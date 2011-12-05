@@ -1,13 +1,16 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] DM RAID: Fix inability to handle failed devices
- during start-up
-Date: Fri, 02 Dec 2011 11:52:11 -0600
-Message-ID: <1322848332.2045.2.camel@f14.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: dm-mpath: Clear map_context pointer when requeuing
+Date: Mon, 05 Dec 2011 19:49:33 +0900
+Message-ID: <4EDCA1BD.1000708@ce.jp.nec.com>
+References: <1322663118-53387-1-git-send-email-hare@suse.de>
+	<20111130144951.GA13775@redhat.com>
+	<4ED6C67A.3060305@ce.jp.nec.com> <4ED8FA8F.20109@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4ED8FA8F.20109@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,96 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, James Bottomley <jbottomley@parallels.com>, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-DM RAID: Fix inability to handle failed devices during start-up
+Hi Hannes,
 
-The code fails to create a RAID array if any of the superblocks cannot be read.
-However, if the userspace program passing in the device-mapper table spots the
-failure and passes in the sentinel values ('- -') for the failed array position,
-then everything is handled properly.  This functional gap should not exist.
+On 12/03/11 01:19, Hannes Reinecke wrote:
+>>>> When requeing a request we should be clearing the map_context
+>>>> pointer, otherwise we might access an invalid memory location.
+>>
+>> Could you elaborate on the mechanism how the map_context->ptr
+>> (= mpio) is accessed after freeing it?
+>>
+> In short: No. Pure guesswork :-)
 
-This patch makes it so that if a superblock cannot be read, the array position's
-fields are initialized as though '- -' were passed in via the CTR table.  That
-is, the device is failed and the position should not be used; but if there is
-sufficient redundancy, the array should still be activated.
+Guesswork is OK :)
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+But..
 
-Index: linux-upstream/drivers/md/dm-raid.c
-===================================================================
---- linux-upstream.orig/drivers/md/dm-raid.c
-+++ linux-upstream/drivers/md/dm-raid.c
-@@ -603,7 +603,9 @@ static int read_disk_sb(struct md_rdev *
- 		return 0;
- 
- 	if (!sync_page_io(rdev, 0, size, rdev->sb_page, READ, 1)) {
--		DMERR("Failed to read device superblock");
-+		DMERR("Failed to read superblock of device at position %d",
-+		      rdev->raid_disk);
-+		set_bit(Faulty, &rdev->flags);
- 		return -EINVAL;
- 	}
- 
-@@ -854,9 +856,25 @@ static int super_validate(struct mddev *
- static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
- {
- 	int ret;
-+	unsigned redundancy = 0;
-+	struct raid_dev *dev;
- 	struct md_rdev *rdev, *freshest, *tmp;
- 	struct mddev *mddev = &rs->md;
- 
-+	switch (rs->raid_type->level) {
-+	case 1:
-+		redundancy = rs->md.raid_disks - 1;
-+		break;
-+	case 4:
-+	case 5:
-+	case 6:
-+		redundancy = rs->raid_type->parity_devs;
-+		break;
-+	default:
-+		ti->error = "Unknown RAID type";
-+		return -EINVAL;
-+	}
-+
- 	freshest = NULL;
- 	rdev_for_each(rdev, tmp, mddev) {
- 		if (!rdev->meta_bdev)
-@@ -871,6 +889,34 @@ static int analyse_superblocks(struct dm
- 		case 0:
- 			break;
- 		default:
-+			dev = container_of(rdev, struct raid_dev, rdev);
-+			if (redundancy--) {
-+				if (dev->meta_dev)
-+					dm_put_device(ti, dev->meta_dev);
-+				dev->meta_dev = NULL;
-+				rdev->meta_bdev = NULL;
-+
-+				if (rdev->sb_page)
-+					put_page(rdev->sb_page);
-+				rdev->sb_page = NULL;
-+
-+				rdev->sb_loaded = 0;
-+
-+				/*
-+				 * We might be able to salvage the data device
-+				 * even though the meta device has failed.  For
-+				 * now, we behave as though '- -' had been
-+				 * passed in for this device via the CTR table.
-+				 */
-+				if (dev->data_dev)
-+					dm_put_device(ti, dev->data_dev);
-+				dev->data_dev = NULL;
-+				rdev->bdev = NULL;
-+
-+				list_del(&rdev->same_set);
-+
-+				continue;
-+			}
- 			ti->error = "Failed to load superblock";
- 			return ret;
- 		}
+> The longer answer here is that 'map_context' is managed by the
+> caller for multipath_map().
+> So in theory the caller is free to re-use the map_context whenever
+> 'clone' is in use.
+> So if 'clone' is terminated when it's still requeued the caller
+> might be calling multipath_end_io(), at which point map_context->ptr
+> will be pointing to an invalid memory location.
+
+With that logic, 'map_context->ptr = NULL' would just replace
+the invalid memory access by NULL pointer dereference,
+because there is no NULL-check for map_context->ptr.
+Right?
+
+> But as I said, this is not a detailed analysis. It's good enough
+> for me that it solves the problem :-)
+> 
+>> mpio is known to be non-NULL where it is used. So clearing the pointer
+>> should not make any difference in logic.
+>>
+> It does, see above.
+> 
+>> If this is a preventive change so that we can see NULL dereference
+>> instead of random invalid access if anything happens, it should be
+>> noted in the patch description and in the code.
+>> Otherwise, somebody looking at the code/change in future might be
+>> confused: "why we have to clear this pointer?"
+>>
+>> And there are other places where mpio is freed.
+>> (E.g. in dispatch_queued_ios() in dm-mpath.c)
+>> Don't we need the same change there?
+>>
+> I don't think so. It's just from multipath_map() where we need to
+> ensure map_context->ptr is correct. All the other places will not
+> touch the map_context->ptr again.
+
+For DM_MAPIO_REQUEUE, both multipath_map() and dispatch_queued_ios()
+end up with dm_requeue_unmapped_request().
+What is the difference?
+
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation
