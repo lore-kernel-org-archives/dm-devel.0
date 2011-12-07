@@ -1,12 +1,14 @@
-From: =?UTF-8?B?UMOhZHJhaWcgQnJhZHk=?= <pbrady@redhat.com>
-Subject: kpartx return codes
-Date: Wed, 07 Dec 2011 15:55:08 +0000
-Message-ID: <4EDF8C5C.9080900@redhat.com>
+From: Christian May <cmay@linux.vnet.ibm.com>
+Subject: Re: ERROR: asr: reading /dev/sdo[Input/output error]
+Date: Wed, 07 Dec 2011 21:29:02 +0100
+Message-ID: <4EDFCC8E.2030801@linux.vnet.ibm.com>
+References: <4EDF8497.7080508@linux.vnet.ibm.com> <4EDF9265.7080806@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4EDF9265.7080806@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,18 +18,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SSBub3RpY2VkIHNvbWUgaXNzdWVzIHdpdGgga3BhcnR4IHJldHVybiBjb2RlczoKCk9uIGFuIHVu
-Y29ubmVjdGVkIGxvb3AgZGV2aWNlIHdlIGdldCB3YXJuaW5ncywKYnV0IGFuIEVYSVRfU1VDQ0VT
-UyA/CgogICMga3BhcnR4IC1hIC9kZXYvbG9vcDEgJiYgZWNobyBFWElUX1NVQ0NFU1MKICByZWFk
-IGVycm9yLCBzZWN0b3IgMAogIGxsc2VlayBlcnJvcgogIGxsc2VlayBlcnJvcgogIGxsc2VlayBl
-cnJvcgogIEVYSVRfU1VDQ0VTUwoKQWxzbyBmb3IgYSBsb29wIGRldmljZSB0aGF0IGlzIGNvbm5l
-Y3RlZCwKSSBnZXQgYSAiZmFpbGVkIiB3YXJuaW5nLCBidXQgdGhlIEVYSVRfU1VDQ0VTUwppcyBh
-cHByb3ByaWF0ZSBpbiB0aGF0IGNhc2UgYXMgdGhlIG1hcHBlZCBkZXZpY2UKaXMgcHJlc2VudCBh
-bmQgdXNhYmxlCgogICMga3BhcnR4IC1hIC9kZXYvbG9vcDAKIC9kZXYvbWFwcGVyL2xvb3AwcDE6
-IG1rbm9kIGZvciBsb29wMHAxIGZhaWxlZDogRmlsZSBleGlzdHMKCmNoZWVycywKUMOhZHJhaWcu
-CgpwLnMuIHRoZSBnaXQgcmVwbyBvbiBrZXJuZWwub3JnIGlzIG5vIGxvbmdlciBhdmFpbGFibGUK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Am 07.12.2011 17:20, schrieb Heinz Mauelshagen:
+> On 12/07/2011 04:21 PM, Christian May wrote:
+>> Hi,
+>>
+>> I've setup an IBM HS21 blade with RHEL6.1. The OS installed on a 
+>> DS5100 storage server (SAN boot).
+>> During booting I'm recognizing the following messages:
+>>
+>> Starting udev: OK
+>> Setting hostname elm8a203.beaverton.ibm.com:
+>> ERROR: asr: reading /dev/sdo[Input/output error]
+>> ERROR: ddf1: reading /dev/sdo[Input/output error]
+>> ERROR: ddf1: reading /dev/sdo[Input/output error]
+>> ERROR: hpt37x: reading /dev/sdo[Input/output error]
+>> ERROR: hpt45x: reading /dev/sdo[Input/output error]
+>> ERROR: isw: reading /dev/sdo[Input/output error]
+>> ERROR: jmicron: reading /dev/sdo[Input/output error]
+>> ERROR: lsi: reading /dev/sdo[Input/output error]
+>> ERROR: nvidia: reading /dev/sdo[Input/output error]
+>> ERROR: pdc: reading /dev/sdo[Input/output error]
+>> ...
+>>
+>> ERROR: sil: reading /dev/sdf[Input/output error]
+>> ERROR: via: reading /dev/sdf[Input/output error]
+>> ERROR: asr: reading /dev/sde[Input/output error]
+>> ERROR: ddf1: reading /dev/sde[Input/output error]
+>> ERROR: ddf1: reading /dev/sde[Input/output error]
+>> ERROR: hpt37x: reading /dev/sde[Input/output error]
+>> ERROR: hpt45x: reading /dev/sde[Input/output error]
+>> ERROR: isw: reading /dev/sde[Input/output error]
+>> ERROR: jmicron: reading /dev/sde[Input/output error]
+>> ERROR: lsi: reading /dev/sde[Input/output error]
+>> ERROR: nvidia: reading /dev/sde[Input/output error]
+>> ERROR: pdc: reading /dev/sde[Input/output error]
+>> ERROR: pdc: reading /dev/sde[Input/output error]
+>> ERROR: pdc: reading /dev/sde[Input/output error]
+>> ERROR: pdc: reading /dev/sde[Input/output error]
+>> ERROR: pdc: reading /dev/sde[Input/output error]
+>> ERROR: pdc: reading /dev/sde[Input/output error]
+>>
+>>
+>> etc.
+>>
+>> All those device /dev/sd...are part of a multipath devices, e.g.:
+>>
+>>
+>> mpathh (3600a0b800047e4e4000008b54ebc91c3) dm-6 IBM,1818      FAStT
+>> size=25G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+>> |-+- policy='round-robin 0' prio=6 status=active
+>> | `- 3:0:3:0 sdh 8:112 active ready running
+>> `-+- policy='round-robin 0' prio=1 status=enabled
+>>   `- 4:0:2:0 sdo 8:224 active ghost running
+>> mpathg (3600a0b800011573a00006da14a648a22) dm-0 IBM,1815      FAStT
+>> size=4.8G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+>> |-+- policy='round-robin 0' prio=6 status=active
+>> | `- 4:0:1:1 sdn 8:208 active ready running
+>> `-+- policy='round-robin 0' prio=1 status=enabled
+>>   `- 3:0:0:1 sdc 8:32  active ghost running
+>>
+>>
+>> OS is booting but how can I get rid of those messages? Is it 
+>> udev-rules related?
+>
+> You have to deactivate dmraid with the "nodmraid" kernel command line 
+> option in order to avoid its scanning leading to the above error 
+> messages.
+>
+> Regards,
+> Heinz
+>
+>>
+>> Regards,
+>>
+>> Christian May (IBM)
+>>
+>>
+>>
+>> -- 
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+
+This parameter is set already...it's not solving the problem:
+
+[root@elm8a203 ~]# cat /boot/grub/menu.lst
+# grub.conf generated by anaconda
+#
+# Note that you do not have to rerun grub after making changes to this file
+# NOTICE:  You do not have a /boot partition.  This means that
+#          all kernel and initrd paths are relative to /, eg.
+#          root (hd0,0)
+#          kernel /boot/vmlinuz-version ro root=/dev/mapper/mpathhp1
+#          initrd /boot/initrd-[generic-]version.img
+#boot=/dev/mpathh
+default=0
+timeout=15
+splashimage=(hd0,0)/boot/grub/splash.xpm.gz
+#hiddenmenu
+title Red Hat Enterprise Linux Server (2.6.32-131.0.15.el6.i686)
+         root (hd0,0)
+         kernel /boot/vmlinuz-2.6.32-131.0.15.el6.i686 ro 
+root=UUID=ad6570c8-5e2d-41f9-a228-85f9d68f00ce rd_NO_LUKS rd_NO_LVM 
+rd_NO_MD rd_NO_DM LANG=en_US.UTF-8 SYSFONT=latarcyrheb-sun16 
+KEYBOARDTYPE=pc KEYTABLE=de crashkernel=auto 
+rdloaddriver=scsi_dh_alua,scsi_dh_rdac
+         initrd /boot/initramfs-2.6.32-131.0.15.el6.i686.img
+title Red Hat Enterprise Linux Server (2.6.32-131.17.1.el6.i686)
+         root (hd0,0)
+         kernel /boot/vmlinuz-2.6.32-131.17.1.el6.i686 ro 
+root=UUID=ad6570c8-5e2d-41f9-a228-85f9d68f00ce rd_NO_LUKS rd_NO_LVM 
+rd_NO_MD rd_NO_DM LANG=en_US.UTF-8 SYSFONT=latarcyrheb-sun16 
+KEYBOARDTYPE=pc KEYTABLE=de crashkernel=auto 
+rdloaddriver=scsi_dh_alua,scsi_dh_rdac
+         initrd /boot/initramfs-2.6.32-131.17.1.el6.i686.img
+title Red Hat Enterprise Linux (2.6.32-131.0.15.el6.i686)
+         root (hd0,0)
+         kernel /boot/vmlinuz-2.6.32-131.0.15.el6.i686 ro 
+root=UUID=ad6570c8-5e2d-41f9-a228-85f9d68f00ce rd_NO_LUKS rd_NO_LVM 
+rd_NO_MD rd_NO_DM LANG=en_US.UTF-8 SYSFONT=latarcyrheb-sun16 
+KEYBOARDTYPE=pc KEYTABLE=de crashkernel=auto
+         initrd /boot/initramfs-2.6.32-131.0.15.el6.i686.img
+[root@elm8a203 ~]#
