@@ -1,14 +1,12 @@
-From: Yathindra <ydev@cs.utah.edu>
-Subject: Re: Compiling/linking applications using libdevmapper
-Date: Tue, 13 Dec 2011 10:12:15 -0700
-Message-ID: <4EE7876F.5030608@cs.utah.edu>
-References: <4EE6519C.40003@cs.utah.edu> <4EE72CAA.6010405@redhat.com>
+From: Rudy Gevaert <Rudy.Gevaert@UGent.be>
+Subject: how to troubleshoot faulty multipath path?
+Date: Fri, 16 Dec 2011 16:49:26 +0100
+Message-ID: <4EEB6886.402@UGent.be>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4EE72CAA.6010405@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +16,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Hello,
 
-Actually, I'm using some of the API's from libdevmapper and as such I'm 
-not installing device mapper.
-So I'm linking my application by using -ldevmapper, but for devmapper 
-library (-ldevmapper), do I need
-to build the device mapper part from lvm2 src ?
+I'm running an IBM DS3400 and am seeing a faulty paths:
 
-Thanks again,
-Yathi
+mail11-ds3400-1 (3600a0b80005a591a0000042b4cac46de) dm-2 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=0 status=enabled
+| `- 1:0:0:11 sdd  8:48   active faulty running
+`-+- policy='round-robin 0' prio=-1 status=active
+   `- 5:0:0:11 sdr  65:16  active undef  running
+mail10-ds3400-1 (3600a0b80005a67b60000046a4cac4613) dm-1 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=0 status=enabled
+| `- 5:0:0:10 sdq  65:0   active faulty running
+`-+- policy='round-robin 0' prio=-1 status=active
+   `- 1:0:0:10 sdc  8:32   active undef  running
+mail15r-ds3400-1 (3600a0b80005a67b60000046d4cac464f) dm-6 IBM,1726-4xx 
+FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=0 status=enabled
+| `- 5:0:0:15 sdv  65:80  active faulty running
+`-+- policy='round-robin 0' prio=-1 status=active
+   `- 1:0:0:15 sdh  8:112  active undef  running
 
-On 12/13/2011 3:44 AM, Zdenek Kabelac wrote:
-> Dne 12.12.2011 20:10, Yathindra napsal(a):
->> Hi,
->>
->> I'm actually doing a make and make install in the LVM source code 
->> directory so
->> I can compile and link my application using -ldevmapper.
->>
->> I'm wondering if this is the only way (correct way) to build 
->> applications
->> using libdevmapper ?
->>
->
->
-> If you want to build only device mapper part from lvm2 src tarball you 
-> may use:
->
-> make device-mapper
->
-> or just directly:
->
-> make install_device-mapper
->
-> (though there seems to be a minor issue with the install target which 
-> might need some cosmetic cleanup - but it should install correctly 
-> everything you need)
->
-> Zdenek
+
+The storage software says those luns are not 'on the preferred path'.
+
+I'm a bit clueless where to look next.
+
+I see on the storage software that other luns are on that controller, so 
+it seems to me that controller/path is not the problem.
+
+Where should I look next?  I'm afraid that if I change the ownership it 
+will take the lun offline.
+
+Thanks in advance,
+
+Rudy
