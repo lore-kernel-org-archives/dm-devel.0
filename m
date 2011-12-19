@@ -1,14 +1,16 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: add option to change the number of
-	error	messages
-Date: Mon, 19 Dec 2011 13:42:51 -0600
-Message-ID: <20111219194251.GN24133@ether.msp.redhat.com>
+Subject: Re: [PATCH V2] multipath: add option to change
+	the	number of error messages
+Date: Mon, 19 Dec 2011 15:41:57 -0600
+Message-ID: <20111219214157.GO24133@ether.msp.redhat.com>
+References: <20111219194251.GN24133@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20111219194251.GN24133@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,6 +31,8 @@ first checker error message is logged at logging level 2. All future messages
 are logged at level 3, until the device is restored or removed. If it's set
 to "always", all messages are logged at level 2, like multipathd currently does.
 
+This version actually compiles.
+
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
  libmultipath/config.h      |    1 +
@@ -38,22 +42,22 @@ Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
  multipathd/main.c          |    8 ++++++--
  5 files changed, 50 insertions(+), 2 deletions(-)
 
-Index: multipath-tools-111111/libmultipath/config.h
+Index: multipath-tools-111219/libmultipath/config.h
 ===================================================================
---- multipath-tools-111111.orig/libmultipath/config.h
-+++ multipath-tools-111111/libmultipath/config.h
-@@ -37,6 +37,7 @@ struct hwentry {
- 	int flush_on_last_del;
+--- multipath-tools-111219.orig/libmultipath/config.h
++++ multipath-tools-111219/libmultipath/config.h
+@@ -92,6 +92,7 @@ struct config {
+ 	int attribute_flags;
  	int fast_io_fail;
  	unsigned int dev_loss;
 +	int log_checker_err;
- 	char * bl_product;
- };
- 
-Index: multipath-tools-111111/libmultipath/dict.c
+ 	int allow_queueing;
+ 	uid_t uid;
+ 	gid_t gid;
+Index: multipath-tools-111219/libmultipath/dict.c
 ===================================================================
---- multipath-tools-111111.orig/libmultipath/dict.c
-+++ multipath-tools-111111/libmultipath/dict.c
+--- multipath-tools-111219.orig/libmultipath/dict.c
++++ multipath-tools-111219/libmultipath/dict.c
 @@ -525,6 +525,25 @@ def_flush_on_last_del_handler(vector str
  }
  
@@ -103,10 +107,10 @@ Index: multipath-tools-111111/libmultipath/dict.c
  	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
  	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
  	__deprecated install_keyword("default_getuid_callout", &def_getuid_callout_handler, NULL);
-Index: multipath-tools-111111/libmultipath/structs.h
+Index: multipath-tools-111219/libmultipath/structs.h
 ===================================================================
---- multipath-tools-111111.orig/libmultipath/structs.h
-+++ multipath-tools-111111/libmultipath/structs.h
+--- multipath-tools-111219.orig/libmultipath/structs.h
++++ multipath-tools-111219/libmultipath/structs.h
 @@ -87,6 +87,11 @@ enum flush_states {
  	FLUSH_IN_PROGRESS,
  };
@@ -119,29 +123,10 @@ Index: multipath-tools-111111/libmultipath/structs.h
  struct scsi_idlun {
  	int dev_id;
  	int host_unique_id;
-Index: multipath-tools-111111/multipathd/main.c
+Index: multipath-tools-111219/multipath/multipath.conf.5
 ===================================================================
---- multipath-tools-111111.orig/multipathd/main.c
-+++ multipath-tools-111111/multipathd/main.c
-@@ -1193,8 +1193,12 @@ check_path (struct vectors * vecs, struc
- 				pp->dev_t, pp->tick);
- 		}
- 	}
--	else if (newstate == PATH_DOWN)
--		LOG_MSG(2, checker_message(&pp->checker));
-+	else if (newstate == PATH_DOWN) {
-+		if (conf->log_checker_err == LOG_CHKR_ERR_ONCE)
-+			LOG_MSG(3, checker_message(&pp->checker));
-+		else
-+			LOG_MSG(2, checker_message(&pp->checker));
-+	}
- 
- 	pp->state = newstate;
- 
-Index: multipath-tools-111111/multipath/multipath.conf.5
-===================================================================
---- multipath-tools-111111.orig/multipath/multipath.conf.5
-+++ multipath-tools-111111/multipath/multipath.conf.5
+--- multipath-tools-111219.orig/multipath/multipath.conf.5
++++ multipath-tools-111219/multipath/multipath.conf.5
 @@ -316,9 +316,19 @@ cannot be told to stop queueing IO. Sett
  .I no
  , avoids this problem. Default is
@@ -162,3 +147,22 @@ Index: multipath-tools-111111/multipath/multipath.conf.5
  .
  .SH "blacklist section"
  The
+Index: multipath-tools-111219/multipathd/main.c
+===================================================================
+--- multipath-tools-111219.orig/multipathd/main.c
++++ multipath-tools-111219/multipathd/main.c
+@@ -1193,8 +1193,12 @@ check_path (struct vectors * vecs, struc
+ 				pp->dev_t, pp->tick);
+ 		}
+ 	}
+-	else if (newstate == PATH_DOWN)
+-		LOG_MSG(2, checker_message(&pp->checker));
++	else if (newstate == PATH_DOWN) {
++		if (conf->log_checker_err == LOG_CHKR_ERR_ONCE)
++			LOG_MSG(3, checker_message(&pp->checker));
++		else
++			LOG_MSG(2, checker_message(&pp->checker));
++	}
+ 
+ 	pp->state = newstate;
+ 
