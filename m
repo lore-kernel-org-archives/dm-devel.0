@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid CHANGELOG
-Date: 19 Dec 2011 14:34:48 -0000
-Message-ID: <20111219143448.18282.qmail@sourceware.org>
+Subject: dmraid/tools VERSION
+Date: 19 Dec 2011 14:37:41 -0000
+Message-ID: <20111219143741.26747.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,35 +21,19 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2011-12-19 14:34:48
+Changes by:	heinzm@sourceware.org	2011-12-19 14:37:40
 
 Modified files:
-	.              : CHANGELOG 
+	tools          : VERSION 
 
 Log message:
-	
+	update version
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/CHANGELOG.diff?cvsroot=dm&r1=1.7&r2=1.8
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/VERSION.diff?cvsroot=dm&r1=1.10&r2=1.11
 
---- dmraid/CHANGELOG	2009/09/16 11:45:11	1.7
-+++ dmraid/CHANGELOG	2011/12/19 14:34:48	1.8
-@@ -1,4 +1,18 @@
- 
-+Changelog from dmraid 1.0.0.rc16-1 to 1.0.0.rc16-4	2011.12.19
-+o Added Ubuntu upstream patches [Philip Susi]
-+  - fix hyphen used as minus sign in man pages
-+  - support for checking virtio devices for dmraid metadata
-+  - activate multiple raid sets
-+  - probe isw disks with [some] HPA awareness
-+  - fix isw raid0 sector calculation
-+  - fix jmicron name
-+  - dump all 4 sets of PDC metadata
-+  - make partition separator follow standards
-+
-+
-+....
-+
- Changelog from dmraid 1.0.0.rc12 to 1.0.0.rc13		2006.10.11
- 
- 
+--- dmraid/tools/VERSION	2011/12/02 14:12:29	1.10
++++ dmraid/tools/VERSION	2011/12/19 14:37:40	1.11
+@@ -1 +1 @@
+-1.0.0.rc16-3 (2010.11.12)
++1.0.0.rc16-4 (2011.12.19)
