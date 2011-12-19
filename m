@@ -1,16 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [RFC][PATCH 0/3] persistent management feature for
- multipath-tools
-Date: Mon, 19 Dec 2011 23:16:12 +0100
-Message-ID: <1324332972.4565.46.camel@lapoo.opensvc.com>
-References: <EE2129A8E578DC4E94D643D6C1C1C67D078966CE@BTCMVEXC2-PRD.hq.netapp.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: fix scsi timeout code
+Date: Mon, 19 Dec 2011 16:19:56 -0600
+Message-ID: <20111219221956.GP24133@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <EE2129A8E578DC4E94D643D6C1C1C67D078966CE@BTCMVEXC2-PRD.hq.netapp.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,296 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>, "Stankey,
-	Robert" <Robert.Stankey@netapp.com>, "Moger,
-	Babu" <Babu.Moger@netapp.com>, "Dachepalli,
-	Sudhir" <Sudhir.Dachepalli@netapp.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On lun., 2011-12-19 at 22:04 +0530, Chauhan, Vijay wrote:
-> PERSISTENT RESERVE OUT/IN commands are currently not supported on mpath device. Any command sent to mpath device is routed to only one of the physical path (selected by path selector) from the active path group. PR OUT registration service action is one of the such use-case which fails as it expects all the physical path for the given mpath device to be registered. Due to these limitations, most of the cluster applications needs to manage persistent reservation through underlying physical path.
-> 
-Persistent reservation is a path-centric command set. I don't see
-clearly the benefit of folding (obfuscating?) it into the multipath
-layer.
+sysfs_attr_set_value() returns the amount written on on success, or -1 on
+failure.  sysfs_setc_scsi_tmo() was checking if the return was nonzero, and
+failing if it was. This meant that it always failed out silently after writing
+the first value. I've changed the check, and added some error messages.  I also
+made sysfs_attr_set_value return -1 for all errors.
 
-Saving a few command lines ? I don't think there are wild admins playing
-with PR without a clustering toolkit out there, so the tricky command
-lines don't really matter.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/discovery.c |   11 +++++++++--
+ libmultipath/sysfs.c     |    2 +-
+ 2 files changed, 10 insertions(+), 3 deletions(-)
 
-I do maintain a clustering toolkit that handles PR, and I know this
-feature would add code (multipath specific), not remove the current more
-generic code.
-
-I also realize some other multipath implementations (PowerPath for one)
-propose that feature. I'm curious to know the motivation.
-
-Am I the only one on the list thinking along this line ? Anyway, I have
-no hard feelings against this work.
-
-Best regards,
-Christophe Varoqui
-
-> 
-> This feature enables mpath device to be used with cluster application.
-> 
-> Following are the detailed description for Persistent Reservation management feature:
-> ===========================================================================================================
-> CONTENT
-> ===========================================================================================================
-> 1. Feature Introduction
-> 2. Steps to configure for persistent reservation management
-> 3. mpathpersist Command Usage
-> 4. PR IN/OUT  service action and use-case handling
-> 	4.1 Persistent Reserve Out service action
-> 		4.1.1 [Register] 
-> 		4.1.2 [Reserve]
-> 		4.1.3 [Release]
-> 		4.1.4 [CLEAR]
-> 		4.1.5 [PREEMPT] & [PREEMPT AND ABORT]		
-> 	4.2 Persistent Reserve In service action
-> 		4.2.1 [READ KEY] 
-> 		4.2.2 [READ RESERVATION]
-> 		4.2.3 [READ STATUS]
-> 		4.2.4 [REPORT CAPABILITIES]
-> 	4.3 Usage case handled by multipath tools for PR management
-> 5. mpathpersist library and header 
-> 	5.1 mpathpersist  Library  APIs.
-> 		5.1.1 int mpath_lib_init (void )
-> 		5.1.2 int mpath_lib_exit (void )
-> 		5.1.3 int mpath_persistent_reserve_in (int fd, int rq_servact,
-> 				struct prin_resp *resp, int noisy, int verbose)			
-> 		5.1.4 int mpath_persistent_reserve_out ( int fd, int rq_servact, 
-> 				int rq_scope, unsigned int rq_type, struct rout_param_descriptor *paramp, 
-> 				int noisy, int verbose)
-> 6. Limitation and restriction.
-> 
-> 
-> 
-> 1. Feature Introduction
-> ==========================
-> 
-> Persistent reservation management feature allows cluster management software to manage persistent reservation through mpath device. It processes management requests from callers and hides the management task details. It also handles persistent reservation management of data path life cycle and state changes.
-> 
-> All the patch for this feature are applicable to multipath-tools only. It adds new utility 'mpathpersist' and libmpathpersist library in multipath-tools to support this feature. 'mpathpersist' is similar to sg_persist utility with respect to cli usage but it is only applicable to dm multipath devices.
-> 
-> 
-> 2. Steps to configure for persistent reservation management
-> =============================================================
-> This feature adds new parameter 'reservation_key' in default section and multipath section of multipath.conf. 
-> 
-> 'reservation_key'  here represents RESERVATION KEY field of PERSISTENT RESERVE OUT parameter list which contains an 8-byte value provided by the application client to the device server to identify the I_T nexus.
->  
-> STEP 1: Set reservation_key parameter in multipath.conf for mpath device. 'reservation_key' parameter needs to be set for all the mpath device applicable for persistent management.
-> STEP 2: restart multipathd daemon
-> 
-> Note: reservation key in multipath.com must be same as service action reservation key used/to be used for mpath device registration reservation.
-> 
-> 
-> 3. mpathpersist Command Usage
-> ===============================
-> 
-> mpathpersist CLI usage is kept close to sg_persist usage except it takes mpath device as device name.
-> 
-> Usage: mpathpersist [OPTIONS] [DEVICE]
->  Options:
->     --verbose|-v level         verbosity level
->                    0           Critical messages
->                    1           Error messages
->                    2           Warning messages
->                    3           Informational messages
->                    4           Informational messages with trace enabled
->     --clear|-C                 PR Out: Clear
->     --device=DEVICE|-d DEVICE  query or change DEVICE
->     --help|-h                  output this usage message
->     --hex|-H                   output response in hex
->     --in|-i                    request PR In command
->     --out|-o                   request PR Out command
->     --param-aptpl|-Z           PR Out parameter 'APTPL'
->     --read-keys|-k             PR In: Read Keys
->     --param-sark=SARK|-S SARK  PR Out parameter service action
->                                reservation key (SARK is in hex)
->     --param-rk=RK|-K RK        PR Out parameter reservation key
->                                (RK is in hex)
->     --preempt|-P               PR Out: Preempt
->     --preempt-abort|-A         PR Out: Preempt and Abort
->     --prout-type=TYPE|-T TYPE  PR Out command type
->     --read-status|-s           PR In: Read Full Status
->     --read-keys|-k             PR In: Read Keys
->     --read-reservation|-r      PR In: Read Reservation
->     --register|-G              PR Out: Register
->     --register-ignore|-I       PR Out: Register and Ignore
->     --release|-L               PR Out: Release
->     --report-capabilities|-c   PR In: Report Capabilities
->     --reserve|-R               PR Out: Reserve
->     --transport-id=TIDS|-X TIDS  TransportIDs can be mentioned
->                                in several forms
-> 
-> 
-> 4. PR IN/OUT  service action and use-case handling
-> ===================================================
-> 
-> 4.1 Persistent Reserve Out service action:
-> ----------------------------------
-> 4.1.1 [Register] 
-> The caller provides multipath device name, reservation key, and service action reservation key and optionally APTPL bit value. The persistent reservation management command issues PROUT Register service action to all active data paths of the multipath device. If reservation key or service action reservation key is not provided, fill with all 0s. For each path, a thread is created to process PROUT register service action. Consolidated results of all the paths are returned to caller. In case if this PROUT command fails with reservation conflict, all the successful registration by other threads will be rolled back.
-> Example:	mpathpersist --out --register --param-sark=123abc --prout-type=8 /dev/mapper/mpath9
-> 			/*Unregister*/
-> 		mpathpersist --out --register --param-rk=123abc --prout-type=8 /dev/mapper/mpath9
-> 
-> 
-> 4.1.2 [Reserve]
-> The caller provides multipath device name, reservation type and reservation key. The reservation SCOPE value is not required since persistent reservation supports only LU_SCOPE. The persistent reservation management command issues PROUT Reserve service action to any active data paths of the multipath
-> device. PROUT command is send to one of the active path of multipath device. Result is returned to the caller of this module.
-> Example:	mpathpersist --out --reserve --param-rk=123abc --prout-type=8 /dev/mapper/mpath9
-> 
-> 
-> 4.1.3 [Release]
-> The caller provides multipath device name, reservation type and reservation key. The persistent reservation management command issues PROUT Release service action to all active data paths of the multipath device. The reason why issuing PROUT Release service action is because it is unclear which
-> data path is the reservation holder. If RESERVATION CONFLICT SCSI status is received, it indicates that either the reservation key or
-> reservation type is invalid. Return error status back to the caller. After PROUT Release service action command is issued to all active data paths, a PRIN Read Reservation service action should be issued to an active data path. If the Read Reservation parameter
-> data indicates that the logical unit is still reserved and the registration key matches the reservation key
-> caller provided, this indicates that the reservation holder belongs to a data path in failed state or removed
-> data path of the multipath device. The following operations should be taken for this error case. 
-> 1. Issue a PRIN Report Full Status service action to any active data path
-> 2. Remember the full status descriptors returned from the step 1.
-> 3. Issue a PROUT clear reservation service action, via any active data path, to clear the reservation and registrants and
-> 4. Restore all registrants by issuing PROUT register service action with transport IDs from the full status descriptors saved in the step 2.
-> Example:	mpathpersist --out --release --param-rk=123abc --prout-type=8 /dev/mapper/mpath9
-> 
-> 
-> 4.1.4 [CLEAR]
-> The caller provides multipath device name and reservation key. The persistent reservation management
-> command issues PROUT Preempt service action to any active data paths of the multipath device.
-> If RESERVATION CONFLICT SCSI status is received, it indicates that the reservation key is invalid or the
-> data path is not a registrant. Return error status back to the caller.
-> Example:	mpathpersist --out --clear --param-rk=123abc --prout-type=8 /dev/mapper/mpath9
->   
-> 
-> 4.1.5 [PREEMPT] & [PREEMPT AND ABORT]
-> The caller provides multipath device name, reservation type, reservation key and service action reservation key. The persistent reservation management command issues PROUT Preempt service action to any active data paths of the multipath device. If RESERVATION CONFLICT SCSI status is received, it indicates that either the reservation key or service action reservation key is invalid. Return error status back to the caller. PROUT command is send to one of the active path of multipath device. Result is returned to the caller of this module.
-> Example: mpathpersist --out --preempt-abort --param-rk=0 --paramsark=789def --prout-type=8 /dev/mapper/mpath9
-> 
-> 
-> PS: This feature does not support ALL_TG_PT bit on. With a storage array having 8 or 16 target ports, the total number of registrants will be equal to total-number-of-initiator-ports X total-number-of target-ports. If ALL_TG_PT is on, too much storage array resources will be wasted and it also creates implementation challenge of managing registration rollback. In a use case where one initiator port (such as a FC port) connects to multiple target ports on the same storage array via a switch, ALL_TG_PT=1 will cause registration failed with RESERVATION CONFLICT status when issuing PROUT registration to the second data path which shares the same initiator port.
-> 
-> PS: This RFC version does not support REGISTER AND MOVE service action.
-> 
-> 4.2 Persistent Reserve In service action:
-> --------------------------------------------
-> 4.2.1 [READ KEY] 
-> The caller provides multipath device. The persistent reservation management command selects any active data path and issues a PRIN Read Keys service action to the selected data path of the multipath device. Parameter data is sent to the caller with appropriate formatted. The persistent reservation
-> management command will not filter registration keys returned from the storage array. In other words, multiple registration keys is reported in general.
-> Example:	mpathpersist -i -k /dev/mapper/mpath9 
-> 
-> 
-> 4.2.2 [READ RESERVATION]
-> The caller provides multipath device. The persistent reservation management command selects any active data path and issues a PRIN Read Reservation service action to the selected data path of the multipath device. Parameter data is sent to the caller with appropriate formatted.
-> Example:	mpathpersist -i -r /dev/mapper/mpath9 
-> 
-> 
-> 4.2.3 [READ STATUS]
-> The caller provides multipath device. The persistent reservation management command selects any active data path and issues a PRIN Read Full Status service action to the selected data path of the multipath device. Parameter data is sent to the caller with appropriate formatted. The persistent reservation management command will not filter full status descriptor entries returned from the storage array. In other words, full statuses for multiple registrants is reported in general.
-> Example:	mpathpersist -i -s /dev/mapper/mpath9
-> 
-> 
-> 4.2.4 [REPORT CAPABILITIES]
-> The caller provides multipath device. The persistent reservation management command selects any active data path and issues a PRIN Report Capabilities service action to the selected data path of the multipath device. Parameter data is sent to the caller with appropriate formatted.
-> Example:	mpathpersist -i -c /dev/mapper/mpath9
-> 
-> 
-> 4.3 Use-case handled by multipath tools for PR management
-> - For any reinstated path, multipath daemon checks for persistent reservation on the path and registers the path with reservation_key (from multipath.conf) if required.
-> - For any new path discovery, multipath daemon checks for persistent reservation on the path and registers the path if required.
-> - In case of device all path failure condition, command is returns with failed status.
-> - PR command is retried by pr management for any Unit Attention.
-> - While performing persistent reservation registration on mpath device, if any of the path receives reservation conflict then successful registration on the other paths will be rolled back.
-> 
-> 5. mpathpersist Library and Header
-> ======================================
-> 
-> 
-> mpathpersist library provides four APIs for managing persistent reservation on device mapper multipath device. 
-> 
-> 5.1 mpathpersist  Library  APIs.
-> ---------------------------------
-> 5.1.1 int mpath_lib_init (void)
-> DESCRIPTION :
-> Initialize device mapper multipath configuration. This function must be invoked first before performing reservation management functions.
-> 
-> RETURNS:
-> 0->Success, 1->Failed
-> Note: mpath_lib_init function must be called at the start of the usage of PR management APIs (such as mpath_persistent_reserve_in or mpath_persistent_reserve_out). This function is responsible for initializing config table. (Any dynamic allocation done by mpath_lib_init function will be de-allocated only by mpath_lib_exit API).
-> 
-> 
-> 5.1.2  int mpath_lib_exit (void)
-> DESCRIPTION:
-> Release device mapper multipath configuration. This function must be invoked after performing reservation management functions.
-> 
-> RETURNS:
-> 0->Success, 1->Failed.
-> 
-> Note: mpath_lib_exit function must be called at the end of the usage of PR management APIs (such as mpath_persistent_reserve_in or mpath_persistent_reserve_out). This function is responsible for freeing up the dynamic allocation made by mpath_lib_init function.
-> 
-> 
-> 5.1.3 int mpath_persistent_reserve_in (int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)
-> DESCRIPTION:
-> The function in the mpath_persistent_reserve_in() sends PRIN command to the DM device and gets the response.
-> 
-> PARAMETERS:
-> fd - The file descriptor of a multipath device. Input argument.
-> rq_servact  -  PRIN command service action. Input argument
-> resp - The response from PRIN service action. The caller should manage the memory allocation of this structure
-> noisy - Turn on debugging trace: Input argument. 0->Disable, 1->Enable
-> verbose -  Set verbosity level. Input argument. value:[0-3]. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug
-> 
-> RETURNS
-> 	MPATH_PR_SUCCESS if PR command successful
-> 	MPATH_PR_SYNTAX_ERROR if syntax error or invalid parameter
-> 	MPATH_PR_SENSE_NOT_READY if command fails with [sk,asc,ascq: 0x2,*,*]
-> 	MPATH_PR_SENSE_MEDIUM_ERROR if command fails with [sk,asc,ascq: 0x3,*,*]
-> 	MPATH_PR_SENSE_HARDWARE_ERROR if command fails with [sk,asc,ascq: 0x4,*,*]
-> 	MPATH_PR_SENSE_INVALID_OP if command fails with [sk,asc,ascq: 0x5,0x20,0x0]
-> 	MPATH_PR_ILLEGAL_REQ if command fails with [sk,asc,ascq: 0x5,*,*]
-> 	MPATH_PR_SENSE_UNIT_ATTENTION if command fails with [sk,asc,ascq: 0x6,*,*]
-> 	MPATH_PR_SENSE_ABORTED_COMMAND if command fails with [sk,asc,ascq: 0xb,*,*]
-> 	MPATH_PR_NO_SENSE if command fails with [sk,asc,ascq: 0x0,*,*]
->       MPATH_PR_SENSE_MALFORMED if command fails with SCSI command malformed
->       MPATH_PR_FILE_ERROR if command fails while accessing file (device node) problems(e.g. not found)
->       MPATH_PR_DMMP_ERROR if Device Mapper related error.(e.g Error in getting dm info)
->       MPATH_PR_OTHER if other error/warning has occurred(e.g transport or driver error)
-> 
-> 
-> 5.1.4 int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope, unsigned int rq_type,
->                 struct rout_param_descriptor *paramp, int noisy, int verbose)
-> DESCRIPTION
-> The function in the mpath_persistent_reserve_out() sends PR OUT command to the DM device and gets the response.
-> 
-> PARAMETERS:
-> fd - The file descriptor of a multipath device. Input argument.
-> rq_servact  - PROUT command service action. Input argument
-> rq_scope - Persistent reservation scope. The value should be always LU_SCOPE (0h).
-> rq_type - Persistent reservation type. The valid values of persistent reservation types are
->              5h (Write exclusive - registrants only)
->              8h (Exclusive access - registrants only)
->              7h (Write exclusive - All registrants)
->              8h (Exclusive access - All registrants).
-> paramp - PROUT  command  parameter  data.  The paramp is a struct which describes PROUT parameter list. Caller should
->                  manage the memory  allocation of this structure. 
-> noisy - Turn on debugging trace: Input argument. 0->Disable, 1->Enable.
-> verbose - Set verbosity level. Input argument. value: 0 to 3. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug
-> 
-> 6. Limitation and restriction
-> 	-This feature doesn't support persistent reservation types of Write-Exclusive (1h) 
-> 	 and Exclusive-Access(3h).
-> 	- This feature will not support ALL_TG_PT bit on. 
-> 	- Current implementation is limited to FC SAS and ISCSI transport protocol. Other protocol support could be added in future.
-> 
-> 
-> Regards,
-> Vijay Chauhan
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Index: multipath-tools-111111/libmultipath/discovery.c
+===================================================================
+--- multipath-tools-111111.orig/libmultipath/discovery.c
++++ multipath-tools-111111/libmultipath/discovery.c
+@@ -316,8 +316,11 @@ sysfs_set_scsi_tmo (struct multipath *mp
+ 		if (mpp->dev_loss){
+ 			snprintf(value, 11, "%u", mpp->dev_loss);
+ 			if (sysfs_attr_set_value(attr_path, "dev_loss_tmo",
+-						 value, 11))
++						 value, 11) < 0) {
++				condlog(0, "%s failed to set %s/dev_loss_tmo",
++					mpp->alias, attr_path);
+ 				return 1;
++			}
+ 		}
+ 		if (mpp->fast_io_fail){
+ 			if (mpp->fast_io_fail == -1)
+@@ -325,8 +328,12 @@ sysfs_set_scsi_tmo (struct multipath *mp
+ 			else
+ 				snprintf(value, 11, "%u", mpp->fast_io_fail);
+ 			if (sysfs_attr_set_value(attr_path, "fast_io_fail_tmo",
+-						 value, 11))
++						 value, 11) < 0) {
++				condlog(0,
++					"%s failed to set %s/fast_io_fail_tmo", 
++					mpp->alias, attr_path);
+ 				return 1;
++			}
+ 		}
+ 	}
+ 	return 0;
+Index: multipath-tools-111111/libmultipath/sysfs.c
+===================================================================
+--- multipath-tools-111111.orig/libmultipath/sysfs.c
++++ multipath-tools-111111/libmultipath/sysfs.c
+@@ -351,7 +351,7 @@ ssize_t sysfs_attr_set_value(const char
+ 	char path_full[PATH_SIZE];
+ 	struct stat statbuf;
+ 	int fd;
+-	ssize_t size = 0;
++	ssize_t size = -1;
+ 	size_t sysfs_len;
+ 
+ 	if (!attr_name || !value || !value_len)
