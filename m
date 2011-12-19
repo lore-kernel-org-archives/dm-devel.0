@@ -1,8 +1,8 @@
 From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
 Subject: [RFC][PATCH 1/3] persistent management feature for
 	multipath-tools
-Date: Mon, 19 Dec 2011 23:58:41 +0530
-Message-ID: <EE2129A8E578DC4E94D643D6C1C1C67D07896716@BTCMVEXC2-PRD.hq.netapp.com>
+Date: Mon, 19 Dec 2011 22:04:35 +0530
+Message-ID: <EE2129A8E578DC4E94D643D6C1C1C67D078966D0@BTCMVEXC2-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,15 +25,12 @@ Cc: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>, "Dachepalli,
 	Robert" <Robert.Stankey@netapp.com>
 List-Id: dm-devel.ids
 
-Resending this patch as somehow it did not show up in dm-devel mailing list sent in previous post.
-
 This patch adds new cli utility 'mpathpersist' in multipath-tools for mpath persistent management. 
  
 Signed-off-by: Vijay Chauhan <Vijay.chauhan@netapp.com>
-Reviewed-by: Bob Stankey <Robert.stankey@netapp.com>
+Reviewed-by: Bob Stankey <Robert.stankey@netapp.com> 
 Reviewed-by: Babu Moger <Babu.moger@netapp.com>
 Reviewed-by: Yanling Q <Yanling.Q@netapp.com>
-
 ---
 diff -uprN multipath-tools-orig/libmpathpersist/Makefile multipath-tools/libmpathpersist/Makefile
 --- multipath-tools-orig/libmpathpersist/Makefile	1970-01-01 05:30:00.000000000 +0530
@@ -3415,5 +3412,3 @@ diff -uprN multipath-tools-orig/mpathpersist/mpathpersist.8 multipath-tools/mpat
 +mpathpersist \fB\-i\fR \fB\-k\fR /dev/mapper/mpath9
 +.PP
 --
-
-  
