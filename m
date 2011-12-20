@@ -1,13 +1,17 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: fix scsi timeout code
-Date: Mon, 19 Dec 2011 16:19:56 -0600
-Message-ID: <20111219221956.GP24133@ether.msp.redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Subject: Re: [RFC][PATCH 0/3] persistent management feature for
+	multipath-tools
+Date: Tue, 20 Dec 2011 19:00:07 +0530
+Message-ID: <EE2129A8E578DC4E94D643D6C1C1C67D07A576CA@BTCMVEXC2-PRD.hq.netapp.com>
+References: <EE2129A8E578DC4E94D643D6C1C1C67D078966CE@BTCMVEXC2-PRD.hq.netapp.com>
+	<20111219193827.GB17387@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
+In-Reply-To: <20111219193827.GB17387@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,63 +21,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Stankey,
+	Robert" <Robert.Stankey@netapp.com>, "Moger,
+	Babu" <Babu.Moger@netapp.com>, christophe.varoqui@free.fr, "Dachepalli, Sudhir" <Sudhir.Dachepalli@netapp.com>
 List-Id: dm-devel.ids
 
-sysfs_attr_set_value() returns the amount written on on success, or -1 on
-failure.  sysfs_setc_scsi_tmo() was checking if the return was nonzero, and
-failing if it was. This meant that it always failed out silently after writing
-the first value. I've changed the check, and added some error messages.  I also
-made sysfs_attr_set_value return -1 for all errors.
+Mike,
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/discovery.c |   11 +++++++++--
- libmultipath/sysfs.c     |    2 +-
- 2 files changed, 10 insertions(+), 3 deletions(-)
+Thanks for your comment. I will take care of it from next post.
 
-Index: multipath-tools-111111/libmultipath/discovery.c
-===================================================================
---- multipath-tools-111111.orig/libmultipath/discovery.c
-+++ multipath-tools-111111/libmultipath/discovery.c
-@@ -316,8 +316,11 @@ sysfs_set_scsi_tmo (struct multipath *mp
- 		if (mpp->dev_loss){
- 			snprintf(value, 11, "%u", mpp->dev_loss);
- 			if (sysfs_attr_set_value(attr_path, "dev_loss_tmo",
--						 value, 11))
-+						 value, 11) < 0) {
-+				condlog(0, "%s failed to set %s/dev_loss_tmo",
-+					mpp->alias, attr_path);
- 				return 1;
-+			}
- 		}
- 		if (mpp->fast_io_fail){
- 			if (mpp->fast_io_fail == -1)
-@@ -325,8 +328,12 @@ sysfs_set_scsi_tmo (struct multipath *mp
- 			else
- 				snprintf(value, 11, "%u", mpp->fast_io_fail);
- 			if (sysfs_attr_set_value(attr_path, "fast_io_fail_tmo",
--						 value, 11))
-+						 value, 11) < 0) {
-+				condlog(0,
-+					"%s failed to set %s/fast_io_fail_tmo", 
-+					mpp->alias, attr_path);
- 				return 1;
-+			}
- 		}
- 	}
- 	return 0;
-Index: multipath-tools-111111/libmultipath/sysfs.c
-===================================================================
---- multipath-tools-111111.orig/libmultipath/sysfs.c
-+++ multipath-tools-111111/libmultipath/sysfs.c
-@@ -351,7 +351,7 @@ ssize_t sysfs_attr_set_value(const char
- 	char path_full[PATH_SIZE];
- 	struct stat statbuf;
- 	int fd;
--	ssize_t size = 0;
-+	ssize_t size = -1;
- 	size_t sysfs_len;
- 
- 	if (!attr_name || !value || !value_len)
+Regards,
+Vijay
+
+On Tue, Dec 20, 2011 at 1:08 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+>Why don't your patches have distinct subjects?
+>
+>Also wrapping the 0th patch summary and patch headers of your messages
+>to ~80-100 characters would be helpful.
+>
+>And providing stats in your patches would be ideal (allows high-level
+>view of which files are touched by a patch), e.g. 'git format-patch' or
+>'git diff -p --stat'.
+>
+>Anyway, thanks for working on this.
+>
+>Mike
