@@ -1,103 +1,52 @@
-From: "Williams, Dan J" <dan.j.williams@intel.com>
-Subject: [CFP] Linux Storage, Filesystem & Memory Management Summit 2012
- (April 1-2)
-Date: Wed, 21 Dec 2011 09:26:05 -0800
-Message-ID: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH] scsi_dh_alua: Retry the check-condition in case Mode Parameters Changed
+Date: Wed, 21 Dec 2011 18:01:37 -0500
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD910D14606@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-class: urn:content-classes:message
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi@vger.kernel.org
+Cc: dm-devel@redhat.com, JBottomley@Parallels.com
 List-Id: dm-devel.ids
 
-The annual Linux Storage, Filesystem and Memory Management Summit for
-2012 will be held on the 2 days preceding the Linux Foundation
-Collaboration Summit at Hotel Nikko in San Francisco, CA:
+This patch adds a check-condition in scsi_dh_alua handler for a retry.
+Sometimes,
+I have seen attach failing due to this check-condition with following
+error 
+messages on NetApp E series storage.
 
-       https://events.linuxfoundation.org/events/lsfmm-summit
-       https://events.linuxfoundation.org/events/collaboration-summit/
+Dec  7 15:31:01 nilgiris kernel: [102979.696673] scsi 3:0:2:9: alua:
+port group 00 rel port 01
+Dec  7 15:31:01 nilgiris kernel: [102979.697082] scsi 3:0:2:9: alua:
+rtpg failed with 8000002
+Dec  7 15:31:01 nilgiris kernel: [102979.697086] scsi 3:0:2:9: alua:
+rtpg sense code 06/2a/01
+Dec  7 15:31:01 nilgiris kernel: [102979.697088] scsi 3:0:2:9: alua: not
+attached
 
-We'd therefore like to issue a call for agenda proposals that are
-suitable for cross-track discussion as well as more technical subjects
-for discussion in the breakout sessions.
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
+---
 
-1) Suggestions for agenda topics should be sent before February 5th
-2012 to:
+--- linux-3.2-rc6/drivers/scsi/device_handler/scsi_dh_alua.c.orig
+2011-12-21 15:48:46.000000000 -0600
++++ linux-3.2-rc6/drivers/scsi/device_handler/scsi_dh_alua.c
+2011-12-21 16:03:56.000000000 -0600
+@@ -466,6 +466,11 @@ static int alua_check_sense(struct scsi_
+ 			 * Power On, Reset, or Bus Device Reset, just
+retry.
+ 			 */
+ 			return ADD_TO_MLQUEUE;
++		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x01)
++			/*
++			 * Mode Parameters Changed
++			 */
++			return ADD_TO_MLQUEUE;
+ 		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x06)
+ 			/*
+ 			 * ALUA state changed
 
-lsf-pc@lists.linux-foundation.org
 
-and optionally cc the Linux list which would be most interested in it:
-
-SCSI: linux-scsi@vger.kernel.org
-FS: linux-fsdevel@vger.kernel.org
-MM: linux-mm@kvack.org
-
-Please remember to tag your subject with [LSF/MM TOPIC] to make it
-easier to track. Agenda topics and attendees will be selected by the
-programme committee, but the final agenda will be formed by consensus
-of the attendees on the day.
-
-We'll try to cap attendance at around 25-30 per track to facilitate
-discussions although the final numbers will depend on the room sizes at
-the venue.
-
-2) Requests to attend should be sent to:
-
-lsf-pc@lists.linux-foundation.org
-
-please summarize what expertise you will bring to the meeting, and what
-you'd like to discuss.  please also tag your email with [ATTEND] so
-there's less chance of it getting lost in the large mail pile.
-
-Presentations are allowed to guide discussion, but are strongly
-discouraged.  There will be no recording or audio bridge, however
-written minutes will be published as in previous years:
-
-2011:
-
-http://lwn.net/Articles/436871/
-http://lwn.net/Articles/437066/
-
-2010:
-http://lwn.net/Articles/399148/
-http://lwn.net/Articles/399313/
-http://lwn.net/Articles/400589/
-
-2009:
-http://lwn.net/Articles/327601/
-http://lwn.net/Articles/327740/
-http://lwn.net/Articles/328347/
-
-Prior years:
-http://www.usenix.org/events/lsf08/tech/lsf08sums.pdf
-http://www.usenix.org/publications/login/2007-06/openpdfs/lsf07sums.pdf
-
-3) If you have feedback on last year's meeting that we can use to
-improve this year's, please also send that to:
-
-lsf-pc@lists.linux-foundation.org
-
-Thank you on behalf of the Program Committee:
-
-Storage
-
-Jens Axboe
-James Bottomley
-Vivek Goyal
-Dan Williams
-
-Filesystems
-
-Trond Myklebust
-Chris Mason
-Christoph Hellwig
-Theodore Ts'o
-Mingming Cao
-Jan Kara
-Joel Becker
-
-MM
-
-Andrea Arcangeli
-Hugh Dickins
-Mel Gorman
