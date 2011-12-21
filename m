@@ -1,99 +1,103 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: Re: how to troubleshoot faulty multipath path?
-Date: Wed, 21 Dec 2011 11:57:49 -0500
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD910D14466@RTPMVEXC1-PRD.hq.netapp.com>
-References: <4EEB6886.402@UGent.be><47D23AD8469A2B448F33C24BD7A39BD910C56472@RTPMVEXC1-PRD.hq.netapp.com>	<20111217113450.35436m5i93gv279m@webmail.ugent.be><47D23AD8469A2B448F33C24BD7A39BD910D14220@RTPMVEXC1-PRD.hq.netapp.com>
-	<4EF207F8.7030904@UGent.be>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Williams, Dan J" <dan.j.williams@intel.com>
+Subject: [CFP] Linux Storage, Filesystem & Memory Management Summit 2012
+ (April 1-2)
+Date: Wed, 21 Dec 2011 09:26:05 -0800
+Message-ID: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <4EF207F8.7030904@UGent.be>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+The annual Linux Storage, Filesystem and Memory Management Summit for
+2012 will be held on the 2 days preceding the Linux Foundation
+Collaboration Summit at Hotel Nikko in San Francisco, CA:
 
+       https://events.linuxfoundation.org/events/lsfmm-summit
+       https://events.linuxfoundation.org/events/collaboration-summit/
 
-> -----Original Message-----
-> From: Rudy Gevaert [mailto:Rudy.Gevaert@UGent.be]
-> Sent: Wednesday, December 21, 2011 10:23 AM
-> To: dm-devel@redhat.com
-> Subject: Re: [dm-devel] how to troubleshoot faulty multipath path?
-> 
-> On 12/20/2011 08:45 PM, Moger, Babu wrote:
-> 
-> > None of your logs show any problems with the paths related to
-DS3400.
-> > Can you please set the verbosity to 6 and collect the logs.
-> > To set the verbosity level  add following line in default section in
-> > your multipath.conf.
-> > verbosity 	6
-> 
-> Hello,
-> 
-> I have changed the verbosity level to 6.  I have attached the output
-of
-> multipath -l.
-> 
-> Do you need any other logs?
+We'd therefore like to issue a call for agenda proposals that are
+suitable for cross-track discussion as well as more technical subjects
+for discussion in the breakout sessions.
 
+1) Suggestions for agenda topics should be sent before February 5th
+2012 to:
 
-There are problem with few devices.  Open itself is failing. 
+lsf-pc@lists.linux-foundation.org
 
-Look here..
-Dec 21 17:23:02 | Discover device /sys/block/sdd
-Dec 21 17:23:02 | sdd: not found in pathvec
-Dec 21 17:23:02 | sdd: mask = 0x1
-Dec 21 17:23:02 | sdd: dev_t = 8:48
-Dec 21 17:23:02 | sdd: size = 1153433600
-Dec 21 17:23:02 | sdd: subsystem = scsi
-Dec 21 17:23:02 | sdd: vendor = IBM
-Dec 21 17:23:02 | sdd: product = 1726-4xx  FAStT
-Dec 21 17:23:02 | sdd: rev = 0617
-Dec 21 17:23:02 | sdd: h:b:t:l = 1:0:0:11
-Dec 21 17:23:02 | sdd: tgt_node_name = 0x200400a0b85a591
-Dec 21 17:23:02 | Couldn't open node for sdd: No such device or address
+and optionally cc the Linux list which would be most interested in it:
 
-Dec 21 17:23:02 | Discover device /sys/block/sdq
-Dec 21 17:23:02 | sdq: not found in pathvec
-Dec 21 17:23:02 | sdq: mask = 0x1
-Dec 21 17:23:02 | sdq: dev_t = 65:0
-Dec 21 17:23:02 | sdq: size = 1153433600
-Dec 21 17:23:02 | sdq: subsystem = scsi
-Dec 21 17:23:02 | sdq: vendor = IBM
-Dec 21 17:23:02 | sdq: product = 1726-4xx  FAStT
-Dec 21 17:23:02 | sdq: rev = 0617
-Dec 21 17:23:02 | sdq: h:b:t:l = 5:0:0:10
-Dec 21 17:23:02 | sdq: tgt_node_name = 0x200400a0b85a591
-Dec 21 17:23:02 | Couldn't open node for sdq: No such device or address
+SCSI: linux-scsi@vger.kernel.org
+FS: linux-fsdevel@vger.kernel.org
+MM: linux-mm@kvack.org
 
-Dec 21 17:23:02 | Discover device /sys/block/sdv
-Dec 21 17:23:02 | sdv: not found in pathvec
-Dec 21 17:23:02 | sdv: mask = 0x1
-Dec 21 17:23:02 | sdv: dev_t = 65:80
-Dec 21 17:23:02 | sdv: size = 1153433600
-Dec 21 17:23:02 | sdv: subsystem = scsi
-Dec 21 17:23:02 | sdv: vendor = IBM
-Dec 21 17:23:02 | sdv: product = 1726-4xx  FAStT
-Dec 21 17:23:02 | sdv: rev = 0617
-Dec 21 17:23:02 | sdv: h:b:t:l = 5:0:0:15
-Dec 21 17:23:02 | sdv: tgt_node_name = 0x200400a0b85a591
-Dec 21 17:23:02 | Couldn't open node for sdv: No such device or address
+Please remember to tag your subject with [LSF/MM TOPIC] to make it
+easier to track. Agenda topics and attendees will be selected by the
+programme committee, but the final agenda will be formed by consensus
+of the attendees on the day.
 
-If you have sg_utils, you can try sending some commands to these
-devices.
+We'll try to cap attendance at around 25-30 per track to facilitate
+discussions although the final numbers will depend on the room sizes at
+the venue.
 
-> 
-> Thanks in advance!
-> Rudy
+2) Requests to attend should be sent to:
+
+lsf-pc@lists.linux-foundation.org
+
+please summarize what expertise you will bring to the meeting, and what
+you'd like to discuss.  please also tag your email with [ATTEND] so
+there's less chance of it getting lost in the large mail pile.
+
+Presentations are allowed to guide discussion, but are strongly
+discouraged.  There will be no recording or audio bridge, however
+written minutes will be published as in previous years:
+
+2011:
+
+http://lwn.net/Articles/436871/
+http://lwn.net/Articles/437066/
+
+2010:
+http://lwn.net/Articles/399148/
+http://lwn.net/Articles/399313/
+http://lwn.net/Articles/400589/
+
+2009:
+http://lwn.net/Articles/327601/
+http://lwn.net/Articles/327740/
+http://lwn.net/Articles/328347/
+
+Prior years:
+http://www.usenix.org/events/lsf08/tech/lsf08sums.pdf
+http://www.usenix.org/publications/login/2007-06/openpdfs/lsf07sums.pdf
+
+3) If you have feedback on last year's meeting that we can use to
+improve this year's, please also send that to:
+
+lsf-pc@lists.linux-foundation.org
+
+Thank you on behalf of the Program Committee:
+
+Storage
+
+Jens Axboe
+James Bottomley
+Vivek Goyal
+Dan Williams
+
+Filesystems
+
+Trond Myklebust
+Chris Mason
+Christoph Hellwig
+Theodore Ts'o
+Mingming Cao
+Jan Kara
+Joel Becker
+
+MM
+
+Andrea Arcangeli
+Hugh Dickins
+Mel Gorman
