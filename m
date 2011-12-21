@@ -1,17 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipath: fix scsi async tur
-	checker	corruption
-Date: Wed, 21 Dec 2011 09:41:49 -0600
-Message-ID: <20111221154149.GC17034@ether.msp.redhat.com>
-References: <20111220230130.GB17034@ether.msp.redhat.com>
-	<4EF19630.4020709@suse.de>
+From: Rudy Gevaert <Rudy.Gevaert@UGent.be>
+Subject: Re: how to troubleshoot faulty multipath path?
+Date: Wed, 21 Dec 2011 17:23:20 +0100
+Message-ID: <4EF207F8.7030904@UGent.be>
+References: <4EEB6886.402@UGent.be><47D23AD8469A2B448F33C24BD7A39BD910C56472@RTPMVEXC1-PRD.hq.netapp.com>	<20111217113450.35436m5i93gv279m@webmail.ugent.be>
+	<47D23AD8469A2B448F33C24BD7A39BD910D14220@RTPMVEXC1-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="------------070006090406080306050402"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4EF19630.4020709@suse.de>
+In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD910D14220@RTPMVEXC1-PRD.hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,364 +18,1084 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 21, 2011 at 09:17:52AM +0100, Hannes Reinecke wrote:
-> On 12/21/2011 12:01 AM, Benjamin Marzinski wrote:
-> > Since the tur checker runs asynchronously in its own thread, there is n=
-othing
-> > that keeps a path from being orphaned or deleted before the tur thread =
-has
-> > finished. When this happenes the checker struct gets deleted.  However,=
- the tur
-> > thread might still we writing to that memory.  This can lead to memory
-> > corruption.  This patch adds all of the necessary data to the checker c=
-ontext,
-> > and makes the tur thread only use that. This way, if the checker is del=
-eted
-> > while the thread is still using the context, the thread will clean up t=
-he
-> > context itself.
-> > =
+This is a multi-part message in MIME format.
+--------------070006090406080306050402
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  libmultipath/checkers/tur.c |   85 +++++++++++++++++++++++++++++++++--=
----------
-> >  libmultipath/discovery.c    |    1 =
+On 12/20/2011 08:45 PM, Moger, Babu wrote:
 
-> >  2 files changed, 65 insertions(+), 21 deletions(-)
-> > =
+> None of your logs show any problems with the paths related to DS3400.
+> Can you please set the verbosity to 6 and collect the logs.
+> To set the verbosity level  add following line in default section in
+> your multipath.conf.
+> verbosity 	6
 
-> > Index: multipath-tools-111219/libmultipath/checkers/tur.c
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > --- multipath-tools-111219.orig/libmultipath/checkers/tur.c
-> > +++ multipath-tools-111219/libmultipath/checkers/tur.c
-> > @@ -35,10 +35,15 @@ struct tur_checker_context {
-> >  	dev_t devt;
-> >  	int state;
-> >  	int running;
-> > -	time_t timeout;
-> > +	int fd;
-> > +	unsigned int timeout;
-> > +	time_t time;
-> >  	pthread_t thread;
-> >  	pthread_mutex_t lock;
-> >  	pthread_cond_t active;
-> > +	pthread_spinlock_t hldr_lock;
-> > +	int holders;
-> > +	char message[CHECKER_MSG_LEN];
-> >  };
-> >  =
+Hello,
 
-> >  #define TUR_DEVT(c) major((c)->devt), minor((c)->devt)
-> > @@ -53,28 +58,49 @@ int libcheck_init (struct checker * c)
-> >  	memset(ct, 0, sizeof(struct tur_checker_context));
-> >  =
+I have changed the verbosity level to 6.  I have attached the output of 
+multipath -l.
 
-> >  	ct->state =3D PATH_UNCHECKED;
-> > +	ct->fd =3D -1;
-> > +	ct->holders =3D 1;
-> >  	pthread_cond_init(&ct->active, NULL);
-> >  	pthread_mutex_init(&ct->lock, NULL);
-> > +	pthread_spin_init(&ct->hldr_lock, PTHREAD_PROCESS_PRIVATE);
-> >  	c->context =3D ct;
-> >  =
+Do you need any other logs?
 
-> >  	return 0;
-> >  }
-> >  =
+Thanks in advance!
+Rudy
 
-> > +void cleanup_context(struct tur_checker_context *ct)
-> > +{
-> > +	pthread_mutex_destroy(&ct->lock);
-> > +	pthread_cond_destroy(&ct->active);
-> > +	pthread_spin_destroy(&ct->hldr_lock);
-> > +	free(ct);
-> > +}
-> > +
-> >  void libcheck_free (struct checker * c)
-> >  {
-> >  	if (c->context) {
-> >  		struct tur_checker_context *ct =3D c->context;
-> > +		int holders;
-> > +		pthread_t thread;
-> >  =
+--------------070006090406080306050402
+Content-Type: text/plain;
+ name="multipath_ll"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="multipath_ll"
 
-> > -		pthread_mutex_destroy(&ct->lock);
-> > -		pthread_cond_destroy(&ct->active);
-> > -		free(c->context);
-> > +		pthread_spin_lock(&ct->hldr_lock);
-> > +		ct->holders--;
-> > +		holders =3D ct->holders;
-> > +		thread =3D ct->thread;
-> > +		pthread_spin_unlock(&ct->hldr_lock);
-> > +		if (holders)
-> > +			pthread_cancel(thread);
-> > +		else
-> > +			cleanup_context(ct);
-> >  		c->context =3D NULL;
-> >  	}
-> >  	return;
-> >  }
-> >  =
+Dec 21 17:23:02 | loading /lib/multipath/libcheckdirectio.so checker
+Dec 21 17:23:02 | loading /lib/multipath/libprioconst.so prioritizer
+Dec 21 17:23:02 | Discover device /sys/block/sda
+Dec 21 17:23:02 | sda: not found in pathvec
+Dec 21 17:23:02 | sda: mask = 0x1
+Dec 21 17:23:02 | sda: dev_t = 8:0
+Dec 21 17:23:02 | sda: size = 2924216320
+Dec 21 17:23:02 | sda: subsystem = scsi
+Dec 21 17:23:02 | sda: vendor = DELL
+Dec 21 17:23:02 | sda: product = PERC 6/i
+Dec 21 17:23:02 | sda: rev = 1.22
+Dec 21 17:23:02 | sda: h:b:t:l = 0:2:0:0
+Dec 21 17:23:02 | Discover device /sys/block/sdb
+Dec 21 17:23:02 | sdb: not found in pathvec
+Dec 21 17:23:02 | sdb: mask = 0x1
+Dec 21 17:23:02 | sdb: dev_t = 8:16
+Dec 21 17:23:02 | sdb: size = 1153433600
+Dec 21 17:23:02 | sdb: subsystem = scsi
+Dec 21 17:23:02 | sdb: vendor = IBM
+Dec 21 17:23:02 | sdb: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdb: rev = 0617
+Dec 21 17:23:02 | sdb: h:b:t:l = 1:0:0:8
+Dec 21 17:23:02 | sdb: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdc
+Dec 21 17:23:02 | sdc: not found in pathvec
+Dec 21 17:23:02 | sdc: mask = 0x1
+Dec 21 17:23:02 | sdc: dev_t = 8:32
+Dec 21 17:23:02 | sdc: size = 1153433600
+Dec 21 17:23:02 | sdc: subsystem = scsi
+Dec 21 17:23:02 | sdc: vendor = IBM
+Dec 21 17:23:02 | sdc: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdc: rev = 0617
+Dec 21 17:23:02 | sdc: h:b:t:l = 1:0:0:10
+Dec 21 17:23:02 | sdc: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdd
+Dec 21 17:23:02 | sdd: not found in pathvec
+Dec 21 17:23:02 | sdd: mask = 0x1
+Dec 21 17:23:02 | sdd: dev_t = 8:48
+Dec 21 17:23:02 | sdd: size = 1153433600
+Dec 21 17:23:02 | sdd: subsystem = scsi
+Dec 21 17:23:02 | sdd: vendor = IBM
+Dec 21 17:23:02 | sdd: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdd: rev = 0617
+Dec 21 17:23:02 | sdd: h:b:t:l = 1:0:0:11
+Dec 21 17:23:02 | sdd: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Couldn't open node for sdd: No such device or address
+Dec 21 17:23:02 | Discover device /sys/block/sde
+Dec 21 17:23:02 | sde: not found in pathvec
+Dec 21 17:23:02 | sde: mask = 0x1
+Dec 21 17:23:02 | sde: dev_t = 8:64
+Dec 21 17:23:02 | sde: size = 1153433600
+Dec 21 17:23:02 | sde: subsystem = scsi
+Dec 21 17:23:02 | sde: vendor = IBM
+Dec 21 17:23:02 | sde: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sde: rev = 0617
+Dec 21 17:23:02 | sde: h:b:t:l = 1:0:0:12
+Dec 21 17:23:02 | sde: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdf
+Dec 21 17:23:02 | sdf: not found in pathvec
+Dec 21 17:23:02 | sdf: mask = 0x1
+Dec 21 17:23:02 | sdf: dev_t = 8:80
+Dec 21 17:23:02 | sdf: size = 1153433600
+Dec 21 17:23:02 | sdf: subsystem = scsi
+Dec 21 17:23:02 | sdf: vendor = IBM
+Dec 21 17:23:02 | sdf: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdf: rev = 0617
+Dec 21 17:23:02 | sdf: h:b:t:l = 1:0:0:13
+Dec 21 17:23:02 | sdf: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdg
+Dec 21 17:23:02 | sdg: not found in pathvec
+Dec 21 17:23:02 | sdg: mask = 0x1
+Dec 21 17:23:02 | sdg: dev_t = 8:96
+Dec 21 17:23:02 | sdg: size = 1153433600
+Dec 21 17:23:02 | sdg: subsystem = scsi
+Dec 21 17:23:02 | sdg: vendor = IBM
+Dec 21 17:23:02 | sdg: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdg: rev = 0617
+Dec 21 17:23:02 | sdg: h:b:t:l = 1:0:0:14
+Dec 21 17:23:02 | sdg: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdh
+Dec 21 17:23:02 | sdh: not found in pathvec
+Dec 21 17:23:02 | sdh: mask = 0x1
+Dec 21 17:23:02 | sdh: dev_t = 8:112
+Dec 21 17:23:02 | sdh: size = 1153433600
+Dec 21 17:23:02 | sdh: subsystem = scsi
+Dec 21 17:23:02 | sdh: vendor = IBM
+Dec 21 17:23:02 | sdh: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdh: rev = 0617
+Dec 21 17:23:02 | sdh: h:b:t:l = 1:0:0:15
+Dec 21 17:23:02 | sdh: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdi
+Dec 21 17:23:02 | sdi: not found in pathvec
+Dec 21 17:23:02 | sdi: mask = 0x1
+Dec 21 17:23:02 | sdi: dev_t = 8:128
+Dec 21 17:23:02 | sdi: size = 1153433600
+Dec 21 17:23:02 | sdi: subsystem = scsi
+Dec 21 17:23:02 | sdi: vendor = IBM
+Dec 21 17:23:02 | sdi: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdi: rev = 0617
+Dec 21 17:23:02 | sdi: h:b:t:l = 1:0:0:16
+Dec 21 17:23:02 | sdi: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdj
+Dec 21 17:23:02 | sdj: not found in pathvec
+Dec 21 17:23:02 | sdj: mask = 0x1
+Dec 21 17:23:02 | sdj: dev_t = 8:144
+Dec 21 17:23:02 | sdj: size = 1153433600
+Dec 21 17:23:02 | sdj: subsystem = scsi
+Dec 21 17:23:02 | sdj: vendor = IBM
+Dec 21 17:23:02 | sdj: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdj: rev = 0617
+Dec 21 17:23:02 | sdj: h:b:t:l = 1:0:0:17
+Dec 21 17:23:02 | sdj: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdk
+Dec 21 17:23:02 | sdk: not found in pathvec
+Dec 21 17:23:02 | sdk: mask = 0x1
+Dec 21 17:23:02 | sdk: dev_t = 8:160
+Dec 21 17:23:02 | sdk: size = 1153433600
+Dec 21 17:23:02 | sdk: subsystem = scsi
+Dec 21 17:23:02 | sdk: vendor = IBM
+Dec 21 17:23:02 | sdk: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdk: rev = 0617
+Dec 21 17:23:02 | sdk: h:b:t:l = 1:0:0:18
+Dec 21 17:23:02 | sdk: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdl
+Dec 21 17:23:02 | sdl: not found in pathvec
+Dec 21 17:23:02 | sdl: mask = 0x1
+Dec 21 17:23:02 | sdl: dev_t = 8:176
+Dec 21 17:23:02 | sdl: size = 1153433600
+Dec 21 17:23:02 | sdl: subsystem = scsi
+Dec 21 17:23:02 | sdl: vendor = IBM
+Dec 21 17:23:02 | sdl: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdl: rev = 0617
+Dec 21 17:23:02 | sdl: h:b:t:l = 1:0:0:19
+Dec 21 17:23:02 | sdl: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdm
+Dec 21 17:23:02 | sdm: not found in pathvec
+Dec 21 17:23:02 | sdm: mask = 0x1
+Dec 21 17:23:02 | sdm: dev_t = 8:192
+Dec 21 17:23:02 | sdm: size = 1153433600
+Dec 21 17:23:02 | sdm: subsystem = scsi
+Dec 21 17:23:02 | sdm: vendor = IBM
+Dec 21 17:23:02 | sdm: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdm: rev = 0617
+Dec 21 17:23:02 | sdm: h:b:t:l = 1:0:0:20
+Dec 21 17:23:02 | sdm: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdn
+Dec 21 17:23:02 | sdn: not found in pathvec
+Dec 21 17:23:02 | sdn: mask = 0x1
+Dec 21 17:23:02 | sdn: dev_t = 8:208
+Dec 21 17:23:02 | sdn: size = 1153433600
+Dec 21 17:23:02 | sdn: subsystem = scsi
+Dec 21 17:23:02 | sdn: vendor = IBM
+Dec 21 17:23:02 | sdn: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdn: rev = 0617
+Dec 21 17:23:02 | sdn: h:b:t:l = 1:0:0:21
+Dec 21 17:23:02 | sdn: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdo
+Dec 21 17:23:02 | sdo: not found in pathvec
+Dec 21 17:23:02 | sdo: mask = 0x1
+Dec 21 17:23:02 | sdo: dev_t = 8:224
+Dec 21 17:23:02 | sdo: size = 1153433600
+Dec 21 17:23:02 | sdo: subsystem = scsi
+Dec 21 17:23:02 | sdo: vendor = IBM
+Dec 21 17:23:02 | sdo: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdo: rev = 0617
+Dec 21 17:23:02 | sdo: h:b:t:l = 1:0:0:22
+Dec 21 17:23:02 | sdo: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdp
+Dec 21 17:23:02 | sdp: not found in pathvec
+Dec 21 17:23:02 | sdp: mask = 0x1
+Dec 21 17:23:02 | sdp: dev_t = 8:240
+Dec 21 17:23:02 | sdp: size = 1153433600
+Dec 21 17:23:02 | sdp: subsystem = scsi
+Dec 21 17:23:02 | sdp: vendor = IBM
+Dec 21 17:23:02 | sdp: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdp: rev = 0617
+Dec 21 17:23:02 | sdp: h:b:t:l = 5:0:0:8
+Dec 21 17:23:02 | sdp: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdq
+Dec 21 17:23:02 | sdq: not found in pathvec
+Dec 21 17:23:02 | sdq: mask = 0x1
+Dec 21 17:23:02 | sdq: dev_t = 65:0
+Dec 21 17:23:02 | sdq: size = 1153433600
+Dec 21 17:23:02 | sdq: subsystem = scsi
+Dec 21 17:23:02 | sdq: vendor = IBM
+Dec 21 17:23:02 | sdq: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdq: rev = 0617
+Dec 21 17:23:02 | sdq: h:b:t:l = 5:0:0:10
+Dec 21 17:23:02 | sdq: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Couldn't open node for sdq: No such device or address
+Dec 21 17:23:02 | Discover device /sys/block/sdr
+Dec 21 17:23:02 | sdr: not found in pathvec
+Dec 21 17:23:02 | sdr: mask = 0x1
+Dec 21 17:23:02 | sdr: dev_t = 65:16
+Dec 21 17:23:02 | sdr: size = 1153433600
+Dec 21 17:23:02 | sdr: subsystem = scsi
+Dec 21 17:23:02 | sdr: vendor = IBM
+Dec 21 17:23:02 | sdr: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdr: rev = 0617
+Dec 21 17:23:02 | sdr: h:b:t:l = 5:0:0:11
+Dec 21 17:23:02 | sdr: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sds
+Dec 21 17:23:02 | sds: not found in pathvec
+Dec 21 17:23:02 | sds: mask = 0x1
+Dec 21 17:23:02 | sds: dev_t = 65:32
+Dec 21 17:23:02 | sds: size = 1153433600
+Dec 21 17:23:02 | sds: subsystem = scsi
+Dec 21 17:23:02 | sds: vendor = IBM
+Dec 21 17:23:02 | sds: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sds: rev = 0617
+Dec 21 17:23:02 | sds: h:b:t:l = 5:0:0:12
+Dec 21 17:23:02 | sds: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdt
+Dec 21 17:23:02 | sdt: not found in pathvec
+Dec 21 17:23:02 | sdt: mask = 0x1
+Dec 21 17:23:02 | sdt: dev_t = 65:48
+Dec 21 17:23:02 | sdt: size = 1153433600
+Dec 21 17:23:02 | sdt: subsystem = scsi
+Dec 21 17:23:02 | sdt: vendor = IBM
+Dec 21 17:23:02 | sdt: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdt: rev = 0617
+Dec 21 17:23:02 | sdt: h:b:t:l = 5:0:0:13
+Dec 21 17:23:02 | sdt: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdu
+Dec 21 17:23:02 | sdu: not found in pathvec
+Dec 21 17:23:02 | sdu: mask = 0x1
+Dec 21 17:23:02 | sdu: dev_t = 65:64
+Dec 21 17:23:02 | sdu: size = 1153433600
+Dec 21 17:23:02 | sdu: subsystem = scsi
+Dec 21 17:23:02 | sdu: vendor = IBM
+Dec 21 17:23:02 | sdu: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdu: rev = 0617
+Dec 21 17:23:02 | sdu: h:b:t:l = 5:0:0:14
+Dec 21 17:23:02 | sdu: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdv
+Dec 21 17:23:02 | sdv: not found in pathvec
+Dec 21 17:23:02 | sdv: mask = 0x1
+Dec 21 17:23:02 | sdv: dev_t = 65:80
+Dec 21 17:23:02 | sdv: size = 1153433600
+Dec 21 17:23:02 | sdv: subsystem = scsi
+Dec 21 17:23:02 | sdv: vendor = IBM
+Dec 21 17:23:02 | sdv: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdv: rev = 0617
+Dec 21 17:23:02 | sdv: h:b:t:l = 5:0:0:15
+Dec 21 17:23:02 | sdv: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Couldn't open node for sdv: No such device or address
+Dec 21 17:23:02 | Discover device /sys/block/sdw
+Dec 21 17:23:02 | sdw: not found in pathvec
+Dec 21 17:23:02 | sdw: mask = 0x1
+Dec 21 17:23:02 | sdw: dev_t = 65:96
+Dec 21 17:23:02 | sdw: size = 1153433600
+Dec 21 17:23:02 | sdw: subsystem = scsi
+Dec 21 17:23:02 | sdw: vendor = IBM
+Dec 21 17:23:02 | sdw: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdw: rev = 0617
+Dec 21 17:23:02 | sdw: h:b:t:l = 5:0:0:16
+Dec 21 17:23:02 | sdw: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdx
+Dec 21 17:23:02 | sdx: not found in pathvec
+Dec 21 17:23:02 | sdx: mask = 0x1
+Dec 21 17:23:02 | sdx: dev_t = 65:112
+Dec 21 17:23:02 | sdx: size = 1153433600
+Dec 21 17:23:02 | sdx: subsystem = scsi
+Dec 21 17:23:02 | sdx: vendor = IBM
+Dec 21 17:23:02 | sdx: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdx: rev = 0617
+Dec 21 17:23:02 | sdx: h:b:t:l = 5:0:0:17
+Dec 21 17:23:02 | sdx: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdy
+Dec 21 17:23:02 | sdy: not found in pathvec
+Dec 21 17:23:02 | sdy: mask = 0x1
+Dec 21 17:23:02 | sdy: dev_t = 65:128
+Dec 21 17:23:02 | sdy: size = 1153433600
+Dec 21 17:23:02 | sdy: subsystem = scsi
+Dec 21 17:23:02 | sdy: vendor = IBM
+Dec 21 17:23:02 | sdy: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdy: rev = 0617
+Dec 21 17:23:02 | sdy: h:b:t:l = 5:0:0:18
+Dec 21 17:23:02 | sdy: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdz
+Dec 21 17:23:02 | sdz: not found in pathvec
+Dec 21 17:23:02 | sdz: mask = 0x1
+Dec 21 17:23:02 | sdz: dev_t = 65:144
+Dec 21 17:23:02 | sdz: size = 1153433600
+Dec 21 17:23:02 | sdz: subsystem = scsi
+Dec 21 17:23:02 | sdz: vendor = IBM
+Dec 21 17:23:02 | sdz: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdz: rev = 0617
+Dec 21 17:23:02 | sdz: h:b:t:l = 5:0:0:19
+Dec 21 17:23:02 | sdz: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdaa
+Dec 21 17:23:02 | sdaa: not found in pathvec
+Dec 21 17:23:02 | sdaa: mask = 0x1
+Dec 21 17:23:02 | sdaa: dev_t = 65:160
+Dec 21 17:23:02 | sdaa: size = 1153433600
+Dec 21 17:23:02 | sdaa: subsystem = scsi
+Dec 21 17:23:02 | sdaa: vendor = IBM
+Dec 21 17:23:02 | sdaa: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdaa: rev = 0617
+Dec 21 17:23:02 | sdaa: h:b:t:l = 5:0:0:20
+Dec 21 17:23:02 | sdaa: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdab
+Dec 21 17:23:02 | sdab: not found in pathvec
+Dec 21 17:23:02 | sdab: mask = 0x1
+Dec 21 17:23:02 | sdab: dev_t = 65:176
+Dec 21 17:23:02 | sdab: size = 1153433600
+Dec 21 17:23:02 | sdab: subsystem = scsi
+Dec 21 17:23:02 | sdab: vendor = IBM
+Dec 21 17:23:02 | sdab: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdab: rev = 0617
+Dec 21 17:23:02 | sdab: h:b:t:l = 5:0:0:21
+Dec 21 17:23:02 | sdab: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sdac
+Dec 21 17:23:02 | sdac: not found in pathvec
+Dec 21 17:23:02 | sdac: mask = 0x1
+Dec 21 17:23:02 | sdac: dev_t = 65:192
+Dec 21 17:23:02 | sdac: size = 1153433600
+Dec 21 17:23:02 | sdac: subsystem = scsi
+Dec 21 17:23:02 | sdac: vendor = IBM
+Dec 21 17:23:02 | sdac: product = 1726-4xx  FAStT
+Dec 21 17:23:02 | sdac: rev = 0617
+Dec 21 17:23:02 | sdac: h:b:t:l = 5:0:0:22
+Dec 21 17:23:02 | sdac: tgt_node_name = 0x200400a0b85a591
+Dec 21 17:23:02 | Discover device /sys/block/sr0
+Dec 21 17:23:02 | sr0: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-0
+Dec 21 17:23:02 | dm-0: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-1
+Dec 21 17:23:02 | dm-1: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-2
+Dec 21 17:23:02 | dm-2: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-3
+Dec 21 17:23:02 | dm-3: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-4
+Dec 21 17:23:02 | dm-4: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-5
+Dec 21 17:23:02 | dm-5: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-6
+Dec 21 17:23:02 | dm-6: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-7
+Dec 21 17:23:02 | dm-7: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-8
+Dec 21 17:23:02 | dm-8: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-9
+Dec 21 17:23:02 | dm-9: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-10
+Dec 21 17:23:02 | dm-10: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-11
+Dec 21 17:23:02 | dm-11: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-12
+Dec 21 17:23:02 | dm-12: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-13
+Dec 21 17:23:02 | dm-13: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-14
+Dec 21 17:23:02 | dm-14: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-15
+Dec 21 17:23:02 | dm-15: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-16
+Dec 21 17:23:02 | dm-16: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-17
+Dec 21 17:23:02 | dm-17: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-18
+Dec 21 17:23:02 | dm-18: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-19
+Dec 21 17:23:02 | dm-19: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-20
+Dec 21 17:23:02 | dm-20: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-21
+Dec 21 17:23:02 | dm-21: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-22
+Dec 21 17:23:02 | dm-22: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-23
+Dec 21 17:23:02 | dm-23: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-24
+Dec 21 17:23:02 | dm-24: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-25
+Dec 21 17:23:02 | dm-25: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-26
+Dec 21 17:23:02 | dm-26: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-27
+Dec 21 17:23:02 | dm-27: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-28
+Dec 21 17:23:02 | dm-28: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-29
+Dec 21 17:23:02 | dm-29: device node name blacklisted
+Dec 21 17:23:02 | Discover device /sys/block/dm-30
+Dec 21 17:23:02 | dm-30: device node name blacklisted
+Dec 21 17:23:02 | Discovery status 0
+===== paths list =====
+uuid hcil     dev  dev_t  pri dm_st chk_st vend/prod/rev       dev_st 
+     0:2:0:0  sda  8:0    -1  undef undef  DELL,PERC 6/i       running
+     1:0:0:8  sdb  8:16   -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:10 sdc  8:32   -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:11 sdd  8:48   -1  undef faulty IBM,1726-4xx  FAStT running
+     1:0:0:12 sde  8:64   -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:13 sdf  8:80   -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:14 sdg  8:96   -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:15 sdh  8:112  -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:16 sdi  8:128  -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:17 sdj  8:144  -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:18 sdk  8:160  -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:19 sdl  8:176  -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:20 sdm  8:192  -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:21 sdn  8:208  -1  undef undef  IBM,1726-4xx  FAStT running
+     1:0:0:22 sdo  8:224  -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:8  sdp  8:240  -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:10 sdq  65:0   -1  undef faulty IBM,1726-4xx  FAStT running
+     5:0:0:11 sdr  65:16  -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:12 sds  65:32  -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:13 sdt  65:48  -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:14 sdu  65:64  -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:15 sdv  65:80  -1  undef faulty IBM,1726-4xx  FAStT running
+     5:0:0:16 sdw  65:96  -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:17 sdx  65:112 -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:18 sdy  65:128 -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:19 sdz  65:144 -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:20 sdaa 65:160 -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:21 sdab 65:176 -1  undef undef  IBM,1726-4xx  FAStT running
+     5:0:0:22 sdac 65:192 -1  undef undef  IBM,1726-4xx  FAStT running
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm names   NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore19r  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail17r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail17r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail17r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail17r-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail17r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail13-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail13-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail13-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail13-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail13-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore14r  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail19r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail19r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail19r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail19r-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail19r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail12-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail12-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail12-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail12-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail12-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore17r  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail11-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail11-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail11-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail11-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail11-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore21  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore20  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore22r  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail10-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail10-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail10-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail10-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail10-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail14r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail14r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail14r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail14r-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail14r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail8-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail8-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail8-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail8-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail8-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore15r  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail16r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail16r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail16r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail16r-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail16r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail22r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail22r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail22r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail22r-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail22r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail18r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail18r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail18r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail18r-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail18r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table ugent-tmp  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore18r  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore13  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore8  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore12  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail21-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail21-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail21-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail21-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail21-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore16r  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table ugent-var  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore11  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail20-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail20-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail20-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail20-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail20-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail15r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mail15r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm status mail15r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail15r-ds3400-1  OF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm info mail15r-ds3400-1  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table mailstore10  NF   [16384]
+Dec 21 17:23:02 | libdevmapper: ioctl/libdm-iface.c(1821): dm table ugent-home  NF   [16384]
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 65:112 1000 round-robin 0 1 1 8:144 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 65:112 A 0 E 0 1 0 8:144 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:112, len = 6
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:144, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail17r-ds3400-1 (3600a0b80005a67b6000004764cac4912) dm-8 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 5:0:0:17 sdx  65:112 active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 1:0:0:17 sdj  8:144  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 65:48 1000 round-robin 0 1 1 8:80 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 65:48 A 0 E 0 1 0 8:80 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:48, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:80, len = 4
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail13-ds3400-1 (3600a0b80005a67b60000046f4cac471e) dm-4 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 5:0:0:13 sdt  65:48  active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 1:0:0:13 sdf  8:80   active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 65:144 1000 round-robin 0 1 1 8:176 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 65:144 A 0 E 0 1 0 8:176 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:144, len = 6
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:176, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail19r-ds3400-1 (3600a0b80005a67b6000004744cac48bd) dm-10 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 5:0:0:19 sdz  65:144 active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 1:0:0:19 sdl  8:176  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:64 1000 round-robin 0 1 1 65:32 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 8:64 A 0 E 0 1 0 65:32 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:64, len = 4
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:32, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail12-ds3400-1 (3600a0b80005a591a0000042d4cac4753) dm-3 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 1:0:0:12 sde  8:64   active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 5:0:0:12 sds  65:32  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 2 round-robin 0 1 1 8:48 1000 round-robin 0 1 1 65:16 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 2 E 0 1 0 8:48 A 1 A 0 1 0 65:16 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:48, len = 4
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:16, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail11-ds3400-1 (3600a0b80005a591a0000042b4cac46de) dm-2 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=0 status=enabled
+| `- 1:0:0:11 sdd  8:48   active faulty running
+`-+- policy='round-robin 0' prio=-1 status=active
+  `- 5:0:0:11 sdr  65:16  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 2 round-robin 0 1 1 65:0 1000 round-robin 0 1 1 8:32 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 2 E 0 1 0 65:0 A 1 A 0 1 0 8:32 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:0, len = 4
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:32, len = 4
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail10-ds3400-1 (3600a0b80005a67b60000046a4cac4613) dm-1 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=0 status=enabled
+| `- 5:0:0:10 sdq  65:0   active faulty running
+`-+- policy='round-robin 0' prio=-1 status=active
+  `- 1:0:0:10 sdc  8:32   active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:96 1000 round-robin 0 1 1 65:64 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 8:96 A 0 E 0 1 0 65:64 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:96, len = 4
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:64, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail14r-ds3400-1 (3600a0b80005a591a000004294cac468b) dm-5 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 1:0:0:14 sdg  8:96   active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 5:0:0:14 sdu  65:64  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:16 1000 round-robin 0 1 1 8:240 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 8:16 A 0 E 0 1 0 8:240 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:16, len = 4
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:240, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail8-ds3400-1 (3600a0b80005a591a000004264cac464b) dm-0 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 1:0:0:8  sdb  8:16   active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 5:0:0:8  sdp  8:240  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:128 1000 round-robin 0 1 1 65:96 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 8:128 A 0 E 0 1 0 65:96 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:128, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:96, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail16r-ds3400-1 (3600a0b80005a591a000004304cac47f7) dm-7 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 1:0:0:16 sdi  8:128  active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 5:0:0:16 sdw  65:96  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:224 1000 round-robin 0 1 1 65:192 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 8:224 A 0 E 0 1 0 65:192 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:224, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:192, len = 6
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail22r-ds3400-1 (3600a0b80005a591a000004374cac49dd) dm-13 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 1:0:0:22 sdo  8:224  active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 5:0:0:22 sdac 65:192 active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:160 1000 round-robin 0 1 1 65:128 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 8:160 A 0 E 0 1 0 65:128 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:160, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:128, len = 6
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail18r-ds3400-1 (3600a0b80005a591a000004324cac4953) dm-9 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 1:0:0:18 sdk  8:160  active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 5:0:0:18 sdy  65:128 active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 65:176 1000 round-robin 0 1 1 8:208 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 65:176 A 0 E 0 1 0 8:208 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:176, len = 6
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:208, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail21-ds3400-1 (3600a0b80005a67b6000004714cac4771) dm-12 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 5:0:0:21 sdab 65:176 active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 1:0:0:21 sdn  8:208  active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:192 1000 round-robin 0 1 1 65:160 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 1 A 0 1 0 8:192 A 0 E 0 1 0 65:160 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:192, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:160, len = 6
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail20-ds3400-1 (3600a0b80005a591a000004344cac49a6) dm-11 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 1:0:0:20 sdm  8:192  active undef  running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 5:0:0:20 sdaa 65:160 active undef  running
+Dec 21 17:23:02 | params = 1 queue_if_no_path 1 rdac 2 2 round-robin 0 1 1 65:80 1000 round-robin 0 1 1 8:112 1000 
+Dec 21 17:23:02 | status = 2 0 1 0 2 2 E 0 1 0 65:80 A 1 A 0 1 0 8:112 A 0 
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = queue_if_no_path, len = 16
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = rdac, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = round-robin, len = 11
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 65:80, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 8:112, len = 5
+Dec 21 17:23:02 | *word = 1000, len = 4
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = 2, len = 1
+Dec 21 17:23:02 | *word = E, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 1, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+Dec 21 17:23:02 | *word = A, len = 1
+Dec 21 17:23:02 | *word = 0, len = 1
+mail15r-ds3400-1 (3600a0b80005a67b60000046d4cac464f) dm-6 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=0 status=enabled
+| `- 5:0:0:15 sdv  65:80  active faulty running
+`-+- policy='round-robin 0' prio=-1 status=active
+  `- 1:0:0:15 sdh  8:112  active undef  running
 
-> > +#define TUR_MSG(msg, fmt, args...) snprintf(msg, CHECKER_MSG_LEN, fmt,=
- ##args);
-> > +
-> >  int
-> > -tur_check (struct checker * c)
-> > +tur_check(int fd, unsigned int timeout, char *msg)
-> >  {
-> >  	struct sg_io_hdr io_hdr;
-> >  	unsigned char turCmdBlk[TUR_CMD_LEN] =3D { 0x00, 0, 0, 0, 0, 0 };
-> > @@ -90,10 +116,10 @@ tur_check (struct checker * c)
-> >  	io_hdr.dxfer_direction =3D SG_DXFER_NONE;
-> >  	io_hdr.cmdp =3D turCmdBlk;
-> >  	io_hdr.sbp =3D sense_buffer;
-> > -	io_hdr.timeout =3D c->timeout;
-> > +	io_hdr.timeout =3D timeout;
-> >  	io_hdr.pack_id =3D 0;
-> > -	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
-> > -		MSG(c, MSG_TUR_DOWN);
-> > +	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
-> > +		TUR_MSG(msg, MSG_TUR_DOWN);
-> >  		return PATH_DOWN;
-> >  	}
-> >  	if ((io_hdr.status & 0x7e) =3D=3D 0x18) {
-> > @@ -101,7 +127,7 @@ tur_check (struct checker * c)
-> >  		 * SCSI-3 arrays might return
-> >  		 * reservation conflict on TUR
-> >  		 */
-> > -		MSG(c, MSG_TUR_UP);
-> > +		TUR_MSG(msg, MSG_TUR_UP);
-> >  		return PATH_UP;
-> >  	}
-> >  	if (io_hdr.info & SG_INFO_OK_MASK) {
-> > @@ -146,14 +172,14 @@ tur_check (struct checker * c)
-> >  				 * LOGICAL UNIT NOT ACCESSIBLE,
-> >  				 * TARGET PORT IN STANDBY STATE
-> >  				 */
-> > -				MSG(c, MSG_TUR_GHOST);
-> > +				TUR_MSG(msg, MSG_TUR_GHOST);
-> >  				return PATH_GHOST;
-> >  			}
-> >  		}
-> > -		MSG(c, MSG_TUR_DOWN);
-> > +		TUR_MSG(msg, MSG_TUR_DOWN);
-> >  		return PATH_DOWN;
-> >  	}
-> > -	MSG(c, MSG_TUR_UP);
-> > +	TUR_MSG(msg, MSG_TUR_UP);
-> >  	return PATH_UP;
-> >  }
-> >  =
+--------------070006090406080306050402
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> > @@ -162,18 +188,25 @@ tur_check (struct checker * c)
-> >  =
 
-> >  void cleanup_func(void *data)
-> >  {
-> > +	int holders;
-> >  	struct tur_checker_context *ct =3D data;
-> > +	pthread_spin_lock(&ct->hldr_lock);
-> > +	ct->holders--;
-> > +	holders =3D ct->holders;
-> >  	ct->thread =3D 0;
-> > +	pthread_spin_unlock(&ct->hldr_lock);
-> > +	if (!holders)
-> > +		cleanup_context(ct);
-> >  }
-> >  =
-
-> >  void *tur_thread(void *ctx)
-> >  {
-> > -	struct checker *c =3D ctx;
-> > -	struct tur_checker_context *ct =3D c->context;
-> > +	struct tur_checker_context *ct =3D ctx;
-> >  	int state;
-> >  =
-
-> >  	condlog(3, "%d:%d: tur checker starting up", TUR_DEVT(ct));
-> >  =
-
-> > +	ct->message[0] =3D '\0';
-> >  	/* This thread can be canceled, so setup clean up */
-> >  	tur_thread_cleanup_push(ct)
-> >  =
-
-> > @@ -182,7 +215,7 @@ void *tur_thread(void *ctx)
-> >  	ct->state =3D PATH_PENDING;
-> >  	pthread_mutex_unlock(&ct->lock);
-> >  =
-
-> > -	state =3D tur_check(c);
-> > +	state =3D tur_check(ct->fd, ct->timeout, ct->message);
-> >  =
-
-> >  	/* TUR checker done */
-> >  	pthread_mutex_lock(&ct->lock);
-> > @@ -213,7 +246,7 @@ void tur_set_async_timeout(struct checke
-> >  	struct timeval now;
-> >  =
-
-> >  	gettimeofday(&now, NULL);
-> > -	ct->timeout =3D now.tv_sec + c->timeout;
-> > +	ct->time =3D now.tv_sec + c->timeout;
-> >  }
-> >  =
-
-> >  int tur_check_async_timeout(struct checker *c)
-> > @@ -222,7 +255,7 @@ int tur_check_async_timeout(struct check
-> >  	struct timeval now;
-> >  =
-
-> >  	gettimeofday(&now, NULL);
-> > -	return (now.tv_sec > ct->timeout);
-> > +	return (now.tv_sec > ct->time);
-> >  }
-> >  =
-
-> >  extern int
-> > @@ -242,7 +275,7 @@ libcheck_check (struct checker * c)
-> >  		ct->devt =3D sb.st_rdev;
-> >  =
-
-> >  	if (c->sync)
-> > -		return tur_check(c);
-> > +		return tur_check(c->fd, c->timeout, c->message);
-> >  =
-
-> >  	/*
-> >  	 * Async mode
-> > @@ -276,6 +309,8 @@ libcheck_check (struct checker * c)
-> >  			/* TUR checker done */
-> >  			ct->running =3D 0;
-> >  			tur_status =3D ct->state;
-> > +			strncpy(c->message, ct->message, CHECKER_MSG_LEN);
-> > +			c->message[CHECKER_MSG_LEN - 1] =3D '\0';
-> >  		}
-> >  		pthread_mutex_unlock(&ct->lock);
-> >  	} else {
-> > @@ -284,24 +319,32 @@ libcheck_check (struct checker * c)
-> >  			pthread_mutex_unlock(&ct->lock);
-> >  			condlog(3, "%d:%d: tur thread not responding, "
-> >  				"using sync mode", TUR_DEVT(ct));
-> > -			return tur_check(c);
-> > +			return tur_check(c->fd, c->timeout, c->message);
-> >  		}
-> >  		/* Start new TUR checker */
-> >  		ct->state =3D PATH_UNCHECKED;
-> > +		ct->fd =3D c->fd;
-> > +		ct->timeout =3D c->timeout;
-> > +		pthread_spin_lock(&ct->hldr_lock);
-> > +		ct->holders++;
-> > +		pthread_spin_unlock(&ct->hldr_lock);
-> >  		tur_set_async_timeout(c);
-> >  		setup_thread_attr(&attr, 32 * 1024, 1);
-> > -		r =3D pthread_create(&ct->thread, &attr, tur_thread, c);
-> > +		r =3D pthread_create(&ct->thread, &attr, tur_thread, ct);
-> >  		if (r) {
-> >  			pthread_mutex_unlock(&ct->lock);
-> >  			ct->thread =3D 0;
-> > +			ct->holders--;
-> >  			condlog(3, "%d:%d: failed to start tur thread, using"
-> >  				" sync mode", TUR_DEVT(ct));
-> > -			return tur_check(c);
-> > +			return tur_check(c->fd, c->timeout, c->message);
-> >  		}
-> >  		pthread_attr_destroy(&attr);
-> >  		tur_timeout(&tsp);
-> >  		r =3D pthread_cond_timedwait(&ct->active, &ct->lock, &tsp);
-> >  		tur_status =3D ct->state;
-> > +		strncpy(c->message, ct->message,CHECKER_MSG_LEN);
-> > +		c->message[CHECKER_MSG_LEN -1] =3D '\0';
-> >  		pthread_mutex_unlock(&ct->lock);
-> >  		if (ct->thread &&
-> >  		    (tur_status =3D=3D PATH_PENDING || tur_status =3D=3D PATH_UNCHEC=
-KED)) {
-> > Index: multipath-tools-111219/libmultipath/discovery.c
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > --- multipath-tools-111219.orig/libmultipath/discovery.c
-> > +++ multipath-tools-111219/libmultipath/discovery.c
-> > @@ -826,6 +826,7 @@ get_state (struct path * pp, int daemon)
-> >  		}
-> >  		checker_set_fd(c, pp->fd);
-> >  		if (checker_init(c, pp->mpp?&pp->mpp->mpcontext:NULL)) {
-> > +			memset(c, 0x0, sizeof(struct checker));
-> >  			condlog(3, "%s: checker init failed", pp->dev);
-> >  			return PATH_UNCHECKED;
-> >  		}
-> > =
-
-> Hmm. Why do we need ->holders here?
-> In theory we can have only two states; async thread running or no
-> thread running. I really cannot imagine a scenario where ->holders
-> would be > 1.
-
-Holders will be greater than 1 whenever the thread is running (It's
-initialized to 1 in libcheck_init).  There are two holders of the
-checker context. One is the thread and one is the checker structure
-itself.  The checker context is created when the path first gets a
-checker, and usually lasts until the path puts the checker when it is
-getting either orphaned or removed.  In the async tur checker case, we
-need it to last until both the the checker structure has been freed, and
-the thread has finished running. Unless we wanted to do something
-different in the tur code where it creates a new checker context each
-time it fires off the thread, we only want to free the context when both
-of these holders are gone. And since the path can be removed of orphaned
-at any time with respect to the thread, we need some sort of lock to
-make sure they both aren't decrementing holders at the same time,
-meaning nobody would clean up the context.
-
-Just to spell out the possible cases:
-
-If the path's checker is freed, but the thread is still running, we
-can't remove the checker context, since the thread is still using it.
-This is the case that I saw causing memory corruption.
-
-If the thread gets finished, but the path's checker is still there, we
-can't remove the checker context, because the checker is still using it.
-This is the standard case.  The thread usually finishes between path
-checker calls, and the result needs to get pulled from the context.
-
-Only when both of these are done can the context get freed.
-
--Ben
-
-> Or, to stress the point a bit more, any scenario where holders > 1
-> would most definitely be a bug, as this would indicate that an async
-> tur thread is running, but we somehow failed to notice this, and
-> started a new one. Which means we end with two threads doing exactly
-> the same thing. And which was _exactly_ what we want to avoid with
-> at startup.
-> So I guess we can do away with ->holders.
-> And once ->holders is gone, I doubt it'll make any sense to retain
-> the spinlock, as we then just have ->thread to worry about.
-> And this doesn't need to be spinlock protected, as we take care to
-> synchronize during startup. And during shutdown we simply don't
-> care, as pthread_cancel() will return an error if the thread is
-> already done for.
-> =
-
-> Cheers,
-> =
-
-> Hannes
-> -- =
-
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
-> =
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--------------070006090406080306050402--
