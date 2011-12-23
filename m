@@ -1,16 +1,23 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: FW: CVE-2011-4127 kernel: possible privilege
-	escalation via	SG_IO ioctl
-Date: Thu, 22 Dec 2011 18:21:08 +0000
-Message-ID: <20111222182108.GA30117@agk-dp.fab.redhat.com>
-References: <20111222172548.GA31021@agk-dp.fab.redhat.com>
+From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+Subject: Re: [Multipath] Round-robin performance limit
+Date: Thu, 22 Dec 2011 19:54:46 -0500
+Message-ID: <1324601686.10184.6.camel@denise.theartistscloset.com>
+References: <BANLkTikyCtPX8L=7h94hTm4TjOYDyb7nxQ@mail.gmail.com>
+	<20110502072528.GW32595@reaktio.net>
+	<BANLkTi=h0AwEy0S4Miv-SYTEu3jF0DXXJQ@mail.gmail.com>
+	<1304375238.3134.23.camel@denise.theartistscloset.com>
+	<20110503050406.GA11442@us.ibm.com>
+	<1304417561.25728.16.camel@denise.theartistscloset.com>
+	<CANtKaxLFSvg-iMGJ-fKPM=9HR1ORWOdMoEs2uQJkSGR-JpesYg@mail.gmail.com>
+	<CANtKax+RqXJeor4dBzQewWT+k8EG2s63NFYSi=pRN0v3MLPKBA@mail.gmail.com>
+	<1317784026.31536.7.camel@denise.theartistscloset.com>
+	<CANtKax+PzU=yVepQh3Kq7NK671-bSpYfms2Xu_YgdXQ0cDG6kA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20111222172548.GA31021@agk-dp.fab.redhat.com>
+In-Reply-To: <CANtKax+PzU=yVepQh3Kq7NK671-bSpYfms2Xu_YgdXQ0cDG6kA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,15 +27,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-lvm@redhat.com, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Paul T. Bibaud" <paul.b@pogolinux.com>
 List-Id: dm-devel.ids
 
-On Thu, Dec 22, 2011 at 05:25:48PM +0000, Alasdair G Kergon wrote:
-> A kernel patch that fixes device-mapper/LVM devices is here:
->   http://people.redhat.com/agk/patches/linux/editing/dm-block-sg_io-ioctls.patch
->   ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/dm-block-sg_io-ioctls.patch
- 
-Complete patchset to fix this proposed here:
-  https://lkml.org/lkml/2011/12/22/270
+On Wed, 2011-10-05 at 15:54 -0400, Adam Chasen wrote:
+> John,
+> I am limited in a similar fashion. I would much prefer to use multibus
+> multipath, but was unable to achieve bandwidth which would exceed a
+> single link even though it was spread over the 4 available links. Were
+> you able to gain even a similar performance of the RAID0 setup with
+> the multibus multipath?
+> 
+> Thanks,
+> Adam
+<snip>
+We just ran a quick benchmark before optimizing.  Using multibus rather
+than RAID0 with four GbE NICs, and testing with a simple cat /dev/zero >
+zeros, we hit 3.664 Gbps!
 
-Alasdair
+This is still on CentOS 5.4 so we are not able to play with
+rr_min_io_rq.  We have not yet activated jumbo frames. We are also
+thinking of using SFQ as a qdisc instead of the default pfifo_fast.  So,
+we think we can make it go even faster.
+
+We are delighted to be achieving this with multibus rather than RAID0 as
+it means we can take transactionally consistent snapshots on the SAN.
+
+Many thanks to whomever pointed out that tag queueing should solve the
+4KB block size latency problem.  The problem turned out to not be
+latency as we were told but simply an under resources SAN.  We brought
+in new Nexenta SANs with much more RAM and they are flying - John
