@@ -1,15 +1,24 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath: fix scsi timeout code
-Date: Fri, 23 Dec 2011 21:04:18 +0100
-Message-ID: <1324670658.18455.4.camel@lapoo.opensvc.com>
-References: <20111219221956.GP24133@ether.msp.redhat.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+Subject: Re: [Multipath] Round-robin performance limit
+Date: Tue, 27 Dec 2011 13:36:39 +0200
+Message-ID: <20111227113639.GI12984@reaktio.net>
+References: <20110502072528.GW32595@reaktio.net>
+	<BANLkTi=h0AwEy0S4Miv-SYTEu3jF0DXXJQ@mail.gmail.com>
+	<1304375238.3134.23.camel@denise.theartistscloset.com>
+	<20110503050406.GA11442@us.ibm.com>
+	<1304417561.25728.16.camel@denise.theartistscloset.com>
+	<CANtKaxLFSvg-iMGJ-fKPM=9HR1ORWOdMoEs2uQJkSGR-JpesYg@mail.gmail.com>
+	<CANtKax+RqXJeor4dBzQewWT+k8EG2s63NFYSi=pRN0v3MLPKBA@mail.gmail.com>
+	<1317784026.31536.7.camel@denise.theartistscloset.com>
+	<CANtKax+PzU=yVepQh3Kq7NK671-bSpYfms2Xu_YgdXQ0cDG6kA@mail.gmail.com>
+	<1324601686.10184.6.camel@denise.theartistscloset.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111219221956.GP24133@ether.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1324601686.10184.6.camel@denise.theartistscloset.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,67 +28,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Paul T. Bibaud" <paul.b@pogolinux.com>
 List-Id: dm-devel.ids
 
-On lun., 2011-12-19 at 16:19 -0600, Benjamin Marzinski wrote:
-> sysfs_attr_set_value() returns the amount written on on success, or -1 on
-> failure.  sysfs_setc_scsi_tmo() was checking if the return was nonzero, and
-> failing if it was. This meant that it always failed out silently after writing
-> the first value. I've changed the check, and added some error messages.  I also
-> made sysfs_attr_set_value return -1 for all errors.
+On Thu, Dec 22, 2011 at 07:54:46PM -0500, John A. Sullivan III wrote:
+> On Wed, 2011-10-05 at 15:54 -0400, Adam Chasen wrote:
+> > John,
+> > I am limited in a similar fashion. I would much prefer to use multibus
+> > multipath, but was unable to achieve bandwidth which would exceed a
+> > single link even though it was spread over the 4 available links. Were
+> > you able to gain even a similar performance of the RAID0 setup with
+> > the multibus multipath?
+> > 
+> > Thanks,
+> > Adam
+> <snip>
+> We just ran a quick benchmark before optimizing.  Using multibus rather
+> than RAID0 with four GbE NICs, and testing with a simple cat /dev/zero >
+> zeros, we hit 3.664 Gbps!
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-Merged.
-
-> ---
->  libmultipath/discovery.c |   11 +++++++++--
->  libmultipath/sysfs.c     |    2 +-
->  2 files changed, 10 insertions(+), 3 deletions(-)
+> This is still on CentOS 5.4 so we are not able to play with
+> rr_min_io_rq.  We have not yet activated jumbo frames. We are also
+> thinking of using SFQ as a qdisc instead of the default pfifo_fast.  So,
+> we think we can make it go even faster.
 > 
-> Index: multipath-tools-111111/libmultipath/discovery.c
-> ===================================================================
-> --- multipath-tools-111111.orig/libmultipath/discovery.c
-> +++ multipath-tools-111111/libmultipath/discovery.c
-> @@ -316,8 +316,11 @@ sysfs_set_scsi_tmo (struct multipath *mp
->  		if (mpp->dev_loss){
->  			snprintf(value, 11, "%u", mpp->dev_loss);
->  			if (sysfs_attr_set_value(attr_path, "dev_loss_tmo",
-> -						 value, 11))
-> +						 value, 11) < 0) {
-> +				condlog(0, "%s failed to set %s/dev_loss_tmo",
-> +					mpp->alias, attr_path);
->  				return 1;
-> +			}
->  		}
->  		if (mpp->fast_io_fail){
->  			if (mpp->fast_io_fail == -1)
-> @@ -325,8 +328,12 @@ sysfs_set_scsi_tmo (struct multipath *mp
->  			else
->  				snprintf(value, 11, "%u", mpp->fast_io_fail);
->  			if (sysfs_attr_set_value(attr_path, "fast_io_fail_tmo",
-> -						 value, 11))
-> +						 value, 11) < 0) {
-> +				condlog(0,
-> +					"%s failed to set %s/fast_io_fail_tmo", 
-> +					mpp->alias, attr_path);
->  				return 1;
-> +			}
->  		}
->  	}
->  	return 0;
-> Index: multipath-tools-111111/libmultipath/sysfs.c
-> ===================================================================
-> --- multipath-tools-111111.orig/libmultipath/sysfs.c
-> +++ multipath-tools-111111/libmultipath/sysfs.c
-> @@ -351,7 +351,7 @@ ssize_t sysfs_attr_set_value(const char
->  	char path_full[PATH_SIZE];
->  	struct stat statbuf;
->  	int fd;
-> -	ssize_t size = 0;
-> +	ssize_t size = -1;
->  	size_t sysfs_len;
->  
->  	if (!attr_name || !value || !value_len)
+> We are delighted to be achieving this with multibus rather than RAID0 as
+> it means we can take transactionally consistent snapshots on the SAN.
+> 
+> Many thanks to whomever pointed out that tag queueing should solve the
+> 4KB block size latency problem.  The problem turned out to not be
+> latency as we were told but simply an under resources SAN.  We brought
+> in new Nexenta SANs with much more RAM and they are flying - John
+> 
+
+Hey,
+
+Can you please post your multipath configuration ? 
+Just for reference for future people googling for this :)
+
+-- Pasi
