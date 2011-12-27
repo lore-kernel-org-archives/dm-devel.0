@@ -1,70 +1,49 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: [Multipath] Round-robin performance limit
-Date: Tue, 27 Dec 2011 13:36:39 +0200
-Message-ID: <20111227113639.GI12984@reaktio.net>
-References: <20110502072528.GW32595@reaktio.net>
-	<BANLkTi=h0AwEy0S4Miv-SYTEu3jF0DXXJQ@mail.gmail.com>
-	<1304375238.3134.23.camel@denise.theartistscloset.com>
-	<20110503050406.GA11442@us.ibm.com>
-	<1304417561.25728.16.camel@denise.theartistscloset.com>
-	<CANtKaxLFSvg-iMGJ-fKPM=9HR1ORWOdMoEs2uQJkSGR-JpesYg@mail.gmail.com>
-	<CANtKax+RqXJeor4dBzQewWT+k8EG2s63NFYSi=pRN0v3MLPKBA@mail.gmail.com>
-	<1317784026.31536.7.camel@denise.theartistscloset.com>
-	<CANtKax+PzU=yVepQh3Kq7NK671-bSpYfms2Xu_YgdXQ0cDG6kA@mail.gmail.com>
-	<1324601686.10184.6.camel@denise.theartistscloset.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1324601686.10184.6.camel@denise.theartistscloset.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Paul T. Bibaud" <paul.b@pogolinux.com>
+From: Namhyung Kim <namhyung@gmail.com>
+Subject: [PATCH 2/2] block: don't export block_bio_complete tracepoint
+Date: Tue, 27 Dec 2011 23:28:33 +0900
+Message-ID: <1324996113-1837-3-git-send-email-namhyung@gmail.com>
+References: <1324996113-1837-1-git-send-email-namhyung@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1324996113-1837-1-git-send-email-namhyung@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 22, 2011 at 07:54:46PM -0500, John A. Sullivan III wrote:
-> On Wed, 2011-10-05 at 15:54 -0400, Adam Chasen wrote:
-> > John,
-> > I am limited in a similar fashion. I would much prefer to use multibus
-> > multipath, but was unable to achieve bandwidth which would exceed a
-> > single link even though it was spread over the 4 available links. Were
-> > you able to gain even a similar performance of the RAID0 setup with
-> > the multibus multipath?
-> > 
-> > Thanks,
-> > Adam
-> <snip>
-> We just ran a quick benchmark before optimizing.  Using multibus rather
-> than RAID0 with four GbE NICs, and testing with a simple cat /dev/zero >
-> zeros, we hit 3.664 Gbps!
-> 
-> This is still on CentOS 5.4 so we are not able to play with
-> rr_min_io_rq.  We have not yet activated jumbo frames. We are also
-> thinking of using SFQ as a qdisc instead of the default pfifo_fast.  So,
-> we think we can make it go even faster.
-> 
-> We are delighted to be achieving this with multibus rather than RAID0 as
-> it means we can take transactionally consistent snapshots on the SAN.
-> 
-> Many thanks to whomever pointed out that tag queueing should solve the
-> 4KB block size latency problem.  The problem turned out to not be
-> latency as we were told but simply an under resources SAN.  We brought
-> in new Nexenta SANs with much more RAM and they are flying - John
-> 
+Now bio_endio() contains the tracepoint in it, so we don't
+need to have it twice in DM. Plus, as the only external user
+of the tracepoint was the DM, we can unexport the symbol.
 
-Hey,
+Signed-off-by: Namhyung Kim <namhyung@gmail.com>
+Cc: dm-devel@redhat.com
+---
+ block/blk-core.c |    1 -
+ drivers/md/dm.c  |    1 -
+ 2 files changed, 0 insertions(+), 2 deletions(-)
 
-Can you please post your multipath configuration ? 
-Just for reference for future people googling for this :)
-
--- Pasi
+diff --git a/block/blk-core.c b/block/blk-core.c
+index f61310323954..f7eab1932543 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -37,7 +37,6 @@
+ 
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ 
+ DEFINE_IDA(blk_queue_ida);
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4720f68f817e..01185fa0eb74 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -648,7 +648,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+-- 
+1.7.6
