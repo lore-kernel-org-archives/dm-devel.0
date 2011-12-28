@@ -1,24 +1,13 @@
-From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
-Subject: Re: [Multipath] Round-robin performance limit
-Date: Tue, 27 Dec 2011 14:18:45 -0500
-Message-ID: <1325013525.3436.30.camel@denise.theartistscloset.com>
-References: <20110502072528.GW32595@reaktio.net>
-	<BANLkTi=h0AwEy0S4Miv-SYTEu3jF0DXXJQ@mail.gmail.com>
-	<1304375238.3134.23.camel@denise.theartistscloset.com>
-	<20110503050406.GA11442@us.ibm.com>
-	<1304417561.25728.16.camel@denise.theartistscloset.com>
-	<CANtKaxLFSvg-iMGJ-fKPM=9HR1ORWOdMoEs2uQJkSGR-JpesYg@mail.gmail.com>
-	<CANtKax+RqXJeor4dBzQewWT+k8EG2s63NFYSi=pRN0v3MLPKBA@mail.gmail.com>
-	<1317784026.31536.7.camel@denise.theartistscloset.com>
-	<CANtKax+PzU=yVepQh3Kq7NK671-bSpYfms2Xu_YgdXQ0cDG6kA@mail.gmail.com>
-	<1324601686.10184.6.camel@denise.theartistscloset.com>
-	<20111227113639.GI12984@reaktio.net>
+From: Oren Held <orenhe@il.ibm.com>
+Subject: [PATCH] Add default values for IBM XIV Storage System.
+Date: Wed, 28 Dec 2011 19:59:20 +0200
+Message-ID: <20111228175920.GA29764@orenhe-laptop>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="WIyZ46R2i8wDzkSu"
+Content-Transfer-Encoding: 8bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111227113639.GI12984@reaktio.net>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,126 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: "Paul T. Bibaud" <paul.b@pogolinux.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDExLTEyLTI3IGF0IDEzOjM2ICswMjAwLCBQYXNpIEvDpHJra8OkaW5lbiB3cm90
-ZToKPiBPbiBUaHUsIERlYyAyMiwgMjAxMSBhdCAwNzo1NDo0NlBNIC0wNTAwLCBKb2huIEEuIFN1
-bGxpdmFuIElJSSB3cm90ZToKPiA+IE9uIFdlZCwgMjAxMS0xMC0wNSBhdCAxNTo1NCAtMDQwMCwg
-QWRhbSBDaGFzZW4gd3JvdGU6Cj4gPiA+IEpvaG4sCj4gPiA+IEkgYW0gbGltaXRlZCBpbiBhIHNp
-bWlsYXIgZmFzaGlvbi4gSSB3b3VsZCBtdWNoIHByZWZlciB0byB1c2UgbXVsdGlidXMKPiA+ID4g
-bXVsdGlwYXRoLCBidXQgd2FzIHVuYWJsZSB0byBhY2hpZXZlIGJhbmR3aWR0aCB3aGljaCB3b3Vs
-ZCBleGNlZWQgYQo+ID4gPiBzaW5nbGUgbGluayBldmVuIHRob3VnaCBpdCB3YXMgc3ByZWFkIG92
-ZXIgdGhlIDQgYXZhaWxhYmxlIGxpbmtzLiBXZXJlCj4gPiA+IHlvdSBhYmxlIHRvIGdhaW4gZXZl
-biBhIHNpbWlsYXIgcGVyZm9ybWFuY2Ugb2YgdGhlIFJBSUQwIHNldHVwIHdpdGgKPiA+ID4gdGhl
-IG11bHRpYnVzIG11bHRpcGF0aD8KPiA+ID4gCj4gPiA+IFRoYW5rcywKPiA+ID4gQWRhbQo+ID4g
-PHNuaXA+Cj4gPiBXZSBqdXN0IHJhbiBhIHF1aWNrIGJlbmNobWFyayBiZWZvcmUgb3B0aW1pemlu
-Zy4gIFVzaW5nIG11bHRpYnVzIHJhdGhlcgo+ID4gdGhhbiBSQUlEMCB3aXRoIGZvdXIgR2JFIE5J
-Q3MsIGFuZCB0ZXN0aW5nIHdpdGggYSBzaW1wbGUgY2F0IC9kZXYvemVybyA+Cj4gPiB6ZXJvcywg
-d2UgaGl0IDMuNjY0IEdicHMhCj4gPiAKPiA+IFRoaXMgaXMgc3RpbGwgb24gQ2VudE9TIDUuNCBz
-byB3ZSBhcmUgbm90IGFibGUgdG8gcGxheSB3aXRoCj4gPiBycl9taW5faW9fcnEuICBXZSBoYXZl
-IG5vdCB5ZXQgYWN0aXZhdGVkIGp1bWJvIGZyYW1lcy4gV2UgYXJlIGFsc28KPiA+IHRoaW5raW5n
-IG9mIHVzaW5nIFNGUSBhcyBhIHFkaXNjIGluc3RlYWQgb2YgdGhlIGRlZmF1bHQgcGZpZm9fZmFz
-dC4gIFNvLAo+ID4gd2UgdGhpbmsgd2UgY2FuIG1ha2UgaXQgZ28gZXZlbiBmYXN0ZXIuCj4gPiAK
-PiA+IFdlIGFyZSBkZWxpZ2h0ZWQgdG8gYmUgYWNoaWV2aW5nIHRoaXMgd2l0aCBtdWx0aWJ1cyBy
-YXRoZXIgdGhhbiBSQUlEMCBhcwo+ID4gaXQgbWVhbnMgd2UgY2FuIHRha2UgdHJhbnNhY3Rpb25h
-bGx5IGNvbnNpc3RlbnQgc25hcHNob3RzIG9uIHRoZSBTQU4uCj4gPiAKPiA+IE1hbnkgdGhhbmtz
-IHRvIHdob21ldmVyIHBvaW50ZWQgb3V0IHRoYXQgdGFnIHF1ZXVlaW5nIHNob3VsZCBzb2x2ZSB0
-aGUKPiA+IDRLQiBibG9jayBzaXplIGxhdGVuY3kgcHJvYmxlbS4gIFRoZSBwcm9ibGVtIHR1cm5l
-ZCBvdXQgdG8gbm90IGJlCj4gPiBsYXRlbmN5IGFzIHdlIHdlcmUgdG9sZCBidXQgc2ltcGx5IGFu
-IHVuZGVyIHJlc291cmNlcyBTQU4uICBXZSBicm91Z2h0Cj4gPiBpbiBuZXcgTmV4ZW50YSBTQU5z
-IHdpdGggbXVjaCBtb3JlIFJBTSBhbmQgdGhleSBhcmUgZmx5aW5nIC0gSm9obgo+ID4gCj4gCj4g
-SGV5LAo+IAo+IENhbiB5b3UgcGxlYXNlIHBvc3QgeW91ciBtdWx0aXBhdGggY29uZmlndXJhdGlv
-biA/IAo+IEp1c3QgZm9yIHJlZmVyZW5jZSBmb3IgZnV0dXJlIHBlb3BsZSBnb29nbGluZyBmb3Ig
-dGhpcyA6KQo+IAo+IC0tIFBhc2kKPiAKPHNuaXA+ClN1cmUgYWx0aG91Z2ggSSB3b3VsZCBiZSBh
-IGJpdCBjYXJlZnVsLiAgSSB0aGluayB0aGVyZSBhcmUgYSBmZXcgdGhpbmdzCndlIG5lZWQgdG8g
-dHdlYWsgaW4gaXQgYW5kIHRoZSBsZWFkIGVuZ2luZWVyIG9uIHRoZSBwcm9kdWN0IGFuZCBJIGp1
-c3QKaGF2ZW4ndCBoYWQgdGhlIHRpbWUgdG8gZ28gb3ZlciBpdC4gIEl0IGlzIGFsc28gYmFzZWQg
-dXBvbiBDZW50T1MgNS40IHNvCndlIGRvIG5vdCBoYXZlIHJyX21pbl9pb19ycS4gIFdlIGFyZSBh
-IG1vZGVyYXRlbHkgc2VjdXJlIGVudmlyb25tZW50IHNvCkkgbWlnaHQgbmVlZCB0byBzY3J1YiBh
-IGJpdCBvZiBkYXRhOgoKbXVsdGlwYXRoLmNvbmYKYmxhY2tsaXN0IHsKIyAgICAgICAgZGV2bm9k
-ZSAiKiIKICAgICAgICAjIHNkYgogICAgICAgIHd3aWQgU0FUQV9TVDMyNTAzMTBOU185WFgwTFlZ
-WQogICAgICAgICNzZGEKICAgICAgICB3d2lkIFNBVEFfU1QzMjUwMzEwTlNfOVhYMExaWloKICAg
-ICAgICAjIFRoZSBhYm92ZSBkb2VzIG5vdCBzZWVtIHRvIGJlIHdvcmtpbmcgdGh1cyB3ZSB3aWxs
-IGRvCiAgICAgICAgZGV2bm9kZSAiXnNkW2FiXSQiCiAgICAgICAgIyBUaGlzIGlzIHVzdWFsbHkg
-YSBiYWQgaWRlYSBhcyB0aGUgZGV2aWNlIG5hbWVzIGNhbiBjaGFuZ2UKICAgICAgICAjIEhvd2V2
-ZXIsIHNpbmNlIHdlIGFkZCBvdXIgaVNDU0kgZGV2aWNlcyBsb25nIGFmdGVyIGJvb3QsIEkgdGhp
-bmsgd2UgYXJlIHNhZmUKfQoKZGVmYXVsdHMgewogICAgICAgIHVkZXZfZGlyICAgICAgICAgICAg
-ICAgIC9kZXYKICAgICAgICBwb2xsaW5nX2ludGVydmFsICAgICAgICA1CiAgICAgICAgc2VsZWN0
-b3IgICAgICAgICAgICAgICAgInJvdW5kLXJvYmluIDAiCiAgICAgICAgcGF0aF9ncm91cGluZ19w
-b2xpY3kgICAgbXVsdGlidXMKICAgICAgICBnZXR1aWRfY2FsbG91dCAgICAgICAgICAiL3NiaW4v
-c2NzaV9pZCAtZyAtdSAtcyAvYmxvY2svJW4iCiAgICAgICAgcHJpb19jYWxsb3V0ICAgICAgICAg
-ICAgIi9iaW4vYmFzaCAvc2Jpbi9tcGF0aF9wcmlvX3NzaSAlbiIgIyBUaGlzIG5lZWRzIHRvIGJl
-IGNsZWFuZWQgdXAKICAgICAgICBwcmlvX2NhbGxvdXQgICAgICAgICAgICAvYmluL3RydWUKICAg
-ICAgICBwYXRoX2NoZWNrZXIgICAgICAgICAgICBkaXJlY3RpbwogICAgICAgIHJyX21pbl9pbyAg
-ICAgICAgICAgICAgIDEwMAogICAgICAgIG1heF9mZHMgICAgICAgICAgICAgICAgIDgxOTIKICAg
-ICAgICBycl93ZWlnaHQgICAgICAgICAgICAgICB1bmlmb3JtCiAgICAgICAgZmFpbGJhY2sgICAg
-ICAgICAgICAgICAgaW1tZWRpYXRlCiAgICAgICAgbm9fcGF0aF9yZXRyeSAgICAgICAgICAgZmFp
-bAojICAgICAgIHVzZXJfZnJpZW5kbHlfbmFtZXMgICAgIHllcwp9CgptdWx0aXBhdGhzIHsKCiAg
-ICAgICAgbXVsdGlwYXRoIHsKICAgICAgICAgICAgICAgIHd3aWQgICAgICAgICAgICAgICAgICAg
-IGFhYWFhYWFhYWE1M2YwZDAwMDAwMDRlODFmMjdkMDAwMQogICAgICAgICAgICAgICBhbGlhcyAg
-ICAgICAgICAgICAgICAgICAgaXNkYQogICAgICAgIH0KCiAgICAgICAgbXVsdGlwYXRoIHsKICAg
-ICAgICAgICAgICAgIHd3aWQgICAgICAgICAgICAgICAgICAgIGFhYWFhYWFhYWE1M2YwZDAwMDAw
-MDRlODFmMjkxMDAwMgogICAgICAgICAgICAgICBhbGlhcyAgICAgICAgICAgICAgICAgICAgaXNk
-YgogICAgICAgIH0KCiAgICAgICAgbXVsdGlwYXRoIHsKICAgICAgICAgICAgICAgIHd3aWQgICAg
-ICAgICAgICAgICAgICAgIGFhYWFhYWFhYWE1M2YwZDAwMDAwMDRlODFmMmFiMDAwMwogICAgICAg
-ICAgICAgICBhbGlhcyAgICAgICAgICAgICAgICAgICAgaXNkYwogICAgICAgIH0KCiAgICAgICAg
-bXVsdGlwYXRoIHsKICAgICAgICAgICAgICAgIHd3aWQgICAgICAgICAgICAgICAgICAgIGFhYWFh
-YWFhYWE1M2YwZDAwMDAwMDRlODFmMmMxMDAwNAogICAgICAgICAgICAgICBhbGlhcyAgICAgICAg
-ICAgICAgICAgICAgaXNkZAogICAgICAgIH0KCn0KCmRldmljZXMgewogICAgICAgZGV2aWNlIHsK
-ICAgICAgICAgICAgICAgdmVuZG9yICAgICAgICAgICAgICAgICAgIk5FWEVOVEEiCiAgICAgICAg
-ICAgICAgIHByb2R1Y3QgICAgICAgICAgICAgICAgICJDT01TVEFSIgogICAgICAgICAgICAgICBn
-ZXR1aWRfY2FsbG91dCAgICAgICAgICAiL3NiaW4vc2NzaV9pZCAtZyAtdSAtcyAvYmxvY2svJW4i
-CiAgICAgICAgICAgICAgIGZlYXR1cmVzICAgICAgICAgICAgICAgICIwIgogICAgICAgICAgICAg
-ICBoYXJkd2FyZV9oYW5kbGVyICAgICAgICAiMCIKICAgICAgIH0KfQoKT3RoZXIgbWlzY2VsbGFu
-ZW91cyBzZXR0aW5nczoKIyBTb21lIG9wdGltaXphdGlvbnMgZm9yIHRoZSBTQU4gbmV0d29yawpp
-cCBsaW5rIHNldCBldGgwIHR4cWxlbiAyMDAwCmlwIGxpbmsgc2V0IGV0aDEgdHhxbGVuIDIwMDAK
-aXAgbGluayBzZXQgZXRoMiB0eHFsZW4gMjAwMAppcCBsaW5rIHNldCBldGgzIHR4cWxlbiAyMDAw
-CgpUaGUgbW9yZSB3ZSByZWFkIGFib3V0IGFuZCB0ZXN0IGJ1ZmZlcmJsb2F0CihodHRwOi8vd3d3
-LmJ1ZmZlcmJsb2F0Lm5ldC9wcm9qZWN0cy9ibG9hdCksIHRoZSBtb3JlIHdlIGFyZSB0aGlua2lu
-ZyBvZgphY3R1YWxseSBkcmFtYXRpY2FsbHkgcmVkdWNpbmcgdGhlc2UgYnVmZmVycyBhcyBpdCBp
-cyBxdWl0ZSBwb3NzaWJsZSBmb3IKb25lIG5ldyBpU0NTSSBjb252ZXJzYXRpb24gdG8gYmVjb21l
-IGJhY2tsb2dnZWQgYmVoaW5kIGFub3RoZXIgYW5kLCBJCnN1c3BlY3QsIHRoYXQgY291bGQgYWxz
-byB3cmVhayBoYXZvYyBvbiBjb21tYW5kIHJlb3JkZXJpbmcgaWYgd2UgYXJlCmRvaW5nIHJvdW5k
-IHJvYmluIGFyb3VuZCB0aGUgaW50ZXJmYWNlcy4KCldlIGFyZSBhbHNvIHRoaW5raW5nIG9mIGNo
-YW5naW5nIHRoZSBxdWV1aW5nIGRpc2NpcGxpbmUgZnJvbSB0aGUgZGVmYXVsdApwZmlmb19mYXN0
-LiAgU2luY2UgaXQgaXMgYWxsIHRoZSBzYW1lIHRyYWZmaWMsIHRoZXJlIGlzIG5vIG5lZWQgdG8g
-YmFuZAppdCBsaWtlIHBmaWZvX2Zhc3QgZG9lcyBieSBleGFtaW5pbmcgdGhlIFRPUyBiaXRzLiAg
-QSByZWd1bGFyIGZpZm8gcWRpc2MKbWlnaHQgYmUgYSBoYWlyIGZhc3Rlci4gIE9uIHRoZSBvdGhl
-ciBoYW5kLCB3ZSBtaWdodCB3YW50IHRvIGdvIHdpdGggU0ZRCnNvIHRoYXQgb25lIGhlYXZ5IGlT
-Q1NJIGNvbnZlcnNhdGlvbiBjYW5ub3Qgc3RhcnZlIG90aGVycyBvciBjYXVzZSB0aGVtCnRvIG5v
-dCBxdWlja2x5IGFjY2VsZXJhdGUgVENQIHNsb3cgc3RhcnQuCgptdWx0aXBhdGggLUYgI2ZsdXNo
-Cm11bHRpcGF0aApzbGVlcCAyCnNlcnZpY2UgbXVsdGlwYXRoZCBzdGFydApzbGVlcCAyCgpibG9j
-a2RldiAtLXNldHJhIDEwMjQgL2Rldi9tYXBwZXIvaXNkYQpibG9ja2RldiAtLXNldHJhIDEwMjQg
-L2Rldi9tYXBwZXIvaXNkYgpibG9ja2RldiAtLXNldHJhIDEwMjQgL2Rldi9tYXBwZXIvaXNkYwpi
-bG9ja2RldiAtLXNldHJhIDEwMjQgL2Rldi9tYXBwZXIvaXNkZAoKbW91bnQgLW8gZGVmYXVsdHMs
-bm9hdGltZSAvZGV2L21hcHBlci9pZDAyc2RkIC9iYWNrdXBzICMgTm90ZSB0aGUKbm9hdGltZQoK
-PkZyb20gc3lzY3RsLmNvbmY6CiMgQ29udHJvbHMgdGNwIG1heGltdW0gcmVjZWl2ZSB3aW5kb3cg
-c2l6ZQojbmV0LmNvcmUucm1lbV9tYXggPSA0MDk2MDAKI25ldC5jb3JlLnJtZW1fbWF4ID0gODcz
-ODAwMApuZXQuY29yZS5ybWVtX21heCA9IDE2Nzc3MjE2Cm5ldC5pcHY0LnRjcF9ybWVtID0gODE5
-MiA4NzM4MDAgMTY3NzcyMTYKCiMgQ29udHJvbHMgdGNwIG1heGltdW0gc2VuZCB3aW5kb3cgc2l6
-ZQojbmV0LmNvcmUud21lbV9tYXggPSA0MDk2MDAKI25ldC5jb3JlLndtZW1fbWF4ID0gNjU1MzYw
-MApuZXQuY29yZS53bWVtX21heCA9IDE2Nzc3MjE2Cm5ldC5pcHY0LnRjcF93bWVtID0gNDA5NiA2
-NTUzNjAgMTY3NzcyMTYKCiMgQ29udHJvbHMgZGlzYWJsaW5nIE5hZ2xlIGFsZ29yaXRobSBhbmQg
-ZGVsYXllZCBhY2tzCm5ldC5pcHY0LnRjcF9sb3dfbGF0ZW5jeT0xCgpuZXQuY29yZS5uZXRkZXZf
-bWF4X2JhY2tsb2cgPSAyMDAwCiMgQ29udHJvbHMgdGhlIHVzZSBvZiBUQ1Agc3luY29va2llcwpu
-ZXQuaXB2NC50Y3Bfc3luY29va2llcyA9IDEKCiMgQ29udHJvbHMgdGhlIG1heGltdW0gc2l6ZSBv
-ZiBhIG1lc3NhZ2UsIGluIGJ5dGVzCmtlcm5lbC5tc2dtbmIgPSA2NTUzNgoKIyBDb250cm9scyB0
-aGUgZGVmYXVsdCBtYXhtaW11bSBzaXplIG9mIGEgbWVzYWdlIHF1ZXVlCmtlcm5lbC5tc2dtYXgg
-PSA2NTUzNgoKIyBDb250cm9scyB0aGUgbWF4aW11bSBzaGFyZWQgc2VnbWVudCBzaXplLCBpbiBi
-eXRlcwprZXJuZWwuc2htbWF4ID0gNjg3MTk0NzY3MzYKCiMgQ29udHJvbHMgdGhlIG1heGltdW0g
-bnVtYmVyIG9mIHNoYXJlZCBtZW1vcnkgc2VnbWVudHMsIGluIHBhZ2VzCmtlcm5lbC5zaG1hbGwg
-PSA0Mjk0OTY3Mjk2CgojIENvbnRyb2xzIHdoZW4gd2UgY2FsbCBmb3IgbW9yZSBlbnRyb3B5CiMg
-U2luY2UgdGhlc2Ugc3lzdGVtcyBoYXZlIG5vIG1vdXNlIG9yIGtleWJvYXJkIGFuZCBMaW51eCBu
-byBsb25nZXIgdXNlcwpuZXR3b3JrIEkvTywKIyB3ZSBhcmUgcmVndWxhcmx5IHJ1bm5pbmcgbG93
-IG9uIGVudHJvcHkKa2VybmVsLnJhbmRvbS53cml0ZV93YWtldXBfdGhyZXNob2xkID0gMTAyNAoj
-IE5vdCByZWFsbHkgbmVlZGVkIGZvciBpU0NTSSAtIGp1c3QgYW4gaW50ZXJlc3Rpbmcgc2V0dGlu
-ZyB3ZSB1c2UgaW4KY29uanVuY3Rpb24gd2l0aCBoYXZlZ2VkIHRvIGFkZHJlc3MgdGhlIHByb2Js
-ZW0gb2YgbGFjayBvZiBlbnRyb3B5IG9uCmhlYWRsZXNzIHN5c3RlbXMKCldlIGhhdmUgbm90IHll
-dCByZS1lbmFibGVkIGp1bWJvIHBhY2tldHMgYXMgdGhhdCBhY3R1YWxseSByZWR1Y2VkCnRocm91
-Z2hwdXQgaW4gdGhlIHBhc3QgYnV0IHRoYXQgbWF5IGhhdmUgYmVlbiByZWxhdGVkIHRvIHRoZSBs
-YWNrIG9mCnJlc291cmNlcyBpbiB0aGUgb3JpZ2luYWwgdW5pdC4KCkhvcGUgdGhpcyBoZWxwcy4g
-IFdlIGFyZSBub3QgZXhwZXJ0cyBzbywgaWYgc29tZW9uZSBzZWVzIHNvbWV0aGluZyB3ZQpjYW4g
-dHdlYWssIHBsZWFzZSBwb2ludCBpdCBvdXQgLSBKb2huCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
-c3RpbmZvL2RtLWRldmVs
+--WIyZ46R2i8wDzkSu
+Content-Type: text/plain; charset=us-ascii; format=fixed
+Content-Disposition: inline
+
+
+Signed-off-by: Oren Held <orenhe@il.ibm.com>
+---
+ libmultipath/hwtable.c |   18 ++++++++++++++++++
+ 1 files changed, 18 insertions(+), 0 deletions(-)
+
+
+--WIyZ46R2i8wDzkSu
+Content-Type: text/x-patch; charset=us-ascii;
+	name="0001-Add-default-values-for-IBM-XIV-Storage-System.patch"
+Content-Disposition: attachment;
+	filename="0001-Add-default-values-for-IBM-XIV-Storage-System.patch"
+Content-Transfer-Encoding: quoted-printable
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 7697883..8dceaba 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -771,6 +771,24 @@ static struct hwentry default=5Fhw[] =3D {
+ 		.prio=5Fname     =3D PRIO=5FALUA,
+ 		.prio=5Fargs     =3D NULL,
+ 	},
++        {
++                /* IBM XIV Storage System */
++                .vendor        =3D "IBM",
++                .product       =3D "2810XIV",
++                .getuid        =3D DEFAULT=5FGETUID,
++                .features      =3D "1 queue=5Fif=5Fno=5Fpath",
++                .hwhandler     =3D DEFAULT=5FHWHANDLER,
++                .selector      =3D DEFAULT=5FSELECTOR,
++                .pgpolicy      =3D MULTIBUS,
++                .pgfailback    =3D 15,
++                .rr=5Fweight     =3D RR=5FWEIGHT=5FNONE,
++                .no=5Fpath=5Fretry =3D NO=5FPATH=5FRETRY=5FUNDEF,
++                .minio         =3D 15,
++                .minio=5Frq      =3D DEFAULT=5FMINIO=5FRQ,
++                .checker=5Fname  =3D TUR,
++                .prio=5Fname     =3D DEFAULT=5FPRIO,
++                .prio=5Fargs     =3D NULL,
++        },
+ 	/*
+ 	 * IBM Power Virtual SCSI Devices
+ 	 *
+=
+
+--WIyZ46R2i8wDzkSu
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--WIyZ46R2i8wDzkSu--
