@@ -1,12 +1,19 @@
 From: Mandeep Singh Baines <msb@chromium.org>
 Subject: [PATCH] dm: verity target
-Date: Wed,  4 Jan 2012 13:49:11 -0800
-Message-ID: <1325713751-9572-1-git-send-email-msb@chromium.org>
+Date: Wed,  4 Jan 2012 14:42:06 -0800
+Message-ID: <1325716926-15673-1-git-send-email-msb@chromium.org>
+References: <1325713751-9572-1-git-send-email-msb@chromium.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1325713751-9572-1-git-send-email-msb@chromium.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 Cc: Mandeep Singh Baines <msb@chromium.org>, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, Steffen Klassert <steffen.klassert@secunet.com>
 List-Id: dm-devel.ids
+
+D'oh. Forget to -a when running git commit earlier. Ignore earlier
+post and use this instead.
+
+---
 
 The verity target provides transparent integrity checking of block devices
 using a cryptographic digest.
@@ -41,10 +48,10 @@ Cc: dm-devel@redhat.com
  drivers/md/Kconfig                        |   30 +
  drivers/md/Makefile                       |    2 +
  drivers/md/dm-bht.c                       |  559 +++++++++++++++
- drivers/md/dm-verity.c                    | 1043 +++++++++++++++++++++++++++++
+ drivers/md/dm-verity.c                    | 1051 +++++++++++++++++++++++++++++
  drivers/md/dm-verity.h                    |   45 ++
  include/linux/dm-bht.h                    |  166 +++++
- 8 files changed, 1980 insertions(+), 0 deletions(-)
+ 8 files changed, 1988 insertions(+), 0 deletions(-)
  create mode 100644 Documentation/device-mapper/dm-bht.txt
  create mode 100644 Documentation/device-mapper/dm-verity.txt
  create mode 100644 drivers/md/dm-bht.c
@@ -818,10 +825,10 @@ index 0000000..6eb2be3
 +
 diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
 new file mode 100644
-index 0000000..a9bd0e8
+index 0000000..8f1e8dc
 --- /dev/null
 +++ b/drivers/md/dm-verity.c
-@@ -0,0 +1,1043 @@
+@@ -0,0 +1,1051 @@
 +/*
 + * Originally based on dm-crypt.c,
 + * Copyright (C) 2003 Christophe Saout <christophe@saout.de>
@@ -1729,6 +1736,13 @@ index 0000000..a9bd0e8
 +	kfree(vc);
 +}
 +
++static int verity_ioctl(struct dm_target *ti, unsigned int cmd,
++			unsigned long arg)
++{
++	struct verity_config *vc = (struct verity_config *) ti->private;
++	return __blkdev_driver_ioctl(vc->dev->bdev, vc->dev->mode, cmd, arg);
++}
++
 +static int verity_status(struct dm_target *ti, status_type_t type,
 +			char *result, unsigned int maxlen)
 +{
@@ -1798,6 +1812,7 @@ index 0000000..a9bd0e8
 +	.module = THIS_MODULE,
 +	.ctr    = verity_ctr,
 +	.dtr    = verity_dtr,
++	.ioctl  = verity_ioctl,
 +	.map    = verity_map,
 +	.merge  = verity_merge,
 +	.status = verity_status,
