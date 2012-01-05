@@ -1,69 +1,166 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: better alternative to part multpath -l output?
-Date: Thu, 05 Jan 2012 13:50:12 +0000
-Message-ID: <4F05AA94.2030202@redhat.com>
-References: <4F05A6B5.1020509@UGent.be>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: can't recover ext4 on lvm from ext4_mb_generate_buddy:739:
+ group 1687, 32254 clusters in bitmap, 32258 in gd
+Date: Thu, 5 Jan 2012 13:15:35 -0500
+Message-ID: <20120105181535.GB26382@thunk.org>
+References: <217150909.20120105113759@eikelenboom.it>
+ <197607646.20120105142107@eikelenboom.it>
+ <6FC155DD-80C1-4088-B745-6B74D9D5AA48@mit.edu>
+ <4910694144.20120105171428@eikelenboom.it>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F05A6B5.1020509@UGent.be>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Rudy Gevaert <Rudy.Gevaert@UGent.be>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4910694144.20120105171428@eikelenboom.it>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Sander Eikelenboom <linux@eikelenboom.it>
+Cc: linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMDEvMDUvMjAxMiAwMTozMyBQTSwgUnVkeSBHZXZhZXJ0IHdyb3RlOgo+IEhlbGxvLAo+IAo+
-IENhbiBhbnlib2R5IHN1Z2dlc3QgYSBiZXR0ZXIgYWx0ZXJuYXRpdmUgdG8gcGFyc2luZyBtdWx0
-cGF0aCAtbAo+IDxkZXZpY2U+IHRvIGdldCB0aGUgdW5kZXJseWluZyBkZXZpY2VzIHRoYXQgYXJl
-IHBhcnQgb2YgdGhlCj4gbXVsdGlwYXRoPwo+IAo+IFRoYW5rcyBpbiBhZHZhbmNlLAo+IAo+IFJ1
-ZHkKCllvdSBjb3VsZCBwYXJzZSB0aGUgb3V0cHV0IG9mIGRtc2V0dXAsIGVpdGhlciB0YWJsZSBv
-ciBkZXBzOgoKIyBkbXNldHVwIHRhYmxlIG1wYXRoMgowIDMxNDU3MjgwIG11bHRpcGF0aCAxIHF1
-ZXVlX2lmX25vX3BhdGggMSBlbWMgMSAxIHJvdW5kLXJvYmluIDAgMiAxCjg6MzIgMTAwMCA4Ojgw
-IDEwMDAKXl5eXiAgICAgIF5eXl4KIyBkbXNldHVwIGRlcHMgbXBhdGgyCjIgZGVwZW5kZW5jaWVz
-CTogKDgsIDgwKSAoOCwgMzIpCiAgICAgICAgICAgICAgICAgICBeXl5eXiAgIF5eXl5eClRoZSBs
-c2JsayBjb21tYW5kIChvciBkbXNldHVwIGxzIC0tdHJlZSkgd2lsbCBhbHNvIGRpc3BsYXkgZGVw
-ZW5kZW5jeQp0cmVlcyBncmFwaGljYWxseSBidXQgeW91IHByb2JhYmx5IHdvdWxkbid0IHdhbnQg
-dG8gcGFyc2UgdGhpcyAoYW5kIGl0Cm9wZXJhdGVzIGJvdHRvbS11cCByYXRoZXIgdGhhbiB0b3At
-ZG93bik6CgojIGxzYmxrIC9kZXYvc2RjIC9kZXYvc2RkCk5BTUUgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgTUFKOk1JTiBSTSAgIFNJWkUgUk8gTU9VTlRQT0lOVApzZGMgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgODozMiAgIDAgICAgMTVHICAwCuKUlOKUgG1wYXRoYSAoZG0tMCkg
-ICAgICAgICAgICAgICAgIDI1MzowICAgIDAgICAgMTVHICAwCiAg4pSc4pSAbXBhdGhhcDEgKGRt
-LTEpICAgICAgICAgICAgIDI1MzoxICAgIDAgICA1MDBNICAwIC9ib290CiAg4pSU4pSAbXBhdGhh
-cDIgKGRtLTIpICAgICAgICAgICAgIDI1MzoyICAgIDAgIDE0LjVHICAwCiAgICDilJzilIB2Z19w
-ZTE5NTAzLWx2X3Jvb3QgKGRtLTMpIDI1MzozICAgIDAgIDEwLjZHICAwIC8KICAgIOKUlOKUgHZn
-X3BlMTk1MDMtbHZfc3dhcCAoZG0tNCkgMjUzOjQgICAgMCAgICAgNEcgIDAgW1NXQVBdCnNkZCAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICA4OjQ4ICAgMCAgICAxNUcgIDAK4pSU4pSAbXBh
-dGhhIChkbS0wKSAgICAgICAgICAgICAgICAgMjUzOjAgICAgMCAgICAxNUcgIDAKICDilJzilIBt
-cGF0aGFwMSAoZG0tMSkgICAgICAgICAgICAgMjUzOjEgICAgMCAgIDUwME0gIDAgL2Jvb3QKICDi
-lJTilIBtcGF0aGFwMiAoZG0tMikgICAgICAgICAgICAgMjUzOjIgICAgMCAgMTQuNUcgIDAKICAg
-IOKUnOKUgHZnX3BlMTk1MDMtbHZfcm9vdCAoZG0tMykgMjUzOjMgICAgMCAgMTAuNkcgIDAgLwog
-ICAg4pSU4pSAdmdfcGUxOTUwMy1sdl9zd2FwIChkbS00KSAyNTM6NCAgICAwICAgICA0RyAgMCBb
-U1dBUF0KCkJ1dCBwcm9iYWJseSB0aGUgZWFzaWVzdCBhbmQgbW9zdCBkaXJlY3Qgd2F5IGlzIHRv
-IHVzZSB0aGUgc3lzZnMKaG9sZGVycy9zbGF2ZXMgZGlyZWN0b3JpZXM6CgojIG11bHRpcGF0aCAt
-bCBtcGF0aDIKbXBhdGgyICgzNjAwNjAxNjA4ZTY2MWEwMWE1MGZmMGZlMjc3NmUwMTEpIGRtLTEg
-REdDLFJBSUQgNQpbc2l6ZT0xNUddW2ZlYXR1cmVzPTEgcXVldWVfaWZfbm9fcGF0aF1baHdoYW5k
-bGVyPTEgZW1jXVtyd10KXF8gcm91bmQtcm9iaW4gMCBbcHJpbz0wXVthY3RpdmVdCiBcXyAxOjA6
-MDowIHNkYyA4OjMyICBbYWN0aXZlXVt1bmRlZl0KIFxfIDI6MDowOjAgc2RmIDg6ODAgIFthY3Rp
-dmVdW3VuZGVmXQoKIyBscyAvc3lzL2Jsb2NrL2RtLTEvc2xhdmVzLwpzZGMgIHNkZgoKVGhlIG9u
-bHkgbmlnZ2xlIGhlcmUgaXMgdGhhdCB5b3UgbmVlZCB0byBtYXAgdGhlIG1wYXRoIGRldmljZSBu
-YW1lIHRvCml0J3MgZGV2aWNlIG1hcHBlciBtaW5vciBudW1iZXIgdG8gb2J0YWluIHRoZSBzeXNm
-cyBwYXRoLgoKSWYgeW91IHdhbnQgdG8gZmluZCBvdXQgd2hhdCdzIHVzaW5nIHRoZSBkZXZpY2Ug
-cmF0aGVyIHRoYW4gd2hhdCBpdCdzCnVzaW5nIGNoYW5nZSBzbGF2ZXMgdG8gaG9sZGVyczoKCiMg
-bHMgL3N5cy9ibG9jay9kbS0wL2hvbGRlcnMvCmRtLTEgIGRtLTIKCiMgZG1zZXR1cCBpbmZvIC9k
-ZXYvZG0tMQpOYW1lOiAgICAgICAgICAgICAgbXBhdGhhcDEKU3RhdGU6ICAgICAgICAgICAgIEFD
-VElWRQpSZWFkIEFoZWFkOiAgICAgICAgMjU2ClRhYmxlcyBwcmVzZW50OiAgICBMSVZFCk9wZW4g
-Y291bnQ6ICAgICAgICAxCkV2ZW50IG51bWJlcjogICAgICAwCk1ham9yLCBtaW5vcjogICAgICAy
-NTMsIDEKTnVtYmVyIG9mIHRhcmdldHM6IDEKVVVJRDogcGFydDEtbXBhdGgtMzYwMDYwMTYwOGU2
-NjFhMDFhNjBmZjBmZTI3NzZlMDExCgpldGMuCgpSZWdhcmRzLApCcnluLgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Thu, Jan 05, 2012 at 05:14:28PM +0100, Sander Eikelenboom wrote:
+> 
+> OK spoke too soon, i have been able to trigger it again:
+> - copying files from LV to the same LV without the snapshot went OK
+> - copying from the RO snapshot of a LV to the same LV gave the error while copying the file again:
+
+OK.  Originally, you said you did this:
+
+1) fsck -v -p -f the filesystem
+2) mount the filesystem
+3) Try to copy a file
+4) filesystem will be mounted RO on error  (see below)
+5) fsck again, journal will be recovered, no other errors
+6) start at 1)
+
+Was this with with a read-only snapshot always being in existence
+through all of these five steps?  When was the RO snapshot created?
+
+If a RO snapshot has to be there in order for this to happen, then
+this is almost certainly a device-mapper regression.  (dm-devel folks,
+this is a problem which apparently occurred when the user went from
+v3.1.5 to v3.2, so this looks likes 3.2 regression.)
+
+						- Ted
+
+
+> 
+> [ 2357.655783] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1861, 32254 clusters in bitmap, 32258 in gd
+> [ 2357.656056] Aborting journal on device dm-2-8.
+> [ 2357.718473] EXT4-fs (dm-2): Remounting filesystem read-only
+> [ 2357.736680] EXT4-fs error (device dm-2) in ext4_da_write_end:2532: IO failure
+> [ 2357.738328] EXT4-fs (dm-2): ext4_da_writepages: jbd2_start: 7615 pages, ino 4079617; err -30
+> [ 2716.125010] EXT4-fs error (device dm-2): ext4_put_super:818: Couldn't clean up the journal
+> 
+> 
+> Attached are 4x output from dumpe2fs
+> - dumpe2fs-xen_images-3.2.0                           Made just after boot
+> - dumpe2fs-xen_images-3.2.0-afterfsck                 Made after doing a fsck -v -p -f on the unmounted LV
+> - dumpe2fs-xen_images-3.2.0-aftererror                Made after the error occured on the mounted LV
+> - dumpe2fs-xen_images-3.2.0-aftererror-afterfsck      Made after the error occured, and after a subsequent fsck -v -p -f on the unmounted LV
+> - dumpe2fs-xen_images-3.1.5                           Made after booting into 3.1.5 after all of the above
+> 
+> Oh yes also did a badblock scan to rule that out, and it seems the numbers stay the same.
+> e2fsck 1.41.12 (17-May-2010) (from debian squeeze)
+> 
+> --
+> Sander
+> 
+> 
+> 
+> >> 
+> >> --
+> >> Sander
+> >> 
+> >> 
+> >> This is a forwarded message
+> >> From: Sander Eikelenboom <linux@eikelenboom.it>
+> >> To: "Theodore Ts'o" <tytso@mit.edu>
+> >> Date: Thursday, January 5, 2012, 11:37:59 AM
+> >> Subject: can't recover ext4 on lvm from ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
+> >> 
+> >> ===8<==============Original message text===============
+> >> 
+> >> I'm having some troubles with a ext4 filesystem on LVM, it seems bricked and fsck doesn't seem to find and correct the problem.
+> >> 
+> >> Steps:
+> >> 1) fsck -v -p -f the filesystem
+> >> 2) mount the filesystem
+> >> 3) Try to copy a file
+> >> 4) filesystem will be mounted RO on error  (see below)
+> >> 5) fsck again, journal will be recovered, no other errors
+> >> 6) start at 1)
+> >> 
+> >> 
+> >> I think the way i bricked it is:
+> >> - make a lvm snapshot from that lvm logical disk
+> >> - mount that lvm snapshot as RO
+> >> - try to copy a file from that mounted RO snapshot to a diffrent dir on the lvm logical disk the snapshot is from.
+> >> - it fails and i can't recover (see above)
+> >> 
+> >> 
+> >> Is there a way to recover from this ?
+> >> 
+> >> 
+> >> 
+> >> [  220.748928] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
+> >> [  220.749415] Aborting journal on device dm-2-8.
+> >> [  220.771633] EXT4-fs error (device dm-2): ext4_journal_start_sb:327: Detected aborted journal
+> >> [  220.772593] EXT4-fs (dm-2): Remounting filesystem read-only
+> >> [  220.792455] EXT4-fs (dm-2): Remounting filesystem read-only
+> >> [  220.805118] EXT4-fs (dm-2): ext4_da_writepages: jbd2_start: 9680 pages, ino 4079617; err -30
+> >> serveerstertje:/mnt/xen_images/domains/production# cd /
+> >> serveerstertje:/# umount /mnt/xen_images/
+> >> serveerstertje:/# fsck -f -v -p /dev/serveerstertje/xen_images
+> >> fsck from util-linux-ng 2.17.2
+> >> /dev/mapper/serveerstertje-xen_images: recovering journal
+> >> 
+> >>     277 inodes used (0.00%)
+> >>       5 non-contiguous files (1.8%)
+> >>       0 non-contiguous directories (0.0%)
+> >>         # of inodes with ind/dind/tind blocks: 41/41/3
+> >>         Extent depth histogram: 69/28/2
+> >> 51890920 blocks used (79.18%)
+> >>       0 bad blocks
+> >>      41 large files
+> >> 
+> >>     199 regular files
+> >>      53 directories
+> >>       0 character device files
+> >>       0 block device files
+> >>       0 fifos
+> >>       0 links
+> >>      16 symbolic links (16 fast symbolic links)
+> >>       0 sockets
+> >> --------
+> >>     268 files
+> >> serveerstertje:/#
+> >> 
+> >> 
+> >> 
+> >> 
+> >> System:
+> >> - Kernel 3.2.0
+> >> - Debian Squeeze with:
+> >> ii  e2fslibs                              1.41.12-4stable1                     ext2/ext3/ext4 file system libraries
+> >> ii  e2fsprogs                             1.41.12-4stable1                     ext2/ext3/ext4 file system utilities
+> >> 
+> >> ===8<===========End of original message text===========
+> >> 
+> >> 
+> >> 
+> >> -- 
+> >> Best regards,
+> >> Sander                            mailto:linux@eikelenboom.it<Message01.eml>
+> 
+> 
+> 
+> 
+> -- 
+> Best regards,
+>  Sander                            mailto:linux@eikelenboom.it
+
+
+
+
+
+
