@@ -1,7 +1,7 @@
 From: Sander Eikelenboom <linux@eikelenboom.it>
 Subject: Re: can't recover ext4 on lvm from ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
-Date: Thu, 5 Jan 2012 22:31:27 +0100
-Message-ID: <1136620602.20120105223127@eikelenboom.it>
+Date: Thu, 5 Jan 2012 23:43:22 +0100
+Message-ID: <1829329984.20120105234322@eikelenboom.it>
 References: <217150909.20120105113759@eikelenboom.it> <197607646.20120105142107@eikelenboom.it> <6FC155DD-80C1-4088-B745-6B74D9D5AA48@mit.edu> <4910694144.20120105171428@eikelenboom.it> <20120105181535.GB26382@thunk.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -42,17 +42,14 @@ Thursday, January 5, 2012, 7:15:35 PM, you wrote:
 
 >                                                 - Ted
 
+Tried to bisect, but every kernel in between seems to have some drivers for devices f*cked up so it doesn't even boot.
+That was a quite frustrating and disappointing experience.
+So it's back to 3.1.5 and continue with i was actually trying to do, and try later if it's still reproducible with another disk layout.
 
-OK Xen is out of the equation, it also happens on baremetal.
-Last time under both Xen and baremetal i got a slightly different error (different numbers (group)
+Thx for your effort so far.
 
-[  823.782633] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1865, 32254 clusters in bitmap, 32258 in gd
-[  823.788129] Aborting journal on device dm-2-8.
-[  823.852443] EXT4-fs (dm-2): Remounting filesystem read-only
-[  823.857956] EXT4-fs error (device dm-2) in ext4_da_write_end:2532: IO failure
-[  823.858646] EXT4-fs (dm-2): ext4_da_writepages: jbd2_start: 12288 pages, ino 4079617; err -30
-
-
+--
+Sander
 
 >> 
 >> [ 2357.655783] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1861, 32254 clusters in bitmap, 32258 in gd
