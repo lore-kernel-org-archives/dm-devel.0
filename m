@@ -1,181 +1,144 @@
-From: Sander Eikelenboom <linux@eikelenboom.it>
-Subject: Re: can't recover ext4 on lvm from ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
-Date: Thu, 5 Jan 2012 23:43:22 +0100
-Message-ID: <1829329984.20120105234322@eikelenboom.it>
-References: <217150909.20120105113759@eikelenboom.it> <197607646.20120105142107@eikelenboom.it> <6FC155DD-80C1-4088-B745-6B74D9D5AA48@mit.edu> <4910694144.20120105171428@eikelenboom.it> <20120105181535.GB26382@thunk.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [RFC PATCH] Track block device users that created dirty
+	pages
+Date: Thu, 5 Jan 2012 19:58:34 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1201051954160.31587@hs20-bc2-1.build.redhat.com>
+References: <1325632496-5524-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20120105181535.GB26382@thunk.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Ted Ts'o <tytso@mit.edu>
-Cc: linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1325632496-5524-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Ted,
+Hi
 
-Thursday, January 5, 2012, 7:15:35 PM, you wrote:
+This is the patch for selective flushing on block devices. Only processes 
+that created some dirty data in the pagecache flush the pagecache when 
+closing the device. The processes that didn't create any dirty data (for 
+example lvm, when using direct io) don't flush the cache when closing the 
+device.
 
-> On Thu, Jan 05, 2012 at 05:14:28PM +0100, Sander Eikelenboom wrote:
->> 
->> OK spoke too soon, i have been able to trigger it again:
->> - copying files from LV to the same LV without the snapshot went OK
->> - copying from the RO snapshot of a LV to the same LV gave the error while copying the file again:
+Mikulas
 
-> OK.  Originally, you said you did this:
+---
 
-> 1) fsck -v -p -f the filesystem
-> 2) mount the filesystem
-> 3) Try to copy a file
-> 4) filesystem will be mounted RO on error  (see below)
-> 5) fsck again, journal will be recovered, no other errors
-> 6) start at 1)
+Track block device users that created dirty pages
 
-> Was this with with a read-only snapshot always being in existence
-> through all of these five steps?  When was the RO snapshot created?
+This patch adds a new field f_driver_flags to struct file. The field may
+be used by the driver for any purpose.
 
-> If a RO snapshot has to be there in order for this to happen, then
-> this is almost certainly a device-mapper regression.  (dm-devel folks,
-> this is a problem which apparently occurred when the user went from
-> v3.1.5 to v3.2, so this looks likes 3.2 regression.)
+Block device driver uses this field to track "file" structures that
+created some dirty data in the pagecache. When such "file" structure is
+closed, we flush block device cache.
 
->                                                 - Ted
+This changes previously defined flush semantics.
 
-Tried to bisect, but every kernel in between seems to have some drivers for devices f*cked up so it doesn't even boot.
-That was a quite frustrating and disappointing experience.
-So it's back to 3.1.5 and continue with i was actually trying to do, and try later if it's still reproducible with another disk layout.
+Previously, the block device cache was flushed when the last user closed
+the block device. That has various problems:
+* because system tools and daemons (for example udev or lvm) can open
+  any block device anytime, this semantics doesn't guarantee that flush
+  happens. For example, if the user runs "dd" to copy some data to the
+  partition, then udev opens the device and then "dd" finishes copying
+  and closes the device, data is not flushed when "dd" exits (because
+  udev still keeps the device open).
+* if the last user that closes the device ends up being "lvm" process,
+  it can introduce deadlocks. "lvm" would than have to flush some dirty
+  data created by some other process. If writeback of these dirty data
+  waits for some other operation to be performed by "lvm", we get a
+  deadlock.
 
-Thx for your effort so far.
+The new semantics is: if a process did some buffered writes to the block
+device (with write or mmap), the cache is flushed when the process
+closes the block device. Processes that didn't do any buffered writes to
+the device don't cause cache flush. It has these advantages:
+* processes that don't do buffered writes (such as "lvm") don't flush
+  other process's data.
+* if the user runs "dd" on a block device, it is actually guaranteed
+  that the data is flushed when "dd" exits.
 
---
-Sander
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
->> 
->> [ 2357.655783] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1861, 32254 clusters in bitmap, 32258 in gd
->> [ 2357.656056] Aborting journal on device dm-2-8.
->> [ 2357.718473] EXT4-fs (dm-2): Remounting filesystem read-only
->> [ 2357.736680] EXT4-fs error (device dm-2) in ext4_da_write_end:2532: IO failure
->> [ 2357.738328] EXT4-fs (dm-2): ext4_da_writepages: jbd2_start: 7615 pages, ino 4079617; err -30
->> [ 2716.125010] EXT4-fs error (device dm-2): ext4_put_super:818: Couldn't clean up the journal
->> 
->> 
->> Attached are 4x output from dumpe2fs
->> - dumpe2fs-xen_images-3.2.0                           Made just after boot
->> - dumpe2fs-xen_images-3.2.0-afterfsck                 Made after doing a fsck -v -p -f on the unmounted LV
->> - dumpe2fs-xen_images-3.2.0-aftererror                Made after the error occured on the mounted LV
->> - dumpe2fs-xen_images-3.2.0-aftererror-afterfsck      Made after the error occured, and after a subsequent fsck -v -p -f on the unmounted LV
->> - dumpe2fs-xen_images-3.1.5                           Made after booting into 3.1.5 after all of the above
->> 
->> Oh yes also did a badblock scan to rule that out, and it seems the numbers stay the same.
->> e2fsck 1.41.12 (17-May-2010) (from debian squeeze)
->> 
->> --
->> Sander
->> 
->> 
->> 
->> >> 
->> >> --
->> >> Sander
->> >> 
->> >> 
->> >> This is a forwarded message
->> >> From: Sander Eikelenboom <linux@eikelenboom.it>
->> >> To: "Theodore Ts'o" <tytso@mit.edu>
->> >> Date: Thursday, January 5, 2012, 11:37:59 AM
->> >> Subject: can't recover ext4 on lvm from ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
->> >> 
->> >> ===8<==============Original message text===============
->> >> 
->> >> I'm having some troubles with a ext4 filesystem on LVM, it seems bricked and fsck doesn't seem to find and correct the problem.
->> >> 
->> >> Steps:
->> >> 1) fsck -v -p -f the filesystem
->> >> 2) mount the filesystem
->> >> 3) Try to copy a file
->> >> 4) filesystem will be mounted RO on error  (see below)
->> >> 5) fsck again, journal will be recovered, no other errors
->> >> 6) start at 1)
->> >> 
->> >> 
->> >> I think the way i bricked it is:
->> >> - make a lvm snapshot from that lvm logical disk
->> >> - mount that lvm snapshot as RO
->> >> - try to copy a file from that mounted RO snapshot to a diffrent dir on the lvm logical disk the snapshot is from.
->> >> - it fails and i can't recover (see above)
->> >> 
->> >> 
->> >> Is there a way to recover from this ?
->> >> 
->> >> 
->> >> 
->> >> [  220.748928] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
->> >> [  220.749415] Aborting journal on device dm-2-8.
->> >> [  220.771633] EXT4-fs error (device dm-2): ext4_journal_start_sb:327: Detected aborted journal
->> >> [  220.772593] EXT4-fs (dm-2): Remounting filesystem read-only
->> >> [  220.792455] EXT4-fs (dm-2): Remounting filesystem read-only
->> >> [  220.805118] EXT4-fs (dm-2): ext4_da_writepages: jbd2_start: 9680 pages, ino 4079617; err -30
->> >> serveerstertje:/mnt/xen_images/domains/production# cd /
->> >> serveerstertje:/# umount /mnt/xen_images/
->> >> serveerstertje:/# fsck -f -v -p /dev/serveerstertje/xen_images
->> >> fsck from util-linux-ng 2.17.2
->> >> /dev/mapper/serveerstertje-xen_images: recovering journal
->> >> 
->> >>     277 inodes used (0.00%)
->> >>       5 non-contiguous files (1.8%)
->> >>       0 non-contiguous directories (0.0%)
->> >>         # of inodes with ind/dind/tind blocks: 41/41/3
->> >>         Extent depth histogram: 69/28/2
->> >> 51890920 blocks used (79.18%)
->> >>       0 bad blocks
->> >>      41 large files
->> >> 
->> >>     199 regular files
->> >>      53 directories
->> >>       0 character device files
->> >>       0 block device files
->> >>       0 fifos
->> >>       0 links
->> >>      16 symbolic links (16 fast symbolic links)
->> >>       0 sockets
->> >> --------
->> >>     268 files
->> >> serveerstertje:/#
->> >> 
->> >> 
->> >> 
->> >> 
->> >> System:
->> >> - Kernel 3.2.0
->> >> - Debian Squeeze with:
->> >> ii  e2fslibs                              1.41.12-4stable1                     ext2/ext3/ext4 file system libraries
->> >> ii  e2fsprogs                             1.41.12-4stable1                     ext2/ext3/ext4 file system utilities
->> >> 
->> >> ===8<===========End of original message text===========
->> >> 
->> >> 
->> >> 
->> >> -- 
->> >> Best regards,
->> >> Sander                            mailto:linux@eikelenboom.it<Message01.eml>
->> 
->> 
->> 
->> 
->> -- 
->> Best regards,
->>  Sander                            mailto:linux@eikelenboom.it
+---
+ fs/block_dev.c     |   18 ++++++++++++++++--
+ include/linux/fs.h |    1 +
+ 2 files changed, 17 insertions(+), 2 deletions(-)
 
-
-
-
-
-
-
-
-
--- 
-Best regards,
- Sander                            mailto:linux@eikelenboom.it
-
+Index: linux-3.2-fast/include/linux/fs.h
+===================================================================
+--- linux-3.2-fast.orig/include/linux/fs.h	2012-01-06 00:57:58.000000000 +0100
++++ linux-3.2-fast/include/linux/fs.h	2012-01-06 00:58:42.000000000 +0100
+@@ -1007,6 +1007,7 @@ struct file {
+ #ifdef CONFIG_DEBUG_WRITECOUNT
+ 	unsigned long f_mnt_write_state;
+ #endif
++	unsigned		f_driver_flags;
+ };
+ 
+ struct file_handle {
+Index: linux-3.2-fast/fs/block_dev.c
+===================================================================
+--- linux-3.2-fast.orig/fs/block_dev.c	2012-01-06 00:57:58.000000000 +0100
++++ linux-3.2-fast/fs/block_dev.c	2012-01-06 01:41:08.000000000 +0100
+@@ -324,10 +324,22 @@ static int blkdev_readpage(struct file *
+ 	return block_read_full_page(page, blkdev_get_block);
+ }
+ 
++static int blkdev_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	if ((vma->vm_flags & (VM_WRITE | VM_SHARED)) == (VM_WRITE | VM_SHARED)) {
++		if (!file->f_driver_flags)
++			file->f_driver_flags = 1;
++	}
++	return generic_file_mmap(file, vma);
++}
++
+ static int blkdev_write_begin(struct file *file, struct address_space *mapping,
+ 			loff_t pos, unsigned len, unsigned flags,
+ 			struct page **pagep, void **fsdata)
+ {
++	if (unlikely(!file->f_driver_flags))
++		file->f_driver_flags = 1;
++
+ 	return block_write_begin(mapping, pos, len, flags, pagep,
+ 				 blkdev_get_block);
+ }
+@@ -1429,7 +1441,6 @@ static int __blkdev_put(struct block_dev
+ 
+ 	if (!--bdev->bd_openers) {
+ 		WARN_ON_ONCE(bdev->bd_holders);
+-		sync_blockdev(bdev);
+ 		kill_bdev(bdev);
+ 		/* ->release can cause the old bdi to disappear,
+ 		 * so must switch it out first
+@@ -1513,6 +1524,9 @@ static int blkdev_close(struct inode * i
+ {
+ 	struct block_device *bdev = I_BDEV(filp->f_mapping->host);
+ 
++	if (unlikely(filp->f_driver_flags))
++		sync_blockdev(bdev);
++
+ 	return blkdev_put(bdev, filp->f_mode);
+ }
+ 
+@@ -1592,7 +1606,7 @@ const struct file_operations def_blk_fop
+ 	.write		= do_sync_write,
+   	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= blkdev_aio_write,
+-	.mmap		= generic_file_mmap,
++	.mmap		= blkdev_mmap,
+ 	.fsync		= blkdev_fsync,
+ 	.unlocked_ioctl	= block_ioctl,
+ #ifdef CONFIG_COMPAT
