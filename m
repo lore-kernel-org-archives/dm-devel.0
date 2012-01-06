@@ -1,46 +1,52 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [RFC PATCH] Track block device users that created
- dirty pages
-Date: Fri, 6 Jan 2012 09:41:34 -0500
-Message-ID: <20120106144134.GA17498@infradead.org>
-References: <1325632496-5524-1-git-send-email-snitzer@redhat.com>
-	<Pine.LNX.4.64.1201051954160.31587@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] can't recover ext4 on lvm from ext4_mb_generate_buddy:739:
+ group 1687, 32254 clusters in bitmap, 32258 in gd
+Date: Fri, 6 Jan 2012 11:40:17 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1201061133140.6954@hs20-bc2-1.build.redhat.com>
+References: <217150909.20120105113759@eikelenboom.it> <197607646.20120105142107@eikelenboom.it>
+ <6FC155DD-80C1-4088-B745-6B74D9D5AA48@mit.edu> <4910694144.20120105171428@eikelenboom.it>
+ <20120105181535.GB26382@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1201051954160.31587@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20120105181535.GB26382@thunk.org>
+Sender: linux-ext4-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, Edward Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: Sander Eikelenboom <linux@eikelenboom.it>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Jan 05, 2012 at 07:58:34PM -0500, Mikulas Patocka wrote:
-> Hi
-> 
-> This is the patch for selective flushing on block devices. Only processes 
-> that created some dirty data in the pagecache flush the pagecache when 
-> closing the device. The processes that didn't create any dirty data (for 
-> example lvm, when using direct io) don't flush the cache when closing the 
-> device.
-> 
-> Mikulas
-> 
-> ---
-> 
-> Track block device users that created dirty pages
-> 
-> This patch adds a new field f_driver_flags to struct file. The field may
-> be used by the driver for any purpose.
 
-Please use file->private for that kind of usage.
+
+On Thu, 5 Jan 2012, Ted Ts'o wrote:
+
+> On Thu, Jan 05, 2012 at 05:14:28PM +0100, Sander Eikelenboom wrote:
+> > 
+> > OK spoke too soon, i have been able to trigger it again:
+> > - copying files from LV to the same LV without the snapshot went OK
+> > - copying from the RO snapshot of a LV to the same LV gave the error while copying the file again:
+> 
+> OK.  Originally, you said you did this:
+> 
+> 1) fsck -v -p -f the filesystem
+> 2) mount the filesystem
+> 3) Try to copy a file
+> 4) filesystem will be mounted RO on error  (see below)
+> 5) fsck again, journal will be recovered, no other errors
+> 6) start at 1)
+> 
+> Was this with with a read-only snapshot always being in existence
+> through all of these five steps?  When was the RO snapshot created?
+> 
+> If a RO snapshot has to be there in order for this to happen, then
+> this is almost certainly a device-mapper regression.  (dm-devel folks,
+
+The existence of a snapshot changes I/O completion times significantly, so 
+it may be a race condition in ext4 that gets triggered which changed 
+timings.
+
+Mikulas
+
+> this is a problem which apparently occurred when the user went from
+> v3.1.5 to v3.2, so this looks likes 3.2 regression.)
+> 
+> 						- Ted
