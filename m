@@ -1,67 +1,101 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Write protected devices, unexpected dm-multipath queueing
-Date: Mon, 09 Jan 2012 09:01:18 +0100
-Message-ID: <4F0A9ECE.60808@suse.de>
-References: <1325878251.19595.13.camel@lapoo.opensvc.com> <20120106223212.GB2393@redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: [PATCH] Don't add 'p' delimiter when you shouldn't
+Date: Sun, 08 Jan 2012 22:08:23 -0500
+Message-ID: <4F0A5A27.8090107@ubuntu.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20120106223212.GB2393@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>, "cyril.galibern" <cyril.galibern@opensvc.com>, linux-scsi@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============6788881619893088299=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/06/2012 11:32 PM, Mike Snitzer wrote:
-> On Fri, Jan 06 2012 at  2:30pm -0500,
-> Christophe Varoqui <christophe.varoqui@gmail.com> wrote:
->=20
->> Hannes, list,
->>
->> reading your kernel path there
->> http://git.kernel.org/?p=3Dlinux/kernel/git/torvalds/linux-2.6.git;a=
-=3Dcommitdiff;h=3D63583cca745f440167bf27877182dc13e19d4bcf
->> I wonder if this is expected that a write io on a write protected de=
-vice
->> is returned to the queue ? I would have guessed it qualified as
->> TARGET_ERROR, hence not retryable (and not causing path invalidation=
-).
->>
->> In the following log the sense code is clearly seen as=20
->> Sense Key : Data Protect [current]
->> Add. Sense: Write protected
->>
->> The log is grabbed from a el6 kernel rev. 131 which include the
->> mentioned patch (since rev. 110 iirc).
->>
->> Care to confirm something is fishy there ?
->=20
-> scsi_check_sense() needs to be trained to return TARGET_ERROR for thi=
-s
-> case.
->=20
-> The commit you referenced wasn't meant to have covered _every_ possib=
-le
-> TARGET_ERROR case.  For example, I posted a patch for other TARGET_ER=
-ROR
-> cases here:
-> http://www.spinics.net/lists/linux-scsi/msg55792.html
->=20
-Yes, that's correct. We'll need to check for this case, too.
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--===============6788881619893088299==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="------------enigAF057FAAD5C0E79E65FA67B9"
 
-I'll be sending a patch.
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enigAF057FAAD5C0E79E65FA67B9
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Cheers,
+The 'p' delimiter is supposed to be added when the base disk name
+ends in a digit.  This decision was based on the name given on the
+command line, not the canonical device name, so giving /dev/dm-0
+instead of /dev/mapper/foo triggered the digit test and added the
+'p'.  Changed test to use the canonical name rather than the given
+name.
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Index: b/kpartx/kpartx.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -310,12 +310,6 @@
+ 		device =3D loopdev;
+ 	}
+=20
+-	if (delim =3D=3D NULL) {
+-		delim =3D malloc(DELIM_SIZE);
+-		memset(delim, 0, DELIM_SIZE);
+-		set_delimiter(device, delim);
+-	}
+-
+ 	off =3D find_devname_offset(device);
+=20
+ 	if (!loopdev) {
+@@ -331,6 +325,12 @@
+ 	if (!mapname)
+ 		mapname =3D device + off;
+=20
++	if (delim =3D=3D NULL) {
++		delim =3D malloc(DELIM_SIZE);
++		memset(delim, 0, DELIM_SIZE);
++		set_delimiter(mapname, delim);
++	}
++
+ 	fd =3D open(device, O_RDONLY);
+=20
+ 	if (fd =3D=3D -1) {
+
+
+--------------enigAF057FAAD5C0E79E65FA67B9
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
+
+iQEcBAEBAgAGBQJPClonAAoJEJrBOlT6nu75uIkH/ROUm2oKsiK6Kjhkj2k0KeZP
+jhrP8UoK0AR6Tvk/AFFGhINe7RWxM0P2O8mhfRhs24A4Xv2yxtz0WkkCKmu0qGDM
+TRetKN/jCV8tFVv2z87nV3Sdze5ekLakoMBY9Ik9VRbCGT7i5YRYEaHs0H9bgrJt
+JNrnUXDzuajpyJPNSsuF+KIiw0r68kknSeNO0yypyAszqdiOxARcuRidfQlM7trB
+qqoMwRzy6oLdnZCjyWpd5rKQpnFV3aGxpIwXc8emC8kRi0GYZLzDYmOlzrCBzmd+
+XwZkNhDvpkE6eIuxVyvllAwldPTQ7b9c+JcncBdERWVExVrsTUN9YmFu6wcrj6I=
+=xwtw
+-----END PGP SIGNATURE-----
+
+--------------enigAF057FAAD5C0E79E65FA67B9--
+
+
+--===============6788881619893088299==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6788881619893088299==--
