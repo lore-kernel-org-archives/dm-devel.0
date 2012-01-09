@@ -1,65 +1,52 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: Write protected devices, unexpected dm-multipath queueing
-Date: Sat, 07 Jan 2012 10:39:32 +0100
-Message-ID: <1325929172.19595.19.camel@lapoo.opensvc.com>
-References: <1325878251.19595.13.camel@lapoo.opensvc.com>
-	 <20120106223212.GB2393@redhat.com> <20120106225554.GA15329@redhat.com>
-	 <20120106232055.GB15329@redhat.com>
-Reply-To: christophe.varoqui@opensvc.com
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH] scsi_dh_alua: Retry the check-condition in
+ case	Mode Parameters Changed
+Date: Mon, 09 Jan 2012 08:12:13 +0100
+Message-ID: <4F0A934D.6000802@suse.de>
+References: <47D23AD8469A2B448F33C24BD7A39BD910D14606@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20120106232055.GB15329@redhat.com>
+In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD910D14606@RTPMVEXC1-PRD.hq.netapp.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "cyril.galibern" <cyril.galibern@opensvc.com>, linux-scsi@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Moger, Babu" <Babu.Moger@netapp.com>, linux-scsi@vger.kernel.org, JBottomley@Parallels.com
 List-Id: dm-devel.ids
 
-On ven., 2012-01-06 at 18:20 -0500, Mike Snitzer wrote:
-> On Fri, Jan 06 2012 at  5:55pm -0500,
-> Mike Snitzer <snitzer@redhat.com> wrote:
-> 
-> > On Fri, Jan 06 2012 at  5:32pm -0500,
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> > 
-> > > On Fri, Jan 06 2012 at  2:30pm -0500,
-> > > Christophe Varoqui <christophe.varoqui@gmail.com> wrote:
-> > > 
-> > > > Hannes, list,
-> > > > 
-> > > > reading your kernel path there
-> > > > http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=63583cca745f440167bf27877182dc13e19d4bcf
-> > > > I wonder if this is expected that a write io on a write protected device
-> > > > is returned to the queue ? I would have guessed it qualified as
-> > > > TARGET_ERROR, hence not retryable (and not causing path invalidation).
-> > > > 
-> > > > In the following log the sense code is clearly seen as 
-> > > > Sense Key : Data Protect [current]
-> > > > Add. Sense: Write protected
-> > > > 
-> > > > The log is grabbed from a el6 kernel rev. 131 which include the
-> > > > mentioned patch (since rev. 110 iirc).
-> > > > 
-> > > > Care to confirm something is fishy there ?
-> 
-> Aha, now I remember, I applied all the changes for differentiated SCSI
-> IO errors for -131.el6 (aka RHEL6.1) _except_ I overlooked one disjoint
-> yet crucial commit that went upstream much earlier, see this one-liner:
-> http://git.kernel.org/linus/ad63082626f99651d261ccd8698ce4e997362f7e
-> 
-> So the code for differentiated IO errors was dormant in RHEL6.1, it was
-> noticed before 6.1 GA'd but was deemed too risky to enable so late in
-> the 6.1 release cycle.  It has since been enabled in RHEL6.2.
-> 
-> And yes it was a pretty embarassing oversight at the time... now you've
-> allowed me to relive that embarassment ;)
-> 
-> Long story short, apply that patch or upgrade to the RHEL6.2 kernel.
+On 12/22/2011 12:01 AM, Moger, Babu wrote:
+> This patch adds a check-condition in scsi_dh_alua handler for a retry=
+=2E
+> Sometimes,
+> I have seen attach failing due to this check-condition with following
+> error=20
+> messages on NetApp E series storage.
+>=20
+> Dec  7 15:31:01 nilgiris kernel: [102979.696673] scsi 3:0:2:9: alua:
+> port group 00 rel port 01
+> Dec  7 15:31:01 nilgiris kernel: [102979.697082] scsi 3:0:2:9: alua:
+> rtpg failed with 8000002
+> Dec  7 15:31:01 nilgiris kernel: [102979.697086] scsi 3:0:2:9: alua:
+> rtpg sense code 06/2a/01
+> Dec  7 15:31:01 nilgiris kernel: [102979.697088] scsi 3:0:2:9: alua: =
+not
+> attached
+>=20
+> Signed-off-by: Babu Moger <babu.moger@netapp.com>
+Looks ok.
 
-Thank you for the explanation, and sorry for the ambarassment. By bad,
-for not having tried the upgrade before nosing around ;)
+Acked-by: Hannes Reinecke <hare@suse.de>
 
-Regards,
-cvaroqui
+Cheers,
 
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
