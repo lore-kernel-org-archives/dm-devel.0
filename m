@@ -1,10 +1,12 @@
-From: Phillip Susi <psusi@ubuntu.com>
-Subject: [PATCH] Don't add 'p' delimiter when you shouldn't
-Date: Sun, 08 Jan 2012 22:08:23 -0500
-Message-ID: <4F0A5A27.8090107@ubuntu.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm thin metadata: clarify __open_device
+	functionality and fix callers
+Date: Mon,  9 Jan 2012 15:33:08 -0500
+Message-ID: <1326141188-2172-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6788881619893088299=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,87 +17,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: thornber@redhat.com
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---===============6788881619893088299==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature";
-	boundary="------------enigAF057FAAD5C0E79E65FA67B9"
+The __open_device() error path of __create_thin() and __create_snap()
+will call __close_device() even if td was not initialized by
+__open_device().
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigAF057FAAD5C0E79E65FA67B9
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Clearly define what callers should expect from __open_device()'s
+return.
 
-The 'p' delimiter is supposed to be added when the base disk name
-ends in a digit.  This decision was based on the name given on the
-command line, not the canonical device name, so giving /dev/dm-0
-instead of /dev/mapper/foo triggered the digit test and added the
-'p'.  Changed test to use the canonical name rather than the given
-name.
+Also, remove redundant 'td->changed = 1' in __create_thin() --
+__open_device() with create=1 will have set td->changed on successful
+return.
 
-Index: b/kpartx/kpartx.c
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -310,12 +310,6 @@
- 		device =3D loopdev;
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-thin-metadata.c |   22 ++++++++++++++++++----
+ 1 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index 59c4f04..28f98cb 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -789,6 +789,11 @@ int dm_pool_metadata_close(struct dm_pool_metadata *pmd)
+ 	return 0;
+ }
+ 
++/*
++ * __open_device: lookup @td if already open, allocate @td on first open.
++ * on success, return @td with an incremented reference count.
++ * on failure, @td is not initialized.
++ */
+ static int __open_device(struct dm_pool_metadata *pmd,
+ 			 dm_thin_id dev, int create,
+ 			 struct dm_thin_device **td)
+@@ -803,6 +808,13 @@ static int __open_device(struct dm_pool_metadata *pmd,
+ 	 */
+ 	list_for_each_entry(td2, &pmd->thin_devices, list)
+ 		if (td2->id == dev) {
++			if (create) {
++				/*
++				 * inconsistency if looking to create
++				 * an already open device.
++				 */
++				return -EINVAL;
++			}
+ 			td2->open_count++;
+ 			*td = td2;
+ 			return 0;
+@@ -817,6 +829,9 @@ static int __open_device(struct dm_pool_metadata *pmd,
+ 		if (r != -ENODATA || !create)
+ 			return r;
+ 
++		/*
++		 * Open is for device creation.
++		 */
+ 		changed = 1;
+ 		details_le.mapped_blocks = 0;
+ 		details_le.transaction_id = cpu_to_le64(pmd->trans_id);
+@@ -882,12 +897,10 @@ static int __create_thin(struct dm_pool_metadata *pmd,
+ 
+ 	r = __open_device(pmd, dev, 1, &td);
+ 	if (r) {
+-		__close_device(td);
+ 		dm_btree_remove(&pmd->tl_info, pmd->root, &key, &pmd->root);
+ 		dm_btree_del(&pmd->bl_info, dev_root);
+ 		return r;
  	}
-=20
--	if (delim =3D=3D NULL) {
--		delim =3D malloc(DELIM_SIZE);
--		memset(delim, 0, DELIM_SIZE);
--		set_delimiter(device, delim);
--	}
--
- 	off =3D find_devname_offset(device);
-=20
- 	if (!loopdev) {
-@@ -331,6 +325,12 @@
- 	if (!mapname)
- 		mapname =3D device + off;
-=20
-+	if (delim =3D=3D NULL) {
-+		delim =3D malloc(DELIM_SIZE);
-+		memset(delim, 0, DELIM_SIZE);
-+		set_delimiter(mapname, delim);
+-	td->changed = 1;
+ 	__close_device(td);
+ 
+ 	return r;
+@@ -967,14 +980,15 @@ static int __create_snap(struct dm_pool_metadata *pmd,
+ 		goto bad;
+ 
+ 	r = __set_snapshot_details(pmd, td, origin, pmd->time);
+-	if (r)
++	if (r) {
++		__close_device(td);
+ 		goto bad;
 +	}
-+
- 	fd =3D open(device, O_RDONLY);
-=20
- 	if (fd =3D=3D -1) {
-
-
---------------enigAF057FAAD5C0E79E65FA67B9
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
-
-iQEcBAEBAgAGBQJPClonAAoJEJrBOlT6nu75uIkH/ROUm2oKsiK6Kjhkj2k0KeZP
-jhrP8UoK0AR6Tvk/AFFGhINe7RWxM0P2O8mhfRhs24A4Xv2yxtz0WkkCKmu0qGDM
-TRetKN/jCV8tFVv2z87nV3Sdze5ekLakoMBY9Ik9VRbCGT7i5YRYEaHs0H9bgrJt
-JNrnUXDzuajpyJPNSsuF+KIiw0r68kknSeNO0yypyAszqdiOxARcuRidfQlM7trB
-qqoMwRzy6oLdnZCjyWpd5rKQpnFV3aGxpIwXc8emC8kRi0GYZLzDYmOlzrCBzmd+
-XwZkNhDvpkE6eIuxVyvllAwldPTQ7b9c+JcncBdERWVExVrsTUN9YmFu6wcrj6I=
-=xwtw
------END PGP SIGNATURE-----
-
---------------enigAF057FAAD5C0E79E65FA67B9--
-
-
---===============6788881619893088299==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6788881619893088299==--
+ 
+ 	__close_device(td);
+ 	return 0;
+ 
+ bad:
+-	__close_device(td);
+ 	dm_btree_remove(&pmd->tl_info, pmd->root, &key, &pmd->root);
+ 	dm_btree_remove(&pmd->details_info, pmd->details_root,
+ 			&key, &pmd->details_root);
+-- 
+1.7.4.4
