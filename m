@@ -1,69 +1,91 @@
-From: Oren Held <oren@held.org.il>
-Subject: Re: [PATCH] Add default values for IBM XIV Storage
-	System.
-Date: Thu, 12 Jan 2012 09:37:16 +0200
-Message-ID: <20120112073714.GA4362@orenhe-laptop>
-References: <20111228175920.GA29764@orenhe-laptop>
-	<1325245568.6564.0.camel@lapoo.opensvc.com>
-	<CAEnAntiX-ub=xBi34=iU6e_neY6aOU0ViVNjY7sU6g4iEZD2kA@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAEnAntiX-ub=xBi34=iU6e_neY6aOU0ViVNjY7sU6g4iEZD2kA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: [PATCH v2 3/3] dm: do not forward ioctls from logical volumes to the underlying device
+Date: Thu, 12 Jan 2012 16:01:29 +0100
+Message-ID: <1326380489-9044-4-git-send-email-pbonzini@redhat.com>
+References: <1326380489-9044-1-git-send-email-pbonzini@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1326380489-9044-1-git-send-email-pbonzini@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Petr Matousek <pmatouse@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-2812 is an internal IBM model number, which means 'longer warranty' (so it doesn't actually replace 2810).
-(http://rogerluethy.wordpress.com/2011/07/12/ibm-xiv-storage-system-gen3-offers-a-new-high-performance-model-114-for-machine-types-2810-and-2812/)
+A logical volume can map to just part of underlying physical volume.
+In this case, it must be treated like a partition.
 
-What matters is that this internal IBM model number is *not* exposed by SCSI inquiry.
-To this day, all IBM XIV models report 'IBM'/'2810XIV' in the vendor/product fields of SCSI inquiry, regardless of being internally known as 2810, 2812 or 2814. It's deliberate, and there's no plan to change this, AFAIK.
+Based on a patch from Alasdair G Kergon.
 
-Thanks
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ drivers/md/dm-flakey.c |   11 ++++++++++-
+ drivers/md/dm-linear.c |   12 +++++++++++-
+ drivers/md/dm-mpath.c  |    6 ++++++
+ 3 files changed, 27 insertions(+), 2 deletions(-)
 
-Oren H
-XIV Host Software team
-
-On Wed, Jan 11, 2012 at 05:39:12PM -0500, August Sodora wrote:
-> The new XIV machine code is actually 2812, not sure if this matters.
-> 
-> August Sodora
-> augsod@gmail.com
-> (201) 280-8138
-> 
-> 
-> 
-> On Fri, Dec 30, 2011 at 6:46 AM, Christophe Varoqui
-> <christophe.varoqui@gmail.com> wrote:
-> > On mer., 2011-12-28 at 19:59 +0200, Oren Held wrote:
-> >> Add default values for IBM XIV Storage System.
-> >
-> > Applied and pushed.
-> >
-> > Thanks.
-> > --
-> > Christophe Varoqui
-> > OpenSVC - Tools to scale
-> > http://www.opensvc.com/
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index f84c080..9fb18c1 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -368,8 +368,17 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
+ static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
+ {
+ 	struct flakey_c *fc = ti->private;
++	struct dm_dev *dev = fc->dev;
++	int r = 0;
+ 
+-	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (fc->start ||
++	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+ static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 3921e3b..9728839 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
+ 			unsigned long arg)
+ {
+ 	struct linear_c *lc = (struct linear_c *) ti->private;
+-	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
++	struct dm_dev *dev = lc->dev;
++	int r = 0;
++
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (lc->start ||
++	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+ static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 5e0090e..801d92d 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1520,6 +1520,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
+ 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+ }
+ 
+-- 
+1.7.7.1
