@@ -1,15 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: kpartx return codes
-Date: Thu, 12 Jan 2012 19:58:03 +0100
-Message-ID: <1326394683.19595.32.camel@lapoo.opensvc.com>
-References: <4EDF8C5C.9080900@redhat.com> <4F0F1F45.5040208@redhat.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: kpartx -l side effects
+Date: Thu, 12 Jan 2012 16:08:14 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1201121606210.12911@hs20-bc2-1.build.redhat.com>
+References: <4F0F2024.7060205@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: MULTIPART/MIXED; BOUNDARY="168436252-545965634-1326402494=:12911"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F0F1F45.5040208@redhat.com>
+In-Reply-To: <4F0F2024.7060205@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,26 +17,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: =?UTF-8?B?UMOhZHJhaWcgQnJhZHk=?= <pbrady@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gamV1LiwgMjAxMi0wMS0xMiBhdCAxNzo1OCArMDAwMCwgUMOhZHJhaWcgQnJhZHkgd3JvdGU6
-Cj4gT24gMTIvMDcvMjAxMSAwMzo1NSBQTSwgUMOhZHJhaWcgQnJhZHkgd3JvdGU6Cj4gPiBJIG5v
-dGljZWQgc29tZSBpc3N1ZXMgd2l0aCBrcGFydHggcmV0dXJuIGNvZGVzOgo+ID4gCj4gPiBPbiBh
-biB1bmNvbm5lY3RlZCBsb29wIGRldmljZSB3ZSBnZXQgd2FybmluZ3MsCj4gPiBidXQgYW4gRVhJ
-VF9TVUNDRVNTID8KPiA+IAo+ID4gICAjIGtwYXJ0eCAtYSAvZGV2L2xvb3AxICYmIGVjaG8gRVhJ
-VF9TVUNDRVNTCj4gPiAgIHJlYWQgZXJyb3IsIHNlY3RvciAwCj4gPiAgIGxsc2VlayBlcnJvcgo+
-ID4gICBsbHNlZWsgZXJyb3IKPiA+ICAgbGxzZWVrIGVycm9yCj4gPiAgIEVYSVRfU1VDQ0VTUwo+
-ID4gCj4gPiBBbHNvIGZvciBhIGxvb3AgZGV2aWNlIHRoYXQgaXMgY29ubmVjdGVkLAo+ID4gSSBn
-ZXQgYSAiZmFpbGVkIiB3YXJuaW5nLCBidXQgdGhlIEVYSVRfU1VDQ0VTUwo+ID4gaXMgYXBwcm9w
-cmlhdGUgaW4gdGhhdCBjYXNlIGFzIHRoZSBtYXBwZWQgZGV2aWNlCj4gPiBpcyBwcmVzZW50IGFu
-ZCB1c2FibGUKPiA+IAo+ID4gICAjIGtwYXJ0eCAtYSAvZGV2L2xvb3AwCj4gPiAgL2Rldi9tYXBw
-ZXIvbG9vcDBwMTogbWtub2QgZm9yIGxvb3AwcDEgZmFpbGVkOiBGaWxlIGV4aXN0cwo+ID4gCj4g
-PiBjaGVlcnMsCj4gPiBQw6FkcmFpZy4KPiA+IAo+ID4gcC5zLiB0aGUgZ2l0IHJlcG8gb24ga2Vy
-bmVsLm9yZyBpcyBubyBsb25nZXIgYXZhaWxhYmxlCj4gCj4gcmVwbyBpcyBzdGlsbCBub3QgYXZh
-aWxhYmxlLgo+IEkgd2FzIGtpbmRhIHdhaXRpbmcgZm9yIHRoYXQgYmVmb3JlIGF0dGVtcHRpbmcg
-dG8gbG9vayBhdCB0aGUgYWJvdmUgaXNzdWVzLgo+IApUaGUgbWFzdGVyIHJlcG8gb2YgbXVsdGlw
-YXRoLXRvb2xzIGlzIG5vdyBvbiBodHRwOi8vZ2l0Lm9wZW5zdmMuY29tCgpTb3JyeSBmb3Igbm90
-IGFkdmVydGl6aW5nIG1vcmUuCgpjdmFyb3F1aQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
-L2RtLWRldmVs
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--168436252-545965634-1326402494=:12911
+Content-Type: TEXT/PLAIN; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+
+
+
+On Thu, 12 Jan 2012, P=C3=A1draig Brady wrote:
+
+> I was playing around with kpartx on 2.6.40.4-5.fc15.x86_64 and did:
+> kpartx -l /bin/ls
+> Now I get "text file busy" when trying to run ls.
+> How does one undo that?
+>
+> cheers,
+> P=C3=A1draig.
+
+Run losetup -a, you find that one of loopback devices is assigned to=20
+/bin/ls (for example /dev/loop0). Then, run losetup -d /dev/loop0 to=20
+remove that block device. Then, you can use /bin/ls again.
+
+Mikulas
+--168436252-545965634-1326402494=:12911
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--168436252-545965634-1326402494=:12911--
