@@ -1,91 +1,39 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: [PATCH v2 3/3] dm: do not forward ioctls from logical volumes to the underlying device
-Date: Thu, 12 Jan 2012 16:01:29 +0100
-Message-ID: <1326380489-9044-4-git-send-email-pbonzini@redhat.com>
-References: <1326380489-9044-1-git-send-email-pbonzini@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1326380489-9044-1-git-send-email-pbonzini@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Petr Matousek <pmatouse@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+From: =?UTF-8?B?UMOhZHJhaWcgQnJhZHk=?= <pbrady@redhat.com>
+Subject: Re: kpartx return codes
+Date: Thu, 12 Jan 2012 17:58:29 +0000
+Message-ID: <4F0F1F45.5040208@redhat.com>
+References: <4EDF8C5C.9080900@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4EDF8C5C.9080900@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A logical volume can map to just part of underlying physical volume.
-In this case, it must be treated like a partition.
-
-Based on a patch from Alasdair G Kergon.
-
-Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
-Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
----
- drivers/md/dm-flakey.c |   11 ++++++++++-
- drivers/md/dm-linear.c |   12 +++++++++++-
- drivers/md/dm-mpath.c  |    6 ++++++
- 3 files changed, 27 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index f84c080..9fb18c1 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -368,8 +368,17 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
- static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
- {
- 	struct flakey_c *fc = ti->private;
-+	struct dm_dev *dev = fc->dev;
-+	int r = 0;
- 
--	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (fc->start ||
-+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
-+	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
- }
- 
- static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 3921e3b..9728839 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
- 			unsigned long arg)
- {
- 	struct linear_c *lc = (struct linear_c *) ti->private;
--	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
-+	struct dm_dev *dev = lc->dev;
-+	int r = 0;
-+
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (lc->start ||
-+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
-+	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
- }
- 
- static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 5e0090e..801d92d 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1520,6 +1520,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
- 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
- }
- 
--- 
-1.7.7.1
+T24gMTIvMDcvMjAxMSAwMzo1NSBQTSwgUMOhZHJhaWcgQnJhZHkgd3JvdGU6Cj4gSSBub3RpY2Vk
+IHNvbWUgaXNzdWVzIHdpdGgga3BhcnR4IHJldHVybiBjb2RlczoKPiAKPiBPbiBhbiB1bmNvbm5l
+Y3RlZCBsb29wIGRldmljZSB3ZSBnZXQgd2FybmluZ3MsCj4gYnV0IGFuIEVYSVRfU1VDQ0VTUyA/
+Cj4gCj4gICAjIGtwYXJ0eCAtYSAvZGV2L2xvb3AxICYmIGVjaG8gRVhJVF9TVUNDRVNTCj4gICBy
+ZWFkIGVycm9yLCBzZWN0b3IgMAo+ICAgbGxzZWVrIGVycm9yCj4gICBsbHNlZWsgZXJyb3IKPiAg
+IGxsc2VlayBlcnJvcgo+ICAgRVhJVF9TVUNDRVNTCj4gCj4gQWxzbyBmb3IgYSBsb29wIGRldmlj
+ZSB0aGF0IGlzIGNvbm5lY3RlZCwKPiBJIGdldCBhICJmYWlsZWQiIHdhcm5pbmcsIGJ1dCB0aGUg
+RVhJVF9TVUNDRVNTCj4gaXMgYXBwcm9wcmlhdGUgaW4gdGhhdCBjYXNlIGFzIHRoZSBtYXBwZWQg
+ZGV2aWNlCj4gaXMgcHJlc2VudCBhbmQgdXNhYmxlCj4gCj4gICAjIGtwYXJ0eCAtYSAvZGV2L2xv
+b3AwCj4gIC9kZXYvbWFwcGVyL2xvb3AwcDE6IG1rbm9kIGZvciBsb29wMHAxIGZhaWxlZDogRmls
+ZSBleGlzdHMKPiAKPiBjaGVlcnMsCj4gUMOhZHJhaWcuCj4gCj4gcC5zLiB0aGUgZ2l0IHJlcG8g
+b24ga2VybmVsLm9yZyBpcyBubyBsb25nZXIgYXZhaWxhYmxlCgpyZXBvIGlzIHN0aWxsIG5vdCBh
+dmFpbGFibGUuCkkgd2FzIGtpbmRhIHdhaXRpbmcgZm9yIHRoYXQgYmVmb3JlIGF0dGVtcHRpbmcg
+dG8gbG9vayBhdCB0aGUgYWJvdmUgaXNzdWVzLgoKY2hlZXJzLApQw6FkcmFpZy4KCi0tCmRtLWRl
+dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
+b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
