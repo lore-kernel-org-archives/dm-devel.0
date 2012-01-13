@@ -1,16 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: kpartx -l side effects
-Date: Fri, 13 Jan 2012 11:42:51 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1201131142170.32458@hs20-bc2-1.build.redhat.com>
-References: <4F0F2024.7060205@redhat.com>
-	<Pine.LNX.4.64.1201121606210.12911@hs20-bc2-1.build.redhat.com>
-	<4F102EA5.3040304@redhat.com>
+From: HyoGi Sim <sandrain@gmail.com>
+Subject: communication between a dm target and a userspace
+	application
+Date: Fri, 13 Jan 2012 13:17:54 -0500
+Message-ID: <CAFUgR=pfQ5qJ3GO8twZGAn8xgQ7eZS6xQ27hY6i+CVj-C5ZMxQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED;
-	BOUNDARY="168436252-1803508421-1326472971=:32458"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F102EA5.3040304@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +17,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?UMOhZHJhaWcgQnJhZHk=?= <pbrady@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi,
 
---168436252-1803508421-1326472971=:32458
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+I'm working with a dm device which needs a way to communicate with a
+userspace application as follows:
 
+1. The application gives a list of sectors which should be updated in
+an async way by the dm device.
+2. The application requests to the dm device a list of sectors which
+meet with some condition.
 
+What is a good way to implement this?
+I'm rather new to the kernel as well as device mapper, and possible
+ways that I can imagine are:
 
-On Fri, 13 Jan 2012, P=C3=A1draig Brady wrote:
+1. adding ioctl (is it possible/ok to have target specific ioctl command?)
+2. creating a sysfs/proc entry
 
-> On 01/12/2012 09:08 PM, Mikulas Patocka wrote:
-> >=20
-> >=20
-> > On Thu, 12 Jan 2012, P=C3=A1draig Brady wrote:
-> >=20
-> >> I was playing around with kpartx on 2.6.40.4-5.fc15.x86_64 and did:
-> >> kpartx -l /bin/ls
-> >> Now I get "text file busy" when trying to run ls.
-> >> How does one undo that?
-> >>
-> >> cheers,
-> >> P=C3=A1draig.
-> >=20
-> > Run losetup -a, you find that one of loopback devices is assigned to=20
-> > /bin/ls (for example /dev/loop0). Then, run losetup -d /dev/loop0 to=20
-> > remove that block device. Then, you can use /bin/ls again.
->=20
-> Cool that works.
-> It's still a bug though right?
-> I.E. `kpartx -l` has side effects (only when it can't map partitions).
->=20
-> cheers,
-> P=C3=A1draig.
+Or do you think it's a bad idea that the userspace application and the
+dm device communicate in that way?
 
-It may be a bug. You can report it to kpartx developers.
-
-Mikulas
---168436252-1803508421-1326472971=:32458
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---168436252-1803508421-1326472971=:32458--
+Thanks,
+Hyogi
