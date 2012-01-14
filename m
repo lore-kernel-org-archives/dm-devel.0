@@ -1,17 +1,16 @@
-From: =?UTF-8?B?UMOhZHJhaWcgQnJhZHk=?= <pbrady@redhat.com>
-Subject: Re: kpartx -l side effects
-Date: Fri, 13 Jan 2012 18:54:10 +0000
-Message-ID: <4F107DD2.4050402@redhat.com>
-References: <4F0F2024.7060205@redhat.com>
-	<Pine.LNX.4.64.1201121606210.12911@hs20-bc2-1.build.redhat.com>
-	<4F102EA5.3040304@redhat.com>
-	<Pine.LNX.4.64.1201131142170.32458@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH] multipath: make tgt_node_name work for iscsi
+	devices
+Date: Sat, 14 Jan 2012 12:21:15 +0100
+Message-ID: <1326540075.3211.0.camel@lapoo.opensvc.com>
+References: <20120113041456.GL1241@ether.msp.redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1201131142170.32458@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20120113041456.GL1241@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +20,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDEvMTMvMjAxMiAwNDo0MiBQTSwgTWlrdWxhcyBQYXRvY2thIHdyb3RlOgo+IAo+IAo+IE9u
-IEZyaSwgMTMgSmFuIDIwMTIsIFDDoWRyYWlnIEJyYWR5IHdyb3RlOgo+IAo+PiBPbiAwMS8xMi8y
-MDEyIDA5OjA4IFBNLCBNaWt1bGFzIFBhdG9ja2Egd3JvdGU6Cj4+Pgo+Pj4KPj4+IE9uIFRodSwg
-MTIgSmFuIDIwMTIsIFDDoWRyYWlnIEJyYWR5IHdyb3RlOgo+Pj4KPj4+PiBJIHdhcyBwbGF5aW5n
-IGFyb3VuZCB3aXRoIGtwYXJ0eCBvbiAyLjYuNDAuNC01LmZjMTUueDg2XzY0IGFuZCBkaWQ6Cj4+
-Pj4ga3BhcnR4IC1sIC9iaW4vbHMKPj4+PiBOb3cgSSBnZXQgInRleHQgZmlsZSBidXN5IiB3aGVu
-IHRyeWluZyB0byBydW4gbHMuCj4+Pj4gSG93IGRvZXMgb25lIHVuZG8gdGhhdD8KPj4+Pgo+Pj4+
-IGNoZWVycywKPj4+PiBQw6FkcmFpZy4KPj4+Cj4+PiBSdW4gbG9zZXR1cCAtYSwgeW91IGZpbmQg
-dGhhdCBvbmUgb2YgbG9vcGJhY2sgZGV2aWNlcyBpcyBhc3NpZ25lZCB0byAKPj4+IC9iaW4vbHMg
-KGZvciBleGFtcGxlIC9kZXYvbG9vcDApLiBUaGVuLCBydW4gbG9zZXR1cCAtZCAvZGV2L2xvb3Aw
-IHRvIAo+Pj4gcmVtb3ZlIHRoYXQgYmxvY2sgZGV2aWNlLiBUaGVuLCB5b3UgY2FuIHVzZSAvYmlu
-L2xzIGFnYWluLgo+Pgo+PiBDb29sIHRoYXQgd29ya3MuCj4+IEl0J3Mgc3RpbGwgYSBidWcgdGhv
-dWdoIHJpZ2h0Pwo+PiBJLkUuIGBrcGFydHggLWxgIGhhcyBzaWRlIGVmZmVjdHMgKG9ubHkgd2hl
-biBpdCBjYW4ndCBtYXAgcGFydGl0aW9ucykuCj4+Cj4+IGNoZWVycywKPj4gUMOhZHJhaWcuCj4g
-Cj4gSXQgbWF5IGJlIGEgYnVnLiBZb3UgY2FuIHJlcG9ydCBpdCB0byBrcGFydHggZGV2ZWxvcGVy
-cy4KPiAKPiBNaWt1bGFzCgpTb3JyeSwgaHR0cDovL2NocmlzdG9waGUudmFyb3F1aS5mcmVlLmZy
-LyBwb2ludGVkIGhlcmUuCkkndmUgY29waWVkIENocmlzdG9waGUgZGlyZWN0bHkuCgp0aGFua3Ms
-ClDDoWRyYWlnLgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
-aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On jeu., 2012-01-12 at 22:14 -0600, Benjamin Marzinski wrote:
+> tgt_node_name wasn't displaying anything for iscsi devices. With this
+> change, if multipath can't get the node_name, it will check
+> sys/devices/platform/hostX/sessionY/iscsi_session/sessionY/targetname
+> and if this is available, it will get the node name from there.
+> 
+
+Applied.
+
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  libmultipath/discovery.c |   20 ++++++++++++++++++--
+>  libmultipath/structs.h   |    2 +-
+>  2 files changed, 19 insertions(+), 3 deletions(-)
+> 
+> Index: multipath-tools-111219/libmultipath/discovery.c
+> ===================================================================
+> --- multipath-tools-111219.orig/libmultipath/discovery.c
+> +++ multipath-tools-111219/libmultipath/discovery.c
+> @@ -210,10 +210,11 @@ sysfs_get_size (struct sysfs_device * de
+>  }
+>  
+>  int
+> -sysfs_get_fc_nodename (struct sysfs_device * dev, char * node,
+> +sysfs_get_tgt_nodename (struct sysfs_device * dev, char * node,
+>  		       unsigned int host, unsigned int channel,
+>  		       unsigned int target)
+>  {
+> +	unsigned int checkhost, session;
+>  	char attr_path[SYSFS_PATH_SIZE];
+>  	size_t len;
+>  
+> @@ -225,6 +226,21 @@ sysfs_get_fc_nodename (struct sysfs_devi
+>  	}
+>  
+>  	len = sysfs_attr_get_value(attr_path, "node_name", node, NODE_NAME_SIZE);
+> +	if (len)
+> +		return 0;
+> +
+> +	if (sscanf(dev->devpath, "/devices/platform/host%u/session%u/",
+> +	           &checkhost, &session) != 2)
+> +		return 1;
+> +	if (checkhost != host)
+> +		return 1;
+> +	if (safe_sprintf(attr_path, "/devices/platform/host%u/session%u/iscsi_session/session%u", host, session, session)) {
+> +		condlog(0, "attr_path too small");
+> +		return 1;
+> +	}
+> +
+> +	len = sysfs_attr_get_value(attr_path, "targetname", node,
+> +				   NODE_NAME_SIZE);
+>  	if (!len)
+>  		return 1;
+>  
+> @@ -562,7 +578,7 @@ scsi_sysfs_pathinfo (struct path * pp, s
+>  	/*
+>  	 * target node name
+>  	 */
+> -	if(!sysfs_get_fc_nodename(parent, pp->tgt_node_name,
+> +	if(!sysfs_get_tgt_nodename(parent, pp->tgt_node_name,
+>  				 pp->sg_id.host_no,
+>  				 pp->sg_id.channel,
+>  				 pp->sg_id.scsi_id)) {
+> Index: multipath-tools-111219/libmultipath/structs.h
+> ===================================================================
+> --- multipath-tools-111219.orig/libmultipath/structs.h
+> +++ multipath-tools-111219/libmultipath/structs.h
+> @@ -5,7 +5,7 @@
+>  
+>  #define WWID_SIZE		128
+>  #define SERIAL_SIZE		65
+> -#define NODE_NAME_SIZE		65
+> +#define NODE_NAME_SIZE		224
+>  #define PATH_STR_SIZE		16
+>  #define PARAMS_SIZE		1024
+>  #define FILE_NAME_SIZE		256
