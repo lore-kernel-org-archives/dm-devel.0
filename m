@@ -1,62 +1,62 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-crypt: fix possible mempool deadlock
-Date: Sun, 15 Jan 2012 17:24:36 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1201151723540.26479@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH] drivers/md/dm-ioctl.c::target_message():
+ don't leak 'argv' mem
+Date: Sun, 15 Jan 2012 17:28:20 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1201151727450.26479@hs20-bc2-1.build.redhat.com>
+References: <alpine.LNX.2.00.1201152034410.13389@swampdragon.chaosbits.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LNX.2.00.1201152034410.13389@swampdragon.chaosbits.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-dm-crypt: fix possible mempool deadlock
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
 
-This patch fixes a possible deadlock in mempool in dm-crypt.
+BTW., it should be also backported to RHEL-6.
 
-Currently, dm-crypt reserves a mempool of MIN_BIO_PAGES reserved pages.
-It allocates first MIN_BIO_PAGES with non-failing allocation (the allocation
-cannot fail and waits until the mempool is refilled). Further pages are
-allocated with different gfp flags that allow failing.
+Mikulas
 
-Because allocations may be done in parallel, this code can deadlock. Example:
-There are two processes, each tries to allocate MIN_BIO_PAGES and the processes
-run simultaneously.
-It may end up in a situation where each process allocates (MIN_BIO_PAGES / 2)
-pages. The mempool is exhausted. Each process waits for more pages to be freed
-to the mempool, which never happens.
+On Sun, 15 Jan 2012, Jesper Juhl wrote:
 
-To avoid this deadlock scenario, this patch changes the code so that only
-the first page is allocated with non-failing gfp mask. Allocation of further
-pages may fail.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-crypt.c |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-Index: linux-3.2-fast/drivers/md/dm-crypt.c
-===================================================================
---- linux-3.2-fast.orig/drivers/md/dm-crypt.c	2012-01-15 22:39:47.000000000 +0100
-+++ linux-3.2-fast/drivers/md/dm-crypt.c	2012-01-15 22:40:31.000000000 +0100
-@@ -852,8 +852,7 @@ static struct bio *crypt_alloc_buffer(st
- 		 * return a partially allocated bio, the caller will then try
- 		 * to allocate additional bios while submitting this partial bio
- 		 */
--		if (i == (MIN_BIO_PAGES - 1))
--			gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
-+		gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
- 
- 		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
- 
+> If, after allocating memory for 'argv' via dm_split_args(...), we take
+> the true branch of 'if (!argc)', we'll jump to the 'out:' label and
+> neglect to free the memory we allocated. We should instead jump to the
+> 'out_argv:' label in that case as far as I can tell.
+> 
+> Signed-off-by: Jesper Juhl <jj@chaosbits.net>
+> ---
+>  drivers/md/dm-ioctl.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> 
+>  Compile tested only.
+> 
+> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> index 31c2dc2..1ce84ed 100644
+> --- a/drivers/md/dm-ioctl.c
+> +++ b/drivers/md/dm-ioctl.c
+> @@ -1437,7 +1437,7 @@ static int target_message(struct dm_ioctl *param, size_t param_size)
+>  
+>  	if (!argc) {
+>  		DMWARN("Empty message received.");
+> -		goto out;
+> +		goto out_argv;
+>  	}
+>  
+>  	table = dm_get_live_table(md);
+> -- 
+> 1.7.8.3
+> 
+> 
+> -- 
+> Jesper Juhl <jj@chaosbits.net>       http://www.chaosbits.net/
+> Don't top-post http://www.catb.org/jargon/html/T/top-post.html
+> Plain text mails only, please.
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
