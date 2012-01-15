@@ -1,41 +1,37 @@
 From: Jesper Juhl <jj@chaosbits.net>
-Subject: [PATCH] drivers/md/dm-ioctl.c::target_message(): don't leak 'argv'
- mem
-Date: Sun, 15 Jan 2012 20:36:46 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1201152034410.13389@swampdragon.chaosbits.net>
+Subject: [PATCH] There's no need to include linux/version.h in
+ drivers/md/dm-bufio.c
+Date: Sun, 15 Jan 2012 21:12:23 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1201152110290.13389@swampdragon.chaosbits.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com
-Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Neil Brown <neilb@suse.de>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, trivial@kernel.org
 List-Id: dm-devel.ids
 
-If, after allocating memory for 'argv' via dm_split_args(...), we take
-the true branch of 'if (!argc)', we'll jump to the 'out:' label and
-neglect to free the memory we allocated. We should instead jump to the
-'out_argv:' label in that case as far as I can tell.
+As 'make versioncheck' points out, drivers/md/dm-bufio.c has no need
+to include linux/version.h, so this patch removes the unneeded
+include.
 
 Signed-off-by: Jesper Juhl <jj@chaosbits.net>
 ---
- drivers/md/dm-ioctl.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ drivers/md/dm-bufio.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
 
- Compile tested only.
-
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 31c2dc2..1ce84ed 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1437,7 +1437,7 @@ static int target_message(struct dm_ioctl *param, size_t param_size)
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 0a6806f..b6e58c7 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -12,7 +12,6 @@
+ #include <linux/dm-io.h>
+ #include <linux/slab.h>
+ #include <linux/vmalloc.h>
+-#include <linux/version.h>
+ #include <linux/shrinker.h>
+ #include <linux/module.h>
  
- 	if (!argc) {
- 		DMWARN("Empty message received.");
--		goto out;
-+		goto out_argv;
- 	}
- 
- 	table = dm_get_live_table(md);
 -- 
 1.7.8.3
 
