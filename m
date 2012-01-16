@@ -1,96 +1,253 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: [PATCH stable 3/3] dm: do not forward ioctls from logical volumes to the underlying device
-Date: Mon, 16 Jan 2012 17:13:00 +0100
-Message-ID: <1326730380-7674-4-git-send-email-pbonzini@redhat.com>
-References: <1326730380-7674-1-git-send-email-pbonzini@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1326730380-7674-1-git-send-email-pbonzini@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: stable@kernel.org, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: About the thin provision function @ kernel 3.2 or
+ later.
+Date: Mon, 16 Jan 2012 17:21:06 +0100
+Message-ID: <4F144E72.9030604@redhat.com>
+References: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0867167246544835824=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A logical volume can map to just part of underlying physical volume.
-In this case, it must be treated like a partition.
+This is a multi-part message in MIME format.
+--===============0867167246544835824==
+Content-Type: multipart/alternative;
+	boundary="------------040809060502060102040209"
 
-Based on a patch from Alasdair G Kergon.
+This is a multi-part message in MIME format.
+--------------040809060502060102040209
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-[ Cherry picked from 95113a17a2a1eb06151dc698dca9bcc4a29e4fbb ]
+On 01/16/2012 02:27 AM, Yukihito HARA wrote:
+> Hi, I'm Yukihito, and interested in Linux system.
 
-Cc: stable@kernel.org
-Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
-Cc: linux-scsi@vger.kernel.org
-Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
----
- drivers/md/dm-flakey.c |   11 ++++++++++-
- drivers/md/dm-linear.c |   12 +++++++++++-
- drivers/md/dm-mpath.c  |    6 ++++++
- 3 files changed, 27 insertions(+), 2 deletions(-)
+Hi.
 
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index f84c080..9fb18c1 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -368,8 +368,17 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
- static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
- {
- 	struct flakey_c *fc = ti->private;
-+	struct dm_dev *dev = fc->dev;
-+	int r = 0;
- 
--	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (fc->start ||
-+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
-+	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
- }
- 
- static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 3921e3b..9728839 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
- 			unsigned long arg)
- {
- 	struct linear_c *lc = (struct linear_c *) ti->private;
--	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
-+	struct dm_dev *dev = lc->dev;
-+	int r = 0;
-+
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (lc->start ||
-+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
-+	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
- }
- 
- static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 5e0090e..801d92d 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1520,6 +1520,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
- 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
- }
- 
+>
+> Recently days, I became happy to hear that Linux kernel start to 
+> support thin-provisioning function.
+> And not trying to how it work on latest kernel.
+>
+> According to the word "thin provisioning", I'm imaging that, I can get 
+> larger space than actual disk size. This image is born from 
+> thin-provisioning system working on VMWare series.
+
+Thin provisioning iis a general design to save storage costs.
+
+There's solutions in software and hardware in the market, including VMWare.
+Higher range storage systems feature it.
+
+> And can write the files until reach to the physical maximum. Once 
+> reach to the physical maximum, I can't write any more files to that 
+> volume, but I can write more files after add additional physical disks 
+> to thin-pool.
+
+Yes.
+
+>
+> I could create the pool according to the documents included in the 
+> kernel source(Documentation/device-mapper/thin-provisioning.txt).
+> But I'm not sure, it works as I expecting like above.
+>
+> So can you provide more detailed documentation about the 
+> thin-provisioning, if you have?
+
+Did you read Documentation/device-mapper/thin-provisioning.txt in the 
+kernel source tree to use it yet?
+It provides advice how to create thin-provisioned devices and snapshots 
+(see dmsetup message examples).
+
+> There're no documentation written in Japanese, so I'll also output 
+> this communication to wiki or my twitter in Japanese. It helpful to 
+> make your work more major among Japanese IT engineers. And you can get 
+> more feedback if the challengers in Japan will be increased.
+> The worst point of the current documentation is, it's not instruct 
+> about how to use like above. Can't get image how to use this like 
+> VMware system from that document.
+
+Keep in mind that there'll be LVM2 support available later in distributions.
+You can pull that code from the HEAD of the LVM2 upstream repository for 
+testing purposes already (not meant for production use obviously).
+
+>
+> Sorry, this is my private testing, not for work. So I can't get much 
+> time to this, but very interested in.
+
+Thanks for trying it, we're interested in external feedback.
+
+Regards,
+Heinz
+
+>
+>
+> I'm looking forward to your answer.
+>
+> Thank you.
+> Yukihito.
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
 -- 
-1.7.7.1
+===============================================================
+Heinz Mauelshagen                               +49 2626 141200
+Consulting Development Engineer             FAX +49 2626 924446
+Red Hat GmbH
+Am Sonnenhang 11
+56242 Marienrachdorf
+Germany                                       heinzm@redhat.com
+===============================================================
+
+
+--------------040809060502060102040209
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+
+<html>
+  <head>
+    <meta content="text/html; charset=ISO-8859-1"
+      http-equiv="Content-Type">
+  </head>
+  <body bgcolor="#FFFFFF" text="#000000">
+    On 01/16/2012 02:27 AM, Yukihito HARA wrote:
+    <blockquote
+cite="mid:CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com"
+      type="cite">Hi, I'm Yukihito, and interested in Linux system.<br>
+    </blockquote>
+    <br>
+    Hi.<br>
+    <br>
+    <blockquote
+cite="mid:CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com"
+      type="cite"><br>
+      Recently days, I became happy to hear that Linux kernel start to
+      support thin-provisioning function.<br>
+      And not trying to how it work on latest kernel.<br>
+      <br>
+      According to the word "thin provisioning", I'm imaging that, I can
+      get larger space than actual disk size. This image is born from
+      thin-provisioning system working on VMWare series.<br>
+    </blockquote>
+    <br>
+    Thin provisioning iis a general design to save storage costs.<br>
+    <br>
+    There's solutions in software and hardware in the market, including
+    VMWare.<br>
+    Higher range storage systems feature it.<br>
+    <br>
+    <blockquote
+cite="mid:CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com"
+      type="cite">
+      And can write the files until reach to the physical maximum. Once
+      reach to the physical maximum, I can't write any more files to
+      that volume, but I can write more files after add additional
+      physical disks to thin-pool.<br>
+    </blockquote>
+    <br>
+    Yes.<br>
+    <br>
+    <blockquote
+cite="mid:CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com"
+      type="cite">
+      <br>
+      I could create the pool according to the documents included in the
+      kernel source(Documentation/device-mapper/thin-provisioning.txt).<br>
+      But I'm not sure, it works as I expecting like above.<br>
+      <br>
+      So can you provide more detailed documentation about the
+      thin-provisioning, if you have?<br>
+    </blockquote>
+    <br>
+    Did you read Documentation/device-mapper/thin-provisioning.txt in
+    the kernel source tree to use it yet?<br>
+    It provides advice how to create thin-provisioned devices and
+    snapshots (see dmsetup message examples).<br>
+    <br>
+    <blockquote
+cite="mid:CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com"
+      type="cite">
+      There're no documentation written in Japanese, so I'll also output
+      this communication to wiki or my twitter in Japanese. It helpful
+      to make your work more major among Japanese IT engineers. And you
+      can get more feedback if the challengers in Japan will be
+      increased.<br>
+      The worst point of the current documentation is, it's not instruct
+      about how to use like above. Can't get image how to use this like
+      VMware system from that document.<br>
+    </blockquote>
+    <br>
+    Keep in mind that there'll be LVM2 support available later in
+    distributions.<br>
+    You can pull that code from the HEAD of the LVM2 upstream repository
+    for testing purposes already (not meant for production use
+    obviously).<br>
+    <br>
+    <blockquote
+cite="mid:CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com"
+      type="cite"><br>
+      Sorry, this is my private testing, not for work. So I can't get
+      much time to this, but very interested in.<br>
+    </blockquote>
+    <br>
+    Thanks for trying it, we're interested in external feedback.<br>
+    <br>
+    Regards,<br>
+    Heinz<br>
+    <br>
+    <blockquote
+cite="mid:CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com"
+      type="cite">
+      <br>
+      <br>
+      I'm looking forward to your answer.<br>
+      <br>
+      Thank you.<br>
+      Yukihito.<br>
+      <br>
+      <fieldset class="mimeAttachmentHeader"></fieldset>
+      <br>
+      <pre wrap="">--
+dm-devel mailing list
+<a class="moz-txt-link-abbreviated" href="mailto:dm-devel@redhat.com">dm-devel@redhat.com</a>
+<a class="moz-txt-link-freetext" href="https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a></pre>
+    </blockquote>
+    <br>
+    <pre class="moz-signature" cols="72">-- 
+===============================================================
+Heinz Mauelshagen                               +49 2626 141200
+Consulting Development Engineer             FAX +49 2626 924446
+Red Hat GmbH
+Am Sonnenhang 11
+56242 Marienrachdorf
+Germany                                       <a class="moz-txt-link-abbreviated" href="mailto:heinzm@redhat.com">heinzm@redhat.com</a>
+===============================================================</pre>
+  </body>
+</html>
+
+--------------040809060502060102040209--
+
+
+--===============0867167246544835824==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0867167246544835824==--
