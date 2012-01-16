@@ -1,68 +1,96 @@
-From: "Ted Ts'o" <tytso@mit.edu>
-Subject: Re: About the thin provision function @ kernel 3.2 or
- later.
-Date: Mon, 16 Jan 2012 10:59:59 -0500
-Message-ID: <20120116155959.GC4667@thunk.org>
-References: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
-	<20120116143816.GA2184@ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20120116143816.GA2184@ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: [PATCH stable 3/3] dm: do not forward ioctls from logical volumes to the underlying device
+Date: Mon, 16 Jan 2012 17:13:00 +0100
+Message-ID: <1326730380-7674-4-git-send-email-pbonzini@redhat.com>
+References: <1326730380-7674-1-git-send-email-pbonzini@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1326730380-7674-1-git-send-email-pbonzini@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: stable@kernel.org, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Mon, Jan 16, 2012 at 02:38:17PM +0000, Joe Thornber wrote:
-> 
-> There are a couple of documents here:
-> 
-> https://github.com/jthornber/storage-papers/tree/master/thinp-snapshots-2011
-> 
-> I'll be updating the presentation soon for a talk next month.
+A logical volume can map to just part of underlying physical volume.
+In this case, it must be treated like a partition.
 
-Hi Joe,
+Based on a patch from Alasdair G Kergon.
 
-Thanks for making a pointer to the paper available!  I have a question
-about one of the slides, where you say: "snapshots of external
-origins".  Am I correct in suppose this means you can take a snapshot
-of something which is currently not a thin-provisioned volume?
+[ Cherry picked from 95113a17a2a1eb06151dc698dca9bcc4a29e4fbb ]
 
-If so, is this currently implemented?  Looking at the documentation in
-the v3.2's Documentation/device-mapper/thin-provisioning.txt, I don't
-see a way of doing it:
+Cc: stable@kernel.org
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+Cc: linux-scsi@vger.kernel.org
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+ drivers/md/dm-flakey.c |   11 ++++++++++-
+ drivers/md/dm-linear.c |   12 +++++++++++-
+ drivers/md/dm-mpath.c  |    6 ++++++
+ 3 files changed, 27 insertions(+), 2 deletions(-)
 
-    create_snap <dev id> <origin id>
-
-    Create a new snapshot of another thinly-provisioned device.
-    <dev id> is an arbitrary unique 24-bit identifier chosen by
-    the caller.
-    <origin id> is the identifier of the thinly-provisioned device
-    of which the new device will be a snapshot.
-
-Is this a feature which is yet to be implemented?  And if so, what's
-the timeline for implementing it.
-
-If this is not a feature to be implemented, can I please put it on the
-wishlist?  I can imagine a lot of ext4 users who would be interested
-in thin-provisioning, especially if there is discard support such than
-when we delete a file, we send a discard which causes the
-thin-provisioned space in the snapshot to be dropped.  (This is also
-apparently not implemented, from what I can tell from the source; do
-you have an approximate idea of where in the priority list / when it
-is scheduled to be implemented?)
-
-Many thanks,
-
-						- Ted
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index f84c080..9fb18c1 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -368,8 +368,17 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
+ static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
+ {
+ 	struct flakey_c *fc = ti->private;
++	struct dm_dev *dev = fc->dev;
++	int r = 0;
+ 
+-	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (fc->start ||
++	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+ static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 3921e3b..9728839 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
+ 			unsigned long arg)
+ {
+ 	struct linear_c *lc = (struct linear_c *) ti->private;
+-	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
++	struct dm_dev *dev = lc->dev;
++	int r = 0;
++
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (lc->start ||
++	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+ static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 5e0090e..801d92d 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1520,6 +1520,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
+ 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+ }
+ 
+-- 
+1.7.7.1
