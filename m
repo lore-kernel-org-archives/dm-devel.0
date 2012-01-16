@@ -1,16 +1,17 @@
-From: Joe Thornber <thornber@redhat.com>
+From: "Ted Ts'o" <tytso@mit.edu>
 Subject: Re: About the thin provision function @ kernel 3.2 or
  later.
-Date: Mon, 16 Jan 2012 14:38:17 +0000
-Message-ID: <20120116143816.GA2184@ubuntu>
+Date: Mon, 16 Jan 2012 10:59:59 -0500
+Message-ID: <20120116155959.GC4667@thunk.org>
 References: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
+	<20120116143816.GA2184@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
+In-Reply-To: <20120116143816.GA2184@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,18 +24,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 16, 2012 at 10:27:34AM +0900, Yukihito HARA wrote:
-> Hi, I'm Yukihito, and interested in Linux system.
+On Mon, Jan 16, 2012 at 02:38:17PM +0000, Joe Thornber wrote:
 > 
-> There're no documentation written in Japanese, so I'll also output this
-> communication to wiki or my twitter in Japanese. It helpful to make your
-> work more major among Japanese IT engineers. And you can get more feedback
-> if the challengers in Japan will be increased.
+> There are a couple of documents here:
+> 
+> https://github.com/jthornber/storage-papers/tree/master/thinp-snapshots-2011
+> 
+> I'll be updating the presentation soon for a talk next month.
 
-There are a couple of documents here:
+Hi Joe,
 
-https://github.com/jthornber/storage-papers/tree/master/thinp-snapshots-2011
+Thanks for making a pointer to the paper available!  I have a question
+about one of the slides, where you say: "snapshots of external
+origins".  Am I correct in suppose this means you can take a snapshot
+of something which is currently not a thin-provisioned volume?
 
-I'll be updating the presentation soon for a talk next month.
+If so, is this currently implemented?  Looking at the documentation in
+the v3.2's Documentation/device-mapper/thin-provisioning.txt, I don't
+see a way of doing it:
 
-- Joe
+    create_snap <dev id> <origin id>
+
+    Create a new snapshot of another thinly-provisioned device.
+    <dev id> is an arbitrary unique 24-bit identifier chosen by
+    the caller.
+    <origin id> is the identifier of the thinly-provisioned device
+    of which the new device will be a snapshot.
+
+Is this a feature which is yet to be implemented?  And if so, what's
+the timeline for implementing it.
+
+If this is not a feature to be implemented, can I please put it on the
+wishlist?  I can imagine a lot of ext4 users who would be interested
+in thin-provisioning, especially if there is discard support such than
+when we delete a file, we send a discard which causes the
+thin-provisioned space in the snapshot to be dropped.  (This is also
+apparently not implemented, from what I can tell from the source; do
+you have an approximate idea of where in the priority list / when it
+is scheduled to be implemented?)
+
+Many thanks,
+
+						- Ted
