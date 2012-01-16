@@ -1,15 +1,11 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-thin vs lvm performance
-Date: Mon, 16 Jan 2012 12:42:01 +0000
-Message-ID: <20120116124158.GA4426@ubuntu>
-References: <1326416116.56981.YahooMailNeo@web36404.mail.mud.yahoo.com>
+From: Yukihito HARA <yukihito.hara623@gmail.com>
+Subject: About the thin provision function @ kernel 3.2 or later.
+Date: Mon, 16 Jan 2012 10:27:34 +0900
+Message-ID: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============6201622116181064915=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1326416116.56981.YahooMailNeo@web36404.mail.mud.yahoo.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,139 +15,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jagan Reddy <gjmsreddy@yahoo.com>, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jagan,
+--===============6201622116181064915==
+Content-Type: multipart/alternative; boundary=20cf307cfc608188d904b69b1e7e
 
-On Thu, Jan 12, 2012 at 04:55:16PM -0800, Jagan Reddy wrote:
-> Hi,
+--20cf307cfc608188d904b69b1e7e
+Content-Type: text/plain; charset=ISO-8859-1
 
-> I =A0recently started using dm-thin module and first of all, thank you
-> for the good work. It works great, well documented and the comments
-> in the code are very useful. =A0I tried to run some performance tests
-> using a high performance flash device and the performance of dm thin
-> is about 30% of LVM performance on a full allocated thin provisioned
-> volume. ( ie after all pages/blocks are allocated using
-> dd). Performance test does only reads and no writes.=A0
+Hi, I'm Yukihito, and interested in Linux system.
 
-Thanks very much for taking the time to try thinp out properly.
-People testing different scenarios is very useful to us.
+Recently days, I became happy to hear that Linux kernel start to support
+thin-provisioning function.
+And not trying to how it work on latest kernel.
 
-You're probably aware that the thinp test suite is available here:
+According to the word "thin provisioning", I'm imaging that, I can get
+larger space than actual disk size. This image is born from
+thin-provisioning system working on VMWare series.
+And can write the files until reach to the physical maximum. Once reach to
+the physical maximum, I can't write any more files to that volume, but I
+can write more files after add additional physical disks to thin-pool.
 
-    https://github.com/jthornber/thinp-test-suite
+I could create the pool according to the documents included in the kernel
+source(Documentation/device-mapper/thin-provisioning.txt).
+But I'm not sure, it works as I expecting like above.
 
-I've added a little set of tests that recreate your scenario here:
+So can you provide more detailed documentation about the thin-provisioning,
+if you have?
+There're no documentation written in Japanese, so I'll also output this
+communication to wiki or my twitter in Japanese. It helpful to make your
+work more major among Japanese IT engineers. And you can get more feedback
+if the challengers in Japan will be increased.
+The worst point of the current documentation is, it's not instruct about
+how to use like above. Can't get image how to use this like VMware system
+from that document.
 
-    https://github.com/jthornber/thinp-test-suite/blob/master/ramdisk_tests=
-.rb
-
-I used a 2G ramdisk for these tests, and a variety of thinp block
-sizes and 'dd' options.  I'll just summarise the main results, also I
-should point out that my testing was done on a VM hosted on a 4G
-machine, so the machine was under a lot of memory pressure and there
-was a lot of variance in the benchmarks.
-
-writes across various volumes
------------------------------
-
-write1
-------
-
-Testing write performance.
-
-dd if=3D/dev/zero of=3D/dev/mapper/<thin> oflags=3Ddirect bs=3D64M
-
-zeroing new blocks turned on.
-
-thinp block size =3D 64k
-
-| Linear              | 2.2 G/s |
-| Unprovisioned thin  | 1.4 G/s |
-| Provisioned thin    | 1.9     |
-| Snap totally shared | 1.5 G/s |
-| Snap no sharing     | 1.9     |
-
-Pretty good.  Not showing the drastic drop that you were seeing.  The
-small thinp block size means the snaps perform nicely (not many
-copy-on-writes).
-
-write2
-------
-
-As test1, but with 8M thinp block size as in your tests.
-
-| Linear              | 2.2 G/s |
-| Unprovisioned thin  | 1.5 G/s |
-| Provisioned thin    | 2.2     |
-| Snap totally shared | 882 Ms  |
-| Snap no sharing     | 2.2     | =
+Sorry, this is my private testing, not for work. So I can't get much time
+to this, but very interested in.
 
 
-Good results, breaking sharing performance is down because the large
-block size mean there will be more actual copying incurred.
+I'm looking forward to your answer.
 
-write3
-------
+Thank you.
+Yukihito.
 
-As test2, but no oflags=3Ddirect option to dd.
+--20cf307cfc608188d904b69b1e7e
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-| Linear              | 900 M/s |
-| Unprovisioned thin  | 579 M/s |
-| Provisioned thin    | 694 M/s |
-| Snap totally shared | 510 M/s |
-| Snap no sharing     | 654 M/s | =
+Hi, I&#39;m Yukihito, and interested in Linux system.<br><br>Recently days,=
+ I became happy to hear that Linux kernel start to support thin-provisionin=
+g function.<br>And not trying to how it work on latest kernel.<br><br>Accor=
+ding to the word &quot;thin provisioning&quot;, I&#39;m imaging that, I can=
+ get larger space than actual disk size. This image is born from thin-provi=
+sioning system working on VMWare series.<br>
+And can write the files until reach to the physical maximum. Once reach to =
+the physical maximum, I can&#39;t write any more files to that volume, but =
+I can write more files after add additional physical disks to thin-pool.<br=
+>
+<br>I could create the pool according to the documents included in the kern=
+el source(Documentation/device-mapper/thin-provisioning.txt).<br>But I&#39;=
+m not sure, it works as I expecting like above.<br><br>So can you provide m=
+ore detailed documentation about the thin-provisioning, if you have?<br>
+There&#39;re no documentation written in Japanese, so I&#39;ll also output =
+this communication to wiki or my twitter in Japanese. It helpful to make yo=
+ur work more major among Japanese IT engineers. And you can get more feedba=
+ck if the challengers in Japan will be increased.<br>
+The worst point of the current documentation is, it&#39;s not instruct abou=
+t how to use like above. Can&#39;t get image how to use this like VMware sy=
+stem from that document.<br><br>Sorry, this is my private testing, not for =
+work. So I can&#39;t get much time to this, but very interested in.<br>
+<br><br>I&#39;m looking forward to your answer.<br><br>Thank you.<br>Yukihi=
+to.<br>
 
-
-Alarming.  Results are similar for thinp block size of 64k.
-
-read1
------
-
-Testing read performance.
-
-dd if=3D/dev/mapper/<thin> of=3D/dev/null iflags=3Ddirect bs=3D64M
-
-thinp block size =3D 64k
-
-| Linear              | 3.3 G/s |
-| Provisioned thin    | 2.7 G/s |
-| Snap no sharing     | 2.8 G/s | =
-
-
-
-read2
------
-
-read1 but with 8M thinp block size
-
-| Linear              | 3.3 G/s |
-| Provisioned thin    | 3.2 G/s |
-| Snap no sharing     | 3.3 G/s | =
+--20cf307cfc608188d904b69b1e7e--
 
 
-read3
------
-
-As read2, but without the iflags=3Ddirect option to 'dd'.
-
-| Linear              | 1.0 G/s |
-| Provisioned thin    | 594 M/s |
-| Snap no sharing     | 605 M/s | =
+--===============6201622116181064915==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-
-
-I think there are a couple of conclusions we can draw from this:
-
-i) dd isn't great for benchmarking block devices
-ii) if you are going to use it, then make sure you use O_DIRECT
-
-Using an instrumented kernel, I've confirmed that these read tests
-are taking the fast path through the code.  The mapping tables are all
-in memory.  The bio_map function is always returning DM_MAPIO_REMAPPED.
-
-Will you be using a filesystem on these block devices?
-
-- Joe
+--===============6201622116181064915==--
