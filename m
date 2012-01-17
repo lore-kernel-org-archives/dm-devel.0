@@ -1,69 +1,116 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath hwtable.c
-Date: 16 Jan 2012 22:22:05 -0000
-Message-ID: <20120116222205.20282.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH stable 3/3] dm: do not forward ioctls from
+ logical volumes to the underlying device
+Date: Mon, 16 Jan 2012 19:32:19 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1201161926190.26607@hs20-bc2-1.build.redhat.com>
+References: <1326730380-7674-1-git-send-email-pbonzini@redhat.com>
+ <1326730380-7674-4-git-send-email-pbonzini@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1326730380-7674-4-git-send-email-pbonzini@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paolo Bonzini <pbonzini@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, stable@kernel.org, Alasdair G Kergon <agk@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2012-01-16 22:22:05
+Hi
 
-Modified files:
-	libmultipath   : hwtable.c 
+You should put this test to a function or macro. Don't copy the same logic 
+to three different places. Think what happens if someone needs to change 
+it after few years --- it will be hard to find out what was copied where.
 
-Log message:
-	Fix for bzs 781480/742906. change config for HP P2000 SAS
+Mikulas
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.36&r2=1.20.2.37
+On Mon, 16 Jan 2012, Paolo Bonzini wrote:
 
---- multipath-tools/libmultipath/hwtable.c	2011/10/26 04:55:18	1.20.2.36
-+++ multipath-tools/libmultipath/hwtable.c	2012/01/16 22:22:05	1.20.2.37
-@@ -173,7 +173,7 @@
- 	{
-                  /* HP P2000 product family */
-                 .vendor        = "HP",
--                .product       = "P2000 G3 FC|P2000G3 FC/iSCSI|P2000 G3 SAS|P2000 G3 iSCSI",
-+                .product       = "P2000 G3 FC|P2000G3 FC/iSCSI|P2000 G3 iSCSI",
-                 .getuid        = DEFAULT_GETUID,
-                 .getprio       = "/sbin/mpath_prio_alua /dev/%n",
-                 .features      = DEFAULT_FEATURES,
-@@ -187,6 +187,22 @@
-                 .checker_name  = TUR,
-         },
- 	{
-+		/* HP P2000 SAS */
-+		.vendor        = "HP",
-+		.product       = "P2000 G3 SAS",
-+		.getuid        = "/sbin/cciss_id /block/%n",
-+		.getprio       = "/sbin/mpath_prio_alua /dev/%c",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = 18,
-+		.minio         = 100,
-+		.checker_name  = TUR,
-+	},
-+	{
-                  /* HP SVSP Active-Standby */
-                 .vendor        = "HP",
-                 .product       = "HSVX700",
+> A logical volume can map to just part of underlying physical volume.
+> In this case, it must be treated like a partition.
+> 
+> Based on a patch from Alasdair G Kergon.
+> 
+> [ Cherry picked from 95113a17a2a1eb06151dc698dca9bcc4a29e4fbb ]
+> 
+> Cc: stable@kernel.org
+> Cc: Alasdair G Kergon <agk@redhat.com>
+> Cc: dm-devel@redhat.com
+> Cc: linux-scsi@vger.kernel.org
+> Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+> Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+> ---
+>  drivers/md/dm-flakey.c |   11 ++++++++++-
+>  drivers/md/dm-linear.c |   12 +++++++++++-
+>  drivers/md/dm-mpath.c  |    6 ++++++
+>  3 files changed, 27 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+> index f84c080..9fb18c1 100644
+> --- a/drivers/md/dm-flakey.c
+> +++ b/drivers/md/dm-flakey.c
+> @@ -368,8 +368,17 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
+>  static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
+>  {
+>  	struct flakey_c *fc = ti->private;
+> +	struct dm_dev *dev = fc->dev;
+> +	int r = 0;
+>  
+> -	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
+> +	/*
+> +	 * Only pass ioctls through if the device sizes match exactly.
+> +	 */
+> +	if (fc->start ||
+> +	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
+> +		r = scsi_verify_blk_ioctl(NULL, cmd);
+> +
+> +	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+>  }
+>  
+>  static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+> index 3921e3b..9728839 100644
+> --- a/drivers/md/dm-linear.c
+> +++ b/drivers/md/dm-linear.c
+> @@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
+>  			unsigned long arg)
+>  {
+>  	struct linear_c *lc = (struct linear_c *) ti->private;
+> -	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
+> +	struct dm_dev *dev = lc->dev;
+> +	int r = 0;
+> +
+> +	/*
+> +	 * Only pass ioctls through if the device sizes match exactly.
+> +	 */
+> +	if (lc->start ||
+> +	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
+> +		r = scsi_verify_blk_ioctl(NULL, cmd);
+> +
+> +	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+>  }
+>  
+>  static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 5e0090e..801d92d 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -1520,6 +1520,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+>  
+>  	spin_unlock_irqrestore(&m->lock, flags);
+>  
+> +	/*
+> +	 * Only pass ioctls through if the device sizes match exactly.
+> +	 */
+> +	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
+> +		r = scsi_verify_blk_ioctl(NULL, cmd);
+> +
+>  	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+>  }
+>  
+> -- 
+> 1.7.7.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
