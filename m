@@ -1,116 +1,49 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH stable 3/3] dm: do not forward ioctls from
- logical volumes to the underlying device
-Date: Mon, 16 Jan 2012 19:32:19 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1201161926190.26607@hs20-bc2-1.build.redhat.com>
-References: <1326730380-7674-1-git-send-email-pbonzini@redhat.com>
- <1326730380-7674-4-git-send-email-pbonzini@redhat.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+From: Namhyung Kim <namhyung.kim@lge.com>
+Subject: [PATCH 3/3] block: don't export block_bio_complete tracepoint
+Date: Tue, 17 Jan 2012 10:32:08 +0900
+Message-ID: <1326763928-1972-3-git-send-email-namhyung.kim@lge.com>
+References: <1326763928-1972-1-git-send-email-namhyung.kim@lge.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1326730380-7674-4-git-send-email-pbonzini@redhat.com>
+In-Reply-To: <1326763928-1972-1-git-send-email-namhyung.kim@lge.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paolo Bonzini <pbonzini@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, stable@kernel.org, Alasdair G Kergon <agk@redhat.com>, linux-scsi@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Namhyung Kim <namhyung@gmail.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+Now bio_endio() contains the tracepoint in it, so we don't
+need to have it twice in DM. Plus, as the only external user
+of the tracepoint was the DM, we can unexport the symbol.
 
-You should put this test to a function or macro. Don't copy the same logic 
-to three different places. Think what happens if someone needs to change 
-it after few years --- it will be hard to find out what was copied where.
+Signed-off-by: Namhyung Kim <namhyung.kim@lge.com>
+Cc: dm-devel@redhat.com
+---
+ block/blk-core.c |    1 -
+ drivers/md/dm.c  |    1 -
+ 2 files changed, 0 insertions(+), 2 deletions(-)
 
-Mikulas
-
-On Mon, 16 Jan 2012, Paolo Bonzini wrote:
-
-> A logical volume can map to just part of underlying physical volume.
-> In this case, it must be treated like a partition.
-> 
-> Based on a patch from Alasdair G Kergon.
-> 
-> [ Cherry picked from 95113a17a2a1eb06151dc698dca9bcc4a29e4fbb ]
-> 
-> Cc: stable@kernel.org
-> Cc: Alasdair G Kergon <agk@redhat.com>
-> Cc: dm-devel@redhat.com
-> Cc: linux-scsi@vger.kernel.org
-> Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
-> Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-> ---
->  drivers/md/dm-flakey.c |   11 ++++++++++-
->  drivers/md/dm-linear.c |   12 +++++++++++-
->  drivers/md/dm-mpath.c  |    6 ++++++
->  3 files changed, 27 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-> index f84c080..9fb18c1 100644
-> --- a/drivers/md/dm-flakey.c
-> +++ b/drivers/md/dm-flakey.c
-> @@ -368,8 +368,17 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
->  static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
->  {
->  	struct flakey_c *fc = ti->private;
-> +	struct dm_dev *dev = fc->dev;
-> +	int r = 0;
->  
-> -	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
-> +	/*
-> +	 * Only pass ioctls through if the device sizes match exactly.
-> +	 */
-> +	if (fc->start ||
-> +	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-> +		r = scsi_verify_blk_ioctl(NULL, cmd);
-> +
-> +	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
->  }
->  
->  static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-> index 3921e3b..9728839 100644
-> --- a/drivers/md/dm-linear.c
-> +++ b/drivers/md/dm-linear.c
-> @@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
->  			unsigned long arg)
->  {
->  	struct linear_c *lc = (struct linear_c *) ti->private;
-> -	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
-> +	struct dm_dev *dev = lc->dev;
-> +	int r = 0;
-> +
-> +	/*
-> +	 * Only pass ioctls through if the device sizes match exactly.
-> +	 */
-> +	if (lc->start ||
-> +	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-> +		r = scsi_verify_blk_ioctl(NULL, cmd);
-> +
-> +	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
->  }
->  
->  static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 5e0090e..801d92d 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -1520,6 +1520,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
->  
->  	spin_unlock_irqrestore(&m->lock, flags);
->  
-> +	/*
-> +	 * Only pass ioctls through if the device sizes match exactly.
-> +	 */
-> +	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
-> +		r = scsi_verify_blk_ioctl(NULL, cmd);
-> +
->  	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
->  }
->  
-> -- 
-> 1.7.7.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 1b4fd93af2c0..399c128f516c 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -37,7 +37,6 @@
+ 
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ 
+ DEFINE_IDA(blk_queue_ida);
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4720f68f817e..01185fa0eb74 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -648,7 +648,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+-- 
+1.7.9.rc1.dirty
