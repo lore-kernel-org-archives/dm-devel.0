@@ -1,17 +1,18 @@
-From: Joe Thornber <thornber@redhat.com>
+From: "Ted Ts'o" <tytso@mit.edu>
 Subject: Re: About the thin provision function @ kernel 3.2 or
  later.
-Date: Tue, 17 Jan 2012 10:13:31 +0000
-Message-ID: <20120117101330.GA15182@ubuntu>
+Date: Tue, 17 Jan 2012 10:59:30 -0500
+Message-ID: <20120117155930.GA11903@thunk.org>
 References: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
 	<20120116143816.GA2184@ubuntu> <20120116155959.GC4667@thunk.org>
+	<20120117101330.GA15182@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20120116155959.GC4667@thunk.org>
+In-Reply-To: <20120117101330.GA15182@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,56 +25,24 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Ted,
+On Tue, Jan 17, 2012 at 10:13:31AM +0000, Joe Thornber wrote:
+> iii) We add support to patch metadata changes into the running
+> metadata device.  This would allow us to map the origin directly into
+> the pools data device (eg, using a linear target).  And then introduce
+> a mapping for that origin.  This would mean the origin would appear as
+> a thin dev within the pool.
 
-Thanks for taking time to look at thinp.
+Have you considered just doing this part first?  If there's a way that
+an existing linear region could be considered a data source for a
+pool, then wouldn't you get full support of existing LVM2 volumes
+(read-only and read/write) for free, at one fell swoop?
 
-On Mon, Jan 16, 2012 at 10:59:59AM -0500, Ted Ts'o wrote:
-> Thanks for making a pointer to the paper available!  I have a question
-> about one of the slides, where you say: "snapshots of external
-> origins".  Am I correct in suppose this means you can take a snapshot
-> of something which is currently not a thin-provisioned volume?
+Given that it's relatively rare that volume groups get moved, this
+could even be something which is done as a off-line conversion step so
+that existing LVM volumes are treated as "thin-provisioned voumes"
+that happened to be fully provisioned, with some flag so that a
+discard operation doesn't cause the blocks to be freed for use by some
+other thin-provisioned volume, but instead is propagated down to the
+hardware (for better SSD performance).
 
-...
-
-> Is this a feature which is yet to be implemented?  And if so, what's
-> the timeline for implementing it.
-
-Yes, that's exactly it.  I do want to support it in the near future
-(2-3 months).  There are a few options on this front.
-
-i) We only support a read-only external origin.  Of course people can
-use snapshots if they want writeable versions of the current state.
-An explicit merge facility will need to be added if people want to
-copy the snap back over the origin.  This is by far the simplest
-approach, and I'll probably start with this - at least in a dev branch.
-
-ii) We support read/write origins.  When I last looked at this 15
-months ago I struggled to come up with a metadata design that allowed
-both efficient snapshot lookup _and_ efficient snapshot deletion.  I'm
-expecting people to use many, many more snapshots with thinp; deletion
-performance really is a problem.
-
-iii) We add support to patch metadata changes into the running
-metadata device.  This would allow us to map the origin directly into
-the pools data device (eg, using a linear target).  And then introduce
-a mapping for that origin.  This would mean the origin would appear as
-a thin dev within the pool.  This approach greatly improves the
-performance since we wouldn't have to always COW on the first write to
-an origin block (i.e. the overlapping block optimisation is still
-valid).
-
-> If this is not a feature to be implemented, can I please put it on the
-> wishlist?  I can imagine a lot of ext4 users who would be interested
-> in thin-provisioning, especially if there is discard support such than
-> when we delete a file, we send a discard which causes the
-> thin-provisioned space in the snapshot to be dropped.  (This is also
-> apparently not implemented, from what I can tell from the source; do
-> you have an approximate idea of where in the priority list / when it
-> is scheduled to be implemented?)
-
-Discard was in until recently.  There were some race conditions
-associated with it that I didn't have time to work through before the
-merge window.  Expect this to reappear sometime in the next 2-3 months.
-
-- Joe
+						- Ted
