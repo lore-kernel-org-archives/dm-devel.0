@@ -1,48 +1,48 @@
-From: "Ted Ts'o" <tytso@mit.edu>
-Subject: Re: About the thin provision function @ kernel 3.2 or
- later.
-Date: Tue, 17 Jan 2012 10:59:30 -0500
-Message-ID: <20120117155930.GA11903@thunk.org>
-References: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
-	<20120116143816.GA2184@ubuntu> <20120116155959.GC4667@thunk.org>
-	<20120117101330.GA15182@ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [LSF/MM TOPIC] a few storage topics
+Date: Tue, 17 Jan 2012 15:06:12 -0500
+Message-ID: <20120117200609.GA7933@redhat.com>
+References: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120117101330.GA15182@ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: lsf-pc@lists.linux-foundation.org
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jan 17, 2012 at 10:13:31AM +0000, Joe Thornber wrote:
-> iii) We add support to patch metadata changes into the running
-> metadata device.  This would allow us to map the origin directly into
-> the pools data device (eg, using a linear target).  And then introduce
-> a mapping for that origin.  This would mean the origin would appear as
-> a thin dev within the pool.
+1) expose WRITE SAME via higher level interface (ala sb_issue_discard)
+   for more efficient zeroing on SCSI devices that support it
+   - dm-thinp and dm-kcopyd could benefit from offloading the zeroing to
+     the array
+   - I'll be reviewing this closer to assess the scope of the work
 
-Have you considered just doing this part first?  If there's a way that
-an existing linear region could be considered a data source for a
-pool, then wouldn't you get full support of existing LVM2 volumes
-(read-only and read/write) for free, at one fell swoop?
+2) revise fs/block_dev.c:__blkdev_put's "sync on last close" semantic,
+   please see Mikulas Patocka's recent proposal on dm-devel:
+   http://www.redhat.com/archives/dm-devel/2012-January/msg00021.html
+   - patch didn't create much discussion (other than hch's suggestion to
+     use file->private_data).  Are the current semantics somehow 
+     important to some filesystems (e.g. NFS)?
+   - allowing read-only opens to _not_ trigger a sync is desirable
+     (e.g. if dm-thinp's storage pool was exhausted we should still be
+      able to read data from thinp devices)
 
-Given that it's relatively rare that volume groups get moved, this
-could even be something which is done as a off-line conversion step so
-that existing LVM volumes are treated as "thin-provisioned voumes"
-that happened to be fully provisioned, with some flag so that a
-discard operation doesn't cause the blocks to be freed for use by some
-other thin-provisioned volume, but instead is propagated down to the
-hardware (for better SSD performance).
+3) Are any SSD+rotational storage caching layers that are being
+   developed for upstream consideration (there were: bcache, fb's
+   dm-cache, etc).
+   - Red Hat would like to know if leveraging the dm-thinp
+     infrastructure to implement a new DM target for caching would be
+     well received by the greater community
+   - and are there any proposals for classifying data/files as cache
+     hot, etc (T10 has an active proposal for passing info in the CDB)
+     -- is anyone working in this area?
 
-						- Ted
+4) is anyone working on an interface to GET LBA STATUS?
+   - Martin Petersen added GET LBA STATUS support to scsi_debug, but is
+     there a vision for how tools (e.g. pvmove) could access such info
+     in a uniform way across different vendors' storage?
+
+5) Any more progress on stable pages?
+   - I know Darrick Wong had some proposals, what remains?
