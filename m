@@ -1,48 +1,25 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [LSF/MM TOPIC] a few storage topics
-Date: Tue, 17 Jan 2012 15:06:12 -0500
-Message-ID: <20120117200609.GA7933@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
+Date: Tue, 17 Jan 2012 22:36:48 +0100
+Message-ID: <20120117213648.GA9457@quack.suse.cz>
 References: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
+ <20120117200609.GA7933@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: lsf-pc@lists.linux-foundation.org
-Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+In-Reply-To: <20120117200609.GA7933@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: lsf-pc@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-1) expose WRITE SAME via higher level interface (ala sb_issue_discard)
-   for more efficient zeroing on SCSI devices that support it
-   - dm-thinp and dm-kcopyd could benefit from offloading the zeroing to
-     the array
-   - I'll be reviewing this closer to assess the scope of the work
+On Tue 17-01-12 15:06:12, Mike Snitzer wrote:
+> 5) Any more progress on stable pages?
+>    - I know Darrick Wong had some proposals, what remains?
+  As far as I know this is done for XFS, btrfs, ext4. Is more needed?
 
-2) revise fs/block_dev.c:__blkdev_put's "sync on last close" semantic,
-   please see Mikulas Patocka's recent proposal on dm-devel:
-   http://www.redhat.com/archives/dm-devel/2012-January/msg00021.html
-   - patch didn't create much discussion (other than hch's suggestion to
-     use file->private_data).  Are the current semantics somehow 
-     important to some filesystems (e.g. NFS)?
-   - allowing read-only opens to _not_ trigger a sync is desirable
-     (e.g. if dm-thinp's storage pool was exhausted we should still be
-      able to read data from thinp devices)
-
-3) Are any SSD+rotational storage caching layers that are being
-   developed for upstream consideration (there were: bcache, fb's
-   dm-cache, etc).
-   - Red Hat would like to know if leveraging the dm-thinp
-     infrastructure to implement a new DM target for caching would be
-     well received by the greater community
-   - and are there any proposals for classifying data/files as cache
-     hot, etc (T10 has an active proposal for passing info in the CDB)
-     -- is anyone working in this area?
-
-4) is anyone working on an interface to GET LBA STATUS?
-   - Martin Petersen added GET LBA STATUS support to scsi_debug, but is
-     there a vision for how tools (e.g. pvmove) could access such info
-     in a uniform way across different vendors' storage?
-
-5) Any more progress on stable pages?
-   - I know Darrick Wong had some proposals, what remains?
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
