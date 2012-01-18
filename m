@@ -1,29 +1,56 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: parted issue/question
-Date: Wed, 18 Jan 2012 00:38:02 +0000
-Message-ID: <20120118003802.GA11769@agk-dp.fab.redhat.com>
-References: <4F13ADB3.5070806@redhat.com> <87lip6t157.fsf@rho.meyering.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christian Kujau <lists@nerdbynature.de>
+Subject: BUG: spinlock trylock failure on UP on CPU#0, vgchange/936
+Date: Wed, 18 Jan 2012 00:18:24 -0800 (PST)
+Message-ID: <alpine.DEB.2.01.1201180009520.2895@trent.utfs.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <87lip6t157.fsf@rho.meyering.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jim Meyering <jim@meyering.net>, Joey Boggs <jboggs@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: peterz@infradead.org, axboe@kernel.dk, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Try
-  blkdev --flushbufs
-after any cmd that writes to a dev to see if that makes any difference.
+Hi,
 
-Alasdair
+today's git checkout boots fine on powerpc32, but has this message during 
+bootup:
+
+BUG: spinlock trylock failure on UP on CPU#0, vgchange/936
+ lock: ef32a9f8, .magic: dead4ead, .owner: vgchange/936, .owner_cpu: 0
+Call Trace:
+[eed459e0] [c0009de4] show_stack+0x70/0x1bc (unreliable)
+[eed45a20] [c0326da8] spin_dump+0x70/0xe0
+[eed45a30] [c0326f8c] do_raw_spin_trylock+0x58/0x70
+[eed45a40] [c0512b28] _raw_spin_trylock+0x34/0xa0
+[eed45a60] [c02f5510] put_io_context+0xd8/0x184
+[eed45a80] [c0303428] __cfq_slice_expired+0x1e4/0x43c
+[eed45ac0] [c03053d8] cfq_insert_request+0x264/0x5b0
+[eed45ae0] [c02edef4] __elv_add_request+0x1a4/0x2d4
+[eed45af0] [c02f1024] blk_flush_plug_list+0x22c/0x270
+[eed45b20] [c05112dc] io_schedule+0x74/0xec
+[eed45b30] [c0110f88] dio_await_completion+0x60/0xf4
+[eed45b50] [c0112d0c] __blockdev_direct_IO+0x1b80/0x3574
+[eed45d70] [c010f4a4] blkdev_direct_IO+0x54/0x64
+[eed45d90] [c009a424] generic_file_aio_read+0x7b8/0x808
+[eed45e40] [c00d4f68] do_sync_read+0xb8/0x144
+[eed45ef0] [c00d6168] vfs_read+0xcc/0x1c0
+[eed45f10] [c00d6394] sys_read+0x58/0xc8
+[eed45f40] [c00127a0] ret_from_syscall+0x0/0x38
+--- Exception: c01 at 0xfe52b90
+    LR = 0x1003e834
+
+The system is running fine so far and has before with 3.2.0-rc7, without 
+that warning. The "vgchange" could be the result of some LVM2 initscripts 
+(lvm2-2.02.66-5 are installed on this Debian/stable system), but there are 
+no LVM disks anywhere on the system.
+
+Full .config & dmesg: http://nerdbynature.de/bits/3.2.0/
+
+Is this BUG something to worry about?
+
+Thanks,
+Christian.
+-- 
+BOFH excuse #100:
+
+IRQ dropout
