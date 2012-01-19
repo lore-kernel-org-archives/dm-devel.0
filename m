@@ -1,18 +1,18 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
-Date: Thu, 19 Jan 2012 01:42:12 +0200
-Message-ID: <4F1758D4.9010401@panasas.com>
-References: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
-	<20120117200609.GA7933@redhat.com>
-	<20120117213648.GA9457@quack.suse.cz>
-	<20120118225808.GA3074@tux1.beaverton.ibm.com>
-	<20120118232200.GA22019@quack.suse.cz>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: About the thin provision function @ kernel 3.2 or
+ later.
+Date: Thu, 19 Jan 2012 09:14:41 +0000
+Message-ID: <20120119091434.GA3942@ubuntu>
+References: <CACaC9DzwWWdy3YBrs1KMx6RnwvU8wC2q_OrVTCzp2+rbEirBVQ@mail.gmail.com>
+	<20120116143816.GA2184@ubuntu> <20120116155959.GC4667@thunk.org>
+	<20120117101330.GA15182@ubuntu> <20120117155930.GA11903@thunk.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120118232200.GA22019@quack.suse.cz>
+Content-Disposition: inline
+In-Reply-To: <20120117155930.GA11903@thunk.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,51 +22,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jan Kara <jack@suse.cz>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/19/2012 01:22 AM, Jan Kara wrote:
-> On Wed 18-01-12 14:58:08, Darrick J. Wong wrote:
->> On Tue, Jan 17, 2012 at 10:36:48PM +0100, Jan Kara wrote:
->>> On Tue 17-01-12 15:06:12, Mike Snitzer wrote:
->>>> 5) Any more progress on stable pages?
->>>>    - I know Darrick Wong had some proposals, what remains?
->>>   As far as I know this is done for XFS, btrfs, ext4. Is more needed?
->>
->> Yep, it's done for those three fses.
->>
->> I suppose it might help some people if instead of wait_on_page_writeback we
->> could simply page-migrate all the processes onto a new page...?
-
->   Well, but it will cost some more memory & copying so whether it's faster
-> or not pretty much depends on the workload, doesn't it? Anyway I've already
-> heard one guy complaining that his RT application does redirtying of mmaped
-> pages and it started seeing big latencies due to stable pages work. So for
-> these guys migrating might be an option (or maybe fadvise/madvise flag to
-> do copy out before submitting for IO?).
+On Tue, Jan 17, 2012 at 10:59:30AM -0500, Ted Ts'o wrote:
+> On Tue, Jan 17, 2012 at 10:13:31AM +0000, Joe Thornber wrote:
+> > iii) We add support to patch metadata changes into the running
+> > metadata device.  This would allow us to map the origin directly into
+> > the pools data device (eg, using a linear target).  And then introduce
+> > a mapping for that origin.  This would mean the origin would appear as
+> > a thin dev within the pool.
 > 
+> Have you considered just doing this part first?  If there's a way that
+> an existing linear region could be considered a data source for a
+> pool, then wouldn't you get full support of existing LVM2 volumes
+> (read-only and read/write) for free, at one fell swoop?
 
-OK That one is interesting. Because I'd imagine that the Kernel would not
-start write-out on a busily modified page.
+Yes, this is the solution that I like best.  But I've only recently
+thought of it whilst I coded up the thinp_dump and thin_restore tools.
+Note that by using these tools and doing some manipulation of the
+metadata you can do this today in an offline mode.
 
-Some heavy modifying then a single write. If it's not so then there is already
-great inefficiency, just now exposed, but was always there. The "page-migrate"
-mentioned here will not help.
+> Given that it's relatively rare that volume groups get moved, this
+> could even be something which is done as a off-line conversion step so
+> that existing LVM volumes are treated as "thin-provisioned voumes"
+> that happened to be fully provisioned, with some flag so that a
+> discard operation doesn't cause the blocks to be freed for use by some
+> other thin-provisioned volume, but instead is propagated down to the
+> hardware (for better SSD performance).
 
-Could we not better our page write-out algorithms to avoid heavy contended pages?
+Certainly the discard support needs to do two things; release the
+block and pass the discard down to the device.  Making the first part
+optional sounds sensible to me.
 
-Do you have a more detailed description of the workload? Is it theoretically
-avoidable?
-
->> Or possibly modify md-raid5 not to snapshot dirty pages prior to xor/write?
->> (I never really bothered to find out if it really does this.)
-
-md-raid5/1 currently copies all pages if that what you meant.
-
->   Not sure either. Neil should know :) (added to CC).
-> 
-> 								Honze
-
-Thanks
-Boaz
+- Joe
