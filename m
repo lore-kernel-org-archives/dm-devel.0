@@ -1,8 +1,9 @@
 From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
-Subject: [PATCH 1/3][RESEND]multipath-tools: Add mpathpersist
-	utility and libmpathpersist library for mpath pr management
-Date: Fri, 20 Jan 2012 00:51:04 +0530
-Message-ID: <EE2129A8E578DC4E94D643D6C1C1C67D07D9B40A@BTCMVEXC2-PRD.hq.netapp.com>
+Subject: [PATCH 2/3][RESEND]multipath-tools: Changes in
+	multipath-tools to handles pr management of data path life
+	cycle and state changes.
+Date: Fri, 20 Jan 2012 00:51:18 +0530
+Message-ID: <EE2129A8E578DC4E94D643D6C1C1C67D07D9B40C@BTCMVEXC2-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,7 +25,8 @@ Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@netapp.com>, "Stankey,
 	Babu" <Babu.Moger@netapp.com>, "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
 List-Id: dm-devel.ids
 
-This patch adds new cli utility 'mpathpersist' in multipath-tools for managing pr on mpath device.
+This patch includes changes in multipathd and multipath library files for handling pr management of 
+data path life cycle and state changes. These includes new path discovery and path reinstated.
 
 Signed-off-by: Vijay Chauhan <Vijay.chauhan@netapp.com>
 Reviewed-by: Bob Stankey <Robert.stankey@netapp.com> 
@@ -32,366 +34,953 @@ Reviewed-by: Babu Moger <Babu.moger@netapp.com>
 Reviewed-by: Yanling Q <Yanling.Q@netapp.com>
 
 ---
-diff -uprN multipath-tools-orig/libmpathpersist/Makefile multipath-tools/libmpathpersist/Makefile
---- multipath-tools-orig/libmpathpersist/Makefile	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/Makefile	2012-01-17 06:07:41.000000000 -0500
-@@ -0,0 +1,49 @@
-+# Makefile
-+#
-+BUILD = glibc
-+include ../Makefile.inc
-+
-+INSTALL_PROGRAM = install
-+
-+SONAME=0
-+DEVLIB = libmpathpersist.so
-+LIBS = $(DEVLIB).$(SONAME)
-+
-+
-+CFLAGS += -I$(multipathdir) -I$(mpathpersistdir) 
-+LIBDEPS +=  -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath -lsysfs
-+
-+OBJS = mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.o 
-+
-+all: $(LIBS)
-+
-+
-+$(LIBS): 
-+	$(CC) -Wall -fPIC -c $(CFLAGS) *.c 
-+	$(CC)  -shared $(LIBDEPS) -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS)
-+	ln -s $(LIBS) $(DEVLIB)
-+	$(GZIP) mpath_persistent_reserve_in.3 > mpath_persistent_reserve_in.3.gz	
-+	$(GZIP) mpath_persistent_reserve_out.3 > mpath_persistent_reserve_out.3.gz	
-+
-+install: $(LIBS)
-+	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
-+	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(syslibdir)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(man3dir)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)/usr/include/
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)/usr/share/doc/mpathpersist/
-+	ln -sf $(DESTDIR)$(syslibdir)/$(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
-+	install -m 644 mpath_persistent_reserve_in.3.gz $(DESTDIR)$(man3dir)	
-+	install -m 644 mpath_persistent_reserve_out.3.gz $(DESTDIR)$(man3dir)	
-+	install -m 644 mpath_persist.h $(DESTDIR)/usr/include/
-+
-+uninstall:
-+	rm -f $(DESTDIR)$(syslibdir)/$(LIBS)
-+	rm $(DESTDIR)$(mandir)/mpath_persistent_reserve_in.3.gz	
-+	rm $(DESTDIR)$(mandir)/mpath_persistent_reserve_out.3.gz	
-+
-+clean:
-+	rm -f core *.a *.o 
-+	rm -f libmpathpersist.so.0
-+	rm -f libmpathpersist.so
-+	rm -f mpath_persistent_reserve_in.3.gz mpath_persistent_reserve_out.3.gz
-diff -uprN multipath-tools-orig/libmpathpersist/mpath_persist.c multipath-tools/libmpathpersist/mpath_persist.c
---- multipath-tools-orig/libmpathpersist/mpath_persist.c	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpath_persist.c	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,880 @@
-+#include "mpath_persist.h"
-+#include <libdevmapper.h>
-+#include <defaults.h>
-+#include <sys/stat.h>
-+#include <linux/kdev_t.h>
-+#include <fcntl.h>
-+#include <vector.h>
-+#include <checkers.h>
-+#include <structs.h>
-+#include <structs_vec.h>
-+
-+#include <prio.h>
-+#include <unistd.h>
-+#include <devmapper.h>
-+#include <debug.h>
-+#include <config.h>
-+#include <switchgroup.h>
-+#include <discovery.h>
-+#include <dmparser.h>
-+#include <ctype.h>
-+#include <propsel.h>
-+#include <sysfs.h>
-+
-+#include "mpathpr.h"
-+#include "mpath_pr_ioctl.h"
-+
-+#include <pthread.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+
-+#define __STDC_FORMAT_MACROS 1
-+
-+
-+int
-+mpath_lib_init (void)
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/config.c multipath-tools/libmultipath/config.c
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/config.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/config.c	2012-01-12 12:05:02.000000000 -0500
+@@ -459,6 +459,8 @@ free_config (struct config * conf)
+ 
+ 	if (conf->checker_name)
+ 		FREE(conf->checker_name);
++	if (conf->reservation_key)
++		FREE(conf->reservation_key);
+ 
+ 	free_blacklist(conf->blist_devnode);
+ 	free_blacklist(conf->blist_wwid);
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/config.h multipath-tools/libmultipath/config.h
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/config.h	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/config.h	2012-01-12 12:05:36.000000000 -0500
+@@ -49,6 +49,7 @@ struct mpentry {
+ 
+ 	char * prio_name;
+ 	char * prio_args;
++	unsigned char * reservation_key;
+ 	int pgpolicy;
+ 	int pgfailback;
+ 	int rr_weight;
+@@ -113,6 +114,7 @@ struct config {
+ 	char * prio_args;
+ 	char * checker_name;
+ 	char * alias_prefix;
++	unsigned char * reservation_key;
+ 
+ 	vector keywords;
+ 	vector mptable;
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/configure.c multipath-tools/libmultipath/configure.c
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/configure.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/configure.c	2012-01-12 12:06:09.000000000 -0500
+@@ -73,6 +73,7 @@ setup_map (struct multipath * mpp, char 
+ 	select_gid(mpp);
+ 	select_fast_io_fail(mpp);
+ 	select_dev_loss(mpp);
++	select_reservation_key(mpp);
+ 
+ 	sysfs_set_scsi_tmo(mpp);
+ 	/*
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/dict.c multipath-tools/libmultipath/dict.c
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/dict.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/dict.c	2012-01-12 12:13:27.000000000 -0500
+@@ -20,6 +20,7 @@
+ #include "defaults.h"
+ #include "prio.h"
+ #include "errno.h"
++#include <inttypes.h>
+ 
+ /*
+  * default block handlers
+@@ -544,6 +545,53 @@ def_log_checker_err_handler(vector strve
+ }
+ 
+ static int
++def_reservation_key_handler(vector strvec)
 +{
-+	if (load_config(DEFAULT_CONFIGFILE)){
-+		condlog(0, "Failed to initialize multipath config.");
++	char *buff;
++	char *tbuff;
++	int j, k;
++	int len;
++	uint64_t prkey;
++
++	buff = set_value(strvec);
++	if (!buff)
++		return 1;
++
++	tbuff = buff;
++
++	if (!memcmp("0x",buff, 2))
++		buff = buff + 2;
++
++	len = strlen(buff);
++
++	k = strspn(buff, "0123456789aAbBcCdDeEfF");
++
++	if (len != k) {
++		FREE(tbuff);
 +		return 1;
 +	}
 +
-+	if (sysfs_init(conf->sysfs_dir, FILE_NAME_SIZE)){
-+		condlog(0, "Failed. mpathpersist needs sysfs mounted");
-+		exit(1);
++	if (1 != sscanf (buff, "%" SCNx64 "", &prkey))
++	{
++		FREE(tbuff);
++		return 1;
 +	}
-+	return 0;
-+}
 +
-+int
-+mpath_lib_exit (void)
-+{
-+	dm_lib_release();
-+	dm_lib_exit();
-+	cleanup_prio();
-+	cleanup_checkers();
-+	free_config(conf);
-+	conf = NULL;
++	if (!conf->reservation_key)
++		conf->reservation_key = (unsigned char *) malloc(8);
++
++	memset(conf->reservation_key, 0, 8);
++
++	for (j = 7; j >= 0; --j) {
++		conf->reservation_key[j] = (prkey & 0xff);
++		prkey >>= 8;
++	}
++
++	FREE(tbuff);
 +	return 0;
 +}
 +
 +static int
-+updatepaths (struct multipath * mpp)
+ names_handler(vector strvec)
+ {
+ 	char * buff;
+@@ -1564,6 +1612,56 @@ mp_prio_args_handler (vector strvec)
+ 	return 0;
+ }
+ 
++static int
++mp_reservation_key_handler (vector strvec)
 +{
-+	int i, j;
-+	struct pathgroup * pgp;
-+	struct path * pp;
++	char *buff;
++	char *tbuff;
++	struct mpentry *mpe = VECTOR_LAST_SLOT(conf->mptable);
 +
-+	if (!mpp->pg)
-+		return 0;
++	int j, k, len;
++	uint64_t prkey;
 +
-+	vector_foreach_slot (mpp->pg, pgp, i){
-+		if (!pgp->paths)
-+			continue;
++	if (!mpe)
++		return 1;
 +
-+		vector_foreach_slot (pgp->paths, pp, j){
-+			if (!strlen(pp->dev)){
-+				if (devt2devname(pp->dev, pp->dev_t)){
-+					/*
-+					 * path is not in sysfs anymore
-+					 */
-+					pp->state = PATH_DOWN;
-+					continue;
-+				}
-+				pp->mpp = mpp;
-+				pathinfo(pp, conf->hwtable, DI_ALL);
-+				continue;
-+			}
-+			pp->mpp = mpp;
-+			if (pp->state == PATH_UNCHECKED ||
-+					pp->state == PATH_WILD)
-+				pathinfo(pp, conf->hwtable, DI_CHECKER);
++	buff = set_value(strvec);
++	if (!buff)
++		return 1;
 +
-+			if (pp->priority == PRIO_UNDEF)
-+				pathinfo(pp, conf->hwtable, DI_PRIO);
-+		}
++	tbuff = buff;
++	if (!memcmp(buff, "0x", 2))
++		buff = buff + 2;
++
++	len = strlen(buff);
++
++	k = strspn(buff, "0123456789aAbBcCdDeEfF");
++	if (len != k) {
++		FREE(tbuff);
++		return 1;
 +	}
++
++	if (1 != sscanf (buff, "%" SCNx64 "", &prkey))
++	{
++		FREE(tbuff);
++		return 1;
++	}
++
++	if (!mpe->reservation_key)
++		mpe->reservation_key = (unsigned char *) malloc(8);
++
++	memset(mpe->reservation_key, 0, 8);
++
++	for (j = 7; j >= 0; --j) {
++		mpe->reservation_key[j] = (prkey & 0xff);
++		prkey >>= 8;
++	}
++
++	FREE(tbuff);
 +	return 0;
 +}
 +
-+int 
-+mpath_prin_activepath (struct multipath *mpp, int rq_servact,
-+	struct prin_resp * resp, int noisy)
++
+ /*
+  * config file keywords printing
+  */
+@@ -1787,6 +1885,14 @@ snprint_mp_prio_args(char * buff, int le
+ }
+ 
+ static int
++snprint_mp_reservation_key (char * buff, int len, void * data)
 +{
-+	int i,j, ret;
-+	struct pathgroup *pgp = NULL;
-+	struct path *pp = NULL;
-+
-+	vector_foreach_slot (mpp->pg, pgp, j){
-+		vector_foreach_slot (pgp->paths, pp, i){
-+			if (!((pp->state == PATH_UP) || (pp->state == PATH_GHOST))){
-+				condlog(2, "%s: %s not available. Skip.", mpp->wwid, pp->dev);
-+				condlog(3, "%s: status = %d.", mpp->wwid, pp->state);
-+				continue;
-+			}
-+
-+			condlog(3, "%s: sending pr in command to %s ", mpp->wwid, pp->dev);
-+			ret = mpath_send_prin_activepath(pp->dev, rq_servact, resp, noisy);
-+			return ret ;
-+		}
-+	}
-+	return MPATH_PR_DMMP_ERROR;	
++	struct mpentry * mpe = (struct mpentry *)data;
++	return snprintf(buff, len, "%s" , mpe->reservation_key);
 +}
 +
-+int mpath_persistent_reserve_in (int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)
++
++static int
+ snprint_hw_fast_io_fail(char * buff, int len, void * data)
+ {
+ 	struct hwentry * hwe = (struct hwentry *)data;
+@@ -2394,6 +2500,12 @@ snprint_def_bindings_file (char * buff, 
+ }
+ 
+ static int
++snprint_def_reservation_key(char * buff, int len, void * data)
 +{
-+	struct stat info;
-+	vector curmp = NULL;
-+	vector pathvec = NULL;
-+	char * alias;
-+	struct multipath * mpp;
-+	int map_present;
-+	int major, minor;
-+	int ret;
-+
-+	conf->verbosity = verbose;
-+
-+	if (fstat( fd, &info) != 0){
-+		condlog(0, "stat error %d", fd);
-+		return MPATH_PR_FILE_ERROR;
-+	} 
-+	if(!S_ISBLK(info.st_mode)){
-+		condlog(0, "Failed to get major:minor. fd = %d", fd);
-+		return MPATH_PR_FILE_ERROR;
-+	}
-+
-+	major = (int)MAJOR(info.st_rdev);
-+	minor = (int)MINOR(info.st_rdev);	
-+	condlog(4, "Device %d:%d:  ", major, minor);
-+
-+	/* get alias from major:minor*/
-+	alias = dm_mapname(major, minor);
-+	if (!alias){
-+		condlog(0, "%d:%d failed to get device alias.", major, minor);
-+		return MPATH_PR_DMMP_ERROR;
-+	}
-+
-+	condlog(3, "alias = %s", alias);
-+	map_present = dm_map_present(alias);
-+	if (map_present && dm_type(alias, TGT_MPATH) <= 0){
-+		condlog( 0, "%s: not a multipath device.", alias);
-+		ret = MPATH_PR_DMMP_ERROR;
-+		goto out;
-+	}
-+
-+	/*
-+	 * allocate core vectors to store paths and multipaths
-+	 */
-+	curmp = vector_alloc ();
-+	pathvec = vector_alloc ();
-+
-+	if (!curmp || !pathvec){
-+		condlog (0, "%s: vector allocation failed.", alias);
-+		ret = MPATH_PR_DMMP_ERROR;
-+		goto out;
-+	}
-+
-+	/* get info of all paths from the dm device	*/
-+	if (get_mpvec (curmp, pathvec, alias)){
-+		condlog(0, "%s: failed to get device info.", alias);
-+		ret = MPATH_PR_DMMP_ERROR;
-+		goto out1;
-+	}
-+
-+	mpp = find_mp_by_alias(curmp, alias);
-+	if (!mpp){
-+		condlog(0, "%s: devmap not registered.", alias);
-+		ret = MPATH_PR_DMMP_ERROR;
-+		goto out1;
-+	}
-+
-+	ret = mpath_prin_activepath(mpp, rq_servact, resp, noisy);
-+
-+out1:
-+	free_multipathvec(curmp, KEEP_PATHS);
-+	free_pathvec(pathvec, FREE_PATHS);	
-+out:
-+	FREE(alias);
-+	return ret; 						
++	return snprintf(buff, len, "%s", conf->reservation_key);
 +}
 +
-+int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
-+		unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy, int verbose)
++static int
+ snprint_ble_simple (char * buff, int len, void * data)
+ {
+ 	struct blentry * ble = (struct blentry *)data;
+@@ -2456,6 +2568,7 @@ init_keywords(void)
+ 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
+ 	install_keyword("bindings_file", &bindings_file_handler, &snprint_def_bindings_file);
+ 	install_keyword("log_checker_err", &def_log_checker_err_handler, &snprint_def_log_checker_err);
++	install_keyword("reservation_key", &def_reservation_key_handler, &snprint_def_reservation_key);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_getuid_callout", &def_getuid_callout_handler, NULL);
+@@ -2538,5 +2651,6 @@ init_keywords(void)
+ 	install_keyword("mode", &mp_mode_handler, &snprint_mp_mode);
+ 	install_keyword("uid", &mp_uid_handler, &snprint_mp_uid);
+ 	install_keyword("gid", &mp_gid_handler, &snprint_mp_gid);
++	install_keyword("reservation_key", &mp_reservation_key_handler, &snprint_mp_reservation_key);
+ 	install_sublevel_end();
+ }
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/discovery.c multipath-tools/libmultipath/discovery.c
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/discovery.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/discovery.c	2012-01-12 12:14:04.000000000 -0500
+@@ -914,7 +914,7 @@ pathinfo (struct path *pp, vector hwtabl
+ 	 * fetch info not available through sysfs
+ 	 */
+ 	if (pp->fd < 0)
+-		pp->fd = opennode(pp->dev, O_RDONLY);
++		pp->fd = opennode(pp->dev, O_RDWR);
+ 
+ 	if (pp->fd < 0) {
+ 		condlog(4, "Couldn't open node for %s: %s",
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/propsel.c multipath-tools/libmultipath/propsel.c
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/propsel.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/propsel.c	2012-01-12 12:15:30.000000000 -0500
+@@ -17,6 +17,7 @@
+ #include "devmapper.h"
+ #include "prio.h"
+ #include "discovery.h"
++#include <inttypes.h>
+ 
+ pgpolicyfn *pgpolicies[] = {
+ 	NULL,
+@@ -613,3 +614,48 @@ select_flush_on_last_del(struct multipat
+ 	condlog(3, "flush_on_last_del = DISABLED (internal default)");
+ 	return 0;
+ }
++
++extern int
++select_reservation_key (struct multipath * mp)
 +{
-+
-+	struct stat info;
-+
-+	vector curmp = NULL;
-+	vector pathvec = NULL;
-+
-+	char * alias;
-+	struct multipath * mpp;
-+	int map_present;
-+	int major, minor;
-+	int ret;
 +	int j;
 +	unsigned char *keyp;
-+	uint64_t prkey;		
++	uint64_t prkey = 0;
 +
-+	conf->verbosity = verbose;
++	mp->reservation_key = NULL;
 +
-+	if (fstat( fd, &info) != 0){
-+		condlog(0, "stat error fd=%d", fd);
++	if (mp->mpe && mp->mpe->reservation_key) {
++		keyp =  mp->mpe->reservation_key;
++		for (j = 0; j < 8; ++j) {
++			if (j > 0)
++				prkey <<= 8;
++			prkey |= *keyp;
++			++keyp;
++		}
++
++		condlog(3, "%s: reservation_key = 0x%" PRIx64 " "
++				"(multipath setting)",  mp->alias, prkey);
++
++		mp->reservation_key = mp->mpe->reservation_key;
++		return 0;
++	}
++
++	if (conf->reservation_key) {
++		keyp = conf->reservation_key;
++		for (j = 0; j < 8; ++j) {
++			if (j > 0)
++				prkey <<= 8;
++			prkey |= *keyp;
++			++keyp;
++		}
++
++		condlog(3, "%s: reservation_key  = 0x%" PRIx64
++				" (config file default)", mp->alias, prkey);
++
++		mp->reservation_key = conf->reservation_key;
++		return 0;
++	}
++
++	return 0;
++}
++
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/propsel.h multipath-tools/libmultipath/propsel.h
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/propsel.h	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/propsel.h	2012-01-12 12:15:48.000000000 -0500
+@@ -17,3 +17,4 @@ int select_uid(struct multipath *mp);
+ int select_gid(struct multipath *mp);
+ int select_fast_io_fail(struct multipath *mp);
+ int select_dev_loss(struct multipath *mp);
++int select_reservation_key(struct multipath *mp);
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/libmultipath/structs.h multipath-tools/libmultipath/structs.h
+--- multipath-tools-14jan-upstream-patchedall-1st/libmultipath/structs.h	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/libmultipath/structs.h	2012-01-12 12:16:26.000000000 -0500
+@@ -216,6 +216,10 @@ struct multipath {
+ 
+ 	/* checkers shared data */
+ 	void * mpcontext;
++	
++	/* persistent management data*/
++	unsigned char * reservation_key;
++	unsigned char prflag;
+ };
+ 
+ struct pathgroup {
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/Makefile multipath-tools/Makefile
+--- multipath-tools-14jan-upstream-patchedall-1st/Makefile	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/Makefile	2012-01-12 12:17:39.000000000 -0500
+@@ -23,8 +23,10 @@ BUILDDIRS = \
+ 	libmultipath \
+ 	libmultipath/prioritizers \
+ 	libmultipath/checkers \
++	libmpathpersist \
+ 	multipath \
+ 	multipathd \
++	mpathpersist \
+ 	kpartx
+ 
+ ifeq   ($(MULTIPATH_VERSION),)
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/Makefile.inc multipath-tools/Makefile.inc
+--- multipath-tools-14jan-upstream-patchedall-1st/Makefile.inc	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/Makefile.inc	2012-01-12 12:18:26.000000000 -0500
+@@ -28,10 +28,12 @@ libudevdir  = ${prefix}/lib/udev
+ multipathdir = $(TOPDIR)/libmultipath
+ mandir      = $(prefix)/usr/share/man/man8
+ man5dir     = $(prefix)/usr/share/man/man5
++man3dir      = $(prefix)/usr/share/man/man3
+ rcdir	    = $(prefix)/etc/init.d
+ syslibdir   = $(prefix)/$(LIB)
+ libdir	    = $(prefix)/$(LIB)/multipath
+ unitdir     = $(prefix)/lib/systemd/system
++mpathpersistdir = $(TOPDIR)/libmpathpersist
+ 
+ GZIP        = /bin/gzip -9 -c
+ INSTALL_PROGRAM = install
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/main.c multipath-tools/mpathpersist/main.c
+--- multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/main.c	1969-12-31 19:00:00.000000000 -0500
++++ multipath-tools/mpathpersist/main.c	2012-01-12 12:20:55.000000000 -0500
+@@ -0,0 +1,808 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include <fcntl.h>
++#include <checkers.h>
++#include <vector.h>
++#include <structs.h>
++#include <getopt.h>
++#include <mpath_persist.h>
++#include "main.h"
++#include <pthread.h>
++#include <ctype.h>
++#include <string.h>
++
++static const char * pr_type_strs[] = {
++	"obsolete [0]",
++	"Write Exclusive",
++	"obsolete [2]",
++	"Exclusive Access",
++	"obsolete [4]",
++	"Write Exclusive, registrants only",
++	"Exclusive Access, registrants only",
++	"Write Exclusive, all registrants",
++	"Exclusive Access, all registrants",
++	"obsolete [9]", "obsolete [0xa]", "obsolete [0xb]", "obsolete [0xc]",
++	"obsolete [0xd]", "obsolete [0xe]", "obsolete [0xf]",
++};
++
++int get_transportids_length(unsigned char * transportid_arr, int max_transportid, int num_transportids);
++void mpath_print_buf_readcap(struct prin_resp *pr_buff); 
++void mpath_print_buf_readfullstat(struct prin_resp *pr_buff);
++void mpath_print_buf_readresv(struct prin_resp *pr_buff);
++void mpath_print_buf_readkeys(struct prin_resp *pr_buff);
++void dumpHex(const char* str, int len, int no_ascii);
++void * mpath_alloc_prin_response(int prin_sa);	
++void mpath_print_transport_id(struct prin_fulldescr *fdesc);
++int construct_transportid(const char * inp, struct transportid transid[], int num_transportids);
++
++int logsink;
++
++int main (int argc, char * argv[])
++{
++	int fd, c, res;
++	const char *device_name = NULL;
++	int num_prin_sa = 0;
++	int num_prout_sa = 0;
++	int num_prout_param = 0;
++	int prin_flag = 0;
++	int prout_flag = 0;
++	int ret = 0;
++	int hex = 0;
++	uint64_t param_sark = 0;
++	unsigned int prout_type = 0;
++	int param_alltgpt = 0;
++	int param_aptpl = 0;
++	uint64_t param_rk = 0;
++	unsigned int param_rtp = 0;
++	int num_transportids = 0;
++	struct transportid transportids[MPATH_MX_TIDS];
++	int prout = 1;
++	int prin = 1;
++	int prin_sa = -1;
++	int prout_sa = -1;
++	int verbose = 0;
++	int loglevel = 0;
++	int noisy = 0;
++	int num_transport =0;
++	void *resp = NULL;
++	struct transportid * tmp; 
++
++	if (optind == argc)
++	{
++
++		fprintf (stderr, "No parameter used\n");
++		usage ();
++		exit (1);
++	}
++
++	if (getuid () != 0)
++	{
++		fprintf (stderr, "need to be root\n");
++		exit (1);
++	}
++
++
++	mpath_lib_init();
++	memset(transportids,0,MPATH_MX_TIDS);
++
++	while (1)
++	{
++		int option_index = 0;
++
++		c = getopt_long (argc, argv, "v:Cd:hHioZK:S:PAT:skrGILcRX:",
++				long_options, &option_index);
++		if (c == -1)
++			break;
++
++		switch (c)
++		{
++			case 'v':
++				if (1 != sscanf (optarg, "%d", &loglevel))
++				{
++					fprintf (stderr, "bad argument to '--verbose'\n");
++					return MPATH_PR_SYNTAX_ERROR;
++				}
++				break;
++
++			case 'C':
++				prout_sa = MPATH_PROUT_CLEAR_SA;
++				++num_prout_sa;
++				break;
++
++			case 'd':
++				device_name = optarg;
++				break;
++
++			case 'h':
++				usage ();
++				return 0;
++
++			case 'H':
++				hex=1;
++				break;
++
++			case 'i':
++				prin_flag = 1;
++				break;
++
++			case 'o':
++				prout_flag = 1;
++				break;
++
++			case 'Z':
++				param_aptpl = 1;
++				++num_prout_param;
++				break;
++			case 'K':
++				if (1 != sscanf (optarg, "%" SCNx64 "", &param_rk))
++				{
++					fprintf (stderr, "bad argument to '--param-rk'\n");
++					return MPATH_PR_SYNTAX_ERROR;
++				}
++				++num_prout_param;
++				break;
++
++			case 'S':
++				if (1 != sscanf (optarg, "%" SCNx64 "", &param_sark))
++				{
++					fprintf (stderr, "bad argument to '--param-sark'\n");
++					return MPATH_PR_SYNTAX_ERROR;
++				}
++				++num_prout_param;
++				break;
++
++			case 'P':
++				prout_sa = MPATH_PROUT_PREE_SA;
++				++num_prout_sa;
++				break;
++
++			case 'A':
++				prout_sa = MPATH_PROUT_PREE_AB_SA;
++				++num_prout_sa;
++				break;
++
++			case 'T':
++				if (1 != sscanf (optarg, "%x", &prout_type))
++				{
++					fprintf (stderr, "bad argument to '--prout-type'\n");
++					return MPATH_PR_SYNTAX_ERROR;
++				}
++				++num_prout_param;
++				break;
++
++			case 's':
++				prin_sa = MPATH_PRIN_RFSTAT_SA;
++				++num_prin_sa;
++				break;
++
++			case 'k':
++				prin_sa = MPATH_PRIN_RKEY_SA;
++				++num_prin_sa;
++				break;
++
++			case 'r':
++				prin_sa = MPATH_PRIN_RRES_SA;
++				++num_prin_sa;
++				break;
++
++			case 'G':
++				prout_sa = MPATH_PROUT_REG_SA;
++				++num_prout_sa;
++				break;
++
++			case 'I':
++				prout_sa = MPATH_PROUT_REG_IGN_SA;
++				++num_prout_sa;
++				break;
++
++			case 'L':
++				prout_sa = MPATH_PROUT_REL_SA;
++				++num_prout_sa;
++				break;
++
++			case 'c':
++				prin_sa = MPATH_PRIN_RCAP_SA;
++				++num_prin_sa;
++				break;
++
++			case 'R':
++				prout_sa = MPATH_PROUT_RES_SA;
++				++num_prout_sa;
++				break;
++
++			case 'X':
++				if (0 != construct_transportid(optarg, transportids, num_transport)) {
++					fprintf(stderr, "bad argument to '--transport-id'\n");
++					return MPATH_PR_SYNTAX_ERROR;
++				}
++
++				++num_transport;
++				break;
++
++			default:
++				fprintf(stderr, "unrecognised switch " "code 0x%x ??\n", c);	
++				usage ();
++				ret = MPATH_PR_SYNTAX_ERROR;
++				goto out;
++		}
++	}
++
++	if (optind < argc)
++	{
++
++		if (NULL == device_name)
++		{
++			device_name = argv[optind];
++			++optind;
++		}
++		if (optind < argc)
++		{
++			for (; optind < argc; ++optind)
++				fprintf (stderr, "Unexpected extra argument: %s\n", argv[optind]);
++			usage ();
++			ret = MPATH_PR_SYNTAX_ERROR;
++			goto out;
++		}
++	}
++
++	/* set verbosity */
++	noisy = (loglevel >= 3) ? 1: 0;
++	verbose	= (loglevel >= 3)? 3: loglevel;
++
++	if ((prout_flag + prin_flag) == 0)
++	{
++		fprintf (stderr, "choose either '--in' or '--out' \n");
++		usage ();
++		ret = MPATH_PR_SYNTAX_ERROR;
++		goto out;
++	}
++	if ((prout_flag + prin_flag) > 1)
++	{
++		fprintf (stderr, "choose either '--in' or '--out' \n");
++		usage ();
++		ret = MPATH_PR_SYNTAX_ERROR;
++		goto out;
++	}
++	else if (prout_flag)
++	{				/* syntax check on PROUT arguments */
++		prin = 0;
++		if ((1 != num_prout_sa) || (0 != num_prin_sa))
++		{
++			fprintf (stderr, " For Persistent Reserve Out only one "
++					"appropriate\n service action must be "
++					"chosen \n");
++			ret = MPATH_PR_SYNTAX_ERROR;
++			goto out;
++		}
++	}
++	else if (prin_flag)
++	{				/* syntax check on PRIN arguments */
++		prout = 0;
++		if (num_prout_sa > 0)
++		{
++			fprintf (stderr, " When a service action for Persistent "
++					"Reserve Out is chosen the\n"
++					" '--out' option must be given \n");
++			ret = MPATH_PR_SYNTAX_ERROR;
++			goto out;
++		}
++		if (0 == num_prin_sa)
++		{
++			fprintf (stderr,
++					" No service action given for Persistent Reserve IN\n");
++			usage();
++			ret = MPATH_PR_SYNTAX_ERROR;
++		}
++		else if (num_prin_sa > 1)
++		{
++			fprintf (stderr, " Too many service actions given; choose "
++					"one only\n");
++			usage();
++			ret = MPATH_PR_SYNTAX_ERROR;
++		}
++	}
++	else
++	{
++		usage ();
++		ret = MPATH_PR_SYNTAX_ERROR;
++		goto out;
++	}
++
++	if ((param_rtp) && (MPATH_PROUT_REG_MOV_SA != prout_sa))
++	{
++		fprintf (stderr, " --relative-target-port"
++				" only useful with --register-move\n");
++		usage ();
++		ret = MPATH_PR_SYNTAX_ERROR;
++		goto out;
++	}
++
++	if (((MPATH_PROUT_RES_SA == prout_sa) ||
++				(MPATH_PROUT_REL_SA == prout_sa) ||
++				(MPATH_PROUT_PREE_SA == prout_sa) ||
++				(MPATH_PROUT_PREE_AB_SA == prout_sa)) &&
++			(0 == prout_type)) {
++		fprintf(stderr, "Warning: --prout-type probably needs to be "
++				"given\n");
++	}
++	if ((verbose > 2) && num_transportids)
++	{
++		fprintf (stderr, "number of tranport-ids decoded from "
++				"command line : %d\n", num_transportids);
++	}
++
++	if (device_name == NULL)
++	{
++		fprintf (stderr, "No device name given \n");
++		usage ();
++		ret = MPATH_PR_SYNTAX_ERROR;
++		goto out;
++	}
++
++	/* open device */
++	if ((fd = open (device_name, O_WRONLY)) < 0)
++	{
++		fprintf (stderr, "%s: error opening file (rw) fd=%d\n",
++				device_name, fd);
++		ret = MPATH_PR_FILE_ERROR;
++		goto out;
++	}
++
++
++	if (prin)
++	{
++		resp = mpath_alloc_prin_response(prin_sa);
++		if (!resp)
++		{
++			fprintf (stderr, "failed to allocate PRIN response buffer\n");
++			ret = MPATH_PR_OTHER;
++			goto out;
++		}
++
++		ret = mpath_persistent_reserve_in (fd, prin_sa, resp, noisy, verbose);
++		if (ret != MPATH_PR_SUCCESS )
++		{
++			fprintf (stderr, "Persistent Reserve IN command failed\n");
++			goto out;	
++		}
++
++		switch(prin_sa)
++		{			
++			case MPATH_PRIN_RKEY_SA: 
++				mpath_print_buf_readkeys(resp);		
++				break;
++			case MPATH_PRIN_RRES_SA: 
++				mpath_print_buf_readresv(resp);
++				break;
++			case MPATH_PRIN_RCAP_SA:
++				mpath_print_buf_readcap(resp);		
++				break;
++			case MPATH_PRIN_RFSTAT_SA:
++				mpath_print_buf_readfullstat(resp);		
++				break;
++		}
++		free(resp);
++	}
++	else if (prout)
++	{
++		int j; 
++		int t_arr_len=0;
++		struct prout_param_descriptor *paramp;
++		t_arr_len = MPATH_MX_TID_LEN * num_transport;
++
++		paramp= malloc(sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS )));
++		
++		memset(paramp, 0, sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS)));
++
++		for (j = 7; j >= 0; --j) {
++			paramp->key[j] = (param_rk & 0xff);
++			param_rk >>= 8;
++		}
++
++		for (j = 7; j >= 0; --j) {
++			paramp->sa_key[j] = (param_sark & 0xff);
++			param_sark >>= 8;
++		}
++
++		if (param_alltgpt)
++			paramp->sa_flags |= 0x4;
++		if (param_aptpl)
++			paramp->sa_flags |= 0x1;
++
++		if (num_transport) 
++		{
++			paramp->sa_flags |= MPATH_F_SPEC_I_PT_MASK;
++			paramp->num_transportid = num_transport;
++			for (j = 0 ; j < num_transport; j++)
++			{
++				paramp->trnptid_list[j] = (struct transportid *)malloc(sizeof(struct transportid));
++				memcpy(paramp->trnptid_list[j], &transportids[j],sizeof(struct transportid));
++			}
++		}
++
++		/* PROUT commands other than 'register and move' */
++		ret = mpath_persistent_reserve_out (fd, prout_sa, 0, prout_type,
++				paramp, noisy, verbose);
++		for (j = 0 ; j < num_transport; j++)
++		{
++			tmp = paramp->trnptid_list[j];
++			free(tmp);
++		}
++		free(paramp);
++	}
++
++	if (ret != MPATH_PR_SUCCESS)
++	{
++		switch(ret)
++		{
++			case MPATH_PR_SENSE_UNIT_ATTENTION:
++				printf("persistent reserve out: scsi status: Unit Attention\n");
++				break;
++			case MPATH_PR_RESERV_CONFLICT:
++				printf("persistent reserve out: scsi status: Reservation Conflict\n");
++				break;
++		}
++		printf("PR out: command failed\n");
++	}
++
++	res = close (fd);
++	if (res < 0)
++	{
++		mpath_lib_exit();
 +		return MPATH_PR_FILE_ERROR;
 +	}
 +
-+	if(!S_ISBLK(info.st_mode)){
-+		condlog(3, "Failed to get major:minor. fd=%d", fd);
-+		return MPATH_PR_FILE_ERROR;	
-+	}	
++out :
++	mpath_lib_exit();
 +
-+	major = (int)MAJOR(info.st_rdev);
-+	minor = (int)MINOR(info.st_rdev);
-+	condlog(4, "Device  %d:%d", major, minor);
++	return (ret >= 0) ? ret : MPATH_PR_OTHER;
++}
 +
-+	/* get WWN of the device from major:minor*/
-+	alias = dm_mapname(major, minor);
-+	if (!alias){
-+		return MPATH_PR_DMMP_ERROR;
++int
++get_transportids_length(unsigned char * transportid_arr, int max_transportid, int num_transportids)
++{
++	int compact_len = 0;
++	unsigned char * ucp = transportid_arr;
++	int k, off, protocol_id, len;
++	for (k = 0, off = 0; ((k < num_transportids) && (k < max_transportid));
++			++k, off += MPATH_MX_TID_LEN) {
++		protocol_id = ucp[off] & 0xf;
++		if (5 == protocol_id) {
++			len = (ucp[off + 2] << 8) + ucp[off + 3] + 4;
++			if (len < 24)
++				len = 24;
++			if (off > compact_len)
++				memmove(ucp + compact_len, ucp + off, len);
++			compact_len += len;
++
++		} else {
++			if (off > compact_len)
++				memmove(ucp + compact_len, ucp + off, 24);
++			compact_len += 24;
++		}
 +	}
 +
-+	condlog(3, "alias = %s", alias);
-+	map_present = dm_map_present(alias);
++	return compact_len;
++}
 +
-+	if (map_present && dm_type(alias, TGT_MPATH) <= 0){
-+		condlog(3, "%s: not a multipath device.", alias);
-+		ret = MPATH_PR_DMMP_ERROR;
-+		goto out;
++void mpath_print_buf_readkeys( struct prin_resp *pr_buff)
++{
++	int i,j,k, num;
++	unsigned char *keyp;
++	uint64_t prkey;
++	printf("  PR generation=0x%x, ", pr_buff->prin_descriptor.prin_readkeys.prgeneration);
++
++	num = pr_buff->prin_descriptor.prin_readkeys.additional_length / 8;
++	if (0 == num) {
++		printf("	0 registered reservation key.\n");
++		return;
 +	}
++	else if (1 == num)
++		printf("	1 registered reservation key follows:\n");
++	else
++		printf("	%d registered reservation keys follow:\n", num);
 +
-+	/*
-+	 * allocate core vectors to store paths and multipaths
-+	 */
-+	curmp = vector_alloc ();
-+	pathvec = vector_alloc ();
 +
-+	 if (!curmp || !pathvec){
-+                condlog (0, "%s: vector allocation failed.", alias);
-+                ret = MPATH_PR_DMMP_ERROR;
-+                goto out;
-+        }
-+
-+	/* get info of all paths from the dm device     */
-+	if (get_mpvec(curmp, pathvec, alias)){
-+		condlog(0, "%s: failed to get device info.", alias);
-+		ret = MPATH_PR_DMMP_ERROR;
-+		goto out;
-+	}
-+
-+	mpp = find_mp_by_alias(curmp, alias);
-+
-+	if (!mpp) {
-+		condlog(0, "%s: devmap not registered.", alias);
-+		ret = MPATH_PR_DMMP_ERROR;
-+		goto out1;
-+	}
-+
-+	select_reservation_key(mpp);
-+
-+	switch(rq_servact)
++	keyp = (unsigned char *)&pr_buff->prin_descriptor.prin_readkeys.key_list[0];
++	for (i = 0; i < num ; i++)
 +	{
-+		case MPATH_PROUT_REG_SA: 
-+		case MPATH_PROUT_REG_IGN_SA:  
-+			ret= mpath_prout_reg(mpp, rq_servact, rq_scope, rq_type, paramp, noisy);
-+			break;
-+		case MPATH_PROUT_RES_SA :  
-+		case MPATH_PROUT_PREE_SA :  
-+		case MPATH_PROUT_PREE_AB_SA :  
-+		case MPATH_PROUT_CLEAR_SA:  
-+			ret = mpath_prout_common(mpp, rq_servact, rq_scope, rq_type, paramp, noisy);
-+			break;
-+		case MPATH_PROUT_REL_SA:
-+			ret = mpath_prout_rel(mpp, rq_servact, rq_scope, rq_type, paramp, noisy);
-+			break;
-+		default:
-+			ret = MPATH_PR_OTHER;
-+			goto out1;
++		prkey = 0;
++		for (j = 0; j < 8; ++j) {
++
++			if (j > 0)
++				prkey <<= 8;
++			prkey |= keyp[j];
++		}
++		printf("    0x%" PRIx64 "\n", prkey);
++		k=8*i+j;
++		keyp = (unsigned char *)&pr_buff->prin_descriptor.prin_readkeys.key_list[k];
++	}
++}
++
++void mpath_print_buf_readresv( struct prin_resp *pr_buff)
++{
++	int j, num, scope=0, type=0;
++	unsigned char *keyp;
++	uint64_t prkey;	
++
++	num = pr_buff->prin_descriptor.prin_readresv.additional_length / 8;
++	if (0 == num)
++	{
++		printf("  PR generation=0x%x, there is NO reservation held \n", pr_buff->prin_descriptor.prin_readresv.prgeneration);
++		return ;
++	}
++	else
++		printf("  PR generation=0x%x, Reservation follows:\n", pr_buff->prin_descriptor.prin_readresv.prgeneration);
++	keyp = (unsigned  char *)&pr_buff->prin_descriptor.prin_readkeys.key_list[0]; 
++	prkey = 0;
++	for (j = 0; j < 8; ++j) {
++		if (j > 0)
++			prkey <<= 8;
++		prkey |= keyp[j];
 +	}
 +
-+	if ((ret == MPATH_PR_SUCCESS) && ((rq_servact == MPATH_PROUT_REG_SA) ||
-+				(rq_servact ==  MPATH_PROUT_REG_IGN_SA)))
++	printf("   Key = 0x%" PRIx64 "\n", prkey);
++
++	scope = (pr_buff->prin_descriptor.prin_readresv.scope_type >> 4) &  0x0f;
++	type = pr_buff->prin_descriptor.prin_readresv.scope_type & 0x0f;
++
++	if (scope == 0)	
++		printf("  scope = LU_SCOPE, type = %s", pr_type_strs[type]);
++	else
++		printf("  scope = %d, type = %s", scope, pr_type_strs[type]);
++
++	printf("\n");
++
++}
++
++void mpath_print_buf_readcap( struct prin_resp *pr_buff)
++{
++	if ( pr_buff->prin_descriptor.prin_readcap.length <= 2 ) {
++		fprintf(stderr, "Unexpected response for PRIN Report "
++				"Capabilities\n");
++		return; //MALFORMED;
++	}
++
++	printf("Report capabilities response:\n");
++
++	printf("  Compatible Reservation Handling(CRH): %d\n", !!(pr_buff->prin_descriptor.prin_readcap.flags[0] & 0x10));
++	printf("  Specify Initiator Ports Capable(SIP_C): %d\n",!!(pr_buff->prin_descriptor.prin_readcap.flags[0] & 0x8));
++	printf("  All Target Ports Capable(ATP_C): %d\n",!!(pr_buff->prin_descriptor.prin_readcap.flags[0] & 0x4 ));
++	printf("  Persist Through Power Loss Capable(PTPL_C): %d\n",!!(pr_buff->prin_descriptor.prin_readcap.flags[0]));
++	printf("  Type Mask Valid(TMV): %d\n", !!(pr_buff->prin_descriptor.prin_readcap.flags[1] & 0x80));
++	printf("  Allow Commands: %d\n", !!(( pr_buff->prin_descriptor.prin_readcap.flags[1] >> 4) & 0x7));
++	printf("  Persist Through Power Loss Active(PTPL_A): %d\n",
++			!!(pr_buff->prin_descriptor.prin_readcap.flags[1] & 0x1));
++
++	if(pr_buff->prin_descriptor.prin_readcap.flags[1] & 0x80)
 +	{
-+		keyp=paramp->sa_key;
++		printf("    Support indicated in Type mask:\n");
++
++		printf("      %s: %d\n", pr_type_strs[7], pr_buff->prin_descriptor.prin_readcap.pr_type_mask & 0x80);
++		printf("      %s: %d\n", pr_type_strs[6], pr_buff->prin_descriptor.prin_readcap.pr_type_mask & 0x40);
++		printf("      %s: %d\n", pr_type_strs[5], pr_buff->prin_descriptor.prin_readcap.pr_type_mask & 0x20);
++		printf("      %s: %d\n", pr_type_strs[3], pr_buff->prin_descriptor.prin_readcap.pr_type_mask & 0x8);
++		printf("      %s: %d\n", pr_type_strs[1], pr_buff->prin_descriptor.prin_readcap.pr_type_mask & 0x2);
++		printf("      %s: %d\n", pr_type_strs[8], pr_buff->prin_descriptor.prin_readcap.pr_type_mask & 0x100);
++	}
++}
++
++void mpath_print_buf_readfullstat( struct prin_resp *pr_buff)
++{
++
++	int i,j, num;
++	uint64_t  prkey;
++	uint16_t  rel_pt_addr;
++	unsigned char * keyp;
++
++	num = pr_buff->prin_descriptor.prin_readfd.number_of_descriptor;	
++	if (0 == num)
++	{
++		printf("  PR generation=0x%x \n", pr_buff->prin_descriptor.prin_readfd.prgeneration);
++		return ;
++	}
++	else
++		printf("  PR generation=0x%x \n", pr_buff->prin_descriptor.prin_readfd.prgeneration);
++
++	for (i = 0 ; i < num; i++)
++	{
++		keyp = (unsigned  char *)&pr_buff->prin_descriptor.prin_readfd.descriptors[i]->key;
++
 +		prkey = 0;
 +		for (j = 0; j < 8; ++j) {
 +			if (j > 0)
@@ -399,1803 +988,729 @@ diff -uprN multipath-tools-orig/libmpathpersist/mpath_persist.c multipath-tools/
 +			prkey |= *keyp;
 +			++keyp;
 +		}
-+		if (prkey == 0)
-+			update_prflag(alias, "unset", noisy);
-+		else
-+			update_prflag(alias, "set", noisy);
-+	} else {
-+		if ((ret == MPATH_PR_SUCCESS) && ((rq_servact == MPATH_PROUT_CLEAR_SA) || 
-+					(rq_servact == MPATH_PROUT_PREE_AB_SA ))){
-+			update_prflag(alias, "unset", noisy);
-+		}
-+	}
-+out1:
-+	free_multipathvec(curmp, KEEP_PATHS);
-+	free_pathvec(pathvec, FREE_PATHS);
++		printf("   Key = 0x%" PRIx64 "\n", prkey);
 +
-+out:
-+	FREE(alias);
-+	return ret; 
++		if (pr_buff->prin_descriptor.prin_readfd.descriptors[i]->flag & 0x02)	
++			printf("      All target ports bit set\n");
++		else {
++			printf("      All target ports bit clear\n");
++
++			rel_pt_addr = pr_buff->prin_descriptor.prin_readfd.descriptors[i]->rtpi;
++			printf("      Relative port address: 0x%x\n",
++					rel_pt_addr);
++		}
++
++		if (pr_buff->prin_descriptor.prin_readfd.descriptors[i]->flag & 0x1) {
++			printf("      << Reservation holder >>\n");
++			j = ((pr_buff->prin_descriptor.prin_readfd.descriptors[i]->scope_type>> 4) & 0xf);
++			if (0 == j)
++				printf("      scope: LU_SCOPE, ");
++			else
++				printf("      scope: %d ", j);
++			j = (pr_buff->prin_descriptor.prin_readfd.descriptors[i]->scope_type & 0xf);
++			printf(" type: %s\n", pr_type_strs[j]);
++		} else
++			printf("      not reservation holder\n");
++		mpath_print_transport_id(pr_buff->prin_descriptor.prin_readfd.descriptors[i]);
++	}
++}
++
++static void usage()
++{
++	fprintf(stderr,
++			"Usage: mpathpersist [OPTIONS] [DEVICE]\n"
++			" Options:\n"
++			"    --verbose|-v level         verbosity level\n"
++			"                   0           Critical messages\n"
++			"                   1           Error messages\n"
++			"                   2           Warning messages\n"
++			"                   3           Informational messages\n"
++			"                   4           Informational messages with trace enabled\n"
++			"    --clear|-C                 PR Out: Clear\n"
++			"    --device=DEVICE|-d DEVICE  query or change DEVICE\n"
++			"    --help|-h                  output this usage message\n"
++			"    --hex|-H                   output response in hex\n"
++			"    --in|-i                    request PR In command \n"
++			"    --out|-o                   request PR Out command\n"
++			"    --param-aptpl|-Z           PR Out parameter 'APTPL'\n"
++			"    --read-keys|-k             PR In: Read Keys\n"
++			"    --param-sark=SARK|-S SARK  PR Out parameter service "
++			"action\n"
++			"                               reservation key (SARK is in "
++			"hex)\n"
++			"    --preempt|-P               PR Out: Preempt\n"
++			"    --preempt-abort|-A         PR Out: Preempt and Abort\n"
++			"    --prout-type=TYPE|-T TYPE  PR Out command type\n"
++			"    --read-status|-s           PR In: Read Full Status\n"
++			"    --read-keys|-k             PR In: Read Keys\n"
++			"    --read-reservation|-r      PR In: Read Reservation\n"
++			"    --register|-G              PR Out: Register\n"
++			"    --register-ignore|-I       PR Out: Register and Ignore\n"
++			"    --release|-L               PR Out: Release\n"
++			"    --report-capabilities|-c   PR In: Report Capabilities\n"
++			"    --reserve|-R               PR Out: Reserve\n"
++			"    --transport-id=TIDS|-X TIDS  TransportIDs can be mentioned \n"
++			"                               in several forms\n"
++			" Examples:\n"
++			"     mpathpersist --out --register --param-sark=123abc --prout-type=5 /dev/mapper/mpath9\n"
++			"     mpathpersist -i -k /dev/mapper/mpath9\n"	);
++}
++
++void
++mpath_print_transport_id(struct prin_fulldescr *fdesc)
++{
++	switch (fdesc->trnptid.protocol_id) {
++		case MPATH_PROTOCOL_ID_FC:
++			printf("   FCP-2 ");
++			if (0 != fdesc->trnptid.format_code)
++				printf(" [Unexpected format code: %d]\n", 
++						fdesc->trnptid.format_code);
++			dumpHex((const char *)fdesc->trnptid.n_port_name, 8, 0);
++			break;
++		case MPATH_PROTOCOL_ID_ISCSI:
++			printf("   iSCSI ");
++			if (0 == fdesc->trnptid.format_code) {
++				printf("name: %.*s\n", (int)sizeof(fdesc->trnptid.iscsi_name),
++					fdesc->trnptid.iscsi_name);
++			}else if (1 == fdesc->trnptid.format_code){
++				printf("world wide unique port id: %.*s\n",
++						(int)sizeof(fdesc->trnptid.iscsi_name),
++						fdesc->trnptid.iscsi_name);
++			}else {
++				printf("  [Unexpected format code: %d]\n", fdesc->trnptid.format_code);
++				dumpHex((const char *)fdesc->trnptid.iscsi_name,
++					 (int)sizeof(fdesc->trnptid.iscsi_name), 0);
++			}
++			break;
++		case MPATH_PROTOCOL_ID_SAS:
++			printf("   SAS ");
++			 if (0 != fdesc->trnptid.format_code)
++                                printf(" [Unexpected format code: %d]\n",
++                                                fdesc->trnptid.format_code);
++                        dumpHex((const char *)fdesc->trnptid.sas_address, 8, 0);
++			break;
++		default:
++			return;
++	}
 +}
 +
 +int
-+get_mpvec (vector curmp, vector pathvec, char * refwwid)
++construct_transportid(const char * lcp, struct transportid transid[], int num_transportids)
 +{
-+	int i;
-+	struct multipath *mpp;
-+	char params[PARAMS_SIZE], status[PARAMS_SIZE];
++	unsigned char * tidp;
++	int k = 0;
++	int j, n, b, c, len, alen;
++	const char * ecp;
++	const char * isip;
 +
-+	if (dm_get_maps (curmp)){
++	if ((0 == memcmp("fcp,", lcp, 4)) ||
++			(0 == memcmp("FCP,", lcp, 4))) {
++		lcp += 4;
++		k = strspn(lcp, "0123456789aAbBcCdDeEfF");
++
++		len = strlen(lcp);
++		if (len != k) {
++			fprintf(stderr, "badly formed symbolic FCP TransportID: %s\n",
++					lcp);
++			return 1;
++		}
++		transid[num_transportids].format_code = MPATH_PROTOCOL_ID_FC;
++		transid[num_transportids].protocol_id = MPATH_WWUI_DEVICE_NAME;
++		for (k = 0, j = 0, b = 0; k < 16; ++k) {
++			c = lcp[k];
++			if (isdigit(c))
++				n = c - 0x30;
++			else if (isupper(c))
++				n = c - 0x37;
++			else
++				n = c - 0x57;
++			if (k & 1) {
++				transid[num_transportids].n_port_name[j] = b | n;
++				++j;
++			} else
++				b = n << 4;
++		}
++		goto my_cont_b;
++	}
++	if ((0 == memcmp("sas,", lcp, 4)) || (0 == memcmp("SAS,", lcp, 4))) {
++		lcp += 4;
++		k = strspn(lcp, "0123456789aAbBcCdDeEfF");
++		len =strlen(lcp);
++		if (len != k) {
++			fprintf(stderr, "badly formed symbolic SAS TransportID: %s\n",
++					lcp);
++			return 1;
++		}
++		transid[num_transportids].format_code = MPATH_PROTOCOL_ID_SAS;
++		transid[num_transportids].protocol_id = MPATH_WWUI_DEVICE_NAME;
++		memcpy(&transid[num_transportids].sas_address, lcp, 8);
++
++		goto my_cont_b;
++	}
++	if (0 == memcmp("iqn.", lcp, 4)) {
++		ecp = strpbrk(lcp, " \t");
++		isip = strstr(lcp, ",i,0x");
++		if (ecp && (isip > ecp))
++			isip = NULL;
++		len = ecp ? (ecp - lcp) : (int)strlen(lcp);
++		memset(&tidp, 0, 24);
++		transid[num_transportids].format_code = (isip ? MPATH_WWUI_PORT_IDENTIFIER:MPATH_WWUI_DEVICE_NAME);
++		transid[num_transportids].protocol_id = MPATH_PROTOCOL_ID_ISCSI;
++		alen = len + 1; /* at least one trailing null */
++		if (alen < 20)
++			alen = 20;
++		else if (0 != (alen % 4))
++			alen = ((alen / 4) + 1) * 4;
++		if (alen > 241) { /* sam5r02.pdf A.2 (Annex) */
++			fprintf(stderr, "iSCSI name too long, alen=%d\n", alen);
++			return 0;
++		}
++		transid[num_transportids].iscsi_name[1] = alen & 0xff;
++		memcpy(&transid[num_transportids].iscsi_name[2], lcp, len);
++		goto my_cont_b;
++	}
++my_cont_b:
++	if (k >= MPATH_MAX_PARAM_LEN) {
++		fprintf(stderr, "build_transportid: array length exceeded\n");
 +		return 1;
 +	}
-+
-+	vector_foreach_slot (curmp, mpp, i){
-+		/*
-+		 * discard out of scope maps
-+		 */
-+		if (mpp->alias && refwwid && strncmp (mpp->alias, refwwid, WWID_SIZE)){
-+			free_multipath (mpp, KEEP_PATHS);
-+			vector_del_slot (curmp, i);
-+			i--;
-+			continue;
-+		}
-+
-+		dm_get_map(mpp->alias, &mpp->size, params);
-+		condlog(3, "params = %s", params);
-+		dm_get_status(mpp->alias, status);
-+                condlog(3, "status = %s", status);
-+		disassemble_map (pathvec, params, mpp);
-+		
-+		/*
-+		 * disassemble_map() can add new paths to pathvec.
-+		 * If not in "fast list mode", we need to fetch information
-+		 * about them
-+		 */
-+		updatepaths(mpp);
-+		mpp->bestpg = select_path_group (mpp);
-+		disassemble_status (status, mpp);
-+
-+	}
-+	return MPATH_PR_SUCCESS ;
++	return 0;
 +}
 +
-+void * mpath_prin_pthread_fn (void *p)
-+{
-+	int ret;
-+	struct prin_param * pparam = (struct prin_param *)p;
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/main.h multipath-tools/mpathpersist/main.h
+--- multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/main.h	1969-12-31 19:00:00.000000000 -0500
++++ multipath-tools/mpathpersist/main.h	2012-01-12 12:20:55.000000000 -0500
+@@ -0,0 +1,28 @@
++static struct option long_options[] = {
++	{"verbose", 1, 0, 'v'},
++	{"clear", 0, 0, 'C'},
++	{"device", 1, 0, 'd'},
++	{"help", 0, 0, 'h'},
++	{"hex", 0, 0, 'H'},
++	{"in", 0, 0, 'i'},
++	{"out", 0, 0, 'o'},
++	{"param-aptpl", 0, 0, 'Z'},
++	{"param-rk", 1, 0, 'K'},
++	{"param-sark", 1, 0, 'S'},
++	{"preempt", 0, 0, 'P'},
++	{"preempt-abort", 0, 0, 'A'},
++	{"prout-type", 1, 0, 'T'},
++	{"read-full-status", 0, 0, 's'},
++	{"read-keys", 0, 0, 'k'},
++	{"read-reservation", 0, 0, 'r'},
++	{"register", 0, 0, 'G'},
++	{"register-ignore", 0, 0, 'I'},
++	{"release", 0, 0, 'L'},
++	{"report-capabilities", 0, 0, 'c'},		
++	{"reserve", 0, 0, 'R'},
++	{"transport-id", 1, 0, 'X'},
++	{0, 0, 0, 0}
++};
 +
-+	ret = prin_do_scsi_ioctl(pparam->dev, pparam->rq_servact, pparam->resp,  pparam->noisy);
-+	pparam->status = ret;	
-+	pthread_exit(NULL);	
-+}
++static void usage(void);
 +
-+int mpath_send_prin_activepath (char * dev, int rq_servact, struct prin_resp * resp, int noisy)
-+{
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/Makefile multipath-tools/mpathpersist/Makefile
+--- multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/Makefile	1969-12-31 19:00:00.000000000 -0500
++++ multipath-tools/mpathpersist/Makefile	2012-01-12 12:20:55.000000000 -0500
+@@ -0,0 +1,30 @@
++# Makefile
++#
++include ../Makefile.inc
 +
-+	struct prin_param param;
-+	int rc;
++OBJS = main.o 
 +
-+	param.rq_servact = rq_servact; 
-+	param.resp = resp;
-+	param.noisy = noisy;
-+	param.status = MPATH_PR_OTHER;
++CFLAGS += -I$(multipathdir) -I$(mpathpersistdir) 
++LDFLAGS += -lpthread -ldevmapper -lsysfs -L$(mpathpersistdir) -lmpathpersist -L$(multipathdir) -lmultipath 
 +
-+	rc = prin_do_scsi_ioctl(dev, rq_servact, resp,  noisy);
++EXEC = mpathpersist
++
++all: $(EXEC)
++
++$(EXEC): $(OBJS)
++	$(CC) -g $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS)
++	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
 +	
-+	return (rc);
-+}
++install:
++	install -d $(DESTDIR)$(bindir)
++	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/
++	install -d $(DESTDIR)$(mandir)
++	install -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
++	
++clean:
++	rm -f *.o $(EXEC)
++	rm -f mpathpersist.8.gz
 +
-+int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
-+	unsigned int rq_type, struct prout_param_descriptor * paramp, int noisy)
++uninstall:
++	rm $(DESTDIR)$(bindir)/$(EXEC)
++	rm $(DESTDIR)$(mandir)/$(EXEC).8.gz
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/mpathpersist.8 multipath-tools/mpathpersist/mpathpersist.8
+--- multipath-tools-14jan-upstream-patchedall-1st/mpathpersist/mpathpersist.8	1969-12-31 19:00:00.000000000 -0500
++++ multipath-tools/mpathpersist/mpathpersist.8	2012-01-12 12:20:55.000000000 -0500
+@@ -0,0 +1,96 @@
++.\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.39.2.
++.TH MPATHPERSIST  "8" "April 2011" "mpathpersist" "User Commands"
++.SH NAME
++mpathpersist
++.SH SYNOPSIS
++.B mpathpersist
++[\fIOPTIONS\fR] [\fIDEVICE\fR]
++.SH DESCRIPTION
++.IP
++Options:
++.TP
++\fB\-\-verbose\fR|\-v level
++verbosity level
++.TP
++0
++Critical and error messages
++.TP
++1
++Warning messages
++.TP
++2
++Informational messages
++.TP
++3
++Informational messages with trace enabled
++.TP
++\fB\-\-clear\fR|\-C
++PR Out: Clear
++.TP
++\fB\-\-device\fR=\fIDEVICE\fR|\-d DEVICE
++query or change DEVICE
++.TP
++\fB\-\-help\fR|\-h
++output this usage message
++.TP
++\fB\-\-hex\fR|\-H
++output response in hex
++.TP
++\fB\-\-in\fR|\-i
++request PR In command
++.TP
++\fB\-\-out\fR|\-o
++request PR Out command
++.TP
++\fB\-\-param\-aptpl\fR|\-Z
++PR Out parameter 'APTPL'
++.TP
++\fB\-\-read\-keys\fR|\-k
++PR In: Read Keys
++.TP
++\fB\-\-param\-sark\fR=\fISARK\fR|\-S SARK
++PR Out parameter service action
++reservation key (SARK is in hex)
++.TP
++\fB\-\-preempt\fR|\-P
++PR Out: Preempt
++.TP
++\fB\-\-preempt\-abort\fR|\-A
++PR Out: Preempt and Abort
++.TP
++\fB\-\-prout\-type\fR=\fITYPE\fR|\-T TYPE
++PR Out command type
++.TP
++\fB\-\-read\-status\fR|\-s
++PR In: Read Full Status
++.TP
++\fB\-\-read\-keys\fR|\-k
++PR In: Read Keys
++.TP
++\fB\-\-read\-reservation\fR|\-r
++PR In: Read Reservation
++.TP
++\fB\-\-register\fR|\-G
++PR Out: Register
++.TP
++\fB\-\-register\-ignore\fR|\-I
++PR Out: Register and Ignore
++.TP
++\fB\-\-release\fR|\-L
++PR Out: Release
++.TP
++\fB\-\-report\-capabilities\fR|\-c
++PR In: Report Capabilities
++.TP
++\fB\-\-reserve\fR|\-R
++PR Out: Reserve
++.TP
++\fB\-\-transport\-id\fR=\fITIDS\fR|\-X TIDS
++TransportIDs can be mentioned
++in several forms
++.IP
++Examples:
++.IP
++mpathpersist \fB\-\-out\fR \fB\-\-register\fR \fB\-\-param\-sark\fR=\fI123abc\fR \fB\-\-prout\-type\fR=\fI5\fR /dev/mapper/mpath9
++mpathpersist \fB\-i\fR \fB\-k\fR /dev/mapper/mpath9
++.PP
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli.c multipath-tools/multipathd/cli.c
+--- multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/multipathd/cli.c	2012-01-12 12:23:15.000000000 -0500
+@@ -184,6 +184,9 @@ load_keys (void)
+ 	r += add_key(keys, "quit", QUIT, 0);
+ 	r += add_key(keys, "exit", QUIT, 0);
+ 	r += add_key(keys, "shutdown", SHUTDOWN, 0);
++	r += add_key(keys, "getprstatus", GETPRSTATUS, 0);
++	r += add_key(keys, "setprstatus", SETPRSTATUS, 0);
++	r += add_key(keys, "unsetprstatus", UNSETPRSTATUS, 0);
+ 
+ 	if (r) {
+ 		free_keys(keys);
+@@ -453,6 +456,9 @@ cli_init (void) {
+ 	add_handler(FAIL+PATH, NULL);
+ 	add_handler(QUIT, NULL);
+ 	add_handler(SHUTDOWN, NULL);
++	add_handler(GETPRSTATUS+MAP, NULL);
++	add_handler(SETPRSTATUS+MAP, NULL);
++	add_handler(UNSETPRSTATUS+MAP, NULL);
+ 
+ 	return 0;
+ }
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli.h multipath-tools/multipathd/cli.h
+--- multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli.h	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/multipathd/cli.h	2012-01-12 12:24:09.000000000 -0500
+@@ -29,6 +29,9 @@ enum {
+ 	__WILDCARDS,
+ 	__QUIT,
+ 	__SHUTDOWN,
++	__GETPRSTATUS,
++	__SETPRSTATUS,
++	__UNSETPRSTATUS,
+ };
+ 
+ #define LIST		(1 << __LIST)
+@@ -62,6 +65,9 @@ enum {
+ #define WILDCARDS	(1 << __WILDCARDS)
+ #define QUIT		(1 << __QUIT)
+ #define SHUTDOWN	(1 << __SHUTDOWN)
++#define GETPRSTATUS	(1 << __GETPRSTATUS)
++#define SETPRSTATUS	(1 << __SETPRSTATUS)
++#define UNSETPRSTATUS	(1 << __UNSETPRSTATUS)
+ 
+ #define INITIAL_REPLY_LEN 1000
+ 
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli_handlers.c multipath-tools/multipathd/cli_handlers.c
+--- multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli_handlers.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/multipathd/cli_handlers.c	2012-01-17 06:35:04.000000000 -0500
+@@ -883,3 +883,75 @@ cli_shutdown (void * v, char ** reply, i
+ 
+ 	return exit_daemon(0);
+ }
++
++int
++cli_getprstatus (void * v, char ** reply, int * len, void * data)
 +{
++	struct multipath * mpp;
++	struct vectors * vecs = (struct vectors *)data;
++	char * param = get_keyparam(v, MAP);
 +
-+	int i, j;
-+	struct pathgroup *pgp = NULL;
-+	struct path *pp = NULL;
-+	int rollback = 0;
-+	int active_pathcount=0;	
-+	int rc;
-+	int count=0;
-+	int status = MPATH_PR_SUCCESS;
-+	uint64_t sa_key;	
++	get_path_layout(vecs->pathvec, 0);
++	mpp = find_mp_by_str(vecs->mpvec, param);
 +
 +	if (!mpp)
-+		return MPATH_PR_DMMP_ERROR; 
++		return 1;
 +
-+	active_pathcount = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
++	condlog(3, "%s: prflag = %u", param, (unsigned int)mpp->prflag);
 +
-+	if (active_pathcount == 0) {
-+		condlog (0, "%s: no path available", mpp->wwid);
-+		return MPATH_PR_DMMP_ERROR;
++	*reply =(char *)malloc(2);
++	*len = 2;
++	memset(*reply,0,2);
++
++
++	sprintf(*reply,"%d",mpp->prflag);
++	*reply[1]='\0';
++
++
++	condlog(3, "%s: reply = %s", param, *reply);
++
++	return 0;
++}
++
++int
++cli_setprstatus(void * v, char ** reply, int * len, void * data)
++{
++	struct multipath * mpp;
++	struct vectors * vecs = (struct vectors *)data;
++	char * param = get_keyparam(v, MAP);
++
++	get_path_layout(vecs->pathvec, 0);
++	mpp = find_mp_by_str(vecs->mpvec, param);
++
++	if (!mpp)
++		return 1;
++
++	if (!mpp->prflag) {
++		mpp->prflag = 1;
++		condlog(2, "%s: prflag set", param);
 +	}
 +
-+	if ( paramp->sa_flags & MPATH_F_ALL_TG_PT_MASK ) {
-+		condlog (1, "Warning: ALL_TG_PT is set. Configuration not supported");
++
++	return 0;
++}
++
++int
++cli_unsetprstatus(void * v, char ** reply, int * len, void * data)
++{
++	struct multipath * mpp;
++	struct vectors * vecs = (struct vectors *)data;
++	char * param = get_keyparam(v, MAP);
++
++	get_path_layout(vecs->pathvec, 0);
++	mpp = find_mp_by_str(vecs->mpvec, param);
++
++	if (!mpp)
++		return 1;
++
++	if (mpp->prflag) {
++		mpp->prflag = 0;
++		condlog(2, "%s: prflag unset", param);
 +	}
 +
-+	struct threadinfo thread[active_pathcount];
++	return 0;
++}
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli_handlers.h multipath-tools/multipathd/cli_handlers.h
+--- multipath-tools-14jan-upstream-patchedall-1st/multipathd/cli_handlers.h	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/multipathd/cli_handlers.h	2012-01-12 12:25:39.000000000 -0500
+@@ -31,3 +31,7 @@ int cli_fail(void * v, char ** reply, in
+ int cli_quit(void * v, char ** reply, int * len, void * data);
+ int cli_shutdown(void * v, char ** reply, int * len, void * data);
+ int cli_reassign (void * v, char ** reply, int * len, void * data);
++int cli_getprstatus(void * v, char ** reply, int * len, void * data);
++int cli_setprstatus(void * v, char ** reply, int * len, void * data);
++int cli_unsetprstatus(void * v, char ** reply, int * len, void * data);
 +
-+	memset(thread, 0, sizeof(thread));
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/multipathd/main.c multipath-tools/multipathd/main.c
+--- multipath-tools-14jan-upstream-patchedall-1st/multipathd/main.c	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/multipathd/main.c	2012-01-12 12:32:40.000000000 -0500
+@@ -16,6 +16,7 @@
+ #include <sys/resource.h>
+ #include <limits.h>
+ #include <linux/oom.h>
++#include <mpath_persist.h>
+ 
+ /*
+  * libcheckers
+@@ -71,6 +72,12 @@ do { \
+ 		condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b); \
+ } while(0)
+ 
++struct mpath_event_param
++{
++	char * devname;
++	struct multipath *mpp;
++};
 +
-+	/* init thread parameter */
-+	for (i =0; i< active_pathcount; i++){
-+		thread[i].param.rq_servact = rq_servact;
-+		thread[i].param.rq_scope = rq_scope;
-+		thread[i].param.rq_type = rq_type;
-+		thread[i].param.paramp = paramp;
-+		thread[i].param.noisy = noisy;
-+		thread[i].param.status = -1;
+ pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
+ pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
+ 
+@@ -468,6 +475,9 @@ rescan:
+ 			goto fail; /* leave path added to pathvec */
+ 	}
+ 
++	/* persistent reseravtion check*/
++	mpath_pr_event_handle(pp);	
 +
-+		condlog (3, "THRED ID [%d] INFO]", i);
-+		condlog (3, "rq_servact=%d ", thread[i].param.rq_servact);
-+		condlog (3, "rq_scope=%d ", thread[i].param.rq_scope); 
-+		condlog (3, "rq_type=%d ", thread[i].param.rq_type);  
-+		condlog (3, "rkey="); 
-+		condlog (3, "paramp->sa_flags =%02x ", thread[i].param.paramp->sa_flags); 
-+		condlog (3, "noisy=%d ", thread[i].param.noisy); 
-+		condlog (3, "status=%d ", thread[i].param.status); 
-+	}
-+
-+	pthread_attr_t attr;
-+	pthread_attr_init(&attr);
-+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-+
-+	vector_foreach_slot (mpp->pg, pgp, j){
-+		vector_foreach_slot (pgp->paths, pp, i){
-+			if (!((pp->state == PATH_UP) || (pp->state == PATH_GHOST))){
-+				condlog (1, "%s: %s path not up. Skip.", mpp->wwid, pp->dev);
-+				continue;
-+			}
-+			strncpy(thread[count].param.dev, pp->dev, FILE_NAME_SIZE);
-+
-+			if (count && (thread[count].param.paramp->sa_flags & MPATH_F_SPEC_I_PT_MASK)){
+ 	/*
+ 	 * push the map to the device-mapper
+ 	 */
+@@ -875,6 +885,9 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(RESTOREQ+MAPS, cli_restore_all_queueing);
+ 	set_handler_callback(QUIT, cli_quit);
+ 	set_handler_callback(SHUTDOWN, cli_shutdown);
++	set_handler_callback(GETPRSTATUS+MAP, cli_getprstatus);
++	set_handler_callback(SETPRSTATUS+MAP, cli_setprstatus);
++	set_handler_callback(UNSETPRSTATUS+MAP, cli_unsetprstatus);
+ 
+ 	umask(077);
+ 	uxsock_listen(&uxsock_trigger, ap);
+@@ -1154,6 +1167,17 @@ check_path (struct vectors * vecs, struc
+ 			return;
+ 		}
+ 
++		if(newstate == PATH_UP || newstate == PATH_GHOST){
++			if ( pp->mpp && pp->mpp->prflag ){
 +				/*
-+				 * Clearing SPEC_I_PT as transportids are already registered by now.
++				 * Check Persistent Reservation.
 +				 */
-+				thread[count].param.paramp->sa_flags &= (~MPATH_F_SPEC_I_PT_MASK);
++			condlog(2, "%s: checking persistent reservation "
++				"registration", pp->dev);
++			mpath_pr_event_handle(pp);
 +			}
-+
-+			condlog (3, "%s: sending pr out command to %s", mpp->wwid, pp->dev);
-+
-+			rc = pthread_create(&thread[count].id, &attr, mpath_prout_pthread_fn, (void *)(&thread[count].param));
-+			if (rc){
-+				condlog (0, "%s: failed to create thread %d", mpp->wwid, rc);
-+			}
-+			count = count +1;
 +		}
++
+ 		/*
+ 		 * reinstate this path
+ 		 */
+@@ -1321,6 +1345,9 @@ configure (struct vectors * vecs, int st
+ 	dm_lib_release();
+ 
+ 	sync_maps_state(mpvec);
++	vector_foreach_slot(mpvec, mpp, i){
++		update_map_pr(mpp);
 +	}
-+	for( i=0; i < active_pathcount ; i++){
-+		rc = pthread_join(thread[i].id, NULL);
-+		if (rc){
-+			condlog (0, "%s: Thread[%d] failed to join thread %d", mpp->wwid, i, rc);
-+		}
-+		if (!rollback && (thread[i].param.status == MPATH_PR_RESERV_CONFLICT)){
-+			rollback = 1;
-+			sa_key = 0;
-+			for (i = 0; i < 8; ++i){
-+				if (i > 0)
-+					sa_key <<= 8;
-+				sa_key |= paramp->sa_key[i];
-+			}
-+			status = MPATH_PR_RESERV_CONFLICT ;
-+		}
-+		if (!rollback && (status == MPATH_PR_SUCCESS)){
-+			status = thread[i].param.status;
-+		}
-+	}
-+	if (rollback && ((rq_servact == MPATH_PROUT_REG_SA) && sa_key != 0 )){
-+		condlog (3, "%s: ERROR: initiating pr out rollback", mpp->wwid);
-+		for( i=0 ; i < active_pathcount ; i++){
-+			if((thread[i].param.status == MPATH_PR_SUCCESS) &&
-+					((pp->state == PATH_UP) || (pp->state == PATH_GHOST))){
-+				memcpy(&thread[i].param.paramp->key, &thread[i].param.paramp->sa_key, 8);
-+				memset(&thread[i].param.paramp->sa_key, 0, 8);
-+				thread[i].param.status = MPATH_PR_SUCCESS;
-+				rc = pthread_create(&thread[i].id, &attr, mpath_prout_pthread_fn, 
-+						(void *)(&thread[count].param));
-+				if (rc){
-+					condlog (0, "%s: failed to create thread for rollback. %d",  mpp->wwid, rc);
-+				}
-+			}
-+		}
-+		for(i=0; i < active_pathcount ; i++){
-+			rc = pthread_join(thread[i].id, NULL);
-+			if (rc){
-+				condlog (3, "%s: failed to join thread while rolling back %d",
-+						mpp->wwid, i);
-+			}
-+		}
-+	}
-+
-+	pthread_attr_destroy(&attr);
-+	return (status);
-+}
-+
-+void * mpath_prout_pthread_fn(void *p)
+ 
+ 	/*
+ 	 * purge dm of old maps
+@@ -1818,3 +1845,116 @@ main (int argc, char *argv[])
+ 		return (child(NULL));
+ }
+ 
++void *  mpath_pr_event_handler_fn (void * pathp )
 +{
-+	int ret;
-+	struct prout_param * param = (struct prout_param *)p;
-+
-+	ret = prout_do_scsi_ioctl( param->dev,param->rq_servact, param->rq_scope,
-+			param->rq_type, param->paramp, param->noisy);
-+	param->status = ret;
-+	pthread_exit(NULL);
-+}
-+
-+int mpath_prout_common(struct multipath *mpp,int rq_servact, int rq_scope,
-+        unsigned int rq_type, struct prout_param_descriptor* paramp, int noisy)
-+{
-+	int i,j, ret;
-+	struct pathgroup *pgp = NULL;
-+	struct path *pp = NULL;
-+	struct path *pptemp = NULL;
-+
-+	vector_foreach_slot (mpp->pg, pgp, j){
-+		vector_foreach_slot (pgp->paths, pp, i){
-+			if (!((pp->state == PATH_UP) || (pp->state == PATH_GHOST))){
-+				condlog (1, "%s: %s path not up. Skip", mpp->wwid, pp->dev); 
-+				continue;
-+			}
-+
-+			condlog (3, "%s: sending pr out command to %s", mpp->wwid, pp->dev);
-+			ret = send_prout_activepath(pp->dev, rq_servact, rq_scope, rq_type, 
-+					paramp, noisy); 
-+			pptemp = pp;
-+			return ret ;
-+		}
-+	}
-+	return MPATH_PR_SUCCESS;
-+}
-+
-+int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
-+	unsigned int rq_type, struct prout_param_descriptor * paramp, int noisy)
-+{
-+	struct prout_param param;
-+	param.rq_servact = rq_servact;
-+	param.rq_scope  = rq_scope;
-+	param.rq_type   = rq_type;
-+	param.paramp    = paramp;
-+	param.noisy = noisy;
-+	param.status = -1;
-+
-+	pthread_t thread;
-+	pthread_attr_t attr;
-+	int rc;
-+
-+	memset(&thread, 0, sizeof(thread));
-+	strncpy(param.dev, dev, FILE_NAME_SIZE);
-+	/* Initialize and set thread joinable attribute */
-+	pthread_attr_init(&attr);
-+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-+
-+	rc = pthread_create(&thread, &attr, mpath_prout_pthread_fn, (void *)(&param));
-+	if (rc){
-+		condlog (3, "%s: failed to create thread %d", dev, rc);
-+		exit(-1);
-+	}
-+	/* Free attribute and wait for the other threads */
-+	pthread_attr_destroy(&attr);
-+	rc = pthread_join(thread, NULL);
-+
-+	return (param.status);
-+}
-+
-+int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
-+        unsigned int rq_type, struct prout_param_descriptor * paramp, int noisy)
-+{
-+	int i, j;
-+	int num = 0;
-+	struct pathgroup *pgp = NULL;
-+	struct path *pp = NULL;
-+	int active_pathcount = 0;
-+	pthread_attr_t attr;
-+	int rc, found = 0;;
-+	int count = 0;
-+	int status = MPATH_PR_SUCCESS;
-+	struct prin_resp resp;
-+	struct prout_param_descriptor *pamp;
-+	struct prin_resp *pr_buff;
-+	int length;
-+	struct transportid *pptr;	
-+
-+	if (!mpp)
-+		return MPATH_PR_DMMP_ERROR;
-+
-+	active_pathcount = pathcount (mpp, PATH_UP) + pathcount (mpp, PATH_GHOST);
-+
-+	struct threadinfo thread[active_pathcount];
-+	memset(thread, 0, sizeof(thread));
-+	for (i = 0; i < active_pathcount; i++){
-+		thread[i].param.rq_servact = rq_servact;
-+		thread[i].param.rq_scope = rq_scope;
-+		thread[i].param.rq_type = rq_type;
-+		thread[i].param.paramp = paramp;
-+		thread[i].param.noisy = noisy;
-+		thread[i].param.status = -1;
-+
-+		condlog (3, " path count = %d", i);
-+		condlog (3, "rq_servact=%d ", thread[i].param.rq_servact);
-+		condlog (3, "rq_scope=%d ", thread[i].param.rq_scope);
-+		condlog (3, "rq_type=%d ", thread[i].param.rq_type);
-+		condlog (3, "noisy=%d ", thread[i].param.noisy);
-+		condlog (3, "status=%d ", thread[i].param.status);
-+	}
-+
-+	pthread_attr_init (&attr);
-+	pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_JOINABLE);
-+
-+	vector_foreach_slot (mpp->pg, pgp, j){
-+		vector_foreach_slot (pgp->paths, pp, i){
-+			if (!((pp->state == PATH_UP) || (pp->state == PATH_GHOST))){
-+				condlog (1, "%s: %s path not up.", mpp->wwid, pp->dev);
-+				continue;
-+			}
-+			
-+			strncpy(thread[count].param.dev, pp->dev, FILE_NAME_SIZE);
-+			condlog (3, "%s: sending pr out command to %s", mpp->wwid, pp->dev);
-+			rc = pthread_create (&thread[count].id, &attr, mpath_prout_pthread_fn,
-+					(void *) (&thread[count].param));
-+			if (rc)
-+				condlog (0, "%s: failed to create thread. %d",  mpp->wwid, rc);
-+			count = count + 1;
-+		}
-+	}
-+	pthread_attr_destroy (&attr);
-+	for (i = 0; i < active_pathcount; i++){
-+		rc = pthread_join (thread[i].id, NULL);
-+		if (rc){
-+			condlog (1, "%s: failed to join thread.  %d",  mpp->wwid,  rc);
-+		}
-+	}
-+
-+	for (i = 0; i < active_pathcount; i++){
-+		/*  check thread status here and return the status */
-+
-+		if (thread[i].param.status == MPATH_PR_RESERV_CONFLICT)
-+			status = MPATH_PR_RESERV_CONFLICT;
-+		else if (status == MPATH_PR_SUCCESS
-+				&& thread[i].param.status != MPATH_PR_RESERV_CONFLICT)
-+			status = thread[i].param.status;
-+	}
-+
-+	status = mpath_prin_activepath (mpp, MPATH_PRIN_RRES_SA, &resp, noisy);
-+	if (status != MPATH_PR_SUCCESS){
-+		condlog (0, "%s: pr in read reservation command failed.", mpp->wwid);
-+		return MPATH_PR_OTHER;
-+	}
-+
-+	num = resp.prin_descriptor.prin_readresv.additional_length / 8;
-+	if (num == 0){
-+		condlog (2, "%s: Path holding reservation is released.", mpp->wwid);
-+		return MPATH_PR_SUCCESS;	
-+	}
-+	condlog (2, "%s: Path holding reservation is not avialable.", mpp->wwid);
-+
-+	pr_buff =  mpath_alloc_prin_response(MPATH_PRIN_RFSTAT_SA);
-+	if (!pr_buff){
-+		condlog (0, "%s: failed to  alloc pr in response buffer.", mpp->wwid);	
-+		return MPATH_PR_OTHER;
-+	}
-+
-+	status = mpath_prin_activepath (mpp, MPATH_PRIN_RFSTAT_SA, pr_buff, noisy);
-+
-+	if (status != MPATH_PR_SUCCESS){
-+		condlog (0,  "%s: pr in read full status command failed.",  mpp->wwid);
-+		goto out;
-+	}
-+
-+	num = pr_buff->prin_descriptor.prin_readfd.number_of_descriptor;
-+	if (0 == num){
-+		goto out;
-+	}
-+	length = sizeof (struct prout_param_descriptor) + (sizeof (struct transportid *));
-+
-+	pamp = (struct prout_param_descriptor *)malloc (length);
-+	if (!pamp){
-+		condlog (0, "%s: failed to alloc pr out parameter.", mpp->wwid);
-+		goto out1;
-+	}
-+
-+	memset(pamp, 0, length);
-+
-+	pamp->trnptid_list[0] = (struct transportid *) malloc (sizeof (struct transportid));
-+	if (!pamp->trnptid_list[0]){
-+		condlog (0, "%s: failed to alloc pr out transportid.", mpp->wwid);
-+		goto out1;
-+	}
-+
-+	if (mpp->reservation_key ){
-+		memcpy (pamp->key, mpp->reservation_key, 8);
-+		condlog (3, "%s: reservation key set.", mpp->wwid);
-+	}
-+
-+	mpath_prout_common (mpp, MPATH_PROUT_CLEAR_SA, rq_scope, rq_type, pamp,
-+			noisy);
-+
-+	pamp->num_transportid = 1;
-+	pptr=pamp->trnptid_list[0];
-+
-+	for (i = 0; i < num; i++){
-+		if (mpp->reservation_key && 
-+			memcmp(pr_buff->prin_descriptor.prin_readfd.descriptors[i]->key,
-+			mpp->reservation_key, 8)){	
-+			/*register with tarnsport id*/
-+			memset(pamp, 0, length);
-+			pamp->trnptid_list[0] = pptr;
-+			memset (pamp->trnptid_list[0], 0, sizeof (struct transportid));
-+			memcpy (pamp->sa_key,
-+					pr_buff->prin_descriptor.prin_readfd.descriptors[i]->key, 8);
-+			pamp->sa_flags = MPATH_F_SPEC_I_PT_MASK;
-+			pamp->num_transportid = 1;
-+
-+			memcpy (pamp->trnptid_list[0],
-+					&pr_buff->prin_descriptor.prin_readfd.descriptors[i]->trnptid,
-+					sizeof (struct transportid));
-+			status = mpath_prout_common (mpp, MPATH_PROUT_REG_SA, 0, rq_type,
-+					pamp, noisy);
-+
-+			pamp->sa_flags = 0;
-+			memcpy (pamp->key, pr_buff->prin_descriptor.prin_readfd.descriptors[i]->key, 8);
-+			memset (pamp->sa_key, 0, 8);
-+			pamp->num_transportid = 0;
-+			status = mpath_prout_common (mpp, MPATH_PROUT_REG_SA, 0, rq_type,
-+					pamp, noisy);
-+		}
-+		else
-+		{
-+			if (mpp->reservation_key)
-+				found = 1;
-+		}
-+
-+
-+	}
-+
-+	if (found){
-+		memset (pamp, 0, length);
-+		memcpy (pamp->sa_key, mpp->reservation_key, 8);
-+		memset (pamp->key, 0, 8);
-+		status = mpath_prout_reg(mpp, MPATH_PROUT_REG_SA, rq_scope, rq_type, pamp, noisy);	
-+	}
-+
-+
-+	free(pptr);
-+out1:
-+	free (pamp);
-+out:
-+	free (pr_buff);
-+	return (status);
-+}
-+
-+void * mpath_alloc_prin_response(int prin_sa)
-+{
-+	void * ptr = NULL;
-+	int size=0;
-+	switch (prin_sa)
-+	{
-+		case MPATH_PRIN_RKEY_SA:
-+			size = sizeof(struct prin_readdescr);
-+			ptr = malloc(size);
-+			memset(ptr, 0, size);
-+			break;
-+		case MPATH_PRIN_RRES_SA:
-+			size = sizeof(struct prin_resvdescr);
-+			ptr = malloc(size);
-+			memset(ptr, 0, size);
-+			break;
-+		case MPATH_PRIN_RCAP_SA:
-+			size=sizeof(struct prin_capdescr);
-+			ptr = malloc(size);
-+			memset(ptr, 0, size);
-+			break;
-+		case MPATH_PRIN_RFSTAT_SA:
-+			size = sizeof(struct print_fulldescr_list) + 
-+				sizeof(struct prin_fulldescr *)*MPATH_MX_TIDS;
-+			ptr = malloc(size);
-+			memset(ptr, 0, size);
-+			break;
-+	}
-+	return ptr;
-+}
-+
-+int update_map_pr(struct multipath *mpp)
-+{
-+	int noisy=0;
-+	struct prin_resp *resp;
++	struct multipath * mpp;
 +	int i,j, ret, isFound;
++	struct path * pp = (struct path *)pathp;
 +	unsigned char *keyp;
 +	uint64_t prkey;
++	struct prout_param_descriptor *param;
++	struct prin_resp *resp;
 +
-+	if (!mpp->reservation_key)
-+	{
-+		/* Nothing to do. Assuming pr mgmt feature is disabled*/
-+		condlog(3, "%s: reservation_key not set in multiapth.conf", mpp->alias);
-+		return MPATH_PR_SUCCESS;
-+	}
++	mpp = pp->mpp;
 +
 +	resp = mpath_alloc_prin_response(MPATH_PRIN_RKEY_SA);
-+	if (!resp)
-+	{
-+		condlog(0,"%s : failed to alloc resp in update_map_pr", mpp->alias);
-+		return MPATH_PR_OTHER;
++	if (!resp){
++		condlog(0,"%s Alloc failed for prin response \n", pp->dev);
++		return NULL;
 +	}
-+	ret = mpath_prin_activepath(mpp, MPATH_PRIN_RKEY_SA, resp, noisy);
 +
++	ret = prin_do_scsi_ioctl(pp->dev, MPATH_PRIN_RKEY_SA, resp, 0);
 +	if (ret != MPATH_PR_SUCCESS )
 +	{
-+		condlog(0,"%s : pr in read keys service action failed Error=%d", mpp->alias, ret);
-+		free(resp);
-+		return  ret;
++		condlog(0,"%s : pr in read keys service action failed. Error=%d\n", pp->dev, ret);
++		goto out;
 +	}
++
++	condlog(3, " event pr=%d addlen=%d\n",resp->prin_descriptor.prin_readkeys.prgeneration,
++			resp->prin_descriptor.prin_readkeys.additional_length );
 +
 +	if (resp->prin_descriptor.prin_readkeys.additional_length == 0 )
 +	{
-+		condlog(0,"%s: No key found. Device may not be registered. ", mpp->alias);
-+		free(resp);
-+		return MPATH_PR_SUCCESS;
++		condlog(1, "%s: No key found. Device may not be registered.", pp->dev);
++		ret = MPATH_PR_SUCCESS;
++		goto out;
 +	}
-+
 +	prkey = 0;
-+	keyp = mpp->reservation_key;
++	keyp = (unsigned char *)mpp->reservation_key;
 +	for (j = 0; j < 8; ++j) {
 +		if (j > 0)
 +			prkey <<= 8;
 +		prkey |= *keyp;
 +		++keyp;
 +	}
-+	condlog(2, "%s: Multipath  reservation_key: 0x%" PRIx64 " ", mpp->alias, prkey);
++	condlog(2, "Multipath  reservation_key: 0x%" PRIx64 " ", prkey);
 +
 +	isFound =0;
 +	for (i = 0; i < resp->prin_descriptor.prin_readkeys.additional_length/8; i++ )
 +	{
-+		condlog(2, "%s: PR IN READKEYS[%d]  reservation key:", mpp->alias, i);
-+		dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i*8], 8 , 1);
-+
++		condlog(2, "PR IN READKEYS[%d]  reservation key:\n",i);
++		dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i*8], 8 , -1);
 +		if (!memcmp(mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
 +		{
-+			condlog(2, "%s: reservation key found in pr in readkeys response", mpp->alias);
++			condlog(2, "%s: pr key found in prin readkeys response", mpp->alias);
 +			isFound =1;
++			break;
 +		}
 +	}
-+
-+	if (isFound)
++	if (!isFound)
 +	{
-+		mpp->prflag = 1;
-+		condlog(2, "%s: prflag flag set.", mpp->alias );
-+	}
-+
-+	free(resp);
-+	return MPATH_PR_SUCCESS;
-+}
-+
-+
-+
-diff -uprN multipath-tools-orig/libmpathpersist/mpath_persistent_reserve_in.3 multipath-tools/libmpathpersist/mpath_persistent_reserve_in.3
---- multipath-tools-orig/libmpathpersist/mpath_persistent_reserve_in.3	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpath_persistent_reserve_in.3	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,80 @@
-+.\"
-+.TH MPATH_PERSISTENT_RESERVE_IN 3  2011-04-08 "Linux Manpage" 
-+.SH NAME
-+mpath_persistent_reserve_in
-+.SH SYNOPSIS
-+.B #include <mpath_persist.h>
-+.sp
-+.BI "int mpath_persistent_reserve_in (int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
-+.sp
-+.SH DESCRIPTION
-+The function in the
-+.BR mpath_persistent_reserve_in ()
-+sends PRIN command to the DM device and gets the response.
-+.br
-+.BI Parameters:
-+.br
-+.I fd
-+.B The file descriptor of a multipath device. Input argument.
-+.br
-+.I rq_servact
-+.B PRIN command service action. Input argument
-+.br
-+.I resp
-+.B The response from PRIN service action. The caller should manage the memory allocation of this structure
-+.br
-+.I noisy
-+.B Turn on debugging trace: Input argument. 0->Disable, 1->Enable
-+.br
-+.I verbose
-+.B Set verbosity level. Input argument. value:[0-3]. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug
-+.br
-+
-+.SH "RETURNS"
-+.I MPATH_PR_SUCCESS
-+.B if PR command successful
-+.br
-+.I MPATH_PR_SYNTAX_ERROR        
-+.B if  syntax error or invalid parameter
-+.br
-+.I MPATH_PR_SENSE_NOT_READY     
-+.B  if command fails with [sk,asc,ascq: 0x2,*,*]
-+.br
-+.I MPATH_PR_SENSE_MEDIUM_ERROR
-+.B  if command fails with [sk,asc,ascq: 0x3,*,*]
-+.br
-+.I MPATH_PR_SENSE_HARDWARE_ERROR
-+.B  if command fails with [sk,asc,ascq: 0x4,*,*]
-+.br
-+.I MPATH_PR_SENSE_INVALID_OP
-+.B  if command fails with [sk,asc,ascq: 0x5,0x20,0x0]
-+.br
-+.I MPATH_PR_ILLEGAL_REQ
-+.B  if command fails with [sk,asc,ascq: 0x5,*,*]
-+.br
-+.I MPATH_PR_SENSE_UNIT_ATTENTION
-+.B  if command fails with [sk,asc,ascq: 0x6,*,*]
-+.br
-+.I MPATH_PR_SENSE_ABORTED_COMMAND
-+.B  if command fails with [sk,asc,ascq: 0xb,*,*]
-+.br
-+.I MPATH_PR_NO_SENSE
-+.B  if command fails with [sk,asc,ascq: 0x0,*,*]
-+.br
-+.I MPATH_PR_SENSE_MALFORMED  
-+.B if command fails with SCSI command malformed
-+.br
-+.I MPATH_PR_FILE_ERROR
-+.B if command fails while accessing file (device node) problems(e.g. not found)
-+.br
-+.I MPATH_PR_DMMP_ERROR
-+.B if Device Mapper related error.(e.g Error in getting dm info) 
-+.br
-+.I MPATH_PR_OTHER
-+.B if other error/warning has occurred(e.g transport or driver error)
-+.br
-+
-+
-+.SH "SEE ALSO"
-+.I  mpath_persistent_reserve_out      mpathpersist     /usr/share/doc/mpathpersist/README
-+.br
-diff -uprN multipath-tools-orig/libmpathpersist/mpath_persistent_reserve_out.3 multipath-tools/libmpathpersist/mpath_persistent_reserve_out.3
---- multipath-tools-orig/libmpathpersist/mpath_persistent_reserve_out.3	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpath_persistent_reserve_out.3	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,92 @@
-+.\"
-+.TH MPATH_PERSISTENT_RESERVE_OUT 3  2011-04-08 "Linux Manpage" 
-+.SH NAME
-+mpath_persistent_reserve_out
-+.SH SYNOPSIS
-+.B #include <mpath_persist.h>
-+.sp
-+.BI "int mpath_persistent_reserve_out (int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
-+.sp
-+.SH DESCRIPTION
-+The function in the
-+.BR mpath_persistent_reserve_out ()
-+sends PR OUT command to the DM device and gets the response.
-+.br
-+.BI Parameters:
-+.br
-+.I fd 
-+.B The file descriptor of a multipath device. Input argument.
-+.br
-+.I rq_servact
-+.B PROUT command service action. Input argument
-+.br
-+.I rq_scope
-+.B Persistent reservation scope. The value should be always LU_SCOPE (0h).
-+.br
-+.I rq_type
-+.B Persistent reservation type. The valid values of persistent reservation types are
-+      5h (Write exclusive - registrants only)
-+      8h (Exclusive access - registrants only)
-+      7h (Write exclusive - All registrants)
-+      8h (Exclusive access - All registrants).
-+.br
-+.I paramp
-+.B PROUT command parameter data. The paramp is a struct which describes PROUT parameter list. Caller should manage the memory allocation of this structure.
-+.br
-+.I noisy
-+.B Turn on debugging trace: Input argument. 0->Disable, 1->Enable.
-+.br
-+.I verbose
-+.B Set verbosity level. Input argument. value: 0 to 3. 0->Crits and Errors, 1->Warnings, 2->Info, 3->Debug
-+
-+.SH "RETURNS"
-+.I MPATH_PR_SUCCESS
-+.B if PR command successful else returns any one of the status mentioned below
-+.br
-+.I MPATH_PR_SYNTAX_ERROR        
-+.B if  syntax error or invalid parameter
-+.br
-+.I MPATH_PR_SENSE_NOT_READY     
-+.B  if command fails with [sk,asc,ascq: 0x2,*,*]
-+.br
-+.I MPATH_PR_SENSE_MEDIUM_ERROR
-+.B  if command fails with [sk,asc,ascq: 0x3,*,*]
-+.br
-+.I MPATH_PR_SENSE_HARDWARE_ERROR
-+.B  if command fails with [sk,asc,ascq: 0x4,*,*]
-+.br
-+.I MPATH_PR_SENSE_INVALID_OP
-+.B  if command fails with [sk,asc,ascq: 0x5,0x20,0x0]
-+.br
-+.I MPATH_PR_ILLEGAL_REQ
-+.B  if command fails with [sk,asc,ascq: 0x5,*,*]
-+.br
-+.I MPATH_PR_SENSE_UNIT_ATTENTION
-+.B  if command fails with [sk,asc,ascq: 0x6,*,*]
-+.br
-+.I MPATH_PR_SENSE_ABORTED_COMMAND
-+.B  if command fails with [sk,asc,ascq: 0xb,*,*]
-+.br
-+.I MPATH_PR_NO_SENSE
-+.B  if command fails with [sk,asc,ascq: 0x0,*,*]
-+.br
-+.I MPATH_PR_SENSE_MALFORMED  
-+.B if command fails with SCSI command malformed
-+.br
-+.I MPATH_PR_RESERV_CONFLICT
-+.B if command fails with reservation conflict
-+.br
-+.I MPATH_PR_FILE_ERROR
-+.B if command fails while accessing file (device node) problems(e.g. not found)
-+.br
-+.I MPATH_PR_DMMP_ERROR
-+.B if Device Mapper related error.(e.g Error in getting dm info) 
-+.br
-+.I MPATH_PR_OTHER
-+.B if other error/warning has occurred(e.g transport or driver error)
-+.br
-+
-+
-+.SH "SEE ALSO"
-+.I  mpath_persistent_reserve_in		mpathpersist     /usr/share/doc/mpathpersist/README
-+.br
-diff -uprN multipath-tools-orig/libmpathpersist/mpath_persist.h multipath-tools/libmpathpersist/mpath_persist.h
---- multipath-tools-orig/libmpathpersist/mpath_persist.h	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpath_persist.h	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,241 @@
-+/* version - 1.0 */
-+
-+#ifndef MPATH_PERSIST_LIB_H
-+#define MPATH_PERSIST_LIB_H
-+
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#include <inttypes.h>
-+
-+#define MPATH_MAX_PARAM_LEN	8192
-+
-+#define MPATH_MX_TIDS 		32	  /* Max number of transport ids"*/
-+#define MPATH_MX_TID_LEN	256	  /* Max lenght of transport id */
-+
-+/* PRIN Service Actions */
-+#define MPATH_PRIN_RKEY_SA	0x00	   /* READ KEYS SA*/
-+#define MPATH_PRIN_RRES_SA	0x01	   /* READ RESERVATION  SA*/
-+#define MPATH_PRIN_RCAP_SA	0x02	   /* REPORT CAPABILITIES SA*/
-+#define MPATH_PRIN_RFSTAT_SA	0x03	   /* READ FULL STATUS SA*/
-+
-+/* PROUT Service Actions */
-+#define MPATH_PROUT_REG_SA	0x00	    /* REGISTER SA */
-+#define MPATH_PROUT_RES_SA	0x01	    /* RESERVE SA*/
-+#define MPATH_PROUT_REL_SA	0x02	    /* RELEASE SA*/
-+#define MPATH_PROUT_CLEAR_SA	0x03	    /* CLEAR SA*/
-+#define MPATH_PROUT_PREE_SA	0x04	    /* PREEMPT SA*/
-+#define MPATH_PROUT_PREE_AB_SA	0x05	    /* PREEMPT AND ABORT SA*/
-+#define MPATH_PROUT_REG_IGN_SA	0x06	    /* REGISTER AND IGNORE EXISTING KEY SA*/
-+#define MPATH_PROUT_REG_MOV_SA	0x07	    /* REGISTER AND MOVE SA*/
-+
-+#define MPATH_LU_SCOPE		0x00	    /* LU_SCOPE */
-+
-+/* Persistent reservations type */
-+#define MPATH_PRTPE_WE	 	0x01	    /* Write Exclusive */
-+#define MPATH_PRTPE_EA 		0x03	    /* Exclusive Access*/
-+#define MPATH_PRTPE_WE_RO 	0x05	    /* WriteExclusive Registrants Only */
-+#define MPATH_PRTPE_EA_RO 	0x06	    /* Exclusive Access. Registrants Only*/
-+#define MPATH_PRTPE_WE_AR	0x07	    /* Write Exclusive. All Registrants*/
-+#define MPATH_PRTPE_EA_AR 	0x08	    /* Exclusive Access. All Registrants */
-+
-+
-+/* PR RETURN_STATUS */
-+#define MPATH_PR_SUCCESS 		0
-+#define MPATH_PR_SYNTAX_ERROR		1   /*  syntax error or invalid parameter */
-+					    /* status for check condition */
-+#define MPATH_PR_SENSE_NOT_READY 	2   /*	[sk,asc,ascq: 0x2,*,*] */
-+#define MPATH_PR_SENSE_MEDIUM_ERROR	3   /*	[sk,asc,ascq: 0x3,*,*] */
-+#define MPATH_PR_SENSE_HARDWARE_ERROR	4   /*	[sk,asc,ascq: 0x4,*,*] */
-+#define MPATH_PR_ILLEGAL_REQ 		5   /*	[sk,asc,ascq: 0x5,*,*]*/
-+#define MPATH_PR_SENSE_UNIT_ATTENTION	6   /*	[sk,asc,ascq: 0x6,*,*] */
-+#define MPATH_PR_SENSE_INVALID_OP	7   /* 	[sk,asc,ascq: 0x5,0x20,0x0]*/
-+#define MPATH_PR_SENSE_ABORTED_COMMAND  8   /*  [sk,asc,ascq: 0xb,*,*] */
-+#define MPATH_PR_NO_SENSE		9   /*	[sk,asc,ascq: 0x0,*,*] */
-+
-+#define MPATH_PR_SENSE_MALFORMED	10  /* Response to SCSI command malformed */
-+#define MPATH_PR_RESERV_CONFLICT	11  /* Reservation conflict on the device */
-+#define MPATH_PR_FILE_ERROR		12  /* file (device node) problems(e.g. not found)*/
-+#define MPATH_PR_DMMP_ERROR		13  /* DMMP related error.(e.g Error in getting dm info */
-+#define MPATH_PR_OTHER			14  /*other error/warning has occurred(transport
-+					      or driver error) */
-+
-+/* PR MASK */
-+#define MPATH_F_APTPL_MASK		0x01	/* APTPL MASK*/
-+#define MPATH_F_ALL_TG_PT_MASK		0x04	/* ALL_TG_PT MASK*/
-+#define MPATH_F_SPEC_I_PT_MASK		0x08	/* SPEC_I_PT MASK*/
-+#define MPATH_PR_TYPE_MASK 		0x0f	/* TYPE MASK*/
-+#define MPATH_PR_SCOPE_MASK		0xf0	/* SCOPE MASK*/
-+
-+/*Transport ID PROTOCOL IDENTIFIER values */
-+#define MPATH_PROTOCOL_ID_FC		0x00
-+#define MPATH_PROTOCOL_ID_ISCSI		0x05
-+#define MPATH_PROTOCOL_ID_SAS		0x06
-+
-+
-+/*Transport ID FORMATE CODE */
-+#define MPATH_WWUI_DEVICE_NAME		0x00	/* World wide unique initiator device name */
-+#define MPATH_WWUI_PORT_IDENTIFIER	0x40	/* World wide unique initiator port identifier	*/
-+
-+
-+
-+
-+struct prin_readdescr
-+{
-+	uint32_t prgeneration;
-+	uint32_t additional_length;	/* The value should be either 0 or divisible by 8.
-+					   0 indicates no registered reservation key. */
-+	uint8_t	 key_list[MPATH_MAX_PARAM_LEN];
-+};
-+
-+struct prin_resvdescr
-+{
-+	uint32_t prgeneration;
-+	uint32_t additional_length;	/* The value should be either 0 or 10h. 0 indicates
-+					   there is no reservation held. 10h indicates the
-+					   key[8] and scope_type have valid values */
-+	uint8_t  key[8];
-+	uint32_t _obsolete;
-+	uint8_t  _reserved;
-+	uint8_t  scope_type;            /* Use PR SCOPE AND TYPE MASK specified above */
-+	uint16_t _obsolete1;
-+};
-+
-+struct prin_capdescr
-+{
-+	uint16_t length;
-+	uint8_t  flags[2];
-+	uint16_t pr_type_mask;
-+	uint16_t _reserved;
-+};
-+
-+struct transportid
-+{
-+	uint8_t format_code;
-+	uint8_t protocol_id;
-+	union {
-+		uint8_t n_port_name[8];	/* FC transport*/
-+		uint8_t sas_address[8];	/* SAS transport */
-+		uint8_t iscsi_name[256]; /* ISCSI  transport */
-+	};
-+};
-+
-+struct prin_fulldescr
-+{
-+	uint8_t key[8];
-+	uint8_t flag; 			/* All_tg_pt and reservation holder */
-+	uint8_t scope_type;		/* Use PR SCOPE AND TYPE MASK specified above.
-+					   Meaningful only for reservation holder */
-+	uint16_t rtpi;
-+	struct transportid trnptid;
-+};
-+
-+struct print_fulldescr_list
-+{
-+	uint32_t prgeneration;
-+	uint32_t number_of_descriptor;
-+	uint8_t private_buffer[MPATH_MAX_PARAM_LEN]; /*Private buffer for list storage*/
-+	struct prin_fulldescr *descriptors[];
-+};
-+
-+struct prin_resp
-+{
-+	union
-+	{
-+		struct prin_readdescr prin_readkeys; /* for PRIN read keys SA*/
-+		struct prin_resvdescr prin_readresv; /* for PRIN read reservation SA*/
-+		struct prin_capdescr  prin_readcap;  /* for PRIN Report Capabilities SA*/
-+		struct print_fulldescr_list prin_readfd;   /* for PRIN read full status SA*/
-+	}prin_descriptor;
-+};
-+
-+struct prout_param_descriptor { 	/* PROUT parameter descriptor */
-+	uint8_t	 key[8];
-+	uint8_t	 sa_key[8];
-+	uint32_t _obsolete;
-+	uint8_t	 sa_flags;
-+	uint8_t _reserved;
-+	uint16_t _obsolete1;
-+	uint8_t  private_buffer[MPATH_MAX_PARAM_LEN]; /*private buffer for list storage*/
-+	uint32_t num_transportid;	/* Number of Transport ID listed in trnptid_list[]*/
-+	struct transportid *trnptid_list[];
-+};
-+
-+
-+/* Function declarations */
-+
-+/*
-+ * DESCRIPTION :
-+ *	Initialize device mapper multipath configuration. This function must be invoked first
-+ *	before performing reservation management functions.
-+ * RESTRICTIONS:
-+ *
-+ * RETURNS: 0->Success, 1->Failed.
-+ */
-+extern int mpath_lib_init (void );
-+
-+
-+/*
-+ * DESCRIPTION :
-+ *	Release device mapper multipath configuration. This function must be invoked after
-+ *	performing reservation management functions.
-+ * RESTRICTIONS:
-+ *
-+ * RETURNS: 0->Success, 1->Failed.
-+ */
-+extern int mpath_lib_exit (void );
-+
-+
-+/*
-+ * DESCRIPTION :
-+ * This function sends PRIN command to the DM device and get the response.
-+ *
-+ * @fd:	The file descriptor of a multipath device. Input argument.
-+ * @rq_servact: PRIN command service action. Input argument
-+ * @resp: The response from PRIN service action. The resp is a struct specified below. The caller should
-+ * 	manage the memory allocation of this struct
-+ * @noisy: Turn on debugging trace: Input argument. 0->Disable, 1->Enable
-+ * @verbose: Set verbosity level. Input argument. value:[0-3]. 0->disabled, 3->Max verbose
-+ *
-+ * RESTRICTIONS:
-+ *
-+ * RETURNS: MPATH_PR_SUCCESS if PR command successful else returns any of the PR status (specified
-+ *	 above).
-+ *
-+ */
-+extern int mpath_persistent_reserve_in (int fd, int rq_servact, struct prin_resp *resp,
-+		int noisy, int verbose);
-+
-+/*
-+ * DESCRIPTION :
-+ * This function sends PROUT command to the DM device and get the response.
-+ *
-+ * @fd: The file descriptor of a multipath device. Input argument.
-+ * @rq_servact: PROUT command service action. Input argument
-+ * @rq_scope: Persistent reservation scope. The value should be always LU_SCOPE (0h).
-+ * @rq_type: Persistent reservation type. The valid values of persistent reservation types are
-+ *	5h (Write exclusive - registrants only)
-+ *	8h (Exclusive access - registrants only)
-+ *	7h (Write exclusive - All registrants)
-+ *	8h (Exclusive access - All registrants).
-+ * @paramp: PROUT command parameter data. The paramp is a struct which describes PROUT
-+ * 	    parameter list. The caller should manage the memory allocation of this struct.
-+ * @noisy: Turn on debugging trace: Input argument.0->Disable, 1->Enable.
-+ * @verbose: Set verbosity level. Input argument. value:0 to 3. 0->disabled, 3->Max verbose
-+ *
-+ * RESTRICTIONS:
-+ *
-+ * RETURNS: MPATH_PR_SUCCESS if PR command successful else returns any of the status specified
-+ *       above in RETURN_STATUS.
-+ */
-+extern int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
-+		unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy,
-+		int verbose);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif  /*MPATH_PERSIST_LIB_H*/
-diff -uprN multipath-tools-orig/libmpathpersist/mpathpr.h multipath-tools/libmpathpersist/mpathpr.h
---- multipath-tools-orig/libmpathpersist/mpathpr.h	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpathpr.h	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,55 @@
-+#ifndef MPATHPR_H
-+#define MPATHPR_H
-+
-+struct prin_param {
-+	char dev[FILE_NAME_SIZE];
-+        int rq_servact;
-+        struct prin_resp *resp;
-+        int noisy;
-+        int status;
-+};
-+
-+struct prout_param {
-+	char dev[FILE_NAME_SIZE];
-+        int rq_servact;
-+        int rq_scope;
-+        unsigned int rq_type;
-+        struct prout_param_descriptor  *paramp;
-+        int noisy;
-+        int status;
-+};
-+
-+struct threadinfo {
-+        int status;
-+        pthread_t id;
-+        struct prout_param param;
-+};
-+
-+
-+struct config * conf;
-+
-+
-+int prin_do_scsi_ioctl(char * dev, int rq_servact, struct prin_resp * resp, int noisy);
-+int prout_do_scsi_ioctl( char * dev, int rq_servact, int rq_scope,
-+                unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy);
-+void * _mpath_pr_update (void *arg);
-+int mpath_send_prin_activepath (char * dev, int rq_servact, struct prin_resp * resp, int noisy);
-+int get_mpvec (vector curmp, vector pathvec, char * refwwid);
-+void * mpath_prout_pthread_fn(void *p);
-+void dumpHex(const char* , int len, int no_ascii);
-+
-+int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
-+        unsigned int rq_type,  struct prout_param_descriptor * paramp, int noisy);
-+int mpath_prout_common(struct multipath *mpp,int rq_servact, int rq_scope,
-+        unsigned int rq_type,  struct prout_param_descriptor * paramp, int noisy);
-+int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
-+        unsigned int rq_type,  struct prout_param_descriptor * paramp, int noisy);
-+int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
-+        unsigned int rq_type,   struct prout_param_descriptor * paramp, int noisy);
-+
-+int update_prflag(char * arg1, char * arg2, int noisy);
-+void * mpath_alloc_prin_response(int prin_sa);
-+int update_map_pr(struct multipath *mpp);
-+int devt2devname (char *devname, char *devt);
-+
-+#endif  
-diff -uprN multipath-tools-orig/libmpathpersist/mpath_pr_ioctl.c multipath-tools/libmpathpersist/mpath_pr_ioctl.c
---- multipath-tools-orig/libmpathpersist/mpath_pr_ioctl.c	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpath_pr_ioctl.c	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,571 @@
-+#include <stdio.h>
-+#include <stdlib.h>
-+
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <scsi/sg.h>
-+#include <scsi/scsi.h>
-+#include <unistd.h>
-+#include <string.h>
-+#include <sys/ioctl.h>
-+#include <unistd.h>
-+#include "mpath_pr_ioctl.h" 
-+#include <mpath_persist.h> 
-+
-+#include <debug.h>
-+
-+#define FILE_NAME_SIZE          256
-+
-+#define TIMEOUT 2000
-+#define MAXRETRY 5
-+
-+int prin_do_scsi_ioctl(char * dev, int rq_servact, struct prin_resp *resp, int noisy);
-+void mpath_format_readkeys(struct prin_resp *pr_buff, int len , int noisy);
-+void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy);
-+int mpath_translate_response (char * dev, struct sg_io_hdr io_hdr, SenseData_t Sensedata, int noisy);
-+void dumpHex(const char* str, int len, int no_ascii);
-+int prout_do_scsi_ioctl( char * dev, int rq_servact, int rq_scope,
-+                unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy);
-+uint32_t  format_transportids(struct prout_param_descriptor *paramp);
-+void mpath_reverse_uint32_byteorder(uint32_t *num);
-+void mpath_reverse_uint16_byteorder(uint16_t *num);
-+void decode_transport_id(struct prin_fulldescr *fdesc, unsigned char * p, int length);
-+int get_prin_length(int rq_servact);
-+int mpath_isLittleEndian(void);
-+
-+
-+int prout_do_scsi_ioctl(char * dev, int rq_servact, int rq_scope,
-+                unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy)
-+{
-+
-+	int status, paramlen = 24, ret = 0;
-+	uint32_t translen=0;
-+	int retry = MAXRETRY;
-+	SenseData_t Sensedata;
-+	struct sg_io_hdr io_hdr;
-+	char devname[FILE_NAME_SIZE];
-+	int fd = -1;
-+
-+	snprintf(devname, FILE_NAME_SIZE, "/dev/%s",dev);
-+	fd = open(devname, O_WRONLY);
-+	if(fd < 0){
-+		condlog (1, "%s: unable to open device.", dev);
-+		return MPATH_PR_FILE_ERROR;
-+	}
-+
-+	unsigned char cdb[MPATH_PROUT_CMDLEN] =
-+	{MPATH_PROUT_CMD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-+
-+
-+	if (paramp->sa_flags & MPATH_F_SPEC_I_PT_MASK)
-+	{
-+		translen = format_transportids(paramp);
-+		paramlen = 24 + translen;
-+	}	
-+	else
-+		paramlen = 24;
-+
-+	if ( rq_servact > 0)
-+		cdb[1] = (unsigned char)(rq_servact & 0x1f);
-+	cdb[2] = (((rq_scope & 0xf) << 4) | (rq_type & 0xf));
-+	cdb[7] = (unsigned char)((paramlen >> 8) & 0xff);
-+	cdb[8] = (unsigned char)(paramlen & 0xff);
-+
-+retry :
-+	condlog(3, "%s: rq_servact = %d", dev, rq_servact); 
-+	condlog(3, "%s: rq_scope = %d ", dev, rq_scope);
-+	condlog(3, "%s: rq_type = %d ", dev, rq_type);
-+	condlog(3, "%s: paramlen = %d", dev, paramlen);
-+
-+	if (noisy)
-+	{
-+		condlog(3, "%s: Persistent Reservation OUT parameter:", dev);
-+		dumpHex((const char *)paramp, paramlen,1);
-+	}
-+
-+	memset(&Sensedata, 0, sizeof(SenseData_t));
-+	memset(&io_hdr,0 , sizeof( struct sg_io_hdr));
-+	io_hdr.interface_id = 'S';
-+	io_hdr.cmd_len = MPATH_PROUT_CMDLEN;
-+	io_hdr.cmdp = cdb;
-+	io_hdr.sbp = (void *)&Sensedata;
-+	io_hdr.mx_sb_len = sizeof (SenseData_t);
-+	io_hdr.timeout = TIMEOUT;
-+
-+	if (paramlen > 0) {
-+		io_hdr.dxferp = (void *)paramp;
-+		io_hdr.dxfer_len = paramlen;
-+		io_hdr.dxfer_direction = SG_DXFER_TO_DEV ;
-+	}
-+	else {
-+		io_hdr.dxfer_direction = SG_DXFER_NONE;
-+	}
-+	ret = ioctl(fd, SG_IO, &io_hdr);
-+	if (ret < 0)
-+	{
-+		condlog(0, "%s: ioctl failed %d", dev, ret);
-+		close(fd);
-+		return ret;
-+	}
-+
-+	condlog(2, "%s: Duration=%u (ms)", dev, io_hdr.duration);
-+
-+	status = mpath_translate_response(dev, io_hdr, Sensedata, noisy);
-+	condlog(3, "%s: status = %d", dev, status);
-+
-+	if (status == MPATH_PR_SENSE_UNIT_ATTENTION && (retry > 0))
-+	{
-+		--retry;
-+		condlog(2, "%s: retrying for Unit Attention. Remaining retries = %d", 
-+			dev, retry);
-+		goto retry;
-+	}
-+
-+	if (((status == MPATH_PR_SENSE_NOT_READY )&& (Sensedata.ASC == 0x04)&&
-+				(Sensedata.ASCQ == 0x07))&& (retry > 0))
-+	{
-+		usleep(1000);
-+		--retry;
-+		condlog(2, "%s: retrying for sense 02/04/07."
-+			" Remaining retries = %d", dev, retry);
-+		goto retry;
-+	}
-+
-+	close(fd);	
-+	return status;
-+}
-+
-+uint32_t  format_transportids(struct prout_param_descriptor *paramp)
-+{
-+	int i = 0, len;	
-+	uint32_t buff_offset = 4;
-+	memset(paramp->private_buffer, 0, MPATH_MAX_PARAM_LEN);
-+	for (i=0; i < paramp->num_transportid; i++ )
-+	{
-+		paramp->private_buffer[buff_offset] = (uint8_t)((paramp->trnptid_list[i]->format_code & 0xff)|
-+							(paramp->trnptid_list[i]->protocol_id & 0xff));
-+		buff_offset += 1;
-+		switch(paramp->trnptid_list[i]->protocol_id)
-+		{
-+			case MPATH_PROTOCOL_ID_FC:
-+				buff_offset += 7;
-+				memcpy(&paramp->private_buffer[buff_offset], &paramp->trnptid_list[i]->n_port_name, 8);
-+				buff_offset +=8 ;
-+				buff_offset +=8 ;
-+				break;
-+			case MPATH_PROTOCOL_ID_SAS:
-+				buff_offset += 3;
-+				memcpy(&paramp->private_buffer[buff_offset], &paramp->trnptid_list[i]->sas_address, 8);
-+				buff_offset += 12;
-+				break;
-+			case MPATH_PROTOCOL_ID_ISCSI:
-+				buff_offset += 1;
-+				len = (paramp->trnptid_list[i]->iscsi_name[1] & 0xff)+2;	
-+				memcpy(&paramp->private_buffer[buff_offset], &paramp->trnptid_list[i]->iscsi_name,len);
-+				buff_offset += len ; 
-+				break;
-+		}
-+
-+	}
-+	buff_offset -= 4; 
-+	paramp->private_buffer[0] = (unsigned char)((buff_offset >> 24) & 0xff);
-+	paramp->private_buffer[1] = (unsigned char)((buff_offset >> 16) & 0xff);
-+	paramp->private_buffer[2] = (unsigned char)((buff_offset >> 8) & 0xff);
-+	paramp->private_buffer[3] = (unsigned char)(buff_offset & 0xff);
-+	buff_offset += 4; 
-+	return buff_offset;	
-+}
-+
-+void mpath_format_readkeys( struct prin_resp *pr_buff, int len, int noisy)
-+{
-+        mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readkeys.prgeneration);
-+        mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readkeys.additional_length);
-+}
-+
-+void mpath_format_readresv(struct prin_resp *pr_buff, int len, int noisy)
-+{
-+
-+        mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readkeys.prgeneration);
-+        mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readkeys.additional_length);
-+
-+        return;
-+}
-+
-+void mpath_format_reportcapabilities(struct prin_resp *pr_buff, int len, int noisy)
-+{
-+        mpath_reverse_uint16_byteorder(&pr_buff->prin_descriptor.prin_readcap.length);
-+        mpath_reverse_uint16_byteorder(&pr_buff->prin_descriptor.prin_readcap.pr_type_mask);
-+
-+        return;
-+}
-+
-+void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
-+{
-+	int num, k, tid_len_len=0;
-+	uint32_t fdesc_count=0;
-+	unsigned char *p;
-+	char  *ppbuff;
-+	uint32_t additional_length;
-+
-+
-+	mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readfd.prgeneration);
-+	mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readfd.number_of_descriptor);
-+
-+	if (0 == pr_buff->prin_descriptor.prin_readfd.number_of_descriptor)
-+	{
-+		return ;
-+	}
-+
-+
-+	if (pr_buff->prin_descriptor.prin_readfd.number_of_descriptor == 0)
-+	{
-+		condlog(2, "No registration or resrvation found.");
-+		return;
-+	}
-+
-+	additional_length = pr_buff->prin_descriptor.prin_readfd.number_of_descriptor;
-+
-+	char tempbuff[MPATH_MAX_PARAM_LEN];
-+	struct prin_fulldescr fdesc;
-+	memset(&fdesc, 0, sizeof(struct prin_fulldescr));
-+
-+	memcpy( tempbuff, pr_buff->prin_descriptor.prin_readfd.private_buffer,MPATH_MAX_PARAM_LEN );
-+	memset(&pr_buff->prin_descriptor.prin_readfd.private_buffer, 0, MPATH_MAX_PARAM_LEN);
-+
-+	p =(unsigned char *)tempbuff;
-+	ppbuff = (char *)pr_buff->prin_descriptor.prin_readfd.private_buffer;
-+
-+	for (k = 0; k < additional_length; k += num, p += num) {
-+		memcpy(&fdesc.key, p, 8 );
-+		fdesc.flag = p[12];
-+		fdesc.scope_type =  p[13];
-+		fdesc.rtpi = ((p[18] << 8) | p[19]);
-+
-+		tid_len_len = ((p[20] << 24) | (p[21] << 16) |
-+				(p[22] << 8) | p[23]);
-+
-+		if (tid_len_len > 0)
-+			decode_transport_id( &fdesc, &p[24], tid_len_len);
-+
-+		num = 24 + tid_len_len;
-+		memcpy(ppbuff, &fdesc, sizeof(struct prin_fulldescr));
-+		pr_buff->prin_descriptor.prin_readfd.descriptors[fdesc_count]= (struct prin_fulldescr *)ppbuff;
-+		ppbuff += sizeof(struct prin_fulldescr);
-+		++fdesc_count;
-+	}
-+
-+	pr_buff->prin_descriptor.prin_readfd.number_of_descriptor = fdesc_count;
-+
-+	return;
-+}
-+
-+void
-+decode_transport_id(struct prin_fulldescr *fdesc, unsigned char * p, int length)
-+{
-+	int num, k;
-+	int jump;
-+	for (k = 0, jump = 24; k < length; k += jump, p += jump) {
-+		fdesc->trnptid.format_code = ((p[0] >> 6) & 0x3);
-+		fdesc->trnptid.protocol_id = (p[0] & 0xf);
-+		switch (fdesc->trnptid.protocol_id) {
-+			case MPATH_PROTOCOL_ID_FC:
-+				memcpy(&fdesc->trnptid.n_port_name, &p[8], 8);
-+				jump = 24;
-+				break;
-+			case MPATH_PROTOCOL_ID_ISCSI:
-+				num = ((p[2] << 8) | p[3]);
-+				memcpy(&fdesc->trnptid.iscsi_name, &p[4], num);
-+				jump = (((num + 4) < 24) ? 24 : num + 4);
-+				break;
-+			case MPATH_PROTOCOL_ID_SAS:
-+				memcpy(&fdesc->trnptid.sas_address, &p[4], 8);
-+				jump = 24;
-+				break;
-+			default:
-+				jump = 24;
-+				break;
-+		}
-+	}
-+}
-+
-+int prin_do_scsi_ioctl(char * dev, int rq_servact, struct prin_resp * resp, int noisy)
-+{
-+
-+	int ret, status, got, fd;
-+	int mx_resp_len;
-+	SenseData_t Sensedata;
-+	int retry = MAXRETRY;
-+	struct sg_io_hdr io_hdr;
-+	char devname[FILE_NAME_SIZE];
-+	unsigned char cdb[MPATH_PRIN_CMDLEN] =
-+	{MPATH_PRIN_CMD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-+
-+	snprintf(devname, FILE_NAME_SIZE, "/dev/%s",dev);
-+        fd = open(devname, O_WRONLY);
-+        if(fd < 0){
-+        	condlog(0, "%s: Unable to open device ", dev);
-+		return MPATH_PR_FILE_ERROR;
-+         }
-+
-+	mx_resp_len =  sizeof(struct prin_readdescr);
-+	cdb[1] = (unsigned char)(rq_servact & 0x1f);
-+	cdb[7] = (unsigned char)((mx_resp_len >> 8) & 0xff);
-+	cdb[8] = (unsigned char)(mx_resp_len & 0xff);
-+
-+retry :
-+	memset(&Sensedata, 0, sizeof(SenseData_t));
-+	memset(&io_hdr,0 , sizeof( struct sg_io_hdr));
-+
-+	io_hdr.interface_id = 'S';
-+	io_hdr.cmd_len = MPATH_PRIN_CMDLEN;
-+	io_hdr.mx_sb_len = sizeof (SenseData_t);
-+	io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
-+	io_hdr.cmdp = cdb;
-+	io_hdr.sbp = (void *)&Sensedata;
-+	io_hdr.timeout = TIMEOUT;
-+
-+	mx_resp_len = get_prin_length(rq_servact);
-+
-+
-+	io_hdr.dxfer_len = mx_resp_len;
-+	io_hdr.dxferp = (void *)resp;
-+
-+	ret =ioctl(fd, SG_IO, &io_hdr);
-+	if (ret < 0){
-+		condlog(0, "%s: IOCTL failed %d", dev, ret);
-+		status = MPATH_PR_OTHER;
++		condlog(0, "%s: Either device not registered or ", pp->dev);
++		condlog(0, "host is not authorised for registration. Skip path\n");
++		ret = MPATH_PR_OTHER;
 +		goto out;
 +	}
 +
-+	got = mx_resp_len - io_hdr.resid;
++	param= malloc(sizeof(struct prout_param_descriptor));
++	memset(param, 0 , sizeof(struct prout_param_descriptor));
 +
-+	condlog(2, "%s: duration = %u (ms)", dev, io_hdr.duration);
-+
-+	status = mpath_translate_response(dev, io_hdr, Sensedata, noisy);
-+
-+	if (status == MPATH_PR_SENSE_UNIT_ATTENTION && (retry > 0))
-+	{
-+		--retry;
-+		condlog(2, "%s: retrying for Unit Attention. Remaining retries = %d", dev, retry);
-+		goto retry;
++	for (j = 7; j >= 0; --j) {
++		param->sa_key[j] = (prkey & 0xff);
++		prkey >>= 8;
 +	}
++	param->num_transportid = 0;
 +
-+	if (((status == MPATH_PR_SENSE_NOT_READY )&& (Sensedata.ASC == 0x04)&&
-+				(Sensedata.ASCQ == 0x07))&& (retry > 0))
++	condlog(3, "device %s:%s \n", pp->dev, pp->mpp->wwid);
++
++	ret = prout_do_scsi_ioctl(pp->dev, MPATH_PROUT_REG_IGN_SA, 0, 0, param, 0);
++	if (ret != MPATH_PR_SUCCESS )
 +	{
-+		usleep(1000);
-+		--retry;
-+		condlog(2, "%s: retrying for 02/04/07. Remaining retries = %d", dev, retry);
-+		goto retry;
++		condlog(0,"%s: Reservation registration failed. Error: %d\n", pp->dev, ret);
 +	}
++	mpp->prflag = 1;
 +
-+	if (status != MPATH_PR_SUCCESS)
-+		goto out;
-+
-+	if (noisy)
-+		dumpHex((const char *)resp, got , 1);
-+
-+
-+	switch (rq_servact)
-+	{
-+		case MPATH_PRIN_RKEY_SA :
-+			mpath_format_readkeys(resp, got, noisy);
-+			break;
-+		case MPATH_PRIN_RRES_SA :
-+			mpath_format_readresv(resp, got, noisy);
-+			break;
-+		case MPATH_PRIN_RCAP_SA :
-+			mpath_format_reportcapabilities(resp, got, noisy);
-+			break;
-+		case MPATH_PRIN_RFSTAT_SA :
-+			mpath_format_readfullstatus(resp, got, noisy);
-+	}
-+
++	free(param);
 +out:
-+	close(fd);
-+	return status;
++	free(resp);
++	return NULL;
 +}
 +
-+int mpath_translate_response (char * dev, struct sg_io_hdr io_hdr, SenseData_t Sensedata, int noisy)
++int mpath_pr_event_handle(struct path *pp)
 +{
-+	condlog(3, "%s: status driver:%02x host:%02x scsi:%02x", dev, 
-+			io_hdr.driver_status, io_hdr.host_status ,io_hdr.status);
-+	io_hdr.status &= 0x7e;
-+	if ((0 == io_hdr.status) && (0 == io_hdr.host_status) &&
-+			(0 == io_hdr.driver_status))
-+	{
-+		return MPATH_PR_SUCCESS;
-+	}
++	pthread_t thread;
++	int rc;
++	pthread_attr_t attr;
++	struct multipath * mpp;
 +
-+	switch(io_hdr.status)
-+	{
-+		case SAM_STAT_GOOD:
-+			break;
-+		case SAM_STAT_CHECK_CONDITION:
-+			condlog(2, "%s: Sense_Key=%02x, ASC=%02x ASCQ=%02x", dev,
-+					Sensedata.Sense_Key, Sensedata.ASC, Sensedata.ASCQ);
-+			switch(Sensedata.Sense_Key)
-+			{
-+				case NO_SENSE:
-+					return MPATH_PR_NO_SENSE;
-+				case RECOVERED_ERROR:
-+					return MPATH_PR_SUCCESS;
-+				case NOT_READY:
-+					return MPATH_PR_SENSE_NOT_READY;
-+				case MEDIUM_ERROR:
-+					return MPATH_PR_SENSE_MEDIUM_ERROR;
-+				case BLANK_CHECK:
-+					return MPATH_PR_OTHER;
-+				case HARDWARE_ERROR:
-+					return MPATH_PR_SENSE_HARDWARE_ERROR;
-+				case ILLEGAL_REQUEST:
-+					return MPATH_PR_ILLEGAL_REQ;
-+				case UNIT_ATTENTION:
-+					return MPATH_PR_SENSE_UNIT_ATTENTION;
-+				case DATA_PROTECT:
-+				case COPY_ABORTED:
-+					return MPATH_PR_OTHER;
-+				case ABORTED_COMMAND:
-+					return MPATH_PR_SENSE_ABORTED_COMMAND;
++	mpp = pp->mpp;
 +
-+				default :
-+					return MPATH_PR_OTHER;
-+			}
-+		case SAM_STAT_RESERVATION_CONFLICT:
-+			return MPATH_PR_RESERV_CONFLICT;
++	if (!mpp->reservation_key)
++		return -1;
 +
-+		default :
-+			return  MPATH_PR_OTHER;
-+	}
++	pthread_attr_init(&attr);
++	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 +
-+	switch(io_hdr.host_status)
-+	{
-+		case DID_OK :
-+			break;
-+		default :
-+			return MPATH_PR_OTHER;
++	rc = pthread_create(&thread, NULL , mpath_pr_event_handler_fn, pp);
++	if (rc) {
++		condlog(0, "%s: ERROR; return code from pthread_create() is %d\n", pp->dev, rc);
++		return -1;
 +	}
-+	switch(io_hdr.driver_status)
-+	{
-+		case DRIVER_OK:
-+			break;
-+		default :
-+			return MPATH_PR_OTHER;
-+	}
-+	return MPATH_PR_SUCCESS;
-+}
-+
-+int mpath_isLittleEndian()
-+{
-+	int num = 1;
-+	if(*(char *)&num == 1)
-+	{
-+		condlog(2, "Little-Endian");
-+	}
-+	else
-+	{
-+		condlog(2, "Big-Endian");
-+	}
++	pthread_attr_destroy(&attr);
++	rc = pthread_join(thread, NULL);
 +	return 0;
 +}
 +
-+void mpath_reverse_uint16_byteorder(uint16_t *num)
-+{
-+	uint16_t byte0, byte1;
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/multipathd/main.h multipath-tools/multipathd/main.h
+--- multipath-tools-14jan-upstream-patchedall-1st/multipathd/main.h	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/multipathd/main.h	2012-01-12 12:33:25.000000000 -0500
+@@ -11,6 +11,9 @@ enum daemon_status {
+     DAEMON_SHUTDOWN,
+ };
+ 
++struct prout_param_descriptor;
++struct prin_resp;
 +
-+	byte0 = (*num & 0x000000FF) >>  0 ;
-+	byte1 = (*num & 0x0000FF00) >>  8 ;
-+
-+	*num = ((byte0 << 8) | (byte1 << 0));
-+}
-+
-+void mpath_reverse_uint32_byteorder(uint32_t *num)
-+{
-+	uint32_t byte0, byte1, byte2, byte3;
-+
-+	byte0 = (*num & 0x000000FF) >>  0 ;
-+	byte1 = (*num & 0x0000FF00) >>  8 ;
-+	byte2 = (*num & 0x00FF0000) >> 16 ;
-+	byte3 = (*num & 0xFF000000) >> 24 ;
-+
-+	*num = ((byte0 << 24) | (byte1 << 16) | (byte2 << 8) | (byte3 << 0));
-+}
-+
-+void mpath_reverse_8bytes_order(char * var)
-+{
-+	char byte[8];
-+
-+	int i;
-+	for(i=0 ; i < 8 ; i++ )
-+	{
-+		byte[i] = var[i];
-+	}
-+	for(i=0 ; i < 8 ; i++ )
-+	{
-+		var[7 - i] = byte[i];
-+	}
-+}
-+
-+void
-+dumpHex(const char* str, int len, int log)
-+{
-+	const char * p = str;
-+	const char * formatstr;
-+	unsigned char c;
-+	char buff[82];
-+	const int bpstart = 5;
-+	int bpos = bpstart;
-+	int  k;
-+
-+	if (len <= 0)
-+		return;
-+	formatstr = (0 == log) ? "%.76s\n" : "%.56s\n";
-+	memset(buff, ' ', 80);
-+	buff[80] = '\0';
-+	for (k = 0; k < len; k++) {
-+		c = *p++;
-+		bpos += 3;
-+		if (bpos == (bpstart + (9 * 3)))
-+			bpos++;
-+		sprintf(&buff[bpos], "%.2x", (int)(unsigned char)c);
-+		buff[bpos + 2] = ' ';
-+		if ((k > 0) && (0 == ((k + 1) % 16))) {
-+			if (log)
-+				condlog(0, "%.76s" , buff);
-+			else
-+				printf("%.76s" , buff);
-+			bpos = bpstart;
-+			memset(buff, ' ', 80);
-+		}
-+	}
-+	if (bpos > bpstart) {
-+		buff[bpos + 2] = '\0';
-+		if (log)
-+			condlog(0, "%s", buff);
-+		else
-+			printf("%s\n" , buff);
-+	}
-+	return;
-+}
-+
-+int get_prin_length(int rq_servact)
-+{
-+        int mx_resp_len;
-+        switch (rq_servact)
-+        {
-+                case MPATH_PRIN_RKEY_SA:
-+                        mx_resp_len =  sizeof(struct prin_readdescr);
-+                        break;
-+                case MPATH_PRIN_RRES_SA :
-+                        mx_resp_len =  sizeof(struct prin_resvdescr);
-+                        break;
-+                case MPATH_PRIN_RCAP_SA :
-+                        mx_resp_len = sizeof(struct prin_capdescr);
-+                        break;
-+                case MPATH_PRIN_RFSTAT_SA:
-+                        mx_resp_len = sizeof(struct print_fulldescr_list) + sizeof(struct prin_fulldescr *)*32;
-+                        break;
-+        }
-+        return mx_resp_len;
-+}
-diff -uprN multipath-tools-orig/libmpathpersist/mpath_pr_ioctl.h multipath-tools/libmpathpersist/mpath_pr_ioctl.h
---- multipath-tools-orig/libmpathpersist/mpath_pr_ioctl.h	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpath_pr_ioctl.h	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,111 @@
-+#define MPATH_XFER_HOST_DEV              0   /*data transfer from initiator to target */
-+#define MPATH_XFER_DEV_HOST              1   /*data transfer from target to initiator */
-+#define MPATH_XFER_NONE                  2   /*no data transfer */
-+#define MPATH_XFER_UNKNOWN               3   /*data transfer direction is unknown */
-+
-+#if 0
-+static const char * pr_type_strs[] = {
-+    "obsolete [0]",
-+    "Write Exclusive",
-+    "obsolete [2]",
-+    "Exclusive Access",
-+    "obsolete [4]",
-+    "Write Exclusive, registrants only",
-+    "Exclusive Access, registrants only",
-+    "Write Exclusive, all registrants",
-+    "Exclusive Access, all registrants",
-+    "obsolete [9]", "obsolete [0xa]", "obsolete [0xb]", "obsolete [0xc]",
-+    "obsolete [0xd]", "obsolete [0xe]", "obsolete [0xf]",
-+};
-+#endif
-+
-+typedef unsigned int     LWORD;     /* unsigned numeric, bit patterns */
-+typedef unsigned char    BYTE;      /* unsigned numeric, bit patterns */
-+
-+typedef struct SenseData
-+{
-+    BYTE        Error_Code;
-+    BYTE        Segment_Number; /* not applicable to DAC */
-+    BYTE        Sense_Key;
-+    BYTE        Information[ 4 ];
-+    BYTE        Additional_Len;
-+    LWORD       Command_Specific_Info;
-+    BYTE        ASC;
-+    BYTE        ASCQ;
-+    BYTE        Field_Replaceable_Unit;
-+    BYTE        Sense_Key_Specific_Info[ 3 ];
-+    BYTE        Recovery_Action[ 2 ];
-+    BYTE        Total_Errors;
-+    BYTE        Total_Retries;
-+    BYTE        ASC_Stack_1;
-+    BYTE        ASCQ_Stack_1;
-+    BYTE        ASC_Stack_2;
-+    BYTE        ASCQ_Stack_2;
-+    BYTE        Additional_FRU_Info[ 8 ];
-+    BYTE        Error_Specific_Info[ 3 ];
-+    BYTE        Error_Detection_Point[ 4 ];
-+    BYTE        Original_CDB[10];
-+    BYTE        Host_ID;
-+    BYTE        Host_Descriptor[ 2 ];
-+    BYTE        Serial_Number[ 16 ];
-+    BYTE        Array_SW_Revision[ 4 ];
-+    BYTE        Data_Xfer_Operation;
-+    BYTE        LUN_Number;
-+    BYTE        LUN_Status;
-+    BYTE        Drive_ID;
-+    BYTE        Xfer_Start_Drive_ID;
-+    BYTE        Drive_SW_Revision[ 4 ];
-+    BYTE        Drive_Product_ID[ 16 ];
-+    BYTE        PowerUp_Status[ 2 ];
-+    BYTE        RAID_Level;
-+    BYTE        Drive_Sense_ID[ 2 ];
-+    BYTE        Drive_Sense_Data[ 32 ];
-+    BYTE        Reserved2[24];
-+} SenseData_t;
-+
-+#define MPATH_PRIN_CMD 0x5e
-+#define MPATH_PRIN_CMDLEN 10
-+#define MPATH_PROUT_CMD 0x5f
-+#define MPATH_PROUT_CMDLEN 10
-+
-+#define  DID_OK	0x00
-+/*
-+ *  Status codes
-+ */
-+#define SAM_STAT_GOOD            0x00
-+#define SAM_STAT_CHECK_CONDITION 0x02
-+#define SAM_STAT_CONDITION_MET   0x04
-+#define SAM_STAT_BUSY            0x08
-+#define SAM_STAT_INTERMEDIATE    0x10
-+#define SAM_STAT_INTERMEDIATE_CONDITION_MET 0x14
-+#define SAM_STAT_RESERVATION_CONFLICT 0x18
-+#define SAM_STAT_COMMAND_TERMINATED 0x22        /* obsolete in SAM-3 */
-+#define SAM_STAT_TASK_SET_FULL   0x28
-+#define SAM_STAT_ACA_ACTIVE      0x30
-+#define SAM_STAT_TASK_ABORTED    0x40
-+
-+#define STATUS_MASK          0x3e
-+
-+/*
-+ *  SENSE KEYS
-+ */
-+
-+#define NO_SENSE            0x00
-+#define RECOVERED_ERROR     0x01
-+#define NOT_READY           0x02
-+#define MEDIUM_ERROR        0x03
-+#define HARDWARE_ERROR      0x04
-+#define ILLEGAL_REQUEST     0x05
-+#define UNIT_ATTENTION      0x06
-+#define DATA_PROTECT        0x07
-+#define BLANK_CHECK         0x08
-+#define COPY_ABORTED        0x0a
-+#define ABORTED_COMMAND     0x0b
-+#define VOLUME_OVERFLOW     0x0d
-+#define MISCOMPARE          0x0e
-+
-+
-+/* Driver status */
-+#define DRIVER_OK 0x00
-+
-+
-diff -uprN multipath-tools-orig/libmpathpersist/mpath_updatepr.c multipath-tools/libmpathpersist/mpath_updatepr.c
---- multipath-tools-orig/libmpathpersist/mpath_updatepr.c	1969-12-31 19:00:00.000000000 -0500
-+++ multipath-tools/libmpathpersist/mpath_updatepr.c	2012-01-12 11:53:01.000000000 -0500
-@@ -0,0 +1,50 @@
-+#include<stdio.h>
-+#include<unistd.h>
-+#include <errno.h>
-+
-+#include <stdlib.h>
-+#include <stdarg.h>
-+#include <fcntl.h>
-+#include <sys/ioctl.h>
-+#include <sys/types.h>
-+#include <sys/socket.h>
-+#include <sys/un.h>
-+#include <sys/poll.h>
-+#include <errno.h>
-+#include <debug.h>
-+#include "memory.h"
-+#include "../libmultipath/uxsock.h"
-+
-+unsigned long mem_allocated;    /* Total memory used in Bytes */
-+
-+int update_prflag(char * arg1, char * arg2, int noisy)
-+{
-+	int fd;
-+	char str[64];
-+	char *reply;
-+	size_t len;
-+	int ret = 0;
-+
-+	fd = ux_socket_connect("/var/run/multipathd.sock");
-+	if (fd == -1) {
-+		condlog (0, "ux socket connect error");
-+		return 1 ;
-+	}
-+
-+	snprintf(str,sizeof(str),"map %s %s", arg1, arg2);
-+	condlog (2, "%s: pr flag message=%s", arg1, str);
-+	send_packet(fd, str, strlen(str) + 1);
-+	recv_packet(fd, &reply, &len);
-+
-+	condlog (2, "%s: message=%s reply=%s", arg1, str, reply);
-+	if (!reply || strncmp(reply,"ok", 2) == 0)
-+		ret = -1;
-+	else if (strncmp(reply, "fail", 4) == 0)
-+		ret = -2;
-+	else{
-+		ret = atoi(reply);
-+	}
-+
-+	free(reply);
-+	return ret;
-+}
-
+ extern pid_t daemon_pid;
+ 
+ int exit_daemon(int);
+@@ -21,5 +24,16 @@ int ev_remove_path (char *, struct vecto
+ int ev_add_map (char *, char *, struct vectors *);
+ int ev_remove_map (char *, char *, int, struct vectors *);
+ void sync_map_state (struct multipath *);
++void * mpath_alloc_prin_response(int prin_sa);
++int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
++       int noisy);
++void dumpHex(const char * , int len, int no_ascii);
++int prout_do_scsi_ioctl(char * , int rq_servact, int rq_scope,
++       unsigned int rq_type, struct prout_param_descriptor *param,
++       int noisy);
++int mpath_pr_event_handle(struct path *pp);
++void * mpath_pr_event_handler_fn (void * );
++int update_map_pr(struct multipath *mpp);
++void * mpath_pr_event_handler_fn (void * pathp );
+ 
+ #endif /* MAIN_H */
+diff -uprN multipath-tools-14jan-upstream-patchedall-1st/multipathd/Makefile multipath-tools/multipathd/Makefile
+--- multipath-tools-14jan-upstream-patchedall-1st/multipathd/Makefile	2012-01-12 11:53:01.000000000 -0500
++++ multipath-tools/multipathd/Makefile	2012-01-12 12:34:04.000000000 -0500
+@@ -5,9 +5,9 @@ include ../Makefile.inc
+ #
+ # basic flags setting
+ #
+-CFLAGS += -I$(multipathdir)
++CFLAGS += -I$(multipathdir) -I$(mpathpersistdir)
+ LDFLAGS += -lpthread -ldevmapper -lreadline -lncurses -ldl \
+-	   -L$(multipathdir) -lmultipath
++	   -L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist
+ 
+ #
+ # debuging stuff
 --
