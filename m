@@ -1,70 +1,67 @@
-From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Subject: Re: dmsetup fails on latest kernel
-Date: Thu, 19 Jan 2012 18:10:28 +0200
-Message-ID: <CALLzPKYuKufGoUkXb9kPSn6buzVY0awzCL2F9onr1=NxysP3_w@mail.gmail.com>
-References: <CALLzPKb6kimUjgj9qN9ehx8RO3-bXvGetFQgx48T1rMm22oD2g@mail.gmail.com>
-	<CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: [dm-devel] dmsetup fails on latest kernel
+Date: Thu, 19 Jan 2012 18:06:52 +0000
+Message-ID: <4F185BBC.1010607@redhat.com>
+References: <CALLzPKb6kimUjgj9qN9ehx8RO3-bXvGetFQgx48T1rMm22oD2g@mail.gmail.com> <CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com> <CALLzPKYuKufGoUkXb9kPSn6buzVY0awzCL2F9onr1=NxysP3_w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com>
+In-Reply-To: <CALLzPKYuKufGoUkXb9kPSn6buzVY0awzCL2F9onr1=NxysP3_w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, "H. Peter Anvin" <hpa@linux.intel.com>
+Cc: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>, "H. Peter Anvin" <hpa@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Jan 19, 2012 at 5:56 PM, Kasatkin, Dmitry
-<dmitry.kasatkin@intel.com> wrote:
-> On Thu, Jan 19, 2012 at 3:02 PM, Kasatkin, Dmitry
-> <dmitry.kasatkin@intel.com> wrote:
->> Hi,
->>
->> (subject added)
->>
->> I rebased on the stop of latest mainline tree and now dmsetup fails.=
-=2E.
->> It says: "Failed to create notification semaphore: Function not impl=
-emented".
->> I run strace and saw that dmsetup uses "semget" which returns -ENOSY=
-S...
->>
->> It works on
->> 122804ecb59493fbb4d31b3ba9ac59faaf45276f
->>
->> but does not work on
->> ccb19d263fd1c9e34948e2158c53eacbff369344
->>
->> Any ideas?
->>
->> - Dmitry
->
-> Hi,
->
-> I have bisected the problem...
->
-> It is introduced by this commit:
->
-> 303395ac3bf3e2cb488435537d416bc840438fcb is the first bad commit
-> commit 303395ac3bf3e2cb488435537d416bc840438fcb
-> Author: H. Peter Anvin <hpa@linux.intel.com>
-> Date: =C2=A0 Fri Nov 11 16:07:41 2011 -0800
->
-> =C2=A0 =C2=A0x86: Generate system call tables and unistd_*.h from tab=
-les
->
->
-> It came from: =C2=A0Merge branch 'x86-syscall-for-linus' of
-> git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip
-> Was on 17.01.2012...
->
-> I have 32 bit VM and I have SYSVIPC enabled in the configuration...
->
-> - Dmitry
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-It seems "semget" is missing from: arch/x86/syscalls/syscall_32.tbl
-But it presents in: arch/x86/syscalls/syscall_64.tbl
+On 01/19/2012 04:10 PM, Kasatkin, Dmitry wrote:
+> It seems "semget" is missing from:
+> arch/x86/syscalls/syscall_32.tbl But it presents in:
+> arch/x86/syscalls/syscall_64.tbl
+> 
+> Is it a bug then?
 
-Is it a bug then?
+Maybe; I noticed that too but it's also missing in the old x86
+unistd_32.h.
 
-- Dmitry
+I thought Linux only provided the ipc(2) call - glibc sources seem to
+confirm that (sysdeps/unix/sysv/linux/semget.c).
+
+sys_sem* and friends are present in include/asm-generic/unistd.h so
+maybe these values just need to be propagated to syscall_32.tbl?
+
+Actually there's a bunch of SysV IPC calls defined in syscall_64.tbl
+that are not present in syscall_32.tbl:
+
+$ egrep 'shm|sem|msg[a-z]' arch/x86/syscalls/syscall_32.tbl
+$ egrep 'shm|sem|msg[a-z]' arch/x86/syscalls/syscall_64.tbl
+29	64	shmget			sys_shmget
+30	64	shmat			sys_shmat
+31	64	shmctl			sys_shmctl
+64	64	semget			sys_semget
+65	64	semop			sys_semop
+66	64	semctl			sys_semctl
+67	64	shmdt			sys_shmdt
+68	64	msgget			sys_msgget
+69	64	msgsnd			sys_msgsnd
+70	64	msgrcv			sys_msgrcv
+71	64	msgctl			sys_msgctl
+220	64	semtimedop		sys_semtimedop
+
+But sys_ipc is there:
+
+$ grep sys_ipc arch/x86/syscalls/syscall_32.tbl
+117	i386	ipc			sys_ipc				sys32_ipc
+
+Regards,
+Bryn.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
+
+iEYEARECAAYFAk8YW7wACgkQ6YSQoMYUY97S0gCfTZOFMENOiVrm5jIprhcYkmDJ
+Pu4AnRUkUVwyZkgUG9DAcAfdmwR7kX2N
+=Bnwq
+-----END PGP SIGNATURE-----
