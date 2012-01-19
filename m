@@ -1,58 +1,52 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Multisnap / dm-thin
-Date: Thu, 19 Jan 2012 14:58:05 +0000
-Message-ID: <20120119145742.GA12793@ubuntu>
-References: <4F16A07C.7040705@shiftmail.org> <20120119093343.GB3942@ubuntu>
-	<4F180AB2.3060801@shiftmail.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
+Date: Thu, 19 Jan 2012 16:08:49 +0100
+Message-ID: <20120119150849.GD8316@redhat.com>
+References: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
+ <20120117200609.GA7933@redhat.com>
+ <20120117213648.GA9457@quack.suse.cz>
+ <20120118225808.GA3074@tux1.beaverton.ibm.com>
+ <20120118232200.GA22019@quack.suse.cz>
+ <4F1758D4.9010401@panasas.com>
+ <20120119094637.GA23442@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4F180AB2.3060801@shiftmail.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20120119094637.GA23442@quack.suse.cz>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: Boaz Harrosh <bharrosh@panasas.com>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J. Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 19, 2012 at 01:21:06PM +0100, Spelic wrote:
-> On 01/19/12 10:33, Joe Thornber wrote:
-> but it seems to talk about a snapshot of an external origin.
-> Supporting a readonly external origin is easy but it's not what I want.
-> Supporting a r/w external origin... I don't know how it could ever
-> be done since you won't receive notifications of the underlying
-> origin changing. Would that be made with a sort of hook points in
-> all device types in the kernel?
+On Thu, Jan 19, 2012 at 10:46:37AM +0100, Jan Kara wrote:
+> So to make this useful the logic won't be trivial. Thirdly, the benefit is
+> questionable anyway (at least for most of realistic workloads) because
+> flusher thread doesn't write the pages all that often - when there are not
+> many pages, we write them out just once every couple of seconds, when we
+> have lots of dirty pages we cycle through all of them so one page is not
+> written that often.
+
+If you mean migrate as in mm/migrate.c that's also not cheap, it will
+page fault anybody accessing the page, it'll do the page copy, and
+it'll IPI all cpus that had the mm on the TLB, it locks the page too
+and does all sort of checks. But it's true it'll be CPU bound... while
+I understand the current solution is I/O bound.
+
 > 
-> Seems a big can of worms to go that way just for my use case.
-> For my use case it would be simpler if there was a way to fully
-> preallocate a contiguous origin in thinp, and then the ability to
-> disable discard implementation when it gets implemented. Clearly
-> this would go against the name "thin".
+> > Do you have a more detailed description of the workload? Is it theoretically
+> > avoidable?
+>   See https://lkml.org/lkml/2011/10/23/156. Using page migration or copyout
+> would solve the problems of this guy.
 
-The trouble with having a contiguous image within the pool, is you
-then need to keep track of every other thin device that is sharing a
-block.  If you write to the block you'd then have to update the
-metadata for all these snaps, destroying the nice time complexity
-properties (at the momement breaking sharing only changes the metadata
-for the device being written too).
+Copying in the I/O layer should be better than page migration,
+1) copying the page to a I/O kernel buffer won't involve expensive TLB
+IPIs that migration requires, 2) copying the page to a I/O kernel
+buffer won't cause page faults because of migration entries being set,
+3) migration has to copy too so the cost on the memory bus is the
+same.
 
-I'll think some more about this, but I don't think I've got a quick
-answer for you.
-
-> Another question: is support from userspace (LVM) planned? Is there
-> an ETA? Will that be from you or we are waiting for LVM people to
-> pick it up?
-> Because being just DM it seems a bit hard to use.
-
-Grab the latest lvm2 source from cvs.  It has thinp support.
-
-- Joe
+So unless I'm missing something page migration and pte/tlb mangling (I
+mean as in mm/migrate.c) is worse in every way than bounce buffering
+at the I/O layer if you notice the page can be modified while it's
+under I/O.
