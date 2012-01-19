@@ -1,63 +1,79 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Multisnap / dm-thin
-Date: Thu, 19 Jan 2012 09:33:45 +0000
-Message-ID: <20120119093343.GB3942@ubuntu>
-References: <4F16A07C.7040705@shiftmail.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
+Date: Thu, 19 Jan 2012 10:46:37 +0100
+Message-ID: <20120119094637.GA23442@quack.suse.cz>
+References: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
+ <20120117200609.GA7933@redhat.com>
+ <20120117213648.GA9457@quack.suse.cz>
+ <20120118225808.GA3074@tux1.beaverton.ibm.com>
+ <20120118232200.GA22019@quack.suse.cz>
+ <4F1758D4.9010401@panasas.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4F16A07C.7040705@shiftmail.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <4F1758D4.9010401@panasas.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Boaz Harrosh <bharrosh@panasas.com>
+Cc: Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J. Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 18, 2012 at 11:35:40AM +0100, Spelic wrote:
-> Hello all,
-> I would need the multisnap feature, i.e., the ability to make many
-> snapshots without high performance degradation...
-> I saw it mentioned around, but it does not seem to be in the kernel
-> yet. Is it planned to be introduced? Is there an ETA?
+On Thu 19-01-12 01:42:12, Boaz Harrosh wrote:
+> On 01/19/2012 01:22 AM, Jan Kara wrote:
+> > On Wed 18-01-12 14:58:08, Darrick J. Wong wrote:
+> >> On Tue, Jan 17, 2012 at 10:36:48PM +0100, Jan Kara wrote:
+> >>> On Tue 17-01-12 15:06:12, Mike Snitzer wrote:
+> >>>> 5) Any more progress on stable pages?
+> >>>>    - I know Darrick Wong had some proposals, what remains?
+> >>>   As far as I know this is done for XFS, btrfs, ext4. Is more needed?
+> >>
+> >> Yep, it's done for those three fses.
+> >>
+> >> I suppose it might help some people if instead of wait_on_page_writeback we
+> >> could simply page-migrate all the processes onto a new page...?
 > 
-> Note that I am not very fond of the new dm-thin which is planned to
-> have a multisnap-equivalent feature, because of the fragmentation it
-> will cause (I suppose a defragmenter is long way to come). Not
-> having fragmentation is the reason for using blockdevices instead of
-> loop mounted files after all isn't it?
+> >   Well, but it will cost some more memory & copying so whether it's faster
+> > or not pretty much depends on the workload, doesn't it? Anyway I've already
+> > heard one guy complaining that his RT application does redirtying of mmaped
+> > pages and it started seeing big latencies due to stable pages work. So for
+> > these guys migrating might be an option (or maybe fadvise/madvise flag to
+> > do copy out before submitting for IO?).
+> > 
+> 
+> OK That one is interesting. Because I'd imagine that the Kernel would not
+> start write-out on a busily modified page.
+  So currently writeback doesn't use the fact how busily is page modified.
+After all whole mm has only two sorts of pages - active & inactive - which
+reflects how often page is accessed but says nothing about how often is it
+dirtied. So we don't have this information in the kernel and it would be
+relatively (memory) expensive to keep it.
 
-The point of multisnap is that blocks of data are shared between
-multiple snapshots (unlike the current single snap implementation).
-Saving both disk space, and probably more importantly, redundant
-copying.  As such I struggle to see why you think it's possible to do
-this and keep all the data contiguous.  Both Mikulas' multisnap, and
-my thinp, use btrees to store the metadata, and allocate data blocks
-on a first come first served basis.
+> Some heavy modifying then a single write. If it's not so then there is
+> already great inefficiency, just now exposed, but was always there. The
+> "page-migrate" mentioned here will not help.
+  Yes, but I believe RT guy doesn't redirty the page that often. It is just
+that if you have to meet certain latency criteria, you cannot afford a
+single case where you have to wait. And if you redirty pages, you are bound
+to hit PageWriteback case sooner or later.
 
-Fragmentation is a big concern; but until I have a good idea what real
-world usage patterns for thinp are I'm a bit short of data to base any
-improvements to the allocator on.  If you want to help I'd love to
-know your usage scenario, and the slow down you're observing as the
-pool ages.
+> Could we not better our page write-out algorithms to avoid heavy
+> contended pages?
+  That's not so easy. Firstly, you'll have track and keep that information
+somehow. Secondly, it is better to writeout a busily dirtied page than to
+introduce a seek. Also definition of 'busy' differs for different purposes.
+So to make this useful the logic won't be trivial. Thirdly, the benefit is
+questionable anyway (at least for most of realistic workloads) because
+flusher thread doesn't write the pages all that often - when there are not
+many pages, we write them out just once every couple of seconds, when we
+have lots of dirty pages we cycle through all of them so one page is not
+written that often.
 
-As far as a defragmenter goes.  My first approach will be allowing
-people to set a 'copy-on-read' flag on thin devices that they feel are
-too fragmented.  This will then trigger the current machinery for
-breaking sharing - but reallocating according to the _current_ io
-usage pattern.  This should be a very small change, when I see
-real world fragmentation, I'll implement it.
+> Do you have a more detailed description of the workload? Is it theoretically
+> avoidable?
+  See https://lkml.org/lkml/2011/10/23/156. Using page migration or copyout
+would solve the problems of this guy.
 
-Maybe your requirement is for the origin to be a preexisting,
-contiguous device?  In which case see the other discussion thread with
-Ted Tso.
-
-- Joe
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
