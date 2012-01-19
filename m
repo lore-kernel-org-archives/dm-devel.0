@@ -1,67 +1,73 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: [dm-devel] dmsetup fails on latest kernel
-Date: Thu, 19 Jan 2012 18:06:52 +0000
-Message-ID: <4F185BBC.1010607@redhat.com>
-References: <CALLzPKb6kimUjgj9qN9ehx8RO3-bXvGetFQgx48T1rMm22oD2g@mail.gmail.com> <CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com> <CALLzPKYuKufGoUkXb9kPSn6buzVY0awzCL2F9onr1=NxysP3_w@mail.gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: dmsetup fails on latest kernel
+Date: Thu, 19 Jan 2012 11:05:41 -0800
+Message-ID: <CA+55aFwwkjFsVuSZWgasN4e_d9suRV4Afr94NMvNt4R7Ej0gbw@mail.gmail.com>
+References: <CALLzPKb6kimUjgj9qN9ehx8RO3-bXvGetFQgx48T1rMm22oD2g@mail.gmail.com>
+ <CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALLzPKYuKufGoUkXb9kPSn6buzVY0awzCL2F9onr1=NxysP3_w@mail.gmail.com>
+In-Reply-To: <CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>, "H. Peter Anvin" <hpa@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>
+To: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Cc: device-mapper development <dm-devel@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@linux.intel.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Thu, Jan 19, 2012 at 7:56 AM, Kasatkin, Dmitry
+<dmitry.kasatkin@intel.com> wrote:
+> On Thu, Jan 19, 2012 at 3:02 PM, Kasatkin, Dmitry
+> <dmitry.kasatkin@intel.com> wrote:
+>> Hi,
+>>
+>> (subject added)
+>>
+>> I rebased on the stop of latest mainline tree and now dmsetup fails.=
+=2E.
+>> It says: "Failed to create notification semaphore: Function not impl=
+emented".
+>> I run strace and saw that dmsetup uses "semget" which returns -ENOSY=
+S...
+>>
+>> It works on
+>> 122804ecb59493fbb4d31b3ba9ac59faaf45276f
+>>
+>> but does not work on
+>> ccb19d263fd1c9e34948e2158c53eacbff369344
+>>
+>> Any ideas?
+>>
+>> - Dmitry
+>
+> Hi,
+>
+> I have bisected the problem...
+>
+> It is introduced by this commit:
+>
+> 303395ac3bf3e2cb488435537d416bc840438fcb is the first bad commit
+> commit 303395ac3bf3e2cb488435537d416bc840438fcb
+> Author: H. Peter Anvin <hpa@linux.intel.com>
+> Date: =A0 Fri Nov 11 16:07:41 2011 -0800
+>
+> =A0 =A0x86: Generate system call tables and unistd_*.h from tables
 
-On 01/19/2012 04:10 PM, Kasatkin, Dmitry wrote:
-> It seems "semget" is missing from:
-> arch/x86/syscalls/syscall_32.tbl But it presents in:
-> arch/x86/syscalls/syscall_64.tbl
-> 
-> Is it a bug then?
+Interesting. I just munged the old pre-merge
 
-Maybe; I noticed that too but it's also missing in the old x86
-unistd_32.h.
+  arch/x86/kernel/syscall_table_32.S
 
-I thought Linux only provided the ipc(2) call - glibc sources seem to
-confirm that (sysdeps/unix/sysv/linux/semget.c).
+and the new
 
-sys_sem* and friends are present in include/asm-generic/unistd.h so
-maybe these values just need to be propagated to syscall_32.tbl?
+  arch/x86/syscalls/syscall_32.tbl
 
-Actually there's a bunch of SysV IPC calls defined in syscall_64.tbl
-that are not present in syscall_32.tbl:
+with some trivial shell scripting, and they are definitely identical.
 
-$ egrep 'shm|sem|msg[a-z]' arch/x86/syscalls/syscall_32.tbl
-$ egrep 'shm|sem|msg[a-z]' arch/x86/syscalls/syscall_64.tbl
-29	64	shmget			sys_shmget
-30	64	shmat			sys_shmat
-31	64	shmctl			sys_shmctl
-64	64	semget			sys_semget
-65	64	semop			sys_semop
-66	64	semctl			sys_semctl
-67	64	shmdt			sys_shmdt
-68	64	msgget			sys_msgget
-69	64	msgsnd			sys_msgsnd
-70	64	msgrcv			sys_msgrcv
-71	64	msgctl			sys_msgctl
-220	64	semtimedop		sys_semtimedop
+So the tables look like they match 1:1.
 
-But sys_ipc is there:
+The compat tables match too, except the new list contains the entry
+for bdflush (134), but that's a legacy thing that doesn't matter.
 
-$ grep sys_ipc arch/x86/syscalls/syscall_32.tbl
-117	i386	ipc			sys_ipc				sys32_ipc
+I wonder what else could be going on. Wrong number of system calls
+check? Peter, any ideas?
 
-Regards,
-Bryn.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
-
-iEYEARECAAYFAk8YW7wACgkQ6YSQoMYUY97S0gCfTZOFMENOiVrm5jIprhcYkmDJ
-Pu4AnRUkUVwyZkgUG9DAcAfdmwR7kX2N
-=Bnwq
------END PGP SIGNATURE-----
+                        Linus
