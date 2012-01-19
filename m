@@ -1,54 +1,66 @@
 From: "H. Peter Anvin" <hpa@linux.intel.com>
-Subject: Re: dmsetup fails on latest kernel
-Date: Thu, 19 Jan 2012 11:58:04 -0800
-Message-ID: <4F1875CC.4010006@linux.intel.com>
-References: <CALLzPKb6kimUjgj9qN9ehx8RO3-bXvGetFQgx48T1rMm22oD2g@mail.gmail.com> <CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com> <CA+55aFwwkjFsVuSZWgasN4e_d9suRV4Afr94NMvNt4R7Ej0gbw@mail.gmail.com>
+Subject: Re: [dm-devel] dmsetup fails on latest kernel
+Date: Thu, 19 Jan 2012 11:58:22 -0800
+Message-ID: <4F1875DE.8010805@linux.intel.com>
+References: <CALLzPKb6kimUjgj9qN9ehx8RO3-bXvGetFQgx48T1rMm22oD2g@mail.gmail.com> <CALLzPKbeXN5gdngo8uYYU8mAow=XhrwBFBhKfG811f37BubQOg@mail.gmail.com> <CALLzPKYuKufGoUkXb9kPSn6buzVY0awzCL2F9onr1=NxysP3_w@mail.gmail.com> <4F185BBC.1010607@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFwwkjFsVuSZWgasN4e_d9suRV4Afr94NMvNt4R7Ej0gbw@mail.gmail.com>
+In-Reply-To: <4F185BBC.1010607@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>, device-mapper development <dm-devel@redhat.com>, LKML <linux-kernel@vger.kernel.org>
+To: "Bryn M. Reeves" <bmr@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 01/19/2012 11:05 AM, Linus Torvalds wrote:
+On 01/19/2012 10:06 AM, Bryn M. Reeves wrote:
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+>
+> On 01/19/2012 04:10 PM, Kasatkin, Dmitry wrote:
+>> It seems "semget" is missing from:
+>> arch/x86/syscalls/syscall_32.tbl But it presents in:
+>> arch/x86/syscalls/syscall_64.tbl
 >>
->> Hi,
->>
->> I have bisected the problem...
->>
->> It is introduced by this commit:
->>
->> 303395ac3bf3e2cb488435537d416bc840438fcb is the first bad commit
->> commit 303395ac3bf3e2cb488435537d416bc840438fcb
->> Author: H. Peter Anvin<hpa@linux.intel.com>
->> Date:   Fri Nov 11 16:07:41 2011 -0800
->>
->>     x86: Generate system call tables and unistd_*.h from tables
+>> Is it a bug then?
 >
-> Interesting. I just munged the old pre-merge
+> Maybe; I noticed that too but it's also missing in the old x86
+> unistd_32.h.
 >
->    arch/x86/kernel/syscall_table_32.S
+> I thought Linux only provided the ipc(2) call - glibc sources seem to
+> confirm that (sysdeps/unix/sysv/linux/semget.c).
 >
-> and the new
+> sys_sem* and friends are present in include/asm-generic/unistd.h so
+> maybe these values just need to be propagated to syscall_32.tbl?
 >
->    arch/x86/syscalls/syscall_32.tbl
+> Actually there's a bunch of SysV IPC calls defined in syscall_64.tbl
+> that are not present in syscall_32.tbl:
 >
-> with some trivial shell scripting, and they are definitely identical.
+> $ egrep 'shm|sem|msg[a-z]' arch/x86/syscalls/syscall_32.tbl
+> $ egrep 'shm|sem|msg[a-z]' arch/x86/syscalls/syscall_64.tbl
+> 29	64	shmget			sys_shmget
+> 30	64	shmat			sys_shmat
+> 31	64	shmctl			sys_shmctl
+> 64	64	semget			sys_semget
+> 65	64	semop			sys_semop
+> 66	64	semctl			sys_semctl
+> 67	64	shmdt			sys_shmdt
+> 68	64	msgget			sys_msgget
+> 69	64	msgsnd			sys_msgsnd
+> 70	64	msgrcv			sys_msgrcv
+> 71	64	msgctl			sys_msgctl
+> 220	64	semtimedop		sys_semtimedop
 >
-> So the tables look like they match 1:1.
+> But sys_ipc is there:
 >
-> The compat tables match too, except the new list contains the entry
-> for bdflush (134), but that's a legacy thing that doesn't matter.
->
-> I wonder what else could be going on. Wrong number of system calls
-> check? Peter, any ideas?
+> $ grep sys_ipc arch/x86/syscalls/syscall_32.tbl
+> 117	i386	ipc			sys_ipc				sys32_ipc
 >
 
-Not off the top of my head.  I will try to reproduce this and see what 
-the problem is.  Dmitry, what version of binutils and gcc are you using? 
-  It could be that there is a toolchain problem.
+No, the i386 ABI uses several system call multiplexes (sys_ipc, 
+sys_socketcall) which are deprecated for new ABIs.  x86-64 and other new 
+ABIs use plain system calls.  Thus, this is all as one should expect; 
+the right thing to do is to compare against the old 32-bit system call 
+table.
 
 	-hpa
