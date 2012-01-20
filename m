@@ -1,45 +1,79 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
-Date: Thu, 19 Jan 2012 22:39:58 +0100
-Message-ID: <20120119213958.GJ8316@redhat.com>
-References: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
- <20120117200609.GA7933@redhat.com>
- <20120117213648.GA9457@quack.suse.cz>
- <20120118225808.GA3074@tux1.beaverton.ibm.com>
- <20120118232200.GA22019@quack.suse.cz>
- <4F1758D4.9010401@panasas.com>
- <20120119094637.GA23442@quack.suse.cz>
- <20120119150849.GD8316@redhat.com>
- <20120119205211.GB3629@quack.suse.cz>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] block: Invalidate the cache for a parent
+	block-device
+Date: Thu, 19 Jan 2012 20:54:09 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1201192036500.10677@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120119205211.GB3629@quack.suse.cz>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, Boaz Harrosh <bharrosh@panasas.com>, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J. Wong" <djwong@us.ibm.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Niels De Vos <ndevos@redhat.com>
+Cc: bmr@redhat.com, linux-kernel@vger.kerne.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jan 19, 2012 at 09:52:11PM +0100, Jan Kara wrote:
-> anything. So what will be cheaper depends on how often are redirtied pages
-> under IO. This is rather rare because pages aren't flushed all that often.
-> So the effect of stable pages in not observable on throughput. But you can
-> certainly see it on max latency...
+Hi
 
-I see your point. A problem with migrate though is that the page must
-be pinned by the I/O layer to prevent migration to free the page under
-I/O, or how else it could be safe to read from a freed page? And if
-the page is pinned migration won't work at all. See page_freeze_refs
-in migrate_page_move_mapping. So the pinning issue would need to be
-handled somehow. It's needed for example when there's an O_DIRECT
-read, and the I/O is going to the page, if the page is migrated in
-that case, we'd lose a part of the I/O. Differentiating how many page
-pins are ok to be ignored by migration won't be trivial but probably
-possible to do.
+This definitely doesn't belong to blkdev_issue_flush.
 
-Another way maybe would be to detect when there's too much re-dirtying
-of pages in flight in a short amount of time, and to start the bounce
-buffering and stop waiting, until the re-dirtying stops, and then you
-stop the bounce buffering. But unlike migration, it can't prevent an
-initial burst of high fault latency...
+blkdev_issue_flush is called by filesystems each time they want to 
+synchronize hardware disk cache (for example, when committing a journal).
+
+The patch may cause serious performance regressions (each time a 
+filesystem commits journal, the patch causes it to walk all buffers in the 
+whole-disk device).
+
+You should put this code into fsync_bdev (so that it is called only on 
+fsync or BLKFLSBUF) and not to blkdev_issue_flush.
+
+Mikulas
+
+> Executing a BLKFLSBUF-ioctl on a partition flushes the caches for that
+> partition but reading data through the parent device will still return
+> the old cached data.
+> 
+> The cache for the block-device is not synced if the block-device is kept
+> open (due to a mounted partition, for example). Only when all users for
+> the disk have exited, the cache for the disk is made consistent again.
+> 
+> Calling invalidate_bdev() on the parent block-device in case
+> blkdev_issue_flush() was called for a partition fixes this.
+> 
+> The problem can be worked around by forcing the caches to be flushed
+> with either
+>         # blockdev --flushbufs ${dev_disk}
+> or
+>         # echo 3 > /proc/sys/vm/drop_caches
+> 
+> CC: Bryn M. Reeves <bmr <at> redhat.com>
+> Signed-off-by: Niels de Vos <ndevos <at> redhat.com>
+> ---
+>  block/blk-flush.c |    3 +++
+>  1 files changed, 3 insertions(+), 0 deletions(-)
+> 
+> diff --git a/block/blk-flush.c b/block/blk-flush.c
+> index 720ad60..e876f8e 100644
+> --- a/block/blk-flush.c
+> +++ b/block/blk-flush.c
+> @@ -448,6 +448,9 @@ int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_
+> 
+>         if (!bio_flagged(bio, BIO_UPTODATE))
+>                 ret = -EIO;
+> +       else if (bdev != bdev->bd_contains)
+> +               /* invalidate parent block_device */
+> +               invalidate_bdev(bdev->bd_contains);
+> 
+>         bio_put(bio);
+>         return ret;
+> --
+> 1.7.6.5
+> 
