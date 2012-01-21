@@ -1,34 +1,34 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Christian Kujau <lists@nerdbynature.de>
 Subject: Re: BUG: spinlock trylock failure on UP on CPU#0, vgchange/936
-Date: Sat, 21 Jan 2012 13:46:10 +0100
-Message-ID: <4F1AB392.20604@kernel.dk>
-References: <alpine.DEB.2.01.1201180009520.2895@trent.utfs.org> <alpine.DEB.2.01.1201210341430.2895@trent.utfs.org>
+Date: Sat, 21 Jan 2012 14:35:18 -0800 (PST)
+Message-ID: <alpine.DEB.2.01.1201211430340.2895@trent.utfs.org>
+References: <alpine.DEB.2.01.1201180009520.2895@trent.utfs.org> <alpine.DEB.2.01.1201210341430.2895@trent.utfs.org> <4F1AB392.20604@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.01.1201210341430.2895@trent.utfs.org>
+In-Reply-To: <4F1AB392.20604@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Kujau <lists@nerdbynature.de>
+To: Jens Axboe <axboe@kernel.dk>
 Cc: LKML <linux-kernel@vger.kernel.org>, peterz@infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2012-01-21 12:42, Christian Kujau wrote:
-> On Wed, 18 Jan 2012 at 00:18, Christian Kujau wrote:
->> today's git checkout boots fine on powerpc32, but has this message during 
->> bootup:
->>
->> BUG: spinlock trylock failure on UP on CPU#0, vgchange/936
->>  lock: ef32a9f8, .magic: dead4ead, .owner: vgchange/936, .owner_cpu: 0
->> Call Trace:
+On Sat, 21 Jan 2012 at 13:46, Jens Axboe wrote:
+> Can you try and pull:
 > 
-> Still happening with 3.3.0-rc1.
+> git://git.kernel.dk/linux-block.git for-linus
+> 
+> and see if it helps?
 
-Can you try and pull:
+Pulled, compiled, bootet - but the BUG: stays. Please see .config and full 
+dmesg: http://nerdbynature.de/bits/3.2.0/   (the 3.3.0-rc1 files)
 
-git://git.kernel.dk/linux-block.git for-linus
+Note that I don't have an actual problem here: the machine (PowerBook G4) 
+is booting & running fine, I'm currently not using any LVM devices, so 
+it's merely the BUG: being printed during bootup I'm whining about.
 
-and see if it helps?
-
+Thanks,
+Christian.
 -- 
-Jens Axboe
+BOFH excuse #292:
+
+We ran out of dial tone and we're and waiting for the phone company to deliver another bottle.
