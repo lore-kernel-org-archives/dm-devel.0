@@ -1,480 +1,76 @@
-From: Jagan Reddy <gjmsreddy@yahoo.com>
-Subject: Re: dm-thin vs lvm performance
-Date: Fri, 20 Jan 2012 13:06:08 -0800 (PST)
-Message-ID: <1327093568.21183.YahooMailNeo@web36404.mail.mud.yahoo.com>
-References: <1326416116.56981.YahooMailNeo@web36404.mail.mud.yahoo.com>
-	<20120116124158.GA4426@ubuntu>
-	<1326915054.99335.YahooMailNeo@web36407.mail.mud.yahoo.com>
-	<20120120170335.GA10518@ubuntu> <20120120173333.GA12920@ubuntu>
-	<20120120180721.GB12920@ubuntu>
-Reply-To: Jagan Reddy <gjmsreddy@yahoo.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: Christian Kujau <lists@nerdbynature.de>
+Subject: Re: BUG: spinlock trylock failure on UP on CPU#0, vgchange/936
+Date: Sat, 21 Jan 2012 03:42:32 -0800 (PST)
+Message-ID: <alpine.DEB.2.01.1201210341430.2895@trent.utfs.org>
+References: <alpine.DEB.2.01.1201180009520.2895@trent.utfs.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="-2114655128-60673088-1327093568=:21183"
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120120180721.GB12920@ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.01.1201180009520.2895@trent.utfs.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: peterz@infradead.org, axboe@kernel.dk, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
----2114655128-60673088-1327093568=:21183
-Content-Type: multipart/alternative;
-	boundary="-2114655128-224023313-1327093568=:21183"
+On Wed, 18 Jan 2012 at 00:18, Christian Kujau wrote:
+> today's git checkout boots fine on powerpc32, but has this message during 
+> bootup:
+> 
+> BUG: spinlock trylock failure on UP on CPU#0, vgchange/936
+>  lock: ef32a9f8, .magic: dead4ead, .owner: vgchange/936, .owner_cpu: 0
+> Call Trace:
 
----2114655128-224023313-1327093568=:21183
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Still happening with 3.3.0-rc1.
 
-Joe,=0AThanks for spending time with aio_stress(much apperciated) and the i=
-nformation.=A0=A0 A week back I ran the tests on flash device and saw lower=
- numbers. However all my runs since last week have been with ramdisk only. =
-I run the following command to make sure ramdisk has backing store.=0A=0A[r=
-oot@lab-dm-cn4 ~]# dd if=3D/dev/zero of=3D/dev/ram bs=3D512 oflag=3Ddirect =
-count=3D`blockdev --getsize /dev/ram`=0A8388608+0 records in=0A8388608+0 re=
-cords out=0A4294967296 bytes (4.3 GB) copied, 19.2371 s, 223 MB/s=0A=0AOne =
-interesting thing I notice is raw ramdisk has 9000+MB/s throughput in my te=
-sts and 5440MB/s throughput in your tests. I remember you mentioning that y=
-ou are running tests in a VM with 4G memory, while I run the rests on a sta=
-ndalone server with 16 quad-core processors and 12G or ram (out of that 12G=
-, I carve out 4G ramdisk). Attached are the cpu and memory information. Cou=
-ld that be causing an issue?=0A=0AThanks,=0AJagan.=0A=0A=0A=0A_____________=
-___________________=0A From: Joe Thornber <thornber@redhat.com>=0ATo: Jagan=
- Reddy <gjmsreddy@yahoo.com>; device-mapper development <dm-devel@redhat.co=
-m> =0ASent: Friday, January 20, 2012 10:07 AM=0ASubject: Re: [dm-devel] dm-=
-thin vs lvm performance=0A =0AJagan,=0A=0AOn Fri, Jan 20, 2012 at 05:33:34P=
-M +0000, Joe Thornber wrote:=0A> Back to testing ...=0A=0AHere are my aio-s=
-tress results for various devices running on top of a=0Aramdisk:=0A=0A| Dev=
-ice stack=A0 =A0 =A0 =A0 =A0  | M/s=A0 | =0A+------------------------+-----=
--+=A0 =0A| raw ramdisk=A0 =A0 =A0 =A0 =A0 =A0 | 5440 |=0A| linear=A0 =A0 =
-=A0 =A0 =A0 =A0 =A0 =A0  | 5431 |=0A| 2 stacked linear=A0 =A0 =A0  | 5304 |=
-=0A| pool device=A0 =A0 =A0 =A0 =A0 =A0 | 5351 |=0A| linear stacked on pool=
- | 5243 |=0A| thin=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0  | 5375 |=0A=0AI also=
- tried the thin test after disabling the block locking in=0Adm-block-manage=
-r.c, and using a 128 entry cache local to the thin=0Adevice.=A0 Neither mad=
-e any difference to the 'thin' result.=0A=0AThings for you to check:=0A=0Ai=
-)=A0 Are you benchmarking with a ramdisk, or your flash device?=A0 In both=
-=0A=A0 =A0 cases I think you need to make sure the device has allocated bac=
-king=0A=A0 =A0 store before you run any tests.=A0 Remember that Discards ma=
-y well=0A=A0 =A0 removing this backing.=0A=0Aii) You claim that io is getti=
-ng deferred.=A0 This will happen when you do=0A=A0 =A0 the initial wipe of =
-the thin device to force provisioning.=A0 But for=0A=A0 =A0 the aio-stress =
-tests you should get nothing deferred (I instrumented=0A=A0 =A0 to confirm =
-this).=0A=0A=0A- Joe
----2114655128-224023313-1327093568=:21183
-Content-Type: text/html; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Anyone?
 
-<html><body><div style=3D"color:#000; background-color:#fff; font-family:ar=
-ial, helvetica, sans-serif;font-size:12pt"><div><span>Joe,</span></div><div=
-><span>Thanks for spending time with aio_stress(much apperciated) and the i=
-nformation.&nbsp;&nbsp; A week back I ran the tests on flash device and saw=
- lower numbers. However all my runs since last week have been with ramdisk =
-only. I run the following command to make sure</span> <span>ramdisk has bac=
-king store.</span></div><br><div><span>[root@lab-dm-cn4 ~]# dd if=3D/dev/ze=
-ro of=3D/dev/ram bs=3D512 oflag=3Ddirect count=3D`</span><span>blockdev --g=
-etsize /dev/ram`</span><span><br>8388608+0 records in<br>8388608+0 records =
-out<br>4294967296 bytes (4.3 GB) copied, 19.2371 s, 223 MB/s<br></span></di=
-v><div><span><br></span></div>One interesting thing I notice is raw ramdisk=
- has 9000+MB/s throughput in my tests and 5440MB/s throughput in your tests=
-. I remember you mentioning that you are running tests in a VM with 4G memo=
-ry,
- while I run the rests on a standalone server with 16 quad-core processors =
-and 12G or ram (out of that 12G, I carve out 4G ramdisk). Attached are the =
-cpu and memory information. Could that be causing an issue?<br><br>Thanks,<=
-br>Jagan.<br><div><br></div>  <div style=3D"font-family: arial,helvetica,sa=
-ns-serif; font-size: 12pt;"> <div style=3D"font-family: times new roman,new=
- york,times,serif; font-size: 12pt;"> <div dir=3D"ltr"> <font face=3D"Arial=
-" size=3D"2"> <hr size=3D"1">  <b><span style=3D"font-weight: bold;">From:<=
-/span></b> Joe Thornber &lt;thornber@redhat.com&gt;<br> <b><span style=3D"f=
-ont-weight: bold;">To:</span></b> Jagan Reddy &lt;gjmsreddy@yahoo.com&gt;; =
-device-mapper development &lt;dm-devel@redhat.com&gt; <br> <b><span style=
-=3D"font-weight: bold;">Sent:</span></b> Friday, January 20, 2012 10:07 AM<=
-br> <b><span style=3D"font-weight: bold;">Subject:</span></b> Re: [dm-devel=
-] dm-thin vs lvm performance<br> </font> </div> <br>=0AJagan,<br><br>On Fri=
-, Jan 20, 2012 at 05:33:34PM +0000, Joe Thornber wrote:<br>&gt; Back to tes=
-ting ...<br><br>Here are my aio-stress results for various devices running =
-on top of a<br>ramdisk:<br><br>| Device stack&nbsp; &nbsp; &nbsp; &nbsp; &n=
-bsp;  | M/s&nbsp; | <br>+------------------------+------+&nbsp; <br>| raw r=
-amdisk&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; | 5440 |<br>| linear&nbsp; =
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  | 5431 |<br>| 2 stacked l=
-inear&nbsp; &nbsp; &nbsp;  | 5304 |<br>| pool device&nbsp; &nbsp; &nbsp; &n=
-bsp; &nbsp; &nbsp; | 5351 |<br>| linear stacked on pool | 5243 |<br>| thin&=
-nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  | 5375 |<br>=
-<br>I also tried the thin test after disabling the block locking in<br>dm-b=
-lock-manager.c, and using a 128 entry cache local to the thin<br>device.&nb=
-sp; Neither made any difference to the 'thin' result.<br><br>Things for you=
- to check:<br><br>i)&nbsp; Are you benchmarking
- with a ramdisk, or your flash device?&nbsp; In both<br>&nbsp; &nbsp; cases=
- I think you need to make sure the device has allocated backing<br>&nbsp; &=
-nbsp; store before you run any tests.&nbsp; Remember that Discards may well=
-<br>&nbsp; &nbsp; removing this backing.<br><br>ii) You claim that io is ge=
-tting deferred.&nbsp; This will happen when you do<br>&nbsp; &nbsp; the ini=
-tial wipe of the thin device to force provisioning.&nbsp; But for<br>&nbsp;=
- &nbsp; the aio-stress tests you should get nothing deferred (I instrumente=
-d<br>&nbsp; &nbsp; to confirm this).<br><br><br>- Joe<br><br><br> </div> </=
-div>  </div></body></html>
----2114655128-224023313-1327093568=:21183--
+Thanks,
+Christian.
 
----2114655128-60673088-1327093568=:21183
-Content-Type: application/octet-stream; name=cpu_info
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="cpu_info"
+> [eed459e0] [c0009de4] show_stack+0x70/0x1bc (unreliable)
+> [eed45a20] [c0326da8] spin_dump+0x70/0xe0
+> [eed45a30] [c0326f8c] do_raw_spin_trylock+0x58/0x70
+> [eed45a40] [c0512b28] _raw_spin_trylock+0x34/0xa0
+> [eed45a60] [c02f5510] put_io_context+0xd8/0x184
+> [eed45a80] [c0303428] __cfq_slice_expired+0x1e4/0x43c
+> [eed45ac0] [c03053d8] cfq_insert_request+0x264/0x5b0
+> [eed45ae0] [c02edef4] __elv_add_request+0x1a4/0x2d4
+> [eed45af0] [c02f1024] blk_flush_plug_list+0x22c/0x270
+> [eed45b20] [c05112dc] io_schedule+0x74/0xec
+> [eed45b30] [c0110f88] dio_await_completion+0x60/0xf4
+> [eed45b50] [c0112d0c] __blockdev_direct_IO+0x1b80/0x3574
+> [eed45d70] [c010f4a4] blkdev_direct_IO+0x54/0x64
+> [eed45d90] [c009a424] generic_file_aio_read+0x7b8/0x808
+> [eed45e40] [c00d4f68] do_sync_read+0xb8/0x144
+> [eed45ef0] [c00d6168] vfs_read+0xcc/0x1c0
+> [eed45f10] [c00d6394] sys_read+0x58/0xc8
+> [eed45f40] [c00127a0] ret_from_syscall+0x0/0x38
+> --- Exception: c01 at 0xfe52b90
+>     LR = 0x1003e834
+> 
+> The system is running fine so far and has before with 3.2.0-rc7, without 
+> that warning. The "vgchange" could be the result of some LVM2 initscripts 
+> (lvm2-2.02.66-5 are installed on this Debian/stable system), but there are 
+> no LVM disks anywhere on the system.
+> 
+> Full .config & dmesg: http://nerdbynature.de/bits/3.2.0/
+> 
+> Is this BUG something to worry about?
+> 
+> Thanks,
+> Christian.
+> -- 
+> BOFH excuse #100:
+> 
+> IRQ dropout
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+> 
 
-cHJvY2Vzc29yCTogMAp2ZW5kb3JfaWQJOiBHZW51aW5lSW50ZWwKY3B1IGZh
-bWlseQk6IDYKbW9kZWwJCTogNDQKbW9kZWwgbmFtZQk6IEludGVsKFIpIFhl
-b24oUikgQ1BVICAgICAgICAgICBFNTYzMCAgQCAyLjUzR0h6CnN0ZXBwaW5n
-CTogMgptaWNyb2NvZGUJOiAweDE0CmNwdSBNSHoJCTogMjUzMy41NzYKY2Fj
-aGUgc2l6ZQk6IDEyMjg4IEtCCnBoeXNpY2FsIGlkCTogMApzaWJsaW5ncwk6
-IDgKY29yZSBpZAkJOiAwCmNwdSBjb3Jlcwk6IDQKYXBpY2lkCQk6IDAKaW5p
-dGlhbCBhcGljaWQJOiAwCmZwdQkJOiB5ZXMKZnB1X2V4Y2VwdGlvbgk6IHll
-cwpjcHVpZCBsZXZlbAk6IDExCndwCQk6IHllcwpmbGFncwkJOiBmcHUgdm1l
-IGRlIHBzZSB0c2MgbXNyIHBhZSBtY2UgY3g4IGFwaWMgc2VwIG10cnIgcGdl
-IG1jYSBjbW92IHBhdCBwc2UzNiBjbGZsdXNoIGR0cyBhY3BpIG1teCBmeHNy
-IHNzZSBzc2UyIHNzIGh0IHRtIHBiZSBzeXNjYWxsIG54IHBkcGUxZ2IgcmR0
-c2NwIGxtIGNvbnN0YW50X3RzYyBhcmNoX3BlcmZtb24gcGVicyBidHMgcmVw
-X2dvb2Qgbm9wbCB4dG9wb2xvZ3kgbm9uc3RvcF90c2MgYXBlcmZtcGVyZiBw
-bmkgZHRlczY0IG1vbml0b3IgZHNfY3BsIHZteCBzbXggZXN0IHRtMiBzc3Nl
-MyBjeDE2IHh0cHIgcGRjbSBwY2lkIGRjYSBzc2U0XzEgc3NlNF8yIHBvcGNu
-dCBsYWhmX2xtIGFyYXQgZHRzIHRwcl9zaGFkb3cgdm5taSBmbGV4cHJpb3Jp
-dHkgZXB0IHZwaWQKYm9nb21pcHMJOiA1MDY3LjE1CmNsZmx1c2ggc2l6ZQk6
-IDY0CmNhY2hlX2FsaWdubWVudAk6IDY0CmFkZHJlc3Mgc2l6ZXMJOiA0MCBi
-aXRzIHBoeXNpY2FsLCA0OCBiaXRzIHZpcnR1YWwKcG93ZXIgbWFuYWdlbWVu
-dDoKCnByb2Nlc3Nvcgk6IDEKdmVuZG9yX2lkCTogR2VudWluZUludGVsCmNw
-dSBmYW1pbHkJOiA2Cm1vZGVsCQk6IDQ0Cm1vZGVsIG5hbWUJOiBJbnRlbChS
-KSBYZW9uKFIpIENQVSAgICAgICAgICAgRTU2MzAgIEAgMi41M0dIegpzdGVw
-cGluZwk6IDIKbWljcm9jb2RlCTogMHgxNApjcHUgTUh6CQk6IDI1MzMuNTc2
-CmNhY2hlIHNpemUJOiAxMjI4OCBLQgpwaHlzaWNhbCBpZAk6IDAKc2libGlu
-Z3MJOiA4CmNvcmUgaWQJCTogMQpjcHUgY29yZXMJOiA0CmFwaWNpZAkJOiAy
-CmluaXRpYWwgYXBpY2lkCTogMgpmcHUJCTogeWVzCmZwdV9leGNlcHRpb24J
-OiB5ZXMKY3B1aWQgbGV2ZWwJOiAxMQp3cAkJOiB5ZXMKZmxhZ3MJCTogZnB1
-IHZtZSBkZSBwc2UgdHNjIG1zciBwYWUgbWNlIGN4OCBhcGljIHNlcCBtdHJy
-IHBnZSBtY2EgY21vdiBwYXQgcHNlMzYgY2xmbHVzaCBkdHMgYWNwaSBtbXgg
-ZnhzciBzc2Ugc3NlMiBzcyBodCB0bSBwYmUgc3lzY2FsbCBueCBwZHBlMWdi
-IHJkdHNjcCBsbSBjb25zdGFudF90c2MgYXJjaF9wZXJmbW9uIHBlYnMgYnRz
-IHJlcF9nb29kIG5vcGwgeHRvcG9sb2d5IG5vbnN0b3BfdHNjIGFwZXJmbXBl
-cmYgcG5pIGR0ZXM2NCBtb25pdG9yIGRzX2NwbCB2bXggc214IGVzdCB0bTIg
-c3NzZTMgY3gxNiB4dHByIHBkY20gcGNpZCBkY2Egc3NlNF8xIHNzZTRfMiBw
-b3BjbnQgbGFoZl9sbSBhcmF0IGR0cyB0cHJfc2hhZG93IHZubWkgZmxleHBy
-aW9yaXR5IGVwdCB2cGlkCmJvZ29taXBzCTogNTA2Ni41MApjbGZsdXNoIHNp
-emUJOiA2NApjYWNoZV9hbGlnbm1lbnQJOiA2NAphZGRyZXNzIHNpemVzCTog
-NDAgYml0cyBwaHlzaWNhbCwgNDggYml0cyB2aXJ0dWFsCnBvd2VyIG1hbmFn
-ZW1lbnQ6Cgpwcm9jZXNzb3IJOiAyCnZlbmRvcl9pZAk6IEdlbnVpbmVJbnRl
-bApjcHUgZmFtaWx5CTogNgptb2RlbAkJOiA0NAptb2RlbCBuYW1lCTogSW50
-ZWwoUikgWGVvbihSKSBDUFUgICAgICAgICAgIEU1NjMwICBAIDIuNTNHSHoK
-c3RlcHBpbmcJOiAyCm1pY3JvY29kZQk6IDB4MTQKY3B1IE1IegkJOiAyNTMz
-LjU3NgpjYWNoZSBzaXplCTogMTIyODggS0IKcGh5c2ljYWwgaWQJOiAwCnNp
-YmxpbmdzCTogOApjb3JlIGlkCQk6IDkKY3B1IGNvcmVzCTogNAphcGljaWQJ
-CTogMTgKaW5pdGlhbCBhcGljaWQJOiAxOApmcHUJCTogeWVzCmZwdV9leGNl
-cHRpb24JOiB5ZXMKY3B1aWQgbGV2ZWwJOiAxMQp3cAkJOiB5ZXMKZmxhZ3MJ
-CTogZnB1IHZtZSBkZSBwc2UgdHNjIG1zciBwYWUgbWNlIGN4OCBhcGljIHNl
-cCBtdHJyIHBnZSBtY2EgY21vdiBwYXQgcHNlMzYgY2xmbHVzaCBkdHMgYWNw
-aSBtbXggZnhzciBzc2Ugc3NlMiBzcyBodCB0bSBwYmUgc3lzY2FsbCBueCBw
-ZHBlMWdiIHJkdHNjcCBsbSBjb25zdGFudF90c2MgYXJjaF9wZXJmbW9uIHBl
-YnMgYnRzIHJlcF9nb29kIG5vcGwgeHRvcG9sb2d5IG5vbnN0b3BfdHNjIGFw
-ZXJmbXBlcmYgcG5pIGR0ZXM2NCBtb25pdG9yIGRzX2NwbCB2bXggc214IGVz
-dCB0bTIgc3NzZTMgY3gxNiB4dHByIHBkY20gcGNpZCBkY2Egc3NlNF8xIHNz
-ZTRfMiBwb3BjbnQgbGFoZl9sbSBhcmF0IGR0cyB0cHJfc2hhZG93IHZubWkg
-ZmxleHByaW9yaXR5IGVwdCB2cGlkCmJvZ29taXBzCTogNTA2Ni41MApjbGZs
-dXNoIHNpemUJOiA2NApjYWNoZV9hbGlnbm1lbnQJOiA2NAphZGRyZXNzIHNp
-emVzCTogNDAgYml0cyBwaHlzaWNhbCwgNDggYml0cyB2aXJ0dWFsCnBvd2Vy
-IG1hbmFnZW1lbnQ6Cgpwcm9jZXNzb3IJOiAzCnZlbmRvcl9pZAk6IEdlbnVp
-bmVJbnRlbApjcHUgZmFtaWx5CTogNgptb2RlbAkJOiA0NAptb2RlbCBuYW1l
-CTogSW50ZWwoUikgWGVvbihSKSBDUFUgICAgICAgICAgIEU1NjMwICBAIDIu
-NTNHSHoKc3RlcHBpbmcJOiAyCm1pY3JvY29kZQk6IDB4MTQKY3B1IE1IegkJ
-OiAyNTMzLjU3NgpjYWNoZSBzaXplCTogMTIyODggS0IKcGh5c2ljYWwgaWQJ
-OiAwCnNpYmxpbmdzCTogOApjb3JlIGlkCQk6IDEwCmNwdSBjb3Jlcwk6IDQK
-YXBpY2lkCQk6IDIwCmluaXRpYWwgYXBpY2lkCTogMjAKZnB1CQk6IHllcwpm
-cHVfZXhjZXB0aW9uCTogeWVzCmNwdWlkIGxldmVsCTogMTEKd3AJCTogeWVz
-CmZsYWdzCQk6IGZwdSB2bWUgZGUgcHNlIHRzYyBtc3IgcGFlIG1jZSBjeDgg
-YXBpYyBzZXAgbXRyciBwZ2UgbWNhIGNtb3YgcGF0IHBzZTM2IGNsZmx1c2gg
-ZHRzIGFjcGkgbW14IGZ4c3Igc3NlIHNzZTIgc3MgaHQgdG0gcGJlIHN5c2Nh
-bGwgbnggcGRwZTFnYiByZHRzY3AgbG0gY29uc3RhbnRfdHNjIGFyY2hfcGVy
-Zm1vbiBwZWJzIGJ0cyByZXBfZ29vZCBub3BsIHh0b3BvbG9neSBub25zdG9w
-X3RzYyBhcGVyZm1wZXJmIHBuaSBkdGVzNjQgbW9uaXRvciBkc19jcGwgdm14
-IHNteCBlc3QgdG0yIHNzc2UzIGN4MTYgeHRwciBwZGNtIHBjaWQgZGNhIHNz
-ZTRfMSBzc2U0XzIgcG9wY250IGxhaGZfbG0gYXJhdCBkdHMgdHByX3NoYWRv
-dyB2bm1pIGZsZXhwcmlvcml0eSBlcHQgdnBpZApib2dvbWlwcwk6IDUwNjYu
-NTAKY2xmbHVzaCBzaXplCTogNjQKY2FjaGVfYWxpZ25tZW50CTogNjQKYWRk
-cmVzcyBzaXplcwk6IDQwIGJpdHMgcGh5c2ljYWwsIDQ4IGJpdHMgdmlydHVh
-bApwb3dlciBtYW5hZ2VtZW50OgoKcHJvY2Vzc29yCTogNAp2ZW5kb3JfaWQJ
-OiBHZW51aW5lSW50ZWwKY3B1IGZhbWlseQk6IDYKbW9kZWwJCTogNDQKbW9k
-ZWwgbmFtZQk6IEludGVsKFIpIFhlb24oUikgQ1BVICAgICAgICAgICBFNTYz
-MCAgQCAyLjUzR0h6CnN0ZXBwaW5nCTogMgptaWNyb2NvZGUJOiAweDE0CmNw
-dSBNSHoJCTogMjUzMy41NzYKY2FjaGUgc2l6ZQk6IDEyMjg4IEtCCnBoeXNp
-Y2FsIGlkCTogMQpzaWJsaW5ncwk6IDgKY29yZSBpZAkJOiAwCmNwdSBjb3Jl
-cwk6IDQKYXBpY2lkCQk6IDMyCmluaXRpYWwgYXBpY2lkCTogMzIKZnB1CQk6
-IHllcwpmcHVfZXhjZXB0aW9uCTogeWVzCmNwdWlkIGxldmVsCTogMTEKd3AJ
-CTogeWVzCmZsYWdzCQk6IGZwdSB2bWUgZGUgcHNlIHRzYyBtc3IgcGFlIG1j
-ZSBjeDggYXBpYyBzZXAgbXRyciBwZ2UgbWNhIGNtb3YgcGF0IHBzZTM2IGNs
-Zmx1c2ggZHRzIGFjcGkgbW14IGZ4c3Igc3NlIHNzZTIgc3MgaHQgdG0gcGJl
-IHN5c2NhbGwgbnggcGRwZTFnYiByZHRzY3AgbG0gY29uc3RhbnRfdHNjIGFy
-Y2hfcGVyZm1vbiBwZWJzIGJ0cyByZXBfZ29vZCBub3BsIHh0b3BvbG9neSBu
-b25zdG9wX3RzYyBhcGVyZm1wZXJmIHBuaSBkdGVzNjQgbW9uaXRvciBkc19j
-cGwgdm14IHNteCBlc3QgdG0yIHNzc2UzIGN4MTYgeHRwciBwZGNtIHBjaWQg
-ZGNhIHNzZTRfMSBzc2U0XzIgcG9wY250IGxhaGZfbG0gYXJhdCBkdHMgdHBy
-X3NoYWRvdyB2bm1pIGZsZXhwcmlvcml0eSBlcHQgdnBpZApib2dvbWlwcwk6
-IDUwNjYuNTQKY2xmbHVzaCBzaXplCTogNjQKY2FjaGVfYWxpZ25tZW50CTog
-NjQKYWRkcmVzcyBzaXplcwk6IDQwIGJpdHMgcGh5c2ljYWwsIDQ4IGJpdHMg
-dmlydHVhbApwb3dlciBtYW5hZ2VtZW50OgoKcHJvY2Vzc29yCTogNQp2ZW5k
-b3JfaWQJOiBHZW51aW5lSW50ZWwKY3B1IGZhbWlseQk6IDYKbW9kZWwJCTog
-NDQKbW9kZWwgbmFtZQk6IEludGVsKFIpIFhlb24oUikgQ1BVICAgICAgICAg
-ICBFNTYzMCAgQCAyLjUzR0h6CnN0ZXBwaW5nCTogMgptaWNyb2NvZGUJOiAw
-eDE0CmNwdSBNSHoJCTogMjUzMy41NzYKY2FjaGUgc2l6ZQk6IDEyMjg4IEtC
-CnBoeXNpY2FsIGlkCTogMQpzaWJsaW5ncwk6IDgKY29yZSBpZAkJOiAxCmNw
-dSBjb3Jlcwk6IDQKYXBpY2lkCQk6IDM0CmluaXRpYWwgYXBpY2lkCTogMzQK
-ZnB1CQk6IHllcwpmcHVfZXhjZXB0aW9uCTogeWVzCmNwdWlkIGxldmVsCTog
-MTEKd3AJCTogeWVzCmZsYWdzCQk6IGZwdSB2bWUgZGUgcHNlIHRzYyBtc3Ig
-cGFlIG1jZSBjeDggYXBpYyBzZXAgbXRyciBwZ2UgbWNhIGNtb3YgcGF0IHBz
-ZTM2IGNsZmx1c2ggZHRzIGFjcGkgbW14IGZ4c3Igc3NlIHNzZTIgc3MgaHQg
-dG0gcGJlIHN5c2NhbGwgbnggcGRwZTFnYiByZHRzY3AgbG0gY29uc3RhbnRf
-dHNjIGFyY2hfcGVyZm1vbiBwZWJzIGJ0cyByZXBfZ29vZCBub3BsIHh0b3Bv
-bG9neSBub25zdG9wX3RzYyBhcGVyZm1wZXJmIHBuaSBkdGVzNjQgbW9uaXRv
-ciBkc19jcGwgdm14IHNteCBlc3QgdG0yIHNzc2UzIGN4MTYgeHRwciBwZGNt
-IHBjaWQgZGNhIHNzZTRfMSBzc2U0XzIgcG9wY250IGxhaGZfbG0gYXJhdCBk
-dHMgdHByX3NoYWRvdyB2bm1pIGZsZXhwcmlvcml0eSBlcHQgdnBpZApib2dv
-bWlwcwk6IDUwNjYuNTMKY2xmbHVzaCBzaXplCTogNjQKY2FjaGVfYWxpZ25t
-ZW50CTogNjQKYWRkcmVzcyBzaXplcwk6IDQwIGJpdHMgcGh5c2ljYWwsIDQ4
-IGJpdHMgdmlydHVhbApwb3dlciBtYW5hZ2VtZW50OgoKcHJvY2Vzc29yCTog
-Ngp2ZW5kb3JfaWQJOiBHZW51aW5lSW50ZWwKY3B1IGZhbWlseQk6IDYKbW9k
-ZWwJCTogNDQKbW9kZWwgbmFtZQk6IEludGVsKFIpIFhlb24oUikgQ1BVICAg
-ICAgICAgICBFNTYzMCAgQCAyLjUzR0h6CnN0ZXBwaW5nCTogMgptaWNyb2Nv
-ZGUJOiAweDE0CmNwdSBNSHoJCTogMjUzMy41NzYKY2FjaGUgc2l6ZQk6IDEy
-Mjg4IEtCCnBoeXNpY2FsIGlkCTogMQpzaWJsaW5ncwk6IDgKY29yZSBpZAkJ
-OiA5CmNwdSBjb3Jlcwk6IDQKYXBpY2lkCQk6IDUwCmluaXRpYWwgYXBpY2lk
-CTogNTAKZnB1CQk6IHllcwpmcHVfZXhjZXB0aW9uCTogeWVzCmNwdWlkIGxl
-dmVsCTogMTEKd3AJCTogeWVzCmZsYWdzCQk6IGZwdSB2bWUgZGUgcHNlIHRz
-YyBtc3IgcGFlIG1jZSBjeDggYXBpYyBzZXAgbXRyciBwZ2UgbWNhIGNtb3Yg
-cGF0IHBzZTM2IGNsZmx1c2ggZHRzIGFjcGkgbW14IGZ4c3Igc3NlIHNzZTIg
-c3MgaHQgdG0gcGJlIHN5c2NhbGwgbnggcGRwZTFnYiByZHRzY3AgbG0gY29u
-c3RhbnRfdHNjIGFyY2hfcGVyZm1vbiBwZWJzIGJ0cyByZXBfZ29vZCBub3Bs
-IHh0b3BvbG9neSBub25zdG9wX3RzYyBhcGVyZm1wZXJmIHBuaSBkdGVzNjQg
-bW9uaXRvciBkc19jcGwgdm14IHNteCBlc3QgdG0yIHNzc2UzIGN4MTYgeHRw
-ciBwZGNtIHBjaWQgZGNhIHNzZTRfMSBzc2U0XzIgcG9wY250IGxhaGZfbG0g
-YXJhdCBkdHMgdHByX3NoYWRvdyB2bm1pIGZsZXhwcmlvcml0eSBlcHQgdnBp
-ZApib2dvbWlwcwk6IDUwNjYuNTQKY2xmbHVzaCBzaXplCTogNjQKY2FjaGVf
-YWxpZ25tZW50CTogNjQKYWRkcmVzcyBzaXplcwk6IDQwIGJpdHMgcGh5c2lj
-YWwsIDQ4IGJpdHMgdmlydHVhbApwb3dlciBtYW5hZ2VtZW50OgoKcHJvY2Vz
-c29yCTogNwp2ZW5kb3JfaWQJOiBHZW51aW5lSW50ZWwKY3B1IGZhbWlseQk6
-IDYKbW9kZWwJCTogNDQKbW9kZWwgbmFtZQk6IEludGVsKFIpIFhlb24oUikg
-Q1BVICAgICAgICAgICBFNTYzMCAgQCAyLjUzR0h6CnN0ZXBwaW5nCTogMgpt
-aWNyb2NvZGUJOiAweDE0CmNwdSBNSHoJCTogMjUzMy41NzYKY2FjaGUgc2l6
-ZQk6IDEyMjg4IEtCCnBoeXNpY2FsIGlkCTogMQpzaWJsaW5ncwk6IDgKY29y
-ZSBpZAkJOiAxMApjcHUgY29yZXMJOiA0CmFwaWNpZAkJOiA1Mgppbml0aWFs
-IGFwaWNpZAk6IDUyCmZwdQkJOiB5ZXMKZnB1X2V4Y2VwdGlvbgk6IHllcwpj
-cHVpZCBsZXZlbAk6IDExCndwCQk6IHllcwpmbGFncwkJOiBmcHUgdm1lIGRl
-IHBzZSB0c2MgbXNyIHBhZSBtY2UgY3g4IGFwaWMgc2VwIG10cnIgcGdlIG1j
-YSBjbW92IHBhdCBwc2UzNiBjbGZsdXNoIGR0cyBhY3BpIG1teCBmeHNyIHNz
-ZSBzc2UyIHNzIGh0IHRtIHBiZSBzeXNjYWxsIG54IHBkcGUxZ2IgcmR0c2Nw
-IGxtIGNvbnN0YW50X3RzYyBhcmNoX3BlcmZtb24gcGVicyBidHMgcmVwX2dv
-b2Qgbm9wbCB4dG9wb2xvZ3kgbm9uc3RvcF90c2MgYXBlcmZtcGVyZiBwbmkg
-ZHRlczY0IG1vbml0b3IgZHNfY3BsIHZteCBzbXggZXN0IHRtMiBzc3NlMyBj
-eDE2IHh0cHIgcGRjbSBwY2lkIGRjYSBzc2U0XzEgc3NlNF8yIHBvcGNudCBs
-YWhmX2xtIGFyYXQgZHRzIHRwcl9zaGFkb3cgdm5taSBmbGV4cHJpb3JpdHkg
-ZXB0IHZwaWQKYm9nb21pcHMJOiA1MTE4LjAxCmNsZmx1c2ggc2l6ZQk6IDY0
-CmNhY2hlX2FsaWdubWVudAk6IDY0CmFkZHJlc3Mgc2l6ZXMJOiA0MCBiaXRz
-IHBoeXNpY2FsLCA0OCBiaXRzIHZpcnR1YWwKcG93ZXIgbWFuYWdlbWVudDoK
-CnByb2Nlc3Nvcgk6IDgKdmVuZG9yX2lkCTogR2VudWluZUludGVsCmNwdSBm
-YW1pbHkJOiA2Cm1vZGVsCQk6IDQ0Cm1vZGVsIG5hbWUJOiBJbnRlbChSKSBY
-ZW9uKFIpIENQVSAgICAgICAgICAgRTU2MzAgIEAgMi41M0dIegpzdGVwcGlu
-Zwk6IDIKbWljcm9jb2RlCTogMHgxNApjcHUgTUh6CQk6IDI1MzMuNTc2CmNh
-Y2hlIHNpemUJOiAxMjI4OCBLQgpwaHlzaWNhbCBpZAk6IDAKc2libGluZ3MJ
-OiA4CmNvcmUgaWQJCTogMApjcHUgY29yZXMJOiA0CmFwaWNpZAkJOiAxCmlu
-aXRpYWwgYXBpY2lkCTogMQpmcHUJCTogeWVzCmZwdV9leGNlcHRpb24JOiB5
-ZXMKY3B1aWQgbGV2ZWwJOiAxMQp3cAkJOiB5ZXMKZmxhZ3MJCTogZnB1IHZt
-ZSBkZSBwc2UgdHNjIG1zciBwYWUgbWNlIGN4OCBhcGljIHNlcCBtdHJyIHBn
-ZSBtY2EgY21vdiBwYXQgcHNlMzYgY2xmbHVzaCBkdHMgYWNwaSBtbXggZnhz
-ciBzc2Ugc3NlMiBzcyBodCB0bSBwYmUgc3lzY2FsbCBueCBwZHBlMWdiIHJk
-dHNjcCBsbSBjb25zdGFudF90c2MgYXJjaF9wZXJmbW9uIHBlYnMgYnRzIHJl
-cF9nb29kIG5vcGwgeHRvcG9sb2d5IG5vbnN0b3BfdHNjIGFwZXJmbXBlcmYg
-cG5pIGR0ZXM2NCBtb25pdG9yIGRzX2NwbCB2bXggc214IGVzdCB0bTIgc3Nz
-ZTMgY3gxNiB4dHByIHBkY20gcGNpZCBkY2Egc3NlNF8xIHNzZTRfMiBwb3Bj
-bnQgbGFoZl9sbSBhcmF0IGR0cyB0cHJfc2hhZG93IHZubWkgZmxleHByaW9y
-aXR5IGVwdCB2cGlkCmJvZ29taXBzCTogNTA2Ni41MwpjbGZsdXNoIHNpemUJ
-OiA2NApjYWNoZV9hbGlnbm1lbnQJOiA2NAphZGRyZXNzIHNpemVzCTogNDAg
-Yml0cyBwaHlzaWNhbCwgNDggYml0cyB2aXJ0dWFsCnBvd2VyIG1hbmFnZW1l
-bnQ6Cgpwcm9jZXNzb3IJOiA5CnZlbmRvcl9pZAk6IEdlbnVpbmVJbnRlbApj
-cHUgZmFtaWx5CTogNgptb2RlbAkJOiA0NAptb2RlbCBuYW1lCTogSW50ZWwo
-UikgWGVvbihSKSBDUFUgICAgICAgICAgIEU1NjMwICBAIDIuNTNHSHoKc3Rl
-cHBpbmcJOiAyCm1pY3JvY29kZQk6IDB4MTQKY3B1IE1IegkJOiAyNTMzLjU3
-NgpjYWNoZSBzaXplCTogMTIyODggS0IKcGh5c2ljYWwgaWQJOiAwCnNpYmxp
-bmdzCTogOApjb3JlIGlkCQk6IDEKY3B1IGNvcmVzCTogNAphcGljaWQJCTog
-Mwppbml0aWFsIGFwaWNpZAk6IDMKZnB1CQk6IHllcwpmcHVfZXhjZXB0aW9u
-CTogeWVzCmNwdWlkIGxldmVsCTogMTEKd3AJCTogeWVzCmZsYWdzCQk6IGZw
-dSB2bWUgZGUgcHNlIHRzYyBtc3IgcGFlIG1jZSBjeDggYXBpYyBzZXAgbXRy
-ciBwZ2UgbWNhIGNtb3YgcGF0IHBzZTM2IGNsZmx1c2ggZHRzIGFjcGkgbW14
-IGZ4c3Igc3NlIHNzZTIgc3MgaHQgdG0gcGJlIHN5c2NhbGwgbnggcGRwZTFn
-YiByZHRzY3AgbG0gY29uc3RhbnRfdHNjIGFyY2hfcGVyZm1vbiBwZWJzIGJ0
-cyByZXBfZ29vZCBub3BsIHh0b3BvbG9neSBub25zdG9wX3RzYyBhcGVyZm1w
-ZXJmIHBuaSBkdGVzNjQgbW9uaXRvciBkc19jcGwgdm14IHNteCBlc3QgdG0y
-IHNzc2UzIGN4MTYgeHRwciBwZGNtIHBjaWQgZGNhIHNzZTRfMSBzc2U0XzIg
-cG9wY250IGxhaGZfbG0gYXJhdCBkdHMgdHByX3NoYWRvdyB2bm1pIGZsZXhw
-cmlvcml0eSBlcHQgdnBpZApib2dvbWlwcwk6IDUwNjYuNTQKY2xmbHVzaCBz
-aXplCTogNjQKY2FjaGVfYWxpZ25tZW50CTogNjQKYWRkcmVzcyBzaXplcwk6
-IDQwIGJpdHMgcGh5c2ljYWwsIDQ4IGJpdHMgdmlydHVhbApwb3dlciBtYW5h
-Z2VtZW50OgoKcHJvY2Vzc29yCTogMTAKdmVuZG9yX2lkCTogR2VudWluZUlu
-dGVsCmNwdSBmYW1pbHkJOiA2Cm1vZGVsCQk6IDQ0Cm1vZGVsIG5hbWUJOiBJ
-bnRlbChSKSBYZW9uKFIpIENQVSAgICAgICAgICAgRTU2MzAgIEAgMi41M0dI
-egpzdGVwcGluZwk6IDIKbWljcm9jb2RlCTogMHgxNApjcHUgTUh6CQk6IDI1
-MzMuNTc2CmNhY2hlIHNpemUJOiAxMjI4OCBLQgpwaHlzaWNhbCBpZAk6IDAK
-c2libGluZ3MJOiA4CmNvcmUgaWQJCTogOQpjcHUgY29yZXMJOiA0CmFwaWNp
-ZAkJOiAxOQppbml0aWFsIGFwaWNpZAk6IDE5CmZwdQkJOiB5ZXMKZnB1X2V4
-Y2VwdGlvbgk6IHllcwpjcHVpZCBsZXZlbAk6IDExCndwCQk6IHllcwpmbGFn
-cwkJOiBmcHUgdm1lIGRlIHBzZSB0c2MgbXNyIHBhZSBtY2UgY3g4IGFwaWMg
-c2VwIG10cnIgcGdlIG1jYSBjbW92IHBhdCBwc2UzNiBjbGZsdXNoIGR0cyBh
-Y3BpIG1teCBmeHNyIHNzZSBzc2UyIHNzIGh0IHRtIHBiZSBzeXNjYWxsIG54
-IHBkcGUxZ2IgcmR0c2NwIGxtIGNvbnN0YW50X3RzYyBhcmNoX3BlcmZtb24g
-cGVicyBidHMgcmVwX2dvb2Qgbm9wbCB4dG9wb2xvZ3kgbm9uc3RvcF90c2Mg
-YXBlcmZtcGVyZiBwbmkgZHRlczY0IG1vbml0b3IgZHNfY3BsIHZteCBzbXgg
-ZXN0IHRtMiBzc3NlMyBjeDE2IHh0cHIgcGRjbSBwY2lkIGRjYSBzc2U0XzEg
-c3NlNF8yIHBvcGNudCBsYWhmX2xtIGFyYXQgZHRzIHRwcl9zaGFkb3cgdm5t
-aSBmbGV4cHJpb3JpdHkgZXB0IHZwaWQKYm9nb21pcHMJOiA1MDY2LjU0CmNs
-Zmx1c2ggc2l6ZQk6IDY0CmNhY2hlX2FsaWdubWVudAk6IDY0CmFkZHJlc3Mg
-c2l6ZXMJOiA0MCBiaXRzIHBoeXNpY2FsLCA0OCBiaXRzIHZpcnR1YWwKcG93
-ZXIgbWFuYWdlbWVudDoKCnByb2Nlc3Nvcgk6IDExCnZlbmRvcl9pZAk6IEdl
-bnVpbmVJbnRlbApjcHUgZmFtaWx5CTogNgptb2RlbAkJOiA0NAptb2RlbCBu
-YW1lCTogSW50ZWwoUikgWGVvbihSKSBDUFUgICAgICAgICAgIEU1NjMwICBA
-IDIuNTNHSHoKc3RlcHBpbmcJOiAyCm1pY3JvY29kZQk6IDB4MTQKY3B1IE1I
-egkJOiAyNTMzLjU3NgpjYWNoZSBzaXplCTogMTIyODggS0IKcGh5c2ljYWwg
-aWQJOiAwCnNpYmxpbmdzCTogOApjb3JlIGlkCQk6IDEwCmNwdSBjb3Jlcwk6
-IDQKYXBpY2lkCQk6IDIxCmluaXRpYWwgYXBpY2lkCTogMjEKZnB1CQk6IHll
-cwpmcHVfZXhjZXB0aW9uCTogeWVzCmNwdWlkIGxldmVsCTogMTEKd3AJCTog
-eWVzCmZsYWdzCQk6IGZwdSB2bWUgZGUgcHNlIHRzYyBtc3IgcGFlIG1jZSBj
-eDggYXBpYyBzZXAgbXRyciBwZ2UgbWNhIGNtb3YgcGF0IHBzZTM2IGNsZmx1
-c2ggZHRzIGFjcGkgbW14IGZ4c3Igc3NlIHNzZTIgc3MgaHQgdG0gcGJlIHN5
-c2NhbGwgbnggcGRwZTFnYiByZHRzY3AgbG0gY29uc3RhbnRfdHNjIGFyY2hf
-cGVyZm1vbiBwZWJzIGJ0cyByZXBfZ29vZCBub3BsIHh0b3BvbG9neSBub25z
-dG9wX3RzYyBhcGVyZm1wZXJmIHBuaSBkdGVzNjQgbW9uaXRvciBkc19jcGwg
-dm14IHNteCBlc3QgdG0yIHNzc2UzIGN4MTYgeHRwciBwZGNtIHBjaWQgZGNh
-IHNzZTRfMSBzc2U0XzIgcG9wY250IGxhaGZfbG0gYXJhdCBkdHMgdHByX3No
-YWRvdyB2bm1pIGZsZXhwcmlvcml0eSBlcHQgdnBpZApib2dvbWlwcwk6IDUw
-NjYuNTQKY2xmbHVzaCBzaXplCTogNjQKY2FjaGVfYWxpZ25tZW50CTogNjQK
-YWRkcmVzcyBzaXplcwk6IDQwIGJpdHMgcGh5c2ljYWwsIDQ4IGJpdHMgdmly
-dHVhbApwb3dlciBtYW5hZ2VtZW50OgoKcHJvY2Vzc29yCTogMTIKdmVuZG9y
-X2lkCTogR2VudWluZUludGVsCmNwdSBmYW1pbHkJOiA2Cm1vZGVsCQk6IDQ0
-Cm1vZGVsIG5hbWUJOiBJbnRlbChSKSBYZW9uKFIpIENQVSAgICAgICAgICAg
-RTU2MzAgIEAgMi41M0dIegpzdGVwcGluZwk6IDIKbWljcm9jb2RlCTogMHgx
-NApjcHUgTUh6CQk6IDI1MzMuNTc2CmNhY2hlIHNpemUJOiAxMjI4OCBLQgpw
-aHlzaWNhbCBpZAk6IDEKc2libGluZ3MJOiA4CmNvcmUgaWQJCTogMApjcHUg
-Y29yZXMJOiA0CmFwaWNpZAkJOiAzMwppbml0aWFsIGFwaWNpZAk6IDMzCmZw
-dQkJOiB5ZXMKZnB1X2V4Y2VwdGlvbgk6IHllcwpjcHVpZCBsZXZlbAk6IDEx
-CndwCQk6IHllcwpmbGFncwkJOiBmcHUgdm1lIGRlIHBzZSB0c2MgbXNyIHBh
-ZSBtY2UgY3g4IGFwaWMgc2VwIG10cnIgcGdlIG1jYSBjbW92IHBhdCBwc2Uz
-NiBjbGZsdXNoIGR0cyBhY3BpIG1teCBmeHNyIHNzZSBzc2UyIHNzIGh0IHRt
-IHBiZSBzeXNjYWxsIG54IHBkcGUxZ2IgcmR0c2NwIGxtIGNvbnN0YW50X3Rz
-YyBhcmNoX3BlcmZtb24gcGVicyBidHMgcmVwX2dvb2Qgbm9wbCB4dG9wb2xv
-Z3kgbm9uc3RvcF90c2MgYXBlcmZtcGVyZiBwbmkgZHRlczY0IG1vbml0b3Ig
-ZHNfY3BsIHZteCBzbXggZXN0IHRtMiBzc3NlMyBjeDE2IHh0cHIgcGRjbSBw
-Y2lkIGRjYSBzc2U0XzEgc3NlNF8yIHBvcGNudCBsYWhmX2xtIGFyYXQgZHRz
-IHRwcl9zaGFkb3cgdm5taSBmbGV4cHJpb3JpdHkgZXB0IHZwaWQKYm9nb21p
-cHMJOiA1MDY2LjU0CmNsZmx1c2ggc2l6ZQk6IDY0CmNhY2hlX2FsaWdubWVu
-dAk6IDY0CmFkZHJlc3Mgc2l6ZXMJOiA0MCBiaXRzIHBoeXNpY2FsLCA0OCBi
-aXRzIHZpcnR1YWwKcG93ZXIgbWFuYWdlbWVudDoKCnByb2Nlc3Nvcgk6IDEz
-CnZlbmRvcl9pZAk6IEdlbnVpbmVJbnRlbApjcHUgZmFtaWx5CTogNgptb2Rl
-bAkJOiA0NAptb2RlbCBuYW1lCTogSW50ZWwoUikgWGVvbihSKSBDUFUgICAg
-ICAgICAgIEU1NjMwICBAIDIuNTNHSHoKc3RlcHBpbmcJOiAyCm1pY3JvY29k
-ZQk6IDB4MTQKY3B1IE1IegkJOiAyNTMzLjU3NgpjYWNoZSBzaXplCTogMTIy
-ODggS0IKcGh5c2ljYWwgaWQJOiAxCnNpYmxpbmdzCTogOApjb3JlIGlkCQk6
-IDEKY3B1IGNvcmVzCTogNAphcGljaWQJCTogMzUKaW5pdGlhbCBhcGljaWQJ
-OiAzNQpmcHUJCTogeWVzCmZwdV9leGNlcHRpb24JOiB5ZXMKY3B1aWQgbGV2
-ZWwJOiAxMQp3cAkJOiB5ZXMKZmxhZ3MJCTogZnB1IHZtZSBkZSBwc2UgdHNj
-IG1zciBwYWUgbWNlIGN4OCBhcGljIHNlcCBtdHJyIHBnZSBtY2EgY21vdiBw
-YXQgcHNlMzYgY2xmbHVzaCBkdHMgYWNwaSBtbXggZnhzciBzc2Ugc3NlMiBz
-cyBodCB0bSBwYmUgc3lzY2FsbCBueCBwZHBlMWdiIHJkdHNjcCBsbSBjb25z
-dGFudF90c2MgYXJjaF9wZXJmbW9uIHBlYnMgYnRzIHJlcF9nb29kIG5vcGwg
-eHRvcG9sb2d5IG5vbnN0b3BfdHNjIGFwZXJmbXBlcmYgcG5pIGR0ZXM2NCBt
-b25pdG9yIGRzX2NwbCB2bXggc214IGVzdCB0bTIgc3NzZTMgY3gxNiB4dHBy
-IHBkY20gcGNpZCBkY2Egc3NlNF8xIHNzZTRfMiBwb3BjbnQgbGFoZl9sbSBh
-cmF0IGR0cyB0cHJfc2hhZG93IHZubWkgZmxleHByaW9yaXR5IGVwdCB2cGlk
-CmJvZ29taXBzCTogNTEzMS42MgpjbGZsdXNoIHNpemUJOiA2NApjYWNoZV9h
-bGlnbm1lbnQJOiA2NAphZGRyZXNzIHNpemVzCTogNDAgYml0cyBwaHlzaWNh
-bCwgNDggYml0cyB2aXJ0dWFsCnBvd2VyIG1hbmFnZW1lbnQ6Cgpwcm9jZXNz
-b3IJOiAxNAp2ZW5kb3JfaWQJOiBHZW51aW5lSW50ZWwKY3B1IGZhbWlseQk6
-IDYKbW9kZWwJCTogNDQKbW9kZWwgbmFtZQk6IEludGVsKFIpIFhlb24oUikg
-Q1BVICAgICAgICAgICBFNTYzMCAgQCAyLjUzR0h6CnN0ZXBwaW5nCTogMgpt
-aWNyb2NvZGUJOiAweDE0CmNwdSBNSHoJCTogMjUzMy41NzYKY2FjaGUgc2l6
-ZQk6IDEyMjg4IEtCCnBoeXNpY2FsIGlkCTogMQpzaWJsaW5ncwk6IDgKY29y
-ZSBpZAkJOiA5CmNwdSBjb3Jlcwk6IDQKYXBpY2lkCQk6IDUxCmluaXRpYWwg
-YXBpY2lkCTogNTEKZnB1CQk6IHllcwpmcHVfZXhjZXB0aW9uCTogeWVzCmNw
-dWlkIGxldmVsCTogMTEKd3AJCTogeWVzCmZsYWdzCQk6IGZwdSB2bWUgZGUg
-cHNlIHRzYyBtc3IgcGFlIG1jZSBjeDggYXBpYyBzZXAgbXRyciBwZ2UgbWNh
-IGNtb3YgcGF0IHBzZTM2IGNsZmx1c2ggZHRzIGFjcGkgbW14IGZ4c3Igc3Nl
-IHNzZTIgc3MgaHQgdG0gcGJlIHN5c2NhbGwgbnggcGRwZTFnYiByZHRzY3Ag
-bG0gY29uc3RhbnRfdHNjIGFyY2hfcGVyZm1vbiBwZWJzIGJ0cyByZXBfZ29v
-ZCBub3BsIHh0b3BvbG9neSBub25zdG9wX3RzYyBhcGVyZm1wZXJmIHBuaSBk
-dGVzNjQgbW9uaXRvciBkc19jcGwgdm14IHNteCBlc3QgdG0yIHNzc2UzIGN4
-MTYgeHRwciBwZGNtIHBjaWQgZGNhIHNzZTRfMSBzc2U0XzIgcG9wY250IGxh
-aGZfbG0gYXJhdCBkdHMgdHByX3NoYWRvdyB2bm1pIGZsZXhwcmlvcml0eSBl
-cHQgdnBpZApib2dvbWlwcwk6IDUwNjYuNTMKY2xmbHVzaCBzaXplCTogNjQK
-Y2FjaGVfYWxpZ25tZW50CTogNjQKYWRkcmVzcyBzaXplcwk6IDQwIGJpdHMg
-cGh5c2ljYWwsIDQ4IGJpdHMgdmlydHVhbApwb3dlciBtYW5hZ2VtZW50OgoK
-cHJvY2Vzc29yCTogMTUKdmVuZG9yX2lkCTogR2VudWluZUludGVsCmNwdSBm
-YW1pbHkJOiA2Cm1vZGVsCQk6IDQ0Cm1vZGVsIG5hbWUJOiBJbnRlbChSKSBY
-ZW9uKFIpIENQVSAgICAgICAgICAgRTU2MzAgIEAgMi41M0dIegpzdGVwcGlu
-Zwk6IDIKbWljcm9jb2RlCTogMHgxNApjcHUgTUh6CQk6IDI1MzMuNTc2CmNh
-Y2hlIHNpemUJOiAxMjI4OCBLQgpwaHlzaWNhbCBpZAk6IDEKc2libGluZ3MJ
-OiA4CmNvcmUgaWQJCTogMTAKY3B1IGNvcmVzCTogNAphcGljaWQJCTogNTMK
-aW5pdGlhbCBhcGljaWQJOiA1MwpmcHUJCTogeWVzCmZwdV9leGNlcHRpb24J
-OiB5ZXMKY3B1aWQgbGV2ZWwJOiAxMQp3cAkJOiB5ZXMKZmxhZ3MJCTogZnB1
-IHZtZSBkZSBwc2UgdHNjIG1zciBwYWUgbWNlIGN4OCBhcGljIHNlcCBtdHJy
-IHBnZSBtY2EgY21vdiBwYXQgcHNlMzYgY2xmbHVzaCBkdHMgYWNwaSBtbXgg
-ZnhzciBzc2Ugc3NlMiBzcyBodCB0bSBwYmUgc3lzY2FsbCBueCBwZHBlMWdi
-IHJkdHNjcCBsbSBjb25zdGFudF90c2MgYXJjaF9wZXJmbW9uIHBlYnMgYnRz
-IHJlcF9nb29kIG5vcGwgeHRvcG9sb2d5IG5vbnN0b3BfdHNjIGFwZXJmbXBl
-cmYgcG5pIGR0ZXM2NCBtb25pdG9yIGRzX2NwbCB2bXggc214IGVzdCB0bTIg
-c3NzZTMgY3gxNiB4dHByIHBkY20gcGNpZCBkY2Egc3NlNF8xIHNzZTRfMiBw
-b3BjbnQgbGFoZl9sbSBhcmF0IGR0cyB0cHJfc2hhZG93IHZubWkgZmxleHBy
-aW9yaXR5IGVwdCB2cGlkCmJvZ29taXBzCTogNTA2Ni41MgpjbGZsdXNoIHNp
-emUJOiA2NApjYWNoZV9hbGlnbm1lbnQJOiA2NAphZGRyZXNzIHNpemVzCTog
-NDAgYml0cyBwaHlzaWNhbCwgNDggYml0cyB2aXJ0dWFsCnBvd2VyIG1hbmFn
-ZW1lbnQ6Cgo=
+-- 
+BOFH excuse #63:
 
----2114655128-60673088-1327093568=:21183
-Content-Type: application/octet-stream; name=meminfo
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="meminfo"
-
-TWVtVG90YWw6ICAgICAgIDEyMzIwODE2IGtCCk1lbUZyZWU6ICAgICAgICAx
-MjAxMDM0NCBrQgpCdWZmZXJzOiAgICAgICAgICAgIDY5NDgga0IKQ2FjaGVk
-OiAgICAgICAgICAgIDY2MjcyIGtCClN3YXBDYWNoZWQ6ICAgICAgICAgICAg
-MCBrQgpBY3RpdmU6ICAgICAgICAgICAgMjQzOTYga0IKSW5hY3RpdmU6ICAg
-ICAgICAgIDYyMjgwIGtCCkFjdGl2ZShhbm9uKTogICAgICAxMzU4OCBrQgpJ
-bmFjdGl2ZShhbm9uKTogICAgICAxOTIga0IKQWN0aXZlKGZpbGUpOiAgICAg
-IDEwODA4IGtCCkluYWN0aXZlKGZpbGUpOiAgICA2MjA4OCBrQgpVbmV2aWN0
-YWJsZTogICAgICAgICAgIDAga0IKTWxvY2tlZDogICAgICAgICAgICAgICAw
-IGtCClN3YXBUb3RhbDogICAgICAgMjA0Nzk5NiBrQgpTd2FwRnJlZTogICAg
-ICAgIDIwNDc5OTYga0IKRGlydHk6ICAgICAgICAgICAgICAgIDI0IGtCCldy
-aXRlYmFjazogICAgICAgICAgICAgMCBrQgpBbm9uUGFnZXM6ICAgICAgICAg
-MTM2NTYga0IKTWFwcGVkOiAgICAgICAgICAgICA2MTEyIGtCClNobWVtOiAg
-ICAgICAgICAgICAgIDIwNCBrQgpTbGFiOiAgICAgICAgICAgICAgNTU4ODAg
-a0IKU1JlY2xhaW1hYmxlOiAgICAgICA5OTgwIGtCClNVbnJlY2xhaW06ICAg
-ICAgICA0NTkwMCBrQgpLZXJuZWxTdGFjazogICAgICAgIDEyNzIga0IKUGFn
-ZVRhYmxlczogICAgICAgICAxNDIwIGtCCk5GU19VbnN0YWJsZTogICAgICAg
-ICAgMCBrQgpCb3VuY2U6ICAgICAgICAgICAgICAgIDAga0IKV3JpdGViYWNr
-VG1wOiAgICAgICAgICAwIGtCCkNvbW1pdExpbWl0OiAgICAgODIwODQwNCBr
-QgpDb21taXR0ZWRfQVM6ICAgICAgNTQzMjAga0IKVm1hbGxvY1RvdGFsOiAg
-IDM0MzU5NzM4MzY3IGtCClZtYWxsb2NVc2VkOiAgICAgIDMwNjM4NCBrQgpW
-bWFsbG9jQ2h1bms6ICAgMzQzNTMxMTY2NjAga0IKSGFyZHdhcmVDb3JydXB0
-ZWQ6ICAgICAwIGtCCkFub25IdWdlUGFnZXM6ICAgICAgMjA0OCBrQgpIdWdl
-UGFnZXNfVG90YWw6ICAgICAgIDAKSHVnZVBhZ2VzX0ZyZWU6ICAgICAgICAw
-Ckh1Z2VQYWdlc19Sc3ZkOiAgICAgICAgMApIdWdlUGFnZXNfU3VycDogICAg
-ICAgIDAKSHVnZXBhZ2VzaXplOiAgICAgICAyMDQ4IGtCCkRpcmVjdE1hcDRr
-OiAgICAgICAxMTc3NiBrQgpEaXJlY3RNYXAyTTogICAgIDIwNzY2NzIga0IK
-RGlyZWN0TWFwMUc6ICAgIDEwNDg1NzYwIGtCCg==
-
----2114655128-60673088-1327093568=:21183
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
----2114655128-60673088-1327093568=:21183--
+not properly grounded, please bury computer
