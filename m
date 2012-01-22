@@ -1,72 +1,117 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: BUG: spinlock trylock failure on UP on CPU#0, vgchange/936
-Date: Sun, 22 Jan 2012 13:10:45 +0100
-Message-ID: <4F1BFCC5.20507@kernel.dk>
-References: <alpine.DEB.2.01.1201180009520.2895@trent.utfs.org> <alpine.DEB.2.01.1201210341430.2895@trent.utfs.org> <4F1AB392.20604@kernel.dk> <alpine.DEB.2.01.1201211430340.2895@trent.utfs.org> <4F1BE548.3000800@kernel.dk> <alpine.DEB.2.01.1201220233260.2895@trent.utfs.org> <alpine.DEB.2.01.1201220329150.2895@trent.utfs.org>
+From: Boaz Harrosh <bharrosh@panasas.com>
+Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
+Date: Sun, 22 Jan 2012 14:21:51 +0200
+Message-ID: <4F1BFF5F.6000502@panasas.com>
+References: <CABE8wws67dn0fwhTCs_XqH0g_CxGuT+hPQH9cVFe1xx5t_O9Jw@mail.gmail.com>
+	<20120117200609.GA7933@redhat.com>
+	<20120117213648.GA9457@quack.suse.cz>
+	<20120118225808.GA3074@tux1.beaverton.ibm.com>
+	<20120118232200.GA22019@quack.suse.cz>
+	<4F1758D4.9010401@panasas.com>
+	<20120119094637.GA23442@quack.suse.cz>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.01.1201220329150.2895@trent.utfs.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Kujau <lists@nerdbynature.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, peterz@infradead.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20120119094637.GA23442@quack.suse.cz>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jan Kara <jack@suse.cz>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On 2012-01-22 12:38, Christian Kujau wrote:
-> On Sun, 22 Jan 2012 at 02:36, Christian Kujau wrote:
->> On Sun, 22 Jan 2012 at 11:30, Jens Axboe wrote:
->>> What about with this on top?
+On 01/19/2012 11:46 AM, Jan Kara wrote:
 >>
->> Will try. A compile on this box takes almost two hours (PowerBook G4, 
->> throttled to 70MHz), would it be enough to remove the block/*.o files and 
->> continue from there?
+>> OK That one is interesting. Because I'd imagine that the Kernel would not
+>> start write-out on a busily modified page.
+>   So currently writeback doesn't use the fact how busily is page modified.
+> After all whole mm has only two sorts of pages - active & inactive - which
+> reflects how often page is accessed but says nothing about how often is it
+> dirtied. So we don't have this information in the kernel and it would be
+> relatively (memory) expensive to keep it.
 > 
-> OK, I did that. With the pull from linux-block.git ("for-linus") and your 
-> diff[0], the BUG is still there:
-> 
-> [   15.048991] BUG: spinlock trylock failure on UP on CPU#0, vgchange/911
-> [   15.050579]  lock: ef32a9f8, .magic: dead4ead, .owner: vgchange/911, .owner_cpu: 0
-> [   15.052081] Call Trace:
-> [   15.053561] [eecaf9e0] [c0009de4] show_stack+0x70/0x1bc (unreliable)
-> [   15.055078] [eecafa20] [c0326d64] spin_dump+0x70/0xe0
-> [   15.056576] [eecafa30] [c0326f48] do_raw_spin_trylock+0x58/0x70
-> [   15.058052] [eecafa40] [c0512b88] _raw_spin_trylock+0x34/0xa0
-> [   15.059496] [eecafa60] [c02f53f4] put_io_context+0xd8/0x184
-> [   15.060953] [eecafa80] [c030343c] __cfq_slice_expired+0x1e4/0x43c
-> [   15.062426] [eecafac0] [c03053bc] cfq_insert_request+0x234/0x558
-> [   15.063908] [eecafae0] [c02edc00] __elv_add_request+0x1a4/0x2d4
-> [   15.065371] [eecafaf0] [c02f0f14] blk_flush_plug_list+0x22c/0x270
-> [   15.066833] [eecafb20] [c051133c] io_schedule+0x74/0xec
-> [   15.068270] [eecafb30] [c0110f1c] dio_await_completion+0x60/0xf4
-> [   15.069692] [eecafb50] [c0112ca0] __blockdev_direct_IO+0x1b80/0x3574
-> [   15.071110] [eecafd70] [c010f438] blkdev_direct_IO+0x54/0x64
-> [   15.072512] [eecafd90] [c009a424] generic_file_aio_read+0x7b8/0x808
-> [   15.073890] [eecafe40] [c00d4f68] do_sync_read+0xb8/0x144
-> [   15.075254] [eecafef0] [c00d6168] vfs_read+0xcc/0x1c0
-> [   15.076610] [eecaff10] [c00d6394] sys_read+0x58/0xc8
-> [   15.077958] [eecaff40] [c00127a0] ret_from_syscall+0x0/0x38
-> [   15.079299] --- Exception: c01 at 0xfe52b90
-> [   15.079302]     LR = 0x1003e834
-> 
-> 
-> As I said before, I do have lvm2 tools installed, but I'm not actually 
-> using LVM. Grepping through the initscripts, the lvm2 init script 
-> seems to be doing the following during bootup:
-> 
->   do_start()
->   {
->         modprobe dm-mod 2> /dev/null || :
->         /sbin/vgscan --ignorelockingfailure --mknodes || :
->         /sbin/vgchange -aly --ignorelockingfailure || return 2
->   }
-> 
-> 
-> Running "vgchange -aly --ignorelockingfailure" again (that is, after 
-> the machine finished booting and printed the BUG already) does not print 
-> the BUG again, I guess that's intentional.
 
-OK, I will see if I can reproduce this. Thanks for testing!
+Don't we? what about the information used by the IO elevators per-io-group.
+Is it not collected at redirty time. Is it only recorded by the time a bio
+is submitted? How does the io-elevator keeps small IO behind heavy writer
+latency bound? We could use the reverse of that to not IO the "too soon"
 
--- 
-Jens Axboe
+>> Some heavy modifying then a single write. If it's not so then there is
+>> already great inefficiency, just now exposed, but was always there. The
+>> "page-migrate" mentioned here will not help.
+>   Yes, but I believe RT guy doesn't redirty the page that often. It is just
+> that if you have to meet certain latency criteria, you cannot afford a
+> single case where you have to wait. And if you redirty pages, you are bound
+> to hit PageWriteback case sooner or later.
+> 
+
+OK, thanks. I need this overview. What you mean is that since the writeback
+fires periodically then there must be times when the page or group of pages
+are just in the stage of changing and the writeback takes only half of the
+modification.
+
+So What if we let the dirty data always wait that writeback timeout, if
+the pages are "to-new" and memory condition is fine, then postpone the
+writeout to the next round. (Assuming we have that information from the
+first part)
+
+>> Could we not better our page write-out algorithms to avoid heavy
+>> contended pages?
+>   That's not so easy. Firstly, you'll have track and keep that information
+> somehow. Secondly, it is better to writeout a busily dirtied page than to
+> introduce a seek. 
+
+Sure I'd say we just go on the timestamp of the first page in the group.
+Because I'd imagine that the application has changed that group of pages
+ruffly at the same time.
+
+> Also definition of 'busy' differs for different purposes.
+> So to make this useful the logic won't be trivial. 
+
+I don't think so. 1st: io the oldest data. 2nd: Postpone the IO of
+"too new data". So any dirtying has some "aging time" before attack. The
+aging time is very much related to your writeback timer. (Which is
+ "the amount of memory buffer you want to keep" divide by your writeout-rate)
+
+> Thirdly, the benefit is
+> questionable anyway (at least for most of realistic workloads) because
+> flusher thread doesn't write the pages all that often - when there are not
+> many pages, we write them out just once every couple of seconds, when we
+> have lots of dirty pages we cycle through all of them so one page is not
+> written that often.
+> 
+
+Exactly, so lets make sure dirty is always "couple of seconds" old. Don't let
+that timer sample data that is just been dirtied.
+
+Which brings me to another subject in the second case "when we have lots of
+dirty pages". I wish we could talk at LSF/MM about how to not do a dumb cycle
+on sb's inodes but do a time sort write-out. The writeout is always started
+from the lowest addressed page (inode->i_index) so take the time-of-dirty of
+that page as the sorting factor of the inode. And maybe keep a min-inode-dirty-time
+per SB to prioritize on SBs.
+
+Because you see elevator-less FileSystems. Which are none-block-dev BDIs like
+NFS or exofs have a problem. An heavy writer can easily totally starve a slow
+IOer (read or write). I can easily demonstrate how an NFS heavy writer starves
+a KDE desktop to a crawl. We should be starting to think on IO fairness and
+interactivity at the VFS layer. So to not let every none-block-FS solve it's
+own problem all over again.
+
+>> Do you have a more detailed description of the workload? Is it theoretically
+>> avoidable?
+>   See https://lkml.org/lkml/2011/10/23/156. Using page migration or copyout
+> would solve the problems of this guy.
+> 
+> 								Honza
+
+Thanks
+Boaz
