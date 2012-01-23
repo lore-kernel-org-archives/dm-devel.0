@@ -1,49 +1,107 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
-Date: Mon, 23 Jan 2012 14:19:33 -0500
-Message-ID: <x49lioy9qgq.fsf@segfault.boston.devel.redhat.com>
-References: <20120117200609.GA7933@redhat.com>
-	<20120117213648.GA9457@quack.suse.cz>
-	<20120118225808.GA3074@tux1.beaverton.ibm.com>
-	<20120118232200.GA22019@quack.suse.cz> <4F1758D4.9010401@panasas.com>
-	<20120119094637.GA23442@quack.suse.cz> <4F1BFF5F.6000502@panasas.com>
-	<20120123161857.GC28526@quack.suse.cz>
-	<20120123175353.GD30782@redhat.com>
-	<x49r4yq9suf.fsf@segfault.boston.devel.redhat.com>
-	<20120123185650.GF30782@redhat.com>
+From: Greg KH <gregkh@suse.de>
+Subject: [63/90] dm: do not forward ioctls from logical volumes
+ to the underlying device
+Date: Mon, 23 Jan 2012 15:39:49 -0800
+Message-ID: <20120123234028.299579430@clark.kroah.org>
+References: <20120123234211.GA19504@kroah.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20120123185650.GF30782@redhat.com> (Andrea Arcangeli's message
-	of "Mon, 23 Jan 2012 19:56:50 +0100")
-Sender: linux-scsi-owner@vger.kernel.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Jan Kara <jack@suse.cz>, Boaz Harrosh <bharrosh@panasas.com>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J. Wong" <djwong@us.ibm.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20120123234211.GA19504@kroah.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: dm-devel@redhat.com, alan@lxorguk.ukuu.org.uk, Paolo Bonzini <pbonzini@redhat.com>, akpm@linux-foundation.org, torvalds@linux-foundation.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Andrea Arcangeli <aarcange@redhat.com> writes:
+3.0-stable review patch.  If anyone has any objections, please let me know.
 
-> On Mon, Jan 23, 2012 at 01:28:08PM -0500, Jeff Moyer wrote:
->> Are you speaking from experience?  If so, what workloads were negatively
->> affected by merging, and how did you measure that?
->
-> Any workload where two processes compete for accessing the same disk
-> and one process writes big requests (usually async writes), the other
-> small (usually sync reads). The one with the small 4k requests
-> (usually reads) gets some artificial latency if the big requests are
-> 512k. Vivek did a recent measurement to verify the issue is still
-> there, and it's basically an hardware issue. Software can't do much
-> other than possibly reducing the max request size when we notice such
-> an I/O pattern coming in cfq. I did old measurements that's how I knew
-> it, but they were so ancient they're worthless by now, this is why
-> Vivek had to repeat it to verify before we could assume it still
-> existed on recent hardware.
->
-> These days with cgroups it may be a bit more relevant as max write
-> bandwidth may be secondary to latency/QoS.
+------------------
 
-Thanks, Vivek was able to point me at the old thread:
-  http://www.spinics.net/lists/linux-fsdevel/msg44191.html
+From: Paolo Bonzini <pbonzini@redhat.com>
 
-Cheers,
-Jeff
+commit ec8013beddd717d1740cfefb1a9b900deef85462 upstream.
+
+A logical volume can map to just part of underlying physical volume.
+In this case, it must be treated like a partition.
+
+Based on a patch from Alasdair G Kergon.
+
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+---
+ drivers/md/dm-flakey.c |   11 ++++++++++-
+ drivers/md/dm-linear.c |   12 +++++++++++-
+ drivers/md/dm-mpath.c  |    6 ++++++
+ 3 files changed, 27 insertions(+), 2 deletions(-)
+
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -149,8 +149,17 @@ static int flakey_status(struct dm_targe
+ static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
+ {
+ 	struct flakey_c *fc = ti->private;
++	struct dm_dev *dev = fc->dev;
++	int r = 0;
+ 
+-	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (fc->start ||
++	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+ static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target
+ 			unsigned long arg)
+ {
+ 	struct linear_c *lc = (struct linear_c *) ti->private;
+-	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
++	struct dm_dev *dev = lc->dev;
++	int r = 0;
++
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (lc->start ||
++	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+ static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1584,6 +1584,12 @@ static int multipath_ioctl(struct dm_tar
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
+ 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+ }
+ 
