@@ -1,8 +1,8 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 4/5] [dm-thin] [btree-remove] Fix bug that
-	allowed the nr of entries in a btree node to drop below 1/3.
-Date: Tue, 24 Jan 2012 11:50:39 +0000
-Message-ID: <1327405840-19750-5-git-send-email-ejt@redhat.com>
+Subject: [PATCH 5/5] [dm-thin] [space-map-common] Remove entries
+	from the ref_count tree if they're no longer needed.
+Date: Tue, 24 Jan 2012 11:50:40 +0000
+Message-ID: <1327405840-19750-6-git-send-email-ejt@redhat.com>
 References: <1327405840-19750-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,73 +23,37 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-For performance reasons we try and keep all btree nodes at least 1/3
-full.
+Ref counts are stored in two places: a bitmap if the ref_count is
+below 3, or a btreeof uint32_t if 3 or above.
 
-Doing so requires spotting when we should delete a node and move it's
-entries to it's neighbours.  Sometimes this deletion wasn't occuring.
+When a ref_count that was above 3 drops below we can remove it from
+the tree and save some metadata space.  This removal was commented out
+before because I was unsure why this was causing under populated btree
+nodes.  Earlier patches have fixed this issue.
 ---
- drivers/md/persistent-data/dm-btree-remove.c |   21 ++++++---------------
- 1 files changed, 6 insertions(+), 15 deletions(-)
+ drivers/md/persistent-data/dm-space-map-common.c |    3 ---
+ 1 files changed, 0 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-index 9480fcc..9eca1af 100644
---- a/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -128,18 +128,9 @@ static void delete_at(struct node *n, unsigned index)
- 	n->header.nr_entries = cpu_to_le32(nr_entries - 1);
- }
+diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
+index df2494c..ff3beed 100644
+--- a/drivers/md/persistent-data/dm-space-map-common.c
++++ b/drivers/md/persistent-data/dm-space-map-common.c
+@@ -405,8 +405,6 @@ int sm_ll_insert(struct ll_disk *ll, dm_block_t b,
+ 		if (r < 0)
+ 			return r;
  
--static unsigned del_threshold(struct node *n)
--{
--	return le32_to_cpu(n->header.max_entries) / 3;
--}
--
- static unsigned merge_threshold(struct node *n)
- {
--	/*
--	 * The extra one is because we know we're potentially going to
--	 * delete an entry.
--	 */
--	return 2 * (le32_to_cpu(n->header.max_entries) / 3) + 1;
-+	return le32_to_cpu(n->header.max_entries) / 3;
- }
+-#if 0
+-		/* FIXME: dm_btree_remove doesn't handle this yet */
+ 		if (old > 2) {
+ 			r = dm_btree_remove(&ll->ref_count_info,
+ 					    ll->ref_count_root,
+@@ -414,7 +412,6 @@ int sm_ll_insert(struct ll_disk *ll, dm_block_t b,
+ 			if (r)
+ 				return r;
+ 		}
+-#endif
  
- struct child {
-@@ -215,8 +206,9 @@ static void __rebalance2(struct dm_btree_info *info, struct node *parent,
- 	struct node *right = r->n;
- 	uint32_t nr_left = le32_to_cpu(left->header.nr_entries);
- 	uint32_t nr_right = le32_to_cpu(right->header.nr_entries);
-+	unsigned threshold = 2 * merge_threshold(left) + 1;
- 
--	if (nr_left + nr_right <= merge_threshold(left)) {
-+	if (nr_left + nr_right < threshold) {
- 		/*
- 		 * Merge
- 		 */
-@@ -331,10 +323,12 @@ static void __rebalance3(struct dm_btree_info *info, struct node *parent,
- 	uint32_t nr_center = le32_to_cpu(center->header.nr_entries);
- 	uint32_t nr_right = le32_to_cpu(right->header.nr_entries);
- 
-+	unsigned threshold = merge_threshold(left) * 4 + 1;
-+
- 	BUG_ON(left->header.max_entries != center->header.max_entries);
- 	BUG_ON(center->header.max_entries != right->header.max_entries);
- 
--	if (((nr_left + nr_center + nr_right) / 2) < merge_threshold(center))
-+	if ((nr_left + nr_center + nr_right) / 2 < threshold)
- 		delete_center_node(info, parent, l, c, r, left, center, right,
- 				   nr_left, nr_center, nr_right);
- 	else
-@@ -443,9 +437,6 @@ static int rebalance_children(struct shadow_spine *s,
- 	if (r)
- 		return r;
- 
--	if (child_entries > del_threshold(n))
--		return 0;
--
- 	has_left_sibling = i > 0;
- 	has_right_sibling = i < (le32_to_cpu(n->header.nr_entries) - 1);
- 
+ 	} else {
+ 		__le32 le_rc = cpu_to_le32(ref_count);
 -- 
 1.7.5.4
