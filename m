@@ -1,15 +1,12 @@
-From: Greg KH <gregkh@suse.de>
-Subject: [63/90] dm: do not forward ioctls from logical volumes
- to the underlying device
-Date: Mon, 23 Jan 2012 15:39:49 -0800
-Message-ID: <20120123234028.299579430@clark.kroah.org>
-References: <20120123234211.GA19504@kroah.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-crypt: add missing error handling
+Date: Mon, 23 Jan 2012 21:32:20 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1201232131240.17493@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120123234211.GA19504@kroah.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,89 +16,110 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: dm-devel@redhat.com, alan@lxorguk.ukuu.org.uk, Paolo Bonzini <pbonzini@redhat.com>, akpm@linux-foundation.org, torvalds@linux-foundation.org, Alasdair G Kergon <agk@redhat.com>
+To: Milan Broz <mbroz@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-3.0-stable review patch.  If anyone has any objections, please let me know.
+dm-crypt: add missing error handling
 
-------------------
+There were cases where error code would be used only if we finish processing
+the last sector. If there were other encryption operations in flight, error
+would be ignored and bio would be returned with success as if no error
+happened.
 
-From: Paolo Bonzini <pbonzini@redhat.com>
+This bug is present in kcryptd_crypt_write_convert, kcryptd_crypt_read_convert
+and kcryptd_async_done.
 
-commit ec8013beddd717d1740cfefb1a9b900deef85462 upstream.
+This patch fixes it, setting io->error to -EIO always when an error happens.
 
-A logical volume can map to just part of underlying physical volume.
-In this case, it must be treated like a partition.
-
-Based on a patch from Alasdair G Kergon.
-
-Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
-Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-flakey.c |   11 ++++++++++-
- drivers/md/dm-linear.c |   12 +++++++++++-
- drivers/md/dm-mpath.c  |    6 ++++++
- 3 files changed, 27 insertions(+), 2 deletions(-)
+ drivers/md/dm-crypt.c |   27 +++++++++++++++------------
+ 1 file changed, 15 insertions(+), 12 deletions(-)
 
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -149,8 +149,17 @@ static int flakey_status(struct dm_targe
- static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
+Index: linux-3.2-fast/drivers/md/dm-crypt.c
+===================================================================
+--- linux-3.2-fast.orig/drivers/md/dm-crypt.c	2012-01-24 03:14:11.000000000 +0100
++++ linux-3.2-fast/drivers/md/dm-crypt.c	2012-01-24 03:20:41.000000000 +0100
+@@ -1045,16 +1045,14 @@ static void kcryptd_queue_io(struct dm_c
+ 	queue_work(cc->io_queue, &io->work);
+ }
+ 
+-static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io,
+-					  int error, int async)
++static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
  {
- 	struct flakey_c *fc = ti->private;
-+	struct dm_dev *dev = fc->dev;
-+	int r = 0;
+ 	struct bio *clone = io->ctx.bio_out;
+ 	struct crypt_config *cc = io->target->private;
  
--	return __blkdev_driver_ioctl(fc->dev->bdev, fc->dev->mode, cmd, arg);
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (fc->start ||
-+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
-+	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+-	if (unlikely(error < 0)) {
++	if (unlikely(io->error < 0)) {
+ 		crypt_free_buffer_pages(cc, clone);
+ 		bio_put(clone);
+-		io->error = -EIO;
+ 		crypt_dec_pending(io);
+ 		return;
+ 	}
+@@ -1106,11 +1104,13 @@ static void kcryptd_crypt_write_convert(
+ 
+ 		crypt_inc_pending(io);
+ 		r = crypt_convert(cc, &io->ctx);
++		if (r < 0)
++			io->error = -EIO;
+ 		crypt_finished = atomic_dec_and_test(&io->ctx.pending);
+ 
+ 		/* Encryption was already finished, submit io now */
+ 		if (crypt_finished) {
+-			kcryptd_crypt_write_io_submit(io, r, 0);
++			kcryptd_crypt_write_io_submit(io, 0);
+ 
+ 			/*
+ 			 * If there was an error, do not try next fragments.
+@@ -1161,11 +1161,8 @@ static void kcryptd_crypt_write_convert(
+ 	crypt_dec_pending(io);
  }
  
- static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target
- 			unsigned long arg)
+-static void kcryptd_crypt_read_done(struct dm_crypt_io *io, int error)
++static void kcryptd_crypt_read_done(struct dm_crypt_io *io)
  {
- 	struct linear_c *lc = (struct linear_c *) ti->private;
--	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
-+	struct dm_dev *dev = lc->dev;
-+	int r = 0;
-+
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (lc->start ||
-+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
-+	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+-	if (unlikely(error < 0))
+-		io->error = -EIO;
+-
+ 	crypt_dec_pending(io);
  }
  
- static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1584,6 +1584,12 @@ static int multipath_ioctl(struct dm_tar
+@@ -1181,8 +1178,11 @@ static void kcryptd_crypt_read_convert(s
  
- 	spin_unlock_irqrestore(&m->lock, flags);
+ 	r = crypt_convert(cc, &io->ctx);
  
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
++	if (r < 0)
++		io->error = -EIO;
 +
- 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+ 	if (atomic_dec_and_test(&io->ctx.pending))
+-		kcryptd_crypt_read_done(io, r);
++		kcryptd_crypt_read_done(io);
+ 
+ 	crypt_dec_pending(io);
+ }
+@@ -1203,15 +1203,18 @@ static void kcryptd_async_done(struct cr
+ 	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
+ 		error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq), dmreq);
+ 
++	if (error < 0)
++		io->error = -EIO;
++
+ 	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
+ 
+ 	if (!atomic_dec_and_test(&ctx->pending))
+ 		return;
+ 
+ 	if (bio_data_dir(io->base_bio) == READ)
+-		kcryptd_crypt_read_done(io, error);
++		kcryptd_crypt_read_done(io);
+ 	else
+-		kcryptd_crypt_write_io_submit(io, error, 1);
++		kcryptd_crypt_write_io_submit(io, 1);
  }
  
+ static void kcryptd_crypt(struct work_struct *work)
