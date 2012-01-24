@@ -1,15 +1,12 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 2/5] [dm-thin] Remove 2 BUG_ONs from btree_remove
-	code.
-Date: Tue, 24 Jan 2012 11:50:37 +0000
-Message-ID: <1327405840-19750-3-git-send-email-ejt@redhat.com>
-References: <1327405840-19750-1-git-send-email-ejt@redhat.com>
+Subject: [PATCH 0/5] [dm-thin] btree remove tweaks
+Date: Tue, 24 Jan 2012 11:50:35 +0000
+Message-ID: <1327405840-19750-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1327405840-19750-1-git-send-email-ejt@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,24 +20,25 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-These paranoia checks are no longer needed.
----
- drivers/md/persistent-data/dm-btree-remove.c |    3 ---
- 1 files changed, 0 insertions(+), 3 deletions(-)
+Here's a set of patches that do some tidying in the btree remove code and
+fix an issue that caused under populated nodes.
 
-diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-index 8576d56..8d6f958 100644
---- a/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -234,9 +234,6 @@ static void __rebalance2(struct dm_btree_info *info, struct node *parent,
- 		 * Rebalance.
- 		 */
- 		unsigned target_left = (nr_left + nr_right) / 2;
--		unsigned shift_ = nr_left - target_left;
--		BUG_ON(le32_to_cpu(left->header.max_entries) <= nr_left - shift_);
--		BUG_ON(le32_to_cpu(right->header.max_entries) <= nr_right + shift_);
- 		shift(left, right, nr_left - target_left);
- 		*key_ptr(parent, r->index) = right->keys[0];
- 	}
+Tested on my system, more testing required before pushing upstream.
+
+Joe Thornber (5):
+  [dm-thin] Remove redundant arg from value_ptr()
+  [dm-thin] Remove 2 BUG_ONs from btree_remove code.
+  [dm-thin] [btree-remove] break up __rebalance3 function.
+  [dm-thin] [btree-remove] Fix bug that allowed the nr of entries in a
+    btree node to drop below 1/3.
+  [dm-thin] [space-map-common] Remove entries from the ref_count tree
+    if they're no longer needed.
+
+ drivers/md/persistent-data/dm-btree-internal.h   |    7 +-
+ drivers/md/persistent-data/dm-btree-remove.c     |  157 ++++++++++-----------
+ drivers/md/persistent-data/dm-btree.c            |   27 ++--
+ drivers/md/persistent-data/dm-space-map-common.c |    3 -
+ 4 files changed, 90 insertions(+), 104 deletions(-)
+
 -- 
 1.7.5.4
