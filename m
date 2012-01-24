@@ -1,72 +1,37 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [Lsf-pc]   [LSF/MM TOPIC] a few storage topics
-Date: Tue, 24 Jan 2012 15:13:40 -0500
-Message-ID: <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com>
-References: <20120123161857.GC28526@quack.suse.cz>
-	<20120123175353.GD30782@redhat.com>
-	<x49r4yq9suf.fsf@segfault.boston.devel.redhat.com>
-	<20120124151504.GQ4387@shiny> <20120124165631.GA8941@infradead.org>
-	<186EA560-1720-4975-AC2F-8C72C4A777A9@dilger.ca>
-	<x49fwf5kmbl.fsf@segfault.boston.devel.redhat.com>
-	<20120124184054.GA23227@infradead.org> <20120124190732.GH4387@shiny>
-	<x49vco0kj5l.fsf@segfault.boston.devel.redhat.com>
-	<20120124200932.GB20650@quack.suse.cz>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH 1/2] scsi : Correctly setting the scsi host/msg/status bytes
+Date: Tue, 24 Jan 2012 20:38:42 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2BEA7F@SACEXCMBX02-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120124200932.GB20650@quack.suse.cz> (Jan Kara's message of
-	"Tue, 24 Jan 2012 21:09:32 +0100")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jan Kara <jack@suse.cz>
-Cc: Andreas Dilger <adilger@dilger.ca>, Andrea Arcangeli <aarcange@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, fengguang.wu@gmail.com, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, Chris Mason <chris.mason@oracle.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: "device-mapper development (dm-devel@redhat.com)" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Jan Kara <jack@suse.cz> writes:
-
-> On Tue 24-01-12 14:14:14, Jeff Moyer wrote:
->> Chris Mason <chris.mason@oracle.com> writes:
->> 
->> >> All three filesystems use the generic mpages code for reads, so they
->> >> all get the same (bad) I/O patterns.  Looks like we need to fix this up
->> >> ASAP.
->> >
->> > Can you easily run btrfs through the same rig?  We don't use mpages and
->> > I'm curious.
->> 
->> The readahead code was to blame, here.  I wonder if we can change the
->> logic there to not break larger I/Os down into smaller sized ones.
->> Fengguang, doing a dd if=file of=/dev/null bs=1M results in 128K I/Os,
->> when 128KB is the read_ahead_kb value.  Is there any heuristic you could
->> apply to not break larger I/Os up like this?  Does that make sense?
->   Well, not breaking up I/Os would be fairly simple as ondemand_readahead()
-> already knows how much do we want to read. We just trim the submitted I/O to
-> read_ahead_kb artificially. And that is done so that you don't trash page
-> cache (possibly evicting pages you have not yet copied to userspace) when
-> there are several processes doing large reads.
-
-Do you really think applications issue large reads and then don't use
-the data?  I mean, I've seen some bad programming, so I can believe that
-would be the case.  Still, I'd like to think it doesn't happen.  ;-)
-
-> Maybe 128 KB is a too small default these days but OTOH noone prevents you
-> from raising it (e.g. SLES uses 1 MB as a default).
-
-For some reason, I thought it had been bumped to 512KB by default.  Must
-be that overactive imagination I have...  Anyway, if all of the distros
-start bumping the default, don't you think it's time to consider bumping
-it upstream, too?  I thought there was a lot of work put into not being
-too aggressive on readahead, so the downside of having a larger
-read_ahead_kb setting was fairly small.
-
-Cheers,
-Jeff
+UmVzdWJtaXR0aW5nIGFzIG15IHByZXZpb3VzIHBvc3QgaGFkIGZvcm1hdCBpc3N1ZXMgYW5kIGRp
+ZCBub3QgZ28gbGxpbnV4LXNjc2kuDQpUaGlzIHBhdGNoIGNoYW5nZXMgdGhlIGZ1bmN0aW9uIHRv
+ICBzZXRfbXNnX2J5dGUsIHNldF9ob3N0X2J5dGUgYW5kIHNldF9kcml2ZXJfYnl0ZSB0byBjb3Jy
+ZWN0bHkNCnNldCB0aGUgY29ycmVzcG9uZGluZyBieXRlcyBhcHByb3ByaWF0ZWx5LiANCg0KSXQg
+d2lsbCByZXNldCB0aGUgb3JpZ2luYWwgc2V0dGluZyBhbmQgY29ycmVjdGx5IHNldCBpdCB0byB0
+aGUgbmV3IHZhbHVlLiAgVGhlIHByZXZpb3VzIE9SIG9wZXJhdGlvbiBkb2VzDQpub3QgYWx3YXlz
+ICBzZXQgaXQgYmFjayB0byBuZXcgdmFsdWUuIExvb2sgYXQgcGF0Y2ggMi8yIGZvciBhbiBleGFt
+cGxlLg0KDQpTaWduZWQtb2ZmLWJ5OiBCYWJ1IE1vZ2VyIDxiYWJ1Lm1vZ2VyQG5ldGFwcC5jb20+
+DQotLS0NCi0tLSBsaW51eC0zLjMtcmMxLW5ldy9pbmNsdWRlL3Njc2kvc2NzaV9jbW5kLmgub3Jp
+ZwkyMDEyLTAxLTIzIDExOjMwOjQ2LjAwMDAwMDAwMCAtMDYwMA0KKysrIGxpbnV4LTMuMy1yYzEt
+bmV3L2luY2x1ZGUvc2NzaS9zY3NpX2NtbmQuaAkyMDEyLTAxLTIzIDExOjM4OjMwLjAwMDAwMDAw
+MCAtMDYwMA0KQEAgLTI4OSwxNyArMjg5LDE3IEBAIHN0YXRpYyBpbmxpbmUgc3RydWN0IHNjc2lf
+ZGF0YV9idWZmZXIgKnMNCiANCiBzdGF0aWMgaW5saW5lIHZvaWQgc2V0X21zZ19ieXRlKHN0cnVj
+dCBzY3NpX2NtbmQgKmNtZCwgY2hhciBzdGF0dXMpDQogew0KLQljbWQtPnJlc3VsdCB8PSBzdGF0
+dXMgPDwgODsNCisJY21kLT5yZXN1bHQgPSAoY21kLT5yZXN1bHQgJiAweGZmZmYwMGZmKSB8IChz
+dGF0dXMgPDwgOCk7DQogfQ0KIA0KIHN0YXRpYyBpbmxpbmUgdm9pZCBzZXRfaG9zdF9ieXRlKHN0
+cnVjdCBzY3NpX2NtbmQgKmNtZCwgY2hhciBzdGF0dXMpDQogew0KLQljbWQtPnJlc3VsdCB8PSBz
+dGF0dXMgPDwgMTY7DQorCWNtZC0+cmVzdWx0ID0gKGNtZC0+cmVzdWx0ICYgMHhmZjAwZmZmZikg
+fCAoc3RhdHVzIDw8IDE2KTsNCiB9DQogDQogc3RhdGljIGlubGluZSB2b2lkIHNldF9kcml2ZXJf
+Ynl0ZShzdHJ1Y3Qgc2NzaV9jbW5kICpjbWQsIGNoYXIgc3RhdHVzKQ0KIHsNCi0JY21kLT5yZXN1
+bHQgfD0gc3RhdHVzIDw8IDI0Ow0KKwljbWQtPnJlc3VsdCA9IChjbWQtPnJlc3VsdCAmIDB4MDBm
+ZmZmZmYpIHwgKHN0YXR1cyA8PCAyNCk7DQogfQ0KIA0KICNlbmRpZiAvKiBfU0NTSV9TQ1NJX0NN
+TkRfSCAqLw0KDQoNCg==
