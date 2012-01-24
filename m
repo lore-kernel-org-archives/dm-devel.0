@@ -1,59 +1,49 @@
-From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 5/5] [dm-thin] [space-map-common] Remove entries
-	from the ref_count tree if they're no longer needed.
-Date: Tue, 24 Jan 2012 11:50:40 +0000
-Message-ID: <1327405840-19750-6-git-send-email-ejt@redhat.com>
-References: <1327405840-19750-1-git-send-email-ejt@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chris Mason <chris.mason@oracle.com>
+Subject: Re: [Lsf-pc] [LSF/MM TOPIC] a few storage topics
+Date: Tue, 24 Jan 2012 10:15:04 -0500
+Message-ID: <20120124151504.GQ4387@shiny>
+References: <20120117200609.GA7933@redhat.com>
+ <20120117213648.GA9457@quack.suse.cz>
+ <20120118225808.GA3074@tux1.beaverton.ibm.com>
+ <20120118232200.GA22019@quack.suse.cz>
+ <4F1758D4.9010401@panasas.com>
+ <20120119094637.GA23442@quack.suse.cz>
+ <4F1BFF5F.6000502@panasas.com>
+ <20120123161857.GC28526@quack.suse.cz>
+ <20120123175353.GD30782@redhat.com>
+ <x49r4yq9suf.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1327405840-19750-1-git-send-email-ejt@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Joe Thornber <ejt@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <x49r4yq9suf.fsf@segfault.boston.devel.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, Boaz Harrosh <bharrosh@panasas.com>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J. Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-Ref counts are stored in two places: a bitmap if the ref_count is
-below 3, or a btreeof uint32_t if 3 or above.
+On Mon, Jan 23, 2012 at 01:28:08PM -0500, Jeff Moyer wrote:
+> Andrea Arcangeli <aarcange@redhat.com> writes:
+> 
+> > On Mon, Jan 23, 2012 at 05:18:57PM +0100, Jan Kara wrote:
+> >> requst granularity. Sure, big requests will take longer to complete but
+> >> maximum request size is relatively low (512k by default) so writing maximum
+> >> sized request isn't that much slower than writing 4k. So it works OK in
+> >> practice.
+> >
+> > Totally unrelated to the writeback, but the merged big 512k requests
+> > actually adds up some measurable I/O scheduler latencies and they in
+> > turn slightly diminish the fairness that cfq could provide with
+> > smaller max request size. Probably even more measurable with SSDs (but
+> > then SSDs are even faster).
+> 
+> Are you speaking from experience?  If so, what workloads were negatively
+> affected by merging, and how did you measure that?
 
-When a ref_count that was above 3 drops below we can remove it from
-the tree and save some metadata space.  This removal was commented out
-before because I was unsure why this was causing under populated btree
-nodes.  Earlier patches have fixed this issue.
----
- drivers/md/persistent-data/dm-space-map-common.c |    3 ---
- 1 files changed, 0 insertions(+), 3 deletions(-)
+https://lkml.org/lkml/2011/12/13/326
 
-diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
-index df2494c..ff3beed 100644
---- a/drivers/md/persistent-data/dm-space-map-common.c
-+++ b/drivers/md/persistent-data/dm-space-map-common.c
-@@ -405,8 +405,6 @@ int sm_ll_insert(struct ll_disk *ll, dm_block_t b,
- 		if (r < 0)
- 			return r;
- 
--#if 0
--		/* FIXME: dm_btree_remove doesn't handle this yet */
- 		if (old > 2) {
- 			r = dm_btree_remove(&ll->ref_count_info,
- 					    ll->ref_count_root,
-@@ -414,7 +412,6 @@ int sm_ll_insert(struct ll_disk *ll, dm_block_t b,
- 			if (r)
- 				return r;
- 		}
--#endif
- 
- 	} else {
- 		__le32 le_rc = cpu_to_le32(ref_count);
--- 
-1.7.5.4
+This patch is another example, although for a slight different reason.
+I really have no idea yet what the right answer is in a generic sense,
+but you don't need a 512K request to see higher latencies from merging.
+
+-chris
