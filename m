@@ -1,100 +1,231 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
-Date: Wed, 25 Jan 2012 20:44:05 +0200
-Message-ID: <4F204D75.8020107@panasas.com>
-References: <20120124151504.GQ4387@shiny> <20120124165631.GA8941@infradead.org> <186EA560-1720-4975-AC2F-8C72C4A777A9@dilger.ca> <x49fwf5kmbl.fsf@segfault.boston.devel.redhat.com> <20120124184054.GA23227@infradead.org> <20120124190732.GH4387@shiny> <x49vco0kj5l.fsf@segfault.boston.devel.redhat.com> <20120124200932.GB20650@quack.suse.cz> <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com> <20120124203936.GC20650@quack.suse.cz> <20120125032932.GA7150@localhost> <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca> <1327502034.2720.23.camel@menhir> <D3F292ADF945FB49B35E96C94C2061B915A638A6@nsmail.netscout.com> <1327509623.2720.52.camel@menhir> <1327512727.2776.52.camel@dabdike.int.hansenpartnership.com> <D3F292ADF945FB49B35E96C94C2061B915A63A30@nsmail.netscout.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Subject: Re: [PATCH 0/3][RESEND]multipath-tools: mpathpersist
+ utility for managing persistent reservation on dm multipath device.
+Date: Wed, 25 Jan 2012 19:28:01 +0000
+Message-ID: <F200AD42A082BC4088B232D13A916A89EC06@SACEXCMBX02-PRD.hq.netapp.com>
+References: <EE2129A8E578DC4E94D643D6C1C1C67D07D9B409@BTCMVEXC2-PRD.hq.netapp.com>
+	<4F197EEB.3050805@internyc.net>
+	<F200AD42A082BC4088B232D13A916A89E24A@SACEXCMBX02-PRD.hq.netapp.com>
+	<4F1E4785.7010806@internyc.net>
+	<F200AD42A082BC4088B232D13A916A89EA01@SACEXCMBX02-PRD.hq.netapp.com>
+	<4F2022D3.2070609@internyc.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <D3F292ADF945FB49B35E96C94C2061B915A63A30@nsmail.netscout.com>
-Sender: owner-linux-mm@kvack.org
-To: "Loke, Chetan" <Chetan.Loke@netscout.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Steven Whitehouse <swhiteho@redhat.com>, Andreas Dilger <adilger@dilger.ca>, Wu Fengguang <fengguang.wu@gmail.com>, Jan Kara <jack@suse.cz>, Jeff Moyer <jmoyer@redhat.com>, Andrea Arcangeli <aarcange@redhat.com>, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, neilb@suse.de, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>, linux-mm@kvack.org
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4F2022D3.2070609@internyc.net>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Fil <lists@internyc.net>
+Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@netapp.com>, "Moger,
+	Babu" <Babu.Moger@netapp.com>, "Stankey,
+	Robert" <Robert.Stankey@netapp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/25/2012 08:28 PM, Loke, Chetan wrote:
->> So there are two separate problems mentioned here.  The first is to
->> ensure that readahead (RA) pages are treated as more disposable than
->> accessed pages under memory pressure and then to derive a statistic for
->> futile RA (those pages that were read in but never accessed).
+On Wednesday, January 25, 2012 9:12 PM, Fil Wrote:
+>Here is the info you requested.
+
+Fil, Thanks for the logs.
+
+>On 01/25/2012 02:45 AM, Chauhan, Vijay wrote:
+>> On January 24, 2012, Fil Wrote:
+>>>
+>>> 1. Patches apply against the 63704387009443bdb37d9deaaafa9ab121d45bfb
+>>> without any problems. Everything builds correctly (tested it on
+>centos
+>>> 6.2 and fedora 16).
+>>>
+>>> 2. multipathd runs correctly.
+>>>
 >>
->> The first sounds really like its an LRU thing rather than adding yet
->> another page flag.  We need a position in the LRU list for never
->> accessed ... that way they're first to be evicted as memory pressure
->> rises.
+>> Fil, Thanks for the update. Good to know.
 >>
->> The second is you can derive this futile readahead statistic from the
->> LRU position of unaccessed pages ... you could keep this globally.
+>>> 3. mpathpersist is missing --no-inquiry option. It would be nice to
+>be
+>>> compatible with  sg_persist. (breaks most of my test scripts.)
+>>>
+>>> 4. mpathpersist -d /dev/mapper/blah --in --read-status
+>>> mpathpersist: unrecognized option '--read-status'
+>>> unrecognised switch code 0x3f ??
+>>>
 >>
->> Now the problem: if you trash all unaccessed RA pages first, you end up
->> with the situation of say playing a movie under moderate memory
->> pressure that we do RA, then trash the RA page then have to re-read to display
->> to the user resulting in an undesirable uptick in read I/O.
+>> There is a typo in usage output. Please use --read-full-status
+>instead. I will correct it.
+>
+>still no go...
+>
+
+It seems issue 4 is resolved with option '--read-full-status'
+
+>mpathpersist -d /dev/mapper/blah --in --read-full-status
+>Persistent Reserve IN command failed
+>mpathpersist -d /dev/mapper/blah --in --read-full-status -v3
+
+>Jan 25 10:32:37 | alias =3D blah
+>Jan 25 10:32:37 | 36001405c55fc03cd8193d491eda0d4d7: sending pr in
+>command to sda
+>Jan 25 10:32:37 | sda: duration =3D 2 (ms)
+>Jan 25 10:32:37 | sda: status driver:00 host:04 scsi:00
+
+PRIN command returned with DID_BAD_TARGET host status. iscsi layer returns =
+this when we get some bad output from =
+
+target. This does not look like issue related to this feature. =
+
+
 >>
->> Based on the above, it sounds like a better heuristic would be to evict
->> accessed clean pages at the top of the LRU list before unaccessed clean
->> pages because the expectation is that the unaccessed clean pages will
->> be accessed (that's after all, why we did the readahead).  As RA pages age
-> 
-> Well, the movie example is one case where evicting unaccessed page
-> may not be the right thing to do. But what about a workload that
-> perform a random one-shot search? The search was done and the RA'd
-> blocks are of no use anymore. So it seems one solution would hurt
-> another.
-> 
+>>> 5. registration works
+>>>
+>>> 6. reservation, reserves only a single path. (is this by design?)
+>>
+>> Yes, this is as per design. Reservation is sent to one of the active
+>> path and reservation is applicable to registered I_T nexus with
+>respect to pr type.
+>>
+>> I was expecting your device server to  apply reservation to all the
+>> registered I_T nexus for pr type "Exclusive Access, all registrants".
+>Can you verify the below output again?
+>>
+>> Please see below in SPC4
+>> "For a persistent reservation of the type Write Exclusive =96 All
+>Registrants or Exclusive Access =96 All Registrants,
+>> the persistent reservation holder is any registered I_T nexus;"
+>>
+>>> mpathpersist --out --reserve --param-rk=3D123abc --prout-type=3D8 -d
+>>> /dev/mapper/blah
+>>>
+>>> sg_persist -i -s /dev/mapper/blah
+>>>  QNAP      iSCSI Storage     3.1
+>>>  Peripheral device type: disk
+>>>  PR generation=3D0x8
+>>>    Key=3D0x123abc
+>>>      All target ports bit clear
+>>>      Relative port address: 0x1
+>>>      not reservation holder
+>>>      Transport Id of initiator:
+>>>        iSCSI name and session id: iqn.2009-
+>>> 11.com.adriaticsolutions:blah
+>>>    Key=3D0x123abc
+>>>      All target ports bit clear
+>>>      Relative port address: 0x1
+>>>      << Reservation holder >>
+>>>      scope: LU_SCOPE,  type: Exclusive Access, all registrants
+>>>      Transport Id of initiator:
+>>>        iSCSI name and session id: iqn.2009-
+>>> 11.com.adriaticsolutions:blah
+>>>
+>>> multipath -ll
+>>> blah (36001405c55fc03cd8193d491eda0d4d7) dm-4 QNAP,iSCSI Storage
+>>> size=3D10G features=3D'0' hwhandler=3D'0' wp=3Drw
+>>> `-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive
+>>>  |- 16:0:0:0 sda 8:0  active ready  running
+>>>  `- 17:0:0:0 sdb 8:16 failed faulty running
+>>>
+>>> 7. mpathpersist -d /dev/mapper/blah --in --read-reservation
+>>> Persistent Reserve IN command failed
+>>>
+>> Can you please share the output with verbose 3. Append '-v3'.
+>
+>
+>mpathpersist -d /dev/mapper/blah --in --read-reservation
+>Persistent Reserve IN command failed
+>mpathpersist -d /dev/mapper/blah --in --read-reservation -v3
+>Jan 25 10:34:07 | alias =3D blah
 
-I think there is a "seeky" flag the Kernel keeps to prevent read-ahead
-in the case of seeks.
+>Jan 25 10:34:07 | 36001405c55fc03cd8193d491eda0d4d7: sending pr in
+>command to sda
+>Jan 25 10:34:07 | sda: duration =3D 1 (ms)
+>Jan 25 10:34:07 | sda: status driver:00 host:04 scsi:00
 
-> We can try to bring-in process run-time heuristics while evicting
-> pages. So in the one-shot search case, the application did it's thing
-> and went to sleep. While the movie-app has a pretty good run-time and
-> is still running. So be a little gentle(?) on such apps? Selective
-> eviction?
-> 
-> In addition what if we do something like this:
-> 
-> RA block[X], RA block[X+1], ... , RA block[X+m]
-> 
-> Assume a block reads 'N' pages.
-> 
-> Evict unaccessed RA page 'a' from block[X+2] and not [X+1].
-> 
-> We might need tracking at the RA-block level. This way if a movie
-> touched RA-page 'a' from block[X], it would at least have [X+1] in
-> cache. And while [X+1] is being read, the new slow-down version of RA
-> will not RA that many blocks.
-> 
-> Also, application's should use xxx_fadvise calls to give us hints...
-> 
+Same is with issue 7. PRIN command returned with DID_BAD_TARGET host status.
 
-Lets start by reading the number of pages requested by the read()
-call, first. 
-The application is reading 4M and we still send 128K. Don't you
-think that would be fadvise enough?
+>Jan 25 10:34:07 | directio checker refcount 2
+>Jan 25 10:34:07 | directio checker refcount 1
+>Persistent Reserve IN command failed
+>Jan 25 10:34:07 | unloading const prioritizer
+>Jan 25 10:34:07 | unloading directio checker
+>
+>>
+>>> 8. release 'fails' because reservation registered only a single path
+>and
+>>> the other one is in a failed state.
+>>>
+>>> mpathpersist -d /dev/mapper/blah --out --release --param-rk=3D123abc
+>>> --prout-type=3D8
+>>> Jan 24 00:43:53 | 36001405c55fc03cd8193d491eda0d4d7: pr in read
+>>> reservation command failed.
+>>> PR out: command failed
+>>>
+>> As per design, release service action performs following steps:
+>> Step 1) PROUT 'release' SA is sent on the all paths of the multipath
+>device as it is not clear which data path is reservation holder.
+>> STEP 2) PRIN read reservation SA is sent to one of the active path to
+>verify the reservation.
+>> STEP 3) If the Read Reservation parameter data indicates that the
+>logical unit is still reserved then this indicates that the reservation
+>holder belongs to a data path in failed state or removed data path of
+>the multipath device, continue else goto step 7
+>> STEP 4) PRIN Report Full Status  service action is issued to any
+>active data path. Full status descriptors are saved.
+>> STEP 5) PROUT clear reservation service action is sent via any active
+>data path to clear the reservation and
+>> Registrants
+>> STEP 6) all registrants are restored by issuing PROUT register service
+>action with transport IDs from the full status
+>> descriptors saved in the step 4
+>> STEP 7) exit with status
+>>
+>> It looks like you are getting into some other issue. Can you please
+>share the output with verbose with '-v3'.
+>
+>
+>mpathpersist -d /dev/mapper/blah --out --release --param-rk=3D123abc
+>--prout-type=3D8 -v3
+>Jan 25 10:35:41 | alias =3D blah
 
-Lets start with the simple stuff.
+>Jan 25 10:35:41 | 36001405c55fc03cd8193d491eda0d4d7: sending pr out
+>command to sda
+>Jan 25 10:35:41 | 36001405c55fc03cd8193d491eda0d4d7: sdb path not up.
+>Jan 25 10:35:41 | sda: rq_servact =3D 2
+>Jan 25 10:35:41 | sda: rq_scope =3D 0
+>Jan 25 10:35:41 | sda: rq_type =3D 8
+>Jan 25 10:35:41 | sda: paramlen =3D 24
+>Jan 25 10:35:41 | sda: Persistent Reservation OUT parameter:
+>Jan 25 10:35:41 |         00 00 00 00 00 12 3a bc  00 00 00 00 00 00 00
+>00
+>Jan 25 10:35:41 |         00 00 00 00 00 00 00 00
+>Jan 25 10:35:41 | sda: Duration=3D1 (ms)
+>Jan 25 10:35:41 | sda: status driver:00 host:00 scsi:00
+>Jan 25 10:35:41 | sda: status =3D 0
+>Jan 25 10:35:41 | 36001405c55fc03cd8193d491eda0d4d7: sending pr in
+>command to sda
+>Jan 25 10:35:41 | sda: duration =3D 1 (ms)
+>Jan 25 10:35:41 | sda: status driver:08 host:00 scsi:02
+>Jan 25 10:35:41 | sda: Sense_Key=3D06, ASC=3D00 ASCQ=3D00
+>Jan 25 10:35:41 | sda: retrying for Unit Attention. Remaining retries =3D
+>4
+>Jan 25 10:35:41 | sda: duration =3D 0 (ms)
+>Jan 25 10:35:41 | sda: status driver:00 host:04 scsi:00
 
-The only flag I see on read pages is that if it's read ahead
-pages that we Kernel initiated without an application request.
-Like beyond the read() call or a surrounding an mmap read
-that was not actually requested by the application.
+Same with issue 8. PRIN command returned with DID_BAD_TARGET host status.
 
-For generality we always initiate a read in the page fault
-and loose all the wonderful information the app gave us in the
-different read API's. Lets start with that.
+All the three failures reported above are due to DID_BAD_TARGET host status=
+ returned for =
 
-> 
->> James
-> 
-> Chetan Loke
+the PRIN command. It does not look like anywhere this feature is related to=
+ the above reported errors.
 
-Boaz
+>>> 9. de-registration works....
+>>>
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Fight unfair telecom internet charges in Canada: sign http://stopthemeter.ca/
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+Vijay
