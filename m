@@ -1,166 +1,72 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
-Subject: Re: [PATCH 0/3][RESEND]multipath-tools: mpathpersist
- utility for managing persistent reservation on dm multipath device.
-Date: Wed, 25 Jan 2012 07:45:26 +0000
-Message-ID: <F200AD42A082BC4088B232D13A916A89EA01@SACEXCMBX02-PRD.hq.netapp.com>
-References: <EE2129A8E578DC4E94D643D6C1C1C67D07D9B409@BTCMVEXC2-PRD.hq.netapp.com>
-	<4F197EEB.3050805@internyc.net>
-	<F200AD42A082BC4088B232D13A916A89E24A@SACEXCMBX02-PRD.hq.netapp.com>
-	<4F1E4785.7010806@internyc.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
+Date: Wed, 25 Jan 2012 15:00:48 +0100
+Message-ID: <20120125140048.GC32361@quack.suse.cz>
+References: <x49fwf5kmbl.fsf@segfault.boston.devel.redhat.com>
+ <20120124184054.GA23227@infradead.org>
+ <20120124190732.GH4387@shiny>
+ <x49vco0kj5l.fsf@segfault.boston.devel.redhat.com>
+ <20120124200932.GB20650@quack.suse.cz>
+ <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com>
+ <20120124203936.GC20650@quack.suse.cz>
+ <20120125032932.GA7150@localhost>
+ <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
+ <20120125063552.GA27375@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F1E4785.7010806@internyc.net>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Fil <lists@internyc.net>
-Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@netapp.com>, "Moger,
-	Babu" <Babu.Moger@netapp.com>, "Stankey,
-	Robert" <Robert.Stankey@netapp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20120125063552.GA27375@localhost>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Wu Fengguang <fengguang.wu@gmail.com>
+Cc: Andreas Dilger <adilger@dilger.ca>, Jan Kara <jack@suse.cz>, Jeff Moyer <jmoyer@redhat.com>, Andrea Arcangeli <aarcange@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, "neilb@suse.de" <neilb@suse.de>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-On January 24, 2012, Fil Wrote:
->
->1. Patches apply against the 63704387009443bdb37d9deaaafa9ab121d45bfb
->without any problems. Everything builds correctly (tested it on centos
->6.2 and fedora 16).
->
->2. multipathd runs correctly.
->
+On Wed 25-01-12 14:35:52, Wu Fengguang wrote:
+> On Tue, Jan 24, 2012 at 11:15:13PM -0700, Andreas Dilger wrote:
+> > On 2012-01-24, at 8:29 PM, Wu Fengguang wrote:
+> > > On Tue, Jan 24, 2012 at 09:39:36PM +0100, Jan Kara wrote:
+> > >> On Tue 24-01-12 15:13:40, Jeff Moyer wrote:
+> > >>>> Maybe 128 KB is a too small default these days but OTOH noone prevents you
+> > >>>> from raising it (e.g. SLES uses 1 MB as a default).
+> > >>> 
+> > >>> For some reason, I thought it had been bumped to 512KB by default.  Must
+> > >>> be that overactive imagination I have...  Anyway, if all of the distros
+> > >>> start bumping the default, don't you think it's time to consider bumping
+> > >>> it upstream, too?  I thought there was a lot of work put into not being
+> > >>> too aggressive on readahead, so the downside of having a larger
+> > >>> read_ahead_kb setting was fairly small.
+> > >> 
+> > >>  Yeah, I believe 512KB should be pretty safe these days except for
+> > >> embedded world. OTOH average desktop user doesn't really care so it's
+> > >> mostly servers with beefy storage that care... (note that I wrote we raised
+> > >> the read_ahead_kb for SLES but not for openSUSE or SLED (desktop enterprise
+> > >> distro)).
+> > > 
+> > > Maybe we don't need to care much about the embedded world when raising
+> > > the default readahead size? Because even the current 128KB is too much
+> > > for them, and I see Android setting the readahead size to 4KB...
+> > > 
+> > > Some time ago I posted a series for raising the default readahead size
+> > > to 512KB. But I'm open to use 1MB now (shall we vote on it?).
+> > 
+> > I'm all in favour of 1MB (aligned) readahead.
+> 
+> 1MB readahead aligned to i*1MB boundaries? I like this idea. It will
+> work well if the filesystems employ the same alignment rule for large
+> files.
+  Yeah. Clever filesystems (e.g. XFS) can be configured to align files e.g.
+to raid stripes AFAIK so for them this could be worthwhile.
 
-Fil, Thanks for the update. Good to know.
+> > I think the embedded folks
+> > already set enough CONFIG opts that we could trigger on one of those
+> > (e.g. CONFIG_EMBEDDED) to avoid stepping on their toes.
+> 
+> Good point. We could add a configurable CONFIG_READAHEAD_KB=128 when
+> CONFIG_EMBEDDED is selected.
+  Sounds good.
 
->3. mpathpersist is missing --no-inquiry option. It would be nice to be
->compatible with  sg_persist. (breaks most of my test scripts.)
->
->4. mpathpersist -d /dev/mapper/blah --in --read-status
->mpathpersist: unrecognized option '--read-status'
->unrecognised switch code 0x3f ??
->
-
-There is a typo in usage output. Please use --read-full-status instead. I w=
-ill correct it. =
-
-
->5. registration works
->
->6. reservation, reserves only a single path. (is this by design?)
-
-Yes, this is as per design. Reservation is sent to one of the active =
-
-path and reservation is applicable to registered I_T nexus with respect to =
-pr type.
-
-I was expecting your device server to  apply reservation to all the =
-
-registered I_T nexus for pr type "Exclusive Access, all registrants". Can y=
-ou verify the below output again?
-
-Please see below in SPC4
-"For a persistent reservation of the type Write Exclusive =96 All Registran=
-ts or Exclusive Access =96 All Registrants,
-the persistent reservation holder is any registered I_T nexus;" =
-
-
->mpathpersist --out --reserve --param-rk=3D123abc --prout-type=3D8 -d
->/dev/mapper/blah
->
->sg_persist -i -s /dev/mapper/blah
->  QNAP      iSCSI Storage     3.1
->  Peripheral device type: disk
->  PR generation=3D0x8
->    Key=3D0x123abc
->      All target ports bit clear
->      Relative port address: 0x1
->      not reservation holder
->      Transport Id of initiator:
->        iSCSI name and session id: iqn.2009-
->11.com.adriaticsolutions:blah
->    Key=3D0x123abc
->      All target ports bit clear
->      Relative port address: 0x1
->      << Reservation holder >>
->      scope: LU_SCOPE,  type: Exclusive Access, all registrants
->      Transport Id of initiator:
->        iSCSI name and session id: iqn.2009-
->11.com.adriaticsolutions:blah
->
->multipath -ll
->blah (36001405c55fc03cd8193d491eda0d4d7) dm-4 QNAP,iSCSI Storage
->size=3D10G features=3D'0' hwhandler=3D'0' wp=3Drw
->`-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive
->  |- 16:0:0:0 sda 8:0  active ready  running
->  `- 17:0:0:0 sdb 8:16 failed faulty running
->
->7. mpathpersist -d /dev/mapper/blah --in --read-reservation
->Persistent Reserve IN command failed
->
-Can you please share the output with verbose 3. Append '-v3'.
-
->8. release 'fails' because reservation registered only a single path and
->the other one is in a failed state.
->
->mpathpersist -d /dev/mapper/blah --out --release --param-rk=3D123abc
->--prout-type=3D8
->Jan 24 00:43:53 | 36001405c55fc03cd8193d491eda0d4d7: pr in read
->reservation command failed.
->PR out: command failed
->
-As per design, release service action performs following steps: =
-
-Step 1) PROUT 'release' SA is sent on the all paths of the multipath device=
- as it is not clear which data path is reservation holder.
-STEP 2) PRIN read reservation SA is sent to one of the active path to verif=
-y the reservation.
-STEP 3) If the Read Reservation parameter data indicates that the logical u=
-nit is still reserved then this indicates that the reservation holder belon=
-gs to a data path in failed state or removed data path of the multipath dev=
-ice, continue else goto step 7
-STEP 4) PRIN Report Full Status  service action is issued to any active dat=
-a path. Full status descriptors are saved.
-STEP 5) PROUT clear reservation service action is sent via any active data =
-path to clear the reservation and
-Registrants
-STEP 6) all registrants are restored by issuing PROUT register service acti=
-on with transport IDs from the full status
-descriptors saved in the step 4
-STEP 7) exit with status
-
-It looks like you are getting into some other issue. Can you please share t=
-he output with verbose with '-v3'.
-
->9. de-registration works....
->
->I haven't had time to test path fail over and weird cases when multiple
->nodes try to do destructive things to the shared luns...
->
->thanks
->fil
->
->On 01/23/2012 11:09 PM, Chauhan, Vijay wrote:
->> Thanks for these info Fil.  Can you please also share your feedback on
->your in-depth testing.
->>
->> I appreciate your effort.
->>
->> On January 20, 2012, Fil wrote:
->>> Thanks for the patches Vijay,
->>>
->>> I tested the new set of patches against the git repo, and it applied
->>> cleanly compiled and is running as expected. I will do more indepth
->>> testing over the weekend.
-
-Thanks for your detailed testing.
-
-Thanks and regards,
-Vijay
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
