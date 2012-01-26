@@ -1,88 +1,61 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
-Date: Thu, 26 Jan 2012 21:37:50 +0100
-Message-ID: <20120126203750.GB27283@quack.suse.cz>
-References: <20120124184054.GA23227@infradead.org>
- <20120124190732.GH4387@shiny>
- <x49vco0kj5l.fsf@segfault.boston.devel.redhat.com>
- <20120124200932.GB20650@quack.suse.cz>
- <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com>
- <20120124203936.GC20650@quack.suse.cz>
- <20120125032932.GA7150@localhost>
- <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
- <20120125063552.GA27375@localhost>
- <20120126162555.GF1891@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [dm-devel] [Lsf-pc] [LSF/MM TOPIC] a few storage topics
+Date: Fri, 27 Jan 2012 09:31:11 +1100
+Message-ID: <20120126223111.GY15102@dastard>
+References: <4F1758D4.9010401@panasas.com>
+ <20120119094637.GA23442@quack.suse.cz>
+ <4F1BFF5F.6000502@panasas.com>
+ <20120123161857.GC28526@quack.suse.cz>
+ <20120123175353.GD30782@redhat.com>
+ <x49r4yq9suf.fsf@segfault.boston.devel.redhat.com>
+ <20120124151504.GQ4387@shiny>
+ <20120124165631.GA8941@infradead.org>
+ <186EA560-1720-4975-AC2F-8C72C4A777A9@dilger.ca>
+ <x49fwf5kmbl.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120126162555.GF1891@redhat.com>
+In-Reply-To: <x49fwf5kmbl.fsf@segfault.boston.devel.redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Wu Fengguang <fengguang.wu@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, "neilb@suse.de" <neilb@suse.de>, Jeff Moyer <jmoyer@redhat.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: Andreas Dilger <adilger@dilger.ca>, Christoph Hellwig <hch@infradead.org>, Chris Mason <chris.mason@oracle.com>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, Boaz Harrosh <bharrosh@panasas.com>, Mike Snitzer <snitzer@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "neilb@suse.de" <neilb@suse.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, "Darrick J.Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Thu 26-01-12 11:25:56, Vivek Goyal wrote:
-> On Wed, Jan 25, 2012 at 02:35:52PM +0800, Wu Fengguang wrote:
-> > On Tue, Jan 24, 2012 at 11:15:13PM -0700, Andreas Dilger wrote:
-> > > On 2012-01-24, at 8:29 PM, Wu Fengguang wrote:
-> > > > On Tue, Jan 24, 2012 at 09:39:36PM +0100, Jan Kara wrote:
-> > > >> On Tue 24-01-12 15:13:40, Jeff Moyer wrote:
-> > > >>>> Maybe 128 KB is a too small default these days but OTOH noone prevents you
-> > > >>>> from raising it (e.g. SLES uses 1 MB as a default).
-> > > >>> 
-> > > >>> For some reason, I thought it had been bumped to 512KB by default.  Must
-> > > >>> be that overactive imagination I have...  Anyway, if all of the distros
-> > > >>> start bumping the default, don't you think it's time to consider bumping
-> > > >>> it upstream, too?  I thought there was a lot of work put into not being
-> > > >>> too aggressive on readahead, so the downside of having a larger
-> > > >>> read_ahead_kb setting was fairly small.
-> > > >> 
-> > > >>  Yeah, I believe 512KB should be pretty safe these days except for
-> > > >> embedded world. OTOH average desktop user doesn't really care so it's
-> > > >> mostly servers with beefy storage that care... (note that I wrote we raised
-> > > >> the read_ahead_kb for SLES but not for openSUSE or SLED (desktop enterprise
-> > > >> distro)).
-> > > > 
-> > > > Maybe we don't need to care much about the embedded world when raising
-> > > > the default readahead size? Because even the current 128KB is too much
-> > > > for them, and I see Android setting the readahead size to 4KB...
-> > > > 
-> > > > Some time ago I posted a series for raising the default readahead size
-> > > > to 512KB. But I'm open to use 1MB now (shall we vote on it?).
-> > > 
-> > > I'm all in favour of 1MB (aligned) readahead.
-> > 
-> > 1MB readahead aligned to i*1MB boundaries? I like this idea. It will
-> > work well if the filesystems employ the same alignment rule for large
-> > files.
-> > 
-> > > I think the embedded folks
-> > > already set enough CONFIG opts that we could trigger on one of those
-> > > (e.g. CONFIG_EMBEDDED) to avoid stepping on their toes.
-> > 
-> > Good point. We could add a configurable CONFIG_READAHEAD_KB=128 when
-> > CONFIG_EMBEDDED is selected.
-> > 
-> > > It would also be
-> > > possible to trigger on the size of the device so that the 32MB USB stick
-> > > doesn't sit busy for a minute with readahead that is useless.
-> > 
-> > Yeah, I do have a patch for shrinking readahead size based on device size.
+On Tue, Jan 24, 2012 at 01:05:50PM -0500, Jeff Moyer wrote:
+> Andreas Dilger <adilger@dilger.ca> writes:
+> I've been wondering if it's gotten better, so decided to run a few quick
+> tests.
 > 
-> Should it be a udev rule to change read_ahead_kb on device based on device
-> size, instead of a kernel patch?
-  Yes, we talked about that and I think having the logic in udev rule is
-easier. Just if we decided the logic should use a lot of kernel internal
-state, then it's better to have it in kernel.
+> kernel version 3.2.0, storage: hp eva fc array, i/o scheduler cfq,
+> max_sectors_kb: 1024, test program: dd
+> 
+> ext3:
+> - buffered writes and buffered O_SYNC writes, all 1MB block size show 4k
+>   I/Os passed down to the I/O scheduler
+> - buffered 1MB reads are a little better, typically in the 128k-256k
+>   range when they hit the I/O scheduler.
+> 
+> ext4:
+> - buffered writes: 512K I/Os show up at the elevator
+> - buffered O_SYNC writes: data is again 512KB, journal writes are 4K
+> - buffered 1MB reads get down to the scheduler in 128KB chunks
+> 
+> xfs:
+> - buffered writes: 1MB I/Os show up at the elevator
+> - buffered O_SYNC writes: 1MB I/Os
+> - buffered 1MB reads: 128KB chunks show up at the I/O scheduler
+> 
+> So, ext4 is doing better than ext3, but still not perfect.  xfs is
+> kicking ass for writes, but reads are still split up.
 
-> This is assuming device size is a good way to determine read ahead window
-> size. I would guess that device speed should also matter though isn't it.
-> If device is small but fast then it is probably ok to have larger read ahead
-> window and vice versa.
-  Yes, but speed is harder to measure than size ;)
+Isn't that simply because the default readahead is 128k? Change the
+readahead to be much larger, and you should see much larger IOs
+being issued....
 
-								Honza
+Cheers,
+
+Dave.
 -- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+Dave Chinner
+david@fromorbit.com
