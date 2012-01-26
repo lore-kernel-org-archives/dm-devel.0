@@ -1,57 +1,88 @@
-From: "Loke, Chetan" <Chetan.Loke@netscout.com>
-Subject: RE: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
-Date: Thu, 26 Jan 2012 12:16:14 -0500
-Message-ID: <D3F292ADF945FB49B35E96C94C2061B915A64180@nsmail.netscout.com>
-References: <20120124203936.GC20650@quack.suse.cz> <20120125032932.GA7150@localhost> <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca> <1327502034.2720.23.camel@menhir> <D3F292ADF945FB49B35E96C94C2061B915A638A6@nsmail.netscout.com> <1327509623.2720.52.camel@menhir> <1327512727.2776.52.camel@dabdike.int.hansenpartnership.com> <D3F292ADF945FB49B35E96C94C2061B915A63A30@nsmail.netscout.com> <1327516668.7168.7.camel@dabdike.int.hansenpartnership.com> <20120125200613.GH15866@shiny> <20120125224614.GM30782@redhat.com> <D3F292ADF945FB49B35E96C94C2061B915A64111@nsmail.netscout.com> <10715842-8E51-40A5-8C28-AD8B1090645D@dilger.ca>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
+Date: Thu, 26 Jan 2012 21:37:50 +0100
+Message-ID: <20120126203750.GB27283@quack.suse.cz>
+References: <20120124184054.GA23227@infradead.org>
+ <20120124190732.GH4387@shiny>
+ <x49vco0kj5l.fsf@segfault.boston.devel.redhat.com>
+ <20120124200932.GB20650@quack.suse.cz>
+ <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com>
+ <20120124203936.GC20650@quack.suse.cz>
+ <20120125032932.GA7150@localhost>
+ <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
+ <20120125063552.GA27375@localhost>
+ <20120126162555.GF1891@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-Content-class: urn:content-classes:message
-In-Reply-To: <10715842-8E51-40A5-8C28-AD8B1090645D@dilger.ca>
-Sender: owner-linux-mm@kvack.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: Andrea Arcangeli <aarcange@redhat.com>, Chris Mason <chris.mason@oracle.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Steven Whitehouse <swhiteho@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, Christoph Hellwig <hch@infradead.org>, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Wu Fengguang <fengguang.wu@gmail.com>, Boaz Harrosh <bharrosh@panasas.com>, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J.Wong" <djwong@us.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20120126162555.GF1891@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Wu Fengguang <fengguang.wu@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, "neilb@suse.de" <neilb@suse.de>, Jeff Moyer <jmoyer@redhat.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-> > And 'maybe' for adaptive RA just increase the RA-blocks by '1'(or
-some N) over period of time. No more smartness. A simple 10 line
-function is
-> > easy to debug/maintain. That is, a scaled-down version of
-ramp-up/ramp-down. Don't go crazy by ramping-up/down after every RA(like
-> > SCSI LLDD madness). Wait for some event to happen.
->=20
-> Doing 1-block readahead increments is a performance disaster on RAID-
-> 5/6. That means you seek all the disks, but use only a fraction of the
-> data that the controller read internally and had to parity check.
->=20
-> It makes more sense to keep the read units the same size as write
-units
-> (1 MB or as dictated by RAID geometry) that the filesystem is also
-> hopefully using for allocation.  When doing a readahead it should
-fetch
-> the whole chunk at one time, then not do another until it needs
-another
-> full chunk.
->=20
+On Thu 26-01-12 11:25:56, Vivek Goyal wrote:
+> On Wed, Jan 25, 2012 at 02:35:52PM +0800, Wu Fengguang wrote:
+> > On Tue, Jan 24, 2012 at 11:15:13PM -0700, Andreas Dilger wrote:
+> > > On 2012-01-24, at 8:29 PM, Wu Fengguang wrote:
+> > > > On Tue, Jan 24, 2012 at 09:39:36PM +0100, Jan Kara wrote:
+> > > >> On Tue 24-01-12 15:13:40, Jeff Moyer wrote:
+> > > >>>> Maybe 128 KB is a too small default these days but OTOH noone prevents you
+> > > >>>> from raising it (e.g. SLES uses 1 MB as a default).
+> > > >>> 
+> > > >>> For some reason, I thought it had been bumped to 512KB by default.  Must
+> > > >>> be that overactive imagination I have...  Anyway, if all of the distros
+> > > >>> start bumping the default, don't you think it's time to consider bumping
+> > > >>> it upstream, too?  I thought there was a lot of work put into not being
+> > > >>> too aggressive on readahead, so the downside of having a larger
+> > > >>> read_ahead_kb setting was fairly small.
+> > > >> 
+> > > >>  Yeah, I believe 512KB should be pretty safe these days except for
+> > > >> embedded world. OTOH average desktop user doesn't really care so it's
+> > > >> mostly servers with beefy storage that care... (note that I wrote we raised
+> > > >> the read_ahead_kb for SLES but not for openSUSE or SLED (desktop enterprise
+> > > >> distro)).
+> > > > 
+> > > > Maybe we don't need to care much about the embedded world when raising
+> > > > the default readahead size? Because even the current 128KB is too much
+> > > > for them, and I see Android setting the readahead size to 4KB...
+> > > > 
+> > > > Some time ago I posted a series for raising the default readahead size
+> > > > to 512KB. But I'm open to use 1MB now (shall we vote on it?).
+> > > 
+> > > I'm all in favour of 1MB (aligned) readahead.
+> > 
+> > 1MB readahead aligned to i*1MB boundaries? I like this idea. It will
+> > work well if the filesystems employ the same alignment rule for large
+> > files.
+> > 
+> > > I think the embedded folks
+> > > already set enough CONFIG opts that we could trigger on one of those
+> > > (e.g. CONFIG_EMBEDDED) to avoid stepping on their toes.
+> > 
+> > Good point. We could add a configurable CONFIG_READAHEAD_KB=128 when
+> > CONFIG_EMBEDDED is selected.
+> > 
+> > > It would also be
+> > > possible to trigger on the size of the device so that the 32MB USB stick
+> > > doesn't sit busy for a minute with readahead that is useless.
+> > 
+> > Yeah, I do have a patch for shrinking readahead size based on device size.
+> 
+> Should it be a udev rule to change read_ahead_kb on device based on device
+> size, instead of a kernel patch?
+  Yes, we talked about that and I think having the logic in udev rule is
+easier. Just if we decided the logic should use a lot of kernel internal
+state, then it's better to have it in kernel.
 
-I was using it loosely(don't confuse it with 1 block as in 4K :). RA
-could be tied to whatever appropriate parameters depending on the
-setup(underlying backing store) etc.
-But the point I'm trying to make is to (may be)keep the adaptive logic
-simple. So if you start with RA-chunk =3D=3D 512KB/xMB, then when we
-increment it, do something like (RA-chunk << N).
-BTW, it's not just RAID but also different abstractions you might have.
-Stripe-width worth of RA is still useless if your LVM chunk is N *
-stripe-width.
+> This is assuming device size is a good way to determine read ahead window
+> size. I would guess that device speed should also matter though isn't it.
+> If device is small but fast then it is probably ok to have larger read ahead
+> window and vice versa.
+  Yes, but speed is harder to measure than size ;)
 
-> Cheers, Andreas
-Chetan
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Fight unfair telecom internet charges in Canada: sign http://stopthemeter.ca/
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
