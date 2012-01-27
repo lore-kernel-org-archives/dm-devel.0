@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: Update multipath device on show
-	topology
-Date: Fri, 27 Jan 2012 14:41:49 -0600
-Message-ID: <20120127204149.GV1241@ether.msp.redhat.com>
+Subject: [PATCH] multipath: Update multipath.conf man page
+Date: Fri, 27 Jan 2012 14:42:45 -0600
+Message-ID: <20120127204245.GW1241@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,152 +21,175 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-when multipathd's show_map_topology or show_maps_topology commands are
-called, multipathd doesn't update its device state from the kernel.  So,
-if you do something like call disablequeueing first, show_map_topology won't
-register the change. This patche makes multipathd update the device before
-printing the topology. This also requires a change to setup_multipath, to
-allow it to just read the kernel state, and not update anything.
+Update the multipath.conf man page.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs_vec.c |   18 ++++++++++--------
- libmultipath/structs_vec.h |    6 ++++--
- libmultipath/waiter.c      |    2 +-
- multipathd/cli_handlers.c  |   14 +++++++++++---
- 4 files changed, 26 insertions(+), 14 deletions(-)
+ multipath/multipath.conf.5 |   79 ++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 64 insertions(+), 15 deletions(-)
 
-Index: multipath-tools-120123/multipathd/cli_handlers.c
+Index: multipath-tools-120123/multipath/multipath.conf.5
 ===================================================================
---- multipath-tools-120123.orig/multipathd/cli_handlers.c
-+++ multipath-tools-120123/multipathd/cli_handlers.c
-@@ -68,13 +68,16 @@ show_paths (char ** r, int * len, struct
- }
- 
- int
--show_map_topology (char ** r, int * len, struct multipath * mpp)
-+show_map_topology (char ** r, int * len, struct multipath * mpp,
-+		   struct vectors * vecs)
- {
- 	char * c;
- 	char * reply;
- 	unsigned int maxlen = INITIAL_REPLY_LEN;
- 	int again = 1;
- 
-+	if (update_multipath(vecs, mpp->alias, 0))
-+		return 1;
- 	reply = MALLOC(maxlen);
- 
- 	while (again) {
-@@ -112,9 +115,14 @@ show_maps_topology (char ** r, int * len
- 
- 		c = reply;
- 
--		vector_foreach_slot(vecs->mpvec, mpp, i)
-+		vector_foreach_slot(vecs->mpvec, mpp, i) {
-+			if (update_multipath(vecs, mpp->alias, 0)) {
-+				i--;
-+				continue;
-+			}
- 			c += snprint_multipath_topology(c, reply + maxlen - c,
- 							mpp, 2);
-+		}
- 
- 		again = ((c - reply) == (maxlen - 1));
- 
-@@ -232,7 +240,7 @@ cli_list_map_topology (void * v, char **
- 
- 	condlog(3, "list multipath %s (operator)", param);
- 
--	return show_map_topology(reply, len, mpp);
-+	return show_map_topology(reply, len, mpp, vecs);
- }
- 
- int
-Index: multipath-tools-120123/libmultipath/structs_vec.c
-===================================================================
---- multipath-tools-120123.orig/libmultipath/structs_vec.c
-+++ multipath-tools-120123/libmultipath/structs_vec.c
-@@ -324,7 +324,7 @@ set_no_path_retry(struct multipath *mpp)
- }
- 
- extern int
--setup_multipath (struct vectors * vecs, struct multipath * mpp)
-+__setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
- {
- 	if (dm_get_info(mpp->alias, &mpp->dmi)) {
- 		/* Error accessing table */
-@@ -353,11 +353,13 @@ setup_multipath (struct vectors * vecs,
- 		condlog(3, "%s: no hardware entry found, using defaults",
- 			mpp->alias);
- 	}
--	select_rr_weight(mpp);
--	select_pgfailback(mpp);
--	set_no_path_retry(mpp);
--	select_pg_timeout(mpp);
--	select_flush_on_last_del(mpp);
-+	if (reset) {
-+		select_rr_weight(mpp);
-+		select_pgfailback(mpp);
-+		set_no_path_retry(mpp);
-+		select_pg_timeout(mpp);
-+		select_flush_on_last_del(mpp);
-+	}
- 
- 	return 0;
- out:
-@@ -479,7 +481,7 @@ verify_paths(struct multipath * mpp, str
- 	return count;
- }
- 
--int update_multipath (struct vectors *vecs, char *mapname)
-+int update_multipath (struct vectors *vecs, char *mapname, int reset)
- {
- 	struct multipath *mpp;
- 	struct pathgroup  *pgp;
-@@ -496,7 +498,7 @@ int update_multipath (struct vectors *ve
- 	free_pgvec(mpp->pg, KEEP_PATHS);
- 	mpp->pg = NULL;
- 
--	if (setup_multipath(vecs, mpp))
-+	if (__setup_multipath(vecs, mpp, reset))
- 		return 1; /* mpp freed in setup_multipath */
- 
- 	adopt_paths(vecs->pathvec, mpp, 0);
-Index: multipath-tools-120123/libmultipath/structs_vec.h
-===================================================================
---- multipath-tools-120123.orig/libmultipath/structs_vec.h
-+++ multipath-tools-120123/libmultipath/structs_vec.h
-@@ -21,7 +21,9 @@ void orphan_path (struct path * pp);
- 
- int verify_paths(struct multipath * mpp, struct vectors * vecs, vector rpvec);
- int update_mpp_paths(struct multipath * mpp, vector pathvec);
--int setup_multipath (struct vectors * vecs, struct multipath * mpp);
-+int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
-+		       int reset);
-+#define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
- int update_multipath_strings (struct multipath *mpp, vector pathvec);
- 	
- void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
-@@ -32,7 +34,7 @@ void remove_maps_and_stop_waiters (struc
- struct multipath * add_map_without_path (struct vectors * vecs, char * alias);
- struct multipath * add_map_with_path (struct vectors * vecs,
- 				struct path * pp, int add_vec);
--int update_multipath (struct vectors *vecs, char *mapname);
-+int update_multipath (struct vectors *vecs, char *mapname, int reset);
- void update_queue_mode_del_path(struct multipath *mpp);
- void update_queue_mode_add_path(struct multipath *mpp);
- 
-Index: multipath-tools-120123/libmultipath/waiter.c
-===================================================================
---- multipath-tools-120123.orig/libmultipath/waiter.c
-+++ multipath-tools-120123/libmultipath/waiter.c
-@@ -157,7 +157,7 @@ int waiteventloop (struct event_thread *
- 		 */
- 		pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
- 		lock(waiter->vecs->lock);
--		r = update_multipath(waiter->vecs, waiter->mapname);
-+		r = update_multipath(waiter->vecs, waiter->mapname, 1);
- 		lock_cleanup_pop(waiter->vecs->lock);
- 
- 		if (r) {
+--- multipath-tools-120123.orig/multipath/multipath.conf.5
++++ multipath-tools-120123/multipath/multipath.conf.5
+@@ -82,6 +82,11 @@ maximal interval between two path checks
+ directory where udev creates its device nodes; default is
+ .I /dev
+ .TP
++.B multipath_dir
++directory where the dynamic shared objects are stored; default is system
++dependent, commonly
++.I /lib/multipath
++.TP
+ .B verbosity
+ default verbosity. Higher values increase the verbosity level. Valid
+ levels are between 0 and 6; default is
+@@ -141,7 +146,7 @@ Default value is \fImultibus\fR.
+ The default program and args to callout to obtain a unique path
+ identifier. Should be specified with an absolute path. Default value
+ is
+-.I /lib/udev/scsi_id --whitelisted --device=/dev/%n
++.I /lib/udev/scsi_id --whitelisted --replace-whitespace --device=/dev/%n
+ .TP
+ .B prio
+ The name of the path priority routine. The specified routine
+@@ -177,17 +182,22 @@ Generate the path priority for Hitachi H
+ .B random
+ Generate a random priority between 1 and 10.
+ .TP 12
+-.B weightedpath <hbtl|devname> <regex1> <prio1> <regex2> <prio2> ...
+-.I hbtl 
+-regex can be of SCSI H:B:T:L format  Ex: 1:0:.:. , *:0:0:.
+-.I devname 
+-regex can be of device name format  Ex: sda , sd.e
++.B weightedpath
+ Generate the path priority based on the regular expression and the 
+-priority provided as argument.
++priority provided as argument. requires prio_args keyword.
+ .TP
+ Default value is \fBnone\fR.
+ .RE
+ .TP
++.B prio_args
++Arguments to pass to to the prio function.  Currently only used with
++.I weighted, which needs a value of the form
++.I "<hbtl|devname> <regex1> <prio1> <regex2> <prio2> ..."
++.I hbtl
++regex can be of SCSI H:B:T:L format  Ex: 1:0:.:. , *:0:0:.
++.I devname
++regex can be of device name format  Ex: sda , sd.e
++.TP
+ .B features
+ Specify any device-mapper features to be used. Syntax is
+ .I num list
+@@ -238,19 +248,33 @@ Default value is \fIdirectio\fR.
+ .RE
+ .TP
+ .B failback
+-Tell the daemon to manage path group failback, or not to. 0 or
+-.I immediate
+-means immediate failback, values >0 means deferred failback (in
+-seconds).
+-.I manual
+-means no failback. Default value is
+-.I manual
++Tell multipathd how to manage path group failback.
++.RS
++.TP 12
++.B immediate
++Immediately failback to the highest priority pathgroup that contains
++active paths.
++.TP
++.B manual
++Do not perform automatic failback.
++.TP
++.B values > 0
++deferred failback (time to defer in seconds)
++.TP
++Default value is \fImanual\fR.
++.RE
+ .TP
+ .B  rr_min_io
+ The number of IO to route to a path before switching to the next in
+-the same path group. Default is
++the same path group. This is only for BIO based multipath. Default is
+ .I 1000
+ .TP
++.B rr_min_io_q
++The number of IO requests to route to a path before switching to the
++next in the same path group. This is only for request based multipath.
++Default is
++.I 1
++.TP
+ .B rr_weight
+ If set to \fIpriorities\fR the multipath configurator will assign
+ path weights as "path prio * rr_min_io". Possible values are
+@@ -280,6 +304,13 @@ be overriden by any specific aliases in
+ Default is
+ .I no
+ .TP
++.B flush_on_last_del
++If set to
++.I yes
++, multipathd will disable queueing when the last path to a device has been
++deleted. Default is
++.I no
++.TP
+ .B max_fds
+ Specify the maximum number of file descriptors that can be opened by multipath
+ and multipathd.  This is equivalent to ulimit -n. A value of \fImax\fR will set
+@@ -413,12 +444,20 @@ section:
+ .TP
+ .B prio
+ .TP
++.B prio_args
++.TP
+ .B failback
+ .TP
++.B rr_weight
++.TP
++.B flush_on_last_del
++.TP
+ .B no_path_retry
+ .TP
+ .B rr_min_io
+ .TP
++.B rr_min_io_q
++.TP
+ .B features
+ .RE
+ .PD
+@@ -446,6 +485,10 @@ subsection recognizes the following attr
+ .B product_blacklist
+ (Optional) Product strings to blacklist for this vendor
+ .TP
++.B alias_prefix
++(Optional) The user_friendly_names prefix to use for this
++device type, instead of the default "mpath"
++.TP
+ .B hardware_handler
+ (Optional) The hardware handler to use for this device type.
+ The following hardware handler are implemented:
+@@ -483,6 +526,8 @@ section:
+ .TP
+ .B prio
+ .TP
++.B prio_args
++.TP
+ .B features
+ .TP
+ .B failback
+@@ -493,9 +538,13 @@ section:
+ .TP
+ .B rr_min_io
+ .TP
++.B rr_min_io_rq
++.TP
+ .B fast_io_fail_tmo
+ .TP
+ .B dev_loss_tmo
++.TP
++.B flush_on_last_del
+ .RE
+ .PD
+ .LP
