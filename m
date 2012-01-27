@@ -1,82 +1,48 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: dd to a striped device with 9 disks gets much lower
- throughput when oflag=direct used
-Date: Fri, 27 Jan 2012 07:54:47 +0100
-Message-ID: <4F224A37.2090308@suse.de>
-References: <CACyXjPzWjBz0=btbL0Gx_qoxRQs7wy9m=dY1--xL29uszTpmFA@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Wu Fengguang <fengguang.wu@gmail.com>
+Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
+Date: Fri, 27 Jan 2012 15:53:07 +0800
+Message-ID: <20120127075306.GA8795@localhost>
+References: <20120124200932.GB20650@quack.suse.cz>
+ <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com>
+ <20120124203936.GC20650@quack.suse.cz>
+ <20120125032932.GA7150@localhost>
+ <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
+ <20120125063552.GA27375@localhost>
+ <20120126162555.GF1891@redhat.com>
+ <20120126223449.GZ15102@dastard>
+ <20120127032734.GA16980@localhost>
+ <20C51818-5C53-4417-B62A-AD7C020CE283@dilger.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CACyXjPzWjBz0=btbL0Gx_qoxRQs7wy9m=dY1--xL29uszTpmFA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20C51818-5C53-4417-B62A-AD7C020CE283@dilger.ca>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Andreas Dilger <adilger@dilger.ca>
+Cc: Dave Chinner <david@fromorbit.com>, Vivek Goyal <vgoyal@redhat.com>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, "neilb@suse.de" <neilb@suse.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@infradead.org>, Jeff Moyer <jmoyer@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-On 01/27/2012 02:06 AM, Richard Sharpe wrote:
-> Hi,
-> =
+On Thu, Jan 26, 2012 at 10:25:33PM -0700, Andreas Dilger wrote:
+[snip]
+> Doesn't the kernel derive at least some idea of the speed of a device
+> due to the writeback changes that you made?  It would be very useful
+> if we could derive at least some rough metric for the device performance
+> in the kernel and use that as input to the readahead window size as well.
 
-> Perhaps I am doing something stupid, but I would like to understand
-> why there is a difference in the following situation.
-> =
+Yeah we now have bdi->write_bandwidth (exported as "BdiWriteBandwidth"
+in /debug/bdi/8:0/stats) for estimating the bdi write bandwidth.
 
-> I have defined a stripe device thusly:
-> =
+However the value is not reflecting the sequential throughput in some
+cases:
 
->      "echo 0 17560535040 striped 9 8 /dev/sdd 0 /dev/sde 0 /dev/sdf 0
-> /dev/sdg 0 /dev/sdh 0 /dev/sdi 0 /dev/sdj 0 /dev/sdk 0 /dev/sdl 0 |
-> dmsetup create stripe_dev"
-> =
+1) when doing random writes
+2) when doing mixed reads+writes
+3) when not enough IO have been issued
+4) in the rare case, when writing to a small area repeatedly so that
+   it's effectively writing to the internal disk buffer at high speed
 
-> Then is did the following:
-> =
+So there are still some challenges in getting a reliably usable
+runtime estimation.
 
->     dd if=3D/dev/zero of=3D/dev/mapper/stripe_dev bs=3D262144 count=3D100=
-0000
-> =
-
-> and I got 880 MB/s
-> =
-
-> However, when I changed that command to:
-> =
-
->     dd if=3D/dev/zero of=3D/dev/mapper/stripe_dev bs=3D262144 count=3D100=
-0000
-> oflag=3Ddirect
-> =
-
-> I get 210 MB/s reliably.
-> =
-
-> The system in question is a 16 core (probably two CPUs) Intel Xeon
-> E5620 @2.40Ghz with 64GB of memory and 12 7200PRM SATA drives
-> connected to an LSI SAS controller but set up as a JBOD of 12 drives.
-> =
-
-> Why do I see such a big performance difference? Does writing to the
-> device also use the page cache if I don't specify DIRECT IO?
-> =
-
-Yes. All I/O using read/write calls is going via the pagecache.
-The only way to circumvent this is to use DIRECT_IO.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Thanks,
+Fengguang
