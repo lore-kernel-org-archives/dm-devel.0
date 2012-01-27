@@ -1,56 +1,117 @@
-From: Richard Sharpe <realrichardsharpe@gmail.com>
-Subject: dd to a striped device with 9 disks gets much lower
- throughput when oflag=direct used
-Date: Thu, 26 Jan 2012 17:06:42 -0800
-Message-ID: <CACyXjPzWjBz0=btbL0Gx_qoxRQs7wy9m=dY1--xL29uszTpmFA@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: New LVM2 release 2.02.89: Thinly-provisioned logical
+	volumes
+Date: Fri, 27 Jan 2012 02:57:01 +0000
+Message-ID: <20120127025701.GB16767@agk-dp.fab.redhat.com>
+Reply-To: lvm-devel@redhat.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <lvm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: lvm-devel@redhat.com, linux-lvm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+After a long break, we've issued a new LVM2 release, 2.02.89.
 
-Perhaps I am doing something stupid, but I would like to understand
-why there is a difference in the following situation.
+ 394 files changed, 22662 insertions(+), 11614 deletions(-)
 
-I have defined a stripe device thusly:
+This release includes experimental support for thinly-provisioned
+logical volumes using the new device-mapper thin provisioning target
+in kernel 3.2.
 
-     "echo 0 17560535040 striped 9 8 /dev/sdd 0 /dev/sde 0 /dev/sdf 0
-/dev/sdg 0 /dev/sdh 0 /dev/sdi 0 /dev/sdj 0 /dev/sdk 0 /dev/sdl 0 |
-dmsetup create stripe_dev"
+This is still a *development* release and the new feature is not
+supported by all the LVM commands yet.
 
-Then is did the following:
+The various interface extensions for thin provisioning are not frozen.
+So we might still decide to tweak the command line extensions, library
+functions, on-disk metadata extensions, tool output, configuration
+options etc. in ways that make later releases incompatible with this
+particular release.
 
-    dd if=/dev/zero of=/dev/mapper/stripe_dev bs=262144 count=1000000
+Please try it out, test it, and give us feedback preferably on the
+mailing list lvm-devel@redhat.com.
 
-and I got 880 MB/s
+  ftp://sources.redhat.com/pub/lvm2/WHATS_NEW
+  ftp://sources.redhat.com/pub/lvm2/WHATS_NEW_DM
 
-However, when I changed that command to:
+  ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.89.tgz
+  ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.89.tgz.asc
 
-    dd if=/dev/zero of=/dev/mapper/stripe_dev bs=262144 count=1000000
-oflag=direct
 
-I get 210 MB/s reliably.
+Getting started
+---------------
 
-The system in question is a 16 core (probably two CPUs) Intel Xeon
-E5620 @2.40Ghz with 64GB of memory and 12 7200PRM SATA drives
-connected to an LSI SAS controller but set up as a JBOD of 12 drives.
+Ensure your kernel is at least version 3.2 and compiled with
+DM_THIN_PROVISIONING.
 
-Why do I see such a big performance difference? Does writing to the
-device also use the page cache if I don't specify DIRECT IO?
+Add '--with-thin=internal' to your configure line.
+You should have --enable-dmeventd too and install dmeventd for automatic
+extension of nearly-full thin volumes.
 
--- 
-Regards,
-Richard Sharpe
+Fedora users may use this package:
+  lvm2-2.02.89-2.fc17
+  http://koji.fedoraproject.org/koji/buildinfo?buildID=295965
+  (or a newer one, if we rebuild it)
+
+
+The basic idea
+--------------
+You create a logical volume known as the "thin pool" to hold the disk
+space you want to use inside your volume group.
+
+Then you create "thin" logical volumes which share the space in that pool.
+
+lvs and lvdisplay will tell you "how full" your pool is.
+
+dmeventd will monitor how full your pool is, and automatically use
+unallocated physical extents to extend it according to the policy in
+lvm.conf.  Do not allow your pool to fill up!
+
+You can also take snapshots of thin volumes.
+
+There are basic examples in the man pages, and sophisticated
+examples in the test scripts (e.g. test/shell/lvcreate-thin.sh).
+
+With lvcreate, think of -L as controlling actual disk space and -V as
+controlling virtual size.  -T is a short-cut indicating the use of
+something thin.  If not specified, volume names (like lvol0) are
+generated whenever needed.
+
+Creating a pool needs actual disk space, so use -L.
+Creating a thin volume use virtual space, so use -V.
+
+You can have more than one pool in a VG, so to use an existing one
+you must mention which it is on the command line.
+
+(Of course, we will be producing additional documentation eventually.)
+
+Commands that should mostly work with thin volumes at this stage:
+
+  lvcreate, lvremove, lvresize, lvextend, lvreduce, lvchange, lvdisplay, lvs
+  vgscan, vgdisplay, vgs, vgcreate, vgremove, vgextend, vgreduce
+
+Please limit yourself to those commands for now.
+
+Other commands have not been updated and may fail in surprising way.
+(If one of them causes you problems, we're unlikely to be interested.)
+
+In particular, be aware that vgcfgrestore only restores the LVM metadata
+and NOT the in-kernel thin metadata and so can easily cause crashes or
+corruption at the moment.
+
+Alasdair
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
