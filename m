@@ -1,117 +1,48 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: New LVM2 release 2.02.89: Thinly-provisioned logical
-	volumes
-Date: Fri, 27 Jan 2012 02:57:01 +0000
-Message-ID: <20120127025701.GB16767@agk-dp.fab.redhat.com>
-Reply-To: lvm-devel@redhat.com
+From: Wu Fengguang <fengguang.wu@gmail.com>
+Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
+Date: Fri, 27 Jan 2012 11:27:34 +0800
+Message-ID: <20120127032734.GA16980@localhost>
+References: <20120124190732.GH4387@shiny>
+ <x49vco0kj5l.fsf@segfault.boston.devel.redhat.com>
+ <20120124200932.GB20650@quack.suse.cz>
+ <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com>
+ <20120124203936.GC20650@quack.suse.cz>
+ <20120125032932.GA7150@localhost>
+ <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
+ <20120125063552.GA27375@localhost>
+ <20120126162555.GF1891@redhat.com>
+ <20120126223449.GZ15102@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: lvm-devel@redhat.com, linux-lvm@redhat.com, dm-devel@redhat.com
+In-Reply-To: <20120126223449.GZ15102@dastard>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Vivek Goyal <vgoyal@redhat.com>, Andreas Dilger <adilger@dilger.ca>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, "neilb@suse.de" <neilb@suse.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@infradead.org>, Jeff Moyer <jmoyer@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>
 List-Id: dm-devel.ids
 
-After a long break, we've issued a new LVM2 release, 2.02.89.
+On Fri, Jan 27, 2012 at 09:34:49AM +1100, Dave Chinner wrote:
+> On Thu, Jan 26, 2012 at 11:25:56AM -0500, Vivek Goyal wrote:
+> > On Wed, Jan 25, 2012 at 02:35:52PM +0800, Wu Fengguang wrote:
+> > > > It would also be
+> > > > possible to trigger on the size of the device so that the 32MB USB stick
+> > > > doesn't sit busy for a minute with readahead that is useless.
+> > > 
+> > > Yeah, I do have a patch for shrinking readahead size based on device size.
+> > 
+> > Should it be a udev rule to change read_ahead_kb on device based on device
+> > size, instead of a kernel patch?
+> 
+> That's effectively what vendors like SGI have been doing since udev
+> was first introduced, though more often the rules are based on device
+> type rather than size. e.g. a 64GB device might be a USB flash drive
+> now, but a 40GB device might be a really fast SSD....
 
- 394 files changed, 22662 insertions(+), 11614 deletions(-)
+Fair enough. I'll drop this kernel policy patch 
 
-This release includes experimental support for thinly-provisioned
-logical volumes using the new device-mapper thin provisioning target
-in kernel 3.2.
+        block: limit default readahead size for small devices
+        https://lkml.org/lkml/2011/12/19/89
 
-This is still a *development* release and the new feature is not
-supported by all the LVM commands yet.
-
-The various interface extensions for thin provisioning are not frozen.
-So we might still decide to tweak the command line extensions, library
-functions, on-disk metadata extensions, tool output, configuration
-options etc. in ways that make later releases incompatible with this
-particular release.
-
-Please try it out, test it, and give us feedback preferably on the
-mailing list lvm-devel@redhat.com.
-
-  ftp://sources.redhat.com/pub/lvm2/WHATS_NEW
-  ftp://sources.redhat.com/pub/lvm2/WHATS_NEW_DM
-
-  ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.89.tgz
-  ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.89.tgz.asc
-
-
-Getting started
----------------
-
-Ensure your kernel is at least version 3.2 and compiled with
-DM_THIN_PROVISIONING.
-
-Add '--with-thin=internal' to your configure line.
-You should have --enable-dmeventd too and install dmeventd for automatic
-extension of nearly-full thin volumes.
-
-Fedora users may use this package:
-  lvm2-2.02.89-2.fc17
-  http://koji.fedoraproject.org/koji/buildinfo?buildID=295965
-  (or a newer one, if we rebuild it)
-
-
-The basic idea
---------------
-You create a logical volume known as the "thin pool" to hold the disk
-space you want to use inside your volume group.
-
-Then you create "thin" logical volumes which share the space in that pool.
-
-lvs and lvdisplay will tell you "how full" your pool is.
-
-dmeventd will monitor how full your pool is, and automatically use
-unallocated physical extents to extend it according to the policy in
-lvm.conf.  Do not allow your pool to fill up!
-
-You can also take snapshots of thin volumes.
-
-There are basic examples in the man pages, and sophisticated
-examples in the test scripts (e.g. test/shell/lvcreate-thin.sh).
-
-With lvcreate, think of -L as controlling actual disk space and -V as
-controlling virtual size.  -T is a short-cut indicating the use of
-something thin.  If not specified, volume names (like lvol0) are
-generated whenever needed.
-
-Creating a pool needs actual disk space, so use -L.
-Creating a thin volume use virtual space, so use -V.
-
-You can have more than one pool in a VG, so to use an existing one
-you must mention which it is on the command line.
-
-(Of course, we will be producing additional documentation eventually.)
-
-Commands that should mostly work with thin volumes at this stage:
-
-  lvcreate, lvremove, lvresize, lvextend, lvreduce, lvchange, lvdisplay, lvs
-  vgscan, vgdisplay, vgs, vgcreate, vgremove, vgextend, vgreduce
-
-Please limit yourself to those commands for now.
-
-Other commands have not been updated and may fail in surprising way.
-(If one of them causes you problems, we're unlikely to be interested.)
-
-In particular, be aware that vgcfgrestore only restores the LVM metadata
-and NOT the in-kernel thin metadata and so can easily cause crashes or
-corruption at the moment.
-
-Alasdair
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+Thanks,
+Fengguang
