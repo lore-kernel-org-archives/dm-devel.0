@@ -1,90 +1,46 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] DM RAID: Fix memory corruption caused by repeated calls to
- bitmap_load
-Date: Fri, 27 Jan 2012 08:53:53 -0600
-Message-ID: <1327676033.9152.7.camel@f14.redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-thin vs lvm performance
+Date: Fri, 27 Jan 2012 14:58:03 +0000
+Message-ID: <20120127145801.GA26730@ubuntu>
+References: <1326416116.56981.YahooMailNeo@web36404.mail.mud.yahoo.com>
+	<20120116124158.GA4426@ubuntu>
+	<1326915054.99335.YahooMailNeo@web36407.mail.mud.yahoo.com>
+	<20120120170335.GA10518@ubuntu> <20120120173333.GA12920@ubuntu>
+	<20120120180721.GB12920@ubuntu>
+	<1327093568.21183.YahooMailNeo@web36404.mail.mud.yahoo.com>
+	<20120122202429.GA27507@ubuntu>
+	<1327449515.67553.YahooMailNeo@web36401.mail.mud.yahoo.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: dm-devel@redhat.com, linux-raid@vger.kernel.org
-Cc: neilb@suse.de
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1327449515.67553.YahooMailNeo@web36401.mail.mud.yahoo.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jagan Reddy <gjmsreddy@yahoo.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Neil,
+On Tue, Jan 24, 2012 at 03:58:35PM -0800, Jagan Reddy wrote:
+> Joe,
+> =A0I was running more tests to get more data.
 
-I came across this bug when testing snapshots of RAID volumes.  The
-snapshot code performs multiple suspend/resume cycles on the underlying
-LV, which is what caused me to notice that 'bitmap_load' was being
-called multiple times and causing memory corruption.  As I explain in
-the patch header, I'm pretty sure that avoiding the repeat call to
-'bitmap_load' and kicking the MD thread instead is all that is needed.
-(It certainly works in all my tests.)  However, please let me know if
-there is anything I'm not aware of.
+Could I trouble you to grab my test suite [1], add your machine to the
+config.rb file and then:
 
-Thanks,
- brassow
+      ./run_tests -t /RamDisk/
 
-Prevent DM RAID from loading bitmap twice.
+and see if those results are different too please?
 
-The life cycle of a device-mapper target is:
-1) create
-2) resume
-3) suspend
-*) possibly repeat from 2
-4) destroy
-
-The dm-raid target is unconditionally calling MD's bitmap_load function upon
-every resume.  If steps 2 & 3 above are repeated, bitmap_load is called
-multiple times.  It is only written to be called once; otherwise, it allocates
-new memory for the bitmap (without freeing the old) and incrementing the number
-of pages it thinks it has without zeroing first.  This ultimately leads to
-access beyond allocated memory and lost memory.
-
-Simply avoiding the bitmap_load call upon resume is not sufficient.  If the
-target was suspended while the initial recovery was only partially complete,
-it needs to be restarted when the target is resumed.  This is why
-'md_wakeup_thread' is called on the before issuing the 'mddev_resume'.
-
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-
-Index: linux-upstream/drivers/md/dm-raid.c
-===================================================================
---- linux-upstream.orig/drivers/md/dm-raid.c
-+++ linux-upstream/drivers/md/dm-raid.c
-@@ -56,7 +56,8 @@ struct raid_dev {
- struct raid_set {
- 	struct dm_target *ti;
- 
--	uint64_t print_flags;
-+	uint32_t bitmap_loaded;
-+	uint32_t print_flags;
- 
- 	struct mddev md;
- 	struct raid_type *raid_type;
-@@ -1135,7 +1136,7 @@ static int raid_status(struct dm_target 
- 				raid_param_cnt += 2;
- 		}
- 
--		raid_param_cnt += (hweight64(rs->print_flags & ~DMPF_REBUILD) * 2);
-+		raid_param_cnt += (hweight32(rs->print_flags & ~DMPF_REBUILD) * 2);
- 		if (rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC))
- 			raid_param_cnt--;
- 
-@@ -1247,7 +1248,12 @@ static void raid_resume(struct dm_target
- {
- 	struct raid_set *rs = ti->private;
- 
--	bitmap_load(&rs->md);
-+	if (!rs->bitmap_loaded) {
-+		bitmap_load(&rs->md);
-+		rs->bitmap_loaded = 1;
-+	} else
-+		md_wakeup_thread(rs->md.thread);
-+
- 	mddev_resume(&rs->md);
- }
- 
+- Joe
 
 
+[1] https://github.com/jthornber/thinp-test-suite
