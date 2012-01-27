@@ -1,53 +1,84 @@
-From: Ted Ts'o <tytso@mit.edu>
-Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
-Date: Fri, 27 Jan 2012 12:03:50 -0500
-Message-ID: <20120127170350.GA10479@thunk.org>
-References: <20120124190732.GH4387@shiny>
- <x49vco0kj5l.fsf@segfault.boston.devel.redhat.com>
- <20120124200932.GB20650@quack.suse.cz>
- <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com>
- <20120124203936.GC20650@quack.suse.cz>
- <20120125032932.GA7150@localhost>
- <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
- <20120125063552.GA27375@localhost>
- <20120125140048.GC32361@quack.suse.cz>
- <5B229F2F-4B0D-4AC1-A726-9E0CC8CE5FBE@dilger.ca>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: dd to a striped device with 9 disks gets much lower
+ throughput when oflag=direct used
+Date: Fri, 27 Jan 2012 18:24:26 +0100
+Message-ID: <4F22DDCA.4000201@redhat.com>
+References: <CACyXjPzWjBz0=btbL0Gx_qoxRQs7wy9m=dY1--xL29uszTpmFA@mail.gmail.com>
+	<20120127085226.GA16520@infradead.org>
+	<CACyXjPz1mKXtCnRnzVDotOES9QaD0kLKBP_r_GWe_FrgZq0g3g@mail.gmail.com>
+	<4F22BFBC.1000709@redhat.com>
+	<CACyXjPw0a8EhCSz=9tr4VN5r55c3L3jexpH3eCuWxnm+7MAQFg@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5B229F2F-4B0D-4AC1-A726-9E0CC8CE5FBE@dilger.ca>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: Wu Fengguang <fengguang.wu@gmail.com>, Jan Kara <jack@suse.cz>, Jeff Moyer <jmoyer@redhat.com>, Andrea Arcangeli <aarcange@redhat.com>, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, "neilb@suse.de Brown" <neilb@suse.de>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com development" <dm-devel@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org Devel" <linux-fsdevel@vger.kernel.org>, lsf-pc@lists.linux-foundation.org, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CACyXjPw0a8EhCSz=9tr4VN5r55c3L3jexpH3eCuWxnm+7MAQFg@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 26, 2012 at 05:29:03AM -0700, Andreas Dilger wrote:
-> 
-> Ext4 will also align IO to 1MB boundaries (from the start of
-> LUN/partition) by default.  If the mke2fs code detects the
-> underlying RAID geometry (or the sysadmin sets this manually with
-> tune2fs) it will store this in the superblock for the allocator to
-> pick a better alignment.
+Dne 27.1.2012 16:28, Richard Sharpe napsal(a):
+> On Fri, Jan 27, 2012 at 7:16 AM, Zdenek Kabelac<zkabelac@redhat.com>  wrote:
+>> Dne 27.1.2012 16:03, Richard Sharpe napsal(a):
+>>
+>>> On Fri, Jan 27, 2012 at 12:52 AM, Christoph Hellwig<hch@infradead.org>
+>>>   wrote:
+>>>>
+>>>> On Thu, Jan 26, 2012 at 05:06:42PM -0800, Richard Sharpe wrote:
+>>>>>
+>>>>> Why do I see such a big performance difference? Does writing to the
+>>>>> device also use the page cache if I don't specify DIRECT IO?
+>>>>
+>>>>
+>>>> Yes.  Trying adding conv=fdatasync to both versions to get more
+>>>> realistic results.
+>>>
+>>>
+>>> Thank you for that advice. I am comparing btrfs vs rolling my own
+>>> thing using the new dm thin-provisioning approach to get something
+>>> with resilient metadata, but I need to support two different types of
+>>> IO, one that uses directio and one that can take advantage of the page
+>>> cache.
+>>>
+>>> So far, btrfs gives me around 800MB/s with a similar setup (can't get
+>>> exactly the same setup) without DIRECTIO and 450MB/s with DIRECTIO. a
+>>> dm striped setup is giving me about 10% better throughput without
+>>> DIRECTIO but only about 45% of the performance with DIRECTIO.
+>>>
+>>
+>> You've mentioned you are using thinp device with stripping - do you have
+>> stripes properly aligned on data-block-size of thinp device ?
+>> (I think 9 disks are properly quite hard to align somehow on 3.2 kernel,
+>> since data block size needs to be power of 2 - I think 3.3 will have this
+>> relaxed to page size boundary.
+>
+> Actually, so far I have not used any thinp devices, since from reading
+> the documentation it seemed that, for what I am doing, I need to give
+> thinp a mirrored device for its metadata and a striped device for its
+> data, so I thought I would try just a striped device.
+>
+> Actually, I can cut that back to 8 devices in the stripe. I am using
+> 4kiB block sizes and writing 256kiB blocks in the dd requests and
+> there is no parity involved so there should be no read-modify-write
+> cycles.
+>
+> I imagine that if I push the write sizes up to a MB or more at a time
+> throughput will get better because at the moment each device is being
+> given 32kIB or 16kiB (a few devices) with DIRECTIO and with a larger
+> write size they will get more data at a time.
+>
 
-(Still in Hawaii on vacation, but picked this up while I was quickly
-scanning through e-mail.)
+Well I cannot tell how big influence proper alignment has in your case, but it 
+would be good to measure it in your case.
+Do you use data_block_size equal to stripe size (256KiB 512blocks ?)
 
-This is true only if you're using the special (non-upstream'ed) Lustre
-interfaces for writing Lustre objects.  The writepages interface
-doesn't have all of the necessary smarts to do the right thing.  It's
-been on my todo list to look at, but I've been mostly concentrated on
-single disk file systems since that's what we use at Google.  (GFS can
-scale to many many file systems and servers, and avoiding RAID means
-fast FSCK recoveries, simplifying things since we don't have to worry
-about RAID-related failures, etc.)
-
-Eventually I'd like ext4 to handle RAID better, but unless you're
-forced to support really large files, I've come around to believing
-that n=3 replication or Reed-Solomon encoding across multiple servers
-is a much better way of achieving data robustness, so it's just not
-been high on my list of priorities.  I'm much more interested in
-making sure ext4 works well under high memory pressure, and other
-cloud-related issues.
-
-							- Ted
+Zdenek
