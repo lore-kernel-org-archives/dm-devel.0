@@ -1,79 +1,56 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
-Date: Fri, 27 Jan 2012 09:38:01 +1100
-Message-ID: <20120126223801.GA15102@dastard>
-References: <20120124203936.GC20650@quack.suse.cz>
- <20120125032932.GA7150@localhost>
- <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
- <1327502034.2720.23.camel@menhir>
- <D3F292ADF945FB49B35E96C94C2061B915A638A6@nsmail.netscout.com>
- <1327509623.2720.52.camel@menhir>
- <1327512727.2776.52.camel@dabdike.int.hansenpartnership.com>
- <D3F292ADF945FB49B35E96C94C2061B915A63A30@nsmail.netscout.com>
- <1327516668.7168.7.camel@dabdike.int.hansenpartnership.com>
- <20120125200613.GH15866@shiny>
+From: Richard Sharpe <realrichardsharpe@gmail.com>
+Subject: dd to a striped device with 9 disks gets much lower
+ throughput when oflag=direct used
+Date: Thu, 26 Jan 2012 17:06:42 -0800
+Message-ID: <CACyXjPzWjBz0=btbL0Gx_qoxRQs7wy9m=dY1--xL29uszTpmFA@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120125200613.GH15866@shiny>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Chris Mason <chris.mason@oracle.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, "Loke, Chetan" <Chetan.Loke@netscout.com>, Steven Whitehouse <swhiteho@redhat.com>, Andreas Dilger <adilger@dilger.ca>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, Christoph Hellwig <hch@infradead.org>, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Wu Fengguang <fengguang.wu@gmail.com>, Boaz Harrosh <bharrosh@panasas.com>, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J.Wong" <djwong@us.ibm.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jan 25, 2012 at 03:06:13PM -0500, Chris Mason wrote:
-> On Wed, Jan 25, 2012 at 12:37:48PM -0600, James Bottomley wrote:
-> > On Wed, 2012-01-25 at 13:28 -0500, Loke, Chetan wrote:
-> > > > So there are two separate problems mentioned here.  The first is to
-> > > > ensure that readahead (RA) pages are treated as more disposable than
-> > > > accessed pages under memory pressure and then to derive a statistic for
-> > > > futile RA (those pages that were read in but never accessed).
-> > > > 
-> > > > The first sounds really like its an LRU thing rather than adding yet
-> > > > another page flag.  We need a position in the LRU list for never
-> > > > accessed ... that way they're first to be evicted as memory pressure
-> > > > rises.
-> > > > 
-> > > > The second is you can derive this futile readahead statistic from the
-> > > > LRU position of unaccessed pages ... you could keep this globally.
-> > > > 
-> > > > Now the problem: if you trash all unaccessed RA pages first, you end up
-> > > > with the situation of say playing a movie under moderate memory
-> > > > pressure that we do RA, then trash the RA page then have to re-read to display
-> > > > to the user resulting in an undesirable uptick in read I/O.
-> > > > 
-> > > > Based on the above, it sounds like a better heuristic would be to evict
-> > > > accessed clean pages at the top of the LRU list before unaccessed clean
-> > > > pages because the expectation is that the unaccessed clean pages will
-> > > > be accessed (that's after all, why we did the readahead).  As RA pages age
-> > > 
-> > > Well, the movie example is one case where evicting unaccessed page may not be the right thing to do. But what about a workload that perform a random one-shot search?
-> > > The search was done and the RA'd blocks are of no use anymore. So it seems one solution would hurt another.
-> > 
-> > Well not really: RA is always wrong for random reads.  The whole purpose
-> > of RA is assumption of sequential access patterns.
-> 
-> Just to jump back, Jeff's benchmark that started this (on xfs and ext4):
-> 
-> 	- buffered 1MB reads get down to the scheduler in 128KB chunks
-> 
-> The really hard part about readahead is that you don't know what
-> userland wants.  In Jeff's test, he's telling the kernel he wants 1MB
-> ios and our RA engine is doing 128KB ios.
-> 
-> We can talk about scaling up how big the RA windows get on their own,
-> but if userland asks for 1MB, we don't have to worry about futile RA, we
-> just have to make sure we don't oom the box trying to honor 1MB reads
-> from 5000 different procs.
+Hi,
 
-Right - if we know the read request is larger than the RA window,
-then we should ignore the RA window and just service the request in
-a single bio. Well, at least, in chunks as large as the underlying
-device will allow us to build....
+Perhaps I am doing something stupid, but I would like to understand
+why there is a difference in the following situation.
 
-Cheers,
+I have defined a stripe device thusly:
 
-Dave.
+     "echo 0 17560535040 striped 9 8 /dev/sdd 0 /dev/sde 0 /dev/sdf 0
+/dev/sdg 0 /dev/sdh 0 /dev/sdi 0 /dev/sdj 0 /dev/sdk 0 /dev/sdl 0 |
+dmsetup create stripe_dev"
+
+Then is did the following:
+
+    dd if=/dev/zero of=/dev/mapper/stripe_dev bs=262144 count=1000000
+
+and I got 880 MB/s
+
+However, when I changed that command to:
+
+    dd if=/dev/zero of=/dev/mapper/stripe_dev bs=262144 count=1000000
+oflag=direct
+
+I get 210 MB/s reliably.
+
+The system in question is a 16 core (probably two CPUs) Intel Xeon
+E5620 @2.40Ghz with 64GB of memory and 12 7200PRM SATA drives
+connected to an LSI SAS controller but set up as a JBOD of 12 drives.
+
+Why do I see such a big performance difference? Does writing to the
+device also use the page cache if I don't specify DIRECT IO?
+
 -- 
-Dave Chinner
-david@fromorbit.com
+Regards,
+Richard Sharpe
