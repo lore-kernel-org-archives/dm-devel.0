@@ -1,50 +1,82 @@
-From: Andreas Dilger <adilger@dilger.ca>
-Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
-Date: Thu, 26 Jan 2012 22:25:33 -0700
-Message-ID: <20C51818-5C53-4417-B62A-AD7C020CE283@dilger.ca>
-References: <20120124190732.GH4387@shiny> <x49vco0kj5l.fsf@segfault.boston.devel.redhat.com> <20120124200932.GB20650@quack.suse.cz> <x49pqe8kgej.fsf@segfault.boston.devel.redhat.com> <20120124203936.GC20650@quack.suse.cz> <20120125032932.GA7150@localhost> <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca> <20120125063552.GA27375@localhost> <20120126162555.GF1891@redhat.com> <20120126223449.GZ15102@dastard> <20120127032734.GA16980@localhost>
-Mime-Version: 1.0 (Apple Message framework v1084)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20120127032734.GA16980@localhost>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Wu Fengguang <fengguang.wu@gmail.com>
-Cc: Dave Chinner <david@fromorbit.com>, Vivek Goyal <vgoyal@redhat.com>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, "neilb@suse.de" <neilb@suse.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@infradead.org>, Jeff Moyer <jmoyer@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>, Chris Mason <chris.mason@oracle.com>, "Darrick J.Wong" <djwong@us.ibm.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: dd to a striped device with 9 disks gets much lower
+ throughput when oflag=direct used
+Date: Fri, 27 Jan 2012 07:54:47 +0100
+Message-ID: <4F224A37.2090308@suse.de>
+References: <CACyXjPzWjBz0=btbL0Gx_qoxRQs7wy9m=dY1--xL29uszTpmFA@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CACyXjPzWjBz0=btbL0Gx_qoxRQs7wy9m=dY1--xL29uszTpmFA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2012-01-26, at 8:27 PM, Wu Fengguang wrote:
-> On Fri, Jan 27, 2012 at 09:34:49AM +1100, Dave Chinner wrote:
->> On Thu, Jan 26, 2012 at 11:25:56AM -0500, Vivek Goyal wrote:
->>> On Wed, Jan 25, 2012 at 02:35:52PM +0800, Wu Fengguang wrote:
->>>>> It would also be
->>>>> possible to trigger on the size of the device so that the 32MB USB stick
->>>>> doesn't sit busy for a minute with readahead that is useless.
->>>> 
->>>> Yeah, I do have a patch for shrinking readahead size based on device size.
->>> 
->>> Should it be a udev rule to change read_ahead_kb on device based on device
->>> size, instead of a kernel patch?
->> 
->> That's effectively what vendors like SGI have been doing since udev
->> was first introduced, though more often the rules are based on device
->> type rather than size. e.g. a 64GB device might be a USB flash drive
->> now, but a 40GB device might be a really fast SSD....
-> 
-> Fair enough. I'll drop this kernel policy patch 
-> 
->        block: limit default readahead size for small devices
->        https://lkml.org/lkml/2011/12/19/89
+On 01/27/2012 02:06 AM, Richard Sharpe wrote:
+> Hi,
+> =
 
-Fengguang,
-Doesn't the kernel derive at least some idea of the speed of a device
-due to the writeback changes that you made?  It would be very useful
-if we could derive at least some rough metric for the device performance
-in the kernel and use that as input to the readahead window size as well.
+> Perhaps I am doing something stupid, but I would like to understand
+> why there is a difference in the following situation.
+> =
 
-Cheers, Andreas
+> I have defined a stripe device thusly:
+> =
 
+>      "echo 0 17560535040 striped 9 8 /dev/sdd 0 /dev/sde 0 /dev/sdf 0
+> /dev/sdg 0 /dev/sdh 0 /dev/sdi 0 /dev/sdj 0 /dev/sdk 0 /dev/sdl 0 |
+> dmsetup create stripe_dev"
+> =
 
+> Then is did the following:
+> =
 
+>     dd if=3D/dev/zero of=3D/dev/mapper/stripe_dev bs=3D262144 count=3D100=
+0000
+> =
 
+> and I got 880 MB/s
+> =
 
+> However, when I changed that command to:
+> =
+
+>     dd if=3D/dev/zero of=3D/dev/mapper/stripe_dev bs=3D262144 count=3D100=
+0000
+> oflag=3Ddirect
+> =
+
+> I get 210 MB/s reliably.
+> =
+
+> The system in question is a 16 core (probably two CPUs) Intel Xeon
+> E5620 @2.40Ghz with 64GB of memory and 12 7200PRM SATA drives
+> connected to an LSI SAS controller but set up as a JBOD of 12 drives.
+> =
+
+> Why do I see such a big performance difference? Does writing to the
+> device also use the page cache if I don't specify DIRECT IO?
+> =
+
+Yes. All I/O using read/write calls is going via the pagecache.
+The only way to circumvent this is to use DIRECT_IO.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
