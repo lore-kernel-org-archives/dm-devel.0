@@ -1,87 +1,96 @@
-From: Jagan Reddy <gjmsreddy@yahoo.com>
-Subject: Re: dm-thin vs lvm performance
-Date: Sat, 28 Jan 2012 10:54:30 -0800 (PST)
-Message-ID: <1327776870.41511.YahooMailNeo@web36406.mail.mud.yahoo.com>
-References: <1326416116.56981.YahooMailNeo@web36404.mail.mud.yahoo.com>
-	<20120116124158.GA4426@ubuntu>
-	<1326915054.99335.YahooMailNeo@web36407.mail.mud.yahoo.com>
-	<20120120170335.GA10518@ubuntu> <20120120173333.GA12920@ubuntu>
-	<20120120180721.GB12920@ubuntu>
-	<1327093568.21183.YahooMailNeo@web36404.mail.mud.yahoo.com>
-	<20120122202429.GA27507@ubuntu>
-	<1327449515.67553.YahooMailNeo@web36401.mail.mud.yahoo.com>
-	<20120127145801.GA26730@ubuntu>
-Reply-To: Jagan Reddy <gjmsreddy@yahoo.com>,
-        device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4558334492285056562=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120127145801.GA26730@ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>
+From: Namhyung Kim <namhyung@gmail.com>
+Subject: [PATCH] block: add missing block_bio_complete() tracepoint
+Date: Sun, 29 Jan 2012 18:41:33 +0900
+Message-ID: <1327830093-12130-1-git-send-email-namhyung@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============4558334492285056562==
-Content-Type: multipart/alternative;
-	boundary="-2114655128-1752405002-1327776870=:41511"
+The block_bio_complete() TP has been missed so long, so that bio-based
+drivers haven't been able to trace its IO behavior. Add it.
 
----2114655128-1752405002-1327776870=:41511
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+In some rare cases, such as loop_switch, @bio->bi_bdev can be NULL.
+Thus convert it to TRACE_EVENT_CONDITION() as Steven suggested.
 
-Hi Joe,=0A=A0sure. I will try the test next week and report the results.=0A=
-=0AThanks,=0AJagan.=0A=0A=0A________________________________=0A From: Joe T=
-hornber <thornber@redhat.com>=0ATo: Jagan Reddy <gjmsreddy@yahoo.com>; devi=
-ce-mapper development <dm-devel@redhat.com> =0ASent: Friday, January 27, 20=
-12 6:58 AM=0ASubject: Re: [dm-devel] dm-thin vs lvm performance=0A =0AOn Tu=
-e, Jan 24, 2012 at 03:58:35PM -0800, Jagan Reddy wrote:=0A> Joe,=0A> =A0I w=
-as running more tests to get more data.=0A=0ACould I trouble you to grab my=
- test suite [1], add your machine to the=0Aconfig.rb file and then:=0A=0A=
-=A0 =A0 =A0 ./run_tests -t /RamDisk/=0A=0Aand see if those results are diff=
-erent too please?=0A=0A- Joe=0A=0A=0A[1] https://github.com/jthornber/thinp=
--test-suite
----2114655128-1752405002-1327776870=:41511
-Content-Type: text/html; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+From now on, request-based drivers will also get BLK_TA_COMPLETEs for
+all bio's in requests. This needs to be handled in userland properly.
 
-<html><body><div style=3D"color:#000; background-color:#fff; font-family:ar=
-ial, helvetica, sans-serif;font-size:12pt"><div><span>Hi Joe,</span></div><=
-div><span>&nbsp;sure. I will try the test next week and report the results.=
-</span></div><div><span><br></span></div><div>Thanks,</div><div>Jagan.</div=
-><div><br></div>  <div style=3D"font-size: 12pt; font-family: arial, helvet=
-ica, sans-serif; "> <div style=3D"font-size: 12pt; font-family: 'times new =
-roman', 'new york', times, serif; "> <div dir=3D"ltr"> <font size=3D"2" fac=
-e=3D"Arial"> <hr size=3D"1">  <b><span style=3D"font-weight:bold;">From:</s=
-pan></b> Joe Thornber &lt;thornber@redhat.com&gt;<br> <b><span style=3D"fon=
-t-weight: bold;">To:</span></b> Jagan Reddy &lt;gjmsreddy@yahoo.com&gt;; de=
-vice-mapper development &lt;dm-devel@redhat.com&gt; <br> <b><span style=3D"=
-font-weight: bold;">Sent:</span></b> Friday, January 27, 2012 6:58 AM<br> <=
-b><span style=3D"font-weight: bold;">Subject:</span></b> Re: [dm-devel] dm-=
-thin vs lvm
- performance<br> </font> </div> <br>=0AOn Tue, Jan 24, 2012 at 03:58:35PM -=
-0800, Jagan Reddy wrote:<br>&gt; Joe,<br>&gt; &nbsp;I was running more test=
-s to get more data.<br><br>Could I trouble you to grab my test suite [1], a=
-dd your machine to the<br>config.rb file and then:<br><br>&nbsp; &nbsp; &nb=
-sp; ./run_tests -t /RamDisk/<br><br>and see if those results are different =
-too please?<br><br>- Joe<br><br><br>[1] <a href=3D"https://github.com/jthor=
-nber/thinp-test-suite" target=3D"_blank">https://github.com/jthornber/thinp=
--test-suite</a><br><br><br> </div> </div>  </div></body></html>
----2114655128-1752405002-1327776870=:41511--
+Also remove external use of the TP in DM and unexport it.
 
+Signed-off-by: Namhyung Kim <namhyung@gmail.com>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: dm-devel@redhat.com
+---
+* v2:
+ - Merge previous patches into one as suggested by Tejun.
+ - Drop BIO_COMPLETE_MASK. Now I think it should be handled in userland
+   like other (maybe duplicated, in some sense) bio complete reports.
 
---===============4558334492285056562==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+ block/blk-core.c             |    1 -
+ drivers/md/dm.c              |    1 -
+ fs/bio.c                     |    2 ++
+ include/trace/events/block.h |    4 +++-
+ 4 files changed, 5 insertions(+), 3 deletions(-)
 
-
---===============4558334492285056562==--
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 1b4fd93af2c0..399c128f516c 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -37,7 +37,6 @@
+ 
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ 
+ DEFINE_IDA(blk_queue_ida);
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4720f68f817e..01185fa0eb74 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -648,7 +648,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+diff --git a/fs/bio.c b/fs/bio.c
+index b1fe82cf88cf..14c03eaf384e 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -1447,6 +1447,8 @@ void bio_endio(struct bio *bio, int error)
+ 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+ 		error = -EIO;
+ 
++	trace_block_bio_complete(bdev_get_queue(bio->bi_bdev), bio, error);
++
+ 	if (bio->bi_end_io)
+ 		bio->bi_end_io(bio, error);
+ }
+diff --git a/include/trace/events/block.h b/include/trace/events/block.h
+index 05c5e61f0a7c..96955f4828b3 100644
+--- a/include/trace/events/block.h
++++ b/include/trace/events/block.h
+@@ -213,12 +213,14 @@ TRACE_EVENT(block_bio_bounce,
+  * This tracepoint indicates there is no further work to do on this
+  * block IO operation @bio.
+  */
+-TRACE_EVENT(block_bio_complete,
++TRACE_EVENT_CONDITION(block_bio_complete,
+ 
+ 	TP_PROTO(struct request_queue *q, struct bio *bio, int error),
+ 
+ 	TP_ARGS(q, bio, error),
+ 
++	TP_CONDITION(bio->bi_bdev != NULL),
++
+ 	TP_STRUCT__entry(
+ 		__field( dev_t,		dev		)
+ 		__field( sector_t,	sector		)
+-- 
+1.7.8.2
