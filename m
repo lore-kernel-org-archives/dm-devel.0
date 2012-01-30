@@ -1,43 +1,99 @@
-From: Namhyung Kim <namhyung@gmail.com>
-Subject: Re: [PATCH] block: add missing block_bio_complete() tracepoint
-Date: Mon, 30 Jan 2012 15:02:19 +0900
-Message-ID: <4F26326B.5010806@gmail.com>
-References: <1327830093-12130-1-git-send-email-namhyung@gmail.com> <20120129192447.GB17211@htj.dyndns.org> <4F25F5F3.6060507@gmail.com> <20120130014703.GG17211@htj.dyndns.org> <4F25FEE5.5010309@gmail.com> <20120130023012.GH17211@htj.dyndns.org> <4F260547.1030405@gmail.com> <20120130025326.GI17211@htj.dyndns.org> <4F262FEF.9020406@gmail.com> <20120130055459.GJ17211@htj.dyndns.org>
+From: Kirby Zhou <kirbyzhou@sogou-inc.com>
+Subject: =?gb2312?b?tPC4tDogIE5ldyBMVk0yIHJlbGVhc2UgMi4wMi44?=
+ =?gb2312?b?OTogVGhpbmx5LXByb3Zpc2lvbmVkIGxvZ2ljYWwJdm9sdW1lcw==?=
+Date: Mon, 30 Jan 2012 06:29:54 +0000
+Message-ID: <A0D9F519724C4648B433C8FA859E3EBB7CD0390C@EX01.sogou-inc.com>
+References: <20120127025701.GB16767@agk-dp.fab.redhat.com>
+Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120130055459.GJ17211@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
+Return-path: <linux-lvm-bounces@redhat.com>
+In-Reply-To: <20120127025701.GB16767@agk-dp.fab.redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-lvm>
+List-Post: <mailto:linux-lvm@redhat.com>
+List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
+Sender: linux-lvm-bounces@redhat.com
+Errors-To: linux-lvm-bounces@redhat.com
+To: "lvm-devel@redhat.com" <lvm-devel@redhat.com>, LVM general discussion and development <linux-lvm@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-2012-01-30 2:54 PM, Tejun Heo wrote:
-> On Mon, Jan 30, 2012 at 02:51:43PM +0900, Namhyung Kim wrote:
->> Hi,
->>
->> 2012-01-30 11:53 AM, Tejun Heo wrote:
->>> Hello,
->>>
->>> On Mon, Jan 30, 2012 at 11:49:43 AM +0900, Namhyung Kim wrote:
->>>> Yes, blktrace will see both of completions for rq and bio's it
->>>> contains from now on, and I thought it's your intention? For the
->>>> bounced bio's, it'll see one more completion per bio.
->>>
->>> Umm... no, blktrace users shouldn't see confusing outputs.  My point
->>> was that we should leave raw tracepoints as raw monitor points so that
->>> they can provide raw data to different users and filter from
->>> blktrace.c so that the existing users aren't disturbed.
->>>
->>
->> That means blktrace should not be changed, and not see duplicated
->> completions for rq based drivers at all?
->
-> Yeap
->
-
-I see. I'll prepare the patch soon.
-
-Thanks,
-Namhyung
+Q2FuIHRoZSB0aGlubHktcHJvdmlzaW9uZWQgbG9naWNhbCB2b2x1bWUgYXV0b21hdGljYWxseSBy
+ZXR1cm4gaXRzIG93bmVkIHNwYWNlIHRvIHRoZSBwb29sPwpJIG1lYW4sIGlmIEkgY3JlYXRlIGEg
+aHVnZSBmaWxlIG9uIHRoZSBsb2dpY2FsIHZvbHVtZSwgdGhlbiBkZWxldGUgaXQsIHdpbGwgdGhl
+IGxvZ2ljYWwgdm9sdW1lIGFjdHVhbCBzcGFjZSBzaXplIGJlIHJlZHVjZWQgYXV0b21hdGljYWxs
+eT8KSWYgbm90LCBob3cgY2FuIGl0IGJlIHNocmlua2VkPwoKClJlZ2FyZHMKS2lyYnkgWmhvdQor
+ODYgKDEwKSA2MjcyIDgyNjEKCi0tLS0t08q8/tStvP4tLS0tLQq3orz+yMs6IGxpbnV4LWx2bS1i
+b3VuY2VzQHJlZGhhdC5jb20gW21haWx0bzpsaW51eC1sdm0tYm91bmNlc0ByZWRoYXQuY29tXSC0
++rHtIEFsYXNkYWlyIEcgS2VyZ29uCreiy83KsbzkOiAyMDEyxOox1MIyN8jVIDEwOjU3CsrVvP7I
+yzogbHZtLWRldmVsQHJlZGhhdC5jb207IGxpbnV4LWx2bUByZWRoYXQuY29tOyBkbS1kZXZlbEBy
+ZWRoYXQuY29tCtb3zOI6IFtsaW51eC1sdm1dIE5ldyBMVk0yIHJlbGVhc2UgMi4wMi44OTogVGhp
+bmx5LXByb3Zpc2lvbmVkIGxvZ2ljYWwgdm9sdW1lcwoKQWZ0ZXIgYSBsb25nIGJyZWFrLCB3ZSd2
+ZSBpc3N1ZWQgYSBuZXcgTFZNMiByZWxlYXNlLCAyLjAyLjg5LgoKIDM5NCBmaWxlcyBjaGFuZ2Vk
+LCAyMjY2MiBpbnNlcnRpb25zKCspLCAxMTYxNCBkZWxldGlvbnMoLSkKClRoaXMgcmVsZWFzZSBp
+bmNsdWRlcyBleHBlcmltZW50YWwgc3VwcG9ydCBmb3IgdGhpbmx5LXByb3Zpc2lvbmVkIGxvZ2lj
+YWwgdm9sdW1lcyB1c2luZyB0aGUgbmV3IGRldmljZS1tYXBwZXIgdGhpbiBwcm92aXNpb25pbmcg
+dGFyZ2V0IGluIGtlcm5lbCAzLjIuCgpUaGlzIGlzIHN0aWxsIGEgKmRldmVsb3BtZW50KiByZWxl
+YXNlIGFuZCB0aGUgbmV3IGZlYXR1cmUgaXMgbm90IHN1cHBvcnRlZCBieSBhbGwgdGhlIExWTSBj
+b21tYW5kcyB5ZXQuCgpUaGUgdmFyaW91cyBpbnRlcmZhY2UgZXh0ZW5zaW9ucyBmb3IgdGhpbiBw
+cm92aXNpb25pbmcgYXJlIG5vdCBmcm96ZW4uClNvIHdlIG1pZ2h0IHN0aWxsIGRlY2lkZSB0byB0
+d2VhayB0aGUgY29tbWFuZCBsaW5lIGV4dGVuc2lvbnMsIGxpYnJhcnkgZnVuY3Rpb25zLCBvbi1k
+aXNrIG1ldGFkYXRhIGV4dGVuc2lvbnMsIHRvb2wgb3V0cHV0LCBjb25maWd1cmF0aW9uIG9wdGlv
+bnMgZXRjLiBpbiB3YXlzIHRoYXQgbWFrZSBsYXRlciByZWxlYXNlcyBpbmNvbXBhdGlibGUgd2l0
+aCB0aGlzIHBhcnRpY3VsYXIgcmVsZWFzZS4KClBsZWFzZSB0cnkgaXQgb3V0LCB0ZXN0IGl0LCBh
+bmQgZ2l2ZSB1cyBmZWVkYmFjayBwcmVmZXJhYmx5IG9uIHRoZSBtYWlsaW5nIGxpc3QgbHZtLWRl
+dmVsQHJlZGhhdC5jb20uCgogIGZ0cDovL3NvdXJjZXMucmVkaGF0LmNvbS9wdWIvbHZtMi9XSEFU
+U19ORVcKICBmdHA6Ly9zb3VyY2VzLnJlZGhhdC5jb20vcHViL2x2bTIvV0hBVFNfTkVXX0RNCgog
+IGZ0cDovL3NvdXJjZXMucmVkaGF0LmNvbS9wdWIvbHZtMi9MVk0yLjIuMDIuODkudGd6CiAgZnRw
+Oi8vc291cmNlcy5yZWRoYXQuY29tL3B1Yi9sdm0yL0xWTTIuMi4wMi44OS50Z3ouYXNjCgoKR2V0
+dGluZyBzdGFydGVkCi0tLS0tLS0tLS0tLS0tLQoKRW5zdXJlIHlvdXIga2VybmVsIGlzIGF0IGxl
+YXN0IHZlcnNpb24gMy4yIGFuZCBjb21waWxlZCB3aXRoIERNX1RISU5fUFJPVklTSU9OSU5HLgoK
+QWRkICctLXdpdGgtdGhpbj1pbnRlcm5hbCcgdG8geW91ciBjb25maWd1cmUgbGluZS4KWW91IHNo
+b3VsZCBoYXZlIC0tZW5hYmxlLWRtZXZlbnRkIHRvbyBhbmQgaW5zdGFsbCBkbWV2ZW50ZCBmb3Ig
+YXV0b21hdGljIGV4dGVuc2lvbiBvZiBuZWFybHktZnVsbCB0aGluIHZvbHVtZXMuCgpGZWRvcmEg
+dXNlcnMgbWF5IHVzZSB0aGlzIHBhY2thZ2U6CiAgbHZtMi0yLjAyLjg5LTIuZmMxNwogIGh0dHA6
+Ly9rb2ppLmZlZG9yYXByb2plY3Qub3JnL2tvamkvYnVpbGRpbmZvP2J1aWxkSUQ9Mjk1OTY1CiAg
+KG9yIGEgbmV3ZXIgb25lLCBpZiB3ZSByZWJ1aWxkIGl0KQoKClRoZSBiYXNpYyBpZGVhCi0tLS0t
+LS0tLS0tLS0tCllvdSBjcmVhdGUgYSBsb2dpY2FsIHZvbHVtZSBrbm93biBhcyB0aGUgInRoaW4g
+cG9vbCIgdG8gaG9sZCB0aGUgZGlzayBzcGFjZSB5b3Ugd2FudCB0byB1c2UgaW5zaWRlIHlvdXIg
+dm9sdW1lIGdyb3VwLgoKVGhlbiB5b3UgY3JlYXRlICJ0aGluIiBsb2dpY2FsIHZvbHVtZXMgd2hp
+Y2ggc2hhcmUgdGhlIHNwYWNlIGluIHRoYXQgcG9vbC4KCmx2cyBhbmQgbHZkaXNwbGF5IHdpbGwg
+dGVsbCB5b3UgImhvdyBmdWxsIiB5b3VyIHBvb2wgaXMuCgpkbWV2ZW50ZCB3aWxsIG1vbml0b3Ig
+aG93IGZ1bGwgeW91ciBwb29sIGlzLCBhbmQgYXV0b21hdGljYWxseSB1c2UgdW5hbGxvY2F0ZWQg
+cGh5c2ljYWwgZXh0ZW50cyB0byBleHRlbmQgaXQgYWNjb3JkaW5nIHRvIHRoZSBwb2xpY3kgaW4g
+bHZtLmNvbmYuICBEbyBub3QgYWxsb3cgeW91ciBwb29sIHRvIGZpbGwgdXAhCgpZb3UgY2FuIGFs
+c28gdGFrZSBzbmFwc2hvdHMgb2YgdGhpbiB2b2x1bWVzLgoKVGhlcmUgYXJlIGJhc2ljIGV4YW1w
+bGVzIGluIHRoZSBtYW4gcGFnZXMsIGFuZCBzb3BoaXN0aWNhdGVkIGV4YW1wbGVzIGluIHRoZSB0
+ZXN0IHNjcmlwdHMgKGUuZy4gdGVzdC9zaGVsbC9sdmNyZWF0ZS10aGluLnNoKS4KCldpdGggbHZj
+cmVhdGUsIHRoaW5rIG9mIC1MIGFzIGNvbnRyb2xsaW5nIGFjdHVhbCBkaXNrIHNwYWNlIGFuZCAt
+ViBhcyBjb250cm9sbGluZyB2aXJ0dWFsIHNpemUuICAtVCBpcyBhIHNob3J0LWN1dCBpbmRpY2F0
+aW5nIHRoZSB1c2Ugb2Ygc29tZXRoaW5nIHRoaW4uICBJZiBub3Qgc3BlY2lmaWVkLCB2b2x1bWUg
+bmFtZXMgKGxpa2UgbHZvbDApIGFyZSBnZW5lcmF0ZWQgd2hlbmV2ZXIgbmVlZGVkLgoKQ3JlYXRp
+bmcgYSBwb29sIG5lZWRzIGFjdHVhbCBkaXNrIHNwYWNlLCBzbyB1c2UgLUwuCkNyZWF0aW5nIGEg
+dGhpbiB2b2x1bWUgdXNlIHZpcnR1YWwgc3BhY2UsIHNvIHVzZSAtVi4KCllvdSBjYW4gaGF2ZSBt
+b3JlIHRoYW4gb25lIHBvb2wgaW4gYSBWRywgc28gdG8gdXNlIGFuIGV4aXN0aW5nIG9uZSB5b3Ug
+bXVzdCBtZW50aW9uIHdoaWNoIGl0IGlzIG9uIHRoZSBjb21tYW5kIGxpbmUuCgooT2YgY291cnNl
+LCB3ZSB3aWxsIGJlIHByb2R1Y2luZyBhZGRpdGlvbmFsIGRvY3VtZW50YXRpb24gZXZlbnR1YWxs
+eS4pCgpDb21tYW5kcyB0aGF0IHNob3VsZCBtb3N0bHkgd29yayB3aXRoIHRoaW4gdm9sdW1lcyBh
+dCB0aGlzIHN0YWdlOgoKICBsdmNyZWF0ZSwgbHZyZW1vdmUsIGx2cmVzaXplLCBsdmV4dGVuZCwg
+bHZyZWR1Y2UsIGx2Y2hhbmdlLCBsdmRpc3BsYXksIGx2cwogIHZnc2NhbiwgdmdkaXNwbGF5LCB2
+Z3MsIHZnY3JlYXRlLCB2Z3JlbW92ZSwgdmdleHRlbmQsIHZncmVkdWNlCgpQbGVhc2UgbGltaXQg
+eW91cnNlbGYgdG8gdGhvc2UgY29tbWFuZHMgZm9yIG5vdy4KCk90aGVyIGNvbW1hbmRzIGhhdmUg
+bm90IGJlZW4gdXBkYXRlZCBhbmQgbWF5IGZhaWwgaW4gc3VycHJpc2luZyB3YXkuCihJZiBvbmUg
+b2YgdGhlbSBjYXVzZXMgeW91IHByb2JsZW1zLCB3ZSdyZSB1bmxpa2VseSB0byBiZSBpbnRlcmVz
+dGVkLikKCkluIHBhcnRpY3VsYXIsIGJlIGF3YXJlIHRoYXQgdmdjZmdyZXN0b3JlIG9ubHkgcmVz
+dG9yZXMgdGhlIExWTSBtZXRhZGF0YSBhbmQgTk9UIHRoZSBpbi1rZXJuZWwgdGhpbiBtZXRhZGF0
+YSBhbmQgc28gY2FuIGVhc2lseSBjYXVzZSBjcmFzaGVzIG9yIGNvcnJ1cHRpb24gYXQgdGhlIG1v
+bWVudC4KCkFsYXNkYWlyCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fXwpsaW51eC1sdm0gbWFpbGluZyBsaXN0CmxpbnV4LWx2bUByZWRoYXQuY29tCmh0dHBz
+Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9saW51eC1sdm0KcmVhZCB0aGUgTFZN
+IEhPVy1UTyBhdCBodHRwOi8vdGxkcC5vcmcvSE9XVE8vTFZNLUhPV1RPLwoKX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KbGludXgtbHZtIG1haWxpbmcgbGlz
+dApsaW51eC1sdm1AcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vbGludXgtbHZtCnJlYWQgdGhlIExWTSBIT1ctVE8gYXQgaHR0cDovL3RsZHAub3JnL0hP
+V1RPL0xWTS1IT1dUTy8=
