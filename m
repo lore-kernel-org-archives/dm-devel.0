@@ -1,99 +1,110 @@
-From: Kirby Zhou <kirbyzhou@sogou-inc.com>
-Subject: =?gb2312?b?tPC4tDogIE5ldyBMVk0yIHJlbGVhc2UgMi4wMi44?=
- =?gb2312?b?OTogVGhpbmx5LXByb3Zpc2lvbmVkIGxvZ2ljYWwJdm9sdW1lcw==?=
-Date: Mon, 30 Jan 2012 06:29:54 +0000
-Message-ID: <A0D9F519724C4648B433C8FA859E3EBB7CD0390C@EX01.sogou-inc.com>
-References: <20120127025701.GB16767@agk-dp.fab.redhat.com>
-Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
+From: Namhyung Kim <namhyung@gmail.com>
+Subject: Re: [PATCH] block: add missing block_bio_complete() tracepoint
+Date: Mon, 30 Jan 2012 15:38:57 +0900
+Message-ID: <4F263B01.4050103@gmail.com>
+References: <1327830093-12130-1-git-send-email-namhyung@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
-Return-path: <linux-lvm-bounces@redhat.com>
-In-Reply-To: <20120127025701.GB16767@agk-dp.fab.redhat.com>
-Content-Language: zh-CN
-List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-lvm>
-List-Post: <mailto:linux-lvm@redhat.com>
-List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
-Sender: linux-lvm-bounces@redhat.com
-Errors-To: linux-lvm-bounces@redhat.com
-To: "lvm-devel@redhat.com" <lvm-devel@redhat.com>, LVM general discussion and development <linux-lvm@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1327830093-12130-1-git-send-email-namhyung@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Q2FuIHRoZSB0aGlubHktcHJvdmlzaW9uZWQgbG9naWNhbCB2b2x1bWUgYXV0b21hdGljYWxseSBy
-ZXR1cm4gaXRzIG93bmVkIHNwYWNlIHRvIHRoZSBwb29sPwpJIG1lYW4sIGlmIEkgY3JlYXRlIGEg
-aHVnZSBmaWxlIG9uIHRoZSBsb2dpY2FsIHZvbHVtZSwgdGhlbiBkZWxldGUgaXQsIHdpbGwgdGhl
-IGxvZ2ljYWwgdm9sdW1lIGFjdHVhbCBzcGFjZSBzaXplIGJlIHJlZHVjZWQgYXV0b21hdGljYWxs
-eT8KSWYgbm90LCBob3cgY2FuIGl0IGJlIHNocmlua2VkPwoKClJlZ2FyZHMKS2lyYnkgWmhvdQor
-ODYgKDEwKSA2MjcyIDgyNjEKCi0tLS0t08q8/tStvP4tLS0tLQq3orz+yMs6IGxpbnV4LWx2bS1i
-b3VuY2VzQHJlZGhhdC5jb20gW21haWx0bzpsaW51eC1sdm0tYm91bmNlc0ByZWRoYXQuY29tXSC0
-+rHtIEFsYXNkYWlyIEcgS2VyZ29uCreiy83KsbzkOiAyMDEyxOox1MIyN8jVIDEwOjU3CsrVvP7I
-yzogbHZtLWRldmVsQHJlZGhhdC5jb207IGxpbnV4LWx2bUByZWRoYXQuY29tOyBkbS1kZXZlbEBy
-ZWRoYXQuY29tCtb3zOI6IFtsaW51eC1sdm1dIE5ldyBMVk0yIHJlbGVhc2UgMi4wMi44OTogVGhp
-bmx5LXByb3Zpc2lvbmVkIGxvZ2ljYWwgdm9sdW1lcwoKQWZ0ZXIgYSBsb25nIGJyZWFrLCB3ZSd2
-ZSBpc3N1ZWQgYSBuZXcgTFZNMiByZWxlYXNlLCAyLjAyLjg5LgoKIDM5NCBmaWxlcyBjaGFuZ2Vk
-LCAyMjY2MiBpbnNlcnRpb25zKCspLCAxMTYxNCBkZWxldGlvbnMoLSkKClRoaXMgcmVsZWFzZSBp
-bmNsdWRlcyBleHBlcmltZW50YWwgc3VwcG9ydCBmb3IgdGhpbmx5LXByb3Zpc2lvbmVkIGxvZ2lj
-YWwgdm9sdW1lcyB1c2luZyB0aGUgbmV3IGRldmljZS1tYXBwZXIgdGhpbiBwcm92aXNpb25pbmcg
-dGFyZ2V0IGluIGtlcm5lbCAzLjIuCgpUaGlzIGlzIHN0aWxsIGEgKmRldmVsb3BtZW50KiByZWxl
-YXNlIGFuZCB0aGUgbmV3IGZlYXR1cmUgaXMgbm90IHN1cHBvcnRlZCBieSBhbGwgdGhlIExWTSBj
-b21tYW5kcyB5ZXQuCgpUaGUgdmFyaW91cyBpbnRlcmZhY2UgZXh0ZW5zaW9ucyBmb3IgdGhpbiBw
-cm92aXNpb25pbmcgYXJlIG5vdCBmcm96ZW4uClNvIHdlIG1pZ2h0IHN0aWxsIGRlY2lkZSB0byB0
-d2VhayB0aGUgY29tbWFuZCBsaW5lIGV4dGVuc2lvbnMsIGxpYnJhcnkgZnVuY3Rpb25zLCBvbi1k
-aXNrIG1ldGFkYXRhIGV4dGVuc2lvbnMsIHRvb2wgb3V0cHV0LCBjb25maWd1cmF0aW9uIG9wdGlv
-bnMgZXRjLiBpbiB3YXlzIHRoYXQgbWFrZSBsYXRlciByZWxlYXNlcyBpbmNvbXBhdGlibGUgd2l0
-aCB0aGlzIHBhcnRpY3VsYXIgcmVsZWFzZS4KClBsZWFzZSB0cnkgaXQgb3V0LCB0ZXN0IGl0LCBh
-bmQgZ2l2ZSB1cyBmZWVkYmFjayBwcmVmZXJhYmx5IG9uIHRoZSBtYWlsaW5nIGxpc3QgbHZtLWRl
-dmVsQHJlZGhhdC5jb20uCgogIGZ0cDovL3NvdXJjZXMucmVkaGF0LmNvbS9wdWIvbHZtMi9XSEFU
-U19ORVcKICBmdHA6Ly9zb3VyY2VzLnJlZGhhdC5jb20vcHViL2x2bTIvV0hBVFNfTkVXX0RNCgog
-IGZ0cDovL3NvdXJjZXMucmVkaGF0LmNvbS9wdWIvbHZtMi9MVk0yLjIuMDIuODkudGd6CiAgZnRw
-Oi8vc291cmNlcy5yZWRoYXQuY29tL3B1Yi9sdm0yL0xWTTIuMi4wMi44OS50Z3ouYXNjCgoKR2V0
-dGluZyBzdGFydGVkCi0tLS0tLS0tLS0tLS0tLQoKRW5zdXJlIHlvdXIga2VybmVsIGlzIGF0IGxl
-YXN0IHZlcnNpb24gMy4yIGFuZCBjb21waWxlZCB3aXRoIERNX1RISU5fUFJPVklTSU9OSU5HLgoK
-QWRkICctLXdpdGgtdGhpbj1pbnRlcm5hbCcgdG8geW91ciBjb25maWd1cmUgbGluZS4KWW91IHNo
-b3VsZCBoYXZlIC0tZW5hYmxlLWRtZXZlbnRkIHRvbyBhbmQgaW5zdGFsbCBkbWV2ZW50ZCBmb3Ig
-YXV0b21hdGljIGV4dGVuc2lvbiBvZiBuZWFybHktZnVsbCB0aGluIHZvbHVtZXMuCgpGZWRvcmEg
-dXNlcnMgbWF5IHVzZSB0aGlzIHBhY2thZ2U6CiAgbHZtMi0yLjAyLjg5LTIuZmMxNwogIGh0dHA6
-Ly9rb2ppLmZlZG9yYXByb2plY3Qub3JnL2tvamkvYnVpbGRpbmZvP2J1aWxkSUQ9Mjk1OTY1CiAg
-KG9yIGEgbmV3ZXIgb25lLCBpZiB3ZSByZWJ1aWxkIGl0KQoKClRoZSBiYXNpYyBpZGVhCi0tLS0t
-LS0tLS0tLS0tCllvdSBjcmVhdGUgYSBsb2dpY2FsIHZvbHVtZSBrbm93biBhcyB0aGUgInRoaW4g
-cG9vbCIgdG8gaG9sZCB0aGUgZGlzayBzcGFjZSB5b3Ugd2FudCB0byB1c2UgaW5zaWRlIHlvdXIg
-dm9sdW1lIGdyb3VwLgoKVGhlbiB5b3UgY3JlYXRlICJ0aGluIiBsb2dpY2FsIHZvbHVtZXMgd2hp
-Y2ggc2hhcmUgdGhlIHNwYWNlIGluIHRoYXQgcG9vbC4KCmx2cyBhbmQgbHZkaXNwbGF5IHdpbGwg
-dGVsbCB5b3UgImhvdyBmdWxsIiB5b3VyIHBvb2wgaXMuCgpkbWV2ZW50ZCB3aWxsIG1vbml0b3Ig
-aG93IGZ1bGwgeW91ciBwb29sIGlzLCBhbmQgYXV0b21hdGljYWxseSB1c2UgdW5hbGxvY2F0ZWQg
-cGh5c2ljYWwgZXh0ZW50cyB0byBleHRlbmQgaXQgYWNjb3JkaW5nIHRvIHRoZSBwb2xpY3kgaW4g
-bHZtLmNvbmYuICBEbyBub3QgYWxsb3cgeW91ciBwb29sIHRvIGZpbGwgdXAhCgpZb3UgY2FuIGFs
-c28gdGFrZSBzbmFwc2hvdHMgb2YgdGhpbiB2b2x1bWVzLgoKVGhlcmUgYXJlIGJhc2ljIGV4YW1w
-bGVzIGluIHRoZSBtYW4gcGFnZXMsIGFuZCBzb3BoaXN0aWNhdGVkIGV4YW1wbGVzIGluIHRoZSB0
-ZXN0IHNjcmlwdHMgKGUuZy4gdGVzdC9zaGVsbC9sdmNyZWF0ZS10aGluLnNoKS4KCldpdGggbHZj
-cmVhdGUsIHRoaW5rIG9mIC1MIGFzIGNvbnRyb2xsaW5nIGFjdHVhbCBkaXNrIHNwYWNlIGFuZCAt
-ViBhcyBjb250cm9sbGluZyB2aXJ0dWFsIHNpemUuICAtVCBpcyBhIHNob3J0LWN1dCBpbmRpY2F0
-aW5nIHRoZSB1c2Ugb2Ygc29tZXRoaW5nIHRoaW4uICBJZiBub3Qgc3BlY2lmaWVkLCB2b2x1bWUg
-bmFtZXMgKGxpa2UgbHZvbDApIGFyZSBnZW5lcmF0ZWQgd2hlbmV2ZXIgbmVlZGVkLgoKQ3JlYXRp
-bmcgYSBwb29sIG5lZWRzIGFjdHVhbCBkaXNrIHNwYWNlLCBzbyB1c2UgLUwuCkNyZWF0aW5nIGEg
-dGhpbiB2b2x1bWUgdXNlIHZpcnR1YWwgc3BhY2UsIHNvIHVzZSAtVi4KCllvdSBjYW4gaGF2ZSBt
-b3JlIHRoYW4gb25lIHBvb2wgaW4gYSBWRywgc28gdG8gdXNlIGFuIGV4aXN0aW5nIG9uZSB5b3Ug
-bXVzdCBtZW50aW9uIHdoaWNoIGl0IGlzIG9uIHRoZSBjb21tYW5kIGxpbmUuCgooT2YgY291cnNl
-LCB3ZSB3aWxsIGJlIHByb2R1Y2luZyBhZGRpdGlvbmFsIGRvY3VtZW50YXRpb24gZXZlbnR1YWxs
-eS4pCgpDb21tYW5kcyB0aGF0IHNob3VsZCBtb3N0bHkgd29yayB3aXRoIHRoaW4gdm9sdW1lcyBh
-dCB0aGlzIHN0YWdlOgoKICBsdmNyZWF0ZSwgbHZyZW1vdmUsIGx2cmVzaXplLCBsdmV4dGVuZCwg
-bHZyZWR1Y2UsIGx2Y2hhbmdlLCBsdmRpc3BsYXksIGx2cwogIHZnc2NhbiwgdmdkaXNwbGF5LCB2
-Z3MsIHZnY3JlYXRlLCB2Z3JlbW92ZSwgdmdleHRlbmQsIHZncmVkdWNlCgpQbGVhc2UgbGltaXQg
-eW91cnNlbGYgdG8gdGhvc2UgY29tbWFuZHMgZm9yIG5vdy4KCk90aGVyIGNvbW1hbmRzIGhhdmUg
-bm90IGJlZW4gdXBkYXRlZCBhbmQgbWF5IGZhaWwgaW4gc3VycHJpc2luZyB3YXkuCihJZiBvbmUg
-b2YgdGhlbSBjYXVzZXMgeW91IHByb2JsZW1zLCB3ZSdyZSB1bmxpa2VseSB0byBiZSBpbnRlcmVz
-dGVkLikKCkluIHBhcnRpY3VsYXIsIGJlIGF3YXJlIHRoYXQgdmdjZmdyZXN0b3JlIG9ubHkgcmVz
-dG9yZXMgdGhlIExWTSBtZXRhZGF0YSBhbmQgTk9UIHRoZSBpbi1rZXJuZWwgdGhpbiBtZXRhZGF0
-YSBhbmQgc28gY2FuIGVhc2lseSBjYXVzZSBjcmFzaGVzIG9yIGNvcnJ1cHRpb24gYXQgdGhlIG1v
-bWVudC4KCkFsYXNkYWlyCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fXwpsaW51eC1sdm0gbWFpbGluZyBsaXN0CmxpbnV4LWx2bUByZWRoYXQuY29tCmh0dHBz
-Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9saW51eC1sdm0KcmVhZCB0aGUgTFZN
-IEhPVy1UTyBhdCBodHRwOi8vdGxkcC5vcmcvSE9XVE8vTFZNLUhPV1RPLwoKX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KbGludXgtbHZtIG1haWxpbmcgbGlz
-dApsaW51eC1sdm1AcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
-dGluZm8vbGludXgtbHZtCnJlYWQgdGhlIExWTSBIT1ctVE8gYXQgaHR0cDovL3RsZHAub3JnL0hP
-V1RPL0xWTS1IT1dUTy8=
+2012-01-29 6:41 PM, Namhyung Kim wrote:
+> The block_bio_complete() TP has been missed so long, so that bio-based
+> drivers haven't been able to trace its IO behavior. Add it.
+>
+> In some rare cases, such as loop_switch, @bio->bi_bdev can be NULL.
+> Thus convert it to TRACE_EVENT_CONDITION() as Steven suggested.
+>
+
+Now I see that it seems TRACE_EVENT_CONDITION() can protect event 
+tracing from such condition, but what about other users of the TP like 
+blktrace? I think it'll still get NULL pointer dereference on 
+bdev_get_queue() after the change, right? If so, convert to T_E_C() 
+looks meaningless IMHO. Do I miss something?
+
+Thanks,
+Namhyung
+
+
+>  From now on, request-based drivers will also get BLK_TA_COMPLETEs for
+> all bio's in requests. This needs to be handled in userland properly.
+>
+> Also remove external use of the TP in DM and unexport it.
+>
+> Signed-off-by: Namhyung Kim <namhyung@gmail.com>
+> Cc: Tejun Heo <tj@kernel.org>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: dm-devel@redhat.com
+> ---
+> * v2:
+>   - Merge previous patches into one as suggested by Tejun.
+>   - Drop BIO_COMPLETE_MASK. Now I think it should be handled in userland
+>     like other (maybe duplicated, in some sense) bio complete reports.
+>
+>   block/blk-core.c             |    1 -
+>   drivers/md/dm.c              |    1 -
+>   fs/bio.c                     |    2 ++
+>   include/trace/events/block.h |    4 +++-
+>   4 files changed, 5 insertions(+), 3 deletions(-)
+>
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 1b4fd93af2c0..399c128f516c 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -37,7 +37,6 @@
+>
+>   EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+>   EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+> -EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+>
+>   DEFINE_IDA(blk_queue_ida);
+>
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 4720f68f817e..01185fa0eb74 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -648,7 +648,6 @@ static void dec_pending(struct dm_io *io, int error)
+>   			queue_io(md, bio);
+>   		} else {
+>   			/* done with normal IO or empty flush */
+> -			trace_block_bio_complete(md->queue, bio, io_error);
+>   			bio_endio(bio, io_error);
+>   		}
+>   	}
+> diff --git a/fs/bio.c b/fs/bio.c
+> index b1fe82cf88cf..14c03eaf384e 100644
+> --- a/fs/bio.c
+> +++ b/fs/bio.c
+> @@ -1447,6 +1447,8 @@ void bio_endio(struct bio *bio, int error)
+>   	else if (!test_bit(BIO_UPTODATE,&bio->bi_flags))
+>   		error = -EIO;
+>
+> +	trace_block_bio_complete(bdev_get_queue(bio->bi_bdev), bio, error);
+> +
+>   	if (bio->bi_end_io)
+>   		bio->bi_end_io(bio, error);
+>   }
+> diff --git a/include/trace/events/block.h b/include/trace/events/block.h
+> index 05c5e61f0a7c..96955f4828b3 100644
+> --- a/include/trace/events/block.h
+> +++ b/include/trace/events/block.h
+> @@ -213,12 +213,14 @@ TRACE_EVENT(block_bio_bounce,
+>    * This tracepoint indicates there is no further work to do on this
+>    * block IO operation @bio.
+>    */
+> -TRACE_EVENT(block_bio_complete,
+> +TRACE_EVENT_CONDITION(block_bio_complete,
+>
+>   	TP_PROTO(struct request_queue *q, struct bio *bio, int error),
+>
+>   	TP_ARGS(q, bio, error),
+>
+> +	TP_CONDITION(bio->bi_bdev != NULL),
+> +
+>   	TP_STRUCT__entry(
+>   		__field( dev_t,		dev		)
+>   		__field( sector_t,	sector		)
