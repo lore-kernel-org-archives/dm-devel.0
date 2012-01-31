@@ -1,68 +1,97 @@
-From: Namhyung Kim <namhyung@gmail.com>
-Subject: Re: [PATCH] block: add missing block_bio_complete() tracepoint
-Date: Wed, 01 Feb 2012 11:18:33 +0900
-Message-ID: <4F28A0F9.9070603@gmail.com>
-References: <1327830093-12130-1-git-send-email-namhyung@gmail.com> <4F263B01.4050103@gmail.com> <20120130170548.GA3355@google.com> <4F278A78.8080300@gmail.com> <CAOS58YP1F6_yBxRArcP4oyzAJVArLJB-ckjdXU35U1SNwi75XQ@mail.gmail.com>
+From: Frederick Grose <fgrose@gmail.com>
+Subject: Re: Tutorial or sample code for device mapper
+Date: Tue, 31 Jan 2012 15:20:21 -0500
+Message-ID: <CAEcBt+V=DN1xvbhDS3qW73Y5zpCDEBe-Q6d-x+5emTg5QcO=8w@mail.gmail.com>
+References: <4F2726CC.9070001@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOS58YP1F6_yBxRArcP4oyzAJVArLJB-ckjdXU35U1SNwi75XQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="===============0062031190791609641=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4F2726CC.9070001@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+--===============0062031190791609641==
+Content-Type: multipart/alternative; boundary=000e0ce03ec6b0e42604b7d8b3c3
 
-2012-01-31 7:39 PM, Tejun Heo wrote:
-> Hello,
+--000e0ce03ec6b0e42604b7d8b3c3
+Content-Type: text/plain; charset=ISO-8859-1
+
+On Mon, Jan 30, 2012 at 6:25 PM, George Shuklin <george.shuklin@gmail.com>wrote:
+
+> Good day.
 >
-> On Mon, Jan 30, 2012 at 10:30 PM, Namhyung Kim<namhyung@gmail.com>  wrote:
->> Right, but the point is it could make a NULL pointer dereference during
->> evaluation of the argument of the TP AFAICS. I'm not sure about the TP
->> implementation though, I think I was wrong - T_E_C() cannot protect us from
->> it because it happens just before jumping to the TP, right?
->>
->> So I think we need a conditional jump (with the "likely" annotation) for
->> this even when the TP is disabled.
->
-> Hmmm... still not following. Where the said NULL dereference happen?
-> TEC conditional is equivalent to "if (COND) TP;".  If you don't use
-> TEC, it'll be "if (COND) if (TP enabled) TP;".  With TEC, it will be
-> "if (TP enabled) if (COND) TP;".  There's no other difference.
+> I've trying to find any 'newbie' documentation for device mapper.
+> Something like simple one-to-one IO passtrough or something like that. Any
+> suggestion? Or, may be name of the simplest existing device-mapper based
+> driver to research?
 >
 > Thanks.
->
-
-I've made a quick investigation on TP implementation, and finally 
-figured out what I was wrong - I thought the COND would be checkd in a 
-probe, but it's not. Thanks for pointing it out.
-
-However, for some reason, it seems gcc generated code that evaluates the 
-arguments - bdev_get_queue() in this case - before checking the COND. 
-Simple test module below caused a NULL pointer dereference when I used 
-TRACE_EVENT_CONDITION(), but not for conditional jump:
-
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/bio.h>
-
-static int __init init_mod(void)
-{
-         struct bio *bio = bio_alloc(GFP_KERNEL, 0);
-         bio_endio(bio, 0);
-         bio_put(bio);
-         return 0;
-}
-
-static void __exit exit_mod(void)
-{
-}
-
-module_init(init_mod);
-module_exit(exit_mod);
 
 
-Thanks,
-Namhyung
+Red Hat has this:
+http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Logical_Volume_Manager_Administration/device_mapper.html
+
+
+There is also the kernel documentation tree:
+http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=tree;f=Documentation/device-mapper;hb=HEAD
+<http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=tree;f=Documentation/device-mapper;hb=HEAD%20>
+
+I'm curious about what others might suggest.
+
+        --Fred
+
+--000e0ce03ec6b0e42604b7d8b3c3
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<font color=3D"#000099"><font><font face=3D"trebuchet ms,sans-serif"></font=
+></font></font>On Mon, Jan 30, 2012 at 6:25 PM, George Shuklin <span dir=3D=
+"ltr">&lt;<a href=3D"mailto:george.shuklin@gmail.com">george.shuklin@gmail.=
+com</a>&gt;</span> wrote:<br>
+
+<div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"margi=
+n:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Good day.<br>
+<br>
+I&#39;ve trying to find any &#39;newbie&#39; documentation for device mappe=
+r. Something like simple one-to-one IO passtrough or something like that. A=
+ny suggestion? Or, may be name of the simplest existing device-mapper based=
+ driver to research?<br>
+
+
+<br>
+Thanks.</blockquote><div><br>Red Hat has this:<br><a href=3D"http://docs.re=
+dhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Logical_Volume_Manager_=
+Administration/device_mapper.html">http://docs.redhat.com/docs/en-US/Red_Ha=
+t_Enterprise_Linux/6/html/Logical_Volume_Manager_Administration/device_mapp=
+er.html </a><br>
+
+</div><div><br>There is also the kernel documentation tree:<br><a href=3D"h=
+ttp://git.kernel.org/?p=3Dlinux/kernel/git/torvalds/linux.git;a=3Dtree;f=3D=
+Documentation/device-mapper;hb=3DHEAD%20">http://git.kernel.org/?p=3Dlinux/=
+kernel/git/torvalds/linux.git;a=3Dtree;f=3DDocumentation/device-mapper;hb=
+=3DHEAD </a><br>
+
+<br>I&#39;m curious about what others might suggest.<br><br>=A0=A0=A0=A0=A0=
+=A0=A0 --Fred<br></div></div>
+
+--000e0ce03ec6b0e42604b7d8b3c3--
+
+
+--===============0062031190791609641==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0062031190791609641==--
