@@ -1,45 +1,63 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [linux-lvm] New LVM2 release 2.02.89:
-	Thinly-provisioned	logical volumes
-Date: Tue, 31 Jan 2012 13:23:18 +0000
-Message-ID: <20120131132318.GH16447@agk-dp.fab.redhat.com>
-References: <20120127025701.GB16767@agk-dp.fab.redhat.com>
-	<1eaeb3d5.c6e.135332dea21.Coremail.chaimvy@163.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH] backing-dev: use synchronize_rcu_expedited instead of
+ synchronize_rcu
+Date: Tue, 31 Jan 2012 21:34:23 +0100
+Message-ID: <1328042063.2446.250.camel@twins>
+References: <Pine.LNX.4.64.1107202019420.26781@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1eaeb3d5.c6e.135332dea21.Coremail.chaimvy@163.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: LVM general discussion and development <linux-lvm@redhat.com>
-Cc: dm-devel@redhat.com, lvm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1107202019420.26781@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: axboe@kernel.dk, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Paul E. McKenney" <paulmck@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 31, 2012 at 05:52:21PM +0800, Busby.Cheung wrote:
->        I tryed to use this LVM2 to create thin pool and thin lv, but it said PE was required. The VG I used is free, can anyone help me? Should any more args be needed? Is there any more detailed HowTo file than man file?
-  
+On Wed, 2011-07-20 at 20:29 -0400, Mikulas Patocka wrote:
+> Hi Jens
+> 
+> Please would you consider taking this into the block tree? It seems to 
+> speed up device deletion enormously.
+> 
+> Mikulas
+> 
+> ---
+> 
+> backing-dev: use synchronize_rcu_expedited instead of synchronize_rcu
+> 
+> synchronize_rcu sleeps several timer ticks. synchronize_rcu_expedited is 
+> much faster.
+> 
+> With 100Hz timer frequency, when we remove 10000 block devices with 
+> "dmsetup remove_all" command, it takes 27 minutes. With this patch, 
+> removing 10000 block devices takes only 15 seconds.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>  mm/backing-dev.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> Index: linux-3.0-rc7-fast/mm/backing-dev.c
+> ===================================================================
+> --- linux-3.0-rc7-fast.orig/mm/backing-dev.c	2011-07-19 18:01:00.000000000 +0200
+> +++ linux-3.0-rc7-fast/mm/backing-dev.c	2011-07-19 18:01:07.000000000 +0200
+> @@ -505,7 +505,7 @@ static void bdi_remove_from_list(struct 
+>  	list_del_rcu(&bdi->bdi_list);
+>  	spin_unlock_bh(&bdi_lock);
+>  
+> -	synchronize_rcu();
+> +	synchronize_rcu_expedited();
+>  }
+>  
 
-For now, you need either 2 PVs in the VG, or use --alloc anywhere with 1 PV, or
-split the allocation manually like:
+Urgh, I just noticed this crap in my tree.. You realize that what you're
+effectively hammering a global sync primitive this way? Depending on
+what RCU flavour you have any SMP variant will at least do a machine
+wide IPI broadcast for every sync_rcu_exp(), some do significantly more.
 
-> [root@host2 ~]# lvcreate  -L100M -T vg_pool/pool -V 1T --name thin_lv /dev/sdl:0 /dev/sdl:1-
+The much better solution would've been to batch your block-dev removals
+and use a single sync_rcu as barrier.
 
-I have a patch that fixes this problem, but I'm still testing it.
-
-Alasdair
-
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+This is not cool.
