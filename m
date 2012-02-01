@@ -1,35 +1,68 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: git source repository
-Date: Tue, 31 Jan 2012 22:42:00 +0100
-Message-ID: <1328046120.7838.3.camel@lapoo.opensvc.com>
-References: <1328003255.4568.2.camel@moon.ceda.unina2.it>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Namhyung Kim <namhyung@gmail.com>
+Subject: Re: [PATCH] block: add missing block_bio_complete() tracepoint
+Date: Wed, 01 Feb 2012 11:18:33 +0900
+Message-ID: <4F28A0F9.9070603@gmail.com>
+References: <1327830093-12130-1-git-send-email-namhyung@gmail.com> <4F263B01.4050103@gmail.com> <20120130170548.GA3355@google.com> <4F278A78.8080300@gmail.com> <CAOS58YP1F6_yBxRArcP4oyzAJVArLJB-ckjdXU35U1SNwi75XQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1328003255.4568.2.camel@moon.ceda.unina2.it>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAOS58YP1F6_yBxRArcP4oyzAJVArLJB-ckjdXU35U1SNwi75XQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
-
-On mar., 2012-01-31 at 10:47 +0100, Ing. Mario De Chenno wrote:
-> Hi,
-> when git source repository on kernel.org will be back online?
 
 Hi,
 
-the multipath-tools upstream repo is hosted on http://git.opensvc.com/
-now. It will stay there for a while.
+2012-01-31 7:39 PM, Tejun Heo wrote:
+> Hello,
+>
+> On Mon, Jan 30, 2012 at 10:30 PM, Namhyung Kim<namhyung@gmail.com>  wrote:
+>> Right, but the point is it could make a NULL pointer dereference during
+>> evaluation of the argument of the TP AFAICS. I'm not sure about the TP
+>> implementation though, I think I was wrong - T_E_C() cannot protect us from
+>> it because it happens just before jumping to the TP, right?
+>>
+>> So I think we need a conditional jump (with the "likely" annotation) for
+>> this even when the TP is disabled.
+>
+> Hmmm... still not following. Where the said NULL dereference happen?
+> TEC conditional is equivalent to "if (COND) TP;".  If you don't use
+> TEC, it'll be "if (COND) if (TP enabled) TP;".  With TEC, it will be
+> "if (TP enabled) if (COND) TP;".  There's no other difference.
+>
+> Thanks.
+>
 
-Best regards,
-cvaroqui
+I've made a quick investigation on TP implementation, and finally 
+figured out what I was wrong - I thought the COND would be checkd in a 
+probe, but it's not. Thanks for pointing it out.
+
+However, for some reason, it seems gcc generated code that evaluates the 
+arguments - bdev_get_queue() in this case - before checking the COND. 
+Simple test module below caused a NULL pointer dereference when I used 
+TRACE_EVENT_CONDITION(), but not for conditional jump:
+
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/bio.h>
+
+static int __init init_mod(void)
+{
+         struct bio *bio = bio_alloc(GFP_KERNEL, 0);
+         bio_endio(bio, 0);
+         bio_put(bio);
+         return 0;
+}
+
+static void __exit exit_mod(void)
+{
+}
+
+module_init(init_mod);
+module_exit(exit_mod);
+
+
+Thanks,
+Namhyung
