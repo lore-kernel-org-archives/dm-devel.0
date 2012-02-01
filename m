@@ -1,13 +1,16 @@
-From: Frederick Grose <fgrose@gmail.com>
-Subject: Re: Tutorial or sample code for device mapper
-Date: Tue, 31 Jan 2012 15:20:21 -0500
-Message-ID: <CAEcBt+V=DN1xvbhDS3qW73Y5zpCDEBe-Q6d-x+5emTg5QcO=8w@mail.gmail.com>
-References: <4F2726CC.9070001@gmail.com>
+From: "Busby.Cheung" <chaimvy@163.com>
+Subject: Re: [linux-lvm] New LVM2 release 2.02.89:
+	Thinly-provisioned	logical volumes
+Date: Wed, 1 Feb 2012 09:42:29 +0800 (CST)
+Message-ID: <582e15fb.4e8.1353693c7ce.Coremail.chaimvy@163.com>
+References: <20120131132318.GH16447@agk-dp.fab.redhat.com>
+	<20120127025701.GB16767@agk-dp.fab.redhat.com>
+	<1eaeb3d5.c6e.135332dea21.Coremail.chaimvy@163.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0062031190791609641=="
+Content-Type: multipart/mixed; boundary="===============7705778940374992861=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F2726CC.9070001@gmail.com>
+In-Reply-To: <20120131132318.GH16447@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,81 +20,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: LVM general discussion and development <linux-lvm@redhat.com>, agk@redhat.com
+Cc: dm-devel@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0062031190791609641==
-Content-Type: multipart/alternative; boundary=000e0ce03ec6b0e42604b7d8b3c3
+--===============7705778940374992861==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_21291_747923278.1328060549070"
 
---000e0ce03ec6b0e42604b7d8b3c3
-Content-Type: text/plain; charset=ISO-8859-1
+------=_Part_21291_747923278.1328060549070
+Content-Type: text/plain; charset=GBK
+Content-Transfer-Encoding: base64
 
-On Mon, Jan 30, 2012 at 6:25 PM, George Shuklin <george.shuklin@gmail.com>wrote:
+SGkgQWxhc2RhaXIsCiAgICAgICAgICAgICBJdCB3b3JrcyB3ZWxsIGFzICB3aGF0IHlvdSBzYWlk
+IGluIHRoZSBlbWFpbC4gVGhhbmtzIQoKQmVzdCByZWdhcmRzLApCdXNieQoKIAogPiAtLS0tLdSt
+yrzTyrz+LS0tLS0KPiC3orz+yMs6ICJBbGFzZGFpciBHIEtlcmdvbiIgPGFna0ByZWRoYXQuY29t
+Pgo+ILeiy83KsbzkOiAyMDEyxOox1MIzMcjVINDHxtq2/go+IMrVvP7IyzogIkxWTSBnZW5lcmFs
+IGRpc2N1c3Npb24gYW5kIGRldmVsb3BtZW50IiA8bGludXgtbHZtQHJlZGhhdC5jb20+Cj4gs63L
+zTogZG0tZGV2ZWxAcmVkaGF0LmNvbSwgbHZtLWRldmVsQHJlZGhhdC5jb20KPiDW98ziOiBSZTog
+W2xpbnV4LWx2bV0gTmV3IExWTTIgcmVsZWFzZSAyLjAyLjg5OiBUaGlubHktcHJvdmlzaW9uZWQJ
+bG9naWNhbCB2b2x1bWVzCj4gCj4gT24gVHVlLCBKYW4gMzEsIDIwMTIgYXQgMDU6NTI6MjFQTSAr
+MDgwMCwgQnVzYnkuQ2hldW5nIHdyb3RlOgo+ID4gICAgICAgIEkgdHJ5ZWQgdG8gdXNlIHRoaXMg
+TFZNMiB0byBjcmVhdGUgdGhpbiBwb29sIGFuZCB0aGluIGx2LCBidXQgaXQgc2FpZCBQRSB3YXMg
+cmVxdWlyZWQuIFRoZSBWRyBJIHVzZWQgaXMgZnJlZSwgY2FuIGFueW9uZSBoZWxwIG1lPyBTaG91
+bGQgYW55IG1vcmUgYXJncyBiZSBuZWVkZWQ/IElzIHRoZXJlIGFueSBtb3JlIGRldGFpbGVkIEhv
+d1RvIGZpbGUgdGhhbiBtYW4gZmlsZT8KPiAgIAo+IAo+IEZvciBub3csIHlvdSBuZWVkIGVpdGhl
+ciAyIFBWcyBpbiB0aGUgVkcsIG9yIHVzZSAtLWFsbG9jIGFueXdoZXJlIHdpdGggMSBQViwgb3IK
+PiBzcGxpdCB0aGUgYWxsb2NhdGlvbiBtYW51YWxseSBsaWtlOgo+IAo+ID4gW3Jvb3RAaG9zdDIg
+fl0jIGx2Y3JlYXRlICAtTDEwME0gLVQgdmdfcG9vbC9wb29sIC1WIDFUIC0tbmFtZSB0aGluX2x2
+IC9kZXYvc2RsOjAgL2Rldi9zZGw6MS0KPiAKPiBJIGhhdmUgYSBwYXRjaCB0aGF0IGZpeGVzIHRo
+aXMgcHJvYmxlbSwgYnV0IEknbSBzdGlsbCB0ZXN0aW5nIGl0Lgo+IAo+IEFsYXNkYWlyCj4gCj4g
+Cj4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KPiBsaW51
+eC1sdm0gbWFpbGluZyBsaXN0Cj4gbGludXgtbHZtQHJlZGhhdC5jb20KPiBodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vbGludXgtbHZtCj4gcmVhZCB0aGUgTFZNIEhPVy1U
+TyBhdCBodHRwOi8vdGxkcC5vcmcvSE9XVE8vTFZNLUhPV1RPLwo=
+------=_Part_21291_747923278.1328060549070
+Content-Type: text/html; charset=GBK
+Content-Transfer-Encoding: base64
 
-> Good day.
->
-> I've trying to find any 'newbie' documentation for device mapper.
-> Something like simple one-to-one IO passtrough or something like that. Any
-> suggestion? Or, may be name of the simplest existing device-mapper based
-> driver to research?
->
-> Thanks.
-
-
-Red Hat has this:
-http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Logical_Volume_Manager_Administration/device_mapper.html
-
-
-There is also the kernel documentation tree:
-http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=tree;f=Documentation/device-mapper;hb=HEAD
-<http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=tree;f=Documentation/device-mapper;hb=HEAD%20>
-
-I'm curious about what others might suggest.
-
-        --Fred
-
---000e0ce03ec6b0e42604b7d8b3c3
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<font color=3D"#000099"><font><font face=3D"trebuchet ms,sans-serif"></font=
-></font></font>On Mon, Jan 30, 2012 at 6:25 PM, George Shuklin <span dir=3D=
-"ltr">&lt;<a href=3D"mailto:george.shuklin@gmail.com">george.shuklin@gmail.=
-com</a>&gt;</span> wrote:<br>
-
-<div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"margi=
-n:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Good day.<br>
-<br>
-I&#39;ve trying to find any &#39;newbie&#39; documentation for device mappe=
-r. Something like simple one-to-one IO passtrough or something like that. A=
-ny suggestion? Or, may be name of the simplest existing device-mapper based=
- driver to research?<br>
-
-
-<br>
-Thanks.</blockquote><div><br>Red Hat has this:<br><a href=3D"http://docs.re=
-dhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/Logical_Volume_Manager_=
-Administration/device_mapper.html">http://docs.redhat.com/docs/en-US/Red_Ha=
-t_Enterprise_Linux/6/html/Logical_Volume_Manager_Administration/device_mapp=
-er.html </a><br>
-
-</div><div><br>There is also the kernel documentation tree:<br><a href=3D"h=
-ttp://git.kernel.org/?p=3Dlinux/kernel/git/torvalds/linux.git;a=3Dtree;f=3D=
-Documentation/device-mapper;hb=3DHEAD%20">http://git.kernel.org/?p=3Dlinux/=
-kernel/git/torvalds/linux.git;a=3Dtree;f=3DDocumentation/device-mapper;hb=
-=3DHEAD </a><br>
-
-<br>I&#39;m curious about what others might suggest.<br><br>=A0=A0=A0=A0=A0=
-=A0=A0 --Fred<br></div></div>
-
---000e0ce03ec6b0e42604b7d8b3c3--
+PGRpdj5IaSBBbGFzZGFpciw8YnI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IEl0IHdvcmtzIHdlbGwgYXMmbmJz
+cDsgd2hhdCB5b3Ugc2FpZCBpbiB0aGUgZW1haWwuIFRoYW5rcyE8YnI+PGJyPkJlc3QgcmVnYXJk
+cyw8YnI+QnVzYnk8YnI+PC9kaXY+PGRpdj4mbmJzcDs8L2Rpdj48cHJlPiZuYnNwOyZndDsgLS0t
+LS3Urcq808q8/i0tLS0tCiZndDsgt6K8/sjLOiAiQWxhc2RhaXIgRyBLZXJnb24iICZsdDthZ2tA
+cmVkaGF0LmNvbSZndDsKJmd0OyC3osvNyrG85DogMjAxMsTqMdTCMzHI1SDQx8batv4KJmd0OyDK
+1bz+yMs6ICJMVk0gZ2VuZXJhbCBkaXNjdXNzaW9uIGFuZCBkZXZlbG9wbWVudCIgJmx0O2xpbnV4
+LWx2bUByZWRoYXQuY29tJmd0OwomZ3Q7ILOty806IGRtLWRldmVsQHJlZGhhdC5jb20sIGx2bS1k
+ZXZlbEByZWRoYXQuY29tCiZndDsg1vfM4jogUmU6IFtsaW51eC1sdm1dIE5ldyBMVk0yIHJlbGVh
+c2UgMi4wMi44OTogVGhpbmx5LXByb3Zpc2lvbmVkCWxvZ2ljYWwgdm9sdW1lcwomZ3Q7IAomZ3Q7
+IE9uIFR1ZSwgSmFuIDMxLCAyMDEyIGF0IDA1OjUyOjIxUE0gKzA4MDAsIEJ1c2J5LkNoZXVuZyB3
+cm90ZToKJmd0OyAmZ3Q7ICAgICAgICBJIHRyeWVkIHRvIHVzZSB0aGlzIExWTTIgdG8gY3JlYXRl
+IHRoaW4gcG9vbCBhbmQgdGhpbiBsdiwgYnV0IGl0IHNhaWQgUEUgd2FzIHJlcXVpcmVkLiBUaGUg
+VkcgSSB1c2VkIGlzIGZyZWUsIGNhbiBhbnlvbmUgaGVscCBtZT8gU2hvdWxkIGFueSBtb3JlIGFy
+Z3MgYmUgbmVlZGVkPyBJcyB0aGVyZSBhbnkgbW9yZSBkZXRhaWxlZCBIb3dUbyBmaWxlIHRoYW4g
+bWFuIGZpbGU/CiZndDsgICAKJmd0OyAKJmd0OyBGb3Igbm93LCB5b3UgbmVlZCBlaXRoZXIgMiBQ
+VnMgaW4gdGhlIFZHLCBvciB1c2UgLS1hbGxvYyBhbnl3aGVyZSB3aXRoIDEgUFYsIG9yCiZndDsg
+c3BsaXQgdGhlIGFsbG9jYXRpb24gbWFudWFsbHkgbGlrZToKJmd0OyAKJmd0OyAmZ3Q7IFtyb290
+QGhvc3QyIH5dIyBsdmNyZWF0ZSAgLUwxMDBNIC1UIHZnX3Bvb2wvcG9vbCAtViAxVCAtLW5hbWUg
+dGhpbl9sdiAvZGV2L3NkbDowIC9kZXYvc2RsOjEtCiZndDsgCiZndDsgSSBoYXZlIGEgcGF0Y2gg
+dGhhdCBmaXhlcyB0aGlzIHByb2JsZW0sIGJ1dCBJJ20gc3RpbGwgdGVzdGluZyBpdC4KJmd0OyAK
+Jmd0OyBBbGFzZGFpcgomZ3Q7IAomZ3Q7IAomZ3Q7IF9fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fCiZndDsgbGludXgtbHZtIG1haWxpbmcgbGlzdAomZ3Q7IGxp
+bnV4LWx2bUByZWRoYXQuY29tCiZndDsgaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
+c3RpbmZvL2xpbnV4LWx2bQomZ3Q7IHJlYWQgdGhlIExWTSBIT1ctVE8gYXQgaHR0cDovL3RsZHAu
+b3JnL0hPV1RPL0xWTS1IT1dUTy8KPC9wcmU+PGJyPjxicj48c3BhbiB0aXRsZT0ibmV0ZWFzZWZv
+b3RlciI+PHNwYW4gaWQ9Im5ldGVhc2VfbWFpbF9mb290ZXIiPjwvc3Bhbj48L3NwYW4+
+------=_Part_21291_747923278.1328060549070--
 
 
---===============0062031190791609641==
+--===============7705778940374992861==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0062031190791609641==--
+--===============7705778940374992861==--
