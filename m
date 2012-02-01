@@ -1,36 +1,77 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [linux-lvm] New LVM2 release 2.02.89:
-	Thinly-provisioned	logical volumes
-Date: Wed, 1 Feb 2012 12:41:44 +0000
-Message-ID: <20120201124144.GA23056@agk-dp.fab.redhat.com>
-References: <20120131132318.GH16447@agk-dp.fab.redhat.com>
-	<20120127025701.GB16767@agk-dp.fab.redhat.com>
-	<1eaeb3d5.c6e.135332dea21.Coremail.chaimvy@163.com>
-	<5162be66.9cd.13538125472.Coremail.chaimvy@163.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5162be66.9cd.13538125472.Coremail.chaimvy@163.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Busby.Cheung" <chaimvy@163.com>
-Cc: dm-devel@redhat.com, "agk@redhat.com" <agk@redhat.com>, LVM general discussion and development <linux-lvm@redhat.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: [09/20] dm: do not forward ioctls from logical volumes to the underlying device
+Date: Wed, 01 Feb 2012 12:14:11 -0800
+Message-ID: <20120201201531.842552350@clark.kroah.org>
+References: <20120201210055.GA25374@kroah.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20120201210055.GA25374@kroah.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: torvalds@linux-foundation.org, akpm@linux-foundation.org, alan@lxorguk.ukuu.org.uk, Paolo Bonzini <pbonzini@redhat.com>, Petr Matousek <pmatouse@redhat.com>, linux-scsi@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, James Bottomley <JBottomley@parallels.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, Ben Hutchings <ben@decadent.org.uk>
 List-Id: dm-devel.ids
 
-On Wed, Feb 01, 2012 at 04:40:19PM +0800, Busby.Cheung wrote:
-> This is the mesgs:
- 
-Can you also lookin the kernel message log and see where or not it gives any
-additional reason there?
+2.6.32-longterm review patch.  If anyone has any objections, please let me know.
 
-Alasdair
+------------------
+
+
+From: Paolo Bonzini <pbonzini@redhat.com>
+
+commit ec8013beddd717d1740cfefb1a9b900deef85462 upstream.
+
+A logical volume can map to just part of underlying physical volume.
+In this case, it must be treated like a partition.
+
+Based on a patch from Alasdair G Kergon.
+
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+[bwh: Backport to 2.6.32 - drop change to drivers/md/dm-flakey.c]
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+---
+ drivers/md/dm-linear.c |   12 +++++++++++-
+ drivers/md/dm-mpath.c  |    6 ++++++
+ 2 files changed, 17 insertions(+), 1 deletion(-)
+
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -116,7 +116,17 @@ static int linear_ioctl(struct dm_target
+ 			unsigned long arg)
+ {
+ 	struct linear_c *lc = (struct linear_c *) ti->private;
+-	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
++	struct dm_dev *dev = lc->dev;
++	int r = 0;
++
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (lc->start ||
++	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+ }
+ 
+ static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1464,6 +1464,12 @@ static int multipath_ioctl(struct dm_tar
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
+ 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+ }
+ 
+
+
