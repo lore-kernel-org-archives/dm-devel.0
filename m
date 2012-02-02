@@ -1,37 +1,38 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH] scsi : Adding all the definitions of host bytes in
- hostbyte_table
-Date: Thu, 2 Feb 2012 15:27:50 +0000
-Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B01034E@SACEXCMBX02-PRD.hq.netapp.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH] scsi : Adding all the definitions of host
+ bytes in hostbyte_table
+Date: Thu, 02 Feb 2012 18:43:16 +0100
+Message-ID: <4F2ACB34.6020709@suse.de>
+References: <77471C95FAFD844C8CA02DD4F4C5FE2B01034E@SACEXCMBX02-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
+In-Reply-To: <77471C95FAFD844C8CA02DD4F4C5FE2B01034E@SACEXCMBX02-PRD.hq.netapp.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Moger, Babu" <Babu.Moger@netapp.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Resubmitting it again(Probably last one had some format issues).
-Adding all the definitions of host bytes in hostbyte_table.
+On 02/02/2012 04:27 PM, Moger, Babu wrote:
+> Resubmitting it again(Probably last one had some format issues).
+> Adding all the definitions of host bytes in hostbyte_table.
+>
+> Without this patch, scsi_show_result prints hostbyte as invalid
+> for statuses that are not defined in hostbyte_table(when scsi logging=
+ is enabled).
+>
+> Look at scsi_print_result function for better understanding.
+>
+> Signed-off-by: Babu Moger<babu.moger@netapp.com>
+Acked-by: Hannes Reinecke <hare@suse.de>
 
-Without this patch, scsi_show_result prints hostbyte as invalid
-for statuses that are not defined in hostbyte_table(when scsi logging is enabled).
+Cheers,
 
-Look at scsi_print_result function for better understanding.
-
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
----
---- linux-3.1-rc4/drivers/scsi/constants.c.orig	2012-01-12 15:21:28.000000000 -0600
-+++ linux-3.1-rc4/drivers/scsi/constants.c	2012-01-12 15:25:07.000000000 -0600
-@@ -1422,7 +1422,8 @@ static const char * const hostbyte_table
- "DID_OK", "DID_NO_CONNECT", "DID_BUS_BUSY", "DID_TIME_OUT", "DID_BAD_TARGET",
- "DID_ABORT", "DID_PARITY", "DID_ERROR", "DID_RESET", "DID_BAD_INTR",
- "DID_PASSTHROUGH", "DID_SOFT_ERROR", "DID_IMM_RETRY", "DID_REQUEUE",
--"DID_TRANSPORT_DISRUPTED", "DID_TRANSPORT_FAILFAST" };
-+"DID_TRANSPORT_DISRUPTED", "DID_TRANSPORT_FAILFAST", "DID_TARGET_FAILURE",
-+"DID_NEXUS_FAILURE" };
- #define NUM_HOSTBYTE_STRS ARRAY_SIZE(hostbyte_table)
- 
- static const char * const driverbyte_table[]={
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
