@@ -1,8 +1,8 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 07/11] [dm-thin] Commit every second to prevent
-	too much of a position building up.
-Date: Thu,  2 Feb 2012 16:39:10 +0000
-Message-ID: <1328200754-13642-8-git-send-email-ejt@redhat.com>
+Subject: [PATCH 03/11] [PATCH 18/19] [dm-thin] [bio prison] Don't
+	use the bi_next field for the holder of a cell.
+Date: Thu,  2 Feb 2012 16:39:06 +0000
+Message-ID: <1328200754-13642-4-git-send-email-ejt@redhat.com>
 References: <1328200754-13642-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,113 +23,101 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
+The holder can be passed down to lower devices which may want to use
+bi_next themselves.  Also added BUG_ON checks to confirm fix.
 ---
- drivers/md/dm-thin.c |   28 ++++++++++++++++++++++++++--
- 1 files changed, 26 insertions(+), 2 deletions(-)
+ drivers/md/dm-thin.c |   35 ++++++++++++++++++++++-------------
+ 1 files changed, 22 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 6ef03a2..19de11a 100644
+index c308757..6ef03a2 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -23,6 +23,7 @@
- #define DEFERRED_SET_SIZE 64
- #define MAPPING_POOL_SIZE 1024
- #define PRISON_CELLS 1024
-+#define COMMIT_PERIOD HZ
+@@ -124,7 +124,7 @@ struct cell {
+ 	struct hlist_node list;
+ 	struct bio_prison *prison;
+ 	struct cell_key key;
+-	unsigned count;
++	struct bio *holder;
+ 	struct bio_list bios;
+ };
+ 
+@@ -220,8 +220,8 @@ static struct cell *__search_bucket(struct hlist_head *bucket,
+  * This may block if a new cell needs allocating.  You must ensure that
+  * cells will be unlocked even if the calling thread is blocked.
+  *
+- * Returns the number of entries in the cell prior to the new addition
+- * or < 0 on failure.
++ * Returns 1 if the cell was already held, 0 if @inmate is the new holder,
++ * or < 0 on error.
+  */
+ static int bio_detain(struct bio_prison *prison, struct cell_key *key,
+ 		      struct bio *inmate, struct cell **ref)
+@@ -256,21 +256,25 @@ static int bio_detain(struct bio_prison *prison, struct cell_key *key,
+ 
+ 			cell->prison = prison;
+ 			memcpy(&cell->key, key, sizeof(cell->key));
+-			cell->count = 0;
++			cell->holder = inmate;
+ 			bio_list_init(&cell->bios);
+ 			hlist_add_head(&cell->list, prison->cells + hash);
++			r = 0;
++
++		} else {
++			mempool_free(cell2, prison->cell_pool);
++			cell2 = NULL;
++			r = 1;
++			bio_list_add(&cell->bios, inmate);
+ 		}
+-	}
+ 
+-	r = cell->count++;
+-	bio_list_add(&cell->bios, inmate);
++	} else {
++		r = 1;
++		bio_list_add(&cell->bios, inmate);
++	}
+ 	spin_unlock_irqrestore(&prison->lock, flags);
+ 
+-	if (cell2)
+-		mempool_free(cell2, prison->cell_pool);
+-
+ 	*ref = cell;
+-
+ 	return r;
+ }
+ 
+@@ -286,6 +290,7 @@ static void __cell_release(struct cell *cell, struct bio_list *inmates)
+ 	if (inmates)
+ 		bio_list_merge(inmates, &cell->bios);
+ 
++	bio_list_add_head(inmates, cell->holder);
+ 	mempool_free(cell, prison->cell_pool);
+ }
+ 
+@@ -662,8 +667,10 @@ static void remap_and_issue(struct thin_c *tc, struct bio *bio,
+ 		spin_lock_irqsave(&pool->lock, flags);
+ 		bio_list_add(&pool->deferred_flush_bios, bio);
+ 		spin_unlock_irqrestore(&pool->lock, flags);
+-	} else
++	} else {
++		BUG_ON(bio->bi_next);
+ 		generic_make_request(bio);
++	}
+ }
  
  /*
-  * The block size of the device holding pool data must be
-@@ -498,8 +499,10 @@ struct pool {
- 
- 	struct workqueue_struct *wq;
- 	struct work_struct worker;
-+	struct delayed_work waker;
- 
- 	unsigned ref_count;
-+	unsigned long last_commit_jiffies;
- 
- 	spinlock_t lock;
- 	struct bio_list deferred_bios;
-@@ -1256,6 +1259,12 @@ static void process_bio(struct thin_c *tc, struct bio *bio)
- 	}
- }
- 
-+static int need_commit_due_to_time(struct pool *pool)
-+{
-+	return jiffies < pool->last_commit_jiffies ||
-+	       jiffies > pool->last_commit_jiffies + COMMIT_PERIOD;
-+}
-+
- static void process_deferred_bios(struct pool *pool)
- {
- 	unsigned long flags;
-@@ -1297,7 +1306,7 @@ static void process_deferred_bios(struct pool *pool)
- 	bio_list_init(&pool->deferred_flush_bios);
- 	spin_unlock_irqrestore(&pool->lock, flags);
- 
--	if (bio_list_empty(&bios))
-+	if (bio_list_empty(&bios) && !need_commit_due_to_time(pool))
- 		return;
- 
- 	r = dm_pool_commit_metadata(pool->pmd);
-@@ -1308,6 +1317,7 @@ static void process_deferred_bios(struct pool *pool)
- 			bio_io_error(bio);
+@@ -1302,8 +1309,10 @@ static void process_deferred_bios(struct pool *pool)
  		return;
  	}
-+	pool->last_commit_jiffies = jiffies;
  
- 	while ((bio = bio_list_pop(&bios))) {
- 		BUG_ON(bio->bi_next);
-@@ -1323,6 +1333,17 @@ static void do_worker(struct work_struct *ws)
- 	process_deferred_bios(pool);
+-	while ((bio = bio_list_pop(&bios)))
++	while ((bio = bio_list_pop(&bios))) {
++		BUG_ON(bio->bi_next);
+ 		generic_make_request(bio);
++	}
  }
  
-+/*
-+ * We want to commit periodically so that not too much
-+ * unwritten data builds up.
-+ */
-+static void do_waker(struct work_struct *ws)
-+{
-+	struct pool *pool = container_of(to_delayed_work(ws), struct pool, waker);
-+	wake_worker(pool);
-+	queue_delayed_work(pool->wq, &pool->waker, COMMIT_PERIOD);
-+}
-+
- /*----------------------------------------------------------------*/
- 
- /*
-@@ -1532,6 +1553,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 	}
- 
- 	INIT_WORK(&pool->worker, do_worker);
-+	INIT_DELAYED_WORK(&pool->waker, do_waker);
- 	spin_lock_init(&pool->lock);
- 	bio_list_init(&pool->deferred_bios);
- 	bio_list_init(&pool->deferred_flush_bios);
-@@ -1558,6 +1580,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 		goto bad_endio_hook_pool;
- 	}
- 	pool->ref_count = 1;
-+	pool->last_commit_jiffies = jiffies;
- 	pool->pool_md = pool_md;
- 	pool->md_dev = metadata_dev;
- 	__pool_table_insert(pool);
-@@ -1887,7 +1910,7 @@ static void pool_resume(struct dm_target *ti)
- 	__requeue_bios(pool);
- 	spin_unlock_irqrestore(&pool->lock, flags);
- 
--	wake_worker(pool);
-+	do_waker(&pool->waker.work);
- }
- 
- static void pool_postsuspend(struct dm_target *ti)
-@@ -1896,6 +1919,7 @@ static void pool_postsuspend(struct dm_target *ti)
- 	struct pool_c *pt = ti->private;
- 	struct pool *pool = pt->pool;
- 
-+	cancel_delayed_work(&pool->waker);
- 	flush_workqueue(pool->wq);
- 
- 	r = dm_pool_commit_metadata(pool->pmd);
+ static void do_worker(struct work_struct *ws)
 -- 
 1.7.5.4
