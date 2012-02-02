@@ -1,9 +1,8 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 04/11] [PATCH 15/19] [dm-thin]
-	dm_thin_remove_block() wasn't decrementing the mapped_blocks
-	counter.
-Date: Thu,  2 Feb 2012 16:39:07 +0000
-Message-ID: <1328200754-13642-5-git-send-email-ejt@redhat.com>
+Subject: [PATCH 06/11] Remove entries from the ref_count tree if
+	they're no longer needed.
+Date: Thu,  2 Feb 2012 16:39:09 +0000
+Message-ID: <1328200754-13642-7-git-send-email-ejt@redhat.com>
 References: <1328200754-13642-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,22 +23,37 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
----
- drivers/md/dm-thin-metadata.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Ref counts are stored in two places: a bitmap if the ref_count is
+below 3, or a btreeof uint32_t if 3 or above.
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 6741732..1aeef4e 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1212,6 +1212,8 @@ static int __remove(struct dm_thin_device *td, dm_block_t block)
- 	if (r)
- 		return r;
+When a ref_count that was above 3 drops below we can remove it from
+the tree and save some metadata space.  This removal was commented out
+before because I was unsure why this was causing under populated btree
+nodes.  Earlier patches have fixed this issue.
+---
+ drivers/md/persistent-data/dm-space-map-common.c |    3 ---
+ 1 files changed, 0 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
+index df2494c..ff3beed 100644
+--- a/drivers/md/persistent-data/dm-space-map-common.c
++++ b/drivers/md/persistent-data/dm-space-map-common.c
+@@ -405,8 +405,6 @@ int sm_ll_insert(struct ll_disk *ll, dm_block_t b,
+ 		if (r < 0)
+ 			return r;
  
-+	td->mapped_blocks--;
-+	td->changed = 1;
- 	pmd->need_commit = 1;
+-#if 0
+-		/* FIXME: dm_btree_remove doesn't handle this yet */
+ 		if (old > 2) {
+ 			r = dm_btree_remove(&ll->ref_count_info,
+ 					    ll->ref_count_root,
+@@ -414,7 +412,6 @@ int sm_ll_insert(struct ll_disk *ll, dm_block_t b,
+ 			if (r)
+ 				return r;
+ 		}
+-#endif
  
- 	return 0;
+ 	} else {
+ 		__le32 le_rc = cpu_to_le32(ref_count);
 -- 
 1.7.5.4
