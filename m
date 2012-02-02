@@ -1,18 +1,20 @@
-From: "Busby.Cheung" <chaimvy@163.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: [linux-lvm] New LVM2 release 2.02.89:
  Thinly-provisioned logical volumes
-Date: Thu, 2 Feb 2012 09:36:41 +0800 (CST)
-Message-ID: <407b84bc.164f.1353bb4d438.Coremail.chaimvy@163.com>
+Date: Thu, 02 Feb 2012 10:41:29 +0100
+Message-ID: <4F2A5A49.9060407@redhat.com>
 References: <20120201124144.GA23056@agk-dp.fab.redhat.com>
 	<20120131132318.GH16447@agk-dp.fab.redhat.com>
 	<20120127025701.GB16767@agk-dp.fab.redhat.com>
 	<1eaeb3d5.c6e.135332dea21.Coremail.chaimvy@163.com>
 	<5162be66.9cd.13538125472.Coremail.chaimvy@163.com>
+	<407b84bc.164f.1353bb4d438.Coremail.chaimvy@163.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4004914500482704420=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120201124144.GA23056@agk-dp.fab.redhat.com>
+In-Reply-To: <407b84bc.164f.1353bb4d438.Coremail.chaimvy@163.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,176 +24,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, LVM general discussion and development <linux-lvm@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Busby.Cheung" <chaimvy@163.com>, Alasdair G Kergon <agk@redhat.com>, LVM general discussion and development <linux-lvm@redhat.com>
 List-Id: dm-devel.ids
 
---===============4004914500482704420==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_181529_305130070.1328146601016"
+Dne 2.2.2012 02:36, Busby.Cheung napsal(a):
+> Hi Alasdair,
+>
+>               The kernel mesg log "failed to resize data device" while use dmsetup CMDs to create pool will be ok.
+>
+> use LVM2 cmd mesgs:
+> ---------------------------
+>
+> [root@host2 ~]# pvs
+>    Ignoring too small pv_min_size 512KB, using default 2048KB.
+>    PV         VG         Fmt  Attr PSize   PFree
+>    /dev/sda2  VolGroup00 lvm2 a--  931.41G      0
+>    /dev/sdg   vg_pool    lvm2 a--  931.51G 931.51G
+>    /dev/sdl   vg_pool    lvm2 a--  931.51G 931.51G
+> [root@host2 ~]# vgs
+>    Ignoring too small pv_min_size 512KB, using default 2048KB.
+>    VG         #PV #LV #SN Attr   VSize   VFree
+>    VolGroup00   1   2   0 wz--n- 931.41G      0
+>    vg_pool      2   0   0 wz--n-   1.82T   1.82T
+> [root@host2 ~]# lvcreate -L65G -T vg_pool/pool
+>    Ignoring too small pv_min_size 512KB, using default 2048KB.
+>    Rounding up size to full physical extent 4.00 MB
+>    device-mapper: resume ioctl on  failed: Cannot allocate memory
+>    Unable to resume vg_pool-pool-tpool (253:12)
+>    Aborting. Failed to activate thin pool.
+> [root@host2 ~]# dmesg
+> device-mapper: space map checker: Loading debug space map from disk.  This may take some time
+> device-mapper: space map checker: Load complete
+> device-mapper: thin: failed to resize data device
+> [root@host2 ~]# cat /var/log/messages
+> Feb  2 09:14:45 host2 kernel: device-mapper: space map checker: Loading debug space map from disk.  This may take some time
+> Feb  2 09:14:45 host2 kernel: device-mapper: space map checker: Load complete
+> Feb  2 09:14:45 host2 kernel: device-mapper: thin: failed to resize data device
+>
+>   --------------------------
+> use dmsetup cmd:
+>
+> [root@host2 ~]# lvcreate -n metadata_lv -L40M  vg_pool
+>    Ignoring too small pv_min_size 512KB, using default 2048KB.
+>    Logical volume "metadata_lv" created
+> [root@host2 ~]# lvcreate -n data_lv -L300G vg_pool
+>    Ignoring too small pv_min_size 512KB, using default 2048KB.
+>    Logical volume "data_lv" created
+> [root@host2 ~]# dmsetup create pool --table "0 209715200 thin-pool /dev/vg_pool/metadata_lv /dev/vg_pool/data_lv  1024  20000"
+> [root@host2 ~]# dmsetup status
+> vg_pool-metadata_lv: 0 81920 linear
+> VolGroup00-LogVol01: 0 24510464 linear
+> vg_pool-pool-tpool: 0 136314880 thin-pool 0 76/1024 0/0 -
+> vg_pool-pool_tdata: 0 136314880 linear
+> VolGroup00-LogVol00: 0 1928790016 linear
+> vg_pool-pool_tmeta: 0 8192 linear
+> pool: 0 209715200 thin-pool 0 21/10240 0/204800 -
+> vg_pool-data_lv: 0 629145600 linear
+>
+> [root@host2 ~]# dmesg
+> device-mapper: space map checker: Loading debug space map from disk.  This may take some time
+> device-mapper: space map checker: Load complete
+> device-mapper: thin: failed to resize data device
+> device-mapper: space map checker: Loading debug space map from disk.  This may take some time
+> device-mapper: space map checker: Load complete
+> device-mapper: space map checker: free block counts differ, checker 1020, sm-disk:948
+> device-mapper: space map checker: free block counts differ, checker 10236, sm-disk:10219
+>
 
-------=_Part_181529_305130070.1328146601016
-Content-Type: text/plain; charset=GBK
-Content-Transfer-Encoding: base64
+Have you tried to build kernel without CONFIG_DM_DEBUG_SPACE_MAPS and 
+CONFIG_DM_DEBUG_BLOCK_STACK_TRACING ?
 
-SGkgQWxhc2RhaXIsCgogICAgICAgICAgICAgVGhlIGtlcm5lbCBtZXNnIGxvZyAiZmFpbGVkIHRv
-IHJlc2l6ZSBkYXRhIGRldmljZSIgd2hpbGUgdXNlIGRtc2V0dXAgQ01EcyB0byBjcmVhdGUgcG9v
-bCB3aWxsIGJlIG9rLiAgIAoKdXNlIExWTTIgY21kIG1lc2dzOgotLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0KCltyb290QGhvc3QyIH5dIyBwdnMKICBJZ25vcmluZyB0b28gc21hbGwgcHZfbWlu
-X3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLgogIFBWICAgICAgICAgVkcgICAgICAg
-ICBGbXQgIEF0dHIgUFNpemUgICBQRnJlZSAKICAvZGV2L3NkYTIgIFZvbEdyb3VwMDAgbHZtMiBh
-LS0gIDkzMS40MUcgICAgICAwCiAgL2Rldi9zZGcgICB2Z19wb29sICAgIGx2bTIgYS0tICA5MzEu
-NTFHIDkzMS41MUcKICAvZGV2L3NkbCAgIHZnX3Bvb2wgICAgbHZtMiBhLS0gIDkzMS41MUcgOTMx
-LjUxRwpbcm9vdEBob3N0MiB+XSMgdmdzCiAgSWdub3JpbmcgdG9vIHNtYWxsIHB2X21pbl9zaXpl
-IDUxMktCLCB1c2luZyBkZWZhdWx0IDIwNDhLQi4KICBWRyAgICAgICAgICNQViAjTFYgI1NOIEF0
-dHIgICBWU2l6ZSAgIFZGcmVlIAogIFZvbEdyb3VwMDAgICAxICAgMiAgIDAgd3otLW4tIDkzMS40
-MUcgICAgICAwCiAgdmdfcG9vbCAgICAgIDIgICAwICAgMCB3ei0tbi0gICAxLjgyVCAgIDEuODJU
-Cltyb290QGhvc3QyIH5dIyBsdmNyZWF0ZSAtTDY1RyAtVCB2Z19wb29sL3Bvb2wKICBJZ25vcmlu
-ZyB0b28gc21hbGwgcHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLgogIFJv
-dW5kaW5nIHVwIHNpemUgdG8gZnVsbCBwaHlzaWNhbCBleHRlbnQgNC4wMCBNQgogIGRldmljZS1t
-YXBwZXI6IHJlc3VtZSBpb2N0bCBvbiAgZmFpbGVkOiBDYW5ub3QgYWxsb2NhdGUgbWVtb3J5CiAg
-VW5hYmxlIHRvIHJlc3VtZSB2Z19wb29sLXBvb2wtdHBvb2wgKDI1MzoxMikKICBBYm9ydGluZy4g
-RmFpbGVkIHRvIGFjdGl2YXRlIHRoaW4gcG9vbC4KW3Jvb3RAaG9zdDIgfl0jIGRtZXNnCmRldmlj
-ZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBMb2FkaW5nIGRlYnVnIHNwYWNlIG1hcCBmcm9t
-IGRpc2suICBUaGlzIG1heSB0YWtlIHNvbWUgdGltZQpkZXZpY2UtbWFwcGVyOiBzcGFjZSBtYXAg
-Y2hlY2tlcjogTG9hZCBjb21wbGV0ZQpkZXZpY2UtbWFwcGVyOiB0aGluOiBmYWlsZWQgdG8gcmVz
-aXplIGRhdGEgZGV2aWNlCltyb290QGhvc3QyIH5dIyBjYXQgL3Zhci9sb2cvbWVzc2FnZXMKRmVi
-ICAyIDA5OjE0OjQ1IGhvc3QyIGtlcm5lbDogZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNr
-ZXI6IExvYWRpbmcgZGVidWcgc3BhY2UgbWFwIGZyb20gZGlzay4gIFRoaXMgbWF5IHRha2Ugc29t
-ZSB0aW1lCkZlYiAgMiAwOToxNDo0NSBob3N0MiBrZXJuZWw6IGRldmljZS1tYXBwZXI6IHNwYWNl
-IG1hcCBjaGVja2VyOiBMb2FkIGNvbXBsZXRlCkZlYiAgMiAwOToxNDo0NSBob3N0MiBrZXJuZWw6
-IGRldmljZS1tYXBwZXI6IHRoaW46IGZhaWxlZCB0byByZXNpemUgZGF0YSBkZXZpY2UKCiAtLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLQp1c2UgZG1zZXR1cCBjbWQ6Cgpbcm9vdEBob3N0MiB+XSMg
-bHZjcmVhdGUgLW4gbWV0YWRhdGFfbHYgLUw0ME0gIHZnX3Bvb2wKICBJZ25vcmluZyB0b28gc21h
-bGwgcHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLgogIExvZ2ljYWwgdm9s
-dW1lICJtZXRhZGF0YV9sdiIgY3JlYXRlZApbcm9vdEBob3N0MiB+XSMgbHZjcmVhdGUgLW4gZGF0
-YV9sdiAtTDMwMEcgdmdfcG9vbAogIElnbm9yaW5nIHRvbyBzbWFsbCBwdl9taW5fc2l6ZSA1MTJL
-QiwgdXNpbmcgZGVmYXVsdCAyMDQ4S0IuCiAgTG9naWNhbCB2b2x1bWUgImRhdGFfbHYiIGNyZWF0
-ZWQKW3Jvb3RAaG9zdDIgfl0jIGRtc2V0dXAgY3JlYXRlIHBvb2wgLS10YWJsZSAiMCAyMDk3MTUy
-MDAgdGhpbi1wb29sIC9kZXYvdmdfcG9vbC9tZXRhZGF0YV9sdiAvZGV2L3ZnX3Bvb2wvZGF0YV9s
-diAgMTAyNCAgMjAwMDAiCltyb290QGhvc3QyIH5dIyBkbXNldHVwIHN0YXR1cwp2Z19wb29sLW1l
-dGFkYXRhX2x2OiAwIDgxOTIwIGxpbmVhcgpWb2xHcm91cDAwLUxvZ1ZvbDAxOiAwIDI0NTEwNDY0
-IGxpbmVhcgp2Z19wb29sLXBvb2wtdHBvb2w6IDAgMTM2MzE0ODgwIHRoaW4tcG9vbCAwIDc2LzEw
-MjQgMC8wIC0KdmdfcG9vbC1wb29sX3RkYXRhOiAwIDEzNjMxNDg4MCBsaW5lYXIKVm9sR3JvdXAw
-MC1Mb2dWb2wwMDogMCAxOTI4NzkwMDE2IGxpbmVhcgp2Z19wb29sLXBvb2xfdG1ldGE6IDAgODE5
-MiBsaW5lYXIKcG9vbDogMCAyMDk3MTUyMDAgdGhpbi1wb29sIDAgMjEvMTAyNDAgMC8yMDQ4MDAg
-LQp2Z19wb29sLWRhdGFfbHY6IDAgNjI5MTQ1NjAwIGxpbmVhcgoKW3Jvb3RAaG9zdDIgfl0jIGRt
-ZXNnCmRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBMb2FkaW5nIGRlYnVnIHNwYWNl
-IG1hcCBmcm9tIGRpc2suICBUaGlzIG1heSB0YWtlIHNvbWUgdGltZQpkZXZpY2UtbWFwcGVyOiBz
-cGFjZSBtYXAgY2hlY2tlcjogTG9hZCBjb21wbGV0ZQpkZXZpY2UtbWFwcGVyOiB0aGluOiBmYWls
-ZWQgdG8gcmVzaXplIGRhdGEgZGV2aWNlCmRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2Vy
-OiBMb2FkaW5nIGRlYnVnIHNwYWNlIG1hcCBmcm9tIGRpc2suICBUaGlzIG1heSB0YWtlIHNvbWUg
-dGltZQpkZXZpY2UtbWFwcGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogTG9hZCBjb21wbGV0ZQpkZXZp
-Y2UtbWFwcGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogZnJlZSBibG9jayBjb3VudHMgZGlmZmVyLCBj
-aGVja2VyIDEwMjAsIHNtLWRpc2s6OTQ4CmRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2Vy
-OiBmcmVlIGJsb2NrIGNvdW50cyBkaWZmZXIsIGNoZWNrZXIgMTAyMzYsIHNtLWRpc2s6MTAyMTkK
-CiAKIApCZXN0IHJlZ2FyZHMsCkJ1c2J5CgoKID4gLS0tLS3Urcq808q8/i0tLS0tCj4gt6K8/sjL
-OiAiQWxhc2RhaXIgRyBLZXJnb24iIDxhZ2tAcmVkaGF0LmNvbT4KPiC3osvNyrG85DogMjAxMsTq
-MtTCMcjVINDHxtrI/Qo+IMrVvP7IyzogIkJ1c2J5LkNoZXVuZyIgPGNoYWltdnlAMTYzLmNvbT4K
-PiCzrcvNOiAiTFZNIGdlbmVyYWwgZGlzY3Vzc2lvbiBhbmQgZGV2ZWxvcG1lbnQiIDxsaW51eC1s
-dm1AcmVkaGF0LmNvbT4sICJhZ2tAcmVkaGF0LmNvbSIgPGFna0ByZWRoYXQuY29tPiwgZG0tZGV2
-ZWxAcmVkaGF0LmNvbQo+INb3zOI6IFJlOiBSZTogW2xpbnV4LWx2bV0gTmV3IExWTTIgcmVsZWFz
-ZSAyLjAyLjg5OiBUaGlubHktcHJvdmlzaW9uZWQgbG9naWNhbCB2b2x1bWVzCj4gCj4gT24gV2Vk
-LCBGZWIgMDEsIDIwMTIgYXQgMDQ6NDA6MTlQTSArMDgwMCwgQnVzYnkuQ2hldW5nIHdyb3RlOgo+
-ID4gVGhpcyBpcyB0aGUgbWVzZ3M6Cj4gIAo+IENhbiB5b3UgYWxzbyBsb29raW4gdGhlIGtlcm5l
-bCBtZXNzYWdlIGxvZyBhbmQgc2VlIHdoZXJlIG9yIG5vdCBpdCBnaXZlcyBhbnkKPiBhZGRpdGlv
-bmFsIHJlYXNvbiB0aGVyZT8KPiAKPiBBbGFzZGFpcgo=
-------=_Part_181529_305130070.1328146601016
-Content-Type: text/html; charset=GBK
-Content-Transfer-Encoding: base64
+These two options are there only for debugging - and have major impact on 
+performance (and possibly on memory resource as well).
 
-SGkgQWxhc2RhaXIsPGJyPjxwcmU+ICAgICAgICAgICAgIFRoZSBrZXJuZWwgbWVzZyBsb2cgImZh
-aWxlZCB0byByZXNpemUgZGF0YSBkZXZpY2UiIHdoaWxlIHVzZSBkbXNldHVwIENNRHMgdG8gY3Jl
-YXRlIHBvb2wgd2lsbCBiZSBvay4gICA8YnI+PGJyPjxzcGFuIHN0eWxlPSJmb250LXdlaWdodDog
-Ym9sZDsiPnVzZSBMVk0yIGNtZCBtZXNnczo8L3NwYW4+PGJyPi0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLTxicj48L3ByZT5bcm9vdEBob3N0MiB+XSMgcHZzPGJyPiZuYnNwOyBJZ25vcmluZyB0
-b28gc21hbGwgcHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLjxicj4mbmJz
-cDsgUFYmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgVkcm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgRm10Jm5ic3A7
-IEF0dHIgUFNpemUmbmJzcDsmbmJzcDsgUEZyZWUmbmJzcDsgPGJyPiZuYnNwOyAvZGV2L3NkYTIm
-bmJzcDsgVm9sR3JvdXAwMCBsdm0yIGEtLSZuYnNwOyA5MzEuNDFHJm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7IDAgPGJyPiZuYnNwOyAvZGV2L3NkZyZuYnNwOyZuYnNwOyB2Z19wb29sJm5i
-c3A7Jm5ic3A7Jm5ic3A7IGx2bTIgYS0tJm5ic3A7IDkzMS41MUcgOTMxLjUxRzxicj4mbmJzcDsg
-L2Rldi9zZGwmbmJzcDsmbmJzcDsgdmdfcG9vbCZuYnNwOyZuYnNwOyZuYnNwOyBsdm0yIGEtLSZu
-YnNwOyA5MzEuNTFHIDkzMS41MUc8YnI+W3Jvb3RAaG9zdDIgfl0jIHZnczxicj4mbmJzcDsgSWdu
-b3JpbmcgdG9vIHNtYWxsIHB2X21pbl9zaXplIDUxMktCLCB1c2luZyBkZWZhdWx0IDIwNDhLQi48
-YnI+Jm5ic3A7IFZHJm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7ICNQViAjTFYgI1NOIEF0dHImbmJzcDsmbmJzcDsgVlNpemUmbmJzcDsmbmJzcDsgVkZyZWUm
-bmJzcDsgPGJyPiZuYnNwOyBWb2xHcm91cDAwJm5ic3A7Jm5ic3A7IDEmbmJzcDsmbmJzcDsgMiZu
-YnNwOyZuYnNwOyAwIHd6LS1uLSA5MzEuNDFHJm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-IDAgPGJyPiZuYnNwOyB2Z19wb29sJm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDImbmJz
-cDsmbmJzcDsgMCZuYnNwOyZuYnNwOyAwIHd6LS1uLSZuYnNwOyZuYnNwOyAxLjgyVCZuYnNwOyZu
-YnNwOyAxLjgyVDxicj5bcm9vdEBob3N0MiB+XSMgbHZjcmVhdGUgLUw2NUcgLVQgdmdfcG9vbC9w
-b29sPGJyPiZuYnNwOyBJZ25vcmluZyB0b28gc21hbGwgcHZfbWluX3NpemUgNTEyS0IsIHVzaW5n
-IGRlZmF1bHQgMjA0OEtCLjxicj4mbmJzcDsgUm91bmRpbmcgdXAgc2l6ZSB0byBmdWxsIHBoeXNp
-Y2FsIGV4dGVudCA0LjAwIE1CPGJyPiZuYnNwOyBkZXZpY2UtbWFwcGVyOiByZXN1bWUgaW9jdGwg
-b24mbmJzcDsgZmFpbGVkOiBDYW5ub3QgYWxsb2NhdGUgbWVtb3J5PGJyPiZuYnNwOyBVbmFibGUg
-dG8gcmVzdW1lIHZnX3Bvb2wtcG9vbC10cG9vbCAoMjUzOjEyKTxicj4mbmJzcDsgQWJvcnRpbmcu
-IEZhaWxlZCB0byBhY3RpdmF0ZSB0aGluIHBvb2wuPGJyPltyb290QGhvc3QyIH5dIyBkbWVzZzxi
-cj5kZXZpY2UtbWFwcGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogTG9hZGluZyBkZWJ1ZyBzcGFjZSBt
-YXAgZnJvbSBkaXNrLiZuYnNwOyBUaGlzIG1heSB0YWtlIHNvbWUgdGltZTxicj5kZXZpY2UtbWFw
-cGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogTG9hZCBjb21wbGV0ZTxicj5kZXZpY2UtbWFwcGVyOiB0
-aGluOiA8c3BhbiBzdHlsZT0iY29sb3I6IHJnYigyNDAsIDAsIDApOyI+ZmFpbGVkIHRvIHJlc2l6
-ZSBkYXRhIGRldmljZTwvc3Bhbj48YnI+W3Jvb3RAaG9zdDIgfl0jIGNhdCAvdmFyL2xvZy9tZXNz
-YWdlczxicj5GZWImbmJzcDsgMiAwOToxNDo0NSBob3N0MiBrZXJuZWw6IGRldmljZS1tYXBwZXI6
-IHNwYWNlIG1hcCBjaGVja2VyOiBMb2FkaW5nIGRlYnVnIHNwYWNlIG1hcCBmcm9tIGRpc2suJm5i
-c3A7IFRoaXMgbWF5IHRha2Ugc29tZSB0aW1lPGJyPkZlYiZuYnNwOyAyIDA5OjE0OjQ1IGhvc3Qy
-IGtlcm5lbDogZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWQgY29tcGxldGU8
-YnI+RmViJm5ic3A7IDIgMDk6MTQ6NDUgaG9zdDIga2VybmVsOiBkZXZpY2UtbWFwcGVyOiB0aGlu
-OiBmYWlsZWQgdG8gcmVzaXplIGRhdGEgZGV2aWNlPGJyPjxkaXY+Jm5ic3A7LS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS08YnI+PHNwYW4gc3R5bGU9ImZvbnQtd2VpZ2h0OiBib2xkOyI+dXNlIGRt
-c2V0dXAgY21kOjwvc3Bhbj48YnI+PGJyPltyb290QGhvc3QyIH5dIyBsdmNyZWF0ZSAtbiBtZXRh
-ZGF0YV9sdiAtTDQwTSZuYnNwOyB2Z19wb29sPGJyPiZuYnNwOyBJZ25vcmluZyB0b28gc21hbGwg
-cHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLjxicj4mbmJzcDsgTG9naWNh
-bCB2b2x1bWUgIm1ldGFkYXRhX2x2IiBjcmVhdGVkPGJyPltyb290QGhvc3QyIH5dIyBsdmNyZWF0
-ZSAtbiBkYXRhX2x2IC1MMzAwRyB2Z19wb29sPGJyPiZuYnNwOyBJZ25vcmluZyB0b28gc21hbGwg
-cHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLjxicj4mbmJzcDsgTG9naWNh
-bCB2b2x1bWUgImRhdGFfbHYiIGNyZWF0ZWQ8YnI+W3Jvb3RAaG9zdDIgfl0jIGRtc2V0dXAgY3Jl
-YXRlIHBvb2wgLS10YWJsZSAiMCAyMDk3MTUyMDAgdGhpbi1wb29sIC9kZXYvdmdfcG9vbC9tZXRh
-ZGF0YV9sdiAvZGV2L3ZnX3Bvb2wvZGF0YV9sdiZuYnNwOyAxMDI0Jm5ic3A7IDIwMDAwIjxicj5b
-cm9vdEBob3N0MiB+XSMgZG1zZXR1cCBzdGF0dXM8YnI+dmdfcG9vbC1tZXRhZGF0YV9sdjogMCA4
-MTkyMCBsaW5lYXIgPGJyPlZvbEdyb3VwMDAtTG9nVm9sMDE6IDAgMjQ1MTA0NjQgbGluZWFyIDxi
-cj52Z19wb29sLXBvb2wtdHBvb2w6IDAgMTM2MzE0ODgwIHRoaW4tcG9vbCAwIDc2LzEwMjQgMC8w
-IC08YnI+dmdfcG9vbC1wb29sX3RkYXRhOiAwIDEzNjMxNDg4MCBsaW5lYXIgPGJyPlZvbEdyb3Vw
-MDAtTG9nVm9sMDA6IDAgMTkyODc5MDAxNiBsaW5lYXIgPGJyPnZnX3Bvb2wtcG9vbF90bWV0YTog
-MCA4MTkyIGxpbmVhciA8YnI+PHNwYW4gc3R5bGU9ImNvbG9yOiByZ2IoMjQwLCAwLCAwKTsiPnBv
-b2w6IDAgMjA5NzE1MjAwIHRoaW4tcG9vbCAwIDIxLzEwMjQwIDAvMjA0ODAwIC08L3NwYW4+PGJy
-PnZnX3Bvb2wtZGF0YV9sdjogMCA2MjkxNDU2MDAgbGluZWFyIDxicj48YnI+W3Jvb3RAaG9zdDIg
-fl0jIGRtZXNnPGJyPmRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBMb2FkaW5nIGRl
-YnVnIHNwYWNlIG1hcCBmcm9tIGRpc2suJm5ic3A7IFRoaXMgbWF5IHRha2Ugc29tZSB0aW1lPGJy
-PmRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBMb2FkIGNvbXBsZXRlPGJyPmRldmlj
-ZS1tYXBwZXI6IHRoaW46IGZhaWxlZCB0byByZXNpemUgZGF0YSBkZXZpY2U8YnI+ZGV2aWNlLW1h
-cHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWRpbmcgZGVidWcgc3BhY2UgbWFwIGZyb20gZGlz
-ay4mbmJzcDsgVGhpcyBtYXkgdGFrZSBzb21lIHRpbWU8YnI+ZGV2aWNlLW1hcHBlcjogc3BhY2Ug
-bWFwIGNoZWNrZXI6IExvYWQgY29tcGxldGU8YnI+PHNwYW4gc3R5bGU9ImNvbG9yOiByZ2IoMjQw
-LCAwLCAwKTsiPmRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBmcmVlIGJsb2NrIGNv
-dW50cyBkaWZmZXIsIGNoZWNrZXIgMTAyMCwgc20tZGlzazo5NDg8L3NwYW4+PGJyIHN0eWxlPSJj
-b2xvcjogcmdiKDI0MCwgMCwgMCk7Ij48c3BhbiBzdHlsZT0iY29sb3I6IHJnYigyNDAsIDAsIDAp
-OyI+ZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IGZyZWUgYmxvY2sgY291bnRzIGRp
-ZmZlciwgY2hlY2tlciAxMDIzNiwgc20tZGlzazoxMDIxOTwvc3Bhbj48YnI+PC9kaXY+PGRpdj4m
-bmJzcDs8L2Rpdj48ZGl2PiZuYnNwOzxicj5CZXN0IHJlZ2FyZHMsPGJyPkJ1c2J5PGJyPjxicj48
-L2Rpdj48cHJlPiZuYnNwOyZndDsgLS0tLS3Urcq808q8/i0tLS0tCiZndDsgt6K8/sjLOiAiQWxh
-c2RhaXIgRyBLZXJnb24iICZsdDthZ2tAcmVkaGF0LmNvbSZndDsKJmd0OyC3osvNyrG85DogMjAx
-MsTqMtTCMcjVINDHxtrI/QomZ3Q7IMrVvP7IyzogIkJ1c2J5LkNoZXVuZyIgJmx0O2NoYWltdnlA
-MTYzLmNvbSZndDsKJmd0OyCzrcvNOiAiTFZNIGdlbmVyYWwgZGlzY3Vzc2lvbiBhbmQgZGV2ZWxv
-cG1lbnQiICZsdDtsaW51eC1sdm1AcmVkaGF0LmNvbSZndDssICJhZ2tAcmVkaGF0LmNvbSIgJmx0
-O2Fna0ByZWRoYXQuY29tJmd0OywgZG0tZGV2ZWxAcmVkaGF0LmNvbQomZ3Q7INb3zOI6IFJlOiBS
-ZTogW2xpbnV4LWx2bV0gTmV3IExWTTIgcmVsZWFzZSAyLjAyLjg5OiBUaGlubHktcHJvdmlzaW9u
-ZWQgbG9naWNhbCB2b2x1bWVzCiZndDsgCiZndDsgT24gV2VkLCBGZWIgMDEsIDIwMTIgYXQgMDQ6
-NDA6MTlQTSArMDgwMCwgQnVzYnkuQ2hldW5nIHdyb3RlOgomZ3Q7ICZndDsgVGhpcyBpcyB0aGUg
-bWVzZ3M6CiZndDsgIAomZ3Q7IENhbiB5b3UgYWxzbyBsb29raW4gdGhlIGtlcm5lbCBtZXNzYWdl
-IGxvZyBhbmQgc2VlIHdoZXJlIG9yIG5vdCBpdCBnaXZlcyBhbnkKJmd0OyBhZGRpdGlvbmFsIHJl
-YXNvbiB0aGVyZT8KJmd0OyAKJmd0OyBBbGFzZGFpcgo8L3ByZT48YnI+PGJyPjxzcGFuIHRpdGxl
-PSJuZXRlYXNlZm9vdGVyIj48c3BhbiBpZD0ibmV0ZWFzZV9tYWlsX2Zvb3RlciI+PC9zcGFuPjwv
-c3Bhbj4=
-------=_Part_181529_305130070.1328146601016--
+To check consistency of metadata there are now user-space tools available.
 
-
---===============4004914500482704420==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4004914500482704420==--
+Zdenek
