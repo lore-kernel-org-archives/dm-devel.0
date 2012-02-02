@@ -1,8 +1,9 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 01/11] Unlock the superblock on an error path for
-	new metadata dev creation.
-Date: Thu,  2 Feb 2012 16:39:04 +0000
-Message-ID: <1328200754-13642-2-git-send-email-ejt@redhat.com>
+Subject: [PATCH 04/11] [PATCH 15/19] [dm-thin]
+	dm_thin_remove_block() wasn't decrementing the mapped_blocks
+	counter.
+Date: Thu,  2 Feb 2012 16:39:07 +0000
+Message-ID: <1328200754-13642-5-git-send-email-ejt@redhat.com>
 References: <1328200754-13642-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,20 +25,21 @@ Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
 ---
- drivers/md/dm-thin-metadata.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ drivers/md/dm-thin-metadata.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 59c4f04..6741732 100644
+index 6741732..1aeef4e 100644
 --- a/drivers/md/dm-thin-metadata.c
 +++ b/drivers/md/dm-thin-metadata.c
-@@ -385,6 +385,7 @@ static int init_pmd(struct dm_pool_metadata *pmd,
- 		data_sm = dm_sm_disk_create(tm, nr_blocks);
- 		if (IS_ERR(data_sm)) {
- 			DMERR("sm_disk_create failed");
-+			dm_tm_unlock(tm, sblock);
- 			r = PTR_ERR(data_sm);
- 			goto bad;
- 		}
+@@ -1212,6 +1212,8 @@ static int __remove(struct dm_thin_device *td, dm_block_t block)
+ 	if (r)
+ 		return r;
+ 
++	td->mapped_blocks--;
++	td->changed = 1;
+ 	pmd->need_commit = 1;
+ 
+ 	return 0;
 -- 
 1.7.5.4
