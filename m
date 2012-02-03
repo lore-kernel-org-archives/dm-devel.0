@@ -1,212 +1,107 @@
-From: "Busby.Cheung" <chaimvy@163.com>
-Subject: Re: [linux-lvm] New LVM2 release 2.02.89:
- Thinly-provisioned logical volumes
-Date: Fri, 3 Feb 2012 10:54:02 +0800 (CST)
-Message-ID: <e0f9bae.8ab.13541220248.Coremail.chaimvy@163.com>
-References: <4F2A5A49.9060407@redhat.com>
-	<20120201124144.GA23056@agk-dp.fab.redhat.com>
-	<20120131132318.GH16447@agk-dp.fab.redhat.com>
-	<20120127025701.GB16767@agk-dp.fab.redhat.com>
-	<1eaeb3d5.c6e.135332dea21.Coremail.chaimvy@163.com>
-	<5162be66.9cd.13538125472.Coremail.chaimvy@163.com>
-	<407b84bc.164f.1353bb4d438.Coremail.chaimvy@163.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Wu Fengguang <fengguang.wu@gmail.com>
+Subject: Re: [Lsf-pc] [dm-devel]  [LSF/MM TOPIC] a few storage topics
+Date: Fri, 3 Feb 2012 20:37:53 +0800
+Message-ID: <20120203123753.GA11042@localhost>
+References: <F6F2DEB8-F096-4A3B-89E3-3A132033BC76@dilger.ca>
+ <1327502034.2720.23.camel@menhir>
+ <D3F292ADF945FB49B35E96C94C2061B915A638A6@nsmail.netscout.com>
+ <1327509623.2720.52.camel@menhir>
+ <1327512727.2776.52.camel@dabdike.int.hansenpartnership.com>
+ <D3F292ADF945FB49B35E96C94C2061B915A63A30@nsmail.netscout.com>
+ <1327516668.7168.7.camel@dabdike.int.hansenpartnership.com>
+ <20120125200613.GH15866@shiny>
+ <20120125224614.GM30782@redhat.com>
+ <D3F292ADF945FB49B35E96C94C2061B915A64111@nsmail.netscout.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5224110333002928609=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F2A5A49.9060407@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, LVM general discussion and development <linux-lvm@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <D3F292ADF945FB49B35E96C94C2061B915A64111@nsmail.netscout.com>
+Sender: owner-linux-mm@kvack.org
+To: "Loke, Chetan" <Chetan.Loke@netscout.com>
+Cc: Andrea Arcangeli <aarcange@redhat.com>, Chris Mason <chris.mason@oracle.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Steven Whitehouse <swhiteho@redhat.com>, Andreas Dilger <adilger@dilger.ca>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, neilb@suse.de, dm-devel@redhat.com, Christoph Hellwig <hch@infradead.org>, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org, "Darrick J.Wong" <djwong@us.ibm.com>, Dan Magenheimer <dan.magenheimer@oracle.com>
 List-Id: dm-devel.ids
 
---===============5224110333002928609==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_58351_1428844363.1328237642312"
+On Thu, Jan 26, 2012 at 11:40:47AM -0500, Loke, Chetan wrote:
+> > From: Andrea Arcangeli [mailto:aarcange@redhat.com]
+> > Sent: January 25, 2012 5:46 PM
+> 
+> ....
+> 
+> > Way more important is to have feedback on the readahead hits and be
+> > sure when readahead is raised to the maximum the hit rate is near 100%
+> > and fallback to lower readaheads if we don't get that hit rate. But
+> > that's not a VM problem and it's a readahead issue only.
+> > 
+> 
+> A quick google showed up - http://kerneltrap.org/node/6642 
+> 
+> Interesting thread to follow. I haven't looked further as to what was
+> merged and what wasn't.
+> 
+> A quote from the patch - " It works by peeking into the file cache and
+> check if there are any history pages present or accessed."
+> Now I don't understand anything about this but I would think digging the
+> file-cache isn't needed(?). So, yes, a simple RA hit-rate feedback could
+> be fine.
+> 
+> And 'maybe' for adaptive RA just increase the RA-blocks by '1'(or some
+> N) over period of time. No more smartness. A simple 10 line function is
+> easy to debug/maintain. That is, a scaled-down version of
+> ramp-up/ramp-down. Don't go crazy by ramping-up/down after every RA(like
+> SCSI LLDD madness). Wait for some event to happen.
+> 
+> I can see where Andrew Morton's concerns could be(just my
+> interpretation). We may not want to end up like a protocol state machine
+> code: tcp slow-start, then increase , then congestion, then let's
+> back-off. hmmm, slow-start is a problem for my business logic, so let's
+> speed-up slow-start ;).
 
-------=_Part_58351_1428844363.1328237642312
-Content-Type: text/plain; charset=GBK
-Content-Transfer-Encoding: base64
+Loke,
 
-SGkgWmRlbmVrLAoKICAgICAgICAgIEkgY2hlY2tlZCBteSBrZXJuZWwgY29uZmlnLCBib3RoIG9m
-IHRoZSBvcHRpb25zIEkgc2V0ICAneScsIGFuZCB0aGVuIGJ1aWx0IGtlcm5lbCB3aXRob3V0IENP
-TkZJR19ETV9ERUJVR19TUEFDRV9NQVBTIGFuZCBDT05GSUdfRE1fREVCVUdfQkxPQ0tfU1RBQ0tf
-VFJBQ0lORyBhcyB5b3Ugc2FpZCwgY2FuIHNvbHZlIHRoZSBwcm9ibGVtIEkgbWV0LiBUaGFua3Mh
-CgpCZXN0IHJlZ2FyZHMsCgpCdXNieQoKCiAKID4gLS0tLS3Urcq808q8/i0tLS0tCj4gt6K8/sjL
-OiAiWmRlbmVrIEthYmVsYWMiIDx6a2FiZWxhY0ByZWRoYXQuY29tPgo+ILeiy83KsbzkOiAyMDEy
-xOoy1MIyyNUg0MfG2svECj4gytW8/sjLOiAiZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCIgPGRt
-LWRldmVsQHJlZGhhdC5jb20+Cj4gs63LzTogIkJ1c2J5LkNoZXVuZyIgPGNoYWltdnlAMTYzLmNv
-bT4sICJBbGFzZGFpciBHIEtlcmdvbiIgPGFna0ByZWRoYXQuY29tPiwgIkxWTSBnZW5lcmFsIGRp
-c2N1c3Npb24gYW5kIGRldmVsb3BtZW50IiA8bGludXgtbHZtQHJlZGhhdC5jb20+Cj4g1vfM4jog
-UmU6IFtkbS1kZXZlbF0gW2xpbnV4LWx2bV0gTmV3IExWTTIgcmVsZWFzZSAyLjAyLjg5OiBUaGlu
-bHktcHJvdmlzaW9uZWQgbG9naWNhbCB2b2x1bWVzCj4gCj4gRG5lIDIuMi4yMDEyIDAyOjM2LCBC
-dXNieS5DaGV1bmcgbmFwc2FsKGEpOgo+ID4gSGkgQWxhc2RhaXIsCj4gPgo+ID4gICAgICAgICAg
-ICAgICBUaGUga2VybmVsIG1lc2cgbG9nICJmYWlsZWQgdG8gcmVzaXplIGRhdGEgZGV2aWNlIiB3
-aGlsZSB1c2UgZG1zZXR1cCBDTURzIHRvIGNyZWF0ZSBwb29sIHdpbGwgYmUgb2suCj4gPgo+ID4g
-dXNlIExWTTIgY21kIG1lc2dzOgo+ID4gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4gPgo+
-ID4gW3Jvb3RAaG9zdDIgfl0jIHB2cwo+ID4gICAgSWdub3JpbmcgdG9vIHNtYWxsIHB2X21pbl9z
-aXplIDUxMktCLCB1c2luZyBkZWZhdWx0IDIwNDhLQi4KPiA+ICAgIFBWICAgICAgICAgVkcgICAg
-ICAgICBGbXQgIEF0dHIgUFNpemUgICBQRnJlZQo+ID4gICAgL2Rldi9zZGEyICBWb2xHcm91cDAw
-IGx2bTIgYS0tICA5MzEuNDFHICAgICAgMAo+ID4gICAgL2Rldi9zZGcgICB2Z19wb29sICAgIGx2
-bTIgYS0tICA5MzEuNTFHIDkzMS41MUcKPiA+ICAgIC9kZXYvc2RsICAgdmdfcG9vbCAgICBsdm0y
-IGEtLSAgOTMxLjUxRyA5MzEuNTFHCj4gPiBbcm9vdEBob3N0MiB+XSMgdmdzCj4gPiAgICBJZ25v
-cmluZyB0b28gc21hbGwgcHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLgo+
-ID4gICAgVkcgICAgICAgICAjUFYgI0xWICNTTiBBdHRyICAgVlNpemUgICBWRnJlZQo+ID4gICAg
-Vm9sR3JvdXAwMCAgIDEgICAyICAgMCB3ei0tbi0gOTMxLjQxRyAgICAgIDAKPiA+ICAgIHZnX3Bv
-b2wgICAgICAyICAgMCAgIDAgd3otLW4tICAgMS44MlQgICAxLjgyVAo+ID4gW3Jvb3RAaG9zdDIg
-fl0jIGx2Y3JlYXRlIC1MNjVHIC1UIHZnX3Bvb2wvcG9vbAo+ID4gICAgSWdub3JpbmcgdG9vIHNt
-YWxsIHB2X21pbl9zaXplIDUxMktCLCB1c2luZyBkZWZhdWx0IDIwNDhLQi4KPiA+ICAgIFJvdW5k
-aW5nIHVwIHNpemUgdG8gZnVsbCBwaHlzaWNhbCBleHRlbnQgNC4wMCBNQgo+ID4gICAgZGV2aWNl
-LW1hcHBlcjogcmVzdW1lIGlvY3RsIG9uICBmYWlsZWQ6IENhbm5vdCBhbGxvY2F0ZSBtZW1vcnkK
-PiA+ICAgIFVuYWJsZSB0byByZXN1bWUgdmdfcG9vbC1wb29sLXRwb29sICgyNTM6MTIpCj4gPiAg
-ICBBYm9ydGluZy4gRmFpbGVkIHRvIGFjdGl2YXRlIHRoaW4gcG9vbC4KPiA+IFtyb290QGhvc3Qy
-IH5dIyBkbWVzZwo+ID4gZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWRpbmcg
-ZGVidWcgc3BhY2UgbWFwIGZyb20gZGlzay4gIFRoaXMgbWF5IHRha2Ugc29tZSB0aW1lCj4gPiBk
-ZXZpY2UtbWFwcGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogTG9hZCBjb21wbGV0ZQo+ID4gZGV2aWNl
-LW1hcHBlcjogdGhpbjogZmFpbGVkIHRvIHJlc2l6ZSBkYXRhIGRldmljZQo+ID4gW3Jvb3RAaG9z
-dDIgfl0jIGNhdCAvdmFyL2xvZy9tZXNzYWdlcwo+ID4gRmViICAyIDA5OjE0OjQ1IGhvc3QyIGtl
-cm5lbDogZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWRpbmcgZGVidWcgc3Bh
-Y2UgbWFwIGZyb20gZGlzay4gIFRoaXMgbWF5IHRha2Ugc29tZSB0aW1lCj4gPiBGZWIgIDIgMDk6
-MTQ6NDUgaG9zdDIga2VybmVsOiBkZXZpY2UtbWFwcGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogTG9h
-ZCBjb21wbGV0ZQo+ID4gRmViICAyIDA5OjE0OjQ1IGhvc3QyIGtlcm5lbDogZGV2aWNlLW1hcHBl
-cjogdGhpbjogZmFpbGVkIHRvIHJlc2l6ZSBkYXRhIGRldmljZQo+ID4KPiA+ICAgLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0KPiA+IHVzZSBkbXNldHVwIGNtZDoKPiA+Cj4gPiBbcm9vdEBob3N0
-MiB+XSMgbHZjcmVhdGUgLW4gbWV0YWRhdGFfbHYgLUw0ME0gIHZnX3Bvb2wKPiA+ICAgIElnbm9y
-aW5nIHRvbyBzbWFsbCBwdl9taW5fc2l6ZSA1MTJLQiwgdXNpbmcgZGVmYXVsdCAyMDQ4S0IuCj4g
-PiAgICBMb2dpY2FsIHZvbHVtZSAibWV0YWRhdGFfbHYiIGNyZWF0ZWQKPiA+IFtyb290QGhvc3Qy
-IH5dIyBsdmNyZWF0ZSAtbiBkYXRhX2x2IC1MMzAwRyB2Z19wb29sCj4gPiAgICBJZ25vcmluZyB0
-b28gc21hbGwgcHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLgo+ID4gICAg
-TG9naWNhbCB2b2x1bWUgImRhdGFfbHYiIGNyZWF0ZWQKPiA+IFtyb290QGhvc3QyIH5dIyBkbXNl
-dHVwIGNyZWF0ZSBwb29sIC0tdGFibGUgIjAgMjA5NzE1MjAwIHRoaW4tcG9vbCAvZGV2L3ZnX3Bv
-b2wvbWV0YWRhdGFfbHYgL2Rldi92Z19wb29sL2RhdGFfbHYgIDEwMjQgIDIwMDAwIgo+ID4gW3Jv
-b3RAaG9zdDIgfl0jIGRtc2V0dXAgc3RhdHVzCj4gPiB2Z19wb29sLW1ldGFkYXRhX2x2OiAwIDgx
-OTIwIGxpbmVhcgo+ID4gVm9sR3JvdXAwMC1Mb2dWb2wwMTogMCAyNDUxMDQ2NCBsaW5lYXIKPiA+
-IHZnX3Bvb2wtcG9vbC10cG9vbDogMCAxMzYzMTQ4ODAgdGhpbi1wb29sIDAgNzYvMTAyNCAwLzAg
-LQo+ID4gdmdfcG9vbC1wb29sX3RkYXRhOiAwIDEzNjMxNDg4MCBsaW5lYXIKPiA+IFZvbEdyb3Vw
-MDAtTG9nVm9sMDA6IDAgMTkyODc5MDAxNiBsaW5lYXIKPiA+IHZnX3Bvb2wtcG9vbF90bWV0YTog
-MCA4MTkyIGxpbmVhcgo+ID4gcG9vbDogMCAyMDk3MTUyMDAgdGhpbi1wb29sIDAgMjEvMTAyNDAg
-MC8yMDQ4MDAgLQo+ID4gdmdfcG9vbC1kYXRhX2x2OiAwIDYyOTE0NTYwMCBsaW5lYXIKPiA+Cj4g
-PiBbcm9vdEBob3N0MiB+XSMgZG1lc2cKPiA+IGRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVj
-a2VyOiBMb2FkaW5nIGRlYnVnIHNwYWNlIG1hcCBmcm9tIGRpc2suICBUaGlzIG1heSB0YWtlIHNv
-bWUgdGltZQo+ID4gZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWQgY29tcGxl
-dGUKPiA+IGRldmljZS1tYXBwZXI6IHRoaW46IGZhaWxlZCB0byByZXNpemUgZGF0YSBkZXZpY2UK
-PiA+IGRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBMb2FkaW5nIGRlYnVnIHNwYWNl
-IG1hcCBmcm9tIGRpc2suICBUaGlzIG1heSB0YWtlIHNvbWUgdGltZQo+ID4gZGV2aWNlLW1hcHBl
-cjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWQgY29tcGxldGUKPiA+IGRldmljZS1tYXBwZXI6IHNw
-YWNlIG1hcCBjaGVja2VyOiBmcmVlIGJsb2NrIGNvdW50cyBkaWZmZXIsIGNoZWNrZXIgMTAyMCwg
-c20tZGlzazo5NDgKPiA+IGRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBmcmVlIGJs
-b2NrIGNvdW50cyBkaWZmZXIsIGNoZWNrZXIgMTAyMzYsIHNtLWRpc2s6MTAyMTkKPiA+Cj4gCj4g
-SGF2ZSB5b3UgdHJpZWQgdG8gYnVpbGQga2VybmVsIHdpdGhvdXQgQ09ORklHX0RNX0RFQlVHX1NQ
-QUNFX01BUFMgYW5kIAo+IENPTkZJR19ETV9ERUJVR19CTE9DS19TVEFDS19UUkFDSU5HID8KPiAK
-PiBUaGVzZSB0d28gb3B0aW9ucyBhcmUgdGhlcmUgb25seSBmb3IgZGVidWdnaW5nIC0gYW5kIGhh
-dmUgbWFqb3IgaW1wYWN0IG9uIAo+IHBlcmZvcm1hbmNlIChhbmQgcG9zc2libHkgb24gbWVtb3J5
-IHJlc291cmNlIGFzIHdlbGwpLgo+IAo+IFRvIGNoZWNrIGNvbnNpc3RlbmN5IG9mIG1ldGFkYXRh
-IHRoZXJlIGFyZSBub3cgdXNlci1zcGFjZSB0b29scyBhdmFpbGFibGUuCj4gCj4gWmRlbmVrCg==
-------=_Part_58351_1428844363.1328237642312
-Content-Type: text/html; charset=GBK
-Content-Transfer-Encoding: base64
+Thrashing safe readahead can work as simple as:
 
-PGRpdj5IaSBaZGVuZWssIDxicj48L2Rpdj48ZGl2PjxwcmU+ICAgICAgICAgIEkgY2hlY2tlZCBt
-eSBrZXJuZWwgY29uZmlnLCBib3RoIG9mIHRoZSBvcHRpb25zIEkgc2V0ICAneScsIGFuZCB0aGVu
-IGJ1aWx0IGtlcm5lbCB3aXRob3V0IENPTkZJR19ETV9ERUJVR19TUEFDRV9NQVBTIGFuZCBDT05G
-SUdfRE1fREVCVUdfQkxPQ0tfU1RBQ0tfVFJBQ0lORyBhcyB5b3Ugc2FpZCwgY2FuIHNvbHZlIHRo
-ZSBwcm9ibGVtIEkgbWV0LiBUaGFua3MhPGJyPjxicj5CZXN0IHJlZ2FyZHMsPGJyPjxicj5CdXNi
-eTxicj48YnI+PC9wcmU+PC9kaXY+PGRpdj4mbmJzcDs8L2Rpdj48cHJlPiZuYnNwOyZndDsgLS0t
-LS3Urcq808q8/i0tLS0tCiZndDsgt6K8/sjLOiAiWmRlbmVrIEthYmVsYWMiICZsdDt6a2FiZWxh
-Y0ByZWRoYXQuY29tJmd0OwomZ3Q7ILeiy83KsbzkOiAyMDEyxOoy1MIyyNUg0MfG2svECiZndDsg
-ytW8/sjLOiAiZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCIgJmx0O2RtLWRldmVsQHJlZGhhdC5j
-b20mZ3Q7CiZndDsgs63LzTogIkJ1c2J5LkNoZXVuZyIgJmx0O2NoYWltdnlAMTYzLmNvbSZndDss
-ICJBbGFzZGFpciBHIEtlcmdvbiIgJmx0O2Fna0ByZWRoYXQuY29tJmd0OywgIkxWTSBnZW5lcmFs
-IGRpc2N1c3Npb24gYW5kIGRldmVsb3BtZW50IiAmbHQ7bGludXgtbHZtQHJlZGhhdC5jb20mZ3Q7
-CiZndDsg1vfM4jogUmU6IFtkbS1kZXZlbF0gW2xpbnV4LWx2bV0gTmV3IExWTTIgcmVsZWFzZSAy
-LjAyLjg5OiBUaGlubHktcHJvdmlzaW9uZWQgbG9naWNhbCB2b2x1bWVzCiZndDsgCiZndDsgRG5l
-IDIuMi4yMDEyIDAyOjM2LCBCdXNieS5DaGV1bmcgbmFwc2FsKGEpOgomZ3Q7ICZndDsgSGkgQWxh
-c2RhaXIsCiZndDsgJmd0OwomZ3Q7ICZndDsgICAgICAgICAgICAgICBUaGUga2VybmVsIG1lc2cg
-bG9nICJmYWlsZWQgdG8gcmVzaXplIGRhdGEgZGV2aWNlIiB3aGlsZSB1c2UgZG1zZXR1cCBDTURz
-IHRvIGNyZWF0ZSBwb29sIHdpbGwgYmUgb2suCiZndDsgJmd0OwomZ3Q7ICZndDsgdXNlIExWTTIg
-Y21kIG1lc2dzOgomZ3Q7ICZndDsgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiZndDsgJmd0
-OwomZ3Q7ICZndDsgW3Jvb3RAaG9zdDIgfl0jIHB2cwomZ3Q7ICZndDsgICAgSWdub3JpbmcgdG9v
-IHNtYWxsIHB2X21pbl9zaXplIDUxMktCLCB1c2luZyBkZWZhdWx0IDIwNDhLQi4KJmd0OyAmZ3Q7
-ICAgIFBWICAgICAgICAgVkcgICAgICAgICBGbXQgIEF0dHIgUFNpemUgICBQRnJlZQomZ3Q7ICZn
-dDsgICAgL2Rldi9zZGEyICBWb2xHcm91cDAwIGx2bTIgYS0tICA5MzEuNDFHICAgICAgMAomZ3Q7
-ICZndDsgICAgL2Rldi9zZGcgICB2Z19wb29sICAgIGx2bTIgYS0tICA5MzEuNTFHIDkzMS41MUcK
-Jmd0OyAmZ3Q7ICAgIC9kZXYvc2RsICAgdmdfcG9vbCAgICBsdm0yIGEtLSAgOTMxLjUxRyA5MzEu
-NTFHCiZndDsgJmd0OyBbcm9vdEBob3N0MiB+XSMgdmdzCiZndDsgJmd0OyAgICBJZ25vcmluZyB0
-b28gc21hbGwgcHZfbWluX3NpemUgNTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLgomZ3Q7ICZn
-dDsgICAgVkcgICAgICAgICAjUFYgI0xWICNTTiBBdHRyICAgVlNpemUgICBWRnJlZQomZ3Q7ICZn
-dDsgICAgVm9sR3JvdXAwMCAgIDEgICAyICAgMCB3ei0tbi0gOTMxLjQxRyAgICAgIDAKJmd0OyAm
-Z3Q7ICAgIHZnX3Bvb2wgICAgICAyICAgMCAgIDAgd3otLW4tICAgMS44MlQgICAxLjgyVAomZ3Q7
-ICZndDsgW3Jvb3RAaG9zdDIgfl0jIGx2Y3JlYXRlIC1MNjVHIC1UIHZnX3Bvb2wvcG9vbAomZ3Q7
-ICZndDsgICAgSWdub3JpbmcgdG9vIHNtYWxsIHB2X21pbl9zaXplIDUxMktCLCB1c2luZyBkZWZh
-dWx0IDIwNDhLQi4KJmd0OyAmZ3Q7ICAgIFJvdW5kaW5nIHVwIHNpemUgdG8gZnVsbCBwaHlzaWNh
-bCBleHRlbnQgNC4wMCBNQgomZ3Q7ICZndDsgICAgZGV2aWNlLW1hcHBlcjogcmVzdW1lIGlvY3Rs
-IG9uICBmYWlsZWQ6IENhbm5vdCBhbGxvY2F0ZSBtZW1vcnkKJmd0OyAmZ3Q7ICAgIFVuYWJsZSB0
-byByZXN1bWUgdmdfcG9vbC1wb29sLXRwb29sICgyNTM6MTIpCiZndDsgJmd0OyAgICBBYm9ydGlu
-Zy4gRmFpbGVkIHRvIGFjdGl2YXRlIHRoaW4gcG9vbC4KJmd0OyAmZ3Q7IFtyb290QGhvc3QyIH5d
-IyBkbWVzZwomZ3Q7ICZndDsgZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWRp
-bmcgZGVidWcgc3BhY2UgbWFwIGZyb20gZGlzay4gIFRoaXMgbWF5IHRha2Ugc29tZSB0aW1lCiZn
-dDsgJmd0OyBkZXZpY2UtbWFwcGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogTG9hZCBjb21wbGV0ZQom
-Z3Q7ICZndDsgZGV2aWNlLW1hcHBlcjogdGhpbjogZmFpbGVkIHRvIHJlc2l6ZSBkYXRhIGRldmlj
-ZQomZ3Q7ICZndDsgW3Jvb3RAaG9zdDIgfl0jIGNhdCAvdmFyL2xvZy9tZXNzYWdlcwomZ3Q7ICZn
-dDsgRmViICAyIDA5OjE0OjQ1IGhvc3QyIGtlcm5lbDogZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFw
-IGNoZWNrZXI6IExvYWRpbmcgZGVidWcgc3BhY2UgbWFwIGZyb20gZGlzay4gIFRoaXMgbWF5IHRh
-a2Ugc29tZSB0aW1lCiZndDsgJmd0OyBGZWIgIDIgMDk6MTQ6NDUgaG9zdDIga2VybmVsOiBkZXZp
-Y2UtbWFwcGVyOiBzcGFjZSBtYXAgY2hlY2tlcjogTG9hZCBjb21wbGV0ZQomZ3Q7ICZndDsgRmVi
-ICAyIDA5OjE0OjQ1IGhvc3QyIGtlcm5lbDogZGV2aWNlLW1hcHBlcjogdGhpbjogZmFpbGVkIHRv
-IHJlc2l6ZSBkYXRhIGRldmljZQomZ3Q7ICZndDsKJmd0OyAmZ3Q7ICAgLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0KJmd0OyAmZ3Q7IHVzZSBkbXNldHVwIGNtZDoKJmd0OyAmZ3Q7CiZndDsgJmd0
-OyBbcm9vdEBob3N0MiB+XSMgbHZjcmVhdGUgLW4gbWV0YWRhdGFfbHYgLUw0ME0gIHZnX3Bvb2wK
-Jmd0OyAmZ3Q7ICAgIElnbm9yaW5nIHRvbyBzbWFsbCBwdl9taW5fc2l6ZSA1MTJLQiwgdXNpbmcg
-ZGVmYXVsdCAyMDQ4S0IuCiZndDsgJmd0OyAgICBMb2dpY2FsIHZvbHVtZSAibWV0YWRhdGFfbHYi
-IGNyZWF0ZWQKJmd0OyAmZ3Q7IFtyb290QGhvc3QyIH5dIyBsdmNyZWF0ZSAtbiBkYXRhX2x2IC1M
-MzAwRyB2Z19wb29sCiZndDsgJmd0OyAgICBJZ25vcmluZyB0b28gc21hbGwgcHZfbWluX3NpemUg
-NTEyS0IsIHVzaW5nIGRlZmF1bHQgMjA0OEtCLgomZ3Q7ICZndDsgICAgTG9naWNhbCB2b2x1bWUg
-ImRhdGFfbHYiIGNyZWF0ZWQKJmd0OyAmZ3Q7IFtyb290QGhvc3QyIH5dIyBkbXNldHVwIGNyZWF0
-ZSBwb29sIC0tdGFibGUgIjAgMjA5NzE1MjAwIHRoaW4tcG9vbCAvZGV2L3ZnX3Bvb2wvbWV0YWRh
-dGFfbHYgL2Rldi92Z19wb29sL2RhdGFfbHYgIDEwMjQgIDIwMDAwIgomZ3Q7ICZndDsgW3Jvb3RA
-aG9zdDIgfl0jIGRtc2V0dXAgc3RhdHVzCiZndDsgJmd0OyB2Z19wb29sLW1ldGFkYXRhX2x2OiAw
-IDgxOTIwIGxpbmVhcgomZ3Q7ICZndDsgVm9sR3JvdXAwMC1Mb2dWb2wwMTogMCAyNDUxMDQ2NCBs
-aW5lYXIKJmd0OyAmZ3Q7IHZnX3Bvb2wtcG9vbC10cG9vbDogMCAxMzYzMTQ4ODAgdGhpbi1wb29s
-IDAgNzYvMTAyNCAwLzAgLQomZ3Q7ICZndDsgdmdfcG9vbC1wb29sX3RkYXRhOiAwIDEzNjMxNDg4
-MCBsaW5lYXIKJmd0OyAmZ3Q7IFZvbEdyb3VwMDAtTG9nVm9sMDA6IDAgMTkyODc5MDAxNiBsaW5l
-YXIKJmd0OyAmZ3Q7IHZnX3Bvb2wtcG9vbF90bWV0YTogMCA4MTkyIGxpbmVhcgomZ3Q7ICZndDsg
-cG9vbDogMCAyMDk3MTUyMDAgdGhpbi1wb29sIDAgMjEvMTAyNDAgMC8yMDQ4MDAgLQomZ3Q7ICZn
-dDsgdmdfcG9vbC1kYXRhX2x2OiAwIDYyOTE0NTYwMCBsaW5lYXIKJmd0OyAmZ3Q7CiZndDsgJmd0
-OyBbcm9vdEBob3N0MiB+XSMgZG1lc2cKJmd0OyAmZ3Q7IGRldmljZS1tYXBwZXI6IHNwYWNlIG1h
-cCBjaGVja2VyOiBMb2FkaW5nIGRlYnVnIHNwYWNlIG1hcCBmcm9tIGRpc2suICBUaGlzIG1heSB0
-YWtlIHNvbWUgdGltZQomZ3Q7ICZndDsgZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6
-IExvYWQgY29tcGxldGUKJmd0OyAmZ3Q7IGRldmljZS1tYXBwZXI6IHRoaW46IGZhaWxlZCB0byBy
-ZXNpemUgZGF0YSBkZXZpY2UKJmd0OyAmZ3Q7IGRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVj
-a2VyOiBMb2FkaW5nIGRlYnVnIHNwYWNlIG1hcCBmcm9tIGRpc2suICBUaGlzIG1heSB0YWtlIHNv
-bWUgdGltZQomZ3Q7ICZndDsgZGV2aWNlLW1hcHBlcjogc3BhY2UgbWFwIGNoZWNrZXI6IExvYWQg
-Y29tcGxldGUKJmd0OyAmZ3Q7IGRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBmcmVl
-IGJsb2NrIGNvdW50cyBkaWZmZXIsIGNoZWNrZXIgMTAyMCwgc20tZGlzazo5NDgKJmd0OyAmZ3Q7
-IGRldmljZS1tYXBwZXI6IHNwYWNlIG1hcCBjaGVja2VyOiBmcmVlIGJsb2NrIGNvdW50cyBkaWZm
-ZXIsIGNoZWNrZXIgMTAyMzYsIHNtLWRpc2s6MTAyMTkKJmd0OyAmZ3Q7CiZndDsgCiZndDsgSGF2
-ZSB5b3UgdHJpZWQgdG8gYnVpbGQga2VybmVsIHdpdGhvdXQgQ09ORklHX0RNX0RFQlVHX1NQQUNF
-X01BUFMgYW5kIAomZ3Q7IENPTkZJR19ETV9ERUJVR19CTE9DS19TVEFDS19UUkFDSU5HID8KJmd0
-OyAKJmd0OyBUaGVzZSB0d28gb3B0aW9ucyBhcmUgdGhlcmUgb25seSBmb3IgZGVidWdnaW5nIC0g
-YW5kIGhhdmUgbWFqb3IgaW1wYWN0IG9uIAomZ3Q7IHBlcmZvcm1hbmNlIChhbmQgcG9zc2libHkg
-b24gbWVtb3J5IHJlc291cmNlIGFzIHdlbGwpLgomZ3Q7IAomZ3Q7IFRvIGNoZWNrIGNvbnNpc3Rl
-bmN5IG9mIG1ldGFkYXRhIHRoZXJlIGFyZSBub3cgdXNlci1zcGFjZSB0b29scyBhdmFpbGFibGUu
-CiZndDsgCiZndDsgWmRlbmVrCjwvcHJlPjxicj48YnI+PHNwYW4gdGl0bGU9Im5ldGVhc2Vmb290
-ZXIiPjxzcGFuIGlkPSJuZXRlYXNlX21haWxfZm9vdGVyIj48L3NwYW4+PC9zcGFuPg==
-------=_Part_58351_1428844363.1328237642312--
+        readahead_size = min(nr_history_pages, MAX_READAHEAD_PAGES)
 
+No need for more slow-start or back-off magics.
 
---===============5224110333002928609==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+This is because nr_history_pages is a lower estimation of the threshing
+threshold:
 
+   chunk A           chunk B                      chunk C                 head
 
---===============5224110333002928609==--
+   l01 l11           l12   l21                    l22
+| |-->|-->|       |------>|-->|                |------>|
+| +-------+       +-----------+                +-------------+               |
+| |   #   |       |       #   |                |       #     |               |
+| +-------+       +-----------+                +-------------+               |
+| |<==============|<===========================|<============================|
+        L0                     L1                            L2
+
+ Let f(l) = L be a map from
+     l: the number of pages read by the stream
+ to
+     L: the number of pages pushed into inactive_list in the mean time
+ then
+     f(l01) <= L0
+     f(l11 + l12) = L1
+     f(l21 + l22) = L2
+     ...
+     f(l01 + l11 + ...) <= Sum(L0 + L1 + ...)
+                        <= Length(inactive_list) = f(thrashing-threshold)
+
+So the count of continuous history pages left in inactive_list is always a
+lower estimation of the true thrashing-threshold. Given a stable workload,
+the readahead size will keep ramping up and then stabilize in range
+
+        (thrashing_threshold/2, thrashing_threshold)
+
+Thanks,
+Fengguang
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Fight unfair telecom internet charges in Canada: sign http://stopthemeter.ca/
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
