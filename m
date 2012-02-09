@@ -1,9 +1,10 @@
-From: Phillip Susi <psusi@ubuntu.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
 Subject: Re: [PATCH] Don't add 'p' delimiter when you shouldn't
-Date: Thu, 09 Feb 2012 14:33:34 -0500
-Message-ID: <4F341F8E.5010406@ubuntu.com>
+Date: Thu, 09 Feb 2012 21:17:27 +0100
+Message-ID: <1328818647.17706.1.camel@lapoo.opensvc.com>
 References: <4F0A5A27.8090107@ubuntu.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,49 +22,14 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Not heard anything back about this yet.  Does anyone have any comments
-or care to merge it?
-
-On 1/8/2012 10:08 PM, Phillip Susi wrote:
+On dim., 2012-01-08 at 22:08 -0500, Phillip Susi wrote:
 > The 'p' delimiter is supposed to be added when the base disk name
 > ends in a digit.  This decision was based on the name given on the
 > command line, not the canonical device name, so giving /dev/dm-0
 > instead of /dev/mapper/foo triggered the digit test and added the
 > 'p'.  Changed test to use the canonical name rather than the given
-> name.
-> 
-> Index: b/kpartx/kpartx.c
-> ===================================================================
-> --- a/kpartx/kpartx.c
-> +++ b/kpartx/kpartx.c
-> @@ -310,12 +310,6 @@
->  		device = loopdev;
->  	}
->  
-> -	if (delim == NULL) {
-> -		delim = malloc(DELIM_SIZE);
-> -		memset(delim, 0, DELIM_SIZE);
-> -		set_delimiter(device, delim);
-> -	}
-> -
->  	off = find_devname_offset(device);
->  
->  	if (!loopdev) {
-> @@ -331,6 +325,12 @@
->  	if (!mapname)
->  		mapname = device + off;
->  
-> +	if (delim == NULL) {
-> +		delim = malloc(DELIM_SIZE);
-> +		memset(delim, 0, DELIM_SIZE);
-> +		set_delimiter(mapname, delim);
-> +	}
-> +
->  	fd = open(device, O_RDONLY);
->  
->  	if (fd == -1) {
-> 
-> 
-> 
-> 
-> --
+> name. 
+
+Rebased and merged.
+
+Thanks.
