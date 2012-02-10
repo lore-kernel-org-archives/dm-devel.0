@@ -1,14 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 12/12 v2] dm thin: add discard support
-Date: Fri, 10 Feb 2012 13:08:38 -0500
-Message-ID: <1328897318-14040-1-git-send-email-snitzer@redhat.com>
-References: <1328200754-13642-11-git-send-email-ejt@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: fix shutdown crashes
+Date: Fri, 10 Feb 2012 12:10:11 -0600
+Message-ID: <20120210181011.GM1241@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1328200754-13642-11-git-send-email-ejt@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,343 +17,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Joe Thornber <ejt@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+A number of processes don't reach a pthread cancellation point
+before they use the pathvec or mpvec vectors, after they've
+locked the vecs lock.  This can cause crashes on shutdown, since
+these vectors are deallocated.  Also, the log thread accesses a
+number of resources which may have been deallocated during shutdown
+without holding any locks. This patch avoids these issues by
+adding pthread_testcancel() checks after acquiring the vecs lock,
+and having the child process make sure the log thread has exitted
+before deallocating the resources.
 
-FIXME - add descriptive header
-
-Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- drivers/md/dm-thin.c |  173 ++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 159 insertions(+), 14 deletions(-)
+ libmultipath/log_pthread.c |    1 +
+ libmultipath/waiter.c      |    1 +
+ multipathd/main.c          |    6 +++++-
+ 3 files changed, 7 insertions(+), 1 deletion(-)
 
-Index: linux-2.6/drivers/md/dm-thin.c
+Index: multipath-tools-120123/multipathd/main.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-thin.c
-+++ linux-2.6/drivers/md/dm-thin.c
-@@ -528,10 +528,12 @@ struct pool {
- 	struct bio_list deferred_bios;
- 	struct bio_list deferred_flush_bios;
- 	struct list_head prepared_mappings;
-+	struct list_head prepared_discards;
+--- multipath-tools-120123.orig/multipathd/main.c
++++ multipath-tools-120123/multipathd/main.c
+@@ -729,6 +729,7 @@ uxsock_trigger (char * str, char ** repl
  
- 	struct bio_list retry_on_resume_list;
+ 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 	lock(vecs->lock);
++	pthread_testcancel();
  
- 	struct deferred_set shared_read_ds;
-+	struct deferred_set all_io_ds;
+ 	r = parse_cmd(str, reply, len, vecs);
  
- 	struct new_mapping *next_mapping;
- 	mempool_t *mapping_pool;
-@@ -629,6 +631,7 @@ static struct pool *__pool_table_lookup_
- struct endio_hook {
- 	struct thin_c *tc;
- 	struct deferred_entry *shared_read_entry;
-+	struct deferred_entry *all_io_entry;
- 	struct new_mapping *overwrite_mapping;
- };
+@@ -781,7 +782,9 @@ uev_trigger (struct uevent * uev, void *
+ 	if (uev_discard(uev->devpath))
+ 		return 0;
  
-@@ -738,11 +741,12 @@ struct new_mapping {
- 
- 	unsigned quiesced:1;
- 	unsigned prepared:1;
-+	unsigned pass_discard:1;
- 
- 	struct thin_c *tc;
- 	dm_block_t virt_block;
- 	dm_block_t data_block;
--	struct cell *cell;
-+	struct cell *cell, *cell2;
- 	int err;
++	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 	lock(vecs->lock);
++	pthread_testcancel();
  
  	/*
-@@ -882,7 +886,30 @@ static void process_prepared_mapping(str
- 	mempool_free(m, tc->pool->mapping_pool);
- }
- 
--static void process_prepared_mappings(struct pool *pool)
-+static void process_prepared_discard(struct new_mapping *m)
-+{
-+	int r;
-+	struct thin_c *tc = m->tc;
-+
-+	r = dm_thin_remove_block(tc->td, m->virt_block);
-+	if (r)
-+		DMERR("dm_thin_metadata_remove() failed");
-+
-+	/*
-+	 * Pass the discard down to the underlying device?
-+	 */
-+	if (m->pass_discard)
-+		remap_and_issue(tc, m->bio, m->data_block);
-+	else
-+		bio_endio(m->bio, 0);
-+
-+	cell_defer_except(tc, m->cell);
-+	cell_defer_except(tc, m->cell2);
-+	mempool_free(m, tc->pool->mapping_pool);
-+}
-+
-+static void process_prepared(struct pool *pool, struct list_head *head,
-+			     void (*fn)(struct new_mapping *))
- {
- 	unsigned long flags;
- 	struct list_head maps;
-@@ -890,21 +917,27 @@ static void process_prepared_mappings(st
- 
- 	INIT_LIST_HEAD(&maps);
- 	spin_lock_irqsave(&pool->lock, flags);
--	list_splice_init(&pool->prepared_mappings, &maps);
-+	list_splice_init(head, &maps);
- 	spin_unlock_irqrestore(&pool->lock, flags);
- 
- 	list_for_each_entry_safe(m, tmp, &maps, list)
--		process_prepared_mapping(m);
-+		fn(m);
- }
- 
- /*
-  * Deferred bio jobs.
-  */
--static int io_overwrites_block(struct pool *pool, struct bio *bio)
-+static int io_overlaps_block(struct pool *pool, struct bio *bio)
- {
--	return ((bio_data_dir(bio) == WRITE) &&
--		!(bio->bi_sector & pool->offset_mask)) &&
-+	return !(bio->bi_sector & pool->offset_mask) &&
- 		(bio->bi_size == (pool->sectors_per_block << SECTOR_SHIFT));
-+
-+}
-+
-+static int io_overwrites_block(struct pool *pool, struct bio *bio)
-+{
-+	return (bio_data_dir(bio) == WRITE) &&
-+		io_overlaps_block(pool, bio);
- }
- 
- static void save_and_set_endio(struct bio *bio, bio_end_io_t **save,
-@@ -1142,6 +1175,86 @@ static void no_space(struct cell *cell)
- 		retry_on_resume(bio);
- }
- 
-+static void process_discard(struct thin_c *tc, struct bio *bio)
-+{
-+	int r;
-+	struct pool *pool = tc->pool;
-+	struct cell *cell, *cell2;
-+	struct cell_key key, key2;
-+	dm_block_t block = get_bio_block(tc, bio);
-+	struct dm_thin_lookup_result lookup_result;
-+	struct new_mapping *m;
-+
-+	build_virtual_key(tc->td, block, &key);
-+	if (bio_detain(tc->pool->prison, &key, bio, &cell))
-+		return;
-+
-+	r = dm_thin_find_block(tc->td, block, 1, &lookup_result);
-+	switch (r) {
-+	case 0:
-+		/*
-+		 * Check nobody is fiddling with this pool block.  This can
-+		 * happen if someone's in the process of breaking sharing
-+		 * on this block.
-+		 */
-+		build_data_key(tc->td, lookup_result.block, &key2);
-+		if (bio_detain(tc->pool->prison, &key2, bio, &cell2)) {
-+			cell_release_singleton(cell, bio);
-+			break;
-+		}
-+
-+		if (io_overlaps_block(pool, bio)) {
-+			/*
-+			 * IO may still be going to the destination block.  We must
-+			 * quiesce before we can do the removal.
-+			 */
-+			m = get_next_mapping(pool);
-+			m->tc = tc;
-+			m->pass_discard = !lookup_result.shared;
-+			m->virt_block = block;
-+			m->data_block = lookup_result.block;
-+			m->cell = cell;
-+			m->cell2 = cell2;
-+			m->err = 0;
-+			m->bio = bio;
-+
-+			if (!ds_add_work(&pool->all_io_ds, &m->list)) {
-+				list_add(&m->list, &pool->prepared_discards);
-+				wake_worker(pool);
-+			}
-+		} else {
-+			/*
-+			 * This path is hit if people are ignoring
-+			 * limits->discard_granularity.  It ignores any
-+			 * part of the discard that is in a subsequent
-+			 * block.
-+			 */
-+			sector_t offset = bio->bi_sector - (block << pool->block_shift);
-+			unsigned remaining = (pool->sectors_per_block - offset) << 9;
-+			bio->bi_size = min(bio->bi_size, remaining);
-+
-+			cell_release_singleton(cell, bio);
-+			cell_release_singleton(cell2, bio);
-+			remap_and_issue(tc, bio, lookup_result.block);
-+		}
-+		break;
-+
-+	case -ENODATA:
-+		/*
-+		 * It isn't provisioned, just forget it.
-+		 */
-+		cell_release_singleton(cell, bio);
-+		bio_endio(bio, 0);
-+		break;
-+
-+	default:
-+		DMERR("discard: find block unexpectedly returned %d\n", r);
-+		cell_release_singleton(cell, bio);
-+		bio_io_error(bio);
-+		break;
-+	}
-+}
-+
- static void break_sharing(struct thin_c *tc, struct bio *bio, dm_block_t block,
- 			  struct cell_key *key,
- 			  struct dm_thin_lookup_result *lookup_result,
-@@ -1287,6 +1400,7 @@ static void process_bio(struct thin_c *t
- 
- 	default:
- 		DMERR("dm_thin_find_block() failed, error = %d", r);
-+		cell_release_singleton(cell, bio);
- 		bio_io_error(bio);
- 		break;
- 	}
-@@ -1328,7 +1442,11 @@ static void process_deferred_bios(struct
- 
- 			break;
- 		}
--		process_bio(tc, bio);
-+
-+		if (bio->bi_rw & REQ_DISCARD)
-+			process_discard(tc, bio);
-+		else
-+			process_bio(tc, bio);
+ 	 * device map event
+@@ -821,7 +824,7 @@ uev_trigger (struct uevent * uev, void *
  	}
  
- 	/*
-@@ -1362,7 +1480,8 @@ static void do_worker(struct work_struct
- {
- 	struct pool *pool = container_of(ws, struct pool, worker);
- 
--	process_prepared_mappings(pool);
-+	process_prepared(pool, &pool->prepared_mappings, process_prepared_mapping);
-+	process_prepared(pool, &pool->prepared_discards, process_prepared_discard);
- 	process_deferred_bios(pool);
+ out:
+-	unlock(vecs->lock);
++	lock_cleanup_pop(vecs->lock);
+ 	return r;
  }
  
-@@ -1405,6 +1524,7 @@ static struct endio_hook *thin_hook_bio(
+@@ -1261,6 +1264,7 @@ checkerloop (void *ap)
+ 		block_signal(SIGHUP, &old);
+ 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 		lock(vecs->lock);
++		pthread_testcancel();
+ 		condlog(4, "tick");
  
- 	h->tc = tc;
- 	h->shared_read_entry = NULL;
-+	h->all_io_entry = bio->bi_rw & REQ_DISCARD ? NULL : ds_inc(&pool->all_io_ds);
- 	h->overwrite_mapping = NULL;
+ 		if (vecs->pathvec) {
+Index: multipath-tools-120123/libmultipath/waiter.c
+===================================================================
+--- multipath-tools-120123.orig/libmultipath/waiter.c
++++ multipath-tools-120123/libmultipath/waiter.c
+@@ -157,6 +157,7 @@ int waiteventloop (struct event_thread *
+ 		 */
+ 		pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
+ 		lock(waiter->vecs->lock);
++		pthread_testcancel();
+ 		r = update_multipath(waiter->vecs, waiter->mapname, 1);
+ 		lock_cleanup_pop(waiter->vecs->lock);
  
- 	return h;
-@@ -1423,7 +1543,7 @@ static int thin_bio_map(struct dm_target
- 	struct dm_thin_lookup_result result;
+Index: multipath-tools-120123/libmultipath/log_pthread.c
+===================================================================
+--- multipath-tools-120123.orig/libmultipath/log_pthread.c
++++ multipath-tools-120123/libmultipath/log_pthread.c
+@@ -87,6 +87,7 @@ void log_thread_stop (void)
+ 	pthread_mutex_lock(logq_lock);
+ 	pthread_cancel(log_thr);
+ 	pthread_mutex_unlock(logq_lock);
++	pthread_join(log_thr, NULL);
  
- 	map_context->ptr = thin_hook_bio(tc, bio);
--	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA)) {
-+	if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA)) {
- 		thin_defer_bio(tc, bio);
- 		return DM_MAPIO_SUBMITTED;
- 	}
-@@ -1599,10 +1719,12 @@ static struct pool *pool_create(struct m
- 	bio_list_init(&pool->deferred_bios);
- 	bio_list_init(&pool->deferred_flush_bios);
- 	INIT_LIST_HEAD(&pool->prepared_mappings);
-+	INIT_LIST_HEAD(&pool->prepared_discards);
- 	pool->low_water_triggered = 0;
- 	pool->no_free_space = 0;
- 	bio_list_init(&pool->retry_on_resume_list);
- 	ds_init(&pool->shared_read_ds);
-+	ds_init(&pool->all_io_ds);
+ 	flush_logqueue();
  
- 	pool->next_mapping = NULL;
- 	pool->mapping_pool =
-@@ -1843,7 +1965,8 @@ static int pool_ctr(struct dm_target *ti
- 	pt->low_water_blocks = low_water_blocks;
- 	pt->zero_new_blocks = pf.zero_new_blocks;
- 	ti->num_flush_requests = 1;
--	ti->num_discard_requests = 0;
-+	ti->num_discard_requests = 1;
-+	ti->discards_supported = 1;
- 	ti->private = pt;
- 
- 	pt->callbacks.congested_fn = pool_is_congested;
-@@ -2236,6 +2359,17 @@ static int pool_merge(struct dm_target *
- 	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
- }
- 
-+static void set_discard_limits(struct pool *pool, struct queue_limits *limits)
-+{
-+	limits->max_discard_sectors = pool->sectors_per_block;
-+
-+	/*
-+	 * This is just a hint, and not enforced.  We have to cope with
-+	 * bios that overlap 2 blocks.
-+	 */
-+	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
-+}
-+
- static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
- {
- 	struct pool_c *pt = ti->private;
-@@ -2243,6 +2377,7 @@ static void pool_io_hints(struct dm_targ
- 
- 	blk_limits_io_min(limits, 0);
- 	blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
-+	set_discard_limits(pool, limits);
- }
- 
- static struct target_type pool_target = {
-@@ -2359,8 +2494,8 @@ static int thin_ctr(struct dm_target *ti
- 
- 	ti->split_io = tc->pool->sectors_per_block;
- 	ti->num_flush_requests = 1;
--	ti->num_discard_requests = 0;
--	ti->discards_supported = 0;
-+	ti->num_discard_requests = 1;
-+	ti->discards_supported = 1;
- 
- 	dm_put(pool_md);
- 
-@@ -2416,6 +2551,14 @@ static int thin_endio(struct dm_target *
- 		spin_unlock_irqrestore(&pool->lock, flags);
- 	}
- 
-+	if (h->all_io_entry) {
-+		INIT_LIST_HEAD(&work);
-+		ds_dec(h->all_io_entry, &work);
-+		list_for_each_entry_safe(m, tmp, &work, list)
-+			list_add(&m->list, &pool->prepared_discards);
-+	}
-+
-+	mempool_free(h, pool->endio_hook_pool);
- 	return 0;
- }
- 
-@@ -2492,9 +2635,11 @@ static int thin_iterate_devices(struct d
- static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
- {
- 	struct thin_c *tc = ti->private;
-+	struct pool *pool = tc->pool;
- 
- 	blk_limits_io_min(limits, 0);
--	blk_limits_io_opt(limits, tc->pool->sectors_per_block << SECTOR_SHIFT);
-+	blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
-+	set_discard_limits(pool, limits);
- }
- 
- static struct target_type thin_target = {
