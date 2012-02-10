@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: don't remove map twice
-Date: Fri, 10 Feb 2012 12:13:12 -0600
-Message-ID: <20120210181312.GO1241@ether.msp.redhat.com>
+Subject: [PATCH] kpartx: verify GUID partition entry size
+Date: Fri, 10 Feb 2012 12:14:39 -0600
+Message-ID: <20120210181439.GP1241@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,23 +21,32 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-If setup_mutipath fails, it removes the map itself, so don't try to again.
+This patch pulls in some kernel code to catch a corrupt GUID partition
+table with the wrong size.
 
+Signed-off-by: Boris Ranto <branto@redhat.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kpartx/gpt.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-Index: multipath-tools-120123/multipathd/main.c
+Index: multipath-tools-120123/kpartx/gpt.c
 ===================================================================
---- multipath-tools-120123.orig/multipathd/main.c
-+++ multipath-tools-120123/multipathd/main.c
-@@ -518,7 +518,7 @@ rescan:
- 	 * update our state from kernel regardless of create or reload
- 	 */
- 	if (setup_multipath(vecs, mpp))
--		goto fail_map;
-+		goto fail; /* if setup_multipath fails, it removes the map */
+--- multipath-tools-120123.orig/kpartx/gpt.c
++++ multipath-tools-120123/kpartx/gpt.c
+@@ -367,6 +367,15 @@ is_gpt_valid(int fd, uint64_t lba,
+ 	}
  
- 	sync_map_state(mpp);
  
++	/* Check that sizeof_partition_entry has the correct value */
++	if (__le32_to_cpu((*gpt)->sizeof_partition_entry) != sizeof(gpt_entry)) {
++		// printf("GUID partition entry size check failed.\n");
++		free(*gpt);
++		*gpt = NULL;
++		return 0;
++	}
++
++
+ 	if (!(*ptes = alloc_read_gpt_entries(fd, *gpt))) {
+ 		free(*gpt);
+ 		*gpt = NULL;
