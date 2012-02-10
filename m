@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: fix shutdown crashes
-Date: Fri, 10 Feb 2012 12:10:11 -0600
-Message-ID: <20120210181011.GM1241@ether.msp.redhat.com>
+Subject: [PATCH] multipath: cleanup dev_loss_tmo issues
+Date: Fri, 10 Feb 2012 12:11:37 -0600
+Message-ID: <20120210181137.GN1241@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,83 +21,84 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-A number of processes don't reach a pthread cancellation point
-before they use the pathvec or mpvec vectors, after they've
-locked the vecs lock.  This can cause crashes on shutdown, since
-these vectors are deallocated.  Also, the log thread accesses a
-number of resources which may have been deallocated during shutdown
-without holding any locks. This patch avoids these issues by
-adding pthread_testcancel() checks after acquiring the vecs lock,
-and having the child process make sure the log thread has exitted
-before deallocating the resources.
+There are a couple of issues with the dev_loss_tmo code.  First, the
+comparison between fast_io_fail and dev_loss was failing for
+fast_io_fail = -1. Second, if fast_io_fail_tmo was set to off, and
+dev_loss was greater than 600, dev_loss_tmo would not be set. Finally,
+verify_paths was calling sysfs_set_scsi_tmo without ever calling
+select_fast_io_fail.  However, this hasn't be causing problems since
+setup_map is always called immediately after verify_paths, and it calls
+all the select_ functions correctly.  This patch fixes all these.  Now,
+if setting dev_loss_tmo fails, and fast_io_fail is set to off, it will
+retry will dev_loss_tmo set to 600. Also, the calls that are duplicated
+between verify_paths and setup_map have been removed.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/log_pthread.c |    1 +
- libmultipath/waiter.c      |    1 +
- multipathd/main.c          |    6 +++++-
- 3 files changed, 7 insertions(+), 1 deletion(-)
+ libmultipath/discovery.c   |   22 +++++++++++++++-------
+ libmultipath/structs_vec.c |    5 -----
+ 2 files changed, 15 insertions(+), 12 deletions(-)
 
-Index: multipath-tools-120123/multipathd/main.c
+Index: multipath-tools-120123/libmultipath/discovery.c
 ===================================================================
---- multipath-tools-120123.orig/multipathd/main.c
-+++ multipath-tools-120123/multipathd/main.c
-@@ -729,6 +729,7 @@ uxsock_trigger (char * str, char ** repl
- 
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(vecs->lock);
-+	pthread_testcancel();
- 
- 	r = parse_cmd(str, reply, len, vecs);
- 
-@@ -781,7 +782,9 @@ uev_trigger (struct uevent * uev, void *
- 	if (uev_discard(uev->devpath))
+--- multipath-tools-120123.orig/libmultipath/discovery.c
++++ multipath-tools-120123/libmultipath/discovery.c
+@@ -299,17 +299,17 @@ sysfs_set_scsi_tmo (struct multipath *mp
+ 			no_path_retry_tmo = MAX_DEV_LOSS_TMO;
+ 		if (no_path_retry_tmo > dev_loss_tmo)
+ 			dev_loss_tmo = no_path_retry_tmo;
+-		condlog(3, "%s: update dev_loss_tmo to %d\n",
++		condlog(3, "%s: update dev_loss_tmo to %d",
+ 			mpp->alias, dev_loss_tmo);
+ 	} else if (mpp->no_path_retry == NO_PATH_RETRY_QUEUE) {
+ 		dev_loss_tmo = MAX_DEV_LOSS_TMO;
+-		condlog(4, "%s: update dev_loss_tmo to %d\n",
++		condlog(3, "%s: update dev_loss_tmo to %d",
+ 			mpp->alias, dev_loss_tmo);
+ 	}
+ 	mpp->dev_loss = dev_loss_tmo;
+-	if (mpp->fast_io_fail > mpp->dev_loss) {
++	if (mpp->fast_io_fail > (int)mpp->dev_loss) {
+ 		mpp->fast_io_fail = mpp->dev_loss;
+-		condlog(3, "%s: update fast_io_fail to %d\n",
++		condlog(3, "%s: update fast_io_fail to %d",
+ 			mpp->alias, mpp->fast_io_fail);
+ 	}
+ 	if (!mpp->dev_loss && !mpp->fast_io_fail)
+@@ -333,9 +333,17 @@ sysfs_set_scsi_tmo (struct multipath *mp
+ 			snprintf(value, 11, "%u", mpp->dev_loss);
+ 			if (sysfs_attr_set_value(attr_path, "dev_loss_tmo",
+ 						 value, 11) < 0) {
+-				condlog(0, "%s failed to set %s/dev_loss_tmo",
+-					mpp->alias, attr_path);
+-				return 1;
++				int err = 1;
++				if (mpp->fast_io_fail <= 0 && mpp->dev_loss > 600) {
++					strncpy(value, "600", 4);
++					condlog(3, "%s: limiting dev_loss_tmo to 600, since fast_io_fail is not set", mpp->alias);
++					if (sysfs_attr_set_value(attr_path, "dev_loss_tmo", value, 11) >= 0)
++						err = 0;
++				}
++				if (err) {
++					condlog(0, "%s failed to set %s/dev_loss_tmo", mpp->alias, attr_path);
++					return 1;
++				}
+ 			}
+ 		}
+ 		if (mpp->fast_io_fail){
+Index: multipath-tools-120123/libmultipath/structs_vec.c
+===================================================================
+--- multipath-tools-120123.orig/libmultipath/structs_vec.c
++++ multipath-tools-120123/libmultipath/structs_vec.c
+@@ -441,11 +441,6 @@ verify_paths(struct multipath * mpp, str
+ 	if (!mpp)
  		return 0;
  
-+	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(vecs->lock);
-+	pthread_testcancel();
- 
- 	/*
- 	 * device map event
-@@ -821,7 +824,7 @@ uev_trigger (struct uevent * uev, void *
- 	}
- 
- out:
--	unlock(vecs->lock);
-+	lock_cleanup_pop(vecs->lock);
- 	return r;
- }
- 
-@@ -1261,6 +1264,7 @@ checkerloop (void *ap)
- 		block_signal(SIGHUP, &old);
- 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 		lock(vecs->lock);
-+		pthread_testcancel();
- 		condlog(4, "tick");
- 
- 		if (vecs->pathvec) {
-Index: multipath-tools-120123/libmultipath/waiter.c
-===================================================================
---- multipath-tools-120123.orig/libmultipath/waiter.c
-+++ multipath-tools-120123/libmultipath/waiter.c
-@@ -157,6 +157,7 @@ int waiteventloop (struct event_thread *
- 		 */
- 		pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
- 		lock(waiter->vecs->lock);
-+		pthread_testcancel();
- 		r = update_multipath(waiter->vecs, waiter->mapname, 1);
- 		lock_cleanup_pop(waiter->vecs->lock);
- 
-Index: multipath-tools-120123/libmultipath/log_pthread.c
-===================================================================
---- multipath-tools-120123.orig/libmultipath/log_pthread.c
-+++ multipath-tools-120123/libmultipath/log_pthread.c
-@@ -87,6 +87,7 @@ void log_thread_stop (void)
- 	pthread_mutex_lock(logq_lock);
- 	pthread_cancel(log_thr);
- 	pthread_mutex_unlock(logq_lock);
-+	pthread_join(log_thr, NULL);
- 
- 	flush_logqueue();
- 
+-	select_features(mpp);
+-	select_no_path_retry(mpp);
+-	select_dev_loss(mpp);
+-	sysfs_set_scsi_tmo(mpp);
+-
+ 	vector_foreach_slot (mpp->paths, pp, i) {
+ 		/*
+ 		 * see if path is in sysfs
