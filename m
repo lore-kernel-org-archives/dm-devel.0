@@ -1,63 +1,58 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 0/2] block: online resize of disk partitions
-Date: Mon, 13 Feb 2012 14:30:36 -0500
-Message-ID: <1329161438-12602-1-git-send-email-vgoyal@redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: Re: [PATCH 0/2] block: online resize of disk partitions
+Date: Mon, 13 Feb 2012 16:34:54 -0500
+Message-ID: <4F3981FE.7090601@ubuntu.com>
+References: <1329161438-12602-1-git-send-email-vgoyal@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1329161438-12602-1-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, kzak@redhat.com
-Cc: vgoyal@redhat.com, psusi@ubuntu.com, psusi@cfl.rr.com, maxim.patlasov@gmail.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, Karel Zak <kzak@redhat.com>, maxim.patlasov@gmail.com
 List-Id: dm-devel.ids
 
-Hi,
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Following patch adds support for online resizing of a partition. This patch
-is based on previously posted patches by Phillip Susi.
+On 2/13/2012 2:30 PM, Vivek Goyal wrote:
+> Hi,
+> 
+> Following patch adds support for online resizing of a partition.
+> This patch is based on previously posted patches by Phillip Susi.
+> 
+> There are two patches. Out of which one is kernel patch and other
+> one is util-linux patch to add support of a user space utility
+> "resizepart" to allow resizing the partition.
+> 
+> This ioctl only resizes the partition size in kenrel and does not
+> change the size on disk. A user needs to make sure that
+> corresponding changes are made to disk data structures also using
+> fdisk(or partx), if changes are to be retained across reboot.
+> 
+> I made some changes according to the feedback received last time.
+> Following are changes since the version Phillip posted.
+> 
+> - RESIZE ioctl ignores the partition "start" and does not expect
+> user to specify one. Caller needs to just specify "device",
+> "partition number" and "size" of new partition.
 
-There are two patches. Out of which one is kernel patch and other one is
-util-linux patch to add support of a user space utility "resizepart" to
-allow resizing the partition.
+I would prefer that the start argument not be left undefined.  I
+checked it to make sure it was unchanged as a simple sanity check to
+guard against user space being goofy, as well as to allow for the
+possibility of extending the interface in the future to allow changing
+the start as well as the length.
 
-This ioctl only resizes the partition size in kenrel and does not change
-the size on disk. A user needs to make sure that corresponding changes
-are made to disk data structures also using fdisk(or partx), if changes
-are to be retained across reboot.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.17 (MingW32)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
 
-I made some changes according to the feedback received last time. Following
-are changes since the version Phillip posted.
-
-- RESIZE ioctl ignores the partition "start" and does not expect user to
-  specify one. Caller needs to just specify "device", "partition number" and
-  "size" of new partition. 
-
-- Got rid of part_nr_sects_write_begin/part_nr_sects_write_end functions
-  and replaced these with single part_nr_sects_write().
-
-- Some sequence counter related changes are simply lifted from i_size_write().
-
-- Initialized part->nr_sects_seq using seqcount_init().
-
-Phillip, do let me know if I should put your signed-off-by also in the
-patch.
-
-Any feedback is welcome.
-
-I did following test.
-
-- Create a partition of 10MB on a disk using fdisk.
-- Add this partition to a volume group
-- Use fdisk to increase the partition size to 20MB. (First delete the
-  partition and then create a new one of 20MB size).
-- Use resizepart to extend partition size in kernel.
-	resizepart /dev/sdc 1 40960
-- Do pvresize on partition so that physical volume can be incrased in
-  size online.
-	pvresize /dev/sda1
-
-pvresize does recognize the new size. Also lsblk and /proc/partitions
-report the new size of partition.
-
-Thanks
-Vivek
-
-[PATCH 1/2] block: add partition resize function to blkpg ioctl
-[PATCH 2/2] resizepart: Utility to resize a partition
+iQEcBAEBAgAGBQJPOYH+AAoJEJrBOlT6nu75rvwIALjEMrUZPEvwYzH9MI9wHmGg
+lZzeBTSalqEOWL/hM0Ge6o1Of1adjeEyB7riXi7Fbb4Z8U55oBkAyKcRD/fdm0EA
+8SyfMnGnMqZjh6VthIZMw43HbNwHojXeu2ri4ygeUORMIrX8tmZLAePw6iuOWcX6
+qxOZsJOz3CdoGy2yc362AuIQACKH6IfFimP81NH5uUA01DIawWpes3EuN+KcxOQP
+hlIeixVPzlNrXuDY/m35xlXNaXcTUqTYFJ30vvVn0/MHylAbfCXKx6P19jvPHTt9
+j0OyBNVnsb/BCKsbSW89lfHoVPMeYC6Kz2u8d1AX5byCxcYcznqclA6S93/UUms=
+=ZABC
+-----END PGP SIGNATURE-----
