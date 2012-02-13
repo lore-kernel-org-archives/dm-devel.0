@@ -1,61 +1,50 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 0/2] block: online resize of disk partitions
-Date: Mon, 13 Feb 2012 17:24:54 -0500
-Message-ID: <20120213222454.GF3130@redhat.com>
-References: <1329161438-12602-1-git-send-email-vgoyal@redhat.com>
- <4F3981FE.7090601@ubuntu.com>
- <20120213215039.GD3130@redhat.com>
- <4F398C39.6010901@ubuntu.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] [SCSI] scsi_error: classify some ILLEGAL_REQUEST sense as
+ a permanent TARGET_ERROR
+Date: Mon, 13 Feb 2012 18:35:11 -0500
+Message-ID: <20120213233511.GA27146@redhat.com>
+References: <1322857889-2623-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4F398C39.6010901@ubuntu.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Phillip Susi <psusi@ubuntu.com>
-Cc: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, Karel Zak <kzak@redhat.com>, maxim.patlasov@gmail.com
+In-Reply-To: <1322857889-2623-1-git-send-email-snitzer@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi@vger.kernel.org
+Cc: James Bottomley <jbottomley@parallels.com>, Hannes Reinecke <hare@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 13, 2012 at 05:18:33PM -0500, Phillip Susi wrote:
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
-> 
-> On 2/13/2012 4:50 PM, Vivek Goyal wrote:
-> > So if a user anyway does not specify the start of sector, then 
-> > tools shall have to first read it and then call the ioctl. If 
-> > anyway tools are specifying, there is no much scope of screwing up 
-> > the things?
-> 
-> Tools certainly should know where the partition starts.  I already
-> have patched parted and partx to pass the current size, which they
-> had trivially available.  Making sure of that is a good sanity check
-> to guard against, for instance, resizing the wrong partition.
+Permanent target failures are non-retryable and should be classified as
+TARGET_ERROR; otherwise dm-multipath will retry an IO request that will
+always fail at the target.
 
-Ok, so user still specifies just the new size of partition and tool
-passes in both the "start" and new "size" to the ioctl?
+A SCSI command that fails with ILLEGAL_REQUEST sense and Additional
+sense 0x20, 0x21, 0x24 or 0x26 represents a permanent TARGET_ERROR.
 
-> 
-> > Even if we allow changing start at some point of time, then IOCTL 
-> > can remain the same and just the implementation will change in a 
-> > backward compatible manner. Old tools still will continue to work 
-> > as they have always been, and new ones can start passing "start" 
-> > too.
-> > 
-> > So I really did not find passing and checking "start" of partition
-> >  very appealing.
-> 
-> That is exactly why passing and checking start is required.  If it is
-> entirely ignored, then the interface can not start using it in the
-> future in a backward compatible way, because user mode tools will have
-> grown used to passing in any kind of garbage, so if the kernel starts
-> using it to alter the start position of the partition, older tools
-> would randomly and accidentally be shifting the the start of
-> partitions they just mean to change the length of.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/scsi/scsi_error.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-Ok, I think keeping the ioctl backward compatible in light of any
-future changes makes sense. I will change the patches to not ignore
-the partition "start" and repost.
+v2: revised patch header to not be hyper-focused on WRITE SAME failures
 
-Thanks for the comments.
+diff --git a/drivers/scsi/scsi_error.c b/drivers/scsi/scsi_error.c
+index dc6131e..33d3a50 100644
+--- a/drivers/scsi/scsi_error.c
++++ b/drivers/scsi/scsi_error.c
+@@ -366,6 +366,14 @@ static int scsi_check_sense(struct scsi_cmnd *scmd)
+ 			return TARGET_ERROR;
+ 
+ 	case ILLEGAL_REQUEST:
++		if (sshdr.asc == 0x20 || /* Invalid command operation code */
++		    sshdr.asc == 0x21 || /* Logical block address out of range */
++		    sshdr.asc == 0x24 || /* Invalid field in cdb */
++		    sshdr.asc == 0x26) { /* Parameter value invalid */
++			return TARGET_ERROR;
++		}
++		return SUCCESS;
++
+ 	default:
+ 		return SUCCESS;
+ 	}
 
-Vivek
