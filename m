@@ -1,73 +1,148 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
-Subject: Re: [PATCH 0/3][RESEND]multipath-tools: mpathpersist
- utility for managing persistent reservation on dm multipath device.
-Date: Mon, 13 Feb 2012 14:07:50 +0000
-Message-ID: <F200AD42A082BC4088B232D13A916A890129EF@SACEXCMBX02-PRD.hq.netapp.com>
-References: <EE2129A8E578DC4E94D643D6C1C1C67D07D9B409@BTCMVEXC2-PRD.hq.netapp.com>
-	<4F197EEB.3050805@internyc.net>
-	<F200AD42A082BC4088B232D13A916A89E24A@SACEXCMBX02-PRD.hq.netapp.com>
-	<4F1E4785.7010806@internyc.net>
-	<F200AD42A082BC4088B232D13A916A89EA01@SACEXCMBX02-PRD.hq.netapp.com>
-	<4F2022D3.2070609@internyc.net>
-	<F200AD42A082BC4088B232D13A916A89EC06@SACEXCMBX02-PRD.hq.netapp.com>
-	<4F206C34.4030401@internyc.net>
-	<F200AD42A082BC4088B232D13A916A8901045C@SACEXCMBX02-PRD.hq.netapp.com>
-	<4F28B517.2030109@internyc.net>
-	<F200AD42A082BC4088B232D13A916A89011BC1@SACEXCMBX02-PRD.hq.netapp.com>
-	<b0igk7.lz3in5.1hge0zf-qmf@smtp1-g21.free.fr>
-	<F200AD42A082BC4088B232D13A916A890124D9@SACEXCMBX02-PRD.hq.netapp.com>
-	<1328857210.17706.4.camel@lapoo.opensvc.com>
-	<F200AD42A082BC4088B232D13A916A890125CF@SACEXCMBX02-PRD.hq.netapp.com>
-	<wi7l65.lz6iq4.31ap0z-qmf@mx.google.com>
-	<F200AD42A082BC4088B232D13A916A8901275B@SACEXCMBX02-PRD.hq.netapp.com>
-	<1328949786.2617.6.camel@lapoo.opensvc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1328949786.2617.6.camel@lapoo.opensvc.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: dm-devel <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH 2/2] resizepart: Utility to resize a partition
+Date: Mon, 13 Feb 2012 14:30:38 -0500
+Message-ID: <1329161438-12602-3-git-send-email-vgoyal@redhat.com>
+References: <1329161438-12602-1-git-send-email-vgoyal@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1329161438-12602-1-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, kzak@redhat.com
+Cc: vgoyal@redhat.com, psusi@ubuntu.com, psusi@cfl.rr.com, maxim.patlasov@gmail.com
 List-Id: dm-devel.ids
 
-T24gU2F0dXJkYXksIEZlYnJ1YXJ5IDExLCAyMDEyIDI6MTMgUE0sIENocmlzdG9waGUgVmFyb3F1
-aSB3cm90ZToKPiAKPiBPbiB2ZW4uLCAyMDEyLTAyLTEwIGF0IDE4OjQ3ICswMDAwLCBDaGF1aGFu
-LCBWaWpheSB3cm90ZToKPiA+IGdpdDovL2dpdGh1Yi5jb20vdmlqYXljaGF1aGFuL211bHRpcGF0
-aC10b29scy5naXQKPiAKPiBPay4gVGhpcyByZXBvIGlzIG1lcmdlZC4KPiAKVGhhbmtzLgoKPiBJ
-IGhhZCB0byBhZGQgYSBzbWFsbCBidWlsZCBmaXguIENhbiB5b3UgdmVyaWZ5IGl0J3MgY29ycmVj
-dG5lc3MgPwo+ClllcywgdGhpcyBmaXggaXMgZmluZS4gCiAKPiBBcmUgeW91IHN1cmUgdGhlIC1I
-IChoZXgpIGZsYWcgaXMgdXNlZCA/IGdjYyByZXBvcnRzIHRoZSBmbGFnIGFzCj4gdW51c2VkLgo+
-IElmIGl0J3Mgbm90IHVzZWQgSSB0aGluayB5b3Ugc2hvdWxkIGVpdGhlciByZW1vdmUgaXQgZnJv
-bSB0aGUgdXNhZ2UKPiBtZXNzYWdlIGFuZCBtYW4gb3IgYWRkIHRoZSBmZWF0dXJlLgo+IAoKSSB3
-aWxsIGNvcnJlY3QgaXQuIFRoYW5rcyBmb3IgcG9pbnRpbmcgaXQgb3V0LgoKPiBPbiB0aGUgc2Ft
-ZSB0b3BpYzoKPiBpbiBtcGF0aHBlcnNpc3QsCj4gbWFpbi5jOjQwMzo3OiBhdHRlbnRpb24gOiB2
-YXJpYWJsZSDigJh0X2Fycl9sZW7igJkgc2V0IGJ1dCBub3QgdXNlZAo+IFstV3VudXNlZC1idXQt
-c2V0LXZhcmlhYmxlXQo+IAo+IGFuZCBpbiBsaWJtcGF0aHBlcnNpc3QsCj4gbXBhdGhfcGVyc2lz
-dC5jOiBJbiBmdW5jdGlvbiDigJhtcGF0aF9zZW5kX3ByaW5fYWN0aXZlcGF0aOKAmToKPiBtcGF0
-aF9wZXJzaXN0LmM6Mzk3OjIwOiBhdHRlbnRpb24gOiB2YXJpYWJsZSDigJhwYXJhbeKAmSBzZXQg
-YnV0IG5vdCB1c2VkCj4gWy1XdW51c2VkLWJ1dC1zZXQtdmFyaWFibGVdCj4gbXBhdGhfcGVyc2lz
-dC5jOiBJbiBmdW5jdGlvbiDigJhtcGF0aF9wcm91dF9jb21tb27igJk6Cj4gbXBhdGhfcGVyc2lz
-dC5jOjU1MzoxNTogYXR0ZW50aW9uIDogdmFyaWFibGUg4oCYcHB0ZW1w4oCZIHNldCBidXQgbm90
-IHVzZWQKPiBbLVd1bnVzZWQtYnV0LXNldC12YXJpYWJsZV0KPiBtcGF0aF9wcl9pb2N0bC5jOiBJ
-biBmdW5jdGlvbiDigJhkdW1wSGV44oCZOgo+IG1wYXRoX3ByX2lvY3RsLmM6NTE5OjE1OiBhdHRl
-bnRpb24gOiB2YXJpYWJsZSDigJhmb3JtYXRzdHLigJkgc2V0IGJ1dCBub3QKPiB1c2VkIFstV3Vu
-dXNlZC1idXQtc2V0LXZhcmlhYmxlXQo+IApJIHdpbGwgY2xlYW4gdXAgdGhlc2UuCj4gCj4gQWxz
-byBJIHRob3VnaCBzZ19wZXJzaXN0IGhhcyBJTiBtb2RlIHNldCBhcyBkZWZhdWx0LCBzbyB0aGF0
-IHNpbXBsZQo+IGNvbW1hbmRzIGFyZSBzaW1wbGUgdG8gd3JpdGUgOiBzZ19wZXJzaXN0IC1yIC9k
-ZXYvc2RhLiBDYW4gd2UgcmVzdG9yZQo+IHRoYXQgbmljZSBmZWF0dXJlID8KPiAKClllcywgVGhp
-cyB3b3VsZCBiZSBhIG5pY2UgZmVhdHVyZS4gIEkgd2lsbCBzdWJtaXQgdGhlIHBhdGNoIGZvciBh
-bGwgb2YgeW91ciBhYm92ZSBjb21tZW50cy4gVGhhbmtzIGZvciB5b3VyIHJldmlldy4KCj4gQW55
-d2F5LCB0aGFua3MgZm9yIHRoZSBncmVhdCB3b3JrLgoKVGhhbmtzLApWaWpheQoKLS0KZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+A simple user space utility to resize an existing partition.
+
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ partx/Makefile.am  |    4 ++--
+ partx/partx.h      |   19 +++++++++++++++++++
+ partx/resizepart.8 |   38 ++++++++++++++++++++++++++++++++++++++
+ partx/resizepart.c |   30 ++++++++++++++++++++++++++++++
+ 4 files changed, 89 insertions(+), 2 deletions(-)
+ create mode 100644 partx/resizepart.8
+ create mode 100644 partx/resizepart.c
+
+diff --git a/partx/Makefile.am b/partx/Makefile.am
+index 080bc47..1f4dbf5 100644
+--- a/partx/Makefile.am
++++ b/partx/Makefile.am
+@@ -1,7 +1,7 @@
+ include $(top_srcdir)/config/include-Makefile.am
+ 
+-usrsbin_exec_PROGRAMS = addpart delpart
+-dist_man_MANS = addpart.8 delpart.8
++usrsbin_exec_PROGRAMS = addpart delpart resizepart
++dist_man_MANS = addpart.8 delpart.8 resizepart.8
+ 
+ usrsbin_exec_PROGRAMS += partx
+ partx_SOURCES = partx.c partx.h \
+diff --git a/partx/partx.h b/partx/partx.h
+index b40fa8f..7a509f3 100644
+--- a/partx/partx.h
++++ b/partx/partx.h
+@@ -41,4 +41,23 @@ static inline int partx_add_partition(int fd, int partno,
+ 	return ioctl(fd, BLKPG, &a);
+ }
+ 
++static inline int partx_resize_partition(int fd, int partno, unsigned long size)
++{
++	struct blkpg_ioctl_arg a;
++	struct blkpg_partition p;
++
++	p.pno = partno;
++	/* start is unused for resize operation. It can't be changed */
++	p.start = 0;
++	p.length = size << 9;
++	p.devname[0] = 0;
++	p.volname[0] = 0;
++	a.op = BLKPG_RESIZE_PARTITION;
++	a.flags = 0;
++	a.datalen = sizeof(p);
++	a.data = &p;
++
++	return ioctl(fd, BLKPG, &a);
++}
++
+ #endif /*  UTIL_LINUX_PARTX_H */
+diff --git a/partx/resizepart.8 b/partx/resizepart.8
+new file mode 100644
+index 0000000..0b47e81
+--- /dev/null
++++ b/partx/resizepart.8
+@@ -0,0 +1,38 @@
++.\" resizepart.8 --
++.\" Copyright 2012 Vivek Goyal <vgoyal@redhat.com>
++.\" Copyright 2012 Red Hat, Inc.
++.\" May be distributed under the GNU General Public License
++.TH RESIZEPART 8 "February 2012" "util-linux" "System Administration"
++.SH NAME
++resizepart \-
++simple wrapper around the "resize partition" ioctl
++.SH SYNOPSIS
++.B resizepart
++.I device partition length
++.SH DESCRIPTION
++.B resizepart
++is a program that informs the Linux kernel of new partition size.
++
++This command doesn't manipulate partitions on hard drive.
++
++.SH PARAMETERS
++.TP
++.I device
++Specify the disk device.
++.TP
++.I partition
++Specify the partition number.
++.TP
++.I length
++Specify the length of the partition (in 512-byte sectors).
++
++.SH SEE ALSO
++.BR addpart (8),
++.BR delpart (8),
++.BR fdisk (8),
++.BR parted (8),
++.BR partprobe (8),
++.BR partx (8)
++.SH AVAILABILITY
++The addpart command is part of the util-linux package and is available from
++ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+diff --git a/partx/resizepart.c b/partx/resizepart.c
+new file mode 100644
+index 0000000..e230fcd
+--- /dev/null
++++ b/partx/resizepart.c
+@@ -0,0 +1,30 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <fcntl.h>
++
++#include "partx.h"
++
++int
++main(int argc, char **argv)
++{
++	int fd;
++
++	if (argc != 4) {
++		fprintf(stderr,
++			"usage: %s diskdevice partitionnr length\n",
++			argv[0]);
++		exit(1);
++	}
++	if ((fd = open(argv[1], O_RDONLY)) < 0) {
++		perror(argv[1]);
++		exit(1);
++	}
++
++	if (partx_resize_partition(fd, atoi(argv[2]),
++				atoll(argv[3]))) {
++		perror("BLKPG");
++		exit(1);
++	}
++
++	return 0;
++}
+-- 
+1.7.6.4
