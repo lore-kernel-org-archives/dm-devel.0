@@ -1,50 +1,41 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] [SCSI] scsi_error: classify some ILLEGAL_REQUEST sense as
- a permanent TARGET_ERROR
-Date: Mon, 13 Feb 2012 18:35:11 -0500
-Message-ID: <20120213233511.GA27146@redhat.com>
-References: <1322857889-2623-1-git-send-email-snitzer@redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: Re: [PATCH 0/2] block: online resize of disk partitions
+Date: Mon, 13 Feb 2012 20:24:39 -0500
+Message-ID: <4F39B7D7.8050501@ubuntu.com>
+References: <1329161438-12602-1-git-send-email-vgoyal@redhat.com> <4F3981FE.7090601@ubuntu.com> <20120213215039.GD3130@redhat.com> <4F398C39.6010901@ubuntu.com> <20120213222454.GF3130@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1322857889-2623-1-git-send-email-snitzer@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: James Bottomley <jbottomley@parallels.com>, Hannes Reinecke <hare@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120213222454.GF3130@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, Karel Zak <kzak@redhat.com>, maxim.patlasov@gmail.com
 List-Id: dm-devel.ids
 
-Permanent target failures are non-retryable and should be classified as
-TARGET_ERROR; otherwise dm-multipath will retry an IO request that will
-always fail at the target.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-A SCSI command that fails with ILLEGAL_REQUEST sense and Additional
-sense 0x20, 0x21, 0x24 or 0x26 represents a permanent TARGET_ERROR.
+On 02/13/2012 05:24 PM, Vivek Goyal wrote:
+> Ok, so user still specifies just the new size of partition and tool
+> passes in both the "start" and new "size" to the ioctl?
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/scsi/scsi_error.c |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+Bingo.  Eventually I'm kicking around the idea of having the ioctl allow
+changing the start and modifying gparted to be able to use that on a
+mounted partition if the fs supports it ( I think btrfs could be made
+to without too much difficulty ).  In the mean time, libparted enforces
+the start remaining unchanged and parted, gparted, and kpartx automatically
+use the existing start position.
 
-v2: revised patch header to not be hyper-focused on WRITE SAME failures
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
 
-diff --git a/drivers/scsi/scsi_error.c b/drivers/scsi/scsi_error.c
-index dc6131e..33d3a50 100644
---- a/drivers/scsi/scsi_error.c
-+++ b/drivers/scsi/scsi_error.c
-@@ -366,6 +366,14 @@ static int scsi_check_sense(struct scsi_cmnd *scmd)
- 			return TARGET_ERROR;
- 
- 	case ILLEGAL_REQUEST:
-+		if (sshdr.asc == 0x20 || /* Invalid command operation code */
-+		    sshdr.asc == 0x21 || /* Logical block address out of range */
-+		    sshdr.asc == 0x24 || /* Invalid field in cdb */
-+		    sshdr.asc == 0x26) { /* Parameter value invalid */
-+			return TARGET_ERROR;
-+		}
-+		return SUCCESS;
-+
- 	default:
- 		return SUCCESS;
- 	}
-
+iQEcBAEBAgAGBQJPObfXAAoJEJrBOlT6nu75IKwH/jKcbW6L/j/v7hF0rXHql7Tg
+/E17+L37YvtwNA3aiZvDmj6FWablT2Dmvi/zcPITJ0FOWtZ+HKQ6+1odqPWRkOl/
+4gQrcUyYn/OK/RqyqCM9O6AwpiKZCvAn9LmDc0BCKDptbKshXe+L2GmgOQbiFSdk
+2rcbncXI9Sz1pt8nCP8M3gNdYIl6Ln2u0PxwohMoIVGFDhxETdzm8YfX9MfH4Ay6
+FU+5chGJUEiXQgjDw5k+vgX85Xc4pC7IRR6vqAZ5I69RxWB4DBteiR0znBNBZG1Z
+Mg8cAJTku2n4fZojCAXv35i3gRa3bgwyHv0suaSc2BGKYEeAu41ncAC3q77Arp4=
+=Qxgd
+-----END PGP SIGNATURE-----
