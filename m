@@ -1,65 +1,64 @@
-From: PRASHANT AKBARI <08bit002@nirmauni.ac.in>
-Subject: kernel panic please help
-Date: Thu, 16 Feb 2012 02:08:03 -0500
-Message-ID: <CAFNi2GJQrzBcWs_zSTuUh101UarDAKOGT9u3uswjgqyhpRrdqA@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re: Write
+ same support]
+Date: Thu, 16 Feb 2012 16:03:01 -0500
+Message-ID: <20120216210301.GA27404@redhat.com>
+References: <1327969892-5090-1-git-send-email-martin.petersen@oracle.com>
+ <20120216200202.GA27311@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0340473361366145832=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: ktanzer@desc.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20120216200202.GA27311@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, jaxboe@fusionio.com, dm-devel@redhat.com, michaelc@cs.wisc.edu
 List-Id: dm-devel.ids
 
---===============0340473361366145832==
-Content-Type: multipart/alternative; boundary=f46d04478a7f36a74a04b90f7de0
+On Thu, Feb 16 2012 at  3:02pm -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
---f46d04478a7f36a74a04b90f7de0
-Content-Type: text/plain; charset=ISO-8859-1
+> FYI, I'll bounce a message detailing the iSCSI scatter-gather NULL
+> pointer I _always_ hit with dm-io issuing async WRITE_SAME.
 
-SCSI subsystem initialized
-3ware 9000 Storage Controller device driver for Linux v2.26.02.008.
-device-mapper: uevent: version 1.0.3
-device-mapper: ioctl: 4.11.5-ioctl (2007-12-12) initialised:
-Kernel panic - not syncing: Attempted to kill init!
+I developed a patch for dm-io so that the new dm-thinp target can
+leverage your new WRITE SAME functionality for, hopefully, more
+efficient zeroing of the disk (see: dm-io-WRITE_SAME.patch at the end of
+the following patchset).
 
+Here is the patchset I'm using ontop of Linux 3.2:
+http://people.redhat.com/msnitzer/patches/upstream/dm-io-WRITE_SAME/series.html
 
-friend please help me to outcome this error
-thank you
+All works great on FC (tested against NetApp 3040 LUN)... I'm using the
+thinp-test-suite to test dm-thinp's use of dm_kcopyd_zero().
 
--- 
-*prashant akbari*
+But testing with iSCSI, I get a NULL pointer _every_ time in the iSCSI
+scatter-gather code, see:
+http://people.redhat.com/msnitzer/patches/upstream/dm-io-WRITE_SAME/async-WRITE_SAME-makes-iscsi-sg-die.txt
+-- in the middle of that file you'll see my 'crash' analysis of the
+issue -- but that is just the NULL pointer.. no idea what the smoking
+gun is that caused the iscsi_segment to become NULL.
 
---f46d04478a7f36a74a04b90f7de0
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Anyway, taking a step back... WRITE SAME is all about transfering a
+single logical block, backed by a single empty_zero_page in this test
+case, so I'm wondering if for some reason iSCSI's sg code is getting
+confused and thinking that more pages need to be transferred than were
+in the original bio's payload (but iSCSI is way beneath the bio -> SCSI
+command translation... grr)
 
-<pre>SCSI subsystem initialized<br>3ware 9000 Storage Controller device dri=
-ver for Linux v2.26.02.008.<br>device-mapper: uevent: version 1.0.3<br>devi=
-ce-mapper: ioctl: 4.11.5-ioctl (2007-12-12) initialised: <br>Kernel panic -=
- not syncing: Attempted to kill init!<br>
-</pre><br>friend please help me to outcome this error<br>thank you<br clear=
-=3D"all"><br>-- <br><font size=3D"4"><i style=3D"font-family:comic sans ms,=
-sans-serif;background-color:rgb(255,255,255);color:rgb(51,51,153)">prashant=
- akbari</i><span style=3D"background-color:rgb(255,255,255);font-family:com=
-ic sans ms,sans-serif;color:rgb(51,51,153)"></span></font><br>
-<br>
+It should be noted that using your synchronous blkdev_issue_write_same()
+interface works fine on the same iSCSI LUN (again NetApp 3040 LUN):
+http://people.redhat.com/msnitzer/patches/upstream/dm-io-WRITE_SAME/dm-thin-use-WRITE_SAME-for-zeroing.patch
+(but an dm-thinp really wants an async interface for zeroing).
 
---f46d04478a7f36a74a04b90f7de0--
+Mike
 
+p.s.
+dm-io-WRITE_SAME.patch's use of dp->get_page()+bio_add_page()
+accomplishes the same bio init as you do in blkdev_issue_write_same():
 
---===============0340473361366145832==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0340473361366145832==--
+      bio->bi_vcnt = 1;
+      bio->bi_phys_segments = 1;
+      bio->bi_io_vec->bv_page = virt_to_page(empty_zero_page);
+      bio->bi_io_vec->bv_offset = offset_in_page(empty_zero_page);
+      bio->bi_io_vec->bv_len = logical_block_size;
