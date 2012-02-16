@@ -1,69 +1,65 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 0/2][V3] block: Support online resize of disk partitions
-Date: Tue, 14 Feb 2012 15:39:49 -0500
-Message-ID: <1329251991-22468-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, kzak@redhat.com
-Cc: vgoyal@redhat.com, psusi@ubuntu.com, psusi@cfl.rr.com, maxim.patlasov@gmail.com
+From: PRASHANT AKBARI <08bit002@nirmauni.ac.in>
+Subject: kernel panic please help
+Date: Thu, 16 Feb 2012 02:08:03 -0500
+Message-ID: <CAFNi2GJQrzBcWs_zSTuUh101UarDAKOGT9u3uswjgqyhpRrdqA@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0340473361366145832=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: ktanzer@desc.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+--===============0340473361366145832==
+Content-Type: multipart/alternative; boundary=f46d04478a7f36a74a04b90f7de0
 
-This is V3 of patch which adds support for online resizing of a partition.
-This patch is based on previously posted patches by Phillip Susi.
+--f46d04478a7f36a74a04b90f7de0
+Content-Type: text/plain; charset=ISO-8859-1
 
-There are two patches. Out of which one is kernel patch and other one is
-util-linux patch to add support of a user space utility "resizepart" to
-allow resizing the partition.
+SCSI subsystem initialized
+3ware 9000 Storage Controller device driver for Linux v2.26.02.008.
+device-mapper: uevent: version 1.0.3
+device-mapper: ioctl: 4.11.5-ioctl (2007-12-12) initialised:
+Kernel panic - not syncing: Attempted to kill init!
 
-This ioctl only resizes the partition size in kenrel and does not change
-the size on disk. A user needs to make sure that corresponding changes
-are made to disk data structures also using fdisk(or partx), if changes
-are to be retained across reboot.
 
-Changes since V2
-----------------
-- Do not ignore the "start" parameter in RESIZE ioctl.
-- Change resizepart utility to parse sysfs to get to partition start.
+friend please help me to outcome this error
+thank you
 
-Changes since V1
-----------------
-Following are changes since the version Phillip posted.
+-- 
+*prashant akbari*
 
-- RESIZE ioctl ignores the partition "start" and does not expect user to
-  specify one. Caller needs to just specify "device", "partition number" and
-  "size" of new partition. 
+--f46d04478a7f36a74a04b90f7de0
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-- Got rid of part_nr_sects_write_begin/part_nr_sects_write_end functions
-  and replaced these with single part_nr_sects_write().
+<pre>SCSI subsystem initialized<br>3ware 9000 Storage Controller device dri=
+ver for Linux v2.26.02.008.<br>device-mapper: uevent: version 1.0.3<br>devi=
+ce-mapper: ioctl: 4.11.5-ioctl (2007-12-12) initialised: <br>Kernel panic -=
+ not syncing: Attempted to kill init!<br>
+</pre><br>friend please help me to outcome this error<br>thank you<br clear=
+=3D"all"><br>-- <br><font size=3D"4"><i style=3D"font-family:comic sans ms,=
+sans-serif;background-color:rgb(255,255,255);color:rgb(51,51,153)">prashant=
+ akbari</i><span style=3D"background-color:rgb(255,255,255);font-family:com=
+ic sans ms,sans-serif;color:rgb(51,51,153)"></span></font><br>
+<br>
 
-- Some sequence counter related changes are simply lifted from i_size_write().
+--f46d04478a7f36a74a04b90f7de0--
 
-- Initialized part->nr_sects_seq using seqcount_init().
 
-Phillip, do let me know if I should put your signed-off-by also in the
-patch.
+--===============0340473361366145832==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Any review feedback is welcome.
 
-I did following test.
-
-- Create a partition of 10MB on a disk using fdisk.
-- Add this partition to a volume group
-- Use fdisk to increase the partition size to 20MB. (First delete the
-  partition and then create a new one of 20MB size).
-- Use resizepart to extend partition size in kernel.
-	resizepart /dev/sdc 1 40960
-- Do pvresize on partition so that physical volume can be incrased in
-  size online.
-	pvresize /dev/sda1
-
-pvresize does recognize the new size. Also lsblk and /proc/partitions
-report the new size of partition.
-
-Thanks
-Vivek
-
-[PATCH 1/2] block: add partition resize function to blkpg ioctl
-[PATCH 2/2] util-linux: resizepart: Utility to resize a partition
+--===============0340473361366145832==--
