@@ -1,76 +1,168 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re:
- Write same support]
-Date: Thu, 16 Feb 2012 16:35:02 -0500
-Message-ID: <20120216213502.GB29691@redhat.com>
-References: <1327969892-5090-1-git-send-email-martin.petersen@oracle.com>
- <20120216200202.GA27311@redhat.com>
- <20120216210301.GA27404@redhat.com>
- <4F3D7430.2080506@cs.wisc.edu>
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH for-3.3/core] block: add missing block_bio_complete()
+ tracepoint
+Date: Fri, 17 Feb 2012 13:19:58 -0800
+Message-ID: <20120217211958.GG29414@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4F3D7430.2080506@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: jaxboe@fusionio.com, linux-scsi@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, device-mapper development <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Namhyung Kim <namhyung@gmail.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Feb 16 2012 at  4:25pm -0500,
-Mike Christie <michaelc@cs.wisc.edu> wrote:
+bio completion didn't kick block_bio_complete TP.  Only dm was
+explicitly triggering the TP on IO completion.  This makes
+block_bio_complete TP useless for tracers which want to know about
+bios, and all other bio based drivers skip generating blktrace
+completion events.
 
-> On 02/16/2012 03:03 PM, Mike Snitzer wrote:
-> > On Thu, Feb 16 2012 at  3:02pm -0500,
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> > 
-> >> FYI, I'll bounce a message detailing the iSCSI scatter-gather NULL
-> >> pointer I _always_ hit with dm-io issuing async WRITE_SAME.
-> > 
-> > I developed a patch for dm-io so that the new dm-thinp target can
-> > leverage your new WRITE SAME functionality for, hopefully, more
-> > efficient zeroing of the disk (see: dm-io-WRITE_SAME.patch at the end of
-> > the following patchset).
-> > 
-> > Here is the patchset I'm using ontop of Linux 3.2:
-> > http://people.redhat.com/msnitzer/patches/upstream/dm-io-WRITE_SAME/series.html
-> > 
-> > All works great on FC (tested against NetApp 3040 LUN)... I'm using the
-> > thinp-test-suite to test dm-thinp's use of dm_kcopyd_zero().
-> > 
-> > But testing with iSCSI, I get a NULL pointer _every_ time in the iSCSI
-> > scatter-gather code, see:
-> > http://people.redhat.com/msnitzer/patches/upstream/dm-io-WRITE_SAME/async-WRITE_SAME-makes-iscsi-sg-die.txt
-> > -- in the middle of that file you'll see my 'crash' analysis of the
-> > issue -- but that is just the NULL pointer.. no idea what the smoking
-> > gun is that caused the iscsi_segment to become NULL.
-> > 
-> > Anyway, taking a step back... WRITE SAME is all about transfering a
-> > single logical block, backed by a single empty_zero_page in this test
-> > case, so I'm wondering if for some reason iSCSI's sg code is getting
-> > confused and thinking that more pages need to be transferred than were
-> > in the original bio's payload (but iSCSI is way beneath the bio -> SCSI
-> > command translation... grr)
-> 
-> Yeah, probably a request/scsi_cmnd/sg sector/length/offset value is off
-> or iscsi is making a bad assumption.
-> 
-> Do:
-> 
-> echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_session
-> echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_session
-> echo 1 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp
-> echo 1 > /sys/module/libiscsi_tcp/parameters/iscsi_tcp
-> 
-> then rerun your test.
+This patch makes all bio completions via bio_endio() generate
+block_bio_complete TP.
 
-OK, will retry with all 4.. but just this caused the system to crap
-itself:
+* Explicit trace_block_bio_complete() invocation removed from dm and
+  the trace point is unexported.
 
-echo 1 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp
+* @rq dropped from trace_block_bio_complete().  bios may fly around
+  w/o queue associated.  Verifying and accessing the assocaited queue
+  belongs to TP probes.
 
-(I did this to turn on the ISCSI_DBG_TCP messages I noticed while
-reviewing the code).
+* blktrace now gets both request and bio completions.  Make it ignore
+  bio completions if request completion path is happening.
 
-I saw a bunch of opcode 0x25 (READ CAPACITY) but never did see 0x93
-(WRITE_SAME_16) come through.
+This makes all bio based drivers generate blktrace completion events
+properly and makes the block_bio_complete TP actually useful.
+
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Original-patch-by: Namhyung Kim <namhyung@gmail.com>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: dm-devel@redhat.com
+---
+ block/blk-core.c             |    1 -
+ drivers/md/dm.c              |    1 -
+ fs/bio.c                     |    2 ++
+ include/linux/blktrace_api.h |    1 +
+ include/trace/events/block.h |    5 ++---
+ kernel/trace/blktrace.c      |   26 +++++++++++++++++++++++---
+ 6 files changed, 28 insertions(+), 8 deletions(-)
+
+Index: work/block/blk-core.c
+===================================================================
+--- work.orig/block/blk-core.c
++++ work/block/blk-core.c
+@@ -37,7 +37,6 @@
+ 
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ 
+ DEFINE_IDA(blk_queue_ida);
+ 
+Index: work/drivers/md/dm.c
+===================================================================
+--- work.orig/drivers/md/dm.c
++++ work/drivers/md/dm.c
+@@ -647,7 +647,6 @@ static void dec_pending(struct dm_io *io
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+Index: work/fs/bio.c
+===================================================================
+--- work.orig/fs/bio.c
++++ work/fs/bio.c
+@@ -1443,6 +1443,8 @@ void bio_endio(struct bio *bio, int erro
+ 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+ 		error = -EIO;
+ 
++	trace_block_bio_complete(bio, error);
++
+ 	if (bio->bi_end_io)
+ 		bio->bi_end_io(bio, error);
+ }
+Index: work/include/trace/events/block.h
+===================================================================
+--- work.orig/include/trace/events/block.h
++++ work/include/trace/events/block.h
+@@ -206,7 +206,6 @@ TRACE_EVENT(block_bio_bounce,
+ 
+ /**
+  * block_bio_complete - completed all work on the block operation
+- * @q: queue holding the block operation
+  * @bio: block operation completed
+  * @error: io error value
+  *
+@@ -215,9 +214,9 @@ TRACE_EVENT(block_bio_bounce,
+  */
+ TRACE_EVENT(block_bio_complete,
+ 
+-	TP_PROTO(struct request_queue *q, struct bio *bio, int error),
++	TP_PROTO(struct bio *bio, int error),
+ 
+-	TP_ARGS(q, bio, error),
++	TP_ARGS(bio, error),
+ 
+ 	TP_STRUCT__entry(
+ 		__field( dev_t,		dev		)
+Index: work/kernel/trace/blktrace.c
+===================================================================
+--- work.orig/kernel/trace/blktrace.c
++++ work/kernel/trace/blktrace.c
+@@ -753,6 +753,12 @@ static void blk_add_trace_rq_complete(vo
+ 				      struct request_queue *q,
+ 				      struct request *rq)
+ {
++	struct blk_trace *bt = q->blk_trace;
++
++	/* if control ever passes through here, it's a request based driver */
++	if (unlikely(bt && !bt->rq_based))
++		bt->rq_based = true;
++
+ 	blk_add_trace_rq(q, rq, BLK_TA_COMPLETE);
+ }
+ 
+@@ -788,10 +794,24 @@ static void blk_add_trace_bio_bounce(voi
+ 	blk_add_trace_bio(q, bio, BLK_TA_BOUNCE, 0);
+ }
+ 
+-static void blk_add_trace_bio_complete(void *ignore,
+-				       struct request_queue *q, struct bio *bio,
+-				       int error)
++static void blk_add_trace_bio_complete(void *ignore, struct bio *bio, int error)
+ {
++	struct request_queue *q;
++	struct blk_trace *bt;
++
++	if (!bio->bi_bdev)
++		return;
++
++	q = bdev_get_queue(bio->bi_bdev);
++	bt = q->blk_trace;
++
++	/*
++	 * Request based drivers will generate both rq and bio completions.
++	 * Ignore bio ones.
++	 */
++	if (likely(!bt) || bt->rq_based)
++		return;
++
+ 	blk_add_trace_bio(q, bio, BLK_TA_COMPLETE, error);
+ }
+ 
+Index: work/include/linux/blktrace_api.h
+===================================================================
+--- work.orig/include/linux/blktrace_api.h
++++ work/include/linux/blktrace_api.h
+@@ -151,6 +151,7 @@ struct blk_user_trace_setup {
+ 
+ struct blk_trace {
+ 	int trace_state;
++	bool rq_based;
+ 	struct rchan *rchan;
+ 	unsigned long __percpu *sequence;
+ 	unsigned char __percpu *msg_data;
