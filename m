@@ -1,61 +1,41 @@
-From: Spelic <spelic@shiftmail.org>
-Subject: Re: DM / LVM hangs if snapshot present on kernel v3.0.3
-Date: Mon, 20 Feb 2012 16:09:40 +0100
-Message-ID: <4F426234.1020704@shiftmail.org>
-References: <4F405E1B.5030609@shiftmail.org>
-	<20120220135103.GB27388@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: Re: [PATCH 1/2] block: add partition resize function to blkpg ioctl
+Date: Mon, 20 Feb 2012 10:17:42 -0500
+Message-ID: <4F426416.7030507@ubuntu.com>
+References: <1329251991-22468-1-git-send-email-vgoyal@redhat.com> <1329251991-22468-2-git-send-email-vgoyal@redhat.com> <20120220144221.GC10342@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-reply-to: <20120220135103.GB27388@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, linux-lvm@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120220144221.GC10342@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: psusi@cfl.rr.com, maxim.patlasov@gmail.com, linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, kzak@redhat.com
 List-Id: dm-devel.ids
 
-On 02/20/12 14:51, Mike Snitzer wrote:
-> I've never seen this. Which distro are you using?
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Ubuntu 11.04  64-bit but with vanilla 3.0.3 kernel
+On 2/20/2012 9:42 AM, Vivek Goyal wrote:
+> On Tue, Feb 14, 2012 at 03:39:50PM -0500, Vivek Goyal wrote:
+>> Add a new operation code ( BLKPG_RESIZE_PARTITION ) to the BLKPG
+>> ioctl that allows altering the size of an existing partition,
+>> even if it is currently in use.
+> 
+> Hi Phillip,
+> 
+> Are you ok with the change?
 
-Ubuntu's lvm:
-# lvm version
-   LVM version:     2.02.66(2) (2010-05-20)
-   Library version: 1.02.48 (2010-05-20)
+Yes.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.17 (MingW32)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
 
-> The "Snapshot cow pairing for exception table handover failed" is the 
-> error path most commonly associated with the snapshot-merge feature. 
-> Are you using snapshot-merge for the root LV (e.g. lvconvert --merge 
-> ...)? Mike 
-
-Absolutely not, never merged a snapshot in my life, and also the root of 
-the host was *not* on LVM.
-
-Here is some more info:
-
-Host machine had 2 PV, 2 VG (each of 1 PV), only one LV had only one 
-snapshot, more specifically:
-
-PV1 (a MD raid) --> VG1 --> 5 x LVs used for virtual machines disks; of 
-these, only one LV had one snapshot. No other snapshots. None of these 
-volumes were mounted on the host. This is where the problem happened.
-PV2 (a MD raid) --> VG2 --> 1 x LV , I don't remember if this was 
-mounted on the host at that time or was a disk for a virtual machine, 
-but anyway was not the root filesystem of the host. No snapshots here.
-
-Root filesystem of the host was definitely *not* on LVM.
-
-Unfortunately the machine where it happened is a production machine and 
-it's too dangerous to try to reproduce it there; this weekend I tried to 
-reproduce it elsewhere but clearly it didn't happen. I had a stack trace 
-of the DM hang but I lost it, stupid me...
+iQEcBAEBAgAGBQJPQmQWAAoJEJrBOlT6nu75V8YH/0khEQy1sCiDmjqaVAqJGn3R
+xjS7eCU6ndgGj3CHE+j4AJCTJ6cdrcaheEF/QWd3f2GxI0kQ6bBiWzxMeEXaSA57
+VQOyKqoGalaWA78a3xFR1oax8ZwOAQi7LdyttdvzXUTKDXrO57cAAIHGQcLTPFiv
+a926d27kMulNQzXvjhBj/h8LAOeUVFIEbrGk5QxOw28gdStEv/RtMKeSvuq3e4qu
+/TxNT78K49HBaWuhTZJB4Mg7ttyBTQJrQr5c23oo9KLSUgd+3ZvaHF53vUsP7IMm
+Kbor7u648P0Xo2gaWGXPF5z4hmyhO08/1SNFKAKw0CSycpOlwjsbel/Ys57gIAY=
+=oTDA
+-----END PGP SIGNATURE-----
