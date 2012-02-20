@@ -1,179 +1,116 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re:
- Write same support]
-Date: Mon, 20 Feb 2012 13:46:24 -0500
-Message-ID: <20120220184623.GA29931@redhat.com>
-References: <1327969892-5090-1-git-send-email-martin.petersen@oracle.com>
- <20120216200202.GA27311@redhat.com>
- <20120216210301.GA27404@redhat.com>
- <yq139a55rhr.fsf@sermon.lab.mkp.net>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Benchmarking dm-crypt with different block size,
+ request number and scheduler
+Date: Mon, 20 Feb 2012 15:47:18 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1202201201330.10690@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="X1bOJ3K7DJ5YkBrT"
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <yq139a55rhr.fsf@sermon.lab.mkp.net>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, jaxboe@fusionio.com, dm-devel@redhat.com, michaelc@cs.wisc.edu
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
+Hi
 
---X1bOJ3K7DJ5YkBrT
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+As you asked to run benchmarks with more requests and bigger block size to 
+test if sorting inside dm-crypt is needed. Here are the results.
 
-On Mon, Feb 20 2012 at 12:44pm -0500,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+Conclusion: if I increase the number of requests to 1000000, the cfq 
+scheduler behaves nondeterministically, the same workload on the raw 
+device (without crypt) takes sometimes 15 seconds and sometimes 34 
+seconds. Cfq scheduler was likely not designed to run with such high 
+request count.
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> Mike> But testing with iSCSI, I get a NULL pointer _every_ time in the
-> Mike> iSCSI scatter-gather code,
-> 
-> I finally managed to get a WRITE SAME-capable iSCSI target set up.
-> 
-> Can you beam me your test case?
+Even with the number of requests increased to 1000000 and block size 
+increased to 4096, dm-crypt still benefits from sorting writes 
+(performance is 3 times better when sorting requests in dm-crypt).
 
-I've been using the thinp-test-suite, here:
-https://github.com/jthornber/thinp-test-suite
+The deadline scheduler behaves much more deterministically than cfq, 
+increasing the number of requests to 1000000 generally fixes the problems 
+and makes sorting in dm-crypt not needed. With 100000 requests and 4096 
+block size, sorting in dm-crypt still improves performance, but only a 
+little (17 seconds without sorting, 14 with sorting).
 
-After establishing a minimal config in config.rb, e.g.:
-    'hostname' =>
-    { :metadata_dev => '/dev/thin_iscsi/metadata',
-      :metadata_size => 2097152,
-      :data_dev => '/dev/thin_iscsi/data',
-      :data_size => 17825792
-    }
+Mikulas
 
-I run a single test:
-export THIN_TESTS=EXECUTE
-./run_tests -n /test_two_pools_can_create_thins/
 
-Anyway, looking at the code, the sg setup code is common for all SCSI,
-so I have no reason to believe that FC is different than iSCSI -- FC's
-sg code may just be much more forgiving?:
 
-sd_setup_write_same_cmnd -> sd_setup_write_same_cmnd -> scsi_setup_blk_pc_cmnd ->
- scsi_init_io -> scsi_init_sgtable -> blk_rq_map_sg
+Data:
 
-I'm not seeing any code that accounts for the possibility of a
-WRITE_SAME bio having bv_len=512 but bi_size=65536 in blk_rq_map_sg().
-I'm definitely seeing blk_rq_map_sg() take a WRITE SAME request and
-create a sg with multiple segments.  That in and of itself seems like a
-bug.  But I'm no scatter-gather expert!
+raw device: benchmark on raw device without crypt
+dm-crypt-without-sorting: dm crypt without request sorting.
+dm-crypt-offload-writes-to-thread: dm crypt with all write requests 
+	submitted to a thread. No sorting of requests is done.
+dm-crypt-retain-write-ordering: dm crypt with write requests being 
+	submitted in the same order they were received in.
+dm-crypt-sort-writes: dm crypt with write requests being sorted using 
+	red-black tree.
 
-I'm adding more debug printks to blk_rq_map_sg() to try to understand
-what is going on... will share more once I have it.
+cfq scheduler, blocksize 512, 128 requests:
+raw device: 0m15.934s
+dm-crypt-without-sorting: 3m57.734s
+dm-crypt-offload-writes-to-thread: 0m25.923s
+dm-crypt-retain-write-ordering: 0m21.940s
+dm-crypt-sort-writes: 0m20.812s
 
-But the iSCSI traces I got, with some debugging code that Mike Christie
-provided -- attached to this mail, showed that the sg was setup
-improperly (so I think) because there are multiple segments, e.g.:
+cfq scheduler, blocksize 512, 1000000 requests:
+raw device: 0m15.087s-0m34.446s (the result varies and seems to depend on 
+previous workload)
+dm-crypt-without-sorting: 0m49.316s
+dm-crypt-offload-writes-to-thread: 0m22.118s
+dm-crypt-retain-write-ordering: 0m21.939s
+dm-crypt-sort-writes: 0m21.451s
 
-iscsi prep [write cid 0 sc ffff880117ce5080 cdb 0x41 itt 0x15 len 512 sg count 8 bidi_len 0 cmdsn 883 win 128]
-0 sg ffff88011a471800 0 512
-1 sg ffff88011a471828 0 512
-2 sg ffff88011a471850 0 512
-3 sg ffff88011a471878 0 512
-4 sg ffff88011a4718a0 0 512
-5 sg ffff88011a4718c8 0 512
-6 sg ffff88011a4718f0 0 512
-7 sg ffff88011a471918 0 512
+cfq scheduler, blocksize 4096, 128 requests:
+raw device: 0m14.558s
+dm-crypt-without-sorting: 0m40.323s
+dm-crypt-offload-writes-to-thread: 0m15.267s
+dm-crypt-retain-write-ordering: 0m13.953s
+dm-crypt-sort-writes: 0m13.902s
 
-When the test is executed using your synchronous blkdev_issue_write_same
-interface each WRITE SAME is confined to an sg with a single segment,
-e.g.:
+cfq scheduler, blocksize 4096, 1000000 requests:
+raw device: 0m15.236s-0m23.367s (the result varies)
+dm-crypt-without-sorting: 0m45.478s
+dm-crypt-offload-writes-to-thread: 0m14.187s
+dm-crypt-retain-write-ordering: 0m14.013s
+dm-crypt-sort-writes: 0m13.954s
 
-iscsi prep [write cid 0 sc ffff880117ce1c80 cdb 0x41 itt 0x5e len 512 sg count 1 bidi_len 0 cmdsn 902 win 128]
-0 sg ffff880118d72e80 0 512
-iscsi prep [write cid 0 sc ffff880116fc0b80 cdb 0x41 itt 0x5f len 512 sg count 1 bidi_len 0 cmdsn 903 win 128]
-0 sg ffff88011a471940 0 512
-iscsi prep [write cid 0 sc ffff880117ce1c80 cdb 0x41 itt 0x60 len 512 sg count 1 bidi_len 0 cmdsn 904 win 128]
-0 sg ffff880118d72e80 0 512
 
-And here is the sg that ultimately caused the libiscsi_tcp code to NULL
-pointer (len is much too large, and it _seems_ like WRITE SAME has been
-merged on a WRITE cdb's sg):
+deadline scheduler, blocksize 512, 128 requests:
+raw device: 0m15.211s
+dm-crypt-without-sorting: 3m59.977s
+dm-crypt-offload-writes-to-thread: 0m14.819s
+dm-crypt-retain-write-ordering: 0m15.027s
+dm-crypt-sort-writes: 0m14.598s
 
-iscsi prep [write cid 0 sc ffff8800cfc953c0 cdb 0x2a itt 0x27 len 512000 sg count 20 bidi_len 0 cmdsn 1146 win 128]
-0 sg ffff88011a476040 0 4096
-1 sg ffff88011a476068 0 4096
-2 sg ffff88011a476090 0 4096
-3 sg ffff88011a4760b8 0 4096
-4 sg ffff88011a4760e0 0 4096
-5 sg ffff88011a476108 0 4096
-6 sg ffff88011a476130 0 4096
-7 sg ffff88011a476158 0 4096
-8 sg ffff88011a476180 0 4096
-9 sg ffff88011a4761a8 0 4096
-10 sg ffff88011a4761d0 0 4096
-11 sg ffff88011a4761f8 0 4096
-12 sg ffff88011a476220 0 4096
-13 sg ffff88011a476248 0 512
-14 sg ffff88011a476270 0 512
-15 sg ffff88011a476298 0 512
-16 sg ffff88011a4762c0 0 512
-17 sg ffff88011a4762e8 0 512
-18 sg ffff88011a476310 0 512
-19 sg ffff88011a476338 0 512
-Bad! offset 0 size 65536 copied 56832
+deadline scheduler, blocksize 512, 1000000 requests:
+raw device: 0m15.412s
+dm-crypt-without-sorting: 0m15.125s
+dm-crypt-offload-writes-to-thread: 0m14.877s
+dm-crypt-retain-write-ordering: 0m14.893s
+dm-crypt-sort-writes: 0m14.741s
 
---X1bOJ3K7DJ5YkBrT
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="cmd-sgl-check.patch"
+deadline scheduler, blocksize 4096, 128 requests:
+raw device: 0m14.143s
+dm-crypt-without-sorting: 0m22.124s
+dm-crypt-offload-writes-to-thread: 0m14.793s
+dm-crypt-retain-write-ordering: 0m13.917s
+dm-crypt-sort-writes: 0m13.943s
 
-diff --git a/drivers/scsi/libiscsi.c b/drivers/scsi/libiscsi.c
-index 9075cfa..50a1d79 100644
---- a/drivers/scsi/libiscsi.c
-+++ b/drivers/scsi/libiscsi.c
-@@ -362,7 +362,8 @@ static int iscsi_prep_scsi_cmd_pdu(struct iscsi_task *task)
- 	struct iscsi_cmd *hdr;
- 	unsigned hdrlength, cmd_len;
- 	itt_t itt;
--	int rc;
-+	int rc, i;
-+	struct scatterlist *sg;
- 
- 	rc = iscsi_check_tmf_restrictions(task, ISCSI_OP_SCSI_CMD);
- 	if (rc)
-@@ -479,15 +480,19 @@ static int iscsi_prep_scsi_cmd_pdu(struct iscsi_task *task)
- 	session->cmdsn++;
- 
- 	conn->scsicmd_pdus_cnt++;
--	ISCSI_DBG_SESSION(session, "iscsi prep [%s cid %d sc %p cdb 0x%x "
--			  "itt 0x%x len %d bidi_len %d cmdsn %d win %d]\n",
-+	printk(KERN_ERR "iscsi prep [%s cid %d sc %p cdb 0x%x "
-+			  "itt 0x%x len %d sg count %d bidi_len %d cmdsn %d win %d]\n",
- 			  scsi_bidi_cmnd(sc) ? "bidirectional" :
- 			  sc->sc_data_direction == DMA_TO_DEVICE ?
- 			  "write" : "read", conn->id, sc, sc->cmnd[0],
--			  task->itt, scsi_bufflen(sc),
-+			  task->itt, scsi_bufflen(sc), scsi_sg_count(sc),
- 			  scsi_bidi_cmnd(sc) ? scsi_in(sc)->length : 0,
- 			  session->cmdsn,
- 			  session->max_cmdsn - session->exp_cmdsn + 1);
-+
-+	scsi_for_each_sg(sc, sg, scsi_sg_count(sc), i)
-+		printk(KERN_ERR "%d sg %p %u %u\n", i, sg, sg->offset, sg->length);
-+
- 	return 0;
- }
- 
-diff --git a/drivers/scsi/libiscsi_tcp.c b/drivers/scsi/libiscsi_tcp.c
-index e0ea92c..240f2d2 100644
---- a/drivers/scsi/libiscsi_tcp.c
-+++ b/drivers/scsi/libiscsi_tcp.c
-@@ -95,6 +95,12 @@ static inline void
- iscsi_tcp_segment_init_sg(struct iscsi_segment *segment,
- 			  struct scatterlist *sg, unsigned int offset)
- {
-+	if (!sg) {
-+		printk(KERN_ERR "Bad! offset %u size %u copied %u\n",
-+			offset, segment->total_size, segment->total_copied);
-+		return;
-+	}
-+
- 	segment->sg = sg;
- 	segment->sg_offset = offset;
- 	segment->size = min(sg->length - offset,
-
---X1bOJ3K7DJ5YkBrT--
+deadline scheduler, blocksize 4096, 1000000 requests:
+raw device: 0m15.208s
+dm-crypt-without-sorting: 0m17.642s
+dm-crypt-offload-writes-to-thread: 0m14.308s
+dm-crypt-retain-write-ordering: 0m13.973s
+dm-crypt-sort-writes: 0m14.025s
