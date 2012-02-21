@@ -1,31 +1,43 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re: Write same support]
-Date: Tue, 21 Feb 2012 16:31:53 -0500
-Message-ID: <yq14nuj27qu.fsf@sermon.lab.mkp.net>
-References: <20120216210301.GA27404@redhat.com>
-	<yq139a55rhr.fsf@sermon.lab.mkp.net>
-	<20120220184623.GA29931@redhat.com>
-	<20120220234410.GC31853@redhat.com>
-	<yq1k43h2gm9.fsf@sermon.lab.mkp.net> <20120221031854.GA468@redhat.com>
-	<yq1pqd825zt.fsf@sermon.lab.mkp.net> <20120221065504.GB468@redhat.com>
-	<yq1linw1i6e.fsf@sermon.lab.mkp.net>
-	<20120221144145.GA4743@redhat.com> <20120221193312.GA6565@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re:
+ Write same support]
+Date: Tue, 21 Feb 2012 18:36:35 -0500
+Message-ID: <20120221233635.GB9079@redhat.com>
+References: <20120220184623.GA29931@redhat.com>
+ <20120220234410.GC31853@redhat.com>
+ <yq1k43h2gm9.fsf@sermon.lab.mkp.net>
+ <20120221031854.GA468@redhat.com>
+ <yq1pqd825zt.fsf@sermon.lab.mkp.net>
+ <20120221065504.GB468@redhat.com>
+ <yq1linw1i6e.fsf@sermon.lab.mkp.net>
+ <20120221144145.GA4743@redhat.com>
+ <20120221193312.GA6565@redhat.com>
+ <yq14nuj27qu.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20120221193312.GA6565@redhat.com> (Mike Snitzer's message of
-	"Tue, 21 Feb 2012 14:33:12 -0500")
+Content-Disposition: inline
+In-Reply-To: <yq14nuj27qu.fsf@sermon.lab.mkp.net>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, jaxboe@fusionio.com, dm-devel@redhat.com, michaelc@cs.wisc.edu, Vivek Goyal <vgoyal@redhat.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, jaxboe@fusionio.com, dm-devel@redhat.com, michaelc@cs.wisc.edu, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+On Tue, Feb 21 2012 at  4:31pm -0500,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
->> Yeah, it worked with the patch I provided in my previous mail too.
->> But ultimately the async stuff wasn't working for me due to merging.
+> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> 
+> >> Yeah, it worked with the patch I provided in my previous mail too.
+> >> But ultimately the async stuff wasn't working for me due to merging.
+> 
+> New writesame3 branch on kernel.org. Please give it a whirl...
 
-New writesame3 branch on kernel.org. Please give it a whirl...
+Looks good.  And it works great (with both your improved
+blkdev_issue_write_same interface and the dm_kcopyd_zero interface).
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Please feel free to add my Acked-by: Mike Snitzer <snitzer@redhat.com>
+to the entire set.
+
+(and thanks for working with me on chasing down and/or explaining the
+various issues I was seeing!)
