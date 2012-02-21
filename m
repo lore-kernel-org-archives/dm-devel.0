@@ -1,10 +1,9 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re:
  Write same support]
-Date: Tue, 21 Feb 2012 09:42:22 -0500
-Message-ID: <20120221144145.GA4743@redhat.com>
-References: <20120216200202.GA27311@redhat.com>
- <20120216210301.GA27404@redhat.com>
+Date: Tue, 21 Feb 2012 14:33:12 -0500
+Message-ID: <20120221193312.GA6565@redhat.com>
+References: <20120216210301.GA27404@redhat.com>
  <yq139a55rhr.fsf@sermon.lab.mkp.net>
  <20120220184623.GA29931@redhat.com>
  <20120220234410.GC31853@redhat.com>
@@ -13,56 +12,107 @@ References: <20120216200202.GA27311@redhat.com>
  <yq1pqd825zt.fsf@sermon.lab.mkp.net>
  <20120221065504.GB468@redhat.com>
  <yq1linw1i6e.fsf@sermon.lab.mkp.net>
+ <20120221144145.GA4743@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <yq1linw1i6e.fsf@sermon.lab.mkp.net>
+In-Reply-To: <20120221144145.GA4743@redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
 To: "Martin K. Petersen" <martin.petersen@oracle.com>
 Cc: linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, jaxboe@fusionio.com, dm-devel@redhat.com, michaelc@cs.wisc.edu, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Feb 21 2012 at  7:31am -0500,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+On Tue, Feb 21 2012 at  9:41am -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> On Tue, Feb 21 2012 at  7:31am -0500,
+> Martin K. Petersen <martin.petersen@oracle.com> wrote:
+
+> > PS. The good news is that your async stuff works when I set phys_segs to
+> > 1 in sd.
 > 
-> Mike> This patch fixed the issue for me (though I'm still missing why
-> Mike> bio->bi_phys_segments was 0 given blkdev_issue_write_same() sets
-> Mike> it):
-> 
-> Ok, I see what's going on. You have your own dm-specific make request
-> function. When cloning the original bio phys_segments isn't carried
-> over. And that's why we see 0 in sd.
+> Yeah, it worked with the patch I provided in my previous mail too.  But
+> ultimately the async stuff wasn't working for me due to merging.
 
-Ah, yes indeed.  I was just setting out to answer the why on it so
-you've saved me some time, thanks!
+(not related to async interface but...)
 
-> For discard this is not a problem because we hardwire things in sd.c
-> regardless of what was passed down. And besides you have special
-> handling for mapping discards in DM.
+After further testing (iSCSI from with a guest) it is clear that we
+still have a problem with REQ_WRITE_SAME bios being merged into WRITE
+requests (I added a debugging WARN_ON_ONCE to generate the following):
 
-sd allocating the page used for discard was what enabled DM to have
-discard support; otherwise cloning a discard required allocation of the
-page and it all got _really_ ugly.
+------------[ cut here ]------------
+WARNING: at block/blk-merge.c:476 blk_rq_merge_ok+0x4d/0xb4()
+Hardware name: KVM
+Modules linked in: dm_thin_pool dm_persistent_data dm_bufio libcrc32c dm_mod sunrpc iscsi_tcp libiscsi_tcp libiscsi scsi_transport_iscsi virtio_net virtio_balloon i2c_piix4 i2c_core virtio_blk virtio_pci virtio_ring virtio [last unloaded: dm_thin_pool]
+Pid: 5, comm: kworker/u:0 Not tainted 3.2.0-snitm+ #185
+Call Trace:
+ [<ffffffff81042efa>] warn_slowpath_common+0x85/0x9d
+ [<ffffffff81042f2c>] warn_slowpath_null+0x1a/0x1c
+ [<ffffffff811cd8bc>] blk_rq_merge_ok+0x4d/0xb4
+ [<ffffffff811c4213>] elv_rq_merge_ok+0x17/0x47
+ [<ffffffff811c4287>] elv_merge+0x44/0xc2
+ [<ffffffff811ca815>] blk_queue_bio+0xf2/0x2d5
+ [<ffffffff811c9ca2>] generic_make_request+0xa1/0xe2
+ [<ffffffff811c9dc2>] submit_bio+0xdf/0x119
+ [<ffffffff8113191d>] ? bio_alloc_bioset+0x4d/0xc2
+ [<ffffffff811ceee3>] blkdev_issue_write_same+0x203/0x26c
+ [<ffffffff8106511a>] ? local_clock+0x41/0x5a
+ [<ffffffffa00f5dbf>] do_worker+0x3b6/0x5f1 [dm_thin_pool]
+ [<ffffffff8107084e>] ? trace_hardirqs_off_caller+0x1f/0x9e
+ [<ffffffffa00f5a09>] ? process_shared_bio+0x36e/0x36e [dm_thin_pool]
+ [<ffffffffa00f5a09>] ? process_shared_bio+0x36e/0x36e [dm_thin_pool]
+ [<ffffffff8105b6d0>] process_one_work+0x213/0x37b
+ [<ffffffff8105b641>] ? process_one_work+0x184/0x37b
+ [<ffffffff8105bb6d>] worker_thread+0x138/0x21c
+ [<ffffffff8105ba35>] ? rescuer_thread+0x1fd/0x1fd
+ [<ffffffff8105f6b1>] kthread+0xa0/0xa8
+ [<ffffffff81073663>] ? trace_hardirqs_on_caller+0x12f/0x166
+ [<ffffffff81398384>] kernel_thread_helper+0x4/0x10
+ [<ffffffff81390534>] ? retint_restore_args+0x13/0x13
+ [<ffffffff8105f611>] ? __init_kthread_worker+0x5b/0x5b
+ [<ffffffff81398380>] ? gs_change+0x13/0x13
+---[ end trace 07b896d4bdef61b0 ]---
 
-> I was trying to avoid perpetuating Christoph's horrible hack (his words,
-> not mine). But maybe it's better to do it the same way as for discard so
-> we only have to have to deal with pure evil in one place.
+This patch fixes it for me, please feel free to add it to your series:
 
-Which hack are you referring to?  sd allocates the page used for
-discard (I had a hand in that work, along with tomo, and don't hold it
-to be too big a hack really).
+From: Mike Snitzer <snitzer@redhat.com>
+Date:   Tue Feb 21 13:55:42 2012 -0500
 
-But I'm not immediately seeing a clean way to do so for WRITE SAME
-because the user provided buffer would need to get down to sd somehow.
+    block: disallow certain bios from being merged into a request
+    
+    Not all WRITE bios are pure WRITEs (there may be other flags set,
+    e.g. REQ_WRITE_SAME).  Introduce bio_mergeable() and have
+    blk_rq_merge_ok() check that a given bio is mergeable.
+    
+    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 
-> I'll contemplate a bit...
-> 
-> 
-> PS. The good news is that your async stuff works when I set phys_segs to
-> 1 in sd.
-
-Yeah, it worked with the patch I provided in my previous mail too.  But
-ultimately the async stuff wasn't working for me due to merging.
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index 3f73823..81484d3 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -468,7 +468,7 @@ int blk_attempt_req_merge(struct request_queue *q, struct request *rq,
+ 
+ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
+ {
+-	if (!rq_mergeable(rq))
++	if (!rq_mergeable(rq) || !bio_mergeable(bio))
+ 		return false;
+ 
+ 	/* don't merge discard requests and secure discard requests */
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 5a505d7..7cf2d37 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -568,7 +568,10 @@ static inline void blk_clear_queue_full(struct request_queue *q, int sync)
+ #define rq_mergeable(rq)	\
+ 	(!((rq)->cmd_flags & RQ_NOMERGE_FLAGS) && (rq)->cmd_type == REQ_TYPE_FS)
+ 
+-
++#define BIO_NOMERGE_FLAGS	\
++	(REQ_DISCARD | REQ_WRITE_SAME)
++#define bio_mergeable(bio)	\
++	(!((bio)->bi_rw & BIO_NOMERGE_FLAGS))
+ 
+ /*
+  * q->prep_rq_fn return values
