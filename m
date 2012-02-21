@@ -1,50 +1,48 @@
-From: Spelic <spelic@shiftmail.org>
-Subject: Re: DM / LVM hangs if snapshot present on kernel v3.0.3
-Date: Tue, 21 Feb 2012 11:22:03 +0100
-Message-ID: <4F43704B.50903@shiftmail.org>
-References: <4F405E1B.5030609@shiftmail.org>
-	<20120220135103.GB27388@redhat.com> <4F426234.1020704@shiftmail.org>
-	<4F428012.6090302@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re: Write same support]
+Date: Tue, 21 Feb 2012 07:31:53 -0500
+Message-ID: <yq1linw1i6e.fsf@sermon.lab.mkp.net>
+References: <1327969892-5090-1-git-send-email-martin.petersen@oracle.com>
+	<20120216200202.GA27311@redhat.com>
+	<20120216210301.GA27404@redhat.com>
+	<yq139a55rhr.fsf@sermon.lab.mkp.net>
+	<20120220184623.GA29931@redhat.com>
+	<20120220234410.GC31853@redhat.com>
+	<yq1k43h2gm9.fsf@sermon.lab.mkp.net> <20120221031854.GA468@redhat.com>
+	<yq1pqd825zt.fsf@sermon.lab.mkp.net> <20120221065504.GB468@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-reply-to: <4F428012.6090302@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-lvm@redhat.com
+Content-Type: text/plain
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20120221065504.GB468@redhat.com> (Mike Snitzer's message of
+	"Tue, 21 Feb 2012 01:55:04 -0500")
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, jaxboe@fusionio.com, dm-devel@redhat.com, michaelc@cs.wisc.edu, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/20/12 18:17, Zdenek Kabelac wrote:
-> Dne 20.2.2012 16:09, Spelic napsal(a):
->> On 02/20/12 14:51, Mike Snitzer wrote:
->>> I've never seen this. Which distro are you using?
->> Ubuntu 11.04  64-bit but with vanilla 3.0.3 kernel
->>
->> Ubuntu's lvm:
->> # lvm version
->>    LVM version:     2.02.66(2) (2010-05-20)
->>    Library version: 1.02.48 (2010-05-20)
->>
-> So I'd guess you might be a 'victim' of Debian home-brew udev rules for lvm2,
-> which were unfortunately not consulted with upstream (nor udev, nor lvm).
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-Indeed I have had a few bad experiences with Ubuntu's udev rules, but 
-never like this...
-I don't think a wrong udev rule can hangup the whole machine with such 
-symptoms, you really think so?
+Mike> This patch fixed the issue for me (though I'm still missing why
+Mike> bio->bi_phys_segments was 0 given blkdev_issue_write_same() sets
+Mike> it):
 
-- lvs and/or "lvchange --refresh ..." processes hanging forever in 
-kernel code (and AFAIR it was in DM region, that's the /proc/pid/stack 
-trace which I unfortunately lost)
+Ok, I see what's going on. You have your own dm-specific make request
+function. When cloning the original bio phys_segments isn't carried
+over. And that's why we see 0 in sd.
 
-- "sync" also cannot complete, so I can only do force reboot without flush
+For discard this is not a problem because we hardwire things in sd.c
+regardless of what was passed down. And besides you have special
+handling for mapping discards in DM.
+
+I was trying to avoid perpetuating Christoph's horrible hack (his words,
+not mine). But maybe it's better to do it the same way as for discard so
+we only have to have to deal with pure evil in one place.
+
+I'll contemplate a bit...
+
+
+PS. The good news is that your async stuff works when I set phys_segs to
+1 in sd.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
