@@ -1,14 +1,12 @@
-From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH] [dm-thin] experimental erase-log patch.
-Date: Wed, 22 Feb 2012 14:25:50 +0000
-Message-ID: <1329920750-29291-1-git-send-email-ejt@redhat.com>
-References: <20120222141442.GA28145@ubuntu>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: Better number validation in sscanf
+Date: Wed, 22 Feb 2012 10:53:40 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1202221052450.19488@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120222141442.GA28145@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,233 +16,429 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Joe Thornber <ejt@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is just to let me get an idea of the costs involved with
-implementing an erase log.
----
- drivers/md/dm-thin-metadata.c |   56 +++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-thin-metadata.h |    6 ++++
- drivers/md/dm-thin.c          |   38 ++++++++++++++++++++-------
- 3 files changed, 90 insertions(+), 10 deletions(-)
+dm: Better number validation in sscanf
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index f3ba61d..c392068 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -124,6 +124,11 @@ struct thin_disk_superblock {
- 	__le32 compat_flags;
- 	__le32 compat_ro_flags;
- 	__le32 incompat_flags;
-+
-+	/*
-+	 * Hold's blocks that will need to be zeroed as part of recovery from crash.
-+	 */
-+	__le64 erase_root;
- } __packed;
+Device mapper uses sscanf to convert arguments to numbers. The problem is that
+sscanf ignores additional unmatched characters in the scanned string.
+
+For example, this `if (sscanf(string, "%d", &number) == 1)' will match a number,
+but also it will match number with some garbage appended, like "123abc".
+
+sscanf is used this way at a lot of places in the device mapper and
+as a result, device mapper accepts garbage after some numbers, for example
+the command `dmsetup create vg1-new --table "0 16384 linear 254:1bla 34816bla"'
+will pass without an error.
+
+This patch fixes all sscanf uses in device mapper. The patch appends "%c" with
+a pointer to a dummy character variable to every sscanf statement.
+
+The construct `if (sscanf(string, "%d%c", &number, &dummy) == 1)' succeeds
+only if string is a null-terminated number (optinally preceeded by some
+whitespace characters). If there is some character appended after the number,
+sscanf matches "%c", writes the character to the dummy variable and returns 2.
+We check the return value for 1, consequently we reject numbers with some
+garbage appended.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-crypt.c        |    8 +++++---
+ drivers/md/dm-delay.c        |    9 +++++----
+ drivers/md/dm-flakey.c       |    3 ++-
+ drivers/md/dm-ioctl.c        |    5 +++--
+ drivers/md/dm-linear.c       |    3 ++-
+ drivers/md/dm-log.c          |    3 ++-
+ drivers/md/dm-mpath.c        |    6 ++++--
+ drivers/md/dm-queue-length.c |    3 ++-
+ drivers/md/dm-raid1.c        |   12 ++++++++----
+ drivers/md/dm-round-robin.c  |    3 ++-
+ drivers/md/dm-service-time.c |    5 +++--
+ drivers/md/dm-stripe.c       |    3 ++-
+ drivers/md/dm-table.c        |    6 ++++--
+ 13 files changed, 44 insertions(+), 25 deletions(-)
+
+Index: linux-3.2.7-fast/drivers/md/dm-crypt.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-crypt.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-crypt.c	2012-02-22 16:33:39.000000000 +0100
+@@ -1413,6 +1413,7 @@ static int crypt_ctr_cipher(struct dm_ta
+ 	char *tmp, *cipher, *chainmode, *ivmode, *ivopts, *keycount;
+ 	char *cipher_api = NULL;
+ 	int cpu, ret = -EINVAL;
++	char dummy;
  
- struct disk_device_details {
-@@ -170,11 +175,17 @@ struct dm_pool_metadata {
- 	 */
- 	struct dm_btree_info details_info;
+ 	/* Convert to crypto api definition? */
+ 	if (strchr(cipher_in, '(')) {
+@@ -1434,7 +1435,7 @@ static int crypt_ctr_cipher(struct dm_ta
  
-+	/*
-+	 * Blocks that need erasing on recovery.
-+	 */
-+	struct dm_btree_info erase_info;
-+
- 	struct rw_semaphore root_lock;
- 	uint32_t time;
- 	int need_commit;
- 	dm_block_t root;
- 	dm_block_t details_root;
-+	dm_block_t erase_root;
- 	struct list_head thin_devices;
- 	uint64_t trans_id;
- 	unsigned long flags;
-@@ -465,6 +476,14 @@ static int init_pmd(struct dm_pool_metadata *pmd,
- 	pmd->details_info.value_type.dec = NULL;
- 	pmd->details_info.value_type.equal = NULL;
+ 	if (!keycount)
+ 		cc->tfms_count = 1;
+-	else if (sscanf(keycount, "%u", &cc->tfms_count) != 1 ||
++	else if (sscanf(keycount, "%u%c", &cc->tfms_count, &dummy) != 1 ||
+ 		 !is_power_of_2(cc->tfms_count)) {
+ 		ti->error = "Bad cipher key count specification";
+ 		return -EINVAL;
+@@ -1579,6 +1580,7 @@ static int crypt_ctr(struct dm_target *t
+ 	int ret;
+ 	struct dm_arg_set as;
+ 	const char *opt_string;
++	char dummy;
  
-+	pmd->erase_info.tm = tm;
-+	pmd->erase_info.levels = 1;
-+	pmd->erase_info.value_type.context = NULL;
-+	pmd->erase_info.value_type.size = sizeof(__le64);
-+	pmd->erase_info.value_type.inc = NULL;
-+	pmd->erase_info.value_type.dec = NULL;
-+	pmd->erase_info.value_type.equal = NULL;
-+
- 	pmd->root = 0;
+ 	static struct dm_arg _args[] = {
+ 		{0, 1, "Invalid number of feature args"},
+@@ -1636,7 +1638,7 @@ static int crypt_ctr(struct dm_target *t
+ 	}
  
- 	init_rwsem(&pmd->root_lock);
-@@ -735,6 +754,12 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
+ 	ret = -EINVAL;
+-	if (sscanf(argv[2], "%llu", &tmpll) != 1) {
++	if (sscanf(argv[2], "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid iv_offset sector";
+ 		goto bad;
+ 	}
+@@ -1647,7 +1649,7 @@ static int crypt_ctr(struct dm_target *t
  		goto bad;
  	}
  
-+	r = dm_btree_empty(&pmd->erase_info, &pmd->erase_root);
-+	if (r < 0) {
-+		DMERR("couldn't create erase journal");
-+		goto bad;
-+	}
-+
- 	pmd->flags = 0;
- 	pmd->need_commit = 1;
- 	r = dm_pool_commit_metadata(pmd);
-@@ -1332,6 +1357,37 @@ int dm_pool_alloc_data_block(struct dm_pool_metadata *pmd, dm_block_t *result)
- 	return r;
- }
- 
-+int dm_pool_mark_erase(struct dm_pool_metadata *pmd, dm_block_t b)
-+{
-+	int r;
-+	uint64_t key = b;
-+	__le64 value = cpu_to_le64(pmd->time);
-+
-+	down_write(&pmd->root_lock);
-+	r = dm_btree_insert(&pmd->erase_info, pmd->erase_root,
-+			    &key, &value, &pmd->erase_root);
-+	if (!r)
-+		pmd->need_commit = 1;
-+	up_write(&pmd->root_lock);
-+
-+	return r;
-+}
-+
-+int dm_pool_clear_erase(struct dm_pool_metadata *pmd, dm_block_t b)
-+{
-+	int r;
-+	uint64_t key = b;
-+
-+	down_write(&pmd->root_lock);
-+	r = dm_btree_remove(&pmd->erase_info, pmd->erase_root,
-+			    &key, &pmd->erase_root);
-+	if (!r)
-+		pmd->need_commit = 1;
-+	up_write(&pmd->root_lock);
-+
-+	return r;
-+}
-+
- int dm_pool_commit_metadata(struct dm_pool_metadata *pmd)
+-	if (sscanf(argv[4], "%llu", &tmpll) != 1) {
++	if (sscanf(argv[4], "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+ 	}
+Index: linux-3.2.7-fast/drivers/md/dm-delay.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-delay.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-delay.c	2012-02-22 16:33:39.000000000 +0100
+@@ -131,6 +131,7 @@ static int delay_ctr(struct dm_target *t
  {
- 	int r;
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index cfc7d0b..42a4268 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -126,6 +126,12 @@ int dm_thin_insert_block(struct dm_thin_device *td, dm_block_t block,
- int dm_thin_remove_block(struct dm_thin_device *td, dm_block_t block);
+ 	struct delay_c *dc;
+ 	unsigned long long tmpll;
++	char dummy;
  
- /*
-+ * Erase log
-+ */
-+int dm_pool_mark_erase(struct dm_pool_metadata *pmd, dm_block_t b);
-+int dm_pool_clear_erase(struct dm_pool_metadata *pmd, dm_block_t b);
-+
-+/*
-  * Queries.
-  */
- int dm_thin_get_highest_mapped_block(struct dm_thin_device *td,
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 0da0db2..7536db1 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -539,6 +539,7 @@ struct pool {
- 	struct bio_list deferred_flush_bios;
- 	struct list_head prepared_mappings;
- 	struct list_head prepared_discards;
-+	struct list_head copy_jobs;
+ 	if (argc != 3 && argc != 6) {
+ 		ti->error = "requires exactly 3 or 6 arguments";
+@@ -145,13 +146,13 @@ static int delay_ctr(struct dm_target *t
  
- 	struct bio_list retry_on_resume_list;
+ 	dc->reads = dc->writes = 0;
  
-@@ -809,14 +810,6 @@ static void overwrite_endio(struct bio *bio, int err)
- /*----------------------------------------------------------------*/
+-	if (sscanf(argv[1], "%llu", &tmpll) != 1) {
++	if (sscanf(argv[1], "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+ 	}
+ 	dc->start_read = tmpll;
  
- /*
-- * Workqueue.
-- */
--
--/*
-- * Prepared mapping jobs.
-- */
--
--/*
-  * This sends the bios in the cell back to the deferred_bios list.
-  */
- static void cell_defer(struct thin_c *tc, struct cell *cell,
-@@ -878,6 +871,13 @@ static void process_prepared_mapping(struct new_mapping *m)
- 		return;
+-	if (sscanf(argv[2], "%u", &dc->read_delay) != 1) {
++	if (sscanf(argv[2], "%u%c", &dc->read_delay, &dummy) != 1) {
+ 		ti->error = "Invalid delay";
+ 		goto bad;
+ 	}
+@@ -166,13 +167,13 @@ static int delay_ctr(struct dm_target *t
+ 	if (argc == 3)
+ 		goto out;
+ 
+-	if (sscanf(argv[4], "%llu", &tmpll) != 1) {
++	if (sscanf(argv[4], "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid write device sector";
+ 		goto bad_dev_read;
+ 	}
+ 	dc->start_write = tmpll;
+ 
+-	if (sscanf(argv[5], "%u", &dc->write_delay) != 1) {
++	if (sscanf(argv[5], "%u%c", &dc->write_delay, &dummy) != 1) {
+ 		ti->error = "Invalid write delay";
+ 		goto bad_dev_read;
+ 	}
+Index: linux-3.2.7-fast/drivers/md/dm-flakey.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-flakey.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-flakey.c	2012-02-22 16:33:39.000000000 +0100
+@@ -160,6 +160,7 @@ static int flakey_ctr(struct dm_target *
+ 	unsigned long long tmpll;
+ 	struct dm_arg_set as;
+ 	const char *devname;
++	char dummy;
+ 
+ 	as.argc = argc;
+ 	as.argv = argv;
+@@ -178,7 +179,7 @@ static int flakey_ctr(struct dm_target *
+ 
+ 	devname = dm_shift_arg(&as);
+ 
+-	if (sscanf(dm_shift_arg(&as), "%llu", &tmpll) != 1) {
++	if (sscanf(dm_shift_arg(&as), "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+ 	}
+Index: linux-3.2.7-fast/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-ioctl.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-ioctl.c	2012-02-22 16:33:39.000000000 +0100
+@@ -880,6 +880,7 @@ static int dev_set_geometry(struct dm_io
+ 	struct hd_geometry geometry;
+ 	unsigned long indata[4];
+ 	char *geostr = (char *) param + param->data_start;
++	char dummy;
+ 
+ 	md = find_device(param);
+ 	if (!md)
+@@ -891,8 +892,8 @@ static int dev_set_geometry(struct dm_io
+ 		goto out;
  	}
  
-+	r = dm_pool_clear_erase(tc->pool->pmd, m->data_block);
-+	if (r) {
-+		DMERR("dm_pool_clear_erase() failed");
-+		cell_error(m->cell);
-+		return;
-+	}
-+
+-	x = sscanf(geostr, "%lu %lu %lu %lu", indata,
+-		   indata + 1, indata + 2, indata + 3);
++	x = sscanf(geostr, "%lu %lu %lu %lu%c", indata,
++		   indata + 1, indata + 2, indata + 3, &dummy);
+ 
+ 	if (x != 4) {
+ 		DMWARN("Unable to interpret geometry settings.");
+Index: linux-3.2.7-fast/drivers/md/dm-linear.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-linear.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-linear.c	2012-02-22 16:33:39.000000000 +0100
+@@ -29,6 +29,7 @@ static int linear_ctr(struct dm_target *
+ {
+ 	struct linear_c *lc;
+ 	unsigned long long tmp;
++	char dummy;
+ 
+ 	if (argc != 2) {
+ 		ti->error = "Invalid argument count";
+@@ -41,7 +42,7 @@ static int linear_ctr(struct dm_target *
+ 		return -ENOMEM;
+ 	}
+ 
+-	if (sscanf(argv[1], "%llu", &tmp) != 1) {
++	if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1) {
+ 		ti->error = "dm-linear: Invalid device sector";
+ 		goto bad;
+ 	}
+Index: linux-3.2.7-fast/drivers/md/dm-log.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-log.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-log.c	2012-02-22 16:33:39.000000000 +0100
+@@ -369,6 +369,7 @@ static int create_log_context(struct dm_
+ 	unsigned int region_count;
+ 	size_t bitset_size, buf_size;
+ 	int r;
++	char dummy;
+ 
+ 	if (argc < 1 || argc > 2) {
+ 		DMWARN("wrong number of arguments to dirty region log");
+@@ -387,7 +388,7 @@ static int create_log_context(struct dm_
+ 		}
+ 	}
+ 
+-	if (sscanf(argv[0], "%u", &region_size) != 1 ||
++	if (sscanf(argv[0], "%u%c", &region_size, &dummy) != 1 ||
+ 	    !_check_region_size(ti, region_size)) {
+ 		DMWARN("invalid region size %s", argv[0]);
+ 		return -EINVAL;
+Index: linux-3.2.7-fast/drivers/md/dm-mpath.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-mpath.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-mpath.c	2012-02-22 16:33:39.000000000 +0100
+@@ -1054,8 +1054,9 @@ static int switch_pg_num(struct multipat
+ 	struct priority_group *pg;
+ 	unsigned pgnum;
+ 	unsigned long flags;
++	char dummy;
+ 
+-	if (!pgstr || (sscanf(pgstr, "%u", &pgnum) != 1) || !pgnum ||
++	if (!pgstr || (sscanf(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
+ 	    (pgnum > m->nr_priority_groups)) {
+ 		DMWARN("invalid PG number supplied to switch_pg_num");
+ 		return -EINVAL;
+@@ -1085,8 +1086,9 @@ static int bypass_pg_num(struct multipat
+ {
+ 	struct priority_group *pg;
+ 	unsigned pgnum;
++	char dummy;
+ 
+-	if (!pgstr || (sscanf(pgstr, "%u", &pgnum) != 1) || !pgnum ||
++	if (!pgstr || (sscanf(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
+ 	    (pgnum > m->nr_priority_groups)) {
+ 		DMWARN("invalid PG number supplied to bypass_pg");
+ 		return -EINVAL;
+Index: linux-3.2.7-fast/drivers/md/dm-queue-length.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-queue-length.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-queue-length.c	2012-02-22 16:33:39.000000000 +0100
+@@ -112,6 +112,7 @@ static int ql_add_path(struct path_selec
+ 	struct selector *s = ps->context;
+ 	struct path_info *pi;
+ 	unsigned repeat_count = QL_MIN_IO;
++	char dummy;
+ 
  	/*
- 	 * Release any bios held while the block was being provisioned.
- 	 * If we are processing a write bio that completely covers the block,
-@@ -996,6 +996,13 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	if (!ds_add_work(&pool->shared_read_ds, &m->list))
- 		m->quiesced = 1;
+ 	 * Arguments: [<repeat_count>]
+@@ -123,7 +124,7 @@ static int ql_add_path(struct path_selec
+ 		return -EINVAL;
+ 	}
  
-+	r = dm_pool_mark_erase(pool->pmd, data_dest);
-+	if (r) {
-+		mempool_free(m, pool->mapping_pool);
-+		DMERR("dm_kcopyd_copy() failed");
-+		cell_error(cell);
-+	}
-+
+-	if ((argc == 1) && (sscanf(argv[0], "%u", &repeat_count) != 1)) {
++	if ((argc == 1) && (sscanf(argv[0], "%u%c", &repeat_count, &dummy) != 1)) {
+ 		*error = "queue-length ps: invalid repeat count";
+ 		return -EINVAL;
+ 	}
+Index: linux-3.2.7-fast/drivers/md/dm-raid1.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-raid1.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-raid1.c	2012-02-22 16:33:39.000000000 +0100
+@@ -927,8 +927,9 @@ static int get_mirror(struct mirror_set 
+ 		      unsigned int mirror, char **argv)
+ {
+ 	unsigned long long offset;
++	char dummy;
+ 
+-	if (sscanf(argv[1], "%llu", &offset) != 1) {
++	if (sscanf(argv[1], "%llu%c", &offset, &dummy) != 1) {
+ 		ti->error = "Invalid offset";
+ 		return -EINVAL;
+ 	}
+@@ -956,13 +957,14 @@ static struct dm_dirty_log *create_dirty
+ {
+ 	unsigned param_count;
+ 	struct dm_dirty_log *dl;
++	char dummy;
+ 
+ 	if (argc < 2) {
+ 		ti->error = "Insufficient mirror log arguments";
+ 		return NULL;
+ 	}
+ 
+-	if (sscanf(argv[1], "%u", &param_count) != 1) {
++	if (sscanf(argv[1], "%u%c", &param_count, &dummy) != 1) {
+ 		ti->error = "Invalid mirror log argument count";
+ 		return NULL;
+ 	}
+@@ -989,13 +991,14 @@ static int parse_features(struct mirror_
+ {
+ 	unsigned num_features;
+ 	struct dm_target *ti = ms->ti;
++	char dummy;
+ 
+ 	*args_used = 0;
+ 
+ 	if (!argc)
+ 		return 0;
+ 
+-	if (sscanf(argv[0], "%u", &num_features) != 1) {
++	if (sscanf(argv[0], "%u%c", &num_features, &dummy) != 1) {
+ 		ti->error = "Invalid number of features";
+ 		return -EINVAL;
+ 	}
+@@ -1039,6 +1042,7 @@ static int mirror_ctr(struct dm_target *
+ 	unsigned int nr_mirrors, m, args_used;
+ 	struct mirror_set *ms;
+ 	struct dm_dirty_log *dl;
++	char dummy;
+ 
+ 	dl = create_dirty_log(ti, argc, argv, &args_used);
+ 	if (!dl)
+@@ -1047,7 +1051,7 @@ static int mirror_ctr(struct dm_target *
+ 	argv += args_used;
+ 	argc -= args_used;
+ 
+-	if (!argc || sscanf(argv[0], "%u", &nr_mirrors) != 1 ||
++	if (!argc || sscanf(argv[0], "%u%c", &nr_mirrors, &dummy) != 1 ||
+ 	    nr_mirrors < 2 || nr_mirrors > DM_KCOPYD_MAX_REGIONS + 1) {
+ 		ti->error = "Invalid number of mirrors";
+ 		dm_dirty_log_destroy(dl);
+Index: linux-3.2.7-fast/drivers/md/dm-round-robin.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-round-robin.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-round-robin.c	2012-02-22 16:33:39.000000000 +0100
+@@ -114,6 +114,7 @@ static int rr_add_path(struct path_selec
+ 	struct selector *s = (struct selector *) ps->context;
+ 	struct path_info *pi;
+ 	unsigned repeat_count = RR_MIN_IO;
++	char dummy;
+ 
+ 	if (argc > 1) {
+ 		*error = "round-robin ps: incorrect number of arguments";
+@@ -121,7 +122,7 @@ static int rr_add_path(struct path_selec
+ 	}
+ 
+ 	/* First path argument is number of I/Os before switching path */
+-	if ((argc == 1) && (sscanf(argv[0], "%u", &repeat_count) != 1)) {
++	if ((argc == 1) && (sscanf(argv[0], "%u%c", &repeat_count, &dummy) != 1)) {
+ 		*error = "round-robin ps: invalid repeat count";
+ 		return -EINVAL;
+ 	}
+Index: linux-3.2.7-fast/drivers/md/dm-service-time.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-service-time.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-service-time.c	2012-02-22 16:33:39.000000000 +0100
+@@ -110,6 +110,7 @@ static int st_add_path(struct path_selec
+ 	struct path_info *pi;
+ 	unsigned repeat_count = ST_MIN_IO;
+ 	unsigned relative_throughput = 1;
++	char dummy;
+ 
  	/*
- 	 * IO to pool_dev remaps to the pool target's data_dev.
- 	 *
-@@ -1007,8 +1014,15 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 		h->overwrite_mapping = m;
- 		m->bio = bio;
- 		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
--		remap_and_issue(tc, bio, data_dest);
-+		remap(tc, bio, data_dest);
-+		bio_list_add(&pool->deferred_flush_bios, bio);
-+
- 	} else {
-+		/*
-+		 * FIXME: this shouldn't be done until after the commit of
-+		 * the erase state change.  No point doing it now, for this
-+		 * little experiment.  Just use small block sizes.
-+		 */
- 		struct dm_io_region from, to;
+ 	 * Arguments: [<repeat_count> [<relative_throughput>]]
+@@ -128,13 +129,13 @@ static int st_add_path(struct path_selec
+ 		return -EINVAL;
+ 	}
  
- 		from.bdev = origin->bdev;
-@@ -1062,6 +1076,8 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 	m->err = 0;
- 	m->bio = NULL;
+-	if (argc && (sscanf(argv[0], "%u", &repeat_count) != 1)) {
++	if (argc && (sscanf(argv[0], "%u%c", &repeat_count, &dummy) != 1)) {
+ 		*error = "service-time ps: invalid repeat count";
+ 		return -EINVAL;
+ 	}
  
-+	dm_pool_mark_erase(pool->pmd, data_block);
-+
- 	/*
- 	 * If the whole block of data is being overwritten or we are not
- 	 * zeroing pre-existing data, we can issue the bio immediately.
-@@ -1075,7 +1091,8 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 		h->overwrite_mapping = m;
- 		m->bio = bio;
- 		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
--		remap_and_issue(tc, bio, data_block);
-+		remap(tc, bio, data_block);
-+		bio_list_add(&pool->deferred_flush_bios, bio);
+ 	if ((argc == 2) &&
+-	    (sscanf(argv[1], "%u", &relative_throughput) != 1 ||
++	    (sscanf(argv[1], "%u%c", &relative_throughput, &dummy) != 1 ||
+ 	     relative_throughput > ST_MAX_RELATIVE_THROUGHPUT)) {
+ 		*error = "service-time ps: invalid relative_throughput value";
+ 		return -EINVAL;
+Index: linux-3.2.7-fast/drivers/md/dm-stripe.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-stripe.c	2012-02-22 16:31:43.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-stripe.c	2012-02-22 16:33:39.000000000 +0100
+@@ -75,8 +75,9 @@ static int get_stripe(struct dm_target *
+ 		      unsigned int stripe, char **argv)
+ {
+ 	unsigned long long start;
++	char dummy;
  
- 	} else {
- 		int r;
-@@ -1087,6 +1104,7 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+-	if (sscanf(argv[1], "%llu", &start) != 1)
++	if (sscanf(argv[1], "%llu%c", &start, &dummy) != 1)
+ 		return -EINVAL;
  
- 		r = dm_kcopyd_zero(pool->copier, 1, &to, 0, copy_complete, m);
- 		if (r < 0) {
-+			dm_pool_clear_erase(pool->pmd, data_block);
- 			mempool_free(m, pool->mapping_pool);
- 			DMERR("dm_kcopyd_zero() failed");
- 			cell_error(cell);
--- 
-1.7.5.4
+ 	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
+Index: linux-3.2.7-fast/drivers/md/dm-table.c
+===================================================================
+--- linux-3.2.7-fast.orig/drivers/md/dm-table.c	2012-02-22 16:31:44.000000000 +0100
++++ linux-3.2.7-fast/drivers/md/dm-table.c	2012-02-22 16:33:39.000000000 +0100
+@@ -464,10 +464,11 @@ int dm_get_device(struct dm_target *ti, 
+ 	struct dm_dev_internal *dd;
+ 	unsigned int major, minor;
+ 	struct dm_table *t = ti->table;
++	char dummy;
+ 
+ 	BUG_ON(!t);
+ 
+-	if (sscanf(path, "%u:%u", &major, &minor) == 2) {
++	if (sscanf(path, "%u:%u%c", &major, &minor, &dummy) == 2) {
+ 		/* Extract the major/minor numbers */
+ 		dev = MKDEV(major, minor);
+ 		if (MAJOR(dev) != major || MINOR(dev) != minor)
+@@ -842,9 +843,10 @@ static int validate_next_arg(struct dm_a
+ 			     unsigned *value, char **error, unsigned grouped)
+ {
+ 	const char *arg_str = dm_shift_arg(arg_set);
++	char dummy;
+ 
+ 	if (!arg_str ||
+-	    (sscanf(arg_str, "%u", value) != 1) ||
++	    (sscanf(arg_str, "%u%c", value, &dummy) != 1) ||
+ 	    (*value < arg->min) ||
+ 	    (*value > arg->max) ||
+ 	    (grouped && arg_set->argc < *value)) {
