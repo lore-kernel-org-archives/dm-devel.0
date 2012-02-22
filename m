@@ -1,88 +1,36 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: [NOTES] thinp zeroing
-Date: Wed, 22 Feb 2012 19:04:13 +0100
-Message-ID: <4F452E1D.2050202@redhat.com>
-References: <20120222141442.GA28145@ubuntu> <4F45180C.8030801@shiftmail.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH 1/2]  multipath-tools: fix the bug while processing vpd 0x83
+ designation descriptors
+Date: Wed, 22 Feb 2012 18:09:00 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B01821B@SACEXCMBX02-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F45180C.8030801@shiftmail.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Dne 22.2.2012 17:30, Spelic napsal(a):
-> On 02/22/12 15:14, Joe Thornber wrote:
->> * Requirements
->>
->>    There are two distinct requirements for zeroing applicable to the
->>    thin-provisioning target:
->>
->>    - Avoid data leaks (DATA_LEAK)
->>
->> * Implementing DATA_LEAK
->>
->>
->> * Implementing ERASE
->>
->> ** Erase on deallocation
->>
->>
->> ** Erasing from userland.
->>
->> ** Crash recovery
->>
->> ** Discards
->>
->>
-> 
-> Hello
-> thanks for all your hard work regarding thinp
-> 
-> I was thinking: why don't you implement a bitmap that takes care of emulating
-> the discard functionality?
-> 
-> This would take care of all your issues above, and also be great for a lot of
-> use cases even outside thinp (*).
-> 
-> Every read would first hit the bitmap; if the bitmap says that the region has
-> been discarded, thinp would return zeroes to the requestor.
-> 
-> When a discard comes, you first set the bits in the discard-emulation-bitmap,
-> and then also pass the discard to layers below. Passing the discard below has
-> no user-visible effects (because discard is already implemented in thinp)
-> however it is still advantageous to pass it to lower layers because there
-> might be SSDs below thinp which can benefit from the discard.
-> 
-> I suggest a bitmap of 4kbytes / bit, and then if a discard comes that is not
-> 4K aligned (that would be a mistake of the above layers, at least a
-> "performance" mistake), you set the bitmaps only for the bits which are
-> completely covered by the discard, and then you are left with at most two
-> misaligned edges one at the beginning and one at the end of the discard
-> region, and for those you will need to write zeroes to the layers below. So in
-> the worst case you need to set a few bits and then perform two small writes of
-> zeroes, but in most cases you just set a few bits.
-> 
-> (*) remember that most MD Raid levels do not pass discards below, so we -raid
-> users- cannot really see zeroes where discard has been triggered. That's a
-> problem when we want to backup a virtual machine disk image (DM volume) from
-> the outside: non-zeroes don't compress well; it's like we backup deleted files
-> everytime.
-> 
+This patch fixes the bug while processing the vpd 0x83 designation descriptors.
+Removing the buggy check(> sizeof(buf))while loping the descriptors. Sizeof(buf) will 
+always return 8 (in 64 bit machine). Descriptor length can be more than 8 bytes in 
+some cases. This was causing problems while configuring my storage with alua.
 
-For backups there will be much better solution which will be able to get list
-of provisioned blocks for a device (in case of snapshot - diffs).
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
+---
+--- multipath-tools/libmultipath/prioritizers/alua_rtpg.c.orig	2012-02-21 16:14:55.000000000 -0600
++++ multipath-tools/libmultipath/prioritizers/alua_rtpg.c	2012-02-21 16:16:41.000000000 -0600
+@@ -184,9 +184,6 @@ get_target_port_group(int fd)
+ 
+ 		rc = -RTPG_NO_TPG_IDENTIFIER;
+ 		FOR_EACH_VPD83_DSCR(vpd83, dscr) {
+-			if ((((char *) dscr) - ((char *) vpd83)) > sizeof(buf))
+-				break;
+-
+ 			if (vpd83_dscr_istype(dscr, IDTYPE_TARGET_PORT_GROUP)) {
+ 				struct vpd83_tpg_dscr *	p;
+ 
 
-IMHO Bitmaps are expensive - as you may observe with certain extX operations.
 
-Zdenek
