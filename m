@@ -1,43 +1,158 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-io async WRITE_SAME results in iSCSI NULL pointer [was: Re:
- Write same support]
-Date: Tue, 21 Feb 2012 18:36:35 -0500
-Message-ID: <20120221233635.GB9079@redhat.com>
-References: <20120220184623.GA29931@redhat.com>
- <20120220234410.GC31853@redhat.com>
- <yq1k43h2gm9.fsf@sermon.lab.mkp.net>
- <20120221031854.GA468@redhat.com>
- <yq1pqd825zt.fsf@sermon.lab.mkp.net>
- <20120221065504.GB468@redhat.com>
- <yq1linw1i6e.fsf@sermon.lab.mkp.net>
- <20120221144145.GA4743@redhat.com>
- <20120221193312.GA6565@redhat.com>
- <yq14nuj27qu.fsf@sermon.lab.mkp.net>
+From: Joe Thornber <thornber@redhat.com>
+Subject: [NOTES] thinp zeroing
+Date: Wed, 22 Feb 2012 14:14:43 +0000
+Message-ID: <20120222141442.GA28145@ubuntu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <yq14nuj27qu.fsf@sermon.lab.mkp.net>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, jaxboe@fusionio.com, dm-devel@redhat.com, michaelc@cs.wisc.edu, Vivek Goyal <vgoyal@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 21 2012 at  4:31pm -0500,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+* Requirements
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> >> Yeah, it worked with the patch I provided in my previous mail too.
-> >> But ultimately the async stuff wasn't working for me due to merging.
-> 
-> New writesame3 branch on kernel.org. Please give it a whirl...
+  There are two distinct requirements for zeroing applicable to the
+  thin-provisioning target:
 
-Looks good.  And it works great (with both your improved
-blkdev_issue_write_same interface and the dm_kcopyd_zero interface).
+  - Avoid data leaks (DATA_LEAK)
 
-Please feel free to add my Acked-by: Mike Snitzer <snitzer@redhat.com>
-to the entire set.
+    Consumers of thin devices may be using the same pool.  eg, two
+    different vm guests provisioned from the same pool.  We must
+    ensure that no data from one thin device appears on another in
+    newly provisioned areas.
 
-(and thanks for working with me on chasing down and/or explaining the
-various issues I was seeing!)
+  - Provide guarantees about the presence/absence of sensitive data (ERASE)
+
+    eg, When decomissioning a guest vm, the host (running the pool)
+    wishes to guarantee that no data from that guest remains on the
+    data device.
+  
+* Implementing DATA_LEAK
+
+  Currently the DATA_LEAK requirement is enforced by zeroing every
+  newly provisioned thin device block.  This zeroing can often be
+  elided if the write io triggering the provisioning completely covers
+  the block in question.  This zeroing can be turned off at the pool
+  level if data leaks are not a concern (eg, a desktop system).
+  Already upstream.
+
+* Implementing ERASE
+
+** Erase on deallocation
+
+  The ERASE requirement is more difficult.  Zeroing data blocks when
+  they are deallocated (ie. their ref count drops to zero after
+  deleting the device) sounds like a good approach, but this
+  introduces certain difficulties, mainly:
+
+  - To retain our crash recovery properties, the zeroing cannot occur
+    until after the next commit.  Extra on disk metadata would need to
+    be stored to keep track of these blocks that need zeroing.  A
+    commit would trigger a storm of io; currently the cost of a
+    copy-on-write exception is paid immediately by the io that
+    triggers it.  Building up delayed work like this makes it very
+    hard to give performance estimates.
+
+** Erasing from userland.
+
+   Zeroing all unshared blocks when deleting a thin device will create
+   a lot of io, I'd much rather this was being managed by userland.  I
+   really don't want message ioctls that take many minutes to
+   complete.
+
+   The 'held_root' facility allows userland to read a snapshot of the
+   metadata in a live pool.  [Note: this is a snapshot of the
+   metadata, not a snapshot of data].  The following will implement
+   ERASE in userland.
+
+   - Deactivate all thin volumes that you wish to erase.
+
+     Failure to deactivate would mean the mappings for the thins could
+     be out of date by the time userland reads them.  There is no
+     mechanism for enforcing this at the device mapper level; but
+     userland can easily do this (eg, lvm2 already has a comprehensive
+     locking scheme that will handle this).  It should also be pointed
+     out that if you try and erase a volume while you're still using it,
+     you are an idiot.
+
+   - Grab a 'held_root'
+
+   - Read the mappings for all of the thins you wish to erase.
+
+   - Work out which data blocks are used exclusively by this subset of
+     thins.
+
+   - Write zeroes across these blocks.
+
+   - send a thin-delete message to the pool for each thin.
+
+** Crash recovery
+
+   If we crash during the copy-on-write or provision operation the
+   recovery process needs to zero those new, but not committed,
+   blocks.  This requires the introduction of an 'erase log' to the
+   metadata format.  This log would need to be committed *before* the
+   copy/overwrite operation could proceed.
+
+   I've implemented such an erase log [see patch], to get an idea of
+   the performance overhead.  Testing in ideal conditions (ie. large
+   writes that are triggering many provision/copy operations so costs
+   can be amortised), we see a 25% slowdown in throughput of
+   provision/copy operations.  Better than I feared.
+
+   We can improve the performance significantly by observing that it's
+   harmless to do too much zeroing of unprovisioned blocks on
+   recovery.  This suggests a scheme similar to a mirror log, where we
+   mark regions of the data volume that we have pending provision/copy
+   operations.  When we recover we just zero *all* unallocated blocks
+   in these marked regions.  This will result in fewer commits, since
+   newly allocated blocks will commonly come from the same region and
+   so avoid the need for a commit.  [TODO: get a proof of concept
+   patch together].
+
+** Discards
+
+   DISCARDs *must* result in data being zeroed.  Some devices set the
+   discard_zeroes_data flag.  This is not good enough; you cannot use
+   this flag as a guarantee that the data no longer exists on the
+   disk.  So real zeroing must occur.  I suggest we write a separate
+   target that zeroes data just before discarding it, and stack it
+   under the thin-pool.  The performance impact of this will be
+   significant; to the point that we may wish to turn discard within
+   the fs off; instead doing periodic tidy-ups.
+
+** Avoid redundant copying
+
+   The calculation to say whether a block is shared or not (and thus
+   liable to suffer a copy-on-write exception), is an approximation.
+   It sometimes says something is shared when it isn't, which causes
+   us a problem wrt ERASE.  To avoid leaving orphaned copies of data,
+   we must either tighten up the sharing detection [patch in the
+   works], or zero the old block (via discard).
+
+** Summary of work items [0/5]
+
+   Too much for linux 3.4 timeframe.
+
+   - [ ] Change the shared block detection [1 day, worth doing anyway]
+
+   - [ ] Bitmap based erase log [1 week]
+
+   - [ ] Recovery tool that zeroes unallocated blocks in dirty regions [1 week]
+
+   - [ ] Implement the discard-really-zeroes target [1 month]
+
+   - [ ] Write thin_erase userland tool [1 week]
+
+   - [ ] Update lvm2 tools [3 months]
