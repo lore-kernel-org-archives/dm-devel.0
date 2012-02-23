@@ -1,16 +1,15 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [NOTES] thinp zeroing
-Date: Thu, 23 Feb 2012 15:43:35 +0000
-Message-ID: <20120223154334.GA16341@ubuntu>
-References: <20120222141442.GA28145@ubuntu>
- <4F45180C.8030801@shiftmail.org>
+Subject: Re: thinp zeroing
+Date: Thu, 23 Feb 2012 15:47:19 +0000
+Message-ID: <20120223154717.GB16341@ubuntu>
+References: <20120222141442.GA28145@ubuntu> <20120223024918.GA25353@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4F45180C.8030801@shiftmail.org>
+In-Reply-To: <20120223024918.GA25353@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,66 +19,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Spelic <spelic@shiftmail.org>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Feb 22, 2012 at 05:30:04PM +0100, Spelic wrote:
-> On 02/22/12 15:14, Joe Thornber wrote:
-> >* Requirements
-> >
-> >   There are two distinct requirements for zeroing applicable to the
-> >   thin-provisioning target:
-> >
-> >   - Avoid data leaks (DATA_LEAK)
-> >
-> >* Implementing DATA_LEAK
-> >
-> >
-> >* Implementing ERASE
-> >
-> >** Erase on deallocation
-> >
-> >
-> >** Erasing from userland.
-> >
-> >** Crash recovery
-> >
-> >** Discards
-> >
-> >
+On Wed, Feb 22, 2012 at 09:49:18PM -0500, Mike Snitzer wrote:
+> Nice write-up.  It is concerning that we have to go to such lengths but
+> I don't see a way around it without limiting who can consume thinp.
 > 
-> Hello
-> thanks for all your hard work regarding thinp
+> On Wed, Feb 22 2012 at  9:14am -0500,
+> Joe Thornber <thornber@redhat.com> wrote:
 > 
-> I was thinking: why don't you implement a bitmap that takes care of
-> emulating the discard functionality?
+> > ** Discards
+> > 
+> >    DISCARDs *must* result in data being zeroed.  Some devices set the
+> >    discard_zeroes_data flag.  This is not good enough; you cannot use
+> >    this flag as a guarantee that the data no longer exists on the
+> >    disk.  So real zeroing must occur.  I suggest we write a separate
+> >    target that zeroes data just before discarding it, and stack it
+> >    under the thin-pool.  The performance impact of this will be
+> >    significant; to the point that we may wish to turn discard within
+> >    the fs off; instead doing periodic tidy-ups.
 > 
-> This would take care of all your issues above, and also be great for
-> a lot of use cases even outside thinp (*).
+> ...
 > 
-> Every read would first hit the bitmap; if the bitmap says that the
-> region has been discarded, thinp would return zeroes to the
-> requestor.
+> > ** Summary of work items [0/5]
+> > 
+> >    - [ ] Implement the discard-really-zeroes target [1 month]
+> 
+> I don't think it'll take a month.  Probably a focused week to 2 weeks.
 
-Already done, the first thing a discard bio does is remove mappings
-from the btree.  It's then (optionally) handed down to the underlying
-device.
+By the time you include getting it through agk I think a month is
+highly optimistic.
 
-> I suggest a bitmap of 4kbytes / bit, and then if a discard comes
-> that is not 4K aligned (that would be a mistake of the above layers,
-> at least a "performance" mistake), you set the bitmaps only for the
-> bits which are completely covered by the discard, and then you are
-> left with at most two misaligned edges one at the beginning and one
-> at the end of the discard region, and for those you will need to
-> write zeroes to the layers below. So in the worst case you need to
-> set a few bits and then perform two small writes of zeroes, but in
-> most cases you just set a few bits.
+> I can develop this target before jumping in to the HSM target (unless
+> you'd rather I start in on HSM asap).
 
-Things like SSDs that set the discard_zeroes_data flag are only saying
-that they'll return zeroes if you read from this area.  This is
-different from promising the data has been overwritten with zeroes on
-the disk.  Hence the need in the ERASE case for real writes across the
-discarded area.
+HSM is the priority please.  ERASE can wait until later.  Plus given
+the development effort and performance impact I think there are other
+alternatives we should consider (such as using dm-crypt on each thin,
+and throwing away the keys when you delete it).
 
 - Joe
