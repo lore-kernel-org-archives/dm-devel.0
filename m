@@ -1,32 +1,23 @@
-From: Andrei Warkentin <andrey.warkentin@gmail.com>
-Subject: [PATCH] DM: Minor fix to dm-snap metadata backend registration.
-Date: Fri, 24 Feb 2012 21:26:52 -0500
-Message-ID: <1330136812-4377-1-git-send-email-andrey.warkentin@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: DM: Minor fix to dm-snap metadata backend registration.
+Date: Mon, 27 Feb 2012 08:54:28 -0500
+Message-ID: <20120227135427.GC9784@redhat.com>
+References: <1330136812-4377-1-git-send-email-andrey.warkentin@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1330136812-4377-1-git-send-email-andrey.warkentin@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, andreiw@vmware.com, Andrei Warkentin <andrey.warkentin@gmail.com>
+To: Andrei Warkentin <andrey.warkentin@gmail.com>
+Cc: dm-devel@redhat.com, andreiw@vmware.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Cleanup in dm_exception_store_init was messed up.
+On Fri, Feb 24 2012 at  9:26pm -0500,
+Andrei Warkentin <andrey.warkentin@gmail.com> wrote:
 
-Signed-off-by: Andrei Warkentin <andrey.warkentin@gmail.com>
----
- drivers/md/dm-exception-store.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+> Cleanup in dm_exception_store_init was messed up.
+> 
+> Signed-off-by: Andrei Warkentin <andrey.warkentin@gmail.com>
 
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index 042e719..aa70f7d 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -283,7 +283,7 @@ int dm_exception_store_init(void)
- 	return 0;
- 
- persistent_fail:
--	dm_persistent_snapshot_exit();
-+	dm_transient_snapshot_exit();
- transient_fail:
- 	return r;
- }
--- 
-1.7.8.3
+Acked-by: Mike Snitzer <snitzer@redhat.com>
