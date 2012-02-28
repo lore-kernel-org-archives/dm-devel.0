@@ -1,23 +1,35 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: DM: Minor fix to dm-snap metadata backend registration.
-Date: Mon, 27 Feb 2012 08:54:28 -0500
-Message-ID: <20120227135427.GC9784@redhat.com>
-References: <1330136812-4377-1-git-send-email-andrey.warkentin@gmail.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] Add barrier support to dm-raid
+Date: Tue, 28 Feb 2012 07:57:29 -0600
+Message-ID: <1330437449.9910.2.camel@f14.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1330136812-4377-1-git-send-email-andrey.warkentin@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrei Warkentin <andrey.warkentin@gmail.com>
-Cc: dm-devel@redhat.com, andreiw@vmware.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-raid@vger.kernel.org
+Cc: agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-On Fri, Feb 24 2012 at  9:26pm -0500,
-Andrei Warkentin <andrey.warkentin@gmail.com> wrote:
+Add barrier support to dm-raid.
 
-> Cleanup in dm_exception_store_init was messed up.
-> 
-> Signed-off-by: Andrei Warkentin <andrey.warkentin@gmail.com>
+MD has support for barriers.  DM core has support for barriers.  Set the
+variable necessary to indicate to DM core that it is ok to pass down
+barrier requests - which dm-raid will simply pass along to MD.
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+
+Index: linux-upstream/drivers/md/dm-raid.c
+===================================================================
+--- linux-upstream.orig/drivers/md/dm-raid.c
++++ linux-upstream/drivers/md/dm-raid.c
+@@ -971,6 +971,7 @@ static int raid_ctr(struct dm_target *ti
+ 
+ 	INIT_WORK(&rs->md.event_work, do_table_event);
+ 	ti->private = rs;
++	ti->num_flush_requests = 1;
+ 
+ 	mutex_lock(&rs->md.reconfig_mutex);
+ 	ret = md_run(&rs->md);
+
+
