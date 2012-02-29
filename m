@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 03/13] dm btree remove: remove 2 BUG_ONs from
-	__rebalance2 function
-Date: Wed, 29 Feb 2012 09:50:07 -0500
-Message-ID: <1330527017-28618-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 05/13] dm btree remove: fix center node entry
+	redistribution in redistribute3 function
+Date: Wed, 29 Feb 2012 09:50:09 -0500
+Message-ID: <1330527017-28618-6-git-send-email-snitzer@redhat.com>
 References: <1330527017-28618-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,27 +25,92 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-These paranoia checks are no longer needed.
+The code to redistribute entries among 3 nodes wasn't taking into
+consideration the case where the central node has so few entries that
+some need to go from left to right, or vice versa.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
-Acked-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/persistent-data/dm-btree-remove.c |    3 ---
- 1 files changed, 0 insertions(+), 3 deletions(-)
+ drivers/md/persistent-data/dm-btree-remove.c |   49 +++++++++++++++++++++-----
+ 1 files changed, 40 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-index ebd2460..9480fcc 100644
+index 6c8e9a7..aa71e23 100644
 --- a/drivers/md/persistent-data/dm-btree-remove.c
 +++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -234,9 +234,6 @@ static void __rebalance2(struct dm_btree_info *info, struct node *parent,
- 		 * Rebalance.
- 		 */
- 		unsigned target_left = (nr_left + nr_right) / 2;
--		unsigned shift_ = nr_left - target_left;
--		BUG_ON(le32_to_cpu(left->header.max_entries) <= nr_left - shift_);
--		BUG_ON(le32_to_cpu(right->header.max_entries) <= nr_right + shift_);
- 		shift(left, right, nr_left - target_left);
- 		*key_ptr(parent, r->index) = right->keys[0];
+@@ -179,6 +179,15 @@ static int exit_child(struct dm_btree_info *info, struct child *c)
+ 
+ static void shift(struct node *left, struct node *right, int count)
+ {
++	uint32_t nr_left = le32_to_cpu(left->header.nr_entries);
++	uint32_t nr_right = le32_to_cpu(right->header.nr_entries);
++	uint32_t max_entries = le32_to_cpu(left->header.max_entries);
++	uint32_t r_max_entries = le32_to_cpu(right->header.max_entries);
++
++	BUG_ON(max_entries != r_max_entries);
++	BUG_ON(nr_left - count > max_entries);
++	BUG_ON(nr_right + count > max_entries);
++
+ 	if (!count)
+ 		return;
+ 
+@@ -190,13 +199,8 @@ static void shift(struct node *left, struct node *right, int count)
+ 		node_shift(right, count);
  	}
+ 
+-	left->header.nr_entries =
+-		cpu_to_le32(le32_to_cpu(left->header.nr_entries) - count);
+-	BUG_ON(le32_to_cpu(left->header.nr_entries) > le32_to_cpu(left->header.max_entries));
+-
+-	right->header.nr_entries =
+-		cpu_to_le32(le32_to_cpu(right->header.nr_entries) + count);
+-	BUG_ON(le32_to_cpu(right->header.nr_entries) > le32_to_cpu(right->header.max_entries));
++	left->header.nr_entries = cpu_to_le32(nr_left - count);
++	right->header.nr_entries = cpu_to_le32(nr_right + count);
+ }
+ 
+ static void __rebalance2(struct dm_btree_info *info, struct node *parent,
+@@ -302,12 +306,39 @@ static void redistribute3(struct dm_btree_info *info, struct node *parent,
+ 			  struct node *left, struct node *center, struct node *right,
+ 			  uint32_t nr_left, uint32_t nr_center, uint32_t nr_right)
+ {
++	int s;
+ 	uint32_t max_entries = le32_to_cpu(left->header.max_entries);
+ 	unsigned target = (nr_left + nr_center + nr_right) / 3;
+ 	BUG_ON(target > max_entries);
+ 
+-	shift(left, center, nr_left - target);
+-	shift(center, right, target - nr_right);
++	if (nr_left < nr_right) {
++		s = nr_left - target;
++
++		if (s < 0 && nr_center < -s) {
++			/* not enough in central node */
++			shift(left, center, nr_center);
++			s = nr_center - target;
++			shift(left, right, s);
++			nr_right += s;
++		} else
++			shift(left, center, s);
++
++		shift(center, right, target - nr_right);
++
++	} else {
++		s = target - nr_right;
++		if (s > 0 && nr_center < s) {
++			/* not enough in central node */
++			shift(center, right, nr_center);
++			s = target - nr_center;
++			shift(left, right, s);
++			nr_left -= s;
++		} else
++			shift(center, right, s);
++
++		shift(left, center, nr_left - target);
++	}
++
+ 	*key_ptr(parent, c->index) = center->keys[0];
+ 	*key_ptr(parent, r->index) = right->keys[0];
+ }
 -- 
 1.7.1
