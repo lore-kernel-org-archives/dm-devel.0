@@ -1,10 +1,11 @@
-From: "**me**" <sam.wanshan@gmail.com>
-Subject: How to distinguish active and standby path?
-Date: Tue, 28 Feb 2012 15:16:46 +0800
-Message-ID: <CALAUA6x8ntCaWP9XBva9sN97thTehZmu4Dq3cjgshJ-xffwD5Q@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Infinite recursion when creating devices
+Date: Wed, 29 Feb 2012 15:23:03 +0100
+Message-ID: <4F4E34C7.7070005@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1579318759220177756=="
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,77 +16,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============1579318759220177756==
-Content-Type: multipart/alternative; boundary=f46d0418266287bc9b04ba01029c
+Hi all,
 
---f46d0418266287bc9b04ba01029c
-Content-Type: text/plain; charset=ISO-8859-1
+I found a nice way of crashing the kernel:
 
-Hi Christophe,
+dd if=3D/dev/zero of=3D/tmp/testdisk bs=3D512 count=3D4096
+losetup /dev/loop1 /tmp/testdisk
+echo '0 4096 linear /dev/loop1 0' | dmsetup create test1
+echo '0 4096 linear /dev/dm-0 0' | dmsetup reload test1
+dmsetup resume test1
+-> Watch the system go up in flames.
 
-  We're using your multipath tools to access an Active-Standby
-storage(Oracle SS7420 if you're concerned.)
+The above case can be trivially fixed by eg:
 
-  There're 4 path's to a LUN, 2 active and 2 standby.
-  But we can't distinguish them from 'multipath -ll'.
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 0e575d1..da46690 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -896,6 +896,12 @@ int bd_link_disk_holder(struct block_device
+*bdev, struct g
+endisk *disk)
+        if (WARN_ON(!disk->slave_dir || !bdev->bd_part->holder_dir))
+                goto out_unlock;
 
-  for example:
--------------------------------------------------------------------------
-chuli3v0 (3600144f0ad85965d00004f446c610001) dm-34 SUN,ZFS Storage 7420
-[size=4.0T][features=0][hwhandler=0][rw]
-\_ round-robin 0 [prio=1][enabled]
- \_ 8:0:2:2  sdbd 67:112  [active][ready]
-\_ round-robin 0 [prio=1][enabled]
- \_ 6:0:3:2  sdt  65:48   [active][ready]
-\_ round-robin 0 [prio=1][enabled]
- \_ 8:0:0:2  sdbv 68:144  [active][ready]
-\_ round-robin 0 [prio=1][enabled]
- \_ 6:0:2:2  sdcn 69:176  [active][ready]
------------------------------------------------------------------------
++       /* Prevent infinite loops */
++       if (bdev->bd_disk =3D=3D disk) {
++               ret =3D -ELOOP;
++               goto out_unlock;
++       }
++
+        holder =3D bd_find_holder_disk(bdev, disk);
+        if (holder) {
+                holder->refcnt++;
 
-  All 4 path's are same.
-  We're using redhat 5.5 and multipath 0.4.7
+but obviously that doesn't cover the more 'interesting' cases
+involving several devices, like
 
-  Is there any way to distinguish them?
+dd if=3D/dev/zero of=3D/tmp/testdisk bs=3D512 count=3D4096
+losetup /dev/loop1 /tmp/testdisk
+echo '0 4096 linear /dev/loop1 0' | dmsetup create test1
+echo '0 4096 linear /dev/dm-0 0' | dmsetup create test2
+echo '0 4096 linear /dev/dm-1 0' | dmsetup create test3
+echo '0 4096 linear /dev/dm-2 0' | dmsetup reload test1
+dmsetup resume test1
 
-  Thanks and regards
+For these cases we probably don't have any better chance
+then fixing things ex-post, eg proper loop detection in each and
+every interaction.
 
-Sam
+Anyone a better idea?
 
---f46d0418266287bc9b04ba01029c
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Cheers,
 
-Hi Christophe,<br><br>=A0 We&#39;re using your multipath tools to access an=
- Active-Standby storage(Oracle SS7420 if you&#39;re concerned.)<br><br>=A0 =
-There&#39;re 4 path&#39;s to a LUN, 2 active and 2 standby.<br>=A0 But we c=
-an&#39;t distinguish them from &#39;multipath -ll&#39;.<br>
-<br>=A0 for example:<br>---------------------------------------------------=
-----------------------<br>chuli3v0 (3600144f0ad85965d00004f446c610001) dm-3=
-4 SUN,ZFS Storage 7420<br>[size=3D4.0T][features=3D0][hwhandler=3D0][rw]<br=
->\_ round-robin 0 [prio=3D1][enabled]<br>
-=A0\_ 8:0:2:2=A0 sdbd 67:112=A0 [active][ready]<br>\_ round-robin 0 [prio=
-=3D1][enabled]<br>=A0\_ 6:0:3:2=A0 sdt=A0 65:48=A0=A0 [active][ready]<br>\_=
- round-robin 0 [prio=3D1][enabled]<br>=A0\_ 8:0:0:2=A0 sdbv 68:144=A0 [acti=
-ve][ready]<br>\_ round-robin 0 [prio=3D1][enabled]<br>
-=A0\_ 6:0:2:2=A0 sdcn 69:176=A0 [active][ready]<br>------------------------=
------------------------------------------------<br><br>=A0 All 4 path&#39;s=
- are same.<br>=A0 We&#39;re using redhat 5.5 and multipath 0.4.7<br><br>=A0=
- Is there any way to distinguish them?<br>
-<br>=A0 Thanks and regards<br><br>Sam<br>
+Hannes
+-- =
 
---f46d0418266287bc9b04ba01029c--
-
-
---===============1579318759220177756==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1579318759220177756==--
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
