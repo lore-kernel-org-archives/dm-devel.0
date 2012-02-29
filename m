@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 10/13] dm thin: foundation for discard support
-Date: Wed, 29 Feb 2012 09:50:14 -0500
-Message-ID: <1330527017-28618-11-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 09/13] dm thin: held root support
+Date: Wed, 29 Feb 2012 09:50:13 -0500
+Message-ID: <1330527017-28618-10-git-send-email-snitzer@redhat.com>
 References: <1330527017-28618-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,309 +24,210 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-This patch contains a lot of the ground work needed for supporting
-discard.
-
-- The thin target now has an endio function, that replaces
-  shared_read_endio.
-
-- An explicit 'quiesced' flag has been introduced into the new_mapping
-  structure.  Before, this was implicitly indicated by m->list being
-  empty.
-
-- The map_info->ptr remains constant for the duration of a bio's trip
-  through thinp.  Making it easier to reason about it.
+This allows userland access to the thinp data mappings.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
-Acked-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c |  125 ++++++++++++++++++++++++++++----------------------
- 1 files changed, 70 insertions(+), 55 deletions(-)
+ Documentation/device-mapper/thin-provisioning.txt |   11 +++
+ drivers/md/dm-thin-metadata.c                     |   78 ++++++++++++++++++++-
+ drivers/md/dm-thin-metadata.h                     |    1 +
+ drivers/md/dm-thin.c                              |   38 ++++++++++
+ 4 files changed, 126 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 2e7c1bc..bcbe86f 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -534,7 +534,7 @@ struct pool {
+diff --git a/Documentation/device-mapper/thin-provisioning.txt b/Documentation/device-mapper/thin-provisioning.txt
+index 60fc5cf..13e42fb 100644
+--- a/Documentation/device-mapper/thin-provisioning.txt
++++ b/Documentation/device-mapper/thin-provisioning.txt
+@@ -289,6 +289,17 @@ iii) Messages
+ 	the current transaction id is when you change it with this
+ 	compare-and-swap message.
  
- 	struct bio_list retry_on_resume_list;
- 
--	struct deferred_set ds;	/* FIXME: move to thin_c */
-+	struct deferred_set shared_read_ds;
- 
- 	struct new_mapping *next_mapping;
- 	mempool_t *mapping_pool;
-@@ -629,6 +629,12 @@ static struct pool *__pool_table_lookup_metadata_dev(struct block_device *md_dev
- 
- /*----------------------------------------------------------------*/
- 
-+struct endio_hook {
-+	struct thin_c *tc;
-+	struct deferred_entry *shared_read_entry;
-+	struct new_mapping *overwrite_mapping;
-+};
++    hold_root
 +
- static void __requeue_bio_list(struct thin_c *tc, struct bio_list *master)
- {
- 	struct bio *bio;
-@@ -639,7 +645,8 @@ static void __requeue_bio_list(struct thin_c *tc, struct bio_list *master)
- 	bio_list_init(master);
++        Reserve a copy of the data mapping btree for use by userland.
++        This allows userland to inspect the mappings as they were when
++        this message was executed.  Use the pool's status command to
++        get the root block.
++
++    release_root
++
++        Release a previously reserved copy of the data mapping btree.
++
+ 'thin' target
+ -------------
  
- 	while ((bio = bio_list_pop(&bios))) {
--		if (dm_get_mapinfo(bio)->ptr == tc)
-+		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
-+		if (h->tc == tc)
- 			bio_endio(bio, DM_ENDIO_REQUEUE);
- 		else
- 			bio_list_add(master, bio);
-@@ -727,16 +734,11 @@ static void wake_worker(struct pool *pool)
- /*
-  * Bio endio functions.
-  */
--struct endio_hook {
--	struct thin_c *tc;
--	bio_end_io_t *saved_bi_end_io;
--	struct deferred_entry *entry;
--};
--
- struct new_mapping {
- 	struct list_head list;
- 
--	int prepared;
-+	unsigned quiesced:1;
-+	unsigned prepared:1;
- 
- 	struct thin_c *tc;
- 	dm_block_t virt_block;
-@@ -758,7 +760,7 @@ static void __maybe_add_mapping(struct new_mapping *m)
- {
- 	struct pool *pool = m->tc->pool;
- 
--	if (list_empty(&m->list) && m->prepared) {
-+	if (m->quiesced && m->prepared) {
- 		list_add(&m->list, &pool->prepared_mappings);
- 		wake_worker(pool);
- 	}
-@@ -781,7 +783,8 @@ static void copy_complete(int read_err, unsigned long write_err, void *context)
- static void overwrite_endio(struct bio *bio, int err)
- {
- 	unsigned long flags;
--	struct new_mapping *m = dm_get_mapinfo(bio)->ptr;
-+	struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
-+	struct new_mapping *m = h->overwrite_mapping;
- 	struct pool *pool = m->tc->pool;
- 
- 	m->err = err;
-@@ -792,31 +795,6 @@ static void overwrite_endio(struct bio *bio, int err)
- 	spin_unlock_irqrestore(&pool->lock, flags);
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index 0bc3033..f3ba61d 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -1081,10 +1081,46 @@ int dm_pool_get_metadata_transaction_id(struct dm_pool_metadata *pmd,
+ 	return 0;
  }
  
--static void shared_read_endio(struct bio *bio, int err)
--{
--	struct list_head mappings;
--	struct new_mapping *m, *tmp;
--	struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
--	unsigned long flags;
--	struct pool *pool = h->tc->pool;
--
--	bio->bi_end_io = h->saved_bi_end_io;
--	bio_endio(bio, err);
--
--	INIT_LIST_HEAD(&mappings);
--	ds_dec(h->entry, &mappings);
--
--	spin_lock_irqsave(&pool->lock, flags);
--	list_for_each_entry_safe(m, tmp, &mappings, list) {
--		list_del(&m->list);
--		INIT_LIST_HEAD(&m->list);
--		__maybe_add_mapping(m);
--	}
--	spin_unlock_irqrestore(&pool->lock, flags);
--
--	mempool_free(h, pool->endio_hook_pool);
--}
--
- /*----------------------------------------------------------------*/
- 
- /*
-@@ -950,9 +928,7 @@ static int ensure_next_mapping(struct pool *pool)
- static struct new_mapping *get_next_mapping(struct pool *pool)
- {
- 	struct new_mapping *r = pool->next_mapping;
--
- 	BUG_ON(!pool->next_mapping);
--
- 	pool->next_mapping = NULL;
- 
- 	return r;
-@@ -968,6 +944,7 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	struct new_mapping *m = get_next_mapping(pool);
- 
- 	INIT_LIST_HEAD(&m->list);
-+	m->quiesced = 0;
- 	m->prepared = 0;
- 	m->tc = tc;
- 	m->virt_block = virt_block;
-@@ -976,7 +953,8 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	m->err = 0;
- 	m->bio = NULL;
- 
--	ds_add_work(&pool->ds, &m->list);
-+	if (!ds_add_work(&pool->shared_read_ds, &m->list))
-+		m->quiesced = 1;
- 
- 	/*
- 	 * IO to pool_dev remaps to the pool target's data_dev.
-@@ -985,9 +963,10 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	 * bio immediately. Otherwise we use kcopyd to clone the data first.
- 	 */
- 	if (io_overwrites_block(pool, bio)) {
-+		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
-+		h->overwrite_mapping = m;
- 		m->bio = bio;
- 		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
--		dm_get_mapinfo(bio)->ptr = m;
- 		remap_and_issue(tc, bio, data_dest);
- 	} else {
- 		struct dm_io_region from, to;
-@@ -1034,6 +1013,7 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 	struct new_mapping *m = get_next_mapping(pool);
- 
- 	INIT_LIST_HEAD(&m->list);
-+	m->quiesced = 1;
- 	m->prepared = 0;
- 	m->tc = tc;
- 	m->virt_block = virt_block;
-@@ -1051,9 +1031,10 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 		process_prepared_mapping(m);
- 
- 	else if (io_overwrites_block(pool, bio)) {
-+		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
-+		h->overwrite_mapping = m;
- 		m->bio = bio;
- 		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
--		dm_get_mapinfo(bio)->ptr = m;
- 		remap_and_issue(tc, bio, data_block);
- 
- 	} else {
-@@ -1140,7 +1121,8 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
-  */
- static void retry_on_resume(struct bio *bio)
- {
--	struct thin_c *tc = dm_get_mapinfo(bio)->ptr;
-+	struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
-+	struct thin_c *tc = h->tc;
- 	struct pool *pool = tc->pool;
- 	unsigned long flags;
- 
-@@ -1206,13 +1188,9 @@ static void process_shared_bio(struct thin_c *tc, struct bio *bio,
- 	if (bio_data_dir(bio) == WRITE)
- 		break_sharing(tc, bio, block, &key, lookup_result, cell);
- 	else {
--		struct endio_hook *h;
--		h = mempool_alloc(pool->endio_hook_pool, GFP_NOIO);
-+		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
- 
--		h->tc = tc;
--		h->entry = ds_inc(&pool->ds);
--		save_and_set_endio(bio, &h->saved_bi_end_io, shared_read_endio);
--		dm_get_mapinfo(bio)->ptr = h;
-+		h->shared_read_entry = ds_inc(&pool->shared_read_ds);
- 
- 		cell_release_singleton(cell, bio);
- 		remap_and_issue(tc, bio, lookup_result->block);
-@@ -1336,7 +1314,9 @@ static void process_deferred_bios(struct pool *pool)
- 	spin_unlock_irqrestore(&pool->lock, flags);
- 
- 	while ((bio = bio_list_pop(&bios))) {
--		struct thin_c *tc = dm_get_mapinfo(bio)->ptr;
-+		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
-+		struct thin_c *tc = h->tc;
-+
- 		/*
- 		 * If we've got no free new_mapping structs, and processing
- 		 * this bio might require one, we pause until there are some
-@@ -1419,6 +1399,18 @@ static void thin_defer_bio(struct thin_c *tc, struct bio *bio)
- 	wake_worker(pool);
- }
- 
-+static struct endio_hook *thin_hook_bio(struct thin_c *tc, struct bio *bio)
+-static int __get_held_metadata_root(struct dm_pool_metadata *pmd,
+-				    dm_block_t *result)
++static int __hold_metadata_root(struct dm_pool_metadata *pmd)
 +{
-+	struct pool *pool = tc->pool;
-+	struct endio_hook *h = mempool_alloc(pool->endio_hook_pool, GFP_NOIO);
++	int r, r2;
++	struct thin_disk_superblock *disk_super;
++	struct dm_block *sblock;
 +
-+	h->tc = tc;
-+	h->shared_read_entry = NULL;
-+	h->overwrite_mapping = NULL;
++	r = dm_bm_write_lock(pmd->bm, THIN_SUPERBLOCK_LOCATION,
++			     &sb_validator, &sblock);
++	if (r)
++		return r;
 +
-+	return h;
-+}
-+
- /*
-  * Non-blocking function called from the thin target's map function.
-  */
-@@ -1431,11 +1423,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio,
- 	struct dm_thin_device *td = tc->td;
- 	struct dm_thin_lookup_result result;
- 
--	/*
--	 * Save the thin context for easy access from the deferred bio later.
--	 */
--	map_context->ptr = tc;
--
-+	map_context->ptr = thin_hook_bio(tc, bio);
- 	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA)) {
- 		thin_defer_bio(tc, bio);
- 		return DM_MAPIO_SUBMITTED;
-@@ -1615,7 +1603,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 	pool->low_water_triggered = 0;
- 	pool->no_free_space = 0;
- 	bio_list_init(&pool->retry_on_resume_list);
--	ds_init(&pool->ds);
-+	ds_init(&pool->shared_read_ds);
- 
- 	pool->next_mapping = NULL;
- 	pool->mapping_pool =
-@@ -2444,6 +2432,32 @@ static int thin_map(struct dm_target *ti, struct bio *bio,
- 	return thin_bio_map(ti, bio, map_context);
- }
- 
-+static int thin_endio(struct dm_target *ti,
-+		      struct bio *bio, int err,
-+		      union map_info *map_context)
-+{
-+	unsigned long flags;
-+	struct endio_hook *h = map_context->ptr;
-+	struct list_head work;
-+	struct new_mapping *m, *tmp;
-+	struct pool *pool = h->tc->pool;
-+
-+	if (h->shared_read_entry) {
-+		INIT_LIST_HEAD(&work);
-+		ds_dec(h->shared_read_entry, &work);
-+
-+		spin_lock_irqsave(&pool->lock, flags);
-+		list_for_each_entry_safe(m, tmp, &work, list) {
-+			list_del(&m->list);
-+			m->quiesced = 1;
-+			__maybe_add_mapping(m);
-+		}
-+		spin_unlock_irqrestore(&pool->lock, flags);
++	disk_super = dm_block_data(sblock);
++	if (le64_to_cpu(disk_super->held_root)) {
++		DMWARN("pool already has a held root");
++		r = -EBUSY;
++	} else {
++		__le64 root = disk_super->data_mapping_root;
++		dm_sm_inc_block(pmd->metadata_sm, le64_to_cpu(root));
++		disk_super->held_root = root;
++		pmd->need_commit = 1;
 +	}
 +
-+	return 0;
++	r2 = dm_bm_unlock(sblock);
++	return r ? r : r2;
 +}
 +
- static void thin_postsuspend(struct dm_target *ti)
++int dm_pool_hold_metadata_root(struct dm_pool_metadata *pmd)
  {
- 	if (dm_noflush_suspending(ti))
-@@ -2529,6 +2543,7 @@ static struct target_type thin_target = {
- 	.ctr = thin_ctr,
- 	.dtr = thin_dtr,
- 	.map = thin_map,
-+	.end_io = thin_endio,
- 	.postsuspend = thin_postsuspend,
- 	.status = thin_status,
- 	.iterate_devices = thin_iterate_devices,
+ 	int r;
++
++	down_write(&pmd->root_lock);
++	r = __hold_metadata_root(pmd);
++	up_write(&pmd->root_lock);
++
++	return r;
++}
++
++static int __release_metadata_root(struct dm_pool_metadata *pmd)
++{
++	int r, r2;
+ 	struct thin_disk_superblock *disk_super;
+ 	struct dm_block *sblock;
+ 
+@@ -1094,6 +1130,44 @@ static int __get_held_metadata_root(struct dm_pool_metadata *pmd,
+ 		return r;
+ 
+ 	disk_super = dm_block_data(sblock);
++	if (!le64_to_cpu(disk_super->held_root)) {
++		DMWARN("pool has no held root");
++		r = -EINVAL;
++	} else {
++		__le64 root = disk_super->held_root;
++		dm_sm_dec_block(pmd->metadata_sm, le64_to_cpu(root));
++		disk_super->held_root = cpu_to_le64(0ULL);
++		pmd->need_commit = 1;
++	}
++
++	r2 = dm_bm_unlock(sblock);
++	return r ? r : r2;
++}
++
++int dm_pool_release_metadata_root(struct dm_pool_metadata *pmd)
++{
++	int r;
++
++	down_write(&pmd->root_lock);
++	r = __release_metadata_root(pmd);
++	up_write(&pmd->root_lock);
++
++	return r;
++}
++
++static int __get_held_metadata_root(struct dm_pool_metadata *pmd,
++				    dm_block_t *result)
++{
++	int r;
++	struct thin_disk_superblock *disk_super;
++	struct dm_block *sblock;
++
++	r = dm_bm_read_lock(pmd->bm, THIN_SUPERBLOCK_LOCATION,
++			    &sb_validator, &sblock);
++	if (r)
++		return r;
++
++	disk_super = dm_block_data(sblock);
+ 	*result = le64_to_cpu(disk_super->held_root);
+ 
+ 	return dm_bm_unlock(sblock);
+diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+index 859c168..cfc7d0b 100644
+--- a/drivers/md/dm-thin-metadata.h
++++ b/drivers/md/dm-thin-metadata.h
+@@ -79,6 +79,7 @@ int dm_pool_get_metadata_transaction_id(struct dm_pool_metadata *pmd,
+  * Hold/get root for userspace transaction.
+  */
+ int dm_pool_hold_metadata_root(struct dm_pool_metadata *pmd);
++int dm_pool_release_metadata_root(struct dm_pool_metadata *pmd);
+ 
+ int dm_pool_get_held_metadata_root(struct dm_pool_metadata *pmd,
+ 				   dm_block_t *result);
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index c143cf1..2e7c1bc 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -2107,6 +2107,36 @@ static int process_set_transaction_id_mesg(unsigned argc, char **argv, struct po
+ 	return 0;
+ }
+ 
++static int process_hold_root_mesg(unsigned argc, char **argv, struct pool *pool)
++{
++	int r;
++
++	r = check_arg_count(argc, 1);
++	if (r)
++		return r;
++
++	r = dm_pool_hold_metadata_root(pool->pmd);
++	if (r)
++		DMWARN("hold root request failed");
++
++	return r;
++}
++
++static int process_release_root_mesg(unsigned argc, char **argv, struct pool *pool)
++{
++	int r;
++
++	r = check_arg_count(argc, 1);
++	if (r)
++		return r;
++
++	r = dm_pool_release_metadata_root(pool->pmd);
++	if (r)
++		DMWARN("release root request failed");
++
++	return r;
++}
++
+ /*
+  * Messages supported:
+  *   create_thin	<dev_id>
+@@ -2114,6 +2144,8 @@ static int process_set_transaction_id_mesg(unsigned argc, char **argv, struct po
+  *   delete		<dev_id>
+  *   trim		<dev_id> <new_size_in_sectors>
+  *   set_transaction_id <current_trans_id> <new_trans_id>
++ *   hold_root
++ *   release_root
+  */
+ static int pool_message(struct dm_target *ti, unsigned argc, char **argv)
+ {
+@@ -2133,6 +2165,12 @@ static int pool_message(struct dm_target *ti, unsigned argc, char **argv)
+ 	else if (!strcasecmp(argv[0], "set_transaction_id"))
+ 		r = process_set_transaction_id_mesg(argc, argv, pool);
+ 
++	else if (!strcasecmp(argv[0], "hold_root"))
++		r = process_hold_root_mesg(argc, argv, pool);
++
++	else if (!strcasecmp(argv[0], "release_root"))
++		r = process_release_root_mesg(argc, argv, pool);
++
+ 	else
+ 		DMWARN("Unrecognised thin pool target message received: %s", argv[0]);
+ 
 -- 
 1.7.1
