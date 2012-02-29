@@ -1,15 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Infinite recursion when creating devices
-Date: Wed, 29 Feb 2012 14:50:06 +0000
-Message-ID: <20120229145006.GF24997@agk-dp.fab.redhat.com>
-References: <4F4E34C7.7070005@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 12/13] dm thin: add discard pool features
+Date: Wed, 29 Feb 2012 09:50:16 -0500
+Message-ID: <1330527017-28618-13-git-send-email-snitzer@redhat.com>
+References: <1330527017-28618-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4F4E34C7.7070005@suse.de>
+In-Reply-To: <1330527017-28618-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,17 +18,255 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Joe Thornber <ejt@redhat.com>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-You need sysadmin privileges to do this and I reckon that offers many
-other ways of causing crashes too:)
+From: Joe Thornber <ejt@redhat.com>
 
-It didn't seem worth attempting to prevent all device loops as it's not
-a cheap thing to detect and not something likely to occur in practice. 
+Make additional features available during pool creation:
 
-Nevertheless, some userspace tools do contain some checks to avoid some
-cases like this already.
+ 'skip_discard': disable discard support
+ 'skip_discard_passdown': don't pass discards down to the underlying data device
 
-Alasdair
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+---
+ Documentation/device-mapper/thin-provisioning.txt |    2 +
+ drivers/md/dm-thin.c                              |   79 +++++++++++++++------
+ 2 files changed, 59 insertions(+), 22 deletions(-)
+
+diff --git a/Documentation/device-mapper/thin-provisioning.txt b/Documentation/device-mapper/thin-provisioning.txt
+index 13e42fb..57076dd 100644
+--- a/Documentation/device-mapper/thin-provisioning.txt
++++ b/Documentation/device-mapper/thin-provisioning.txt
+@@ -222,6 +222,8 @@ i) Constructor
+ 
+     Optional feature arguments:
+     - 'skip_block_zeroing': skips the zeroing of newly-provisioned blocks.
++      'skip_discard': disable discard support
++      'skip_discard_passdown': don't pass discards down to the underlying data device
+ 
+     Data block size must be between 64KB (128 sectors) and 1GB
+     (2097152 sectors) inclusive.
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index fec7ddb..2e16b3a 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -500,6 +500,13 @@ static void build_virtual_key(struct dm_thin_device *td, dm_block_t b,
+  * devices.
+  */
+ struct new_mapping;
++
++struct pool_features {
++	unsigned zero_new_blocks:1;
++	unsigned discard_enabled:1;
++	unsigned discard_passdown:1;
++};
++
+ struct pool {
+ 	struct list_head list;
+ 	struct dm_target *ti;	/* Only set if a pool target is bound */
+@@ -513,7 +520,7 @@ struct pool {
+ 	dm_block_t offset_mask;
+ 	dm_block_t low_water_blocks;
+ 
+-	unsigned zero_new_blocks:1;
++	struct pool_features pf;
+ 	unsigned low_water_triggered:1;	/* A dm event has been sent */
+ 	unsigned no_free_space:1;	/* A -ENOSPC warning has been issued */
+ 
+@@ -554,7 +561,7 @@ struct pool_c {
+ 	struct dm_target_callbacks callbacks;
+ 
+ 	dm_block_t low_water_blocks;
+-	unsigned zero_new_blocks:1;
++	struct pool_features pf;
+ };
+ 
+ /*
+@@ -1060,7 +1067,7 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+ 	 * zeroing pre-existing data, we can issue the bio immediately.
+ 	 * Otherwise we use kcopyd to zero the data first.
+ 	 */
+-	if (!pool->zero_new_blocks)
++	if (!pool->pf.zero_new_blocks)
+ 		process_prepared_mapping(m);
+ 
+ 	else if (io_overwrites_block(pool, bio)) {
+@@ -1626,7 +1633,7 @@ static int bind_control_target(struct pool *pool, struct dm_target *ti)
+ 
+ 	pool->ti = ti;
+ 	pool->low_water_blocks = pt->low_water_blocks;
+-	pool->zero_new_blocks = pt->zero_new_blocks;
++	pool->pf = pt->pf;
+ 
+ 	return 0;
+ }
+@@ -1640,6 +1647,14 @@ static void unbind_control_target(struct pool *pool, struct dm_target *ti)
+ /*----------------------------------------------------------------
+  * Pool creation
+  *--------------------------------------------------------------*/
++/* Initialize pool features. */
++static void pool_features_init(struct pool_features *pf)
++{
++	pf->zero_new_blocks = 1;
++	pf->discard_enabled = 1;
++	pf->discard_passdown = 1;
++}
++
+ static void __pool_destroy(struct pool *pool)
+ {
+ 	__pool_table_remove(pool);
+@@ -1687,7 +1702,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 	pool->block_shift = ffs(block_size) - 1;
+ 	pool->offset_mask = block_size - 1;
+ 	pool->low_water_blocks = 0;
+-	pool->zero_new_blocks = 1;
++	pool_features_init(&pool->pf);
+ 	pool->prison = prison_create(PRISON_CELLS);
+ 	if (!pool->prison) {
+ 		*error = "Error creating pool's bio prison";
+@@ -1825,10 +1840,6 @@ static void pool_dtr(struct dm_target *ti)
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
+ }
+ 
+-struct pool_features {
+-	unsigned zero_new_blocks:1;
+-};
+-
+ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+ 			       struct dm_target *ti)
+ {
+@@ -1837,7 +1848,7 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+ 	const char *arg_name;
+ 
+ 	static struct dm_arg _args[] = {
+-		{0, 1, "Invalid number of pool feature arguments"},
++		{0, 3, "Invalid number of pool feature arguments"},
+ 	};
+ 
+ 	/*
+@@ -1857,6 +1868,12 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+ 		if (!strcasecmp(arg_name, "skip_block_zeroing")) {
+ 			pf->zero_new_blocks = 0;
+ 			continue;
++		} else if (!strcasecmp(arg_name, "skip_discard")) {
++			pf->discard_enabled = 0;
++			continue;
++		} else if (!strcasecmp(arg_name, "skip_discard_passdown")) {
++			pf->discard_passdown = 0;
++			continue;
+ 		}
+ 
+ 		ti->error = "Unrecognised pool feature requested";
+@@ -1874,6 +1891,8 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+  *
+  * Optional feature arguments are:
+  *	     skip_block_zeroing: skips the zeroing of newly-provisioned blocks.
++ *           skip_discard: disable discard
++ *           skip_discard_passdown: don't pass discards down to the data device
+  */
+ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+@@ -1938,8 +1957,7 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	/*
+ 	 * Set default pool features.
+ 	 */
+-	memset(&pf, 0, sizeof(pf));
+-	pf.zero_new_blocks = 1;
++	pool_features_init(&pf);
+ 
+ 	dm_consume_args(&as, 4);
+ 	r = parse_pool_features(&as, &pf, ti);
+@@ -1964,10 +1982,12 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	pt->metadata_dev = metadata_dev;
+ 	pt->data_dev = data_dev;
+ 	pt->low_water_blocks = low_water_blocks;
+-	pt->zero_new_blocks = pf.zero_new_blocks;
++	pt->pf = pf;
+ 	ti->num_flush_requests = 1;
+-	ti->num_discard_requests = 1;
+-	ti->discards_supported = 1;
++	if (pf.discard_enabled && pf.discard_passdown) {
++		ti->discards_supported = 1;
++		ti->num_discard_requests = 1;
++	}
+ 	ti->private = pt;
+ 
+ 	pt->callbacks.congested_fn = pool_is_congested;
+@@ -2303,7 +2323,7 @@ static int pool_message(struct dm_target *ti, unsigned argc, char **argv)
+ static int pool_status(struct dm_target *ti, status_type_t type,
+ 		       char *result, unsigned maxlen)
+ {
+-	int r;
++	int r, count;
+ 	unsigned sz = 0;
+ 	uint64_t transaction_id;
+ 	dm_block_t nr_free_blocks_data;
+@@ -2366,10 +2386,18 @@ static int pool_status(struct dm_target *ti, status_type_t type,
+ 		       (unsigned long)pool->sectors_per_block,
+ 		       (unsigned long long)pt->low_water_blocks);
+ 
+-		DMEMIT("%u ", !pool->zero_new_blocks);
++		count = !pool->pf.zero_new_blocks + !pool->pf.discard_enabled + !pool->pf.discard_passdown;
++		DMEMIT("%u ", count);
+ 
+-		if (!pool->zero_new_blocks)
++		if (!pool->pf.zero_new_blocks)
+ 			DMEMIT("skip_block_zeroing ");
++
++		if (!pool->pf.discard_enabled)
++			DMEMIT("skip_discard ");
++
++		if (!pool->pf.discard_passdown)
++			DMEMIT("skip_discard_passdown");
++
+ 		break;
+ 	}
+ 
+@@ -2407,7 +2435,7 @@ static void set_discard_limits(struct pool *pool, struct queue_limits *limits)
+ 	 * bios that overlap 2 blocks.
+ 	 */
+ 	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
+-	limits->discard_zeroes_data = pool->zero_new_blocks;
++	limits->discard_zeroes_data = pool->pf.zero_new_blocks;
+ }
+ 
+ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
+@@ -2417,7 +2445,8 @@ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 
+ 	blk_limits_io_min(limits, 0);
+ 	blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
+-	set_discard_limits(pool, limits);
++	if (pool->pf.discard_enabled)
++		set_discard_limits(pool, limits);
+ }
+ 
+ static struct target_type pool_target = {
+@@ -2466,6 +2495,8 @@ static void thin_dtr(struct dm_target *ti)
+  * pool_dev: the path to the pool (eg, /dev/mapper/my_pool)
+  * dev_id: the internal device identifier
+  * origin_dev: a device external to the pool that should act as the origin
++ *
++ * If the pool has discards disabled, they get disabled for the thin as well.
+  */
+ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+@@ -2534,8 +2565,12 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ 	ti->split_io = tc->pool->sectors_per_block;
+ 	ti->num_flush_requests = 1;
+-	ti->num_discard_requests = 1;
+-	ti->discards_supported = 1;
++
++	/* In case the pool supports discards, pass them on. */
++	if (tc->pool->pf.discard_enabled) {
++		ti->discards_supported = 1;
++		ti->num_discard_requests = 1;
++	}
+ 
+ 	dm_put(pool_md);
+ 
+-- 
+1.7.1
