@@ -1,11 +1,11 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Infinite recursion when creating devices
-Date: Wed, 29 Feb 2012 15:23:03 +0100
-Message-ID: <4F4E34C7.7070005@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 00/13] dm thin: updated patches for 3.4
+Date: Wed, 29 Feb 2012 09:50:04 -0500
+Message-ID: <1330527017-28618-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,66 +16,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+I've reviewed all but one of these patches quite closely (didn't go
+crazy on the held root patch).
 
-I found a nice way of crashing the kernel:
+I've taken care to make sure the patches include relevant fixes that
+were made after Joe's previous submission to dm-devel.
 
-dd if=3D/dev/zero of=3D/tmp/testdisk bs=3D512 count=3D4096
-losetup /dev/loop1 /tmp/testdisk
-echo '0 4096 linear /dev/loop1 0' | dmsetup create test1
-echo '0 4096 linear /dev/dm-0 0' | dmsetup reload test1
-dmsetup resume test1
--> Watch the system go up in flames.
+This patchset will bring the upstream dm thinp code up to Joe's
+thin-dev commit f1f8676ecdf366.
 
-The above case can be trivially fixed by eg:
+Heinz Mauelshagen (1):
+  dm thin: pre-commit in pool_status so it provides accurate free block counts
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 0e575d1..da46690 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -896,6 +896,12 @@ int bd_link_disk_holder(struct block_device
-*bdev, struct g
-endisk *disk)
-        if (WARN_ON(!disk->slave_dir || !bdev->bd_part->holder_dir))
-                goto out_unlock;
+Joe Thornber (12):
+  dm thin: tidy up the cell_release functions
+  dm btree-remove: break up __rebalance3 function
+  dm btree remove: remove 2 BUG_ONs from __rebalance2 function
+  dm btree remove: fix bug that allowed the nr of entries in a btree node to drop below 1/3
+  dm btree remove: fix center node entry redistribution in redistribute3 function
+  dm space map: remove entries from the ref_count tree if no longer needed
+  dm thin: don't use the bi_next field for the holder of a cell
+  dm thin: add support for external origins
+  dm thin: held root support
+  dm thin: foundation for discard support
+  dm thin: add discard support
+  dm thin: add discard pool features
 
-+       /* Prevent infinite loops */
-+       if (bdev->bd_disk =3D=3D disk) {
-+               ret =3D -ELOOP;
-+               goto out_unlock;
-+       }
-+
-        holder =3D bd_find_holder_disk(bdev, disk);
-        if (holder) {
-                holder->refcnt++;
-
-but obviously that doesn't cover the more 'interesting' cases
-involving several devices, like
-
-dd if=3D/dev/zero of=3D/tmp/testdisk bs=3D512 count=3D4096
-losetup /dev/loop1 /tmp/testdisk
-echo '0 4096 linear /dev/loop1 0' | dmsetup create test1
-echo '0 4096 linear /dev/dm-0 0' | dmsetup create test2
-echo '0 4096 linear /dev/dm-1 0' | dmsetup create test3
-echo '0 4096 linear /dev/dm-2 0' | dmsetup reload test1
-dmsetup resume test1
-
-For these cases we probably don't have any better chance
-then fixing things ex-post, eg proper loop detection in each and
-every interaction.
-
-Anyone a better idea?
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+ Documentation/device-mapper/thin-provisioning.txt |   51 ++-
+ drivers/md/dm-thin-metadata.c                     |   78 +++-
+ drivers/md/dm-thin-metadata.h                     |    1 +
+ drivers/md/dm-thin.c                              |  577 ++++++++++++++++-----
+ drivers/md/persistent-data/dm-btree-remove.c      |  174 ++++---
+ drivers/md/persistent-data/dm-space-map-common.c  |    3 -
+ 6 files changed, 675 insertions(+), 209 deletions(-)
