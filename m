@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 07/13] dm thin: don't use the bi_next field for
-	the holder of a cell
-Date: Wed, 29 Feb 2012 09:50:11 -0500
-Message-ID: <1330527017-28618-8-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 10/13] dm thin: foundation for discard support
+Date: Wed, 29 Feb 2012 09:50:14 -0500
+Message-ID: <1330527017-28618-11-git-send-email-snitzer@redhat.com>
 References: <1330527017-28618-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,87 +24,309 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-The holder can be passed down to lower devices which may want to use
-bi_next themselves.  Also add BUG_ON check to confirm fix.
+This patch contains a lot of the ground work needed for supporting
+discard.
 
-When releasing bios that have been detained in a cell, fix the order in
-which the holder and other cellmates are added to the inmates list:
-append holder first followed by the other cellmates.
+- The thin target now has an endio function, that replaces
+  shared_read_endio.
+
+- An explicit 'quiesced' flag has been introduced into the new_mapping
+  structure.  Before, this was implicitly indicated by m->list being
+  empty.
+
+- The map_info->ptr remains constant for the duration of a bio's trip
+  through thinp.  Making it easier to reason about it.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c |   29 +++++++++++++++++------------
- 1 files changed, 17 insertions(+), 12 deletions(-)
+ drivers/md/dm-thin.c |  125 ++++++++++++++++++++++++++++----------------------
+ 1 files changed, 70 insertions(+), 55 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index f796afb..a148532 100644
+index 2e7c1bc..bcbe86f 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -125,7 +125,7 @@ struct cell {
- 	struct hlist_node list;
- 	struct bio_prison *prison;
- 	struct cell_key key;
--	unsigned count;
-+	struct bio *holder;
- 	struct bio_list bios;
- };
+@@ -534,7 +534,7 @@ struct pool {
  
-@@ -221,8 +221,7 @@ static struct cell *__search_bucket(struct hlist_head *bucket,
-  * This may block if a new cell needs allocating.  You must ensure that
-  * cells will be unlocked even if the calling thread is blocked.
-  *
-- * Returns the number of entries in the cell prior to the new addition
-- * or < 0 on failure.
-+ * Returns 1 if the cell was already held, 0 if @inmate is the new holder.
-  */
- static int bio_detain(struct bio_prison *prison, struct cell_key *key,
- 		      struct bio *inmate, struct cell **ref)
-@@ -257,21 +256,25 @@ static int bio_detain(struct bio_prison *prison, struct cell_key *key,
+ 	struct bio_list retry_on_resume_list;
  
- 			cell->prison = prison;
- 			memcpy(&cell->key, key, sizeof(cell->key));
--			cell->count = 0;
-+			cell->holder = inmate;
- 			bio_list_init(&cell->bios);
- 			hlist_add_head(&cell->list, prison->cells + hash);
-+			r = 0;
+-	struct deferred_set ds;	/* FIXME: move to thin_c */
++	struct deferred_set shared_read_ds;
+ 
+ 	struct new_mapping *next_mapping;
+ 	mempool_t *mapping_pool;
+@@ -629,6 +629,12 @@ static struct pool *__pool_table_lookup_metadata_dev(struct block_device *md_dev
+ 
+ /*----------------------------------------------------------------*/
+ 
++struct endio_hook {
++	struct thin_c *tc;
++	struct deferred_entry *shared_read_entry;
++	struct new_mapping *overwrite_mapping;
++};
 +
-+		} else {
-+			mempool_free(cell2, prison->cell_pool);
-+			cell2 = NULL;
-+			r = 1;
-+			bio_list_add(&cell->bios, inmate);
- 		}
+ static void __requeue_bio_list(struct thin_c *tc, struct bio_list *master)
+ {
+ 	struct bio *bio;
+@@ -639,7 +645,8 @@ static void __requeue_bio_list(struct thin_c *tc, struct bio_list *master)
+ 	bio_list_init(master);
+ 
+ 	while ((bio = bio_list_pop(&bios))) {
+-		if (dm_get_mapinfo(bio)->ptr == tc)
++		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
++		if (h->tc == tc)
+ 			bio_endio(bio, DM_ENDIO_REQUEUE);
+ 		else
+ 			bio_list_add(master, bio);
+@@ -727,16 +734,11 @@ static void wake_worker(struct pool *pool)
+ /*
+  * Bio endio functions.
+  */
+-struct endio_hook {
+-	struct thin_c *tc;
+-	bio_end_io_t *saved_bi_end_io;
+-	struct deferred_entry *entry;
+-};
+-
+ struct new_mapping {
+ 	struct list_head list;
+ 
+-	int prepared;
++	unsigned quiesced:1;
++	unsigned prepared:1;
+ 
+ 	struct thin_c *tc;
+ 	dm_block_t virt_block;
+@@ -758,7 +760,7 @@ static void __maybe_add_mapping(struct new_mapping *m)
+ {
+ 	struct pool *pool = m->tc->pool;
+ 
+-	if (list_empty(&m->list) && m->prepared) {
++	if (m->quiesced && m->prepared) {
+ 		list_add(&m->list, &pool->prepared_mappings);
+ 		wake_worker(pool);
+ 	}
+@@ -781,7 +783,8 @@ static void copy_complete(int read_err, unsigned long write_err, void *context)
+ static void overwrite_endio(struct bio *bio, int err)
+ {
+ 	unsigned long flags;
+-	struct new_mapping *m = dm_get_mapinfo(bio)->ptr;
++	struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
++	struct new_mapping *m = h->overwrite_mapping;
+ 	struct pool *pool = m->tc->pool;
+ 
+ 	m->err = err;
+@@ -792,31 +795,6 @@ static void overwrite_endio(struct bio *bio, int err)
+ 	spin_unlock_irqrestore(&pool->lock, flags);
+ }
+ 
+-static void shared_read_endio(struct bio *bio, int err)
+-{
+-	struct list_head mappings;
+-	struct new_mapping *m, *tmp;
+-	struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
+-	unsigned long flags;
+-	struct pool *pool = h->tc->pool;
+-
+-	bio->bi_end_io = h->saved_bi_end_io;
+-	bio_endio(bio, err);
+-
+-	INIT_LIST_HEAD(&mappings);
+-	ds_dec(h->entry, &mappings);
+-
+-	spin_lock_irqsave(&pool->lock, flags);
+-	list_for_each_entry_safe(m, tmp, &mappings, list) {
+-		list_del(&m->list);
+-		INIT_LIST_HEAD(&m->list);
+-		__maybe_add_mapping(m);
 -	}
- 
--	r = cell->count++;
--	bio_list_add(&cell->bios, inmate);
-+	} else {
-+		r = 1;
-+		bio_list_add(&cell->bios, inmate);
-+	}
- 	spin_unlock_irqrestore(&prison->lock, flags);
- 
--	if (cell2)
--		mempool_free(cell2, prison->cell_pool);
+-	spin_unlock_irqrestore(&pool->lock, flags);
 -
- 	*ref = cell;
+-	mempool_free(h, pool->endio_hook_pool);
+-}
 -
+ /*----------------------------------------------------------------*/
+ 
+ /*
+@@ -950,9 +928,7 @@ static int ensure_next_mapping(struct pool *pool)
+ static struct new_mapping *get_next_mapping(struct pool *pool)
+ {
+ 	struct new_mapping *r = pool->next_mapping;
+-
+ 	BUG_ON(!pool->next_mapping);
+-
+ 	pool->next_mapping = NULL;
+ 
  	return r;
+@@ -968,6 +944,7 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+ 	struct new_mapping *m = get_next_mapping(pool);
+ 
+ 	INIT_LIST_HEAD(&m->list);
++	m->quiesced = 0;
+ 	m->prepared = 0;
+ 	m->tc = tc;
+ 	m->virt_block = virt_block;
+@@ -976,7 +953,8 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+ 	m->err = 0;
+ 	m->bio = NULL;
+ 
+-	ds_add_work(&pool->ds, &m->list);
++	if (!ds_add_work(&pool->shared_read_ds, &m->list))
++		m->quiesced = 1;
+ 
+ 	/*
+ 	 * IO to pool_dev remaps to the pool target's data_dev.
+@@ -985,9 +963,10 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+ 	 * bio immediately. Otherwise we use kcopyd to clone the data first.
+ 	 */
+ 	if (io_overwrites_block(pool, bio)) {
++		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
++		h->overwrite_mapping = m;
+ 		m->bio = bio;
+ 		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
+-		dm_get_mapinfo(bio)->ptr = m;
+ 		remap_and_issue(tc, bio, data_dest);
+ 	} else {
+ 		struct dm_io_region from, to;
+@@ -1034,6 +1013,7 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+ 	struct new_mapping *m = get_next_mapping(pool);
+ 
+ 	INIT_LIST_HEAD(&m->list);
++	m->quiesced = 1;
+ 	m->prepared = 0;
+ 	m->tc = tc;
+ 	m->virt_block = virt_block;
+@@ -1051,9 +1031,10 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+ 		process_prepared_mapping(m);
+ 
+ 	else if (io_overwrites_block(pool, bio)) {
++		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
++		h->overwrite_mapping = m;
+ 		m->bio = bio;
+ 		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
+-		dm_get_mapinfo(bio)->ptr = m;
+ 		remap_and_issue(tc, bio, data_block);
+ 
+ 	} else {
+@@ -1140,7 +1121,8 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
+  */
+ static void retry_on_resume(struct bio *bio)
+ {
+-	struct thin_c *tc = dm_get_mapinfo(bio)->ptr;
++	struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
++	struct thin_c *tc = h->tc;
+ 	struct pool *pool = tc->pool;
+ 	unsigned long flags;
+ 
+@@ -1206,13 +1188,9 @@ static void process_shared_bio(struct thin_c *tc, struct bio *bio,
+ 	if (bio_data_dir(bio) == WRITE)
+ 		break_sharing(tc, bio, block, &key, lookup_result, cell);
+ 	else {
+-		struct endio_hook *h;
+-		h = mempool_alloc(pool->endio_hook_pool, GFP_NOIO);
++		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
+ 
+-		h->tc = tc;
+-		h->entry = ds_inc(&pool->ds);
+-		save_and_set_endio(bio, &h->saved_bi_end_io, shared_read_endio);
+-		dm_get_mapinfo(bio)->ptr = h;
++		h->shared_read_entry = ds_inc(&pool->shared_read_ds);
+ 
+ 		cell_release_singleton(cell, bio);
+ 		remap_and_issue(tc, bio, lookup_result->block);
+@@ -1336,7 +1314,9 @@ static void process_deferred_bios(struct pool *pool)
+ 	spin_unlock_irqrestore(&pool->lock, flags);
+ 
+ 	while ((bio = bio_list_pop(&bios))) {
+-		struct thin_c *tc = dm_get_mapinfo(bio)->ptr;
++		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
++		struct thin_c *tc = h->tc;
++
+ 		/*
+ 		 * If we've got no free new_mapping structs, and processing
+ 		 * this bio might require one, we pause until there are some
+@@ -1419,6 +1399,18 @@ static void thin_defer_bio(struct thin_c *tc, struct bio *bio)
+ 	wake_worker(pool);
  }
  
-@@ -284,8 +287,10 @@ static void __cell_release(struct cell *cell, struct bio_list *inmates)
++static struct endio_hook *thin_hook_bio(struct thin_c *tc, struct bio *bio)
++{
++	struct pool *pool = tc->pool;
++	struct endio_hook *h = mempool_alloc(pool->endio_hook_pool, GFP_NOIO);
++
++	h->tc = tc;
++	h->shared_read_entry = NULL;
++	h->overwrite_mapping = NULL;
++
++	return h;
++}
++
+ /*
+  * Non-blocking function called from the thin target's map function.
+  */
+@@ -1431,11 +1423,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio,
+ 	struct dm_thin_device *td = tc->td;
+ 	struct dm_thin_lookup_result result;
  
- 	hlist_del(&cell->list);
+-	/*
+-	 * Save the thin context for easy access from the deferred bio later.
+-	 */
+-	map_context->ptr = tc;
+-
++	map_context->ptr = thin_hook_bio(tc, bio);
+ 	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA)) {
+ 		thin_defer_bio(tc, bio);
+ 		return DM_MAPIO_SUBMITTED;
+@@ -1615,7 +1603,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 	pool->low_water_triggered = 0;
+ 	pool->no_free_space = 0;
+ 	bio_list_init(&pool->retry_on_resume_list);
+-	ds_init(&pool->ds);
++	ds_init(&pool->shared_read_ds);
  
--	if (inmates)
-+	if (inmates) {
-+		bio_list_add(inmates, cell->holder);
- 		bio_list_merge(inmates, &cell->bios);
+ 	pool->next_mapping = NULL;
+ 	pool->mapping_pool =
+@@ -2444,6 +2432,32 @@ static int thin_map(struct dm_target *ti, struct bio *bio,
+ 	return thin_bio_map(ti, bio, map_context);
+ }
+ 
++static int thin_endio(struct dm_target *ti,
++		      struct bio *bio, int err,
++		      union map_info *map_context)
++{
++	unsigned long flags;
++	struct endio_hook *h = map_context->ptr;
++	struct list_head work;
++	struct new_mapping *m, *tmp;
++	struct pool *pool = h->tc->pool;
++
++	if (h->shared_read_entry) {
++		INIT_LIST_HEAD(&work);
++		ds_dec(h->shared_read_entry, &work);
++
++		spin_lock_irqsave(&pool->lock, flags);
++		list_for_each_entry_safe(m, tmp, &work, list) {
++			list_del(&m->list);
++			m->quiesced = 1;
++			__maybe_add_mapping(m);
++		}
++		spin_unlock_irqrestore(&pool->lock, flags);
 +	}
- 
- 	mempool_free(cell, prison->cell_pool);
- }
++
++	return 0;
++}
++
+ static void thin_postsuspend(struct dm_target *ti)
+ {
+ 	if (dm_noflush_suspending(ti))
+@@ -2529,6 +2543,7 @@ static struct target_type thin_target = {
+ 	.ctr = thin_ctr,
+ 	.dtr = thin_dtr,
+ 	.map = thin_map,
++	.end_io = thin_endio,
+ 	.postsuspend = thin_postsuspend,
+ 	.status = thin_status,
+ 	.iterate_devices = thin_iterate_devices,
 -- 
 1.7.1
