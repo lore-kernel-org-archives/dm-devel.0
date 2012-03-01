@@ -1,13 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm flakey: check corrupt_bio_byte was configured
-	before calling corrupt_bio_data
-Date: Wed, 29 Feb 2012 19:38:02 -0500
-Message-ID: <1330562282-32508-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2] dm flakey: check corrupt_bio_byte was
+ configured before calling corrupt_bio_data
+Date: Wed, 29 Feb 2012 21:02:29 -0500
+Message-ID: <20120301020229.GA477@redhat.com>
+References: <1330562282-32508-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1330562282-32508-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,11 +21,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: snitzer@redhat.com
+Cc: stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-Otherwise this BUG is easily hit on the first read while the device is
-"down":
+The following BUG is easily hit on the first read that is submitted
+while the device is "down" (and corrupt_bio_byte wasn't configured).
+Example DM table that will hit this BUG: 0 2097152 flakey 8:0 2048 0 30
+
+This issue was introduced with this commit:
+a399879 v3.1-rc1 dm flakey: add corrupt_bio_byte feature
 
 BUG: unable to handle kernel paging request at ffff8801cfce3fff
 IP: [<ffffffffa008c233>] corrupt_bio_data+0x6e/0xae [dm_flakey]
@@ -54,7 +61,10 @@ Call Trace:
  [<ffffffff81390333>] common_interrupt+0x73/0x73
 ...
 
+But luckily the flakey target is only used for testing.
+
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org # 3.1+
 ---
  drivers/md/dm-flakey.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
