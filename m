@@ -1,14 +1,12 @@
-From: Orquidea Salt mas <orquidea.peramor@gmail.com>
-Subject: =?iso-8859-1?q?Reb=E9late_by_self-management=2C_first_?=
-	=?iso-8859-1?q?project_of_free_software_by_which_we_bet_all_/_Reb?=
-	=?iso-8859-1?q?=E9late_por_la_autogesti=F3n=2C_primer_proyecto_de_?=
-	=?iso-8859-1?q?software_libre_por_el_que_apostamos_todas?=
-Date: Fri, 2 Mar 2012 19:52:48 +0100
-Message-ID: <CAHvO04adP3Rt5xnbCfdoz0Eauvv_Vdj-T3wA8fEJ2tErG9u4tw@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm thin: relax hard limit on the maximum size of
+	a metadata device
+Date: Fri,  2 Mar 2012 16:32:33 -0500
+Message-ID: <1330723953-16872-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,212 +18,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: ejt@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Ingl=E9s :
-
-Many already we have contributed to the first project of free software
-dedicated to self-management in this campaign of collective financing,
-it collaborates and it spreads!/
-
-
-Beginning campaign collective financing
-
-http://www.goteo.org/project/rebelaos-publicacion-por-la-autogestion?lang=
-=3Den
-
-
-Login to enter with user of social networks and for would register in Goteo=
- :
-
-http://www.goteo.org/user/login?lang=3Den
-
-
-Rebelaos! Publication by self-management A massive publication that
-floods the public transport, the work centers, the parks, the
-consumption centers, by means of distribution of 500,000 gratuitous
-units, acting simultaneously in all sides and nowhere.
-
-We announce the main tool of a vestibule Web for the management of
-self-sustaining resources by means of Drupal, in addition in the
-publication there will be an article dedicated to free software,
-hardware, It is being prepared in ingl=E8s,  the machinery You can see
-more details in the index of the
-publication    https://n-1.cc/pg/file/read/1151902/indexresumen-de-los-cont=
-enidos-pdf
-
- . A computer system that allows us to share resources in all the
-scopes of our life so that we do not have to generate means different
-for each subject nor for each territory.
-
-A point of contact digitalis to generate projects of life outside
-Capitalism and to margin of the State.
-
-
-A tool to spread and to impel the social transformation through the
-resources that will set out in their contents around self-management,
-the autoorganizaci=F3n, the disobedience and the collective action.
-
-In which the capitalist system goes to the collapse, in a while
-immersed in a deep systemic crisis (ecological, political and
-economic, but mainly of values), where individual and collective of
-people they are being lacking of his fundamental rights, is necessary
-to develop a horizontal collective process where all the human beings
-we pruned to interact in equality of conditions and freedom.
-
-
-To interact means to relate to us (as much human as economically), to
-communicate to us, to cover our basic needs, to generate and to
-protect communal properties, to know and to provide collective
-solutions us problematic that our lives interfere. We want abrir a
-breach within normality in the monotonous life state-capitalist, a day
-anyone, that finally will not be any day.
-
-
-By means of this publication we try:
-
-- To drive a horizontal collective process where all and all we pruned
-to interact in equality of conditions and freedom.
-
- - To create communications network between the people it jeopardize
-with the change and arranged to act.
-
-
- - To find collective solutions to problematic that our lives interfere
-
-
-- To facilitate the access to resources that make possible self-management.
-
-- To participate in the construction of networks of mutual support,
-generated horizontals, asamblearias and from the base.
-
-
- - To publish all this information in an attractive format stops to
-facilitate the access to all the society.
-
-
-
-There are 15 days remaining for the upcoming March 15, the day that
-will come Rebelaos!, Magazine for the selfmanagement
-
-Today, we issue the cover of Rebelaos! (Castilian version) that can be
-displayed on the following link:
-https://n-1.cc/pg/file/read/1200503/portada-15-de-marzo-rebelaos
-The contents of the store owners to us by 15 March. Do you? Do you
-keep on 15 March?
-
-In addition, we have over 200 distribution nodes, distributed
-throughout the Spanish state. Check the map:
-https://afinidadrebelde.crowdmap.com/
-
-On the other hand, the funding campaign continues to move and still
-have 12 days to collect the remaining 6,000 euros. We can all make a
-bit for all the grains of sand become a great beach on March 15. You
-can access the co-financing campaign:
-http://www.goteo.org/project/rebelaos-publicacion-por-la-autogestion
-
-Rebel Affinity group
-www.rebelaos.net
-
-
----------------------------------------------------------------------------=
-----
-Castellano:
-
-Muchos ya hemos aportado al primer proyecto de software libre dedicado
-a la la financiaci=F3n colectiva, colabora y diffunde !!!!!
-
-Inicio campa=F1a financiaci=F3n colectiva goteo.org
-
-www.goteo.org/project/rebelaos-publicacion-por-la-autogestion
-
-
-Link para registrarse en Goteo y acceder a redes sociales para
-colaborar en la difus=EDn
-
-http://www.goteo.org/user/login
-
-=A1Rebelaos! Publicaci=F3n por la autogesti=F3n
-
-Una publicaci=F3n masiva que inunde el transporte p=FAblico, los centros
-de trabajo, los parques, los centros de consumo, mediante la
-distribuci=F3n de 500.000 ejemplares gratuitos, actuando simult=E1neamente
-en todos lados y en ninguna parte.
-
-
-Anunciamos la herramienta principal de un  portal web para la gesti=F3n
-de recursos autogestionados mediante Drupal, adem=E1s en  la publicaci=F3n
-habr=E1 un art=EDculo dedicado al software libre, el hardware, la
-maquinaria... Puedes ver m=E1s detalles en el =EDndice de la publicaci=F3n
-https://n-1.cc/pg/file/read/1151902/indexresumen-de-los-contenidos-pdf
-
-Un sistema inf=F3rmatico que nos permita compartir recursos en todos los
-=E1mbitos de nuestra vida de forma que no tengamos que generar un medio
-distinto para cada tema ni para cada territorio. Un punto de encuentro
-digital para generar proyectos de vida fuera del capitalismo y al
-margen del Estado.
-
-
-Una herramienta para difundir e impulsar la transformaci=F3n social a
-trav=E9s de los recursos que se propondr=E1n en sus contenidos en torno a
-la autogesti=F3n, la autoorganizaci=F3n, la desobediencia y la acci=F3n
-colectiva.
-
-En un momento en que el sistema capitalista se dirige al colapso,
-inmerso en una profunda crisis sist=E9mica (ecol=F3gica, pol=EDtica y
-econ=F3mica, pero principalmente de valores), donde individuos y
-colectivos de personas est=E1n siendo desprovistos de sus derechos
-fundamentales, es necesario desarrollar un proceso colectivo
-horizontal donde todos los seres humanos podamos interactuar en
-igualdad de condiciones y en libertad.
-
-Interactuar significa relacionarnos (tanto humana como
-econ=F3micamente), comunicarnos, cubrir nuestras necesidades b=E1sicas,
-generar y proteger bienes comunes, conocernos y dar soluciones
-colectivas a problem=E1ticas que interfieren nuestras vidas. Queremos
-abrir una brecha dentro de la normalidad en la mon=F3tona vida
-estatal-capitalista, un d=EDa cualquiera, que finalmente no ser=E1
-cualquier d=EDa.
-
-Mediante esta publicaci=F3n pretendemos:
-
-- Impulsar un proceso colectivo horizontal donde todos y todas podamos
-interactuar en igualdad de condiciones y en libertad.
-
-- Crear red de comunicaciones entre las personas comprometidas con el
-cambio y dispuestas a actuar.
-
-- Encontrar soluciones colectivas a problem=E1ticas que interfieren
-nuestras vidas.
-
-- Facilitar el acceso a recursos que posibiliten la autogesti=F3n.
-
-- Participar en la construcci=F3n de redes de apoyo mutuo, horizontales,
-asamblearias y generadas desde la base.
-
-- Publicar toda esta informaci=F3n en un formato atractivo para
-facilitar el acceso a toda la sociedad.
-
-Son 15 los d=EDas que restan para el pr=F3ximo 15 de marzo, d=EDa en el que
-ver=E1 la luz =A1Rebelaos!, publicaci=F3n por la autogesti=F3n.
-
-Hoy, hacemos p=FAblica la portada de =A1Rebelaos! (versi=F3n en castellano)
-que pod=E9is visualizar en el siguiente enlace:
-https://n-1.cc/pg/file/read/1200503/portada-15-de-marzo-rebelaos
-El contenido de los titulares nos los guardamos para el 15 de marzo.
-=BFY t=FA? =BFTe guardas el 15 de marzo?
-
-Adem=E1s, ya hemos superado los 200 nodos de distribuci=F3n, repartidos
-por todo el estado espa=F1ol. Ver el mapa:
-https://afinidadrebelde.crowdmap.com/
-
-Por otro lado, la campa=F1a de financiaci=F3n contin=FAa avanzando y todav=
-=EDa
-quedan 12 d=EDas para reunir los 6.000 euros que restan. Todas podemos
-aportar un poco para que todos los granitos de arena se conviertan en
-una gran playa el 15 de marzo. Pod=E9is acceder a la campa=F1a de
-cofinanciaci=F3n en:
-http://www.goteo.org/project/rebelaos-publicacion-por-la-autogestion
-
-Colectivo Afinidad Rebelde
-www.rebelaos.net
+The thin metadata format can only make use of a device that is <=
+METADATA_DEV_MAX_SECTORS (currently 15.9375 GB).  Therefore, there is no
+practical benefit to using a larger device.
+
+However, it may be that other factors impose a certain granularity for
+the space that is allocated to a device (E.g. lvm2 can impose a coarse
+granularity through the use of large, >= 1 GB, physical extents).
+
+Rather than reject a larger metadata device, during thin-pool device
+construction, switch to allowing it but issue a warning if a device
+larger than METADATA_DEV_MAX_SECTORS_NEAREST_POWER_OF_2 (16 GB) is
+provided.  Any space over 15.9375 GB will not be used.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ Documentation/device-mapper/thin-provisioning.txt |    8 +++++---
+ drivers/md/dm-thin-metadata.c                     |    5 ++++-
+ drivers/md/dm-thin-metadata.h                     |   15 +++++++++++++++
+ drivers/md/dm-thin.c                              |   18 ++++--------------
+ 4 files changed, 28 insertions(+), 18 deletions(-)
+
+diff --git a/Documentation/device-mapper/thin-provisioning.txt b/Documentation/device-mapper/thin-provisioning.txt
+index 57076dd..ca54bac 100644
+--- a/Documentation/device-mapper/thin-provisioning.txt
++++ b/Documentation/device-mapper/thin-provisioning.txt
+@@ -75,10 +75,12 @@ less sharing than average you'll need a larger-than-average metadata device.
+ 
+ As a guide, we suggest you calculate the number of bytes to use in the
+ metadata device as 48 * $data_dev_size / $data_block_size but round it up
+-to 2MB if the answer is smaller.  The largest size supported is 16GB.
++to 2MB if the answer is smaller.  If you're creating large numbers of
++snapshots which are recording large amounts of change, you may find you
++need to increase this.
+ 
+-If you're creating large numbers of snapshots which are recording large
+-amounts of change, you may need find you need to increase this.
++The largest size supported, without a warning about space being wasted,
++is 16GB.
+ 
+ Reloading a pool table
+ ----------------------
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index f3ba61d..1783741 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -718,7 +718,10 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
+ 	disk_super->version = cpu_to_le32(THIN_VERSION);
+ 	disk_super->time = 0;
+ 	disk_super->metadata_block_size = cpu_to_le32(THIN_METADATA_BLOCK_SIZE >> SECTOR_SHIFT);
+-	disk_super->metadata_nr_blocks = cpu_to_le64(bdev_size >> SECTOR_TO_BLOCK_SHIFT);
++	if (bdev_size > METADATA_DEV_MAX_SECTORS)
++		disk_super->metadata_nr_blocks = cpu_to_le64(METADATA_DEV_MAX_SECTORS >> SECTOR_TO_BLOCK_SHIFT);	
++	else
++		disk_super->metadata_nr_blocks = cpu_to_le64(bdev_size >> SECTOR_TO_BLOCK_SHIFT);
+ 	disk_super->data_block_size = cpu_to_le32(data_block_size);
+ 
+ 	r = dm_bm_unlock(sblock);
+diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+index cfc7d0b..df290fc 100644
+--- a/drivers/md/dm-thin-metadata.h
++++ b/drivers/md/dm-thin-metadata.h
+@@ -11,6 +11,21 @@
+ 
+ #define THIN_METADATA_BLOCK_SIZE 4096
+ 
++/*
++ * The metadata device is currently limited in size.
++ *
++ * We have one block of index, which can hold 255 index entries.  Each
++ * index entry contains allocation info about 16k metadata blocks.
++ */
++#define METADATA_DEV_MAX_SECTORS (255 * (1 << 14) * (THIN_METADATA_BLOCK_SIZE / (1 << SECTOR_SHIFT)))
++
++/*
++ * Userspace may need to provide a metadata device that is larger than
++ * METADATA_DEV_MAX_SECTORS.  Anything larger than the power of 2 nearest
++ * to METADATA_DEV_MAX_SECTORS will trigger a warning.
++ */
++#define METADATA_DEV_MAX_SECTORS_NEAREST_POWER_OF_2 (16 * (1024 * 1024 * 1024 >> SECTOR_SHIFT))
++
+ /*----------------------------------------------------------------*/
+ 
+ struct dm_pool_metadata;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 2b1d5bd..d9ea643 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -33,16 +33,6 @@
+ #define DATA_DEV_BLOCK_SIZE_MAX_SECTORS (1024 * 1024 * 1024 >> SECTOR_SHIFT)
+ 
+ /*
+- * The metadata device is currently limited in size.  The limitation is
+- * checked lower down in dm-space-map-metadata, but we also check it here
+- * so we can fail early.
+- *
+- * We have one block of index, which can hold 255 index entries.  Each
+- * index entry contains allocation info about 16k metadata blocks.
+- */
+-#define METADATA_DEV_MAX_SECTORS (255 * (1 << 14) * (THIN_METADATA_BLOCK_SIZE / (1 << SECTOR_SHIFT)))
+-
+-/*
+  * Device id is restricted to 24 bits.
+  */
+ #define MAX_DEV_ID ((1 << 24) - 1)
+@@ -1927,10 +1917,10 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	}
+ 
+ 	metadata_dev_size = i_size_read(metadata_dev->bdev->bd_inode) >> SECTOR_SHIFT;
+-	if (metadata_dev_size > METADATA_DEV_MAX_SECTORS) {
+-		ti->error = "Metadata device is too large";
+-		r = -EINVAL;
+-		goto out_metadata;
++	if (metadata_dev_size > METADATA_DEV_MAX_SECTORS_NEAREST_POWER_OF_2) {
++		char b[BDEVNAME_SIZE];
++		DMWARN("Metadata device %s is larger than %u sectors, excess space will not be used",
++		       bdevname(metadata_dev->bdev, b), METADATA_DEV_MAX_SECTORS);
+ 	}
+ 
+ 	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, &data_dev);
+-- 
+1.7.1
