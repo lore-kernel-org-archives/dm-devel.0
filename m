@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm thin: relax hard limit on the maximum size of
-	a metadata device
-Date: Fri,  2 Mar 2012 16:32:33 -0500
-Message-ID: <1330723953-16872-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 1/2] dm thin: rename dm_thin_id to more generic
+	dm_dev_id
+Date: Fri,  2 Mar 2012 18:59:29 -0500
+Message-ID: <1330732770-18621-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,124 +21,246 @@ To: dm-devel@redhat.com
 Cc: ejt@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-The thin metadata format can only make use of a device that is <=
-METADATA_DEV_MAX_SECTORS (currently 15.9375 GB).  Therefore, there is no
-practical benefit to using a larger device.
-
-However, it may be that other factors impose a certain granularity for
-the space that is allocated to a device (E.g. lvm2 can impose a coarse
-granularity through the use of large, >= 1 GB, physical extents).
-
-Rather than reject a larger metadata device, during thin-pool device
-construction, switch to allowing it but issue a warning if a device
-larger than METADATA_DEV_MAX_SECTORS_NEAREST_POWER_OF_2 (16 GB) is
-provided.  Any space over 15.9375 GB will not be used.
+dm_thin_id is too specific to thin devices.  Rename to allow for reuse
+by other targets.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- Documentation/device-mapper/thin-provisioning.txt |    8 +++++---
- drivers/md/dm-thin-metadata.c                     |    5 ++++-
- drivers/md/dm-thin-metadata.h                     |   15 +++++++++++++++
- drivers/md/dm-thin.c                              |   18 ++++--------------
- 4 files changed, 28 insertions(+), 18 deletions(-)
+ drivers/md/dm-thin-metadata.c |   24 ++++++++++++------------
+ drivers/md/dm-thin-metadata.h |   14 +++++++-------
+ drivers/md/dm-thin.c          |   16 ++++++++--------
+ 3 files changed, 27 insertions(+), 27 deletions(-)
 
-diff --git a/Documentation/device-mapper/thin-provisioning.txt b/Documentation/device-mapper/thin-provisioning.txt
-index 57076dd..ca54bac 100644
---- a/Documentation/device-mapper/thin-provisioning.txt
-+++ b/Documentation/device-mapper/thin-provisioning.txt
-@@ -75,10 +75,12 @@ less sharing than average you'll need a larger-than-average metadata device.
- 
- As a guide, we suggest you calculate the number of bytes to use in the
- metadata device as 48 * $data_dev_size / $data_block_size but round it up
--to 2MB if the answer is smaller.  The largest size supported is 16GB.
-+to 2MB if the answer is smaller.  If you're creating large numbers of
-+snapshots which are recording large amounts of change, you may find you
-+need to increase this.
- 
--If you're creating large numbers of snapshots which are recording large
--amounts of change, you may need find you need to increase this.
-+The largest size supported, without a warning about space being wasted,
-+is 16GB.
- 
- Reloading a pool table
- ----------------------
 diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index f3ba61d..1783741 100644
+index 1783741..62e7024 100644
 --- a/drivers/md/dm-thin-metadata.c
 +++ b/drivers/md/dm-thin-metadata.c
-@@ -718,7 +718,10 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
- 	disk_super->version = cpu_to_le32(THIN_VERSION);
- 	disk_super->time = 0;
- 	disk_super->metadata_block_size = cpu_to_le32(THIN_METADATA_BLOCK_SIZE >> SECTOR_SHIFT);
--	disk_super->metadata_nr_blocks = cpu_to_le64(bdev_size >> SECTOR_TO_BLOCK_SHIFT);
-+	if (bdev_size > METADATA_DEV_MAX_SECTORS)
-+		disk_super->metadata_nr_blocks = cpu_to_le64(METADATA_DEV_MAX_SECTORS >> SECTOR_TO_BLOCK_SHIFT);	
-+	else
-+		disk_super->metadata_nr_blocks = cpu_to_le64(bdev_size >> SECTOR_TO_BLOCK_SHIFT);
- 	disk_super->data_block_size = cpu_to_le32(data_block_size);
+@@ -184,7 +184,7 @@ struct dm_pool_metadata {
+ struct dm_thin_device {
+ 	struct list_head list;
+ 	struct dm_pool_metadata *pmd;
+-	dm_thin_id id;
++	dm_dev_id id;
  
- 	r = dm_bm_unlock(sblock);
+ 	int open_count;
+ 	int changed;
+@@ -799,7 +799,7 @@ int dm_pool_metadata_close(struct dm_pool_metadata *pmd)
+  * on failure, @td is not initialized.
+  */
+ static int __open_device(struct dm_pool_metadata *pmd,
+-			 dm_thin_id dev, int create,
++			 dm_dev_id dev, int create,
+ 			 struct dm_thin_device **td)
+ {
+ 	int r, changed = 0;
+@@ -867,7 +867,7 @@ static void __close_device(struct dm_thin_device *td)
+ }
+ 
+ static int __create_thin(struct dm_pool_metadata *pmd,
+-			 dm_thin_id dev)
++			 dm_dev_id dev)
+ {
+ 	int r;
+ 	dm_block_t dev_root;
+@@ -910,7 +910,7 @@ static int __create_thin(struct dm_pool_metadata *pmd,
+ 	return r;
+ }
+ 
+-int dm_pool_create_thin(struct dm_pool_metadata *pmd, dm_thin_id dev)
++int dm_pool_create_thin(struct dm_pool_metadata *pmd, dm_dev_id dev)
+ {
+ 	int r;
+ 
+@@ -923,7 +923,7 @@ int dm_pool_create_thin(struct dm_pool_metadata *pmd, dm_thin_id dev)
+ 
+ static int __set_snapshot_details(struct dm_pool_metadata *pmd,
+ 				  struct dm_thin_device *snap,
+-				  dm_thin_id origin, uint32_t time)
++				  dm_dev_id origin, uint32_t time)
+ {
+ 	int r;
+ 	struct dm_thin_device *td;
+@@ -943,7 +943,7 @@ static int __set_snapshot_details(struct dm_pool_metadata *pmd,
+ }
+ 
+ static int __create_snap(struct dm_pool_metadata *pmd,
+-			 dm_thin_id dev, dm_thin_id origin)
++			 dm_dev_id dev, dm_dev_id origin)
+ {
+ 	int r;
+ 	dm_block_t origin_root;
+@@ -1000,8 +1000,8 @@ bad:
+ }
+ 
+ int dm_pool_create_snap(struct dm_pool_metadata *pmd,
+-				 dm_thin_id dev,
+-				 dm_thin_id origin)
++				 dm_dev_id dev,
++				 dm_dev_id origin)
+ {
+ 	int r;
+ 
+@@ -1012,7 +1012,7 @@ int dm_pool_create_snap(struct dm_pool_metadata *pmd,
+ 	return r;
+ }
+ 
+-static int __delete_device(struct dm_pool_metadata *pmd, dm_thin_id dev)
++static int __delete_device(struct dm_pool_metadata *pmd, dm_dev_id dev)
+ {
+ 	int r;
+ 	uint64_t key = dev;
+@@ -1045,7 +1045,7 @@ static int __delete_device(struct dm_pool_metadata *pmd, dm_thin_id dev)
+ }
+ 
+ int dm_pool_delete_thin_device(struct dm_pool_metadata *pmd,
+-			       dm_thin_id dev)
++			       dm_dev_id dev)
+ {
+ 	int r;
+ 
+@@ -1188,7 +1188,7 @@ int dm_pool_get_held_metadata_root(struct dm_pool_metadata *pmd,
+ 	return r;
+ }
+ 
+-int dm_pool_open_thin_device(struct dm_pool_metadata *pmd, dm_thin_id dev,
++int dm_pool_open_thin_device(struct dm_pool_metadata *pmd, dm_dev_id dev,
+ 			     struct dm_thin_device **td)
+ {
+ 	int r;
+@@ -1209,7 +1209,7 @@ int dm_pool_close_thin_device(struct dm_thin_device *td)
+ 	return 0;
+ }
+ 
+-dm_thin_id dm_thin_dev_id(struct dm_thin_device *td)
++dm_dev_id dm_thin_dev_id(struct dm_thin_device *td)
+ {
+ 	return td->id;
+ }
 diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index cfc7d0b..df290fc 100644
+index 4460857..511a223 100644
 --- a/drivers/md/dm-thin-metadata.h
 +++ b/drivers/md/dm-thin-metadata.h
-@@ -11,6 +11,21 @@
- 
- #define THIN_METADATA_BLOCK_SIZE 4096
- 
-+/*
-+ * The metadata device is currently limited in size.
-+ *
-+ * We have one block of index, which can hold 255 index entries.  Each
-+ * index entry contains allocation info about 16k metadata blocks.
-+ */
-+#define METADATA_DEV_MAX_SECTORS (255 * (1 << 14) * (THIN_METADATA_BLOCK_SIZE / (1 << SECTOR_SHIFT)))
-+
-+/*
-+ * Userspace may need to provide a metadata device that is larger than
-+ * METADATA_DEV_MAX_SECTORS.  Anything larger than the power of 2 nearest
-+ * to METADATA_DEV_MAX_SECTORS will trigger a warning.
-+ */
-+#define METADATA_DEV_MAX_SECTORS_NEAREST_POWER_OF_2 (16 * (1024 * 1024 * 1024 >> SECTOR_SHIFT))
-+
- /*----------------------------------------------------------------*/
- 
- struct dm_pool_metadata;
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 2b1d5bd..d9ea643 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -33,16 +33,6 @@
- #define DATA_DEV_BLOCK_SIZE_MAX_SECTORS (1024 * 1024 * 1024 >> SECTOR_SHIFT)
+@@ -34,7 +34,7 @@ struct dm_thin_device;
+ /*
+  * Device identifier
+  */
+-typedef uint64_t dm_thin_id;
++typedef uint64_t dm_dev_id;
  
  /*
-- * The metadata device is currently limited in size.  The limitation is
-- * checked lower down in dm-space-map-metadata, but we also check it here
-- * so we can fail early.
-- *
-- * We have one block of index, which can hold 255 index entries.  Each
-- * index entry contains allocation info about 16k metadata blocks.
-- */
--#define METADATA_DEV_MAX_SECTORS (255 * (1 << 14) * (THIN_METADATA_BLOCK_SIZE / (1 << SECTOR_SHIFT)))
--
--/*
-  * Device id is restricted to 24 bits.
+  * Reopens or creates a new, empty metadata volume.
+@@ -55,7 +55,7 @@ int dm_pool_metadata_close(struct dm_pool_metadata *pmd);
+ /*
+  * Device creation/deletion.
   */
- #define MAX_DEV_ID ((1 << 24) - 1)
-@@ -1927,10 +1917,10 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	}
+-int dm_pool_create_thin(struct dm_pool_metadata *pmd, dm_thin_id dev);
++int dm_pool_create_thin(struct dm_pool_metadata *pmd, dm_dev_id dev);
  
- 	metadata_dev_size = i_size_read(metadata_dev->bdev->bd_inode) >> SECTOR_SHIFT;
--	if (metadata_dev_size > METADATA_DEV_MAX_SECTORS) {
--		ti->error = "Metadata device is too large";
--		r = -EINVAL;
--		goto out_metadata;
-+	if (metadata_dev_size > METADATA_DEV_MAX_SECTORS_NEAREST_POWER_OF_2) {
-+		char b[BDEVNAME_SIZE];
-+		DMWARN("Metadata device %s is larger than %u sectors, excess space will not be used",
-+		       bdevname(metadata_dev->bdev, b), METADATA_DEV_MAX_SECTORS);
- 	}
+ /*
+  * An internal snapshot.
+@@ -63,8 +63,8 @@ int dm_pool_create_thin(struct dm_pool_metadata *pmd, dm_thin_id dev);
+  * You can only snapshot a quiesced origin i.e. one that is either
+  * suspended or not instanced at all.
+  */
+-int dm_pool_create_snap(struct dm_pool_metadata *pmd, dm_thin_id dev,
+-			dm_thin_id origin);
++int dm_pool_create_snap(struct dm_pool_metadata *pmd, dm_dev_id dev,
++			dm_dev_id origin);
  
- 	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, &data_dev);
+ /*
+  * Deletes a virtual device from the metadata.  It _is_ safe to call this
+@@ -72,7 +72,7 @@ int dm_pool_create_snap(struct dm_pool_metadata *pmd, dm_thin_id dev,
+  * failing.  You still need to call close() on the device.
+  */
+ int dm_pool_delete_thin_device(struct dm_pool_metadata *pmd,
+-			       dm_thin_id dev);
++			       dm_dev_id dev);
+ 
+ /*
+  * Commits _all_ metadata changes: device creation, deletion, mapping
+@@ -106,12 +106,12 @@ int dm_pool_get_held_metadata_root(struct dm_pool_metadata *pmd,
+ /*
+  * Opening the same device more than once will fail with -EBUSY.
+  */
+-int dm_pool_open_thin_device(struct dm_pool_metadata *pmd, dm_thin_id dev,
++int dm_pool_open_thin_device(struct dm_pool_metadata *pmd, dm_dev_id dev,
+ 			     struct dm_thin_device **td);
+ 
+ int dm_pool_close_thin_device(struct dm_thin_device *td);
+ 
+-dm_thin_id dm_thin_dev_id(struct dm_thin_device *td);
++dm_dev_id dm_thin_dev_id(struct dm_thin_device *td);
+ 
+ struct dm_thin_lookup_result {
+ 	dm_block_t block;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index d9ea643..536835f 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -107,7 +107,7 @@ struct bio_prison;
+ 
+ struct cell_key {
+ 	int virtual;
+-	dm_thin_id dev;
++	dm_dev_id dev;
+ 	dm_block_t block;
+ };
+ 
+@@ -560,7 +560,7 @@ struct pool_c {
+ struct thin_c {
+ 	struct dm_dev *pool_dev;
+ 	struct dm_dev *origin_dev;
+-	dm_thin_id dev_id;
++	dm_dev_id dev_id;
+ 
+ 	struct pool *pool;
+ 	struct dm_thin_device *td;
+@@ -2116,7 +2116,7 @@ static int check_arg_count(unsigned argc, unsigned args_required)
+ 	return 0;
+ }
+ 
+-static int read_dev_id(char *arg, dm_thin_id *dev_id, int warning)
++static int read_dev_id(char *arg, dm_dev_id *dev_id, int warning)
+ {
+ 	if (!kstrtoull(arg, 10, (unsigned long long *)dev_id) &&
+ 	    *dev_id <= MAX_DEV_ID)
+@@ -2130,7 +2130,7 @@ static int read_dev_id(char *arg, dm_thin_id *dev_id, int warning)
+ 
+ static int process_create_thin_mesg(unsigned argc, char **argv, struct pool *pool)
+ {
+-	dm_thin_id dev_id;
++	dm_dev_id dev_id;
+ 	int r;
+ 
+ 	r = check_arg_count(argc, 2);
+@@ -2153,8 +2153,8 @@ static int process_create_thin_mesg(unsigned argc, char **argv, struct pool *poo
+ 
+ static int process_create_snap_mesg(unsigned argc, char **argv, struct pool *pool)
+ {
+-	dm_thin_id dev_id;
+-	dm_thin_id origin_dev_id;
++	dm_dev_id dev_id;
++	dm_dev_id origin_dev_id;
+ 	int r;
+ 
+ 	r = check_arg_count(argc, 3);
+@@ -2181,7 +2181,7 @@ static int process_create_snap_mesg(unsigned argc, char **argv, struct pool *poo
+ 
+ static int process_delete_mesg(unsigned argc, char **argv, struct pool *pool)
+ {
+-	dm_thin_id dev_id;
++	dm_dev_id dev_id;
+ 	int r;
+ 
+ 	r = check_arg_count(argc, 2);
+@@ -2201,7 +2201,7 @@ static int process_delete_mesg(unsigned argc, char **argv, struct pool *pool)
+ 
+ static int process_set_transaction_id_mesg(unsigned argc, char **argv, struct pool *pool)
+ {
+-	dm_thin_id old_id, new_id;
++	dm_dev_id old_id, new_id;
+ 	int r;
+ 
+ 	r = check_arg_count(argc, 3);
 -- 
 1.7.1
