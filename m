@@ -1,1212 +1,1141 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/2 v2] dm thin: elevate the bio_prison and
- deferred_set code to allow for re-use
-Date: Fri, 2 Mar 2012 22:13:21 -0500
-Message-ID: <20120303031320.GA20103@redhat.com>
-References: <1330732770-18621-1-git-send-email-snitzer@redhat.com>
-	<1330732770-18621-2-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: remake of the verity target
+Date: Sun, 4 Mar 2012 14:18:39 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1203031340340.10937@file.rdu.redhat.com>
+References: <1330648393-20692-1-git-send-email-msb@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1330732770-18621-2-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: ejt@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1330648393-20692-1-git-send-email-msb@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mandeep Singh Baines <msb@chromium.org>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, Steffen Klassert <steffen.klassert@secunet.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-Allow other DM targets to make use of the bio_prison and deferred_set
-infrastructure.  Code elevated to drivers/md/dm-bio-prison.[hc]
+Hi
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Here I'm posting remake of the dm-verity target originall developed by 
+Mandeep Singh Baines. It has a compatible target line syntax, so it can be 
+used as a drop-in replacement.
+
+The major difference is that this driver uses dm-bufio to manage cache of 
+hash blocks in memory. We talked with Alasdair about using dm-bufio for 
+caching and I concluded that it is simpler to rewrite the code rather than 
+transform the original Google code with patches.
+
+Because of dm-bufio, memory consumption is not dependent on device size 
+(if the system starts running out of memory, dm-bufio discards cached 
+blocks loaded in memory).
+
+This implementation is smaller, because (unlike the original 
+implementation), it doesn't create persistent in-memory structures.
+
+This implementation is faster than the original. It uses clustered 
+prefetch to prefetch several hash blocks at once, greatly improving 
+performance if the data partition and hash partition are located on the 
+same disk (the prefetch cluster can be set with prefetch_cluster module 
+parameter).
+
+Mikulas
+
 ---
- drivers/md/Makefile           |    2 
- drivers/md/dm-bio-prison.c    |  336 ++++++++++++++++++++++++++++++++
- drivers/md/dm-bio-prison.h    |  109 ++++++++++
- drivers/md/dm-thin-metadata.h |    6 
- drivers/md/dm-thin.c          |  438 +++---------------------------------------
- 5 files changed, 483 insertions(+), 408 deletions(-)
- create mode 100644 drivers/md/dm-bio-prison.c
- create mode 100644 drivers/md/dm-bio-prison.h
 
-Index: linux-2.6/drivers/md/Makefile
+Disk: Maxtor Atlas 15k2 146GB, 3.8GB partition
+
+The following tests were made:
+dd if=/dev/mapper/verity of=/dev/null bs=1M
+fsck.ext2 -fn -C 0 /dev/mapper/verity
+fio --rw=randread --size=200M --bsrange=1k-128k --filename=/dev/mapper/verity --name=job1 --name=job2 --name=job3 --name=job4
+
+raw partition:
+dd:			42s
+fsck:			11s
+fio:			13s
+
+original google dm-verity implementation:
+dd (first time):	571s
+dd (next time):		46s
+fsck (first time):	39s
+fsck (next time):	10s
+fio (first time):	26s
+fio (next time):	24s
+
+my vm-verity implementation:
+dd (first time):	45s
+dd (next time):		43s
+fsck (first time):	11s
+fsck (next time):	11s
+fio (first time):	14s
+fio (next time):	14s
+
+---
+
+Remake of the google dm-verity patch.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/Kconfig     |   17 +
+ drivers/md/Makefile    |    1 
+ drivers/md/dm-bufio.c  |   97 ++++--
+ drivers/md/dm-bufio.h  |    8 
+ drivers/md/dm-verity.c |  785 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 887 insertions(+), 21 deletions(-)
+
+Index: linux-3.3-rc5-fast/drivers/md/Kconfig
 ===================================================================
---- linux-2.6.orig/drivers/md/Makefile
-+++ linux-2.6/drivers/md/Makefile
-@@ -3,7 +3,7 @@
- #
+--- linux-3.3-rc5-fast.orig/drivers/md/Kconfig	2012-03-03 05:19:33.000000000 +0100
++++ linux-3.3-rc5-fast/drivers/md/Kconfig	2012-03-03 19:39:30.000000000 +0100
+@@ -388,4 +388,21 @@ config DM_FLAKEY
+        ---help---
+          A target that intermittently fails I/O for debugging purposes.
  
- dm-mod-y	+= dm.o dm-table.o dm-target.o dm-linear.o dm-stripe.o \
--		   dm-ioctl.o dm-io.o dm-kcopyd.o dm-sysfs.o
-+		   dm-ioctl.o dm-io.o dm-kcopyd.o dm-sysfs.o dm-bio-prison.o
- dm-multipath-y	+= dm-path-selector.o dm-mpath.o
- dm-snapshot-y	+= dm-snap.o dm-exception-store.o dm-snap-transient.o \
- 		    dm-snap-persistent.o
-Index: linux-2.6/drivers/md/dm-bio-prison.c
-===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-bio-prison.c
-@@ -0,0 +1,336 @@
-+/*
-+ * Copyright (C) 2012 Red Hat.
-+ *
-+ * This file is released under the GPL.
-+ */
++config DM_VERITY
++	tristate "Verity target support"
++	depends on BLK_DEV_DM
++	select CRYPTO
++	select CRYPTO_HASH
++	select DM_BUFIO
++	---help---
++	  This device-mapper target allows you to create a device that
++	  transparently integrity checks the data on it. You'll need to
++	  activate the digests you're going to use in the cryptoapi
++	  configuration.
 +
-+#include "dm-bio-prison.h"
++	  To compile this code as a module, choose M here: the module will
++	  be called dm-verity.
++
++	  If unsure, say N.
++
+ endif # MD
+Index: linux-3.3-rc5-fast/drivers/md/Makefile
+===================================================================
+--- linux-3.3-rc5-fast.orig/drivers/md/Makefile	2012-03-03 05:19:33.000000000 +0100
++++ linux-3.3-rc5-fast/drivers/md/Makefile	2012-03-03 19:39:30.000000000 +0100
+@@ -29,6 +29,7 @@ obj-$(CONFIG_MD_FAULTY)		+= faulty.o
+ obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
+ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
+ obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
++obj-$(CONFIG_DM_VERITY)		+= dm-verity.o
+ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
+ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+ obj-$(CONFIG_DM_FLAKEY)		+= dm-flakey.o
+Index: linux-3.3-rc5-fast/drivers/md/dm-verity.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-3.3-rc5-fast/drivers/md/dm-verity.c	2012-03-03 05:51:10.000000000 +0100
+@@ -0,0 +1,785 @@
++/*
++ * Copyright (C) 2012 Red Hat, Inc.
++ *
++ * Author: Mikulas Patocka <mpatocka@redhat.com>
++ *
++ * Based on Chromium dm-verity driver (C) 2011 The Chromium OS Authors
++ *
++ * This file is released under the GPLv2.
++ *
++ * Device mapper target parameters:
++ *	<version>	0
++ *	<data device>
++ *	<hash device>
++ *	<hash start>	(typically 0)
++ *	<block size>	(typically 4096)
++ *	<algorithm>
++ *	<digest>
++ *	optional parameters:
++ *		<salt> (should have 32 bytes for compatibility with Google code)
++ *		<hash block size> (by default it is the same as data block size)
++ *
++ * In the file "/sys/module/dm_verity/parameters/prefetch_cluster" you can set
++ * default prefetch value. Data are read in "prefetch_cluster" chunks from the
++ * hash device. Prefetch cluster greatly improves performance when data and hash
++ * are on the same disk on different partitions.
++ */
 +
 +#include <linux/module.h>
++#include <linux/device-mapper.h>
++#include <crypto/hash.h>
++#include "dm-bufio.h"
 +
-+/*----------------------------------------------------------------*/
++#define DM_MSG_PREFIX			"verity"
 +
-+static uint32_t calc_nr_buckets(unsigned nr_cells)
++#define DM_VERITY_IO_VEC_INLINE		16
++#define DM_VERITY_MEMPOOL_SIZE		4
++#define DM_VERITY_PREFETCH_SIZE		262144
++
++#define DM_VERITY_MAX_LEVELS		63
++
++static unsigned prefetch_cluster = DM_VERITY_PREFETCH_SIZE;
++
++module_param_named(prefetch_cluster, prefetch_cluster, uint, S_IRUGO | S_IWUSR);
++
++struct dm_verity {
++	struct dm_dev *data_dev;
++	struct dm_dev *hash_dev;
++	struct dm_target *ti;
++	struct dm_bufio_client *bufio;
++	char *alg_name;
++	struct crypto_shash *tfm;
++	u8 *root_digest;
++	u8 *salt;
++	unsigned salt_size;
++	sector_t data_start;
++	sector_t hash_start;
++	sector_t data_blocks;
++	sector_t hash_blocks;
++	unsigned char data_dev_block_bits;
++	unsigned char hash_dev_block_bits;
++	unsigned char hash_per_block_bits;
++	unsigned char levels;
++	unsigned digest_size;
++	unsigned shash_descsize;
++
++	mempool_t *io_mempool;
++	mempool_t *vec_mempool;
++
++	struct workqueue_struct *verify_wq;
++
++	sector_t hash_level_block[DM_VERITY_MAX_LEVELS];
++};
++
++struct dm_verity_io {
++	struct dm_verity *v;
++	struct bio *bio;
++	bio_end_io_t *orig_bi_end_io;
++	void *orig_bi_private;
++	sector_t block;
++	unsigned n_blocks;
++	struct bio_vec *io_vec;
++	unsigned io_vec_size;
++	struct work_struct work;
++	struct bio_vec io_vec_inline[DM_VERITY_IO_VEC_INLINE];
++	/* u8 hash_desc[crypto_shash_descsize(v->tfm)]; */
++	/* u8 real_digest[v->digest_size]; */
++	/* u8 want_digest[v->digest_size]; */
++};
++
++static struct shash_desc *io_hash_desc(struct dm_verity *v, struct dm_verity_io *io)
 +{
-+	uint32_t n = 128;
-+
-+	nr_cells /= 4;
-+	nr_cells = min(nr_cells, 8192u);
-+
-+	while (n < nr_cells)
-+		n <<= 1;
-+
-+	return n;
++	return (struct shash_desc *)(io + 1);
 +}
 +
-+/*
-+ * @nr_cells should be the number of cells you want in use _concurrently_.
-+ * Don't confuse it with the number of distinct keys.
-+ */
-+struct bio_prison *dm_prison_create(unsigned nr_cells)
++static u8 *io_real_digest(struct dm_verity *v, struct dm_verity_io *io)
 +{
-+	unsigned i;
-+	uint32_t nr_buckets = calc_nr_buckets(nr_cells);
-+	size_t len = sizeof(struct bio_prison) +
-+		(sizeof(struct hlist_head) * nr_buckets);
-+	struct bio_prison *prison = kmalloc(len, GFP_KERNEL);
-+
-+	if (!prison)
-+		return NULL;
-+
-+	spin_lock_init(&prison->lock);
-+	prison->cell_pool = mempool_create_kmalloc_pool(nr_cells,
-+							sizeof(struct cell));
-+	if (!prison->cell_pool) {
-+		kfree(prison);
-+		return NULL;
-+	}
-+
-+	prison->nr_buckets = nr_buckets;
-+	prison->hash_mask = nr_buckets - 1;
-+	prison->cells = (struct hlist_head *) (prison + 1);
-+	for (i = 0; i < nr_buckets; i++)
-+		INIT_HLIST_HEAD(prison->cells + i);
-+
-+	return prison;
-+}
-+EXPORT_SYMBOL_GPL(dm_prison_create);
-+
-+void dm_prison_destroy(struct bio_prison *prison)
-+{
-+	mempool_destroy(prison->cell_pool);
-+	kfree(prison);
-+}
-+EXPORT_SYMBOL_GPL(dm_prison_destroy);
-+
-+static uint32_t hash_key(struct bio_prison *prison, struct cell_key *key)
-+{
-+	const unsigned long BIG_PRIME = 4294967291UL;
-+	uint64_t hash = key->block * BIG_PRIME;
-+
-+	return (uint32_t) (hash & prison->hash_mask);
++	return (u8 *)(io + 1) + v->shash_descsize;
 +}
 +
-+static int keys_equal(struct cell_key *lhs, struct cell_key *rhs)
++static u8 *io_want_digest(struct dm_verity *v, struct dm_verity_io *io)
 +{
-+	       return (lhs->virtual == rhs->virtual) &&
-+		       (lhs->dev == rhs->dev) &&
-+		       (lhs->block == rhs->block);
++	return (u8 *)(io + 1) + v->shash_descsize + v->digest_size;
 +}
 +
-+static struct cell *__search_bucket(struct hlist_head *bucket,
-+				    struct cell_key *key)
++struct buffer_aux {
++	int hash_verified;
++};
++
++static void dm_bufio_alloc_callback(struct dm_buffer *buf)
 +{
-+	struct cell *cell;
-+	struct hlist_node *tmp;
-+
-+	hlist_for_each_entry(cell, tmp, bucket, list)
-+		if (keys_equal(&cell->key, key))
-+			return cell;
-+
-+	return NULL;
++	struct buffer_aux *aux = dm_bufio_get_aux_data(buf);
++	aux->hash_verified = 0;
 +}
 +
-+/*
-+ * This may block if a new cell needs allocating.  You must ensure that
-+ * cells will be unlocked even if the calling thread is blocked.
-+ *
-+ * Returns 1 if the cell was already held, 0 if @inmate is the new holder.
-+ */
-+int dm_bio_detain(struct bio_prison *prison, struct cell_key *key,
-+		  struct bio *inmate, struct cell **ref)
++static sector_t verity_map_sector(struct dm_verity *v, sector_t bi_sector)
 +{
++	return v->data_start + dm_target_offset(v->ti, bi_sector);
++}
++
++static sector_t verity_position_at_level(struct dm_verity *v, sector_t block,
++					 int level)
++{
++	return block >> (level * v->hash_per_block_bits);
++}
++
++static void verity_hash_at_level(struct dm_verity *v, sector_t block, int level,
++				 sector_t *hash_block, unsigned *offset)
++{
++	sector_t position = verity_position_at_level(v, block, level);
++
++	*hash_block = v->hash_level_block[level] + (position >> v->hash_per_block_bits);
++	if (offset)
++		*offset = v->digest_size * (position & ((1 << v->hash_per_block_bits) - 1));
++}
++
++static int verity_verify_level(struct dm_verity_io *io, sector_t block,
++			       int level, int skip_unverified)
++{
++	struct dm_verity *v = io->v;
++	struct dm_buffer *buf;
++	struct buffer_aux *aux;
++	u8 *data;
 +	int r;
-+	unsigned long flags;
-+	uint32_t hash = hash_key(prison, key);
-+	struct cell *uninitialized_var(cell), *cell2 = NULL;
++	sector_t hash_block;
++	unsigned offset;
 +
-+	BUG_ON(hash > prison->nr_buckets);
++	verity_hash_at_level(v, block, level, &hash_block, &offset);
 +
-+	spin_lock_irqsave(&prison->lock, flags);
-+	cell = __search_bucket(prison->cells + hash, key);
++	data = dm_bufio_read(v->bufio, hash_block, &buf);
++	if (unlikely(IS_ERR(data)))
++		return PTR_ERR(data);
 +
-+	if (!cell) {
-+		/*
-+		 * Allocate a new cell
-+		 */
-+		spin_unlock_irqrestore(&prison->lock, flags);
-+		cell2 = mempool_alloc(prison->cell_pool, GFP_NOIO);
-+		spin_lock_irqsave(&prison->lock, flags);
++	aux = dm_bufio_get_aux_data(buf);
 +
-+		/*
-+		 * We've been unlocked, so we have to double check that
-+		 * nobody else has inserted this cell in the meantime.
-+		 */
-+		cell = __search_bucket(prison->cells + hash, key);
++	if (!aux->hash_verified) {
++		struct shash_desc *desc;
++		u8 *result;
 +
-+		if (!cell) {
-+			cell = cell2;
-+			cell2 = NULL;
-+
-+			cell->prison = prison;
-+			memcpy(&cell->key, key, sizeof(cell->key));
-+			cell->holder = inmate;
-+			bio_list_init(&cell->bios);
-+			hlist_add_head(&cell->list, prison->cells + hash);
-+			r = 0;
-+
-+		} else {
-+			mempool_free(cell2, prison->cell_pool);
-+			cell2 = NULL;
++		if (skip_unverified) {
 +			r = 1;
-+			bio_list_add(&cell->bios, inmate);
++			goto release_ret_r;
 +		}
 +
-+	} else {
-+		r = 1;
-+		bio_list_add(&cell->bios, inmate);
-+	}
-+	spin_unlock_irqrestore(&prison->lock, flags);
++		desc = io_hash_desc(v, io);
++		desc->tfm = v->tfm;
++		desc->flags = CRYPTO_TFM_REQ_MAY_SLEEP;
++		r = crypto_shash_init(desc);
++		if (r < 0) {
++			DMERR("crypto_shash_init failed: %d", r);
++			goto release_ret_r;
++		}
 +
-+	*ref = cell;
++		r = crypto_shash_update(desc, data, 1 << v->hash_dev_block_bits);
++		if (r < 0) {
++			DMERR("crypto_shash_update failed: %d", r);
++			goto release_ret_r;
++		}
++
++		r = crypto_shash_update(desc, v->salt, v->salt_size);
++		if (r < 0) {
++			DMERR("crypto_shash_update failed: %d", r);
++			goto release_ret_r;
++		}
++
++		result = io_real_digest(v, io);
++		r = crypto_shash_final(desc, result);
++		if (r < 0) {
++			DMERR("crypto_shash_final failed: %d", r);
++			goto release_ret_r;
++		}
++		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
++			DMERR_LIMIT("metadata block %llu is corrupted",
++				(unsigned long long)hash_block);
++			r = -EIO;
++			goto release_ret_r;
++		} else
++			aux->hash_verified = 1;
++	}
++
++	data += offset;
++
++	memcpy(io_want_digest(v, io), data, v->digest_size);
++
++	dm_bufio_release(buf);
++	return 0;
++
++release_ret_r:
++	dm_bufio_release(buf);
 +	return r;
 +}
-+EXPORT_SYMBOL_GPL(dm_bio_detain);
 +
-+/*
-+ * @inmates must have been initialised prior to this call
-+ */
-+static void __cell_release(struct cell *cell, struct bio_list *inmates)
++static int verity_verify_io(struct dm_verity_io *io)
 +{
-+	struct bio_prison *prison = cell->prison;
++	struct dm_verity *v = io->v;
++	unsigned b;
++	int i;
++	unsigned vector = 0, offset = 0;
++	for (b = 0; b < io->n_blocks; b++) {
++		struct shash_desc *desc;
++		u8 *result;
++		int r;
++		unsigned todo;
 +
-+	hlist_del(&cell->list);
++		if (likely(v->levels)) {
++			int r = verity_verify_level(io, io->block + b, 0, 1);
++			if (likely(!r))
++				goto test_block_hash;
++			if (r < 0)
++				return r;
++		}
 +
-+	if (inmates) {
-+		bio_list_add(inmates, cell->holder);
-+		bio_list_merge(inmates, &cell->bios);
++		memcpy(io_want_digest(v, io), v->root_digest, v->digest_size);
++
++		for (i = v->levels - 1; i >= 0; i--) {
++			int r = verity_verify_level(io, io->block + b, i, 0);
++			if (unlikely(r))
++				return r;
++		}
++
++test_block_hash:
++		desc = io_hash_desc(v, io);
++		desc->tfm = v->tfm;
++		desc->flags = CRYPTO_TFM_REQ_MAY_SLEEP;
++		r = crypto_shash_init(desc);
++		if (r < 0) {
++			DMERR("crypto_shash_init failed: %d", r);
++			return r;
++		}
++
++		todo = 1 << v->data_dev_block_bits;
++		do {
++			struct bio_vec *bv;
++			u8 *page;
++			unsigned len;
++
++			BUG_ON(vector >= io->io_vec_size);
++			bv = &io->io_vec[vector];
++			page = kmap_atomic(bv->bv_page, KM_USER0);
++			len = bv->bv_len - offset;
++			if (likely(len >= todo))
++				len = todo;
++			r = crypto_shash_update(desc,
++					page + bv->bv_offset + offset, len);
++			kunmap_atomic(page, KM_USER0);
++			if (r < 0) {
++				DMERR("crypto_shash_update failed: %d", r);
++				return r;
++			}
++			offset += len;
++			if (likely(offset == bv->bv_len)) {
++				offset = 0;
++				vector++;
++			}
++			todo -= len;
++		} while (todo);
++
++		r = crypto_shash_update(desc, v->salt, v->salt_size);
++		if (r < 0) {
++			DMERR("crypto_shash_update failed: %d", r);
++			return r;
++		}
++
++		result = io_real_digest(v, io);
++		r = crypto_shash_final(desc, result);
++		if (r < 0) {
++			DMERR("crypto_shash_final failed: %d", r);
++			return r;
++		}
++		if (unlikely(memcmp(result, io_want_digest(v, io), v->digest_size))) {
++			DMERR_LIMIT("data block %llu is corrupted",
++				(unsigned long long)(io->block + b));
++			return -EIO;
++		}
++	}
++	BUG_ON(vector != io->io_vec_size);
++	BUG_ON(offset);
++	return 0;
++}
++
++static void verity_finish_io(struct dm_verity_io *io, int error)
++{
++	struct bio *bio = io->bio;
++	struct dm_verity *v = io->v;
++
++	bio->bi_end_io = io->orig_bi_end_io;
++	bio->bi_private = io->orig_bi_private;
++
++	if (io->io_vec != io->io_vec_inline)
++		mempool_free(io->io_vec, v->vec_mempool);
++	mempool_free(io, v->io_mempool);
++
++	bio_endio(bio, error);
++}
++
++static void verity_work(struct work_struct *w)
++{
++	struct dm_verity_io *io = container_of(w, struct dm_verity_io, work);
++
++	verity_finish_io(io, verity_verify_io(io));
++}
++
++static void verity_end_io(struct bio *bio, int error)
++{
++	struct dm_verity_io *io = bio->bi_private;
++	if (error) {
++		verity_finish_io(io, error);
++		return;
 +	}
 +
-+	mempool_free(cell, prison->cell_pool);
++	INIT_WORK(&io->work, verity_work);
++	queue_work(io->v->verify_wq, &io->work);
 +}
 +
-+void dm_cell_release(struct cell *cell, struct bio_list *bios)
-+{
-+	unsigned long flags;
-+	struct bio_prison *prison = cell->prison;
-+
-+	spin_lock_irqsave(&prison->lock, flags);
-+	__cell_release(cell, bios);
-+	spin_unlock_irqrestore(&prison->lock, flags);
-+}
-+EXPORT_SYMBOL_GPL(dm_cell_release);
-+
-+/*
-+ * There are a couple of places where we put a bio into a cell briefly
-+ * before taking it out again.  In these situations we know that no other
-+ * bio may be in the cell.  This function releases the cell, and also does
-+ * a sanity check.
-+ */
-+static void __cell_release_singleton(struct cell *cell, struct bio *bio)
-+{
-+	hlist_del(&cell->list);
-+	BUG_ON(cell->holder != bio);
-+	BUG_ON(!bio_list_empty(&cell->bios));
-+}
-+
-+void dm_cell_release_singleton(struct cell *cell, struct bio *bio)
-+{
-+	unsigned long flags;
-+	struct bio_prison *prison = cell->prison;
-+
-+	spin_lock_irqsave(&prison->lock, flags);
-+	__cell_release_singleton(cell, bio);
-+	spin_unlock_irqrestore(&prison->lock, flags);
-+}
-+EXPORT_SYMBOL_GPL(dm_cell_release_singleton);
-+
-+/*
-+ * Sometimes we don't want the holder, just the additional bios.
-+ */
-+static void __cell_release_no_holder(struct cell *cell, struct bio_list *inmates)
-+{
-+	struct bio_prison *prison = cell->prison;
-+
-+	hlist_del(&cell->list);
-+	if (inmates)
-+		bio_list_merge(inmates, &cell->bios);
-+
-+	mempool_free(cell, prison->cell_pool);
-+}
-+
-+void dm_cell_release_no_holder(struct cell *cell, struct bio_list *inmates)
-+{
-+	unsigned long flags;
-+	struct bio_prison *prison = cell->prison;
-+
-+	spin_lock_irqsave(&prison->lock, flags);
-+	__cell_release_no_holder(cell, inmates);
-+	spin_unlock_irqrestore(&prison->lock, flags);
-+}
-+EXPORT_SYMBOL_GPL(dm_cell_release_no_holder);
-+
-+void dm_cell_error(struct cell *cell)
-+{
-+	struct bio_prison *prison = cell->prison;
-+	struct bio_list bios;
-+	struct bio *bio;
-+	unsigned long flags;
-+
-+	bio_list_init(&bios);
-+
-+	spin_lock_irqsave(&prison->lock, flags);
-+	__cell_release(cell, &bios);
-+	spin_unlock_irqrestore(&prison->lock, flags);
-+
-+	while ((bio = bio_list_pop(&bios)))
-+		bio_io_error(bio);
-+}
-+EXPORT_SYMBOL_GPL(dm_cell_error);
-+
-+/*----------------------------------------------------------------*/
-+
-+void dm_ds_init(struct deferred_set *ds)
++static void verity_prefetch_io(struct dm_verity *v, struct dm_verity_io *io)
 +{
 +	int i;
++	for (i = v->levels - 2; i >= 0; i--) {
++		sector_t hash_block_start;
++		sector_t hash_block_end;
++		verity_hash_at_level(v, io->block, i, &hash_block_start, NULL);
++		verity_hash_at_level(v, io->block + io->n_blocks - 1, i, &hash_block_end, NULL);
++		if (!i) {
++			unsigned cluster = prefetch_cluster;
++	 /* barrier to stop GCC from re-reading prefetch_cluster again */
++			barrier();
++			cluster >>= v->data_dev_block_bits;
++			if (unlikely(!cluster))
++				goto no_prefetch_cluster;
++			if (unlikely(cluster & (cluster - 1)))
++				cluster = 1 << (fls(cluster) - 1);
 +
-+	spin_lock_init(&ds->lock);
-+	ds->current_entry = 0;
-+	ds->sweeper = 0;
-+	for (i = 0; i < DEFERRED_SET_SIZE; i++) {
-+		ds->entries[i].ds = ds;
-+		ds->entries[i].count = 0;
-+		INIT_LIST_HEAD(&ds->entries[i].work_items);
++			hash_block_start &= ~(sector_t)(cluster - 1);
++			hash_block_end |= cluster - 1;
++			if (unlikely(hash_block_end >= v->hash_blocks))
++				hash_block_end = v->hash_blocks - 1;
++		}
++no_prefetch_cluster:
++		dm_bufio_prefetch(v->bufio, hash_block_start,
++					hash_block_end - hash_block_start + 1);
 +	}
 +}
-+EXPORT_SYMBOL_GPL(dm_ds_init);
 +
-+struct deferred_entry *dm_ds_inc(struct deferred_set *ds)
++static int verity_map(struct dm_target *ti, struct bio *bio,
++		      union map_info *map_context)
 +{
-+	unsigned long flags;
-+	struct deferred_entry *entry;
++	struct dm_verity *v = ti->private;
++	struct dm_verity_io *io;
 +
-+	spin_lock_irqsave(&ds->lock, flags);
-+	entry = ds->entries + ds->current_entry;
-+	entry->count++;
-+	spin_unlock_irqrestore(&ds->lock, flags);
-+
-+	return entry;
-+}
-+EXPORT_SYMBOL_GPL(dm_ds_inc);
-+
-+static unsigned ds_next(unsigned index)
-+{
-+	return (index + 1) % DEFERRED_SET_SIZE;
-+}
-+
-+static void __sweep(struct deferred_set *ds, struct list_head *head)
-+{
-+	while ((ds->sweeper != ds->current_entry) &&
-+	       !ds->entries[ds->sweeper].count) {
-+		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
-+		ds->sweeper = ds_next(ds->sweeper);
++	if (((unsigned)bio->bi_sector | bio_sectors(bio)) &
++	    ((1 << (v->data_dev_block_bits - SECTOR_SHIFT)) - 1)) {
++		DMERR_LIMIT("unaligned io");
++		return -EIO;
 +	}
 +
-+	if ((ds->sweeper == ds->current_entry) && !ds->entries[ds->sweeper].count)
-+		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
-+}
-+
-+void dm_ds_dec(struct deferred_entry *entry, struct list_head *head)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&entry->ds->lock, flags);
-+	BUG_ON(!entry->count);
-+	--entry->count;
-+	__sweep(entry->ds, head);
-+	spin_unlock_irqrestore(&entry->ds->lock, flags);
-+}
-+EXPORT_SYMBOL_GPL(dm_ds_dec);
-+
-+/*
-+ * Returns 1 if deferred or 0 if no pending items to delay job.
-+ */
-+int dm_ds_add_work(struct deferred_set *ds, struct list_head *work)
-+{
-+	int r = 1;
-+	unsigned long flags;
-+	unsigned next_entry;
-+
-+	spin_lock_irqsave(&ds->lock, flags);
-+	if ((ds->sweeper == ds->current_entry) &&
-+	    !ds->entries[ds->current_entry].count)
-+		r = 0;
-+	else {
-+		list_add(work, &ds->entries[ds->current_entry].work_items);
-+		next_entry = ds_next(ds->current_entry);
-+		if (!ds->entries[next_entry].count)
-+			ds->current_entry = next_entry;
++	if ((bio->bi_sector + bio_sectors(bio)) >>
++	    (v->data_dev_block_bits - SECTOR_SHIFT) > v->data_blocks) {
++		DMERR_LIMIT("io out of range");
++		return -EIO;
 +	}
-+	spin_unlock_irqrestore(&ds->lock, flags);
 +
++	if (bio_data_dir(bio) == WRITE)
++		return -EIO;
++
++	io = mempool_alloc(v->io_mempool, GFP_NOIO);
++	io->v = v;
++	io->bio = bio;
++	io->orig_bi_end_io = bio->bi_end_io;
++	io->orig_bi_private = bio->bi_private;
++	io->block = bio->bi_sector >> (v->data_dev_block_bits - SECTOR_SHIFT);
++	io->n_blocks = bio->bi_size >> v->data_dev_block_bits;
++
++	bio->bi_end_io = verity_end_io;
++	bio->bi_private = io;
++	bio->bi_bdev = v->data_dev->bdev;
++	bio->bi_sector = verity_map_sector(v, bio->bi_sector);
++
++	io->io_vec_size = bio->bi_vcnt - bio->bi_idx;
++	if (io->io_vec_size < DM_VERITY_IO_VEC_INLINE)
++		io->io_vec = io->io_vec_inline;
++	else
++		io->io_vec = mempool_alloc(v->vec_mempool, GFP_NOIO);
++	memcpy(io->io_vec, bio_iovec(bio),
++	       io->io_vec_size * sizeof(struct bio_vec));
++
++	verity_prefetch_io(v, io);
++
++	generic_make_request(bio);
++
++	return DM_MAPIO_SUBMITTED;
++}
++
++static int verity_status(struct dm_target *ti, status_type_t type,
++			 char *result, unsigned maxlen)
++{
++	struct dm_verity *v = ti->private;
++	unsigned sz = 0;
++	unsigned x;
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		result[0] = 0;
++		break;
++	case STATUSTYPE_TABLE:
++		DMEMIT("%u %s %s %llu %u %s ",
++			0,
++			v->data_dev->name,
++			v->hash_dev->name,
++			(unsigned long long)v->hash_start << (v->hash_dev_block_bits - SECTOR_SHIFT),
++			1 << v->data_dev_block_bits,
++			v->alg_name
++			);
++		for (x = 0; x < v->digest_size; x++)
++			DMEMIT("%02x", v->root_digest[x]);
++		DMEMIT(" ");
++		if (!v->salt_size)
++			DMEMIT("-");
++		else
++			for (x = 0; x < v->salt_size; x++)
++				DMEMIT("%02x", v->salt[x]);
++		DMEMIT(" %u", 1 << v->hash_dev_block_bits);
++		break;
++	}
++	return 0;
++}
++
++static int verity_ioctl(struct dm_target *ti, unsigned cmd,
++			unsigned long arg)
++{
++	struct dm_verity *v = ti->private;
++	int r = 0;
++
++	if (v->data_start ||
++	    ti->len != i_size_read(v->data_dev->bdev->bd_inode) >> SECTOR_SHIFT)
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++
++	return r ? : __blkdev_driver_ioctl(v->data_dev->bdev, v->data_dev->mode,
++				     cmd, arg);
++}
++
++static int verity_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
++			struct bio_vec *biovec, int max_size)
++{
++	struct dm_verity *v = ti->private;
++	struct request_queue *q = bdev_get_queue(v->data_dev->bdev);
++
++	if (!q->merge_bvec_fn)
++		return max_size;
++
++	bvm->bi_bdev = v->data_dev->bdev;
++	bvm->bi_sector = verity_map_sector(v, bvm->bi_sector);
++
++	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
++}
++
++static int verity_iterate_devices(struct dm_target *ti,
++				  iterate_devices_callout_fn fn, void *data)
++{
++	struct dm_verity *v = ti->private;
++	return fn(ti, v->data_dev, v->data_start, ti->len, data);
++}
++
++static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
++{
++	struct dm_verity *v = ti->private;
++
++	if (limits->logical_block_size < 1 << v->data_dev_block_bits)
++		limits->logical_block_size = 1 << v->data_dev_block_bits;
++	if (limits->physical_block_size < 1 << v->data_dev_block_bits)
++		limits->physical_block_size = 1 << v->data_dev_block_bits;
++	blk_limits_io_min(limits, limits->logical_block_size);
++}
++
++static void verity_dtr(struct dm_target *ti);
++
++static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
++{
++	struct dm_verity *v;
++	unsigned num;
++	unsigned long long hs;
++	int r;
++	int i;
++	sector_t hash_position;
++	char dummy;
++
++	v = kzalloc(sizeof(struct dm_verity), GFP_KERNEL);
++	if (!v) {
++		ti->error = "Cannot allocate verity structure";
++		return -ENOMEM;
++	}
++	ti->private = v;
++	v->ti = ti;
++
++	if ((dm_table_get_mode(ti->table) & ~FMODE_READ) != 0) {
++		ti->error = "Device must be readonly";
++		r = -EINVAL;
++		goto bad;
++	}
++
++	if (argc < 7) {
++		ti->error = "Not enough arguments";
++		r = -EINVAL;
++		goto bad;
++	}
++
++	if (sscanf(argv[0], "%d%c", &num, &dummy) != 1 ||
++	    num != 0) {
++		ti->error = "Invalid version";
++		r = -EINVAL;
++		goto bad;
++	}
++
++	r = dm_get_device(ti, argv[1], FMODE_READ, &v->data_dev);
++	if (r) {
++		ti->error = "Data device lookup failed";
++		goto bad;
++	}
++
++	r = dm_get_device(ti, argv[2], FMODE_READ, &v->hash_dev);
++	if (r) {
++		ti->error = "Data device lookup failed";
++		goto bad;
++	}
++
++	if (sscanf(argv[3], "%llu%c", &hs, &dummy) != 1 ||
++	    hs != (sector_t)hs) {
++		ti->error = "Invalid hash start";
++		r = -EINVAL;
++		goto bad;
++	}
++
++	if (sscanf(argv[4], "%u%c", &num, &dummy) != 1 ||
++	    !num || (num & (num - 1)) ||
++	    num < bdev_logical_block_size(v->data_dev->bdev) ||
++	    num > PAGE_SIZE) {
++		ti->error = "Invalid data device block size";
++		r = -EINVAL;
++		goto bad;
++	}
++	v->data_dev_block_bits = ffs(num) - 1;
++	v->hash_dev_block_bits = ffs(num) - 1;
++
++	v->alg_name = kstrdup(argv[5], GFP_KERNEL);
++	if (!v->alg_name) {
++		ti->error = "Cannot allocate algorithm name";
++		r = -ENOMEM;
++		goto bad;
++	}
++
++	v->tfm = crypto_alloc_shash(v->alg_name, 0, 0);
++	if (IS_ERR(v->tfm)) {
++		ti->error = "Cannot initialize hash function";
++		r = PTR_ERR(v->tfm);
++		v->tfm = NULL;
++		goto bad;
++	}
++	v->digest_size = crypto_shash_digestsize(v->tfm);
++	if ((1 << v->hash_dev_block_bits) < v->digest_size * 2) {
++		ti->error = "Digest size too big";
++		r = -EINVAL;
++		goto bad;
++	}
++	v->shash_descsize =
++		sizeof(struct shash_desc) + crypto_shash_descsize(v->tfm);
++
++	v->root_digest = kmalloc(v->digest_size, GFP_KERNEL);
++	if (!v->root_digest) {
++		ti->error = "Cannot allocate root digest";
++		r = -ENOMEM;
++		goto bad;
++	}
++	if (strlen(argv[6]) != v->digest_size * 2 ||
++	    hex2bin(v->root_digest, argv[6], v->digest_size)) {
++		ti->error = "Invalid root digest";
++		r = -EINVAL;
++		goto bad;
++	}
++
++	if (argc > 7 && strcmp(argv[7], "-")) {
++		v->salt_size = strlen(argv[7]) / 2;
++		v->salt = kmalloc(v->salt_size, GFP_KERNEL);
++		if (!v->salt) {
++			ti->error = "Cannot allocate salt";
++			r = -ENOMEM;
++			goto bad;
++		}
++		if (strlen(argv[7]) != v->salt_size * 2 ||
++		    hex2bin(v->salt, argv[7], v->salt_size)) {
++			ti->error = "Invalid salt";
++			r = -EINVAL;
++			goto bad;
++		}
++	}
++
++	if (argc > 8) {
++		if (sscanf(argv[8], "%u%c", &num, &dummy) != 1 ||
++		    !num || (num & (num - 1)) ||
++		    num < bdev_logical_block_size(v->hash_dev->bdev) ||
++		    num > INT_MAX) {
++			ti->error = "Invalid hash device block size";
++			r = -EINVAL;
++			goto bad;
++		}
++		v->hash_dev_block_bits = ffs(num) - 1;
++	}
++
++	if (hs & ((1 << (v->hash_dev_block_bits - SECTOR_SHIFT)) - 1)) {
++		ti->error = "Hash start not aligned on block boundary";
++		r = -EINVAL;
++		goto bad;
++	}
++	v->hash_start = hs >> (v->hash_dev_block_bits - SECTOR_SHIFT);
++
++	if (ti->len > i_size_read(v->data_dev->bdev->bd_inode) >> SECTOR_SHIFT) {
++		ti->error = "Data device si too small";
++		r = -EINVAL;
++		goto bad;
++	}
++
++	if (ti->len & ((1 << (v->data_dev_block_bits - SECTOR_SHIFT)) - 1)) {
++		ti->error = "Data device length is not aligned to block size";
++		r = -EINVAL;
++		goto bad;
++	}
++
++	v->data_blocks = ti->len >> (v->data_dev_block_bits - SECTOR_SHIFT);
++
++	v->hash_per_block_bits =
++		fls((1 << v->hash_dev_block_bits) / v->digest_size) - 1;
++
++	v->levels = 0;
++	if (v->data_blocks)
++		while (v->hash_per_block_bits * v->levels < 64 &&
++		       (unsigned long long)(v->data_blocks - 1) >>
++		       (v->hash_per_block_bits * v->levels))
++			v->levels++;
++
++	if (v->levels > DM_VERITY_MAX_LEVELS) {
++		ti->error = "Too many tree levels";
++		r = -E2BIG;
++		goto bad;
++	}
++
++	hash_position = v->hash_start;
++	for (i = v->levels - 1; i >= 0; i--) {
++		sector_t s;
++		v->hash_level_block[i] = hash_position;
++		s = verity_position_at_level(v, v->data_blocks, i);
++		s = (s >> v->hash_per_block_bits) +
++		    !!(s & ((1 << v->hash_per_block_bits) - 1));
++		if (hash_position + s < hash_position) {
++			ti->error = "Hash device offset overflow";
++			r = -E2BIG;
++			goto bad;
++		}
++		hash_position += s;
++	}
++	v->hash_blocks = hash_position;
++
++	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
++		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
++		dm_bufio_alloc_callback, NULL);
++	if (IS_ERR(v->bufio)) {
++		ti->error = "Cannot initialize dm-bufio";
++		r = PTR_ERR(v->bufio);
++		v->bufio = NULL;
++		goto bad;
++	}
++
++	if (dm_bufio_get_device_size(v->bufio) < v->hash_blocks) {
++		ti->error = "Hash device is too small";
++		r = -E2BIG;
++		goto bad;
++	}
++
++	v->io_mempool = mempool_create_kmalloc_pool(DM_VERITY_MEMPOOL_SIZE,
++	  sizeof(struct dm_verity_io) + v->shash_descsize + v->digest_size * 2);
++	if (!v->io_mempool) {
++		ti->error = "Cannot allocate io mempool";
++		r = -ENOMEM;
++		goto bad;
++	}
++
++	v->vec_mempool = mempool_create_kmalloc_pool(DM_VERITY_MEMPOOL_SIZE,
++					BIO_MAX_PAGES * sizeof(struct bio_vec));
++	if (!v->vec_mempool) {
++		ti->error = "Cannot allocate vector mempool";
++		r = -ENOMEM;
++		goto bad;
++	}
++
++	/*v->verify_wq = alloc_workqueue("verityd", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM, 1);*/
++	/* WQ_UNBOUND greatly improves performance when running on ramdisk */
++	v->verify_wq = alloc_workqueue("verityd", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND, num_online_cpus());
++	if (!v->verify_wq) {
++		ti->error = "Cannot allocate workqueue";
++		r = -ENOMEM;
++		goto bad;
++	}
++
++	return 0;
++
++bad:
++	verity_dtr(ti);
 +	return r;
 +}
-+EXPORT_SYMBOL_GPL(dm_ds_add_work);
 +
-+/*----------------------------------------------------------------*/
-Index: linux-2.6/drivers/md/dm-bio-prison.h
++static void verity_dtr(struct dm_target *ti)
++{
++	struct dm_verity *v = ti->private;
++
++	if (v->verify_wq)
++		destroy_workqueue(v->verify_wq);
++	if (v->vec_mempool)
++		mempool_destroy(v->vec_mempool);
++	if (v->io_mempool)
++		mempool_destroy(v->io_mempool);
++	if (v->bufio)
++		dm_bufio_client_destroy(v->bufio);
++	kfree(v->salt);
++	kfree(v->root_digest);
++	if (v->tfm)
++		crypto_free_shash(v->tfm);
++	kfree(v->alg_name);
++	if (v->hash_dev)
++		dm_put_device(ti, v->hash_dev);
++	if (v->data_dev)
++		dm_put_device(ti, v->data_dev);
++	kfree(v);
++}
++
++static struct target_type verity_target = {
++	.name		= "verity",
++	.version	= {1, 0, 0},
++	.module		= THIS_MODULE,
++	.ctr		= verity_ctr,
++	.dtr		= verity_dtr,
++	.map		= verity_map,
++	.status		= verity_status,
++	.ioctl		= verity_ioctl,
++	.merge		= verity_merge,
++	.iterate_devices = verity_iterate_devices,
++	.io_hints	= verity_io_hints,
++};
++
++static int __init dm_verity_init(void)
++{
++	int r;
++	r = dm_register_target(&verity_target);
++	if (r < 0)
++		DMERR("register failed %d", r);
++	return r;
++}
++
++static void __exit dm_verity_exit(void)
++{
++	dm_unregister_target(&verity_target);
++}
++
++module_init(dm_verity_init);
++module_exit(dm_verity_exit);
++
++MODULE_AUTHOR("Mikulas Patocka <mpatocka@redhat.com>");
++MODULE_DESCRIPTION(DM_NAME " target for transparent disk integrity checking");
++MODULE_LICENSE("GPL");
++
+Index: linux-3.3-rc5-fast/drivers/md/dm-bufio.c
 ===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-bio-prison.h
-@@ -0,0 +1,109 @@
-+/*
-+ * Copyright (C) 2012 Red Hat.
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef DM_BIO_PRISON_H
-+#define DM_BIO_PRISON_H
-+
-+#include "persistent-data/dm-block-manager.h"
-+
-+#include <linux/list.h>
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * Device identifier
-+ */
-+typedef uint64_t dm_dev_id;
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * Sometimes we can't deal with a bio straight away.  We put them in prison
-+ * where they can't cause any mischief.  Bios are put in a cell identified
-+ * by a key, multiple bios can be in the same cell.  When the cell is
-+ * subsequently unlocked the bios become available.
-+ */
-+struct bio_prison;
-+
-+struct cell_key {
-+	int virtual;
-+	dm_dev_id dev;
-+	dm_block_t block;
-+};
-+
-+struct cell {
-+	struct hlist_node list;
-+	struct bio_prison *prison;
-+	struct cell_key key;
-+	struct bio *holder;
-+	struct bio_list bios;
-+};
-+
-+struct bio_prison {
-+	spinlock_t lock;
-+	mempool_t *cell_pool;
-+
-+	unsigned nr_buckets;
-+	unsigned hash_mask;
-+	struct hlist_head *cells;
-+};
-+
-+/*
-+ * @nr_cells should be the number of cells you want in use _concurrently_.
-+ * Don't confuse it with the number of distinct keys.
-+ */
-+struct bio_prison *dm_prison_create(unsigned nr_cells);
-+void dm_prison_destroy(struct bio_prison *prison);
-+
-+/*
-+ * This may block if a new cell needs allocating.  You must ensure that
-+ * cells will be unlocked even if the calling thread is blocked.
-+ *
-+ * Returns 1 if the cell was already held, 0 if @inmate is the new holder.
-+ */
-+int dm_bio_detain(struct bio_prison *prison, struct cell_key *key,
-+	       struct bio *inmate, struct cell **ref);
-+void dm_cell_release(struct cell *cell, struct bio_list *bios);
-+void dm_cell_release_singleton(struct cell *cell, struct bio *bio);
-+void dm_cell_release_no_holder(struct cell *cell, struct bio_list *inmates);
-+void dm_cell_error(struct cell *cell);
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * We use the deferred set to keep track of pending reads to shared blocks.
-+ * We do this to ensure the new mapping caused by a write isn't performed
-+ * until these prior reads have completed.  Otherwise the insertion of the
-+ * new mapping could free the old block that the read bios are mapped to.
-+ */
-+#define DEFERRED_SET_SIZE 64
-+
-+struct deferred_set;
-+struct deferred_entry {
-+	struct deferred_set *ds;
-+	unsigned count;
-+	struct list_head work_items;
-+};
-+
-+struct deferred_set {
-+	spinlock_t lock;
-+	unsigned current_entry;
-+	unsigned sweeper;
-+	struct deferred_entry entries[DEFERRED_SET_SIZE];
-+};
-+
-+void dm_ds_init(struct deferred_set *ds);
-+struct deferred_entry *dm_ds_inc(struct deferred_set *ds);
-+void dm_ds_dec(struct deferred_entry *entry, struct list_head *head);
-+
-+/*
-+ * Returns 1 if deferred or 0 if no pending items to delay job.
-+ */
-+int dm_ds_add_work(struct deferred_set *ds, struct list_head *work);
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-Index: linux-2.6/drivers/md/dm-thin-metadata.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-thin-metadata.h
-+++ linux-2.6/drivers/md/dm-thin-metadata.h
-@@ -7,6 +7,7 @@
- #ifndef DM_THIN_METADATA_H
- #define DM_THIN_METADATA_H
+--- linux-3.3-rc5-fast.orig/drivers/md/dm-bufio.c	2012-03-03 05:19:33.000000000 +0100
++++ linux-3.3-rc5-fast/drivers/md/dm-bufio.c	2012-03-03 05:19:35.000000000 +0100
+@@ -579,7 +579,7 @@ static void write_endio(struct bio *bio,
+ 	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
  
-+#include "dm-bio-prison.h"
- #include "persistent-data/dm-block-manager.h"
- 
- #define THIN_METADATA_BLOCK_SIZE 4096
-@@ -32,11 +33,6 @@ struct dm_pool_metadata;
- struct dm_thin_device;
- 
- /*
-- * Device identifier
-- */
--typedef uint64_t dm_dev_id;
--
--/*
-  * Reopens or creates a new, empty metadata volume.
-  */
- struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
-Index: linux-2.6/drivers/md/dm-thin.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-thin.c
-+++ linux-2.6/drivers/md/dm-thin.c
-@@ -4,6 +4,7 @@
-  * This file is released under the GPL.
-  */
- 
-+#include "dm-bio-prison.h"
- #include "dm-thin-metadata.h"
- 
- #include <linux/device-mapper.h>
-@@ -20,7 +21,6 @@
-  * Tunable constants
-  */
- #define ENDIO_HOOK_POOL_SIZE 10240
--#define DEFERRED_SET_SIZE 64
- #define MAPPING_POOL_SIZE 1024
- #define PRISON_CELLS 1024
- #define COMMIT_PERIOD HZ
-@@ -98,372 +98,6 @@
- /*----------------------------------------------------------------*/
- 
- /*
-- * Sometimes we can't deal with a bio straight away.  We put them in prison
-- * where they can't cause any mischief.  Bios are put in a cell identified
-- * by a key, multiple bios can be in the same cell.  When the cell is
-- * subsequently unlocked the bios become available.
-- */
--struct bio_prison;
--
--struct cell_key {
--	int virtual;
--	dm_dev_id dev;
--	dm_block_t block;
--};
--
--struct cell {
--	struct hlist_node list;
--	struct bio_prison *prison;
--	struct cell_key key;
--	struct bio *holder;
--	struct bio_list bios;
--};
--
--struct bio_prison {
--	spinlock_t lock;
--	mempool_t *cell_pool;
--
--	unsigned nr_buckets;
--	unsigned hash_mask;
--	struct hlist_head *cells;
--};
--
--static uint32_t calc_nr_buckets(unsigned nr_cells)
--{
--	uint32_t n = 128;
--
--	nr_cells /= 4;
--	nr_cells = min(nr_cells, 8192u);
--
--	while (n < nr_cells)
--		n <<= 1;
--
--	return n;
--}
--
--/*
-- * @nr_cells should be the number of cells you want in use _concurrently_.
-- * Don't confuse it with the number of distinct keys.
-- */
--static struct bio_prison *prison_create(unsigned nr_cells)
--{
--	unsigned i;
--	uint32_t nr_buckets = calc_nr_buckets(nr_cells);
--	size_t len = sizeof(struct bio_prison) +
--		(sizeof(struct hlist_head) * nr_buckets);
--	struct bio_prison *prison = kmalloc(len, GFP_KERNEL);
--
--	if (!prison)
--		return NULL;
--
--	spin_lock_init(&prison->lock);
--	prison->cell_pool = mempool_create_kmalloc_pool(nr_cells,
--							sizeof(struct cell));
--	if (!prison->cell_pool) {
--		kfree(prison);
--		return NULL;
--	}
--
--	prison->nr_buckets = nr_buckets;
--	prison->hash_mask = nr_buckets - 1;
--	prison->cells = (struct hlist_head *) (prison + 1);
--	for (i = 0; i < nr_buckets; i++)
--		INIT_HLIST_HEAD(prison->cells + i);
--
--	return prison;
--}
--
--static void prison_destroy(struct bio_prison *prison)
--{
--	mempool_destroy(prison->cell_pool);
--	kfree(prison);
--}
--
--static uint32_t hash_key(struct bio_prison *prison, struct cell_key *key)
--{
--	const unsigned long BIG_PRIME = 4294967291UL;
--	uint64_t hash = key->block * BIG_PRIME;
--
--	return (uint32_t) (hash & prison->hash_mask);
--}
--
--static int keys_equal(struct cell_key *lhs, struct cell_key *rhs)
--{
--	       return (lhs->virtual == rhs->virtual) &&
--		       (lhs->dev == rhs->dev) &&
--		       (lhs->block == rhs->block);
--}
--
--static struct cell *__search_bucket(struct hlist_head *bucket,
--				    struct cell_key *key)
--{
--	struct cell *cell;
--	struct hlist_node *tmp;
--
--	hlist_for_each_entry(cell, tmp, bucket, list)
--		if (keys_equal(&cell->key, key))
--			return cell;
--
--	return NULL;
--}
--
--/*
-- * This may block if a new cell needs allocating.  You must ensure that
-- * cells will be unlocked even if the calling thread is blocked.
-- *
-- * Returns 1 if the cell was already held, 0 if @inmate is the new holder.
-- */
--static int bio_detain(struct bio_prison *prison, struct cell_key *key,
--		      struct bio *inmate, struct cell **ref)
--{
--	int r;
--	unsigned long flags;
--	uint32_t hash = hash_key(prison, key);
--	struct cell *uninitialized_var(cell), *cell2 = NULL;
--
--	BUG_ON(hash > prison->nr_buckets);
--
--	spin_lock_irqsave(&prison->lock, flags);
--	cell = __search_bucket(prison->cells + hash, key);
--
--	if (!cell) {
--		/*
--		 * Allocate a new cell
--		 */
--		spin_unlock_irqrestore(&prison->lock, flags);
--		cell2 = mempool_alloc(prison->cell_pool, GFP_NOIO);
--		spin_lock_irqsave(&prison->lock, flags);
--
--		/*
--		 * We've been unlocked, so we have to double check that
--		 * nobody else has inserted this cell in the meantime.
--		 */
--		cell = __search_bucket(prison->cells + hash, key);
--
--		if (!cell) {
--			cell = cell2;
--			cell2 = NULL;
--
--			cell->prison = prison;
--			memcpy(&cell->key, key, sizeof(cell->key));
--			cell->holder = inmate;
--			bio_list_init(&cell->bios);
--			hlist_add_head(&cell->list, prison->cells + hash);
--			r = 0;
--
--		} else {
--			mempool_free(cell2, prison->cell_pool);
--			cell2 = NULL;
--			r = 1;
--			bio_list_add(&cell->bios, inmate);
--		}
--
--	} else {
--		r = 1;
--		bio_list_add(&cell->bios, inmate);
--	}
--	spin_unlock_irqrestore(&prison->lock, flags);
--
--	*ref = cell;
--	return r;
--}
--
--/*
-- * @inmates must have been initialised prior to this call
-- */
--static void __cell_release(struct cell *cell, struct bio_list *inmates)
--{
--	struct bio_prison *prison = cell->prison;
--
--	hlist_del(&cell->list);
--
--	if (inmates) {
--		bio_list_add(inmates, cell->holder);
--		bio_list_merge(inmates, &cell->bios);
--	}
--
--	mempool_free(cell, prison->cell_pool);
--}
--
--static void cell_release(struct cell *cell, struct bio_list *bios)
--{
--	unsigned long flags;
--	struct bio_prison *prison = cell->prison;
--
--	spin_lock_irqsave(&prison->lock, flags);
--	__cell_release(cell, bios);
--	spin_unlock_irqrestore(&prison->lock, flags);
--}
--
--/*
-- * There are a couple of places where we put a bio into a cell briefly
-- * before taking it out again.  In these situations we know that no other
-- * bio may be in the cell.  This function releases the cell, and also does
-- * a sanity check.
-- */
--static void __cell_release_singleton(struct cell *cell, struct bio *bio)
--{
--	hlist_del(&cell->list);
--	BUG_ON(cell->holder != bio);
--	BUG_ON(!bio_list_empty(&cell->bios));
--}
--
--static void cell_release_singleton(struct cell *cell, struct bio *bio)
--{
--	unsigned long flags;
--	struct bio_prison *prison = cell->prison;
--
--	spin_lock_irqsave(&prison->lock, flags);
--	__cell_release_singleton(cell, bio);
--	spin_unlock_irqrestore(&prison->lock, flags);
--}
--
--/*
-- * Sometimes we don't want the holder, just the additional bios.
-- */
--static void __cell_release_no_holder(struct cell *cell, struct bio_list *inmates)
--{
--	struct bio_prison *prison = cell->prison;
--
--	hlist_del(&cell->list);
--	if (inmates)
--		bio_list_merge(inmates, &cell->bios);
--
--	mempool_free(cell, prison->cell_pool);
--}
--
--static void cell_release_no_holder(struct cell *cell, struct bio_list *inmates)
--{
--	unsigned long flags;
--	struct bio_prison *prison = cell->prison;
--
--	spin_lock_irqsave(&prison->lock, flags);
--	__cell_release_no_holder(cell, inmates);
--	spin_unlock_irqrestore(&prison->lock, flags);
--}
--
--static void cell_error(struct cell *cell)
--{
--	struct bio_prison *prison = cell->prison;
--	struct bio_list bios;
--	struct bio *bio;
--	unsigned long flags;
--
--	bio_list_init(&bios);
--
--	spin_lock_irqsave(&prison->lock, flags);
--	__cell_release(cell, &bios);
--	spin_unlock_irqrestore(&prison->lock, flags);
--
--	while ((bio = bio_list_pop(&bios)))
--		bio_io_error(bio);
--}
--
--/*----------------------------------------------------------------*/
--
--/*
-- * We use the deferred set to keep track of pending reads to shared blocks.
-- * We do this to ensure the new mapping caused by a write isn't performed
-- * until these prior reads have completed.  Otherwise the insertion of the
-- * new mapping could free the old block that the read bios are mapped to.
-- */
--
--struct deferred_set;
--struct deferred_entry {
--	struct deferred_set *ds;
--	unsigned count;
--	struct list_head work_items;
--};
--
--struct deferred_set {
--	spinlock_t lock;
--	unsigned current_entry;
--	unsigned sweeper;
--	struct deferred_entry entries[DEFERRED_SET_SIZE];
--};
--
--static void ds_init(struct deferred_set *ds)
--{
--	int i;
--
--	spin_lock_init(&ds->lock);
--	ds->current_entry = 0;
--	ds->sweeper = 0;
--	for (i = 0; i < DEFERRED_SET_SIZE; i++) {
--		ds->entries[i].ds = ds;
--		ds->entries[i].count = 0;
--		INIT_LIST_HEAD(&ds->entries[i].work_items);
--	}
--}
--
--static struct deferred_entry *ds_inc(struct deferred_set *ds)
--{
--	unsigned long flags;
--	struct deferred_entry *entry;
--
--	spin_lock_irqsave(&ds->lock, flags);
--	entry = ds->entries + ds->current_entry;
--	entry->count++;
--	spin_unlock_irqrestore(&ds->lock, flags);
--
--	return entry;
--}
--
--static unsigned ds_next(unsigned index)
--{
--	return (index + 1) % DEFERRED_SET_SIZE;
--}
--
--static void __sweep(struct deferred_set *ds, struct list_head *head)
--{
--	while ((ds->sweeper != ds->current_entry) &&
--	       !ds->entries[ds->sweeper].count) {
--		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
--		ds->sweeper = ds_next(ds->sweeper);
--	}
--
--	if ((ds->sweeper == ds->current_entry) && !ds->entries[ds->sweeper].count)
--		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
--}
--
--static void ds_dec(struct deferred_entry *entry, struct list_head *head)
--{
--	unsigned long flags;
--
--	spin_lock_irqsave(&entry->ds->lock, flags);
--	BUG_ON(!entry->count);
--	--entry->count;
--	__sweep(entry->ds, head);
--	spin_unlock_irqrestore(&entry->ds->lock, flags);
--}
--
--/*
-- * Returns 1 if deferred or 0 if no pending items to delay job.
-- */
--static int ds_add_work(struct deferred_set *ds, struct list_head *work)
--{
--	int r = 1;
--	unsigned long flags;
--	unsigned next_entry;
--
--	spin_lock_irqsave(&ds->lock, flags);
--	if ((ds->sweeper == ds->current_entry) &&
--	    !ds->entries[ds->current_entry].count)
--		r = 0;
--	else {
--		list_add(work, &ds->entries[ds->current_entry].work_items);
--		next_entry = ds_next(ds->current_entry);
--		if (!ds->entries[next_entry].count)
--			ds->current_entry = next_entry;
--	}
--	spin_unlock_irqrestore(&ds->lock, flags);
--
--	return r;
--}
--
--/*----------------------------------------------------------------*/
--
--/*
-  * Key building.
-  */
- static void build_data_key(struct dm_thin_device *td,
-@@ -816,7 +450,7 @@ static void cell_defer(struct thin_c *tc
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&pool->lock, flags);
--	cell_release(cell, &pool->deferred_bios);
-+	dm_cell_release(cell, &pool->deferred_bios);
- 	spin_unlock_irqrestore(&tc->pool->lock, flags);
- 
- 	wake_worker(pool);
-@@ -835,7 +469,7 @@ static void cell_defer_except(struct thi
- 	bio_list_init(&bios);
- 
- 	spin_lock_irqsave(&pool->lock, flags);
--	cell_release_no_holder(cell, &pool->deferred_bios);
-+	dm_cell_release_no_holder(cell, &pool->deferred_bios);
- 	spin_unlock_irqrestore(&pool->lock, flags);
- 
- 	wake_worker(pool);
-@@ -852,7 +486,7 @@ static void process_prepared_mapping(str
- 		bio->bi_end_io = m->saved_bi_end_io;
- 
- 	if (m->err) {
--		cell_error(m->cell);
-+		dm_cell_error(m->cell);
- 		return;
+ 	b->write_error = error;
+-	if (error) {
++	if (unlikely(error)) {
+ 		struct dm_bufio_client *c = b->c;
+ 		(void)cmpxchg(&c->async_write_error, 0, error);
  	}
+@@ -698,13 +698,20 @@ static void __wait_for_free_buffer(struc
+ 	dm_bufio_lock(c);
+ }
  
-@@ -864,7 +498,7 @@ static void process_prepared_mapping(str
- 	r = dm_thin_insert_block(tc->td, m->virt_block, m->data_block);
- 	if (r) {
- 		DMERR("dm_thin_insert_block() failed");
--		cell_error(m->cell);
-+		dm_cell_error(m->cell);
- 		return;
++enum new_flag {
++	NF_FRESH = 0,
++	NF_READ = 1,
++	NF_GET = 2,
++	NF_PREFETCH = 3
++};
++
+ /*
+  * Allocate a new buffer. If the allocation is not possible, wait until
+  * some other thread frees a buffer.
+  *
+  * May drop the lock and regain it.
+  */
+-static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client *c)
++static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client *c, enum new_flag nf)
+ {
+ 	struct dm_buffer *b;
+ 
+@@ -727,6 +734,9 @@ static struct dm_buffer *__alloc_buffer_
+ 				return b;
+ 		}
+ 
++		if (nf == NF_PREFETCH)
++			return NULL;
++
+ 		if (!list_empty(&c->reserved_buffers)) {
+ 			b = list_entry(c->reserved_buffers.next,
+ 				       struct dm_buffer, lru_list);
+@@ -744,9 +754,12 @@ static struct dm_buffer *__alloc_buffer_
  	}
+ }
  
-@@ -983,7 +617,7 @@ static void schedule_copy(struct thin_c 
- 	m->err = 0;
- 	m->bio = NULL;
+-static struct dm_buffer *__alloc_buffer_wait(struct dm_bufio_client *c)
++static struct dm_buffer *__alloc_buffer_wait(struct dm_bufio_client *c, enum new_flag nf)
+ {
+-	struct dm_buffer *b = __alloc_buffer_wait_no_callback(c);
++	struct dm_buffer *b = __alloc_buffer_wait_no_callback(c, nf);
++
++	if (!b)
++		return NULL;
  
--	if (!ds_add_work(&pool->shared_read_ds, &m->list))
-+	if (!dm_ds_add_work(&pool->shared_read_ds, &m->list))
- 		m->quiesced = 1;
+ 	if (c->alloc_callback)
+ 		c->alloc_callback(b);
+@@ -866,15 +879,8 @@ static struct dm_buffer *__find(struct d
+  * Getting a buffer
+  *--------------------------------------------------------------*/
+ 
+-enum new_flag {
+-	NF_FRESH = 0,
+-	NF_READ = 1,
+-	NF_GET = 2
+-};
+-
+ static struct dm_buffer *__bufio_new(struct dm_bufio_client *c, sector_t block,
+-				     enum new_flag nf, struct dm_buffer **bp,
+-				     int *need_submit)
++				     enum new_flag nf, int *need_submit)
+ {
+ 	struct dm_buffer *b, *new_b = NULL;
+ 
+@@ -882,6 +888,19 @@ static struct dm_buffer *__bufio_new(str
+ 
+ 	b = __find(c, block);
+ 	if (b) {
++found_buffer:
++		if (nf == NF_PREFETCH)
++			return NULL;
++		/*
++		 * Note: it is essential that we don't wait for the buffer to be
++		 * read if dm_bufio_get function is used. Both dm_bufio_get and
++		 * dm_bufio_prefetch can be used in the driver request routine.
++		 * If the user called both dm_bufio_prefetch and dm_bufio_get on
++		 * the same buffer, it would deadlock if we waited.
++		 */
++		if (nf == NF_GET && unlikely(test_bit(B_READING, &b->state)))
++			return NULL;
++
+ 		b->hold_count++;
+ 		__relink_lru(b, test_bit(B_DIRTY, &b->state) ||
+ 			     test_bit(B_WRITING, &b->state));
+@@ -891,7 +910,9 @@ static struct dm_buffer *__bufio_new(str
+ 	if (nf == NF_GET)
+ 		return NULL;
+ 
+-	new_b = __alloc_buffer_wait(c);
++	new_b = __alloc_buffer_wait(c, nf);
++	if (!new_b)
++		return NULL;
  
  	/*
-@@ -1014,7 +648,7 @@ static void schedule_copy(struct thin_c 
- 		if (r < 0) {
- 			mempool_free(m, pool->mapping_pool);
- 			DMERR("dm_kcopyd_copy() failed");
--			cell_error(cell);
-+			dm_cell_error(cell);
- 		}
+ 	 * We've had a period where the mutex was unlocked, so need to
+@@ -900,10 +921,7 @@ static struct dm_buffer *__bufio_new(str
+ 	b = __find(c, block);
+ 	if (b) {
+ 		__free_buffer_wake(new_b);
+-		b->hold_count++;
+-		__relink_lru(b, test_bit(B_DIRTY, &b->state) ||
+-			     test_bit(B_WRITING, &b->state));
+-		return b;
++		goto found_buffer;
  	}
+ 
+ 	__check_watermark(c);
+@@ -957,7 +975,7 @@ static void *new_read(struct dm_bufio_cl
+ 	struct dm_buffer *b;
+ 
+ 	dm_bufio_lock(c);
+-	b = __bufio_new(c, block, nf, bp, &need_submit);
++	b = __bufio_new(c, block, nf, &need_submit);
+ 	dm_bufio_unlock(c);
+ 
+ 	if (!b || IS_ERR(b))
+@@ -997,6 +1015,8 @@ void *dm_bufio_read(struct dm_bufio_clie
  }
-@@ -1079,7 +713,7 @@ static void schedule_zero(struct thin_c 
- 		if (r < 0) {
- 			mempool_free(m, pool->mapping_pool);
- 			DMERR("dm_kcopyd_zero() failed");
--			cell_error(cell);
-+			dm_cell_error(cell);
- 		}
- 	}
+ EXPORT_SYMBOL_GPL(dm_bufio_read);
+ 
++static void dm_bufio_release_unlocked(struct dm_buffer *b);
++
+ void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
+ 		   struct dm_buffer **bp)
+ {
+@@ -1006,13 +1026,35 @@ void *dm_bufio_new(struct dm_bufio_clien
  }
-@@ -1167,7 +801,7 @@ static void no_space(struct cell *cell)
- 	struct bio_list bios;
+ EXPORT_SYMBOL_GPL(dm_bufio_new);
  
- 	bio_list_init(&bios);
--	cell_release(cell, &bios);
-+	dm_cell_release(cell, &bios);
+-void dm_bufio_release(struct dm_buffer *b)
++void dm_bufio_prefetch(struct dm_bufio_client *c,
++		       sector_t block, unsigned n_blocks)
+ {
+-	struct dm_bufio_client *c = b->c;
++	struct blk_plug plug;
  
- 	while ((bio = bio_list_pop(&bios)))
- 		retry_on_resume(bio);
-@@ -1184,7 +818,7 @@ static void process_discard(struct thin_
- 	struct new_mapping *m;
++	blk_start_plug(&plug);
+ 	dm_bufio_lock(c);
  
- 	build_virtual_key(tc->td, block, &key);
--	if (bio_detain(tc->pool->prison, &key, bio, &cell))
-+	if (dm_bio_detain(tc->pool->prison, &key, bio, &cell))
- 		return;
+-	BUG_ON(test_bit(B_READING, &b->state));
++	for (; n_blocks--; block++) {
++		int need_submit;
++		struct dm_buffer *b;
++		b = __bufio_new(c, block, NF_PREFETCH, &need_submit);
++		if (unlikely(b != NULL)) {
++			if (need_submit)
++				submit_io(b, READ, b->block, read_endio);
++			dm_bufio_release_unlocked(b);
++		}
++
++	}
++
++	dm_bufio_unlock(c);
++	blk_finish_plug(&plug);
++}
++EXPORT_SYMBOL(dm_bufio_prefetch);
++
++static void dm_bufio_release_unlocked(struct dm_buffer *b)
++{
++	struct dm_bufio_client *c = b->c;
++
+ 	BUG_ON(!b->hold_count);
  
- 	r = dm_thin_find_block(tc->td, block, 1, &lookup_result);
-@@ -1196,8 +830,8 @@ static void process_discard(struct thin_
- 		 * on this block.
+ 	b->hold_count--;
+@@ -1025,12 +1067,23 @@ void dm_bufio_release(struct dm_buffer *
+ 		 * invalid buffer.
  		 */
- 		build_data_key(tc->td, lookup_result.block, &key2);
--		if (bio_detain(tc->pool->prison, &key2, bio, &cell2)) {
--			cell_release_singleton(cell, bio);
-+		if (dm_bio_detain(tc->pool->prison, &key2, bio, &cell2)) {
-+			dm_cell_release_singleton(cell, bio);
- 			break;
+ 		if ((b->read_error || b->write_error) &&
++		    !test_bit(B_READING, &b->state) &&
+ 		    !test_bit(B_WRITING, &b->state) &&
+ 		    !test_bit(B_DIRTY, &b->state)) {
+ 			__unlink_buffer(b);
+ 			__free_buffer_wake(b);
  		}
- 
-@@ -1216,7 +850,7 @@ static void process_discard(struct thin_
- 			m->err = 0;
- 			m->bio = bio;
- 
--			if (!ds_add_work(&pool->all_io_ds, &m->list)) {
-+			if (!dm_ds_add_work(&pool->all_io_ds, &m->list)) {
- 				list_add(&m->list, &pool->prepared_discards);
- 				wake_worker(pool);
- 			}
-@@ -1231,8 +865,8 @@ static void process_discard(struct thin_
- 			unsigned remaining = (pool->sectors_per_block - offset) << 9;
- 			bio->bi_size = min(bio->bi_size, remaining);
- 
--			cell_release_singleton(cell, bio);
--			cell_release_singleton(cell2, bio);
-+			dm_cell_release_singleton(cell, bio);
-+			dm_cell_release_singleton(cell2, bio);
- 			remap_and_issue(tc, bio, lookup_result.block);
- 		}
- 		break;
-@@ -1241,13 +875,13 @@ static void process_discard(struct thin_
- 		/*
- 		 * It isn't provisioned, just forget it.
- 		 */
--		cell_release_singleton(cell, bio);
-+		dm_cell_release_singleton(cell, bio);
- 		bio_endio(bio, 0);
- 		break;
- 
- 	default:
- 		DMERR("discard: find block unexpectedly returned %d\n", r);
--		cell_release_singleton(cell, bio);
-+		dm_cell_release_singleton(cell, bio);
- 		bio_io_error(bio);
- 		break;
  	}
-@@ -1274,7 +908,7 @@ static void break_sharing(struct thin_c 
++}
++
++void dm_bufio_release(struct dm_buffer *b)
++{
++	struct dm_bufio_client *c = b->c;
++
++	dm_bufio_lock(c);
++
++	BUG_ON(test_bit(B_READING, &b->state));
++	dm_bufio_release_unlocked(b);
  
- 	default:
- 		DMERR("%s: alloc_data_block() failed, error = %d", __func__, r);
--		cell_error(cell);
-+		dm_cell_error(cell);
- 		break;
- 	}
+ 	dm_bufio_unlock(c);
  }
-@@ -1292,7 +926,7 @@ static void process_shared_bio(struct th
- 	 * of being broken so we have nothing further to do here.
- 	 */
- 	build_data_key(tc->td, lookup_result->block, &key);
--	if (bio_detain(pool->prison, &key, bio, &cell))
-+	if (dm_bio_detain(pool->prison, &key, bio, &cell))
- 		return;
+@@ -1042,6 +1095,8 @@ void dm_bufio_mark_buffer_dirty(struct d
  
- 	if (bio_data_dir(bio) == WRITE)
-@@ -1300,9 +934,9 @@ static void process_shared_bio(struct th
- 	else {
- 		struct endio_hook *h = dm_get_mapinfo(bio)->ptr;
+ 	dm_bufio_lock(c);
  
--		h->shared_read_entry = ds_inc(&pool->shared_read_ds);
-+		h->shared_read_entry = dm_ds_inc(&pool->shared_read_ds);
++	BUG_ON(test_bit(B_READING, &b->state));
++
+ 	if (!test_and_set_bit(B_DIRTY, &b->state))
+ 		__relink_lru(b, LIST_DIRTY);
  
--		cell_release_singleton(cell, bio);
-+		dm_cell_release_singleton(cell, bio);
- 		remap_and_issue(tc, bio, lookup_result->block);
- 	}
- }
-@@ -1317,7 +951,7 @@ static void provision_block(struct thin_
- 	 * Remap empty bios (flushes) immediately, without provisioning.
- 	 */
- 	if (!bio->bi_size) {
--		cell_release_singleton(cell, bio);
-+		dm_cell_release_singleton(cell, bio);
- 		remap_and_issue(tc, bio, 0);
- 		return;
- 	}
-@@ -1327,7 +961,7 @@ static void provision_block(struct thin_
- 	 */
- 	if (bio_data_dir(bio) == READ) {
- 		zero_fill_bio(bio);
--		cell_release_singleton(cell, bio);
-+		dm_cell_release_singleton(cell, bio);
- 		bio_endio(bio, 0);
- 		return;
- 	}
-@@ -1347,7 +981,7 @@ static void provision_block(struct thin_
+Index: linux-3.3-rc5-fast/drivers/md/dm-bufio.h
+===================================================================
+--- linux-3.3-rc5-fast.orig/drivers/md/dm-bufio.h	2012-03-03 05:19:33.000000000 +0100
++++ linux-3.3-rc5-fast/drivers/md/dm-bufio.h	2012-03-03 05:19:35.000000000 +0100
+@@ -63,6 +63,14 @@ void *dm_bufio_new(struct dm_bufio_clien
+ 		   struct dm_buffer **bp);
  
- 	default:
- 		DMERR("%s: alloc_data_block() failed, error = %d", __func__, r);
--		cell_error(cell);
-+		dm_cell_error(cell);
- 		break;
- 	}
- }
-@@ -1365,7 +999,7 @@ static void process_bio(struct thin_c *t
- 	 * being provisioned so we have nothing further to do here.
- 	 */
- 	build_virtual_key(tc->td, block, &key);
--	if (bio_detain(tc->pool->prison, &key, bio, &cell))
-+	if (dm_bio_detain(tc->pool->prison, &key, bio, &cell))
- 		return;
- 
- 	r = dm_thin_find_block(tc->td, block, 1, &lookup_result);
-@@ -1380,7 +1014,7 @@ static void process_bio(struct thin_c *t
- 		 * TODO: this will probably have to change when discard goes
- 		 * back in.
- 		 */
--		cell_release_singleton(cell, bio);
-+		dm_cell_release_singleton(cell, bio);
- 
- 		if (lookup_result.shared)
- 			process_shared_bio(tc, bio, block, &lookup_result);
-@@ -1390,7 +1024,7 @@ static void process_bio(struct thin_c *t
- 
- 	case -ENODATA:
- 		if (bio_data_dir(bio) == READ && tc->origin_dev) {
--			cell_release_singleton(cell, bio);
-+			dm_cell_release_singleton(cell, bio);
- 			remap_to_origin_and_issue(tc, bio);
- 		} else
- 			provision_block(tc, bio, block, cell);
-@@ -1398,7 +1032,7 @@ static void process_bio(struct thin_c *t
- 
- 	default:
- 		DMERR("dm_thin_find_block() failed, error = %d", r);
--		cell_release_singleton(cell, bio);
-+		dm_cell_release_singleton(cell, bio);
- 		bio_io_error(bio);
- 		break;
- 	}
-@@ -1522,7 +1156,7 @@ static struct endio_hook *thin_hook_bio(
- 
- 	h->tc = tc;
- 	h->shared_read_entry = NULL;
--	h->all_io_entry = bio->bi_rw & REQ_DISCARD ? NULL : ds_inc(&pool->all_io_ds);
-+	h->all_io_entry = bio->bi_rw & REQ_DISCARD ? NULL : dm_ds_inc(&pool->all_io_ds);
- 	h->overwrite_mapping = NULL;
- 
- 	return h;
-@@ -1652,7 +1286,7 @@ static void __pool_destroy(struct pool *
- 	if (dm_pool_metadata_close(pool->pmd) < 0)
- 		DMWARN("%s: dm_pool_metadata_close() failed.", __func__);
- 
--	prison_destroy(pool->prison);
-+	dm_prison_destroy(pool->prison);
- 	dm_kcopyd_client_destroy(pool->copier);
- 
- 	if (pool->wq)
-@@ -1693,7 +1327,7 @@ static struct pool *pool_create(struct m
- 	pool->offset_mask = block_size - 1;
- 	pool->low_water_blocks = 0;
- 	pool_features_init(&pool->pf);
--	pool->prison = prison_create(PRISON_CELLS);
-+	pool->prison = dm_prison_create(PRISON_CELLS);
- 	if (!pool->prison) {
- 		*error = "Error creating pool's bio prison";
- 		err_p = ERR_PTR(-ENOMEM);
-@@ -1729,8 +1363,8 @@ static struct pool *pool_create(struct m
- 	pool->low_water_triggered = 0;
- 	pool->no_free_space = 0;
- 	bio_list_init(&pool->retry_on_resume_list);
--	ds_init(&pool->shared_read_ds);
--	ds_init(&pool->all_io_ds);
-+	dm_ds_init(&pool->shared_read_ds);
-+	dm_ds_init(&pool->all_io_ds);
- 
- 	pool->next_mapping = NULL;
- 	pool->mapping_pool =
-@@ -1763,7 +1397,7 @@ bad_mapping_pool:
- bad_wq:
- 	dm_kcopyd_client_destroy(pool->copier);
- bad_kcopyd_client:
--	prison_destroy(pool->prison);
-+	dm_prison_destroy(pool->prison);
- bad_prison:
- 	kfree(pool);
- bad_pool:
-@@ -2614,7 +2248,7 @@ static int thin_endio(struct dm_target *
- 
- 	if (h->shared_read_entry) {
- 		INIT_LIST_HEAD(&work);
--		ds_dec(h->shared_read_entry, &work);
-+		dm_ds_dec(h->shared_read_entry, &work);
- 
- 		spin_lock_irqsave(&pool->lock, flags);
- 		list_for_each_entry_safe(m, tmp, &work, list) {
-@@ -2627,7 +2261,7 @@ static int thin_endio(struct dm_target *
- 
- 	if (h->all_io_entry) {
- 		INIT_LIST_HEAD(&work);
--		ds_dec(h->all_io_entry, &work);
-+		dm_ds_dec(h->all_io_entry, &work);
- 		list_for_each_entry_safe(m, tmp, &work, list)
- 			list_add(&m->list, &pool->prepared_discards);
- 	}
+ /*
++ * Prefetch the specified blocks to the cache.
++ * The function starts to read the blocks and returns without waiting for
++ * I/O to finish.
++ */
++void dm_bufio_prefetch(struct dm_bufio_client *c,
++		       sector_t block, unsigned n_blocks);
++
++/*
+  * Release a reference obtained with dm_bufio_{read,get,new}. The data
+  * pointer and dm_buffer pointer is no longer valid after this call.
+  */
