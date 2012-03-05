@@ -1,17 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm thin: relax hard limit on the maximum size of a
- metadata device
-Date: Mon, 5 Mar 2012 09:19:51 -0500
-Message-ID: <20120305141950.GC25562@redhat.com>
-References: <1330723953-16872-1-git-send-email-snitzer@redhat.com>
-	<20120305102133.GB6431@ubuntu> <20120305140421.GA25562@redhat.com>
+From: Rudy Gevaert <Rudy.Gevaert@UGent.be>
+Subject: multipath device with name '1'
+Date: Mon, 05 Mar 2012 17:52:12 +0100
+Message-ID: <4F54EF3C.8050405@UGent.be>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20120305140421.GA25562@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,47 +16,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, ejt@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 05 2012 at  9:04am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Hello,
 
-> On Mon, Mar 05 2012 at  5:21am -0500,
-> Joe Thornber <thornber@redhat.com> wrote:
-> 
-> > Hi Mike,
-> > 
-> > My concerns are:
-> > 
-> > i) The current behaviour is upstream; by changing this aren't you
-> >    making the tools writers life more complicated rather than less by
-> >    making them support both interfaces?
-> 
-> It is an incremental improvement.  Allows the kernel to be forgiving.
-> How does this impact some tool that took the special care to limit the
-> size of the device to METADATA_DEV_MAX_SECTORS (which is < 16G)?
-> 
-> I'm not imposing new or conflicting restrictions that would trip up any
-> existing/hypothetical tools.
-> 
-> > ii) 16G is a ludicrous amount of space to allocate for metadata (16M
-> >     would be much better).  Why are the tools trying to allocate this
-> >     much?  LVM2's unit of _allocation_ may be the extent, but this is
-> >     separate from activation.  If your extent size is 16G you can
-> >     probably squeeze 1000 metadata areas into there.
-> > 
-> >     As a side issue it's not clear to me why anyone would want to use
-> >     16G extents?  (eg, 16M extents lets them address 2^56 bytes of
-> >     data in the VG).  Maybe the sys admins mistakenly think they're
-> >     getting performance benefits through having more contiguous data?
-> >     [LVM2's allocation policies try and allocate contiguous extents
-> >     anyway].
-> 
-> Whatever the tools may be doing is not my concern.  Ideally the users
-> and tool authors understand that 16G is insane for thinp metadata.  But
-> in the event that they use 16G would you rather we reject them?
-> I do think so, especially given that we've already documented that 16G
-> is the max.
+ From time to time I get a multipath device called '1':
 
-I clearly meant "I do _not_ think so" ;)
+1                 dm-4 DELL,MD32xx
+size=50G features='3 queue_if_no_path pg_init_retries 50' hwhandler='1 
+rdac' wp=rw
+`-+- policy='round-robin 0' prio=-1 status=enabled
+   |- 0:0:0:1 sdd 8:48  failed undef running
+   `- 0:0:1:1 sde 8:64  failed undef running
+
+
+This happens when I unmap/map luns to a specific host.
+
+I am seeing this on machines connected through fibre channel to an IBM 
+DS3400, but also on a machine direct attached to a Dell MD3200.
+
+1                 dm-6 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+`-+- policy='round-robin 0' prio=-1 status=enabled
+   `- 1:0:0:15 sdh  8:112  failed undef  running
+
+I haven't been able to remove the device from the listing.  I can remove 
+it from device mapper, but as soon as I rescan the bus it appears again.
+
+The only way to get rid of the multipath (so it stays away) is to reboot 
+the machine.
+
+The main concern with this device I have is that some scripts (like when 
+you recreate initramfs) go and check all the devices.  And when it 
+checks this device the process hangs...
+
+Has anybody seen this before?
+
+root@cyrprd2:~# uname -a
+Linux cyrprd2 2.6.32-5-amd64 #1 SMP Tue Jun 14 09:42:28 UTC 2011 x86_64 
+GNU/Linux
+
+
+
+Thanks,
+
+Rudy
