@@ -1,17 +1,14 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm thin: relax hard limit on the maximum size of a
- metadata device
-Date: Tue, 6 Mar 2012 10:09:53 +0000
-Message-ID: <20120306100952.GA5323@ubuntu>
-References: <1330723953-16872-1-git-send-email-snitzer@redhat.com>
-	<20120305102133.GB6431@ubuntu> <20120305140421.GA25562@redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Subject: [PATCH]multipath-tools: Implementation for hex output
+ (-H) for mpathpersist
+Date: Tue, 6 Mar 2012 15:10:15 +0000
+Message-ID: <F200AD42A082BC4088B232D13A916A8901C8CD@SACEXCMBX02-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20120305140421.GA25562@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,38 +18,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, ejt@redhat.com
+To: "christophe.varoqui@free.fr" <christophe.varoqui@free.fr>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 05, 2012 at 09:04:21AM -0500, Mike Snitzer wrote:
-> On Mon, Mar 05 2012 at  5:21am -0500,
-> Joe Thornber <thornber@redhat.com> wrote:
-> 
-> > Hi Mike,
-> > 
-> > My concerns are:
-> > 
-> > i) The current behaviour is upstream; by changing this aren't you
-> >    making the tools writers life more complicated rather than less by
-> >    making them support both interfaces?
-> 
-> It is an incremental improvement.  Allows the kernel to be forgiving.
-> How does this impact some tool that took the special care to limit the
-> size of the device to METADATA_DEV_MAX_SECTORS (which is < 16G)?
+Adding missing implementation for hex output(-H).
 
-You're making this change to make life easier for tool writers, yet
-tool writers still have to support the existing 3.2 kernel and deal
-with the 16G limit.
+Signed-off-by: Vijay Chauhan <vijay.chauhan@netapp.com>
 
-> Whatever the tools may be doing is not my concern.  Ideally the users
-> and tool authors understand that 16G is insane for thinp metadata.  But
-> in the event that they use 16G would you rather we reject them?
-
-Yes, I would rather reject, than let people think they had 32G of
-metadata.  It also forces the tool writers to do something sane.
-
-I don't feel strongly enough about this to keep arguing.  So consider
-this an ACK and see if you can get it past Alasdair.
-
-- Joe
+---
+diff -uprN multipath-tools.orig/mpathpersist/main.c multipath-tools/mpathpersist/main.c
+--- multipath-tools.orig/mpathpersist/main.c	2012-03-04 02:16:55.000000000 -0500
++++ multipath-tools/mpathpersist/main.c	2012-03-05 01:23:07.000000000 -0500
+@@ -260,7 +260,7 @@ int main (int argc, char * argv[])
+ 	}
+ 
+ 	/* set verbosity */
+-	noisy = (loglevel >= 3) ? 1: 0;
++	noisy = (loglevel >= 3) ? 1 : hex;
+ 	verbose	= (loglevel >= 3)? 3: loglevel;
+ 
+ 	if ((prout_flag + prin_flag) == 0)
+--
