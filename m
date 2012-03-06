@@ -1,16 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Crash in dm_done()
-Date: Mon, 5 Mar 2012 13:23:38 -0500
-Message-ID: <20120305182338.GA28280@redhat.com>
-References: <4F0C1E68.30602@suse.de> <4F0D4A23.7060604@ce.jp.nec.com>
-	<20120111162501.GA25980@redhat.com> <4F0E8B10.2000909@suse.de>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm thin: relax hard limit on the maximum size of a
+ metadata device
+Date: Tue, 6 Mar 2012 10:09:53 +0000
+Message-ID: <20120306100952.GA5323@ubuntu>
+References: <1330723953-16872-1-git-send-email-snitzer@redhat.com>
+	<20120305102133.GB6431@ubuntu> <20120305140421.GA25562@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4F0E8B10.2000909@suse.de>
+In-Reply-To: <20120305140421.GA25562@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,33 +21,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jan 12 2012 at  2:26am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> On 01/11/2012 05:25 PM, Mike Snitzer wrote:
-> > But we never did get to the bottom of _why_, and Jun'ichi pointed out
-> > a NULL pointer check is missing:
-> > http://www.redhat.com/archives/dm-devel/2011-December/msg00022.html
+On Mon, Mar 05, 2012 at 09:04:21AM -0500, Mike Snitzer wrote:
+> On Mon, Mar 05 2012 at  5:21am -0500,
+> Joe Thornber <thornber@redhat.com> wrote:
+> 
+> > Hi Mike,
 > > 
-> > Anyway, Hannes, if you can reproduce it'd also be interesting to see if
-> > your patch (updated with NULL pointer check?) makes any difference.
+> > My concerns are:
 > > 
-> Sad news: This is _with_ my patch applied.
-> (Hey, these are my patches. Obviously I will be using them :-)
+> > i) The current behaviour is upstream; by changing this aren't you
+> >    making the tools writers life more complicated rather than less by
+> >    making them support both interfaces?
+> 
+> It is an incremental improvement.  Allows the kernel to be forgiving.
+> How does this impact some tool that took the special care to limit the
+> size of the device to METADATA_DEV_MAX_SECTORS (which is < 16G)?
 
-Hi Hannes,
+You're making this change to make life easier for tool writers, yet
+tool writers still have to support the existing 3.2 kernel and deal
+with the 16G limit.
 
-Alasdair staged an old version of your patch here (for 3.4):
-http://people.redhat.com/agk/patches/linux/editing/dm-mpath-clear-map_context-when-requeueing.patch
+> Whatever the tools may be doing is not my concern.  Ideally the users
+> and tool authors understand that 16G is insane for thinp metadata.  But
+> in the event that they use 16G would you rather we reject them?
 
-But it is missing a mpio NULL pointer check in do_end_io().
+Yes, I would rather reject, than let people think they had 32G of
+metadata.  It also forces the tool writers to do something sane.
 
-Did you have an updated patch you'd like used instead of the one above?
-If so, please post it to dm-devel.
+I don't feel strongly enough about this to keep arguing.  So consider
+this an ACK and see if you can get it past Alasdair.
 
-Thanks,
-Mike
+- Joe
