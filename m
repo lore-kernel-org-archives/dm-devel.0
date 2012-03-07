@@ -1,53 +1,52 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH]multipath-tools: Implementation for hex
- output (-H) for mpathpersist
-Date: Wed, 07 Mar 2012 22:32:43 +0100
-Message-ID: <1331155963.19673.25.camel@lapoo.opensvc.com>
-References: <F200AD42A082BC4088B232D13A916A8901C8CD@SACEXCMBX02-PRD.hq.netapp.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper fixes for 3.3
+Date: Wed, 7 Mar 2012 22:46:58 +0000
+Message-ID: <20120307224658.GQ16767@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <F200AD42A082BC4088B232D13A916A8901C8CD@SACEXCMBX02-PRD.hq.netapp.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Joe Thornber <thornber@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, stable@kernel.org, Jesper Juhl <jj@chaosbits.net>
 List-Id: dm-devel.ids
 
-On mar., 2012-03-06 at 15:10 +0000, Chauhan, Vijay wrote:
-> Adding missing implementation for hex output(-H).
-> 
-Applied.
+Please pull from:
 
-> Signed-off-by: Vijay Chauhan <vijay.chauhan@netapp.com>
-> 
-> ---
-> diff -uprN multipath-tools.orig/mpathpersist/main.c multipath-tools/mpathpersist/main.c
-> --- multipath-tools.orig/mpathpersist/main.c	2012-03-04 02:16:55.000000000 -0500
-> +++ multipath-tools/mpathpersist/main.c	2012-03-05 01:23:07.000000000 -0500
-> @@ -260,7 +260,7 @@ int main (int argc, char * argv[])
->  	}
->  
->  	/* set verbosity */
-> -	noisy = (loglevel >= 3) ? 1: 0;
-> +	noisy = (loglevel >= 3) ? 1 : hex;
->  	verbose	= (loglevel >= 3)? 3: loglevel;
->  
->  	if ((prout_flag + prin_flag) == 0)
-> --
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.3-fixes
+
+to get the following device-mapper fixes for 3.3.
+
+Thanks,
+Alasdair
+
+----------------------------------------------------------------
+Device-mapper fixes for 3.3.
+
+Eight small device-mapper bug fixes.
+
+----------------------------------------------------------------
+Jesper Juhl (1):
+      dm ioctl: do not leak argv if target message only contains whitespace
+
+Joe Thornber (2):
+      dm thin metadata: unlock superblock in init_pmd error path
+      dm thin metadata: decrement counter after removing mapped block
+
+Jonathan E Brassow (2):
+      dm raid: set MD_CHANGE_DEVS when rebuilding
+      dm raid: fix flush support
+
+Mike Snitzer (2):
+      dm flakey: fix crash on read when corrupt_bio_byte not set
+      dm thin metadata: remove incorrect close_device on creation error paths
+
+Milan Broz (1):
+      dm io: fix discard support
+
+ drivers/md/dm-flakey.c        |    2 +-
+ drivers/md/dm-io.c            |   23 ++++++++++++++++-------
+ drivers/md/dm-ioctl.c         |    2 +-
+ drivers/md/dm-raid.c          |   17 +++++++++++------
+ drivers/md/dm-thin-metadata.c |   25 ++++++++++++++++++++-----
+ 5 files changed, 49 insertions(+), 20 deletions(-)
