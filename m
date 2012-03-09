@@ -1,8 +1,8 @@
-From: Tejun Heo <tj@kernel.org>
+From: Mandeep Singh Baines <msb@chromium.org>
 Subject: Re: workqueues and percpu (was: [PATCH] dm: remake of the verity
  target)
-Date: Fri, 9 Mar 2012 13:20:49 -0800
-Message-ID: <20120309212049.GD24890@google.com>
+Date: Fri, 9 Mar 2012 14:06:23 -0800
+Message-ID: <20120309220623.GM27051@google.com>
 References: <1330648393-20692-1-git-send-email-msb@chromium.org>
  <Pine.LNX.4.64.1203031340340.10937@file.rdu.redhat.com>
  <20120306215947.GB27051@google.com>
@@ -10,36 +10,50 @@ References: <1330648393-20692-1-git-send-email-msb@chromium.org>
  <20120308143909.bfc4cb4d.akpm@linux-foundation.org>
  <20120308231521.GA2968@htj.dyndns.org>
  <20120309211512.GL27051@google.com>
+ <20120309212049.GD24890@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120309211512.GL27051@google.com>
+In-Reply-To: <20120309212049.GD24890@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mandeep Singh Baines <msb@chromium.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, Steffen Klassert <steffen.klassert@secunet.com>, Rusty Russell <rusty@rustcorp.com.au>
+To: Tejun Heo <tj@kernel.org>
+Cc: Mandeep Singh Baines <msb@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, Steffen Klassert <steffen.klassert@secunet.com>, Rusty Russell <rusty@rustcorp.com.au>
 List-Id: dm-devel.ids
 
-Hello,
+Tejun Heo (tj@kernel.org) wrote:
+> Hello,
+> 
+> On Fri, Mar 09, 2012 at 01:15:12PM -0800, Mandeep Singh Baines wrote:
+> > In this case, I need the per-cpu data for the duration of calculating
+> > a cryptographics hash on a 4K page of data. That's a long time to disable
+> > pre-emption.
+> 
+> How long are we talking about?  Tens of microsecs, tens of millisecs?
+> 
 
-On Fri, Mar 09, 2012 at 01:15:12PM -0800, Mandeep Singh Baines wrote:
-> In this case, I need the per-cpu data for the duration of calculating
-> a cryptographics hash on a 4K page of data. That's a long time to disable
-> pre-emption.
+It depends on the H/W. We are running on Atom w/ PREEMPT_DESKTOP so
+we aren't pre-emptible even now. But I think there is interest from other
+folks in embedded to use the work. So it potentially be millisecs on a
+slower few hundred MHZ embedded processor.
 
-How long are we talking about?  Tens of microsecs, tens of millisecs?
+> > I could fix the bug temporarily by adding get/put for the per_cpu data
+> > but would that be acceptable? I'm not sure what the OK limit is for how
+> > long one can disable preemption. An alternative fix would be not allow
+> > CONFIG_VERITY when CONFIG_HOTPLUG_CPU. Once workqueues are fixed, I could
+> > remove that restriction.
+> 
+> I think the right thing to do for now is to add cpu hotplug notifier
+> and do flush_work_sync() on the work item.  We can later move that
+> logic into workqueue and remove it from crypto.
+> 
 
-> I could fix the bug temporarily by adding get/put for the per_cpu data
-> but would that be acceptable? I'm not sure what the OK limit is for how
-> long one can disable preemption. An alternative fix would be not allow
-> CONFIG_VERITY when CONFIG_HOTPLUG_CPU. Once workqueues are fixed, I could
-> remove that restriction.
+That seems like the correct solution. I will implement that.
 
-I think the right thing to do for now is to add cpu hotplug notifier
-and do flush_work_sync() on the work item.  We can later move that
-logic into workqueue and remove it from crypto.
+Thanks,
+Mandeep
 
-Thanks.
-
--- 
-tejun
+> Thanks.
+> 
+> -- 
+> tejun
