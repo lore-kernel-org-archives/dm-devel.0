@@ -1,12 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bufio: prefetch
-Date: Mon, 12 Mar 2012 17:48:22 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1203121744510.3313@file.rdu.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 08/13 v2] dm thin: add support for external
+	origins
+Date: Mon, 12 Mar 2012 18:14:58 -0400
+Message-ID: <20120312221458.GA29597@redhat.com>
+References: <1330527017-28618-1-git-send-email-snitzer@redhat.com>
+	<1330527017-28618-9-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1330527017-28618-9-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,238 +21,301 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: Edward Thornber <thornber@redhat.com>
+To: dm-devel@redhat.com
+Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Allow use of an external, _read only_, device as an origin for a thin
+device.  Any read to an unprovisioned area of the thin device will be
+passed through to the origin.  Writes trigger allocation of new blocks
+as usual.
 
-This patch adds prefetch function to dm-bufio. I'm adding Joe to CC, 
-because he may use it in his code too.
+One possible use case for this would be VM hosts who want to run
+guests on thinp volumes, but have the base image on another device
+(possibly shared between many VMs).
 
-Mikulas
+You must not write to the origin device if you use this technique!  Of
+course you can write to the thin device, and take internal snapshots
+of the thin.
 
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
 ---
+ Documentation/device-mapper/thin-provisioning.txt |   38 +++++++++
+ drivers/md/dm-thin.c                              |   84 ++++++++++++++++++----
+ 2 files changed, 108 insertions(+), 14 deletions(-)
 
-dm-bufio: prefetch
+[v2: add external origin output to pool_status]
 
-This patch introduces a new function dm_bufio_prefetch. It prefetches
-the specified range of blocks into dm-bufio cache without waiting
-for i/o completion.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-bufio.c |   88 +++++++++++++++++++++++++++++++++++++++-----------
- drivers/md/dm-bufio.h |    8 ++++
- 2 files changed, 77 insertions(+), 19 deletions(-)
-
-Index: linux-3.3-rc6-fast/drivers/md/dm-bufio.c
+Index: linux-2.6/Documentation/device-mapper/thin-provisioning.txt
 ===================================================================
---- linux-3.3-rc6-fast.orig/drivers/md/dm-bufio.c	2012-03-12 22:20:47.000000000 +0100
-+++ linux-3.3-rc6-fast/drivers/md/dm-bufio.c	2012-03-12 22:38:01.000000000 +0100
-@@ -579,7 +579,7 @@ static void write_endio(struct bio *bio,
- 	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
+--- linux-2.6.orig/Documentation/device-mapper/thin-provisioning.txt
++++ linux-2.6/Documentation/device-mapper/thin-provisioning.txt
+@@ -167,6 +167,38 @@ ii) Using an internal snapshot.
  
- 	b->write_error = error;
--	if (error) {
-+	if (unlikely(error)) {
- 		struct dm_bufio_client *c = b->c;
- 		(void)cmpxchg(&c->async_write_error, 0, error);
- 	}
-@@ -698,13 +698,20 @@ static void __wait_for_free_buffer(struc
- 	dm_bufio_lock(c);
+     dmsetup create snap --table "0 2097152 thin /dev/mapper/pool 1"
+ 
++External snapshots
++------------------
++
++You can use an external, _read only_, device as an origin for a thin
++device.  Any read to an unprovisioned area of the thin device will be
++passed through to the origin.  Writes trigger allocation of new blocks
++as usual.
++
++One possible use case for this would be VM hosts who want to run
++guests on thinp volumes, but have the base image on another device
++(possibly shared between many VMs).
++
++You must not write to the origin device if you use this technique!  Of
++course you can write to the thin device, and take internal snapshots
++of the thin.
++
++i) Creating an external snapshot
++
++  Same as creating a thin device.  You don't need to mention the
++  origin at this stage.
++
++    dmsetup message /dev/mapper/pool 0 "create_thin 0"
++
++ii) Using an external snapshot.
++
++  Add an extra parameter to the thin target specifying the origin:
++
++    dmsetup create snap --table "0 2097152 thin /dev/mapper/pool 0 /dev/image"
++
++  All descendants (internal snapshots) of an external snapshot will
++  need the extra origin argument.
++
+ Deactivation
+ ------------
+ 
+@@ -262,7 +294,7 @@ iii) Messages
+ 
+ i) Constructor
+ 
+-    thin <pool dev> <dev id>
++    thin <pool dev> <dev id> [external origin id]
+ 
+     pool dev:
+ 	the thin-pool device, e.g. /dev/mapper/my_pool or 253:0
+@@ -271,6 +303,10 @@ i) Constructor
+ 	the internal device identifier of the device to be
+ 	activated.
+ 
++    external origin dev:
++        a block device; reads to unprovisioned areas of the thin target
++        will be mapped to here.
++
+ The pool doesn't store any size against the thin devices.  If you
+ load a thin target that is smaller than you've been using previously,
+ then you'll have no access to blocks mapped beyond the end.  If you
+Index: linux-2.6/drivers/md/dm-thin.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-thin.c
++++ linux-2.6/drivers/md/dm-thin.c
+@@ -557,6 +557,7 @@ struct pool_c {
+  */
+ struct thin_c {
+ 	struct dm_dev *pool_dev;
++	struct dm_dev *origin_dev;
+ 	dm_thin_id dev_id;
+ 
+ 	struct pool *pool;
+@@ -674,14 +675,16 @@ static void remap(struct thin_c *tc, str
+ 		(bio->bi_sector & pool->offset_mask);
  }
  
-+enum new_flag {
-+	NF_FRESH = 0,
-+	NF_READ = 1,
-+	NF_GET = 2,
-+	NF_PREFETCH = 3
-+};
+-static void remap_and_issue(struct thin_c *tc, struct bio *bio,
+-			    dm_block_t block)
++static void remap_to_origin(struct thin_c *tc, struct bio *bio)
++{
++	bio->bi_bdev = tc->origin_dev->bdev;
++}
++
++static void issue(struct thin_c *tc, struct bio *bio)
+ {
+ 	struct pool *pool = tc->pool;
+ 	unsigned long flags;
+ 
+-	remap(tc, bio, block);
+-
+ 	/*
+ 	 * Batch together any FUA/FLUSH bios we find and then issue
+ 	 * a single commit for them in process_deferred_bios().
+@@ -694,6 +697,19 @@ static void remap_and_issue(struct thin_
+ 		generic_make_request(bio);
+ }
+ 
++static void remap_to_origin_and_issue(struct thin_c *tc, struct bio *bio)
++{
++	remap_to_origin(tc, bio);
++	issue(tc, bio);
++}
++
++static void remap_and_issue(struct thin_c *tc, struct bio *bio,
++			    dm_block_t block)
++{
++	remap(tc, bio, block);
++	issue(tc, bio);
++}
 +
  /*
-  * Allocate a new buffer. If the allocation is not possible, wait until
-  * some other thread frees a buffer.
-  *
-  * May drop the lock and regain it.
-  */
--static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client *c)
-+static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client *c, enum new_flag nf)
+  * wake_worker() is used when new work is queued and when pool_resume is
+  * ready to continue deferred IO processing.
+@@ -940,7 +956,8 @@ static struct new_mapping *get_next_mapp
+ }
+ 
+ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+-			  dm_block_t data_origin, dm_block_t data_dest,
++			  struct dm_dev *origin, dm_block_t data_origin,
++			  dm_block_t data_dest,
+ 			  struct cell *cell, struct bio *bio)
  {
- 	struct dm_buffer *b;
+ 	int r;
+@@ -972,7 +989,7 @@ static void schedule_copy(struct thin_c 
+ 	} else {
+ 		struct dm_io_region from, to;
  
-@@ -727,6 +734,9 @@ static struct dm_buffer *__alloc_buffer_
- 				return b;
- 		}
+-		from.bdev = tc->pool_dev->bdev;
++		from.bdev = origin->bdev;
+ 		from.sector = data_origin * pool->sectors_per_block;
+ 		from.count = pool->sectors_per_block;
  
-+		if (nf == NF_PREFETCH)
-+			return NULL;
-+
- 		if (!list_empty(&c->reserved_buffers)) {
- 			b = list_entry(c->reserved_buffers.next,
- 				       struct dm_buffer, lru_list);
-@@ -744,9 +754,12 @@ static struct dm_buffer *__alloc_buffer_
+@@ -990,6 +1007,22 @@ static void schedule_copy(struct thin_c 
  	}
  }
  
--static struct dm_buffer *__alloc_buffer_wait(struct dm_bufio_client *c)
-+static struct dm_buffer *__alloc_buffer_wait(struct dm_bufio_client *c, enum new_flag nf)
- {
--	struct dm_buffer *b = __alloc_buffer_wait_no_callback(c);
-+	struct dm_buffer *b = __alloc_buffer_wait_no_callback(c, nf);
-+
-+	if (!b)
-+		return NULL;
- 
- 	if (c->alloc_callback)
- 		c->alloc_callback(b);
-@@ -866,15 +879,8 @@ static struct dm_buffer *__find(struct d
-  * Getting a buffer
-  *--------------------------------------------------------------*/
- 
--enum new_flag {
--	NF_FRESH = 0,
--	NF_READ = 1,
--	NF_GET = 2
--};
--
- static struct dm_buffer *__bufio_new(struct dm_bufio_client *c, sector_t block,
--				     enum new_flag nf, struct dm_buffer **bp,
--				     int *need_submit)
-+				     enum new_flag nf, int *need_submit)
- {
- 	struct dm_buffer *b, *new_b = NULL;
- 
-@@ -882,6 +888,19 @@ static struct dm_buffer *__bufio_new(str
- 
- 	b = __find(c, block);
- 	if (b) {
-+found_buffer:
-+		if (nf == NF_PREFETCH)
-+			return NULL;
-+		/*
-+		 * Note: it is essential that we don't wait for the buffer to be
-+		 * read if dm_bufio_get function is used. Both dm_bufio_get and
-+		 * dm_bufio_prefetch can be used in the driver request routine.
-+		 * If the user called both dm_bufio_prefetch and dm_bufio_get on
-+		 * the same buffer, it would deadlock if we waited.
-+		 */
-+		if (nf == NF_GET && unlikely(test_bit(B_READING, &b->state)))
-+			return NULL;
-+
- 		b->hold_count++;
- 		__relink_lru(b, test_bit(B_DIRTY, &b->state) ||
- 			     test_bit(B_WRITING, &b->state));
-@@ -891,7 +910,9 @@ static struct dm_buffer *__bufio_new(str
- 	if (nf == NF_GET)
- 		return NULL;
- 
--	new_b = __alloc_buffer_wait(c);
-+	new_b = __alloc_buffer_wait(c, nf);
-+	if (!new_b)
-+		return NULL;
- 
- 	/*
- 	 * We've had a period where the mutex was unlocked, so need to
-@@ -900,10 +921,7 @@ static struct dm_buffer *__bufio_new(str
- 	b = __find(c, block);
- 	if (b) {
- 		__free_buffer_wake(new_b);
--		b->hold_count++;
--		__relink_lru(b, test_bit(B_DIRTY, &b->state) ||
--			     test_bit(B_WRITING, &b->state));
--		return b;
-+		goto found_buffer;
- 	}
- 
- 	__check_watermark(c);
-@@ -957,7 +975,7 @@ static void *new_read(struct dm_bufio_cl
- 	struct dm_buffer *b;
- 
- 	dm_bufio_lock(c);
--	b = __bufio_new(c, block, nf, bp, &need_submit);
-+	b = __bufio_new(c, block, nf, &need_submit);
- 	dm_bufio_unlock(c);
- 
- 	if (!b || IS_ERR(b))
-@@ -1006,13 +1024,42 @@ void *dm_bufio_new(struct dm_bufio_clien
- }
- EXPORT_SYMBOL_GPL(dm_bufio_new);
- 
-+void dm_bufio_prefetch(struct dm_bufio_client *c,
-+		       sector_t block, unsigned n_blocks)
++static void schedule_internal_copy(struct thin_c *tc, dm_block_t virt_block,
++				   dm_block_t data_origin, dm_block_t data_dest,
++				   struct cell *cell, struct bio *bio)
 +{
-+	struct blk_plug plug;
++	schedule_copy(tc, virt_block, tc->pool_dev,
++		      data_origin, data_dest, cell, bio);
++}
 +
-+	blk_start_plug(&plug);
-+	dm_bufio_lock(c);
++static void schedule_external_copy(struct thin_c *tc, dm_block_t virt_block,
++				   dm_block_t data_dest,
++				   struct cell *cell, struct bio *bio)
++{
++	schedule_copy(tc, virt_block, tc->origin_dev,
++		      virt_block, data_dest, cell, bio);
++}
 +
-+	for (; n_blocks--; block++) {
-+		int need_submit;
-+		struct dm_buffer *b;
-+		b = __bufio_new(c, block, NF_PREFETCH, &need_submit);
-+		if (unlikely(b != NULL)) {
-+			dm_bufio_unlock(c);
-+
-+			if (need_submit)
-+				submit_io(b, READ, b->block, read_endio);
-+			dm_bufio_release(b);
-+
-+			dm_bufio_cond_resched();
-+			dm_bufio_lock(c);
+ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+ 			  dm_block_t data_block, struct cell *cell,
+ 			  struct bio *bio)
+@@ -1136,8 +1169,8 @@ static void break_sharing(struct thin_c 
+ 	r = alloc_data_block(tc, &data_block);
+ 	switch (r) {
+ 	case 0:
+-		schedule_copy(tc, block, lookup_result->block,
+-			      data_block, cell, bio);
++		schedule_internal_copy(tc, block, lookup_result->block,
++				       data_block, cell, bio);
+ 		break;
+ 
+ 	case -ENOSPC:
+@@ -1211,7 +1244,10 @@ static void provision_block(struct thin_
+ 	r = alloc_data_block(tc, &data_block);
+ 	switch (r) {
+ 	case 0:
+-		schedule_zero(tc, block, data_block, cell, bio);
++		if (tc->origin_dev)
++			schedule_external_copy(tc, block, data_block, cell, bio);
++		else
++			schedule_zero(tc, block, data_block, cell, bio);
+ 		break;
+ 
+ 	case -ENOSPC:
+@@ -1262,7 +1298,11 @@ static void process_bio(struct thin_c *t
+ 		break;
+ 
+ 	case -ENODATA:
+-		provision_block(tc, bio, block, cell);
++		if (bio_data_dir(bio) == READ && tc->origin_dev) {
++			cell_release_singleton(cell, bio);
++			remap_to_origin_and_issue(tc, bio);
++		} else
++			provision_block(tc, bio, block, cell);
+ 		break;
+ 
+ 	default:
+@@ -2225,6 +2265,8 @@ static void thin_dtr(struct dm_target *t
+ 	__pool_dec(tc->pool);
+ 	dm_pool_close_thin_device(tc->td);
+ 	dm_put_device(ti, tc->pool_dev);
++	if (tc->origin_dev)
++		dm_put_device(ti, tc->origin_dev);
+ 	kfree(tc);
+ 
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
+@@ -2233,21 +2275,22 @@ static void thin_dtr(struct dm_target *t
+ /*
+  * Thin target parameters:
+  *
+- * <pool_dev> <dev_id>
++ * <pool_dev> <dev_id> [origin_dev]
+  *
+  * pool_dev: the path to the pool (eg, /dev/mapper/my_pool)
+  * dev_id: the internal device identifier
++ * origin_dev: a device external to the pool that should act as the origin
+  */
+ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+ 	int r;
+ 	struct thin_c *tc;
+-	struct dm_dev *pool_dev;
++	struct dm_dev *pool_dev, *origin_dev;
+ 	struct mapped_device *pool_md;
+ 
+ 	mutex_lock(&dm_thin_pool_table.mutex);
+ 
+-	if (argc != 2) {
++	if (argc != 2 && argc != 3) {
+ 		ti->error = "Invalid argument count";
+ 		r = -EINVAL;
+ 		goto out_unlock;
+@@ -2260,6 +2303,15 @@ static int thin_ctr(struct dm_target *ti
+ 		goto out_unlock;
+ 	}
+ 
++	if (argc == 3) {
++		r = dm_get_device(ti, argv[2], FMODE_READ, &origin_dev);
++		if (r) {
++			ti->error = "Error opening origin device";
++			goto bad_origin_dev;
 +		}
-+
++		tc->origin_dev = origin_dev;
 +	}
 +
-+	dm_bufio_unlock(c);
-+	blk_finish_plug(&plug);
-+}
-+EXPORT_SYMBOL(dm_bufio_prefetch);
-+
- void dm_bufio_release(struct dm_buffer *b)
- {
- 	struct dm_bufio_client *c = b->c;
+ 	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &pool_dev);
+ 	if (r) {
+ 		ti->error = "Error opening pool device";
+@@ -2312,6 +2364,9 @@ bad_pool_lookup:
+ bad_common:
+ 	dm_put_device(ti, tc->pool_dev);
+ bad_pool_dev:
++	if (tc->origin_dev)
++		dm_put_device(ti, tc->origin_dev);
++bad_origin_dev:
+ 	kfree(tc);
+ out_unlock:
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
+@@ -2343,6 +2398,7 @@ static int thin_status(struct dm_target 
+ 	ssize_t sz = 0;
+ 	dm_block_t mapped, highest;
+ 	char buf[BDEVNAME_SIZE];
++	char buf2[BDEVNAME_SIZE];
+ 	struct thin_c *tc = ti->private;
  
- 	dm_bufio_lock(c);
- 
--	BUG_ON(test_bit(B_READING, &b->state));
- 	BUG_ON(!b->hold_count);
- 
- 	b->hold_count--;
-@@ -1025,6 +1072,7 @@ void dm_bufio_release(struct dm_buffer *
- 		 * invalid buffer.
- 		 */
- 		if ((b->read_error || b->write_error) &&
-+		    !test_bit(B_READING, &b->state) &&
- 		    !test_bit(B_WRITING, &b->state) &&
- 		    !test_bit(B_DIRTY, &b->state)) {
- 			__unlink_buffer(b);
-@@ -1042,6 +1090,8 @@ void dm_bufio_mark_buffer_dirty(struct d
- 
- 	dm_bufio_lock(c);
- 
-+	BUG_ON(test_bit(B_READING, &b->state));
-+
- 	if (!test_and_set_bit(B_DIRTY, &b->state))
- 		__relink_lru(b, LIST_DIRTY);
- 
-Index: linux-3.3-rc6-fast/drivers/md/dm-bufio.h
-===================================================================
---- linux-3.3-rc6-fast.orig/drivers/md/dm-bufio.h	2012-03-12 22:20:47.000000000 +0100
-+++ linux-3.3-rc6-fast/drivers/md/dm-bufio.h	2012-03-12 22:20:50.000000000 +0100
-@@ -63,6 +63,14 @@ void *dm_bufio_new(struct dm_bufio_clien
- 		   struct dm_buffer **bp);
- 
- /*
-+ * Prefetch the specified blocks to the cache.
-+ * The function starts to read the blocks and returns without waiting for
-+ * I/O to finish.
-+ */
-+void dm_bufio_prefetch(struct dm_bufio_client *c,
-+		       sector_t block, unsigned n_blocks);
-+
-+/*
-  * Release a reference obtained with dm_bufio_{read,get,new}. The data
-  * pointer and dm_buffer pointer is no longer valid after this call.
-  */
+ 	if (!tc->td)
+@@ -2370,6 +2426,8 @@ static int thin_status(struct dm_target 
+ 			DMEMIT("%s %lu",
+ 			       format_dev_t(buf, tc->pool_dev->bdev->bd_dev),
+ 			       (unsigned long) tc->dev_id);
++			if (tc->origin_dev)
++				DMEMIT(" %s", format_dev_t(buf2, tc->origin_dev->bdev->bd_dev));
+ 			break;
+ 		}
+ 	}
