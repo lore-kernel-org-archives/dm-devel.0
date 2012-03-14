@@ -1,28 +1,46 @@
-From: Christoph Hellwig <hch@infradead.org>
+From: Ted Ts'o <tytso@mit.edu>
 Subject: Re: [Lsf-pc] [Topic] Bcache
-Date: Wed, 14 Mar 2012 14:47:53 -0400
-Message-ID: <20120314184753.GA9358@infradead.org>
+Date: Wed, 14 Mar 2012 14:54:56 -0400
+Message-ID: <20120314185455.GD28042@thunk.org>
 References: <20120314133228.GA2284@dhcp-172-18-216-138.mtv.corp.google.com>
  <20120314155339.GC30235@redhat.com>
  <CAAsGZS6Jw8xCdu3Wuve=iaKpd_UNdm72kbTbiQtypAfrZ46PWw@mail.gmail.com>
  <CAH+dOx+Vgv12w=Q=8hCQggLg+kq6TnT2i3ZtnpZ=bNVyMgk31Q@mail.gmail.com>
  <CAAsGZS5UTrYTbncAjk1Vor6R_-KWDboTw3sh+jXCbXm5q_o-TA@mail.gmail.com>
- <CAH+dOx+M5so=YOx=O2vUjpdHsG+oiGsJh3GouoVq+twL+tO3Yw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAH+dOx+M5so=YOx=O2vUjpdHsG+oiGsJh3GouoVq+twL+tO3Yw@mail.gmail.com>
+In-Reply-To: <CAAsGZS5UTrYTbncAjk1Vor6R_-KWDboTw3sh+jXCbXm5q_o-TA@mail.gmail.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: chetan loke <loke.chetan@gmail.com>, nauman@google.com, dm-devel@redhat.com, lsf-pc@lists.linux-foundation.org, linux-scsi@vger.kernel.org, Vivek Goyal <vgoyal@redhat.com>
+To: chetan loke <loke.chetan@gmail.com>
+Cc: Kent Overstreet <koverstreet@google.com>, Vivek Goyal <vgoyal@redhat.com>, lsf-pc@lists.linux-foundation.org, nauman@google.com, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Mar 14, 2012 at 02:41:35PM -0400, Kent Overstreet wrote:
-> If you want me to implement bcache differently, shouldn't you explain
-> why? I'm not sure why I _have_ to justify my decisions to you.
+On Wed, Mar 14, 2012 at 02:33:25PM -0400, chetan loke wrote:
+> But you are not explaining why dm is not the right stack. Just because
+> it crashed when you tried doesn't mean it's not the right place.
+> flash-cache works, doesn't it? flash-cache's limitation is because
+> it's a dm-target or because it is using hashing or something else?
+> There are start-ups who are doing quite great with SSD-cache+dm. So
+> please stop kidding yourself.
 
-You don't have to - unless you want to get bcache merged into the
-mainline kernel.  If you don't want to you probably shouldn't bother
-appearing at the LSF, though.
+SATA-attached flash is not the only kind of flash out there you know.
+There is also PCIe-attached flash which is a wee bit faster (where wee
+is defined as multiple orders of magnitude --- SATA-attached SSD's
+typically have thousands of IOPS; Fusion I/O is shipping product today
+with hundreds of thousands of IOPS, and has demonstrated a billion
+IOPS early this year).  And Fusion I/O isn't the only company shipping
+PCIe-attached flash products.
 
+Startups may be doing great on SSD's; you may want to accept the fact
+that there is stuff which is way, way, way better out there than
+SSD's which are available on the market *today*.
+
+And it's not like bache which is a new project.  It's working code,
+just like flash cache is today.  So it's not like it needs to justify
+its existence.
+
+Best regards,
+
+					- Ted
