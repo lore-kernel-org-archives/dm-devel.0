@@ -1,66 +1,100 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm-bufio: prefetch
-Date: Tue, 13 Mar 2012 23:04:50 +0000
-Message-ID: <20120313230450.GE3775@agk-dp.fab.redhat.com>
-References: <Pine.LNX.4.64.1203121744510.3313@file.rdu.redhat.com>
-	<20120313130044.GB3415@redhat.com>
-	<Pine.LNX.4.64.1203131043480.18405@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [Lsf-pc] [Topic] Bcache
+Date: Wed, 14 Mar 2012 11:53:39 -0400
+Message-ID: <20120314155339.GC30235@redhat.com>
+References: <20120314133228.GA2284@dhcp-172-18-216-138.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1203131043480.18405@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <20120314133228.GA2284@dhcp-172-18-216-138.mtv.corp.google.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: lsf-pc@lists.linux-foundation.org, nauman@google.com, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Let's move this 'found_buffer' code after both places that use it, I think.
-(goto an earlier point in the function would normally mean a loop, which
-this isn't)
+On Wed, Mar 14, 2012 at 09:32:28AM -0400, Kent Overstreet wrote:
+> I'm already registered to attend, but would it be too late in the
+> process to give a talk? I'd like to give a short talk about bcache, what
+> it does and where it's going (more than just caching).
 
-Alasdair
+[CCing dm-devel list]
 
+I am curious if you considered writing a device mapper driver for this? If
+yes, why that is not a good choice. It seems to be stacked device and device
+mapper should be good at that. All the configuration through sysfs seems
+little odd to me.
 
-On Tue, Mar 13, 2012 at 10:46:00AM -0400, Mikulas Patocka wrote:
-> @@ -882,6 +888,19 @@ static struct dm_buffer *__bufio_new(str
->  
->  	b = __find(c, block);
->  	if (b) {
-> +found_buffer:
-> +		if (nf == NF_PREFETCH)
-> +			return NULL;
-> +		/*
-> +		 * Note: it is essential that we don't wait for the buffer to be
-> +		 * read if dm_bufio_get function is used. Both dm_bufio_get and
-> +		 * dm_bufio_prefetch can be used in the driver request routine.
-> +		 * If the user called both dm_bufio_prefetch and dm_bufio_get on
-> +		 * the same buffer, it would deadlock if we waited.
-> +		 */
-> +		if (nf == NF_GET && unlikely(test_bit(B_READING, &b->state)))
-> +			return NULL;
-> +
->  		b->hold_count++;
->  		__relink_lru(b, test_bit(B_DIRTY, &b->state) ||
->  			     test_bit(B_WRITING, &b->state));
+On a side note, I was playing with bcache a bit. I tried to register the
+cache device and it crashes. (I guess I should post this on relevant mailing
+list).
 
-> @@ -900,10 +921,7 @@ static struct dm_buffer *__bufio_new(str
->  	b = __find(c, block);
->  	if (b) {
->  		__free_buffer_wake(new_b);
-> -		b->hold_count++;
-> -		__relink_lru(b, test_bit(B_DIRTY, &b->state) ||
-> -			     test_bit(B_WRITING, &b->state));
-> -		return b;
-> +		goto found_buffer;
->  	}
+# echo /dev/sdc > /sys/fs/bcache/register
+
+[ 6758.314093] Pid: 0, comm: kworker/0:1 Not tainted 3.1.0-bcache+ #2
+Hewlett-Packard HP xw6600 Workstation/0A9Ch
+[ 6758.314093] RIP: 0010:[<ffffffff8146625b>]  [<ffffffff8146625b>]
+closure_put+0x5b/0xe0
+[ 6758.314093] RSP: 0018:ffff88013fc83c60  EFLAGS: 00010246
+[ 6758.314093] RAX: 6b6b6b6b6b6b6b6b RBX: ffff8801281204a0 RCX:
+0000000000000000
+[ 6758.314093] RDX: 0000000000000000 RSI: 00000000ffffffff RDI:
+ffff88013906ec48
+[ 6758.314093] RBP: ffff88013fc83c60 R08: 0000000000000000 R09:
+0000000000000001
+[ 6758.314093] R10: 0000000000000000 R11: 0000000000000000 R12:
+0000000000000000
+[ 6758.314093] R13: ffff880130b58560 R14: 0000000000080000 R15:
+0000000000000000
+[ 6758.314093] FS:  0000000000000000(0000) GS:ffff88013fc80000(0000)
+knlGS:0000000000000000
+[ 6758.314093] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 6758.314093] CR2: 00007f9becec7000 CR3: 0000000137fe0000 CR4:
+00000000000006e0
+[ 6758.314093] DR0: 0000000000000000 DR1: 0000000000000000 DR2:
+0000000000000000
+[ 6758.314093] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7:
+0000000000000400
+[ 6758.314093] Process kworker/0:1 (pid: 0, threadinfo ffff88013a44a000,
+task ffff88013a458000)
+[ 6758.314093] Stack:
+[ 6758.314093]  ffff88013fc83c80 ffffffff8145ee6d ffffffff00000000
+ffff8801281204a0
+[ 6758.314093]  ffff88013fc83c90 ffffffff81173a9d ffff88013fc83cc0
+ffffffff812d15d3
+[ 6758.314093]  ffff88013a44a000 0000000000000000 ffff8801281204a0
+0000000000080000
+[ 6758.314093] Call Trace:
+[ 6758.314093]  <IRQ> 
+[ 6758.314093]  [<ffffffff8145ee6d>] uuid_endio+0x3d/0x50
+[ 6758.314093]  [<ffffffff81173a9d>] bio_endio+0x1d/0x40
+[ 6758.314093]  [<ffffffff812d15d3>] req_bio_endio+0x83/0xc0
+[ 6758.314093]  [<ffffffff812d4f71>] blk_update_request+0x101/0x5c0
+[ 6758.314093]  [<ffffffff812d51a2>] ? blk_update_request+0x332/0x5c0
+[ 6758.314093]  [<ffffffff812d5461>] blk_update_bidi_request+0x31/0x90
+[ 6758.314093]  [<ffffffff812d54ec>] blk_end_bidi_request+0x2c/0x80
+[ 6758.314093]  [<ffffffff812d5580>] blk_end_request+0x10/0x20
+[ 6758.314093]  [<ffffffff81471b7c>] scsi_io_completion+0x9c/0x5f0
+[ 6758.314093]  [<ffffffff81468940>] scsi_finish_command+0xb0/0xe0
+[ 6758.314093]  [<ffffffff81471965>] scsi_softirq_done+0xa5/0x140
+[ 6758.314093]  [<ffffffff812db70b>] blk_done_softirq+0x7b/0x90
+[ 6758.314093]  [<ffffffff8104fc65>] __do_softirq+0xc5/0x3a0
+[ 6758.314093]  [<ffffffff817f6dac>] call_softirq+0x1c/0x30
+[ 6758.314093]  [<ffffffff8100419d>] do_softirq+0x8d/0xc0
+[ 6758.314093]  [<ffffffff8105027e>] irq_exit+0xae/0xe0
+[ 6758.314093]  [<ffffffff817f74b3>] do_IRQ+0x63/0xe0
+[ 6758.314093]  [<ffffffff817ecc30>] common_interrupt+0x70/0x70
+[ 6758.314093]  <EOI> 
+[ 6758.314093]  [<ffffffff8100a1f6>] ? mwait_idle+0xb6/0x470
+[ 6758.314093]  [<ffffffff8100a1ed>] ? mwait_idle+0xad/0x470
+[ 6758.314093]  [<ffffffff810011df>] cpu_idle+0x8f/0xd0
+[ 6758.314093]  [<ffffffff817da107>] start_secondary+0x1be/0x1c2
+[ 6758.314093] Code: 00 48 8b 50 48 83 e2 08 0f 85 9c 00 00 00 48 8b 50 48
+83 e2 10 0f 85 8d 00 00 00 48 83 78 18 00 75 46 48 8b 40 40 48 85 c0 74 24 
+[ 6758.314093]  8b 50 48 48 c1 ea 04 89 d1 89 f2 83 e1 01 f0 0f c1 50 4c
+83 
+[ 6758.314093] RIP  [<ffffffff8146625b>] closure_put+0x5b/0xe0
+[ 6758.314093]  RSP <ffff88013fc83c60>
+
+Thanks
+Vivek
