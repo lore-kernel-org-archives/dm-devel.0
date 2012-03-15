@@ -1,104 +1,113 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [Lsf-pc] [Topic] Bcache
-Date: Thu, 15 Mar 2012 15:43:36 -0400
-Message-ID: <20120315194336.GH3253@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Bcache
+Date: Thu, 15 Mar 2012 16:17:32 -0400
+Message-ID: <20120315201732.GA23403@redhat.com>
 References: <20120314133228.GA2284@dhcp-172-18-216-138.mtv.corp.google.com>
  <20120314155339.GC30235@redhat.com>
  <CAH+dOxKxZYSdZfewt5mHsvOk68VfNKzMQveibGLM+qunV6mOMw@mail.gmail.com>
+ <20120314220150.GA15464@redhat.com>
+ <20120315172746.GC8638@dhcp-172-18-216-138.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAH+dOxKxZYSdZfewt5mHsvOk68VfNKzMQveibGLM+qunV6mOMw@mail.gmail.com>
+In-Reply-To: <20120315172746.GC8638@dhcp-172-18-216-138.mtv.corp.google.com>
 Sender: linux-scsi-owner@vger.kernel.org
 To: Kent Overstreet <koverstreet@google.com>
-Cc: lsf-pc@lists.linux-foundation.org, nauman@google.com, linux-scsi@vger.kernel.org, dm-devel@redhat.com
+Cc: Vivek Goyal <vgoyal@redhat.com>, lsf-pc@lists.linux-foundation.org, nauman@google.com, linux-scsi@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On Wed, Mar 14, 2012 at 01:24:08PM -0400, Kent Overstreet wrote:
+On Thu, Mar 15 2012 at  1:27pm -0400,
+Kent Overstreet <koverstreet@google.com> wrote:
 
-[..]
+> On Wed, Mar 14, 2012 at 06:01:50PM -0400, Mike Snitzer wrote:
+> > I really wish you'd have worked with dm-devel more persistently, you did
+> > post twice to dm-devel (at an awkward time of year but whatever):
+> > http://www.redhat.com/archives/dm-devel/2010-December/msg00204.html
+> > http://www.redhat.com/archives/dm-devel/2010-December/msg00232.html
 > 
-> Can you post the full log? There was a bug where if it encountered an
-> error during registration, it wouldn't wait for a uuid read or write
-> before tearing everything down - that's what your backtrace looks like
-> to me.
+> I spent quite a bit of time talking to Heinz Mauelshagen and someone
+> else who's name escapes me; I also spent around two weeks working on
+> bcache-dm code before I decided it was unworkable.
 > 
-> You could try the bcache-3.2-dev branch, too. I have a newer branch
-> with a ton of bugfixes but I'm waiting until it's seen more testing
-> before I post it.
+> And bcache is two years old now, if the dm guys wanted bcache to use dm
+> there's been ample opportunity; nobody's been interested enough to do
+> anything about it. I'm still not against a bcache-dm interface, if
+> someone else can make it work - I just really have no interest or reason
+> to write the code myself. It works fine as it is.
 
-Faced the same issue on bcache-3.2-dev branch too.
+Your interest should be in getting the hard work you've put into bcache
+upstream.  That's unlikely to happen until you soften on your reluctance
+to embrace existing appropriate kernel interfaces.
 
-login: [  167.532932] bio: create slab <bio-1> at 1
-[  167.539071] bcache: invalidating existing data
-[  167.547604] general protection fault: 0000 [#1] SMP DEBUG_PAGEALLOC
-[  167.548573] CPU 2 
-[  167.548573] Modules linked in: floppy [last unloaded: scsi_wait_scan]
-[  167.548573] 
-[  167.548573] Pid: 0, comm: swapper/2 Not tainted 3.2.0-bcache+ #4
-Hewlett-Packard HP xw6600 Workstation/0A9Ch
-[  167.548573] RIP: 0010:[<ffffffff8144d6fe>]  [<ffffffff8144d6fe>]
-closure_put+0xe/0x20
-[  167.548573] RSP: 0018:ffff88013fc83c60  EFLAGS: 00010246
-[  167.548573] RAX: 0000000000000000 RBX: ffff8801385b04a0 RCX:
-0000000000000000
-[  167.548573] RDX: 0000000000000000 RSI: 00000000ffffffff RDI:
-6b6b6b6b6b6b6b6b
-[  167.548573] RBP: ffff88013fc83c60 R08: 0000000000000000 R09:
-0000000000000001
-[  167.548573] R10: 0000000000000000 R11: 0000000000000000 R12:
-0000000000000000
-[  167.548573] R13: ffff880137719580 R14: 0000000000080000 R15:
-0000000000000000
-[  167.548573] FS:  0000000000000000(0000) GS:ffff88013fc80000(0000)
-knlGS:0000000000000000
-[  167.548573] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-[  167.548573] CR2: 00007f6e84f70240 CR3: 000000013707d000 CR4:
-00000000000006e0
-[  167.548573] DR0: 0000000000000000 DR1: 0000000000000000 DR2:
-0000000000000000
-[  167.548573] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7:
-0000000000000400
-[  167.548573] Process swapper/2 (pid: 0, threadinfo ffff88013a454000,
-task ffff88013a458000)
-[  167.548573] Stack:
-[  167.548573]  ffff88013fc83c80 ffffffff814448c6 ffffffff00000000
-ffff8801385b04a0
-[  167.548573]  ffff88013fc83c90 ffffffff8117ae8d ffff88013fc83cc0
-ffffffff812e2273
-[  167.548573]  ffff88013a454000 0000000000000000 ffff8801385b04a0
-0000000000080000
-[  167.548573] Call Trace:
-[  167.548573]  <IRQ> 
-[  167.548573]  [<ffffffff814448c6>] uuid_endio+0x36/0x40
-[  167.548573]  [<ffffffff8117ae8d>] bio_endio+0x1d/0x40
-[  167.548573]  [<ffffffff812e2273>] req_bio_endio+0x83/0xc0
-[  167.548573]  [<ffffffff812e53e1>] blk_update_request+0x101/0x5c0
-[  167.548573]  [<ffffffff812e5612>] ? blk_update_request+0x332/0x5c0
-[  167.548573]  [<ffffffff812e58d1>] blk_update_bidi_request+0x31/0x90
-[  167.548573]  [<ffffffff812e595c>] blk_end_bidi_request+0x2c/0x80
-[  167.548573]  [<ffffffff812e59f0>] blk_end_request+0x10/0x20
-[  167.548573]  [<ffffffff81458fdc>] scsi_io_completion+0x9c/0x5f0
-[  167.548573]  [<ffffffff8144fcd0>] scsi_finish_command+0xb0/0xe0
-[  167.548573]  [<ffffffff81458dc5>] scsi_softirq_done+0xa5/0x140
-[  167.548573]  [<ffffffff812ec55b>] blk_done_softirq+0x7b/0x90
-[  167.548573]  [<ffffffff810512ae>] __do_softirq+0xce/0x3c0
-[  167.548573]  [<ffffffff817e84ac>] call_softirq+0x1c/0x30
-[  167.548573]  [<ffffffff8100417d>] do_softirq+0x8d/0xc0
-[  167.548573]  [<ffffffff810518de>] irq_exit+0xae/0xe0
-[  167.548573]  [<ffffffff817e8bb3>] do_IRQ+0x63/0xe0
-[  167.548573]  [<ffffffff817de1f0>] common_interrupt+0x70/0x70
-[  167.548573]  <EOI> 
-[  167.548573]  [<ffffffff8100a5f6>] ? mwait_idle+0xb6/0x490
-[  167.548573]  [<ffffffff8100a5ed>] ? mwait_idle+0xad/0x490
-[  167.548573]  [<ffffffff810011e6>] cpu_idle+0x96/0xe0
-[  167.548573]  [<ffffffff817cb475>] start_secondary+0x1be/0x1c2
-[  167.548573] Code: ee 01 00 00 10 e8 03 ff ff ff 48 85 db 75 de 5b 41 5c
-5d c3 66 0f 1f 84 00 00 00 00 00 55 48 89 e5 66 66 66 66 90 be ff ff ff ff
-<f0> 0f c1 77 48 83 ee 01 e8 d5 fe ff ff 5d c3 0f 1f 00 55 48 89 
-[  167.548573] RIP  [<ffffffff8144d6fe>] closure_put+0xe/0x20
-[  167.548573]  RSP <ffff88013fc83c60>
+> Frankly, my biggest complaint with the DM is that the code is _terrible_
+> and very poorly documented. It's an inflexible framework that tries to
+> combine a bunch of things that should be orthogonal. My other complaints
+> all stem from that; it became very clear that it wasn't designed for
+> creating a block device from the kernel, which is kind of necessary (at
+> least the only sane way of doing it, IMO) when metadata is managed by
+> the kernel (and the kernel has to manage most metadata for bcache).
 
-Thanks
-Vivek
+Baseless and unspecific assertions don't help your cause -- dm-thinp
+disproves your unconvincing position (manages it's metadata in kernel,
+etc).
+
+Seems pretty clear you could care less about _really_ working together
+-- maybe it is just this DM/kernel interface thing gets you down.
+
+Regardless, the burden is on me (and all developers who have a desire to
+see a caching/HSM driver get upstream) to evaluate bcache.  That process
+has started -- hopefully it'll be as simple as:
+
+1) put a DM target wrapper in place of your sysfs interface.
+2) switch/port bcache's btree over to drivers/md/persistent-data/
+3) dm-bcache FTW
+
+One could dream.
+
+The little bit I've looked at bcache it already seems unrealistic; for
+starters you have the btree wired directly to bio submission.
+drivers/md/persistent-data/ offers a layered approach,
+dm-block-manager.c brokers the IO submission (via dm-bufio) so the
+management of the btree(s) doesn't need to be concerned with actual IO.
+
+bcache is _very_ tightly coupled with your btree implementation.
+
+> > Reading between the lines on a previous LKML bcache threads where the
+> > questions of "why not use DM or MD?" came up:
+> > https://lkml.org/lkml/2011/9/11/117
+> > https://lkml.org/lkml/2011/9/15/376
+> > 
+> > It seemed your primary focus was on getting into the details of the SSD
+> > caching ASAP -- because that is what interested you.  Both DM and MD
+> > have a learning curve, maybe it was too frustrating and/or
+> > distracting to tackle.
+> > 
+> > Anyway, I don't fault you for initially doing your own thing for a
+> > virtual device framework -- it allowed you to get to the stuff you
+> > really cared about sooner.
+> > 
+> > That said, it is frustrating that you are content to continue doing your
+> > own thing because I'm now tasked with implementing a DM target for
+> > caching/HSM, as I touched on here:
+> > http://www.redhat.com/archives/linux-lvm/2012-March/msg00007.html
+> 
+> Kind of presumptuous, don't you think?
+
+Not really, considering what I'm responding to at the moment ;)
+
+> I've nothing at all against collaborating, or you or other dm devs
+> adapting bcache code - I'd help out with that!
+
+OK.
+
+> But I'm just not going to write my code a certain way just to suit you.
+
+upstream kumbaya: more cooperative eyes on the problem, working to hook
+into established interfaces, will produce a solution that is worthy of
+upstream inclusion.
+
+> Look forward to seeing the benchmarks.
+
+Speaking of which, weren't you saying you'd show bcache benchmarks in a
+previous LKML thread?
