@@ -1,113 +1,139 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Kent Overstreet <koverstreet@google.com>
 Subject: Re: Bcache
-Date: Thu, 15 Mar 2012 16:17:32 -0400
-Message-ID: <20120315201732.GA23403@redhat.com>
+Date: Thu, 15 Mar 2012 18:59:52 -0400
+Message-ID: <20120315225952.GA8564@dhcp-172-18-216-138.mtv.corp.google.com>
 References: <20120314133228.GA2284@dhcp-172-18-216-138.mtv.corp.google.com>
  <20120314155339.GC30235@redhat.com>
  <CAH+dOxKxZYSdZfewt5mHsvOk68VfNKzMQveibGLM+qunV6mOMw@mail.gmail.com>
  <20120314220150.GA15464@redhat.com>
  <20120315172746.GC8638@dhcp-172-18-216-138.mtv.corp.google.com>
+ <20120315201732.GA23403@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120315172746.GC8638@dhcp-172-18-216-138.mtv.corp.google.com>
+In-Reply-To: <20120315201732.GA23403@redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: Vivek Goyal <vgoyal@redhat.com>, lsf-pc@lists.linux-foundation.org, nauman@google.com, linux-scsi@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On Thu, Mar 15 2012 at  1:27pm -0400,
-Kent Overstreet <koverstreet@google.com> wrote:
+On Thu, Mar 15, 2012 at 04:17:32PM -0400, Mike Snitzer wrote:
+> Your interest should be in getting the hard work you've put into bcache
+> upstream.  That's unlikely to happen until you soften on your reluctance
+> to embrace existing appropriate kernel interfaces.
 
-> On Wed, Mar 14, 2012 at 06:01:50PM -0400, Mike Snitzer wrote:
-> > I really wish you'd have worked with dm-devel more persistently, you did
-> > post twice to dm-devel (at an awkward time of year but whatever):
-> > http://www.redhat.com/archives/dm-devel/2010-December/msg00204.html
-> > http://www.redhat.com/archives/dm-devel/2010-December/msg00232.html
+I don't really care what you think my priorities should be. I write code
+first and foremost for myself, and the one thing I care about is good
+code.
+
+I'd love to have bcache in mainline, seeing more use and getting more
+improvements - but if that's contingent on making it work through dm,
+sorry, not interested.
+
+If you want to convince me that dm is the right way to go you'll have
+much better luck with technical arguments.
+
+Besides which, I'm planning on (and very soon going to be working on)
+growing bcache down into an FTL and up into the bottom half of a
+filesystem. As far as I can tell integrating with dm would only get in
+the way of that.
+
+It's actually not as crazy as it sounds - the basic idea is to make the
+index the central abstraction, and allocation policies sit conceptually
+underneath and are abstracted out - and sitting top, some filesystem
+code (and possibly other things) uses the existing code as if it were
+some kind of object storage like thing; the existing bcache code maps
+inode number:offset -> lba instead of cached device:offset.
+
+I'll explain more at LSF, but eventually it ought to look vaguely like
+btrfs/zfs but with better abstraction and better performance.
+
+> > Frankly, my biggest complaint with the DM is that the code is _terrible_
+> > and very poorly documented. It's an inflexible framework that tries to
+> > combine a bunch of things that should be orthogonal. My other complaints
+> > all stem from that; it became very clear that it wasn't designed for
+> > creating a block device from the kernel, which is kind of necessary (at
+> > least the only sane way of doing it, IMO) when metadata is managed by
+> > the kernel (and the kernel has to manage most metadata for bcache).
 > 
-> I spent quite a bit of time talking to Heinz Mauelshagen and someone
-> else who's name escapes me; I also spent around two weeks working on
-> bcache-dm code before I decided it was unworkable.
+> Baseless and unspecific assertions don't help your cause -- dm-thinp
+> disproves your unconvincing position (manages it's metadata in kernel,
+> etc).
+
+I'm not the only one who's read the dm code and found it lacking - and
+anyways, I'm not really out to convince anyone. 
+
+> Seems pretty clear you could care less about _really_ working together
+> -- maybe it is just this DM/kernel interface thing gets you down.
+
+Dude, I reached out to dm developers ages ago. Maybe if you guys had
+shown some interest we wouldn't be having this conversation now.
+
+This finger pointing is ridiculous and getting us nowhere.
+
+> Regardless, the burden is on me (and all developers who have a desire to
+> see a caching/HSM driver get upstream) to evaluate bcache.  That process
+> has started -- hopefully it'll be as simple as:
 > 
-> And bcache is two years old now, if the dm guys wanted bcache to use dm
-> there's been ample opportunity; nobody's been interested enough to do
-> anything about it. I'm still not against a bcache-dm interface, if
-> someone else can make it work - I just really have no interest or reason
-> to write the code myself. It works fine as it is.
+> 1) put a DM target wrapper in place of your sysfs interface.
+> 2) switch/port bcache's btree over to drivers/md/persistent-data/
+> 3) dm-bcache FTW
 
-Your interest should be in getting the hard work you've put into bcache
-upstream.  That's unlikely to happen until you soften on your reluctance
-to embrace existing appropriate kernel interfaces.
+Replacing bcache's persistent metadata code? Hah. That's the central
+part of the design!
 
-> Frankly, my biggest complaint with the DM is that the code is _terrible_
-> and very poorly documented. It's an inflexible framework that tries to
-> combine a bunch of things that should be orthogonal. My other complaints
-> all stem from that; it became very clear that it wasn't designed for
-> creating a block device from the kernel, which is kind of necessary (at
-> least the only sane way of doing it, IMO) when metadata is managed by
-> the kernel (and the kernel has to manage most metadata for bcache).
+Is this the way new filesystems are evaluated? No, it's not. What makes
+you more special than ext4?
 
-Baseless and unspecific assertions don't help your cause -- dm-thinp
-disproves your unconvincing position (manages it's metadata in kernel,
-etc).
-
-Seems pretty clear you could care less about _really_ working together
--- maybe it is just this DM/kernel interface thing gets you down.
-
-Regardless, the burden is on me (and all developers who have a desire to
-see a caching/HSM driver get upstream) to evaluate bcache.  That process
-has started -- hopefully it'll be as simple as:
-
-1) put a DM target wrapper in place of your sysfs interface.
-2) switch/port bcache's btree over to drivers/md/persistent-data/
-3) dm-bcache FTW
-
-One could dream.
-
-The little bit I've looked at bcache it already seems unrealistic; for
-starters you have the btree wired directly to bio submission.
-drivers/md/persistent-data/ offers a layered approach,
-dm-block-manager.c brokers the IO submission (via dm-bufio) so the
-management of the btree(s) doesn't need to be concerned with actual IO.
-
-bcache is _very_ tightly coupled with your btree implementation.
-
-> > Reading between the lines on a previous LKML bcache threads where the
-> > questions of "why not use DM or MD?" came up:
-> > https://lkml.org/lkml/2011/9/11/117
-> > https://lkml.org/lkml/2011/9/15/376
-> > 
-> > It seemed your primary focus was on getting into the details of the SSD
-> > caching ASAP -- because that is what interested you.  Both DM and MD
-> > have a learning curve, maybe it was too frustrating and/or
-> > distracting to tackle.
-> > 
-> > Anyway, I don't fault you for initially doing your own thing for a
-> > virtual device framework -- it allowed you to get to the stuff you
-> > really cared about sooner.
-> > 
-> > That said, it is frustrating that you are content to continue doing your
-> > own thing because I'm now tasked with implementing a DM target for
-> > caching/HSM, as I touched on here:
-> > http://www.redhat.com/archives/linux-lvm/2012-March/msg00007.html
+> One could dream.
 > 
-> Kind of presumptuous, don't you think?
+> The little bit I've looked at bcache it already seems unrealistic; for
+> starters you have the btree wired directly to bio submission.
+> drivers/md/persistent-data/ offers a layered approach,
+> dm-block-manager.c brokers the IO submission (via dm-bufio) so the
+> management of the btree(s) doesn't need to be concerned with actual IO.
+> 
+> bcache is _very_ tightly coupled with your btree implementation.
 
-Not really, considering what I'm responding to at the moment ;)
+Yes, it is! It really has to be, efficiently allocating buckets and
+invalidating cached data relies on specific details of the btree
+implementation.
 
-> I've nothing at all against collaborating, or you or other dm devs
-> adapting bcache code - I'd help out with that!
+The btree is _central_ to bcache, ignoring that the rest of the code
+isn't all that interesting.
 
-OK.
+> > > That said, it is frustrating that you are content to continue doing your
+> > > own thing because I'm now tasked with implementing a DM target for
+> > > caching/HSM, as I touched on here:
+> > > http://www.redhat.com/archives/linux-lvm/2012-March/msg00007.html
+> > 
+> > Kind of presumptuous, don't you think?
+> 
+> Not really, considering what I'm responding to at the moment ;)
 
-> But I'm just not going to write my code a certain way just to suit you.
+Maybe you should consider how you word things...
 
-upstream kumbaya: more cooperative eyes on the problem, working to hook
-into established interfaces, will produce a solution that is worthy of
-upstream inclusion.
+> > I've nothing at all against collaborating, or you or other dm devs
+> > adapting bcache code - I'd help out with that!
+> 
+> OK.
+> 
+> > But I'm just not going to write my code a certain way just to suit you.
+> 
+> upstream kumbaya: more cooperative eyes on the problem, working to hook
+> into established interfaces, will produce a solution that is worthy of
+> upstream inclusion.
 
-> Look forward to seeing the benchmarks.
+Let me be clear: All I care about is the best solution. I'm more than
+happy to work with other people to achieve that, but I don't give a damn
+about anything else.
 
-Speaking of which, weren't you saying you'd show bcache benchmarks in a
-previous LKML thread?
+> > Look forward to seeing the benchmarks.
+> 
+> Speaking of which, weren't you saying you'd show bcache benchmarks in a
+> previous LKML thread?
+
+Yeah I did, but as usual I got distracted. I'm travelling for the next
+three weeks, but maybe I can get someone else to get some numbers that
+we can publish...
