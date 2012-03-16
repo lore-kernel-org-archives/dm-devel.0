@@ -1,7 +1,8 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 04/14] dm_thin: tweak a comment
-Date: Fri, 16 Mar 2012 15:22:27 +0000
-Message-ID: <1331911358-8848-4-git-send-email-ejt@redhat.com>
+Subject: [PATCH 13/14] dm_thin: commit just before processing a
+	pool target info request
+Date: Fri, 16 Mar 2012 15:22:36 +0000
+Message-ID: <1331911358-8848-13-git-send-email-ejt@redhat.com>
 References: <20120316152156.GA8836@ubuntu>
 	<1331911358-8848-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -23,26 +24,35 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-An extraneous 's'.
+Enhancement.
+
+This makes the free block counts more accurate.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ drivers/md/dm-thin.c |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 5abcc9b..2620a13 100644
+index a3a66af..63f8adf 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -72,7 +72,7 @@
-  * missed out if the io covers the block. (schedule_copy).
-  *
-  * iv) insert the new mapping into the origin's btree
-- * (process_prepared_mappings).  This act of inserting breaks some
-+ * (process_prepared_mapping).  This act of inserting breaks some
-  * sharing of btree nodes between the two devices.  Breaking sharing only
-  * effects the btree of that specific device.  Btrees for the other
-  * devices that share the block never change.  The btree for the origin
+@@ -2305,6 +2305,15 @@ static int pool_status(struct dm_target *ti, status_type_t type,
+ 		if (r)
+ 			return r;
+ 
++		/*
++		 * If we're in the middle of a transaction the free block
++		 * counts can be quite out of date, so we do a quick
++		 * commit.
++		 */
++		r = dm_pool_commit_metadata(pool->pmd);
++		if (r)
++			return r;
++
+ 		r = dm_pool_get_free_metadata_block_count(pool->pmd,
+ 							  &nr_free_blocks_metadata);
+ 		if (r)
 -- 
 1.7.9.1
