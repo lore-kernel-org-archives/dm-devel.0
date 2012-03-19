@@ -1,15 +1,12 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] dm-table: simplify call to free_devices()
-Date: Mon, 19 Mar 2012 16:53:47 +0100
-Message-ID: <1332172428-35948-3-git-send-email-hare@suse.de>
-References: <1332172428-35948-1-git-send-email-hare@suse.de>
-	<1332172428-35948-2-git-send-email-hare@suse.de>
+Subject: [PATCH] Device-mapper misc cleanup
+Date: Mon, 19 Mar 2012 16:53:45 +0100
+Message-ID: <1332172428-35948-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1332172428-35948-2-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,27 +20,25 @@ To: dm-devel@redhat.com
 Cc: Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-free_devices already uses list_for_each(), so we don't need to
-check if the list is empty.
+This is small patchset for some cleanups I've found during
+debugging other issues:
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-table.c |    3 +--
- 1 files changed, 1 insertions(+), 2 deletions(-)
+- Zero out bi_end_io: I always find it more convenient to
+  explictly zero out things we've set previously. No harm
+  done, but possibly easier debugging.
+- Simplify call to free_devices(): free_devices() already
+  does a list_for_each(), so we don't have to check for
+  list_empty...
+- Delayed cleanup for dm_table_destroy(): We have krefs
+  in the kernel, which does exactly what we want. And I
+  fail to see why we can't use them here. Plus we're
+  saving an msleep ...
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 63cc542..a3d1e18 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -268,8 +268,7 @@ void dm_table_destroy(struct dm_table *t)
- 	vfree(t->highs);
- 
- 	/* free the device list */
--	if (t->devices.next != &t->devices)
--		free_devices(&t->devices);
-+	free_devices(&t->devices);
- 
- 	dm_free_md_mempools(t->mempools);
- 
--- 
-1.6.0.2
+Hannes Reinecke (3):
+  dm: zero out bi_end_io on remapping failure
+  dm-table: simplify call to free_devices()
+  dm-table: delayed cleanup for dm_table_destroy()
+
+ drivers/md/dm-table.c |   29 ++++++++++++++---------------
+ drivers/md/dm.c       |    1 +
+ 2 files changed, 15 insertions(+), 15 deletions(-)
