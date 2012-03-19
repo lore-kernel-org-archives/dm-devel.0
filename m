@@ -1,53 +1,21 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 13/14] dm_thin: commit just before	processing
-	a pool target info request
-Date: Mon, 19 Mar 2012 14:00:12 +0000
-Message-ID: <20120319140012.GB4495@agk-dp.fab.redhat.com>
-References: <20120316152156.GA8836@ubuntu>
-	<1331911358-8848-1-git-send-email-ejt@redhat.com>
-	<1331911358-8848-13-git-send-email-ejt@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] dm-mpath: Clear map_context pointer when requeuing
+Date: Mon, 19 Mar 2012 15:00:15 +0000
+Message-ID: <20120319150015.GC4495@agk-dp.fab.redhat.com>
+References: <1322663118-53387-1-git-send-email-hare@suse.de> <20111130144951.GA13775@redhat.com> <4ED6C67A.3060305@ce.jp.nec.com> <4ED8FA8F.20109@suse.de> <4EDCA1BD.1000708@ce.jp.nec.com> <4EDCEFFE.6080702@suse.de> <4EDD9DBD.7000603@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1331911358-8848-13-git-send-email-ejt@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <4EDD9DBD.7000603@ce.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, James Bottomley <jbottomley@parallels.com>, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 16, 2012 at 03:22:36PM +0000, Joe Thornber wrote:
-> This makes the free block counts more accurate.
- 
-I'm not keen on this one: deferring it.
+OK - I'm not taking this patch in its current form.
 
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -2305,6 +2305,15 @@ static int pool_status(struct dm_target *ti, status_type_t type,
-
-(Used by dmsetup status and wait.)
-
-> +		/*
-> +		 * If we're in the middle of a transaction the free block
-> +		 * counts can be quite out of date, so we do a quick
-> +		 * commit.
-> +		 */
-> +		r = dm_pool_commit_metadata(pool->pmd);
-> +		if (r)
-> +			return r;
-> +
-
-1) If commit fails (repeatedly?) we still need to get the status.
-
-2) Could the commit ever be too slow?  (Or re-use NOFLUSH flag to skip it?)
+If there are still concerns about this, I would accept a BUG_ON() style patch
+that consistently checks/clears the value of the field.
 
 Alasdair
+
