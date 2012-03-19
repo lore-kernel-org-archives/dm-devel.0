@@ -1,21 +1,63 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] dm-mpath: Clear map_context pointer when requeuing
-Date: Mon, 19 Mar 2012 15:00:15 +0000
-Message-ID: <20120319150015.GC4495@agk-dp.fab.redhat.com>
-References: <1322663118-53387-1-git-send-email-hare@suse.de> <20111130144951.GA13775@redhat.com> <4ED6C67A.3060305@ce.jp.nec.com> <4ED8FA8F.20109@suse.de> <4EDCA1BD.1000708@ce.jp.nec.com> <4EDCEFFE.6080702@suse.de> <4EDD9DBD.7000603@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] dm-mpath: Track invalid map_context
+Date: Mon, 19 Mar 2012 16:15:28 +0100
+Message-ID: <1332170128-30232-1-git-send-email-hare@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4EDD9DBD.7000603@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, James Bottomley <jbottomley@parallels.com>, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <akg@redhat.com>
 List-Id: dm-devel.ids
 
-OK - I'm not taking this patch in its current form.
+The map_context pointer should always be set. However, we
+have reports that upon requeing it is not set correctly.
+So add a BUG_ON() statement and clear the pointer to
+track the issue properly.
 
-If there are still concerns about this, I would accept a BUG_ON() style patch
-that consistently checks/clears the value of the field.
+Cc: Alasdair Kergon <akg@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Tested-by: Heiko Carstens <heiko.carstens@de.ibm.com>
+Acked-by: Dave Wysochanski <dwysocha@redhat.com>
+---
+ drivers/md/dm-mpath.c |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
 
-Alasdair
-
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 801d92d..94a91d6 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -920,8 +920,10 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
+ 	map_context->ptr = mpio;
+ 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+ 	r = map_io(m, clone, mpio, 0);
+-	if (r < 0 || r == DM_MAPIO_REQUEUE)
++	if (r < 0 || r == DM_MAPIO_REQUEUE) {
+ 		mempool_free(mpio, m->mpio_pool);
++		map_context->ptr = NULL;
++	}
+ 
+ 	return r;
+ }
+@@ -1228,6 +1230,8 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 	int r = DM_ENDIO_REQUEUE;
+ 	unsigned long flags;
+ 
++	BUG_ON(!mpio);
++
+ 	if (!error && !clone->errors)
+ 		return 0;	/* I/O complete */
+ 
+-- 
+1.6.0.2
