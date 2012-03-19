@@ -1,14 +1,14 @@
-From: Mark Hills <mark@pogo.org.uk>
-Subject: Re: RFC: dm-ssdcache
-Date: Sat, 17 Mar 2012 19:47:06 +0000 (GMT)
-Message-ID: <alpine.LNX.2.01.1203171740180.2038@stax.localdomain>
-References: <4F635E69.3070901@suse.de>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH v2] dm-crypt: fix possible mempool deadlock
+Date: Mon, 19 Mar 2012 13:01:30 +0100
+Message-ID: <1332158490-13130-1-git-send-email-mbroz@redhat.com>
+References: <Pine.LNX.4.64.1201151723540.26479@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F635E69.3070901@suse.de>
+In-Reply-To: <Pine.LNX.4.64.1201151723540.26479@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,56 +18,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Mikulas Patocka <mpatocka@redhat.com>, agk@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 16 Mar 2012, Hannes Reinecke wrote:
+This patch fixes a possible deadlock in mempool in dm-crypt.
 
-> Hi all,
-> 
-> to through some more confusion in an already heated debate, here is
-> the 'dm-ssdcache' module I recently wrote.
-> And held a talk about at LinuxCon Europe 2011 :-)
-> 
-> Upon request I'll be generating a proper patch ...
-> 
-> Not saying it's perfect, and surely doesn't have all the nifty
-> features bcache has, but it should serve as a 'minimal'
-> implementation. And probaly will start yet another discussion,
-> if nothing else.
-> 
-> So, comments etc are welcome.
+Currently, dm-crypt reserves a mempool of MIN_BIO_PAGES reserved pages.
+It allocates first MIN_BIO_PAGES with non-failing allocation (the allocation
+cannot fail and waits until the mempool is refilled). Further pages are
+allocated with different gfp flags that allow failing.
 
-Thanks for sharing this. I gave it a try with mixed but promising 
-resulting. I'll share my observations in case they are useful.
+Because allocations may be done in parallel, this code can deadlock. Example:
+There are two processes, each tries to allocate MIN_BIO_PAGES and the processes
+run simultaneously.
+It may end up in a situation where each process allocates (MIN_BIO_PAGES / 2)
+pages. The mempool is exhausted. Each process waits for more pages to be freed
+to the mempool, which never happens.
 
-Writethrough mode worked as expected, as did 'readcache'. But I found the 
-caching would stop after a short time; data already in the cache was read 
-from there, but no new data written. dmesg no longer prints "flush start", 
-"flush done", but no other indication; possibly some lock is taken in some 
-way?
+To avoid this deadlock scenario, this patch changes the code so that only
+the first page is allocated with non-failing gfp mask. Allocation of further
+pages may fail.
 
-It took me a while to work out how to switch to LRU behaviour, as I had to 
-give the number of option arguments, for reference here it is:
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+---
+ drivers/md/dm-crypt.c |    4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
 
-  dmsetup create test --table "0 625137282 ssdcache /dev/sdc1 /dev/sdb1 options 1 lru"
-
-In writeback I found I was quickly getting ext4 reports of corruption. 
-Even just between formatting the device and using it. Possibly it 
-by-passes the cache a little too readily under some reasons (eg. large bio 
-size) when data is in the cache?
-
-In all cases I zeroed the front of the cache device before use, but I 
-couldn't see quickly from the code whether the cache device is intended to 
-be persistent and if I need a better way to initialise it, I assume not?
-
-"dmsetup remove" seems to take along time (several minutes), not spinning 
-on CPU or disk. But it does eventually complete. Possibly this is linked 
-to the non-caching issue and some kind of lock. But then that doesn't 
-explain why it eventually completes.
-
-Thanks
-
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 8c2a000..72eb06f 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -176,7 +176,6 @@ struct crypt_config {
+ 
+ #define MIN_IOS        16
+ #define MIN_POOL_PAGES 32
+-#define MIN_BIO_PAGES  8
+ 
+ static struct kmem_cache *_crypt_io_pool;
+ 
+@@ -852,8 +851,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size,
+ 		 * return a partially allocated bio, the caller will then try
+ 		 * to allocate additional bios while submitting this partial bio
+ 		 */
+-		if (i == (MIN_BIO_PAGES - 1))
+-			gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
++		gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
+ 
+ 		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
+ 
 -- 
-Mark
+1.7.9.1
