@@ -1,17 +1,20 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 01/14] dm-thin: don't use the bi_next
-	field	for the holder of a cell.
-Date: Tue, 20 Mar 2012 18:24:44 +0000
-Message-ID: <20120320182444.GI4495@agk-dp.fab.redhat.com>
-References: <20120316152156.GA8836@ubuntu>
-	<1331911358-8848-1-git-send-email-ejt@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-table: delayed cleanup for dm_table_destroy()
+Date: Tue, 20 Mar 2012 15:43:08 -0400
+Message-ID: <20120320194307.GD30980@redhat.com>
+References: <1332172428-35948-1-git-send-email-hare@suse.de>
+	<1332172428-35948-2-git-send-email-hare@suse.de>
+	<1332172428-35948-3-git-send-email-hare@suse.de>
+	<1332172428-35948-4-git-send-email-hare@suse.de>
+	<Pine.LNX.4.64.1203191714090.10651@file.rdu.redhat.com>
+	<4F68A3D8.40005@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1331911358-8848-1-git-send-email-ejt@redhat.com>
+In-Reply-To: <4F68A3D8.40005@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,149 +24,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <ejt@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 16, 2012 at 03:22:24PM +0000, Joe Thornber wrote:
-> This also has the effect of simplifying some code that had to work out
-> which bio was the holder.
- 
-Further simplification.
- - cell isn't uninitialised
- - cell2 doesn't need initialising
- - avoid else clause indentation
- - inmates is never uninitialised (as per comment)
+On Tue, Mar 20 2012 at 11:35am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-Alasdair
+> Hi Mikulas,
+> 
+> On 03/19/2012 10:45 PM, Mikulas Patocka wrote:
+> > Hi Hannes
+> > 
+> > I wouldn't do this. This behavior actually existed in kernels <= 2.6.28.
+> > And it caused trouble.
+> > 
+> > The problems are these:
+> > 
+> > Some code may hold a spinlock and call dm_table_put. Currently, 
+> > dm_table_put just decrements the counter and the cleanup is done 
+> > synchronously in dm_table_destroy. With your patch, cleanup would be done 
+> > in dm_table_put --- you call a target destructor (which may sleep) in a 
+> > non-sleeping context.
+> > 
+> > Some code may hold a mutex and call dm_table_put. If you call a target 
+> > destructor from dm_table_put and it takes the same mutex, it deadlocks.
+> > 
+> > Currently, when dm_table_destroy exits, it is guaranteed that the table is 
+> > destroyed and all target destructors have been called. With your patch, 
+> > dm_table_destroy may exit and the table could be still alive because of 
+> > some other reference. This may cause leaked references to some other files 
+> > or devices. For example, suppose that the user has a device mapper device 
+> > "dm" that redirects requests to "/dev/sda". The user assumes that if he 
+> > runs "dmsetup remove dm" and this command returns, "/dev/sda" will not be 
+> > open. Your patch breaks this assumption.
+> > 
+> Hmm. Yes, true.
+> 
+> > Look at the commit "d58168763f74d1edbc296d7038c60efe6493fdd4" in 2.6.29 
+> > --- I was actually removing the old-style reference counting (that is 
+> > functionally equivalent to what your patch does) because of these three 
+> > problems. The old code really caused a crash although it happened very 
+> > rarely.
+> > 
+> Ah. That'll explain it.
+> The actual problem I'm trying to track down is that I'm seeing an
+> excessive duration for the 'resume' dm ioctl after a table update.
+> I've got reports where the ioctl can take up to several seconds.
+> Which (as this is multipath) causes an extremely erratic behaviour.
+> 
+> And the 'msleep' here is one of the obvious culprits.
+> 
+> But I'll continue debugging, maybe I'll find something else.
 
+I once wanted to replace all msleep(1); with cpu_relax();:
+http://www.redhat.com/archives/dm-devel/2010-September/msg00100.html
 
-From: Alasdair G Kergon <agk@redhat.com>
-
-Clean up prison code after holders patch.
-
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-
----
- drivers/md/dm-thin.c |   79 +++++++++++++++++++++++++--------------------------
- 1 file changed, 39 insertions(+), 40 deletions(-)
-
-Index: linux-3.3/drivers/md/dm-thin.c
-===================================================================
---- linux-3.3.orig/drivers/md/dm-thin.c
-+++ linux-3.3/drivers/md/dm-thin.c
-@@ -225,55 +225,57 @@ static struct cell *__search_bucket(stru
- static int bio_detain(struct bio_prison *prison, struct cell_key *key,
- 		      struct bio *inmate, struct cell **ref)
- {
--	int r;
-+	int r = 1;
- 	unsigned long flags;
- 	uint32_t hash = hash_key(prison, key);
--	struct cell *uninitialized_var(cell), *cell2 = NULL;
-+	struct cell *cell, *cell2;
- 
- 	BUG_ON(hash > prison->nr_buckets);
- 
- 	spin_lock_irqsave(&prison->lock, flags);
-+
- 	cell = __search_bucket(prison->cells + hash, key);
-+	if (cell) {
-+		bio_list_add(&cell->bios, inmate);
-+		goto out;
-+	}
- 
--	if (!cell) {
--		/*
--		 * Allocate a new cell
--		 */
--		spin_unlock_irqrestore(&prison->lock, flags);
--		cell2 = mempool_alloc(prison->cell_pool, GFP_NOIO);
--		spin_lock_irqsave(&prison->lock, flags);
-+	/*
-+	 * Allocate a new cell
-+	 */
-+	spin_unlock_irqrestore(&prison->lock, flags);
-+	cell2 = mempool_alloc(prison->cell_pool, GFP_NOIO);
-+	spin_lock_irqsave(&prison->lock, flags);
- 
--		/*
--		 * We've been unlocked, so we have to double check that
--		 * nobody else has inserted this cell in the meantime.
--		 */
--		cell = __search_bucket(prison->cells + hash, key);
-+	/*
-+	 * We've been unlocked, so we have to double check that
-+	 * nobody else has inserted this cell in the meantime.
-+	 */
-+	cell = __search_bucket(prison->cells + hash, key);
-+	if (cell) {
-+		mempool_free(cell2, prison->cell_pool);
-+		bio_list_add(&cell->bios, inmate);
-+		goto out;
-+	}
- 
--		if (!cell) {
--			cell = cell2;
--			cell2 = NULL;
--
--			cell->prison = prison;
--			memcpy(&cell->key, key, sizeof(cell->key));
--			cell->holder = inmate;
--			bio_list_init(&cell->bios);
--			hlist_add_head(&cell->list, prison->cells + hash);
--			r = 0;
-+	/*
-+	 * Use new cell.
-+	 */
-+	cell = cell2;
- 
--		} else {
--			mempool_free(cell2, prison->cell_pool);
--			cell2 = NULL;
--			r = 1;
--			bio_list_add(&cell->bios, inmate);
--		}
-+	cell->prison = prison;
-+	memcpy(&cell->key, key, sizeof(cell->key));
-+	cell->holder = inmate;
-+	bio_list_init(&cell->bios);
-+	hlist_add_head(&cell->list, prison->cells + hash);
- 
--	} else {
--		r = 1;
--		bio_list_add(&cell->bios, inmate);
--	}
-+	r = 0;
-+
-+out:
- 	spin_unlock_irqrestore(&prison->lock, flags);
- 
- 	*ref = cell;
-+
- 	return r;
- }
- 
-@@ -286,10 +288,8 @@ static void __cell_release(struct cell *
- 
- 	hlist_del(&cell->list);
- 
--	if (inmates) {
--		bio_list_add(inmates, cell->holder);
--		bio_list_merge(inmates, &cell->bios);
--	}
-+	bio_list_add(inmates, cell->holder);
-+	bio_list_merge(inmates, &cell->bios);
- 
- 	mempool_free(cell, prison->cell_pool);
- }
-@@ -335,8 +335,7 @@ static void __cell_release_no_holder(str
- 	struct bio_prison *prison = cell->prison;
- 
- 	hlist_del(&cell->list);
--	if (inmates)
--		bio_list_merge(inmates, &cell->bios);
-+	bio_list_merge(inmates, &cell->bios);
- 
- 	mempool_free(cell, prison->cell_pool);
- }
+But Alasdair wasn't sure if cpu_relax() would provide the required
+delay effect:
+https://www.redhat.com/archives/dm-devel/2011-June/msg00080.html
