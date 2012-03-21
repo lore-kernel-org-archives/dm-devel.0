@@ -1,176 +1,183 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Fix I/O counts in vmstat
-Date: Wed, 21 Mar 2012 00:05:48 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1203202336370.15617@file.rdu.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH] dm-mpath: Track invalid map_context
+Date: Wed, 21 Mar 2012 13:16:26 +0900
+Message-ID: <4F69561A.5040406@ce.jp.nec.com>
+References: <1332171546-33434-1-git-send-email-hare@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Alasdair G. Kergon" <agk@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1332171546-33434-1-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.de>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hi Hannes,
 
-This patch fixes I/O counting in vmstat. It makes us count only I/Os to 
-real physical I/O devices and avoids counting at intermediate drivers 
-that send the bio elsewhere.
+On 03/20/12 00:39, Hannes Reinecke wrote:
+> The map_context pointer should always be set. However, we
+> have reports that upon requeing it is not set correctly.
+> So add a BUG_ON() statement and clear the pointer to
+> track the issue properly.
+> 
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> Tested-by: Heiko Carstens <heiko.carstens@de.ibm.com>
+> Acked-by: Dave Wysochanski <dwysocha@redhat.com>
+> ---
+>  drivers/md/dm-mpath.c |    9 ++++++++-
+>  1 files changed, 8 insertions(+), 1 deletions(-)
+> 
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 801d92d..2ed316e 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -441,11 +441,13 @@ static void dispatch_queued_ios(struct multipath *m)
+>  		r = map_io(m, clone, mpio, 1);
+>  		if (r < 0) {
+>  			mempool_free(mpio, m->mpio_pool);
+> +			info->ptr = NULL;
+>  			dm_kill_unmapped_request(clone, r);
+>  		} else if (r == DM_MAPIO_REMAPPED)
+>  			dm_dispatch_request(clone);
+>  		else if (r == DM_MAPIO_REQUEUE) {
+>  			mempool_free(mpio, m->mpio_pool);
+> +			info->ptr = NULL;
+>  			dm_requeue_unmapped_request(clone);
+>  		}
+>  	}
 
-Mikulas
-
----
-
-Fix I/O counts in vmstat
-
-Currently, there are two functions to submit a bio, submit_bio and
-generic_make_request. They both do the same thing, except that
-submit_bio increments the I/O counter (visible in vmstat) and
-generic_make_request doesn't.
-
-The decision whether bio is counted or not is made by the code that
-submits the bio. This leads to some problems:
-* when we write to dm-raid1 target with two raid legs, I/O is counted
-  three times (once on entry to dm-raid1 and once on each legs)
-* when dm-crypt target accepts large number of bios and sends them out,
-  the machine appears deadlocked (there is no I/O activity in vmstat and
-  processes are stuck in 'D' state). The machine is not really
-  deadlocked, I/Os are submitted by dm-crypt to the disk driver, but
-  they are not counted.
-
-This patch changes it so that the decision if the bio should or
-shouldn't be counted is made at the queue the bio is sent to. The bios
-are counted (regardless if the submitter uses submit_bio or
-generic_make_reuqest) unless the queue has a flag
-"QUEUE_FLAG_NO_IO_COUNT".
-
-QUEUE_FLAG_NO_IO_COUNT is sent on queues for md, dm and loop because
-these drivers forward the bio to some other device.
-
-Consequently, the I/O counts in vmstat are accurate, they measure the
-I/O throughput of physical block devices.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+If we want to ensure info->ptr is either valid or NULL,
+how about introducing a function to do it like this?
 
 ---
- block/blk-core.c       |   46 +++++++++++++++++++++++-----------------------
- drivers/block/loop.c   |    2 ++
- drivers/md/dm.c        |    1 +
- drivers/md/md.c        |    1 +
- include/linux/blkdev.h |    1 +
- 5 files changed, 28 insertions(+), 23 deletions(-)
+Jun'ichi Nomura, NEC Corporation
 
-Index: linux-3.3-rc5-fast/block/blk-core.c
-===================================================================
---- linux-3.3-rc5-fast.orig/block/blk-core.c	2012-03-03 01:04:02.000000000 +0100
-+++ linux-3.3-rc5-fast/block/blk-core.c	2012-03-03 01:12:59.000000000 +0100
-@@ -1636,6 +1636,21 @@ void generic_make_request(struct bio *bi
- 		return;
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 801d92d..c6c33b0 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -226,6 +226,26 @@ static void free_multipath(struct multipath *m)
+ 	kfree(m);
+ }
  
- 	/*
-+	 * If it's a regular read/write or a barrier with data attached,
-+	 * go through the normal accounting stuff before submission.
-+	 */
-+	if (!test_bit(QUEUE_FLAG_NO_IO_COUNT, &bdev_get_queue(bio->bi_bdev)->queue_flags) &&
-+	    bio_has_data(bio) && !(bio->bi_rw & REQ_DISCARD)) {
-+		int count = bio_sectors(bio);
-+		if (bio->bi_rw & WRITE) {
-+			count_vm_events(PGPGOUT, count);
-+		} else {
-+			task_io_account_read(bio->bi_size);
-+			count_vm_events(PGPGIN, count);
-+		}
-+	}
++static int set_mapinfo(struct multipath *m, union map_info *info)
++{
++	struct dm_mpath_io *mpio;
 +
-+	/*
- 	 * We only want one ->make_request_fn to be active at a time, else
- 	 * stack usage with stacked devices could be a problem.  So use
- 	 * current->bio_list to keep a list of requests submited by a
-@@ -1690,31 +1705,16 @@ EXPORT_SYMBOL(generic_make_request);
-  */
- void submit_bio(int rw, struct bio *bio)
++	mpio = mempool_alloc(m->mpio_pool, GFP_ATOMIC);
++	if (!mpio)
++		return -ENOMEM;
++
++	memset(mpio, 0, sizeof(*mpio));
++	info->ptr = mpio;
++
++	return 0;
++}
++
++static void clear_mapinfo(struct multipath *m, union map_info *info)
++{
++	struct dm_mpath_io *mpio = info->ptr;
++	info->ptr = NULL;
++	mempool_free(mpio, m->mpio_pool);
++}
+ 
+ /*-----------------------------------------------
+  * Path selection
+@@ -341,13 +361,14 @@ static int __must_push_back(struct multipath *m)
+ }
+ 
+ static int map_io(struct multipath *m, struct request *clone,
+-		  struct dm_mpath_io *mpio, unsigned was_queued)
++		  union map_info *map_context, unsigned was_queued)
  {
--	int count = bio_sectors(bio);
--
- 	bio->bi_rw |= rw;
+ 	int r = DM_MAPIO_REMAPPED;
+ 	size_t nr_bytes = blk_rq_bytes(clone);
+ 	unsigned long flags;
+ 	struct pgpath *pgpath;
+ 	struct block_device *bdev;
++	struct dm_mpath_io *mpio = map_context->ptr;
  
--	/*
--	 * If it's a regular read/write or a barrier with data attached,
--	 * go through the normal accounting stuff before submission.
--	 */
--	if (bio_has_data(bio) && !(rw & REQ_DISCARD)) {
--		if (rw & WRITE) {
--			count_vm_events(PGPGOUT, count);
--		} else {
--			task_io_account_read(bio->bi_size);
--			count_vm_events(PGPGIN, count);
--		}
--
--		if (unlikely(block_dump)) {
--			char b[BDEVNAME_SIZE];
--			printk(KERN_DEBUG "%s(%d): %s block %Lu on %s (%u sectors)\n",
--			current->comm, task_pid_nr(current),
--				(rw & WRITE) ? "WRITE" : "READ",
--				(unsigned long long)bio->bi_sector,
--				bdevname(bio->bi_bdev, b),
--				count);
--		}
-+	if (unlikely(block_dump)) {
-+		char b[BDEVNAME_SIZE];
-+		printk(KERN_DEBUG "%s(%d): %s block %Lu on %s (%u sectors)\n",
-+		current->comm, task_pid_nr(current),
-+			(rw & WRITE) ? "WRITE" : "READ",
-+			(unsigned long long)bio->bi_sector,
-+			bdevname(bio->bi_bdev, b),
-+			bio_sectors(bio));
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+@@ -423,7 +444,6 @@ static void dispatch_queued_ios(struct multipath *m)
+ {
+ 	int r;
+ 	unsigned long flags;
+-	struct dm_mpath_io *mpio;
+ 	union map_info *info;
+ 	struct request *clone, *n;
+ 	LIST_HEAD(cl);
+@@ -436,16 +456,15 @@ static void dispatch_queued_ios(struct multipath *m)
+ 		list_del_init(&clone->queuelist);
+ 
+ 		info = dm_get_rq_mapinfo(clone);
+-		mpio = info->ptr;
+ 
+-		r = map_io(m, clone, mpio, 1);
++		r = map_io(m, clone, info, 1);
+ 		if (r < 0) {
+-			mempool_free(mpio, m->mpio_pool);
++			clear_mapinfo(m, info);
+ 			dm_kill_unmapped_request(clone, r);
+ 		} else if (r == DM_MAPIO_REMAPPED)
+ 			dm_dispatch_request(clone);
+ 		else if (r == DM_MAPIO_REQUEUE) {
+-			mempool_free(mpio, m->mpio_pool);
++			clear_mapinfo(m, info);
+ 			dm_requeue_unmapped_request(clone);
+ 		}
  	}
+@@ -908,20 +927,16 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
+ 			 union map_info *map_context)
+ {
+ 	int r;
+-	struct dm_mpath_io *mpio;
+ 	struct multipath *m = (struct multipath *) ti->private;
  
- 	generic_make_request(bio);
-Index: linux-3.3-rc5-fast/include/linux/blkdev.h
-===================================================================
---- linux-3.3-rc5-fast.orig/include/linux/blkdev.h	2012-03-03 01:04:23.000000000 +0100
-+++ linux-3.3-rc5-fast/include/linux/blkdev.h	2012-03-03 01:12:59.000000000 +0100
-@@ -420,6 +420,7 @@ struct request_queue {
- #define QUEUE_FLAG_ADD_RANDOM  16	/* Contributes to random pool */
- #define QUEUE_FLAG_SECDISCARD  17	/* supports SECDISCARD */
- #define QUEUE_FLAG_SAME_FORCE  18	/* force complete on same CPU */
-+#define QUEUE_FLAG_NO_IO_COUNT 19	/* don't increase io request count */
+-	mpio = mempool_alloc(m->mpio_pool, GFP_ATOMIC);
+-	if (!mpio)
++	if (set_mapinfo(m, map_context) < 0)
+ 		/* ENOMEM, requeue */
+ 		return DM_MAPIO_REQUEUE;
+-	memset(mpio, 0, sizeof(*mpio));
  
- #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
- 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
-Index: linux-3.3-rc5-fast/drivers/block/loop.c
-===================================================================
---- linux-3.3-rc5-fast.orig/drivers/block/loop.c	2012-03-03 01:04:03.000000000 +0100
-+++ linux-3.3-rc5-fast/drivers/block/loop.c	2012-03-03 01:12:59.000000000 +0100
-@@ -1633,6 +1633,8 @@ static int loop_add(struct loop_device *
- 	if (!lo->lo_queue)
- 		goto out_free_dev;
+-	map_context->ptr = mpio;
+ 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+-	r = map_io(m, clone, mpio, 0);
++	r = map_io(m, clone, map_context, 0);
+ 	if (r < 0 || r == DM_MAPIO_REQUEUE)
+-		mempool_free(mpio, m->mpio_pool);
++		clear_mapinfo(m, map_context);
  
-+	queue_flag_set_unlocked(QUEUE_FLAG_NO_IO_COUNT, lo->lo_queue);
+ 	return r;
+ }
+@@ -1261,13 +1276,15 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	struct path_selector *ps;
+ 	int r;
+ 
++	BUG_ON(!mpio);
 +
- 	disk = lo->lo_disk = alloc_disk(1 << part_shift);
- 	if (!disk)
- 		goto out_free_queue;
-Index: linux-3.3-rc5-fast/drivers/md/md.c
-===================================================================
---- linux-3.3-rc5-fast.orig/drivers/md/md.c	2012-03-03 01:04:06.000000000 +0100
-+++ linux-3.3-rc5-fast/drivers/md/md.c	2012-03-03 01:12:59.000000000 +0100
-@@ -4667,6 +4667,7 @@ static int md_alloc(dev_t dev, char *nam
+ 	r  = do_end_io(m, clone, error, mpio);
+ 	if (pgpath) {
+ 		ps = &pgpath->pg->ps;
+ 		if (ps->type->end_io)
+ 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
+ 	}
+-	mempool_free(mpio, m->mpio_pool);
++	clear_mapinfo(m, map_context);
  
- 	blk_queue_make_request(mddev->queue, md_make_request);
- 	blk_set_stacking_limits(&mddev->queue->limits);
-+	queue_flag_set_unlocked(QUEUE_FLAG_NO_IO_COUNT, mddev->queue);
- 
- 	disk = alloc_disk(1 << shift);
- 	if (!disk) {
-Index: linux-3.3-rc5-fast/drivers/md/dm.c
-===================================================================
---- linux-3.3-rc5-fast.orig/drivers/md/dm.c	2012-03-03 01:11:47.000000000 +0100
-+++ linux-3.3-rc5-fast/drivers/md/dm.c	2012-03-03 01:12:59.000000000 +0100
-@@ -1803,6 +1803,7 @@ static void dm_init_md_queue(struct mapp
- 	 * This queue is new, so no concurrency on the queue_flags.
- 	 */
- 	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
-+	queue_flag_set_unlocked(QUEUE_FLAG_NO_IO_COUNT, md->queue);
- 
- 	md->queue->queuedata = md;
- 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
+ 	return r;
+ }
