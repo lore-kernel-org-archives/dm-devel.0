@@ -1,98 +1,61 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd main.c
-Date: 22 Mar 2012 18:02:35 -0000
-Message-ID: <20120322180235.1349.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm: remake of the verity target
+Date: Thu, 22 Mar 2012 17:52:11 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1203221739060.11979@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1203031340340.10937@file.rdu.redhat.com>
+ <20120306215947.GB27051@google.com> <Pine.LNX.4.64.1203131742230.24876@file.rdu.redhat.com>
+ <20120320154159.GD27051@google.com> <Pine.LNX.4.64.1203202045150.23255@file.rdu.redhat.com>
+ <Pine.LNX.4.64.1203202233250.6371@file.rdu.redhat.com>
+ <CACBanvrjZbDY+aUUyp9-YuG8KoEd9k-cn50kn8N=3DQxKf7QFA@mail.gmail.com>
+ <Pine.LNX.4.64.1203202340160.15617@file.rdu.redhat.com>
+ <CACBanvqYb3MU=Zy7HNJ2oMekQE6FZY5ZtN7QAaAv0M=tVH=cXw@mail.gmail.com>
+ <Pine.LNX.4.64.1203211304550.7011@file.rdu.redhat.com> <20120322174101.GM27051@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120322174101.GM27051@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mandeep Singh Baines <msb@chromium.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Steffen Klassert <steffen.klassert@secunet.com>, Will Drewry <wad@chromium.org>, linux-kernel@vger.kernel.org, Elly Jones <ellyjones@chromium.org>, Olof Johansson <olofj@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2012-03-22 18:02:34
 
-Modified files:
-	multipathd     : main.c 
 
-Log message:
-	Fix for bz803849.  applying patch from John Ruemker. multipathd was not
-	correctly unmounting all unnecessary devices from its private namespace.
-	Not applicable upstream.
+On Thu, 22 Mar 2012, Mandeep Singh Baines wrote:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.39&r2=1.69.2.40
+> Mikulas Patocka (mpatocka@redhat.com) wrote:
+> > 
+> > This is improved patch that supports both the old format and the new 
+> > format. I checked that it is interoperable with with the old Google 
+> > userspace tool and with the original Google kernel driver.
+> > 
+> 
+> Thanks much for doing this:)
+> 
+> This looks good but would a prepend/append flag be better?
 
---- multipath-tools/multipathd/main.c	2011/10/27 21:36:20	1.69.2.39
-+++ multipath-tools/multipathd/main.c	2012/03/22 18:02:34	1.69.2.40
-@@ -1377,17 +1377,27 @@
- {
- 	char buf[LINE_MAX];
- 	FILE *file;
-+	vector extra_devs;
-+	char *slot;
-+	int s;
- 
- 	file = fopen("/proc/mounts", "r");
- 	if (!file) {
- 		condlog(0, "couldn't open /proc/mounts : %s", strerror(errno));
- 		return -1;
- 	}
-+
-+	extra_devs = vector_alloc();
-+	if (!extra_devs) {
-+		condlog(0, "couldn't allocate vector for extra devs\n");
-+		return -1;
-+	}
-+
- 	find_keep_dirs();
- 	while (fgets(buf, LINE_MAX, file)) {
- 		int i;
- 		char *keep;
--		char *end, *mnt = strchr(buf, ' ');
-+		char *end, *extra, *mnt = strchr(buf, ' ');
- 		if (!mnt)
- 			continue;
- 		mnt++;
-@@ -1418,13 +1428,26 @@
- 		    strncmp(mnt, "/lib64", 6) == 0 || strncmp(mnt, "/usr/lib64", 10) == 0 ||
- 		    strncmp(mnt, "/ram", 4) == 0)
- 			continue;
--		if (umount2(mnt, MNT_DETACH) < 0 && errno != ENOENT)
--			condlog(0, "failed to umount '%s' (%s). skipping", mnt,
--				strerror(errno));
-+		if (!vector_alloc_slot(extra_devs)) {
-+			condlog(2, "couldn't allocate vector slot for extra dev (%s). "
-+				"skipping,", mnt);
-+			continue;
-+ 		}
-+		extra = strdup(mnt);
-+		vector_set_slot(extra_devs, extra);
- next:
- 		;
- 	}
- 	fclose(file);
-+
-+	vector_foreach_slot(extra_devs, slot, s) {
-+	        if (umount2(slot, MNT_DETACH) < 0 && errno != ENOENT) {
-+                        condlog(0, "failed to umount '%s' (%s). skipping",
-+				slot, strerror(errno));
-+                }
-+		free(slot);
-+	}
-+	vector_free(extra_devs);
- 	return 0;
- }	
- 	
+It does more than changing prepend/append salt. I changed alignment in the 
+new format so that it doesn't have to use a multiply instruction.
+
+In the old format, if digest size is not a power of two, all digests are 
+placed first and the rest of the block is padded with zeros. In the new 
+format, each digest is padded with zeros to a power of two.
+
+For example, when using sha1, the old format padding looks like this:
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbccccccccccccccccccccccccccccccccccccccccdddddddd
+dddddddddddddddddddddddddddddddd00000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000
+
+... and the new format padding looks like this:
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000000000000000
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb000000000000000000000000
+cccccccccccccccccccccccccccccccccccccccc000000000000000000000000
+dddddddddddddddddddddddddddddddddddddddd000000000000000000000000
+
+The version "0" (first argument in the target line) actually means the old 
+style padding and the salt is hashed after the data. The version "1" means 
+new style padding and the salt is hashed before the data. If someone comes 
+with another format, we can use version "2" for it, etc.
+
+Mikulas
