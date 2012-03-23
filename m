@@ -1,18 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
 Subject: Re: dm-bufio
-Date: Fri, 23 Mar 2012 10:21:33 -0400
-Message-ID: <20120323142133.GF7220@redhat.com>
+Date: Fri, 23 Mar 2012 16:29:18 +0200
+Message-ID: <CALLzPKa1qoaRcWzeh2sTz9PFhYmPSgpGicL0dQ3w1rsP4XhGUQ@mail.gmail.com>
 References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
 	<4F6C5A1F.1000103@redhat.com>
 	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
 	<CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
+	<20120323142133.GF7220@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
+In-Reply-To: <20120323142133.GF7220@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,60 +22,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Cc: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: mpatocka@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 23 2012 at 10:12am -0400,
-Kasatkin, Dmitry <dmitry.kasatkin@intel.com> wrote:
-
-> On Fri, Mar 23, 2012 at 1:26 PM, Kasatkin, Dmitry
-> <dmitry.kasatkin@intel.com> wrote:
-> > On Fri, Mar 23, 2012 at 1:10 PM, Zdenek Kabelac <zkabelac@redhat.com> w=
-rote:
-> >> Dne 23.3.2012 12:01, Kasatkin, Dmitry napsal(a):
-> >>> Hello,
-> >>>
-> >>> When using dm-bufio and dm-io in general, how to ensure that all dirty
-> >>> buffers are written to the storage when machine reboots?
-> >>> suspend hooks could be used, but they are not called on reboot, only
-> >>> when suspending/removing the target...
-> >>>
-> >>
-> >> You mean you reboot without running =A0'sync' command?
-> >>
-> >> And yes - on reboot you should properly unmount devices - so you should
-> >> see removal of target on your shutdown sequence - =A0I believe Fedora =
-currently
-> >> tries to support switch to some shutdown ramdisk, so all filesystem and
-> >> devices might be properly unmounted and destroyed.
-> >>
-> >
-> > Hello,
-> >
-> > Thanks for response.
-> > I use bufio to store some data on block device.
-> > It is not mounted in anyway. My target just use it to load/store data.
-> > When machine reboots, I want to be sure that bufio written all dirty bu=
-ffers...
-> >
-> > - Dmitry
-> >
-> =
-
-> At the moment, I have reboot notifier which does the following
-> =
-
-> 	dm_bufio_write_dirty_buffers(d->bufio);
-> 	sync_blockdev(d->dev->bdev);
-> 	blkdev_issue_flush(d->dev->bdev, GFP_KERNEL, NULL);
-> =
-
-> without first line on the next boot I got corrupted/not updated blocks.
-> and I am not sure if I need last 2 lines...
-
-Are you cleanly removing the target from the kernel before reboot
-(e.g. dmsetup remove devname)?
-
-As long as your target's .dtr is making sure to flush all outstanding IO
-(like your reboot notifier does) you should be fine.
+T24gRnJpLCBNYXIgMjMsIDIwMTIgYXQgNDoyMSBQTSwgTWlrZSBTbml0emVyIDxzbml0emVyQHJl
+ZGhhdC5jb20+IHdyb3RlOgo+IE9uIEZyaSwgTWFyIDIzIDIwMTIgYXQgMTA6MTJhbSAtMDQwMCwK
+PiBLYXNhdGtpbiwgRG1pdHJ5IDxkbWl0cnkua2FzYXRraW5AaW50ZWwuY29tPiB3cm90ZToKPgo+
+PiBPbiBGcmksIE1hciAyMywgMjAxMiBhdCAxOjI2IFBNLCBLYXNhdGtpbiwgRG1pdHJ5Cj4+IDxk
+bWl0cnkua2FzYXRraW5AaW50ZWwuY29tPiB3cm90ZToKPj4gPiBPbiBGcmksIE1hciAyMywgMjAx
+MiBhdCAxOjEwIFBNLCBaZGVuZWsgS2FiZWxhYyA8emthYmVsYWNAcmVkaGF0LmNvbT4gd3JvdGU6
+Cj4+ID4+IERuZSAyMy4zLjIwMTIgMTI6MDEsIEthc2F0a2luLCBEbWl0cnkgbmFwc2FsKGEpOgo+
+PiA+Pj4gSGVsbG8sCj4+ID4+Pgo+PiA+Pj4gV2hlbiB1c2luZyBkbS1idWZpbyBhbmQgZG0taW8g
+aW4gZ2VuZXJhbCwgaG93IHRvIGVuc3VyZSB0aGF0IGFsbCBkaXJ0eQo+PiA+Pj4gYnVmZmVycyBh
+cmUgd3JpdHRlbiB0byB0aGUgc3RvcmFnZSB3aGVuIG1hY2hpbmUgcmVib290cz8KPj4gPj4+IHN1
+c3BlbmQgaG9va3MgY291bGQgYmUgdXNlZCwgYnV0IHRoZXkgYXJlIG5vdCBjYWxsZWQgb24gcmVi
+b290LCBvbmx5Cj4+ID4+PiB3aGVuIHN1c3BlbmRpbmcvcmVtb3ZpbmcgdGhlIHRhcmdldC4uLgo+
+PiA+Pj4KPj4gPj4KPj4gPj4gWW91IG1lYW4geW91IHJlYm9vdCB3aXRob3V0IHJ1bm5pbmcgwqAn
+c3luYycgY29tbWFuZD8KPj4gPj4KPj4gPj4gQW5kIHllcyAtIG9uIHJlYm9vdCB5b3Ugc2hvdWxk
+IHByb3Blcmx5IHVubW91bnQgZGV2aWNlcyAtIHNvIHlvdSBzaG91bGQKPj4gPj4gc2VlIHJlbW92
+YWwgb2YgdGFyZ2V0IG9uIHlvdXIgc2h1dGRvd24gc2VxdWVuY2UgLSDCoEkgYmVsaWV2ZSBGZWRv
+cmEgY3VycmVudGx5Cj4+ID4+IHRyaWVzIHRvIHN1cHBvcnQgc3dpdGNoIHRvIHNvbWUgc2h1dGRv
+d24gcmFtZGlzaywgc28gYWxsIGZpbGVzeXN0ZW0gYW5kCj4+ID4+IGRldmljZXMgbWlnaHQgYmUg
+cHJvcGVybHkgdW5tb3VudGVkIGFuZCBkZXN0cm95ZWQuCj4+ID4+Cj4+ID4KPj4gPiBIZWxsbywK
+Pj4gPgo+PiA+IFRoYW5rcyBmb3IgcmVzcG9uc2UuCj4+ID4gSSB1c2UgYnVmaW8gdG8gc3RvcmUg
+c29tZSBkYXRhIG9uIGJsb2NrIGRldmljZS4KPj4gPiBJdCBpcyBub3QgbW91bnRlZCBpbiBhbnl3
+YXkuIE15IHRhcmdldCBqdXN0IHVzZSBpdCB0byBsb2FkL3N0b3JlIGRhdGEuCj4+ID4gV2hlbiBt
+YWNoaW5lIHJlYm9vdHMsIEkgd2FudCB0byBiZSBzdXJlIHRoYXQgYnVmaW8gd3JpdHRlbiBhbGwg
+ZGlydHkgYnVmZmVycy4uLgo+PiA+Cj4+ID4gLSBEbWl0cnkKPj4gPgo+Pgo+PiBBdCB0aGUgbW9t
+ZW50LCBJIGhhdmUgcmVib290IG5vdGlmaWVyIHdoaWNoIGRvZXMgdGhlIGZvbGxvd2luZwo+Pgo+
+PiDCoCDCoCDCoCBkbV9idWZpb193cml0ZV9kaXJ0eV9idWZmZXJzKGQtPmJ1ZmlvKTsKPj4gwqAg
+wqAgwqAgc3luY19ibG9ja2RldihkLT5kZXYtPmJkZXYpOwo+PiDCoCDCoCDCoCBibGtkZXZfaXNz
+dWVfZmx1c2goZC0+ZGV2LT5iZGV2LCBHRlBfS0VSTkVMLCBOVUxMKTsKPj4KPj4gd2l0aG91dCBm
+aXJzdCBsaW5lIG9uIHRoZSBuZXh0IGJvb3QgSSBnb3QgY29ycnVwdGVkL25vdCB1cGRhdGVkIGJs
+b2Nrcy4KPj4gYW5kIEkgYW0gbm90IHN1cmUgaWYgSSBuZWVkIGxhc3QgMiBsaW5lcy4uLgo+Cj4g
+QXJlIHlvdSBjbGVhbmx5IHJlbW92aW5nIHRoZSB0YXJnZXQgZnJvbSB0aGUga2VybmVsIGJlZm9y
+ZSByZWJvb3QKPiAoZS5nLiBkbXNldHVwIHJlbW92ZSBkZXZuYW1lKT8KPgo+IEFzIGxvbmcgYXMg
+eW91ciB0YXJnZXQncyAuZHRyIGlzIG1ha2luZyBzdXJlIHRvIGZsdXNoIGFsbCBvdXRzdGFuZGlu
+ZyBJTwo+IChsaWtlIHlvdXIgcmVib290IG5vdGlmaWVyIGRvZXMpIHlvdSBzaG91bGQgYmUgZmlu
+ZS4KPgoKVGhlIHRhcmdldCBjb250YWlucyByb290ZnMuLi4gT24gcmVib290LCBpdCBpcyByZW1v
+dW50ZWQgcmVhZC1vbmx5LgpJIGNhbm5vdCByZW1vdmUgaXQuLi4KClNvbWV0aW1lIGFnbyBJIGhh
+ZCAibWVzc2FnZSIgb3BlcmF0aW9uICJzeW5jIiwgdG8gc3luYyBiYWNraW5nIGRldmljZXMuCkJ1
+dCByZWJvb3Qgbm90aWZpZXIgbG9va3MgbmljZS4uLiBJdCBpcyBhdXRvbWF0aWNhbGx5IGNhbGxl
+ZC4KCj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4g
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
