@@ -1,14 +1,20 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: mpath_prio_rdac?
-Date: Fri, 23 Mar 2012 14:50:41 +0000
-Message-ID: <4F6C8DC1.9060708@redhat.com>
-References: <756D2EE1FEBD2946972256A5FDFCB2EE2C38E064@IT-AIRSTORM.sooner.net.ou.edu>
+From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Subject: Re: dm-bufio
+Date: Fri, 23 Mar 2012 17:17:30 +0200
+Message-ID: <CALLzPKZcArim2WxockC6mKfcDNBJxhqt6_yvNqmFV0tPm6Z40A@mail.gmail.com>
+References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
+	<4F6C5A1F.1000103@redhat.com>
+	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
+	<CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
+	<20120323142133.GF7220@redhat.com>
+	<CALLzPKa1qoaRcWzeh2sTz9PFhYmPSgpGicL0dQ3w1rsP4XhGUQ@mail.gmail.com>
+	<20120323143254.GG7220@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <756D2EE1FEBD2946972256A5FDFCB2EE2C38E064@IT-AIRSTORM.sooner.net.ou.edu>
+In-Reply-To: <20120323143254.GG7220@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,74 +24,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Hart, Brian R." <brianhart@ou.edu>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
-
-On 03/23/2012 02:41 PM, Hart, Brian R. wrote:
-> All,
-> 
-> I've been trying to figure this out and have not been able to
-> locate any information on this.  I hope that I'm not just
-> overlooking something silly...
-> 
-> We have a couple of Dell MD storage arrays that when installed
-> setup multipath.conf to use this line: prio_callout
-> "/sbin/mpath_prio_rdac /dev/%n"
-> 
-> Now, in RHEL5 and Debian Lenny this mpath_prio_rdac file exists.
-> However, in the newer distro releases this file seems to be
-> completely gone and I cannot find any reference to it in any
-> packages.  Has this functionality been replaced some how?  Should
-> this line really be different or is multipath handling it
-> differently where it just ignores this line anyways in newer
-> versions?
-> 
-> I would greatly appreciate any light that could be shed on the
-> subject.  Thanks in advance!
-> 
-> -- Brian Hart
-
-Callouts make life difficult when file systems go away so like the
-path checkers before them they were merged into the libmultipath
-shared library. This means that the daemon can lock them into memory
-via mlock(2)/mlockall(2) and not have to worry about being able to
-load a binary from disk when the paths to that storage have failed -
-this is very useful if your root file system is on multipath and you
-need to recover from a failure.
-
-In RHEL5 this is dealt with using a complex and fragile private
-namespace and RAM-backed file system - the required binaries are
-copied into this ramfs at daemon startup and the daemon unmounts
-unnecessary file systems to avoid blocking when failures occur.
-
-For this reason the parameter is now just "prio", e.g.:
-
-device {
-    vendor                  "IBM"
-    product                 "1742"
-[...]
-    hardware_handler        "1 rdac"
-    path_selector           "round-robin 0"
-    path_grouping_policy    group_by_prio
-[...]
-    path_checker            rdac
-    prio                    rdac
-}
-
-See multipath.conf.defaults or the other example files in the package
-your distribution provides.
-
-Regards,
-Bryn.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
-
-iEYEARECAAYFAk9sjcEACgkQ6YSQoMYUY975UACfWKTaipiI4v1SxXzhEHU4WJWy
-v5EAnjyv40wDVgtY8hQ5Jy6A3esM8hke
-=laC0
------END PGP SIGNATURE-----
+T24gRnJpLCBNYXIgMjMsIDIwMTIgYXQgNDozMiBQTSwgTWlrZSBTbml0emVyIDxzbml0emVyQHJl
+ZGhhdC5jb20+IHdyb3RlOgo+IE9uIEZyaSwgTWFyIDIzIDIwMTIgYXQgMTA6MjlhbSAtMDQwMCwK
+PiBLYXNhdGtpbiwgRG1pdHJ5IDxkbWl0cnkua2FzYXRraW5AaW50ZWwuY29tPiB3cm90ZToKPgo+
+PiBPbiBGcmksIE1hciAyMywgMjAxMiBhdCA0OjIxIFBNLCBNaWtlIFNuaXR6ZXIgPHNuaXR6ZXJA
+cmVkaGF0LmNvbT4gd3JvdGU6Cj4+ID4gT24gRnJpLCBNYXIgMjMgMjAxMiBhdCAxMDoxMmFtIC0w
+NDAwLAo+PiA+IEthc2F0a2luLCBEbWl0cnkgPGRtaXRyeS5rYXNhdGtpbkBpbnRlbC5jb20+IHdy
+b3RlOgo+PiA+Cj4+ID4+IE9uIEZyaSwgTWFyIDIzLCAyMDEyIGF0IDE6MjYgUE0sIEthc2F0a2lu
+LCBEbWl0cnkKPj4gPj4gPGRtaXRyeS5rYXNhdGtpbkBpbnRlbC5jb20+IHdyb3RlOgo+PiA+PiA+
+IE9uIEZyaSwgTWFyIDIzLCAyMDEyIGF0IDE6MTAgUE0sIFpkZW5layBLYWJlbGFjIDx6a2FiZWxh
+Y0ByZWRoYXQuY29tPiB3cm90ZToKPj4gPj4gPj4gRG5lIDIzLjMuMjAxMiAxMjowMSwgS2FzYXRr
+aW4sIERtaXRyeSBuYXBzYWwoYSk6Cj4+ID4+ID4+PiBIZWxsbywKPj4gPj4gPj4+Cj4+ID4+ID4+
+PiBXaGVuIHVzaW5nIGRtLWJ1ZmlvIGFuZCBkbS1pbyBpbiBnZW5lcmFsLCBob3cgdG8gZW5zdXJl
+IHRoYXQgYWxsIGRpcnR5Cj4+ID4+ID4+PiBidWZmZXJzIGFyZSB3cml0dGVuIHRvIHRoZSBzdG9y
+YWdlIHdoZW4gbWFjaGluZSByZWJvb3RzPwo+PiA+PiA+Pj4gc3VzcGVuZCBob29rcyBjb3VsZCBi
+ZSB1c2VkLCBidXQgdGhleSBhcmUgbm90IGNhbGxlZCBvbiByZWJvb3QsIG9ubHkKPj4gPj4gPj4+
+IHdoZW4gc3VzcGVuZGluZy9yZW1vdmluZyB0aGUgdGFyZ2V0Li4uCj4+ID4+ID4+Pgo+PiA+PiA+
+Pgo+PiA+PiA+PiBZb3UgbWVhbiB5b3UgcmVib290IHdpdGhvdXQgcnVubmluZyDCoCdzeW5jJyBj
+b21tYW5kPwo+PiA+PiA+Pgo+PiA+PiA+PiBBbmQgeWVzIC0gb24gcmVib290IHlvdSBzaG91bGQg
+cHJvcGVybHkgdW5tb3VudCBkZXZpY2VzIC0gc28geW91IHNob3VsZAo+PiA+PiA+PiBzZWUgcmVt
+b3ZhbCBvZiB0YXJnZXQgb24geW91ciBzaHV0ZG93biBzZXF1ZW5jZSAtIMKgSSBiZWxpZXZlIEZl
+ZG9yYSBjdXJyZW50bHkKPj4gPj4gPj4gdHJpZXMgdG8gc3VwcG9ydCBzd2l0Y2ggdG8gc29tZSBz
+aHV0ZG93biByYW1kaXNrLCBzbyBhbGwgZmlsZXN5c3RlbSBhbmQKPj4gPj4gPj4gZGV2aWNlcyBt
+aWdodCBiZSBwcm9wZXJseSB1bm1vdW50ZWQgYW5kIGRlc3Ryb3llZC4KPj4gPj4gPj4KPj4gPj4g
+Pgo+PiA+PiA+IEhlbGxvLAo+PiA+PiA+Cj4+ID4+ID4gVGhhbmtzIGZvciByZXNwb25zZS4KPj4g
+Pj4gPiBJIHVzZSBidWZpbyB0byBzdG9yZSBzb21lIGRhdGEgb24gYmxvY2sgZGV2aWNlLgo+PiA+
+PiA+IEl0IGlzIG5vdCBtb3VudGVkIGluIGFueXdheS4gTXkgdGFyZ2V0IGp1c3QgdXNlIGl0IHRv
+IGxvYWQvc3RvcmUgZGF0YS4KPj4gPj4gPiBXaGVuIG1hY2hpbmUgcmVib290cywgSSB3YW50IHRv
+IGJlIHN1cmUgdGhhdCBidWZpbyB3cml0dGVuIGFsbCBkaXJ0eSBidWZmZXJzLi4uCj4+ID4+ID4K
+Pj4gPj4gPiAtIERtaXRyeQo+PiA+PiA+Cj4+ID4+Cj4+ID4+IEF0IHRoZSBtb21lbnQsIEkgaGF2
+ZSByZWJvb3Qgbm90aWZpZXIgd2hpY2ggZG9lcyB0aGUgZm9sbG93aW5nCj4+ID4+Cj4+ID4+IMKg
+IMKgIMKgIGRtX2J1ZmlvX3dyaXRlX2RpcnR5X2J1ZmZlcnMoZC0+YnVmaW8pOwo+PiA+PiDCoCDC
+oCDCoCBzeW5jX2Jsb2NrZGV2KGQtPmRldi0+YmRldik7Cj4+ID4+IMKgIMKgIMKgIGJsa2Rldl9p
+c3N1ZV9mbHVzaChkLT5kZXYtPmJkZXYsIEdGUF9LRVJORUwsIE5VTEwpOwo+PiA+Pgo+PiA+PiB3
+aXRob3V0IGZpcnN0IGxpbmUgb24gdGhlIG5leHQgYm9vdCBJIGdvdCBjb3JydXB0ZWQvbm90IHVw
+ZGF0ZWQgYmxvY2tzLgo+PiA+PiBhbmQgSSBhbSBub3Qgc3VyZSBpZiBJIG5lZWQgbGFzdCAyIGxp
+bmVzLi4uCj4+ID4KPj4gPiBBcmUgeW91IGNsZWFubHkgcmVtb3ZpbmcgdGhlIHRhcmdldCBmcm9t
+IHRoZSBrZXJuZWwgYmVmb3JlIHJlYm9vdAo+PiA+IChlLmcuIGRtc2V0dXAgcmVtb3ZlIGRldm5h
+bWUpPwo+PiA+Cj4+ID4gQXMgbG9uZyBhcyB5b3VyIHRhcmdldCdzIC5kdHIgaXMgbWFraW5nIHN1
+cmUgdG8gZmx1c2ggYWxsIG91dHN0YW5kaW5nIElPCj4+ID4gKGxpa2UgeW91ciByZWJvb3Qgbm90
+aWZpZXIgZG9lcykgeW91IHNob3VsZCBiZSBmaW5lLgo+PiA+Cj4+Cj4+IFRoZSB0YXJnZXQgY29u
+dGFpbnMgcm9vdGZzLi4uIE9uIHJlYm9vdCwgaXQgaXMgcmVtb3VudGVkIHJlYWQtb25seS4KPj4g
+SSBjYW5ub3QgcmVtb3ZlIGl0Li4uCj4+Cj4+IFNvbWV0aW1lIGFnbyBJIGhhZCAibWVzc2FnZSIg
+b3BlcmF0aW9uICJzeW5jIiwgdG8gc3luYyBiYWNraW5nIGRldmljZXMuCj4+IEJ1dCByZWJvb3Qg
+bm90aWZpZXIgbG9va3MgbmljZS4uLiBJdCBpcyBhdXRvbWF0aWNhbGx5IGNhbGxlZC4KPgo+IE9L
+Lgo+Cj4gQXMgYW4gYXNpZGUsIGp1c3QgY3VyaW91czogd2hhdCBkb2VzIHlvdXIgdGFyZ2V0IGRv
+PwoKSSBoYXZlIGV4cGVyaW1lbnRlZCB3aXRoIGludGVncml0eSBwcm90ZWN0aW9uLgoKVGhhbmtz
+LgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
+d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
