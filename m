@@ -1,17 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 10/14] dm_thin: add support for REQ_DISCARD
-Date: Fri, 23 Mar 2012 12:45:21 +0000
-Message-ID: <20120323124520.GC16214@agk-dp.fab.redhat.com>
-References: <20120316152156.GA8836@ubuntu>
-	<1331911358-8848-1-git-send-email-ejt@redhat.com>
-	<1331911358-8848-10-git-send-email-ejt@redhat.com>
+From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Subject: Re: dm-bufio
+Date: Fri, 23 Mar 2012 16:12:39 +0200
+Message-ID: <CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
+References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
+	<4F6C5A1F.1000103@redhat.com>
+	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1331911358-8848-10-git-send-email-ejt@redhat.com>
+In-Reply-To: <CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,17 +20,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Mar 16, 2012 at 03:22:33PM +0000, Joe Thornber wrote:
-> +	default:
-> +		DMERR("discard: find block unexpectedly returned %d\n", r);
-
-What can trigger that?
-- Is it really BUG() or /* NOTREACHED */ perhaps?
-
-Similar question applies to (existing) process_bio().
-
-Alasdair
+T24gRnJpLCBNYXIgMjMsIDIwMTIgYXQgMToyNiBQTSwgS2FzYXRraW4sIERtaXRyeQo8ZG1pdHJ5
+Lmthc2F0a2luQGludGVsLmNvbT4gd3JvdGU6Cj4gT24gRnJpLCBNYXIgMjMsIDIwMTIgYXQgMTox
+MCBQTSwgWmRlbmVrIEthYmVsYWMgPHprYWJlbGFjQHJlZGhhdC5jb20+IHdyb3RlOgo+PiBEbmUg
+MjMuMy4yMDEyIDEyOjAxLCBLYXNhdGtpbiwgRG1pdHJ5IG5hcHNhbChhKToKPj4+IEhlbGxvLAo+
+Pj4KPj4+IFdoZW4gdXNpbmcgZG0tYnVmaW8gYW5kIGRtLWlvIGluIGdlbmVyYWwsIGhvdyB0byBl
+bnN1cmUgdGhhdCBhbGwgZGlydHkKPj4+IGJ1ZmZlcnMgYXJlIHdyaXR0ZW4gdG8gdGhlIHN0b3Jh
+Z2Ugd2hlbiBtYWNoaW5lIHJlYm9vdHM/Cj4+PiBzdXNwZW5kIGhvb2tzIGNvdWxkIGJlIHVzZWQs
+IGJ1dCB0aGV5IGFyZSBub3QgY2FsbGVkIG9uIHJlYm9vdCwgb25seQo+Pj4gd2hlbiBzdXNwZW5k
+aW5nL3JlbW92aW5nIHRoZSB0YXJnZXQuLi4KPj4+Cj4+Cj4+IFlvdSBtZWFuIHlvdSByZWJvb3Qg
+d2l0aG91dCBydW5uaW5nIMKgJ3N5bmMnIGNvbW1hbmQ/Cj4+Cj4+IEFuZCB5ZXMgLSBvbiByZWJv
+b3QgeW91IHNob3VsZCBwcm9wZXJseSB1bm1vdW50IGRldmljZXMgLSBzbyB5b3Ugc2hvdWxkCj4+
+IHNlZSByZW1vdmFsIG9mIHRhcmdldCBvbiB5b3VyIHNodXRkb3duIHNlcXVlbmNlIC0gwqBJIGJl
+bGlldmUgRmVkb3JhIGN1cnJlbnRseQo+PiB0cmllcyB0byBzdXBwb3J0IHN3aXRjaCB0byBzb21l
+IHNodXRkb3duIHJhbWRpc2ssIHNvIGFsbCBmaWxlc3lzdGVtIGFuZAo+PiBkZXZpY2VzIG1pZ2h0
+IGJlIHByb3Blcmx5IHVubW91bnRlZCBhbmQgZGVzdHJveWVkLgo+Pgo+Cj4gSGVsbG8sCj4KPiBU
+aGFua3MgZm9yIHJlc3BvbnNlLgo+IEkgdXNlIGJ1ZmlvIHRvIHN0b3JlIHNvbWUgZGF0YSBvbiBi
+bG9jayBkZXZpY2UuCj4gSXQgaXMgbm90IG1vdW50ZWQgaW4gYW55d2F5LiBNeSB0YXJnZXQganVz
+dCB1c2UgaXQgdG8gbG9hZC9zdG9yZSBkYXRhLgo+IFdoZW4gbWFjaGluZSByZWJvb3RzLCBJIHdh
+bnQgdG8gYmUgc3VyZSB0aGF0IGJ1ZmlvIHdyaXR0ZW4gYWxsIGRpcnR5IGJ1ZmZlcnMuLi4KPgo+
+IC0gRG1pdHJ5Cj4KCkF0IHRoZSBtb21lbnQsIEkgaGF2ZSByZWJvb3Qgbm90aWZpZXIgd2hpY2gg
+ZG9lcyB0aGUgZm9sbG93aW5nCgoJZG1fYnVmaW9fd3JpdGVfZGlydHlfYnVmZmVycyhkLT5idWZp
+byk7CglzeW5jX2Jsb2NrZGV2KGQtPmRldi0+YmRldik7CglibGtkZXZfaXNzdWVfZmx1c2goZC0+
+ZGV2LT5iZGV2LCBHRlBfS0VSTkVMLCBOVUxMKTsKCndpdGhvdXQgZmlyc3QgbGluZSBvbiB0aGUg
+bmV4dCBib290IEkgZ290IGNvcnJ1cHRlZC9ub3QgdXBkYXRlZCBibG9ja3MuCmFuZCBJIGFtIG5v
+dCBzdXJlIGlmIEkgbmVlZCBsYXN0IDIgbGluZXMuLi4KCi0gRG1pdHJ5Cgo+Cj4+IFpkZW5lawo+
+Pgo+PgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
