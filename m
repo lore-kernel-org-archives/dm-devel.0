@@ -1,20 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-bufio
-Date: Fri, 23 Mar 2012 10:32:55 -0400
-Message-ID: <20120323143254.GG7220@redhat.com>
-References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
-	<4F6C5A1F.1000103@redhat.com>
-	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
-	<CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
-	<20120323142133.GF7220@redhat.com>
-	<CALLzPKa1qoaRcWzeh2sTz9PFhYmPSgpGicL0dQ3w1rsP4XhGUQ@mail.gmail.com>
+From: "Hart, Brian R." <brianhart@ou.edu>
+Subject: mpath_prio_rdac?
+Date: Fri, 23 Mar 2012 14:41:33 +0000
+Message-ID: <756D2EE1FEBD2946972256A5FDFCB2EE2C38E064@IT-AIRSTORM.sooner.net.ou.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============7429405936838645197=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CALLzPKa1qoaRcWzeh2sTz9PFhYmPSgpGicL0dQ3w1rsP4XhGUQ@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,79 +16,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Cc: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 23 2012 at 10:29am -0400,
-Kasatkin, Dmitry <dmitry.kasatkin@intel.com> wrote:
+--===============7429405936838645197==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_"
 
-> On Fri, Mar 23, 2012 at 4:21 PM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > On Fri, Mar 23 2012 at 10:12am -0400,
-> > Kasatkin, Dmitry <dmitry.kasatkin@intel.com> wrote:
-> >
-> >> On Fri, Mar 23, 2012 at 1:26 PM, Kasatkin, Dmitry
-> >> <dmitry.kasatkin@intel.com> wrote:
-> >> > On Fri, Mar 23, 2012 at 1:10 PM, Zdenek Kabelac <zkabelac@redhat.com=
-> wrote:
-> >> >> Dne 23.3.2012 12:01, Kasatkin, Dmitry napsal(a):
-> >> >>> Hello,
-> >> >>>
-> >> >>> When using dm-bufio and dm-io in general, how to ensure that all d=
-irty
-> >> >>> buffers are written to the storage when machine reboots?
-> >> >>> suspend hooks could be used, but they are not called on reboot, on=
-ly
-> >> >>> when suspending/removing the target...
-> >> >>>
-> >> >>
-> >> >> You mean you reboot without running =A0'sync' command?
-> >> >>
-> >> >> And yes - on reboot you should properly unmount devices - so you sh=
-ould
-> >> >> see removal of target on your shutdown sequence - =A0I believe Fedo=
-ra currently
-> >> >> tries to support switch to some shutdown ramdisk, so all filesystem=
- and
-> >> >> devices might be properly unmounted and destroyed.
-> >> >>
-> >> >
-> >> > Hello,
-> >> >
-> >> > Thanks for response.
-> >> > I use bufio to store some data on block device.
-> >> > It is not mounted in anyway. My target just use it to load/store dat=
-a.
-> >> > When machine reboots, I want to be sure that bufio written all dirty=
- buffers...
-> >> >
-> >> > - Dmitry
-> >> >
-> >>
-> >> At the moment, I have reboot notifier which does the following
-> >>
-> >> =A0 =A0 =A0 dm_bufio_write_dirty_buffers(d->bufio);
-> >> =A0 =A0 =A0 sync_blockdev(d->dev->bdev);
-> >> =A0 =A0 =A0 blkdev_issue_flush(d->dev->bdev, GFP_KERNEL, NULL);
-> >>
-> >> without first line on the next boot I got corrupted/not updated blocks.
-> >> and I am not sure if I need last 2 lines...
-> >
-> > Are you cleanly removing the target from the kernel before reboot
-> > (e.g. dmsetup remove devname)?
-> >
-> > As long as your target's .dtr is making sure to flush all outstanding IO
-> > (like your reboot notifier does) you should be fine.
-> >
-> =
+--_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-> The target contains rootfs... On reboot, it is remounted read-only.
-> I cannot remove it...
-> =
+All,
 
-> Sometime ago I had "message" operation "sync", to sync backing devices.
-> But reboot notifier looks nice... It is automatically called.
+I've been trying to figure this out and have not been able to locate any in=
+formation on this.  I hope that I'm not just overlooking something silly...
 
-OK.
+We have a couple of Dell MD storage arrays that when installed setup multip=
+ath.conf to use this line:
+        prio_callout          "/sbin/mpath_prio_rdac /dev/%n"
 
-As an aside, just curious: what does your target do?
+Now, in RHEL5 and Debian Lenny this mpath_prio_rdac file exists.  However, =
+in the newer distro releases this file seems to be completely gone and I ca=
+nnot find any reference to it in any packages.  Has this functionality been=
+ replaced some how?  Should this line really be different or is multipath h=
+andling it differently where it just ignores this line anyways in newer ver=
+sions?
+
+I would greatly appreciate any light that could be shed on the subject.  Th=
+anks in advance!
+
+-- Brian Hart
+
+--_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_
+Content-Type: text/html; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<html dir=3D"ltr">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859-=
+1">
+<style id=3D"owaParaStyle" type=3D"text/css">P {margin-top:0;margin-bottom:=
+0;}</style>
+</head>
+<body ocsi=3D"0" fpstyle=3D"1">
+<div style=3D"direction: ltr;font-family: Tahoma;color: #000000;font-size: =
+10pt;">All,<br>
+<br>
+I've been trying to figure this out and have not been able to locate any in=
+formation on this.&nbsp; I hope that I'm not just overlooking something sil=
+ly...<br>
+<br>
+We have a couple of Dell MD storage arrays that when installed setup multip=
+ath.conf to use this line:<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; prio_callout&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;/sbin/mpath_prio_rdac /dev/%n&quot;<br>
+<br>
+Now, in RHEL5 and Debian Lenny this mpath_prio_rdac file exists.&nbsp; Howe=
+ver, in the newer distro releases this file seems to be completely gone and=
+ I cannot find any reference to it in any packages.&nbsp; Has this function=
+ality been replaced some how?&nbsp; Should this
+ line really be different or is multipath handling it differently where it =
+just ignores this line anyways in newer versions?<br>
+<br>
+I would greatly appreciate any light that could be shed on the subject.&nbs=
+p; Thanks in advance!<br>
+<div><br>
+<div style=3D"font-family:Tahoma; font-size:13px">
+<div style=3D"font-family:Calibri; font-size:13px"><font size=3D"2">
+<div style=3D"margin:0px"><font size=3D"2" color=3D"black"><span style=3D"f=
+ont-size:14px">-- Brian Hart<br>
+</span></font></div>
+</font></div>
+</div>
+</div>
+</div>
+</body>
+</html>
+
+--_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_--
+
+
+--===============7429405936838645197==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7429405936838645197==--
