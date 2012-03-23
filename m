@@ -1,16 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm-mpath: Track invalid map_context
-Date: Fri, 23 Mar 2012 23:33:26 +0000
-Message-ID: <20120323233325.GM16214@agk-dp.fab.redhat.com>
-References: <1332171546-33434-1-git-send-email-hare@suse.de>
-	<4F69561A.5040406@ce.jp.nec.com>
+From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Subject: Re: dm-bufio
+Date: Sat, 24 Mar 2012 01:58:08 +0200
+Message-ID: <CALLzPKZ8b5Pd_GVRDzxNcBLzE=D9yAZ+fbhGiWKvi=E1oXcOMg@mail.gmail.com>
+References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
+	<4F6C5A1F.1000103@redhat.com>
+	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
+	<CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
+	<Pine.LNX.4.64.1203231213320.17386@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4F69561A.5040406@ce.jp.nec.com>
+In-Reply-To: <Pine.LNX.4.64.1203231213320.17386@file.rdu.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,12 +22,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-I've opted for this version.
-
-  http://people.redhat.com/agk/patches/linux/editing/dm-mpath-detect-invalid-map_context.patch
-
-Alasdair
+T24gRnJpLCBNYXIgMjMsIDIwMTIgYXQgNjoyMiBQTSwgTWlrdWxhcyBQYXRvY2thIDxtcGF0b2Nr
+YUByZWRoYXQuY29tPiB3cm90ZToKPgo+Cj4gT24gRnJpLCAyMyBNYXIgMjAxMiwgS2FzYXRraW4s
+IERtaXRyeSB3cm90ZToKPgo+PiBXaGVuIHVzaW5nIGRtLWJ1ZmlvIGFuZCBkbS1pbyBpbiBnZW5l
+cmFsLCBob3cgdG8gZW5zdXJlIHRoYXQgYWxsIGRpcnR5Cj4KPiBSZWdhcmRpbmcgZG0taW8sIHlv
+dSBkb24ndCBoYXZlIHRvIGZsdXNoIGRpcnR5IGJ1ZmZlcnMgYmVjYXVzZSBkbS1pbyBkb2VzCj4g
+bm8gY2FjaGluZy4gWW91IG9ubHkgbmVlZCB0byBmbHVzaCBoYXJkd2FyZSBkaXNrIGNhY2hlIHdp
+dGgKPiBibGtkZXZfaXNzdWVfZmx1c2guCj4KPj4gQXQgdGhlIG1vbWVudCwgSSBoYXZlIHJlYm9v
+dCBub3RpZmllciB3aGljaCBkb2VzIHRoZSBmb2xsb3dpbmcKPj4KPj4gwqAgwqAgwqAgZG1fYnVm
+aW9fd3JpdGVfZGlydHlfYnVmZmVycyhkLT5idWZpbyk7Cj4+IMKgIMKgIMKgIHN5bmNfYmxvY2tk
+ZXYoZC0+ZGV2LT5iZGV2KTsKPj4gwqAgwqAgwqAgYmxrZGV2X2lzc3VlX2ZsdXNoKGQtPmRldi0+
+YmRldiwgR0ZQX0tFUk5FTCwgTlVMTCk7Cj4+Cj4+IHdpdGhvdXQgZmlyc3QgbGluZSBvbiB0aGUg
+bmV4dCBib290IEkgZ290IGNvcnJ1cHRlZC9ub3QgdXBkYXRlZCBibG9ja3MuCj4+IGFuZCBJIGFt
+IG5vdCBzdXJlIGlmIEkgbmVlZCBsYXN0IDIgbGluZXMuLi4KPgo+IFlvdSBjYW4gZHJvcCBzeW5j
+X2Jsb2NrZGV2KGQtPmRldi0+YmRldikgLS0tIHN5bmNfYmxvY2tkZXYgZmx1c2hlcyBrZXJuZWwK
+PiBidWZmZXIgY2FjaGUgYW5kIGRtLWJ1ZmlvIGRvZXNuJ3QgdXNlIHRoZSBrZXJuZWwgYnVmZmVy
+IGNhY2hlICh5b3Ugb25seQo+IG5lZWQgc3luY19ibG9ja2RldiBpZiB5b3UgdXNlIGtlcm5lbCBi
+dWZmZXIgY2FjaGUgb24gdGhpcyBkZXZpY2UgZm9yCj4gc29tZXRoaW5nIGVsc2UpLiBJZiB5b3Ug
+ZHJvcCBzeW5jX2Jsb2NrZGV2LCB5b3UgY2FuIGFsc28gZHJvcAo+IGJsa2Rldl9pc3N1ZV9mbHVz
+aCwgYmVjYXVzZSBkbV9idWZpb193cml0ZV9kaXJ0eV9idWZmZXJzIGFscmVhZHkgaXNzdWVzCj4g
+dGhlIGZsdXNoIHJlcXVlc3QuCj4KPiBCVFcuIGhvdyBhcmUgeW91IGdvaW5nIHRvIGRlYWwgd2l0
+aCBrZXJuZWwgY3Jhc2hlcyBvciBwb3dlciBmYXVsdHM/Cj4KPiBJdCBpcyBtdWNoIGJldHRlciB0
+byB1c2Ugam91cm5hbGluZywgcGhhc2UgdHJlZSwgY3Jhc2ggY291bnRzIG9yIG90aGVyCj4gbWV0
+aG9kIHRvIG1haW50YWluIG1ldGFkYXRhIGludGVncml0eSBpbnN0ZWQgb2YgcmVib290IG5vdGlm
+aWVyIC0tLSB0aGVzZQo+IG1ldGhvZHMgbWFpbnRhaW4gaW50ZWdyaXR5IGV2ZW4gaW4gY2FzZSBv
+ZiB1bmV4cGVjdGVkIGNyYXNoLgo+Cj4gTWlrdWxhcwo+CgpIaSwKClRoYW5rcyBmb3IgY2xhcmlm
+aWNhdGlvbi4KSW5kZWVkIGV2ZXJ5dGhpbmcgd29ya3MganVzdCB3aXRoIGRtX2J1ZmlvX3dyaXRl
+X2RpcnR5X2J1ZmZlcnMoKS4KUmVib290IG5vdGlmaWVyIGlzIHRvIGlzc3VlIHRoZSBmbHVzaCBv
+bmx5Li4KQXMgSSB1bmRlcnN0YW5kLCBkbS1idWZpbyB3aWxsIGRvIHRoZSBmbHVzaCBidXQgY3Vy
+cmVudGx5IG9uY2UgcGVyIDEwIHNlY29uZHMuCgppZiBkYXRhIG9uIHRoZSBibG9jayBkZXZpY2Ug
+YW5kIG1ldGFkYXRhIG9uIG90aGVyIGJsb2NrIGRldmljZSBnZXQgb3V0Cm9mIHN5bmMsIHdoYXQg
+eW91IGNhbiBkbyB0aGVuPwpob3cgam91cm5hbCBoZWxwcyB0aGVuPwoKLSBEbWl0cnkKCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
