@@ -1,12 +1,14 @@
-From: "Hart, Brian R." <brianhart@ou.edu>
-Subject: mpath_prio_rdac?
-Date: Fri, 23 Mar 2012 14:41:33 +0000
-Message-ID: <756D2EE1FEBD2946972256A5FDFCB2EE2C38E064@IT-AIRSTORM.sooner.net.ou.edu>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: mpath_prio_rdac?
+Date: Fri, 23 Mar 2012 14:50:41 +0000
+Message-ID: <4F6C8DC1.9060708@redhat.com>
+References: <756D2EE1FEBD2946972256A5FDFCB2EE2C38E064@IT-AIRSTORM.sooner.net.ou.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7429405936838645197=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <756D2EE1FEBD2946972256A5FDFCB2EE2C38E064@IT-AIRSTORM.sooner.net.ou.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,93 +18,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Hart, Brian R." <brianhart@ou.edu>
 List-Id: dm-devel.ids
 
---===============7429405936838645197==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_"
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
---_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+On 03/23/2012 02:41 PM, Hart, Brian R. wrote:
+> All,
+> 
+> I've been trying to figure this out and have not been able to
+> locate any information on this.  I hope that I'm not just
+> overlooking something silly...
+> 
+> We have a couple of Dell MD storage arrays that when installed
+> setup multipath.conf to use this line: prio_callout
+> "/sbin/mpath_prio_rdac /dev/%n"
+> 
+> Now, in RHEL5 and Debian Lenny this mpath_prio_rdac file exists.
+> However, in the newer distro releases this file seems to be
+> completely gone and I cannot find any reference to it in any
+> packages.  Has this functionality been replaced some how?  Should
+> this line really be different or is multipath handling it
+> differently where it just ignores this line anyways in newer
+> versions?
+> 
+> I would greatly appreciate any light that could be shed on the
+> subject.  Thanks in advance!
+> 
+> -- Brian Hart
 
-All,
+Callouts make life difficult when file systems go away so like the
+path checkers before them they were merged into the libmultipath
+shared library. This means that the daemon can lock them into memory
+via mlock(2)/mlockall(2) and not have to worry about being able to
+load a binary from disk when the paths to that storage have failed -
+this is very useful if your root file system is on multipath and you
+need to recover from a failure.
 
-I've been trying to figure this out and have not been able to locate any in=
-formation on this.  I hope that I'm not just overlooking something silly...
+In RHEL5 this is dealt with using a complex and fragile private
+namespace and RAM-backed file system - the required binaries are
+copied into this ramfs at daemon startup and the daemon unmounts
+unnecessary file systems to avoid blocking when failures occur.
 
-We have a couple of Dell MD storage arrays that when installed setup multip=
-ath.conf to use this line:
-        prio_callout          "/sbin/mpath_prio_rdac /dev/%n"
+For this reason the parameter is now just "prio", e.g.:
 
-Now, in RHEL5 and Debian Lenny this mpath_prio_rdac file exists.  However, =
-in the newer distro releases this file seems to be completely gone and I ca=
-nnot find any reference to it in any packages.  Has this functionality been=
- replaced some how?  Should this line really be different or is multipath h=
-andling it differently where it just ignores this line anyways in newer ver=
-sions?
+device {
+    vendor                  "IBM"
+    product                 "1742"
+[...]
+    hardware_handler        "1 rdac"
+    path_selector           "round-robin 0"
+    path_grouping_policy    group_by_prio
+[...]
+    path_checker            rdac
+    prio                    rdac
+}
 
-I would greatly appreciate any light that could be shed on the subject.  Th=
-anks in advance!
+See multipath.conf.defaults or the other example files in the package
+your distribution provides.
 
--- Brian Hart
+Regards,
+Bryn.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
 
---_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_
-Content-Type: text/html; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-<html dir=3D"ltr">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859-=
-1">
-<style id=3D"owaParaStyle" type=3D"text/css">P {margin-top:0;margin-bottom:=
-0;}</style>
-</head>
-<body ocsi=3D"0" fpstyle=3D"1">
-<div style=3D"direction: ltr;font-family: Tahoma;color: #000000;font-size: =
-10pt;">All,<br>
-<br>
-I've been trying to figure this out and have not been able to locate any in=
-formation on this.&nbsp; I hope that I'm not just overlooking something sil=
-ly...<br>
-<br>
-We have a couple of Dell MD storage arrays that when installed setup multip=
-ath.conf to use this line:<br>
-&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; prio_callout&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;/sbin/mpath_prio_rdac /dev/%n&quot;<br>
-<br>
-Now, in RHEL5 and Debian Lenny this mpath_prio_rdac file exists.&nbsp; Howe=
-ver, in the newer distro releases this file seems to be completely gone and=
- I cannot find any reference to it in any packages.&nbsp; Has this function=
-ality been replaced some how?&nbsp; Should this
- line really be different or is multipath handling it differently where it =
-just ignores this line anyways in newer versions?<br>
-<br>
-I would greatly appreciate any light that could be shed on the subject.&nbs=
-p; Thanks in advance!<br>
-<div><br>
-<div style=3D"font-family:Tahoma; font-size:13px">
-<div style=3D"font-family:Calibri; font-size:13px"><font size=3D"2">
-<div style=3D"margin:0px"><font size=3D"2" color=3D"black"><span style=3D"f=
-ont-size:14px">-- Brian Hart<br>
-</span></font></div>
-</font></div>
-</div>
-</div>
-</div>
-</body>
-</html>
-
---_000_756D2EE1FEBD2946972256A5FDFCB2EE2C38E064ITAIRSTORMsoone_--
-
-
---===============7429405936838645197==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7429405936838645197==--
+iEYEARECAAYFAk9sjcEACgkQ6YSQoMYUY975UACfWKTaipiI4v1SxXzhEHU4WJWy
+v5EAnjyv40wDVgtY8hQ5Jy6A3esM8hke
+=laC0
+-----END PGP SIGNATURE-----
