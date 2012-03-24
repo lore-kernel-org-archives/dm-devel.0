@@ -1,22 +1,19 @@
-From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: dm-bufio
-Date: Sat, 24 Mar 2012 02:04:55 +0200
-Message-ID: <CALLzPKaMtbFD8iLvsRcPznYSafjbhkiMVXDNBmfvgk_enhX7ww@mail.gmail.com>
+Date: Fri, 23 Mar 2012 21:07:58 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1203232046220.3024@file.rdu.redhat.com>
 References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
 	<4F6C5A1F.1000103@redhat.com>
 	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
 	<CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
-	<20120323142133.GF7220@redhat.com>
-	<CALLzPKa1qoaRcWzeh2sTz9PFhYmPSgpGicL0dQ3w1rsP4XhGUQ@mail.gmail.com>
-	<20120323143254.GG7220@redhat.com>
-	<CALLzPKZcArim2WxockC6mKfcDNBJxhqt6_yvNqmFV0tPm6Z40A@mail.gmail.com>
-	<20120323213110.GA11054@redhat.com>
+	<Pine.LNX.4.64.1203231213320.17386@file.rdu.redhat.com>
+	<CALLzPKZ8b5Pd_GVRDzxNcBLzE=D9yAZ+fbhGiWKvi=E1oXcOMg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120323213110.GA11054@redhat.com>
+In-Reply-To: <CALLzPKZ8b5Pd_GVRDzxNcBLzE=D9yAZ+fbhGiWKvi=E1oXcOMg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,33 +23,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+To: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCBNYXIgMjMsIDIwMTIgYXQgMTE6MzIgUE0sIE1pa2UgU25pdHplciA8c25pdHplckBy
-ZWRoYXQuY29tPiB3cm90ZToKPiBPbiBGcmksIE1hciAyMyAyMDEyIGF0IDExOjE3YW0gLTA0MDAs
-Cj4gS2FzYXRraW4sIERtaXRyeSA8ZG1pdHJ5Lmthc2F0a2luQGludGVsLmNvbT4gd3JvdGU6Cj4K
-Pj4gT24gRnJpLCBNYXIgMjMsIDIwMTIgYXQgNDozMiBQTSwgTWlrZSBTbml0emVyIDxzbml0emVy
-QHJlZGhhdC5jb20+IHdyb3RlOgo+PiA+IEFzIGFuIGFzaWRlLCBqdXN0IGN1cmlvdXM6IHdoYXQg
-ZG9lcyB5b3VyIHRhcmdldCBkbz8KPj4KPj4gSSBoYXZlIGV4cGVyaW1lbnRlZCB3aXRoIGludGVn
-cml0eSBwcm90ZWN0aW9uLgo+Cj4gSW50ZXJlc3RpbmcuIMKgQXJlIHlvdSBhd2FyZSB0aGF0IGEg
-bmV3IGludGVncml0eSB0YXJnZXQgaGFzIGJlZW4KPiBkZXZlbG9wZWQgYW5kIGlzIGFwcHJvYWNo
-aW5nIHVwc3RyZWFtIGluY2x1c3Npb24/IMKgSXQgaXMgY2FsbGVkCj4gZG0tdmVyaXR5Lgo+Cj4g
-TWlrdWxhcyBwb3N0ZWQgdGhlIG1vc3QgcmVjZW50IHZlcnNpb24gaGVyZToKPiBodHRwOi8vd3d3
-LnJlZGhhdC5jb20vYXJjaGl2ZXMvZG0tZGV2ZWwvMjAxMi1NYXJjaC9tc2cwMDEzMy5odG1sCj4K
-PiBBbmQgaGVyZSBpcyB0aGUgdXNlcnNwYWNlIHNldHVwIGNvZGU6Cj4gaHR0cDovL3d3dy5yZWRo
-YXQuY29tL2FyY2hpdmVzL2RtLWRldmVsLzIwMTItTWFyY2gvbXNnMDAxMzQuaHRtbAo+Cj4gVGhl
-IG9yaWdpbmFsIGRvY3MgZnJvbSBHb29nbGUncyBpbml0aWFsIGRtLXZlcml0eSBhcmUgbW9zdGx5
-IGFwcGxpY2FibGUKPiAoYnV0IG5lZWQgdG8gYmUgcmVmcmVzaGVkIGFuZCBpbmNsdWRlZCB3aXRo
-IHRoZSBuZXcgdmVyc2lvbik6Cj4gaHR0cDovL3d3dy5yZWRoYXQuY29tL2FyY2hpdmVzL2RtLWRl
-dmVsLzIwMTItRmVicnVhcnkvbXNnMDAxMTkuaHRtbAo+Cj4gZG0tdmVyaXR5IGFscmVhZHkgaGFz
-IDIgZm9ybWF0cywgYSAzcmQgY291bGQgYmUgYWRkZWQgaWYgeW91IGZvdW5kIHRoZQo+IGV4aXN0
-aW5nIGZvcm1hdHMgc29tZWhvdyBsYWNraW5nLCBzZWU6Cj4gaHR0cDovL3d3dy5yZWRoYXQuY29t
-L2FyY2hpdmVzL2RtLWRldmVsLzIwMTItTWFyY2gvbXNnMDAxNDMuaHRtbAo+Cj4gTWlrZQoKSGks
-CgpZZXMuLiBJIGFtIGF3YXJlIG9mIGRtLXZlcml0eSB0YXJnZXQuCkl0IHN1aXRlcyB3ZWxsIGZv
-ciByZWFkLW9ubHkgY2FzZXMuCkl0IGlzIHF1ZXN0aW9uYWJsZSBob3cgdHJlZS1iYXNlZCBhcHBy
-b2FjaCB3aWxsIHdvcmsgd2l0aCByZWFkLXdyaXRlLgpFYWNoIHNpbmdsZSB1cGRhdGUgd2lsbCBj
-YXVzZSB3aG9sZSB0cmVlIHJlY2FsY3VsYXRpb24uCgotIERtaXRyeQoKLS0KZG0tZGV2ZWwgbWFp
-bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
-bWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+
+On Sat, 24 Mar 2012, Kasatkin, Dmitry wrote:
+
+> Hi,
+> 
+> Thanks for clarification.
+> Indeed everything works just with dm_bufio_write_dirty_buffers().
+> Reboot notifier is to issue the flush only..
+> As I understand, dm-bufio will do the flush but currently once per 10 seconds.
+> 
+> if data on the block device and metadata on other block device get out
+> of sync, what you can do then?
+> how journal helps then?
+> 
+> - Dmitry
+
+It depends what you're trying to do.
+
+If you're trying to do something like "dm-verity", but with a possibility 
+to write to the device, there are several possibilities:
+
+* keep two checksums per 512-byte sector, the old checksum and the new 
+checksum. If you update the block, you update the new checksum, sync the 
+metadata device and then write to the data device (obviously you need to 
+batch this update-sync-write for many blocks write concurrently to get 
+decent performance). When you verify block, you allow either checksum to 
+match. When you sync caches on the data device, you must forget all the 
+old checksums.
+
+* use journaling, write data block and its checksum to a journal. If the 
+computer crashes, you just replay the journal (so you don't care what data 
+was present at that place, you overwrite it with data from the journal). 
+The downside is that this doubles required i/o throughput, you should have 
+journal and data on different devices.
+
+* do nothing and rebuild the checksums in case of crash. It is simplest, 
+but it doesn't protect from data damages that happen due to the crash (for 
+example, some SSDs corrupt its metadata on power failure and you can't 
+detect this if you rebuild checksums after a power failure).
+
+> Yes.. I am aware of dm-verity target.
+> It suites well for read-only cases.
+> It is questionable how tree-based approach will work with read-write.
+> Each single update will cause whole tree recalculation.
+
+A write would recalculate hashes only in the branch from tree bottom to 
+tree top. The obvious downside is that there is no protection from crash.
+
+
+BTW. regarding that reboot notifier with 
+"dm_bufio_write_dirty_buffers(d->bufio)" ... there could be another 
+problem ... what if other reboot notifier (maybe for a completely 
+different driver) writes to the device after 
+"dm_bufio_write_dirty_buffers(d->bufio)" was performed?
+
+- would it be possible to install your notifier again?
+
+- or turn into a synchronous updates? --- i.e. set a flag in your reboot 
+notifier and if the flag is on, call 
+"dm_bufio_write_dirty_buffers(d->bufio)" after every write.
+
+Mikulas
