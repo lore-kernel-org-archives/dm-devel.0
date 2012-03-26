@@ -1,21 +1,12 @@
-From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Subject: Re: dm-bufio
-Date: Tue, 27 Mar 2012 13:20:00 +0300
-Message-ID: <CALLzPKb8woEgeZ2jLyqsWKi9PXFkveSwxu4LAZD1gAwH7beK4w@mail.gmail.com>
-References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
-	<4F6C5A1F.1000103@redhat.com>
-	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
-	<CALLzPKYkLXz0iZPwSbw268w1dkQtvjgoX19aVTK6cEAgt5L50g@mail.gmail.com>
-	<Pine.LNX.4.64.1203231213320.17386@file.rdu.redhat.com>
-	<CALLzPKZ8b5Pd_GVRDzxNcBLzE=D9yAZ+fbhGiWKvi=E1oXcOMg@mail.gmail.com>
-	<Pine.LNX.4.64.1203232046220.3024@file.rdu.redhat.com>
-	<CABmXcB-FVWfdgA5mxN66YN_iX37+a3ME3nHyDOo28AbwGe4eLw@mail.gmail.com>
+From: mittals@codeaurora.org
+Subject: CPU hotplug issue in dm-crypt driver
+Date: Mon, 26 Mar 2012 12:28:59 -0700 (PDT)
+Message-ID: <547dd161c75a98c7bcf4fb7a4d54b914.squirrel@www.codeaurora.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABmXcB-FVWfdgA5mxN66YN_iX37+a3ME3nHyDOo28AbwGe4eLw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,71 +16,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Will Drewry <redpig@dataspill.org>
-Cc: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gU2F0LCBNYXIgMjQsIDIwMTIgYXQgODo1MSBQTSwgV2lsbCBEcmV3cnkgPHJlZHBpZ0BkYXRh
-c3BpbGwub3JnPiB3cm90ZToKPiBPbiBGcmksIE1hciAyMywgMjAxMiBhdCA4OjA3IFBNLCBNaWt1
-bGFzIFBhdG9ja2EgPG1wYXRvY2thQHJlZGhhdC5jb20+IHdyb3RlOgo+Pgo+Pgo+PiBPbiBTYXQs
-IDI0IE1hciAyMDEyLCBLYXNhdGtpbiwgRG1pdHJ5IHdyb3RlOgo+Pgo+Pj4gSGksCj4+Pgo+Pj4g
-VGhhbmtzIGZvciBjbGFyaWZpY2F0aW9uLgo+Pj4gSW5kZWVkIGV2ZXJ5dGhpbmcgd29ya3MganVz
-dCB3aXRoIGRtX2J1ZmlvX3dyaXRlX2RpcnR5X2J1ZmZlcnMoKS4KPj4+IFJlYm9vdCBub3RpZmll
-ciBpcyB0byBpc3N1ZSB0aGUgZmx1c2ggb25seS4uCj4+PiBBcyBJIHVuZGVyc3RhbmQsIGRtLWJ1
-ZmlvIHdpbGwgZG8gdGhlIGZsdXNoIGJ1dCBjdXJyZW50bHkgb25jZSBwZXIgMTAgc2Vjb25kcy4K
-Pj4+Cj4+PiBpZiBkYXRhIG9uIHRoZSBibG9jayBkZXZpY2UgYW5kIG1ldGFkYXRhIG9uIG90aGVy
-IGJsb2NrIGRldmljZSBnZXQgb3V0Cj4+PiBvZiBzeW5jLCB3aGF0IHlvdSBjYW4gZG8gdGhlbj8K
-Pj4+IGhvdyBqb3VybmFsIGhlbHBzIHRoZW4/Cj4+Pgo+Pj4gLSBEbWl0cnkKPj4KPj4gSXQgZGVw
-ZW5kcyB3aGF0IHlvdSdyZSB0cnlpbmcgdG8gZG8uCj4+Cj4+IElmIHlvdSdyZSB0cnlpbmcgdG8g
-ZG8gc29tZXRoaW5nIGxpa2UgImRtLXZlcml0eSIsIGJ1dCB3aXRoIGEgcG9zc2liaWxpdHkKPj4g
-dG8gd3JpdGUgdG8gdGhlIGRldmljZSwgdGhlcmUgYXJlIHNldmVyYWwgcG9zc2liaWxpdGllczoK
-Pj4KPj4gKiBrZWVwIHR3byBjaGVja3N1bXMgcGVyIDUxMi1ieXRlIHNlY3RvciwgdGhlIG9sZCBj
-aGVja3N1bSBhbmQgdGhlIG5ldwo+PiBjaGVja3N1bS4gSWYgeW91IHVwZGF0ZSB0aGUgYmxvY2ss
-IHlvdSB1cGRhdGUgdGhlIG5ldyBjaGVja3N1bSwgc3luYyB0aGUKPj4gbWV0YWRhdGEgZGV2aWNl
-IGFuZCB0aGVuIHdyaXRlIHRvIHRoZSBkYXRhIGRldmljZSAob2J2aW91c2x5IHlvdSBuZWVkIHRv
-Cj4+IGJhdGNoIHRoaXMgdXBkYXRlLXN5bmMtd3JpdGUgZm9yIG1hbnkgYmxvY2tzIHdyaXRlIGNv
-bmN1cnJlbnRseSB0byBnZXQKPj4gZGVjZW50IHBlcmZvcm1hbmNlKS4gV2hlbiB5b3UgdmVyaWZ5
-IGJsb2NrLCB5b3UgYWxsb3cgZWl0aGVyIGNoZWNrc3VtIHRvCj4+IG1hdGNoLiBXaGVuIHlvdSBz
-eW5jIGNhY2hlcyBvbiB0aGUgZGF0YSBkZXZpY2UsIHlvdSBtdXN0IGZvcmdldCBhbGwgdGhlCj4+
-IG9sZCBjaGVja3N1bXMuCj4+Cj4+ICogdXNlIGpvdXJuYWxpbmcsIHdyaXRlIGRhdGEgYmxvY2sg
-YW5kIGl0cyBjaGVja3N1bSB0byBhIGpvdXJuYWwuIElmIHRoZQo+PiBjb21wdXRlciBjcmFzaGVz
-LCB5b3UganVzdCByZXBsYXkgdGhlIGpvdXJuYWwgKHNvIHlvdSBkb24ndCBjYXJlIHdoYXQgZGF0
-YQo+PiB3YXMgcHJlc2VudCBhdCB0aGF0IHBsYWNlLCB5b3Ugb3ZlcndyaXRlIGl0IHdpdGggZGF0
-YSBmcm9tIHRoZSBqb3VybmFsKS4KPj4gVGhlIGRvd25zaWRlIGlzIHRoYXQgdGhpcyBkb3VibGVz
-IHJlcXVpcmVkIGkvbyB0aHJvdWdocHV0LCB5b3Ugc2hvdWxkIGhhdmUKPj4gam91cm5hbCBhbmQg
-ZGF0YSBvbiBkaWZmZXJlbnQgZGV2aWNlcy4KPj4KPj4gKiBkbyBub3RoaW5nIGFuZCByZWJ1aWxk
-IHRoZSBjaGVja3N1bXMgaW4gY2FzZSBvZiBjcmFzaC4gSXQgaXMgc2ltcGxlc3QsCj4+IGJ1dCBp
-dCBkb2Vzbid0IHByb3RlY3QgZnJvbSBkYXRhIGRhbWFnZXMgdGhhdCBoYXBwZW4gZHVlIHRvIHRo
-ZSBjcmFzaCAoZm9yCj4+IGV4YW1wbGUsIHNvbWUgU1NEcyBjb3JydXB0IGl0cyBtZXRhZGF0YSBv
-biBwb3dlciBmYWlsdXJlIGFuZCB5b3UgY2FuJ3QKPj4gZGV0ZWN0IHRoaXMgaWYgeW91IHJlYnVp
-bGQgY2hlY2tzdW1zIGFmdGVyIGEgcG93ZXIgZmFpbHVyZSkuCj4+Cj4+PiBZZXMuLiBJIGFtIGF3
-YXJlIG9mIGRtLXZlcml0eSB0YXJnZXQuCj4+PiBJdCBzdWl0ZXMgd2VsbCBmb3IgcmVhZC1vbmx5
-IGNhc2VzLgo+Pj4gSXQgaXMgcXVlc3Rpb25hYmxlIGhvdyB0cmVlLWJhc2VkIGFwcHJvYWNoIHdp
-bGwgd29yayB3aXRoIHJlYWQtd3JpdGUuCj4+PiBFYWNoIHNpbmdsZSB1cGRhdGUgd2lsbCBjYXVz
-ZSB3aG9sZSB0cmVlIHJlY2FsY3VsYXRpb24uCj4+Cj4+IEEgd3JpdGUgd291bGQgcmVjYWxjdWxh
-dGUgaGFzaGVzIG9ubHkgaW4gdGhlIGJyYW5jaCBmcm9tIHRyZWUgYm90dG9tIHRvCj4+IHRyZWUg
-dG9wLiBUaGUgb2J2aW91cyBkb3duc2lkZSBpcyB0aGF0IHRoZXJlIGlzIG5vIHByb3RlY3Rpb24g
-ZnJvbSBjcmFzaC4KPgo+IEl0IGFsc28gZGVwZW5kcyBvbiBob3cgeW91IHBsYW4gdG8gYXNzdXJl
-IHRoZSBpbnRlZ3JpdHkgb2YgdGhlIGRhdGE6Cj4gRGV2aWNlLWJhc2VkIHN5bW1ldHJpYyBrZXks
-IGFzeW1tZXRyaWMga2V5LCBldGMgYW5kIHRoZSBjb3N0cwo+IGFzc29jaWF0ZWQuIMKgTG9jYWwg
-dXBkYXRlcyBtYWtlIGludGVncml0eSB0cmlja3kgLS0gd2lsbCB0aGUgZGV2aWNlCj4gdXBkYXRl
-IGl0c2VsZiBvciB3aWxsIHNpZ25lZCB1cGRhdGVzIGJlIHN1cHBsaWVkLCBkbyB0aGV5IG5lZWQg
-dG8gYmUKPiBvbmxpbmUsIGRvZXMgb25seSBhIHN1YnNlY3Rpb24gbmVlZCB0byBiZSBvbmxpbmUs
-IGV0Yy4KPgo+IEl0J3MgbGlrZWx5IHRoYXQgdGhlIHRyZWUgdXBkYXRlcyB3b24ndCBiZSB0b28g
-ZXhwZW5zaXZlIGNvbXBhcmVkIHRvCj4gdGhlIGNyeXB0byBhbmQgeW91IGNvdWxkIGF0dGVtcHQg
-dG8gb3B0aW1pemUgdHJlZSB1cGRhdGVzIGFsb25nIGEgaG90Cj4gcGF0aCBpZiBuZWVkZWQgKGJ5
-IGJyZWFraW5nIG91dCBob3Qgc3ViZGlycyB0byBhIHNlcGFyYXRlIHRhcmdldHMpIGFuZAo+IGV4
-cGxvcmUgb3RoZXIgdHJpY2tzIGZvciBnZXR0aW5nIHRyYW5zYWN0aW9uIG9yaWVudGVkIGJlaGF2
-aW9yICh0d28KPiBzd2FwcGluZyBtZXRhZGF0YSBkZXZpY2VzIGZvciBhdG9taWMgdHJlZSB1cGRh
-dGVzLCBldGMpLiDCoGRtLXZlcml0eQo+IHdhcyBuZXZlciBsb2NrZWQgaW50byBiZWluZyBhIHJl
-YWQtb25seSB0YXJnZXQsIGJ1dCB0aGUgbGFjayBvZiBuZWVkCj4gdG8gc3VwcG9ydCBvbmxpbmUg
-dXBkYXRlcyBtZWFucyB0aGUgY29kZSBhbmQgcmVxdWlyZWQgY2hhbmdlcyBkb24ndAo+IGV4aXN0
-Lgo+Cj4gSSdtIHN1cmUgYW55IG9mIHVzIGludm9sdmVkIGluIGRtLXZlcml0eSB3b3VsZCBiZSBo
-YXBweSB0byBkaXNjdXNzIGhvdwo+IGl0IG1pZ2h0IGJlIHVzZWQgZm9yIHlvdXIgcHVycG9zZXMg
-KG9yIGlmIGl0IGlzIHJlYWxseSBhIGJhZCBmaXQpLAo+IGV0Yy4KPgo+IGNoZWVycyEKPiB3aWxs
-CgpIZWxsbywKCmRtLXZlcml0eSBsb29rcyBleHRyZW1lbHkgbmljZSBmb3IgcmVhZC1vbmx5IHRh
-cmdldHMuCkp1c3Qgb25lIHJvb3QgaGFzaCBwcm90ZWN0cyB3aG9sZSBibG9jayBkZXZpY2UuCkJ1
-dCBJIGFtIGludGVyZXN0ZWQgaW4gd3JpdGFibGUgdXNlIGNhc2UuCldvdWxkIGJlIG5pY2UgdG8g
-dW5kZXJzdGFuZCBob3cgaXQgY2FuIGJlIGFkZHJlc3NlcyBhcyB3ZWxsLi4uCgpUaGFua3MsCkRt
-aXRyeQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi,
+
+We are using dm-crypt driver to encrypt Android Phone on a 2 core target.
+We saw random failures (kernel panics) in scatterwalk code when we were
+trying to bring secondary cpu online and offline randomly.
+
+I looked into the dm-crypt driver(drivers/md/dm-crypt.c) and put a hack in
+the kcryptd_queue_crypt function to acquire hotplug lock (using
+get_online_cpus()), just before adding new work in work queue and release
+this lock (using put_online_cpus) after completing work in kcryptd_crypt
+function.
+With this i didn't see any issue during encryption.
+
+So my questions are -
+
+1) Is it a know problem that there is some issue with dm-crypt driver with
+cpu hotplug?
+
+2) If yes, then can someone suggest me a cleaner way to resolve this issue?
+
+Thanks in advance!
+
+--Shashank
+
+Sent by an employee of the Qualcomm Innovation Center, Inc.
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum.
