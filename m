@@ -1,16 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Query about dm device max_discard_sectors
-Date: Sun, 25 Mar 2012 21:49:11 -0400
-Message-ID: <20120326014910.GA31951@redhat.com>
-References: <CAL08bwfwD0wtOvum-oeA=skLfQQ_BKSmwJ-ZQbZ+RBwduEJm_A@mail.gmail.com>
-	<20120325235421.GA31320@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] dm-mpath: Track invalid map_context
+Date: Mon, 26 Mar 2012 08:18:30 +0200
+Message-ID: <4F700A36.4030401@suse.de>
+References: <1332171546-33434-1-git-send-email-hare@suse.de>
+	<4F69561A.5040406@ce.jp.nec.com>
+	<20120323233325.GM16214@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20120325235421.GA31320@redhat.com>
+In-Reply-To: <20120323233325.GM16214@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,55 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Amar Mudrankit <amar.mudrankit@gmail.com>
-Cc: dm-devel@redhat.com
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Mar 25 2012 at  7:54pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On 03/24/2012 12:33 AM, Alasdair G Kergon wrote:
+> I've opted for this version.
+> =
 
-> On Sun, Mar 25 2012 at  6:46pm -0400,
-> Amar Mudrankit <amar.mudrankit@gmail.com> wrote:
-> 
-> > Hi all,
-> > 
-> > I am building an experimental device mapper target which is supposed to
-> > receive
-> > all TRIM requests (REQ_DISCARD).  Irrespective of whether underlying actual
-> > physical block device supports discards or not, my device mapper target
-> > should
-> > receive REQ_DISCARD bios.
-> 
-> I'm just curious but: what will your target do in general?
->  
-> > In my target, I set:
-> > 
-> > ti->num_discard_requests = 1;
-> > ti->discards_supported = 1;
-> 
-> You'll also want to set ti->discards_supported
-> 
-> see: http://git.kernel.org/linus/4c259327
+>   http://people.redhat.com/agk/patches/linux/editing/dm-mpath-detect-inva=
+lid-map_context.patch
+> =
 
-ah, I now see you already did set discards_supported.
- 
-> > So, if my device mapper target does not implement iterate_devices function
-> > (used to set max_discard_sectors based on underlying physical device's
-> > discard
-> > support) or underlying physical device does not support discards, then there
-> > is no way for device mapper target to set max_discard_sectors more than 0
-> > to receive REQ_DISCARD commands.
-> > 
-> > Is this analysis correct? Or I am missing something?
-> 
-> All DM targets should implement .iterate_devices -- intent is to iterate
-> over all data devices.
-> 
-> You'll also want to implement .io_hints to set limits->max_discard_sectors 
-> (like drivers/md/dm-thin.c does).
+> Alasdair
+> =
 
-BTW, the dm-thin.c discard changes will be merged in 3.4, you can see
-the relevant patches here:
+Yeah. I'm used to my patches getting rewritten by others.
+And me not getting any credit for it. Oh well.
 
-http://people.redhat.com/agk/patches/linux/editing/dm-thin-support-discards.patch
-http://people.redhat.com/agk/patches/linux/editing/dm_thin-add-pool-target-flags-to-control-discard.patch
+Acked-by: Hannes Reinecke <hare@suse.de>
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
