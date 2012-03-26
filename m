@@ -1,7 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm thin: fix pool target flags that control discard
-Date: Mon, 26 Mar 2012 11:33:41 -0400
-Message-ID: <20120326153341.GA4022@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH] dm thin: fix pool target flags that control
+ discard
+Date: Mon, 26 Mar 2012 16:34:39 +0100
+Message-ID: <20120326153438.GA26558@ubuntu>
 References: <20120316152156.GA8836@ubuntu>
 	<1331911358-8848-1-git-send-email-ejt@redhat.com>
 	<1331911358-8848-11-git-send-email-ejt@redhat.com>
@@ -26,57 +27,7 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 26 2012 at 10:15am -0400,
-Joe Thornber <thornber@redhat.com> wrote:
-
-> On Fri, Mar 23, 2012 at 05:55:02PM -0400, Mike Snitzer wrote:
-> > On Fri, Mar 23 2012 at  8:37am -0400,
-> > Alasdair G Kergon <agk@redhat.com> wrote:
-> > 
-> > > On Fri, Mar 16, 2012 at 03:22:34PM +0000, Joe Thornber wrote:
-> > > > +      'ignore_discard': disable discard support
-> > > > +      'no_discard_passdown': don't pass discards down to the underlying data device
-> > > 
-> > > If someone reloads the pool target changing either of these options, how do connected
-> > > thin targets pick up the change?  If they don't pick it up automatically, how do you
-> > > determine whether they did or didn't pick it up - is that internal state not
-> > > exposed to userspace yet?
-> > 
-> > Here are various fixes for dm_thin-add-pool-target-flags-to-control-discard.patch
-> > 
-> > o wire up 'discard_passdown' so that it does control whether or not the
-> >   discard is passed to the pool's underlying data device
-> 
-> This already works, see test_{enable,disable}_passdown() tests here:
-> 
->   https://github.com/jthornber/thinp-test-suite/blob/master/discard_tests.rb
-> 
-> You've got to remember that there are 2 different interacting targets:
-> 
->  i) discard enabled in the 'thin' target will cause mappings to be removed from the btree.
-> 
->  ii) discard enabled in the 'pool' device will cause discards to be passed down.
-> 
-> The following logic is in the pool_ctr:
-> 
->         if (pf.discard_enabled && pf.discard_passdown) {
->                 ti->discards_supported = 1;
->                 ti->num_discard_requests = 1;
->         }
-
-We reasoned through this already, your code did work.  But for the
-benefit of others this is why it worked:
-
-thin will process_discard() via bio being deferring in thin_bio_map() --
-provided pf.discard_enabled.  Then thin will pass the discard on to the
-pool device regardless of pf.discard_passdown.  dm-core will then drop
-the discard because ti->num_discard_requests is 0; but that results in
--EOPNOTSUPP.
-
-Thing is, we don't want to return -EOPNOTSUPP if passdown was disabled.
-So I think my change is an improvement (because process_prepared_discard
-will now properly bio_endio(m->bio, 0) the discard).
-
+On Mon, Mar 26, 2012 at 03:15:21PM +0100, Joe Thornber wrote:
 > > o disallow disabling discards if a pool was already configured with
 > >   discards enabled (the default)
 > >   - justification is inlined in the code
@@ -85,28 +36,112 @@ will now properly bio_endio(m->bio, 0) the discard).
 > 
 > ack, this needs fixing.
 
-We've discussed that it is easier to just disallow changing discard
-configuration.  And that there was a bug in my early return.  So you'll
-be sending a follow-up fixup patch.
+The following patch prevents people changing the top-level discard
+flag when reloading a pool target.
 
-> > o if 'discard_passdown' is enabled (the default) verify that the pool's
-> >   data device supports discards; if not warn and disable discard_passdown
-> 
-> Why?  Do other targets do this?  (no)
+I'll push this test in a bit (dm-cache changes holding things up).
 
-The thin target is the first target to use ti->discards_supported.
-Setting that will cause dm_table_supports_discards to skip checking if
-the target's underlying device(s) natively support discards.
+  # we don't allow people to change their minds about top level                                                                                                    
+  # discard support.                                                                                                                                               
+  def test_change_discard_with_reload_fails
+    with_standard_pool(@size, :discard => true) do |pool|
+      assert_raise(ExitError) do
+        table = Table.new(ThinPool.new(@size, @metadata_dev, @data_dev,
+                                       @data_block_size, @low_water_mark, false, false, false))
+        pool.load(table)
+      end
+    end
 
-So passdown needs to only be allowed if the underlying data device
-supports discard -- otherwise we'll get a bunch of failed discards from
-the SCSI layer, etc.
+    with_standard_pool(@size, :discard => false) do |pool|
+      assert_raise(ExitError) do
+        table = Table.new(ThinPool.new(@size, @metadata_dev, @data_dev,
+                                       @data_block_size, @low_water_mark, false, true, false))
+        pool.load(table)
+      end
+    end
+  end
 
-> > o the pool device's discard support should _not_ be limited by whether
-> >   'discard_passdown' is enabled or not.
-> 
-> Yes it should.
 
-Yeah, like I said above your approach works (except for the
--EOPNOTSUPP).  I just happen to prefer dm-thin taking a more active role
-by short-circuting the discard_passdown directly.
+- Joe
+
+
+commit 9f075e7f5330039addba213a0f512ab7c0ea3ecf
+Author: Joe Thornber <ejt@redhat.com>
+Date:   Mon Mar 26 16:26:33 2012 +0100
+
+    dm-thin: don't allow the top level discard flag to be changed on reload.
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index e8fe5db..e5a6ed4 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -1445,10 +1445,12 @@ static void __pool_dec(struct pool *pool)
+ 
+ static struct pool *__pool_find(struct mapped_device *pool_md,
+ 				struct block_device *metadata_dev,
+-				unsigned long block_size, char **error)
++				unsigned long block_size, char **error,
++				int *created)
+ {
+ 	struct pool *pool = __pool_table_lookup_metadata_dev(metadata_dev);
+ 
++	*created = 0;
+ 	if (pool) {
+ 		if (pool->pool_md != pool_md)
+ 			return ERR_PTR(-EBUSY);
+@@ -1461,8 +1463,10 @@ static struct pool *__pool_find(struct mapped_device *pool_md,
+ 				return ERR_PTR(-EINVAL);
+ 			__pool_inc(pool);
+ 
+-		} else
++		} else {
+ 			pool = pool_create(pool_md, metadata_dev, block_size, error);
++			*created = 1;
++		}
+ 	}
+ 
+ 	return pool;
+@@ -1542,7 +1546,7 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+  */
+ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+-	int r;
++	int r, pool_created;
+ 	struct pool_c *pt;
+ 	struct pool *pool;
+ 	struct pool_features pf;
+@@ -1617,12 +1621,24 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	}
+ 
+ 	pool = __pool_find(dm_table_get_md(ti->table), metadata_dev->bdev,
+-			   block_size, &ti->error);
++			   block_size, &ti->error, &pool_created);
+ 	if (IS_ERR(pool)) {
+ 		r = PTR_ERR(pool);
+ 		goto out_free_pt;
+ 	}
+ 
++	/*
++	 * 'pool_created' reflects whether this is the first table load.
++	 * Top level discard support is not allowed to be changed after
++	 * initial load.  This would require a pool reload to trigger thin
++	 * device changes.
++	 */
++	if (!pool_created && pf.discard_enabled != pool->pf.discard_enabled) {
++		ti->error = "Discard support cannot be changed once enabled";
++		r = -EINVAL;
++		goto out_flags_changed;
++	}
++
+ 	pt->pool = pool;
+ 	pt->ti = ti;
+ 	pt->metadata_dev = metadata_dev;
+@@ -1643,6 +1659,8 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ 	return 0;
+ 
++out_flags_changed:
++	__pool_dec(pool);
+ out_free_pt:
+ 	kfree(pt);
+ out:
