@@ -1,7 +1,7 @@
 From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
 Subject: Re: dm-bufio
-Date: Tue, 27 Mar 2012 12:56:35 +0300
-Message-ID: <CALLzPKZC5d0EH3vZ2J7Z=eE=TX4ZCH8aBqo4DE+Tb46GJ-bPuQ@mail.gmail.com>
+Date: Tue, 27 Mar 2012 13:20:00 +0300
+Message-ID: <CALLzPKb8woEgeZ2jLyqsWKi9PXFkveSwxu4LAZD1gAwH7beK4w@mail.gmail.com>
 References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
 	<4F6C5A1F.1000103@redhat.com>
 	<CALLzPKb+xrQQ-+sOTY0-MHbfVDkgvY2TYqmpP0Mqi7XwD4iEDg@mail.gmail.com>
@@ -9,12 +9,13 @@ References: <CALLzPKZyOc+_Pjht8uR6AJOBsMFXQN=y5QWvD0_OZFaYJpvRig@mail.gmail.com>
 	<Pine.LNX.4.64.1203231213320.17386@file.rdu.redhat.com>
 	<CALLzPKZ8b5Pd_GVRDzxNcBLzE=D9yAZ+fbhGiWKvi=E1oXcOMg@mail.gmail.com>
 	<Pine.LNX.4.64.1203232046220.3024@file.rdu.redhat.com>
+	<CABmXcB-FVWfdgA5mxN66YN_iX37+a3ME3nHyDOo28AbwGe4eLw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1203232046220.3024@file.rdu.redhat.com>
+In-Reply-To: <CABmXcB-FVWfdgA5mxN66YN_iX37+a3ME3nHyDOo28AbwGe4eLw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,107 +25,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Zdenek Kabelac <zkabelac@redhat.com>
+To: Will Drewry <redpig@dataspill.org>
+Cc: device-mapper development <dm-devel@redhat.com>, mpatocka@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Mar 24, 2012 at 3:07 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
-> On Sat, 24 Mar 2012, Kasatkin, Dmitry wrote:
->
->> Hi,
->>
->> Thanks for clarification.
->> Indeed everything works just with dm_bufio_write_dirty_buffers().
->> Reboot notifier is to issue the flush only..
->> As I understand, dm-bufio will do the flush but currently once per 10 seconds.
->>
->> if data on the block device and metadata on other block device get out
->> of sync, what you can do then?
->> how journal helps then?
->>
->> - Dmitry
->
-> It depends what you're trying to do.
->
-> If you're trying to do something like "dm-verity", but with a possibility
-> to write to the device, there are several possibilities:
->
-> * keep two checksums per 512-byte sector, the old checksum and the new
-> checksum. If you update the block, you update the new checksum, sync the
-> metadata device and then write to the data device (obviously you need to
-> batch this update-sync-write for many blocks write concurrently to get
-> decent performance). When you verify block, you allow either checksum to
-> match. When you sync caches on the data device, you must forget all the
-> old checksums.
->
-
-Right.. It requires double space and more IO.
-The it will certainly be more stable to failures.
-But what if data block will be corrupted during write due to power or
-other failures?
-In such case both checksums will not obviously match...
-
-> * use journaling, write data block and its checksum to a journal. If the
-> computer crashes, you just replay the journal (so you don't care what data
-> was present at that place, you overwrite it with data from the journal).
-> The downside is that this doubles required i/o throughput, you should have
-> journal and data on different devices.
->
-
-That looks definitely more reliable.
-
-
-> * do nothing and rebuild the checksums in case of crash. It is simplest,
-> but it doesn't protect from data damages that happen due to the crash (for
-> example, some SSDs corrupt its metadata on power failure and you can't
-> detect this if you rebuild checksums after a power failure).
->
-
-easy and nice :)
-
->> Yes.. I am aware of dm-verity target.
->> It suites well for read-only cases.
->> It is questionable how tree-based approach will work with read-write.
->> Each single update will cause whole tree recalculation.
->
-> A write would recalculate hashes only in the branch from tree bottom to
-> tree top. The obvious downside is that there is no protection from crash.
->
-
-Yes.. I noticed.
-
->
-> BTW. regarding that reboot notifier with
-> "dm_bufio_write_dirty_buffers(d->bufio)" ... there could be another
-> problem ... what if other reboot notifier (maybe for a completely
-> different driver) writes to the device after
-> "dm_bufio_write_dirty_buffers(d->bufio)" was performed?
->
-
-"Target" owns/writes to device...
- What other driver will do it?
- Also rootfs is re-mounted read-only before rebooting.
-It is actually not about data device sync, but "hash device" sync.
-
-> - would it be possible to install your notifier again?
->
-> - or turn into a synchronous updates? --- i.e. set a flag in your reboot
-> notifier and if the flag is on, call
-> "dm_bufio_write_dirty_buffers(d->bufio)" after every write.
->
-
-I see the idea.
-
-> Mikulas
->
-
-Thanks,
-
-Dmitry
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+T24gU2F0LCBNYXIgMjQsIDIwMTIgYXQgODo1MSBQTSwgV2lsbCBEcmV3cnkgPHJlZHBpZ0BkYXRh
+c3BpbGwub3JnPiB3cm90ZToKPiBPbiBGcmksIE1hciAyMywgMjAxMiBhdCA4OjA3IFBNLCBNaWt1
+bGFzIFBhdG9ja2EgPG1wYXRvY2thQHJlZGhhdC5jb20+IHdyb3RlOgo+Pgo+Pgo+PiBPbiBTYXQs
+IDI0IE1hciAyMDEyLCBLYXNhdGtpbiwgRG1pdHJ5IHdyb3RlOgo+Pgo+Pj4gSGksCj4+Pgo+Pj4g
+VGhhbmtzIGZvciBjbGFyaWZpY2F0aW9uLgo+Pj4gSW5kZWVkIGV2ZXJ5dGhpbmcgd29ya3MganVz
+dCB3aXRoIGRtX2J1ZmlvX3dyaXRlX2RpcnR5X2J1ZmZlcnMoKS4KPj4+IFJlYm9vdCBub3RpZmll
+ciBpcyB0byBpc3N1ZSB0aGUgZmx1c2ggb25seS4uCj4+PiBBcyBJIHVuZGVyc3RhbmQsIGRtLWJ1
+ZmlvIHdpbGwgZG8gdGhlIGZsdXNoIGJ1dCBjdXJyZW50bHkgb25jZSBwZXIgMTAgc2Vjb25kcy4K
+Pj4+Cj4+PiBpZiBkYXRhIG9uIHRoZSBibG9jayBkZXZpY2UgYW5kIG1ldGFkYXRhIG9uIG90aGVy
+IGJsb2NrIGRldmljZSBnZXQgb3V0Cj4+PiBvZiBzeW5jLCB3aGF0IHlvdSBjYW4gZG8gdGhlbj8K
+Pj4+IGhvdyBqb3VybmFsIGhlbHBzIHRoZW4/Cj4+Pgo+Pj4gLSBEbWl0cnkKPj4KPj4gSXQgZGVw
+ZW5kcyB3aGF0IHlvdSdyZSB0cnlpbmcgdG8gZG8uCj4+Cj4+IElmIHlvdSdyZSB0cnlpbmcgdG8g
+ZG8gc29tZXRoaW5nIGxpa2UgImRtLXZlcml0eSIsIGJ1dCB3aXRoIGEgcG9zc2liaWxpdHkKPj4g
+dG8gd3JpdGUgdG8gdGhlIGRldmljZSwgdGhlcmUgYXJlIHNldmVyYWwgcG9zc2liaWxpdGllczoK
+Pj4KPj4gKiBrZWVwIHR3byBjaGVja3N1bXMgcGVyIDUxMi1ieXRlIHNlY3RvciwgdGhlIG9sZCBj
+aGVja3N1bSBhbmQgdGhlIG5ldwo+PiBjaGVja3N1bS4gSWYgeW91IHVwZGF0ZSB0aGUgYmxvY2ss
+IHlvdSB1cGRhdGUgdGhlIG5ldyBjaGVja3N1bSwgc3luYyB0aGUKPj4gbWV0YWRhdGEgZGV2aWNl
+IGFuZCB0aGVuIHdyaXRlIHRvIHRoZSBkYXRhIGRldmljZSAob2J2aW91c2x5IHlvdSBuZWVkIHRv
+Cj4+IGJhdGNoIHRoaXMgdXBkYXRlLXN5bmMtd3JpdGUgZm9yIG1hbnkgYmxvY2tzIHdyaXRlIGNv
+bmN1cnJlbnRseSB0byBnZXQKPj4gZGVjZW50IHBlcmZvcm1hbmNlKS4gV2hlbiB5b3UgdmVyaWZ5
+IGJsb2NrLCB5b3UgYWxsb3cgZWl0aGVyIGNoZWNrc3VtIHRvCj4+IG1hdGNoLiBXaGVuIHlvdSBz
+eW5jIGNhY2hlcyBvbiB0aGUgZGF0YSBkZXZpY2UsIHlvdSBtdXN0IGZvcmdldCBhbGwgdGhlCj4+
+IG9sZCBjaGVja3N1bXMuCj4+Cj4+ICogdXNlIGpvdXJuYWxpbmcsIHdyaXRlIGRhdGEgYmxvY2sg
+YW5kIGl0cyBjaGVja3N1bSB0byBhIGpvdXJuYWwuIElmIHRoZQo+PiBjb21wdXRlciBjcmFzaGVz
+LCB5b3UganVzdCByZXBsYXkgdGhlIGpvdXJuYWwgKHNvIHlvdSBkb24ndCBjYXJlIHdoYXQgZGF0
+YQo+PiB3YXMgcHJlc2VudCBhdCB0aGF0IHBsYWNlLCB5b3Ugb3ZlcndyaXRlIGl0IHdpdGggZGF0
+YSBmcm9tIHRoZSBqb3VybmFsKS4KPj4gVGhlIGRvd25zaWRlIGlzIHRoYXQgdGhpcyBkb3VibGVz
+IHJlcXVpcmVkIGkvbyB0aHJvdWdocHV0LCB5b3Ugc2hvdWxkIGhhdmUKPj4gam91cm5hbCBhbmQg
+ZGF0YSBvbiBkaWZmZXJlbnQgZGV2aWNlcy4KPj4KPj4gKiBkbyBub3RoaW5nIGFuZCByZWJ1aWxk
+IHRoZSBjaGVja3N1bXMgaW4gY2FzZSBvZiBjcmFzaC4gSXQgaXMgc2ltcGxlc3QsCj4+IGJ1dCBp
+dCBkb2Vzbid0IHByb3RlY3QgZnJvbSBkYXRhIGRhbWFnZXMgdGhhdCBoYXBwZW4gZHVlIHRvIHRo
+ZSBjcmFzaCAoZm9yCj4+IGV4YW1wbGUsIHNvbWUgU1NEcyBjb3JydXB0IGl0cyBtZXRhZGF0YSBv
+biBwb3dlciBmYWlsdXJlIGFuZCB5b3UgY2FuJ3QKPj4gZGV0ZWN0IHRoaXMgaWYgeW91IHJlYnVp
+bGQgY2hlY2tzdW1zIGFmdGVyIGEgcG93ZXIgZmFpbHVyZSkuCj4+Cj4+PiBZZXMuLiBJIGFtIGF3
+YXJlIG9mIGRtLXZlcml0eSB0YXJnZXQuCj4+PiBJdCBzdWl0ZXMgd2VsbCBmb3IgcmVhZC1vbmx5
+IGNhc2VzLgo+Pj4gSXQgaXMgcXVlc3Rpb25hYmxlIGhvdyB0cmVlLWJhc2VkIGFwcHJvYWNoIHdp
+bGwgd29yayB3aXRoIHJlYWQtd3JpdGUuCj4+PiBFYWNoIHNpbmdsZSB1cGRhdGUgd2lsbCBjYXVz
+ZSB3aG9sZSB0cmVlIHJlY2FsY3VsYXRpb24uCj4+Cj4+IEEgd3JpdGUgd291bGQgcmVjYWxjdWxh
+dGUgaGFzaGVzIG9ubHkgaW4gdGhlIGJyYW5jaCBmcm9tIHRyZWUgYm90dG9tIHRvCj4+IHRyZWUg
+dG9wLiBUaGUgb2J2aW91cyBkb3duc2lkZSBpcyB0aGF0IHRoZXJlIGlzIG5vIHByb3RlY3Rpb24g
+ZnJvbSBjcmFzaC4KPgo+IEl0IGFsc28gZGVwZW5kcyBvbiBob3cgeW91IHBsYW4gdG8gYXNzdXJl
+IHRoZSBpbnRlZ3JpdHkgb2YgdGhlIGRhdGE6Cj4gRGV2aWNlLWJhc2VkIHN5bW1ldHJpYyBrZXks
+IGFzeW1tZXRyaWMga2V5LCBldGMgYW5kIHRoZSBjb3N0cwo+IGFzc29jaWF0ZWQuIMKgTG9jYWwg
+dXBkYXRlcyBtYWtlIGludGVncml0eSB0cmlja3kgLS0gd2lsbCB0aGUgZGV2aWNlCj4gdXBkYXRl
+IGl0c2VsZiBvciB3aWxsIHNpZ25lZCB1cGRhdGVzIGJlIHN1cHBsaWVkLCBkbyB0aGV5IG5lZWQg
+dG8gYmUKPiBvbmxpbmUsIGRvZXMgb25seSBhIHN1YnNlY3Rpb24gbmVlZCB0byBiZSBvbmxpbmUs
+IGV0Yy4KPgo+IEl0J3MgbGlrZWx5IHRoYXQgdGhlIHRyZWUgdXBkYXRlcyB3b24ndCBiZSB0b28g
+ZXhwZW5zaXZlIGNvbXBhcmVkIHRvCj4gdGhlIGNyeXB0byBhbmQgeW91IGNvdWxkIGF0dGVtcHQg
+dG8gb3B0aW1pemUgdHJlZSB1cGRhdGVzIGFsb25nIGEgaG90Cj4gcGF0aCBpZiBuZWVkZWQgKGJ5
+IGJyZWFraW5nIG91dCBob3Qgc3ViZGlycyB0byBhIHNlcGFyYXRlIHRhcmdldHMpIGFuZAo+IGV4
+cGxvcmUgb3RoZXIgdHJpY2tzIGZvciBnZXR0aW5nIHRyYW5zYWN0aW9uIG9yaWVudGVkIGJlaGF2
+aW9yICh0d28KPiBzd2FwcGluZyBtZXRhZGF0YSBkZXZpY2VzIGZvciBhdG9taWMgdHJlZSB1cGRh
+dGVzLCBldGMpLiDCoGRtLXZlcml0eQo+IHdhcyBuZXZlciBsb2NrZWQgaW50byBiZWluZyBhIHJl
+YWQtb25seSB0YXJnZXQsIGJ1dCB0aGUgbGFjayBvZiBuZWVkCj4gdG8gc3VwcG9ydCBvbmxpbmUg
+dXBkYXRlcyBtZWFucyB0aGUgY29kZSBhbmQgcmVxdWlyZWQgY2hhbmdlcyBkb24ndAo+IGV4aXN0
+Lgo+Cj4gSSdtIHN1cmUgYW55IG9mIHVzIGludm9sdmVkIGluIGRtLXZlcml0eSB3b3VsZCBiZSBo
+YXBweSB0byBkaXNjdXNzIGhvdwo+IGl0IG1pZ2h0IGJlIHVzZWQgZm9yIHlvdXIgcHVycG9zZXMg
+KG9yIGlmIGl0IGlzIHJlYWxseSBhIGJhZCBmaXQpLAo+IGV0Yy4KPgo+IGNoZWVycyEKPiB3aWxs
+CgpIZWxsbywKCmRtLXZlcml0eSBsb29rcyBleHRyZW1lbHkgbmljZSBmb3IgcmVhZC1vbmx5IHRh
+cmdldHMuCkp1c3Qgb25lIHJvb3QgaGFzaCBwcm90ZWN0cyB3aG9sZSBibG9jayBkZXZpY2UuCkJ1
+dCBJIGFtIGludGVyZXN0ZWQgaW4gd3JpdGFibGUgdXNlIGNhc2UuCldvdWxkIGJlIG5pY2UgdG8g
+dW5kZXJzdGFuZCBob3cgaXQgY2FuIGJlIGFkZHJlc3NlcyBhcyB3ZWxsLi4uCgpUaGFua3MsCkRt
+aXRyeQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
