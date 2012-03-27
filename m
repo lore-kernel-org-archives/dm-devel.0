@@ -1,12 +1,14 @@
-From: mittals@codeaurora.org
-Subject: CPU hotplug issue in dm-crypt driver
-Date: Mon, 26 Mar 2012 12:28:59 -0700 (PDT)
-Message-ID: <547dd161c75a98c7bcf4fb7a4d54b914.squirrel@www.codeaurora.org>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: CPU hotplug issue in dm-crypt driver
+Date: Tue, 27 Mar 2012 14:51:32 +0200
+Message-ID: <4F71B7D4.8030209@redhat.com>
+References: <547dd161c75a98c7bcf4fb7a4d54b914.squirrel@www.codeaurora.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <547dd161c75a98c7bcf4fb7a4d54b914.squirrel@www.codeaurora.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,32 +18,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: mittals@codeaurora.org, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+On 03/26/2012 09:28 PM, mittals@codeaurora.org wrote:
+> 1) Is it a know problem that there is some issue with dm-crypt driver with
+> cpu hotplug?
 
-We are using dm-crypt driver to encrypt Android Phone on a 2 core target.
-We saw random failures (kernel panics) in scatterwalk code when we were
-trying to bring secondary cpu online and offline randomly.
+It is quite possible that there is a bug on CPU hotplugging.
 
-I looked into the dm-crypt driver(drivers/md/dm-crypt.c) and put a hack in
-the kcryptd_queue_crypt function to acquire hotplug lock (using
-get_online_cpus()), just before adding new work in work queue and release
-this lock (using put_online_cpus) after completing work in kcryptd_crypt
-function.
-With this i didn't see any issue during encryption.
+Can you please sent your patch/workaround and how you can reproduce it?
 
-So my questions are -
+(The code in dmcrypt will change in future. Anyway Mikulas already
+had some complaints here regarding CPU hotplug, adding him to cc.)
 
-1) Is it a know problem that there is some issue with dm-crypt driver with
-cpu hotplug?
-
-2) If yes, then can someone suggest me a cleaner way to resolve this issue?
-
-Thanks in advance!
-
---Shashank
-
-Sent by an employee of the Qualcomm Innovation Center, Inc.
-The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum.
+Milan
