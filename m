@@ -1,499 +1,113 @@
-From: Alexander Murashkin <AlexanderMurashkin@msn.com>
-Subject: Active/backup multipath configuration for iSCSI paths
-Date: Wed, 28 Mar 2012 03:52:09 -0500
-Message-ID: <BLU0-SMTP3709E65DBDAB82FD7948CE4D54B0@phx.gbl>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper updates for 3.4
+Date: Wed, 28 Mar 2012 19:16:55 +0100
+Message-ID: <20120328181655.GB16767@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6093647820168350282=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-us
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andrei Warkentin <andrey.warkentin@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Dave Wysochanski <dwysocha@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Elly Jones <ellyjones@chromium.org>, Hannes Reinecke <hare@suse.de>, Heiko Carstens <heiko.carstens@de.ibm.com>, Joe Thornber <ejt@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Mandeep Singh Baines <msb@chromium.org>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, stable@kernel.org, Steffen Klassert <steffen.klassert@secunet.com>, Will Drewry <wad@chromium.org>
 List-Id: dm-devel.ids
 
---===============6093647820168350282==
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0082_01CD0C96.271E0940"
-Content-Language: en-us
+Please pull from:
 
-------=_NextPart_000_0082_01CD0C96.271E0940
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.4-changes
 
-On 03/23/2012 02:41 PM, Hart, Brian R. wrote:
+to get the following device-mapper updates for 3.4.
 
-(https://www.redhat.com/archives/dm-devel/2012-March/msg00155.html)
+Thanks,
+Alasdair
 
- 
+----------------------------------------------------------------
+Device-mapper changes for 3.4.
 
-> We have a couple of Dell MD storage arrays that when installed
+- Update thin provisioning to support read-only external snapshot origins and
+discards.
+- A new target, dm verity, for device content validation.
+- Mark dm uevent and dm raid as no-longer-experimental.
+- Miscellaneous other fixes and clean-ups.
 
-> setup multipath.conf to use this line: prio_callout
+----------------------------------------------------------------
+Alasdair G Kergon (4):
+      dm: add persistent data to MAINTAINERS
+      dm uevent: no longer experimental
+      dm raid: no longer experimental
+      dm thin: use dm_target_offset
 
-> "/sbin/mpath_prio_rdac /dev/%n"
+Andrei Warkentin (1):
+      dm exception store: fix init error path
 
- 
+Hannes Reinecke (2):
+      dm table: simplify call to free_devices
+      dm: clear bi_end_io on remapping failure
 
-On 03/23/2012 02:41 PM, Bryn M. Reeves wrote:
+Joe Thornber (11):
+      dm thin: fix stacked bi_next usage
+      dm persistent data: fix btree rebalancing after remove
+      dm thin: correct comments
+      dm persistent data: remove redundant value_size arg from value_ptr
+      dm thin metadata: pass correct space map to dm_sm_root_size
+      dm thin: commit outstanding data every second
+      dm persistent data: remove space map ref_count entries if redundant
+      dm thin: support read only external snapshot origins
+      dm thin: prepare to support discard
+      dm thin: support discards
+      dm thin: add pool target flags to control discard
 
-(https://www.redhat.com/archives/dm-devel/2012-March/msg00155.html)
+Jonathan E Brassow (1):
+      dm raid: handle failed devices during start up
 
- 
+Jun'ichi Nomura (1):
+      dm mpath: detect invalid map_context
 
->Callouts make life difficult when file systems go away so like the
+Mike Snitzer (1):
+      dm thin: relax hard limit on the maximum size of a metadata device
 
->path checkers before them they were merged into the libmultipath
+Mikulas Patocka (5):
+      dm crypt: fix mempool deadlock
+      dm crypt: add missing error handling
+      dm: reject trailing characters in sccanf input
+      dm bufio: prefetch
+      dm: add verity target
 
->shared library. This means that the daemon can lock them into memory
+Milan Broz (1):
+      dm: document sysfs entries
 
->via mlock(2)/mlockall(2) and not have to worry about being able to
-
->load a binary from disk when the paths to that storage have failed -
-
->this is very useful if your root file system is on multipath and you
-
->need to recover from a failure.
-
-> 
-
->In RHEL5 this is dealt with using a complex and fragile private
-
->namespace and RAM-backed file system - the required binaries are
-
->copied into this ramfs at daemon startup and the daemon unmounts
-
->unnecessary file systems to avoid blocking when failures occur.
-
-> 
-
->For this reason the parameter is now just "prio", e.g.:
-
-> 
-
->device {
-
-.
-
->    prio                    rdac
-
->}
-
- 
-
-I can see that using shared libraries to handle priorities makes handling
-failed paths easier in many situations. But how to configure active/backup
-multipath in the following case, for example
-
- 
-
--          1st path uses iSCSI over Infiniband
-
--          2nd path used iSCSI over Gigabit Ethernet
-
--          iSCSI target does not support ALUA
-
--          we want Infiniband path to have higher priority
-
- 
-
-Will it be enough to set path_grouping_policy =  multibus and path_selector
-= "service-time 0"? Will Gigabit Ethernet path be never used as long as
-Infiniband path is working?
-
- 
-
-I appreciate your help,
-
-    Alexander Murashkin
-
- 
-
-Email:  AlexanderMurashkin@msn.com
-
- 
-
- 
-
-
-------=_NextPart_000_0082_01CD0C96.271E0940
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
-xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
-xmlns=3D"http://www.w3.org/TR/REC-html40"><head><meta =
-http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii"><meta name=3DGenerator content=3D"Microsoft Word 14 =
-(filtered medium)"><style><!--
-/* Font Definitions */
-@font-face
-	{font-family:Wingdings;
-	panose-1:5 0 0 0 0 0 0 0 0 0;}
-@font-face
-	{font-family:Wingdings;
-	panose-1:5 0 0 0 0 0 0 0 0 0;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri","sans-serif";}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:purple;
-	text-decoration:underline;}
-p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
-	{mso-style-priority:34;
-	margin-top:0in;
-	margin-right:0in;
-	margin-bottom:0in;
-	margin-left:.5in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri","sans-serif";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri","sans-serif";
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri","sans-serif";}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
-/* List Definitions */
-@list l0
-	{mso-list-id:1014185494;
-	mso-list-type:hybrid;
-	mso-list-template-ids:-635304684 -1716632624 67698691 67698693 67698689 =
-67698691 67698693 67698689 67698691 67698693;}
-@list l0:level1
-	{mso-level-start-at:0;
-	mso-level-number-format:bullet;
-	mso-level-text:\F0D8;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;
-	mso-fareast-font-family:Calibri;
-	mso-bidi-font-family:"Times New Roman";}
-@list l0:level2
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l0:level3
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l0:level4
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Symbol;}
-@list l0:level5
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l0:level6
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l0:level7
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Symbol;}
-@list l0:level8
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l0:level9
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l1
-	{mso-list-id:1372805116;
-	mso-list-type:hybrid;
-	mso-list-template-ids:-264059628 -1659974808 67698691 67698693 67698689 =
-67698691 67698693 67698689 67698691 67698693;}
-@list l1:level1
-	{mso-level-start-at:0;
-	mso-level-number-format:bullet;
-	mso-level-text:-;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Calibri","sans-serif";
-	mso-fareast-font-family:Calibri;}
-@list l1:level2
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l1:level3
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l1:level4
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Symbol;}
-@list l1:level5
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l1:level6
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l1:level7
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Symbol;}
-@list l1:level8
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l1:level9
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l2
-	{mso-list-id:2067214972;
-	mso-list-type:hybrid;
-	mso-list-template-ids:-1075653594 -853493250 67698691 67698693 67698689 =
-67698691 67698693 67698689 67698691 67698693;}
-@list l2:level1
-	{mso-level-start-at:0;
-	mso-level-number-format:bullet;
-	mso-level-text:\F0D8;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;
-	mso-fareast-font-family:Calibri;
-	mso-bidi-font-family:"Times New Roman";}
-@list l2:level2
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l2:level3
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l2:level4
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Symbol;}
-@list l2:level5
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l2:level6
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-@list l2:level7
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Symbol;}
-@list l2:level8
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:"Courier New";}
-@list l2:level9
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:none;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	font-family:Wingdings;}
-ol
-	{margin-bottom:0in;}
-ul
-	{margin-bottom:0in;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]--></head><body lang=3DEN-US link=3Dblue =
-vlink=3Dpurple><div class=3DWordSection1><p class=3DMsoNormal>On =
-03/23/2012 02:41 PM, Hart, Brian R. wrote:<o:p></o:p></p><p =
-class=3DMsoNormal>(<a =
-href=3D"https://www.redhat.com/archives/dm-devel/2012-March/msg00155.html=
-">https://www.redhat.com/archives/dm-devel/2012-March/msg00155.html</a>)<=
-o:p></o:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal>&gt; We have a couple of Dell MD storage arrays that =
-when installed<o:p></o:p></p><p class=3DMsoNormal>&gt; setup =
-multipath.conf to use this line: prio_callout<o:p></o:p></p><p =
-class=3DMsoNormal>&gt; &quot;/sbin/mpath_prio_rdac =
-/dev/%n&quot;<o:p></o:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal>On 03/23/2012 02:41 PM, Bryn M. Reeves =
-wrote:<o:p></o:p></p><p class=3DMsoNormal>(<a =
-href=3D"https://www.redhat.com/archives/dm-devel/2012-March/msg00155.html=
-">https://www.redhat.com/archives/dm-devel/2012-March/msg00155.html</a>)<=
-o:p></o:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal>&gt;Callouts make life difficult when file systems go =
-away so like the<o:p></o:p></p><p class=3DMsoNormal>&gt;path checkers =
-before them they were merged into the libmultipath<o:p></o:p></p><p =
-class=3DMsoNormal>&gt;shared library. This means that the daemon can =
-lock them into memory<o:p></o:p></p><p class=3DMsoNormal>&gt;via =
-mlock(2)/mlockall(2) and not have to worry about being able =
-to<o:p></o:p></p><p class=3DMsoNormal>&gt;load a binary from disk when =
-the paths to that storage have failed -<o:p></o:p></p><p =
-class=3DMsoNormal>&gt;this is very useful if your root file system is on =
-multipath and you<o:p></o:p></p><p class=3DMsoNormal>&gt;need to recover =
-from a failure.<o:p></o:p></p><p =
-class=3DMsoNormal>&gt;<o:p>&nbsp;</o:p></p><p class=3DMsoNormal>&gt;In =
-RHEL5 this is dealt with using a complex and fragile =
-private<o:p></o:p></p><p class=3DMsoNormal>&gt;namespace and RAM-backed =
-file system - the required binaries are<o:p></o:p></p><p =
-class=3DMsoNormal>&gt;copied into this ramfs at daemon startup and the =
-daemon unmounts<o:p></o:p></p><p class=3DMsoNormal>&gt;unnecessary file =
-systems to avoid blocking when failures occur.<o:p></o:p></p><p =
-class=3DMsoNormal>&gt;<o:p>&nbsp;</o:p></p><p class=3DMsoNormal>&gt;For =
-this reason the parameter is now just &quot;prio&quot;, =
-e.g.:<o:p></o:p></p><p class=3DMsoNormal>&gt;<o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal>&gt;device {<o:p></o:p></p><p =
-class=3DMsoNormal>&#8230;<o:p></o:p></p><p =
-class=3DMsoNormal>&gt;&nbsp;&nbsp;&nbsp; =
-prio&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rdac<o:p></o:p></p>=
-<p class=3DMsoNormal>&gt;}<o:p></o:p></p><p =
-class=3DMsoNormal><o:p>&nbsp;</o:p></p><p class=3DMsoNormal>I can see =
-that using shared libraries to handle priorities makes handling failed =
-paths easier in many situations. But how to configure active/backup =
-multipath in the following case, for example<o:p></o:p></p><p =
-class=3DMsoNormal><o:p>&nbsp;</o:p></p><p class=3DMsoListParagraph =
-style=3D'text-indent:-.25in;mso-list:l1 level1 lfo3'><![if =
-!supportLists]><span style=3D'mso-list:Ignore'>-<span =
-style=3D'font:7.0pt "Times New =
-Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-</span></span><![endif]>1st path uses iSCSI over =
-Infiniband<o:p></o:p></p><p class=3DMsoListParagraph =
-style=3D'text-indent:-.25in;mso-list:l1 level1 lfo3'><![if =
-!supportLists]><span style=3D'mso-list:Ignore'>-<span =
-style=3D'font:7.0pt "Times New =
-Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-</span></span><![endif]>2nd path used iSCSI over Gigabit =
-Ethernet<o:p></o:p></p><p class=3DMsoListParagraph =
-style=3D'text-indent:-.25in;mso-list:l1 level1 lfo3'><![if =
-!supportLists]><span style=3D'mso-list:Ignore'>-<span =
-style=3D'font:7.0pt "Times New =
-Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-</span></span><![endif]>iSCSI target does not support =
-ALUA<o:p></o:p></p><p class=3DMsoListParagraph =
-style=3D'text-indent:-.25in;mso-list:l1 level1 lfo3'><![if =
-!supportLists]><span style=3D'mso-list:Ignore'>-<span =
-style=3D'font:7.0pt "Times New =
-Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-</span></span><![endif]>we want Infiniband path to have higher =
-priority<o:p></o:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal>Will it be enough to set path_grouping_policy =3D =
-&nbsp;multibus and path_selector =3D &#8220;service-time 0&#8221;? Will =
-Gigabit Ethernet path be never used as long as Infiniband path is =
-working?<o:p></o:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal>I appreciate your help,<o:p></o:p></p><p =
-class=3DMsoNormal>&nbsp;&nbsp;&nbsp; Alexander =
-Murashkin<o:p></o:p></p><p class=3DMsoNormal><o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal>Email: =
-&nbsp;AlexanderMurashkin@msn.com<o:p></o:p></p><p =
-class=3DMsoNormal><o:p>&nbsp;</o:p></p><p =
-class=3DMsoNormal><o:p>&nbsp;</o:p></p></div></body></html>
-------=_NextPart_000_0082_01CD0C96.271E0940--
-
-
---===============6093647820168350282==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6093647820168350282==--
+ Documentation/ABI/testing/sysfs-block-dm          |   25 +
+ Documentation/device-mapper/thin-provisioning.txt |   65 +-
+ Documentation/device-mapper/verity.txt            |  194 +++++
+ MAINTAINERS                                       |    5 +-
+ drivers/md/Kconfig                                |   28 +-
+ drivers/md/Makefile                               |    1 +
+ drivers/md/dm-bufio.c                             |  108 ++-
+ drivers/md/dm-bufio.h                             |    8 +
+ drivers/md/dm-crypt.c                             |   46 +-
+ drivers/md/dm-delay.c                             |    9 +-
+ drivers/md/dm-exception-store.c                   |    2 +-
+ drivers/md/dm-flakey.c                            |    3 +-
+ drivers/md/dm-ioctl.c                             |    5 +-
+ drivers/md/dm-linear.c                            |    3 +-
+ drivers/md/dm-log.c                               |    3 +-
+ drivers/md/dm-mpath.c                             |   52 +-
+ drivers/md/dm-queue-length.c                      |    3 +-
+ drivers/md/dm-raid.c                              |   53 +-
+ drivers/md/dm-raid1.c                             |   12 +-
+ drivers/md/dm-round-robin.c                       |    3 +-
+ drivers/md/dm-service-time.c                      |    5 +-
+ drivers/md/dm-stripe.c                            |    3 +-
+ drivers/md/dm-table.c                             |    9 +-
+ drivers/md/dm-thin-metadata.c                     |    5 +-
+ drivers/md/dm-thin-metadata.h                     |   13 +
+ drivers/md/dm-thin.c                              |  680 +++++++++++----
+ drivers/md/dm-verity.c                            |  913 +++++++++++++++++++++
+ drivers/md/dm.c                                   |    1 +
+ drivers/md/persistent-data/dm-btree-internal.h    |    7 +-
+ drivers/md/persistent-data/dm-btree-remove.c      |  202 +++--
+ drivers/md/persistent-data/dm-btree.c             |   27 +-
+ drivers/md/persistent-data/dm-space-map-common.c  |    3 -
+ 32 files changed, 2104 insertions(+), 392 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-block-dm
+ create mode 100644 Documentation/device-mapper/verity.txt
+ create mode 100644 drivers/md/dm-verity.c
