@@ -1,113 +1,35 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper updates for 3.4
-Date: Wed, 28 Mar 2012 19:16:55 +0100
-Message-ID: <20120328181655.GB16767@agk-dp.fab.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andrei Warkentin <andrey.warkentin@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Dave Wysochanski <dwysocha@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Elly Jones <ellyjones@chromium.org>, Hannes Reinecke <hare@suse.de>, Heiko Carstens <heiko.carstens@de.ibm.com>, Joe Thornber <ejt@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Mandeep Singh Baines <msb@chromium.org>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, stable@kernel.org, Steffen Klassert <steffen.klassert@secunet.com>, Will Drewry <wad@chromium.org>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 0/2] 'default' hardware handler for multipath
+Date: Mon,  2 Apr 2012 18:43:53 +0200
+Message-ID: <1333385035-6663-1-git-send-email-hare@suse.de>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi@vger.kernel.org
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-Please pull from:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.4-changes
-
-to get the following device-mapper updates for 3.4.
-
-Thanks,
-Alasdair
-
-----------------------------------------------------------------
-Device-mapper changes for 3.4.
-
-- Update thin provisioning to support read-only external snapshot origins and
-discards.
-- A new target, dm verity, for device content validation.
-- Mark dm uevent and dm raid as no-longer-experimental.
-- Miscellaneous other fixes and clean-ups.
-
-----------------------------------------------------------------
-Alasdair G Kergon (4):
-      dm: add persistent data to MAINTAINERS
-      dm uevent: no longer experimental
-      dm raid: no longer experimental
-      dm thin: use dm_target_offset
-
-Andrei Warkentin (1):
-      dm exception store: fix init error path
+This patchset introduces a 'default' hardware handler for
+dm-multipath.
+Modern storage arrays typically support two failover methods,
+the original proprietary and the modern ALUA-based one.
+The device_handler implementation will currently select the
+ALUA handler, and falling back to the proprietary one if
+ALUA isn't supported.
+However, in the built-in hardware table for multipath one
+can specify only one hardware handler, causing the original
+hardware handler to be overwritten.
+By specifying a 'default' hardware handler multipath will not
+try to attach a specific hardware handler, but rather using
+the currently attached on.
 
 Hannes Reinecke (2):
-      dm table: simplify call to free_devices
-      dm: clear bi_end_io on remapping failure
+  scsi_dh: Allow NULL hardware handler name in scsi_dh_attach()
+  dm-mpath: Allow 'default' hardware handler
 
-Joe Thornber (11):
-      dm thin: fix stacked bi_next usage
-      dm persistent data: fix btree rebalancing after remove
-      dm thin: correct comments
-      dm persistent data: remove redundant value_size arg from value_ptr
-      dm thin metadata: pass correct space map to dm_sm_root_size
-      dm thin: commit outstanding data every second
-      dm persistent data: remove space map ref_count entries if redundant
-      dm thin: support read only external snapshot origins
-      dm thin: prepare to support discard
-      dm thin: support discards
-      dm thin: add pool target flags to control discard
+ drivers/md/dm-mpath.c                 |    8 ++++++--
+ drivers/scsi/device_handler/scsi_dh.c |    8 ++++++--
+ 2 files changed, 12 insertions(+), 4 deletions(-)
 
-Jonathan E Brassow (1):
-      dm raid: handle failed devices during start up
+-- 
+1.7.7
 
-Jun'ichi Nomura (1):
-      dm mpath: detect invalid map_context
-
-Mike Snitzer (1):
-      dm thin: relax hard limit on the maximum size of a metadata device
-
-Mikulas Patocka (5):
-      dm crypt: fix mempool deadlock
-      dm crypt: add missing error handling
-      dm: reject trailing characters in sccanf input
-      dm bufio: prefetch
-      dm: add verity target
-
-Milan Broz (1):
-      dm: document sysfs entries
-
- Documentation/ABI/testing/sysfs-block-dm          |   25 +
- Documentation/device-mapper/thin-provisioning.txt |   65 +-
- Documentation/device-mapper/verity.txt            |  194 +++++
- MAINTAINERS                                       |    5 +-
- drivers/md/Kconfig                                |   28 +-
- drivers/md/Makefile                               |    1 +
- drivers/md/dm-bufio.c                             |  108 ++-
- drivers/md/dm-bufio.h                             |    8 +
- drivers/md/dm-crypt.c                             |   46 +-
- drivers/md/dm-delay.c                             |    9 +-
- drivers/md/dm-exception-store.c                   |    2 +-
- drivers/md/dm-flakey.c                            |    3 +-
- drivers/md/dm-ioctl.c                             |    5 +-
- drivers/md/dm-linear.c                            |    3 +-
- drivers/md/dm-log.c                               |    3 +-
- drivers/md/dm-mpath.c                             |   52 +-
- drivers/md/dm-queue-length.c                      |    3 +-
- drivers/md/dm-raid.c                              |   53 +-
- drivers/md/dm-raid1.c                             |   12 +-
- drivers/md/dm-round-robin.c                       |    3 +-
- drivers/md/dm-service-time.c                      |    5 +-
- drivers/md/dm-stripe.c                            |    3 +-
- drivers/md/dm-table.c                             |    9 +-
- drivers/md/dm-thin-metadata.c                     |    5 +-
- drivers/md/dm-thin-metadata.h                     |   13 +
- drivers/md/dm-thin.c                              |  680 +++++++++++----
- drivers/md/dm-verity.c                            |  913 +++++++++++++++++++++
- drivers/md/dm.c                                   |    1 +
- drivers/md/persistent-data/dm-btree-internal.h    |    7 +-
- drivers/md/persistent-data/dm-btree-remove.c      |  202 +++--
- drivers/md/persistent-data/dm-btree.c             |   27 +-
- drivers/md/persistent-data/dm-space-map-common.c  |    3 -
- 32 files changed, 2104 insertions(+), 392 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-block-dm
- create mode 100644 Documentation/device-mapper/verity.txt
- create mode 100644 drivers/md/dm-verity.c
