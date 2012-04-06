@@ -1,15 +1,16 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: [PATCH] multipath: enable getting uevents through
-	libudev
-Date: Wed, 04 Apr 2012 13:12:45 +0200
-Message-ID: <4F7C2CAD.5060905@redhat.com>
-References: <20120403234221.GM1241@ether.msp.redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: Re: [PATCH] multipath: blacklist all the management Luns
+ by	default
+Date: Fri, 6 Apr 2012 21:17:48 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B04BD86@SACEXCMBX03-PRD.hq.netapp.com>
+References: <77471C95FAFD844C8CA02DD4F4C5FE2B01AFE9@SACEXCMBX02-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120403234221.GM1241@ether.msp.redhat.com>
+In-Reply-To: <77471C95FAFD844C8CA02DD4F4C5FE2B01AFE9@SACEXCMBX02-PRD.hq.netapp.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,170 +21,184 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: "christophe.varoqui@gmail.com" <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Dne 4.4.2012 01:42, Benjamin Marzinski napsal(a):
-> udev is removing support for RUN+="socket:..." rules. For now, I've kept
-> all the existing uevent code, but I've added a new method for getting the
-> uevent information using libudev that will be tried first.
->
-> Signed-off-by: Benjamin Marzinski<bmarzins@redhat.com>
+Christophe,  Can you please merge  these patches when you get a chance..
+
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-
+> bounces@redhat.com] On Behalf Of Moger, Babu
+> Sent: Wednesday, March 14, 2012 4:20 PM
+> To: device-mapper development
+> Subject: [dm-devel] [PATCH] multipath: blacklist all the management Luns by
+> default
+> 
+> This patch adds the blacklisting for all the management luns. Otherwise user
+> has to manually add blacklisting in multipath.conf for these luns.
+> 
+> Signed-off-by: Babu Moger <babu.moger@netapp.com>
 > ---
->   libmultipath/Makefile |    2
->   libmultipath/uevent.c |  151 ++++++++++++++++++++++++++++++++++++++++++++------
->   2 files changed, 134 insertions(+), 19 deletions(-)
->
-> Index: multipath-tools-120123/libmultipath/Makefile
-> ===================================================================
-> --- multipath-tools-120123.orig/libmultipath/Makefile
-> +++ multipath-tools-120123/libmultipath/Makefile
-> @@ -7,7 +7,7 @@ include ../Makefile.inc
->   SONAME=0
->   DEVLIB = libmultipath.so
->   LIBS = $(DEVLIB).$(SONAME)
-> -LIBDEPS = -lpthread -ldl -ldevmapper
-> +LIBDEPS = -lpthread -ldl -ldevmapper -ludev
->
->   OBJS = memory.o parser.o vector.o devmapper.o callout.o \
->          hwtable.o blacklist.o util.o dmparser.o config.o \
-> Index: multipath-tools-120123/libmultipath/uevent.c
-> ===================================================================
-> --- multipath-tools-120123.orig/libmultipath/uevent.c
-> +++ multipath-tools-120123/libmultipath/uevent.c
-> @@ -39,6 +39,7 @@
->   #include<pthread.h>
->   #include<limits.h>
->   #include<sys/mman.h>
-> +#include<libudev.h>
->   #include<errno.h>
->
->   #include "memory.h"
-> @@ -161,7 +162,7 @@ int uevent_dispatch(int (*uev_trigger)(s
->   	return 0;
->   }
->
-> -int uevent_listen(void)
-> +int failback_listen(void)
->   {
->   	int sock;
->   	struct sockaddr_nl snl;
-> @@ -173,20 +174,6 @@ int uevent_listen(void)
->   	int rcvszsz = sizeof(rcvsz);
->   	unsigned int *prcvszsz = (unsigned int *)&rcvszsz;
->   	const int feature_on = 1;
-> -
-> -	/*
-> -	 * Queue uevents for service by dedicated thread so that the uevent
-> -	 * listening thread does not block on multipathd locks (vecs->lock)
-> -	 * thereby not getting to empty the socket's receive buffer queue
-> -	 * often enough.
-> -	 */
-> -	INIT_LIST_HEAD(&uevq);
-> -
-> -	pthread_mutex_init(uevq_lockp, NULL);
-> -	pthread_cond_init(uev_condp, NULL);
-> -
-> -	pthread_cleanup_push(uevq_stop, NULL);
-> -
->   	/*
->   	 * First check whether we have a udev socket
->   	 */
-> @@ -382,13 +369,141 @@ int uevent_listen(void)
->
->   exit:
->   	close(sock);
-> +	return 1;
-> +}
->
-> -	pthread_cleanup_pop(1);
-> +int uevent_listen(void)
-> +{
-> +	int err;
-> +	struct udev *udev = NULL;
-> +	struct udev_monitor *monitor = NULL;
-> +	int fd, socket_flags;
-> +	int need_failback = 0;
-> +	/*
-> +	 * Queue uevents for service by dedicated thread so that the uevent
-> +	 * listening thread does not block on multipathd locks (vecs->lock)
-> +	 * thereby not getting to empty the socket's receive buffer queue
-> +	 * often enough.
-> +	 */
-> +	INIT_LIST_HEAD(&uevq);
-> +
-> +	pthread_mutex_init(uevq_lockp, NULL);
-> +	pthread_cond_init(uev_condp, NULL);
-> +	pthread_cleanup_push(uevq_stop, NULL);
-> +
-> +	udev = udev_new();
-> +	if (!udev) {
-> +		condlog(2, "failed to create udev context");
-> +		need_failback = 1;
-> +		goto out;
-> +	}
-> +	monitor = udev_monitor_new_from_netlink(udev, "udev");
-> +	if (!monitor) {
-> +		condlog(2, "failed to create udev monitor");
-> +		need_failback = 1;
-> +		goto out;
-> +	}
-> +	if (udev_monitor_set_receive_buffer_size(monitor, 128 * 1024 * 1024))
-> +		condlog(2, "failed to increase buffer size");
-> +	fd = udev_monitor_get_fd(monitor);
-> +	socket_flags = fcntl(fd, F_GETFL);
-> +	if (socket_flags<  0) {
-> +		condlog(2, "failed to get monitor socket flags : %s",
-> +			strerror(errno));
-> +		need_failback = 1;
-> +		goto out;
-> +	}
-> +	if (fcntl(fd, F_SETFL, socket_flags&  ~O_NONBLOCK)<  0) {
-> +		condlog(2, "failed to set monitor socket flags : %s",
-> +			strerror(errno));
-> +		need_failback = 1;
-> +		goto out;
-> +	}
-> +	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
-> +							      NULL);
-> +	if (err)
-> +		condlog(2, "failed to create filter : %s\n", strerror(-err));
-> +	err = udev_monitor_enable_receiving(monitor);
-> +	if (err) {
-> +		condlog(2, "failed to enable receiving : %s\n", strerror(-err));
-> +		need_failback = 1;
-> +		goto out;
-> +	}
-> +	while (1) {
-> +		int i = 0;
-> +		char *pos, *end;
-> +		struct uevent *uev;
-> +		struct udev_device *dev;
-> +                struct udev_list_entry *list_entry;
-> +
-> +		dev = udev_monitor_receive_device(monitor);
-> +		if (!dev) {
-> +			condlog(0, "failed getting udev device");
-> +			continue;
-> +		}
->
-> +		uev = alloc_uevent();
-> +		if (!uev) {
-> +			condlog(1, "lost uevent, oom");
-> +			continue;
-> +		}
-> +		pos = uev->buffer;
-> +		end = pos + HOTPLUG_BUFFER_SIZE + OBJECT_SIZE - 1;
-> +		udev_list_entry_foreach(list_entry, udev_device_get_properties_list_entry(dev)) {
-> +			const char *name, *value;
-> +			int bytes;
-> +
-> +			name = udev_list_entry_get_name(list_entry);
-> +			value = udev_list_entry_get_value(list_entry);
-> +			bytes = snprintf(pos, end - pos, "%s=%s", name,
-
-I'd recommend to validate all input going from libudev agains NULL pointers:
-
-(i.e. look at https://bugzilla.redhat.com/show_bug.cgi?id=809576)
-
-Zdenek
+> --- multipath-tools/libmultipath/hwtable.c.orig	2012-03-14
+> 15:10:04.000000000 -0500
+> +++ multipath-tools/libmultipath/hwtable.c	2012-03-14
+> 15:27:11.000000000 -0500
+> @@ -448,6 +448,7 @@ static struct hwentry default_hw[] = {
+>  		/* IBM FAStT 1722-600 */
+>  		.vendor        = "IBM",
+>  		.product       = "^1722-600",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "1 queue_if_no_path",
+>  		.hwhandler     = "1 rdac",
+> @@ -466,6 +467,7 @@ static struct hwentry default_hw[] = {
+>  		/* IBM DS4100 */
+>  		.vendor        = "IBM",
+>  		.product       = "^1724",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "1 queue_if_no_path",
+>  		.hwhandler     = "1 rdac",
+> @@ -484,6 +486,7 @@ static struct hwentry default_hw[] = {
+>  		/* IBM DS3200 / DS3300 / DS3400 */
+>  		.vendor        = "IBM",
+>  		.product       = "^1726",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "1 queue_if_no_path",
+>  		.hwhandler     = "1 rdac",
+> @@ -502,6 +505,7 @@ static struct hwentry default_hw[] = {
+>  		/* IBM DS4400 / DS4500 / FAStT700 */
+>  		.vendor        = "IBM",
+>  		.product       = "^1742",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -519,6 +523,7 @@ static struct hwentry default_hw[] = {
+>  	{
+>  		.vendor        = "IBM",
+>  		.product       = "^1745|^1746",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> @@ -537,6 +542,7 @@ static struct hwentry default_hw[] = {
+>  	    /* IBM DS4700 */
+>  		.vendor        = "IBM",
+>  		.product       = "^1814",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -555,6 +561,7 @@ static struct hwentry default_hw[] = {
+>  	    /* IBM DS4800 */
+>  		.vendor        = "IBM",
+>  		.product       = "^1815",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -573,6 +580,7 @@ static struct hwentry default_hw[] = {
+>  	    /* IBM DS5000 */
+>  		.vendor        = "IBM",
+>  		.product       = "^1818",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -591,6 +599,7 @@ static struct hwentry default_hw[] = {
+>  		/* IBM Netfinity Fibre Channel RAID Controller Unit */
+>  		.vendor        = "IBM",
+>  		.product       = "^3526",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -869,6 +878,7 @@ static struct hwentry default_hw[] = {
+>  		/* DELL MD3000 */
+>  		.vendor        = "DELL",
+>  		.product       = "MD3000",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> @@ -887,6 +897,7 @@ static struct hwentry default_hw[] = {
+>  		/* DELL MD3000i */
+>  		.vendor        = "DELL",
+>  		.product       = "MD3000i",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> @@ -905,6 +916,7 @@ static struct hwentry default_hw[] = {
+>  		/* DELL MD32xx */
+>  		.vendor        = "DELL",
+>  		.product       = "MD32xx",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> @@ -923,6 +935,7 @@ static struct hwentry default_hw[] = {
+>  		/* DELL MD32xxi */
+>  		.vendor        = "DELL",
+>  		.product       = "MD32xxi",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> @@ -1053,6 +1066,7 @@ static struct hwentry default_hw[] = {
+>  	{
+>  		.vendor        = "SGI",
+>  		.product       = "TP9[45]00",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -1070,6 +1084,7 @@ static struct hwentry default_hw[] = {
+>  	{
+>  		.vendor        = "SGI",
+>  		.product       = "IS.*",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> @@ -1111,6 +1126,7 @@ static struct hwentry default_hw[] = {
+>  	{
+>  		.vendor        = "STK",
+>  		.product       = "OPENstorage D280",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -1190,6 +1206,7 @@ static struct hwentry default_hw[] = {
+>  	{
+>  		.vendor        = "SUN",
+>  		.product       = "CSM200_R",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -1208,6 +1225,7 @@ static struct hwentry default_hw[] = {
+>  	{
+>  		.vendor        = "SUN",
+>  		.product       = "LCSM100_[IEFS]",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = DEFAULT_FEATURES,
+>  		.hwhandler     = "1 rdac",
+> @@ -1226,6 +1244,7 @@ static struct hwentry default_hw[] = {
+>  	{
+>  		.vendor        = "(LSI|ENGENIO)",
+>  		.product       = "INF-01-00",
+> +		.bl_product    = "Universal Xport",
+>  		.getuid        = DEFAULT_GETUID,
+>  		.features      = "2 pg_init_retries 50",
+>  		.hwhandler     = "1 rdac",
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
