@@ -1,105 +1,212 @@
-From: "Maxim V. Patlasov" <mpatlasov@parallels.com>
-Subject: Re: [PATCH 1/2] block: add partition resize function to blkpg ioctl
-Date: Mon, 9 Apr 2012 20:40:35 +0400
-Message-ID: <4F831103.3050704@parallels.com>
-References: <1329251991-22468-1-git-send-email-vgoyal@redhat.com> <1329251991-22468-2-git-send-email-vgoyal@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH] multipath: enable getting uevents through
+	libudev
+Date: Mon, 9 Apr 2012 15:18:11 -0500
+Message-ID: <20120409201811.GS1241@ether.msp.redhat.com>
+References: <20120403234221.GM1241@ether.msp.redhat.com>
+	<4F7C2CAD.5060905@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1329251991-22468-2-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "kzak@redhat.com" <kzak@redhat.com>, "psusi@ubuntu.com" <psusi@ubuntu.com>, "psusi@cfl.rr.com" <psusi@cfl.rr.com>, "maxim.patlasov@gmail.com" <maxim.patlasov@gmail.com>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4F7C2CAD.5060905@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Hi Vivek,
-
-See please inline comments below...
-
-On 02/15/2012 12:39 AM, Vivek Goyal wrote:
-> ...
-> @@ -765,8 +765,8 @@ void __init printk_all_partitions(void)
+On Wed, Apr 04, 2012 at 01:12:45PM +0200, Zdenek Kabelac wrote:
+> Dne 4.4.2012 01:42, Benjamin Marzinski napsal(a):
+>> udev is removing support for RUN+="socket:..." rules. For now, I've kept
+>> all the existing uevent code, but I've added a new method for getting the
+>> uevent information using libudev that will be tried first.
+>>
+>> Signed-off-by: Benjamin Marzinski<bmarzins@redhat.com>
+>> ---
+>>   libmultipath/Makefile |    2
+>>   libmultipath/uevent.c |  151 ++++++++++++++++++++++++++++++++++++++++++++------
+>>   2 files changed, 134 insertions(+), 19 deletions(-)
+>>
+>> Index: multipath-tools-120123/libmultipath/Makefile
+>> ===================================================================
+>> --- multipath-tools-120123.orig/libmultipath/Makefile
+>> +++ multipath-tools-120123/libmultipath/Makefile
+>> @@ -7,7 +7,7 @@ include ../Makefile.inc
+>>   SONAME=0
+>>   DEVLIB = libmultipath.so
+>>   LIBS = $(DEVLIB).$(SONAME)
+>> -LIBDEPS = -lpthread -ldl -ldevmapper
+>> +LIBDEPS = -lpthread -ldl -ldevmapper -ludev
+>>
+>>   OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+>>          hwtable.o blacklist.o util.o dmparser.o config.o \
+>> Index: multipath-tools-120123/libmultipath/uevent.c
+>> ===================================================================
+>> --- multipath-tools-120123.orig/libmultipath/uevent.c
+>> +++ multipath-tools-120123/libmultipath/uevent.c
+>> @@ -39,6 +39,7 @@
+>>   #include<pthread.h>
+>>   #include<limits.h>
+>>   #include<sys/mman.h>
+>> +#include<libudev.h>
+>>   #include<errno.h>
+>>
+>>   #include "memory.h"
+>> @@ -161,7 +162,7 @@ int uevent_dispatch(int (*uev_trigger)(s
+>>   	return 0;
+>>   }
+>>
+>> -int uevent_listen(void)
+>> +int failback_listen(void)
+>>   {
+>>   	int sock;
+>>   	struct sockaddr_nl snl;
+>> @@ -173,20 +174,6 @@ int uevent_listen(void)
+>>   	int rcvszsz = sizeof(rcvsz);
+>>   	unsigned int *prcvszsz = (unsigned int *)&rcvszsz;
+>>   	const int feature_on = 1;
+>> -
+>> -	/*
+>> -	 * Queue uevents for service by dedicated thread so that the uevent
+>> -	 * listening thread does not block on multipathd locks (vecs->lock)
+>> -	 * thereby not getting to empty the socket's receive buffer queue
+>> -	 * often enough.
+>> -	 */
+>> -	INIT_LIST_HEAD(&uevq);
+>> -
+>> -	pthread_mutex_init(uevq_lockp, NULL);
+>> -	pthread_cond_init(uev_condp, NULL);
+>> -
+>> -	pthread_cleanup_push(uevq_stop, NULL);
+>> -
+>>   	/*
+>>   	 * First check whether we have a udev socket
+>>   	 */
+>> @@ -382,13 +369,141 @@ int uevent_listen(void)
+>>
+>>   exit:
+>>   	close(sock);
+>> +	return 1;
+>> +}
+>>
+>> -	pthread_cleanup_pop(1);
+>> +int uevent_listen(void)
+>> +{
+>> +	int err;
+>> +	struct udev *udev = NULL;
+>> +	struct udev_monitor *monitor = NULL;
+>> +	int fd, socket_flags;
+>> +	int need_failback = 0;
+>> +	/*
+>> +	 * Queue uevents for service by dedicated thread so that the uevent
+>> +	 * listening thread does not block on multipathd locks (vecs->lock)
+>> +	 * thereby not getting to empty the socket's receive buffer queue
+>> +	 * often enough.
+>> +	 */
+>> +	INIT_LIST_HEAD(&uevq);
+>> +
+>> +	pthread_mutex_init(uevq_lockp, NULL);
+>> +	pthread_cond_init(uev_condp, NULL);
+>> +	pthread_cleanup_push(uevq_stop, NULL);
+>> +
+>> +	udev = udev_new();
+>> +	if (!udev) {
+>> +		condlog(2, "failed to create udev context");
+>> +		need_failback = 1;
+>> +		goto out;
+>> +	}
+>> +	monitor = udev_monitor_new_from_netlink(udev, "udev");
+>> +	if (!monitor) {
+>> +		condlog(2, "failed to create udev monitor");
+>> +		need_failback = 1;
+>> +		goto out;
+>> +	}
+>> +	if (udev_monitor_set_receive_buffer_size(monitor, 128 * 1024 * 1024))
+>> +		condlog(2, "failed to increase buffer size");
+>> +	fd = udev_monitor_get_fd(monitor);
+>> +	socket_flags = fcntl(fd, F_GETFL);
+>> +	if (socket_flags<  0) {
+>> +		condlog(2, "failed to get monitor socket flags : %s",
+>> +			strerror(errno));
+>> +		need_failback = 1;
+>> +		goto out;
+>> +	}
+>> +	if (fcntl(fd, F_SETFL, socket_flags&  ~O_NONBLOCK)<  0) {
+>> +		condlog(2, "failed to set monitor socket flags : %s",
+>> +			strerror(errno));
+>> +		need_failback = 1;
+>> +		goto out;
+>> +	}
+>> +	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
+>> +							      NULL);
+>> +	if (err)
+>> +		condlog(2, "failed to create filter : %s\n", strerror(-err));
+>> +	err = udev_monitor_enable_receiving(monitor);
+>> +	if (err) {
+>> +		condlog(2, "failed to enable receiving : %s\n", strerror(-err));
+>> +		need_failback = 1;
+>> +		goto out;
+>> +	}
+>> +	while (1) {
+>> +		int i = 0;
+>> +		char *pos, *end;
+>> +		struct uevent *uev;
+>> +		struct udev_device *dev;
+>> +                struct udev_list_entry *list_entry;
+>> +
+>> +		dev = udev_monitor_receive_device(monitor);
+>> +		if (!dev) {
+>> +			condlog(0, "failed getting udev device");
+>> +			continue;
+>> +		}
+>>
+>> +		uev = alloc_uevent();
+>> +		if (!uev) {
+>> +			condlog(1, "lost uevent, oom");
+>> +			continue;
+>> +		}
+>> +		pos = uev->buffer;
+>> +		end = pos + HOTPLUG_BUFFER_SIZE + OBJECT_SIZE - 1;
+>> +		udev_list_entry_foreach(list_entry, udev_device_get_properties_list_entry(dev)) {
+>> +			const char *name, *value;
+>> +			int bytes;
+>> +
+>> +			name = udev_list_entry_get_name(list_entry);
+>> +			value = udev_list_entry_get_value(list_entry);
+>> +			bytes = snprintf(pos, end - pos, "%s=%s", name,
 >
->   			printk("%s%s %10llu %s %s", is_part0 ? "" : "  ",
->   			       bdevt_str(part_devt(part), devt_buf),
-> -			       (unsigned long long)part->nr_sects>>  1,
-> -			       disk_name(disk, part->partno, name_buf), uuid);
-> +			       (unsigned long long)part_nr_sects_read(part)>>  1
-> +			       , disk_name(disk, part->partno, name_buf), uuid);
-
-A line starting from comma looks unusual. Is it what you intended?
-
-> diff --git a/block/ioctl.c b/block/ioctl.c
-> index ba15b2d..ddbc649 100644
-> --- a/block/ioctl.c
-> +++ b/block/ioctl.c
-> ...
-> @@ -92,6 +92,57 @@ static int blkpg_ioctl(struct block_device *bdev, struct blkpg_ioctl_arg __user
->   			bdput(bdevp);
+> I'd recommend to validate all input going from libudev agains NULL pointers:
 >
->   			return 0;
-> +		case BLKPG_RESIZE_PARTITION:
-> +			start = p.start>>  9;
-> +			/* new length of partition in bytes */
-> +			length = p.length>>  9;
-> +			/* check for fit in a hd_struct */
-> +			if (sizeof(sector_t) == sizeof(long)&&
-> +			    sizeof(long long)>  sizeof(long)) {
-> +				long pstart = start, plength = length;
-> +				if (pstart != start || plength != length
-> +				    || pstart<  0 || plength<  0)
-> +					return -EINVAL;
-> +			}
-> +			part = disk_get_part(disk, partno);
-> +			if (!part)
-> +				return -ENXIO;
-> +			bdevp = bdget(part_devt(part));
-> +			if (!bdevp) {
-> +				disk_put_part(part);
-> +				return -ENOMEM;
-> +			}
-> +			mutex_lock(&bdevp->bd_mutex);
-> +			mutex_lock_nested(&bdev->bd_mutex, 1);
-> +			if (start != part->start_sect) {
-> +				mutex_unlock(&bdevp->bd_mutex);
-> +				mutex_unlock(&bdev->bd_mutex);
-> +				disk_put_part(part);
-> +				return -EINVAL;
+> (i.e. look at https://bugzilla.redhat.com/show_bug.cgi?id=809576)
 
-bdput(bdevp) missed?
+Looking at the udev code and the Libudev reference manual, most of my
+checking decisions seem reasonable. I do more checking that udevd and
+udevadm do. But I suppose it doesn't hurt to do some more.
 
+I don't see how, given my previous checking, udev_monitor_get_fd() could
+fail, but that function can return a failure, and it's no pain to check it.
 
-> +			}
-> +			/* overlap? */
-> +			disk_part_iter_init(&piter, disk,
-> +					    DISK_PITER_INCL_EMPTY);
-> +			while ((lpart = disk_part_iter_next(&piter))) {
-> +				if (lpart->partno != partno&&
-> +				   !(start + length<= lpart->start_sect ||
-> +				   start>= lpart->start_sect + lpart->nr_sects)
-> +				   ) {
-> +					disk_part_iter_exit(&piter);
-> +					mutex_unlock(&bdevp->bd_mutex);
-> +					mutex_unlock(&bdev->bd_mutex);
-> +					disk_put_part(part);
-> +					return -EBUSY;
+Also, udev_list_entry_get_name() and udev_list_entry_get_value() can
+return NULL, although I don't think it's possible here given that I
+check and have a reference on the device, udev_list_entry_foreach()
+cannot return a NULL list_entry, and I'm looking at a list of properties
+which AFAIK must have a value. None of the udev code checks for NULL
+here itself. But again, there's no compelling reason not to check for
+NULL.
 
-bdput(bdevp) missed?
+I'll resend this patch with the additional checks. 
 
-> +				}
-> +			}
-> +			disk_part_iter_exit(&piter);
-> +			part_nr_sects_write(part, (sector_t)length);
-> +			i_size_write(bdevp->bd_inode, p.length);
-> +			mutex_unlock(&bdevp->bd_mutex);
-> +			mutex_unlock(&bdev->bd_mutex);
-> +			bdput(bdevp);
-> +			disk_put_part(part);
-> +			return 0;
->   		default:
->   			return -EINVAL;
->   	}
+-Ben
 
-Thanks,
-Maxim
+>
+> Zdenek
