@@ -1,212 +1,119 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipath: enable getting uevents through
-	libudev
-Date: Mon, 9 Apr 2012 15:18:11 -0500
-Message-ID: <20120409201811.GS1241@ether.msp.redhat.com>
-References: <20120403234221.GM1241@ether.msp.redhat.com>
-	<4F7C2CAD.5060905@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Neerav Parikh <neerav.parikh-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [RFC PATCH] multipathd: Removal of device with invalid
+ uevent DEVPATH fails
+Date: Mon, 09 Apr 2012 13:53:17 -0700
+Message-ID: <20120409205317.29160.8485.stgit@localhost6.localdomain6>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4F7C2CAD.5060905@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Return-path: <devel-bounces-s9riP+hp16TNLxjTenLetw@public.gmane.org>
+List-Unsubscribe: <https://lists.open-fcoe.org/mailman/options/devel>,
+ <mailto:devel-request-s9riP+hp16TNLxjTenLetw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.open-fcoe.org/pipermail/devel>
+List-Post: <mailto:devel-s9riP+hp16TNLxjTenLetw@public.gmane.org>
+List-Help: <mailto:devel-request-s9riP+hp16TNLxjTenLetw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.open-fcoe.org/mailman/listinfo/devel>,
+ <mailto:devel-request-s9riP+hp16TNLxjTenLetw@public.gmane.org?subject=subscribe>
+Errors-To: devel-bounces-s9riP+hp16TNLxjTenLetw@public.gmane.org
+Sender: devel-bounces-s9riP+hp16TNLxjTenLetw@public.gmane.org
+To: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: devel-s9riP+hp16TNLxjTenLetw@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Apr 04, 2012 at 01:12:45PM +0200, Zdenek Kabelac wrote:
-> Dne 4.4.2012 01:42, Benjamin Marzinski napsal(a):
->> udev is removing support for RUN+="socket:..." rules. For now, I've kept
->> all the existing uevent code, but I've added a new method for getting the
->> uevent information using libudev that will be tried first.
->>
->> Signed-off-by: Benjamin Marzinski<bmarzins@redhat.com>
->> ---
->>   libmultipath/Makefile |    2
->>   libmultipath/uevent.c |  151 ++++++++++++++++++++++++++++++++++++++++++++------
->>   2 files changed, 134 insertions(+), 19 deletions(-)
->>
->> Index: multipath-tools-120123/libmultipath/Makefile
->> ===================================================================
->> --- multipath-tools-120123.orig/libmultipath/Makefile
->> +++ multipath-tools-120123/libmultipath/Makefile
->> @@ -7,7 +7,7 @@ include ../Makefile.inc
->>   SONAME=0
->>   DEVLIB = libmultipath.so
->>   LIBS = $(DEVLIB).$(SONAME)
->> -LIBDEPS = -lpthread -ldl -ldevmapper
->> +LIBDEPS = -lpthread -ldl -ldevmapper -ludev
->>
->>   OBJS = memory.o parser.o vector.o devmapper.o callout.o \
->>          hwtable.o blacklist.o util.o dmparser.o config.o \
->> Index: multipath-tools-120123/libmultipath/uevent.c
->> ===================================================================
->> --- multipath-tools-120123.orig/libmultipath/uevent.c
->> +++ multipath-tools-120123/libmultipath/uevent.c
->> @@ -39,6 +39,7 @@
->>   #include<pthread.h>
->>   #include<limits.h>
->>   #include<sys/mman.h>
->> +#include<libudev.h>
->>   #include<errno.h>
->>
->>   #include "memory.h"
->> @@ -161,7 +162,7 @@ int uevent_dispatch(int (*uev_trigger)(s
->>   	return 0;
->>   }
->>
->> -int uevent_listen(void)
->> +int failback_listen(void)
->>   {
->>   	int sock;
->>   	struct sockaddr_nl snl;
->> @@ -173,20 +174,6 @@ int uevent_listen(void)
->>   	int rcvszsz = sizeof(rcvsz);
->>   	unsigned int *prcvszsz = (unsigned int *)&rcvszsz;
->>   	const int feature_on = 1;
->> -
->> -	/*
->> -	 * Queue uevents for service by dedicated thread so that the uevent
->> -	 * listening thread does not block on multipathd locks (vecs->lock)
->> -	 * thereby not getting to empty the socket's receive buffer queue
->> -	 * often enough.
->> -	 */
->> -	INIT_LIST_HEAD(&uevq);
->> -
->> -	pthread_mutex_init(uevq_lockp, NULL);
->> -	pthread_cond_init(uev_condp, NULL);
->> -
->> -	pthread_cleanup_push(uevq_stop, NULL);
->> -
->>   	/*
->>   	 * First check whether we have a udev socket
->>   	 */
->> @@ -382,13 +369,141 @@ int uevent_listen(void)
->>
->>   exit:
->>   	close(sock);
->> +	return 1;
->> +}
->>
->> -	pthread_cleanup_pop(1);
->> +int uevent_listen(void)
->> +{
->> +	int err;
->> +	struct udev *udev = NULL;
->> +	struct udev_monitor *monitor = NULL;
->> +	int fd, socket_flags;
->> +	int need_failback = 0;
->> +	/*
->> +	 * Queue uevents for service by dedicated thread so that the uevent
->> +	 * listening thread does not block on multipathd locks (vecs->lock)
->> +	 * thereby not getting to empty the socket's receive buffer queue
->> +	 * often enough.
->> +	 */
->> +	INIT_LIST_HEAD(&uevq);
->> +
->> +	pthread_mutex_init(uevq_lockp, NULL);
->> +	pthread_cond_init(uev_condp, NULL);
->> +	pthread_cleanup_push(uevq_stop, NULL);
->> +
->> +	udev = udev_new();
->> +	if (!udev) {
->> +		condlog(2, "failed to create udev context");
->> +		need_failback = 1;
->> +		goto out;
->> +	}
->> +	monitor = udev_monitor_new_from_netlink(udev, "udev");
->> +	if (!monitor) {
->> +		condlog(2, "failed to create udev monitor");
->> +		need_failback = 1;
->> +		goto out;
->> +	}
->> +	if (udev_monitor_set_receive_buffer_size(monitor, 128 * 1024 * 1024))
->> +		condlog(2, "failed to increase buffer size");
->> +	fd = udev_monitor_get_fd(monitor);
->> +	socket_flags = fcntl(fd, F_GETFL);
->> +	if (socket_flags<  0) {
->> +		condlog(2, "failed to get monitor socket flags : %s",
->> +			strerror(errno));
->> +		need_failback = 1;
->> +		goto out;
->> +	}
->> +	if (fcntl(fd, F_SETFL, socket_flags&  ~O_NONBLOCK)<  0) {
->> +		condlog(2, "failed to set monitor socket flags : %s",
->> +			strerror(errno));
->> +		need_failback = 1;
->> +		goto out;
->> +	}
->> +	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
->> +							      NULL);
->> +	if (err)
->> +		condlog(2, "failed to create filter : %s\n", strerror(-err));
->> +	err = udev_monitor_enable_receiving(monitor);
->> +	if (err) {
->> +		condlog(2, "failed to enable receiving : %s\n", strerror(-err));
->> +		need_failback = 1;
->> +		goto out;
->> +	}
->> +	while (1) {
->> +		int i = 0;
->> +		char *pos, *end;
->> +		struct uevent *uev;
->> +		struct udev_device *dev;
->> +                struct udev_list_entry *list_entry;
->> +
->> +		dev = udev_monitor_receive_device(monitor);
->> +		if (!dev) {
->> +			condlog(0, "failed getting udev device");
->> +			continue;
->> +		}
->>
->> +		uev = alloc_uevent();
->> +		if (!uev) {
->> +			condlog(1, "lost uevent, oom");
->> +			continue;
->> +		}
->> +		pos = uev->buffer;
->> +		end = pos + HOTPLUG_BUFFER_SIZE + OBJECT_SIZE - 1;
->> +		udev_list_entry_foreach(list_entry, udev_device_get_properties_list_entry(dev)) {
->> +			const char *name, *value;
->> +			int bytes;
->> +
->> +			name = udev_list_entry_get_name(list_entry);
->> +			value = udev_list_entry_get_value(list_entry);
->> +			bytes = snprintf(pos, end - pos, "%s=%s", name,
->
-> I'd recommend to validate all input going from libudev agains NULL pointers:
->
-> (i.e. look at https://bugzilla.redhat.com/show_bug.cgi?id=809576)
+From: Neerav Parikh <Neerav.Parikh-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-Looking at the udev code and the Libudev reference manual, most of my
-checking decisions seem reasonable. I do more checking that udevd and
-udevadm do. But I suppose it doesn't hurt to do some more.
+When a VLAN device is removed via command line "vconfig rem <vlan-dev>"; the
+network layer will send out NETDEV_UNREGISTER notification to all the devices
+that are on top of the VLAN device and listening to that notification. After that
+the network layer will keep the device reference till all the holds are removed
+but it will go ahead and remove the sysfs entries of the VLAN device after sending
+out the notification.
+In case of an FCoE interface configured on top of a VLAN device; when the VLAN
+NETDEV_UNREGISTER is called it queues up the destroying of the interface in a delayed
+workqueue.
 
-I don't see how, given my previous checking, udev_monitor_get_fd() could
-fail, but that function can return a failure, and it's no pain to check it.
+Now, when SCSI disks that are discovered via FCoE interface are participating in a
+multipath environment the removal of VLAN devices results in multipathd not able to
+remove the individual paths from it's internal table resulting in dangling sysfs links
+and references.
 
-Also, udev_list_entry_get_name() and udev_list_entry_get_value() can
-return NULL, although I don't think it's possible here given that I
-check and have a reference on the device, udev_list_entry_foreach()
-cannot return a NULL list_entry, and I'm looking at a list of properties
-which AFAIK must have a value. None of the udev code checks for NULL
-here itself. But again, there's no compelling reason not to check for
-NULL.
+Multipathd is listening to uevents generated by the kernel and removal of the VLAN
+device and the tree below it is received by the uevent listener. In case of the
+the 'remove' uevent from the kernel for SCSI disks the DEVPATH for the SCSI disk
+ends at the VLAN interface name; resulting in the multipathd not able to find the
+device in sysfs and hence not removing it from it's internal table.
+Here's an excerpt from the syslog with multipath debug enabled for the sequence of
+'remove' uevent to understand what's received:
 
-I'll resend this patch with the additional checks. 
+[snip]
+Apr  2 13:22:23 linaut71 multipathd: uevent 'remove' from '/eth2.228-fcoe/ctlr_4/host6/rport-6:0-2/target6:0:0/6:0:0:0/block/sdb'
+Apr  2 13:22:23 linaut71 multipathd: UDEV_LOG=3
+Apr  2 13:22:23 linaut71 multipathd: ACTION=remove
+Apr  2 13:22:23 linaut71 multipathd: DEVPATH=/eth2.228-fcoe/ctlr_4/host6/rport-6:0-2/target6:0:0/6:0:0:0/block/sdb
+Apr  2 13:22:23 linaut71 multipathd: SUBSYSTEM=block
+Apr  2 13:22:23 linaut71 multipathd: DEVNAME=/dev/sdb
+Apr  2 13:22:23 linaut71 multipathd: DEVTYPE=disk
+Apr  2 13:22:23 linaut71 multipathd: SEQNUM=2040
+Apr  2 13:22:23 linaut71 multipathd: MAJOR=259
+Apr  2 13:22:23 linaut71 multipathd: MINOR=589824
+Apr  2 13:22:23 linaut71 multipathd: ID_SCSI=1
+Apr  2 13:22:23 linaut71 multipathd: ID_VENDOR=EMC
+Apr  2 13:22:23 linaut71 multipathd: ID_VENDOR_ENC=EMC\x20\x20\x20\x20\x20
+Apr  2 13:22:23 linaut71 multipathd: ID_MODEL=SYMMETRIX
+Apr  2 13:22:23 linaut71 multipathd: ID_MODEL_ENC=SYMMETRIX\x20\x20\x20\x20\x20\x20\x20
+Apr  2 13:22:23 linaut71 multipathd: ID_REVISION=5874
+Apr  2 13:22:23 linaut71 multipathd: ID_TYPE=disk
+Apr  2 13:22:23 linaut71 multipathd: ID_SERIAL=360000970000194900586533030303243
+Apr  2 13:22:24 linaut71 multipathd: ID_SERIAL_SHORT=60000970000194900586533030303243
+Apr  2 13:22:24 linaut71 multipathd: ID_WWN=0x6000097000019490
+Apr  2 13:22:24 linaut71 multipathd: ID_WWN_VENDOR_EXTENSION=0x0586533030303243
+Apr  2 13:22:24 linaut71 multipathd: ID_WWN_WITH_EXTENSION=0x60000970000194900586533030303243
+Apr  2 13:22:24 linaut71 multipathd: ID_SCSI_SERIAL=90058602C000
+Apr  2 13:22:24 linaut71 multipathd: ID_BUS=scsi
+Apr  2 13:22:24 linaut71 multipathd: ID_PATH=fc-0x50000972c0092919-lun-0
+Apr  2 13:22:24 linaut71 multipathd: DEVLINKS=/dev/block/259:589824 /dev/disk/by-id/scsi-360000970000194900586533030303243 /dev/disk/by-path/fc-0x50000972c0092919-l
+Apr  2 13:22:24 linaut71 multipathd: /eth2.228-fcoe/ctlr_4/host6/rport-6:0-2/target6:0:0/6:0:0:0/block/sdb: not found in sysfs
+Apr  2 13:22:24 linaut71 multipathd: uevent trigger error
+[snip]
 
--Ben
+With the below patch that I added to fix this issue; on failure of sysfs_device_get()
+in fetching the device from sysfs in uev_remove_path() instead of bailing out the code
+will continue and search for the device itself (leaf node in devpath) in the internal
+multipathd table. If it is found then it will continue with the removal of the path.
 
->
-> Zdenek
+
+
+Signed-off-by: Neerav Parikh <Neerav.Parikh-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+---
+ multipathd/main.c |   14 ++++++++++++--
+ 1 files changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 5b7195d..74fa8fc 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -553,12 +553,22 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs)
+ 	dev = sysfs_device_get(uev->devpath);
+ 	if (!dev) {
+ 		condlog(2, "%s: not found in sysfs", uev->devpath);
+-		return 1;
++		/*
++		 * Seems like we got uevent for a device that does not have
++		 * a valid devpath anymore.
++		 * Check if the device itself is actually present or not.
++		 */
++		condlog(2, "%s: searching path in pathvec", uev->kernel);
++		if (!find_path_by_dev(vecs->pathvec, uev->kernel)) {
++			condlog(2, "%s: path not found in pathvec",
++				uev->kernel);
++			return 1;
++		}
+ 	}
+ 	condlog(2, "%s: remove path (uevent)", uev->kernel);
+ 	retval = ev_remove_path(uev->kernel, vecs);
+ 
+-	if (!retval)
++	if (!retval && dev)
+ 		sysfs_device_put(dev);
+ 
+ 	return retval;
