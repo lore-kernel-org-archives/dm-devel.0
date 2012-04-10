@@ -1,240 +1,73 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2] multipath: enable getting uevents through
-	libudev
-Date: Mon, 9 Apr 2012 23:01:54 -0500
-Message-ID: <20120410040154.GT1241@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH] scsi_dh_rdac: Add dynamic match functionality to rdac
+ handler
+Date: Tue, 10 Apr 2012 17:06:42 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B0574C6@SACEXCMBX02-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>, "Krishnasamy, Somasundaram" <Somasundaram.Krishnasamy@netapp.com>, "Stankey, Robert" <Robert.Stankey@netapp.com>
 List-Id: dm-devel.ids
 
-udev is removing support for RUN+="socket:..." rules. For now, I've kept
-all the existing uevent code, but I've added a new method for getting the
-uevent information using libudev that will be tried first.  
+This patch adds the dynamic match functionality to scsi_dh_rdac driver.
+New vendor and product strings are normally not there in the kernel. Whenever
+the new product is tested with this driver we see failures during the disco-
+very. Without the handler attached, the default scsi mid-level retries would
+take effect for certain check-conditions. Default retries(5) are not enough in
+some cases(especially with large configuration or huge lun cases).
 
-This version includes more error checking.
+This patch will send an inquiry if the vendor/product strings are not in the
+device list and match with vendor signature.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
+Reviewed-by: Somasundaram Krishnasamy <Somasundaram.Krishnasamy@netapp.com>
 ---
- libmultipath/Makefile |    2 
- libmultipath/uevent.c |  155 ++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 138 insertions(+), 19 deletions(-)
 
-Index: multipath-tools-120403/libmultipath/Makefile
-===================================================================
---- multipath-tools-120403.orig/libmultipath/Makefile
-+++ multipath-tools-120403/libmultipath/Makefile
-@@ -7,7 +7,7 @@ include ../Makefile.inc
- SONAME=0
- DEVLIB = libmultipath.so
- LIBS = $(DEVLIB).$(SONAME)
--LIBDEPS = -lpthread -ldl -ldevmapper
-+LIBDEPS = -lpthread -ldl -ldevmapper -ludev
+--- linux-3.4-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2012-04-07 20:30:41.000000000 -0500
++++ linux-3.4-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2012-04-10 10:48:40.000000000 -0500
+@@ -818,7 +818,10 @@ static const struct scsi_dh_devlist rdac
  
- OBJS = memory.o parser.o vector.o devmapper.o callout.o \
-        hwtable.o blacklist.o util.o dmparser.o config.o \
-Index: multipath-tools-120403/libmultipath/uevent.c
-===================================================================
---- multipath-tools-120403.orig/libmultipath/uevent.c
-+++ multipath-tools-120403/libmultipath/uevent.c
-@@ -39,6 +39,7 @@
- #include <pthread.h>
- #include <limits.h>
- #include <sys/mman.h>
-+#include <libudev.h>
- #include <errno.h>
- 
- #include "memory.h"
-@@ -161,7 +162,7 @@ int uevent_dispatch(int (*uev_trigger)(s
- 	return 0;
- }
- 
--int uevent_listen(void)
-+int failback_listen(void)
+ static bool rdac_match(struct scsi_device *sdev)
  {
- 	int sock;
- 	struct sockaddr_nl snl;
-@@ -173,20 +174,6 @@ int uevent_listen(void)
- 	int rcvszsz = sizeof(rcvsz);
- 	unsigned int *prcvszsz = (unsigned int *)&rcvszsz;
- 	const int feature_on = 1;
--
--	/*
--	 * Queue uevents for service by dedicated thread so that the uevent
--	 * listening thread does not block on multipathd locks (vecs->lock)
--	 * thereby not getting to empty the socket's receive buffer queue
--	 * often enough.
--	 */
--	INIT_LIST_HEAD(&uevq);
--
--	pthread_mutex_init(uevq_lockp, NULL);
--	pthread_cond_init(uev_condp, NULL);
--
--	pthread_cleanup_push(uevq_stop, NULL);
--
- 	/*
- 	 * First check whether we have a udev socket
- 	 */
-@@ -382,13 +369,145 @@ int uevent_listen(void)
+-	int i;
++	int i, err;
++	struct c8_inquiry inqp;
++	struct request *rq;
++	struct request_queue *q = sdev->request_queue;
  
- exit:
- 	close(sock);
-+	return 1;
-+}
- 
--	pthread_cleanup_pop(1);
-+int uevent_listen(void)
-+{
-+	int err;
-+	struct udev *udev = NULL;
-+	struct udev_monitor *monitor = NULL;
-+	int fd, socket_flags;
-+	int need_failback = 1;
-+	/*
-+	 * Queue uevents for service by dedicated thread so that the uevent
-+	 * listening thread does not block on multipathd locks (vecs->lock)
-+	 * thereby not getting to empty the socket's receive buffer queue
-+	 * often enough.
-+	 */
-+	INIT_LIST_HEAD(&uevq);
- 
-+	pthread_mutex_init(uevq_lockp, NULL);
-+	pthread_cond_init(uev_condp, NULL);
-+	pthread_cleanup_push(uevq_stop, NULL);
+ 	if (scsi_device_tpgs(sdev))
+ 		return false;
+@@ -831,6 +834,27 @@ static bool rdac_match(struct scsi_devic
+ 			return true;
+ 		}
+ 	}
 +
-+	udev = udev_new();
-+	if (!udev) {
-+		condlog(2, "failed to create udev context");
-+		goto out;
-+	}
-+	monitor = udev_monitor_new_from_netlink(udev, "udev");
-+	if (!monitor) {
-+		condlog(2, "failed to create udev monitor");
-+		goto out;
-+	}
-+	if (udev_monitor_set_receive_buffer_size(monitor, 128 * 1024 * 1024))
-+		condlog(2, "failed to increase buffer size");
-+	fd = udev_monitor_get_fd(monitor);
-+	if (fd < 0) {
-+		condlog(2, "failed to get monitor fd");
-+		goto out;
-+	}
-+	socket_flags = fcntl(fd, F_GETFL);
-+	if (socket_flags < 0) {
-+		condlog(2, "failed to get monitor socket flags : %s",
-+			strerror(errno));
-+		goto out;
-+	}
-+	if (fcntl(fd, F_SETFL, socket_flags & ~O_NONBLOCK) < 0) {
-+		condlog(2, "failed to set monitor socket flags : %s",
-+			strerror(errno));
-+		goto out;
-+	}
-+	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
-+							      NULL);
-+	if (err)
-+		condlog(2, "failed to create filter : %s\n", strerror(-err));
-+	err = udev_monitor_enable_receiving(monitor);
-+	if (err) {
-+		condlog(2, "failed to enable receiving : %s\n", strerror(-err));
-+		goto out;
-+	}
-+	while (1) {
-+		int i = 0;
-+		char *pos, *end;
-+		struct uevent *uev;
-+		struct udev_device *dev;
-+                struct udev_list_entry *list_entry;
++	/* Now lets try to match the signature on 0xC8 page */
++	memset(&inqp, 0, sizeof(struct c8_inquiry));
++	rq = get_rdac_req(sdev, &inqp, sizeof(struct c8_inquiry), READ);
++	if (!rq)
++		return false;
 +
-+		dev = udev_monitor_receive_device(monitor);
-+		if (!dev) {
-+			condlog(0, "failed getting udev device");
-+			continue;
-+		}
++	rq->cmd[0] = INQUIRY;
++	rq->cmd[1] = 1;
++	rq->cmd[2] = 0xC8;
++	rq->cmd[4] = sizeof(struct c8_inquiry);
++	rq->cmd_len = COMMAND_SIZE(INQUIRY);
 +
-+		uev = alloc_uevent();
-+		if (!uev) {
-+			condlog(1, "lost uevent, oom");
-+			continue;
-+		}
-+		pos = uev->buffer;
-+		end = pos + HOTPLUG_BUFFER_SIZE + OBJECT_SIZE - 1;
-+		udev_list_entry_foreach(list_entry, udev_device_get_properties_list_entry(dev)) {
-+			const char *name, *value;
-+			int bytes;
-+
-+			name = udev_list_entry_get_name(list_entry);
-+			if (!name)
-+				name = "(null)";
-+			value = udev_list_entry_get_value(list_entry);
-+			if (!value)
-+				value = "(null)";
-+			bytes = snprintf(pos, end - pos, "%s=%s", name,
-+					value);
-+			if (pos + bytes >= end) {
-+				condlog(2, "buffer overflow for uevent");
-+				break;
-+			}
-+			uev->envp[i] = pos;
-+			pos += bytes;
-+			*pos = '\0';
-+			pos++;
-+			if (strcmp(name, "DEVPATH") == 0)
-+				uev->devpath = uev->envp[i] + 8;
-+			if (strcmp(name, "ACTION") == 0)
-+				uev->action = uev->envp[i] + 7;
-+			i++;
-+			if (i == HOTPLUG_NUM_ENVP - 1)
-+				break;
-+		}
-+		udev_device_unref(dev);
-+		uev->envp[i] = NULL;
-+
-+		condlog(3, "uevent '%s' from '%s'", uev->action, uev->devpath);
-+		uev->kernel = strrchr(uev->devpath, '/');
-+		if (uev->kernel)
-+			uev->kernel++;
-+
-+		/* print payload environment */
-+		for (i = 0; uev->envp[i] != NULL; i++)
-+			condlog(5, "%s", uev->envp[i]);
-+
-+		/*
-+ 		 * Queue uevent and poke service pthread.
-+ 		 */
-+		pthread_mutex_lock(uevq_lockp);
-+		list_add_tail(&uev->node, &uevq);
-+		pthread_cond_signal(uev_condp);
-+		pthread_mutex_unlock(uevq_lockp);
++	err = blk_execute_rq(q, NULL, rq, 1);
++	blk_put_request(rq);
++	if (err != -EIO) {
++		if (inqp.page_id[0] == 'e' && inqp.page_id[1] == 'd' &&
++		    inqp.page_id[2] == 'i' && inqp.page_id[3] == 'd')
++			return true;
 +	}
-+	need_failback = 0;
-+out:
-+	if (monitor)
-+		udev_monitor_unref(monitor);
-+	if (udev)
-+		udev_unref(udev);
-+	if (need_failback)
-+		err = failback_listen();
-+	pthread_cleanup_pop(1);
- 	pthread_mutex_destroy(uevq_lockp);
- 	pthread_cond_destroy(uev_condp);
--
--	return 1;
-+	return err;
++
+ 	return false;
  }
  
- extern int
+
+
