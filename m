@@ -1,14 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/2] dm thin: use slab_pool for caches
-Date: Thu, 12 Apr 2012 18:34:35 -0400
-Message-ID: <1334270075-11699-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 2/2 v2] dm thin: use slab mempools with local
+	caches
+Date: Thu, 12 Apr 2012 18:39:17 -0400
+Message-ID: <20120412223917.GA11729@redhat.com>
 References: <1334270075-11699-1-git-send-email-snitzer@redhat.com>
+	<1334270075-11699-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1334270075-11699-1-git-send-email-snitzer@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1334270075-11699-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,20 +26,22 @@ Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
 Use dedicated caches prefixed with a "dm_" name rather than rely on
-generic slab caches.
+kmalloc mempools backed by generic slab caches.
 
 This will aid in debugging thinp memory leaks should they occur.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c |   52 ++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 47 insertions(+), 5 deletions(-)
+ drivers/md/dm-thin.c |   52 +++++++++++++++++++++++++++++++++++++++++++++----
+ 1 files changed, 47 insertions(+), 5 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-thin.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-thin.c
-+++ linux-2.6/drivers/md/dm-thin.c
-@@ -141,6 +141,8 @@ static uint32_t calc_nr_buckets(unsigned
+v2: tweaked subject and header some, no code changes.
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 301db0f..57d40b1 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -141,6 +141,8 @@ static uint32_t calc_nr_buckets(unsigned nr_cells)
  	return n;
  }
  
@@ -45,7 +50,7 @@ Index: linux-2.6/drivers/md/dm-thin.c
  /*
   * @nr_cells should be the number of cells you want in use _concurrently_.
   * Don't confuse it with the number of distinct keys.
-@@ -157,8 +159,7 @@ static struct bio_prison *prison_create(
+@@ -157,8 +159,7 @@ static struct bio_prison *prison_create(unsigned nr_cells)
  		return NULL;
  
  	spin_lock_init(&prison->lock);
@@ -55,7 +60,7 @@ Index: linux-2.6/drivers/md/dm-thin.c
  	if (!prison->cell_pool) {
  		kfree(prison);
  		return NULL;
-@@ -1649,6 +1650,9 @@ static void pool_features_init(struct po
+@@ -1649,6 +1650,9 @@ static void pool_features_init(struct pool_features *pf)
  	pf->discard_passdown = 1;
  }
  
@@ -65,7 +70,7 @@ Index: linux-2.6/drivers/md/dm-thin.c
  static void __pool_destroy(struct pool *pool)
  {
  	__pool_table_remove(pool);
-@@ -1738,7 +1742,7 @@ static struct pool *pool_create(struct m
+@@ -1738,7 +1742,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
  
  	pool->next_mapping = NULL;
  	pool->mapping_pool =
@@ -74,7 +79,7 @@ Index: linux-2.6/drivers/md/dm-thin.c
  	if (!pool->mapping_pool) {
  		*error = "Error creating pool's mapping mempool";
  		err_p = ERR_PTR(-ENOMEM);
-@@ -1746,7 +1750,7 @@ static struct pool *pool_create(struct m
+@@ -1746,7 +1750,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
  	}
  
  	pool->endio_hook_pool =
@@ -137,3 +142,5 @@ Index: linux-2.6/drivers/md/dm-thin.c
  }
  
  module_init(dm_thin_init);
+-- 
+1.7.4.4
