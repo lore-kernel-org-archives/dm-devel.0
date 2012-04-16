@@ -1,81 +1,42 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] dm-raid: record and handle missing devices
-Date: Mon, 16 Apr 2012 18:45:43 -0500
-Message-ID: <1334619943.16017.27.camel@f14.redhat.com>
+Subject: [PATCH 0 of 2] dm-raid: Bug fixes
+Date: Mon, 16 Apr 2012 18:45:17 -0500
+Message-ID: <1334619917.16017.25.camel@f14.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-raid-owner@vger.kernel.org>
 Sender: linux-raid-owner@vger.kernel.org
-To: linux-raid@vger.kernel.org, dm-devel@redhat.com
-Cc: neilb@suse.de, agk@redhat.com
+To: dm-devel@redhat.com, linux-raid@vger.kernel.org
+Cc: agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-Missing devices should be recorded and cause array to operate in degraded mode.
+Neil,
 
-When specifying the devices that compose a DM RAID array, it is possible to denote
-failed or missing devices with '-'s.  When this occurs, we must set mddev->degraded.
-Otherwise, if the missing/failed device comes back, the bitmap will not have
-recorded what areas of the array need to be recovered - the array will be assumed to
-be in-sync!  Additionally, we must mark in the superblock which device was specified
-as missing/failed.  We do this by setting the appropriate bit in the 'failed_devices'
-field.  Finally, we must also ensure that the superblock is properly recorded by
-setting 'MD_CHANGE_DEVS' in raid_resume.  If we do not cause the superblock to be
-rewritten by the resume function, it is possible for a stale superblock to be
-written by an out-going in-active table (during 'raid_dtr').
+I have 3 bugs that I've been working on.  Two I have fixed and one I
+have not, but have a question.
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+The first patch (dm-raid-set-recovery-flags-on-resume) addresses the
+fact that some recovery flags are altered during suspend, but not
+corrected upon resume.  I'm wondering if you think these flags would be
+better pushed into 'mddev_resume' rather that being altered in
+dm-raid.c?
 
-Index: linux-upstream/drivers/md/dm-raid.c
-===================================================================
---- linux-upstream.orig/drivers/md/dm-raid.c
-+++ linux-upstream/drivers/md/dm-raid.c
-@@ -226,6 +226,7 @@ static int dev_parms(struct raid_set *rs
- 			if (rs->dev[i].meta_dev)
- 				return -EINVAL;
- 
-+			rs->md.degraded++;
- 			continue;
- 		}
- 
-@@ -606,6 +607,7 @@ static int read_disk_sb(struct md_rdev *
- 	if (!sync_page_io(rdev, 0, size, rdev->sb_page, READ, 1)) {
- 		DMERR("Failed to read superblock of device at position %d",
- 		      rdev->raid_disk);
-+		rdev->mddev->degraded++;
- 		set_bit(Faulty, &rdev->flags);
- 		return -EINVAL;
- 	}
-@@ -617,16 +619,18 @@ static int read_disk_sb(struct md_rdev *
- 
- static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
- {
--	struct md_rdev *r;
-+	int i;
- 	uint64_t failed_devices;
- 	struct dm_raid_superblock *sb;
-+	struct raid_set *rs = container_of(mddev, struct raid_set, md);
- 
- 	sb = page_address(rdev->sb_page);
- 	failed_devices = le64_to_cpu(sb->failed_devices);
- 
--	rdev_for_each(r, mddev)
--		if ((r->raid_disk >= 0) && test_bit(Faulty, &r->flags))
--			failed_devices |= (1ULL << r->raid_disk);
-+	for (i = 0; i < mddev->raid_disks; i++)
-+		if (!rs->dev[i].data_dev ||
-+		    test_bit(Faulty, &(rs->dev[i].rdev.flags)))
-+			failed_devices |= (1ULL << i);
- 
- 	memset(sb, 0, sizeof(*sb));
- 
-@@ -1252,6 +1256,7 @@ static void raid_resume(struct dm_target
- {
- 	struct raid_set *rs = ti->private;
- 
-+	set_bit(MD_CHANGE_DEVS, &rs->md.flags);
- 	if (!rs->bitmap_loaded) {
- 		bitmap_load(&rs->md);
- 		rs->bitmap_loaded = 1;
+The second patch (dm-raid-record-and-handle-missing-devices) adds code
+to address the case where the user specifies particular array positions
+as missing.  I don't have any significant questions about this patch.
+
+The 3rd issue I am seeing concerns how 'suspend' happens.  Suspend
+should flush all outstanding I/O and quiesce.  When I look at the code,
+I feel it should be doing this.  ('md_stop_writes' is called and
+followed-up by a call to 'mddev_suspend', which quiesces the
+personality.)  However, if I create a RAID1 device, suspend it, and then
+detach one of the legs, it does not show the changes written immediately
+before the suspend.  If I issue a 'sync', then the changes do show-up.
+I confused as to why the suspend process doesn't seem to be pushing out
+the writes that have been issued.  Any ideas?
+
+Thanks, (the first two patches follow)
+ brassow
 
 
