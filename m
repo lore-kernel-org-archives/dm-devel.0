@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 0 of 2] dm-raid: Bug fixes
-Date: Mon, 16 Apr 2012 18:45:17 -0500
-Message-ID: <1334619917.16017.25.camel@f14.redhat.com>
+Subject: [PATCH 1 of 2] dm-raid: set recovery flags on resume
+Date: Mon, 16 Apr 2012 18:45:35 -0500
+Message-ID: <1334619935.16017.26.camel@f14.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -11,32 +11,35 @@ To: dm-devel@redhat.com, linux-raid@vger.kernel.org
 Cc: agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-Neil,
+Set recovery flags so that recovery restarts when DM device is resumed.
 
-I have 3 bugs that I've been working on.  Two I have fixed and one I
-have not, but have a question.
+When a device-mapper device is suspended, all I/O must stop.  This is done by
+calling 'md_stop_writes' and 'mddev_suspend'.  These calls in-turn manipulate
+the recovery flags - including setting 'MD_RECOVERY_FROZEN'.  The DM device
+may have been suspended while recovery was not yet complete, so the process
+needs to pick-up where it left off.  Since 'mddev_resume' does not unset
+'MD_RECOVERY_FROZEN' and set 'MD_RECOVERY_NEEDED', we must do it ourselves before
+calling 'mddev_resume'.
 
-The first patch (dm-raid-set-recovery-flags-on-resume) addresses the
-fact that some recovery flags are altered during suspend, but not
-corrected upon resume.  I'm wondering if you think these flags would be
-better pushed into 'mddev_resume' rather that being altered in
-dm-raid.c?
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-The second patch (dm-raid-record-and-handle-missing-devices) adds code
-to address the case where the user specifies particular array positions
-as missing.  I don't have any significant questions about this patch.
-
-The 3rd issue I am seeing concerns how 'suspend' happens.  Suspend
-should flush all outstanding I/O and quiesce.  When I look at the code,
-I feel it should be doing this.  ('md_stop_writes' is called and
-followed-up by a call to 'mddev_suspend', which quiesces the
-personality.)  However, if I create a RAID1 device, suspend it, and then
-detach one of the legs, it does not show the changes written immediately
-before the suspend.  If I issue a 'sync', then the changes do show-up.
-I confused as to why the suspend process doesn't seem to be pushing out
-the writes that have been issued.  Any ideas?
-
-Thanks, (the first two patches follow)
- brassow
+Index: linux-upstream/drivers/md/dm-raid.c
+===================================================================
+--- linux-upstream.orig/drivers/md/dm-raid.c
++++ linux-upstream/drivers/md/dm-raid.c
+@@ -1255,9 +1255,11 @@ static void raid_resume(struct dm_target
+ 	if (!rs->bitmap_loaded) {
+ 		bitmap_load(&rs->md);
+ 		rs->bitmap_loaded = 1;
+-	} else
++	} else {
++		set_bit(MD_RECOVERY_NEEDED, &rs->md.recovery);
++		clear_bit(MD_RECOVERY_FROZEN, &rs->md.recovery);
+ 		md_wakeup_thread(rs->md.thread);
+-
++	}
+ 	mddev_resume(&rs->md);
+ }
+ 
 
 
