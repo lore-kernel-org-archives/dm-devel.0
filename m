@@ -1,111 +1,96 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: RE: [dm-devel] [PATCH 0/2] 'default' hardware handler for multipath
-Date: Wed, 18 Apr 2012 16:25:24 +0000
-Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B059160@SACEXCMBX02-PRD.hq.netapp.com>
-References: <1333385035-6663-1-git-send-email-hare@suse.de>
- <77471C95FAFD844C8CA02DD4F4C5FE2B03A484@SACEXCMBX02-PRD.hq.netapp.com>
- <4F8ECAB5.1020806@suse.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4F8ECAB5.1020806@suse.de>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH 0 of 4] dm-raid: various bug fixes
+Date: Wed, 18 Apr 2012 16:32:00 -0500
+Message-ID: <A71FAACD-D1A7-4452-BDD3-5156DB9E5497@redhat.com>
+References: <1334716219.23908.14.camel@f14.redhat.com>
+	<20120418134843.1376cc7e@notabene.brown>
+	<3F107DB9-0ED6-47C5-9F5A-DF485017EA92@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v1084)
+Content-Type: multipart/mixed; boundary="===============5679787356347500322=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <3F107DB9-0ED6-47C5-9F5A-DF485017EA92@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hannes,
 
-> -----Original Message-----
-> From: Hannes Reinecke [mailto:hare@suse.de]
-> Sent: Wednesday, April 18, 2012 9:08 AM
-> To: Moger, Babu
-> Cc: device-mapper development; linux-scsi@vger.kernel.org; Mike Snitz=
-er
-> Subject: Re: [dm-devel] [PATCH 0/2] 'default' hardware handler for mu=
-ltipath
->=20
-> On 04/03/2012 11:12 PM, Moger, Babu wrote:
-> > Thanks Hannes. We appreciate your work on this.
-> >
-> >> -----Original Message-----
-> >> From: dm-devel-bounces@redhat.com [mailto:dm-devel-
-> >> bounces@redhat.com] On Behalf Of Hannes Reinecke
-> >> Sent: Monday, April 02, 2012 11:44 AM
-> >> To: linux-scsi@vger.kernel.org
-> >> Cc: dm-devel@redhat.com; Mike Snitzer
-> >> Subject: [dm-devel] [PATCH 0/2] 'default' hardware handler for mul=
-tipath
-> >>
-> >> This patchset introduces a 'default' hardware handler for dm-multi=
-path.
-> >> Modern storage arrays typically support two failover methods, the =
-original
-> >> proprietary and the modern ALUA-based one.
-> >> The device_handler implementation will currently select the ALUA
-> handler,
-> >> and falling back to the proprietary one if ALUA isn't supported.
-> >> However, in the built-in hardware table for multipath one can spec=
-ify only
-> >> one hardware handler, causing the original hardware handler to be
-> >> overwritten.
-> >> By specifying a 'default' hardware handler multipath will not try =
-to attach a
-> >> specific hardware handler, but rather using the currently attached=
- on.
-> >
-> > I think we still have some issues here. Right now we load the drive=
-r
-> > either by adding it in initrd or by using request_module call from =
-device
-> mapper.
-> > If the user passes, hardware_handler   "1 default"  from multipath =
-then
-> request_module will fail.
-> > How are we going to load the driver if these handlers are not loade=
-d.
-> >
-> The idea of the 'default' hardware handler is to avoid multipath
-> overriding the kernel matchine algorithm. To make this work we
-> obviously have to load the modules prior to start multipathing.
->=20
-> Given that we (ie RH and us) are already loading the device-handler
-> modules from the initrd independent from multipathing we should be fi=
-ne.
->=20
-> But thinking a bit more about it, it might be better to handle this
-> via features.
-> Implementing a feature like 'default_hw_handler' would not override
-> the default hardware handler from the hardware table.
-> So the requested hardware handler would still be loaded, but the
-> actual initialisation would be controlled via the feature.
+--===============5679787356347500322==
+Content-Type: multipart/alternative; boundary=Apple-Mail-1--4764693
 
-hardware_handler is also used to pass on the arguments to handler. Like=
-=2E
-	hardware_handler        "2 emc 1"
-We have to make sure that this feature does not break here. Considering=
- all this=20
-don't you think it may be better if we make this decision in multipath =
-tools itself.
-Common factor here is alua. It is always between alua or some other han=
-dler.
-Does it make sense to check TPGS in tools?=20
 
-> Yep, that sound better.
-> I'll be preparing a patch.
+--Apple-Mail-1--4764693
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
+
+
+On Apr 18, 2012, at 9:05 AM, Brassow Jonathan wrote:
+
 >=20
-> Cheers,
->=20
-> Hannes
-> --
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 5-of-5: changing the check to 'saved_raid_disk >=3D 0' would be fine, =
+but I think I should initialize 'saved_raid_disk' to -1 in dm-raid.c =
+then normally.  Right now, an nominal initial value is not set - meaning =
+it is '0'.  (When a device comes back from a failure, 'saved_raid_disk' =
+is assigned its old position.)
+
+... that's not quite right.  I do call 'md_rdev_init' which sets =
+'saved_raid_disk' to -1.  Then, if the device has returned after a =
+disappearance, I set 'saved_raid_disk' to it's old position.  Therefore, =
+'saved_raid_disk >=3D 0' would be fine and wouldn't require me to set -1 =
+in dm-raid.c.
+
+ brassow
+
+
+--Apple-Mail-1--4764693
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html;
+	charset=us-ascii
+
+<html><head></head><body style=3D"word-wrap: break-word; =
+-webkit-nbsp-mode: space; -webkit-line-break: after-white-space; =
+"><br><div><div>On Apr 18, 2012, at 9:05 AM, Brassow Jonathan =
+wrote:</div><br class=3D"Apple-interchange-newline"><blockquote =
+type=3D"cite"><span class=3D"Apple-style-span" style=3D"border-collapse: =
+separate; font-family: Helvetica; font-style: normal; font-variant: =
+normal; font-weight: normal; letter-spacing: normal; line-height: =
+normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; =
+text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; =
+-webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: =
+0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: =
+auto; -webkit-text-stroke-width: 0px; font-size: medium; "><br>5-of-5: =
+changing the check to 'saved_raid_disk &gt;=3D 0' would be fine, but I =
+think I should initialize 'saved_raid_disk' to -1 in dm-raid.c then =
+normally. &nbsp;Right now, an nominal initial value is not set - meaning =
+it is '0'. &nbsp;(When a device comes back from a failure, =
+'saved_raid_disk' is assigned its old =
+position.)<br></span></blockquote></div><br><div>... that's not quite =
+right. &nbsp;I do call 'md_rdev_init' which sets 'saved_raid_disk' to =
+-1. &nbsp;Then, if the device has returned after a disappearance, I set =
+'saved_raid_disk' to it's old position. &nbsp;Therefore, =
+'saved_raid_disk &gt;=3D 0' would be fine and wouldn't require me to set =
+-1 in =
+dm-raid.c.</div><div><br></div><div>&nbsp;brassow</div><div><br></div></bo=
+dy></html>=
+
+--Apple-Mail-1--4764693--
+
+
+--===============5679787356347500322==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5679787356347500322==--
