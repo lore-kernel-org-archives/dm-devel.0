@@ -1,46 +1,60 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [PATCH] scsi_dh_rdac: Add dynamic match functionality to rdac
- handler
-Date: Wed, 18 Apr 2012 00:32:31 -0500
-Message-ID: <4F8E51EF.5010504@cs.wisc.edu>
-References: <77471C95FAFD844C8CA02DD4F4C5FE2B0574C6@SACEXCMBX02-PRD.hq.netapp.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <77471C95FAFD844C8CA02DD4F4C5FE2B0574C6@SACEXCMBX02-PRD.hq.netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@netapp.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "Krishnasamy, Somasundaram" <Somasundaram.Krishnasamy@netapp.com>, "Stankey, Robert" <Robert.Stankey@netapp.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH 0 of 4] dm-raid: various bug fixes
+Date: Wed, 18 Apr 2012 09:05:59 -0500
+Message-ID: <3F107DB9-0ED6-47C5-9F5A-DF485017EA92@redhat.com>
+References: <1334716219.23908.14.camel@f14.redhat.com> <20120418134843.1376cc7e@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v1084)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20120418134843.1376cc7e@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 04/10/2012 12:06 PM, Moger, Babu wrote:
-> This patch adds the dynamic match functionality to scsi_dh_rdac driver.
-> New vendor and product strings are normally not there in the kernel. Whenever
-> the new product is tested with this driver we see failures during the disco-
-> very. Without the handler attached, the default scsi mid-level retries would
-> take effect for certain check-conditions. Default retries(5) are not enough in
-> some cases(especially with large configuration or huge lun cases).
-> 
-> This patch will send an inquiry if the vendor/product strings are not in the
-> device list and match with vendor signature.
-> 
-> Signed-off-by: Babu Moger <babu.moger@netapp.com>
-> Reviewed-by: Somasundaram Krishnasamy <Somasundaram.Krishnasamy@netapp.com>
-> ---
-> 
-> --- linux-3.4-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2012-04-07 20:30:41.000000000 -0500
-> +++ linux-3.4-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2012-04-10 10:48:40.000000000 -0500
-> @@ -818,7 +818,10 @@ static const struct scsi_dh_devlist rdac
->  
->  static bool rdac_match(struct scsi_device *sdev)
->  {
-> -	int i;
-> +	int i, err;
-> +	struct c8_inquiry inqp;
 
-The per function stack use limit is 512 bytes right? If so then the
-patch seems ok to me (thought maybe the c8_inquiry was too large but it
-is under that 512 limit), so:
+On Apr 17, 2012, at 10:48 PM, NeilBrown wrote:
 
-Reviewed-by: Mike Christie <michaelc@cs.wisc.edu>
+> On Tue, 17 Apr 2012 21:30:19 -0500 Jonathan Brassow <jbrassow@redhat.com>
+> wrote:
+> 
+>> Neil,
+>> 
+>> I've cleaned up the first two patches I sent earlier:
+>> 	[1 of 5] dm-raid-set-recovery-flags-on-resume.patch
+>> 	[2 of 5] dm-raid-record-and-handle-missing-devices.patch
+>> and added a couple more:
+>> 	[3 of 5] dm-raid-need-safe-version-of-rdev_for_each.patch
+>> 	[4 of 5] dm-raid-use-md_error-in-place-of-faulty-bit.patch
+>> 	[5 of 5] md-raid1-further-conditionalize-fullsync.patch
+>> 
+>> Patch [5 of 5] I think needs some work.  It fixes the problem I'm seeing
+>> and seems to go along with similar logic used for RAID5 in commit
+>> d6b212f4b19da5301e6b6eca562e5c7a2a6e8c8d.  It also seems like a workable
+>> solution based on the code surrounding commit
+>> d30519fc59c5cc2f7772fa67b16b1a2426d36c95.  Can you let me know if I'm
+>> stretching the usage of 'saved_raid_disk' too far?
+>> 
+>> Thanks,
+>> brassow
+> 
+> Thanks.
+> 
+> 3-of-5 should go in 3.4 presumably.  The rest wait for 3.5?  Or do you think
+> they should be in 3.4?
+> 
+> 5-of-5:  Maybe it would make sense just to check if saved_raid_disk >= 0 ??
+> 
+> This is only relevant for dm-raid isn't it?  I'd need to think through how
+> all that fits together again.
+> 
+> The rest are all fine and are in my for-next
+
+Thanks Neil,
+
+Yes, 3-of-5 should probably go in sooner rather than later.  Waiting on the others shouldn't hurt.
+
+5-of-5: changing the check to 'saved_raid_disk >= 0' would be fine, but I think I should initialize 'saved_raid_disk' to -1 in dm-raid.c then normally.  Right now, an nominal initial value is not set - meaning it is '0'.  (When a device comes back from a failure, 'saved_raid_disk' is assigned its old position.)
+
+ brassow
