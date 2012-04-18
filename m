@@ -1,60 +1,83 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH 0 of 4] dm-raid: various bug fixes
-Date: Wed, 18 Apr 2012 09:05:59 -0500
-Message-ID: <3F107DB9-0ED6-47C5-9F5A-DF485017EA92@redhat.com>
-References: <1334716219.23908.14.camel@f14.redhat.com> <20120418134843.1376cc7e@notabene.brown>
-Mime-Version: 1.0 (Apple Message framework v1084)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20120418134843.1376cc7e@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH 0/2] 'default' hardware handler for multipath
+Date: Wed, 18 Apr 2012 16:07:49 +0200
+Message-ID: <4F8ECAB5.1020806@suse.de>
+References: <1333385035-6663-1-git-send-email-hare@suse.de> <77471C95FAFD844C8CA02DD4F4C5FE2B03A484@SACEXCMBX02-PRD.hq.netapp.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <77471C95FAFD844C8CA02DD4F4C5FE2B03A484@SACEXCMBX02-PRD.hq.netapp.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
+On 04/03/2012 11:12 PM, Moger, Babu wrote:
+> Thanks Hannes. We appreciate your work on this.
+>=20
+>> -----Original Message-----
+>> From: dm-devel-bounces@redhat.com [mailto:dm-devel-
+>> bounces@redhat.com] On Behalf Of Hannes Reinecke
+>> Sent: Monday, April 02, 2012 11:44 AM
+>> To: linux-scsi@vger.kernel.org
+>> Cc: dm-devel@redhat.com; Mike Snitzer
+>> Subject: [dm-devel] [PATCH 0/2] 'default' hardware handler for multi=
+path
+>>
+>> This patchset introduces a 'default' hardware handler for dm-multipa=
+th.
+>> Modern storage arrays typically support two failover methods, the or=
+iginal
+>> proprietary and the modern ALUA-based one.
+>> The device_handler implementation will currently select the ALUA han=
+dler,
+>> and falling back to the proprietary one if ALUA isn't supported.
+>> However, in the built-in hardware table for multipath one can specif=
+y only
+>> one hardware handler, causing the original hardware handler to be
+>> overwritten.
+>> By specifying a 'default' hardware handler multipath will not try to=
+ attach a
+>> specific hardware handler, but rather using the currently attached o=
+n.
+>=20
+> I think we still have some issues here. Right now we load the driver
+> either by adding it in initrd or by using request_module call from de=
+vice mapper.
+> If the user passes, hardware_handler   "1 default"  from multipath th=
+en request_module will fail.=20
+> How are we going to load the driver if these handlers are not loaded.=
+=20
+>=20
+The idea of the 'default' hardware handler is to avoid multipath
+overriding the kernel matchine algorithm. To make this work we
+obviously have to load the modules prior to start multipathing.
 
-On Apr 17, 2012, at 10:48 PM, NeilBrown wrote:
+Given that we (ie RH and us) are already loading the device-handler
+modules from the initrd independent from multipathing we should be fine=
+=2E
 
-> On Tue, 17 Apr 2012 21:30:19 -0500 Jonathan Brassow <jbrassow@redhat.com>
-> wrote:
-> 
->> Neil,
->> 
->> I've cleaned up the first two patches I sent earlier:
->> 	[1 of 5] dm-raid-set-recovery-flags-on-resume.patch
->> 	[2 of 5] dm-raid-record-and-handle-missing-devices.patch
->> and added a couple more:
->> 	[3 of 5] dm-raid-need-safe-version-of-rdev_for_each.patch
->> 	[4 of 5] dm-raid-use-md_error-in-place-of-faulty-bit.patch
->> 	[5 of 5] md-raid1-further-conditionalize-fullsync.patch
->> 
->> Patch [5 of 5] I think needs some work.  It fixes the problem I'm seeing
->> and seems to go along with similar logic used for RAID5 in commit
->> d6b212f4b19da5301e6b6eca562e5c7a2a6e8c8d.  It also seems like a workable
->> solution based on the code surrounding commit
->> d30519fc59c5cc2f7772fa67b16b1a2426d36c95.  Can you let me know if I'm
->> stretching the usage of 'saved_raid_disk' too far?
->> 
->> Thanks,
->> brassow
-> 
-> Thanks.
-> 
-> 3-of-5 should go in 3.4 presumably.  The rest wait for 3.5?  Or do you think
-> they should be in 3.4?
-> 
-> 5-of-5:  Maybe it would make sense just to check if saved_raid_disk >= 0 ??
-> 
-> This is only relevant for dm-raid isn't it?  I'd need to think through how
-> all that fits together again.
-> 
-> The rest are all fine and are in my for-next
+But thinking a bit more about it, it might be better to handle this
+via features.
+Implementing a feature like 'default_hw_handler' would not override
+the default hardware handler from the hardware table.
+So the requested hardware handler would still be loaded, but the
+actual initialisation would be controlled via the feature.
 
-Thanks Neil,
+Yep, that sound better.
+I'll be preparing a patch.
 
-Yes, 3-of-5 should probably go in sooner rather than later.  Waiting on the others shouldn't hurt.
+Cheers,
 
-5-of-5: changing the check to 'saved_raid_disk >= 0' would be fine, but I think I should initialize 'saved_raid_disk' to -1 in dm-raid.c then normally.  Right now, an nominal initial value is not set - meaning it is '0'.  (When a device comes back from a failure, 'saved_raid_disk' is assigned its old position.)
-
- brassow
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
