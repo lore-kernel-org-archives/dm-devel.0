@@ -1,14 +1,13 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 05/12] Use udev enumeration during discovery
-Date: Thu, 19 Apr 2012 11:08:59 +0200
-Message-ID: <1334826546-32039-6-git-send-email-hare@suse.de>
-References: <1334826546-32039-1-git-send-email-hare@suse.de>
+Subject: [PATCH 1/2] Compilation fix for system not providing
+	OOM_SCORE_ADJ_MIN
+Date: Thu, 19 Apr 2012 14:03:26 +0200
+Message-ID: <1334837006-10611-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1334826546-32039-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,83 +17,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Device-mapper Development <dm-devel@redhat.com>
+To: Device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Instead of scanning /sys/block by hand we should be using enumeration
-provided by udev.
+Newer systems do not provide a definition for OOM_SCORE_ADJ_MIN,
+so we need to test against this.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c |   40 ++++++++++++++++++----------------------
- 1 files changed, 18 insertions(+), 22 deletions(-)
+ multipathd/main.c |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 426c511..d68324b 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -11,6 +11,7 @@
- #include <dirent.h>
- #include <errno.h>
- #include <libgen.h>
-+#include <libudev.h>
- 
- #include "checkers.h"
- #include "vector.h"
-@@ -91,37 +92,32 @@ path_discover (vector pathvec, struct config * conf, char * devname, int flag)
- int
- path_discovery (vector pathvec, struct config * conf, int flag)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3845880..a3f82d1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1483,9 +1483,15 @@ setscheduler (void)
+ static void
+ set_oom_adj (void)
  {
--	DIR *blkdir;
--	struct dirent *blkdev;
--	struct stat statbuf;
--	char devpath[PATH_MAX];
-+	struct udev_enumerate *udev_iter;
-+	struct udev_list_entry *entry;
-+	char *devpath;
- 	char *devptr;
- 	int r = 0;
++#ifdef OOM_SCORE_ADJ_MIN
+ 	int retry = 1;
+ 	char *file = "/proc/self/oom_score_adj";
+ 	int score = OOM_SCORE_ADJ_MIN;
++#else
++	int retry = 0;
++	char *file = "/proc/self/oom_adj";
++	int score = OOM_ADJUST_MIN;
++#endif
+ 	FILE *fp;
+ 	struct stat st;
  
--	if (!(blkdir = opendir("/sys/block")))
-+	udev_iter = udev_enumerate_new(conf->udev);
-+	if (!udev_iter)
- 		return 1;
- 
--	strcpy(devpath,"/sys/block");
--	while ((blkdev = readdir(blkdir)) != NULL) {
--		if ((strcmp(blkdev->d_name,".") == 0) ||
--		    (strcmp(blkdev->d_name,"..") == 0))
--			continue;
--
--		devptr = devpath + 10;
--		*devptr = '\0';
--		strcat(devptr,"/");
--		strcat(devptr,blkdev->d_name);
--		if (stat(devpath, &statbuf) < 0)
--			continue;
--
--		if (S_ISDIR(statbuf.st_mode) == 0)
--			continue;
-+	udev_enumerate_add_match_subsystem(udev_iter, "block");
-+	udev_enumerate_scan_devices(udev_iter);
- 
-+	udev_list_entry_foreach(entry,
-+				udev_enumerate_get_list_entry(udev_iter)) {
-+		devpath = udev_list_entry_get_name(entry);
- 		condlog(4, "Discover device %s", devpath);
-+		devptr = strrchr(devpath, '/');
-+		if (devptr)
-+			devptr++;
-+		else
-+			devptr = devpath;
- 
--		r += path_discover(pathvec, conf, blkdev->d_name, flag);
-+		r += path_discover(pathvec, conf, devptr, flag);
- 	}
--	closedir(blkdir);
-+	udev_enumerate_unref(udev_iter);
- 	condlog(4, "Discovery status %d", r);
- 	return r;
- }
 -- 
 1.7.3.4
