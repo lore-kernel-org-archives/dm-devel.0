@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 06/12] use struct udev_device during discovery
-Date: Thu, 19 Apr 2012 11:09:00 +0200
-Message-ID: <1334826546-32039-7-git-send-email-hare@suse.de>
+Subject: [PATCH 09/12] discovery: Fixup cciss discovery
+Date: Thu, 19 Apr 2012 11:09:03 +0200
+Message-ID: <1334826546-32039-10-git-send-email-hare@suse.de>
 References: <1334826546-32039-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,92 +21,122 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Device-mapper Development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-We can save quite some parsing etc. by just using struct udev_device.
+We can get the sysfs attributes directly from the parent.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c |   44 ++++++++++++++++++--------------------------
- 1 files changed, 18 insertions(+), 26 deletions(-)
+ libmultipath/discovery.c |   78 +++++++++++++++++++++++++++------------------
+ 1 files changed, 47 insertions(+), 31 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index d68324b..fd0f827 100644
+index f45602a..fa8cfa0 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -56,34 +56,24 @@ out:
+@@ -162,7 +162,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
+ 	int r;
+ 	unsigned int t;
+ 
+-	if (!pp->udev)
++	if (!pp->udev || pp->bus != SYSFS_BUS_SCSI)
+ 		return 1;
+ 
+ 	parent = pp->udev;
+@@ -691,26 +691,56 @@ ccw_sysfs_pathinfo (struct path * pp)
+ static int
+ cciss_sysfs_pathinfo (struct path * pp)
+ {
+-	const char * attr_path;
++	const char * attr_path = NULL;
++	struct udev_device *parent;
++
++	parent = pp->udev;
++	while (parent) {
++		if (!strncmp(udev_device_get_subsystem(parent), "cciss", 5)) {
++			attr_path = udev_device_get_sysname(parent);
++			if (!attr_path)
++				break;
++			if (sscanf(attr_path, "c%id%i",
++				   &pp->sg_id.host_no,
++				   &pp->sg_id.scsi_id) == 2)
++				break;
++		}
++		parent = udev_device_get_parent(parent);
++	}
++	if (!attr_path || pp->sg_id.host_no == -1)
++		return 1;
++
++	if (sysfs_get_vendor(parent, pp->vendor_id, SCSI_VENDOR_SIZE))
++		return 1;
++
++	condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
++
++	if (sysfs_get_model(parent, pp->product_id, SCSI_PRODUCT_SIZE))
++		return 1;
++
++	condlog(3, "%s: product = %s", pp->dev, pp->product_id);
++
++	if (sysfs_get_rev(parent, pp->rev, SCSI_REV_SIZE))
++		return 1;
++
++	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
+ 
+ 	/*
+-	 * host / bus / target / lun
++	 * set the hwe configlet pointer
+ 	 */
+-	attr_path = udev_device_get_devpath(pp->udev);
+-	if (!attr_path)
+-		return 1;
++	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, pp->rev);
+ 
++	/*
++	 * host / bus / target / lun
++	 */
+ 	pp->sg_id.lun = 0;
+ 	pp->sg_id.channel = 0;
+-	sscanf(attr_path, "cciss!c%id%i",
+-			&pp->sg_id.host_no,
+-			&pp->sg_id.scsi_id);
+ 	condlog(3, "%s: h:b:t:l = %i:%i:%i:%i",
+-			pp->dev,
+-			pp->sg_id.host_no,
+-			pp->sg_id.channel,
+-			pp->sg_id.scsi_id,
+-			pp->sg_id.lun);
++		pp->dev,
++		pp->sg_id.host_no,
++		pp->sg_id.channel,
++		pp->sg_id.scsi_id,
++		pp->sg_id.lun);
+ 	return 0;
  }
  
+@@ -818,23 +848,9 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
  static int
--path_discover (vector pathvec, struct config * conf, char * devname, int flag)
-+path_discover (vector pathvec, struct config * conf,
-+	       struct udev_device *udevice, int flag)
+ cciss_ioctl_pathinfo (struct path * pp, int mask)
  {
--	char path[FILE_NAME_SIZE];
- 	struct path * pp;
-+	const char * devname;
- 
-+	devname = udev_device_get_sysname(udevice);
- 	if (!devname)
- 		return 0;
- 
- 	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--			   devname) > 0)
-+			   (char *)devname) > 0)
- 		return 0;
- 
--	if(safe_sprintf(path, "%s/block/%s/device", sysfs_path,
--			devname)) {
--		condlog(0, "path too small");
--		return 1;
--	}
+-	int ret;
 -
--	if (strncmp(devname,"cciss",5) && !filepresent(path)) {
--		condlog(4, "path %s not present", path);
--		return 0;
--	}
+-	if (mask & DI_SYSFS) {
+-		ret = get_inq(pp->dev, pp->vendor_id, pp->product_id,
+-			      pp->rev, pp->fd);
+-		if (ret)
+-			return ret;
 -
--	pp = find_path_by_dev(pathvec, devname);
+-		condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+-		condlog(3, "%s: product = %s", pp->dev, pp->product_id);
+-		condlog(3, "%s: revision = %s", pp->dev, pp->rev);
+-		/*
+-		 * set the hwe configlet pointer
+-		 */
+-		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id,
+-				   pp->product_id, pp->rev);
 -
-+	pp = find_path_by_dev(pathvec, (char *)devname);
- 	if (!pp) {
- 		pp = store_pathinfo(pathvec, conf->hwtable,
--				    devname, flag);
-+				    (char *)devname, flag);
- 		return (pp ? 0 : 1);
++	if (mask & DI_SERIAL) {
++		get_serial(pp->serial, SERIAL_SIZE, pp->fd);
++		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
  	}
- 	return pathinfo(pp, conf->hwtable, flag);
-@@ -94,8 +84,8 @@ path_discovery (vector pathvec, struct config * conf, int flag)
- {
- 	struct udev_enumerate *udev_iter;
- 	struct udev_list_entry *entry;
--	char *devpath;
--	char *devptr;
-+	struct udev_device *udevice;
-+	const char *devpath;
- 	int r = 0;
- 
- 	udev_iter = udev_enumerate_new(conf->udev);
-@@ -109,13 +99,15 @@ path_discovery (vector pathvec, struct config * conf, int flag)
- 				udev_enumerate_get_list_entry(udev_iter)) {
- 		devpath = udev_list_entry_get_name(entry);
- 		condlog(4, "Discover device %s", devpath);
--		devptr = strrchr(devpath, '/');
--		if (devptr)
--			devptr++;
--		else
--			devptr = devpath;
--
--		r += path_discover(pathvec, conf, devptr, flag);
-+		udevice = udev_device_new_from_syspath(conf->udev, devpath);
-+		if (!udevice) {
-+			condlog(4, "%s: no udev information", devpath);
-+			r++;
-+			continue;
-+		}
-+		if(!strncmp(udev_device_get_devtype(udevice), "disk", 4))
-+			r += path_discover(pathvec, conf, udevice, flag);
-+		udev_device_unref(udevice);
- 	}
- 	udev_enumerate_unref(udev_iter);
- 	condlog(4, "Discovery status %d", r);
+ 	return 0;
+ }
 -- 
 1.7.3.4
