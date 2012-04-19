@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 11/12] Use udev devices during discovery
-Date: Thu, 19 Apr 2012 11:09:05 +0200
-Message-ID: <1334826546-32039-12-git-send-email-hare@suse.de>
+Subject: [PATCH 12/12] Remove all references to hand-craftes
+	sysfs code
+Date: Thu, 19 Apr 2012 11:09:06 +0200
+Message-ID: <1334826546-32039-13-git-send-email-hare@suse.de>
 References: <1334826546-32039-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,391 +22,462 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Device-mapper Development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Remove all hand-crafted sysfs access code and replace it with
-libudev functions.
+We've now converted everything to libudev, so we can get rid
+of all the variables etc.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c |  309 +++++++++++++--------------------------------
- 1 files changed, 89 insertions(+), 220 deletions(-)
+ libmpathpersist/mpath_persist.c |    5 -
+ libmultipath/config.c           |    9 +--
+ libmultipath/config.h           |    3 -
+ libmultipath/dict.c             |   23 +-----
+ libmultipath/structs_vec.c      |    1 -
+ libmultipath/sysfs.c            |  183 ++++++++++-----------------------------
+ libmultipath/sysfs.h            |   21 +----
+ multipath/main.c                |    4 -
+ multipath/multipath.conf.5      |    4 -
+ multipathd/main.c               |    4 -
+ 10 files changed, 50 insertions(+), 207 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 452c709..7adda2a 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -192,127 +192,126 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- }
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 302dd3f..d99c0da 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -19,7 +19,6 @@
+ #include <dmparser.h>
+ #include <ctype.h>
+ #include <propsel.h>
+-#include <sysfs.h>
  
- int
--sysfs_get_size (struct path *pp, unsigned long long * size)
-+sysfs_get_tgt_nodename (struct path *pp, char * node)
- {
--	const char * attr;
--	int r;
--
--	if (!pp->udev)
--		return 1;
--
--	attr = udev_device_get_sysattr_value(pp->udev, "size");
--	if (!attr) {
--		condlog(3, "%s: No size attribute in sysfs", pp->dev);
--		return 1;
--	}
--
--	r = sscanf(attr, "%llu\n", size);
-+	const char *targetid, *value;
-+	struct udev_device *parent, *tgtdev;
- 
--	if (r != 1) {
--		condlog(3, "%s: Cannot parse size attribute '%s'",
--			pp->dev, attr);
-+	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev, "scsi", "scsi_device");
-+	if (!parent)
+ #include "mpathpr.h"
+ #include "mpath_pr_ioctl.h"
+@@ -40,10 +39,6 @@ mpath_lib_init (void)
  		return 1;
-+	/* Check for SAS */
-+	value = udev_device_get_sysattr_value(parent, "sas_address");
-+	if (value) {
-+		strncpy(node, value, NODE_NAME_SIZE);
-+		return 0;
  	}
  
--	return 0;
--}
--
--int
--sysfs_get_tgt_nodename (struct path *pp, char * node)
--{
--	const char * targetid;
--	struct udev_device *parent;
--	char attr_path[SYSFS_PATH_SIZE];
--	size_t len;
--
--	parent = pp->udev;
--	while (parent) {
--		targetid = udev_device_get_sysname(parent);
--		if (!strncmp(targetid , "target", 6))
--			break;
--		parent = udev_device_get_parent(parent);
+-	if (sysfs_init(conf->sysfs_dir, FILE_NAME_SIZE)){
+-		condlog(0, "Failed. mpathpersist needs sysfs mounted");
+-		exit(1);
 -	}
--	/* 'target' needs to exist */
--	if (!parent || !targetid)
-+	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev, "scsi", "scsi_target");
-+	if (!parent)
- 		return 1;
-+	tgtdev = udev_device_new_from_subsystem_sysname(conf->udev, "fc_transport", udev_device_get_sysname(parent));
- 	/* Check if it's FibreChannel */
--	if (safe_sprintf(attr_path,
--			 "/class/fc_transport/%s", targetid)) {
--		condlog(0, "attr_path too small");
--		return 1;
--	}
-+	if (tgtdev) {
-+		const char *value;
- 
--	len = sysfs_attr_get_value(attr_path, "node_name",
--				   node, NODE_NAME_SIZE);
--	if (len)
--		return 0;
-+		value = udev_device_get_sysattr_value(tgtdev, "node_name");
-+		if (value) {
-+			strncpy(node, value, NODE_NAME_SIZE);
-+			return 0;
-+		}
-+		udev_device_unref(tgtdev);
-+	}
- 
- 	/* Check for iSCSI */
- 	parent = pp->udev;
-+	targetid = NULL;
- 	while (parent) {
- 		targetid = udev_device_get_sysname(parent);
- 		if (!strncmp(targetid , "session", 6))
- 			break;
- 		parent = udev_device_get_parent(parent);
-+		targetid = NULL;
- 	}
- 	if (parent) {
--		if (safe_sprintf(attr_path, "/class/iscsi_session/%s",
--				 targetid)) {
--			condlog(0, "attr_path too small");
--			return 1;
-+		tgtdev = udev_device_new_from_subsystem_sysname(conf->udev, "iscsi_session", targetid);
-+		if (node) {
-+			const char *value;
-+
-+			value = udev_device_get_sysattr_value(tgtdev, "targetname");
-+			if (value) {
-+				strncpy(node, value, NODE_NAME_SIZE);
-+				return 0;
-+			}
-+			udev_device_unref(tgtdev);
- 		}
--		len = sysfs_attr_get_value(attr_path, "targetname", node,
--					   NODE_NAME_SIZE);
--		if (len)
--			return 0;
- 	}
--
- 	return 1;
- }
- 
--static int
--find_rport_id(struct path *pp)
-+static void
-+sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- {
--	char attr_path[SYSFS_PATH_SIZE];
--	char *dir, *base;
--	int host, channel, rport_id = -1;
--
--	if (safe_sprintf(attr_path,
--			 "/class/fc_transport/target%i:%i:%i",
--			 pp->sg_id.host_no, pp->sg_id.channel,
--			 pp->sg_id.scsi_id)) {
--		condlog(0, "attr_path too small for target");
--		return 1;
--	}
--
--	if (sysfs_resolve_link(attr_path, SYSFS_PATH_SIZE))
--		return -1;
--
--	condlog(4, "target%d:%d:%d -> path %s", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id, attr_path);
--	dir = attr_path;
--	do {
--		base = basename(dir);
--		dir = dirname(dir);
-+	struct udev_device *parent = pp->udev;
-+	struct udev_device *rport_dev = NULL;
-+	char value[11];
-+	const char *rport_id = NULL;
- 
--		if (sscanf((const char *)base, "rport-%d:%d-%d", &host, &channel, &rport_id) == 3)
-+	while (parent) {
-+		rport_id = udev_device_get_sysname(parent);
-+		if (!strncmp(rport_id, "rport-", 6))
- 			break;
--	} while (strcmp((const char *)dir, "/"));
--
--	if (rport_id < 0)
--		return -1;
--
--	condlog(4, "target%d:%d:%d -> rport_id %d", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id, rport_id);
--	return rport_id;
-+		parent = udev_device_get_parent(parent);
-+		rport_id = NULL;
-+	}
-+	if (!parent || !rport_id) {
-+		condlog(0, "%s: rport id not found", pp->dev);
-+		return;
-+	}
-+	rport_dev = udev_device_new_from_subsystem_sysname(conf->udev, "fc_remote_ports", rport_id);
-+	if (!rport_dev) {
-+		condlog(3, "%s: No fc_remote_port device for '%s'", pp->dev,
-+			rport_id);
-+		return;
-+	}
-+	condlog(4, "target%d:%d:%d -> %s", pp->sg_id.host_no,
-+		pp->sg_id.channel, pp->sg_id.scsi_id, rport_id);
-+
-+	snprintf(value, 11, "%u", mpp->dev_loss);
-+	if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11) < 0) {
-+		if ((!mpp->fast_io_fail ||
-+		     mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
-+		    && mpp->dev_loss > 600) {
-+			condlog(3, "%s: limiting dev_loss_tmo to 600, since "
-+				"fast_io_fail is not set", mpp->alias);
-+			snprintf(value, 11, "%u", 600);
-+			if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
-+						 value, 11) < 0)
-+				condlog(0, "%s failed to set dev_loss_tmo",
-+					mpp->alias);
-+			return;
-+		}
-+	}
-+	if (mpp->fast_io_fail){
-+		if (mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
-+			sprintf(value, "off");
-+		else if (mpp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
-+			sprintf(value, "0");
-+		else
-+			snprintf(value, 11, "%u", mpp->fast_io_fail);
-+		if (sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
-+					 value, 11) < 0) {
-+			condlog(0, "%s failed to set fast_io_fail_tmo",
-+				mpp->alias);
-+		}
-+	}
- }
- 
- int
- sysfs_set_scsi_tmo (struct multipath *mpp)
- {
--	char attr_path[SYSFS_PATH_SIZE];
- 	struct path *pp;
- 	int i;
--	char value[11];
--	int rport_id;
- 	int dev_loss_tmo = mpp->dev_loss;
- 
- 	if (mpp->no_path_retry > 0) {
-@@ -339,75 +338,11 @@ sysfs_set_scsi_tmo (struct multipath *mpp)
- 		return 0;
- 
- 	vector_foreach_slot(mpp->paths, pp, i) {
--		rport_id = find_rport_id(pp);
--		if (rport_id < 0) {
--			condlog(3, "failed to find rport_id for target%d:%d:%d", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id);
--			return 1;
--		}
--
--		if (safe_snprintf(attr_path, SYSFS_PATH_SIZE,
--				  "/class/fc_remote_ports/rport-%d:%d-%d",
--				  pp->sg_id.host_no, pp->sg_id.channel,
--				  rport_id)) {
--			condlog(0, "attr_path '/class/fc_remote_ports/rport-%d:%d-%d' too large", pp->sg_id.host_no, pp->sg_id.channel, rport_id);
--			return 1;
--		}
--		if (mpp->dev_loss){
--			snprintf(value, 11, "%u", mpp->dev_loss);
--			if (sysfs_attr_set_value(attr_path, "dev_loss_tmo",
--						 value, 11) < 0) {
--				int err = 1;
--				if ((!mpp->fast_io_fail || mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF) && mpp->dev_loss > 600) {
--					strncpy(value, "600", 4);
--					condlog(3, "%s: limiting dev_loss_tmo to 600, since fast_io_fail is not set", mpp->alias);
--					if (sysfs_attr_set_value(attr_path, "dev_loss_tmo", value, 11) >= 0)
--						err = 0;
--				}
--				if (err) {
--					condlog(0, "%s failed to set %s/dev_loss_tmo", mpp->alias, attr_path);
--					return 1;
--				}
--			}
--		}
--		if (mpp->fast_io_fail){
--			if (mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
--				sprintf(value, "off");
--			else if (mpp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
--				sprintf(value, "0");
--			else
--				snprintf(value, 11, "%u", mpp->fast_io_fail);
--			if (sysfs_attr_set_value(attr_path, "fast_io_fail_tmo",
--						 value, 11) < 0) {
--				condlog(0,
--					"%s failed to set %s/fast_io_fail_tmo", 
--					mpp->alias, attr_path);
--				return 1;
--			}
--		}
-+		sysfs_set_rport_tmo(mpp, pp);
- 	}
  	return 0;
  }
  
--static int
--opennode (char * dev, int mode)
--{
--	char devpath[FILE_NAME_SIZE], *ptr;
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 2263e19..0f17f03 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -431,9 +431,6 @@ free_config (struct config * conf)
+ 	if (conf->udev)
+ 		udev_unref(conf->udev);
+ 
+-	if (conf->udev_dir)
+-		FREE(conf->udev_dir);
 -
--	if (safe_sprintf(devpath, "%s/%s", conf->udev_dir, dev)) {
--		condlog(0, "devpath too small");
--		return -1;
--	}
--	/*
--	 * Translate '!' into '/'
--	 */
--	ptr = devpath;
--	while ((ptr = strchr(ptr, '!'))) {
--		*ptr = '/';
--		ptr++;
--	}
--	return open(devpath, mode);
--}
+ 	if (conf->multipath_dir)
+ 		FREE(conf->multipath_dir);
+ 
+@@ -597,14 +594,10 @@ load_config (char * file)
+ 		if (!conf->mptable)
+ 			goto out;
+ 	}
+-	if (conf->udev_dir == NULL)
+-		conf->udev_dir = set_default(DEFAULT_UDEVDIR);
 -
- int
- do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
-        void *resp, int mx_resp_len)
-@@ -484,72 +419,6 @@ get_serial (char * str, int maxlen, int fd)
+ 	if (conf->bindings_file == NULL)
+ 		conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+ 
+-	if (!conf->udev_dir || !conf->multipath_dir ||
+-	    !conf->bindings_file)
++	if (!conf->multipath_dir || !conf->bindings_file)
+ 		goto out;
+ 
+ 	return 0;
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 590dde2..bcca7bd 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -77,7 +77,6 @@ struct config {
+ 	int dry_run;
+ 	int list;
+ 	int pgpolicy_flag;
+-	int with_sysfs;
+ 	int pgpolicy;
+ 	enum devtypes dev_type;
+ 	int minio;
+@@ -110,8 +109,6 @@ struct config {
+ 
+ 	char * dev;
+ 	struct udev * udev;
+-	char * sysfs_dir;
+-	char * udev_dir;
+ 	char * multipath_dir;
+ 	char * selector;
+ 	char * uid_attribute;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index c51e005..7300b7e 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -112,17 +112,6 @@ reassign_maps_handler(vector strvec)
  }
  
  static int
--get_inq (char * dev, char * vendor, char * product, char * rev, int fd)
+-udev_dir_handler(vector strvec)
 -{
--	unsigned char buff[MX_ALLOC_LEN + 1] = {0};
--	int len;
+-	conf->udev_dir = set_value(strvec);
 -
--	if (fd < 0)
+-	if (!conf->udev_dir)
 -		return 1;
--
--	if (0 != do_inq(fd, 0, 0, 0, buff, MX_ALLOC_LEN))
--		return 1;
--
--	/* Check peripheral qualifier */
--	if ((buff[0] >> 5) != 0) {
--		int pqual = (buff[0] >> 5);
--		switch (pqual) {
--		case 1:
--			condlog(3, "%s: INQUIRY failed, LU not connected", dev);
--			break;
--		case 3:
--			condlog(3, "%s: INQUIRY failed, LU not supported", dev);
--			break;
--		default:
--			condlog(3, "%s: INQUIRY failed, Invalid PQ %x",
--				dev, pqual);
--			break;
--		}
--
--		return 1;
--	}
--
--	len = buff[4] + 4;
--
--	if (len < 8) {
--		condlog(3, "%s: INQUIRY response too short (len %d)",
--			dev, len);
--		return 1;
--	}
--
--	len -= 8;
--	memset(vendor, 0x0, 8);
--	memcpy(vendor, buff + 8, len > 8 ? 8 : len);
--	vendor[8] = '\0';
--	strchop(vendor);
--	if (len <= 8)
--		return 0;
--
--	len -= 8;
--
--	memset(product, 0x0, 16);
--	memcpy(product, buff + 16, len > 16 ? 16 : len);
--	product[16] = '\0';
--	strchop(product);
--	if (len <= 16)
--		return 0;
--
--	len -= 16;
--
--	memset(rev, 0x0, 4);
--	memcpy(rev, buff + 32, 4);
--	rev[4] = '\0';
--	strchop(rev);
 -
 -	return 0;
 -}
 -
 -static int
- get_geometry(struct path *pp)
+ multipath_dir_handler(vector strvec)
  {
- 	if (pp->fd < 0)
-@@ -980,7 +849,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 	 * fetch info not available through sysfs
- 	 */
- 	if (pp->fd < 0)
--		pp->fd = opennode(pp->dev, O_RDWR);
-+		pp->fd = open(udev_device_get_devnode(pp->udev), O_RDWR);
+ 	conf->multipath_dir = set_value(strvec);
+@@ -2237,18 +2226,9 @@ snprint_reassign_maps (char * buff, int len, void * data)
+ }
  
- 	if (pp->fd < 0) {
- 		condlog(4, "Couldn't open node for %s: %s",
+ static int
+-snprint_def_udev_dir (char * buff, int len, void * data)
+-{
+-	if (!conf->udev_dir)
+-		return 0;
+-
+-	return snprintf(buff, len, "\"%s\"", conf->udev_dir);
+-}
+-
+-static int
+ snprint_def_multipath_dir (char * buff, int len, void * data)
+ {
+-	if (!conf->udev_dir)
++	if (!conf->multipath_dir)
+ 		return 0;
+ 
+ 	return snprintf(buff, len, "\"%s\"", conf->multipath_dir);
+@@ -2547,7 +2527,6 @@ init_keywords(void)
+ 	install_keyword("polling_interval", &polling_interval_handler, &snprint_def_polling_interval);
+ 	install_keyword("max_polling_interval", &max_polling_interval_handler, &snprint_def_max_polling_interval);
+ 	install_keyword("reassign_maps", &reassign_maps_handler, &snprint_reassign_maps);
+-	install_keyword("udev_dir", &udev_dir_handler, &snprint_def_udev_dir);
+ 	install_keyword("multipath_dir", &multipath_dir_handler, &snprint_def_multipath_dir);
+ 	install_keyword("path_selector", &def_selector_handler, &snprint_def_selector);
+ 	install_keyword("path_grouping_policy", &def_pgpolicy_handler, &snprint_def_path_grouping_policy);
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index e1fb4b1..6e70d63 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -13,7 +13,6 @@
+ #include "dmparser.h"
+ #include "config.h"
+ #include "propsel.h"
+-#include "sysfs.h"
+ #include "discovery.h"
+ #include "prio.h"
+ 
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 5cd365a..c9dc280 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -27,6 +27,7 @@
+ #include <sys/stat.h>
+ #include <string.h>
+ #include <dirent.h>
++#include <libudev.h>
+ 
+ #include "checkers.h"
+ #include "vector.h"
+@@ -37,171 +38,77 @@
+ #include "debug.h"
+ #include "devmapper.h"
+ 
+-char sysfs_path[PATH_SIZE];
+-
+-int sysfs_init(char *path, size_t len)
+-{
+-	if (path) {
+-		strlcpy(sysfs_path, path, len);
+-		remove_trailing_chars(sysfs_path, '/');
+-	} else
+-		strlcpy(sysfs_path, "/sys", sizeof(sysfs_path));
+-	dbg("sysfs_path='%s'", sysfs_path);
+-
+-	return 0;
+-}
+-
+-int sysfs_resolve_link(char *devpath, size_t size)
+-{
+-	char link_path[PATH_SIZE];
+-	char link_target[PATH_SIZE];
+-	int len;
+-	int i;
+-	int back;
+-
+-	strlcpy(link_path, sysfs_path, sizeof(link_path));
+-	strlcat(link_path, devpath, sizeof(link_path));
+-	len = readlink(link_path, link_target, sizeof(link_target));
+-	if (len <= 0)
+-		return -1;
+-	link_target[len] = '\0';
+-	dbg("path link '%s' points to '%s'", devpath, link_target);
+-
+-	for (back = 0; strncmp(&link_target[back * 3], "../", 3) == 0; back++)
+-		;
+-	dbg("base '%s', tail '%s', back %i", devpath, &link_target[back * 3], back);
+-	for (i = 0; i <= back; i++) {
+-		char *pos = strrchr(devpath, '/');
+-
+-		if (pos == NULL)
+-			return -1;
+-		pos[0] = '\0';
+-	}
+-	dbg("after moving back '%s'", devpath);
+-	strlcat(devpath, "/", size);
+-	strlcat(devpath, &link_target[back * 3], size);
+-	return 0;
+-}
+-
+-size_t sysfs_attr_get_value(const char *devpath, const char *attr_name,
+-			    char *attr_value, int attr_len)
++ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
++			     char * value, size_t value_len)
+ {
+-	char path_full[PATH_SIZE];
++	const char *devpath;
+ 	struct stat statbuf;
+ 	int fd;
+-	ssize_t size;
+-	size_t sysfs_len;
++	ssize_t size = -1;
+ 
+-	if (!attr_value || !attr_len)
++	if (!dev || !attr_name || !value)
+ 		return 0;
+ 
+-	attr_value[0] = '\0';
+-	size = 0;
+-
+-	dbg("open '%s'/'%s'", devpath, attr_name);
+-	sysfs_len = strlcpy(path_full, sysfs_path, sizeof(path_full));
+-	if(sysfs_len >= sizeof(path_full))
+-		sysfs_len = sizeof(path_full) - 1;
+-
+-	strlcat(path_full, devpath, sizeof(path_full));
+-	strlcat(path_full, "/", sizeof(path_full));
+-	strlcat(path_full, attr_name, sizeof(path_full));
+-
+-	if (stat(path_full, &statbuf) != 0) {
+-		dbg("stat '%s' failed: %s", path_full, strerror(errno));
+-		goto out;
++	devpath = udev_device_get_syspath(dev);
++	condlog(4, "open '%s'/'%s'", devpath, attr_name);
++	if (stat(devpath, &statbuf) != 0) {
++		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
++		return 0;
+ 	}
+ 
+ 	/* skip directories */
+ 	if (S_ISDIR(statbuf.st_mode))
+-		goto out;
++		return 0;
+ 
+-	/* skip non-readable files */
+-	if ((statbuf.st_mode & S_IRUSR) == 0)
+-		goto out;
++	/* skip non-writeable files */
++	if ((statbuf.st_mode & S_IWUSR) == 0)
++		return 0;
+ 
+-	/* read attribute value */
+-	fd = open(path_full, O_RDONLY);
++	/* write attribute value */
++	fd = open(devpath, O_WRONLY);
+ 	if (fd < 0) {
+-		dbg("attribute '%s' can not be opened: %s",
+-		    path_full, strerror(errno));
+-		goto out;
++		condlog(4, "attribute '%s' can not be opened: %s",
++			devpath, strerror(errno));
++		return 0;
+ 	}
+-	size = read(fd, attr_value, attr_len);
+-	close(fd);
+-	if (size < 0)
+-		goto out;
+-	if (size == attr_len) {
+-		dbg("overflow in attribute '%s', truncating", path_full);
+-		size--;
++	size = write(fd, value, value_len);
++	if (size < 0) {
++		condlog(4, "write to %s failed: %s", devpath, strerror(errno));
++		size = 0;
++	} else if (size < value_len) {
++		condlog(4, "tried to write %ld to %s. Wrote %ld\n",
++			(long)value_len, devpath, (long)size);
++		size = 0;
+ 	}
+ 
+-	/* got a valid value, store and return it */
+-	attr_value[size] = '\0';
+-	remove_trailing_chars(attr_value, '\n');
+-
+-out:
++	close(fd);
+ 	return size;
+ }
+ 
+-ssize_t sysfs_attr_set_value(const char *devpath, const char *attr_name,
+-			     const char *value, int value_len)
++int
++sysfs_get_size (struct path *pp, unsigned long long * size)
+ {
+-	char path_full[PATH_SIZE];
+-	struct stat statbuf;
+-	int fd;
+-	ssize_t size = -1;
+-	size_t sysfs_len;
+-
+-	if (!attr_name || !value || !value_len)
+-		return 0;
++	const char * attr;
++	int r;
+ 
+-	dbg("open '%s'/'%s'", devpath, attr_name);
+-	sysfs_len = snprintf(path_full, PATH_SIZE, "%s%s/%s", sysfs_path,
+-			     devpath, attr_name);
+-	if (sysfs_len >= PATH_SIZE || sysfs_len < 0) {
+-		if (sysfs_len < 0)
+-			dbg("cannot copy sysfs path %s%s/%s : %s", sysfs_path,
+-			    devpath, attr_name, strerror(errno));
+-		else
+-			dbg("sysfs_path %s%s/%s too large", sysfs_path,
+-			    devpath, attr_name);
+-		goto out;
+-	}
++	if (!pp->udev)
++		return 1;
+ 
+-	if (stat(path_full, &statbuf) != 0) {
+-		dbg("stat '%s' failed: %s", path_full, strerror(errno));
+-		goto out;
++	attr = udev_device_get_sysattr_value(pp->udev, "size");
++	if (!attr) {
++		condlog(3, "%s: No size attribute in sysfs", pp->dev);
++		return 1;
+ 	}
+ 
+-	/* skip directories */
+-	if (S_ISDIR(statbuf.st_mode))
+-		goto out;
+-
+-	/* skip non-writeable files */
+-	if ((statbuf.st_mode & S_IWUSR) == 0)
+-		goto out;
++	r = sscanf(attr, "%llu\n", size);
+ 
+-	/* write attribute value */
+-	fd = open(path_full, O_WRONLY);
+-	if (fd < 0) {
+-		dbg("attribute '%s' can not be opened: %s",
+-		    path_full, strerror(errno));
+-		goto out;
++	if (r != 1) {
++		condlog(3, "%s: Cannot parse size attribute '%s'",
++			pp->dev, attr);
++		return 1;
+ 	}
+-	size = write(fd, value, value_len);
+-	if (size < 0)
+-		dbg("write to %s failed: %s", path_full, strerror(errno));
+-	else if (size < value_len) {
+-		dbg("tried to write %d to %s. Wrote %d\n", value_len,
+-		    path_full, size);
+-		size = -1;
+-	}
+-
+-	close(fd);
+-out:
+ 
+-	return size;
++	return 0;
+ }
+ 
+ int sysfs_check_holders(char * check_devt, char * new_devt)
+diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+index b5a3f21..13d7545 100644
+--- a/libmultipath/sysfs.h
++++ b/libmultipath/sysfs.h
+@@ -5,23 +5,8 @@
+ #ifndef _LIBMULTIPATH_SYSFS_H
+ #define _LIBMULTIPATH_SYSFS_H
+ 
+-#ifdef DEBUG
+-# define dbg(format, args...) condlog(4, format, ##args)
+-#else
+-# define dbg(format, args...) do {} while (0)
+-#endif
+-
+-int sysfs_init(char *path, size_t len);
+-void sysfs_cleanup(void);
+-struct sysfs_device *sysfs_device_get(const char *devpath);
+-struct sysfs_device *sysfs_device_get_parent(struct sysfs_device *dev);
+-void sysfs_device_put(struct sysfs_device *dev);
+-struct sysfs_device *sysfs_device_verify(struct sysfs_device *dev);
+-size_t sysfs_attr_get_value(const char *devpath, const char *attr_name,
+-			    char *attr_value, int attr_len);
+-ssize_t sysfs_attr_set_value(const char *devpath, const char *attr_name,
+-			     const char *value, int value_len);
+-int sysfs_resolve_link(char *path, size_t size);
+-int sysfs_get_size(struct path *pp, unsigned long long * size);
++ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
++			     char * value, size_t value_len);
++int sysfs_get_size (struct path *pp, unsigned long long * size);
+ int sysfs_check_holders(char * check_devt, char * new_devt);
+ #endif
+diff --git a/multipath/main.c b/multipath/main.c
+index 9be52b5..9ea2ae3 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -412,10 +412,6 @@ main (int argc, char *argv[])
+ 	if (load_config(DEFAULT_CONFIGFILE))
+ 		exit(1);
+ 
+-	if (sysfs_init(conf->sysfs_dir, FILE_NAME_SIZE)) {
+-		condlog(0, "multipath tools need sysfs mounted");
+-		exit(1);
+-	}
+ 	while ((arg = getopt(argc, argv, ":dhl::FfM:v:p:b:Brtq")) != EOF ) {
+ 		switch(arg) {
+ 		case 1: printf("optarg : %s\n",optarg);
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index b04a2a9..8dd4a4b 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -79,10 +79,6 @@ default is
+ maximal interval between two path checks in seconds; default is
+ .I 4 * polling_interval
+ .TP
+-.B udev_dir
+-directory where udev creates its device nodes; default is
+-.I /dev
+-.TP
+ .B multipath_dir
+ directory where the dynamic shared objects are stored; default is system
+ dependent, commonly
+diff --git a/multipathd/main.c b/multipathd/main.c
+index b54f6c6..f7625ca 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1607,10 +1607,6 @@ child (void * param)
+ 	if (!vecs)
+ 		exit(1);
+ 
+-	if (sysfs_init(conf->sysfs_dir, FILE_NAME_SIZE)) {
+-		condlog(0, "can not find sysfs mount point");
+-		exit(1);
+-	}
+ 	conf->daemon = 1;
+ 	udev_set_sync_support(0);
+ 	/*
 -- 
 1.7.3.4
