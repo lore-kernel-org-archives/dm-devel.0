@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 03/12] multipathd: use struct path as argument
-	for event processing
-Date: Thu, 19 Apr 2012 11:08:57 +0200
-Message-ID: <1334826546-32039-4-git-send-email-hare@suse.de>
+Subject: [PATCH 11/12] Use udev devices during discovery
+Date: Thu, 19 Apr 2012 11:09:05 +0200
+Message-ID: <1334826546-32039-12-git-send-email-hare@suse.de>
 References: <1334826546-32039-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,328 +21,391 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Device-mapper Development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-ev_add/remove_path should be using struct path as the argument,
-this makes transitioning to use libudev easier.
+Remove all hand-crafted sysfs access code and replace it with
+libudev functions.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.h  |    2 +
- multipathd/cli_handlers.c |   39 ++++++++++++++---
- multipathd/main.c         |  100 ++++++++++++++++++++++-----------------------
- multipathd/main.h         |    4 +-
- 4 files changed, 85 insertions(+), 60 deletions(-)
+ libmultipath/discovery.c |  309 +++++++++++++--------------------------------
+ 1 files changed, 89 insertions(+), 220 deletions(-)
 
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 1b4d437..c071026 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -24,6 +24,8 @@
- #define SCSI_COMMAND_TERMINATED 0x22
- #define SG_ERR_DRIVER_SENSE     0x08
- 
-+struct config;
-+
- int sysfs_get_dev (const char * dev, char * buff, size_t len);
- int path_discovery (vector pathvec, struct config * conf, int flag);
- 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 4c4295d..5cf5f4b 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -8,6 +8,7 @@
- #include <structs_vec.h>
- #include <libdevmapper.h>
- #include <devmapper.h>
-+#include <discovery.h>
- #include <config.h>
- #include <configure.h>
- #include <blacklist.h>
-@@ -410,18 +411,37 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, PATH);
-+	struct path *pp;
- 	int r;
- 
- 	condlog(2, "%s: add path (operator)", param);
- 
- 	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--	    param) > 0 || (r = ev_add_path(param, vecs)) == 2) {
--		*reply = strdup("blacklisted\n");
--		*len = strlen(*reply) + 1;
--		condlog(2, "%s: path blacklisted", param);
--		return 0;
-+			   param) > 0)
-+		goto blacklisted;
-+
-+	pp = find_path_by_dev(vecs->pathvec, param);
-+	if (pp) {
-+		condlog(2, "%s: path already in pathvec", param);
-+		if (pp->mpp)
-+			return 0;
-+	} else {
-+		pp = store_pathinfo(vecs->pathvec, conf->hwtable,
-+				    param, DI_ALL);
-+		if (!pp) {
-+			condlog(0, "%s: failed to store path info", param);
-+			return 1;
-+		}
- 	}
-+	r = ev_add_path(pp, vecs);
-+	if (r == 2)
-+		goto blacklisted;
- 	return r;
-+blacklisted:
-+	*reply = strdup("blacklisted\n");
-+	*len = strlen(*reply) + 1;
-+	condlog(2, "%s: path blacklisted", param);
-+	return 0;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 452c709..7adda2a 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -192,127 +192,126 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
  }
  
  int
-@@ -429,10 +449,15 @@ cli_del_path (void * v, char ** reply, int * len, void * data)
+-sysfs_get_size (struct path *pp, unsigned long long * size)
++sysfs_get_tgt_nodename (struct path *pp, char * node)
  {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, PATH);
-+	struct path *pp;
- 
- 	condlog(2, "%s: remove path (operator)", param);
+-	const char * attr;
+-	int r;
 -
--	return ev_remove_path(param, vecs);
-+	pp = find_path_by_dev(vecs->pathvec, param);
-+	if (!pp) {
-+		condlog(0, "%s: path already removed", param);
-+		return 0;
-+	}
-+	return ev_remove_path(pp, vecs);
- }
+-	if (!pp->udev)
+-		return 1;
+-
+-	attr = udev_device_get_sysattr_value(pp->udev, "size");
+-	if (!attr) {
+-		condlog(3, "%s: No size attribute in sysfs", pp->dev);
+-		return 1;
+-	}
+-
+-	r = sscanf(attr, "%llu\n", size);
++	const char *targetid, *value;
++	struct udev_device *parent, *tgtdev;
  
- int
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 0667a2b..e87375c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -372,59 +372,59 @@ ev_remove_map (char * devname, char * alias, int minor, struct vectors * vecs)
- static int
- uev_add_path (struct uevent *uev, struct vectors * vecs)
- {
--	condlog(2, "%s: add path (uevent)", uev->kernel);
--	return (ev_add_path(dev->kernel, vecs) != 1)? 0 : 1;
+-	if (r != 1) {
+-		condlog(3, "%s: Cannot parse size attribute '%s'",
+-			pp->dev, attr);
++	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev, "scsi", "scsi_device");
++	if (!parent)
+ 		return 1;
++	/* Check for SAS */
++	value = udev_device_get_sysattr_value(parent, "sas_address");
++	if (value) {
++		strncpy(node, value, NODE_NAME_SIZE);
++		return 0;
+ 	}
+ 
+-	return 0;
 -}
 -
--/*
-- * returns:
-- * 0: added
-- * 1: error
-- * 2: blacklisted
-- */
 -int
--ev_add_path (char * devname, struct vectors * vecs)
+-sysfs_get_tgt_nodename (struct path *pp, char * node)
 -{
--	struct multipath * mpp;
--	struct path * pp;
--	char empty_buff[WWID_SIZE] = {0};
--	char params[PARAMS_SIZE] = {0};
--	int retries = 3;
--	int start_waiter = 0;
-+	struct path *pp;
- 
--	if (strstr(devname, "..") != NULL) {
-+	condlog(2, "%s: add path (uevent)", uev->kernel);
-+	if (strstr(uev->kernel, "..") != NULL) {
- 		/*
- 		 * Don't allow relative device names in the pathvec
- 		 */
--		condlog(0, "%s: path name is invalid", devname);
-+		condlog(0, "%s: path name is invalid", uev->kernel);
- 		return 1;
- 	}
- 
--	pp = find_path_by_dev(vecs->pathvec, devname);
+-	const char * targetid;
+-	struct udev_device *parent;
+-	char attr_path[SYSFS_PATH_SIZE];
+-	size_t len;
 -
-+	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 	if (pp) {
- 		condlog(0, "%s: spurious uevent, path already in pathvec",
--			devname);
-+			uev->kernel);
- 		if (pp->mpp)
- 			return 0;
+-	parent = pp->udev;
+-	while (parent) {
+-		targetid = udev_device_get_sysname(parent);
+-		if (!strncmp(targetid , "target", 6))
+-			break;
+-		parent = udev_device_get_parent(parent);
 -	}
--	else {
-+	} else {
- 		/*
- 		 * get path vital state
- 		 */
- 		if (!(pp = store_pathinfo(vecs->pathvec, conf->hwtable,
--		      devname, DI_ALL))) {
--			condlog(0, "%s: failed to store path info", devname);
-+					  uev->kernel, DI_ALL))) {
-+			condlog(0, "%s: failed to store path info",
-+				uev->kernel);
- 			return 1;
- 		}
- 		pp->checkint = conf->checkint;
- 	}
+-	/* 'target' needs to exist */
+-	if (!parent || !targetid)
++	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev, "scsi", "scsi_target");
++	if (!parent)
+ 		return 1;
++	tgtdev = udev_device_new_from_subsystem_sysname(conf->udev, "fc_transport", udev_device_get_sysname(parent));
+ 	/* Check if it's FibreChannel */
+-	if (safe_sprintf(attr_path,
+-			 "/class/fc_transport/%s", targetid)) {
+-		condlog(0, "attr_path too small");
+-		return 1;
+-	}
++	if (tgtdev) {
++		const char *value;
  
-+	return (ev_add_path(pp, vecs) != 1)? 0 : 1;
-+}
-+
-+/*
-+ * returns:
-+ * 0: added
-+ * 1: error
-+ * 2: blacklisted
-+ */
-+int
-+ev_add_path (struct path * pp, struct vectors * vecs)
-+{
-+	struct multipath * mpp;
-+	char empty_buff[WWID_SIZE] = {0};
-+	char params[PARAMS_SIZE] = {0};
-+	int retries = 3;
-+	int start_waiter = 0;
-+
- 	/*
- 	 * need path UID to go any further
- 	 */
- 	if (memcmp(empty_buff, pp->wwid, WWID_SIZE) == 0) {
--		condlog(0, "%s: failed to get path uid", devname);
-+		condlog(0, "%s: failed to get path uid", pp->dev);
- 		goto fail; /* leave path added to pathvec */
- 	}
- 	if (filter_path(conf, pp) > 0){
-@@ -441,11 +441,11 @@ rescan:
- 			if (!pp->size)
- 				condlog(0, "%s: failed to add new path %s, "
- 					"device size is 0",
--					devname, pp->dev);
-+					mpp->alias, pp->dev);
- 			else
- 				condlog(0, "%s: failed to add new path %s, "
- 					"device size mismatch",
--					devname, pp->dev);
-+					mpp->alias, pp->dev);
- 			int i = find_slot(vecs->pathvec, (void *)pp);
- 			if (i != -1)
- 				vector_del_slot(vecs->pathvec, i);
-@@ -465,7 +465,7 @@ rescan:
- 	else {
- 		if (!pp->size) {
- 			condlog(0, "%s: failed to create new map,"
--				" %s device size is 0 ", devname, pp->dev);
-+				" device size is 0 ", pp->dev);
- 			int i = find_slot(vecs->pathvec, (void *)pp);
- 			if (i != -1)
- 				vector_del_slot(vecs->pathvec, i);
-@@ -494,7 +494,7 @@ rescan:
- 	 */
- 	if (setup_map(mpp, params, PARAMS_SIZE)) {
- 		condlog(0, "%s: failed to setup map for addition of new "
--			"path %s", mpp->alias, devname);
-+			"path %s", mpp->alias, pp->dev);
- 		goto fail_map;
- 	}
- 	/*
-@@ -502,7 +502,7 @@ rescan:
- 	 */
- 	if (domap(mpp, params) <= 0) {
- 		condlog(0, "%s: failed in domap for addition of new "
--			"path %s", mpp->alias, devname);
-+			"path %s", mpp->alias, pp->dev);
- 		/*
- 		 * deal with asynchronous uevents :((
- 		 */
-@@ -533,7 +533,7 @@ rescan:
- 			goto fail_map;
- 
- 	if (retries >= 0) {
--		condlog(2, "%s path added to devmap %s", devname, mpp->alias);
-+		condlog(2, "%s path added to devmap %s", pp->dev, mpp->alias);
- 		return 0;
- 	}
- 	else
-@@ -549,28 +549,27 @@ fail:
- static int
- uev_remove_path (struct uevent *uev, struct vectors * vecs)
- {
--	int retval;
-+	struct path *pp;
- 
- 	condlog(2, "%s: remove path (uevent)", uev->kernel);
--	return ev_remove_path(uev->kernel, vecs);
-+	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
-+
-+	if (!pp) {
-+		/* Not an error; path might have been purged earlier */
-+		condlog(0, "%s: path already removed", uev->kernel);
-+		return 0;
+-	len = sysfs_attr_get_value(attr_path, "node_name",
+-				   node, NODE_NAME_SIZE);
+-	if (len)
+-		return 0;
++		value = udev_device_get_sysattr_value(tgtdev, "node_name");
++		if (value) {
++			strncpy(node, value, NODE_NAME_SIZE);
++			return 0;
++		}
++		udev_device_unref(tgtdev);
 +	}
+ 
+ 	/* Check for iSCSI */
+ 	parent = pp->udev;
++	targetid = NULL;
+ 	while (parent) {
+ 		targetid = udev_device_get_sysname(parent);
+ 		if (!strncmp(targetid , "session", 6))
+ 			break;
+ 		parent = udev_device_get_parent(parent);
++		targetid = NULL;
+ 	}
+ 	if (parent) {
+-		if (safe_sprintf(attr_path, "/class/iscsi_session/%s",
+-				 targetid)) {
+-			condlog(0, "attr_path too small");
+-			return 1;
++		tgtdev = udev_device_new_from_subsystem_sysname(conf->udev, "iscsi_session", targetid);
++		if (node) {
++			const char *value;
 +
-+	return ev_remove_path(pp, vecs);
++			value = udev_device_get_sysattr_value(tgtdev, "targetname");
++			if (value) {
++				strncpy(node, value, NODE_NAME_SIZE);
++				return 0;
++			}
++			udev_device_unref(tgtdev);
+ 		}
+-		len = sysfs_attr_get_value(attr_path, "targetname", node,
+-					   NODE_NAME_SIZE);
+-		if (len)
+-			return 0;
+ 	}
+-
+ 	return 1;
+ }
+ 
+-static int
+-find_rport_id(struct path *pp)
++static void
++sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ {
+-	char attr_path[SYSFS_PATH_SIZE];
+-	char *dir, *base;
+-	int host, channel, rport_id = -1;
+-
+-	if (safe_sprintf(attr_path,
+-			 "/class/fc_transport/target%i:%i:%i",
+-			 pp->sg_id.host_no, pp->sg_id.channel,
+-			 pp->sg_id.scsi_id)) {
+-		condlog(0, "attr_path too small for target");
+-		return 1;
+-	}
+-
+-	if (sysfs_resolve_link(attr_path, SYSFS_PATH_SIZE))
+-		return -1;
+-
+-	condlog(4, "target%d:%d:%d -> path %s", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id, attr_path);
+-	dir = attr_path;
+-	do {
+-		base = basename(dir);
+-		dir = dirname(dir);
++	struct udev_device *parent = pp->udev;
++	struct udev_device *rport_dev = NULL;
++	char value[11];
++	const char *rport_id = NULL;
+ 
+-		if (sscanf((const char *)base, "rport-%d:%d-%d", &host, &channel, &rport_id) == 3)
++	while (parent) {
++		rport_id = udev_device_get_sysname(parent);
++		if (!strncmp(rport_id, "rport-", 6))
+ 			break;
+-	} while (strcmp((const char *)dir, "/"));
+-
+-	if (rport_id < 0)
+-		return -1;
+-
+-	condlog(4, "target%d:%d:%d -> rport_id %d", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id, rport_id);
+-	return rport_id;
++		parent = udev_device_get_parent(parent);
++		rport_id = NULL;
++	}
++	if (!parent || !rport_id) {
++		condlog(0, "%s: rport id not found", pp->dev);
++		return;
++	}
++	rport_dev = udev_device_new_from_subsystem_sysname(conf->udev, "fc_remote_ports", rport_id);
++	if (!rport_dev) {
++		condlog(3, "%s: No fc_remote_port device for '%s'", pp->dev,
++			rport_id);
++		return;
++	}
++	condlog(4, "target%d:%d:%d -> %s", pp->sg_id.host_no,
++		pp->sg_id.channel, pp->sg_id.scsi_id, rport_id);
++
++	snprintf(value, 11, "%u", mpp->dev_loss);
++	if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11) < 0) {
++		if ((!mpp->fast_io_fail ||
++		     mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
++		    && mpp->dev_loss > 600) {
++			condlog(3, "%s: limiting dev_loss_tmo to 600, since "
++				"fast_io_fail is not set", mpp->alias);
++			snprintf(value, 11, "%u", 600);
++			if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
++						 value, 11) < 0)
++				condlog(0, "%s failed to set dev_loss_tmo",
++					mpp->alias);
++			return;
++		}
++	}
++	if (mpp->fast_io_fail){
++		if (mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
++			sprintf(value, "off");
++		else if (mpp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
++			sprintf(value, "0");
++		else
++			snprintf(value, 11, "%u", mpp->fast_io_fail);
++		if (sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
++					 value, 11) < 0) {
++			condlog(0, "%s failed to set fast_io_fail_tmo",
++				mpp->alias);
++		}
++	}
  }
  
  int
--ev_remove_path (char * devname, struct vectors * vecs)
-+ev_remove_path (struct path *pp, struct vectors * vecs)
+ sysfs_set_scsi_tmo (struct multipath *mpp)
  {
- 	struct multipath * mpp;
--	struct path * pp;
- 	int i, retval = 0;
- 	char params[PARAMS_SIZE] = {0};
+-	char attr_path[SYSFS_PATH_SIZE];
+ 	struct path *pp;
+ 	int i;
+-	char value[11];
+-	int rport_id;
+ 	int dev_loss_tmo = mpp->dev_loss;
  
--	pp = find_path_by_dev(vecs->pathvec, devname);
+ 	if (mpp->no_path_retry > 0) {
+@@ -339,75 +338,11 @@ sysfs_set_scsi_tmo (struct multipath *mpp)
+ 		return 0;
+ 
+ 	vector_foreach_slot(mpp->paths, pp, i) {
+-		rport_id = find_rport_id(pp);
+-		if (rport_id < 0) {
+-			condlog(3, "failed to find rport_id for target%d:%d:%d", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id);
+-			return 1;
+-		}
 -
--	if (!pp) {
--		/* Not an error; path might have been purged earlier */
--		condlog(0, "%s: path already removed", devname);
--		return 0;
+-		if (safe_snprintf(attr_path, SYSFS_PATH_SIZE,
+-				  "/class/fc_remote_ports/rport-%d:%d-%d",
+-				  pp->sg_id.host_no, pp->sg_id.channel,
+-				  rport_id)) {
+-			condlog(0, "attr_path '/class/fc_remote_ports/rport-%d:%d-%d' too large", pp->sg_id.host_no, pp->sg_id.channel, rport_id);
+-			return 1;
+-		}
+-		if (mpp->dev_loss){
+-			snprintf(value, 11, "%u", mpp->dev_loss);
+-			if (sysfs_attr_set_value(attr_path, "dev_loss_tmo",
+-						 value, 11) < 0) {
+-				int err = 1;
+-				if ((!mpp->fast_io_fail || mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF) && mpp->dev_loss > 600) {
+-					strncpy(value, "600", 4);
+-					condlog(3, "%s: limiting dev_loss_tmo to 600, since fast_io_fail is not set", mpp->alias);
+-					if (sysfs_attr_set_value(attr_path, "dev_loss_tmo", value, 11) >= 0)
+-						err = 0;
+-				}
+-				if (err) {
+-					condlog(0, "%s failed to set %s/dev_loss_tmo", mpp->alias, attr_path);
+-					return 1;
+-				}
+-			}
+-		}
+-		if (mpp->fast_io_fail){
+-			if (mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
+-				sprintf(value, "off");
+-			else if (mpp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
+-				sprintf(value, "0");
+-			else
+-				snprintf(value, 11, "%u", mpp->fast_io_fail);
+-			if (sysfs_attr_set_value(attr_path, "fast_io_fail_tmo",
+-						 value, 11) < 0) {
+-				condlog(0,
+-					"%s failed to set %s/fast_io_fail_tmo", 
+-					mpp->alias, attr_path);
+-				return 1;
+-			}
+-		}
++		sysfs_set_rport_tmo(mpp, pp);
+ 	}
+ 	return 0;
+ }
+ 
+-static int
+-opennode (char * dev, int mode)
+-{
+-	char devpath[FILE_NAME_SIZE], *ptr;
+-
+-	if (safe_sprintf(devpath, "%s/%s", conf->udev_dir, dev)) {
+-		condlog(0, "devpath too small");
+-		return -1;
+-	}
+-	/*
+-	 * Translate '!' into '/'
+-	 */
+-	ptr = devpath;
+-	while ((ptr = strchr(ptr, '!'))) {
+-		*ptr = '/';
+-		ptr++;
+-	}
+-	return open(devpath, mode);
+-}
+-
+ int
+ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+        void *resp, int mx_resp_len)
+@@ -484,72 +419,6 @@ get_serial (char * str, int maxlen, int fd)
+ }
+ 
+ static int
+-get_inq (char * dev, char * vendor, char * product, char * rev, int fd)
+-{
+-	unsigned char buff[MX_ALLOC_LEN + 1] = {0};
+-	int len;
+-
+-	if (fd < 0)
+-		return 1;
+-
+-	if (0 != do_inq(fd, 0, 0, 0, buff, MX_ALLOC_LEN))
+-		return 1;
+-
+-	/* Check peripheral qualifier */
+-	if ((buff[0] >> 5) != 0) {
+-		int pqual = (buff[0] >> 5);
+-		switch (pqual) {
+-		case 1:
+-			condlog(3, "%s: INQUIRY failed, LU not connected", dev);
+-			break;
+-		case 3:
+-			condlog(3, "%s: INQUIRY failed, LU not supported", dev);
+-			break;
+-		default:
+-			condlog(3, "%s: INQUIRY failed, Invalid PQ %x",
+-				dev, pqual);
+-			break;
+-		}
+-
+-		return 1;
 -	}
 -
- 	/*
- 	 * avoid referring to the map of an orphaned path
+-	len = buff[4] + 4;
+-
+-	if (len < 8) {
+-		condlog(3, "%s: INQUIRY response too short (len %d)",
+-			dev, len);
+-		return 1;
+-	}
+-
+-	len -= 8;
+-	memset(vendor, 0x0, 8);
+-	memcpy(vendor, buff + 8, len > 8 ? 8 : len);
+-	vendor[8] = '\0';
+-	strchop(vendor);
+-	if (len <= 8)
+-		return 0;
+-
+-	len -= 8;
+-
+-	memset(product, 0x0, 16);
+-	memcpy(product, buff + 16, len > 16 ? 16 : len);
+-	product[16] = '\0';
+-	strchop(product);
+-	if (len <= 16)
+-		return 0;
+-
+-	len -= 16;
+-
+-	memset(rev, 0x0, 4);
+-	memcpy(rev, buff + 32, 4);
+-	rev[4] = '\0';
+-	strchop(rev);
+-
+-	return 0;
+-}
+-
+-static int
+ get_geometry(struct path *pp)
+ {
+ 	if (pp->fd < 0)
+@@ -980,7 +849,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 	 * fetch info not available through sysfs
  	 */
-@@ -618,8 +617,7 @@ ev_remove_path (char * devname, struct vectors * vecs)
+ 	if (pp->fd < 0)
+-		pp->fd = opennode(pp->dev, O_RDWR);
++		pp->fd = open(udev_device_get_devnode(pp->udev), O_RDWR);
  
- 		if (setup_map(mpp, params, PARAMS_SIZE)) {
- 			condlog(0, "%s: failed to setup map for"
--				" removal of path %s", mpp->alias,
--				devname);
-+				" removal of path %s", mpp->alias, pp->dev);
- 			goto fail;
- 		}
- 		/*
-@@ -629,7 +627,7 @@ ev_remove_path (char * devname, struct vectors * vecs)
- 		if (domap(mpp, params) <= 0) {
- 			condlog(0, "%s: failed in domap for "
- 				"removal of path %s",
--				mpp->alias, devname);
-+				mpp->alias, pp->dev);
- 			retval = 1;
- 		} else {
- 			/*
-@@ -641,7 +639,7 @@ ev_remove_path (char * devname, struct vectors * vecs)
- 			sync_map_state(mpp);
- 
- 			condlog(2, "%s: path removed from map %s",
--				devname, mpp->alias);
-+				pp->dev, mpp->alias);
- 		}
- 	}
- 
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 0733299..242f5e1 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -19,8 +19,8 @@ extern pid_t daemon_pid;
- int exit_daemon(int);
- const char * daemon_status(void);
- int reconfigure (struct vectors *);
--int ev_add_path (char *, struct vectors *);
--int ev_remove_path (char *, struct vectors *);
-+int ev_add_path (struct path *, struct vectors *);
-+int ev_remove_path (struct path *, struct vectors *);
- int ev_add_map (char *, char *, struct vectors *);
- int ev_remove_map (char *, char *, int, struct vectors *);
- void sync_map_state (struct multipath *);
+ 	if (pp->fd < 0) {
+ 		condlog(4, "Couldn't open node for %s: %s",
 -- 
 1.7.3.4
