@@ -1,31 +1,42 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: Re: [PATCH] scsi_dh_rdac: Add dynamic match functionality to rdac
  handler
-Date: Fri, 20 Apr 2012 11:48:17 -0500
-Message-ID: <4F919351.3050000@cs.wisc.edu>
-References: <77471C95FAFD844C8CA02DD4F4C5FE2B0574C6@SACEXCMBX02-PRD.hq.netapp.com> <1334939232.3420.30.camel@chandra-lucid.austin.ibm.com>
+Date: Fri, 20 Apr 2012 13:05:30 -0500
+Message-ID: <1334945131.3420.33.camel@chandra-lucid.austin.ibm.com>
+References: <77471C95FAFD844C8CA02DD4F4C5FE2B0574C6@SACEXCMBX02-PRD.hq.netapp.com>
+	 <1334939232.3420.30.camel@chandra-lucid.austin.ibm.com>
+	 <4F919351.3050000@cs.wisc.edu>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1334939232.3420.30.camel@chandra-lucid.austin.ibm.com>
+In-Reply-To: <4F919351.3050000@cs.wisc.edu>
 Sender: linux-scsi-owner@vger.kernel.org
-To: sekharan@us.ibm.com
+To: Mike Christie <michaelc@cs.wisc.edu>
 Cc: "Moger, Babu" <Babu.Moger@netapp.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "Krishnasamy, Somasundaram" <Somasundaram.Krishnasamy@netapp.com>
 List-Id: dm-devel.ids
 
-On 04/20/2012 11:27 AM, Chandra Seetharaman wrote:
-> Babu,
+On Fri, 2012-04-20 at 11:48 -0500, Mike Christie wrote:
+> On 04/20/2012 11:27 AM, Chandra Seetharaman wrote:
+> > Babu,
+> > 
+> > So, in effect, any SCSI devices with INQ C8 page with "edid" would be
+> > treated as a rdac device, right ?
+> > 
+> > Is that enough to identify _any_ SCSI device as a rdac device (even in
+> > future) ?
+> > 
+> > Also, instead of repeating the code, can you use submit_inquiry() ?
+> > 
 > 
-> So, in effect, any SCSI devices with INQ C8 page with "edid" would be
-> treated as a rdac device, right ?
-> 
-> Is that enough to identify _any_ SCSI device as a rdac device (even in
-> future) ?
-> 
-> Also, instead of repeating the code, can you use submit_inquiry() ?
+> Yeah you are right, I think we should modify submit_inquiry to take in
+> the sense and data buffers instead of taking in the rdac_dh_data struct.
+> At the time the match function is run rdac_dh_data might not be allocated.
+
+oh yeah,
+
+I did not not realize that...
 > 
 
-Yeah you are right, I think we should modify submit_inquiry to take in
-the sense and data buffers instead of taking in the rdac_dh_data struct.
-At the time the match function is run rdac_dh_data might not be allocated.
+
