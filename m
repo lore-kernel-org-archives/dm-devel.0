@@ -1,15 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCHES]: dm lock optimization
-Date: Sat, 21 Apr 2012 12:17:38 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1204211215230.3269@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1204182249060.12984@file.rdu.redhat.com>
-	<4F8F9FDA.1000103@ce.jp.nec.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH 1/2] dm thin: fix memory leak of singleton
+	bio-prison cell
+Date: Mon, 23 Apr 2012 08:24:08 +0100
+Message-ID: <20120423072407.GA8082@ubuntu>
+References: <1334270075-11699-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F8F9FDA.1000103@ce.jp.nec.com>
+Content-Disposition: inline
+In-Reply-To: <1334270075-11699-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,56 +20,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On Thu, 19 Apr 2012, Jun'ichi Nomura wrote:
-
-> Hello Mikulas,
+On Thu, Apr 12, 2012 at 06:34:34PM -0400, Mike Snitzer wrote:
+> Add missing mempool_free() to __cell_release_singleton().
 > 
-> On 04/19/12 12:03, Mikulas Patocka wrote:
-> > http://people.redhat.com/mpatocka/patches/kernel/dm-lock-optimization/
-> > 
-> > The patches remove cache-line bouncing from device mapper when multiple 
-> > processors submit requests simultaneously.
-> 
-> I think the idea of optimization is nice.
-> 
-> >From a quick look, however, I have some comments:
-> 
-> dm-optimize-no-irqsave-map-lock.patch:
->   - dm_get_live_table() is called from request_fn,
->     that can be called from in_interrupt context.
->     So the added BUG_ON will be triggered.
-> 
-> dm-optimize-percpu-io-lock.patch:
->   - The following existing mechanisms could be used:
->       * include/linux/rcupdate.h
->       * include/linux/lglock.h
->     (or extended if necessary).
-> 
-> dm-optimize-get_live_table_fast.patch:
->   - dm_lld_busy() can (theoretically, if dm-mpath is stacked)
->     be called from in_interrupt context and trigger the
->     BUG_ON.
-> 
-> -- 
-> Jun'ichi Nomura, NEC Corporation
+> This is a pretty significant leak that will accumulate to over 2GB of
+> leaked memory just from running the full thinp-test-suite.
 
-Hi
-
-I created new patches that use rcu instead of map_lock, so they address 
-the issues you mentioned. Get the new patches here:
-http://people.redhat.com/mpatocka/patches/kernel/dm-lock-optimization/
-
-performance with new patches:
-no patch:               69.3
-patch 1:                54.0
-patch 1,2:              44.2
-patch 1,2,3:            39.8
-patch 1,2,3,4:          32.7
-
-Mikulas
+When was this introduced?  With agk's tweaks for 3.4?
