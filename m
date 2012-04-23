@@ -1,18 +1,16 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH 1/2] dm thin: fix memory leak of singleton
- bio-prison cell
-Date: Mon, 23 Apr 2012 10:26:39 +0100
-Message-ID: <20120423092638.GA11835@ubuntu>
-References: <1334270075-11699-1-git-send-email-snitzer@redhat.com>
-	<20120423072407.GA8082@ubuntu>
-	<20120423100246.GA4073@agk-dp.fab.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCHES]: dm lock optimization
+Date: Mon, 23 Apr 2012 19:56:52 +0900
+Message-ID: <4F953574.3000702@ce.jp.nec.com>
+References: <Pine.LNX.4.64.1204182249060.12984@file.rdu.redhat.com>
+	<4F8F9FDA.1000103@ce.jp.nec.com>
+	<Pine.LNX.4.64.1204211215230.3269@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20120423100246.GA4073@agk-dp.fab.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1204211215230.3269@file.rdu.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,31 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: ejt@redhat.com, dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Apr 23, 2012 at 11:02:46AM +0100, Alasdair G Kergon wrote:
-> On Mon, Apr 23, 2012 at 08:24:08AM +0100, Joe Thornber wrote:
-> > On Thu, Apr 12, 2012 at 06:34:34PM -0400, Mike Snitzer wrote:
-> > > Add missing mempool_free() to __cell_release_singleton().
-> > > 
-> > > This is a pretty significant leak that will accumulate to over 2GB of
-> > > leaked memory just from running the full thinp-test-suite.
-> > When was this introduced?  With agk's tweaks for 3.4?
->  
-> I think it was here:
->   http://www.redhat.com/archives/dm-devel/2012-March/msg00080.html
+Hi Mikulas,
 
-Yep, this should call mempool_release:
+On 04/22/12 01:17, Mikulas Patocka wrote:
+> I created new patches that use rcu instead of map_lock, so they address 
+> the issues you mentioned. Get the new patches here:
+> http://people.redhat.com/mpatocka/patches/kernel/dm-lock-optimization/
+> 
+> performance with new patches:
+> no patch:               69.3
+> patch 1:                54.0
+> patch 1,2:              44.2
+> patch 1,2,3:            39.8
+> patch 1,2,3,4:          32.7
 
-@@ -305,22 +310,45 @@ static void cell_release(struct cell *cell, struct bio_list *bios)
-  * bio may be in the cell.  This function releases the cell, and also does
-  * a sanity check.
-  */
-+static void __cell_release_singleton(struct cell *cell, struct bio *bio)
-+{
-+	hlist_del(&cell->list);
-+	BUG_ON(cell->holder != bio);
-+	BUG_ON(!bio_list_empty(&cell->bios));
-+}
-+
+Thank you. I have 2 comments for the new patches.
+
+synchronize_rcu could be put in dm_table_destroy() instead of __bind().
+I think it's safer place to wait.
+
+io_lock could be converted to SRCU.
+I.e. something like:
+  On reader-side:
+    idx = srcu_read_lock(io_srcu);
+    if (!DMF_BLOCK_IO_FOR_SUSPEND)
+      split_and_process_bio();
+    srcu_read_unlock(io_srcu,idx);
+  In dm_suspend:
+    set_bit(DMF_BLOCK_IO_FOR_SUSPEND);
+    mb();
+    synchronize_srcu(io_srcu);
+    <from here, nobody will enter split_and_process_bio>
+That makes dm-optimize-percpu-io-lock.patch simpler.
+dm-optimize-take-io_lock-on-table-swap.patch may become simpler, too.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
