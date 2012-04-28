@@ -1,15 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/1] dm-multipath: delay retry of bypassed pg
-Date: Fri, 27 Apr 2012 15:39:23 -0400
-Message-ID: <20120427193923.GA30535@redhat.com>
-References: <1334641618-24512-1-git-send-email-michaelc@cs.wisc.edu>
+Subject: [PATCH 1/2] dm: update max_io_len to support a split_io
+	that is not a power of 2
+Date: Sat, 28 Apr 2012 00:44:28 -0400
+Message-ID: <1335588269-807-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1334641618-24512-1-git-send-email-michaelc@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,26 +17,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Christie <michaelc@cs.wisc.edu>
+To: dm-devel@redhat.com
+Cc: ejt@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Apr 17 2012 at  1:46am -0400,
-michaelc@cs.wisc.edu <michaelc@cs.wisc.edu> wrote:
+Required to support a target's use of a non power of 2 blocksize.
 
-> From: Mike Christie <michaelc@cs.wisc.edu>
-> 
-> If there are only bypassed PGs available then we do not want
-> to retry right away. If for example the controller was getting
-> reset or there was a fw upgrade going on and that was the reason
-> for the bypass, then retrying right away is going to cause a flood of
-> log messages and retries for what could be a longish time (more than
-> a couple seconds and possible up to several minutes).
-> 
-> For the case where the only PGs are ones that are bypassed this
-> patch will have dm-multipath delay the pg init by setting the
-> pg_init_delay_retry flag.
-> 
-> Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index e24143c..fe57285 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -973,10 +973,10 @@ static sector_t max_io_len(sector_t sector, struct dm_target *ti)
+ 	 * Does the target need to split even further ?
+ 	 */
+ 	if (ti->split_io) {
+-		sector_t boundary;
+ 		sector_t offset = dm_target_offset(ti, sector);
+-		boundary = ((offset + ti->split_io) & ~(ti->split_io - 1))
+-			   - offset;
++		sector_t boundary, tmp = offset + ti->split_io;
++
++		boundary = ti->split_io - do_div(tmp, ti->split_io);
+ 		if (len > boundary)
+ 			len = boundary;
+ 	}
+-- 
+1.7.1
