@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 07/16] Remove stale variable in
-	sysfs_attr_get_value
-Date: Mon, 30 Apr 2012 12:25:59 +0200
-Message-ID: <1335781568-13299-9-git-send-email-hare@suse.de>
+Subject: [PATCH 09/16] discovery: Fixup cciss discovery
+Date: Mon, 30 Apr 2012 12:26:01 +0200
+Message-ID: <1335781568-13299-11-git-send-email-hare@suse.de>
 References: <1335781568-13299-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,31 +22,122 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Kay Sievers <kay.sievers@vrfy.org>
 List-Id: dm-devel.ids
 
+We can get the sysfs attributes directly from the parent.
+
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/sysfs.c |    3 +--
- 1 files changed, 1 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c |   78 +++++++++++++++++++++++++++------------------
+ 1 files changed, 47 insertions(+), 31 deletions(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 16dce4a..13af8a1 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -287,7 +287,6 @@ size_t sysfs_attr_get_value(const char *devpath, const char *attr_name,
- 			    char *attr_value, int attr_len)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index f45602a..fa8cfa0 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -162,7 +162,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
+ 	int r;
+ 	unsigned int t;
+ 
+-	if (!pp->udev)
++	if (!pp->udev || pp->bus != SYSFS_BUS_SCSI)
+ 		return 1;
+ 
+ 	parent = pp->udev;
+@@ -691,26 +691,56 @@ ccw_sysfs_pathinfo (struct path * pp)
+ static int
+ cciss_sysfs_pathinfo (struct path * pp)
  {
- 	char path_full[PATH_SIZE];
--	const char *path;
- 	struct stat statbuf;
- 	int fd;
- 	ssize_t size;
-@@ -303,7 +302,7 @@ size_t sysfs_attr_get_value(const char *devpath, const char *attr_name,
- 	sysfs_len = strlcpy(path_full, sysfs_path, sizeof(path_full));
- 	if(sysfs_len >= sizeof(path_full))
- 		sysfs_len = sizeof(path_full) - 1;
--	path = &path_full[sysfs_len];
+-	const char * attr_path;
++	const char * attr_path = NULL;
++	struct udev_device *parent;
 +
- 	strlcat(path_full, devpath, sizeof(path_full));
- 	strlcat(path_full, "/", sizeof(path_full));
- 	strlcat(path_full, attr_name, sizeof(path_full));
++	parent = pp->udev;
++	while (parent) {
++		if (!strncmp(udev_device_get_subsystem(parent), "cciss", 5)) {
++			attr_path = udev_device_get_sysname(parent);
++			if (!attr_path)
++				break;
++			if (sscanf(attr_path, "c%id%i",
++				   &pp->sg_id.host_no,
++				   &pp->sg_id.scsi_id) == 2)
++				break;
++		}
++		parent = udev_device_get_parent(parent);
++	}
++	if (!attr_path || pp->sg_id.host_no == -1)
++		return 1;
++
++	if (sysfs_get_vendor(parent, pp->vendor_id, SCSI_VENDOR_SIZE))
++		return 1;
++
++	condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
++
++	if (sysfs_get_model(parent, pp->product_id, SCSI_PRODUCT_SIZE))
++		return 1;
++
++	condlog(3, "%s: product = %s", pp->dev, pp->product_id);
++
++	if (sysfs_get_rev(parent, pp->rev, SCSI_REV_SIZE))
++		return 1;
++
++	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
+ 
+ 	/*
+-	 * host / bus / target / lun
++	 * set the hwe configlet pointer
+ 	 */
+-	attr_path = udev_device_get_devpath(pp->udev);
+-	if (!attr_path)
+-		return 1;
++	pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, pp->rev);
+ 
++	/*
++	 * host / bus / target / lun
++	 */
+ 	pp->sg_id.lun = 0;
+ 	pp->sg_id.channel = 0;
+-	sscanf(attr_path, "cciss!c%id%i",
+-			&pp->sg_id.host_no,
+-			&pp->sg_id.scsi_id);
+ 	condlog(3, "%s: h:b:t:l = %i:%i:%i:%i",
+-			pp->dev,
+-			pp->sg_id.host_no,
+-			pp->sg_id.channel,
+-			pp->sg_id.scsi_id,
+-			pp->sg_id.lun);
++		pp->dev,
++		pp->sg_id.host_no,
++		pp->sg_id.channel,
++		pp->sg_id.scsi_id,
++		pp->sg_id.lun);
+ 	return 0;
+ }
+ 
+@@ -818,23 +848,9 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
+ static int
+ cciss_ioctl_pathinfo (struct path * pp, int mask)
+ {
+-	int ret;
+-
+-	if (mask & DI_SYSFS) {
+-		ret = get_inq(pp->dev, pp->vendor_id, pp->product_id,
+-			      pp->rev, pp->fd);
+-		if (ret)
+-			return ret;
+-
+-		condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+-		condlog(3, "%s: product = %s", pp->dev, pp->product_id);
+-		condlog(3, "%s: revision = %s", pp->dev, pp->rev);
+-		/*
+-		 * set the hwe configlet pointer
+-		 */
+-		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id,
+-				   pp->product_id, pp->rev);
+-
++	if (mask & DI_SERIAL) {
++		get_serial(pp->serial, SERIAL_SIZE, pp->fd);
++		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
+ 	}
+ 	return 0;
+ }
 -- 
 1.7.3.4
