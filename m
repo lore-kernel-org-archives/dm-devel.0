@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 03/16] multipathd: use struct path as argument
-	for event processing
-Date: Mon, 30 Apr 2012 12:25:54 +0200
-Message-ID: <1335781568-13299-4-git-send-email-hare@suse.de>
+Subject: [PATCH] multipathd: use struct path as argument for
+	event processing
+Date: Mon, 30 Apr 2012 12:25:55 +0200
+Message-ID: <1335781568-13299-5-git-send-email-hare@suse.de>
 References: <1335781568-13299-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -347,4 +347,4 @@ index 0733299..242f5e1 100644
  int ev_remove_map (char *, char *, int, struct vectors *);
  void sync_map_state (struct multipath *);
 -- 
-1.7.3.4
+1.6.0.2
