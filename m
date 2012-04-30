@@ -1,17 +1,18 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH 2/2] dm thin: support for non power of 2 pool
-	blocksize
-Date: Mon, 30 Apr 2012 10:55:55 +0100
-Message-ID: <20120430095555.GA5955@ubuntu>
+Subject: Re: [PATCH] thinp-test-suite: support for non power of 2
+ pool blocksize
+Date: Mon, 30 Apr 2012 11:15:02 +0100
+Message-ID: <20120430101501.GB5955@ubuntu>
 References: <1335588269-807-1-git-send-email-snitzer@redhat.com>
 	<1335588269-807-2-git-send-email-snitzer@redhat.com>
+	<20120428045151.GA853@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1335588269-807-2-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20120428045151.GA853@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,62 +26,32 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com, ejt@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+On Sat, Apr 28, 2012 at 12:51:51AM -0400, Mike Snitzer wrote:
+> On Sat, Apr 28 2012 at 12:44am -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+> The non power of 2 support patch required quite a few thinp-test-suite
+> fixes; this works for me but there may be more clever/clean ways to
+> address rounding down the pool size to a multiple of blocksize...
 
-In general this looks good.  A lot cleaner now you've dropped the
-specialisation of the division.  A few nit-picks below.
+Yes, I need to do some work here.  We can't keep tweaking these magic
+numbers.
 
-- Joe
+- Some tests hardwire a block size, eg, my cache_tests, your
+  non-power-2 tests.
 
-On Sat, Apr 28, 2012 at 12:44:29AM -0400, Mike Snitzer wrote:
-> +/*
-> + * do_div wrappers that don't modify the dividend
-> + */
-> +static inline sector_t dm_thin_do_div(sector_t a, __u32 b)
-> +{
-> +	sector_t r = a;
-> +
-> +	do_div(r, b);
-> +	return r;
-> +}
-> +
-> +static inline sector_t dm_thin_do_mod(sector_t a, __u32 b)
-> +{
-> +	sector_t tmp = a;
-> +
-> +	return do_div(tmp, b);
-> +}
+- Some tests can prove their point with a small pool size.  So no point
+  wasting time by running on bigger pools.
 
-Please don't inline static functions.  Let the compiler make the
-decision.
+- Some tests would definitely benefit by scaling up to larger pools,
+  more thins etc, as hardware allows.  But we should probably control
+  this from the command line - big tests take a long time to run, so
+  we shouldn't assume we should scale up the tests to consume all disk
+  space.
 
-Also those sector_t's are passed by value, so you don't need to
-declare r or tmp.  eg, it's enough to do this:
+- different hardware has different logical block sizes, which can
+  effect io sizes (eg, see discard tests).  The code needs to make it
+  clear that the sizes are being influenced by the LBS.
 
-static sector_t dm_thin_do_div(sector_t a, __u32 b)
-{
-	do_div(a, b);
-	return a;
-}
-
-static sector_t dm_thin_do_mod(sector_t a, __u32 b)
-{
-	return do_div(a, b);
-}
-
-> @@ -1941,12 +1954,18 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
-
-...
-
-> +	if (dm_thin_do_mod(ti->len, block_size)) {
-> +		ti->error = "Data device is not a multiple of block size";
-> +		r = -EINVAL;
-> +		goto out;
-> +	}
-
-I don't see the need for this check.  If I have a disk that isn't a
-multiple of the block size why should I have to layer a linear mapping
-on it to truncate it before I can use it as a data volume?  Any
-partial block at the end of the device is already ignored (see the
-data_size calculation in pool_preresume).  Is this restriction causing
-some of the changes you made to the test-suite?
+- We should make it clear in the results, and the test source, which
+  tests scaled up and how.  eg, did data_block_size change?,
+  data_dev_size?
