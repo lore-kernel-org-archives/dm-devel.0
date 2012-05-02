@@ -1,11 +1,12 @@
-From: yangfanlinuxmail <yangfanlinuxmail@gmail.com>
-Subject: path check failed by RHEL 6.2
-Date: Wed, 2 May 2012 14:49:57 +0800
-Message-ID: <201205021449543744505@gmail.com>
-Reply-To: yangfanlinuxmail <yangfanlinuxmail@gmail.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: okozina@redhat.com
+Subject: [RFC PATCH 0/4] Allow user w/o CAP_SYS_ADMIN to submit
+	ioctl commands into DM
+Date: Wed,  2 May 2012 21:13:49 +0200
+Message-ID: <1335986033-15236-1-git-send-email-okozina@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1893341450863538883=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,721 +17,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Ondrej Kozina <okozina@redhat.com>, mgrac@redhat.com, kas@fi.muni.cz
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+From: Ondrej Kozina <okozina@redhat.com>
 
---===============1893341450863538883==
-Content-Type: multipart/alternative;
-	boundary="----=_001_NextPart327870104500_=----"
+Hi,
 
-This is a multi-part message in MIME format.
+I would like to post RFC with a set of changes for device-mapper that would
+enable user w/o CAP_SYS_ADMIN capability to create and manage his own devices
+in more or less distant future. I`ll try to be as brief as possible, so:
 
-------=_001_NextPart327870104500_=----
-Content-Type: text/plain;
-	charset="gb2312"
-Content-Transfer-Encoding: base64
+Simple use cases:
+^^^^^^^^^^^^^^^^
+(1) Non-root user would be able to create dm-crypt device from USB stick
+    (assuming the user has permission to access backing device)
+(2) You can create pool of storage space for virtual machines. VM managers
+    would be able to administrate the pool w/o root permissions. Each VM would
+    be able to create it's own device (same premise as before)
 
-SGVsbG8sZGV2ZWxvcCB0ZWFtLkkgdGVzdCBtdWx0aXBhdGggaW4gUkhFTCA2LjIoWDg2XzY0KS5J
-IGZpbmQgYSBpc3N1ZSB3aGVuIHRlc3QgdGFrZW92ZXIuVGhlcmUgYXJlIDggZGlzayBpbiBvbmUg
-dGFyZ2V0IHBhdGg7NyBkaXNrIGlzIGFjdGl2ZSxidXQgMSBpcyBmYXVsdHkobXBhdGhmKS5JIGNo
-ZWNrIHRhcmdldCAsYW5kIHRoZXJlIGlzIHdlbGw7SSBkaWRuJ3QgaG93IGNhbiBpIGF2b2lkIHRo
-ZSBpc3N1ZS4gSSBmaW5kIHNvbWUgZGlmZmVyZW50IGJldHdlZW4gYWN0aXZlIGFuZCBmYXVsdHkg
-dmFyIC92YXIvbG9nL21lc3NhZ2UuVGhlIG1wYXRoZiBwcmludCAibWFwIGluIHVzZSx1bmFibGUg
-dG8gZmx1c2ggZGV2bWFwIi5JcyB0aGVyZSBzb21lIGhlbHBmdWw/DQoNCltyb290QGxvY2FsaG9z
-dCB+XSMgbXVsdGlwYXRoIC1sbA0KbXBhdGhlICgyMzQzMTM3MzYzMzMxMzEzOCkgZG0tOCBfSU5T
-UFVSXyx2ZzVfbHY1Mg0Kc2l6ZT0zMDBHIGZlYXR1cmVzPScxIHF1ZXVlX2lmX25vX3BhdGgnIGh3
-aGFuZGxlcj0nMCcgd3A9cncNCmAtKy0gcG9saWN5PSdyb3VuZC1yb2JpbiAwJyBwcmlvPTEgc3Rh
-dHVzPWFjdGl2ZQ0KICBgLSAxOTowOjA6NiBzZHEgNjU6MCAgYWN0aXZlIHJlYWR5ICBydW5uaW5n
-DQptcGF0aGQgKDIzNzM1MzkzMTM5MzkzODMxKSBkbS0xMCBfSU5TUFVSXyx2ZzVfbHY1MQ0Kc2l6
-ZT0zNTBHIGZlYXR1cmVzPScxIHF1ZXVlX2lmX25vX3BhdGgnIGh3aGFuZGxlcj0nMCcgd3A9cncN
-CmAtKy0gcG9saWN5PSdyb3VuZC1yb2JpbiAwJyBwcmlvPTEgc3RhdHVzPWFjdGl2ZQ0KICBgLSAx
-OTowOjA6MiBzZG0gODoxOTIgYWN0aXZlIHJlYWR5ICBydW5uaW5nDQptcGF0aGMgKDI2MjM4NjQz
-MzMyMzczMzM3KSBkbS05IF9JTlNQVVJfLHZnNF9sdjQxDQpzaXplPTMwMEcgZmVhdHVyZXM9JzEg
-cXVldWVfaWZfbm9fcGF0aCcgaHdoYW5kbGVyPScwJyB3cD1ydw0KYC0rLSBwb2xpY3k9J3JvdW5k
-LXJvYmluIDAnIHByaW89MSBzdGF0dXM9YWN0aXZlDQogIGAtIDE5OjA6MDoxIHNkbCA4OjE3NiBh
-Y3RpdmUgcmVhZHkgIHJ1bm5pbmcNCm1wYXRoaiAoMjMyMzg2MjM5MzYzMDMyNjEpIGRtLTQgX0lO
-U1BVUl8sdmc1X2x2NTQNCnNpemU9MzUwRyBmZWF0dXJlcz0nMSBxdWV1ZV9pZl9ub19wYXRoJyBo
-d2hhbmRsZXI9JzAnIHdwPXJ3DQpgLSstIHBvbGljeT0ncm91bmQtcm9iaW4gMCcgcHJpbz0xIHN0
-YXR1cz1hY3RpdmUNCiAgYC0gMTk6MDowOjggc2RzIDY1OjMyIGFjdGl2ZSByZWFkeSAgcnVubmlu
-Zw0KbXBhdGhpICgyMzk2NjM5MzYzMTM3NjQzOSkgZG0tNyBfSU5TUFVSXyx2ZzRfbHY0Mw0Kc2l6
-ZT0zMDBHIGZlYXR1cmVzPScxIHF1ZXVlX2lmX25vX3BhdGgnIGh3aGFuZGxlcj0nMCcgd3A9cncN
-CmAtKy0gcG9saWN5PSdyb3VuZC1yb2JpbiAwJyBwcmlvPTEgc3RhdHVzPWFjdGl2ZQ0KICBgLSAx
-OTowOjA6NCBzZG8gODoyMjQgYWN0aXZlIHJlYWR5ICBydW5uaW5nDQptcGF0aGggKDI2NTM1NjY2
-MjY0NjUzOTYzKSBkbS0zIF9JTlNQVVJfLHZnNF9sdjQ0DQpzaXplPTMwMEcgZmVhdHVyZXM9JzEg
-cXVldWVfaWZfbm9fcGF0aCcgaHdoYW5kbGVyPScwJyB3cD1ydw0KYC0rLSBwb2xpY3k9J3JvdW5k
-LXJvYmluIDAnIHByaW89MSBzdGF0dXM9YWN0aXZlDQogIGAtIDE5OjA6MDo1IHNkcCA4OjI0MCBh
-Y3RpdmUgcmVhZHkgIHJ1bm5pbmcNCm1wYXRoZyAoMjM1MzI2NDM0NjEzOTM2NjYpIGRtLTYgX0lO
-U1BVUl8sdmc1X2x2NTMNCnNpemU9MzUwRyBmZWF0dXJlcz0nMSBxdWV1ZV9pZl9ub19wYXRoJyBo
-d2hhbmRsZXI9JzAnIHdwPXJ3DQpgLSstIHBvbGljeT0ncm91bmQtcm9iaW4gMCcgcHJpbz0xIHN0
-YXR1cz1hY3RpdmUNCiAgYC0gMTk6MDowOjcgc2RyIDY1OjE2IGFjdGl2ZSByZWFkeSAgcnVubmlu
-Zw0KbXBhdGhmICgyMzg2MzMzMzQzODY2NjE2NSkgZG0tNSAsDQpzaXplPTMwMEcgZmVhdHVyZXM9
-JzEgcXVldWVfaWZfbm9fcGF0aCcgaHdoYW5kbGVyPScwJyB3cD1ydw0KYC0rLSBwb2xpY3k9J3Jv
-dW5kLXJvYmluIDAnIHByaW89MCBzdGF0dXM9ZW5hYmxlZA0KICB8LSAjOiM6IzojICAtICAgIzoj
-ICAgZmFpbGVkIGZhdWx0eSBydW5uaW5nDQogIGAtIDE5OjA6MDozIHNkbiA4OjIwOCBmYWlsZWQg
-ZmF1bHR5IHJ1bm5pbmcNCg0KW3Jvb3RAbG9jYWxob3N0IH5dIyBkbXNldHVwIC12IHN0YXR1cw0K
-TmFtZTogICAgICAgICAgICAgIG1wYXRoZQ0KU3RhdGU6ICAgICAgICAgICAgIEFDVElWRQ0KUmVh
-ZCBBaGVhZDogICAgICAgIDI1Ng0KVGFibGVzIHByZXNlbnQ6ICAgIExJVkUNCk9wZW4gY291bnQ6
-ICAgICAgICAxDQpFdmVudCBudW1iZXI6ICAgICAgNw0KTWFqb3IsIG1pbm9yOiAgICAgIDI1Mywg
-OA0KTnVtYmVyIG9mIHRhcmdldHM6IDENClVVSUQ6IG1wYXRoLTIzNDMxMzczNjMzMzEzMTM4DQoN
-CjAgNjI5MTQ1NjAwIG11bHRpcGF0aCAyIDAgMCAwIDEgMSBBIDAgMSAwIDY1OjAgQSAwIA0KDQpO
-YW1lOiAgICAgICAgICAgICAgVm9sR3JvdXAtbHZfc3dhcA0KU3RhdGU6ICAgICAgICAgICAgIEFD
-VElWRQ0KUmVhZCBBaGVhZDogICAgICAgIDI1Ng0KVGFibGVzIHByZXNlbnQ6ICAgIExJVkUNCk9w
-ZW4gY291bnQ6ICAgICAgICAxDQpFdmVudCBudW1iZXI6ICAgICAgMA0KTWFqb3IsIG1pbm9yOiAg
-ICAgIDI1MywgMQ0KTnVtYmVyIG9mIHRhcmdldHM6IDENClVVSUQ6IExWTS1nMTQ2T1hINFFXNnl1
-enhWUFFnNk1Ub3dTNG43MFpRRTJ5WGVBbkJKMHJ6bDM1aFFkNUVObzlKckZ1YXZMYVo0DQoNCjAg
-ODE5MjAwMCBsaW5lYXIgDQoNCk5hbWU6ICAgICAgICAgICAgICBtcGF0aGQNClN0YXRlOiAgICAg
-ICAgICAgICBBQ1RJVkUNClJlYWQgQWhlYWQ6ICAgICAgICAyNTYNClRhYmxlcyBwcmVzZW50OiAg
-ICBMSVZFDQpPcGVuIGNvdW50OiAgICAgICAgMQ0KRXZlbnQgbnVtYmVyOiAgICAgIDcNCk1ham9y
-LCBtaW5vcjogICAgICAyNTMsIDEwDQpOdW1iZXIgb2YgdGFyZ2V0czogMQ0KVVVJRDogbXBhdGgt
-MjM3MzUzOTMxMzkzOTM4MzENCg0KMCA3MzQwMDMyMDAgbXVsdGlwYXRoIDIgMCAwIDAgMSAxIEEg
-MCAxIDAgODoxOTIgQSAwIA0KDQpOYW1lOiAgICAgICAgICAgICAgVm9sR3JvdXAtbHZfcm9vdA0K
-U3RhdGU6ICAgICAgICAgICAgIEFDVElWRQ0KUmVhZCBBaGVhZDogICAgICAgIDI1Ng0KVGFibGVz
-IHByZXNlbnQ6ICAgIExJVkUNCk9wZW4gY291bnQ6ICAgICAgICAxDQpFdmVudCBudW1iZXI6ICAg
-ICAgMA0KTWFqb3IsIG1pbm9yOiAgICAgIDI1MywgMA0KTnVtYmVyIG9mIHRhcmdldHM6IDENClVV
-SUQ6IExWTS1nMTQ2T1hINFFXNnl1enhWUFFnNk1Ub3dTNG43MFpRRUp1RVNkVjh3QUFpNnh0Wkpz
-dnVlME1NZEt3djhKckQxDQoNCjAgMTA0ODU3NjAwIGxpbmVhciANCg0KTmFtZTogICAgICAgICAg
-ICAgIG1wYXRoYw0KU3RhdGU6ICAgICAgICAgICAgIEFDVElWRQ0KUmVhZCBBaGVhZDogICAgICAg
-IDI1Ng0KVGFibGVzIHByZXNlbnQ6ICAgIExJVkUNCk9wZW4gY291bnQ6ICAgICAgICAxDQpFdmVu
-dCBudW1iZXI6ICAgICAgOA0KTWFqb3IsIG1pbm9yOiAgICAgIDI1MywgOQ0KTnVtYmVyIG9mIHRh
-cmdldHM6IDENClVVSUQ6IG1wYXRoLTI2MjM4NjQzMzMyMzczMzM3DQoNCjAgNjI5MTQ1NjAwIG11
-bHRpcGF0aCAyIDAgMCAwIDEgMSBBIDAgMSAwIDg6MTc2IEEgMCANCg0KTmFtZTogICAgICAgICAg
-ICAgIG1wYXRoag0KU3RhdGU6ICAgICAgICAgICAgIEFDVElWRQ0KUmVhZCBBaGVhZDogICAgICAg
-IDI1Ng0KVGFibGVzIHByZXNlbnQ6ICAgIExJVkUNCk9wZW4gY291bnQ6ICAgICAgICAxDQpFdmVu
-dCBudW1iZXI6ICAgICAgNw0KTWFqb3IsIG1pbm9yOiAgICAgIDI1MywgNA0KTnVtYmVyIG9mIHRh
-cmdldHM6IDENClVVSUQ6IG1wYXRoLTIzMjM4NjIzOTM2MzAzMjYxDQoNCjAgNzM0MDAzMjAwIG11
-bHRpcGF0aCAyIDAgMCAwIDEgMSBBIDAgMSAwIDY1OjMyIEEgMCANCg0KTmFtZTogICAgICAgICAg
-ICAgIG1wYXRoaQ0KU3RhdGU6ICAgICAgICAgICAgIEFDVElWRQ0KUmVhZCBBaGVhZDogICAgICAg
-IDI1Ng0KVGFibGVzIHByZXNlbnQ6ICAgIExJVkUNCk9wZW4gY291bnQ6ICAgICAgICAxDQpFdmVu
-dCBudW1iZXI6ICAgICAgOA0KTWFqb3IsIG1pbm9yOiAgICAgIDI1MywgNw0KTnVtYmVyIG9mIHRh
-cmdldHM6IDENClVVSUQ6IG1wYXRoLTIzOTY2MzkzNjMxMzc2NDM5DQoNCjAgNjI5MTQ1NjAwIG11
-bHRpcGF0aCAyIDAgMCAwIDEgMSBBIDAgMSAwIDg6MjI0IEEgMCANCg0KTmFtZTogICAgICAgICAg
-ICAgIG1wYXRoaA0KU3RhdGU6ICAgICAgICAgICAgIEFDVElWRQ0KUmVhZCBBaGVhZDogICAgICAg
-IDI1Ng0KVGFibGVzIHByZXNlbnQ6ICAgIExJVkUNCk9wZW4gY291bnQ6ICAgICAgICAxDQpFdmVu
-dCBudW1iZXI6ICAgICAgNw0KTWFqb3IsIG1pbm9yOiAgICAgIDI1MywgMw0KTnVtYmVyIG9mIHRh
-cmdldHM6IDENClVVSUQ6IG1wYXRoLTI2NTM1NjY2MjY0NjUzOTYzDQoNCjAgNjI5MTQ1NjAwIG11
-bHRpcGF0aCAyIDAgMCAwIDEgMSBBIDAgMSAwIDg6MjQwIEEgMCANCg0KTmFtZTogICAgICAgICAg
-ICAgIFZvbEdyb3VwLWx2X2hvbWUNClN0YXRlOiAgICAgICAgICAgICBBQ1RJVkUNClJlYWQgQWhl
-YWQ6ICAgICAgICAyNTYNClRhYmxlcyBwcmVzZW50OiAgICBMSVZFDQpPcGVuIGNvdW50OiAgICAg
-ICAgMQ0KRXZlbnQgbnVtYmVyOiAgICAgIDANCk1ham9yLCBtaW5vcjogICAgICAyNTMsIDINCk51
-bWJlciBvZiB0YXJnZXRzOiAxDQpVVUlEOiBMVk0tZzE0Nk9YSDRRVzZ5dXp4VlBRZzZNVG93UzRu
-NzBaUUVYbkFhZDR1VGVCZW5zazYwb0VhS2VoZWlRVEdLeVNnQg0KDQowIDE4Mzk0Mzk4NzIgbGlu
-ZWFyIA0KDQpOYW1lOiAgICAgICAgICAgICAgbXBhdGhnDQpTdGF0ZTogICAgICAgICAgICAgQUNU
-SVZFDQpSZWFkIEFoZWFkOiAgICAgICAgMjU2DQpUYWJsZXMgcHJlc2VudDogICAgTElWRQ0KT3Bl
-biBjb3VudDogICAgICAgIDANCkV2ZW50IG51bWJlcjogICAgICA4DQpNYWpvciwgbWlub3I6ICAg
-ICAgMjUzLCA2DQpOdW1iZXIgb2YgdGFyZ2V0czogMQ0KVVVJRDogbXBhdGgtMjM1MzI2NDM0NjEz
-OTM2NjYNCg0KMCA3MzQwMDMyMDAgbXVsdGlwYXRoIDIgMCAwIDAgMSAxIEEgMCAxIDAgNjU6MTYg
-QSAwIA0KDQpOYW1lOiAgICAgICAgICAgICAgbXBhdGhmDQpTdGF0ZTogICAgICAgICAgICAgQUNU
-SVZFDQpSZWFkIEFoZWFkOiAgICAgICAgMjU2DQpUYWJsZXMgcHJlc2VudDogICAgTElWRQ0KT3Bl
-biBjb3VudDogICAgICAgIDENCkV2ZW50IG51bWJlcjogICAgICA5DQpNYWpvciwgbWlub3I6ICAg
-ICAgMjUzLCA1DQpOdW1iZXIgb2YgdGFyZ2V0czogMQ0KVVVJRDogbXBhdGgtMjM4NjMzMzM0Mzg2
-NjYxNjUNCg0KMCA2MjkxNDU2MDAgbXVsdGlwYXRoIDIgMzkgMCAwIDEgMSBFIDAgMiAwIDg6NjQg
-RiAxIDg6MjA4IEYgMSANCg0KDQoNCk1heSAgMiAyMTo1NDowMiBsb2NhbGhvc3Qga2VybmVsOiBz
-ZCAxOTowOjA6MzogW3Nkbl0gVW5oYW5kbGVkIGVycm9yIGNvZGUNCk1heSAgMiAyMTo1NDowMiBs
-b2NhbGhvc3Qga2VybmVsOiBzZCAxOTowOjA6MzogW3Nkbl0gUmVzdWx0OiBob3N0Ynl0ZT1ESURf
-Tk9fQ09OTkVDVCBkcml2ZXJieXRlPURSSVZFUl9PSw0KTWF5ICAyIDIxOjU0OjAyIGxvY2FsaG9z
-dCBrZXJuZWw6IHNkIDE5OjA6MDozOiBbc2RuXSBDREI6IFdyaXRlKDEwKTogMmEgMDAgMGEgMjEg
-YjIgMDAgMDAgMDAgNjAgMDANCk1heSAgMiAyMTo1NDowMiBsb2NhbGhvc3Qga2VybmVsOiBlbmRf
-cmVxdWVzdDogSS9PIGVycm9yLCBkZXYgc2RuLCBzZWN0b3IgMTY5OTgwNDE2DQpNYXkgIDIgMjE6
-NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IHNkYjogcmVtb3ZlIHBhdGggKHVldmVudCkNCk1h
-eSAgMiAyMTo1NDowMyBsb2NhbGhvc3QgbXVsdGlwYXRoZDogc2RjOiByZW1vdmUgcGF0aCAodWV2
-ZW50KQ0KTWF5ICAyIDIxOjU0OjAzIGxvY2FsaG9zdCBrZXJuZWw6IGRldmljZS1tYXBwZXI6IHRh
-YmxlOiAyNTM6NTogbXVsdGlwYXRoOiBlcnJvciBnZXR0aW5nIGRldmljZQ0KTWF5ICAyIDIxOjU0
-OjAzIGxvY2FsaG9zdCBrZXJuZWw6IGRldmljZS1tYXBwZXI6IGlvY3RsOiBlcnJvciBhZGRpbmcg
-dGFyZ2V0IHRvIHRhYmxlDQpNYXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IGtlcm5lbDogZGV2aWNl
-LW1hcHBlcjogdGFibGU6IDI1Mzo1OiBtdWx0aXBhdGg6IGVycm9yIGdldHRpbmcgZGV2aWNlDQpN
-YXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IGtlcm5lbDogZGV2aWNlLW1hcHBlcjogaW9jdGw6IGVy
-cm9yIGFkZGluZyB0YXJnZXQgdG8gdGFibGUNCk1heSAgMiAyMTo1NDowMyBsb2NhbGhvc3QgbXVs
-dGlwYXRoZDogbXBhdGhjOiBsb2FkIHRhYmxlIFswIDYyOTE0NTYwMCBtdWx0aXBhdGggMSBxdWV1
-ZV9pZl9ub19wYXRoIDAgMSAxIHJvdW5kLXJvYmluIDAgMSAxIDg6MTc2IDFdDQpNYXkgIDIgMjE6
-NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IHNkYzogcGF0aCByZW1vdmVkIGZyb20gbWFwIG1w
-YXRoYw0KTWF5ICAyIDIxOjU0OjAzIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBzZGQ6IHJlbW92ZSBw
-YXRoICh1ZXZlbnQpDQpNYXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IHNkZzog
-cmVtb3ZlIHBhdGggKHVldmVudCkNCk1heSAgMiAyMTo1NDowMyBsb2NhbGhvc3QgbXVsdGlwYXRo
-ZDogbXBhdGhoOiBsb2FkIHRhYmxlIFswIDYyOTE0NTYwMCBtdWx0aXBhdGggMSBxdWV1ZV9pZl9u
-b19wYXRoIDAgMSAxIHJvdW5kLXJvYmluIDAgMSAxIDg6MjQwIDFdDQpNYXkgIDIgMjE6NTQ6MDMg
-bG9jYWxob3N0IG11bHRpcGF0aGQ6IHNkZzogcGF0aCByZW1vdmVkIGZyb20gbWFwIG1wYXRoaA0K
-TWF5ICAyIDIxOjU0OjAzIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBzZGY6IHJlbW92ZSBwYXRoICh1
-ZXZlbnQpDQpNYXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IG1wYXRoaTogbG9h
-ZCB0YWJsZSBbMCA2MjkxNDU2MDAgbXVsdGlwYXRoIDEgcXVldWVfaWZfbm9fcGF0aCAwIDEgMSBy
-b3VuZC1yb2JpbiAwIDEgMSA4OjIyNCAxXQ0KTWF5ICAyIDIxOjU0OjAzIGxvY2FsaG9zdCBtdWx0
-aXBhdGhkOiBzZGY6IHBhdGggcmVtb3ZlZCBmcm9tIG1hcCBtcGF0aGkNCk1heSAgMiAyMTo1NDow
-MyBsb2NhbGhvc3QgbXVsdGlwYXRoZDogc2RpOiByZW1vdmUgcGF0aCAodWV2ZW50KQ0KTWF5ICAy
-IDIxOjU0OjAzIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGc6IGxvYWQgdGFibGUgWzAgNzM0
-MDAzMjAwIG11bHRpcGF0aCAxIHF1ZXVlX2lmX25vX3BhdGggMCAxIDEgcm91bmQtcm9iaW4gMCAx
-IDEgNjU6MTYgMV0NCk1heSAgMiAyMTo1NDowMyBsb2NhbGhvc3QgbXVsdGlwYXRoZDogc2RpOiBw
-YXRoIHJlbW92ZWQgZnJvbSBtYXAgbXBhdGhnDQpNYXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11
-bHRpcGF0aGQ6IHNkajogcmVtb3ZlIHBhdGggKHVldmVudCkNCk1heSAgMiAyMTo1NDowMyBsb2Nh
-bGhvc3QgbXVsdGlwYXRoZDogbXBhdGhqOiBsb2FkIHRhYmxlIFswIDczNDAwMzIwMCBtdWx0aXBh
-dGggMSBxdWV1ZV9pZl9ub19wYXRoIDAgMSAxIHJvdW5kLXJvYmluIDAgMSAxIDY1OjMyIDFdDQpN
-YXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IHNkajogcGF0aCByZW1vdmVkIGZy
-b20gbWFwIG1wYXRoag0KTWF5ICAyIDIxOjU0OjAzIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBzZGU6
-IHJlbW92ZSBwYXRoICh1ZXZlbnQpDQpNYXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0
-aGQ6IG1wYXRoZjogZmFpbGVkIGluIGRvbWFwIGZvciByZW1vdmFsIG9mIHBhdGggc2RlDQpNYXkg
-IDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IHVldmVudCB0cmlnZ2VyIGVycm9yDQpN
-YXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IHNkaDogcmVtb3ZlIHBhdGggKHVl
-dmVudCkNCk1heSAgMiAyMTo1NDowMyBsb2NhbGhvc3QgbXVsdGlwYXRoZDogbXBhdGhlOiBsb2Fk
-IHRhYmxlIFswIDYyOTE0NTYwMCBtdWx0aXBhdGggMSBxdWV1ZV9pZl9ub19wYXRoIDAgMSAxIHJv
-dW5kLXJvYmluIDAgMSAxIDY1OjAgMV0NCk1heSAgMiAyMTo1NDowMyBsb2NhbGhvc3QgbXVsdGlw
-YXRoZDogc2RoOiBwYXRoIHJlbW92ZWQgZnJvbSBtYXAgbXBhdGhlDQpNYXkgIDIgMjE6NTQ6MDMg
-bG9jYWxob3N0IG11bHRpcGF0aGQ6IG1wYXRoZjogRW50ZXJpbmcgcmVjb3ZlcnkgbW9kZTogbWF4
-X3JldHJpZXM9MzAwDQpNYXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IDg6NjQ6
-IG1hcmsgYXMgZmFpbGVkDQpNYXkgIDIgMjE6NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IG1w
-YXRoZjogRW50ZXJpbmcgcmVjb3ZlcnkgbW9kZTogbWF4X3JldHJpZXM9MzAwDQpNYXkgIDIgMjE6
-NTQ6MDMgbG9jYWxob3N0IG11bHRpcGF0aGQ6IDg6NjQ6IG1hcmsgYXMgZmFpbGVkDQpNYXkgIDIg
-MjE6NTU6MTkgbG9jYWxob3N0IG11bHRpcGF0aGQ6IHJlY29uZmlndXJlIChTSUdIVVApDQpNYXkg
-IDIgMjE6NTU6MTkgbG9jYWxob3N0IG11bHRpcGF0aGQ6IG1wYXRoYzogc3RvcCBldmVudCBjaGVj
-a2VyIHRocmVhZCAoMTQwMjcwMTg3ODM3MTg0KQ0KTWF5ICAyIDIxOjU1OjE5IGxvY2FsaG9zdCBt
-dWx0aXBhdGhkOiBtcGF0aGg6IHN0b3AgZXZlbnQgY2hlY2tlciB0aHJlYWQgKDE0MDI3MDE4MDky
-NzIzMikNCk1heSAgMiAyMTo1NToxOSBsb2NhbGhvc3QgbXVsdGlwYXRoZDogbXBhdGhmOiBzdG9w
-IGV2ZW50IGNoZWNrZXIgdGhyZWFkICgxNDAyNzAxODA4OTQ0NjQpDQpNYXkgIDIgMjE6NTU6MTkg
-bG9jYWxob3N0IG11bHRpcGF0aGQ6IG1wYXRoaTogc3RvcCBldmVudCBjaGVja2VyIHRocmVhZCAo
-MTQwMjcwMTgwODYxNjk2KQ0KTWF5ICAyIDIxOjU1OjE5IGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBt
-cGF0aGU6IHN0b3AgZXZlbnQgY2hlY2tlciB0aHJlYWQgKDE0MDI3MDE4MDgyODkyOCkNCk1heSAg
-MiAyMTo1NToxOSBsb2NhbGhvc3QgbXVsdGlwYXRoZDogbXBhdGhnOiBzdG9wIGV2ZW50IGNoZWNr
-ZXIgdGhyZWFkICgxNDAyNzAxODA3OTYxNjApDQpNYXkgIDIgMjE6NTU6MTkgbG9jYWxob3N0IG11
-bHRpcGF0aGQ6IG1wYXRoajogc3RvcCBldmVudCBjaGVja2VyIHRocmVhZCAoMTQwMjcwMTgwNzYz
-MzkyKQ0KTWF5ICAyIDIxOjU1OjE5IGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGQ6IHN0b3Ag
-ZXZlbnQgY2hlY2tlciB0aHJlYWQgKDE0MDI3MDE4MDczMDYyNCkNCk1heSAgMiAyMTo1NToyMCBs
-b2NhbGhvc3Qga2VybmVsOiBkZXZpY2UtbWFwcGVyOiB0YWJsZTogMjUzOjExOiBtdWx0aXBhdGg6
-IGVycm9yIGdldHRpbmcgZGV2aWNlDQpNYXkgIDIgMjE6NTU6MjAgbG9jYWxob3N0IGtlcm5lbDog
-ZGV2aWNlLW1hcHBlcjogaW9jdGw6IGVycm9yIGFkZGluZyB0YXJnZXQgdG8gdGFibGUNCk1heSAg
-MiAyMTo1NToyMCBsb2NhbGhvc3Qga2VybmVsOiBkZXZpY2UtbWFwcGVyOiB0YWJsZTogMjUzOjEx
-OiBtdWx0aXBhdGg6IGVycm9yIGdldHRpbmcgZGV2aWNlDQpNYXkgIDIgMjE6NTU6MjAgbG9jYWxo
-b3N0IGtlcm5lbDogZGV2aWNlLW1hcHBlcjogaW9jdGw6IGVycm9yIGFkZGluZyB0YXJnZXQgdG8g
-dGFibGUNCk1heSAgMiAyMTo1NToyMCBsb2NhbGhvc3QgbXVsdGlwYXRoZDogbXBhdGhhOiBpZ25v
-cmluZyBtYXANCk1heSAgMiAyMTo1NToyMCBsb2NhbGhvc3QgbXVsdGlwYXRoZDogbXBhdGhjOiBs
-b2FkIHRhYmxlIFswIDYyOTE0NTYwMCBtdWx0aXBhdGggMSBxdWV1ZV9pZl9ub19wYXRoIDAgMSAx
-IHJvdW5kLXJvYmluIDAgMSAxIDg6MTc2IDFdDQpNYXkgIDIgMjE6NTU6MjAgbG9jYWxob3N0IG11
-bHRpcGF0aGQ6IG1wYXRoZDogbG9hZCB0YWJsZSBbMCA3MzQwMDMyMDAgbXVsdGlwYXRoIDEgcXVl
-dWVfaWZfbm9fcGF0aCAwIDEgMSByb3VuZC1yb2JpbiAwIDEgMSA4OjE5MiAxXQ0KTWF5ICAyIDIx
-OjU1OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGc6IGxvYWQgdGFibGUgWzAgNzM0MDAz
-MjAwIG11bHRpcGF0aCAxIHF1ZXVlX2lmX25vX3BhdGggMCAxIDEgcm91bmQtcm9iaW4gMCAxIDEg
-NjU6MTYgMV0NCk1heSAgMiAyMTo1NToyMCBsb2NhbGhvc3QgbXVsdGlwYXRoZDogbXBhdGhlOiBs
-b2FkIHRhYmxlIFswIDYyOTE0NTYwMCBtdWx0aXBhdGggMSBxdWV1ZV9pZl9ub19wYXRoIDAgMSAx
-IHJvdW5kLXJvYmluIDAgMSAxIDY1OjAgMV0NCk1heSAgMiAyMTo1NToyMCBsb2NhbGhvc3QgbXVs
-dGlwYXRoZDogbXBhdGhoOiBsb2FkIHRhYmxlIFswIDYyOTE0NTYwMCBtdWx0aXBhdGggMSBxdWV1
-ZV9pZl9ub19wYXRoIDAgMSAxIHJvdW5kLXJvYmluIDAgMSAxIDg6MjQwIDFdDQpNYXkgIDIgMjE6
-NTU6MjAgbG9jYWxob3N0IG11bHRpcGF0aGQ6IG1wYXRoaTogbG9hZCB0YWJsZSBbMCA2MjkxNDU2
-MDAgbXVsdGlwYXRoIDEgcXVldWVfaWZfbm9fcGF0aCAwIDEgMSByb3VuZC1yb2JpbiAwIDEgMSA4
-OjIyNCAxXQ0KTWF5ICAyIDIxOjU1OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGo6IGxv
-YWQgdGFibGUgWzAgNzM0MDAzMjAwIG11bHRpcGF0aCAxIHF1ZXVlX2lmX25vX3BhdGggMCAxIDEg
-cm91bmQtcm9iaW4gMCAxIDEgNjU6MzIgMV0NCk1heSAgMiAyMTo1NToyMCBsb2NhbGhvc3QgbXVs
-dGlwYXRoZDogbXBhdGhmOiBtYXAgaW4gdXNlDQpNYXkgIDIgMjE6NTU6MjAgbG9jYWxob3N0IG11
-bHRpcGF0aGQ6IG1wYXRoZjogdW5hYmxlIHRvIGZsdXNoIGRldm1hcA0KTWF5ICAyIDIxOjU1OjIw
-IGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGM6IGV2ZW50IGNoZWNrZXIgc3RhcnRlZA0KTWF5
-ICAyIDIxOjU1OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGQ6IGV2ZW50IGNoZWNrZXIg
-c3RhcnRlZA0KTWF5ICAyIDIxOjU1OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGc6IGV2
-ZW50IGNoZWNrZXIgc3RhcnRlZA0KTWF5ICAyIDIxOjU1OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhk
-OiBtcGF0aGU6IGV2ZW50IGNoZWNrZXIgc3RhcnRlZA0KTWF5ICAyIDIxOjU1OjIwIGxvY2FsaG9z
-dCBtdWx0aXBhdGhkOiBtcGF0aGg6IGV2ZW50IGNoZWNrZXIgc3RhcnRlZA0KTWF5ICAyIDIxOjU1
-OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGk6IGV2ZW50IGNoZWNrZXIgc3RhcnRlZA0K
-TWF5ICAyIDIxOjU1OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGo6IGV2ZW50IGNoZWNr
-ZXIgc3RhcnRlZA0KTWF5ICAyIDIxOjU1OjIwIGxvY2FsaG9zdCBtdWx0aXBhdGhkOiBtcGF0aGY6
-IGV2ZW50IGNoZWNrZXIgc3RhcnRlZA==
+Short Overview:
+^^^^^^^^^^^^^^
+(1) The first checkpoint that decides whether the user has an access right to
+    submit ioctl cmds into DM driver are actually the attributes on dentry of
+    /dev/mapper/control (through general perm., ACL, LSM checks).
 
-------=_001_NextPart327870104500_=----
-Content-Type: text/html;
-	charset="gb2312"
-Content-Transfer-Encoding: quoted-printable
+(2) After the DM_DEV_CREATE ioctl, new block device will receive FSUID and
+    FSGID from the context on behalf of which we entered into kernel
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META content=3D"text/html; charset=3Dgb2312" http-equiv=3DContent-Type>
-<STYLE>
-BLOCKQUOTE {
-	MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 2em
-}
-OL {
-	MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px
-}
-UL {
-	MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px
-}
-P {
-	MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px
-}
-BODY {
-	LINE-HEIGHT: 1.5; FONT-FAMILY: =CE=A2=C8=ED=D1=C5=BA=DA; COLOR: #000000; =
-FONT-SIZE: 10.5pt
-}
-</STYLE>
+(3) Whenever user asks to manipulate DM device he must pass the test whether
+    he's the owner of DM device or not
 
-<META name=3DGENERATOR content=3D"MSHTML 9.00.8112.16443"></HEAD>
-<BODY style=3D"MARGIN: 10px">
-<DIV><SPAN>Hello,develop team.I test multipath in RHEL 6.2(X86_64).I find =
-a=20
-issue when test takeover.There are 8 disk in one&nbsp;target path;7 disk i=
-s=20
-active,but 1 is faulty(mpathf).I check target ,and there is well;I didn't =
-how=20
-can i avoid the issue. I find some different between active and faulty var=
-=20
-/var/log/message.The mpathf print "map in use,unable to flush devmap".Is t=
-here=20
-some helpful?</SPAN></DIV>
-<DIV><SPAN></SPAN>&nbsp;</DIV>
-<DIV><SPAN>
-<DIV>[root@localhost&nbsp;~]#&nbsp;multipath&nbsp;-ll</DIV>
-<DIV>mpathe&nbsp;(23431373633313138)&nbsp;dm-8&nbsp;_INSPUR_,vg5_lv52</DIV=
->
-<DIV>size=3D300G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D1&nbsp;status=3Da=
-ctive</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:6&nbsp;sdq&nbsp;65:0&nbsp;&nbsp;active&nbs=
-p;ready&nbsp;&nbsp;running</DIV>
-<DIV>mpathd&nbsp;(23735393139393831)&nbsp;dm-10&nbsp;_INSPUR_,vg5_lv51</DI=
-V>
-<DIV>size=3D350G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D1&nbsp;status=3Da=
-ctive</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:2&nbsp;sdm&nbsp;8:192&nbsp;active&nbsp;rea=
-dy&nbsp;&nbsp;running</DIV>
-<DIV>mpathc&nbsp;(26238643332373337)&nbsp;dm-9&nbsp;_INSPUR_,vg4_lv41</DIV=
->
-<DIV>size=3D300G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D1&nbsp;status=3Da=
-ctive</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:1&nbsp;sdl&nbsp;8:176&nbsp;active&nbsp;rea=
-dy&nbsp;&nbsp;running</DIV>
-<DIV>mpathj&nbsp;(23238623936303261)&nbsp;dm-4&nbsp;_INSPUR_,vg5_lv54</DIV=
->
-<DIV>size=3D350G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D1&nbsp;status=3Da=
-ctive</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:8&nbsp;sds&nbsp;65:32&nbsp;active&nbsp;rea=
-dy&nbsp;&nbsp;running</DIV>
-<DIV>mpathi&nbsp;(23966393631376439)&nbsp;dm-7&nbsp;_INSPUR_,vg4_lv43</DIV=
->
-<DIV>size=3D300G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D1&nbsp;status=3Da=
-ctive</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:4&nbsp;sdo&nbsp;8:224&nbsp;active&nbsp;rea=
-dy&nbsp;&nbsp;running</DIV>
-<DIV>mpathh&nbsp;(26535666264653963)&nbsp;dm-3&nbsp;_INSPUR_,vg4_lv44</DIV=
->
-<DIV>size=3D300G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D1&nbsp;status=3Da=
-ctive</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:5&nbsp;sdp&nbsp;8:240&nbsp;active&nbsp;rea=
-dy&nbsp;&nbsp;running</DIV>
-<DIV>mpathg&nbsp;(23532643461393666)&nbsp;dm-6&nbsp;_INSPUR_,vg5_lv53</DIV=
->
-<DIV>size=3D350G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D1&nbsp;status=3Da=
-ctive</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:7&nbsp;sdr&nbsp;65:16&nbsp;active&nbsp;rea=
-dy&nbsp;&nbsp;running</DIV>
-<DIV>mpathf&nbsp;(23863333438666165)&nbsp;dm-5&nbsp;,</DIV>
-<DIV>size=3D300G&nbsp;features=3D'1&nbsp;queue_if_no_path'&nbsp;hwhandler=
-=3D'0'&nbsp;wp=3Drw</DIV>
-<DIV>`-+-&nbsp;policy=3D'round-robin&nbsp;0'&nbsp;prio=3D0&nbsp;status=3De=
-nabled</DIV>
-<DIV>&nbsp;&nbsp;|-&nbsp;#:#:#:#&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;#:#&nbsp;&n=
-bsp;&nbsp;failed&nbsp;faulty&nbsp;running</DIV>
-<DIV>&nbsp;&nbsp;`-&nbsp;19:0:0:3&nbsp;sdn&nbsp;8:208&nbsp;failed&nbsp;fau=
-lty&nbsp;running</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>
-<DIV>[root@localhost&nbsp;~]#&nbsp;dmsetup&nbsp;-v&nbsp;status</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathe</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;8</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-23431373633313138</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;629145600&nbsp;multipath&nbsp;2&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nb=
-sp;1&nbsp;A&nbsp;0&nbsp;1&nbsp;0&nbsp;65:0&nbsp;A&nbsp;0&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;VolGroup-lv_swap</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;1</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;LVM-g146OXH4QW6yuzxVPQg6MTowS4n70ZQE2yXeAnBJ0rzl35hQd5ENo9=
-JrFuavLaZ4</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;8192000&nbsp;linear&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathd</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;10</D=
-IV>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-23735393139393831</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;734003200&nbsp;multipath&nbsp;2&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nb=
-sp;1&nbsp;A&nbsp;0&nbsp;1&nbsp;0&nbsp;8:192&nbsp;A&nbsp;0&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;VolGroup-lv_root</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;0</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;LVM-g146OXH4QW6yuzxVPQg6MTowS4n70ZQEJuESdV8wAAi6xtZJsvue0M=
-MdKwv8JrD1</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;104857600&nbsp;linear&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathc</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;9</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-26238643332373337</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;629145600&nbsp;multipath&nbsp;2&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nb=
-sp;1&nbsp;A&nbsp;0&nbsp;1&nbsp;0&nbsp;8:176&nbsp;A&nbsp;0&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathj</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;4</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-23238623936303261</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;734003200&nbsp;multipath&nbsp;2&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nb=
-sp;1&nbsp;A&nbsp;0&nbsp;1&nbsp;0&nbsp;65:32&nbsp;A&nbsp;0&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathi</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;7</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-23966393631376439</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;629145600&nbsp;multipath&nbsp;2&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nb=
-sp;1&nbsp;A&nbsp;0&nbsp;1&nbsp;0&nbsp;8:224&nbsp;A&nbsp;0&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathh</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;3</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-26535666264653963</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;629145600&nbsp;multipath&nbsp;2&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nb=
-sp;1&nbsp;A&nbsp;0&nbsp;1&nbsp;0&nbsp;8:240&nbsp;A&nbsp;0&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;VolGroup-lv_home</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;2</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;LVM-g146OXH4QW6yuzxVPQg6MTowS4n70ZQEXnAad4uTeBensk60oEaKeh=
-eiQTGKySgB</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;1839439872&nbsp;linear&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathg</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;6</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-23532643461393666</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;734003200&nbsp;multipath&nbsp;2&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nb=
-sp;1&nbsp;A&nbsp;0&nbsp;1&nbsp;0&nbsp;65:16&nbsp;A&nbsp;0&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;mpathf</DIV>
-<DIV>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;ACTIVE</DIV>
-<DIV>Read&nbsp;Ahead:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256</=
-DIV>
-<DIV>Tables&nbsp;present:&nbsp;&nbsp;&nbsp;&nbsp;LIVE</DIV>
-<DIV>Open&nbsp;count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</DI=
-V>
-<DIV>Event&nbsp;number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9</DIV>
-<DIV>Major,&nbsp;minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;253,&nbsp;5</DI=
-V>
-<DIV>Number&nbsp;of&nbsp;targets:&nbsp;1</DIV>
-<DIV>UUID:&nbsp;mpath-23863333438666165</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>0&nbsp;629145600&nbsp;multipath&nbsp;2&nbsp;39&nbsp;0&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;E&nbsp;0&nbsp;2&nbsp;0&nbsp;8:64&nbsp;F&nbsp;1&nbsp;8:208&nbsp;=
-F&nbsp;1&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:02&nbsp;localhost&nbsp;kernel:&nbsp;sd&nb=
-sp;19:0:0:3:&nbsp;[sdn]&nbsp;Unhandled&nbsp;error&nbsp;code</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:02&nbsp;localhost&nbsp;kernel:&nbsp;sd&nb=
-sp;19:0:0:3:&nbsp;[sdn]&nbsp;Result:&nbsp;hostbyte=3DDID_NO_CONNECT&nbsp;d=
-riverbyte=3DDRIVER_OK</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:02&nbsp;localhost&nbsp;kernel:&nbsp;sd&nb=
-sp;19:0:0:3:&nbsp;[sdn]&nbsp;CDB:&nbsp;Write(10):&nbsp;2a&nbsp;00&nbsp;0a&=
-nbsp;21&nbsp;b2&nbsp;00&nbsp;00&nbsp;00&nbsp;60&nbsp;00</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:02&nbsp;localhost&nbsp;kernel:&nbsp;end_r=
-equest:&nbsp;I/O&nbsp;error,&nbsp;dev&nbsp;sdn,&nbsp;sector&nbsp;169980416=
-</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-db:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dc:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;table:&nbsp;253:5:&nbsp;multipath:&nbsp;error&nbsp;getting&=
-nbsp;device</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;ioctl:&nbsp;error&nbsp;adding&nbsp;target&nbsp;to&nbsp;tabl=
-e</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;table:&nbsp;253:5:&nbsp;multipath:&nbsp;error&nbsp;getting&=
-nbsp;device</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;ioctl:&nbsp;error&nbsp;adding&nbsp;target&nbsp;to&nbsp;tabl=
-e</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathc:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;8:176&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dc:&nbsp;path&nbsp;removed&nbsp;from&nbsp;map&nbsp;mpathc</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dd:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dg:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathh:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;8:240&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dg:&nbsp;path&nbsp;removed&nbsp;from&nbsp;map&nbsp;mpathh</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-df:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathi:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;8:224&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-df:&nbsp;path&nbsp;removed&nbsp;from&nbsp;map&nbsp;mpathi</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-di:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathg:&nbsp;load&nbsp;table&nbsp;[0&nbsp;734003200&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;65:16&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-di:&nbsp;path&nbsp;removed&nbsp;from&nbsp;map&nbsp;mpathg</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dj:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathj:&nbsp;load&nbsp;table&nbsp;[0&nbsp;734003200&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;65:32&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dj:&nbsp;path&nbsp;removed&nbsp;from&nbsp;map&nbsp;mpathj</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-de:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathf:&nbsp;failed&nbsp;in&nbsp;domap&nbsp;for&nbsp;removal&nbsp;of&nbsp;p=
-ath&nbsp;sde</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;u=
-event&nbsp;trigger&nbsp;error</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dh:&nbsp;remove&nbsp;path&nbsp;(uevent)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathe:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;65:0&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;s=
-dh:&nbsp;path&nbsp;removed&nbsp;from&nbsp;map&nbsp;mpathe</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathf:&nbsp;Entering&nbsp;recovery&nbsp;mode:&nbsp;max_retries=3D300</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;8=
-:64:&nbsp;mark&nbsp;as&nbsp;failed</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathf:&nbsp;Entering&nbsp;recovery&nbsp;mode:&nbsp;max_retries=3D300</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:54:03&nbsp;localhost&nbsp;multipathd:&nbsp;8=
-:64:&nbsp;mark&nbsp;as&nbsp;failed</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;r=
-econfigure&nbsp;(SIGHUP)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathc:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270187837184=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathh:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270180927232=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathf:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270180894464=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathi:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270180861696=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathe:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270180828928=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathg:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270180796160=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathj:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270180763392=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:19&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathd:&nbsp;stop&nbsp;event&nbsp;checker&nbsp;thread&nbsp;(140270180730624=
-)</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;table:&nbsp;253:11:&nbsp;multipath:&nbsp;error&nbsp;getting=
-&nbsp;device</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;ioctl:&nbsp;error&nbsp;adding&nbsp;target&nbsp;to&nbsp;tabl=
-e</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;table:&nbsp;253:11:&nbsp;multipath:&nbsp;error&nbsp;getting=
-&nbsp;device</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;kernel:&nbsp;devic=
-e-mapper:&nbsp;ioctl:&nbsp;error&nbsp;adding&nbsp;target&nbsp;to&nbsp;tabl=
-e</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-patha:&nbsp;ignoring&nbsp;map</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathc:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;8:176&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathd:&nbsp;load&nbsp;table&nbsp;[0&nbsp;734003200&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;8:192&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathg:&nbsp;load&nbsp;table&nbsp;[0&nbsp;734003200&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;65:16&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathe:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;65:0&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathh:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;8:240&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathi:&nbsp;load&nbsp;table&nbsp;[0&nbsp;629145600&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;8:224&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathj:&nbsp;load&nbsp;table&nbsp;[0&nbsp;734003200&nbsp;multipath&nbsp;1&n=
-bsp;queue_if_no_path&nbsp;0&nbsp;1&nbsp;1&nbsp;round-robin&nbsp;0&nbsp;1&n=
-bsp;1&nbsp;65:32&nbsp;1]</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathf:&nbsp;map&nbsp;in&nbsp;use</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathf:&nbsp;unable&nbsp;to&nbsp;flush&nbsp;devmap</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathc:&nbsp;event&nbsp;checker&nbsp;started</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathd:&nbsp;event&nbsp;checker&nbsp;started</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathg:&nbsp;event&nbsp;checker&nbsp;started</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathe:&nbsp;event&nbsp;checker&nbsp;started</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathh:&nbsp;event&nbsp;checker&nbsp;started</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathi:&nbsp;event&nbsp;checker&nbsp;started</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathj:&nbsp;event&nbsp;checker&nbsp;started</DIV>
-<DIV>May&nbsp;&nbsp;2&nbsp;21:55:20&nbsp;localhost&nbsp;multipathd:&nbsp;m=
-pathf:&nbsp;event&nbsp;checker&nbsp;started</DIV></DIV></DIV></SPAN></DIV>
-<DIV><SPAN></SPAN>&nbsp;</DIV></BODY></HTML>
+(4) During the table creation process we check whether the user has right to
+    READ/WRITE the backing device, according to table mode (there's possibly
+    major drawback when user submits target device as major:minor couple, more
+    on that later). For that purpose I added a new function into target_type
+    interface - dm_security_fn.
 
-------=_001_NextPart327870104500_=------
+Note: It's still work in progress. I would jusk like to ask you humbly for any
+comments, if you may miss a few minutes.
 
+Another note: I'm prety sure that there are many bugs and many mistakes in my
+concept (locking, maybe even reference leaks,...) but what I'm looking for
+right now, is rather a proof of concept than patchset ready for upstream.
 
---===============1893341450863538883==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+With regards
+O.
 
+Ondrej Kozina (4):
+  Adds support for user-submitted ioctl commands
+  Adds support for the dentry lookup from path or major:minor couple
+    during target security check
+  Adds support for security checks in the linear target
+  Adds support for security checks in the crypt target
 
---===============1893341450863538883==--
+ drivers/md/dm-crypt.c         |   37 +++++++++++-
+ drivers/md/dm-ioctl.c         |  138 +++++++++++++++++++++++++++++++++++------
+ drivers/md/dm-linear.c        |   49 ++++++++++++++-
+ drivers/md/dm-sysfs.c         |   30 +++++++++
+ drivers/md/dm-table.c         |   16 +++++
+ drivers/md/dm-target.c        |  126 +++++++++++++++++++++++++++++++++++++
+ drivers/md/dm.c               |   86 +++++++++++++++++++++++++
+ drivers/md/dm.h               |   14 ++++
+ include/linux/device-mapper.h |    3 +
+ 9 files changed, 477 insertions(+), 22 deletions(-)
+
+-- 
+1.7.8.5
