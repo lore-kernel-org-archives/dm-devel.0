@@ -1,78 +1,45 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCHES]: dm lock optimization
-Date: Tue, 1 May 2012 22:17:47 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1205012214560.24798@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1204182249060.12984@file.rdu.redhat.com>
-	<4F8F9FDA.1000103@ce.jp.nec.com>
-	<Pine.LNX.4.64.1204211215230.3269@file.rdu.redhat.com>
-	<4F953574.3000702@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: dmraid incompatible with multipath-tools?
+Date: Tue, 01 May 2012 23:16:08 -0400
+Message-ID: <4FA0A6F8.6030600@ubuntu.com>
+Reply-To: "ATARAID \(eg, Promise Fasttrak,
+	Highpoint 370\) related discussions" <ataraid-list@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F953574.3000702@ce.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Return-path: <ataraid-list-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/ataraid-list>
+List-Post: <mailto:ataraid-list@redhat.com>
+List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
+Sender: ataraid-list-bounces@redhat.com
+Errors-To: ataraid-list-bounces@redhat.com
+To: ataraid-list@redhat.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-I placed the new code using srcu here: 
-http://people.redhat.com/mpatocka/patches/kernel/dm-lock-optimization/
+A user recently filed this bug report against ubuntu 12.04:
 
-It removes io_lock, map_lock and holders and replaces them with srcu.
+https://bugs.launchpad.net/ubuntu/+source/dmraid/+bug/992975
 
+I believe this is the result of my patch fixing the testing support, and testing being enabled by default.  With testing enabled, it looks like dmraid is finding the physical disks both on the normal scsi devnode, and again on the dm devnode created by multipath-tools.
 
-On Mon, 23 Apr 2012, Jun'ichi Nomura wrote:
+Why does multipath-tools create a dm mapping for each physical disk by default?  It seems like this is likely to cause other problems as well.  I suppose that configuring dmraid with --disable-testing would resolve this issue ( and it probably should be disabled by default if it doesn't play well with multipath-tools ), but I'd like to understand multipath-tools better first and try to find a better solution.
 
-> Hi Mikulas,
-> 
-> On 04/22/12 01:17, Mikulas Patocka wrote:
-> > I created new patches that use rcu instead of map_lock, so they address 
-> > the issues you mentioned. Get the new patches here:
-> > http://people.redhat.com/mpatocka/patches/kernel/dm-lock-optimization/
-> > 
-> > performance with new patches:
-> > no patch:               69.3
-> > patch 1:                54.0
-> > patch 1,2:              44.2
-> > patch 1,2,3:            39.8
-> > patch 1,2,3,4:          32.7
-> 
-> Thank you. I have 2 comments for the new patches.
-> 
-> synchronize_rcu could be put in dm_table_destroy() instead of __bind().
-> I think it's safer place to wait.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
 
-I think the code is more readable if synchronizing rcu is just after 
-assigning the pointer that is protected by rcu.
-
-> io_lock could be converted to SRCU.
-> I.e. something like:
->   On reader-side:
->     idx = srcu_read_lock(io_srcu);
->     if (!DMF_BLOCK_IO_FOR_SUSPEND)
->       split_and_process_bio();
->     srcu_read_unlock(io_srcu,idx);
->   In dm_suspend:
->     set_bit(DMF_BLOCK_IO_FOR_SUSPEND);
->     mb();
->     synchronize_srcu(io_srcu);
->     <from here, nobody will enter split_and_process_bio>
-> That makes dm-optimize-percpu-io-lock.patch simpler.
-> dm-optimize-take-io_lock-on-table-swap.patch may become simpler, too.
-> 
-> -- 
-> Jun'ichi Nomura, NEC Corporation
-
-Mikulas
+iQEcBAEBAgAGBQJPoKb4AAoJEJrBOlT6nu75NGwIAMi+yoaiupVV3pKPYe9TVwoz
+RoeU9NRrY5DObqwOo8LlQqXCEMBGle84WhBf1c23vBESolw0kLN1a1Pb1hbvCWxa
+S0KYwlSRR7xg3cGIaRgS2aX5pvI5YwqrSQQEvgCBZ9S+J7cN2qugRhX/+GjtJRJa
+ITqkSNjAjp9IoO8vH4RPSdmsieVTKvdjL9vGmJGEnvpOBqCjJ2NjwWNhgMvlhbm7
+n+DFkCy3GLKzmJGuMTHcQodmEuoOSSi4xMI6YvJDCe/D6OLlnlLxjRwqQhkLOq0N
+s5PnaoQIgp8z+3I5kyvBQ+kz4EOl1cZAWie8YcpUD2mWJCFRLdLOmiGmwD02UNk=
+=edhj
+-----END PGP SIGNATURE-----
