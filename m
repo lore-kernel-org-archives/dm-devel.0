@@ -1,8 +1,8 @@
 From: okozina@redhat.com
-Subject: [RFC PATCH 3/4] Adds support for security checks in the
-	linear target
-Date: Wed,  2 May 2012 21:13:52 +0200
-Message-ID: <1335986033-15236-4-git-send-email-okozina@redhat.com>
+Subject: [RFC PATCH 4/4] Adds support for security checks in the
+	crypt target
+Date: Wed,  2 May 2012 21:13:53 +0200
+Message-ID: <1335986033-15236-5-git-send-email-okozina@redhat.com>
 References: <1335986033-15236-1-git-send-email-okozina@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,46 +25,41 @@ List-Id: dm-devel.ids
 
 From: Ondrej Kozina <okozina@redhat.com>
 
-Just a security check implementation for the linear target
+Just a security check implementation for the crypt target
 
 ---
- drivers/md/dm-linear.c |   49 +++++++++++++++++++++++++++++++++++++++++++++++-
- 1 files changed, 48 insertions(+), 1 deletions(-)
+ drivers/md/dm-crypt.c |   37 ++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 36 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 3639eea..68345ad 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -153,9 +153,55 @@ static int linear_iterate_devices(struct dm_target *ti,
- 	return fn(ti, lc->dev, lc->start, ti->len, data);
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 3f06df5..06e2018 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -28,6 +28,7 @@
+ #include <crypto/algapi.h>
+ 
+ #include <linux/device-mapper.h>
++#include "dm.h"
+ 
+ #define DM_MSG_PREFIX "crypt"
+ 
+@@ -1867,9 +1868,42 @@ static int crypt_iterate_devices(struct dm_target *ti,
+ 	return fn(ti, cc->dev, cc->start, ti->len, data);
  }
  
-+/*
-+ * This function checks wheter user has right to create the target with passed
-+ * parameters.
-+ *
-+ * NOTE: Right now it checks access rights against dentry for device node.
-+ * 	 There's problem with translation from major:minor to dentry (which one
-+ * 	 of possibly many dentries?)
-+ *
-+ * 	 In the end, it should do checks against block device itself! But
-+ * 	 we can't set security context for bdev->bd_inode because bdev
-+ * 	 inodes do not support extended attributes.
-+ */
-+static int linear_security(struct dm_target *ti, unsigned int argc, char **argv)
++static int crypt_security(struct dm_target *ti, unsigned int argc, char **argv)
 +{
 +	int perm = 0, r;
 +	struct dentry *bdev_dentry;
 +
-+	if (argc < 1) {
-+		ti->error = "dm-linear: Security check: invalid number of parameters";
++	if (argc < 4) {
++		ti->error = "dm-crypt: Security check: invalid number of parameters";
 +		return -EINVAL;
 +	}
-+
-+	bdev_dentry = dm_lookup_bdev_dentry(argv[0]);
++	bdev_dentry = dm_lookup_bdev_dentry(argv[3]);
 +
 +	if (IS_ERR(bdev_dentry)) {
-+		ti->error = "dm-linear: security_check: Couldn't get dentry for bdev";
++		ti->error = "dm-crypt: security_check: Couldn't get dentry for bdev";
 +		r = PTR_ERR(bdev_dentry);
 +		goto err;
 +	}
@@ -78,27 +73,27 @@ index 3639eea..68345ad 100644
 +	r = inode_permission(bdev_dentry->d_inode, perm);
 +
 +	if (r)
-+		ti->error = "dm-linear: Security check failed";
++		ti->error = "dm-crypt: Security check failed";
 +
 +	dput(bdev_dentry);
 +err:
 +	return r;
 +}
 +
- static struct target_type linear_target = {
- 	.name   = "linear",
--	.version = {1, 1, 0},
-+	.version = {1, 2, 0},
+ static struct target_type crypt_target = {
+ 	.name   = "crypt",
+-	.version = {1, 11, 0},
++	.version = {1, 12, 0},
  	.module = THIS_MODULE,
- 	.ctr    = linear_ctr,
- 	.dtr    = linear_dtr,
-@@ -164,6 +210,7 @@ static struct target_type linear_target = {
- 	.ioctl  = linear_ioctl,
- 	.merge  = linear_merge,
- 	.iterate_devices = linear_iterate_devices,
-+	.security = linear_security
+ 	.ctr    = crypt_ctr,
+ 	.dtr    = crypt_dtr,
+@@ -1881,6 +1915,7 @@ static struct target_type crypt_target = {
+ 	.message = crypt_message,
+ 	.merge  = crypt_merge,
+ 	.iterate_devices = crypt_iterate_devices,
++	.security = crypt_security
  };
  
- int __init dm_linear_init(void)
+ static int __init dm_crypt_init(void)
 -- 
 1.7.8.5
