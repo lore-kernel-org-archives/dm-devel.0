@@ -1,13 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm mpath: only try to load the scsi_dh module if
-	the scsi_dh doesn't exist
-Date: Tue,  1 May 2012 13:52:17 -0400
-Message-ID: <1335894737-28825-1-git-send-email-snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCHES]: dm lock optimization
+Date: Tue, 1 May 2012 20:03:35 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1205011958240.6126@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1204182249060.12984@file.rdu.redhat.com>
+	<20120423131438.GA32127@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20120423131438.GA32127@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,36 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: agk@redhat.com
+To: Joe Thornber <thornber@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-There have been reports of multipath table loads hanging due to
-__request_module hanging (for some unknown reason).
 
-More often than not, the scsi_dh is already available and there is no
-need to request_module().
 
-Reported-by: Ben Marzinski <bmarzins@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-mpath.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+On Mon, 23 Apr 2012, Joe Thornber wrote:
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 922a338..754f38f 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -718,8 +718,8 @@ static int parse_hw_handler(struct dm_arg_set *as, struct multipath *m)
- 		return 0;
- 
- 	m->hw_handler_name = kstrdup(dm_shift_arg(as), GFP_KERNEL);
--	request_module("scsi_dh_%s", m->hw_handler_name);
--	if (scsi_dh_handler_exist(m->hw_handler_name) == 0) {
-+	if (!try_then_request_module(scsi_dh_handler_exist(m->hw_handler_name),
-+				     "scsi_dh_%s", m->hw_handler_name)) {
- 		ti->error = "unknown hardware handler type";
- 		ret = -EINVAL;
- 		goto fail;
--- 
-1.7.1
+> On Wed, Apr 18, 2012 at 11:03:33PM -0400, Mikulas Patocka wrote:
+> > Hi
+> > 
+> > I placed dm lock optimization patches here
+> > 
+> > http://people.redhat.com/mpatocka/patches/kernel/dm-lock-optimization/
+> 
+> Just a heads up that sparse gives some warnings with these patches:
+> 
+> drivers/md/dm.c:689:24: warning: context imbalance in 'dm_get_live_table_fast' - wrong count at exit
+> drivers/md/dm.c:695:13: warning: context imbalance in 'dm_put_live_table_fast' - unexpected unlock
+> drivers/md/dm.c:1789:17: warning: context imbalance in 'dm_request_fn' - unexpected unlock
+> 
+> - Joe
+
+I couldn't figure out how to shut up sparse warnings. For RCU you can mark 
+functions that take/release RCU with __acquires(RCU)/__releases(RCU), but 
+I didn't find out how to do it for SRCU.
+
+If I use "__acquires(&md->io_barrier)"
+struct dm_table *dm_get_live_table(struct mapped_device *md, int 
+*srcu_idx) __acquires(&md->io_barrier)
+{
+        *srcu_idx = srcu_read_lock(&md->io_barrier);
+        return rcu_dereference(md->map);
+}
+it doens't work and I get an error:
+drivers/md/dm.c:557:9: warning: context imbalance in 'dm_get_live_table': 
+unexpected unlock
+drivers/md/dm.c:557:9:    default context: wanted 1, got 0
+
+Maybe it is a bug in sparse, maybe I am using a wrong tag? Is there a 
+reference of all sparse tags somewhere?
+
+Mikulas
