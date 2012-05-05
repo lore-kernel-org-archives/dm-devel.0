@@ -1,15 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 2/3] dm thin: support for non power of 2 pool
-	blocksize
-Date: Fri,  4 May 2012 23:57:09 -0400
-Message-ID: <1336190230-11243-2-git-send-email-snitzer@redhat.com>
-References: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 1/3] dm: support for non power of 2 target IO
+	sizes
+Date: Fri,  4 May 2012 23:57:08 -0400
+Message-ID: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,135 +21,258 @@ To: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-Non power of 2 blocksize support is needed to properly align thinp IO
-on storage that has non power of 2 optimal IO sizes (e.g. RAID6 10+2).
+Update DM core's max_io_len() to use sector_div() to support a target's
+use of a non power of 2 blocksize.
 
-Use do_div wrappers to support non power of 2 blocksize for the pool's
-data device.  do_div provides comparable performance to the power of 2
-math that was performed until now (as tested on modern x86_64 hardware).
+Rename split_io to max_io_len in the dm_target structure and change data
+type from sector_t to uint32_t.  Introduce dm_set_target_max_io_len() to
+check that each target's max_io_len does not exceed UINT_MAX.
 
-Eliminate pool structure's 'sectors_per_block', 'block_shift' and
-remaining 4 byte holes.
+Add do_div wrappers (dm_do_div and dm_do_mod) that don't modify the
+dividend; these will be used by thin-pool and striped targets.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c |   32 ++++++++++++++------------------
- 1 file changed, 14 insertions(+), 18 deletions(-)
+ drivers/md/dm-raid.c          |   12 +++++-------
+ drivers/md/dm-raid1.c         |    4 +++-
+ drivers/md/dm-snap.c          |   19 +++++++++++--------
+ drivers/md/dm-stripe.c        |    4 +++-
+ drivers/md/dm-thin.c          |    4 +++-
+ drivers/md/dm.c               |   28 +++++++++++++++++++++-------
+ include/linux/device-mapper.h |   20 ++++++++++++++++++--
+ 7 files changed, 64 insertions(+), 27 deletions(-)
 
+Index: linux/drivers/md/dm-raid.c
+===================================================================
+--- linux.orig/drivers/md/dm-raid.c
++++ linux/drivers/md/dm-raid.c
+@@ -356,6 +356,7 @@ static int parse_raid_params(struct raid
+ {
+ 	unsigned i, rebuild_cnt = 0;
+ 	unsigned long value, region_size = 0;
++	sector_t max_io_len;
+ 	char *key;
+ 
+ 	/*
+@@ -525,14 +526,11 @@ static int parse_raid_params(struct raid
+ 		return -EINVAL;
+ 
+ 	if (rs->md.chunk_sectors)
+-		rs->ti->split_io = rs->md.chunk_sectors;
++		max_io_len = rs->md.chunk_sectors;
+ 	else
+-		rs->ti->split_io = region_size;
+-
+-	if (rs->md.chunk_sectors)
+-		rs->ti->split_io = rs->md.chunk_sectors;
+-	else
+-		rs->ti->split_io = region_size;
++		max_io_len = region_size;
++	if (dm_set_target_max_io_len(rs->ti, max_io_len) < 0)
++		return -EINVAL;
+ 
+ 	/* Assume there are no metadata devices until the drives are parsed */
+ 	rs->md.persistent = 0;
+Index: linux/drivers/md/dm-raid1.c
+===================================================================
+--- linux.orig/drivers/md/dm-raid1.c
++++ linux/drivers/md/dm-raid1.c
+@@ -1081,7 +1081,9 @@ static int mirror_ctr(struct dm_target *
+ 	}
+ 
+ 	ti->private = ms;
+-	ti->split_io = dm_rh_get_region_size(ms->rh);
++	r = dm_set_target_max_io_len(ti, dm_rh_get_region_size(ms->rh));
++	if (r < 0)
++		goto err_free_context;
+ 	ti->num_flush_requests = 1;
+ 	ti->num_discard_requests = 1;
+ 
+Index: linux/drivers/md/dm-snap.c
+===================================================================
+--- linux.orig/drivers/md/dm-snap.c
++++ linux/drivers/md/dm-snap.c
+@@ -1172,7 +1172,10 @@ static int snapshot_ctr(struct dm_target
+ 		ti->error = "Chunk size not set";
+ 		goto bad_read_metadata;
+ 	}
+-	ti->split_io = s->store->chunk_size;
++
++	r = dm_set_target_max_io_len(ti, s->store->chunk_size);
++	if (r < 0)
++		goto bad_read_metadata;
+ 
+ 	return 0;
+ 
+@@ -1239,7 +1242,7 @@ static void __handover_exceptions(struct
+ 	snap_dest->store->snap = snap_dest;
+ 	snap_src->store->snap = snap_src;
+ 
+-	snap_dest->ti->split_io = snap_dest->store->chunk_size;
++	snap_dest->ti->max_io_len = snap_dest->store->chunk_size;
+ 	snap_dest->valid = snap_src->valid;
+ 
+ 	/*
+@@ -1838,9 +1841,9 @@ static void snapshot_merge_resume(struct
+ 	snapshot_resume(ti);
+ 
+ 	/*
+-	 * snapshot-merge acts as an origin, so set ti->split_io
++	 * snapshot-merge acts as an origin, so set ti->max_io_len
+ 	 */
+-	ti->split_io = get_origin_minimum_chunksize(s->origin->bdev);
++	ti->max_io_len = get_origin_minimum_chunksize(s->origin->bdev);
+ 
+ 	start_merge(s);
+ }
+@@ -2073,12 +2076,12 @@ static int origin_write_extent(struct dm
+ 	struct origin *o;
+ 
+ 	/*
+-	 * The origin's __minimum_chunk_size() got stored in split_io
++	 * The origin's __minimum_chunk_size() got stored in max_io_len
+ 	 * by snapshot_merge_resume().
+ 	 */
+ 	down_read(&_origins_lock);
+ 	o = __lookup_origin(merging_snap->origin->bdev);
+-	for (n = 0; n < size; n += merging_snap->ti->split_io)
++	for (n = 0; n < size; n += merging_snap->ti->max_io_len)
+ 		if (__origin_write(&o->snapshots, sector + n, NULL) ==
+ 		    DM_MAPIO_SUBMITTED)
+ 			must_wait = 1;
+@@ -2138,14 +2141,14 @@ static int origin_map(struct dm_target *
+ }
+ 
+ /*
+- * Set the target "split_io" field to the minimum of all the snapshots'
++ * Set the target "max_io_len" field to the minimum of all the snapshots'
+  * chunk sizes.
+  */
+ static void origin_resume(struct dm_target *ti)
+ {
+ 	struct dm_dev *dev = ti->private;
+ 
+-	ti->split_io = get_origin_minimum_chunksize(dev->bdev);
++	ti->max_io_len = get_origin_minimum_chunksize(dev->bdev);
+ }
+ 
+ static int origin_status(struct dm_target *ti, status_type_t type, char *result,
+Index: linux/drivers/md/dm-stripe.c
+===================================================================
+--- linux.orig/drivers/md/dm-stripe.c
++++ linux/drivers/md/dm-stripe.c
+@@ -172,7 +172,9 @@ static int stripe_ctr(struct dm_target *
+ 		sc->stripes_mask = ((sector_t) stripes) - 1;
+ 	}
+ 
+-	ti->split_io = chunk_size;
++	r = dm_set_target_max_io_len(ti, chunk_size);
++	if (r < 0)
++		return r;
+ 	ti->num_flush_requests = stripes;
+ 	ti->num_discard_requests = stripes;
+ 
 Index: linux/drivers/md/dm-thin.c
 ===================================================================
 --- linux.orig/drivers/md/dm-thin.c
 +++ linux/drivers/md/dm-thin.c
-@@ -507,10 +507,8 @@ struct pool {
- 	struct block_device *md_dev;
- 	struct dm_pool_metadata *pmd;
+@@ -2575,7 +2575,9 @@ static int thin_ctr(struct dm_target *ti
+ 		goto bad_thin_open;
+ 	}
  
--	uint32_t sectors_per_block;
--	unsigned block_shift;
--	dm_block_t offset_mask;
- 	dm_block_t low_water_blocks;
-+	uint32_t sectors_per_block;
+-	ti->split_io = tc->pool->sectors_per_block;
++	r = dm_set_target_max_io_len(ti, tc->pool->sectors_per_block);
++	if (r < 0)
++		goto bad_thin_open;
+ 	ti->num_flush_requests = 1;
  
- 	struct pool_features pf;
- 	unsigned low_water_triggered:1;	/* A dm event has been sent */
-@@ -523,8 +521,8 @@ struct pool {
- 	struct work_struct worker;
- 	struct delayed_work waker;
- 
--	unsigned ref_count;
- 	unsigned long last_commit_jiffies;
-+	unsigned ref_count;
- 
- 	spinlock_t lock;
- 	struct bio_list deferred_bios;
-@@ -675,7 +673,7 @@ static void requeue_io(struct thin_c *tc
- 
- static dm_block_t get_bio_block(struct thin_c *tc, struct bio *bio)
- {
--	return bio->bi_sector >> tc->pool->block_shift;
-+	return dm_do_div(bio->bi_sector, tc->pool->sectors_per_block);
- }
- 
- static void remap(struct thin_c *tc, struct bio *bio, dm_block_t block)
-@@ -683,8 +681,8 @@ static void remap(struct thin_c *tc, str
- 	struct pool *pool = tc->pool;
- 
- 	bio->bi_bdev = tc->pool_dev->bdev;
--	bio->bi_sector = (block << pool->block_shift) +
--		(bio->bi_sector & pool->offset_mask);
-+	bio->bi_sector = (block * pool->sectors_per_block) +
-+		dm_do_mod(bio->bi_sector, pool->sectors_per_block);
- }
- 
- static void remap_to_origin(struct thin_c *tc, struct bio *bio)
-@@ -929,9 +927,8 @@ static void process_prepared(struct pool
-  */
- static int io_overlaps_block(struct pool *pool, struct bio *bio)
- {
--	return !(bio->bi_sector & pool->offset_mask) &&
-+	return !dm_do_mod(bio->bi_sector, pool->sectors_per_block) &&
- 		(bio->bi_size == (pool->sectors_per_block << SECTOR_SHIFT));
--
- }
- 
- static int io_overwrites_block(struct pool *pool, struct bio *bio)
-@@ -1234,8 +1231,8 @@ static void process_discard(struct thin_
- 			 * part of the discard that is in a subsequent
- 			 * block.
- 			 */
--			sector_t offset = bio->bi_sector - (block << pool->block_shift);
--			unsigned remaining = (pool->sectors_per_block - offset) << 9;
-+			sector_t offset = bio->bi_sector - (block * pool->sectors_per_block);
-+			unsigned remaining = (pool->sectors_per_block - offset) << SECTOR_SHIFT;
- 			bio->bi_size = min(bio->bi_size, remaining);
- 
- 			cell_release_singleton(cell, bio);
-@@ -1696,8 +1693,6 @@ static struct pool *pool_create(struct m
- 
- 	pool->pmd = pmd;
- 	pool->sectors_per_block = block_size;
--	pool->block_shift = ffs(block_size) - 1;
--	pool->offset_mask = block_size - 1;
- 	pool->low_water_blocks = 0;
- 	pool_features_init(&pool->pf);
- 	pool->prison = prison_create(PRISON_CELLS);
-@@ -1941,7 +1936,7 @@ static int pool_ctr(struct dm_target *ti
- 	if (kstrtoul(argv[2], 10, &block_size) || !block_size ||
- 	    block_size < DATA_DEV_BLOCK_SIZE_MIN_SECTORS ||
- 	    block_size > DATA_DEV_BLOCK_SIZE_MAX_SECTORS ||
--	    !is_power_of_2(block_size)) {
-+	    dm_do_mod(block_size, DATA_DEV_BLOCK_SIZE_MIN_SECTORS)) {
- 		ti->error = "Invalid block size";
- 		r = -EINVAL;
- 		goto out;
-@@ -2089,7 +2084,7 @@ static int pool_preresume(struct dm_targ
- 	if (r)
- 		return r;
- 
--	data_size = ti->len >> pool->block_shift;
-+	data_size = dm_do_div(ti->len, pool->sectors_per_block);
- 	r = dm_pool_get_data_dev_size(pool->pmd, &sb_data_size);
- 	if (r) {
- 		DMERR("failed to retrieve data device size");
-@@ -2711,17 +2706,18 @@ static int thin_iterate_devices(struct d
- {
- 	dm_block_t blocks;
- 	struct thin_c *tc = ti->private;
-+	struct pool *pool = tc->pool;
+ 	/* In case the pool supports discards, pass them on. */
+Index: linux/drivers/md/dm.c
+===================================================================
+--- linux.orig/drivers/md/dm.c
++++ linux/drivers/md/dm.c
+@@ -970,20 +970,34 @@ static sector_t max_io_len(sector_t sect
+ 	sector_t len = max_io_len_target_boundary(sector, ti);
  
  	/*
- 	 * We can't call dm_pool_get_data_dev_size() since that blocks.  So
- 	 * we follow a more convoluted path through to the pool's target.
+-	 * Does the target need to split even further ?
++	 * Does the target need to split even further?
  	 */
--	if (!tc->pool->ti)
-+	if (!pool->ti)
- 		return 0;	/* nothing is bound */
+-	if (ti->split_io) {
+-		sector_t boundary;
++	if (ti->max_io_len) {
+ 		sector_t offset = dm_target_offset(ti, sector);
+-		boundary = ((offset + ti->split_io) & ~(ti->split_io - 1))
+-			   - offset;
+-		if (len > boundary)
+-			len = boundary;
++		sector_t boundary = offset + ti->max_io_len;
++		sector_t max_len = ti->max_io_len - sector_div(boundary, ti->max_io_len);
++
++		if (len > max_len)
++			len = max_len;
+ 	}
  
--	blocks = tc->pool->ti->len >> tc->pool->block_shift;
-+	blocks = dm_do_div(pool->ti->len, pool->sectors_per_block);
- 	if (blocks)
--		return fn(ti, tc->pool_dev, 0, tc->pool->sectors_per_block * blocks, data);
-+		return fn(ti, tc->pool_dev, 0, pool->sectors_per_block * blocks, data);
- 
- 	return 0;
+ 	return len;
  }
+ 
++int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
++{
++	if (len > UINT_MAX) {
++		DMERR("Specified maximum size of target IO (%llu) exceeds limit (%u)",
++		      (unsigned long long)len, UINT_MAX);
++		ti->error = "Maximum size of target IO is too large";
++		return -EINVAL;
++	}
++
++	ti->max_io_len = (uint32_t) len;
++	return 0;
++}
++EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
++
+ static void __map_bio(struct dm_target *ti, struct bio *clone,
+ 		      struct dm_target_io *tio)
+ {
+Index: linux/include/linux/device-mapper.h
+===================================================================
+--- linux.orig/include/linux/device-mapper.h
++++ linux/include/linux/device-mapper.h
+@@ -188,8 +188,8 @@ struct dm_target {
+ 	sector_t begin;
+ 	sector_t len;
+ 
+-	/* Always a power of 2 */
+-	sector_t split_io;
++	/* If non-zero, maximum size of I/O submitted to a target. */
++	uint32_t max_io_len;
+ 
+ 	/*
+ 	 * A number of zero-length barrier requests that will be submitted
+@@ -503,6 +503,20 @@ static inline unsigned long to_bytes(sec
+ 	return (n << SECTOR_SHIFT);
+ }
+ 
++/*
++ * do_div wrappers that don't modify the dividend
++ */
++static inline sector_t dm_do_div(sector_t a, uint32_t b)
++{
++	do_div(a, b);
++	return a;
++}
++
++static inline uint32_t dm_do_mod(sector_t a, uint32_t b)
++{
++	return do_div(a, b);
++}
++
+ /*-----------------------------------------------------------------
+  * Helper for block layer and dm core operations
+  *---------------------------------------------------------------*/
+@@ -511,4 +525,6 @@ void dm_requeue_unmapped_request(struct 
+ void dm_kill_unmapped_request(struct request *rq, int error);
+ int dm_underlying_device_busy(struct request_queue *q);
+ 
++int __must_check dm_set_target_max_io_len(struct dm_target *ti, sector_t len);
++
+ #endif	/* _LINUX_DEVICE_MAPPER_H */
