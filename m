@@ -1,13 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 1/3] dm: support for non power of 2 target IO
-	sizes
-Date: Fri,  4 May 2012 23:57:08 -0400
-Message-ID: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/3] dm stripe: support for non power of 2
+	chunksize
+Date: Fri,  4 May 2012 23:57:10 -0400
+Message-ID: <1336190230-11243-3-git-send-email-snitzer@redhat.com>
+References: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,258 +23,149 @@ To: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-Update DM core's max_io_len() to use sector_div() to support a target's
-use of a non power of 2 blocksize.
+Non power of 2 chunksize support is needed to properly align stripe IO
+on storage that has non power of 2 optimal IO sizes (e.g. RAID6 10+2).
 
-Rename split_io to max_io_len in the dm_target structure and change data
-type from sector_t to uint32_t.  Introduce dm_set_target_max_io_len() to
-check that each target's max_io_len does not exceed UINT_MAX.
-
-Add do_div wrappers (dm_do_div and dm_do_mod) that don't modify the
-dividend; these will be used by thin-pool and striped targets.
+Use do_div wrappers to support non power of 2 chunksize for the pool's
+data device.  do_div provides comparable performance to the power of 2
+math that was performed until now (as tested on modern x86_64 hardware).
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-raid.c          |   12 +++++-------
- drivers/md/dm-raid1.c         |    4 +++-
- drivers/md/dm-snap.c          |   19 +++++++++++--------
- drivers/md/dm-stripe.c        |    4 +++-
- drivers/md/dm-thin.c          |    4 +++-
- drivers/md/dm.c               |   28 +++++++++++++++++++++-------
- include/linux/device-mapper.h |   20 ++++++++++++++++++--
- 7 files changed, 64 insertions(+), 27 deletions(-)
+ Documentation/device-mapper/striped.txt |    4 +--
+ drivers/md/dm-stripe.c                  |   39 +++++++++++---------------------
+ 2 files changed, 16 insertions(+), 27 deletions(-)
 
-Index: linux/drivers/md/dm-raid.c
+Index: linux/Documentation/device-mapper/striped.txt
 ===================================================================
---- linux.orig/drivers/md/dm-raid.c
-+++ linux/drivers/md/dm-raid.c
-@@ -356,6 +356,7 @@ static int parse_raid_params(struct raid
- {
- 	unsigned i, rebuild_cnt = 0;
- 	unsigned long value, region_size = 0;
-+	sector_t max_io_len;
- 	char *key;
+--- linux.orig/Documentation/device-mapper/striped.txt
++++ linux/Documentation/device-mapper/striped.txt
+@@ -9,8 +9,8 @@ devices in parallel.
  
- 	/*
-@@ -525,14 +526,11 @@ static int parse_raid_params(struct raid
- 		return -EINVAL;
- 
- 	if (rs->md.chunk_sectors)
--		rs->ti->split_io = rs->md.chunk_sectors;
-+		max_io_len = rs->md.chunk_sectors;
- 	else
--		rs->ti->split_io = region_size;
--
--	if (rs->md.chunk_sectors)
--		rs->ti->split_io = rs->md.chunk_sectors;
--	else
--		rs->ti->split_io = region_size;
-+		max_io_len = region_size;
-+	if (dm_set_target_max_io_len(rs->ti, max_io_len) < 0)
-+		return -EINVAL;
- 
- 	/* Assume there are no metadata devices until the drives are parsed */
- 	rs->md.persistent = 0;
-Index: linux/drivers/md/dm-raid1.c
-===================================================================
---- linux.orig/drivers/md/dm-raid1.c
-+++ linux/drivers/md/dm-raid1.c
-@@ -1081,7 +1081,9 @@ static int mirror_ctr(struct dm_target *
- 	}
- 
- 	ti->private = ms;
--	ti->split_io = dm_rh_get_region_size(ms->rh);
-+	r = dm_set_target_max_io_len(ti, dm_rh_get_region_size(ms->rh));
-+	if (r < 0)
-+		goto err_free_context;
- 	ti->num_flush_requests = 1;
- 	ti->num_discard_requests = 1;
- 
-Index: linux/drivers/md/dm-snap.c
-===================================================================
---- linux.orig/drivers/md/dm-snap.c
-+++ linux/drivers/md/dm-snap.c
-@@ -1172,7 +1172,10 @@ static int snapshot_ctr(struct dm_target
- 		ti->error = "Chunk size not set";
- 		goto bad_read_metadata;
- 	}
--	ti->split_io = s->store->chunk_size;
-+
-+	r = dm_set_target_max_io_len(ti, s->store->chunk_size);
-+	if (r < 0)
-+		goto bad_read_metadata;
- 
- 	return 0;
- 
-@@ -1239,7 +1242,7 @@ static void __handover_exceptions(struct
- 	snap_dest->store->snap = snap_dest;
- 	snap_src->store->snap = snap_src;
- 
--	snap_dest->ti->split_io = snap_dest->store->chunk_size;
-+	snap_dest->ti->max_io_len = snap_dest->store->chunk_size;
- 	snap_dest->valid = snap_src->valid;
- 
- 	/*
-@@ -1838,9 +1841,9 @@ static void snapshot_merge_resume(struct
- 	snapshot_resume(ti);
- 
- 	/*
--	 * snapshot-merge acts as an origin, so set ti->split_io
-+	 * snapshot-merge acts as an origin, so set ti->max_io_len
- 	 */
--	ti->split_io = get_origin_minimum_chunksize(s->origin->bdev);
-+	ti->max_io_len = get_origin_minimum_chunksize(s->origin->bdev);
- 
- 	start_merge(s);
- }
-@@ -2073,12 +2076,12 @@ static int origin_write_extent(struct dm
- 	struct origin *o;
- 
- 	/*
--	 * The origin's __minimum_chunk_size() got stored in split_io
-+	 * The origin's __minimum_chunk_size() got stored in max_io_len
- 	 * by snapshot_merge_resume().
- 	 */
- 	down_read(&_origins_lock);
- 	o = __lookup_origin(merging_snap->origin->bdev);
--	for (n = 0; n < size; n += merging_snap->ti->split_io)
-+	for (n = 0; n < size; n += merging_snap->ti->max_io_len)
- 		if (__origin_write(&o->snapshots, sector + n, NULL) ==
- 		    DM_MAPIO_SUBMITTED)
- 			must_wait = 1;
-@@ -2138,14 +2141,14 @@ static int origin_map(struct dm_target *
- }
- 
- /*
-- * Set the target "split_io" field to the minimum of all the snapshots'
-+ * Set the target "max_io_len" field to the minimum of all the snapshots'
-  * chunk sizes.
-  */
- static void origin_resume(struct dm_target *ti)
- {
- 	struct dm_dev *dev = ti->private;
- 
--	ti->split_io = get_origin_minimum_chunksize(dev->bdev);
-+	ti->max_io_len = get_origin_minimum_chunksize(dev->bdev);
- }
- 
- static int origin_status(struct dm_target *ti, status_type_t type, char *result,
+ Parameters: <num devs> <chunk size> [<dev path> <offset>]+
+     <num devs>: Number of underlying devices.
+-    <chunk size>: Size of each chunk of data. Must be a power-of-2 and at
+-                  least as large as the system's PAGE_SIZE.
++    <chunk size>: Size of each chunk of data. Must be at least as
++                  large as the system's PAGE_SIZE.
+     <dev path>: Full pathname to the underlying block-device, or a
+                 "major:minor" device-number.
+     <offset>: Starting sector within the device.
 Index: linux/drivers/md/dm-stripe.c
 ===================================================================
 --- linux.orig/drivers/md/dm-stripe.c
 +++ linux/drivers/md/dm-stripe.c
-@@ -172,7 +172,9 @@ static int stripe_ctr(struct dm_target *
- 		sc->stripes_mask = ((sector_t) stripes) - 1;
+@@ -31,9 +31,7 @@ struct stripe_c {
+ 	/* The size of this target / num. stripes */
+ 	sector_t stripe_width;
+ 
+-	/* stripe chunk size */
+-	uint32_t chunk_shift;
+-	sector_t chunk_mask;
++	uint32_t chunk_size;
+ 
+ 	/* Needed for handling events */
+ 	struct dm_target *ti;
+@@ -91,7 +89,7 @@ static int get_stripe(struct dm_target *
+ 
+ /*
+  * Construct a striped mapping.
+- * <number of stripes> <chunk size (2^^n)> [<dev_path> <offset>]+
++ * <number of stripes> <chunk size> [<dev_path> <offset>]+
+  */
+ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+@@ -115,21 +113,12 @@ static int stripe_ctr(struct dm_target *
  	}
  
--	ti->split_io = chunk_size;
-+	r = dm_set_target_max_io_len(ti, chunk_size);
-+	if (r < 0)
-+		return r;
+ 	chunk_size = simple_strtoul(argv[1], &end, 10);
+-	if (*end) {
++	if (*end || (chunk_size < (PAGE_SIZE >> SECTOR_SHIFT))) {
+ 		ti->error = "Invalid chunk_size";
+ 		return -EINVAL;
+ 	}
+ 
+-	/*
+-	 * chunk_size is a power of two
+-	 */
+-	if (!is_power_of_2(chunk_size) ||
+-	    (chunk_size < (PAGE_SIZE >> SECTOR_SHIFT))) {
+-		ti->error = "Invalid chunk size";
+-		return -EINVAL;
+-	}
+-
+-	if (ti->len & (chunk_size - 1)) {
++	if (dm_do_mod(ti->len, chunk_size)) {
+ 		ti->error = "Target length not divisible by "
+ 		    "chunk size";
+ 		return -EINVAL;
+@@ -178,8 +167,7 @@ static int stripe_ctr(struct dm_target *
  	ti->num_flush_requests = stripes;
  	ti->num_discard_requests = stripes;
  
-Index: linux/drivers/md/dm-thin.c
-===================================================================
---- linux.orig/drivers/md/dm-thin.c
-+++ linux/drivers/md/dm-thin.c
-@@ -2575,7 +2575,9 @@ static int thin_ctr(struct dm_target *ti
- 		goto bad_thin_open;
- 	}
- 
--	ti->split_io = tc->pool->sectors_per_block;
-+	r = dm_set_target_max_io_len(ti, tc->pool->sectors_per_block);
-+	if (r < 0)
-+		goto bad_thin_open;
- 	ti->num_flush_requests = 1;
- 
- 	/* In case the pool supports discards, pass them on. */
-Index: linux/drivers/md/dm.c
-===================================================================
---- linux.orig/drivers/md/dm.c
-+++ linux/drivers/md/dm.c
-@@ -970,20 +970,34 @@ static sector_t max_io_len(sector_t sect
- 	sector_t len = max_io_len_target_boundary(sector, ti);
+-	sc->chunk_shift = ffs(chunk_size) - 1;
+-	sc->chunk_mask = ((sector_t) chunk_size) - 1;
++	sc->chunk_size = chunk_size;
  
  	/*
--	 * Does the target need to split even further ?
-+	 * Does the target need to split even further?
- 	 */
--	if (ti->split_io) {
--		sector_t boundary;
-+	if (ti->max_io_len) {
- 		sector_t offset = dm_target_offset(ti, sector);
--		boundary = ((offset + ti->split_io) & ~(ti->split_io - 1))
--			   - offset;
--		if (len > boundary)
--			len = boundary;
-+		sector_t boundary = offset + ti->max_io_len;
-+		sector_t max_len = ti->max_io_len - sector_div(boundary, ti->max_io_len);
-+
-+		if (len > max_len)
-+			len = max_len;
- 	}
- 
- 	return len;
- }
- 
-+int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
-+{
-+	if (len > UINT_MAX) {
-+		DMERR("Specified maximum size of target IO (%llu) exceeds limit (%u)",
-+		      (unsigned long long)len, UINT_MAX);
-+		ti->error = "Maximum size of target IO is too large";
-+		return -EINVAL;
-+	}
-+
-+	ti->max_io_len = (uint32_t) len;
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
-+
- static void __map_bio(struct dm_target *ti, struct bio *clone,
- 		      struct dm_target_io *tio)
+ 	 * Get the stripe destinations.
+@@ -218,8 +206,8 @@ static void stripe_dtr(struct dm_target 
+ static void stripe_map_sector(struct stripe_c *sc, sector_t sector,
+ 			      uint32_t *stripe, sector_t *result)
  {
-Index: linux/include/linux/device-mapper.h
-===================================================================
---- linux.orig/include/linux/device-mapper.h
-+++ linux/include/linux/device-mapper.h
-@@ -188,8 +188,8 @@ struct dm_target {
- 	sector_t begin;
- 	sector_t len;
+-	sector_t offset = dm_target_offset(sc->ti, sector);
+-	sector_t chunk = offset >> sc->chunk_shift;
++	sector_t chunk = dm_target_offset(sc->ti, sector);
++	sector_t chunk_offset = sector_div(chunk, sc->chunk_size);
  
--	/* Always a power of 2 */
--	sector_t split_io;
-+	/* If non-zero, maximum size of I/O submitted to a target. */
-+	uint32_t max_io_len;
+ 	if (sc->stripes_shift < 0)
+ 		*stripe = sector_div(chunk, sc->stripes);
+@@ -228,7 +216,7 @@ static void stripe_map_sector(struct str
+ 		chunk >>= sc->stripes_shift;
+ 	}
  
- 	/*
- 	 * A number of zero-length barrier requests that will be submitted
-@@ -503,6 +503,20 @@ static inline unsigned long to_bytes(sec
- 	return (n << SECTOR_SHIFT);
+-	*result = (chunk << sc->chunk_shift) | (offset & sc->chunk_mask);
++	*result = (chunk * sc->chunk_size) + chunk_offset;
  }
  
-+/*
-+ * do_div wrappers that don't modify the dividend
-+ */
-+static inline sector_t dm_do_div(sector_t a, uint32_t b)
-+{
-+	do_div(a, b);
-+	return a;
-+}
-+
-+static inline uint32_t dm_do_mod(sector_t a, uint32_t b)
-+{
-+	return do_div(a, b);
-+}
-+
- /*-----------------------------------------------------------------
-  * Helper for block layer and dm core operations
-  *---------------------------------------------------------------*/
-@@ -511,4 +525,6 @@ void dm_requeue_unmapped_request(struct 
- void dm_kill_unmapped_request(struct request *rq, int error);
- int dm_underlying_device_busy(struct request_queue *q);
+ static void stripe_map_range_sector(struct stripe_c *sc, sector_t sector,
+@@ -239,9 +227,10 @@ static void stripe_map_range_sector(stru
+ 	stripe_map_sector(sc, sector, &stripe, result);
+ 	if (stripe == target_stripe)
+ 		return;
+-	*result &= ~sc->chunk_mask;			/* round down */
++	/* round down */
++	*result = dm_do_div(*result, sc->chunk_size) * sc->chunk_size;
+ 	if (target_stripe < stripe)
+-		*result += sc->chunk_mask + 1;		/* next chunk */
++		*result += sc->chunk_size;		/* next chunk */
+ }
  
-+int __must_check dm_set_target_max_io_len(struct dm_target *ti, sector_t len);
-+
- #endif	/* _LINUX_DEVICE_MAPPER_H */
+ static int stripe_map_discard(struct stripe_c *sc, struct bio *bio,
+@@ -326,7 +315,7 @@ static int stripe_status(struct dm_targe
+ 
+ 	case STATUSTYPE_TABLE:
+ 		DMEMIT("%d %llu", sc->stripes,
+-			(unsigned long long)sc->chunk_mask + 1);
++			(unsigned long long)sc->chunk_size);
+ 		for (i = 0; i < sc->stripes; i++)
+ 			DMEMIT(" %s %llu", sc->stripe[i].dev->name,
+ 			    (unsigned long long)sc->stripe[i].physical_start);
+@@ -393,7 +382,7 @@ static void stripe_io_hints(struct dm_ta
+ 			    struct queue_limits *limits)
+ {
+ 	struct stripe_c *sc = ti->private;
+-	unsigned chunk_size = (sc->chunk_mask + 1) << 9;
++	unsigned chunk_size = sc->chunk_size << SECTOR_SHIFT;
+ 
+ 	blk_limits_io_min(limits, chunk_size);
+ 	blk_limits_io_opt(limits, chunk_size * sc->stripes);
+@@ -421,7 +410,7 @@ static int stripe_merge(struct dm_target
+ 
+ static struct target_type stripe_target = {
+ 	.name   = "striped",
+-	.version = {1, 4, 0},
++	.version = {1, 5, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr    = stripe_ctr,
+ 	.dtr    = stripe_dtr,
