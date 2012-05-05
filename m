@@ -1,15 +1,15 @@
-From: Spelic <spelic@shiftmail.org>
-Subject: Re: dm-thin f.req. : SEEK_DATA / SEEK_HOLE / SEEK_DISCARD
-Date: Fri, 04 May 2012 19:16:52 +0200
-Message-ID: <4FA40F04.8040006@shiftmail.org>
-References: <4F9FDCC2.2080905@shiftmail.org> <20120501141023.GA20313@ubuntu>
-	<4FA006CD.3050204@shiftmail.org> <20120503091428.GB5351@ubuntu>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2 2/3] dm thin: support for non power of 2 pool
+	blocksize
+Date: Fri,  4 May 2012 23:57:09 -0400
+Message-ID: <1336190230-11243-2-git-send-email-snitzer@redhat.com>
+References: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-reply-to: <20120503091428.GB5351@ubuntu>
+In-Reply-To: <1336190230-11243-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,69 +20,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 05/03/12 11:14, Joe Thornber wrote:
-> On Tue, May 01, 2012 at 05:52:45PM +0200, Spelic wrote:
->> I'm looking at it right now
->> Well, I was thinking at a parent snapshot and child snapshot (or
->> anyway an older and a more recent snapshot of the same device) so
->> I'm not sure that's the feature I needed... probably I'm missing
->> something and need to study more
-> I'm not really following you here.  You can have arbitrary depth of
-> snapshots (snaps of snaps) if that helps.
+Non power of 2 blocksize support is needed to properly align thinp IO
+on storage that has non power of 2 optimal IO sizes (e.g. RAID6 10+2).
 
-I'm not following you either (you pointed me to the external snapshot 
-feature but this would not be an "external origin" methinks...?), but 
-this is probably irrelevant after having seen the rest of the replies 
-because I now finally understand what metadata is available inside 
-dm-thin. Thanks for such clear replies.
+Use do_div wrappers to support non power of 2 blocksize for the pool's
+data device.  do_div provides comparable performance to the power of 2
+math that was performed until now (as tested on modern x86_64 hardware).
 
-With your implementation there's the problem of fragmentation and RAID 
-alignment vs discards implementation. With concurrent access to many 
-thin provisioned devices, if blocksize is small, fragmentation is likely 
-to come out bad, HDDs streaming reads can suffer a lot on fragmented 
-areas (up to a factor 1000), and on parity raid, write performance would 
-also suffer; while if blocksize is set to be large (such as one RAID 
-stripe), block unmapping on discards is not likely to work because one 
-discard per file would be received but most files would be smaller than 
-a thinpool block (smaller than a RAID stripe: in fact it is recommended 
-that the raid chunk is made equal to the prospected average file size so 
-average file size and average discard size would be 1/N of the thinpool 
-block size) so nothing would be unprovisioned.
+Eliminate pool structure's 'sectors_per_block', 'block_shift' and
+remaining 4 byte holes.
 
-There would be another way to do it (pls excuse my obvious arrogance and 
-I know I should write code instead of write emails) two layers: 
-blocksize for provisioning is e.g. 64M (this one should be customizable 
-like you have now), while blocksize for tracking writes and discards is 
-e.g. 4K. You make the btree only for the 64M blocks, and inside that you 
-keep 2 bitmaps for tracking its 16384  4K-blocks. One bit is "4K block 
-has been written", and if this is zero, reads go against the parent 
-snapshot (this avoids CoW costs when provisioning a new 64M block). The 
-other bit is "4K block has been discarded" and if this is set, reads 
-return zero, and if all 16384 bits are set, the 64M block gets 
-un-provisioned. This would play well with RAID alignment, with HDD 
-fragmentation, with CoW (normally no cow performed if writes are 4K or 
-bigger... "read optimizations" could do that afterwards if needed), with 
-multiple small discards, with tracking differences between parent 
-snapshot and current snapshot for remote replication, and with 
-compressed backups which would see zeroes on all discarded areas.
-It should be possible to add this into your implementation because added 
-metadata is just 2 bitmaps more for each block than what you have now.
-I would really like to try to write code for this but unfortunately I 
-foresee I won't have time to write code for a good while.
-With this I don't want that to appear like I don't appreciate your 
-current implementation which is great work, was very much needed, and in 
-fact I will definitely use it for our production systems after 3.4 is 
-stable (I was waiting for discards)
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-thin.c |   32 ++++++++++++++------------------
+ 1 file changed, 14 insertions(+), 18 deletions(-)
 
-
-> Y, I'll provide tools to let you do this.  If you wish to help with
-> writing a replicator please email me.  It's a project I'm keen to get
-> going.
-
-Thanks for the opportunity but for now it seems I can only be a leech, 
-at most I have time for writing a few emails :-(
-
-Thank you
-S.
+Index: linux/drivers/md/dm-thin.c
+===================================================================
+--- linux.orig/drivers/md/dm-thin.c
++++ linux/drivers/md/dm-thin.c
+@@ -507,10 +507,8 @@ struct pool {
+ 	struct block_device *md_dev;
+ 	struct dm_pool_metadata *pmd;
+ 
+-	uint32_t sectors_per_block;
+-	unsigned block_shift;
+-	dm_block_t offset_mask;
+ 	dm_block_t low_water_blocks;
++	uint32_t sectors_per_block;
+ 
+ 	struct pool_features pf;
+ 	unsigned low_water_triggered:1;	/* A dm event has been sent */
+@@ -523,8 +521,8 @@ struct pool {
+ 	struct work_struct worker;
+ 	struct delayed_work waker;
+ 
+-	unsigned ref_count;
+ 	unsigned long last_commit_jiffies;
++	unsigned ref_count;
+ 
+ 	spinlock_t lock;
+ 	struct bio_list deferred_bios;
+@@ -675,7 +673,7 @@ static void requeue_io(struct thin_c *tc
+ 
+ static dm_block_t get_bio_block(struct thin_c *tc, struct bio *bio)
+ {
+-	return bio->bi_sector >> tc->pool->block_shift;
++	return dm_do_div(bio->bi_sector, tc->pool->sectors_per_block);
+ }
+ 
+ static void remap(struct thin_c *tc, struct bio *bio, dm_block_t block)
+@@ -683,8 +681,8 @@ static void remap(struct thin_c *tc, str
+ 	struct pool *pool = tc->pool;
+ 
+ 	bio->bi_bdev = tc->pool_dev->bdev;
+-	bio->bi_sector = (block << pool->block_shift) +
+-		(bio->bi_sector & pool->offset_mask);
++	bio->bi_sector = (block * pool->sectors_per_block) +
++		dm_do_mod(bio->bi_sector, pool->sectors_per_block);
+ }
+ 
+ static void remap_to_origin(struct thin_c *tc, struct bio *bio)
+@@ -929,9 +927,8 @@ static void process_prepared(struct pool
+  */
+ static int io_overlaps_block(struct pool *pool, struct bio *bio)
+ {
+-	return !(bio->bi_sector & pool->offset_mask) &&
++	return !dm_do_mod(bio->bi_sector, pool->sectors_per_block) &&
+ 		(bio->bi_size == (pool->sectors_per_block << SECTOR_SHIFT));
+-
+ }
+ 
+ static int io_overwrites_block(struct pool *pool, struct bio *bio)
+@@ -1234,8 +1231,8 @@ static void process_discard(struct thin_
+ 			 * part of the discard that is in a subsequent
+ 			 * block.
+ 			 */
+-			sector_t offset = bio->bi_sector - (block << pool->block_shift);
+-			unsigned remaining = (pool->sectors_per_block - offset) << 9;
++			sector_t offset = bio->bi_sector - (block * pool->sectors_per_block);
++			unsigned remaining = (pool->sectors_per_block - offset) << SECTOR_SHIFT;
+ 			bio->bi_size = min(bio->bi_size, remaining);
+ 
+ 			cell_release_singleton(cell, bio);
+@@ -1696,8 +1693,6 @@ static struct pool *pool_create(struct m
+ 
+ 	pool->pmd = pmd;
+ 	pool->sectors_per_block = block_size;
+-	pool->block_shift = ffs(block_size) - 1;
+-	pool->offset_mask = block_size - 1;
+ 	pool->low_water_blocks = 0;
+ 	pool_features_init(&pool->pf);
+ 	pool->prison = prison_create(PRISON_CELLS);
+@@ -1941,7 +1936,7 @@ static int pool_ctr(struct dm_target *ti
+ 	if (kstrtoul(argv[2], 10, &block_size) || !block_size ||
+ 	    block_size < DATA_DEV_BLOCK_SIZE_MIN_SECTORS ||
+ 	    block_size > DATA_DEV_BLOCK_SIZE_MAX_SECTORS ||
+-	    !is_power_of_2(block_size)) {
++	    dm_do_mod(block_size, DATA_DEV_BLOCK_SIZE_MIN_SECTORS)) {
+ 		ti->error = "Invalid block size";
+ 		r = -EINVAL;
+ 		goto out;
+@@ -2089,7 +2084,7 @@ static int pool_preresume(struct dm_targ
+ 	if (r)
+ 		return r;
+ 
+-	data_size = ti->len >> pool->block_shift;
++	data_size = dm_do_div(ti->len, pool->sectors_per_block);
+ 	r = dm_pool_get_data_dev_size(pool->pmd, &sb_data_size);
+ 	if (r) {
+ 		DMERR("failed to retrieve data device size");
+@@ -2711,17 +2706,18 @@ static int thin_iterate_devices(struct d
+ {
+ 	dm_block_t blocks;
+ 	struct thin_c *tc = ti->private;
++	struct pool *pool = tc->pool;
+ 
+ 	/*
+ 	 * We can't call dm_pool_get_data_dev_size() since that blocks.  So
+ 	 * we follow a more convoluted path through to the pool's target.
+ 	 */
+-	if (!tc->pool->ti)
++	if (!pool->ti)
+ 		return 0;	/* nothing is bound */
+ 
+-	blocks = tc->pool->ti->len >> tc->pool->block_shift;
++	blocks = dm_do_div(pool->ti->len, pool->sectors_per_block);
+ 	if (blocks)
+-		return fn(ti, tc->pool_dev, 0, tc->pool->sectors_per_block * blocks, data);
++		return fn(ti, tc->pool_dev, 0, pool->sectors_per_block * blocks, data);
+ 
+ 	return 0;
+ }
