@@ -1,20 +1,19 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: Re: [PATCH 3/3] dm-multipath: 'default_hw_handler'
-	feature
-Date: Tue, 8 May 2012 17:56:06 +0000
-Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B05CEFA@SACEXCMBX02-PRD.hq.netapp.com>
+ feature
+Date: Tue, 08 May 2012 16:12:51 -0500
+Message-ID: <1336511571.1118.84.camel@chandra-lucid.austin.ibm.com>
 References: <1336486687-31535-1-git-send-email-hare@suse.de>
 	<1336486687-31535-2-git-send-email-hare@suse.de>
 	<1336486687-31535-3-git-send-email-hare@suse.de>
 	<1336486687-31535-4-git-send-email-hare@suse.de>
-	<20120508144653.GF8383@redhat.com> <4FA95822.2040701@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<20120508144653.GF8383@redhat.com>  <4FA95822.2040701@suse.de>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <4FA95822.2040701@suse.de>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,17 +23,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Babu Moger <babu.moger@netapp.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Hannes Reinecke [mailto:hare@suse.de]
-> Sent: Tuesday, May 08, 2012 12:30 PM
-> To: Mike Snitzer
-> Cc: dm-devel@redhat.com; Moger, Babu
-> Subject: Re: [PATCH 3/3] dm-multipath: 'default_hw_handler' feature
-> 
+I concur with the idea of combining both patches. 
+
+Chandra
+On Tue, 2012-05-08 at 19:30 +0200, Hannes Reinecke wrote:
 > On 05/08/2012 04:46 PM, Mike Snitzer wrote:
 > > On Tue, May 08 2012 at 10:18am -0400,
 > > Hannes Reinecke<hare@suse.de>  wrote:
@@ -64,12 +60,10 @@ List-Id: dm-devel.ids
 > >>
 > >>   /* Multipath context */
 > >>   struct multipath {
-> >> @@ -589,14 +590,24 @@ static struct pgpath *parse_path(struct
-> dm_arg_set *as, struct path_selector *ps
+> >> @@ -589,14 +590,24 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
 > >>
 > >>   	if (m->hw_handler_name) {
-> >>   		struct request_queue *q = bdev_get_queue(p->path.dev-
-> >bdev);
+> >>   		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
 > >> +		const char *hw_handler_name = m->hw_handler_name;
 > >>
 > >> -		r = scsi_dh_attach(q, m->hw_handler_name);
@@ -94,8 +88,7 @@ List-Id: dm-devel.ids
 > >
 > > I like what you've done with the 'default_hw_handler' feature.  But
 > > you're not establishing m->hw_handler_name.  As such the rest of the
-> > dm-mpath.c code that keys off of m->hw_handler_name (e.g.
-> reinstate_path,
+> > dm-mpath.c code that keys off of m->hw_handler_name (e.g. reinstate_path,
 > > pg_init_done, free_pgpaths) will not work.
 > >
 > Ah. True.
@@ -119,16 +112,7 @@ List-Id: dm-devel.ids
 > >
 > Oh, cool.
 > Please do.
-
-I am little bit lost with all the patches. From what I understand so far.
-Multipath tools will pass following parameters..
-
-hardware_handler "1 alua"  
-features "1 default_hw_handler"
-
-On seeing the "features", dm will try to detect default handler and will initialize
-m-> hw_handler_name. If the feature is not specified then old behavior should
-take effect.  Or if the dm cannot determine the default handler then also old behavior
-should take effect. 
-If the dm CAN  find default handler then parse_hw_handler will skip all the processing.
-Is that the summary.  Or Did I miss something here.
+> 
+> Cheers,
+> 
+> Hannes
