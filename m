@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 5/5] dm mpath: add ability to disable
-	partition creation
-Date: Tue,  8 May 2012 17:56:07 -0400
-Message-ID: <1336514167-15393-6-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 1/5] dm mpath: only try to load the scsi_dh
+	module if the scsi_dh doesn't exist
+Date: Tue,  8 May 2012 17:56:03 -0400
+Message-ID: <1336514167-15393-2-git-send-email-snitzer@redhat.com>
 References: <1336514167-15393-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,73 +23,32 @@ To: dm-devel@redhat.com
 Cc: babu.moger@netapp.com, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-From: Hannes Reinecke <hare@suse.de>
+There have been reports of multipath table loads hanging due to
+__request_module hanging (for some unknown reason).
 
-When multipath devices are being used as disks for VM Guests any
-partition scanning / setup should be done within the VM Guest, not from
-host.  So we need to a mechanism to switch off partition scanning and
-creation via kpartx.
+More often than not, the scsi_dh is already available and there is no
+need to request_module().
 
-The new 'no_partitions' feature serves as a notifier to kpartx to _not_
-create partitions on these multipath devices.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Reported-by: Ben Marzinski <bmarzins@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-mpath.c |   13 +++++++++++--
- 1 files changed, 11 insertions(+), 2 deletions(-)
+ drivers/md/dm-mpath.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 0fc6849..1039e7f 100644
+index 922a338..754f38f 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -85,6 +85,7 @@ struct multipath {
- 	unsigned queue_if_no_path:1;	/* Queue I/O if last path fails? */
- 	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
- 	unsigned use_default_hw_handler:1; /* Use attached device handler */
-+	unsigned no_partitions:1;	/* Avoid partition scanning */
+@@ -718,8 +718,8 @@ static int parse_hw_handler(struct dm_arg_set *as, struct multipath *m)
+ 		return 0;
  
- 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
- 	unsigned pg_init_count;		/* Number of times pg_init called */
-@@ -770,7 +771,7 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
- 	const char *arg_name;
- 
- 	static struct dm_arg _args[] = {
--		{0, 6, "invalid number of feature args"},
-+		{0, 7, "invalid number of feature args"},
- 		{1, 50, "pg_init_retries must be between 1 and 50"},
- 		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
- 	};
-@@ -796,6 +797,11 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
- 			continue;
- 		}
- 
-+		if (!strcasecmp(arg_name, "no_partitions")) {
-+			m->no_partitions = 1;
-+			continue;
-+		}
-+
- 		if (!strcasecmp(arg_name, "pg_init_retries") &&
- 		    (argc >= 1)) {
- 			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
-@@ -1380,7 +1386,8 @@ static int multipath_status(struct dm_target *ti, status_type_t type,
- 		DMEMIT("%u ", m->queue_if_no_path +
- 			      (m->pg_init_retries > 0) * 2 +
- 			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
--			      m->use_default_hw_handler);
-+			      m->use_default_hw_handler +
-+			      m->no_partitions);
- 		if (m->queue_if_no_path)
- 			DMEMIT("queue_if_no_path ");
- 		if (m->pg_init_retries)
-@@ -1389,6 +1396,8 @@ static int multipath_status(struct dm_target *ti, status_type_t type,
- 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
- 		if (m->use_default_hw_handler)
- 			DMEMIT("default_hw_handler ");
-+		if (m->no_partitions)
-+			DMEMIT("no_partitions ");
- 	}
- 
- 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
+ 	m->hw_handler_name = kstrdup(dm_shift_arg(as), GFP_KERNEL);
+-	request_module("scsi_dh_%s", m->hw_handler_name);
+-	if (scsi_dh_handler_exist(m->hw_handler_name) == 0) {
++	if (!try_then_request_module(scsi_dh_handler_exist(m->hw_handler_name),
++				     "scsi_dh_%s", m->hw_handler_name)) {
+ 		ti->error = "unknown hardware handler type";
+ 		ret = -EINVAL;
+ 		goto fail;
 -- 
 1.7.4.4
