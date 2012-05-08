@@ -1,57 +1,95 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Does dm-thin support GC (garbage collection) ?
-Date: Mon, 7 May 2012 09:22:43 -0400
-Message-ID: <20120507132242.GA27715@redhat.com>
-References: <CAJv3x-Xk-aODfJtqCEBKPM1jkwXEFVN40EEu_hnnDZB9o4dBWw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAJv3x-Xk-aODfJtqCEBKPM1jkwXEFVN40EEu_hnnDZB9o4dBWw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Busby <chaimvy@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Subject: [PATCH 3/3] dm mpath: add support for using previously attached scsi_dh
+Date: Mon,  7 May 2012 23:19:07 -0400
+Message-ID: <1336447147-3830-2-git-send-email-snitzer@redhat.com>
+References: <1336447147-3830-1-git-send-email-snitzer@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1336447147-3830-1-git-send-email-snitzer@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: agk@redhat.com, hare@suse.de, babu.moger@netapp.com, sekharan@us.ibm.com, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 07 2012 at  3:28am -0400,
-Busby <chaimvy@gmail.com> wrote:
+Use the previously attached scsi_dh if "default" is provided as the
+hardware handler name (the new 'use_default_hw_handler' flag is set in
+the multipath structure).
 
-> Hi All,
->          The dm-thin supports 'discard' now?Can I think this function
-> likes SSD's 'TRIM'? If it just discard the block mapped but not
-> remap(reallocate), the Pool's space will soon be used up . I want to
-> know whether it supports block reuse ( can use ext4 with '--discard'
-> test this? ) now or in the future.
+Leverage scsi_dh_attach's ability to increment the scsi_dh's reference
+count if the same scsi_dh name is provided when attaching -- currently
+attached scsi_dh name is determined with scsi_dh_attached_handler_name.
 
-thinp discard support was added during upstream's most recent 3.4 merge
-window.  See:
-http://git.kernel.org/linus/104655fd4dcebd500
-http://git.kernel.org/linus/67e2e2b281812b5ca
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-mpath.c |   23 ++++++++++++++++++++---
+ 1 file changed, 20 insertions(+), 3 deletions(-)
 
-As you can see in the commit header for this last commit, you have
-control over how the discard (as issued by ext4, etc) is handled by
-thinp.  It should be noted that if the underlying storage does not
-support discard then the thin-pool will default to no_discard_passdown
--- otherwise it does default to passing discards down to the underlying
-storage.
-
-But you'll need 2 late fixes for thinp issues that have been found
-during the 3.4-rcX development (these will be sent upstream shortly):
-http://www.redhat.com/archives/dm-devel/2012-April/msg00027.html
-http://www.redhat.com/archives/dm-devel/2012-April/msg00071.html
-
-(I'll bounce both of these patches to your email so you have them,
-please apply them before building/testing the latest 3.4-rcX kernel).
-
-Regards,
-Mike
+Index: linux-2.6/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-mpath.c
++++ linux-2.6/drivers/md/dm-mpath.c
+@@ -63,6 +63,7 @@ struct multipath {
+ 
+ 	spinlock_t lock;
+ 
++	unsigned use_default_hw_handler:1;
+ 	const char *hw_handler_name;
+ 	char *hw_handler_params;
+ 
+@@ -566,6 +567,7 @@ static struct pgpath *parse_path(struct 
+ 	int r;
+ 	struct pgpath *p;
+ 	struct multipath *m = ti->private;
++	struct request_queue *q = NULL;
+ 
+ 	/* we need at least a path arg */
+ 	if (as->argc < 1) {
+@@ -584,9 +586,16 @@ static struct pgpath *parse_path(struct 
+ 		goto bad;
+ 	}
+ 
+-	if (m->hw_handler_name) {
+-		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
++	if (m->use_default_hw_handler || m->hw_handler_name)
++		q = bdev_get_queue(p->path.dev->bdev);
++
++	if (m->use_default_hw_handler) {
++		const char *attached_handler_name = scsi_dh_attached_handler_name(q);
++		if (attached_handler_name)
++			m->hw_handler_name = kstrdup(attached_handler_name, GFP_KERNEL);
++	}
+ 
++	if (m->hw_handler_name) {
+ 		r = scsi_dh_attach(q, m->hw_handler_name);
+ 		if (r == -EBUSY) {
+ 			/*
+@@ -706,6 +715,7 @@ static int parse_hw_handler(struct dm_ar
+ 	unsigned hw_argc;
+ 	int ret;
+ 	struct dm_target *ti = m->ti;
++	const char *hw_handler_name;
+ 
+ 	static struct dm_arg _args[] = {
+ 		{0, 1024, "invalid number of hardware handler args"},
+@@ -717,7 +727,13 @@ static int parse_hw_handler(struct dm_ar
+ 	if (!hw_argc)
+ 		return 0;
+ 
+-	m->hw_handler_name = kstrdup(dm_shift_arg(as), GFP_KERNEL);
++	hw_handler_name = dm_shift_arg(as);
++	if (!strncmp(hw_handler_name, "default", 8)) {
++		m->use_default_hw_handler = 1;
++		goto parse_hw_handler_params;
++	}
++
++	m->hw_handler_name = kstrdup(hw_handler_name, GFP_KERNEL);
+ 	if (!try_then_request_module(scsi_dh_handler_exist(m->hw_handler_name),
+ 				     "scsi_dh_%s", m->hw_handler_name)) {
+ 		ti->error = "unknown hardware handler type";
+@@ -725,6 +741,7 @@ static int parse_hw_handler(struct dm_ar
+ 		goto fail;
+ 	}
+ 
++parse_hw_handler_params:
+ 	if (hw_argc > 1) {
+ 		char *p;
+ 		int i, j, len = 4;
