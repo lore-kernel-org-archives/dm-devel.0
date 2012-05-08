@@ -1,48 +1,58 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/3] dm mpath: add support for using previously attached
- scsi_dh
-Date: Tue, 8 May 2012 10:05:41 -0400
-Message-ID: <20120508140541.GB8383@redhat.com>
-References: <1336447147-3830-1-git-send-email-snitzer@redhat.com>
- <1336447147-3830-2-git-send-email-snitzer@redhat.com>
- <4FA8BBA3.3030705@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 1/3] scsi_dh: Allow NULL hardware handler name in
+	scsi_dh_attach()
+Date: Tue,  8 May 2012 16:18:05 +0200
+Message-ID: <1336486687-31535-2-git-send-email-hare@suse.de>
+References: <1336486687-31535-1-git-send-email-hare@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4FA8BBA3.3030705@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, agk@redhat.com, babu.moger@netapp.com, sekharan@us.ibm.com, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1336486687-31535-1-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Babu Moger <babu.moger@netapp.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, May 08 2012 at  2:22am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+This patch allows to pass in a NULL hardware handler to
+scsi_dh_attach(), causing the reference count of the existing
+hardware handler to be increased.
+An error will be returned if no hardware handler is attached.
 
-> On 05/08/2012 05:19 AM, Mike Snitzer wrote:
-> > Use the previously attached scsi_dh if "default" is provided as the
-> > hardware handler name (the new 'use_default_hw_handler' flag is set in
-> > the multipath structure).
-> > 
-> > Leverage scsi_dh_attach's ability to increment the scsi_dh's reference
-> > count if the same scsi_dh name is provided when attaching -- currently
-> > attached scsi_dh name is determined with scsi_dh_attached_handler_name.
-> > 
-> Not sure it that's the correct way.
-> 
-> Using 'default' as the hardware handler name has the drawback that
-> the original information (ie the original hardware handler name)
-> is lost.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/scsi/device_handler/scsi_dh.c |    8 ++++++--
+ 1 files changed, 6 insertions(+), 2 deletions(-)
 
-BTW, on this point: How is the original handler's name lost with my
-patches?  I set m->hw_handler_name to the original (aka attached)
-handler's name (as returned scsi_dh_attached_handler_name).
-
-"default" is only used as a key to trigger the use of the attached
-handler (it causes m->use_default_hw_handler to be set).
-
-Was my description or code somehow unclear?  Guess so... otherwise I'd
-not be clarifying this... unfortunately I'm not seeing where I fell
-short.
-
-Mike
+diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_handler/scsi_dh.c
+index 48e46f5..9820f1f 100644
+--- a/drivers/scsi/device_handler/scsi_dh.c
++++ b/drivers/scsi/device_handler/scsi_dh.c
+@@ -475,10 +475,14 @@ int scsi_dh_attach(struct request_queue *q, const char *name)
+ {
+ 	unsigned long flags;
+ 	struct scsi_device *sdev;
+-	struct scsi_device_handler *scsi_dh;
++	struct scsi_device_handler *scsi_dh = NULL;
+ 	int err = 0;
+ 
+-	scsi_dh = get_device_handler(name);
++	if (name) {
++		scsi_dh = get_device_handler(name);
++	} else if (sdev && sdev->scsi_dh_data) {
++		scsi_dh = sdev->scsi_dh_data->scsi_dh;
++	}
+ 	if (!scsi_dh)
+ 		return -EINVAL;
+ 
+-- 
+1.6.0.2
