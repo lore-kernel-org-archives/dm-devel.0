@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 3/5] dm mpath: reduce size of multipath
-	structure
-Date: Tue,  8 May 2012 17:56:05 -0400
-Message-ID: <1336514167-15393-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 2/5] scsi_dh: add scsi_dh_attached_handler_name
+Date: Tue,  8 May 2012 17:56:04 -0400
+Message-ID: <1336514167-15393-3-git-send-email-snitzer@redhat.com>
 References: <1336514167-15393-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,55 +22,97 @@ To: dm-devel@redhat.com
 Cc: babu.moger@netapp.com, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-Move multipath structure's 'lock' and 'queue_size' members to eliminate
-2 4-byte holes.  Also use a bit within a single unsigned int for each
-existing flag (saves 8-bytes).  This allows future flags to be added
-without each consuming an unsigned int.
+Introduce scsi_dh_attached_handler_name() to retrieve the name of the
+scsi_dh that is attached to the scsi_device associated with the provided
+request queue.  Returns NULL if a scsi_dh is not attached.
+
+Also, fix scsi_dh_{attach,detach} function header comments to document
+@q rather than @sdev.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-mpath.c |   13 +++++++------
- 1 files changed, 7 insertions(+), 6 deletions(-)
+ drivers/scsi/device_handler/scsi_dh.c |   31 +++++++++++++++++++++++++++++--
+ include/scsi/scsi_dh.h                |    5 +++++
+ 2 files changed, 34 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 754f38f..c351607 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -61,11 +61,11 @@ struct multipath {
- 	struct list_head list;
- 	struct dm_target *ti;
+diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_handler/scsi_dh.c
+index 48e46f5..7497c78 100644
+--- a/drivers/scsi/device_handler/scsi_dh.c
++++ b/drivers/scsi/device_handler/scsi_dh.c
+@@ -468,7 +468,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
  
--	spinlock_t lock;
--
- 	const char *hw_handler_name;
- 	char *hw_handler_params;
+ /*
+  * scsi_dh_attach - Attach device handler
+- * @sdev - sdev the handler should be attached to
++ * @q - Request queue that is associated with the scsi_device
++ *      the handler should be attached to
+  * @name - name of the handler to attach
+  */
+ int scsi_dh_attach(struct request_queue *q, const char *name)
+@@ -498,7 +499,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
  
-+	spinlock_t lock;
+ /*
+  * scsi_dh_detach - Detach device handler
+- * @sdev - sdev the handler should be detached from
++ * @q - Request queue that is associated with the scsi_device
++ *      the handler should be detached from
+  *
+  * This function will detach the device handler only
+  * if the sdev is not part of the internal list, ie
+@@ -527,6 +529,31 @@ void scsi_dh_detach(struct request_queue *q)
+ }
+ EXPORT_SYMBOL_GPL(scsi_dh_detach);
+ 
++/*
++ * scsi_dh_attached_handler_name - Get attached device handler's name
++ * @q - Request queue that is associated with the scsi_device
++ *      that may have a device handler attached
++ *
++ * Returns name of attached scsi_dh, NULL if no handler is attached.
++ */
++const char *scsi_dh_attached_handler_name(struct request_queue *q)
++{
++	unsigned long flags;
++	struct scsi_device *sdev;
 +
- 	unsigned nr_priority_groups;
- 	struct list_head priority_groups;
- 
-@@ -81,16 +81,17 @@ struct multipath {
- 	struct priority_group *next_pg;	/* Switch to this PG if set */
- 	unsigned repeat_count;		/* I/Os left before calling PS again */
- 
--	unsigned queue_io;		/* Must we queue all I/O? */
--	unsigned queue_if_no_path;	/* Queue I/O if last path fails? */
--	unsigned saved_queue_if_no_path;/* Saved state during suspension */
-+	unsigned queue_io:1;		/* Must we queue all I/O? */
-+	unsigned queue_if_no_path:1;	/* Queue I/O if last path fails? */
-+	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
++	spin_lock_irqsave(q->queue_lock, flags);
++	sdev = q->queuedata;
++	if (!sdev || !get_device(&sdev->sdev_gendev))
++		sdev = NULL;
++	spin_unlock_irqrestore(q->queue_lock, flags);
 +
- 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
- 	unsigned pg_init_count;		/* Number of times pg_init called */
- 	unsigned pg_init_delay_msecs;	/* Number of msecs before pg_init retry */
- 
-+	unsigned queue_size;
- 	struct work_struct process_queued_ios;
- 	struct list_head queued_ios;
--	unsigned queue_size;
- 
- 	struct work_struct trigger_event;
- 
++	if (!sdev || !sdev->scsi_dh_data)
++		return NULL;
++
++	return sdev->scsi_dh_data->scsi_dh->name;
++}
++EXPORT_SYMBOL_GPL(scsi_dh_attached_handler_name);
++
+ static struct notifier_block scsi_dh_nb = {
+ 	.notifier_call = scsi_dh_notifier
+ };
+diff --git a/include/scsi/scsi_dh.h b/include/scsi/scsi_dh.h
+index e3f2db2..94f502b 100644
+--- a/include/scsi/scsi_dh.h
++++ b/include/scsi/scsi_dh.h
+@@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct request_queue *, activate_complete, void *);
+ extern int scsi_dh_handler_exist(const char *);
+ extern int scsi_dh_attach(struct request_queue *, const char *);
+ extern void scsi_dh_detach(struct request_queue *);
++extern const char *scsi_dh_attached_handler_name(struct request_queue *q);
+ extern int scsi_dh_set_params(struct request_queue *, const char *);
+ #else
+ static inline int scsi_dh_activate(struct request_queue *req,
+@@ -80,6 +81,10 @@ static inline void scsi_dh_detach(struct request_queue *q)
+ {
+ 	return;
+ }
++static inline const char *scsi_dh_attached_handler_name(struct request_queue *q)
++{
++	return NULL;
++}
+ static inline int scsi_dh_set_params(struct request_queue *req, const char *params)
+ {
+ 	return -SCSI_DH_NOSYS;
 -- 
 1.7.4.4
