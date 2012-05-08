@@ -1,119 +1,73 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 3/3] dm-multipath: 'default_hw_handler' feature
-Date: Tue,  8 May 2012 16:18:07 +0200
-Message-ID: <1336486687-31535-4-git-send-email-hare@suse.de>
-References: <1336486687-31535-1-git-send-email-hare@suse.de>
-	<1336486687-31535-2-git-send-email-hare@suse.de>
-	<1336486687-31535-3-git-send-email-hare@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH 3/3] dm mpath: add support for using previously attached
+ scsi_dh
+Date: Tue, 08 May 2012 18:20:45 +0200
+Message-ID: <4FA947DD.8060908@suse.de>
+References: <1336447147-3830-1-git-send-email-snitzer@redhat.com> <1336447147-3830-2-git-send-email-snitzer@redhat.com> <4FA8BBA3.3030705@suse.de> <20120508140541.GB8383@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1336486687-31535-3-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Babu Moger <babu.moger@netapp.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20120508140541.GB8383@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com, babu.moger@netapp.com, sekharan@us.ibm.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-This patch introduces a 'default_hw_handler' feature for
-dm-mpath. When specifying the feature 'default_hw_handler'
-dm-multipath will be using the currently attached hardware
-handler instead of trying to re-attach with the one
-specified during table creation.
-If no hardware handler is attached the specified hardware
-handler will be used.
+On 05/08/2012 04:05 PM, Mike Snitzer wrote:
+> On Tue, May 08 2012 at  2:22am -0400,
+> Hannes Reinecke<hare@suse.de>  wrote:
+>
+>> On 05/08/2012 05:19 AM, Mike Snitzer wrote:
+>>> Use the previously attached scsi_dh if "default" is provided as the
+>>> hardware handler name (the new 'use_default_hw_handler' flag is set=
+ in
+>>> the multipath structure).
+>>>
+>>> Leverage scsi_dh_attach's ability to increment the scsi_dh's refere=
+nce
+>>> count if the same scsi_dh name is provided when attaching -- curren=
+tly
+>>> attached scsi_dh name is determined with scsi_dh_attached_handler_n=
+ame.
+>>>
+>> Not sure it that's the correct way.
+>>
+>> Using 'default' as the hardware handler name has the drawback that
+>> the original information (ie the original hardware handler name)
+>> is lost.
+>
+> BTW, on this point: How is the original handler's name lost with my
+> patches?  I set m->hw_handler_name to the original (aka attached)
+> handler's name (as returned scsi_dh_attached_handler_name).
+>
+> "default" is only used as a key to trigger the use of the attached
+> handler (it causes m->use_default_hw_handler to be set).
+>
+What I meant is that within multipath you can only specify one hardware=
+=20
+handler. So if it's 'default' and no hardware handler is attached we=20
+wouldn't know what to look for.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c |   25 ++++++++++++++++++++++---
- 1 files changed, 22 insertions(+), 3 deletions(-)
+> Was my description or code somehow unclear?  Guess so... otherwise I'=
+d
+> not be clarifying this... unfortunately I'm not seeing where I fell
+> short.
+>
+Meanwhile I've sent the patchset, Please check that for details.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 6d3f2a8..c1ef41d 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -57,6 +57,7 @@ struct priority_group {
- };
- 
- #define FEATURE_NO_PARTITIONS 1
-+#define FEATURE_DEFAULT_HW_HANDLER 2
- 
- /* Multipath context */
- struct multipath {
-@@ -589,14 +590,24 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
- 
- 	if (m->hw_handler_name) {
- 		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
-+		const char *hw_handler_name = m->hw_handler_name;
- 
--		r = scsi_dh_attach(q, m->hw_handler_name);
-+		if (m->features & FEATURE_DEFAULT_HW_HANDLER)
-+			hw_handler_name = NULL;
-+
-+		r = scsi_dh_attach(q, hw_handler_name);
- 		if (r == -EBUSY) {
- 			/*
- 			 * Already attached to different hw_handler,
- 			 * try to reattach with correct one.
- 			 */
- 			scsi_dh_detach(q);
-+			r = scsi_dh_attach(q, hw_handler_name);
-+		} else if (r == -EINVAL) {
-+			/*
-+			 * No hardware handler attached, use
-+			 * the specified one.
-+			 */
- 			r = scsi_dh_attach(q, m->hw_handler_name);
- 		}
- 
-@@ -761,7 +772,7 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
- 	const char *arg_name;
- 
- 	static struct dm_arg _args[] = {
--		{0, 6, "invalid number of feature args"},
-+		{0, 7, "invalid number of feature args"},
- 		{1, 50, "pg_init_retries must be between 1 and 50"},
- 		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
- 	};
-@@ -787,6 +798,11 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
- 			continue;
- 		}
- 
-+		if (!strcasecmp(arg_name, "default_hw_handler")) {
-+			m->features |= FEATURE_DEFAULT_HW_HANDLER;
-+			continue;
-+		}
-+
- 		if (!strcasecmp(arg_name, "pg_init_retries") &&
- 		    (argc >= 1)) {
- 			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
-@@ -1371,7 +1387,8 @@ static int multipath_status(struct dm_target *ti, status_type_t type,
- 		DMEMIT("%u ", m->queue_if_no_path +
- 			      (m->pg_init_retries > 0) * 2 +
- 			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
--			      (m->features & FEATURE_NO_PARTITIONS));
-+			      (m->features & FEATURE_NO_PARTITIONS) +
-+			      (m->features & FEATURE_DEFAULT_HW_HANDLER));
- 		if (m->queue_if_no_path)
- 			DMEMIT("queue_if_no_path ");
- 		if (m->pg_init_retries)
-@@ -1380,6 +1397,8 @@ static int multipath_status(struct dm_target *ti, status_type_t type,
- 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
- 		if (m->features & FEATURE_NO_PARTITIONS)
- 			DMEMIT("no_partitions ");
-+		if (m->features & FEATURE_DEFAULT_HW_HANDLER)
-+			DMEMIT("default_hw_handler ");
- 	}
- 
- 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
--- 
-1.6.0.2
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
