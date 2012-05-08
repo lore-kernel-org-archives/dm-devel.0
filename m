@@ -1,44 +1,55 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Does dm-thin support GC (garbage collection) ?
-Date: Tue, 8 May 2012 11:30:33 +0100
-Message-ID: <20120508103032.GB4034@ubuntu>
-References: <CAJv3x-Xk-aODfJtqCEBKPM1jkwXEFVN40EEu_hnnDZB9o4dBWw@mail.gmail.com>
-	<20120507132242.GA27715@redhat.com>
-	<CAJv3x-USC=8z7Kz_-p8uOiQkdE21Oe0isMeDOBKRc4semHbLCA@mail.gmail.com>
-	<CAJv3x-U1VRyq1m6oJQ0X8nn4WSiAzVnqm7CLuPGj-xmDh8c1AQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 3/3] dm mpath: add support for using previously attached
+ scsi_dh
+Date: Tue, 8 May 2012 09:36:52 -0400
+Message-ID: <20120508133652.GA8383@redhat.com>
+References: <1336447147-3830-1-git-send-email-snitzer@redhat.com>
+ <1336447147-3830-2-git-send-email-snitzer@redhat.com>
+ <4FA8BBA3.3030705@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAJv3x-U1VRyq1m6oJQ0X8nn4WSiAzVnqm7CLuPGj-xmDh8c1AQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <4FA8BBA3.3030705@suse.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, agk@redhat.com, babu.moger@netapp.com, sekharan@us.ibm.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, May 08, 2012 at 03:21:31PM +0800, Busby wrote:
->    I have tested that the blocks were reused in the other thin-lun of
-> this pool  when deleted a thin-lun .
->    How can the blocks allocated for the thin-lun be dynamically
-> reclaimed? (use some method like 'discard' to tell the pool which
-> block should be reclaimed and whether the pool can reclaim it ?).
->    When I mounted a filesystem on a thin-lun, create 4G bytes file
-> firstly, the pool have decreased  4G space, then I deleted the file,
-> the pool did not increase the size as I thought, after this, create a
-> 5G file, then the pool would decrease 1G size. So I think if the
+On Tue, May 08 2012 at  2:22am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-Have you enabled discard support in both the thin-pool _and_ the
-filesystem?  Have you confirmed that the filesystem issues the discard
-in your test scenario?  (eg, via blktrace).
+> On 05/08/2012 05:19 AM, Mike Snitzer wrote:
+> > Use the previously attached scsi_dh if "default" is provided as the
+> > hardware handler name (the new 'use_default_hw_handler' flag is set in
+> > the multipath structure).
+> > 
+> > Leverage scsi_dh_attach's ability to increment the scsi_dh's reference
+> > count if the same scsi_dh name is provided when attaching -- currently
+> > attached scsi_dh name is determined with scsi_dh_attached_handler_name.
+> > 
+> Not sure it that's the correct way.
+> 
+> Using 'default' as the hardware handler name has the drawback that
+> the original information (ie the original hardware handler name)
+> is lost.
+> 
+> So if there is no 'default', eg if the kernel module hasn't been
+> loaded, we wouldn't know which hardware handler to load.
 
-- Joe
+What I've done does depend on all relevant scsi_dh being available
+very early (either as builtins or loaded before the HBA drivers) so that
+the scsi_dh gets attached during the drivers' SCSI device scan.
+
+> I'd rather have a feature 'default_hw_handler' which then could be
+> passed into the kernel module. With that we would retain both, the
+> original implementation and the default case.
+
+My change retains the original and allows "default" to have multipath
+just use what the kernel already detected and attached via .match
+
+Please be more precise with what it is you're proposing (either with
+description or working patches).
+
+Thanks!
+Mike
