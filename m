@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 3/3] dm mpath: add support for using previously attached
  scsi_dh
-Date: Tue, 8 May 2012 09:36:52 -0400
-Message-ID: <20120508133652.GA8383@redhat.com>
+Date: Tue, 8 May 2012 10:05:41 -0400
+Message-ID: <20120508140541.GB8383@redhat.com>
 References: <1336447147-3830-1-git-send-email-snitzer@redhat.com>
  <1336447147-3830-2-git-send-email-snitzer@redhat.com>
  <4FA8BBA3.3030705@suse.de>
@@ -33,23 +33,16 @@ Hannes Reinecke <hare@suse.de> wrote:
 > Using 'default' as the hardware handler name has the drawback that
 > the original information (ie the original hardware handler name)
 > is lost.
-> 
-> So if there is no 'default', eg if the kernel module hasn't been
-> loaded, we wouldn't know which hardware handler to load.
 
-What I've done does depend on all relevant scsi_dh being available
-very early (either as builtins or loaded before the HBA drivers) so that
-the scsi_dh gets attached during the drivers' SCSI device scan.
+BTW, on this point: How is the original handler's name lost with my
+patches?  I set m->hw_handler_name to the original (aka attached)
+handler's name (as returned scsi_dh_attached_handler_name).
 
-> I'd rather have a feature 'default_hw_handler' which then could be
-> passed into the kernel module. With that we would retain both, the
-> original implementation and the default case.
+"default" is only used as a key to trigger the use of the attached
+handler (it causes m->use_default_hw_handler to be set).
 
-My change retains the original and allows "default" to have multipath
-just use what the kernel already detected and attached via .match
+Was my description or code somehow unclear?  Guess so... otherwise I'd
+not be clarifying this... unfortunately I'm not seeing where I fell
+short.
 
-Please be more precise with what it is you're proposing (either with
-description or working patches).
-
-Thanks!
 Mike
