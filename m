@@ -1,16 +1,16 @@
 From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: Re: [PATCH v2 2/5] scsi_dh: add
-	scsi_dh_attached_handler_name
-Date: Wed, 9 May 2012 17:40:44 +0000
-Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B05D284@SACEXCMBX02-PRD.hq.netapp.com>
+Subject: Re: [PATCH v2 4/5] dm mpath: add 'default_hw_handler'
+	feature
+Date: Wed, 9 May 2012 18:10:59 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B05D2D0@SACEXCMBX02-PRD.hq.netapp.com>
 References: <1336514167-15393-1-git-send-email-snitzer@redhat.com>
-	<1336514167-15393-3-git-send-email-snitzer@redhat.com>
+	<1336514167-15393-5-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1336514167-15393-3-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1336514167-15393-5-git-send-email-snitzer@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -25,7 +25,7 @@ To: Mike Snitzer <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.co
 Cc: "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Mike, I have a question for you below.
+Mike,
 
 > -----Original Message-----
 > From: Mike Snitzer [mailto:snitzer@redhat.com]
@@ -33,111 +33,133 @@ Mike, I have a question for you below.
 > To: dm-devel@redhat.com
 > Cc: agk@redhat.com; hare@suse.de; Moger, Babu; sekharan@us.ibm.com;
 > Mike Snitzer
-> Subject: [PATCH v2 2/5] scsi_dh: add scsi_dh_attached_handler_name
+> Subject: [PATCH v2 4/5] dm mpath: add 'default_hw_handler' feature
 > 
-> Introduce scsi_dh_attached_handler_name() to retrieve the name of the
-> scsi_dh that is attached to the scsi_device associated with the provided
-> request queue.  Returns NULL if a scsi_dh is not attached.
+> From: Hannes Reinecke <hare@suse.de>
 > 
-> Also, fix scsi_dh_{attach,detach} function header comments to document
-> @q rather than @sdev.
+> When specifying the feature 'default_hw_handler' multipath will be use
+> the currently attached hardware handler instead of trying to attach the
+> one specified during table load.  If no hardware handler is attached the
+> specified hardware handler will be used.
+
+I am trying to test these patches right now.  What is the expectation from
+Multipath tools for this to work correctly.  Do I have to pass following 
+Parameters?
+
+hardware_handler "1 alua"  
+features "1 default_hw_handler"
+ 
+It appears to me that the first line will forcibly load the alua handler even if
+the default handler is different. 
+
 > 
+> Leverages scsi_dh_attach's ability to increment the scsi_dh's reference
+> count if the same scsi_dh name is provided when attaching -- currently
+> attached scsi_dh name is determined with scsi_dh_attached_handler_name.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 > ---
->  drivers/scsi/device_handler/scsi_dh.c |   31
-> +++++++++++++++++++++++++++++--
->  include/scsi/scsi_dh.h                |    5 +++++
->  2 files changed, 34 insertions(+), 2 deletions(-)
+>  drivers/md/dm-mpath.c |   27 +++++++++++++++++++++++----
+>  1 files changed, 23 insertions(+), 4 deletions(-)
 > 
-> diff --git a/drivers/scsi/device_handler/scsi_dh.c
-> b/drivers/scsi/device_handler/scsi_dh.c
-> index 48e46f5..7497c78 100644
-> --- a/drivers/scsi/device_handler/scsi_dh.c
-> +++ b/drivers/scsi/device_handler/scsi_dh.c
-> @@ -468,7 +468,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index c351607..0fc6849 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -84,6 +84,7 @@ struct multipath {
+>  	unsigned queue_io:1;		/* Must we queue all I/O? */
+>  	unsigned queue_if_no_path:1;	/* Queue I/O if last path fails? */
+>  	unsigned saved_queue_if_no_path:1; /* Saved state during
+> suspension */
+> +	unsigned use_default_hw_handler:1; /* Use attached device
+> handler */
 > 
->  /*
->   * scsi_dh_attach - Attach device handler
-> - * @sdev - sdev the handler should be attached to
-> + * @q - Request queue that is associated with the scsi_device
-> + *      the handler should be attached to
->   * @name - name of the handler to attach
->   */
->  int scsi_dh_attach(struct request_queue *q, const char *name)
-> @@ -498,7 +499,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
+>  	unsigned pg_init_retries;	/* Number of times to retry pg_init
+> */
+>  	unsigned pg_init_count;		/* Number of times pg_init
+> called */
+> @@ -567,6 +568,7 @@ static struct pgpath *parse_path(struct dm_arg_set
+> *as, struct path_selector *ps
+>  	int r;
+>  	struct pgpath *p;
+>  	struct multipath *m = ti->private;
+> +	struct request_queue *q = NULL;
 > 
->  /*
->   * scsi_dh_detach - Detach device handler
-> - * @sdev - sdev the handler should be detached from
-> + * @q - Request queue that is associated with the scsi_device
-> + *      the handler should be detached from
->   *
->   * This function will detach the device handler only
->   * if the sdev is not part of the internal list, ie
-> @@ -527,6 +529,31 @@ void scsi_dh_detach(struct request_queue *q)
->  }
->  EXPORT_SYMBOL_GPL(scsi_dh_detach);
+>  	/* we need at least a path arg */
+>  	if (as->argc < 1) {
+> @@ -585,9 +587,18 @@ static struct pgpath *parse_path(struct dm_arg_set
+> *as, struct path_selector *ps
+>  		goto bad;
+>  	}
 > 
-> +/*
-> + * scsi_dh_attached_handler_name - Get attached device handler's name
-> + * @q - Request queue that is associated with the scsi_device
-> + *      that may have a device handler attached
-> + *
-> + * Returns name of attached scsi_dh, NULL if no handler is attached.
-> + */
-> +const char *scsi_dh_attached_handler_name(struct request_queue *q)
-> +{
-> +	unsigned long flags;
-> +	struct scsi_device *sdev;
+> -	if (m->hw_handler_name) {
+> -		struct request_queue *q = bdev_get_queue(p->path.dev-
+> >bdev);
+> +	if (m->use_default_hw_handler || m->hw_handler_name)
+> +		q = bdev_get_queue(p->path.dev->bdev);
 > +
-> +	spin_lock_irqsave(q->queue_lock, flags);
-> +	sdev = q->queuedata;
-> +	if (!sdev || !get_device(&sdev->sdev_gendev))
-> +		sdev = NULL;
-> +	spin_unlock_irqrestore(q->queue_lock, flags);
+> +	if (m->use_default_hw_handler) {
+> +		const char *attached_handler_name =
+> scsi_dh_attached_handler_name(q);
+> +		if (attached_handler_name) {
+> +			kfree(m->hw_handler_name);
+> +			m->hw_handler_name =
+> kstrdup(attached_handler_name, GFP_KERNEL);
+> +		}
+> +	}
+> 
+> +	if (m->hw_handler_name) {
+>  		r = scsi_dh_attach(q, m->hw_handler_name);
+>  		if (r == -EBUSY) {
+>  			/*
+> @@ -759,7 +770,7 @@ static int parse_features(struct dm_arg_set *as,
+> struct multipath *m)
+>  	const char *arg_name;
+> 
+>  	static struct dm_arg _args[] = {
+> -		{0, 5, "invalid number of feature args"},
+> +		{0, 6, "invalid number of feature args"},
+>  		{1, 50, "pg_init_retries must be between 1 and 50"},
+>  		{0, 60000, "pg_init_delay_msecs must be between 0 and
+> 60000"},
+>  	};
+> @@ -780,6 +791,11 @@ static int parse_features(struct dm_arg_set *as,
+> struct multipath *m)
+>  			continue;
+>  		}
+> 
+> +		if (!strcasecmp(arg_name, "default_hw_handler")) {
+> +			m->use_default_hw_handler = 1;
+> +			continue;
+> +		}
 > +
-> +	if (!sdev || !sdev->scsi_dh_data)
-> +		return NULL;
-> +
-> +	return sdev->scsi_dh_data->scsi_dh->name;
-> +}
-
-
-I only see get_device call.  I don't see matching put_device call.  Was  that on purspose?
-
-
-> +EXPORT_SYMBOL_GPL(scsi_dh_attached_handler_name);
-> +
->  static struct notifier_block scsi_dh_nb = {
->  	.notifier_call = scsi_dh_notifier
->  };
-> diff --git a/include/scsi/scsi_dh.h b/include/scsi/scsi_dh.h
-> index e3f2db2..94f502b 100644
-> --- a/include/scsi/scsi_dh.h
-> +++ b/include/scsi/scsi_dh.h
-> @@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct request_queue *,
-> activate_complete, void *);
->  extern int scsi_dh_handler_exist(const char *);
->  extern int scsi_dh_attach(struct request_queue *, const char *);
->  extern void scsi_dh_detach(struct request_queue *);
-> +extern const char *scsi_dh_attached_handler_name(struct request_queue
-> *q);
->  extern int scsi_dh_set_params(struct request_queue *, const char *);
->  #else
->  static inline int scsi_dh_activate(struct request_queue *req,
-> @@ -80,6 +81,10 @@ static inline void scsi_dh_detach(struct request_queue
-> *q)
->  {
->  	return;
->  }
-> +static inline const char *scsi_dh_attached_handler_name(struct
-> request_queue *q)
-> +{
-> +	return NULL;
-> +}
->  static inline int scsi_dh_set_params(struct request_queue *req, const char
-> *params)
->  {
->  	return -SCSI_DH_NOSYS;
+>  		if (!strcasecmp(arg_name, "pg_init_retries") &&
+>  		    (argc >= 1)) {
+>  			r = dm_read_arg(_args + 1, as, &m->pg_init_retries,
+> &ti->error);
+> @@ -1363,13 +1379,16 @@ static int multipath_status(struct dm_target *ti,
+> status_type_t type,
+>  	else {
+>  		DMEMIT("%u ", m->queue_if_no_path +
+>  			      (m->pg_init_retries > 0) * 2 +
+> -			      (m->pg_init_delay_msecs !=
+> DM_PG_INIT_DELAY_DEFAULT) * 2);
+> +			      (m->pg_init_delay_msecs !=
+> DM_PG_INIT_DELAY_DEFAULT) * 2 +
+> +			      m->use_default_hw_handler);
+>  		if (m->queue_if_no_path)
+>  			DMEMIT("queue_if_no_path ");
+>  		if (m->pg_init_retries)
+>  			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
+>  		if (m->pg_init_delay_msecs !=
+> DM_PG_INIT_DELAY_DEFAULT)
+>  			DMEMIT("pg_init_delay_msecs %u ", m-
+> >pg_init_delay_msecs);
+> +		if (m->use_default_hw_handler)
+> +			DMEMIT("default_hw_handler ");
+>  	}
+> 
+>  	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
 > --
 > 1.7.4.4
