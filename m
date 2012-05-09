@@ -1,16 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2 2/5] scsi_dh: add
-	scsi_dh_attached_handler_name
-Date: Wed, 09 May 2012 08:57:53 +0200
-Message-ID: <4FAA1571.4090007@suse.de>
+Subject: Re: [PATCH v2 3/5] dm mpath: reduce size of multipath
+	structure
+Date: Wed, 09 May 2012 08:58:53 +0200
+Message-ID: <4FAA15AD.2040709@suse.de>
 References: <1336514167-15393-1-git-send-email-snitzer@redhat.com>
-	<1336514167-15393-3-git-send-email-snitzer@redhat.com>
+	<1336514167-15393-4-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1336514167-15393-3-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1336514167-15393-4-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,111 +25,65 @@ Cc: dm-devel@redhat.com, babu.moger@netapp.com, agk@redhat.com
 List-Id: dm-devel.ids
 
 On 05/08/2012 11:56 PM, Mike Snitzer wrote:
-> Introduce scsi_dh_attached_handler_name() to retrieve the name of the
-> scsi_dh that is attached to the scsi_device associated with the provided
-> request queue.  Returns NULL if a scsi_dh is not attached.
-> =
-
-> Also, fix scsi_dh_{attach,detach} function header comments to document
-> @q rather than @sdev.
+> Move multipath structure's 'lock' and 'queue_size' members to eliminate
+> 2 4-byte holes.  Also use a bit within a single unsigned int for each
+> existing flag (saves 8-bytes).  This allows future flags to be added
+> without each consuming an unsigned int.
 > =
 
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 > ---
->  drivers/scsi/device_handler/scsi_dh.c |   31 +++++++++++++++++++++++++++=
-++--
->  include/scsi/scsi_dh.h                |    5 +++++
->  2 files changed, 34 insertions(+), 2 deletions(-)
+>  drivers/md/dm-mpath.c |   13 +++++++------
+>  1 files changed, 7 insertions(+), 6 deletions(-)
 > =
 
-> diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_=
-handler/scsi_dh.c
-> index 48e46f5..7497c78 100644
-> --- a/drivers/scsi/device_handler/scsi_dh.c
-> +++ b/drivers/scsi/device_handler/scsi_dh.c
-> @@ -468,7 +468,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 754f38f..c351607 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -61,11 +61,11 @@ struct multipath {
+>  	struct list_head list;
+>  	struct dm_target *ti;
 >  =
 
->  /*
->   * scsi_dh_attach - Attach device handler
-> - * @sdev - sdev the handler should be attached to
-> + * @q - Request queue that is associated with the scsi_device
-> + *      the handler should be attached to
->   * @name - name of the handler to attach
->   */
->  int scsi_dh_attach(struct request_queue *q, const char *name)
-> @@ -498,7 +499,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
+> -	spinlock_t lock;
+> -
+>  	const char *hw_handler_name;
+>  	char *hw_handler_params;
 >  =
 
->  /*
->   * scsi_dh_detach - Detach device handler
-> - * @sdev - sdev the handler should be detached from
-> + * @q - Request queue that is associated with the scsi_device
-> + *      the handler should be detached from
->   *
->   * This function will detach the device handler only
->   * if the sdev is not part of the internal list, ie
-> @@ -527,6 +529,31 @@ void scsi_dh_detach(struct request_queue *q)
->  }
->  EXPORT_SYMBOL_GPL(scsi_dh_detach);
+> +	spinlock_t lock;
+> +
+>  	unsigned nr_priority_groups;
+>  	struct list_head priority_groups;
 >  =
 
-> +/*
-> + * scsi_dh_attached_handler_name - Get attached device handler's name
-> + * @q - Request queue that is associated with the scsi_device
-> + *      that may have a device handler attached
-> + *
-> + * Returns name of attached scsi_dh, NULL if no handler is attached.
-> + */
-> +const char *scsi_dh_attached_handler_name(struct request_queue *q)
-> +{
-> +	unsigned long flags;
-> +	struct scsi_device *sdev;
+> @@ -81,16 +81,17 @@ struct multipath {
+>  	struct priority_group *next_pg;	/* Switch to this PG if set */
+>  	unsigned repeat_count;		/* I/Os left before calling PS again */
+>  =
+
+> -	unsigned queue_io;		/* Must we queue all I/O? */
+> -	unsigned queue_if_no_path;	/* Queue I/O if last path fails? */
+> -	unsigned saved_queue_if_no_path;/* Saved state during suspension */
+> +	unsigned queue_io:1;		/* Must we queue all I/O? */
+> +	unsigned queue_if_no_path:1;	/* Queue I/O if last path fails? */
+> +	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
 > +
-> +	spin_lock_irqsave(q->queue_lock, flags);
-> +	sdev =3D q->queuedata;
-> +	if (!sdev || !get_device(&sdev->sdev_gendev))
-> +		sdev =3D NULL;
-> +	spin_unlock_irqrestore(q->queue_lock, flags);
-> +
-> +	if (!sdev || !sdev->scsi_dh_data)
-> +		return NULL;
-> +
-> +	return sdev->scsi_dh_data->scsi_dh->name;
-> +}
-> +EXPORT_SYMBOL_GPL(scsi_dh_attached_handler_name);
-> +
->  static struct notifier_block scsi_dh_nb =3D {
->  	.notifier_call =3D scsi_dh_notifier
->  };
-> diff --git a/include/scsi/scsi_dh.h b/include/scsi/scsi_dh.h
-> index e3f2db2..94f502b 100644
-> --- a/include/scsi/scsi_dh.h
-> +++ b/include/scsi/scsi_dh.h
-> @@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct request_queue *, act=
-ivate_complete, void *);
->  extern int scsi_dh_handler_exist(const char *);
->  extern int scsi_dh_attach(struct request_queue *, const char *);
->  extern void scsi_dh_detach(struct request_queue *);
-> +extern const char *scsi_dh_attached_handler_name(struct request_queue *q=
-);
->  extern int scsi_dh_set_params(struct request_queue *, const char *);
->  #else
->  static inline int scsi_dh_activate(struct request_queue *req,
-> @@ -80,6 +81,10 @@ static inline void scsi_dh_detach(struct request_queue=
- *q)
->  {
->  	return;
->  }
-> +static inline const char *scsi_dh_attached_handler_name(struct request_q=
-ueue *q)
-> +{
-> +	return NULL;
-> +}
->  static inline int scsi_dh_set_params(struct request_queue *req, const ch=
-ar *params)
->  {
->  	return -SCSI_DH_NOSYS;
+>  	unsigned pg_init_retries;	/* Number of times to retry pg_init */
+>  	unsigned pg_init_count;		/* Number of times pg_init called */
+>  	unsigned pg_init_delay_msecs;	/* Number of msecs before pg_init retry */
+>  =
+
+> +	unsigned queue_size;
+>  	struct work_struct process_queued_ios;
+>  	struct list_head queued_ios;
+> -	unsigned queue_size;
+>  =
+
+>  	struct work_struct trigger_event;
+>  =
+
 
 Acked-by: Hannes Reinecke <hare@suse.de>
 
