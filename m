@@ -1,16 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2 1/5] dm mpath: only try to load the
- scsi_dh module if the scsi_dh doesn't exist
-Date: Wed, 09 May 2012 08:57:14 +0200
-Message-ID: <4FAA154A.6020703@suse.de>
+Subject: Re: [PATCH v2 2/5] scsi_dh: add
+	scsi_dh_attached_handler_name
+Date: Wed, 09 May 2012 08:57:53 +0200
+Message-ID: <4FAA1571.4090007@suse.de>
 References: <1336514167-15393-1-git-send-email-snitzer@redhat.com>
-	<1336514167-15393-2-git-send-email-snitzer@redhat.com>
+	<1336514167-15393-3-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1336514167-15393-2-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1336514167-15393-3-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,38 +25,111 @@ Cc: dm-devel@redhat.com, babu.moger@netapp.com, agk@redhat.com
 List-Id: dm-devel.ids
 
 On 05/08/2012 11:56 PM, Mike Snitzer wrote:
-> There have been reports of multipath table loads hanging due to
-> __request_module hanging (for some unknown reason).
+> Introduce scsi_dh_attached_handler_name() to retrieve the name of the
+> scsi_dh that is attached to the scsi_device associated with the provided
+> request queue.  Returns NULL if a scsi_dh is not attached.
 > =
 
-> More often than not, the scsi_dh is already available and there is no
-> need to request_module().
+> Also, fix scsi_dh_{attach,detach} function header comments to document
+> @q rather than @sdev.
 > =
 
-> Reported-by: Ben Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 > ---
->  drivers/md/dm-mpath.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
+>  drivers/scsi/device_handler/scsi_dh.c |   31 +++++++++++++++++++++++++++=
+++--
+>  include/scsi/scsi_dh.h                |    5 +++++
+>  2 files changed, 34 insertions(+), 2 deletions(-)
 > =
 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 922a338..754f38f 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -718,8 +718,8 @@ static int parse_hw_handler(struct dm_arg_set *as, st=
-ruct multipath *m)
->  		return 0;
+> diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_=
+handler/scsi_dh.c
+> index 48e46f5..7497c78 100644
+> --- a/drivers/scsi/device_handler/scsi_dh.c
+> +++ b/drivers/scsi/device_handler/scsi_dh.c
+> @@ -468,7 +468,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
 >  =
 
->  	m->hw_handler_name =3D kstrdup(dm_shift_arg(as), GFP_KERNEL);
-> -	request_module("scsi_dh_%s", m->hw_handler_name);
-> -	if (scsi_dh_handler_exist(m->hw_handler_name) =3D=3D 0) {
-> +	if (!try_then_request_module(scsi_dh_handler_exist(m->hw_handler_name),
-> +				     "scsi_dh_%s", m->hw_handler_name)) {
->  		ti->error =3D "unknown hardware handler type";
->  		ret =3D -EINVAL;
->  		goto fail;
+>  /*
+>   * scsi_dh_attach - Attach device handler
+> - * @sdev - sdev the handler should be attached to
+> + * @q - Request queue that is associated with the scsi_device
+> + *      the handler should be attached to
+>   * @name - name of the handler to attach
+>   */
+>  int scsi_dh_attach(struct request_queue *q, const char *name)
+> @@ -498,7 +499,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
+>  =
+
+>  /*
+>   * scsi_dh_detach - Detach device handler
+> - * @sdev - sdev the handler should be detached from
+> + * @q - Request queue that is associated with the scsi_device
+> + *      the handler should be detached from
+>   *
+>   * This function will detach the device handler only
+>   * if the sdev is not part of the internal list, ie
+> @@ -527,6 +529,31 @@ void scsi_dh_detach(struct request_queue *q)
+>  }
+>  EXPORT_SYMBOL_GPL(scsi_dh_detach);
+>  =
+
+> +/*
+> + * scsi_dh_attached_handler_name - Get attached device handler's name
+> + * @q - Request queue that is associated with the scsi_device
+> + *      that may have a device handler attached
+> + *
+> + * Returns name of attached scsi_dh, NULL if no handler is attached.
+> + */
+> +const char *scsi_dh_attached_handler_name(struct request_queue *q)
+> +{
+> +	unsigned long flags;
+> +	struct scsi_device *sdev;
+> +
+> +	spin_lock_irqsave(q->queue_lock, flags);
+> +	sdev =3D q->queuedata;
+> +	if (!sdev || !get_device(&sdev->sdev_gendev))
+> +		sdev =3D NULL;
+> +	spin_unlock_irqrestore(q->queue_lock, flags);
+> +
+> +	if (!sdev || !sdev->scsi_dh_data)
+> +		return NULL;
+> +
+> +	return sdev->scsi_dh_data->scsi_dh->name;
+> +}
+> +EXPORT_SYMBOL_GPL(scsi_dh_attached_handler_name);
+> +
+>  static struct notifier_block scsi_dh_nb =3D {
+>  	.notifier_call =3D scsi_dh_notifier
+>  };
+> diff --git a/include/scsi/scsi_dh.h b/include/scsi/scsi_dh.h
+> index e3f2db2..94f502b 100644
+> --- a/include/scsi/scsi_dh.h
+> +++ b/include/scsi/scsi_dh.h
+> @@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct request_queue *, act=
+ivate_complete, void *);
+>  extern int scsi_dh_handler_exist(const char *);
+>  extern int scsi_dh_attach(struct request_queue *, const char *);
+>  extern void scsi_dh_detach(struct request_queue *);
+> +extern const char *scsi_dh_attached_handler_name(struct request_queue *q=
+);
+>  extern int scsi_dh_set_params(struct request_queue *, const char *);
+>  #else
+>  static inline int scsi_dh_activate(struct request_queue *req,
+> @@ -80,6 +81,10 @@ static inline void scsi_dh_detach(struct request_queue=
+ *q)
+>  {
+>  	return;
+>  }
+> +static inline const char *scsi_dh_attached_handler_name(struct request_q=
+ueue *q)
+> +{
+> +	return NULL;
+> +}
+>  static inline int scsi_dh_set_params(struct request_queue *req, const ch=
+ar *params)
+>  {
+>  	return -SCSI_DH_NOSYS;
 
 Acked-by: Hannes Reinecke <hare@suse.de>
 
