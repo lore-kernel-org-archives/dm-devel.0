@@ -1,18 +1,16 @@
-From: Busby <chaimvy@gmail.com>
-Subject: Re: Does dm-thin support GC (garbage collection) ?
-Date: Wed, 9 May 2012 14:03:12 +0800
-Message-ID: <CAJv3x-WpO85tOG0Gt8ZS5JV9Z_81G4F=_gHzSjtroVogAtgm4A@mail.gmail.com>
-References: <CAJv3x-Xk-aODfJtqCEBKPM1jkwXEFVN40EEu_hnnDZB9o4dBWw@mail.gmail.com>
-	<20120507132242.GA27715@redhat.com>
-	<CAJv3x-USC=8z7Kz_-p8uOiQkdE21Oe0isMeDOBKRc4semHbLCA@mail.gmail.com>
-	<CAJv3x-U1VRyq1m6oJQ0X8nn4WSiAzVnqm7CLuPGj-xmDh8c1AQ@mail.gmail.com>
-	<20120508103032.GB4034@ubuntu>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v2 1/5] dm mpath: only try to load the
+ scsi_dh module if the scsi_dh doesn't exist
+Date: Wed, 09 May 2012 08:57:14 +0200
+Message-ID: <4FAA154A.6020703@suse.de>
+References: <1336514167-15393-1-git-send-email-snitzer@redhat.com>
+	<1336514167-15393-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120508103032.GB4034@ubuntu>
+In-Reply-To: <1336514167-15393-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,38 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, babu.moger@netapp.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-I created pool without ignore_discard feature, is this the way to
-enable discard? I mounted the ext4 with '--discard' args, I will trace
-whether the ext4 really issue discard later.
-Thanks.
+On 05/08/2012 11:56 PM, Mike Snitzer wrote:
+> There have been reports of multipath table loads hanging due to
+> __request_module hanging (for some unknown reason).
+> =
 
-Regards,
-Busby
+> More often than not, the scsi_dh is already available and there is no
+> need to request_module().
+> =
 
+> Reported-by: Ben Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm-mpath.c |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
+> =
 
-2012/5/8, Joe Thornber <thornber@redhat.com>:
-> On Tue, May 08, 2012 at 03:21:31PM +0800, Busby wrote:
->>    I have tested that the blocks were reused in the other thin-lun of
->> this pool  when deleted a thin-lun .
->>    How can the blocks allocated for the thin-lun be dynamically
->> reclaimed? (use some method like 'discard' to tell the pool which
->> block should be reclaimed and whether the pool can reclaim it ?).
->>    When I mounted a filesystem on a thin-lun, create 4G bytes file
->> firstly, the pool have decreased  4G space, then I deleted the file,
->> the pool did not increase the size as I thought, after this, create a
->> 5G file, then the pool would decrease 1G size. So I think if the
->
-> Have you enabled discard support in both the thin-pool _and_ the
-> filesystem?  Have you confirmed that the filesystem issues the discard
-> in your test scenario?  (eg, via blktrace).
->
-> - Joe
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 922a338..754f38f 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -718,8 +718,8 @@ static int parse_hw_handler(struct dm_arg_set *as, st=
+ruct multipath *m)
+>  		return 0;
+>  =
+
+>  	m->hw_handler_name =3D kstrdup(dm_shift_arg(as), GFP_KERNEL);
+> -	request_module("scsi_dh_%s", m->hw_handler_name);
+> -	if (scsi_dh_handler_exist(m->hw_handler_name) =3D=3D 0) {
+> +	if (!try_then_request_module(scsi_dh_handler_exist(m->hw_handler_name),
+> +				     "scsi_dh_%s", m->hw_handler_name)) {
+>  		ti->error =3D "unknown hardware handler type";
+>  		ret =3D -EINVAL;
+>  		goto fail;
+
+Acked-by: Hannes Reinecke <hare@suse.de>
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
