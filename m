@@ -1,98 +1,147 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH v2 5/5] dm mpath: add ability to disable
- partition creation
-Date: Wed, 09 May 2012 18:04:16 -0500
-Message-ID: <1336604656.1118.101.camel@chandra-lucid.austin.ibm.com>
-References: <1336514167-15393-1-git-send-email-snitzer@redhat.com>
-	<1336514167-15393-6-git-send-email-snitzer@redhat.com>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [Bcache v13 00/16]
+Date: Wed, 9 May 2012 23:07:29 -0400
+Message-ID: <cover.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1336514167-15393-6-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: babu.moger@netapp.com, dm-devel@redhat.com, agk@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: tejun@google.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
+bcache: a cache for arbitrary block devices using an SSD.
 
+Short overview:
+Bcache does both writethrough and writeback caching. It presents itself as a
+new block device, a bit like say md. You can cache an arbitrary number of
+block devices with a single cache device, and attach and detach things at
+runtime - it's quite flexible.
 
-On Tue, 2012-05-08 at 17:56 -0400, Mike Snitzer wrote:
-> From: Hannes Reinecke <hare@suse.de>
-> 
-> When multipath devices are being used as disks for VM Guests any
-> partition scanning / setup should be done within the VM Guest, not from
-> host.  So we need to a mechanism to switch off partition scanning and
-> creation via kpartx.
-> 
-> The new 'no_partitions' feature serves as a notifier to kpartx to _not_
-> create partitions on these multipath devices.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm-mpath.c |   13 +++++++++++--
->  1 files changed, 11 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 0fc6849..1039e7f 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -85,6 +85,7 @@ struct multipath {
->  	unsigned queue_if_no_path:1;	/* Queue I/O if last path fails? */
->  	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
->  	unsigned use_default_hw_handler:1; /* Use attached device handler */
-> +	unsigned no_partitions:1;	/* Avoid partition scanning */
-> 
->  	unsigned pg_init_retries;	/* Number of times to retry pg_init */
->  	unsigned pg_init_count;		/* Number of times pg_init called */
-> @@ -770,7 +771,7 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
->  	const char *arg_name;
-> 
->  	static struct dm_arg _args[] = {
-> -		{0, 6, "invalid number of feature args"},
-> +		{0, 7, "invalid number of feature args"},
->  		{1, 50, "pg_init_retries must be between 1 and 50"},
->  		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
->  	};
-> @@ -796,6 +797,11 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
->  			continue;
->  		}
-> 
-> +		if (!strcasecmp(arg_name, "no_partitions")) {
-> +			m->no_partitions = 1;
-> +			continue;
-> +		}
-> +
->  		if (!strcasecmp(arg_name, "pg_init_retries") &&
->  		    (argc >= 1)) {
->  			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
-> @@ -1380,7 +1386,8 @@ static int multipath_status(struct dm_target *ti, status_type_t type,
->  		DMEMIT("%u ", m->queue_if_no_path +
->  			      (m->pg_init_retries > 0) * 2 +
->  			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
-> -			      m->use_default_hw_handler);
-> +			      m->use_default_hw_handler +
-> +			      m->no_partitions);
->  		if (m->queue_if_no_path)
->  			DMEMIT("queue_if_no_path ");
->  		if (m->pg_init_retries)
-> @@ -1389,6 +1396,8 @@ static int multipath_status(struct dm_target *ti, status_type_t type,
->  			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
->  		if (m->use_default_hw_handler)
->  			DMEMIT("default_hw_handler ");
-> +		if (m->no_partitions)
-> +			DMEMIT("no_partitions ");
->  	}
-> 
->  	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
+It's very fast. It uses a b+ tree for the index, along with a journal to
+coalesce index updates, and a bunch of other cool tricks like auxiliary binary
+search trees with software floating point keys for searching within btree
+nodes.
+
+Bcache is solid, production ready code. There are still bugs being found that
+affect specific configurations, but there haven't been any major issues found
+in awhile - it's well past time I started working on getting it into mainline.
+
+It's a lot of code - I tried to split it out so that it'd make some sort of
+sense for reviewing. Let me know if there's anything else I can do to make
+review easier.
+
+TODO/known issues:
+
+__up_write() needs to be exported for bcache to compile as a module - it's
+used for bypassing lockdep when traversing the btree during garbage
+collection. If someone else knows a better solution, please let me know.
+
+The userspace interface is going to change before it goes in. The general
+consensus at LSF was that we don't want yet another interface for
+probing/managing block devices, and dm exists so we may as well use that. I
+don't think anyone's started on that yet, though.
+
+Documentation needs to be updated. That's being actively worked on, though.
+
+Kent Overstreet (16):
+  Only clone bio vecs that are in use
+  Bio pool freeing
+  Revert "rw_semaphore: remove up/down_read_non_owner"
+  Fix ratelimit macro to compile in c99 mode
+  Export get_random_int()
+  Export blk_fill_rwbs()
+  Closures
+  bcache: Documentation, and changes to generic code
+  Bcache: generic utility code
+  bcache: Superblock/initialization/sysfs code
+  bcache: Core btree code
+  bcache: Bset code (lookups within a btree node)
+  bcache: Journalling
+  bcache: Request, io and allocation code
+  bcache: Writeback
+  bcache: Debug and tracing code
+
+ Documentation/ABI/testing/sysfs-block-bcache |  156 ++
+ Documentation/bcache.txt                     |  255 +++
+ block/blk-core.c                             |    2 +-
+ drivers/block/Kconfig                        |    2 +
+ drivers/block/Makefile                       |    1 +
+ drivers/block/bcache/Kconfig                 |   42 +
+ drivers/block/bcache/Makefile                |    8 +
+ drivers/block/bcache/alloc.c                 |  591 +++++++
+ drivers/block/bcache/bcache.h                |  839 ++++++++++
+ drivers/block/bcache/bset.c                  | 1149 +++++++++++++
+ drivers/block/bcache/bset.h                  |  218 +++
+ drivers/block/bcache/btree.c                 | 2249 ++++++++++++++++++++++++++
+ drivers/block/bcache/btree.h                 |  272 ++++
+ drivers/block/bcache/debug.c                 |  574 +++++++
+ drivers/block/bcache/debug.h                 |   53 +
+ drivers/block/bcache/io.c                    |  198 +++
+ drivers/block/bcache/journal.c               |  722 +++++++++
+ drivers/block/bcache/journal.h               |  113 ++
+ drivers/block/bcache/request.c               | 1470 +++++++++++++++++
+ drivers/block/bcache/request.h               |   58 +
+ drivers/block/bcache/stats.c                 |  243 +++
+ drivers/block/bcache/stats.h                 |   58 +
+ drivers/block/bcache/super.c                 | 2000 +++++++++++++++++++++++
+ drivers/block/bcache/sysfs.c                 |  802 +++++++++
+ drivers/block/bcache/sysfs.h                 |   99 ++
+ drivers/block/bcache/trace.c                 |   26 +
+ drivers/block/bcache/util.c                  |  572 +++++++
+ drivers/block/bcache/util.h                  |  657 ++++++++
+ drivers/block/bcache/writeback.c             |  518 ++++++
+ drivers/block/rbd.c                          |    2 +-
+ drivers/char/random.c                        |    1 +
+ drivers/md/dm.c                              |   27 +-
+ drivers/md/md.c                              |    3 +-
+ fs/bio.c                                     |   55 +-
+ include/linux/bio.h                          |    7 +-
+ include/linux/blk_types.h                    |    2 +
+ include/linux/cgroup_subsys.h                |    6 +
+ include/linux/closure.h                      |  614 +++++++
+ include/linux/ratelimit.h                    |    2 +-
+ include/linux/rwsem.h                        |   10 +
+ include/linux/sched.h                        |    4 +
+ include/trace/events/bcache.h                |  257 +++
+ kernel/fork.c                                |    4 +
+ kernel/rwsem.c                               |   16 +
+ kernel/trace/blktrace.c                      |    1 +
+ lib/Kconfig                                  |    3 +
+ lib/Kconfig.debug                            |    9 +
+ lib/Makefile                                 |    2 +
+ lib/closure.c                                |  363 +++++
+ 49 files changed, 15288 insertions(+), 47 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-block-bcache
+ create mode 100644 Documentation/bcache.txt
+ create mode 100644 drivers/block/bcache/Kconfig
+ create mode 100644 drivers/block/bcache/Makefile
+ create mode 100644 drivers/block/bcache/alloc.c
+ create mode 100644 drivers/block/bcache/bcache.h
+ create mode 100644 drivers/block/bcache/bset.c
+ create mode 100644 drivers/block/bcache/bset.h
+ create mode 100644 drivers/block/bcache/btree.c
+ create mode 100644 drivers/block/bcache/btree.h
+ create mode 100644 drivers/block/bcache/debug.c
+ create mode 100644 drivers/block/bcache/debug.h
+ create mode 100644 drivers/block/bcache/io.c
+ create mode 100644 drivers/block/bcache/journal.c
+ create mode 100644 drivers/block/bcache/journal.h
+ create mode 100644 drivers/block/bcache/request.c
+ create mode 100644 drivers/block/bcache/request.h
+ create mode 100644 drivers/block/bcache/stats.c
+ create mode 100644 drivers/block/bcache/stats.h
+ create mode 100644 drivers/block/bcache/super.c
+ create mode 100644 drivers/block/bcache/sysfs.c
+ create mode 100644 drivers/block/bcache/sysfs.h
+ create mode 100644 drivers/block/bcache/trace.c
+ create mode 100644 drivers/block/bcache/util.c
+ create mode 100644 drivers/block/bcache/util.h
+ create mode 100644 drivers/block/bcache/writeback.c
+ create mode 100644 include/linux/closure.h
+ create mode 100644 include/trace/events/bcache.h
+ create mode 100644 lib/closure.c
+
+-- 
+1.7.9.rc2
