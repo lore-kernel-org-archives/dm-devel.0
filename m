@@ -1,57 +1,52 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [Bcache v13 00/16]
-Date: Thu, 10 May 2012 11:34:34 -0700
-Message-ID: <CAA9_cmdozzzapZrU2uAiquuquggzMUBficntrJBo5KXV_Q58sA@mail.gmail.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [Bcache v13 11/16] bcache: Core btree code
+Date: Thu, 10 May 2012 11:49:47 -0700
+Message-ID: <1336675787.22495.29.camel@joe2Laptop>
 References: <cover.1336619038.git.koverstreet@google.com>
+	 <1188908028.170.1336674698865.JavaMail.mail@webmail09>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1336619038.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-raid <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1188908028.170.1336674698865.JavaMail.mail@webmail09>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tejun@google.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, May 9, 2012 at 8:07 PM, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> bcache: a cache for arbitrary block devices using an SSD.
->
-> Short overview:
-> Bcache does both writethrough and writeback caching. It presents itself as a
-> new block device, a bit like say md. You can cache an arbitrary number of
-> block devices with a single cache device, and attach and detach things at
-> runtime - it's quite flexible.
->
-> It's very fast. It uses a b+ tree for the index, along with a journal to
-> coalesce index updates, and a bunch of other cool tricks like auxiliary binary
-> search trees with software floating point keys for searching within btree
-> nodes.
->
-> Bcache is solid, production ready code. There are still bugs being found that
-> affect specific configurations, but there haven't been any major issues found
-> in awhile - it's well past time I started working on getting it into mainline.
->
-> It's a lot of code - I tried to split it out so that it'd make some sort of
-> sense for reviewing. Let me know if there's anything else I can do to make
-> review easier.
->
-> TODO/known issues:
->
-> __up_write() needs to be exported for bcache to compile as a module - it's
-> used for bypassing lockdep when traversing the btree during garbage
-> collection. If someone else knows a better solution, please let me know.
->
-> The userspace interface is going to change before it goes in. The general
-> consensus at LSF was that we don't want yet another interface for
-> probing/managing block devices, and dm exists so we may as well use that. I
-> don't think anyone's started on that yet, though.
+On Wed, 2012-05-09 at 23:10 -0400, Kent Overstreet wrote:
+> Signed-off-by: Kent Overstreet <koverstreet@google.com>
+[]
+> +
+> +void btree_read_done(struct closure *cl)
+> +{
+[]
+> +	if (b->written < btree_blocks(b))
+> +		bset_init_next(b);
+> +
+> +	if (0) {
+> +err:		set_btree_node_io_error(b);
+> +		cache_set_error(b->c, "%s at bucket %lu, block %zu, %u keys",
+> +				err, PTR_BUCKET_NR(b->c, &b->key, 0),
+> +				index(i, b), i->keys);
+> +	}
 
-Might as well mention I've started work on a md conversion.  Nearing
-the point of having RFC patches ready to post.
+Hi Kent
 
-I'm doing it in such a way that it does not preclude a dm target from
-coming along as well.  Like I mentioned to Alasdair at LSF, there's no
-reason this could not be treated the same as the shared raid
-personalities between dm and md.
+trivia:  This if (0) is an exceedingly ugly style.
 
---
-Dan
+I'd much prefer:
+
+	if (foo)
+		bar();
+
+	goto exit;
+
+err:
+	set_btree_node_io_error(b);
+	cache_set_error(b->c, "%s at bucket %lu, block %zu, %u keys",
+			err, PTR_BUCKET_NR(b->c, &b->key, 0),
+			index(i, b), i->keys);
+
+exit:
+	etc...
