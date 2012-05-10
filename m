@@ -1,7 +1,8 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [Bcache v13 02/16] Bio pool freeing
-Date: Wed, 9 May 2012 23:08:34 -0400
-Message-ID: <ba8ce9fcca87f192ff5f5d3a436eb8f4d0bcb006.1336619038.git.koverstreet@google.com>
+Subject: [Bcache v13 03/16] Revert "rw_semaphore: remove
+ up/down_read_non_owner"
+Date: Wed, 9 May 2012 23:08:49 -0400
+Message-ID: <3f51ec3e69b8f471e2d1cc539f01504e2b903fed.1336619038.git.koverstreet@google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -13,64 +14,71 @@ To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29
 Cc: tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-When you allocate a bio from a bio pool, to free it you have to know
-where it came from; this adds a flag which, if set, means bi_destructor
-is the pointer to the pool and bio_put() can do the right thing.
-
-This is used in bcache, so we can cleanly use per device bio pools.
+This reverts commit 11b80f459adaf91a712f95e7734a17655a36bf30.
 
 Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- fs/bio.c                  |    9 +++++++--
- include/linux/blk_types.h |    2 ++
- 2 files changed, 9 insertions(+), 2 deletions(-)
+ include/linux/rwsem.h |   10 ++++++++++
+ kernel/rwsem.c        |   16 ++++++++++++++++
+ 2 files changed, 26 insertions(+), 0 deletions(-)
 
-diff --git a/fs/bio.c b/fs/bio.c
-index a965b89..6a967fc 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -235,7 +235,7 @@ void bio_free(struct bio *bio, struct bio_set *bs)
- {
- 	void *p;
+diff --git a/include/linux/rwsem.h b/include/linux/rwsem.h
+index 63d4065..5f0dc75 100644
+--- a/include/linux/rwsem.h
++++ b/include/linux/rwsem.h
+@@ -126,9 +126,19 @@ extern void downgrade_write(struct rw_semaphore *sem);
+  */
+ extern void down_read_nested(struct rw_semaphore *sem, int subclass);
+ extern void down_write_nested(struct rw_semaphore *sem, int subclass);
++/*
++ * Take/release a lock when not the owner will release it.
++ *
++ * [ This API should be avoided as much as possible - the
++ *   proper abstraction for this case is completions. ]
++ */
++extern void down_read_non_owner(struct rw_semaphore *sem);
++extern void up_read_non_owner(struct rw_semaphore *sem);
+ #else
+ # define down_read_nested(sem, subclass)		down_read(sem)
+ # define down_write_nested(sem, subclass)	down_write(sem)
++# define down_read_non_owner(sem)		down_read(sem)
++# define up_read_non_owner(sem)			up_read(sem)
+ #endif
  
--	if (bio_has_allocated_vec(bio))
-+	if (bio_flagged(bio, BIO_HAS_VEC))
- 		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
+ #endif /* _LINUX_RWSEM_H */
+diff --git a/kernel/rwsem.c b/kernel/rwsem.c
+index b152f74..66de558 100644
+--- a/kernel/rwsem.c
++++ b/kernel/rwsem.c
+@@ -117,6 +117,15 @@ void down_read_nested(struct rw_semaphore *sem, int subclass)
  
- 	if (bio_integrity(bio))
-@@ -301,6 +301,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- 			goto err_free;
+ EXPORT_SYMBOL(down_read_nested);
  
- 		nr_iovecs = bvec_nr_vecs(idx);
-+		bio->bi_flags |= 1 << BIO_HAS_VEC;
- 	}
- out_set:
- 	bio->bi_flags |= idx << BIO_POOL_OFFSET;
-@@ -417,7 +418,11 @@ void bio_put(struct bio *bio)
- 	 */
- 	if (atomic_dec_and_test(&bio->bi_cnt)) {
- 		bio->bi_next = NULL;
--		bio->bi_destructor(bio);
++void down_read_non_owner(struct rw_semaphore *sem)
++{
++	might_sleep();
 +
-+		if (bio_flagged(bio, BIO_HAS_POOL))
-+			bio_free(bio, (void *) bio->bi_destructor);
-+		else
-+			bio->bi_destructor(bio);
- 	}
- }
- EXPORT_SYMBOL(bio_put);
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 4053cbd..a0be8b3 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -95,6 +95,8 @@ struct bio {
- #define BIO_FS_INTEGRITY 9	/* fs owns integrity data, not block layer */
- #define BIO_QUIET	10	/* Make BIO Quiet */
- #define BIO_MAPPED_INTEGRITY 11/* integrity metadata has been remapped */
-+#define BIO_HAS_POOL	12	/* bi_destructor points to bio_pool */
-+#define BIO_HAS_VEC	13	/* bio_free() should free bvec */
- #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
++	__down_read(sem);
++}
++
++EXPORT_SYMBOL(down_read_non_owner);
++
+ void down_write_nested(struct rw_semaphore *sem, int subclass)
+ {
+ 	might_sleep();
+@@ -127,6 +136,13 @@ void down_write_nested(struct rw_semaphore *sem, int subclass)
  
- /*
+ EXPORT_SYMBOL(down_write_nested);
+ 
++void up_read_non_owner(struct rw_semaphore *sem)
++{
++	__up_read(sem);
++}
++
++EXPORT_SYMBOL(up_read_non_owner);
++
+ #endif
+ 
+ 
 -- 
 1.7.9.rc2
