@@ -1,52 +1,34 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [Bcache v13 11/16] bcache: Core btree code
-Date: Thu, 10 May 2012 11:49:47 -0700
-Message-ID: <1336675787.22495.29.camel@joe2Laptop>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [Bcache v13 09/16] Bcache: generic utility code
+Date: Thu, 10 May 2012 12:35:25 -0700
+Message-ID: <CAA9_cmcT0Jiz8pfj2MS+Sv55DqLrMMd=GaPMopRDCObiO5+waQ@mail.gmail.com>
 References: <cover.1336619038.git.koverstreet@google.com>
-	 <1188908028.170.1336674698865.JavaMail.mail@webmail09>
+	<c3f0ca2a499f532253d4c16a30837d43e237266a.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1188908028.170.1336674698865.JavaMail.mail@webmail09>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tejun@google.com, agk@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <c3f0ca2a499f532253d4c16a30837d43e237266a.1336619038.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, 2012-05-09 at 23:10 -0400, Kent Overstreet wrote:
-> Signed-off-by: Kent Overstreet <koverstreet@google.com>
-[]
+On Wed, May 9, 2012 at 8:10 PM, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org=
+> wrote:
+> Much of this code should be moved out of drivers/block/bcache, but it
+> was originally written for bcache.
+>
+> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> ---
+
+[..]
+> +#include <linux/dynamic_fault.h>
+[..]
+> +#define bio_alloc_pages(...) =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \
+> + =A0 =A0 =A0 (dynamic_fault() ? -ENOMEM =A0 =A0 =A0: bio_alloc_pages=
+(__VA_ARGS__))
 > +
-> +void btree_read_done(struct closure *cl)
-> +{
-[]
-> +	if (b->written < btree_blocks(b))
-> +		bset_init_next(b);
-> +
-> +	if (0) {
-> +err:		set_btree_node_io_error(b);
-> +		cache_set_error(b->c, "%s at bucket %lu, block %zu, %u keys",
-> +				err, PTR_BUCKET_NR(b->c, &b->key, 0),
-> +				index(i, b), i->keys);
-> +	}
 
-Hi Kent
-
-trivia:  This if (0) is an exceedingly ugly style.
-
-I'd much prefer:
-
-	if (foo)
-		bar();
-
-	goto exit;
-
-err:
-	set_btree_node_io_error(b);
-	cache_set_error(b->c, "%s at bucket %lu, block %zu, %u keys",
-			err, PTR_BUCKET_NR(b->c, &b->key, 0),
-			index(i, b), i->keys);
-
-exit:
-	etc...
+=2E..these missed the removal of the dynamic_fault bits.
