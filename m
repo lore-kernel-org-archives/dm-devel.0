@@ -1,121 +1,90 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v4 2/5] scsi_dh: add scsi_dh_attached_handler_name
-Date: Thu, 10 May 2012 17:31:12 -0400
-Message-ID: <20120510213112.GA7374@redhat.com>
-References: <1336612366-30794-1-git-send-email-snitzer@redhat.com>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] [Bcache v13 02/16] Bio pool freeing
+Date: Thu, 10 May 2012 17:32:17 -0400
+Message-ID: <20120510213217.GN23768@redhat.com>
+References: <cover.1336619038.git.koverstreet@google.com>
+ <ba8ce9fcca87f192ff5f5d3a436eb8f4d0bcb006.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1336612366-30794-1-git-send-email-snitzer@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: agk@redhat.com, hare@suse.de, babu.moger@netapp.com, sekharan@us.ibm.com, dm-devel@redhat.com
+In-Reply-To: <ba8ce9fcca87f192ff5f5d3a436eb8f4d0bcb006.1336619038.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Introduce scsi_dh_attached_handler_name() to retrieve the name of the
-scsi_dh that is attached to the scsi_device associated with the provided
-request queue.  Returns NULL if a scsi_dh is not attached.
+On Wed, May 09, 2012 at 11:08:34PM -0400, Kent Overstreet wrote:
+> When you allocate a bio from a bio pool, to free it you have to know
+> where it came from; this adds a flag which, if set, means bi_destructor
+> is the pointer to the pool and bio_put() can do the right thing.
+> 
+> This is used in bcache, so we can cleanly use per device bio pools.
 
-Also, fix scsi_dh_{attach,detach} function header comments to document
-@q rather than @sdev.
+Ok, that will explain BIO_HAS_POOL flag.  Why to replace
+bio_has_allocated_vec() with BIO_HAS_VEC flag?
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Tested-by: Babu Moger <babu.moger@netapp.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Chandra Seetharaman <sekharan@us.ibm.com>
----
- drivers/scsi/device_handler/scsi_dh.c |   38 ++++++++++++++++++++++++++++++++--
- include/scsi/scsi_dh.h                |    6 +++++
- 2 files changed, 42 insertions(+), 2 deletions(-)
+Thanks
+Vivek
 
-v4: fixed potential for returned string to be invalid (hch)
-v3: fixed missing put_device that Babu pointed out
-
-Index: linux-2.6/drivers/scsi/device_handler/scsi_dh.c
-===================================================================
---- linux-2.6.orig/drivers/scsi/device_handler/scsi_dh.c
-+++ linux-2.6/drivers/scsi/device_handler/scsi_dh.c
-@@ -468,7 +468,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist)
- 
- /*
-  * scsi_dh_attach - Attach device handler
-- * @sdev - sdev the handler should be attached to
-+ * @q - Request queue that is associated with the scsi_device
-+ *      the handler should be attached to
-  * @name - name of the handler to attach
-  */
- int scsi_dh_attach(struct request_queue *q, const char *name)
-@@ -498,7 +499,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
- 
- /*
-  * scsi_dh_detach - Detach device handler
-- * @sdev - sdev the handler should be detached from
-+ * @q - Request queue that is associated with the scsi_device
-+ *      the handler should be detached from
-  *
-  * This function will detach the device handler only
-  * if the sdev is not part of the internal list, ie
-@@ -527,6 +529,38 @@ void scsi_dh_detach(struct request_queue
- }
- EXPORT_SYMBOL_GPL(scsi_dh_detach);
- 
-+/*
-+ * scsi_dh_attached_handler_name - Get attached device handler's name
-+ * @q - Request queue that is associated with the scsi_device
-+ *      that may have a device handler attached
-+ * @gfp - the GFP mask used in the kmalloc() call when allocating memory
-+ *
-+ * Returns name of attached handler, NULL if no handler is attached.
-+ * Caller must take care to free the returned string.
-+ */
-+const char *scsi_dh_attached_handler_name(struct request_queue *q, gfp_t gfp)
-+{
-+	unsigned long flags;
-+	struct scsi_device *sdev;
-+	const char *handler_name = NULL;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	sdev = q->queuedata;
-+	if (!sdev || !get_device(&sdev->sdev_gendev))
-+		sdev = NULL;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	if (!sdev)
-+		return NULL;
-+
-+	if (sdev->scsi_dh_data)
-+		handler_name = kstrdup(sdev->scsi_dh_data->scsi_dh->name, gfp);
-+
-+	put_device(&sdev->sdev_gendev);
-+	return handler_name;
-+}
-+EXPORT_SYMBOL_GPL(scsi_dh_attached_handler_name);
-+
- static struct notifier_block scsi_dh_nb = {
- 	.notifier_call = scsi_dh_notifier
- };
-Index: linux-2.6/include/scsi/scsi_dh.h
-===================================================================
---- linux-2.6.orig/include/scsi/scsi_dh.h
-+++ linux-2.6/include/scsi/scsi_dh.h
-@@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct reque
- extern int scsi_dh_handler_exist(const char *);
- extern int scsi_dh_attach(struct request_queue *, const char *);
- extern void scsi_dh_detach(struct request_queue *);
-+extern const char *scsi_dh_attached_handler_name(struct request_queue *, gfp_t);
- extern int scsi_dh_set_params(struct request_queue *, const char *);
- #else
- static inline int scsi_dh_activate(struct request_queue *req,
-@@ -80,6 +81,11 @@ static inline void scsi_dh_detach(struct
- {
- 	return;
- }
-+static inline const char *scsi_dh_attached_handler_name(struct request_queue *q,
-+							gfp_t gfp)
-+{
-+	return NULL;
-+}
- static inline int scsi_dh_set_params(struct request_queue *req, const char *params)
- {
- 	return -SCSI_DH_NOSYS;
+> 
+> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/bio.c                  |    9 +++++++--
+>  include/linux/blk_types.h |    2 ++
+>  2 files changed, 9 insertions(+), 2 deletions(-)
+> 
+> diff --git a/fs/bio.c b/fs/bio.c
+> index a965b89..6a967fc 100644
+> --- a/fs/bio.c
+> +++ b/fs/bio.c
+> @@ -235,7 +235,7 @@ void bio_free(struct bio *bio, struct bio_set *bs)
+>  {
+>  	void *p;
+>  
+> -	if (bio_has_allocated_vec(bio))
+> +	if (bio_flagged(bio, BIO_HAS_VEC))
+>  		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
+>  
+>  	if (bio_integrity(bio))
+> @@ -301,6 +301,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>  			goto err_free;
+>  
+>  		nr_iovecs = bvec_nr_vecs(idx);
+> +		bio->bi_flags |= 1 << BIO_HAS_VEC;
+>  	}
+>  out_set:
+>  	bio->bi_flags |= idx << BIO_POOL_OFFSET;
+> @@ -417,7 +418,11 @@ void bio_put(struct bio *bio)
+>  	 */
+>  	if (atomic_dec_and_test(&bio->bi_cnt)) {
+>  		bio->bi_next = NULL;
+> -		bio->bi_destructor(bio);
+> +
+> +		if (bio_flagged(bio, BIO_HAS_POOL))
+> +			bio_free(bio, (void *) bio->bi_destructor);
+> +		else
+> +			bio->bi_destructor(bio);
+>  	}
+>  }
+>  EXPORT_SYMBOL(bio_put);
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index 4053cbd..a0be8b3 100644
+> --- a/include/linux/blk_types.h
+> +++ b/include/linux/blk_types.h
+> @@ -95,6 +95,8 @@ struct bio {
+>  #define BIO_FS_INTEGRITY 9	/* fs owns integrity data, not block layer */
+>  #define BIO_QUIET	10	/* Make BIO Quiet */
+>  #define BIO_MAPPED_INTEGRITY 11/* integrity metadata has been remapped */
+> +#define BIO_HAS_POOL	12	/* bi_destructor points to bio_pool */
+> +#define BIO_HAS_VEC	13	/* bio_free() should free bvec */
+>  #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
+>  
+>  /*
+> -- 
+> 1.7.9.rc2
+> 
+> --
+> dm-devel mailing list
+> dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+> https://www.redhat.com/mailman/listinfo/dm-devel
