@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [Bcache v13 12/16] bcache: Bset code (lookups within a btree node)
-Date: Wed, 9 May 2012 23:11:00 -0400
-Message-ID: <5b5998d7d09ec36377acdb5d15665d1e4e818521.1336619038.git.koverstreet@google.com>
+Subject: [Bcache v13 14/16] bcache: Request, io and allocation code
+Date: Wed, 9 May 2012 23:11:25 -0400
+Message-ID: <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -15,1390 +15,2356 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- drivers/block/bcache/bset.c | 1149 +++++++++++++++++++++++++++++++++++++++++++
- drivers/block/bcache/bset.h |  218 ++++++++
- 2 files changed, 1367 insertions(+), 0 deletions(-)
- create mode 100644 drivers/block/bcache/bset.c
- create mode 100644 drivers/block/bcache/bset.h
+ drivers/block/bcache/alloc.c   |  591 ++++++++++++++++
+ drivers/block/bcache/io.c      |  198 ++++++
+ drivers/block/bcache/request.c | 1470 ++++++++++++++++++++++++++++++++++++++++
+ drivers/block/bcache/request.h |   58 ++
+ 4 files changed, 2317 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/block/bcache/alloc.c
+ create mode 100644 drivers/block/bcache/io.c
+ create mode 100644 drivers/block/bcache/request.c
+ create mode 100644 drivers/block/bcache/request.h
 
-diff --git a/drivers/block/bcache/bset.c b/drivers/block/bcache/bset.c
+diff --git a/drivers/block/bcache/alloc.c b/drivers/block/bcache/alloc.c
 new file mode 100644
-index 0000000..5823c47
+index 0000000..b55392f
 --- /dev/null
-+++ b/drivers/block/bcache/bset.c
-@@ -0,0 +1,1149 @@
++++ b/drivers/block/bcache/alloc.c
+@@ -0,0 +1,591 @@
++
++#include "bcache.h"
++#include "btree.h"
++
++#include <linux/random.h>
++
++/*
++ * Allocation in bcache is done in terms of buckets:
++ *
++ * Each bucket has associated an 8 bit gen; this gen corresponds to the gen in
++ * btree pointers - they must match for the pointer to be considered valid.
++ *
++ * Thus (assuming a bucket has no dirty data or metadata in it) we can reuse a
++ * bucket simply by incrementing its gen.
++ *
++ * The gens (along with the priorities; it's really the gens are important but
++ * the code is named as if it's the priorities) are written in an arbitrary list
++ * of buckets on disk, with a pointer to them in the journal header.
++ *
++ * When we invalidate a bucket, we have to write its new gen to disk and wait
++ * for that write to complete before we use it - otherwise after a crash we
++ * could have pointers that appeared to be good but pointed to data that had
++ * been overwritten.
++ *
++ * Since the gens and priorities are all stored contiguously on disk, we can
++ * batch this up: We fill up the free_inc list with freshly invalidated buckets,
++ * call prio_write() - and when prio_write() eventually finishes it toggles
++ * c->prio_written and the buckets in free_inc are now ready to be used. When
++ * the free_inc list empties, we toggle c->prio_written and the cycle repeats.
++ *
++ * free_inc isn't the only freelist - if it was, we'd often to sleep while
++ * priorities and gens were being written before we could allocate. c->free is a
++ * smaller freelist, and buckets on that list are always ready to be used.
++ *
++ * If we've got discards enabled, that happens when a bucket moves from the
++ * free_inc list to the free list.
++ *
++ * There is another freelist, because sometimes we have buckets that we know
++ * have nothing pointing into them - these we can reuse without waiting for
++ * priorities to be rewritten. These come from freed btree nodes and buckets
++ * that garbage collection discovered no longer had valid keys pointing into
++ * them (because they were overwritten). That's the unused list - buckets on the
++ * unused list move to the free list, optionally being discarded in the process.
++ *
++ * It's also important to ensure that gens don't wrap around - with respect to
++ * either the oldest gen in the btree or the gen on disk. This is quite
++ * difficult to do in practice, but we explicitly guard against it anyways - if
++ * a bucket is in danger of wrapping around we simply skip invalidating it that
++ * time around, and we garbage collect or rewrite the priorities sooner than we
++ * would have otherwise.
++ *
++ * pop_bucket() allocates a single bucket from a specific cache.
++ *
++ * pop_bucket_set() allocates one or more buckets from different caches out of a
++ * cache set.
++ *
++ * free_some_buckets() drives all the processes described above. It's called
++ * from pop_bucket() and a few other places that need to make sure free buckets
++ * are ready.
++ *
++ * invalidate_buckets_(lru|fifo)() find buckets that are available to be
++ * invalidated, and then invalidate them and stick them on the free_inc list -
++ * in either lru or fifo order.
++ */
++
++static void do_discard(struct cache *);
++
++/* Bucket heap / gen */
++
++uint8_t inc_gen(struct cache *c, struct bucket *b)
++{
++	uint8_t ret = ++b->gen;
++
++	c->set->need_gc = max(c->set->need_gc, bucket_gc_gen(b));
++	BUG_ON(c->set->need_gc > 97);
++
++	if (CACHE_SYNC(&c->set->sb)) {
++		c->need_save_prio = max(c->need_save_prio, bucket_disk_gen(b));
++		BUG_ON(c->need_save_prio > 96);
++	}
++
++	return ret;
++}
++
++void rescale_priorities(struct cache_set *c, int sectors)
++{
++	struct cache *ca;
++	struct bucket *b;
++	unsigned next = c->nbuckets * c->sb.bucket_size / 1024;
++	int r;
++
++	atomic_sub(sectors, &c->rescale);
++
++	do {
++		r = atomic_read(&c->rescale);
++
++		if (r >= 0)
++			return;
++	} while (atomic_cmpxchg(&c->rescale, r, r + next) != r);
++
++	mutex_lock(&c->bucket_lock);
++
++	for_each_cache(ca, c)
++		for_each_bucket(b, ca)
++			if (b->prio &&
++			    b->prio != btree_prio &&
++			    !atomic_read(&b->pin)) {
++				b->prio--;
++				c->min_prio = min(c->min_prio, b->prio);
++			}
++
++	mutex_unlock(&c->bucket_lock);
++}
++
++static long pop_freed(struct cache *c)
++{
++	long r;
++
++	if ((!CACHE_SYNC(&c->set->sb) ||
++	     !atomic_read(&c->set->prio_blocked)) &&
++	    fifo_pop(&c->unused, r))
++		return r;
++
++	if ((!CACHE_SYNC(&c->set->sb) ||
++	     atomic_read(&c->prio_written) > 0) &&
++	    fifo_pop(&c->free_inc, r))
++		return r;
++
++	return -1;
++}
++
++/* Discard/TRIM */
++
++struct discard {
++	struct list_head	list;
++	struct work_struct	work;
++	struct cache		*c;
++	long			bucket;
++
++	struct bio		bio;
++	struct bio_vec		bv;
++};
++
++static void discard_finish(struct work_struct *w)
++{
++	struct discard *d = container_of(w, struct discard, work);
++	struct cache *c = d->c;
++	char buf[BDEVNAME_SIZE];
++	bool run = false;
++
++	if (!test_bit(BIO_UPTODATE, &d->bio.bi_flags)) {
++		printk(KERN_NOTICE "bcache: discard error on %s, disabling\n",
++		       bdevname(c->bdev, buf));
++		d->c->discard = 0;
++	}
++
++	mutex_lock(&c->set->bucket_lock);
++	if (fifo_empty(&c->free) ||
++	    fifo_used(&c->free) == 8)
++		run = true;
++
++	fifo_push(&c->free, d->bucket);
++
++	list_add(&d->list, &c->discards);
++
++	do_discard(c);
++	mutex_unlock(&c->set->bucket_lock);
++
++	if (run)
++		closure_wake_up(&c->set->bucket_wait);
++
++	closure_put(&c->set->cl);
++}
++
++static void discard_endio(struct bio *bio, int error)
++{
++	struct discard *d = container_of(bio, struct discard, bio);
++
++	PREPARE_WORK(&d->work, discard_finish);
++	schedule_work(&d->work);
++}
++
++static void discard_work(struct work_struct *w)
++{
++	struct discard *d = container_of(w, struct discard, work);
++	submit_bio(0, &d->bio);
++}
++
++static void do_discard(struct cache *c)
++{
++	struct request_queue *q = bdev_get_queue(c->bdev);
++	int s = q->limits.logical_block_size;
++
++	while (c->discard &&
++	       !atomic_read(&c->set->closing) &&
++	       !list_empty(&c->discards) &&
++	       fifo_free(&c->free) >= 8) {
++		struct discard *d = list_first_entry(&c->discards,
++						     struct discard, list);
++
++		d->bucket = pop_freed(c);
++		if (d->bucket == -1)
++			break;
++
++		list_del(&d->list);
++		closure_get(&c->set->cl);
++
++		bio_init(&d->bio);
++		memset(&d->bv, 0, sizeof(struct bio_vec));
++		bio_set_prio(&d->bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
++
++		d->bio.bi_sector	= bucket_to_sector(c->set, d->bucket);
++		d->bio.bi_bdev		= c->bdev;
++		d->bio.bi_rw		= REQ_WRITE|(1 << BIO_RW_DISCARD);
++		d->bio.bi_max_vecs	= 1;
++		d->bio.bi_io_vec	= d->bio.bi_inline_vecs;
++		d->bio.bi_end_io	= discard_endio;
++
++		if (bio_add_pc_page(q, &d->bio, c->discard_page, s, 0) < s) {
++			printk(KERN_DEBUG "bcache: bio_add_pc_page failed\n");
++			c->discard = 0;
++			fifo_push(&c->free, d->bucket);
++			list_add(&d->list, &c->discards);
++			break;
++		}
++
++		d->bio.bi_size = bucket_bytes(c);
++
++		schedule_work(&d->work);
++	}
++}
++
++void free_discards(struct cache *ca)
++{
++	struct discard *d;
++
++	while (!list_empty(&ca->discards)) {
++		d = list_first_entry(&ca->discards, struct discard, list);
++		cancel_work_sync(&d->work);
++		list_del(&d->list);
++		kfree(d);
++	}
++}
++
++int alloc_discards(struct cache *ca)
++{
++	for (int i = 0; i < 8; i++) {
++		struct discard *d = kzalloc(sizeof(*d), GFP_KERNEL);
++		if (!d)
++			return -ENOMEM;
++
++		d->c = ca;
++		INIT_WORK(&d->work, discard_work);
++		list_add(&d->list, &ca->discards);
++	}
++
++	return 0;
++}
++
++/* Allocation */
++
++bool bucket_add_unused(struct cache *c, struct bucket *b)
++{
++	if (c->prio_alloc == prio_buckets(c) &&
++	    CACHE_REPLACEMENT(&c->sb) == CACHE_REPLACEMENT_FIFO)
++		return false;
++
++	b->prio = 0;
++
++	if (bucket_gc_gen(b) < 96U &&
++	    bucket_disk_gen(b) < 64U &&
++	    fifo_push(&c->unused, b - c->buckets)) {
++		atomic_inc(&b->pin);
++		return true;
++	}
++
++	return false;
++}
++
++static bool can_invalidate_bucket(struct cache *c, struct bucket *b)
++{
++	return b->mark >= 0 &&
++		!atomic_read(&b->pin) &&
++		bucket_gc_gen(b) < 96U &&
++		bucket_disk_gen(b) < 64U;
++}
++
++static void invalidate_one_bucket(struct cache *c, struct bucket *b)
++{
++	inc_gen(c, b);
++	b->prio = initial_prio;
++	atomic_inc(&b->pin);
++	fifo_push(&c->free_inc, b - c->buckets);
++}
++
++static void invalidate_buckets_lru(struct cache *c)
++{
++	unsigned bucket_prio(struct bucket *b)
++	{
++		return ((unsigned) (b->prio - c->set->min_prio)) * b->mark;
++	}
++
++	bool bucket_max_cmp(struct bucket *l, struct bucket *r)
++	{
++		return bucket_prio(l) < bucket_prio(r);
++	}
++
++	bool bucket_min_cmp(struct bucket *l, struct bucket *r)
++	{
++		return bucket_prio(l) > bucket_prio(r);
++	}
++
++	struct bucket *b;
++
++	c->heap.used = 0;
++
++	for_each_bucket(b, c) {
++		if (!can_invalidate_bucket(c, b))
++			continue;
++
++		if (!b->mark) {
++			if (!bucket_add_unused(c, b))
++				return;
++		} else {
++			if (!heap_full(&c->heap))
++				heap_add(&c->heap, b, bucket_max_cmp);
++			else if (bucket_max_cmp(b, heap_peek(&c->heap))) {
++				c->heap.data[0] = b;
++				heap_sift(&c->heap, 0, bucket_max_cmp);
++			}
++		}
++	}
++
++	if (c->heap.used * 2 < c->heap.size)
++		bcache_queue_gc(c->set);
++
++	for (ssize_t i = c->heap.used / 2 - 1; i >= 0; --i)
++		heap_sift(&c->heap, i, bucket_min_cmp);
++
++	while (!fifo_full(&c->free_inc)) {
++		if (!heap_pop(&c->heap, b, bucket_min_cmp)) {
++			/* We don't want to be calling invalidate_buckets()
++			 * multiple times when it can't do anything
++			 */
++			c->invalidate_needs_gc = 1;
++			bcache_queue_gc(c->set);
++			return;
++		}
++
++		invalidate_one_bucket(c, b);
++	}
++}
++
++static void invalidate_buckets_fifo(struct cache *c)
++{
++	struct bucket *b;
++	size_t checked = 0;
++
++	while (!fifo_full(&c->free_inc)) {
++		if (c->fifo_last_bucket <  c->sb.first_bucket ||
++		    c->fifo_last_bucket >= c->sb.nbuckets)
++			c->fifo_last_bucket = c->sb.first_bucket;
++
++		b = c->buckets + c->fifo_last_bucket++;
++
++		if (can_invalidate_bucket(c, b))
++			invalidate_one_bucket(c, b);
++
++		if (++checked >= c->sb.nbuckets) {
++			c->invalidate_needs_gc = 1;
++			bcache_queue_gc(c->set);
++			return;
++		}
++	}
++}
++
++static void invalidate_buckets_random(struct cache *c)
++{
++	struct bucket *b;
++	size_t checked = 0;
++
++	while (!fifo_full(&c->free_inc)) {
++		size_t n;
++		get_random_bytes(&n, sizeof(n));
++
++		n %= (size_t) (c->sb.nbuckets - c->sb.first_bucket);
++		n += c->sb.first_bucket;
++
++		b = c->buckets + n;
++
++		if (can_invalidate_bucket(c, b))
++			invalidate_one_bucket(c, b);
++
++		if (++checked >= c->sb.nbuckets / 2) {
++			c->invalidate_needs_gc = 1;
++			bcache_queue_gc(c->set);
++			return;
++		}
++	}
++}
++
++static void invalidate_buckets(struct cache *c)
++{
++	/* free_some_buckets() may just need to write priorities to keep gens
++	 * from wrapping around
++	 */
++	if (!c->set->gc_mark_valid ||
++	    c->invalidate_needs_gc)
++		return;
++
++	switch (CACHE_REPLACEMENT(&c->sb)) {
++	case CACHE_REPLACEMENT_LRU:
++		invalidate_buckets_lru(c);
++		break;
++	case CACHE_REPLACEMENT_FIFO:
++		invalidate_buckets_fifo(c);
++		break;
++	case CACHE_REPLACEMENT_RANDOM:
++		invalidate_buckets_random(c);
++		break;
++	}
++}
++
++bool can_save_prios(struct cache *c)
++{
++	return ((c->need_save_prio > 64 ||
++		 (c->set->gc_mark_valid &&
++		  !c->invalidate_needs_gc)) &&
++		!atomic_read(&c->prio_written) &&
++		!atomic_read(&c->set->prio_blocked));
++}
++
++void free_some_buckets(struct cache *c)
++{
++	long r;
++
++	/*
++	 * XXX: do_discard(), prio_write() take refcounts on the cache set.  How
++	 * do we know that refcount is nonzero?
++	 */
++
++	do_discard(c);
++
++	while (!fifo_full(&c->free) &&
++	       (fifo_used(&c->free) <= 8 ||
++		!c->discard) &&
++	       (r = pop_freed(c)) != -1)
++		fifo_push(&c->free, r);
++
++	while (c->prio_alloc != prio_buckets(c) &&
++	       fifo_pop(&c->free, r)) {
++		struct bucket *b = c->buckets + r;
++		c->prio_next[c->prio_alloc++] = r;
++
++		b->mark = GC_MARK_BTREE;
++		atomic_dec_bug(&b->pin);
++	}
++
++	if (!CACHE_SYNC(&c->set->sb)) {
++		if (fifo_empty(&c->free_inc))
++			invalidate_buckets(c);
++		return;
++	}
++
++	/* XXX: tracepoint for when c->need_save_prio > 64 */
++
++	if (c->need_save_prio <= 64 &&
++	    fifo_used(&c->unused) > c->unused.size / 2)
++		return;
++
++	if (atomic_read(&c->prio_written) > 0 &&
++	    (fifo_empty(&c->free_inc) ||
++	     c->need_save_prio > 64))
++		atomic_set(&c->prio_written, 0);
++
++	if (!can_save_prios(c))
++		return;
++
++	invalidate_buckets(c);
++
++	if (!fifo_empty(&c->free_inc) ||
++	    c->need_save_prio > 64)
++		prio_write(c);
++}
++
++static long pop_bucket(struct cache *c, uint16_t priority, struct closure *cl)
++{
++	long r = -1;
++again:
++	free_some_buckets(c);
++
++	if ((priority == btree_prio ||
++	     fifo_used(&c->free) > 8) &&
++	    fifo_pop(&c->free, r)) {
++		struct bucket *b = c->buckets + r;
++#ifdef CONFIG_BCACHE_EDEBUG
++		long i;
++		for (unsigned j = 0; j < prio_buckets(c); j++)
++			BUG_ON(c->prio_buckets[j] == (uint64_t) r);
++		for (unsigned j = 0; j < c->prio_alloc; j++)
++			BUG_ON(c->prio_next[j] == (uint64_t) r);
++
++		fifo_for_each(i, &c->free)
++			BUG_ON(i == r);
++		fifo_for_each(i, &c->free_inc)
++			BUG_ON(i == r);
++		fifo_for_each(i, &c->unused)
++			BUG_ON(i == r);
++#endif
++		BUG_ON(atomic_read(&b->pin) != 1);
++
++		b->prio = priority;
++		b->mark = priority == btree_prio
++			? GC_MARK_BTREE
++			: c->sb.bucket_size;
++		return r;
++	}
++
++	pr_debug("no free buckets, prio_written %i, blocked %i, "
++		 "free %zu, free_inc %zu, unused %zu",
++		 atomic_read(&c->prio_written),
++		 atomic_read(&c->set->prio_blocked), fifo_used(&c->free),
++		 fifo_used(&c->free_inc), fifo_used(&c->unused));
++
++	if (cl) {
++		if (closure_blocking(cl))
++			mutex_unlock(&c->set->bucket_lock);
++
++		closure_wait_event(&c->set->bucket_wait, cl,
++				   atomic_read(&c->prio_written) > 0 ||
++				   can_save_prios(c));
++
++		if (closure_blocking(cl)) {
++			mutex_lock(&c->set->bucket_lock);
++			goto again;
++		}
++	}
++
++	return -1;
++}
++
++void unpop_bucket(struct cache_set *c, struct bkey *k)
++{
++	for (unsigned i = 0; i < KEY_PTRS(k); i++) {
++		struct bucket *b = PTR_BUCKET(c, k, i);
++
++		b->mark = 0;
++		bucket_add_unused(PTR_CACHE(c, k, i), b);
++	}
++}
++
++int __pop_bucket_set(struct cache_set *c, uint16_t prio,
++		     struct bkey *k, int n, struct closure *cl)
++{
++	lockdep_assert_held(&c->bucket_lock);
++	BUG_ON(!n || n > c->caches_loaded || n > 8);
++
++	k->header = KEY_HEADER(0, 0);
++
++	/* sort by free space/prio of oldest data in caches */
++
++	for (int i = 0; i < n; i++) {
++		struct cache *ca = c->cache_by_alloc[i];
++		long b = pop_bucket(ca, prio, cl);
++
++		if (b == -1)
++			goto err;
++
++		k->ptr[i] = PTR(ca->buckets[b].gen,
++				bucket_to_sector(c, b),
++				ca->sb.nr_this_dev);
++
++		SET_KEY_PTRS(k, i + 1);
++	}
++
++	return 0;
++err:
++	unpop_bucket(c, k);
++	__bkey_put(c, k);
++	return -1;
++}
++
++int pop_bucket_set(struct cache_set *c, uint16_t prio,
++		   struct bkey *k, int n, struct closure *cl)
++{
++	int ret;
++	mutex_lock(&c->bucket_lock);
++	ret = __pop_bucket_set(c, prio, k, n, cl);
++	mutex_unlock(&c->bucket_lock);
++	return ret;
++}
+diff --git a/drivers/block/bcache/io.c b/drivers/block/bcache/io.c
+new file mode 100644
+index 0000000..736d996
+--- /dev/null
++++ b/drivers/block/bcache/io.c
+@@ -0,0 +1,198 @@
++
++#include "bcache.h"
++#include "bset.h"
++#include "debug.h"
++
++/* Bios with headers */
++
++void bbio_free(struct bio *bio, struct cache_set *c)
++{
++	struct bbio *b = container_of(bio, struct bbio, bio);
++	mempool_free(b, c->bio_meta);
++}
++
++struct bio *bbio_alloc(struct cache_set *c)
++{
++	struct bbio *b = mempool_alloc(c->bio_meta, GFP_NOIO);
++	struct bio *bio = &b->bio;
++
++	bio_init(bio);
++	bio->bi_flags		|= BIO_POOL_NONE << BIO_POOL_OFFSET;
++	bio->bi_max_vecs	 = bucket_pages(c);
++	bio->bi_io_vec		 = bio->bi_inline_vecs;
++
++	return bio;
++}
++
++static void bbio_destructor(struct bio *bio)
++{
++	struct bbio *b = container_of(bio, struct bbio, bio);
++	kfree(b);
++}
++
++struct bio *bbio_kmalloc(gfp_t gfp, int vecs)
++{
++	struct bio *bio;
++	struct bbio *b;
++
++	b = kmalloc(sizeof(struct bbio) + sizeof(struct bio_vec) * vecs, gfp);
++	if (!b)
++		return NULL;
++
++	bio = &b->bio;
++	bio_init(bio);
++	bio->bi_flags		|= BIO_POOL_NONE << BIO_POOL_OFFSET;
++	bio->bi_max_vecs	 = vecs;
++	bio->bi_io_vec		 = bio->bi_inline_vecs;
++	bio->bi_destructor	 = bbio_destructor;
++
++	return bio;
++}
++
++struct bio *__bio_split_get(struct bio *bio, int len, struct bio_set *bs)
++{
++	struct bio *ret = bio_split_front(bio, len, bbio_kmalloc, GFP_NOIO, bs);
++
++	if (ret && ret != bio) {
++		closure_get(ret->bi_private);
++		ret->bi_rw &= ~REQ_UNPLUG;
++	}
++
++	return ret;
++}
++
++void __submit_bbio(struct bio *bio, struct cache_set *c)
++{
++	struct bbio *b = container_of(bio, struct bbio, bio);
++
++	bio->bi_sector	= PTR_OFFSET(&b->key, 0);
++	bio->bi_bdev	= PTR_CACHE(c, &b->key, 0)->bdev;
++
++	b->submit_time_us = local_clock_us();
++	generic_make_request(bio);
++}
++
++void submit_bbio(struct bio *bio, struct cache_set *c,
++			struct bkey *k, unsigned ptr)
++{
++	struct bbio *b = container_of(bio, struct bbio, bio);
++	bkey_copy_single_ptr(&b->key, k, ptr);
++	__submit_bbio(bio, c);
++}
++
++int submit_bbio_split(struct bio *bio, struct cache_set *c,
++		      struct bkey *k, unsigned ptr)
++{
++	struct closure *cl = bio->bi_private;
++	struct bbio *b;
++	struct bio *n;
++	unsigned sectors_done = 0;
++
++	closure_get(cl);
++
++	bio->bi_sector	= PTR_OFFSET(k, ptr);
++	bio->bi_bdev	= PTR_CACHE(c, k, ptr)->bdev;
++
++	do {
++		n = bio_split_get(bio, bio_max_sectors(bio), c);
++		if (!n) {
++			closure_put(cl);
++			return -ENOMEM;
++		}
++
++		b = container_of(n, struct bbio, bio);
++
++		bkey_copy_single_ptr(&b->key, k, ptr);
++		SET_KEY_SIZE(&b->key, KEY_SIZE(k) - sectors_done);
++		SET_PTR_OFFSET(&b->key, 0, PTR_OFFSET(k, ptr) + sectors_done);
++
++		b->submit_time_us = local_clock_us();
++		generic_make_request(n);
++	} while (n != bio);
++
++	return 0;
++}
++
++/* IO errors */
++
++void count_io_errors(struct cache *c, int error, const char *m)
++{
++	/*
++	 * The halflife of an error is:
++	 * log2(1/2)/log2(127/128) * refresh ~= 88 * refresh
++	 */
++
++	if (c->set->error_decay) {
++		unsigned count = atomic_inc_return(&c->io_count);
++
++		while (count > c->set->error_decay) {
++			unsigned errors;
++			unsigned old = count;
++			unsigned new = count - c->set->error_decay;
++
++			/*
++			 * First we subtract refresh from count; each time we
++			 * succesfully do so, we rescale the errors once:
++			 */
++
++			count = atomic_cmpxchg(&c->io_count, old, new);
++
++			if (count == old) {
++				count = new;
++
++				errors = atomic_read(&c->io_errors);
++				do {
++					old = errors;
++					new = ((uint64_t) errors * 127) / 128;
++					errors = atomic_cmpxchg(&c->io_errors,
++								old, new);
++				} while (old != errors);
++			}
++		}
++	}
++
++	if (error) {
++		char buf[BDEVNAME_SIZE];
++		unsigned errors = atomic_add_return(1 << IO_ERROR_SHIFT,
++						    &c->io_errors);
++		errors >>= IO_ERROR_SHIFT;
++
++		if (errors < c->set->error_limit)
++			err_printk("IO error on %s %s, recovering\n",
++				   bdevname(c->bdev, buf), m);
++		else
++			cache_set_error(c->set, "too many IO errors", m);
++	}
++}
++
++void bcache_endio(struct cache_set *c, struct bio *bio,
++		  int error, const char *m)
++{
++	struct closure *cl = bio->bi_private;
++	struct bbio *b = container_of(bio, struct bbio, bio);
++	struct cache *ca = PTR_CACHE(c, &b->key, 0);
++
++	unsigned threshold = bio->bi_rw & REQ_WRITE
++		? c->congested_write_threshold_us
++		: c->congested_read_threshold_us;
++
++	if (threshold) {
++		unsigned t = local_clock_us();
++
++		int us = t - b->submit_time_us;
++		int congested = atomic_read(&c->congested);
++
++		if (us > (int) threshold) {
++			int ms = us / 1024;
++			c->congested_last_us = t;
++
++			ms = min(ms, CONGESTED_MAX + congested);
++			atomic_sub(ms, &c->congested);
++		} else if (congested < 0)
++			atomic_inc(&c->congested);
++	}
++
++	count_io_errors(ca, error, m);
++	bio_put(bio);
++	closure_put(cl);
++}
+diff --git a/drivers/block/bcache/request.c b/drivers/block/bcache/request.c
+new file mode 100644
+index 0000000..691fe8d
+--- /dev/null
++++ b/drivers/block/bcache/request.c
+@@ -0,0 +1,1470 @@
 +
 +#include "bcache.h"
 +#include "btree.h"
 +#include "debug.h"
++#include "request.h"
 +
++#include <linux/cgroup.h>
++#include <linux/module.h>
++#include <linux/hash.h>
 +#include <linux/random.h>
++#include "blk-cgroup.h"
 +
-+/* Keylists */
++#include <trace/events/bcache.h>
 +
-+void keylist_copy(struct keylist *dest, struct keylist *src)
++#define CUTOFF_CACHE_ADD	95
++#define CUTOFF_CACHE_READA	90
++#define CUTOFF_WRITEBACK	50
++#define CUTOFF_WRITEBACK_SYNC	75
++
++struct bio_passthrough {
++	struct closure		cl;
++	struct cached_dev	*d;
++	struct bio		*bio;
++	bio_end_io_t		*bi_end_io;
++	void			*bi_private;
++};
++
++struct kmem_cache *passthrough_cache;
++struct kmem_cache *search_cache;
++
++static void check_should_skip(struct cached_dev *, struct search *);
++
++static const char *search_type(struct search *s)
 +{
-+	*dest = *src;
++	return s->writeback ? "writeback"
++		: s->write ? "write" : "read";
++}
 +
-+	if (src->list == src->d) {
-+		size_t n = (uint64_t *) src->top - src->d;
-+		dest->top = (struct bkey *) &dest->d[n];
-+		dest->list = dest->d;
++/* Cgroup interface */
++
++#ifdef CONFIG_CGROUP_BCACHE
++static struct bcache_cgroup bcache_default_cgroup = { .cache_mode = -1 };
++
++struct bcache_cgroup *cgroup_to_bcache(struct cgroup *cgroup)
++{
++	struct cgroup_subsys_state *css;
++	return cgroup &&
++		(css = cgroup_subsys_state(cgroup, bcache_subsys_id))
++		? container_of(css, struct bcache_cgroup, css)
++		: &bcache_default_cgroup;
++}
++
++struct bcache_cgroup *bio_to_cgroup(struct bio *bio)
++{
++	return cgroup_to_bcache(get_bio_cgroup(bio));
++}
++
++static ssize_t cache_mode_read(struct cgroup *cgrp, struct cftype *cft,
++			struct file *file,
++			char __user *buf, size_t nbytes, loff_t *ppos)
++{
++	char tmp[1024];
++	int len = sprint_string_list(tmp, bcache_cache_modes,
++				     cgroup_to_bcache(cgrp)->cache_mode + 1);
++
++	if (len < 0)
++		return len;
++
++	return simple_read_from_buffer(buf, nbytes, ppos, tmp, len);
++}
++
++static int cache_mode_write(struct cgroup *cgrp, struct cftype *cft,
++			    const char *buf)
++{
++	int v = read_string_list(buf, bcache_cache_modes);
++	if (v < 0)
++		return v;
++
++	cgroup_to_bcache(cgrp)->cache_mode = v - 1;
++	return 0;
++}
++
++static u64 bcache_verify_read(struct cgroup *cgrp, struct cftype *cft)
++{
++	return cgroup_to_bcache(cgrp)->verify;
++}
++
++static int bcache_verify_write(struct cgroup *cgrp, struct cftype *cft, u64 val)
++{
++	cgroup_to_bcache(cgrp)->verify = val;
++	return 0;
++}
++
++static u64 bcache_cache_hits_read(struct cgroup *cgrp, struct cftype *cft)
++{
++	struct bcache_cgroup *bcachecg = cgroup_to_bcache(cgrp);
++	return atomic_read(&bcachecg->stats.cache_hits);
++}
++
++static u64 bcache_cache_misses_read(struct cgroup *cgrp, struct cftype *cft)
++{
++	struct bcache_cgroup *bcachecg = cgroup_to_bcache(cgrp);
++	return atomic_read(&bcachecg->stats.cache_misses);
++}
++
++static u64 bcache_cache_bypass_hits_read(struct cgroup *cgrp,
++					 struct cftype *cft)
++{
++	struct bcache_cgroup *bcachecg = cgroup_to_bcache(cgrp);
++	return atomic_read(&bcachecg->stats.cache_bypass_hits);
++}
++
++static u64 bcache_cache_bypass_misses_read(struct cgroup *cgrp,
++					   struct cftype *cft)
++{
++	struct bcache_cgroup *bcachecg = cgroup_to_bcache(cgrp);
++	return atomic_read(&bcachecg->stats.cache_bypass_misses);
++}
++
++struct cftype bcache_files[] = {
++	{
++		.name		= "cache_mode",
++		.read		= cache_mode_read,
++		.write_string	= cache_mode_write,
++	},
++	{
++		.name		= "verify",
++		.read_u64	= bcache_verify_read,
++		.write_u64	= bcache_verify_write,
++	},
++	{
++		.name		= "cache_hits",
++		.read_u64	= bcache_cache_hits_read,
++	},
++	{
++		.name		= "cache_misses",
++		.read_u64	= bcache_cache_misses_read,
++	},
++	{
++		.name		= "cache_bypass_hits",
++		.read_u64	= bcache_cache_bypass_hits_read,
++	},
++	{
++		.name		= "cache_bypass_misses",
++		.read_u64	= bcache_cache_bypass_misses_read,
++	},
++};
++
++static void init_bcache_cgroup(struct bcache_cgroup *cg)
++{
++	cg->cache_mode = -1;
++}
++
++static struct cgroup_subsys_state *
++bcachecg_create(struct cgroup_subsys *subsys, struct cgroup *cgroup)
++{
++	struct bcache_cgroup *cg;
++
++	cg = kzalloc(sizeof(*cg), GFP_KERNEL);
++	if (!cg)
++		return ERR_PTR(-ENOMEM);
++	init_bcache_cgroup(cg);
++	return &cg->css;
++}
++
++static void bcachecg_destroy(struct cgroup_subsys *subsys,
++			     struct cgroup *cgroup)
++{
++	struct bcache_cgroup *cg = cgroup_to_bcache(cgroup);
++	free_css_id(&bcache_subsys, &cg->css);
++	kfree(cg);
++}
++
++static int bcachecg_populate(struct cgroup_subsys *subsys,
++			     struct cgroup *cgroup)
++{
++	return cgroup_add_files(cgroup, subsys, bcache_files,
++				ARRAY_SIZE(bcache_files));
++}
++
++struct cgroup_subsys bcache_subsys = {
++	.create		= bcachecg_create,
++	.destroy	= bcachecg_destroy,
++	.populate	= bcachecg_populate,
++	.subsys_id	= bcache_subsys_id,
++	.name		= "bcache",
++	.module		= THIS_MODULE,
++};
++EXPORT_SYMBOL_GPL(bcache_subsys);
++#endif
++
++static unsigned cache_mode(struct cached_dev *d, struct bio *bio)
++{
++#ifdef CONFIG_CGROUP_BCACHE
++	int r = bio_to_cgroup(bio)->cache_mode;
++	if (r >= 0)
++		return r;
++#endif
++	return BDEV_CACHE_MODE(&d->sb);
++}
++
++static bool verify(struct cached_dev *d, struct bio *bio)
++{
++#ifdef CONFIG_CGROUP_BCACHE
++	if (bio_to_cgroup(bio)->verify)
++		return true;
++#endif
++	return d->verify;
++}
++
++static void bio_csum(struct bio *bio, struct bkey *k)
++{
++	struct bio_vec *bv;
++	uint64_t csum = 0;
++	int i;
++
++	bio_for_each_segment(bv, bio, i) {
++		void *d = kmap(bv->bv_page) + bv->bv_offset;
++		csum = crc64_update(csum, d, bv->bv_len);
++		kunmap(bv->bv_page);
++	}
++
++	k->ptr[KEY_PTRS(k)] = csum & (~0ULL >> 1);
++}
++
++/* Insert data into cache */
++
++static void bio_invalidate(struct closure *cl)
++{
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++	struct search *s = container_of(op, struct search, op);
++	struct bio *bio = s->cache_bio;
++
++	pr_debug("invalidating %i sectors from %llu",
++		 bio_sectors(bio), (uint64_t) bio->bi_sector);
++
++	while (bio_sectors(bio)) {
++		unsigned len = min(bio_sectors(bio), 1U << 14);
++		if (keylist_realloc(&s->op.keys, 0, s->op.d->c))
++			goto out;
++
++		bio->bi_sector	+= len;
++		bio->bi_size	-= len << 9;
++
++		keylist_add(&s->op.keys,
++			    &KEY(s->op.d->id, bio->bi_sector, len));
++	}
++
++	s->bio_insert_done = true;
++out:
++	continue_at(cl, bcache_journal, bcache_wq);
++}
++
++struct open_bucket {
++	struct list_head	list;
++	struct task_struct	*last;
++	unsigned		sectors_free;
++	BKEY_PADDED(key);
++};
++
++void bcache_open_buckets_free(struct cache_set *c)
++{
++	struct open_bucket *b;
++
++	while (!list_empty(&c->data_buckets)) {
++		b = list_first_entry(&c->data_buckets,
++				     struct open_bucket, list);
++		list_del(&b->list);
++		kfree(b);
 +	}
 +}
 +
-+int keylist_realloc(struct keylist *l, int nptrs, struct cache_set *c)
++int bcache_open_buckets_alloc(struct cache_set *c)
 +{
-+	unsigned oldsize = (uint64_t *) l->top - l->list;
-+	unsigned newsize = oldsize + 2 + nptrs;
-+	uint64_t *new;
++	spin_lock_init(&c->data_bucket_lock);
 +
-+	/* The journalling code doesn't handle the case where the keys to insert
-+	 * is bigger than an empty write: If we just return -ENOMEM here,
-+	 * bio_insert() and bio_invalidate() will insert the keys created so far
-+	 * and finish the rest when the keylist is empty.
-+	 */
-+	if (newsize * sizeof(uint64_t) > block_bytes(c) - sizeof(struct jset))
-+		return -ENOMEM;
++	for (int i = 0; i < 6; i++) {
++		struct open_bucket *b = kzalloc(sizeof(*b), GFP_KERNEL);
++		if (!b)
++			return -ENOMEM;
 +
-+	newsize = roundup_pow_of_two(newsize);
-+
-+	if (newsize <= KEYLIST_INLINE ||
-+	    roundup_pow_of_two(oldsize) == newsize)
-+		return 0;
-+
-+	new = krealloc(l->list == l->d ? NULL : l->list,
-+		       sizeof(uint64_t) * newsize, GFP_NOIO);
-+
-+	if (!new)
-+		return -ENOMEM;
-+
-+	if (l->list == l->d)
-+		memcpy(new, l->list, sizeof(uint64_t) * KEYLIST_INLINE);
-+
-+	l->list = new;
-+	l->top = (struct bkey *) (&l->list[oldsize]);
++		list_add(&b->list, &c->data_buckets);
++	}
 +
 +	return 0;
 +}
 +
-+struct bkey *keylist_pop(struct keylist *l)
++static void put_data_bucket(struct open_bucket *b, struct cache_set *c,
++			    struct bkey *k, struct bio *bio)
 +{
-+	struct bkey *k = l->bottom;
++	unsigned split = min(bio_sectors(bio), b->sectors_free);
 +
-+	if (k == l->top)
-+		return NULL;
++	for (unsigned i = 0; i < KEY_PTRS(&b->key); i++)
++		split = min(split, __bio_max_sectors(bio,
++				      PTR_CACHE(c, &b->key, i)->bdev,
++				      PTR_OFFSET(&b->key, i)));
 +
-+	while (next(k) != l->top)
-+		k = next(k);
++	b->key.key += split;
 +
-+	return l->top = k;
-+}
++	bkey_copy(k, &b->key);
++	SET_KEY_SIZE(k, split);
 +
-+/* Pointer validation */
++	b->sectors_free	-= split;
 +
-+bool __ptr_invalid(struct cache_set *c, int level, const struct bkey *k)
-+{
-+	if (level && (!KEY_PTRS(k) || !KEY_SIZE(k) || KEY_DIRTY(k)))
-+		goto bad;
-+
-+	if (!level && KEY_SIZE(k) > k->key)
-+		goto bad;
-+
-+	if (!KEY_SIZE(k))
-+		return true;
-+
-+	for (unsigned i = 0; i < KEY_PTRS(k); i++)
-+		if (ptr_available(c, k, i)) {
-+			struct cache *ca = PTR_CACHE(c, k, i);
-+			size_t bucket = PTR_BUCKET_NR(c, k, i);
-+			size_t r = bucket_remainder(c, PTR_OFFSET(k, i));
-+
-+			if (KEY_SIZE(k) + r > c->sb.bucket_size ||
-+			    bucket <  ca->sb.first_bucket ||
-+			    bucket >= ca->sb.nbuckets)
-+				goto bad;
-+		}
-+
-+	return false;
-+bad:
-+	cache_bug(c, "spotted bad key %s: %s", pkey(k), ptr_status(c, k));
-+	return true;
-+}
-+
-+bool ptr_invalid(struct btree *b, const struct bkey *k)
-+{
-+	return __ptr_invalid(b->c, b->level, k);
-+}
-+
-+bool ptr_bad(struct btree *b, const struct bkey *k)
-+{
-+	struct bucket *g;
-+	unsigned i, stale;
-+
-+	if (!bkey_cmp(k, &ZERO_KEY) ||
-+	    !KEY_PTRS(k) ||
-+	    ptr_invalid(b, k))
-+		return true;
-+
-+	if (KEY_PTRS(k) && PTR_DEV(k, 0) == PTR_CHECK_DEV)
-+		return true;
-+
-+	for (i = 0; i < KEY_PTRS(k); i++)
-+		if (ptr_available(b->c, k, i)) {
-+			g = PTR_BUCKET(b->c, k, i);
-+			stale = ptr_stale(b->c, k, i);
-+
-+			btree_bug_on(stale > 96, b,
-+				     "key too stale: %i, need_gc %u",
-+				     stale, b->c->need_gc);
-+
-+			btree_bug_on(stale && KEY_DIRTY(k) && KEY_SIZE(k),
-+				     b, "stale dirty pointer");
-+
-+			if (stale)
-+				return true;
-+
-+#ifdef CONFIG_BCACHE_EDEBUG
-+			if (!mutex_trylock(&b->c->bucket_lock))
-+				continue;
-+
-+			if (b->level) {
-+				if (KEY_DIRTY(k) ||
-+				    g->prio != btree_prio ||
-+				    (b->c->gc_mark_valid &&
-+				     g->mark != GC_MARK_BTREE))
-+					goto bug;
-+
-+			} else {
-+				if (g->prio == btree_prio)
-+					goto bug;
-+
-+				if (KEY_DIRTY(k) &&
-+				    b->c->gc_mark_valid &&
-+				    g->mark != GC_MARK_DIRTY)
-+					goto bug;
-+			}
-+			mutex_unlock(&b->c->bucket_lock);
-+#endif
-+		}
-+
-+	return false;
-+#ifdef CONFIG_BCACHE_EDEBUG
-+bug:
-+	mutex_unlock(&b->c->bucket_lock);
-+	btree_bug(b, "inconsistent pointer %s: bucket %li pin %i "
-+		  "prio %i gen %i last_gc %i mark %i gc_gen %i", pkey(k),
-+		  PTR_BUCKET_NR(b->c, k, i), atomic_read(&g->pin),
-+		  g->prio, g->gen, g->last_gc, g->mark, g->gc_gen);
-+	return true;
-+#endif
-+}
-+
-+/* Key/pointer manipulation */
-+
-+void bkey_copy_single_ptr(struct bkey *dest, const struct bkey *src, unsigned i)
-+{
-+	BUG_ON(i > KEY_PTRS(src));
-+
-+	/* Only copy the header, key, and one pointer. */
-+	memcpy(dest, src, 2 * sizeof(uint64_t));
-+	dest->ptr[0] = src->ptr[i];
-+	SET_KEY_PTRS(dest, 1);
-+	/* We didn't copy the checksum so clear that bit. */
-+	SET_KEY_CSUM(dest, 0);
-+}
-+
-+bool __cut_front(const struct bkey *where, struct bkey *k)
-+{
-+	unsigned len = 0;
-+
-+	if (bkey_cmp(where, &START_KEY(k)) <= 0)
-+		return false;
-+
-+	if (bkey_cmp(where, k) < 0)
-+		len = k->key - where->key;
-+	else
-+		bkey_copy_key(k, where);
-+
-+	for (unsigned i = 0; i < KEY_PTRS(k); i++)
-+		SET_PTR_OFFSET(k, i, PTR_OFFSET(k, i) + KEY_SIZE(k) - len);
-+
-+	BUG_ON(len > KEY_SIZE(k));
-+	SET_KEY_SIZE(k, len);
-+	return true;
-+}
-+
-+bool __cut_back(const struct bkey *where, struct bkey *k)
-+{
-+	unsigned len = 0;
-+
-+	if (bkey_cmp(where, k) >= 0)
-+		return false;
-+
-+	BUG_ON(KEY_DEV(where) != KEY_DEV(k));
-+
-+	if (bkey_cmp(where, &START_KEY(k)) > 0)
-+		len = where->key - KEY_START(k);
-+
-+	bkey_copy_key(k, where);
-+
-+	BUG_ON(len > KEY_SIZE(k));
-+	SET_KEY_SIZE(k, len);
-+	return true;
-+}
-+
-+static uint64_t merge_chksums(struct bkey *l, struct bkey *r)
-+{
-+	return (l->ptr[KEY_PTRS(l)] + r->ptr[KEY_PTRS(r)]) &
-+		~((uint64_t)1 << 63);
-+}
-+
-+/* Tries to merge l and r: l should be lower than r
-+ * Returns true if we were able to merge. If we did merge, l will be the merged
-+ * key, r will be untouched.
-+ */
-+bool bkey_try_merge(struct btree *b, struct bkey *l, struct bkey *r)
-+{
-+	if (key_merging_disabled(b->c))
-+		return false;
-+
-+	if (KEY_PTRS(l) != KEY_PTRS(r) ||
-+	    KEY_DIRTY(l) != KEY_DIRTY(r) ||
-+	    bkey_cmp(l, &START_KEY(r)))
-+		return false;
-+
-+	for (unsigned j = 0; j < KEY_PTRS(l); j++)
-+		if (l->ptr[j] + PTR(0, KEY_SIZE(l), 0) != r->ptr[j] ||
-+		    PTR_BUCKET_NR(b->c, l, j) != PTR_BUCKET_NR(b->c, r, j))
-+			return false;
-+
-+	/* Keys with no pointers aren't restricted to one bucket and could
-+	 * overflow KEY_SIZE
++	/* If we're closing this open bucket, get_data_bucket()'s refcount now
++	 * belongs to the key that's being inserted
 +	 */
-+	if (KEY_SIZE(l) + KEY_SIZE(r) > USHRT_MAX) {
-+		l->key += USHRT_MAX - KEY_SIZE(l);
-+		SET_KEY_SIZE(l, USHRT_MAX);
++	if (b->sectors_free < c->sb.block_size)
++		b->sectors_free = 0;
++	else
++		for (unsigned i = 0; i < KEY_PTRS(&b->key); i++)
++			atomic_inc(&PTR_BUCKET(c, &b->key, i)->pin);
 +
-+		cut_front(l, r);
-+		return false;
++	for (unsigned i = 0; i < KEY_PTRS(&b->key); i++) {
++		atomic_long_add(split,
++				&PTR_CACHE(c, &b->key, i)->sectors_written);
++
++		SET_PTR_OFFSET(&b->key, i, PTR_OFFSET(&b->key, i) + split);
 +	}
 +
-+	if (KEY_CSUM(l)) {
-+		if (KEY_CSUM(r))
-+			l->ptr[KEY_PTRS(l)] = merge_chksums(l, r);
++	spin_unlock(&c->data_bucket_lock);
++}
++
++static struct open_bucket *get_data_bucket(struct bkey *search,
++					   struct search *s)
++{
++	struct closure cl, *w = NULL;
++	struct cache_set *c = s->op.d->c;
++	struct open_bucket *l, *ret, *ret_task;
++
++	BKEY_PADDED(key) alloc;
++	struct bkey *k = NULL;
++
++	if (s->writeback) {
++		closure_init_stack(&cl);
++		w = &cl;
++	}
++again:
++	ret = ret_task = NULL;
++
++	spin_lock(&c->data_bucket_lock);
++	list_for_each_entry_reverse(l, &c->data_buckets, list)
++		if (!bkey_cmp(&l->key, search)) {
++			ret = l;
++			goto found;
++		} else if (l->last == s->task)
++			ret_task = l;
++
++	ret = ret_task ?: list_first_entry(&c->data_buckets,
++					   struct open_bucket, list);
++found:
++	if (!ret->sectors_free) {
++		if (!k) {
++			spin_unlock(&c->data_bucket_lock);
++			k = &alloc.key;
++
++			if (pop_bucket_set(c, initial_prio, k, 1, w))
++				return NULL;
++
++			goto again;
++		}
++
++		bkey_copy(&ret->key, k);
++		k = NULL;
++
++		ret->sectors_free = c->sb.bucket_size;
++	} else
++		for (unsigned i = 0; i < KEY_PTRS(&ret->key); i++)
++			EBUG_ON(ptr_stale(c, &ret->key, i));
++
++	if (k)
++		__bkey_put(c, k);
++
++	if (w)
++		for (unsigned i = 0; i < KEY_PTRS(&ret->key); i++)
++			PTR_BUCKET(c, &ret->key, i)->mark = GC_MARK_DIRTY;
++
++	ret->last = s->task;
++	bkey_copy_key(&ret->key, search);
++
++	list_move_tail(&ret->list, &c->data_buckets);
++	return ret;
++}
++
++static void bio_insert_error(struct closure *cl)
++{
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++
++	/*
++	 * Our data write just errored, which means we've got a bunch of keys to
++	 * insert that point to data that wasn't succesfully written.
++	 *
++	 * We don't have to insert those keys but we still have to invalidate
++	 * that region of the cache - so, if we just strip off all the pointers
++	 * from the keys we'll accomplish just that.
++	 */
++
++	struct bkey *src = op->keys.bottom, *dst = op->keys.bottom;
++
++	while (src != op->keys.top) {
++		struct bkey *n = next(src);
++
++		SET_KEY_PTRS(src, 0);
++		bkey_copy(dst, src);
++
++		dst = next(dst);
++		src = n;
++	}
++
++	op->keys.top = dst;
++
++	bcache_journal(cl);
++}
++
++static void bio_insert_endio(struct bio *bio, int error)
++{
++	struct closure *cl = bio->bi_private;
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++	struct search *s = container_of(op, struct search, op);
++
++	if (error) {
++		/* TODO: We could try to recover from this. */
++		if (s->writeback)
++			s->error = error;
++		else if (s->write)
++			set_closure_fn(cl, bio_insert_error, bcache_wq);
 +		else
-+			SET_KEY_CSUM(l, 0);
++			set_closure_fn(cl, NULL, NULL);
 +	}
 +
-+	SET_KEY_SIZE(l, KEY_SIZE(l) + KEY_SIZE(r));
-+	l->key += KEY_SIZE(r);
-+
-+	return true;
++	bcache_endio(op->d->c, bio, error, "writing data to cache");
 +}
 +
-+/* Binary tree stuff for auxiliary search trees */
-+
-+static unsigned inorder_next(unsigned j, unsigned size)
++static void bio_insert_loop(struct closure *cl)
 +{
-+	if (j * 2 + 1 < size) {
-+		j = j * 2 + 1;
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++	struct search *s = container_of(op, struct search, op);
++	struct bio *bio = s->cache_bio, *n;
++	unsigned sectors = bio_sectors(bio);
 +
-+		while (j * 2 < size)
-+			j *= 2;
-+	} else
-+		j >>= ffz(j) + 1;
++	if (s->skip)
++		return bio_invalidate(cl);
 +
-+	return j;
-+}
-+
-+static unsigned inorder_prev(unsigned j, unsigned size)
-+{
-+	if (j * 2 < size) {
-+		j = j * 2;
-+
-+		while (j * 2 + 1 < size)
-+			j = j * 2 + 1;
-+	} else
-+		j >>= ffs(j);
-+
-+	return j;
-+}
-+
-+/* I have no idea why this code works... and I'm the one who wrote it
-+ *
-+ * However, I do know what it does:
-+ * Given a binary tree constructed in an array (i.e. how you normally implement
-+ * a heap), it converts a node in the tree - referenced by array index - to the
-+ * index it would have if you did an inorder traversal.
-+ *
-+ * The binary tree starts at array index 1, not 0
-+ * extra is a function of size:
-+ *   extra = (size - rounddown_pow_of_two(size - 1)) << 1;
-+ */
-+static unsigned __to_inorder(unsigned j, unsigned size, unsigned extra)
-+{
-+	unsigned b = fls(j);
-+	unsigned shift = fls(size - 1) - b;
-+
-+	j  ^= 1U << (b - 1);
-+	j <<= 1;
-+	j  |= 1;
-+	j <<= shift;
-+
-+	if (j > extra)
-+		j -= (j - extra) >> 1;
-+
-+	return j;
-+}
-+
-+static unsigned to_inorder(unsigned j, struct bset_tree *t)
-+{
-+	return __to_inorder(j, t->size, t->extra);
-+}
-+
-+static unsigned __inorder_to_tree(unsigned j, unsigned size, unsigned extra)
-+{
-+	unsigned shift;
-+
-+	if (j > extra)
-+		j += j - extra;
-+
-+	shift = ffs(j);
-+
-+	j >>= shift;
-+	j  |= roundup_pow_of_two(size) >> shift;
-+
-+	return j;
-+}
-+
-+static unsigned inorder_to_tree(unsigned j, struct bset_tree *t)
-+{
-+	return __inorder_to_tree(j, t->size, t->extra);
-+}
-+
-+#if 0
-+void inorder_test(void)
-+{
-+	unsigned long done = 0;
-+	ktime_t start = ktime_get();
-+
-+	for (unsigned size = 2;
-+	     size < 65536000;
-+	     size++) {
-+		unsigned extra = (size - rounddown_pow_of_two(size - 1)) << 1;
-+		unsigned i = 1, j = rounddown_pow_of_two(size - 1);
-+
-+		if (!(size % 4096))
-+			printk(KERN_NOTICE "loop %u, %llu per us\n", size,
-+			       done / ktime_us_delta(ktime_get(), start));
-+
-+		while (1) {
-+			if (__inorder_to_tree(i, size, extra) != j)
-+				panic("size %10u j %10u i %10u", size, j, i);
-+
-+			if (__to_inorder(j, size, extra) != i)
-+				panic("size %10u j %10u i %10u", size, j, i);
-+
-+			if (j == rounddown_pow_of_two(size) - 1)
-+				break;
-+
-+			BUG_ON(inorder_prev(inorder_next(j, size), size) != j);
-+
-+			j = inorder_next(j, size);
-+			i++;
-+		}
-+
-+		done += size - 1;
++	if (atomic_sub_return(bio_sectors(bio), &op->d->c->sectors_to_gc) < 0) {
++		set_gc_sectors(op->d->c);
++		bcache_queue_gc(op->d->c);
 +	}
-+}
-+#endif
-+
-+/*
-+ * Cacheline/offset <-> bkey pointer arithmatic:
-+ *
-+ * t->tree is a binary search tree in an array; each node corresponds to a key
-+ * in one cacheline in t->set (BSET_CACHELINE bytes).
-+ *
-+ * This means we don't have to store the full index of the key that a node in
-+ * the binary tree points to; to_inorder() gives us the cacheline, and then
-+ * bkey_float->m gives us the offset within that cacheline, in units of 8 bytes.
-+ *
-+ * cacheline_to_bkey() and friends abstract out all the pointer arithmatic to
-+ * make this work.
-+ *
-+ * To construct the bfloat for an arbitrary key we need to know what the key
-+ * immediately preceding it is: we have to check if the two keys differ in the
-+ * bits we're going to store in bkey_float->mantissa. t->prev[j] stores the size
-+ * of the previous key so we can walk backwards to it from t->tree[j]'s key.
-+ */
-+
-+static struct bkey *cacheline_to_bkey(struct bset_tree *t, unsigned cacheline,
-+				      unsigned offset)
-+{
-+	return ((void *) t->data) + cacheline * BSET_CACHELINE + offset * 8;
-+}
-+
-+static unsigned bkey_to_cacheline(struct bset_tree *t, struct bkey *k)
-+{
-+	return ((void *) k - (void *) t->data) / BSET_CACHELINE;
-+}
-+
-+static unsigned bkey_to_cacheline_offset(struct bkey *k)
-+{
-+	return ((size_t) k & (BSET_CACHELINE - 1)) / sizeof(uint64_t);
-+}
-+
-+static struct bkey *tree_to_bkey(struct bset_tree *t, unsigned j)
-+{
-+	return cacheline_to_bkey(t, to_inorder(j, t), t->tree[j].m);
-+}
-+
-+static struct bkey *tree_to_prev_bkey(struct bset_tree *t, unsigned j)
-+{
-+	return (void *) (((uint64_t *) tree_to_bkey(t, j)) - t->prev[j]);
-+}
-+
-+/*
-+ * For the write set - the one we're currently inserting keys into - we don't
-+ * maintain a full search tree, we just keep a simple lookup table in t->prev.
-+ */
-+struct bkey *table_to_bkey(struct bset_tree *t, unsigned cacheline)
-+{
-+	return cacheline_to_bkey(t, cacheline, t->prev[cacheline]);
-+}
-+
-+/* Auxiliary search trees */
-+
-+static inline uint64_t shrd128(uint64_t high, uint64_t low, uint8_t shift)
-+{
-+#ifdef CONFIG_X86_64
-+	asm("shrd %[shift],%[high],%[low]"
-+	    : [low] "+Rm" (low)
-+	    : [high] "R" (high),
-+	    [shift] "ci" (shift)
-+	    : "cc");
-+#else
-+	low >>= shift;
-+	low  |= (high << 1) << (63U - shift);
-+#endif
-+	return low;
-+}
-+
-+static inline unsigned bfloat_mantissa(const struct bkey *k,
-+				       struct bkey_float *f)
-+{
-+	const uint64_t *p = &k->key - (f->exponent >> 6);
-+	return shrd128(p[-1], p[0], f->exponent & 63) & BKEY_MANTISSA_MASK;
-+}
-+
-+static void make_bfloat(struct bset_tree *t, unsigned j)
-+{
-+	struct bkey_float *f = &t->tree[j];
-+	struct bkey *m = tree_to_bkey(t, j);
-+	struct bkey *p = tree_to_prev_bkey(t, j);
-+
-+	struct bkey *l = is_power_of_2(j)
-+		? t->data->start
-+		: tree_to_prev_bkey(t, j >> ffs(j));
-+
-+	struct bkey *r = is_power_of_2(j + 1)
-+		? node(t->data, t->data->keys - bkey_u64s(&t->end))
-+		: tree_to_bkey(t, j >> (ffz(j) + 1));
-+
-+	BUG_ON(m < l || m > r);
-+	BUG_ON(next(p) != m);
-+
-+	if (KEY_DEV(l) != KEY_DEV(r))
-+		f->exponent = fls64(KEY_DEV(r) ^ KEY_DEV(l)) + 64;
-+	else
-+		f->exponent = fls64(r->key ^ l->key);
-+
-+	f->exponent = max_t(int, f->exponent - BKEY_MANTISSA_BITS, 0);
-+
-+	if (bfloat_mantissa(m, f) != bfloat_mantissa(p, f))
-+		f->mantissa = bfloat_mantissa(m, f) - 1;
-+	else
-+		f->exponent = 127;
-+}
-+
-+static void bset_alloc_tree(struct btree *b, struct bset_tree *t)
-+{
-+	if (t != b->sets) {
-+		unsigned j = roundup(t[-1].size,
-+				     64 / sizeof(struct bkey_float));
-+
-+		t->tree = t[-1].tree + j;
-+		t->prev = t[-1].prev + j;
-+	}
-+
-+	while (t < b->sets + MAX_BSETS)
-+		t++->size = 0;
-+}
-+
-+static void bset_build_unwritten_tree(struct btree *b)
-+{
-+	struct bset_tree *t = b->sets + b->nsets;
-+
-+	bset_alloc_tree(b, t);
-+
-+	if (t->tree != b->sets->tree + bset_tree_space(b)) {
-+		t->prev[0] = bkey_to_cacheline_offset(t->data->start);
-+		t->size = 1;
-+	}
-+}
-+
-+static void bset_build_written_tree(struct btree *b)
-+{
-+	struct bset_tree *t = b->sets + b->nsets;
-+	struct bkey *k = t->data->start;
-+	unsigned j, cacheline = 1;
-+
-+	bset_alloc_tree(b, t);
-+
-+	t->size = min_t(unsigned,
-+			bkey_to_cacheline(t, end(t->data)),
-+			b->sets->tree + bset_tree_space(b) - t->tree);
-+
-+	if (t->size < 2) {
-+		t->size = 0;
-+		return;
-+	}
-+
-+	t->extra = (t->size - rounddown_pow_of_two(t->size - 1)) << 1;
-+
-+	/* First we figure out where the first key in each cacheline is */
-+	for (j = inorder_next(0, t->size);
-+	     j;
-+	     j = inorder_next(j, t->size)) {
-+		while (bkey_to_cacheline(t, k) != cacheline)
-+			k = next(k);
-+
-+		t->prev[j] = bkey_u64s(k);
-+		k = next(k);
-+		cacheline++;
-+		t->tree[j].m = bkey_to_cacheline_offset(k);
-+	}
-+
-+	while (next(k) != end(t->data))
-+		k = next(k);
-+
-+	t->end = *k;
-+
-+	/* Then we build the tree */
-+	for (j = inorder_next(0, t->size);
-+	     j;
-+	     j = inorder_next(j, t->size))
-+		make_bfloat(t, j);
-+}
-+
-+void bset_fix_invalidated_key(struct btree *b, struct bkey *k)
-+{
-+	struct bset_tree *t;
-+	unsigned inorder, j = 1;
-+
-+	for (t = b->sets; t <= &b->sets[b->nsets]; t++)
-+		if (k < end(t->data))
-+			goto found_set;
-+
-+	BUG();
-+found_set:
-+	if (!t->size || !bset_written(b, t))
-+		return;
-+
-+	inorder = bkey_to_cacheline(t, k);
-+
-+	if (k == t->data->start)
-+		goto fix_left;
-+
-+	if (next(k) == end(t->data)) {
-+		t->end = *k;
-+		goto fix_right;
-+	}
-+
-+	j = inorder_to_tree(inorder, t);
-+
-+	if (j &&
-+	    j < t->size &&
-+	    k == tree_to_bkey(t, j))
-+fix_left:	do {
-+			make_bfloat(t, j);
-+			j = j * 2;
-+		} while (j < t->size);
-+
-+	j = inorder_to_tree(inorder + 1, t);
-+
-+	if (j &&
-+	    j < t->size &&
-+	    k == tree_to_prev_bkey(t, j))
-+fix_right:	do {
-+			make_bfloat(t, j);
-+			j = j * 2 + 1;
-+		} while (j < t->size);
-+}
-+
-+void bset_fix_lookup_table(struct btree *b, struct bkey *k)
-+{
-+	struct bset_tree *t = &b->sets[b->nsets];
-+	unsigned shift = bkey_u64s(k);
-+	unsigned j = bkey_to_cacheline(t, k);
-+
-+	/* We're getting called from btree_split() or btree_gc, just bail out */
-+	if (!t->size)
-+		return;
-+
-+	/* k is the key we just inserted; we need to find the entry in the
-+	 * lookup table for the first key that is strictly greater than k:
-+	 * it's either k's cacheline or the next one
-+	 */
-+	if (j < t->size &&
-+	    table_to_bkey(t, j) <= k)
-+		j++;
-+
-+	/* Adjust all the lookup table entries, and find a new key for any that
-+	 * have gotten too big
-+	 */
-+	for (; j < t->size; j++) {
-+		t->prev[j] += shift;
-+
-+		if (t->prev[j] > 7) {
-+			k = table_to_bkey(t, j - 1);
-+
-+			while (k < cacheline_to_bkey(t, j, 0))
-+				k = next(k);
-+
-+			t->prev[j] = bkey_to_cacheline_offset(k);
-+		}
-+	}
-+
-+	if (t->size == b->sets->tree + bset_tree_space(b) - t->tree)
-+		return;
-+
-+	/* Possibly add a new entry to the end of the lookup table */
-+
-+	for (k = table_to_bkey(t, t->size - 1);
-+	     k != end(t->data);
-+	     k = next(k))
-+		if (t->size == bkey_to_cacheline(t, k)) {
-+			t->prev[t->size] = bkey_to_cacheline_offset(k);
-+			t->size++;
-+		}
-+}
-+
-+void bset_init_next(struct btree *b)
-+{
-+	struct bset *i = write_block(b);
-+
-+	if (i != b->sets[0].data) {
-+		b->sets[++b->nsets].data = i;
-+		i->seq = b->sets[0].data->seq;
-+	} else
-+		get_random_bytes(&i->seq, sizeof(uint64_t));
-+
-+	i->magic	= bset_magic(b->c);
-+	i->version	= 0;
-+	i->keys		= 0;
-+
-+	bset_build_unwritten_tree(b);
-+}
-+
-+struct bset_search_iter {
-+	struct bkey *l, *r;
-+};
-+
-+__attribute__((optimize(3)))
-+static struct bset_search_iter bset_search_write_set(struct btree *b,
-+						     struct bset_tree *t,
-+						     const struct bkey *search)
-+{
-+	unsigned li = 0, ri = t->size;
-+
-+	BUG_ON(!b->nsets &&
-+	       t->size < bkey_to_cacheline(t, end(t->data)));
-+
-+	while (li + 1 != ri) {
-+		unsigned m = (li + ri) >> 1;
-+
-+		if (bkey_cmp(table_to_bkey(t, m), search) > 0)
-+			ri = m;
-+		else
-+			li = m;
-+	}
-+
-+	return (struct bset_search_iter) {
-+		table_to_bkey(t, li),
-+		ri < t->size ? table_to_bkey(t, ri) : end(t->data)
-+	};
-+}
-+
-+__attribute__((optimize(3)))
-+static struct bset_search_iter bset_search_tree(struct btree *b,
-+						struct bset_tree *t,
-+						const struct bkey *search)
-+{
-+	struct bkey *l, *r;
-+	struct bkey_float *f;
-+	unsigned inorder, j, n = 1;
 +
 +	do {
-+		unsigned p = n << 4;
-+		p &= ((int) (p - t->size)) >> 31;
-+
-+		prefetch(&t->tree[p]);
-+
-+		j = n;
-+		f = &t->tree[j];
-+
-+		/*
-+		 * n = (f->mantissa > bfloat_mantissa())
-+		 *	? j * 2
-+		 *	: j * 2 + 1;
-+		 *
-+		 * We need to subtract 1 from f->mantissa for the sign bit trick
-+		 * to work  - that's done in make_bfloat()
-+		 */
-+		if (likely(f->exponent != 127))
-+			n = j * 2 + (((unsigned)
-+				      (f->mantissa -
-+				       bfloat_mantissa(search, f))) >> 31);
-+		else
-+			n = (bkey_cmp(tree_to_bkey(t, j), search) > 0)
-+				? j * 2
-+				: j * 2 + 1;
-+	} while (n < t->size);
-+
-+	inorder = to_inorder(j, t);
-+
-+	/*
-+	 * n would have been the node we recursed to - the low bit tells us if
-+	 * we recursed left or recursed right.
-+	 */
-+	if (n & 1) {
-+		l = cacheline_to_bkey(t, inorder, f->m);
-+
-+		if (++inorder != t->size) {
-+			f = &t->tree[inorder_next(j, t->size)];
-+			r = cacheline_to_bkey(t, inorder, f->m);
-+		} else
-+			r = end(t->data);
-+	} else {
-+		r = cacheline_to_bkey(t, inorder, f->m);
-+
-+		if (--inorder) {
-+			f = &t->tree[inorder_prev(j, t->size)];
-+			l = cacheline_to_bkey(t, inorder, f->m);
-+		} else
-+			l = t->data->start;
-+	}
-+
-+	return (struct bset_search_iter) {l, r};
-+}
-+
-+__attribute__((optimize(3)))
-+struct bkey *__bset_search(struct btree *b, struct bset_tree *t,
-+			   const struct bkey *search)
-+{
-+	struct bset_search_iter i;
-+
-+	/*
-+	 * First, we search for a cacheline, then lastly we do a linear search
-+	 * within that cacheline.
-+	 *
-+	 * To search for the cacheline, there's three different possibilities:
-+	 *  * The set is too small to have a search tree, so we just do a linear
-+	 *    search over the whole set.
-+	 *  * The set is the one we're currently inserting into; keeping a full
-+	 *    auxiliary search tree up to date would be too expensive, so we
-+	 *    use a much simpler lookup table to do a binary search -
-+	 *    bset_search_write_set().
-+	 *  * Or we use the auxiliary search tree we constructed earlier -
-+	 *    bset_search_tree()
-+	 */
-+
-+	if (unlikely(!t->size)) {
-+		i.l = t->data->start;
-+		i.r = end(t->data);
-+	} else if (bset_written(b, t)) {
-+		/*
-+		 * Each node in the auxiliary search tree covers a certain range
-+		 * of bits, and keys above and below the set it covers might
-+		 * differ outside those bits - so we have to special case the
-+		 * start and end - handle that here:
-+		 */
-+
-+		if (unlikely(bkey_cmp(search, &t->end) >= 0))
-+			return end(t->data);
-+
-+		if (unlikely(bkey_cmp(search, t->data->start) < 0))
-+			return t->data->start;
-+
-+		i = bset_search_tree(b, t, search);
-+	} else
-+		i = bset_search_write_set(b, t, search);
-+
-+#ifdef CONFIG_BCACHE_EDEBUG
-+	BUG_ON(bset_written(b, t) &&
-+	       i.l != t->data->start &&
-+	       bkey_cmp(tree_to_prev_bkey(t,
-+		  inorder_to_tree(bkey_to_cacheline(t, i.l), t)),
-+			search) > 0);
-+
-+	BUG_ON(i.r != end(t->data) &&
-+	       bkey_cmp(i.r, search) <= 0);
-+#endif
-+
-+	while (likely(i.l != i.r) &&
-+	       bkey_cmp(i.l, search) <= 0)
-+		i.l = next(i.l);
-+
-+	return i.l;
-+}
-+
-+/* Btree iterator */
-+
-+static inline bool btree_iter_cmp(struct btree_iter_set l,
-+				  struct btree_iter_set r)
-+{
-+	int64_t c = bkey_cmp(&START_KEY(l.k), &START_KEY(r.k));
-+
-+	return c ? c > 0 : l.k < r.k;
-+}
-+
-+static inline bool btree_iter_end(struct btree_iter *iter)
-+{
-+	return !iter->used;
-+}
-+
-+void btree_iter_push(struct btree_iter *iter, struct bkey *k, struct bkey *end)
-+{
-+	if (k != end)
-+		BUG_ON(!heap_add(iter,
-+				 ((struct btree_iter_set) { k, end }),
-+				 btree_iter_cmp));
-+}
-+
-+struct bkey *__btree_iter_init(struct btree *b, struct btree_iter *iter,
-+			       struct bkey *search, struct bset_tree *start)
-+{
-+	struct bkey *ret = NULL;
-+	iter->size = ARRAY_SIZE(iter->data);
-+	iter->used = 0;
-+
-+	for (; start <= &b->sets[b->nsets]; start++) {
-+		ret = bset_search(b, start, search);
-+		btree_iter_push(iter, ret, end(start->data));
-+	}
-+
-+	return ret;
-+}
-+
-+struct bkey *btree_iter_next(struct btree_iter *iter)
-+{
-+	struct btree_iter_set unused;
-+	struct bkey *ret = NULL;
-+
-+	if (!btree_iter_end(iter)) {
-+		ret = iter->data->k;
-+		iter->data->k = next(iter->data->k);
-+
-+		if (iter->data->k > iter->data->end) {
-+			__WARN();
-+			iter->data->k = iter->data->end;
-+		}
-+
-+		if (iter->data->k == iter->data->end)
-+			heap_pop(iter, unused, btree_iter_cmp);
-+		else
-+			heap_sift(iter, 0, btree_iter_cmp);
-+	}
-+
-+	return ret;
-+}
-+
-+struct bkey *next_recurse_key(struct btree *b, struct bkey *search)
-+{
-+	struct bkey *ret;
-+	struct btree_iter iter;
-+	btree_iter_init(b, &iter, search);
-+
-+	do
-+		ret = btree_iter_next(&iter);
-+	while (ret && ptr_bad(b, ret));
-+
-+	return ret;
-+}
-+
-+/* Mergesort */
-+
-+static void btree_sort_fixup(struct btree_iter *iter)
-+{
-+	while (iter->used > 1) {
-+		struct btree_iter_set *top = iter->data, *i = top + 1;
++		struct open_bucket *b;
 +		struct bkey *k;
 +
-+		if (iter->used > 2 &&
-+		    btree_iter_cmp(i[0], i[1]))
-+			i++;
++		/* 1 for the device pointer and 1 for the chksum */
++		if (keylist_realloc(&op->keys,
++				    1 + (op->d->data_csum ? 1 : 0),
++				    op->d->c))
++			continue_at(cl, bcache_journal, bcache_wq);
 +
-+		for (k = i->k;
-+		     k != i->end && bkey_cmp(top->k, &START_KEY(k)) > 0;
-+		     k = next(k))
-+			if (top->k > i->k)
-+				__cut_front(top->k, k);
-+			else if (KEY_SIZE(k))
-+				cut_back(&START_KEY(k), top->k);
++		k = op->keys.top;
 +
-+		if (top->k < i->k || k == i->k)
-+			break;
++		b = get_data_bucket(&KEY(op->d->id, bio->bi_sector, 0), s);
++		if (!b)
++			goto err;
 +
-+		heap_sift(iter, i - top, btree_iter_cmp);
-+	}
-+}
++		put_data_bucket(b, op->d->c, k, bio);
 +
-+static void btree_mergesort(struct btree *b, struct bset *out,
-+			    struct btree_iter *iter,
-+			    bool fixup, bool remove_stale)
-+{
-+	struct bkey *k, *last = NULL;
-+	bool (*bad)(struct btree *, const struct bkey *) = remove_stale
-+		? ptr_bad
-+		: ptr_invalid;
-+
-+	while (!btree_iter_end(iter)) {
-+		if (fixup && !b->level)
-+			btree_sort_fixup(iter);
-+
-+		k = btree_iter_next(iter);
-+		if (bad(b, k))
-+			continue;
-+
-+		if (!last) {
-+			last = out->start;
-+			bkey_copy(last, k);
-+		} else if (b->level ||
-+			   !bkey_try_merge(b, last, k)) {
-+			last = next(last);
-+			bkey_copy(last, k);
++		n = bio_split_get(bio, KEY_SIZE(k), op->d);
++		if (!n) {
++			__bkey_put(op->d->c, k);
++			continue_at(cl, bio_insert_loop, bcache_wq);
 +		}
-+	}
 +
-+	out->keys = last ? (uint64_t *) next(last) - out->d : 0;
++		if (s->writeback)
++			SET_KEY_DIRTY(k, true);
 +
-+	pr_debug("sorted %i keys", out->keys);
-+	check_key_order(b, out);
-+}
++		SET_KEY_CSUM(k, op->d->data_csum);
++		if (op->d->data_csum)
++			bio_csum(n, k);
 +
-+static void __btree_sort(struct btree *b, struct btree_iter *iter,
-+			 unsigned start, unsigned order, bool fixup)
-+{
-+	uint64_t start_time;
-+	bool remove_stale = !b->written;
-+	struct bset *out = (void *) __get_free_pages(__GFP_NOWARN|GFP_NOIO,
-+						     order);
-+	if (!out) {
-+		mutex_lock(&b->c->sort_lock);
-+		out = b->c->sort;
-+		order = ilog2(bucket_pages(b->c));
-+	}
++		pr_debug("%s", pkey(k));
++		keylist_push(&op->keys);
 +
-+	start_time = local_clock();
++		n->bi_rw |= REQ_WRITE;
 +
-+	btree_mergesort(b, out, iter, fixup, remove_stale);
-+	b->nsets = start;
++		if (n == bio)
++			closure_get(cl);
 +
-+	if (!fixup && !start && b->written)
-+		btree_verify(b, out);
++		trace_bcache_cache_insert(n, n->bi_sector, n->bi_bdev);
++		submit_bbio(n, op->d->c, k, 0);
++	} while (n != bio);
 +
-+	if (!start && order == b->page_order) {
-+		out->magic	= bset_magic(b->c);
-+		out->seq	= b->sets[0].data->seq;
-+		out->version	= b->sets[0].data->version;
-+		swap(out, b->sets[0].data);
++	s->bio_insert_done = true;
++	continue_at(cl, bcache_journal, bcache_wq);
++err:
++	/* IO never happened, so bbio key isn't set up, so we can't call
++	 * bio_endio()
++	 */
++	bio_put(bio);
 +
-+		if (b->c->sort == b->sets[0].data)
-+			b->c->sort = out;
-+	} else {
-+		b->sets[start].data->keys = out->keys;
-+		memcpy(b->sets[start].data->start, out->start,
-+		       (void *) end(out) - (void *) out->start);
-+	}
++	pr_debug("error for %s, %i/%i sectors done, bi_sector %llu",
++		 search_type(s), sectors - bio_sectors(bio), sectors,
++		 (uint64_t) bio->bi_sector);
 +
-+	if (out == b->c->sort)
-+		mutex_unlock(&b->c->sort_lock);
++	if (s->writeback) {
++		/* This is dead code now, since we handle all memory allocation
++		 * failures and block if we don't have free buckets
++		 */
++		BUG();
++		/* Lookup in in_writeback rb tree, wait on appropriate
++		 * closure, then invalidate in btree and do normal
++		 * write
++		 */
++		s->bio_insert_done	= true;
++		s->error		= -ENOMEM;
++	} else if (s->write) {
++		s->skip			= true;
++		return bio_invalidate(cl);
++	} else
++		s->bio_insert_done	= true;
++
++	if (!keylist_empty(&op->keys))
++		continue_at(cl, bcache_journal, bcache_wq);
 +	else
-+		free_pages((unsigned long) out, order);
++		closure_return(cl);
++}
 +
-+	if (b->written)
-+		bset_build_written_tree(b);
++static void bio_insert(struct closure *cl)
++{
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++	struct search *s = container_of(op, struct search, op);
++	struct bio *bio = s->cache_bio;
 +
-+	if (!start) {
-+		spin_lock(&b->c->sort_time_lock);
-+		time_stats_update(&b->c->sort_time, start_time);
-+		spin_unlock(&b->c->sort_time_lock);
++	if (!s->skip) {
++		bio->bi_end_io	= bio_insert_endio;
++		bio->bi_private = cl;
++		bio_get(bio);
++	}
++
++	keylist_init(&op->keys);
++	bio_insert_loop(cl);
++}
++
++void bcache_btree_insert_async(struct closure *cl)
++{
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++	struct search *s = container_of(op, struct search, op);
++
++	if (bcache_btree_insert(op, op->d->c)) {
++		s->error		= -ENOMEM;
++		s->bio_insert_done	= true;
++	}
++
++	if (s->bio_insert_done) {
++		keylist_free(&op->keys);
++		closure_return(cl);
++	} else
++		continue_at(cl, bio_insert_loop, bcache_wq);
++}
++
++/* Common code for the make_request functions */
++
++static void __bio_complete(struct search *s)
++{
++	if (s->orig_bio) {
++		if (s->error)
++			clear_bit(BIO_UPTODATE, &s->orig_bio->bi_flags);
++
++		trace_bcache_request_end(&s->op, s->orig_bio);
++		bio_endio(s->orig_bio, s->error);
++		s->orig_bio = NULL;
 +	}
 +}
 +
-+void btree_sort_partial(struct btree *b, unsigned start)
++static void request_endio(struct bio *bio, int error)
 +{
-+	size_t oldsize = 0, order = b->page_order, keys = 0;
-+	struct btree_iter iter;
-+	__btree_iter_init(b, &iter, NULL, &b->sets[start]);
++	struct closure *cl = bio->bi_private;
 +
-+	BUG_ON(b->sets[b->nsets].data == write_block(b) &&
-+	       (b->sets[b->nsets].size || b->nsets));
-+
-+	if (b->written)
-+		oldsize = count_data(b);
-+
-+	if (start) {
-+		struct bset *i;
-+		for_each_sorted_set_start(b, i, start)
-+			keys += i->keys;
-+
-+		order = roundup_pow_of_two(__set_bytes(i, keys)) / PAGE_SIZE;
-+		if (order)
-+			order = ilog2(order);
++	if (error) {
++		struct search *s = container_of(cl, struct search, cl);
++		s->error = error;
++		/* Only cache read errors are recoverable */
++		s->recoverable = false;
 +	}
 +
-+	__btree_sort(b, &iter, start, order, false);
-+
-+	EBUG_ON(b->written && count_data(b) != oldsize);
++	bio_put(bio);
++	closure_put(cl);
 +}
 +
-+void btree_sort_and_fix_extents(struct btree *b, struct btree_iter *iter)
++void cache_read_endio(struct bio *bio, int error)
 +{
-+	BUG_ON(!b->written);
-+	__btree_sort(b, iter, 0, b->page_order, true);
++	struct bbio *b = container_of(bio, struct bbio, bio);
++	struct closure *cl = bio->bi_private;
++	struct search *s = container_of(cl, struct search, cl);
++
++	/*
++	 * If the bucket was reused while our bio was in flight, we might have
++	 * read the wrong data. Set s->error but not error so it doesn't get
++	 * counted against the cache device, but we'll still reread the data
++	 * from the backing device.
++	 */
++
++	if (error)
++		s->error = error;
++	else if (ptr_stale(s->op.d->c, &b->key, 0)) {
++		atomic_long_inc(&s->op.d->c->cache_read_races);
++		s->error = -EINTR;
++	}
++
++	bcache_endio(s->op.d->c, bio, error, "reading from cache");
 +}
 +
-+void btree_sort_into(struct btree *b, struct btree *new)
++static void __do_bio_hook(struct search *s)
 +{
-+	uint64_t start_time = local_clock();
++	struct bio *bio = &s->bio.bio;
++	memcpy(bio, s->orig_bio, sizeof(struct bio));
 +
-+	struct btree_iter iter;
-+	btree_iter_init(b, &iter, NULL);
-+
-+	btree_mergesort(b, new->sets->data, &iter, false, true);
-+
-+	spin_lock(&b->c->sort_time_lock);
-+	time_stats_update(&b->c->sort_time, start_time);
-+	spin_unlock(&b->c->sort_time_lock);
-+
-+	bkey_copy_key(&new->key, &b->key);
-+	new->sets->size = 0;
++#ifdef CONFIG_DISKMON
++	bio->bi_flowid		= NULL;
++#endif
++	bio->bi_end_io		= request_endio;
++	bio->bi_private		= &s->cl;
++	bio->bi_destructor	= NULL;
++	atomic_set(&bio->bi_cnt, 3);
 +}
 +
-+void btree_sort_lazy(struct btree *b)
++static struct search *do_bio_hook(struct bio *bio, struct bcache_device *d)
 +{
-+	if (b->nsets) {
-+		struct bset *i;
-+		unsigned keys = 0, total;
++	struct bio_vec *bv;
++	struct search *s = mempool_alloc(d->c->search, GFP_NOIO);
++	memset(s, 0, offsetof(struct search, op.keys));
 +
-+		for_each_sorted_set(b, i)
-+			keys += i->keys;
-+		total = keys;
++	__closure_init(&s->cl, NULL);
++	__closure_init(&s->op.cl, &s->cl);
 +
-+		for (unsigned j = 0; j < b->nsets; j++) {
-+			if (keys * 2 < total ||
-+			    keys < 1000) {
-+				btree_sort_partial(b, j);
-+				return;
++	s->op.d			= d;
++	s->op.lock		= -1;
++	s->task			= get_current();
++	s->orig_bio		= bio;
++	s->write		= bio->bi_rw & REQ_WRITE;
++	s->op.flush_journal	= bio->bi_rw & REQ_FLUSH;
++	s->recoverable		= 1;
++	__do_bio_hook(s);
++
++	if (bio->bi_size != bio_segments(bio) * PAGE_SIZE) {
++		bv = mempool_alloc(d->unaligned_bvec, GFP_NOIO);
++		memcpy(bv, bio_iovec(bio),
++		       sizeof(struct bio_vec) * bio_segments(bio));
++
++		s->bio.bio.bi_io_vec	= bv;
++		s->unaligned_bvec	= 1;
++	}
++
++	return s;
++}
++
++static void btree_read_async(struct closure *cl)
++{
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++
++	int ret = btree_root(search_recurse, op->d->c, op);
++
++	if (ret == -EAGAIN)
++		continue_at(cl, btree_read_async, bcache_wq);
++
++	closure_return(cl);
++}
++
++/* Cached devices */
++
++static void cached_dev_bio_complete(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++	struct cached_dev *dc = container_of(s->op.d, struct cached_dev, disk);
++
++	if (s->cache_bio)
++		bio_put(s->cache_bio);
++
++	if (s->unaligned_bvec)
++		mempool_free(s->bio.bio.bi_io_vec, dc->disk.unaligned_bvec);
++
++	__bio_complete(s);
++
++	closure_debug_destroy(&s->cl);
++	mempool_free(s, dc->disk.c->search);
++	cached_dev_put(dc);
++}
++
++/* Process reads */
++
++static void cached_dev_read_complete(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++
++	if (s->cache_miss)
++		bio_put(s->cache_miss);
++
++	if (s->cache_bio) {
++		int i;
++		struct bio_vec *bv;
++
++		__bio_for_each_segment(bv, s->cache_bio, i, 0)
++			__free_page(bv->bv_page);
++	}
++
++	cached_dev_bio_complete(cl);
++}
++
++static void request_read_error(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++	struct bio_vec *bv;
++	int i;
++
++	if (s->recoverable) {
++		/* The cache read failed, but we can retry from the backing
++		 * device.
++		 */
++		pr_debug("recovering at sector %llu",
++			 (uint64_t) s->orig_bio->bi_sector);
++
++		s->error = 0;
++		bv = s->bio.bio.bi_io_vec;
++		__do_bio_hook(s);
++		s->bio.bio.bi_io_vec = bv;
++
++		if (!s->unaligned_bvec)
++			bio_for_each_segment(bv, s->orig_bio, i)
++				bv->bv_offset = 0, bv->bv_len = PAGE_SIZE;
++		else
++			memcpy(s->bio.bio.bi_io_vec,
++			       bio_iovec(s->orig_bio),
++			       sizeof(struct bio_vec) *
++			       bio_segments(s->orig_bio));
++
++		/* XXX: invalidate cache */
++
++		trace_bcache_read_retry(&s->bio.bio);
++		closure_bio_submit(&s->bio.bio, &s->cl, s->op.d->c->bio_split);
++	}
++
++	continue_at(cl, cached_dev_read_complete, NULL);
++}
++
++static void request_read_done(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++	struct cached_dev *d = container_of(s->op.d, struct cached_dev, disk);
++
++	/*
++	 * s->cache_bio != NULL implies that we had a cache miss; cache_bio now
++	 * contains data ready to be inserted into the cache.
++	 *
++	 * First, we copy the data we just read from cache_bio's bounce buffers
++	 * to the buffers the original bio pointed to:
++	 */
++
++	if (s->cache_bio) {
++		struct bio_vec *src, *dst;
++		unsigned src_offset, dst_offset, bytes;
++		void *dst_ptr;
++
++		bio_reset(s->cache_bio);
++		atomic_set(&s->cache_bio->bi_cnt, 1);
++		s->cache_bio->bi_sector	= s->cache_miss->bi_sector;
++		s->cache_bio->bi_bdev	= s->cache_miss->bi_bdev;
++		s->cache_bio->bi_size	= s->cache_bio_sectors << 9;
++		bio_map(s->cache_bio, NULL);
++
++		src = bio_iovec(s->cache_bio);
++		dst = bio_iovec(s->cache_miss);
++		src_offset = src->bv_offset;
++		dst_offset = dst->bv_offset;
++		dst_ptr = kmap(dst->bv_page);
++
++		while (1) {
++			if (dst_offset == dst->bv_offset + dst->bv_len) {
++				kunmap(dst->bv_page);
++				dst++;
++				if (dst == bio_iovec_idx(s->cache_miss,
++							 s->cache_miss->bi_vcnt))
++					break;
++
++				dst_offset = dst->bv_offset;
++				dst_ptr = kmap(dst->bv_page);
 +			}
 +
-+			keys -= b->sets[j].data->keys;
-+		}
++			if (src_offset == src->bv_offset + src->bv_len) {
++				src++;
++				if (src == bio_iovec_idx(s->cache_bio,
++							 s->cache_bio->bi_vcnt))
++					BUG();
 +
-+		/* Must sort if b->nsets == 3 or we'll overflow */
-+		if (b->nsets >= (MAX_BSETS - 1) - b->level) {
-+			btree_sort(b);
-+			return;
++				src_offset = src->bv_offset;
++			}
++
++			bytes = min(dst->bv_offset + dst->bv_len - dst_offset,
++				    src->bv_offset + src->bv_len - src_offset);
++
++			memcpy(dst_ptr + dst_offset,
++			       page_address(src->bv_page) + src_offset,
++			       bytes);
++
++			src_offset	+= bytes;
++			dst_offset	+= bytes;
 +		}
 +	}
 +
-+	bset_build_written_tree(b);
++	if (verify(d, &s->bio.bio) && s->recoverable)
++		data_verify(s);
++
++	__bio_complete(s);
++
++	if (s->cache_bio && !atomic_read(&s->op.d->c->closing)) {
++		s->op.type = BTREE_REPLACE;
++		closure_init(&s->op.cl, &s->cl);
++		bio_insert(&s->op.cl);
++	}
++
++	continue_at(cl, cached_dev_read_complete, NULL);
 +}
 +
-+/* Sysfs stuff */
-+
-+struct bset_stats {
-+	size_t writes, sets, keys, trees, floats, failed, tree_space;
-+};
-+
-+static int btree_bset_stats(struct btree *b, struct btree_op *op,
-+			    struct bset_stats *stats)
++static void request_read_done_bh(struct closure *cl)
 +{
-+	struct bkey *k;
++	struct search *s = container_of(cl, struct search, cl);
++	struct cached_dev *d = container_of(s->op.d, struct cached_dev, disk);
 +
-+	if (btree_node_dirty(b))
-+		stats->writes++;
-+	stats->sets		+= b->nsets + 1;
-+	stats->tree_space	+= bset_tree_space(b);
++	if (s->cache_miss && s->op.insert_collision)
++		mark_cache_miss_collision(&s->op);
 +
-+	for (int i = 0; i < MAX_BSETS && b->sets[i].size; i++) {
-+		stats->trees++;
-+		stats->keys	+= b->sets[i].data->keys * sizeof(uint64_t);
-+		stats->floats	+= b->sets[i].size - 1;
++	mark_cache_accounting(s, !s->cache_miss, s->skip);
 +
-+		for (size_t j = 1; j < b->sets[i].size; j++)
-+			if (b->sets[i].tree[j].exponent == 127)
-+				stats->failed++;
++	if (s->error)
++		set_closure_fn(cl, request_read_error, bcache_wq);
++	else if (s->cache_bio || verify(d, &s->bio.bio))
++		set_closure_fn(cl, request_read_done, bcache_wq);
++	else
++		set_closure_fn(cl, cached_dev_read_complete, NULL);
++
++	closure_queue(cl);
++}
++
++static int cached_dev_cache_miss(struct btree *b, struct search *s,
++				 struct bio *bio, unsigned sectors)
++{
++	int ret = 0;
++	unsigned reada;
++	struct cached_dev *d = container_of(s->op.d, struct cached_dev, disk);
++	struct bio *n;
++
++	sectors = min(sectors, bio_max_sectors(bio)),
++
++	n = bio_split_get(bio, sectors, s->op.d);
++	if (!n)
++		return -EAGAIN;
++
++	if (n == bio)
++		s->op.lookup_done = true;
++
++	if (s->cache_miss || s->skip)
++		goto out_submit;
++
++	if (n != bio ||
++	    (bio->bi_rw & REQ_RAHEAD) ||
++	    (bio->bi_rw & REQ_META) ||
++	    s->op.d->c->gc_stats.in_use >= CUTOFF_CACHE_READA)
++		reada = 0;
++	else
++		reada = min(d->readahead >> 9, sectors - bio_sectors(n));
++
++	s->cache_bio_sectors = bio_sectors(n) + reada;
++	s->cache_bio = bbio_kmalloc(GFP_NOIO,
++			DIV_ROUND_UP(s->cache_bio_sectors, PAGE_SECTORS));
++
++	if (!s->cache_bio)
++		goto out_submit;
++
++	s->cache_bio->bi_sector	= n->bi_sector;
++	s->cache_bio->bi_bdev	= n->bi_bdev;
++	s->cache_bio->bi_size	= s->cache_bio_sectors << 9;
++
++	s->cache_bio->bi_end_io	= request_endio;
++	s->cache_bio->bi_private = &s->cl;
++
++	/* btree_search_recurse()'s btree iterator is no good anymore */
++	ret = -EINTR;
++	if (!btree_insert_check_key(b, &s->op, s->cache_bio))
++		goto out_put;
++
++	bio_map(s->cache_bio, NULL);
++	if (bio_alloc_pages(s->cache_bio, __GFP_NOWARN|GFP_NOIO))
++		goto out_put;
++
++	s->cache_miss = n;
++	bio_get(s->cache_bio);
++
++	trace_bcache_cache_miss(s->orig_bio);
++	generic_make_request(s->cache_bio);
++
++	return ret;
++out_put:
++	bio_put(s->cache_bio);
++	s->cache_bio = NULL;
++out_submit:
++	generic_make_request(n);
++	return ret;
++}
++
++static void request_read(struct cached_dev *d, struct search *s)
++{
++	check_should_skip(d, s);
++
++	set_closure_fn(&s->cl, request_read_done_bh, NULL);
++	closure_set_stopped(&s->cl);
++
++	btree_read_async(&s->op.cl);
++}
++
++/* Process writes */
++
++static void cached_dev_write_complete(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++	struct cached_dev *dc = container_of(s->op.d, struct cached_dev, disk);
++
++	up_read_non_owner(&dc->writeback_lock);
++	cached_dev_bio_complete(cl);
++}
++
++static bool should_writeback(struct cached_dev *d, struct bio *bio)
++{
++	return !atomic_read(&d->disk.detaching) &&
++		cache_mode(d, bio) == CACHE_MODE_WRITEBACK &&
++		(d->disk.c->gc_stats.in_use < (bio->bi_rw & REQ_SYNC)
++		 ? CUTOFF_WRITEBACK_SYNC
++		 : CUTOFF_WRITEBACK);
++}
++
++static void request_write_resubmit(struct closure *cl)
++{
++	struct btree_op *op = container_of(cl, struct btree_op, cl);
++	struct search *s = container_of(op, struct search, op);
++	struct bio *bio = &s->bio.bio;
++
++	closure_bio_submit(bio, &s->cl, op->d->c->bio_split);
++
++	bio_insert(&s->op.cl);
++	continue_at(&s->cl, cached_dev_write_complete, NULL);
++}
++
++static void request_write(struct cached_dev *d, struct search *s)
++{
++	struct closure *cl = &s->cl;
++	struct bio *bio = &s->bio.bio;
++
++	check_should_skip(d, s);
++	down_read_non_owner(&d->writeback_lock);
++
++	if (bcache_in_writeback(d, bio->bi_sector, bio_sectors(bio))) {
++		s->skip		= false;
++		s->writeback	= true;
 +	}
 +
-+	if (b->level)
-+		for_each_key_filter(b, k, ptr_bad) {
-+			int ret = btree(bset_stats, k, b, op, stats);
-+			if (ret)
-+				return ret;
++	if (s->skip) {
++skip:		s->cache_bio = s->orig_bio;
++		bio_get(s->cache_bio);
++		trace_bcache_write_skip(s->orig_bio);
++
++		if (bio->bi_rw & (1 << BIO_RW_DISCARD)) {
++			closure_get(cl);
++
++			if (blk_queue_discard(bdev_get_queue(d->bdev)))
++				generic_make_request(bio);
++			else
++				bio_endio(bio, 0);
++
++			goto out;
++		} else
++			goto submit;
++	}
++
++	if (should_writeback(d, s->orig_bio))
++		s->writeback = true;
++
++	if (!s->writeback) {
++		s->cache_bio = bbio_kmalloc(GFP_NOIO, bio->bi_max_vecs);
++		if (!s->cache_bio) {
++			s->skip = true;
++			goto skip;
 +		}
 +
++		__bio_clone(s->cache_bio, bio);
++		trace_bcache_writethrough(s->orig_bio);
++submit:
++		if (closure_bio_submit(bio, cl, s->op.d->c->bio_split))
++			continue_at(&s->op.cl,
++				    request_write_resubmit,
++				    bcache_wq);
++	} else {
++		s->cache_bio = bio;
++		trace_bcache_writeback(s->orig_bio);
++		bcache_writeback_add(d, bio_sectors(bio));
++	}
++out:
++	bio_insert(&s->op.cl);
++	continue_at(cl, cached_dev_write_complete, NULL);
++}
++
++static void request_nodata(struct cached_dev *d, struct search *s)
++{
++	struct closure *cl = &s->cl;
++	struct bio *bio = &s->bio.bio;
++
++	if (bio->bi_rw & (1 << BIO_RW_DISCARD)) {
++		request_write(d, s);
++		return;
++	}
++
++	if (s->op.flush_journal)
++		bcache_journal_meta(s->op.d->c, cl);
++
++	closure_get(cl);
++	generic_make_request(bio);
++
++	closure_set_stopped(&s->op.cl);
++	closure_put(&s->op.cl);
++
++	continue_at(cl, cached_dev_bio_complete, NULL);
++}
++
++/* Split bios in passthrough mode */
++
++static void bio_passthrough_done(struct closure *cl)
++{
++	struct bio_passthrough *s = container_of(cl, struct bio_passthrough,
++						 cl);
++
++	s->bio->bi_end_io	= s->bi_end_io;
++	s->bio->bi_private	= s->bi_private;
++	bio_endio(s->bio, 0);
++
++	closure_debug_destroy(&s->cl);
++	mempool_free(s, s->d->bio_passthrough);
++}
++
++static void bio_passthrough_endio(struct bio *bio, int error)
++{
++	struct closure *cl = bio->bi_private;
++	struct bio_passthrough *s = container_of(cl, struct bio_passthrough,
++						 cl);
++
++	if (error)
++		clear_bit(BIO_UPTODATE, &s->bio->bi_flags);
++
++	bio_put(bio);
++	closure_put(cl);
++}
++
++static void bio_passthrough_submit(struct closure *cl)
++{
++	struct bio_passthrough *s = container_of(cl, struct bio_passthrough,
++						 cl);
++	struct bio *bio = s->bio, *n;
++
++	do {
++		n = bio_split_get(bio, bio_max_sectors(bio), &s->d->disk);
++		if (!n)
++			continue_at(cl, bio_passthrough_submit, bcache_wq);
++
++		if (n == bio) {
++			set_closure_fn(cl, bio_passthrough_done, NULL);
++			closure_set_stopped(cl);
++		}
++
++		trace_bcache_passthrough(n);
++		generic_make_request(n);
++	} while (n != bio);
++}
++
++static void bio_passthrough(struct cached_dev *d, struct bio *bio)
++{
++	struct bio_passthrough *s;
++
++	if (bio->bi_rw & (1 << BIO_RW_DISCARD)) {
++		if (!blk_queue_discard(bdev_get_queue(d->bdev)))
++			bio_endio(bio, 0);
++		else
++			generic_make_request(bio);
++
++		return;
++	}
++
++	if (!bio_has_data(bio) ||
++	    bio->bi_size <= bio_max_sectors(bio) << 9) {
++		generic_make_request(bio);
++		return;
++	}
++
++	s = mempool_alloc(d->bio_passthrough, GFP_NOIO);
++
++	closure_init(&s->cl, NULL);
++	s->d		= d;
++	s->bio		= bio;
++	s->bi_end_io	= bio->bi_end_io;
++	s->bi_private	= bio->bi_private;
++
++	bio_get(bio);
++	bio->bi_end_io	= bio_passthrough_endio;
++	bio->bi_private	= &s->cl;
++
++	bio_passthrough_submit(&s->cl);
++}
++
++/* Cached devices - read & write stuff */
++
++int bcache_get_congested(struct cache_set *c)
++{
++	int i;
++
++	if (!c->congested_read_threshold_us &&
++	    !c->congested_write_threshold_us)
++		return 0;
++
++	i = (local_clock_us() - c->congested_last_us) / 1024;
++	if (i < 0)
++		return 0;
++
++	i += atomic_read(&c->congested);
++	if (i >= 0)
++		return 0;
++
++	i += CONGESTED_MAX;
++
++	return i <= 0 ? 1 : fract_exp_two(i, 6);
++}
++
++static void check_should_skip(struct cached_dev *d, struct search *s)
++{
++	void add_sequential(struct task_struct *t)
++	{
++		ewma_add(t->sequential_io_avg,
++			 t->sequential_io, 8, 0);
++
++		t->sequential_io = 0;
++	}
++
++	struct hlist_head *iohash(uint64_t k)
++	{ return &d->io_hash[hash_64(k, RECENT_IO_BITS)]; }
++
++	struct cache_set *c = s->op.d->c;
++	struct bio *bio = &s->bio.bio;
++
++	int cutoff = bcache_get_congested(c);
++	unsigned mode = cache_mode(d, bio);
++
++	if (atomic_read(&d->disk.detaching) ||
++	    c->gc_stats.in_use > CUTOFF_CACHE_ADD ||
++	    (bio->bi_rw & (1 << BIO_RW_DISCARD)))
++		goto skip;
++
++	if (mode == CACHE_MODE_NONE ||
++	    (mode == CACHE_MODE_WRITEAROUND &&
++	     (bio->bi_rw & REQ_WRITE)))
++		goto skip;
++
++	if (bio->bi_sector   & (c->sb.block_size - 1) ||
++	    bio_sectors(bio) & (c->sb.block_size - 1)) {
++		pr_debug("skipping unaligned io");
++		goto skip;
++	}
++
++	if (!cutoff) {
++		cutoff = d->sequential_cutoff >> 9;
++
++		if (!cutoff)
++			goto rescale;
++
++		if (mode == CACHE_MODE_WRITEBACK &&
++		    (bio->bi_rw & REQ_WRITE) &&
++		    (bio->bi_rw & REQ_SYNC))
++			goto rescale;
++	}
++
++	if (d->sequential_merge) {
++		struct hlist_node *cursor;
++		struct io *i;
++
++		spin_lock(&d->io_lock);
++
++		hlist_for_each_entry(i, cursor, iohash(bio->bi_sector), hash)
++			if (i->last == bio->bi_sector &&
++			    time_before(jiffies, i->jiffies))
++				goto found;
++
++		i = list_first_entry(&d->io_lru, struct io, lru);
++
++		add_sequential(s->task);
++		i->sequential = 0;
++found:
++		if (i->sequential + bio->bi_size > i->sequential)
++			i->sequential	+= bio->bi_size;
++
++		i->last			 = bio_end(bio);
++		i->jiffies		 = jiffies + msecs_to_jiffies(5000);
++		s->task->sequential_io	 = i->sequential;
++
++		hlist_del(&i->hash);
++		hlist_add_head(&i->hash, iohash(i->last));
++		list_move_tail(&i->lru, &d->io_lru);
++
++		spin_unlock(&d->io_lock);
++	} else {
++		s->task->sequential_io = bio->bi_size;
++
++		add_sequential(s->task);
++	}
++
++	cutoff -= popcount_32(get_random_int());
++
++	if (cutoff <= (int) (max(s->task->sequential_io,
++				 s->task->sequential_io_avg) >> 9))
++		goto skip;
++
++rescale:
++	rescale_priorities(c, bio_sectors(bio));
++	return;
++skip:
++	mark_sectors_bypassed(s, bio_sectors(bio));
++	s->skip = true;
++}
++
++static void cached_dev_make_request(struct request_queue *q, struct bio *bio)
++{
++	struct search *s;
++	struct bcache_device *d = bio->bi_bdev->bd_disk->private_data;
++	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
++
++	bio->bi_bdev = dc->bdev;
++	bio->bi_sector += 16;
++
++	if (cached_dev_get(dc)) {
++		s = do_bio_hook(bio, d);
++		trace_bcache_request_start(&s->op, bio);
++
++		(!bio_has_data(bio)	? request_nodata :
++		 bio->bi_rw & REQ_WRITE ? request_write :
++					  request_read)(dc, s);
++	} else
++		bio_passthrough(dc, bio);
++}
++
++static int cached_dev_ioctl(struct bcache_device *d, fmode_t mode,
++			    unsigned int cmd, unsigned long arg)
++{
++	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
++	return __blkdev_driver_ioctl(dc->bdev, mode, cmd, arg);
++}
++
++static int cached_dev_congested(void *data, int bits)
++{
++	struct bcache_device *d = data;
++	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
++	struct request_queue *q = bdev_get_queue(dc->bdev);
++	int ret = 0;
++
++	if (bdi_congested(&q->backing_dev_info, bits))
++		return 1;
++
++	if (cached_dev_get(dc)) {
++		struct cache *ca;
++
++		for_each_cache(ca, d->c) {
++			q = bdev_get_queue(ca->bdev);
++			ret |= bdi_congested(&q->backing_dev_info, bits);
++		}
++
++		cached_dev_put(dc);
++	}
++
++	return ret;
++}
++
++void cached_dev_request_init(struct cached_dev *d)
++{
++	struct gendisk *g = d->disk.disk;
++
++	g->queue->make_request_fn		= cached_dev_make_request;
++	g->queue->backing_dev_info.congested_fn = cached_dev_congested;
++	d->disk.cache_miss			= cached_dev_cache_miss;
++	d->disk.ioctl				= cached_dev_ioctl;
++}
++
++/* Flash backed devices */
++
++static void flash_dev_bio_complete(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++	struct bcache_device *d = s->op.d;
++
++	__bio_complete(s);
++
++	if (s->cache_bio) {
++		int i;
++		struct bio_vec *bv;
++
++		if (!s->write)
++			__bio_for_each_segment(bv, s->cache_bio, i, 0)
++				__free_page(bv->bv_page);
++		bio_put(s->cache_bio);
++	}
++
++	if (s->unaligned_bvec)
++		mempool_free(s->bio.bio.bi_io_vec, d->unaligned_bvec);
++
++	closure_debug_destroy(&s->cl);
++	mempool_free(s, d->c->search);
++}
++
++static int flash_dev_cache_miss(struct btree *b, struct search *s,
++				struct bio *bio, unsigned sectors)
++{
++	sectors = min(sectors, bio_sectors(bio));
++
++	/* Zero fill bio */
++
++	while (sectors) {
++		struct bio_vec *bv = bio_iovec(bio);
++		unsigned j = min(bv->bv_len >> 9, sectors);
++
++		void *p = kmap(bv->bv_page);
++		memset(p + bv->bv_offset, 0, j << 9);
++		kunmap(bv->bv_page);
++
++		bv->bv_len	-= j << 9;
++		bv->bv_offset	+= j << 9;
++
++		bio->bi_sector	+= j;
++		bio->bi_size	-= j << 9;
++
++		bio->bi_idx++;
++		sectors		-= j;
++	}
++
++	if (sectors >= bio_sectors(bio)) {
++		s->op.lookup_done = true;
++		bio_endio(bio, 0);
++	}
 +	return 0;
 +}
 +
-+int bset_print_stats(struct cache_set *c, char *buf)
++static void flash_dev_read(struct search *s)
 +{
-+	struct btree_op op;
-+	struct bset_stats t;
++	set_closure_fn(&s->cl, flash_dev_bio_complete, NULL);
++	closure_set_stopped(&s->cl);
 +
-+	btree_op_init_stack(&op);
-+	memset(&t, 0, sizeof(struct bset_stats));
-+
-+	btree_root(bset_stats, c, &op, &t);
-+
-+	return snprintf(buf, PAGE_SIZE,
-+			"sets:		%zu\n"
-+			"write sets:	%zu\n"
-+			"key bytes:	%zu\n"
-+			"trees:		%zu\n"
-+			"tree space:	%zu\n"
-+			"floats:		%zu\n"
-+			"bytes/float:	%zu\n"
-+			"failed:		%zu\n",
-+			t.sets, t.writes, t.keys, t.trees, t.tree_space,
-+			t.floats, DIV_SAFE(t.keys, t.floats), t.failed);
-+}
-diff --git a/drivers/block/bcache/bset.h b/drivers/block/bcache/bset.h
-new file mode 100644
-index 0000000..47c959a
---- /dev/null
-+++ b/drivers/block/bcache/bset.h
-@@ -0,0 +1,218 @@
-+#ifndef _BCACHE_BSET_H
-+#define _BCACHE_BSET_H
-+
-+/* Btree key comparison/iteration */
-+
-+struct btree_iter {
-+	size_t size, used;
-+	struct btree_iter_set {
-+		struct bkey *k, *end;
-+	} data[MAX_BSETS];
-+};
-+
-+struct bset_tree {
-+	/*
-+	 * We construct a binary tree in an array as if the array
-+	 * started at 1, so that things line up on the same cachelines
-+	 * better: see comments in bset.c at cacheline_to_bkey() for
-+	 * details
-+	 */
-+
-+	/* size of the binary tree and prev array */
-+	unsigned	size;
-+
-+	/* function of size - precalculated for to_inorder() */
-+	unsigned	extra;
-+
-+	/* copy of the last key in the set */
-+	struct bkey	end;
-+	struct bkey_float *tree;
-+
-+	/*
-+	 * The nodes in the bset tree point to specific keys - this
-+	 * array holds the sizes of the previous key.
-+	 *
-+	 * Conceptually it's a member of struct bkey_float, but we want
-+	 * to keep bkey_float to 4 bytes and prev isn't used in the fast
-+	 * path.
-+	 */
-+	uint8_t		*prev;
-+
-+	/* The actual btree node, with pointers to each sorted set */
-+	struct bset	*data;
-+};
-+
-+static __always_inline int64_t bkey_cmp(const struct bkey *l,
-+					const struct bkey *r)
-+{
-+	return unlikely(KEY_DEV(l) != KEY_DEV(r))
-+		? (int64_t) KEY_DEV(l) - (int64_t) KEY_DEV(r)
-+		: (int64_t) l->key - (int64_t) r->key;
++	btree_read_async(&s->op.cl);
 +}
 +
-+static inline size_t bkey_u64s(const struct bkey *k)
++static void flash_dev_write(struct search *s)
 +{
-+	BUG_ON(KEY_CSUM(k) > 1);
-+	return 2 + KEY_PTRS(k) + (KEY_CSUM(k) ? 1 : 0);
++	struct closure *cl = &s->cl;
++	struct bio *bio = &s->bio.bio;
++
++	if (bio->bi_rw & (1 << BIO_RW_DISCARD)) {
++		s->cache_bio	= s->orig_bio;
++		s->skip		= true;
++
++		closure_get(cl);
++		bio_get(s->cache_bio);
++		bio_endio(bio, 0);
++	} else {
++		s->writeback	= true;
++		s->cache_bio	= bio;
++	}
++
++	bio_insert(&s->op.cl);
++	continue_at(&s->cl, flash_dev_bio_complete, NULL);
 +}
 +
-+static inline size_t bkey_bytes(const struct bkey *k)
++static void flash_dev_req_nodata(struct search *s)
 +{
-+	return bkey_u64s(k) * sizeof(uint64_t);
++	struct closure *cl = &s->cl;
++	struct bio *bio = &s->bio.bio;
++
++	if (bio->bi_rw & (1 << BIO_RW_DISCARD)) {
++		flash_dev_write(s);
++		return;
++	}
++
++	if (s->op.flush_journal)
++		bcache_journal_meta(s->op.d->c, cl);
++
++	closure_get(cl);
++	generic_make_request(bio);
++
++	closure_set_stopped(&s->op.cl);
++	closure_put(&s->op.cl);
++
++	continue_at(&s->cl, flash_dev_bio_complete, NULL);
 +}
 +
-+static inline void bkey_copy(struct bkey *dest, const struct bkey *src)
++static void flash_dev_make_request(struct request_queue *q, struct bio *bio)
 +{
-+	memcpy(dest, src, bkey_bytes(src));
++	struct search *s;
++	struct bcache_device *d = bio->bi_bdev->bd_disk->private_data;
++
++	s = do_bio_hook(bio, d);
++	trace_bcache_request_start(&s->op, bio);
++
++	(!bio_has_data(bio)	? flash_dev_req_nodata :
++	 bio->bi_rw & REQ_WRITE ? flash_dev_write :
++				  flash_dev_read)(s);
 +}
 +
-+static inline void bkey_copy_key(struct bkey *dest, const struct bkey *src)
++static int flash_dev_ioctl(struct bcache_device *d, fmode_t mode,
++			   unsigned int cmd, unsigned long arg)
 +{
-+	if (!src)
-+		src = &KEY(0, 0, 0);
-+
-+	SET_KEY_DEV(dest, KEY_DEV(src));
-+	dest->key = src->key;
++	return -ENOTTY;
 +}
 +
-+static inline struct bkey *next(const struct bkey *k)
++static int flash_dev_congested(void *data, int bits)
 +{
-+	uint64_t *d = (void *) k;
-+	return (struct bkey *) (d + bkey_u64s(k));
++	struct bcache_device *d = data;
++	struct request_queue *q;
++	struct cache *ca;
++	int ret = 0;
++
++	for_each_cache(ca, d->c) {
++		q = bdev_get_queue(ca->bdev);
++		ret |= bdi_congested(&q->backing_dev_info, bits);
++	}
++
++	return ret;
 +}
 +
-+/* Keylists */
-+
-+struct keylist {
-+	struct bkey		*top;
-+	union {
-+		uint64_t		*list;
-+		struct bkey		*bottom;
-+	};
-+
-+	/* Enough room for btree_split's keys without realloc */
-+#define KEYLIST_INLINE		16
-+	uint64_t		d[KEYLIST_INLINE];
-+};
-+
-+static inline void keylist_init(struct keylist *l)
++void flash_dev_request_init(struct bcache_device *d)
 +{
-+	l->top = (void *) (l->list = l->d);
++	struct gendisk *g = d->disk;
++
++	g->queue->make_request_fn		= flash_dev_make_request;
++	g->queue->backing_dev_info.congested_fn = flash_dev_congested;
++	d->cache_miss				= flash_dev_cache_miss;
++	d->ioctl				= flash_dev_ioctl;
 +}
 +
-+static inline void keylist_push(struct keylist *l)
++void bcache_request_exit(void)
 +{
-+	l->top = next(l->top);
-+}
-+
-+static inline void keylist_add(struct keylist *l, struct bkey *k)
-+{
-+	bkey_copy(l->top, k);
-+	keylist_push(l);
-+}
-+
-+static inline bool keylist_empty(struct keylist *l)
-+{
-+	return l->top == (void *) l->list;
-+}
-+
-+static inline void keylist_free(struct keylist *l)
-+{
-+	if (l->list != l->d)
-+		kfree(l->list);
-+}
-+
-+void keylist_copy(struct keylist *, struct keylist *);
-+struct bkey *keylist_pop(struct keylist *);
-+int keylist_realloc(struct keylist *, int, struct cache_set *);
-+
-+void bkey_copy_single_ptr(struct bkey *, const struct bkey *, unsigned);
-+bool __cut_front(const struct bkey *, struct bkey *);
-+bool __cut_back(const struct bkey *, struct bkey *);
-+
-+static inline bool cut_front(const struct bkey *where, struct bkey *k)
-+{
-+	BUG_ON(bkey_cmp(where, k) > 0);
-+	return __cut_front(where, k);
-+}
-+
-+static inline bool cut_back(const struct bkey *where, struct bkey *k)
-+{
-+	BUG_ON(bkey_cmp(where, &START_KEY(k)) < 0);
-+	return __cut_back(where, k);
-+}
-+
-+const char *ptr_status(struct cache_set *, const struct bkey *);
-+bool __ptr_invalid(struct cache_set *, int level, const struct bkey *);
-+bool ptr_invalid(struct btree *, const struct bkey *);
-+bool ptr_bad(struct btree *, const struct bkey *);
-+
-+static inline uint8_t gen_after(uint8_t a, uint8_t b)
-+{
-+	uint8_t r = a - b;
-+	return r > 128U ? 0 : r;
-+}
-+
-+static inline uint8_t ptr_stale(struct cache_set *c, const struct bkey *k,
-+				unsigned i)
-+{
-+	return gen_after(PTR_BUCKET(c, k, i)->gen, PTR_GEN(k, i));
-+}
-+
-+static inline bool ptr_available(struct cache_set *c, const struct bkey *k,
-+				 unsigned i)
-+{
-+	return (PTR_DEV(k, i) < MAX_CACHES_PER_SET) && PTR_CACHE(c, k, i);
-+}
-+
-+struct bkey *next_recurse_key(struct btree *, struct bkey *);
-+struct bkey *btree_iter_next(struct btree_iter *);
-+void btree_iter_push(struct btree_iter *, struct bkey *, struct bkey *);
-+struct bkey *__btree_iter_init(struct btree *, struct btree_iter *,
-+			       struct bkey *, struct bset_tree *);
-+
-+#define btree_iter_init(b, iter, search)			\
-+	__btree_iter_init(b, iter, search, (b)->sets)
-+
-+#define BKEY_MID_BITS		3
-+#define BKEY_MID_MAX		(~(~0 << (BKEY_MID_BITS - 1)))
-+#define BKEY_MID_MIN		(-1 - BKEY_MID_MAX)
-+
-+#define BKEY_EXPONENT_BITS	7
-+#define BKEY_MANTISSA_BITS	22
-+#define BKEY_MANTISSA_MASK	((1 << BKEY_MANTISSA_BITS) - 1)
-+
-+struct bkey_float {
-+	unsigned	exponent:BKEY_EXPONENT_BITS;
-+	unsigned	m:BKEY_MID_BITS;
-+	unsigned	mantissa:BKEY_MANTISSA_BITS;
-+} __packed;
-+
-+#define BSET_CACHELINE		128
-+#define BSET_CACHELINE_BITS	ilog2(BSET_CACHELINE)
-+
-+#define bset_tree_space(b)	(btree_data_space(b) >> BSET_CACHELINE_BITS)
-+
-+#define bset_tree_bytes(b)	(bset_tree_space(b) * sizeof(struct bkey_float))
-+#define bset_prev_bytes(b)	(bset_tree_bytes(b) >> 2)
-+
-+void bset_init_next(struct btree *);
-+
-+void bset_fix_invalidated_key(struct btree *, struct bkey *);
-+void bset_fix_lookup_table(struct btree *, struct bkey *);
-+
-+struct bkey *__bset_search(struct btree *, struct bset_tree *,
-+			   const struct bkey *);
-+#define bset_search(b, t, search)				\
-+	((search) ? __bset_search(b, t, search) : (t)->data->start)
-+
-+bool bkey_try_merge(struct btree *, struct bkey *, struct bkey *);
-+void btree_sort_lazy(struct btree *);
-+void btree_sort_into(struct btree *, struct btree *);
-+void btree_sort_and_fix_extents(struct btree *, struct btree_iter *);
-+void btree_sort_partial(struct btree *, unsigned);
-+#define btree_sort(b)	btree_sort_partial(b, 0)
-+
-+int bset_print_stats(struct cache_set *, char *);
-+
++#ifdef CONFIG_CGROUP_BCACHE
++	cgroup_unload_subsys(&bcache_subsys);
 +#endif
++	if (passthrough_cache)
++		kmem_cache_destroy(passthrough_cache);
++	if (search_cache)
++		kmem_cache_destroy(search_cache);
++}
++
++int __init bcache_request_init(void)
++{
++	if (!(search_cache = KMEM_CACHE(search, 0)) ||
++	    !(passthrough_cache = KMEM_CACHE(bio_passthrough, 0)))
++		goto err;
++
++#ifdef CONFIG_CGROUP_BCACHE
++	cgroup_load_subsys(&bcache_subsys);
++	init_bcache_cgroup(&bcache_default_cgroup);
++#endif
++	return 0;
++err:
++	bcache_request_exit();
++	return -ENOMEM;
++}
+diff --git a/drivers/block/bcache/request.h b/drivers/block/bcache/request.h
+new file mode 100644
+index 0000000..7e1b11a
+--- /dev/null
++++ b/drivers/block/bcache/request.h
+@@ -0,0 +1,58 @@
++#ifndef _BCACHE_REQUEST_H_
++#define _BCACHE_REQUEST_H_
++#include <linux/cgroup.h>
++
++struct search {
++	/* Stack frame for bio_complete */
++	struct closure		cl;
++
++	struct task_struct	*task;
++
++	struct bbio		bio;
++	struct bio		*orig_bio;
++	struct bio		*cache_bio;
++	struct bio		*cache_miss;
++	unsigned		cache_bio_sectors;
++
++	unsigned		recoverable:1;
++	unsigned		unaligned_bvec:1;
++	unsigned		skip:1;
++	unsigned		write:1;
++	unsigned		writeback:1;
++
++	unsigned		bio_insert_done:1;
++
++	/* IO error returned to s->bio */
++	short			error;
++
++	/* Anything past op->keys won't get zeroed in do_bio_hook */
++	struct btree_op		op;
++};
++
++void cache_read_endio(struct bio *, int);
++int bcache_get_congested(struct cache_set *);
++void bcache_btree_insert_async(struct closure *);
++
++void bcache_open_buckets_free(struct cache_set *);
++int bcache_open_buckets_alloc(struct cache_set *);
++
++void cached_dev_request_init(struct cached_dev *d);
++void flash_dev_request_init(struct bcache_device *d);
++
++extern struct kmem_cache *search_cache, *passthrough_cache;
++
++struct bcache_cgroup {
++#ifdef CONFIG_CGROUP_BCACHE
++	struct cgroup_subsys_state	css;
++#endif
++	/*
++	 * We subtract one from the index into bcache_cache_modes[], so that
++	 * default == -1; this makes it so the rest match up with d->cache_mode,
++	 * and we use d->cache_mode if cgrp->cache_mode < 0
++	 */
++	short				cache_mode;
++	bool				verify;
++	struct cache_stat_collector	stats;
++};
++
++#endif /* _BCACHE_REQUEST_H_ */
 -- 
 1.7.9.rc2
