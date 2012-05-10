@@ -1,36 +1,39 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [Bcache v13 04/16] Fix ratelimit macro to compile in c99 mode
-Date: Wed, 9 May 2012 23:09:00 -0400
-Message-ID: <d7cfd6b70316efc3fe2ce575203d906a610e3670.1336619038.git.koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [Bcache v13 05/16] Export get_random_int()
+Date: Wed, 9 May 2012 23:09:13 -0400
+Message-ID: <5278ad493eb3ad441b2091b4c119d741e47f5c97.1336619038.git.koverstreet@google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <cover.1336619038.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+In-Reply-To: <cover.1336619038.git.koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: tejun@google.com, agk@redhat.com
 List-Id: dm-devel.ids
 
+This is needed for bcache - it needs a fast source of random numbers for
+the throttling code in order to fuzz IO sizes, but the random numbers
+don't need to be any good (and it immediately converts it to a
+binomially distributed random number with popcount anyways).
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- include/linux/ratelimit.h |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ drivers/char/random.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/include/linux/ratelimit.h b/include/linux/ratelimit.h
-index e11ccb4..9ad57d3 100644
---- a/include/linux/ratelimit.h
-+++ b/include/linux/ratelimit.h
-@@ -20,7 +20,7 @@ struct ratelimit_state {
- #define DEFINE_RATELIMIT_STATE(name, interval_init, burst_init)		\
- 									\
- 	struct ratelimit_state name = {					\
--		.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),	\
-+		.lock		= __RAW_SPIN_LOCK_INITIALIZER(name.lock),\
- 		.interval	= interval_init,			\
- 		.burst		= burst_init,				\
- 	}
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index 54ca8b2..ec4dd79 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -1357,6 +1357,7 @@ unsigned int get_random_int(void)
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL(get_random_int);
+ 
+ /*
+  * randomize_range() returns a start address such that
 -- 
 1.7.9.rc2
