@@ -1,698 +1,389 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [Bcache v13 16/16] bcache: Debug and tracing code
-Date: Wed, 9 May 2012 23:11:48 -0400
-Message-ID: <ea3807bc74b1e17e2550ac3bf96e6a64c3e653f1.1336619038.git.koverstreet@google.com>
-References: <cover.1336619038.git.koverstreet@google.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCHES]: dm lock optimization
+Date: Thu, 10 May 2012 13:33:53 +0900
+Message-ID: <4FAB4531.4010704@ce.jp.nec.com>
+References: <Pine.LNX.4.64.1204182249060.12984@file.rdu.redhat.com>
+	<4F8F9FDA.1000103@ce.jp.nec.com>
+	<Pine.LNX.4.64.1204211215230.3269@file.rdu.redhat.com>
+	<4F953574.3000702@ce.jp.nec.com>
+	<Pine.LNX.4.64.1205012214560.24798@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1336619038.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1205012214560.24798@file.rdu.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- drivers/block/bcache/debug.c |  574 ++++++++++++++++++++++++++++++++++++++++++
- drivers/block/bcache/debug.h |   53 ++++
- drivers/block/bcache/trace.c |   26 ++
- 3 files changed, 653 insertions(+), 0 deletions(-)
- create mode 100644 drivers/block/bcache/debug.c
- create mode 100644 drivers/block/bcache/debug.h
- create mode 100644 drivers/block/bcache/trace.c
+Hi Mikulas,
 
-diff --git a/drivers/block/bcache/debug.c b/drivers/block/bcache/debug.c
-new file mode 100644
-index 0000000..a9a8369
---- /dev/null
-+++ b/drivers/block/bcache/debug.c
-@@ -0,0 +1,574 @@
-+
-+#include "bcache.h"
-+#include "btree.h"
-+#include "debug.h"
-+#include "request.h"
-+
-+#include <linux/console.h>
-+#include <linux/debugfs.h>
-+#include <linux/module.h>
-+#include <linux/random.h>
-+#include <linux/seq_file.h>
-+
-+static struct dentry *debug;
-+
-+/* Various debug code */
-+
-+const char *ptr_status(struct cache_set *c, const struct bkey *k)
+On 05/02/12 11:17, Mikulas Patocka wrote:
+> I placed the new code using srcu here: 
+> http://people.redhat.com/mpatocka/patches/kernel/dm-lock-optimization/
+> 
+> It removes io_lock, map_lock and holders and replaces them with srcu.
+
+I've reviewed the patches and here are some comments.
+The 1st one seems to be a bug.
+Others are minor comments about readability.
+
+  - There are functions destroying inactive table
+    without SRCU synchronization.
+      * table_load
+      * table_clear
+      * do_resume
+      * __hash_remove
+    It could cause use-after-free by the user of
+    dm_get_inactive_table().
+    synchronization is needed, outside of exclusive hash_lock.
+
+  - I couldn't see the reason why locking is different
+    for request-based in dm_wq_work().
+
+  - We could use dm_get_live_table() in the caller of
+    __split_and_process_bio() and pass the result to it.
+    Then, naked use of srcu_read_lock/unlock and
+    rcu_dereference can be eliminated.
+    I think it helps readability.
+
+  - md->map is directly referenced in dm_suspend/dm_resume.
+    It's ok because md->suspend_lock is taken and nobody
+    can replace md->map. I think it's worth putting a comment
+    in 'struct mapped_device' about the rule.
+
+Attached patch explains the above comments by code.
+
+>> synchronize_rcu could be put in dm_table_destroy() instead of __bind().
+>> I think it's safer place to wait.
+> 
+> I think the code is more readable if synchronizing rcu is just after 
+> assigning the pointer that is protected by rcu.
+
+OK. I don't object.
+
+Thanks,
+--- 
+Jun'ichi Nomura, NEC Corporation
+
+* Added a comment about locking for reading md->map
+* dm_sync_table() to wait for other processes to exit from
+  read-side critical section
+* __split_and_process_bio() takes map
+* __hash_remove() returns a table pointer to be destroyed later
+* Added dm_sync_table() in functions in dm-ioctl.c to synchronize with
+  inactive table users
+
+Index: linux-3.3/drivers/md/dm.c
+===================================================================
+--- linux-3.3.orig/drivers/md/dm.c	2012-05-10 12:19:10.977242964 +0900
++++ linux-3.3/drivers/md/dm.c	2012-05-10 13:54:30.150853855 +0900
+@@ -141,6 +141,8 @@ struct mapped_device {
+ 
+ 	/*
+ 	 * The current mapping.
++	 * Use dm_get_live_table{_fast} or take suspend_lock for
++	 * dereference.
+ 	 */
+ 	struct dm_table *map;
+ 
+@@ -561,6 +563,12 @@ void dm_put_live_table(struct mapped_dev
+ 	srcu_read_unlock(&md->io_barrier, srcu_idx);
+ }
+ 
++void dm_sync_table(struct mapped_device *md)
 +{
-+	for (unsigned i = 0; i < KEY_PTRS(k); i++)
-+		if (ptr_available(c, k, i)) {
-+			struct cache *ca = PTR_CACHE(c, k, i);
-+			size_t bucket = PTR_BUCKET_NR(c, k, i);
-+			size_t r = bucket_remainder(c, PTR_OFFSET(k, i));
-+
-+			if (KEY_SIZE(k) + r > c->sb.bucket_size)
-+				return "bad, length too big";
-+			if (bucket <  ca->sb.first_bucket)
-+				return "bad, short offset";
-+			if (bucket >= ca->sb.nbuckets)
-+				return "bad, offset past end of device";
-+			if (ptr_stale(c, k, i))
-+				return "stale";
-+		}
-+
-+	if (!bkey_cmp(k, &ZERO_KEY))
-+		return "bad, null key";
-+	if (!KEY_PTRS(k))
-+		return "bad, no pointers";
-+	if (!KEY_SIZE(k))
-+		return "zeroed key";
-+	return "";
++	synchronize_srcu(&md->io_barrier);
++	synchronize_rcu_expedited();
 +}
 +
-+static bool skipped_backwards(struct btree *b, struct bkey *k)
-+{
-+	return bkey_cmp(k, (!b->level) ? &START_KEY(next(k)) : next(k)) > 0;
-+}
-+
-+static void dump_bset(struct btree *b, struct bset *i)
-+{
-+	for (struct bkey *k = i->start; k < end(i); k = next(k)) {
-+		printk(KERN_ERR "block %zu key %zu/%i: %s", index(i, b),
-+		       (uint64_t *) k - i->d, i->keys, pkey(k));
-+
-+		for (unsigned j = 0; j < KEY_PTRS(k); j++) {
-+			size_t n = PTR_BUCKET_NR(b->c, k, j);
-+			printk(" bucket %zu", n);
-+
-+			if (n >= b->c->sb.first_bucket && n < b->c->sb.nbuckets)
-+				printk(" prio %i",
-+				       PTR_BUCKET(b->c, k, j)->prio);
-+		}
-+
-+		printk(" %s\n", ptr_status(b->c, k));
-+
-+		if (next(k) < end(i) &&
-+		    skipped_backwards(b, k))
-+			printk(KERN_ERR "Key skipped backwards\n");
-+	}
-+}
-+
-+static void vdump_bucket_and_panic(struct btree *b, const char *m, va_list args)
-+{
-+	struct bset *i;
-+
-+	console_lock();
-+
-+	for_each_sorted_set(b, i)
-+		dump_bset(b, i);
-+
-+	vprintk(m, args);
-+
-+	console_unlock();
-+
-+	panic("at %s\n", pbtree(b));
-+}
-+
-+static void dump_bucket_and_panic(struct btree *b, const char *m, ...)
-+{
-+	va_list args;
-+	va_start(args, m);
-+	vdump_bucket_and_panic(b, m, args);
-+	va_end(args);
-+}
-+
-+static void __maybe_unused
-+dump_key_and_panic(struct btree *b, struct bset *i, int j)
-+{
-+	long bucket = PTR_BUCKET_NR(b->c, node(i, j), 0);
-+	long r = PTR_OFFSET(node(i, j), 0) & ~(~0 << b->c->bucket_bits);
-+
-+	printk(KERN_ERR "level %i block %zu key %i/%i: %s "
-+	       "bucket %llu offset %li into bucket\n",
-+	       b->level, index(i, b), j, i->keys, pkey(node(i, j)),
-+	       (uint64_t) bucket, r);
-+	dump_bucket_and_panic(b, "");
-+}
-+
-+struct keyprint_hack bcache_pkey(const struct bkey *k)
-+{
-+	unsigned i = 0;
-+	struct keyprint_hack r;
-+	char *out = r.s, *end = r.s + KEYHACK_SIZE;
-+
-+#define p(...)	(out += scnprintf(out, end - out, __VA_ARGS__))
-+
-+	p("%llu:%llu len %llu -> [", KEY_DEV(k), k->key, KEY_SIZE(k));
-+
-+	if (KEY_PTRS(k))
-+		while (1) {
-+			p("%llu:%llu gen %llu",
-+			  PTR_DEV(k, i), PTR_OFFSET(k, i), PTR_GEN(k, i));
-+
-+			if (++i == KEY_PTRS(k))
-+				break;
-+
-+			p(", ");
-+		}
-+
-+	p("]");
-+
-+	if (KEY_DIRTY(k))
-+		p(" dirty");
-+	if (KEY_CSUM(k))
-+		p(" cs%llu %llx", KEY_CSUM(k), k->ptr[1]);
-+#undef p
-+	return r;
-+}
-+
-+struct keyprint_hack bcache_pbtree(const struct btree *b)
-+{
-+	struct keyprint_hack r;
-+
-+	snprintf(r.s, 40, "%li level %i/%i", PTR_BUCKET_NR(b->c, &b->key, 0),
-+		 b->level, b->c->root ? b->c->root->level : -1);
-+	return r;
-+}
-+
-+#ifdef CONFIG_BCACHE_DEBUG
-+
-+void btree_verify(struct btree *b, struct bset *new)
-+{
-+	struct btree *v = b->c->verify_data;
-+	struct closure cl;
-+	closure_init_stack(&cl);
-+
-+	if (!b->c->verify)
-+		return;
-+
-+	closure_wait_event(&b->io.wait, &cl,
-+			   atomic_read(&b->io.cl.remaining) == -1);
-+
-+	mutex_lock(&b->c->verify_lock);
-+
-+	bkey_copy(&v->key, &b->key);
-+	v->written = 0;
-+	v->level = b->level;
-+
-+	btree_read(v);
-+	closure_wait_event(&v->io.wait, &cl,
-+			   atomic_read(&b->io.cl.remaining) == -1);
-+
-+	if (new->keys != v->sets[0].data->keys ||
-+	    memcmp(new->start,
-+		   v->sets[0].data->start,
-+		   (void *) end(new) - (void *) new->start)) {
-+		struct bset *i;
-+		unsigned j;
-+
-+		console_lock();
-+
-+		printk(KERN_ERR "*** original memory node:\n");
-+		for_each_sorted_set(b, i)
-+			dump_bset(b, i);
-+
-+		printk(KERN_ERR "*** sorted memory node:\n");
-+		dump_bset(b, new);
-+
-+		printk(KERN_ERR "*** on disk node:\n");
-+		dump_bset(v, v->sets[0].data);
-+
-+		for (j = 0; j < new->keys; j++)
-+			if (new->d[j] != v->sets[0].data->d[j])
-+				break;
-+
-+		console_unlock();
-+		panic("verify failed at %u\n", j);
-+	}
-+
-+	mutex_unlock(&b->c->verify_lock);
-+}
-+
-+static void data_verify_endio(struct bio *bio, int error)
-+{
-+	struct closure *cl = bio->bi_private;
-+	closure_put(cl);
-+}
-+
-+void data_verify(struct search *s)
-+{
-+	char name[BDEVNAME_SIZE];
-+	struct cached_dev *dc = container_of(s->op.d, struct cached_dev, disk);
-+	struct closure *cl = &s->cl;
-+	struct bio *check;
-+	struct bio_vec *bv;
-+	int i;
-+
-+	if (!s->unaligned_bvec)
-+		bio_for_each_segment(bv, s->orig_bio, i)
-+			bv->bv_offset = 0, bv->bv_len = PAGE_SIZE;
-+
-+	check = bio_clone(s->orig_bio, GFP_NOIO);
-+	if (!check)
-+		return;
-+
-+	if (bio_alloc_pages(check, GFP_NOIO))
-+		goto out_put;
-+
-+	check->bi_rw		= READ_SYNC;
-+	check->bi_private	= cl;
-+	check->bi_end_io	= data_verify_endio;
-+
-+	closure_bio_submit(check, cl, s->op.d->c->bio_split);
-+	closure_sync(cl);
-+
-+	bio_for_each_segment(bv, s->orig_bio, i) {
-+		void *p1 = kmap(bv->bv_page);
-+		void *p2 = kmap(check->bi_io_vec[i].bv_page);
-+
-+		if (memcmp(p1 + bv->bv_offset,
-+			   p2 + bv->bv_offset,
-+			   bv->bv_len))
-+			printk(KERN_ERR "bcache (%s): verify failed"
-+			       " at sector %llu\n",
-+			       bdevname(dc->bdev, name),
-+			       (uint64_t) s->orig_bio->bi_sector);
-+
-+		kunmap(bv->bv_page);
-+		kunmap(check->bi_io_vec[i].bv_page);
-+	}
-+
-+	__bio_for_each_segment(bv, check, i, 0)
-+		__free_page(bv->bv_page);
-+out_put:
-+	bio_put(check);
-+}
-+
-+#endif
-+
-+#ifdef CONFIG_BCACHE_EDEBUG
-+
-+unsigned count_data(struct btree *b)
-+{
-+	unsigned ret = 0;
-+	struct bkey *k;
-+
-+	if (!b->level)
-+		for_each_key(b, k)
-+			ret += KEY_SIZE(k);
-+	return ret;
-+}
-+
-+void check_key_order_msg(struct btree *b, struct bset *i, const char *m, ...)
-+{
-+	if (!i->keys)
-+		return;
-+
-+	for (struct bkey *k = i->start; next(k) < end(i); k = next(k))
-+		if (skipped_backwards(b, k)) {
-+			va_list args;
-+			va_start(args, m);
-+
-+			vdump_bucket_and_panic(b, m, args);
-+			va_end(args);
-+		}
-+}
-+
-+void check_keys(struct btree *b, const char *m, ...)
-+{
-+	va_list args;
-+	struct bkey *k, *p;
-+	struct btree_iter iter;
-+
-+	if (b->level)
-+		return;
-+
-+	btree_iter_init(b, &iter, NULL);
-+
-+	do
-+		p = btree_iter_next(&iter);
-+	while (p && ptr_invalid(b, p));
-+
-+	while ((k = btree_iter_next(&iter))) {
-+		if (bkey_cmp(&START_KEY(p), &START_KEY(k)) > 0) {
-+			printk(KERN_ERR "Keys out of order:\n");
-+			goto bug;
-+		}
-+
-+		if (ptr_invalid(b, k))
-+			continue;
-+
-+		if (bkey_cmp(p, &START_KEY(k)) > 0) {
-+			printk(KERN_ERR "Overlapping keys:\n");
-+			goto bug;
-+		}
-+		p = k;
-+	}
-+	return;
-+bug:
-+	va_start(args, m);
-+	vdump_bucket_and_panic(b, m, args);
-+	va_end(args);
-+}
-+
-+#endif
-+
-+#ifdef CONFIG_DEBUG_FS
-+
-+static int btree_dump(struct btree *b, struct btree_op *op, struct seq_file *f,
-+		      const char *tabs, uint64_t *prev, uint64_t *sectors)
-+{
-+	struct bkey *k;
-+	char buf[30];
-+	uint64_t last, biggest = 0;
-+
-+	for_each_key(b, k) {
-+		int j = (uint64_t *) k - _t->data->d;
-+		if (!j)
-+			last = *prev;
-+
-+		if (last > k->key)
-+			seq_printf(f, "Key skipped backwards\n");
-+
-+		if (!b->level && j &&
-+		    last != KEY_START(k))
-+			seq_printf(f, "<hole>\n");
-+		else if (b->level && !ptr_bad(b, k))
-+			btree(dump, k, b, op, f, tabs - 1, &last, sectors);
-+
-+		seq_printf(f, "%s%zi %4i: %s %s\n",
-+			   tabs, _t - b->sets, j, pkey(k), buf);
-+
-+		if (!b->level && !buf[0])
-+			*sectors += KEY_SIZE(k);
-+
-+		last = k->key;
-+		biggest = max(biggest, last);
-+	}
-+	*prev = biggest;
-+
-+	return 0;
-+}
-+
-+static int debug_seq_show(struct seq_file *f, void *data)
-+{
-+	static const char *tabs = "\t\t\t\t\t";
-+	uint64_t last = 0, sectors = 0;
-+	struct cache *ca = f->private;
-+	struct cache_set *c = ca->set;
-+
-+	struct btree_op op;
-+	btree_op_init_stack(&op);
-+
-+	btree_root(dump, c, &op, f, &tabs[4], &last, &sectors);
-+
-+	seq_printf(f, "%s\n" "%llu Mb found\n",
-+		   pkey(&c->root->key), sectors / 2048);
-+
-+	closure_sync(&op.cl);
-+	return 0;
-+}
-+
-+static int debug_seq_open(struct inode *inode, struct file *file)
-+{
-+	return single_open(file, debug_seq_show, inode->i_private);
-+}
-+
-+static const struct file_operations cache_debug_ops = {
-+	.owner		= THIS_MODULE,
-+	.open		= debug_seq_open,
-+	.read		= seq_read,
-+	.release	= single_release
-+};
-+
-+void bcache_debug_init_cache(struct cache *c)
-+{
-+	if (!IS_ERR_OR_NULL(debug)) {
-+		char b[BDEVNAME_SIZE];
-+		bdevname(c->bdev, b);
-+
-+		c->debug = debugfs_create_file(b, 0400, debug, c,
-+					       &cache_debug_ops);
-+	}
-+}
-+
-+#endif
-+
-+#ifdef CONFIG_BCACHE_DEBUG
-+static ssize_t btree_fuzz(struct kobject *k, struct kobj_attribute *a,
-+		      const char *buffer, size_t size)
-+{
-+	void dump(struct btree *b)
-+	{
-+		for (struct bset *i = b->sets[0].data;
-+		     index(i, b) < btree_blocks(b) &&
-+		     i->seq == b->sets[0].data->seq;
-+		     i = ((void *) i) + set_blocks(i, b->c) * block_bytes(b->c))
-+			dump_bset(b, i);
-+	}
-+
-+	struct cache_sb *sb;
-+	struct cache_set *c;
-+	struct btree *all[3], *b, *fill, *orig;
-+
-+	struct btree_op op;
-+	btree_op_init_stack(&op);
-+
-+	sb = kzalloc(sizeof(struct cache_sb), GFP_KERNEL);
-+	if (!sb)
-+		return -ENOMEM;
-+
-+	sb->bucket_size = 128;
-+	sb->block_size = 4;
-+
-+	c = cache_set_alloc(sb);
-+	if (!c)
-+		return -ENOMEM;
-+
-+	for (int i = 0; i < 3; i++) {
-+		BUG_ON(list_empty(&c->btree_cache));
-+		all[i] = list_first_entry(&c->btree_cache, struct btree, list);
-+		list_del_init(&all[i]->list);
-+
-+		all[i]->key = KEY(0, 0, c->sb.bucket_size);
-+		bkey_copy_key(&all[i]->key, &MAX_KEY);
-+	}
-+
-+	b = all[0];
-+	fill = all[1];
-+	orig = all[2];
-+
-+	while (1) {
-+		for (int i = 0; i < 3; i++)
-+			all[i]->written = all[i]->nsets = 0;
-+
-+		bset_init_next(b);
-+
-+		while (1) {
-+			struct bset *i = write_block(b);
-+			struct bkey *k = op.keys.top;
-+
-+			k->key = get_random_int();
-+
-+			op.type = k->key & 1
-+				? BTREE_INSERT
-+				: BTREE_REPLACE;
-+			k->key >>= 1;
-+
-+			k->header = KEY_HEADER(bucket_remainder(c, k->key), 0);
-+			k->key >>= c->bucket_bits;
-+			k->key &= 1024 * 512 - 1;
-+			k->key += c->sb.bucket_size;
-+#if 0
-+			SET_KEY_PTRS(k, 1);
-+#endif
-+			keylist_push(&op.keys);
-+			bcache_btree_insert_keys(b, &op);
-+
-+			if (should_split(b) ||
-+			    set_blocks(i, b->c) !=
-+			    __set_blocks(i, i->keys + 15, b->c)) {
-+				i->csum = csum_set(i);
-+
-+				memcpy(write_block(fill),
-+				       i, set_bytes(i));
-+
-+				b->written += set_blocks(i, b->c);
-+				fill->written = b->written;
-+				if (b->written == btree_blocks(b))
-+					break;
-+
-+				btree_sort_lazy(b);
-+				bset_init_next(b);
+ /*
+  * A fast alternative to dm_get_live_table/dm_put_live_table.
+  * The caller must not block between these two functions.
+@@ -1316,17 +1324,18 @@ static int __clone_and_map(struct clone_
+ /*
+  * Split the bio into several clones and submit it to targets.
+  */
+-static void __split_and_process_bio(struct mapped_device *md, struct bio *bio)
++static void __split_and_process_bio(struct mapped_device *md,
++				    struct dm_table *map, struct bio *bio)
+ {
+ 	struct clone_info ci;
+ 	int error = 0;
+ 
+-	ci.map = srcu_dereference(md->map, &md->io_barrier);
+-	if (unlikely(!ci.map)) {
++	if (unlikely(!map)) {
+ 		bio_io_error(bio);
+ 		return;
+ 	}
+ 
++	ci.map = map;
+ 	ci.md = md;
+ 	ci.io = alloc_io(md);
+ 	ci.io->error = 0;
+@@ -1422,8 +1431,9 @@ static void _dm_request(struct request_q
+ 	struct mapped_device *md = q->queuedata;
+ 	int cpu;
+ 	int srcu_idx;
++	struct dm_table *map;
+ 
+-	srcu_idx = srcu_read_lock(&md->io_barrier);
++	map = dm_get_live_table(md, &srcu_idx);
+ 
+ 	cpu = part_stat_lock();
+ 	part_stat_inc(cpu, &dm_disk(md)->part0, ios[rw]);
+@@ -1432,7 +1442,7 @@ static void _dm_request(struct request_q
+ 
+ 	/* if we're suspended, we have to queue this io for later */
+ 	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))) {
+-		srcu_read_unlock(&md->io_barrier, srcu_idx);
++		dm_put_live_table(md, srcu_idx);
+ 
+ 		if (bio_rw(bio) != READA)
+ 			queue_io(md, bio);
+@@ -1441,8 +1451,8 @@ static void _dm_request(struct request_q
+ 		return;
+ 	}
+ 
+-	__split_and_process_bio(md, bio);
+-	srcu_read_unlock(&md->io_barrier, srcu_idx);
++	__split_and_process_bio(md, map, bio);
++	dm_put_live_table(md, srcu_idx);
+ 	return;
+ }
+ 
+@@ -2115,8 +2125,7 @@ static struct dm_table *__bind(struct ma
+ 		set_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+ 	else
+ 		clear_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+-	synchronize_srcu(&md->io_barrier);
+-	synchronize_rcu_expedited();
++	dm_sync_table(md);
+ 
+ 	return old_map;
+ }
+@@ -2133,8 +2142,7 @@ static struct dm_table *__unbind(struct 
+ 
+ 	dm_table_event_callback(map, NULL, NULL);
+ 	rcu_assign_pointer(md->map, NULL);
+-	synchronize_srcu(&md->io_barrier);
+-	synchronize_rcu_expedited();
++	dm_sync_table(md);
+ 
+ 	return map;
+ }
+@@ -2375,8 +2383,9 @@ static void dm_wq_work(struct work_struc
+ 						work);
+ 	struct bio *c;
+ 	int srcu_idx;
++	struct dm_table *map;
+ 
+-	srcu_idx = srcu_read_lock(&md->io_barrier);
++	map = dm_get_live_table(md, &srcu_idx);
+ 
+ 	while (!test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)) {
+ 		spin_lock_irq(&md->deferred_lock);
+@@ -2386,15 +2395,13 @@ static void dm_wq_work(struct work_struc
+ 		if (!c)
+ 			break;
+ 
+-		if (dm_request_based(md)) {
+-			srcu_read_unlock(&md->io_barrier, srcu_idx);
++		if (dm_request_based(md))
+ 			generic_make_request(c);
+-			srcu_idx = srcu_read_lock(&md->io_barrier);
+-		} else
+-			__split_and_process_bio(md, c);
++		else
++			__split_and_process_bio(md, map, c);
+ 	}
+ 
+-	srcu_read_unlock(&md->io_barrier, srcu_idx);
++	dm_put_live_table(md, srcu_idx);
+ }
+ 
+ static void dm_queue_flush(struct mapped_device *md)
+Index: linux-3.3/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-3.3.orig/drivers/md/dm-ioctl.c	2012-05-10 12:19:10.995242964 +0900
++++ linux-3.3/drivers/md/dm-ioctl.c	2012-05-10 12:54:30.312180811 +0900
+@@ -250,7 +250,7 @@ static int dm_hash_insert(const char *na
+ 	return -EBUSY;
+ }
+ 
+-static void __hash_remove(struct hash_cell *hc)
++static struct dm_table *__hash_remove(struct hash_cell *hc)
+ {
+ 	struct dm_table *table;
+ 	int srcu_idx;
+@@ -267,10 +267,13 @@ static void __hash_remove(struct hash_ce
+ 		dm_table_event(table);
+ 	dm_put_live_table(hc->md, srcu_idx);
+ 
++	table = NULL;
+ 	if (hc->new_map)
+-		dm_table_destroy(hc->new_map);
++		table = hc->new_map;
+ 	dm_put(hc->md);
+ 	free_cell(hc);
++
++	return table;
+ }
+ 
+ static void dm_hash_remove_all(int keep_open_devices)
+@@ -278,6 +281,7 @@ static void dm_hash_remove_all(int keep_
+ 	int i, dev_skipped;
+ 	struct hash_cell *hc;
+ 	struct mapped_device *md;
++	struct dm_table *t;
+ 
+ retry:
+ 	dev_skipped = 0;
+@@ -295,10 +299,14 @@ retry:
+ 				continue;
+ 			}
+ 
+-			__hash_remove(hc);
++			t = __hash_remove(hc);
+ 
+ 			up_write(&_hash_lock);
+ 
++			if (t) {
++				dm_sync_table(md);
++				dm_table_destroy(t);
 +			}
-+		}
-+
-+		memcpy(orig->sets[0].data,
-+		       fill->sets[0].data,
-+		       btree_bytes(c));
-+
-+		btree_sort(b);
-+		fill->written = 0;
-+		btree_read_done(&fill->io.cl);
-+
-+		if (b->sets[0].data->keys != fill->sets[0].data->keys ||
-+		    memcmp(b->sets[0].data->start,
-+			   fill->sets[0].data->start,
-+			   b->sets[0].data->keys * sizeof(uint64_t))) {
-+			struct bset *i = b->sets[0].data;
-+
-+			for (struct bkey *k = i->start,
-+			     *j = fill->sets[0].data->start;
-+			     k < end(i);
-+			     k = next(k), j = next(j))
-+				if (bkey_cmp(k, j) ||
-+				    KEY_SIZE(k) != KEY_SIZE(j))
-+					printk(KERN_ERR "key %zi differs: %s "
-+					       "!= %s\n", (uint64_t *) k - i->d,
-+					       pkey(k), pkey(j));
-+
-+			for (int i = 0; i < 3; i++) {
-+				printk(KERN_ERR "**** Set %i ****\n", i);
-+				dump(all[i]);
-+			}
-+			panic("\n");
-+		}
-+
-+		printk(KERN_DEBUG "bcache: fuzz complete: %i keys\n",
-+		       b->sets[0].data->keys);
+ 			dm_put(md);
+ 			if (likely(keep_open_devices))
+ 				dm_destroy(md);
+@@ -808,6 +816,7 @@ static int dev_remove(struct dm_ioctl *p
+ 	struct hash_cell *hc;
+ 	struct mapped_device *md;
+ 	int r;
++	struct dm_table *t;
+ 
+ 	down_write(&_hash_lock);
+ 	hc = __find_device_hash_cell(param);
+@@ -831,9 +840,14 @@ static int dev_remove(struct dm_ioctl *p
+ 		return r;
+ 	}
+ 
+-	__hash_remove(hc);
++	t = __hash_remove(hc);
+ 	up_write(&_hash_lock);
+ 
++	if (t) {
++		dm_sync_table(md);
++		dm_table_destroy(t);
 +	}
-+}
 +
-+kobj_attribute_write(fuzz, btree_fuzz);
-+#endif
+ 	if (!dm_kobject_uevent(md, KOBJ_REMOVE, param->event_nr))
+ 		param->flags |= DM_UEVENT_GENERATED_FLAG;
+ 
+@@ -997,6 +1011,7 @@ static int do_resume(struct dm_ioctl *pa
+ 
+ 		old_map = dm_swap_table(md, new_map);
+ 		if (IS_ERR(old_map)) {
++			dm_sync_table(md);
+ 			dm_table_destroy(new_map);
+ 			dm_put(md);
+ 			return PTR_ERR(old_map);
+@@ -1014,6 +1029,10 @@ static int do_resume(struct dm_ioctl *pa
+ 			param->flags |= DM_UEVENT_GENERATED_FLAG;
+ 	}
+ 
++	/*
++	 * Since dm_swap_table synchronizes RCU, nobody should be in
++	 * read-side critical section already.
++	 */
+ 	if (old_map)
+ 		dm_table_destroy(old_map);
+ 
+@@ -1225,7 +1244,7 @@ static int table_load(struct dm_ioctl *p
+ {
+ 	int r;
+ 	struct hash_cell *hc;
+-	struct dm_table *t;
++	struct dm_table *t, *old_map = NULL;
+ 	struct mapped_device *md;
+ 	struct target_type *immutable_target_type;
+ 
+@@ -1281,14 +1300,14 @@ static int table_load(struct dm_ioctl *p
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+ 		DMWARN("device has been removed from the dev hash table.");
+-		dm_table_destroy(t);
+ 		up_write(&_hash_lock);
++		dm_table_destroy(t);
+ 		r = -ENXIO;
+ 		goto out;
+ 	}
+ 
+ 	if (hc->new_map)
+-		dm_table_destroy(hc->new_map);
++		old_map = hc->new_map;
+ 	hc->new_map = t;
+ 	up_write(&_hash_lock);
+ 
+@@ -1296,6 +1315,11 @@ static int table_load(struct dm_ioctl *p
+ 	__dev_status(md, param);
+ 
+ out:
++	if (old_map) {
++		dm_sync_table(md);
++		dm_table_destroy(old_map);
++	}
 +
-+#ifdef CONFIG_BCACHE_LATENCY_DEBUG
-+static ssize_t show(struct kobject *k, struct kobj_attribute *attr, char *buf)
-+{
-+	return snprintf(buf, PAGE_SIZE, "%i\n", latency_warn_ms);
-+}
-+
-+static ssize_t store(struct kobject *k, struct kobj_attribute *attr,
-+		     const char *buffer, size_t size)
-+{
-+	return strtoul_safe(buffer, latency_warn_ms) ?: (ssize_t) size;
-+}
-+
-+kobj_attribute_rw(latency_warn_ms, show, store);
-+#endif
-+
-+void bcache_debug_exit(void)
-+{
-+	if (!IS_ERR_OR_NULL(debug))
-+		debugfs_remove_recursive(debug);
-+}
-+
-+int __init bcache_debug_init(struct kobject *kobj)
-+{
-+	int ret = 0;
-+#ifdef CONFIG_BCACHE_DEBUG
-+	ret = sysfs_create_file(kobj, &ksysfs_fuzz.attr);
-+	if (ret)
-+		return ret;
-+#endif
-+
-+#ifdef CONFIG_BCACHE_LATENCY_DEBUG
-+	ret = sysfs_create_file(kobj, &ksysfs_latency_warn_ms.attr);
-+	if (ret)
-+		return ret;
-+#endif
-+
-+	debug = debugfs_create_dir("bcache", NULL);
-+	return ret;
-+}
-diff --git a/drivers/block/bcache/debug.h b/drivers/block/bcache/debug.h
-new file mode 100644
-index 0000000..9f91a2a
---- /dev/null
-+++ b/drivers/block/bcache/debug.h
-@@ -0,0 +1,53 @@
-+#ifndef _BCACHE_DEBUG_H
-+#define _BCACHE_DEBUG_H
-+
-+/* Btree/bkey debug printing */
-+
-+#define KEYHACK_SIZE 80
-+struct keyprint_hack {
-+	char s[KEYHACK_SIZE];
-+};
-+
-+struct keyprint_hack bcache_pkey(const struct bkey *k);
-+struct keyprint_hack bcache_pbtree(const struct btree *b);
-+#define pkey(k)		(bcache_pkey(k).s)
-+#define pbtree(b)	(bcache_pbtree(b).s)
-+
-+#ifdef CONFIG_BCACHE_EDEBUG
-+
-+unsigned count_data(struct btree *);
-+void check_key_order_msg(struct btree *, struct bset *, const char *, ...);
-+void check_keys(struct btree *, const char *, ...);
-+
-+#define check_key_order(b, i)	check_key_order_msg(b, i, "keys out of order")
-+#define EBUG_ON(cond)		BUG_ON(cond)
-+
-+#else /* EDEBUG */
-+
-+#define count_data(b)					0
-+#define check_key_order(b, i)				do {} while (0)
-+#define check_key_order_msg(b, i, ...)			do {} while (0)
-+#define check_keys(b, ...)				do {} while (0)
-+#define EBUG_ON(cond)		do {} while (0)
-+
-+#endif
-+
-+#ifdef CONFIG_BCACHE_DEBUG
-+
-+void btree_verify(struct btree *, struct bset *);
-+void data_verify(struct search *);
-+
-+#else /* DEBUG */
-+
-+static inline void btree_verify(struct btree *b, struct bset *i) {}
-+static inline void data_verify(struct search *s) {};
-+
-+#endif
-+
-+#ifdef CONFIG_DEBUG_FS
-+void bcache_debug_init_cache(struct cache *);
-+#else
-+static inline void bcache_debug_init_cache(struct cache *c) {}
-+#endif
-+
-+#endif
-diff --git a/drivers/block/bcache/trace.c b/drivers/block/bcache/trace.c
-new file mode 100644
-index 0000000..983f9bb
---- /dev/null
-+++ b/drivers/block/bcache/trace.c
-@@ -0,0 +1,26 @@
-+#include "bcache.h"
-+#include "btree.h"
-+#include "request.h"
-+
-+#include <linux/module.h>
-+
-+#define CREATE_TRACE_POINTS
-+#include <trace/events/bcache.h>
-+
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_request_start);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_request_end);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_passthrough);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_cache_hit);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_cache_miss);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_read_retry);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_writethrough);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_writeback);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_write_skip);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_btree_read);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_btree_write);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_write_dirty);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_read_dirty);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_journal_write);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_cache_insert);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_gc_start);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(bcache_gc_end);
--- 
-1.7.9.rc2
+ 	dm_put(md);
+ 
+ 	return r;
+@@ -1305,6 +1329,7 @@ static int table_clear(struct dm_ioctl *
+ {
+ 	struct hash_cell *hc;
+ 	struct mapped_device *md;
++	struct dm_table *old_map = NULL;
+ 
+ 	down_write(&_hash_lock);
+ 
+@@ -1316,7 +1341,7 @@ static int table_clear(struct dm_ioctl *
+ 	}
+ 
+ 	if (hc->new_map) {
+-		dm_table_destroy(hc->new_map);
++		old_map = hc->new_map;
+ 		hc->new_map = NULL;
+ 	}
+ 
+@@ -1325,6 +1350,10 @@ static int table_clear(struct dm_ioctl *
+ 	__dev_status(hc->md, param);
+ 	md = hc->md;
+ 	up_write(&_hash_lock);
++	if (old_map) {
++		dm_sync_table(md);
++		dm_table_destroy(old_map);
++	}
+ 	dm_put(md);
+ 
+ 	return 0;
+Index: linux-3.3/include/linux/device-mapper.h
+===================================================================
+--- linux-3.3.orig/include/linux/device-mapper.h	2012-05-10 10:03:06.000000000 +0900
++++ linux-3.3/include/linux/device-mapper.h	2012-05-10 12:45:48.510196182 +0900
+@@ -364,6 +364,7 @@ int dm_table_complete(struct dm_table *t
+  */
+ struct dm_table *dm_get_live_table(struct mapped_device *md, int *srcu_idx);
+ void dm_put_live_table(struct mapped_device *md, int srcu_idx);
++void dm_sync_table(struct mapped_device *md);
+ 
+ /*
+  * Queries
