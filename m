@@ -1,62 +1,43 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [dm-devel] [Bcache v13 01/16] Only clone bio vecs that are in use
-Date: Fri, 11 May 2012 13:29:49 -0700
-Message-ID: <20120511202949.GB26298@google.com>
-References: <cover.1336619038.git.koverstreet@google.com>
- <cb817596299fecd01ea36e4a80203f23165bda75.1336619038.git.koverstreet@google.com>
- <20120510213556.GO23768@redhat.com>
- <CAH+dOxJ2Vi=8Oq1zDZLmqD9-a_wgM=co3+xemw4XBoiDkh_4zg@mail.gmail.com>
- <x494nrmx2ux.fsf@segfault.boston.devel.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper fixes for 3.4
+Date: Sat, 12 May 2012 02:07:34 +0100
+Message-ID: <20120512010734.GA20415@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <x494nrmx2ux.fsf@segfault.boston.devel.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tejun@google.com, agk@redhat.com, Martin Peterson <mkp@mkp.net>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Ben Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Joe Thornber <thornber@redhat.com>, stable@kernel.org, xiaoli@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, May 11, 2012 at 09:29:42AM -0400, Jeff Moyer wrote:
->=20
-> [top posting fixed]
->=20
-> Kent Overstreet <koverstreet@google.com> writes:
->=20
-> > 2012/5/10 Vivek Goyal <vgoyal@redhat.com>:
-> >> On Wed, May 09, 2012 at 11:08:13PM -0400, Kent Overstreet wrote:
-> >>
-> >> [..]
-> >>> -
-> >>> - =C2=A0 =C2=A0 if (bio_integrity(bio)) {
-> >>> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 bio_integrity_clone(c=
-lone, bio, GFP_NOIO, bs);
-> >>> -
-> >>> +#if 0
-> >>> + =C2=A0 =C2=A0 if (bio_integrity(bio))
-> >>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (idx !=3D bio=
-->bi_idx || clone->bi_size < bio->bi_size)
-> >>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 bio_integrity_trim(clone,
-> >>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0bio_sector_offset(bio, idx, 0), len);
-> >>> - =C2=A0 =C2=A0 }
-> >>> -
-> >>> +#endif
-> >>
-> >> Dead/debug code under "#if 0" ?
-> >>
-> > Oh, I never got around to figuring out what needed to be done with =
-the
-> > bio integrity - presumably it'll have to be handled differently
-> > somehow (I'm assuming an index in the integrity bvec is intended to
-> > match up with an index in the regular bvec), but I don't have any w=
-ay
-> > to test the integrity stuff.
->=20
-> The scsi debug module supports dif/dix, so you can use that for testi=
-ng.
+Please pull from:
 
-Thanks, I'll try that.
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.4-fixes
+
+to get the following device-mapper fixes for 3.4.
+
+Thanks,
+Alasdair
+
+----------------------------------------------------------------
+Device-mapper fixes for 3.4.
+
+Fix a couple of serious memory leaks in device-mapper thin provisioning
+and tidy its MODULE_DESCRIPTION.
+
+Mitigate occasional reported hangs associated with multipath scsi_dh
+module loading.
+
+----------------------------------------------------------------
+Alasdair G Kergon (1):
+      dm thin: correct module description
+
+Mike Snitzer (3):
+      dm thin: reinstate missing mempool_free in cell_release_singleton
+      dm thin: fix unprotected use of prepared_discards list
+      dm mpath: check if scsi_dh module already loaded before trying to load
+
+ drivers/md/dm-mpath.c |    4 ++--
+ drivers/md/dm-thin.c  |   16 ++++++++++++----
+ 2 files changed, 14 insertions(+), 6 deletions(-)
