@@ -1,7 +1,7 @@
-From: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Subject: Re: [Bcache v13 02/16] Bio pool freeing
-Date: Tue, 15 May 2012 09:24:00 -0700
-Message-ID: <20120515162400.GB17216@google.com>
+Date: Tue, 15 May 2012 09:25:25 -0700
+Message-ID: <20120515162525.GC17216@google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
  <ba8ce9fcca87f192ff5f5d3a436eb8f4d0bcb006.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
@@ -23,6 +23,14 @@ On Wed, May 09, 2012 at 11:08:34PM -0400, Kent Overstreet wrote:
 > 
 > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > ---
+>  fs/bio.c                  |    9 +++++++--
+>  include/linux/blk_types.h |    2 ++
+>  2 files changed, 9 insertions(+), 2 deletions(-)
+> 
+> diff --git a/fs/bio.c b/fs/bio.c
+> index a965b89..6a967fc 100644
+> --- a/fs/bio.c
+> +++ b/fs/bio.c
 > @@ -417,7 +418,11 @@ void bio_put(struct bio *bio)
 >  	 */
 >  	if (atomic_dec_and_test(&bio->bi_cnt)) {
