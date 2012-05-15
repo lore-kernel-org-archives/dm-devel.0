@@ -1,11 +1,7 @@
-From: Charles Nordlund <iueras@hotmail.com>
-Subject: Re: HPA unlock during partition scan of RAID components
-Date: Tue, 15 May 2012 00:50:25 +0000 (UTC)
-Message-ID: <loom.20120515T024500-794@post.gmane.org>
-References: <74AAB12B538EC94087A0D16AFDFC24F4045674@IRSMSX102.ger.corp.intel.com>
-	<20111103153835.GF4417@google.com>
-	<20111104074652.7b5eacb3@notabene.brown>
-	<20111103210810.GM4417@google.com>
+From: ml ml <mliebherr99@googlemail.com>
+Subject: Multipath and LVM (lvdisplay takes 30Secs)
+Date: Tue, 15 May 2012 12:15:09 +0200
+Message-ID: <CANFxOjBW+RSKRCe_sSfAH=CXXLBLzJcfJzd8iJmJNLvSDVzOHg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,41 +19,96 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Tejun Heo <tj <at> kernel.org> writes:
+Hello List,
 
-> 
-> On Fri, Nov 04, 2011 at 07:46:52AM +1100, NeilBrown wrote:
-> > What exactly do you mean by "expose both sizes" ??
-> > A new ioctl - BLKGETHPASIZE64 ??
-> > 
-> > That might work, but I think it would be good if there were also an ioctl
-> > BLKHBALOCK which changed BLKGETSIZE64 to match BLKGETHPASIZE64.
-> > Then some user-space tools could examine the device with a full understanding
-> > of md, dm, dmraid, partitions, filesystems etc etc and make a reasonably
-> > informed decision.  And then put that decision into effect.
-> 
-> In kernel, just another size field.  Out of kernel, I was thinking
-> more along the line of a new /sysfs field, but yeah maybe another
-> ioctl.  At this point, I don't really think making unlocking
-> selectable is a good idea.  That has to go through device detach /
-> attach cycle and what if someone else is already using first half of
-> the disk?  We can try to be sneaky and slip in device size change
-> underneath it but that just sounds too crazy to me.  IMHO, we should
-> unlock by default and just let everyone know what the size before
-> unlocking was in case that could be useful.
-> 
-> Thank you.
-> 
+i am using multipath for redundance reasons. But something seems to be dodgy.
 
+"lvdisplay" takes 30Seconds.
 
-Just wanted to pop in and say that thanks to your "intelligent HPA unlock" code
-you submitted to the kernel, I am completely unable to mount and use an NTFS
-RAID0. The way it ignores the ignore_hpa=0 parameter causes the fakeraid to
-fail; since the first disk in the array reports a partition size that goes
-beyond EOD, the code you submitted goes ahead and unlocks it to native -- not
-HPA limited -- capacity, with the expected result that it completely trashes the
-array as far as Linux is concerned. What was the point of the huge debate over
-locking/unlocking by default and the associated parameters if the kernel is
-going to simply ignore all that -- and my explicit parameter to NOT unlock past
-HPA size -- and unlock it anyway (which was determined to be a very very bad
-idea way back in 2009)?
+"multipath" -l shows nothing
+
+multipath -l -v 2
+SAN (3600a0b80001f7557000032864ce4aff3) dm-0 IBM,1722-600
+size=250G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 2:0:1:0 sdb 8:16 active undef running
+|-+- policy='round-robin 0' prio=-1 status=enabled
+| `- 3:0:1:0 sdd 8:48 active undef running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 3:0:0:0 sdc 8:32 active undef running
+
+Any idea why lvmdisplay takes so long? If i can see its trying to read
+from sda, dm-1, sdb, dm-1 where the "read(3, " operations need some
+time each time.
+
+Here is some more info:
+
+multipath -l -v 3
+May 15 12:10:06 | sdb: not found in pathvec
+May 15 12:10:06 | sdb: mask = 0x1
+May 15 12:10:06 | sdb: dev_t = 8:16
+May 15 12:10:06 | sdb: size = 524288000
+May 15 12:10:06 | sdb: subsystem = scsi
+May 15 12:10:06 | sdb: vendor = IBM
+May 15 12:10:06 | sdb: product = 1722-600
+May 15 12:10:06 | sdb: rev = 0914
+May 15 12:10:06 | sdb: h:b:t:l = 2:0:1:0
+May 15 12:10:06 | sdb: tgt_node_name = 0x200400a0b816fb7
+May 15 12:10:06 | sda: device node name blacklisted
+May 15 12:10:06 | sdd: not found in pathvec
+May 15 12:10:06 | sdd: mask = 0x1
+May 15 12:10:06 | sdd: dev_t = 8:48
+May 15 12:10:06 | sdd: size = 524288000
+May 15 12:10:06 | sdd: subsystem = scsi
+May 15 12:10:06 | sdd: vendor = IBM
+May 15 12:10:06 | sdd: product = 1722-600
+May 15 12:10:06 | sdd: rev = 0914
+May 15 12:10:06 | sdd: h:b:t:l = 3:0:1:0
+May 15 12:10:06 | sdd: tgt_node_name = 0x200400a0b816fb7
+May 15 12:10:06 | sdc: not found in pathvec
+May 15 12:10:06 | sdc: mask = 0x1
+May 15 12:10:06 | sdc: dev_t = 8:32
+May 15 12:10:06 | sdc: size = 524288000
+May 15 12:10:06 | sdc: subsystem = scsi
+May 15 12:10:06 | sdc: vendor = IBM
+May 15 12:10:06 | sdc: product = 1722-600
+May 15 12:10:06 | sdc: rev = 0914
+May 15 12:10:06 | sdc: h:b:t:l = 3:0:0:0
+May 15 12:10:06 | sdc: tgt_node_name = 0x200400a0b816fb7
+May 15 12:10:06 | dm-0: device node name blacklisted
+May 15 12:10:06 | dm-1: device node name blacklisted
+May 15 12:10:06 | dm-2: device node name blacklisted
+May 15 12:10:06 | dm-3: device node name blacklisted
+May 15 12:10:06 | loop0: device node name blacklisted
+May 15 12:10:06 | loop1: device node name blacklisted
+May 15 12:10:06 | loop2: device node name blacklisted
+May 15 12:10:06 | loop3: device node name blacklisted
+May 15 12:10:06 | loop4: device node name blacklisted
+May 15 12:10:06 | loop5: device node name blacklisted
+May 15 12:10:06 | loop6: device node name blacklisted
+May 15 12:10:06 | loop7: device node name blacklisted
+May 15 12:10:06 | dm-4: device node name blacklisted
+May 15 12:10:06 | dm-5: device node name blacklisted
+May 15 12:10:06 | dm-6: device node name blacklisted
+===== paths list =====
+uuid hcil    dev dev_t pri dm_st chk_st vend/prod/rev dev_st
+     2:0:1:0 sdb 8:16  -1  undef undef  IBM,1722-600  running
+     3:0:1:0 sdd 8:48  -1  undef undef  IBM,1722-600  running
+     3:0:0:0 sdc 8:32  -1  undef undef  IBM,1722-600  running
+May 15 12:10:06 | params = 1 queue_if_no_path 1 rdac 3 1 round-robin 0
+1 1 8:16 600 round-robin 0 1 1 8:48 600 round-robin 0 1 1 8:32 100
+May 15 12:10:06 | status = 2 0 1 0 3 1 A 0 1 0 8:16 A 0 E 0 1 0 8:48 A
+0 E 0 1 0 8:32 A 0
+SAN (3600a0b80001f7557000032864ce4aff3) dm-0 IBM,1722-600
+size=250G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 2:0:1:0 sdb 8:16 active undef running
+|-+- policy='round-robin 0' prio=-1 status=enabled
+| `- 3:0:1:0 sdd 8:48 active undef running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 3:0:0:0 sdc 8:32 active undef running
+
+Any idea whats wrong here?
+
+Thanks a lot,
+Mario
