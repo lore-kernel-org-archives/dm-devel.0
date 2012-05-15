@@ -1,17 +1,15 @@
-From: Nicholas Nevin <njnevin@gmail.com>
-Subject: Re: /dev/mapper/<dm_name> symlink not being created
-Date: Tue, 15 May 2012 10:32:11 -0400
-Message-ID: <CACmkXc5-ALYkEW3U=UQTY=yCEwLGbJDhMeLv60winYCg4nkv0g@mail.gmail.com>
-References: <CACmkXc5fQCF78UW1_tEruAiuWL_EgODLt87=ZD-d_f2zT-GPeA@mail.gmail.com>
-	<CACmkXc5cEhvdBgHzbNW13cFcoj83LjFea=qwZOq5UUq5vpwdAw@mail.gmail.com>
-	<4FB10BE7.8090602@redhat.com>
-	<CACmkXc75Sp1itjaNvsU-y8Jq51V34feZuzxRFPqWxC1ASdo22g@mail.gmail.com>
-	<20120515140705.GA19147@agk-dp.fab.redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: Re: Multipath and LVM (lvdisplay takes 30Secs)
+Date: Tue, 15 May 2012 15:32:17 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B065AE3@SACEXCMBX02-PRD.hq.netapp.com>
+References: <CANFxOjBW+RSKRCe_sSfAH=CXXLBLzJcfJzd8iJmJNLvSDVzOHg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4012398610735819727=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120515140705.GA19147@agk-dp.fab.redhat.com>
+In-Reply-To: <CANFxOjBW+RSKRCe_sSfAH=CXXLBLzJcfJzd8iJmJNLvSDVzOHg@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,60 +19,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4012398610735819727==
-Content-Type: multipart/alternative; boundary=047d7b2edf0741de0004c01413fd
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-
+> bounces@redhat.com] On Behalf Of ml ml
+> Sent: Tuesday, May 15, 2012 5:15 AM
+> To: dm-devel@redhat.com
+> Subject: [dm-devel] Multipath and LVM (lvdisplay takes 30Secs)
+> 
+> Hello List,
+> 
+> i am using multipath for redundance reasons. But something seems to be
+> dodgy.
+> 
+> "lvdisplay" takes 30Seconds.
+> 
+> "multipath" -l shows nothing
+> 
+> multipath -l -v 2
+> SAN (3600a0b80001f7557000032864ce4aff3) dm-0 IBM,1722-600
+> size=250G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+> |-+- policy='round-robin 0' prio=-1 status=active
+> | `- 2:0:1:0 sdb 8:16 active undef running
+> |-+- policy='round-robin 0' prio=-1 status=enabled
+> | `- 3:0:1:0 sdd 8:48 active undef running
+> `-+- policy='round-robin 0' prio=-1 status=enabled
+>   `- 3:0:0:0 sdc 8:32 active undef running
 
---047d7b2edf0741de0004c01413fd
-Content-Type: text/plain; charset=ISO-8859-1
+Prio is showing -1.  May be your path grouping policy and prio handler is not set right.
+I would set it correctly and then test it again. Here is how I would set it in multipath.conf.
+path_grouping_policy    group_by_prio
+prio                    		rdac
 
-On Tue, May 15, 2012 at 10:07 AM, Alasdair G Kergon <agk@redhat.com> wrote:
-
-> dmsetup and udev have the functionality needed to do this in a race-free
-> manner, but it's necessarily complicated and takes a while to get your head
-> around it.  You'll need to use the dmsetup commands/options for udev
-> cookies
-> described in the man page.
->
-> Alasdair
->
->
-Thanks. I'll take a look at doing this.
-
--nick
-
---047d7b2edf0741de0004c01413fd
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<br><br><div class=3D"gmail_quote">On Tue, May 15, 2012 at 10:07 AM, Alasda=
-ir G Kergon <span dir=3D"ltr">&lt;<a href=3D"mailto:agk@redhat.com" target=
-=3D"_blank">agk@redhat.com</a>&gt;</span> wrote:<br><blockquote class=3D"gm=
-ail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-le=
-ft:1ex">
-
-dmsetup and udev have the functionality needed to do this in a race-free<br=
->
-manner, but it&#39;s necessarily complicated and takes a while to get your =
-head<br>
-around it. =A0You&#39;ll need to use the dmsetup commands/options for udev =
-cookies<br>
-described in the man page.<br>
-<br>
-Alasdair<br>
-<br></blockquote><div><br></div><div>Thanks.=A0I&#39;ll take a look at doin=
-g this.</div><div><br></div><div>-nick</div><div><br></div></div>
-
---047d7b2edf0741de0004c01413fd--
-
-
---===============4012398610735819727==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4012398610735819727==--
+> 
+> Any idea why lvmdisplay takes so long? If i can see its trying to read
+> from sda, dm-1, sdb, dm-1 where the "read(3, " operations need some
+> time each time.
+> 
+> Here is some more info:
+> 
+> multipath -l -v 3
+> May 15 12:10:06 | sdb: not found in pathvec
+> May 15 12:10:06 | sdb: mask = 0x1
+> May 15 12:10:06 | sdb: dev_t = 8:16
+> May 15 12:10:06 | sdb: size = 524288000
+> May 15 12:10:06 | sdb: subsystem = scsi
+> May 15 12:10:06 | sdb: vendor = IBM
+> May 15 12:10:06 | sdb: product = 1722-600
+> May 15 12:10:06 | sdb: rev = 0914
+> May 15 12:10:06 | sdb: h:b:t:l = 2:0:1:0
+> May 15 12:10:06 | sdb: tgt_node_name = 0x200400a0b816fb7
+> May 15 12:10:06 | sda: device node name blacklisted
+> May 15 12:10:06 | sdd: not found in pathvec
+> May 15 12:10:06 | sdd: mask = 0x1
+> May 15 12:10:06 | sdd: dev_t = 8:48
+> May 15 12:10:06 | sdd: size = 524288000
+> May 15 12:10:06 | sdd: subsystem = scsi
+> May 15 12:10:06 | sdd: vendor = IBM
+> May 15 12:10:06 | sdd: product = 1722-600
+> May 15 12:10:06 | sdd: rev = 0914
+> May 15 12:10:06 | sdd: h:b:t:l = 3:0:1:0
+> May 15 12:10:06 | sdd: tgt_node_name = 0x200400a0b816fb7
+> May 15 12:10:06 | sdc: not found in pathvec
+> May 15 12:10:06 | sdc: mask = 0x1
+> May 15 12:10:06 | sdc: dev_t = 8:32
+> May 15 12:10:06 | sdc: size = 524288000
+> May 15 12:10:06 | sdc: subsystem = scsi
+> May 15 12:10:06 | sdc: vendor = IBM
+> May 15 12:10:06 | sdc: product = 1722-600
+> May 15 12:10:06 | sdc: rev = 0914
+> May 15 12:10:06 | sdc: h:b:t:l = 3:0:0:0
+> May 15 12:10:06 | sdc: tgt_node_name = 0x200400a0b816fb7
+> May 15 12:10:06 | dm-0: device node name blacklisted
+> May 15 12:10:06 | dm-1: device node name blacklisted
+> May 15 12:10:06 | dm-2: device node name blacklisted
+> May 15 12:10:06 | dm-3: device node name blacklisted
+> May 15 12:10:06 | loop0: device node name blacklisted
+> May 15 12:10:06 | loop1: device node name blacklisted
+> May 15 12:10:06 | loop2: device node name blacklisted
+> May 15 12:10:06 | loop3: device node name blacklisted
+> May 15 12:10:06 | loop4: device node name blacklisted
+> May 15 12:10:06 | loop5: device node name blacklisted
+> May 15 12:10:06 | loop6: device node name blacklisted
+> May 15 12:10:06 | loop7: device node name blacklisted
+> May 15 12:10:06 | dm-4: device node name blacklisted
+> May 15 12:10:06 | dm-5: device node name blacklisted
+> May 15 12:10:06 | dm-6: device node name blacklisted
+> ===== paths list =====
+> uuid hcil    dev dev_t pri dm_st chk_st vend/prod/rev dev_st
+>      2:0:1:0 sdb 8:16  -1  undef undef  IBM,1722-600  running
+>      3:0:1:0 sdd 8:48  -1  undef undef  IBM,1722-600  running
+>      3:0:0:0 sdc 8:32  -1  undef undef  IBM,1722-600  running
+> May 15 12:10:06 | params = 1 queue_if_no_path 1 rdac 3 1 round-robin 0
+> 1 1 8:16 600 round-robin 0 1 1 8:48 600 round-robin 0 1 1 8:32 100
+> May 15 12:10:06 | status = 2 0 1 0 3 1 A 0 1 0 8:16 A 0 E 0 1 0 8:48 A
+> 0 E 0 1 0 8:32 A 0
+> SAN (3600a0b80001f7557000032864ce4aff3) dm-0 IBM,1722-600
+> size=250G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+> |-+- policy='round-robin 0' prio=-1 status=active
+> | `- 2:0:1:0 sdb 8:16 active undef running
+> |-+- policy='round-robin 0' prio=-1 status=enabled
+> | `- 3:0:1:0 sdd 8:48 active undef running
+> `-+- policy='round-robin 0' prio=-1 status=enabled
+>   `- 3:0:0:0 sdc 8:32 active undef running
+> 
+> Any idea whats wrong here?
+> 
+> Thanks a lot,
+> Mario
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
