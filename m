@@ -1,42 +1,27 @@
-From: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>
-Subject: Re: multipath_busy() stalls IO due to scsi_host_is_busy()
-Date: Wed, 16 May 2012 16:29:50 +0200
-Message-ID: <4FB3B9DE.1050903@itwm.fraunhofer.de>
-References: <4FB39D78.9020300@itwm.fraunhofer.de> <1337177200.2985.71.camel@dabdike.int.hansenpartnership.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Bumping multipath-tools version
+Date: Wed, 16 May 2012 10:05:32 -0500
+Message-ID: <20120516150532.GA3343@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1337177200.2985.71.camel@dabdike.int.hansenpartnership.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: dm-devel@redhat.com, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/16/2012 04:06 PM, James Bottomley wrote:
-> On Wed, 2012-05-16 at 14:28 +0200, Bernd Schubert wrote:
->> shost->can_queue ->  62 here
->> shost->host_busy ->  62 when one of the multipath groups does IO, further
->> multipath groups then seem to get stalled.
->>
->> I'm not sure yet why multipath_busy() does not stall IO when there is a
->> passive path in the prio group.
->>
->> Any idea how to properly address this problem?
->
-> shost->can_queue is supposed to represent the maximum number of possible
-> outstanding commands per HBA (i.e. the HBA hardware limit).  Assuming
-> the driver got it right, the only way of increasing this is to buy a
-> better HBA.
+Given the amount of change in the tools, I was wondering if we should
+bump the release version.
 
-HBA is a mellanox IB adapter. I have not checked yet where the limit of 
-62 queue entries comes from. This is also not a real problem. Real 
-problem is that multipath suspends IO, although it should not.
-As I said, if I remove the functionality of those busy functions 
-everything is fine. I think what happens is that dm-multipath suspends 
-IO for too long and in the mean time the other path already submits IO 
-again. So I guess the underlying problem is an unfair queuing strategy.
-
-
-Cheers,
-Bernd
+-Ben
