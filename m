@@ -1,70 +1,93 @@
-From: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>
-Subject: multipath_busy() stalls IO due to scsi_host_is_busy()
-Date: Wed, 16 May 2012 14:28:40 +0200
-Message-ID: <4FB39D78.9020300@itwm.fraunhofer.de>
+From: ml ml <mliebherr99@googlemail.com>
+Subject: Re: Multipath and LVM (lvdisplay takes 30Secs)
+Date: Wed, 16 May 2012 10:41:51 +0200
+Message-ID: <CANFxOjCSPajjXYvPQ3et+MnpVxvvqkPzQN8UNAknEaWwcCgo+Q@mail.gmail.com>
+References: <CANFxOjBW+RSKRCe_sSfAH=CXXLBLzJcfJzd8iJmJNLvSDVzOHg@mail.gmail.com>
+	<77471C95FAFD844C8CA02DD4F4C5FE2B065AE3@SACEXCMBX02-PRD.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <77471C95FAFD844C8CA02DD4F4C5FE2B065AE3@SACEXCMBX02-PRD.hq.netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
+Hi,
 
-while I actually want to benchmark FhGFS on a NetApp system, I'm somehow 
-running from one kernel problem to another.
-Yesterday we had to recable and while we are now still using multipath, 
-each priority group now only has one underlying devices (we don't have 
-sufficient IB srp ports on our test systems, but still want to benchmark 
-a system as close as possible to a production system).
-So after recabling actually all failover paths disappeared, which 
-*shouldn't* have any influence on the performance. However, unexpectedly 
-performance is now by less than 50% when I'm doing buffered IO. With 
-direct IO it also still fine and reducing nr_requests of the multipath 
-device to 8 also 'fixes' the problem. I then guessed it right and simply 
-made multipath_busy() always to return 0, which also fixes the issue.
-
-
-- problem:
-	- iostat -x -m 1 shows that alternating one multipath devices starts to 
-stall IO for several minutes
-	- the other multipath device then does IO during that time with about 
-600 to 700 MB/s, until it starts to stall IO
-	- the active NetApp controller could server both multipath devices with 
-about 600 to 700 MB/s
-
-problem solutions:
-	- add another passive sdX device to the multipath group
-	- use direct IO
-	- reduce /sys/block/dm-X/queue/nr_requests to 8
-		- /sys/block/sdX does not need to be updated
-	- disbable multipath_busy() by letting it return 0
-
-Looking through the call chain, I see the underlying problem seems to be 
-in scsi_host_is_busy().
-
-> static inline int scsi_host_is_busy(struct Scsi_Host *shost)
-> {
-> 	if ((shost->can_queue > 0 && shost->host_busy >= shost->can_queue) ||
-> 	    shost->host_blocked || shost->host_self_blocked)
-> 		return 1;
+>> multipath -l -v 2
+>> SAN (3600a0b80001f7557000032864ce4aff3) dm-0 IBM,1722-600
+>> size=250G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+>> |-+- policy='round-robin 0' prio=-1 status=active
+>> | `- 2:0:1:0 sdb 8:16 active undef running
+>> |-+- policy='round-robin 0' prio=-1 status=enabled
+>> | `- 3:0:1:0 sdd 8:48 active undef running
+>> `-+- policy='round-robin 0' prio=-1 status=enabled
+>>   `- 3:0:0:0 sdc 8:32 active undef running
 >
-> 	return 0;
-> }
+> Prio is showing -1.  May be your path grouping policy and prio handler is not set right.
+> I would set it correctly and then test it again. Here is how I would set it in multipath.conf.
+> path_grouping_policy    group_by_prio
+> prio                                    rdac
 >
 
-shost->can_queue -> 62 here
-shost->host_busy -> 62 when one of the multipath groups does IO, further 
-multipath groups then seem to get stalled.
+Right now i am using "path_grouping_policy    failover". See below for
+the full config file.
+Since i want failover/redundancy. In this case i really want
+"path_grouping_policy    group_by_prio"?
 
-I'm not sure yet why multipath_busy() does not stall IO when there is a 
-passive path in the prio group.
+Here is the full config file:
 
-Any idea how to properly address this problem?
+
+blacklist {
+        devnode "sda"
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode "^hd[a-z][[0-9]*]"
+
+}
+
+defaults {
+        user_friendly_names     yes
+        udev_dir                /dev
+        polling_interval        10
+        verbosity               0
+        path_grouping_policy    failover
+        #path_grouping_policy    group_by_prio
+        #prio                    rdac
+
+}
+
+multipaths {
+       multipath {
+               wwid                    3600a0b80001f7557000032864ce4aff3
+               alias                   SAN
+               path_grouping_policy    failover
+               path_selector           "round-robin 0"
+               failback                manual
+               rr_weight               priorities
+               no_path_retry           5
+               rr_min_io               100
+       }
+}
+
+devices {
+       device {
+               vendor                  "IBM"
+               product                 "1722-600"
+               path_grouping_policy    failover
+       }
+}
+
 
 
 Thanks,
-Bernd
-
+Mario
