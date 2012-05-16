@@ -1,69 +1,164 @@
-From: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>
-Subject: Re: [dm-devel] multipath_busy() stalls IO due to scsi_host_is_busy()
-Date: Wed, 16 May 2012 22:34:35 +0200
-Message-ID: <4FB40F5B.6070200@itwm.fraunhofer.de>
-References: <4FB39D78.9020300@itwm.fraunhofer.de>  <1337177200.2985.71.camel@dabdike.int.hansenpartnership.com>  <4FB3B9DE.1050903@itwm.fraunhofer.de> <4FB3C75F.3070903@cs.wisc.edu>  <4FB3CDC5.9040608@itwm.fraunhofer.de> <1337187813.21009.14.camel@frustration.ornl.gov>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm thin: commit pool's metadata on last close of
+	thin device
+Date: Wed, 16 May 2012 18:19:53 -0400
+Message-ID: <1337206793-30658-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1337187813.21009.14.camel@frustration.ornl.gov>
-Sender: linux-scsi-owner@vger.kernel.org
-To: David Dillow <dillowda@ornl.gov>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 05/16/2012 07:03 PM, David Dillow wrote:
-> On Wed, 2012-05-16 at 11:54 -0400, Bernd Schubert wrote:
->> 2) Low SRP command queues. Is there a reason why 
->> SRP_RQ_SHIFT/SRP_RQ_SIZE and their depend values such as SRP_RQ_SIZE are 
->> so small?
-> 
-> That's a decision that has been around since the beginning of the driver
-> as far as I can tell. It looks to be a balance between device needs and
-> memory usage, and it can certainly be raised -- I've run locally with
-> SRP_RQ_SHIFT set to 7 (shost.can_queue 126) and I'm sure 8 would be no
-> problem, either. I didn't see a performance improvement on my workload,
-> but may you will.
+Reinstate dm_flush_all and dm_table_flush_all.  dm_blk_close will
+now trigger the .flush method of all targets within a table on the last
+close of a DM device.
 
-Ah, thanks a lot! In the past I tested the DDN S2A and figured out a
-queue size of 16 per device provides optimal performance. So with
-typically 7 primary devices per Server that makes 112, so SRP_RQ_SHIFT=7
-is perfectly fine. But then with another typical configuration of 14
-devices per server and with the current multipath-busy strategy, you
-already should see a performance drop.
-Right now I'm running tests on a NetApp and don't know yet optimal
-parameters.  So I set the queue size to the maximum, but didn't expect
-such multipath issues...
+In the case of the thin target, the thin_flush method will commit the
+backing pool's metadata.
 
-> 
-> Because we take the minimum of our initiator queue depth and the initial
-> credits from the target (each req consumes a credit), going higher than
-> 8 doesn't buy us much, as I don't know off-hand of any target that gives
-> out more than 256 credits.
-> 
-> The memory used for the command ring will vary depending on the value of
-> SRP_RQ_SHIFT and the number of s/g entries allows to be put in the
-> command. 255 s/g entries requires an 8 KB allocation for each request
-> (~4200 bytes), so we currently require 512 KB of buffers for the send
-> queue for each target. Going to 8 will require 2 MB max per target,
-> which probably isn't a real issue.
-> 
-> There's also a response ring with an allocation size that depends on the
-> target, but those should be pretty small buffers, say 1 KB * (1 <<
-> SRP_RQ_SHIFT).
-> 
+Doing so avoids a deadlock that has been observed with the following
+sequence (as can be triggered via "dmsetup remove_all"):
+- IO is issued to a thin device, thin device is closed
+- pool's metadata device is suspended before the pool is
+- because the pool still has outstanding IO we deadlock because the
+  pool's metadata device is suspended
 
-Maybe we should covert the entire parameter to a module option? I will
-look into it tomorrow.
-And unless someone already comes up with a dm-mpath patch, I will try to
-fix the first. I think I will simply always allow a few requests per
-prio-group. Lets see if this gets accepted.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
+---
+ drivers/md/dm-table.c |    9 +++++++++
+ drivers/md/dm-thin.c  |   19 +++++++++++++++++++
+ drivers/md/dm.c       |   20 +++++++++++++++++++-
+ drivers/md/dm.h       |    1 +
+ 4 files changed, 48 insertions(+), 1 deletions(-)
 
-
-Thanks,
-Bernd
-
-
-PS: Thanks a lot for your ib-srp large IO patches you already sent last
-year! I just noticed those last week.
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 2e227fb..077fff8 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1487,6 +1487,15 @@ int dm_table_resume_targets(struct dm_table *t)
+ 	return 0;
+ }
+ 
++void dm_table_flush_all(struct dm_table *t)
++{
++	unsigned i;
++
++	for (i = 0; i < t->num_targets; i++)
++		if (t->targets[i].type->flush)
++			t->targets[i].type->flush(&t->targets[i]);
++}
++
+ void dm_table_add_target_callbacks(struct dm_table *t, struct dm_target_callbacks *cb)
+ {
+ 	list_add(&cb->list, &t->target_callbacks);
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index c514078..f64c7e6 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -2429,6 +2429,24 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 	set_discard_limits(pool, limits);
+ }
+ 
++static void thin_flush(struct dm_target *ti)
++{
++	int r;
++	struct thin_c *tc = ti->private;
++	struct pool *pool = tc->pool;
++
++	/*
++	 * A bit heavy-handed but the only existing way to batch
++	 * metadata commits is to issue() a FLUSH bio -- but DM
++	 * doesn't allocate bios outside the DM core.
++	 */
++	r = dm_pool_commit_metadata(pool->pmd);
++	if (r < 0) {
++		DMERR("%s: dm_pool_commit_metadata() failed, error = %d",
++		      __func__, r);
++	}
++}
++
+ static struct target_type thin_target = {
+ 	.name = "thin",
+ 	.version = {1, 1, 0},
+@@ -2441,6 +2459,7 @@ static struct target_type thin_target = {
+ 	.status = thin_status,
+ 	.iterate_devices = thin_iterate_devices,
+ 	.io_hints = thin_io_hints,
++	.flush = thin_flush,
+ };
+ 
+ /*----------------------------------------------------------------*/
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 23a1a84..715ee57 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -487,6 +487,16 @@ out:
+ 	return md ? 0 : -ENXIO;
+ }
+ 
++static void dm_flush_all(struct mapped_device *md)
++{
++	struct dm_table *t = dm_get_live_table(md);
++	
++	if (t) {
++		dm_table_flush_all(t);
++		dm_table_put(t);
++	}
++}
++
+ static int dm_blk_close(struct gendisk *disk, fmode_t mode)
+ {
+ 	struct mapped_device *md = disk->private_data;
+@@ -494,10 +504,17 @@ static int dm_blk_close(struct gendisk *disk, fmode_t mode)
+ 	spin_lock(&_minor_lock);
+ 
+ 	atomic_dec(&md->open_count);
+-	dm_put(md);
+ 
+ 	spin_unlock(&_minor_lock);
+ 
++	/*
++	 * Flush all targets on last close
++	 */
++	if (!dm_open_count(md))
++		dm_flush_all(md);
++
++	dm_put(md);	
++
+ 	return 0;
+ }
+ 
+@@ -2468,6 +2485,7 @@ void dm_destroy_immediate(struct mapped_device *md)
+ void dm_put(struct mapped_device *md)
+ {
+ 	atomic_dec(&md->holders);
++	smp_mb__after_atomic_dec();
+ }
+ EXPORT_SYMBOL_GPL(dm_put);
+ 
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index b7dacd5..82199a1 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -66,6 +66,7 @@ bool dm_table_supports_discards(struct dm_table *t);
+ int dm_table_alloc_md_mempools(struct dm_table *t);
+ void dm_table_free_md_mempools(struct dm_table *t);
+ struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
++void dm_table_flush_all(struct dm_table *t);
+ 
+ int dm_queue_merge_is_compulsory(struct request_queue *q);
+ 
+-- 
+1.7.1
