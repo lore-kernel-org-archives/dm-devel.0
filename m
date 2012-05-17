@@ -1,108 +1,70 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: dm thin: commit pool's metadata on last close of
-	thin device
-Date: Thu, 17 May 2012 09:44:00 +0200
-Message-ID: <4FB4AC40.1060201@redhat.com>
-References: <1337206793-30658-1-git-send-email-snitzer@redhat.com>
-	<Pine.LNX.4.64.1205162033500.12442@file.rdu.redhat.com>
-	<20120517040007.GA32219@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: multipath_busy() stalls IO due to scsi_host_is_busy()
+Date: Thu, 17 May 2012 18:09:57 +0900
+Message-ID: <4FB4C065.7070804@ce.jp.nec.com>
+References: <4FB39D78.9020300@itwm.fraunhofer.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120517040007.GA32219@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Edward Thornber <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4FB39D78.9020300@itwm.fraunhofer.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>
+Cc: dm-devel@redhat.com, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Dne 17.5.2012 06:00, Mike Snitzer napsal(a):
-> On Wed, May 16 2012 at  8:43pm -0400,
-> Mikulas Patocka<mpatocka@redhat.com>  wrote:
->
->>
->>
->> On Wed, 16 May 2012, Mike Snitzer wrote:
->>
->>> Reinstate dm_flush_all and dm_table_flush_all.  dm_blk_close will
->>> now trigger the .flush method of all targets within a table on the last
->>> close of a DM device.
->>>
->>> In the case of the thin target, the thin_flush method will commit the
->>> backing pool's metadata.
->>>
->>> Doing so avoids a deadlock that has been observed with the following
->>> sequence (as can be triggered via "dmsetup remove_all"):
->>> - IO is issued to a thin device, thin device is closed
->>> - pool's metadata device is suspended before the pool is
->>> - because the pool still has outstanding IO we deadlock because the
->>>    pool's metadata device is suspended
->>>
->>> Signed-off-by: Mike Snitzer<snitzer@redhat.com>
->>> Cc: stable@vger.kernel.org
->>
->> I'd say --- don't do this sequence.
->>
->> Device mapper generally expects that devices are suspended top-down ---
->> i.e. you should first suspend the thin device and then suspend its
->> underlying data and metadata device. If you violate this sequence and
->> suspend bottom-up, you get deadlocks.
->>
->> For example, if dm-mirror is resynchronizing and you suspend the
->> underlying leg or log volume and then suspend dm-mirror, you get a
->> deadlock.
->>
->> If dm-snapshot is merging and you suspend the underlying snapshot or
->> origin volume and then suspend snapshot-merget target, you get a deadlock.
->>
->> These are not bugs in dm-mirror or dm-snapshot, this is expected behavior.
->> Userspace shouldn't do any bottom-up suspend sequence.
->>
->> In the same sense, if you suspend the underlying data or metadata pool and
->> then suspend dm-thin, you get a deadlock too. Fix userspace so that it
->> doesn't do it.
->
-> Yeah, I agree.  I told Zdenek it'd be best to just not do it.
->
-> 'dmsetup remove_all' is a dumb command that invites these deadlocks when
-> more sophisticated stacking is being used.
->
-> But all said, in general I don't have a problem with triggering a target
-> specific "flush" on device close.
->
-> (Though the implementation of thin_flush could be made more
-> intelligent... as is we can see a pretty good storm of redundant
-> metadata commits if 100s of thin devices are closed simultaneously --
-> creating pmd->root_lock write lock contention).
+Hi,
 
+On 05/16/12 21:28, Bernd Schubert wrote:
+> Looking through the call chain, I see the underlying problem seems to be in scsi_host_is_busy().
+> 
+>> static inline int scsi_host_is_busy(struct Scsi_Host *shost)
+>> {
+>>     if ((shost->can_queue > 0 && shost->host_busy >= shost->can_queue) ||
+>>         shost->host_blocked || shost->host_self_blocked)
+>>         return 1;
+>>
+>>     return 0;
+>> }
 
-I'd say it differently - the question here is whether we really want to 
-support forced removal of devices or we keep them stuck in the system.
+multipath_busy() was introduced because, without that,
+a request would be prematurely sent down to SCSI,
+lose the chance of additional merges and result in
+bad performance.
 
-The system must expect that device become unavailable anytime (hw fault),
-and if the device is not mounted and unused, it should not be a problem to
-remove such device (even suspended).
+However, when it is target/host that is busy, I think dm should
+send the request down and let SCSI, which has better knowledge
+about the shared resource, do appropriate starvation control.
 
-However current code basically removes thinpool target (has open count 0),
-but keeps data and metadata devices  (the problem is worse, if the metadata 
-device is replaced with error target in this moment).
+Could you try the attached patch?
 
-Also not - there is not a problem in userspace code as such (except the case 
-of discardless devices - where the change is simple quite unexpected new 
-behavior of device table, thus older tools cannot work properly with it).
-The error is technically in the 'teardown' code for the test case - which
-used to assume that something with open count 0 could be easily removed - and 
-unremovable targets might be replaced with error targets (so underlying devs 
-could be detached as well) - however with current thinp target, we are in
-some troubles and I'd like to see them behaving like all other dm targets.
+---
+Jun'ichi Nomura, NEC Corporation
 
-Zdenek
+If sdev is not busy but starget and/or host is busy,
+it is better to accept a request from stacking driver.
+Otherwise, the stacking device could be starved by other device
+sharing the same target/host.
+
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index 5dfd749..0eb4602 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -1378,16 +1378,13 @@ static int scsi_lld_busy(struct request_queue *q)
+ {
+ 	struct scsi_device *sdev = q->queuedata;
+ 	struct Scsi_Host *shost;
+-	struct scsi_target *starget;
+ 
+ 	if (!sdev)
+ 		return 0;
+ 
+ 	shost = sdev->host;
+-	starget = scsi_target(sdev);
+ 
+-	if (scsi_host_in_recovery(shost) || scsi_host_is_busy(shost) ||
+-	    scsi_target_is_busy(starget) || scsi_device_is_busy(sdev))
++	if (scsi_host_in_recovery(shost) || scsi_device_is_busy(sdev)) 
+ 		return 1;
+ 
+ 	return 0;
