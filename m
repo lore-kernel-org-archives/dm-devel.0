@@ -1,15 +1,17 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH] MD: Add del_timer_sync to mddev_suspend (fix
-	nasty panic)
-Date: Wed, 16 May 2012 21:33:30 -0500
-Message-ID: <A30A147C-1292-4326-88E9-426DEA1FC102@redhat.com>
-References: <1337141174.4337.8.camel@f14.redhat.com>
-	<20120517105032.007f09c7@notabene.brown>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm thin: commit pool's metadata on last close of
+	thin device
+Date: Thu, 17 May 2012 00:00:41 -0400
+Message-ID: <20120517040007.GA32219@redhat.com>
+References: <1337206793-30658-1-git-send-email-snitzer@redhat.com>
+	<Pine.LNX.4.64.1205162033500.12442@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1084)
-Content-Type: multipart/mixed; boundary="===============6230471781188392381=="
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120517105032.007f09c7@notabene.brown>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1205162033500.12442@file.rdu.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,167 +21,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.de>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, May 16 2012 at  8:43pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
---===============6230471781188392381==
-Content-Type: multipart/alternative; boundary=Apple-Mail-1-285041950
+> 
+> 
+> On Wed, 16 May 2012, Mike Snitzer wrote:
+> 
+> > Reinstate dm_flush_all and dm_table_flush_all.  dm_blk_close will
+> > now trigger the .flush method of all targets within a table on the last
+> > close of a DM device.
+> > 
+> > In the case of the thin target, the thin_flush method will commit the
+> > backing pool's metadata.
+> > 
+> > Doing so avoids a deadlock that has been observed with the following
+> > sequence (as can be triggered via "dmsetup remove_all"):
+> > - IO is issued to a thin device, thin device is closed
+> > - pool's metadata device is suspended before the pool is
+> > - because the pool still has outstanding IO we deadlock because the
+> >   pool's metadata device is suspended
+> > 
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > Cc: stable@vger.kernel.org
+> 
+> I'd say --- don't do this sequence.
+> 
+> Device mapper generally expects that devices are suspended top-down --- 
+> i.e. you should first suspend the thin device and then suspend its 
+> underlying data and metadata device. If you violate this sequence and 
+> suspend bottom-up, you get deadlocks.
+> 
+> For example, if dm-mirror is resynchronizing and you suspend the 
+> underlying leg or log volume and then suspend dm-mirror, you get a 
+> deadlock.
+> 
+> If dm-snapshot is merging and you suspend the underlying snapshot or 
+> origin volume and then suspend snapshot-merget target, you get a deadlock.
+> 
+> These are not bugs in dm-mirror or dm-snapshot, this is expected behavior. 
+> Userspace shouldn't do any bottom-up suspend sequence.
+> 
+> In the same sense, if you suspend the underlying data or metadata pool and 
+> then suspend dm-thin, you get a deadlock too. Fix userspace so that it 
+> doesn't do it.
 
+Yeah, I agree.  I told Zdenek it'd be best to just not do it.
 
---Apple-Mail-1-285041950
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
+'dmsetup remove_all' is a dumb command that invites these deadlocks when
+more sophisticated stacking is being used.
 
+But all said, in general I don't have a problem with triggering a target
+specific "flush" on device close.
 
-On May 16, 2012, at 7:50 PM, NeilBrown wrote:
-
-> On Tue, 15 May 2012 23:06:14 -0500 Jonathan Brassow =
-<jbrassow@redhat.com>
-> wrote:
->=20
->> Neil,
->>=20
->> I've been seeing some really bad panics take place on dm-raid.c.  =
-I've
->> found that it is because the mddev->safemode_timer is firing after =
-the
->> mddev structure has been freed.  I've attached a patch to fix the
->> problem below, but I have some questions (outlined in the patch =
-header).
->> I also have a debugging patch that prints something during each of =
-the
->> suspend stages and when md_write_end resets the timer so that you can
->> see the problem in action - let me know if you want that patch also.
->>=20
->> brassow
->=20
-> Hi Jon,
-> thanks for the patch.  It looks simple and can clearly fix a problem
-> so at this point in the cycle I propose to submit it to Linus as-is, =
-even
-> though I'm not convinced it is perfect, and you didn't give me a s-o-b =
-line.
-> See more blow.
-
-Thanks Neil.
-
-> <pet peeve>.
-> No Signed-off-by: line?  why is that.
->=20
-> "Signed-off-by" *only* means "I certify that I have any necessary =
-right to
-> submit this patch, and I agree to it being used in the way that all =
-other
-> code in this project can be used" - only with more words.  See the =
-Developer's
-> Certificate of Origin 1.1
->=20
-> Refusing to add a Signed-off-by: because you don't think the code is =
-"ready"
-> yet in some sense is just plain wrong.  I never ever want to even see =
-a patch
-> that doesn't have Signed-off-by, because I don't know if I've been =
-given
-> permission to use it.
->=20
-> Certainly add an 'RFC-by' if you want to say something about the =
-quality of
-> the patch, but don't for that reason exclude the signed-off-by
-> </pet peeve>
-
-"RFC-by" must be some overly clever thing I thought up or saw at one =
-point.  i can certainly break that habit.  I had seen that possibly =
-setting 'mddev->safemode =3D 2' might be a possible solution.  I was =
-also a bit confused if I should pull the 'del_timer_sync' from =
-'md_stop_writes'.  This is why I put the RFC in there, but I see your =
-meaning.
-
-Thanks,
- brassow=
-
---Apple-Mail-1-285041950
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/html;
-	charset=us-ascii
-
-<html><head></head><body style=3D"word-wrap: break-word; =
--webkit-nbsp-mode: space; -webkit-line-break: after-white-space; =
-"><br><div><div>On May 16, 2012, at 7:50 PM, NeilBrown wrote:</div><br =
-class=3D"Apple-interchange-newline"><blockquote type=3D"cite"><span =
-class=3D"Apple-style-span" style=3D"border-collapse: separate; =
-font-family: Helvetica; font-style: normal; font-variant: normal; =
-font-weight: normal; letter-spacing: normal; line-height: normal; =
-orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: =
-none; white-space: normal; widows: 2; word-spacing: 0px; =
--webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: =
-0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: =
-auto; -webkit-text-stroke-width: 0px; font-size: medium; ">On Tue, 15 =
-May 2012 23:06:14 -0500 Jonathan Brassow &lt;<a =
-href=3D"mailto:jbrassow@redhat.com">jbrassow@redhat.com</a>&gt;<br>wrote:<=
-br><br><blockquote type=3D"cite">Neil,<br></blockquote><blockquote =
-type=3D"cite"><br></blockquote><blockquote type=3D"cite">I've been =
-seeing some really bad panics take place on dm-raid.c. =
-&nbsp;I've<br></blockquote><blockquote type=3D"cite">found that it is =
-because the mddev-&gt;safemode_timer is firing after =
-the<br></blockquote><blockquote type=3D"cite">mddev structure has been =
-freed. &nbsp;I've attached a patch to fix =
-the<br></blockquote><blockquote type=3D"cite">problem below, but I have =
-some questions (outlined in the patch =
-header).<br></blockquote><blockquote type=3D"cite">I also have a =
-debugging patch that prints something during each of =
-the<br></blockquote><blockquote type=3D"cite">suspend stages and when =
-md_write_end resets the timer so that you =
-can<br></blockquote><blockquote type=3D"cite">see the problem in action =
-- let me know if you want that patch also.<br></blockquote><blockquote =
-type=3D"cite"><br></blockquote><blockquote =
-type=3D"cite">brassow<br></blockquote><br>Hi Jon,<br>thanks for the =
-patch. &nbsp;It looks simple and can clearly fix a problem<br>so at this =
-point in the cycle I propose to submit it to Linus as-is, even<br>though =
-I'm not convinced it is perfect, and you didn't give me a s-o-b =
-line.<br>See more =
-blow.<br></span></blockquote><div><br></div><div>Thanks =
-Neil.</div><div><br></div><blockquote type=3D"cite"><span =
-class=3D"Apple-style-span" style=3D"border-collapse: separate; =
-font-family: Helvetica; font-style: normal; font-variant: normal; =
-font-weight: normal; letter-spacing: normal; line-height: normal; =
-orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: =
-none; white-space: normal; widows: 2; word-spacing: 0px; =
--webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: =
-0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: =
-auto; -webkit-text-stroke-width: 0px; font-size: medium; ">&lt;pet =
-peeve&gt;.<br>No Signed-off-by: line? &nbsp;why is =
-that.<br><br>"Signed-off-by" *only* means "I certify that I have any =
-necessary right to<br>submit this patch, and I agree to it being used in =
-the way that all other<br>code in this project can be used" - only with =
-more words. &nbsp;See the Developer's<br>Certificate of Origin =
-1.1<br><br>Refusing to add a Signed-off-by: because you don't think the =
-code is "ready"<br>yet in some sense is just plain wrong. &nbsp;I never =
-ever want to even see a patch<br>that doesn't have Signed-off-by, =
-because I don't know if I've been given<br>permission to use =
-it.<br><br>Certainly add an 'RFC-by' if you want to say something about =
-the quality of<br>the patch, but don't for that reason exclude the =
-signed-off-by<br>&lt;/pet =
-peeve&gt;<br></span></blockquote></div><br><div>"RFC-by" must be some =
-overly clever thing I thought up or saw at one point. &nbsp;i can =
-certainly break that habit. &nbsp;I had seen that possibly setting =
-'mddev-&gt;safemode =3D 2' might be a possible solution. &nbsp;I was =
-also a bit confused if I should pull the 'del_timer_sync' from =
-'md_stop_writes'. &nbsp;This is why I put the RFC in there, but I see =
-your =
-meaning.</div><div><br></div><div>Thanks,</div><div>&nbsp;brassow</div></b=
-ody></html>=
-
---Apple-Mail-1-285041950--
-
-
---===============6230471781188392381==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6230471781188392381==--
+(Though the implementation of thin_flush could be made more
+intelligent... as is we can see a pretty good storm of redundant
+metadata commits if 100s of thin devices are closed simultaneously --
+creating pmd->root_lock write lock contention).
