@@ -1,71 +1,38 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 03/13] block: Add bio_clone_bioset()
-Date: Fri, 18 May 2012 09:05:11 -0700
-Message-ID: <20120518160511.GC19388@google.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 04/13] block: Add bio_clone_kmalloc()
+Date: Fri, 18 May 2012 09:09:03 -0700
+Message-ID: <20120518160903.GD19388@google.com>
 References: <cover.1337308722.git.koverstreet@google.com>
- <eb6a7d3fe7ae203202bc365d7274ee531631a9ca.1337308722.git.koverstreet@google.com>
+ <1c7c2d4b89bc3d0e907608cec37bcf0ee50f4c0e.1337308722.git.koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <eb6a7d3fe7ae203202bc365d7274ee531631a9ca.1337308722.git.koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: koverstreet@google.com
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
+In-Reply-To: <1c7c2d4b89bc3d0e907608cec37bcf0ee50f4c0e.1337308722.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-Hey, Kent.
-
-On Thu, May 17, 2012 at 10:59:50PM -0400, koverstreet@google.com wrote:
-> From: Kent Overstreet <koverstreet@google.com>
-> 
-> This consolidates some code, and will help in a later patch changing how
-> bio cloning works.
-> 
-> Signed-off-by: Kent Overstreet <koverstreet@google.com>
-
-I'd prefer a bit more explanation on what's going on generally and why
-and how dm conversion is different.
-
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 3cc2169..3e33039 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1072,26 +1072,19 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
->   * Creates a bio that consists of range of complete bvecs.
->   */
->  static struct bio *clone_bio(struct bio *bio, sector_t sector,
-> -			     unsigned short idx, unsigned short bv_count,
-> +			     unsigned short bv_count,
->  			     unsigned int len, struct bio_set *bs)
->  {
->  	struct bio *clone;
+On Thu, May 17, 2012 at 10:59:51PM -0400, koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org wrote:
+> @@ -729,7 +729,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+>  	}
 >  
-> -	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
-> -	__bio_clone(clone, bio);
-> +	clone = bio_clone_bioset(bio, GFP_NOIO, bs);
->  	clone->bi_sector = sector;
-> -	clone->bi_idx = idx;
-> -	clone->bi_vcnt = idx + bv_count;
-> +	clone->bi_vcnt = bv_count;
->  	clone->bi_size = to_bytes(len);
-> -	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
-
-Maybe removal of @idx deserves a separate patch?
-
-> -	if (bio_integrity(bio)) {
-> -		bio_integrity_clone(clone, bio, GFP_NOIO, bs);
+>  	while (old_chain && (total < len)) {
+> -		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
+> +		tmp = bio_clone_kmalloc(old_chain, gfpmask);
+>  		if (!tmp)
+>  			goto err_out;
+>  
+> @@ -751,13 +751,9 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+>  			if (!bp)
+>  				goto err_out;
+>  
+> -			__bio_clone(tmp, &bp->bio1);
 > -
-> -		if (idx != bio->bi_idx || clone->bi_size < bio->bi_size)
-> -			bio_integrity_trim(clone,
-> -					   bio_sector_offset(bio, idx, 0), len);
-> -	}
-> +	if (bio_integrity(bio) &&
-> +	    clone->bi_size < bio->bi_size)
 
-Unnecessary line break.
-
-Other than that, looks good to me.
+This effectively swaps the order of bio_split() and __bio_clone().  Is
+that safe?  Also, please cc the maintainer.
 
 Thanks.
 
