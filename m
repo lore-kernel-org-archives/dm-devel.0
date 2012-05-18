@@ -1,37 +1,27 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 06/13] block: Add bio_reset()
-Date: Fri, 18 May 2012 09:16:08 -0700
-Message-ID: <20120518161608.GF19388@google.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 07/13] pktcdvd: Switch to bio_kmalloc()
+Date: Fri, 18 May 2012 09:18:52 -0700
+Message-ID: <20120518161852.GG19388@google.com>
 References: <cover.1337308722.git.koverstreet@google.com>
- <9953623f6fae97018e59d96971a2612caf6c01e7.1337308722.git.koverstreet@google.com>
+ <04a4d6c2c8b6f0097e3594c6e0932093afffc1da.1337308722.git.koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <9953623f6fae97018e59d96971a2612caf6c01e7.1337308722.git.koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: koverstreet@google.com
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
+In-Reply-To: <04a4d6c2c8b6f0097e3594c6e0932093afffc1da.1337308722.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello,
-
-On Thu, May 17, 2012 at 10:59:53PM -0400, koverstreet@google.com wrote:
-> From: Kent Overstreet <koverstreet@google.com>
+On Thu, May 17, 2012 at 10:59:54PM -0400, koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org wrote:
+> From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > 
-> Reusing bios is something that's been highly frowned upon in the past,
-> but driver code keeps doing it anyways. If it's going to happen anyways,
-> we should provide a generic method.
-> 
-> This'll help with getting rid of bi_destructor.
+> This is prep work for killing bi_destructor
 
-It would be nice to explain a bit why this helps bi_destructor
-removal.
-
-> +#define BIO_RESET_OFFSET	offsetof(struct bio, bi_max_vecs)
-
-Maybe better named BIO_RESET_BYTES?  As offset tends to indicate the
-start of a region.
+Again, it would be great if the commit message described what
+conversion is taking place how and how it's been tested.  Please also
+cc the maintainer.
 
 Thanks.
 
