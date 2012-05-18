@@ -1,38 +1,38 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH v2] dm thin: fix table output when pool
- target disables discard passdown internally
-Date: Fri, 18 May 2012 16:14:28 +0100
-Message-ID: <20120518151427.GA24493@ubuntu>
-References: <1337310059-8517-1-git-send-email-snitzer@redhat.com>
-	<1337353441-12647-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 01/13] block: Generalized bio pool freeing
+Date: Fri, 18 May 2012 08:55:38 -0700
+Message-ID: <20120518155538.GA19388@google.com>
+References: <cover.1337308722.git.koverstreet@google.com>
+ <ea774fea2a27c9f1028a12ce31a7ee5e5517bef4.1337308722.git.koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1337353441-12647-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <ea774fea2a27c9f1028a12ce31a7ee5e5517bef4.1337308722.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, May 18, 2012 at 11:04:01AM -0400, Mike Snitzer wrote:
-> When the thin pool target clears the discard_passdown parameter
-> internally, it incorrectly reports this to userspace on the table line.
-> This patch corrects this by no longer changing the table line to reflect
-> that discard passdown was disabled.
+On Thu, May 17, 2012 at 10:59:48PM -0400, koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org wrote:
+> From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > 
-> We can still tell when discard passdown is overridden by looking for the
-> message "Discard unsupported by data device (sdX): Disabling discard passdown."
+> With the old code, when you allocate a bio from a bio pool you have to
+> implement your own destructor that knows how to find the bio pool the
+> bio was originally allocated from.
 > 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> This adds a new field to struct bio (bi_pool) and changes
+> bio_alloc_bioset() to use it. This makes various bio destructors
+> unnecessary, so they're then deleted.
+> 
+> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-Ack
+Please add Cc: to maintainers of each modified subsystem.  Other than
+that, nice cleanup even without the later removal of bi_destructor.
+
+ Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+Thanks.
+
+-- 
+tejun
