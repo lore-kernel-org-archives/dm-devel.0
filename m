@@ -1,141 +1,32 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 12/13] Make generic_make_request handle arbitrarily
- large bios
-Date: Fri, 18 May 2012 10:52:16 -0700
-Message-ID: <20120518175216.GL19388@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH 02/13] dm: kill dm_rq_bio_destructor
+Date: Fri, 18 May 2012 11:50:27 -0700
+Message-ID: <20120518185027.GA9673@google.com>
 References: <cover.1337308722.git.koverstreet@google.com>
- <1114e7019b0055fc09a54b59b36398d5c54f5e32.1337308722.git.koverstreet@google.com>
+ <f07bc0f57562d98078e0f4c507cae165aa159e7c.1337308722.git.koverstreet@google.com>
+ <20120518155729.GB19388@google.com>
+ <20120518164319.GJ29330@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1114e7019b0055fc09a54b59b36398d5c54f5e32.1337308722.git.koverstreet@google.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: koverstreet@google.com
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
+In-Reply-To: <20120518164319.GJ29330-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Junichi Nomura <j-nomura-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hello, Kent.
+On Fri, May 18, 2012 at 05:43:19PM +0100, Alasdair G Kergon wrote:
+> On Fri, May 18, 2012 at 08:57:29AM -0700, Tejun Heo wrote:
+> > Please explain why this is done and how it's safe.  Alasdair / dm
+> > folks, can you please ack this?
+>  
+> I think it's relying on there being never more than one reference on those 
+> bios so that that endio fn, called exactly once, always frees it and there
+> are no dm_puts elsewhere.
 
-On Thu, May 17, 2012 at 10:59:59PM -0400, koverstreet@google.com wrote:
-> From: Kent Overstreet <koverstreet@google.com>
-> 
-> The way the block layer is currently written, it goes to great lengths
-> to avoid having to split bios; upper layer code (such as bio_add_page())
-> checks what the underlying device can handle and tries to always create
-> bios that don't need to be split.
-> 
-> But this approach becomes unwieldy and eventually breaks down with
-> stacked devices and devices with dynamic limits, and it adds a lot of
-> complexity. If the block layer could split bios as needed, we could
-> eliminate a lot of complexity elsewhere - particularly in stacked
-> drivers. Code that creates bios can then create whatever size bios are
-> convenient, and more importantly stacked drivers don't have to deal with
-> both their own bio size limitations and the limitations of the
-> (potentially multiple) devices underneath them.
+Is that a safe assumption? From my perusal of the code it certainly
+looks like it should be, but I don't know dm all that well.
 
-I generally like the idea.  Device limit directly being propagated to
-high level users is cumbersome.  Somebody has to be splitting anyway
-and doing it at top makes things, including limit propagation through
-stacked drivers, unnecessarily complicated.  Jens, what are your
-thoughts?
-
-> +static void bio_submit_split_done(struct closure *cl)
-> +{
-> +	struct bio_split_hook *s = container_of(cl, struct bio_split_hook, cl);
-> +
-> +	s->bio->bi_end_io	= s->bi_end_io;
-> +	s->bio->bi_private	= s->bi_private;
-> +	bio_endio(s->bio, 0);
-
-I'd rather you didn't indent assignments.
-
-> +	closure_debug_destroy(&s->cl);
-> +	mempool_free(s, s->q->bio_split_hook);
-> +}
-...
-> +static int bio_submit_split(struct bio *bio)
-
-bool?
-
-> +{
-> +	struct bio_split_hook *s;
-> +	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
-> +
-> +	if (!bio_has_data(bio) ||
-> +	    !q ||
-> +	    !q->bio_split_hook ||
-> +	    bio_sectors(bio) <= bio_max_sectors(bio))
-
-Style issues.
-
-> +		return 0;
-> +
-> +	s = mempool_alloc(q->bio_split_hook, GFP_NOIO);
-> +
-> +	closure_init(&s->cl, NULL);
-
-Please use workqueue with open coded sequencer or maybe implement bio
-sequencer which can be used by other stacking drivers too.
-
-> +	s->bio		= bio;
-> +	s->q		= q;
-> +	s->bi_end_io	= bio->bi_end_io;
-> +	s->bi_private	= bio->bi_private;
-> +
-> +	bio_get(bio);
-> +	bio->bi_end_io	= bio_submit_split_endio;
-> +	bio->bi_private	= &s->cl;
-
-Maybe it's okay but I *hope* bi_private override weren't necessary -
-it's way too subtle.  If there's no other way and this is gonna be an
-integral part of block layer, just add a field to bio.
-
-> +unsigned __bio_max_sectors(struct bio *bio, struct block_device *bdev,
-> +			   sector_t sector)
-> +{
-> +	unsigned ret = bio_sectors(bio);
-> +	struct request_queue *q = bdev_get_queue(bdev);
-> +	struct bio_vec *bv, *end = bio_iovec(bio) +
-> +		min_t(int, bio_segments(bio), queue_max_segments(q));
-> +
-> +	struct bvec_merge_data bvm = {
-> +		.bi_bdev	= bdev,
-> +		.bi_sector	= sector,
-> +		.bi_size	= 0,
-> +		.bi_rw		= bio->bi_rw,
-> +	};
-> +
-> +	if (bio_segments(bio) > queue_max_segments(q) ||
-> +	    q->merge_bvec_fn) {
-> +		ret = 0;
-> +
-> +		for (bv = bio_iovec(bio); bv < end; bv++) {
-> +			if (q->merge_bvec_fn &&
-> +			    q->merge_bvec_fn(q, &bvm, bv) < (int) bv->bv_len)
-> +				break;
-> +
-> +			ret		+= bv->bv_len >> 9;
-> +			bvm.bi_size	+= bv->bv_len;
-> +		}
-> +
-> +		if (ret >= (BIO_MAX_PAGES * PAGE_SIZE) >> 9)
-> +			return (BIO_MAX_PAGES * PAGE_SIZE) >> 9;
-> +	}
-> +
-> +	ret = min(ret, queue_max_sectors(q));
-> +
-> +	WARN_ON(!ret);
-> +	ret = max_t(int, ret, bio_iovec(bio)->bv_len >> 9);
-> +
-> +	return ret;
-> +}
-> +EXPORT_SYMBOL_GPL(__bio_max_sectors);
-
-Does this by any chance allow killing ->merge_bvec_fn()?  That would
-be *awesome*.
-
-Thanks.
-
--- 
-tejun
+Seems like it might be better to use bio set's front_pad to put it in
+the same allocation as the bio, but I don't really want to get into that
+myself.
