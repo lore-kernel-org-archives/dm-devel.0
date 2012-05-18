@@ -1,13 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm thin: fix table output when pool target
-	disables discard passdown internally
-Date: Thu, 17 May 2012 23:00:59 -0400
-Message-ID: <1337310059-8517-1-git-send-email-snitzer@redhat.com>
+From: koverstreet@google.com
+Subject: [PATCH 04/13] block: Add bio_clone_kmalloc()
+Date: Thu, 17 May 2012 22:59:51 -0400
+Message-ID: <1c7c2d4b89bc3d0e907608cec37bcf0ee50f4c0e.1337308722.git.koverstreet@google.com>
+References: <cover.1337308722.git.koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1337308722.git.koverstreet@google.com>
+In-Reply-To: <cover.1337308722.git.koverstreet@google.com>
+References: <cover.1337308722.git.koverstreet@google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,72 +20,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-When the thin pool target clears the discard_passdown parameter
-internally, it incorrectly reports this to userspace on the table line.
-This patch corrects this by no longer changing the table line to reflect
-that discard passdown was disabled.
+From: Kent Overstreet <koverstreet@google.com>
 
-We can still tell when discard passdown is overridden by looking for the
-message "Discard unsupported by data device: Disabling discard passdown."
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- drivers/md/dm-thin.c |   12 ++++++++++--
- 1 files changed, 10 insertions(+), 2 deletions(-)
+ drivers/block/osdblk.c |    3 +--
+ drivers/block/rbd.c    |    8 ++------
+ fs/bio.c               |   13 +++++++++++++
+ fs/exofs/ore.c         |    5 ++---
+ include/linux/bio.h    |    1 +
+ 5 files changed, 19 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 2fd87b5..d05fefd 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -497,6 +497,12 @@ struct pool_features {
- 	unsigned zero_new_blocks:1;
- 	unsigned discard_enabled:1;
- 	unsigned discard_passdown:1;
-+	/*
-+	 * 'discard_passdown_original' preserves the value supplied to the
-+	 * constructor that could be overridden internally if the data device
-+	 * doesn't support discards.
-+	 */
-+	unsigned discard_passdown_original:1;
- };
+diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
+index 87311eb..1bbc681 100644
+--- a/drivers/block/osdblk.c
++++ b/drivers/block/osdblk.c
+@@ -266,11 +266,10 @@ static struct bio *bio_chain_clone(struct bio *old_chain, gfp_t gfpmask)
+ 	struct bio *tmp, *new_chain = NULL, *tail = NULL;
  
- struct pool {
-@@ -1650,6 +1656,7 @@ static void pool_features_init(struct pool_features *pf)
- 	pf->zero_new_blocks = 1;
- 	pf->discard_enabled = 1;
- 	pf->discard_passdown = 1;
-+	pf->discard_passdown_original = 1;
+ 	while (old_chain) {
+-		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
++		tmp = bio_clone_kmalloc(old_chain, gfpmask);
+ 		if (!tmp)
+ 			goto err_out;
+ 
+-		__bio_clone(tmp, old_chain);
+ 		tmp->bi_bdev = NULL;
+ 		gfpmask &= ~__GFP_WAIT;
+ 		tmp->bi_next = NULL;
+diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+index 013c7a5..5a953c6 100644
+--- a/drivers/block/rbd.c
++++ b/drivers/block/rbd.c
+@@ -729,7 +729,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+ 	}
+ 
+ 	while (old_chain && (total < len)) {
+-		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
++		tmp = bio_clone_kmalloc(old_chain, gfpmask);
+ 		if (!tmp)
+ 			goto err_out;
+ 
+@@ -751,13 +751,9 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+ 			if (!bp)
+ 				goto err_out;
+ 
+-			__bio_clone(tmp, &bp->bio1);
+-
+ 			*next = &bp->bio2;
+-		} else {
+-			__bio_clone(tmp, old_chain);
++		} else
+ 			*next = old_chain->bi_next;
+-		}
+ 
+ 		tmp->bi_bdev = NULL;
+ 		gfpmask &= ~__GFP_WAIT;
+diff --git a/fs/bio.c b/fs/bio.c
+index 4cb621f..e2c0970 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -491,6 +491,19 @@ struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
  }
+ EXPORT_SYMBOL(bio_clone);
  
- static void __pool_destroy(struct pool *pool)
-@@ -1873,6 +1880,7 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
- 			continue;
- 		} else if (!strcasecmp(arg_name, "no_discard_passdown")) {
- 			pf->discard_passdown = 0;
-+			pf->discard_passdown_original = 0;
- 			continue;
- 		}
++struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
++{
++	struct bio *b = bio_kmalloc(gfp_mask, bio->bi_max_vecs);
++
++	if (!b)
++		return NULL;
++
++	__bio_clone(b, bio);
++
++	return b;
++}
++EXPORT_SYMBOL(bio_clone_kmalloc);
++
+ /**
+  *	bio_get_nr_vecs		- return approx number of vecs
+  *	@bdev:  I/O target
+diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
+index 49cf230..95c7264 100644
+--- a/fs/exofs/ore.c
++++ b/fs/exofs/ore.c
+@@ -820,8 +820,8 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+ 			struct bio *bio;
  
-@@ -2385,7 +2393,7 @@ static int pool_status(struct dm_target *ti, status_type_t type,
- 		       (unsigned long long)pt->low_water_blocks);
+ 			if (per_dev != master_dev) {
+-				bio = bio_kmalloc(GFP_KERNEL,
+-						  master_dev->bio->bi_max_vecs);
++				bio = bio_clone_kmalloc(master_dev->bio,
++							GFP_KERNEL);
+ 				if (unlikely(!bio)) {
+ 					ORE_DBGMSG(
+ 					      "Failed to allocate BIO size=%u\n",
+@@ -830,7 +830,6 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+ 					goto out;
+ 				}
  
- 		count = !pool->pf.zero_new_blocks + !pool->pf.discard_enabled +
--			!pool->pf.discard_passdown;
-+			!pool->pf.discard_passdown_original;
- 		DMEMIT("%u ", count);
+-				__bio_clone(bio, master_dev->bio);
+ 				bio->bi_bdev = NULL;
+ 				bio->bi_next = NULL;
+ 				per_dev->offset = master_dev->offset;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index e068a68..b27f16b 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -225,6 +225,7 @@ extern int bio_phys_segments(struct request_queue *, struct bio *);
+ extern void __bio_clone(struct bio *, struct bio *);
+ extern struct bio *bio_clone_bioset(struct bio *, gfp_t, struct bio_set *bs);
+ extern struct bio *bio_clone(struct bio *, gfp_t);
++struct bio *bio_clone_kmalloc(struct bio *, gfp_t);
  
- 		if (!pool->pf.zero_new_blocks)
-@@ -2394,7 +2402,7 @@ static int pool_status(struct dm_target *ti, status_type_t type,
- 		if (!pool->pf.discard_enabled)
- 			DMEMIT("ignore_discard ");
+ extern void bio_init(struct bio *);
  
--		if (!pool->pf.discard_passdown)
-+		if (!pool->pf.discard_passdown_original)
- 			DMEMIT("no_discard_passdown ");
- 
- 		break;
 -- 
-1.7.4.4
+1.7.9.rc2
