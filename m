@@ -1,80 +1,48 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH 03/13] block: Add bio_clone_bioset()
-Date: Fri, 18 May 2012 13:31:11 -0700
-Message-ID: <20120518203111.GC9673@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 04/13] block: Add bio_clone_kmalloc()
+Date: Fri, 18 May 2012 13:39:32 -0700
+Message-ID: <20120518203932.GD9673@google.com>
 References: <cover.1337308722.git.koverstreet@google.com>
- <eb6a7d3fe7ae203202bc365d7274ee531631a9ca.1337308722.git.koverstreet@google.com>
- <20120518160511.GC19388@google.com>
+ <1c7c2d4b89bc3d0e907608cec37bcf0ee50f4c0e.1337308722.git.koverstreet@google.com>
+ <20120518160903.GD19388@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120518160511.GC19388@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
+In-Reply-To: <20120518160903.GD19388-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, May 18, 2012 at 09:05:11AM -0700, Tejun Heo wrote:
-> Hey, Kent.
-> 
-> On Thu, May 17, 2012 at 10:59:50PM -0400, koverstreet@google.com wrote:
-> > From: Kent Overstreet <koverstreet@google.com>
-> > 
-> > This consolidates some code, and will help in a later patch changing how
-> > bio cloning works.
-> > 
-> > Signed-off-by: Kent Overstreet <koverstreet@google.com>
-> 
-> I'd prefer a bit more explanation on what's going on generally and why
-> and how dm conversion is different.
-
-Well, besides the removal of idx it's all just removing stuff that
-bio_clone_bioset() does for it.
-
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 3cc2169..3e33039 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -1072,26 +1072,19 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
-> >   * Creates a bio that consists of range of complete bvecs.
-> >   */
-> >  static struct bio *clone_bio(struct bio *bio, sector_t sector,
-> > -			     unsigned short idx, unsigned short bv_count,
-> > +			     unsigned short bv_count,
-> >  			     unsigned int len, struct bio_set *bs)
-> >  {
-> >  	struct bio *clone;
+On Fri, May 18, 2012 at 09:09:03AM -0700, Tejun Heo wrote:
+> On Thu, May 17, 2012 at 10:59:51PM -0400, koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org wrote:
+> > @@ -729,7 +729,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+> >  	}
 > >  
-> > -	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
-> > -	__bio_clone(clone, bio);
-> > +	clone = bio_clone_bioset(bio, GFP_NOIO, bs);
-> >  	clone->bi_sector = sector;
-> > -	clone->bi_idx = idx;
-> > -	clone->bi_vcnt = idx + bv_count;
-> > +	clone->bi_vcnt = bv_count;
-> >  	clone->bi_size = to_bytes(len);
-> > -	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
-> 
-> Maybe removal of @idx deserves a separate patch?
-
-I'm gonna back that out, I'm not sure it was correct now.
-
-> > -	if (bio_integrity(bio)) {
-> > -		bio_integrity_clone(clone, bio, GFP_NOIO, bs);
+> >  	while (old_chain && (total < len)) {
+> > -		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
+> > +		tmp = bio_clone_kmalloc(old_chain, gfpmask);
+> >  		if (!tmp)
+> >  			goto err_out;
+> >  
+> > @@ -751,13 +751,9 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+> >  			if (!bp)
+> >  				goto err_out;
+> >  
+> > -			__bio_clone(tmp, &bp->bio1);
 > > -
-> > -		if (idx != bio->bi_idx || clone->bi_size < bio->bi_size)
-> > -			bio_integrity_trim(clone,
-> > -					   bio_sector_offset(bio, idx, 0), len);
-> > -	}
-> > +	if (bio_integrity(bio) &&
-> > +	    clone->bi_size < bio->bi_size)
 > 
-> Unnecessary line break.
-> 
-> Other than that, looks good to me.
-> 
-> Thanks.
-> 
-> -- 
-> tejun
+> This effectively swaps the order of bio_split() and __bio_clone().  Is
+> that safe?  Also, please cc the maintainer.
+
+Now that I look at that code some more, I'm not sure it was quite right
+before - that or I don't follow how it's supposed to work.
+
+That bio_split() effectively does its own clone, so it seems to me the
+bio_kmalloc()/bio_clone_kmalloc() should only be happening in the non
+split case.
+
+Also, there's a bio_chain_clone in drivers/block/osdblk.c that looks
+like it's doing something similar, probably we should have some generic
+code for this.
