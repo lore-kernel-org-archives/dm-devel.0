@@ -1,47 +1,42 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH 09/13] block: Add an explicit bio flag for bios that own
- their bvec
-Date: Fri, 18 May 2012 14:49:28 -0700
-Message-ID: <20120518214928.GB32300@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 08/13] block: Kill bi_destructor
+Date: Fri, 18 May 2012 15:21:30 -0700
+Message-ID: <20120518222130.GC32300@google.com>
 References: <cover.1337308722.git.koverstreet@google.com>
- <363875943e9d0e13bee6ed28239280543e6e5055.1337308722.git.koverstreet@google.com>
- <20120518163018.GI19388@google.com>
+ <de05855cf0fa4800cfab7e8340f106dccc7a75a1.1337308722.git.koverstreet@google.com>
+ <20120518162142.GH19388@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120518163018.GI19388@google.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
+In-Reply-To: <20120518162142.GH19388-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, May 18, 2012 at 09:30:18AM -0700, Tejun Heo wrote:
-> On Thu, May 17, 2012 at 10:59:56PM -0400, koverstreet@google.com wrote:
-> > From: Kent Overstreet <koverstreet@google.com>
-> > 
-> > This is for the new bio splitting code. When we split a bio, if the
-> > split occured on a bvec boundry we reuse the bvec for the new bio. But
-> > that means bio_free() can't free it, hence the explicit flag.
-> > 
-> > Signed-off-by: Kent Overstreet <koverstreet@google.com>
-> > ---
-> >  fs/bio.c                  |    3 ++-
-> >  include/linux/blk_types.h |    1 +
-> >  2 files changed, 3 insertions(+), 1 deletions(-)
-> > 
-> > diff --git a/fs/bio.c b/fs/bio.c
-> > index ecc9088..3332800 100644
-> > --- a/fs/bio.c
-> > +++ b/fs/bio.c
-> > @@ -234,7 +234,7 @@ void bio_free(struct bio *bio, struct bio_set *bs)
-> >  {
-> >  	void *p;
-> >  
-> > -	if (bio_has_allocated_vec(bio))
-> > +	if (bio_flagged(bio, BIO_HAS_VEC))
-> >  		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
+On Fri, May 18, 2012 at 09:21:42AM -0700, Tejun Heo wrote:
+> Hello,
 > 
-> We can remove bio_has_allocated_vec()?
+> > @@ -417,8 +409,11 @@ void bio_put(struct bio *bio)
+> >  
+> >  		if (bio->bi_pool)
+> >  			bio_free(bio, bio->bi_pool);
+> > -		else
+> > -			bio->bi_destructor(bio);
+> > +		else {
+> > +			if (bio_integrity(bio))
+> > +				bio_integrity_free(bio, fs_bio_set);
+> > +			kfree(bio);
+> 
+> if {
+> } else {
+> }
+> 
+> And wouldn't it be better to make bio_free() handle kfreeing too?
 
-Yep! Adding that to the patch.
+That'd kind of change the semantics of bio_free() - but I suppose it'd
+make sense.
+
+I'm not terribly happy with how the bio integrity data belongs to
+fs_bio_set for kmalloced bios. Maybe I'll change that at some point.
