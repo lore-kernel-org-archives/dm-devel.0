@@ -1,54 +1,101 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [Bcache v13 00/16]
-Date: Fri, 18 May 2012 10:06:04 +0000
-Message-ID: <201205181006.04575.arnd@arndb.de>
-References: <cover.1336619038.git.koverstreet@google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] dm thin: fix table output when pool target
+	disables discard passdown internally
+Date: Fri, 18 May 2012 11:04:01 -0400
+Message-ID: <1337353441-12647-1-git-send-email-snitzer@redhat.com>
+References: <1337310059-8517-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1336619038.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1337310059-8517-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thursday 10 May 2012, Kent Overstreet wrote:
-> TODO/known issues:
-> 
-> __up_write() needs to be exported for bcache to compile as a module - it's
-> used for bypassing lockdep when traversing the btree during garbage
-> collection. If someone else knows a better solution, please let me know.
-> 
-> The userspace interface is going to change before it goes in. The general
-> consensus at LSF was that we don't want yet another interface for
-> probing/managing block devices, and dm exists so we may as well use that. I
-> don't think anyone's started on that yet, though.
-> 
-> Documentation needs to be updated. That's being actively worked on, though.
+When the thin pool target clears the discard_passdown parameter
+internally, it incorrectly reports this to userspace on the table line.
+This patch corrects this by no longer changing the table line to reflect
+that discard passdown was disabled.
 
-Hi Kent,
+We can still tell when discard passdown is overridden by looking for the
+message "Discard unsupported by data device (sdX): Disabling discard passdown."
 
-Sorry for jumping in late in the discussion. I believe we discussed the
-requirements for the low-end media when you posted v12 and it seemed that
-there are issues with a lot of the low-end media you were planning to
-support. I have seen devices with 12MB or 16MB erase block size, which you 
-didn't handle well, and many devices are severely limited on the number of
-buckets (erase blocks that a device can write to concurrently), typically
-3 to 8 for an SD card and slightly more for a USB drive.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-thin.c |   32 +++++++++++++++++---------------
+ 1 files changed, 17 insertions(+), 15 deletions(-)
 
-Are you still planning to support those devices or are you focusing now
-on other hardware? If you plan to support them, what are you current
-limits on the bucket size and the number of buckets?
-
-FWIW, Tixy has written a tool named flashsim[1] to simulate the behavior
-of all kinds of flash drives, so you can use a blocktrace file as
-input and it will tell you the write amplification factor that a given
-drive would suffer given that workload. You can use it to find out how
-your algorithms would interact with devices that can only support a
-smaller number of buckets that you would actually want.
-
-	Arnd
-
-[1] http://yxit.co.uk/public/flash-performance/
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 2fd87b5..eb3d138 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -1632,6 +1632,21 @@ static int bind_control_target(struct pool *pool, struct dm_target *ti)
+ 	pool->low_water_blocks = pt->low_water_blocks;
+ 	pool->pf = pt->pf;
+ 
++	/*
++	 * If discard_passdown was enabled verify that the data device
++	 * supports discards.  Disable discard_passdown if not; otherwise
++	 * -EOPNOTSUPP will be returned.
++	 */
++	if (pt->pf.discard_passdown) {
++		struct request_queue *q = bdev_get_queue(pt->data_dev->bdev);
++		if (!q || !blk_queue_discard(q)) {
++			char buf[BDEVNAME_SIZE];
++			DMWARN("Discard unsupported by data device (%s): Disabling discard passdown.",
++			       bdevname(pt->data_dev->bdev, buf));
++			pool->pf.discard_passdown = 0;
++		}
++	}
++
+ 	return 0;
+ }
+ 
+@@ -1988,19 +2003,6 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		goto out_flags_changed;
+ 	}
+ 
+-	/*
+-	 * If discard_passdown was enabled verify that the data device
+-	 * supports discards.  Disable discard_passdown if not; otherwise
+-	 * -EOPNOTSUPP will be returned.
+-	 */
+-	if (pf.discard_passdown) {
+-		struct request_queue *q = bdev_get_queue(data_dev->bdev);
+-		if (!q || !blk_queue_discard(q)) {
+-			DMWARN("Discard unsupported by data device: Disabling discard passdown.");
+-			pf.discard_passdown = 0;
+-		}
+-	}
+-
+ 	pt->pool = pool;
+ 	pt->ti = ti;
+ 	pt->metadata_dev = metadata_dev;
+@@ -2385,7 +2387,7 @@ static int pool_status(struct dm_target *ti, status_type_t type,
+ 		       (unsigned long long)pt->low_water_blocks);
+ 
+ 		count = !pool->pf.zero_new_blocks + !pool->pf.discard_enabled +
+-			!pool->pf.discard_passdown;
++			!pt->pf.discard_passdown;
+ 		DMEMIT("%u ", count);
+ 
+ 		if (!pool->pf.zero_new_blocks)
+@@ -2394,7 +2396,7 @@ static int pool_status(struct dm_target *ti, status_type_t type,
+ 		if (!pool->pf.discard_enabled)
+ 			DMEMIT("ignore_discard ");
+ 
+-		if (!pool->pf.discard_passdown)
++		if (!pt->pf.discard_passdown)
+ 			DMEMIT("no_discard_passdown ");
+ 
+ 		break;
