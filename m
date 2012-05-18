@@ -1,43 +1,47 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 06/13] block: Add bio_reset()
-Date: Fri, 18 May 2012 14:48:01 -0700
-Message-ID: <20120518214801.GA32300@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH 09/13] block: Add an explicit bio flag for bios that own
+ their bvec
+Date: Fri, 18 May 2012 14:49:28 -0700
+Message-ID: <20120518214928.GB32300@google.com>
 References: <cover.1337308722.git.koverstreet@google.com>
- <9953623f6fae97018e59d96971a2612caf6c01e7.1337308722.git.koverstreet@google.com>
- <20120518161608.GF19388@google.com>
+ <363875943e9d0e13bee6ed28239280543e6e5055.1337308722.git.koverstreet@google.com>
+ <20120518163018.GI19388@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120518161608.GF19388-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
+In-Reply-To: <20120518163018.GI19388@google.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-On Fri, May 18, 2012 at 09:16:08AM -0700, Tejun Heo wrote:
-> Hello,
-> 
-> On Thu, May 17, 2012 at 10:59:53PM -0400, koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org wrote:
-> > From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+On Fri, May 18, 2012 at 09:30:18AM -0700, Tejun Heo wrote:
+> On Thu, May 17, 2012 at 10:59:56PM -0400, koverstreet@google.com wrote:
+> > From: Kent Overstreet <koverstreet@google.com>
 > > 
-> > Reusing bios is something that's been highly frowned upon in the past,
-> > but driver code keeps doing it anyways. If it's going to happen anyways,
-> > we should provide a generic method.
+> > This is for the new bio splitting code. When we split a bio, if the
+> > split occured on a bvec boundry we reuse the bvec for the new bio. But
+> > that means bio_free() can't free it, hence the explicit flag.
 > > 
-> > This'll help with getting rid of bi_destructor.
+> > Signed-off-by: Kent Overstreet <koverstreet@google.com>
+> > ---
+> >  fs/bio.c                  |    3 ++-
+> >  include/linux/blk_types.h |    1 +
+> >  2 files changed, 3 insertions(+), 1 deletions(-)
+> > 
+> > diff --git a/fs/bio.c b/fs/bio.c
+> > index ecc9088..3332800 100644
+> > --- a/fs/bio.c
+> > +++ b/fs/bio.c
+> > @@ -234,7 +234,7 @@ void bio_free(struct bio *bio, struct bio_set *bs)
+> >  {
+> >  	void *p;
+> >  
+> > -	if (bio_has_allocated_vec(bio))
+> > +	if (bio_flagged(bio, BIO_HAS_VEC))
+> >  		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
 > 
-> It would be nice to explain a bit why this helps bi_destructor
-> removal.
+> We can remove bio_has_allocated_vec()?
 
-drivers/block/pktcdvd.c was open coding this - it was doing a bio_init()
-and then resetting bi_destructor (and other stuff). The generic
-bio_reset() means it doesn't have to know about bi_destructor anymore.
-
-> 
-> > +#define BIO_RESET_OFFSET	offsetof(struct bio, bi_max_vecs)
-> 
-> Maybe better named BIO_RESET_BYTES?  As offset tends to indicate the
-> start of a region.
-
-Yeah, that's a better name.
+Yep! Adding that to the patch.
