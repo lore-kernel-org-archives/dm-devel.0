@@ -1,85 +1,36 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 12/13] Make generic_make_request handle arbitrarily large
- bios
-Date: Fri, 18 May 2012 04:14:44 -0400
-Message-ID: <20120518081444.GA27205@dhcp-172-18-216-138.mtv.corp.google.com>
-References: <cover.1337308722.git.koverstreet@google.com>
- <1114e7019b0055fc09a54b59b36398d5c54f5e32.1337308722.git.koverstreet@google.com>
- <20120518180550.0a6cdc34@notabene.brown>
+From: Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+Subject: Re: [Bcache v13 07/16] Closures
+Date: Fri, 18 May 2012 11:02:47 +0100
+Message-ID: <20120518110247.08696cec@pyramind.ukuu.org.uk>
+References: <cover.1336619038.git.koverstreet@google.com>
+	<82f00ebb4ee0404788c5bd7fbfa1fe4969f28ba1.1336619038.git.koverstreet@google.com>
+	<20120515224137.GA15386@google.com>
+	<20120518062948.GA21163@dhcp-172-18-216-138.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120518180550.0a6cdc34-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
+In-Reply-To: <20120518062948.GA21163-RcKxWJ4Cfj3IzGYXcIpNmNLIRw13R84JkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, May 18, 2012 at 06:05:50PM +1000, NeilBrown wrote:
-> 
-> Hi Kent,
->  there is lots of good stuff in this series and I certainly hope a lot of it
->  can eventually go upstream.
-> 
->  However there is a part of this patch that I don't think is safe:
-> 
-> 
-> > +static void __bio_submit_split(struct closure *cl)
-> > +{
-> > +	struct bio_split_hook *s = container_of(cl, struct bio_split_hook, cl);
-> > +	struct bio *bio = s->bio, *n;
-> > +
-> > +	do {
-> > +		n = bio_split(bio, bio_max_sectors(bio),
-> > +			      GFP_NOIO, s->q->bio_split);
-> > +		if (!n)
-> > +			continue_at(cl, __bio_submit_split, bio_split_wq);
-> > +
-> > +		closure_get(cl);
-> > +		generic_make_request(n);
-> > +	} while (n != bio);
-> > +
-> > +	continue_at(cl, bio_submit_split_done, NULL);
-> > +}
-> 
-> Firstly a small point:  Can bio_split ever return NULL here?  I don't
-> think it can, so there is no need to test.
-> But if it can, then calling generic_make_request(NULL) doesn't seem like a
-> good idea.
-> 
-> More significantly though::
->   This is called from generic_make_request which can be called recursively and
-> enforces a tail-recursion semantic.
-> If that generic_make_request was a recursive call, then the
-> generic_make_request in __bio_submit_split will not start the request, but
-> will queue the bio for later handling.  If we then call bio_split again, we
-> could try to allocation from a mempool while we are holding one entry
-> allocated from that pool captive.  This can deadlock.
-> 
-> i.e. if the original bio is so large that it needs to be split into 3 pieces,
-> then we will try to allocate the second piece before the first piece has a
-> chance to be released.  If this happens in enough threads to exhaust the pool
-> (4 I think), it will deadlock.
-> 
-> I realise this sounds like a very unlikely case, but of course they happen.
-> 
-> One possible approach might be to count how many splits will be required,
-> then have an interface to mempools so you can allocate them all at once,
-> or block and wait.
+> Well, I can definitely understand your reservations about the code; it's
+> strange and foreign and complicated. But having beaten my head against
+> the various problems and difficulties inherent in asynchronous
+> programming for years - well, having found a way to make it sane to me
+> it'd be madness to go back.
 
-Yeah, I actually thought of that (I probably should've documented it,
-though).
+I think its more of a different paradigm than complicated. The big
+question I'd have to ask is how does it fit with hard real time. That is
+a big issue given the gradual merging and getting of "hard" real time
+into the kernel proper.
 
-That's why the code is checking if bio_split() returned NULL; my verison
-of bio_split() checks if current->bio_list is non NULL, and if it is it
-doesn't pass __GFP_WAIT to bio_alloc_bioset().
+In some ways it's not that strange either. A look at what happens on some
+of our kref handling in drivers is very similar but hardcoded.
 
-(I was debating whether bio_split() should do that itself or leave it up
-to the caller. I tend to think it's too easy to accidentally screw up -
-and not notice it - so it should be enforced by generic code. Possibly
-the check should be moved to bio_alloc_bioset(), though.)
+Is the handling of priority inversion within closures a well understood
+and solved problem ?
 
-If we do get a memory allocation failure, then we just punt to workqueue
-- continue_at() runs __bio_submit_split from the bio_split workqueue -
-where we can safely use the mempool.
+Alan
