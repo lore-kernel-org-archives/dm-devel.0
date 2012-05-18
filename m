@@ -1,20 +1,39 @@
-From: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH 01/13] block: Generalized bio pool freeing
-Date: Fri, 18 May 2012 17:14:23 +0100
-Message-ID: <20120518161423.GI29330@agk-dp.fab.redhat.com>
-References: <cover.1337308722.git.koverstreet@google.com> <ea774fea2a27c9f1028a12ce31a7ee5e5517bef4.1337308722.git.koverstreet@google.com> <20120518155538.GA19388@google.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH 06/13] block: Add bio_reset()
+Date: Fri, 18 May 2012 09:16:08 -0700
+Message-ID: <20120518161608.GF19388@google.com>
+References: <cover.1337308722.git.koverstreet@google.com>
+ <9953623f6fae97018e59d96971a2612caf6c01e7.1337308722.git.koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120518155538.GA19388-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Junichi Nomura <j-nomura-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
+In-Reply-To: <9953623f6fae97018e59d96971a2612caf6c01e7.1337308722.git.koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: koverstreet@google.com
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-This dance should come out of clone_endio() and __map_bio() too?
+Hello,
 
-        bio->bi_private = md->bs;
+On Thu, May 17, 2012 at 10:59:53PM -0400, koverstreet@google.com wrote:
+> From: Kent Overstreet <koverstreet@google.com>
+> 
+> Reusing bios is something that's been highly frowned upon in the past,
+> but driver code keeps doing it anyways. If it's going to happen anyways,
+> we should provide a generic method.
+> 
+> This'll help with getting rid of bi_destructor.
 
-Alasdair
+It would be nice to explain a bit why this helps bi_destructor
+removal.
+
+> +#define BIO_RESET_OFFSET	offsetof(struct bio, bi_max_vecs)
+
+Maybe better named BIO_RESET_BYTES?  As offset tends to indicate the
+start of a region.
+
+Thanks.
+
+-- 
+tejun
