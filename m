@@ -1,7 +1,7 @@
 From: koverstreet@google.com
-Subject: [PATCH 08/13] block: Kill bi_destructor
-Date: Thu, 17 May 2012 22:59:55 -0400
-Message-ID: <de05855cf0fa4800cfab7e8340f106dccc7a75a1.1337308722.git.koverstreet@google.com>
+Subject: [PATCH 07/13] pktcdvd: Switch to bio_kmalloc()
+Date: Thu, 17 May 2012 22:59:54 -0400
+Message-ID: <04a4d6c2c8b6f0097e3594c6e0932093afffc1da.1337308722.git.koverstreet@google.com>
 References: <cover.1337308722.git.koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -26,94 +26,191 @@ List-Id: dm-devel.ids
 
 From: Kent Overstreet <koverstreet@google.com>
 
-Now that we've got generic code for freeing bios allocated from bio
-pools, this isn't needed anymore.
+This is prep work for killing bi_destructor
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- Documentation/block/biodoc.txt |    5 -----
- fs/bio.c                       |   15 +++++----------
- include/linux/blk_types.h      |    3 ---
- 3 files changed, 5 insertions(+), 18 deletions(-)
+ drivers/block/pktcdvd.c |  115 ++++++++++++++++-------------------------------
+ 1 files changed, 39 insertions(+), 76 deletions(-)
 
-diff --git a/Documentation/block/biodoc.txt b/Documentation/block/biodoc.txt
-index e418dc0..8df5e8e 100644
---- a/Documentation/block/biodoc.txt
-+++ b/Documentation/block/biodoc.txt
-@@ -465,7 +465,6 @@ struct bio {
-        bio_end_io_t	*bi_end_io;  /* bi_end_io (bio) */
-        atomic_t		bi_cnt;	     /* pin count: free when it hits zero */
-        void             *bi_private;
--       bio_destructor_t *bi_destructor; /* bi_destructor (bio) */
- };
- 
- With this multipage bio design:
-@@ -647,10 +646,6 @@ for a non-clone bio. There are the 6 pools setup for different size biovecs,
- so bio_alloc(gfp_mask, nr_iovecs) will allocate a vec_list of the
- given size from these slabs.
- 
--The bi_destructor() routine takes into account the possibility of the bio
--having originated from a different source (see later discussions on
--n/w to block transfers and kvec_cb)
--
- The bio_get() routine may be used to hold an extra reference on a bio prior
- to i/o submission, if the bio fields are likely to be accessed after the
- i/o is issued (since the bio may otherwise get freed in case i/o completion
-diff --git a/fs/bio.c b/fs/bio.c
-index 90e4c3a..ecc9088 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -343,13 +343,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
- }
- EXPORT_SYMBOL(bio_alloc);
- 
--static void bio_kmalloc_destructor(struct bio *bio)
--{
--	if (bio_integrity(bio))
--		bio_integrity_free(bio, fs_bio_set);
--	kfree(bio);
--}
--
- /**
-  * bio_kmalloc - allocate a bio for I/O using kmalloc()
-  * @gfp_mask:   the GFP_ mask given to the slab allocator
-@@ -376,7 +369,6 @@ struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
- 	bio->bi_flags |= BIO_POOL_NONE << BIO_POOL_OFFSET;
- 	bio->bi_max_vecs = nr_iovecs;
- 	bio->bi_io_vec = bio->bi_inline_vecs;
--	bio->bi_destructor = bio_kmalloc_destructor;
- 
- 	return bio;
- }
-@@ -417,8 +409,11 @@ void bio_put(struct bio *bio)
- 
- 		if (bio->bi_pool)
- 			bio_free(bio, bio->bi_pool);
--		else
--			bio->bi_destructor(bio);
-+		else {
-+			if (bio_integrity(bio))
-+				bio_integrity_free(bio, fs_bio_set);
-+			kfree(bio);
-+		}
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index ba66e44..6fe693a 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -522,36 +522,38 @@ static void pkt_bio_finished(struct pktcdvd_device *pd)
  	}
  }
- EXPORT_SYMBOL(bio_put);
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 4a47783..bd9a610 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -74,11 +74,8 @@ struct bio {
- 	struct bio_integrity_payload *bi_integrity;  /* data integrity */
- #endif
  
--	/* If bi_pool is non NULL, bi_destructor is not called */
- 	struct bio_set		*bi_pool;
+-static void pkt_bio_destructor(struct bio *bio)
++static void pkt_end_io_read(struct bio *bio, int err)
+ {
+-	kfree(bio->bi_io_vec);
+-	kfree(bio);
+-}
++	struct packet_data *pkt = bio->bi_private;
++	struct pktcdvd_device *pd = pkt->pd;
++	BUG_ON(!pd);
  
--	bio_destructor_t	*bi_destructor;	/* destructor */
+-static struct bio *pkt_bio_alloc(int nr_iovecs)
+-{
+-	struct bio_vec *bvl = NULL;
+-	struct bio *bio;
++	VPRINTK("pkt_end_io_read: bio=%p sec0=%llx sec=%llx err=%d\n", bio,
++		(unsigned long long)pkt->sector, (unsigned long long)bio->bi_sector, err);
+ 
+-	bio = kmalloc(sizeof(struct bio), GFP_KERNEL);
+-	if (!bio)
+-		goto no_bio;
+-	bio_init(bio);
++	if (err)
++		atomic_inc(&pkt->io_errors);
++	if (atomic_dec_and_test(&pkt->io_wait)) {
++		atomic_inc(&pkt->run_sm);
++		wake_up(&pd->wqueue);
++	}
++	pkt_bio_finished(pd);
++}
+ 
+-	bvl = kcalloc(nr_iovecs, sizeof(struct bio_vec), GFP_KERNEL);
+-	if (!bvl)
+-		goto no_bvl;
++static void pkt_end_io_packet_write(struct bio *bio, int err)
++{
++	struct packet_data *pkt = bio->bi_private;
++	struct pktcdvd_device *pd = pkt->pd;
++	BUG_ON(!pd);
+ 
+-	bio->bi_max_vecs = nr_iovecs;
+-	bio->bi_io_vec = bvl;
+-	bio->bi_destructor = pkt_bio_destructor;
++	VPRINTK("pkt_end_io_packet_write: id=%d, err=%d\n", pkt->id, err);
+ 
+-	return bio;
++	pd->stats.pkt_ended++;
+ 
+- no_bvl:
+-	kfree(bio);
+- no_bio:
+-	return NULL;
++	pkt_bio_finished(pd);
++	atomic_dec(&pkt->io_wait);
++	atomic_inc(&pkt->run_sm);
++	wake_up(&pd->wqueue);
+ }
+ 
+ /*
+@@ -567,10 +569,13 @@ static struct packet_data *pkt_alloc_packet_data(int frames)
+ 		goto no_pkt;
+ 
+ 	pkt->frames = frames;
+-	pkt->w_bio = pkt_bio_alloc(frames);
++	pkt->w_bio = bio_kmalloc(GFP_KERNEL, frames);
+ 	if (!pkt->w_bio)
+ 		goto no_bio;
+ 
++	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
++	pkt->w_bio->bi_private = pkt;
++
+ 	for (i = 0; i < frames / FRAMES_PER_PAGE; i++) {
+ 		pkt->pages[i] = alloc_page(GFP_KERNEL|__GFP_ZERO);
+ 		if (!pkt->pages[i])
+@@ -581,9 +586,12 @@ static struct packet_data *pkt_alloc_packet_data(int frames)
+ 	bio_list_init(&pkt->orig_bios);
+ 
+ 	for (i = 0; i < frames; i++) {
+-		struct bio *bio = pkt_bio_alloc(1);
++		struct bio *bio = bio_kmalloc(GFP_KERNEL, 1);
+ 		if (!bio)
+ 			goto no_rd_bio;
++
++		bio->bi_end_io = pkt_end_io_read;
++		bio->bi_private = pkt;
+ 		pkt->r_bios[i] = bio;
+ 	}
+ 
+@@ -1036,40 +1044,6 @@ static void pkt_make_local_copy(struct packet_data *pkt, struct bio_vec *bvec)
+ 	}
+ }
+ 
+-static void pkt_end_io_read(struct bio *bio, int err)
+-{
+-	struct packet_data *pkt = bio->bi_private;
+-	struct pktcdvd_device *pd = pkt->pd;
+-	BUG_ON(!pd);
 -
- 	/*
- 	 * We can inline a number of vecs at the end of the bio, to avoid
- 	 * double allocations for a small number of bio_vecs. This member
+-	VPRINTK("pkt_end_io_read: bio=%p sec0=%llx sec=%llx err=%d\n", bio,
+-		(unsigned long long)pkt->sector, (unsigned long long)bio->bi_sector, err);
+-
+-	if (err)
+-		atomic_inc(&pkt->io_errors);
+-	if (atomic_dec_and_test(&pkt->io_wait)) {
+-		atomic_inc(&pkt->run_sm);
+-		wake_up(&pd->wqueue);
+-	}
+-	pkt_bio_finished(pd);
+-}
+-
+-static void pkt_end_io_packet_write(struct bio *bio, int err)
+-{
+-	struct packet_data *pkt = bio->bi_private;
+-	struct pktcdvd_device *pd = pkt->pd;
+-	BUG_ON(!pd);
+-
+-	VPRINTK("pkt_end_io_packet_write: id=%d, err=%d\n", pkt->id, err);
+-
+-	pd->stats.pkt_ended++;
+-
+-	pkt_bio_finished(pd);
+-	atomic_dec(&pkt->io_wait);
+-	atomic_inc(&pkt->run_sm);
+-	wake_up(&pd->wqueue);
+-}
+-
+ /*
+  * Schedule reads for the holes in a packet
+  */
+@@ -1111,21 +1085,15 @@ static void pkt_gather_data(struct pktcdvd_device *pd, struct packet_data *pkt)
+ 	 * Schedule reads for missing parts of the packet.
+ 	 */
+ 	for (f = 0; f < pkt->frames; f++) {
+-		struct bio_vec *vec;
+-
+ 		int p, offset;
++
+ 		if (written[f])
+ 			continue;
++
+ 		bio = pkt->r_bios[f];
+-		vec = bio->bi_io_vec;
+-		bio_init(bio);
+-		bio->bi_max_vecs = 1;
+-		bio->bi_sector = pkt->sector + f * (CD_FRAMESIZE >> 9);
+-		bio->bi_bdev = pd->bdev;
+-		bio->bi_end_io = pkt_end_io_read;
+-		bio->bi_private = pkt;
+-		bio->bi_io_vec = vec;
+-		bio->bi_destructor = pkt_bio_destructor;
++		bio_reset(bio);
++		bio->bi_sector	= pkt->sector + f * (CD_FRAMESIZE >> 9);
++		bio->bi_bdev	= pd->bdev;
+ 
+ 		p = (f * CD_FRAMESIZE) / PAGE_SIZE;
+ 		offset = (f * CD_FRAMESIZE) % PAGE_SIZE;
+@@ -1418,14 +1386,9 @@ static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
+ 	}
+ 
+ 	/* Start the write request */
+-	bio_init(pkt->w_bio);
+-	pkt->w_bio->bi_max_vecs = PACKET_MAX_SIZE;
++	bio_reset(pkt->w_bio);
+ 	pkt->w_bio->bi_sector = pkt->sector;
+ 	pkt->w_bio->bi_bdev = pd->bdev;
+-	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
+-	pkt->w_bio->bi_private = pkt;
+-	pkt->w_bio->bi_io_vec = bvec;
+-	pkt->w_bio->bi_destructor = pkt_bio_destructor;
+ 	for (f = 0; f < pkt->frames; f++)
+ 		if (!bio_add_page(pkt->w_bio, bvec[f].bv_page, CD_FRAMESIZE, bvec[f].bv_offset))
+ 			BUG();
 -- 
 1.7.9.rc2
