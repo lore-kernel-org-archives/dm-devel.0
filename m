@@ -1,586 +1,141 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [PATCH 10/13] block: Rework bio splitting
-Date: Fri, 18 May 2012 20:46:24 +0300
-Message-ID: <4FB68AF0.4050707@panasas.com>
-References: <cover.1337308722.git.koverstreet@google.com> <ac4c1cbd10934fdc3a4af74d4cb5ec370f9139d5.1337308722.git.koverstreet@google.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH 12/13] Make generic_make_request handle arbitrarily
+ large bios
+Date: Fri, 18 May 2012 10:52:16 -0700
+Message-ID: <20120518175216.GL19388@google.com>
+References: <cover.1337308722.git.koverstreet@google.com>
+ <1114e7019b0055fc09a54b59b36398d5c54f5e32.1337308722.git.koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <ac4c1cbd10934fdc3a4af74d4cb5ec370f9139d5.1337308722.git.koverstreet@google.com>
+Content-Disposition: inline
+In-Reply-To: <1114e7019b0055fc09a54b59b36398d5c54f5e32.1337308722.git.koverstreet@google.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: koverstreet@google.com
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-On 05/18/2012 05:59 AM, koverstreet@google.com wrote:
+Hello, Kent.
 
+On Thu, May 17, 2012 at 10:59:59PM -0400, koverstreet@google.com wrote:
 > From: Kent Overstreet <koverstreet@google.com>
 > 
-> Break out bio_split() and bio_pair_split(), and get rid of the
-> limitations of bio_split()
+> The way the block layer is currently written, it goes to great lengths
+> to avoid having to split bios; upper layer code (such as bio_add_page())
+> checks what the underlying device can handle and tries to always create
+> bios that don't need to be split.
 > 
-> Signed-off-by: Kent Overstreet <koverstreet@google.com>
-> ---
->  drivers/block/drbd/drbd_req.c |   18 +----
->  drivers/block/pktcdvd.c       |    6 +-
->  drivers/block/rbd.c           |    4 +-
->  drivers/md/linear.c           |    6 +-
->  drivers/md/raid0.c            |    8 +-
->  drivers/md/raid10.c           |   23 ++-----
->  fs/bio-integrity.c            |   44 ------------
->  fs/bio.c                      |  149 ++++++++++++++++++++++++++---------------
->  include/linux/bio.h           |   27 +++-----
->  9 files changed, 125 insertions(+), 160 deletions(-)
-> 
-> diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-> index 4a0f314..68fa494 100644
-> --- a/drivers/block/drbd/drbd_req.c
-> +++ b/drivers/block/drbd/drbd_req.c
-> @@ -1101,18 +1101,6 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
->  	if (likely(s_enr == e_enr)) {
->  		inc_ap_bio(mdev, 1);
->  		drbd_make_request_common(mdev, bio, start_time);
-> -		return;
-> -	}
-> -
-> -	/* can this bio be split generically?
-> -	 * Maybe add our own split-arbitrary-bios function. */
-> -	if (bio->bi_vcnt != 1 || bio->bi_idx != 0 || bio->bi_size > DRBD_MAX_BIO_SIZE) {
-> -		/* rather error out here than BUG in bio_split */
-> -		dev_err(DEV, "bio would need to, but cannot, be split: "
-> -		    "(vcnt=%u,idx=%u,size=%u,sector=%llu)\n",
-> -		    bio->bi_vcnt, bio->bi_idx, bio->bi_size,
-> -		    (unsigned long long)bio->bi_sector);
-> -		bio_endio(bio, -EINVAL);
->  	} else {
->  		/* This bio crosses some boundary, so we have to split it. */
->  		struct bio_pair *bp;
-> @@ -1128,7 +1116,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
->  		const int sps = 1 << HT_SHIFT; /* sectors per slot */
->  		const int mask = sps - 1;
->  		const sector_t first_sectors = sps - (sect & mask);
-> -		bp = bio_split(bio, first_sectors);
-> +		bp = bio_pair_split(bio, first_sectors);
+> But this approach becomes unwieldy and eventually breaks down with
+> stacked devices and devices with dynamic limits, and it adds a lot of
+> complexity. If the block layer could split bios as needed, we could
+> eliminate a lot of complexity elsewhere - particularly in stacked
+> drivers. Code that creates bios can then create whatever size bios are
+> convenient, and more importantly stacked drivers don't have to deal with
+> both their own bio size limitations and the limitations of the
+> (potentially multiple) devices underneath them.
 
+I generally like the idea.  Device limit directly being propagated to
+high level users is cumbersome.  Somebody has to be splitting anyway
+and doing it at top makes things, including limit propagation through
+stacked drivers, unnecessarily complicated.  Jens, what are your
+thoughts?
 
-I do not see the point of this rename. See below
-
->  
->  		/* we need to get a "reference count" (ap_bio_cnt)
->  		 * to avoid races with the disconnect/reconnect/suspend code.
-> @@ -1139,10 +1127,10 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
->  
->  		D_ASSERT(e_enr == s_enr + 1);
->  
-> -		while (drbd_make_request_common(mdev, &bp->bio1, start_time))
-> +		while (drbd_make_request_common(mdev, &bp->split, start_time))
->  			inc_ap_bio(mdev, 1);
->  
-> -		while (drbd_make_request_common(mdev, &bp->bio2, start_time))
-> +		while (drbd_make_request_common(mdev, bio, start_time))
->  			inc_ap_bio(mdev, 1);
->  
->  		dec_ap_bio(mdev);
-> diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-> index 6fe693a..1465155 100644
-> --- a/drivers/block/pktcdvd.c
-> +++ b/drivers/block/pktcdvd.c
-> @@ -2467,10 +2467,10 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
->  		if (last_zone != zone) {
->  			BUG_ON(last_zone != zone + pd->settings.size);
->  			first_sectors = last_zone - bio->bi_sector;
-> -			bp = bio_split(bio, first_sectors);
-> +			bp = bio_pair_split(bio, first_sectors);
-
-
-just a rename. See below
-
-
->  			BUG_ON(!bp);
-> -			pkt_make_request(q, &bp->bio1);
-> -			pkt_make_request(q, &bp->bio2);
-> +			pkt_make_request(q, &bp->split);
-> +			pkt_make_request(q, bio);
->  			bio_pair_release(bp);
->  			return;
->  		}
-> diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-> index 5a953c6..dd19311 100644
-> --- a/drivers/block/rbd.c
-> +++ b/drivers/block/rbd.c
-> @@ -747,11 +747,11 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
->  
->  			/* split the bio. We'll release it either in the next
->  			   call, or it will have to be released outside */
-> -			bp = bio_split(old_chain, (len - total) / SECTOR_SIZE);
-> +			bp = bio_pair_split(old_chain, (len - total) / SECTOR_SIZE);
-
-
-just a rename. See below
-
->  			if (!bp)
->  				goto err_out;
->  
-> -			*next = &bp->bio2;
-> +			*next = &bp->split;
->  		} else
->  			*next = old_chain->bi_next;
->  
-> diff --git a/drivers/md/linear.c b/drivers/md/linear.c
-> index fa211d8..7c6cafd 100644
-> --- a/drivers/md/linear.c
-> +++ b/drivers/md/linear.c
-> @@ -314,10 +314,10 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
->  
->  		rcu_read_unlock();
->  
-> -		bp = bio_split(bio, end_sector - bio->bi_sector);
-> +		bp = bio_pair_split(bio, end_sector - bio->bi_sector);
->  
-
-
-just a rename. See below
-
-> -		linear_make_request(mddev, &bp->bio1);
-> -		linear_make_request(mddev, &bp->bio2);
-> +		linear_make_request(mddev, &bp->split);
-> +		linear_make_request(mddev, bio);
->  		bio_pair_release(bp);
->  		return;
->  	}
-> diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-> index de63a1f..3469adf 100644
-> --- a/drivers/md/raid0.c
-> +++ b/drivers/md/raid0.c
-> @@ -516,13 +516,13 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
->  		 * refuse to split for us, so we need to split it.
->  		 */
->  		if (likely(is_power_of_2(chunk_sects)))
-> -			bp = bio_split(bio, chunk_sects - (sector &
-> +			bp = bio_pair_split(bio, chunk_sects - (sector &
->  							   (chunk_sects-1)));
->  		else
-> -			bp = bio_split(bio, chunk_sects -
-> +			bp = bio_pair_split(bio, chunk_sects -
->  				       sector_div(sector, chunk_sects));
-
-
-just a rename. See below
-
-
-> -		raid0_make_request(mddev, &bp->bio1);
-> -		raid0_make_request(mddev, &bp->bio2);
-> +		raid0_make_request(mddev, &bp->split);
-> +		raid0_make_request(mddev, bio);
->  		bio_pair_release(bp);
->  		return;
->  	}
-> diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-> index 3e7b154..0062326 100644
-> --- a/drivers/md/raid10.c
-> +++ b/drivers/md/raid10.c
-> @@ -1001,15 +1001,9 @@ static void make_request(struct mddev *mddev, struct bio * bio)
->  		      > chunk_sects &&
->  		    conf->near_copies < conf->raid_disks)) {
->  		struct bio_pair *bp;
-> -		/* Sanity check -- queue functions should prevent this happening */
-> -		if (bio->bi_vcnt != 1 ||
-> -		    bio->bi_idx != 0)
-> -			goto bad_map;
-> -		/* This is a one page bio that upper layers
-> -		 * refuse to split for us, so we need to split it.
-> -		 */
-> -		bp = bio_split(bio,
-> -			       chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
+> +static void bio_submit_split_done(struct closure *cl)
+> +{
+> +	struct bio_split_hook *s = container_of(cl, struct bio_split_hook, cl);
 > +
-> +		bp = bio_pair_split(bio,
-> +				    chunk_sects - (bio->bi_sector & (chunk_sects - 1)));
+> +	s->bio->bi_end_io	= s->bi_end_io;
+> +	s->bio->bi_private	= s->bi_private;
+> +	bio_endio(s->bio, 0);
 
+I'd rather you didn't indent assignments.
 
-just a rename. See below
+> +	closure_debug_destroy(&s->cl);
+> +	mempool_free(s, s->q->bio_split_hook);
+> +}
+...
+> +static int bio_submit_split(struct bio *bio)
 
->  
->  		/* Each of these 'make_request' calls will call 'wait_barrier'.
->  		 * If the first succeeds but the second blocks due to the resync
-> @@ -1023,8 +1017,8 @@ static void make_request(struct mddev *mddev, struct bio * bio)
->  		conf->nr_waiting++;
->  		spin_unlock_irq(&conf->resync_lock);
->  
-> -		make_request(mddev, &bp->bio1);
-> -		make_request(mddev, &bp->bio2);
-> +		make_request(mddev, &bp->split);
-> +		make_request(mddev, bio);
->  
->  		spin_lock_irq(&conf->resync_lock);
->  		conf->nr_waiting--;
-> @@ -1033,13 +1027,6 @@ static void make_request(struct mddev *mddev, struct bio * bio)
->  
->  		bio_pair_release(bp);
->  		return;
-> -	bad_map:
-> -		printk("md/raid10:%s: make_request bug: can't convert block across chunks"
-> -		       " or bigger than %dk %llu %d\n", mdname(mddev), chunk_sects/2,
-> -		       (unsigned long long)bio->bi_sector, bio->bi_size >> 10);
-> -
-> -		bio_io_error(bio);
-> -		return;
->  	}
->  
->  	md_write_start(mddev, bio);
-> diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-> index e85c04b..9ed2c44 100644
-> --- a/fs/bio-integrity.c
-> +++ b/fs/bio-integrity.c
-> @@ -682,50 +682,6 @@ void bio_integrity_trim(struct bio *bio, unsigned int offset,
->  EXPORT_SYMBOL(bio_integrity_trim);
->  
->  /**
-> - * bio_integrity_split - Split integrity metadata
-> - * @bio:	Protected bio
-> - * @bp:		Resulting bio_pair
-> - * @sectors:	Offset
-> - *
-> - * Description: Splits an integrity page into a bio_pair.
-> - */
-> -void bio_integrity_split(struct bio *bio, struct bio_pair *bp, int sectors)
-> -{
-> -	struct blk_integrity *bi;
-> -	struct bio_integrity_payload *bip = bio->bi_integrity;
-> -	unsigned int nr_sectors;
-> -
-> -	if (bio_integrity(bio) == 0)
-> -		return;
-> -
-> -	bi = bdev_get_integrity(bio->bi_bdev);
-> -	BUG_ON(bi == NULL);
-> -	BUG_ON(bip->bip_vcnt != 1);
-> -
-> -	nr_sectors = bio_integrity_hw_sectors(bi, sectors);
-> -
-> -	bp->bio1.bi_integrity = &bp->bip1;
-> -	bp->bio2.bi_integrity = &bp->bip2;
-> -
-> -	bp->iv1 = bip->bip_vec[0];
-> -	bp->iv2 = bip->bip_vec[0];
-> -
-> -	bp->bip1.bip_vec[0] = bp->iv1;
-> -	bp->bip2.bip_vec[0] = bp->iv2;
-> -
-> -	bp->iv1.bv_len = sectors * bi->tuple_size;
-> -	bp->iv2.bv_offset += sectors * bi->tuple_size;
-> -	bp->iv2.bv_len -= sectors * bi->tuple_size;
-> -
-> -	bp->bip1.bip_sector = bio->bi_integrity->bip_sector;
-> -	bp->bip2.bip_sector = bio->bi_integrity->bip_sector + nr_sectors;
-> -
-> -	bp->bip1.bip_vcnt = bp->bip2.bip_vcnt = 1;
-> -	bp->bip1.bip_idx = bp->bip2.bip_idx = 0;
-> -}
-> -EXPORT_SYMBOL(bio_integrity_split);
-> -
-> -/**
->   * bio_integrity_clone - Callback for cloning bios with integrity metadata
->   * @bio:	New bio
->   * @bio_src:	Original bio
-> diff --git a/fs/bio.c b/fs/bio.c
-> index 3332800..781a8cf 100644
-> --- a/fs/bio.c
-> +++ b/fs/bio.c
-> @@ -35,7 +35,7 @@
->   */
->  #define BIO_INLINE_VECS		4
->  
-> -static mempool_t *bio_split_pool __read_mostly;
-> +static struct bio_set *bio_split_pool __read_mostly;
->  
->  /*
->   * if you change this list, also change bvec_alloc or things will
-> @@ -1464,84 +1464,124 @@ void bio_endio(struct bio *bio, int error)
->  }
->  EXPORT_SYMBOL(bio_endio);
->  
-> -void bio_pair_release(struct bio_pair *bp)
+bool?
 
+> +{
+> +	struct bio_split_hook *s;
+> +	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+> +
+> +	if (!bio_has_data(bio) ||
+> +	    !q ||
+> +	    !q->bio_split_hook ||
+> +	    bio_sectors(bio) <= bio_max_sectors(bio))
 
-bio_pair_release() was just moved to down there. Which makes
-a complete messy patch, unless I patch it on real code
-Its hard to see what's written.
+Style issues.
 
-For review sake if I *must* move+change code, I split
-it up by doing the pure move in a separate patch, or
-sometime commenting the old code and remove it in 
-a next patch.
+> +		return 0;
+> +
+> +	s = mempool_alloc(q->bio_split_hook, GFP_NOIO);
+> +
+> +	closure_init(&s->cl, NULL);
 
-But here I don't see the point of why you switched
-them?
+Please use workqueue with open coded sequencer or maybe implement bio
+sequencer which can be used by other stacking drivers too.
 
-> +struct bio *bio_split(struct bio *bio, int sectors,
-> +		      gfp_t gfp, struct bio_set *bs)
->  {
-> -	if (atomic_dec_and_test(&bp->cnt)) {
-> -		struct bio *master = bp->bio1.bi_private;
-> +	unsigned idx, vcnt = 0, nbytes = sectors << 9;
-> +	struct bio_vec *bv;
-> +	struct bio *ret = NULL;
+> +	s->bio		= bio;
+> +	s->q		= q;
+> +	s->bi_end_io	= bio->bi_end_io;
+> +	s->bi_private	= bio->bi_private;
 > +
-> +	BUG_ON(sectors <= 0);
+> +	bio_get(bio);
+> +	bio->bi_end_io	= bio_submit_split_endio;
+> +	bio->bi_private	= &s->cl;
+
+Maybe it's okay but I *hope* bi_private override weren't necessary -
+it's way too subtle.  If there's no other way and this is gonna be an
+integral part of block layer, just add a field to bio.
+
+> +unsigned __bio_max_sectors(struct bio *bio, struct block_device *bdev,
+> +			   sector_t sector)
+> +{
+> +	unsigned ret = bio_sectors(bio);
+> +	struct request_queue *q = bdev_get_queue(bdev);
+> +	struct bio_vec *bv, *end = bio_iovec(bio) +
+> +		min_t(int, bio_segments(bio), queue_max_segments(q));
 > +
-> +	if (current->bio_list)
-> +		gfp &= ~__GFP_WAIT;
+> +	struct bvec_merge_data bvm = {
+> +		.bi_bdev	= bdev,
+> +		.bi_sector	= sector,
+> +		.bi_size	= 0,
+> +		.bi_rw		= bio->bi_rw,
+> +	};
 > +
-> +	if (nbytes >= bio->bi_size)
-> +		return bio;
+> +	if (bio_segments(bio) > queue_max_segments(q) ||
+> +	    q->merge_bvec_fn) {
+> +		ret = 0;
 > +
-> +	trace_block_split(bdev_get_queue(bio->bi_bdev), bio,
-> +				bio->bi_sector + sectors);
+> +		for (bv = bio_iovec(bio); bv < end; bv++) {
+> +			if (q->merge_bvec_fn &&
+> +			    q->merge_bvec_fn(q, &bvm, bv) < (int) bv->bv_len)
+> +				break;
 > +
-> +	bio_for_each_segment(bv, bio, idx) {
-> +		vcnt = idx - bio->bi_idx;
-> +
-> +		if (!nbytes) {
-> +			ret = bio_alloc_bioset(gfp, 0, bs);
-> +			if (!ret)
-> +				return NULL;
-> +
-> +			ret->bi_io_vec = bio_iovec(bio);
-> +			ret->bi_flags |= 1 << BIO_CLONED;
-> +			break;
-> +		} else if (nbytes < bv->bv_len) {
-> +			ret = bio_alloc_bioset(gfp, ++vcnt, bs);
-> +			if (!ret)
-> +				return NULL;
-> +
-> +			memcpy(ret->bi_io_vec, bio_iovec(bio),
-> +			       sizeof(struct bio_vec) * vcnt);
-> +
-> +			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
-> +			bv->bv_offset	+= nbytes;
-> +			bv->bv_len	-= nbytes;
-> +			break;
+> +			ret		+= bv->bv_len >> 9;
+> +			bvm.bi_size	+= bv->bv_len;
 > +		}
 > +
-> +		nbytes -= bv->bv_len;
+> +		if (ret >= (BIO_MAX_PAGES * PAGE_SIZE) >> 9)
+> +			return (BIO_MAX_PAGES * PAGE_SIZE) >> 9;
 > +	}
 > +
-> +	ret->bi_bdev	= bio->bi_bdev;
-> +	ret->bi_sector	= bio->bi_sector;
-> +	ret->bi_size	= sectors << 9;
-> +	ret->bi_rw	= bio->bi_rw;
-> +	ret->bi_vcnt	= vcnt;
-> +	ret->bi_max_vecs = vcnt;
-> +	ret->bi_end_io	= bio->bi_end_io;
-> +	ret->bi_private	= bio->bi_private;
->  
-> -		bio_endio(master, bp->error);
-> -		mempool_free(bp, bp->bio2.bi_private);
-> +	bio->bi_sector	+= sectors;
-> +	bio->bi_size	-= sectors << 9;
-> +	bio->bi_idx	 = idx;
+> +	ret = min(ret, queue_max_sectors(q));
 > +
-> +	if (bio_integrity(bio)) {
-> +		bio_integrity_clone(ret, bio, gfp, bs);
-> +		bio_integrity_trim(ret, 0, bio_sectors(ret));
-> +		bio_integrity_trim(bio, bio_sectors(ret), bio_sectors(bio));
->  	}
+> +	WARN_ON(!ret);
+> +	ret = max_t(int, ret, bio_iovec(bio)->bv_len >> 9);
 > +
 > +	return ret;
->  }
-> -EXPORT_SYMBOL(bio_pair_release);
-> +EXPORT_SYMBOL_GPL(bio_split);
->  
-> -static void bio_pair_end_1(struct bio *bi, int err)
-> +void bio_pair_release(struct bio_pair *bp)
->  {
-> -	struct bio_pair *bp = container_of(bi, struct bio_pair, bio1);
-> -
-> -	if (err)
-> -		bp->error = err;
-> +	if (atomic_dec_and_test(&bp->cnt)) {
-> +		bp->orig->bi_end_io = bp->bi_end_io;
-> +		bp->orig->bi_private = bp->bi_private;
->  
-> -	bio_pair_release(bp);
-> +		bio_endio(bp->orig, 0);
-> +		bio_put(&bp->split);
-> +	}
->  }
-> +EXPORT_SYMBOL(bio_pair_release);
->  
-> -static void bio_pair_end_2(struct bio *bi, int err)
-> +static void bio_pair_end(struct bio *bio, int error)
->  {
-> -	struct bio_pair *bp = container_of(bi, struct bio_pair, bio2);
-> +	struct bio_pair *bp = bio->bi_private;
->  
-> -	if (err)
-> -		bp->error = err;
-> +	if (error)
-> +		clear_bit(BIO_UPTODATE, &bp->orig->bi_flags);
->  
->  	bio_pair_release(bp);
->  }
->  
-> -/*
-> - * split a bio - only worry about a bio with a single page in its iovec
-> - */
-> -struct bio_pair *bio_split(struct bio *bi, int first_sectors)
-> +struct bio_pair *bio_pair_split(struct bio *bio, int first_sectors)
->  {
+> +}
+> +EXPORT_SYMBOL_GPL(__bio_max_sectors);
 
+Does this by any chance allow killing ->merge_bvec_fn()?  That would
+be *awesome*.
 
-Here too if you would have staged the function order properly that
-new-split above would better merge with the old-split and the
-new-old-split that uses the new-split would be a new hunk by itself.
+Thanks.
 
-I do this not only for reviewers, but also for myself to prove
-I have not changed something I didn't mean to change.
-
-To summarize. I think undoing code movement and better staging
-of the code could make this patch much cleaner.
-
-> -	struct bio_pair *bp = mempool_alloc(bio_split_pool, GFP_NOIO);
-> -
-> -	if (!bp)
-> -		return bp;
-> +	struct bio_pair *bp;
-> +	struct bio *split = bio_split(bio, first_sectors,
-> +				      GFP_NOIO, bio_split_pool);
->  
-> -	trace_block_split(bdev_get_queue(bi->bi_bdev), bi,
-> -				bi->bi_sector + first_sectors);
-> -
-> -	BUG_ON(bi->bi_vcnt != 1);
-> -	BUG_ON(bi->bi_idx != 0);
-> -	atomic_set(&bp->cnt, 3);
-> -	bp->error = 0;
-> -	bp->bio1 = *bi;
-> -	bp->bio2 = *bi;
-> -	bp->bio2.bi_sector += first_sectors;
-> -	bp->bio2.bi_size -= first_sectors << 9;
-> -	bp->bio1.bi_size = first_sectors << 9;
-> +	if (!split)
-> +		return NULL;
->  
-> -	bp->bv1 = bi->bi_io_vec[0];
-> -	bp->bv2 = bi->bi_io_vec[0];
-> -	bp->bv2.bv_offset += first_sectors << 9;
-> -	bp->bv2.bv_len -= first_sectors << 9;
-> -	bp->bv1.bv_len = first_sectors << 9;
-> +	BUG_ON(split == bio);
->  
-> -	bp->bio1.bi_io_vec = &bp->bv1;
-> -	bp->bio2.bi_io_vec = &bp->bv2;
-> +	bp = container_of(split, struct bio_pair, split);
->  
-> -	bp->bio1.bi_max_vecs = 1;
-> -	bp->bio2.bi_max_vecs = 1;
-> +	atomic_set(&bp->cnt, 3);
->  
-> -	bp->bio1.bi_end_io = bio_pair_end_1;
-> -	bp->bio2.bi_end_io = bio_pair_end_2;
-> +	bp->bi_end_io = bio->bi_end_io;
-> +	bp->bi_private = bio->bi_private;
->  
-> -	bp->bio1.bi_private = bi;
-> -	bp->bio2.bi_private = bio_split_pool;
-> +	bio->bi_private = bp;
-> +	bio->bi_end_io = bio_pair_end;
->  
-> -	if (bio_integrity(bi))
-> -		bio_integrity_split(bi, bp, first_sectors);
-> +	split->bi_private = bp;
-> +	split->bi_end_io = bio_pair_end;
->  
->  	return bp;
->  }
-> -EXPORT_SYMBOL(bio_split);
-> +EXPORT_SYMBOL(bio_pair_split);
->  
->  /**
->   *      bio_sector_offset - Find hardware sector offset in bio
-> @@ -1694,8 +1734,7 @@ static int __init init_bio(void)
->  	if (bioset_integrity_create(fs_bio_set, BIO_POOL_SIZE))
->  		panic("bio: can't create integrity pool\n");
->  
-> -	bio_split_pool = mempool_create_kmalloc_pool(BIO_SPLIT_ENTRIES,
-> -						     sizeof(struct bio_pair));
-> +	bio_split_pool = bioset_create(BIO_POOL_SIZE, offsetof(struct bio_pair, split));
->  	if (!bio_split_pool)
->  		panic("bio: can't create split pool\n");
->  
-> diff --git a/include/linux/bio.h b/include/linux/bio.h
-> index 35f7c4d..db38175 100644
-> --- a/include/linux/bio.h
-> +++ b/include/linux/bio.h
-> @@ -197,16 +197,18 @@ struct bio_integrity_payload {
->   *   in bio2.bi_private
->   */
->  struct bio_pair {
-> -	struct bio			bio1, bio2;
-> -	struct bio_vec			bv1, bv2;
-> -#if defined(CONFIG_BLK_DEV_INTEGRITY)
-> -	struct bio_integrity_payload	bip1, bip2;
-> -	struct bio_vec			iv1, iv2;
-> -#endif
-> -	atomic_t			cnt;
-> -	int				error;
-> +	atomic_t		cnt;
-> +
-> +	bio_end_io_t		*bi_end_io;
-> +	void			*bi_private;
-> +
-> +	struct bio		*orig;
-> +	struct bio		split;
->  };
-> -extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
-> +
-> +extern struct bio *bio_split(struct bio *bio, int sectors,
-> +			     gfp_t gfp, struct bio_set *bs);
-> +extern struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors);
-
-
-I do not get this. Please explain. We have two different topics here.
-1. Introduction of a new/better split function.
-2. Rename of an old one.
-
-Now if you must, making the rename a patch of it's own is preferred.
-But why must you? can't you think of a creative name for the new
-one?
-
-Though I admit your names do make sense. The first belongs to the
-bio domain bio_DO, and the second belongs to the bio_pair domain
-bio_pair_DO
-
-Hey this patch and the rest are amazing. It gives one the incentive
-to do some more complicating things, just because it is easier now.
-Thanks!
-
-Boaz
-
->  extern void bio_pair_release(struct bio_pair *dbio);
->  
->  extern struct bio_set *bioset_create(unsigned int, unsigned int);
-> @@ -511,7 +513,6 @@ extern int bio_integrity_prep(struct bio *);
->  extern void bio_integrity_endio(struct bio *, int);
->  extern void bio_integrity_advance(struct bio *, unsigned int);
->  extern void bio_integrity_trim(struct bio *, unsigned int, unsigned int);
-> -extern void bio_integrity_split(struct bio *, struct bio_pair *, int);
->  extern int bio_integrity_clone(struct bio *, struct bio *, gfp_t, struct bio_set *);
->  extern int bioset_integrity_create(struct bio_set *, int);
->  extern void bioset_integrity_free(struct bio_set *);
-> @@ -555,12 +556,6 @@ static inline int bio_integrity_clone(struct bio *bio, struct bio *bio_src,
->  	return 0;
->  }
->  
-> -static inline void bio_integrity_split(struct bio *bio, struct bio_pair *bp,
-> -				       int sectors)
-> -{
-> -	return;
-> -}
-> -
->  static inline void bio_integrity_advance(struct bio *bio,
->  					 unsigned int bytes_done)
->  {
-
-
+-- 
+tejun
