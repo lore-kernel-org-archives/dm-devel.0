@@ -1,31 +1,27 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] last-minute device-mapper fix for 3.4
-Date: Sat, 19 May 2012 01:33:03 +0100
-Message-ID: <20120519003302.GB20415@agk-dp.fab.redhat.com>
+Subject: Re: [dm-devel] [PATCH 12/13] Make generic_make_request handle
+	arbitrarily large bios
+Date: Sat, 19 May 2012 01:59:32 +0100
+Message-ID: <20120519005932.GM29330@agk-dp.fab.redhat.com>
+References: <cover.1337308722.git.koverstreet@google.com> <1114e7019b0055fc09a54b59b36398d5c54f5e32.1337308722.git.koverstreet@google.com> <20120518175216.GL19388@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Joe Thornber <thornber@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+In-Reply-To: <20120518175216.GL19388@google.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: koverstreet@google.com, axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-If it's not too late, please pull from:
+On Fri, May 18, 2012 at 10:52:16AM -0700, Tejun Heo wrote:
+> Does this by any chance allow killing ->merge_bvec_fn()?
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.4-fixes-2
+merge_bvec also has an impact on efficiency.
 
-to get a last-minute fix for a problem discovered a couple of days ago.
+Why create a too-large bio in the first place if it's only going to have to
+get split up again?
 
-Thanks,
+If a change like this goes in, the various trade-offs should be re-examined.
+
 Alasdair
- 
-----------------------------------------------------------------
-A fix to the thin provisioning userspace interface.
-
-----------------------------------------------------------------
-Mike Snitzer (1):
-      dm thin: fix table output when pool target disables discard passdown internally
-
- drivers/md/dm-thin.c |   32 +++++++++++++++++---------------
- 1 file changed, 17 insertions(+), 15 deletions(-)
