@@ -1,100 +1,66 @@
 From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: [PATCH 01/10] string: introduce memweight
-Date: Sun, 20 May 2012 22:23:14 +0900
-Message-ID: <1337520203-29147-1-git-send-email-akinobu.mita@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [PATCH 04/10] dm-log: use memweight()
+Date: Sun, 20 May 2012 22:23:17 +0900
+Message-ID: <1337520203-29147-4-git-send-email-akinobu.mita@gmail.com>
+References: <1337520203-29147-1-git-send-email-akinobu.mita@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1337520203-29147-1-git-send-email-akinobu.mita@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: linux-kernel@vger.kernel.org, akpm@linux-foundation.org
-Cc: Akinobu Mita <akinobu.mita@gmail.com>, Anders Larsen <al@alarsen.net>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Mark Fasheh <mfasheh@suse.com>, Joel Becker <jlbec@evilplan.org>, ocfs2-devel@oss.oracle.com, Jan Kara <jack@suse.cz>, linux-ext4@vger.kernel.org, Andreas Dilger <adilger.kernel@dilger.ca>, Theodore Ts'o <tytso@mit.edu>
+Cc: dm-devel@redhat.com, Akinobu Mita <akinobu.mita@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-memweight() is the function that counts the total number of bits set
-in memory area.  The memory area doesn't need to be aligned to
-long-word boundary unlike bitmap_weight().
+Use memweight() to count the total number of bits set in memory area.
 
 Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: Anders Larsen <al@alarsen.net>
 Cc: Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
-Cc: linux-fsdevel@vger.kernel.org
-Cc: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
-Cc: linux-media@vger.kernel.org
-Cc: Mark Fasheh <mfasheh@suse.com>
-Cc: Joel Becker <jlbec@evilplan.org>
-Cc: ocfs2-devel@oss.oracle.com
-Cc: Jan Kara <jack@suse.cz>
-Cc: linux-ext4@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andreas Dilger <adilger.kernel@dilger.ca>
-Cc: "Theodore Ts'o" <tytso@mit.edu>
 ---
- include/linux/string.h |    3 +++
- lib/string.c           |   37 +++++++++++++++++++++++++++++++++++++
- 2 files changed, 40 insertions(+), 0 deletions(-)
+ drivers/md/dm-log.c |   13 ++-----------
+ 1 files changed, 2 insertions(+), 11 deletions(-)
 
-diff --git a/include/linux/string.h b/include/linux/string.h
-index e033564..ffe0442 100644
---- a/include/linux/string.h
-+++ b/include/linux/string.h
-@@ -145,4 +145,7 @@ static inline bool strstarts(const char *str, const char *prefix)
- 	return strncmp(str, prefix, strlen(prefix)) == 0;
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 65ebaeb..627d191 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -571,16 +571,6 @@ static void disk_dtr(struct dm_dirty_log *log)
+ 	destroy_log_context(lc);
  }
- #endif
-+
-+extern size_t memweight(const void *ptr, size_t bytes);
-+
- #endif /* _LINUX_STRING_H_ */
-diff --git a/lib/string.c b/lib/string.c
-index e5878de..c8b92a0 100644
---- a/lib/string.c
-+++ b/lib/string.c
-@@ -26,6 +26,7 @@
- #include <linux/export.h>
- #include <linux/bug.h>
- #include <linux/errno.h>
-+#include <linux/bitmap.h>
  
- #ifndef __HAVE_ARCH_STRNICMP
- /**
-@@ -824,3 +825,39 @@ void *memchr_inv(const void *start, int c, size_t bytes)
- 	return check_bytes8(start, value, bytes % 8);
- }
- EXPORT_SYMBOL(memchr_inv);
-+
-+/**
-+ * memweight - count the total number of bits set in memory area
-+ * @ptr: pointer to the start of the area
-+ * @bytes: the size of the area
-+ */
-+size_t memweight(const void *ptr, size_t bytes)
-+{
-+	size_t w = 0;
-+	size_t longs;
-+	union {
-+		const void *ptr;
-+		const unsigned char *b;
-+		unsigned long address;
-+	} bitmap;
-+
-+	for (bitmap.ptr = ptr; bytes > 0 && bitmap.address % sizeof(long);
-+			bytes--, bitmap.address++)
-+		w += hweight8(*bitmap.b);
-+
-+	for (longs = bytes / sizeof(long); longs > 0; ) {
-+		size_t bits = min_t(size_t, INT_MAX & ~(BITS_PER_LONG - 1),
-+					longs * BITS_PER_LONG);
-+
-+		w += bitmap_weight(bitmap.ptr, bits);
-+		bytes -= bits / BITS_PER_BYTE;
-+		bitmap.address += bits / BITS_PER_BYTE;
-+		longs -= bits / BITS_PER_LONG;
-+	}
-+
-+	for (; bytes > 0; bytes--, bitmap.address++)
-+		w += hweight8(*bitmap.b);
-+
-+	return w;
-+}
-+EXPORT_SYMBOL(memweight);
+-static int count_bits32(uint32_t *addr, unsigned size)
+-{
+-	int count = 0, i;
+-
+-	for (i = 0; i < size; i++) {
+-		count += hweight32(*(addr+i));
+-	}
+-	return count;
+-}
+-
+ static void fail_log_device(struct log_c *lc)
+ {
+ 	if (lc->log_dev_failed)
+@@ -629,7 +619,8 @@ static int disk_resume(struct dm_dirty_log *log)
+ 
+ 	/* copy clean across to sync */
+ 	memcpy(lc->sync_bits, lc->clean_bits, size);
+-	lc->sync_count = count_bits32(lc->clean_bits, lc->bitset_uint32_count);
++	lc->sync_count = memweight(lc->clean_bits,
++				lc->bitset_uint32_count * sizeof(uint32_t));
+ 	lc->sync_search = 0;
+ 
+ 	/* set the correct number of regions in the header */
 -- 
 1.7.7.6
