@@ -1,66 +1,79 @@
-From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: [PATCH 04/10] dm-log: use memweight()
-Date: Sun, 20 May 2012 22:23:17 +0900
-Message-ID: <1337520203-29147-4-git-send-email-akinobu.mita@gmail.com>
-References: <1337520203-29147-1-git-send-email-akinobu.mita@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>
+Subject: Re: multipath_busy() stalls IO due to scsi_host_is_busy()
+Date: Mon, 21 May 2012 17:42:57 +0200
+Message-ID: <4FBA6281.3040109@itwm.fraunhofer.de>
+References: <4FB39D78.9020300@itwm.fraunhofer.de> <4FB4C065.7070804@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1337520203-29147-1-git-send-email-akinobu.mita@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, akpm@linux-foundation.org
-Cc: dm-devel@redhat.com, Akinobu Mita <akinobu.mita@gmail.com>, Alasdair Kergon <agk@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4FB4C065.7070804@ce.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: dm-devel@redhat.com, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Use memweight() to count the total number of bits set in memory area.
+On 05/17/2012 11:09 AM, Jun'ichi Nomura wrote:
+> Hi,
+>
+> On 05/16/12 21:28, Bernd Schubert wrote:
+>> Looking through the call chain, I see the underlying problem seems to be in scsi_host_is_busy().
+>>
+>>> static inline int scsi_host_is_busy(struct Scsi_Host *shost)
+>>> {
+>>>      if ((shost->can_queue>  0&&  shost->host_busy>= shost->can_queue) ||
+>>>          shost->host_blocked || shost->host_self_blocked)
+>>>          return 1;
+>>>
+>>>      return 0;
+>>> }
+>
+> multipath_busy() was introduced because, without that,
+> a request would be prematurely sent down to SCSI,
+> lose the chance of additional merges and result in
+> bad performance.
+>
+> However, when it is target/host that is busy, I think dm should
+> send the request down and let SCSI, which has better knowledge
+> about the shared resource, do appropriate starvation control.
+>
+> Could you try the attached patch?
+>
+> ---
+> Jun'ichi Nomura, NEC Corporation
+>
+> If sdev is not busy but starget and/or host is busy,
+> it is better to accept a request from stacking driver.
+> Otherwise, the stacking device could be starved by other device
+> sharing the same target/host.
+>
+> diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+> index 5dfd749..0eb4602 100644
+> --- a/drivers/scsi/scsi_lib.c
+> +++ b/drivers/scsi/scsi_lib.c
+> @@ -1378,16 +1378,13 @@ static int scsi_lld_busy(struct request_queue *q)
+>   {
+>   	struct scsi_device *sdev = q->queuedata;
+>   	struct Scsi_Host *shost;
+> -	struct scsi_target *starget;
+>
+>   	if (!sdev)
+>   		return 0;
+>
+>   	shost = sdev->host;
+> -	starget = scsi_target(sdev);
+>
+> -	if (scsi_host_in_recovery(shost) || scsi_host_is_busy(shost) ||
+> -	    scsi_target_is_busy(starget) || scsi_device_is_busy(sdev))
+> +	if (scsi_host_in_recovery(shost) || scsi_device_is_busy(sdev))
+>   		return 1;
+>
+>   	return 0;
 
-Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
- drivers/md/dm-log.c |   13 ++-----------
- 1 files changed, 2 insertions(+), 11 deletions(-)
+Thanks, that works fine! I had something else in my mind for multipath, 
+but if this can go into scsi we don't need the multipath patch anymore.
+Are you going to officially submit it (missing signed-off)?
 
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 65ebaeb..627d191 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -571,16 +571,6 @@ static void disk_dtr(struct dm_dirty_log *log)
- 	destroy_log_context(lc);
- }
- 
--static int count_bits32(uint32_t *addr, unsigned size)
--{
--	int count = 0, i;
--
--	for (i = 0; i < size; i++) {
--		count += hweight32(*(addr+i));
--	}
--	return count;
--}
--
- static void fail_log_device(struct log_c *lc)
- {
- 	if (lc->log_dev_failed)
-@@ -629,7 +619,8 @@ static int disk_resume(struct dm_dirty_log *log)
- 
- 	/* copy clean across to sync */
- 	memcpy(lc->sync_bits, lc->clean_bits, size);
--	lc->sync_count = count_bits32(lc->clean_bits, lc->bitset_uint32_count);
-+	lc->sync_count = memweight(lc->clean_bits,
-+				lc->bitset_uint32_count * sizeof(uint32_t));
- 	lc->sync_search = 0;
- 
- 	/* set the correct number of regions in the header */
--- 
-1.7.7.6
+Thanks,
+Bernd
+
