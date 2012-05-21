@@ -1,51 +1,140 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [dm-devel] [PATCH 12/13] Make generic_make_request handle
- arbitrarily large bios
-Date: Mon, 21 May 2012 14:32:53 -0400
-Message-ID: <20120521183253.GA30143@redhat.com>
-References: <cover.1337308722.git.koverstreet@google.com>
- <1114e7019b0055fc09a54b59b36398d5c54f5e32.1337308722.git.koverstreet@google.com>
- <20120518180550.0a6cdc34@notabene.brown>
- <20120518081444.GA27205@dhcp-172-18-216-138.mtv.corp.google.com>
- <20120521171706.GH23993@redhat.com>
- <20120521175542.GA16598@google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v4 2/5] scsi_dh: add scsi_dh_attached_handler_name
+Date: Mon, 21 May 2012 14:45:17 -0400
+Message-ID: <20120521184516.GA18807@redhat.com>
+References: <1336612366-30794-1-git-send-email-snitzer@redhat.com>
+ <20120510213112.GA7374@redhat.com>
+ <1337295520.2825.12.camel@chandra-lucid.austin.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120521175542.GA16598@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: NeilBrown <neilb@suse.de>, axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, tj@kernel.org, linux-bcache@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com
+In-Reply-To: <1337295520.2825.12.camel@chandra-lucid.austin.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James.Bottomley@hansenpartnership.com
+Cc: linux-scsi@vger.kernel.org, agk@redhat.com, hare@suse.de, babu.moger@netapp.com, dm-devel@redhat.com, Chandra Seetharaman <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Mon, May 21, 2012 at 10:55:42AM -0700, Kent Overstreet wrote:
-> On Mon, May 21, 2012 at 01:17:06PM -0400, Vivek Goyal wrote:
-> > May be I am missing something, hence I will ask.  Is punting to workqueue
-> > will really solve the issue raised by Neil. 
+Hi James,
+
+Could you please stage this scsi_dh patch for the 3.5 merge?  The other
+DM mpath patches in the patchset will go through Alasdair's DM tree.
+
+Thanks,
+Mike
+
+On Thu, May 17 2012 at  6:58pm -0400,
+Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+
+> Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
+> 
+> On Thu, 2012-05-10 at 17:31 -0400, Mike Snitzer wrote:
+> > Introduce scsi_dh_attached_handler_name() to retrieve the name of the
+> > scsi_dh that is attached to the scsi_device associated with the provided
+> > request queue.  Returns NULL if a scsi_dh is not attached.
 > > 
-> > Due to spliting required, we will be holding some bios in the stack and
-> > these bios can't be submitted till further allocation from pool happens. So
-> > will it matter whether we are waiting for allocation in submitting process
-> > context or in worker thread context.
+> > Also, fix scsi_dh_{attach,detach} function header comments to document
+> > @q rather than @sdev.
+> > 
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > Tested-by: Babu Moger <babu.moger@netapp.com>
+> > Cc: Hannes Reinecke <hare@suse.de>
+> > Cc: Chandra Seetharaman <sekharan@us.ibm.com>
+> > ---
+> >  drivers/scsi/device_handler/scsi_dh.c |   38 ++++++++++++++++++++++++++++++++--
+> >  include/scsi/scsi_dh.h                |    6 +++++
+> >  2 files changed, 42 insertions(+), 2 deletions(-)
+> > 
+> > v4: fixed potential for returned string to be invalid (hch)
+> > v3: fixed missing put_device that Babu pointed out
+> > 
+> > Index: linux-2.6/drivers/scsi/device_handler/scsi_dh.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/scsi/device_handler/scsi_dh.c
+> > +++ linux-2.6/drivers/scsi/device_handler/scsi_dh.c
+> > @@ -468,7 +468,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist)
+> > 
+> >  /*
+> >   * scsi_dh_attach - Attach device handler
+> > - * @sdev - sdev the handler should be attached to
+> > + * @q - Request queue that is associated with the scsi_device
+> > + *      the handler should be attached to
+> >   * @name - name of the handler to attach
+> >   */
+> >  int scsi_dh_attach(struct request_queue *q, const char *name)
+> > @@ -498,7 +499,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
+> > 
+> >  /*
+> >   * scsi_dh_detach - Detach device handler
+> > - * @sdev - sdev the handler should be detached from
+> > + * @q - Request queue that is associated with the scsi_device
+> > + *      the handler should be detached from
+> >   *
+> >   * This function will detach the device handler only
+> >   * if the sdev is not part of the internal list, ie
+> > @@ -527,6 +529,38 @@ void scsi_dh_detach(struct request_queue
+> >  }
+> >  EXPORT_SYMBOL_GPL(scsi_dh_detach);
+> > 
+> > +/*
+> > + * scsi_dh_attached_handler_name - Get attached device handler's name
+> > + * @q - Request queue that is associated with the scsi_device
+> > + *      that may have a device handler attached
+> > + * @gfp - the GFP mask used in the kmalloc() call when allocating memory
+> > + *
+> > + * Returns name of attached handler, NULL if no handler is attached.
+> > + * Caller must take care to free the returned string.
+> > + */
+> > +const char *scsi_dh_attached_handler_name(struct request_queue *q, gfp_t gfp)
+> > +{
+> > +	unsigned long flags;
+> > +	struct scsi_device *sdev;
+> > +	const char *handler_name = NULL;
+> > +
+> > +	spin_lock_irqsave(q->queue_lock, flags);
+> > +	sdev = q->queuedata;
+> > +	if (!sdev || !get_device(&sdev->sdev_gendev))
+> > +		sdev = NULL;
+> > +	spin_unlock_irqrestore(q->queue_lock, flags);
+> > +
+> > +	if (!sdev)
+> > +		return NULL;
+> > +
+> > +	if (sdev->scsi_dh_data)
+> > +		handler_name = kstrdup(sdev->scsi_dh_data->scsi_dh->name, gfp);
+> > +
+> > +	put_device(&sdev->sdev_gendev);
+> > +	return handler_name;
+> > +}
+> > +EXPORT_SYMBOL_GPL(scsi_dh_attached_handler_name);
+> > +
+> >  static struct notifier_block scsi_dh_nb = {
+> >  	.notifier_call = scsi_dh_notifier
+> >  };
+> > Index: linux-2.6/include/scsi/scsi_dh.h
+> > ===================================================================
+> > --- linux-2.6.orig/include/scsi/scsi_dh.h
+> > +++ linux-2.6/include/scsi/scsi_dh.h
+> > @@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct reque
+> >  extern int scsi_dh_handler_exist(const char *);
+> >  extern int scsi_dh_attach(struct request_queue *, const char *);
+> >  extern void scsi_dh_detach(struct request_queue *);
+> > +extern const char *scsi_dh_attached_handler_name(struct request_queue *, gfp_t);
+> >  extern int scsi_dh_set_params(struct request_queue *, const char *);
+> >  #else
+> >  static inline int scsi_dh_activate(struct request_queue *req,
+> > @@ -80,6 +81,11 @@ static inline void scsi_dh_detach(struct
+> >  {
+> >  	return;
+> >  }
+> > +static inline const char *scsi_dh_attached_handler_name(struct request_queue *q,
+> > +							gfp_t gfp)
+> > +{
+> > +	return NULL;
+> > +}
+> >  static inline int scsi_dh_set_params(struct request_queue *req, const char *params)
+> >  {
+> >  	return -SCSI_DH_NOSYS;
+> > 
 > 
-> Punting to workqueue allows all the bio splits that have already been
-> allocated to be submitted.
->
-> > IOW, say you have a pool of 2 bios. We allocate 1 bio (say bio A),  and submit
-> > it for IO (now 1 bio left in pool). Now, bio A needs to be split up, so we
-> > allocate bio B and submit it (pool is empty now). Now we try to submit bio
-> > B and this also needs to be split. There are no more free bios so we will
-> > wait for some to get free but none of the bios (A and B) have actually
-> > been submitted for IO so nothing will get freed and we have a deadlock
-> > (This is assuming that memory is tight enough that we are not able to do
-> > any allocations from the slab backing the mempool).
 > 
-> You're talking about a different issue. You can't safely split a split
-> from the same bio pool - but this code doesn't do that since it adds a
-> separate bio pool for each request_queue that's only for splits.
-
-Ok, I missed the fact that there are per queue pools for bio allocation.
-Thanks for clarifying.
-
-Vivek
