@@ -1,140 +1,56 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v4 2/5] scsi_dh: add scsi_dh_attached_handler_name
-Date: Mon, 21 May 2012 14:45:17 -0400
-Message-ID: <20120521184516.GA18807@redhat.com>
-References: <1336612366-30794-1-git-send-email-snitzer@redhat.com>
- <20120510213112.GA7374@redhat.com>
- <1337295520.2825.12.camel@chandra-lucid.austin.ibm.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [Bcache v13 07/16] Closures
+Date: Mon, 21 May 2012 12:40:20 -0700
+Message-ID: <20120521194020.GA20338@google.com>
+References: <cover.1336619038.git.koverstreet@google.com>
+ <82f00ebb4ee0404788c5bd7fbfa1fe4969f28ba1.1336619038.git.koverstreet@google.com>
+ <20120515224137.GA15386@google.com>
+ <20120518062948.GA21163@dhcp-172-18-216-138.mtv.corp.google.com>
+ <20120518110247.08696cec@pyramind.ukuu.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1337295520.2825.12.camel@chandra-lucid.austin.ibm.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James.Bottomley@hansenpartnership.com
-Cc: linux-scsi@vger.kernel.org, agk@redhat.com, hare@suse.de, babu.moger@netapp.com, dm-devel@redhat.com, Chandra Seetharaman <sekharan@us.ibm.com>
+In-Reply-To: <20120518110247.08696cec@pyramind.ukuu.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alan Cox <alan@lxorguk.ukuu.org.uk>
+Cc: Tejun Heo <tj@kernel.org>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi James,
-
-Could you please stage this scsi_dh patch for the 3.5 merge?  The other
-DM mpath patches in the patchset will go through Alasdair's DM tree.
-
-Thanks,
-Mike
-
-On Thu, May 17 2012 at  6:58pm -0400,
-Chandra Seetharaman <sekharan@us.ibm.com> wrote:
-
-> Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
+On Fri, May 18, 2012 at 11:02:47AM +0100, Alan Cox wrote:
+> > Well, I can definitely understand your reservations about the code; it's
+> > strange and foreign and complicated. But having beaten my head against
+> > the various problems and difficulties inherent in asynchronous
+> > programming for years - well, having found a way to make it sane to me
+> > it'd be madness to go back.
 > 
-> On Thu, 2012-05-10 at 17:31 -0400, Mike Snitzer wrote:
-> > Introduce scsi_dh_attached_handler_name() to retrieve the name of the
-> > scsi_dh that is attached to the scsi_device associated with the provided
-> > request queue.  Returns NULL if a scsi_dh is not attached.
-> > 
-> > Also, fix scsi_dh_{attach,detach} function header comments to document
-> > @q rather than @sdev.
-> > 
-> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > Tested-by: Babu Moger <babu.moger@netapp.com>
-> > Cc: Hannes Reinecke <hare@suse.de>
-> > Cc: Chandra Seetharaman <sekharan@us.ibm.com>
-> > ---
-> >  drivers/scsi/device_handler/scsi_dh.c |   38 ++++++++++++++++++++++++++++++++--
-> >  include/scsi/scsi_dh.h                |    6 +++++
-> >  2 files changed, 42 insertions(+), 2 deletions(-)
-> > 
-> > v4: fixed potential for returned string to be invalid (hch)
-> > v3: fixed missing put_device that Babu pointed out
-> > 
-> > Index: linux-2.6/drivers/scsi/device_handler/scsi_dh.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/scsi/device_handler/scsi_dh.c
-> > +++ linux-2.6/drivers/scsi/device_handler/scsi_dh.c
-> > @@ -468,7 +468,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist)
-> > 
-> >  /*
-> >   * scsi_dh_attach - Attach device handler
-> > - * @sdev - sdev the handler should be attached to
-> > + * @q - Request queue that is associated with the scsi_device
-> > + *      the handler should be attached to
-> >   * @name - name of the handler to attach
-> >   */
-> >  int scsi_dh_attach(struct request_queue *q, const char *name)
-> > @@ -498,7 +499,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
-> > 
-> >  /*
-> >   * scsi_dh_detach - Detach device handler
-> > - * @sdev - sdev the handler should be detached from
-> > + * @q - Request queue that is associated with the scsi_device
-> > + *      the handler should be detached from
-> >   *
-> >   * This function will detach the device handler only
-> >   * if the sdev is not part of the internal list, ie
-> > @@ -527,6 +529,38 @@ void scsi_dh_detach(struct request_queue
-> >  }
-> >  EXPORT_SYMBOL_GPL(scsi_dh_detach);
-> > 
-> > +/*
-> > + * scsi_dh_attached_handler_name - Get attached device handler's name
-> > + * @q - Request queue that is associated with the scsi_device
-> > + *      that may have a device handler attached
-> > + * @gfp - the GFP mask used in the kmalloc() call when allocating memory
-> > + *
-> > + * Returns name of attached handler, NULL if no handler is attached.
-> > + * Caller must take care to free the returned string.
-> > + */
-> > +const char *scsi_dh_attached_handler_name(struct request_queue *q, gfp_t gfp)
-> > +{
-> > +	unsigned long flags;
-> > +	struct scsi_device *sdev;
-> > +	const char *handler_name = NULL;
-> > +
-> > +	spin_lock_irqsave(q->queue_lock, flags);
-> > +	sdev = q->queuedata;
-> > +	if (!sdev || !get_device(&sdev->sdev_gendev))
-> > +		sdev = NULL;
-> > +	spin_unlock_irqrestore(q->queue_lock, flags);
-> > +
-> > +	if (!sdev)
-> > +		return NULL;
-> > +
-> > +	if (sdev->scsi_dh_data)
-> > +		handler_name = kstrdup(sdev->scsi_dh_data->scsi_dh->name, gfp);
-> > +
-> > +	put_device(&sdev->sdev_gendev);
-> > +	return handler_name;
-> > +}
-> > +EXPORT_SYMBOL_GPL(scsi_dh_attached_handler_name);
-> > +
-> >  static struct notifier_block scsi_dh_nb = {
-> >  	.notifier_call = scsi_dh_notifier
-> >  };
-> > Index: linux-2.6/include/scsi/scsi_dh.h
-> > ===================================================================
-> > --- linux-2.6.orig/include/scsi/scsi_dh.h
-> > +++ linux-2.6/include/scsi/scsi_dh.h
-> > @@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct reque
-> >  extern int scsi_dh_handler_exist(const char *);
-> >  extern int scsi_dh_attach(struct request_queue *, const char *);
-> >  extern void scsi_dh_detach(struct request_queue *);
-> > +extern const char *scsi_dh_attached_handler_name(struct request_queue *, gfp_t);
-> >  extern int scsi_dh_set_params(struct request_queue *, const char *);
-> >  #else
-> >  static inline int scsi_dh_activate(struct request_queue *req,
-> > @@ -80,6 +81,11 @@ static inline void scsi_dh_detach(struct
-> >  {
-> >  	return;
-> >  }
-> > +static inline const char *scsi_dh_attached_handler_name(struct request_queue *q,
-> > +							gfp_t gfp)
-> > +{
-> > +	return NULL;
-> > +}
-> >  static inline int scsi_dh_set_params(struct request_queue *req, const char *params)
-> >  {
-> >  	return -SCSI_DH_NOSYS;
-> > 
+> I think its more of a different paradigm than complicated.
+
+Yeah, that's probably apt :) 
+
+> The big
+> question I'd have to ask is how does it fit with hard real time. That is
+> a big issue given the gradual merging and getting of "hard" real time
+> into the kernel proper.
 > 
+> In some ways it's not that strange either. A look at what happens on some
+> of our kref handling in drivers is very similar but hardcoded.
 > 
+> Is the handling of priority inversion within closures a well understood
+> and solved problem ?
+
+Haven't really thought about it (aside from deadlocks which are a
+slightly different issue). AFAICT there shouldn't be much to worry
+about, at least with the way I'm using closures today; scheduling is all
+handled by the existing workqueue code and you have to explicitly say
+which workqueue a function is going to run out of.
+
+There are the wait lists I've implemented but that's mostly just for
+when some thread/closure is waiting on an arbitrary event to become true
+- analagous to wait_event(), in which case you want everything on the
+wait list to to run at once which is all it implements.
+
+If the closure wait lists ever did end up being used in a situation
+where priorities or priority inversion was more of a concern it wouldn't
+be a huge deal to swap out the implementation for something more
+sophisticated, or just use the existing wait_queue_t.
