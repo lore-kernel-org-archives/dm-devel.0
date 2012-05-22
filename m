@@ -1,142 +1,321 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Allow userland access to metadata of a live thin
- provisioning pool
-Date: Tue, 22 May 2012 17:21:38 -0400
-Message-ID: <20120522212138.GA6495@redhat.com>
-References: <1337266042-2875-1-git-send-email-ejt@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [Bcache v13 11/16] bcache: Core btree code
+Date: Tue, 22 May 2012 15:12:59 -0700
+Message-ID: <20120522221259.GJ14339@google.com>
+References: <cover.1336619038.git.koverstreet@google.com>
+ <7f1de39b6d7040b3fe271500776f4b985b21ea82.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1337266042-2875-1-git-send-email-ejt@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Joe Thornber <ejt@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+In-Reply-To: <7f1de39b6d7040b3fe271500776f4b985b21ea82.1336619038.git.koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Thu, May 17 2012 at 10:47am -0400,
-Joe Thornber <ejt@redhat.com> wrote:
+Hello, Kent.
 
-> New feature.
-> 
-> This patch implements two new messages that can be sent to the thin
-> pool target allowing it to take a snapshot of the _metadata_.  This,
-> read-only snapshot can be accessed by userland, concurrently with the
-> live target.
-> 
-> Only one metadata snapshot can be held at a time.  The pool's status
-> line will give the block location for the current msnap.
-> 
-> The thin-provisioning-tools have been updated to v0.1.5.  The
-> thin_dump program can now be used to display the msnap.  eg,
-> 
->     thin_dump -m <msnap root> <metadata dev>
-> 
-> Available here: https://github.com/jthornber/thin-provisioning-tools
-> 
-> Now that userland can access the metadata we can do various things
-> that have traditionally been kernel side tasks:
-> 
->      i) Incremental backups.
-> 
->      By using metadata snapshots we can work out what blocks have
->      changed over time.  Combined with data snapshots we can ensure
->      the data doesn't change while we back it up.
-> 
->      A short proof of concept script can be found here:
-> 
->      https://github.com/jthornber/thinp-test-suite/blob/master/incremental_backup_example.rb
-> 
->      ii) Migration of thin devices from one pool to another.
-> 
->      iii) Merging snapshots back into an external origin.
-> 
->      iv) Asyncronous replication.
+On Wed, May 09, 2012 at 11:10:48PM -0400, Kent Overstreet wrote:
+> +#define BKEY_PADDED(key)					\
+> +	union { struct bkey key; uint64_t key ## _pad[8]; }
 
-Hey Joe,
+What does the '8' mean?  And why does struct bbio use 3 instead?  Does
+this have to be a macro?  Can't we have struct bkey_padded (or
+whatever)?
 
-You forgot your Signed-off-by.
+> +struct io {
+> +	/* Used to track sequential IO so it can be skipped */
+> +	struct hlist_node	hash;
+> +	struct list_head	lru;
+> +
+> +	unsigned long		jiffies;
+> +	unsigned		sequential;
+> +	sector_t		last;
+> +};
 
-I reviewed the patch and had a few suggestions; please see the following
-small incremental patch (Alasdair please feel free to fold these nits
-into Joe's original patch).
+I don't think bcache can have struct io. :P
 
-The switch from dm_tm_unlock() to dm_bm_unlock() in 2 places was done
-because the block was locked with the block-manager (rather than a tm
-wrapper).
+> +struct dirty_io {
+> +	struct closure		cl;
+> +	struct cached_dev	*d;
+> +	struct bio		bio;
+> +};
+> +
+> +struct dirty {
+> +	struct rb_node		node;
+> +	BKEY_PADDED(key);
+> +	struct dirty_io		*io;
+> +};
+...
+> +struct cache {
 
-There are still remnants of "held root" but I didn't feel that strongly
-to change the superblock's variable name, clean up the header comment,
-etc.
+Nor these and so on.
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
----
- Documentation/device-mapper/thin-provisioning.txt |    2 +-
- drivers/md/dm-thin-metadata.c                     |   10 ++++++----
- 2 files changed, 7 insertions(+), 5 deletions(-)
+> +/* Bkey fields: all units are in sectors */
+> +
+> +#define KEY_FIELD(name, field, offset, size)				\
+> +	BITMASK(name, struct bkey, field, offset, size)
+> +
+> +#define PTR_FIELD(name, offset, size)					\
+> +	static inline uint64_t name(const struct bkey *k, unsigned i)	\
+> +	{ return (k->ptr[i] >> offset) & ~(((uint64_t) ~0) << size); }	\
+> +									\
+> +	static inline void SET_##name(struct bkey *k, unsigned i, uint64_t v)\
+> +	{								\
+> +		k->ptr[i] &= ~(~((uint64_t) ~0 << size) << offset);	\
+> +		k->ptr[i] |= v << offset;				\
+> +	}
+> +
+> +KEY_FIELD(KEY_PTRS,	header, 60, 3)
+> +KEY_FIELD(HEADER_SIZE,	header, 58, 2)
+> +KEY_FIELD(KEY_CSUM,	header, 56, 2)
+> +KEY_FIELD(KEY_PINNED,	header, 55, 1)
+> +KEY_FIELD(KEY_DIRTY,	header, 36, 1)
+> +
+> +KEY_FIELD(KEY_SIZE,	header, 20, 16)
+> +KEY_FIELD(KEY_DEV,	header, 0,  20)
+> +
+> +KEY_FIELD(KEY_SECTOR,	key,	16, 47)
+> +KEY_FIELD(KEY_SNAPSHOT,	key,	0,  16)
+> +
+> +PTR_FIELD(PTR_DEV,		51, 12)
+> +PTR_FIELD(PTR_OFFSET,		8,  43)
+> +PTR_FIELD(PTR_GEN,		0,  8)
 
-diff --git a/Documentation/device-mapper/thin-provisioning.txt b/Documentation/device-mapper/thin-provisioning.txt
-index 897e66da..f5cfc62 100644
---- a/Documentation/device-mapper/thin-provisioning.txt
-+++ b/Documentation/device-mapper/thin-provisioning.txt
-@@ -292,7 +292,7 @@ iii) Messages
-         Reserve a copy of the data mapping btree for use by userland.
-         This allows userland to inspect the mappings as they were when
-         this message was executed.  Use the pool's status command to
--        get the root block.
-+        get the root block associated with the metadata snapshot.
- 
-     release_metadata_snap
- 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 7e272e2..f53c6d0 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1093,7 +1093,8 @@ static int __reserve_metadata_snap(struct dm_pool_metadata *pmd)
- 	 * Copy the superblock.
- 	 */
- 	dm_sm_inc_block(pmd->metadata_sm, THIN_SUPERBLOCK_LOCATION);
--	r = dm_tm_shadow_block(pmd->tm, THIN_SUPERBLOCK_LOCATION, &sb_validator, &copy, &inc);
-+	r = dm_tm_shadow_block(pmd->tm, THIN_SUPERBLOCK_LOCATION,
-+			       &sb_validator, &copy, &inc);
- 	if (r)
- 		return r;
- 	BUG_ON(!inc);
-@@ -1111,7 +1112,8 @@ static int __reserve_metadata_snap(struct dm_pool_metadata *pmd)
- 	/*
- 	 * Wipe the spacemap since we're not publishing this.
- 	 */
--	memset(&disk_super->data_space_map_root, 0, sizeof(disk_super->data_space_map_root));
-+	memset(&disk_super->data_space_map_root, 0,
-+	       sizeof(disk_super->data_space_map_root));
- 	memset(&disk_super->metadata_space_map_root, 0,
- 	       sizeof(disk_super->metadata_space_map_root));
- 
-@@ -1135,7 +1137,7 @@ static int __reserve_metadata_snap(struct dm_pool_metadata *pmd)
- 
- 	disk_super = dm_block_data(sblock);
- 	disk_super->held_root = cpu_to_le64(held_root);
--	dm_tm_unlock(pmd->tm, sblock);
-+	dm_bm_unlock(sblock);
- 
- 	pmd->need_commit = 1;
- 	return 0;
-@@ -1169,7 +1171,7 @@ static int __release_metadata_snap(struct dm_pool_metadata *pmd)
- 	disk_super->held_root = cpu_to_le64(0);
- 	pmd->need_commit = 1;
- 
--	dm_tm_unlock(pmd->tm, sblock);
-+	dm_bm_unlock(sblock);
- 
- 	if (!held_root) {
- 		DMWARN("pool has no metadata snap");
+So, apart from the the macros, key is 64bit containing the backend
+device and extent offset and size with the ptr fields somehow point to
+cache.  Am I understanding it correctly?  If right, I'm *tiny* bit
+apprehensive about using only 43bits for offset.  While the block 9
+bits means 52bit addressing, the 9 bit block size is now there mostly
+to work as buffer between memory bitness growth and storage device
+size growth so that we have 9 bit buffer as storage device reaches
+ulong addressing limit.  Probably those days are far out enough.
+
+> +void btree_read_done(struct closure *cl)
+> +{
+> +	struct btree *b = container_of(cl, struct btree, io.cl);
+> +	struct bset *i = b->sets[0].data;
+> +	struct btree_iter *iter = b->c->fill_iter;
+> +	const char *err = "bad btree header";
+> +	BUG_ON(b->nsets || b->written);
+> +
+> +	bbio_free(b->bio, b->c);
+> +	b->bio = NULL;
+> +
+> +	mutex_lock(&b->c->fill_lock);
+> +	iter->used = 0;
+> +
+> +	if (btree_node_io_error(b) ||
+> +	    !i->seq)
+> +		goto err;
+> +
+> +	for (;
+> +	     b->written < btree_blocks(b) && i->seq == b->sets[0].data->seq;
+> +	     i = write_block(b)) {
+> +		err = "unsupported bset version";
+> +		if (i->version > BCACHE_BSET_VERSION)
+> +			goto err;
+> +
+> +		err = "bad btree header";
+> +		if (b->written + set_blocks(i, b->c) > btree_blocks(b))
+> +			goto err;
+> +
+> +		err = "bad magic";
+> +		if (i->magic != bset_magic(b->c))
+> +			goto err;
+> +
+> +		err = "bad checksum";
+> +		switch (i->version) {
+> +		case 0:
+> +			if (i->csum != csum_set(i))
+> +				goto err;
+> +			break;
+> +		case BCACHE_BSET_VERSION:
+> +			if (i->csum != btree_csum_set(b, i))
+> +				goto err;
+> +			break;
+> +		}
+> +
+> +		err = "empty set";
+> +		if (i != b->sets[0].data && !i->keys)
+> +			goto err;
+> +
+> +		btree_iter_push(iter, i->start, end(i));
+> +
+> +		b->written += set_blocks(i, b->c);
+> +	}
+> +
+> +	err = "corrupted btree";
+> +	for (i = write_block(b);
+> +	     index(i, b) < btree_blocks(b);
+> +	     i = ((void *) i) + block_bytes(b->c))
+> +		if (i->seq == b->sets[0].data->seq)
+> +			goto err;
+> +
+> +	btree_sort_and_fix_extents(b, iter);
+> +
+> +	i = b->sets[0].data;
+> +	err = "short btree key";
+> +	if (b->sets[0].size &&
+> +	    bkey_cmp(&b->key, &b->sets[0].end) < 0)
+> +		goto err;
+> +
+> +	if (b->written < btree_blocks(b))
+> +		bset_init_next(b);
+> +
+> +	if (0) {
+> +err:		set_btree_node_io_error(b);
+> +		cache_set_error(b->c, "%s at bucket %lu, block %zu, %u keys",
+> +				err, PTR_BUCKET_NR(b->c, &b->key, 0),
+> +				index(i, b), i->keys);
+> +	}
+
+Please don't do that.  Just define out: label, move error specific
+path to the end of the function and jump to out at the end of that.
+
+> +
+> +	mutex_unlock(&b->c->fill_lock);
+> +
+> +	spin_lock(&b->c->btree_read_time_lock);
+> +	time_stats_update(&b->c->btree_read_time, b->io_start_time);
+> +	spin_unlock(&b->c->btree_read_time_lock);
+> +
+> +	smp_wmb(); /* read_done is our write lock */
+> +	set_btree_node_read_done(b);
+> +
+> +	closure_return(cl);
+> +}
+> +
+> +static void btree_read_resubmit(struct closure *cl)
+> +{
+> +	struct btree *b = container_of(cl, struct btree, io.cl);
+> +
+> +	submit_bbio_split(b->bio, b->c, &b->key, 0);
+> +	continue_at(&b->io.cl, btree_read_done, system_wq);
+> +}
+
+I suppose submit_bbio_split() can't fail here somehow unlike from
+btree_read() path?  If so, please add a comment to explain and maybe
+WARN_ON_ONCE() on failure.  Subtlety to comment ratio is *way* off.
+
+> +static struct btree *mca_bucket_alloc(struct cache_set *c,
+> +				      struct bkey *k, gfp_t gfp)
+> +{
+> +	struct btree *b = kzalloc(sizeof(struct btree), gfp);
+> +	if (!b)
+> +		return NULL;
+> +
+> +	init_rwsem(&b->lock);
+> +	INIT_LIST_HEAD(&b->list);
+> +	INIT_DELAYED_WORK(&b->work, btree_write_work);
+> +	b->c = c;
+> +	closure_init_unlocked(&b->io);
+> +
+> +	mca_data_alloc(b, k, gfp);
+> +	return b->sets[0].data ? b : NULL;
+> +}
+
+mca_data_alloc() failure path seems like a resource leak but it isn't
+because mca_data_alloc() puts it in free list.  Is the extra level of
+caching necessary?  How is it different from sl?b allocator cache?
+And either way, comments please.
+
+> +static int mca_reap(struct btree *b, struct closure *cl)
+> +{
+> +	lockdep_assert_held(&b->c->bucket_lock);
+> +
+> +	if (!down_write_trylock(&b->lock))
+> +		return -1;
+> +
+> +	BUG_ON(btree_node_dirty(b) && !b->sets[0].data);
+> +
+> +	if (cl && btree_node_dirty(b))
+> +		btree_write(b, true, NULL);
+> +
+> +	if (cl)
+> +		closure_wait_event_async(&b->io.wait, cl,
+> +			 atomic_read(&b->io.cl.remaining) == -1);
+> +
+> +	if (btree_node_dirty(b) ||
+> +	    atomic_read(&b->io.cl.remaining) != -1 ||
+> +	    work_pending(&b->work.work)) {
+> +		rw_unlock(true, b);
+> +		return -EAGAIN;
+> +	}
+> +
+> +	return 0;
+> +}
+
+Mixing -1 and -EAGAIN returns usually isn't a good idea.
+
+> +static struct btree *alloc_bucket(struct cache_set *c, struct bkey *k,
+> +				  int level, struct closure *cl)
+> +{
+> +	struct btree *b, *i;
+> +	unsigned page_order = ilog2(KEY_SIZE(k) / PAGE_SECTORS ?: 1);
+> +
+> +	lockdep_assert_held(&c->bucket_lock);
+> +retry:
+> +	if (find_bucket(c, k))
+> +		return NULL;
+> +
+> +	/* btree_free() doesn't free memory; it sticks the node on the end of
+> +	 * the list. Check if there's any freed nodes there:
+> +	 */
+> +	list_for_each_entry(b, &c->btree_cache_freeable, list)
+> +		if (page_order <= b->page_order &&
+> +		    !b->key.ptr[0] &&
+> +		    !mca_reap(b, NULL))
+> +			goto out;
+> +
+> +	/* We never free struct btree itself, just the memory that holds the on
+> +	 * disk node. Check the freed list before allocating a new one:
+> +	 */
+> +	list_for_each_entry(b, &c->btree_cache_freed, list)
+> +		if (!mca_reap(b, NULL)) {
+> +			mca_data_alloc(b, k, __GFP_NOWARN|GFP_NOIO);
+> +			if (!b->sets[0].data) {
+> +				rw_unlock(true, b);
+> +				goto err;
+> +			} else
+> +				goto out;
+> +		}
+> +
+> +	b = mca_bucket_alloc(c, k, __GFP_NOWARN|GFP_NOIO);
+> +	if (!b)
+> +		goto err;
+> +
+> +	BUG_ON(!down_write_trylock(&b->lock));
+> +out:
+> +	BUG_ON(!closure_is_unlocked(&b->io.cl));
+> +
+> +	bkey_copy(&b->key, k);
+> +	list_move(&b->list, &c->btree_cache);
+> +	hlist_del_init_rcu(&b->hash);
+> +	hlist_add_head_rcu(&b->hash, hash_bucket(c, k));
+> +	lock_set_subclass(&b->lock.dep_map, level + 1, _THIS_IP_);
+> +
+> +	b->flags	= 0;
+> +	b->level	= level;
+> +	b->written	= 0;
+> +	b->nsets	= 0;
+> +	for (int i = 0; i < MAX_BSETS; i++)
+> +		b->sets[i].size = 0;
+> +	for (int i = 1; i < MAX_BSETS; i++)
+> +		b->sets[i].data = NULL;
+
+Why separate loops?
+
+> +
+> +	return b;
+> +err:
+> +	if (current->bio_list)
+> +		return ERR_PTR(-EAGAIN);
+
+What does this test do?
+
+Thanks.
+
+-- 
+tejun
