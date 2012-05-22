@@ -1,36 +1,61 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: multipath_busy() stalls IO due to scsi_host_is_busy()
-Date: Tue, 22 May 2012 13:31:36 +0900
-Message-ID: <4FBB16A8.1020401@ce.jp.nec.com>
-References: <4FB39D78.9020300@itwm.fraunhofer.de> <4FB4C065.7070804@ce.jp.nec.com> <4FBA6281.3040109@itwm.fraunhofer.de>
+Subject: [PATCH] scsi: Fix dm-multipath starvation when scsi host is busy
+Date: Tue, 22 May 2012 17:59:07 +0900
+Message-ID: <4FBB555B.5060608@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4FBA6281.3040109@itwm.fraunhofer.de>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+To: linux-scsi <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Cc: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>, James Bottomley <James.Bottomley@HansenPartnership.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+When a scsi host is kept busy by a dm-mpath device, other dm-mpath device
+on the same host could be starved. For example:
+http://www.redhat.com/archives/dm-devel/2012-May/msg00123.html
 
-On 05/22/12 00:42, Bernd Schubert wrote:
-> On 05/17/2012 11:09 AM, Jun'ichi Nomura wrote:
->> However, when it is target/host that is busy, I think dm should
->> send the request down and let SCSI, which has better knowledge
->> about the shared resource, do appropriate starvation control.
->>
->> Could you try the attached patch?
-...
-> Thanks, that works fine! I had something else in my mind for multipath, but if this can go into scsi we don't need the multipath patch anymore.
-> Are you going to officially submit it (missing signed-off)?
+It happens because dm-mpath delays request submission when the underlying
+scsi host is busy even if sdev is not busy.
 
-Thank you for testing.
-Yes, I'll submit it officially with your Reported-by/Tested-by.
+For case like this, it is better to send the request down and let scsi do
+appropriate starvation control over the shared resource.
 
-Also, a note suggested by Mike Snitzer will be added to the
-patch description. (Thanks Mike.)
+Though it might seem odd to change scsi's definition of a LLD being "busy",
+it is reasonable because scsi_lld_busy (and blk_lld_busy) was introduced
+to provide a hint for request-based stacking driver (i.e. dm-multipath)
+and dm-multipath is the only user of this function.
 
--- 
-Jun'ichi Nomura, NEC Corporation
+Reported-by: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>
+Tested-by: Bernd Schubert <bernd.schubert@itwm.fraunhofer.de>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: <stable@vger.kernel.org>
+---
+ drivers/scsi/scsi_lib.c |    5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index 5dfd749..0eb4602 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -1378,16 +1378,13 @@ static int scsi_lld_busy(struct request_queue *q)
+ {
+ 	struct scsi_device *sdev = q->queuedata;
+ 	struct Scsi_Host *shost;
+-	struct scsi_target *starget;
+ 
+ 	if (!sdev)
+ 		return 0;
+ 
+ 	shost = sdev->host;
+-	starget = scsi_target(sdev);
+ 
+-	if (scsi_host_in_recovery(shost) || scsi_host_is_busy(shost) ||
+-	    scsi_target_is_busy(starget) || scsi_device_is_busy(sdev))
++	if (scsi_host_in_recovery(shost) || scsi_device_is_busy(sdev)) 
+ 		return 1;
+ 
+ 	return 0;
