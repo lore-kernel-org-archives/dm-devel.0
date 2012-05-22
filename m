@@ -1,7 +1,7 @@
-From: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Subject: Re: [Bcache v13 14/16] bcache: Request, io and allocation code
-Date: Tue, 22 May 2012 15:42:55 -0700
-Message-ID: <20120522224255.GM14339@google.com>
+Date: Tue, 22 May 2012 15:44:02 -0700
+Message-ID: <20120522224402.GN14339@google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
  <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
 Mime-Version: 1.0
@@ -48,7 +48,7 @@ On Wed, May 09, 2012 at 11:11:25PM -0400, Kent Overstreet wrote:
 > +	return 0;
 > +}
 
-Hmmm... where is @sectors_done updated?
+Where is @sectors_done updated?
 
 Thanks.
 
