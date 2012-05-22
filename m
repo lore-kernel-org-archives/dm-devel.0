@@ -1,56 +1,41 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [Bcache v13 07/16] Closures
-Date: Mon, 21 May 2012 12:40:20 -0700
-Message-ID: <20120521194020.GA20338@google.com>
-References: <cover.1336619038.git.koverstreet@google.com>
- <82f00ebb4ee0404788c5bd7fbfa1fe4969f28ba1.1336619038.git.koverstreet@google.com>
- <20120515224137.GA15386@google.com>
- <20120518062948.GA21163@dhcp-172-18-216-138.mtv.corp.google.com>
- <20120518110247.08696cec@pyramind.ukuu.org.uk>
+From: "Jun'ichi Nomura" <j-nomura-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH 02/13] dm: kill dm_rq_bio_destructor
+Date: Tue, 22 May 2012 13:29:01 +0900
+Message-ID: <4FBB160D.9040600@ce.jp.nec.com>
+References: <cover.1337308722.git.koverstreet@google.com> <f07bc0f57562d98078e0f4c507cae165aa159e7c.1337308722.git.koverstreet@google.com> <20120518155729.GB19388@google.com> <20120518164319.GJ29330@agk-dp.fab.redhat.com> <20120518185027.GA9673@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120518110247.08696cec@pyramind.ukuu.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Cc: Tejun Heo <tj@kernel.org>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120518185027.GA9673-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Fri, May 18, 2012 at 11:02:47AM +0100, Alan Cox wrote:
-> > Well, I can definitely understand your reservations about the code; it's
-> > strange and foreign and complicated. But having beaten my head against
-> > the various problems and difficulties inherent in asynchronous
-> > programming for years - well, having found a way to make it sane to me
-> > it'd be madness to go back.
+Hi,
+
+On 05/19/12 03:50, Kent Overstreet wrote:
+> On Fri, May 18, 2012 at 05:43:19PM +0100, Alasdair G Kergon wrote:
+>> On Fri, May 18, 2012 at 08:57:29AM -0700, Tejun Heo wrote:
+>>> Please explain why this is done and how it's safe.  Alasdair / dm
+>>> folks, can you please ack this?
+>>  
+>> I think it's relying on there being never more than one reference on those 
+>> bios so that that endio fn, called exactly once, always frees it and there
+>> are no dm_puts elsewhere.
 > 
-> I think its more of a different paradigm than complicated.
+> Is that a safe assumption? From my perusal of the code it certainly
+> looks like it should be, but I don't know dm all that well.
 
-Yeah, that's probably apt :) 
+Doing free_bio_info() in end_clone_bio() is safe.
 
-> The big
-> question I'd have to ask is how does it fit with hard real time. That is
-> a big issue given the gradual merging and getting of "hard" real time
-> into the kernel proper.
-> 
-> In some ways it's not that strange either. A look at what happens on some
-> of our kref handling in drivers is very similar but hardcoded.
-> 
-> Is the handling of priority inversion within closures a well understood
-> and solved problem ?
+But there is other problem.
+This bio may be put by blk_rq_unprep_clone() and leak memory
+without the destructor.
 
-Haven't really thought about it (aside from deadlocks which are a
-slightly different issue). AFAICT there shouldn't be much to worry
-about, at least with the way I'm using closures today; scheduling is all
-handled by the existing workqueue code and you have to explicitly say
-which workqueue a function is going to run out of.
+So could it be possible to keep bi_destructor available for this case?
 
-There are the wait lists I've implemented but that's mostly just for
-when some thread/closure is waiting on an arbitrary event to become true
-- analagous to wait_event(), in which case you want everything on the
-wait list to to run at once which is all it implements.
-
-If the closure wait lists ever did end up being used in a situation
-where priorities or priority inversion was more of a concern it wouldn't
-be a huge deal to swap out the implementation for something more
-sophisticated, or just use the existing wait_queue_t.
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation
