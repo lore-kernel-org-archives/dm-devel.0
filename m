@@ -1,65 +1,52 @@
-From: Matthew Wilcox <matthew@wil.cx>
-Subject: Re: [PATCH 01/10] string: introduce memweight
-Date: Wed, 23 May 2012 07:16:00 -0600
-Message-ID: <20120523131559.GA7064@parisc-linux.org>
-References: <1337520203-29147-1-git-send-email-akinobu.mita@gmail.com> <20120523092113.GG10452@quack.suse.cz> <CAC5umyi=ridqRZGGh0+_xw0-GCN+69B33Qz82-9x4dVODGGx6w@mail.gmail.com>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] [Bcache v13 09/16] Bcache: generic utility code
+Date: Wed, 23 May 2012 11:15:38 -0400
+Message-ID: <20120523151538.GJ14943@redhat.com>
+References: <cover.1336619038.git.koverstreet@google.com>
+ <c3f0ca2a499f532253d4c16a30837d43e237266a.1336619038.git.koverstreet@google.com>
+ <20120522211706.GH14339@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAC5umyi=ridqRZGGh0+_xw0-GCN+69B33Qz82-9x4dVODGGx6w@mail.gmail.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, Anders Larsen <al@alarsen.net>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Mark Fasheh <mfasheh@suse.com>, Joel Becker <jlbec@evilplan.org>, ocfs2-devel@oss.oracle.com, linux-ext4@vger.kernel.org, Andreas Dilger <adilger.kernel@dilger.ca>, Theodore Ts'o <tytso@mit.edu>
+In-Reply-To: <20120522211706.GH14339-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, May 23, 2012 at 09:12:18PM +0900, Akinobu Mita wrote:
-> size_t memweight(const void *ptr, size_t bytes)
-
-Why should this return size_t instead of unsigned long?
-
-> {
-> 	size_t w = 0;
-> 	size_t longs;
-> 	const unsigned char *bitmap = ptr;
+On Tue, May 22, 2012 at 02:17:06PM -0700, Tejun Heo wrote:
+> Hello, Kent.
 > 
-> 	for (; bytes > 0 && ((unsigned long)bitmap) % sizeof(long);
-> 			bytes--, bitmap++)
-> 		w += hweight8(*bitmap);
+> I've been reading the code and am still very far from understanding
+> the whole thing but here are general impressions upto this point.
 > 
-> 	longs = bytes / sizeof(long);
-> 	BUG_ON(longs >= INT_MAX / BITS_PER_LONG);
-> 	w += bitmap_weight((unsigned long *)bitmap, longs * BITS_PER_LONG);
-> 	bytes -= longs * sizeof(long);
-> 	bitmap += longs * sizeof(long);
-> 
-> 	for (; bytes > 0; bytes--, bitmap++)
-> 		w += hweight8(*bitmap);
-> 
-> 	return w;
-> }
+> * I started reading from get_bucket(), mostly because I wasn't sure
+>   where to start.  It would be very helpful to the reviewers and
+>   future participants if there's a design doc and more comments (much
+>   more).  The code is on the big side and the problem is exacerbated
+>   by use of somewhat unconventional constructs and conventions and
+>   lack of documentation and comments.
 
-bitmap_weight copes with a bitmask that isn't a multiple of BITS_PER_LONG
-in size already.  So I think this can be done as:
+I totally agreed. There is a lot going on and design doc is going to 
+help a lot while reviewing.
 
-unsigned long memweight(const void *s, size_t n)
-{
-	const unsigned char *ptr = s;
-	unsigned long r = 0;
+> * Too many smart macros.  Macros suck.  Smart ones double suck.
 
-	while (n > 0 && (unsigned long)ptr % sizeof(long)) {
-		r += hweight8(*ptr);
-		n--;
-		ptr++;
-	}
+I had the same impression when I tried to read the code last. Too many
+macros and it makes reading code really difficult.
 
-	BUG_ON(n >= INT_MAX / 8)
+[..]
+> * Somewhat related to the above, I'm not a fan of super-verbose
+>   symbols but I *hope* that the variable names were just a tiny bit
+>   more descriptive.  At least, the ones used as arguments.
 
-	return r + bitmap_weight((unsigned long *)ptr, n * 8);
-}
+Another thing is that keep variable names consistent. Last time I looked,
+same name "c" was being used to represent cached_dev or cache_set or 
+something else too. If we keep variable name same to represent same
+data structure, it becomes easier to read the code. I was totally lost
+and always had to go back to figure out what "c" is representing, what
+"d" is representing etc.
 
--- 
-Matthew Wilcox				Intel Open Source Technology Centre
-"Bill, look, we understand that you're interested in selling us this
-operating system, but compare it to ours.  We can't possibly take such
-a retrograde step."
+Thanks
+Vivek
