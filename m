@@ -1,94 +1,64 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [Bcache v13 11/16] bcache: Core btree code
-Date: Wed, 23 May 2012 01:34:03 -0400
-Message-ID: <20120523053403.GB14312@dhcp-172-18-216-138.mtv.corp.google.com>
+From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH] Add human-readable units modifier to vsnprintf()
+Date: Tue, 22 May 2012 22:42:40 -0700
+Message-ID: <1337751760.13111.47.camel@joe2Laptop>
 References: <cover.1336619038.git.koverstreet@google.com>
- <7f1de39b6d7040b3fe271500776f4b985b21ea82.1336619038.git.koverstreet@google.com>
- <20120522221259.GJ14339@google.com>
- <20120523034546.GB607@dhcp-172-18-216-138.mtv.corp.google.com>
- <20120523052054.GB29976@dhcp-172-17-108-109.mtv.corp.google.com>
+	 <c3f0ca2a499f532253d4c16a30837d43e237266a.1336619038.git.koverstreet@google.com>
+	 <20120522211706.GH14339@google.com>
+	 <20120523031214.GA607@dhcp-172-18-216-138.mtv.corp.google.com>
+	 <1337744190.13111.33.camel@joe2Laptop>
+	 <20120523045023.GE607@dhcp-172-18-216-138.mtv.corp.google.com>
+	 <1337749848.13111.40.camel@joe2Laptop>
+	 <20120523052236.GA14312@dhcp-172-18-216-138.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120523052054.GB29976@dhcp-172-17-108-109.mtv.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Tejun Heo <tejun@google.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120523052236.GA14312-RcKxWJ4Cfj3IzGYXcIpNmNLIRw13R84JkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, May 22, 2012 at 10:20:54PM -0700, Tejun Heo wrote:
-> Hmmm... I would prefer it to be defined explicitly as union.  It's
-> rather easy to define it incorrectly (ie. using struct bkey) and then
-> pass it around expecting it to have the pad.
-
-Thing is, things don't expect the pad - bkeys are normally just in a big
-chunk of memory concatenated together, and the same functions have to
-work both with those and with bare bkeys the code occasionally
-manipulates.
-
-> It doesn't have to be full bcache.  e.g. words starting with cache can
-> simply have 'b' in front and others can use things like bc_ or
-> whatever.
-
-Ok, that sounds quite reasonable.
-
-> 
-> > > So, apart from the the macros, key is 64bit containing the backend
-> > > device and extent offset and size with the ptr fields somehow point to
-> > > cache.  Am I understanding it correctly?  If right, I'm *tiny* bit
-> > > apprehensive about using only 43bits for offset.  While the block 9
-> > > bits means 52bit addressing, the 9 bit block size is now there mostly
-> > > to work as buffer between memory bitness growth and storage device
-> > > size growth so that we have 9 bit buffer as storage device reaches
-> > > ulong addressing limit.  Probably those days are far out enough.
+On Wed, 2012-05-23 at 01:22 -0400, Kent Overstreet wrote:
+> On Tue, May 22, 2012 at 10:10:48PM -0700, Joe Perches wrote:
+> > On Wed, 2012-05-23 at 00:50 -0400, Kent Overstreet wrote:
+> > > diff --git a/lib/vsprintf.c b/lib/vsprintf.c
+> > []
+> > > @@ -1002,6 +1023,7 @@ int format_decode(const char *fmt, struct printf_spec *spec)
+> > >  		case ' ': spec->flags |= SPACE;   break;
+> > >  		case '#': spec->flags |= SPECIAL; break;
+> > >  		case '0': spec->flags |= ZEROPAD; break;
+> > > +		case 'h': spec->flags |= HUNITS;  break;
+> > >  		default:  found = false;
+> > >  		}
+> > >  
 > > 
-> > You're exactly right. I had similar thoughts about the offset size,
-> > but... it'll last until we have 8 exabyte cache devices, and I can't
+> > I think that doesn't work well because
+> > gcc __attribute__((format(printf, x, y)))
+> > verification fails.
 > 
-> I'm a bit confused.  Cache device or cached device?  Isn't the key
-> dev:offset:size of the cached device?
+> Yeah, I already ran into that. I was looking through the gcc docs to see
+> if there was a way to add modifiers (how is it done for the other kernel
+> specific format strings?) but I haven't found anything yet
 
-No - bkey->key is the offset on the cached device, PTR_OFFSET is on the
-cache.
+It's done via %p extensions.
+gcc doesn't care as long as the %p argument is a pointer.
 
-Confusing, I know. Any ideas for better terminology?
-
+> > It's also possible
+> > to confuse it with printf's own 'h' / 
+> > integer precision use.
 > 
-> > > mca_data_alloc() failure path seems like a resource leak but it isn't
-> > > because mca_data_alloc() puts it in free list.  Is the extra level of
-> > > caching necessary?  How is it different from sl?b allocator cache?
-> > > And either way, comments please.
-> > 
-> > This btree in memory cache code is probably the nastiest, subtlest,
-> > trickiest code in bcache. I have some cleanups in a branch somewhere as
-> > part of some other work that I need to finish off.
-> > 
-> > The btree_cache_freed list isn't for caching - we never free struct
-> > btrees except on shutdown, to simplify the code. It doesn't cost much
-> > memory since the memory usage is dominated by the buffers struct btree
-> > points to, and those are freed when necessary.
-> 
-> Out of curiosity, how does not freeing make the code simpler?  Is it
-> something synchronization related?
+> Well, that's annoying. Any suggestions?
 
-Yeah - looking up btree nodes in the in memory cache involves checking a
-lockless hash table (i.e. using hlist_for_each_rcu()).
+I gave you one already.
 
-It would be fairly trivial to free them with kfree_rcu(), but I'd have
-to go through and make sure there aren't any other places where there
-could be dangling references - i.e. io related stuff. And I wouldn't be
-able to delete any code - I need the btree_cache_freed list anyways so I
-can preallocate a reserve at startup.
+Use a new lib/vsprintf.c %p pointer extension like 
+"%pD" or "%pH" and use a pointer to the type as the
+argument.
 
-I all the changes I've made based on your review feedback so far up -
-git://evilpiepirate.org/~kent/linux-bcache.git bcache-3.3-dev
-
-Kent Overstreet (7):
-      Document some things and incorporate some review feedback
-      bcache: Fix a bug in submit_bbio_split()
-      bcache: sprint_string_list() -> snprint_string_list()
-      Add human-readable units modifier to vsnprintf()
-      bcache: Kill hprint()
-      bcache: Review feedback
-      bcache: Kill popcount()
+It's how it's done for an ipv4 address.
+For instance:
+	be32 address = cpu_to_be32(0xc0a80101);
+	printk("%pI4" &address);
+emits "192.168.1.1"
