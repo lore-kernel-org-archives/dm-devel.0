@@ -1,354 +1,314 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [Bcache v13 11/16] bcache: Core btree code
-Date: Tue, 22 May 2012 23:45:49 -0400
-Message-ID: <20120523034546.GB607@dhcp-172-18-216-138.mtv.corp.google.com>
+Subject: Re: [Bcache v13 12/16] bcache: Bset code (lookups within a btree
+ node)
+Date: Wed, 23 May 2012 00:21:14 -0400
+Message-ID: <20120523042114.GC607@dhcp-172-18-216-138.mtv.corp.google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
- <7f1de39b6d7040b3fe271500776f4b985b21ea82.1336619038.git.koverstreet@google.com>
- <20120522221259.GJ14339@google.com>
+ <5b5998d7d09ec36377acdb5d15665d1e4e818521.1336619038.git.koverstreet@google.com>
+ <20120522223932.GK14339@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120522221259.GJ14339-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120522223932.GK14339-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, May 22, 2012 at 03:12:59PM -0700, Tejun Heo wrote:
-> Hello, Kent.
+On Tue, May 22, 2012 at 03:39:32PM -0700, Tejun Heo wrote:
+> Hello, again.
 > 
-> On Wed, May 09, 2012 at 11:10:48PM -0400, Kent Overstreet wrote:
-> > +#define BKEY_PADDED(key)					\
-> > +	union { struct bkey key; uint64_t key ## _pad[8]; }
-> 
-> What does the '8' mean?  And why does struct bbio use 3 instead?  Does
-> this have to be a macro?  Can't we have struct bkey_padded (or
-> whatever)?
-
-Struct bbio uses 3 because it only ever carries around a single pointer
-(i.e. the pointer it's doing io to/from). I'll document that.
-
-The 8 here is kind of arbitrary, it should be a constant defined
-somewhere - it's just a nice round number so it doesn't overflow, means
-it can fit 6 pointers.
-
-It's a macro because it's used for embedding them in various structs -
-that way the pad can be in an anonymous union. Doesn't work the way
-you'd want for bkey_paddeds that are declared on the stack - I never
-found a solution I liked.
-
-> > +struct io {
-> > +	/* Used to track sequential IO so it can be skipped */
-> > +	struct hlist_node	hash;
-> > +	struct list_head	lru;
+> On Wed, May 09, 2012 at 11:11:00PM -0400, Kent Overstreet wrote:
+> > +void bkey_copy_single_ptr(struct bkey *dest, const struct bkey *src, unsigned i)
+> > +{
+> > +	BUG_ON(i > KEY_PTRS(src));
 > > +
-> > +	unsigned long		jiffies;
-> > +	unsigned		sequential;
-> > +	sector_t		last;
-> > +};
+> > +	/* Only copy the header, key, and one pointer. */
+> > +	memcpy(dest, src, 2 * sizeof(uint64_t));
 > 
-> I don't think bcache can have struct io. :P
+> I hope this could be better somehow.
 
-Is your complaint that there's a struct io somewhere else, or just the
-potential namespace clash in the future? Regardless, I can change it.
+I don't know a great way of writing it, but I suppose sizeof(struct
+bkey) + sizeof(uint64_t) would be an improvement.
 
 > 
-> > +struct dirty_io {
-> > +	struct closure		cl;
-> > +	struct cached_dev	*d;
-> > +	struct bio		bio;
-> > +};
+> > +	dest->ptr[0] = src->ptr[i];
+> > +	SET_KEY_PTRS(dest, 1);
+> > +	/* We didn't copy the checksum so clear that bit. */
+> > +	SET_KEY_CSUM(dest, 0);
+> > +}
+> > +/* I have no idea why this code works... and I'm the one who wrote it
+> > + *
+> > + * However, I do know what it does:
+> > + * Given a binary tree constructed in an array (i.e. how you normally implement
+> > + * a heap), it converts a node in the tree - referenced by array index - to the
+> > + * index it would have if you did an inorder traversal.
+> > + *
+> > + * The binary tree starts at array index 1, not 0
+> > + * extra is a function of size:
+> > + *   extra = (size - rounddown_pow_of_two(size - 1)) << 1;
+> > + */
+> 
+> It's kinda problematic if you can't understand or explain it.  I'm
+> scared.  :(
+
+Hehe. I spent several days staring at pictures of binary trees, then
+staring at integers in binary from my code doing inorder travels until
+eventually I saw the pattern. Never figured out the math behind it.
+
+But I did test every j for every binary tree up to size somewhere around
+6 million. I suppose I'll mention that in the comment.
+
+> 
+> > +static unsigned __to_inorder(unsigned j, unsigned size, unsigned extra)
+> > +{
+> > +	unsigned b = fls(j);
+> > +	unsigned shift = fls(size - 1) - b;
 > > +
-> > +struct dirty {
-> > +	struct rb_node		node;
-> > +	BKEY_PADDED(key);
-> > +	struct dirty_io		*io;
-> > +};
+> > +	j  ^= 1U << (b - 1);
+> > +	j <<= 1;
+> > +	j  |= 1;
+> > +	j <<= shift;
+> > +
+> > +	if (j > extra)
+> > +		j -= (j - extra) >> 1;
+> > +
+> > +	return j;
+> > +}
 > ...
-> > +struct cache {
-> 
-> Nor these and so on.
-
-You want me to prefix all my struct names with bcache_? Blech.
-
-> 
-> > +/* Bkey fields: all units are in sectors */
+> > +static void bset_alloc_tree(struct btree *b, struct bset_tree *t)
+> > +{
+> > +	if (t != b->sets) {
+> > +		unsigned j = roundup(t[-1].size,
+> > +				     64 / sizeof(struct bkey_float));
 > > +
-> > +#define KEY_FIELD(name, field, offset, size)				\
-> > +	BITMASK(name, struct bkey, field, offset, size)
-> > +
-> > +#define PTR_FIELD(name, offset, size)					\
-> > +	static inline uint64_t name(const struct bkey *k, unsigned i)	\
-> > +	{ return (k->ptr[i] >> offset) & ~(((uint64_t) ~0) << size); }	\
-> > +									\
-> > +	static inline void SET_##name(struct bkey *k, unsigned i, uint64_t v)\
-> > +	{								\
-> > +		k->ptr[i] &= ~(~((uint64_t) ~0 << size) << offset);	\
-> > +		k->ptr[i] |= v << offset;				\
+> > +		t->tree = t[-1].tree + j;
+> > +		t->prev = t[-1].prev + j;
 > > +	}
 > > +
-> > +KEY_FIELD(KEY_PTRS,	header, 60, 3)
-> > +KEY_FIELD(HEADER_SIZE,	header, 58, 2)
-> > +KEY_FIELD(KEY_CSUM,	header, 56, 2)
-> > +KEY_FIELD(KEY_PINNED,	header, 55, 1)
-> > +KEY_FIELD(KEY_DIRTY,	header, 36, 1)
-> > +
-> > +KEY_FIELD(KEY_SIZE,	header, 20, 16)
-> > +KEY_FIELD(KEY_DEV,	header, 0,  20)
-> > +
-> > +KEY_FIELD(KEY_SECTOR,	key,	16, 47)
-> > +KEY_FIELD(KEY_SNAPSHOT,	key,	0,  16)
-> > +
-> > +PTR_FIELD(PTR_DEV,		51, 12)
-> > +PTR_FIELD(PTR_OFFSET,		8,  43)
-> > +PTR_FIELD(PTR_GEN,		0,  8)
+> > +	while (t < b->sets + MAX_BSETS)
+> > +		t++->size = 0;
+> > +}
 > 
-> So, apart from the the macros, key is 64bit containing the backend
-> device and extent offset and size with the ptr fields somehow point to
-> cache.  Am I understanding it correctly?  If right, I'm *tiny* bit
-> apprehensive about using only 43bits for offset.  While the block 9
-> bits means 52bit addressing, the 9 bit block size is now there mostly
-> to work as buffer between memory bitness growth and storage device
-> size growth so that we have 9 bit buffer as storage device reaches
-> ulong addressing limit.  Probably those days are far out enough.
+> I don't know.  This is cryptic and I feel dirty and stupid.
 
-You're exactly right. I had similar thoughts about the offset size,
-but... it'll last until we have 8 exabyte cache devices, and I can't
-make it bigger without making PTR_DEV smaller or making the whole
-pointer 16 bytes.
+Now you know how I feel :) It really irritates me that I never did
+figure out the math.
 
-Shouldn't be that hard to make a version of the on disk format with 16
-byte pointers that's backwards compatible though, when it becomes
-necessary. And we can detect it at format time.
-
-> > +void btree_read_done(struct closure *cl)
+> 
+> > +static void bset_build_unwritten_tree(struct btree *b)
 > > +{
-> > +	struct btree *b = container_of(cl, struct btree, io.cl);
-> > +	struct bset *i = b->sets[0].data;
-> > +	struct btree_iter *iter = b->c->fill_iter;
-> > +	const char *err = "bad btree header";
-> > +	BUG_ON(b->nsets || b->written);
+> > +	struct bset_tree *t = b->sets + b->nsets;
+> 
+> Why not &b->sets[b->nsets]?
+
+Yeah, that'd be more consistent.
+
+> 
 > > +
-> > +	bbio_free(b->bio, b->c);
-> > +	b->bio = NULL;
+> > +	bset_alloc_tree(b, t);
 > > +
-> > +	mutex_lock(&b->c->fill_lock);
-> > +	iter->used = 0;
-> > +
-> > +	if (btree_node_io_error(b) ||
-> > +	    !i->seq)
-> > +		goto err;
-> > +
-> > +	for (;
-> > +	     b->written < btree_blocks(b) && i->seq == b->sets[0].data->seq;
-> > +	     i = write_block(b)) {
-> > +		err = "unsupported bset version";
-> > +		if (i->version > BCACHE_BSET_VERSION)
-> > +			goto err;
-> > +
-> > +		err = "bad btree header";
-> > +		if (b->written + set_blocks(i, b->c) > btree_blocks(b))
-> > +			goto err;
-> > +
-> > +		err = "bad magic";
-> > +		if (i->magic != bset_magic(b->c))
-> > +			goto err;
-> > +
-> > +		err = "bad checksum";
-> > +		switch (i->version) {
-> > +		case 0:
-> > +			if (i->csum != csum_set(i))
-> > +				goto err;
-> > +			break;
-> > +		case BCACHE_BSET_VERSION:
-> > +			if (i->csum != btree_csum_set(b, i))
-> > +				goto err;
-> > +			break;
-> > +		}
-> > +
-> > +		err = "empty set";
-> > +		if (i != b->sets[0].data && !i->keys)
-> > +			goto err;
-> > +
-> > +		btree_iter_push(iter, i->start, end(i));
-> > +
-> > +		b->written += set_blocks(i, b->c);
+> > +	if (t->tree != b->sets->tree + bset_tree_space(b)) {
+> 
+> And why are we switching between sets[N].XXX and sets->XXX?  Do they
+> signify something?  The usages don't seem to be consistent tho.
+
+I tried to generally use the sets-> notation when I'm referring to the
+allocated memory - that's what's going on here.
+
+> 
+> > +		t->prev[0] = bkey_to_cacheline_offset(t->data->start);
+> > +		t->size = 1;
 > > +	}
+> > +}
+> ...
+> > +void bset_init_next(struct btree *b)
+> > +{
+> > +	struct bset *i = write_block(b);
 > > +
-> > +	err = "corrupted btree";
-> > +	for (i = write_block(b);
-> > +	     index(i, b) < btree_blocks(b);
-> > +	     i = ((void *) i) + block_bytes(b->c))
-> > +		if (i->seq == b->sets[0].data->seq)
-> > +			goto err;
+> > +	if (i != b->sets[0].data) {
+> > +		b->sets[++b->nsets].data = i;
+> > +		i->seq = b->sets[0].data->seq;
+> > +	} else
+> > +		get_random_bytes(&i->seq, sizeof(uint64_t));
 > > +
-> > +	btree_sort_and_fix_extents(b, iter);
+> > +	i->magic	= bset_magic(b->c);
+> > +	i->version	= 0;
+> > +	i->keys		= 0;
 > > +
-> > +	i = b->sets[0].data;
-> > +	err = "short btree key";
-> > +	if (b->sets[0].size &&
-> > +	    bkey_cmp(&b->key, &b->sets[0].end) < 0)
-> > +		goto err;
+> > +	bset_build_unwritten_tree(b);
+> > +}
 > > +
-> > +	if (b->written < btree_blocks(b))
-> > +		bset_init_next(b);
+> > +struct bset_search_iter {
+> > +	struct bkey *l, *r;
+> > +};
 > > +
-> > +	if (0) {
-> > +err:		set_btree_node_io_error(b);
-> > +		cache_set_error(b->c, "%s at bucket %lu, block %zu, %u keys",
-> > +				err, PTR_BUCKET_NR(b->c, &b->key, 0),
-> > +				index(i, b), i->keys);
+> > +__attribute__((optimize(3)))
+> 
+> So, this sets different optimization level per function.  Is this
+> really necessary?  If so, you need to make compiler independent in
+> include/linux/compiler*.h.
+
+The bset_search_*() functions are definitely hot enough to justify it,
+but I can't remember if I ever checked whether that attribute made a
+difference.
+
+> 
+> > +static void __btree_sort(struct btree *b, struct btree_iter *iter,
+> > +			 unsigned start, unsigned order, bool fixup)
+> > +{
+> > +	uint64_t start_time;
+> > +	bool remove_stale = !b->written;
+> > +	struct bset *out = (void *) __get_free_pages(__GFP_NOWARN|GFP_NOIO,
+> > +						     order);
+> > +	if (!out) {
+> > +		mutex_lock(&b->c->sort_lock);
+> > +		out = b->c->sort;
+> > +		order = ilog2(bucket_pages(b->c));
 > > +	}
 > 
-> Please don't do that.  Just define out: label, move error specific
-> path to the end of the function and jump to out at the end of that.
+> So, this is implementing simplistic mempool, right?  If so, why not
+> just use mempool?
 
-Heh. Given that you're the second person to complain about that, I'll
-change it.
-
-> > +
-> > +	mutex_unlock(&b->c->fill_lock);
-> > +
-> > +	spin_lock(&b->c->btree_read_time_lock);
-> > +	time_stats_update(&b->c->btree_read_time, b->io_start_time);
-> > +	spin_unlock(&b->c->btree_read_time_lock);
-> > +
-> > +	smp_wmb(); /* read_done is our write lock */
-> > +	set_btree_node_read_done(b);
-> > +
-> > +	closure_return(cl);
-> > +}
-> > +
-> > +static void btree_read_resubmit(struct closure *cl)
-> > +{
-> > +	struct btree *b = container_of(cl, struct btree, io.cl);
-> > +
-> > +	submit_bbio_split(b->bio, b->c, &b->key, 0);
-> > +	continue_at(&b->io.cl, btree_read_done, system_wq);
-> > +}
-> 
-> I suppose submit_bbio_split() can't fail here somehow unlike from
-> btree_read() path?  If so, please add a comment to explain and maybe
-> WARN_ON_ONCE() on failure.  Subtlety to comment ratio is *way* off.
-
-Yes - because this is the resubmit patch, i.e. runs out of workqueue
-context if the one in btree_read() failed, which is only possible when
-it's running under generic_make_request() (because then we don't use the
-mempool to avoid deadlock).
-
-If the code for making generic_make_request() handle arbitrary sized
-bios goes in, this code will be deleted :)
+It is (btree_read_done() has another). I'm not sure if this one would
+benefit from being switched to a mempool since it tries to allocate only
+the size buffer it needs (which may be smaller than what the mempool
+has), but the one in btree_read_done() could probably be switched to a
+mempool. I'll try it out.
 
 > 
-> > +static struct btree *mca_bucket_alloc(struct cache_set *c,
-> > +				      struct bkey *k, gfp_t gfp)
-> > +{
-> > +	struct btree *b = kzalloc(sizeof(struct btree), gfp);
-> > +	if (!b)
-> > +		return NULL;
+> > +	start_time = local_clock();
 > > +
-> > +	init_rwsem(&b->lock);
-> > +	INIT_LIST_HEAD(&b->list);
-> > +	INIT_DELAYED_WORK(&b->work, btree_write_work);
-> > +	b->c = c;
-> > +	closure_init_unlocked(&b->io);
+> > +	btree_mergesort(b, out, iter, fixup, remove_stale);
+> > +	b->nsets = start;
 > > +
-> > +	mca_data_alloc(b, k, gfp);
-> > +	return b->sets[0].data ? b : NULL;
-> > +}
-> 
-> mca_data_alloc() failure path seems like a resource leak but it isn't
-> because mca_data_alloc() puts it in free list.  Is the extra level of
-> caching necessary?  How is it different from sl?b allocator cache?
-> And either way, comments please.
-
-This btree in memory cache code is probably the nastiest, subtlest,
-trickiest code in bcache. I have some cleanups in a branch somewhere as
-part of some other work that I need to finish off.
-
-The btree_cache_freed list isn't for caching - we never free struct
-btrees except on shutdown, to simplify the code. It doesn't cost much
-memory since the memory usage is dominated by the buffers struct btree
-points to, and those are freed when necessary.
-
-btree_cache_freeable is a small cache for the buffers struct btree
-points to (the btree node as it exists on disk + the bset tree). We have
-that because high order page allocations can be expensive, and it's
-quite common to delete and allocate btree nodes in quick succession -
-but it should never grow past 2 or 3 nodes.
-
-I'm adding all this to where the lists are defined, in struct cache_set.
-
-> 
-> > +static int mca_reap(struct btree *b, struct closure *cl)
-> > +{
-> > +	lockdep_assert_held(&b->c->bucket_lock);
+> > +	if (!fixup && !start && b->written)
+> > +		btree_verify(b, out);
 > > +
-> > +	if (!down_write_trylock(&b->lock))
-> > +		return -1;
+> > +	if (!start && order == b->page_order) {
+> > +		out->magic	= bset_magic(b->c);
+> > +		out->seq	= b->sets[0].data->seq;
+> > +		out->version	= b->sets[0].data->version;
+> > +		swap(out, b->sets[0].data);
 > > +
-> > +	BUG_ON(btree_node_dirty(b) && !b->sets[0].data);
-> > +
-> > +	if (cl && btree_node_dirty(b))
-> > +		btree_write(b, true, NULL);
-> > +
-> > +	if (cl)
-> > +		closure_wait_event_async(&b->io.wait, cl,
-> > +			 atomic_read(&b->io.cl.remaining) == -1);
-> > +
-> > +	if (btree_node_dirty(b) ||
-> > +	    atomic_read(&b->io.cl.remaining) != -1 ||
-> > +	    work_pending(&b->work.work)) {
-> > +		rw_unlock(true, b);
-> > +		return -EAGAIN;
+> > +		if (b->c->sort == b->sets[0].data)
+> > +			b->c->sort = out;
+> > +	} else {
+> > +		b->sets[start].data->keys = out->keys;
+> > +		memcpy(b->sets[start].data->start, out->start,
+> > +		       (void *) end(out) - (void *) out->start);
 > > +	}
 > > +
-> > +	return 0;
-> > +}
+> > +	if (out == b->c->sort)
 > 
-> Mixing -1 and -EAGAIN returns usually isn't a good idea.
+> And is this test correct given the above swap(out, b->sets[0].data)?
 
-Yeah. I'm not going to change anything in this code right away, since
-it's just to tricky to screw with - but when I finish off those other
-patches this code will be improved somewhat (this is already fixed in
-that branch).
-
-> > +	b->flags	= 0;
-> > +	b->level	= level;
-> > +	b->written	= 0;
-> > +	b->nsets	= 0;
-> > +	for (int i = 0; i < MAX_BSETS; i++)
-> > +		b->sets[i].size = 0;
-> > +	for (int i = 1; i < MAX_BSETS; i++)
-> > +		b->sets[i].data = NULL;
-> 
-> Why separate loops?
-
-Sceond loop starts at 1, because b->sets[0]->data points to the memory
-we have allocated. I suppose that merits a comment.
+Yes. It's difficult to read but I think it's just as bad if the check is
+before the swap(). It's avoiding a memcpy() and just swapping buffers
+when possible - I added a comment to that effect.
 
 > 
+> > +		mutex_unlock(&b->c->sort_lock);
+> > +	else
+> > +		free_pages((unsigned long) out, order);
 > > +
-> > +	return b;
-> > +err:
-> > +	if (current->bio_list)
-> > +		return ERR_PTR(-EAGAIN);
+> > +	if (b->written)
+> > +		bset_build_written_tree(b);
+> > +
+> > +	if (!start) {
+> > +		spin_lock(&b->c->sort_time_lock);
+> > +		time_stats_update(&b->c->sort_time, start_time);
+> > +		spin_unlock(&b->c->sort_time_lock);
+> > +	}
+> > +}
+> ...
+> > +#define BKEY_MID_BITS		3
+> > +#define BKEY_MID_MAX		(~(~0 << (BKEY_MID_BITS - 1)))
+> > +#define BKEY_MID_MIN		(-1 - BKEY_MID_MAX)
+> > +
+> > +#define BKEY_EXPONENT_BITS	7
+> > +#define BKEY_MANTISSA_BITS	22
+> > +#define BKEY_MANTISSA_MASK	((1 << BKEY_MANTISSA_BITS) - 1)
+> > +
+> > +struct bkey_float {
+> > +	unsigned	exponent:BKEY_EXPONENT_BITS;
+> > +	unsigned	m:BKEY_MID_BITS;
+> > +	unsigned	mantissa:BKEY_MANTISSA_BITS;
+> > +} __packed;
 > 
-> What does this test do?
+> I *suppose* bkey_float is used to somehow compactly represent key
+> values for compacter search tree.  Wouldn't things like this need
+> boatload of explanation?
 
-Trying to free up some memory - i.e. reuse some btree nodes - may
-require initiating IO to flush the dirty part of the node. If we're
-running under generic_make_request(), that IO will never finish and we
-would deadlock - returning -EAGAIN causes the cache lookup code to punt
-to workqueue and retry.
+Oh man, I don't even know where to begin. But yeah.
 
 > 
-> Thanks.
+> > +#define BSET_CACHELINE		128
+> > +#define BSET_CACHELINE_BITS	ilog2(BSET_CACHELINE)
 > 
-> -- 
-> tejun
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-bcache" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Hmm... what if CACHELINE isn't 128 bytes?  What are the effects?
+> Wouldn't it be better to name it something else (I don't know,
+> BSET_UNIT_BYTES or whatever) and then explain that it's defined to be
+> close to popular cacheline size and the effects of it not coinciding
+> with actual cacheline size? 
+
+It's poorly named, yeah. Nothing bad happens if it's not the same size
+as hardware cachelines (as it's not now) - it used to be 64, but I
+realized the lookup code would touch slightly less memory if it was 128.
+
+What it's defining is the number of bytes per bset_float, if you missed
+that - when we're done searching the bset_float tree we have this many
+bytes left that we do a linear search over.
+
+Since (after level 5, if my math is right) every level of the bset_tree
+is on a new cacheline, we're touching one fewer cacheline in the bset
+tree in exchange for one more cacheline in the linear search - but the
+linear search might stop before it gets to the second cacheline.
+
+> Another nit, it's more customary to
+> define BITS or SHIFT first and then define size as << SHIFT.
+
+Yeah, usually I do it that way... I kind of like having the units in
+bytes one be the explicitly defined one, but I don't really care either
+way.
+
+> 
+> > +#define bset_tree_space(b)	(btree_data_space(b) >> BSET_CACHELINE_BITS)
+> > +
+> > +#define bset_tree_bytes(b)	(bset_tree_space(b) * sizeof(struct bkey_float))
+> > +#define bset_prev_bytes(b)	(bset_tree_bytes(b) >> 2)
+> 
+> Ummm.... cryptic.  What does that >> 2 mean?  Why not
+> bset_tree_space(b) * sizeof(whatever prev type is)?
+
+That'd be better (wtf was I thinking when I wrote than?)
+
+> 
+> > +void bset_init_next(struct btree *);
+> > +
+> > +void bset_fix_invalidated_key(struct btree *, struct bkey *);
+> > +void bset_fix_lookup_table(struct btree *, struct bkey *);
+> > +
+> > +struct bkey *__bset_search(struct btree *, struct bset_tree *,
+> > +			   const struct bkey *);
+> > +#define bset_search(b, t, search)				\
+> > +	((search) ? __bset_search(b, t, search) : (t)->data->start)
+> 
+> Why oh why is this a macro? 
+
+No particular reason. I don't care one way or the other about these one
+line wrappers, but I'll switch it to a static inline function if you
+prefer.
+
+> And can we please have descriptive
+> variable names in prototypes?  btree_sort_into(btree *, btree *) - how
+> is one supposed to know from which into which?
+
+Well - my intent isn't for these to be documentation, they're just there
+to make the compiler happy... I'd rather refer to the function
+definitions. That seems to me to be the norm within the kernel, function
+documentation goes with the definition and I've seen dropped variable
+names before (but then, that was block layer stuff :)
+
+I'll change it if you want, though.
