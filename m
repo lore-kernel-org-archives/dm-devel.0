@@ -1,55 +1,65 @@
-From: Cedric Buissart <cbuissar@redhat.com>
-Subject: [PATCH]] multipath-tools : Minor typo in
-	multipath.conf.annotated
-Date: Wed, 23 May 2012 14:47:35 +0200
-Message-ID: <4FBCDC67.1020503@redhat.com>
-Reply-To: cbuissar@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Matthew Wilcox <matthew@wil.cx>
+Subject: Re: [PATCH 01/10] string: introduce memweight
+Date: Wed, 23 May 2012 07:16:00 -0600
+Message-ID: <20120523131559.GA7064@parisc-linux.org>
+References: <1337520203-29147-1-git-send-email-akinobu.mita@gmail.com> <20120523092113.GG10452@quack.suse.cz> <CAC5umyi=ridqRZGGh0+_xw0-GCN+69B33Qz82-9x4dVODGGx6w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAC5umyi=ridqRZGGh0+_xw0-GCN+69B33Qz82-9x4dVODGGx6w@mail.gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Akinobu Mita <akinobu.mita@gmail.com>
+Cc: Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, Anders Larsen <al@alarsen.net>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Mark Fasheh <mfasheh@suse.com>, Joel Becker <jlbec@evilplan.org>, ocfs2-devel@oss.oracle.com, linux-ext4@vger.kernel.org, Andreas Dilger <adilger.kernel@dilger.ca>, Theodore Ts'o <tytso@mit.edu>
 List-Id: dm-devel.ids
 
-path checking alorithm <= should be algorithm
----
-  multipath.conf.annotated |    2 +-
-  1 files changed, 1 insertions(+), 1 deletions(-)
+On Wed, May 23, 2012 at 09:12:18PM +0900, Akinobu Mita wrote:
+> size_t memweight(const void *ptr, size_t bytes)
 
-diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-index c8e8218..8700d33 100644
---- a/multipath.conf.annotated
-+++ b/multipath.conf.annotated
-@@ -491,7 +491,7 @@
-  ##
-  #              # name    : path_checker, checker
-  #              # scope   : multipathd & multipathd
--#              # desc    : path checking alorithm to use to check path 
-state
-+#              # desc    : path checking algorithm to use to check path 
-state
-  #              # values  : 
-readsector0|tur|emc_clariion|hp_sw|directio|rdac|
-  #              #           cciss_tur
-  #              #
+Why should this return size_t instead of unsigned long?
+
+> {
+> 	size_t w = 0;
+> 	size_t longs;
+> 	const unsigned char *bitmap = ptr;
+> 
+> 	for (; bytes > 0 && ((unsigned long)bitmap) % sizeof(long);
+> 			bytes--, bitmap++)
+> 		w += hweight8(*bitmap);
+> 
+> 	longs = bytes / sizeof(long);
+> 	BUG_ON(longs >= INT_MAX / BITS_PER_LONG);
+> 	w += bitmap_weight((unsigned long *)bitmap, longs * BITS_PER_LONG);
+> 	bytes -= longs * sizeof(long);
+> 	bitmap += longs * sizeof(long);
+> 
+> 	for (; bytes > 0; bytes--, bitmap++)
+> 		w += hweight8(*bitmap);
+> 
+> 	return w;
+> }
+
+bitmap_weight copes with a bitmask that isn't a multiple of BITS_PER_LONG
+in size already.  So I think this can be done as:
+
+unsigned long memweight(const void *s, size_t n)
+{
+	const unsigned char *ptr = s;
+	unsigned long r = 0;
+
+	while (n > 0 && (unsigned long)ptr % sizeof(long)) {
+		r += hweight8(*ptr);
+		n--;
+		ptr++;
+	}
+
+	BUG_ON(n >= INT_MAX / 8)
+
+	return r + bitmap_weight((unsigned long *)ptr, n * 8);
+}
+
 -- 
-1.7.7.6
-
--- 
-Cedric Buissart,
-Technical Support Engineer.
-Red Hat UK Ltd
-200 Fowler Avenue IQ Farnborough, Farnborough, Hants GU14 7JP
-
-Registered in England and Wales under Company Registration No. 03798903
-Directors: Michael Cunningham (USA), Mark Hegarty (Ireland), Matt Parson
-(USA), Charlie Peters (USA)
+Matthew Wilcox				Intel Open Source Technology Centre
+"Bill, look, we understand that you're interested in selling us this
+operating system, but compare it to ours.  We can't possibly take such
+a retrograde step."
