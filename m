@@ -1,55 +1,120 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [Bcache v13 14/16] bcache: Request, io and allocation code
-Date: Wed, 23 May 2012 00:24:26 -0400
-Message-ID: <20120523042426.GD607@dhcp-172-18-216-138.mtv.corp.google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH] Add human-readable units modifier to vsnprintf()
+Date: Wed, 23 May 2012 00:50:23 -0400
+Message-ID: <20120523045023.GE607@dhcp-172-18-216-138.mtv.corp.google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
- <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
- <20120522224255.GM14339@google.com>
+ <c3f0ca2a499f532253d4c16a30837d43e237266a.1336619038.git.koverstreet@google.com>
+ <20120522211706.GH14339@google.com>
+ <20120523031214.GA607@dhcp-172-18-216-138.mtv.corp.google.com>
+ <1337744190.13111.33.camel@joe2Laptop>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120522224255.GM14339-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+In-Reply-To: <1337744190.13111.33.camel@joe2Laptop>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joe Perches <joe@perches.com>
+Cc: Tejun Heo <tejun@google.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, May 22, 2012 at 03:42:55PM -0700, Tejun Heo wrote:
-> On Wed, May 09, 2012 at 11:11:25PM -0400, Kent Overstreet wrote:
-> > +int submit_bbio_split(struct bio *bio, struct cache_set *c,
-> > +		      struct bkey *k, unsigned ptr)
-> > +{
-> > +	struct closure *cl = bio->bi_private;
-> > +	struct bbio *b;
-> > +	struct bio *n;
-> > +	unsigned sectors_done = 0;
-> > +
-> > +	closure_get(cl);
-> > +
-> > +	bio->bi_sector	= PTR_OFFSET(k, ptr);
-> > +	bio->bi_bdev	= PTR_CACHE(c, k, ptr)->bdev;
-> > +
-> > +	do {
-> > +		n = bio_split_get(bio, bio_max_sectors(bio), c);
-> > +		if (!n) {
-> > +			closure_put(cl);
-> > +			return -ENOMEM;
-> > +		}
-> > +
-> > +		b = container_of(n, struct bbio, bio);
-> > +
-> > +		bkey_copy_single_ptr(&b->key, k, ptr);
-> > +		SET_KEY_SIZE(&b->key, KEY_SIZE(k) - sectors_done);
-> > +		SET_PTR_OFFSET(&b->key, 0, PTR_OFFSET(k, ptr) + sectors_done);
-> > +
-> > +		b->submit_time_us = local_clock_us();
-> > +		generic_make_request(n);
-> > +	} while (n != bio);
-> > +
-> > +	return 0;
-> > +}
+On Tue, May 22, 2012 at 08:36:30PM -0700, Joe Perches wrote:
+> On Tue, 2012-05-22 at 23:12 -0400, Kent Overstreet wrote:
+> > On Tue, May 22, 2012 at 02:17:06PM -0700, Tejun Heo wrote:
+> []
+> > > > +ssize_t hprint(char *buf, int64_t v)
+> > > > +{
+> > > > +	static const char units[] = "?kMGTPEZY";
+> > > > +	char dec[3] = "";
+> > > > +	int u, t = 0;
+> > > > +
+> > > > +	for (u = 0; v >= 1024 || v <= -1024; u++) {
+> > > > +		t = v & ~(~0 << 10);
+> > > > +		v >>= 10;
+> > > > +	}
+> > > > +
+> > > > +	if (!u)
+> > > > +		return sprintf(buf, "%llu", v);
+> > > > +
+> > > > +	if (v < 100 && v > -100)
+> > > > +		sprintf(dec, ".%i", t / 100);
+> > > > +
+> > > > +	return sprintf(buf, "%lli%s%c", v, dec, units[u]);
+> > > > +}
+> > > > +EXPORT_SYMBOL_GPL(hprint);
+> > > 
+> > > Not your fault but maybe we want integer vsnprintf modifier for this.
+> > 
+> > Yes.
 > 
-> Hmmm... where is @sectors_done updated?
+> or maybe yet another lib/vsprintf pointer extension
+> like %pD with some descriptors after the %pD for
+> type, width and precision.
 
-That's a bug - thanks!
+Integer modifier makes more sense to me - it's an integer you're
+printing in the first place, anyways...
+
+This code seems to work - it produces the same output as my hprint(),
+anyways:
+
+---
+ lib/vsprintf.c |   24 +++++++++++++++++++++++-
+ 1 files changed, 23 insertions(+), 1 deletions(-)
+
+diff --git a/lib/vsprintf.c b/lib/vsprintf.c
+index 38e612e..9225857 100644
+--- a/lib/vsprintf.c
++++ b/lib/vsprintf.c
+@@ -219,6 +219,7 @@ char *put_dec(char *buf, unsigned long long num)
+ #define LEFT	16		/* left justified */
+ #define SMALL	32		/* use lowercase in hex (must be 32 == 0x20) */
+ #define SPECIAL	64		/* prefix hex with "0x", octal with "0" */
++#define HUNITS	128		/* Human readable units, i.e. k/M/G/T */
+ 
+ enum format_type {
+ 	FORMAT_TYPE_NONE, /* Just a string part */
+@@ -258,6 +259,7 @@ char *number(char *buf, char *end, unsigned long long num,
+ {
+ 	/* we are called with base 8, 10 or 16, only, thus don't need "G..."  */
+ 	static const char digits[16] = "0123456789ABCDEF"; /* "GHIJKLMNOPQRSTUVWXYZ"; */
++	static const char units[] = "?kMGTPEZY";
+ 
+ 	char tmp[66];
+ 	char sign;
+@@ -310,7 +312,26 @@ char *number(char *buf, char *end, unsigned long long num,
+ 			num >>= shift;
+ 		} while (num);
+ 	} else { /* base 10 */
+-		i = put_dec(tmp, num) - tmp;
++		if (spec.flags & HUNITS) {
++			int u, rem = 0;
++
++			for (u = 0; num >= 1024; u++) {
++				rem = num & ~(~0 << 10);
++				num >>= 10;
++			}
++
++			if (u) {
++				tmp[i++] = units[u];
++
++				if (num < 100) {
++					rem /= 100;
++					i = put_dec(tmp + i, rem) - tmp;
++					tmp[i++] = '.';
++				}
++			}
++		}
++
++		i = put_dec(tmp + i, num) - tmp;
+ 	}
+ 
+ 	/* printing 100 using %2d gives "100", not "00" */
+@@ -1002,6 +1023,7 @@ int format_decode(const char *fmt, struct printf_spec *spec)
+ 		case ' ': spec->flags |= SPACE;   break;
+ 		case '#': spec->flags |= SPECIAL; break;
+ 		case '0': spec->flags |= ZEROPAD; break;
++		case 'h': spec->flags |= HUNITS;  break;
+ 		default:  found = false;
+ 		}
+ 
+-- 
+1.7.9.rc2
