@@ -1,85 +1,73 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 06/14] block: Add bio_reset()
-Date: Wed, 23 May 2012 17:02:43 -0700
-Message-ID: <1337817771-25038-7-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 05/14] block: Only clone bio vecs that are in use
+Date: Wed, 23 May 2012 17:02:42 -0700
+Message-ID: <1337817771-25038-6-git-send-email-koverstreet@google.com>
 References: <1337817771-25038-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1337817771-25038-1-git-send-email-koverstreet@google.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1337817771-25038-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
-Reusing bios is something that's been highly frowned upon in the past,
-but driver code keeps doing it anyways. If it's going to happen anyways,
-we should provide a generic method.
+bcache creates large bios internally, and then splits them according to
+the device requirements before it sends them down. If a lower level
+device tries to clone the bio, and the original bio had more than
+BIO_MAX_PAGES, the clone will fail unecessarily.
 
-This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
-was open coding it, by doing a bio_init() and resetting bi_destructor.
+We can fix this by only cloning the bio vecs that are actually in use.
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-Change-Id: Ib0a43dfcb3f6c22a54da513d4a86be544b5ffd95
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- fs/bio.c                  |    8 ++++++++
- include/linux/bio.h       |    1 +
- include/linux/blk_types.h |    6 ++++++
- 3 files changed, 15 insertions(+)
+ fs/bio.c |   13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/fs/bio.c b/fs/bio.c
-index de0733e..7d8c29d 100644
+index e2c0970..de0733e 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -259,6 +259,14 @@ void bio_init(struct bio *bio)
- }
- EXPORT_SYMBOL(bio_init);
- 
-+void bio_reset(struct bio *bio)
-+{
-+	memset(bio, 0, BIO_RESET_BYTES);
-+	bio->bi_flags = 1 << BIO_UPTODATE;
-+
-+}
-+EXPORT_SYMBOL(bio_reset);
-+
- /**
-  * bio_alloc_bioset - allocate a bio for I/O
-  * @gfp_mask:   the GFP_ mask given to the slab allocator
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index b27f16b..35f7c4d 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -228,6 +228,7 @@ extern struct bio *bio_clone(struct bio *, gfp_t);
- struct bio *bio_clone_kmalloc(struct bio *, gfp_t);
- 
- extern void bio_init(struct bio *);
-+extern void bio_reset(struct bio *);
- 
- extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
- extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index dc0e399..6b7daf3 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -57,6 +57,10 @@ struct bio {
- 	unsigned int		bi_seg_front_size;
- 	unsigned int		bi_seg_back_size;
- 
-+	/*
-+	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
-+	 */
-+
- 	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
- 
- 	atomic_t		bi_cnt;		/* pin count */
-@@ -83,6 +87,8 @@ struct bio {
- 	struct bio_vec		bi_inline_vecs[0];
- };
- 
-+#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
-+
- /*
-  * bio flags
+@@ -435,8 +435,9 @@ EXPORT_SYMBOL(bio_phys_segments);
   */
+ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ {
+-	memcpy(bio->bi_io_vec, bio_src->bi_io_vec,
+-		bio_src->bi_max_vecs * sizeof(struct bio_vec));
++	memcpy(bio->bi_io_vec,
++	       bio_iovec(bio_src),
++	       bio_segments(bio_src) * sizeof(struct bio_vec));
+ 
+ 	/*
+ 	 * most users will be overriding ->bi_bdev with a new target,
+@@ -445,10 +446,10 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ 	bio->bi_sector = bio_src->bi_sector;
+ 	bio->bi_bdev = bio_src->bi_bdev;
+ 	bio->bi_flags |= 1 << BIO_CLONED;
++	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
+ 	bio->bi_rw = bio_src->bi_rw;
+-	bio->bi_vcnt = bio_src->bi_vcnt;
++	bio->bi_vcnt = bio_segments(bio_src);
+ 	bio->bi_size = bio_src->bi_size;
+-	bio->bi_idx = bio_src->bi_idx;
+ }
+ EXPORT_SYMBOL(__bio_clone);
+ 
+@@ -463,7 +464,7 @@ EXPORT_SYMBOL(__bio_clone);
+ struct bio *bio_clone_bioset(struct bio *bio, gfp_t gfp_mask,
+ 			     struct bio_set *bs)
+ {
+-	struct bio *b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, bs);
++	struct bio *b = bio_alloc_bioset(gfp_mask, bio_segments(bio), bs);
+ 
+ 	if (!b)
+ 		return NULL;
+@@ -493,7 +494,7 @@ EXPORT_SYMBOL(bio_clone);
+ 
+ struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
+ {
+-	struct bio *b = bio_kmalloc(gfp_mask, bio->bi_max_vecs);
++	struct bio *b = bio_kmalloc(gfp_mask, bio_segments(bio));
+ 
+ 	if (!b)
+ 		return NULL;
 -- 
 1.7.9.3.327.g2980b
-
