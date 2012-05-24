@@ -1,49 +1,193 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v2 02/14] dm: kill dm_rq_bio_destructor
-Date: Wed, 23 May 2012 17:39:16 -0700
-Message-ID: <20120524003915.GA27443@google.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH v2 12/14] Closures
+Date: Wed, 23 May 2012 17:47:23 -0700
+Message-ID: <1337820443.1747.24.camel@joe2Laptop>
 References: <1337817771-25038-1-git-send-email-koverstreet@google.com>
- <1337817771-25038-3-git-send-email-koverstreet@google.com>
- <4FBD7E80.4020005@ce.jp.nec.com>
+	 <1337817771-25038-13-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <4FBD7E80.4020005-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jun'ichi Nomura <j-nomura-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1337817771-25038-13-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-On Thu, May 24, 2012 at 09:19:12AM +0900, Jun'ichi Nomura wrote:
-> Hi,
-> 
-> On 05/24/12 09:02, Kent Overstreet wrote:
-> > @@ -1438,15 +1439,6 @@ void dm_dispatch_request(struct request *rq)
-> >  }
-> >  EXPORT_SYMBOL_GPL(dm_dispatch_request);
-> >  
-> > -static void dm_rq_bio_destructor(struct bio *bio)
-> > -{
-> > -	struct dm_rq_clone_bio_info *info = bio->bi_private;
-> > -	struct mapped_device *md = info->tio->md;
-> > -
-> > -	free_bio_info(info);
-> > -	bio_free(bio, md->bs);
-> > -}
-> > -
-> >  static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
-> >  				 void *data)
-> >  {
-> > @@ -1461,7 +1453,6 @@ static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
-> >  	info->tio = tio;
-> >  	bio->bi_end_io = end_clone_bio;
-> >  	bio->bi_private = info;
-> > -	bio->bi_destructor = dm_rq_bio_destructor;
-> 
-> The destructor may also be called from blk_rq_unprep_clone(),
-> which just puts bio.
-> So this patch will introduce a memory leak.
+On Wed, 2012-05-23 at 17:02 -0700, Kent Overstreet wrote:
+> Asynchronous refcounty thingies;
 
-Well, keeping around bi_destructor solely for that reason would be
-pretty lousy. Can you come up with a better solution?
+Hi again Kent.
+
+Highly descriptive word choice you've employed there.
+
+> they embed a refcount and a work
+> struct. Extensive documentation follows in include/linux/closure.h
+
+All trivia:
+
+> diff --git a/include/linux/closure.h b/include/linux/closure.h
+[]
+> +#define CLOSURE_REMAINING_MASK	(~(~0 << 20))
+
+More commonly used is ((1 << 20) - 1)
+
+> +#define CLOSURE_GUARD_MASK					\
+> +	((1 << 20)|(1 << 22)|(1 << 24)|(1 << 26)|(1 << 28)|(1 << 30))
+
+Perhaps a poor choice of layout.
+
+Perhaps it'd be more sensible to define CLOSURE_<FOO>_GUARDs
+along with CLOSURE_<FOO>
+
+It might make more sense to use another macro with
+the somewhat magic number of 20 more explicitly defined.
+
+> +
+> +	/*
+> +	 * CLOSURE_RUNNING: Set when a closure is running (i.e. by
+> +	 * closure_init() and when closure_put() runs then next function), and
+> +	 * must be cleared before remaining hits 0. Primarily to help guard
+> +	 * against incorrect usage and accidently transferring references.
+
+accidentally
+
+[]
+> +	 * CLOSURE_TIMER: Analagous to CLOSURE_WAITING, indicates that a closure
+
+analogous
+
+[]
+
+> +#define TYPE_closure			0U
+> +#define TYPE_closure_with_waitlist	1U
+> +#define TYPE_closure_with_timer		2U
+> +#define TYPE_closure_with_waitlist_and_timer 3U
+
+UPPER_lower is generally frowned on.
+It'd be better to use CLOSURE_TYPE as all uses
+are obscured by macros.
+
+> +#define MAX_CLOSURE_TYPE		3U
+> +	unsigned		type;
+> +
+> +#ifdef CONFIG_DEBUG_CLOSURES
+> +#define CLOSURE_MAGIC_DEAD	0xc054dead
+> +#define CLOSURE_MAGIC_ALIVE	0xc054a11e
+> +
+> +	unsigned		magic;
+> +	struct list_head	all;
+> +	unsigned long		ip;
+> +	unsigned long		waiting_on;
+> +#endif
+> +};
+> +
+> +struct closure_with_waitlist {
+> +	struct closure	cl;
+> +	closure_list_t	wait;
+> +};
+> +
+> +struct closure_with_timer {
+> +	struct closure	cl;
+> +	struct timer_list timer;
+> +};
+> +
+> +struct closure_with_waitlist_and_timer {
+> +	struct closure	cl;
+> +	closure_list_t	wait;
+> +	struct timer_list timer;
+> +};
+> +
+> +extern unsigned invalid_closure_type(void);
+> +
+> +#define __CL_TYPE(cl, _t)						\
+> +	  __builtin_types_compatible_p(typeof(cl), struct _t)		\
+> +		? TYPE_ ## _t :						\
+
+Might as well use __CLOSURE_TYPE
+
+> +
+> +#define __closure_type(cl)						\
+> +(									\
+> +	__CL_TYPE(cl, closure)						\
+> +	__CL_TYPE(cl, closure_with_waitlist)				\
+> +	__CL_TYPE(cl, closure_with_timer)				\
+> +	__CL_TYPE(cl, closure_with_waitlist_and_timer)			\
+> +	invalid_closure_type()						\
+> +)
+
+outstandingly obscure. props.
+
+> diff --git a/lib/closure.c b/lib/closure.c
+
+[]
+> +#define CL_FIELD(type, field)					\
+> +	case TYPE_ ## type:					\
+> +	return &container_of(cl, struct type, cl)->field
+> +
+> +static closure_list_t *closure_waitlist(struct closure *cl)
+> +{
+> +	switch (cl->type) {
+> +		CL_FIELD(closure_with_waitlist, wait);
+> +		CL_FIELD(closure_with_waitlist_and_timer, wait);
+> +	}
+> +	return NULL;
+> +}
+> +
+> +static struct timer_list *closure_timer(struct closure *cl)
+> +{
+> +	switch (cl->type) {
+> +		CL_FIELD(closure_with_timer, timer);
+> +		CL_FIELD(closure_with_waitlist_and_timer, timer);
+> +	}
+> +	return NULL;
+> +}
+> +
+
+Another paragon of intelligibility.
+
+I think you should lose CL_FIELD and
+write normal switch/cases.
+
+[]
+
+> +static int debug_seq_show(struct seq_file *f, void *data)
+> +{
+> +	struct closure *cl;
+> +	spin_lock_irq(&closure_list_lock);
+> +
+> +	list_for_each_entry(cl, &closure_list, all) {
+> +		int r = atomic_read(&cl->remaining);
+> +
+> +		seq_printf(f, "%p: %pF -> %pf p %p r %i ",
+> +			   cl, (void *) cl->ip, cl->fn, cl->parent,
+> +			   r & CLOSURE_REMAINING_MASK);
+> +
+> +		if (test_bit(WORK_STRUCT_PENDING, work_data_bits(&cl->work)))
+> +			seq_printf(f, "Q");
+
+seq_putc or seq_puts
+
+> +
+> +		if (r & CLOSURE_RUNNING)
+> +			seq_printf(f, "R");
+> +
+> +		if (r & CLOSURE_BLOCKING)
+> +			seq_printf(f, "B");
+> +
+> +		if (r & CLOSURE_STACK)
+> +			seq_printf(f, "S");
+> +
+> +		if (r & CLOSURE_SLEEPING)
+> +			seq_printf(f, "Sl");
+> +
+> +		if (r & CLOSURE_TIMER)
+> +			seq_printf(f, "T");
+> +
+> +		if (r & CLOSURE_WAITING)
+> +			seq_printf(f, " W %pF\n",
+> +				   (void *) cl->waiting_on);
+> +
+> +		seq_printf(f, "\n");
+
+or maybe just bundle all this in a single seq_printf
