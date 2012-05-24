@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 02/14] dm: kill dm_rq_bio_destructor
-Date: Wed, 23 May 2012 17:02:39 -0700
-Message-ID: <1337817771-25038-3-git-send-email-koverstreet@google.com>
+Subject: [PATCH v2 06/14] block: Add bio_reset()
+Date: Wed, 23 May 2012 17:02:43 -0700
+Message-ID: <1337817771-25038-7-git-send-email-koverstreet@google.com>
 References: <1337817771-25038-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1337817771-25038-1-git-send-email-koverstreet@google.com>
@@ -10,47 +10,76 @@ To: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.
 Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
----
- drivers/md/dm.c |   11 +----------
- 1 file changed, 1 insertion(+), 10 deletions(-)
+Reusing bios is something that's been highly frowned upon in the past,
+but driver code keeps doing it anyways. If it's going to happen anyways,
+we should provide a generic method.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 40b7735..e6e7b19 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -696,6 +696,7 @@ static void end_clone_bio(struct bio *clone, int error)
- 	struct bio *bio = info->orig;
- 	unsigned int nr_bytes = info->orig->bi_size;
- 
-+	free_bio_info(info);
- 	bio_put(clone);
- 
- 	if (tio->error)
-@@ -1438,15 +1439,6 @@ void dm_dispatch_request(struct request *rq)
+This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
+was open coding it, by doing a bio_init() and resetting bi_destructor.
+
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+Change-Id: Ib0a43dfcb3f6c22a54da513d4a86be544b5ffd95
+---
+ fs/bio.c                  |    8 ++++++++
+ include/linux/bio.h       |    1 +
+ include/linux/blk_types.h |    6 ++++++
+ 3 files changed, 15 insertions(+)
+
+diff --git a/fs/bio.c b/fs/bio.c
+index de0733e..7d8c29d 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -259,6 +259,14 @@ void bio_init(struct bio *bio)
  }
- EXPORT_SYMBOL_GPL(dm_dispatch_request);
+ EXPORT_SYMBOL(bio_init);
  
--static void dm_rq_bio_destructor(struct bio *bio)
--{
--	struct dm_rq_clone_bio_info *info = bio->bi_private;
--	struct mapped_device *md = info->tio->md;
--
--	free_bio_info(info);
--	bio_free(bio, md->bs);
--}
--
- static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
- 				 void *data)
- {
-@@ -1461,7 +1453,6 @@ static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
- 	info->tio = tio;
- 	bio->bi_end_io = end_clone_bio;
- 	bio->bi_private = info;
--	bio->bi_destructor = dm_rq_bio_destructor;
++void bio_reset(struct bio *bio)
++{
++	memset(bio, 0, BIO_RESET_BYTES);
++	bio->bi_flags = 1 << BIO_UPTODATE;
++
++}
++EXPORT_SYMBOL(bio_reset);
++
+ /**
+  * bio_alloc_bioset - allocate a bio for I/O
+  * @gfp_mask:   the GFP_ mask given to the slab allocator
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index b27f16b..35f7c4d 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -228,6 +228,7 @@ extern struct bio *bio_clone(struct bio *, gfp_t);
+ struct bio *bio_clone_kmalloc(struct bio *, gfp_t);
  
- 	return 0;
- }
+ extern void bio_init(struct bio *);
++extern void bio_reset(struct bio *);
+ 
+ extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
+ extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index dc0e399..6b7daf3 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -57,6 +57,10 @@ struct bio {
+ 	unsigned int		bi_seg_front_size;
+ 	unsigned int		bi_seg_back_size;
+ 
++	/*
++	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
++	 */
++
+ 	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
+ 
+ 	atomic_t		bi_cnt;		/* pin count */
+@@ -83,6 +87,8 @@ struct bio {
+ 	struct bio_vec		bi_inline_vecs[0];
+ };
+ 
++#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
++
+ /*
+  * bio flags
+  */
 -- 
 1.7.9.3.327.g2980b
 
