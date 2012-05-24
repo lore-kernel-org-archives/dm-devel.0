@@ -1,55 +1,74 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 01/14] block: Generalized bio pool freeing
-Date: Thu, 24 May 2012 09:19:14 -0700
-Message-ID: <20120524161914.GD27983@google.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v2 03/14] block: Add bio_clone_bioset()
+Date: Thu, 24 May 2012 09:38:31 -0700
+Message-ID: <20120524163831.GE27983@google.com>
 References: <1337817771-25038-1-git-send-email-koverstreet@google.com>
-	<1337817771-25038-2-git-send-email-koverstreet@google.com>
-	<20120524160944.GB27983@google.com>
+ <1337817771-25038-4-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120524160944.GB27983-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+In-Reply-To: <1337817771-25038-4-git-send-email-koverstreet@google.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-On Thu, May 24, 2012 at 09:09:44AM -0700, Tejun Heo wrote:
-> On Wed, May 23, 2012 at 05:02:38PM -0700, Kent Overstreet wrote:
-> > With the old code, when you allocate a bio from a bio pool you have to
-> > implement your own destructor that knows how to find the bio pool the
-> > bio was originally allocated from.
-> > 
-> > This adds a new field to struct bio (bi_pool) and changes
-> > bio_alloc_bioset() to use it. This makes various bio destructors
-> > unnecessary, so they're then deleted.
-> > 
-> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> > Change-Id: I5eb66c1d6910757f4af8755b8857dcbe4619cf8d
-> 
-> Please drop Change-ID tag and it would be great how you tested the
-> changes, other than that,
-> 
->  Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+On Wed, May 23, 2012 at 05:02:40PM -0700, Kent Overstreet wrote:
+> This consolidates some code, and will help in a later patch changing how
+> bio cloning works.
 
-To add a bit here too.  Please explain "why" you're making this
-change.  Is it because bi_destructor interface is cumbersome?  Adding
-bi_pool is overhead - why is it justified?  Is it because one pointer
-is fine to add to struct bio (which I kinda agree) or are there future
-changes which will reverse the overhead (which is the case here).
+Which consolidations are happening and which drivers are being
+affected how?
 
-In general, I find the descriptions insufficient.  They don't describe
-the reasons and reasoning behind the patch.
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index e6e7b19..e5076f2 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1062,26 +1062,19 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
+>   * Creates a bio that consists of range of complete bvecs.
+>   */
+>  static struct bio *clone_bio(struct bio *bio, sector_t sector,
+> -			     unsigned short idx, unsigned short bv_count,
+> +			     unsigned short bv_count,
+>  			     unsigned int len, struct bio_set *bs)
+>  {
+>  	struct bio *clone;
+>  
+> -	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
+> -	__bio_clone(clone, bio);
+> +	clone = bio_clone_bioset(bio, GFP_NOIO, bs);
+>  	clone->bi_sector = sector;
+> -	clone->bi_idx = idx;
+> -	clone->bi_vcnt = idx + bv_count;
+> +	clone->bi_vcnt = bv_count;
+>  	clone->bi_size = to_bytes(len);
+> -	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
+
+Why is this safe?  If it's only bioset related API changes, why are
+there other changes at all?  If the new clone interface can handle
+bioset fine, do we still need to expose __bio_clone()?
+
+> -	if (bio_integrity(bio)) {
+> -		bio_integrity_clone(clone, bio, GFP_NOIO, bs);
+> -
+> -		if (idx != bio->bi_idx || clone->bi_size < bio->bi_size)
+> -			bio_integrity_trim(clone,
+> -					   bio_sector_offset(bio, idx, 0), len);
+> -	}
+> +	if (bio_integrity(bio) &&
+> +	    clone->bi_size < bio->bi_size)
+> +		bio_integrity_trim(clone, 0, len);
+
+Why is idx != bi_idx test dropped?
+
+I'm gonna stop here on this series.  It doesn't seem like the issues
+pointed out before have been addressed.  I recommend spending more
+effort on patch descriptions.  Writing descriptions is not only
+important for reviewing and history but it's a good step in ensuring
+the patches are sane and properly split.  If you can't explain each
+change in the patch, it generally means either the changes themselves
+are wrong or wrongly split.
 
 Thanks.
 
