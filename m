@@ -1,53 +1,56 @@
-From: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2 01/14] block: Generalized bio pool freeing
-Date: Thu, 24 May 2012 21:06:26 +0300
-Message-ID: <4FBE78A2.8000803@panasas.com>
-References: <1337817771-25038-1-git-send-email-koverstreet@google.com> <1337817771-25038-2-git-send-email-koverstreet@google.com> <20120524174649.GC27550@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [Bcache v13 12/16] bcache: Bset code (lookups within a btree
+ node)
+Date: Thu, 24 May 2012 11:11:16 -0700
+Message-ID: <20120524181116.GF27983@google.com>
+References: <cover.1336619038.git.koverstreet@google.com>
+ <5b5998d7d09ec36377acdb5d15665d1e4e818521.1336619038.git.koverstreet@google.com>
+ <20120522223932.GK14339@google.com>
+ <20120523042114.GC607@dhcp-172-18-216-138.mtv.corp.google.com>
+ <20120523175544.GC18143@google.com>
+ <20120523204914.GC3933@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120524174649.GC27550-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120523204914.GC3933-Gd/HAXX7CRxy/B6EtB590w@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 05/24/2012 08:46 PM, Vivek Goyal wrote:
+Hello, Kent.
 
-> On Wed, May 23, 2012 at 05:02:38PM -0700, Kent Overstreet wrote:
->> With the old code, when you allocate a bio from a bio pool you have to
->> implement your own destructor that knows how to find the bio pool the
->> bio was originally allocated from.
->>
->> This adds a new field to struct bio (bi_pool) and changes
->> bio_alloc_bioset() to use it. This makes various bio destructors
->> unnecessary, so they're then deleted.
->>
+On Wed, May 23, 2012 at 01:49:14PM -0700, Tejun Heo wrote:
+> On Wed, May 23, 2012 at 10:55:44AM -0700, Tejun Heo wrote:
+> > How much benefit are we gaining by doing this float thing?  Any chance
+> > we can do something simpler?  As long as it's properly encapsulated,
+> > it shouldn't be too bad but I keep having the suspicion that a lot of
+> > complexity is added for unnecessary level of optimization.
 > 
-> [..]
->> @@ -419,7 +406,11 @@ void bio_put(struct bio *bio)
->>  	 */
->>  	if (atomic_dec_and_test(&bio->bi_cnt)) {
->>  		bio->bi_next = NULL;
->> -		bio->bi_destructor(bio);
->> +
->> +		if (bio->bi_pool)
->> +			bio_free(bio, bio->bi_pool);
->> +		else
->> +			bio->bi_destructor(bio);
-> 
-> If you have removed all the users of bi_destructor, then I am wondering that
-> why are we retaining this field and trying to call into it when bio_pool
-> is not set?
-> 
+> e.g. how much performance gain does it provide compared to just using
+> u64 in binary search tree combined with last search result hint for
+> sequential accesses?
 
+I've been thinking a bit more about it last night and have one more
+question, so the use of floating numbers in binary search tree is to
+use less memory and thus lower cacheline overhead on lookups, and the
+tree is built between the min and max values of the bset so that
+cluster of large keys don't get lower resolution from high exponent.
 
-At this point there are still some users they are all removed and this field
-later in the patchset
+Assuming resolution of 512k - 2^19, 32bit can cover 2^41 - 2TiB.  If
+having compact search tree is so important (I kinda have hard time
+accepting that too tho), why not just use bin search tree of either
+u32 or u64 depending on the range?  In most cases u32 will be used and
+it's not like float can cover large areas well anyway.  It can
+degenerate into essentially linear search depending on key
+distribution (e.g. partition table read at sector 0 followed by bunch
+of high partition accesses) - u64 tree will show much better bound
+behavior in cases where key range becomes large.  Wouldn't that be
+*far* simpler and easier to understand and maintain without much
+downside?
 
-Boaz
+Thanks.
 
-> Thanks
-> Vivek
-> 
+-- 
+tejun
