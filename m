@@ -1,84 +1,204 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v3 03/16] block: Add bio_reset()
-Date: Fri, 25 May 2012 13:25:26 -0700
-Message-ID: <1337977539-16977-4-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v3 14/16] Gut bio_add_page()
+Date: Fri, 25 May 2012 13:25:37 -0700
+Message-ID: <1337977539-16977-15-git-send-email-koverstreet@google.com>
 References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1337977539-16977-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1337977539-16977-1-git-send-email-koverstreet@google.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-Reusing bios is something that's been highly frowned upon in the past,
-but driver code keeps doing it anyways. If it's going to happen anyways,
-we should provide a generic method.
+Since generic_make_request() can now handle arbitrary size bios, all we
+have to do is make sure the bvec array doesn't overflow.
 
-This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
-was open coding it, by doing a bio_init() and resetting bi_destructor.
-
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Change-Id: Ib0a43dfcb3f6c22a54da513d4a86be544b5ffd95
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- fs/bio.c                  |    8 ++++++++
- include/linux/bio.h       |    1 +
- include/linux/blk_types.h |    6 ++++++
- 3 files changed, 15 insertions(+)
+ fs/bio.c |  133 ++++++++++++--------------------------------------------------
+ 1 file changed, 26 insertions(+), 107 deletions(-)
 
 diff --git a/fs/bio.c b/fs/bio.c
-index 3667cef..240da21 100644
+index e4d54b2..b0c2944 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -259,6 +259,14 @@ void bio_init(struct bio *bio)
+@@ -570,12 +570,22 @@ int bio_get_nr_vecs(struct block_device *bdev)
  }
- EXPORT_SYMBOL(bio_init);
+ EXPORT_SYMBOL(bio_get_nr_vecs);
  
-+void bio_reset(struct bio *bio)
-+{
-+	memset(bio, 0, BIO_RESET_BYTES);
-+	bio->bi_flags = 1 << BIO_UPTODATE;
-+
-+}
-+EXPORT_SYMBOL(bio_reset);
-+
+-static int __bio_add_page(struct request_queue *q, struct bio *bio, struct page
+-			  *page, unsigned int len, unsigned int offset,
+-			  unsigned short max_sectors)
++/**
++ *	bio_add_page	-	attempt to add page to bio
++ *	@bio: destination bio
++ *	@page: page to add
++ *	@len: vec entry length
++ *	@offset: vec entry offset
++ *
++ *	Attempt to add a page to the bio_vec maplist. This can fail for a
++ *	number of reasons, such as the bio being full or target block device
++ *	limitations. The target block device must allow bio's up to PAGE_SIZE,
++ *	so it is always possible to add a single page to an empty bio.
++ */
++int bio_add_page(struct bio *bio, struct page *page,
++		 unsigned int len, unsigned int offset)
+ {
+-	int retried_segments = 0;
+-	struct bio_vec *bvec;
++	struct bio_vec *bv;
+ 
+ 	/*
+ 	 * cloned bio must not modify vec list
+@@ -583,40 +593,17 @@ static int __bio_add_page(struct request_queue *q, struct bio *bio, struct page
+ 	if (unlikely(bio_flagged(bio, BIO_CLONED)))
+ 		return 0;
+ 
+-	if (((bio->bi_size + len) >> 9) > max_sectors)
+-		return 0;
+-
+ 	/*
+ 	 * For filesystems with a blocksize smaller than the pagesize
+ 	 * we will often be called with the same page as last time and
+ 	 * a consecutive offset.  Optimize this special case.
+ 	 */
+ 	if (bio->bi_vcnt > 0) {
+-		struct bio_vec *prev = &bio->bi_io_vec[bio->bi_vcnt - 1];
+-
+-		if (page == prev->bv_page &&
+-		    offset == prev->bv_offset + prev->bv_len) {
+-			unsigned int prev_bv_len = prev->bv_len;
+-			prev->bv_len += len;
+-
+-			if (q->merge_bvec_fn) {
+-				struct bvec_merge_data bvm = {
+-					/* prev_bvec is already charged in
+-					   bi_size, discharge it in order to
+-					   simulate merging updated prev_bvec
+-					   as new bvec. */
+-					.bi_bdev = bio->bi_bdev,
+-					.bi_sector = bio->bi_sector,
+-					.bi_size = bio->bi_size - prev_bv_len,
+-					.bi_rw = bio->bi_rw,
+-				};
+-
+-				if (q->merge_bvec_fn(q, &bvm, prev) < prev->bv_len) {
+-					prev->bv_len -= len;
+-					return 0;
+-				}
+-			}
++		bv = bio_iovec_idx(bio, bio->bi_vcnt - 1);
+ 
++		if (page == bv->bv_page &&
++		    offset == bv->bv_offset + bv->bv_len) {
++			bv->bv_len += len;
+ 			goto done;
+ 		}
+ 	}
+@@ -624,64 +611,17 @@ static int __bio_add_page(struct request_queue *q, struct bio *bio, struct page
+ 	if (bio->bi_vcnt >= bio->bi_max_vecs)
+ 		return 0;
+ 
+-	/*
+-	 * we might lose a segment or two here, but rather that than
+-	 * make this too complex.
+-	 */
+-
+-	while (bio->bi_phys_segments >= queue_max_segments(q)) {
+-
+-		if (retried_segments)
+-			return 0;
+-
+-		retried_segments = 1;
+-		blk_recount_segments(q, bio);
+-	}
+-
+-	/*
+-	 * setup the new entry, we might clear it again later if we
+-	 * cannot add the page
+-	 */
+-	bvec = &bio->bi_io_vec[bio->bi_vcnt];
+-	bvec->bv_page = page;
+-	bvec->bv_len = len;
+-	bvec->bv_offset = offset;
+-
+-	/*
+-	 * if queue has other restrictions (eg varying max sector size
+-	 * depending on offset), it can specify a merge_bvec_fn in the
+-	 * queue to get further control
+-	 */
+-	if (q->merge_bvec_fn) {
+-		struct bvec_merge_data bvm = {
+-			.bi_bdev = bio->bi_bdev,
+-			.bi_sector = bio->bi_sector,
+-			.bi_size = bio->bi_size,
+-			.bi_rw = bio->bi_rw,
+-		};
+-
+-		/*
+-		 * merge_bvec_fn() returns number of bytes it can accept
+-		 * at this offset
+-		 */
+-		if (q->merge_bvec_fn(q, &bvm, bvec) < bvec->bv_len) {
+-			bvec->bv_page = NULL;
+-			bvec->bv_len = 0;
+-			bvec->bv_offset = 0;
+-			return 0;
+-		}
+-	}
+-
+-	/* If we may be able to merge these biovecs, force a recount */
+-	if (bio->bi_vcnt && (BIOVEC_PHYS_MERGEABLE(bvec-1, bvec)))
+-		bio->bi_flags &= ~(1 << BIO_SEG_VALID);
++	bv		= bio_iovec_idx(bio, bio->bi_vcnt);
++	bv->bv_page	= page;
++	bv->bv_len	= len;
++	bv->bv_offset	= offset;
+ 
+ 	bio->bi_vcnt++;
+-	bio->bi_phys_segments++;
+- done:
++done:
+ 	bio->bi_size += len;
+ 	return len;
+ }
++EXPORT_SYMBOL(bio_add_page);
+ 
  /**
-  * bio_alloc_bioset - allocate a bio for I/O
-  * @gfp_mask:   the GFP_ mask given to the slab allocator
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 4d94eb8..e5c2504 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -226,6 +226,7 @@ extern void __bio_clone(struct bio *, struct bio *);
- extern struct bio *bio_clone(struct bio *, gfp_t);
+  *	bio_add_pc_page	-	attempt to add page to bio
+@@ -701,31 +641,10 @@ static int __bio_add_page(struct request_queue *q, struct bio *bio, struct page
+ int bio_add_pc_page(struct request_queue *q, struct bio *bio, struct page *page,
+ 		    unsigned int len, unsigned int offset)
+ {
+-	return __bio_add_page(q, bio, page, len, offset,
+-			      queue_max_hw_sectors(q));
++	return bio_add_page(bio, page, len, offset);
+ }
+ EXPORT_SYMBOL(bio_add_pc_page);
  
- extern void bio_init(struct bio *);
-+extern void bio_reset(struct bio *);
- 
- extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
- extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index dc0e399..6b7daf3 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -57,6 +57,10 @@ struct bio {
- 	unsigned int		bi_seg_front_size;
- 	unsigned int		bi_seg_back_size;
- 
-+	/*
-+	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
-+	 */
-+
- 	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
- 
- 	atomic_t		bi_cnt;		/* pin count */
-@@ -83,6 +87,8 @@ struct bio {
- 	struct bio_vec		bi_inline_vecs[0];
- };
- 
-+#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
-+
- /*
-  * bio flags
-  */
+-/**
+- *	bio_add_page	-	attempt to add page to bio
+- *	@bio: destination bio
+- *	@page: page to add
+- *	@len: vec entry length
+- *	@offset: vec entry offset
+- *
+- *	Attempt to add a page to the bio_vec maplist. This can fail for a
+- *	number of reasons, such as the bio being full or target block device
+- *	limitations. The target block device must allow bio's up to PAGE_SIZE,
+- *	so it is always possible to add a single page to an empty bio.
+- */
+-int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
+-		 unsigned int offset)
+-{
+-	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+-	return __bio_add_page(q, bio, page, len, offset, queue_max_sectors(q));
+-}
+-EXPORT_SYMBOL(bio_add_page);
+-
+ struct bio_map_data {
+ 	struct bio_vec *iovecs;
+ 	struct sg_iovec *sgvecs;
 -- 
 1.7.9.3.327.g2980b
+
