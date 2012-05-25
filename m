@@ -1,8 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 11/16] block: Only clone bio vecs that are in
-	use
-Date: Fri, 25 May 2012 13:25:34 -0700
-Message-ID: <1337977539-16977-12-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 09/16] block: Add bio_clone_kmalloc()
+Date: Fri, 25 May 2012 13:25:32 -0700
+Message-ID: <1337977539-16977-10-git-send-email-koverstreet@google.com>
 References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,98 +22,90 @@ To: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.
 Cc: axboe@kernel.dk, yehuda@hq.newdream.net, Kent Overstreet <koverstreet@google.com>, mpatocka@redhat.com, vgoyal@redhat.com, bharrosh@panasas.com, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-bcache creates large bios internally, and then splits them according to
-the device requirements before it sends them down. If a lower level
-device tries to clone the bio, and the original bio had more than
-BIO_MAX_PAGES, the clone will fail unecessarily.
-
-We can fix this by only cloning the bio vecs that are actually in use.
-
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
-Change-Id: I71971827a623ce90626fa4a09b07f95f875ad890
+Change-Id: I4aad3ae23640e847056f9de54d6cb75b0ddaa85b
 ---
- drivers/block/rbd.c |    2 +-
- drivers/md/dm.c     |    5 ++---
- fs/bio.c            |   13 +++++++------
- 3 files changed, 10 insertions(+), 10 deletions(-)
+ drivers/block/osdblk.c |    3 +--
+ fs/bio.c               |   13 +++++++++++++
+ fs/exofs/ore.c         |    5 ++---
+ include/linux/bio.h    |    1 +
+ 4 files changed, 17 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 11777b4..c1f8a8fe 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -729,7 +729,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
- 	}
+diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
+index 87311eb..1bbc681 100644
+--- a/drivers/block/osdblk.c
++++ b/drivers/block/osdblk.c
+@@ -266,11 +266,10 @@ static struct bio *bio_chain_clone(struct bio *old_chain, gfp_t gfpmask)
+ 	struct bio *tmp, *new_chain = NULL, *tail = NULL;
  
- 	while (old_chain && (total < len)) {
+ 	while (old_chain) {
 -		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
-+		tmp = bio_kmalloc(gfpmask, bio_segments(old_chain));
++		tmp = bio_clone_kmalloc(old_chain, gfpmask);
  		if (!tmp)
  			goto err_out;
  
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 3f3c26e..193fb19 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1057,11 +1057,10 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
- {
- 	struct bio *clone;
- 
--	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
-+	clone = bio_alloc_bioset(GFP_NOIO, bv_count, bs);
- 	__bio_clone(clone, bio);
- 	clone->bi_sector = sector;
--	clone->bi_idx = idx;
--	clone->bi_vcnt = idx + bv_count;
-+	clone->bi_vcnt = bv_count;
- 	clone->bi_size = to_bytes(len);
- 	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
- 
+-		__bio_clone(tmp, old_chain);
+ 		tmp->bi_bdev = NULL;
+ 		gfpmask &= ~__GFP_WAIT;
+ 		tmp->bi_next = NULL;
 diff --git a/fs/bio.c b/fs/bio.c
-index a62b5b6..a85239f 100644
+index 62c4af81..d212ee2 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -441,8 +441,9 @@ EXPORT_SYMBOL(bio_phys_segments);
-  */
- void __bio_clone(struct bio *bio, struct bio *bio_src)
- {
--	memcpy(bio->bi_io_vec, bio_src->bi_io_vec,
--		bio_src->bi_max_vecs * sizeof(struct bio_vec));
-+	memcpy(bio->bi_io_vec,
-+	       bio_iovec(bio_src),
-+	       bio_segments(bio_src) * sizeof(struct bio_vec));
- 
- 	/*
- 	 * most users will be overriding ->bi_bdev with a new target,
-@@ -451,10 +452,10 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
- 	bio->bi_sector = bio_src->bi_sector;
- 	bio->bi_bdev = bio_src->bi_bdev;
- 	bio->bi_flags |= 1 << BIO_CLONED;
-+	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
- 	bio->bi_rw = bio_src->bi_rw;
--	bio->bi_vcnt = bio_src->bi_vcnt;
-+	bio->bi_vcnt = bio_segments(bio_src);
- 	bio->bi_size = bio_src->bi_size;
--	bio->bi_idx = bio_src->bi_idx;
+@@ -489,6 +489,19 @@ struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
  }
- EXPORT_SYMBOL(__bio_clone);
+ EXPORT_SYMBOL(bio_clone);
  
-@@ -469,7 +470,7 @@ EXPORT_SYMBOL(__bio_clone);
- struct bio *bio_clone_bioset(struct bio *bio, gfp_t gfp_mask,
- 			     struct bio_set *bs)
- {
--	struct bio *b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, bs);
-+	struct bio *b = bio_alloc_bioset(gfp_mask, bio_segments(bio), bs);
++struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
++{
++	struct bio *b = bio_kmalloc(gfp_mask, bio->bi_max_vecs);
++
++	if (!b)
++		return NULL;
++
++	__bio_clone(b, bio);
++
++	return b;
++}
++EXPORT_SYMBOL(bio_clone_kmalloc);
++
+ /**
+  *	bio_get_nr_vecs		- return approx number of vecs
+  *	@bdev:  I/O target
+diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
+index 49cf230..95c7264 100644
+--- a/fs/exofs/ore.c
++++ b/fs/exofs/ore.c
+@@ -820,8 +820,8 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+ 			struct bio *bio;
  
- 	if (!b)
- 		return NULL;
-@@ -499,7 +500,7 @@ EXPORT_SYMBOL(bio_clone);
+ 			if (per_dev != master_dev) {
+-				bio = bio_kmalloc(GFP_KERNEL,
+-						  master_dev->bio->bi_max_vecs);
++				bio = bio_clone_kmalloc(master_dev->bio,
++							GFP_KERNEL);
+ 				if (unlikely(!bio)) {
+ 					ORE_DBGMSG(
+ 					      "Failed to allocate BIO size=%u\n",
+@@ -830,7 +830,6 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+ 					goto out;
+ 				}
  
- struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
- {
--	struct bio *b = bio_kmalloc(gfp_mask, bio->bi_max_vecs);
-+	struct bio *b = bio_kmalloc(gfp_mask, bio_segments(bio));
+-				__bio_clone(bio, master_dev->bio);
+ 				bio->bi_bdev = NULL;
+ 				bio->bi_next = NULL;
+ 				per_dev->offset = master_dev->offset;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 486233c..8f280f7 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -220,6 +220,7 @@ extern int bio_phys_segments(struct request_queue *, struct bio *);
  
- 	if (!b)
- 		return NULL;
+ extern void __bio_clone(struct bio *, struct bio *);
+ extern struct bio *bio_clone(struct bio *, gfp_t);
++struct bio *bio_clone_kmalloc(struct bio *, gfp_t);
+ 
+ extern void bio_init(struct bio *);
+ extern void bio_reset(struct bio *);
 -- 
 1.7.9.3.327.g2980b
