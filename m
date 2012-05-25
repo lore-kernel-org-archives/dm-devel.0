@@ -1,8 +1,8 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 07/16] block: Rename bio_split() ->
-	bio_pair_split()
-Date: Fri, 25 May 2012 13:25:30 -0700
-Message-ID: <1337977539-16977-8-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 13/16] Make generic_make_request handle
+	arbitrarily large bios
+Date: Fri, 25 May 2012 13:25:36 -0700
+Message-ID: <1337977539-16977-14-git-send-email-koverstreet@google.com>
 References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,143 +23,288 @@ To: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.
 Cc: axboe@kernel.dk, yehuda@hq.newdream.net, Kent Overstreet <koverstreet@google.com>, mpatocka@redhat.com, vgoyal@redhat.com, bharrosh@panasas.com, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-This is prep work for introducing a more general bio_split()
+The way the block layer is currently written, it goes to great lengths
+to avoid having to split bios; upper layer code (such as bio_add_page())
+checks what the underlying device can handle and tries to always create
+bios that don't need to be split.
 
-Change-Id: Ib9c4ff691af889d26bc9ec9fb42a2f3068f34ad9
+But this approach becomes unwieldy and eventually breaks down with
+stacked devices and devices with dynamic limits, and it adds a lot of
+complexity. If the block layer could split bios as needed, we could
+eliminate a lot of complexity elsewhere - particularly in stacked
+drivers. Code that creates bios can then create whatever size bios are
+convenient, and more importantly stacked drivers don't have to deal with
+both their own bio size limitations and the limitations of the
+(potentially multiple) devices underneath them.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
+Change-Id: I53ed182e8c0a5fe192b040b1fdedba205fe953d5
 ---
- drivers/block/drbd/drbd_req.c |    2 +-
- drivers/block/pktcdvd.c       |    2 +-
- drivers/block/rbd.c           |    3 ++-
- drivers/md/linear.c           |    2 +-
- drivers/md/raid0.c            |    6 +++---
- drivers/md/raid10.c           |    4 ++--
- fs/bio.c                      |    4 ++--
- include/linux/bio.h           |    2 +-
- 8 files changed, 13 insertions(+), 12 deletions(-)
+ block/blk-core.c       |  118 ++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/bio.c               |   41 +++++++++++++++++
+ include/linux/bio.h    |    7 +++
+ include/linux/blkdev.h |    3 ++
+ 4 files changed, 169 insertions(+)
 
-diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-index 4a0f314..1c7e3c4 100644
---- a/drivers/block/drbd/drbd_req.c
-+++ b/drivers/block/drbd/drbd_req.c
-@@ -1128,7 +1128,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
- 		const int sps = 1 << HT_SHIFT; /* sectors per slot */
- 		const int mask = sps - 1;
- 		const sector_t first_sectors = sps - (sect & mask);
--		bp = bio_split(bio, first_sectors);
-+		bp = bio_pair_split(bio, first_sectors);
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 91617eb..19145ab 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -29,6 +29,7 @@
+ #include <linux/fault-inject.h>
+ #include <linux/list_sort.h>
+ #include <linux/delay.h>
++#include <linux/closure.h>
  
- 		/* we need to get a "reference count" (ap_bio_cnt)
- 		 * to avoid races with the disconnect/reconnect/suspend code.
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 6fe693a..12a14c0 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -2467,7 +2467,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
- 		if (last_zone != zone) {
- 			BUG_ON(last_zone != zone + pd->settings.size);
- 			first_sectors = last_zone - bio->bi_sector;
--			bp = bio_split(bio, first_sectors);
-+			bp = bio_pair_split(bio, first_sectors);
- 			BUG_ON(!bp);
- 			pkt_make_request(q, &bp->bio1);
- 			pkt_make_request(q, &bp->bio2);
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 013c7a5..a0b76c6 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -747,7 +747,8 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/block.h>
+@@ -52,6 +53,12 @@ static struct kmem_cache *request_cachep;
+ struct kmem_cache *blk_requestq_cachep;
  
- 			/* split the bio. We'll release it either in the next
- 			   call, or it will have to be released outside */
--			bp = bio_split(old_chain, (len - total) / SECTOR_SIZE);
-+			bp = bio_pair_split(old_chain,
-+					    (len - total) / SECTOR_SIZE);
- 			if (!bp)
- 				goto err_out;
+ /*
++ * For bio_split_hook
++ */
++static struct kmem_cache *bio_split_cache;
++static struct workqueue_struct *bio_split_wq;
++
++/*
+  * Controlling structure to kblockd
+  */
+ static struct workqueue_struct *kblockd_workqueue;
+@@ -487,6 +494,14 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 	if (q->id < 0)
+ 		goto fail_q;
  
-diff --git a/drivers/md/linear.c b/drivers/md/linear.c
-index fa211d8..e860cb9 100644
---- a/drivers/md/linear.c
-+++ b/drivers/md/linear.c
-@@ -314,7 +314,7 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
++	q->bio_split_hook = mempool_create_slab_pool(4, bio_split_cache);
++	if (!q->bio_split_hook)
++		goto fail_split_hook;
++
++	q->bio_split = bioset_create(4, 0);
++	if (!q->bio_split)
++		goto fail_split;
++
+ 	q->backing_dev_info.ra_pages =
+ 			(VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE;
+ 	q->backing_dev_info.state = 0;
+@@ -526,6 +541,10 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
  
- 		rcu_read_unlock();
+ fail_id:
+ 	ida_simple_remove(&blk_queue_ida, q->id);
++fail_split:
++	bioset_free(q->bio_split);
++fail_split_hook:
++	mempool_destroy(q->bio_split_hook);
+ fail_q:
+ 	kmem_cache_free(blk_requestq_cachep, q);
+ 	return NULL;
+@@ -1493,6 +1512,90 @@ static inline bool should_fail_request(struct hd_struct *part,
  
--		bp = bio_split(bio, end_sector - bio->bi_sector);
-+		bp = bio_pair_split(bio, end_sector - bio->bi_sector);
+ #endif /* CONFIG_FAIL_MAKE_REQUEST */
  
- 		linear_make_request(mddev, &bp->bio1);
- 		linear_make_request(mddev, &bp->bio2);
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index de63a1f..c89c8aa 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -516,11 +516,11 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
- 		 * refuse to split for us, so we need to split it.
- 		 */
- 		if (likely(is_power_of_2(chunk_sects)))
--			bp = bio_split(bio, chunk_sects - (sector &
-+			bp = bio_pair_split(bio, chunk_sects - (sector &
- 							   (chunk_sects-1)));
- 		else
--			bp = bio_split(bio, chunk_sects -
--				       sector_div(sector, chunk_sects));
-+			bp = bio_pair_split(bio, chunk_sects -
-+					    sector_div(sector, chunk_sects));
- 		raid0_make_request(mddev, &bp->bio1);
- 		raid0_make_request(mddev, &bp->bio2);
- 		bio_pair_release(bp);
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 3e7b154..f8b6f14 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1008,8 +1008,8 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 		/* This is a one page bio that upper layers
- 		 * refuse to split for us, so we need to split it.
- 		 */
--		bp = bio_split(bio,
--			       chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
-+		bp = bio_pair_split(bio,
-+				    chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
++struct bio_split_hook {
++	struct closure		cl;
++	struct request_queue	*q;
++	struct bio		*bio;
++	bio_end_io_t		*bi_end_io;
++	void			*bi_private;
++};
++
++static void bio_submit_split_done(struct closure *cl)
++{
++	struct bio_split_hook *s = container_of(cl, struct bio_split_hook, cl);
++
++	s->bio->bi_end_io = s->bi_end_io;
++	s->bio->bi_private = s->bi_private;
++	bio_endio(s->bio, 0);
++
++	closure_debug_destroy(&s->cl);
++	mempool_free(s, s->q->bio_split_hook);
++}
++
++static void bio_submit_split_endio(struct bio *bio, int error)
++{
++	struct closure *cl = bio->bi_private;
++	struct bio_split_hook *s = container_of(cl, struct bio_split_hook, cl);
++
++	if (error)
++		clear_bit(BIO_UPTODATE, &s->bio->bi_flags);
++
++	bio_put(bio);
++	closure_put(cl);
++}
++
++static void __bio_submit_split(struct closure *cl)
++{
++	struct bio_split_hook *s = container_of(cl, struct bio_split_hook, cl);
++	struct bio *bio = s->bio, *n;
++
++	do {
++		/*
++		 * If we're running underneath generic_make_request(), we risk
++		 * deadlock if we allocate multiple bios from the mempool.
++		 *
++		 * To avoid this, bio_split() masks out __GFP_WAIT
++		 * current->bio_list != NULL; if it fails, the continue_at()
++		 * just punts us to a workqueue, where we can safely retry the
++		 * allocation using the mempool.
++		 */
++		n = bio_split(bio, bio_max_sectors(bio),
++			      GFP_NOIO, s->q->bio_split);
++		if (!n)
++			continue_at(cl, __bio_submit_split, bio_split_wq);
++
++		closure_get(cl);
++		generic_make_request(n);
++	} while (n != bio);
++
++	continue_at(cl, bio_submit_split_done, NULL);
++}
++
++static bool bio_submit_split(struct bio *bio)
++{
++	struct bio_split_hook *s;
++	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
++
++	if (!bio_has_data(bio) || !q || !q->bio_split_hook ||
++	    bio_sectors(bio) <= bio_max_sectors(bio))
++		return false;
++
++	s = mempool_alloc(q->bio_split_hook, GFP_NOIO);
++
++	closure_init(&s->cl, NULL);
++	s->bio		= bio;
++	s->q		= q;
++	s->bi_end_io	= bio->bi_end_io;
++	s->bi_private	= bio->bi_private;
++
++	bio_get(bio);
++	bio->bi_end_io	= bio_submit_split_endio;
++	bio->bi_private	= &s->cl;
++
++	__bio_submit_split(&s->cl);
++	return true;
++}
++
+ /*
+  * Check whether this bio extends beyond the end of the device.
+  */
+@@ -1646,6 +1749,14 @@ void generic_make_request(struct bio *bio)
+ 	 * it is non-NULL, then a make_request is active, and new requests
+ 	 * should be added at the tail
+ 	 */
++
++	/*
++	 * If the device can't accept arbitrary sized bios, check if we
++	 * need to split:
++	 */
++	if (bio_submit_split(bio))
++		return;
++
+ 	if (current->bio_list) {
+ 		bio_list_add(current->bio_list, bio);
+ 		return;
+@@ -2892,11 +3003,18 @@ int __init blk_dev_init(void)
+ 	if (!kblockd_workqueue)
+ 		panic("Failed to create kblockd\n");
  
- 		/* Each of these 'make_request' calls will call 'wait_barrier'.
- 		 * If the first succeeds but the second blocks due to the resync
++	bio_split_wq = alloc_workqueue("bio_split", WQ_MEM_RECLAIM, 0);
++	if (!bio_split_wq)
++		panic("Failed to create bio_split wq\n");
++
+ 	request_cachep = kmem_cache_create("blkdev_requests",
+ 			sizeof(struct request), 0, SLAB_PANIC, NULL);
+ 
+ 	blk_requestq_cachep = kmem_cache_create("blkdev_queue",
+ 			sizeof(struct request_queue), 0, SLAB_PANIC, NULL);
+ 
++	bio_split_cache = kmem_cache_create("bio_split_hook",
++			sizeof(struct bio_split_hook), 0, SLAB_PANIC, NULL);
++
+ 	return 0;
+ }
 diff --git a/fs/bio.c b/fs/bio.c
-index 692911e..fb7607b 100644
+index a85239f..e4d54b2 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -1478,7 +1478,7 @@ static void bio_pair_end_2(struct bio *bi, int err)
- /*
-  * split a bio - only worry about a bio with a single page in its iovec
-  */
--struct bio_pair *bio_split(struct bio *bi, int first_sectors)
-+struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors)
- {
- 	struct bio_pair *bp = mempool_alloc(bio_split_pool, GFP_NOIO);
- 
-@@ -1521,7 +1521,7 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
- 
- 	return bp;
+@@ -430,6 +430,47 @@ inline int bio_phys_segments(struct request_queue *q, struct bio *bio)
  }
--EXPORT_SYMBOL(bio_split);
-+EXPORT_SYMBOL(bio_pair_split);
+ EXPORT_SYMBOL(bio_phys_segments);
  
++unsigned __bio_max_sectors(struct bio *bio, struct block_device *bdev,
++			   sector_t sector)
++{
++	unsigned ret = bio_sectors(bio);
++	struct request_queue *q = bdev_get_queue(bdev);
++	struct bio_vec *bv, *end = bio_iovec(bio) +
++		min_t(int, bio_segments(bio), queue_max_segments(q));
++
++	struct bvec_merge_data bvm = {
++		.bi_bdev	= bdev,
++		.bi_sector	= sector,
++		.bi_size	= 0,
++		.bi_rw		= bio->bi_rw,
++	};
++
++	if (bio_segments(bio) > queue_max_segments(q) ||
++	    q->merge_bvec_fn) {
++		ret = 0;
++
++		for (bv = bio_iovec(bio); bv < end; bv++) {
++			if (q->merge_bvec_fn &&
++			    q->merge_bvec_fn(q, &bvm, bv) < (int) bv->bv_len)
++				break;
++
++			ret		+= bv->bv_len >> 9;
++			bvm.bi_size	+= bv->bv_len;
++		}
++
++		if (ret >= (BIO_MAX_PAGES * PAGE_SIZE) >> 9)
++			return (BIO_MAX_PAGES * PAGE_SIZE) >> 9;
++	}
++
++	ret = min(ret, queue_max_sectors(q));
++
++	WARN_ON(!ret);
++	ret = max_t(int, ret, bio_iovec(bio)->bv_len >> 9);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(__bio_max_sectors);
++
  /**
-  *      bio_sector_offset - Find hardware sector offset in bio
+  * 	__bio_clone	-	clone a bio
+  * 	@bio: destination bio
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 9e89f5e..18ab020 100644
+index 0880a71..758cd56 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -201,7 +201,7 @@ struct bio_pair {
- 	atomic_t			cnt;
- 	int				error;
- };
--extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
-+extern struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors);
- extern void bio_pair_release(struct bio_pair *dbio);
+@@ -218,6 +218,13 @@ extern void bio_endio(struct bio *, int);
+ struct request_queue;
+ extern int bio_phys_segments(struct request_queue *, struct bio *);
  
- extern struct bio_set *bioset_create(unsigned int, unsigned int);
++unsigned __bio_max_sectors(struct bio *, struct block_device *, sector_t);
++
++static inline unsigned bio_max_sectors(struct bio *bio)
++{
++	return __bio_max_sectors(bio, bio->bi_bdev, bio->bi_sector);
++}
++
+ extern void __bio_clone(struct bio *, struct bio *);
+ extern struct bio *bio_clone_bioset(struct bio *, gfp_t, struct bio_set *bs);
+ extern struct bio *bio_clone(struct bio *, gfp_t);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 2aa2466..464adb7 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -399,6 +399,9 @@ struct request_queue {
+ 	/* Throttle data */
+ 	struct throtl_data *td;
+ #endif
++
++	mempool_t		*bio_split_hook;
++	struct bio_set		*bio_split;
+ };
+ 
+ #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
 -- 
 1.7.9.3.327.g2980b
