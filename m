@@ -1,8 +1,8 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 06/16] block: Add an explicit bio flag for
-	bios that own their bvec
-Date: Fri, 25 May 2012 13:25:29 -0700
-Message-ID: <1337977539-16977-7-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 11/16] block: Only clone bio vecs that are in
+	use
+Date: Fri, 25 May 2012 13:25:34 -0700
+Message-ID: <1337977539-16977-12-git-send-email-koverstreet@google.com>
 References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,66 +23,98 @@ To: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.
 Cc: axboe@kernel.dk, yehuda@hq.newdream.net, Kent Overstreet <koverstreet@google.com>, mpatocka@redhat.com, vgoyal@redhat.com, bharrosh@panasas.com, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-This is for the new bio splitting code. When we split a bio, if the
-split occured on a bvec boundry we reuse the bvec for the new bio. But
-that means bio_free() can't free it, hence the explicit flag.
+bcache creates large bios internally, and then splits them according to
+the device requirements before it sends them down. If a lower level
+device tries to clone the bio, and the original bio had more than
+BIO_MAX_PAGES, the clone will fail unecessarily.
+
+We can fix this by only cloning the bio vecs that are actually in use.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
-Change-Id: I040f6b501088e882a9f013d6b6e730ff04e9c1da
+Change-Id: I71971827a623ce90626fa4a09b07f95f875ad890
 ---
- fs/bio.c                  |    3 ++-
- include/linux/bio.h       |    5 -----
- include/linux/blk_types.h |    1 +
- 3 files changed, 3 insertions(+), 6 deletions(-)
+ drivers/block/rbd.c |    2 +-
+ drivers/md/dm.c     |    5 ++---
+ fs/bio.c            |   13 +++++++------
+ 3 files changed, 10 insertions(+), 10 deletions(-)
 
+diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+index 11777b4..c1f8a8fe 100644
+--- a/drivers/block/rbd.c
++++ b/drivers/block/rbd.c
+@@ -729,7 +729,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+ 	}
+ 
+ 	while (old_chain && (total < len)) {
+-		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
++		tmp = bio_kmalloc(gfpmask, bio_segments(old_chain));
+ 		if (!tmp)
+ 			goto err_out;
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 3f3c26e..193fb19 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1057,11 +1057,10 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
+ {
+ 	struct bio *clone;
+ 
+-	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
++	clone = bio_alloc_bioset(GFP_NOIO, bv_count, bs);
+ 	__bio_clone(clone, bio);
+ 	clone->bi_sector = sector;
+-	clone->bi_idx = idx;
+-	clone->bi_vcnt = idx + bv_count;
++	clone->bi_vcnt = bv_count;
+ 	clone->bi_size = to_bytes(len);
+ 	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
+ 
 diff --git a/fs/bio.c b/fs/bio.c
-index 4075171..692911e 100644
+index a62b5b6..a85239f 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -243,7 +243,7 @@ static void bio_free(struct bio *bio)
- 		return;
- 	}
- 
--	if (bio_has_allocated_vec(bio))
-+	if (bio_flagged(bio, BIO_OWNS_VEC))
- 		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
- 
- 	if (bio_integrity(bio))
-@@ -313,6 +313,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- 			goto err_free;
- 
- 		nr_iovecs = bvec_nr_vecs(idx);
-+		bio->bi_flags |= 1 << BIO_OWNS_VEC;
- 	}
- out_set:
- 	bio->bi_flags |= idx << BIO_POOL_OFFSET;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 242447c..9e89f5e 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -84,11 +84,6 @@ static inline void *bio_data(struct bio *bio)
- 	return NULL;
- }
- 
--static inline int bio_has_allocated_vec(struct bio *bio)
--{
--	return bio->bi_io_vec && bio->bi_io_vec != bio->bi_inline_vecs;
--}
--
- /*
-  * will die
+@@ -441,8 +441,9 @@ EXPORT_SYMBOL(bio_phys_segments);
   */
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index b6ddbf1..5ad45bf 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -101,6 +101,7 @@ struct bio {
- #define BIO_FS_INTEGRITY 9	/* fs owns integrity data, not block layer */
- #define BIO_QUIET	10	/* Make BIO Quiet */
- #define BIO_MAPPED_INTEGRITY 11/* integrity metadata has been remapped */
-+#define BIO_OWNS_VEC	12	/* bio_free() should free bvec */
- #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
+ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ {
+-	memcpy(bio->bi_io_vec, bio_src->bi_io_vec,
+-		bio_src->bi_max_vecs * sizeof(struct bio_vec));
++	memcpy(bio->bi_io_vec,
++	       bio_iovec(bio_src),
++	       bio_segments(bio_src) * sizeof(struct bio_vec));
  
- /*
+ 	/*
+ 	 * most users will be overriding ->bi_bdev with a new target,
+@@ -451,10 +452,10 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ 	bio->bi_sector = bio_src->bi_sector;
+ 	bio->bi_bdev = bio_src->bi_bdev;
+ 	bio->bi_flags |= 1 << BIO_CLONED;
++	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
+ 	bio->bi_rw = bio_src->bi_rw;
+-	bio->bi_vcnt = bio_src->bi_vcnt;
++	bio->bi_vcnt = bio_segments(bio_src);
+ 	bio->bi_size = bio_src->bi_size;
+-	bio->bi_idx = bio_src->bi_idx;
+ }
+ EXPORT_SYMBOL(__bio_clone);
+ 
+@@ -469,7 +470,7 @@ EXPORT_SYMBOL(__bio_clone);
+ struct bio *bio_clone_bioset(struct bio *bio, gfp_t gfp_mask,
+ 			     struct bio_set *bs)
+ {
+-	struct bio *b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, bs);
++	struct bio *b = bio_alloc_bioset(gfp_mask, bio_segments(bio), bs);
+ 
+ 	if (!b)
+ 		return NULL;
+@@ -499,7 +500,7 @@ EXPORT_SYMBOL(bio_clone);
+ 
+ struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
+ {
+-	struct bio *b = bio_kmalloc(gfp_mask, bio->bi_max_vecs);
++	struct bio *b = bio_kmalloc(gfp_mask, bio_segments(bio));
+ 
+ 	if (!b)
+ 		return NULL;
 -- 
 1.7.9.3.327.g2980b
