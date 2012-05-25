@@ -1,51 +1,195 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2 04/14] block: Add bio_clone_kmalloc()
-Date: Thu, 24 May 2012 17:31:14 -0700
-Message-ID: <20120525003114.GF22664@google.com>
-References: <1337817771-25038-1-git-send-email-koverstreet@google.com>
- <1337817771-25038-5-git-send-email-koverstreet@google.com>
- <20120524185919.GE27550@redhat.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: dm corruption? (Was: Re: can't recover ext4 on lvm from
+ ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in
+ gd)
+Date: Thu, 24 May 2012 18:54:17 -0700
+Message-ID: <20120525015417.GK29466@outflux.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120524185919.GE27550-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+Sender: linux-ext4-owner@vger.kernel.org
+To: Sander Eikelenboom <linux@eikelenboom.it>
+Cc: Ted Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, May 24, 2012 at 02:59:19PM -0400, Vivek Goyal wrote:
-> On Wed, May 23, 2012 at 05:02:41PM -0700, Kent Overstreet wrote:
-> 
-> [..]
-> > diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-> > index 013c7a5..5a953c6 100644
-> > --- a/drivers/block/rbd.c
-> > +++ b/drivers/block/rbd.c
-> > @@ -729,7 +729,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
-> >  	}
-> >  
-> >  	while (old_chain && (total < len)) {
-> > -		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
-> > +		tmp = bio_clone_kmalloc(old_chain, gfpmask);
-> >  		if (!tmp)
-> >  			goto err_out;
-> >  
-> > @@ -751,13 +751,9 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
-> >  			if (!bp)
-> >  				goto err_out;
-> >  
-> > -			__bio_clone(tmp, &bp->bio1);
-> > -
-> >  			*next = &bp->bio2;
-> 
-> Is this code correct. Now original code might clone bio after split and
-> new code will clone the original bio itself and not the split one?
+Hi,
 
-Argh, you're right, I screwed that up.
+On Thu, Jan 05, 2012 at 11:43:22PM +0100, Sander Eikelenboom wrote:
+> Hello Ted,
+> 
+> Thursday, January 5, 2012, 7:15:35 PM, you wrote:
+> 
+> > On Thu, Jan 05, 2012 at 05:14:28PM +0100, Sander Eikelenboom wrote:
+> >> 
+> >> OK spoke too soon, i have been able to trigger it again:
+> >> - copying files from LV to the same LV without the snapshot went OK
+> >> - copying from the RO snapshot of a LV to the same LV gave the error while copying the file again:
+> 
+> > OK.  Originally, you said you did this:
+> 
+> > 1) fsck -v -p -f the filesystem
+> > 2) mount the filesystem
+> > 3) Try to copy a file
+> > 4) filesystem will be mounted RO on error  (see below)
+> > 5) fsck again, journal will be recovered, no other errors
+> > 6) start at 1)
+> 
+> > Was this with with a read-only snapshot always being in existence
+> > through all of these five steps?  When was the RO snapshot created?
+> 
+> > If a RO snapshot has to be there in order for this to happen, then
+> > this is almost certainly a device-mapper regression.  (dm-devel folks,
+> > this is a problem which apparently occurred when the user went from
+> > v3.1.5 to v3.2, so this looks likes 3.2 regression.)
+> 
+> >                                                 - Ted
+> 
+> Tried to bisect, but every kernel in between seems to have some drivers for devices f*cked up so it doesn't even boot.
+> That was a quite frustrating and disappointing experience.
+> So it's back to 3.1.5 and continue with i was actually trying to do, and try later if it's still reproducible with another disk layout.
+> 
+> Thx for your effort so far.
 
-I'd like to get rid of all the open coded bio_clone()s out there (to
-reduce the amount of code that "Only clone bio vecs that are in use" has
-to change, but this code is too tricky - I'm just going to drop this
-bit.
+Has anything else happened with this?
+
+I'm seeing similar problems with dm_crypt (with kernel 3.2.7),
+only I also see "JBD2: Spotted dirty metadata buffer",
+which I've found some (unanswered) reference to here:
+https://bugzilla.redhat.com/show_bug.cgi?format=multiple&id=822071
+
+I can reproduce the problem 100% of the time, but only under the
+early-boot conditions I see it in. I've failed at any attempt so far to
+reproduce it once the system is all the way up. :(
+
+My steps to reproduce are:
+
+create 3G sparse file (making this zero-filled doesn't change anything)
+loopback mount file
+bring up dm-crypt on loopback
+build ext4 on dm-crypt
+copy about 100M worth of files into the filesystem
+
+The amount of errors reported varies, but most recently:
+
+[   82.659992] EXT4-fs error (device dm-1): ext4_mb_generate_buddy:739: group 14, 32258 clusters in bitmap, 32262 in gd
+[   84.338432] EXT4-fs error (device dm-1): ext4_mb_generate_buddy:739: group 15, 32258 clusters in bitmap, 32262 in gd
+[   86.334815] EXT4-fs error (device dm-1): ext4_mb_generate_buddy:739: group 16, 32258 clusters in bitmap, 32262 in gd
+[   87.660183] JBD2: Spotted dirty metadata buffer (dev = dm-1, blocknr = 0). There's a risk of filesystem corruption in case of system crash.
+[   87.814646] JBD2: Spotted dirty metadata buffer (dev = dm-1, blocknr = 0). There's a risk of filesystem corruption in case of system crash.
+[   88.221369] EXT4-fs error (device dm-1): ext4_mb_generate_buddy:739: group 17, 32258 clusters in bitmap, 32262 in gd
+[   89.930729] EXT4-fs error (device dm-1): ext4_mb_generate_buddy:739: group 18, 32258 clusters in bitmap, 32262 in gd
+[   91.709804] EXT4-fs error (device dm-1): ext4_mb_generate_buddy:739: group 19, 32258 clusters in bitmap, 32262 in gd
+[   93.805440] EXT4-fs error (device dm-1): ext4_mb_generate_buddy:739: group 20, 32258 clusters in bitmap, 32262 in gd
+
+I'm at a loss for how to track this down. :(
+
+Any ideas?
+
+-Kees
+
+> >> [ 2357.655783] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1861, 32254 clusters in bitmap, 32258 in gd
+> >> [ 2357.656056] Aborting journal on device dm-2-8.
+> >> [ 2357.718473] EXT4-fs (dm-2): Remounting filesystem read-only
+> >> [ 2357.736680] EXT4-fs error (device dm-2) in ext4_da_write_end:2532: IO failure
+> >> [ 2357.738328] EXT4-fs (dm-2): ext4_da_writepages: jbd2_start: 7615 pages, ino 4079617; err -30
+> >> [ 2716.125010] EXT4-fs error (device dm-2): ext4_put_super:818: Couldn't clean up the journal
+> >> 
+> >> 
+> >> Attached are 4x output from dumpe2fs
+> >> - dumpe2fs-xen_images-3.2.0                           Made just after boot
+> >> - dumpe2fs-xen_images-3.2.0-afterfsck                 Made after doing a fsck -v -p -f on the unmounted LV
+> >> - dumpe2fs-xen_images-3.2.0-aftererror                Made after the error occured on the mounted LV
+> >> - dumpe2fs-xen_images-3.2.0-aftererror-afterfsck      Made after the error occured, and after a subsequent fsck -v -p -f on the unmounted LV
+> >> - dumpe2fs-xen_images-3.1.5                           Made after booting into 3.1.5 after all of the above
+> >> 
+> >> Oh yes also did a badblock scan to rule that out, and it seems the numbers stay the same.
+> >> e2fsck 1.41.12 (17-May-2010) (from debian squeeze)
+> >> 
+> >> --
+> >> Sander
+> >> 
+> >> 
+> >> 
+> >> >> 
+> >> >> --
+> >> >> Sander
+> >> >> 
+> >> >> 
+> >> >> This is a forwarded message
+> >> >> From: Sander Eikelenboom <linux@eikelenboom.it>
+> >> >> To: "Theodore Ts'o" <tytso@mit.edu>
+> >> >> Date: Thursday, January 5, 2012, 11:37:59 AM
+> >> >> Subject: can't recover ext4 on lvm from ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
+> >> >> 
+> >> >> ===8<==============Original message text===============
+> >> >> 
+> >> >> I'm having some troubles with a ext4 filesystem on LVM, it seems bricked and fsck doesn't seem to find and correct the problem.
+> >> >> 
+> >> >> Steps:
+> >> >> 1) fsck -v -p -f the filesystem
+> >> >> 2) mount the filesystem
+> >> >> 3) Try to copy a file
+> >> >> 4) filesystem will be mounted RO on error  (see below)
+> >> >> 5) fsck again, journal will be recovered, no other errors
+> >> >> 6) start at 1)
+> >> >> 
+> >> >> 
+> >> >> I think the way i bricked it is:
+> >> >> - make a lvm snapshot from that lvm logical disk
+> >> >> - mount that lvm snapshot as RO
+> >> >> - try to copy a file from that mounted RO snapshot to a diffrent dir on the lvm logical disk the snapshot is from.
+> >> >> - it fails and i can't recover (see above)
+> >> >> 
+> >> >> 
+> >> >> Is there a way to recover from this ?
+> >> >> 
+> >> >> 
+> >> >> 
+> >> >> [  220.748928] EXT4-fs error (device dm-2): ext4_mb_generate_buddy:739: group 1687, 32254 clusters in bitmap, 32258 in gd
+> >> >> [  220.749415] Aborting journal on device dm-2-8.
+> >> >> [  220.771633] EXT4-fs error (device dm-2): ext4_journal_start_sb:327: Detected aborted journal
+> >> >> [  220.772593] EXT4-fs (dm-2): Remounting filesystem read-only
+> >> >> [  220.792455] EXT4-fs (dm-2): Remounting filesystem read-only
+> >> >> [  220.805118] EXT4-fs (dm-2): ext4_da_writepages: jbd2_start: 9680 pages, ino 4079617; err -30
+> >> >> serveerstertje:/mnt/xen_images/domains/production# cd /
+> >> >> serveerstertje:/# umount /mnt/xen_images/
+> >> >> serveerstertje:/# fsck -f -v -p /dev/serveerstertje/xen_images
+> >> >> fsck from util-linux-ng 2.17.2
+> >> >> /dev/mapper/serveerstertje-xen_images: recovering journal
+> >> >> 
+> >> >>     277 inodes used (0.00%)
+> >> >>       5 non-contiguous files (1.8%)
+> >> >>       0 non-contiguous directories (0.0%)
+> >> >>         # of inodes with ind/dind/tind blocks: 41/41/3
+> >> >>         Extent depth histogram: 69/28/2
+> >> >> 51890920 blocks used (79.18%)
+> >> >>       0 bad blocks
+> >> >>      41 large files
+> >> >> 
+> >> >>     199 regular files
+> >> >>      53 directories
+> >> >>       0 character device files
+> >> >>       0 block device files
+> >> >>       0 fifos
+> >> >>       0 links
+> >> >>      16 symbolic links (16 fast symbolic links)
+> >> >>       0 sockets
+> >> >> --------
+> >> >>     268 files
+> >> >> serveerstertje:/#
+> >> >> 
+> >> >> 
+> >> >> 
+> >> >> 
+> >> >> System:
+> >> >> - Kernel 3.2.0
+> >> >> - Debian Squeeze with:
+> >> >> ii  e2fslibs                              1.41.12-4stable1                     ext2/ext3/ext4 file system libraries
+> >> >> ii  e2fsprogs                             1.41.12-4stable1                     ext2/ext3/ext4 file system utilities
+> >> >> 
+> >> >> ===8<===========End of original message text===========
+
+-- 
+Kees Cook                                            @outflux.net
+
