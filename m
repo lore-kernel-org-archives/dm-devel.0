@@ -1,85 +1,51 @@
-From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v3 12/16] Closures
-Date: Fri, 25 May 2012 13:57:04 -0700
-Message-ID: <1337979424.30100.19.camel@joe2Laptop>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v3 14/16] Gut bio_add_page()
+Date: Fri, 25 May 2012 14:09:44 -0700
+Message-ID: <20120525210944.GB14196@google.com>
 References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
-	 <1337977539-16977-13-git-send-email-koverstreet@google.com>
+ <1337977539-16977-15-git-send-email-koverstreet@google.com>
+ <20120525204651.GA24246@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1337977539-16977-13-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20120525204651.GA24246@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, yehuda@hq.newdream.net, mpatocka@redhat.com, vgoyal@redhat.com, bharrosh@panasas.com, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com, Dave Chinner <dchinner@redhat.com>, tytso@google.com
 List-Id: dm-devel.ids
 
-On Fri, 2012-05-25 at 13:25 -0700, Kent Overstreet wrote:
-> Asynchronous refcounty thingies; they embed a refcount and a work
-> struct. Extensive documentation follows in include/linux/closure.h
-[]
-> diff --git a/include/linux/closure.h b/include/linux/closure.h
-[]
-> +enum closure_type {
-> +	TYPE_closure				= 0,
+On Fri, May 25, 2012 at 04:46:51PM -0400, Mike Snitzer wrote:
+> I'd love to see the merge_bvec stuff go away but it does serve a
+> purpose: filesystems benefit from accurately building up much larger
+> bios (based on underlying device limits).  XFS has leveraged this for
+> some time and ext4 adopted this (commit bd2d0210cf) because of the
+> performance advantage.
 
-I still think these should be
-	CLOSURE_TYPE_closure
-etc.
+That commit only talks about skipping buffer heads, from the patch
+description I don't see how merge_bvec_fn would have anything to do with
+what it's after.
 
-> +#define __CLOSURE_TYPE(cl, _t)						\
-> +	  __builtin_types_compatible_p(typeof(cl), struct _t)		\
-> +		? TYPE_ ## _t :						\
-	CLOSURE_TYPE_##_t
+> So if you don't have a mechanism for the filesystem's IO to have
+> accurate understanding of the limits of the device the filesystem is
+> built on (merge_bvec was the mechanism) and are leaning on late
+> splitting does filesystem performance suffer?
 
-> +#define __closure_type(cl)						\
-> +(									\
-> +	__CLOSURE_TYPE(cl, closure)					\
-> +	__CLOSURE_TYPE(cl, closure_with_waitlist)			\
-> +	__CLOSURE_TYPE(cl, closure_with_timer)				\
-> +	__CLOSURE_TYPE(cl, closure_with_waitlist_and_timer)		\
-> +	invalid_closure_type()						\
-> +)
+So is the issue that it may take longer for an IO to complete, or is it
+CPU utilization/scalability?
 
-You should still feel dirty about this...
+If it's the former, we've got a real problem. If it's the latter - it
+might be a problem in the interim (I don't expect generic_make_request()
+to be splitting bios in the common case long term), but I doubt it's
+going to be much of an issue.
 
-> +#define continue_at(_cl, _fn, _wq, ...)					\
-> +do {									\
-> +	BUG_ON(!(_cl) || object_is_on_stack(_cl));			\
-> +	closure_set_ip(_cl);						\
-> +	set_closure_fn(_cl, _fn, _wq);					\
-> +	closure_sub(_cl, CLOSURE_RUNNING + 1);				\
-> +	return __VA_ARGS__;						\
-> +} while (0)
+> Would be nice to see before and after XFS and ext4 benchmarks against a
+> RAID device (level 5 or 6).  I'm especially interested to get Dave
+> Chinner's and Ted's insight here.
 
-Does this have to be a macro?
+Yeah.
 
-> diff --git a/lib/closure.c b/lib/closure.c
-[]
-> +#define CL_FIELD(type, field)					\
-> +	case TYPE_ ## type:					\
-> +	return &container_of(cl, struct type, cl)->field
-> +
-> +static struct closure_waitlist *closure_waitlist(struct closure *cl)
-> +{
-> +	switch (cl->type) {
-> +		CL_FIELD(closure_with_waitlist, wait);
-> +		CL_FIELD(closure_with_waitlist_and_timer, wait);
-> +	default:
-> +		return NULL;
-> +	}
-> +}
-
-Here:
-
-static struct closure_waitlist *closure_waitlist(struct closure *cl)
-{
-	switch (cl->type) {
-	case CLOSURE_TYPE_closure_with_waitlist:
-		return &container_of(cl, struct closure_with_waitlist, cl)->wait;
-	case CLOSURE_TYPE_closure_with_waitlist_and_timer:
-		return &container_of(cl, struct closure_with_waitlist_and_timer, cl)->wait;
-	}
-
-	return NULL;
-}
+I can't remember who it was, but Ted knows someone who was able to
+benchmark on a 48 core system. I don't think we need numbers from a 48
+core machine for these patches, but whatever workloads they were testing
+that were problematic CPU wise would be useful to test.
