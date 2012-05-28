@@ -1,70 +1,74 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] dm optimize: reorder structure
-Date: Mon, 28 May 2012 12:44:09 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1205281243380.4594@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1205281242280.4594@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v3 14/16] Gut bio_add_page()
+Date: Tue, 29 May 2012 05:28:39 +0900
+Message-ID: <20120528202839.GA18537@dhcp-172-17-108-109.mtv.corp.google.com>
+References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
+ <1337977539-16977-15-git-send-email-koverstreet@google.com>
+ <20120525204651.GA24246@redhat.com>
+ <20120525210944.GB14196@google.com>
+ <20120525223937.GF5761@agk-dp.fab.redhat.com>
+ <Pine.LNX.4.64.1205281129180.2227@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1205281242280.4594@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1205281129180.2227-e+HWlsje6Db1wF9wiOj0lkEOCMrvLtNR@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tytso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-dm-optimize: reorder structure
+Hello,
 
-This reorder actually improves performance by 20% (from 39.1s to 32.8s)
-on x86-64 quad core Opteron.
+On Mon, May 28, 2012 at 12:07:14PM -0400, Mikulas Patocka wrote:
+> With accurately sized bios, you send one bio for 256 sectors (it is sent 
+> immediatelly to the disk) and a second bio for another 256 sectors (it is 
+> put to the block device queue). The first bio finishes, pages are marked 
+> as uptodate, the second bio is sent to the disk. While the disk is 
 
-I have no explanation for this, possibly it makes some other entries are
-better cache-aligned.
+They're split and made in-flight together.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> processing the second bio, the kernel already knows that the first 256 
+> sectors are finished - so it copies the data to userspace and lets the 
+> userspace process them - while the disk is processing the second bio. So, 
+> disk transfer and data processing are overlapped.
+>
+> Now, with your patch, you send just one 512-sector bio. The bio is split 
+> to two bios, the first one is sent to the disk and you wait. The disk 
+> finishes the first bio, you send the second bio to the disk and wait. The 
+> disk finishes the second bio. You complete the master bio, mark all 512 
+> sectors as uptodate in the pagecache, start copying data to the userspace 
+> and processing them. Disk transfer and data processing are not overlapped.
 
----
- drivers/md/dm.c |   14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+Disk will most likely seek to the sector read all of them into buffer
+at once and then serve the two consecutive commands back-to-back
+without much inter-command delay.
 
-Index: linux-3.4-rc6-fast/drivers/md/dm.c
-===================================================================
---- linux-3.4-rc6-fast.orig/drivers/md/dm.c	2012-05-18 08:06:15.000000000 +0200
-+++ linux-3.4-rc6-fast/drivers/md/dm.c	2012-05-18 08:21:52.000000000 +0200
-@@ -139,6 +139,13 @@ struct mapped_device {
- 	atomic_t holders;
- 	atomic_t open_count;
- 
-+	/*
-+	 * The current mapping.
-+	 * Use dm_get_live_table{_fast} or take suspend_lock for
-+	 * dereference.
-+	 */
-+	struct dm_table *map;
-+
- 	unsigned long flags;
- 
- 	struct request_queue *queue;
-@@ -168,13 +175,6 @@ struct mapped_device {
- 	struct workqueue_struct *wq;
- 
- 	/*
--	 * The current mapping.
--	 * Use dm_get_live_table{_fast} or take suspend_lock for
--	 * dereference.
--	 */
--	struct dm_table *map;
--
--	/*
- 	 * io objects are allocated from here.
- 	 */
- 	mempool_t *io_pool;
+> accurately-sized bios (that don't span stripe boundaries), each bio waits 
+> just for one disk to seek to the requested position. If you send oversized 
+> bio that spans several stripes, that bio will wait until all the disks 
+> seek to the requested position.
+> 
+> In general, you can send oversized bios if the user is waiting for all the 
+> data requested (for example O_DIRECT read or write). You shouldn't send 
+> oversized bios if the user is waiting just for a small part of data and 
+> the kernel is doing readahead - in this case, oversized bio will result in 
+> additional delay.
+
+Isn't it more like you shouldn't be sending read requested by user and
+read ahead in the same bio?
+
+> I think bio_add_page should be simplified in such a way that in the most 
+> common cases it doesn't create oversized bio, but it can create oversized 
+> bios in uncommon cases. We could retain a limit on a maximum number of 
+> sectors (this limit is most commonly hit on disks), put a stripe boundary 
+> to queue_limits (the stripe boundary limit is most commonly hit on raid), 
+> ignore the rest of the limits in bio_add_page and remove merge_bvec.
+
+If exposing segmenting limit upwards is a must (I'm kinda skeptical),
+let's have proper hints (or dynamic hinting interface) instead.
+
+Thanks.
+
+-- 
+tejun
