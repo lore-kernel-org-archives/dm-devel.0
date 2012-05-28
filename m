@@ -1,33 +1,99 @@
-From: "Jun'ichi Nomura" <j-nomura-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v3 02/16] dm: Use bioset's front_pad for dm_rq_clone_bio_info
-Date: Mon, 28 May 2012 20:41:18 +0900
-Message-ID: <4FC3645E.8040901@ce.jp.nec.com>
-References: <1337977539-16977-1-git-send-email-koverstreet@google.com> <1337977539-16977-3-git-send-email-koverstreet@google.com> <4FC2CD93.1080009@ce.jp.nec.com>
+From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 14/16] Gut bio_add_page()
+Date: Mon, 28 May 2012 12:07:14 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1205281129180.2227@file.rdu.redhat.com>
+References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
+ <1337977539-16977-15-git-send-email-koverstreet@google.com>
+ <20120525204651.GA24246@redhat.com> <20120525210944.GB14196@google.com>
+ <20120525223937.GF5761@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4FC2CD93.1080009-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
+In-Reply-To: <20120525223937.GF5761-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org
+To: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tytso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 05/28/12 09:57, Jun'ichi Nomura wrote:
-> On 05/26/12 05:25, Kent Overstreet wrote:
->> -	pools->bs = bioset_create(pool_size, 0);
->> +	pools->bs = bioset_create(pool_size,
->> +				  offsetof(struct dm_rq_clone_bio_info, orig));
->>  	if (!pools->bs)
->>  		goto free_tio_pool_and_out;
+Hi
+
+The general problem with bio_add_page simplification is this:
+
+Suppose that you have an old ATA disk that can read or write at most 256 
+sectors. Suppose that you are reading from the disk and readahead for 512 
+sectors is used:
+
+With accurately sized bios, you send one bio for 256 sectors (it is sent 
+immediatelly to the disk) and a second bio for another 256 sectors (it is 
+put to the block device queue). The first bio finishes, pages are marked 
+as uptodate, the second bio is sent to the disk. While the disk is 
+processing the second bio, the kernel already knows that the first 256 
+sectors are finished - so it copies the data to userspace and lets the 
+userspace process them - while the disk is processing the second bio. So, 
+disk transfer and data processing are overlapped.
+
+Now, with your patch, you send just one 512-sector bio. The bio is split 
+to two bios, the first one is sent to the disk and you wait. The disk 
+finishes the first bio, you send the second bio to the disk and wait. The 
+disk finishes the second bio. You complete the master bio, mark all 512 
+sectors as uptodate in the pagecache, start copying data to the userspace 
+and processing them. Disk transfer and data processing are not overlapped.
+
+The same problem arises with raid-0, raid-5 or raid-10: if you send 
+accurately-sized bios (that don't span stripe boundaries), each bio waits 
+just for one disk to seek to the requested position. If you send oversized 
+bio that spans several stripes, that bio will wait until all the disks 
+seek to the requested position.
+
+In general, you can send oversized bios if the user is waiting for all the 
+data requested (for example O_DIRECT read or write). You shouldn't send 
+oversized bios if the user is waiting just for a small part of data and 
+the kernel is doing readahead - in this case, oversized bio will result in 
+additional delay.
+
+
+I think bio_add_page should be simplified in such a way that in the most 
+common cases it doesn't create oversized bio, but it can create oversized 
+bios in uncommon cases. We could retain a limit on a maximum number of 
+sectors (this limit is most commonly hit on disks), put a stripe boundary 
+to queue_limits (the stripe boundary limit is most commonly hit on raid), 
+ignore the rest of the limits in bio_add_page and remove merge_bvec.
+
+Mikulas
+
+
+
+On Fri, 25 May 2012, Alasdair G Kergon wrote:
+
+> Where's the urge to remove merge_bvec coming from?
 > 
-> Did you mean offset of *clone*?
-> "offsetof(struct dm_rq_clone_bio_info, orig)" is zero.
-
-Additional comment:
-frontpad is not necessary if type is DM_TYPE_BIO_BASED.
-Please check conditional switches done in the same function for
-pools->tio_pool.
-
--- 
-Jun'ichi Nomura, NEC Corporation
+> I think it's premature to touch this, and that the other changes, if
+> fixed and integrated, should be allowed to bed themselves down first.
+> 
+> 
+> Ideally every bio would be the best size on submission and no bio would
+> ever need to be split.
+> 
+> But there is a cost involved in calculating the best size - we use
+> merge_bvec for this, which gives a (probable) maximum size.  It's
+> usually very cheap to calculate - but not always.  [In dm, we permit
+> some situations where the answer we give will turn out to be wrong, but
+> ensure dm will always fix up those particular cases itself later and
+> still process the over-sized bio correctly.]
+> 
+> Similarly there is a performance penalty incurred when the size is wrong
+> - the bio has to be split, requiring memory, potential delays etc.
+> 
+> There is a trade-off between those two, and our experience with the current
+> code has that tilted strongly in favour of using merge_bvec all the time.
+> The wasted overhead in cases where it is of no benefit seem to be
+> outweighed by the benefit where it does avoid lots of splitting and help
+> filesystems optimise their behaviour.
+> 
+> 
+> If the splitting mechanism is changed as proposed, then that balance
+> might shift.  My gut feeling though is that any shift would strengthen
+> the case for merge_bvec.
+> 
+> Alasdair
+> 
