@@ -1,51 +1,53 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH v3 14/16] Gut bio_add_page()
-Date: Tue, 29 May 2012 12:08:15 +1000
-Message-ID: <20120529020815.GB5091@dastard>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v3 05/16] block: Kill bi_destructor
+Date: Mon, 28 May 2012 22:10:42 -0400
+Message-ID: <20120529021042.GA6472@dhcp-172-18-216-138.mtv.corp.google.com>
 References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
- <1337977539-16977-15-git-send-email-koverstreet@google.com>
- <20120525204651.GA24246@redhat.com>
- <20120525210944.GB14196@google.com>
- <20120525223937.GF5761@agk-dp.fab.redhat.com>
- <Pine.LNX.4.64.1205281129180.2227@file.rdu.redhat.com>
- <20120528202839.GA18537@dhcp-172-17-108-109.mtv.corp.google.com>
- <Pine.LNX.4.64.1205281659580.11763@file.rdu.redhat.com>
- <20120528213839.GB18537@dhcp-172-17-108-109.mtv.corp.google.com>
- <20120528230208.GA20954@dhcp-172-17-108-109.mtv.corp.google.com>
+ <1337977539-16977-6-git-send-email-koverstreet@google.com>
+ <20120528013608.GE9891@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120528230208.GA20954-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tytso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120528013608.GE9891@dhcp-172-17-108-109.mtv.corp.google.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-On Tue, May 29, 2012 at 08:02:08AM +0900, Tejun Heo wrote:
-> (cc'ing Martin K. Petersen, hi!)
-> 
-> On Tue, May 29, 2012 at 06:38:39AM +0900, Tejun Heo wrote:
-> > > With this patchset, you don't have to expose all the limits. You can 
-> > > expose just a few most useful limits to avoid bio split in the cases 
-> > > described above.
+On Mon, May 28, 2012 at 10:36:08AM +0900, Tejun Heo wrote:
+> On Fri, May 25, 2012 at 01:25:28PM -0700, Kent Overstreet wrote:
+> > Now that we've got generic code for freeing bios allocated from bio
+> > pools, this isn't needed anymore.
 > > 
-> > Yeah, if that actually helps, sure.  From what I read, dm is already
-> > (ab)using merge_bvec_fn() like that anyway.
+> > This also changes the semantics of bio_free() a bit - it now also frees
+> > bios allocated by bio_kmalloc(). It's also no longer exported, as
+> > without bi_destructor there should be no need for it to be called
+> > anywhere else.
 > 
-> i thought a bit more about it and the only thing which makes sense to
-> me is exposing the stripe granularity for striped devices -
-> ie. something which says "if you go across this boundary, the
-> performance characteristics including latency might get affected",
-> which should fit nicely with the rest of topology information.
-> Martin, adding that shouldn't be difficult, right?
+> I like this patch but I'd *really* like to see the patch description
+> giving some background and explains *why* this is a good change.
 
-We already have the optimal IO size/alignment field in the topology.
-Doesn't this fit what you want exactly?
+Heh. Well, in my view deleting stuff is good by default, and if you can
+delete things without user visible effects and without making the code
+more complicated... 
 
-Cheers,
+So I guess given the simplicity of this particular patch in the series
+I'm not sure what there is to justify here. Any suggestions on what
+would make sense to put in...?
 
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+> 
+> > diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> > index 6b7daf3..b6ddbf1 100644
+> > --- a/include/linux/blk_types.h
+> > +++ b/include/linux/blk_types.h
+> > @@ -74,11 +74,8 @@ struct bio {
+> >  	struct bio_integrity_payload *bi_integrity;  /* data integrity */
+> >  #endif
+> >  
+> > -	/* If bi_pool is non NULL, bi_destructor is not called */
+> >  	struct bio_set		*bi_pool;
+> 
+> Maybe explain that %NULL bi_pool indicates kmalloc backed allocation?
+
+Yeah, I'll update that comment.
