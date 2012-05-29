@@ -1,44 +1,95 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: Dave Chinner <david@fromorbit.com>
 Subject: Re: [PATCH v3 14/16] Gut bio_add_page()
-Date: Tue, 29 May 2012 08:02:08 +0900
-Message-ID: <20120528230208.GA20954@dhcp-172-17-108-109.mtv.corp.google.com>
+Date: Tue, 29 May 2012 11:54:38 +1000
+Message-ID: <20120529015438.GZ5091@dastard>
 References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
  <1337977539-16977-15-git-send-email-koverstreet@google.com>
  <20120525204651.GA24246@redhat.com>
  <20120525210944.GB14196@google.com>
- <20120525223937.GF5761@agk-dp.fab.redhat.com>
- <Pine.LNX.4.64.1205281129180.2227@file.rdu.redhat.com>
- <20120528202839.GA18537@dhcp-172-17-108-109.mtv.corp.google.com>
- <Pine.LNX.4.64.1205281659580.11763@file.rdu.redhat.com>
- <20120528213839.GB18537@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120528213839.GB18537-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tytso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120525210944.GB14196@google.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, yehuda@hq.newdream.net, mpatocka@redhat.com, vgoyal@redhat.com, bharrosh@panasas.com, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com, Dave Chinner <dchinner@redhat.com>, tytso@google.com
 List-Id: dm-devel.ids
 
-(cc'ing Martin K. Petersen, hi!)
-
-On Tue, May 29, 2012 at 06:38:39AM +0900, Tejun Heo wrote:
-> > With this patchset, you don't have to expose all the limits. You can 
-> > expose just a few most useful limits to avoid bio split in the cases 
-> > described above.
+On Fri, May 25, 2012 at 02:09:44PM -0700, Kent Overstreet wrote:
+> On Fri, May 25, 2012 at 04:46:51PM -0400, Mike Snitzer wrote:
+> > I'd love to see the merge_bvec stuff go away but it does serve a
+> > purpose: filesystems benefit from accurately building up much larger
+> > bios (based on underlying device limits).  XFS has leveraged this for
+> > some time and ext4 adopted this (commit bd2d0210cf) because of the
+> > performance advantage.
 > 
-> Yeah, if that actually helps, sure.  From what I read, dm is already
-> (ab)using merge_bvec_fn() like that anyway.
+> That commit only talks about skipping buffer heads, from the patch
+> description I don't see how merge_bvec_fn would have anything to do with
+> what it's after.
 
-i thought a bit more about it and the only thing which makes sense to
-me is exposing the stripe granularity for striped devices -
-ie. something which says "if you go across this boundary, the
-performance characteristics including latency might get affected",
-which should fit nicely with the rest of topology information.
-Martin, adding that shouldn't be difficult, right?
+XFS has used it since 2.6.16 as building our own bios enabled the Io
+path form IOs of sizes that are independent of the filesystem block
+size.
 
-Thanks.
+http://oss.sgi.com/projects/xfs/papers/ols2006/ols-2006-paper.pdf
 
+And it's not just the XFS write path that uses bio_add_page - the XFS
+metadata read/write IO code uses it as well because we have metadata
+constructs that are larger than a single page...
+
+> > So if you don't have a mechanism for the filesystem's IO to have
+> > accurate understanding of the limits of the device the filesystem is
+> > built on (merge_bvec was the mechanism) and are leaning on late
+> > splitting does filesystem performance suffer?
+> 
+> So is the issue that it may take longer for an IO to complete, or is it
+> CPU utilization/scalability?
+
+Both. Moving to this code reduced the CPU overhead per MB of data
+written to disk by 80-90%. It also allowed us to build IOs that span
+entire RAID stripe widths, thereby avoiding potential RAID RMW
+cycles, and even allowing high end raid controllers to trigger BBWC
+bypass fast paths that could double or triple the write throughput
+of the arrays...
+
+> If it's the former, we've got a real problem.
+
+... then you have a real problem.
+
+> If it's the latter - it
+> might be a problem in the interim (I don't expect generic_make_request()
+> to be splitting bios in the common case long term), but I doubt it's
+> going to be much of an issue.
+
+I think this will also be an issue - the typical sort of throughput
+I've been hearing about over the past year for typical HPC
+deployments is >20GB/s buffered write throughput to disk on a single
+XFS filesystem, and that is typically limited by the flusher thread
+being CPU bound. So if you changes have a CPU usage impact, then
+these systems will definitely see reduced performance....
+
+> > Would be nice to see before and after XFS and ext4 benchmarks against a
+> > RAID device (level 5 or 6).  I'm especially interested to get Dave
+> > Chinner's and Ted's insight here.
+> 
+> Yeah.
+> 
+> I can't remember who it was, but Ted knows someone who was able to
+> benchmark on a 48 core system. I don't think we need numbers from a 48
+> core machine for these patches, but whatever workloads they were testing
+> that were problematic CPU wise would be useful to test.
+
+Eric Whitney.
+
+http://downloads.linux.hp.com/~enw/ext4/3.2/
+
+His storage hardware probably isn't fast enough to demonstrate the
+sort of problems I'm expecting that would occur...
+
+Cheers,
+
+Dave.
 -- 
-tejun
+Dave Chinner
+david@fromorbit.com
