@@ -1,62 +1,108 @@
-From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [ANNOUNCE] cryptsetup 1.4.3
-Date: Thu, 31 May 2012 11:26:23 +0200
-Message-ID: <4FC7393F.80009@gmail.com>
-References: <4EA85582.3080904@redhat.com> <4FC72DF2.9070106@gmail.com>
+From: "majianpeng" <majianpeng@gmail.com>
+Subject: [PATCH] dm:simple_strtoul() cleanup.
+Date: Wed, 30 May 2012 16:23:29 +0800
+Message-ID: <201205301623260006539@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-In-Reply-To: <4FC72DF2.9070106-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk <agk@redhat.com>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Change them to use kstrtoul/kstrtou8/kstrtouint instead of obsolete simple_strtoul().
 
-On 05/31/2012 10:38 AM, Milan Broz wrote:
-> Cryptsetup 1.4.3 Release Notes
-> ==============================
-> 
-> Changes since version 1.4.2
+Signed-off-by: majianpeng <majianpeng@gmail.com>
+---
+ drivers/md/dm-crypt.c           |    5 +----
+ drivers/md/dm-exception-store.c |    6 ++----
+ drivers/md/dm-stripe.c          |    7 ++-----
+ 3 files changed, 5 insertions(+), 13 deletions(-)
 
-Obviously I forgot the most important thing in this release notes...
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 3f06df5..e2b3240 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1241,7 +1241,6 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+ static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
+ {
+ 	char buffer[3];
+-	char *endp;
+ 	unsigned int i;
+ 
+ 	buffer[2] = '\0';
+@@ -1250,9 +1249,7 @@ static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
+ 		buffer[0] = *hex++;
+ 		buffer[1] = *hex++;
+ 
+-		key[i] = (u8)simple_strtoul(buffer, &endp, 16);
+-
+-		if (endp != &buffer[2])
++		if (kstrtou8(buffer, 16, &key[i]))
+ 			return -EINVAL;
+ 	}
+ 
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index aa70f7d..cf583bc 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -143,11 +143,9 @@ static int set_chunk_size(struct dm_exception_store *store,
+ 			  const char *chunk_size_arg, char **error)
+ {
+ 	unsigned long chunk_size_ulong;
+-	char *value;
+ 
+-	chunk_size_ulong = simple_strtoul(chunk_size_arg, &value, 10);
+-	if (*chunk_size_arg == '\0' || *value != '\0' ||
+-	    chunk_size_ulong > UINT_MAX) {
++	if (kstrtoul(chunk_size_arg, 10, &chunk_size_ulong) ||
++			chunk_size_ulong > UINT_MAX) {
+ 		*error = "Invalid chunk size";
+ 		return -EINVAL;
+ 	}
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 35c94ff..183db5d 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -99,7 +99,6 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	sector_t width;
+ 	uint32_t stripes;
+ 	uint32_t chunk_size;
+-	char *end;
+ 	int r;
+ 	unsigned int i;
+ 
+@@ -108,14 +107,12 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -EINVAL;
+ 	}
+ 
+-	stripes = simple_strtoul(argv[0], &end, 10);
+-	if (!stripes || *end) {
++	if (kstrtouint(argv[0], 10, &stripes) || !stripes) {
+ 		ti->error = "Invalid stripe count";
+ 		return -EINVAL;
+ 	}
+ 
+-	chunk_size = simple_strtoul(argv[1], &end, 10);
+-	if (*end) {
++	if (kstrtouint(argv[1], 10, &chunk_size)) {
+ 		ti->error = "Invalid chunk_size";
+ 		return -EINVAL;
+ 	}
+-- 
+1.7.5.4
 
-* Man page rewrite and fixes by Arno Wagner.
-
-Thanks!
-
-Milan
-(apparently still in need of more sleep:-)
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQIcBAEBAgAGBQJPxzk2AAoJENmwV3vZPpj8CtEP/i5fXbA9Aw1Ij9LkGUH0gmRf
-ZqO+Pw8xVoGD196bdHj5BfQOHtUAp7fSD0flwrFfDA+UTFR0gkHkOMThCgTBsl9t
-SsDvr+iO2VChm7l87nk6+BCQhFllHva0d6GqDwvqG+He4Lg7LLqjbE/HYwgObUZ4
-baBCPNcRApjPmTDxdnLfslaCr5I5xmwA2pbF1mK+yAuzkrnlzw7ASvF3/817kHr6
-nieWLyeOTV+8hbv1LdZ+uBIG60QANOcEilZW60h0F5ycBO3HuyY2GAWz+sMelLkl
-uDCTBeDn1hRjmG3ZLM4P6v4iP2pc4hoeTPTY+vur84Eb8CmdvzmG5e+937T0ZeRC
-lwpxt6PbPZK365oJi6S7IfpJ7MH4S/868KvpFJDeU+TG5294HjCsVPOQSOS6up+y
-lC4Lo6ZgvchM7rjjoRySI/2TIkU13ci1TkSy+5adIOJGk2w+bZ5nUE9OMkiWWsaS
-9YKmGs5C6mKe7RQQ20uke+YnKVD4LGPtpG/K4BMGvneGksYXWzFiGWSgbEHMt0lX
-AF0vrd2WHrmN8JGtuU96Ef+Q/JE1EBvoNNqXxC0ehJqxZtBPUKdljKd8KxhckTLE
-EtJColIwdPqPYrf9jJe5vtwsAP9MDLcXCYtcpFyWbVMjtESlbrB7XV5OTJEhdjek
-O3C8XHiwwqfYx5but6HG
-=T3KV
------END PGP SIGNATURE-----
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
+ 				
+--------------
+majianpeng
+2012-05-30
