@@ -1,19 +1,19 @@
-From: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Tejun Heo <tj@kernel.org>
 Subject: Re: [Bcache v13 14/16] bcache: Request, io and allocation code
-Date: Thu, 31 May 2012 11:43:27 +0900
-Message-ID: <20120531024327.GC32121@google.com>
+Date: Thu, 31 May 2012 11:45:53 +0900
+Message-ID: <20120531024553.GD32121@google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
  <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
  <20120530072358.GB4854@google.com>
  <20120531005224.GA5645@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120531005224.GA5645-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+In-Reply-To: <20120531005224.GA5645@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
 Hey, Kent.
