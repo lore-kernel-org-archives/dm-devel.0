@@ -1,122 +1,237 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [Bcache v13 11/16] bcache: Core btree code
-Date: Wed, 30 May 2012 18:09:41 -0700
-Message-ID: <20120531010940.GB5645@google.com>
+From: Tejun Heo <tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [Bcache v13 14/16] bcache: Request, io and allocation code
+Date: Thu, 31 May 2012 11:43:27 +0900
+Message-ID: <20120531024327.GC32121@google.com>
 References: <cover.1336619038.git.koverstreet@google.com>
- <7f1de39b6d7040b3fe271500776f4b985b21ea82.1336619038.git.koverstreet@google.com>
- <20120530074708.GA32121@google.com>
+ <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
+ <20120530072358.GB4854@google.com>
+ <20120531005224.GA5645@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120530074708.GA32121-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120531005224.GA5645-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, May 30, 2012 at 04:47:08PM +0900, Tejun Heo wrote:
-> A couple more comments from this round of reading.
-> 
-> On Wed, May 09, 2012 at 11:10:48PM -0400, Kent Overstreet wrote:
-> > +#define btree_prio		USHRT_MAX
-> > +#define initial_prio		32768
-> 
-> Why are these in lower case?
+Hey, Kent.
 
-No good reason. I'll change it.
-
+On Wed, May 30, 2012 at 05:52:25PM -0700, Kent Overstreet wrote:
+> > > +int alloc_discards(struct cache *ca)
+> > > +{
+> > > +	for (int i = 0; i < 8; i++) {
+> > > +		struct discard *d = kzalloc(sizeof(*d), GFP_KERNEL);
+> > > +		if (!d)
+> > > +			return -ENOMEM;
+> > > +
+> > > +		d->c = ca;
+> > > +		INIT_WORK(&d->work, discard_work);
+> > > +		list_add(&d->list, &ca->discards);
+> > > +	}
+> > > +
+> > > +	return 0;
+> > > +}
+> > 
+> > Why maintain separate pool of discards?  It it to throttle discard
+> > commands?  And another evil number!
 > 
-> > +#define PTR_BUCKET(c, k, n)						\
-> > +	(PTR_CACHE(c, k, n)->buckets + PTR_BUCKET_NR(c, k, n))
-> 
-> PTR_BUCKET(c, k, n)
-> 
-> Awesome.  I don't know what type it takes or what each single
-> character argument stands for.
+> Yeah, it's just a mempool that also throttles. I don't particularly care
+> for doing it that way, any suggestions? (Just fixed the magic number, at
+> least).
 
-Yeah, that should be an inline function, along with some others. Fixed -
-well, have to convert the rest of the code to the lowercase names:
+I think the list is fine.  I'm curious how the 8 was chosen tho and
+what are the implications of higher or lower number.  If it's just a
+number you just liked and didn't cause any problem, that's fine too as
+long as it's explained as such.
 
-Maybe ptr_bucket_idx() instead of ptr_bucket_nr()?
-
-diff --git a/drivers/md/bcache/bcache.h b/drivers/md/bcache/bcache.h
-index 1011a73..0617885 100644
---- a/drivers/md/bcache/bcache.h
-+++ b/drivers/md/bcache/bcache.h
-@@ -717,15 +717,41 @@ PTR_FIELD(PTR_GEN,		0,  8)
- #define PTR(gen, offset, dev)						\
- 	((((uint64_t) dev) << 51) | ((uint64_t) offset) << 8 | gen)
- 
--#define sector_to_bucket(c, s)	((long) ((s) >> (c)->bucket_bits))
--#define bucket_to_sector(c, b)	(((sector_t) (b)) << (c)->bucket_bits)
--#define bucket_remainder(c, b)	((b) & ((c)->sb.bucket_size - 1))
-+static inline size_t sector_to_bucket(struct cache_set *c, sector_t s)
-+{
-+	return s >> c->bucket_bits;
-+}
-+
-+static inline sector_t bucket_to_sector(struct cache_set *c, size_t b)
-+{
-+	return ((sector_t) b) << c->bucket_bits;
-+}
- 
--#define PTR_CACHE(c, k, n)	((c)->cache[PTR_DEV(k, n)])
--#define PTR_BUCKET_NR(c, k, n)	sector_to_bucket(c, PTR_OFFSET(k, n))
-+static inline sector_t bucket_remainder(struct cache_set *c, sector_t s)
-+{
-+	return s & (c->sb.bucket_size - 1);
-+}
- 
--#define PTR_BUCKET(c, k, n)						\
--	(PTR_CACHE(c, k, n)->buckets + PTR_BUCKET_NR(c, k, n))
-+static inline struct cache *ptr_cache(struct cache_set *c,
-+				      struct bkey *k,
-+				      unsigned ptr)
-+{
-+	return c->cache[PTR_DEV(k, ptr)];
-+}
-+
-+static inline size_t ptr_bucket_nr(struct cache_set *c,
-+				   struct bkey *k,
-+				   unsigned ptr)
-+{
-+	return sector_to_bucket(c, PTR_OFFSET(k, ptr));
-+}
-+
-+static inline struct bucket *ptr_bucket(struct cache_set *c,
-+					struct bkey *k,
-+					unsigned ptr)
-+{
-+	return ptr_cache(c, k, ptr)->buckets + ptr_bucket_nr(c, k, ptr);
-+}
- 
- /* Btree key macros */
- 
+> > > +static long pop_bucket(struct cache *c, uint16_t priority, struct closure *cl)
+> > > +{
+> > > +	long r = -1;
+> > > +again:
+> > > +	free_some_buckets(c);
+> > > +
+> > > +	if ((priority == btree_prio ||
+> > > +	     fifo_used(&c->free) > 8) &&
+> > > +	    fifo_pop(&c->free, r)) {
+> > 
+> > This is unconventional and more difficult to read than
+> > 
+> > 	if ((priority == btree_prio || fifo_used(&c->free) > 8) &&
+> > 	    fifo_pop(&c->free, r)) {
+> > 
+> > It harms readability by both being unnecessarily different and
+> > visually less distinguishible.  Why do this?
 > 
-> > +static inline bool cached_dev_get(struct cached_dev *d)
-> > +{
-> > +	if (!atomic_inc_not_zero(&d->count))
-> > +		return false;
-> > +
-> > +	smp_mb__after_atomic_inc();
-> 
-> What is this mb() paired with?  Whenever using a mb, please specify
-> what the mb is paired with.
+> I prefer extra linebreaks in complicated if statements as the
+> indentation makes the way the parentheses group things clearer, but for
+> this one I'm fine with your version.
 
-super.c, cached_dev_attach():
+Hmmm.... more on the subject of style conformance at the end.
 
-	smp_wmb();
-	/* d->c must be set before d->count != 0 */
-	atomic_set(&d->count, 1);
+> > > +static struct open_bucket *get_data_bucket(struct bkey *search,
+> > > +					   struct search *s)
+> > > +{
+> > > +	struct closure cl, *w = NULL;
+> > > +	struct cache_set *c = s->op.d->c;
+> > > +	struct open_bucket *l, *ret, *ret_task;
+> > > +
+> > 
+> > Unnecessary new line.
+> 
+> That one serves no purpose, fixed.
+> 
+> > > +	BKEY_PADDED(key) alloc;
+> > 
+> > Why BKEY_PADDED()?  What does it do?  Can we not do this?
+> 
+> Just a bare struct bkey on the stack won't be big enough for any
+> pointers.
+> 
+> I _suppose_ I could do something like:
+> 
+> struct bkey_padded alloc_pad;
+> struct bkey *alloc = &alloc_pad.key;
+> 
+> I like that marginally better. Any better ideas?
 
-I'm improving the comments.
+Looks sane enough to me.  Maybe just use padded_key.key directly?
 
+> +/**
+> + * get_data_bucket - pick out a bucket to write some data to, possibly
+> + * allocating a new one.
+
+If you're gonna do /** comments, please also add arguments section.
+DocBook stuff may get unhappy.
+
+> + * We keep multiple buckets open for writes, and try to segregate different
+> + * write streams for better cache utilization: first we look for a bucket where
+> + * the last write to it was sequential with the current write, and failing that
+> + * we look for a bucket that was last used by the same task.
+> + *
+> + * The ideas is if you've got multiple tasks pulling data into the cache at the
+> + * same time, you'll get better cache utilization if you try to segregate their
+> + * data and preserve locality.
+> + *
+> + * For example, say you've starting Firefox at the same time you're copying a
+> + * bunch of files. Firefox will likely end up being fairly hot and stay in the
+> + * cache awhile, but the data you copied might not be; if you wrote all that
+> + * data to the same buckets it'd get invalidated at the same time.
+> + *
+> + * Both of those tasks will be doing fairly random IO so we can't rely on
+> + * detecting sequential IO to segregate their data, but going off of the task
+> + * should be a sane heuristic.
+> + */
+>  static struct open_bucket *get_data_bucket(struct bkey *search,
+>  					   struct search *s)
+>  {
+...
+> > > +static void bio_insert(struct closure *cl)
+> > 
+> > Too generic name.  This and a lot of others.  Note that there are
+> > issues other than direct compile time symbol collision - it makes the
+> > code difficult to grep for and stack traces difficult to decipher.
+> > I'm not gonna complain more about too generic names but please review
+> > the code and fix other instances too.
 > 
-> > +	return true;
-> > +}
+> I'm pretty terrible at naming, so if at some point you could help me
+> come up with names that are descriptive _to you_, it'd be a big help.
+
+The problem I'm having with names are two-fold.
+
+* Name not descriptive enough.  It doesn't have to be super verbose
+  but something which people can look at and associate with its type
+  and/or role would be great.  e.g. instead of k, use key, d -> cdev,
+  and so on.
+
+* Generic names.  bio_insert() belongs to block layer.  Block layer
+  may use it in the future and when one sees bio_insert(), it's
+  natural for that person to assume that it's a block layer thing
+  doing something with bio.  As for better name, I'm not sure.  Maybe
+  just prefix it with bc_?
+
+  Note that this isn't a 100% strict rule.  You can and people do get
+  away with some generic names and many of them don't cause any
+  problem over the lifetime of the code but it's just way too
+  prevalent in this code.  You can bend stuff only so much.
+
+> > > +
+> > > +	if (cached_dev_get(dc)) {
+> > > +		s = do_bio_hook(bio, d);
+> > > +		trace_bcache_request_start(&s->op, bio);
+> > > +
+> > > +		(!bio_has_data(bio)	? request_nodata :
+> > > +		 bio->bi_rw & REQ_WRITE ? request_write :
+> > > +					  request_read)(dc, s);
+> > 
+> > Don't do this.  Among other things, it should be possible to search /
+> > grep for "FUNCTION_NAME(" and find all the direct invocations.  Just
+> > use if/else.  You're not gaining anything from doing things like the
+> > above while basically aggravating other developers trying to
+> > understand your code.
 > 
-> Thanks.
+> I don't buy the argument about finding direct invocations (tons of stuff
+> is indirectly invoked today and i can't remember ever caring about
+> direct invocations vs. calls via a pointer, and worse for grepping is
+> all the set wrappers for things like merge_bvec_fn (it's inconsistent
+> and what is this, C++?)
 > 
-> -- 
-> tejun
+> But I give up, changed it :P
+
+So, I don't know.  I guess I might be too conservative but the
+followings are the points I want to make.
+
+* These small style issues don't really matter one way or the other.
+  They're mostly the matter or taste or preference after all.  Most
+  technical merits or shortcomings one perceives in this area tend to
+  be highly subjective and marginal, and the overhead of being unusual
+  tends to be way higher.  So, my or your taste doesn't weight that
+  much unless there actually are tangible technical merits which
+  people can agree upon.  I don't see that here (or in many other
+  bcache oddities).
+
+* These aren't hard and fast rules.  There isn't one true fixed
+  standard that everyone conforms to.  There still are different
+  styles and people adopt the ones they think are pretty.  That's how
+  it evolves, but it too is a problem of degree and you can bend only
+  so far before people start complaining.
+
+  For example, here's a fictionalized process that I got irritated and
+  felt generally hostile against the code base.
+
+  1. Reading code.  Full of macros.
+
+  2. Reading macros.  Single char arguments.  Starting to get
+     irritated.
+
+  3. Encountered closures.  Still unsure what they mean.  This one
+     looks like a simple refcnt.  Wonders what the hell is wrong with
+     the usual refcnts.  Maybe somehow this gets used differently
+     somewhere else?  Of course, no explanation.
+
+  4. While trying to follow the control flow, encounters a function
+     with full of cryptic numbers with "different" formatting.  No
+     high level explanation or anything.  Getting irritated.
+
+  5. Now in the lower half of the function, forgot how @d was being
+     used.  Pressed ctrl-s and then d to highlight the variable in the
+     function.  Ooh, pretty.
+
+  6. Saw the next function which seems static.  Tries to look for the
+     immediate caller by searching for FUNC_NAME( - hmmm... no match.
+     Maybe it's called indirectly somehow.  Looks for FUNC_NAME
+     assignments / used as arguments.  Find the function symbol buried
+     in ?:.
+
+  7. kajga;wioegja;sdklbja; bkjhaw83ua;kdgjasl;dgjk aw;eig93ua;kgNACK
+     NACK NACK NACK NACK
+
+So, at least to me, you seem to be pushing unique style / concepts too
+far and I can't identify the technical merits of doing so.  Code is to
+be read and worked together on by peer developers.
+
+Thanks.
+
+-- 
+tejun
