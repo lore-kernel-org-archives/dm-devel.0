@@ -1,156 +1,116 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [Bcache v13 14/16] bcache: Request, io and allocation code
-Date: Thu, 31 May 2012 15:45:15 +0900
-Message-ID: <20120531064515.GA18984@mtj.dyndns.org>
-References: <cover.1336619038.git.koverstreet@google.com>
- <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
- <20120530072358.GB4854@google.com>
- <20120531005224.GA5645@google.com>
- <20120531024327.GC32121@google.com>
- <20120531051321.GA12602@dhcp-172-18-216-138.mtv.corp.google.com>
+From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [ANNOUNCE] cryptsetup 1.4.3
+Date: Thu, 31 May 2012 10:38:10 +0200
+Message-ID: <4FC72DF2.9070106@gmail.com>
+References: <4EA85582.3080904@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120531051321.GA12602-RcKxWJ4Cfj3IzGYXcIpNmNLIRw13R84JkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+In-Reply-To: <4EA85582.3080904-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://www.saout.de/pipermail/dm-crypt>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hello, Kent.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-On Thu, May 31, 2012 at 01:13:21AM -0400, Kent Overstreet wrote:
-> BKEY_PADDED() was originally for keys in other structs that needed
-> padded, where the transparent union thing actually works. Are you
-> against the macro in general or just for stack allocated keys?
+The stable cryptsetup 1.4.3 release is available at
 
-Macro in general.  If it needs an extra union / struct member deref,
-so be it.  No need to be smart for things like this.
+   http://code.google.com/p/cryptsetup/
 
-> I would like more descriptive/unique variable names for cache,
-> cache_set, bcache_device and cached_dev, I'm just not coming up with
-> anything that's reasonably terse and seems to me like an improvement.
-> 
-> (I'm not really against cdev, it's just that bcache_device should then
-> be bdev by analogy and that's taken... argh).
->
-> Anyways, I'm not really attached to the current variable names like I am
-> some of the style issues, I just can't come up with anything I like.
+Feedback and bug reports are welcomed.
 
-Heh, yeah, naming isn't easy.  In most cases, it just has to be
-something consistent which has some association tho.
 
-> > * Generic names.  bio_insert() belongs to block layer.  Block layer
-> >   may use it in the future and when one sees bio_insert(), it's
-> >   natural for that person to assume that it's a block layer thing
-> >   doing something with bio.  As for better name, I'm not sure.  Maybe
-> >   just prefix it with bc_?
-> 
-> Agreed on bio_insert() (there's a fair number of functions that I've
-> been meaning to rename for similarish reasons - get_bucket() and
-> pop_bucket() don't have anything to do with each other, for example).
-> 
-> I think the function names are easier to improve than variabe names,
-> though. The main obstacle (for me) to renaming stuff is that when I do I
-> want to come up with names that are patterned on the relationships in
-> the code, and that'll take some work.
+Cryptsetup 1.4.3 Release Notes
+==============================
 
-It doesn't have to be perfect.  Naming schemes like anything else tend
-to lose consistency over time anyway, so something good enough is
-usually good enough.
+Changes since version 1.4.2
 
-> > * These aren't hard and fast rules.  There isn't one true fixed
-> >   standard that everyone conforms to.  There still are different
-> >   styles and people adopt the ones they think are pretty.  That's how
-> >   it evolves, but it too is a problem of degree and you can bend only
-> >   so far before people start complaining.
-> > 
-> >   For example, here's a fictionalized process that I got irritated and
-> >   felt generally hostile against the code base.
-> > 
-> >   1. Reading code.  Full of macros.
-> > 
-> >   2. Reading macros.  Single char arguments.  Starting to get
-> >      irritated.
-> > 
-> >   3. Encountered closures.  Still unsure what they mean.  This one
-> >      looks like a simple refcnt.  Wonders what the hell is wrong with
-> >      the usual refcnts.  Maybe somehow this gets used differently
-> >      somewhere else?  Of course, no explanation.
-> > 
-> >   4. While trying to follow the control flow, encounters a function
-> >      with full of cryptic numbers with "different" formatting.  No
-> >      high level explanation or anything.  Getting irritated.
-> 
-> Which function was that?
+* Fix readonly activation if underlying device is readonly (1.4.0).
 
-Heh, this was dramatized for maximum effect.  I was thinking about the
-condition check functions / macros with hard-coded constants.
+* Fix loop mapping on readonly file.
 
-...
-> I think also I haven't been explicit about it but I do try to
-> differentiate between style issues that are of no consequence (whoever
-> feels more strongly about those can decide, for all I care) and things
-> that make the codebase harder to read and understand.
-> 
-> Hell, I've never pretended to be any good at writing code that's
-> understandable by others. There's things I _am_ good at - writing fast
-> code, writing complex asynchronous code that _reliably works_ - but
-> understandable code? Hell no.
+* Include stddef.h in libdevmapper.h (size_t definition).
 
-I don't think your style is inferior or anything.  It's just different
-from the one used in the kernel.  I don't think it's anything
-difficult either.  It's just a matter of habit.
+* Fix keyslot removal for device with 4k hw block (1.4.0).
+(Wipe keyslot failed in this case.)
 
-...
-> That said, it does bug me when things are rejected out of hand merely
-> for being different and foreign.
-> 
-> Closures being the main example - I'd be more receptive to criticism if
-> I'd seen a half decent solution before, or if you or anyone else was
-> actually trying to come up with something better.
-> 
-> I'd really like to see what you come up with if you implement that bio
-> sequencer you've been talking about, because either you'll come up with
-> something better or you'll have a better understanding of the problems I
-> was trying to solve.
+* Relax --shared flag to allow mapping even for overlapping segments.
 
-I still don't understand what's being made better by closure.  At
-least the ones I've seen didn't seem to be justified, so if you have
-some examples which highlight the benefits of closure, please go ahead
-and explain them.
+  The --shared flag (and API CRYPT_ACTIVATE_SHARED flag) is now able
+  to map arbitrary overlapping area. From API it is even usable
+  for LUKS devices.
+  It is user responsibility to not cause data corruption though.
 
-I'll write more about it later but here are some of my current
-thoughts.
+  This allows e.g. scubed to work again and also allows some
+  tricky extensions later.
 
-* I personally think async (using something other than stack for
-  execution state) programming inherently sucks, no matter how it's
-  done.  The programming language and even the processor we use assume
-  that stack is used to track execution context after all.  My opinion
-  about async programming can essentially be summarized as "avoid it
-  as much as possible".
+* Allow empty cipher (cipher_null) for testing.
 
-* This itself may be too abstract but excess is often worse than lack,
-  especially for abstraction and design.  Problems caused by excess is
-  much more difficult to rectify as the problems are intentional and
-  systematic.  That's the part I dislike the most about kobject and
-  friends.
+  You can now use "null" (or directly cipher_null-ecb) in cryptsetup.
+  This means no encryption, useful for performance tests
+  (measure dm-crypt layer overhead).
 
-* I don't (yet anyway) believe that you have something drastically
-  better in closure.  You just have something very different and maybe
-  a bit more convenient.  Both async and refcnting are well known
-  problems with established patterns.
+* Switch on retry on device remove for libdevmapper.
+  Device-mapper now retry removal if device is busy.
 
-  In a sense, I think it's similar to the style argument although at a
-  higher level.  I don't think the amount of benefit justifies the
-  amount of deviation.
+* Allow "private" activation (skip some udev global rules) flag.
+  Cryptsetup library API now allows to specify CRYPT_ACTIVATE_PRIVATE,
+  which means that some udev rules are not processed.
+  (Used for temporary devices, like internal keyslot mappings where
+  it is not desirable to run any device scans.)
 
-So, at least to me, the bar for highly abstract refcnty async thingy
-is pretty high.  It's a ugly problem and I'd prefer to leave it ugly
-and painful unless it can be drastically better.
+* This release also includes some Red Hat/Fedora specific extensions
+related to FIPS140-2 compliance.
 
-Thanks.
+In fact, all these patches are more formal changes and are just subset
+of building blocks for FIPS certification. See FAQ for more details
+about FIPS.
 
--- 
-tejun
+FIPS extensions are enabled by using --enable-fips configure switch.
+
+In FIPS mode (kernel booted with fips=1 and gcrypt in FIPS mode)
+
+  - it provides library and binary integrity verification using
+  libfipscheck (requires pre-generated checksums)
+
+  - it uses FIPS approved RNG for encryption key and salt generation
+  (note that using /dev/random is not formally FIPS compliant RNG).
+
+ - only gcrypt crypto backend is currently supported in FIPS mode.
+
+The FIPS RNG requirement for salt comes from NIST SP 800-132 recommendation.
+(Recommendation for Password-Based Key Derivation. Part 1: Storage Applications.
+http://csrc.nist.gov/publications/nistpubs/800-132/nist-sp800-132.pdf)
+LUKS should be aligned to this recommendation otherwise.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAEBAgAGBQJPxy3yAAoJENmwV3vZPpj8338QAKV7PFpTuW8aIcx2wqM2C9QQ
+JWudHWLwPml88YYQt00FhaBQgN6zklElp9TQTGf/6l0tqluDgxc3ALuMi9+jCDb0
+yQGpgv1JE3ZhCb0OVpOBhp2p495J5zPVyBdOWEXIq0Go/pREoEbdQ9c5XANaKzF2
+oYCpw1QhXIf2z6cUMiTMfN3Ivb4E4KDmaAJpuWLdkqrrdOMrepEneYs4VSH+feQ4
+anmikqHqVSzkOQjmZ5cZYcfdMZCQlrJKdOpqwTQCLSzMvMLo3e/bb8J1l7+I1AIu
+Rkap0ODlCVX+QsddI1b38GLPVn3wxtme4wC6/gsGRi+uHThtjnCEOFq5wn2mlveN
+w6g3+F+sle+YjQsT5S9fgXlOMT4D6MaobTHQppDFa2ajYHsEJKWjX/yRALMBo7zq
+pN0sVHUT/dEj06RoPTEnObJmL/y3wY+ibE19+PdmBewYPr1uhwLlA/vCwnLiItxr
+GnRgXxex+rhJjrtCoJRrYNLeA6fFldrIovaoiHRft9bvJv9q3QYNgKLDJdCegUUT
+9OO/HlzkB7Vsds4xtgRgHXJNP9dZqOd9ccX4a2bAUj45n8FJ9F/u/n9G5uS7X6c8
+tOQCUmB+MS+WIINmSCP7wI3sDYfBaW4w0KxZvDyGQca6dddQPWabVARwKPG3q4Mi
+eoxGYC+mPiCL0kENLY4M
+=hmEH
+-----END PGP SIGNATURE-----
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+http://www.saout.de/mailman/listinfo/dm-crypt
