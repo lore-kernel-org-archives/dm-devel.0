@@ -1,108 +1,183 @@
-From: "majianpeng" <majianpeng@gmail.com>
-Subject: [PATCH] dm:simple_strtoul() cleanup.
-Date: Wed, 30 May 2012 16:23:29 +0800
-Message-ID: <201205301623260006539@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [Bcache v13 14/16] bcache: Request, io and allocation code
+Date: Fri, 1 Jun 2012 11:37:00 +0900
+Message-ID: <20120601023700.GE32121@google.com>
+References: <cover.1336619038.git.koverstreet@google.com>
+ <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
+ <20120530072358.GB4854@google.com>
+ <20120531005224.GA5645@google.com>
+ <20120531024327.GC32121@google.com>
+ <20120531051321.GA12602@dhcp-172-18-216-138.mtv.corp.google.com>
+ <20120531064515.GA18984@mtj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk <agk@redhat.com>
-Cc: dm-devel <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120531064515.GA18984-9pTldWuhBndy/B6EtB590w@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Change them to use kstrtoul/kstrtou8/kstrtouint instead of obsolete simple_strtoul().
+Hello, again, Kent.
 
-Signed-off-by: majianpeng <majianpeng@gmail.com>
----
- drivers/md/dm-crypt.c           |    5 +----
- drivers/md/dm-exception-store.c |    6 ++----
- drivers/md/dm-stripe.c          |    7 ++-----
- 3 files changed, 5 insertions(+), 13 deletions(-)
+On Thu, May 31, 2012 at 03:45:15PM +0900, Tejun Heo wrote:
+> I still don't understand what's being made better by closure.  At
+> least the ones I've seen didn't seem to be justified, so if you have
+> some examples which highlight the benefits of closure, please go ahead
+> and explain them.
+> 
+> I'll write more about it later but here are some of my current
+> thoughts.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 3f06df5..e2b3240 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1241,7 +1241,6 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
- static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
- {
- 	char buffer[3];
--	char *endp;
- 	unsigned int i;
- 
- 	buffer[2] = '\0';
-@@ -1250,9 +1249,7 @@ static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
- 		buffer[0] = *hex++;
- 		buffer[1] = *hex++;
- 
--		key[i] = (u8)simple_strtoul(buffer, &endp, 16);
--
--		if (endp != &buffer[2])
-+		if (kstrtou8(buffer, 16, &key[i]))
- 			return -EINVAL;
- 	}
- 
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index aa70f7d..cf583bc 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -143,11 +143,9 @@ static int set_chunk_size(struct dm_exception_store *store,
- 			  const char *chunk_size_arg, char **error)
- {
- 	unsigned long chunk_size_ulong;
--	char *value;
- 
--	chunk_size_ulong = simple_strtoul(chunk_size_arg, &value, 10);
--	if (*chunk_size_arg == '\0' || *value != '\0' ||
--	    chunk_size_ulong > UINT_MAX) {
-+	if (kstrtoul(chunk_size_arg, 10, &chunk_size_ulong) ||
-+			chunk_size_ulong > UINT_MAX) {
- 		*error = "Invalid chunk size";
- 		return -EINVAL;
- 	}
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index 35c94ff..183db5d 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -99,7 +99,6 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	sector_t width;
- 	uint32_t stripes;
- 	uint32_t chunk_size;
--	char *end;
- 	int r;
- 	unsigned int i;
- 
-@@ -108,14 +107,12 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		return -EINVAL;
- 	}
- 
--	stripes = simple_strtoul(argv[0], &end, 10);
--	if (!stripes || *end) {
-+	if (kstrtouint(argv[0], 10, &stripes) || !stripes) {
- 		ti->error = "Invalid stripe count";
- 		return -EINVAL;
- 	}
- 
--	chunk_size = simple_strtoul(argv[1], &end, 10);
--	if (*end) {
-+	if (kstrtouint(argv[1], 10, &chunk_size)) {
- 		ti->error = "Invalid chunk_size";
- 		return -EINVAL;
- 	}
+I'm gonna try my (personal, of course) reasoning on closure.  It's
+gonna be long-winded and fairly abstract.  The issue at hand is an
+abstract one and I don't know how to communicate it better.  :(
+
+My objection to closure is largely two-fold.
+
+1. Excessive abstraction / mosaicing of functions.
+
+Abstraction itself isn't a goal onto itself - it is a (pretty
+important) tool that we rely on to manage complexities.  By the very
+nature, it's heavily dependent on what concepts one develops on the
+subjct and those concepts may grow substantially removed from the
+concrete requirements and functionality, and as they get further
+removed from the concrete, different people tend to arrive at
+conclusions vastly far apart.  One man's paradise can easily be
+another's hell.  Concepts clear to one mind can be completely
+ambiguous or disturbing to others.
+
+It's a problem with no fast solution but IMHO trying to minimize the
+distance between the needed functionality (requirements) and the
+abstraction.  You brought up RB tree earlier in the discussion and
+that's a great example.  It provides a clear functionality of balanced
+search tree without much extra abstracting.  Most software developers
+can agree on the need of searching an element based on a key value and
+RB tree implements that specific functionality.  If one understands
+the need, the abstraction is fundamental and immediate and thus
+self-evident.
+
+One effective way of reaching at a bad abstraction, I think, is overly
+generalizing limited local usage patterns.  When one sees certain
+pattern repeated, it's tempting to overly generalize and make it some
+fundamental abstraction when the only things which actually exist are
+local usage patterns.
+
+Such over-generalization often ends up bundling things which aren't
+fundamentally associated.  After all, there aren't clear fundamental
+requirements such an abstraction is serving - it is a mosaic of
+incidental set of features which happen to be in use for the specific
+part of code.  Generalized ambiguity can be very generous - combining
+A and B resulted in this awesome generic super construct, adding C on
+top would woule make it super-duper, right?
+
+This harms both the local usage and the code base in general.  Local
+code develops unnecessary (generic things tend to have lives of their
+own) distance between the actual requirements and the mechanism
+implementing them making it more difficult to understand, and the rest
+of code base gets something which seems generic but is ambiguos,
+difficult to understand and easy to misuse.
+
+I personally think kobject is a good example of this.  Its name seems
+to suggest it's something like the base type for kernel objects.
+Pretty ambiguous and ambitious.  If you look at it, it's a combination
+of refcnting, elements for sysfs representation, weird looking type
+system mostly born out from sysfs usage and device driver model,
+userland notification mechanism and some more.  It's ass-ugly but
+seems to fit device driver model okish.  Unfortunately, as soon as it
+gets dragged out of device driver model, it isn't clear what different
+parts of the dang thing are supposed to do.
+
+For some device-driver-model specific reason, a directory in sysfs
+hierarchy maps to a kobject (there are attr dirs which are exceptions
+tho).  As soon as you start using sysfs outside device driver model,
+it becomes weird.  An entity which wants to expose something via sysfs
+somehow has to use kobject which brings in its object lifetime
+management which may not fit the existing usage model.
+
+Let's say there are entities A, B and C, where A and B follow mostly
+the same life-cycle rules and C is dependent on B, and A and C have
+something to expose via sysfs.  So, A and C embed kobjects inside
+them.  What about kobj life-cycle management then?  Let's say A and C
+use kobj life-cycle management.  Hmmm... C is dependent on B.  How
+does that play out?  What if some in-kernel entity represents two
+separate userland-visible entities?  What happens then?  Do people
+have to suppress / circumvent kobj lifecycle mechanism?  Wouldn't that
+make the code unnecessarily difficult to understand - extra cruft
+tends to be very effective at confusing people?
+
+The stupid thing is that sysfs doesn't need any of the kobject
+silliness.  sysfs should have provided interface fundamental to its
+features which device driver model should have used to implement
+whatever specific abstraction necessary and keep that inside.  The
+association between certain type of life cycle management and sysfs
+usage wasn't anything fundamental.  It was a device driver model local
+thing and the mechanism too should have stayed local inside the device
+driver model.
+
+At least for me, closure triggers all the alarms for bad generic
+abstraction.  The patch description you wrote for closure starts with
+"asynchronous refcounty thingies" and it's quite apt.  It's a
+combination of object life-cycle management, async execution, object
+hierarchy, event mechanism and even locking.  It isn't anything
+fundamental.  It's a kitchen sink with spoon, knife, chainsaw and
+toilet welded together.
+
+
+2. Making async programming better, or glaze-coating turd.
+
+As I wrote before, I personally think that async programming - using
+something other than stack for execution state - is inherently
+inferior.  The programming languages we program in and the processors
+the resulting programs run on depend on stack for execution context
+after all.  To my mind, async programming is inherently a turd.
+
+That isn't to say we can do away with async programming completely.
+At times, turds are unavoidable and even essential (and the line
+between turds and !turds isn't clear to begin with).  Process context
+can be expensive in terms of switching and/or memory overhead.  It
+would be silly to keep ten thousand threads lying around listening to
+ten thousand idle clients which may or may not make another request.
+It could also be silly to switch to a process context just to relay
+completion notification to another process context (although block
+layer kinda does that for a different reason).
+
+In block layer, the need for async programming rises mostly from the
+disconnection between issue and completion contexts.  The issuing
+context may not wait for the completion and we end up with IOs without
+matching process contexts.  The problem isn't too bad tho.  We require
+and thus have process context on the issue path and the completion
+paths tend to be not too complex.
+
+When we have to deal with async programming, I think the best approach
+is to identify why they're necessary, restrict their scopes to minimum
+and clearly contain them.  For example, bounce to wq as soon as things
+start to get complex, don't try to be smart with process contexts
+while something complex is going on, and relinquish context judicially
+when not doing so results in noticeable performance / resource hit and
+hopefully where doing so doesn't complicate things too much (e.g. it's
+a clear retry boundary).
+
+If you follow such patterns, there isn't too much need for fancy async
+mechanism to blur the pain.  Properly identified and consolidated,
+sync / async boundaries shouldn't be too painful to manage and the
+kernel already provides ample mechanisms to support such patterns.
+
+The problem with closure is that it's a mechanism to glaze-coat turd.
+By glaze-coating, it encourages littering turds around instead of
+consolidating and isolating them, so in that sense, I prefer async
+programming to remain painful and explicit.  People tend to do
+bat-shit crazy stuff otherwise.
+
+
+To conclude, I *hope* that bcache followed more usual async
+programming conventions, much like I hope it followed more usual
+coding style.  These aren't cut-and-dry issues and there probably are
+aspects that I haven't considered or lost balance on.  Please feel
+free to point them out.
+
+Thanks.
+
 -- 
-1.7.5.4
-
- 				
---------------
-majianpeng
-2012-05-30
+tejun
