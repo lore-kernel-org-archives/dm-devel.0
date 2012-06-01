@@ -1,183 +1,118 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [Bcache v13 14/16] bcache: Request, io and allocation code
-Date: Fri, 1 Jun 2012 11:37:00 +0900
-Message-ID: <20120601023700.GE32121@google.com>
-References: <cover.1336619038.git.koverstreet@google.com>
- <9ea33658f2a71b3b9bd2ec10bee959bef146f23c.1336619038.git.koverstreet@google.com>
- <20120530072358.GB4854@google.com>
- <20120531005224.GA5645@google.com>
- <20120531024327.GC32121@google.com>
- <20120531051321.GA12602@dhcp-172-18-216-138.mtv.corp.google.com>
- <20120531064515.GA18984@mtj.dyndns.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120531064515.GA18984-9pTldWuhBndy/B6EtB590w@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+From: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] Add dm-verity hash device detection to blkid.
+Date: Fri,  1 Jun 2012 13:34:08 +0200
+Message-ID: <1338550448-13005-1-git-send-email-mbroz@redhat.com>
+Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hello, again, Kent.
+dm-verity can use separate device for hash verification,
+in this case there is a superblock in the first sector.
 
-On Thu, May 31, 2012 at 03:45:15PM +0900, Tejun Heo wrote:
-> I still don't understand what's being made better by closure.  At
-> least the ones I've seen didn't seem to be justified, so if you have
-> some examples which highlight the benefits of closure, please go ahead
-> and explain them.
-> 
-> I'll write more about it later but here are some of my current
-> thoughts.
+See
+http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob;f=Documentation/device-mapper/verity.txt
+for more info.
 
-I'm gonna try my (personal, of course) reasoning on closure.  It's
-gonna be long-winded and fairly abstract.  The issue at hand is an
-abstract one and I don't know how to communicate it better.  :(
+Signed-off-by: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ libblkid/src/superblocks/lvm.c         |   41 ++++++++++++++++++++++++++++++++
+ libblkid/src/superblocks/superblocks.c |    1 +
+ libblkid/src/superblocks/superblocks.h |    1 +
+ 3 files changed, 43 insertions(+)
 
-My objection to closure is largely two-fold.
-
-1. Excessive abstraction / mosaicing of functions.
-
-Abstraction itself isn't a goal onto itself - it is a (pretty
-important) tool that we rely on to manage complexities.  By the very
-nature, it's heavily dependent on what concepts one develops on the
-subjct and those concepts may grow substantially removed from the
-concrete requirements and functionality, and as they get further
-removed from the concrete, different people tend to arrive at
-conclusions vastly far apart.  One man's paradise can easily be
-another's hell.  Concepts clear to one mind can be completely
-ambiguous or disturbing to others.
-
-It's a problem with no fast solution but IMHO trying to minimize the
-distance between the needed functionality (requirements) and the
-abstraction.  You brought up RB tree earlier in the discussion and
-that's a great example.  It provides a clear functionality of balanced
-search tree without much extra abstracting.  Most software developers
-can agree on the need of searching an element based on a key value and
-RB tree implements that specific functionality.  If one understands
-the need, the abstraction is fundamental and immediate and thus
-self-evident.
-
-One effective way of reaching at a bad abstraction, I think, is overly
-generalizing limited local usage patterns.  When one sees certain
-pattern repeated, it's tempting to overly generalize and make it some
-fundamental abstraction when the only things which actually exist are
-local usage patterns.
-
-Such over-generalization often ends up bundling things which aren't
-fundamentally associated.  After all, there aren't clear fundamental
-requirements such an abstraction is serving - it is a mosaic of
-incidental set of features which happen to be in use for the specific
-part of code.  Generalized ambiguity can be very generous - combining
-A and B resulted in this awesome generic super construct, adding C on
-top would woule make it super-duper, right?
-
-This harms both the local usage and the code base in general.  Local
-code develops unnecessary (generic things tend to have lives of their
-own) distance between the actual requirements and the mechanism
-implementing them making it more difficult to understand, and the rest
-of code base gets something which seems generic but is ambiguos,
-difficult to understand and easy to misuse.
-
-I personally think kobject is a good example of this.  Its name seems
-to suggest it's something like the base type for kernel objects.
-Pretty ambiguous and ambitious.  If you look at it, it's a combination
-of refcnting, elements for sysfs representation, weird looking type
-system mostly born out from sysfs usage and device driver model,
-userland notification mechanism and some more.  It's ass-ugly but
-seems to fit device driver model okish.  Unfortunately, as soon as it
-gets dragged out of device driver model, it isn't clear what different
-parts of the dang thing are supposed to do.
-
-For some device-driver-model specific reason, a directory in sysfs
-hierarchy maps to a kobject (there are attr dirs which are exceptions
-tho).  As soon as you start using sysfs outside device driver model,
-it becomes weird.  An entity which wants to expose something via sysfs
-somehow has to use kobject which brings in its object lifetime
-management which may not fit the existing usage model.
-
-Let's say there are entities A, B and C, where A and B follow mostly
-the same life-cycle rules and C is dependent on B, and A and C have
-something to expose via sysfs.  So, A and C embed kobjects inside
-them.  What about kobj life-cycle management then?  Let's say A and C
-use kobj life-cycle management.  Hmmm... C is dependent on B.  How
-does that play out?  What if some in-kernel entity represents two
-separate userland-visible entities?  What happens then?  Do people
-have to suppress / circumvent kobj lifecycle mechanism?  Wouldn't that
-make the code unnecessarily difficult to understand - extra cruft
-tends to be very effective at confusing people?
-
-The stupid thing is that sysfs doesn't need any of the kobject
-silliness.  sysfs should have provided interface fundamental to its
-features which device driver model should have used to implement
-whatever specific abstraction necessary and keep that inside.  The
-association between certain type of life cycle management and sysfs
-usage wasn't anything fundamental.  It was a device driver model local
-thing and the mechanism too should have stayed local inside the device
-driver model.
-
-At least for me, closure triggers all the alarms for bad generic
-abstraction.  The patch description you wrote for closure starts with
-"asynchronous refcounty thingies" and it's quite apt.  It's a
-combination of object life-cycle management, async execution, object
-hierarchy, event mechanism and even locking.  It isn't anything
-fundamental.  It's a kitchen sink with spoon, knife, chainsaw and
-toilet welded together.
-
-
-2. Making async programming better, or glaze-coating turd.
-
-As I wrote before, I personally think that async programming - using
-something other than stack for execution state - is inherently
-inferior.  The programming languages we program in and the processors
-the resulting programs run on depend on stack for execution context
-after all.  To my mind, async programming is inherently a turd.
-
-That isn't to say we can do away with async programming completely.
-At times, turds are unavoidable and even essential (and the line
-between turds and !turds isn't clear to begin with).  Process context
-can be expensive in terms of switching and/or memory overhead.  It
-would be silly to keep ten thousand threads lying around listening to
-ten thousand idle clients which may or may not make another request.
-It could also be silly to switch to a process context just to relay
-completion notification to another process context (although block
-layer kinda does that for a different reason).
-
-In block layer, the need for async programming rises mostly from the
-disconnection between issue and completion contexts.  The issuing
-context may not wait for the completion and we end up with IOs without
-matching process contexts.  The problem isn't too bad tho.  We require
-and thus have process context on the issue path and the completion
-paths tend to be not too complex.
-
-When we have to deal with async programming, I think the best approach
-is to identify why they're necessary, restrict their scopes to minimum
-and clearly contain them.  For example, bounce to wq as soon as things
-start to get complex, don't try to be smart with process contexts
-while something complex is going on, and relinquish context judicially
-when not doing so results in noticeable performance / resource hit and
-hopefully where doing so doesn't complicate things too much (e.g. it's
-a clear retry boundary).
-
-If you follow such patterns, there isn't too much need for fancy async
-mechanism to blur the pain.  Properly identified and consolidated,
-sync / async boundaries shouldn't be too painful to manage and the
-kernel already provides ample mechanisms to support such patterns.
-
-The problem with closure is that it's a mechanism to glaze-coat turd.
-By glaze-coating, it encourages littering turds around instead of
-consolidating and isolating them, so in that sense, I prefer async
-programming to remain painful and explicit.  People tend to do
-bat-shit crazy stuff otherwise.
-
-
-To conclude, I *hope* that bcache followed more usual async
-programming conventions, much like I hope it followed more usual
-coding style.  These aren't cut-and-dry issues and there probably are
-aspects that I haven't considered or lost balance on.  Please feel
-free to point them out.
-
-Thanks.
-
+diff --git a/libblkid/src/superblocks/lvm.c b/libblkid/src/superblocks/lvm.c
+index 3a9807c..57d2b6e 100644
+--- a/libblkid/src/superblocks/lvm.c
++++ b/libblkid/src/superblocks/lvm.c
+@@ -4,6 +4,7 @@
+  * Copyright (C) 2001 by Andreas Dilger
+  * Copyright (C) 2004 Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>
+  * Copyright (C) 2008 Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++ * Copyright (C) 2012 Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+  *
+  * This file may be redistributed under the terms of the
+  * GNU Lesser General Public License.
+@@ -142,6 +143,34 @@ static int probe_lvm1(blkid_probe pr, const struct blkid_idmag *mag)
+ 	return 0;
+ }
+ 
++#define MAX_SALT_SIZE 384
++struct verity_sb {
++	uint8_t signature[8];
++	uint8_t version;
++	uint8_t data_block_bits;
++	uint8_t hash_block_bits;
++	uint8_t pad1[1];
++	uint16_t salt_size;
++	uint8_t pad2[2];
++	uint32_t data_blocks_hi;
++	uint32_t data_blocks_lo;
++	uint8_t algorithm[16];
++	uint8_t salt[MAX_SALT_SIZE];
++	uint8_t pad3[88];
++} __attribute__((packed));
++
++static int probe_verity(blkid_probe pr, const struct blkid_idmag *mag)
++{
++	struct verity_sb *sb;
++
++	sb = blkid_probe_get_sb(pr, mag, struct verity_sb);
++	if (sb == NULL)
++		return -1;
++
++	blkid_probe_sprintf_version(pr, "%u", sb->version);
++	return 0;
++}
++
+ /* NOTE: the original libblkid uses "lvm2pv" as a name */
+ const struct blkid_idinfo lvm2_idinfo =
+ {
+@@ -180,3 +209,15 @@ const struct blkid_idinfo snapcow_idinfo =
+ 		{ NULL }
+ 	}
+ };
++
++const struct blkid_idinfo verity_hash_idinfo =
++{
++	.name		= "DM_verity_hash",
++	.usage		= BLKID_USAGE_CRYPTO,
++	.probefunc	= probe_verity,
++	.magics		=
++	{
++		{ .magic = "verity\0\0", .len = 8 },
++		{ NULL }
++	}
++};
+diff --git a/libblkid/src/superblocks/superblocks.c b/libblkid/src/superblocks/superblocks.c
+index 91f4f88..879a40f 100644
+--- a/libblkid/src/superblocks/superblocks.c
++++ b/libblkid/src/superblocks/superblocks.c
+@@ -96,6 +96,7 @@ static const struct blkid_idinfo *idinfos[] =
+ 	&lvm2_idinfo,
+ 	&lvm1_idinfo,
+ 	&snapcow_idinfo,
++	&verity_hash_idinfo,
+ 	&luks_idinfo,
+ 	&vmfs_volume_idinfo,
+ 
+diff --git a/libblkid/src/superblocks/superblocks.h b/libblkid/src/superblocks/superblocks.h
+index c97e447..086a568 100644
+--- a/libblkid/src/superblocks/superblocks.h
++++ b/libblkid/src/superblocks/superblocks.h
+@@ -50,6 +50,7 @@ extern const struct blkid_idinfo hpfs_idinfo;
+ extern const struct blkid_idinfo lvm2_idinfo;
+ extern const struct blkid_idinfo lvm1_idinfo;
+ extern const struct blkid_idinfo snapcow_idinfo;
++extern const struct blkid_idinfo verity_hash_idinfo;
+ extern const struct blkid_idinfo luks_idinfo;
+ extern const struct blkid_idinfo highpoint37x_idinfo;
+ extern const struct blkid_idinfo highpoint45x_idinfo;
 -- 
-tejun
+1.7.10
+
+--
+To unsubscribe from this list: send the line "unsubscribe util-linux" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
