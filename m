@@ -1,69 +1,47 @@
-From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: [PATCH v2 04/10] dm: use memweight()
-Date: Sat,  2 Jun 2012 22:40:10 +0900
-Message-ID: <1338644416-11417-4-git-send-email-akinobu.mita@gmail.com>
-References: <1338644416-11417-1-git-send-email-akinobu.mita@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper updates for 3.5
+Date: Sat, 2 Jun 2012 23:22:54 +0100
+Message-ID: <20120602222254.GI20415@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1338644416-11417-1-git-send-email-akinobu.mita@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, akpm@linux-foundation.org
-Cc: dm-devel@redhat.com, Akinobu Mita <akinobu.mita@gmail.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Hannes Reinecke <hare@suse.de>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Mike Christie <michaelc@cs.wisc.edu>
 List-Id: dm-devel.ids
 
-Use memweight() to count the total number of bits set in memory area.
-
-Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
-
-v2: change patch title s/dm-log:/dm:/
-
- drivers/md/dm-log.c |   13 ++-----------
- 1 files changed, 2 insertions(+), 11 deletions(-)
-
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 65ebaeb..627d191 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -571,16 +571,6 @@ static void disk_dtr(struct dm_dirty_log *log)
- 	destroy_log_context(lc);
- }
+Please pull from:
  
--static int count_bits32(uint32_t *addr, unsigned size)
--{
--	int count = 0, i;
--
--	for (i = 0; i < size; i++) {
--		count += hweight32(*(addr+i));
--	}
--	return count;
--}
--
- static void fail_log_device(struct log_c *lc)
- {
- 	if (lc->log_dev_failed)
-@@ -629,7 +619,8 @@ static int disk_resume(struct dm_dirty_log *log)
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.5-changes
  
- 	/* copy clean across to sync */
- 	memcpy(lc->sync_bits, lc->clean_bits, size);
--	lc->sync_count = count_bits32(lc->clean_bits, lc->bitset_uint32_count);
-+	lc->sync_count = memweight(lc->clean_bits,
-+				lc->bitset_uint32_count * sizeof(uint32_t));
- 	lc->sync_search = 0;
+to get the following device-mapper updates for 3.5.
  
- 	/* set the correct number of regions in the header */
--- 
-1.7.7.6
+Thanks,
+Alasdair
+
+----------------------------------------------------------------
+Improve multipath's retrying mechanism in some defined circumstances
+and provide a simple reserve/release mechanism for userspace tools to
+access thin provisioning metadata while the pool is in use.
+
+----------------------------------------------------------------
+Joe Thornber (1):
+      dm thin: provide userspace access to pool metadata
+
+Mike Christie (1):
+      dm mpath: delay retry of bypassed pg
+
+Mike Snitzer (2):
+      dm mpath: reduce size of struct multipath
+      dm thin: use slab mempools
+
+Mikulas Patocka (1):
+      dm mpath: allow ioctls to trigger pg init
+
+ Documentation/device-mapper/thin-provisioning.txt |   11 ++
+ drivers/md/dm-mpath.c                             |   47 +++--
+ drivers/md/dm-thin-metadata.c                     |  136 +++++++++++++-
+ drivers/md/dm-thin-metadata.h                     |   13 +-
+ drivers/md/dm-thin.c                              |  203 ++++++++++++++-------
+ 5 files changed, 320 insertions(+), 90 deletions(-)
