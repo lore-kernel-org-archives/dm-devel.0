@@ -1,22 +1,26 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper updates for 3.5
-Date: Sat, 2 Jun 2012 23:22:54 +0100
-Message-ID: <20120602222254.GI20415@agk-dp.fab.redhat.com>
+Subject: Re: [git pull] device-mapper updates for 3.5
+Date: Sun, 3 Jun 2012 00:48:00 +0100
+Message-ID: <20120602234800.GA9293@agk-dp.fab.redhat.com>
+References: <20120602222254.GI20415@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20120602222254.GI20415@agk-dp.fab.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Hannes Reinecke <hare@suse.de>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Mike Christie <michaelc@cs.wisc.edu>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Hannes Reinecke <hare@suse.de>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Mike Christie <michaelc@cs.wisc.edu>, wfg@linux.intel.com
 List-Id: dm-devel.ids
+
+Revised version dealing with a couple of symbols reported by Fengguang Wu.
 
 Please pull from:
  
-  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.5-changes
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.5-changes-1
  
 to get the following device-mapper updates for 3.5.
- 
+  
 Thanks,
 Alasdair
 
@@ -39,9 +43,10 @@ Mike Snitzer (2):
 Mikulas Patocka (1):
       dm mpath: allow ioctls to trigger pg init
 
- Documentation/device-mapper/thin-provisioning.txt |   11 ++
- drivers/md/dm-mpath.c                             |   47 +++--
- drivers/md/dm-thin-metadata.c                     |  136 +++++++++++++-
- drivers/md/dm-thin-metadata.h                     |   13 +-
- drivers/md/dm-thin.c                              |  203 ++++++++++++++-------
- 5 files changed, 320 insertions(+), 90 deletions(-)
+ Documentation/device-mapper/thin-provisioning.txt  |   11 ++
+ drivers/md/dm-mpath.c                              |   47 +++--
+ drivers/md/dm-thin-metadata.c                      |  136 ++++++++++++-
+ drivers/md/dm-thin-metadata.h                      |   13 +-
+ drivers/md/dm-thin.c                               |  203 ++++++++++++++------
+ .../md/persistent-data/dm-transaction-manager.c    |    2 +
+ 6 files changed, 322 insertions(+), 90 deletions(-)
