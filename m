@@ -1,32 +1,65 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: EXT4-fs error (device dm-42): ext4_mb_generate_buddy:741: group
- 1904, 32254 clusters in bitmap, 32258 in gd
-Date: Mon, 4 Jun 2012 17:03:56 -0700
-Message-ID: <20120605000356.GM29466@outflux.net>
-References: <471046920.20120604234941@eikelenboom.it>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH v3 14/16] Gut bio_add_page()
+Date: Tue, 5 Jun 2012 10:33:10 +1000
+Message-ID: <20120605003309.GD4347@dastard>
+References: <1337977539-16977-1-git-send-email-koverstreet@google.com>
+ <1337977539-16977-15-git-send-email-koverstreet@google.com>
+ <20120525204651.GA24246@redhat.com>
+ <20120525210944.GB14196@google.com>
+ <20120529015438.GZ5091@dastard>
+ <20120529033434.GC10175@dhcp-172-18-216-138.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <471046920.20120604234941@eikelenboom.it>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Sander Eikelenboom <linux@eikelenboom.it>
-Cc: Ted Ts'o <tytso@mit.edu>, Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20120529033434.GC10175@dhcp-172-18-216-138.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, yehuda@hq.newdream.net, mpatocka@redhat.com, vgoyal@redhat.com, bharrosh@panasas.com, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com, Dave Chinner <dchinner@redhat.com>, tytso@google.com
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, May 28, 2012 at 11:34:34PM -0400, Kent Overstreet wrote:
+> On Tue, May 29, 2012 at 11:54:38AM +1000, Dave Chinner wrote:
+> > It also allowed us to build IOs that span
+> > entire RAID stripe widths, thereby avoiding potential RAID RMW
+> > cycles, and even allowing high end raid controllers to trigger BBWC
+> > bypass fast paths that could double or triple the write throughput
+> > of the arrays...
+> 
+> merge_bvec_fn has nothing to do with that though, since for one there
 
-On Mon, Jun 04, 2012 at 11:49:41PM +0200, Sander Eikelenboom wrote:
-> I have enabled some debug options, this is from around when the error occurs (kernel: [  950.610126] EXT4-fs error (device dm-42): ext4_mb_generate_buddy:741: group 1699, 32254 clusters in bitmap, 32258 in gd)
+You're mistaking me for someone who cares about merge_bvec_fn().
+Someone asked me to describe why XFS uses bio_add_page()....
 
-Today I've finally managed to bisect this to here:
-[fd034a84e1ea5c8c8d159cd2089c32e792c269b0] ext4: split out ext4_free_blocks_after_init()
+> aren't any merge_bvec_fn's being called in the IO paths on these high
+> end disk arrays,
 
-If I revert all the "ext4:" patches in 3.2 up to and including that one,
-I get normal behavior again.
+Yes there are, because high bandwidth filesytem use software RAID 0
+striping to stripe multiple hardware RAID luns together to acheive
+the necessary bandwidth. Hardware RAID is used for disk failure
+prevention and to manage 1000 disks more easily, while software RAID
+(usually with multipathing) is used to scale the performance....
 
--Kees
+> and for our software raid implementations their
+> merge_bvec_fns will keep you from sending them bios that span entire
+> stripes.
 
+Well, yeah, the lower layer has to break up large bios into chunks
+for it's sub-devices.  What matters is that we build IOs that are
+larger than what the lower layers break it up into. e.g. if your
+hardware RAID5 stripe width is 1MB, then the software RAID chunks
+size is 1MB (and the stripe width is N luns X 1MB), then all that
+matters is that we build IOs larger than 1MB so that we get full
+stripe writes at that hardware RAID level and so avoid RMW cycles
+right at the bottom of the IO stack...
+
+As long as the new code still allows us to achieve the same or
+better IO sizes without any new overhead, then I simply don't care
+what happens to the guts of bio_add_page().
+
+Cheers,
+
+Dave.
 -- 
-Kees Cook
-ChromeOS Security
+Dave Chinner
+david@fromorbit.com
