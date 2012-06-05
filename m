@@ -1,30 +1,37 @@
-From: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] Add dm-verity hash device detection to blkid.
-Date: Tue, 5 Jun 2012 15:02:56 +0200
-Message-ID: <20120605130256.GI14536@x2.net.home>
-References: <1338550448-13005-1-git-send-email-mbroz@redhat.com>
+From: Sander Eikelenboom <linux@eikelenboom.it>
+Subject: Re: EXT4-fs error (device dm-42): ext4_mb_generate_buddy:741: group 1904, 32254 clusters in bitmap, 32258 in gd
+Date: Tue, 5 Jun 2012 22:41:54 +0200
+Message-ID: <1018371644.20120605224154@eikelenboom.it>
+References: <471046920.20120604234941@eikelenboom.it> <20120605000356.GM29466@outflux.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1338550448-13005-1-git-send-email-mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120605000356.GM29466@outflux.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Ted Ts'o <tytso@mit.edu>, Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Jun 01, 2012 at 01:34:08PM +0200, Milan Broz wrote:
->  libblkid/src/superblocks/lvm.c         |   41 ++++++++++++++++++++++++++++++++
->  libblkid/src/superblocks/superblocks.c |    1 +
->  libblkid/src/superblocks/superblocks.h |    1 +
->  3 files changed, 43 insertions(+)
+Tuesday, June 5, 2012, 2:03:56 AM, you wrote:
 
- Applied, thanks.
+> Hi,
 
--- 
- Karel Zak  <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
- http://karelzak.blogspot.com
+> On Mon, Jun 04, 2012 at 11:49:41PM +0200, Sander Eikelenboom wrote:
+>> I have enabled some debug options, this is from around when the error occurs (kernel: [  950.610126] EXT4-fs error (device dm-42): ext4_mb_generate_buddy:741: group 1699, 32254 clusters in bitmap, 32258 in gd)
+
+> Today I've finally managed to bisect this to here:
+> [fd034a84e1ea5c8c8d159cd2089c32e792c269b0] ext4: split out ext4_free_blocks_after_init()
+
+> If I revert all the "ext4:" patches in 3.2 up to and including that one,
+> I get normal behavior again.
+
+Hmm that seems consistent with this report which mentions 3.1.5 as last working kernel:
+http://comments.gmane.org/gmane.comp.file-systems.ext4/30575
+
+So somehow this only effects ext4 on DM (it's THE common factor in all reports) and fsck seems incapable of seeing the error (and thus repair it.)
+
 --
-To unsubscribe from this list: send the line "unsubscribe util-linux" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Sander
+
+> -Kees
