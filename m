@@ -1,96 +1,84 @@
-From: Brian Bunker <brian@purestorage.com>
-Subject: Re: different LUN numbers under the same dm device
-Date: Wed, 6 Jun 2012 13:59:02 -0700
-Message-ID: <A1C07741-D139-45F5-A877-A5E5DC792AD3@purestorage.com>
-References: <8DCD6D08-35CE-48CC-AC54-7436265C32CB@purestorage.com>
-	<20120606203507.GC16432@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1278)
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120606203507.GC16432@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: EXT4-fs error (device dm-42): ext4_mb_generate_buddy:741:
+ group 1904, 32254 clusters in bitmap, 32258 in gd
+Date: Thu, 7 Jun 2012 00:27:56 -0400
+Message-ID: <20120607042756.GA30776@thunk.org>
+References: <471046920.20120604234941@eikelenboom.it>
+ <20120605000356.GM29466@outflux.net>
+ <1018371644.20120605224154@eikelenboom.it>
+ <20120605210806.GB7182@thunk.org>
+ <1883708187.20120606090126@eikelenboom.it>
+ <CAGXu5jK-4dO59-x3eTU10OntcPwsVptjpUzQdbbHOvy9_VBQ2A@mail.gmail.com>
+ <1482118647.20120606164012@eikelenboom.it>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1482118647.20120606164012@eikelenboom.it>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sander Eikelenboom <linux@eikelenboom.it>
+Cc: Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Mike,
+I think this patch should fix things.  Could you give it a try (after
+re-enabling uninit_bg and then running e2fsck on the file systems)?
 
-The devices for LUN 12 are failed and correspond to LUN's not currently shared to the initiator at all. They were at one point and were likely used by dm-11 for its underlying paths. The inquiry data of those LUN's when the problem happened was like this:
+Many thanks,
 
-[root@r13init32 ~]# sg_inq /dev/sde
-standard INQUIRY: [qualifier indicates no connected LU]
-  PQual=1  Device_type=31  RMB=0  version=0x06  [SPC-4]
-  [AERC=0]  [TrmTsk=0]  NormACA=0  HiSUP=0  Resp_data_format=2
-  SCCS=0  ACC=0  TPGS=0  3PC=0  Protect=0  BQue=0
-  EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
-  [RelAdr=0]  WBus16=0  Sync=0  Linked=0  [TranDis=0]  CmdQue=1
-  [SPI: Clocking=0x0  QAS=0  IUS=0]
-    length=96 (0x60)   Peripheral device type: no physical device on this lu
- Vendor identification: PURE    
- Product identification: FlashArray      
- Product revision level: 100 
+						- Ted
 
-There is no NAA number, page code 0x83 or LUN serial number available, page code 0x80 since there is no LUN 12 attached as a disk device at the time multipath -ll was run. Different LUN's from our array would ever have the same NAA value, what I think you are calling UUID. 
+commit b6b218940d47f20fc14e4d203930c575be0c65bf
+Author: Theodore Ts'o <tytso@mit.edu>
+Date:   Thu Jun 7 00:26:56 2012 -0400
 
-The sequence is something like share a LUN from the array with two paths to the initiator, a dm device gets created presumably like this at first (except that the status would be active and ready and not failed and faulty:
+    ext4: fix the free blocks calculation for ext3 file systems w/ uninit_bg
+    
+    Ext3 filesystems that are converted to use as many ext4 file systems
+    as possible will enable uninit_bg to speed up e2fsck times.  File
+    systems with an native ext3 layout of inode tables and block
+    allocation bitmaps (as opposed to ext4's flex_bg layout), ext4 would
+    sometimes incorrectly calculate the number of free blocks in an
+    uninitialized block group.  As a result, when first allocating a block
+    in block group marked uninitalized, ext4 would incorrectly report that
+    the file system was corrupt:
+    
+    EXT4-fs error (device dm-42): ext4_mb_generate_buddy:741: group 1699, 32254 clusters in bitmap, 32258 in gd
+    
+    Fix the calculation in ext4_num_overhead_clusters() to avoid this
+    problem.
+    
+    Signed-off-by: "Theodore Ts'o" <tytso@mit.edu>
 
-  3624a93700a14254d729923840001000b dm-11 PURE,FlashArray
-  size=500G features='0' hwhandler='0' wp=rw
-   `-+- policy='round-robin 0' prio=1 status=active
-   |- 1:0:0:12 sde  8:64   failed faulty running
-   |- 0:0:0:12 sdd  8:48   failed faulty running
-
-Then that LUN 12 is taken away from the initiator and the dm device dm-11 is reused later by LUN 10 when it is shared to the initiator, but the LUN 12 devices still remain as part of the dm device. Then I would expect:
-
- 3624a93700a14254d729923840001000b dm-11 PURE,FlashArray
- size=500G features='0' hwhandler='0' wp=rw
- `-+- policy='round-robin 0' prio=1 status=active
-   |- 0:0:0:10 sdar 66:176 active ready  running
-   !- 1:0:0:10 sdba 67:64  active ready  running
-
-Thanks,
-Brian
-
-On Jun 6, 2012, at 1:35 PM, Mike Snitzer wrote:
-
-> On Wed, Jun 06 2012 at  3:27pm -0400,
-> Brian Bunker <brian@purestorage.com> wrote:
-> 
->> Our company produces a multiple port Fibre Channel storage array. We
->> are continually plagued by this problem. We get a dm device which
->> combines paths for different LUN's. We would like to understand why
->> this is happening. Wouldn't this problem almost certainly lead to a
->> data corruption?
->> 
->> Thanks,
->> Brian
->> 
->> 3624a93700a14254d729923840001000b dm-11 PURE,FlashArray
->> size=500G features='0' hwhandler='0' wp=rw
->> `-+- policy='round-robin 0' prio=1 status=active
->>  |- 1:0:0:12 sde  8:64   failed faulty running
->>  |- 0:0:0:12 sdd  8:48   failed faulty running
->>  |- 0:0:0:10 sdar 66:176 active ready  running
->>  `- 1:0:0:10 sdba 67:64  active ready  running
->> 
->> Of the 4 paths to dm-11, we can see two paths are for LUN 10 and the
->> other two are for LUN 12. We have 24 other dm devices which have only
->> the expected 2 paths.
-> 
-> Multipath considers all LUNs with the same UUID to be the same LUN.
-> 
-> So you should first try to understand why all of these paths were held
-> to have the same UUID (3624a93700a14254d729923840001000b).
-
-Brian Bunker
-brian@purestorage.com
+diff --git a/fs/ext4/balloc.c b/fs/ext4/balloc.c
+index 99b6324..cee7812 100644
+--- a/fs/ext4/balloc.c
++++ b/fs/ext4/balloc.c
+@@ -90,8 +90,8 @@ unsigned ext4_num_overhead_clusters(struct super_block *sb,
+ 	 * unusual file system layouts.
+ 	 */
+ 	if (ext4_block_in_group(sb, ext4_block_bitmap(sb, gdp), block_group)) {
+-		block_cluster = EXT4_B2C(sbi, (start -
+-					       ext4_block_bitmap(sb, gdp)));
++		block_cluster = EXT4_B2C(sbi,
++					 ext4_block_bitmap(sb, gdp) - start);
+ 		if (block_cluster < num_clusters)
+ 			block_cluster = -1;
+ 		else if (block_cluster == num_clusters) {
+@@ -102,7 +102,7 @@ unsigned ext4_num_overhead_clusters(struct super_block *sb,
+ 
+ 	if (ext4_block_in_group(sb, ext4_inode_bitmap(sb, gdp), block_group)) {
+ 		inode_cluster = EXT4_B2C(sbi,
+-					 start - ext4_inode_bitmap(sb, gdp));
++					 ext4_inode_bitmap(sb, gdp) - start);
+ 		if (inode_cluster < num_clusters)
+ 			inode_cluster = -1;
+ 		else if (inode_cluster == num_clusters) {
+@@ -114,7 +114,7 @@ unsigned ext4_num_overhead_clusters(struct super_block *sb,
+ 	itbl_blk = ext4_inode_table(sb, gdp);
+ 	for (i = 0; i < sbi->s_itb_per_group; i++) {
+ 		if (ext4_block_in_group(sb, itbl_blk + i, block_group)) {
+-			c = EXT4_B2C(sbi, start - itbl_blk + i);
++			c = EXT4_B2C(sbi, itbl_blk + i - start);
+ 			if ((c < num_clusters) || (c == inode_cluster) ||
+ 			    (c == block_cluster) || (c == itbl_cluster))
+ 				continue;
