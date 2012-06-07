@@ -1,124 +1,45 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: different LUN numbers under the same dm device
-Date: Thu, 7 Jun 2012 17:39:54 -0500
-Message-ID: <20120607223954.GC3211@ether.msp.redhat.com>
-References: <8DCD6D08-35CE-48CC-AC54-7436265C32CB@purestorage.com>
-	<20120606203507.GC16432@redhat.com>
-	<A1C07741-D139-45F5-A877-A5E5DC792AD3@purestorage.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: [dm-devel] EXT4-fs error (device dm-42):
+ ext4_mb_generate_buddy:741: group 1904, 32254 clusters in bitmap, 32258 in
+ gd
+Date: Thu, 7 Jun 2012 18:54:46 -0400
+Message-ID: <20120607225446.GK19839@thunk.org>
+References: <471046920.20120604234941@eikelenboom.it>
+ <20120605000356.GM29466@outflux.net>
+ <1018371644.20120605224154@eikelenboom.it>
+ <20120605210806.GB7182@thunk.org>
+ <1883708187.20120606090126@eikelenboom.it>
+ <CAGXu5jK-4dO59-x3eTU10OntcPwsVptjpUzQdbbHOvy9_VBQ2A@mail.gmail.com>
+ <1482118647.20120606164012@eikelenboom.it>
+ <20120607042756.GA30776@thunk.org>
+ <20120607222729.GI6938@tux1.beaverton.ibm.com>
+ <CAGXu5jKmBkfvuSR7q47-Ac57dVZynz_JkYXiA_-aXaGQiR_C4g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <A1C07741-D139-45F5-A877-A5E5DC792AD3@purestorage.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <CAGXu5jKmBkfvuSR7q47-Ac57dVZynz_JkYXiA_-aXaGQiR_C4g@mail.gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: djwong@us.ibm.com, Sander Eikelenboom <linux@eikelenboom.it>, Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jun 06, 2012 at 01:59:02PM -0700, Brian Bunker wrote:
-> Mike,
+On Thu, Jun 07, 2012 at 03:40:40PM -0700, Kees Cook wrote:
 > 
-> The devices for LUN 12 are failed and correspond to LUN's not currently shared to the initiator at all. They were at one point and were likely used by dm-11 for its underlying paths. The inquiry data of those LUN's when the problem happened was like this:
+> FWIW, I was building the filesystem that triggered this as ext4:
 > 
-> [root@r13init32 ~]# sg_inq /dev/sde
-> standard INQUIRY: [qualifier indicates no connected LU]
->   PQual=1  Device_type=31  RMB=0  version=0x06  [SPC-4]
->   [AERC=0]  [TrmTsk=0]  NormACA=0  HiSUP=0  Resp_data_format=2
->   SCCS=0  ACC=0  TPGS=0  3PC=0  Protect=0  BQue=0
->   EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
->   [RelAdr=0]  WBus16=0  Sync=0  Linked=0  [TranDis=0]  CmdQue=1
->   [SPI: Clocking=0x0  QAS=0  IUS=0]
->     length=96 (0x60)   Peripheral device type: no physical device on this lu
->  Vendor identification: PURE    
->  Product identification: FlashArray      
->  Product revision level: 100 
-> 
-> There is no NAA number, page code 0x83 or LUN serial number available, page code 0x80 since there is no LUN 12 attached as a disk device at the time multipath -ll was run. Different LUN's from our array would ever have the same NAA value, what I think you are calling UUID. 
-> 
-> The sequence is something like share a LUN from the array with two paths to the initiator, a dm device gets created presumably like this at first (except that the status would be active and ready and not failed and faulty:
-> 
->   3624a93700a14254d729923840001000b dm-11 PURE,FlashArray
->   size=500G features='0' hwhandler='0' wp=rw
->    `-+- policy='round-robin 0' prio=1 status=active
->    |- 1:0:0:12 sde  8:64   failed faulty running
->    |- 0:0:0:12 sdd  8:48   failed faulty running
-> 
-> Then that LUN 12 is taken away from the initiator and the dm device dm-11 is reused later by LUN 10 when it is shared to the initiator, but the LUN 12 devices still remain as part of the dm device. Then I would expect:
-> 
->  3624a93700a14254d729923840001000b dm-11 PURE,FlashArray
->  size=500G features='0' hwhandler='0' wp=rw
->  `-+- policy='round-robin 0' prio=1 status=active
->    |- 0:0:0:10 sdar 66:176 active ready  running
->    !- 1:0:0:10 sdba 67:64  active ready  running
-> 
-> Thanks,
-> Brian
+>   mkfs.ext4 -T default -m 0 -O ^huge_file,^flex_bg -E
+> discard,lazy_itable_init /dev/mapper/...
 
-So, did sde and sdd (the paths for the multipath device for LUN 12)
-originally have the wwid of 3624a93700a14254d729923840001000b.  Do
-sdar and sdba actually have the wwid of
-3624a93700a14254d729923840001000b.  You can check this by running
+Ouy of curiosity, was there a reason you chose those particular file
+system parameters?  It's a surprising set, because if you're starting
+with a fresh file system, enabling flex_bg produces a more optimal
+file system layout.
 
-# scsi_id --whitelisted --device=<devname>
+The reason why I wrote the commit description way I did was because it
+seemed to be the most likely way that someone would trip across this
+bug.  We didn't notice this for as long as we did since most of the
+users of ext4 (especially those who use community distributions) have
+been using freshly mkfs'ed ext4 file systems.
 
-for example
-
-# scsi_id --whitelisted --device=/dev/sde
-
-If all of these scsi devices return the same value, then multipath
-has no way of knowing that they don't belong together. If not, I'd
-like to know which devices don't really have that UUID.
-
--Ben
-
-> 
-> On Jun 6, 2012, at 1:35 PM, Mike Snitzer wrote:
-> 
-> > On Wed, Jun 06 2012 at  3:27pm -0400,
-> > Brian Bunker <brian@purestorage.com> wrote:
-> > 
-> >> Our company produces a multiple port Fibre Channel storage array. We
-> >> are continually plagued by this problem. We get a dm device which
-> >> combines paths for different LUN's. We would like to understand why
-> >> this is happening. Wouldn't this problem almost certainly lead to a
-> >> data corruption?
-> >> 
-> >> Thanks,
-> >> Brian
-> >> 
-> >> 3624a93700a14254d729923840001000b dm-11 PURE,FlashArray
-> >> size=500G features='0' hwhandler='0' wp=rw
-> >> `-+- policy='round-robin 0' prio=1 status=active
-> >>  |- 1:0:0:12 sde  8:64   failed faulty running
-> >>  |- 0:0:0:12 sdd  8:48   failed faulty running
-> >>  |- 0:0:0:10 sdar 66:176 active ready  running
-> >>  `- 1:0:0:10 sdba 67:64  active ready  running
-> >> 
-> >> Of the 4 paths to dm-11, we can see two paths are for LUN 10 and the
-> >> other two are for LUN 12. We have 24 other dm devices which have only
-> >> the expected 2 paths.
-> > 
-> > Multipath considers all LUNs with the same UUID to be the same LUN.
-> > 
-> > So you should first try to understand why all of these paths were held
-> > to have the same UUID (3624a93700a14254d729923840001000b).
-> 
-> Brian Bunker
-> brian@purestorage.com
-> 
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+						- Ted
