@@ -1,19 +1,12 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: different LUN numbers under the same dm device
-Date: Fri, 08 Jun 2012 02:52:57 -0500
-Message-ID: <4FD1AF59.3040101@cs.wisc.edu>
-References: <8DCD6D08-35CE-48CC-AC54-7436265C32CB@purestorage.com>
-	<20120606203507.GC16432@redhat.com>
-	<A1C07741-D139-45F5-A877-A5E5DC792AD3@purestorage.com>
-	<20120607223954.GC3211@ether.msp.redhat.com>
-	<F6378CE3-200B-4AF4-97BC-B3A310231420@purestorage.com>
-	<4FD1A2BF.2090109@suse.de>
+From: "Benjamin S. Scarlet" <scarlet@alum.mit.edu>
+Subject: access to snapshot deltas
+Date: Fri, 08 Jun 2012 10:56:06 -0400
+Message-ID: <1339167366.25380.47.camel@pod.greynode.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4FD1A2BF.2090109@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,60 +16,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 06/08/2012 01:59 AM, Hannes Reinecke wrote:
-> (Third mail on this topic .. I really should've read the entire
-> thread before answering. But there you go.)
-> 
-> On 06/08/2012 01:26 AM, Brian Bunker wrote:
->> The answer is yes they did have that LUN NAA value that comes from page code 0x83 in inquiry.
->> Then the LUN was unmasked from that initiator. That initiator is
-> holding on to those device
->> names in multipath. If you query them when they are in the state
-> that I show in the
->> multipath -ll result, they will not return an NAA number at all in
-> page code 0x83 or
->> a serial number in page code 0x80. They will instead return a PQ
-> of 1 meaning that the
->> LUN is capable of supporting a peripheral device but is not currently.
->>
-> Hehe.
-> 
->> I understand about LUN's needing different NAA numbers and ours do, and we also have
->> different LUN serial numbers for each LUN on the target. An
-> initiator doesn't always
->> have to access to all LUN's that it once did. It is the re-use of
-> dm devices that
->> seems to cause this result.
->>
-> No, rather a problem with the SCSI stack. multipath normally relies
-> on udev to keep track of any device events, like LUNs coming and
-> going. But this only works reliably if these events are triggered
-> via the underlying transport, like FC RSCN et al.
-> 
-> 'Real' scsi events which will get transmitted via Sense codes are
-> not evaluated further, sadly.
-> 
-> So short-term you are supposed to call 'rescan-scsi-bus.sh -r'
-> whenever you made any LUN assigment changes on the array.
-> Mid-term we already agreed on implementing some proper sense code
-> handling in the SCSI midlayer.
-> However, as usual in these cases, real life interfered and I've been
-> busy with other things.
-> But it's definitely on the agenda.
-> 
+Is there or could there be support for writing to a snapshot
+copy-on-write device from userspace? Are the bits contained therein
+portable between two snapshot instances with the same sizes of origin
+and copy-on-write devices?
 
-I think this is a bug in multipath though. Even though we are not
-handling sense that would indicate the path/device is not longer valid
-(PQ changed values) if it was sent, it would make sense that when
-multipath is assembling devices it would not create a device with
-different NAA/UUID values. So multipath should not make a device that
-includes sde, sdd, sdar and sdba but where sde and sdd have a different
-UUID than sdar and sdba, right?
+I tried a simple experiment and caused Very Bad Things to happen (a
+kernel error claiming "BUG: Bad page state in process ..."), but I may
+have done something bogus. Before I proceeded with further experiments,
+I thought I'd ask what, if anything, ought to work.
 
-Brian, what is the device returning in this case for sde and sdd? Does
-it return a error, or is it returning invalid data thinking the OS would
-check the PQ value first? If it returns a error what is the sense, asc
-and ascq?
+My ultimate goal is to reduce downtime while migrating a virtual guest
+with its storage from one host to another. To that end what I'd like to
+do is:
+*) take a snapshot
+*) transfer the frozen view of the snapshot while the guest continues to
+run
+*) stop the guest on the original host
+*) transfer the deltas that have been written since the snapshot
+*) start the guest on the new host
+*) merge the deltas (assuming they weren't already merged during the
+transfer, depending on how that was done)
+
+So please consider the following experiment, expressed mostly in terms
+of lvm tools rather than dmsetup, just because this way I think I'm
+giving myself fewer chances to mess up:
+
+1) create an LVM volume A to play the role of the original volume. Fill
+it up with some data.
+2) create an LVM snapshot of A, A-snap.
+3) create an LVM volume B to play the role of the destination volume,
+the same size as A.
+4) copy (e.g. dd) from A into B, and simultaneously write some changes
+into A-snap.
+5) create an LVM snapshot of B, B-snap.
+5.5) cross your fingers 'cause here I'm heading into the unknown (for
+me)
+6) dmsetup suspend something (if any variant would work, could someone
+tell me what?)
+7) copy bits from A-snap-cow to B-snap-cow
+8) dmsetup resume 
+9) diff A-snap and B-snap and observe they're the same! (or so I would
+like)
+10) proceed to use lvm to merge B-snap into B
+
+ 
