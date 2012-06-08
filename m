@@ -1,60 +1,76 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [dm-devel] EXT4-fs error (device dm-42): ext4_mb_generate_buddy:741:
- group 1904, 32254 clusters in bitmap, 32258 in gd
-Date: Thu, 7 Jun 2012 16:38:31 -0700
-Message-ID: <CAGXu5j+mF1jnMXDT-Vpb6T5s34XgTRTeDOdyoXYy_RwNfaUn6w@mail.gmail.com>
-References: <471046920.20120604234941@eikelenboom.it>
-	<20120605000356.GM29466@outflux.net>
-	<1018371644.20120605224154@eikelenboom.it>
-	<20120605210806.GB7182@thunk.org>
-	<1883708187.20120606090126@eikelenboom.it>
-	<CAGXu5jK-4dO59-x3eTU10OntcPwsVptjpUzQdbbHOvy9_VBQ2A@mail.gmail.com>
-	<1482118647.20120606164012@eikelenboom.it>
-	<20120607042756.GA30776@thunk.org>
-	<20120607222729.GI6938@tux1.beaverton.ibm.com>
-	<CAGXu5jKmBkfvuSR7q47-Ac57dVZynz_JkYXiA_-aXaGQiR_C4g@mail.gmail.com>
-	<20120607225446.GK19839@thunk.org>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: different LUN numbers under the same dm device
+Date: Fri, 08 Jun 2012 08:29:21 +0200
+Message-ID: <4FD19BC1.5020702@suse.de>
+References: <8DCD6D08-35CE-48CC-AC54-7436265C32CB@purestorage.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20120607225446.GK19839@thunk.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Ted Ts'o <tytso@mit.edu>, Kees Cook <keescook@chromium.org>, djwong@us.ibm.com, Sander Eikelenboom <linux@eikelenboom.it>, Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <8DCD6D08-35CE-48CC-AC54-7436265C32CB@purestorage.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Brian Bunker <brian@purestorage.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jun 7, 2012 at 3:54 PM, Ted Ts'o <tytso@mit.edu> wrote:
-> On Thu, Jun 07, 2012 at 03:40:40PM -0700, Kees Cook wrote:
->>
->> FWIW, I was building the filesystem that triggered this as ext4:
->>
->> =A0 mkfs.ext4 -T default -m 0 -O ^huge_file,^flex_bg -E
->> discard,lazy_itable_init /dev/mapper/...
->
-> Ouy of curiosity, was there a reason you chose those particular file
-> system parameters? =A0It's a surprising set, because if you're starti=
-ng
-> with a fresh file system, enabling flex_bg produces a more optimal
-> file system layout.
+On 06/06/2012 09:27 PM, Brian Bunker wrote:
+> Our company produces a multiple port Fibre Channel storage array. We are =
+continually plagued
+> by this problem. We get a dm device which combines paths for
+different LUN's. We would like
+> to understand why this is happening. Wouldn't this problem almost
+certainly lead to a data
+> corruption?
+> =
 
-The intent of this was to create a small (64M) initial filesystem as
-fast as possible that could be resized (to 3G) on the fly later. (The
-performance of the filesystem did not need to be optimized, just the
-speed of creation so that the create+mount would happen as fast as
-possible, to unblock things waiting for this filesystem to exist.)
+Most likely; given that the two LUNs indeed refer to different disks.
 
-In the more common situation, it was built also with:
- -b 4096 ... -E ...,resize=3DMMM ... [device] NNN
-where MMM > NNN. And an online resize would be started a bit after it
-was created, growing it up to MMM.
+> Thanks,
+> Brian
+> =
 
--Kees
+> 3624a93700a14254d729923840001000b dm-11 PURE,FlashArray
+> size=3D500G features=3D'0' hwhandler=3D'0' wp=3Drw
+> `-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive
+>   |- 1:0:0:12 sde  8:64   failed faulty running
+>   |- 0:0:0:12 sdd  8:48   failed faulty running
+>   |- 0:0:0:10 sdar 66:176 active ready  running
+>   `- 1:0:0:10 sdba 67:64  active ready  running
+> =
 
---=20
-Kees Cook
-Chrome OS Security
---
-To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Of the 4 paths to dm-11, we can see two paths are for LUN 10 and the othe=
+r two are for LUN 12.
+> We have 24 other dm devices which have only the expected 2 paths.
+> =
+
+Check the output of 'sg_vpd -p di /dev/sd(e|d|ar|ba)'.
+
+'sde' and 'sdd' should be identical (well, the bits for 'Addressed
+logical unit' should be), as should 'sdar' and 'sdab'.
+'sde' and 'sdar', on the other hand, should _not_.
+
+Given the above, however, I strongly suspect they are.
+Looks like your LUN WWID generation code is buggered.
+
+But I guess you can always blame Nic Bellinger :-)
+
+Greetings to Joern Engel.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
