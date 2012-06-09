@@ -1,69 +1,48 @@
-From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: [PATCH v3 3/9] dm: use memweight()
-Date: Sat,  9 Jun 2012 09:50:32 +0900
-Message-ID: <1339203038-13069-3-git-send-email-akinobu.mita@gmail.com>
-References: <1339203038-13069-1-git-send-email-akinobu.mita@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [linux-lvm] LVM release 2.02.96 / git / veritysetup
+Date: Sat, 09 Jun 2012 10:44:34 +0200
+Message-ID: <4FD30CF2.8060505@redhat.com>
+References: <20120609002308.GD15806@agk-dp.fab.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1339203038-13069-1-git-send-email-akinobu.mita@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, akpm@linux-foundation.org
-Cc: dm-devel@redhat.com, Akinobu Mita <akinobu.mita@gmail.com>, Alasdair Kergon <agk@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
+In-Reply-To: <20120609002308.GD15806@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: linux-lvm@redhat.com, lvm-devel@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use memweight() to count the total number of bits set in memory area.
+On 06/09/2012 02:23 AM, Alasdair G Kergon wrote:
+> veritysetup
+> -----------
+> Although this release contains a userspace tool for dm-verity,
+>   configure --with-verity-setup=<cryptlib>
+> we think the cryptsetup package would provide a better home for this
+> so watch out for an updated version in an upcoming cryptsetup release.
 
-Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
-v3: no changes from v2
-v2: change patch title s/dm-log:/dm:/
+Please do not use this version except for experiments and do not package
+it in distributions yet.
 
- drivers/md/dm-log.c |   13 ++-----------
- 1 files changed, 2 insertions(+), 11 deletions(-)
+Superblock format will perhaps change a little bit and also veritysetup utility
+from cryptsetup source will use different command syntax (similar to dmsetup
+and cryptsetup) and get full library support through libcryptsetup.
 
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 65ebaeb..627d191 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -571,16 +571,6 @@ static void disk_dtr(struct dm_dirty_log *log)
- 	destroy_log_context(lc);
- }
- 
--static int count_bits32(uint32_t *addr, unsigned size)
--{
--	int count = 0, i;
--
--	for (i = 0; i < size; i++) {
--		count += hweight32(*(addr+i));
--	}
--	return count;
--}
--
- static void fail_log_device(struct log_c *lc)
- {
- 	if (lc->log_dev_failed)
-@@ -629,7 +619,8 @@ static int disk_resume(struct dm_dirty_log *log)
- 
- 	/* copy clean across to sync */
- 	memcpy(lc->sync_bits, lc->clean_bits, size);
--	lc->sync_count = count_bits32(lc->clean_bits, lc->bitset_uint32_count);
-+	lc->sync_count = memweight(lc->clean_bits,
-+				lc->bitset_uint32_count * sizeof(uint32_t));
- 	lc->sync_search = 0;
- 
- 	/* set the correct number of regions in the header */
--- 
-1.7.7.6
+The code is maintained in separate veritysetup branch in cryptsetup git
+for now, once it get back all features it will be merged to main branch (next week).
+http://code.google.com/p/cryptsetup/source/browse/?name=veritysetup
+
+Milan
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
