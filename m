@@ -1,63 +1,101 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: fix libudev bug in
-	sysfs_get_tgt_nodename
-Date: Mon, 11 Jun 2012 16:32:35 -0500
-Message-ID: <20120611213235.GE3211@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v3 1/9] string: introduce memweight
+Date: Mon, 11 Jun 2012 16:17:25 -0700
+Message-ID: <20120611161725.84330925.akpm@linux-foundation.org>
+References: <1339203038-13069-1-git-send-email-akinobu.mita@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <1339203038-13069-1-git-send-email-akinobu.mita@gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Akinobu Mita <akinobu.mita@gmail.com>
+Cc: linux-kernel@vger.kernel.org, Anders Larsen <al@alarsen.net>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Mark Fasheh <mfasheh@suse.com>, Joel Becker <jlbec@evilplan.org>, ocfs2-devel@oss.oracle.com, Jan Kara <jack@suse.cz>, linux-ext4@vger.kernel.org, Andreas Dilger <adilger.kernel@dilger.ca>, Theodore Ts'o <tytso@mit.edu>, Matthew Wilcox <matthew@wil.cx>
 List-Id: dm-devel.ids
 
-In a recent patch, I introduced a bug into sysfs_get_tgt_nodename().
-multipath must not unreference the target udevice before it copies the
-tgt_nodename to another location, otherwise the value pointer will be
-pointing at freed memory.
+On Sat,  9 Jun 2012 09:50:30 +0900
+Akinobu Mita <akinobu.mita@gmail.com> wrote:
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Index: multipath-tools-120518/libmultipath/discovery.c
-===================================================================
---- multipath-tools-120518.orig/libmultipath/discovery.c
-+++ multipath-tools-120518/libmultipath/discovery.c
-@@ -215,11 +215,13 @@ sysfs_get_tgt_nodename (struct path *pp,
- 		const char *value;
+> memweight() is the function that counts the total number of bits set
+> in memory area.  Unlike bitmap_weight(), memweight() takes pointer
+> and size in bytes to specify a memory area which does not need to be
+> aligned to long-word boundary.
+> 
+> ...
+>
+> +/**
+> + * memweight - count the total number of bits set in memory area
+> + * @ptr: pointer to the start of the area
+> + * @bytes: the size of the area
+> + */
+> +size_t memweight(const void *ptr, size_t bytes)
+> +{
+> +	size_t w = 0;
+
+Calling the return value "ret" is a useful convention and fits well here.
+
+> +	size_t longs;
+> +	const unsigned char *bitmap = ptr;
+> +
+> +	for (; bytes > 0 && ((unsigned long)bitmap) % sizeof(long);
+> +			bytes--, bitmap++)
+> +		w += hweight8(*bitmap);
+> +
+> +	longs = bytes / sizeof(long);
+> +	if (longs) {
+> +		BUG_ON(longs >= INT_MAX / BITS_PER_LONG);
+> +		w += bitmap_weight((unsigned long *)bitmap,
+> +				longs * BITS_PER_LONG);
+> +		bytes -= longs * sizeof(long);
+> +		bitmap += longs * sizeof(long);
+> +	}
+> +	/*
+> +	 * The reason that this last loop is distinct from the preceding
+> +	 * bitmap_weight() call is to compute 1-bits in the last region smaller
+> +	 * than sizeof(long) properly on big-endian systems.
+> +	 */
+> +	for (; bytes > 0; bytes--, bitmap++)
+> +		w += hweight8(*bitmap);
+> +
+> +	return w;
+> +}
+> +EXPORT_SYMBOL(memweight);
+
+diff -puN lib/string.c~string-introduce-memweight-fix lib/string.c
+--- a/lib/string.c~string-introduce-memweight-fix
++++ a/lib/string.c
+@@ -833,18 +833,18 @@ EXPORT_SYMBOL(memchr_inv);
+  */
+ size_t memweight(const void *ptr, size_t bytes)
+ {
+-	size_t w = 0;
++	size_t ret = 0;
+ 	size_t longs;
+ 	const unsigned char *bitmap = ptr;
  
- 		value = udev_device_get_sysattr_value(tgtdev, "node_name");
--		udev_device_unref(tgtdev);
- 		if (value) {
- 			strncpy(node, value, NODE_NAME_SIZE);
-+			udev_device_unref(tgtdev);
- 			return 0;
- 		}
-+		else
-+			udev_device_unref(tgtdev);
- 	}
+ 	for (; bytes > 0 && ((unsigned long)bitmap) % sizeof(long);
+ 			bytes--, bitmap++)
+-		w += hweight8(*bitmap);
++		ret += hweight8(*bitmap);
  
- 	/* Check for iSCSI */
-@@ -238,11 +240,13 @@ sysfs_get_tgt_nodename (struct path *pp,
- 			const char *value;
+ 	longs = bytes / sizeof(long);
+ 	if (longs) {
+ 		BUG_ON(longs >= INT_MAX / BITS_PER_LONG);
+-		w += bitmap_weight((unsigned long *)bitmap,
++		ret += bitmap_weight((unsigned long *)bitmap,
+ 				longs * BITS_PER_LONG);
+ 		bytes -= longs * sizeof(long);
+ 		bitmap += longs * sizeof(long);
+@@ -855,8 +855,8 @@ size_t memweight(const void *ptr, size_t
+ 	 * than sizeof(long) properly on big-endian systems.
+ 	 */
+ 	for (; bytes > 0; bytes--, bitmap++)
+-		w += hweight8(*bitmap);
++		ret += hweight8(*bitmap);
  
- 			value = udev_device_get_sysattr_value(tgtdev, "targetname");
--			udev_device_unref(tgtdev);
- 			if (value) {
- 				strncpy(node, value, NODE_NAME_SIZE);
-+				udev_device_unref(tgtdev);
- 				return 0;
- 			}
-+			else
-+				udev_device_unref(tgtdev);
- 		}
- 	}
- 	return 1;
+-	return w;
++	return ret;
+ }
+ EXPORT_SYMBOL(memweight);
+_
+
