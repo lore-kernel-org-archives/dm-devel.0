@@ -1,46 +1,864 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [Bcache v14 06/16] Export __lockdep_no_validate__
-Date: Tue, 12 Jun 2012 08:39:12 -0700
-Message-ID: <1339515562-14638-7-git-send-email-koverstreet@google.com>
+Subject: [Bcache v14 08/16] bcache: Documentation, and changes to generic code
+Date: Tue, 12 Jun 2012 08:39:14 -0700
+Message-ID: <1339515562-14638-9-git-send-email-koverstreet@google.com>
 References: <1339515562-14638-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1339515562-14638-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tejun@google.com, dan.j.williams@intel.com, agk@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tejun@google.com, agk@redhat.com, dan.j.williams@intel.com
 List-Id: dm-devel.ids
-
-Bcache's garbage collection needs a way around lockdep; this might not
-be the best way but it'll do for the moment.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- kernel/lockdep.c |    1 +
- 1 file changed, 1 insertion(+)
+ Documentation/ABI/testing/sysfs-block-bcache |  156 +++++++++++++++
+ Documentation/bcache.txt                     |  255 ++++++++++++++++++++++++
+ drivers/md/Kconfig                           |    2 +
+ drivers/md/Makefile                          |    1 +
+ drivers/md/bcache/Kconfig                    |   41 ++++
+ drivers/md/bcache/Makefile                   |   14 ++
+ include/linux/cgroup_subsys.h                |    6 +
+ include/linux/sched.h                        |    4 +
+ include/trace/events/bcache.h                |  271 ++++++++++++++++++++++++++
+ kernel/fork.c                                |    4 +
+ 10 files changed, 754 insertions(+)
 
-diff --git a/kernel/lockdep.c b/kernel/lockdep.c
-index ea9ee45..a554e7f 100644
---- a/kernel/lockdep.c
-+++ b/kernel/lockdep.c
-@@ -2997,6 +2997,7 @@ void lockdep_init_map(struct lockdep_map *lock, const char *name,
- EXPORT_SYMBOL_GPL(lockdep_init_map);
+diff --git a/Documentation/ABI/testing/sysfs-block-bcache b/Documentation/ABI/testing/sysfs-block-bcache
+new file mode 100644
+index 0000000..9e4bbc5
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-block-bcache
+@@ -0,0 +1,156 @@
++What:		/sys/block/<disk>/bcache/unregister
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		A write to this file causes the backing device or cache to be
++		unregistered. If a backing device had dirty data in the cache,
++		writeback mode is automatically disabled and all dirty data is
++		flushed before the device is unregistered. Caches unregister
++		all associated backing devices before unregistering themselves.
++
++What:		/sys/block/<disk>/bcache/clear_stats
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		Writing to this file resets all the statistics for the device.
++
++What:		/sys/block/<disk>/bcache/cache
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a backing device that has cache, a symlink to
++		the bcache/ dir of that cache.
++
++What:		/sys/block/<disk>/bcache/cache_hits
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: integer number of full cache hits,
++		counted per bio. A partial cache hit counts as a miss.
++
++What:		/sys/block/<disk>/bcache/cache_misses
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: integer number of cache misses.
++
++What:		/sys/block/<disk>/bcache/cache_hit_ratio
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: cache hits as a percentage.
++
++What:		/sys/block/<disk>/bcache/sequential_cutoff
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: Threshold past which sequential IO will
++		skip the cache. Read and written as bytes in human readable
++		units (i.e. echo 10M > sequntial_cutoff).
++
++What:		/sys/block/<disk>/bcache/bypassed
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		Sum of all reads and writes that have bypassed the cache (due
++		to the sequential cutoff).  Expressed as bytes in human
++		readable units.
++
++What:		/sys/block/<disk>/bcache/writeback
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: When on, writeback caching is enabled and
++		writes will be buffered in the cache. When off, caching is in
++		writethrough mode; reads and writes will be added to the
++		cache but no write buffering will take place.
++
++What:		/sys/block/<disk>/bcache/writeback_running
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: when off, dirty data will not be written
++		from the cache to the backing device. The cache will still be
++		used to buffer writes until it is mostly full, at which point
++		writes transparently revert to writethrough mode. Intended only
++		for benchmarking/testing.
++
++What:		/sys/block/<disk>/bcache/writeback_delay
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: In writeback mode, when dirty data is
++		written to the cache and the cache held no dirty data for that
++		backing device, writeback from cache to backing device starts
++		after this delay, expressed as an integer number of seconds.
++
++What:		/sys/block/<disk>/bcache/writeback_percent
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For backing devices: If nonzero, writeback from cache to
++		backing device only takes place when more than this percentage
++		of the cache is used, allowing more write coalescing to take
++		place and reducing total number of writes sent to the backing
++		device. Integer between 0 and 40.
++
++What:		/sys/block/<disk>/bcache/synchronous
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a cache, a boolean that allows synchronous mode to be
++		switched on and off. In synchronous mode all writes are ordered
++		such that the cache can reliably recover from unclean shutdown;
++		if disabled bcache will not generally wait for writes to
++		complete but if the cache is not shut down cleanly all data
++		will be discarded from the cache. Should not be turned off with
++		writeback caching enabled.
++
++What:		/sys/block/<disk>/bcache/discard
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a cache, a boolean allowing discard/TRIM to be turned off
++		or back on if the device supports it.
++
++What:		/sys/block/<disk>/bcache/bucket_size
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a cache, bucket size in human readable units, as set at
++		cache creation time; should match the erase block size of the
++		SSD for optimal performance.
++
++What:		/sys/block/<disk>/bcache/nbuckets
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a cache, the number of usable buckets.
++
++What:		/sys/block/<disk>/bcache/tree_depth
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a cache, height of the btree excluding leaf nodes (i.e. a
++		one node tree will have a depth of 0).
++
++What:		/sys/block/<disk>/bcache/btree_cache_size
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		Number of btree buckets/nodes that are currently cached in
++		memory; cache dynamically grows and shrinks in response to
++		memory pressure from the rest of the system.
++
++What:		/sys/block/<disk>/bcache/written
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a cache, total amount of data in human readable units
++		written to the cache, excluding all metadata.
++
++What:		/sys/block/<disk>/bcache/btree_written
++Date:		November 2010
++Contact:	Kent Overstreet <kent.overstreet@gmail.com>
++Description:
++		For a cache, sum of all btree writes in human readable units.
+diff --git a/Documentation/bcache.txt b/Documentation/bcache.txt
+new file mode 100644
+index 0000000..270c734
+--- /dev/null
++++ b/Documentation/bcache.txt
+@@ -0,0 +1,255 @@
++Say you've got a big slow raid 6, and an X-25E or three. Wouldn't it be
++nice if you could use them as cache... Hence bcache.
++
++Userspace tools and a wiki are at:
++  git://evilpiepirate.org/~kent/bcache-tools.git
++  http://bcache.evilpiepirate.org
++
++It's designed around the performance characteristics of SSDs - it only allocates
++in erase block sized buckets, and it uses a hybrid btree/log to track cached
++extants (which can be anywhere from a single sector to the bucket size). It's
++designed to avoid random writes at all costs; it fills up an erase block
++sequentially, then issues a discard before reusing it.
++
++Both writethrough and writeback caching are supported. Writeback defaults to
++off, but can be switched on and off arbitrarily at runtime. Bcache goes to
++great lengths to protect your data - it reliably handles unclean shutdown. (It
++doesn't even have a notion of a clean shutdown; bcache simply doesn't return
++writes as completed until they're on stable storage).
++
++Writeback caching can use most of the cache for buffering writes - writing
++dirty data to the backing device is always done sequentially, scanning from the
++start to the end of the index.
++
++Since random IO is what SSDs excel at, there generally won't be much benefit
++to caching large sequential IO. Bcache detects sequential IO and skips it;
++it also keeps a rolling average of the IO sizes per task, and as long as the
++average is above the cutoff it will skip all IO from that task - instead of
++caching the first 512k after every seek. Backups and large file copies should
++thus entirely bypass the cache.
++
++In the event of a data IO error on the flash it will try to recover by reading
++from disk or invalidating cache entries.  For unrecoverable errors (meta data
++or dirty data), caching is automatically disabled; if dirty data was present
++in the cache it first disables writeback caching and waits for all dirty data
++to be flushed.
++
++Getting started:
++You'll need make-bcache from the bcache-tools repository. Both the cache device
++and backing device must be formatted before use.
++  make-bcache -B /dev/sdb
++  make-bcache -C -w2k -b1M -j64 /dev/sdc
++
++To make bcache devices known to the kernel, echo them to /sys/fs/bcache/register:
++  echo /dev/sdb > /sys/fs/bcache/register
++  echo /dev/sdc > /sys/fs/bcache/register
++
++To register your bcache devices automatically, you could add something like
++this to an init script:
++  echo /dev/sd* > /sys/fs/bcache/register_quiet
++
++It'll look for bcache superblocks and ignore everything that doesn't have one.
++
++When you register a backing device, you'll get a new /dev/bcache# device:
++  mkfs.ext4 /dev/bcache0
++  mount /dev/bcache0 /mnt
++
++Cache devices are managed as sets; multiple caches per set isn't supported yet
++but will allow for mirroring of metadata and dirty data in the future. Your new
++cache set shows up as /sys/fs/bcache/<UUID>
++
++To enable caching, you need to attach the backing device to the cache set by
++specifying the UUID:
++  echo <UUID> > /sys/block/sdb/bcache/attach
++
++The cache set with that UUID need not be registered to attach to it - the UUID
++will be saved to the backing device's superblock and it'll start being cached
++when the cache set does show up.
++
++This only has to be done once. The next time you reboot, just reregister all
++your bcache devices. If a backing device has data in a cache somewhere, the
++/dev/bcache# device won't be created until the cache shows up - particularly
++important if you have writeback caching turned on.
++
++If you're booting up and your cache device is gone and never coming back, you
++can force run the backing device:
++  echo 1 > /sys/block/sdb/bcache/running
++
++The backing device will still use that cache set if it shows up in the future,
++but all the cached data will be invalidated. If there was dirty data in the
++cache, don't expect the filesystem to be recoverable - you will have massive
++filesystem corruption, though ext4's fsck does work miracles.
++
++
++Other sysfs files for the backing device:
++
++  bypassed
++    Sum of all IO, reads and writes, than have bypassed the cache
++
++  cache_hits
++  cache_misses
++  cache_hit_ratio
++    Hits and misses are counted per individual IO as bcache sees them; a
++    partial hit is counted as a miss.
++
++  cache_miss_collisions
++    Count of times a read completes but the data is already in the cache and
++    is therefore redundant.  This is usually caused by readahead while a
++    read to the same location occurs.
++
++  cache_readaheads
++    Count of times readahead occured.
++
++  clear_stats
++    Writing to this file resets all the statistics.
++
++  flush_delay_ms
++  flush_delay_ms_sync
++    Optional delay for btree writes to allow for more coalescing of updates to
++    the index. Default to 0.
++
++  label
++    Name of underlying device.
++
++  readahead
++    Size of readahead that should be performed.  Defaults to 0.  If set to e.g.
++    1M, it will round cache miss reads up to that size, but without overlapping
++    existing cache entries.
++
++  running
++    1 if bcache is running.
++
++  sequential_cutoff
++    A sequential IO will bypass the cache once it passes this threshhold; the
++    most recent 128 IOs are tracked so sequential IO can be detected even when
++    it isn't all done at once.
++
++  sequential_cutoff_average
++    If the weighted average from a client is higher than this cutoff we bypass
++    all IO.
++
++  unregister
++    Writing to this file disables caching on that device
++
++  writeback
++    Boolean, if off only writethrough caching is done
++
++  writeback_delay
++    When dirty data is written to the cache and it previously did not contain
++    any, waits some number of seconds before initiating writeback. Defaults to
++    30.
++
++  writeback_percent
++    To allow for more buffering of random writes, writeback only proceeds when
++    more than this percentage of the cache is unavailable. Defaults to 0.
++
++  writeback_running
++    If off, writeback of dirty data will not take place at all. Dirty data will
++    still be added to the cache until it is mostly full; only meant for
++    benchmarking. Defaults to on.
++
++For the cache set:
++  active_journal_entries
++    Number of journal entries that are newer than the index.
++
++  average_key_size
++    Average data per key in the btree.
++
++  average_seconds_between_gc
++    How often garbage collection is occuring.
++
++  block_size
++    Block size of the virtual device.
++
++  btree_avg_keys_written
++    Average number of keys per write to the btree when a node wasn't being
++    rewritten - indicates how much coalescing is taking place.
++
++
++  btree_cache_size
++    Number of btree buckets currently cached in memory
++
++  btree_nodes
++    Total nodes in the btree.
++
++  btree_used_percent
++    Average fraction of btree in use.
++
++  bucket_size
++    Size of Buckets
++
++  bypassed
++    Sum of all IO, reads and writes, than have bypassed the cache
++
++  cache_available_percent
++    Percentage of cache device free.
++
++  clear_stats
++    Clears the statistics associated with this cache
++
++  dirty_data
++    How much dirty data is in the cache.
++
++  gc_ms_max
++    Longest garbage collection.
++
++  internal/bset_tree_stats
++  internal/btree_cache_max_chain
++    Internal.  Statistics about the bset tree and chain length.  Likely to be
++    hidden soon.
++
++  io_error_halflife
++  io_error_limit
++    These determines how many errors we accept before disabling the cache.
++    Each error is decayed by the half life (in # ios).  If the decaying count
++    reaches io_error_limit dirty data is written out and the cache is disabled.
++
++  root_usage_percent
++    Percentage of the root btree node in use.  If this gets too high the node
++    will split, increasing the tree depth.
++
++  seconds_since_gc
++    When was the last garbage collection.
++
++  synchronous
++    Boolean; when on all writes to the cache are strictly ordered such that it
++    can recover from unclean shutdown. If off it will not generally wait for
++    writes to complete, but the entire cache contents will be invalidated on
++    unclean shutdown. Not recommended that it be turned off when writeback is
++    on.
++
++  tree_depth
++    Depth of the btree.
++
++  trigger_gc
++    Force garbage collection to run now.
++
++  unregister
++    Closes the cache device and all devices being cached; if dirty data is
++    present it will disable writeback caching and wait for it to be flushed.
++
++
++For each cache within a cache set:
++  btree_written
++    Sum of all btree writes, in (kilo/mega/giga) bytes
++
++  discard
++    Boolean; if on a discard/TRIM will be issued to each bucket before it is
++    reused. Defaults to on if supported.
++
++  io_errors
++    Number of errors that have occured, decayed by io_error_halflife.
++
++  metadata_written
++    Total Metadata written (btree + other meta data).
++
++  nbuckets
++    Total buckets in this cache
++
++  priority_stats
++    Statistics about how recently data in the cache has been accessed.  This can
++    reveal your working set size.
++
++  written
++    Sum of all data that has been written to the cache; comparison with
++    btree_written gives the amount of write inflation in bcache.
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 10f122a..d977b45 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -185,6 +185,8 @@ config MD_FAULTY
  
- struct lock_class_key __lockdep_no_validate__;
-+EXPORT_SYMBOL_GPL(__lockdep_no_validate__);
+ 	  In unsure, say N.
  
- /*
-  * This gets called for every mutex_lock*()/spin_lock*() operation.
++source "drivers/md/bcache/Kconfig"
++
+ config BLK_DEV_DM
+ 	tristate "Device mapper support"
+ 	---help---
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index 8b2e0df..0d4b86b 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -26,6 +26,7 @@ obj-$(CONFIG_MD_RAID10)		+= raid10.o
+ obj-$(CONFIG_MD_RAID456)	+= raid456.o
+ obj-$(CONFIG_MD_MULTIPATH)	+= multipath.o
+ obj-$(CONFIG_MD_FAULTY)		+= faulty.o
++obj-$(CONFIG_BCACHE)		+= bcache/
+ obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
+ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
+ obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
+diff --git a/drivers/md/bcache/Kconfig b/drivers/md/bcache/Kconfig
+new file mode 100644
+index 0000000..9acd870
+--- /dev/null
++++ b/drivers/md/bcache/Kconfig
+@@ -0,0 +1,41 @@
++
++config BCACHE
++	tristate "Block device as cache"
++	select CLOSURES
++	---help---
++	Allows a block device to be used as cache for other devices; uses
++	a btree for indexing and the layout is optimized for SSDs.
++
++	See Documentation/bcache.txt for details.
++
++config BCACHE_DEBUG
++	bool "Bcache debugging"
++	depends on BCACHE
++	---help---
++	Don't select this option unless you're a developer
++
++	Enables extra debugging tools (primarily a fuzz tester)
++
++config BCACHE_EDEBUG
++	bool "Extended runtime checks"
++	depends on BCACHE
++	---help---
++	Don't select this option unless you're a developer
++
++	Enables extra runtime checks which significantly affect performance
++
++config BCACHE_LATENCY_DEBUG
++	bool "Latency tracing for bcache"
++	depends on BCACHE
++	---help---
++	Hacky latency tracing that has nevertheless been useful in the past:
++	adds a global variable accessible via /sys/fs/bcache/latency_warn_ms,
++	which defaults to 0. If nonzero, any timed operation that takes longer
++	emits a printk.
++
++config CGROUP_BCACHE
++  bool "Cgroup controls for bcache"
++  depends on BCACHE && BLK_CGROUP
++  ---help---
++  TODO
++
+diff --git a/drivers/md/bcache/Makefile b/drivers/md/bcache/Makefile
+new file mode 100644
+index 0000000..0e5305d
+--- /dev/null
++++ b/drivers/md/bcache/Makefile
+@@ -0,0 +1,14 @@
++
++obj-$(CONFIG_BCACHE)	+= bcache.o
++
++bcache-y		:= alloc.o btree.o bset.o io.o journal.o\
++	writeback.o movinggc.o request.o super.o debug.o util.o trace.o stats.o
++
++CFLAGS_alloc.o		+= -std=gnu99
++CFLAGS_btree.o		+= -std=gnu99
++CFLAGS_bset.o		+= -std=gnu99
++CFLAGS_journal.o	+= -std=gnu99
++CFLAGS_movinggc.o	+= -std=gnu99
++CFLAGS_request.o	+= -std=gnu99 -Iblock
++CFLAGS_super.o		+= -std=gnu99
++CFLAGS_debug.o		+= -std=gnu99
+diff --git a/include/linux/cgroup_subsys.h b/include/linux/cgroup_subsys.h
+index 0bd390c..d698634 100644
+--- a/include/linux/cgroup_subsys.h
++++ b/include/linux/cgroup_subsys.h
+@@ -72,3 +72,9 @@ SUBSYS(net_prio)
+ #endif
+ 
+ /* */
++
++#ifdef CONFIG_CGROUP_BCACHE
++SUBSYS(bcache)
++#endif
++
++/* */
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 4059c0f..4de7e6b 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1583,6 +1583,10 @@ struct task_struct {
+ 	struct uprobe_task *utask;
+ 	int uprobe_srcu_id;
+ #endif
++#if defined(CONFIG_BCACHE) || defined(CONFIG_BCACHE_MODULE)
++	unsigned int	sequential_io;
++	unsigned int	sequential_io_avg;
++#endif
+ };
+ 
+ /* Future-safe accessor for struct task_struct's cpus_allowed. */
+diff --git a/include/trace/events/bcache.h b/include/trace/events/bcache.h
+new file mode 100644
+index 0000000..3cc5a0b
+--- /dev/null
++++ b/include/trace/events/bcache.h
+@@ -0,0 +1,271 @@
++#undef TRACE_SYSTEM
++#define TRACE_SYSTEM bcache
++
++#if !defined(_TRACE_BCACHE_H) || defined(TRACE_HEADER_MULTI_READ)
++#define _TRACE_BCACHE_H
++
++#include <linux/tracepoint.h>
++
++struct search;
++
++DECLARE_EVENT_CLASS(bcache_request,
++
++	TP_PROTO(struct search *s, struct bio *bio),
++
++	TP_ARGS(s, bio),
++
++	TP_STRUCT__entry(
++		__field(dev_t,		dev			)
++		__field(unsigned int,	orig_major		)
++		__field(unsigned int,	orig_minor		)
++		__field(sector_t,	sector			)
++		__field(dev_t,		orig_sector		)
++		__field(unsigned int,	nr_sector		)
++		__array(char,		rwbs,	6		)
++		__array(char,		comm,	TASK_COMM_LEN	)
++	),
++
++	TP_fast_assign(
++		__entry->dev		= bio->bi_bdev->bd_dev;
++		__entry->orig_major	= s->d->disk->major;
++		__entry->orig_minor	= s->d->disk->first_minor;
++		__entry->sector		= bio->bi_sector;
++		__entry->orig_sector	= bio->bi_sector - 16;
++		__entry->nr_sector	= bio->bi_size >> 9;
++		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
++		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
++	),
++
++	TP_printk("%d,%d %s %llu + %u [%s] (from %d,%d @ %llu)",
++		  MAJOR(__entry->dev), MINOR(__entry->dev),
++		  __entry->rwbs,
++		  (unsigned long long)__entry->sector,
++		  __entry->nr_sector, __entry->comm,
++		  __entry->orig_major, __entry->orig_minor,
++		  (unsigned long long)__entry->orig_sector)
++);
++
++DEFINE_EVENT(bcache_request, bcache_request_start,
++
++	TP_PROTO(struct search *s, struct bio *bio),
++
++	TP_ARGS(s, bio)
++);
++
++DEFINE_EVENT(bcache_request, bcache_request_end,
++
++	TP_PROTO(struct search *s, struct bio *bio),
++
++	TP_ARGS(s, bio)
++);
++
++DECLARE_EVENT_CLASS(bcache_bio,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio),
++
++	TP_STRUCT__entry(
++		__field(dev_t,		dev			)
++		__field(sector_t,	sector			)
++		__field(unsigned int,	nr_sector		)
++		__array(char,		rwbs,	6		)
++		__array(char,		comm,	TASK_COMM_LEN	)
++	),
++
++	TP_fast_assign(
++		__entry->dev		= bio->bi_bdev->bd_dev;
++		__entry->sector		= bio->bi_sector;
++		__entry->nr_sector	= bio->bi_size >> 9;
++		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
++		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
++	),
++
++	TP_printk("%d,%d  %s %llu + %u [%s]",
++		  MAJOR(__entry->dev), MINOR(__entry->dev),
++		  __entry->rwbs,
++		  (unsigned long long)__entry->sector,
++		  __entry->nr_sector, __entry->comm)
++);
++
++
++DEFINE_EVENT(bcache_bio, bcache_passthrough,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_cache_hit,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_cache_miss,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_read_retry,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_writethrough,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_writeback,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_write_skip,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_btree_read,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_btree_write,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_write_dirty,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_read_dirty,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_write_moving,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_read_moving,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DEFINE_EVENT(bcache_bio, bcache_journal_write,
++
++	TP_PROTO(struct bio *bio),
++
++	TP_ARGS(bio)
++);
++
++DECLARE_EVENT_CLASS(bcache_cache_bio,
++
++	TP_PROTO(struct bio *bio,
++		 sector_t orig_sector,
++		 struct block_device* orig_bdev),
++
++	TP_ARGS(bio, orig_sector, orig_bdev),
++
++	TP_STRUCT__entry(
++		__field(dev_t,		dev			)
++		__field(dev_t,		orig_dev		)
++		__field(sector_t,	sector			)
++		__field(sector_t,	orig_sector		)
++		__field(unsigned int,	nr_sector		)
++		__array(char,		rwbs,	6		)
++		__array(char,		comm,	TASK_COMM_LEN	)
++	),
++
++	TP_fast_assign(
++		__entry->dev		= bio->bi_bdev->bd_dev;
++		__entry->orig_dev	= orig_bdev->bd_dev;
++		__entry->sector		= bio->bi_sector;
++		__entry->orig_sector	= orig_sector;
++		__entry->nr_sector	= bio->bi_size >> 9;
++		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
++		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
++	),
++
++	TP_printk("%d,%d  %s %llu + %u [%s] (from %d,%d %llu)",
++		  MAJOR(__entry->dev), MINOR(__entry->dev),
++		  __entry->rwbs,
++		  (unsigned long long)__entry->sector,
++		  __entry->nr_sector, __entry->comm,
++		  MAJOR(__entry->orig_dev), MINOR(__entry->orig_dev),
++		  (unsigned long long)__entry->orig_sector)
++);
++
++DEFINE_EVENT(bcache_cache_bio, bcache_cache_insert,
++
++	TP_PROTO(struct bio *bio,
++		 sector_t orig_sector,
++		 struct block_device *orig_bdev),
++
++	TP_ARGS(bio, orig_sector, orig_bdev)
++);
++
++DECLARE_EVENT_CLASS(bcache_gc,
++
++	TP_PROTO(uint8_t *uuid),
++
++	TP_ARGS(uuid),
++
++	TP_STRUCT__entry(
++		__field(uint8_t *,	uuid)
++	),
++
++	TP_fast_assign(
++		__entry->uuid		= uuid;
++	),
++
++	TP_printk("%pU", __entry->uuid)
++);
++
++
++DEFINE_EVENT(bcache_gc, bcache_gc_start,
++
++	     TP_PROTO(uint8_t *uuid),
++
++	     TP_ARGS(uuid)
++);
++
++DEFINE_EVENT(bcache_gc, bcache_gc_end,
++
++	     TP_PROTO(uint8_t *uuid),
++
++	     TP_ARGS(uuid)
++);
++
++#endif /* _TRACE_BCACHE_H */
++
++/* This part must be outside protection */
++#include <trace/define_trace.h>
+diff --git a/kernel/fork.c b/kernel/fork.c
+index ab5211b..aab6d63 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1309,6 +1309,10 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	p->memcg_batch.do_batch = 0;
+ 	p->memcg_batch.memcg = NULL;
+ #endif
++#ifdef CONFIG_BCACHE
++	p->sequential_io	= 0;
++	p->sequential_io_avg	= 0;
++#endif
+ 
+ 	/* Perform scheduler related setup. Assign this task to a CPU. */
+ 	sched_fork(p);
 -- 
 1.7.9.3.327.g2980b
