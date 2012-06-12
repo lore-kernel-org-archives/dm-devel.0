@@ -1,32 +1,33 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [Bcache v14 03/16] Export get_random_int()
-Date: Tue, 12 Jun 2012 08:39:09 -0700
-Message-ID: <1339515562-14638-4-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [Bcache v14 02/16] Fix ratelimit macro to compile in c99 mode
+Date: Tue, 12 Jun 2012 08:39:08 -0700
+Message-ID: <1339515562-14638-3-git-send-email-koverstreet@google.com>
 References: <1339515562-14638-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1339515562-14638-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tejun-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1339515562-14638-1-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tejun@google.com, agk@redhat.com, dan.j.williams@intel.com
 List-Id: dm-devel.ids
 
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- drivers/char/random.c |    1 +
- 1 file changed, 1 insertion(+)
+ include/linux/ratelimit.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index 4ec04a7..78ff2f6 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -1362,6 +1362,7 @@ unsigned int get_random_int(void)
- 
- 	return ret;
- }
-+EXPORT_SYMBOL(get_random_int);
- 
- /*
-  * randomize_range() returns a start address such that
+diff --git a/include/linux/ratelimit.h b/include/linux/ratelimit.h
+index e11ccb4..9ad57d3 100644
+--- a/include/linux/ratelimit.h
++++ b/include/linux/ratelimit.h
+@@ -20,7 +20,7 @@ struct ratelimit_state {
+ #define DEFINE_RATELIMIT_STATE(name, interval_init, burst_init)		\
+ 									\
+ 	struct ratelimit_state name = {					\
+-		.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),	\
++		.lock		= __RAW_SPIN_LOCK_INITIALIZER(name.lock),\
+ 		.interval	= interval_init,			\
+ 		.burst		= burst_init,				\
+ 	}
 -- 
 1.7.9.3.327.g2980b
