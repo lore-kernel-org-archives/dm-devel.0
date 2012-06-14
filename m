@@ -1,13 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm thin: provide useful errors on thin-pool
-	table load failures
-Date: Wed, 13 Jun 2012 19:02:19 -0400
-Message-ID: <1339628539-23580-1-git-send-email-snitzer@redhat.com>
+From: Christian May <cmay@linux.vnet.ibm.com>
+Subject: Re: RHEL6.2: path failures during good path I/O
+Date: Thu, 14 Jun 2012 21:15:12 +0200
+Message-ID: <4FDA3840.9030307@linux.vnet.ibm.com>
+References: <4FD87335.3040300@linux.vnet.ibm.com>
+	<20120613131613.GA18293@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20120613131613.GA18293@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,42 +19,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com, ejt@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Replace "Unknown error" with appropriate errors for thinp-test-suite's
-test_two_pools_pointing_to_the_same_metadata_fails and
-test_different_pool_cant_replace_pool.
+I couldn't recreate the path failures on the exact same test setup with 
+RHEL6.1.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-thin.c |    8 ++++++--
- 1 files changed, 6 insertions(+), 2 deletions(-)
+Something must have been changed in the device-mapper package!?
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index b142428..54ae5c3 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -1825,15 +1825,19 @@ static struct pool *__pool_find(struct mapped_device *pool_md,
- 	struct pool *pool = __pool_table_lookup_metadata_dev(metadata_dev);
- 
- 	if (pool) {
--		if (pool->pool_md != pool_md)
-+		if (pool->pool_md != pool_md) {
-+			*error = "metadata device already in use by a pool";
- 			return ERR_PTR(-EBUSY);
-+		}
- 		__pool_inc(pool);
- 
- 	} else {
- 		pool = __pool_table_lookup(pool_md);
- 		if (pool) {
--			if (pool->md_dev != metadata_dev)
-+			if (pool->md_dev != metadata_dev) {
-+				*error = "different pool cannot replace a pool";
- 				return ERR_PTR(-EINVAL);
-+			}
- 			__pool_inc(pool);
- 
- 		} else {
+Regards,
+
+Christian May
