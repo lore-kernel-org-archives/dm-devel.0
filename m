@@ -1,7 +1,8 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-stripe: fix size test
-Date: Mon, 18 Jun 2012 20:57:02 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1206182054340.15183@file.rdu.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm transaction manager: fix shadow_info leaks on
+	dm_tm_destroy
+Date: Mon, 18 Jun 2012 21:04:04 -0400
+Message-ID: <1340067844-3321-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,46 +17,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: agk@redhat.com
+Cc: dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-dm-stripe: fix size test
+Cleanup the shadow table before destroying the transaction manager.
 
-dm-stripe is supposed to test that all the stripes are fully used.
-It tests that the number of sectors in the target si divisible by
-chunk size and the number of stripes.
+reference: leak was identified with kmemleak when running
+test_discard_random_sectors in the thinp-test-suite.
 
-However, this check is not sufficient:
-For example, suppose that we have target length 30 sectors and the
-device consists of 6 stripes, each stripe with 15 sectors.
-
-30 is divisible by both 6 and 15, so the test passes, but the stripes
-are not fully used --- only the first two stripes are used.
-
-We must actually test that the number of sectors is divisible by the
-chunk size multiplied by the number of stripes.
-
-This patch fixes the test --- it checks that device length is divisible
-by the chunk size --- and checks that the resulting quotient is
-divisible by the number of stripes (which is equivalent to testing if
-device length is divisible by chunk_size * stripes).
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-stripe.c |    1 -
- 1 file changed, 1 deletion(-)
+ .../md/persistent-data/dm-transaction-manager.c    |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-Index: linux-3.4.3-fast/drivers/md/dm-stripe.c
-===================================================================
---- linux-3.4.3-fast.orig/drivers/md/dm-stripe.c	2012-06-19 02:42:05.000000000 +0200
-+++ linux-3.4.3-fast/drivers/md/dm-stripe.c	2012-06-19 02:42:23.000000000 +0200
-@@ -125,7 +125,6 @@ static int stripe_ctr(struct dm_target *
- 		return -EINVAL;
- 	}
+diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
+index 400fe14..02bf78e 100644
+--- a/drivers/md/persistent-data/dm-transaction-manager.c
++++ b/drivers/md/persistent-data/dm-transaction-manager.c
+@@ -138,6 +138,9 @@ EXPORT_SYMBOL_GPL(dm_tm_create_non_blocking_clone);
  
--	width = ti->len;
- 	if (sector_div(width, stripes)) {
- 		ti->error = "Target length not divisible by "
- 		    "number of stripes";
+ void dm_tm_destroy(struct dm_transaction_manager *tm)
+ {
++	if (!tm->is_clone)
++		wipe_shadow_table(tm);
++
+ 	kfree(tm);
+ }
+ EXPORT_SYMBOL_GPL(dm_tm_destroy);
+-- 
+1.7.4.4
