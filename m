@@ -1,35 +1,57 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] Ext4 and xfs problems in dm-thin on allocation and
-	discard
-Date: Tue, 19 Jun 2012 17:03:01 +0100
-Message-ID: <20120619160300.GF14208@agk-dp.fab.redhat.com>
-References: <4FDF9EBE.2030809@shiftmail.org> <alpine.LFD.2.00.1206191601290.21961@dhcp-1-248.brq.redhat.com> <20120619141933.GC10637@thunk.org> <20120619144316.GD14208@agk-dp.fab.redhat.com> <20120619152856.GB7225@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Ext4 and xfs problems in dm-thin on allocation and discard
+Date: Tue, 19 Jun 2012 14:48:59 -0400
+Message-ID: <20120619184858.GA8841@redhat.com>
+References: <4FDF9EBE.2030809@shiftmail.org>
+ <20120619015745.GJ25389@dastard>
+ <20120619031241.GA3884@redhat.com>
+ <alpine.LFD.2.00.1206190816440.2241@dhcp-1-248.brq.redhat.com>
+ <20120619131649.GA6811@redhat.com>
+ <alpine.LFD.2.00.1206191519320.21961@dhcp-1-248.brq.redhat.com>
+ <20120619133041.GB6811@redhat.com>
+ <4FE0840F.2050704@shiftmail.org>
+ <20120619144413.GA7225@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120619152856.GB7225@redhat.com>
+In-Reply-To: <20120619144413.GA7225@redhat.com>
 Sender: linux-ext4-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: =?utf-8?B?THVrw6HFoQ==?= Czerner <lczerner@redhat.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, Spelic <spelic@shiftmail.org>
+To: Spelic <spelic@shiftmail.org>
+Cc: =?utf-8?B?THVrw6HFoQ==?= Czerner <lczerner@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-ext4@vger.kernel.org, Dave Chinner <david@fromorbit.com>, xfs@oss.sgi.com
 List-Id: dm-devel.ids
 
-On Tue, Jun 19, 2012 at 11:28:56AM -0400, Mike Snitzer wrote:
-> That is an lvm2 BZ but there is further kernel work needed.
- 
-In principle, userspace should already be able to handle the replumbing I
-think.  (But when we work through the details of an online import, perhaps
-we'll want some further kernel change for atomicity/speed reasons?  In 
-particular we need to be able to do the last part of the metadata merge
-quickly.)
+On Tue, Jun 19 2012 at 10:44am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Roughly:
-1. rejig the lvm metadata for the new configuration [lvm]
-  - appends the "whole LV" data to the pool's data
-2. Generate metadata for the appended data and append this to the metadata area [dmpd]
-3. suspend all the affected devices [lvm]
-4. link the already-prepared metadata into the existing metadata [dmpd]
-5. resume all the devices (now using the new extended pool)
+> On Tue, Jun 19 2012 at  9:52am -0400,
+> Spelic <spelic@shiftmail.org> wrote:
+>
+> > I do not know what is the mechanism for which xfs cannot unmap
+> > blocks from dm-thin, but it really can't.
+> > If anyone has dm-thin installed he can try. This is 100%
+> > reproducible for me.
+> 
+> I was initially surprised by this considering the thinp-test-suite does
+> test a compilebench workload against xfs and ext4 using online discard
+> (-o discard).
+> 
+> But I just modified that test to use a thin-pool with 'ignore_discard'
+> and the test still passed on both ext4 and xfs.
+> 
+> So there is more work needed in the thinp-test-suite to use blktrace
+> hooks to verify that discards are occuring when the compilebench
+> generated files are removed.
+> 
+> I'll work through that and report back.
 
-Alasdair
+blktrace shows discards for both xfs and ext4.
 
+But in general xfs is issuing discards with much smaller extents than
+ext4 does, e.g.:
+
+to the thin device:
++ 128 vs + 32
+
+to the thin-pool's data device:
++ 120 vs + 16
