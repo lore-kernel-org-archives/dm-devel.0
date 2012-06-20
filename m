@@ -1,212 +1,128 @@
-From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [ANNOUNCE] cryptsetup 1.5.0-rc2
-Date: Wed, 20 Jun 2012 11:59:20 +0200
-Message-ID: <4FE19EF8.8020702@gmail.com>
+From: Spelic <spelic@shiftmail.org>
+Subject: Re: Ext4 and xfs problems in dm-thin on allocation and discard
+Date: Wed, 20 Jun 2012 14:11:31 +0200
+Message-ID: <4FE1BDF3.4080702@shiftmail.org>
+References: <4FDF9EBE.2030809@shiftmail.org> <20120619015745.GJ25389@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; format=flowed; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-reply-to: <20120619015745.GJ25389@dastard>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Spelic <spelic@shiftmail.org>, xfs@oss.sgi.com, linux-ext4@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Ok guys, I think I found the bug. One or more bugs.
 
-The testing release candidate cryptsetup 1.5.0-rc2 is available at
 
-   http://code.google.com/p/cryptsetup/
+Pool has chunksize 1MB.
+In sysfs the thin volume has: queue/discard_max_bytes and 
+queue/discard_granularity are 1048576 .
+And it has discard_alignment = 0, which based on sysfs-block 
+documentation is correct (a less misleading name would have been 
+discard_offset imho).
+Here is the blktrace from ext4 fstrim:
+...
+252,9   17      498     0.030466556   841  Q   D 19898368 + 2048 [fstrim]
+252,9   17      499     0.030467501   841  Q   D 19900416 + 2048 [fstrim]
+252,9   17      500     0.030468359   841  Q   D 19902464 + 2048 [fstrim]
+252,9   17      501     0.030469313   841  Q   D 19904512 + 2048 [fstrim]
+252,9   17      502     0.030470144   841  Q   D 19906560 + 2048 [fstrim]
+252,9   17      503     0.030471381   841  Q   D 19908608 + 2048 [fstrim]
+252,9   17      504     0.030472473   841  Q   D 19910656 + 2048 [fstrim]
+252,9   17      505     0.030473504   841  Q   D 19912704 + 2048 [fstrim]
+252,9   17      506     0.030474561   841  Q   D 19914752 + 2048 [fstrim]
+252,9   17      507     0.030475571   841  Q   D 19916800 + 2048 [fstrim]
+252,9   17      508     0.030476423   841  Q   D 19918848 + 2048 [fstrim]
+252,9   17      509     0.030477341   841  Q   D 19920896 + 2048 [fstrim]
+252,9   17      510     0.034299630   841  Q   D 19922944 + 2048 [fstrim]
+252,9   17      511     0.034306880   841  Q   D 19924992 + 2048 [fstrim]
+252,9   17      512     0.034307955   841  Q   D 19927040 + 2048 [fstrim]
+252,9   17      513     0.034308928   841  Q   D 19929088 + 2048 [fstrim]
+252,9   17      514     0.034309945   841  Q   D 19931136 + 2048 [fstrim]
+252,9   17      515     0.034311007   841  Q   D 19933184 + 2048 [fstrim]
+252,9   17      516     0.034312008   841  Q   D 19935232 + 2048 [fstrim]
+252,9   17      517     0.034313122   841  Q   D 19937280 + 2048 [fstrim]
+252,9   17      518     0.034314013   841  Q   D 19939328 + 2048 [fstrim]
+252,9   17      519     0.034314940   841  Q   D 19941376 + 2048 [fstrim]
+252,9   17      520     0.034315835   841  Q   D 19943424 + 2048 [fstrim]
+252,9   17      521     0.034316662   841  Q   D 19945472 + 2048 [fstrim]
+252,9   17      522     0.034317547   841  Q   D 19947520 + 2048 [fstrim]
+...
 
-Feedback and bug reports are welcomed.
+Here is the blktrace from xfs fstrim:
+252,12  16        1     0.000000000   554  Q   D 96 + 2048 [fstrim]
+252,12  16        2     0.000010149   554  Q   D 2144 + 2048 [fstrim]
+252,12  16        3     0.000011349   554  Q   D 4192 + 2048 [fstrim]
+252,12  16        4     0.000012584   554  Q   D 6240 + 2048 [fstrim]
+252,12  16        5     0.000013685   554  Q   D 8288 + 2048 [fstrim]
+252,12  16        6     0.000014660   554  Q   D 10336 + 2048 [fstrim]
+252,12  16        7     0.000015707   554  Q   D 12384 + 2048 [fstrim]
+252,12  16        8     0.000016692   554  Q   D 14432 + 2048 [fstrim]
+252,12  16        9     0.000017594   554  Q   D 16480 + 2048 [fstrim]
+252,12  16       10     0.000018539   554  Q   D 18528 + 2048 [fstrim]
+252,12  16       11     0.000019434   554  Q   D 20576 + 2048 [fstrim]
+252,12  16       12     0.000020879   554  Q   D 22624 + 2048 [fstrim]
+252,12  16       13     0.000021856   554  Q   D 24672 + 2048 [fstrim]
+252,12  16       14     0.000022786   554  Q   D 26720 + 2048 [fstrim]
+252,12  16       15     0.000023699   554  Q   D 28768 + 2048 [fstrim]
+252,12  16       16     0.000024672   554  Q   D 30816 + 2048 [fstrim]
+252,12  16       17     0.000025467   554  Q   D 32864 + 2048 [fstrim]
+252,12  16       18     0.000026374   554  Q   D 34912 + 2048 [fstrim]
+252,12  16       19     0.000027194   554  Q   D 36960 + 2048 [fstrim]
+252,12  16       20     0.000028137   554  Q   D 39008 + 2048 [fstrim]
+252,12  16       21     0.000029524   554  Q   D 41056 + 2048 [fstrim]
+252,12  16       22     0.000030479   554  Q   D 43104 + 2048 [fstrim]
+252,12  16       23     0.000031306   554  Q   D 45152 + 2048 [fstrim]
+252,12  16       24     0.000032134   554  Q   D 47200 + 2048 [fstrim]
+252,12  16       25     0.000032964   554  Q   D 49248 + 2048 [fstrim]
+252,12  16       26     0.000033794   554  Q   D 51296 + 2048 [fstrim]
 
-(Please report all bugs even in kernel dm-verity part, thanks!)
 
-Cryptsetup 1.5.0 RC2 Release Notes
-==================================
+As you can see, while ext4 correctly aligns the discards to 1MB, xfs 
+does not.
+It looks like an fstrim or xfs bug: they don't look at discard_alignment 
+(=0 ... a less misleading name would be discard_offset imho) + 
+discard_granularity (=1MB) and they don't base alignments on those.
+Clearly the dm-thin cannot unmap anything if the 1MB regions are not 
+fully covered by a single discard. Note that specifying a large -m 
+option for fstrim does NOT widen the discard messages above 2048, and 
+this is correct because discard_max_bytes for that device is 1048576 . 
+If discard_max_bytes could be made much larger these kind of bugs could 
+be ameliorated, especially in complex situations like layers over 
+layers, virtualization etc.
 
-This testing release candidate version covers mainly inclusion of
+Note that also in ext4 there are parts of the discard without the 1MB 
+alignment as seen with blktrace (out of my snippet), so this also might 
+need to be fixed, but most of it is aligned to 1MB. In xfs there are no 
+parts aligned to 1MB.
 
-- new veritysetup tool (and related libcryptsetup extensions).
 
-- new experimental cryptsetup-reencrypt (offline reencryption) tool.
+Now, another problem:
+Firstly I wanted to say that in my original post I missed the 
+conv=notrunc for dd: I complained about the performances because I 
+expected the zerofiles would have been rewritten in-place without block 
+re-provisioning by dm-thin, but clearly without conv=notrunc this was 
+not happening. I confirm that with conv=notrunc performances are high at 
+the first rewrite, also in ext4, and occupied space in the thin volume 
+does not increase at every rewrite by dd.
+HOWEVER
+by NOT specifying conv=notrunc, the behaviour of dd / ext4 / dm-thin is 
+different if skip_block_zeroing is specified or not. If 
+skip_block_zeroing is not specified (provisioned blocks are pre-zeroed) 
+the space occupied by dd truncate + rewrite INCREASES at every rewrite, 
+while if skip_block_zeroing is NOT specified, dd truncate + rewrite DOES 
+NOT increase space occupied on the thin volume. Note: try this on ext4, 
+not xfs.
+This looks very strange to me. The only reason I can think of is some 
+kind of cooperative behaviour of ext4 with the variable
+dm-X/queue/discard_zeroes_data
+which is different in the two cases. Can anyone give an explanation or 
+check if this is the intended behaviour?
 
-Please note that dm-verity API extension can change in next
-1.5.0 release candidate (despite it is not expected).
 
-Changes since version 1.5.0-rc1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Introduce cryptsetup-reencrypt - experimental offline LUKS reencryption tool.
+And still an open question is: why the speed of provisioning new blocks 
+does not increase with increasing chunk size (64K --> 1MB --> 16MB...), 
+not even when skip_block_zeroing has been set and there is no CoW?
 
-! cryptsetup-reencrypt tool is EXPERIMENTAL
-! ALWAYS BE SURE YOU HAVE RELIABLE BACKUP BEFORE USING THIS TOOL
-
-This tool tries to simplify situation when you need to re-encrypt the whole
-LUKS device in situ (without need to move data elsewhere).
-
-This can happen for example when you want to change volume (master) key,
-encryption algorithm, or other encryption parameter.
-
-Cryptsetup-reencrypt can even optionally shift data on device
-(reducing data device size - you need some free space at the end of device).
-
-In general, cryptsetup-reencrypt can be used to
-
- - re-generate volume key
- - change arbitrary encryption parameters
- - add encryption to not yet encrypted drive
-
-Side effect of reencryption is that final device will contain
-only ciphertext (for all sectors) so even if device was not properly
-wiped by random data, after reencryption you cannot distinguish
-which sectors are used.
-(Reecryption is done always for the whole device.)
-
-There are for sure bugs, please TEST IT IN TEST ENVIRONMENT before
-use for your data.
-
-This tool is not resistant to HW and kernel failures - hw crash
-will cause serious data corruption.
-
-You can enable compilation of this tool with --enable-cryptsetup-reencrypt
-configure option (it is switched off by default).
-(Tool requires libcryptsetup 1.4.3 and later.)
-
-You have to provide all keyslot passphrases or use --kesylot-option
-(then all other keyslots will be disabled).
-
-EXAMPLES (from man page)
-
-Reencrypt /dev/sdb1 (change volume key)
-   # cryptsetup-reencrypt /dev/sdb1
-
-Reencrypt and also change cipher and cipher mode
-  # cryptsetup-reencrypt /dev/sdb1 -c aes-xts-plain64
-
-  Note: if you are changing key size, there must be enough space
-  for keyslots in header or you have to use --reduce-device size and
-  reduce fs in advance.
-
-Add LUKS encryption to not yet encrypted device
-  First, be sure you have space added to disk.
-  Or, alternatively, shrink filesystem in advance.
-
-  Here we need 4096 512-bytes sectors (enough for 2x128 bit key).
-
-  # fdisk -u /dev/sdb # move sdb1 partition end + 4096 sectors
-
-  # cryptsetup-reencrypt /dev/sdb1 --new --reduce-device-size 4096
-
-There are some options which can improve performance (depends on system),
-namely --use-directio (use direct IO for all operations) can be faster
-on some systems. See man page.
-
-Progress and estimated time is printed during reencryption.
-
-You can suspend reencryption (using ctrl+c or term signal).
-To continue reencryption you have to provide only
-the device parameter (offset is stored in temporary log file).
-
-Please note LUKS device is marked invalid during reencryption and
-you have to retain tool temporary files until reencryption finishes.
-
-Temporary files are LUKS-<uuid>.[log|org|new]
-
-Other changes
-~~~~~~~~~~~~~
-
-  * Fix luks-header-from-active script (do not use LUKS header on-disk, add UUID).
-
-  * Add --test-passphrase option for luksOpen (check passphrase only).
-
-  * Fix parsing of hexadecimal string (salt or root hash) in veritysetup.
-
-Changes since version 1.4.3
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Introduce veritysetup tool for dm-verity target management.
-
-The dm-verity device-mapper target was added to Linux kernel 3.4 and
-provides transparent integrity checking of block devices using a cryptographic
-digest provided by the kernel crypto API. This target is read-only.
-
-It is meant to be setup as part of a verified boot path (it was originally
-developed by Chrome OS authors as part of verified boot infrastructure).
-
-For deeper description please see http://code.google.com/p/cryptsetup/wiki/DMVerity
-and kernel dm-verity documentation.
-
-The libcryptsetup library was extended to support manipulation
-with dm-verity kernel module and new veritysetup CLI tool is added.
-
-There are no additional library requirements (it uses the same crypto
-backend as cryptsetup).
-
-If you want compile cryptsetup without veritysetup tool,
-use --disable-veritysetup configure option.
-For other configuration option see configure --help and veritysetup --help
-(e.g. default parameters).
-
-Supported libcryptsetup functions new CRYPT_VERITY type:
-  crypt_init
-  crypt_init_by_name
-  crypt_set_data device
-  crypt_get_type
-  crypt_format
-  crypt_load
-  crypt_get_active_device
-  crypt_activate_by_volume_key (volume key == root hash here)
-  crypt_dump
-and new introduced function
-  crypt_get_verity_info
-
-Please see comments in libcryptsetup.h and veritysetup.c as an code example
-how to use CRYPT_VERITY API.
-
-The veritysetup tool supports these operations:
-
-  veritysetup format <data_device> <hash_device>
-    Formats <hash_device> (calculates all hash areas according to <data_device>).
-    This is initial command to prepare device <hash_device> for later verification.
-
-  veritysetup create <name> <data_device> <hash_device> <root_hash>
-    Creates (activates) a dm-verity mapping with <name> backed by device <data_device>
-    and using <hash_device> for in-kernel verification.
-
-  veritysetup verify <data_device> <hash_device> <root_hash>
-    Verifies data in userspace (no kernel device is activated).
-
-  veritysetup remove <name>
-    Removes activated device from kernel (similar to dmsetup remove).
-
-  veritysetup status <name>
-    Reports status for the active kernel dm-verity device.
-
-  veritysetup dump <hash_device>
-    Reports parameters of verity device from on-disk stored superblock.
-
-For more info see veritysetup --help and veritysetup man page.
-
-Other changes
-~~~~~~~~~~~~~
-
-  * Both data and header device can now be a file and
-    loop device is automatically allocated.
-
-  * Require only up to last keyslot area for header device, previously
-    backup (and activation) required device/file of size up to data start
-    offset (data payload).
-
-  * Fix header backup and restore to work on files with large data offset.
-    Backup and restore now works even if backup file is smaller than data offset.
-
-For full release notes with veritysetup examples see
-http://code.google.com/p/cryptsetup/wiki/Cryptsetup150
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
