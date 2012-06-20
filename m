@@ -1,49 +1,212 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: Ext4 and xfs problems in dm-thin on allocation and discard
-Date: Wed, 20 Jun 2012 05:01:17 -0400
-Message-ID: <20120620090117.GA26764@infradead.org>
-References: <alpine.LFD.2.00.1206190816440.2241@dhcp-1-248.brq.redhat.com>
- <20120619131649.GA6811@redhat.com>
- <alpine.LFD.2.00.1206191519320.21961@dhcp-1-248.brq.redhat.com>
- <20120619133041.GB6811@redhat.com>
- <4FE0840F.2050704@shiftmail.org>
- <20120619144413.GA7225@redhat.com>
- <20120619184858.GA8841@redhat.com>
- <20120619200631.GL25389@dastard>
- <20120619202130.GF22805@thunk.org>
- <20120619203938.GM25389@dastard>
+From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [ANNOUNCE] cryptsetup 1.5.0-rc2
+Date: Wed, 20 Jun 2012 11:59:20 +0200
+Message-ID: <4FE19EF8.8020702@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120619203938.GM25389@dastard>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Ted Ts'o <tytso@mit.edu>, Mike Snitzer <snitzer@redhat.com>, xfs@oss.sgi.com, device-mapper development <dm-devel@redhat.com>, Spelic <spelic@shiftmail.org>, Luk???? Czerner <lczerner@redhat.com>, linux-ext4@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://www.saout.de/pipermail/dm-crypt>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Jun 20, 2012 at 06:39:38AM +1000, Dave Chinner wrote:
-> Exactly - XFS transactions are fine grained, checkpoints are coarse.
-> We don't merge extents freed in fine grained transactions inside
-> checkpoints. We probably could, but, well, it's complex to do in XFS
-> and merging adjacent requests is something the block layer is
-> supposed to do....
 
-Last time I checked it actually tries to do that for discard requests,
-but then badly falls flat (=oopses).  That's the reason why the XFS
-transaction commit code still uses the highly suboptimal synchronous
-blkdev_issue_discard instead of the async variant I wrote when designing
-the code.
+The testing release candidate cryptsetup 1.5.0-rc2 is available at
 
-Another "issue" with the XFS discard pattern and the current block
-layer implementation is that XFS frees a lot of small metadata like
-inode clusters and btree blocks and discards them as well.  If those
-simply fill one of the vectors in a range ATA TRIM command and/or a
-queueable command that's not much of an issue, but with the current
-combination of non-queueable, non-vetored TRIM that's a fairly nasty
-pattern.
+   http://code.google.com/p/cryptsetup/
 
-So until the block layer is sorted out I can not recommend actually
-using -o dicard.  I planned to sort out the block layer issues ASAP
-when writing that code, but other things have kept me busy every since.
+Feedback and bug reports are welcomed.
 
+(Please report all bugs even in kernel dm-verity part, thanks!)
+
+Cryptsetup 1.5.0 RC2 Release Notes
+==================================
+
+This testing release candidate version covers mainly inclusion of
+
+- new veritysetup tool (and related libcryptsetup extensions).
+
+- new experimental cryptsetup-reencrypt (offline reencryption) tool.
+
+Please note that dm-verity API extension can change in next
+1.5.0 release candidate (despite it is not expected).
+
+Changes since version 1.5.0-rc1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Introduce cryptsetup-reencrypt - experimental offline LUKS reencryption tool.
+
+! cryptsetup-reencrypt tool is EXPERIMENTAL
+! ALWAYS BE SURE YOU HAVE RELIABLE BACKUP BEFORE USING THIS TOOL
+
+This tool tries to simplify situation when you need to re-encrypt the whole
+LUKS device in situ (without need to move data elsewhere).
+
+This can happen for example when you want to change volume (master) key,
+encryption algorithm, or other encryption parameter.
+
+Cryptsetup-reencrypt can even optionally shift data on device
+(reducing data device size - you need some free space at the end of device).
+
+In general, cryptsetup-reencrypt can be used to
+
+ - re-generate volume key
+ - change arbitrary encryption parameters
+ - add encryption to not yet encrypted drive
+
+Side effect of reencryption is that final device will contain
+only ciphertext (for all sectors) so even if device was not properly
+wiped by random data, after reencryption you cannot distinguish
+which sectors are used.
+(Reecryption is done always for the whole device.)
+
+There are for sure bugs, please TEST IT IN TEST ENVIRONMENT before
+use for your data.
+
+This tool is not resistant to HW and kernel failures - hw crash
+will cause serious data corruption.
+
+You can enable compilation of this tool with --enable-cryptsetup-reencrypt
+configure option (it is switched off by default).
+(Tool requires libcryptsetup 1.4.3 and later.)
+
+You have to provide all keyslot passphrases or use --kesylot-option
+(then all other keyslots will be disabled).
+
+EXAMPLES (from man page)
+
+Reencrypt /dev/sdb1 (change volume key)
+   # cryptsetup-reencrypt /dev/sdb1
+
+Reencrypt and also change cipher and cipher mode
+  # cryptsetup-reencrypt /dev/sdb1 -c aes-xts-plain64
+
+  Note: if you are changing key size, there must be enough space
+  for keyslots in header or you have to use --reduce-device size and
+  reduce fs in advance.
+
+Add LUKS encryption to not yet encrypted device
+  First, be sure you have space added to disk.
+  Or, alternatively, shrink filesystem in advance.
+
+  Here we need 4096 512-bytes sectors (enough for 2x128 bit key).
+
+  # fdisk -u /dev/sdb # move sdb1 partition end + 4096 sectors
+
+  # cryptsetup-reencrypt /dev/sdb1 --new --reduce-device-size 4096
+
+There are some options which can improve performance (depends on system),
+namely --use-directio (use direct IO for all operations) can be faster
+on some systems. See man page.
+
+Progress and estimated time is printed during reencryption.
+
+You can suspend reencryption (using ctrl+c or term signal).
+To continue reencryption you have to provide only
+the device parameter (offset is stored in temporary log file).
+
+Please note LUKS device is marked invalid during reencryption and
+you have to retain tool temporary files until reencryption finishes.
+
+Temporary files are LUKS-<uuid>.[log|org|new]
+
+Other changes
+~~~~~~~~~~~~~
+
+  * Fix luks-header-from-active script (do not use LUKS header on-disk, add UUID).
+
+  * Add --test-passphrase option for luksOpen (check passphrase only).
+
+  * Fix parsing of hexadecimal string (salt or root hash) in veritysetup.
+
+Changes since version 1.4.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Introduce veritysetup tool for dm-verity target management.
+
+The dm-verity device-mapper target was added to Linux kernel 3.4 and
+provides transparent integrity checking of block devices using a cryptographic
+digest provided by the kernel crypto API. This target is read-only.
+
+It is meant to be setup as part of a verified boot path (it was originally
+developed by Chrome OS authors as part of verified boot infrastructure).
+
+For deeper description please see http://code.google.com/p/cryptsetup/wiki/DMVerity
+and kernel dm-verity documentation.
+
+The libcryptsetup library was extended to support manipulation
+with dm-verity kernel module and new veritysetup CLI tool is added.
+
+There are no additional library requirements (it uses the same crypto
+backend as cryptsetup).
+
+If you want compile cryptsetup without veritysetup tool,
+use --disable-veritysetup configure option.
+For other configuration option see configure --help and veritysetup --help
+(e.g. default parameters).
+
+Supported libcryptsetup functions new CRYPT_VERITY type:
+  crypt_init
+  crypt_init_by_name
+  crypt_set_data device
+  crypt_get_type
+  crypt_format
+  crypt_load
+  crypt_get_active_device
+  crypt_activate_by_volume_key (volume key == root hash here)
+  crypt_dump
+and new introduced function
+  crypt_get_verity_info
+
+Please see comments in libcryptsetup.h and veritysetup.c as an code example
+how to use CRYPT_VERITY API.
+
+The veritysetup tool supports these operations:
+
+  veritysetup format <data_device> <hash_device>
+    Formats <hash_device> (calculates all hash areas according to <data_device>).
+    This is initial command to prepare device <hash_device> for later verification.
+
+  veritysetup create <name> <data_device> <hash_device> <root_hash>
+    Creates (activates) a dm-verity mapping with <name> backed by device <data_device>
+    and using <hash_device> for in-kernel verification.
+
+  veritysetup verify <data_device> <hash_device> <root_hash>
+    Verifies data in userspace (no kernel device is activated).
+
+  veritysetup remove <name>
+    Removes activated device from kernel (similar to dmsetup remove).
+
+  veritysetup status <name>
+    Reports status for the active kernel dm-verity device.
+
+  veritysetup dump <hash_device>
+    Reports parameters of verity device from on-disk stored superblock.
+
+For more info see veritysetup --help and veritysetup man page.
+
+Other changes
+~~~~~~~~~~~~~
+
+  * Both data and header device can now be a file and
+    loop device is automatically allocated.
+
+  * Require only up to last keyslot area for header device, previously
+    backup (and activation) required device/file of size up to data start
+    offset (data payload).
+
+  * Fix header backup and restore to work on files with large data offset.
+    Backup and restore now works even if backup file is smaller than data offset.
+
+For full release notes with veritysetup examples see
+http://code.google.com/p/cryptsetup/wiki/Cryptsetup150
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+http://www.saout.de/mailman/listinfo/dm-crypt
