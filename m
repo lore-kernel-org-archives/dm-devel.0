@@ -1,172 +1,114 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/2 v2] dm persistent data: handle space map
-	checker creation failure
-Date: Thu, 21 Jun 2012 14:57:47 -0400
-Message-ID: <1340305068-30096-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: Ext4 and xfs problems in dm-thin on allocation and discard
+Date: Fri, 22 Jun 2012 09:29:57 +1000
+Message-ID: <20120621232957.GE10673@dastard>
+References: <4FDF9EBE.2030809@shiftmail.org>
+ <20120619015745.GJ25389@dastard>
+ <4FE1BDF3.4080702@shiftmail.org>
+ <20120620225327.GL30705@dastard>
+ <20120621174742.GA27837@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com, ejt@redhat.com, vgoyal@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20120621174742.GA27837@redhat.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Spelic <spelic@shiftmail.org>, device-mapper development <dm-devel@redhat.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, Paolo Bonzini <pbonzini@redhat.com>, axboe@kernel.dk, hch@infradead.org
 List-Id: dm-devel.ids
 
-If CONFIG_DM_DEBUG_SPACE_MAPS is enabled and dm_sm_checker_create()
-fails, dm_tm_create_internal() would still return success even though it
-cleaned up all resources it was supposed to have created.
+On Thu, Jun 21, 2012 at 01:47:43PM -0400, Mike Snitzer wrote:
+> On Wed, Jun 20 2012 at  6:53pm -0400,
+> Dave Chinner <david@fromorbit.com> wrote:
+> 
+> > On Wed, Jun 20, 2012 at 02:11:31PM +0200, Spelic wrote:
+> > > Ok guys, I think I found the bug. One or more bugs.
+> > > 
+> > > 
+> > > Pool has chunksize 1MB.
+> > > In sysfs the thin volume has: queue/discard_max_bytes and
+> > > queue/discard_granularity are 1048576 .
+> > > And it has discard_alignment = 0, which based on sysfs-block
+> > > documentation is correct (a less misleading name would have been
+> > > discard_offset imho).
+> > > Here is the blktrace from ext4 fstrim:
+> > > ...
+> > > 252,9   17      498     0.030466556   841  Q   D 19898368 + 2048 [fstrim]
+> > > 252,9   17      499     0.030467501   841  Q   D 19900416 + 2048 [fstrim]
+> > > 252,9   17      500     0.030468359   841  Q   D 19902464 + 2048 [fstrim]
+....
+> > > Here is the blktrace from xfs fstrim:
+> > > 252,12  16        1     0.000000000   554  Q   D 96 + 2048 [fstrim]
+> > > 252,12  16        2     0.000010149   554  Q   D 2144 + 2048 [fstrim]
+> > > 252,12  16        3     0.000011349   554  Q   D 4192 + 2048 [fstrim]
+.....
+> > It looks like blkdev_issue_discard() has reduced each discard to
+> > bios of a single "granule" (1MB), and not aligned them, hence they
+> > are ignore by dm-thinp.
+> > 
+> > what are the discard parameters exposed by dm-thinp in
+> > /sys/block/<thinp-blkdev>/queue/discard*
+> > 
+> > It looks to me that dmthinp might be setting discard_max_bytes to
+> > 1MB rather than discard_granularity. Looking at dm-thin.c:
+> > 
+> > static void set_discard_limits(struct pool *pool, struct queue_limits *limits)
+> > {
+> >         /*
+> >          * FIXME: these limits may be incompatible with the pool's data device
+> >          */
+> >         limits->max_discard_sectors = pool->sectors_per_block;
+> > 
+> >         /*
+> >          * This is just a hint, and not enforced.  We have to cope with
+> >          * bios that overlap 2 blocks.
+> >          */
+> >         limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
+> >         limits->discard_zeroes_data = pool->pf.zero_new_blocks;
+> > }
+> > 
+> > 
+> > Yes - discard_max_bytes == discard_granularity, and so
+> > blkdev_issue_discard fails to align the request properly. As it is,
+> > setting discard_max_bytes to the thinp block size is silly - it
+> > means you'll never get range requests, and we sent a discard for
+> > every single block in a range rather than having the thinp code
+> > iterate over a range itself.
+> 
+> So 2 different issues:
+> 1) blkdev_issue_discard isn't properly aligning
+> 2) thinp should accept larger discards (up to the stacked
+>    discard_max_bytes rather than setting an override)
 
-Fix the space map checker code to return an appropriate ERR_PTR and have
-dm_sm_disk_create() and dm_tm_create_internal() check for it with IS_ERR.
+Yes, in effect, but there's no real reason I can see why thinp can't
+accept large discard requests than the underlying stack and break
+them up appropriately itself....
 
-Reported-by: Vivek Goyal <vgoyal@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org
----
- drivers/md/persistent-data/dm-space-map-checker.c  |   24 ++++++++++----------
- drivers/md/persistent-data/dm-space-map-disk.c     |    8 +++++-
- .../md/persistent-data/dm-transaction-manager.c    |    8 +++++-
- 3 files changed, 25 insertions(+), 15 deletions(-)
+> > i.e. this is not a filesystem bug that is causing the problem....
+> 
+> Paolo Bonzini fixed blkdev_issue_discard to properly align some time
+> ago; unfortunately the patches slipped through the cracks (cc'ing Paolo,
+> Jens, and Christoph).
+> 
+> Here are references to Paolo's patches:
+> 0/2 https://lkml.org/lkml/2012/3/14/323
+> 1/2 https://lkml.org/lkml/2012/3/14/324
+> 2/2 https://lkml.org/lkml/2012/3/14/325
+> 
+> Patch 2/2 specifically addresses the case where:
+>  discard_max_bytes == discard_granularity 
+> 
+> Paolo, any chance you could resend to Jens (maybe with hch's comments on
+> patch#2 accounted for)?  Also, please add hch's Reviewed-by when
+> reposting.
+> 
+> (would love to see this fixed for 3.5-rcX but if not 3.6 it is?)
 
-diff --git a/drivers/md/persistent-data/dm-space-map-checker.c b/drivers/md/persistent-data/dm-space-map-checker.c
-index 50ed53b..6d7c832 100644
---- a/drivers/md/persistent-data/dm-space-map-checker.c
-+++ b/drivers/md/persistent-data/dm-space-map-checker.c
-@@ -343,25 +343,25 @@ struct dm_space_map *dm_sm_checker_create(struct dm_space_map *sm)
- 	int r;
- 	struct sm_checker *smc;
- 
--	if (!sm)
--		return NULL;
-+	if (IS_ERR_OR_NULL(sm))
-+		return ERR_PTR(-EINVAL);
- 
- 	smc = kmalloc(sizeof(*smc), GFP_KERNEL);
- 	if (!smc)
--		return NULL;
-+		return ERR_PTR(-ENOMEM);
- 
- 	memcpy(&smc->sm, &ops_, sizeof(smc->sm));
- 	r = ca_create(&smc->old_counts, sm);
- 	if (r) {
- 		kfree(smc);
--		return NULL;
-+		return ERR_PTR(r);
- 	}
- 
- 	r = ca_create(&smc->counts, sm);
- 	if (r) {
- 		ca_destroy(&smc->old_counts);
- 		kfree(smc);
--		return NULL;
-+		return ERR_PTR(r);
- 	}
- 
- 	smc->real_sm = sm;
-@@ -371,7 +371,7 @@ struct dm_space_map *dm_sm_checker_create(struct dm_space_map *sm)
- 		ca_destroy(&smc->counts);
- 		ca_destroy(&smc->old_counts);
- 		kfree(smc);
--		return NULL;
-+		return ERR_PTR(r);
- 	}
- 
- 	r = ca_commit(&smc->old_counts, &smc->counts);
-@@ -379,7 +379,7 @@ struct dm_space_map *dm_sm_checker_create(struct dm_space_map *sm)
- 		ca_destroy(&smc->counts);
- 		ca_destroy(&smc->old_counts);
- 		kfree(smc);
--		return NULL;
-+		return ERR_PTR(r);
- 	}
- 
- 	return &smc->sm;
-@@ -391,25 +391,25 @@ struct dm_space_map *dm_sm_checker_create_fresh(struct dm_space_map *sm)
- 	int r;
- 	struct sm_checker *smc;
- 
--	if (!sm)
--		return NULL;
-+	if (IS_ERR_OR_NULL(sm))
-+		return ERR_PTR(-EINVAL);
- 
- 	smc = kmalloc(sizeof(*smc), GFP_KERNEL);
- 	if (!smc)
--		return NULL;
-+		return ERR_PTR(-ENOMEM);
- 
- 	memcpy(&smc->sm, &ops_, sizeof(smc->sm));
- 	r = ca_create(&smc->old_counts, sm);
- 	if (r) {
- 		kfree(smc);
--		return NULL;
-+		return ERR_PTR(r);
- 	}
- 
- 	r = ca_create(&smc->counts, sm);
- 	if (r) {
- 		ca_destroy(&smc->old_counts);
- 		kfree(smc);
--		return NULL;
-+		return ERR_PTR(r);
- 	}
- 
- 	smc->real_sm = sm;
-diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
-index fc469ba..c3ebf76 100644
---- a/drivers/md/persistent-data/dm-space-map-disk.c
-+++ b/drivers/md/persistent-data/dm-space-map-disk.c
-@@ -290,7 +290,13 @@ struct dm_space_map *dm_sm_disk_create(struct dm_transaction_manager *tm,
- 				       dm_block_t nr_blocks)
- {
- 	struct dm_space_map *sm = dm_sm_disk_create_real(tm, nr_blocks);
--	return dm_sm_checker_create_fresh(sm);
-+	struct dm_space_map *smc = dm_sm_checker_create_fresh(sm);
-+
-+	if (IS_ERR(smc) && !IS_ERR_OR_NULL(sm))
-+		dm_sm_destroy(sm);
-+	sm = smc;
-+
-+	return sm;
- }
- EXPORT_SYMBOL_GPL(dm_sm_disk_create);
- 
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-index 02bf78e..e5604b3 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.c
-+++ b/drivers/md/persistent-data/dm-transaction-manager.c
-@@ -347,8 +347,10 @@ static int dm_tm_create_internal(struct dm_block_manager *bm,
- 		}
- 
- 		*sm = dm_sm_checker_create(inner);
--		if (!*sm)
-+		if (IS_ERR(*sm)) {
-+			r = PTR_ERR(*sm);
- 			goto bad2;
-+		}
- 
- 	} else {
- 		r = dm_bm_write_lock(dm_tm_get_bm(*tm), sb_location,
-@@ -367,8 +369,10 @@ static int dm_tm_create_internal(struct dm_block_manager *bm,
- 		}
- 
- 		*sm = dm_sm_checker_create(inner);
--		if (!*sm)
-+		if (IS_ERR(*sm)) {
-+			r = PTR_ERR(*sm);
- 			goto bad2;
-+		}
- 	}
- 
- 	return 0;
+That would be good...
+
+Cheers,
+
+Dave.
 -- 
-1.7.4.4
+Dave Chinner
+david@fromorbit.com
