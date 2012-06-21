@@ -1,46 +1,72 @@
-From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: Re: [PATCH v3 1/9] string: introduce memweight
-Date: Thu, 21 Jun 2012 18:07:14 +0900
-Message-ID: <CAC5umyj1RGHh_0miku_R+ZCtfTOBK6XeY62Aun2MifgFTn_MKg@mail.gmail.com>
-References: <1339203038-13069-1-git-send-email-akinobu.mita@gmail.com>
-	<CA+8MBb+Kk=G5GQbSdbjXqFmw+GCON6jLZABCAGuL+bNDC+dLgA@mail.gmail.com>
+From: Oliver Rojo <oliver.rojo@gmail.com>
+Subject: [fail][unknown] error on multipath
+Date: Thu, 21 Jun 2012 20:02:51 +0800
+Message-ID: <CAD8ONkA_yPkyE-d6_YeB0GPWLh3F+L-RPJQV5LCV3mRddPvN8A@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <CA+8MBb+Kk=G5GQbSdbjXqFmw+GCON6jLZABCAGuL+bNDC+dLgA@mail.gmail.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Tony Luck <tony.luck@gmail.com>
-Cc: linux-kernel@vger.kernel.org, akpm@linux-foundation.org, Anders Larsen <al@alarsen.net>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, Mark Fasheh <mfasheh@suse.com>, Joel Becker <jlbec@evilplan.org>, ocfs2-devel@oss.oracle.com, Jan Kara <jack@suse.cz>, linux-ext4@vger.kernel.org, Andreas Dilger <adilger.kernel@dilger.ca>, Theodore Ts'o <tytso@mit.edu>, Matthew Wilcox <matthew@wil.cx>
+Content-Type: multipart/mixed; boundary="===============2396293936760834939=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-2012/6/21 Tony Luck <tony.luck@gmail.com>:
-> On Fri, Jun 8, 2012 at 5:50 PM, Akinobu Mita <akinobu.mita@gmail.com>=
- wrote:
->> =A0lib/string.c =A0 =A0 =A0 =A0 =A0 | =A0 36 +++++++++++++++++++++++=
-+++++++++++++
->
-> Is lib/string.c the right place for this? =A0I get a build error on t=
-he
-> ia64 sim_defconfig:
->
-> =A0LD =A0 =A0 =A0arch/ia64/hp/sim/boot/bootloader
->
-> It fails because it pulls in lib/lib.a(string.o) to get some
-> innocuous function like strcpy() ... but it also gets
-> given memweight() which relies on __bitmap_weight()
-> which it doesn't have, because it doesn't include lib/built-in.o
-> (which is where bitmap.o, the definer of __bitmap_weight(), has
-> been linked).
->
-> Moving memweight() to lib/bitmap.c fixes the problem. But it
-> isn't really clear that it belongs there either. =A0Perhaps it should
-> be its own file lib/memweight.c that gets included in lib/lib.a?
+--===============2396293936760834939==
+Content-Type: multipart/alternative; boundary=e0cb4efe326c8c57df04c2fa4bf4
 
-I'll fix it by making lib/memweight.c as you suggested.
-Thanks for your report and suggestion.
---
-To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--e0cb4efe326c8c57df04c2fa4bf4
+Content-Type: text/plain; charset=ISO-8859-1
+
+hi,
+
+Would like to seek support on my current problem. We are currently running
+a NFS server on a clustered environment under RHEL 5.6. LUN disks are being
+presented into both cluster nodes via DM-Multipathing which is being used
+as NFS share. However, everytime I am testing NFS package failover,
+failover always fails and upon checking the multipath (multipath -ll), it
+shows that the LUN disk affected has "[fail][unknown]" error. The only
+workaround that is being done is to present/unpresent the LUN disk to have
+it [ready][undef] state.
+
+Thank you!
+
+Oliver
+
+--e0cb4efe326c8c57df04c2fa4bf4
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div>hi,</div>
+<div>=A0</div>
+<div>Would like to seek support on my current problem. We are currently run=
+ning a NFS server on a clustered environment under RHEL 5.6. LUN disks are =
+being presented into both cluster nodes via DM-Multipathing which is being =
+used as NFS share. However, everytime=A0I am testing NFS package failover, =
+failover always fails and upon checking the multipath (multipath -ll), it s=
+hows that the LUN disk affected has &quot;[fail][unknown]&quot; error. The =
+only workaround that is being done is to present/unpresent the LUN disk to =
+have it [ready][undef] state.</div>
+
+<div>=A0</div>
+<div>Thank you!</div>
+<div>=A0</div>
+<div>Oliver</div>
+
+--e0cb4efe326c8c57df04c2fa4bf4--
+
+
+--===============2396293936760834939==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2396293936760834939==--
