@@ -1,133 +1,115 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 4] MD RAID10: rename mirror_info structure
-Date: Tue, 26 Jun 2012 03:49:24 -0500
-Message-ID: <1340700564.19015.15.camel@f16>
+Subject: [PATCH 2 of 4] MD RAID1: rename mirror_info structure
+Date: Tue, 26 Jun 2012 03:52:02 -0500
+Message-ID: <1340700722.19015.19.camel@f16>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-raid-owner@vger.kernel.org>
 Sender: linux-raid-owner@vger.kernel.org
 To: dm-devel@redhat.com, linux-raid@vger.kernel.org
-Cc: jbrassow@redhat.com, agk@redhat.com, neilb@suse.de
+Cc: jbrassow@redhat.com, neilb@suse.de, agk@redhat.com
 List-Id: dm-devel.ids
 
-MD RAID10: Rename the structure 'mirror_info' to 'raid10_info'
+MD RAID1: Rename the structure 'mirror_info' to 'raid1_info'
 
-The same structure name ('mirror_info') is used by raid1.  Each of these
+The same structure name ('mirror_info') is used by raid10.  Each of these
 structures are defined in there respective header files.  If dm-raid is
 to support both RAID1 and RAID10, the header files will be included and
-the structure names must not collide.
+the structure names must not collide.  While only one of these structure
+names needs to change, this patch adds consistency to the naming of the
+structure.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-upstream/drivers/md/raid10.c
+Index: linux-upstream/drivers/md/raid1.c
 ===================================================================
---- linux-upstream.orig/drivers/md/raid10.c
-+++ linux-upstream/drivers/md/raid10.c
-@@ -1547,7 +1547,7 @@ static void error(struct mddev *mddev, s
- static void print_conf(struct r10conf *conf)
+--- linux-upstream.orig/drivers/md/raid1.c
++++ linux-upstream/drivers/md/raid1.c
+@@ -873,7 +873,7 @@ do_sync_io:
+ static void make_request(struct mddev *mddev, struct bio * bio)
  {
- 	int i;
--	struct mirror_info *tmp;
-+	struct raid10_info *tmp;
- 
- 	printk(KERN_DEBUG "RAID10 conf printout:\n");
- 	if (!conf) {
-@@ -1581,7 +1581,7 @@ static int raid10_spare_active(struct md
- {
- 	int i;
- 	struct r10conf *conf = mddev->private;
--	struct mirror_info *tmp;
-+	struct raid10_info *tmp;
- 	int count = 0;
- 	unsigned long flags;
- 
-@@ -1656,7 +1656,7 @@ static int raid10_add_disk(struct mddev
- 	else
- 		mirror = first;
- 	for ( ; mirror <= last ; mirror++) {
--		struct mirror_info *p = &conf->mirrors[mirror];
-+		struct raid10_info *p = &conf->mirrors[mirror];
- 		if (p->recovery_disabled == mddev->recovery_disabled)
- 			continue;
- 		if (p->rdev) {
-@@ -1710,7 +1710,7 @@ static int raid10_remove_disk(struct mdd
+ 	struct r1conf *conf = mddev->private;
+-	struct mirror_info *mirror;
++	struct raid1_info *mirror;
+ 	struct r1bio *r1_bio;
+ 	struct bio *read_bio;
+ 	int i, disks;
+@@ -1367,7 +1367,7 @@ static int raid1_add_disk(struct mddev *
+ 	struct r1conf *conf = mddev->private;
+ 	int err = -EEXIST;
+ 	int mirror = 0;
+-	struct mirror_info *p;
++	struct raid1_info *p;
+ 	int first = 0;
+ 	int last = conf->raid_disks - 1;
+ 	struct request_queue *q = bdev_get_queue(rdev->bdev);
+@@ -1436,7 +1436,7 @@ static int raid1_remove_disk(struct mdde
+ 	struct r1conf *conf = mddev->private;
  	int err = 0;
  	int number = rdev->raid_disk;
- 	struct md_rdev **rdevp;
--	struct mirror_info *p = conf->mirrors + number;
-+	struct raid10_info *p = conf->mirrors + number;
+-	struct mirror_info *p = conf->mirrors+ number;
++	struct raid1_info *p = conf->mirrors + number;
  
- 	print_conf(conf);
- 	if (rdev == p->rdev)
-@@ -2876,7 +2876,7 @@ static sector_t sync_request(struct mdde
- 			sector_t sect;
- 			int must_sync;
- 			int any_working;
--			struct mirror_info *mirror = &conf->mirrors[i];
-+			struct raid10_info *mirror = &conf->mirrors[i];
- 
- 			if ((mirror->rdev == NULL ||
- 			     test_bit(In_sync, &mirror->rdev->flags))
-@@ -3382,7 +3382,7 @@ static struct r10conf *setup_conf(struct
- 		goto out;
- 
- 	/* FIXME calc properly */
--	conf->mirrors = kzalloc(sizeof(struct mirror_info)*(mddev->raid_disks +
-+	conf->mirrors = kzalloc(sizeof(struct raid10_info)*(mddev->raid_disks +
- 							    max(0,mddev->delta_disks)),
- 				GFP_KERNEL);
- 	if (!conf->mirrors)
-@@ -3446,7 +3446,7 @@ static int run(struct mddev *mddev)
+ 	if (rdev != p->rdev)
+ 		p = conf->mirrors + conf->raid_disks + number;
+@@ -2517,7 +2517,7 @@ static struct r1conf *setup_conf(struct
  {
- 	struct r10conf *conf;
- 	int i, disk_idx, chunk_size;
+ 	struct r1conf *conf;
+ 	int i;
 -	struct mirror_info *disk;
-+	struct raid10_info *disk;
++	struct raid1_info *disk;
  	struct md_rdev *rdev;
- 	sector_t size;
- 	sector_t min_offset_diff = 0;
-@@ -3799,7 +3799,7 @@ static int raid10_check_reshape(struct m
- 	if (mddev->delta_disks > 0) {
- 		/* allocate new 'mirrors' list */
- 		conf->mirrors_new = kzalloc(
--			sizeof(struct mirror_info)
-+			sizeof(struct raid10_info)
- 			*(mddev->raid_disks +
- 			  mddev->delta_disks),
- 			GFP_KERNEL);
-@@ -3924,7 +3924,7 @@ static int raid10_start_reshape(struct m
- 	spin_lock_irq(&conf->device_lock);
- 	if (conf->mirrors_new) {
- 		memcpy(conf->mirrors_new, conf->mirrors,
--		       sizeof(struct mirror_info)*conf->prev.raid_disks);
-+		       sizeof(struct raid10_info)*conf->prev.raid_disks);
- 		smp_mb();
- 		kfree(conf->mirrors_old); /* FIXME and elsewhere */
- 		conf->mirrors_old = conf->mirrors;
-Index: linux-upstream/drivers/md/raid10.h
+ 	int err = -ENOMEM;
+ 
+@@ -2525,7 +2525,7 @@ static struct r1conf *setup_conf(struct
+ 	if (!conf)
+ 		goto abort;
+ 
+-	conf->mirrors = kzalloc(sizeof(struct mirror_info)
++	conf->mirrors = kzalloc(sizeof(struct raid1_info)
+ 				* mddev->raid_disks * 2,
+ 				 GFP_KERNEL);
+ 	if (!conf->mirrors)
+@@ -2794,7 +2794,7 @@ static int raid1_reshape(struct mddev *m
+ 	 */
+ 	mempool_t *newpool, *oldpool;
+ 	struct pool_info *newpoolinfo;
+-	struct mirror_info *newmirrors;
++	struct raid1_info *newmirrors;
+ 	struct r1conf *conf = mddev->private;
+ 	int cnt, raid_disks;
+ 	unsigned long flags;
+@@ -2837,7 +2837,7 @@ static int raid1_reshape(struct mddev *m
+ 		kfree(newpoolinfo);
+ 		return -ENOMEM;
+ 	}
+-	newmirrors = kzalloc(sizeof(struct mirror_info) * raid_disks * 2,
++	newmirrors = kzalloc(sizeof(struct raid1_info) * raid_disks * 2,
+ 			     GFP_KERNEL);
+ 	if (!newmirrors) {
+ 		kfree(newpoolinfo);
+Index: linux-upstream/drivers/md/raid1.h
 ===================================================================
---- linux-upstream.orig/drivers/md/raid10.h
-+++ linux-upstream/drivers/md/raid10.h
+--- linux-upstream.orig/drivers/md/raid1.h
++++ linux-upstream/drivers/md/raid1.h
 @@ -1,7 +1,7 @@
- #ifndef _RAID10_H
- #define _RAID10_H
+ #ifndef _RAID1_H
+ #define _RAID1_H
  
 -struct mirror_info {
-+struct raid10_info {
- 	struct md_rdev	*rdev, *replacement;
++struct raid1_info {
+ 	struct md_rdev	*rdev;
  	sector_t	head_position;
- 	int		recovery_disabled;	/* matches
-@@ -13,8 +13,8 @@ struct mirror_info {
+ };
+@@ -24,7 +24,7 @@ struct pool_info {
  
- struct r10conf {
+ struct r1conf {
  	struct mddev		*mddev;
--	struct mirror_info	*mirrors;
--	struct mirror_info	*mirrors_new, *mirrors_old;
-+	struct raid10_info	*mirrors;
-+	struct raid10_info	*mirrors_new, *mirrors_old;
- 	spinlock_t		device_lock;
- 
- 	/* geometry */
+-	struct mirror_info	*mirrors;	/* twice 'raid_disks' to
++	struct raid1_info	*mirrors;	/* twice 'raid_disks' to
+ 						 * allow for replacements.
+ 						 */
+ 	int			raid_disks;
 
 
