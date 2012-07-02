@@ -1,88 +1,59 @@
 From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: Ext4 and xfs problems in dm-thin on allocation and discard
-Date: Mon, 02 Jul 2012 15:15:38 +0200
-Message-ID: <4FF19EFA.8020109@redhat.com>
-References: <4FDF9EBE.2030809@shiftmail.org> <20120619015745.GJ25389@dastard> <4FE1BDF3.4080702@shiftmail.org> <20120620225327.GL30705@dastard> <20120621174742.GA27837@redhat.com> <4FF06480.6030109@redhat.com> <20120702130034.GA785@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20120702130034.GA785@redhat.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Dave Chinner <david@fromorbit.com>, Spelic <spelic@shiftmail.org>, device-mapper development <dm-devel@redhat.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, axboe@kernel.dk, hch@infradead.org, "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: [PATCH v2 1/3] block: add sysfs entry for discard_alignment
+Date: Mon,  2 Jul 2012 15:20:23 +0200
+Message-ID: <1341235225-27551-2-git-send-email-pbonzini@redhat.com>
+References: <1341235225-27551-1-git-send-email-pbonzini@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1341235225-27551-1-git-send-email-pbonzini@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: snitzer@redhat.com, david@fromorbit.com, dm-devel@redhat.com, xfs@oss.sgi.com, hch@lst.de, martin.petersen@oracle.com, axboe@kernel.dk
 List-Id: dm-devel.ids
 
-Il 02/07/2012 15:00, Mike Snitzer ha scritto:
-> On Sun, Jul 01 2012 at 10:53am -0400,
-> Paolo Bonzini <pbonzini@redhat.com> wrote:
-> 
->> Il 21/06/2012 19:47, Mike Snitzer ha scritto:
->>> Paolo Bonzini fixed blkdev_issue_discard to properly align some time
->>> ago; unfortunately the patches slipped through the cracks (cc'ing Paolo,
->>> Jens, and Christoph).
->>>
->>> Here are references to Paolo's patches:
->>> 0/2 https://lkml.org/lkml/2012/3/14/323
->>> 1/2 https://lkml.org/lkml/2012/3/14/324
->>> 2/2 https://lkml.org/lkml/2012/3/14/325
->>>
->>> Patch 2/2 specifically addresses the case where:
->>>  discard_max_bytes == discard_granularity 
->>>
->>> Paolo, any chance you could resend to Jens (maybe with hch's comments on
->>> patch#2 accounted for)?  Also, please add hch's Reviewed-by when
->>> reposting.
->>
->> Sure, I'll do it this week.  I just need to retest.
-> 
-> Great, thanks.
-> 
-> (cc'ing mkp)
-> 
-> One thing that seemed odd was your adjustment for discard_alignment (in
-> patch 1/2).
-> 
-> I need to better understand how discard_alignment (an offset despite the
-> name not saying as much) relates to alignment_offset.
+The next patches will actually use the alignment, expose it in sysfs
+for ease of debugging.
 
-In principle, it doesn't.  All SBC says is:
+Cc: Jens Axboe <axboe@kernel.dk>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ block/blk-sysfs.c |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-  The UNMAP GRANULARITY ALIGNMENT field indicates the LBA of the first
-  logical block to which the OPTIMAL UNMAP GRANULARITY field applies.
-  The unmap granularity alignment is used to calculate an optimal unmap
-  request starting LBA as follows:
-
-   optimal unmap request starting LBA = (n * optimal unmap granularity)
-      + unmap granularity alignment
-
-and what my patch does is ensure that all requests except the first
-start at such an LBA.
-
-In practice, there is a connection between the two, because a sane disk
-will make all discard_alignment-aligned sectors also
-alignment_offset-aligned, or vice versa, or both (depending on whether
-1<<phys_exp is < > or = to discard_granularity).
-
-> Could just be that once a partition tool, or lvm, etc account for
-> alignment_offset (which they do now) that discard_alignment is
-> automagically accounted for as a side-effect?
-
-Yes, if discard_granularity <= 1<<phys_exp.  In that case, the condition
-above simplifies to discard_alignment == alignment_offset %
-discard_granularity.  Your partitions will be already aligned to both
-alignment_offset and discard_alignment.
-
-It seems more likely that discard_granularity > 1<<phys_exp if they
-differ at all, in which case the partition tool will improve the
-situation but still not reach an optimal setting.
-
-The optimal positioning of partitions/logical volumes/etc. would be to
-align them to lcm(1<<phys_exp, discard_granularity), and "misalign" the
-starting sector by max(discard_alignment, alignment_offset).
-
-> (I haven't actually seen discard_alignment != 0 in the wild)
-
-Me neither, but it was easy to account for it in the patch.
-
-Paolo
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index aa41b47..95e919c 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -146,6 +146,11 @@ static ssize_t queue_io_opt_show(struct request_queue *q, char *page)
+ 	return queue_var_show(queue_io_opt(q), page);
+ }
+ 
++static ssize_t queue_discard_alignment_show(struct request_queue *q, char *page)
++{
++	return queue_var_show(q->limits.discard_alignment, page);
++}
++
+ static ssize_t queue_discard_granularity_show(struct request_queue *q, char *page)
+ {
+ 	return queue_var_show(q->limits.discard_granularity, page);
+@@ -343,6 +348,11 @@ static struct queue_sysfs_entry queue_io_opt_entry = {
+ 	.show = queue_io_opt_show,
+ };
+ 
++static struct queue_sysfs_entry queue_discard_alignment_entry = {
++	.attr = {.name = "discard_alignment", .mode = S_IRUGO },
++	.show = queue_discard_alignment_show,
++};
++
+ static struct queue_sysfs_entry queue_discard_granularity_entry = {
+ 	.attr = {.name = "discard_granularity", .mode = S_IRUGO },
+ 	.show = queue_discard_granularity_show,
+@@ -403,6 +413,7 @@ static struct attribute *default_attrs[] = {
+ 	&queue_io_min_entry.attr,
+ 	&queue_io_opt_entry.attr,
+ 	&queue_discard_granularity_entry.attr,
++	&queue_discard_alignment_entry.attr,
+ 	&queue_discard_max_entry.attr,
+ 	&queue_discard_zeroes_data_entry.attr,
+ 	&queue_nonrot_entry.attr,
+-- 
+1.7.1
