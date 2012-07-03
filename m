@@ -1,45 +1,45 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RESEND PATCH 1/3] scsi_dh: add scsi_dh_attached_handler_name
-Date: Mon, 2 Jul 2012 17:07:33 -0400
-Message-ID: <20120702210733.GA4097@redhat.com>
-References: <1340735525-21083-1-git-send-email-snitzer@redhat.com>
- <1340735525-21083-2-git-send-email-snitzer@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: xfs_btree_cur leak with 3.5-rc4
+Date: Tue, 3 Jul 2012 10:26:11 +1000
+Message-ID: <20120703002611.GW19223@dastard>
+References: <20120702191412.GA3617@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <1340735525-21083-2-git-send-email-snitzer@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <jbottomley@parallels.com>, James.Bottomley@hansenpartnership.com
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>
+In-Reply-To: <20120702191412.GA3617@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Sender: xfs-bounces@oss.sgi.com
+Errors-To: xfs-bounces@oss.sgi.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, xfs@oss.sgi.com
 List-Id: dm-devel.ids
 
-On Tue, Jun 26 2012 at  2:32pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Mon, Jul 02, 2012 at 03:14:12PM -0400, Mike Snitzer wrote:
+> I get kmemleak reports against XFS when I run the thinp-test-suite
+> against 3.5-rc4.  I didn't see any XFS leaks with 3.4.
 
-> Introduce scsi_dh_attached_handler_name() to retrieve the name of the
-> scsi_dh that is attached to the scsi_device associated with the provided
-> request queue.  Returns NULL if a scsi_dh is not attached.
-> 
-> Also, fix scsi_dh_{attach,detach} function header comments to document
-> @q rather than @sdev.
-> 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> Tested-by: Babu Moger <babu.moger@netapp.com>
-> Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> Acked-by: Hannes Reinecke <hare@suse.de>
+Already fixed in 3.5-rc5:
 
-Hi James,
+76d0953 xfs: fix allocbt cursor leak in xfs_alloc_ag_vextent_near
 
-Any insight on staging this scsi_dh patch for 3.6?
+Thanks for reporting it, though, Mike.
 
-Or what about adding your Acked-by and allowing Alasdair to submit it
-for 3.6 with the corresponding dm-mpath patch?
+Cheers,
 
-However you'd like to skin it is fine by me.  I'd just _really_
-appreciate some feedback.
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
 
-Thanks,
-Mike
-
-p.s. I'm nothing if not persistent ;)
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
