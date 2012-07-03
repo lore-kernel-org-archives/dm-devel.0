@@ -1,44 +1,41 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper fixes for 3.5
-Date: Tue, 3 Jul 2012 14:53:10 +0100
-Message-ID: <20120703135310.GT20415@agk-dp.fab.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 1/3] block: add sysfs entry for
+ discard_alignment
+Date: Tue, 3 Jul 2012 10:00:48 -0400
+Message-ID: <20120703140048.GC11272@redhat.com>
+References: <1341235225-27551-1-git-send-email-pbonzini@redhat.com>
+ <1341235225-27551-2-git-send-email-pbonzini@redhat.com>
+ <20120703023442.GB3586@redhat.com>
+ <4FF2DCB1.2090704@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <4FF2DCB1.2090704@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org, Milan Broz <mbroz@redhat.com>
+To: Paolo Bonzini <pbonzini@redhat.com>
+Cc: linux-kernel@vger.kernel.org, axboe@kernel.dk, snitzer@redhat.com, martin.petersen@oracle.com, david@fromorbit.com, xfs@oss.sgi.com, dm-devel@redhat.com, hch@lst.de
 List-Id: dm-devel.ids
 
-Please pull from:
- 
-  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.5-fixes
+On Tue, Jul 03, 2012 at 01:51:13PM +0200, Paolo Bonzini wrote:
+> Il 03/07/2012 04:34, Vivek Goyal ha scritto:
+> >> > The next patches will actually use the alignment, expose it in sysfs
+> >> > for ease of debugging.
+> >> > 
+> > Don't we already have discard_alignment exported as device attribute.
+> > 
+> > /sys/block/<dev>/discard_alignment
+> 
+> Ah, interesting, I missed it completely.  I guess it's because queue/
+> directories only exist for full disks, and the correct alignment varies
+> for each partition.  So this patch is unnecessary.
 
-to get the following device-mapper fixes for 3.5.
- 
-Thanks,
-Alasdair
- 
-----------------------------------------------------------------
-Four minor thin provisioning fixes and correct and update dm-verity
-documentation.
+Partition discard_alignments are available in
+/sys/block/<disk>/<partition>/discard_alignment.
 
-----------------------------------------------------------------
-Joe Thornber (1):
-      dm thin: commit metadata before creating metadata snapshot
+That raises an interesting question for patch3. If the discard is happening to
+a partition, shouldn't you be looking at partition discard_alignment
+instead of always looking at queue discard_alignment?
 
-Mike Snitzer (3):
-      dm persistent data: fix shadow_info_leak on dm_tm_destroy
-      dm persistent data: handle space map checker creation failure
-      dm persistent data: fix allocation failure in space map checker init
-
-Milan Broz (1):
-      dm: verity fix documentation
-
- Documentation/device-mapper/verity.txt             |  131 +++++++-------------
- drivers/md/dm-thin.c                               |    7 ++
- drivers/md/persistent-data/dm-space-map-checker.c  |   54 ++++----
- drivers/md/persistent-data/dm-space-map-disk.c     |   11 +-
- .../md/persistent-data/dm-transaction-manager.c    |   11 +-
- 5 files changed, 103 insertions(+), 111 deletions(-)
+Thanks
+Vivek
