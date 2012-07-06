@@ -1,14 +1,13 @@
-From: CoolCold <coolthecold@gmail.com>
-Subject: Re: [PATCH 0 of 5] MD: prepare RAID10 for inclusion in
-	dm-raid.c
-Date: Fri, 6 Jul 2012 12:40:51 +0400
-Message-ID: <CAGqmV7osZiY+Bv5vn0gtQ_1-j9KnS8dJxoZKm6WJHYaoDrtTBw@mail.gmail.com>
-References: <1340700259.19015.10.camel@f16>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-mirror: fix crash with mirror recovery and
+	discard
+Date: Fri, 6 Jul 2012 14:56:59 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1207061454200.1119@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0092073247416085092=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1340700259.19015.10.camel@f16>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,98 +17,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0092073247416085092==
-Content-Type: multipart/alternative; boundary=bcaec54ee6eabf3d5c04c425387f
+dm-mirror: fix crash with mirror recovery and discard
 
---bcaec54ee6eabf3d5c04c425387f
-Content-Type: text/plain; charset=ISO-8859-1
+This patch fixes bug 837607 - crash when mirror recovery happens and a
+discard request is sent.
 
-On Tue, Jun 26, 2012 at 12:44 PM, Jonathan Brassow <jbrassow@redhat.com>wrote:
+Generally, the following sequence happens during mirror synchronization:
+- function do_recovery is called
+- do_recovery calls dm_rh_recovery_prepare
+- dm_rh_recovery_prepare uses a semaphore to limit the number
+  simultaneously recovered regions (by default the semaphore value is 1,
+  so only one region at a time is recovered)
+- dm_rh_recovery_prepare calls __rh_recovery_prepare,
+  __rh_recovery_prepare asks the log driver for the next region to
+  recover. Then, it sets the region state to DM_RH_RECOVERING. If there
+  are no pending I/Os on this region, the region is added to
+  quiesced_regions list. If there are pending I/Os, the region is not
+  added to any list. It is added to the quiesced_regions list later (by
+  dm_rh_dec function) when all I/Os finish.
+- when the region is on quiesced_regions list, there are no I/Os in
+  flight on this region. The region popped from the list in
+  dm_rh_recovery_start function. Then, kcopyd job is started in the
+  recover function.
+- when the kcopyd job finishes, recovery_complete is called. It calls
+  dm_rh_recovery_end. dm_rh_recovery_end adds the region to
+  recovered_regions or failed_recovered_regions list (depending on
+  whether the copy operation was successful or not).
 
-> Neil,
->
-> Here's a couple patches that are necessary for MD before I can add
-> RAID10 to the list of supported personalities through dm-raid.c:
->         1) md-raid10-rename-mirror_info.patch
->         2) md-raid1-rename-mirror_info.patch
->         3) md-move-IO_BLOCKED-to-md_h.patch
->         4) md-export-md_raid10_congested.patch
->
-> I'll send the patch that enables raid10 as a separate patch that depends
-> on this patch set and a couple of DM patches.
->
-> Can you explain a bit more detailed for me, what is this about? I.e. from
-my point of view dm-raid and md-raid and fully separated but looks like I'm
-wrong and missing something.
+The above mechanism assumes that if the region is in DM_RH_RECOVERING
+state, no new I/Os are started on this region. When I/O is started,
+dm_rh_inc_pending is called, which increases reg->pending count. When
+I/O is finished, dm_rh_dec is called. It decreases reg->pending count.
+If the count is zero and the region was in DM_RH_RECOVERING state,
+dm_rh_dec adds it to the quiesced_regions list.s
 
+Consequently, if we call dm_rh_inc_pending/dm_rh_dec while the region is
+in DM_RH_RECOVERING state, it could be added to quiesced_regions list
+multiple times or it could be added to this list when kcopyd is copying
+data (it is assumed that the region is not on any list while kcopyd does
+its jobs). This results in memory corruption and crash.
 
->  brassow
->
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-raid" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+There already exist bypasses for REQ_FLUSH requests: REQ_FLUSH requests
+do not belong to any region, so they are always added to the sync list
+in do_writes. dm_rh_inc_pending does not increase count for REQ_FLUSH
+requests. In mirror_end_io, dm_rh_dec is never called for REQ_FLUSH
+requests. These bypasses avoid the crash possibility described above.
 
+These bypasses were improperly implemented for REQ_DISCARD. In
+do_writes, REQ_DISCARD requests is always added on sync queue and
+immediatelly dispatched (even if the region is in DM_RH_RECOVERING).
+However, dm_rh_inc and dm_rh_dec is called for REQ_DISCARD resusts.
+So it violates the rule that no I/Os are started on DM_RH_RECOVERING
+regions, and causes the list corruption described above.
 
+This patch changes it so that REQ_DISCARD requests follow the same path
+as REQ_FLUSH. This avoids the crash.
 
--- 
-Best regards,
-[COOLCOLD-RIPN]
+Note that we can't guarantee that REQ_DISCARD zeroes the data even if
+the underlying disks support zero on discard, so this patch also sets
+ti->discard_zeroes_data_unsupported.
 
---bcaec54ee6eabf3d5c04c425387f
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@kernel.org
 
-<br><br><div class=3D"gmail_quote">On Tue, Jun 26, 2012 at 12:44 PM, Jonath=
-an Brassow <span dir=3D"ltr">&lt;<a href=3D"mailto:jbrassow@redhat.com" tar=
-get=3D"_blank">jbrassow@redhat.com</a>&gt;</span> wrote:<br><blockquote cla=
-ss=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pa=
-dding-left:1ex">
-Neil,<br>
-<br>
-Here&#39;s a couple patches that are necessary for MD before I can add<br>
-RAID10 to the list of supported personalities through dm-raid.c:<br>
-=A0 =A0 =A0 =A0 1) md-raid10-rename-mirror_info.patch<br>
-=A0 =A0 =A0 =A0 2) md-raid1-rename-mirror_info.patch<br>
-=A0 =A0 =A0 =A0 3) md-move-IO_BLOCKED-to-md_h.patch<br>
-=A0 =A0 =A0 =A0 4) md-export-md_raid10_congested.patch<br>
-<br>
-I&#39;ll send the patch that enables raid10 as a separate patch that depend=
-s<br>
-on this patch set and a couple of DM patches.<br>
-<br></blockquote><div>Can you explain a bit more detailed for me, what is t=
-his about? I.e. from my point of view dm-raid and md-raid and fully separat=
-ed but looks like I&#39;m wrong and missing something.<br>=A0</div><blockqu=
-ote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px=
- solid rgb(204,204,204);padding-left:1ex">
+---
+ drivers/md/dm-raid1.c       |    3 ++-
+ drivers/md/dm-region-hash.c |    5 ++++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
-=A0brassow<br>
-<br>
-<br>
---<br>
-To unsubscribe from this list: send the line &quot;unsubscribe linux-raid&q=
-uot; in<br>
-the body of a message to <a href=3D"mailto:majordomo@vger.kernel.org">major=
-domo@vger.kernel.org</a><br>
-More majordomo info at =A0<a href=3D"http://vger.kernel.org/majordomo-info.=
-html" target=3D"_blank">http://vger.kernel.org/majordomo-info.html</a><br>
-</blockquote></div><br><br clear=3D"all"><br>-- <br>Best regards,<br>[COOLC=
-OLD-RIPN] <br>
-
---bcaec54ee6eabf3d5c04c425387f--
-
-
---===============0092073247416085092==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0092073247416085092==--
+Index: linux-3.4.4-fast/drivers/md/dm-raid1.c
+===================================================================
+--- linux-3.4.4-fast.orig/drivers/md/dm-raid1.c	2012-07-06 19:01:27.000000000 +0200
++++ linux-3.4.4-fast/drivers/md/dm-raid1.c	2012-07-06 19:03:53.000000000 +0200
+@@ -1091,6 +1091,7 @@ static int mirror_ctr(struct dm_target *
+ 
+ 	ti->num_flush_requests = 1;
+ 	ti->num_discard_requests = 1;
++	ti->discard_zeroes_data_unsupported = 1;
+ 
+ 	ms->kmirrord_wq = alloc_workqueue("kmirrord",
+ 					  WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
+@@ -1221,7 +1222,7 @@ static int mirror_end_io(struct dm_targe
+ 	 * We need to dec pending if this was a write.
+ 	 */
+ 	if (rw == WRITE) {
+-		if (!(bio->bi_rw & REQ_FLUSH))
++		if (!(bio->bi_rw & (REQ_FLUSH | REQ_DISCARD)))
+ 			dm_rh_dec(ms->rh, map_context->ll);
+ 		return error;
+ 	}
+Index: linux-3.4.4-fast/drivers/md/dm-region-hash.c
+===================================================================
+--- linux-3.4.4-fast.orig/drivers/md/dm-region-hash.c	2012-07-06 19:02:28.000000000 +0200
++++ linux-3.4.4-fast/drivers/md/dm-region-hash.c	2012-07-06 19:02:57.000000000 +0200
+@@ -404,6 +404,9 @@ void dm_rh_mark_nosync(struct dm_region_
+ 		return;
+ 	}
+ 
++	if (bio->bi_rw & REQ_DISCARD)
++		return;
++
+ 	/* We must inform the log that the sync count has changed. */
+ 	log->type->set_region_sync(log, region, 0);
+ 
+@@ -524,7 +527,7 @@ void dm_rh_inc_pending(struct dm_region_
+ 	struct bio *bio;
+ 
+ 	for (bio = bios->head; bio; bio = bio->bi_next) {
+-		if (bio->bi_rw & REQ_FLUSH)
++		if (bio->bi_rw & (REQ_FLUSH | REQ_FLUSH))
+ 			continue;
+ 		rh_inc(rh, dm_rh_bio_to_region(rh, bio));
+ 	}
