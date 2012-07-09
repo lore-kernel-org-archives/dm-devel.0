@@ -1,12 +1,17 @@
-From: =?gb2312?B?zMDVvMCk?= <tangzhankun@hotmail.com>
-Subject: Can anyone give some help on my research of thin
-	provisioning ?
-Date: Mon, 9 Jul 2012 10:05:40 +0800
-Message-ID: <BAY156-W3F9C182981E271257112FBED30@phx.gbl>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mirror: fix crash with mirror recovery and discard
+Date: Mon, 9 Jul 2012 08:16:38 -0400
+Message-ID: <20120709121638.GB30048@redhat.com>
+References: <Pine.LNX.4.64.1207061454200.1119@file.rdu.redhat.com>
+	<20120706194859.GA10276@redhat.com>
+	<Pine.LNX.4.64.1207061629150.16361@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0800916812307318030=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1207061629150.16361@file.rdu.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,92 +21,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
---===============0800916812307318030==
-Content-Type: multipart/alternative;
-	boundary="_9fbcb795-ddbc-4d46-b547-af17c92c6008_"
+On Fri, Jul 06 2012 at  4:38pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
---_9fbcb795-ddbc-4d46-b547-af17c92c6008_
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: 8bit
+> > > +	ti->discard_zeroes_data_unsupported = 1;
+> > >  
+> > >  	ms->kmirrord_wq = alloc_workqueue("kmirrord",
+> > >  					  WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
+> > 
+> > This should be split out to a separate patch and properly justified in
+> > the patch header.  Is there something unique to dm-mirror that renders
+> > the underlying device's zeroing unreliable?
+> 
+> There are two possible approaches to handling REQ_DISCARD
+> 
+> 1. treat REQ_DISCARD as REQ_FLUSH (this is what the patch does) --- i.e. 
+> do not synchronize it with region states, do not set mirror error on 
+> failure. In this mode we must assume that there are uninitialized data 
+> after a flush.
+> 
+> For example, if there is a region that is being resynchronized and we send 
+> REQ_DISCARD that overlaps this region, there is no guarantee that data in 
+> this region were zeroed. 
+> 
+> - kcopyd reads a few blocks for resynchronization
+> - REQ_DISCARD is sent to both mirror legs, both disks overwrites the area 
+> with zeroes
+> - kcopyd writes those blocks to the other leg => the blocks are no longer 
+> zero despite REQ_DISCARD being sent
 
+OK, thanks, but my point still stands: this is worthy of a separate
+patch (with the same type of backround you provided above).
 
-hi,I have tasted LVM2 's thin provisioning logical volume and read some docs of Joe Thornber in github. 
-But I have one more question:
-In the field of research, is there any authoritative thesis or literature review that describe thin provisioning's design idea in detail? or is there any design docs that you follows when implements thin provisioning?I searched a lot , but only find a few papers (may be out of date) like:
+> 2. treat REQ_DISCARD as writes (i.e. synchronize it with region states, 
+> wait until resynchronization finishes, etc.) --- it is possible to do it 
+> this way to, but if we do it this way, we have to split REQ_DISCARD on 
+> region boundaries (it is currently split only on target boundaries, 
+> which is insufficient).
 
-"SUKWOO KANG and A. L. NARASIMHA REDDY Texas A&M University. An Approach to Virtual Allocation in Storage Systems" ..
-I'm guess that the concept 'virtual allocation' is similar to 'thin provisioning', but I have not seen any thesises directly related to 'thin provisioning'.
-So sincerely,  I need your advice, thanks again!
-brs,tangzhankun2012-07-09 		 	   		  
---_9fbcb795-ddbc-4d46-b547-af17c92c6008_
-Content-Type: text/html; charset="gb2312"
-Content-Transfer-Encoding: quoted-printable
-X-MIME-Autoconverted: from 8bit to quoted-printable by mx4-phx2.redhat.com id q697CYlY012413
-
-<html>
-<head>
-<style><!--
-.hmmessage P
-{
-margin:0px;
-padding:0px
-}
-body.hmmessage
-{
-font-size: 10pt;
-font-family:=CE=A2=C8=ED=D1=C5=BA=DA
-}
---></style></head>
-<body class=3D'hmmessage'><div dir=3D'ltr'>
-<p style=3D"margin-bottom: 15px; border: 0px; color: rgb(51, 51, 51); fon=
-t-family: Helvetica, arial, freesans, clean, sans-serif; line-height: 20p=
-x; background-color: rgb(251, 251, 251); ">hi,</p><p style=3D"margin-bott=
-om: 15px; border: 0px; color: rgb(51, 51, 51); font-family: Helvetica, ar=
-ial, freesans, clean, sans-serif; line-height: 20px; background-color: rg=
-b(251, 251, 251); ">I have tasted LVM2 's thin provisioning logical volum=
-e and read some docs of Joe Thornber in github.&nbsp;<br>But I have one m=
-ore question:<br>In the field of research, is there any authoritative the=
-sis or literature review that describe thin provisioning's design idea in=
- detail? or is there any design docs that you follows when implements thi=
-n provisioning?</p><p style=3D"margin-top: 15px; border: 0px; background-=
-color: rgb(251, 251, 251); "><font color=3D"#333333" face=3D"Helvetica, a=
-rial, freesans, clean, sans-serif"><span style=3D"line-height: 20px;">I s=
-earched a lot , but only find a few papers (may be o!
- ut of date) like:</span></font><br><br><font color=3D"#333333" face=3D"H=
-elvetica, arial, freesans, clean, sans-serif"><span style=3D"line-height:=
- 20px;">"SUKWOO KANG and A. L. NARASIMHA REDDY Texas A&amp;M University. =
-An Approach to Virtual Allocation in Storage Systems" ..</span></font><br=
-><font color=3D"#333333" face=3D"Helvetica, arial, freesans, clean, sans-=
-serif"><span style=3D"line-height: 20px;">I'm guess that the concept 'vir=
-tual allocation' is similar to 'thin provisioning', but I have not seen a=
-ny thesises directly related to 'thin provisioning'.</span></font><br><fo=
-nt color=3D"#333333" face=3D"Helvetica, arial, freesans, clean, sans-seri=
-f"><span style=3D"line-height: 20px;">So&nbsp;sincerely, &nbsp;I need you=
-r advice, thanks again!</span></font></p><p style=3D"margin-top: 15px; bo=
-rder: 0px; color: rgb(51, 51, 51); font-family: Helvetica, arial, freesan=
-s, clean, sans-serif; line-height: 20px; background-color: rgb(251, 251, =
-251); "><br></p><p style=3D"margin-top: 15px; border: 0px; col!
- or: rgb(51, 51, 51); font-family: Helvetica, arial, freesans, !
- clean, sans-serif; line-height: 20px; background-color: rgb(251, 251, 25=
-1); ">brs,</p><p style=3D"margin-top: 15px; border: 0px; color: rgb(51, 5=
-1, 51); font-family: Helvetica, arial, freesans, clean, sans-serif; line-=
-height: 20px; background-color: rgb(251, 251, 251); ">tangzhankun</p><p s=
-tyle=3D"margin-top: 15px; border: 0px; color: rgb(51, 51, 51); font-famil=
-y: Helvetica, arial, freesans, clean, sans-serif; line-height: 20px; back=
-ground-color: rgb(251, 251, 251); ">2012-07-09</p> 		 	   		  </div></bod=
-y>
-</html>
---_9fbcb795-ddbc-4d46-b547-af17c92c6008_--
-
-
---===============0800916812307318030==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Disposition: inline
-Content-Transfer-Encoding: 7bit
-
-
---===============0800916812307318030==--
+I think discards should be treated as writes.
