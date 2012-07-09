@@ -1,36 +1,59 @@
-From: Phillip Susi <psusi@ubuntu.com>
-Subject: Re: [patch 0/2] [V4] block: Support online resize of disk partitions
-Date: Mon, 09 Jul 2012 18:40:03 -0400
-Message-ID: <4FFB5DC3.30803@ubuntu.com>
-References: <20120709213418.799759100@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] block: do not artificially constrain max_sectors for
+ stacking drivers
+Date: Mon, 9 Jul 2012 18:57:25 -0400
+Message-ID: <20120709225725.GA1487@redhat.com>
+References: <F200AD42A082BC4088B232D13A916A8907E5DD64@SACEXCMBX02-PRD.hq.netapp.com>
+ <20120709130052.GC30048@redhat.com>
+ <20120709131611.GD30048@redhat.com>
+ <20120709134041.GA30633@redhat.com>
+ <20120709141416.GB30633@redhat.com>
+ <20120709145711.GB30886@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120709213418.799759100@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20120709145711.GB30886@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, kzak@redhat.com, maxim.patlasov@gmail.com
+To: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Cc: axboe@kernel.dk, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-kernel@vger.kernel.org, "Stankey, Robert" <Robert.Stankey@netapp.com>, "Moger, Babu" <Babu.Moger@netapp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Mon, Jul 09 2012 at 10:57am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-On 07/09/2012 05:34 PM, vgoyal@redhat.com wrote:
-> Phillip, do let me know if I should put your signed-off-by also in the
-> patch.
+> blk_set_stacking_limits() is intended to allow stacking drivers to build
+> up the limits of the stacked device based on the underlying devices'
+> limits.  But in the case of 'max_sectors' the default of
+> BLK_DEF_MAX_SECTORS (1024) doesn't allow the stacking driver to inherit
+> a max_sectors larger than 1024.
+> 
+> It is now clear that this artificial limit is getting in the way so
+> change blk_set_stacking_limits's max_sectors to UINT_MAX (which allows
+> stacking drivers like dm-multipath to inherit 'max_sectors' from the
+> underlying paths).
+> 
+> blk_limits_max_hw_sectors() must allow stacking drivers to not have
+> max_sectors set to BLK_DEF_MAX_SECTORS as a side-effect.  Move that
+> historic constraint to blk_queue_max_hw_sectors().
+> 
+> Reported-by: Vijay Chauhan <vijay.chauhan@netapp.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> Cc: Martin K. Petersen <martin.petersen@oracle.com>
+> ---
+>  block/blk-settings.c |    8 ++++----
+>  1 files changed, 4 insertions(+), 4 deletions(-)
+> 
+> v2: tweak blk_limits_max_hw_sectors and blk_queue_max_hw_sectors
 
-Sure, kernel side looks good.  My original util-linux patches also added a -u update mode to kpartx, which I think is the more useful interface than the lower level resizepart command, but I suppose I can rebase it to apply on top of this patch.
+As it happens, v2's changes to blk_limits_max_hw_sectors and
+blk_queue_max_hw_sectors are not strictly required in order for existing
+stacking drivers to have have an unconstrained max_sectors.  Dropping
+those changes also allows for consistency across both block functions.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
+So I'd be happy if v1 were to be staged for 3.6.  NetApp: it would be
+great if you could confirm that v1 does in fact address the max_sectors
+issue you reported.
 
-iQEcBAEBAgAGBQJP+13DAAoJEJrBOlT6nu75cQIIAJvm6ZFxpNNvgkXq0I6blvIj
-Q3s5YbzJYecouHPZdy06UXIdfucHKO7WAaMvpmPnDk+JgtltNljVpA50d21NN2lY
-k2j2oU9mFHGEKLDnnYobnr6cO2UShaZkrcMtC29S4LaAdgAgPNyD8aTTWS9w0frv
-+p2ko+HKvp3neRpOBwfnYXq/rTBLUmOn0k7XsG8QjnNb3aMnMyYp/crV9Kzeb4YX
-uCbnIkzN++oDhmnqsLDGt82/VGXZdnA1umISbV9vZw+Q7FfeaiJVMneFxKe5w/FZ
-wiCixoCtGhbqtz1hSsUR+rs2ZaDozL0iygSB15Z71aLPim0TLumtRTpfpu+JR3w=
-=Vtl+
------END PGP SIGNATURE-----
+Thanks,
+Mike
