@@ -1,17 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mirror: fix crash with mirror recovery and discard
-Date: Mon, 9 Jul 2012 08:16:38 -0400
-Message-ID: <20120709121638.GB30048@redhat.com>
-References: <Pine.LNX.4.64.1207061454200.1119@file.rdu.redhat.com>
-	<20120706194859.GA10276@redhat.com>
-	<Pine.LNX.4.64.1207061629150.16361@file.rdu.redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Subject: Re: [PATCH] DM MULTIPATH: Allow dm to send
+	larger	request if underlying device set to larger max_sectors value
+Date: Mon, 9 Jul 2012 12:34:08 +0000
+Message-ID: <F200AD42A082BC4088B232D13A916A8907E5DEE3@SACEXCMBX02-PRD.hq.netapp.com>
+References: <F200AD42A082BC4088B232D13A916A8907E5DD64@SACEXCMBX02-PRD.hq.netapp.com>
+	<20120709010132.GA29375@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1207061629150.16361@file.rdu.redhat.com>
+In-Reply-To: <20120709010132.GA29375@agk-dp.fab.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,46 +21,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "Moger,
+	Babu" <Babu.Moger@netapp.com>, "Stankey,
+	Robert" <Robert.Stankey@netapp.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 06 2012 at  4:38pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Hi Alasdair,
 
-> > > +	ti->discard_zeroes_data_unsupported = 1;
-> > >  
-> > >  	ms->kmirrord_wq = alloc_workqueue("kmirrord",
-> > >  					  WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
-> > 
-> > This should be split out to a separate patch and properly justified in
-> > the patch header.  Is there something unique to dm-mirror that renders
-> > the underlying device's zeroing unreliable?
-> 
-> There are two possible approaches to handling REQ_DISCARD
-> 
-> 1. treat REQ_DISCARD as REQ_FLUSH (this is what the patch does) --- i.e. 
-> do not synchronize it with region states, do not set mirror error on 
-> failure. In this mode we must assume that there are uninitialized data 
-> after a flush.
-> 
-> For example, if there is a region that is being resynchronized and we send 
-> REQ_DISCARD that overlaps this region, there is no guarantee that data in 
-> this region were zeroed. 
-> 
-> - kcopyd reads a few blocks for resynchronization
-> - REQ_DISCARD is sent to both mirror legs, both disks overwrites the area 
-> with zeroes
-> - kcopyd writes those blocks to the other leg => the blocks are no longer 
-> zero despite REQ_DISCARD being sent
+On July 09, 2012 6:32 AM, Alasdair Wrote:
+>
+>Why is this separate from dm_set_device_limits?
+Ideally it should have been taken care in dm_set_device_limits but to find 
+minimum of max_sectors value among physical paths in dm_set_device_limits  seems tricky. 
+I will look into it to use dm_set_device_limits.
 
-OK, thanks, but my point still stands: this is worthy of a separate
-patch (with the same type of backround you provided above).
+>Why is this not handled by blk-settings.c?
+blk_stack_limits do compare max_sectors between dm & physical path and minimum 
+between two values is then set to max_sectors of dm. But if underlying paths 
+are set with higher value, dm's max_sectors will be always set to default being 
+minimum. Rather objective is to set minimum of max_sectors among underlying paths but 
+not exceeding dm's max_hw_max_sectors
 
-> 2. treat REQ_DISCARD as writes (i.e. synchronize it with region states, 
-> wait until resynchronization finishes, etc.) --- it is possible to do it 
-> this way to, but if we do it this way, we have to split REQ_DISCARD on 
-> region boundaries (it is currently split only on target boundaries, 
-> which is insufficient).
+>Should max_sectors be preserved across a table reload?
+Intentions is to set max_sectors to maximum capable when dm device is created. Even if 
+we reset max_sectors_kb from sysfs, restart of multipathd would again reset it to default. 
+Not sure if I answered your question.
 
-I think discards should be treated as writes.
+
+
+Thanks,
+Vijay
