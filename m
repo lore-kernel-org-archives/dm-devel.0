@@ -1,327 +1,232 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [patch 0/2] [V4] block: Support online resize of disk partitions
-Date: Tue, 10 Jul 2012 10:59:30 -0400
-Message-ID: <20120710145930.GG14884@redhat.com>
-References: <20120709213418.799759100@redhat.com>
- <4FFB5DC3.30803@ubuntu.com>
- <20120710135759.GE14884@redhat.com>
- <4FFC387F.3070308@ubuntu.com>
- <20120710142001.GF14884@redhat.com>
+From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [ANNOUNCE] cryptsetup 1.5.0
+Date: Tue, 10 Jul 2012 20:56:12 +0200
+Message-ID: <4FFC7ACC.7040404@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120710142001.GF14884@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Phillip Susi <psusi@ubuntu.com>
-Cc: linux-kernel@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, kzak@redhat.com, maxim.patlasov@gmail.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://www.saout.de/pipermail/dm-crypt>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Jul 10, 2012 at 10:20:01AM -0400, Vivek Goyal wrote:
-
-[..]
-> > 
-> > Shouldn't this be BITS_PER_LONG==32 && defined(CONFIG_LBDAF) &&
-> > defined(CONFIG_PREEMPT)?  No sense disabling preemption when the
-> > sector size is also 32 bits.
-> 
-> Yes. Good catch. We don't want to disable/enable preemption for 32bit UP 
-> kernels with sector size 32bit. I will modify the patch and repost soon.
-> 
-> BTW, what happened to all the new lines in the code above. Looks like you
-> mailer chewed these up.
-
-Here is the V2 of the patch with CONFIG_LBDAF test added to UP, PREEMPT
-case.
-
-Thanks
-Vivek
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
 
-block: add partition resize function to blkpg ioctl
+The stable cryptsetup 1.5.0 release is available at
 
-Add a new operation code (BLKPG_RESIZE_PARTITION) to the BLKPG ioctl that
-allows altering the size of an existing partition, even if it is currently
-in use.
+   http://code.google.com/p/cryptsetup/
 
-This patch converts hd_struct->nr_sects into sequence counter because
-One might extend a partition while IO is happening to it and update of
-nr_sects can be non-atomic on 32bit machines with 64bit sector_t. This
-can lead to issues like reading inconsistent size of a partition. Sequence
-counter have been used so that readers don't have to take bdev mutex lock
-as we call sector_in_part() very frequently.
+Feedback and bug reports are welcomed.
 
-Now all the access to hd_struct->nr_sects should happen using sequence
-counter read/update helper functions part_nr_sects_read/part_nr_sects_write.
-There is one exception though, set_capacity()/get_capacity(). I think
-theoritically race should exist there too but this patch does not
-modify set_capacity()/get_capacity() due to sheer number of call sites
-and I am afraid that change might break something. I have left that as a
-TODO item. We can handle it later if need be. This patch does not introduce
-any new races as such w.r.t set_capacity()/get_capacity().
 
-v2: Add CONFIG_LBDAF test to UP preempt case as suggested by Phillip. 
+Cryptsetup 1.5.0 Release Notes
+==============================
 
-Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
-Signed-off-by: Phillip Susi <psusi@ubuntu.com>
----
- block/genhd.c             |   20 +++++++++++----
- block/ioctl.c             |   59 +++++++++++++++++++++++++++++++++++++++++++---
- block/partition-generic.c |    4 ++-
- include/linux/blkpg.h     |    1 
- include/linux/genhd.h     |   57 ++++++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 132 insertions(+), 9 deletions(-)
+This release covers mainly inclusion of:
 
-Index: linux-2.6/block/genhd.c
-===================================================================
---- linux-2.6.orig/block/genhd.c	2012-07-10 21:03:52.458190498 -0400
-+++ linux-2.6/block/genhd.c	2012-07-10 21:03:57.065190639 -0400
-@@ -154,7 +154,7 @@ struct hd_struct *disk_part_iter_next(st
- 		part = rcu_dereference(ptbl->part[piter->idx]);
- 		if (!part)
- 			continue;
--		if (!part->nr_sects &&
-+		if (!part_nr_sects_read(part) &&
- 		    !(piter->flags & DISK_PITER_INCL_EMPTY) &&
- 		    !(piter->flags & DISK_PITER_INCL_EMPTY_PART0 &&
- 		      piter->idx == 0))
-@@ -191,7 +191,7 @@ EXPORT_SYMBOL_GPL(disk_part_iter_exit);
- static inline int sector_in_part(struct hd_struct *part, sector_t sector)
- {
- 	return part->start_sect <= sector &&
--		sector < part->start_sect + part->nr_sects;
-+		sector < part->start_sect + part_nr_sects_read(part);
- }
- 
- /**
-@@ -769,8 +769,8 @@ void __init printk_all_partitions(void)
- 
- 			printk("%s%s %10llu %s %s", is_part0 ? "" : "  ",
- 			       bdevt_str(part_devt(part), devt_buf),
--			       (unsigned long long)part->nr_sects >> 1,
--			       disk_name(disk, part->partno, name_buf),
-+			       (unsigned long long)part_nr_sects_read(part) >> 1
-+			       , disk_name(disk, part->partno, name_buf),
- 			       uuid_buf);
- 			if (is_part0) {
- 				if (disk->driverfs_dev != NULL &&
-@@ -862,7 +862,7 @@ static int show_partition(struct seq_fil
- 	while ((part = disk_part_iter_next(&piter)))
- 		seq_printf(seqf, "%4d  %7d %10llu %s\n",
- 			   MAJOR(part_devt(part)), MINOR(part_devt(part)),
--			   (unsigned long long)part->nr_sects >> 1,
-+			   (unsigned long long)part_nr_sects_read(part) >> 1,
- 			   disk_name(sgp, part->partno, buf));
- 	disk_part_iter_exit(&piter);
- 
-@@ -1268,6 +1268,16 @@ struct gendisk *alloc_disk_node(int mino
- 		}
- 		disk->part_tbl->part[0] = &disk->part0;
- 
-+		/*
-+		 * set_capacity() and get_capacity() currently don't use
-+		 * seqcounter to read/update the part0->nr_sects. Still init
-+		 * the counter as we can read the sectors in IO submission
-+		 * patch using seqence counters.
-+		 *
-+		 * TODO: Ideally set_capacity() and get_capacity() should be
-+		 * converted to make use of bd_mutex and sequence counters.
-+		 */
-+		seqcount_init(&disk->part0.nr_sects_seq);
- 		hd_ref_init(&disk->part0);
- 
- 		disk->minors = minors;
-Index: linux-2.6/block/ioctl.c
-===================================================================
---- linux-2.6.orig/block/ioctl.c	2012-07-10 21:03:52.459190498 -0400
-+++ linux-2.6/block/ioctl.c	2012-07-10 21:03:57.067190639 -0400
-@@ -13,7 +13,7 @@ static int blkpg_ioctl(struct block_devi
- {
- 	struct block_device *bdevp;
- 	struct gendisk *disk;
--	struct hd_struct *part;
-+	struct hd_struct *part, *lpart;
- 	struct blkpg_ioctl_arg a;
- 	struct blkpg_partition p;
- 	struct disk_part_iter piter;
-@@ -36,8 +36,8 @@ static int blkpg_ioctl(struct block_devi
- 		case BLKPG_ADD_PARTITION:
- 			start = p.start >> 9;
- 			length = p.length >> 9;
--			/* check for fit in a hd_struct */ 
--			if (sizeof(sector_t) == sizeof(long) && 
-+			/* check for fit in a hd_struct */
-+			if (sizeof(sector_t) == sizeof(long) &&
- 			    sizeof(long long) > sizeof(long)) {
- 				long pstart = start, plength = length;
- 				if (pstart != start || plength != length
-@@ -92,6 +92,59 @@ static int blkpg_ioctl(struct block_devi
- 			bdput(bdevp);
- 
- 			return 0;
-+		case BLKPG_RESIZE_PARTITION:
-+			start = p.start >> 9;
-+			/* new length of partition in bytes */
-+			length = p.length >> 9;
-+			/* check for fit in a hd_struct */
-+			if (sizeof(sector_t) == sizeof(long) &&
-+			    sizeof(long long) > sizeof(long)) {
-+				long pstart = start, plength = length;
-+				if (pstart != start || plength != length
-+				    || pstart < 0 || plength < 0)
-+					return -EINVAL;
-+			}
-+			part = disk_get_part(disk, partno);
-+			if (!part)
-+				return -ENXIO;
-+			bdevp = bdget(part_devt(part));
-+			if (!bdevp) {
-+				disk_put_part(part);
-+				return -ENOMEM;
-+			}
-+			mutex_lock(&bdevp->bd_mutex);
-+			mutex_lock_nested(&bdev->bd_mutex, 1);
-+			if (start != part->start_sect) {
-+				mutex_unlock(&bdevp->bd_mutex);
-+				mutex_unlock(&bdev->bd_mutex);
-+				bdput(bdevp);
-+				disk_put_part(part);
-+				return -EINVAL;
-+			}
-+			/* overlap? */
-+			disk_part_iter_init(&piter, disk,
-+					    DISK_PITER_INCL_EMPTY);
-+			while ((lpart = disk_part_iter_next(&piter))) {
-+				if (lpart->partno != partno &&
-+				   !(start + length <= lpart->start_sect ||
-+				   start >= lpart->start_sect + lpart->nr_sects)
-+				   ) {
-+					disk_part_iter_exit(&piter);
-+					mutex_unlock(&bdevp->bd_mutex);
-+					mutex_unlock(&bdev->bd_mutex);
-+					bdput(bdevp);
-+					disk_put_part(part);
-+					return -EBUSY;
-+				}
-+			}
-+			disk_part_iter_exit(&piter);
-+			part_nr_sects_write(part, (sector_t)length);
-+			i_size_write(bdevp->bd_inode, p.length);
-+			mutex_unlock(&bdevp->bd_mutex);
-+			mutex_unlock(&bdev->bd_mutex);
-+			bdput(bdevp);
-+			disk_put_part(part);
-+			return 0;
- 		default:
- 			return -EINVAL;
- 	}
-Index: linux-2.6/block/partition-generic.c
-===================================================================
---- linux-2.6.orig/block/partition-generic.c	2012-07-10 21:03:52.460190498 -0400
-+++ linux-2.6/block/partition-generic.c	2012-07-10 21:03:57.069190639 -0400
-@@ -84,7 +84,7 @@ ssize_t part_size_show(struct device *de
- 		       struct device_attribute *attr, char *buf)
- {
- 	struct hd_struct *p = dev_to_part(dev);
--	return sprintf(buf, "%llu\n",(unsigned long long)p->nr_sects);
-+	return sprintf(buf, "%llu\n",(unsigned long long)part_nr_sects_read(p));
- }
- 
- static ssize_t part_ro_show(struct device *dev,
-@@ -294,6 +294,8 @@ struct hd_struct *add_partition(struct g
- 		err = -ENOMEM;
- 		goto out_free;
- 	}
-+
-+	seqcount_init(&p->nr_sects_seq);
- 	pdev = part_to_dev(p);
- 
- 	p->start_sect = start;
-Index: linux-2.6/include/linux/blkpg.h
-===================================================================
---- linux-2.6.orig/include/linux/blkpg.h	2012-07-10 21:03:52.462190498 -0400
-+++ linux-2.6/include/linux/blkpg.h	2012-07-10 21:03:57.072190639 -0400
-@@ -40,6 +40,7 @@ struct blkpg_ioctl_arg {
- /* The subfunctions (for the op field) */
- #define BLKPG_ADD_PARTITION	1
- #define BLKPG_DEL_PARTITION	2
-+#define BLKPG_RESIZE_PARTITION	3
- 
- /* Sizes of name fields. Unused at present. */
- #define BLKPG_DEVNAMELTH	64
-Index: linux-2.6/include/linux/genhd.h
-===================================================================
---- linux-2.6.orig/include/linux/genhd.h	2012-07-10 21:03:52.463190498 -0400
-+++ linux-2.6/include/linux/genhd.h	2012-07-10 21:05:47.178194202 -0400
-@@ -98,7 +98,13 @@ struct partition_meta_info {
- 
- struct hd_struct {
- 	sector_t start_sect;
-+	/*
-+	 * nr_sects is protected by sequence counter. One might extend a
-+	 * partition while IO is happening to it and update of nr_sects
-+	 * can be non-atomic on 32bit machines with 64bit sector_t.
-+	 */
- 	sector_t nr_sects;
-+	seqcount_t nr_sects_seq;
- 	sector_t alignment_offset;
- 	unsigned int discard_alignment;
- 	struct device __dev;
-@@ -648,6 +654,57 @@ static inline void hd_struct_put(struct 
- 		__delete_partition(part);
- }
- 
-+/*
-+ * Any access of part->nr_sects which is not protected by partition
-+ * bd_mutex or gendisk bdev bd_mutex, should be done using this
-+ * accessor function.
-+ *
-+ * Code written along the lines of i_size_read() and i_size_write().
-+ * CONFIG_PREEMPT case optimizes the case of UP kernel with preemption
-+ * on.
-+ */
-+static inline sector_t part_nr_sects_read(struct hd_struct *part)
-+{
-+#if BITS_PER_LONG==32 && defined(CONFIG_LBDAF) && defined(CONFIG_SMP)
-+	sector_t nr_sects;
-+	unsigned seq;
-+	do {
-+		seq = read_seqcount_begin(&part->nr_sects_seq);
-+		nr_sects = part->nr_sects;
-+	} while (read_seqcount_retry(&part->nr_sects_seq, seq));
-+	return nr_sects;
-+#elif BITS_PER_LONG==32 && defined(CONFIG_LBDAF) && defined(CONFIG_PREEMPT)
-+	sector_t nr_sects;
-+
-+	preempt_disable();
-+	nr_sects = part->nr_sects;
-+	preempt_enable();
-+	return nr_sects;
-+#else
-+	return part->nr_sects;
-+#endif
-+}
-+
-+/*
-+ * Should be called with mutex lock held (typically bd_mutex) of partition
-+ * to provide mutual exlusion among writers otherwise seqcount might be
-+ * left in wrong state leaving the readers spinning infinitely.
-+ */
-+static inline void part_nr_sects_write(struct hd_struct *part, sector_t size)
-+{
-+#if BITS_PER_LONG==32 && defined(CONFIG_LBDAF) && defined(CONFIG_SMP)
-+	write_seqcount_begin(&part->nr_sects_seq);
-+	part->nr_sects = size;
-+	write_seqcount_end(&part->nr_sects_seq);
-+#elif BITS_PER_LONG==32 && defined(CONFIG_LBDAF) && defined(CONFIG_PREEMPT)
-+	preempt_disable();
-+	part->nr_sects = size;
-+	preempt_enable();
-+#else
-+	part->nr_sects = size;
-+#endif
-+}
-+
- #else /* CONFIG_BLOCK */
- 
- static inline void printk_all_partitions(void) { }
+  * Veritysetup tool (and related libcryptsetup extensions for dm-verity).
+
+  * Experimental cryptsetup-reencrypt tool (LUKS offline reencryption).
+
+Changes since version 1.5.0-rc2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  * Add --device-size option for reencryption tool.
+  * Switch to use unit suffix for --reduce-device-size option.
+  * Remove open device debugging feature (no longer needed).
+  * Fix library name for FIPS check.
+  * Add example of using reencryption inside dracut (see misc/dracut).
+
+Changes since version 1.5.0-rc1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Introduce cryptsetup-reencrypt - experimental offline LUKS reencryption tool.
+
+! cryptsetup-reencrypt tool is EXPERIMENTAL
+! ALWAYS BE SURE YOU HAVE RELIABLE BACKUP BEFORE USING THIS TOOL
+
+This tool tries to simplify situation when you need to re-encrypt the whole
+LUKS device in situ (without need to move data elsewhere).
+
+This can happen for example when you want to change volume (master) key,
+encryption algorithm, or other encryption parameter.
+
+Cryptsetup-reencrypt can even optionally shift data on device
+(reducing data device size - you need some free space at the end of device).
+
+In general, cryptsetup-reencrypt can be used to
+
+ - re-generate volume key
+ - change arbitrary encryption parameters
+ - add encryption to not yet encrypted drive
+
+Side effect of reencryption is that final device will contain
+only ciphertext (for all sectors) so even if device was not properly
+wiped by random data, after reencryption you cannot distinguish
+which sectors are used.
+(Reecryption is done always for the whole device.)
+
+There are for sure bugs, please TEST IT IN TEST ENVIRONMENT before
+use for your data.
+
+This tool is not resistant to HW and kernel failures - hw crash
+will cause serious data corruption.
+
+You can enable compilation of this tool with --enable-cryptsetup-reencrypt
+configure option (it is switched off by default).
+(Tool requires libcryptsetup 1.4.3 and later.)
+
+You have to provide all keyslot passphrases or use --keyslot-option
+(then all other keyslots will be disabled).
+
+EXAMPLES (from man page)
+
+Reencrypt /dev/sdb1 (change volume key)
+   # cryptsetup-reencrypt /dev/sdb1
+
+Reencrypt and also change cipher and cipher mode
+  # cryptsetup-reencrypt /dev/sdb1 -c aes-xts-plain64
+
+  Note: if you are changing key size, there must be enough space
+  for keyslots in header or you have to use --reduce-device size and
+  reduce fs in advance.
+
+Add LUKS encryption to not yet encrypted device
+  First, be sure you have space added to disk.
+  Or, alternatively, shrink filesystem in advance.
+
+  Here we need 4096 512-bytes sectors (enough for 2x128 bit key).
+
+  # fdisk -u /dev/sdb # move sdb1 partition end + 4096 sectors
+
+  # cryptsetup-reencrypt /dev/sdb1 --new --reduce-device-size 4096
+
+There are some options which can improve performance (depends on system),
+namely --use-directio (use direct IO for all operations) can be faster
+on some systems. See man page.
+
+Progress and estimated time is printed during reencryption.
+
+You can suspend reencryption (using ctrl+c or term signal).
+To continue reencryption you have to provide only
+the device parameter (offset is stored in temporary log file).
+
+Please note LUKS device is marked invalid during reencryption and
+you have to retain tool temporary files until reencryption finishes.
+
+Temporary files are LUKS-<uuid>.[log|org|new]
+
+Other changes
+~~~~~~~~~~~~~
+  * Fix luks-header-from-active script (do not use LUKS header on-disk, add UUID).
+  * Add --test-passphrase option for luksOpen (check passphrase only).
+  * Fix parsing of hexadecimal string (salt or root hash) in veritysetup.
+
+Changes since version 1.4.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Introduce veritysetup tool for dm-verity target management.
+
+The dm-verity device-mapper target was added to Linux kernel 3.4 and
+provides transparent integrity checking of block devices using a cryptographic
+digest provided by the kernel crypto API. This target is read-only.
+
+It is meant to be setup as part of a verified boot path (it was originally
+developed by Chrome OS authors as part of verified boot infrastructure).
+
+For deeper description please see http://code.google.com/p/cryptsetup/wiki/DMVerity
+and kernel dm-verity documentation.
+
+The libcryptsetup library was extended to support manipulation
+with dm-verity kernel module and new veritysetup CLI tool is added.
+
+There are no additional library requirements (it uses the same crypto
+backend as cryptsetup).
+
+If you want compile cryptsetup without veritysetup tool,
+use --disable-veritysetup configure option.
+For other configuration option see configure --help and veritysetup --help
+(e.g. default parameters).
+
+Supported libcryptsetup functions new CRYPT_VERITY type:
+  crypt_init
+  crypt_init_by_name
+  crypt_set_data device
+  crypt_get_type
+  crypt_format
+  crypt_load
+  crypt_get_active_device
+  crypt_activate_by_volume_key (volume key == root hash here)
+  crypt_dump
+and new introduced function
+  crypt_get_verity_info
+
+Please see comments in libcryptsetup.h and veritysetup.c as an code example
+how to use CRYPT_VERITY API.
+
+The veritysetup tool supports these operations:
+
+  veritysetup format <data_device> <hash_device>
+    Formats <hash_device> (calculates all hash areas according to <data_device>).
+    This is initial command to prepare device <hash_device> for later verification.
+
+  veritysetup create <name> <data_device> <hash_device> <root_hash>
+    Creates (activates) a dm-verity mapping with <name> backed by device <data_device>
+    and using <hash_device> for in-kernel verification.
+
+  veritysetup verify <data_device> <hash_device> <root_hash>
+    Verifies data in userspace (no kernel device is activated).
+
+  veritysetup remove <name>
+    Removes activated device from kernel (similar to dmsetup remove).
+
+  veritysetup status <name>
+    Reports status for the active kernel dm-verity device.
+
+  veritysetup dump <hash_device>
+    Reports parameters of verity device from on-disk stored superblock.
+
+For more info see veritysetup --help and veritysetup man page.
+
+Other changes
+~~~~~~~~~~~~~
+  * Both data and header device can now be a file and
+    loop device is automatically allocated.
+
+  * Require only up to last keyslot area for header device, previously
+    backup (and activation) required device/file of size up to data start
+    offset (data payload).
+
+  * Fix header backup and restore to work on files with large data offset.
+    Backup and restore now works even if backup file is smaller than data offset.
+
+For full release notes with veritysetup examples see
+http://code.google.com/p/cryptsetup/wiki/Cryptsetup150
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAEBAgAGBQJP/HrCAAoJENmwV3vZPpj8J5EP/jzIVf0AQppUdZ+us7Zyzq80
+rtWxF++414IGSPRBhrkY0ix0R3L+tp6I+vH/VoU4lRFhDRh4lkQkDZxh2BfACE+a
+CJwT2V7/3BqHp9I+v09KRyht2UU05hpYDExXh62a5xm2/GGU5F2v8NxuGRlz9+bs
+YV8C/EO/tqsD3rdxY0HpOYvkA0tIw9ioph9m/G15VAbU1tdyCoaK+OdhFB9CTZ8d
+1pPoa6xqj6rUfXLo+GJbjuxvb973Q0+JYcBO1HhR9oChyaNyltfWytAFpI3KJKLV
+b2cH1lIpezJ3lEPdUWyvMsarkZYz9820Fl4nD494ZxbuHBhXMhB8nSOoXNqpLefT
+jgwLASDTLRIVILd904i58IXSUsSGXxvaTHy6IRc3vYCbQWM8O/I7NolUG1TcUCPf
+HNBq+9TFgs8EjkHb6+Ro782CxwAUzk1FaLXWYZgQH0ZDLo8zC6A01/sBbispVZjE
+sShAMZfAuWdKzRHt7PdtUTcIFKfAmZxdhJNGNaMNQC27uX9FpiIyLYTdhG+2htqr
+h+Hdh+IrjjLAfQcDoweldT1WGCs4RT7UdD93tTj52Xl+h+d9Gp9918WIctgLTcJR
+j5AWlMoj/3VCkJDSiQyXNmd0nal20rxd7Q7LiwC8DzLagpduWwQiTRNYOeMPCaUl
+IbG92uh//pzOonlqfTVg
+=+E+4
+-----END PGP SIGNATURE-----
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+http://www.saout.de/mailman/listinfo/dm-crypt
