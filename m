@@ -1,47 +1,37 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] block: do not artificially constrain max_sectors for
- stacking drivers
-Date: Tue, 10 Jul 2012 15:18:59 -0400
-Message-ID: <20120710191859.GB3831@redhat.com>
-References: <F200AD42A082BC4088B232D13A916A8907E5DD64@SACEXCMBX02-PRD.hq.netapp.com>
- <20120709130052.GC30048@redhat.com>
- <20120709131611.GD30048@redhat.com>
- <20120709134041.GA30633@redhat.com>
- <20120709141416.GB30633@redhat.com>
- <20120709145711.GB30886@redhat.com>
- <20120709225725.GA1487@redhat.com>
- <F200AD42A082BC4088B232D13A916A8907E5F2AA@SACEXCMBX02-PRD.hq.netapp.com>
-Mime-Version: 1.0
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH] DM RAID:  Add support for MD RAID10 personality
+Date: Tue, 10 Jul 2012 14:27:30 -0500
+Message-ID: <5DAA9465-E7B1-4F61-A559-745D653048C2@redhat.com>
+References: <1340712231.19015.42.camel@f16> <20120704112159.36cdb42a@notabene.brown> <262AC9F3-56D9-48A8-8A03-32D6B81D4689@redhat.com> <20120704151537.7c91076d@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v1084)
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <F200AD42A082BC4088B232D13A916A8907E5F2AA@SACEXCMBX02-PRD.hq.netapp.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Stankey, Robert" <Robert.Stankey@netapp.com>, "Moger, Babu" <Babu.Moger@netapp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20120704151537.7c91076d@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jul 10 2012 at  3:10pm -0400,
-Chauhan, Vijay <Vijay.Chauhan@netapp.com> wrote:
 
-> On Tuesday, July 10, 2012 4:27 AM, Mike Wrote:
-> >As it happens, v2's changes to blk_limits_max_hw_sectors and
-> >blk_queue_max_hw_sectors are not strictly required in order for existing
-> >stacking drivers to have have an unconstrained max_sectors.  Dropping
-> >those changes also allows for consistency across both block functions.
-> >
-> >So I'd be happy if v1 were to be staged for 3.6.  NetApp: it would be
-> >great if you could confirm that v1 does in fact address the max_sectors
-> >issue you reported.
-> >
-> >Thanks,
-> >Mike
+On Jul 4, 2012, at 12:15 AM, NeilBrown wrote:
+
+>> 
+>> I like your suggestion of changing the parameter names.  I've found the original names somewhat confusing.  ('far_offset' seems to imply to me that the copy would not be the very next stripe, but _offset_ somehow - it seems to have the reverse meaning to me.  I think this comes from the fact that it acts as a modifier to 'far_copy'.)  I toyed with a couple different ways of doing this but figured it was best to just go along.  Anyway, what you are suggesting seems to be:
+>> 	raid10_copies <number> (Default: 2)
+>> 	raid10_layout <string> (Default: "near"/"adjacent")
+>> Where <string> could be "near", "far", "offset" and "some-future-thing".  That seems nice to me and seems to clear up some of the confusion caused by "far_offset" seeming to be a modifier to "far_copies".
 > 
-> Mike, Thanks for the quick fix. I verified with Patch v1 and it resolves this issue.
+> Yes, that is what I'm suggesting.
 
-Great, thanks for testing.  I assume Jens will be OK with staging v1 of
-this patch for 3.6 once he gets back from vacation.
+One problem with this approach is that users can no longer mix and match.  They can't have 2 near copies and 2 far copies, for example.  Perhaps someone might choose this layout for read balancing performance...
 
-Jens please feel free to add the following to v1's patch header:
+The original method didn't allow for two different simultaneous "far" algorithms (because it would add no redundancy unless they were shifted from each other as well as the original), but this new way of specifying makes it worse.
 
-Tested-by: Vijay Chauhan <vijay.chauhan@netapp.com>
+Do you see this as a problem?  If so, we need to find a way to specify the number of copies for each layout /and/ include the potential for "double-shift" vs "single-shift" or some further variant.  One idea I had before was:
+	raid10_near_copies <#>
+	raid10_far_copies <#>
+	raid10_stripe_copies <#>  (similar to far+offset, but still allows for simultaneous "far" w/o "offset")
+To allow for the different variants of "shifting", we could have different raid10 variants, like "raid10_2s" or "raid1e_2s" - similar to the extensions on RAID5 ("raid5_ls") that you don't like.  :)
+
+ brassow
