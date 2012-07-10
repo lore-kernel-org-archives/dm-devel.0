@@ -1,232 +1,37 @@
-From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [ANNOUNCE] cryptsetup 1.5.0
-Date: Tue, 10 Jul 2012 20:56:12 +0200
-Message-ID: <4FFC7ACC.7040404@gmail.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Subject: RE: [PATCH v2] block: do not artificially constrain max_sectors for
+ stacking drivers
+Date: Tue, 10 Jul 2012 19:10:51 +0000
+Message-ID: <F200AD42A082BC4088B232D13A916A8907E5F2AA@SACEXCMBX02-PRD.hq.netapp.com>
+References: <F200AD42A082BC4088B232D13A916A8907E5DD64@SACEXCMBX02-PRD.hq.netapp.com>
+ <20120709130052.GC30048@redhat.com> <20120709131611.GD30048@redhat.com>
+ <20120709134041.GA30633@redhat.com> <20120709141416.GB30633@redhat.com>
+ <20120709145711.GB30886@redhat.com> <20120709225725.GA1487@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120709225725.GA1487@redhat.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Stankey, Robert" <Robert.Stankey@netapp.com>, "Moger, Babu" <Babu.Moger@netapp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Tuesday, July 10, 2012 4:27 AM, Mike Wrote:
+>As it happens, v2's changes to blk_limits_max_hw_sectors and
+>blk_queue_max_hw_sectors are not strictly required in order for existing
+>stacking drivers to have have an unconstrained max_sectors.  Dropping
+>those changes also allows for consistency across both block functions.
+>
+>So I'd be happy if v1 were to be staged for 3.6.  NetApp: it would be
+>great if you could confirm that v1 does in fact address the max_sectors
+>issue you reported.
+>
+>Thanks,
+>Mike
 
+Mike, Thanks for the quick fix. I verified with Patch v1 and it resolves this issue.
 
-The stable cryptsetup 1.5.0 release is available at
-
-   http://code.google.com/p/cryptsetup/
-
-Feedback and bug reports are welcomed.
-
-
-Cryptsetup 1.5.0 Release Notes
-==============================
-
-This release covers mainly inclusion of:
-
-  * Veritysetup tool (and related libcryptsetup extensions for dm-verity).
-
-  * Experimental cryptsetup-reencrypt tool (LUKS offline reencryption).
-
-Changes since version 1.5.0-rc2
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  * Add --device-size option for reencryption tool.
-  * Switch to use unit suffix for --reduce-device-size option.
-  * Remove open device debugging feature (no longer needed).
-  * Fix library name for FIPS check.
-  * Add example of using reencryption inside dracut (see misc/dracut).
-
-Changes since version 1.5.0-rc1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Introduce cryptsetup-reencrypt - experimental offline LUKS reencryption tool.
-
-! cryptsetup-reencrypt tool is EXPERIMENTAL
-! ALWAYS BE SURE YOU HAVE RELIABLE BACKUP BEFORE USING THIS TOOL
-
-This tool tries to simplify situation when you need to re-encrypt the whole
-LUKS device in situ (without need to move data elsewhere).
-
-This can happen for example when you want to change volume (master) key,
-encryption algorithm, or other encryption parameter.
-
-Cryptsetup-reencrypt can even optionally shift data on device
-(reducing data device size - you need some free space at the end of device).
-
-In general, cryptsetup-reencrypt can be used to
-
- - re-generate volume key
- - change arbitrary encryption parameters
- - add encryption to not yet encrypted drive
-
-Side effect of reencryption is that final device will contain
-only ciphertext (for all sectors) so even if device was not properly
-wiped by random data, after reencryption you cannot distinguish
-which sectors are used.
-(Reecryption is done always for the whole device.)
-
-There are for sure bugs, please TEST IT IN TEST ENVIRONMENT before
-use for your data.
-
-This tool is not resistant to HW and kernel failures - hw crash
-will cause serious data corruption.
-
-You can enable compilation of this tool with --enable-cryptsetup-reencrypt
-configure option (it is switched off by default).
-(Tool requires libcryptsetup 1.4.3 and later.)
-
-You have to provide all keyslot passphrases or use --keyslot-option
-(then all other keyslots will be disabled).
-
-EXAMPLES (from man page)
-
-Reencrypt /dev/sdb1 (change volume key)
-   # cryptsetup-reencrypt /dev/sdb1
-
-Reencrypt and also change cipher and cipher mode
-  # cryptsetup-reencrypt /dev/sdb1 -c aes-xts-plain64
-
-  Note: if you are changing key size, there must be enough space
-  for keyslots in header or you have to use --reduce-device size and
-  reduce fs in advance.
-
-Add LUKS encryption to not yet encrypted device
-  First, be sure you have space added to disk.
-  Or, alternatively, shrink filesystem in advance.
-
-  Here we need 4096 512-bytes sectors (enough for 2x128 bit key).
-
-  # fdisk -u /dev/sdb # move sdb1 partition end + 4096 sectors
-
-  # cryptsetup-reencrypt /dev/sdb1 --new --reduce-device-size 4096
-
-There are some options which can improve performance (depends on system),
-namely --use-directio (use direct IO for all operations) can be faster
-on some systems. See man page.
-
-Progress and estimated time is printed during reencryption.
-
-You can suspend reencryption (using ctrl+c or term signal).
-To continue reencryption you have to provide only
-the device parameter (offset is stored in temporary log file).
-
-Please note LUKS device is marked invalid during reencryption and
-you have to retain tool temporary files until reencryption finishes.
-
-Temporary files are LUKS-<uuid>.[log|org|new]
-
-Other changes
-~~~~~~~~~~~~~
-  * Fix luks-header-from-active script (do not use LUKS header on-disk, add UUID).
-  * Add --test-passphrase option for luksOpen (check passphrase only).
-  * Fix parsing of hexadecimal string (salt or root hash) in veritysetup.
-
-Changes since version 1.4.3
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Introduce veritysetup tool for dm-verity target management.
-
-The dm-verity device-mapper target was added to Linux kernel 3.4 and
-provides transparent integrity checking of block devices using a cryptographic
-digest provided by the kernel crypto API. This target is read-only.
-
-It is meant to be setup as part of a verified boot path (it was originally
-developed by Chrome OS authors as part of verified boot infrastructure).
-
-For deeper description please see http://code.google.com/p/cryptsetup/wiki/DMVerity
-and kernel dm-verity documentation.
-
-The libcryptsetup library was extended to support manipulation
-with dm-verity kernel module and new veritysetup CLI tool is added.
-
-There are no additional library requirements (it uses the same crypto
-backend as cryptsetup).
-
-If you want compile cryptsetup without veritysetup tool,
-use --disable-veritysetup configure option.
-For other configuration option see configure --help and veritysetup --help
-(e.g. default parameters).
-
-Supported libcryptsetup functions new CRYPT_VERITY type:
-  crypt_init
-  crypt_init_by_name
-  crypt_set_data device
-  crypt_get_type
-  crypt_format
-  crypt_load
-  crypt_get_active_device
-  crypt_activate_by_volume_key (volume key == root hash here)
-  crypt_dump
-and new introduced function
-  crypt_get_verity_info
-
-Please see comments in libcryptsetup.h and veritysetup.c as an code example
-how to use CRYPT_VERITY API.
-
-The veritysetup tool supports these operations:
-
-  veritysetup format <data_device> <hash_device>
-    Formats <hash_device> (calculates all hash areas according to <data_device>).
-    This is initial command to prepare device <hash_device> for later verification.
-
-  veritysetup create <name> <data_device> <hash_device> <root_hash>
-    Creates (activates) a dm-verity mapping with <name> backed by device <data_device>
-    and using <hash_device> for in-kernel verification.
-
-  veritysetup verify <data_device> <hash_device> <root_hash>
-    Verifies data in userspace (no kernel device is activated).
-
-  veritysetup remove <name>
-    Removes activated device from kernel (similar to dmsetup remove).
-
-  veritysetup status <name>
-    Reports status for the active kernel dm-verity device.
-
-  veritysetup dump <hash_device>
-    Reports parameters of verity device from on-disk stored superblock.
-
-For more info see veritysetup --help and veritysetup man page.
-
-Other changes
-~~~~~~~~~~~~~
-  * Both data and header device can now be a file and
-    loop device is automatically allocated.
-
-  * Require only up to last keyslot area for header device, previously
-    backup (and activation) required device/file of size up to data start
-    offset (data payload).
-
-  * Fix header backup and restore to work on files with large data offset.
-    Backup and restore now works even if backup file is smaller than data offset.
-
-For full release notes with veritysetup examples see
-http://code.google.com/p/cryptsetup/wiki/Cryptsetup150
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQIcBAEBAgAGBQJP/HrCAAoJENmwV3vZPpj8J5EP/jzIVf0AQppUdZ+us7Zyzq80
-rtWxF++414IGSPRBhrkY0ix0R3L+tp6I+vH/VoU4lRFhDRh4lkQkDZxh2BfACE+a
-CJwT2V7/3BqHp9I+v09KRyht2UU05hpYDExXh62a5xm2/GGU5F2v8NxuGRlz9+bs
-YV8C/EO/tqsD3rdxY0HpOYvkA0tIw9ioph9m/G15VAbU1tdyCoaK+OdhFB9CTZ8d
-1pPoa6xqj6rUfXLo+GJbjuxvb973Q0+JYcBO1HhR9oChyaNyltfWytAFpI3KJKLV
-b2cH1lIpezJ3lEPdUWyvMsarkZYz9820Fl4nD494ZxbuHBhXMhB8nSOoXNqpLefT
-jgwLASDTLRIVILd904i58IXSUsSGXxvaTHy6IRc3vYCbQWM8O/I7NolUG1TcUCPf
-HNBq+9TFgs8EjkHb6+Ro782CxwAUzk1FaLXWYZgQH0ZDLo8zC6A01/sBbispVZjE
-sShAMZfAuWdKzRHt7PdtUTcIFKfAmZxdhJNGNaMNQC27uX9FpiIyLYTdhG+2htqr
-h+Hdh+IrjjLAfQcDoweldT1WGCs4RT7UdD93tTj52Xl+h+d9Gp9918WIctgLTcJR
-j5AWlMoj/3VCkJDSiQyXNmd0nal20rxd7Q7LiwC8DzLagpduWwQiTRNYOeMPCaUl
-IbG92uh//pzOonlqfTVg
-=+E+4
------END PGP SIGNATURE-----
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
+Thanks,
+Vijay
