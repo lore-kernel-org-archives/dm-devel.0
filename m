@@ -1,27 +1,39 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
-Date: Thu, 12 Jul 2012 10:56:24 +0100
-Message-ID: <20120712095624.GD2095@agk-dp.fab.redhat.com>
-References: <1342057001.22214.6.camel@f16> <20120712163207.222b4bcc@notabene.brown>
+From: Busby <chaimvy@gmail.com>
+Subject: How to control the device mapper 's memory use?(or the
+ IO queue limits?)
+Date: Thu, 12 Jul 2012 18:14:43 +0800
+Message-ID: <CAJv3x-XF-E4uxnr7CCRUFV0je4cr2GQRPWAhnjwwxUtK3xkGQg@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120712163207.222b4bcc@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: Jonathan Brassow <jbrassow@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 12, 2012 at 04:32:07PM +1000, Neil Brown wrote:
-> Alasdair: I guess we should make sure we are in agreement about how patches
-> to dm-raid.c are funnelled through.  So far both you and I have feed them to
-> Linus, which doesn't seem to have caused any problems yet.  
+Hi All,
+         I created  a thin-lun using dm-thin module. When used the
+'dd' cmd to write to the thin lun ( the memory of my server is 10G, dd
+file size is 50G, thin lun size is 100G ), only 60M was free. Then I
+used 'iostat' to see how many io the dm device blocked, the number was
+more than 1,000,000. Does the device mapper limit the mapped device's
+queue? If not, how can limit the memory use, if we use writ-back, more
+and more io will be mapped to the thin target?
+      Is there any way to limit the mapped device 's request queue(or
+it has been done)? I test the shared-snapshot(Mikulas), 'dd' the
+origin volume(has snap volume ), big part of the memory will be used
+and the IO number of the dm device is very big (use 'iostat').
+      Thanks.
 
-Just take it case-by-case as has been happening.
-Roughly speaking, when changes are driven from the md side, you take the
-coupled patches to the dm files too; when the changes are driven from the dm
-side, I'll take them.
+Best Wishes & Regards,
 
-Alasdair
-
+Busby
