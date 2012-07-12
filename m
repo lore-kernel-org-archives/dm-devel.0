@@ -1,63 +1,141 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
-Date: Thu, 12 Jul 2012 21:43:36 +1000
-Message-ID: <20120712214336.54fa2ade@notabene.brown>
-References: <1342057001.22214.6.camel@f16>
-	<20120712163207.222b4bcc@notabene.brown>
-	<20120712095624.GD2095@agk-dp.fab.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v3] dm mpath: add 'retain_attached_hw_handler'
+	feature
+Date: Thu, 12 Jul 2012 09:38:25 -0400
+Message-ID: <1342100305-4458-1-git-send-email-snitzer@redhat.com>
+References: <1342032742-29369-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/8CRqObGwOzJYm46bfSY6E69"; protocol="application/pgp-signature"
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20120712095624.GD2095@agk-dp.fab.redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Jonathan Brassow <jbrassow@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1342032742-29369-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---Sig_/8CRqObGwOzJYm46bfSY6E69
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+During SCSI device scan all loaded SCSI device handlers will be
+consulted for a match (via scsi_dh's provided .match).  If a match is
+found that device handler will be attached.  We need a way to have
+userspace multipathd's provided 'hw_handler' not override the already
+attached hardware handler.
 
-On Thu, 12 Jul 2012 10:56:24 +0100 Alasdair G Kergon <agk@redhat.com> wrote:
+When specifying the feature 'retain_attached_hw_handler' multipath will
+use the currently attached hardware handler instead of trying to attach
+the one specified during table load.  If no hardware handler is attached
+the specified hardware handler will be used.
 
-> On Thu, Jul 12, 2012 at 04:32:07PM +1000, Neil Brown wrote:
-> > Alasdair: I guess we should make sure we are in agreement about how pat=
-ches
-> > to dm-raid.c are funnelled through.  So far both you and I have feed th=
-em to
-> > Linus, which doesn't seem to have caused any problems yet. =20
->=20
-> Just take it case-by-case as has been happening.
-> Roughly speaking, when changes are driven from the md side, you take the
-> coupled patches to the dm files too; when the changes are driven from the=
- dm
-> side, I'll take them.
+Leverages scsi_dh_attach's ability to increment the scsi_dh's reference
+count if the same scsi_dh name is provided when attaching -- currently
+attached scsi_dh name is determined with scsi_dh_attached_handler_name.
 
-Sounds good - thanks.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Tested-by: Babu Moger <babu.moger@netapp.com>
+Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Acked-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-mpath.c |   38 ++++++++++++++++++++++++++++++++++----
+ 1 file changed, 34 insertions(+), 4 deletions(-)
 
-NeilBrown
+v2: s/retain_loaded_hw_handler/retain_attached_hw_handler/
+v3: clear hw_handler_params if scsi_dh already attached
 
---Sig_/8CRqObGwOzJYm46bfSY6E69
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
-
-iQIVAwUBT/64aDnsnt1WYoG5AQJ/tA/9GnZgoKLrxiuLY7KskZbck3l3+YdexuDC
-CbH9Z7b3HMvpy6wcnvMXWwtkhKVioyfcit5fK0rFkGfFlWzRvx2QNjr+GJvtQunm
-nS4PznKqbGppkWifPtxn21++Z73SA1AQSdE+0fYzpOyAUfzjYn3KXicAun85ebcy
-PhjfMm9iJDvMb29bSsdwkbQrqAyWoszF6Qza7HOR1JFJpoAzkvJgxymxnSRunYRW
-MsZIN7Ti5O9j/cxD56Td5fuFYQLZ11NVku2KgkxApbzbcG2qB/5nOT55nweibIUA
-bSsVwx3MfNOcyKUrJR5ql8/f/0SSzuEKTvWsF+KuIpmXmvXLsN4/SYO2ZcJx/xsI
-AYmLwjWA+LS3PIo47RUvhOnzOUABs97Yo2MAYxigxV2v63O368uTWSXn56W3QnF7
-b03VqdYq+uSG425isbi278P2uJiIVKha0c+3Ppx2PRo0zqcDFyGhzYZxGANqND4C
-f+FQw80vwbvzurS3pz4KavnI1LnLbHTBXtYzVeh47YkJj+JashvTdGPXX+jbUNTS
-mrFtG0cOhUhN13f8b0AG6TWwayGMBn0el67g9aiYNAsdOIOF79o7vHZPCFx2qNFs
-COSux2nCnSJ+a0A9MpI3ofV9aqs/YNr+7iQidtSu19g2hISm3azhIIH1GGfJ0w9n
-wte7dLmh+pA=
-=Lqx/
------END PGP SIGNATURE-----
-
---Sig_/8CRqObGwOzJYm46bfSY6E69--
+Index: linux-next/drivers/md/dm-mpath.c
+===================================================================
+--- linux-next.orig/drivers/md/dm-mpath.c
++++ linux-next/drivers/md/dm-mpath.c
+@@ -85,6 +85,7 @@ struct multipath {
+ 	unsigned queue_io:1;		/* Must we queue all I/O? */
+ 	unsigned queue_if_no_path:1;	/* Queue I/O if last path fails? */
+ 	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
++	unsigned retain_attached_hw_handler:1; /* If there's already a hw_handler present, don't change it. */
+ 
+ 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
+ 	unsigned pg_init_count;		/* Number of times pg_init called */
+@@ -568,6 +569,7 @@ static struct pgpath *parse_path(struct 
+ 	int r;
+ 	struct pgpath *p;
+ 	struct multipath *m = ti->private;
++	struct request_queue *q = NULL;
+ 
+ 	/* we need at least a path arg */
+ 	if (as->argc < 1) {
+@@ -586,9 +588,29 @@ static struct pgpath *parse_path(struct 
+ 		goto bad;
+ 	}
+ 
+-	if (m->hw_handler_name) {
+-		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
++	if (m->retain_attached_hw_handler || m->hw_handler_name)
++		q = bdev_get_queue(p->path.dev->bdev);
++
++	if (m->retain_attached_hw_handler) {
++		const char *attached_handler_name =
++			scsi_dh_attached_handler_name(q, GFP_KERNEL);
++		if (attached_handler_name) {
++			/*
++			 * clear hw_handler_params, avoids conflict with
++			 * attached handler
++			 */
++			kfree(m->hw_handler_params);
++			m->hw_handler_params = NULL;
++			/*
++			 * reset hw_handler_name to match the attached handler,
++			 * doing so bumps scsi_dh reference via scsi_dh_attach().
++			 */
++			kfree(m->hw_handler_name);
++			m->hw_handler_name = attached_handler_name;
++		}
++	}
+ 
++	if (m->hw_handler_name) {
+ 		r = scsi_dh_attach(q, m->hw_handler_name);
+ 		if (r == -EBUSY) {
+ 			/*
+@@ -760,7 +782,7 @@ static int parse_features(struct dm_arg_
+ 	const char *arg_name;
+ 
+ 	static struct dm_arg _args[] = {
+-		{0, 5, "invalid number of feature args"},
++		{0, 6, "invalid number of feature args"},
+ 		{1, 50, "pg_init_retries must be between 1 and 50"},
+ 		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
+ 	};
+@@ -781,6 +803,11 @@ static int parse_features(struct dm_arg_
+ 			continue;
+ 		}
+ 
++		if (!strcasecmp(arg_name, "retain_attached_hw_handler")) {
++			m->retain_attached_hw_handler = 1;
++			continue;
++		}
++
+ 		if (!strcasecmp(arg_name, "pg_init_retries") &&
+ 		    (argc >= 1)) {
+ 			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
+@@ -1364,13 +1391,16 @@ static int multipath_status(struct dm_ta
+ 	else {
+ 		DMEMIT("%u ", m->queue_if_no_path +
+ 			      (m->pg_init_retries > 0) * 2 +
+-			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2);
++			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
++			      m->retain_attached_hw_handler);
+ 		if (m->queue_if_no_path)
+ 			DMEMIT("queue_if_no_path ");
+ 		if (m->pg_init_retries)
+ 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
+ 		if (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT)
+ 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
++		if (m->retain_attached_hw_handler)
++			DMEMIT("retain_attached_hw_handler ");
+ 	}
+ 
+ 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
