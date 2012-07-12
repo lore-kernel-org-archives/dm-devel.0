@@ -1,141 +1,107 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3] dm mpath: add 'retain_attached_hw_handler'
-	feature
-Date: Thu, 12 Jul 2012 09:38:25 -0400
-Message-ID: <1342100305-4458-1-git-send-email-snitzer@redhat.com>
-References: <1342032742-29369-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: keld@keldix.com
+Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
+Date: Thu, 12 Jul 2012 18:22:05 +0200
+Message-ID: <20120712162205.GA13485@www5.open-std.org>
+References: <1342057001.22214.6.camel@f16>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1342032742-29369-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1342057001.22214.6.camel@f16>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-During SCSI device scan all loaded SCSI device handlers will be
-consulted for a match (via scsi_dh's provided .match).  If a match is
-found that device handler will be attached.  We need a way to have
-userspace multipathd's provided 'hw_handler' not override the already
-attached hardware handler.
+On Wed, Jul 11, 2012 at 08:36:41PM -0500, Jonathan Brassow wrote:
+> +        [raid10_copies   <# copies>]
+> +        [raid10_format   <near|far|offset>]
+> +		These two options are used to alter the default layout of
+> +		a RAID10 configuration.  The number of copies is can be
+> +		specified, but the default is 2.  There are also three
+> +		variations to how the copies are laid down - the default
+> +		is "near".  Near copies are what most people think of with
+> +		respect to mirroring.  If these options are left unspecified,
+> +		or 'raid10_copies 2' and/or 'raid10_format near' are given,
+> +		then the layouts for 2, 3 and 4 devices	are:
+> +		2 drives         3 drives          4 drives
+> +		--------         ----------        --------------
+> +		A1  A1           A1  A1  A2        A1  A1  A2  A2
+> +		A2  A2           A2  A3  A3        A3  A3  A4  A4
+> +		A3  A3           A4  A4  A5        A5  A5  A6  A6
+> +		A4  A4           A5  A6  A6        A7  A7  A8  A8
+> +		..  ..           ..  ..  ..        ..  ..  ..  ..
+> +		The 2-device layout is equivalent 2-way RAID1.  The 4-device
+> +		layout is what a traditional RAID10 would look like.  The
+> +		3-device layout is what might be called a 'RAID1E - Integrated
+> +		Adjacent Stripe Mirroring'.
+> +
+> +		If 'raid10_copies 2' and 'raid10_format far', then the layouts
+> +		for 2, 3 and 4 devices are:
+> +		2 drives             3 drives             4 drives
+> +		--------             --------------       --------------------
+> +		A1  A2               A1   A2   A3         A1   A2   A3   A4
+> +		A3  A4               A4   A5   A6         A5   A6   A7   A8
+> +		A5  A6               A7   A8   A9         A9   A10  A11  A12
+> +		..  ..               ..   ..   ..         ..   ..   ..   ..
+> +		A2  A1               A3   A1   A2         A4   A1   A2   A3
+> +		A4  A3               A6   A4   A5         A8   A5   A6   A7
+> +		A6  A5               A9   A7   A8         A12  A9   A10  A11
 
-When specifying the feature 'retain_attached_hw_handler' multipath will
-use the currently attached hardware handler instead of trying to attach
-the one specified during table load.  If no hardware handler is attached
-the specified hardware handler will be used.
+The trick here for 4 drives is to keep the array running even if some 2 drives fail.
+Your layout does not so so. Only one drive may fail at any time.
 
-Leverages scsi_dh_attach's ability to increment the scsi_dh's reference
-count if the same scsi_dh name is provided when attaching -- currently
-attached scsi_dh name is determined with scsi_dh_attached_handler_name.
+I think a better layout is (for 4 drives)
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Tested-by: Babu Moger <babu.moger@netapp.com>
-Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c |   38 ++++++++++++++++++++++++++++++++++----
- 1 file changed, 34 insertions(+), 4 deletions(-)
+          A1  A2  A3  A4
+          A5  A6  A7  A8
 
-v2: s/retain_loaded_hw_handler/retain_attached_hw_handler/
-v3: clear hw_handler_params if scsi_dh already attached
+          .................
 
-Index: linux-next/drivers/md/dm-mpath.c
-===================================================================
---- linux-next.orig/drivers/md/dm-mpath.c
-+++ linux-next/drivers/md/dm-mpath.c
-@@ -85,6 +85,7 @@ struct multipath {
- 	unsigned queue_io:1;		/* Must we queue all I/O? */
- 	unsigned queue_if_no_path:1;	/* Queue I/O if last path fails? */
- 	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
-+	unsigned retain_attached_hw_handler:1; /* If there's already a hw_handler present, don't change it. */
- 
- 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
- 	unsigned pg_init_count;		/* Number of times pg_init called */
-@@ -568,6 +569,7 @@ static struct pgpath *parse_path(struct 
- 	int r;
- 	struct pgpath *p;
- 	struct multipath *m = ti->private;
-+	struct request_queue *q = NULL;
- 
- 	/* we need at least a path arg */
- 	if (as->argc < 1) {
-@@ -586,9 +588,29 @@ static struct pgpath *parse_path(struct 
- 		goto bad;
- 	}
- 
--	if (m->hw_handler_name) {
--		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
-+	if (m->retain_attached_hw_handler || m->hw_handler_name)
-+		q = bdev_get_queue(p->path.dev->bdev);
-+
-+	if (m->retain_attached_hw_handler) {
-+		const char *attached_handler_name =
-+			scsi_dh_attached_handler_name(q, GFP_KERNEL);
-+		if (attached_handler_name) {
-+			/*
-+			 * clear hw_handler_params, avoids conflict with
-+			 * attached handler
-+			 */
-+			kfree(m->hw_handler_params);
-+			m->hw_handler_params = NULL;
-+			/*
-+			 * reset hw_handler_name to match the attached handler,
-+			 * doing so bumps scsi_dh reference via scsi_dh_attach().
-+			 */
-+			kfree(m->hw_handler_name);
-+			m->hw_handler_name = attached_handler_name;
-+		}
-+	}
- 
-+	if (m->hw_handler_name) {
- 		r = scsi_dh_attach(q, m->hw_handler_name);
- 		if (r == -EBUSY) {
- 			/*
-@@ -760,7 +782,7 @@ static int parse_features(struct dm_arg_
- 	const char *arg_name;
- 
- 	static struct dm_arg _args[] = {
--		{0, 5, "invalid number of feature args"},
-+		{0, 6, "invalid number of feature args"},
- 		{1, 50, "pg_init_retries must be between 1 and 50"},
- 		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
- 	};
-@@ -781,6 +803,11 @@ static int parse_features(struct dm_arg_
- 			continue;
- 		}
- 
-+		if (!strcasecmp(arg_name, "retain_attached_hw_handler")) {
-+			m->retain_attached_hw_handler = 1;
-+			continue;
-+		}
-+
- 		if (!strcasecmp(arg_name, "pg_init_retries") &&
- 		    (argc >= 1)) {
- 			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
-@@ -1364,13 +1391,16 @@ static int multipath_status(struct dm_ta
- 	else {
- 		DMEMIT("%u ", m->queue_if_no_path +
- 			      (m->pg_init_retries > 0) * 2 +
--			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2);
-+			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
-+			      m->retain_attached_hw_handler);
- 		if (m->queue_if_no_path)
- 			DMEMIT("queue_if_no_path ");
- 		if (m->pg_init_retries)
- 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
- 		if (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT)
- 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
-+		if (m->retain_attached_hw_handler)
-+			DMEMIT("retain_attached_hw_handler ");
- 	}
- 
- 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
+          A2  A1  A4  A3  (Swich in pairs for N=2)
+          A6  A5  A8  A7
+
+Here all of the drive combinations 1+3, 1+4, 2+3, 2+4 may fail, and the array should
+still be running.. 1+2 and 3+4 could not fail without destroying the array.
+This would give a 66,7 % chance of the array surviving 2 disk crashes.
+That is better than the 0 % that the documented scheme has.
+
+the same scheme could go for all even numbers of N in a raid10,far layout.
+consider the drives in pairs, and switch the blocks within a pair.
+
+I think this could be generalized to N-copies: treat every group N drives,
+as N copies of the same set of selection of blocks.
+Then any N-1 of the disks in the group could fail and the arry still
+be running. Works then for arrays with straight multipla of N disks .
+
+I am not sure that ordinary raid10 does so, but Neil has indicated so.
+I would be grateful if you could check this, and
+also test what happens with your code if you have any combination of 2 drives
+fail for the 4 drive case.
+
+> +
+> +		If 'raid10_copies 2' and 'raid10_format offset', then the
+> +		layouts for 2, 3 and 4 devices are:
+> +		2 drives       3 drives           4 drives
+> +		--------       ------------       -----------------
+> +		A1  A2         A1  A2  A3         A1  A2  A3  A4
+> +		A2  A1         A3  A1  A2         A4  A1  A2  A3
+> +		A3  A4         A4  A5  A6         A5  A6  A7  A8
+> +		A4  A3         A6  A4  A5         A8  A5  A6  A7
+> +		A5  A6         A7  A8  A9         A9  A10 A11 A12
+> +		A6  A5         A9  A7  A8         A12 A9  A10 A11
+
+The same problem here with 2 failing drives (for the 4 drive case).
+However I dont see an easy solution to this problem.
+
+> +		Here we see layouts closely akin to 'RAID1E - Integrated
+> +		Offset Stripe Mirroring'.
+> +
+> +		Thanks wikipedia 'Non-standard RAID levels' for the layout
+> +		figures:
+> +		http://en.wikipedia.org/wiki/Non-standard_RAID_levels
+
+Wikipedia may be in error wrt. the block orders.
+
+besT regards
+Keld
