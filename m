@@ -1,283 +1,138 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Crash when IO is being submitted and block size is changed
-Date: Sun, 15 Jul 2012 20:55:02 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
- <20120628111541.GB17515@quack.suse.cz>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
+Date: Mon, 16 Jul 2012 16:14:31 +1000
+Message-ID: <20120716161431.42749a15@notabene.brown>
+References: <1342057001.22214.6.camel@f16>
+	<20120712162205.GA13485@www5.open-std.org>
+	<331FD2B6-AD96-4513-AF37-4E1B9EE7A34F@redhat.com>
+	<20120713011505.GA3099@www5.open-std.org>
+	<20120713112717.3b15647c@notabene.brown>
+	<20120713082923.GA19771@www5.open-std.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20120628111541.GB17515@quack.suse.cz>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@vger.kernel.org, dm-devel@redhat.com
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/rjzdFMz/MLjkEzDJN9vOEid"; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20120713082923.GA19771@www5.open-std.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: keld@keldix.com
+Cc: Brassow Jonathan <jbrassow@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
+--Sig_/rjzdFMz/MLjkEzDJN9vOEid
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
+On Fri, 13 Jul 2012 10:29:23 +0200 keld@keldix.com wrote:
 
-On Thu, 28 Jun 2012, Jan Kara wrote:
+> On Fri, Jul 13, 2012 at 11:27:17AM +1000, NeilBrown wrote:
+> > On Fri, 13 Jul 2012 03:15:05 +0200 keld@keldix.com wrote:
+> >=20
+> > > I think the layout you described should not be promoted at all,
+> > > and only kept for backward compatibility. As there is no backward=20
+> > > compatibility in your case I think it is an error to implement it.
+> > > I understand that you do not reuse any of the MD code here?
+> >=20
+> > Not correct.  The whole point of this exercise is to reuse md code.
+>=20
+> OK, I also think it is only sensible to reuse the code already done.
+> I misunderstood then your mail on not to repeat mistakes - which I took t=
+o mean that
+> Barrow should not implement things with mistakes. Maybe that means to not=
+ make hooks
+> to MD code that is a mistake?
+>=20
+> So Barrow will implement the improved far layout once there is MD code fo=
+r it, and
+> then he can make the neceessary hooks in DM code?
+>=20
+> > > The flaw is worse than Neil described, as far as I understand.
+> > > With n=3D2 you can in the current implementation only have 1 disk fai=
+ling,
+> > > for any numbers of drives in the array. With the suggested layout
+> > > then for 4 drives you have the probability of surviving 66 %=20
+> > > of 2 drives failing. This get even better for 6, 8 .. disks in the ar=
+ray.
+> > > And you may even survive 3 or more disk failures, dependent on the nu=
+mber
+> > > of drives employed. The probability is the same as  for raid-1+0
+> >=20
+> > Also not correct.  You can certainly have more than one failed device
+> > providing you don't have 'n' adjacent devices all failed.
+> > So e.g. if you have 2 drives in a far-2 layout then you can survive the
+> > failure of three devices if they are 0,2,4 or 1,3,5.
+>=20
+> On further investigations I agree that you can survive more than one driv=
+e failing with
+> the current layout.
+>=20
+> > > > When it is available to MD, I'll make it available to dm-raid also.
+> > >=20
+> > > Please dont implement it in the flawed  way. It will just create a nu=
+mber of problems
+> > > for when to switch over and convert between the two formats, and then=
+ which should
+> > > be the default (I fear some would say the old flawed should be the de=
+fault), and we need
+> > > to explain the two formats and implement two sets of repairs and so o=
+n.
+> >=20
+> > This "flawed" arrangement is the only one that makes sense for an odd n=
+umber
+> > of devices (assuming 2 copies).
+>=20
+> Well, I have an idea for the odd number of devices:
+> Have the disks arranged in groups (for N=3D2 in pairs) and then the last =
+group extended with
+> the leftover disks in the way it is done now.
+>=20
+> For 2 copies, this would be a number of pairs, and then a rest group of 3=
+ disks.
+> For 3 copies, this would be a number of triplets, and then 4 or 5 disks i=
+n the last group.
 
-> On Wed 27-06-12 23:04:09, Mikulas Patocka wrote:
-> > The kernel crashes when IO is being submitted to a block device and block 
-> > size of that device is changed simultaneously.
->   Nasty ;-)
-> 
-> > To reproduce the crash, apply this patch:
-> > 
-> > --- linux-3.4.3-fast.orig/fs/block_dev.c 2012-06-27 20:24:07.000000000 +0200
-> > +++ linux-3.4.3-fast/fs/block_dev.c 2012-06-27 20:28:34.000000000 +0200
-> > @@ -28,6 +28,7 @@
-> >  #include <linux/log2.h>
-> >  #include <linux/cleancache.h>
-> >  #include <asm/uaccess.h> 
-> > +#include <linux/delay.h>
-> >  #include "internal.h"
-> >  struct bdev_inode {
-> > @@ -203,6 +204,7 @@ blkdev_get_blocks(struct inode *inode, s
-> >  
-> >  	bh->b_bdev = I_BDEV(inode);
-> >  	bh->b_blocknr = iblock;
-> > +	msleep(1000);
-> >  	bh->b_size = max_blocks << inode->i_blkbits;
-> >  	if (max_blocks)
-> >  		set_buffer_mapped(bh);
-> > 
-> > Use some device with 4k blocksize, for example a ramdisk.
-> > Run "dd if=/dev/ram0 of=/dev/null bs=4k count=1 iflag=direct"
-> > While it is sleeping in the msleep function, run "blockdev --setbsz 2048 
-> > /dev/ram0" on the other console.
-> > You get a BUG at fs/direct-io.c:1013 - BUG_ON(this_chunk_bytes == 0);
-> > 
-> > 
-> > One may ask "why would anyone do this - submit I/O and change block size 
-> > simultaneously?" - the problem is that udev and lvm can scan and read all 
-> > block devices anytime - so anytime you change block device size, there may 
-> > be some i/o to that device in flight and the crash may happen. That BUG 
-> > actually happened in production environment because of lvm scanning block 
-> > devices and some other software changing block size at the same time.
-> > 
->   Yeah, it's nasty and neither solution looks particularly appealing. One
-> idea that came to my mind is: I'm trying to solve some races between direct
-> IO, buffered IO, hole punching etc. by a new mapping interval lock. I'm not
-> sure if it will go anywhere yet but if it does, we can fix the above race
-> by taking the mapping lock for the whole block device around setting block
-> size thus effectivelly disallowing any IO to it.
-> 
-> 								Honza
-> -- 
-> Jan Kara <jack@suse.cz>
-> SUSE Labs, CR
-> 
+Certainly possible, but it feels clumsy.  I'm not convinced it is a good id=
+ea.
 
-Hi
+>=20
+> Can I assume, Neil, that you agree with the rest I wrote? :-)
 
-This is the patch that fixes this crash: it takes a rw-semaphore around 
-all direct-IO path.
+You can agree that I don't strongly disagree...
 
-(note that if someone is concerned about performance, the rw-semaphore 
-could be made per-cpu --- take it for read on the current CPU and take it 
-for write on all CPUs).
+> Especially that we should only advice the new layout, and there is no rea=
+son for the
+> current implementation except for backwards compatibility?
 
-Mikulas
+The main reason for the current implementation is that is currently
+implemented.
+Until an alternate implementation exists, it seems pointless to recommend
+that people use it.
+Maybe you are suggesting that dmraid should not support raid10-far or
+raid10-offset until the "new" approach is implemented.
+Maybe that is sensible, but only if someone steps forwards and actually
+implements the "new" approach.
 
----
+NeilBrown
 
-blockdev: fix a crash when block size is changed and I/O is issued simultaneously
+--Sig_/rjzdFMz/MLjkEzDJN9vOEid
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
-The kernel may crash when block size is changed and I/O is issued
-simultaneously.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.18 (GNU/Linux)
 
-Because some subsystems (udev or lvm) may read any block device anytime,
-the bug actually puts any code that changes a block device size in
-jeopardy.
+iQIVAwUBUAOxRznsnt1WYoG5AQLHnhAAqS1LtbsQ3rT61FEWmRcRbs29lFA8ZyRI
+S2FXA7QqQAIyjPCKqDLwlfreOO0GVww3oG/VXXvHC9hkf5qmOrS6UfmD9N46o19i
+wAYn3M8ryWgIF6GkeB4SV8kWOlTB3OKrVHQFfH2snwrPljnD/dHRQpM0f7O9G43i
+Vkoiv0hT5BLsLTSwxoTrUBC4DISlTBARhfShUl/+rQto98dENflPni2WG1cmFxXl
+e0xqrNm22/DCoWaLsa0Ytv33HhP3xFtkt2rKF9/DQZMHhHR+uy7oBuP2ImQfvsBM
+8MeQePrwqDAEif7CFLS+AhDa6wHcd6XVma9WGK/S83Qmc6W74j1Nit+3esnvQeyI
+iGerpToAqF55S9J/ALj1XnW+6SM/5rSSLkzMHmOuXEDJgdKJ8kiHumCkMSSAQ2Yf
+f36jwNuMn3M/v3mMdJztibTFCwRYPBQurxZ5+Kvj0+NOEeb+/rjxlLpl1GCzj743
+iRoYqByxKhwp4s4KHpLx+CcKVysHroIZ2njpXiPiOMmG4T3Avi6LifLQt/SrY8JC
+0/FGksRFGBbV4TFyaj/5VYvZ91IWjCZHBs5djjMKmhm6S1veQwuZ72bodAlUoB3k
+3keD+NeWuTZCqYBLExRBFU/YA5fbACRh/etCeOSmx7bCnI9bv5SITQlFd48MABAe
+/QvLTgF1G7k=
+=TauN
+-----END PGP SIGNATURE-----
 
-The crash can be reproduced if you place "msleep(1000)" to
-blkdev_get_blocks just before "bh->b_size = max_blocks <<
-inode->i_blkbits;".
-Then, run "dd if=/dev/ram0 of=/dev/null bs=4k count=1 iflag=direct"
-While it is waiting in msleep, run "blockdev --setbsz 2048 /dev/ram0"
-You get a BUG.
-
-The direct and non-direct I/O is written with the assumption that block
-size does not change. It doesn't seem practical to fix these crashes
-one-by-one there may be many crash possibilities when block size changes
-at a certain place and it is impossible to find them all and verify the
-code.
-
-This patch introduces a new rw-lock bd_block_size_semaphore. The lock is
-taken for read during I/O. It is taken for write when changing block
-size. Consequently, block size can't be changed while I/O is being
-submitted.
-
-For asynchronous I/O, the patch only prevents block size change while
-the I/O is being submitted. The block size can change when the I/O is in
-progress or when the I/O is being finished. This is acceptable because
-there are no accesses to block size when asynchronous I/O is being
-finished.
-
-The patch prevents block size changing while the device is mapped with
-mmap.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/char/raw.c |    2 -
- fs/block_dev.c     |   58 +++++++++++++++++++++++++++++++++++++++++++++++++++--
- include/linux/fs.h |    4 +++
- 3 files changed, 61 insertions(+), 3 deletions(-)
-
-Index: linux-3.5-rc6-devel/include/linux/fs.h
-===================================================================
---- linux-3.5-rc6-devel.orig/include/linux/fs.h	2012-07-16 01:18:45.000000000 +0200
-+++ linux-3.5-rc6-devel/include/linux/fs.h	2012-07-16 01:29:21.000000000 +0200
-@@ -713,6 +713,8 @@ struct block_device {
- 	int			bd_fsfreeze_count;
- 	/* Mutex for freeze */
- 	struct mutex		bd_fsfreeze_mutex;
-+	/* A semaphore that prevents I/O while block size is being changed */
-+	struct rw_semaphore	bd_block_size_semaphore;
- };
- 
- /*
-@@ -2414,6 +2416,8 @@ extern int generic_segment_checks(const 
- 		unsigned long *nr_segs, size_t *count, int access_flags);
- 
- /* fs/block_dev.c */
-+extern ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
-+			       unsigned long nr_segs, loff_t pos);
- extern ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
- 				unsigned long nr_segs, loff_t pos);
- extern int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
-Index: linux-3.5-rc6-devel/fs/block_dev.c
-===================================================================
---- linux-3.5-rc6-devel.orig/fs/block_dev.c	2012-07-16 01:14:33.000000000 +0200
-+++ linux-3.5-rc6-devel/fs/block_dev.c	2012-07-16 01:37:28.000000000 +0200
-@@ -124,6 +124,20 @@ int set_blocksize(struct block_device *b
- 	if (size < bdev_logical_block_size(bdev))
- 		return -EINVAL;
- 
-+	/* Prevent starting I/O or mapping the device */
-+	down_write(&bdev->bd_block_size_semaphore);
-+
-+	/* Check that the block device is not memory mapped */
-+	mapping = bdev->bd_inode->i_mapping;
-+	mutex_lock(&mapping->i_mmap_mutex);
-+	if (!prio_tree_empty(&mapping->i_mmap) ||
-+	    !list_empty(&mapping->i_mmap_nonlinear)) {
-+		mutex_unlock(&mapping->i_mmap_mutex);
-+		up_write(&bdev->bd_block_size_semaphore);
-+		return -EBUSY;
-+	}
-+	mutex_unlock(&mapping->i_mmap_mutex);
-+
- 	/* Don't change the size if it is same as current */
- 	if (bdev->bd_block_size != size) {
- 		sync_blockdev(bdev);
-@@ -131,6 +145,9 @@ int set_blocksize(struct block_device *b
- 		bdev->bd_inode->i_blkbits = blksize_bits(size);
- 		kill_bdev(bdev);
- 	}
-+
-+	up_write(&bdev->bd_block_size_semaphore);
-+
- 	return 0;
- }
- 
-@@ -472,6 +489,7 @@ static void init_once(void *foo)
- 	inode_init_once(&ei->vfs_inode);
- 	/* Initialize mutex for freeze. */
- 	mutex_init(&bdev->bd_fsfreeze_mutex);
-+	init_rwsem(&bdev->bd_block_size_semaphore);
- }
- 
- static inline void __bd_forget(struct inode *inode)
-@@ -1567,6 +1585,22 @@ static long block_ioctl(struct file *fil
- 	return blkdev_ioctl(bdev, mode, cmd, arg);
- }
- 
-+ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
-+			unsigned long nr_segs, loff_t pos)
-+{
-+	ssize_t ret;
-+	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
-+
-+	down_read(&bdev->bd_block_size_semaphore);
-+
-+	ret = generic_file_aio_read(iocb, iov, nr_segs, pos);
-+
-+	up_read(&bdev->bd_block_size_semaphore);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(blkdev_aio_read);
-+
- /*
-  * Write data to the block device.  Only intended for the block device itself
-  * and the raw driver which basically is a fake block device.
-@@ -1578,10 +1612,13 @@ ssize_t blkdev_aio_write(struct kiocb *i
- 			 unsigned long nr_segs, loff_t pos)
- {
- 	struct file *file = iocb->ki_filp;
-+	struct block_device *bdev = I_BDEV(file->f_mapping->host);
- 	ssize_t ret;
- 
- 	BUG_ON(iocb->ki_pos != pos);
- 
-+	down_read(&bdev->bd_block_size_semaphore);
-+
- 	ret = __generic_file_aio_write(iocb, iov, nr_segs, &iocb->ki_pos);
- 	if (ret > 0 || ret == -EIOCBQUEUED) {
- 		ssize_t err;
-@@ -1590,10 +1627,27 @@ ssize_t blkdev_aio_write(struct kiocb *i
- 		if (err < 0 && ret > 0)
- 			ret = err;
- 	}
-+
-+	up_read(&bdev->bd_block_size_semaphore);
-+
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(blkdev_aio_write);
- 
-+int blkdev_mmap(struct file *file, struct vm_area_struct *vma)
-+{
-+	int ret;
-+	struct block_device *bdev = I_BDEV(file->f_mapping->host);
-+
-+	down_read(&bdev->bd_block_size_semaphore);
-+
-+	ret = generic_file_mmap(file, vma);
-+
-+	up_read(&bdev->bd_block_size_semaphore);
-+
-+	return ret;
-+}
-+
- /*
-  * Try to release a page associated with block device when the system
-  * is under memory pressure.
-@@ -1624,9 +1678,9 @@ const struct file_operations def_blk_fop
- 	.llseek		= block_llseek,
- 	.read		= do_sync_read,
- 	.write		= do_sync_write,
--  	.aio_read	= generic_file_aio_read,
-+  	.aio_read	= blkdev_aio_read,
- 	.aio_write	= blkdev_aio_write,
--	.mmap		= generic_file_mmap,
-+	.mmap		= blkdev_mmap,
- 	.fsync		= blkdev_fsync,
- 	.unlocked_ioctl	= block_ioctl,
- #ifdef CONFIG_COMPAT
-Index: linux-3.5-rc6-devel/drivers/char/raw.c
-===================================================================
---- linux-3.5-rc6-devel.orig/drivers/char/raw.c	2012-07-16 01:29:27.000000000 +0200
-+++ linux-3.5-rc6-devel/drivers/char/raw.c	2012-07-16 01:30:04.000000000 +0200
-@@ -285,7 +285,7 @@ static long raw_ctl_compat_ioctl(struct 
- 
- static const struct file_operations raw_fops = {
- 	.read		= do_sync_read,
--	.aio_read	= generic_file_aio_read,
-+	.aio_read	= blkdev_aio_read,
- 	.write		= do_sync_write,
- 	.aio_write	= blkdev_aio_write,
- 	.fsync		= blkdev_fsync,
+--Sig_/rjzdFMz/MLjkEzDJN9vOEid--
