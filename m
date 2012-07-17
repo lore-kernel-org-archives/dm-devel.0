@@ -1,65 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/3] dm-thin: fix discard_granularity
-Date: Tue, 17 Jul 2012 11:31:41 -0400
-Message-ID: <20120717153140.GA18345@redhat.com>
-References: <Pine.LNX.4.64.1207161432310.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161434300.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161434550.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161435230.3859@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1207161435230.3859@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
+Date: Tue, 17 Jul 2012 11:15:56 -0500
+Message-ID: <3A8FC300-59E8-48CA-81DF-CCCF780BFE0C@redhat.com>
+References: <1342057001.22214.6.camel@f16> <20120712163207.222b4bcc@notabene.brown> <544F2898-B9C7-42CD-A0FD-F1DE35C5E628@redhat.com> <20120717123404.3516b943@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v1084)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20120717123404.3516b943@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 16 2012 at  2:35pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> dm-thin: fix discard_granularity
-> 
-> The kernel expects that limits->discard_granularity is a power of two.
-> Set this limit only if we use a power of two block size.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  drivers/md/dm-thin.c |    3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> Index: linux-3.5-rc6-fast/drivers/md/dm-thin.c
-> ===================================================================
-> --- linux-3.5-rc6-fast.orig/drivers/md/dm-thin.c	2012-07-16 20:07:49.000000000 +0200
-> +++ linux-3.5-rc6-fast/drivers/md/dm-thin.c	2012-07-16 20:08:01.000000000 +0200
-> @@ -2502,7 +2502,8 @@ static void set_discard_limits(struct po
->  	 * bios cover a block partially.  A discard that spans a block boundary
->  	 * is not sent to this target.
->  	 */
-> -	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
-> +	if (pool->sectors_per_block_shift >= 0)
-> +		limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
->  	limits->discard_zeroes_data = pool->pf.zero_new_blocks;
->  }
+On Jul 16, 2012, at 9:34 PM, NeilBrown wrote:
 
-Given the block layer's assumption that discard_granularity is always a
-power of 2: thinp should disable discard if the thinp blocksize is a non
-power of 2.  So this patch isn't correct (discard support should be
-disabled in pool_ctr based on the specified blocksize).
+>>>> 
+>>>> @@ -536,9 +605,25 @@ static int parse_raid_params(struct raid
+>>>> 	if (dm_set_target_max_io_len(rs->ti, max_io_len))
+>>>> 		return -EINVAL;
+>>>> 
+>>>> -	if ((rs->raid_type->level > 1) &&
+>>>> -	    sector_div(sectors_per_dev, (rs->md.raid_disks - rs->raid_type->parity_devs))) {
+>>>> +	if (rs->raid_type->level == 10) {
+>>>> +		/* (Len * Stripes) / Mirrors */
+>>>> +		sectors_per_dev *= rs->md.raid_disks;
+>>>> +		if (sector_div(sectors_per_dev, raid10_copies)) {
+>>>> +			rs->ti->error = "Target length not divisible by number of data devices";
+>>>> +			return -EINVAL;
+>>>> +		}
+>>> 
+>>> I'm not entirely sure what you are trying to do here, but I don't think it
+>>> works.
+>>> 
+>>> At the very least you would need to convert the "sectors_per_dev" number to a
+>>> 'chunks_per_dev' before multiplying by raid_disks and dividing by copies.
+>>> 
+>>> But even that isn't necessary.  If you have a 3-device near=2 array with an
+>>> odd number of chunks per device, that will still work.  The last chunk won't
+>>> be mirrored, so won't be used.
+>>> Until a couple of weeks ago a recovery of the last device would trigger an
+>>> error when we try to recover that last chunk, but that is fixed now.
+>>> 
+>>> So if you want to impose this limitation (and there is some merit in making
+>>> sure people don't confuse themselves), I suggest it get imposed in the
+>>> user-space tools which create the RAID10.
+>> 
+>> I have seen what you do in calc_sectors(), I suppose I could bring that in.  However, I'm simply trying to find the value that will be preliminarily assigned to mddev->dev_sectors.  It is an enforced (perhaps unnecessary) constraint that the array length be divisible by the number of data devices.  I'm not accounting for chunk boundaries - I leave that to userspace to configure and MD to catch.
+> 
+> In that case I suggest you keep it out of dmraid.
+> 
+> It might make sense to check that the resulting array size matches what
+> user-space said to expect - or is at-least-as-big-as.  However I don't see
+> much point in other size changes there.
 
-Future work should be:
-1) explore/eliminate the block layer's power of 2 constraints
-2) divorce thinp's discard limits (for discard passdown) from the pool's
-   blocksize
+I'm not changing any sizes.  I'm finding a value for mddev->dev_sectors (what should I set it to if not the above?), which is the size of each device as computed from the total array size.  If the value can't be computed evenly, then an error is given.  I'm not sure what you are suggesting my alternative is when you say, "keep it out of dm-raid"...  I think this is the least I can do in dm-raid.
+
+ brassow
