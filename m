@@ -1,85 +1,53 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 3/3] dm-thin: fix discard_granularity
-Date: Tue, 17 Jul 2012 15:35:04 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1207171519120.26839@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1207161432310.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161434300.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161434550.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161435230.3859@file.rdu.redhat.com>
-	<20120717153140.GA18345@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120717153140.GA18345@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
+Date: Tue, 17 Jul 2012 15:30:54 -0500
+Message-ID: <6CC78E36-3B8F-4F9B-B4CA-7A4D0C677DF4@redhat.com>
+References: <1342057001.22214.6.camel@f16> <20120712162205.GA13485@www5.open-std.org> <331FD2B6-AD96-4513-AF37-4E1B9EE7A34F@redhat.com> <20120713011505.GA3099@www5.open-std.org> <20120713112717.3b15647c@notabene.brown> <20120713082923.GA19771@www5.open-std.org> <20120716161431.42749a15@notabene.brown> <20120716082843.GA30247@www5.open-std.org> <B5AB774E-C433-4DDC-B878-F1A50AD03AB2@redhat.com> <20120717122914.4d6d160f@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v1084)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20120717122914.4d6d160f@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: keld@keldix.com, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
 
+On Jul 16, 2012, at 9:29 PM, NeilBrown wrote:
 
-On Tue, 17 Jul 2012, Mike Snitzer wrote:
-
-> On Mon, Jul 16 2012 at  2:35pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> The layout with data stored on device 'x' is mirrored on device 'x^1' has
+> N/2 pairs which are vulnerable. 
+> An alternate way to gain this low level of vulnerability would be to mirror
+> data on X onto 'X+N/2'  This is the same as your arrangement for N==4.
+> For N==6 it would be:
 > 
-> > dm-thin: fix discard_granularity
-> > 
-> > The kernel expects that limits->discard_granularity is a power of two.
-> > Set this limit only if we use a power of two block size.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > ---
-> >  drivers/md/dm-thin.c |    3 ++-
-> >  1 file changed, 2 insertions(+), 1 deletion(-)
-> > 
-> > Index: linux-3.5-rc6-fast/drivers/md/dm-thin.c
-> > ===================================================================
-> > --- linux-3.5-rc6-fast.orig/drivers/md/dm-thin.c	2012-07-16 20:07:49.000000000 +0200
-> > +++ linux-3.5-rc6-fast/drivers/md/dm-thin.c	2012-07-16 20:08:01.000000000 +0200
-> > @@ -2502,7 +2502,8 @@ static void set_discard_limits(struct po
-> >  	 * bios cover a block partially.  A discard that spans a block boundary
-> >  	 * is not sent to this target.
-> >  	 */
-> > -	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
-> > +	if (pool->sectors_per_block_shift >= 0)
-> > +		limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
-> >  	limits->discard_zeroes_data = pool->pf.zero_new_blocks;
-> >  }
+> A  B  C  D  E  F
+> G  H  I  J  K  L
+> ....
+> D  E  F  A  B  C
+> J  K  L  G  H  I
+> ...
 > 
-> Given the block layer's assumption that discard_granularity is always a
-> power of 2: thinp should disable discard if the thinp blocksize is a non
-> power of 2.  So this patch isn't correct (discard support should be
-> disabled in pool_ctr based on the specified blocksize).
+> so the vulnerable pairs are 0,3 1,4 2,5
+> This might be slightly easier to implement (as you suggest: have a
+> dev_stride, only set it to raid_disks/fc*nc).
 
-discard_granularity is just a hint (and IMHO quite useless hint).
+Yes, that looks nice.  Plus, it doesn't have as many conditions as my idea.
 
-The documentation says that it indicates a size of internal allocation 
-unit that may be larger than the block size. The code doesn't use it this 
-way - it is used in FITRIM ioctl where it specifies the minimum request 
-size to be sent. It is also used in blkdev_issue_discard where it is used 
-to round down the number of sectors to discard on discard_granularity 
-boundary - this is wrong, it aligns request size on discard_granularity 
-boundary, but it doesn't align request start on this boundary.
-
-I don't see a reason why we should disable discard because of an a rarely 
-used hint.
-
-Mikulas
-
-> Future work should be:
-> 1) explore/eliminate the block layer's power of 2 constraints
-> 2) divorce thinp's discard limits (for discard passdown) from the pool's
->    blocksize
 > 
+>> 
+>> This should require a new bit in 'layout' (bit 17) to signify a different calculation in the way the copy device selection happens.  We then need to replace 'd += geo->near_copies' with 'd += geo->dev_stride' and set dev_stride in 'setup_geo'.  I'm not certain how much work it is beyond that, but I don't *think* it looks that bad and I'd be happy to do it.
+> 
+> I'm tempted to set bit 31 to mean "bits 0xFF are number of copies and bits
+> 0xFF00 define the layout of those copies".. but just adding a bit17 probably
+> makes more sense.
+> 
+> If you create and test a patch using the calculation I suggested, I'll be
+> happy to review it.
+
+ok.  Might come after my current dm-raid patch (that will skip over the current "far" implementations.
+
+If the 17th bit makes it simple to change the 'far' algorithms, that's probably the right idea.  We could save the very last bits for when we need a completely changed view of how the variable is used.  I don't think we are there yet.
+
+ brassow
