@@ -1,178 +1,160 @@
 From: NeilBrown <neilb@suse.de>
 Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
-Date: Tue, 17 Jul 2012 12:29:14 +1000
-Message-ID: <20120717122914.4d6d160f@notabene.brown>
+Date: Tue, 17 Jul 2012 12:34:04 +1000
+Message-ID: <20120717123404.3516b943@notabene.brown>
 References: <1342057001.22214.6.camel@f16>
-	<20120712162205.GA13485@www5.open-std.org>
-	<331FD2B6-AD96-4513-AF37-4E1B9EE7A34F@redhat.com>
-	<20120713011505.GA3099@www5.open-std.org>
-	<20120713112717.3b15647c@notabene.brown>
-	<20120713082923.GA19771@www5.open-std.org>
-	<20120716161431.42749a15@notabene.brown>
-	<20120716082843.GA30247@www5.open-std.org>
-	<B5AB774E-C433-4DDC-B878-F1A50AD03AB2@redhat.com>
+	<20120712163207.222b4bcc@notabene.brown>
+	<544F2898-B9C7-42CD-A0FD-F1DE35C5E628@redhat.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/XbBFeV6YlD3WWTsBvgGvyc/"; protocol="application/pgp-signature"
+ boundary="Sig_/p5XfmhI=lDLwaAj161Tf9wn"; protocol="application/pgp-signature"
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <B5AB774E-C433-4DDC-B878-F1A50AD03AB2@redhat.com>
+In-Reply-To: <544F2898-B9C7-42CD-A0FD-F1DE35C5E628@redhat.com>
 Sender: linux-raid-owner@vger.kernel.org
 To: Brassow Jonathan <jbrassow@redhat.com>
-Cc: keld@keldix.com, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
---Sig_/XbBFeV6YlD3WWTsBvgGvyc/
+--Sig_/p5XfmhI=lDLwaAj161Tf9wn
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 16 Jul 2012 17:53:53 -0500 Brassow Jonathan <jbrassow@redhat.com>
+On Mon, 16 Jul 2012 17:06:32 -0500 Brassow Jonathan <jbrassow@redhat.com>
 wrote:
 
 >=20
-> On Jul 16, 2012, at 3:28 AM, keld@keldix.com wrote:
+> On Jul 12, 2012, at 1:32 AM, NeilBrown wrote:
 >=20
 > >>=20
-> >> Maybe you are suggesting that dmraid should not support raid10-far or
-> >> raid10-offset until the "new" approach is implemented.
+> >> @@ -76,6 +80,7 @@ static struct raid_type {
+> >> 	const unsigned algorithm;	/* RAID algorithm. */
+> >> } raid_types[] =3D {
+> >> 	{"raid1",    "RAID1 (mirroring)",               0, 2, 1, 0 /* NONE */=
+},
+> >> +	{"raid10",   "RAID10 (striped mirrors)",        0, 2, 10, -1 /* Vari=
+es */},
+> >> 	{"raid4",    "RAID4 (dedicated parity disk)",	1, 2, 5, ALGORITHM_PARI=
+TY_0},
+> >> 	{"raid5_la", "RAID5 (left asymmetric)",		1, 2, 5, ALGORITHM_LEFT_ASYM=
+METRIC},
+> >> 	{"raid5_ra", "RAID5 (right asymmetric)",	1, 2, 5, ALGORITHM_RIGHT_ASY=
+MMETRIC},
 > >=20
-> > I don't know. It may take a while to get it implemented as long as no s=
-easoned=20
-> > kernel hackers are working on it. As it is implemented now by Barrow, w=
-hy not then go
-> > forward as planned.=20
+> > Initialising the "unsigned" algorithm to "-1" looks like it is asking f=
+or
+> > trouble.
+>=20
+> I'm initializing to -1 because I know it is a value that will fail if not=
+ set later in the setup process.  I could just as easily choose the default=
+ values (near =3D 2).
+
+I don't much care what value you use as long as it is of the same type as t=
+he
+variable you assign it to.  So maybe UINT_MAX, or maybe '2'.
+
+
+>=20
 > >=20
-> > For the offset layout I don't have a good idea on how to improve the re=
-dundancy.
-> > Maybe you or others have good ideas. Or is the offset layout an impleme=
-ntation
-> > of a standard layout? Then there is not much ado. Except if we could fi=
-nd a layout that has
-> > the same advantages but with better redundancy.
+> >> @@ -493,7 +554,7 @@ static int parse_raid_params(struct raid
+> >> 			 */
+> >> 			value /=3D 2;
+> >>=20
+> >> -			if (rs->raid_type->level < 5) {
+> >> +			if (rs->raid_type->level !=3D 5) {
+> >> 				rs->ti->error =3D "Inappropriate argument: stripe_cache";
+> >> 				return -EINVAL;
+> >> 			}
+> >=20
+> > This leaves RAID6 out in the cold.  Maybe
+> >  level < 5 || level > 6
+> > or      !=3D5          !=3D6
+> > or a switch statement?
 >=20
-> Excuse me, s/Barrow/Brassow/ - my parents insist.
->=20
-> I've got a "simple" idea for improving the redundancy of the "far" algori=
-thms.  Right now, when calculating the device on which the far copy will go=
-, we perform:
-> 	d +=3D geo->near_copies;
-> 	d %=3D geo->raid_disks;
-> This effectively "shifts" the copy rows over by 'near_copies' (1 in the s=
-imple case), as follows:
-> 	disk1	disk2	or	disk1	disk2	disk3
-> 	=3D=3D=3D=3D=3D	=3D=3D=3D=3D=3D		=3D=3D=3D=3D=3D	=3D=3D=3D=3D=3D	=3D=3D=
-=3D=3D=3D
-> 	 A1	 A2		 A1	 A2	 A3
-> 	 ..	 ..		 ..	 ..	 ..
-> 	 A2	 A1		 A3	 A1	 A2
-> For all odd numbers of 'far' copies, this is what we should do.  However,=
- for an even number of far copies, we should shift "near_copies + 1" - unle=
-ss (far_copies =3D=3D (raid_disks / near_copies)), in which case it should =
-be simply "near_copies".  This should provide maximum redundancy for all ca=
-ses, I think.  I will call the number of devices the copy is shifted the "d=
-evice stride", or dev_stride.  Here are a couple examples:
-> 	2-devices, near=3D1, far=3D2, offset=3D0/1: dev_stride =3D nc (SAME AS C=
-URRENT ALGORITHM)
->=20
-> 	3-devices, near=3D1, far=3D2, offset=3D0/1: dev_stride =3D nc + 1.  Layo=
-ut changes as follows:
-> 	disk1	disk2	disk3
-> 	=3D=3D=3D=3D=3D	=3D=3D=3D=3D=3D	=3D=3D=3D=3D=3D
-> 	 A1	 A2	 A3
-> 	 ..	 ..	 ..
-> 	 A2	 A3	 A1
->=20
-> 	4-devices, near=3D1, far=3D2, offset=3D0/1: dev_stride =3D nc + 1.  Layo=
-ut changes as follows:
-> 	disk1	disk2	disk3	disk4
-> 	=3D=3D=3D=3D=3D	=3D=3D=3D=3D=3D	=3D=3D=3D=3D=3D   =3D=3D=3D=3D=3D
-> 	 A1	 A2	 A3	 A4
-> 	 ..	 ..	 ..	 ..
-> 	 A3	 A4	 A1	 A2
+> Thanks.  For some reason I had thought that raid6 had level=3D5, like rai=
+d4...  Fixed.
 
-Hi Jon,
- This looks good for 4 devices, but I think it breaks down for e.g. 6 devic=
-es.
-
-I think a useful measure is how many different pairs of devices exist such
-that when both fail we lose data (thinking of far=3D2 layouts only).  We wa=
-nt to
-keep this number low.  Call it the number of vulnerable pairs.
-
-With the current layout with N devices, there are N pairs that are vulnerab=
-le.
-(x and x+1 for each x).  If N=3D=3D2, the two pairs are 0,1 and 1,0.  These
-pairs are identical so there is only one vulnerable pair.
-
-With your layout there are still N pairs (x and x+2) except when there are 4
-devices (N=3D2), we get 0,2 1,3 2,0 3,1 in which case 2 sets of pairs are
-identical (1,3 =3D=3D 3,1 and 2,4=3D=3D4,2).
-With N=3D6 the 6 pairs are=20
-0,2 1,3 2,4 3,5 4,0 5,1
-and no two pairs are identical.  So there is no gain.
-
-The layout with data stored on device 'x' is mirrored on device 'x^1' has
-N/2 pairs which are vulnerable.=20
-An alternate way to gain this low level of vulnerability would be to mirror
-data on X onto 'X+N/2'  This is the same as your arrangement for N=3D=3D4.
-For N=3D=3D6 it would be:
-
-A  B  C  D  E  F
-G  H  I  J  K  L
-....
-D  E  F  A  B  C
-J  K  L  G  H  I
-...
-
-so the vulnerable pairs are 0,3 1,4 2,5
-This might be slightly easier to implement (as you suggest: have a
-dev_stride, only set it to raid_disks/fc*nc).
+I love consistency ... or at least I think I would if only I could find it
+somewhere!
 
 >=20
-> This should require a new bit in 'layout' (bit 17) to signify a different=
- calculation in the way the copy device selection happens.  We then need to=
- replace 'd +=3D geo->near_copies' with 'd +=3D geo->dev_stride' and set de=
-v_stride in 'setup_geo'.  I'm not certain how much work it is beyond that, =
-but I don't *think* it looks that bad and I'd be happy to do it.
-
-I'm tempted to set bit 31 to mean "bits 0xFF are number of copies and bits
-0xFF00 define the layout of those copies".. but just adding a bit17 probably
-makes more sense.
-
-If you create and test a patch using the calculation I suggested, I'll be
-happy to review it.
-
 >=20
-> So, should I allow the current "far" and "offset" in dm-raid, or should I=
- simply allow "near" for now?
+>=20
+> >> @@ -536,9 +605,25 @@ static int parse_raid_params(struct raid
+> >> 	if (dm_set_target_max_io_len(rs->ti, max_io_len))
+> >> 		return -EINVAL;
+> >>=20
+> >> -	if ((rs->raid_type->level > 1) &&
+> >> -	    sector_div(sectors_per_dev, (rs->md.raid_disks - rs->raid_type->=
+parity_devs))) {
+> >> +	if (rs->raid_type->level =3D=3D 10) {
+> >> +		/* (Len * Stripes) / Mirrors */
+> >> +		sectors_per_dev *=3D rs->md.raid_disks;
+> >> +		if (sector_div(sectors_per_dev, raid10_copies)) {
+> >> +			rs->ti->error =3D "Target length not divisible by number of data d=
+evices";
+> >> +			return -EINVAL;
+> >> +		}
+> >=20
+> > I'm not entirely sure what you are trying to do here, but I don't think=
+ it
+> > works.
+> >=20
+> > At the very least you would need to convert the "sectors_per_dev" numbe=
+r to a
+> > 'chunks_per_dev' before multiplying by raid_disks and dividing by copie=
+s.
+> >=20
+> > But even that isn't necessary.  If you have a 3-device near=3D2 array w=
+ith an
+> > odd number of chunks per device, that will still work.  The last chunk =
+won't
+> > be mirrored, so won't be used.
+> > Until a couple of weeks ago a recovery of the last device would trigger=
+ an
+> > error when we try to recover that last chunk, but that is fixed now.
+> >=20
+> > So if you want to impose this limitation (and there is some merit in ma=
+king
+> > sure people don't confuse themselves), I suggest it get imposed in the
+> > user-space tools which create the RAID10.
+>=20
+> I have seen what you do in calc_sectors(), I suppose I could bring that i=
+n.  However, I'm simply trying to find the value that will be preliminarily=
+ assigned to mddev->dev_sectors.  It is an enforced (perhaps unnecessary) c=
+onstraint that the array length be divisible by the number of data devices.=
+  I'm not accounting for chunk boundaries - I leave that to userspace to co=
+nfigure and MD to catch.
 
-That's up to you.  However it might be sensible not to rush into supporting
-the current far and offset layouts until this conversation has run its cour=
-se.
+In that case I suggest you keep it out of dmraid.
+
+It might make sense to check that the resulting array size matches what
+user-space said to expect - or is at-least-as-big-as.  However I don't see
+much point in other size changes there.
 
 Thanks,
 NeilBrown
 
 
---Sig_/XbBFeV6YlD3WWTsBvgGvyc/
+--Sig_/p5XfmhI=lDLwaAj161Tf9wn
 Content-Type: application/pgp-signature; name=signature.asc
 Content-Disposition: attachment; filename=signature.asc
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2.0.18 (GNU/Linux)
 
-iQIVAwUBUATN+jnsnt1WYoG5AQLq4Q/9EUCwd8dGXxunJc9MA3FDBcBTIwoyhCIn
-/fzoxyTKoLRTIfW/qf/dpQi9a2X9/4/E2xgnT2p46x3meQe7ePHLcl30nhfY2Kyo
-jAWqAmJuvUax5a+SxmIUuxeLKruL3hzvmSAr0P8SQ57nXSA3hoWTEU45Fzh2H9yc
-aDow70uuW10jYWJdp92Fuyzlb29WnLwR+D0/BDfJk9Z9BRzHh0wUmcmSfcKxpxGx
-ti83BgOBv+DSl+EchUzonAga065I93gMVNC2Ruf3liLhWeoVeOyxkd6iGBAT4jTE
-z6i7HmeHYEFQxQp7Fa1JjOV837W6RFl1xD7AuDcb5wbEbfdSjD1/5RGYeRQg6O96
-9vOUQBwz7wKsHrYJSLwosNOM5qXzZ4v/NoDvf1NAwAB8xAUh63mTX8J56raBjh2R
-f09fxaHGpXR42kvUr48hjtpnHrb7ZIajsb/cdY2usOb9slGbhaApCrXKVVjgbF+h
-/Xy2Pt9dEGLH7hyjvYrrIOr+uduIiHvAhN7B7e1G8li88NyA7N2oV9Tlt30mZoev
-i9N/PZUZBqk4Ouyy5GimmvzMz7M3PYx3sRHkxuiimumqvqLW9FrlS653qleGApvC
-LkV8wf30o52vnfjiBegT08vMaufNeg4zLHwIr3LFTIzF/8KIyCH0YAbASNlX2mgI
-AhPb9xwBshY=
-=w9O5
+iQIVAwUBUATPHTnsnt1WYoG5AQKNnw//Zk/7UQaHriM6vGUzkCpCeMGoMciqTy6c
+thDCu43Lsh+4EurB+iT3oRr9ntxd5UetwjWLB3LBo6QxtJ6YzZN1l0Xz7ppqRoec
+FeGAlZ7AHQ0I6qwti5B4t1DOqrV/lZj9Mq1boPBEtnuq4RhxIDy3L9L88VYZEuur
+SlLpQzJfIs2bEHRcE9lQ24daRDrM8Z2899iIEE78MvdKA1MNJOXyW9tNdMedRTG9
+3LGvkuKCLpTixl8YmxGQq+pBmW8oJwRWfSpntRYF0+5d0evuaT0t9+nfJLxWqWsN
+yKd4ewmE1MZHCGnidTNXTwxm5rqNPrfUMGKCNzMVmBeKXdEplG6Zt/RkIhogOpw8
+PplA6GWVTiwCXYl9GZ8CHmZ0Woi0h1dbJBFSFuswHPJcB8Rstm80hIPZaeDrf7Y8
+bxKoe6h5Er13F6HuAWSHggAi+uKVDcMKfye7sBWXqHpt5FxVk6Ydf1WLe/FkJmB8
+3unhZFTjaj8uGNymN25k3SpW5YhP7Jv1Y638LuLnrXL2xL1IJnRumPgzhFaCW1hT
++xVzcXfp3mEFxDQEW5oi3HXcJ8eaBPykvfTN8+Rdwt95AkxO9ixZ4GNGMqM99Krj
+MU2ptQeTjvcQadICWBfz1bf8JXQST1zBONAensPJOraDk+cwmiTxB5vbZyk6cJ5E
+d/OSbp6t4vY=
+=3jLL
 -----END PGP SIGNATURE-----
 
---Sig_/XbBFeV6YlD3WWTsBvgGvyc/--
+--Sig_/p5XfmhI=lDLwaAj161Tf9wn--
