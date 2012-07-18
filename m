@@ -1,156 +1,78 @@
-From: NeilBrown <neilb@suse.de>
+From: keld@keldix.com
 Subject: Re: [PATCH v2] DM RAID: Add support for MD RAID10
-Date: Wed, 18 Jul 2012 11:11:46 +1000
-Message-ID: <20120718111146.336c3228@notabene.brown>
-References: <1342057001.22214.6.camel@f16>
-	<20120712163207.222b4bcc@notabene.brown>
-	<544F2898-B9C7-42CD-A0FD-F1DE35C5E628@redhat.com>
-	<20120717123404.3516b943@notabene.brown>
-	<3A8FC300-59E8-48CA-81DF-CCCF780BFE0C@redhat.com>
+Date: Wed, 18 Jul 2012 09:20:42 +0200
+Message-ID: <20120718072042.GA18608@www5.open-std.org>
+References: <1342057001.22214.6.camel@f16> <20120712162205.GA13485@www5.open-std.org> <331FD2B6-AD96-4513-AF37-4E1B9EE7A34F@redhat.com> <20120713011505.GA3099@www5.open-std.org> <20120713112717.3b15647c@notabene.brown> <20120713082923.GA19771@www5.open-std.org> <20120716161431.42749a15@notabene.brown> <20120716082843.GA30247@www5.open-std.org> <20120717124059.59d1f8b0@notabene.brown>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/EqkI3+vgHGQ=19C+oTGAwtg"; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <3A8FC300-59E8-48CA-81DF-CCCF780BFE0C@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20120717124059.59d1f8b0@notabene.brown>
 Sender: linux-raid-owner@vger.kernel.org
-To: Brassow Jonathan <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
+To: NeilBrown <neilb@suse.de>
+Cc: Brassow Jonathan <jbrassow@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
---Sig_/EqkI3+vgHGQ=19C+oTGAwtg
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Tue, Jul 17, 2012 at 12:40:59PM +1000, NeilBrown wrote:
+> On Mon, 16 Jul 2012 10:28:43 +0200 keld@keldix.com wrote:
+> 
+> > On Mon, Jul 16, 2012 at 04:14:31PM +1000, NeilBrown wrote:
+> > > On Fri, 13 Jul 2012 10:29:23 +0200 keld@keldix.com wrote:
+> > > 
+> > > > On Fri, Jul 13, 2012 at 11:27:17AM +1000, NeilBrown wrote:
+> > > > > On Fri, 13 Jul 2012 03:15:05 +0200 keld@keldix.com wrote:
+> > > > > 
+> > > > Well, I have an idea for the odd number of devices:
+> > > > Have the disks arranged in groups (for N=2 in pairs) and then the last group extended with
+> > > > the leftover disks in the way it is done now.
+> > > > 
+> > > > For 2 copies, this would be a number of pairs, and then a rest group of 3 disks.
+> > > > For 3 copies, this would be a number of triplets, and then 4 or 5 disks in the last group.
+> > > 
+> > > Certainly possible, but it feels clumsy.  I'm not convinced it is a good idea.
+> > 
+> > Well, it is for this time only a proposal. I do think it preserves all the benefits of raid10,far
+> > especially the striping for reading, and I believe it brings redundancy beyond 1 drive up
+> > from zero for odd-drive arrays to almost raid-1+0 - in my mind this is as good as it can get theoretically.
+> > In my guts it feels like good design. I am exited about it:-)
+> > 
+> > Why do you feel it is clumsy? Because it is not as general as the current code, but it would take a few more lines to do it?
+> > We do gain a lot of redundancy for say 20 more lines of code.
+> 
+> Yes, because it is not general.   That makes it hard to explain or describe.
+> That in turn makes mistake easier.
 
-On Tue, 17 Jul 2012 11:15:56 -0500 Brassow Jonathan <jbrassow@redhat.com>
-wrote:
+Well, it is a bit more complicated, I agree, but the explanation I did:
+"pairs, as long as possible, and then the rest in a group shifted 1."
+Is done in just one line...
 
->=20
-> On Jul 16, 2012, at 9:34 PM, NeilBrown wrote:
->=20
-> >>>>=20
-> >>>> @@ -536,9 +605,25 @@ static int parse_raid_params(struct raid
-> >>>> 	if (dm_set_target_max_io_len(rs->ti, max_io_len))
-> >>>> 		return -EINVAL;
-> >>>>=20
-> >>>> -	if ((rs->raid_type->level > 1) &&
-> >>>> -	    sector_div(sectors_per_dev, (rs->md.raid_disks - rs->raid_type=
-->parity_devs))) {
-> >>>> +	if (rs->raid_type->level =3D=3D 10) {
-> >>>> +		/* (Len * Stripes) / Mirrors */
-> >>>> +		sectors_per_dev *=3D rs->md.raid_disks;
-> >>>> +		if (sector_div(sectors_per_dev, raid10_copies)) {
-> >>>> +			rs->ti->error =3D "Target length not divisible by number of data=
- devices";
-> >>>> +			return -EINVAL;
-> >>>> +		}
-> >>>=20
-> >>> I'm not entirely sure what you are trying to do here, but I don't thi=
-nk it
-> >>> works.
-> >>>=20
-> >>> At the very least you would need to convert the "sectors_per_dev" num=
-ber to a
-> >>> 'chunks_per_dev' before multiplying by raid_disks and dividing by cop=
-ies.
-> >>>=20
-> >>> But even that isn't necessary.  If you have a 3-device near=3D2 array=
- with an
-> >>> odd number of chunks per device, that will still work.  The last chun=
-k won't
-> >>> be mirrored, so won't be used.
-> >>> Until a couple of weeks ago a recovery of the last device would trigg=
-er an
-> >>> error when we try to recover that last chunk, but that is fixed now.
-> >>>=20
-> >>> So if you want to impose this limitation (and there is some merit in =
-making
-> >>> sure people don't confuse themselves), I suggest it get imposed in the
-> >>> user-space tools which create the RAID10.
-> >>=20
-> >> I have seen what you do in calc_sectors(), I suppose I could bring tha=
-t in.  However, I'm simply trying to find the value that will be preliminar=
-ily assigned to mddev->dev_sectors.  It is an enforced (perhaps unnecessary=
-) constraint that the array length be divisible by the number of data devic=
-es.  I'm not accounting for chunk boundaries - I leave that to userspace to=
- configure and MD to catch.
-> >=20
-> > In that case I suggest you keep it out of dmraid.
-> >=20
-> > It might make sense to check that the resulting array size matches what
-> > user-space said to expect - or is at-least-as-big-as.  However I don't =
-see
-> > much point in other size changes there.
->=20
-> I'm not changing any sizes.  I'm finding a value for mddev->dev_sectors (=
-what should I set it to if not the above?), which is the size of each devic=
-e as computed from the total array size.  If the value can't be computed ev=
-enly, then an error is given.  I'm not sure what you are suggesting my alte=
-rnative is when you say, "keep it out of dm-raid"...  I think this is the l=
-east I can do in dm-raid.
+> That doesn't mean that I am dead-set against it, but I'm not sure I want to
+> encourage it.
+> I don't think RAID10 array with 'odd' numbers of drives are that common in
+> the first place.
+> You suggestion would make no difference for 3 devices, a small difference for
+> 5 (4 vulnerable pairs instead of 5) and only becomes significant with 7 or
+> more devices.  Are people going to make arrays with 7 devices (with 5
+> vulnerable pairs) instead of 8 devices (with 4 vulnerable pairs)?
 
-Sorry, I mean 'checks', not 'changes'.
+Well, my suggestion does make a difference, and it is not complicated,
+and it moves redundancy to kind of raid-1+0 also for odd numbers.
+And we are not going to do these changes very often. So why not do it now.
+IMHO the patch will make it almost the same for redundancy
+whether they use an even or an odd number of disks, making even/odd
+a less concern. And some will use it, I know!
 
-I was confused a bit by the code.  It might be clearer to have
+> 
+> > 
+> > > Maybe that is sensible, but only if someone steps forwards and actually
+> > > implements the "new" approach.
+> > 
+> > I would have hoped you would do it!
+> 
+> In my copious spare time.
 
-   sectors_per_dev =3D ti->len * rs->md.raid_disks;
-   remainder =3D sector_div(sectors_per_dev, raid10_copies);
+Sounds good!
 
-In almost all cases raid10_copies will be 2 and ti->len will be a multiple =
-of
-8 (as we don't support chunk sizes less than 4K), so remainder will be 0.
-However this doesn't really prove anything.  It is still entirely possible
-that the resulting 'sectors_per_dev' will not result in a RAID10 which has
-the full ti->len sectors required.
-So your test is not sufficient.
 
-Also your calculation is incorrect as it doesn't allow for the possibility =
-of
-unused space in the array.
-A 3-drive 2-copy RAID10 with an odd number of chunks will not use the last
-chunk on the last device. In that case the above calculation will result in
-a sectors_per_dev that it too small.
-
-I think your sectors_per_dev calculation should round up to a whole number =
-of
-chunks.
-
-   sectors_per_dev =3D DIV_ROUND_UP_SECTOR_T(ti->len * rs->md.raid_disks,
-                                           raid10_copies);
-   sectors_per_dev =3D round_up(sectors_per_dev, rs->md.chunk_sectors);
-
-And then after calling md_run(), you should check that
- pers->size(mddev, 0, 0) =3D=3D ti->len
-and abort if not.
-
-Note that getting the sectors_per_dev right is really really important for
-RAID10-far.  For other layouts and levels a smaller sectors_per_dev will ju=
-st
-result in less data being available.
-For raid10-far, sectors_per_dev is included in the layout calculations so
-changing it will change the location of data and could result in corruption.
-
-NeilBrown
-
---Sig_/EqkI3+vgHGQ=19C+oTGAwtg
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
-
-iQIVAwUBUAYNUjnsnt1WYoG5AQJU0xAAo6LDO63+TtcRO4+kRA/m0uwmm0ajAO9p
-Y5IftvE0TnUWMZzp1ziU2SBnm9ewdyYNPhyrnMN4c1/YC2TSIqEj/eGW45ekDzPa
-AkJnr0nElGrRkqqmGmp/4OsFecUayMk7T4sxyNtKIeKKymnevzhBom/lugqEUp4h
-PTpMFPvcByunicU7s1Q6N6I6cwQpt4cwDyE0ePH2CLERTtEaPi4jRdrIt/unVFx+
-yXUd2n+nZrTCdwQZdJJUOQkOFvH1b1aHKSxtKSVOCgc7p01RTGwmVuvs2Xo9UmX2
-FmHcJeqHjJc47nwnJrk6lgahfVEW9mCqDDjFQwRLINPkS0XQ/J4zJO6p/oHDgT2f
-AXofROrl2jpkXoNdImSmqsfJJe/WsFTqX2XHK9IBfXpPitm4cLd/WA2twJqqjX+7
-yQi9I4jiqZ19uwgXmVdvGj3wsqylwzNChSm9lmebAiejhu2r2ujdHGTTsu1j7zSq
-jdyiikVrQ01V+R5SweQyscTJI6jdmV4Y2gCpeSwsqRvFUDbFHX5t4mkgqB4Xayyh
-LbtZKXcyUPQWNjuYsKHqufd1N1JheMzP6AKkBxYZRx7wzIFVj4VY6nv5w+nF6p3I
-T60eonltBoLv1eNZ04QHwjL2/3pbmnxsitvX8WazO87+qDHtpfjRz5IRSQTisG0h
-phA/efF1AVM=
-=pn7h
------END PGP SIGNATURE-----
-
---Sig_/EqkI3+vgHGQ=19C+oTGAwtg--
+best regards
+keld
