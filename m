@@ -1,40 +1,52 @@
-From: Daniel Wisehart <daniel.wisehart@eladian.com>
-Subject: [Bcache v14 PATCH] fix compiler error
-Date: Thu, 19 Jul 2012 16:53:26 -0400 (EDT)
-Message-ID: <0d1ae163-7cde-4a78-852a-04fba827249f@mail.eladian.com>
-References: <1abe2159-2201-46c4-9c60-afc4f358ff6a@mail.eladian.com>
+From: Alex Elsayed <eternaleye+usenet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [RFC] dm-thin: Random block placement strategy?
+Date: Thu, 19 Jul 2012 14:49:51 -0700
+Message-ID: <ju9vdv$vpa$1@dough.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1abe2159-2201-46c4-9c60-afc4f358ff6a@mail.eladian.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: dm-devel@redhat.com
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://www.saout.de/pipermail/dm-crypt>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+To: dm-crypt-4q3lyFh4P1g@public.gmane.org
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello Kent, 
+This may be insufficiently useful to justify implementing, but I thought it 
+was an interesting concept.
 
-This patch keeps gcc 4.7.0 happy.  The static function dump_bset() could be moved, but that would have made a bigger patch.  :-)
+One of the current issues with dm-crypt and discard is that enabling it can 
+leak information about the filesystem and usage patterns of the disk[1].
 
-Thanks,
-Daniel
+If a dm-thin device with a random block placement strategy is layered on top 
+of dm-crypt however, this could solve some of the issues involved and 
+partially mitigate others.
 
+Such a random block placement strategy would heavily disguise any layout 
+patterns that could be used to identify the filesystem, most likely to the 
+point of being completely unrecognizable.
 
+Issues arising from discarded blocks being nonzero are avoided by default 
+due to dm-thin pre-zeroing allocations (unless skip_block_zeroing is 
+enabled).
 
-diff --git a/drivers/md/bcache/debug.c b/drivers/md/bcache/debug.c
-index 3c9c24d..4dc0ba5 100644
---- a/drivers/md/bcache/debug.c
-+++ b/drivers/md/bcache/debug.c
-@@ -83,6 +83,8 @@ struct keyprint_hack bch_pbtree(const struct btree *b)
- 
- #ifdef CONFIG_BCACHE_DEBUG
- 
-+static void dump_bset(struct btree *b, struct bset *i);
-+
- void bch_btree_verify(struct btree *b, struct bset *new)
- {
-        struct btree *v = b->c->verify_data;
+However, some issues would still be present:
 
+While the *distribution* of unused sectors would be concealed, their 
+existence and how many there are would still be detectable.
 
-This communication is restricted - please see http://www.eladian.com for further information.
+In addition, the issues with trim and a hidden device are still present.
+
+[1] http://asalor.blogspot.com/2011/08/trim-dm-crypt-problems.html
+
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+http://www.saout.de/mailman/listinfo/dm-crypt
