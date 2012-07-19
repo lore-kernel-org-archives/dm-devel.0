@@ -1,119 +1,108 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 3/3] dm-thin: fix discard_granularity
-Date: Wed, 18 Jul 2012 15:10:21 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1207181453070.8618@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1207161432310.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161434300.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161434550.3859@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207161435230.3859@file.rdu.redhat.com>
-	<20120717153140.GA18345@redhat.com>
-	<Pine.LNX.4.64.1207171519120.26839@file.rdu.redhat.com>
-	<20120717215200.GA20338@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: Crash when IO is being submitted and block size is changed
+Date: Wed, 18 Jul 2012 22:27:13 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+ <20120628111541.GB17515@quack.suse.cz> <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
+ <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120717215200.GA20338@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: paolo.bonzini@lu.unisi.ch, dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, Alexander Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, lwoodman@redhat.com, Andrea Arcangeli <aarcange@redhat.com>, kosaki.motohiro@jp.fujitsu.com
 List-Id: dm-devel.ids
 
 
 
-On Tue, 17 Jul 2012, Vivek Goyal wrote:
+On Tue, 17 Jul 2012, Jeff Moyer wrote:
 
-> On Tue, Jul 17, 2012 at 03:35:04PM -0400, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Tue, 17 Jul 2012, Mike Snitzer wrote:
-> > 
-> > > On Mon, Jul 16 2012 at  2:35pm -0400,
-> > > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > > 
-> > > > dm-thin: fix discard_granularity
-> > > > 
-> > > > The kernel expects that limits->discard_granularity is a power of two.
-> > > > Set this limit only if we use a power of two block size.
-> > > > 
-> > > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > > > 
-> > > > ---
-> > > >  drivers/md/dm-thin.c |    3 ++-
-> > > >  1 file changed, 2 insertions(+), 1 deletion(-)
-> > > > 
-> > > > Index: linux-3.5-rc6-fast/drivers/md/dm-thin.c
-> > > > ===================================================================
-> > > > --- linux-3.5-rc6-fast.orig/drivers/md/dm-thin.c	2012-07-16 20:07:49.000000000 +0200
-> > > > +++ linux-3.5-rc6-fast/drivers/md/dm-thin.c	2012-07-16 20:08:01.000000000 +0200
-> > > > @@ -2502,7 +2502,8 @@ static void set_discard_limits(struct po
-> > > >  	 * bios cover a block partially.  A discard that spans a block boundary
-> > > >  	 * is not sent to this target.
-> > > >  	 */
-> > > > -	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
-> > > > +	if (pool->sectors_per_block_shift >= 0)
-> > > > +		limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
-> > > >  	limits->discard_zeroes_data = pool->pf.zero_new_blocks;
-> > > >  }
-> > > 
-> > > Given the block layer's assumption that discard_granularity is always a
-> > > power of 2: thinp should disable discard if the thinp blocksize is a non
-> > > power of 2.  So this patch isn't correct (discard support should be
-> > > disabled in pool_ctr based on the specified blocksize).
-> > 
-> > discard_granularity is just a hint (and IMHO quite useless hint).
-> > 
-> > The documentation says that it indicates a size of internal allocation 
-> > unit that may be larger than the block size. The code doesn't use it this 
-> > way - it is used in FITRIM ioctl where it specifies the minimum request 
-> > size to be sent. It is also used in blkdev_issue_discard where it is used 
-> > to round down the number of sectors to discard on discard_granularity 
-> > boundary - this is wrong, it aligns request size on discard_granularity 
-> > boundary, but it doesn't align request start on this boundary.
+> Mikulas Patocka <mpatocka@redhat.com> writes:
 > 
-> I am not sure I understand completely what you are trying to say.
-
-I mean that it is used inconsistently - sometimes it is used as s minimum 
-request to be sent (requests smaller than discard_granularity are not 
-sent). And sometimes length is rounded down to discard_granularity 
-boundary.
-
-> But
-> after paolo's patch, blkdev_issue_discard() will take into account
-> max_discard_sectors to limit max discard request size and use
-> discard_granularity and discard_alignment to determine aligned request start.
-
-The question is - how are we supposed to propagate these parameters 
-through linearly appended devices, raid0, raid1 or other mappings?
-
-For example, if you have a logical volume that consists of two linearly 
-appended disks, disk1 with discard_granularity1,discard_alignment1 and 
-disk2 with discard_granularity2,discard_alignment2 - tell me, how do you 
-calculate discard_granularity and discard_alignment for the combined 
-logical device from these four numbers? How do you calculate it if those 
-two disks are in raid0 or raid1?
-
-It seems to me that would be much better to state that discard request 
-size is unlimited and break one long discard to several smaller discard 
-requests at the physical disk driver - then, the problem with combining 
-the limits would go away.
-
-> First request in the range will go as it is and can be unaligned but if
-> discard range is big, then rest of the request start will be aligned.
+> > On Thu, 28 Jun 2012, Jan Kara wrote:
+> >
+> >> On Wed 27-06-12 23:04:09, Mikulas Patocka wrote:
+> >> > The kernel crashes when IO is being submitted to a block device and block 
+> >> > size of that device is changed simultaneously.
+> >>   Nasty ;-)
+> >> 
+> >> > To reproduce the crash, apply this patch:
+> >> > 
+> >> > --- linux-3.4.3-fast.orig/fs/block_dev.c 2012-06-27 20:24:07.000000000 +0200
+> >> > +++ linux-3.4.3-fast/fs/block_dev.c 2012-06-27 20:28:34.000000000 +0200
+> >> > @@ -28,6 +28,7 @@
+> >> >  #include <linux/log2.h>
+> >> >  #include <linux/cleancache.h>
+> >> >  #include <asm/uaccess.h> 
+> >> > +#include <linux/delay.h>
+> >> >  #include "internal.h"
+> >> >  struct bdev_inode {
+> >> > @@ -203,6 +204,7 @@ blkdev_get_blocks(struct inode *inode, s
+> >> >  
+> >> >  	bh->b_bdev = I_BDEV(inode);
+> >> >  	bh->b_blocknr = iblock;
+> >> > +	msleep(1000);
+> >> >  	bh->b_size = max_blocks << inode->i_blkbits;
+> >> >  	if (max_blocks)
+> >> >  		set_buffer_mapped(bh);
+> >> > 
+> >> > Use some device with 4k blocksize, for example a ramdisk.
+> >> > Run "dd if=/dev/ram0 of=/dev/null bs=4k count=1 iflag=direct"
+> >> > While it is sleeping in the msleep function, run "blockdev --setbsz 2048 
+> >> > /dev/ram0" on the other console.
+> >> > You get a BUG at fs/direct-io.c:1013 - BUG_ON(this_chunk_bytes == 0);
+> >> > 
+> >> > 
+> >> > One may ask "why would anyone do this - submit I/O and change block size 
+> >> > simultaneously?" - the problem is that udev and lvm can scan and read all 
+> >> > block devices anytime - so anytime you change block device size, there may 
+> >> > be some i/o to that device in flight and the crash may happen. That BUG 
+> >> > actually happened in production environment because of lvm scanning block 
+> >> > devices and some other software changing block size at the same time.
+> >> > 
+> >>   Yeah, it's nasty and neither solution looks particularly appealing. One
+> >> idea that came to my mind is: I'm trying to solve some races between direct
+> >> IO, buffered IO, hole punching etc. by a new mapping interval lock. I'm not
+> >> sure if it will go anywhere yet but if it does, we can fix the above race
+> >> by taking the mapping lock for the whole block device around setting block
+> >> size thus effectivelly disallowing any IO to it.
+> >> 
+> >> 								Honza
+> >> -- 
+> >> Jan Kara <jack@suse.cz>
+> >> SUSE Labs, CR
+> >> 
+> >
+> > Hi
+> >
+> > This is the patch that fixes this crash: it takes a rw-semaphore around 
+> > all direct-IO path.
+> >
+> > (note that if someone is concerned about performance, the rw-semaphore 
+> > could be made per-cpu --- take it for read on the current CPU and take it 
+> > for write on all CPUs).
 > 
-> Because there might be an unligned requests at the start of range drivers
-> will still have to handle unaligned requests, i think.
+> Here we go again.  :-)  I believe we had at one point tried taking a rw
+> semaphore around GUP inside of the direct I/O code path to fix the fork
+> vs. GUP race (that still exists today).  When testing that, the overhead
+> of the semaphore was *way* too high to be considered an acceptable
+> solution.  I've CC'd Larry Woodman, Andrea, and Kosaki Motohiro who all
+> worked on that particular bug.  Hopefully they can give better
+> quantification of the slowdown than my poor memory.
 > 
-> Thanks
-> Vivek
+> Cheers,
+> Jeff
+
+Both down_read and up_read together take 82 ticks on Core2, 69 ticks on 
+AMD K10, 62 ticks on UltraSparc2 if the target is in L1 cache. So, if 
+percpu rw_semaphores were used, it would slow down only by this amount.
+
+I hope that Linux developers are not so obsessed with performance that 
+they want a fast crashing kernel rather than a slow reliable kernel. Note 
+that anything that changes a device block size (for example mounting a 
+filesystem with non-default block size) may trigger a crash if lvm or udev 
+reads the device simultaneously; the crash really happened in business 
+environment).
 
 Mikulas
