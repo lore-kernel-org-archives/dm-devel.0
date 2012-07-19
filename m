@@ -1,104 +1,63 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [RFC PATCH] multipath-tools: Preventing silent swapping
- of underlying LUNs
-Date: Thu, 19 Jul 2012 17:07:31 +0900
-Message-ID: <5007C043.4000006@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: Crash when IO is being submitted and block size is changed
+Date: Thu, 19 Jul 2012 09:33:11 -0400
+Message-ID: <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
+References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+	<20120628111541.GB17515@quack.suse.cz>
+	<Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
+	<x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
+	<Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com> (Mikulas
+	Patocka's message of "Wed, 18 Jul 2012 22:27:13 -0400 (EDT)")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, Alexander Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, lwoodman@redhat.com, Andrea Arcangeli <aarcange@redhat.com>, kosaki.motohiro@jp.fujitsu.com
 List-Id: dm-devel.ids
 
-Hi,
+Mikulas Patocka <mpatocka@redhat.com> writes:
 
-I found multipathd could unexpectedly swaps underlying LUNs
-when it should swap names.
+> On Tue, 17 Jul 2012, Jeff Moyer wrote:
+>
 
-Suppose someone has following /etc/multipath/bindings:
-  mpathA  <wwid of LUN0>
-  mpathB  <wwid of LUN1>
-and created those multipath devices.
+>> > This is the patch that fixes this crash: it takes a rw-semaphore around 
+>> > all direct-IO path.
+>> >
+>> > (note that if someone is concerned about performance, the rw-semaphore 
+>> > could be made per-cpu --- take it for read on the current CPU and take it 
+>> > for write on all CPUs).
+>> 
+>> Here we go again.  :-)  I believe we had at one point tried taking a rw
+>> semaphore around GUP inside of the direct I/O code path to fix the fork
+>> vs. GUP race (that still exists today).  When testing that, the overhead
+>> of the semaphore was *way* too high to be considered an acceptable
+>> solution.  I've CC'd Larry Woodman, Andrea, and Kosaki Motohiro who all
+>> worked on that particular bug.  Hopefully they can give better
+>> quantification of the slowdown than my poor memory.
+>> 
+>> Cheers,
+>> Jeff
+>
+> Both down_read and up_read together take 82 ticks on Core2, 69 ticks on 
+> AMD K10, 62 ticks on UltraSparc2 if the target is in L1 cache. So, if 
+> percpu rw_semaphores were used, it would slow down only by this amount.
 
-If he modified bindings as below and do 'multipathd -kreconfigure':
-  mpathB  <wwid of LUN0>
-  mpathA  <wwid of LUN1>
-I think it is natural to expect the mpath device for <wwid of LUN0>
-("mpathA") is renamed to "mpathB" and vice versa.
+Sorry, I'm not familiar with per-cpu rw semaphores.  Where are they
+implemented?
 
-However, what actually happens is mpathA's underlying device is
-changed to LUN1 and mpathB's underlying device is changed to LUN0.
+> I hope that Linux developers are not so obsessed with performance that
+> they want a fast crashing kernel rather than a slow reliable kernel.
+> Note that anything that changes a device block size (for example
+> mounting a filesystem with non-default block size) may trigger a crash
+> if lvm or udev reads the device simultaneously; the crash really
+> happened in business environment).
 
-As a result, users of those devices (mounted file systems, LVs, etc.)
-could get errors and/or corrupt data.
+I wasn't suggesting that we leave the problem unfixed (though I can see
+how you might have gotten that idea, sorry for not being more clear).  I
+was merely suggesting that we should try to fix the problem in a way
+that does not kill performance.
 
-(This not just about dynamic reconfiguration.
- Similar thing could happen if you forget to rebuild initrd
- after modifying bindings.)
-
-If there is smarter solution such as swapping aliases correctly,
-it would be nice.
-But I think it's good to have a patch like this at a minimum
-to prevent the bad thing from happening.
-
-Comments?
----
-Jun'ichi Nomura, NEC Corporation
-
-
-Given alias/wwid pair in config, if there is a mpath with the wwid
-and different alias, the mpath should be renamed to the given alias.
-If there is already other mpath with the alias, though, we could not
-simply rename it.
-However, we must NOT try to create a mpath with the given alias/wwid
-by changing the wwid (i.e. mappings) of the other mpath, that could
-corrupt data.
-
-The patch checks this case and give up processing.
-
-diff -urp multipath-tools.orig/libmultipath/configure.c multipath-tools.new/libmultipath/configure.c
---- multipath-tools.orig/libmultipath/configure.c	2012-07-19 15:17:40.368622358 +0900
-+++ multipath-tools.new/libmultipath/configure.c	2012-07-19 15:29:23.360746687 +0900
-@@ -150,6 +150,7 @@ static void
- select_action (struct multipath * mpp, vector curmp, int force_reload)
- {
- 	struct multipath * cmpp;
-+	struct multipath * cmpp_tmp;
- 
- 	cmpp = find_mp_by_alias(curmp, mpp->alias);
- 
-@@ -169,7 +170,8 @@ select_action (struct multipath * mpp, v
- 		return;
- 	}
- 
--	if (!find_mp_by_wwid(curmp, mpp->wwid)) {
-+	cmpp_tmp = find_mp_by_wwid(curmp, mpp->wwid);
-+	if (!cmpp_tmp) {
- 		condlog(2, "%s: remove (wwid changed)", cmpp->alias);
- 		dm_flush_map(mpp->alias);
- 		strncpy(cmpp->wwid, mpp->wwid, WWID_SIZE);
-@@ -180,6 +182,14 @@ select_action (struct multipath * mpp, v
- 		return;
- 	}
- 
-+	if (cmpp != cmpp_tmp) {
-+		condlog(2, "%s: unable to rename %s to %s (%s is used by %s)",
-+			mpp->wwid, cmpp_tmp->alias, mpp->alias,
-+			mpp->alias, cmpp->wwid);
-+		mpp->action = ACT_NOTHING;
-+		return;
-+	}
-+
- 	if (pathcount(mpp, PATH_UP) == 0) {
- 		mpp->action = ACT_NOTHING;
- 		condlog(3, "%s: set ACT_NOTHING (no usable path)",
+Cheers,
+Jeff
