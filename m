@@ -1,52 +1,48 @@
-From: Alex Elsayed <eternaleye+usenet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [RFC] dm-thin: Random block placement strategy?
-Date: Thu, 19 Jul 2012 14:49:51 -0700
-Message-ID: <ju9vdv$vpa$1@dough.gmane.org>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [RFC] dm-thin: Random block placement strategy?
+Date: Fri, 20 Jul 2012 09:50:59 +0000
+Message-ID: <20120720095058.GA1990@raspberrypi>
+References: <ju9vdv$vpa$1@dough.gmane.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <ju9vdv$vpa$1@dough.gmane.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: dm-crypt@saout.de
 List-Id: dm-devel.ids
 
-This may be insufficiently useful to justify implementing, but I thought it 
-was an interesting concept.
+On Thu, Jul 19, 2012 at 02:49:51PM -0700, Alex Elsayed wrote:
+> This may be insufficiently useful to justify implementing, but I thought it 
+> was an interesting concept.
+> 
+> One of the current issues with dm-crypt and discard is that enabling it can 
+> leak information about the filesystem and usage patterns of the disk[1].
+> 
+> If a dm-thin device with a random block placement strategy is layered on top 
+> of dm-crypt however, this could solve some of the issues involved and 
+> partially mitigate others.
+> 
+> Such a random block placement strategy would heavily disguise any layout 
+> patterns that could be used to identify the filesystem, most likely to the 
+> point of being completely unrecognizable.
 
-One of the current issues with dm-crypt and discard is that enabling it can 
-leak information about the filesystem and usage patterns of the disk[1].
+A couple of things spring to mind.
 
-If a dm-thin device with a random block placement strategy is layered on top 
-of dm-crypt however, this could solve some of the issues involved and 
-partially mitigate others.
+- If you're using a spindle device this will destroy performance,
+  unless you use large block size (which I suspect you don't want
+  to do because you're trying to disguise access patterns).
 
-Such a random block placement strategy would heavily disguise any layout 
-patterns that could be used to identify the filesystem, most likely to the 
-point of being completely unrecognizable.
-
-Issues arising from discarded blocks being nonzero are avoided by default 
-due to dm-thin pre-zeroing allocations (unless skip_block_zeroing is 
-enabled).
-
-However, some issues would still be present:
-
-While the *distribution* of unused sectors would be concealed, their 
-existence and how many there are would still be detectable.
-
-In addition, the issues with trim and a hidden device are still present.
-
-[1] http://asalor.blogspot.com/2011/08/trim-dm-crypt-problems.html
-
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
+- How expensive will acquiring a cryptographically secure random
+  destination be?
