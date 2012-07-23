@@ -1,604 +1,685 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [Bcache v15 09/16] bcache: Documentation,
-	and changes to generic code
-Date: Mon, 23 Jul 2012 16:50:52 -0700
-Message-ID: <1343087459-17645-10-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [Bcache v15 15/16] bcache: Writeback, copying garbage collection
+Date: Mon, 23 Jul 2012 16:50:58 -0700
+Message-ID: <1343087459-17645-16-git-send-email-koverstreet@google.com>
 References: <1343087459-17645-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1343087459-17645-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, joe@perches.com, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1343087459-17645-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org
 List-Id: dm-devel.ids
 
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- Documentation/ABI/testing/sysfs-block-bcache |  156 ++++++++++++++++
- Documentation/bcache.txt                     |  255 ++++++++++++++++++++++++++
- drivers/md/Kconfig                           |    2 +
- drivers/md/Makefile                          |    1 +
- drivers/md/bcache/Kconfig                    |   41 ++++
- drivers/md/bcache/Makefile                   |   14 ++
- include/linux/cgroup_subsys.h                |    6 +
- include/linux/sched.h                        |    4 +
- kernel/fork.c                                |    4 +
- 9 files changed, 483 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-block-bcache
- create mode 100644 Documentation/bcache.txt
- create mode 100644 drivers/md/bcache/Kconfig
- create mode 100644 drivers/md/bcache/Makefile
+ drivers/md/bcache/movinggc.c  |  245 +++++++++++++++++++++++++
+ drivers/md/bcache/writeback.c |  405 +++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 650 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/bcache/movinggc.c
+ create mode 100644 drivers/md/bcache/writeback.c
 
-diff --git a/Documentation/ABI/testing/sysfs-block-bcache b/Documentation/ABI/testing/sysfs-block-bcache
+diff --git a/drivers/md/bcache/movinggc.c b/drivers/md/bcache/movinggc.c
 new file mode 100644
-index 0000000..9e4bbc5
+index 0000000..53a596f
 --- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-block-bcache
-@@ -0,0 +1,156 @@
-+What:		/sys/block/<disk>/bcache/unregister
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		A write to this file causes the backing device or cache to be
-+		unregistered. If a backing device had dirty data in the cache,
-+		writeback mode is automatically disabled and all dirty data is
-+		flushed before the device is unregistered. Caches unregister
-+		all associated backing devices before unregistering themselves.
++++ b/drivers/md/bcache/movinggc.c
+@@ -0,0 +1,245 @@
++#include "bcache.h"
++#include "btree.h"
++#include "debug.h"
++#include "request.h"
 +
-+What:		/sys/block/<disk>/bcache/clear_stats
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		Writing to this file resets all the statistics for the device.
++struct moving_io {
++	struct keybuf_key	*w;
++	struct search		s;
++	struct bbio		bio;
++};
 +
-+What:		/sys/block/<disk>/bcache/cache
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a backing device that has cache, a symlink to
-+		the bcache/ dir of that cache.
++static bool moving_pred(struct keybuf *buf, struct bkey *k)
++{
++	struct cache_set *c = container_of(buf, struct cache_set,
++					   moving_gc_keys);
 +
-+What:		/sys/block/<disk>/bcache/cache_hits
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: integer number of full cache hits,
-+		counted per bio. A partial cache hit counts as a miss.
++	for (unsigned i = 0; i < KEY_PTRS(k); i++) {
++		struct cache *ca = PTR_CACHE(c, k, i);
++		struct bucket *g = PTR_BUCKET(c, k, i);
 +
-+What:		/sys/block/<disk>/bcache/cache_misses
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: integer number of cache misses.
++		if (GC_SECTORS_USED(g) < ca->gc_move_threshold)
++			return true;
++	}
 +
-+What:		/sys/block/<disk>/bcache/cache_hit_ratio
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: cache hits as a percentage.
++	return false;
++}
 +
-+What:		/sys/block/<disk>/bcache/sequential_cutoff
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: Threshold past which sequential IO will
-+		skip the cache. Read and written as bytes in human readable
-+		units (i.e. echo 10M > sequntial_cutoff).
++/* Moving GC - IO loop */
 +
-+What:		/sys/block/<disk>/bcache/bypassed
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		Sum of all reads and writes that have bypassed the cache (due
-+		to the sequential cutoff).  Expressed as bytes in human
-+		readable units.
++static void moving_io_destructor(struct closure *cl)
++{
++	struct moving_io *io = container_of(cl, struct moving_io, s.cl);
++	kfree(io);
++}
 +
-+What:		/sys/block/<disk>/bcache/writeback
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: When on, writeback caching is enabled and
-+		writes will be buffered in the cache. When off, caching is in
-+		writethrough mode; reads and writes will be added to the
-+		cache but no write buffering will take place.
++static void write_moving_finish(struct closure *cl)
++{
++	struct moving_io *io = container_of(cl, struct moving_io, s.cl);
++	struct bio *bio = &io->bio.bio;
++	struct bio_vec *bv = bio_iovec_idx(bio, bio->bi_vcnt);
 +
-+What:		/sys/block/<disk>/bcache/writeback_running
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: when off, dirty data will not be written
-+		from the cache to the backing device. The cache will still be
-+		used to buffer writes until it is mostly full, at which point
-+		writes transparently revert to writethrough mode. Intended only
-+		for benchmarking/testing.
++	while (bv-- != bio->bi_io_vec)
++		__free_page(bv->bv_page);
 +
-+What:		/sys/block/<disk>/bcache/writeback_delay
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: In writeback mode, when dirty data is
-+		written to the cache and the cache held no dirty data for that
-+		backing device, writeback from cache to backing device starts
-+		after this delay, expressed as an integer number of seconds.
++	pr_debug("%s %s", io->s.op.insert_collision
++		 ? "collision moving" : "moved",
++		 pkey(&io->w->key));
 +
-+What:		/sys/block/<disk>/bcache/writeback_percent
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For backing devices: If nonzero, writeback from cache to
-+		backing device only takes place when more than this percentage
-+		of the cache is used, allowing more write coalescing to take
-+		place and reducing total number of writes sent to the backing
-+		device. Integer between 0 and 40.
++	bch_keybuf_del(&io->s.op.c->moving_gc_keys, io->w);
 +
-+What:		/sys/block/<disk>/bcache/synchronous
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a cache, a boolean that allows synchronous mode to be
-+		switched on and off. In synchronous mode all writes are ordered
-+		such that the cache can reliably recover from unclean shutdown;
-+		if disabled bcache will not generally wait for writes to
-+		complete but if the cache is not shut down cleanly all data
-+		will be discarded from the cache. Should not be turned off with
-+		writeback caching enabled.
++	atomic_dec_bug(&io->s.op.c->in_flight);
++	closure_wake_up(&io->s.op.c->moving_gc_wait);
 +
-+What:		/sys/block/<disk>/bcache/discard
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a cache, a boolean allowing discard/TRIM to be turned off
-+		or back on if the device supports it.
++	closure_return_with_destructor(cl, moving_io_destructor);
++}
 +
-+What:		/sys/block/<disk>/bcache/bucket_size
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a cache, bucket size in human readable units, as set at
-+		cache creation time; should match the erase block size of the
-+		SSD for optimal performance.
++static void read_moving_endio(struct bio *bio, int error)
++{
++	struct moving_io *io = container_of(bio->bi_private,
++					    struct moving_io, s.cl);
 +
-+What:		/sys/block/<disk>/bcache/nbuckets
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a cache, the number of usable buckets.
++	if (error)
++		io->s.error = error;
 +
-+What:		/sys/block/<disk>/bcache/tree_depth
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a cache, height of the btree excluding leaf nodes (i.e. a
-+		one node tree will have a depth of 0).
++	bch_bbio_endio(io->s.op.c, bio, error, "reading data to move");
++}
 +
-+What:		/sys/block/<disk>/bcache/btree_cache_size
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		Number of btree buckets/nodes that are currently cached in
-+		memory; cache dynamically grows and shrinks in response to
-+		memory pressure from the rest of the system.
++static void moving_init(struct moving_io *io)
++{
++	struct bio *bio = &io->bio.bio;
 +
-+What:		/sys/block/<disk>/bcache/written
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a cache, total amount of data in human readable units
-+		written to the cache, excluding all metadata.
++	bio_init(bio);
++	bio_get(bio);
++	bio_set_prio(bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
 +
-+What:		/sys/block/<disk>/bcache/btree_written
-+Date:		November 2010
-+Contact:	Kent Overstreet <kent.overstreet@gmail.com>
-+Description:
-+		For a cache, sum of all btree writes in human readable units.
-diff --git a/Documentation/bcache.txt b/Documentation/bcache.txt
++	bio->bi_size		= KEY_SIZE(&io->w->key) << 9;
++	bio->bi_max_vecs	= DIV_ROUND_UP(KEY_SIZE(&io->w->key), PAGE_SECTORS);
++	bio->bi_private		= &io->s.cl;
++	bio->bi_io_vec		= bio->bi_inline_vecs;
++	bio_map(bio, NULL);
++}
++
++static void write_moving(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++	struct moving_io *io = container_of(s, struct moving_io, s);
++
++	if (!s->error) {
++		trace_bcache_write_moving(&io->bio.bio);
++
++		moving_init(io);
++
++		io->bio.bio.bi_sector	= KEY_START(&io->w->key);
++		s->op.lock		= -1;
++		s->op.write_prio	= 1;
++		s->op.cache_bio		= &io->bio.bio;
++
++		s->writeback		= KEY_DIRTY(&io->w->key);
++		s->op.csum		= KEY_CSUM(&io->w->key);
++
++		s->op.type = BTREE_REPLACE;
++		bkey_copy(&s->op.replace, &io->w->key);
++
++		closure_init(&s->op.cl, cl);
++		bch_insert_data(&s->op.cl);
++	}
++
++	continue_at(cl, write_moving_finish, NULL);
++}
++
++static void read_moving_submit(struct closure *cl)
++{
++	struct search *s = container_of(cl, struct search, cl);
++	struct moving_io *io = container_of(s, struct moving_io, s);
++	struct bio *bio = &io->bio.bio;
++
++	trace_bcache_read_moving(bio);
++	bch_submit_bbio(bio, s->op.c, &io->w->key, 0);
++
++	continue_at(cl, write_moving, bch_gc_wq);
++}
++
++static void read_moving(struct closure *cl)
++{
++	struct cache_set *c = container_of(cl, struct cache_set, moving_gc);
++	struct keybuf_key *w;
++	struct moving_io *io;
++	struct bio *bio;
++
++	/* XXX: if we error, background writeback could stall indefinitely */
++
++	while (!atomic_read(&c->closing)) {
++		w = bch_keybuf_next_rescan(c, &c->moving_gc_keys, &MAX_KEY);
++		if (!w)
++			break;
++
++		io = kzalloc(sizeof(struct moving_io) + sizeof(struct bio_vec)
++			     * DIV_ROUND_UP(KEY_SIZE(&w->key), PAGE_SECTORS),
++			     GFP_KERNEL);
++		if (!io)
++			goto err;
++
++		w->private	= io;
++		io->w		= w;
++		io->s.op.inode	= KEY_INODE(&w->key);
++		io->s.op.c	= c;
++
++		moving_init(io);
++		bio = &io->bio.bio;
++
++		bio->bi_rw	= READ;
++		bio->bi_end_io	= read_moving_endio;
++
++		if (bio_alloc_pages(bio, GFP_KERNEL))
++			goto err;
++
++		pr_debug("%s", pkey(&w->key));
++
++		closure_call(read_moving_submit, &io->s.cl, &c->gc.cl);
++
++		if (atomic_inc_return(&c->in_flight) >= 64) {
++			closure_wait_event(&c->moving_gc_wait, cl,
++					   atomic_read(&c->in_flight) < 64);
++			continue_at(cl, read_moving, bch_gc_wq);
++		}
++	}
++
++	if (0) {
++err:		if (!IS_ERR_OR_NULL(w->private))
++			kfree(w->private);
++
++		bch_keybuf_del(&c->moving_gc_keys, w);
++	}
++
++	closure_return(cl);
++}
++
++void bch_moving_gc(struct closure *cl)
++{
++	struct cache_set *c = container_of(cl, struct cache_set, gc.cl);
++	struct cache *ca;
++	struct bucket *b;
++
++	bool bucket_cmp(struct bucket *l, struct bucket *r)
++	{
++		return GC_SECTORS_USED(l) < GC_SECTORS_USED(r);
++	}
++
++	unsigned top(struct cache *ca)
++	{
++		return GC_SECTORS_USED(heap_peek(&ca->heap));
++	}
++
++	if (!c->copy_gc_enabled)
++		closure_return(cl);
++
++	mutex_lock(&c->bucket_lock);
++
++	for_each_cache(ca, c) {
++		unsigned sectors_to_move = 0;
++		unsigned reserve_sectors = ca->sb.bucket_size *
++			min(fifo_used(&ca->free), ca->free.size / 2);
++
++		ca->heap.used = 0;
++
++		for_each_bucket(b, ca) {
++			if (!GC_SECTORS_USED(b))
++				continue;
++
++			if (!heap_full(&ca->heap)) {
++				sectors_to_move += GC_SECTORS_USED(b);
++				heap_add(&ca->heap, b, bucket_cmp);
++			} else if (bucket_cmp(b, heap_peek(&ca->heap))) {
++				sectors_to_move -= top(ca);
++				sectors_to_move += GC_SECTORS_USED(b);
++
++				ca->heap.data[0] = b;
++				heap_sift(&ca->heap, 0, bucket_cmp);
++			}
++		}
++
++		while (sectors_to_move > reserve_sectors) {
++			heap_pop(&ca->heap, b, bucket_cmp);
++			sectors_to_move -= GC_SECTORS_USED(b);
++		}
++
++		ca->gc_move_threshold = top(ca);
++
++		pr_debug("threshold %u", ca->gc_move_threshold);
++	}
++
++	mutex_unlock(&c->bucket_lock);
++
++	c->moving_gc_keys.last_scanned = ZERO_KEY;
++
++	closure_init(&c->moving_gc, cl);
++	read_moving(&c->moving_gc);
++
++	closure_return(cl);
++}
++
++void bch_moving_init_cache_set(struct cache_set *c)
++{
++	bch_keybuf_init(&c->moving_gc_keys, moving_pred);
++}
+diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
 new file mode 100644
-index 0000000..270c734
+index 0000000..5da5876
 --- /dev/null
-+++ b/Documentation/bcache.txt
-@@ -0,0 +1,255 @@
-+Say you've got a big slow raid 6, and an X-25E or three. Wouldn't it be
-+nice if you could use them as cache... Hence bcache.
-+
-+Userspace tools and a wiki are at:
-+  git://evilpiepirate.org/~kent/bcache-tools.git
-+  http://bcache.evilpiepirate.org
-+
-+It's designed around the performance characteristics of SSDs - it only allocates
-+in erase block sized buckets, and it uses a hybrid btree/log to track cached
-+extants (which can be anywhere from a single sector to the bucket size). It's
-+designed to avoid random writes at all costs; it fills up an erase block
-+sequentially, then issues a discard before reusing it.
-+
-+Both writethrough and writeback caching are supported. Writeback defaults to
-+off, but can be switched on and off arbitrarily at runtime. Bcache goes to
-+great lengths to protect your data - it reliably handles unclean shutdown. (It
-+doesn't even have a notion of a clean shutdown; bcache simply doesn't return
-+writes as completed until they're on stable storage).
-+
-+Writeback caching can use most of the cache for buffering writes - writing
-+dirty data to the backing device is always done sequentially, scanning from the
-+start to the end of the index.
-+
-+Since random IO is what SSDs excel at, there generally won't be much benefit
-+to caching large sequential IO. Bcache detects sequential IO and skips it;
-+it also keeps a rolling average of the IO sizes per task, and as long as the
-+average is above the cutoff it will skip all IO from that task - instead of
-+caching the first 512k after every seek. Backups and large file copies should
-+thus entirely bypass the cache.
-+
-+In the event of a data IO error on the flash it will try to recover by reading
-+from disk or invalidating cache entries.  For unrecoverable errors (meta data
-+or dirty data), caching is automatically disabled; if dirty data was present
-+in the cache it first disables writeback caching and waits for all dirty data
-+to be flushed.
-+
-+Getting started:
-+You'll need make-bcache from the bcache-tools repository. Both the cache device
-+and backing device must be formatted before use.
-+  make-bcache -B /dev/sdb
-+  make-bcache -C -w2k -b1M -j64 /dev/sdc
-+
-+To make bcache devices known to the kernel, echo them to /sys/fs/bcache/register:
-+  echo /dev/sdb > /sys/fs/bcache/register
-+  echo /dev/sdc > /sys/fs/bcache/register
-+
-+To register your bcache devices automatically, you could add something like
-+this to an init script:
-+  echo /dev/sd* > /sys/fs/bcache/register_quiet
-+
-+It'll look for bcache superblocks and ignore everything that doesn't have one.
-+
-+When you register a backing device, you'll get a new /dev/bcache# device:
-+  mkfs.ext4 /dev/bcache0
-+  mount /dev/bcache0 /mnt
-+
-+Cache devices are managed as sets; multiple caches per set isn't supported yet
-+but will allow for mirroring of metadata and dirty data in the future. Your new
-+cache set shows up as /sys/fs/bcache/<UUID>
-+
-+To enable caching, you need to attach the backing device to the cache set by
-+specifying the UUID:
-+  echo <UUID> > /sys/block/sdb/bcache/attach
-+
-+The cache set with that UUID need not be registered to attach to it - the UUID
-+will be saved to the backing device's superblock and it'll start being cached
-+when the cache set does show up.
-+
-+This only has to be done once. The next time you reboot, just reregister all
-+your bcache devices. If a backing device has data in a cache somewhere, the
-+/dev/bcache# device won't be created until the cache shows up - particularly
-+important if you have writeback caching turned on.
-+
-+If you're booting up and your cache device is gone and never coming back, you
-+can force run the backing device:
-+  echo 1 > /sys/block/sdb/bcache/running
-+
-+The backing device will still use that cache set if it shows up in the future,
-+but all the cached data will be invalidated. If there was dirty data in the
-+cache, don't expect the filesystem to be recoverable - you will have massive
-+filesystem corruption, though ext4's fsck does work miracles.
++++ b/drivers/md/bcache/writeback.c
+@@ -0,0 +1,405 @@
++#include "bcache.h"
++#include "btree.h"
++#include "debug.h"
++
++static struct workqueue_struct *dirty_wq;
 +
++static void read_dirty(struct closure *);
++
++struct dirty_io {
++	struct closure		cl;
++	struct cached_dev	*dc;
++	struct bio		bio;
++};
++
++/* Rate limiting */
++
++static void __update_writeback_rate(struct cached_dev *dc)
++{
++	struct cache_set *c = dc->disk.c;
++	uint64_t cache_sectors = c->nbuckets * c->sb.bucket_size;
++	uint64_t cache_dirty_target =
++		div_u64(cache_sectors * dc->writeback_percent, 100);
++
++	int64_t target = div64_u64(cache_dirty_target * bdev_sectors(dc->bdev),
++				   c->cached_dev_sectors);
++
++	/* PD controller */
++
++	int change = 0;
++	int64_t error;
++	int64_t dirty = atomic_long_read(&dc->disk.sectors_dirty);
++	int64_t derivative = dirty - dc->disk.sectors_dirty_last;
++
++	dc->disk.sectors_dirty_last = dirty;
++
++	derivative *= dc->writeback_rate_d_term;
++	derivative = clamp(derivative, -dirty, dirty);
++
++	derivative = ewma_add(dc->disk.sectors_dirty_derivative, derivative,
++			      dc->writeback_rate_d_smooth, 0);
++
++	/* Avoid divide by zero */
++	if (!target)
++		goto out;
++
++	error = div64_s64((dirty + derivative - target) << 8, target);
++
++	change = div_s64((dc->writeback_rate.rate * error) >> 8,
++			 dc->writeback_rate_p_term_inverse);
++
++	/* Don't increase writeback rate if the device isn't keeping up */
++	if (change > 0 &&
++	    time_after64(local_clock(),
++			 dc->writeback_rate.next + 10 * NSEC_PER_MSEC))
++		change = 0;
++
++	dc->writeback_rate.rate =
++		clamp_t(int64_t, dc->writeback_rate.rate + change,
++			1, NSEC_PER_MSEC);
++out:
++	dc->writeback_rate_derivative = derivative;
++	dc->writeback_rate_change = change;
++	dc->writeback_rate_target = target;
++
++	schedule_delayed_work(&dc->writeback_rate_update,
++			      dc->writeback_rate_update_seconds * HZ);
++}
++
++static void update_writeback_rate(struct work_struct *work)
++{
++	struct cached_dev *dc = container_of(to_delayed_work(work),
++					     struct cached_dev,
++					     writeback_rate_update);
++
++	down_read(&dc->writeback_lock);
++
++	if (atomic_read(&dc->has_dirty) &&
++	    dc->writeback_percent)
++		__update_writeback_rate(dc);
++
++	up_read(&dc->writeback_lock);
++}
++
++static unsigned writeback_delay(struct cached_dev *dc, unsigned sectors)
++{
++	if (atomic_read(&dc->disk.detaching) ||
++	    !dc->writeback_percent)
++		return 0;
++
++	return next_delay(&dc->writeback_rate, sectors * 10000000ULL);
++}
++
++/* Background writeback */
++
++static bool dirty_pred(struct keybuf *buf, struct bkey *k)
++{
++	return KEY_DIRTY(k);
++}
++
++static void dirty_init(struct keybuf_key *w)
++{
++	struct dirty_io *io = w->private;
++	struct bio *bio = &io->bio;
++
++	bio_init(bio);
++	if (!io->dc->writeback_percent)
++		bio_set_prio(bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
++
++	bio->bi_size		= KEY_SIZE(&w->key) << 9;
++	bio->bi_max_vecs	= DIV_ROUND_UP(KEY_SIZE(&w->key), PAGE_SECTORS);
++	bio->bi_private		= w;
++	bio->bi_io_vec		= bio->bi_inline_vecs;
++	bio_map(bio, NULL);
++}
++
++static void refill_dirty(struct closure *cl)
++{
++	struct cached_dev *dc = container_of(cl, struct cached_dev,
++					     writeback.cl);
++	struct keybuf *buf = &dc->writeback_keys;
++	bool searched_from_start = false;
++	struct bkey end = MAX_KEY;
++	SET_KEY_INODE(&end, dc->disk.id);
++
++	if (!atomic_read(&dc->disk.detaching) &&
++	    !dc->writeback_running)
++		closure_return(cl);
++
++	down_write(&dc->writeback_lock);
++
++	if (!atomic_read(&dc->has_dirty)) {
++		SET_BDEV_STATE(&dc->sb, BDEV_STATE_CLEAN);
++		bch_write_bdev_super(dc, NULL);
++
++		up_write(&dc->writeback_lock);
++		closure_return(cl);
++	}
++
++	if (bkey_cmp(&buf->last_scanned, &end) >= 0) {
++		buf->last_scanned = KEY(dc->disk.id, 0, 0);
++		searched_from_start = true;
++	}
++
++	bch_refill_keybuf(dc->disk.c, buf, &end);
++
++	if (bkey_cmp(&buf->last_scanned, &end) >= 0 && searched_from_start) {
++		/* Searched the entire btree  - delay awhile */
++
++		if (RB_EMPTY_ROOT(&buf->keys)) {
++			atomic_set(&dc->has_dirty, 0);
++			cached_dev_put(dc);
++		}
++
++		if (!atomic_read(&dc->disk.detaching))
++			closure_delay(&dc->writeback, dc->writeback_delay * HZ);
++	}
++
++	up_write(&dc->writeback_lock);
 +
-+Other sysfs files for the backing device:
++	ratelimit_reset(&dc->writeback_rate);
++
++	/* Punt to workqueue only so we don't recurse and blow the stack */
++	continue_at(cl, read_dirty, dirty_wq);
++}
++
++void bch_writeback_queue(struct cached_dev *dc)
++{
++	if (closure_trylock(&dc->writeback.cl, &dc->disk.cl)) {
++		if (!atomic_read(&dc->disk.detaching))
++			closure_delay(&dc->writeback, dc->writeback_delay * HZ);
++
++		continue_at(&dc->writeback.cl, refill_dirty, dirty_wq);
++	}
++}
++
++void bch_writeback_add(struct cached_dev *dc, unsigned sectors)
++{
++	atomic_long_add(sectors, &dc->disk.sectors_dirty);
++
++	if (!atomic_read(&dc->has_dirty) &&
++	    !atomic_xchg(&dc->has_dirty, 1)) {
++		atomic_inc(&dc->count);
++
++		if (BDEV_STATE(&dc->sb) != BDEV_STATE_DIRTY) {
++			SET_BDEV_STATE(&dc->sb, BDEV_STATE_DIRTY);
++			/* XXX: should do this synchronously */
++			bch_write_bdev_super(dc, NULL);
++		}
++
++		bch_writeback_queue(dc);
 +
-+  bypassed
-+    Sum of all IO, reads and writes, than have bypassed the cache
++		if (dc->writeback_percent)
++			schedule_delayed_work(&dc->writeback_rate_update,
++				      dc->writeback_rate_update_seconds * HZ);
++	}
++}
 +
-+  cache_hits
-+  cache_misses
-+  cache_hit_ratio
-+    Hits and misses are counted per individual IO as bcache sees them; a
-+    partial hit is counted as a miss.
++/* Background writeback - IO loop */
 +
-+  cache_miss_collisions
-+    Count of times a read completes but the data is already in the cache and
-+    is therefore redundant.  This is usually caused by readahead while a
-+    read to the same location occurs.
++static void dirty_io_destructor(struct closure *cl)
++{
++	struct dirty_io *io = container_of(cl, struct dirty_io, cl);
++	kfree(io);
++}
++
++static void write_dirty_finish(struct closure *cl)
++{
++	struct dirty_io *io = container_of(cl, struct dirty_io, cl);
++	struct keybuf_key *w = io->bio.bi_private;
++	struct cached_dev *dc = io->dc;
++	struct bio_vec *bv = bio_iovec_idx(&io->bio, io->bio.bi_vcnt);
++
++	while (bv-- != io->bio.bi_io_vec)
++		__free_page(bv->bv_page);
++
++	/* This is kind of a dumb way of signalling errors. */
++	if (KEY_DIRTY(&w->key)) {
++		unsigned i;
++		struct btree_op op;
++		bch_btree_op_init_stack(&op);
++
++		op.type = BTREE_REPLACE;
++		bkey_copy(&op.replace, &w->key);
++
++		SET_KEY_DIRTY(&w->key, false);
++		bch_keylist_add(&op.keys, &w->key);
++
++		for (i = 0; i < KEY_PTRS(&w->key); i++)
++			atomic_inc(&PTR_BUCKET(dc->disk.c, &w->key, i)->pin);
++
++		pr_debug("clearing %s", pkey(&w->key));
++		bch_btree_insert(&op, dc->disk.c);
++		closure_sync(&op.cl);
++
++		atomic_long_inc(op.insert_collision
++				? &dc->disk.c->writeback_keys_failed
++				: &dc->disk.c->writeback_keys_done);
++	}
++
++	bch_keybuf_del(&dc->writeback_keys, w);
++	atomic_dec_bug(&dc->in_flight);
++
++	closure_wake_up(&dc->writeback_wait);
++
++	closure_return_with_destructor(cl, dirty_io_destructor);
++}
++
++static void dirty_endio(struct bio *bio, int error)
++{
++	struct keybuf_key *w = bio->bi_private;
++	struct dirty_io *io = w->private;
++
++	if (error)
++		SET_KEY_DIRTY(&w->key, false);
 +
-+  cache_readaheads
-+    Count of times readahead occured.
++	closure_put(&io->cl);
++}
 +
-+  clear_stats
-+    Writing to this file resets all the statistics.
++static void write_dirty(struct closure *cl)
++{
++	struct dirty_io *io = container_of(cl, struct dirty_io, cl);
++	struct keybuf_key *w = io->bio.bi_private;
 +
-+  flush_delay_ms
-+  flush_delay_ms_sync
-+    Optional delay for btree writes to allow for more coalescing of updates to
-+    the index. Default to 0.
++	dirty_init(w);
++	io->bio.bi_rw		= WRITE;
++	io->bio.bi_sector	= KEY_START(&w->key);
++	io->bio.bi_bdev		= io->dc->bdev;
++	io->bio.bi_end_io	= dirty_endio;
++
++	trace_bcache_write_dirty(&io->bio);
++	closure_bio_submit(&io->bio, cl);
++
++	continue_at(cl, write_dirty_finish, dirty_wq);
++}
 +
-+  label
-+    Name of underlying device.
++static void read_dirty_endio(struct bio *bio, int error)
++{
++	struct keybuf_key *w = bio->bi_private;
++	struct dirty_io *io = w->private;
++
++	bch_count_io_errors(PTR_CACHE(io->dc->disk.c, &w->key, 0),
++			    error, "reading dirty data from cache");
 +
-+  readahead
-+    Size of readahead that should be performed.  Defaults to 0.  If set to e.g.
-+    1M, it will round cache miss reads up to that size, but without overlapping
-+    existing cache entries.
-+
-+  running
-+    1 if bcache is running.
-+
-+  sequential_cutoff
-+    A sequential IO will bypass the cache once it passes this threshhold; the
-+    most recent 128 IOs are tracked so sequential IO can be detected even when
-+    it isn't all done at once.
-+
-+  sequential_cutoff_average
-+    If the weighted average from a client is higher than this cutoff we bypass
-+    all IO.
-+
-+  unregister
-+    Writing to this file disables caching on that device
-+
-+  writeback
-+    Boolean, if off only writethrough caching is done
-+
-+  writeback_delay
-+    When dirty data is written to the cache and it previously did not contain
-+    any, waits some number of seconds before initiating writeback. Defaults to
-+    30.
-+
-+  writeback_percent
-+    To allow for more buffering of random writes, writeback only proceeds when
-+    more than this percentage of the cache is unavailable. Defaults to 0.
-+
-+  writeback_running
-+    If off, writeback of dirty data will not take place at all. Dirty data will
-+    still be added to the cache until it is mostly full; only meant for
-+    benchmarking. Defaults to on.
-+
-+For the cache set:
-+  active_journal_entries
-+    Number of journal entries that are newer than the index.
-+
-+  average_key_size
-+    Average data per key in the btree.
-+
-+  average_seconds_between_gc
-+    How often garbage collection is occuring.
-+
-+  block_size
-+    Block size of the virtual device.
-+
-+  btree_avg_keys_written
-+    Average number of keys per write to the btree when a node wasn't being
-+    rewritten - indicates how much coalescing is taking place.
-+
-+
-+  btree_cache_size
-+    Number of btree buckets currently cached in memory
-+
-+  btree_nodes
-+    Total nodes in the btree.
-+
-+  btree_used_percent
-+    Average fraction of btree in use.
-+
-+  bucket_size
-+    Size of Buckets
-+
-+  bypassed
-+    Sum of all IO, reads and writes, than have bypassed the cache
-+
-+  cache_available_percent
-+    Percentage of cache device free.
-+
-+  clear_stats
-+    Clears the statistics associated with this cache
-+
-+  dirty_data
-+    How much dirty data is in the cache.
-+
-+  gc_ms_max
-+    Longest garbage collection.
-+
-+  internal/bset_tree_stats
-+  internal/btree_cache_max_chain
-+    Internal.  Statistics about the bset tree and chain length.  Likely to be
-+    hidden soon.
-+
-+  io_error_halflife
-+  io_error_limit
-+    These determines how many errors we accept before disabling the cache.
-+    Each error is decayed by the half life (in # ios).  If the decaying count
-+    reaches io_error_limit dirty data is written out and the cache is disabled.
-+
-+  root_usage_percent
-+    Percentage of the root btree node in use.  If this gets too high the node
-+    will split, increasing the tree depth.
-+
-+  seconds_since_gc
-+    When was the last garbage collection.
-+
-+  synchronous
-+    Boolean; when on all writes to the cache are strictly ordered such that it
-+    can recover from unclean shutdown. If off it will not generally wait for
-+    writes to complete, but the entire cache contents will be invalidated on
-+    unclean shutdown. Not recommended that it be turned off when writeback is
-+    on.
-+
-+  tree_depth
-+    Depth of the btree.
-+
-+  trigger_gc
-+    Force garbage collection to run now.
-+
-+  unregister
-+    Closes the cache device and all devices being cached; if dirty data is
-+    present it will disable writeback caching and wait for it to be flushed.
-+
-+
-+For each cache within a cache set:
-+  btree_written
-+    Sum of all btree writes, in (kilo/mega/giga) bytes
-+
-+  discard
-+    Boolean; if on a discard/TRIM will be issued to each bucket before it is
-+    reused. Defaults to on if supported.
-+
-+  io_errors
-+    Number of errors that have occured, decayed by io_error_halflife.
-+
-+  metadata_written
-+    Total Metadata written (btree + other meta data).
-+
-+  nbuckets
-+    Total buckets in this cache
-+
-+  priority_stats
-+    Statistics about how recently data in the cache has been accessed.  This can
-+    reveal your working set size.
-+
-+  written
-+    Sum of all data that has been written to the cache; comparison with
-+    btree_written gives the amount of write inflation in bcache.
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 10f122a..d977b45 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -185,6 +185,8 @@ config MD_FAULTY
- 
- 	  In unsure, say N.
- 
-+source "drivers/md/bcache/Kconfig"
-+
- config BLK_DEV_DM
- 	tristate "Device mapper support"
- 	---help---
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index 8b2e0df..0d4b86b 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -26,6 +26,7 @@ obj-$(CONFIG_MD_RAID10)		+= raid10.o
- obj-$(CONFIG_MD_RAID456)	+= raid456.o
- obj-$(CONFIG_MD_MULTIPATH)	+= multipath.o
- obj-$(CONFIG_MD_FAULTY)		+= faulty.o
-+obj-$(CONFIG_BCACHE)		+= bcache/
- obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
- obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
- obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
-diff --git a/drivers/md/bcache/Kconfig b/drivers/md/bcache/Kconfig
-new file mode 100644
-index 0000000..9acd870
---- /dev/null
-+++ b/drivers/md/bcache/Kconfig
-@@ -0,0 +1,41 @@
-+
-+config BCACHE
-+	tristate "Block device as cache"
-+	select CLOSURES
-+	---help---
-+	Allows a block device to be used as cache for other devices; uses
-+	a btree for indexing and the layout is optimized for SSDs.
-+
-+	See Documentation/bcache.txt for details.
-+
-+config BCACHE_DEBUG
-+	bool "Bcache debugging"
-+	depends on BCACHE
-+	---help---
-+	Don't select this option unless you're a developer
-+
-+	Enables extra debugging tools (primarily a fuzz tester)
-+
-+config BCACHE_EDEBUG
-+	bool "Extended runtime checks"
-+	depends on BCACHE
-+	---help---
-+	Don't select this option unless you're a developer
-+
-+	Enables extra runtime checks which significantly affect performance
-+
-+config BCACHE_LATENCY_DEBUG
-+	bool "Latency tracing for bcache"
-+	depends on BCACHE
-+	---help---
-+	Hacky latency tracing that has nevertheless been useful in the past:
-+	adds a global variable accessible via /sys/fs/bcache/latency_warn_ms,
-+	which defaults to 0. If nonzero, any timed operation that takes longer
-+	emits a printk.
-+
-+config CGROUP_BCACHE
-+  bool "Cgroup controls for bcache"
-+  depends on BCACHE && BLK_CGROUP
-+  ---help---
-+  TODO
-+
-diff --git a/drivers/md/bcache/Makefile b/drivers/md/bcache/Makefile
-new file mode 100644
-index 0000000..0e5305d
---- /dev/null
-+++ b/drivers/md/bcache/Makefile
-@@ -0,0 +1,14 @@
-+
-+obj-$(CONFIG_BCACHE)	+= bcache.o
-+
-+bcache-y		:= alloc.o btree.o bset.o io.o journal.o\
-+	writeback.o movinggc.o request.o super.o debug.o util.o trace.o stats.o
-+
-+CFLAGS_alloc.o		+= -std=gnu99
-+CFLAGS_btree.o		+= -std=gnu99
-+CFLAGS_bset.o		+= -std=gnu99
-+CFLAGS_journal.o	+= -std=gnu99
-+CFLAGS_movinggc.o	+= -std=gnu99
-+CFLAGS_request.o	+= -std=gnu99 -Iblock
-+CFLAGS_super.o		+= -std=gnu99
-+CFLAGS_debug.o		+= -std=gnu99
-diff --git a/include/linux/cgroup_subsys.h b/include/linux/cgroup_subsys.h
-index 0bd390c..d698634 100644
---- a/include/linux/cgroup_subsys.h
-+++ b/include/linux/cgroup_subsys.h
-@@ -72,3 +72,9 @@ SUBSYS(net_prio)
- #endif
- 
- /* */
-+
-+#ifdef CONFIG_CGROUP_BCACHE
-+SUBSYS(bcache)
-+#endif
-+
-+/* */
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 4a1f493..1741596 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1583,6 +1583,10 @@ struct task_struct {
- 	struct uprobe_task *utask;
- 	int uprobe_srcu_id;
- #endif
-+#if defined(CONFIG_BCACHE) || defined(CONFIG_BCACHE_MODULE)
-+	unsigned int	sequential_io;
-+	unsigned int	sequential_io_avg;
-+#endif
- };
- 
- /* Future-safe accessor for struct task_struct's cpus_allowed. */
-diff --git a/kernel/fork.c b/kernel/fork.c
-index f00e319..d47494b 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1314,6 +1314,10 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 	p->memcg_batch.do_batch = 0;
- 	p->memcg_batch.memcg = NULL;
- #endif
-+#ifdef CONFIG_BCACHE
-+	p->sequential_io	= 0;
-+	p->sequential_io_avg	= 0;
-+#endif
- 
- 	/* Perform scheduler related setup. Assign this task to a CPU. */
- 	sched_fork(p);
++	dirty_endio(bio, error);
++}
++
++static void read_dirty_submit(struct closure *cl)
++{
++	struct dirty_io *io = container_of(cl, struct dirty_io, cl);
++
++	trace_bcache_read_dirty(&io->bio);
++	closure_bio_submit(&io->bio, cl);
++
++	continue_at(cl, write_dirty, dirty_wq);
++}
++
++static void read_dirty(struct closure *cl)
++{
++	struct cached_dev *dc = container_of(cl, struct cached_dev,
++					     writeback.cl);
++	unsigned delay = writeback_delay(dc, 0);
++	struct keybuf_key *w;
++	struct dirty_io *io;
++
++	/*
++	 * XXX: if we error, background writeback just spins. Should use some
++	 * mempools.
++	 */
++
++	while (1) {
++		w = bch_keybuf_next(&dc->writeback_keys);
++		if (!w)
++			break;
++
++		BUG_ON(ptr_stale(dc->disk.c, &w->key, 0));
++
++		if (delay > 0 &&
++		    (KEY_START(&w->key) != dc->last_read ||
++		     jiffies_to_msecs(delay) > 50)) {
++			w->private = NULL;
++
++			closure_delay(&dc->writeback, delay);
++			continue_at(cl, read_dirty, dirty_wq);
++		}
++
++		dc->last_read	= KEY_OFFSET(&w->key);
++
++		io = kzalloc(sizeof(struct dirty_io) + sizeof(struct bio_vec)
++			     * DIV_ROUND_UP(KEY_SIZE(&w->key), PAGE_SECTORS),
++			     GFP_KERNEL);
++		if (!io)
++			goto err;
++
++		w->private	= io;
++		io->dc		= dc;
++
++		dirty_init(w);
++		io->bio.bi_sector	= PTR_OFFSET(&w->key, 0);
++		io->bio.bi_bdev		= PTR_CACHE(dc->disk.c,
++						    &w->key, 0)->bdev;
++		io->bio.bi_rw		= READ;
++		io->bio.bi_end_io	= read_dirty_endio;
++
++		if (bio_alloc_pages(&io->bio, GFP_KERNEL))
++			goto err_free;
++
++		pr_debug("%s", pkey(&w->key));
++
++		closure_call(read_dirty_submit, &io->cl, &dc->disk.cl);
++
++		delay = writeback_delay(dc, KEY_SIZE(&w->key));
++
++		atomic_inc(&dc->in_flight);
++
++		if (!closure_wait_event(&dc->writeback_wait, cl,
++					atomic_read(&dc->in_flight) < 64))
++			continue_at(cl, read_dirty, dirty_wq);
++	}
++
++	if (0) {
++err_free:
++		kfree(w->private);
++err:
++		bch_keybuf_del(&dc->writeback_keys, w);
++	}
++
++	refill_dirty(cl);
++}
++
++void bch_writeback_init_cached_dev(struct cached_dev *dc)
++{
++	closure_init_unlocked(&dc->writeback);
++	init_rwsem(&dc->writeback_lock);
++
++	bch_keybuf_init(&dc->writeback_keys, dirty_pred);
++
++	dc->writeback_metadata		= true;
++	dc->writeback_running		= true;
++	dc->writeback_delay		= 30;
++	dc->writeback_rate.rate		= 1024;
++
++	dc->writeback_rate_update_seconds = 30;
++	dc->writeback_rate_d_term	= 16;
++	dc->writeback_rate_p_term_inverse = 64;
++	dc->writeback_rate_d_smooth	= 8;
++
++	INIT_DELAYED_WORK(&dc->writeback_rate_update, update_writeback_rate);
++	schedule_delayed_work(&dc->writeback_rate_update,
++			      dc->writeback_rate_update_seconds * HZ);
++}
++
++void bch_writeback_exit(void)
++{
++	if (dirty_wq)
++		destroy_workqueue(dirty_wq);
++}
++
++int __init bch_writeback_init(void)
++{
++	dirty_wq = create_singlethread_workqueue("bcache_writeback");
++	if (!dirty_wq)
++		return -ENOMEM;
++
++	return 0;
++}
 -- 
 1.7.7.3
