@@ -1,134 +1,109 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v4 08/12] block: Introduce new bio_split()
-Date: Tue, 24 Jul 2012 13:11:25 -0700
-Message-ID: <1343160689-12378-9-git-send-email-koverstreet@google.com>
+Subject: [PATCH v4 02/12] dm: Use bioset's front_pad for
+	dm_rq_clone_bio_info
+Date: Tue, 24 Jul 2012 13:11:19 -0700
+Message-ID: <1343160689-12378-3-git-send-email-koverstreet@google.com>
 References: <1343160689-12378-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1343160689-12378-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
+Cc: axboe@kernel.dk, yehuda@hq.newdream.net, Kent Overstreet <koverstreet@google.com>, mpatocka@redhat.com, vgoyal@redhat.com, bharrosh@panasas.com, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-The new bio_split() can split arbitrary bios - it's not restricted to
-single page bios, like the old bio_split() (previously renamed to
-bio_pair_split()). It also has different semantics - it doesn't allocate
-a struct bio_pair, leaving it up to the caller to handle completions.
+Previously, dm_rq_clone_bio_info needed to be freed by the bio's
+destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
+This gets rid of a memory allocation and means we can kill
+dm_rq_bio_destructor.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- fs/bio.c |   99 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 99 insertions(+), 0 deletions(-)
+ drivers/md/dm.c |   31 +++++--------------------------
+ 1 files changed, 5 insertions(+), 26 deletions(-)
 
-diff --git a/fs/bio.c b/fs/bio.c
-index 5d02aa5..a15e121 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -1539,6 +1539,105 @@ struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors)
- EXPORT_SYMBOL(bio_pair_split);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 40b7735..4014696 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -92,6 +92,7 @@ struct dm_rq_target_io {
+ struct dm_rq_clone_bio_info {
+ 	struct bio *orig;
+ 	struct dm_rq_target_io *tio;
++	struct bio clone;
+ };
  
- /**
-+ * bio_split - split a bio
-+ * @bio:	bio to split
-+ * @sectors:	number of sectors to split from the front of @bio
-+ * @gfp:	gfp mask
-+ * @bs:		bio set to allocate from
-+ *
-+ * Allocates and returns a new bio which represents @sectors from the start of
-+ * @bio, and updates @bio to represent the remaining sectors.
-+ *
-+ * If bio_sectors(@bio) was less than or equal to @sectors, returns @bio
-+ * unchanged.
-+ *
-+ * The newly allocated bio will point to @bio's bi_io_vec, if the split was on a
-+ * bvec boundry; it is the caller's responsibility to ensure that @bio is not
-+ * freed before the split.
-+ *
-+ * If bio_split() is running under generic_make_request(), it's not safe to
-+ * allocate more than one bio from the same bio set. Therefore, if it is running
-+ * under generic_make_request() it masks out __GFP_WAIT when doing the
-+ * allocation. The caller must check for failure if there's any possibility of
-+ * it being called from under generic_make_request(); it is then the caller's
-+ * responsibility to retry from a safe context (by e.g. punting to workqueue).
-+ */
-+struct bio *bio_split(struct bio *bio, int sectors,
-+		      gfp_t gfp, struct bio_set *bs)
-+{
-+	unsigned idx, vcnt = 0, nbytes = sectors << 9;
-+	struct bio_vec *bv;
-+	struct bio *ret = NULL;
-+
-+	BUG_ON(sectors <= 0);
-+
-+	/*
-+	 * If we're being called from underneath generic_make_request() and we
-+	 * already allocated any bios from this bio set, we risk deadlock if we
-+	 * use the mempool. So instead, we possibly fail and let the caller punt
-+	 * to workqueue or somesuch and retry in a safe context.
-+	 */
-+	if (current->bio_list)
-+		gfp &= ~__GFP_WAIT;
-+
-+	if (sectors >= bio_sectors(bio))
-+		return bio;
-+
-+	trace_block_split(bdev_get_queue(bio->bi_bdev), bio,
-+			  bio->bi_sector + sectors);
-+
-+	bio_for_each_segment(bv, bio, idx) {
-+		vcnt = idx - bio->bi_idx;
-+
-+		if (!nbytes) {
-+			ret = bio_alloc_bioset(gfp, 0, bs);
-+			if (!ret)
-+				return NULL;
-+
-+			ret->bi_io_vec = bio_iovec(bio);
-+			ret->bi_flags |= 1 << BIO_CLONED;
-+			break;
-+		} else if (nbytes < bv->bv_len) {
-+			ret = bio_alloc_bioset(gfp, ++vcnt, bs);
-+			if (!ret)
-+				return NULL;
-+
-+			memcpy(ret->bi_io_vec, bio_iovec(bio),
-+			       sizeof(struct bio_vec) * vcnt);
-+
-+			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
-+			bv->bv_offset	+= nbytes;
-+			bv->bv_len	-= nbytes;
-+			break;
-+		}
-+
-+		nbytes -= bv->bv_len;
-+	}
-+
-+	ret->bi_bdev	= bio->bi_bdev;
-+	ret->bi_sector	= bio->bi_sector;
-+	ret->bi_size	= sectors << 9;
-+	ret->bi_rw	= bio->bi_rw;
-+	ret->bi_vcnt	= vcnt;
-+	ret->bi_max_vecs = vcnt;
-+	ret->bi_end_io	= bio->bi_end_io;
-+	ret->bi_private	= bio->bi_private;
-+
-+	bio->bi_sector	+= sectors;
-+	bio->bi_size	-= sectors << 9;
-+	bio->bi_idx	 = idx;
-+
-+	if (bio_integrity(bio)) {
-+		bio_integrity_clone(ret, bio, gfp, bs);
-+		bio_integrity_trim(ret, 0, bio_sectors(ret));
-+		bio_integrity_trim(bio, bio_sectors(ret), bio_sectors(bio));
-+	}
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(bio_split);
-+
-+/**
-  *      bio_sector_offset - Find hardware sector offset in bio
-  *      @bio:           bio to inspect
-  *      @index:         bio_vec index
+ union map_info *dm_get_mapinfo(struct bio *bio)
+@@ -467,16 +468,6 @@ static void free_rq_tio(struct dm_rq_target_io *tio)
+ 	mempool_free(tio, tio->md->tio_pool);
+ }
+ 
+-static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
+-{
+-	return mempool_alloc(md->io_pool, GFP_ATOMIC);
+-}
+-
+-static void free_bio_info(struct dm_rq_clone_bio_info *info)
+-{
+-	mempool_free(info, info->tio->md->io_pool);
+-}
+-
+ static int md_in_flight(struct mapped_device *md)
+ {
+ 	return atomic_read(&md->pending[READ]) +
+@@ -1438,30 +1429,17 @@ void dm_dispatch_request(struct request *rq)
+ }
+ EXPORT_SYMBOL_GPL(dm_dispatch_request);
+ 
+-static void dm_rq_bio_destructor(struct bio *bio)
+-{
+-	struct dm_rq_clone_bio_info *info = bio->bi_private;
+-	struct mapped_device *md = info->tio->md;
+-
+-	free_bio_info(info);
+-	bio_free(bio, md->bs);
+-}
+-
+ static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
+ 				 void *data)
+ {
+ 	struct dm_rq_target_io *tio = data;
+-	struct mapped_device *md = tio->md;
+-	struct dm_rq_clone_bio_info *info = alloc_bio_info(md);
+-
+-	if (!info)
+-		return -ENOMEM;
++	struct dm_rq_clone_bio_info *info =
++		container_of(bio, struct dm_rq_clone_bio_info, clone);
+ 
+ 	info->orig = bio_orig;
+ 	info->tio = tio;
+ 	bio->bi_end_io = end_clone_bio;
+ 	bio->bi_private = info;
+-	bio->bi_destructor = dm_rq_bio_destructor;
+ 
+ 	return 0;
+ }
+@@ -2696,7 +2674,8 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
+ 	if (!pools->tio_pool)
+ 		goto free_io_pool_and_out;
+ 
+-	pools->bs = bioset_create(pool_size, 0);
++	pools->bs = bioset_create(pool_size,
++				  offsetof(struct dm_rq_clone_bio_info, orig));
+ 	if (!pools->bs)
+ 		goto free_tio_pool_and_out;
+ 
 -- 
 1.7.7.3
