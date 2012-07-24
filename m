@@ -1,85 +1,150 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v4 03/12] block: Add bio_reset()
-Date: Tue, 24 Jul 2012 13:11:20 -0700
-Message-ID: <1343160689-12378-4-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v4 07/12] block: Rename bio_split() -> bio_pair_split()
+Date: Tue, 24 Jul 2012 13:11:24 -0700
+Message-ID: <1343160689-12378-8-git-send-email-koverstreet@google.com>
 References: <1343160689-12378-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1343160689-12378-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, bharrosh@panasas.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1343160689-12378-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
-Reusing bios is something that's been highly frowned upon in the past,
-but driver code keeps doing it anyways. If it's going to happen anyways,
-we should provide a generic method.
+This is prep work for introducing a more general bio_split()
 
-This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
-was open coding it, by doing a bio_init() and resetting bi_destructor.
-
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- fs/bio.c                  |   10 ++++++++++
- include/linux/bio.h       |    1 +
- include/linux/blk_types.h |    6 ++++++
- 3 files changed, 17 insertions(+), 0 deletions(-)
+ drivers/block/drbd/drbd_req.c |    2 +-
+ drivers/block/pktcdvd.c       |    2 +-
+ drivers/block/rbd.c           |    3 ++-
+ drivers/md/linear.c           |    2 +-
+ drivers/md/raid0.c            |    6 +++---
+ drivers/md/raid10.c           |    4 ++--
+ fs/bio.c                      |    4 ++--
+ include/linux/bio.h           |    2 +-
+ 8 files changed, 13 insertions(+), 12 deletions(-)
 
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index 8e93a6a..b5cfa3b 100644
+--- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -1150,7 +1150,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
+ 		const int sps = 1 << HT_SHIFT; /* sectors per slot */
+ 		const int mask = sps - 1;
+ 		const sector_t first_sectors = sps - (sect & mask);
+-		bp = bio_split(bio, first_sectors);
++		bp = bio_pair_split(bio, first_sectors);
+ 
+ 		/* we need to get a "reference count" (ap_bio_cnt)
+ 		 * to avoid races with the disconnect/reconnect/suspend code.
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 6fe693a..12a14c0 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -2467,7 +2467,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
+ 		if (last_zone != zone) {
+ 			BUG_ON(last_zone != zone + pd->settings.size);
+ 			first_sectors = last_zone - bio->bi_sector;
+-			bp = bio_split(bio, first_sectors);
++			bp = bio_pair_split(bio, first_sectors);
+ 			BUG_ON(!bp);
+ 			pkt_make_request(q, &bp->bio1);
+ 			pkt_make_request(q, &bp->bio2);
+diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+index 8f428a8..e33c224 100644
+--- a/drivers/block/rbd.c
++++ b/drivers/block/rbd.c
+@@ -732,7 +732,8 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+ 
+ 			/* split the bio. We'll release it either in the next
+ 			   call, or it will have to be released outside */
+-			bp = bio_split(old_chain, (len - total) / SECTOR_SIZE);
++			bp = bio_pair_split(old_chain,
++					    (len - total) / SECTOR_SIZE);
+ 			if (!bp)
+ 				goto err_out;
+ 
+diff --git a/drivers/md/linear.c b/drivers/md/linear.c
+index fa211d8..e860cb9 100644
+--- a/drivers/md/linear.c
++++ b/drivers/md/linear.c
+@@ -314,7 +314,7 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
+ 
+ 		rcu_read_unlock();
+ 
+-		bp = bio_split(bio, end_sector - bio->bi_sector);
++		bp = bio_pair_split(bio, end_sector - bio->bi_sector);
+ 
+ 		linear_make_request(mddev, &bp->bio1);
+ 		linear_make_request(mddev, &bp->bio2);
+diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+index de63a1f..c89c8aa 100644
+--- a/drivers/md/raid0.c
++++ b/drivers/md/raid0.c
+@@ -516,11 +516,11 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
+ 		 * refuse to split for us, so we need to split it.
+ 		 */
+ 		if (likely(is_power_of_2(chunk_sects)))
+-			bp = bio_split(bio, chunk_sects - (sector &
++			bp = bio_pair_split(bio, chunk_sects - (sector &
+ 							   (chunk_sects-1)));
+ 		else
+-			bp = bio_split(bio, chunk_sects -
+-				       sector_div(sector, chunk_sects));
++			bp = bio_pair_split(bio, chunk_sects -
++					    sector_div(sector, chunk_sects));
+ 		raid0_make_request(mddev, &bp->bio1);
+ 		raid0_make_request(mddev, &bp->bio2);
+ 		bio_pair_release(bp);
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 8da6282..be75924 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -1063,8 +1063,8 @@ static void make_request(struct mddev *mddev, struct bio * bio)
+ 		/* This is a one page bio that upper layers
+ 		 * refuse to split for us, so we need to split it.
+ 		 */
+-		bp = bio_split(bio,
+-			       chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
++		bp = bio_pair_split(bio,
++				    chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
+ 
+ 		/* Each of these 'make_request' calls will call 'wait_barrier'.
+ 		 * If the first succeeds but the second blocks due to the resync
 diff --git a/fs/bio.c b/fs/bio.c
-index 1c6c8b7..252e253 100644
+index 2631d0b..5d02aa5 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -261,6 +261,16 @@ void bio_init(struct bio *bio)
- }
- EXPORT_SYMBOL(bio_init);
+@@ -1493,7 +1493,7 @@ static void bio_pair_end_2(struct bio *bi, int err)
+ /*
+  * split a bio - only worry about a bio with a single page in its iovec
+  */
+-struct bio_pair *bio_split(struct bio *bi, int first_sectors)
++struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors)
+ {
+ 	struct bio_pair *bp = mempool_alloc(bio_split_pool, GFP_NOIO);
  
-+void bio_reset(struct bio *bio)
-+{
-+	/* Clear all flags below BIO_OWNS_VEC */
-+	unsigned long flags = bio->bi_flags & (~0UL << BIO_OWNS_VEC);
-+
-+	memset(bio, 0, BIO_RESET_BYTES);
-+	bio->bi_flags = flags|(1 << BIO_UPTODATE);
-+}
-+EXPORT_SYMBOL(bio_reset);
-+
+@@ -1536,7 +1536,7 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
+ 
+ 	return bp;
+ }
+-EXPORT_SYMBOL(bio_split);
++EXPORT_SYMBOL(bio_pair_split);
+ 
  /**
-  * bio_alloc_bioset - allocate a bio for I/O
-  * @gfp_mask:   the GFP_ mask given to the slab allocator
+  *      bio_sector_offset - Find hardware sector offset in bio
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 2643589..ba60319 100644
+index 484b96e..fdcc8dc 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -226,6 +226,7 @@ extern void __bio_clone(struct bio *, struct bio *);
- extern struct bio *bio_clone(struct bio *, gfp_t);
- 
- extern void bio_init(struct bio *);
-+extern void bio_reset(struct bio *);
- 
- extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
- extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 293547e..40411e2 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -59,6 +59,10 @@ struct bio {
- 	unsigned int		bi_seg_front_size;
- 	unsigned int		bi_seg_back_size;
- 
-+	/*
-+	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
-+	 */
-+
- 	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
- 
- 	atomic_t		bi_cnt;		/* pin count */
-@@ -93,6 +97,8 @@ struct bio {
- 	struct bio_vec		bi_inline_vecs[0];
+@@ -201,7 +201,7 @@ struct bio_pair {
+ 	atomic_t			cnt;
+ 	int				error;
  };
+-extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
++extern struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors);
+ extern void bio_pair_release(struct bio_pair *dbio);
  
-+#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
-+
- /*
-  * bio flags
-  */
+ extern struct bio_set *bioset_create(unsigned int, unsigned int);
 -- 
 1.7.7.3
