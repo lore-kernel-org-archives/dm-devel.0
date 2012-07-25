@@ -1,13 +1,13 @@
 From: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v4 09/12] block: Rework bio_pair_split()
-Date: Wed, 25 Jul 2012 15:03:30 +0300
-Message-ID: <500FE092.6010108@panasas.com>
-References: <1343160689-12378-1-git-send-email-koverstreet@google.com> <1343160689-12378-10-git-send-email-koverstreet@google.com>
+Subject: Re: [PATCH v4 10/12] block: Add bio_clone_kmalloc()
+Date: Wed, 25 Jul 2012 15:05:40 +0300
+Message-ID: <500FE114.1000707@panasas.com>
+References: <1343160689-12378-1-git-send-email-koverstreet@google.com> <1343160689-12378-11-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1343160689-12378-10-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1343160689-12378-11-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
@@ -15,49 +15,93 @@ List-Id: dm-devel.ids
 
 On 07/24/2012 11:11 PM, Kent Overstreet wrote:
 
-> This changes bio_pair_split() to use the new bio_split() underneath,
-> which gets rid of the single page bio limitation. The various callers
-> are fixed up for the slightly different struct bio_pair, and to remove
-> the unnecessary checks.
-> 
+ACK-by: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+
 > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-<snip>
 
-> +
-> +extern struct bio *bio_split(struct bio *bio, int sectors,
-> +			     gfp_t gfp, struct bio_set *bs);
+Thanks looks nice
 
-
-nit:
-
-Just for taking pride in my work, I'd move this extern declaration
-to the previous patch that actually introduces it.
-
-Cheers
-Boaz
-
->  extern struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors);
->  extern void bio_pair_release(struct bio_pair *dbio);
+> ---
+>  drivers/block/osdblk.c |    3 +--
+>  fs/bio.c               |   13 +++++++++++++
+>  fs/exofs/ore.c         |    5 ++---
+>  include/linux/bio.h    |    1 +
+>  4 files changed, 17 insertions(+), 5 deletions(-)
+> 
+> diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
+> index 87311eb..1bbc681 100644
+> --- a/drivers/block/osdblk.c
+> +++ b/drivers/block/osdblk.c
+> @@ -266,11 +266,10 @@ static struct bio *bio_chain_clone(struct bio *old_chain, gfp_t gfpmask)
+>  	struct bio *tmp, *new_chain = NULL, *tail = NULL;
 >  
-> @@ -512,7 +514,6 @@ extern int bio_integrity_prep(struct bio *);
->  extern void bio_integrity_endio(struct bio *, int);
->  extern void bio_integrity_advance(struct bio *, unsigned int);
->  extern void bio_integrity_trim(struct bio *, unsigned int, unsigned int);
-> -extern void bio_integrity_split(struct bio *, struct bio_pair *, int);
->  extern int bio_integrity_clone(struct bio *, struct bio *, gfp_t, struct bio_set *);
->  extern int bioset_integrity_create(struct bio_set *, int);
->  extern void bioset_integrity_free(struct bio_set *);
-> @@ -556,12 +557,6 @@ static inline int bio_integrity_clone(struct bio *bio, struct bio *bio_src,
->  	return 0;
+>  	while (old_chain) {
+> -		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
+> +		tmp = bio_clone_kmalloc(old_chain, gfpmask);
+>  		if (!tmp)
+>  			goto err_out;
+>  
+> -		__bio_clone(tmp, old_chain);
+>  		tmp->bi_bdev = NULL;
+>  		gfpmask &= ~__GFP_WAIT;
+>  		tmp->bi_next = NULL;
+> diff --git a/fs/bio.c b/fs/bio.c
+> index fa6dee4..9d0ceb2 100644
+> --- a/fs/bio.c
+> +++ b/fs/bio.c
+> @@ -499,6 +499,19 @@ struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
 >  }
+>  EXPORT_SYMBOL(bio_clone);
 >  
-> -static inline void bio_integrity_split(struct bio *bio, struct bio_pair *bp,
-> -				       int sectors)
-> -{
-> -	return;
-> -}
-> -
->  static inline void bio_integrity_advance(struct bio *bio,
->  					 unsigned int bytes_done)
->  {
+> +struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
+> +{
+> +	struct bio *b = bio_kmalloc(gfp_mask, bio->bi_max_vecs);
+> +
+> +	if (!b)
+> +		return NULL;
+> +
+> +	__bio_clone(b, bio);
+> +
+> +	return b;
+> +}
+> +EXPORT_SYMBOL(bio_clone_kmalloc);
+> +
+>  /**
+>   *	bio_get_nr_vecs		- return approx number of vecs
+>   *	@bdev:  I/O target
+> diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
+> index 24a49d4..a8d92fc 100644
+> --- a/fs/exofs/ore.c
+> +++ b/fs/exofs/ore.c
+> @@ -814,8 +814,8 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+>  			struct bio *bio;
+>  
+>  			if (per_dev != master_dev) {
+> -				bio = bio_kmalloc(GFP_KERNEL,
+> -						  master_dev->bio->bi_max_vecs);
+> +				bio = bio_clone_kmalloc(master_dev->bio,
+> +							GFP_KERNEL);
+>  				if (unlikely(!bio)) {
+>  					ORE_DBGMSG(
+>  					      "Failed to allocate BIO size=%u\n",
+> @@ -824,7 +824,6 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+>  					goto out;
+>  				}
+>  
+> -				__bio_clone(bio, master_dev->bio);
+>  				bio->bi_bdev = NULL;
+>  				bio->bi_next = NULL;
+>  				per_dev->offset = master_dev->offset;
+> diff --git a/include/linux/bio.h b/include/linux/bio.h
+> index 9720544..e180f1d 100644
+> --- a/include/linux/bio.h
+> +++ b/include/linux/bio.h
+> @@ -221,6 +221,7 @@ extern int bio_phys_segments(struct request_queue *, struct bio *);
+>  
+>  extern void __bio_clone(struct bio *, struct bio *);
+>  extern struct bio *bio_clone(struct bio *, gfp_t);
+> +struct bio *bio_clone_kmalloc(struct bio *, gfp_t);
+>  
+>  extern void bio_init(struct bio *);
+>  extern void bio_reset(struct bio *);
