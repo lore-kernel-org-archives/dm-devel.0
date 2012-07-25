@@ -1,157 +1,66 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [PATCH v4 08/12] block: Introduce new bio_split()
-Date: Wed, 25 Jul 2012 14:55:40 +0300
-Message-ID: <500FDEBC.9050607@panasas.com>
-References: <1343160689-12378-1-git-send-email-koverstreet@google.com> <1343160689-12378-9-git-send-email-koverstreet@google.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [RESEND PATCH 3/3] dm mpath: add ability to disable
+ partition creation
+Date: Wed, 25 Jul 2012 14:02:15 +0200
+Message-ID: <500FE047.8060009@suse.de>
+References: <1340735525-21083-1-git-send-email-snitzer@redhat.com> <1340735525-21083-4-git-send-email-snitzer@redhat.com> <20120711151839.GC2095@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1343160689-12378-9-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20120711151839.GC2095@agk-dp.fab.redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, James Bottomley <jbottomley@parallels.com>, linux-scsi@vger.kernel.org, Peter Rajnoha <prajnoha@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/24/2012 11:11 PM, Kent Overstreet wrote:
+On 07/11/2012 05:18 PM, Alasdair G Kergon wrote:
+> On Tue, Jun 26, 2012 at 02:32:05PM -0400, Mike Snitzer wrote:
+>> The new 'no_partitions' feature serves as a notifier to kpartx to _n=
+ot_
+>> create partitions on these multipath devices.
+> =20
+> This isn't really multipath-specific so doesn't belong in the target.
+> It could go into dm core, but we already have flags attached to
+> udev cookies that can turn udev rules on and off and thereby could
+> allow userspace multipath to control whether or not kpartx creates
+> partitions on any particular device.
+>=20
+> But first I'd like us to explore creating a config file for kpartx an=
+d
+> controlling the behaviour from there.  Activation could then be
+> triggered by target type, device name, scsi WWID, dm UUID etc. accord=
+ing
+> to rules in that file.
+>=20
+But that would mean one would have to maintain _two_ configuration
+files, one for multipath and one for kpartx.
 
-> The new bio_split() can split arbitrary bios - it's not restricted to
-> single page bios, like the old bio_split() (previously renamed to
-> bio_pair_split()). It also has different semantics - it doesn't allocate
-> a struct bio_pair, leaving it up to the caller to handle completions.
-> 
-> Signed-off-by: Kent Overstreet <koverstreet@google.com>
-> ---
->  fs/bio.c |   99 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 files changed, 99 insertions(+), 0 deletions(-)
-> 
-> diff --git a/fs/bio.c b/fs/bio.c
-> index 5d02aa5..a15e121 100644
-> --- a/fs/bio.c
-> +++ b/fs/bio.c
-> @@ -1539,6 +1539,105 @@ struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors)
->  EXPORT_SYMBOL(bio_pair_split);
->  
->  /**
-> + * bio_split - split a bio
-> + * @bio:	bio to split
-> + * @sectors:	number of sectors to split from the front of @bio
-> + * @gfp:	gfp mask
-> + * @bs:		bio set to allocate from
-> + *
-> + * Allocates and returns a new bio which represents @sectors from the start of
-> + * @bio, and updates @bio to represent the remaining sectors.
-> + *
-> + * If bio_sectors(@bio) was less than or equal to @sectors, returns @bio
-> + * unchanged.
-> + *
-> + * The newly allocated bio will point to @bio's bi_io_vec, if the split was on a
-> + * bvec boundry; it is the caller's responsibility to ensure that @bio is not
-> + * freed before the split.
-> + *
-> + * If bio_split() is running under generic_make_request(), it's not safe to
-> + * allocate more than one bio from the same bio set. Therefore, if it is running
-> + * under generic_make_request() it masks out __GFP_WAIT when doing the
-> + * allocation. The caller must check for failure if there's any possibility of
-> + * it being called from under generic_make_request(); it is then the caller's
-> + * responsibility to retry from a safe context (by e.g. punting to workqueue).
-> + */
-> +struct bio *bio_split(struct bio *bio, int sectors,
-> +		      gfp_t gfp, struct bio_set *bs)
-> +{
-> +	unsigned idx, vcnt = 0, nbytes = sectors << 9;
-> +	struct bio_vec *bv;
-> +	struct bio *ret = NULL;
-> +
-> +	BUG_ON(sectors <= 0);
-> +
-> +	/*
-> +	 * If we're being called from underneath generic_make_request() and we
-> +	 * already allocated any bios from this bio set, we risk deadlock if we
-> +	 * use the mempool. So instead, we possibly fail and let the caller punt
-> +	 * to workqueue or somesuch and retry in a safe context.
-> +	 */
-> +	if (current->bio_list)
-> +		gfp &= ~__GFP_WAIT;
+Also kpartx initially doesn't have any clue about device names, SCSI
+WWIDs etc. It just takes a device-mapper device and acts upon it.
+The only information it's got is the device-mapper name (which could
+be anything) and the device-mapper UUID if present.
+
+Same goes for udev rules; one would have to traverse the device
+stack backwards to retrieve any information about the hardware.
+
+So when moving the configuration into kpartx we would lose quite
+some flexibility. And reliability, methinks.
+
+=46lexilibity is a valid goal, but not when it can achieved only by
+adding complexity to other pieces.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
 
 
-NACK!
-
-If as you said above in the comment:
-	if there's any possibility of it being called from under generic_make_request();
-        it is then the caller's responsibility to ...
-
-So all the comment needs to say is: 
-	... caller's responsibility to not set __GFP_WAIT at gfp.
-
-And drop this here. It is up to the caller to decide. If the caller wants he can do
-"if (current->bio_list)" by his own.
-
-This is a general purpose utility you might not know it's context.
-for example with osdblk above will break.
-
-Thanks
-Boaz
-
-> +
-> +	if (sectors >= bio_sectors(bio))
-> +		return bio;
-> +
-> +	trace_block_split(bdev_get_queue(bio->bi_bdev), bio,
-> +			  bio->bi_sector + sectors);
-> +
-> +	bio_for_each_segment(bv, bio, idx) {
-> +		vcnt = idx - bio->bi_idx;
-> +
-> +		if (!nbytes) {
-> +			ret = bio_alloc_bioset(gfp, 0, bs);
-> +			if (!ret)
-> +				return NULL;
-> +
-> +			ret->bi_io_vec = bio_iovec(bio);
-> +			ret->bi_flags |= 1 << BIO_CLONED;
-> +			break;
-> +		} else if (nbytes < bv->bv_len) {
-> +			ret = bio_alloc_bioset(gfp, ++vcnt, bs);
-> +			if (!ret)
-> +				return NULL;
-> +
-> +			memcpy(ret->bi_io_vec, bio_iovec(bio),
-> +			       sizeof(struct bio_vec) * vcnt);
-> +
-> +			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
-> +			bv->bv_offset	+= nbytes;
-> +			bv->bv_len	-= nbytes;
-> +			break;
-> +		}
-> +
-> +		nbytes -= bv->bv_len;
-> +	}
-> +
-> +	ret->bi_bdev	= bio->bi_bdev;
-> +	ret->bi_sector	= bio->bi_sector;
-> +	ret->bi_size	= sectors << 9;
-> +	ret->bi_rw	= bio->bi_rw;
-> +	ret->bi_vcnt	= vcnt;
-> +	ret->bi_max_vecs = vcnt;
-> +	ret->bi_end_io	= bio->bi_end_io;
-> +	ret->bi_private	= bio->bi_private;
-> +
-> +	bio->bi_sector	+= sectors;
-> +	bio->bi_size	-= sectors << 9;
-> +	bio->bi_idx	 = idx;
-> +
-> +	if (bio_integrity(bio)) {
-> +		bio_integrity_clone(ret, bio, gfp, bs);
-> +		bio_integrity_trim(ret, 0, bio_sectors(ret));
-> +		bio_integrity_trim(bio, bio_sectors(ret), bio_sectors(bio));
-> +	}
-> +
-> +	return ret;
-> +}
-> +EXPORT_SYMBOL_GPL(bio_split);
-> +
-> +/**
->   *      bio_sector_offset - Find hardware sector offset in bio
->   *      @bio:           bio to inspect
->   *      @index:         bio_vec index
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
