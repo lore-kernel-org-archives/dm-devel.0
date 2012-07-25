@@ -1,53 +1,127 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: Dm-mirror Issue
-Date: Wed, 25 Jul 2012 10:38:55 -0500
-Message-ID: <D83C6575-B911-4B34-BD0B-B53CC145B364@redhat.com>
-References: <CAEfaOmgBJ32kjNAY57=k7p+PfnsTRMRCvujK=KOW-XpcscR8DA@mail.gmail.com>
-	<CAEfaOmhqN=ifxMnuYphdAiWzrwP4qfGW+ViYziFmwLEvRSXwDA@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1084)
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAEfaOmhqN=ifxMnuYphdAiWzrwP4qfGW+ViYziFmwLEvRSXwDA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v4 03/12] block: Add bio_reset()
+Date: Wed, 25 Jul 2012 15:56:20 -0700
+Message-ID: <20120725225620.GA8673@moria.home.lan>
+References: <1343160689-12378-1-git-send-email-koverstreet@google.com>
+ <1343160689-12378-4-git-send-email-koverstreet@google.com>
+ <500FD63F.7050501@panasas.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <500FD63F.7050501-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
+On Wed, Jul 25, 2012 at 02:19:27PM +0300, Boaz Harrosh wrote:
+> On 07/24/2012 11:11 PM, Kent Overstreet wrote:
+> 
+> > Reusing bios is something that's been highly frowned upon in the past,
+> > but driver code keeps doing it anyways. If it's going to happen anyways,
+> > we should provide a generic method.
+> > 
+> > This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
+> > was open coding it, by doing a bio_init() and resetting bi_destructor.
+> > 
+> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  fs/bio.c                  |   10 ++++++++++
+> >  include/linux/bio.h       |    1 +
+> >  include/linux/blk_types.h |    6 ++++++
+> >  3 files changed, 17 insertions(+), 0 deletions(-)
+> > 
+> > diff --git a/fs/bio.c b/fs/bio.c
+> > index 1c6c8b7..252e253 100644
+> > --- a/fs/bio.c
+> > +++ b/fs/bio.c
+> > @@ -261,6 +261,16 @@ void bio_init(struct bio *bio)
+> >  }
+> >  EXPORT_SYMBOL(bio_init);
+> >  
+> > +void bio_reset(struct bio *bio)
+> > +{
+> > +	/* Clear all flags below BIO_OWNS_VEC */
+> > +	unsigned long flags = bio->bi_flags & (~0UL << BIO_OWNS_VEC);
+> > +
+> 
+> 
+> Hey I have not seen these FLAGS thing before. Are these new?
+> 
+> Anyway. Please NO!!! for one you need to put a big fat comment
+> over at flags definitions. And two what happens when one adds
+> a new flag. Is it reset or not reset?
+> 
+> I'd rather you define a flags mask for those that need to be
+> preserved, at header, plus a comment that any needed-to-be-preserved
+> cross init flags, must be added to the mask.
 
-On Jul 25, 2012, at 3:58 AM, Gaurav Mahajan wrote:
+Yeah, that's a much better idea. Do you think this is clear enough?
 
-> Hi,
-> 
-> I want to run Dm-raid1 or dm-mirror in degraded mode. 
-> 
-> So say I have 2 Disks (loop devices) and I create a mirror device over that (using dmsetup).
-> Create EXT4 over the new device, mounted it and started a huge number of IO using dd on that device.
-> Now while the IO are going on, I failed the 'Default' Mirror in the mirror set.
-> 
-> Then ideally the IO operation should not break. All the IO should go to other mirror.
-> But it is not happening. Either my dd command hangs till the default device comes back or it returns an IO error 
-> and breaks the IO operations on disk.
-> 
-> Is this is known behavior ? 
-> Or
-> I am missing something in configuration ?
-> 
-> I tried disabling initial sync, but still it is behaving same.
-> 
-> I am using Kernel 2.6.32. 
-> Mirror target's version is 1.12.0 
-
-This is expected behavior.  The dm-raid1.c code as written will block I/O in the event of a failure and wait for repair.  This repair can be automated (as LVM does with dmeventd monitoring) or manual, but you are stuck until the condition is cleared.
-
-Much of this boils down to the fact that failures are not recorded by the mirror in a superblock or log by the kernel.  MD RAID can handle these situations because it does record device failures in the array superblocks.  You can use MD or - if you prefer device-mapper - you can use dm-raid.c.  Documentation for device-mapper raid targets can be found in the kernel source: linux/Documentation/device-mapper/dm-raid.txt.  Alternately, you can create RAID devices via LVM (or 'mdadm' as I eluded to above).
-
- brassow
+diff --git a/fs/bio.c b/fs/bio.c
+index 1c6c8b7..c7f3442 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -261,6 +261,15 @@ void bio_init(struct bio *bio)
+ }
+ EXPORT_SYMBOL(bio_init);
+ 
++void bio_reset(struct bio *bio)
++{
++	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
++
++	memset(bio, 0, BIO_RESET_BYTES);
++	bio->bi_flags = flags|(1 << BIO_UPTODATE);
++}
++EXPORT_SYMBOL(bio_reset);
++
+ /**
+  * bio_alloc_bioset - allocate a bio for I/O
+  * @gfp_mask:   the GFP_ mask given to the slab allocator
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 2643589..ba60319 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -226,6 +226,7 @@ extern void __bio_clone(struct bio *, struct bio *);
+ extern struct bio *bio_clone(struct bio *, gfp_t);
+ 
+ extern void bio_init(struct bio *);
++extern void bio_reset(struct bio *);
+ 
+ extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
+ extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 293547e..769799f 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -59,6 +59,10 @@ struct bio {
+ 	unsigned int		bi_seg_front_size;
+ 	unsigned int		bi_seg_back_size;
+ 
++	/*
++	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
++	 */
++
+ 	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
+ 
+ 	atomic_t		bi_cnt;		/* pin count */
+@@ -93,6 +97,8 @@ struct bio {
+ 	struct bio_vec		bi_inline_vecs[0];
+ };
+ 
++#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
++
+ /*
+  * bio flags
+  */
+@@ -108,6 +114,9 @@ struct bio {
+ #define BIO_FS_INTEGRITY 9	/* fs owns integrity data, not block layer */
+ #define BIO_QUIET	10	/* Make BIO Quiet */
+ #define BIO_MAPPED_INTEGRITY 11/* integrity metadata has been remapped */
++
++#define BIO_RESET_BITS 12	/* Flags starting here get preserved by bio_reset() */
++
+ #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
+ 
+ /*
