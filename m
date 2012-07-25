@@ -1,66 +1,63 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] [RESEND PATCH 3/3] dm mpath: add ability to disable
- partition creation
-Date: Wed, 25 Jul 2012 14:02:15 +0200
-Message-ID: <500FE047.8060009@suse.de>
-References: <1340735525-21083-1-git-send-email-snitzer@redhat.com> <1340735525-21083-4-git-send-email-snitzer@redhat.com> <20120711151839.GC2095@agk-dp.fab.redhat.com>
+From: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v4 09/12] block: Rework bio_pair_split()
+Date: Wed, 25 Jul 2012 15:03:30 +0300
+Message-ID: <500FE092.6010108@panasas.com>
+References: <1343160689-12378-1-git-send-email-koverstreet@google.com> <1343160689-12378-10-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20120711151839.GC2095@agk-dp.fab.redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, James Bottomley <jbottomley@parallels.com>, linux-scsi@vger.kernel.org, Peter Rajnoha <prajnoha@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1343160689-12378-10-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 07/11/2012 05:18 PM, Alasdair G Kergon wrote:
-> On Tue, Jun 26, 2012 at 02:32:05PM -0400, Mike Snitzer wrote:
->> The new 'no_partitions' feature serves as a notifier to kpartx to _n=
-ot_
->> create partitions on these multipath devices.
-> =20
-> This isn't really multipath-specific so doesn't belong in the target.
-> It could go into dm core, but we already have flags attached to
-> udev cookies that can turn udev rules on and off and thereby could
-> allow userspace multipath to control whether or not kpartx creates
-> partitions on any particular device.
->=20
-> But first I'd like us to explore creating a config file for kpartx an=
-d
-> controlling the behaviour from there.  Activation could then be
-> triggered by target type, device name, scsi WWID, dm UUID etc. accord=
-ing
-> to rules in that file.
->=20
-But that would mean one would have to maintain _two_ configuration
-files, one for multipath and one for kpartx.
+On 07/24/2012 11:11 PM, Kent Overstreet wrote:
 
-Also kpartx initially doesn't have any clue about device names, SCSI
-WWIDs etc. It just takes a device-mapper device and acts upon it.
-The only information it's got is the device-mapper name (which could
-be anything) and the device-mapper UUID if present.
+> This changes bio_pair_split() to use the new bio_split() underneath,
+> which gets rid of the single page bio limitation. The various callers
+> are fixed up for the slightly different struct bio_pair, and to remove
+> the unnecessary checks.
+> 
+> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-Same goes for udev rules; one would have to traverse the device
-stack backwards to retrieve any information about the hardware.
+<snip>
 
-So when moving the configuration into kpartx we would lose quite
-some flexibility. And reliability, methinks.
-
-=46lexilibity is a valid goal, but not when it can achieved only by
-adding complexity to other pieces.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+> +
+> +extern struct bio *bio_split(struct bio *bio, int sectors,
+> +			     gfp_t gfp, struct bio_set *bs);
 
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+nit:
+
+Just for taking pride in my work, I'd move this extern declaration
+to the previous patch that actually introduces it.
+
+Cheers
+Boaz
+
+>  extern struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors);
+>  extern void bio_pair_release(struct bio_pair *dbio);
+>  
+> @@ -512,7 +514,6 @@ extern int bio_integrity_prep(struct bio *);
+>  extern void bio_integrity_endio(struct bio *, int);
+>  extern void bio_integrity_advance(struct bio *, unsigned int);
+>  extern void bio_integrity_trim(struct bio *, unsigned int, unsigned int);
+> -extern void bio_integrity_split(struct bio *, struct bio_pair *, int);
+>  extern int bio_integrity_clone(struct bio *, struct bio *, gfp_t, struct bio_set *);
+>  extern int bioset_integrity_create(struct bio_set *, int);
+>  extern void bioset_integrity_free(struct bio_set *);
+> @@ -556,12 +557,6 @@ static inline int bio_integrity_clone(struct bio *bio, struct bio *bio_src,
+>  	return 0;
+>  }
+>  
+> -static inline void bio_integrity_split(struct bio *bio, struct bio_pair *bp,
+> -				       int sectors)
+> -{
+> -	return;
+> -}
+> -
+>  static inline void bio_integrity_advance(struct bio *bio,
+>  					 unsigned int bytes_done)
+>  {
