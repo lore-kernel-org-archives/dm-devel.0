@@ -1,107 +1,95 @@
-From: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v4 10/12] block: Add bio_clone_kmalloc()
-Date: Wed, 25 Jul 2012 15:05:40 +0300
-Message-ID: <500FE114.1000707@panasas.com>
-References: <1343160689-12378-1-git-send-email-koverstreet@google.com> <1343160689-12378-11-git-send-email-koverstreet@google.com>
+From: Petr Uzel <petr.uzel@suse.cz>
+Subject: [PATCH] kpartx: work correctly with empty GPT table
+Date: Wed, 25 Jul 2012 14:54:07 +0200
+Message-ID: <1343220847-22830-1-git-send-email-petr.uzel@suse.cz>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1343160689-12378-11-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 07/24/2012 11:11 PM, Kent Overstreet wrote:
+When running the partition table probes, the code considered empty
+tables as invalid ones. Because of this, kpartx -u / -d does not work
+correctly on empty tables (with zero partitions).
 
-ACK-by: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+The return value of the probes should be:
+-1: not our partition table type
+0: our partition table, but no partitions exist
+>0: number of partitions found
 
-> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Adapt read_gpt_pt() to this semantics.
 
+CC: Hannes Reinecke <hare@suse.com>
+CC: Christophe Varoqui <christophe.varoqui@gmail.com>
 
-Thanks looks nice
+Signed-off-by: Petr Uzel <petr.uzel@suse.cz>
+---
+ kpartx/gpt.c    |    6 +++---
+ kpartx/kpartx.c |    6 ++----
+ 2 files changed, 5 insertions(+), 7 deletions(-)
 
-> ---
->  drivers/block/osdblk.c |    3 +--
->  fs/bio.c               |   13 +++++++++++++
->  fs/exofs/ore.c         |    5 ++---
->  include/linux/bio.h    |    1 +
->  4 files changed, 17 insertions(+), 5 deletions(-)
-> 
-> diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
-> index 87311eb..1bbc681 100644
-> --- a/drivers/block/osdblk.c
-> +++ b/drivers/block/osdblk.c
-> @@ -266,11 +266,10 @@ static struct bio *bio_chain_clone(struct bio *old_chain, gfp_t gfpmask)
->  	struct bio *tmp, *new_chain = NULL, *tail = NULL;
->  
->  	while (old_chain) {
-> -		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
-> +		tmp = bio_clone_kmalloc(old_chain, gfpmask);
->  		if (!tmp)
->  			goto err_out;
->  
-> -		__bio_clone(tmp, old_chain);
->  		tmp->bi_bdev = NULL;
->  		gfpmask &= ~__GFP_WAIT;
->  		tmp->bi_next = NULL;
-> diff --git a/fs/bio.c b/fs/bio.c
-> index fa6dee4..9d0ceb2 100644
-> --- a/fs/bio.c
-> +++ b/fs/bio.c
-> @@ -499,6 +499,19 @@ struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
->  }
->  EXPORT_SYMBOL(bio_clone);
->  
-> +struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
-> +{
-> +	struct bio *b = bio_kmalloc(gfp_mask, bio->bi_max_vecs);
-> +
-> +	if (!b)
-> +		return NULL;
-> +
-> +	__bio_clone(b, bio);
-> +
-> +	return b;
-> +}
-> +EXPORT_SYMBOL(bio_clone_kmalloc);
-> +
->  /**
->   *	bio_get_nr_vecs		- return approx number of vecs
->   *	@bdev:  I/O target
-> diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
-> index 24a49d4..a8d92fc 100644
-> --- a/fs/exofs/ore.c
-> +++ b/fs/exofs/ore.c
-> @@ -814,8 +814,8 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
->  			struct bio *bio;
->  
->  			if (per_dev != master_dev) {
-> -				bio = bio_kmalloc(GFP_KERNEL,
-> -						  master_dev->bio->bi_max_vecs);
-> +				bio = bio_clone_kmalloc(master_dev->bio,
-> +							GFP_KERNEL);
->  				if (unlikely(!bio)) {
->  					ORE_DBGMSG(
->  					      "Failed to allocate BIO size=%u\n",
-> @@ -824,7 +824,6 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
->  					goto out;
->  				}
->  
-> -				__bio_clone(bio, master_dev->bio);
->  				bio->bi_bdev = NULL;
->  				bio->bi_next = NULL;
->  				per_dev->offset = master_dev->offset;
-> diff --git a/include/linux/bio.h b/include/linux/bio.h
-> index 9720544..e180f1d 100644
-> --- a/include/linux/bio.h
-> +++ b/include/linux/bio.h
-> @@ -221,6 +221,7 @@ extern int bio_phys_segments(struct request_queue *, struct bio *);
->  
->  extern void __bio_clone(struct bio *, struct bio *);
->  extern struct bio *bio_clone(struct bio *, gfp_t);
-> +struct bio *bio_clone_kmalloc(struct bio *, gfp_t);
->  
->  extern void bio_init(struct bio *);
->  extern void bio_reset(struct bio *);
+diff --git a/kpartx/gpt.c b/kpartx/gpt.c
+index 3082cae..18be035 100644
+--- a/kpartx/gpt.c
++++ b/kpartx/gpt.c
+@@ -625,8 +625,8 @@ find_valid_gpt(int fd, gpt_header ** gpt, gpt_entry ** ptes)
+  * @fd
+  * @all - slice with start/size of whole disk
+  *
+- *  0 if this isn't our partition table
+- *  number of partitions if successful
++ *  -1 if this isn't our partition table
++ *  number of partitions if successful (>= 0)
+  *
+  */
+ int
+@@ -643,7 +643,7 @@ read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns)
+ 			free (gpt);
+ 		if (ptes)
+ 			free (ptes);
+-		return 0;
++		return -1;
+ 	}
+ 
+ 	for (i = 0; i < __le32_to_cpu(gpt->num_partition_entries) && i < ns; i++) {
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index b5e0a32..9a4c694 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -368,12 +368,10 @@ main(int argc, char **argv){
+ 		/* here we get partitions */
+ 		n = ptp->fn(fd, all, slices, SIZE(slices));
+ 
++		if (n >= 0) {
+ #ifdef DEBUG
+-		if (n >= 0)
+ 			printf("%s: %d slices\n", ptp->type, n);
+ #endif
+-
+-		if (n > 0) {
+ 			close(fd);
+ 			fd = -1;
+ 		}
+@@ -607,7 +605,7 @@ main(int argc, char **argv){
+ 			break;
+ 
+ 		}
+-		if (n > 0)
++		if (n >= 0)
+ 			break;
+ 	}
+ 	if (what == LIST && loopcreated && S_ISREG (buf.st_mode)) {
+-- 
+1.7.7
