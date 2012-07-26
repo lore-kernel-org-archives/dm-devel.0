@@ -1,74 +1,113 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 01/12] block: Generalized bio pool freeing
-Date: Wed, 25 Jul 2012 16:38:29 -0700
-Message-ID: <20120725233829.GE8673@moria.home.lan>
-References: <1343160689-12378-1-git-send-email-koverstreet@google.com>
- <1343160689-12378-2-git-send-email-koverstreet@google.com>
- <500FD32F.2010809@panasas.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [RESEND PATCH 3/3] dm mpath: add ability to
+	disable	partition creation
+Date: Thu, 26 Jul 2012 12:03:28 -0500
+Message-ID: <20120726170328.GD5299@ether.msp.redhat.com>
+References: <1340735525-21083-1-git-send-email-snitzer@redhat.com>
+	<1340735525-21083-4-git-send-email-snitzer@redhat.com>
+	<20120711151839.GC2095@agk-dp.fab.redhat.com>
+	<500FE047.8060009@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <500FD32F.2010809-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+In-Reply-To: <500FE047.8060009@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, linux-scsi@vger.kernel.org, James Bottomley <jbottomley@parallels.com>
 List-Id: dm-devel.ids
 
-On Wed, Jul 25, 2012 at 02:06:23PM +0300, Boaz Harrosh wrote:
-> On 07/24/2012 11:11 PM, Kent Overstreet wrote:
-> 
-> > With the old code, when you allocate a bio from a bio pool you have to
-> > implement your own destructor that knows how to find the bio pool the
-> > bio was originally allocated from.
-> > 
-> > This adds a new field to struct bio (bi_pool) and changes
-> > bio_alloc_bioset() to use it. This makes various bio destructors
-> > unnecessary, so they're then deleted.
-> > 
-> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> 
-> <snip>
-> 
-> > diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
-> > index fd47950..be65582 100644
-> > --- a/drivers/target/target_core_iblock.c
-> > +++ b/drivers/target/target_core_iblock.c
-> > @@ -447,14 +447,6 @@ static void iblock_complete_cmd(struct se_cmd *cmd)
-> >  	kfree(ibr);
-> >  }
-> >  
-> > -static void iblock_bio_destructor(struct bio *bio)
-> > -{
-> > -	struct se_cmd *cmd = bio->bi_private;
-> > -	struct iblock_dev *ib_dev = cmd->se_dev->dev_ptr;
-> > -
-> > -	bio_free(bio, ib_dev->ibd_bio_set);
-> > -}
-> > -
-> >  static struct bio *
-> >  iblock_get_bio(struct se_cmd *cmd, sector_t lba, u32 sg_num)
-> >  {
-> > @@ -475,8 +467,15 @@ iblock_get_bio(struct se_cmd *cmd, sector_t lba, u32 sg_num)
-> >  	}
-> >  
-> >  	bio->bi_bdev = ib_dev->ibd_bd;
-> > +<<<<<<< HEAD
-> >  	bio->bi_private = cmd;
-> >  	bio->bi_destructor = iblock_bio_destructor;
-> > +||||||| merged common ancestors
-> > +	bio->bi_private = task;
-> > +	bio->bi_destructor = iblock_bio_destructor;
-> > +=======
-> > +	bio->bi_private = task;
-> > +>>>>>>> block: Generalized bio pool freeing
-> >  	bio->bi_end_io = &iblock_bio_done;
-> >  	bio->bi_sector = lba;
-> >  	return bio;
-> 
-> 
-> You left out a rebase merge conflict. Did you allmodconfig compile
-> these patches?
+On Wed, Jul 25, 2012 at 02:02:15PM +0200, Hannes Reinecke wrote:
+> On 07/11/2012 05:18 PM, Alasdair G Kergon wrote:
+> > On Tue, Jun 26, 2012 at 02:32:05PM -0400, Mike Snitzer wrote:
+> >> The new 'no_partitions' feature serves as a notifier to kpartx to _not_
+> >> create partitions on these multipath devices.
+> >  =
 
-Argh, clearly not. And I even fixed that rebase merge conflict at one
-point, that's distressing.
+> > This isn't really multipath-specific so doesn't belong in the target.
+> > It could go into dm core, but we already have flags attached to
+> > udev cookies that can turn udev rules on and off and thereby could
+> > allow userspace multipath to control whether or not kpartx creates
+> > partitions on any particular device.
+> > =
+
+> > But first I'd like us to explore creating a config file for kpartx and
+> > controlling the behaviour from there.  Activation could then be
+> > triggered by target type, device name, scsi WWID, dm UUID etc. according
+> > to rules in that file.
+> > =
+
+> But that would mean one would have to maintain _two_ configuration
+> files, one for multipath and one for kpartx.
+> =
+
+> Also kpartx initially doesn't have any clue about device names, SCSI
+> WWIDs etc. It just takes a device-mapper device and acts upon it.
+> The only information it's got is the device-mapper name (which could
+> be anything) and the device-mapper UUID if present.
+> =
+
+> Same goes for udev rules; one would have to traverse the device
+> stack backwards to retrieve any information about the hardware.
+> =
+
+> So when moving the configuration into kpartx we would lose quite
+> some flexibility. And reliability, methinks.
+> =
+
+> Flexilibity is a valid goal, but not when it can achieved only by
+> adding complexity to other pieces.
+
+Kpartx does already grab the dm device name, uuid and target type
+(although it doesn't currently use the target type for anything). So,
+aside from adding code to read a config file, we don't really have to
+add any complexity to be able to have kpartx configure a device based on
+dm name (which admittedly probably isn't that useful), dm UUID, or
+target type.  We could also have it configure based on the blkid
+results, which should be present when it's called by udev. When
+called manually, kpartx could use libblkid.
+
+We do lose the ability to have kpartx easily configure a device based on
+hardware type.  However, that's not really essential.  Multipath needs
+it because it can't even finish setting up a device until it knows the
+hardware type.  For kpartx, it could make configuration simpler in cases
+where all of the LUNs from a particular hardware type needed to be
+configured the same way.  This may be handy, but its not necessary, and
+you could achieve the same results using UUIDs. What we gain is the
+ability to set this property for non-multipath devices, which currently
+isn't possible.  Also, blkid based (fs type, fs uuid, and fs label)
+configuration seems to me like it would be the most useful. =
+
+
+Now I'm not arguing that adding configuration file handling isn't adding
+complexity, and adding libblkid calls would add more. But since
+multipath always sets the UUID, I don't see this losing any reliability,
+and I does gain the fexibility to work with any dm target type. I
+don't feel strongly about this one way or the other, but do see the
+benefits of having kpartx own this configuration setting.
+
+-Ben
+
+> =
+
+> Cheers,
+> =
+
+> Hannes
+> -- =
+
+> Dr. Hannes Reinecke		      zSeries & Storage
+> hare@suse.de			      +49 911 74053 688
+> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+> =
