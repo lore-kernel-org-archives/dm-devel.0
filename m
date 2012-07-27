@@ -1,41 +1,305 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH] scsi : Adding all the definitions of host bytes in
- hostbyte_table
-Date: Fri, 27 Jul 2012 17:28:40 +0000
-Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B0BC9EDE3@SACEXCMBX02-PRD.hq.netapp.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: remove callout code
+Date: Fri, 27 Jul 2012 15:54:29 -0500
+Message-ID: <20120727205428.GI5299@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi <linux-scsi@vger.kernel.org>
-Cc: "device-mapper development (dm-devel@redhat.com)" <dm-devel@redhat.com>, "James.Bottomley@hansenpartnership.com" <James.Bottomley@hansenpartnership.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Submitted this patch earlier. But it still did not make it to kernel tree.
-Resubmitting again(recreated on top of 3.5 kernel).
- 
-Adding all the definitions of host bytes in hostbyte_table.
+Since nothing is using the callout code anymore, I've removed it.
 
-Without this patch, scsi_show_result prints hostbyte as invalid
-for statuses that are not defined in hostbyte_table(when scsi logging is enabled).
-
-Look at scsi_print_result function for better understanding.
-
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
---- linux-3.5-rc7/drivers/scsi/constants.c.orig	2012-07-27 13:02:28.000000000 -0500
-+++ linux-3.5-rc7/drivers/scsi/constants.c	2012-07-27 13:03:26.000000000 -0500
-@@ -1422,7 +1422,8 @@ static const char * const hostbyte_table
- "DID_OK", "DID_NO_CONNECT", "DID_BUS_BUSY", "DID_TIME_OUT", "DID_BAD_TARGET",
- "DID_ABORT", "DID_PARITY", "DID_ERROR", "DID_RESET", "DID_BAD_INTR",
- "DID_PASSTHROUGH", "DID_SOFT_ERROR", "DID_IMM_RETRY", "DID_REQUEUE",
--"DID_TRANSPORT_DISRUPTED", "DID_TRANSPORT_FAILFAST" };
-+"DID_TRANSPORT_DISRUPTED", "DID_TRANSPORT_FAILFAST", "DID_TARGET_FAILURE",
-+"DID_NEXUS_FAILURE" };
- #define NUM_HOSTBYTE_STRS ARRAY_SIZE(hostbyte_table)
+ libmultipath/Makefile    |    2 
+ libmultipath/callout.c   |  217 -----------------------------------------------
+ libmultipath/callout.h   |    7 -
+ libmultipath/discovery.c |    1 
+ multipathd/main.c        |    1 
+ 5 files changed, 1 insertion(+), 227 deletions(-)
+
+Index: multipath-tools-120518/libmultipath/Makefile
+===================================================================
+--- multipath-tools-120518.orig/libmultipath/Makefile
++++ multipath-tools-120518/libmultipath/Makefile
+@@ -9,7 +9,7 @@ DEVLIB = libmultipath.so
+ LIBS = $(DEVLIB).$(SONAME)
+ LIBDEPS = -lpthread -ldl -ldevmapper -ludev
  
- static const char * const driverbyte_table[]={
-
-
+-OBJS = memory.o parser.o vector.o devmapper.o callout.o \
++OBJS = memory.o parser.o vector.o devmapper.o \
+        hwtable.o blacklist.o util.o dmparser.o config.o \
+        structs.o discovery.o propsel.o dict.o \
+        pgpolicies.o debug.o regex.o defaults.o uevent.o \
+Index: multipath-tools-120518/libmultipath/callout.c
+===================================================================
+--- multipath-tools-120518.orig/libmultipath/callout.c
++++ /dev/null
+@@ -1,217 +0,0 @@
+-/*
+- * Source: copy of the udev package source file
+- *
+- * Copyrights of the source file apply
+- * Copyright (c) 2004 Christophe Varoqui
+- */
+-#include <stdio.h>
+-#include <sys/stat.h>
+-#include <string.h>
+-#include <unistd.h>
+-#include <sys/types.h>
+-#include <stdlib.h>
+-#include <fcntl.h>
+-#include <sys/wait.h>
+-#include <errno.h>
+-
+-#include "checkers.h"
+-#include "vector.h"
+-#include "structs.h"
+-#include "util.h"
+-#include "debug.h"
+-
+-int execute_program(char *path, char *value, int len)
+-{
+-	int retval;
+-	int count;
+-	int status;
+-	int fds[2], null_fd;
+-	pid_t pid;
+-	char *pos;
+-	char arg[CALLOUT_MAX_SIZE];
+-	int argc = sizeof(arg) / 2;
+-	char *argv[argc + 1];
+-	int i;
+-
+-	i = 0;
+-
+-	if (strchr(path, ' ')) {
+-		strlcpy(arg, path, sizeof(arg));
+-		pos = arg;
+-		while (pos != NULL && i < argc) {
+-			if (pos[0] == '\'') {
+-				/* don't separate if in apostrophes */
+-				pos++;
+-				argv[i] = strsep(&pos, "\'");
+-				while (pos[0] == ' ')
+-					pos++;
+-			} else {
+-				argv[i] = strsep(&pos, " ");
+-			}
+-			i++;
+-		}
+-	} else {
+-		argv[i++] = path;
+-	}
+-	argv[i] =  NULL;
+-
+-	retval = pipe(fds);
+-
+-	if (retval != 0) {
+-		condlog(0, "error creating pipe for callout: %s", strerror(errno));
+-		return -1;
+-	}
+-
+-	pid = fork();
+-
+-	switch(pid) {
+-	case 0:
+-		/* child */
+-		close(STDOUT_FILENO);
+-
+-		/* dup write side of pipe to STDOUT */
+-		if (dup(fds[1]) < 0)
+-			return -1;
+-
+-		/* Ignore writes to stderr */
+-		null_fd = open("/dev/null", O_WRONLY);
+-		if (null_fd > 0) {
+-			close(STDERR_FILENO);
+-			dup(null_fd);
+-			close(null_fd);
+-		}
+-
+-		retval = execv(argv[0], argv);
+-		condlog(0, "error execing %s : %s", argv[0], strerror(errno));
+-		exit(-1);
+-	case -1:
+-		condlog(0, "fork failed: %s", strerror(errno));
+-		close(fds[0]);
+-		close(fds[1]);
+-		return -1;
+-	default:
+-		/* parent reads from fds[0] */
+-		close(fds[1]);
+-		retval = 0;
+-		i = 0;
+-		while (1) {
+-			count = read(fds[0], value + i, len - i-1);
+-			if (count <= 0)
+-				break;
+-
+-			i += count;
+-			if (i >= len-1) {
+-				condlog(0, "not enough space for response from %s", argv[0]);
+-				retval = -1;
+-				break;
+-			}
+-		}
+-
+-		if (count < 0) {
+-			condlog(0, "no response from %s", argv[0]);
+-			retval = -1;
+-		}
+-
+-		if (i > 0 && value[i-1] == '\n')
+-			i--;
+-		value[i] = '\0';
+-
+-		wait(&status);
+-		close(fds[0]);
+-
+-		retval = -1;
+-		if (WIFEXITED(status)) {
+-			status = WEXITSTATUS(status);
+-			if (status == 0)
+-				retval = 0;
+-			else
+-				condlog(0, "%s exitted with %d", argv[0], status);
+-		}
+-		else if (WIFSIGNALED(status))
+-			condlog(0, "%s was terminated by signal %d", argv[0], WTERMSIG(status));
+-		else
+-			condlog(0, "%s terminated abnormally", argv[0]);
+-	}
+-	return retval;
+-}
+-
+-extern int
+-apply_format (char * string, char * cmd, struct path * pp)
+-{
+-	char * pos;
+-	char * dst;
+-	char * p;
+-	char * q;
+-	int len;
+-	int myfree;
+-
+-	if (!string)
+-		return 1;
+-
+-	if (!cmd)
+-		return 1;
+-
+-	dst = cmd;
+-	p = dst;
+-	pos = strchr(string, '%');
+-	myfree = CALLOUT_MAX_SIZE;
+-
+-	if (!pos) {
+-		strcpy(dst, string);
+-		return 0;
+-	}
+-
+-	len = (int) (pos - string) + 1;
+-	myfree -= len;
+-
+-	if (myfree < 2)
+-		return 1;
+-
+-	snprintf(p, len, "%s", string);
+-	p += len - 1;
+-	pos++;
+-
+-	switch (*pos) {
+-	case 'n':
+-		len = strlen(pp->dev) + 1;
+-		myfree -= len;
+-
+-		if (myfree < 2)
+-			return 1;
+-
+-		snprintf(p, len, "%s", pp->dev);
+-		for (q = p; q < p + len; q++) {
+-			if (q && *q == '!')
+-				*q = '/';
+-		}
+-		p += len - 1;
+-		break;
+-	case 'd':
+-		len = strlen(pp->dev_t) + 1;
+-		myfree -= len;
+-
+-		if (myfree < 2)
+-			return 1;
+-
+-		snprintf(p, len, "%s", pp->dev_t);
+-		p += len - 1;
+-		break;
+-	default:
+-		break;
+-	}
+-	pos++;
+-
+-	if (!*pos)
+-		return 0;
+-
+-	len = strlen(pos) + 1;
+-	myfree -= len;
+-
+-	if (myfree < 2)
+-		return 1;
+-
+-	snprintf(p, len, "%s", pos);
+-	condlog(3, "reformated callout = %s", dst);
+-	return 0;
+-}
+-
+Index: multipath-tools-120518/libmultipath/callout.h
+===================================================================
+--- multipath-tools-120518.orig/libmultipath/callout.h
++++ /dev/null
+@@ -1,7 +0,0 @@
+-#ifndef _CALLOUT_H
+-#define _CALLOUT_H
+-
+-int execute_program(char *, char *, int);
+-int apply_format (char *, char *, struct path *);
+-
+-#endif /* _CALLOUT_H */
+Index: multipath-tools-120518/libmultipath/discovery.c
+===================================================================
+--- multipath-tools-120518.orig/libmultipath/discovery.c
++++ multipath-tools-120518/libmultipath/discovery.c
+@@ -20,7 +20,6 @@
+ #include "structs.h"
+ #include "config.h"
+ #include "blacklist.h"
+-#include "callout.h"
+ #include "debug.h"
+ #include "propsel.h"
+ #include "sg_include.h"
+Index: multipath-tools-120518/multipathd/main.c
+===================================================================
+--- multipath-tools-120518.orig/multipathd/main.c
++++ multipath-tools-120518/multipathd/main.c
+@@ -35,7 +35,6 @@
+ #include <hwtable.h>
+ #include <defaults.h>
+ #include <structs.h>
+-#include <callout.h>
+ #include <blacklist.h>
+ #include <structs_vec.h>
+ #include <dmparser.h>
