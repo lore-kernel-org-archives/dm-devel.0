@@ -1,113 +1,179 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [RESEND PATCH 3/3] dm mpath: add ability to
-	disable	partition creation
-Date: Thu, 26 Jul 2012 12:03:28 -0500
-Message-ID: <20120726170328.GD5299@ether.msp.redhat.com>
-References: <1340735525-21083-1-git-send-email-snitzer@redhat.com>
-	<1340735525-21083-4-git-send-email-snitzer@redhat.com>
-	<20120711151839.GC2095@agk-dp.fab.redhat.com>
-	<500FE047.8060009@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] A possible deadlock with stacked devices (was: [PATCH v4
+ 08/12] block: Introduce new bio_split())
+Date: Thu, 26 Jul 2012 20:50:46 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1207262005450.28322@file.rdu.redhat.com>
+References: <1343160689-12378-1-git-send-email-koverstreet@google.com>
+ <1343160689-12378-9-git-send-email-koverstreet@google.com> <500FDEBC.9050607@panasas.com>
+ <20120725232611.GD8673@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <500FE047.8060009@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, linux-scsi@vger.kernel.org, James Bottomley <jbottomley@parallels.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120725232611.GD8673@moria.home.lan>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: Boaz Harrosh <bharrosh@panasas.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-On Wed, Jul 25, 2012 at 02:02:15PM +0200, Hannes Reinecke wrote:
-> On 07/11/2012 05:18 PM, Alasdair G Kergon wrote:
-> > On Tue, Jun 26, 2012 at 02:32:05PM -0400, Mike Snitzer wrote:
-> >> The new 'no_partitions' feature serves as a notifier to kpartx to _not_
-> >> create partitions on these multipath devices.
-> >  =
-
-> > This isn't really multipath-specific so doesn't belong in the target.
-> > It could go into dm core, but we already have flags attached to
-> > udev cookies that can turn udev rules on and off and thereby could
-> > allow userspace multipath to control whether or not kpartx creates
-> > partitions on any particular device.
-> > =
-
-> > But first I'd like us to explore creating a config file for kpartx and
-> > controlling the behaviour from there.  Activation could then be
-> > triggered by target type, device name, scsi WWID, dm UUID etc. according
-> > to rules in that file.
-> > =
-
-> But that would mean one would have to maintain _two_ configuration
-> files, one for multipath and one for kpartx.
-> =
-
-> Also kpartx initially doesn't have any clue about device names, SCSI
-> WWIDs etc. It just takes a device-mapper device and acts upon it.
-> The only information it's got is the device-mapper name (which could
-> be anything) and the device-mapper UUID if present.
-> =
-
-> Same goes for udev rules; one would have to traverse the device
-> stack backwards to retrieve any information about the hardware.
-> =
-
-> So when moving the configuration into kpartx we would lose quite
-> some flexibility. And reliability, methinks.
-> =
-
-> Flexilibity is a valid goal, but not when it can achieved only by
-> adding complexity to other pieces.
-
-Kpartx does already grab the dm device name, uuid and target type
-(although it doesn't currently use the target type for anything). So,
-aside from adding code to read a config file, we don't really have to
-add any complexity to be able to have kpartx configure a device based on
-dm name (which admittedly probably isn't that useful), dm UUID, or
-target type.  We could also have it configure based on the blkid
-results, which should be present when it's called by udev. When
-called manually, kpartx could use libblkid.
-
-We do lose the ability to have kpartx easily configure a device based on
-hardware type.  However, that's not really essential.  Multipath needs
-it because it can't even finish setting up a device until it knows the
-hardware type.  For kpartx, it could make configuration simpler in cases
-where all of the LUNs from a particular hardware type needed to be
-configured the same way.  This may be handy, but its not necessary, and
-you could achieve the same results using UUIDs. What we gain is the
-ability to set this property for non-multipath devices, which currently
-isn't possible.  Also, blkid based (fs type, fs uuid, and fs label)
-configuration seems to me like it would be the most useful. =
 
 
-Now I'm not arguing that adding configuration file handling isn't adding
-complexity, and adding libblkid calls would add more. But since
-multipath always sets the UUID, I don't see this losing any reliability,
-and I does gain the fexibility to work with any dm target type. I
-don't feel strongly about this one way or the other, but do see the
-benefits of having kpartx own this configuration setting.
+On Wed, 25 Jul 2012, Kent Overstreet wrote:
 
--Ben
+> On Wed, Jul 25, 2012 at 02:55:40PM +0300, Boaz Harrosh wrote:
+> > On 07/24/2012 11:11 PM, Kent Overstreet wrote:
+> > 
+> > > The new bio_split() can split arbitrary bios - it's not restricted to
+> > > single page bios, like the old bio_split() (previously renamed to
+> > > bio_pair_split()). It also has different semantics - it doesn't allocate
+> > > a struct bio_pair, leaving it up to the caller to handle completions.
+> > > 
+> > > Signed-off-by: Kent Overstreet <koverstreet@google.com>
+> > > ---
+> > >  fs/bio.c |   99 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+> > >  1 files changed, 99 insertions(+), 0 deletions(-)
+> > > 
+> > > diff --git a/fs/bio.c b/fs/bio.c
+> > > index 5d02aa5..a15e121 100644
+> > > --- a/fs/bio.c
+> > > +++ b/fs/bio.c
+> > > @@ -1539,6 +1539,105 @@ struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors)
+> > >  EXPORT_SYMBOL(bio_pair_split);
+> > >  
+> > >  /**
+> > > + * bio_split - split a bio
+> > > + * @bio:	bio to split
+> > > + * @sectors:	number of sectors to split from the front of @bio
+> > > + * @gfp:	gfp mask
+> > > + * @bs:		bio set to allocate from
+> > > + *
+> > > + * Allocates and returns a new bio which represents @sectors from the start of
+> > > + * @bio, and updates @bio to represent the remaining sectors.
+> > > + *
+> > > + * If bio_sectors(@bio) was less than or equal to @sectors, returns @bio
+> > > + * unchanged.
+> > > + *
+> > > + * The newly allocated bio will point to @bio's bi_io_vec, if the split was on a
+> > > + * bvec boundry; it is the caller's responsibility to ensure that @bio is not
+> > > + * freed before the split.
+> > > + *
+> > > + * If bio_split() is running under generic_make_request(), it's not safe to
+> > > + * allocate more than one bio from the same bio set. Therefore, if it is running
+> > > + * under generic_make_request() it masks out __GFP_WAIT when doing the
+> > > + * allocation. The caller must check for failure if there's any possibility of
+> > > + * it being called from under generic_make_request(); it is then the caller's
+> > > + * responsibility to retry from a safe context (by e.g. punting to workqueue).
+> > > + */
+> > > +struct bio *bio_split(struct bio *bio, int sectors,
+> > > +		      gfp_t gfp, struct bio_set *bs)
+> > > +{
+> > > +	unsigned idx, vcnt = 0, nbytes = sectors << 9;
+> > > +	struct bio_vec *bv;
+> > > +	struct bio *ret = NULL;
+> > > +
+> > > +	BUG_ON(sectors <= 0);
+> > > +
+> > > +	/*
+> > > +	 * If we're being called from underneath generic_make_request() and we
+> > > +	 * already allocated any bios from this bio set, we risk deadlock if we
+> > > +	 * use the mempool. So instead, we possibly fail and let the caller punt
+> > > +	 * to workqueue or somesuch and retry in a safe context.
+> > > +	 */
+> > > +	if (current->bio_list)
+> > > +		gfp &= ~__GFP_WAIT;
+> > 
+> > 
+> > NACK!
+> > 
+> > If as you said above in the comment:
+> > 	if there's any possibility of it being called from under generic_make_request();
+> >         it is then the caller's responsibility to ...
+> > 
+> > So all the comment needs to say is: 
+> > 	... caller's responsibility to not set __GFP_WAIT at gfp.
+> > 
+> > And drop this here. It is up to the caller to decide. If the caller wants he can do
+> > "if (current->bio_list)" by his own.
+> > 
+> > This is a general purpose utility you might not know it's context.
+> > for example with osdblk above will break.
+> 
+> Well I'm highly highly skeptical that using __GFP_WAIT under
+> generic_make_request() is ever a sane thing to do - it could certainly
+> be safe in specific circumstances, but it's just such a fragile thing to
+> rely on, you have to _never_ use the same bio pool more than once. And
+> even then I bet there's other subtle ways it could break.
+> 
+> But you're not the first to complain about it, and your point about
+> existing code is compelling.
 
-> =
+Both md and dm use __GFP_WAIT allocations from mempools in 
+generic_make_request.
 
-> Cheers,
-> =
+I think you found an interesting bug here. Suppose that we have three 
+stacked devices: d1 depends on d2 and d2 depends on d3.
 
-> Hannes
-> -- =
+Now, a bio b1 comes to d1. d1 splits it to two bios: b2.1 and b2.2 and 
+sends them to the device d2 - these bios end up in current->bio_list. The 
+driver for d2 receives bio b2.1 and sends bio b3.1 to d3. Now, 
+current->bio_list contains bios b2.2, b3.1. Now, bio b2.2 is popped off 
+the bio list and the driver for d2 is called with b2.2 - suppose that for 
+some reason mempool in d2 is exhausted and the driver needs to wait until 
+b2.1 finishes. b2.1 never finishes, because b2.1 depends on b3.1 and b3.1 
+is still in current->bio_list. So it deadlocks.
 
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
-> =
+Turning off __GFP_WAIT fixes nothing - it just turns one bug (a possible 
+deadlock) into another bug (a possible bio failure with -ENOMEM).
+
+Increasing mempool sizes doesn't fix it either, the bio would just have to 
+be split to more pieces in the above example to make it deadlock.
+
+I think the above possible deadlock scenario could be fixed by reversing 
+current->bio_list processing - i.e. when some device's make_request_fn 
+adds some bios to current->bio_list, these bios are processed before other 
+bios that were on the list before. This way, bio list would contain "b3.1, 
+b2.2" instead of "b2.2, b3.1" in the above example and the deadlock would 
+not happen.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ block/blk-core.c |   13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+Index: linux-3.5-fast/block/blk-core.c
+===================================================================
+--- linux-3.5-fast.orig/block/blk-core.c	2012-07-27 02:20:25.000000000 +0200
++++ linux-3.5-fast/block/blk-core.c	2012-07-27 02:34:37.000000000 +0200
+@@ -1740,6 +1740,7 @@ end_io:
+ void generic_make_request(struct bio *bio)
+ {
+ 	struct bio_list bio_list_on_stack;
++	struct bio_list current_bio_list;
+ 
+ 	if (!generic_make_request_checks(bio))
+ 		return;
+@@ -1789,14 +1790,22 @@ void generic_make_request(struct bio *bi
+ 	 * bio_list, and call into ->make_request() again.
+ 	 */
+ 	BUG_ON(bio->bi_next);
+-	bio_list_init(&bio_list_on_stack);
++	bio_list_init(&current_bio_list);
+ 	current->bio_list = &bio_list_on_stack;
+ 	do {
+ 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+ 
++		bio_list_init(&bio_list_on_stack);
++
+ 		q->make_request_fn(q, bio);
+ 
+-		bio = bio_list_pop(current->bio_list);
++		/*
++		 * To avoid a possible deadlock, bios that were added by
++		 * the most recent make_request_fn must be processed first.
++		 */
++		bio_list_merge_head(&current_bio_list, &bio_list_on_stack);
++
++		bio = bio_list_pop(&current_bio_list);
+ 	} while (bio);
+ 	current->bio_list = NULL; /* deactivate */
+ }
