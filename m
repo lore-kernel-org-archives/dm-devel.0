@@ -1,62 +1,271 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH][RESEND] multipath: fix cciss device names
-Date: Fri, 27 Jul 2012 15:57:18 -0500
-Message-ID: <20120727205718.GL5299@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/3] Fix Crash when IO is being submitted and block size is
+ changed
+Date: Sat, 28 Jul 2012 12:40:19 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+ <20120628111541.GB17515@quack.suse.cz> <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
+ <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
+ <Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
+ <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, Alexander Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, lwoodman@redhat.com, Andrea Arcangeli <aarcange@redhat.com>, kosaki.motohiro@jp.fujitsu.com
 List-Id: dm-devel.ids
 
-When we're looking for cciss devices in sysfs, they have a "!" not a "/".
-If users run multipath on a cciss device using it's devnode name,
-/dev/cciss/cXdY, multipath should convert that to the sysfs name.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+On Thu, 19 Jul 2012, Jeff Moyer wrote:
+
+> Mikulas Patocka <mpatocka@redhat.com> writes:
+> 
+> > On Tue, 17 Jul 2012, Jeff Moyer wrote:
+> >
+> 
+> >> > This is the patch that fixes this crash: it takes a rw-semaphore around 
+> >> > all direct-IO path.
+> >> >
+> >> > (note that if someone is concerned about performance, the rw-semaphore 
+> >> > could be made per-cpu --- take it for read on the current CPU and take it 
+> >> > for write on all CPUs).
+> >> 
+> >> Here we go again.  :-)  I believe we had at one point tried taking a rw
+> >> semaphore around GUP inside of the direct I/O code path to fix the fork
+> >> vs. GUP race (that still exists today).  When testing that, the overhead
+> >> of the semaphore was *way* too high to be considered an acceptable
+> >> solution.  I've CC'd Larry Woodman, Andrea, and Kosaki Motohiro who all
+> >> worked on that particular bug.  Hopefully they can give better
+> >> quantification of the slowdown than my poor memory.
+> >> 
+> >> Cheers,
+> >> Jeff
+> >
+> > Both down_read and up_read together take 82 ticks on Core2, 69 ticks on 
+> > AMD K10, 62 ticks on UltraSparc2 if the target is in L1 cache. So, if 
+> > percpu rw_semaphores were used, it would slow down only by this amount.
+> 
+> Sorry, I'm not familiar with per-cpu rw semaphores.  Where are they
+> implemented?
+
+Here I'm resending the upstream patches with per rw-semaphores - percpu 
+rw-semaphores are implemented in the next patch.
+
+(For Jeff: you can use your patch for RHEL-6 that you did for perfocmance 
+testing, with the change that I proposed).
+
+Mikulas
+
 ---
- multipath/main.c |   12 ++++++++++++
- 1 file changed, 12 insertions(+)
 
-Index: multipath-tools-120518/multipath/main.c
+blockdev: fix a crash when block size is changed and I/O is issued simultaneously
+
+The kernel may crash when block size is changed and I/O is issued
+simultaneously.
+
+Because some subsystems (udev or lvm) may read any block device anytime,
+the bug actually puts any code that changes a block device size in
+jeopardy.
+
+The crash can be reproduced if you place "msleep(1000)" to
+blkdev_get_blocks just before "bh->b_size = max_blocks <<
+inode->i_blkbits;".
+Then, run "dd if=/dev/ram0 of=/dev/null bs=4k count=1 iflag=direct"
+While it is waiting in msleep, run "blockdev --setbsz 2048 /dev/ram0"
+You get a BUG.
+
+The direct and non-direct I/O is written with the assumption that block
+size does not change. It doesn't seem practical to fix these crashes
+one-by-one there may be many crash possibilities when block size changes
+at a certain place and it is impossible to find them all and verify the
+code.
+
+This patch introduces a new rw-lock bd_block_size_semaphore. The lock is
+taken for read during I/O. It is taken for write when changing block
+size. Consequently, block size can't be changed while I/O is being
+submitted.
+
+For asynchronous I/O, the patch only prevents block size change while
+the I/O is being submitted. The block size can change when the I/O is in
+progress or when the I/O is being finished. This is acceptable because
+there are no accesses to block size when asynchronous I/O is being
+finished.
+
+The patch prevents block size changing while the device is mapped with
+mmap.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/char/raw.c |    2 -
+ fs/block_dev.c     |   60 +++++++++++++++++++++++++++++++++++++++++++++++++++--
+ include/linux/fs.h |    4 +++
+ 3 files changed, 63 insertions(+), 3 deletions(-)
+
+Index: linux-3.5-rc6-devel/include/linux/fs.h
 ===================================================================
---- multipath-tools-120518.orig/multipath/main.c
-+++ multipath-tools-120518/multipath/main.c
-@@ -409,6 +409,16 @@ get_dev_type(char *dev) {
- 		return DEV_DEVMAP;
+--- linux-3.5-rc6-devel.orig/include/linux/fs.h	2012-07-16 20:20:12.000000000 +0200
++++ linux-3.5-rc6-devel/include/linux/fs.h	2012-07-16 01:29:21.000000000 +0200
+@@ -713,6 +713,8 @@ struct block_device {
+ 	int			bd_fsfreeze_count;
+ 	/* Mutex for freeze */
+ 	struct mutex		bd_fsfreeze_mutex;
++	/* A semaphore that prevents I/O while block size is being changed */
++	struct rw_semaphore	bd_block_size_semaphore;
+ };
+ 
+ /*
+@@ -2414,6 +2416,8 @@ extern int generic_segment_checks(const 
+ 		unsigned long *nr_segs, size_t *count, int access_flags);
+ 
+ /* fs/block_dev.c */
++extern ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
++			       unsigned long nr_segs, loff_t pos);
+ extern ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
+ 				unsigned long nr_segs, loff_t pos);
+ extern int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
+Index: linux-3.5-rc6-devel/fs/block_dev.c
+===================================================================
+--- linux-3.5-rc6-devel.orig/fs/block_dev.c	2012-07-16 20:20:12.000000000 +0200
++++ linux-3.5-rc6-devel/fs/block_dev.c	2012-07-16 21:47:30.000000000 +0200
+@@ -116,6 +116,8 @@ EXPORT_SYMBOL(invalidate_bdev);
+ 
+ int set_blocksize(struct block_device *bdev, int size)
+ {
++	struct address_space *mapping;
++
+ 	/* Size must be a power of two, and between 512 and PAGE_SIZE */
+ 	if (size > PAGE_SIZE || size < 512 || !is_power_of_2(size))
+ 		return -EINVAL;
+@@ -124,6 +126,20 @@ int set_blocksize(struct block_device *b
+ 	if (size < bdev_logical_block_size(bdev))
+ 		return -EINVAL;
+ 
++	/* Prevent starting I/O or mapping the device */
++	down_write(&bdev->bd_block_size_semaphore);
++
++	/* Check that the block device is not memory mapped */
++	mapping = bdev->bd_inode->i_mapping;
++	mutex_lock(&mapping->i_mmap_mutex);
++	if (!prio_tree_empty(&mapping->i_mmap) ||
++	    !list_empty(&mapping->i_mmap_nonlinear)) {
++		mutex_unlock(&mapping->i_mmap_mutex);
++		up_write(&bdev->bd_block_size_semaphore);
++		return -EBUSY;
++	}
++	mutex_unlock(&mapping->i_mmap_mutex);
++
+ 	/* Don't change the size if it is same as current */
+ 	if (bdev->bd_block_size != size) {
+ 		sync_blockdev(bdev);
+@@ -131,6 +147,9 @@ int set_blocksize(struct block_device *b
+ 		bdev->bd_inode->i_blkbits = blksize_bits(size);
+ 		kill_bdev(bdev);
+ 	}
++
++	up_write(&bdev->bd_block_size_semaphore);
++
+ 	return 0;
  }
  
-+static void
-+convert_dev(char *dev)
+@@ -472,6 +491,7 @@ static void init_once(void *foo)
+ 	inode_init_once(&ei->vfs_inode);
+ 	/* Initialize mutex for freeze. */
+ 	mutex_init(&bdev->bd_fsfreeze_mutex);
++	init_rwsem(&bdev->bd_block_size_semaphore);
+ }
+ 
+ static inline void __bd_forget(struct inode *inode)
+@@ -1567,6 +1587,22 @@ static long block_ioctl(struct file *fil
+ 	return blkdev_ioctl(bdev, mode, cmd, arg);
+ }
+ 
++ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
++			unsigned long nr_segs, loff_t pos)
 +{
-+	char *ptr = strstr(dev, "cciss/");
-+	if (ptr) {
-+		ptr += 5;
-+		*ptr = '!';
-+	}
++	ssize_t ret;
++	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
++
++	down_read(&bdev->bd_block_size_semaphore);
++
++	ret = generic_file_aio_read(iocb, iov, nr_segs, pos);
++
++	up_read(&bdev->bd_block_size_semaphore);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(blkdev_aio_read);
++
+ /*
+  * Write data to the block device.  Only intended for the block device itself
+  * and the raw driver which basically is a fake block device.
+@@ -1578,10 +1614,13 @@ ssize_t blkdev_aio_write(struct kiocb *i
+ 			 unsigned long nr_segs, loff_t pos)
+ {
+ 	struct file *file = iocb->ki_filp;
++	struct block_device *bdev = I_BDEV(file->f_mapping->host);
+ 	ssize_t ret;
+ 
+ 	BUG_ON(iocb->ki_pos != pos);
+ 
++	down_read(&bdev->bd_block_size_semaphore);
++
+ 	ret = __generic_file_aio_write(iocb, iov, nr_segs, &iocb->ki_pos);
+ 	if (ret > 0 || ret == -EIOCBQUEUED) {
+ 		ssize_t err;
+@@ -1590,10 +1629,27 @@ ssize_t blkdev_aio_write(struct kiocb *i
+ 		if (err < 0 && ret > 0)
+ 			ret = err;
+ 	}
++
++	up_read(&bdev->bd_block_size_semaphore);
++
+ 	return ret;
+ }
+ EXPORT_SYMBOL_GPL(blkdev_aio_write);
+ 
++int blkdev_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	int ret;
++	struct block_device *bdev = I_BDEV(file->f_mapping->host);
++
++	down_read(&bdev->bd_block_size_semaphore);
++
++	ret = generic_file_mmap(file, vma);
++
++	up_read(&bdev->bd_block_size_semaphore);
++
++	return ret;
 +}
 +
- int
- main (int argc, char *argv[])
- {
-@@ -514,6 +524,8 @@ main (int argc, char *argv[])
+ /*
+  * Try to release a page associated with block device when the system
+  * is under memory pressure.
+@@ -1624,9 +1680,9 @@ const struct file_operations def_blk_fop
+ 	.llseek		= block_llseek,
+ 	.read		= do_sync_read,
+ 	.write		= do_sync_write,
+-  	.aio_read	= generic_file_aio_read,
++  	.aio_read	= blkdev_aio_read,
+ 	.aio_write	= blkdev_aio_write,
+-	.mmap		= generic_file_mmap,
++	.mmap		= blkdev_mmap,
+ 	.fsync		= blkdev_fsync,
+ 	.unlocked_ioctl	= block_ioctl,
+ #ifdef CONFIG_COMPAT
+Index: linux-3.5-rc6-devel/drivers/char/raw.c
+===================================================================
+--- linux-3.5-rc6-devel.orig/drivers/char/raw.c	2012-07-16 20:20:12.000000000 +0200
++++ linux-3.5-rc6-devel/drivers/char/raw.c	2012-07-16 01:30:04.000000000 +0200
+@@ -285,7 +285,7 @@ static long raw_ctl_compat_ioctl(struct 
  
- 		strncpy(conf->dev, argv[optind], FILE_NAME_SIZE);
- 		conf->dev_type = get_dev_type(conf->dev);
-+		if (conf->dev_type == DEV_DEVNODE)
-+			convert_dev(conf->dev);
- 	}
- 	conf->daemon = 0;
- 
+ static const struct file_operations raw_fops = {
+ 	.read		= do_sync_read,
+-	.aio_read	= generic_file_aio_read,
++	.aio_read	= blkdev_aio_read,
+ 	.write		= do_sync_write,
+ 	.aio_write	= blkdev_aio_write,
+ 	.fsync		= blkdev_fsync,
