@@ -1,145 +1,41 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper updates for 3.6
-Date: Mon, 30 Jul 2012 14:06:57 +0100
-Message-ID: <20120730130657.GF20415@agk-dp.fab.redhat.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [dm-devel] [PATCH 2/3] Introduce percpu rw semaphores
+Date: Mon, 30 Jul 2012 10:00:13 -0700
+Message-ID: <20120730170013.GA4778@linux.vnet.ibm.com>
+References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+ <20120628111541.GB17515@quack.suse.cz>
+ <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
+ <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
+ <Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
+ <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
+ <Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
+ <Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
+ <1343508252.2626.13184.camel@edumazet-glaptop>
+ <Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Hannes Reinecke <hare@suse.de>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Babu Moger <babu.moger@netapp.com>, Jonathan Brassow <jbrassow@redhat.com>, majianpeng <majianpeng@gmail.com>, stable@vger.kernel.org
+In-Reply-To: <Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Eric Dumazet <eric.dumazet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Please pull from:
- 
-  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.6-changes
- 
-to get the following device-mapper updates for 3.6.
- 
-Thanks,
-Alasdair
+On Sun, Jul 29, 2012 at 01:13:34AM -0400, Mikulas Patocka wrote:
+> On Sat, 28 Jul 2012, Eric Dumazet wrote:
+> > On Sat, 2012-07-28 at 12:41 -0400, Mikulas Patocka wrote:
 
-----------------------------------------------------------------
-Device-mapper updates for 3.6:
-- Flip the thin target into new read-only or failed modes if errors
-  are detected;
-- Handle chunk sizes that are not powers of two in the snapshot and
-  thin targets;
-- Provide a way for userspace to avoid replacing an already-loaded
-  multipath hardware handler while booting;
-- Reduce dm_thin_endio_hook slab size to avoid allocation failures;
-- Numerous small changes and cleanups to the code.
+[ . . . ]
 
-----------------------------------------------------------------
-Alasdair G Kergon (5):
-      dm thin: reduce endio_hook pool size
-      dm snapshot: remove redundant assignment in merge fn
-      dm crypt: store crypt_config instead of dm_target struct
-      dm: use bool bitfields in struct dm_target
-      dm thin: commit before gathering status
+> > (bdev->bd_block_size should be read exactly once )
+> 
+> Rewrite all direct and non-direct io code so that it reads block size just 
+> once ...
 
-Joe Thornber (38):
-      dm: remove unused flush target method
-      dm persistent data: remove debug space map checker
-      dm thin metadata: remove pointless label from __commit_transaction
-      dm thin metadata: introduce THIN_MAX_CONCURRENT_LOCKS
-      dm thin: fix memory leak in process_prepared_mapping error paths
-      dm thin: avoid unnecessarily breaking sharing for flushes
-      dm persistent data: always unlock superblock in dm_bm_flush_and_unlock
-      dm persistent data: only commit space map if index changed
-      dm: allow targets to request flushes regardless of underlying device support
-      dm thin: set flush_supported
-      dm thin metadata: factor __setup_btree_details out of init_pmd
-      dm persistent data: create new dm_block_manager struct
-      dm thin metadata: stop tracking need for commit
-      dm persistent data: tidy transaction manager creation fns
-      dm persistent data: stop using dm_bm_unlock_move when shadowing blocks in tm
-      dm thin metadata: wrap superblock locking
-      dm thin metadata: rename init_pmd to __create_persistent_data_objects
-      dm thin metadata: move bm creation code into create_persistent_data_objects
-      dm thin metadata: factor __destroy_persistent_data out of dm_pool_metadata_close
-      dm thin metadata: lift some initialisation out of __open_or_format_metadata
-      dm thin metadata: factor out __write_initial_superblock
-      dm thin metadata: move dm_commit_pool_metadata into __write_initial_superblock
-      dm thin metadata: lift __begin_transaction out of __write_initial_superblock
-      dm thin metadata: zero unused superblock uuid
-      dm thin metadata: use struct dm_pool_metadata members in __open_or_format_metadata
-      dm thin metadata: split __open or format metadata
-      dm thin metadata: remove nr_blocks arg from __create_persistent_data_objects
-      dm thin metadata: move __superblock_all_zeroes to __open_or_format_metadata
-      dm thin metadata: remove create parameter from __create_persistent_data_objects
-      dm thin metadata: remove duplicate pmd initialisation
-      dm thin metadata: tidy up open and format error paths
-      dm thin metadata: add format option to dm_pool_metadata_open
-      dm thin metadata: add dm_thin_changed_this_transaction
-      dm thin: reduce number of metadata commits
-      dm persistent data: introduce dm_bm_set_read_only
-      dm thin metadata: introduce dm_pool_metadata_set_read_only
-      dm thin metadata: introduce dm_pool_abort_metadata
-      dm thin: add read only and fail io modes
+For whatever it is worth, the 3.5 Linux kernel only has about ten mentions
+of bd_block_size, at least according to cscope.
 
-Jonathan E Brassow (2):
-      dm raid: restructure parse_raid_params
-      dm raid: move sectors_per_dev calculation
+							Thanx, Paul
 
-Mike Snitzer (7):
-      dm thin: clean up compiler warning
-      dm thin: provide specific errors for two table load failure cases
-      dm: support non power of two target max_io_len
-      dm stripe: support for non power of 2 chunksize
-      dm thin: support for non power of 2 pool blocksize
-      dm mpath: add retain_attached_hw_handler feature
-      dm thin metadata: only check incompat features on open
-
-Mikulas Patocka (10):
-      dm stripe: fix size test
-      dm stripe: remove stripes_mask
-      dm stripe: remove minimum stripe size
-      dm stripe: optimize chunk_size calculations
-      dm: introduce split_discard_requests
-      dm thin: split discards on block boundary
-      dm thin: optimize power of two block size
-      dm crypt: rename pending field
-      dm crypt: move cipher data out of per_cpu struct
-      dm crypt: rename struct convert_context sector field
-
-majianpeng (1):
-      dm: replace simple_strtoul
-
- Documentation/device-mapper/striped.txt            |    7 +-
- Documentation/device-mapper/thin-provisioning.txt  |   24 +-
- drivers/md/Kconfig                                 |    9 -
- drivers/md/dm-crypt.c                              |  219 +++---
- drivers/md/dm-delay.c                              |    2 +-
- drivers/md/dm-exception-store.c                    |   13 +-
- drivers/md/dm-flakey.c                             |    2 +-
- drivers/md/dm-ioctl.c                              |    5 +-
- drivers/md/dm-linear.c                             |    2 +-
- drivers/md/dm-mpath.c                              |   49 +-
- drivers/md/dm-raid.c                               |   56 +-
- drivers/md/dm-raid1.c                              |   10 +-
- drivers/md/dm-snap.c                               |   34 +-
- drivers/md/dm-stripe.c                             |   87 ++-
- drivers/md/dm-table.c                              |    3 +
- drivers/md/dm-thin-metadata.c                      |  769 ++++++++++++--------
- drivers/md/dm-thin-metadata.h                      |   25 +-
- drivers/md/dm-thin.c                               |  542 ++++++++++----
- drivers/md/dm-verity.c                             |    2 +-
- drivers/md/dm.c                                    |   40 +-
- drivers/md/dm.h                                    |    5 +
- drivers/md/persistent-data/Makefile                |    1 -
- drivers/md/persistent-data/dm-block-manager.c      |  105 +--
- drivers/md/persistent-data/dm-block-manager.h      |   21 +-
- drivers/md/persistent-data/dm-space-map-checker.c  |  446 ------------
- drivers/md/persistent-data/dm-space-map-checker.h  |   26 -
- drivers/md/persistent-data/dm-space-map-common.c   |   12 +-
- drivers/md/persistent-data/dm-space-map-common.h   |    1 +
- drivers/md/persistent-data/dm-space-map-disk.c     |   34 +-
- .../md/persistent-data/dm-transaction-manager.c    |   91 +--
- .../md/persistent-data/dm-transaction-manager.h    |   11 +-
- include/linux/device-mapper.h                      |   29 +-
- include/linux/dm-ioctl.h                           |    6 +-
- 33 files changed, 1373 insertions(+), 1315 deletions(-)
- delete mode 100644 drivers/md/persistent-data/dm-space-map-checker.c
- delete mode 100644 drivers/md/persistent-data/dm-space-map-checker.h
