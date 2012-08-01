@@ -1,274 +1,370 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 4/3] Introduce percpu rw semaphores
-Date: Wed, 1 Aug 2012 16:09:59 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1208011601280.21832@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
- <20120628111541.GB17515@quack.suse.cz>  <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
-  <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
- <Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
- <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
- <Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
- <Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
- <1343508252.2626.13184.camel@edumazet-glaptop>
- <Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
- <1343556630.2626.13257.camel@edumazet-glaptop> <1343586962.2626.13266.camel@edumazet-glaptop>
+From: Erich Weiler <weiler@soe.ucsc.edu>
+Subject: SCSI disk IO problem with JBOD/multipath
+Date: Wed, 01 Aug 2012 16:00:32 -0700
+Message-ID: <5019B510.4000707@soe.ucsc.edu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1343586962.2626.13266.camel@edumazet-glaptop>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi Y'all,
 
+First let me apologize if this is the wrong venue to post this question. 
+  If it is not, please point me to the correct spot if possible!
 
-On Sun, 29 Jul 2012, Eric Dumazet wrote:
+We have a Dell R610 server running RHEL 6.3 (kernel 
+2.6.32-279.2.1.el6.x86_64).  We installed a LSI 9201-16e SAS HBA in it, 
+upgraded to the latest firmware (9116 chipset).  Then we attached a LSI 
+DE2660 JBOD array to it, with 60 hard drives.
 
-> On Sun, 2012-07-29 at 12:10 +0200, Eric Dumazet wrote:
-> 
-> > You can probably design something needing no more than 4 bytes per cpu,
-> > and this thing could use non locked operations as bonus.
-> > 
-> > like the following ...
-> 
-> Coming back from my bike ride, here is a more polished version with
-> proper synchronization/ barriers.
+At first boot, it got past grub to the initrd stage and crashed hard.  A 
+bunch of add_disk exceptions or something.  If we unplug the array, it 
+boots fine.
 
-Hi Eric
+So then I had the idea to compile the RDAC multipathing driver and 
+create a new initrd that preloads the RDAC driver:
 
-I reworked your patch (it should be applied after my previous patch 3/3). 
-I replaced the rw-semaphore with a mutex. Instead of two pointers, I 
-changed it to one pointer and one bool variable.
+mkinitrd /boot/initrd-$(uname -r)-scsi_dh.img $(uname -r) 
+--preload=scsi_dh_rdac
 
-I removed the barriers next to rcu (because, rcu works as a barrier) and 
-added a barrier when decrementing the percpu variable and when waiting for 
-percpu_count to be zero.
+Then I booted with that.  It actually did not crash this time, but did 
+spew a *ton* of SCSI errors on boot, like these (from dmesg):
 
-I tested performance of all implementation:
-30.2s with no lock at all
-32.2s with global rw-lock
-30.6s with per-cpu rw-lock (my original implementation and Eric Dumazet's 
-implementation make no difference)
+end_request: I/O error, dev sdbh, sector 0
+end_request: I/O error, dev dm-57, sector 0
+end_request: I/O error, dev dm-58, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:10:0: [sdj] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdj, sector 0
+end_request: I/O error, dev dm-59, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:52:0: [sdaz] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdaz, sector 0
+end_request: I/O error, dev dm-57, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:60:0: [sdbh] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbh, sector 0
+end_request: I/O error, dev dm-58, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:10:0: [sdj] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 18 00 00 00 18 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdj, sector 24
+end_request: I/O error, dev dm-59, sector 24
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:43:0: [sdaq] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 01 5d 50 a3 a8 5d 50 a3 a8 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdaq, sector 5860533160
+end_request: I/O error, dev dm-40, sector 5860533160
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:60:0: [sdbh] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 18 00 00 00 18 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbh, sector 24
+sd 0:0:52:0: [sdaz] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 18 00 00 00 18 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdaz, sector 24
+end_request: I/O error, dev dm-58, sector 24
+end_request: I/O error, dev dm-57, sector 24
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:53:0: [sdba] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 01 5d 50 a3 a8 5d 50 a3 a8 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdba, sector 5860533160
+end_request: I/O error, dev dm-28, sector 5860533160
+sd 0:0:43:0: [sdaq] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 01 5d 50 a3 a8 5d 50 a3 a8 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdaq, sector 5860533160
+end_request: I/O error, dev dm-40, sector 5860533160
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:53:0: [sdba] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 01 5d 50 a3 a8 5d 50 a3 a8 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdba, sector 5860533160
+end_request: I/O error, dev dm-28, sector 5860533160
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:53:0: [sdba] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdba, sector 0
+end_request: I/O error, dev dm-28, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:53:0: [sdba] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdba, sector 0
+end_request: I/O error, dev dm-28, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:53:0: [sdba] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 18 00 00 00 18 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdba, sector 24
+end_request: I/O error, dev dm-28, sector 24
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:43:0: [sdaq] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdaq, sector 0
+end_request: I/O error, dev dm-40, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:43:0: [sdaq] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdaq, sector 0
+end_request: I/O error, dev dm-40, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:43:0: [sdaq] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 18 00 00 00 18 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdaq, sector 24
+end_request: I/O error, dev dm-40, sector 24
+lo: Disabled Privacy Extensions
+bnx2 0000:01:00.0: irq 63 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 64 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 65 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 66 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 67 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 68 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 69 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 70 for MSI/MSI-X
+bnx2 0000:01:00.0: irq 71 for MSI/MSI-X
+bnx2 0000:01:00.0: em1: using MSIX
+ADDRCONF(NETDEV_UP): em1: link is not ready
+bnx2 0000:01:00.0: em1: NIC Copper Link is Up, 1000 Mbps full duplex
+ADDRCONF(NETDEV_CHANGE): em1: link becomes ready
+em1: no IPv6 routers present
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 20
+__ratelimit: 304 callbacks suppressed
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+__ratelimit: 618 callbacks suppressed
+__ratelimit: 370 callbacks suppressed
+Buffer I/O error on device dm-56, logical block 0
+Buffer I/O error on device dm-56, logical block 1
+Buffer I/O error on device dm-56, logical block 2
+Buffer I/O error on device dm-56, logical block 3
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+Buffer I/O error on device dm-56, logical block 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+Buffer I/O error on device dm-56, logical block 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+Buffer I/O error on device dm-56, logical block 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+Buffer I/O error on device dm-56, logical block 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+end_request: I/O error, dev sdbi, sector 0
+end_request: I/O error, dev dm-56, sector 0
+Buffer I/O error on device dm-56, logical block 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+end_request: I/O error, dev sdbi, sector 0
+end_request: I/O error, dev dm-56, sector 0
+Buffer I/O error on device dm-56, logical block 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+end_request: I/O error, dev sdbi, sector 0
+end_request: I/O error, dev dm-56, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+end_request: I/O error, dev sdbi, sector 0
+end_request: I/O error, dev dm-56, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+sd 0:0:61:0: [sdbi] Target Data Integrity Failure
+sd 0:0:61:0: [sdbi] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+sd 0:0:61:0: [sdbi] Sense Key : Aborted Command [current]
+sd 0:0:61:0: [sdbi] Add. Sense: Logical block reference tag check failed
+end_request: I/O error, dev sdbi, sector 0
+end_request: I/O error, dev dm-56, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 08 00 00 00 08 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 8
+end_request: I/O error, dev dm-56, sector 8
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
+end_request: I/O error, dev sdbi, sector 0
+end_request: I/O error, dev dm-56, sector 0
+mpt2sas0: log_info(0x3112043b): originator(PL), code(0x12), sub_code(0x043b)
+sd 0:0:61:0: [sdbi] CDB: cdb[0]=0x7f, sa=0x9: 7f 00 00 00 00 00 00 18 00 
+09 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08
 
-Mikulas
+etc, etc, thousands of times.  Just for fun I then tried to tie it 
+together with multipathd, using this config:
 
----
+defaults {
+       udev_dir                /dev
+       polling_interval        5
+       path_grouping_policy    failover
+       getuid_callout          "/lib/udev/scsi_id --whitelisted 
+--device=/dev/%n"
+       path_checker            directio
+       prio                    const
+       rr_min_io               1000
+       rr_weight               uniform
+       failback                manual
+       no_path_retry           fail
+       user_friendly_names     yes
+}
 
-New percpu lock implementation
+blacklist {
+       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+       devnode "^hd[a-z]
+       # Blacklist the root disk (/dev/sda) by wwid - Find the wwid via 
+"/lib/udev/scsi_id --page=0x83 --whitelisted --device=/dev/sda"
+       wwid "3600508e000000000c3c8e073ff8f3b0c"
+       devnode "^dcssblk[0-9]*"
+}
 
-An alternative percpu lock implementation. The original idea by
-Eric Dumazet <eric.dumazet@gmail.com>
+devices {
+       device {
+               vendor                  "*"
+               product                 "*"
+               getuid_callout          "/lib/udev/scsi_id --whitelisted 
+--device=/dev/%n"
+               path_selector           "round-robin 0"
+               path_grouping_policy    failover
+               failback                immediate
+               rr_weight               priorities
+               no_path_retry           5
+               rr_min_io               1000
+               path_checker            tur
+               prio                    const
+       }
+}
 
-The lock consists of an array of percpu unsigned integers, a boolean
-variable and a mutex.
+And it *appears* to work:
 
-When we take the lock for read, we enter rcu read section, check for a
-"locked" variable. If it is false, we increase a percpu counter on the
-current cpu and exit the rcu section. If "locked" is true, we exit the
-rcu section, take the mutex and drop it (this waits until a writer
-finished) and retry.
+# multipath -ll
+mpathak (35000c500418ae7db) dm-18 SEAGATE,ST33000651SS
+size=2.7T features='1 queue_if_no_path' hwhandler='0' wp=rw
+|-+- policy='round-robin 0' prio=1 status=active
+| `- 0:0:24:0  sdx  65:112 active ready running
+`-+- policy='round-robin 0' prio=1 status=enabled
+   `- 0:0:84:0  sdce 69:32  active ready running
+mpathr (35000c500419206c3) dm-3 SEAGATE,ST33000651SS
+size=2.7T features='1 queue_if_no_path' hwhandler='0' wp=rw
+|-+- policy='round-robin 0' prio=1 status=active
+| `- 0:0:19:0  sds  65:32  active ready running
+`-+- policy='round-robin 0' prio=1 status=enabled
+   `- 0:0:79:0  sdbz 68:208 active ready running
+mpathe (35000c500418b9ca7) dm-15 SEAGATE,ST33000651SS
+size=2.7T features='1 queue_if_no_path' hwhandler='0' wp=rw
+|-+- policy='round-robin 0' prio=1 status=active
+| `- 0:0:11:0  sdk  8:160  active ready running
+`-+- policy='round-robin 0' prio=1 status=enabled
+   `- 0:0:71:0  sdbr 68:80  active ready running
+mpathbc (35000c500418ac97f) dm-55 SEAGATE,ST33000651SS
+size=2.7T features='1 queue_if_no_path' hwhandler='0' wp=rw
+|-+- policy='round-robin 0' prio=1 status=active
+| `- 0:0:59:0  sdbg 67:160 active ready running
+`-+- policy='round-robin 0' prio=1 status=enabled
+   `- 0:0:119:0 sddn 71:80  active ready running
+mpathaw (35000cca01a8e7174) dm-32 HITACHI,HUS723030ALS641
+size=2.7T features='1 queue_if_no_path' hwhandler='0' wp=rw
+|-+- policy='round-robin 0' prio=1 status=active
+| `- 0:0:35:0  sdai 66:32  active ready running
+`-+- policy='round-robin 0' prio=1 status=enabled
+   `- 0:0:95:0  sdcp 69:208 active ready running
+<...clip... all 60 disks show "active ready running">
 
-Unlocking for read just decreases percpu variable. Note that we can
-unlock on a difference cpu than where we locked, in this case the
-counter underflows. The sum of all percpu counters represents the number
-of processes that hold the lock for read.
+But I cannot write to the disks, I get I/O errors.  When I reboot I 
+still get the thousands of SCSI errors on boot from mpt2sas, etc.  I'm 
+completely stuck.  Does anyone have any ideas?  Or, is there a better 
+place to ask this question?
 
-When we need to lock for write, we take the mutex, set "locked" variable
-to true and synchronize rcu. Since RCU has been synchronized, no
-processes can create new read locks. We wait until the sum of percpu
-counters is zero - when it is, there are no readers in the critical
-section.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- fs/block_dev.c               |   15 ++----
- include/linux/percpu-rwsem.h |   93 +++++++++++++++++++++----------------------
- 2 files changed, 53 insertions(+), 55 deletions(-)
-
-Index: linux-3.5-fast/fs/block_dev.c
-===================================================================
---- linux-3.5-fast.orig/fs/block_dev.c	2012-07-31 21:59:24.000000000 +0200
-+++ linux-3.5-fast/fs/block_dev.c	2012-08-01 19:39:26.000000000 +0200
-@@ -1602,13 +1602,12 @@ ssize_t blkdev_aio_read(struct kiocb *io
- {
- 	ssize_t ret;
- 	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
--	percpu_rwsem_ptr p;
- 
--	p = percpu_down_read(&bdev->bd_block_size_semaphore);
-+	percpu_down_read(&bdev->bd_block_size_semaphore);
- 
- 	ret = generic_file_aio_read(iocb, iov, nr_segs, pos);
- 
--	percpu_up_read(&bdev->bd_block_size_semaphore, p);
-+	percpu_up_read(&bdev->bd_block_size_semaphore);
- 
- 	return ret;
- }
-@@ -1627,11 +1626,10 @@ ssize_t blkdev_aio_write(struct kiocb *i
- 	struct file *file = iocb->ki_filp;
- 	struct block_device *bdev = I_BDEV(file->f_mapping->host);
- 	ssize_t ret;
--	percpu_rwsem_ptr p;
- 
- 	BUG_ON(iocb->ki_pos != pos);
- 
--	p = percpu_down_read(&bdev->bd_block_size_semaphore);
-+	percpu_down_read(&bdev->bd_block_size_semaphore);
- 
- 	ret = __generic_file_aio_write(iocb, iov, nr_segs, &iocb->ki_pos);
- 	if (ret > 0 || ret == -EIOCBQUEUED) {
-@@ -1642,7 +1640,7 @@ ssize_t blkdev_aio_write(struct kiocb *i
- 			ret = err;
- 	}
- 
--	percpu_up_read(&bdev->bd_block_size_semaphore, p);
-+	percpu_up_read(&bdev->bd_block_size_semaphore);
- 
- 	return ret;
- }
-@@ -1652,13 +1650,12 @@ int blkdev_mmap(struct file *file, struc
- {
- 	int ret;
- 	struct block_device *bdev = I_BDEV(file->f_mapping->host);
--	percpu_rwsem_ptr p;
- 
--	p = percpu_down_read(&bdev->bd_block_size_semaphore);
-+	percpu_down_read(&bdev->bd_block_size_semaphore);
- 
- 	ret = generic_file_mmap(file, vma);
- 
--	percpu_up_read(&bdev->bd_block_size_semaphore, p);
-+	percpu_up_read(&bdev->bd_block_size_semaphore);
- 
- 	return ret;
- }
-Index: linux-3.5-fast/include/linux/percpu-rwsem.h
-===================================================================
---- linux-3.5-fast.orig/include/linux/percpu-rwsem.h	2012-07-31 21:47:25.000000000 +0200
-+++ linux-3.5-fast/include/linux/percpu-rwsem.h	2012-08-01 19:32:53.000000000 +0200
-@@ -3,75 +3,76 @@
- 
- #include <linux/rwsem.h>
- #include <linux/percpu.h>
--
--#ifndef CONFIG_SMP
--
--#define percpu_rw_semaphore	rw_semaphore
--#define percpu_rwsem_ptr	int
--#define percpu_down_read(x)	(down_read(x), 0)
--#define percpu_up_read(x, y)	up_read(x)
--#define percpu_down_write	down_write
--#define percpu_up_write		up_write
--#define percpu_init_rwsem(x)	(({init_rwsem(x);}), 0)
--#define percpu_free_rwsem(x)	do { } while (0)
--
--#else
-+#include <linux/rcupdate.h>
-+#include <linux/delay.h>
- 
- struct percpu_rw_semaphore {
--	struct rw_semaphore __percpu *s;
-+	unsigned __percpu *counters;
-+	bool locked;
-+	struct mutex mtx;
- };
- 
--typedef struct rw_semaphore *percpu_rwsem_ptr;
--
--static inline percpu_rwsem_ptr percpu_down_read(struct percpu_rw_semaphore *sem)
-+static inline void percpu_down_read(struct percpu_rw_semaphore *p)
- {
--	struct rw_semaphore *s = __this_cpu_ptr(sem->s);
--	down_read(s);
--	return s;
-+retry:
-+	rcu_read_lock();
-+	if (unlikely(p->locked)) {
-+		rcu_read_unlock();
-+		mutex_lock(&p->mtx);
-+		mutex_unlock(&p->mtx);
-+		goto retry;
-+	}
-+	this_cpu_inc(*p->counters);
-+	rcu_read_unlock();
- }
- 
--static inline void percpu_up_read(struct percpu_rw_semaphore *sem, percpu_rwsem_ptr s)
-+static inline void percpu_up_read(struct percpu_rw_semaphore *p)
- {
--	up_read(s);
-+	smp_wmb();
-+	this_cpu_dec(*p->counters);
- }
- 
--static inline void percpu_down_write(struct percpu_rw_semaphore *sem)
-+static inline unsigned int percpu_count(unsigned __percpu *counters)
- {
-+	unsigned total = 0;
- 	int cpu;
--	for_each_possible_cpu(cpu) {
--		struct rw_semaphore *s = per_cpu_ptr(sem->s, cpu);
--		down_write(s);
--	}
-+
-+	for_each_possible_cpu(cpu)
-+		total += ACCESS_ONCE(*per_cpu_ptr(counters, cpu));
-+
-+	return total;
- }
- 
--static inline void percpu_up_write(struct percpu_rw_semaphore *sem)
-+static inline void percpu_down_write(struct percpu_rw_semaphore *p)
- {
--	int cpu;
--	for_each_possible_cpu(cpu) {
--		struct rw_semaphore *s = per_cpu_ptr(sem->s, cpu);
--		up_write(s);
--	}
-+	mutex_lock(&p->mtx);
-+	p->locked = true;
-+	synchronize_rcu();
-+	while (percpu_count(p->counters))
-+		msleep(1);
-+	smp_rmb(); /* paired with smp_wmb() in percpu_sem_up_read() */
- }
- 
--static inline int percpu_init_rwsem(struct percpu_rw_semaphore *sem)
-+static inline void percpu_up_write(struct percpu_rw_semaphore *p)
- {
--	int cpu;
--	sem->s = alloc_percpu(struct rw_semaphore);
--	if (unlikely(!sem->s))
-+	p->locked = false;
-+	mutex_unlock(&p->mtx);
-+}
-+
-+static inline int percpu_init_rwsem(struct percpu_rw_semaphore *p)
-+{
-+	p->counters = alloc_percpu(unsigned);
-+	if (unlikely(!p->counters))
- 		return -ENOMEM;
--	for_each_possible_cpu(cpu) {
--		struct rw_semaphore *s = per_cpu_ptr(sem->s, cpu);
--		init_rwsem(s);
--	}
-+	p->locked = false;
-+	mutex_init(&p->mtx);
- 	return 0;
- }
- 
--static inline void percpu_free_rwsem(struct percpu_rw_semaphore *sem)
-+static inline void percpu_free_rwsem(struct percpu_rw_semaphore *p)
- {
--	free_percpu(sem->s);
--	sem->s = NULL;		/* catch use after free bugs */
-+	free_percpu(p->counters);
-+	p->counters = NULL; /* catch use after free bugs */
- }
- 
- #endif
--
--#endif
+Many, many thanks!
+-erich
