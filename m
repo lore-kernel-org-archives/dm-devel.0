@@ -1,55 +1,89 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3 0/2] block: improvements for discard alignment
-Date: Wed, 1 Aug 2012 09:40:18 -0400
-Message-ID: <20120801134018.GC20830@redhat.com>
-References: <1341504104-1674-1-git-send-email-pbonzini@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [patch 0/2] [V4] block: Support online resize of disk partitions
+Date: Wed, 1 Aug 2012 10:07:08 -0400
+Message-ID: <20120801140708.GF31946@redhat.com>
+References: <20120709213418.799759100@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1341504104-1674-1-git-send-email-pbonzini@redhat.com>
+In-Reply-To: <20120709213418.799759100@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: axboe@kernel.dk
-Cc: linux-kernel@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>, martin.petersen@oracle.com, david@fromorbit.com, xfs@oss.sgi.com, dm-devel@redhat.com, hch@lst.de, vgoyal@redhat.com
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, kzak@redhat.com, psusi@ubuntu.com, vgoyal@redhat.com, maxim.patlasov@gmail.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 05 2012 at 12:01pm -0400,
-Paolo Bonzini <pbonzini@redhat.com> wrote:
-
-> When a disk has a large discard_granularity, discards are not split with
-> optimal alignment; the pessimization gets bigger as discard_granularity
-> and max_discard_sectors become closer.
+On Mon, Jul 09, 2012 at 05:34:18PM -0400, vivek.goyal2008@gmail.com wrote:
+> Hi,
 > 
-> Take the limit case of discard_granularity == max_discard_sectors == 64.
-> Then, if a request is submitted for 256 sectors 2..257 it will be split
-> like this: 2..65, 66..129, 130..193, 194..257.  None of these requests
-> is aligned, so in fact you might end up with no discarded logical blocks
-> at all.  With this patch, the split will be 2..63, 64..127, 128..191,
-> 192..255, 256..257.  The patches also take the discard_alignment into
-> consideration.
+> Few people have pinged me in rencent past about status of this patch, hence,
+> this is V4 of patch which adds support for online resizing of a partition.
+> This patch is based on previously posted patches by Phillip Susi. 
 > 
-> Patch 1 adjusts the computation of the granularity-adjusted
-> max_discard_sectors so that it prepares for the new code in patch 2,
-> which actually adjusts the split.
+
+Hi Jens,
+
+Can you please consider partition resize patches for inclusion.
+
+Thanks
+Vivek
+
+> There are two patches. Out of which one is kernel patch and other one is
+> util-linux patch to add support of a user space utility "resizepart" to
+> allow resizing the partition.
 > 
-> v2->v3: drop addition of queue/discard_alignment to sysfs, use
->   correct alignment for partitions
+> This ioctl only resizes the partition size in kenrel and does not change
+> the size on disk. A user needs to make sure that corresponding changes
+> are made to disk data structures also using fdisk(or partx), if changes
+> are to be retained across reboot.
 > 
-> Paolo Bonzini (2):
->   block: reorganize rounding of max_discard_sectors
->   block: split discard into aligned requests
+> Changes since V3
+> ----------------
+> - Do bdput() in error path as per the Maxim's review comments.
 > 
->  block/blk-lib.c        |   41 ++++++++++++++++++++++++++++-------------
->  include/linux/blkdev.h |   10 ++++++++++
->  2 files changed, 38 insertions(+), 13 deletions(-)
-
-Hey Jens,
-
-Would be great to get these discard fixes in.  I know both Christoph and
-Vivek have reviewed these changes but that isn't reflected in the patch
-headers.
-
-These patches eliminate misaligned discard from being sent to the
-dm-thinp target.
-
-Tested-by: Mike Snitzer <snitzer@redhat.com>
+> Changes since V2
+> ----------------
+> - Do not ignore the "start" parameter in RESIZE ioctl.
+> - Change resizepart utility to parse sysfs to get to partition start.
+> 
+> Changes since V1
+> ----------------
+> Following are changes since the version Phillip posted.
+> - RESIZE ioctl ignores the partition "start" and does not expect user to
+>   specify one. Caller needs to just specify "device", "partition number" and
+>   "size" of new partition.
+> 
+> - Got rid of part_nr_sects_write_begin/part_nr_sects_write_end functions
+>   and replaced these with single part_nr_sects_write().
+> 
+> - Some sequence counter related changes are simply lifted from i_size_write().
+> 
+> - Initialized part->nr_sects_seq using seqcount_init().
+> 
+> Phillip, do let me know if I should put your signed-off-by also in the
+> patch.
+> 
+> Any review feedback is welcome.
+> 
+> I did following test.
+> 
+> - Create a partition of 10MB on a disk using fdisk.
+> - Add this partition to a volume group
+> - Use fdisk to increase the partition size to 20MB. (First delete the
+>   partition and then create a new one of 20MB size).
+> - Use resizepart to extend partition size in kernel.
+>         resizepart /dev/sdc 1 40960
+> - Do pvresize on partition so that physical volume can be incrased in
+>   size online.
+>         pvresize /dev/sda1
+> 
+> pvresize does recognize the new size. Also lsblk and /proc/partitions
+> report the new size of partition.
+> 
+> Thanks
+> Vivek
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
