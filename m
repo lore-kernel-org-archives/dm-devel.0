@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH 2/3] Introduce percpu rw semaphores
-Date: Wed, 1 Aug 2012 16:07:57 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1208011605430.21832@file.rdu.redhat.com>
+Subject: [PATCH 4/3] Introduce percpu rw semaphores
+Date: Wed, 1 Aug 2012 16:09:59 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1208011601280.21832@file.rdu.redhat.com>
 References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
  <20120628111541.GB17515@quack.suse.cz>  <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
   <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
@@ -14,9 +14,9 @@ References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
  <1343556630.2626.13257.camel@edumazet-glaptop> <1343586962.2626.13266.camel@edumazet-glaptop>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1343586962.2626.13266.camel@edumazet-glaptop>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Eric Dumazet <eric.dumazet@gmail.com>
 Cc: Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
@@ -34,86 +34,241 @@ On Sun, 29 Jul 2012, Eric Dumazet wrote:
 > 
 > Coming back from my bike ride, here is a more polished version with
 > proper synchronization/ barriers.
-> 
-> struct percpu_rw_semaphore {
-> 	/* percpu_sem_down_read() use the following in fast path */
-> 	unsigned int __percpu *active_counters;
-> 
-> 	unsigned int __percpu *counters;
-> 	struct rw_semaphore	sem; /* used in slow path and by writers */
-> };
-> 
-> static inline int percpu_sem_init(struct percpu_rw_semaphore *p)
-> {
-> 	p->counters = alloc_percpu(unsigned int);
-> 	if (!p->counters)
-> 		return -ENOMEM;
-> 	init_rwsem(&p->sem);
-> 	rcu_assign_pointer(p->active_counters, p->counters);
-> 	return 0;
-> }
-> 
-> 
-> static inline bool percpu_sem_down_read(struct percpu_rw_semaphore *p)
-> {
-> 	unsigned int __percpu *counters;
-> 
-> 	rcu_read_lock();
-> 	counters = rcu_dereference(p->active_counters);
-> 	if (counters) {
-> 		this_cpu_inc(*counters);
-> 		smp_wmb(); /* paired with smp_rmb() in percpu_count() */
 
-Why is this barrier needed? RCU works as a barrier doesn't it?
-RCU is unlocked when the cpu passes a quiescent state, and I suppose that 
-entering the quiescent state works as a barrier. Or doesn't it?
+Hi Eric
 
-> 		rcu_read_unlock();
-> 		return true;
-> 	}
-> 	rcu_read_unlock();
-> 	down_read(&p->sem);
-> 	return false;
-> }
-> 
-> static inline void percpu_sem_up_read(struct percpu_rw_semaphore *p, bool fastpath)
-> {
-> 	if (fastpath)
-> 		this_cpu_dec(*p->counters);
-> 	else
-> 		up_read(&p->sem);
-> }
-> 
-> static inline unsigned int percpu_count(unsigned int __percpu *counters)
-> {
-> 	unsigned int total = 0;
-> 	int cpu;
-> 
-> 	for_each_possible_cpu(cpu)
-> 		total += *per_cpu_ptr(counters, cpu);
-> 
-> 	return total;
-> }
-> 
-> static inline void percpu_sem_down_write(struct percpu_rw_semaphore *p)
-> {
-> 	down_write(&p->sem);
-> 	p->active_counters = NULL;
-> 	synchronize_rcu();
-> 	smp_rmb(); /* paired with smp_wmb() in percpu_sem_down_read() */
+I reworked your patch (it should be applied after my previous patch 3/3). 
+I replaced the rw-semaphore with a mutex. Instead of two pointers, I 
+changed it to one pointer and one bool variable.
 
-Why barrier here? Synchronize_rcu() doesn't work as a barrier?
+I removed the barriers next to rcu (because, rcu works as a barrier) and 
+added a barrier when decrementing the percpu variable and when waiting for 
+percpu_count to be zero.
+
+I tested performance of all implementation:
+30.2s with no lock at all
+32.2s with global rw-lock
+30.6s with per-cpu rw-lock (my original implementation and Eric Dumazet's 
+implementation make no difference)
 
 Mikulas
 
-> 	while (percpu_count(p->counters))
-> 		schedule();
-> }
-> 
-> static inline void percpu_sem_up_write(struct percpu_rw_semaphore *p)
-> {
-> 	rcu_assign_pointer(p->active_counters, p->counters);
-> 	up_write(&p->sem);
-> }
-> 
-> 
+---
+
+New percpu lock implementation
+
+An alternative percpu lock implementation. The original idea by
+Eric Dumazet <eric.dumazet@gmail.com>
+
+The lock consists of an array of percpu unsigned integers, a boolean
+variable and a mutex.
+
+When we take the lock for read, we enter rcu read section, check for a
+"locked" variable. If it is false, we increase a percpu counter on the
+current cpu and exit the rcu section. If "locked" is true, we exit the
+rcu section, take the mutex and drop it (this waits until a writer
+finished) and retry.
+
+Unlocking for read just decreases percpu variable. Note that we can
+unlock on a difference cpu than where we locked, in this case the
+counter underflows. The sum of all percpu counters represents the number
+of processes that hold the lock for read.
+
+When we need to lock for write, we take the mutex, set "locked" variable
+to true and synchronize rcu. Since RCU has been synchronized, no
+processes can create new read locks. We wait until the sum of percpu
+counters is zero - when it is, there are no readers in the critical
+section.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ fs/block_dev.c               |   15 ++----
+ include/linux/percpu-rwsem.h |   93 +++++++++++++++++++++----------------------
+ 2 files changed, 53 insertions(+), 55 deletions(-)
+
+Index: linux-3.5-fast/fs/block_dev.c
+===================================================================
+--- linux-3.5-fast.orig/fs/block_dev.c	2012-07-31 21:59:24.000000000 +0200
++++ linux-3.5-fast/fs/block_dev.c	2012-08-01 19:39:26.000000000 +0200
+@@ -1602,13 +1602,12 @@ ssize_t blkdev_aio_read(struct kiocb *io
+ {
+ 	ssize_t ret;
+ 	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
+-	percpu_rwsem_ptr p;
+ 
+-	p = percpu_down_read(&bdev->bd_block_size_semaphore);
++	percpu_down_read(&bdev->bd_block_size_semaphore);
+ 
+ 	ret = generic_file_aio_read(iocb, iov, nr_segs, pos);
+ 
+-	percpu_up_read(&bdev->bd_block_size_semaphore, p);
++	percpu_up_read(&bdev->bd_block_size_semaphore);
+ 
+ 	return ret;
+ }
+@@ -1627,11 +1626,10 @@ ssize_t blkdev_aio_write(struct kiocb *i
+ 	struct file *file = iocb->ki_filp;
+ 	struct block_device *bdev = I_BDEV(file->f_mapping->host);
+ 	ssize_t ret;
+-	percpu_rwsem_ptr p;
+ 
+ 	BUG_ON(iocb->ki_pos != pos);
+ 
+-	p = percpu_down_read(&bdev->bd_block_size_semaphore);
++	percpu_down_read(&bdev->bd_block_size_semaphore);
+ 
+ 	ret = __generic_file_aio_write(iocb, iov, nr_segs, &iocb->ki_pos);
+ 	if (ret > 0 || ret == -EIOCBQUEUED) {
+@@ -1642,7 +1640,7 @@ ssize_t blkdev_aio_write(struct kiocb *i
+ 			ret = err;
+ 	}
+ 
+-	percpu_up_read(&bdev->bd_block_size_semaphore, p);
++	percpu_up_read(&bdev->bd_block_size_semaphore);
+ 
+ 	return ret;
+ }
+@@ -1652,13 +1650,12 @@ int blkdev_mmap(struct file *file, struc
+ {
+ 	int ret;
+ 	struct block_device *bdev = I_BDEV(file->f_mapping->host);
+-	percpu_rwsem_ptr p;
+ 
+-	p = percpu_down_read(&bdev->bd_block_size_semaphore);
++	percpu_down_read(&bdev->bd_block_size_semaphore);
+ 
+ 	ret = generic_file_mmap(file, vma);
+ 
+-	percpu_up_read(&bdev->bd_block_size_semaphore, p);
++	percpu_up_read(&bdev->bd_block_size_semaphore);
+ 
+ 	return ret;
+ }
+Index: linux-3.5-fast/include/linux/percpu-rwsem.h
+===================================================================
+--- linux-3.5-fast.orig/include/linux/percpu-rwsem.h	2012-07-31 21:47:25.000000000 +0200
++++ linux-3.5-fast/include/linux/percpu-rwsem.h	2012-08-01 19:32:53.000000000 +0200
+@@ -3,75 +3,76 @@
+ 
+ #include <linux/rwsem.h>
+ #include <linux/percpu.h>
+-
+-#ifndef CONFIG_SMP
+-
+-#define percpu_rw_semaphore	rw_semaphore
+-#define percpu_rwsem_ptr	int
+-#define percpu_down_read(x)	(down_read(x), 0)
+-#define percpu_up_read(x, y)	up_read(x)
+-#define percpu_down_write	down_write
+-#define percpu_up_write		up_write
+-#define percpu_init_rwsem(x)	(({init_rwsem(x);}), 0)
+-#define percpu_free_rwsem(x)	do { } while (0)
+-
+-#else
++#include <linux/rcupdate.h>
++#include <linux/delay.h>
+ 
+ struct percpu_rw_semaphore {
+-	struct rw_semaphore __percpu *s;
++	unsigned __percpu *counters;
++	bool locked;
++	struct mutex mtx;
+ };
+ 
+-typedef struct rw_semaphore *percpu_rwsem_ptr;
+-
+-static inline percpu_rwsem_ptr percpu_down_read(struct percpu_rw_semaphore *sem)
++static inline void percpu_down_read(struct percpu_rw_semaphore *p)
+ {
+-	struct rw_semaphore *s = __this_cpu_ptr(sem->s);
+-	down_read(s);
+-	return s;
++retry:
++	rcu_read_lock();
++	if (unlikely(p->locked)) {
++		rcu_read_unlock();
++		mutex_lock(&p->mtx);
++		mutex_unlock(&p->mtx);
++		goto retry;
++	}
++	this_cpu_inc(*p->counters);
++	rcu_read_unlock();
+ }
+ 
+-static inline void percpu_up_read(struct percpu_rw_semaphore *sem, percpu_rwsem_ptr s)
++static inline void percpu_up_read(struct percpu_rw_semaphore *p)
+ {
+-	up_read(s);
++	smp_wmb();
++	this_cpu_dec(*p->counters);
+ }
+ 
+-static inline void percpu_down_write(struct percpu_rw_semaphore *sem)
++static inline unsigned int percpu_count(unsigned __percpu *counters)
+ {
++	unsigned total = 0;
+ 	int cpu;
+-	for_each_possible_cpu(cpu) {
+-		struct rw_semaphore *s = per_cpu_ptr(sem->s, cpu);
+-		down_write(s);
+-	}
++
++	for_each_possible_cpu(cpu)
++		total += ACCESS_ONCE(*per_cpu_ptr(counters, cpu));
++
++	return total;
+ }
+ 
+-static inline void percpu_up_write(struct percpu_rw_semaphore *sem)
++static inline void percpu_down_write(struct percpu_rw_semaphore *p)
+ {
+-	int cpu;
+-	for_each_possible_cpu(cpu) {
+-		struct rw_semaphore *s = per_cpu_ptr(sem->s, cpu);
+-		up_write(s);
+-	}
++	mutex_lock(&p->mtx);
++	p->locked = true;
++	synchronize_rcu();
++	while (percpu_count(p->counters))
++		msleep(1);
++	smp_rmb(); /* paired with smp_wmb() in percpu_sem_up_read() */
+ }
+ 
+-static inline int percpu_init_rwsem(struct percpu_rw_semaphore *sem)
++static inline void percpu_up_write(struct percpu_rw_semaphore *p)
+ {
+-	int cpu;
+-	sem->s = alloc_percpu(struct rw_semaphore);
+-	if (unlikely(!sem->s))
++	p->locked = false;
++	mutex_unlock(&p->mtx);
++}
++
++static inline int percpu_init_rwsem(struct percpu_rw_semaphore *p)
++{
++	p->counters = alloc_percpu(unsigned);
++	if (unlikely(!p->counters))
+ 		return -ENOMEM;
+-	for_each_possible_cpu(cpu) {
+-		struct rw_semaphore *s = per_cpu_ptr(sem->s, cpu);
+-		init_rwsem(s);
+-	}
++	p->locked = false;
++	mutex_init(&p->mtx);
+ 	return 0;
+ }
+ 
+-static inline void percpu_free_rwsem(struct percpu_rw_semaphore *sem)
++static inline void percpu_free_rwsem(struct percpu_rw_semaphore *p)
+ {
+-	free_percpu(sem->s);
+-	sem->s = NULL;		/* catch use after free bugs */
++	free_percpu(p->counters);
++	p->counters = NULL; /* catch use after free bugs */
+ }
+ 
+ #endif
+-
+-#endif
