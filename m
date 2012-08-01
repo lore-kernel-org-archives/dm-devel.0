@@ -1,89 +1,32 @@
-From: Vivek Goyal <vgoyal@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [patch 0/2] [V4] block: Support online resize of disk partitions
-Date: Wed, 1 Aug 2012 10:07:08 -0400
-Message-ID: <20120801140708.GF31946@redhat.com>
-References: <20120709213418.799759100@redhat.com>
+Date: Wed, 01 Aug 2012 17:49:11 +0200
+Message-ID: <50194FF7.6010209@kernel.dk>
+References: <20120709213418.799759100@redhat.com> <20120801140708.GF31946@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120709213418.799759100@redhat.com>
+In-Reply-To: <20120801140708.GF31946@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, kzak@redhat.com, psusi@ubuntu.com, vgoyal@redhat.com, maxim.patlasov@gmail.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, kzak@redhat.com, psusi@ubuntu.com, maxim.patlasov@gmail.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 09, 2012 at 05:34:18PM -0400, vivek.goyal2008@gmail.com wrote:
-> Hi,
+On 08/01/2012 04:07 PM, Vivek Goyal wrote:
+> On Mon, Jul 09, 2012 at 05:34:18PM -0400, vivek.goyal2008@gmail.com wrote:
+>> Hi,
+>>
+>> Few people have pinged me in rencent past about status of this patch, hence,
+>> this is V4 of patch which adds support for online resizing of a partition.
+>> This patch is based on previously posted patches by Phillip Susi. 
+>>
 > 
-> Few people have pinged me in rencent past about status of this patch, hence,
-> this is V4 of patch which adds support for online resizing of a partition.
-> This patch is based on previously posted patches by Phillip Susi. 
+> Hi Jens,
 > 
+> Can you please consider partition resize patches for inclusion.
 
-Hi Jens,
+Vivek, they are in and were in the pull request sent out earlier today!
 
-Can you please consider partition resize patches for inclusion.
-
-Thanks
-Vivek
-
-> There are two patches. Out of which one is kernel patch and other one is
-> util-linux patch to add support of a user space utility "resizepart" to
-> allow resizing the partition.
-> 
-> This ioctl only resizes the partition size in kenrel and does not change
-> the size on disk. A user needs to make sure that corresponding changes
-> are made to disk data structures also using fdisk(or partx), if changes
-> are to be retained across reboot.
-> 
-> Changes since V3
-> ----------------
-> - Do bdput() in error path as per the Maxim's review comments.
-> 
-> Changes since V2
-> ----------------
-> - Do not ignore the "start" parameter in RESIZE ioctl.
-> - Change resizepart utility to parse sysfs to get to partition start.
-> 
-> Changes since V1
-> ----------------
-> Following are changes since the version Phillip posted.
-> - RESIZE ioctl ignores the partition "start" and does not expect user to
->   specify one. Caller needs to just specify "device", "partition number" and
->   "size" of new partition.
-> 
-> - Got rid of part_nr_sects_write_begin/part_nr_sects_write_end functions
->   and replaced these with single part_nr_sects_write().
-> 
-> - Some sequence counter related changes are simply lifted from i_size_write().
-> 
-> - Initialized part->nr_sects_seq using seqcount_init().
-> 
-> Phillip, do let me know if I should put your signed-off-by also in the
-> patch.
-> 
-> Any review feedback is welcome.
-> 
-> I did following test.
-> 
-> - Create a partition of 10MB on a disk using fdisk.
-> - Add this partition to a volume group
-> - Use fdisk to increase the partition size to 20MB. (First delete the
->   partition and then create a new one of 20MB size).
-> - Use resizepart to extend partition size in kernel.
->         resizepart /dev/sdc 1 40960
-> - Do pvresize on partition so that physical volume can be incrased in
->   size online.
->         pvresize /dev/sda1
-> 
-> pvresize does recognize the new size. Also lsblk and /proc/partitions
-> report the new size of partition.
-> 
-> Thanks
-> Vivek
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+-- 
+Jens Axboe
