@@ -1,32 +1,55 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [RESEND PATCH] block: do not artificially constrain max_sectors
- for stacking drivers
-Date: Wed, 01 Aug 2012 10:45:08 +0200
-Message-ID: <5018EC94.1050405@kernel.dk>
-References: <20120710191859.GB3831@redhat.com> <1343781553-17089-1-git-send-email-snitzer@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v3 0/2] block: improvements for discard alignment
+Date: Wed, 1 Aug 2012 09:40:18 -0400
+Message-ID: <20120801134018.GC20830@redhat.com>
+References: <1341504104-1674-1-git-send-email-pbonzini@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1343781553-17089-1-git-send-email-snitzer@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1341504104-1674-1-git-send-email-pbonzini@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, vijay.chauhan@netapp.com
+To: axboe@kernel.dk
+Cc: linux-kernel@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>, martin.petersen@oracle.com, david@fromorbit.com, xfs@oss.sgi.com, dm-devel@redhat.com, hch@lst.de, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-On 08/01/2012 02:39 AM, Mike Snitzer wrote:
-> blk_set_stacking_limits is intended to allow stacking drivers to build
-> up the limits of the stacked device based on the underlying devices'
-> limits.  But defaulting 'max_sectors' to BLK_DEF_MAX_SECTORS (1024)
-> doesn't allow the stacking driver to inherit a max_sectors larger than
-> 1024 -- due to blk_stack_limits' use of min_not_zero.
+On Thu, Jul 05 2012 at 12:01pm -0400,
+Paolo Bonzini <pbonzini@redhat.com> wrote:
+
+> When a disk has a large discard_granularity, discards are not split with
+> optimal alignment; the pessimization gets bigger as discard_granularity
+> and max_discard_sectors become closer.
 > 
-> It is now clear that this artificial limit is getting in the way so
-> change blk_set_stacking_limits's max_sectors to UINT_MAX (which allows
-> stacking drivers like dm-multipath to inherit 'max_sectors' from the
-> underlying paths).
+> Take the limit case of discard_granularity == max_discard_sectors == 64.
+> Then, if a request is submitted for 256 sectors 2..257 it will be split
+> like this: 2..65, 66..129, 130..193, 194..257.  None of these requests
+> is aligned, so in fact you might end up with no discarded logical blocks
+> at all.  With this patch, the split will be 2..63, 64..127, 128..191,
+> 192..255, 256..257.  The patches also take the discard_alignment into
+> consideration.
+> 
+> Patch 1 adjusts the computation of the granularity-adjusted
+> max_discard_sectors so that it prepares for the new code in patch 2,
+> which actually adjusts the split.
+> 
+> v2->v3: drop addition of queue/discard_alignment to sysfs, use
+>   correct alignment for partitions
+> 
+> Paolo Bonzini (2):
+>   block: reorganize rounding of max_discard_sectors
+>   block: split discard into aligned requests
+> 
+>  block/blk-lib.c        |   41 ++++++++++++++++++++++++++++-------------
+>  include/linux/blkdev.h |   10 ++++++++++
+>  2 files changed, 38 insertions(+), 13 deletions(-)
 
-Thanks Mike (and Vijay), applied for 3.6.
+Hey Jens,
 
--- 
-Jens Axboe
+Would be great to get these discard fixes in.  I know both Christoph and
+Vivek have reviewed these changes but that isn't reflected in the patch
+headers.
+
+These patches eliminate misaligned discard from being sent to the
+dm-thinp target.
+
+Tested-by: Mike Snitzer <snitzer@redhat.com>
