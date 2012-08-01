@@ -1,51 +1,119 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [dm-devel] [PATCH 2/3] Introduce percpu rw semaphores
-Date: Wed, 1 Aug 2012 10:15:27 -0700
-Message-ID: <20120801171527.GB2491@linux.vnet.ibm.com>
-References: <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
- <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
+Date: Wed, 1 Aug 2012 16:07:57 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1208011605430.21832@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+ <20120628111541.GB17515@quack.suse.cz>  <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
+  <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
  <Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
  <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
  <Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
  <Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
  <1343508252.2626.13184.camel@edumazet-glaptop>
  <Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
- <20120730170013.GA4778@linux.vnet.ibm.com>
- <Pine.LNX.4.64.1207301955370.4547@file.rdu.redhat.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+ <1343556630.2626.13257.camel@edumazet-glaptop> <1343586962.2626.13266.camel@edumazet-glaptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1207301955370.4547@file.rdu.redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1343586962.2626.13266.camel@edumazet-glaptop>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Dumazet <eric.dumazet@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jul 30, 2012 at 08:00:19PM -0400, Mikulas Patocka wrote:
-> 
-> 
-> On Mon, 30 Jul 2012, Paul E. McKenney wrote:
-> 
-> > On Sun, Jul 29, 2012 at 01:13:34AM -0400, Mikulas Patocka wrote:
-> > > On Sat, 28 Jul 2012, Eric Dumazet wrote:
-> > > > On Sat, 2012-07-28 at 12:41 -0400, Mikulas Patocka wrote:
-> > 
-> > [ . . . ]
-> > 
-> > > > (bdev->bd_block_size should be read exactly once )
-> > > 
-> > > Rewrite all direct and non-direct io code so that it reads block size just 
-> > > once ...
-> > 
-> > For whatever it is worth, the 3.5 Linux kernel only has about ten mentions
-> > of bd_block_size, at least according to cscope.
-> 
-> plus 213 uses of i_blkbits (which is derived directly from bd_block_size). 
-> 45 of them is in fs/*.c and mm/*.c
 
-At least it is only hundreds rather than thousands!  ;-)
 
-							Thanx, Paul
+On Sun, 29 Jul 2012, Eric Dumazet wrote:
 
+> On Sun, 2012-07-29 at 12:10 +0200, Eric Dumazet wrote:
+> 
+> > You can probably design something needing no more than 4 bytes per cpu,
+> > and this thing could use non locked operations as bonus.
+> > 
+> > like the following ...
+> 
+> Coming back from my bike ride, here is a more polished version with
+> proper synchronization/ barriers.
+> 
+> struct percpu_rw_semaphore {
+> 	/* percpu_sem_down_read() use the following in fast path */
+> 	unsigned int __percpu *active_counters;
+> 
+> 	unsigned int __percpu *counters;
+> 	struct rw_semaphore	sem; /* used in slow path and by writers */
+> };
+> 
+> static inline int percpu_sem_init(struct percpu_rw_semaphore *p)
+> {
+> 	p->counters = alloc_percpu(unsigned int);
+> 	if (!p->counters)
+> 		return -ENOMEM;
+> 	init_rwsem(&p->sem);
+> 	rcu_assign_pointer(p->active_counters, p->counters);
+> 	return 0;
+> }
+> 
+> 
+> static inline bool percpu_sem_down_read(struct percpu_rw_semaphore *p)
+> {
+> 	unsigned int __percpu *counters;
+> 
+> 	rcu_read_lock();
+> 	counters = rcu_dereference(p->active_counters);
+> 	if (counters) {
+> 		this_cpu_inc(*counters);
+> 		smp_wmb(); /* paired with smp_rmb() in percpu_count() */
+
+Why is this barrier needed? RCU works as a barrier doesn't it?
+RCU is unlocked when the cpu passes a quiescent state, and I suppose that 
+entering the quiescent state works as a barrier. Or doesn't it?
+
+> 		rcu_read_unlock();
+> 		return true;
+> 	}
+> 	rcu_read_unlock();
+> 	down_read(&p->sem);
+> 	return false;
+> }
+> 
+> static inline void percpu_sem_up_read(struct percpu_rw_semaphore *p, bool fastpath)
+> {
+> 	if (fastpath)
+> 		this_cpu_dec(*p->counters);
+> 	else
+> 		up_read(&p->sem);
+> }
+> 
+> static inline unsigned int percpu_count(unsigned int __percpu *counters)
+> {
+> 	unsigned int total = 0;
+> 	int cpu;
+> 
+> 	for_each_possible_cpu(cpu)
+> 		total += *per_cpu_ptr(counters, cpu);
+> 
+> 	return total;
+> }
+> 
+> static inline void percpu_sem_down_write(struct percpu_rw_semaphore *p)
+> {
+> 	down_write(&p->sem);
+> 	p->active_counters = NULL;
+> 	synchronize_rcu();
+> 	smp_rmb(); /* paired with smp_wmb() in percpu_sem_down_read() */
+
+Why barrier here? Synchronize_rcu() doesn't work as a barrier?
+
+Mikulas
+
+> 	while (percpu_count(p->counters))
+> 		schedule();
+> }
+> 
+> static inline void percpu_sem_up_write(struct percpu_rw_semaphore *p)
+> {
+> 	rcu_assign_pointer(p->active_counters, p->counters);
+> 	up_write(&p->sem);
+> }
+> 
+> 
