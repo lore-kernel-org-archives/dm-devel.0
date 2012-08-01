@@ -1,36 +1,51 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [patch 0/2] [V4] block: Support online resize of disk partitions
-Date: Wed, 1 Aug 2012 11:59:39 -0400
-Message-ID: <20120801155939.GK31946@redhat.com>
-References: <20120709213418.799759100@redhat.com>
- <20120801140708.GF31946@redhat.com>
- <50194FF7.6010209@kernel.dk>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [dm-devel] [PATCH 2/3] Introduce percpu rw semaphores
+Date: Wed, 1 Aug 2012 10:15:27 -0700
+Message-ID: <20120801171527.GB2491@linux.vnet.ibm.com>
+References: <Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
+ <x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
+ <Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
+ <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
+ <Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
+ <Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
+ <1343508252.2626.13184.camel@edumazet-glaptop>
+ <Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
+ <20120730170013.GA4778@linux.vnet.ibm.com>
+ <Pine.LNX.4.64.1207301955370.4547@file.rdu.redhat.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <50194FF7.6010209@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, kzak@redhat.com, psusi@ubuntu.com, maxim.patlasov@gmail.com
+In-Reply-To: <Pine.LNX.4.64.1207301955370.4547@file.rdu.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Eric Dumazet <eric.dumazet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 01, 2012 at 05:49:11PM +0200, Jens Axboe wrote:
-> On 08/01/2012 04:07 PM, Vivek Goyal wrote:
-> > On Mon, Jul 09, 2012 at 05:34:18PM -0400, vivek.goyal2008@gmail.com wrote:
-> >> Hi,
-> >>
-> >> Few people have pinged me in rencent past about status of this patch, hence,
-> >> this is V4 of patch which adds support for online resizing of a partition.
-> >> This patch is based on previously posted patches by Phillip Susi. 
-> >>
-> > 
-> > Hi Jens,
-> > 
-> > Can you please consider partition resize patches for inclusion.
+On Mon, Jul 30, 2012 at 08:00:19PM -0400, Mikulas Patocka wrote:
 > 
-> Vivek, they are in and were in the pull request sent out earlier today!
+> 
+> On Mon, 30 Jul 2012, Paul E. McKenney wrote:
+> 
+> > On Sun, Jul 29, 2012 at 01:13:34AM -0400, Mikulas Patocka wrote:
+> > > On Sat, 28 Jul 2012, Eric Dumazet wrote:
+> > > > On Sat, 2012-07-28 at 12:41 -0400, Mikulas Patocka wrote:
+> > 
+> > [ . . . ]
+> > 
+> > > > (bdev->bd_block_size should be read exactly once )
+> > > 
+> > > Rewrite all direct and non-direct io code so that it reads block size just 
+> > > once ...
+> > 
+> > For whatever it is worth, the 3.5 Linux kernel only has about ten mentions
+> > of bd_block_size, at least according to cscope.
+> 
+> plus 213 uses of i_blkbits (which is derived directly from bd_block_size). 
+> 45 of them is in fs/*.c and mm/*.c
 
-Great. I missed that. Thanks for including the patch.
+At least it is only hundreds rather than thousands!  ;-)
 
-Vivek
+							Thanx, Paul
+
