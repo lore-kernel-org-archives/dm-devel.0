@@ -1,75 +1,88 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [dm-devel] linux-next: Tree for Aug 2 (dm-raid)
-Date: Fri, 3 Aug 2012 06:34:26 +1000
-Message-ID: <20120803063426.7ccf7e73@notabene.brown>
-References: <20120802141505.d30da7f7113e955679383acb@canb.auug.org.au>
-	<501AA2F2.1000102@xenotime.net>
+From: Karandeep Chahal <kchahal@ddn.com>
+Subject: multipath bug
+Date: Thu, 2 Aug 2012 10:42:25 -0400
+Message-ID: <501A91D1.3060801@ddn.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/vohp6FVF.dyNsWP9waSFoJm"; protocol="application/pgp-signature"
-Return-path: <linux-next-owner@vger.kernel.org>
-In-Reply-To: <501AA2F2.1000102@xenotime.net>
-Sender: linux-next-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: rdunlap@xenotime.net, Stephen Rothwell <sfr@canb.auug.org.au>, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---Sig_/vohp6FVF.dyNsWP9waSFoJm
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Hello,
 
-On Thu, 02 Aug 2012 08:55:30 -0700 Randy Dunlap <rdunlap@xenotime.net> wrot=
-e:
+I have been fighting with a RHEL 6.2 fail over problem I have hit during 
+rolling upgrades, and I was wondering if anyone else has seen this. On 
+losing IO paths the initiator locks up (ssh locks up etc), I see the 
+following in syslog:
 
-> On 08/01/2012 09:15 PM, Stephen Rothwell wrote:
->=20
-> > Hi all,
-> >=20
-> > Please do not add anything to linux-next included branches/series that =
-is
-> > destined for v3.7 until after v3.6-rc1 is released.
-> >=20
-> > Reminder: do not rebase your branches before asking Linus to pull them =
-...
-> >=20
-> > Changes since 20120731:
->=20
->=20
->=20
-> on i386:
->=20
-> ERROR: "md_raid10_congested" [drivers/md/dm-raid.ko] undefined!
->=20
-> Full randconfig file is attached.
->
+Aug  1 15:10:15 ashe kernel: INFO: task simpled:15450 blocked for more 
+than 120 seconds.
+Aug  1 15:10:15 ashe kernel: "echo 0 > 
+/proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Aug  1 15:10:15 ashe kernel: simpled       D 0000000000000007     0 
+15450  15424 0x00000080
+Aug  1 15:10:15 ashe kernel: ffff880405589a98 0000000000000082 
+0000000000000000 ffffffffa00041fc
+Aug  1 15:10:15 ashe kernel: ffff880406696378 ffff880409fb4400 
+0000000000000001 000000000000000c
+Aug  1 15:10:15 ashe kernel: ffff880405f93058 ffff880405589fd8 
+000000000000fb88 ffff880405f93058
+Aug  1 15:10:15 ashe kernel: Call Trace:
+Aug  1 15:10:15 ashe kernel: [<ffffffffa00041fc>] ? 
+dm_table_unplug_all+0x5c/0x100 [dm_mod]
+Aug  1 15:10:15 ashe kernel: [<ffffffff814fe0f3>] io_schedule+0x73/0xc0
+Aug  1 15:10:15 ashe kernel: [<ffffffff811b676e>] 
+__blockdev_direct_IO_newtrunc+0x6fe/0xb90
+Aug  1 15:10:15 ashe kernel: [<ffffffff811b6c5e>] 
+__blockdev_direct_IO+0x5e/0xd0
+Aug  1 15:10:15 ashe kernel: [<ffffffff811b3510>] ? 
+blkdev_get_blocks+0x0/0xc0
+Aug  1 15:10:15 ashe kernel: [<ffffffff811b4377>] blkdev_direct_IO+0x57/0x60
+Aug  1 15:10:15 ashe kernel: [<ffffffff811b3510>] ? 
+blkdev_get_blocks+0x0/0xc0
+Aug  1 15:10:15 ashe kernel: [<ffffffff81114e62>] 
+generic_file_direct_write+0xc2/0x190
+Aug  1 15:10:15 ashe kernel: [<ffffffff81116675>] 
+__generic_file_aio_write+0x345/0x480
+Aug  1 15:10:15 ashe kernel: [<ffffffff811b4e00>] ? blkdev_open+0x0/0xc0
+Aug  1 15:10:15 ashe kernel: [<ffffffff811b3b0c>] blkdev_aio_write+0x3c/0xa0
+Aug  1 15:10:15 ashe kernel: [<ffffffff8117ae9a>] do_sync_write+0xfa/0x140
+Aug  1 15:10:15 ashe kernel: [<ffffffff8118c2f0>] ? do_filp_open+0x780/0xd60
+Aug  1 15:10:15 ashe kernel: [<ffffffff810920d0>] ? 
+autoremove_wake_function+0x0/0x40
+Aug  1 15:10:15 ashe kernel: [<ffffffff81213266>] ? 
+security_file_permission+0x16/0x20
+Aug  1 15:10:15 ashe kernel: [<ffffffff8117b198>] vfs_write+0xb8/0x1a0
+Aug  1 15:10:15 ashe kernel: [<ffffffff810d6b12>] ? 
+audit_syscall_entry+0x272/0x2a0
+Aug  1 15:10:15 ashe kernel: [<ffffffff8117bbb1>] sys_write+0x51/0x90
+Aug  1 15:10:15 ashe kernel: [<ffffffff8100b0f2>] 
+system_call_fastpath+0x16/0x1b
+Aug  1 15:12:02 ashe init: tty (/dev/tty1) main process (2774) killed by 
+TERM signal
+Aug  1 15:12:03 ashe avahi-daemon[2291]: Got SIGTERM, quitting.
 
-Thanks.  Fix was pulled by Linus about half and hour ago :-)
+I have updated the following packages to the latest available from 
+RedHat but the problem still presists:
 
-http://git.kernel.org/?p=3Dlinux/kernel/git/torvalds/linux.git;a=3Dcommitdi=
-ff;h=3Dd9f691c365a83ce2530f0e46b947365c2db44ea0
+device-mapper-1.02.74-10.el6.x86_64
+device-mapper-multipath-0.4.9-56.el6_3.1.x86_64
+kernel-2.6.32-279.2.1.el6.x86_64
+lvm2-2.02.95-10.el6.x86_64
 
-NeilBrown
+Does anyone have any suggestions/workarounds? I am looking at the source 
+myself but I am not familiar with dm.
 
---Sig_/vohp6FVF.dyNsWP9waSFoJm
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
-
-iQIVAwUBUBrkUjnsnt1WYoG5AQI5bg//VatH2XpVslWMT0WAUMqZ8g7V5xr5gGyp
-01o38tykSl862C5fxb0NjBMKZvxcamYMfddCKSr1y4y82WNJ6LnstMm4h11E6JTD
-HeI9DeG8gokkNAyWfjy8oub5YkJC4kLpBQLi0VNLOKE8A0dUIB3l45YxUE7abrpl
-rqjga53rdp0KKZtEkZul4GXep5md59ziATu3EYmSiTy3pH4D1px4aI/DS9w5L3xS
-OTz9S+NJA+aIMsPot5EkmP1mK+BZcy0P+ql5i6QOPR0WsERcUihlyuHQlbLZyO1w
-UIx9facyIoriq0A+KF0fUtEFEqzMKX+f6U5fKpoiqFZkC7Hww3rGlPYeJQ1IetDW
-eXK17Q0j/WdVqYzPh7je9D3UoageZQ3snLZ6p8ph3gmiZnNn0BoV+1tArJrr3RLs
-DllQSIwnIrdhCTu8xurBLzalUYSJT95NTtkqIPbmlZaBcCAZdPkWBm+kQZKkgdGk
-WiAfxozXPjDTq/eWJ3m0So6WHR1Ql2YVLwTjOS4DZ/woQvTU9mTLpAhg2ZohDKsS
-3zaxTByyMe9dHFssZIy2C9JxOGTIz2+IIbcpUm1BQeGCJVFFgHsk/c+TmWPlyZAJ
-la06OI9cfA8Yo3Ry83beie/wdHqJOkEDqD4IIlgs2LPAAtbHzaON9+aMDrrz7vnj
-2YKHmEjoECo=
-=g3bQ
------END PGP SIGNATURE-----
-
---Sig_/vohp6FVF.dyNsWP9waSFoJm--
+Please advise.
+Karan
