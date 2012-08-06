@@ -1,150 +1,109 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v5 07/12] block: Rename bio_split() -> bio_pair_split()
-Date: Mon,  6 Aug 2012 15:08:36 -0700
-Message-ID: <1344290921-25154-8-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v5 02/12] dm: Use bioset's front_pad for
+	dm_rq_clone_bio_info
+Date: Mon,  6 Aug 2012 15:08:31 -0700
+Message-ID: <1344290921-25154-3-git-send-email-koverstreet@google.com>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1344290921-25154-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, mpatocka@redhat.com, vgoyal@redhat.com, yehuda@hq.newdream.net, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-This is prep work for introducing a more general bio_split()
+Previously, dm_rq_clone_bio_info needed to be freed by the bio's
+destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
+This gets rid of a memory allocation and means we can kill
+dm_rq_bio_destructor.
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- drivers/block/drbd/drbd_req.c |    2 +-
- drivers/block/pktcdvd.c       |    2 +-
- drivers/block/rbd.c           |    3 ++-
- drivers/md/linear.c           |    2 +-
- drivers/md/raid0.c            |    6 +++---
- drivers/md/raid10.c           |    4 ++--
- fs/bio.c                      |    4 ++--
- include/linux/bio.h           |    2 +-
- 8 files changed, 13 insertions(+), 12 deletions(-)
+ drivers/md/dm.c |   31 +++++--------------------------
+ 1 files changed, 5 insertions(+), 26 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-index 8e93a6a..b5cfa3b 100644
---- a/drivers/block/drbd/drbd_req.c
-+++ b/drivers/block/drbd/drbd_req.c
-@@ -1150,7 +1150,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
- 		const int sps = 1 << HT_SHIFT; /* sectors per slot */
- 		const int mask = sps - 1;
- 		const sector_t first_sectors = sps - (sect & mask);
--		bp = bio_split(bio, first_sectors);
-+		bp = bio_pair_split(bio, first_sectors);
- 
- 		/* we need to get a "reference count" (ap_bio_cnt)
- 		 * to avoid races with the disconnect/reconnect/suspend code.
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index ae55f08..18393a1 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -2469,7 +2469,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
- 		if (last_zone != zone) {
- 			BUG_ON(last_zone != zone + pd->settings.size);
- 			first_sectors = last_zone - bio->bi_sector;
--			bp = bio_split(bio, first_sectors);
-+			bp = bio_pair_split(bio, first_sectors);
- 			BUG_ON(!bp);
- 			pkt_make_request(q, &bp->bio1);
- 			pkt_make_request(q, &bp->bio2);
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 8f428a8..e33c224 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -732,7 +732,8 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
- 
- 			/* split the bio. We'll release it either in the next
- 			   call, or it will have to be released outside */
--			bp = bio_split(old_chain, (len - total) / SECTOR_SIZE);
-+			bp = bio_pair_split(old_chain,
-+					    (len - total) / SECTOR_SIZE);
- 			if (!bp)
- 				goto err_out;
- 
-diff --git a/drivers/md/linear.c b/drivers/md/linear.c
-index fa211d8..e860cb9 100644
---- a/drivers/md/linear.c
-+++ b/drivers/md/linear.c
-@@ -314,7 +314,7 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
- 
- 		rcu_read_unlock();
- 
--		bp = bio_split(bio, end_sector - bio->bi_sector);
-+		bp = bio_pair_split(bio, end_sector - bio->bi_sector);
- 
- 		linear_make_request(mddev, &bp->bio1);
- 		linear_make_request(mddev, &bp->bio2);
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index de63a1f..c89c8aa 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -516,11 +516,11 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
- 		 * refuse to split for us, so we need to split it.
- 		 */
- 		if (likely(is_power_of_2(chunk_sects)))
--			bp = bio_split(bio, chunk_sects - (sector &
-+			bp = bio_pair_split(bio, chunk_sects - (sector &
- 							   (chunk_sects-1)));
- 		else
--			bp = bio_split(bio, chunk_sects -
--				       sector_div(sector, chunk_sects));
-+			bp = bio_pair_split(bio, chunk_sects -
-+					    sector_div(sector, chunk_sects));
- 		raid0_make_request(mddev, &bp->bio1);
- 		raid0_make_request(mddev, &bp->bio2);
- 		bio_pair_release(bp);
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 8da6282..be75924 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1063,8 +1063,8 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 		/* This is a one page bio that upper layers
- 		 * refuse to split for us, so we need to split it.
- 		 */
--		bp = bio_split(bio,
--			       chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
-+		bp = bio_pair_split(bio,
-+				    chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
- 
- 		/* Each of these 'make_request' calls will call 'wait_barrier'.
- 		 * If the first succeeds but the second blocks due to the resync
-diff --git a/fs/bio.c b/fs/bio.c
-index ff34311..0470376 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -1491,7 +1491,7 @@ static void bio_pair_end_2(struct bio *bi, int err)
- /*
-  * split a bio - only worry about a bio with a single page in its iovec
-  */
--struct bio_pair *bio_split(struct bio *bi, int first_sectors)
-+struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors)
- {
- 	struct bio_pair *bp = mempool_alloc(bio_split_pool, GFP_NOIO);
- 
-@@ -1534,7 +1534,7 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
- 
- 	return bp;
- }
--EXPORT_SYMBOL(bio_split);
-+EXPORT_SYMBOL(bio_pair_split);
- 
- /**
-  *      bio_sector_offset - Find hardware sector offset in bio
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 484b96e..fdcc8dc 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -201,7 +201,7 @@ struct bio_pair {
- 	atomic_t			cnt;
- 	int				error;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 40b7735..4014696 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -92,6 +92,7 @@ struct dm_rq_target_io {
+ struct dm_rq_clone_bio_info {
+ 	struct bio *orig;
+ 	struct dm_rq_target_io *tio;
++	struct bio clone;
  };
--extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
-+extern struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors);
- extern void bio_pair_release(struct bio_pair *dbio);
  
- extern struct bio_set *bioset_create(unsigned int, unsigned int);
+ union map_info *dm_get_mapinfo(struct bio *bio)
+@@ -467,16 +468,6 @@ static void free_rq_tio(struct dm_rq_target_io *tio)
+ 	mempool_free(tio, tio->md->tio_pool);
+ }
+ 
+-static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
+-{
+-	return mempool_alloc(md->io_pool, GFP_ATOMIC);
+-}
+-
+-static void free_bio_info(struct dm_rq_clone_bio_info *info)
+-{
+-	mempool_free(info, info->tio->md->io_pool);
+-}
+-
+ static int md_in_flight(struct mapped_device *md)
+ {
+ 	return atomic_read(&md->pending[READ]) +
+@@ -1438,30 +1429,17 @@ void dm_dispatch_request(struct request *rq)
+ }
+ EXPORT_SYMBOL_GPL(dm_dispatch_request);
+ 
+-static void dm_rq_bio_destructor(struct bio *bio)
+-{
+-	struct dm_rq_clone_bio_info *info = bio->bi_private;
+-	struct mapped_device *md = info->tio->md;
+-
+-	free_bio_info(info);
+-	bio_free(bio, md->bs);
+-}
+-
+ static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
+ 				 void *data)
+ {
+ 	struct dm_rq_target_io *tio = data;
+-	struct mapped_device *md = tio->md;
+-	struct dm_rq_clone_bio_info *info = alloc_bio_info(md);
+-
+-	if (!info)
+-		return -ENOMEM;
++	struct dm_rq_clone_bio_info *info =
++		container_of(bio, struct dm_rq_clone_bio_info, clone);
+ 
+ 	info->orig = bio_orig;
+ 	info->tio = tio;
+ 	bio->bi_end_io = end_clone_bio;
+ 	bio->bi_private = info;
+-	bio->bi_destructor = dm_rq_bio_destructor;
+ 
+ 	return 0;
+ }
+@@ -2696,7 +2674,8 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
+ 	if (!pools->tio_pool)
+ 		goto free_io_pool_and_out;
+ 
+-	pools->bs = bioset_create(pool_size, 0);
++	pools->bs = bioset_create(pool_size,
++				  offsetof(struct dm_rq_clone_bio_info, orig));
+ 	if (!pools->bs)
+ 		goto free_tio_pool_and_out;
+ 
 -- 
 1.7.7.3
