@@ -1,70 +1,56 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: all kstrto* consumers should include kernel.h
-Date: Fri,  3 Aug 2012 13:06:34 -0400
-Message-ID: <1344013594-13898-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v5 00/12] Block cleanups
+Date: Mon,  6 Aug 2012 15:08:29 -0700
+Message-ID: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
-Commit 1a66a08ae8 ("dm: replace simple_strtoul") should've included
-<linux/kernel.h>.  Likewise for commit 991d9fa0 ("dm: add thin
-provisioning target").
+Various cleanups for the generic block layer - the patches should be pretty
+self explanatory.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-exception-store.c |    1 +
- drivers/md/dm-stripe.c          |    1 +
- drivers/md/dm-thin.c            |    1 +
- 3 files changed, 3 insertions(+), 0 deletions(-)
+CHANGES SINCE LAST VERSION:
 
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index ebaa4f8..4ddcd8a 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -11,6 +11,7 @@
- #include <linux/mm.h>
- #include <linux/pagemap.h>
- #include <linux/vmalloc.h>
-+#include <linux/kernel.h>
- #include <linux/module.h>
- #include <linux/slab.h>
- 
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index a087bf2..0a70334 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -7,6 +7,7 @@
- #include <linux/device-mapper.h>
- 
- #include <linux/module.h>
-+#include <linux/kernel.h>
- #include <linux/init.h>
- #include <linux/blkdev.h>
- #include <linux/bio.h>
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index af1fc3b..c961efd 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -7,6 +7,7 @@
- #include "dm-thin-metadata.h"
- #include "dm.h"
- 
-+#include <linux/kernel.h>
- #include <linux/device-mapper.h>
- #include <linux/dm-io.h>
- #include <linux/dm-kcopyd.h>
+Review feedback - should all be noted in the patch descriptions. Fixed
+retarded rebase conflicts. Added some acked-bys.
+
+Kent Overstreet (12):
+  block: Generalized bio pool freeing
+  dm: Use bioset's front_pad for dm_rq_clone_bio_info
+  block: Add bio_reset()
+  pktcdvd: Switch to bio_kmalloc()
+  block: Kill bi_destructor
+  block: Add an explicit bio flag for bios that own their bvec
+  block: Rename bio_split() -> bio_pair_split()
+  block: Introduce new bio_split()
+  block: Rework bio_pair_split()
+  block: Add bio_clone_kmalloc()
+  block: Add bio_clone_bioset()
+  block: Only clone bio vecs that are in use
+
+ Documentation/block/biodoc.txt      |    5 -
+ block/blk-core.c                    |   10 +-
+ drivers/block/drbd/drbd_main.c      |   13 +--
+ drivers/block/drbd/drbd_req.c       |   18 +--
+ drivers/block/osdblk.c              |    3 +-
+ drivers/block/pktcdvd.c             |   73 +++-------
+ drivers/block/rbd.c                 |    8 +-
+ drivers/md/dm-crypt.c               |    9 --
+ drivers/md/dm-io.c                  |   11 --
+ drivers/md/dm.c                     |   60 ++-------
+ drivers/md/linear.c                 |    6 +-
+ drivers/md/md.c                     |   44 +------
+ drivers/md/raid0.c                  |    8 +-
+ drivers/md/raid10.c                 |   23 +---
+ drivers/target/target_core_iblock.c |    9 --
+ fs/bio-integrity.c                  |   44 ------
+ fs/bio.c                            |  259 +++++++++++++++++++++++------------
+ fs/exofs/ore.c                      |    5 +-
+ include/linux/bio.h                 |   37 ++---
+ include/linux/blk_types.h           |   12 ++-
+ 20 files changed, 256 insertions(+), 401 deletions(-)
+
 -- 
-1.7.4.4
+1.7.7.3
