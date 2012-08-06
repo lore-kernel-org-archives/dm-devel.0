@@ -1,109 +1,74 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v5 02/12] dm: Use bioset's front_pad for
-	dm_rq_clone_bio_info
-Date: Mon,  6 Aug 2012 15:08:31 -0700
-Message-ID: <1344290921-25154-3-git-send-email-koverstreet@google.com>
+Subject: [PATCH v5 06/12] block: Add an explicit bio flag for bios that own their bvec
+Date: Mon,  6 Aug 2012 15:08:35 -0700
+Message-ID: <1344290921-25154-7-git-send-email-koverstreet@google.com>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1344290921-25154-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, mpatocka@redhat.com, vgoyal@redhat.com, yehuda@hq.newdream.net, tj@kernel.org, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-Previously, dm_rq_clone_bio_info needed to be freed by the bio's
-destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
-This gets rid of a memory allocation and means we can kill
-dm_rq_bio_destructor.
+This is for the new bio splitting code. When we split a bio, if the
+split occured on a bvec boundry we reuse the bvec for the new bio. But
+that means bio_free() can't free it, hence the explicit flag.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 ---
- drivers/md/dm.c |   31 +++++--------------------------
- 1 files changed, 5 insertions(+), 26 deletions(-)
+ fs/bio.c                  |    3 ++-
+ include/linux/bio.h       |    5 -----
+ include/linux/blk_types.h |    1 +
+ 3 files changed, 3 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 40b7735..4014696 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -92,6 +92,7 @@ struct dm_rq_target_io {
- struct dm_rq_clone_bio_info {
- 	struct bio *orig;
- 	struct dm_rq_target_io *tio;
-+	struct bio clone;
- };
+diff --git a/fs/bio.c b/fs/bio.c
+index ebc7309..ff34311 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -249,7 +249,7 @@ void bio_free(struct bio *bio)
+ 		return;
+ 	}
  
- union map_info *dm_get_mapinfo(struct bio *bio)
-@@ -467,16 +468,6 @@ static void free_rq_tio(struct dm_rq_target_io *tio)
- 	mempool_free(tio, tio->md->tio_pool);
+-	if (bio_has_allocated_vec(bio))
++	if (bio_flagged(bio, BIO_OWNS_VEC))
+ 		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
+ 
+ 	if (bio_integrity(bio))
+@@ -321,6 +321,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ 			goto err_free;
+ 
+ 		nr_iovecs = bvec_nr_vecs(idx);
++		bio->bi_flags |= 1 << BIO_OWNS_VEC;
+ 	}
+ out_set:
+ 	bio->bi_flags |= idx << BIO_POOL_OFFSET;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 393c87e..484b96e 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -84,11 +84,6 @@ static inline void *bio_data(struct bio *bio)
+ 	return NULL;
  }
  
--static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
+-static inline int bio_has_allocated_vec(struct bio *bio)
 -{
--	return mempool_alloc(md->io_pool, GFP_ATOMIC);
+-	return bio->bi_io_vec && bio->bi_io_vec != bio->bi_inline_vecs;
 -}
 -
--static void free_bio_info(struct dm_rq_clone_bio_info *info)
--{
--	mempool_free(info, info->tio->md->io_pool);
--}
--
- static int md_in_flight(struct mapped_device *md)
- {
- 	return atomic_read(&md->pending[READ]) +
-@@ -1438,30 +1429,17 @@ void dm_dispatch_request(struct request *rq)
- }
- EXPORT_SYMBOL_GPL(dm_dispatch_request);
+ /*
+  * will die
+  */
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index d10c2e49..416aae4 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -113,6 +113,7 @@ struct bio {
+ #define BIO_MAPPED_INTEGRITY 11/* integrity metadata has been remapped */
  
--static void dm_rq_bio_destructor(struct bio *bio)
--{
--	struct dm_rq_clone_bio_info *info = bio->bi_private;
--	struct mapped_device *md = info->tio->md;
--
--	free_bio_info(info);
--	bio_free(bio, md->bs);
--}
--
- static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
- 				 void *data)
- {
- 	struct dm_rq_target_io *tio = data;
--	struct mapped_device *md = tio->md;
--	struct dm_rq_clone_bio_info *info = alloc_bio_info(md);
--
--	if (!info)
--		return -ENOMEM;
-+	struct dm_rq_clone_bio_info *info =
-+		container_of(bio, struct dm_rq_clone_bio_info, clone);
+ #define BIO_RESET_BITS	12	/* Flags starting here get preserved by bio_reset() */
++#define BIO_OWNS_VEC	12	/* bio_free() should free bvec */
  
- 	info->orig = bio_orig;
- 	info->tio = tio;
- 	bio->bi_end_io = end_clone_bio;
- 	bio->bi_private = info;
--	bio->bi_destructor = dm_rq_bio_destructor;
- 
- 	return 0;
- }
-@@ -2696,7 +2674,8 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
- 	if (!pools->tio_pool)
- 		goto free_io_pool_and_out;
- 
--	pools->bs = bioset_create(pool_size, 0);
-+	pools->bs = bioset_create(pool_size,
-+				  offsetof(struct dm_rq_clone_bio_info, orig));
- 	if (!pools->bs)
- 		goto free_tio_pool_and_out;
+ #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
  
 -- 
 1.7.7.3
