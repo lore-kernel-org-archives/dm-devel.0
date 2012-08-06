@@ -1,56 +1,149 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v5 00/12] Block cleanups
-Date: Mon,  6 Aug 2012 15:08:29 -0700
-Message-ID: <1344290921-25154-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v5 04/12] pktcdvd: Switch to bio_kmalloc()
+Date: Mon,  6 Aug 2012 15:08:33 -0700
+Message-ID: <1344290921-25154-5-git-send-email-koverstreet@google.com>
+References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-Various cleanups for the generic block layer - the patches should be pretty
-self explanatory.
+This is prep work for killing bi_destructor - previously, pktcdvd had
+its own pkt_bio_alloc which was basically duplication bio_kmalloc(),
+necessitating its own bi_destructor implementation.
 
-CHANGES SINCE LAST VERSION:
+v5: Un-reorder some functions, to make the patch easier to review
 
-Review feedback - should all be noted in the patch descriptions. Fixed
-retarded rebase conflicts. Added some acked-bys.
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+---
+ drivers/block/pktcdvd.c |   67 +++++++++++-----------------------------------
+ 1 files changed, 16 insertions(+), 51 deletions(-)
 
-Kent Overstreet (12):
-  block: Generalized bio pool freeing
-  dm: Use bioset's front_pad for dm_rq_clone_bio_info
-  block: Add bio_reset()
-  pktcdvd: Switch to bio_kmalloc()
-  block: Kill bi_destructor
-  block: Add an explicit bio flag for bios that own their bvec
-  block: Rename bio_split() -> bio_pair_split()
-  block: Introduce new bio_split()
-  block: Rework bio_pair_split()
-  block: Add bio_clone_kmalloc()
-  block: Add bio_clone_bioset()
-  block: Only clone bio vecs that are in use
-
- Documentation/block/biodoc.txt      |    5 -
- block/blk-core.c                    |   10 +-
- drivers/block/drbd/drbd_main.c      |   13 +--
- drivers/block/drbd/drbd_req.c       |   18 +--
- drivers/block/osdblk.c              |    3 +-
- drivers/block/pktcdvd.c             |   73 +++-------
- drivers/block/rbd.c                 |    8 +-
- drivers/md/dm-crypt.c               |    9 --
- drivers/md/dm-io.c                  |   11 --
- drivers/md/dm.c                     |   60 ++-------
- drivers/md/linear.c                 |    6 +-
- drivers/md/md.c                     |   44 +------
- drivers/md/raid0.c                  |    8 +-
- drivers/md/raid10.c                 |   23 +---
- drivers/target/target_core_iblock.c |    9 --
- fs/bio-integrity.c                  |   44 ------
- fs/bio.c                            |  259 +++++++++++++++++++++++------------
- fs/exofs/ore.c                      |    5 +-
- include/linux/bio.h                 |   37 ++---
- include/linux/blk_types.h           |   12 ++-
- 20 files changed, 256 insertions(+), 401 deletions(-)
-
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index ba66e44..ae55f08 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -101,6 +101,8 @@ static struct dentry	*pkt_debugfs_root = NULL; /* /sys/kernel/debug/pktcdvd */
+ static int pkt_setup_dev(dev_t dev, dev_t* pkt_dev);
+ static int pkt_remove_dev(dev_t pkt_dev);
+ static int pkt_seq_show(struct seq_file *m, void *p);
++static void pkt_end_io_read(struct bio *bio, int err);
++static void pkt_end_io_packet_write(struct bio *bio, int err);
+ 
+ 
+ 
+@@ -522,38 +524,6 @@ static void pkt_bio_finished(struct pktcdvd_device *pd)
+ 	}
+ }
+ 
+-static void pkt_bio_destructor(struct bio *bio)
+-{
+-	kfree(bio->bi_io_vec);
+-	kfree(bio);
+-}
+-
+-static struct bio *pkt_bio_alloc(int nr_iovecs)
+-{
+-	struct bio_vec *bvl = NULL;
+-	struct bio *bio;
+-
+-	bio = kmalloc(sizeof(struct bio), GFP_KERNEL);
+-	if (!bio)
+-		goto no_bio;
+-	bio_init(bio);
+-
+-	bvl = kcalloc(nr_iovecs, sizeof(struct bio_vec), GFP_KERNEL);
+-	if (!bvl)
+-		goto no_bvl;
+-
+-	bio->bi_max_vecs = nr_iovecs;
+-	bio->bi_io_vec = bvl;
+-	bio->bi_destructor = pkt_bio_destructor;
+-
+-	return bio;
+-
+- no_bvl:
+-	kfree(bio);
+- no_bio:
+-	return NULL;
+-}
+-
+ /*
+  * Allocate a packet_data struct
+  */
+@@ -567,10 +537,13 @@ static struct packet_data *pkt_alloc_packet_data(int frames)
+ 		goto no_pkt;
+ 
+ 	pkt->frames = frames;
+-	pkt->w_bio = pkt_bio_alloc(frames);
++	pkt->w_bio = bio_kmalloc(GFP_KERNEL, frames);
+ 	if (!pkt->w_bio)
+ 		goto no_bio;
+ 
++	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
++	pkt->w_bio->bi_private = pkt;
++
+ 	for (i = 0; i < frames / FRAMES_PER_PAGE; i++) {
+ 		pkt->pages[i] = alloc_page(GFP_KERNEL|__GFP_ZERO);
+ 		if (!pkt->pages[i])
+@@ -581,9 +554,12 @@ static struct packet_data *pkt_alloc_packet_data(int frames)
+ 	bio_list_init(&pkt->orig_bios);
+ 
+ 	for (i = 0; i < frames; i++) {
+-		struct bio *bio = pkt_bio_alloc(1);
++		struct bio *bio = bio_kmalloc(GFP_KERNEL, 1);
+ 		if (!bio)
+ 			goto no_rd_bio;
++
++		bio->bi_end_io = pkt_end_io_read;
++		bio->bi_private = pkt;
+ 		pkt->r_bios[i] = bio;
+ 	}
+ 
+@@ -1111,21 +1087,15 @@ static void pkt_gather_data(struct pktcdvd_device *pd, struct packet_data *pkt)
+ 	 * Schedule reads for missing parts of the packet.
+ 	 */
+ 	for (f = 0; f < pkt->frames; f++) {
+-		struct bio_vec *vec;
+-
+ 		int p, offset;
++
+ 		if (written[f])
+ 			continue;
++
+ 		bio = pkt->r_bios[f];
+-		vec = bio->bi_io_vec;
+-		bio_init(bio);
+-		bio->bi_max_vecs = 1;
+-		bio->bi_sector = pkt->sector + f * (CD_FRAMESIZE >> 9);
+-		bio->bi_bdev = pd->bdev;
+-		bio->bi_end_io = pkt_end_io_read;
+-		bio->bi_private = pkt;
+-		bio->bi_io_vec = vec;
+-		bio->bi_destructor = pkt_bio_destructor;
++		bio_reset(bio);
++		bio->bi_sector	= pkt->sector + f * (CD_FRAMESIZE >> 9);
++		bio->bi_bdev	= pd->bdev;
+ 
+ 		p = (f * CD_FRAMESIZE) / PAGE_SIZE;
+ 		offset = (f * CD_FRAMESIZE) % PAGE_SIZE;
+@@ -1418,14 +1388,9 @@ static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
+ 	}
+ 
+ 	/* Start the write request */
+-	bio_init(pkt->w_bio);
+-	pkt->w_bio->bi_max_vecs = PACKET_MAX_SIZE;
++	bio_reset(pkt->w_bio);
+ 	pkt->w_bio->bi_sector = pkt->sector;
+ 	pkt->w_bio->bi_bdev = pd->bdev;
+-	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
+-	pkt->w_bio->bi_private = pkt;
+-	pkt->w_bio->bi_io_vec = bvec;
+-	pkt->w_bio->bi_destructor = pkt_bio_destructor;
+ 	for (f = 0; f < pkt->frames; f++)
+ 		if (!bio_add_page(pkt->w_bio, bvec[f].bv_page, CD_FRAMESIZE, bvec[f].bv_offset))
+ 			BUG();
 -- 
 1.7.7.3
