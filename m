@@ -1,73 +1,70 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: dm-loop and kernel 3.x
-Date: Wed, 08 Aug 2012 17:00:00 +0100
-Message-ID: <50228D00.1020209@redhat.com>
-References: <FB767254-0A6B-42BF-92C7-0527F5329F84@dattobackup.com>
-	<50227BC3.3050002@redhat.com>
-	<A8EC03E5-16E1-439E-8283-3740CBF2080C@dattobackup.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH] scsi_dh_rdac: Add empty set_params function to scsi_dh_rdac
+Date: Wed, 8 Aug 2012 16:10:07 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B0BCA09F1@SACEXCMBX02-PRD.hq.netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <A8EC03E5-16E1-439E-8283-3740CBF2080C@dattobackup.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Matt Coleman <mcoleman@dattobackup.com>
-Cc: device-mapper development <dm-devel@redhat.com>, breeves@redhat.com
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi <linux-scsi@vger.kernel.org>
+Cc: "device-mapper development (dm-devel@redhat.com)" <dm-devel@redhat.com>, "Mike Snitzer <snitzer@redhat.com> (snitzer@redhat.com)" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/08/2012 04:34 PM, Matt Coleman wrote:
-> I was looking to remove the limit on maximum number of loop devices.
-> I wasn't aware that had changed. Was the limit entirely lifted, or is
-> there a new higher limit? When did that change occur (which kernel version)?
+This patch adds empty set_params function to scsi_dh_rdac.
 
-2007 - v2.6.21-3222-g7328508. Devices are now allocated dynamically as
-required. The initial support was in this commit:
+This patch is required for the following features to work properly.
+1. add  retain_attached_hw_handler feature
 
-commit 73285082745045bcd64333c1fbaa88f8490f2626
-Author: Ken Chen <kenchen@google.com>
-Date:   Tue May 8 00:28:20 2007 -0700
+http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=a58a935d5a1b2ad267017a68c3a1bca26226cc76
 
-  remove artificial software max_loop limit
+2. add scsi_dh_attached_handler_name
 
-  Remove artificial maximum 256 loop device that can be created due to a
-  legacy device number limit.  Searching through lkml archive, there are
-  several instances where users complained about the artificial limit
-  that the loop driver impose.  There is no reason to have such limit.
+http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=7e8a74b177f17d100916b6ad415450f7c9508691
 
-  This patch rid the limit entirely and make loop device and associated
-  block queue instantiation on demand.  With on-demand instantiation,
-  it also gives the benefit of not wasting memory if these devices are
-  not in use (compare to current implementation that always create 8
-  loop devices), a net improvement in both areas.  This version is both
-  tested with creation of large number of loop devices and is
-  compatible with existing losetup/mount user land tools.
 
-  There are a number of people who worked on this and provided valuable
-  suggestions, in no particular order, by:
+DM layer detaches the handler if the set_params is not implemented or fails.
 
-  Jens Axboe
-  Jan Engelhardt
-  Christoph Hellwig
-  Thomas M
+For example if we pass following parameters from multipath:
 
-  Signed-off-by: Ken Chen <kenchen@google.com>
-  Cc: Jan Engelhardt <jengelh@linux01.gwdg.de>
-  Cc: Christoph Hellwig <hch@lst.de>
-  Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-  Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+	features "1 retain_attached_hw_handler" (consider rdac as attached_hw_handler)
+	hardware_handler "2 alua 1"
 
-There are several fixes that landed later (78f4bb3 and a1c15c5) that are
-important if using partitionable loop devices. Those all went into
-2.6.39 so any 3.x kernel should be a reasonable choice.
+If the attached_hw_handler is rdac, then DM anyway tries to call set_params on rdac. Because rdac does not 
+implement set_params, scsi_dh_set_params fails and DM detaches the handler.
 
-Regards,
-Bryn.
+This patch fixes this problem. 
+
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
+---
+--- linux-3.5-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2012-08-08 10:38:54.000000000 -0500
++++ linux-3.5-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c	2012-08-08 11:02:10.000000000 -0500
+@@ -816,6 +816,17 @@ static const struct scsi_dh_devlist rdac
+ 	{NULL, NULL},
+ };
+ 
++/*
++ * params - parameters in the following format
++ *      "no_of_params\0param1\0param2\0param3\0...\0"
++ *      for example, string for 2 parameters with value 10 and 21
++ *      is specified as "2\010\021\0".
++ */
++static int rdac_set_params(struct scsi_device *sdev, const char *params)
++{
++	return 0;
++}
++
+ static bool rdac_match(struct scsi_device *sdev)
+ {
+ 	int i;
+@@ -846,6 +857,7 @@ static struct scsi_device_handler rdac_d
+ 	.attach = rdac_bus_attach,
+ 	.detach = rdac_bus_detach,
+ 	.activate = rdac_activate,
++	.set_params = rdac_set_params,
+ 	.match = rdac_match,
+ };
+ 
+
+
