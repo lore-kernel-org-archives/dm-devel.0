@@ -1,67 +1,78 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-verity: fix overflow checking
-Date: Wed, 8 Aug 2012 17:06:10 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1208081704280.24738@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: RE: scsi_dh_rdac: Add empty set_params function to scsi_dh_rdac
+Date: Wed, 8 Aug 2012 21:34:12 +0000
+Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B0BCA0B31@SACEXCMBX02-PRD.hq.netapp.com>
+References: <77471C95FAFD844C8CA02DD4F4C5FE2B0BCA09F1@SACEXCMBX02-PRD.hq.netapp.com>
+ <20120808193127.GA6064@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
-Cc: Wesley Miaw <wmiaw@netflix.com>, Milan Broz <mbroz@redhat.com>
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20120808193127.GA6064@redhat.com>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-scsi <linux-scsi@vger.kernel.org>, "device-mapper development (dm-devel@redhat.com)" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-BTW. This patch improves dm-verity overflow checking.
+> -----Original Message-----
+> From: Mike Snitzer [mailto:snitzer@redhat.com]
+> Sent: Wednesday, August 08, 2012 2:31 PM
+> To: Moger, Babu
+> Cc: linux-scsi; device-mapper development (dm-devel@redhat.com)
+> Subject: Re: scsi_dh_rdac: Add empty set_params function to scsi_dh_rdac
+> 
+> On Wed, Aug 08 2012 at 12:10pm -0400,
+> Moger, Babu <Babu.Moger@netapp.com> wrote:
+> 
+> > This patch adds empty set_params function to scsi_dh_rdac.
+> >
+> > This patch is required for the following features to work properly.
+> > 1. add  retain_attached_hw_handler feature
+> >
+> >
+> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=a58a
+> 935d5a1b2ad267017a68c3a1bca26226cc76
+> >
+> > 2. add scsi_dh_attached_handler_name
+> >
+> >
+> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=7e8
+> a74b177f17d100916b6ad415450f7c9508691
+> >
+> >
+> > DM layer detaches the handler if the set_params is not implemented or
+> fails.
+> >
+> > For example if we pass following parameters from multipath:
+> >
+> > 	features "1 retain_attached_hw_handler" (consider rdac as
+> attached_hw_handler)
+> > 	hardware_handler "2 alua 1"
+> >
+> > If the attached_hw_handler is rdac, then DM anyway tries to call
+> set_params on rdac. Because rdac does not
+> > implement set_params, scsi_dh_set_params fails and DM detaches the
+> handler.
+> >
+> > This patch fixes this problem.
+> >
+> > Signed-off-by: Babu Moger <babu.moger@netapp.com>
+> 
+> I think it'd be best to fix scsi_dh_set_params() so that it returns 0 if
+> scsi_dh->set_params is NULL.  That'd avoid all scsi_dh from having to
+> stub out a similar set_params to return 0.
+> 
+> But taking a step back, have you actually seen the problem you're saying
+> this patch fixes?
+> 
+> This problem shouldn't exist:
+> drivers/md/dm-mpath.c:parse_path will free m->hw_handler_params (and
+> reset it to NULL) if a scsi_dh is already attached.  Have a look at the
+> if (attached_handler_name) {} case.
 
-Mikulas
+My bad. I was still using one of your old patches.
+http://www.redhat.com/archives/dm-devel/2012-June/msg00174.html
 
----
+Things have changed after this version.  We don't have this problem with the new set of patches. 
 
-dm-verity: fix overflow checking
-
-Overflow checking in dm-verity was not sufficient.
-It would check overflow if sector_t was smaller than long long but not
-if sector_t and long long have the same size. This patch implements
-proper overflow checking.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-verity.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
-Index: linux-3.5-fast/drivers/md/dm-verity.c
-===================================================================
---- linux-3.5-fast.orig/drivers/md/dm-verity.c	2012-08-08 21:24:00.000000000 +0200
-+++ linux-3.5-fast/drivers/md/dm-verity.c	2012-08-08 21:28:06.000000000 +0200
-@@ -718,8 +718,8 @@ static int verity_ctr(struct dm_target *
- 	v->hash_dev_block_bits = ffs(num) - 1;
- 
- 	if (sscanf(argv[5], "%llu%c", &num_ll, &dummy) != 1 ||
--	    num_ll << (v->data_dev_block_bits - SECTOR_SHIFT) !=
--	    (sector_t)num_ll << (v->data_dev_block_bits - SECTOR_SHIFT)) {
-+	    (sector_t)(num_ll << (v->data_dev_block_bits - SECTOR_SHIFT))
-+	    >> (v->data_dev_block_bits - SECTOR_SHIFT) != nul_ll) {
- 		ti->error = "Invalid data blocks";
- 		r = -EINVAL;
- 		goto bad;
-@@ -733,8 +733,8 @@ static int verity_ctr(struct dm_target *
- 	}
- 
- 	if (sscanf(argv[6], "%llu%c", &num_ll, &dummy) != 1 ||
--	    num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT) !=
--	    (sector_t)num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT)) {
-+	    (sector_t)(num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT))
-+	    >> (v->hash_dev_block_bits - SECTOR_SHIFT) != num_ll) {
- 		ti->error = "Invalid hash start";
- 		r = -EINVAL;
- 		goto bad;
