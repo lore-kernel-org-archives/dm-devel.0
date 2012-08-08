@@ -1,57 +1,30 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: scsi_dh_rdac: Add empty set_params function to scsi_dh_rdac
-Date: Wed, 8 Aug 2012 15:31:28 -0400
-Message-ID: <20120808193127.GA6064@redhat.com>
-References: <77471C95FAFD844C8CA02DD4F4C5FE2B0BCA09F1@SACEXCMBX02-PRD.hq.netapp.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm: verity support data device offset (Linux
+ 3.4.7)
+Date: Wed, 08 Aug 2012 22:31:21 +0200
+Message-ID: <5022CC99.30103@redhat.com>
+References: <8893CF66-2E2C-4D8F-9239-E38BE55716AE@netflix.com> <Pine.LNX.4.64.1208081437550.16469@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <77471C95FAFD844C8CA02DD4F4C5FE2B0BCA09F1@SACEXCMBX02-PRD.hq.netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@netapp.com>
-Cc: linux-scsi <linux-scsi@vger.kernel.org>, "device-mapper development (dm-devel@redhat.com)" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1208081437550.16469@file.rdu.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, "msb@google.com" <msb@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?windows-1252?Q?Will_Drewry=99?= <w@google.com>, wmiaw@netflix.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 08 2012 at 12:10pm -0400,
-Moger, Babu <Babu.Moger@netapp.com> wrote:
+On 08/08/2012 08:46 PM, Mikulas Patocka wrote:
 
-> This patch adds empty set_params function to scsi_dh_rdac.
-> 
-> This patch is required for the following features to work properly.
-> 1. add  retain_attached_hw_handler feature
-> 
-> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=a58a935d5a1b2ad267017a68c3a1bca26226cc76
-> 
-> 2. add scsi_dh_attached_handler_name
-> 
-> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=7e8a74b177f17d100916b6ad415450f7c9508691
-> 
-> 
-> DM layer detaches the handler if the set_params is not implemented or fails.
-> 
-> For example if we pass following parameters from multipath:
-> 
-> 	features "1 retain_attached_hw_handler" (consider rdac as attached_hw_handler)
-> 	hardware_handler "2 alua 1"
-> 
-> If the attached_hw_handler is rdac, then DM anyway tries to call set_params on rdac. Because rdac does not 
-> implement set_params, scsi_dh_set_params fails and DM detaches the handler.
-> 
-> This patch fixes this problem. 
-> 
-> Signed-off-by: Babu Moger <babu.moger@netapp.com>
+> The problem with the patch is that it changes interface to the userspace 
+> tool. The userspace tool veritysetup already exists in recent cryptsetup 
+> package, so we can't change the interface - you should change the patch so 
+> that the starting data block is the last argument and the argument is 
+> optional - so that it is compatible with the existing userspace too.
 
-I think it'd be best to fix scsi_dh_set_params() so that it returns 0 if
-scsi_dh->set_params is NULL.  That'd avoid all scsi_dh from having to
-stub out a similar set_params to return 0.
+yes. Please never change interface without at least increasing target version.
 
-But taking a step back, have you actually seen the problem you're saying
-this patch fixes?
+I have to add userspace support as well to veritysetup and we need a way
+how to detect that option is supported by running kernel.
 
-This problem shouldn't exist:
-drivers/md/dm-mpath.c:parse_path will free m->hw_handler_params (and
-reset it to NULL) if a scsi_dh is already attached.  Have a look at the
-if (attached_handler_name) {} case.
-
-Mike
+Milan
