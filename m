@@ -1,70 +1,196 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH] scsi_dh_rdac: Add empty set_params function to scsi_dh_rdac
-Date: Wed, 8 Aug 2012 16:10:07 +0000
-Message-ID: <77471C95FAFD844C8CA02DD4F4C5FE2B0BCA09F1@SACEXCMBX02-PRD.hq.netapp.com>
+From: Wesley Miaw <wmiaw@netflix.com>
+Subject: [PATCH] dm: verity support data device offset (Linux 3.4.7)
+Date: Wed, 8 Aug 2012 18:23:20 +0000
+Message-ID: <8893CF66-2E2C-4D8F-9239-E38BE55716AE@netflix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: multipart/signed;
+	boundary="Apple-Mail=_A168BEBD-DC01-457E-9161-FBB6A59AF5BA";
+	protocol="application/pgp-signature"; micalg=pgp-sha1
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi <linux-scsi@vger.kernel.org>
-Cc: "device-mapper development (dm-devel@redhat.com)" <dm-devel@redhat.com>, "Mike Snitzer <snitzer@redhat.com> (snitzer@redhat.com)" <snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "msb@google.com" <msb@google.com>, =?Windows-1252?Q?Will_Drewry=99?= <w@google.com>
 List-Id: dm-devel.ids
 
-This patch adds empty set_params function to scsi_dh_rdac.
+--Apple-Mail=_A168BEBD-DC01-457E-9161-FBB6A59AF5BA
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
 
-This patch is required for the following features to work properly.
-1. add  retain_attached_hw_handler feature
+From: Wesley Miaw <wmiaw@netflix.com>
 
-http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=a58a935d5a1b2ad267017a68c3a1bca26226cc76
+Add data device start block index to dm-verity target parameters to =
+support
+verity targets where the data does not begin at sector 0 of the block =
+device.
+Also fix the hash block index computation so it takes into account data =
+offsets.
 
-2. add scsi_dh_attached_handler_name
-
-http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=7e8a74b177f17d100916b6ad415450f7c9508691
-
-
-DM layer detaches the handler if the set_params is not implemented or fails.
-
-For example if we pass following parameters from multipath:
-
-	features "1 retain_attached_hw_handler" (consider rdac as attached_hw_handler)
-	hardware_handler "2 alua 1"
-
-If the attached_hw_handler is rdac, then DM anyway tries to call set_params on rdac. Because rdac does not 
-implement set_params, scsi_dh_set_params fails and DM detaches the handler.
-
-This patch fixes this problem. 
-
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
+Signed-off-by: Wesley Miaw <wmiaw@netflix.com>
 ---
---- linux-3.5-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2012-08-08 10:38:54.000000000 -0500
-+++ linux-3.5-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c	2012-08-08 11:02:10.000000000 -0500
-@@ -816,6 +816,17 @@ static const struct scsi_dh_devlist rdac
- 	{NULL, NULL},
- };
- 
-+/*
-+ * params - parameters in the following format
-+ *      "no_of_params\0param1\0param2\0param3\0...\0"
-+ *      for example, string for 2 parameters with value 10 and 21
-+ *      is specified as "2\010\021\0".
-+ */
-+static int rdac_set_params(struct scsi_device *sdev, const char *params)
-+{
-+	return 0;
-+}
+ Documentation/device-mapper/verity.txt |    8 ++++-
+ drivers/md/dm-verity.c                 |   32 +++++++++++++++--------
+ 2 files changed, 27 insertions(+), 13 deletions(-)
+--- a/drivers/md/dm-verity.c	2012-08-07 16:03:03.778759000 -0700
++++ b/drivers/md/dm-verity.c	2012-08-07 17:32:02.130176956 -0700
+@@ -491,7 +491,7 @@ static int verity_map(struct dm_target *
+ 	io->bio =3D bio;
+ 	io->orig_bi_end_io =3D bio->bi_end_io;
+ 	io->orig_bi_private =3D bio->bi_private;
+-	io->block =3D bio->bi_sector >> (v->data_dev_block_bits - =
+SECTOR_SHIFT);
++	io->block =3D (bio->bi_sector - v->data_start) >> =
+(v->data_dev_block_bits - SECTOR_SHIFT);
+ 	io->n_blocks =3D bio->bi_size >> v->data_dev_block_bits;
+=20
+ 	bio->bi_end_io =3D verity_end_io;
+@@ -641,6 +641,7 @@ static void verity_dtr(struct dm_target=20
+  *	<hash device>
+  *	<data block size>
+  *	<hash block size>
++ *	<data start block>
+  *	<the number of data blocks>
+  *	<hash start block>
+  *	<algorithm>
+@@ -671,8 +672,8 @@ static int verity_ctr(struct dm_target *
+ 		goto bad;
+ 	}
+=20
+-	if (argc !=3D 10) {
+-		ti->error =3D "Invalid argument count: exactly 10 =
+arguments required";
++	if (argc !=3D 11) {
++		ti->error =3D "Invalid argument count: exactly 11 =
+arguments required";
+ 		r =3D -EINVAL;
+ 		goto bad;
+ 	}
+@@ -718,6 +719,15 @@ static int verity_ctr(struct dm_target *
+ 	v->hash_dev_block_bits =3D ffs(num) - 1;
+=20
+ 	if (sscanf(argv[5], "%llu%c", &num_ll, &dummy) !=3D 1 ||
++		num_ll << (v->data_dev_block_bits - SECTOR_SHIFT) !=3D
++		(sector_t)num_ll << (v->data_dev_block_bits - =
+SECTOR_SHIFT)) {
++		ti->error =3D "Invalid data start";
++		r =3D -EINVAL;
++		goto bad;
++	}
++	v->data_start =3D num_ll << (v->data_dev_block_bits - =
+SECTOR_SHIFT);
 +
- static bool rdac_match(struct scsi_device *sdev)
- {
- 	int i;
-@@ -846,6 +857,7 @@ static struct scsi_device_handler rdac_d
- 	.attach = rdac_bus_attach,
- 	.detach = rdac_bus_detach,
- 	.activate = rdac_activate,
-+	.set_params = rdac_set_params,
- 	.match = rdac_match,
- };
- 
++	if (sscanf(argv[6], "%llu%c", &num_ll, &dummy) !=3D 1 ||
+ 	    num_ll << (v->data_dev_block_bits - SECTOR_SHIFT) !=3D
+ 	    (sector_t)num_ll << (v->data_dev_block_bits - SECTOR_SHIFT)) =
+{
+ 		ti->error =3D "Invalid data blocks";
+@@ -732,7 +742,7 @@ static int verity_ctr(struct dm_target *
+ 		goto bad;
+ 	}
+=20
+-	if (sscanf(argv[6], "%llu%c", &num_ll, &dummy) !=3D 1 ||
++	if (sscanf(argv[7], "%llu%c", &num_ll, &dummy) !=3D 1 ||
+ 	    num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT) !=3D
+ 	    (sector_t)num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT)) =
+{
+ 		ti->error =3D "Invalid hash start";
+@@ -741,7 +751,7 @@ static int verity_ctr(struct dm_target *
+ 	}
+ 	v->hash_start =3D num_ll;
+=20
+-	v->alg_name =3D kstrdup(argv[7], GFP_KERNEL);
++	v->alg_name =3D kstrdup(argv[8], GFP_KERNEL);
+ 	if (!v->alg_name) {
+ 		ti->error =3D "Cannot allocate algorithm name";
+ 		r =3D -ENOMEM;
+@@ -770,23 +780,23 @@ static int verity_ctr(struct dm_target *
+ 		r =3D -ENOMEM;
+ 		goto bad;
+ 	}
+-	if (strlen(argv[8]) !=3D v->digest_size * 2 ||
+-	    hex2bin(v->root_digest, argv[8], v->digest_size)) {
++	if (strlen(argv[9]) !=3D v->digest_size * 2 ||
++	    hex2bin(v->root_digest, argv[9], v->digest_size)) {
+ 		ti->error =3D "Invalid root digest";
+ 		r =3D -EINVAL;
+ 		goto bad;
+ 	}
+=20
+-	if (strcmp(argv[9], "-")) {
+-		v->salt_size =3D strlen(argv[9]) / 2;
++	if (strcmp(argv[10], "-")) {
++		v->salt_size =3D strlen(argv[10]) / 2;
+ 		v->salt =3D kmalloc(v->salt_size, GFP_KERNEL);
+ 		if (!v->salt) {
+ 			ti->error =3D "Cannot allocate salt";
+ 			r =3D -ENOMEM;
+ 			goto bad;
+ 		}
+-		if (strlen(argv[9]) !=3D v->salt_size * 2 ||
+-		    hex2bin(v->salt, argv[9], v->salt_size)) {
++		if (strlen(argv[10]) !=3D v->salt_size * 2 ||
++		    hex2bin(v->salt, argv[10], v->salt_size)) {
+ 			ti->error =3D "Invalid salt";
+ 			r =3D -EINVAL;
+ 			goto bad;
+--- a/Documentation/device-mapper/verity.txt	2012-08-08 =
+11:02:48.558883756 -0700
++++ b/Documentation/device-mapper/verity.txt	2012-08-08 =
+11:13:01.259982498 -0700
+@@ -9,7 +9,7 @@ Construction Parameters
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+     <version> <dev> <hash_dev>
+     <data_block_size> <hash_block_size>
+-    <num_data_blocks> <hash_start_block>
++    <data_start_block> <num_data_blocks> <hash_start_block>
+     <algorithm> <digest> <salt>
+=20
+ <version>
+@@ -41,6 +41,10 @@ Construction Parameters
+ <hash_block_size>
+     The size of a hash block in bytes.
+=20
++<data_start_block>
++    This is the offset, in <data_block_size>-blocks, from the start of =
+data_dev
++    to the first block of the data.
++
+ <num_data_blocks>
+     The number of data blocks on the data device.  Additional blocks =
+are
+     inaccessible.  You can place hashes to the same partition as data, =
+in this
+@@ -136,7 +140,7 @@ Example
+ =3D=3D=3D=3D=3D=3D=3D
+ Set up a device:
+   # dmsetup create vroot --readonly --table \
+-    "0 2097152 verity 1 /dev/sda1 /dev/sda2 4096 4096 262144 1 sha256 =
+"\
++    "0 2097152 verity 1 /dev/sda1 /dev/sda2 4096 4096 0 262144 1 sha256 =
+"\
+     "4392712ba01368efdf14b05c76f9e4df0d53664630b5d48632ed17a137f39076 =
+"\
+     "1234000000000000000000000000000000000000000000000000000000000000"
+=20
 
 
+--Apple-Mail=_A168BEBD-DC01-457E-9161-FBB6A59AF5BA
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="signature.asc"
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Message signed with OpenPGP using GPGMail
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG/MacGPG2 v2.0.18 (Darwin)
+
+iQEcBAEBAgAGBQJQIq6YAAoJELoPFVk1ivvRGtUH/3LRuqivWDIkOEl3551rhTUa
+2WLqMT7z/ZGYg+ut3uyap4GBg6zLz4fcnSDbZnBHxSPB01H9zgQDneLYRN7BBJEf
++avNpotM+mnC4eubKKZrr0RU1bJZgpSQBLt4232cSVvMCLlZTdFGbTBki2I5Vu/t
+X4U9oSMBGEW0W5/DquT7UrepzByN5wOLyS096YwnZY8mOIYo8V/Zqd2UAvcO+8I4
+Rqvhy1W1+rYq+Vhea3sKvCp5CaLxJOGZelZwcHOUCCYtRYw0Vzcta3JC7hkPJL7J
+Pn3JShKmSKFpK09xpVCmo1HvfOmJWc7hcIOrh28VIWtJ5BcWDzbUNGABO3+LFYk=
+=lLh6
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_A168BEBD-DC01-457E-9161-FBB6A59AF5BA--
