@@ -1,27 +1,67 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm: verity support data device offset (Linux
- 3.4.7)
-Date: Wed, 08 Aug 2012 22:56:59 +0200
-Message-ID: <5022D29B.9000402@redhat.com>
-References: <8893CF66-2E2C-4D8F-9239-E38BE55716AE@netflix.com> <Pine.LNX.4.64.1208081437550.16469@file.rdu.redhat.com> <5022CC99.30103@redhat.com> <AD722D70-2E9C-4B2D-BE48-B94E2268C3DD@netflix.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-verity: fix overflow checking
+Date: Wed, 8 Aug 2012 17:06:10 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1208081704280.24738@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <AD722D70-2E9C-4B2D-BE48-B94E2268C3DD@netflix.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wesley Miaw <wmiaw@netflix.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, "msb@google.com" <msb@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?windows-1252?Q?Will_Drewry=99?= <w@google.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+Cc: Wesley Miaw <wmiaw@netflix.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/08/2012 10:46 PM, Wesley Miaw wrote:
-> On Aug 8, 2012, at 1:31 PM, Milan Broz wrote:
+BTW. This patch improves dm-verity overflow checking.
 
-> I did modify veritysetup on my own so the format and verify commands will work with regular files on disk instead of having to mount through loop devices.
+Mikulas
 
-Which veritysetup? In upstream (cryptsetup repository) it allocates loop automatically.
-(And for userspace verification it doesn't need loop at all.)
+---
 
-Anyway, please send a patch for userspace as well then ;-)
+dm-verity: fix overflow checking
 
-Milan
+Overflow checking in dm-verity was not sufficient.
+It would check overflow if sector_t was smaller than long long but not
+if sector_t and long long have the same size. This patch implements
+proper overflow checking.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-verity.c |    8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+Index: linux-3.5-fast/drivers/md/dm-verity.c
+===================================================================
+--- linux-3.5-fast.orig/drivers/md/dm-verity.c	2012-08-08 21:24:00.000000000 +0200
++++ linux-3.5-fast/drivers/md/dm-verity.c	2012-08-08 21:28:06.000000000 +0200
+@@ -718,8 +718,8 @@ static int verity_ctr(struct dm_target *
+ 	v->hash_dev_block_bits = ffs(num) - 1;
+ 
+ 	if (sscanf(argv[5], "%llu%c", &num_ll, &dummy) != 1 ||
+-	    num_ll << (v->data_dev_block_bits - SECTOR_SHIFT) !=
+-	    (sector_t)num_ll << (v->data_dev_block_bits - SECTOR_SHIFT)) {
++	    (sector_t)(num_ll << (v->data_dev_block_bits - SECTOR_SHIFT))
++	    >> (v->data_dev_block_bits - SECTOR_SHIFT) != nul_ll) {
+ 		ti->error = "Invalid data blocks";
+ 		r = -EINVAL;
+ 		goto bad;
+@@ -733,8 +733,8 @@ static int verity_ctr(struct dm_target *
+ 	}
+ 
+ 	if (sscanf(argv[6], "%llu%c", &num_ll, &dummy) != 1 ||
+-	    num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT) !=
+-	    (sector_t)num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT)) {
++	    (sector_t)(num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT))
++	    >> (v->hash_dev_block_bits - SECTOR_SHIFT) != num_ll) {
+ 		ti->error = "Invalid hash start";
+ 		r = -EINVAL;
+ 		goto bad;
