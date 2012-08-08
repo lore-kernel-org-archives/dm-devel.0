@@ -1,69 +1,87 @@
-From: Muthu Kumar <muthu.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v5 12/12] block: Only clone bio vecs that are
- in use
-Date: Wed, 8 Aug 2012 16:47:46 -0700
-Message-ID: <CAFR8uedZiG0NWgWQQa03r+kKh8rT0jzpj+hwPzq+i7K6zhpT_A@mail.gmail.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v5 02/12] dm: Use bioset's front_pad for
+ dm_rq_clone_bio_info
+Date: Wed, 8 Aug 2012 16:57:32 -0700
+Message-ID: <20120808235731.GA7262@moria.home.lan>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
-	<1344290921-25154-13-git-send-email-koverstreet@google.com>
-	<Pine.LNX.4.64.1208061913500.21956@file.rdu.redhat.com>
-	<20120808232804.GL6983@dhcp-172-17-108-109.mtv.corp.google.com>
+ <1344290921-25154-3-git-send-email-koverstreet@google.com>
+ <20120808220612.GA6983@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120808232804.GL6983-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120808220612.GA6983-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Tejun,
+On Wed, Aug 08, 2012 at 03:06:12PM -0700, Tejun Heo wrote:
+> Hello,
+> 
+> On Mon, Aug 06, 2012 at 03:08:31PM -0700, Kent Overstreet wrote:
+> > Previously, dm_rq_clone_bio_info needed to be freed by the bio's
+> > destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
+> > This gets rid of a memory allocation and means we can kill
+> > dm_rq_bio_destructor.
+> > 
+> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  drivers/md/dm.c |   31 +++++--------------------------
+> >  1 files changed, 5 insertions(+), 26 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index 40b7735..4014696 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -92,6 +92,7 @@ struct dm_rq_target_io {
+> >  struct dm_rq_clone_bio_info {
+> >  	struct bio *orig;
+> >  	struct dm_rq_target_io *tio;
+> > +	struct bio clone;
+> >  };
+> ...
+> > @@ -2696,7 +2674,8 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
+> >  	if (!pools->tio_pool)
+> >  		goto free_io_pool_and_out;
+> >  
+> > -	pools->bs = bioset_create(pool_size, 0);
+> > +	pools->bs = bioset_create(pool_size,
+> > +				  offsetof(struct dm_rq_clone_bio_info, orig));
+> >  	if (!pools->bs)
+> >  		goto free_tio_pool_and_out;
+> 
+> I do like this approach much better but this isn't something
+> super-obvious.  Can we please explain what's going on?  Especially,
+> the comment above dm_rq_clone_bio_info is outright misleading now.
 
-This is changing the semantics of the clone. Sorry, I missed this
-thread and replied separately. But anyway, replying it again here:
+This look better to you?
 
+/*
+ * For request-based dm - the bio clones we allocate are embedded in these
+ * structs.
+ *
+ * We allocate these with bio_alloc_bioset, using the front_pad parameter when
+ * the bioset is created - this means the bio has to come at the end of the
+ * struct.
+ */
+struct dm_rq_clone_bio_info {
+	struct bio *orig;
+	struct dm_rq_target_io *tio;
+	struct bio clone;
+};
 
-On Wed, Aug 8, 2012 at 4:28 PM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> On Mon, Aug 06, 2012 at 07:16:33PM -0400, Mikulas Patocka wrote:
->> Hi Kent
->>
->> When you change the semantics of an exported function, rename that
->> function. There may be external modules that use __bio_clone and this
->> change could silently introduce bugs in them.
->>
->> Otherwise, the patchset looks fine.
->
-> I don't know.  This doesn't change the main functionality and should
-> be transparent unless the caller is doing something crazy.  It *might*
-> be nice to rename but I don't think that's a must here.
->
+> Can someone more familiar review this one?  Alasdir, Mike?
+> 
+> Also, how was this tested?
+
+Well, AFAICT the only request based dm target is multipath, and from the
+documentation I've seen it doesn't appear to work without multipath
+hardware, or at least I haven't seen it documented how. So, unless
+there's another user I missed it's not been tested.
+
+> 
 > Thanks.
-
---
-You are changing the meaning of __bio_clone() here. In old code, the
-number of io_vecs, bi_idx, bi_vcnt are preserved. But in this modified
-code, you are mapping bio_src's bi_iovec[bi_idx] to bio_dests
-bi_iovec[0] and also restricting the number of allocated io_vecs of
-the clone. It may be useful for cases were we would like a identical
-copy of the original bio (may not be in current code base, but this
-implementation is definitely not what one would expect from the name
-"clone").
-
-May be, call this new implementation some thing else (and use it for bcache)?
-
----
-
-Like Mikulas pointed out, this is an exported function and silently
-changing the semantics will break external modules.
-
-Regards,
-Muthu
-
-
->
-> --
+> 
+> -- 
 > tejun
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
