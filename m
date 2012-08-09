@@ -1,84 +1,62 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 02/12] dm: Use bioset's front_pad for
- dm_rq_clone_bio_info
-Date: Wed, 8 Aug 2012 16:57:32 -0700
-Message-ID: <20120808235731.GA7262@moria.home.lan>
+Subject: Re: [PATCH v5 03/12] block: Add bio_reset()
+Date: Wed, 8 Aug 2012 17:07:11 -0700
+Message-ID: <20120809000711.GB7262@moria.home.lan>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
- <1344290921-25154-3-git-send-email-koverstreet@google.com>
- <20120808220612.GA6983@dhcp-172-17-108-109.mtv.corp.google.com>
+ <1344290921-25154-4-git-send-email-koverstreet@google.com>
+ <20120808221129.GB6983@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120808220612.GA6983-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
+In-Reply-To: <20120808221129.GB6983-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Aug 08, 2012 at 03:06:12PM -0700, Tejun Heo wrote:
+On Wed, Aug 08, 2012 at 03:11:29PM -0700, Tejun Heo wrote:
 > Hello,
 > 
-> On Mon, Aug 06, 2012 at 03:08:31PM -0700, Kent Overstreet wrote:
-> > Previously, dm_rq_clone_bio_info needed to be freed by the bio's
-> > destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
-> > This gets rid of a memory allocation and means we can kill
-> > dm_rq_bio_destructor.
+> On Mon, Aug 06, 2012 at 03:08:32PM -0700, Kent Overstreet wrote:
+> > Reusing bios is something that's been highly frowned upon in the past,
+> > but driver code keeps doing it anyways. If it's going to happen anyways,
+> > we should provide a generic method.
+> > 
+> > This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
+> > was open coding it, by doing a bio_init() and resetting bi_destructor.
+> > 
+> > v5: Add a define BIO_RESET_BITS, to be very explicit about what parts of
+> > bio->bi_flags are saved.
 > > 
 > > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> > ---
-> >  drivers/md/dm.c |   31 +++++--------------------------
-> >  1 files changed, 5 insertions(+), 26 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 40b7735..4014696 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -92,6 +92,7 @@ struct dm_rq_target_io {
-> >  struct dm_rq_clone_bio_info {
-> >  	struct bio *orig;
-> >  	struct dm_rq_target_io *tio;
-> > +	struct bio clone;
-> >  };
-> ...
-> > @@ -2696,7 +2674,8 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
-> >  	if (!pools->tio_pool)
-> >  		goto free_io_pool_and_out;
-> >  
-> > -	pools->bs = bioset_create(pool_size, 0);
-> > +	pools->bs = bioset_create(pool_size,
-> > +				  offsetof(struct dm_rq_clone_bio_info, orig));
-> >  	if (!pools->bs)
-> >  		goto free_tio_pool_and_out;
+> > Change-Id: I4eb2975bd678d3be811d5423d0620b08020be9ff
 > 
-> I do like this approach much better but this isn't something
-> super-obvious.  Can we please explain what's going on?  Especially,
-> the comment above dm_rq_clone_bio_info is outright misleading now.
+> Please drop Change-Id.  Die gerrit die.
 
-This look better to you?
+Bah, missed that one. 
 
-/*
- * For request-based dm - the bio clones we allocate are embedded in these
- * structs.
- *
- * We allocate these with bio_alloc_bioset, using the front_pad parameter when
- * the bioset is created - this means the bio has to come at the end of the
- * struct.
- */
-struct dm_rq_clone_bio_info {
-	struct bio *orig;
-	struct dm_rq_target_io *tio;
-	struct bio clone;
-};
-
-> Can someone more familiar review this one?  Alasdir, Mike?
+> > +void bio_reset(struct bio *bio)
+> > +{
+> > +	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
 > 
-> Also, how was this tested?
+> How many flags are we talking about?  If there aren't too many, I'd
+> prefer explicit BIO_FLAGS_PRESERVED or whatever.
 
-Well, AFAICT the only request based dm target is multipath, and from the
-documentation I've seen it doesn't appear to work without multipath
-hardware, or at least I haven't seen it documented how. So, unless
-there's another user I missed it's not been tested.
+It mostly isn't actual flags that are preserved - the high bits of the
+flags are used for indicating what slab the bvec was allocated from, and
+that's the main thing that has to be preserved.
+
+So that's why I went with defining the things that are reset instead of
+the things that are preserved.
+
+I would prefer if bitfields were used for at least BIO_POOL_IDX, but the
+problem is flags is used as an atomic bit vector for BIO_UPTODATE.
+
+But flags isn't treated as an atomic bit vector elsewhere -
+bio_flagged() doesn't use test_bit(), and flags are set/cleared with
+atomic bit operations in some places but not in others (probably _most_
+of them are technically safe, but... ick).
 
 > 
 > Thanks.
