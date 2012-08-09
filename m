@@ -1,24 +1,24 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Kent Overstreet <koverstreet@google.com>
 Subject: Re: [PATCH v5 05/12] block: Kill bi_destructor
-Date: Wed, 8 Aug 2012 17:14:27 -0700
-Message-ID: <20120809001427.GD7262@moria.home.lan>
+Date: Wed, 8 Aug 2012 17:21:54 -0700
+Message-ID: <20120809002154.GE7262@moria.home.lan>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
  <1344290921-25154-6-git-send-email-koverstreet@google.com>
- <20120807031921.GA31977@redhat.com>
+ <20120808222223.GD6983@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120807031921.GA31977-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+In-Reply-To: <20120808222223.GD6983@dhcp-172-17-108-109.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-On Mon, Aug 06, 2012 at 11:19:21PM -0400, Mike Snitzer wrote:
-> On Mon, Aug 06 2012 at  6:08pm -0400,
-> Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+On Wed, Aug 08, 2012 at 03:22:23PM -0700, Tejun Heo wrote:
+> Hello,
 > 
+> On Mon, Aug 06, 2012 at 03:08:34PM -0700, Kent Overstreet wrote:
 > > Now that we've got generic code for freeing bios allocated from bio
 > > pools, this isn't needed anymore.
 > > 
@@ -26,7 +26,62 @@ On Mon, Aug 06, 2012 at 11:19:21PM -0400, Mike Snitzer wrote:
 > > bios allocated by bio_kmalloc(). It's also no longer exported, as
 > > without bi_destructor there should be no need for it to be called
 > > anywhere else.
+> > 
+> > v5: Switch to BIO_KMALLOC_POOL ((void *)~0), per Boaz
+> > 
+> > Signed-off-by: Kent Overstreet <koverstreet@google.com>
+> > ---
+> > diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+> > index 920ede2..19bf632 100644
+> > --- a/drivers/block/drbd/drbd_main.c
+> > +++ b/drivers/block/drbd/drbd_main.c
+> > @@ -161,23 +161,12 @@ static const struct block_device_operations drbd_ops = {
+> >  	.release = drbd_release,
+> >  };
+> >  
+> > -static void bio_destructor_drbd(struct bio *bio)
+> > -{
+> > -	bio_free(bio, drbd_md_io_bio_set);
+> > -}
+> > -
+> >  struct bio *bio_alloc_drbd(gfp_t gfp_mask)
+> >  {
+> > -	struct bio *bio;
+> > -
+> >  	if (!drbd_md_io_bio_set)
+> >  		return bio_alloc(gfp_mask, 1);
+> >  
+> > -	bio = bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+> > -	if (!bio)
+> > -		return NULL;
+> > -	bio->bi_destructor = bio_destructor_drbd;
+> > -	return bio;
+> > +	return bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+> >  }
 > 
-> Seems you forgot to remove bio_free's EXPORT_SYMBOL
+> Does this chunk belong to this patch?
 
-Whoops - thanks, fixed.
+Hrm, that should've been in the first patch. Will move it.
+
+> 
+> > @@ -56,6 +56,8 @@ static struct biovec_slab bvec_slabs[BIOVEC_NR_POOLS] __read_mostly = {
+> >   */
+> >  struct bio_set *fs_bio_set;
+> >  
+> > +#define BIO_KMALLOC_POOL ((void *) ~0)
+> 
+> What's wrong with good ol' NULL?
+
+If it's NULL, we can't distinguish between bios where that field wasn't
+set (i.e. bios that were statically allocated somewhere) from bios that
+were allocated by bio_kmalloc().
+
+It's just there to make debugging easier - if bi_cnt goes to 0 on a bio
+where it shouldn't we'll catch it at the BUG_ON() in bio_free() instead
+of kfreeing a bad pointer.
+
+> 
+> Thanks.
+> 
+> -- 
+> tejun
