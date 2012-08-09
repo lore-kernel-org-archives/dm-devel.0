@@ -1,60 +1,139 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] [PATCH v2 2/2] dm: verity support data device offset
- (Linux 3.4.7)
-Date: Thu, 09 Aug 2012 08:35:17 +0200
-Message-ID: <50235A25.6010705@redhat.com>
-References: <8893CF66-2E2C-4D8F-9239-E38BE55716AE@netflix.com> <Pine.LNX.4.64.1208081437550.16469@file.rdu.redhat.com> <5022CC99.30103@redhat.com> <AD722D70-2E9C-4B2D-BE48-B94E2268C3DD@netflix.com> <5022D29B.9000402@redhat.com> <C8AA8C7B-505E-49E8-AE47-C24843E74543@netflix.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v5 08/12] block: Introduce new bio_split()
+Date: Wed, 8 Aug 2012 23:44:48 -0700
+Message-ID: <20120809064448.GC2845@dhcp-172-17-108-109.mtv.corp.google.com>
+References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+ <1344290921-25154-9-git-send-email-koverstreet@google.com>
+ <20120808225839.GG6983@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120809011928.GG7262@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <C8AA8C7B-505E-49E8-AE47-C24843E74543@netflix.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wesley Miaw <wmiaw@netflix.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, "msb@google.com" <msb@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?windows-1252?Q?Will_Drewry=99?= <w@google.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120809011928.GG7262-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 08/09/2012 02:40 AM, Wesley Miaw wrote:
-> On Aug 8, 2012, at 1:56 PM, Milan Broz wrote:
+Hello, Kent.
+
+On Wed, Aug 08, 2012 at 06:19:28PM -0700, Kent Overstreet wrote:
+> If bio_split returned an error, it'd make the code more convoluted -
+> you'd have to do work on either the split or the original bio, and then
+> repeat the same check later when it's time to break out of the loop.
+
+I really dislike this reasonsing.  The interface might streamline
+certain use cases a bit but at the cost of confusing semantics.  It's
+called bio_split() which takes a bio and returns a bio.  Any sane
+person would expect it to return the split bio iff the original bio is
+successfully split and NULL or ERR_PTR() value if splitting didn't
+happen for whatever reason.  Please don't try to make code look
+elegant by twisting obvious things.  Saving three lines is never
+worthwhile it it costs obviousness.
+
+This reminds me of, unfortunately, kobject_get() which returns the
+parameter it got passed in verbatim.  The rationale was that it makes
+code like the following *look* more elegant.
+
+	my_kobj = kobject_get(&blahblah.kobj);
+
+Some people liked how things like the above looked.  Unfortunately, it
+unnecessarily made people wonder whether the return value could be
+different from the parameter (can it ever fail?) and led to cases
+where people misunderstood the semantics and assumed that kobj somehow
+handles zero refcnt racing and kobject_get() would magically return
+NULL if refcnt reaches zero.  I hope we don't have those bugs anymore
+but code built on top of kobject unfortunately propagated this
+stupidity multiple layers upwards and I'm not sure.
+
+So, please don't do things like this.
+
+> > This is somewhat error-prone.  Given how splits are used now, this
+> > might not be a big issue but it isn't difficult to imagine how this
+> > could go subtly wrong.  More on this.
 > 
->> On 08/08/2012 10:46 PM, Wesley Miaw wrote:
->> 
->>> I did modify veritysetup on my own so the format and verify
->>> commands will work with regular files on disk instead of having
->>> to mount through loop devices.
->> 
->> Which veritysetup? In upstream (cryptsetup repository) it allocates
->> loop automatically. (And for userspace verification it doesn't need
->> loop at all.)
->> 
->> Anyway, please send a patch for userspace as well then ;-)
+> I can't find anything else in your emails on the subject...
+
+Oh, it was the chaining thing.  If you bump ref on the original bio
+and let the split one put it on completion, the caller doesn't have to
+worry about this.
+
+> > > +	bio_for_each_segment(bv, bio, idx) {
+> > > +		vcnt = idx - bio->bi_idx;
+> > > +
+> > > +		if (!nbytes) {
+> > > +			ret = bio_alloc_bioset(gfp, 0, bs);
+> > > +			if (!ret)
+> > > +				return NULL;
+> > > +
+> > > +			ret->bi_io_vec = bio_iovec(bio);
+> > > +			ret->bi_flags |= 1 << BIO_CLONED;
+> > > +			break;
+> > > +		} else if (nbytes < bv->bv_len) {
+> > > +			ret = bio_alloc_bioset(gfp, ++vcnt, bs);
+> > > +			if (!ret)
+> > > +				return NULL;
+> > > +
+> > > +			memcpy(ret->bi_io_vec, bio_iovec(bio),
+> > > +			       sizeof(struct bio_vec) * vcnt);
+> > > +
+> > > +			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
+> > > +			bv->bv_offset	+= nbytes;
+> > > +			bv->bv_len	-= nbytes;
+> > > +			break;
+> > > +		}
+...
+> > I find the code a bit confusing.  Wouldn't it be better to structure
+> > it as
+> >
+> >	bio_for_each_segment() {
+> >		find splitting point;
+> >	}
+> >
+> >	Do all of the splitting.
 > 
-> This isn't as polished because I pretty much just added support to do
-> what I needed. I'm not sure if the LKML is the right place to post,
-> so let me know if I should send this somewhere else.
+> Definitely, except I don't see how to sanely do it that way with the
+> different cases for splitting on a bvec boundry and not.
 
-This is libcryptsetup userspace so better list for this is dmcrypt
-mailing list (and/or cc me, I will handle these changes anyway).
+I really don't buy that.  Just break out on the common condition and
+differentiate the two cases afterwards.
 
-The allocated crypto "file" context cannot be later used for some kind
-of operations. I do not like this approach musch... 
-You cannot use file argument for dm-target directly, so your patch
-is useful only for your use case but not for anything else.
+> > So, before, split wouldn't override orig->bi_private.  Now, it does so
+> > while the bio is in flight.  I don't know.  If the only benefit of
+> > temporary override is avoiding have a separate end_io call, I think
+> > not doing so is better.  Also, behavior changes as subtle as this
+> > *must* be noted in the patch description.
+> 
+> Already said more about this below, but to elaborate a bit - there are
+> situations where the caller really wouldn't want the completions chained 
+> (i.e, if the splits are going to different devices or otherwise are
+> going to have different error handling, the caller really needs to
+> supply its own endio function(s)).
 
-Anyway, I am sure there is better way how to solve it I just need
-to understand what the problem is. What's wrong if code allocates
-loop devices (if argument is file)?
-Performance? Loop not available? Need root access?
+Then let it take @chain parameter and if @chain is %false, clear endio
+(or introduce bio_split_chain()).  Copying endio of the original bio
+is useless and dangerous.
 
-Please explain what's the problem first.
-(btw that patch is mangled by a mailer but not a problem now).
+> Outside the scope of this function - if you want the completions
+> chained, you'd use bio_pair_split().
+> 
+> With this bio_split() it's perfectly reasonable to split a bio an
+> arbitrary number of times, and if that's what you're doing it's much
+> cleaner (and more efficient) to just use a refcount instead of chaining
+> the completions a bunch of times.
+> 
+> So if that's what the caller is doing, this will do exactly what they
+> want - if the caller wants to chain the completions, the caller can
+> still do that (like how bio_pair_split() does in the next patch).
 
-> Your previous email implied that veritysetup would need a way to
-> determine if the data offset option is supported; I did not modify
-> veritysetup to support this idea as I didn't need it.
+bio_pair doesn't really make much sense after this change.  Originally
+it made sense as the container holding everything necessary for the
+clone, now it's just a proxy to keep the old interface.  It doesn't
+even succeed at that.  The interface changes.  Let's just roll it into
+the default bio_clone() interface.
 
-Once kernel get this option (if you convince upstream:) then I will
-the option to userspace. We have to handle many dm-crypt extensions
-so not a big problem for dm-verity as well.
+Thanks.
 
-Milan
+-- 
+tejun
