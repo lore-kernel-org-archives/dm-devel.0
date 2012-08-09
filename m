@@ -1,414 +1,290 @@
-From: Wesley Miaw <wmiaw@netflix.com>
-Subject: Re: [dm-devel] [PATCH v2 2/2] dm: verity support data device offset
- (Linux 3.4.7)
-Date: Thu, 9 Aug 2012 00:40:23 +0000
-Message-ID: <C8AA8C7B-505E-49E8-AE47-C24843E74543@netflix.com>
-References: <8893CF66-2E2C-4D8F-9239-E38BE55716AE@netflix.com>
- <Pine.LNX.4.64.1208081437550.16469@file.rdu.redhat.com>
- <5022CC99.30103@redhat.com>
- <AD722D70-2E9C-4B2D-BE48-B94E2268C3DD@netflix.com>
- <5022D29B.9000402@redhat.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v5 08/12] block: Introduce new bio_split()
+Date: Wed, 8 Aug 2012 18:19:28 -0700
+Message-ID: <20120809011928.GG7262@moria.home.lan>
+References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+	<1344290921-25154-9-git-send-email-koverstreet@google.com>
+	<20120808225839.GG6983@dhcp-172-17-108-109.mtv.corp.google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-	boundary="Apple-Mail=_D124A280-E6F2-4BAB-A177-31EDBE0A9558";
-	protocol="application/pgp-signature"; micalg=pgp-sha1
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5022D29B.9000402@redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, "msb@google.com" <msb@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?Windows-1252?Q?Will_Drewry=99?= <w@google.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20120808225839.GG6983@dhcp-172-17-108-109.mtv.corp.google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Tejun Heo <tj@kernel.org>
+Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, mpatocka@redhat.com, vgoyal@redhat.com, yehuda@hq.newdream.net, sage@newdream.net, agk@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
---Apple-Mail=_D124A280-E6F2-4BAB-A177-31EDBE0A9558
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=windows-1252
+On Wed, Aug 08, 2012 at 03:58:39PM -0700, Tejun Heo wrote:
+> Hello,
+> 
+> On Mon, Aug 06, 2012 at 03:08:37PM -0700, Kent Overstreet wrote:
+> >  /**
+> > + * bio_split - split a bio
+> > + * @bio:	bio to split
+> > + * @sectors:	number of sectors to split from the front of @bio
+> > + * @gfp:	gfp mask
+> > + * @bs:		bio set to allocate from
+> > + *
+> > + * Allocates and returns a new bio which represents @sectors from the start of
+> > + * @bio, and updates @bio to represent the remaining sectors.
+> > + *
+> > + * If bio_sectors(@bio) was less than or equal to @sectors, returns @bio
+> > + * unchanged.
+> 
+> Umm.... I don't know.  This is rather confusing.  The function may
+> return new or old bios?  What's the rationale behind it?  Return
+> ERR_PTR(-EINVAL) instead?
 
-On Aug 8, 2012, at 1:56 PM, Milan Broz wrote:
+Returning the old bio would be semantically equivalent to returning an
+error, but IME when you're actually using it it does make sense and
+leads to slightly cleaner code.
 
-> On 08/08/2012 10:46 PM, Wesley Miaw wrote:
->=20
->> I did modify veritysetup on my own so the format and verify commands =
-will work with regular files on disk instead of having to mount through =
-loop devices.
->=20
-> Which veritysetup? In upstream (cryptsetup repository) it allocates =
-loop automatically.
-> (And for userspace verification it doesn't need loop at all.)
->=20
-> Anyway, please send a patch for userspace as well then ;-)
+The reason is that when you're splitting, sectors is typically just the
+maximum number of sectors you can handle here - you calculate the device
+limit, or the number of sectors you can read from this location, or
+whatever.
 
-This isn't as polished because I pretty much just added support to do =
-what I needed. I'm not sure if the LKML is the right place to post, so =
-let me know if I should send this somewhere else.
+So the code ends up looking like:
 
-Your previous email implied that veritysetup would need a way to =
-determine if the data offset option is supported; I did not modify =
-veritysetup to support this idea as I didn't need it.
+while (1) {
+	split = bio_split(bio, sectors);
 
-Thanks.
+	/* do some stuff to split and submit it */
 
-From: Wesley Miaw <wmiaw@netflix.com>
+	/* check if that was the last split and break */
+}
 
-Allow veritysetup format and verify commands to directly operate on =
-regular
-files instead of requiring mounts through loop devices.
-
-Signed-off-by: Wesley Miaw <wmiaw@netflix.com>
----
- cryptsetup/lib/internal.h        |    1=20
- cryptsetup/lib/libcryptsetup.h   |   22 ++++
- cryptsetup/lib/libcryptsetup.sym |    2=20
- cryptsetup/lib/setup.c           |  133 ++++++++++++++++++++++++++++-
- cryptsetup/lib/utils.c           |   12 ++
- cryptsetup/src/veritysetup.c     |   23 +++--
- 6 files changed, 183 insertions(+), 10 deletions(-)
---- a/cryptsetup/lib/internal.h	2012-08-08 17:11:20.366392301 -0700
-+++ b/cryptsetup/lib/internal.h	2012-08-06 16:17:35.154719491 -0700
-@@ -76,6 +76,7 @@ ssize_t read_blockwise(int fd, void *_bu
- ssize_t write_lseek_blockwise(int fd, char *buf, size_t count, off_t =
-offset);
- int device_ready(struct crypt_device *cd, const char *device, int =
-mode);
- int device_size(const char *device, uint64_t *size);
-+int file_size(const char *filename, uint64_t *size);
-=20
- unsigned crypt_getpagesize(void);
-=20
---- a/cryptsetup/lib/libcryptsetup.h	2012-08-08 17:11:20.375392929 =
--0700
-+++ b/cryptsetup/lib/libcryptsetup.h	2012-08-06 16:17:35.159720699 =
--0700
-@@ -56,6 +57,19 @@ struct crypt_device; /* crypt device han
- int crypt_init(struct crypt_device **cd, const char *device);
-=20
- /**
-+ * Initial crypt device handle from a file and check if provided file =
-exists.
-+ *
-+ * @param cd Returns pointer to crypt device handle.
-+ * @param filename Path to the backing file.
-+ *
-+ * @return @e 0 on success or negative errno value otherwise.
-+ *
-+ * @note Note that logging is not initialized here, possible messages =
-uses
-+ *       default log function.
-+ */
-+int crypt_initfile(struct crypt_device **cd, const char *filename);
-+
-+/**
-  * Initialize crypt device handle from provided active device name,
-  * and, optionally, from separate metadata (header) device
-  * and check if provided device exists.
-@@ -237,6 +251,15 @@ void crypt_set_password_verify(struct cr
- int crypt_set_data_device(struct crypt_device *cd, const char *device);
-=20
- /**
-+ * Set data file
-+ * For VERITY it is data file when hash device is separated.
-+ *
-+ * @param cd crypt device handle
-+ * @param filename path to data file
-+ */
-+int crypt_set_data_file(struct crypt_device *cd, const char *device);
-+
-+/**
-  * @defgroup rng "Cryptsetup RNG"
-  *
-  * @addtogroup rng
---- a/cryptsetup/lib/libcryptsetup.sym	2012-08-08 17:11:20.375392930 =
--0700
-+++ b/cryptsetup/lib/libcryptsetup.sym	2012-08-06 16:17:35.160720941 =
--0700
-@@ -1,6 +1,7 @@
- CRYPTSETUP_1.0 {
- 	global:
- 		crypt_init;
-+		crypt_initfile;
- 		crypt_init_by_name;
- 		crypt_init_by_name_and_header;
- 		crypt_set_log_callback;
-@@ -13,6 +14,7 @@ CRYPTSETUP_1.0 {
- 		crypt_set_password_verify;
- 		crypt_set_uuid;
- 		crypt_set_data_device;
-+		crypt_set_data_file;
-=20
- 		crypt_memory_lock;
- 		crypt_format;
---- a/cryptsetup/lib/setup.c	2012-08-08 17:11:20.428396640 -0700
-+++ b/cryptsetup/lib/setup.c	2012-08-06 16:17:35.192728669 -0700
-@@ -25,6 +25,8 @@
- #include <stdarg.h>
- #include <fcntl.h>
- #include <errno.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-=20
- #include "libcryptsetup.h"
- #include "luks.h"
-@@ -585,6 +587,56 @@ bad:
- 	return r;
- }
-=20
-+int crypt_initfile(struct crypt_device **cd, const char *filename)
-+{
-+	struct crypt_device *h =3D NULL;
-+	int fd;
-+	struct stat st;
-+	int r;
-+
-+	if (!cd)
-+		return -EINVAL;
-+
-+	if (stat(filename, &st) < 0) {
-+		log_err(NULL, _("File %s doesn't exist or access =
-denied.\n"), filename);
-+		return -EINVAL;
-+	}
-+
-+	log_dbg("Trying to open and write file %s.", filename);
-+	fd =3D open(filename, O_RDWR);
-+	if (fd < 0) {
-+		log_err(NULL, _("Cannot open file %s for writeable =
-access.\n"), filename);
-+		return -EINVAL;
-+	}
-+	close(fd);
-+
-+	log_dbg("Allocating crypt device %s context.", filename);
-+
-+	if (!(h =3D malloc(sizeof(struct crypt_device))))
-+		return -ENOMEM;
-+
-+	memset(h, 0, sizeof(*h));
-+	h->loop_device_fd =3D -1;
-+	h->loop_metadata_device_fd =3D -1;
-+	h->device =3D strdup(filename);
-+	if (!h->device) {
-+		r =3D -ENOMEM;
-+		goto bad;
-+	}
-+	h->iteration_time =3D 1000;
-+	h->password_verify =3D 0;
-+	h->tries =3D 3;
-+	h->rng_type =3D crypt_random_default_key_rng();
-+	*cd =3D h;
-+	return 0;
-+bad:
-+	if (h) {
-+		free(h->device);
-+	}
-+	free(h);
-+	return r;
-+}
-+
- static int crypt_check_data_device_size(struct crypt_device *cd)
- {
- 	int r;
-@@ -606,6 +658,27 @@ static int crypt_check_data_device_size(
- 	return r;
- }
-=20
-+static int crypt_check_data_file_size(struct crypt_device *cd)
-+{
-+	int r;
-+	uint64_t size, size_min;
-+
-+	/* Check data device size, require at least one sector */
-+	size_min =3D crypt_get_data_offset(cd) << SECTOR_SHIFT ?: =
-SECTOR_SIZE;
-+
-+	r =3D file_size(crypt_get_device_name(cd), &size);
-+	if (r < 0)
-+		return r;
-+
-+	if (size < size_min) {
-+		log_err(cd, _("Header detected but device %s is too =
-small.\n"),
-+			crypt_get_device_name(cd));
-+		return -EINVAL;
-+	}
-+
-+	return r;
-+}
-+
- int crypt_set_data_device(struct crypt_device *cd, const char *device)
- {
- 	char *data_device =3D NULL;
-@@ -641,6 +714,52 @@ int crypt_set_data_device(struct crypt_d
- 	return crypt_check_data_device_size(cd);
- }
-=20
-+int crypt_set_data_file(struct crypt_device *cd, const char *filename)
-+{
-+	int fd;
-+	struct stat st;
-+
-+	log_dbg("Setting ciphertext data file to %s.", filename ?: =
-"(none");
-+
-+	if (!isVERITY(cd->type)) {
-+		log_err(cd, _("This operation is not supported for this =
-device type.\n"));
-+		return  -EINVAL;
-+	}
-+
-+	/* metadata device must be set */
-+	if (!cd->device || !filename)
-+		return -EINVAL;
-+
-+	if (stat(filename, &st) < 0) {
-+		log_err(NULL, _("File %s doesn't exist or access =
-denied.\n"), filename);
-+		return -EINVAL;
-+	}
-+
-+	log_dbg("Trying to open and read file %s.", filename);
-+	fd =3D open(filename, O_RDONLY);
-+	if (fd < 0) {
-+		log_err(NULL, _("Cannot open file %s for read =
-access.\n"), filename);
-+		return -EINVAL;
-+	}
-+	close(fd);
-+
-+	if (!cd->metadata_device) {
-+		cd->metadata_device =3D cd->device;
-+		cd->loop_metadata_device_fd =3D cd->loop_device_fd;
-+	} else {
-+		free(cd->device);
-+		if (cd->loop_device_fd !=3D -1)
-+			close(cd->loop_device_fd);
-+	}
-+
-+	cd->device =3D strdup(filename);
-+	if (!cd->device)
-+		return -ENOMEM;
-+	cd->loop_device_fd =3D -1;
-+
-+	return crypt_check_data_file_size(cd);
-+}
-+
- static int _crypt_load_luks1(struct crypt_device *cd, int =
-require_header, int repair)
- {
- 	struct luks_phdr hdr;
-@@ -1080,12 +1199,18 @@ static int _crypt_format_verity(struct c
- 		return -ENOMEM;
-=20
- 	r =3D crypt_set_data_device(cd, params->data_device);
--	if (r)
--		return r;
-+	if (r) {
-+		r =3D crypt_set_data_file(cd, params->data_device);
-+		if (r)
-+			return r;
-+	}
- 	if (!params->data_size) {
- 		r =3D device_size(cd->device, &data_device_size);
--		if (r < 0)
--			return r;
-+		if (r < 0) {
-+			r =3D file_size(cd->device, &data_device_size);
-+			if (r < 0)
-+				return r;
-+		}
-=20
- 		cd->verity_hdr.data_size =3D data_device_size / =
-params->data_block_size;
- 	} else
---- a/cryptsetup/lib/utils.c	2012-08-08 17:11:20.433396990 -0700
-+++ b/cryptsetup/lib/utils.c	2012-08-06 16:17:35.202731084 -0700
-@@ -316,6 +316,18 @@ int device_size(const char *device, uint
- 	return r;
- }
-=20
-+int file_size(const char *filename, uint64_t *size)
-+{
-+	struct stat st;
-+
-+	if (stat(filename, &st) < 0)
-+		return -EINVAL;
-+
-+	*size =3D (uint64_t)st.st_size;
-+
-+	return 0;
-+}
-+
- static int get_device_infos(const char *device, enum devcheck =
-device_check,
- 			    int *readonly, uint64_t *size)
- {
---- a/cryptsetup/src/veritysetup.c	2012-08-08 17:11:20.942432624 =
--0700
-+++ b/cryptsetup/src/veritysetup.c	2012-08-06 16:17:35.235739053 =
--0700
-@@ -142,8 +142,12 @@ static int action_format(int arg)
- 	uint32_t flags =3D CRYPT_VERITY_CREATE_HASH;
- 	int r;
-=20
--	if ((r =3D crypt_init(&cd, action_argv[1])))
--		goto out;
-+	r =3D crypt_init(&cd, action_argv[1]);
-+	if (r < 0) {
-+		r =3D crypt_initfile(&cd, action_argv[1]);
-+		if (r < 0)
-+			goto out;
-+	}
-=20
- 	if (!use_superblock)
- 		flags |=3D CRYPT_VERITY_NO_HEADER;
-@@ -174,8 +178,12 @@ static int _activate(const char *dm_devi
- 	ssize_t hash_size;
- 	int r;
-=20
--	if ((r =3D crypt_init(&cd, hash_device)))
--		goto out;
-+	r =3D crypt_init(&cd, hash_device);
-+	if (r < 0) {
-+		r =3D crypt_initfile(&cd, hash_device);
-+		if (r < 0)
-+			goto out;
-+	}
-=20
- 	if (use_superblock) {
- 		params.flags =3D flags;
-@@ -190,8 +198,11 @@ static int _activate(const char *dm_devi
- 	if (r < 0)
- 		goto out;
- 	r =3D crypt_set_data_device(cd, data_device);
--	if (r < 0)
--		goto out;
-+	if (r < 0) {
-+		r =3D crypt_set_data_file(cd, data_device);
-+		if (r < 0)
-+			goto out;
-+	}
-=20
- 	hash_size =3D crypt_get_volume_key_size(cd);
- 	if (crypt_hex_to_bytes(root_hash, &root_hash_bytes, 0) !=3D =
-hash_size) {
+If bio_split returned an error, it'd make the code more convoluted -
+you'd have to do work on either the split or the original bio, and then
+repeat the same check later when it's time to break out of the loop.
 
 
---Apple-Mail=_D124A280-E6F2-4BAB-A177-31EDBE0A9558
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="signature.asc"
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Message signed with OpenPGP using GPGMail
+> 
+> > + *
+> > + * The newly allocated bio will point to @bio's bi_io_vec, if the split was on a
+> > + * bvec boundry; it is the caller's responsibility to ensure that @bio is not
+> > + * freed before the split.
+> 
+> This is somewhat error-prone.  Given how splits are used now, this
+> might not be a big issue but it isn't difficult to imagine how this
+> could go subtly wrong.  More on this.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG/MacGPG2 v2.0.18 (Darwin)
+I can't find anything else in your emails on the subject...
 
-iQEcBAEBAgAGBQJQIwb4AAoJELoPFVk1ivvRTBcH/3TjM9R2UfwRuQ+VzjGSIDLk
-MJuMrtSGWO0Trt7IvZlTym8xh0UsRQ5e+zgBdT6uQV8Nf224akGsBqEBGQqx7lkl
-sQKC0H3xPeb3henn7Y9K8GjJ7L4uHZXHajtDHklLDGx3VrrkOl8G4UDatn1ztoU0
-EwDFy2BW/sUnc4mzPCPZ+DaYcdz/QzsJINAmqwYxDasvb8ItkMU/ciTz3v86AiMu
-AzPWipU9oFOpOI+RXAYVo/jucqFnU02/fK7TOU9I0lAsozH9OPDQ5NySPyeB/JFP
-4JThZ0itOA+ocSQxrkVpimtk2zgcvXhQNFMuOY+eP0xoYvFkfLXMbXbS/pFeZ4Q=
-=7SIg
------END PGP SIGNATURE-----
+So, I do agree, but there is a rationale:
 
---Apple-Mail=_D124A280-E6F2-4BAB-A177-31EDBE0A9558--
+Due to the way bio completions have to be chained, I'm not convinced
+it's much of an issue in practice; if you're processing a bio by
+splitting it, you can't complete it until all the splits have
+completed, so you have to have a hook there.
+
+In order for this to lead to a bug, you'd have to be cloning the
+original bio (i.e. you can't be splitting a bio that someone else owns
+and passed you, because that won't be freed until after you complete it)
+and then you have to fail to put/free that clone in your hook, where
+you're going to have other state to free too.
+
+Cloning a bio and then not explicitly freeing it ought to be fairly
+obviously wrong, IMO.
+
+I think there's a more positive reason to do it this way long term, too.
+I'm working towards getting rid of arbitrary restrictions in the block
+layer, and forcing bio_split() to allocate the bvec introduces one;
+allocating a bio with more than BIO_MAX_VECS will fail, and that _is_
+the kind of tricky restriction that's likely to trip callers up (it's
+certainly happened to me, I think multiple times).
+
+Currently this is still an issue if the split isn't aligned on a bvec
+boundary, but that's also fixable - by making the bvec immutable, which
+would have a lot of other benefits too.
+
+Making bio vecs immutable would also solve the original problem, because
+cloning a bio would no longer clone the bvec as well - so the bvec the
+split points to would _always_ be owned by something higher up that
+couldn't free it until after the split completes.
+
+> 
+> > + *
+> > + * BIG FAT WARNING:
+> > + *
+> > + * If you're calling this from under generic_make_request() (i.e.
+> > + * current->bio_list != NULL), you should mask out __GFP_WAIT and punt to
+> > + * workqueue if the allocation fails. Otherwise, your code will probably
+> > + * deadlock.
+> 
+> If the condition is detectable, WARN_ON_ONCE() please.
+
+Ok, I like that.
+
+> 
+> > + * You can't allocate more than once from the same bio pool without submitting
+> > + * the previous allocations (so they'll eventually complete and deallocate
+> > + * themselves), but if you're under generic_make_request() those previous
+> > + * allocations won't submit until you return . And if you have to split bios,
+>                                                ^
+> 					       extra space
+> > + * you should expect that some bios will require multiple splits.
+> > + */
+> > +struct bio *bio_split(struct bio *bio, int sectors,
+> > +		      gfp_t gfp, struct bio_set *bs)
+> > +{
+> > +	unsigned idx, vcnt = 0, nbytes = sectors << 9;
+> > +	struct bio_vec *bv;
+> > +	struct bio *ret = NULL;
+> > +
+> > +	BUG_ON(sectors <= 0);
+> > +
+> > +	if (sectors >= bio_sectors(bio))
+> > +		return bio;
+> > +
+> > +	trace_block_split(bdev_get_queue(bio->bi_bdev), bio,
+> > +			  bio->bi_sector + sectors);
+> > +
+> > +	bio_for_each_segment(bv, bio, idx) {
+> > +		vcnt = idx - bio->bi_idx;
+> > +
+> > +		if (!nbytes) {
+> > +			ret = bio_alloc_bioset(gfp, 0, bs);
+> > +			if (!ret)
+> > +				return NULL;
+> > +
+> > +			ret->bi_io_vec = bio_iovec(bio);
+> > +			ret->bi_flags |= 1 << BIO_CLONED;
+> > +			break;
+> > +		} else if (nbytes < bv->bv_len) {
+> > +			ret = bio_alloc_bioset(gfp, ++vcnt, bs);
+> > +			if (!ret)
+> > +				return NULL;
+> > +
+> > +			memcpy(ret->bi_io_vec, bio_iovec(bio),
+> > +			       sizeof(struct bio_vec) * vcnt);
+> > +
+> > +			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
+> > +			bv->bv_offset	+= nbytes;
+> > +			bv->bv_len	-= nbytes;
+> > +			break;
+> > +		}
+> 
+> Ummm... ISTR reviewing this code and getting confused by bio_alloc
+> inside bio_for_each_segment() loop and commenting something about
+> that.  Yeah, this one.
+> 
+>   http://thread.gmane.org/gmane.linux.kernel.device-mapper.devel/15790/focus=370
+> 
+> So, I actually have reviewed this but didn't get any response and
+> majority of the issues I raised aren't addressed and you sent the
+> patch to me again?  What the hell, Kent?
+
+Argh. I apologize, I knew I'd missing something. Cutting and pasting the
+stuff I haven't already responded to/fixed:
+
+>> +			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
+>> +			bv->bv_offset	+= nbytes;
+>> +			bv->bv_len	-= nbytes;
+>
+> Please don't indent assignments.
+
+Ok, unindented those.
+
+>
+>> +			break;
+>> +		}
+>> +
+>> +		nbytes -= bv->bv_len;
+>> +	}
+>
+> I find the code a bit confusing.  Wouldn't it be better to structure
+> it as
+>
+>	bio_for_each_segment() {
+>		find splitting point;
+>	}
+>
+>	Do all of the splitting.
+
+Definitely, except I don't see how to sanely do it that way with the
+different cases for splitting on a bvec boundry and not.
+
+I would like to get rid of that conditional eventually, but by making
+bvecs immutable.
+
+>
+>> +	ret->bi_bdev	= bio->bi_bdev;
+>> +	ret->bi_sector	= bio->bi_sector;
+>> +	ret->bi_size	= sectors << 9;
+>> +	ret->bi_rw	= bio->bi_rw;
+>> +	ret->bi_vcnt	= vcnt;
+>> +	ret->bi_max_vecs = vcnt;
+>> +	ret->bi_end_io	= bio->bi_end_io;
+>> +	ret->bi_private	= bio->bi_private;
+>>  
+>> -		bio_endio(master, bp->error);
+>> -		mempool_free(bp, bp->bio2.bi_private);
+>> +	bio->bi_sector	+= sectors;
+>> +	bio->bi_size	-= sectors << 9;
+>> +	bio->bi_idx	 = idx;
+>
+> I personally would prefer not having indentations here either.
+
+These I'd prefer to keep - it is a dozen assignments in a row, I
+_really_ find the indented version more readable.
+
+> So, before, split wouldn't override orig->bi_private.  Now, it does so
+> while the bio is in flight.  I don't know.  If the only benefit of
+> temporary override is avoiding have a separate end_io call, I think
+> not doing so is better.  Also, behavior changes as subtle as this
+> *must* be noted in the patch description.
+
+Already said more about this below, but to elaborate a bit - there are
+situations where the caller really wouldn't want the completions chained 
+(i.e, if the splits are going to different devices or otherwise are
+going to have different error handling, the caller really needs to
+supply its own endio function(s)).
+
+The old behaviour is still available (certainly there are cases where it
+_is_ what you want) - it's just been decoupled a bit.
+
+> 
+> > +
+> > +		nbytes -= bv->bv_len;
+> > +	}
+> > +
+> > +	ret->bi_bdev	= bio->bi_bdev;
+> > +	ret->bi_sector	= bio->bi_sector;
+> > +	ret->bi_size	= sectors << 9;
+> > +	ret->bi_rw	= bio->bi_rw;
+> > +	ret->bi_vcnt	= vcnt;
+> > +	ret->bi_max_vecs = vcnt;
+> > +	ret->bi_end_io	= bio->bi_end_io;
+> 
+> Is this safe?  Why isn't this chaining completion of split bio to the
+> original one?
+
+Outside the scope of this function - if you want the completions
+chained, you'd use bio_pair_split().
+
+With this bio_split() it's perfectly reasonable to split a bio an
+arbitrary number of times, and if that's what you're doing it's much
+cleaner (and more efficient) to just use a refcount instead of chaining
+the completions a bunch of times.
+
+So if that's what the caller is doing, this will do exactly what they
+want - if the caller wants to chain the completions, the caller can
+still do that (like how bio_pair_split() does in the next patch).
+
+> 
+> Thanks.
+> 
+> -- 
+> tejun
