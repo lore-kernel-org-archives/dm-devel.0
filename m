@@ -1,48 +1,259 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v5 12/12] block: Only clone bio vecs that
- are in use
-Date: Thu, 9 Aug 2012 00:01:54 -0700
-Message-ID: <20120809070154.GG2845@dhcp-172-17-108-109.mtv.corp.google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v5 10/12] block: Add bio_clone_kmalloc()
+Date: Thu, 9 Aug 2012 03:02:47 -0400
+Message-ID: <20120809070247.GC9128@dhcp-172-18-216-138.mtv.corp.google.com>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
- <1344290921-25154-13-git-send-email-koverstreet@google.com>
- <Pine.LNX.4.64.1208061913500.21956@file.rdu.redhat.com>
- <20120808232804.GL6983@dhcp-172-17-108-109.mtv.corp.google.com>
- <CAFR8uedZiG0NWgWQQa03r+kKh8rT0jzpj+hwPzq+i7K6zhpT_A@mail.gmail.com>
+ <1344290921-25154-11-git-send-email-koverstreet@google.com>
+ <20120808231552.GJ6983@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120809015704.GI7262@moria.home.lan>
+ <20120809065504.GE2845@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAFR8uedZiG0NWgWQQa03r+kKh8rT0jzpj+hwPzq+i7K6zhpT_A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Muthu Kumar <muthu.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+In-Reply-To: <20120809065504.GE2845@dhcp-172-17-108-109.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-Hello,
+On Wed, Aug 08, 2012 at 11:55:04PM -0700, Tejun Heo wrote:
+> On Wed, Aug 08, 2012 at 06:57:04PM -0700, Kent Overstreet wrote:
+> > That means bio_clone_kmalloc will just become:
+> > 
+> > static inline struct bio *bio_clone_kmalloc(struct bio *bio,
+> > 					    gfp_t gfp_mask)
+> > {
+> > 	return bio_clone_bioset(bio, gfp_mask, BIO_KMALLOC_POOL)
+> > }
+> > 
+> > (or maybe NULL there, I think using NULL for the interface makes sense,
+> > I just don't want to use it for bi_pool).
+> > 
+> > Do you still want the /** for a one line wrapper like that?
+> 
+> I don't know.  But do you think you can do similar thing to alloc
+> interface too?
 
-On Wed, Aug 08, 2012 at 04:47:46PM -0700, Muthu Kumar wrote:
-> You are changing the meaning of __bio_clone() here. In old code, the
-> number of io_vecs, bi_idx, bi_vcnt are preserved. But in this modified
-> code, you are mapping bio_src's bi_iovec[bi_idx] to bio_dests
-> bi_iovec[0] and also restricting the number of allocated io_vecs of
-> the clone. It may be useful for cases were we would like a identical
-> copy of the original bio (may not be in current code base, but this
-> implementation is definitely not what one would expect from the name
-> "clone").
+Already did:
 
-Implementation details changed somewhat but the high-level semantics
-didn't change at all.  Any driver not messing with bio internals - and
-they shouldn't - shouldn't notice the change.  No in-kernel drivers
-seem to be broken by the change.  If you ask me, this looks more like
-a bug fix to me where the bug is a silly behavior restricting
-usefulness of the interface.
+commit 313e0a46b1681a8e02b2fe9a86cfc3b82599be58
+Author: Kent Overstreet <koverstreet@google.com>
+Date:   Wed Aug 8 20:30:16 2012 -0700
 
-> May be, call this new implementation some thing else (and use it for bcache)?
+    block: Add bio_clone_bioset(), bio_clone_kmalloc()
+    
+    Previously, there was bio_clone() but it only allocated from the fs bio
+    set; as a result various users were open coding it and using
+    __bio_clone().
+    
+    This changes bio_clone() to become bio_clone_bioset(), and then we add
+    bio_clone() and bio_clone_kmalloc() as wrappers around it, making use of
+    the functionality the last patch adedd.
+    
+    This will also help in a later patch changing how bio cloning works.
+    
+    Signed-off-by: Kent Overstreet <koverstreet@google.com>
 
-This doesn't only change __bio_clone() but all clone interface stacked
-on top of it, so, no way.  This ain't windows.
-
-Thanks.
-
--- 
-tejun
+diff --git a/block/blk-core.c b/block/blk-core.c
+index e9058c2..10a6e08 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -2768,16 +2768,10 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ 	blk_rq_init(NULL, rq);
+ 
+ 	__rq_for_each_bio(bio_src, rq_src) {
+-		bio = bio_alloc_bioset(gfp_mask, bio_src->bi_max_vecs, bs);
++		bio = bio_clone_bioset(bio_src, gfp_mask, bs);
+ 		if (!bio)
+ 			goto free_and_out;
+ 
+-		__bio_clone(bio, bio_src);
+-
+-		if (bio_integrity(bio_src) &&
+-		    bio_integrity_clone(bio, bio_src, gfp_mask, bs))
+-			goto free_and_out;
+-
+ 		if (bio_ctr && bio_ctr(bio, bio_src, data))
+ 			goto free_and_out;
+ 
+diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
+index 87311eb..1bbc681 100644
+--- a/drivers/block/osdblk.c
++++ b/drivers/block/osdblk.c
+@@ -266,11 +266,10 @@ static struct bio *bio_chain_clone(struct bio *old_chain, gfp_t gfpmask)
+ 	struct bio *tmp, *new_chain = NULL, *tail = NULL;
+ 
+ 	while (old_chain) {
+-		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
++		tmp = bio_clone_kmalloc(old_chain, gfpmask);
+ 		if (!tmp)
+ 			goto err_out;
+ 
+-		__bio_clone(tmp, old_chain);
+ 		tmp->bi_bdev = NULL;
+ 		gfpmask &= ~__GFP_WAIT;
+ 		tmp->bi_next = NULL;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index a8f5cdc..d978f7e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1105,8 +1105,8 @@ static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
+ 	 * ci->bio->bi_max_vecs is BIO_INLINE_VECS anyway, for both flush
+ 	 * and discard, so no need for concern about wasted bvec allocations.
+ 	 */
+-	clone = bio_alloc_bioset(GFP_NOIO, ci->bio->bi_max_vecs, ci->md->bs);
+-	__bio_clone(clone, ci->bio);
++	clone = bio_clone_bioset(ci->bio, GFP_NOIO, ci->md->bs);
++
+ 	if (len) {
+ 		clone->bi_sector = ci->sector;
+ 		clone->bi_size = to_bytes(len);
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index f9d16dc..069c3bc 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -173,28 +173,10 @@ EXPORT_SYMBOL_GPL(bio_alloc_mddev);
+ struct bio *bio_clone_mddev(struct bio *bio, gfp_t gfp_mask,
+ 			    struct mddev *mddev)
+ {
+-	struct bio *b;
+-
+ 	if (!mddev || !mddev->bio_set)
+ 		return bio_clone(bio, gfp_mask);
+ 
+-	b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, mddev->bio_set);
+-	if (!b)
+-		return NULL;
+-
+-	__bio_clone(b, bio);
+-	if (bio_integrity(bio)) {
+-		int ret;
+-
+-		ret = bio_integrity_clone(b, bio, gfp_mask, mddev->bio_set);
+-
+-		if (ret < 0) {
+-			bio_put(b);
+-			return NULL;
+-		}
+-	}
+-
+-	return b;
++	return bio_clone_bioset(bio, gfp_mask, mddev->bio_set);
+ }
+ EXPORT_SYMBOL_GPL(bio_clone_mddev);
+ 
+diff --git a/fs/bio.c b/fs/bio.c
+index c0b9bf3..71f1ac5 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -419,16 +419,19 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ EXPORT_SYMBOL(__bio_clone);
+ 
+ /**
+- *	bio_clone	-	clone a bio
++ *	bio_clone_bioset -	clone a bio
+  *	@bio: bio to clone
+  *	@gfp_mask: allocation priority
++ *	@bs: bio_set to allocate from
+  *
+  * 	Like __bio_clone, only also allocates the returned bio
+  */
+-struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
++struct bio *bio_clone_bioset(struct bio *bio, gfp_t gfp_mask,
++			     struct bio_set *bs)
+ {
+-	struct bio *b = bio_alloc(gfp_mask, bio->bi_max_vecs);
++	struct bio *b;
+ 
++	b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, bs);
+ 	if (!b)
+ 		return NULL;
+ 
+@@ -437,7 +440,7 @@ struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
+ 	if (bio_integrity(bio)) {
+ 		int ret;
+ 
+-		ret = bio_integrity_clone(b, bio, gfp_mask, fs_bio_set);
++		ret = bio_integrity_clone(b, bio, gfp_mask, bs);
+ 
+ 		if (ret < 0) {
+ 			bio_put(b);
+@@ -447,7 +450,7 @@ struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
+ 
+ 	return b;
+ }
+-EXPORT_SYMBOL(bio_clone);
++EXPORT_SYMBOL(bio_clone_bioset);
+ 
+ /**
+  *	bio_get_nr_vecs		- return approx number of vecs
+diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
+index 24a49d4..a8d92fc 100644
+--- a/fs/exofs/ore.c
++++ b/fs/exofs/ore.c
+@@ -814,8 +814,8 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+ 			struct bio *bio;
+ 
+ 			if (per_dev != master_dev) {
+-				bio = bio_kmalloc(GFP_KERNEL,
+-						  master_dev->bio->bi_max_vecs);
++				bio = bio_clone_kmalloc(master_dev->bio,
++							GFP_KERNEL);
+ 				if (unlikely(!bio)) {
+ 					ORE_DBGMSG(
+ 					      "Failed to allocate BIO size=%u\n",
+@@ -824,7 +824,6 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
+ 					goto out;
+ 				}
+ 
+-				__bio_clone(bio, master_dev->bio);
+ 				bio->bi_bdev = NULL;
+ 				bio->bi_next = NULL;
+ 				per_dev->offset = master_dev->offset;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 3e2686f..9e2c9a5 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -213,6 +213,9 @@ extern struct bio *bio_alloc_bioset(gfp_t, int, struct bio_set *);
+ extern void bio_put(struct bio *);
+ extern void bio_free(struct bio *);
+ 
++extern void __bio_clone(struct bio *, struct bio *);
++extern struct bio *bio_clone_bioset(struct bio *, gfp_t, struct bio_set *bs);
++
+ extern struct bio_set *fs_bio_set;
+ 
+ static inline struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+@@ -220,6 +223,11 @@ static inline struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+ 	return bio_alloc_bioset(gfp_mask, nr_iovecs, fs_bio_set);
+ }
+ 
++static inline struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
++{
++	return bio_clone_bioset(bio, gfp_mask, fs_bio_set);
++}
++
+ #define BIO_KMALLOC_POOL ((void *) ~0)
+ 
+ static inline struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+@@ -227,13 +235,16 @@ static inline struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+ 	return bio_alloc_bioset(gfp_mask, nr_iovecs, BIO_KMALLOC_POOL);
+ }
+ 
++static inline struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
++{
++	return bio_clone_bioset(bio, gfp_mask, BIO_KMALLOC_POOL);
++
++}
++
+ extern void bio_endio(struct bio *, int);
+ struct request_queue;
+ extern int bio_phys_segments(struct request_queue *, struct bio *);
+ 
+-extern void __bio_clone(struct bio *, struct bio *);
+-extern struct bio *bio_clone(struct bio *, gfp_t);
+-
+ extern void bio_init(struct bio *);
+ extern void bio_reset(struct bio *);
+ 
