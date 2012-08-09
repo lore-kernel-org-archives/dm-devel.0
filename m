@@ -1,137 +1,50 @@
 From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v5 08/12] block: Introduce new bio_split()
-Date: Wed, 8 Aug 2012 23:44:48 -0700
-Message-ID: <20120809064448.GC2845@dhcp-172-17-108-109.mtv.corp.google.com>
+Subject: Re: [PATCH v5 11/12] block: Add bio_clone_bioset()
+Date: Wed, 8 Aug 2012 23:52:51 -0700
+Message-ID: <20120809065251.GD2845@dhcp-172-17-108-109.mtv.corp.google.com>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
- <1344290921-25154-9-git-send-email-koverstreet@google.com>
- <20120808225839.GG6983@dhcp-172-17-108-109.mtv.corp.google.com>
- <20120809011928.GG7262@moria.home.lan>
+ <1344290921-25154-12-git-send-email-koverstreet@google.com>
+ <20120808232120.GK6983@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120809025610.GK7262@moria.home.lan>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120809011928.GG7262-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+In-Reply-To: <20120809025610.GK7262-jC9Py7bek1znysI04z7BkA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello, Kent.
-
-On Wed, Aug 08, 2012 at 06:19:28PM -0700, Kent Overstreet wrote:
-> If bio_split returned an error, it'd make the code more convoluted -
-> you'd have to do work on either the split or the original bio, and then
-> repeat the same check later when it's time to break out of the loop.
-
-I really dislike this reasonsing.  The interface might streamline
-certain use cases a bit but at the cost of confusing semantics.  It's
-called bio_split() which takes a bio and returns a bio.  Any sane
-person would expect it to return the split bio iff the original bio is
-successfully split and NULL or ERR_PTR() value if splitting didn't
-happen for whatever reason.  Please don't try to make code look
-elegant by twisting obvious things.  Saving three lines is never
-worthwhile it it costs obviousness.
-
-This reminds me of, unfortunately, kobject_get() which returns the
-parameter it got passed in verbatim.  The rationale was that it makes
-code like the following *look* more elegant.
-
-	my_kobj = kobject_get(&blahblah.kobj);
-
-Some people liked how things like the above looked.  Unfortunately, it
-unnecessarily made people wonder whether the return value could be
-different from the parameter (can it ever fail?) and led to cases
-where people misunderstood the semantics and assumed that kobj somehow
-handles zero refcnt racing and kobject_get() would magically return
-NULL if refcnt reaches zero.  I hope we don't have those bugs anymore
-but code built on top of kobject unfortunately propagated this
-stupidity multiple layers upwards and I'm not sure.
-
-So, please don't do things like this.
-
-> > This is somewhat error-prone.  Given how splits are used now, this
-> > might not be a big issue but it isn't difficult to imagine how this
-> > could go subtly wrong.  More on this.
+On Wed, Aug 08, 2012 at 07:56:10PM -0700, Kent Overstreet wrote:
+> > So, bio_clone() loses its function comment.  Also, does it even make
+> > sense to call bio_clone() from fs_bio_set?
 > 
-> I can't find anything else in your emails on the subject...
+> I'll re add the function comment if you want, just for a single line
+> wrapper I don't know if it's worth the cost - comments get out of date,
+> and they're more stuff to wade through.
 
-Oh, it was the chaining thing.  If you bump ref on the original bio
-and let the split one put it on completion, the caller doesn't have to
-worry about this.
+People actually look at docbook generated docs.  I don't know why but
+they do.  It's a utility function at block layer.  Please just add the
+comment.
 
-> > > +	bio_for_each_segment(bv, bio, idx) {
-> > > +		vcnt = idx - bio->bi_idx;
-> > > +
-> > > +		if (!nbytes) {
-> > > +			ret = bio_alloc_bioset(gfp, 0, bs);
-> > > +			if (!ret)
-> > > +				return NULL;
-> > > +
-> > > +			ret->bi_io_vec = bio_iovec(bio);
-> > > +			ret->bi_flags |= 1 << BIO_CLONED;
-> > > +			break;
-> > > +		} else if (nbytes < bv->bv_len) {
-> > > +			ret = bio_alloc_bioset(gfp, ++vcnt, bs);
-> > > +			if (!ret)
-> > > +				return NULL;
-> > > +
-> > > +			memcpy(ret->bi_io_vec, bio_iovec(bio),
-> > > +			       sizeof(struct bio_vec) * vcnt);
-> > > +
-> > > +			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
-> > > +			bv->bv_offset	+= nbytes;
-> > > +			bv->bv_len	-= nbytes;
-> > > +			break;
-> > > +		}
-...
-> > I find the code a bit confusing.  Wouldn't it be better to structure
-> > it as
-> >
-> >	bio_for_each_segment() {
-> >		find splitting point;
-> >	}
-> >
-> >	Do all of the splitting.
+> > Let's say it's so, then
+> > what's the difference from using _kmalloc variant?
 > 
-> Definitely, except I don't see how to sanely do it that way with the
-> different cases for splitting on a bvec boundry and not.
-
-I really don't buy that.  Just break out on the common condition and
-differentiate the two cases afterwards.
-
-> > So, before, split wouldn't override orig->bi_private.  Now, it does so
-> > while the bio is in flight.  I don't know.  If the only benefit of
-> > temporary override is avoiding have a separate end_io call, I think
-> > not doing so is better.  Also, behavior changes as subtle as this
-> > *must* be noted in the patch description.
+> bio_kmalloc() fails if nr_iovecs > 1024, bio_alloc_bioset() fails if
+> nr_iovecs > 256
 > 
-> Already said more about this below, but to elaborate a bit - there are
-> situations where the caller really wouldn't want the completions chained 
-> (i.e, if the splits are going to different devices or otherwise are
-> going to have different error handling, the caller really needs to
-> supply its own endio function(s)).
-
-Then let it take @chain parameter and if @chain is %false, clear endio
-(or introduce bio_split_chain()).  Copying endio of the original bio
-is useless and dangerous.
-
-> Outside the scope of this function - if you want the completions
-> chained, you'd use bio_pair_split().
+> and bio_alloc_bioset() is mempool backed, bio_kmalloc() is not.
 > 
-> With this bio_split() it's perfectly reasonable to split a bio an
-> arbitrary number of times, and if that's what you're doing it's much
-> cleaner (and more efficient) to just use a refcount instead of chaining
-> the completions a bunch of times.
-> 
-> So if that's what the caller is doing, this will do exactly what they
-> want - if the caller wants to chain the completions, the caller can
-> still do that (like how bio_pair_split() does in the next patch).
+> AFAICT that's it.
 
-bio_pair doesn't really make much sense after this change.  Originally
-it made sense as the container holding everything necessary for the
-clone, now it's just a proxy to keep the old interface.  It doesn't
-even succeed at that.  The interface changes.  Let's just roll it into
-the default bio_clone() interface.
+So, the thing is being mempool backed doesn't mean anything if
+multiple layers use the pool.  I *suspect* fs_bio_set is supposed to
+be used by fs layer - ie. where bios originate.  The reason why I
+wondered about bio_clone() is that bio_clone() is almost always used
+from stacking drivers and stacking driver tapping into fs reserve is
+buggy.  So, I'm wondering whether cloning from fs_bio_set should be
+supported at all.
 
 Thanks.
 
