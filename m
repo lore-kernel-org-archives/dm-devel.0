@@ -1,49 +1,60 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v5 05/12] block: Kill bi_destructor
-Date: Wed, 8 Aug 2012 23:34:09 -0700
-Message-ID: <CAOS58YOHZmNWezg0uDhDeKP1dAt8fmmcLjmzKGShrw6PCpCFpg@mail.gmail.com>
-References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
-	<1344290921-25154-6-git-send-email-koverstreet@google.com>
-	<20120808222223.GD6983@dhcp-172-17-108-109.mtv.corp.google.com>
-	<20120809002154.GE7262@moria.home.lan>
-	<20120809060517.GB2845@dhcp-172-17-108-109.mtv.corp.google.com>
-	<20120809061214.GA9128@dhcp-172-18-216-138.mtv.corp.google.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 2/2] dm: verity support data device offset
+ (Linux 3.4.7)
+Date: Thu, 09 Aug 2012 08:35:17 +0200
+Message-ID: <50235A25.6010705@redhat.com>
+References: <8893CF66-2E2C-4D8F-9239-E38BE55716AE@netflix.com> <Pine.LNX.4.64.1208081437550.16469@file.rdu.redhat.com> <5022CC99.30103@redhat.com> <AD722D70-2E9C-4B2D-BE48-B94E2268C3DD@netflix.com> <5022D29B.9000402@redhat.com> <C8AA8C7B-505E-49E8-AE47-C24843E74543@netflix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-In-Reply-To: <20120809061214.GA9128-RcKxWJ4Cfj3IzGYXcIpNmNLIRw13R84JkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <C8AA8C7B-505E-49E8-AE47-C24843E74543@netflix.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wesley Miaw <wmiaw@netflix.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, "msb@google.com" <msb@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?windows-1252?Q?Will_Drewry=99?= <w@google.com>
 List-Id: dm-devel.ids
 
-Hello,
+On 08/09/2012 02:40 AM, Wesley Miaw wrote:
+> On Aug 8, 2012, at 1:56 PM, Milan Broz wrote:
+> 
+>> On 08/08/2012 10:46 PM, Wesley Miaw wrote:
+>> 
+>>> I did modify veritysetup on my own so the format and verify
+>>> commands will work with regular files on disk instead of having
+>>> to mount through loop devices.
+>> 
+>> Which veritysetup? In upstream (cryptsetup repository) it allocates
+>> loop automatically. (And for userspace verification it doesn't need
+>> loop at all.)
+>> 
+>> Anyway, please send a patch for userspace as well then ;-)
+> 
+> This isn't as polished because I pretty much just added support to do
+> what I needed. I'm not sure if the LKML is the right place to post,
+> so let me know if I should send this somewhere else.
 
-On Wed, Aug 8, 2012 at 11:12 PM, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> But if it's a pointer to heap allocated memory, but the bio was embedded
-> in another struct? I've seen a fair number of instances of that (md, off
-> the top of my head).
->
-> If you're sure that in a normal config the slab allocator is going to
-> complain right away and not corrupt itself, fine. But I've been bitten
-> way too hard by bugs that could've been caught right away by a simple
-> assert and instead I had to spend hours backtracking, and the block
-> layer is _rife_ with that kind of thing.
+This is libcryptsetup userspace so better list for this is dmcrypt
+mailing list (and/or cc me, I will handle these changes anyway).
 
-Let's let slab debug code deal with that.  I really don't see much
-benefit in doing this.  The said kind of bugs aren't particularly
-difficult to track down.
+The allocated crypto "file" context cannot be later used for some kind
+of operations. I do not like this approach musch... 
+You cannot use file argument for dm-target directly, so your patch
+is useful only for your use case but not for anything else.
 
-Thanks.
+Anyway, I am sure there is better way how to solve it I just need
+to understand what the problem is. What's wrong if code allocates
+loop devices (if argument is file)?
+Performance? Loop not available? Need root access?
 
--- 
-tejun
+Please explain what's the problem first.
+(btw that patch is mangled by a mailer but not a problem now).
+
+> Your previous email implied that veritysetup would need a way to
+> determine if the data offset option is supported; I did not modify
+> veritysetup to support this idea as I didn't need it.
+
+Once kernel get this option (if you convince upstream:) then I will
+the option to userspace. We have to handle many dm-crypt extensions
+so not a big problem for dm-verity as well.
+
+Milan
