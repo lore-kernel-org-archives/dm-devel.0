@@ -1,36 +1,25 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 08/12] block: Introduce new bio_split()
-Date: Wed, 8 Aug 2012 18:39:23 -0700
-Message-ID: <20120809013923.GH7262@moria.home.lan>
-References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
- <1344290921-25154-9-git-send-email-koverstreet@google.com>
- <20120808230532.GH6983@dhcp-172-17-108-109.mtv.corp.google.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 2/2] dm: verity support data device
+	offset (Linux 3.4.7)
+Date: Thu, 9 Aug 2012 02:53:21 +0100
+Message-ID: <20120809015321.GC23758@agk-dp.fab.redhat.com>
+References: <8893CF66-2E2C-4D8F-9239-E38BE55716AE@netflix.com> <Pine.LNX.4.64.1208081437550.16469@file.rdu.redhat.com> <5022CC99.30103@redhat.com> <AD722D70-2E9C-4B2D-BE48-B94E2268C3DD@netflix.com> <5022D29B.9000402@redhat.com> <C8AA8C7B-505E-49E8-AE47-C24843E74543@netflix.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120808230532.GH6983-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+In-Reply-To: <C8AA8C7B-505E-49E8-AE47-C24843E74543@netflix.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wesley Miaw <wmiaw@netflix.com>
+Cc: Milan Broz <mbroz@redhat.com>, "msb@google.com" <msb@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Will =?utf-8?B?RHJld3J54oSi?= <w@google.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 08, 2012 at 04:05:32PM -0700, Tejun Heo wrote:
-> One more thing.
-> 
-> On Mon, Aug 06, 2012 at 03:08:37PM -0700, Kent Overstreet wrote:
-> > +	if (bio_integrity(bio)) {
-> > +		bio_integrity_clone(ret, bio, gfp, bs);
-> > +		bio_integrity_trim(ret, 0, bio_sectors(ret));
-> > +		bio_integrity_trim(bio, bio_sectors(ret), bio_sectors(bio));
-> 
-> Is this equivalent to bio_integrity_split() performance-wise?
+On Thu, Aug 09, 2012 at 12:40:23AM +0000, Wesley Miaw wrote:
+> This isn't as polished because I pretty much just added support to do what I
+> needed. I'm not sure if the LKML is the right place to post, so let me know if
+> I should send this somewhere else.
+ 
+cryptsetup patches are best sent to the mailing list mentioned at the bottom of
+the project page http://code.google.com/p/cryptsetup/ viz. dm-crypt@saout.de.
 
-Strictly speaking, no. But it has the advantage of being drastically
-simpler - and the only one only worked for single page bios so I
-would've had to come up with something new from scratch, and as
-confusing as the integrity stuff is I wouldn't trust the result.
-
-I'm skeptical that it's going to matter in practice given how much
-iteration is done elsewhere in the course of processing a bio and given
-that this stuff isn't used with high end SSDs...
+Alasdair
