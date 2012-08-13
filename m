@@ -1,39 +1,42 @@
-From: Karel Zak <kzak@redhat.com>
-Subject: Re: [patch 2/2] util-linux: resizepart: Utility to
-	resize a partition
-Date: Mon, 13 Aug 2012 22:20:32 +0200
-Message-ID: <20120813202032.GA20252@x2.net.home>
-References: <20120709213418.799759100@redhat.com>
-	<20120709213559.918409313@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v5 02/12] dm: Use bioset's front_pad for
+ dm_rq_clone_bio_info
+Date: Mon, 13 Aug 2012 14:44:46 -0700
+Message-ID: <20120813214446.GC9541@google.com>
+References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+ <1344290921-25154-3-git-send-email-koverstreet@google.com>
+ <20120808220612.GA6983@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120808235731.GA7262@moria.home.lan>
+ <CAOzFzEhPW5-edb6mnL2gNbb4956u2MbWqQovv01010PyBCbc+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120709213559.918409313@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: axboe@kernel.dk, util-linux@vger.kernel.org, psusi@ubuntu.com, linux-kernel@vger.kernel.org, maxim.patlasov@gmail.com, dm-devel@redhat.com, vgoyal@redhat.comi
+In-Reply-To: <CAOzFzEhPW5-edb6mnL2gNbb4956u2MbWqQovv01010PyBCbc+g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joseph Glanville <joseph.glanville@orionvm.com.au>
+Cc: Tejun Heo <tj@kernel.org>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 09, 2012 at 05:34:20PM -0400, vgoyal@redhat.com wrote:
-> A simple user space utility to resize an existing partition. It tries to read
-> the start of partiton from sysfs.
+On Sat, Aug 11, 2012 at 03:24:45PM +1000, Joseph Glanville wrote:
+> Hi Kent, Tejun
+> 
+> On 9 August 2012 09:57, Kent Overstreet <koverstreet@google.com> wrote:
+> >> Also, how was this tested?
+> >
+> > Well, AFAICT the only request based dm target is multipath, and from the
+> > documentation I've seen it doesn't appear to work without multipath
+> > hardware, or at least I haven't seen it documented how. So, unless
+> > there's another user I missed it's not been tested.
+> 
+> Multipath can be tested quite easily with a loopback scsi target, you
+> don't require specialized hardware.
+> The easiest way to do this would probably be the built in LIO target +
+> open_iscsi initiator.
+> 
+> I haven't attempted running this current version of the patch series
+> but I haven't run into issues with bcache+multipath in the past.
 
-Applied with some changes -- will be in the next release util-linux 2.22-rc2
-
-Thanks!
-
-    Karel
-
--- 
- Karel Zak  <kzak@redhat.com>
- http://karelzak.blogspot.com
+Actually, I bet you have been running this code - do you think you could
+check the git log for the version you're running? That'd be awesome if
+you are.
