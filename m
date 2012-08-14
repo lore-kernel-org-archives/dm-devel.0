@@ -1,78 +1,162 @@
-From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH 01/16] hashtable: introduce a small and naive hashtable
-Date: Wed, 15 Aug 2012 09:25:23 +1000
-Message-ID: <20120815092523.00a909ef@notabene.brown>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 02/16] user_ns: use new hashtable implementation
+Date: Tue, 14 Aug 2012 16:52:03 -0700
+Message-ID: <87txw5hw0s.fsf@xmission.com>
 References: <1344961490-4068-1-git-send-email-levinsasha928@gmail.com>
-	<1344961490-4068-2-git-send-email-levinsasha928@gmail.com>
+	<1344961490-4068-3-git-send-email-levinsasha928@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/WaPYDSkmDZTaSUO/RNup8tR"; protocol="application/pgp-signature"
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1344961490-4068-2-git-send-email-levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jesse-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
+Content-Type: text/plain
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1344961490-4068-3-git-send-email-levinsasha928@gmail.com> (Sasha
+	Levin's message of "Tue, 14 Aug 2012 18:24:36 +0200")
+Sender: owner-linux-mm@kvack.org
+To: Sasha Levin <levinsasha928@gmail.com>
+Cc: torvalds@linux-foundation.org, tj@kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
 List-Id: dm-devel.ids
 
---Sig_/WaPYDSkmDZTaSUO/RNup8tR
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Sasha Levin <levinsasha928@gmail.com> writes:
 
-On Tue, 14 Aug 2012 18:24:35 +0200 Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-wrote:
+> Switch user_ns to use the new hashtable implementation. This reduces the amount of
+> generic unrelated code in user_ns.
 
+Two concerns here.
+1) When adding a new entry you recompute the hash where previously that
+   was not done.  I believe that will slow down adding of new entries.
 
-> +static inline void hash_init_size(struct hlist_head *hashtable, int bits)
-> +{
-> +	int i;
-> +
-> +	for (i =3D 0; i < HASH_SIZE(bits); i++)
-> +		INIT_HLIST_HEAD(hashtable + i);
-> +}
+2) Using hash_32 for uids is an interesting choice.  hash_32 discards
+   the low bits.  Last I checked for uids the low bits were the bits
+   that were most likely to be different and had the most entropy.
 
-This seems like an inefficient way to do "memset(hashtable, 0, ...);".
-And in many cases it isn't needed as the hash table is static and initialis=
-ed
-to zero.
-I note that in the SUNRPC/cache patch you call hash_init(), but in the lockd
-patch you don't.  You don't actually need to in either case.
+   I'm not certain how multiplying by the GOLDEN_RATION_PRIME_32 will
+   affect things but I would be surprised if it shifted all of the
+   randomness from the low bits to the high bits.
 
-I realise that any optimisation here is for code that is only executed once
-per boot, so no big deal, and even the presence of extra code making the
-kernel bigger is unlikely to be an issue.  But I'd at least like to see
-consistency: Either use hash_init everywhere, even when not needed, or only
-use it where absolutely needed which might be no-where because static tables
-are already initialised, and dynamic tables can use GFP_ZERO.
+And just a nit.  struct user is essentially orthogonal to the user namespace
+at this point, making the description of the patch a little weird.
 
-And if you keep hash_init_size I would rather see a memset(0)....
+Eric
 
-Thanks,
-NeilBrown
+> Signed-off-by: Sasha Levin <levinsasha928@gmail.com>
+> ---
+>  kernel/user.c |   33 +++++++++++++--------------------
+>  1 files changed, 13 insertions(+), 20 deletions(-)
+>
+> diff --git a/kernel/user.c b/kernel/user.c
+> index b815fef..d10c484 100644
+> --- a/kernel/user.c
+> +++ b/kernel/user.c
+> @@ -16,6 +16,7 @@
+>  #include <linux/interrupt.h>
+>  #include <linux/export.h>
+>  #include <linux/user_namespace.h>
+> +#include <linux/hashtable.h>
+>  
+>  /*
+>   * userns count is 1 for root user, 1 for init_uts_ns,
+> @@ -52,13 +53,9 @@ EXPORT_SYMBOL_GPL(init_user_ns);
+>   */
+>  
+>  #define UIDHASH_BITS	(CONFIG_BASE_SMALL ? 3 : 7)
+> -#define UIDHASH_SZ	(1 << UIDHASH_BITS)
+> -#define UIDHASH_MASK		(UIDHASH_SZ - 1)
+> -#define __uidhashfn(uid)	(((uid >> UIDHASH_BITS) + uid) & UIDHASH_MASK)
+> -#define uidhashentry(uid)	(uidhash_table + __uidhashfn((__kuid_val(uid))))
+>  
+>  static struct kmem_cache *uid_cachep;
+> -struct hlist_head uidhash_table[UIDHASH_SZ];
+> +static DEFINE_HASHTABLE(uidhash_table, UIDHASH_BITS)
+>  
+>  /*
+>   * The uidhash_lock is mostly taken from process context, but it is
+> @@ -84,22 +81,22 @@ struct user_struct root_user = {
+>  /*
+>   * These routines must be called with the uidhash spinlock held!
+>   */
+> -static void uid_hash_insert(struct user_struct *up, struct hlist_head *hashent)
+> +static void uid_hash_insert(struct user_struct *up)
+>  {
+> -	hlist_add_head(&up->uidhash_node, hashent);
+> +	hash_add(uidhash_table, &up->uidhash_node, __kuid_val(up->uid));
+>  }
+>  
+>  static void uid_hash_remove(struct user_struct *up)
+>  {
+> -	hlist_del_init(&up->uidhash_node);
+> +	hash_del(&up->uidhash_node);
+>  }
+>  
+> -static struct user_struct *uid_hash_find(kuid_t uid, struct hlist_head *hashent)
+> +static struct user_struct *uid_hash_find(kuid_t uid)
+>  {
+>  	struct user_struct *user;
+>  	struct hlist_node *h;
+>  
+> -	hlist_for_each_entry(user, h, hashent, uidhash_node) {
+> +	hash_for_each_possible(uidhash_table, user, h, uidhash_node, __kuid_val(uid)) {
+>  		if (uid_eq(user->uid, uid)) {
+>  			atomic_inc(&user->__count);
+>  			return user;
+> @@ -135,7 +132,7 @@ struct user_struct *find_user(kuid_t uid)
+>  	unsigned long flags;
+>  
+>  	spin_lock_irqsave(&uidhash_lock, flags);
+> -	ret = uid_hash_find(uid, uidhashentry(uid));
+> +	ret = uid_hash_find(uid);
+>  	spin_unlock_irqrestore(&uidhash_lock, flags);
+>  	return ret;
+>  }
+> @@ -156,11 +153,10 @@ void free_uid(struct user_struct *up)
+>  
+>  struct user_struct *alloc_uid(kuid_t uid)
+>  {
+> -	struct hlist_head *hashent = uidhashentry(uid);
+>  	struct user_struct *up, *new;
+>  
+>  	spin_lock_irq(&uidhash_lock);
+> -	up = uid_hash_find(uid, hashent);
+> +	up = uid_hash_find(uid);
+>  	spin_unlock_irq(&uidhash_lock);
+>  
+>  	if (!up) {
+> @@ -176,13 +172,13 @@ struct user_struct *alloc_uid(kuid_t uid)
+>  		 * on adding the same user already..
+>  		 */
+>  		spin_lock_irq(&uidhash_lock);
+> -		up = uid_hash_find(uid, hashent);
+> +		up = uid_hash_find(uid);
+>  		if (up) {
+>  			key_put(new->uid_keyring);
+>  			key_put(new->session_keyring);
+>  			kmem_cache_free(uid_cachep, new);
+>  		} else {
+> -			uid_hash_insert(new, hashent);
+> +			uid_hash_insert(new);
+>  			up = new;
+>  		}
+>  		spin_unlock_irq(&uidhash_lock);
+> @@ -196,17 +192,14 @@ out_unlock:
+>  
+>  static int __init uid_cache_init(void)
+>  {
+> -	int n;
+> -
+>  	uid_cachep = kmem_cache_create("uid_cache", sizeof(struct user_struct),
+>  			0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
+>  
+> -	for(n = 0; n < UIDHASH_SZ; ++n)
+> -		INIT_HLIST_HEAD(uidhash_table + n);
+> +	hash_init(uidhash_table);
+>  
+>  	/* Insert the root user immediately (init already runs as root) */
+>  	spin_lock_irq(&uidhash_lock);
+> -	uid_hash_insert(&root_user, uidhashentry(GLOBAL_ROOT_UID));
+> +	uid_hash_insert(&root_user);
+>  	spin_unlock_irq(&uidhash_lock);
+>  
+>  	return 0;
 
---Sig_/WaPYDSkmDZTaSUO/RNup8tR
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
-
-iQIVAwUBUCreYznsnt1WYoG5AQJjuA//cxInQBsHXHRtWYyYJpxwOX9hqpSDNaZ2
-37aTlFSGjdhr1yn+RcwmtWh9nEj+oHEFlds46gW/woLpGFSXuCPD85CDtZDjPSpL
-7VNXdZ1i3+EEPR0K2vjMaUs1cpdz2KIx8KZjIXfQVnARaZNfts7EuaTCpGM+5bac
-G4CX6uoFtPc/A4LVEiYbowLzhUG+GmxcofMjd9ZJ4Ug0Xg4sl8xXtYg8YDkSn3LJ
-zef9ltlJ1WxLSTtBm6+jyH25Xlb31P7TT3BUgNcStSz9Jak2wdggbUE79iOb3GJL
-sP6/meXapGELz7IE8PVo/cdYdfBcskH6M8ai8pNNYTguSh/2VSRnjR1hPqXhgUYn
-FDKLL8galmS5OxQMwv4mb3zhUIHIiTT7tWBq6eYXo3xUzInU5VufAyLIcpRX3fXm
-VNLnnDOyaoWJCP/fUDrmHskSWPhLQA5/1YtiSI1NYwbY2C+OCybFHYixcWe5CT4w
-YvQ2TTweApDjk5JRndjiO0/j4++kAYvQ8KwC7oo7CUK13dH/9h8rxzV3H4zAhxkh
-4F6FzPEagR1CzKpSkJEA46DJQNIdAbbyCM0VkHORy7gTUa0MA3MsjW8dOKSnBnux
-xsx1GI08WW16NEf1TyGrkqdE/caa4WtDDoLNG3cpwLTZNlMACcZOHXQmgeQu3Ija
-TqL1y22gF/Q=
-=lYgD
------END PGP SIGNATURE-----
-
---Sig_/WaPYDSkmDZTaSUO/RNup8tR--
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
