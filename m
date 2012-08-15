@@ -1,541 +1,315 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] reworked dm-switch target
-Date: Wed, 15 Aug 2012 18:36:55 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1208151832280.8587@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH] A possible deadlock with stacked devices (was: [PATCH v4
+ 08/12] block: Introduce new bio_split())
+Date: Wed, 15 Aug 2012 16:07:15 -0700
+Message-ID: <20120815230715.GD2758@google.com>
+References: <1343160689-12378-1-git-send-email-koverstreet@google.com>
+ <1343160689-12378-9-git-send-email-koverstreet@google.com>
+ <500FDEBC.9050607@panasas.com>
+ <20120725232611.GD8673@moria.home.lan>
+ <Pine.LNX.4.64.1207262005450.28322@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Kevin_OKelley@dell.com, Jim_Ramsay@dell.com, Narendran_Ganapathy@dell.com
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1207262005450.28322@file.rdu.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Boaz Harrosh <bharrosh@panasas.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tj@kernel.org, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-This is simplified dm-switch target, originally written by Jim Ramsay.
+> Both md and dm use __GFP_WAIT allocations from mempools in 
+> generic_make_request.
+> 
+> I think you found an interesting bug here. Suppose that we have three 
+> stacked devices: d1 depends on d2 and d2 depends on d3.
+> 
+> Now, a bio b1 comes to d1. d1 splits it to two bios: b2.1 and b2.2 and 
+> sends them to the device d2 - these bios end up in current->bio_list. The 
+> driver for d2 receives bio b2.1 and sends bio b3.1 to d3. Now, 
+> current->bio_list contains bios b2.2, b3.1. Now, bio b2.2 is popped off 
+> the bio list and the driver for d2 is called with b2.2 - suppose that for 
+> some reason mempool in d2 is exhausted and the driver needs to wait until 
+> b2.1 finishes. b2.1 never finishes, because b2.1 depends on b3.1 and b3.1 
+> is still in current->bio_list. So it deadlocks.
+> 
+> Turning off __GFP_WAIT fixes nothing - it just turns one bug (a possible 
+> deadlock) into another bug (a possible bio failure with -ENOMEM).
+> 
+> Increasing mempool sizes doesn't fix it either, the bio would just have to 
+> be split to more pieces in the above example to make it deadlock.
+> 
+> I think the above possible deadlock scenario could be fixed by reversing 
+> current->bio_list processing - i.e. when some device's make_request_fn 
+> adds some bios to current->bio_list, these bios are processed before other 
+> bios that were on the list before. This way, bio list would contain "b3.1, 
+> b2.2" instead of "b2.2, b3.1" in the above example and the deadlock would 
+> not happen.
 
-Changes from the original:
+Your patch isn't sufficient in the case where a bio may be split
+multiple times (I'm not sure if it's sufficient in the case where bios
+are only split once; trying to work it all out makes my head hurt).
 
-Removed netlink interface and added dm message interface to change
-mapping table because the message interface is noticeably simpler.
-The table is changed by sending dm message:
-"dmsetup message <device-name> 0 set-table <commands...>"
-The mesage can have multiple commands, each command has format
-"<page>:<device index>" or "<start page>-<end page>:<device index>"
-The page or pages in the specified range are remapped to the device with
-the given intex.
-For example "dmsetup message switch 0 set-table 0-15:0 16-31:1 32-33:2"
-sets pages 0-15 to device 0, 16-31 to device 1, 32-33 to device 2.
+You don't need multiple stacked drivers to see this; just the case where
+a single driver is running that splits multiple times is sufficient, if
+you have enough threads submitting at the same time.
 
-The dm-switch.h file was removed (if the netlink was removed, there is
-no need for this file).
+Bcache works around this with the trick I mentioned previously, where it
+masks out _GFP_WAIT if current->bio_list != NULL, and punts to workqueue
+if the allocation fails.
 
-Page table is allocated using vmalloc instead of kmalloc. kmalloc
-allocates physically contiguous memory and it can fail if memory is
-fragmented. vmalloc allocates discontiguous memory and maps it to a
-contiguous virtual address range using MMU.
+This works but it'd have to be done in each stacking driver... it's not
+a generic solution, and it's a pain in the ass.
 
-RCU and page table reallocation was removed. The page table is allocated
-in the constructor and stays the same for the lifetime of the device.
-The page table can be read and modified at the same time, so there is no
-need to use RCU.
+I came up with another idea the other day. Conceptually, it inverts my
+previous workaround - the punting to workqueue is done in the allocation
+code when necessary, for the bios that would be blocked.
 
-The page table is initialized with a repetitive pattern that uses all
-the devices.
+It's lightly tested, gonna rig up some kind of fault injection and test
+it more thoroughly later.
 
-One page table entry has 64-bit size on 64-bit processors and 32-bit
-size on 32-bit processors (in the original it was always 32-bit). Making
-it 64-bit makes it consume slightly less space in some cases.
+commit d61bbb074cc8f2e089eb57e2bee8e84500f390a8
+Author: Kent Overstreet <koverstreet@google.com>
+Date:   Mon Aug 13 18:11:01 2012 -0700
 
-Removed dm status:
-- ios_remapped/ios_unmapped counting was removed because all the IOs are
-  mapped when statically allocated page table is used.
-- Userspace-supplied numbers that are reported in the status were
-  removed because it is not clear what were they used for.
-- The device list with 'A' statuses was removed (it could be added back
-  if we implement device error tracking); there was just mock code that
-  returned 'A' for all devices.
+    block: Avoid deadlocks with bio allocation by stacking drivers
+    
+    Previously, if we ever try to allocate more than once from the same bio
+    set while running under generic_make_request(), we risk deadlock.
+    
+    This would happen if e.g. a bio ever needed to be split more than once,
+    and it's difficult to handle correctly in the drivers - so in practice
+    it's not.
+    
+    This patch fixes this issue by allocating a rescuer workqueue for each
+    bio_set, and punting queued bios to said rescuer when necessary:
 
-Device limit check was simplified to use i_size_read and fixed to take
-account of 'start' value as well.
-
-do_div was replaced with sector_div - if we have 32-bit sectors, we
-don't need to do slow 64-bit math.
-
-The divisions were optimized if the divisor is a power of two.
-
-Set dm_set_target_max_io_len. The original code didn't set it, so it
-could issue IOs that span page boundaries.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/Kconfig     |   11 +
- drivers/md/Makefile    |    1 
- drivers/md/dm-switch.c |  419 +++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 431 insertions(+)
-
-Index: linux-3.5.1-fast/drivers/md/Kconfig
-===================================================================
---- linux-3.5.1-fast.orig/drivers/md/Kconfig	2012-08-16 00:29:55.000000000 +0200
-+++ linux-3.5.1-fast/drivers/md/Kconfig	2012-08-16 00:30:14.000000000 +0200
-@@ -417,4 +417,15 @@ config DM_VERITY2
+diff --git a/fs/bio.c b/fs/bio.c
+index bc4265a..7b4f655 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -281,6 +281,23 @@ void bio_reset(struct bio *bio)
+ }
+ EXPORT_SYMBOL(bio_reset);
  
- source "drivers/md/enhanceio/Kconfig"
- 
-+config DM_SWITCH
-+	tristate "Switch target support (EXPERIMENTAL)"
-+	depends on BLK_DEV_DM && EXPERIMENTAL
-+	---help---
-+	  Help text needs writing
-+
-+	  To compile this code as a module, choose M here: the module will
-+	  be called dm-switch.
-+
-+	  If unsure, say N.
-+
- endif # MD
-Index: linux-3.5.1-fast/drivers/md/Makefile
-===================================================================
---- linux-3.5.1-fast.orig/drivers/md/Makefile	2012-08-16 00:29:55.000000000 +0200
-+++ linux-3.5.1-fast/drivers/md/Makefile	2012-08-16 00:30:14.000000000 +0200
-@@ -48,6 +48,7 @@ obj-$(CONFIG_DM_THIN_PROVISIONING)	+= dm
- obj-$(CONFIG_DM_VERITY)		+= dm-verity.o
- obj-$(CONFIG_DM_ZEROED)		+= dm-zeroed.o
- obj-$(CONFIG_DM_ENHANCEIO)	+= enhanceio/
-+obj-$(CONFIG_DM_SWITCH)		+= dm-switch.o
- 
- ifeq ($(CONFIG_DM_UEVENT),y)
- dm-mod-objs			+= dm-uevent.o
-Index: linux-3.5.1-fast/drivers/md/dm-switch.c
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-3.5.1-fast/drivers/md/dm-switch.c	2012-08-16 00:35:03.000000000 +0200
-@@ -0,0 +1,419 @@
-+/*
-+ * Copyright (c) 2010-2011 by Dell, Inc.  All rights reserved.
-+ *
-+ * This file is released under the GPL.
-+ *
-+ * Description:
-+ *
-+ *     file:    dm-switch.c
-+ *     authors: Kevin_OKelley@dell.com
-+ *              Jim_Ramsay@dell.com
-+ *              Narendran_Ganapathy@dell.com
-+ *		mpatocka@redhat.com
-+ *
-+ * This file implements a "switch" target which efficiently implements a
-+ * mapping of IOs to underlying block devices in scenarios where there are:
-+ *   (1) a large number of address regions
-+ *   (2) a fixed size equal across all address regions
-+ *   (3) no pattern than allows for a compact description with something like
-+ *       the dm-stripe target.
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/device-mapper.h>
-+
-+#define DM_MSG_PREFIX "switch"
-+
-+/*
-+ * Switch device context block: A new one is created for each dm device.
-+ * Contains an array of devices from which we have taken references.
-+ */
-+struct switch_dev {
-+	struct dm_dev *dmdev;
-+	sector_t start;
-+};
-+
-+typedef unsigned long pt_entry;
-+
-+/* Switch context header */
-+struct switch_ctx {
-+	unsigned dev_count;		/* Number of devices */
-+	unsigned page_size;		/* Page size in 512B sectors */
-+	unsigned long n_pages;		/* Number of pages */
-+	signed char page_size_bits;	/* log2 of page_size or -1 */
-+
-+	unsigned char pte_size;		/* Page table entry size in bits */
-+	unsigned char pte_fields;	/* Number of entries per pt_entry */
-+	signed char pte_fields_bits;	/* log2 of pte_fields or -1 */
-+	pt_entry *page_table;		/* Page table */
-+
-+	/* Array of dm devices to switch between */
-+	struct switch_dev dev_list[0];
-+};
-+
-+static inline void switch_get_position(struct switch_ctx *pctx,
-+				       unsigned long page,
-+				       unsigned long *index,
-+				       unsigned *bit)
-+
++static void bio_alloc_rescue(struct work_struct *work)
 +{
-+	if (pctx->pte_fields_bits >= 0) {
-+		*index = page >> pctx->pte_fields_bits;
-+		*bit = page & (pctx->pte_fields - 1);
-+	} else {
-+		*index = page / pctx->pte_fields;
-+		*bit = page % pctx->pte_fields;
-+	}
-+	*bit *= pctx->pte_size;
++	struct bio_set *bs = container_of(work, struct bio_set, rescue_work);
++	struct bio *bio;
 +
++	while (1) {
++		spin_lock(&bs->rescue_lock);
++		bio = bio_list_pop(&bs->rescue_list);
++		spin_unlock(&bs->rescue_lock);
++
++		if (!bio)
++			break;
++
++		generic_make_request(bio);
++	}
 +}
 +
-+static void switch_page_table_write(struct switch_ctx *pctx, unsigned long page,
-+				    unsigned value)
-+{
-+	unsigned long index;
-+	unsigned bit;
-+	pt_entry pte;
+ /**
+  * bio_alloc_bioset - allocate a bio for I/O
+  * @gfp_mask:   the GFP_ mask given to the slab allocator
+@@ -294,6 +311,7 @@ EXPORT_SYMBOL(bio_reset);
+  **/
+ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ {
++	gfp_t saved_gfp = gfp_mask;
+ 	unsigned front_pad;
+ 	unsigned inline_vecs;
+ 	unsigned long idx = BIO_POOL_NONE;
+@@ -308,16 +326,39 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ 		p = kmalloc(sizeof(struct bio) +
+ 			    nr_iovecs * sizeof(struct bio_vec),
+ 			    gfp_mask);
 +
-+	switch_get_position(pctx, page, &index, &bit);
+ 		front_pad = 0;
+ 		inline_vecs = nr_iovecs;
+ 	} else {
+-		p = mempool_alloc(bs->bio_pool, gfp_mask);
++		/*
++		 * If we're running under generic_make_request()
++		 * (current->bio_list != NULL), we risk deadlock if we sleep on
++		 * allocation and there's already bios on current->bio_list that
++		 * were allocated from the same bio_set; they won't be submitted
++		 * (and thus freed) as long as we're blocked here.
++		 *
++		 * To deal with this, we first try the allocation without using
++		 * the mempool; if that fails, we punt all the bios on
++		 * current->bio_list to a different thread and then retry the
++		 * allocation with the original gfp mask.
++		 */
 +
-+	pte = pctx->page_table[index];
-+	pte &= ~((((pt_entry)1 << pctx->pte_size) - 1) << bit);
-+	pte |= (pt_entry)value << bit;
-+	pctx->page_table[index] = pte;
-+}
++		if (current->bio_list &&
++		    !bio_list_empty(current->bio_list) &&
++		    (gfp_mask & __GFP_WAIT))
++			gfp_mask &= GFP_ATOMIC;
++retry:
++		if (gfp_mask & __GFP_WAIT)
++			p = mempool_alloc(bs->bio_pool, gfp_mask);
++		else
++			p = kmem_cache_alloc(bs->bio_slab, gfp_mask);
 +
+ 		front_pad = bs->front_pad;
+ 		inline_vecs = BIO_INLINE_VECS;
+ 	}
+ 
+ 	if (unlikely(!p))
+-		return NULL;
++		goto err;
+ 
+ 	bio = p + front_pad;
+ 	bio_init(bio);
+@@ -338,6 +379,19 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ 
+ err_free:
+ 	mempool_free(p, bs->bio_pool);
++err:
++	if (gfp_mask != saved_gfp) {
++		gfp_mask = saved_gfp;
++
++		spin_lock(&bs->rescue_lock);
++		bio_list_merge(&bs->rescue_list, current->bio_list);
++		bio_list_init(current->bio_list);
++		spin_unlock(&bs->rescue_lock);
++
++		queue_work(bs->rescue_workqueue, &bs->rescue_work);
++		goto retry;
++	}
++
+ 	return NULL;
+ }
+ EXPORT_SYMBOL(bio_alloc_bioset);
+@@ -1546,6 +1600,9 @@ static void biovec_free_pools(struct bio_set *bs)
+ 
+ void bioset_free(struct bio_set *bs)
+ {
++	if (bs->rescue_workqueue)
++		destroy_workqueue(bs->rescue_workqueue);
++
+ 	if (bs->bio_pool)
+ 		mempool_destroy(bs->bio_pool);
+ 
+@@ -1581,6 +1638,10 @@ struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
+ 
+ 	bs->front_pad = front_pad;
+ 
++	spin_lock_init(&bs->rescue_lock);
++	bio_list_init(&bs->rescue_list);
++	INIT_WORK(&bs->rescue_work, bio_alloc_rescue);
++
+ 	bs->bio_slab = bio_find_or_create_slab(front_pad + back_pad);
+ 	if (!bs->bio_slab) {
+ 		kfree(bs);
+@@ -1591,9 +1652,14 @@ struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
+ 	if (!bs->bio_pool)
+ 		goto bad;
+ 
+-	if (!biovec_create_pools(bs, pool_size))
+-		return bs;
++	if (biovec_create_pools(bs, pool_size))
++		goto bad;
++
++	bs->rescue_workqueue = alloc_workqueue("bioset", WQ_MEM_RECLAIM, 0);
++	if (!bs->rescue_workqueue)
++		goto bad;
+ 
++	return bs;
+ bad:
+ 	bioset_free(bs);
+ 	return NULL;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index b22c22b..ba5b52e 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -290,39 +290,6 @@ static inline int bio_associate_current(struct bio *bio) { return -ENOENT; }
+ static inline void bio_disassociate_task(struct bio *bio) { }
+ #endif	/* CONFIG_BLK_CGROUP */
+ 
+-/*
+- * bio_set is used to allow other portions of the IO system to
+- * allocate their own private memory pools for bio and iovec structures.
+- * These memory pools in turn all allocate from the bio_slab
+- * and the bvec_slabs[].
+- */
+-#define BIO_POOL_SIZE 2
+-#define BIOVEC_NR_POOLS 6
+-#define BIOVEC_MAX_IDX	(BIOVEC_NR_POOLS - 1)
+-
+-struct bio_set {
+-	struct kmem_cache *bio_slab;
+-	unsigned int front_pad;
+-
+-	mempool_t *bio_pool;
+-#if defined(CONFIG_BLK_DEV_INTEGRITY)
+-	mempool_t *bio_integrity_pool;
+-#endif
+-	mempool_t *bvec_pool;
+-};
+-
+-struct biovec_slab {
+-	int nr_vecs;
+-	char *name;
+-	struct kmem_cache *slab;
+-};
+-
+-/*
+- * a small number of entries is fine, not going to be performance critical.
+- * basically we just need to survive
+- */
+-#define BIO_SPLIT_ENTRIES 2
+-
+ #ifdef CONFIG_HIGHMEM
+ /*
+  * remember never ever reenable interrupts between a bvec_kmap_irq and
+@@ -497,6 +464,48 @@ static inline struct bio *bio_list_get(struct bio_list *bl)
+ 	return bio;
+ }
+ 
 +/*
-+ * Constructor: Called each time a dmsetup command creates a dm device.  The
-+ * target parameter will already have the table, type, begin and len fields
-+ * filled in.  Arguments are in pairs: <dev_path> <offset>.  Therefore, we get
-+ * multiple constructor calls, but we will need to build a list of switch_ctx
-+ * blocks so that the page table information gets matched to the correct
-+ * device.
++ * bio_set is used to allow other portions of the IO system to
++ * allocate their own private memory pools for bio and iovec structures.
++ * These memory pools in turn all allocate from the bio_slab
++ * and the bvec_slabs[].
 + */
-+static int switch_ctr(struct dm_target *ti, unsigned argc, char **argv)
-+{
-+	unsigned a;
-+	int n;
-+	int r;
-+	unsigned dev_count;
-+	struct switch_ctx *pctx;
-+	sector_t dev_size;
-+	unsigned long e;
++#define BIO_POOL_SIZE 2
++#define BIOVEC_NR_POOLS 6
++#define BIOVEC_MAX_IDX	(BIOVEC_NR_POOLS - 1)
 +
-+	if (argc < 4) {
-+		ti->error = "Insufficient arguments";
-+		r = -EINVAL;
-+		goto error;
-+	}
-+	if (kstrtouint(argv[0], 10, &dev_count) ||
-+	    !dev_count ||
-+	    dev_count > (KMALLOC_MAX_SIZE - sizeof(struct switch_ctx)) / sizeof(struct switch_dev)) {
-+		ti->error = "Invalid device count";
-+		r = -EINVAL;
-+		goto error;
-+	}
-+	if (dev_count != (argc - 2) / 2) {
-+		ti->error = "Invalid argument count";
-+		r = -EINVAL;
-+		goto error;
-+	}
-+	pctx = kmalloc(sizeof(struct switch_ctx) + (dev_count * sizeof(struct switch_dev)),
-+		       GFP_KERNEL);
-+	if (!pctx) {
-+		ti->error = "Cannot allocate redirect context";
-+		r = -ENOMEM;
-+		goto error;
-+	}
-+	pctx->dev_count = dev_count;
-+	if (kstrtouint(argv[1], 10, &pctx->page_size) ||
-+	    !pctx->page_size) {
-+		ti->error = "Invalid page size";
-+		r = -EINVAL;
-+		goto error_kfree;
-+	}
++struct bio_set {
++	struct kmem_cache *bio_slab;
++	unsigned int front_pad;
 +
-+	if (!(pctx->page_size & (pctx->page_size - 1)))
-+		pctx->page_size_bits = __ffs(pctx->page_size);
-+	else
-+		pctx->page_size_bits = -1;
-+
-+	pctx->pte_size = 1;
-+	while (pctx->pte_size < sizeof(pt_entry) * 8 &&
-+	       (pt_entry)1 << pctx->pte_size < pctx->dev_count)
-+		pctx->pte_size++;
-+
-+	pctx->pte_fields = (sizeof(pt_entry) * 8) / pctx->pte_size;
-+	if (!(pctx->pte_fields & (pctx->pte_fields - 1)))
-+		pctx->pte_fields_bits = __ffs(pctx->pte_fields);
-+	else
-+		pctx->pte_fields_bits = -1;
-+
-+	dev_size = ti->len;
-+	if (sector_div(dev_size, pctx->page_size))
-+		dev_size++;
-+
-+	pctx->n_pages = dev_size;
-+	if (pctx->n_pages != dev_size || pctx->n_pages >= ULONG_MAX) {
-+		ti->error = "Too long page table";
-+		r = -EINVAL;
-+		goto error_kfree;
-+	}
-+
-+	if (sector_div(dev_size, pctx->pte_fields))
-+		dev_size++;
-+
-+	if (dev_size > ULONG_MAX / sizeof(pt_entry)) {
-+		ti->error = "Too long page table";
-+		r = -EINVAL;
-+		goto error_kfree;
-+	}
-+
-+	r = dm_set_target_max_io_len(ti, pctx->page_size);
-+	if (r)
-+		goto error_kfree;
-+
-+	pctx->page_table = vmalloc(dev_size * sizeof(pt_entry));
-+	if (!pctx->page_table) {
-+		ti->error = "Cannot allocate page table";
-+		r = -ENOMEM;
-+		goto error_kfree;
-+	}
-+
-+	a = 0;
-+	for (e = 0; e < pctx->n_pages; e++) {
-+		switch_page_table_write(pctx, e, a);
-+		a++;
-+		if (a >= pctx->dev_count)
-+			a = 0;
-+	}
++	mempool_t *bio_pool;
++#if defined(CONFIG_BLK_DEV_INTEGRITY)
++	mempool_t *bio_integrity_pool;
++#endif
++	mempool_t *bvec_pool;
 +
 +	/*
-+	 * Check each device beneath the target to ensure that the limits are
-+	 * consistent.
++	 * Deadlock avoidance for stacking block drivers: see comments in
++	 * bio_alloc_bioset() for details
 +	 */
-+	for (n = 0, a = 2; n < pctx->dev_count; n++, a += 2) {
-+		struct dm_dev *dm;
-+		sector_t dev_size;
-+		unsigned long long start;
-+
-+		if (kstrtoull(argv[a + 1], 10, &start) ||
-+		    start != (sector_t)start) {
-+			ti->error = "Invalid device starting offset";
-+			r = -EINVAL;
-+			n--;
-+			goto error_release_n;
-+		}
-+		r = dm_get_device
-+		    (ti, argv[a], dm_table_get_mode(ti->table), &dm);
-+		if (r) {
-+			ti->error = "Device lookup failed";
-+			n--;
-+			goto error_release_n;
-+		}
-+		pctx->dev_list[n].dmdev = dm;
-+		pctx->dev_list[n].start = start;
-+
-+		dev_size = i_size_read(dm->bdev->bd_inode) >> SECTOR_SHIFT;
-+
-+		if (ti->len > start + dev_size) {
-+			ti->error = "Device is too small";
-+			r = -EINVAL;
-+			goto error_release_n;
-+		}
-+	}
-+
-+	ti->private = pctx;
-+
-+	return 0;
-+
-+error_release_n:		/* De-reference all devices  */
-+	for (; n >= 0; n--)
-+		dm_put_device(ti, pctx->dev_list[n].dmdev);
-+
-+	vfree(pctx->page_table);
-+error_kfree:
-+	kfree(pctx);
-+
-+error:
-+	return r;
-+}
-+
-+/*
-+ * Destructor: Don't free the dm_target, just the ti->private data (if any).
-+ */
-+static void switch_dtr(struct dm_target *ti)
-+{
-+	int n;
-+	struct switch_ctx *pctx = ti->private;
-+
-+	for (n = 0; n < pctx->dev_count; n++)
-+		dm_put_device(ti, pctx->dev_list[n].dmdev);
-+
-+	vfree(pctx->page_table);
-+	kfree(pctx);
-+}
-+
-+static int switch_map(struct dm_target *ti, struct bio *bio,
-+		      union map_info *map_context)
-+{
-+	struct switch_ctx *pctx = ti->private;
-+
-+	sector_t offset = bio->bi_sector - ti->begin;
-+	sector_t p;
-+	unsigned long index;
-+	unsigned bit, idev;
-+
-+	p = offset;
-+	if (pctx->page_size_bits >= 0)
-+		p >>= pctx->page_size_bits;
-+	else
-+		sector_div(p, pctx->page_size);
-+
-+	switch_get_position(pctx, p, &index, &bit);
-+
-+	idev = (ACCESS_ONCE(pctx->page_table[index]) >> bit) & ((1 << pctx->pte_size) - 1);
-+	/* This can only happen if the processor uses non-atomic stores. */
-+	if (unlikely(idev >= pctx->dev_count))
-+		idev = 0;
-+
-+	bio->bi_bdev = pctx->dev_list[idev].dmdev->bdev;
-+	bio->bi_sector = pctx->dev_list[idev].start + offset;
-+
-+	return DM_MAPIO_REMAPPED;
-+}
-+
-+static int switch_message(struct dm_target *ti, unsigned argc, char **argv)
-+{
-+	static DEFINE_MUTEX(message_mutex);
-+
-+	struct switch_ctx *pctx = ti->private;
-+	int r;
-+
-+	mutex_lock(&message_mutex);
-+
-+	if (!argc) {
-+		goto invalid_message;
-+	} else if (!strcasecmp(argv[0], "set-table")) {
-+		unsigned i;
-+		for (i = 1; i < argc; i++) {
-+			unsigned long long from, to;
-+			unsigned device;
-+			char dummy;
-+			if (sscanf(argv[i], "%llu-%llu:%u%c", &from, &to, &device, &dummy) == 3)
-+				goto do_set_table;
-+			if (sscanf(argv[i], "%llu:%u%c", &from, &device, &dummy) == 2) {
-+				to = from;
-+				goto do_set_table;
-+			}
-+			DMWARN("invalid set-table argument");
-+			r = -EINVAL;
-+			goto ret;
-+do_set_table:
-+			if (from > to || to >= pctx->n_pages) {
-+				DMWARN("invalid set-table page");
-+				r = -EINVAL;
-+				goto ret;
-+			}
-+			if (device >= pctx->dev_count) {
-+				DMWARN("invalid set-table device");
-+				r = -EINVAL;
-+				goto ret;
-+			}
-+			for (; from <= to; from++)
-+				switch_page_table_write(pctx, from, device);
-+		}
-+		r = 0;
-+	} else {
-+invalid_message:
-+		DMWARN("unrecognised message received.");
-+		r = -EINVAL;
-+	}
-+ret:
-+	mutex_unlock(&message_mutex);
-+	return r;
-+}
-+
-+static int switch_status(struct dm_target *ti, status_type_t type,
-+			 unsigned status_flags, char *result, unsigned maxlen)
-+{
-+	struct switch_ctx *pctx = ti->private;
-+	unsigned sz = 0;
-+	int n;
-+
-+	result[0] = '\0';
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		result[0] = 0;
-+		break;
-+
-+	case STATUSTYPE_TABLE:
-+		DMEMIT("%u %u", pctx->dev_count, pctx->page_size);
-+		for (n = 0; n < pctx->dev_count; n++) {
-+			DMEMIT(" %s %llu", pctx->dev_list[n].dmdev->name,
-+			       (unsigned long long)pctx->dev_list[n].start);
-+		}
-+		break;
-+
-+	default:
-+		return 0;
-+	}
-+	return 0;
-+}
-+
-+/*
-+ * Switch ioctl:
-+ *
-+ * Passthrough all ioctls to the first path.
-+ */
-+static int switch_ioctl(struct dm_target *ti, unsigned cmd,
-+			unsigned long arg)
-+{
-+	struct switch_ctx *pctx = ti->private;
-+	struct block_device *bdev;
-+	fmode_t mode;
-+
-+	bdev = pctx->dev_list[0].dmdev->bdev;
-+	mode = pctx->dev_list[0].dmdev->mode;
-+
-+	return __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-+}
-+
-+static struct target_type switch_target = {
-+	.name = "switch",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr = switch_ctr,
-+	.dtr = switch_dtr,
-+	.map = switch_map,
-+	.message = switch_message,
-+	.status = switch_status,
-+	.ioctl = switch_ioctl,
++	spinlock_t		rescue_lock;
++	struct bio_list		rescue_list;
++	struct work_struct	rescue_work;
++	struct workqueue_struct	*rescue_workqueue;
 +};
 +
-+int __init dm_switch_init(void)
-+{
-+	int r;
++struct biovec_slab {
++	int nr_vecs;
++	char *name;
++	struct kmem_cache *slab;
++};
 +
-+	r = dm_register_target(&switch_target);
-+	if (r) {
-+		DMERR("dm_register_target() failed %d", r);
-+		return r;
-+	}
++/*
++ * a small number of entries is fine, not going to be performance critical.
++ * basically we just need to survive
++ */
++#define BIO_SPLIT_ENTRIES 2
 +
-+	return 0;
-+}
-+
-+void dm_switch_exit(void)
-+{
-+	dm_unregister_target(&switch_target);
-+}
-+
-+module_init(dm_switch_init);
-+module_exit(dm_switch_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " fixed-size address-region-mapping throughput-oriented path selector");
-+MODULE_AUTHOR("Kevin D. O'Kelley <Kevin_OKelley@dell.com>");
-+MODULE_AUTHOR("Mikulas Patocka <mpatocka@redhat.com>");
-+MODULE_LICENSE("GPL");
+ #if defined(CONFIG_BLK_DEV_INTEGRITY)
+ 
+ #define bip_vec_idx(bip, idx)	(&(bip->bip_vec[(idx)]))
