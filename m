@@ -1,35 +1,50 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 02/12] dm: Use bioset's front_pad for
- dm_rq_clone_bio_info
-Date: Wed, 15 Aug 2012 13:46:18 -0700
-Message-ID: <20120815204618.GB2758@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v5 05/12] block: Kill bi_destructor
+Date: Wed, 15 Aug 2012 15:19:36 -0700
+Message-ID: <20120815221936.GC2758@google.com>
 References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
- <1344290921-25154-3-git-send-email-koverstreet@google.com>
- <5029E320.3050603@ce.jp.nec.com>
+ <1344290921-25154-6-git-send-email-koverstreet@google.com>
+ <20120808222223.GD6983@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120809002154.GE7262@moria.home.lan>
+ <20120809060517.GB2845@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120809061214.GA9128@dhcp-172-18-216-138.mtv.corp.google.com>
+ <CAOS58YOHZmNWezg0uDhDeKP1dAt8fmmcLjmzKGShrw6PCpCFpg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5029E320.3050603-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jun'ichi Nomura <j-nomura-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org
+In-Reply-To: <CAOS58YOHZmNWezg0uDhDeKP1dAt8fmmcLjmzKGShrw6PCpCFpg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, agk@redhat.com, neilb@suse.de, drbd-dev@lists.linbit.com, vgoyal@redhat.com, mpatocka@redhat.com, sage@newdream.net, yehuda@hq.newdream.net
 List-Id: dm-devel.ids
 
-On Tue, Aug 14, 2012 at 02:33:20PM +0900, Jun'ichi Nomura wrote:
-> On 08/07/12 07:08, Kent Overstreet wrote:
-> >  struct dm_rq_clone_bio_info {
-> >  	struct bio *orig;
-> >  	struct dm_rq_target_io *tio;
-> > +	struct bio clone;
-> >  };
-> ...
-> > -	pools->bs = bioset_create(pool_size, 0);
-> > +	pools->bs = bioset_create(pool_size,
-> > +				  offsetof(struct dm_rq_clone_bio_info, orig));
-> >  	if (!pools->bs)
-> >  		goto free_tio_pool_and_out;
+On Wed, Aug 08, 2012 at 11:34:09PM -0700, Tejun Heo wrote:
+> Hello,
 > 
-> Shouldn't this be offsetof(struct dm_rq_clone_bio_info, clone)?
+> On Wed, Aug 8, 2012 at 11:12 PM, Kent Overstreet <koverstreet@google.com> wrote:
+> > But if it's a pointer to heap allocated memory, but the bio was embedded
+> > in another struct? I've seen a fair number of instances of that (md, off
+> > the top of my head).
+> >
+> > If you're sure that in a normal config the slab allocator is going to
+> > complain right away and not corrupt itself, fine. But I've been bitten
+> > way too hard by bugs that could've been caught right away by a simple
+> > assert and instead I had to spend hours backtracking, and the block
+> > layer is _rife_ with that kind of thing.
+> 
+> Let's let slab debug code deal with that.  I really don't see much
+> benefit in doing this.  The said kind of bugs aren't particularly
+> difficult to track down.
 
-Ouch! Yes, it definitely should be. Good catch, and thanks.
+The only difference would be changing
+#define BIO_KMALLOC_POOL ((void *) ~0)
+
+to
+#define BIO_KMALLOC_POOL NULL
+
+We want a define for this - bio_alloc_bioset(GFP_KERNEL, 1, NULL)
+doesn't make any sense. I just don't see the argument for changing an
+arbitrary constant... If it's just the ~0 pointer you don't like, I
+originally used a real statically allocated struct bio_set as a sentinel
+value.
