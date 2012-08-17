@@ -1,16 +1,15 @@
-From: <Jim_Ramsay@DELL.com>
-Subject: Re: [PATCH] reworked dm-switch target
-Date: Fri, 17 Aug 2012 14:18:15 +0000
-Message-ID: <C3B343EE19BD2940B6AEC40C9BE99426094C0C@AUSX10MPS302.AMER.DELL.COM>
-References: <Pine.LNX.4.64.1208151832280.8587@file.rdu.redhat.com>,
-	<20120816070955.GA32526@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH][RESEND] multipath: fix cciss device names
+Date: Fri, 17 Aug 2012 21:57:24 +0200
+Message-ID: <1345233444.12286.0.camel@lapoo.opensvc.com>
+References: <20120727205718.GL5299@ether.msp.redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120816070955.GA32526@agk-dp.fab.redhat.com>
-Content-Language: en-US
+In-Reply-To: <20120727205718.GL5299@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,54 +19,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, mpatocka@redhat.com, Kevin_OKelley@DELL.com, Jason_Shamberger@DELL.com, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair and Mikulas.  It's great to hear this feedback, thanks!
+On ven., 2012-07-27 at 15:57 -0500, Benjamin Marzinski wrote:
+> When we're looking for cciss devices in sysfs, they have a "!" not a "/".
+> If users run multipath on a cciss device using it's devnode name,
+> /dev/cciss/cXdY, multipath should convert that to the sysfs name.
+> 
+Applied.
 
-We had a few comments about the latest changes:
+Thanks.
 
-1) Uploading large page tables
-
-As Alasdair mentioned, a more compact method of sending the page table will be necessary.  Consider a volume with a page table that consists of 1572864 entries in total.  On our storage solution, the pages are spread out among different group members (i.e. underlying DM devices) and it is uncommon to see long stretches mapping to the same device.  The reason for this is similar to the principle of striping, attempting to maximize the chance of simultaneous accesses on multiple group members.  This means that there is little gain in having a message format that allows a contiguous range of pages to be set to the same value.
-
-Assuming a fairly well-distributed layout of 1572864 pages where 50% of the pages are different every other page, 20% are different every 2 pages, 10% every 5 pages, 10% every 10 pages, and 10% every 20 pages, this would leave us with a dmsetup message with argc=998768
-
-  dmsetup message switch 0 set-table 0-0:1 1-1:0 2-2:2 3-3:1 4-4:0 5-5:2 6-6:0 7-8:1 9-15:2 16-16:1 ... (plus almost 1000000 more arguments...)
-
-We agree that using 'dmestup message' is a lot cleaner than using a netlink socket in a number of ways, but the fact that it's argc/argv space-delimited shell-parsed data makes it more difficult to send large amounts of binary data like the bit-compressed page table.  We would be fine leaving in the proposed syntax for setting specific pages, as it may be useful to others and in small device testing scenarios, but an additional mechanism to upload larger chunks of binary data all at once would be important for our use of the device.
-
-Perhaps we can work with you on designing alternate non-netlink mechanism to achieve the same goal... A sysfs file per DM device for userland processes to do direct I/O with?  Base64-encoding larger chunks of the binary page tables and passing those values through 'dmsetup message'?
-
-2) vmalloc and TLB performance
-
-Having a (virtually) contiguous memory range certainly simplifies the allocation and lookup algorithms, but what about the concerns about vmalloc() that are summarized nicely in Documentation/flexible-arrays.txt:
-
-"Large contiguous memory allocations can be unreliable in the Linux kernel.
-Kernel programmers will sometimes respond to this problem by allocating
-pages with vmalloc().  This solution not ideal, though.  On 32-bit systems,
-memory from vmalloc() must be mapped into a relatively small address space;
-it's easy to run out.  On SMP systems, the page table changes required by
-vmalloc() allocations can require expensive cross-processor interrupts on
-all CPUs.  And, on all systems, use of space in the vmalloc() range
-increases pressure on the translation lookaside buffer (TLB), reducing the
-performance of the system."
-
-The page table lookup is in the I/O path, so performance is an important consideration.  Do you have any performance comparisons between our existing 2-level lookup of kmalloc'd memory versus a single vmalloc'd memory lookup?  Multiple devices of similarly large table size may be in use simultaneously, so this needs consideration as well.
-
-Also, in the example above with 1572864 page table entries, assuming 2 bits per entry requires a table of 384KB.  Would this be a problem for the vmalloc system, especially on 32-bit systems, if there are multiple devices of similarly large size in use at the same time?
-
-It can also be desirable to allow sparsely-populated page tables, when it is known that large chunks are not needed or deemed (by external logic) not important enough to consume kernel memory.  A 2-level kmalloc'd memory scheme can save memory in sparsely-allocated situations.
-
-3) Userland values and counters
-
-The "user saved" values are useful for debugging purposes.  For example, we had been using the 0th field for a timestamp so it's easy to manually validate when the last page table upload succeeded, and the other field for a count of the number of page table entries uploaded so far, but these could be used for other checkpointing or checksumming by userland processes.
-
-Also, while we had not yet implemented a mechanism to retrieve the per-chunk hit counters, this would be valuable to have for a userland process to decide which chunks of the page table are "hot" for a sparsely-populated situation.
-
-4) num_discard_requests, num_flush_requests, and iterate_devices
-
-I have a slightly updated version of  driver that implements these DM target features as well.  I was actually preparing to submit the changes to this list when this conversation began, and will be doing so shortly.
-
---
-Jim Ramsay
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  multipath/main.c |   12 ++++++++++++
+>  1 file changed, 12 insertions(+)
+> 
+> Index: multipath-tools-120518/multipath/main.c
+> ===================================================================
+> --- multipath-tools-120518.orig/multipath/main.c
+> +++ multipath-tools-120518/multipath/main.c
+> @@ -409,6 +409,16 @@ get_dev_type(char *dev) {
+>  		return DEV_DEVMAP;
+>  }
+>  
+> +static void
+> +convert_dev(char *dev)
+> +{
+> +	char *ptr = strstr(dev, "cciss/");
+> +	if (ptr) {
+> +		ptr += 5;
+> +		*ptr = '!';
+> +	}
+> +}
+> +
+>  int
+>  main (int argc, char *argv[])
+>  {
+> @@ -514,6 +524,8 @@ main (int argc, char *argv[])
+>  
+>  		strncpy(conf->dev, argv[optind], FILE_NAME_SIZE);
+>  		conf->dev_type = get_dev_type(conf->dev);
+> +		if (conf->dev_type == DEV_DEVNODE)
+> +			convert_dev(conf->dev);
+>  	}
+>  	conf->daemon = 0;
+>  
