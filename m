@@ -1,15 +1,16 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] multipath-tools: prevent unexpected swapping of
- underlying LUNs
-Date: Fri, 17 Aug 2012 17:40:39 +0900
-Message-ID: <502E0387.5070808@ce.jp.nec.com>
-References: <5007C043.4000006@ce.jp.nec.com>
+From: <Jim_Ramsay@DELL.com>
+Subject: Re: [PATCH] reworked dm-switch target
+Date: Fri, 17 Aug 2012 14:18:15 +0000
+Message-ID: <C3B343EE19BD2940B6AEC40C9BE99426094C0C@AUSX10MPS302.AMER.DELL.COM>
+References: <Pine.LNX.4.64.1208151832280.8587@file.rdu.redhat.com>,
+	<20120816070955.GA32526@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5007C043.4000006@ce.jp.nec.com>
+In-Reply-To: <20120816070955.GA32526@agk-dp.fab.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,61 +20,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@gmail.com
+To: agk@redhat.com, mpatocka@redhat.com, Kevin_OKelley@DELL.com, Jason_Shamberger@DELL.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-V2hlbiB5b3Ugd2FudCB0byByZW5hbWUgYSBtdWx0aXBhdGggZGV2aWNlCmJ1dCB0aGUgbmV3IGFs
-aWFzIGlzIGFscmVhZHkgdXNlZCBieSBvdGhlciBtdWx0aXBhdGggZGV2aWNlLAptdWx0aXBhdGgt
-dG9vbHMgbWlzdGFrZW5seSByZWxvYWQgYSB0YWJsZSBmb3IgdGhlIG9yaWdpbmFsIG11bHRpcGF0
-aCBkZXZpY2UKdG8gdGhlIG90aGVyIG11bHRpcGF0aCBkZXZpY2UuClRoYXQgY291bGQgbGVhZCB0
-byB2ZXJ5IGJhZCByZXN1bHQsIHN1Y2ggYXMgSS9PIGVycm9yIGFuZCBkYXRhIGNvcnJ1cHRpb24u
-CgpUaGlzIHBhdGNoIGNoZWNrcyBzdWNoIGEgY29uZGl0aW9uIGFuZCBnaXZlcyB1cCByZW5hbWlu
-ZyB3aXRoIGVycm9yIGxvZy4KCkZvciBleGFtcGxlLCBzdXBwb3NlIHlvdSBoYXZlIGZvbGxvd2lu
-ZyAnYmluZGluZ3MnIGZpbGU6CiAgIAogICAjIGNhdCAvZXRjL211bHRpcGF0aC9iaW5kaW5ncyAK
-ICAgbXBhdGhhIDIxMjE0MDA4NGFiY2QwMDAwCiAgIG1wYXRoYiAyMTIxNTAwODRhYmNkMDAwMAoK
-YW5kIGEgbG9naWNhbCB2b2x1bWUgJ1ZHL0xWMCcgb24gdG9wIG9mIG1wYXRoYiwKd2hpY2ggaXMg
-b24gdG9wIG9mIC9kZXYvc2RlKDg6NjQpIGFuZCAvZGV2L3Nkayg4OjE2MCk6CgogICAjIGRtc2V0
-dXAgbHMgLS10cmVlCiAgIG1wYXRoYSAoMjUzOjEpCiAgICDilJzilIAgKDg6MTQ0KQogICAg4pSU
-4pSAICg4OjQ4KQogICBWRy1MVjAgKDI1MzoyKQogICAg4pSU4pSAbXBhdGhiICgyNTM6MCkKICAg
-ICAgIOKUnOKUgCAoODoxNjApCiAgICAgICDilJTilIAgKDg6NjQpCgpUaGVuIHlvdSBkZWNpZGUg
-dG8gc3dhcCB0aGVpciBuYW1lcyBhbmQgY2hhbmdlIHRoZSAnYmluZGluZ3MnIGFzIGZvbGxvd3M6
-CgogICAjIGNhdCAvZXRjL211bHRpcGF0aC9iaW5kaW5ncyAKICAgbXBhdGhiIDIxMjE0MDA4NGFi
-Y2QwMDAwCiAgIG1wYXRoYSAyMTIxNTAwODRhYmNkMDAwMAoKeW91J2xsIGdldCB0aGlzIGFmdGVy
-ICdzZXJ2aWNlIG11bHRpcGF0aGQgcmVsb2FkJzoKCiAgICMgZG1zZXR1cCBscyAtLXRyZWUKICAg
-bXBhdGhhICgyNTM6MSkKICAgIOKUnOKUgCAoODoxNjApCiAgICDilJTilIAgKDg6NjQpCiAgIFZH
-LUxWMCAoMjUzOjIpCiAgICDilJTilIBtcGF0aGIgKDI1MzowKQogICAgICAg4pSc4pSAICg4OjE0
-NCkKICAgICAgIOKUlOKUgCAoODo0OCkKCk5vdyB5b3Ugc3VkZGVubHkgaGF2ZSAnVkcvTFYwJyBv
-biB0b3Agb2YgL2Rldi9zZGQoODo0OCkgYW5kIC9kZXYvc2RqKDg6MTQ0KSwKdGhhdCBpcyBvYnZp
-b3VzbHkgd3JvbmcgYW5kIHdpbGwgY29ycnVwdCBkYXRhIGlmIHlvdSB3cml0ZSB0byAnVkcvTFYw
-Jy4KCgpkaWZmIC11cnBOIG11bHRpcGF0aC10b29scy5vcmlnL2xpYm11bHRpcGF0aC9jb25maWd1
-cmUuYyBtdWx0aXBhdGgtdG9vbHMubmV3L2xpYm11bHRpcGF0aC9jb25maWd1cmUuYwotLS0gbXVs
-dGlwYXRoLXRvb2xzLm9yaWcvbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jCTIwMTItMDctMTkgMTU6
-MTc6NDAuMzY4NjIyMzU4ICswOTAwCisrKyBtdWx0aXBhdGgtdG9vbHMubmV3L2xpYm11bHRpcGF0
-aC9jb25maWd1cmUuYwkyMDEyLTA4LTE3IDE3OjExOjA3LjY5MTg5ODc3NCArMDkwMApAQCAtMTUw
-LDEyICsxNTAsMTIgQEAgc3RhdGljIHZvaWQKIHNlbGVjdF9hY3Rpb24gKHN0cnVjdCBtdWx0aXBh
-dGggKiBtcHAsIHZlY3RvciBjdXJtcCwgaW50IGZvcmNlX3JlbG9hZCkKIHsKIAlzdHJ1Y3QgbXVs
-dGlwYXRoICogY21wcDsKKwlzdHJ1Y3QgbXVsdGlwYXRoICogY21wcF9ieV9uYW1lOwogCi0JY21w
-cCA9IGZpbmRfbXBfYnlfYWxpYXMoY3VybXAsIG1wcC0+YWxpYXMpOwotCi0JaWYgKCFjbXBwKSB7
-Ci0JCWNtcHAgPSBmaW5kX21wX2J5X3d3aWQoY3VybXAsIG1wcC0+d3dpZCk7CisJY21wcCA9IGZp
-bmRfbXBfYnlfd3dpZChjdXJtcCwgbXBwLT53d2lkKTsKKwljbXBwX2J5X25hbWUgPSBmaW5kX21w
-X2J5X2FsaWFzKGN1cm1wLCBtcHAtPmFsaWFzKTsKIAorCWlmICghY21wcF9ieV9uYW1lKSB7CiAJ
-CWlmIChjbXBwKSB7CiAJCQljb25kbG9nKDIsICIlczogcmVuYW1lICVzIHRvICVzIiwgbXBwLT53
-d2lkLAogCQkJCWNtcHAtPmFsaWFzLCBtcHAtPmFsaWFzKTsKQEAgLTE2OSwxNyArMTY5LDI1IEBA
-IHNlbGVjdF9hY3Rpb24gKHN0cnVjdCBtdWx0aXBhdGggKiBtcHAsIHYKIAkJcmV0dXJuOwogCX0K
-IAotCWlmICghZmluZF9tcF9ieV93d2lkKGN1cm1wLCBtcHAtPnd3aWQpKSB7Ci0JCWNvbmRsb2co
-MiwgIiVzOiByZW1vdmUgKHd3aWQgY2hhbmdlZCkiLCBjbXBwLT5hbGlhcyk7CisJaWYgKCFjbXBw
-KSB7CisJCWNvbmRsb2coMiwgIiVzOiByZW1vdmUgKHd3aWQgY2hhbmdlZCkiLCBtcHAtPmFsaWFz
-KTsKIAkJZG1fZmx1c2hfbWFwKG1wcC0+YWxpYXMpOwotCQlzdHJuY3B5KGNtcHAtPnd3aWQsIG1w
-cC0+d3dpZCwgV1dJRF9TSVpFKTsKLQkJZHJvcF9tdWx0aXBhdGgoY3VybXAsIGNtcHAtPnd3aWQs
-IEtFRVBfUEFUSFMpOworCQlzdHJuY3B5KGNtcHBfYnlfbmFtZS0+d3dpZCwgbXBwLT53d2lkLCBX
-V0lEX1NJWkUpOworCQlkcm9wX211bHRpcGF0aChjdXJtcCwgY21wcF9ieV9uYW1lLT53d2lkLCBL
-RUVQX1BBVEhTKTsKIAkJbXBwLT5hY3Rpb24gPSBBQ1RfQ1JFQVRFOwogCQljb25kbG9nKDMsICIl
-czogc2V0IEFDVF9DUkVBVEUgKG1hcCB3d2lkIGNoYW5nZSkiLAogCQkJbXBwLT5hbGlhcyk7CiAJ
-CXJldHVybjsKIAl9CiAKKwlpZiAoY21wcCAhPSBjbXBwX2J5X25hbWUpIHsKKwkJY29uZGxvZygy
-LCAiJXM6IHVuYWJsZSB0byByZW5hbWUgJXMgdG8gJXMgKCVzIGlzIHVzZWQgYnkgJXMpIiwKKwkJ
-CW1wcC0+d3dpZCwgY21wcC0+YWxpYXMsIG1wcC0+YWxpYXMsCisJCQltcHAtPmFsaWFzLCBjbXBw
-X2J5X25hbWUtPnd3aWQpOworCQltcHAtPmFjdGlvbiA9IEFDVF9OT1RISU5HOworCQlyZXR1cm47
-CisJfQorCiAJaWYgKHBhdGhjb3VudChtcHAsIFBBVEhfVVApID09IDApIHsKIAkJbXBwLT5hY3Rp
-b24gPSBBQ1RfTk9USElORzsKIAkJY29uZGxvZygzLCAiJXM6IHNldCBBQ1RfTk9USElORyAobm8g
-dXNhYmxlIHBhdGgpIiwKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
-Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hi Alasdair and Mikulas.  It's great to hear this feedback, thanks!
+
+We had a few comments about the latest changes:
+
+1) Uploading large page tables
+
+As Alasdair mentioned, a more compact method of sending the page table will be necessary.  Consider a volume with a page table that consists of 1572864 entries in total.  On our storage solution, the pages are spread out among different group members (i.e. underlying DM devices) and it is uncommon to see long stretches mapping to the same device.  The reason for this is similar to the principle of striping, attempting to maximize the chance of simultaneous accesses on multiple group members.  This means that there is little gain in having a message format that allows a contiguous range of pages to be set to the same value.
+
+Assuming a fairly well-distributed layout of 1572864 pages where 50% of the pages are different every other page, 20% are different every 2 pages, 10% every 5 pages, 10% every 10 pages, and 10% every 20 pages, this would leave us with a dmsetup message with argc=998768
+
+  dmsetup message switch 0 set-table 0-0:1 1-1:0 2-2:2 3-3:1 4-4:0 5-5:2 6-6:0 7-8:1 9-15:2 16-16:1 ... (plus almost 1000000 more arguments...)
+
+We agree that using 'dmestup message' is a lot cleaner than using a netlink socket in a number of ways, but the fact that it's argc/argv space-delimited shell-parsed data makes it more difficult to send large amounts of binary data like the bit-compressed page table.  We would be fine leaving in the proposed syntax for setting specific pages, as it may be useful to others and in small device testing scenarios, but an additional mechanism to upload larger chunks of binary data all at once would be important for our use of the device.
+
+Perhaps we can work with you on designing alternate non-netlink mechanism to achieve the same goal... A sysfs file per DM device for userland processes to do direct I/O with?  Base64-encoding larger chunks of the binary page tables and passing those values through 'dmsetup message'?
+
+2) vmalloc and TLB performance
+
+Having a (virtually) contiguous memory range certainly simplifies the allocation and lookup algorithms, but what about the concerns about vmalloc() that are summarized nicely in Documentation/flexible-arrays.txt:
+
+"Large contiguous memory allocations can be unreliable in the Linux kernel.
+Kernel programmers will sometimes respond to this problem by allocating
+pages with vmalloc().  This solution not ideal, though.  On 32-bit systems,
+memory from vmalloc() must be mapped into a relatively small address space;
+it's easy to run out.  On SMP systems, the page table changes required by
+vmalloc() allocations can require expensive cross-processor interrupts on
+all CPUs.  And, on all systems, use of space in the vmalloc() range
+increases pressure on the translation lookaside buffer (TLB), reducing the
+performance of the system."
+
+The page table lookup is in the I/O path, so performance is an important consideration.  Do you have any performance comparisons between our existing 2-level lookup of kmalloc'd memory versus a single vmalloc'd memory lookup?  Multiple devices of similarly large table size may be in use simultaneously, so this needs consideration as well.
+
+Also, in the example above with 1572864 page table entries, assuming 2 bits per entry requires a table of 384KB.  Would this be a problem for the vmalloc system, especially on 32-bit systems, if there are multiple devices of similarly large size in use at the same time?
+
+It can also be desirable to allow sparsely-populated page tables, when it is known that large chunks are not needed or deemed (by external logic) not important enough to consume kernel memory.  A 2-level kmalloc'd memory scheme can save memory in sparsely-allocated situations.
+
+3) Userland values and counters
+
+The "user saved" values are useful for debugging purposes.  For example, we had been using the 0th field for a timestamp so it's easy to manually validate when the last page table upload succeeded, and the other field for a count of the number of page table entries uploaded so far, but these could be used for other checkpointing or checksumming by userland processes.
+
+Also, while we had not yet implemented a mechanism to retrieve the per-chunk hit counters, this would be valuable to have for a userland process to decide which chunks of the page table are "hot" for a sparsely-populated situation.
+
+4) num_discard_requests, num_flush_requests, and iterate_devices
+
+I have a slightly updated version of  driver that implements these DM target features as well.  I was actually preparing to submit the changes to this list when this conversation began, and will be doing so shortly.
+
+--
+Jim Ramsay
