@@ -1,801 +1,93 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH][RESEND] multipath: check if a device belongs
- to multipath
-Date: Fri, 17 Aug 2012 22:13:10 +0200
-Message-ID: <1345234390.12286.9.camel@lapoo.opensvc.com>
-References: <20120727205524.GJ5299@ether.msp.redhat.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120727205524.GJ5299@ether.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Sasha Levin <levinsasha928@gmail.com>
+Subject: [PATCH v2 00/16] generic hashtable implementation
+Date: Sun, 19 Aug 2012 02:52:13 +0200
+Message-ID: <1345337550-24304-1-git-send-email-levinsasha928@gmail.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: torvalds@linux-foundation.org
+Cc: tj@kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com, Sasha Levin <levinsasha928@gmail.com>
 List-Id: dm-devel.ids
 
-On ven., 2012-07-27 at 15:55 -0500, Benjamin Marzinski wrote:
-> This patch adds a new multipath option "-c", which checks if a device
-> belongs to multipath.  This can be done during the add uevent for the
-> device, before the multipath device has even been created.  This allows
-> udev to be able to handle multipath path devices differently.  To do
-> this multipath now keeps track of the wwids of all previously created
-> multipath devices in /etc/multipath/wwids. The file creating and
-> editting code from alias.[ch] has been split out into file.[ch]. When a
-> device is checked to see if it's a multipath path, it's wwid is
-> compared against the ones in the wwids file. Also, since the
-> uid_attribute may not have been added to the udev database entry for
-> the device if this is called in a udev rule, when using the "-c" option,
-> get_uid will now also check the process' envirionment variables for the
-> uid_attribute.
-> 
-I'd like other distribution maintainers' comments on this one, as it
-impacts the multipath-tools intregration with udev.
+There are quite a few places in the kernel which implement a hashtable
+in a very similar way. Instead of having implementations of a hashtable
+all over the kernel, we can re-use the code.
 
-Hannes ? Did you face the same issue with SuSE ? Did you solve it
-differently ?
+Since it looks like all the major issues we're addressed in the RFC phase
+and no major issues were raised with this patch set, I'd be happy to see
+this getting merged so that work could continue on different aspects of
+the hashtable. Some interesting directions include:
 
-Ben, does this approach supersedes/extends the "complicated blacklisting
-scheme" you proposed earlier ?
+ - Introducing a dynamic RCU hashtable such as the one Mathieu Desnoyers
+ wrote about out in the userspace RCU.
 
-Thanks.
+ - Replacing the rest of the the kernel structures which use the same basec
+ hashtable construct to use this new interface.
 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/Makefile    |    2 
->  libmultipath/alias.c     |  153 ---------------------------------------
->  libmultipath/alias.h     |    1 
->  libmultipath/configure.c |    3 
->  libmultipath/defaults.h  |    1 
->  libmultipath/discovery.c |    2 
->  libmultipath/file.c      |  180 +++++++++++++++++++++++++++++++++++++++++++++++
->  libmultipath/file.h      |   11 ++
->  libmultipath/wwids.c     |  139 ++++++++++++++++++++++++++++++++++++
->  libmultipath/wwids.h     |   18 ++++
->  multipath/main.c         |   37 ++++++++-
->  11 files changed, 389 insertions(+), 158 deletions(-)
-> 
-> Index: multipath-tools-120518/libmultipath/alias.c
-> ===================================================================
-> --- multipath-tools-120518.orig/libmultipath/alias.c
-> +++ multipath-tools-120518/libmultipath/alias.c
-> @@ -3,19 +3,16 @@
->   * Copyright (c) 2005 Benjamin Marzinski, Redhat
->   */
->  #include <stdlib.h>
-> -#include <sys/types.h>
-> -#include <sys/stat.h>
-> -#include <fcntl.h>
->  #include <errno.h>
->  #include <unistd.h>
->  #include <string.h>
->  #include <limits.h>
->  #include <stdio.h>
-> -#include <signal.h>
->  
->  #include "debug.h"
->  #include "uxsock.h"
->  #include "alias.h"
-> +#include "file.h"
->  
-> 
->  /*
-> @@ -36,150 +33,6 @@
->   * See the file COPYING included with this distribution for more details.
->   */
->  
-> -static int
-> -ensure_directories_exist(char *str, mode_t dir_mode)
-> -{
-> -	char *pathname;
-> -	char *end;
-> -	int err;
-> -
-> -	pathname = strdup(str);
-> -	if (!pathname){
-> -		condlog(0, "Cannot copy bindings file pathname : %s",
-> -			strerror(errno));
-> -		return -1;
-> -	}
-> -	end = pathname;
-> -	/* skip leading slashes */
-> -	while (end && *end && (*end == '/'))
-> -		end++;
-> -
-> -	while ((end = strchr(end, '/'))) {
-> -		/* if there is another slash, make the dir. */
-> -		*end = '\0';
-> -		err = mkdir(pathname, dir_mode);
-> -		if (err && errno != EEXIST) {
-> -			condlog(0, "Cannot make directory [%s] : %s",
-> -				pathname, strerror(errno));
-> -			free(pathname);
-> -			return -1;
-> -		}
-> -		if (!err)
-> -			condlog(3, "Created dir [%s]", pathname);
-> -		*end = '/';
-> -		end++;
-> -	}
-> -	free(pathname);
-> -	return 0;
-> -}
-> -
-> -static void
-> -sigalrm(int sig)
-> -{
-> -	/* do nothing */
-> -}
-> -
-> -static int
-> -lock_bindings_file(int fd)
-> -{
-> -	struct sigaction act, oldact;
-> -	sigset_t set, oldset;
-> -	struct flock lock;
-> -	int err;
-> -
-> -	memset(&lock, 0, sizeof(lock));
-> -	lock.l_type = F_WRLCK;
-> -	lock.l_whence = SEEK_SET;
-> -
-> -	act.sa_handler = sigalrm;
-> -	sigemptyset(&act.sa_mask);
-> -	act.sa_flags = 0;
-> -	sigemptyset(&set);
-> -	sigaddset(&set, SIGALRM);
-> -
-> -	sigaction(SIGALRM, &act, &oldact);
-> -	sigprocmask(SIG_UNBLOCK, &set, &oldset);
-> -
-> -	alarm(BINDINGS_FILE_TIMEOUT);
-> -	err = fcntl(fd, F_SETLKW, &lock);
-> -	alarm(0);
-> -
-> -	if (err) {
-> -		if (errno != EINTR)
-> -			condlog(0, "Cannot lock bindings file : %s",
-> -					strerror(errno));
-> -		else
-> -			condlog(0, "Bindings file is locked. Giving up.");
-> -	}
-> -
-> -	sigprocmask(SIG_SETMASK, &oldset, NULL);
-> -	sigaction(SIGALRM, &oldact, NULL);
-> -	return err;
-> -
-> -}
-> -
-> -
-> -static int
-> -open_bindings_file(char *file, int *can_write)
-> -{
-> -	int fd;
-> -	struct stat s;
-> -
-> -	if (ensure_directories_exist(file, 0700))
-> -		return -1;
-> -	*can_write = 1;
-> -	fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-> -	if (fd < 0) {
-> -		if (errno == EROFS) {
-> -			*can_write = 0;
-> -			condlog(3, "Cannot open bindings file [%s] read/write. "
-> -				" trying readonly", file);
-> -			fd = open(file, O_RDONLY);
-> -			if (fd < 0) {
-> -				condlog(0, "Cannot open bindings file [%s] "
-> -					"readonly : %s", file, strerror(errno));
-> -				return -1;
-> -			}
-> -		}
-> -		else {
-> -			condlog(0, "Cannot open bindings file [%s] : %s", file,
-> -				strerror(errno));
-> -			return -1;
-> -		}
-> -	}
-> -	if (*can_write && lock_bindings_file(fd) < 0)
-> -		goto fail;
-> -
-> -	memset(&s, 0, sizeof(s));
-> -	if (fstat(fd, &s) < 0){
-> -		condlog(0, "Cannot stat bindings file : %s", strerror(errno));
-> -		goto fail;
-> -	}
-> -	if (s.st_size == 0) {
-> -		if (*can_write == 0)
-> -			goto fail;
-> -		/* If bindings file is empty, write the header */
-> -		size_t len = strlen(BINDINGS_FILE_HEADER);
-> -		if (write_all(fd, BINDINGS_FILE_HEADER, len) != len) {
-> -			condlog(0,
-> -				"Cannot write header to bindings file : %s",
-> -				strerror(errno));
-> -			/* cleanup partially written header */
-> -			if (ftruncate(fd, 0))
-> -				condlog(0, "Cannot truncate the header : %s",
-> -					strerror(errno));
-> -			goto fail;
-> -		}
-> -		fsync(fd);
-> -		condlog(3, "Initialized new bindings file [%s]", file);
-> -	}
-> -
-> -	return fd;
-> -
-> -fail:
-> -	close(fd);
-> -	return -1;
-> -}
->  
->  static int
->  format_devname(char *name, int id, int len, char *prefix)
-> @@ -370,7 +223,7 @@ get_user_friendly_alias(char *wwid, char
->  		return NULL;
->  	}
->  
-> -	fd = open_bindings_file(file, &can_write);
-> +	fd = open_file(file, &can_write, BINDINGS_FILE_HEADER);
->  	if (fd < 0)
->  		return NULL;
->  
-> @@ -414,7 +267,7 @@ get_user_friendly_wwid(char *alias, char
->  		return NULL;
->  	}
->  
-> -	fd = open_bindings_file(file, &unused);
-> +	fd = open_file(file, &unused, BINDINGS_FILE_HEADER);
->  	if (fd < 0)
->  		return NULL;
->  
-> Index: multipath-tools-120518/libmultipath/alias.h
-> ===================================================================
-> --- multipath-tools-120518.orig/libmultipath/alias.h
-> +++ multipath-tools-120518/libmultipath/alias.h
-> @@ -1,4 +1,3 @@
-> -#define BINDINGS_FILE_TIMEOUT 30
->  #define BINDINGS_FILE_HEADER \
->  "# Multipath bindings, Version : 1.0\n" \
->  "# NOTE: this file is automatically maintained by the multipath program.\n" \
-> Index: multipath-tools-120518/libmultipath/configure.c
-> ===================================================================
-> --- multipath-tools-120518.orig/libmultipath/configure.c
-> +++ multipath-tools-120518/libmultipath/configure.c
-> @@ -37,6 +37,7 @@
->  #include "prio.h"
->  #include "util.h"
->  #include "uxsock.h"
-> +#include "wwids.h"
->  
->  extern int
->  setup_map (struct multipath * mpp, char * params, int params_size)
-> @@ -407,6 +408,8 @@ domap (struct multipath * mpp, char * pa
->  		 * DM_DEVICE_CREATE, DM_DEVICE_RENAME, or DM_DEVICE_RELOAD
->  		 * succeeded
->  		 */
-> +		if (mpp->action == ACT_CREATE)
-> +			remember_wwid(mpp->wwid);
->  		if (!conf->daemon) {
->  			/* multipath client mode */
->  			dm_switchgroup(mpp->alias, mpp->bestpg);
-> Index: multipath-tools-120518/libmultipath/defaults.h
-> ===================================================================
-> --- multipath-tools-120518.orig/libmultipath/defaults.h
-> +++ multipath-tools-120518/libmultipath/defaults.h
-> @@ -24,5 +24,6 @@
->  #define DEFAULT_SOCKET		"/var/run/multipathd.sock"
->  #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
->  #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
-> +#define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
->  
->  char * set_default (char * str);
-> Index: multipath-tools-120518/libmultipath/file.c
-> ===================================================================
-> --- /dev/null
-> +++ multipath-tools-120518/libmultipath/file.c
-> @@ -0,0 +1,180 @@
-> +/*
-> + * Copyright (c) 2005 Christophe Varoqui
-> + * Copyright (c) 2005 Benjamin Marzinski, Redhat
-> + */
-> +#include <stdlib.h>
-> +#include <sys/types.h>
-> +#include <sys/stat.h>
-> +#include <fcntl.h>
-> +#include <errno.h>
-> +#include <unistd.h>
-> +#include <string.h>
-> +#include <limits.h>
-> +#include <stdio.h>
-> +#include <signal.h>
-> +
-> +#include "file.h"
-> +#include "debug.h"
-> +#include "uxsock.h"
-> +
-> +
-> +/*
-> + * significant parts of this file were taken from iscsi-bindings.c of the
-> + * linux-iscsi project.
-> + * Copyright (C) 2002 Cisco Systems, Inc.
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License as published
-> + * by the Free Software Foundation; either version 2 of the License, or
-> + * (at your option) any later version.
-> + *
-> + * This program is distributed in the hope that it will be useful, but
-> + * WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-> + * General Public License for more details.
-> + *
-> + * See the file COPYING included with this distribution for more details.
-> + */
-> +
-> +static int
-> +ensure_directories_exist(char *str, mode_t dir_mode)
-> +{
-> +	char *pathname;
-> +	char *end;
-> +	int err;
-> +
-> +	pathname = strdup(str);
-> +	if (!pathname){
-> +		condlog(0, "Cannot copy file pathname %s : %s",
-> +			str, strerror(errno));
-> +		return -1;
-> +	}
-> +	end = pathname;
-> +	/* skip leading slashes */
-> +	while (end && *end && (*end == '/'))
-> +		end++;
-> +
-> +	while ((end = strchr(end, '/'))) {
-> +		/* if there is another slash, make the dir. */
-> +		*end = '\0';
-> +		err = mkdir(pathname, dir_mode);
-> +		if (err && errno != EEXIST) {
-> +			condlog(0, "Cannot make directory [%s] : %s",
-> +				pathname, strerror(errno));
-> +			free(pathname);
-> +			return -1;
-> +		}
-> +		if (!err)
-> +			condlog(3, "Created dir [%s]", pathname);
-> +		*end = '/';
-> +		end++;
-> +	}
-> +	free(pathname);
-> +	return 0;
-> +}
-> +
-> +static void
-> +sigalrm(int sig)
-> +{
-> +	/* do nothing */
-> +}
-> +
-> +static int
-> +lock_file(int fd, char *file_name)
-> +{
-> +	struct sigaction act, oldact;
-> +	sigset_t set, oldset;
-> +	struct flock lock;
-> +	int err;
-> +
-> +	memset(&lock, 0, sizeof(lock));
-> +	lock.l_type = F_WRLCK;
-> +	lock.l_whence = SEEK_SET;
-> +
-> +	act.sa_handler = sigalrm;
-> +	sigemptyset(&act.sa_mask);
-> +	act.sa_flags = 0;
-> +	sigemptyset(&set);
-> +	sigaddset(&set, SIGALRM);
-> +
-> +	sigaction(SIGALRM, &act, &oldact);
-> +	sigprocmask(SIG_UNBLOCK, &set, &oldset);
-> +
-> +	alarm(FILE_TIMEOUT);
-> +	err = fcntl(fd, F_SETLKW, &lock);
-> +	alarm(0);
-> +
-> +	if (err) {
-> +		if (errno != EINTR)
-> +			condlog(0, "Cannot lock %s : %s", file_name,
-> +				strerror(errno));
-> +		else
-> +			condlog(0, "%s is locked. Giving up.", file_name);
-> +	}
-> +
-> +	sigprocmask(SIG_SETMASK, &oldset, NULL);
-> +	sigaction(SIGALRM, &oldact, NULL);
-> +	return err;
-> +}
-> +
-> +int
-> +open_file(char *file, int *can_write, char *header)
-> +{
-> +	int fd;
-> +	struct stat s;
-> +
-> +	if (ensure_directories_exist(file, 0700))
-> +		return -1;
-> +	*can_write = 1;
-> +	fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-> +	if (fd < 0) {
-> +		if (errno == EROFS) {
-> +			*can_write = 0;
-> +			condlog(3, "Cannot open file [%s] read/write. "
-> +				" trying readonly", file);
-> +			fd = open(file, O_RDONLY);
-> +			if (fd < 0) {
-> +				condlog(0, "Cannot open file [%s] "
-> +					"readonly : %s", file, strerror(errno));
-> +				return -1;
-> +			}
-> +		}
-> +		else {
-> +			condlog(0, "Cannot open file [%s] : %s", file,
-> +				strerror(errno));
-> +			return -1;
-> +		}
-> +	}
-> +	if (*can_write && lock_file(fd, file) < 0)
-> +		goto fail;
-> +
-> +	memset(&s, 0, sizeof(s));
-> +	if (fstat(fd, &s) < 0){
-> +		condlog(0, "Cannot stat file %s : %s", file, strerror(errno));
-> +		goto fail;
-> +	}
-> +	if (s.st_size == 0) {
-> +		if (*can_write == 0)
-> +			goto fail;
-> +		/* If file is empty, write the header */
-> +		size_t len = strlen(header);
-> +		if (write_all(fd, header, len) != len) {
-> +			condlog(0,
-> +				"Cannot write header to file %s : %s", file,
-> +				strerror(errno));
-> +			/* cleanup partially written header */
-> +			if (ftruncate(fd, 0))
-> +				condlog(0, "Cannot truncate header : %s",
-> +					strerror(errno));
-> +			goto fail;
-> +		}
-> +		fsync(fd);
-> +		condlog(3, "Initialized new file [%s]", file);
-> +	}
-> +
-> +	return fd;
-> +
-> +fail:
-> +	close(fd);
-> +	return -1;
-> +}
-> Index: multipath-tools-120518/libmultipath/file.h
-> ===================================================================
-> --- /dev/null
-> +++ multipath-tools-120518/libmultipath/file.h
-> @@ -0,0 +1,11 @@
-> +/*
-> + * Copyright (c) 2010 Benjamin Marzinski, Redhat
-> + */
-> +
-> +#ifndef _FILE_H
-> +#define _FILE_H
-> +
-> +#define FILE_TIMEOUT 30
-> +int open_file(char *file, int *can_write, char *header);
-> +
-> +#endif /* _FILE_H */
-> Index: multipath-tools-120518/multipath/main.c
-> ===================================================================
-> --- multipath-tools-120518.orig/multipath/main.c
-> +++ multipath-tools-120518/multipath/main.c
-> @@ -53,6 +53,7 @@
->  #include <errno.h>
->  #include <sys/time.h>
->  #include <sys/resource.h>
-> +#include <wwids.h>
->  #include "dev_t.h"
->  
->  int logsink;
-> @@ -82,7 +83,7 @@ usage (char * progname)
->  {
->  	fprintf (stderr, VERSION_STRING);
->  	fprintf (stderr, "Usage:\n");
-> -	fprintf (stderr, "  %s [-d] [-r] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
-> +	fprintf (stderr, "  %s [-c] [-d] [-r] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
->  	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [dev]\n", progname);
->  	fprintf (stderr, "  %s -F [-v lvl]\n", progname);
->  	fprintf (stderr, "  %s -t\n", progname);
-> @@ -95,6 +96,7 @@ usage (char * progname)
->  		"  -ll     show multipath topology (maximum info)\n" \
->  		"  -f      flush a multipath device map\n" \
->  		"  -F      flush all multipath device maps\n" \
-> +		"  -c      check if a device should be a path in a multipath device\n" \
->  		"  -q      allow queue_if_no_path when multipathd is not running\n"\
->  		"  -d      dry run, do not create or update devmaps\n" \
->  		"  -t      dump internal hardware table\n" \
-> @@ -209,6 +211,7 @@ get_dm_mpvec (vector curmp, vector pathv
->  
->  		if (!conf->dry_run)
->  			reinstate_paths(mpp);
-> +		remember_wwid(mpp->wwid);
->  	}
->  	return 0;
->  }
-> @@ -259,9 +262,13 @@ configure (void)
->  	 * if we have a blacklisted device parameter, exit early
->  	 */
->  	if (dev &&
-> -	    (filter_devnode(conf->blist_devnode, conf->elist_devnode, dev) > 0))
-> -			goto out;
-> -
-> +	    (filter_devnode(conf->blist_devnode,
-> +			    conf->elist_devnode, dev) > 0)) {
-> +		if (conf->dry_run == 2)
-> +			printf("%s is not a valid multipath device path\n",
-> +			       conf->dev);
-> +		goto out;
-> +	}
->  	/*
->  	 * scope limiting must be translated into a wwid
->  	 * failing the translation is fatal (by policy)
-> @@ -277,6 +284,15 @@ configure (void)
->  		if (filter_wwid(conf->blist_wwid, conf->elist_wwid,
->  				refwwid) > 0)
->  			goto out;
-> +		if (conf->dry_run == 2) {
-> +			if (check_wwids_file(refwwid, 0) == 0){
-> +				printf("%s is a valid multipath device path\n", conf->dev);
-> +				r = 0;
-> +			}
-> +			else
-> +				printf("%s is not a valid multipath device path\n", conf->dev);
-> +			goto out;
-> +		}
->  	}
->  
->  	/*
-> @@ -412,7 +428,7 @@ main (int argc, char *argv[])
->  	if (load_config(DEFAULT_CONFIGFILE))
->  		exit(1);
->  
-> -	while ((arg = getopt(argc, argv, ":dhl::FfM:v:p:b:Brtq")) != EOF ) {
-> +	while ((arg = getopt(argc, argv, ":dchl::FfM:v:p:b:Brtq")) != EOF ) {
->  		switch(arg) {
->  		case 1: printf("optarg : %s\n",optarg);
->  			break;
-> @@ -434,8 +450,12 @@ main (int argc, char *argv[])
->  		case 'q':
->  			conf->allow_queueing = 1;
->  			break;
-> +		case 'c':
-> +			conf->dry_run = 2;
-> +			break;
->  		case 'd':
-> -			conf->dry_run = 1;
-> +			if (!conf->dry_run)
-> +				conf->dry_run = 1;
->  			break;
->  		case 'f':
->  			conf->remove = FLUSH_ONE;
-> @@ -517,6 +537,11 @@ main (int argc, char *argv[])
->  	}
->  	dm_init();
->  
-> +	if (conf->dry_run == 2 &&
-> +	    (!conf->dev || conf->dev_type == DEV_DEVMAP)) {
-> +		condlog(0, "the -c option requires a path to check");
-> +		goto out;
-> +	}
->  	if (conf->remove == FLUSH_ONE) {
->  		if (conf->dev_type == DEV_DEVMAP)
->  			r = dm_flush_map(conf->dev);
-> Index: multipath-tools-120518/libmultipath/Makefile
-> ===================================================================
-> --- multipath-tools-120518.orig/libmultipath/Makefile
-> +++ multipath-tools-120518/libmultipath/Makefile
-> @@ -15,7 +15,7 @@ OBJS = memory.o parser.o vector.o devmap
->         pgpolicies.o debug.o regex.o defaults.o uevent.o \
->         switchgroup.o uxsock.o print.o alias.o log_pthread.o \
->         log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
-> -       lock.o waiter.o
-> +       lock.o waiter.o file.o wwids.o
->  
->  LIBDM_API_FLUSH = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_no_flush' /usr/include/libdevmapper.h)
->  
-> Index: multipath-tools-120518/libmultipath/wwids.c
-> ===================================================================
-> --- /dev/null
-> +++ multipath-tools-120518/libmultipath/wwids.c
-> @@ -0,0 +1,139 @@
-> +#include <stdlib.h>
-> +#include <errno.h>
-> +#include <unistd.h>
-> +#include <string.h>
-> +#include <limits.h>
-> +#include <stdio.h>
-> +
-> +#include "checkers.h"
-> +#include "vector.h"
-> +#include "structs.h"
-> +#include "debug.h"
-> +#include "uxsock.h"
-> +#include "file.h"
-> +#include "wwids.h"
-> +#include "defaults.h"
-> +
-> +/*
-> + * Copyright (c) 2010 Benjamin Marzinski, Redhat
-> + */
-> +
-> +static int
-> +lookup_wwid(FILE *f, char *wwid) {
-> +	int c;
-> +	char buf[LINE_MAX];
-> +	int count;
-> +
-> +	while ((c = fgetc(f)) != EOF){
-> +		if (c != '/') {
-> +			if (fgets(buf, LINE_MAX, f) == NULL)
-> +				return 0;
-> +			else
-> +				continue;
-> +		}
-> +		count = 0;
-> +		while ((c = fgetc(f)) != '/') {
-> +			if (c == EOF)
-> +				return 0;
-> +			if (count >= WWID_SIZE - 1)
-> +				goto next;
-> +			if (wwid[count] == '\0')
-> +				goto next;
-> +			if (c != wwid[count++])
-> +				goto next;
-> +		}
-> +		if (wwid[count] == '\0')
-> +			return 1;
-> +next:
-> +		if (fgets(buf, LINE_MAX, f) == NULL)
-> +			return 0;
-> +	}
-> +	return 0;
-> +}
-> +
-> +static int
-> +write_out_wwid(int fd, char *wwid) {
-> +	int ret;
-> +	off_t offset;
-> +	char buf[WWID_SIZE + 3];
-> +
-> +	ret = snprintf(buf, WWID_SIZE + 3, "/%s/\n", wwid);
-> +	if (ret >= (WWID_SIZE + 3) || ret < 0){
-> +		condlog(0, "can't format wwid for writing (%d) : %s",
-> +			ret, strerror(errno));
-> +		return -1;
-> +	}
-> +	offset = lseek(fd, 0, SEEK_END);
-> +	if (offset < 0) {
-> +		condlog(0, "can't seek to the end of wwids file : %s",
-> +			strerror(errno));
-> +		return -1;
-> +	}
-> +	if (write_all(fd, buf, strlen(buf)) != strlen(buf)) {
-> +		condlog(0, "cannot write wwid to wwids file : %s",
-> +			strerror(errno));
-> +		if (ftruncate(fd, offset))
-> +			condlog(0, "cannot truncate failed wwid write : %s",
-> +				strerror(errno));
-> +		return -1;
-> +	}
-> +	return 1;
-> +}
-> +
-> +int
-> +check_wwids_file(char *wwid, int write_wwid)
-> +{
-> +	int fd, can_write, found, ret;
-> +	FILE *f;
-> +	fd = open_file(DEFAULT_WWIDS_FILE, &can_write, WWIDS_FILE_HEADER);
-> +	if (fd < 0)
-> +		return -1;
-> +
-> +	f = fdopen(fd, "r");
-> +	if (!f) {
-> +		condlog(0,"can't fdopen wwids file : %s", strerror(errno));
-> +		close(fd);
-> +		return -1;
-> +	}
-> +	found = lookup_wwid(f, wwid);
-> +	if (found) {
-> +		ret = 0;
-> +		goto out;
-> +	}
-> +	if (!write_wwid) {
-> +		ret = -1;
-> +		goto out;
-> +	}
-> +	if (!can_write) {
-> +		condlog(0, "wwids file is read-only. Can't write wwid");
-> +		ret = -1;
-> +		goto out;
-> +	}
-> +
-> +	if (fflush(f) != 0) {
-> +		condlog(0, "cannot fflush wwids file stream : %s",
-> +			strerror(errno));
-> +		ret = -1;
-> +		goto out;
-> +	}
-> +
-> +	ret = write_out_wwid(fd, wwid);
-> +out:
-> +	fclose(f);
-> +	return ret;
-> +}
-> +
-> +int
-> +remember_wwid(char *wwid)
-> +{
-> +	int ret = check_wwids_file(wwid, 1);
-> +	if (ret < 0){
-> +		condlog(3, "failed writing wwid %s to wwids file", wwid);
-> +		return -1;
-> +	}
-> +	if (ret == 1)
-> +		condlog(3, "wrote wwid %s to wwids file", wwid);
-> +	else
-> +		condlog(4, "wwid %s already in wwids file", wwid);
-> +	return 0;
-> +}
-> Index: multipath-tools-120518/libmultipath/wwids.h
-> ===================================================================
-> --- /dev/null
-> +++ multipath-tools-120518/libmultipath/wwids.h
-> @@ -0,0 +1,18 @@
-> +/*
-> + * Copyright (c) 2010 Benjamin Marzinski, Redhat
-> + */
-> +
-> +#ifndef _WWIDS_H
-> +#define _WWIDS_H
-> +
-> +#define WWIDS_FILE_HEADER \
-> +"# Multipath wwids, Version : 1.0\n" \
-> +"# NOTE: This file is automatically maintained by multipath and multipathd.\n" \
-> +"# You should not need to edit this file in normal circumstances.\n" \
-> +"#\n" \
-> +"# Valid WWIDs:\n"
-> +
-> +int remember_wwid(char *wwid);
-> +int check_wwids_file(char *wwid, int write_wwid);
-> +
-> +#endif /* _WWIDS_H */
-> Index: multipath-tools-120518/libmultipath/discovery.c
-> ===================================================================
-> --- multipath-tools-120518.orig/libmultipath/discovery.c
-> +++ multipath-tools-120518/libmultipath/discovery.c
-> @@ -810,6 +810,8 @@ get_uid (struct path * pp)
->  
->  	memset(pp->wwid, 0, WWID_SIZE);
->  	value = udev_device_get_property_value(pp->udev, pp->uid_attribute);
-> +	if ((!value || strlen(value) == 0) && conf->dry_run == 2)
-> +		value = getenv(pp->uid_attribute);
->  	if (value && strlen(value)) {
->  		size_t len = WWID_SIZE;
->  
+ - Same as above, but for non-obvious places (for example, I'm looking into
+ using the hashtable to store KVM vcpus instead of the linked list being used
+ there now - this should help performance with a large amount of vcpus).
+
+
+Changes since v1:
+
+ - Added missing hash_init in rds and lockd.
+ - Addressed the userns comments by Eric Biederman.
+ - Ran a small test to confirm hash_32 does a good job for low key
+ values (1-10000), which showed it did - this resulted in no changes to the
+ code.
+
+
+Sasha Levin (16):
+  hashtable: introduce a small and naive hashtable
+  userns: use new hashtable implementation
+  mm,ksm: use new hashtable implementation
+  workqueue: use new hashtable implementation
+  mm/huge_memory: use new hashtable implementation
+  tracepoint: use new hashtable implementation
+  net,9p: use new hashtable implementation
+  block,elevator: use new hashtable implementation
+  SUNRPC/cache: use new hashtable implementation
+  dlm: use new hashtable implementation
+  net,l2tp: use new hashtable implementation
+  dm: use new hashtable implementation
+  lockd: use new hashtable implementation
+  net,rds: use new hashtable implementation
+  openvswitch: use new hashtable implementation
+  tracing output: use new hashtable implementation
+
+ block/blk.h                                        |    2 +-
+ block/elevator.c                                   |   23 +--
+ drivers/md/dm-snap.c                               |   24 +--
+ drivers/md/persistent-data/dm-block-manager.c      |    1 -
+ .../persistent-data/dm-persistent-data-internal.h  |   19 --
+ .../md/persistent-data/dm-transaction-manager.c    |   30 +--
+ fs/dlm/lowcomms.c                                  |   47 +---
+ fs/lockd/svcsubs.c                                 |   66 +++--
+ include/linux/elevator.h                           |    5 +-
+ include/linux/hashtable.h                          |  284 ++++++++++++++++++++
+ kernel/trace/trace_output.c                        |   20 +-
+ kernel/tracepoint.c                                |   27 +--
+ kernel/user.c                                      |   33 +--
+ kernel/workqueue.c                                 |   86 +-----
+ mm/huge_memory.c                                   |   57 +---
+ mm/ksm.c                                           |   33 +--
+ net/9p/error.c                                     |   21 +-
+ net/l2tp/l2tp_core.c                               |  134 ++++------
+ net/l2tp/l2tp_core.h                               |    8 +-
+ net/l2tp/l2tp_debugfs.c                            |   19 +-
+ net/openvswitch/vport.c                            |   30 +--
+ net/rds/bind.c                                     |   28 ++-
+ net/rds/connection.c                               |  102 +++----
+ net/sunrpc/cache.c                                 |   20 +-
+ 24 files changed, 591 insertions(+), 528 deletions(-)
+ delete mode 100644 drivers/md/persistent-data/dm-persistent-data-internal.h
+ create mode 100644 include/linux/hashtable.h
+
+-- 
+1.7.8.6
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
