@@ -1,101 +1,87 @@
-From: Sasha Levin <levinsasha928@gmail.com>
-Subject: [PATCH v2 16/16] tracing output: use new hashtable implementation
-Date: Sun, 19 Aug 2012 02:52:30 +0200
-Message-ID: <1345337550-24304-18-git-send-email-levinsasha928@gmail.com>
-References: <1345337550-24304-1-git-send-email-levinsasha928@gmail.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1345337550-24304-1-git-send-email-levinsasha928@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: torvalds@linux-foundation.org
-Cc: tj@kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com, Sasha Levin <levinsasha928@gmail.com>
+From: Robert Kim App and Facebook Marketing <evdo.hsdpa-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v5 02/12] dm: Use bioset's front_pad for
+	dm_rq_clone_bio_info
+Date: Sun, 19 Aug 2012 20:46:02 +0900
+Message-ID: <CA+xKNSjhQ=t5uw0yWqrx+3LspYz03Jns5tBHmyrN7nj35R_g1Q@mail.gmail.com>
+References: <1344290921-25154-1-git-send-email-koverstreet@google.com>
+	<1344290921-25154-3-git-send-email-koverstreet@google.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0723470493838076184=="
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <1344290921-25154-3-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, yehuda-L5o5AL9CYN0tUFlbccrkMA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-Switch tracing to use the new hashtable implementation. This reduces the amount of
-generic unrelated code in the tracing module.
+--===============0723470493838076184==
+Content-Type: multipart/alternative; boundary=047d7b33d64409f8eb04c79cf0fa
 
-Signed-off-by: Sasha Levin <levinsasha928@gmail.com>
----
- kernel/trace/trace_output.c |   20 ++++++++------------
- 1 files changed, 8 insertions(+), 12 deletions(-)
+--047d7b33d64409f8eb04c79cf0fa
+Content-Type: text/plain; charset=ISO-8859-1
 
-diff --git a/kernel/trace/trace_output.c b/kernel/trace/trace_output.c
-index 123b189..1324c1a 100644
---- a/kernel/trace/trace_output.c
-+++ b/kernel/trace/trace_output.c
-@@ -8,15 +8,15 @@
- #include <linux/module.h>
- #include <linux/mutex.h>
- #include <linux/ftrace.h>
-+#include <linux/hashtable.h>
- 
- #include "trace_output.h"
- 
--/* must be a power of 2 */
--#define EVENT_HASHSIZE	128
-+#define EVENT_HASH_BITS	7
- 
- DECLARE_RWSEM(trace_event_mutex);
- 
--static struct hlist_head event_hash[EVENT_HASHSIZE] __read_mostly;
-+static DEFINE_HASHTABLE(event_hash, EVENT_HASH_BITS);
- 
- static int next_event_type = __TRACE_LAST_TYPE + 1;
- 
-@@ -712,11 +712,8 @@ struct trace_event *ftrace_find_event(int type)
- {
- 	struct trace_event *event;
- 	struct hlist_node *n;
--	unsigned key;
- 
--	key = type & (EVENT_HASHSIZE - 1);
--
--	hlist_for_each_entry(event, n, &event_hash[key], node) {
-+	hash_for_each_possible(event_hash, event, n, node, type) {
- 		if (event->type == type)
- 			return event;
- 	}
-@@ -781,7 +778,6 @@ void trace_event_read_unlock(void)
-  */
- int register_ftrace_event(struct trace_event *event)
- {
--	unsigned key;
- 	int ret = 0;
- 
- 	down_write(&trace_event_mutex);
-@@ -833,9 +829,7 @@ int register_ftrace_event(struct trace_event *event)
- 	if (event->funcs->binary == NULL)
- 		event->funcs->binary = trace_nop_print;
- 
--	key = event->type & (EVENT_HASHSIZE - 1);
--
--	hlist_add_head(&event->node, &event_hash[key]);
-+	hash_add(event_hash, &event->node, event->type);
- 
- 	ret = event->type;
-  out:
-@@ -850,7 +844,7 @@ EXPORT_SYMBOL_GPL(register_ftrace_event);
-  */
- int __unregister_ftrace_event(struct trace_event *event)
- {
--	hlist_del(&event->node);
-+	hash_del(&event->node);
- 	list_del(&event->list);
- 	return 0;
- }
-@@ -1323,6 +1317,8 @@ __init static int init_events(void)
- 		}
- 	}
- 
-+	hash_init(event_hash);
-+
- 	return 0;
- }
- early_initcall(init_events);
+Kent,
+
+Do you have a website or blog that you've published on this? I tend to
+always lose gems i find here unless I bookmark them. AND we can all leave
+comments too... That would be helpful.
+
 -- 
-1.7.8.6
+Robert Q Kim,
+Sparkah Destination Event Management
+Trade Show Marketing Strategies VP
+http://www.youtube.com/watch?v=RrXcLCVkFds
+2611 S Coast Highway
+San Diego, CA 92007
+310 598 1606
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--047d7b33d64409f8eb04c79cf0fa
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Kent,<div><br></div><div>Do you have a website or blog that you&#39;ve publ=
+ished on this? I tend to always lose gems i find here unless I bookmark the=
+m. AND we can all leave comments too... That would be helpful.<br clear=3D"=
+all">
+<div><br></div>-- <br><span style=3D"color:rgb(136,136,136);font-family:ari=
+al,sans-serif;font-size:13px;background-color:rgb(255,255,255)">Robert Q Ki=
+m,</span><br style=3D"color:rgb(136,136,136);font-family:arial,sans-serif;f=
+ont-size:13px;background-color:rgb(255,255,255)">
+<div style=3D"color:rgb(136,136,136);font-family:arial,sans-serif;font-size=
+:13px;background-color:rgb(255,255,255)">Sparkah Destination Event Manageme=
+nt</div><div style=3D"color:rgb(136,136,136);font-family:arial,sans-serif;f=
+ont-size:13px;background-color:rgb(255,255,255)">
+Trade Show Marketing Strategies VP<br></div><div style=3D"color:rgb(136,136=
+,136);font-family:arial,sans-serif;font-size:13px;background-color:rgb(255,=
+255,255)"><a href=3D"http://www.youtube.com/watch?v=3DRrXcLCVkFds" target=
+=3D"_blank" style=3D"color:rgb(17,85,204)">http://www.youtube.com/watch?v=
+=3DRrXcLCVkFds</a></div>
+<div style=3D"color:rgb(136,136,136);font-family:arial,sans-serif;font-size=
+:13px;background-color:rgb(255,255,255)">2611 S Coast Highway<br>San Diego,=
+ CA 92007<br><span id=3D"gc-number-9" class=3D"gc-cs-link" title=3D"Call wi=
+th Google Voice">310 598 1606</span></div>
+
+</div>
+
+--047d7b33d64409f8eb04c79cf0fa--
+
+--===============0723470493838076184==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+drbd-dev mailing list
+drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+http://lists.linbit.com/mailman/listinfo/drbd-dev
+
+--===============0723470493838076184==--
