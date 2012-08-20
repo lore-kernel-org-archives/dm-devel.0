@@ -1,20 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH][RESEND] multipath: check if a device	belongs
-	to multipath
-Date: Mon, 20 Aug 2012 16:57:11 -0500
-Message-ID: <20120820215711.GW5299@ether.msp.redhat.com>
-References: <20120727205524.GJ5299@ether.msp.redhat.com>
-	<1345234390.12286.9.camel@lapoo.opensvc.com>
-	<50322A59.5080209@suse.de>
-	<20120820174301.GV5299@ether.msp.redhat.com>
-	<1345485031.12286.13.camel@lapoo.opensvc.com>
+Subject: [PATCH] multipath: and wwids_file multipath.conf option
+Date: Mon, 20 Aug 2012 17:19:26 -0500
+Message-ID: <20120820221926.GX5299@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1345485031.12286.13.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,84 +17,158 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 20, 2012 at 07:50:31PM +0200, Christophe Varoqui wrote:
-> On lun., 2012-08-20 at 12:43 -0500, Benjamin Marzinski wrote:
-> > On Mon, Aug 20, 2012 at 02:15:21PM +0200, Hannes Reinecke wrote:
-> > > On 08/17/2012 10:13 PM, Christophe Varoqui wrote:
-> > > > On ven., 2012-07-27 at 15:55 -0500, Benjamin Marzinski wrote:
-> > > >> This patch adds a new multipath option "-c", which checks if a device
-> > > >> belongs to multipath.  This can be done during the add uevent for the
-> > > >> device, before the multipath device has even been created.  This allows
-> > > >> udev to be able to handle multipath path devices differently.  To do
-> > > >> this multipath now keeps track of the wwids of all previously created
-> > > >> multipath devices in /etc/multipath/wwids. The file creating and
-> > > >> editting code from alias.[ch] has been split out into file.[ch]. When a
-> > > >> device is checked to see if it's a multipath path, it's wwid is
-> > > >> compared against the ones in the wwids file. Also, since the
-> > > >> uid_attribute may not have been added to the udev database entry for
-> > > >> the device if this is called in a udev rule, when using the "-c" option,
-> > > >> get_uid will now also check the process' envirionment variables for the
-> > > >> uid_attribute.
-> > > >>
-> > > > I'd like other distribution maintainers' comments on this one, as it
-> > > > impacts the multipath-tools intregration with udev.
-> > > > 
-> > > > Hannes ? Did you face the same issue with SuSE ? Did you solve it
-> > > > differently ?
-> > > > 
-> > > No; currently I didn't solve it at all, what with me being tied up
-> > > with customer issues :-(
-> > > 
-> > > But this is basically the approach I've discussed with Harald Hoyer
-> > > and Kay Sievers on how we should facilitate proper systemd integration.
-> > > 
-> > > The idea here is to have a udev rule calling 'multipath -c' via
-> > > PROGRAM, so that udev can detect if a device should've been handled
-> > > via multipath.
-> > > Which would allow any rules following that one to evaluate this
-> > > status and possibly skip the device.
-> > > 
-> > > So from that perspective the patch should be okay.
-> > > 
-> > > However, the one thing to note is this patch _again_ is using
-> > > hard-coded filenames under /etc, which really shouldn't happen.
-> > > We should be introducing a configuration file variable to set it.
-> > 
-> > I'll post a patch that adds a configuration parameter soon.
-> > 
-> > > 
-> > > > Ben, does this approach supersedes/extends the "complicated blacklisting
-> > > > scheme" you proposed earlier ?
-> > > > 
-> > > I sincerely hope so ...
-> > 
-> > actually, this is patch is what I though were the non-objectional parts
-> > to that patch.  I still think it's useful to be able to setup multipath
-> > so that instead of defaulting to use all the non-blacklisted LUNs, it
-> > just defaults to using the LUNs which actually have multiple paths. That
-> > patch didn't effect how the blacklisting code worked. Nor did it keep you
-> > from setting up multipath on single pathed LUNs. It just didn't default
-> > to setting up multipath devices on single pathed LUNs, if you had never
-> > set up a multipath device on that LUN before. 
-> > 
-> Ok fine. Do you prefer I merge the already submitted patch so that you
-> can submit an incremental patch for the cache file location or I wait
-> for your submitting a feature-complete patch ?
-> 
-> Thanks for the clarification.
+This patch adds a wwids_file multipath.conf option, so that users can
+move the wwids file from its default location at /etc/multipath/wwids.
+It also corrects the default bindings file location in the multipath.conf
+manpage and makes the bindings_file value always print out when you 
+display the configuration, like is done with the other default values.
 
-The existing patch could have stood to be broken up in the interest of
-easy reading. I don't want to make it any larger. I'll just send a
-second patch that adds the multipath.conf option.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/config.c      |    6 +++++-
+ libmultipath/config.h      |    1 +
+ libmultipath/dict.c        |   24 ++++++++++++++++++++----
+ libmultipath/wwids.c       |    3 ++-
+ multipath/multipath.conf.5 |    8 +++++++-
+ 5 files changed, 35 insertions(+), 7 deletions(-)
 
-Thanks.
-
--Ben 
-
-> 
-> cvaroqui,
-> OpenSVC
+Index: multipath-tools-120817/libmultipath/config.c
+===================================================================
+--- multipath-tools-120817.orig/libmultipath/config.c
++++ multipath-tools-120817/libmultipath/config.c
+@@ -455,6 +455,8 @@ free_config (struct config * conf)
+ 	if (conf->bindings_file)
+ 		FREE(conf->bindings_file);
+ 
++	if (conf->wwids_file)
++		FREE(conf->wwids_file);
+ 	if (conf->prio_name)
+ 		FREE(conf->prio_name);
+ 
+@@ -505,6 +507,7 @@ load_config (char * file)
+ 	conf->minio_rq = DEFAULT_MINIO_RQ;
+ 	get_sys_max_fds(&conf->max_fds);
+ 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
++	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
+ 	conf->bindings_read_only = 0;
+ 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+ 	conf->features = set_default(DEFAULT_FEATURES);
+@@ -603,7 +606,8 @@ load_config (char * file)
+ 	if (conf->bindings_file == NULL)
+ 		conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+ 
+-	if (!conf->multipath_dir || !conf->bindings_file)
++	if (!conf->multipath_dir || !conf->bindings_file ||
++	    !conf->wwids_file)
+ 		goto out;
+ 
+ 	return 0;
+Index: multipath-tools-120817/libmultipath/config.h
+===================================================================
+--- multipath-tools-120817.orig/libmultipath/config.h
++++ multipath-tools-120817/libmultipath/config.h
+@@ -117,6 +117,7 @@ struct config {
+ 	char * features;
+ 	char * hwhandler;
+ 	char * bindings_file;
++	char * wwids_file;
+ 	char * prio_name;
+ 	char * prio_args;
+ 	char * checker_name;
+Index: multipath-tools-120817/libmultipath/dict.c
+===================================================================
+--- multipath-tools-120817.orig/libmultipath/dict.c
++++ multipath-tools-120817/libmultipath/dict.c
+@@ -618,6 +618,17 @@ bindings_file_handler(vector strvec)
+ 	return 0;
+ }
+ 
++static int
++wwids_file_handler(vector strvec)
++{
++	conf->wwids_file = set_value(strvec);
++
++	if (!conf->wwids_file)
++		return 1;
++
++	return 0;
++}
++
+ /*
+  * blacklist block handlers
+  */
+@@ -2570,14 +2581,18 @@ snprint_def_bindings_file (char * buff,
+ {
+ 	if (conf->bindings_file == NULL)
+ 		return 0;
+-	if (strlen(conf->bindings_file) == strlen(DEFAULT_BINDINGS_FILE) &&
+-	    !strcmp(conf->bindings_file, DEFAULT_BINDINGS_FILE))
+-		return 0;
+-
+ 	return snprintf(buff, len, "%s", conf->bindings_file);
+ }
+ 
+ static int
++snprint_def_wwids_file (char * buff, int len, void * data)
++{
++	if (conf->wwids_file == NULL)
++		return 0;
++	return snprintf(buff, len, "%s", conf->wwids_file);
++}
++
++static int
+ snprint_def_reservation_key(char * buff, int len, void * data)
+ {
+ 	return snprintf(buff, len, "%s", conf->reservation_key);
+@@ -2644,6 +2659,7 @@ init_keywords(void)
+ 	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
+ 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
+ 	install_keyword("bindings_file", &bindings_file_handler, &snprint_def_bindings_file);
++	install_keyword("wwids_file", &wwids_file_handler, &snprint_def_wwids_file);
+ 	install_keyword("log_checker_err", &def_log_checker_err_handler, &snprint_def_log_checker_err);
+ 	install_keyword("reservation_key", &def_reservation_key_handler, &snprint_def_reservation_key);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+Index: multipath-tools-120817/libmultipath/wwids.c
+===================================================================
+--- multipath-tools-120817.orig/libmultipath/wwids.c
++++ multipath-tools-120817/libmultipath/wwids.c
+@@ -13,6 +13,7 @@
+ #include "file.h"
+ #include "wwids.h"
+ #include "defaults.h"
++#include "config.h"
+ 
+ /*
+  * Copyright (c) 2010 Benjamin Marzinski, Redhat
+@@ -85,7 +86,7 @@ check_wwids_file(char *wwid, int write_w
+ {
+ 	int fd, can_write, found, ret;
+ 	FILE *f;
+-	fd = open_file(DEFAULT_WWIDS_FILE, &can_write, WWIDS_FILE_HEADER);
++	fd = open_file(conf->wwids_file, &can_write, WWIDS_FILE_HEADER);
+ 	if (fd < 0)
+ 		return -1;
+ 
+Index: multipath-tools-120817/multipath/multipath.conf.5
+===================================================================
+--- multipath-tools-120817.orig/multipath/multipath.conf.5
++++ multipath-tools-120817/multipath/multipath.conf.5
+@@ -353,7 +353,13 @@ cannot be told to stop queueing IO. Sett
+ .TP
+ .B bindings_file
+ The full pathname of the binding file to be used when the user_friendly_names option is set. Defaults to
+-.I /var/lib/multipath/bindings
++.I /etc/multipath/bindings
++.TP
++.B wwids_file
++The full pathname of the wwids file, which is used by multipath to keep track
++of the wwids for LUNs it has created multipath devices on in the past.
++Defaults to
++.I /etc/multipath/wwids
+ .TP
+ .B log_checker_err
+ If set to
