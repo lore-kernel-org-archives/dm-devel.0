@@ -1,81 +1,103 @@
-From: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 01/16] hashtable: introduce a small and
-	naive hashtable
-Date: Sun, 19 Aug 2012 18:17:44 +0200
-Message-ID: <503111A8.5030703@gmail.com>
-References: <1345337550-24304-1-git-send-email-levinsasha928@gmail.com>
-	<1345337550-24304-2-git-send-email-levinsasha928@gmail.com>
-	<20120819131637.GA8272@Krystal> <20120819141641.GA9082@Krystal>
+From: Robin Dong <robin.k.dong@gmail.com>
+Subject: [PATCH 1/2] md: add new interface 'mk_rq' in target_type
+Date: Mon, 20 Aug 2012 15:04:52 +0800
+Message-ID: <1345446293-24012-1-git-send-email-robin.k.dong@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
-In-Reply-To: <20120819141641.GA9082@Krystal>
-List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://openvswitch.org/pipermail/dev>
-List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
-List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
-List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
-Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Robin Dong <sanbai@taobao.com>
 List-Id: dm-devel.ids
 
-On 08/19/2012 04:16 PM, Mathieu Desnoyers wrote:
-> * Mathieu Desnoyers (mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org) wrote:
->> * Sasha Levin (levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org) wrote:
-> [...]
->>> +/**
->>> + * hash_for_each_possible - iterate over all possible objects for a given key
->>> + * @name: hashtable to iterate
->>> + * @obj: the type * to use as a loop cursor for each bucket
->>> + * @bits: bit count of hashing function of the hashtable
->>> + * @node: the &struct list_head to use as a loop cursor for each bucket
->>> + * @member: the name of the hlist_node within the struct
->>> + * @key: the key of the objects to iterate over
->>> + */
->>> +#define hash_for_each_possible_size(name, obj, bits, node, member, key)		\
->>> +	hlist_for_each_entry(obj, node,	&name[hash_min(key, bits)], member)
->>
->> Second point: "for_each_possible" does not express the iteration scope.
->> Citing WordNet: "possible adj 1: capable of happening or existing;" --
->> which has nothing to do with iteration on duplicate keys within a hash
->> table.
->>
->> I would recommend to rename "possible" to "duplicate", e.g.:
->>
->>   hash_for_each_duplicate()
->>
->> which clearly says what is the scope of this iteration: duplicate keys.
-> 
-> OK, about this part: I now see that you iterate over all objects within
-> the same hash chain. I guess the description "iterate over all possible
-> objects for a given key" is misleading: it's not all objects with a
-> given key, but rather all objects hashing to the same bucket.
-> 
-> I understand that you don't want to build knowledge of the key
-> comparison function in the iterator (which makes sense for a simple hash
-> table).
-> 
-> By the way, the comment "@obj: the type * to use as a loop cursor for
-> each bucket" is also misleading: it's a loop cursor for each entry,
-> since you iterate on all nodes within single bucket. Same for "@node:
-> the &struct list_head to use as a loop cursor for each bucket".
-> 
-> So with these documentation changes applied, hash_for_each_possible
-> starts to make more sense, because it refers to entries that can
-> _possibly_ be a match (or not). Other options would be
-> hash_chain_for_each() or hash_bucket_for_each().
+From: Robin Dong <sanbai@taobao.com>
 
-I'd rather avoid starting to use chain/bucket since they're not used anywhere
-else (I've tried keeping internal hashing/bucketing opaque to the user).
+We are now trying to modify flashcache(https://github.com/facebook/flashcache)
+to make it request based so that
+we can let cfq io-controller control the bandwidth between different
+io cgroups.
 
-Otherwise makes sense, I'll improve the documentation as suggested. Thanks!
+A search in the dm directory tells me that only multipath is a request
+based dm target and its functionality
+is very simple and map_rq() is used to map the request to different underlying devices.
+We can't work in this way because:
 
-> Thanks,
-> 
-> Mathieu
-> 
+1. the request which processed by map_rq() need to be issued to
+	different lower devices (disk device and cache device, in flashcache), therefore the request
+	can't be totally remapped by simply changing its queue and returning DM_MAPIO_REMAPPED in map_rq() like multipath_map()
+2. to submit bios drectly in map_rq() (by return DM_MAPIO_SUBMITTED) will cause BUG_ON(!irqs_disabled())
+	in dm_request_fn() because the submit_bio()->generic_make_request()->blk_queue_bio() will definitly call spin_unlock_irq to enable the irqs
+
+
+As above,the interface map_rq() provided by devcie-mapper framework
+is not enough for an autonomous target, like flashcache.
+
+We propose to add a new
+mk_rq interface so that we can make the requests
+by ourselves.
+
+Signed-off-by: Robin Dong <sanbai@taobao.com>
+---
+ drivers/md/dm.c               |   10 ++++++++++
+ include/linux/device-mapper.h |    3 +++
+ 2 files changed, 13 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4e09b6f..3ae67de 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1459,11 +1459,21 @@ static int dm_request_based(struct mapped_device *md)
+ static void dm_request(struct request_queue *q, struct bio *bio)
+ {
+ 	struct mapped_device *md = q->queuedata;
++	struct dm_table *map = dm_get_live_table(md);
++	struct dm_target *ti = dm_table_find_target(map, bio->bi_sector);
++
++	if (ti->type->mk_rq) {
++		ti->type->mk_rq(ti, q, bio);
++		goto out;
++	}
+ 
+ 	if (dm_request_based(md))
+ 		blk_queue_bio(q, bio);
+ 	else
+ 		_dm_request(q, bio);
++
++out:
++	dm_table_put(map);
+ }
+ 
+ void dm_dispatch_request(struct request *rq)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 38d27a1..2386389 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -50,6 +50,8 @@ typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio,
+ 			  union map_info *map_context);
+ typedef int (*dm_map_request_fn) (struct dm_target *ti, struct request *clone,
+ 				  union map_info *map_context);
++typedef int (*dm_make_request_fn) (struct dm_target *ti,
++				struct request_queue *q, struct bio *bio);
+ 
+ /*
+  * Returns:
+@@ -136,6 +138,7 @@ struct target_type {
+ 	dm_dtr_fn dtr;
+ 	dm_map_fn map;
+ 	dm_map_request_fn map_rq;
++	dm_make_request_fn mk_rq;
+ 	dm_endio_fn end_io;
+ 	dm_request_endio_fn rq_end_io;
+ 	dm_presuspend_fn presuspend;
+-- 
+1.7.1
