@@ -1,15 +1,16 @@
-From: Robin Dong <sanbai@taobao.com>
-Subject: [PATCH 2/2] md: modify dm_io() so it could return bios
-	instead of submitting it
-Date: Mon, 20 Aug 2012 14:22:54 +0800
-Message-ID: <1345443774-23657-2-git-send-email-sanbai@taobao.com>
-References: <1345443774-23657-1-git-send-email-sanbai@taobao.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH][RESEND] multipath: check if a device belongs
+ to multipath
+Date: Mon, 20 Aug 2012 14:15:21 +0200
+Message-ID: <50322A59.5080209@suse.de>
+References: <20120727205524.GJ5299@ether.msp.redhat.com>
+	<1345234390.12286.9.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1345443774-23657-1-git-send-email-sanbai@taobao.com>
+In-Reply-To: <1345234390.12286.9.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,275 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Robin Dong <sanbai@taobao.com>
+To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-When trying to modify flashcache to request based (current it's bio based), we need
-to make request from bios by ourselves, but dm_io() will submit these bios directly,
-so we propose to modify the dm_io() to return bios instead of submiting it.
+On 08/17/2012 10:13 PM, Christophe Varoqui wrote:
+> On ven., 2012-07-27 at 15:55 -0500, Benjamin Marzinski wrote:
+>> This patch adds a new multipath option "-c", which checks if a device
+>> belongs to multipath.  This can be done during the add uevent for the
+>> device, before the multipath device has even been created.  This allows
+>> udev to be able to handle multipath path devices differently.  To do
+>> this multipath now keeps track of the wwids of all previously created
+>> multipath devices in /etc/multipath/wwids. The file creating and
+>> editting code from alias.[ch] has been split out into file.[ch]. When a
+>> device is checked to see if it's a multipath path, it's wwid is
+>> compared against the ones in the wwids file. Also, since the
+>> uid_attribute may not have been added to the udev database entry for
+>> the device if this is called in a udev rule, when using the "-c" option,
+>> get_uid will now also check the process' envirionment variables for the
+>> uid_attribute.
+>>
+> I'd like other distribution maintainers' comments on this one, as it
+> impacts the multipath-tools intregration with udev.
+> =
 
-This could also improve the flexibility of dm_io().
+> Hannes ? Did you face the same issue with SuSE ? Did you solve it
+> differently ?
+> =
 
-Signed-off-by: Robin Dong <sanbai@taobao.com>
----
- drivers/md/dm-bufio.c           |    2 +
- drivers/md/dm-io.c              |   58 +++++++++++++++++++++++----------------
- drivers/md/dm-kcopyd.c          |    1 +
- drivers/md/dm-log.c             |    1 +
- drivers/md/dm-raid1.c           |    3 ++
- drivers/md/dm-snap-persistent.c |    1 +
- include/linux/dm-io.h           |    3 ++
- 7 files changed, 45 insertions(+), 24 deletions(-)
+No; currently I didn't solve it at all, what with me being tied up
+with customer issues :-(
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index cc06a1e..f5867b9 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -487,6 +487,7 @@ static void use_dmio(struct dm_buffer *b, int rw, sector_t block,
- 		.notify.fn = dmio_complete,
- 		.notify.context = b,
- 		.client = b->c->dm_io,
-+		.submit_bio = 1,
- 	};
- 	struct dm_io_region region = {
- 		.bdev = b->c->bdev,
-@@ -1200,6 +1201,7 @@ int dm_bufio_issue_flush(struct dm_bufio_client *c)
- 		.mem.type = DM_IO_KMEM,
- 		.mem.ptr.addr = NULL,
- 		.client = c->dm_io,
-+		.submit_bio = 1,
- 	};
- 	struct dm_io_region io_reg = {
- 		.bdev = c->bdev,
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index ea5dd28..f235182 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -287,8 +287,8 @@ static void km_dp_init(struct dpages *dp, void *data)
- /*-----------------------------------------------------------------
-  * IO routines that accept a list of pages.
-  *---------------------------------------------------------------*/
--static void do_region(int rw, unsigned region, struct dm_io_region *where,
--		      struct dpages *dp, struct io *io)
-+static void do_region(struct dm_io_request *io_req, unsigned region,
-+		struct dm_io_region *where, struct dpages *dp, struct io *io)
- {
- 	struct bio *bio;
- 	struct page *page;
-@@ -298,6 +298,7 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
- 	sector_t remaining = where->count;
- 	struct request_queue *q = bdev_get_queue(where->bdev);
- 	sector_t discard_sectors;
-+	int rw = io_req->bi_rw;
- 
- 	/*
- 	 * where->count may be zero if rw holds a flush and we need to
-@@ -339,15 +340,26 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
- 		}
- 
- 		atomic_inc(&io->count);
--		submit_bio(rw, bio);
-+		if (io_req->submit_bio)
-+			submit_bio(rw, bio);
-+		else {
-+			bio->bi_rw |= rw;
-+			if (io_req->start) {
-+				io_req->end->bi_next = bio;
-+				io_req->end = bio;
-+			} else
-+				io_req->start = io_req->end = bio;
-+			bio->bi_next = NULL;
-+		}
- 	} while (remaining);
- }
- 
--static void dispatch_io(int rw, unsigned int num_regions,
-+static void dispatch_io(struct dm_io_request *io_req, unsigned int num_regions,
- 			struct dm_io_region *where, struct dpages *dp,
- 			struct io *io, int sync)
- {
- 	int i;
-+	int rw = io_req->bi_rw;
- 	struct dpages old_pages = *dp;
- 
- 	BUG_ON(num_regions > DM_IO_MAX_REGIONS);
-@@ -362,7 +374,7 @@ static void dispatch_io(int rw, unsigned int num_regions,
- 	for (i = 0; i < num_regions; i++) {
- 		*dp = old_pages;
- 		if (where[i].count || (rw & REQ_FLUSH))
--			do_region(rw, i, where + i, dp, io);
-+			do_region(io_req, i, where + i, dp, io);
- 	}
- 
- 	/*
-@@ -372,8 +384,8 @@ static void dispatch_io(int rw, unsigned int num_regions,
- 	dec_count(io, 0, 0);
- }
- 
--static int sync_io(struct dm_io_client *client, unsigned int num_regions,
--		   struct dm_io_region *where, int rw, struct dpages *dp,
-+static int sync_io(struct dm_io_request *io_req,  unsigned int num_regions,
-+		   struct dm_io_region *where, struct dpages *dp,
- 		   unsigned long *error_bits)
- {
- 	/*
-@@ -385,7 +397,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 	volatile char io_[sizeof(struct io) + __alignof__(struct io) - 1];
- 	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
- 
--	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
-+	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
- 		WARN_ON(1);
- 		return -EIO;
- 	}
-@@ -393,12 +405,12 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 	io->error_bits = 0;
- 	atomic_set(&io->count, 1); /* see dispatch_io() */
- 	io->sleeper = current;
--	io->client = client;
-+	io->client = io_req->client;
- 
- 	io->vma_invalidate_address = dp->vma_invalidate_address;
- 	io->vma_invalidate_size = dp->vma_invalidate_size;
- 
--	dispatch_io(rw, num_regions, where, dp, io, 1);
-+	dispatch_io(io_req, num_regions, where, dp, io, 1);
- 
- 	while (1) {
- 		set_current_state(TASK_UNINTERRUPTIBLE);
-@@ -416,30 +428,29 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 	return io->error_bits ? -EIO : 0;
- }
- 
--static int async_io(struct dm_io_client *client, unsigned int num_regions,
--		    struct dm_io_region *where, int rw, struct dpages *dp,
--		    io_notify_fn fn, void *context)
-+static int async_io(struct dm_io_request *io_req, unsigned int num_regions,
-+		    struct dm_io_region *where, struct dpages *dp)
- {
- 	struct io *io;
- 
--	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
-+	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
- 		WARN_ON(1);
--		fn(1, context);
-+		io_req->notify.fn(1, io_req->notify.context);
- 		return -EIO;
- 	}
- 
--	io = mempool_alloc(client->pool, GFP_NOIO);
-+	io = mempool_alloc(io_req->client->pool, GFP_NOIO);
- 	io->error_bits = 0;
- 	atomic_set(&io->count, 1); /* see dispatch_io() */
- 	io->sleeper = NULL;
--	io->client = client;
--	io->callback = fn;
--	io->context = context;
-+	io->client = io_req->client;
-+	io->callback = io_req->notify.fn;
-+	io->context = io_req->notify.context;
- 
- 	io->vma_invalidate_address = dp->vma_invalidate_address;
- 	io->vma_invalidate_size = dp->vma_invalidate_size;
- 
--	dispatch_io(rw, num_regions, where, dp, io, 0);
-+	dispatch_io(io_req, num_regions, where, dp, io, 0);
- 	return 0;
- }
- 
-@@ -499,11 +510,10 @@ int dm_io(struct dm_io_request *io_req, unsigned num_regions,
- 		return r;
- 
- 	if (!io_req->notify.fn)
--		return sync_io(io_req->client, num_regions, where,
--			       io_req->bi_rw, &dp, sync_error_bits);
-+		return sync_io(io_req, num_regions, where,
-+				&dp, sync_error_bits);
- 
--	return async_io(io_req->client, num_regions, where, io_req->bi_rw,
--			&dp, io_req->notify.fn, io_req->notify.context);
-+	return async_io(io_req, num_regions, where, &dp);
- }
- EXPORT_SYMBOL(dm_io);
- 
-diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-index bed444c..6a8ecc9 100644
---- a/drivers/md/dm-kcopyd.c
-+++ b/drivers/md/dm-kcopyd.c
-@@ -387,6 +387,7 @@ static int run_io_job(struct kcopyd_job *job)
- 		.notify.fn = complete_io,
- 		.notify.context = job,
- 		.client = job->kc->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	if (job->rw == READ)
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 627d191..8425e84 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -463,6 +463,7 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
- 			kfree(lc);
- 			return r;
- 		}
-+		lc->io_req.submit_bio = 1;
- 
- 		lc->disk_header = vmalloc(buf_size);
- 		if (!lc->disk_header) {
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index bc5ddba..338d726 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -261,6 +261,7 @@ static int mirror_flush(struct dm_target *ti)
- 		.mem.type = DM_IO_KMEM,
- 		.mem.ptr.addr = NULL,
- 		.client = ms->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	for (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++) {
-@@ -530,6 +531,7 @@ static void read_async_bio(struct mirror *m, struct bio *bio)
- 		.notify.fn = read_callback,
- 		.notify.context = bio,
- 		.client = m->ms->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	map_region(&io, m, bio);
-@@ -633,6 +635,7 @@ static void do_write(struct mirror_set *ms, struct bio *bio)
- 		.notify.fn = write_callback,
- 		.notify.context = bio,
- 		.client = ms->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	if (bio->bi_rw & REQ_DISCARD) {
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index 3ac4156..0600e1d 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -241,6 +241,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
- 		.mem.ptr.vma = area,
- 		.client = ps->io_client,
- 		.notify.fn = NULL,
-+		.submit_bio = 1,
- 	};
- 	struct mdata_req req;
- 
-diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
-index f4b0aa3..45f576b 100644
---- a/include/linux/dm-io.h
-+++ b/include/linux/dm-io.h
-@@ -61,6 +61,9 @@ struct dm_io_request {
- 	struct dm_io_memory mem;	/* Memory to use for io */
- 	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
- 	struct dm_io_client *client;	/* Client memory handler */
-+	int submit_bio;
-+	struct bio *start;
-+	struct bio *end;
- };
- 
- /*
--- 
-1.7.1
+But this is basically the approach I've discussed with Harald Hoyer
+and Kay Sievers on how we should facilitate proper systemd integration.
+
+The idea here is to have a udev rule calling 'multipath -c' via
+PROGRAM, so that udev can detect if a device should've been handled
+via multipath.
+Which would allow any rules following that one to evaluate this
+status and possibly skip the device.
+
+So from that perspective the patch should be okay.
+
+However, the one thing to note is this patch _again_ is using
+hard-coded filenames under /etc, which really shouldn't happen.
+We should be introducing a configuration file variable to set it.
+
+> Ben, does this approach supersedes/extends the "complicated blacklisting
+> scheme" you proposed earlier ?
+> =
+
+I sincerely hope so ...
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
