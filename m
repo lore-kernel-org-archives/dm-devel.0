@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: and wwids_file multipath.conf option
-Date: Mon, 20 Aug 2012 17:19:26 -0500
-Message-ID: <20120820221926.GX5299@ether.msp.redhat.com>
+Subject: [PATCH] multipath: fix setting sysfs fc timeout
+	parameters
+Date: Mon, 20 Aug 2012 17:26:46 -0500
+Message-ID: <20120820222646.GY5299@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,154 +22,72 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-This patch adds a wwids_file multipath.conf option, so that users can
-move the wwids file from its default location at /etc/multipath/wwids.
-It also corrects the default bindings file location in the multipath.conf
-manpage and makes the bindings_file value always print out when you 
-display the configuration, like is done with the other default values.
+Multipath was accidentally trying to write to the directory where
+dev_loss_tmo and fast_io_fail_tmo were located instead to the files
+themselves. Also, if dev_loss_tmo was unset, it was trying to set it
+to 0. Finally, it wasn't correctly checking for errors in setting
+the files.  This patch fixes these issues.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c      |    6 +++++-
- libmultipath/config.h      |    1 +
- libmultipath/dict.c        |   24 ++++++++++++++++++++----
- libmultipath/wwids.c       |    3 ++-
- multipath/multipath.conf.5 |    8 +++++++-
- 5 files changed, 35 insertions(+), 7 deletions(-)
+ libmultipath/discovery.c |    7 ++++---
+ libmultipath/sysfs.c     |    7 ++++---
+ 2 files changed, 8 insertions(+), 6 deletions(-)
 
-Index: multipath-tools-120817/libmultipath/config.c
+Index: multipath-tools-120727/libmultipath/discovery.c
 ===================================================================
---- multipath-tools-120817.orig/libmultipath/config.c
-+++ multipath-tools-120817/libmultipath/config.c
-@@ -455,6 +455,8 @@ free_config (struct config * conf)
- 	if (conf->bindings_file)
- 		FREE(conf->bindings_file);
+--- multipath-tools-120727.orig/libmultipath/discovery.c
++++ multipath-tools-120727/libmultipath/discovery.c
+@@ -281,7 +281,8 @@ sysfs_set_rport_tmo(struct multipath *mp
+ 		pp->sg_id.channel, pp->sg_id.scsi_id, rport_id);
  
-+	if (conf->wwids_file)
-+		FREE(conf->wwids_file);
- 	if (conf->prio_name)
- 		FREE(conf->prio_name);
- 
-@@ -505,6 +507,7 @@ load_config (char * file)
- 	conf->minio_rq = DEFAULT_MINIO_RQ;
- 	get_sys_max_fds(&conf->max_fds);
- 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
-+	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
- 	conf->bindings_read_only = 0;
- 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
- 	conf->features = set_default(DEFAULT_FEATURES);
-@@ -603,7 +606,8 @@ load_config (char * file)
- 	if (conf->bindings_file == NULL)
- 		conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
- 
--	if (!conf->multipath_dir || !conf->bindings_file)
-+	if (!conf->multipath_dir || !conf->bindings_file ||
-+	    !conf->wwids_file)
- 		goto out;
- 
- 	return 0;
-Index: multipath-tools-120817/libmultipath/config.h
+ 	snprintf(value, 11, "%u", mpp->dev_loss);
+-	if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11) < 0) {
++	if (mpp->dev_loss &&
++	    sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11) <= 0) {
+ 		if ((!mpp->fast_io_fail ||
+ 		     mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
+ 		    && mpp->dev_loss > 600) {
+@@ -289,7 +290,7 @@ sysfs_set_rport_tmo(struct multipath *mp
+ 				"fast_io_fail is not set", mpp->alias);
+ 			snprintf(value, 11, "%u", 600);
+ 			if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
+-						 value, 11) < 0)
++						 value, 11) <= 0)
+ 				condlog(0, "%s failed to set dev_loss_tmo",
+ 					mpp->alias);
+ 			goto out;
+@@ -303,7 +304,7 @@ sysfs_set_rport_tmo(struct multipath *mp
+ 		else
+ 			snprintf(value, 11, "%u", mpp->fast_io_fail);
+ 		if (sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
+-					 value, 11) < 0) {
++					 value, 11) <= 0) {
+ 			condlog(0, "%s failed to set fast_io_fail_tmo",
+ 				mpp->alias);
+ 		}
+Index: multipath-tools-120727/libmultipath/sysfs.c
 ===================================================================
---- multipath-tools-120817.orig/libmultipath/config.h
-+++ multipath-tools-120817/libmultipath/config.h
-@@ -117,6 +117,7 @@ struct config {
- 	char * features;
- 	char * hwhandler;
- 	char * bindings_file;
-+	char * wwids_file;
- 	char * prio_name;
- 	char * prio_args;
- 	char * checker_name;
-Index: multipath-tools-120817/libmultipath/dict.c
-===================================================================
---- multipath-tools-120817.orig/libmultipath/dict.c
-+++ multipath-tools-120817/libmultipath/dict.c
-@@ -618,6 +618,17 @@ bindings_file_handler(vector strvec)
- 	return 0;
- }
- 
-+static int
-+wwids_file_handler(vector strvec)
-+{
-+	conf->wwids_file = set_value(strvec);
-+
-+	if (!conf->wwids_file)
-+		return 1;
-+
-+	return 0;
-+}
-+
- /*
-  * blacklist block handlers
-  */
-@@ -2570,14 +2581,18 @@ snprint_def_bindings_file (char * buff,
+--- multipath-tools-120727.orig/libmultipath/sysfs.c
++++ multipath-tools-120727/libmultipath/sysfs.c
+@@ -41,7 +41,7 @@
+ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 			     char * value, size_t value_len)
  {
- 	if (conf->bindings_file == NULL)
+-	const char *devpath;
++	char devpath[PATH_SIZE];
+ 	struct stat statbuf;
+ 	int fd;
+ 	ssize_t size = -1;
+@@ -49,8 +49,9 @@ ssize_t sysfs_attr_set_value(struct udev
+ 	if (!dev || !attr_name || !value)
  		return 0;
--	if (strlen(conf->bindings_file) == strlen(DEFAULT_BINDINGS_FILE) &&
--	    !strcmp(conf->bindings_file, DEFAULT_BINDINGS_FILE))
--		return 0;
--
- 	return snprintf(buff, len, "%s", conf->bindings_file);
- }
  
- static int
-+snprint_def_wwids_file (char * buff, int len, void * data)
-+{
-+	if (conf->wwids_file == NULL)
-+		return 0;
-+	return snprintf(buff, len, "%s", conf->wwids_file);
-+}
-+
-+static int
- snprint_def_reservation_key(char * buff, int len, void * data)
- {
- 	return snprintf(buff, len, "%s", conf->reservation_key);
-@@ -2644,6 +2659,7 @@ init_keywords(void)
- 	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
- 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
- 	install_keyword("bindings_file", &bindings_file_handler, &snprint_def_bindings_file);
-+	install_keyword("wwids_file", &wwids_file_handler, &snprint_def_wwids_file);
- 	install_keyword("log_checker_err", &def_log_checker_err_handler, &snprint_def_log_checker_err);
- 	install_keyword("reservation_key", &def_reservation_key_handler, &snprint_def_reservation_key);
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
-Index: multipath-tools-120817/libmultipath/wwids.c
-===================================================================
---- multipath-tools-120817.orig/libmultipath/wwids.c
-+++ multipath-tools-120817/libmultipath/wwids.c
-@@ -13,6 +13,7 @@
- #include "file.h"
- #include "wwids.h"
- #include "defaults.h"
-+#include "config.h"
- 
- /*
-  * Copyright (c) 2010 Benjamin Marzinski, Redhat
-@@ -85,7 +86,7 @@ check_wwids_file(char *wwid, int write_w
- {
- 	int fd, can_write, found, ret;
- 	FILE *f;
--	fd = open_file(DEFAULT_WWIDS_FILE, &can_write, WWIDS_FILE_HEADER);
-+	fd = open_file(conf->wwids_file, &can_write, WWIDS_FILE_HEADER);
- 	if (fd < 0)
- 		return -1;
- 
-Index: multipath-tools-120817/multipath/multipath.conf.5
-===================================================================
---- multipath-tools-120817.orig/multipath/multipath.conf.5
-+++ multipath-tools-120817/multipath/multipath.conf.5
-@@ -353,7 +353,13 @@ cannot be told to stop queueing IO. Sett
- .TP
- .B bindings_file
- The full pathname of the binding file to be used when the user_friendly_names option is set. Defaults to
--.I /var/lib/multipath/bindings
-+.I /etc/multipath/bindings
-+.TP
-+.B wwids_file
-+The full pathname of the wwids file, which is used by multipath to keep track
-+of the wwids for LUNs it has created multipath devices on in the past.
-+Defaults to
-+.I /etc/multipath/wwids
- .TP
- .B log_checker_err
- If set to
+-	devpath = udev_device_get_syspath(dev);
+-	condlog(4, "open '%s'/'%s'", devpath, attr_name);
++	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
++		 attr_name);
++	condlog(4, "open '%s'", devpath);
+ 	if (stat(devpath, &statbuf) != 0) {
+ 		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
+ 		return 0;
