@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 11/20] dm-crypt: avoid deadlock in mempools
-Date: Tue, 21 Aug 2012 11:09:22 +0200
-Message-ID: <d8cb081039c69d67a77ddb094ba69232420c2727.1345477953.git.mbroz@redhat.com>
+Subject: [PATCH 12/20] dm-crypt: simplify cc_pending
+Date: Tue, 21 Aug 2012 11:09:23 +0200
+Message-ID: <b74d12e390333de8f33b67d983af0fda09c7a001.1345477953.git.mbroz@redhat.com>
 References: <cover.1345477953.git.mbroz@redhat.com>
 	<520994e0c87d38ca6abb8dd60760aef993842a32.1345477953.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -25,111 +25,142 @@ To: dm-devel@redhat.com
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-The function crypt_alloc_buffer may be called concurrently. If we allocate
-from the mempool concurrently, there is a possibility of deadlock.
-For example, if we have mempool of 256 pages, two processes, each wanting 256,
-pages allocate from the mempool concurrently, it may deadlock in a situation
-where both processes have allocated 128 pages and the mempool is exhausted.
-
-In order to avoid this scenarios, we allocate the pages under a mutex.
-
-In order to not degrade performance with excessive locking, we try
-non-blocking allocations without a mutex first and if it fails, we fallback
-to a blocking allocation with a mutex.
+This patch removes one extra cc_pending reference from crypt_convert.
+Now, cc_pending represents real number of pending operations.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-crypt.c |   36 +++++++++++++++++++++++++++++++++---
- 1 file changed, 33 insertions(+), 3 deletions(-)
+ drivers/md/dm-crypt.c |   61 +++++++++++++++++++++++--------------------------
+ 1 file changed, 29 insertions(+), 32 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 7f277ef..36bc19c 100644
+index 36bc19c..36c9087 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -124,6 +124,7 @@ struct crypt_config {
- 	mempool_t *req_pool;
- 	mempool_t *page_pool;
- 	struct bio_set *bs;
-+	struct mutex bio_alloc_lock;
+@@ -815,6 +815,20 @@ static void crypt_flush_batch(struct crypt_config *cc, struct list_head *batch)
+ 	INIT_LIST_HEAD(batch);
+ }
  
- 	struct workqueue_struct *io_queue;
- 	unsigned crypt_threads_size;
-@@ -876,24 +877,46 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone);
++static void crypt_dec_pending(struct dm_crypt_io *io);
++static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async);
++
++static void crypt_dec_cc_pending(struct dm_crypt_io *io)
++{
++	if (!atomic_dec_and_test(&io->ctx.cc_pending))
++		return;
++
++	if (bio_data_dir(io->base_bio) == READ)
++		crypt_dec_pending(io);
++	else
++		kcryptd_crypt_write_io_submit(io, 1);
++}
++
  /*
-  * Generate a new unfragmented bio with the given size
-  * This should never violate the device limitations
-+ *
-+ * This function may be called concurrently. If we allocate from the mempool
-+ * concurrently, there is a possibility of deadlock. For example, if we have
-+ * mempool of 256 pages, two processes, each wanting 256, pages allocate from
-+ * the mempool concurrently, it may deadlock in a situation where both processes
-+ * have allocated 128 pages and the mempool is exhausted.
-+ *
-+ * In order to avoid this scenarios, we allocate the pages under a mutex.
-+ *
-+ * In order to not degrade performance with excessive locking, we try
-+ * non-blocking allocations without a mutex first and if it fails, we fallback
-+ * to a blocking allocation with a mutex.
+  * Encrypt / decrypt data from one bio to another one (can be the same one)
   */
- static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
+@@ -827,9 +841,7 @@ static int crypt_convert(struct crypt_config *cc,
+ 
+ 	atomic_set(&ctx->cc_pending, 1);
+ 
+-	while(ctx->idx_in < ctx->bio_in->bi_vcnt &&
+-	      ctx->idx_out < ctx->bio_out->bi_vcnt) {
+-
++	while (1) {
+ 		struct ablkcipher_request *req = crypt_alloc_req(cc, ctx, GFP_NOWAIT);
+ 		if (!req) {
+ 			/*
+@@ -841,25 +853,30 @@ static int crypt_convert(struct crypt_config *cc,
+ 			req = crypt_alloc_req(cc, ctx, GFP_NOIO);
+ 		}
+ 
+-		atomic_inc(&ctx->cc_pending);
+-
+ 		r = crypt_convert_block(cc, ctx, req, &batch);
+ 		if (unlikely(r < 0)) {
+-			atomic_dec(&ctx->cc_pending);
+-			goto flush_ret;
++			crypt_flush_batch(cc, &batch);
++			crypt_dec_cc_pending(container_of(ctx, struct dm_crypt_io, ctx));
++			goto ret;
+ 		}
+ 
+ 		ctx->sector++;
+ 
+-		if (unlikely(++batch_count >= DMREQ_PUSH_BATCH)) {
+-			batch_count = 0;
+-			crypt_flush_batch(cc, &batch);
++		if (ctx->idx_in < ctx->bio_in->bi_vcnt &&
++		    ctx->idx_out < ctx->bio_out->bi_vcnt) {
++			atomic_inc(&ctx->cc_pending);
++			if (unlikely(++batch_count >= DMREQ_PUSH_BATCH)) {
++				batch_count = 0;
++				crypt_flush_batch(cc, &batch);
++			}
++			continue;
+ 		}
++		break;
+ 	}
+ 	r = 0;
+ 
+-flush_ret:
+ 	crypt_flush_batch(cc, &batch);
++ret:
+ 
+ 	return r;
+ }
+@@ -1122,7 +1139,6 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
  {
  	struct crypt_config *cc = io->cc;
  	struct bio *clone;
- 	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
--	gfp_t gfp_mask = GFP_NOIO | __GFP_HIGHMEM;
-+	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
- 	unsigned i, len;
- 	struct page *page;
- 
-+retry:
-+	if (unlikely(gfp_mask & __GFP_WAIT))
-+		mutex_lock(&cc->bio_alloc_lock);
-+
- 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
- 	if (!clone)
--		return NULL;
-+		goto return_clone;
- 
- 	clone_init(io, clone);
- 
- 	for (i = 0; i < nr_iovecs; i++) {
- 		page = mempool_alloc(cc->page_pool, gfp_mask);
-+		if (!page) {
-+			crypt_free_buffer_pages(cc, clone);
-+			bio_put(clone);
-+			gfp_mask |= __GFP_WAIT;
-+			goto retry;
-+		}
- 
- 		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
- 
-@@ -901,12 +924,17 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
- 			mempool_free(page, cc->page_pool);
- 			crypt_free_buffer_pages(cc, clone);
- 			bio_put(clone);
--			return NULL;
-+			clone = NULL;
-+			goto return_clone;
- 		}
- 
- 		size -= len;
- 	}
- 
-+return_clone:
-+	if (unlikely(gfp_mask & __GFP_WAIT))
-+		mutex_unlock(&cc->bio_alloc_lock);
-+
- 	return clone;
+-	int crypt_finished;
+ 	unsigned remaining = io->base_bio->bi_size;
+ 	sector_t sector = io->sector;
+ 	int r;
+@@ -1149,20 +1165,10 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 	r = crypt_convert(cc, &io->ctx);
+ 	if (r)
+ 		io->error = -EIO;
+-	crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
+-
+-	/* Encryption was already finished, submit io now */
+-	if (crypt_finished)
+-		kcryptd_crypt_write_io_submit(io, 0);
+ dec:
+ 	crypt_dec_pending(io);
  }
  
-@@ -1601,6 +1629,8 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
+-static void kcryptd_crypt_read_done(struct dm_crypt_io *io)
+-{
+-	crypt_dec_pending(io);
+-}
+-
+ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
+ {
+ 	struct crypt_config *cc = io->cc;
+@@ -1177,9 +1183,6 @@ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
+ 	if (r < 0)
+ 		io->error = -EIO;
  
-+	mutex_init(&cc->bio_alloc_lock);
-+
- 	ret = -EINVAL;
- 	if (sscanf(argv[2], "%llu%c", &tmpll, &dummy) != 1) {
- 		ti->error = "Invalid iv_offset sector";
+-	if (atomic_dec_and_test(&io->ctx.cc_pending))
+-		kcryptd_crypt_read_done(io);
+-
+ 	crypt_dec_pending(io);
+ }
+ 
+@@ -1204,13 +1207,7 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 
+ 	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
+ 
+-	if (!atomic_dec_and_test(&ctx->cc_pending))
+-		return;
+-
+-	if (bio_data_dir(io->base_bio) == READ)
+-		kcryptd_crypt_read_done(io);
+-	else
+-		kcryptd_crypt_write_io_submit(io, 1);
++	crypt_dec_cc_pending(io);
+ }
+ 
+ static void kcryptd_crypt(struct work_struct *work)
 -- 
 1.7.10.4
