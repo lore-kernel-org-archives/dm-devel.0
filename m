@@ -1,8 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 02/20] dm-crypt: use unbound workqueue for
-	request processing
-Date: Tue, 21 Aug 2012 11:09:13 +0200
-Message-ID: <ca44fed7b535aaddbfb0593860ae98bc69ff2495.1345477953.git.mbroz@redhat.com>
+Subject: [PATCH 07/20] dm-crypt: don't use write queue
+Date: Tue, 21 Aug 2012 11:09:18 +0200
+Message-ID: <ec542a9b43e70319399967ed23b991e62e12d22c.1345477953.git.mbroz@redhat.com>
 References: <cover.1345477953.git.mbroz@redhat.com>
 	<520994e0c87d38ca6abb8dd60760aef993842a32.1345477953.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -26,32 +25,42 @@ To: dm-devel@redhat.com
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Use unbound workqueue so that work is automatically ballanced between
-available CPUs.
-
-Note: workqueue implementation is somehow buggy, so it still does not yield
-full parallelization across multiple CPUs.
+Don't use write queue and allocate write data directly from the request routine.
+There is no need to bounce requests through a queue.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-crypt.c |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ drivers/md/dm-crypt.c |   11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 7a3e8eb..4c8b4e0 100644
+index fd2909d..4fd0d4b 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -1649,8 +1649,9 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	cc->crypt_queue = alloc_workqueue("kcryptd",
- 					  WQ_NON_REENTRANT|
- 					  WQ_CPU_INTENSIVE|
--					  WQ_MEM_RECLAIM,
--					  1);
-+					  WQ_MEM_RECLAIM|
-+					  WQ_UNBOUND,
-+					  num_online_cpus());
- 	if (!cc->crypt_queue) {
- 		ti->error = "Couldn't create kcryptd queue";
- 		goto bad;
+@@ -1278,10 +1278,8 @@ static void kcryptd_crypt(struct work_struct *work)
+ {
+ 	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+ 
+-	if (bio_data_dir(io->base_bio) == READ)
+-		kcryptd_crypt_read_convert(io);
+-	else
+-		kcryptd_crypt_write_convert(io);
++	BUG_ON(bio_data_dir(io->base_bio) != READ);
++	kcryptd_crypt_read_convert(io);
+ }
+ 
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+@@ -1850,8 +1848,9 @@ static int crypt_map(struct dm_target *ti, struct bio *bio,
+ 	if (bio_data_dir(io->base_bio) == READ) {
+ 		if (kcryptd_io_read(io, GFP_NOWAIT))
+ 			kcryptd_queue_io(io);
+-	} else
+-		kcryptd_queue_crypt(io);
++	} else {
++		kcryptd_crypt_write_convert(io);
++	}
+ 
+ 	return DM_MAPIO_SUBMITTED;
+ }
 -- 
 1.7.10.4
