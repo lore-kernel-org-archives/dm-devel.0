@@ -1,8 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 14/20] dm-crypt: move error handling to
-	crypt_convert.
-Date: Tue, 21 Aug 2012 11:09:25 +0200
-Message-ID: <08b17304bd93eacf540dd5c2b10e1aa3d38b680d.1345477953.git.mbroz@redhat.com>
+Subject: [PATCH 06/20] dm-crypt: Introduce an option that sets
+	the number of threads.
+Date: Tue, 21 Aug 2012 11:09:17 +0200
+Message-ID: <d05353ef83d887f765924a045681d69be3ec50e2.1345477953.git.mbroz@redhat.com>
 References: <cover.1345477953.git.mbroz@redhat.com>
 	<520994e0c87d38ca6abb8dd60760aef993842a32.1345477953.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -26,99 +26,183 @@ To: dm-devel@redhat.com
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-This patch moves error handling to crypt_convert and makes crypt_convert
-return void instead of the error number.
+Introduce an option "num_cpus". It allows the user to set the number of
+threads used for encryption. The value "0" means a default.
+
+The default is the number of CPUs in the system, but at most 3.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-crypt.c |   24 +++++++-----------------
- 1 file changed, 7 insertions(+), 17 deletions(-)
+ drivers/md/dm-crypt.c |   96 ++++++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 76 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index bb11a95..6f18838 100644
+index b251e15..fd2909d 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -825,16 +825,16 @@ static void crypt_dec_cc_pending(struct dm_crypt_io *io)
+@@ -34,6 +34,8 @@
+ #define DMREQ_PULL_BATCH			16
+ #define DMREQ_PUSH_BATCH			16
+ 
++#define DM_CRYPT_DEFAULT_CPUS			3
++
  /*
-  * Encrypt / decrypt data from one bio to another one (can be the same one)
+  * context holding the current state of a multi-part conversion
   */
--static int crypt_convert(struct crypt_config *cc,
--			 struct dm_crypt_io *io)
-+static void crypt_convert(struct crypt_config *cc,
-+			  struct dm_crypt_io *io)
+@@ -127,6 +129,7 @@ struct crypt_config {
+ 	struct workqueue_struct *io_queue;
+ 	struct workqueue_struct *crypt_queue;
+ 	unsigned crypt_threads_size;
++	int num_threads_value;	/* the value entered in the arguments */
+ 	struct task_struct **crypt_threads;
+ 
+ 	wait_queue_head_t crypt_thread_wait;
+@@ -1630,9 +1633,14 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	struct dm_arg_set as;
+ 	const char *opt_string;
+ 	char dummy;
++	int num_threads = -1;
+ 
+ 	static struct dm_arg _args[] = {
+-		{0, 1, "Invalid number of feature args"},
++		{0, INT_MAX, "Invalid number of feature args"},
++	};
++
++	static struct dm_arg num_cpu_arg[] = {
++		{0, 65536, "Number of CPUs"},
+ 	};
+ 
+ 	if (argc < 5) {
+@@ -1716,18 +1724,31 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		if (ret)
+ 			goto bad;
+ 
+-		opt_string = dm_shift_arg(&as);
+-
+-		if (opt_params == 1 && opt_string &&
+-		    !strcasecmp(opt_string, "allow_discards"))
+-			ti->num_discard_requests = 1;
+-		else if (opt_params) {
+-			ret = -EINVAL;
+-			ti->error = "Invalid feature arguments";
+-			goto bad;
++		for (i = 0; i < opt_params; i++) {
++			opt_string = dm_shift_arg(&as);
++			if (!strcasecmp(opt_string, "allow_discards")) {
++				ti->num_discard_requests = 1;
++			} else if (!strcasecmp(opt_string, "num_cpus") && i + 1 < opt_params) {
++				ret = dm_read_arg(num_cpu_arg, &as, &num_threads, &ti->error);
++				if (ret)
++					goto bad;
++				i++;
++			} else {
++				ret = -EINVAL;
++				ti->error = "Invalid feature arguments";
++				goto bad;
++			}
+ 		}
+ 	}
+ 
++	cc->num_threads_value = num_threads;
++
++	if (num_threads <= 0) {
++		num_threads = num_online_cpus();
++		if (num_threads > DM_CRYPT_DEFAULT_CPUS)
++			num_threads = DM_CRYPT_DEFAULT_CPUS;
++	}
++
+ 	ret = -ENOMEM;
+ 	cc->io_queue = alloc_workqueue("kcryptd_io",
+ 				       WQ_NON_REENTRANT|
+@@ -1747,9 +1768,15 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
+-	for (i = 0; i < NR_CPUS; i++)
+-		if (cpu_online(i))
+-			cc->crypt_threads_size = i + 1;
++	if (num_threads == num_online_cpus()) {
++		for (i = 0; i < NR_CPUS; i++)
++			if (cpu_online(i))
++				cc->crypt_threads_size = i + 1;
++	} else {
++		if (num_threads > INT_MAX / sizeof(struct task_struct *))
++			num_threads = INT_MAX / sizeof(struct task_struct *);
++		cc->crypt_threads_size = num_threads;
++	}
+ 
+ 	init_waitqueue_head(&cc->crypt_thread_wait);
+ 	INIT_LIST_HEAD(&cc->crypt_thread_list);
+@@ -1761,18 +1788,31 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
+-	for (i = 0; i < cc->crypt_threads_size; i++) {
+-		if (cpu_online(i)) {
+-			cc->crypt_threads[i] = kthread_create_on_node(
+-				dmcrypt_thread, cc, cpu_to_node(i),
+-				"dmcryptd/%d", i);
++	if (num_threads == num_online_cpus())
++		for (i = 0; i < cc->crypt_threads_size; i++) {
++			if (cpu_online(i)) {
++				cc->crypt_threads[i] = kthread_create_on_node(
++					dmcrypt_thread, cc, cpu_to_node(i),
++					"dmcryptd/%d", i);
++				if (IS_ERR(cc->crypt_threads[i])) {
++					ret = PTR_ERR(cc->crypt_threads[i]);
++					cc->crypt_threads[i] = NULL;
++					ti->error = "Couldn't spawn thread";
++					goto bad;
++				}
++				kthread_bind(cc->crypt_threads[i], i);
++				wake_up_process(cc->crypt_threads[i]);
++			}
++	} else {
++		for (i = 0; i < cc->crypt_threads_size; i++) {
++			cc->crypt_threads[i] = kthread_create(
++				dmcrypt_thread, cc, "dmcryptd/%d", i);
+ 			if (IS_ERR(cc->crypt_threads[i])) {
+ 				ret = PTR_ERR(cc->crypt_threads[i]);
+ 				cc->crypt_threads[i] = NULL;
+ 				ti->error = "Couldn't spawn thread";
+ 				goto bad;
+ 			}
+-			kthread_bind(cc->crypt_threads[i], i);
+ 			wake_up_process(cc->crypt_threads[i]);
+ 		}
+ 	}
+@@ -1821,6 +1861,7 @@ static int crypt_status(struct dm_target *ti, status_type_t type,
  {
--	int r;
- 	LIST_HEAD(batch);
- 	unsigned batch_count = 0;
+ 	struct crypt_config *cc = ti->private;
+ 	unsigned int sz = 0;
++	unsigned int num_args;
  
- 	atomic_set(&io->cc_pending, 1);
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+@@ -1845,8 +1886,23 @@ static int crypt_status(struct dm_target *ti, status_type_t type,
+ 		DMEMIT(" %llu %s %llu", (unsigned long long)cc->iv_offset,
+ 				cc->dev->name, (unsigned long long)cc->start);
  
- 	while (1) {
-+		int r;
- 		struct ablkcipher_request *req = crypt_alloc_req(cc, io, GFP_NOWAIT);
- 		if (!req) {
- 			/*
-@@ -849,8 +849,9 @@ static int crypt_convert(struct crypt_config *cc,
- 		r = crypt_convert_block(cc, io, req, &batch);
- 		if (unlikely(r < 0)) {
- 			crypt_flush_batch(cc, &batch);
-+			io->error = -EIO;
- 			crypt_dec_cc_pending(io);
--			goto ret;
-+			return;
- 		}
++		num_args = 0;
++		if (ti->num_discard_requests)
++			num_args++;
++
++		if (cc->num_threads_value >= 0)
++			num_args += 2;
++
++		if (!num_args)
++			break;
++
++		DMEMIT(" %u", num_args);
++
+ 		if (ti->num_discard_requests)
+-			DMEMIT(" 1 allow_discards");
++			DMEMIT(" allow_discards");
++
++		if (cc->num_threads_value >= 0)
++			DMEMIT(" num_cpus %d", cc->num_threads_value);
  
- 		io->sector++;
-@@ -866,12 +867,8 @@ static int crypt_convert(struct crypt_config *cc,
- 		}
  		break;
  	}
--	r = 0;
- 
- 	crypt_flush_batch(cc, &batch);
--ret:
--
--	return r;
- }
- 
- static void dm_crypt_bio_destructor(struct bio *bio)
-@@ -1134,7 +1131,6 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- 	struct bio *clone;
- 	unsigned remaining = io->base_bio->bi_size;
- 	sector_t sector = io->sector;
--	int r;
- 
- 	/*
- 	 * Prevent io from disappearing until this function completes.
-@@ -1155,9 +1151,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- 	sector += bio_sectors(clone);
- 
- 	crypt_inc_pending(io);
--	r = crypt_convert(cc, io);
--	if (r)
--		io->error = -EIO;
-+	crypt_convert(cc, io);
- dec:
- 	crypt_dec_pending(io);
- }
-@@ -1165,17 +1159,13 @@ dec:
- static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->cc;
--	int r = 0;
- 
- 	crypt_inc_pending(io);
- 
- 	crypt_convert_init(cc, io, io->base_bio, io->base_bio,
- 			   io->sector);
- 
--	r = crypt_convert(cc, io);
--	if (r < 0)
--		io->error = -EIO;
--
-+	crypt_convert(cc, io);
- 	crypt_dec_pending(io);
- }
- 
 -- 
 1.7.10.4
