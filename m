@@ -1,12 +1,16 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: New git URLs in old repo are wrong
-Date: Tue, 21 Aug 2012 11:20:53 +0100
-Message-ID: <50336105.7000004@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 20/20] dm-crypt: sort writes
+Date: Tue, 21 Aug 2012 11:57:48 +0100
+Message-ID: <20120821105748.GB29183@agk-dp.fab.redhat.com>
+References: <cover.1345477953.git.mbroz@redhat.com>
+	<55cef4f342136f3b57d7449b88b4eb1fc6fc7569.1345477953.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <55cef4f342136f3b57d7449b88b4eb1fc6fc7569.1345477953.git.mbroz@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,34 +21,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-The URLs for the new git repo in the frozen repo at
-http://sources.redhat.com/git/lvm2.git are wrong:
+On Tue, Aug 21, 2012 at 11:09:31AM +0200, Mikulas Patocka wrote:
+> In theory the sorting should be performed by the underlying disk scheduler,
+> however, in practice the disk scheduler accepts and sorts only 128 requests.
+> In order to sort more requests, we need to implement our own sorting.
+ 
+Why 128?  Isn't this nr_requests?
+(I thought we discussed this before.)
 
-  http://git.fedorahosted.org/git/LVM2.git
-  git clone git://git.fedorahosted.org/git/LVM2.git
-
-Both should be lowercase. Not sure it's worth another commit at this
-stage but it's a trivial change.
-
-commit 53eeeb279e5196d5998bc86fdb744a49bf9c7829
-Author: Bryn M. Reeves <bmr@redhat.com>
-Date:   Tue Aug 21 11:19:04 2012 +0100
-
-    Fix URLs for new git repository
-
-diff --git a/README b/README
-index ff5fa2a..edc306d 100644
---- a/README
-+++ b/README
-@@ -4,8 +4,8 @@ NEWS
- On 7th June 2012, we froze this copy of the source code and moved it to
- fedorahosted.org:
-
--  http://git.fedorahosted.org/git/LVM2.git
--  git clone git://git.fedorahosted.org/git/LVM2.git
-+  http://git.fedorahosted.org/git/lvm2.git
-+  git clone git://git.fedorahosted.org/git/lvm2.git
-
- -------------------------------------------------------------------------------
+Alasdair
