@@ -1,17 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 12/20] dm-crypt: simplify cc_pending
-Date: Tue, 21 Aug 2012 11:09:23 +0200
-Message-ID: <b74d12e390333de8f33b67d983af0fda09c7a001.1345477953.git.mbroz@redhat.com>
-References: <cover.1345477953.git.mbroz@redhat.com>
-	<520994e0c87d38ca6abb8dd60760aef993842a32.1345477953.git.mbroz@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [RFC PATCH 00/20] dm-crypt: parallel processing
+Date: Tue, 21 Aug 2012 11:08:15 +0200
+Message-ID: <cover.1345477953.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <520994e0c87d38ca6abb8dd60760aef993842a32.1345477953.git.mbroz@redhat.com>
-In-Reply-To: <cover.1345477953.git.mbroz@redhat.com>
-References: <cover.1345477953.git.mbroz@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,145 +17,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-This patch removes one extra cc_pending reference from crypt_convert.
-Now, cc_pending represents real number of pending operations.
+Hello,
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
- drivers/md/dm-crypt.c |   61 +++++++++++++++++++++++--------------------------
- 1 file changed, 29 insertions(+), 32 deletions(-)
+I promised to Mikulas that I will post remaining of his dm-crypt parallel
+processing patchset (plus some related changes) with some comments.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 36bc19c..36c9087 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -815,6 +815,20 @@ static void crypt_flush_batch(struct crypt_config *cc, struct list_head *batch)
- 	INIT_LIST_HEAD(batch);
- }
- 
-+static void crypt_dec_pending(struct dm_crypt_io *io);
-+static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async);
-+
-+static void crypt_dec_cc_pending(struct dm_crypt_io *io)
-+{
-+	if (!atomic_dec_and_test(&io->ctx.cc_pending))
-+		return;
-+
-+	if (bio_data_dir(io->base_bio) == READ)
-+		crypt_dec_pending(io);
-+	else
-+		kcryptd_crypt_write_io_submit(io, 1);
-+}
-+
- /*
-  * Encrypt / decrypt data from one bio to another one (can be the same one)
-  */
-@@ -827,9 +841,7 @@ static int crypt_convert(struct crypt_config *cc,
- 
- 	atomic_set(&ctx->cc_pending, 1);
- 
--	while(ctx->idx_in < ctx->bio_in->bi_vcnt &&
--	      ctx->idx_out < ctx->bio_out->bi_vcnt) {
--
-+	while (1) {
- 		struct ablkcipher_request *req = crypt_alloc_req(cc, ctx, GFP_NOWAIT);
- 		if (!req) {
- 			/*
-@@ -841,25 +853,30 @@ static int crypt_convert(struct crypt_config *cc,
- 			req = crypt_alloc_req(cc, ctx, GFP_NOIO);
- 		}
- 
--		atomic_inc(&ctx->cc_pending);
--
- 		r = crypt_convert_block(cc, ctx, req, &batch);
- 		if (unlikely(r < 0)) {
--			atomic_dec(&ctx->cc_pending);
--			goto flush_ret;
-+			crypt_flush_batch(cc, &batch);
-+			crypt_dec_cc_pending(container_of(ctx, struct dm_crypt_io, ctx));
-+			goto ret;
- 		}
- 
- 		ctx->sector++;
- 
--		if (unlikely(++batch_count >= DMREQ_PUSH_BATCH)) {
--			batch_count = 0;
--			crypt_flush_batch(cc, &batch);
-+		if (ctx->idx_in < ctx->bio_in->bi_vcnt &&
-+		    ctx->idx_out < ctx->bio_out->bi_vcnt) {
-+			atomic_inc(&ctx->cc_pending);
-+			if (unlikely(++batch_count >= DMREQ_PUSH_BATCH)) {
-+				batch_count = 0;
-+				crypt_flush_batch(cc, &batch);
-+			}
-+			continue;
- 		}
-+		break;
- 	}
- 	r = 0;
- 
--flush_ret:
- 	crypt_flush_batch(cc, &batch);
-+ret:
- 
- 	return r;
- }
-@@ -1122,7 +1139,6 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->cc;
- 	struct bio *clone;
--	int crypt_finished;
- 	unsigned remaining = io->base_bio->bi_size;
- 	sector_t sector = io->sector;
- 	int r;
-@@ -1149,20 +1165,10 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- 	r = crypt_convert(cc, &io->ctx);
- 	if (r)
- 		io->error = -EIO;
--	crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
--
--	/* Encryption was already finished, submit io now */
--	if (crypt_finished)
--		kcryptd_crypt_write_io_submit(io, 0);
- dec:
- 	crypt_dec_pending(io);
- }
- 
--static void kcryptd_crypt_read_done(struct dm_crypt_io *io)
--{
--	crypt_dec_pending(io);
--}
--
- static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->cc;
-@@ -1177,9 +1183,6 @@ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
- 	if (r < 0)
- 		io->error = -EIO;
- 
--	if (atomic_dec_and_test(&io->ctx.cc_pending))
--		kcryptd_crypt_read_done(io);
--
- 	crypt_dec_pending(io);
- }
- 
-@@ -1204,13 +1207,7 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
- 
- 	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
- 
--	if (!atomic_dec_and_test(&ctx->cc_pending))
--		return;
--
--	if (bio_data_dir(io->base_bio) == READ)
--		kcryptd_crypt_read_done(io);
--	else
--		kcryptd_crypt_write_io_submit(io, 1);
-+	crypt_dec_cc_pending(io);
- }
- 
- static void kcryptd_crypt(struct work_struct *work)
--- 
-1.7.10.4
+The problem:
+
+The current implementation (using per cpu struct) always use encryption
+on the same CPU which submitted IO.
+
+With very fast storage (usually SSD or MD RAID0) one CPU core can
+be limiting and the throughput of encrypted disk is worse in
+comparison with underlying storage.
+
+Idea here is to distribute encryption to other CPU cores/CPUs.
+
+(Side effect of patches is nice clean up dmcrypt code. :)
+
+Mikulas Patocka (20):
+  dm-crypt: remove per-cpu structure
+  dm-crypt: use unbound workqueue for request processing
+  dm-crypt: remove completion restart
+  dm-crypt: use encryption threads
+  dm-crypt: Unify spinlock
+  dm-crypt: Introduce an option that sets the number of threads.
+  dm-crypt: don't use write queue
+  dm-crypt: simplify io queue
+  dm-crypt: unify io_queue and crypt_queue
+  dm-crypt: don't allocate pages for a partial request.
+  dm-crypt: avoid deadlock in mempools
+  dm-crypt: simplify cc_pending
+  dm-crypt merge convert_context and dm_crypt_io
+  dm-crypt: move error handling to crypt_convert.
+  dm-crypt: remove io_pending field
+  dm-crypt: small changes
+  dm-crypt: move temporary values to stack
+  dm-crypt: offload writes to thread
+  dm-crypt: retain write ordering
+  dm-crypt: sort writes
+
+ drivers/md/dm-crypt.c |  838 +++++++++++++++++++++++++++----------------------
+ 1 file changed, 464 insertions(+), 374 deletions(-)
+
+
+My notes:
+
+I extensively tested this (on top of 3.6.0-rc2) and while I like
+simplification and the main logic (if we have enough power why
+not use other CPUs) I see several problems here.
+
+1) The implementation is not much useful on modern CPUs with hw accelerated
+AES (with AES-NI even one core can saturate very fast storage).
+(Some optimized crypto behaves similar, like twofish optimized modules.)
+
+2) The patchset targets linear access pattern mainly and one
+process generating IOs. (With more processes/CPUs generating IOs
+you get parallel processing even with current code.)
+
+I can see significant improvement (~30%) for linear read
+(if not using AES-NI) and if underlying storage is zero target
+(ideal situation removing scheduler from the stack).
+
+For random access pattern (and more IO producers) I cannot find
+reliable improvement except ideal zero target case (where improvement
+is always >30%). For more producers it doesn't help at all.
+I tested RAID0 over SATA disks and very fast SSD on quad core cpu,
+dmcrypt running with 1, 3 or 4 threads (and with cfq and noop scheduler)
+using fio threaded test with 1 or 4 threads.
+
+Notes to implementation:
+
+1) Last two patches (19/20) provides sorting of IO requests, this
+logically should be done in IO scheduler.
+
+I don't think this should be in dmcrypt, if scheduler doesn't work
+properly, it should be fixed or tuned for crypt access pattern.
+
+2) Could be kernel workqueue used/fixed here instead? Basically all it needs
+is to prefer submitting CPU, if it is busy just move work to another CPU.
+
+3) It doesn't honour CPU hotplugging. Number of CPU is determined
+in crypt constructor. If hotplugging is used for CPU power saving,
+it will not work properly.
+
+4) With debugging options on, everything is extremely slower
+(Perhaps bug in some debug option, I just noticed this on Fedora
+rawhide with all debug on.)
+
+
+I posted it mainly because I think this should move forward,
+whatever direction...
+
+Milan
