@@ -1,59 +1,116 @@
-From: Adrian Bunk <bunk@kernel.org>
-Subject: Re: [PATCH v6 08/13] block: Add an explicit bio flag for
- bios that own their bvec
-Date: Wed, 22 Aug 2012 23:00:38 +0300
-Message-ID: <20120822200038.GB27453@bunk.dyndns.info>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v6 06/13] block: Consolidate bio_alloc_bioset(),
+ bio_kmalloc()
+Date: Wed, 22 Aug 2012 13:17:30 -0700
+Message-ID: <20120822201730.GI19212@google.com>
 References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
-	<1345655050-28199-9-git-send-email-koverstreet@google.com>
-	<20120822174351.GA27453@bunk.dyndns.info>
-	<20120822192241.GA30084@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+ <1345655050-28199-7-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120822192241.GA30084@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kent Overstreet <koverstreet@google.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Adrian Bunk <bunk@kernel.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, mpatocka@redhat.com, bharrosh@panasas.com, tj@kernel.org, vgoyal@redhat.com
+In-Reply-To: <1345655050-28199-7-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Aug 22, 2012 at 12:22:41PM -0700, Kent Overstreet wrote:
-> On Wed, Aug 22, 2012 at 08:43:52PM +0300, Adrian Bunk wrote:
-> > On Wed, Aug 22, 2012 at 10:04:05AM -0700, Kent Overstreet wrote:
-> > >...
-> > > --- a/include/linux/blk_types.h
-> > > +++ b/include/linux/blk_types.h
-> > > @@ -117,6 +117,7 @@ struct bio {
-> > >   * BIO_POOL_IDX()
-> > >   */
-> > >  #define BIO_RESET_BITS	12
-> > > +#define BIO_OWNS_VEC	12	/* bio_free() should free bvec */
-> > >...
-> > 
-> > This doesn't look right.
-> 
-> Well, the first 12 bits are reset, so bit 12 will get preserved... I
-> guess it's unusual to have a duplicated enum value like that but
-> BIO_RESET_BITS is just a marker, not a real bit.
+Hello,
 
-Wouldn't a BIO_RESET_MASK be better than BIO_RESET_BITS?
+On Wed, Aug 22, 2012 at 10:04:03AM -0700, Kent Overstreet wrote:
+> Previously, bio_kmalloc() and bio_alloc_bioset() behaved slightly
+> different because there was some almost-duplicated code - this fixes
+> that issue.
 
-cu
-Adrian
+What were those slight differences?  Why is it safe to change the
+behaviors to match each other?
+
+>  struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>  {
+> +	unsigned front_pad;
+> +	unsigned inline_vecs;
+>  	unsigned long idx = BIO_POOL_NONE;
+>  	struct bio_vec *bvl = NULL;
+>  	struct bio *bio;
+>  	void *p;
+>  
+> -	p = mempool_alloc(bs->bio_pool, gfp_mask);
+> +	if (nr_iovecs > UIO_MAXIOV)
+> +		return NULL;
+
+This test used to only happen for bio_kmalloc().  If I follow the code
+I can see that UIO_MAXIOV is larger than BIOVEC_MAX_IDX, so this
+doesn't really affect the capability of bioset allocs; however, given
+that bioset allocation already checks against BIOVEC_MAX_IDX, I don't
+see why this test is now also applied to them.
+
+> +	if (bs == BIO_KMALLOC_POOL) {
+> +		p = kmalloc(sizeof(struct bio) +
+> +			    nr_iovecs * sizeof(struct bio_vec),
+> +			    gfp_mask);
+> +		front_pad = 0;
+> +		inline_vecs = nr_iovecs;
+> +	} else {
+> +		p = mempool_alloc(bs->bio_pool, gfp_mask);
+> +		front_pad = bs->front_pad;
+> +		inline_vecs = BIO_INLINE_VECS;
+> +	}
+> +
+>  	if (unlikely(!p))
+>  		return NULL;
+> -	bio = p + bs->front_pad;
+>  
+> +	bio = p + front_pad;
+>  	bio_init(bio);
+> -	bio->bi_pool = bs;
+>  
+> -	if (unlikely(!nr_iovecs))
+> -		goto out_set;
+> -
+> -	if (nr_iovecs <= BIO_INLINE_VECS) {
+> -		bvl = bio->bi_inline_vecs;
+> -		nr_iovecs = BIO_INLINE_VECS;
+> -	} else {
+> +	if (nr_iovecs > inline_vecs) {
+>  		bvl = bvec_alloc_bs(gfp_mask, nr_iovecs, &idx, bs);
+>  		if (unlikely(!bvl))
+>  			goto err_free;
+> -
+> -		nr_iovecs = bvec_nr_vecs(idx);
+> +	} else if (nr_iovecs) {
+> +		bvl = bio->bi_inline_vecs;
+>  	}
+> -out_set:
+> +
+> +	bio->bi_pool = bs;
+>  	bio->bi_flags |= idx << BIO_POOL_OFFSET;
+>  	bio->bi_max_vecs = nr_iovecs;
+>  	bio->bi_io_vec = bvl;
+> @@ -331,63 +340,6 @@ err_free:
+>  }
+>  EXPORT_SYMBOL(bio_alloc_bioset);
+
+> +extern struct bio_set *fs_bio_set;
+> +
+> +static inline struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+> +{
+> +	return bio_alloc_bioset(gfp_mask, nr_iovecs, fs_bio_set);
+> +}
+> +
+> +#define BIO_KMALLOC_POOL NULL
+> +
+> +static inline struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+> +{
+> +	return bio_alloc_bioset(gfp_mask, nr_iovecs, BIO_KMALLOC_POOL);
+> +}
+
+And we lose /** comments on two exported functions and
+bio_alloc_bioset() comment doesn't explain that it now also handles
+NULL bioset case.  Now that they share common implementation, you can
+update bio_alloc_bioset() and refer to it from its wrappers but please
+don't drop them like this.
+
+Thanks.
 
 -- 
-
-       "Is there not promise of rain?" Ling Tan asked suddenly out
-        of the darkness. There had been need of rain for many days.
-       "Only a promise," Lao Er said.
-                                       Pearl S. Buck - Dragon Seed
+tejun
