@@ -1,156 +1,396 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v6 09/13] block: Rename bio_split() -> bio_pair_split()
-Date: Wed, 22 Aug 2012 10:04:06 -0700
-Message-ID: <1345655050-28199-10-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v6 01/13] block: Generalized bio pool freeing
+Date: Wed, 22 Aug 2012 10:03:58 -0700
+Message-ID: <1345655050-28199-2-git-send-email-koverstreet@google.com>
 References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1345655050-28199-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>, Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1345655050-28199-1-git-send-email-koverstreet@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <koverstreet@google.com>, mpatocka@redhat.com, Alasdair Kergon <agk@redhat.com>, bharrosh@panasas.com, tj@kernel.org, Lars Ellenberg <lars.ellenberg@linbit.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-This is prep work for introducing a more general bio_split()
+With the old code, when you allocate a bio from a bio pool you have to
+implement your own destructor that knows how to find the bio pool the
+bio was originally allocated from.
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>
-CC: Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>
-CC: Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
+This adds a new field to struct bio (bi_pool) and changes
+bio_alloc_bioset() to use it. This makes various bio destructors
+unnecessary, so they're then deleted.
+
+v6: Explain the temporary if statement in bio_put
+
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
+CC: NeilBrown <neilb@suse.de>
+CC: Alasdair Kergon <agk@redhat.com>
+CC: Nicholas Bellinger <nab@linux-iscsi.org>
+CC: Lars Ellenberg <lars.ellenberg@linbit.com>
+Acked-by: Tejun Heo <tj@kernel.org>
 ---
- drivers/block/drbd/drbd_req.c | 2 +-
- drivers/block/pktcdvd.c       | 2 +-
- drivers/block/rbd.c           | 3 ++-
- drivers/md/linear.c           | 2 +-
- drivers/md/raid0.c            | 6 +++---
- drivers/md/raid10.c           | 4 ++--
- fs/bio.c                      | 4 ++--
- include/linux/bio.h           | 2 +-
- 8 files changed, 13 insertions(+), 12 deletions(-)
+ drivers/block/drbd/drbd_main.c      | 13 +------------
+ drivers/md/dm-crypt.c               |  9 ---------
+ drivers/md/dm-io.c                  | 11 -----------
+ drivers/md/dm.c                     | 20 --------------------
+ drivers/md/md.c                     | 28 ++++------------------------
+ drivers/target/target_core_iblock.c |  9 ---------
+ fs/bio.c                            | 31 +++++++++++++------------------
+ include/linux/blk_types.h           |  3 +++
+ 8 files changed, 21 insertions(+), 103 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-index 910335c..fbb0471 100644
---- a/drivers/block/drbd/drbd_req.c
-+++ b/drivers/block/drbd/drbd_req.c
-@@ -1149,7 +1149,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
- 		const int sps = 1 << HT_SHIFT; /* sectors per slot */
- 		const int mask = sps - 1;
- 		const sector_t first_sectors = sps - (sect & mask);
--		bp = bio_split(bio, first_sectors);
-+		bp = bio_pair_split(bio, first_sectors);
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index dbe6135..5964459 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -161,23 +161,12 @@ static const struct block_device_operations drbd_ops = {
+ 	.release = drbd_release,
+ };
  
- 		/* we need to get a "reference count" (ap_bio_cnt)
- 		 * to avoid races with the disconnect/reconnect/suspend code.
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index ae55f08..18393a1 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -2469,7 +2469,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
- 		if (last_zone != zone) {
- 			BUG_ON(last_zone != zone + pd->settings.size);
- 			first_sectors = last_zone - bio->bi_sector;
--			bp = bio_split(bio, first_sectors);
-+			bp = bio_pair_split(bio, first_sectors);
- 			BUG_ON(!bp);
- 			pkt_make_request(q, &bp->bio1);
- 			pkt_make_request(q, &bp->bio2);
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 9917943..1f5b483 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -751,7 +751,8 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+-static void bio_destructor_drbd(struct bio *bio)
+-{
+-	bio_free(bio, drbd_md_io_bio_set);
+-}
+-
+ struct bio *bio_alloc_drbd(gfp_t gfp_mask)
+ {
+-	struct bio *bio;
+-
+ 	if (!drbd_md_io_bio_set)
+ 		return bio_alloc(gfp_mask, 1);
  
- 			/* split the bio. We'll release it either in the next
- 			   call, or it will have to be released outside */
--			bp = bio_split(old_chain, (len - total) / SECTOR_SIZE);
-+			bp = bio_pair_split(old_chain,
-+					    (len - total) / SECTOR_SIZE);
- 			if (!bp)
- 				goto err_out;
+-	bio = bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+-	if (!bio)
+-		return NULL;
+-	bio->bi_destructor = bio_destructor_drbd;
+-	return bio;
++	return bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+ }
  
-diff --git a/drivers/md/linear.c b/drivers/md/linear.c
-index fa211d8..e860cb9 100644
---- a/drivers/md/linear.c
-+++ b/drivers/md/linear.c
-@@ -314,7 +314,7 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
+ #ifdef __CHECKER__
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 664743d..3c0acba 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -798,14 +798,6 @@ static int crypt_convert(struct crypt_config *cc,
+ 	return 0;
+ }
  
- 		rcu_read_unlock();
+-static void dm_crypt_bio_destructor(struct bio *bio)
+-{
+-	struct dm_crypt_io *io = bio->bi_private;
+-	struct crypt_config *cc = io->cc;
+-
+-	bio_free(bio, cc->bs);
+-}
+-
+ /*
+  * Generate a new unfragmented bio with the given size
+  * This should never violate the device limitations
+@@ -974,7 +966,6 @@ static void clone_init(struct dm_crypt_io *io, struct bio *clone)
+ 	clone->bi_end_io  = crypt_endio;
+ 	clone->bi_bdev    = cc->dev->bdev;
+ 	clone->bi_rw      = io->base_bio->bi_rw;
+-	clone->bi_destructor = dm_crypt_bio_destructor;
+ }
  
--		bp = bio_split(bio, end_sector - bio->bi_sector);
-+		bp = bio_pair_split(bio, end_sector - bio->bi_sector);
+ static int kcryptd_io_read(struct dm_crypt_io *io, gfp_t gfp)
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index ea5dd28..1c46f97 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -249,16 +249,6 @@ static void vm_dp_init(struct dpages *dp, void *data)
+ 	dp->context_ptr = data;
+ }
  
- 		linear_make_request(mddev, &bp->bio1);
- 		linear_make_request(mddev, &bp->bio2);
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index de63a1f..c89c8aa 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -516,11 +516,11 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
- 		 * refuse to split for us, so we need to split it.
- 		 */
- 		if (likely(is_power_of_2(chunk_sects)))
--			bp = bio_split(bio, chunk_sects - (sector &
-+			bp = bio_pair_split(bio, chunk_sects - (sector &
- 							   (chunk_sects-1)));
- 		else
--			bp = bio_split(bio, chunk_sects -
--				       sector_div(sector, chunk_sects));
-+			bp = bio_pair_split(bio, chunk_sects -
-+					    sector_div(sector, chunk_sects));
- 		raid0_make_request(mddev, &bp->bio1);
- 		raid0_make_request(mddev, &bp->bio2);
- 		bio_pair_release(bp);
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 1c2eb38..0f31ec4 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1087,8 +1087,8 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 		/* This is a one page bio that upper layers
- 		 * refuse to split for us, so we need to split it.
- 		 */
--		bp = bio_split(bio,
--			       chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
-+		bp = bio_pair_split(bio,
-+				    chunk_sects - (bio->bi_sector & (chunk_sects - 1)) );
+-static void dm_bio_destructor(struct bio *bio)
+-{
+-	unsigned region;
+-	struct io *io;
+-
+-	retrieve_io_and_region_from_bio(bio, &io, &region);
+-
+-	bio_free(bio, io->client->bios);
+-}
+-
+ /*
+  * Functions for getting the pages from kernel memory.
+  */
+@@ -317,7 +307,6 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 		bio->bi_sector = where->sector + (where->count - remaining);
+ 		bio->bi_bdev = where->bdev;
+ 		bio->bi_end_io = endio;
+-		bio->bi_destructor = dm_bio_destructor;
+ 		store_io_and_region_in_bio(bio, io, region);
  
- 		/* Each of these 'make_request' calls will call 'wait_barrier'.
- 		 * If the first succeeds but the second blocks due to the resync
+ 		if (rw & REQ_DISCARD) {
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4e09b6f..0c3d6dd 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -681,11 +681,6 @@ static void clone_endio(struct bio *bio, int error)
+ 		}
+ 	}
+ 
+-	/*
+-	 * Store md for cleanup instead of tio which is about to get freed.
+-	 */
+-	bio->bi_private = md->bs;
+-
+ 	free_tio(md, tio);
+ 	bio_put(bio);
+ 	dec_pending(io, error);
+@@ -1032,11 +1027,6 @@ static void __map_bio(struct dm_target *ti, struct bio *clone,
+ 		/* error the io and bail out, or requeue it if needed */
+ 		md = tio->io->md;
+ 		dec_pending(tio->io, r);
+-		/*
+-		 * Store bio_set for cleanup.
+-		 */
+-		clone->bi_end_io = NULL;
+-		clone->bi_private = md->bs;
+ 		bio_put(clone);
+ 		free_tio(md, tio);
+ 	} else if (r) {
+@@ -1055,13 +1045,6 @@ struct clone_info {
+ 	unsigned short idx;
+ };
+ 
+-static void dm_bio_destructor(struct bio *bio)
+-{
+-	struct bio_set *bs = bio->bi_private;
+-
+-	bio_free(bio, bs);
+-}
+-
+ /*
+  * Creates a little bio that just does part of a bvec.
+  */
+@@ -1073,7 +1056,6 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
+ 	struct bio_vec *bv = bio->bi_io_vec + idx;
+ 
+ 	clone = bio_alloc_bioset(GFP_NOIO, 1, bs);
+-	clone->bi_destructor = dm_bio_destructor;
+ 	*clone->bi_io_vec = *bv;
+ 
+ 	clone->bi_sector = sector;
+@@ -1105,7 +1087,6 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
+ 
+ 	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
+ 	__bio_clone(clone, bio);
+-	clone->bi_destructor = dm_bio_destructor;
+ 	clone->bi_sector = sector;
+ 	clone->bi_idx = idx;
+ 	clone->bi_vcnt = idx + bv_count;
+@@ -1150,7 +1131,6 @@ static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
+ 	 */
+ 	clone = bio_alloc_bioset(GFP_NOIO, ci->bio->bi_max_vecs, ci->md->bs);
+ 	__bio_clone(clone, ci->bio);
+-	clone->bi_destructor = dm_bio_destructor;
+ 	if (len) {
+ 		clone->bi_sector = ci->sector;
+ 		clone->bi_size = to_bytes(len);
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 3f6203a..b8eebe3 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -155,32 +155,17 @@ static int start_readonly;
+  * like bio_clone, but with a local bio set
+  */
+ 
+-static void mddev_bio_destructor(struct bio *bio)
+-{
+-	struct mddev *mddev, **mddevp;
+-
+-	mddevp = (void*)bio;
+-	mddev = mddevp[-1];
+-
+-	bio_free(bio, mddev->bio_set);
+-}
+-
+ struct bio *bio_alloc_mddev(gfp_t gfp_mask, int nr_iovecs,
+ 			    struct mddev *mddev)
+ {
+ 	struct bio *b;
+-	struct mddev **mddevp;
+ 
+ 	if (!mddev || !mddev->bio_set)
+ 		return bio_alloc(gfp_mask, nr_iovecs);
+ 
+-	b = bio_alloc_bioset(gfp_mask, nr_iovecs,
+-			     mddev->bio_set);
++	b = bio_alloc_bioset(gfp_mask, nr_iovecs, mddev->bio_set);
+ 	if (!b)
+ 		return NULL;
+-	mddevp = (void*)b;
+-	mddevp[-1] = mddev;
+-	b->bi_destructor = mddev_bio_destructor;
+ 	return b;
+ }
+ EXPORT_SYMBOL_GPL(bio_alloc_mddev);
+@@ -189,18 +174,14 @@ struct bio *bio_clone_mddev(struct bio *bio, gfp_t gfp_mask,
+ 			    struct mddev *mddev)
+ {
+ 	struct bio *b;
+-	struct mddev **mddevp;
+ 
+ 	if (!mddev || !mddev->bio_set)
+ 		return bio_clone(bio, gfp_mask);
+ 
+-	b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs,
+-			     mddev->bio_set);
++	b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, mddev->bio_set);
+ 	if (!b)
+ 		return NULL;
+-	mddevp = (void*)b;
+-	mddevp[-1] = mddev;
+-	b->bi_destructor = mddev_bio_destructor;
++
+ 	__bio_clone(b, bio);
+ 	if (bio_integrity(bio)) {
+ 		int ret;
+@@ -5006,8 +4987,7 @@ int md_run(struct mddev *mddev)
+ 	}
+ 
+ 	if (mddev->bio_set == NULL)
+-		mddev->bio_set = bioset_create(BIO_POOL_SIZE,
+-					       sizeof(struct mddev *));
++		mddev->bio_set = bioset_create(BIO_POOL_SIZE, 0);
+ 
+ 	spin_lock(&pers_lock);
+ 	pers = find_pers(mddev->level, mddev->clevel);
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index 76db75e..e58cd7d 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -543,14 +543,6 @@ static void iblock_complete_cmd(struct se_cmd *cmd)
+ 	kfree(ibr);
+ }
+ 
+-static void iblock_bio_destructor(struct bio *bio)
+-{
+-	struct se_cmd *cmd = bio->bi_private;
+-	struct iblock_dev *ib_dev = cmd->se_dev->dev_ptr;
+-
+-	bio_free(bio, ib_dev->ibd_bio_set);
+-}
+-
+ static struct bio *
+ iblock_get_bio(struct se_cmd *cmd, sector_t lba, u32 sg_num)
+ {
+@@ -572,7 +564,6 @@ iblock_get_bio(struct se_cmd *cmd, sector_t lba, u32 sg_num)
+ 
+ 	bio->bi_bdev = ib_dev->ibd_bd;
+ 	bio->bi_private = cmd;
+-	bio->bi_destructor = iblock_bio_destructor;
+ 	bio->bi_end_io = &iblock_bio_done;
+ 	bio->bi_sector = lba;
+ 	return bio;
 diff --git a/fs/bio.c b/fs/bio.c
-index b9c022c..2f2cf19 100644
+index 5eaa70c..86e0534 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -1495,7 +1495,7 @@ static void bio_pair_end_2(struct bio *bi, int err)
- /*
-  * split a bio - only worry about a bio with a single page in its iovec
-  */
--struct bio_pair *bio_split(struct bio *bi, int first_sectors)
-+struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors)
+@@ -271,10 +271,6 @@ EXPORT_SYMBOL(bio_init);
+  *   bio_alloc_bioset will try its own mempool to satisfy the allocation.
+  *   If %__GFP_WAIT is set then we will block on the internal pool waiting
+  *   for a &struct bio to become free.
+- *
+- *   Note that the caller must set ->bi_destructor on successful return
+- *   of a bio, to do the appropriate freeing of the bio once the reference
+- *   count drops to zero.
+  **/
+ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
  {
- 	struct bio_pair *bp = mempool_alloc(bio_split_pool, GFP_NOIO);
+@@ -289,6 +285,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ 	bio = p + bs->front_pad;
  
-@@ -1538,7 +1538,7 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
+ 	bio_init(bio);
++	bio->bi_pool = bs;
  
- 	return bp;
+ 	if (unlikely(!nr_iovecs))
+ 		goto out_set;
+@@ -315,11 +312,6 @@ err_free:
  }
--EXPORT_SYMBOL(bio_split);
-+EXPORT_SYMBOL(bio_pair_split);
+ EXPORT_SYMBOL(bio_alloc_bioset);
  
+-static void bio_fs_destructor(struct bio *bio)
+-{
+-	bio_free(bio, fs_bio_set);
+-}
+-
  /**
-  *      bio_sector_offset - Find hardware sector offset in bio
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 427d05a..13f4188 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -201,7 +201,7 @@ struct bio_pair {
- 	atomic_t			cnt;
- 	int				error;
- };
--extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
-+extern struct bio_pair *bio_pair_split(struct bio *bi, int first_sectors);
- extern void bio_pair_release(struct bio_pair *dbio);
+  *	bio_alloc - allocate a new bio, memory pool backed
+  *	@gfp_mask: allocation mask to use
+@@ -341,12 +333,7 @@ static void bio_fs_destructor(struct bio *bio)
+  */
+ struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+ {
+-	struct bio *bio = bio_alloc_bioset(gfp_mask, nr_iovecs, fs_bio_set);
+-
+-	if (bio)
+-		bio->bi_destructor = bio_fs_destructor;
+-
+-	return bio;
++	return bio_alloc_bioset(gfp_mask, nr_iovecs, fs_bio_set);
+ }
+ EXPORT_SYMBOL(bio_alloc);
  
- extern struct bio_set *bioset_create(unsigned int, unsigned int);
+@@ -422,7 +409,16 @@ void bio_put(struct bio *bio)
+ 	if (atomic_dec_and_test(&bio->bi_cnt)) {
+ 		bio_disassociate_task(bio);
+ 		bio->bi_next = NULL;
+-		bio->bi_destructor(bio);
++
++		/*
++		 * This if statement is temporary - bi_pool is replacing
++		 * bi_destructor, but bi_destructor will be taken out in another
++		 * patch.
++		 */
++		if (bio->bi_pool)
++			bio_free(bio, bio->bi_pool);
++		else
++			bio->bi_destructor(bio);
+ 	}
+ }
+ EXPORT_SYMBOL(bio_put);
+@@ -473,12 +469,11 @@ EXPORT_SYMBOL(__bio_clone);
+  */
+ struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
+ {
+-	struct bio *b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, fs_bio_set);
++	struct bio *b = bio_alloc(gfp_mask, bio->bi_max_vecs);
+ 
+ 	if (!b)
+ 		return NULL;
+ 
+-	b->bi_destructor = bio_fs_destructor;
+ 	__bio_clone(b, bio);
+ 
+ 	if (bio_integrity(bio)) {
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 7b7ac9c..af9dd9d 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -80,6 +80,9 @@ struct bio {
+ 	struct bio_integrity_payload *bi_integrity;  /* data integrity */
+ #endif
+ 
++	/* If bi_pool is non NULL, bi_destructor is not called */
++	struct bio_set		*bi_pool;
++
+ 	bio_destructor_t	*bi_destructor;	/* destructor */
+ 
+ 	/*
 -- 
 1.7.12
