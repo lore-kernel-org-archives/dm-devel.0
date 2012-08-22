@@ -1,104 +1,180 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] dm table: clear add_random unless all devices
-	have it set
-Date: Wed, 22 Aug 2012 19:06:16 +0200
-Message-ID: <1345655176-22950-1-git-send-email-mbroz@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and
+ naive hashtable
+Date: Wed, 22 Aug 2012 11:01:38 -0700
+Message-ID: <20120822180138.GA19212@google.com>
+References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com>
+	<1345602432-27673-2-git-send-email-levinsasha928@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
+Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1345602432-27673-2-git-send-email-levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://openvswitch.org/pipermail/dev>
+List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
+List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
+Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+To: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: dm-devel.ids
 
-The QUEUE_FLAG_ADD_RANDOM specifies if queue IO timings contribute
-to random pool.
+Hello, Sasha.
 
-For bio based target is this flag always 0 because target
-has no real queue.
+On Wed, Aug 22, 2012 at 04:26:56AM +0200, Sasha Levin wrote:
+> +#define DEFINE_HASHTABLE(name, bits)					\
+> +	struct hlist_head name[HASH_SIZE(bits)];
 
-For request-based device was this flag always set to 1 (default).
+Shouldn't this be something like the following?
 
-Set it according to flags on underlying devices (if there is at least
-one device which should not contribute, set flag to zero).
-If device is not suitable (fast SSD storage) for collecting entropy,
-request base queue stacked over it will not be either.
+#define DEFINE_HASHTABLE(name, bits)					\
+	struct hlist_head name[HASH_SIZE(bits)] =			\
+		{ [0 ... HASH_SIZE(bits) - 1] = HLIST_HEAD_INIT };
 
-Because checking logic is exactly same as for rotational flag,
-create one common function which take iteration function
-as parameter.
+Also, given that the declaration isn't non-trivial, you'll probably
+want a matching DECLARE_HASHTABLE() macro too.
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
----
- drivers/md/dm-table.c |   24 ++++++++++++++++++++----
- 1 file changed, 20 insertions(+), 4 deletions(-)
+> +/* Use hash_32 when possible to allow for fast 32bit hashing in 64bit kernels. */
+> +#define hash_min(val, bits) ((sizeof(val)==4) ? hash_32((val), (bits)) : hash_long((val), (bits)))
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index f900690..66f7880 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1354,17 +1354,25 @@ static int device_is_nonrot(struct dm_target *ti, struct dm_dev *dev,
- 	return q && blk_queue_nonrot(q);
- }
- 
--static bool dm_table_is_nonrot(struct dm_table *t)
-+static int device_no_random(struct dm_target *ti, struct dm_dev *dev,
-+			     sector_t start, sector_t len, void *data)
-+{
-+	struct request_queue *q = bdev_get_queue(dev->bdev);
-+
-+	return q && !blk_queue_add_random(q);
-+}
-+
-+static bool dm_table_all_devices_attribute(struct dm_table *t,
-+					   iterate_devices_callout_fn func)
- {
- 	struct dm_target *ti;
- 	unsigned i = 0;
- 
--	/* Ensure that all underlying device are non-rotational. */
- 	while (i < dm_table_get_num_targets(t)) {
- 		ti = dm_table_get_target(t, i++);
- 
- 		if (!ti->type->iterate_devices ||
--		    !ti->type->iterate_devices(ti, device_is_nonrot, NULL))
-+		    !ti->type->iterate_devices(ti, func, NULL))
- 			return 0;
- 	}
- 
-@@ -1396,7 +1404,8 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	if (!dm_table_discard_zeroes_data(t))
- 		q->limits.discard_zeroes_data = 0;
- 
--	if (dm_table_is_nonrot(t))
-+	/* Ensure that all underlying device are non-rotational. */
-+	if (dm_table_all_devices_attribute(t, device_is_nonrot))
- 		queue_flag_set_unlocked(QUEUE_FLAG_NONROT, q);
- 	else
- 		queue_flag_clear_unlocked(QUEUE_FLAG_NONROT, q);
-@@ -1404,6 +1413,13 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	dm_table_set_integrity(t);
- 
- 	/*
-+	 * Ensure that all devices contributes to entropy pool.
-+	 * It can be set only for request-based target.
-+	 */
-+	if (blk_queue_add_random(q) && dm_table_all_devices_attribute(t, device_no_random))
-+		queue_flag_clear_unlocked(QUEUE_FLAG_ADD_RANDOM, q);
-+
-+	/*
- 	 * QUEUE_FLAG_STACKABLE must be set after all queue settings are
- 	 * visible to other CPUs because, once the flag is set, incoming bios
- 	 * are processed by request-based dm, which refers to the queue
+Why is the branching condition sizeof(val) == 4 instead of <= 4?
+Also, no biggie but why isn't this macro in caps?
+
+> +/**
+> + * hash_add_size - add an object to a hashtable
+> + * @hashtable: hashtable to add to
+> + * @bits: bit count used for hashing
+> + * @node: the &struct hlist_node of the object to be added
+> + * @key: the key of the object to be added
+> + */
+> +#define hash_add_size(hashtable, bits, node, key)				\
+> +	hlist_add_head(node, &hashtable[hash_min(key, bits)]);
+> +
+> +/**
+> + * hash_add - add an object to a hashtable
+> + * @hashtable: hashtable to add to
+> + * @node: the &struct hlist_node of the object to be added
+> + * @key: the key of the object to be added
+> + */
+> +#define hash_add(hashtable, node, key)						\
+> +	hash_add_size(hashtable, HASH_BITS(hashtable), node, key)
+
+It would be nice if the comments actually say something which can
+differentiate the two.  Ditto for rcu variants.
+
+> +/**
+> + * hash_add_rcu_size - add an object to a rcu enabled hashtable
+> + * @hashtable: hashtable to add to
+> + * @bits: bit count used for hashing
+> + * @node: the &struct hlist_node of the object to be added
+> + * @key: the key of the object to be added
+> + */
+> +#define hash_add_rcu_size(hashtable, bits, node, key)				\
+> +	hlist_add_head_rcu(node, &hashtable[hash_min(key, bits)]);
+> +
+> +/**
+> + * hash_add_rcu - add an object to a rcu enabled hashtable
+> + * @hashtable: hashtable to add to
+> + * @node: the &struct hlist_node of the object to be added
+> + * @key: the key of the object to be added
+> + */
+> +#define hash_add_rcu(hashtable, node, key)					\
+> +	hash_add_rcu_size(hashtable, HASH_BITS(hashtable), node, key)
+
+Or maybe we're better off with hash_head_size() and hash_head()?  I'll
+expand on it later.  Please bear with me.
+
+> +/**
+> + * hash_hashed - check whether an object is in any hashtable
+> + * @node: the &struct hlist_node of the object to be checked
+> + */
+> +#define hash_hashed(node) (!hlist_unhashed(node))
+
+As the 'h' in hlist* stand for hash anyway and I think this type of
+thin wrappers tend to obfuscate more than anything else.
+
+> +/**
+> + * hash_del - remove an object from a hashtable
+> + * @node: &struct hlist_node of the object to remove
+> + */
+> +static inline void hash_del(struct hlist_node *node)
+> +{
+> +	hlist_del_init(node);
+> +}
+> +
+> +/**
+> + * hash_del_rcu - remove an object from a rcu enabled hashtable
+> + * @node: &struct hlist_node of the object to remove
+> + */
+> +static inline void hash_del_rcu(struct hlist_node *node)
+> +{
+> +	hlist_del_init_rcu(node);
+> +}
+
+If we do that, we can remove all these thin wrappers.
+
+> +#define hash_for_each_size(name, bits, bkt, node, obj, member)			\
+> +	for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)				\
+> +		hlist_for_each_entry(obj, node, &name[bkt], member)
+..
+> +#define hash_for_each(name, bkt, node, obj, member)				\
+> +	hash_for_each_size(name, HASH_BITS(name), bkt, node, obj, member)
+...
+> +#define hash_for_each_rcu_size(name, bits, bkt, node, obj, member)		\
+> +	for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)				\
+> +		hlist_for_each_entry_rcu(obj, node, &name[bkt], member)
+...
+> +#define hash_for_each_rcu(name, bkt, node, obj, member)				\
+> +	hash_for_each_rcu_size(name, HASH_BITS(name), bkt, node, obj, member)
+...
+> +#define hash_for_each_safe_size(name, bits, bkt, node, tmp, obj, member)	\
+> +	for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)                     	\
+> +		hlist_for_each_entry_safe(obj, node, tmp, &name[bkt], member)
+...
+> +#define hash_for_each_safe(name, bkt, node, tmp, obj, member)			\
+> +	hash_for_each_safe_size(name, HASH_BITS(name), bkt, node,		\
+> +				tmp, obj, member)
+...
+> +#define hash_for_each_possible_size(name, obj, bits, node, member, key)		\
+> +	hlist_for_each_entry(obj, node,	&name[hash_min(key, bits)], member)
+...
+> +#define hash_for_each_possible(name, obj, node, member, key)			\
+> +	hash_for_each_possible_size(name, obj, HASH_BITS(name), node, member, key)
+...
+> +#define hash_for_each_possible_rcu_size(name, obj, bits, node, member, key)	\
+> +	hlist_for_each_entry_rcu(obj, node, &name[hash_min(key, bits)], member)
+...
+> +#define hash_for_each_possible_rcu(name, obj, node, member, key)		\
+> +	hash_for_each_possible_rcu_size(name, obj, HASH_BITS(name),		\
+...
+> +#define hash_for_each_possible_safe_size(name, obj, bits, node, tmp, member, key)\
+> +	hlist_for_each_entry_safe(obj, node, tmp,				\
+> +		&name[hash_min(key, bits)], member)
+...
+> +#define hash_for_each_possible_safe(name, obj, node, tmp, member, key)		\
+> +	hash_for_each_possible_safe_size(name, obj, HASH_BITS(name),		\
+
+And also all these.  We'd only need hash_for_each_head() and
+hash_head().  hash_for_each_possible*() could be nice for convenience,
+I suppose.
+
+I think the almost trivial nature of hlist hashtables makes this a bit
+tricky and I'm not very sure but having this combinatory explosion is
+a bit dazzling when the same functionality can be achieved by simply
+combining operations which are already defined and named considering
+hashtable.  I'm not feeling too strong about this tho.  What do others
+think?
+
+Also, can you please audit the comments on top of each macro?  They
+have wrong names and don't differentiate the different variants very
+well.
+
+Thanks.
+
 -- 
-1.7.10.4
+tejun
