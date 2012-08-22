@@ -1,197 +1,84 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v6 07/13] block: Avoid deadlocks with bio
- allocation by stacking drivers
-Date: Wed, 22 Aug 2012 13:30:03 -0700
-Message-ID: <20120822203003.GJ19212@google.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v6 10/13] block: Introduce new bio_split()
+Date: Wed, 22 Aug 2012 13:46:08 -0700
+Message-ID: <20120822204608.GK19212@google.com>
 References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
-	<1345655050-28199-8-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+ <1345655050-28199-11-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1345655050-28199-8-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kent Overstreet <koverstreet@google.com>
-Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, mpatocka@redhat.com, bharrosh@panasas.com, vgoyal@redhat.com
+In-Reply-To: <1345655050-28199-11-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
 Hello, Kent.
 
-On Wed, Aug 22, 2012 at 10:04:04AM -0700, Kent Overstreet wrote:
-> Previously, if we ever try to allocate more than once from the same bio
-> set while running under generic_make_request(), we risk deadlock.
-> 
-> This would happen if e.g. a bio ever needed to be split more than once,
-> and it's difficult to handle correctly in the drivers - so in practice
-> it's not.
-> 
-> This patch fixes this issue by allocating a rescuer workqueue for each
-> bio_set, and punting queued bios to said rescuer when necessary:
+On Wed, Aug 22, 2012 at 10:04:07AM -0700, Kent Overstreet wrote:
+> @@ -672,7 +672,6 @@ void bio_integrity_trim(struct bio *bio, unsigned int offset,
+>  
+>  	BUG_ON(bip == NULL);
+>  	BUG_ON(bi == NULL);
+> -	BUG_ON(!bio_flagged(bio, BIO_CLONED));
+>  
+>  	nr_sectors = bio_integrity_hw_sectors(bi, sectors);
+>  	bip->bip_sector = bip->bip_sector + offset;
 
-This description needs to be several times more descriptive than it
-currently is.  The deadlock issue at hand is very unobvious.  Please
-explain it so that someone who isn't familiar with the problem can
-understand it by reading it.
+It depends on what BIO_CLONED is supposed to do but maybe the right
+thing to do is clearing BIO_CLONED on split bio?  The split bio isn't
+a clone after all.
 
-Also, please describe how the patch was tested.
+>  /**
+> + * bio_split - split a bio
+> + * @bio:	bio to split
+> + * @sectors:	number of sectors to split from the front of @bio
+> + * @gfp:	gfp mask
+> + * @bs:		bio set to allocate from
+> + *
+> + * Allocates and returns a new bio which represents @sectors from the start of
+> + * @bio, and updates @bio to represent the remaining sectors.
+> + *
+> + * If bio_sectors(@bio) was less than or equal to @sectors, returns @bio
+> + * unchanged.
 
-> @@ -306,16 +324,39 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
->  		p = kmalloc(sizeof(struct bio) +
->  			    nr_iovecs * sizeof(struct bio_vec),
->  			    gfp_mask);
+This is no longer true.
+
+> + * The newly allocated bio will point to @bio's bi_io_vec, if the split was on a
+> + * bvec boundry; it is the caller's responsibility to ensure that @bio is not
+> + * freed before the split.
+> + */
+> +struct bio *bio_split(struct bio *bio, int sectors,
+> +		      gfp_t gfp, struct bio_set *bs)
+> +{
+...
+> +	if (bio_integrity(bio)) {
+> +		bio_integrity_clone(split, bio, gfp, bs);
+
+What happens if bio_integrity_clone() fails?
+
+> +		bio_integrity_trim(split, 0, bio_sectors(split));
+> +		bio_integrity_trim(bio, bio_sectors(split), bio_sectors(bio));
+
+I complained pretty loudly about this not being mentioned in the
+description of this patch or the following one and there still is no
+explanation.  Come on, Kent.
+
+> +static inline struct bio *bio_next_split(struct bio *bio, int sectors,
+> +					 gfp_t gfp, struct bio_set *bs)
+> +{
+> +	if (sectors >= bio_sectors(bio))
+> +		return bio;
 > +
->  		front_pad = 0;
->  		inline_vecs = nr_iovecs;
->  	} else {
-> -		p = mempool_alloc(bs->bio_pool, gfp_mask);
-> +		/*
-> +		 * If we're running under generic_make_request()
-> +		 * (current->bio_list != NULL), we risk deadlock if we sleep on
-> +		 * allocation and there's already bios on current->bio_list that
-> +		 * were allocated from the same bio_set; they won't be submitted
-> +		 * (and thus freed) as long as we're blocked here.
-> +		 *
-> +		 * To deal with this, we first try the allocation without using
-> +		 * the mempool; if that fails, we punt all the bios on
-> +		 * current->bio_list to a different thread and then retry the
-> +		 * allocation with the original gfp mask.
-> +		 */
+> +	return bio_split(bio, sectors, gfp, bs);
+> +}
 
-Ditto here.
-
-> +		if (current->bio_list &&
-> +		    !bio_list_empty(current->bio_list) &&
-> +		    (gfp_mask & __GFP_WAIT))
-> +			gfp_mask &= GFP_ATOMIC;
-
-Why aren't we turning off __GFP_WAIT instead?  e.g. What if the caller
-has one of NUMA flags or __GFP_COLD specified?
-
-> +retry:
-> +		if (gfp_mask & __GFP_WAIT)
-> +			p = mempool_alloc(bs->bio_pool, gfp_mask);
-> +		else
-> +			p = kmem_cache_alloc(bs->bio_slab, gfp_mask);
-
-Why is it necessary to avoid using the mempool if __GFP_WAIT is
-already cleared?
-
->  		front_pad = bs->front_pad;
->  		inline_vecs = BIO_INLINE_VECS;
->  	}
->  
->  	if (unlikely(!p))
-> -		return NULL;
-> +		goto err;
->  
->  	bio = p + front_pad;
->  	bio_init(bio);
-> @@ -336,6 +377,19 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
->  
->  err_free:
->  	mempool_free(p, bs->bio_pool);
-> +err:
-> +	if (gfp_mask != saved_gfp) {
-> +		gfp_mask = saved_gfp;
-> +
-> +		spin_lock(&bs->rescue_lock);
-> +		bio_list_merge(&bs->rescue_list, current->bio_list);
-> +		bio_list_init(current->bio_list);
-> +		spin_unlock(&bs->rescue_lock);
-> +
-> +		queue_work(bs->rescue_workqueue, &bs->rescue_work);
-> +		goto retry;
-> +	}
-> +
->  	return NULL;
->  }
->  EXPORT_SYMBOL(bio_alloc_bioset);
-> @@ -1544,6 +1598,9 @@ static void biovec_free_pools(struct bio_set *bs)
->  
->  void bioset_free(struct bio_set *bs)
->  {
-> +	if (bs->rescue_workqueue)
-> +		destroy_workqueue(bs->rescue_workqueue);
-> +
->  	if (bs->bio_pool)
->  		mempool_destroy(bs->bio_pool);
->  
-> @@ -1579,6 +1636,10 @@ struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
->  
->  	bs->front_pad = front_pad;
->  
-> +	spin_lock_init(&bs->rescue_lock);
-> +	bio_list_init(&bs->rescue_list);
-> +	INIT_WORK(&bs->rescue_work, bio_alloc_rescue);
-> +
->  	bs->bio_slab = bio_find_or_create_slab(front_pad + back_pad);
->  	if (!bs->bio_slab) {
->  		kfree(bs);
-> @@ -1589,9 +1650,14 @@ struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
->  	if (!bs->bio_pool)
->  		goto bad;
->  
-> -	if (!biovec_create_pools(bs, pool_size))
-> -		return bs;
-> +	if (biovec_create_pools(bs, pool_size))
-> +		goto bad;
-> +
-> +	bs->rescue_workqueue = alloc_workqueue("bioset", WQ_MEM_RECLAIM, 0);
-> +	if (!bs->rescue_workqueue)
-> +		goto bad;
->  
-> +	return bs;
->  bad:
->  	bioset_free(bs);
->  	return NULL;
-> diff --git a/include/linux/bio.h b/include/linux/bio.h
-> index b22c22b..ba5b52e 100644
-> --- a/include/linux/bio.h
-> +++ b/include/linux/bio.h
-> @@ -290,39 +290,6 @@ static inline int bio_associate_current(struct bio *bio) { return -ENOENT; }
->  static inline void bio_disassociate_task(struct bio *bio) { }
->  #endif	/* CONFIG_BLK_CGROUP */
->  
-> -/*
-> - * bio_set is used to allow other portions of the IO system to
-> - * allocate their own private memory pools for bio and iovec structures.
-> - * These memory pools in turn all allocate from the bio_slab
-> - * and the bvec_slabs[].
-> - */
-> -#define BIO_POOL_SIZE 2
-> -#define BIOVEC_NR_POOLS 6
-> -#define BIOVEC_MAX_IDX	(BIOVEC_NR_POOLS - 1)
-> -
-> -struct bio_set {
-> -	struct kmem_cache *bio_slab;
-> -	unsigned int front_pad;
-> -
-> -	mempool_t *bio_pool;
-> -#if defined(CONFIG_BLK_DEV_INTEGRITY)
-> -	mempool_t *bio_integrity_pool;
-> -#endif
-> -	mempool_t *bvec_pool;
-> -};
-> -
-> -struct biovec_slab {
-> -	int nr_vecs;
-> -	char *name;
-> -	struct kmem_cache *slab;
-> -};
-
-Plesae don't mix struct definition relocation (or any relocation
-really) with actual changes.  It buries the actual changes and makes
-reviewing difficult.
+First of all, I don't think this is necessary.  In addition, this
+doesn't have any comment explaining what it does and is never
+mentioned or justified in patch description.  Kent, you're repeating
+the same mistakes even after being explicitly pointed out multiple
+times.  *Please* pay more attention.
 
 Thanks.
 
