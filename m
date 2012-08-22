@@ -1,75 +1,53 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v6 02/13] dm: Use bioset's front_pad for
- dm_rq_clone_bio_info
-Date: Wed, 22 Aug 2012 17:30:10 -0400
-Message-ID: <20120822213010.GA8020@redhat.com>
-References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
- <1345655050-28199-3-git-send-email-koverstreet@google.com>
+From: Ryan Mallon <rmallon@gmail.com>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive hashtable
+Date: Thu, 23 Aug 2012 09:54:15 +1000
+Message-ID: <50357127.1000608@gmail.com>
+References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com> <1345602432-27673-2-git-send-email-levinsasha928@gmail.com> <20120822180138.GA19212@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1345655050-28199-3-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20120822180138.GA19212@google.com>
+Sender: owner-linux-mm@kvack.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Sasha Levin <levinsasha928@gmail.com>, torvalds@linux-foundation.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 22, 2012 at 10:03:59AM -0700, Kent Overstreet wrote:
-> Previously, dm_rq_clone_bio_info needed to be freed by the bio's
-> destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
-> This gets rid of a memory allocation and means we can kill
-> dm_rq_bio_destructor.
+On 23/08/12 04:01, Tejun Heo wrote:
+> Hello, Sasha.
 > 
-> v6: Fix comment on struct dm_rq_clone_bio_info, per Tejun
+> On Wed, Aug 22, 2012 at 04:26:56AM +0200, Sasha Levin wrote:
+>> +#define DEFINE_HASHTABLE(name, bits)					\
+>> +	struct hlist_head name[HASH_SIZE(bits)];
 > 
-> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  drivers/md/dm.c | 39 +++++++++++----------------------------
->  1 file changed, 11 insertions(+), 28 deletions(-)
+> Shouldn't this be something like the following?
 > 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 0c3d6dd..5ed9779 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -86,12 +86,17 @@ struct dm_rq_target_io {
->  };
->  
->  /*
-> - * For request-based dm.
-> - * One of these is allocated per bio.
-> + * For request-based dm - the bio clones we allocate are embedded in these
-> + * structs.
-> + *
-> + * We allocate these with bio_alloc_bioset, using the front_pad parameter when
-> + * the bioset is created - this means the bio has to come at the end of the
-> + * struct.
->   */
->  struct dm_rq_clone_bio_info {
->  	struct bio *orig;
->  	struct dm_rq_target_io *tio;
-> +	struct bio clone;
->  };
->  
->  union map_info *dm_get_mapinfo(struct bio *bio)
-> @@ -467,16 +472,6 @@ static void free_rq_tio(struct dm_rq_target_io *tio)
->  	mempool_free(tio, tio->md->tio_pool);
->  }
->  
-> -static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
-> -{
-> -	return mempool_alloc(md->io_pool, GFP_ATOMIC);
-> -}
-> -
-> -static void free_bio_info(struct dm_rq_clone_bio_info *info)
-> -{
-> -	mempool_free(info, info->tio->md->io_pool);
-> -}
-> -
+> #define DEFINE_HASHTABLE(name, bits)					\
+> 	struct hlist_head name[HASH_SIZE(bits)] =			\
+> 		{ [0 ... HASH_SIZE(bits) - 1] = HLIST_HEAD_INIT };
+> 
+> Also, given that the declaration isn't non-trivial, you'll probably
+> want a matching DECLARE_HASHTABLE() macro too.
+> 
+>> +/* Use hash_32 when possible to allow for fast 32bit hashing in 64bit kernels. */
+>> +#define hash_min(val, bits) ((sizeof(val)==4) ? hash_32((val), (bits)) : hash_long((val), (bits)))
+> 
+> Why is the branching condition sizeof(val) == 4 instead of <= 4?
+> Also, no biggie but why isn't this macro in caps?
 
-With this change, do you still need "_rq_bio_info_cache" slab cache? I would
-think that it can be cleaned up now?
+It should probably use gcc's statement expression extensions to prevent
+side-effect issues with the arguments:
 
-Thanks
-Vivek
+  #define hash_min ({		\
+	sizeof(val) <= 4 ?	\
+	hash_32(val, bits) :	\
+	hash_long(val, bits));	\
+  })
+
+~Ryan
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
