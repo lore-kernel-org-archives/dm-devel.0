@@ -1,71 +1,76 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v3 13/17] lockd: use new hashtable implementation
-Date: Wed, 22 Aug 2012 09:22:43 -0400
-Message-ID: <20120822132243.GA2844@Krystal>
-References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com> <1345602432-27673-14-git-send-email-levinsasha928@gmail.com> <20120822114752.GC20158@fieldses.org> <5034CD02.2010103@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <5034CD02.2010103-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jesse-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v6 00/13] Block cleanups
+Date: Wed, 22 Aug 2012 10:03:57 -0700
+Message-ID: <1345655050-28199-1-git-send-email-koverstreet@google.com>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org
 List-Id: dm-devel.ids
 
-* Sasha Levin (levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org) wrote:
-> On 08/22/2012 01:47 PM, J. Bruce Fields wrote:
-> > On Wed, Aug 22, 2012 at 04:27:08AM +0200, Sasha Levin wrote:
-> >> +static int __init nlm_init(void)
-> >> +{
-> >> +	hash_init(nlm_files);
-> >> +	return 0;
-> >> +}
-> >> +
-> >> +module_init(nlm_init);
-> > 
-> > That's giving me:
-> > 
-> > fs/lockd/svcsubs.o: In function `nlm_init':
-> > /home/bfields/linux-2.6/fs/lockd/svcsubs.c:454: multiple definition of `init_module'
-> > fs/lockd/svc.o:/home/bfields/linux-2.6/fs/lockd/svc.c:606: first defined here
-> > make[2]: *** [fs/lockd/lockd.o] Error 1
-> > make[1]: *** [fs/lockd] Error 2
-> > make[1]: *** Waiting for unfinished jobs....
-> 
-> I tested this entire patch set both with linux-next and Linus' latest master,
-> and it worked fine in both places.
-> 
-> Is it possible that lockd has a -next tree which isn't pulled into linux-next?
-> (there's nothing listed in MAINTAINERS that I could see).
+Buncha changes in this version.
 
-fs/lockd/Makefile:
+I came up with a new, much better solution to the "bio allocation from
+bio sets under generic_make_request()" problem. Previously, I was
+working around this in all of my code that allocated bios; it'd mask out
+GFP_WAIT if current->bio_list != NULL, then punt to workqueue if the
+allocation failed - so as to avoid the deadlock from allocating multiple
+bios from the same bio set.
 
-obj-$(CONFIG_LOCKD) += lockd.o
+This approach worked, but it required it to be explicitly handled in any
+stacking driver that might split a bio an arbitrary number of times -
+less than ideal.
 
-lockd-objs-y := clntlock.o clntproc.o clntxdr.o host.o svc.o svclock.o \
-                svcshare.o svcproc.o svcsubs.o mon.o xdr.o grace.o
+My new patch inverts this - when we go to allocate a bio and we're
+blocking another bio from being submitted, we punt the bio(s) that are
+being blocked off to a workqueue to be submitted. This means we only
+have to handle it in one place, in bio_alloc_bioset() - stack block
+drivers no longer have to do anything special (I got to delete some code
+from bcache, and dm wasn't handling this at all before).
 
-your patch adds a module_init to svcsubs.c.
-However, there is already one in svc.c, pulled into the same module.
+Other big change - I consolidated bio allocation. Now bio_alloc(),
+bio_kmalloc(), bio_clone(), and bio_clone_kmalloc() are all one line
+wrappers.
 
-in your test build, is CONFIG_LOCKD defined as "m" or "y" ? You should
-always test both.
+Incorporated a bunch of review feedback, most of which I hopefully
+remembered to note in the patch descriptions this time.
 
-One solution here is to create a "local" init function in svcsubs.c and
-expose it to svc.c, so the latter can call it from its module init
-function.
+Kent Overstreet (13):
+  block: Generalized bio pool freeing
+  dm: Use bioset's front_pad for dm_rq_clone_bio_info
+  block: Add bio_reset()
+  pktcdvd: Switch to bio_kmalloc()
+  block: Kill bi_destructor
+  block: Consolidate bio_alloc_bioset(), bio_kmalloc()
+  block: Avoid deadlocks with bio allocation by stacking drivers
+  block: Add an explicit bio flag for bios that own their bvec
+  block: Rename bio_split() -> bio_pair_split()
+  block: Introduce new bio_split()
+  block: Rework bio_pair_split()
+  block: Add bio_clone_bioset(), bio_clone_kmalloc()
+  block: Only clone bio vecs that are in use
 
-Thanks,
-
-Mathieu
+ Documentation/block/biodoc.txt      |   5 -
+ block/blk-core.c                    |  10 +-
+ drivers/block/drbd/drbd_main.c      |  13 +-
+ drivers/block/drbd/drbd_req.c       |  18 +-
+ drivers/block/osdblk.c              |   3 +-
+ drivers/block/pktcdvd.c             |  73 ++-----
+ drivers/block/rbd.c                 |   8 +-
+ drivers/md/dm-crypt.c               |   9 -
+ drivers/md/dm-io.c                  |  11 -
+ drivers/md/dm.c                     |  68 ++----
+ drivers/md/linear.c                 |   6 +-
+ drivers/md/md.c                     |  44 +---
+ drivers/md/raid0.c                  |   8 +-
+ drivers/md/raid10.c                 |  23 +-
+ drivers/target/target_core_iblock.c |   9 -
+ fs/bio-integrity.c                  |  45 ----
+ fs/bio.c                            | 419 +++++++++++++++++++++++-------------
+ fs/exofs/ore.c                      |   5 +-
+ include/linux/bio.h                 | 155 +++++++------
+ include/linux/blk_types.h           |  16 +-
+ 20 files changed, 434 insertions(+), 514 deletions(-)
 
 -- 
-Mathieu Desnoyers
-Operating System Efficiency R&D Consultant
-EfficiOS Inc.
-http://www.efficios.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+1.7.12
