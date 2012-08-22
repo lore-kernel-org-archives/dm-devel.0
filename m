@@ -1,43 +1,58 @@
-From: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: "J. Bruce Fields" <bfields@fieldses.org>
 Subject: Re: [PATCH v3 13/17] lockd: use new hashtable implementation
-Date: Wed, 22 Aug 2012 14:13:54 +0200
-Message-ID: <5034CD02.2010103@gmail.com>
-References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com> <1345602432-27673-14-git-send-email-levinsasha928@gmail.com> <20120822114752.GC20158@fieldses.org>
+Date: Wed, 22 Aug 2012 09:12:25 -0400
+Message-ID: <20120822131225.GD20158@fieldses.org>
+References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com>
+ <1345602432-27673-14-git-send-email-levinsasha928@gmail.com>
+ <20120822114752.GC20158@fieldses.org>
+ <5034CD02.2010103@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120822114752.GC20158-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jesse-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <5034CD02.2010103@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Sasha Levin <levinsasha928@gmail.com>
+Cc: torvalds@linux-foundation.org, tj@kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
 List-Id: dm-devel.ids
 
-On 08/22/2012 01:47 PM, J. Bruce Fields wrote:
-> On Wed, Aug 22, 2012 at 04:27:08AM +0200, Sasha Levin wrote:
->> +static int __init nlm_init(void)
->> +{
->> +	hash_init(nlm_files);
->> +	return 0;
->> +}
->> +
->> +module_init(nlm_init);
+On Wed, Aug 22, 2012 at 02:13:54PM +0200, Sasha Levin wrote:
+> On 08/22/2012 01:47 PM, J. Bruce Fields wrote:
+> > On Wed, Aug 22, 2012 at 04:27:08AM +0200, Sasha Levin wrote:
+> >> +static int __init nlm_init(void)
+> >> +{
+> >> +	hash_init(nlm_files);
+> >> +	return 0;
+> >> +}
+> >> +
+> >> +module_init(nlm_init);
+> > 
+> > That's giving me:
+> > 
+> > fs/lockd/svcsubs.o: In function `nlm_init':
+> > /home/bfields/linux-2.6/fs/lockd/svcsubs.c:454: multiple definition of `init_module'
+> > fs/lockd/svc.o:/home/bfields/linux-2.6/fs/lockd/svc.c:606: first defined here
+> > make[2]: *** [fs/lockd/lockd.o] Error 1
+> > make[1]: *** [fs/lockd] Error 2
+> > make[1]: *** Waiting for unfinished jobs....
 > 
-> That's giving me:
+> I tested this entire patch set both with linux-next and Linus' latest master,
+> and it worked fine in both places.
 > 
-> fs/lockd/svcsubs.o: In function `nlm_init':
-> /home/bfields/linux-2.6/fs/lockd/svcsubs.c:454: multiple definition of `init_module'
-> fs/lockd/svc.o:/home/bfields/linux-2.6/fs/lockd/svc.c:606: first defined here
-> make[2]: *** [fs/lockd/lockd.o] Error 1
-> make[1]: *** [fs/lockd] Error 2
-> make[1]: *** Waiting for unfinished jobs....
+> Is it possible that lockd has a -next tree which isn't pulled into linux-next?
+> (there's nothing listed in MAINTAINERS that I could see).
 
-I tested this entire patch set both with linux-next and Linus' latest master,
-and it worked fine in both places.
+No, there's the same problem with Linus's latest.
 
-Is it possible that lockd has a -next tree which isn't pulled into linux-next?
-(there's nothing listed in MAINTAINERS that I could see).
+I'm applying just patches 1 and 13--but doesn't look like your earlier
+patches touch lockd.
+
+Are you actually building lockd?  (CONFIG_LOCKD).
+
+--b.
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
