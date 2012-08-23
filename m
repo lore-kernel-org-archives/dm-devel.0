@@ -1,205 +1,71 @@
-From: Sasha Levin <levinsasha928@gmail.com>
-Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive hashtable
-Date: Thu, 23 Aug 2012 02:24:32 +0200
-Message-ID: <50357840.5020201@gmail.com>
-References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com> <1345602432-27673-2-git-send-email-levinsasha928@gmail.com> <20120822180138.GA19212@google.com>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v6 00/13] Block cleanups
+Date: Thu, 23 Aug 2012 14:00:41 -0400
+Message-ID: <20120823180041.GK12232@redhat.com>
+References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20120822180138.GA19212@google.com>
-Sender: owner-linux-mm@kvack.org
-To: Tejun Heo <tj@kernel.org>
-Cc: torvalds@linux-foundation.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1345655050-28199-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org
 List-Id: dm-devel.ids
 
-Hi Tejun,
+On Wed, Aug 22, 2012 at 10:03:57AM -0700, Kent Overstreet wrote:
 
-On 08/22/2012 08:01 PM, Tejun Heo wrote:
-> Hello, Sasha.
+[..]
+> Kent Overstreet (13):
+>   block: Generalized bio pool freeing
+>   dm: Use bioset's front_pad for dm_rq_clone_bio_info
+>   block: Add bio_reset()
+>   pktcdvd: Switch to bio_kmalloc()
+>   block: Kill bi_destructor
+>   block: Consolidate bio_alloc_bioset(), bio_kmalloc()
+
+This patch series says "Block Cleanups" in the subject. I think that
+it can be divided in two parts. First part seems to be cleanup where
+we get rid of ->bi_destructor and merge kmalloc() and allocation 
+from bio_set.
+
+Second part seems to be more of enhancing bio splitting functionality
+and not necessarily a cleanup. So may be breaking this series in two
+parts makes sense. First part is cleanup and second part is enhanced
+bio splitting capabilities of block layer.
+
+Thanks
+Vivek
+ 
+>   block: Avoid deadlocks with bio allocation by stacking drivers
+>   block: Add an explicit bio flag for bios that own their bvec
+>   block: Rename bio_split() -> bio_pair_split()
+>   block: Introduce new bio_split()
+>   block: Rework bio_pair_split()
+>   block: Add bio_clone_bioset(), bio_clone_kmalloc()
+>   block: Only clone bio vecs that are in use
 > 
-> On Wed, Aug 22, 2012 at 04:26:56AM +0200, Sasha Levin wrote:
->> +#define DEFINE_HASHTABLE(name, bits)					\
->> +	struct hlist_head name[HASH_SIZE(bits)];
+>  Documentation/block/biodoc.txt      |   5 -
+>  block/blk-core.c                    |  10 +-
+>  drivers/block/drbd/drbd_main.c      |  13 +-
+>  drivers/block/drbd/drbd_req.c       |  18 +-
+>  drivers/block/osdblk.c              |   3 +-
+>  drivers/block/pktcdvd.c             |  73 ++-----
+>  drivers/block/rbd.c                 |   8 +-
+>  drivers/md/dm-crypt.c               |   9 -
+>  drivers/md/dm-io.c                  |  11 -
+>  drivers/md/dm.c                     |  68 ++----
+>  drivers/md/linear.c                 |   6 +-
+>  drivers/md/md.c                     |  44 +---
+>  drivers/md/raid0.c                  |   8 +-
+>  drivers/md/raid10.c                 |  23 +-
+>  drivers/target/target_core_iblock.c |   9 -
+>  fs/bio-integrity.c                  |  45 ----
+>  fs/bio.c                            | 419 +++++++++++++++++++++++-------------
+>  fs/exofs/ore.c                      |   5 +-
+>  include/linux/bio.h                 | 155 +++++++------
+>  include/linux/blk_types.h           |  16 +-
+>  20 files changed, 434 insertions(+), 514 deletions(-)
 > 
-> Shouldn't this be something like the following?
-> 
-> #define DEFINE_HASHTABLE(name, bits)					\
-> 	struct hlist_head name[HASH_SIZE(bits)] =			\
-> 		{ [0 ... HASH_SIZE(bits) - 1] = HLIST_HEAD_INIT };
-> 
-> Also, given that the declaration isn't non-trivial, you'll probably
-> want a matching DECLARE_HASHTABLE() macro too.
-
-I figured we might do a DEFINE_HASHTABLE() to prevent the need from using
-hash_init() on hashtables defined this way, but I preferred not to since we may
-end up wanting a more complex initialization (I'll explain why extensively below).
-
->> +/* Use hash_32 when possible to allow for fast 32bit hashing in 64bit kernels. */
->> +#define hash_min(val, bits) ((sizeof(val)==4) ? hash_32((val), (bits)) : hash_long((val), (bits)))
-> 
-> Why is the branching condition sizeof(val) == 4 instead of <= 4?
-
-No reason, will fix.
-
-> Also, no biggie but why isn't this macro in caps?
-
-I had this plan in my mind to move it into linux/hash.h at some stage later, and
-the API there uses low caps even for macros (hash_long()).
-
->> +/**
->> + * hash_add_rcu_size - add an object to a rcu enabled hashtable
->> + * @hashtable: hashtable to add to
->> + * @bits: bit count used for hashing
->> + * @node: the &struct hlist_node of the object to be added
->> + * @key: the key of the object to be added
->> + */
->> +#define hash_add_rcu_size(hashtable, bits, node, key)				\
->> +	hlist_add_head_rcu(node, &hashtable[hash_min(key, bits)]);
->> +
->> +/**
->> + * hash_add_rcu - add an object to a rcu enabled hashtable
->> + * @hashtable: hashtable to add to
->> + * @node: the &struct hlist_node of the object to be added
->> + * @key: the key of the object to be added
->> + */
->> +#define hash_add_rcu(hashtable, node, key)					\
->> +	hash_add_rcu_size(hashtable, HASH_BITS(hashtable), node, key)
-> 
-> Or maybe we're better off with hash_head_size() and hash_head()?  I'll
-> expand on it later.  Please bear with me.
-> 
->> +/**
->> + * hash_hashed - check whether an object is in any hashtable
->> + * @node: the &struct hlist_node of the object to be checked
->> + */
->> +#define hash_hashed(node) (!hlist_unhashed(node))
-> 
-> As the 'h' in hlist* stand for hash anyway and I think this type of
-> thin wrappers tend to obfuscate more than anything else.
-> 
->> +/**
->> + * hash_del - remove an object from a hashtable
->> + * @node: &struct hlist_node of the object to remove
->> + */
->> +static inline void hash_del(struct hlist_node *node)
->> +{
->> +	hlist_del_init(node);
->> +}
->> +
->> +/**
->> + * hash_del_rcu - remove an object from a rcu enabled hashtable
->> + * @node: &struct hlist_node of the object to remove
->> + */
->> +static inline void hash_del_rcu(struct hlist_node *node)
->> +{
->> +	hlist_del_init_rcu(node);
->> +}
-> 
-> If we do that, we can remove all these thin wrappers.
-> 
->> +#define hash_for_each_size(name, bits, bkt, node, obj, member)			\
->> +	for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)				\
->> +		hlist_for_each_entry(obj, node, &name[bkt], member)
-> ..
->> +#define hash_for_each(name, bkt, node, obj, member)				\
->> +	hash_for_each_size(name, HASH_BITS(name), bkt, node, obj, member)
-> ...
->> +#define hash_for_each_rcu_size(name, bits, bkt, node, obj, member)		\
->> +	for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)				\
->> +		hlist_for_each_entry_rcu(obj, node, &name[bkt], member)
-> ...
->> +#define hash_for_each_rcu(name, bkt, node, obj, member)				\
->> +	hash_for_each_rcu_size(name, HASH_BITS(name), bkt, node, obj, member)
-> ...
->> +#define hash_for_each_safe_size(name, bits, bkt, node, tmp, obj, member)	\
->> +	for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)                     	\
->> +		hlist_for_each_entry_safe(obj, node, tmp, &name[bkt], member)
-> ...
->> +#define hash_for_each_safe(name, bkt, node, tmp, obj, member)			\
->> +	hash_for_each_safe_size(name, HASH_BITS(name), bkt, node,		\
->> +				tmp, obj, member)
-> ...
->> +#define hash_for_each_possible_size(name, obj, bits, node, member, key)		\
->> +	hlist_for_each_entry(obj, node,	&name[hash_min(key, bits)], member)
-> ...
->> +#define hash_for_each_possible(name, obj, node, member, key)			\
->> +	hash_for_each_possible_size(name, obj, HASH_BITS(name), node, member, key)
-> ...
->> +#define hash_for_each_possible_rcu_size(name, obj, bits, node, member, key)	\
->> +	hlist_for_each_entry_rcu(obj, node, &name[hash_min(key, bits)], member)
-> ...
->> +#define hash_for_each_possible_rcu(name, obj, node, member, key)		\
->> +	hash_for_each_possible_rcu_size(name, obj, HASH_BITS(name),		\
-> ...
->> +#define hash_for_each_possible_safe_size(name, obj, bits, node, tmp, member, key)\
->> +	hlist_for_each_entry_safe(obj, node, tmp,				\
->> +		&name[hash_min(key, bits)], member)
-> ...
->> +#define hash_for_each_possible_safe(name, obj, node, tmp, member, key)		\
->> +	hash_for_each_possible_safe_size(name, obj, HASH_BITS(name),		\
-> 
-> And also all these.  We'd only need hash_for_each_head() and
-> hash_head().  hash_for_each_possible*() could be nice for convenience,
-> I suppose.
-> 
-> I think the almost trivial nature of hlist hashtables makes this a bit
-> tricky and I'm not very sure but having this combinatory explosion is
-> a bit dazzling when the same functionality can be achieved by simply
-> combining operations which are already defined and named considering
-> hashtable.  I'm not feeling too strong about this tho.  What do others
-> think?
-
-I'm thinking that this hashtable API will have 2 purposes: First, it would
-prevent the excessive duplication of hashtable implementations all around the code.
-
-Second, it will allow more easily interchangeable hashtable implementations to
-find their way into the kernel. There are several maintainers who would be happy
-to see dynamically sized RCU hashtable, and I'm guessing that several more
-variants could be added based on needs in specific modules.
-
-The second reason is why several things you've mentioned look the way they are:
-
- - No DEFINE_HASHTABLE(): I wanted to force the use of hash_init() since
-initialization for other hashtables may be more complicated than the static
-initialization for this implementation, which means that any place that used
-DEFINE_HASHTABLE() and didn't do hash_init() will be buggy.
-
- - hash_hashed(): Different hashtable implementations may not use hlist, so
-letting them assume that doing hlist operations on hashtable objects is wrong.
-
- - Lack of hash_head(): I didn't want to expose the internal structure of the
-hashtable to the user. This might make it hard to implement hashtables that
-resize themselves if we let the user hold a bucket in his hands.
-
-I'm actually tempted in hiding hlist completely from hashtable users, probably
-by simply defining a hash_head/hash_node on top of the hlist_ counterparts.
-
-Now, I know that I mention a lot of these hashtables that might or might not be
-added later on in the kernel, this is mostly due to the interest in dynamic
-resizable hashtables which was shown during the RFC, and the fact that there is
-a solid implementation of a dynamic RCU hashtable in urcu which might be a great
-benefit in the kernel as well (I'm also looking at it while working on this
-hashtable to verify that both could share an API in the future).
-
-Regarding the amount of new macros, we can address this by splitting off any
-dynamic elements into a new hashtable type. This will let us reduce quite a lot
-of macros (removing all the _size() ones at least).
-
-> Also, can you please audit the comments on top of each macro?  They
-> have wrong names and don't differentiate the different variants very
-> well.
-
-Sure, sorry about that.
-
-Thanks,
-Sasha
-
-> Thanks.
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> -- 
+> 1.7.12
