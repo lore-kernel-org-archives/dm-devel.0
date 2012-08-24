@@ -1,42 +1,159 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v6 12/13] block: Add bio_clone_bioset(),
- bio_clone_kmalloc()
-Date: Thu, 23 Aug 2012 23:24:18 -0700
-Message-ID: <20120824062418.GD11977@moria.home.lan>
+Subject: Re: [PATCH v6 13/13] block: Only clone bio vecs that are in use
+Date: Fri, 24 Aug 2012 00:05:08 -0700
+Message-ID: <20120824070508.GE11977@moria.home.lan>
 References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
- <1345655050-28199-13-git-send-email-koverstreet@google.com>
- <20120822210740.GM19212@google.com>
+ <1345655050-28199-14-git-send-email-koverstreet@google.com>
+ <20120822211045.GN19212@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120822210740.GM19212-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120822211045.GN19212-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Garzik <jeff-o2qLIJkoznsdnm+yROfE0A@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Aug 22, 2012 at 02:07:40PM -0700, Tejun Heo wrote:
-> On Wed, Aug 22, 2012 at 10:04:09AM -0700, Kent Overstreet wrote:
-> > Previously, there was bio_clone() but it only allocated from the fs bio
-> > set; as a result various users were open coding it and using
-> > __bio_clone().
-> > 
-> > This changes bio_clone() to become bio_clone_bioset(), and then we add
-> > bio_clone() and bio_clone_kmalloc() as wrappers around it, making use of
-> > the functionality the last patch adedd.
-> > 
-> > This will also help in a later patch changing how bio cloning works.
+On Wed, Aug 22, 2012 at 02:10:45PM -0700, Tejun Heo wrote:
+> Hello, Kent.
 > 
-> I'd prefer simply adding @bioset to bio_clone() so that the caller
-> always has to make the choice consciously.  We're updating all the
-> callers anyway.
+> On Wed, Aug 22, 2012 at 10:04:10AM -0700, Kent Overstreet wrote:
+> > bcache creates large bios internally, and then splits them according to
+> > the device requirements before it sends them down. If a lower level
+> > device tries to clone the bio, and the original bio had more than
+> > BIO_MAX_PAGES, the clone will fail unecessarily.
+> > 
+> > We can fix this by only cloning the bio vecs that are actually in use.
+> 
+> I'm pretty sure I sound like a broken record by now, but
+> 
+> * How was this tested?
+> 
+> * What are the implications and possible dangers?
 
-Possibly, but the btrfs code uses bio_clone() and there fs_bio_set may
-be correct (will have to look at what it's doing, if it's cloning a bio
-that was allocated out of fs_bio_set that would be bad..)
+I've said all that on list, but I gather what you really wanted was to
+have it all in the patch description. Will do.
 
-I would also prefer to simply drop bio_clone() so that
-bio_clone_bioset() matches bio_alloc_bioset(), but regardless that'll
-have to be a different patch (and I don't think I've had to update any
-of the bio_clone() callers in this patch series anyways).
+Though actually, this patch by itself is pretty innocuous. It's my bio
+splitting code that actually depends on the fields of struct bio
+(bi_idx) being used consistently.
+
+Anyways, tell me if the description below is better.
+
+> > @@ -463,10 +468,10 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
+> >  	bio->bi_sector = bio_src->bi_sector;
+> >  	bio->bi_bdev = bio_src->bi_bdev;
+> >  	bio->bi_flags |= 1 << BIO_CLONED;
+> > +	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
+> 
+> For the n'th time, explain please.
+
+Argh, I could've sworn I dropped that part.
+
+
+commit 0edda563aef9432b45f0c6a50f52590b92594560
+Author: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Date:   Thu Aug 23 23:26:38 2012 -0700
+
+    block: Only clone bio vecs that are in use
+    
+    bcache creates large bios internally, and then splits them according to
+    the device requirements before it sends them down. If a lower level
+    device tries to clone the bio, and the original bio had more than
+    BIO_MAX_PAGES, the clone will fail unecessarily.
+    
+    We can fix this by only cloning the bio vecs that are actually in use -
+    as for as the block layer is concerned the new bio is still equivalent
+    to the old bio.
+    
+    This code should in general be safe as long as all the block layer code
+    uses bi_idx, bi_vcnt consistently; since bios are cloned by code that
+    doesn't own the original bio there's little room for issues caused by
+    code playing games with the original bio's bi_io_vec. One perhaps
+    imagine code depending the clone and original bio's io vecs lining up a
+    certain way, but auditing and testing haven't turned up anything.
+    
+    Testing: This code has been in the bcache tree for quite awhile, and has
+    been tested with various md layers and dm targets (including strange
+    things like multipath).
+    
+    Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+    CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+    CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+    CC: Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
+
+diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+index 63e5852..5c3457f 100644
+--- a/drivers/block/rbd.c
++++ b/drivers/block/rbd.c
+@@ -734,7 +734,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
+ 	}
+ 
+ 	while (old_chain && (total < len)) {
+-		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
++		tmp = bio_kmalloc(gfpmask, bio_segments(old_chain));
+ 		if (!tmp)
+ 			goto err_out;
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index a3c38b9..3aeb108 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1080,11 +1080,10 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
+ {
+ 	struct bio *clone;
+ 
+-	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
++	clone = bio_alloc_bioset(GFP_NOIO, bv_count, bs);
+ 	__bio_clone(clone, bio);
+ 	clone->bi_sector = sector;
+-	clone->bi_idx = idx;
+-	clone->bi_vcnt = idx + bv_count;
++	clone->bi_vcnt = bv_count;
+ 	clone->bi_size = to_bytes(len);
+ 	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
+ 
+diff --git a/fs/bio.c b/fs/bio.c
+index 895e2a6..cd80710 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -467,11 +467,16 @@ EXPORT_SYMBOL(bio_phys_segments);
+  *	Clone a &bio. Caller will own the returned bio, but not
+  *	the actual data it points to. Reference count of returned
+  * 	bio will be one.
++ *
++ *	We don't clone the entire bvec, just the part from bi_idx to b_vcnt
++ *	(i.e. what the bio currently points to, so the new bio is still
++ *	equivalent to the old bio).
+  */
+ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ {
+-	memcpy(bio->bi_io_vec, bio_src->bi_io_vec,
+-		bio_src->bi_max_vecs * sizeof(struct bio_vec));
++	memcpy(bio->bi_io_vec,
++	       bio_iovec(bio_src),
++	       bio_segments(bio_src) * sizeof(struct bio_vec));
+ 
+ 	/*
+ 	 * most users will be overriding ->bi_bdev with a new target,
+@@ -481,9 +486,8 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ 	bio->bi_bdev = bio_src->bi_bdev;
+ 	bio->bi_flags |= 1 << BIO_CLONED;
+ 	bio->bi_rw = bio_src->bi_rw;
+-	bio->bi_vcnt = bio_src->bi_vcnt;
++	bio->bi_vcnt = bio_segments(bio_src);
+ 	bio->bi_size = bio_src->bi_size;
+-	bio->bi_idx = bio_src->bi_idx;
+ }
+ EXPORT_SYMBOL(__bio_clone);
+ 
+@@ -500,7 +504,7 @@ struct bio *bio_clone_bioset(struct bio *bio, gfp_t gfp_mask,
+ {
+ 	struct bio *b;
+ 
+-	b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, bs);
++	b = bio_alloc_bioset(gfp_mask, bio_segments(bio), bs);
+ 	if (!b)
+ 		return NULL;
+ 
