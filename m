@@ -1,42 +1,72 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v6 11/13] block: Rework bio_pair_split()
-Date: Fri, 24 Aug 2012 13:58:12 -0700
-Message-ID: <20120824205812.GJ21325@google.com>
-References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
- <1345655050-28199-12-git-send-email-koverstreet@google.com>
- <20120822210410.GL19212@google.com>
- <yq1y5l5hvpw.fsf@sermon.lab.mkp.net>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive
+ hashtable
+Date: Fri, 24 Aug 2012 14:23:48 -0700
+Message-ID: <20120824212348.GK21325@google.com>
+References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com>
+ <1345602432-27673-2-git-send-email-levinsasha928@gmail.com>
+ <20120822180138.GA19212@google.com>
+ <50357840.5020201@gmail.com>
+ <20120823200456.GD14962@google.com>
+ <5037DA47.9010306@gmail.com>
+ <20120824195941.GC21325@google.com>
+ <5037E00B.6090606@gmail.com>
+ <20120824203332.GF21325@google.com>
+ <5037E9D9.9000605@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <yq1y5l5hvpw.fsf-+q57XtR/GgMb6DWv4sQWN6xOck334EZe@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>, Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <5037E9D9.9000605@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Sasha Levin <levinsasha928@gmail.com>
+Cc: torvalds@linux-foundation.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
 List-Id: dm-devel.ids
 
-Hello, Martin.
+Hello,
 
-On Thu, Aug 23, 2012 at 10:25:47PM -0400, Martin K. Petersen wrote:
-> However, I'm not sure I like the overall approach of the new splitting.
-> Instead of all this cloning, slicing and dicing of bio_vecs I'd rather
-> we bit the bullet and had an offset + length for the vector inside each
-> bio. That way we could keep the bio_vec immutable and make clones more
-> lightweight since their vecs would always point to the parent. This also
-> makes it trivial to split I/Os in the stacking drivers and removes evils
-> in the partial completion code path. It would also allow to sever the
-> ties between "size of block range operated on" vs. bi_size which we need
-> for copy offload, discard, etc.
+On Fri, Aug 24, 2012 at 10:53:45PM +0200, Sasha Levin wrote:
+> Yup, but we could be using the same API for dynamic non-resizable and static if
+> we go with the DECLARE/hash_init. We could switch between them (and other
+> implementations) without having to change the code.
 
-Yeah, I'm fairly sure we all want that but that's gonna have to be a
-separate not-so-small project.  Also, how we split underlying bvec
-doesn't affect the split interface update being done here.  This
-patchset is updating split so that it can handle arbirarily sized
-bios, which is useful whether its implementation is using immutable
-bvec or COWing it.
+I think it's better to stick with the usual conventions.
+
+> > * DECLARE/DEFINE
+> > * hash_head()
+> > * hash_for_each_head()
+> > * hash_add*()
+> > * hash_for_each_possible*()
+>  * hash_for_each*() ?
+> 
+> Why do we need hash_head/hash_for_each_head()? I haven't stumbled on a place yet
+> that needed direct access to the bucket itself.
+
+Because whole hash table walking is much less common and we can avoid
+another full set of iterators.
+
+> This basically means 11 macros/functions that would let us have full
+> encapsulation and will make it very easy for future implementations to work with
+> this API instead of making up a new one. It's also not significantly (+~2-3)
+> more than the ones you listed.
+
+I'm not sure whether full encapsulation is a good idea for trivial
+hashtable.  For higher level stuff, sure but at this level I think
+benefits coming from known obvious implementation can be larger.
+e.g. suppose the caller knows certain entries to be way colder than
+others and wants to put them at the end of the chain.
+
+So, I think implmenting the minimal set of helpers which reflect the
+underlying trivial implementation explicitly could actually be better
+even when discounting the reduced number of wrappers.
 
 Thanks.
 
 -- 
 tejun
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
