@@ -1,77 +1,134 @@
-From: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive hashtable
-Date: Fri, 24 Aug 2012 22:11:55 +0200
-Message-ID: <5037E00B.6090606@gmail.com>
-References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com> <1345602432-27673-2-git-send-email-levinsasha928@gmail.com> <20120822180138.GA19212@google.com> <50357840.5020201@gmail.com> <20120823200456.GD14962@google.com> <5037DA47.9010306@gmail.com> <20120824195941.GC21325@google.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v6 07/13] block: Avoid deadlocks with bio allocation by
+ stacking drivers
+Date: Fri, 24 Aug 2012 13:28:55 -0700
+Message-ID: <20120824202855.GE21325@google.com>
+References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
+ <1345655050-28199-8-git-send-email-koverstreet@google.com>
+ <20120822203003.GJ19212@google.com>
+ <20120824055554.GC11977@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120824195941.GC21325-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jesse-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120824055554.GC11977-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 08/24/2012 09:59 PM, Tejun Heo wrote:
-> Hello, Sasha.
+Hello,
+
+On Thu, Aug 23, 2012 at 10:55:54PM -0700, Kent Overstreet wrote:
+> > Why aren't we turning off __GFP_WAIT instead?  e.g. What if the caller
+> > has one of NUMA flags or __GFP_COLD specified?
 > 
-> On Fri, Aug 24, 2012 at 09:47:19PM +0200, Sasha Levin wrote:
->>> I think this is problematic.  It looks exactly like other existing
->>> DEFINE macros yet what its semantics is different.  I don't think
->>> that's a good idea.
->>
->> I can switch that to be DECLARE_HASHTABLE() if the issue is semantics.
+> Didn't think of that. The reason I did it that way is I wasn't sure if
+> just doing &= ~__GFP_WAIT would be correct, since that would leave
+> __GFP_IO|__GFP_FS set.
+
+Using the appropriate __GFP_IO/FS flags is the caller's
+responsibility.  The only thing bioset needs to worry and take action
+about here is __GFP_WAIT causing indefinite wait in mempool.
+
+> > Plesae don't mix struct definition relocation (or any relocation
+> > really) with actual changes.  It buries the actual changes and makes
+> > reviewing difficult.
 > 
-> If this implementation is about the common trivial case, why not just
-> have the usual DECLARE/DEFINE_HASHTABLE() combination?
+> Make a new patch that does nothing more than reorder the definitions,
+> then?
 
-When we add the dynamic non-resizable support, how would DEFINE_HASHTABLE() look?
+Yeap, with justification.
 
->>> So, I think it would be best to keep this one as straight-forward and
->>> trivial as possible.  Helper macros to help its users are fine but
->>> let's please not go for full encapsulation.
->>
->> What if we cut off the dynamic allocated (but not resizable) hashtable out for
->> the moment, and focus on the most common statically allocated hashtable case?
->>
->> The benefits would be:
->>
->>  - Getting rid of all the _size() macros, which will make the amount of helpers
->> here reasonable.
->>  - Dynamically allocated hashtable can be easily added as a separate
->> implementation using the same API. We already have some of those in the kernel...
-> 
-> It seems we have enough of this static usage and solving the static
-> case first shouldn't hinder the dynamic (!resize) case later, so,
-> yeah, sounds good to me.
-> 
->>  - When that's ready, I feel it's a shame to lose full encapsulation just due to
->> hash_hashed().
-> 
-> I don't know.  If we stick to the static (or even !resize dymaic)
-> straight-forward hash - and we need something like that - I don't see
-> what the full encapsulation buys us other than a lot of trivial
-> wrappers.
+>     block: Avoid deadlocks with bio allocation by stacking drivers
+>     
+>     Previously, if we ever try to allocate more than once from the same bio
+>     set while running under generic_make_request() (i.e. a stacking block
+>     driver), we risk deadlock.
+>     
+>     This is because of the code in generic_make_request() that converts
+>     recursion to iteration; any bios we submit won't actually be submitted
+>     (so they can complete and eventually be freed) until after we return -
+>     this means if we allocate a second bio, we're blocking the first one
+>     from ever being freed.
+>     
+>     Thus if enough threads call into a stacking block driver at the same
+>     time with bios that need multiple splits, and the bio_set's reserve gets
+>     used up, we deadlock.
+>     
+>     This can be worked around in the driver code - we could check if we're
+>     running under generic_make_request(), then mask out __GFP_WAIT when we
+>     go to allocate a bio, and if the allocation fails punt to workqueue and
+>     retry the allocation.
+>     
+>     But this is tricky and not a generic solution. This patch solves it for
+>     all users by inverting the previously described technique. We allocate a
+>     rescuer workqueue for each bio_set, and then in the allocation code if
+>     there are bios on current->bio_list we would be blocking, we punt them
+>     to the rescuer workqueue to be submitted.
+>     
+>     Tested it by forcing the rescue codepath to be taken (by disabling the
+>     first GFP_NOWAIT) attempt, and then ran it with bcache (which does a lot
+>     of arbitrary bio splitting) and verified that the rescuer was being
+>     invoked.
 
-Which macros do you consider as trivial within the current API?
+Yeah, the description looks good to me.
 
-Basically this entire thing could be reduced to DEFINE/DECLARE_HASHTABLE and
-get_bucket(), but it would make the life of anyone who wants a slightly
-different hashtable a hell.
+>  struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>  {
+> +	gfp_t saved_gfp = gfp_mask;
+>  	unsigned front_pad;
+>  	unsigned inline_vecs;
+>  	unsigned long idx = BIO_POOL_NONE;
+> @@ -318,16 +336,44 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>  		p = kmalloc(sizeof(struct bio) +
+>  			    nr_iovecs * sizeof(struct bio_vec),
+>  			    gfp_mask);
+> +
+>  		front_pad = 0;
+>  		inline_vecs = nr_iovecs;
+>  	} else {
+> +		/*
+> +		 * generic_make_request() converts recursion to iteration; this
+> +		 * means if we're running beneath it, any bios we allocate and
+> +		 * submit will not be submitted (and thus freed) until after we
+> +		 * return.
+> +		 *
+> +		 * This exposes us to a potential deadlock if we allocate
+> +		 * multiple bios from the same bio_set() while running
+> +		 * underneath generic_make_request(). If we were to allocate
+> +		 * multiple bios (say a stacking block driver that was splitting
+> +		 * bios), we would deadlock if we exhausted the mempool's
+> +		 * reserve.
+> +		 *
+> +		 * We solve this, and guarantee forward progress, with a rescuer
+> +		 * workqueue per bio_set. If we go to allocate and there are
+> +		 * bios on current->bio_list, we first try the allocation
+> +		 * without __GFP_WAIT; if that fails, we punt those bios we
+> +		 * would be blocking to the rescuer workqueue before we retry
+> +		 * with the original gfp_flags.
+> +		 */
 
-I think that right now the only real trivial wrapper is hash_hashed(), and I
-think it's a price worth paying to have a single hashtable API instead of
-fragmenting it when more implementations come along.
+Can you please add a comment in generic_make_request() to describe the
+issue briefly and link back here?
 
-Thanks,
-Sasha
+>  void bioset_free(struct bio_set *bs)
+>  {
+> +	if (bs->rescue_workqueue)
 
-> 
-> Thanks.
-> 
+Why is the conditional necessary?  Is it possible to have a bioset w/o
+rescue_workqueue?
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> +		destroy_workqueue(bs->rescue_workqueue);
+> +
+>  	if (bs->bio_pool)
+>  		mempool_destroy(bs->bio_pool);
+
+This makes bioset_free() require process context, which probably is
+okay for bioset but still isn't nice.  Might worth noting in the patch
+description.
+
+Thanks.
+
+-- 
+tejun
