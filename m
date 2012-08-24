@@ -1,83 +1,77 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v6 06/13] block: Consolidate bio_alloc_bioset(),
- bio_kmalloc()
-Date: Fri, 24 Aug 2012 13:08:35 -0700
-Message-ID: <20120824200835.GD21325@google.com>
-References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
- <1345655050-28199-7-git-send-email-koverstreet@google.com>
- <20120822201730.GI19212@google.com>
- <20120824050400.GA11977@moria.home.lan>
+From: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive hashtable
+Date: Fri, 24 Aug 2012 22:11:55 +0200
+Message-ID: <5037E00B.6090606@gmail.com>
+References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com> <1345602432-27673-2-git-send-email-levinsasha928@gmail.com> <20120822180138.GA19212@google.com> <50357840.5020201@gmail.com> <20120823200456.GD14962@google.com> <5037DA47.9010306@gmail.com> <20120824195941.GC21325@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120824050400.GA11977-jC9Py7bek1znysI04z7BkA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120824195941.GC21325-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jesse-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello,
-
-On Thu, Aug 23, 2012 at 10:04:00PM -0700, Kent Overstreet wrote:
-> > >  struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
-> > >  {
-> > > +	unsigned front_pad;
-> > > +	unsigned inline_vecs;
-> > >  	unsigned long idx = BIO_POOL_NONE;
-> > >  	struct bio_vec *bvl = NULL;
-> > >  	struct bio *bio;
-> > >  	void *p;
-> > >  
-> > > -	p = mempool_alloc(bs->bio_pool, gfp_mask);
-> > > +	if (nr_iovecs > UIO_MAXIOV)
-> > > +		return NULL;
-> > 
-> > This test used to only happen for bio_kmalloc().  If I follow the code
-> > I can see that UIO_MAXIOV is larger than BIOVEC_MAX_IDX, so this
-> > doesn't really affect the capability of bioset allocs; however, given
-> > that bioset allocation already checks against BIOVEC_MAX_IDX, I don't
-> > see why this test is now also applied to them.
+On 08/24/2012 09:59 PM, Tejun Heo wrote:
+> Hello, Sasha.
 > 
-> Having arbitrary limits that are different for kmalloced bios and bioset
-> allocated bios seems _very_ sketchy to me. I tend to think that
-> UIO_MAXIOV check shouldn't be there at all... but if it is IMO it makes
-> slightly more sense for it to apply to all bio allocations.
+> On Fri, Aug 24, 2012 at 09:47:19PM +0200, Sasha Levin wrote:
+>>> I think this is problematic.  It looks exactly like other existing
+>>> DEFINE macros yet what its semantics is different.  I don't think
+>>> that's a good idea.
+>>
+>> I can switch that to be DECLARE_HASHTABLE() if the issue is semantics.
 > 
-> As you mentioned it doesn't affect the behaviour of the code, but
-> supposing UIO_MAXIOV was less than BIO_MAX_PAGES, whatever was depending
-> on that check would then implicitly depend on the bios not being
-> allocated from a bioset. Ugly.
+> If this implementation is about the common trivial case, why not just
+> have the usual DECLARE/DEFINE_HASHTABLE() combination?
 
-Please keep UIO_MAXIOV test on kmalloc case only.  If you want to
-change that, please do that in a separate patch with its own
-justification.
+When we add the dynamic non-resizable support, how would DEFINE_HASHTABLE() look?
 
-> > And we lose /** comments on two exported functions and
-> > bio_alloc_bioset() comment doesn't explain that it now also handles
-> > NULL bioset case.  Now that they share common implementation, you can
-> > update bio_alloc_bioset() and refer to it from its wrappers but please
-> > don't drop them like this.
+>>> So, I think it would be best to keep this one as straight-forward and
+>>> trivial as possible.  Helper macros to help its users are fine but
+>>> let's please not go for full encapsulation.
+>>
+>> What if we cut off the dynamic allocated (but not resizable) hashtable out for
+>> the moment, and focus on the most common statically allocated hashtable case?
+>>
+>> The benefits would be:
+>>
+>>  - Getting rid of all the _size() macros, which will make the amount of helpers
+>> here reasonable.
+>>  - Dynamically allocated hashtable can be easily added as a separate
+>> implementation using the same API. We already have some of those in the kernel...
 > 
-> So if I follow you, you're fine with dropping the comments from the
-> single line wrappers provided their information is rolled into
-> bio_alloc_bioset()'s documentation? That's what I should have done,
-> I'll do that now.
+> It seems we have enough of this static usage and solving the static
+> case first shouldn't hinder the dynamic (!resize) case later, so,
+> yeah, sounds good to me.
+> 
+>>  - When that's ready, I feel it's a shame to lose full encapsulation just due to
+>> hash_hashed().
+> 
+> I don't know.  If we stick to the static (or even !resize dymaic)
+> straight-forward hash - and we need something like that - I don't see
+> what the full encapsulation buys us other than a lot of trivial
+> wrappers.
 
-Not really, for example, if you had
+Which macros do you consider as trivial within the current API?
 
-	/* explain A in detail */
-	a() {};
+Basically this entire thing could be reduced to DEFINE/DECLARE_HASHTABLE and
+get_bucket(), but it would make the life of anyone who wants a slightly
+different hashtable a hell.
 
-and if you introduce __a() which does __A and make a its wrapper.
+I think that right now the only real trivial wrapper is hash_hashed(), and I
+think it's a price worth paying to have a single hashtable API instead of
+fragmenting it when more implementations come along.
 
-	/* explain __A in detail */
-	__a() {};
+Thanks,
+Sasha
 
-	/* explain A briefly and refer to __a() for details */
-	a() {};
+> 
+> Thanks.
+> 
 
-Thanks.
-
--- 
-tejun
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
