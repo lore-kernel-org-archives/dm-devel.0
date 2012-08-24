@@ -1,159 +1,86 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v6 13/13] block: Only clone bio vecs that are in use
-Date: Fri, 24 Aug 2012 00:05:08 -0700
-Message-ID: <20120824070508.GE11977@moria.home.lan>
+Subject: Re: [PATCH v6 02/13] dm: Use bioset's front_pad for
+ dm_rq_clone_bio_info
+Date: Fri, 24 Aug 2012 00:14:48 -0700
+Message-ID: <20120824071448.GF11977@moria.home.lan>
 References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
- <1345655050-28199-14-git-send-email-koverstreet@google.com>
- <20120822211045.GN19212@google.com>
+ <1345655050-28199-3-git-send-email-koverstreet@google.com>
+ <20120822213010.GA8020@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120822211045.GN19212-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120822213010.GA8020-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
+To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Aug 22, 2012 at 02:10:45PM -0700, Tejun Heo wrote:
-> Hello, Kent.
-> 
-> On Wed, Aug 22, 2012 at 10:04:10AM -0700, Kent Overstreet wrote:
-> > bcache creates large bios internally, and then splits them according to
-> > the device requirements before it sends them down. If a lower level
-> > device tries to clone the bio, and the original bio had more than
-> > BIO_MAX_PAGES, the clone will fail unecessarily.
+On Wed, Aug 22, 2012 at 05:30:10PM -0400, Vivek Goyal wrote:
+> On Wed, Aug 22, 2012 at 10:03:59AM -0700, Kent Overstreet wrote:
+> > Previously, dm_rq_clone_bio_info needed to be freed by the bio's
+> > destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
+> > This gets rid of a memory allocation and means we can kill
+> > dm_rq_bio_destructor.
 > > 
-> > We can fix this by only cloning the bio vecs that are actually in use.
+> > v6: Fix comment on struct dm_rq_clone_bio_info, per Tejun
+> > 
+> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> > CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  drivers/md/dm.c | 39 +++++++++++----------------------------
+> >  1 file changed, 11 insertions(+), 28 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index 0c3d6dd..5ed9779 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -86,12 +86,17 @@ struct dm_rq_target_io {
+> >  };
+> >  
+> >  /*
+> > - * For request-based dm.
+> > - * One of these is allocated per bio.
+> > + * For request-based dm - the bio clones we allocate are embedded in these
+> > + * structs.
+> > + *
+> > + * We allocate these with bio_alloc_bioset, using the front_pad parameter when
+> > + * the bioset is created - this means the bio has to come at the end of the
+> > + * struct.
+> >   */
+> >  struct dm_rq_clone_bio_info {
+> >  	struct bio *orig;
+> >  	struct dm_rq_target_io *tio;
+> > +	struct bio clone;
+> >  };
+> >  
+> >  union map_info *dm_get_mapinfo(struct bio *bio)
+> > @@ -467,16 +472,6 @@ static void free_rq_tio(struct dm_rq_target_io *tio)
+> >  	mempool_free(tio, tio->md->tio_pool);
+> >  }
+> >  
+> > -static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
+> > -{
+> > -	return mempool_alloc(md->io_pool, GFP_ATOMIC);
+> > -}
+> > -
+> > -static void free_bio_info(struct dm_rq_clone_bio_info *info)
+> > -{
+> > -	mempool_free(info, info->tio->md->io_pool);
+> > -}
+> > -
 > 
-> I'm pretty sure I sound like a broken record by now, but
-> 
-> * How was this tested?
-> 
-> * What are the implications and possible dangers?
+> With this change, do you still need "_rq_bio_info_cache" slab cache? I would
+> think that it can be cleaned up now?
 
-I've said all that on list, but I gather what you really wanted was to
-have it all in the patch description. Will do.
+It looks like it, but I'm hesitent to make more extensive changes to the
+dm code given that I'm unfamiliar with it and I haven't been able to
+personally test the request type dm target code.
 
-Though actually, this patch by itself is pretty innocuous. It's my bio
-splitting code that actually depends on the fields of struct bio
-(bi_idx) being used consistently.
+That and the way io_pool is overloaded. I see too many ways I could
+screw things up.
 
-Anyways, tell me if the description below is better.
-
-> > @@ -463,10 +468,10 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
-> >  	bio->bi_sector = bio_src->bi_sector;
-> >  	bio->bi_bdev = bio_src->bi_bdev;
-> >  	bio->bi_flags |= 1 << BIO_CLONED;
-> > +	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
-> 
-> For the n'th time, explain please.
-
-Argh, I could've sworn I dropped that part.
-
-
-commit 0edda563aef9432b45f0c6a50f52590b92594560
-Author: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Date:   Thu Aug 23 23:26:38 2012 -0700
-
-    block: Only clone bio vecs that are in use
-    
-    bcache creates large bios internally, and then splits them according to
-    the device requirements before it sends them down. If a lower level
-    device tries to clone the bio, and the original bio had more than
-    BIO_MAX_PAGES, the clone will fail unecessarily.
-    
-    We can fix this by only cloning the bio vecs that are actually in use -
-    as for as the block layer is concerned the new bio is still equivalent
-    to the old bio.
-    
-    This code should in general be safe as long as all the block layer code
-    uses bi_idx, bi_vcnt consistently; since bios are cloned by code that
-    doesn't own the original bio there's little room for issues caused by
-    code playing games with the original bio's bi_io_vec. One perhaps
-    imagine code depending the clone and original bio's io vecs lining up a
-    certain way, but auditing and testing haven't turned up anything.
-    
-    Testing: This code has been in the bcache tree for quite awhile, and has
-    been tested with various md layers and dm targets (including strange
-    things like multipath).
-    
-    Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-    CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-    CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-    CC: Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
-
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 63e5852..5c3457f 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -734,7 +734,7 @@ static struct bio *bio_chain_clone(struct bio **old, struct bio **next,
- 	}
- 
- 	while (old_chain && (total < len)) {
--		tmp = bio_kmalloc(gfpmask, old_chain->bi_max_vecs);
-+		tmp = bio_kmalloc(gfpmask, bio_segments(old_chain));
- 		if (!tmp)
- 			goto err_out;
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a3c38b9..3aeb108 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1080,11 +1080,10 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
- {
- 	struct bio *clone;
- 
--	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
-+	clone = bio_alloc_bioset(GFP_NOIO, bv_count, bs);
- 	__bio_clone(clone, bio);
- 	clone->bi_sector = sector;
--	clone->bi_idx = idx;
--	clone->bi_vcnt = idx + bv_count;
-+	clone->bi_vcnt = bv_count;
- 	clone->bi_size = to_bytes(len);
- 	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
- 
-diff --git a/fs/bio.c b/fs/bio.c
-index 895e2a6..cd80710 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -467,11 +467,16 @@ EXPORT_SYMBOL(bio_phys_segments);
-  *	Clone a &bio. Caller will own the returned bio, but not
-  *	the actual data it points to. Reference count of returned
-  * 	bio will be one.
-+ *
-+ *	We don't clone the entire bvec, just the part from bi_idx to b_vcnt
-+ *	(i.e. what the bio currently points to, so the new bio is still
-+ *	equivalent to the old bio).
-  */
- void __bio_clone(struct bio *bio, struct bio *bio_src)
- {
--	memcpy(bio->bi_io_vec, bio_src->bi_io_vec,
--		bio_src->bi_max_vecs * sizeof(struct bio_vec));
-+	memcpy(bio->bi_io_vec,
-+	       bio_iovec(bio_src),
-+	       bio_segments(bio_src) * sizeof(struct bio_vec));
- 
- 	/*
- 	 * most users will be overriding ->bi_bdev with a new target,
-@@ -481,9 +486,8 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
- 	bio->bi_bdev = bio_src->bi_bdev;
- 	bio->bi_flags |= 1 << BIO_CLONED;
- 	bio->bi_rw = bio_src->bi_rw;
--	bio->bi_vcnt = bio_src->bi_vcnt;
-+	bio->bi_vcnt = bio_segments(bio_src);
- 	bio->bi_size = bio_src->bi_size;
--	bio->bi_idx = bio_src->bi_idx;
- }
- EXPORT_SYMBOL(__bio_clone);
- 
-@@ -500,7 +504,7 @@ struct bio *bio_clone_bioset(struct bio *bio, gfp_t gfp_mask,
- {
- 	struct bio *b;
- 
--	b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, bs);
-+	b = bio_alloc_bioset(gfp_mask, bio_segments(bio), bs);
- 	if (!b)
- 		return NULL;
- 
+Also it looks like the equivalent change ought to be done with struct
+dm_io first (then we'd have removed all the users of io_pool), but
+honestly it takes me forever to do anything in the dm code so I'd rather
+leave that to someone else.
