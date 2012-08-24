@@ -1,77 +1,92 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v6 13/13] block: Only clone bio vecs that are in use
-Date: Fri, 24 Aug 2012 13:42:16 -0700
-Message-ID: <20120824204216.GH21325@google.com>
-References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
- <1345655050-28199-14-git-send-email-koverstreet@google.com>
- <20120822211045.GN19212@google.com>
- <20120824070508.GE11977@moria.home.lan>
+From: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and
+	naive hashtable
+Date: Fri, 24 Aug 2012 22:53:45 +0200
+Message-ID: <5037E9D9.9000605@gmail.com>
+References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com>
+	<1345602432-27673-2-git-send-email-levinsasha928@gmail.com>
+	<20120822180138.GA19212@google.com> <50357840.5020201@gmail.com>
+	<20120823200456.GD14962@google.com> <5037DA47.9010306@gmail.com>
+	<20120824195941.GC21325@google.com> <5037E00B.6090606@gmail.com>
+	<20120824203332.GF21325@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120824070508.GE11977-jC9Py7bek1znysI04z7BkA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+In-Reply-To: <20120824203332.GF21325-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://openvswitch.org/pipermail/dev>
+List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
+List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
+Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello, Kent.
-
-On Fri, Aug 24, 2012 at 12:05:08AM -0700, Kent Overstreet wrote:
-> > I'm pretty sure I sound like a broken record by now, but
-> > 
-> > * How was this tested?
-> > 
-> > * What are the implications and possible dangers?
+On 08/24/2012 10:33 PM, Tejun Heo wrote:
+> Hello, Sasha.
 > 
-> I've said all that on list, but I gather what you really wanted was to
-> have it all in the patch description. Will do.
-
-Yeap.
-
-> > > @@ -463,10 +468,10 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
-> > >  	bio->bi_sector = bio_src->bi_sector;
-> > >  	bio->bi_bdev = bio_src->bi_bdev;
-> > >  	bio->bi_flags |= 1 << BIO_CLONED;
-> > > +	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
-> > 
-> > For the n'th time, explain please.
+> On Fri, Aug 24, 2012 at 10:11:55PM +0200, Sasha Levin wrote:
+>>> If this implementation is about the common trivial case, why not just
+>>> have the usual DECLARE/DEFINE_HASHTABLE() combination?
+>>
+>> When we add the dynamic non-resizable support, how would DEFINE_HASHTABLE() look?
 > 
-> Argh, I could've sworn I dropped that part.
+> Hmmm?  DECLARE/DEFINE are usually for static ones.
 
-Can we drop it tho?  If we're changing bvecs, we probably should be
-clearing SEG_VALID on both bios.
+Yup, but we could be using the same API for dynamic non-resizable and static if
+we go with the DECLARE/hash_init. We could switch between them (and other
+implementations) without having to change the code.
 
-> commit 0edda563aef9432b45f0c6a50f52590b92594560
-> Author: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> Date:   Thu Aug 23 23:26:38 2012 -0700
+>>> I don't know.  If we stick to the static (or even !resize dymaic)
+>>> straight-forward hash - and we need something like that - I don't see
+>>> what the full encapsulation buys us other than a lot of trivial
+>>> wrappers.
+>>
+>> Which macros do you consider as trivial within the current API?
+>>
+>> Basically this entire thing could be reduced to DEFINE/DECLARE_HASHTABLE and
+>> get_bucket(), but it would make the life of anyone who wants a slightly
+>> different hashtable a hell.
 > 
->     block: Only clone bio vecs that are in use
->     
->     bcache creates large bios internally, and then splits them according to
->     the device requirements before it sends them down. If a lower level
->     device tries to clone the bio, and the original bio had more than
->     BIO_MAX_PAGES, the clone will fail unecessarily.
->     
->     We can fix this by only cloning the bio vecs that are actually in use -
->     as for as the block layer is concerned the new bio is still equivalent
->     to the old bio.
->     
->     This code should in general be safe as long as all the block layer code
->     uses bi_idx, bi_vcnt consistently; since bios are cloned by code that
->     doesn't own the original bio there's little room for issues caused by
->     code playing games with the original bio's bi_io_vec. One perhaps
->     imagine code depending the clone and original bio's io vecs lining up a
->     certain way, but auditing and testing haven't turned up anything.
->     
->     Testing: This code has been in the bcache tree for quite awhile, and has
->     been tested with various md layers and dm targets (including strange
->     things like multipath).
+> Wouldn't the following be enough to get most of the benefits?
+> 
+> * DECLARE/DEFINE
+> * hash_head()
+> * hash_for_each_head()
+> * hash_add*()
+> * hash_for_each_possible*()
+ * hash_for_each*() ?
 
-Yeap, looks much better to me.
 
-Thanks.
+Why do we need hash_head/hash_for_each_head()? I haven't stumbled on a place yet
+that needed direct access to the bucket itself.
 
--- 
-tejun
+Consider the following list:
+
+ - DECLARE
+ - hash_init
+ - hash_add
+ - hash_del
+ - hash_hashed
+ - hash_for_each_[rcu, safe]
+ - hash_for_each_possible[rcu, safe]
+
+This basically means 11 macros/functions that would let us have full
+encapsulation and will make it very easy for future implementations to work with
+this API instead of making up a new one. It's also not significantly (+~2-3)
+more than the ones you listed.
+
+>> I think that right now the only real trivial wrapper is hash_hashed(), and I
+>> think it's a price worth paying to have a single hashtable API instead of
+>> fragmenting it when more implementations come along.
+> 
+> I'm not objecting strongly against full encapsulation but having this
+> many thin wrappers makes me scratch my head.
+> 
+> Thanks.
+> 
