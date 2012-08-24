@@ -1,68 +1,86 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v6 02/13] dm: Use bioset's front_pad for
- dm_rq_clone_bio_info
-Date: Fri, 24 Aug 2012 14:40:34 -0400
-Message-ID: <20120824184034.GA29932@redhat.com>
-References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
- <1345655050-28199-3-git-send-email-koverstreet@google.com>
- <20120822213010.GA8020@redhat.com>
- <20120824071448.GF11977@moria.home.lan>
+From: Sasha Levin <levinsasha928@gmail.com>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive hashtable
+Date: Fri, 24 Aug 2012 21:47:19 +0200
+Message-ID: <5037DA47.9010306@gmail.com>
+References: <1345602432-27673-1-git-send-email-levinsasha928@gmail.com> <1345602432-27673-2-git-send-email-levinsasha928@gmail.com> <20120822180138.GA19212@google.com> <50357840.5020201@gmail.com> <20120823200456.GD14962@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120824071448.GF11977-jC9Py7bek1znysI04z7BkA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20120823200456.GD14962@google.com>
+Sender: owner-linux-mm@kvack.org
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
 List-Id: dm-devel.ids
 
-On Fri, Aug 24, 2012 at 12:14:48AM -0700, Kent Overstreet wrote:
-
-[..]
-> > > -static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
-> > > -{
-> > > -	return mempool_alloc(md->io_pool, GFP_ATOMIC);
-> > > -}
-> > > -
-> > > -static void free_bio_info(struct dm_rq_clone_bio_info *info)
-> > > -{
-> > > -	mempool_free(info, info->tio->md->io_pool);
-> > > -}
-> > > -
-> > 
-> > With this change, do you still need "_rq_bio_info_cache" slab cache? I would
-> > think that it can be cleaned up now?
+On 08/23/2012 10:04 PM, Tejun Heo wrote:
+> Hello, Sasha.
 > 
-> It looks like it, but I'm hesitent to make more extensive changes to the
-> dm code given that I'm unfamiliar with it and I haven't been able to
-> personally test the request type dm target code.
+> On Thu, Aug 23, 2012 at 02:24:32AM +0200, Sasha Levin wrote:
+>>> I think the almost trivial nature of hlist hashtables makes this a bit
+>>> tricky and I'm not very sure but having this combinatory explosion is
+>>> a bit dazzling when the same functionality can be achieved by simply
+>>> combining operations which are already defined and named considering
+>>> hashtable.  I'm not feeling too strong about this tho.  What do others
+>>> think?
+>>
+>> I'm thinking that this hashtable API will have 2 purposes: First, it would
+>> prevent the excessive duplication of hashtable implementations all around the code.
+>>
+>> Second, it will allow more easily interchangeable hashtable implementations to
+>> find their way into the kernel. There are several maintainers who would be happy
+>> to see dynamically sized RCU hashtable, and I'm guessing that several more
+>> variants could be added based on needs in specific modules.
+>>
+>> The second reason is why several things you've mentioned look the way they are:
+>>
+>>  - No DEFINE_HASHTABLE(): I wanted to force the use of hash_init() since
+>> initialization for other hashtables may be more complicated than the static
+>> initialization for this implementation, which means that any place that used
+>> DEFINE_HASHTABLE() and didn't do hash_init() will be buggy.
 > 
-> That and the way io_pool is overloaded. I see too many ways I could
-> screw things up.
+> I think this is problematic.  It looks exactly like other existing
+> DEFINE macros yet what its semantics is different.  I don't think
+> that's a good idea.
 
-I understand your concern but still if you leave it behind, job is
-half done. You moved rq_bio_info in bio front padding but left the
-associated cache and mempool behind. I would say we need to clean
-it up and then get ACK from dm/md folks.
+I can switch that to be DECLARE_HASHTABLE() if the issue is semantics.
 
-I am looking at the code and one thing which is not clear to me is
-__bind_mempools() which assumes that md->io_pool is always set. With
-your change md->io_pool is set only for BIO based targets and not
-request based targets. So that will need some tidying up.
+>> I'm actually tempted in hiding hlist completely from hashtable users, probably
+>> by simply defining a hash_head/hash_node on top of the hlist_ counterparts.
+> 
+> I think that it would be best to keep this one simple & obvious, which
+> already has enough in-kernel users to justify its existence.  There
+> are significant benefits in being trivially understandable and
+> expectable.  If we want more advanced ones - say resizing, hybrid or
+> what not, let's make that a separate one.  No need to complicate the
+> common straight-forward case for that.
+> 
+> So, I think it would be best to keep this one as straight-forward and
+> trivial as possible.  Helper macros to help its users are fine but
+> let's please not go for full encapsulation.
 
-Testing of request based target should be easy. Just enable multipath
-for your sata disk.
+What if we cut off the dynamic allocated (but not resizable) hashtable out for
+the moment, and focus on the most common statically allocated hashtable case?
 
+The benefits would be:
+
+ - Getting rid of all the _size() macros, which will make the amount of helpers
+here reasonable.
+ - Dynamically allocated hashtable can be easily added as a separate
+implementation using the same API. We already have some of those in the kernel...
+ - When that's ready, I feel it's a shame to lose full encapsulation just due to
+hash_hashed().
+
+
+Thanks,
+Sasha
 
 > 
-> Also it looks like the equivalent change ought to be done with struct
-> dm_io first (then we'd have removed all the users of io_pool), but
-> honestly it takes me forever to do anything in the dm code so I'd rather
-> leave that to someone else.
+> Thanks.
+> 
 
-I think we can leave io_pool behind. Just that it remains null for
-request based targets.
-
-Thanks
-Vivek
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
