@@ -1,58 +1,38 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [RFC PATCH 00/20] dm-crypt: parallel processing
-Date: Thu, 23 Aug 2012 13:15:36 -0700
-Message-ID: <20120823201536.GE14962@google.com>
-References: <cover.1345477953.git.mbroz@redhat.com>
-	<503356E7.4080604@redhat.com> <20120821182340.GA24861@google.com>
-	<5034B459.1000107@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v6 11/13] block: Rework bio_pair_split()
+Date: Thu, 23 Aug 2012 22:25:47 -0400
+Message-ID: <yq1y5l5hvpw.fsf@sermon.lab.mkp.net>
+References: <1345655050-28199-1-git-send-email-koverstreet@google.com>
+	<1345655050-28199-12-git-send-email-koverstreet@google.com>
+	<20120822210410.GL19212@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5034B459.1000107@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>, Vivek Goyal <vgoyal@redhat.com>
+Content-Type: text/plain
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120822210410.GL19212-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> (Tejun Heo's message of "Wed,
+	22 Aug 2012 14:04:10 -0700")
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>, Sage Weil <sage-4GqslpFJ+cxBDgjK7y7TUQ@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hello,
+>>>>> "Tejun" == Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> writes:
 
-On Wed, Aug 22, 2012 at 12:28:41PM +0200, Milan Broz wrote:
-> Whatever, if logic is implemented in workqueue code, others can use t as well.
-> I would really prefer not to have "too smart" dmcrypt...
-> (Someone mentioned btrfs on top of it with all workqueues - how it can behave nicely
-> if every layer will try to implement own smart logic.)
-> 
-> Anyway, thanks for discussion, this is exactly what was missing here :)
+Tejun> I complained about this in the last posting and in the previous
+Tejun> patch.  Please respond.  Martin, are you okay with these
+Tejun> integrity changes?
 
-I've been thinking about it and am still unsure.  If there are enough
-use cases, we can try to manage unbound workers such that each CPU has
-some standby ones, but at this point such approach seems a bit
-overkill and I'm skeptical how useful a purely opportunistic approach
-would be.
+I missed the first several iterations of all this while I was out on
+vacation. I'll have to try to wrap my head around the new approach.
 
-Another thing is that this is something which really belongs to the
-scheduler.  The scheduler can know better and do things like this much
-better.  Unfortunately, kthreads don't have mechanisms to be
-discovered in terms of its optimal association (as opposed to, say,
-autonuma for userland).
-
-So... I don't know.  dm-crypt probably is the most extreme use case in
-kernel, so maybe going for specialized solution might not be too
-crazy.  Also, how much of a problem is this?  Is it really worth
-solving?
-
-Thanks.
+However, I'm not sure I like the overall approach of the new splitting.
+Instead of all this cloning, slicing and dicing of bio_vecs I'd rather
+we bit the bullet and had an offset + length for the vector inside each
+bio. That way we could keep the bio_vec immutable and make clones more
+lightweight since their vecs would always point to the parent. This also
+makes it trivial to split I/Os in the stacking drivers and removes evils
+in the partial completion code path. It would also allow to sever the
+ties between "size of block range operated on" vs. bi_size which we need
+for copy offload, discard, etc.
 
 -- 
-tejun
+Martin K. Petersen	Oracle Linux Engineering
