@@ -1,203 +1,191 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v7 3/9] block: Add bio_reset()
-Date: Tue, 28 Aug 2012 15:53:38 -0700
-Message-ID: <20120828225337.GH1048@moria.home.lan>
-References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-4-git-send-email-koverstreet@google.com>
- <20120828203148.GB24608@dhcp-172-17-108-109.mtv.corp.google.com>
- <20120828221715.GD1048@moria.home.lan>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and
+	naive	hashtable
+Date: Tue, 28 Aug 2012 19:00:50 -0400
+Message-ID: <20120828230050.GA3337@Krystal>
+References: <20120824203332.GF21325@google.com> <5037E9D9.9000605@gmail.com>
+	<20120824212348.GK21325@google.com> <5038074D.300@gmail.com>
+	<20120824230740.GN21325@google.com>
+	<20120825042419.GA27240@Krystal> <503C95E4.3010000@gmail.com>
+	<20120828101148.GA21683@Krystal> <503CAB1E.5010408@gmail.com>
+	<20120828115638.GC23818@Krystal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120828221715.GD1048-jC9Py7bek1znysI04z7BkA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+In-Reply-To: <20120828115638.GC23818@Krystal>
+List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://openvswitch.org/pipermail/dev>
+List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
+List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
+Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+To: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Aug 28, 2012 at 03:17:15PM -0700, Kent Overstreet wrote:
-> On Tue, Aug 28, 2012 at 01:31:48PM -0700, Tejun Heo wrote:
-> > > +	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
-> > > +
-> > > +	if (bio_integrity(bio))
-> > > +		bio_integrity_free(bio, bio->bi_pool);
-> > > +
-> > > +	bio_disassociate_task(bio);
+* Mathieu Desnoyers (mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org) wrote:
+> * Sasha Levin (levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org) wrote:
+> > On 08/28/2012 12:11 PM, Mathieu Desnoyers wrote:
+> > > * Sasha Levin (levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org) wrote:
+> > >> On 08/25/2012 06:24 AM, Mathieu Desnoyers wrote:
+> > >>> * Tejun Heo (tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org) wrote:
+> > >>>> Hello,
+> > >>>>
+> > >>>> On Sat, Aug 25, 2012 at 12:59:25AM +0200, Sasha Levin wrote:
+> > >>>>> Thats the thing, the amount of things of things you can do with a given bucket
+> > >>>>> is very limited. You can't add entries to any point besides the head (without
+> > >>>>> walking the entire list).
+> > >>>>
+> > >>>> Kinda my point.  We already have all the hlist*() interface to deal
+> > >>>> with such cases.  Having something which is evidently the trivial
+> > >>>> hlist hashtable and advertises as such in the interface can be
+> > >>>> helpful.  I think we need that more than we need anything fancy.
+> > >>>>
+> > >>>> Heh, this is a debate about which one is less insignificant.  I can
+> > >>>> see your point.  I'd really like to hear what others think on this.
+> > >>>>
+> > >>>> Guys, do we want something which is evidently trivial hlist hashtable
+> > >>>> which can use hlist_*() API directly or do we want something better
+> > >>>> encapsulated?
+> > >>>
+> > >>> My 2 cents, FWIW: I think this specific effort should target a trivially
+> > >>> understandable API and implementation, for use-cases where one would be
+> > >>> tempted to reimplement his own trivial hash table anyway. So here
+> > >>> exposing hlist internals, with which kernel developers are already
+> > >>> familiar, seems like a good approach in my opinion, because hiding stuff
+> > >>> behind new abstraction might make the target users go away.
+> > >>>
+> > >>> Then, as we see the need, we can eventually merge a more elaborate hash
+> > >>> table with poneys and whatnot, but I would expect that the trivial hash
+> > >>> table implementation would still be useful. There are of course very
+> > >>> compelling reasons to use a more featureful hash table: automatic
+> > >>> resize, RT-aware updates, scalable updates, etc... but I see a purpose
+> > >>> for a trivial implementation. Its primary strong points being:
+> > >>>
+> > >>> - it's trivially understandable, so anyone how want to be really sure
+> > >>>   they won't end up debugging the hash table instead of their
+> > >>>   work-in-progress code can have a full understanding of it,
+> > >>> - it has few dependencies, which makes it easier to understand and
+> > >>>   easier to use in some contexts (e.g. early boot).
+> > >>>
+> > >>> So I'm in favor of not overdoing the abstraction for this trivial hash
+> > >>> table, and honestly I would rather prefer that this trivial hash table
+> > >>> stays trivial. A more elaborate hash table should probably come as a
+> > >>> separate API.
+> > >>>
+> > >>> Thanks,
+> > >>>
+> > >>> Mathieu
+> > >>>
+> > >>
+> > >> Alright, let's keep it simple then.
+> > >>
+> > >> I do want to keep the hash_for_each[rcu,safe] family though.
+> > > 
+> > > Just a thought: if the API offered by the simple hash table focus on
+> > > providing a mechanism to find the hash bucket to which belongs the hash
+> > > chain containing the key looked up, and then expects the user to use the
+> > > hlist API to iterate on the chain (with or without the hlist _rcu
+> > > variant), then it might seem consistent that a helper providing
+> > > iteration over the entire table would actually just provide iteration on
+> > > all buckets, and let the user call the hlist for each iterator for each
+> > > node within the bucket, e.g.:
+> > > 
+> > > struct hlist_head *head;
+> > > struct hlist_node *pos;
+> > > 
+> > > hash_for_each_bucket(ht, head) {
+> > >         hlist_for_each(pos, head) {
+> > >                 ...
+> > >         }
+> > > }
+> > > 
+> > > That way you only have to provide one single macro
+> > > (hash_for_each_bucket), and rely on the already existing:
+> > > 
+> > > - hlist_for_each_entry
+> > > - hlist_for_each_safe
+> > > - hlist_for_each_entry_rcu
+> > > - hlist_for_each_safe_rcu
+> > >   .....
+> > > 
+> > > and various flavors that can appear in the future without duplicating
+> > > this API. So you won't even have to create _rcu, _safe, nor _safe_rcu
+> > > versions of the hash_for_each_bucket macro.
+> > > 
+> > > Thoughts ?
 > > 
-> > Is this desirable?  Why?
+> > In my opinion, the downside here is that it'll require 2 function calls and 2
+> > levels of nesting for a simple hash iteration.
 > 
-> *twitch* I should've thought more when I made that change.
+> Those are macros, not functions. No function call is required. But I see
+> your point about nesting.
 > 
-> It occurs to me now that we specifically talked about that and decided
-> to do it the other way - when I changed that I was just looking at
-> bio_free() and decided they needed to be symmetrical.
+> > 
+> > hash_for_each_bucket() will always be followed by an iteration of that
+> > bucket, so splitting a hash_for_each() which does both into 2
+> > different functions which will almost always must be called in that
+> > given order sounds unintuitive to me.
+> > 
+> > It's also just 3 different possible iterators:
+> > 
+> >  - hlist_for_each_entry
+> >  - hlist_for_each_entry_safe
+> >  - hlist_for_each_entry_rcu
+> > 
+> > So I think that it's a good price to pay - 2 extra macro definitions
+> > in the header to save a macro call + nesting level in each place that
+> > uses a hashtable.
 > 
-> I still think they should be symmetrical, but if that's true bi_ioc and
-> bi_css need to be moved, and also bio_disassociate_task() should be
-> getting called from bio_free(), not bio_put().
+> I must admin I don't care that much one way or another.
 
-Though - looking at it again I didn't actually screw anything up when I
-made that change, it's just bad style.
+Looking again at:
 
-Just screwing around a bit with the patch below, but - couple thoughts:
++#define hash_for_each_size(name, bits, bkt, node, obj, member)                 \
++       for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)                             \
++               hlist_for_each_entry(obj, node, &name[bkt], member)
 
-1) I hate duplicated code, and for the stuff in
-bio_init()/bio_free()/bio_reset() it's perhaps not worth it, it is the
-kind of stuff that gets out of sync.
+you will notice that a "break" or "continue" in the inner loop will not
+affect the outer loop, which is certainly not what the programmer would
+expect!
 
-2) It'd be better to have bio_reset() reset as much as possible, i.e. be
-as close to bio_init() as posible. Fewer differences to confuse people.
+I advise strongly against creating such error-prone construct.
+
+Thanks,
+
+Mathieu
 
 
-diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-index 7c8fe1d..a38bc7d 100644
---- a/fs/bio-integrity.c
-+++ b/fs/bio-integrity.c
-@@ -148,6 +148,9 @@ void bio_integrity_free(struct bio *bio, struct bio_set *bs)
- 
- 	BUG_ON(bip == NULL);
- 
-+	if (!bs)
-+		bs = fs_bio_set;
-+
- 	/* A cloned bio doesn't own the integrity metadata */
- 	if (!bio_flagged(bio, BIO_CLONED) && !bio_flagged(bio, BIO_FS_INTEGRITY)
- 	    && bip->bip_buf != NULL)
-diff --git a/fs/bio.c b/fs/bio.c
-index c938f42..56d8fa2 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -234,39 +234,47 @@ fallback:
- 	return bvl;
- }
- 
-+static void bio_free_stuff(struct bio *bio)
-+{
-+	bio_disassociate_task(bio);
-+
-+	if (bio_integrity(bio))
-+		bio_integrity_free(bio, bio->bi_pool);
-+}
-+
- void bio_free(struct bio *bio)
- {
- 	struct bio_set *bs = bio->bi_pool;
- 	void *p;
- 
-+	bio_free_stuff(bio);
-+
- 	if (!bs) {
--		/* Bio was allocated by bio_kmalloc() */
--		if (bio_integrity(bio))
--			bio_integrity_free(bio, fs_bio_set);
- 		kfree(bio);
--		return;
--	}
--
--	if (bio_has_allocated_vec(bio))
--		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
-+	} else {
-+		if (bio_has_allocated_vec(bio))
-+			bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
- 
--	if (bio_integrity(bio))
--		bio_integrity_free(bio, bs);
-+		/*
-+		 * If we have front padding, adjust the bio pointer before freeing
-+		 */
-+		p = bio;
-+		if (bs->front_pad)
-+			p -= bs->front_pad;
- 
--	/*
--	 * If we have front padding, adjust the bio pointer before freeing
--	 */
--	p = bio;
--	if (bs->front_pad)
--		p -= bs->front_pad;
-+		mempool_free(p, bs->bio_pool);
-+	}
-+}
- 
--	mempool_free(p, bs->bio_pool);
-+static void __bio_init(struct bio *bio)
-+{
-+	memset(bio, 0, BIO_RESET_BYTES);
-+	bio->bi_flags = 1 << BIO_UPTODATE;
- }
- 
- void bio_init(struct bio *bio)
- {
--	memset(bio, 0, sizeof(*bio));
--	bio->bi_flags = 1 << BIO_UPTODATE;
-+	__bio_init(bio);
- 	atomic_set(&bio->bi_cnt, 1);
- }
- EXPORT_SYMBOL(bio_init);
-@@ -275,13 +283,10 @@ void bio_reset(struct bio *bio)
- {
- 	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
- 
--	if (bio_integrity(bio))
--		bio_integrity_free(bio, bio->bi_pool);
-+	bio_free_stuff(bio);
-+	__bio_init(bio);
- 
--	bio_disassociate_task(bio);
--
--	memset(bio, 0, BIO_RESET_BYTES);
--	bio->bi_flags = flags|(1 << BIO_UPTODATE);
-+	bio->bi_flags |= flags;
- }
- EXPORT_SYMBOL(bio_reset);
- 
-@@ -440,10 +445,8 @@ void bio_put(struct bio *bio)
- 	/*
- 	 * last put frees it
- 	 */
--	if (atomic_dec_and_test(&bio->bi_cnt)) {
--		bio_disassociate_task(bio);
-+	if (atomic_dec_and_test(&bio->bi_cnt))
- 		bio_free(bio);
--	}
- }
- EXPORT_SYMBOL(bio_put);
- 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index ca63847..28bddc0 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -68,15 +68,6 @@ struct bio {
- 
- 	struct bvec_iter	bi_iter;
- 
--	/*
--	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
--	 */
--
--	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
--
--	atomic_t		bi_cnt;		/* pin count */
--
--	struct bio_vec		*bi_io_vec;	/* the actual vec list */
- #ifdef CONFIG_BLK_CGROUP
- 	/*
- 	 * Optional ioc and css associated with this bio.  Put on bio
-@@ -89,6 +80,16 @@ struct bio {
- 	struct bio_integrity_payload *bi_integrity;  /* data integrity */
- #endif
- 
-+	/*
-+	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
-+	 */
-+
-+	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
-+
-+	atomic_t		bi_cnt;		/* pin count */
-+
-+	struct bio_vec		*bi_io_vec;	/* the actual vec list */
-+
- 	struct bio_set		*bi_pool;
- 
- 	/*
+
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> > 
+> > 
+> > Thanks,
+> > Sasha
+> > 
+> > > Thanks,
+> > > 
+> > > Mathieu
+> > > 
+> > 
+> 
+> -- 
+> Mathieu Desnoyers
+> Operating System Efficiency R&D Consultant
+> EfficiOS Inc.
+> http://www.efficios.com
+
+-- 
+Mathieu Desnoyers
+Operating System Efficiency R&D Consultant
+EfficiOS Inc.
+http://www.efficios.com
