@@ -1,87 +1,30 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
- stacking drivers
-Date: Tue, 28 Aug 2012 13:49:10 -0700
-Message-ID: <20120828204910.GG24608@dhcp-172-17-108-109.mtv.corp.google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v7 6/9] block: Consolidate bio_alloc_bioset(),
+ bio_kmalloc()
+Date: Tue, 28 Aug 2012 15:03:32 -0700
+Message-ID: <20120828220332.GA1048@moria.home.lan>
 References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-10-git-send-email-koverstreet@google.com>
+ <1346175456-1572-7-git-send-email-koverstreet@google.com>
+ <20120828204148.GE24608@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1346175456-1572-10-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120828204148.GE24608-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hello,
+On Tue, Aug 28, 2012 at 01:41:48PM -0700, Tejun Heo wrote:
+> Hello, Kent.
+> 
+> On Tue, Aug 28, 2012 at 10:37:33AM -0700, Kent Overstreet wrote:
+> > v7: Re-add dropped comments, improv patch description
+> 
+> I don't think you did the former part.  Other than that looks good to
+> me.
 
-On Tue, Aug 28, 2012 at 10:37:36AM -0700, Kent Overstreet wrote:
-> @@ -324,13 +342,37 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
->  		front_pad = 0;
->  		inline_vecs = nr_iovecs;
->  	} else {
-> +		/*
-> +		 * generic_make_request() converts recursion to iteration; this
-> +		 * means if we're running beneath it, any bios we allocate and
-> +		 * submit will not be submitted (and thus freed) until after we
-> +		 * return.
-> +		 *
-> +		 * This exposes us to a potential deadlock if we allocate
-> +		 * multiple bios from the same bio_set() while running
-> +		 * underneath generic_make_request(). If we were to allocate
-> +		 * multiple bios (say a stacking block driver that was splitting
-> +		 * bios), we would deadlock if we exhausted the mempool's
-> +		 * reserve.
-> +		 *
-> +		 * We solve this, and guarantee forward progress, with a rescuer
-> +		 * workqueue per bio_set. If we go to allocate and there are
-> +		 * bios on current->bio_list, we first try the allocation
-> +		 * without __GFP_WAIT; if that fails, we punt those bios we
-> +		 * would be blocking to the rescuer workqueue before we retry
-> +		 * with the original gfp_flags.
-> +		 */
-> +
-> +		if (current->bio_list && !bio_list_empty(current->bio_list))
-> +			gfp_mask &= ~__GFP_WAIT;
-> +retry:
->  		p = mempool_alloc(bs->bio_pool, gfp_mask);
->  		front_pad = bs->front_pad;
->  		inline_vecs = BIO_INLINE_VECS;
->  	}
->  
->  	if (unlikely(!p))
-> -		return NULL;
-> +		goto err;
->  
->  	bio = p + front_pad;
->  	bio_init(bio);
-> @@ -351,6 +393,19 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
->  
->  err_free:
->  	mempool_free(p, bs->bio_pool);
-> +err:
-> +	if (gfp_mask != saved_gfp) {
-> +		gfp_mask = saved_gfp;
-> +
-> +		spin_lock(&bs->rescue_lock);
-> +		bio_list_merge(&bs->rescue_list, current->bio_list);
-> +		bio_list_init(current->bio_list);
-> +		spin_unlock(&bs->rescue_lock);
-> +
-> +		queue_work(bs->rescue_workqueue, &bs->rescue_work);
-> +		goto retry;
-> +	}
-
-I wonder whether it would be easier to follow if this part is in-line
-where retry: is.  All that needs to be duplicated is single
-mempool_alloc() call, right?
-
-Overall, I *think* this is correct but need to think more about it to
-be sure.
-
-Thanks!
-
--- 
-tejun
+I folded them into the bio_alloc_bioset() comments - so all the
+information that was there previously should still be there, just
+centralized. That good enough for your acked-by?
