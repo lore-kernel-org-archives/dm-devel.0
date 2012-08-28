@@ -1,51 +1,28 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
- stacking drivers
-Date: Tue, 28 Aug 2012 15:23:04 -0700
-Message-ID: <20120828222303.GE1048@moria.home.lan>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v7 4/9] pktcdvd: Switch to bio_kmalloc()
+Date: Tue, 28 Aug 2012 15:24:16 -0700
+Message-ID: <20120828222416.GF1048@moria.home.lan>
 References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-10-git-send-email-koverstreet@google.com>
- <20120828220610.GH31674@redhat.com>
+ <1346175456-1572-5-git-send-email-koverstreet@google.com>
+ <20120828203247.GC24608@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120828220610.GH31674-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+In-Reply-To: <20120828203247.GC24608@dhcp-172-17-108-109.mtv.corp.google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, vgoyal@redhat.com, mpatocka@redhat.com, bharrosh@panasas.com, Peter Osterlund <petero2@telia.com>
 List-Id: dm-devel.ids
 
-On Tue, Aug 28, 2012 at 06:06:10PM -0400, Vivek Goyal wrote:
-> On Tue, Aug 28, 2012 at 10:37:36AM -0700, Kent Overstreet wrote:
-> > Previously, if we ever try to allocate more than once from the same bio
-> > set while running under generic_make_request() (i.e. a stacking block
-> > driver), we risk deadlock.
-> > 
-> > This is because of the code in generic_make_request() that converts
-> > recursion to iteration; any bios we submit won't actually be submitted
-> > (so they can complete and eventually be freed) until after we return -
-> > this means if we allocate a second bio, we're blocking the first one
-> > from ever being freed.
-> > 
-> > Thus if enough threads call into a stacking block driver at the same
-> > time with bios that need multiple splits, and the bio_set's reserve gets
-> > used up, we deadlock.
+On Tue, Aug 28, 2012 at 01:32:47PM -0700, Tejun Heo wrote:
+> On Tue, Aug 28, 2012 at 10:37:31AM -0700, Kent Overstreet wrote:
+> > This is prep work for killing bi_destructor - previously, pktcdvd had
+> > its own pkt_bio_alloc which was basically duplication bio_kmalloc(),
+> > necessitating its own bi_destructor implementation.
 > 
-> Hi Kent,
-> 
-> So above deadlock possibility arises only if multiple threads are doing
-> multiple splits from same pool and all the threads get blocked on mempool
-> and don't return from ->make_request function.
-> 
-> Is there any existing driver in the tree which can cause this deadlock or
-> it becomes a possibility only when splitting and bcache code shows up?
+> How was this tested?
 
-It is emphatically possible with dm, though you would probably need a
-pathalogical configuration of your targets for it to be possible in
-practice - at least with the targets currently commonly in use.
-
-With most of the newer dm targets coming down the pipe I expect it
-should be possible under real world configurations, with the caveat that
-under that kind of memory pressure in practice many other things will
-fall over first.
+Hasn't been yet, but I'm getting a new test machine in the next day or
+so (and also the patch is a lot smaller since the bio_reset() changes
+you suggested).
