@@ -1,28 +1,97 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH v7 4/9] pktcdvd: Switch to bio_kmalloc()
-Date: Tue, 28 Aug 2012 15:24:16 -0700
-Message-ID: <20120828222416.GF1048@moria.home.lan>
+Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
+ stacking drivers
+Date: Tue, 28 Aug 2012 15:28:00 -0700
+Message-ID: <20120828222800.GG1048@moria.home.lan>
 References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-5-git-send-email-koverstreet@google.com>
- <20120828203247.GC24608@dhcp-172-17-108-109.mtv.corp.google.com>
+ <1346175456-1572-10-git-send-email-koverstreet@google.com>
+ <20120828204910.GG24608@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120828203247.GC24608@dhcp-172-17-108-109.mtv.corp.google.com>
+In-Reply-To: <20120828204910.GG24608@dhcp-172-17-108-109.mtv.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tejun Heo <tj@kernel.org>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, vgoyal@redhat.com, mpatocka@redhat.com, bharrosh@panasas.com, Peter Osterlund <petero2@telia.com>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, vgoyal@redhat.com, mpatocka@redhat.com, bharrosh@panasas.com, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-On Tue, Aug 28, 2012 at 01:32:47PM -0700, Tejun Heo wrote:
-> On Tue, Aug 28, 2012 at 10:37:31AM -0700, Kent Overstreet wrote:
-> > This is prep work for killing bi_destructor - previously, pktcdvd had
-> > its own pkt_bio_alloc which was basically duplication bio_kmalloc(),
-> > necessitating its own bi_destructor implementation.
+On Tue, Aug 28, 2012 at 01:49:10PM -0700, Tejun Heo wrote:
+> Hello,
 > 
-> How was this tested?
+> On Tue, Aug 28, 2012 at 10:37:36AM -0700, Kent Overstreet wrote:
+> > @@ -324,13 +342,37 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+> >  		front_pad = 0;
+> >  		inline_vecs = nr_iovecs;
+> >  	} else {
+> > +		/*
+> > +		 * generic_make_request() converts recursion to iteration; this
+> > +		 * means if we're running beneath it, any bios we allocate and
+> > +		 * submit will not be submitted (and thus freed) until after we
+> > +		 * return.
+> > +		 *
+> > +		 * This exposes us to a potential deadlock if we allocate
+> > +		 * multiple bios from the same bio_set() while running
+> > +		 * underneath generic_make_request(). If we were to allocate
+> > +		 * multiple bios (say a stacking block driver that was splitting
+> > +		 * bios), we would deadlock if we exhausted the mempool's
+> > +		 * reserve.
+> > +		 *
+> > +		 * We solve this, and guarantee forward progress, with a rescuer
+> > +		 * workqueue per bio_set. If we go to allocate and there are
+> > +		 * bios on current->bio_list, we first try the allocation
+> > +		 * without __GFP_WAIT; if that fails, we punt those bios we
+> > +		 * would be blocking to the rescuer workqueue before we retry
+> > +		 * with the original gfp_flags.
+> > +		 */
+> > +
+> > +		if (current->bio_list && !bio_list_empty(current->bio_list))
+> > +			gfp_mask &= ~__GFP_WAIT;
+> > +retry:
+> >  		p = mempool_alloc(bs->bio_pool, gfp_mask);
+> >  		front_pad = bs->front_pad;
+> >  		inline_vecs = BIO_INLINE_VECS;
+> >  	}
+> >  
+> >  	if (unlikely(!p))
+> > -		return NULL;
+> > +		goto err;
+> >  
+> >  	bio = p + front_pad;
+> >  	bio_init(bio);
+> > @@ -351,6 +393,19 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+> >  
+> >  err_free:
+> >  	mempool_free(p, bs->bio_pool);
+> > +err:
+> > +	if (gfp_mask != saved_gfp) {
+> > +		gfp_mask = saved_gfp;
+> > +
+> > +		spin_lock(&bs->rescue_lock);
+> > +		bio_list_merge(&bs->rescue_list, current->bio_list);
+> > +		bio_list_init(current->bio_list);
+> > +		spin_unlock(&bs->rescue_lock);
+> > +
+> > +		queue_work(bs->rescue_workqueue, &bs->rescue_work);
+> > +		goto retry;
+> > +	}
+> 
+> I wonder whether it would be easier to follow if this part is in-line
+> where retry: is.  All that needs to be duplicated is single
+> mempool_alloc() call, right?
 
-Hasn't been yet, but I'm getting a new test machine in the next day or
-so (and also the patch is a lot smaller since the bio_reset() changes
-you suggested).
+Actually, what might be better than both of those approaches is shoving
+that code into another function. Then it's just:
+
+if (gfp_mask != saved_gfp) {
+	gfp_mask = saved_gfp;
+	shovel_bios_to_rescuer();
+	goto retry;
+}
+
+> Overall, I *think* this is correct but need to think more about it to
+> be sure.
+
+Please do. As much time as I've spent staring at this kind of stuff,
+I'm pretty sure I've got it correct but it still makes my head hurt to
+work out all the various possible deadlocks.
