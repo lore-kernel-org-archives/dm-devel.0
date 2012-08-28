@@ -1,29 +1,76 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH v7 5/9] block: Kill bi_destructor
-Date: Tue, 28 Aug 2012 15:07:11 -0700
-Message-ID: <20120828220711.GC1048@moria.home.lan>
+Subject: Re: [PATCH v7 3/9] block: Add bio_reset()
+Date: Tue, 28 Aug 2012 15:17:15 -0700
+Message-ID: <20120828221715.GD1048@moria.home.lan>
 References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-6-git-send-email-koverstreet@google.com>
- <20120828203613.GD24608@dhcp-172-17-108-109.mtv.corp.google.com>
+ <1346175456-1572-4-git-send-email-koverstreet@google.com>
+ <20120828203148.GB24608@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120828203613.GD24608@dhcp-172-17-108-109.mtv.corp.google.com>
+In-Reply-To: <20120828203148.GB24608@dhcp-172-17-108-109.mtv.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tejun Heo <tj@kernel.org>
 Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, vgoyal@redhat.com, mpatocka@redhat.com, bharrosh@panasas.com, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-On Tue, Aug 28, 2012 at 01:36:13PM -0700, Tejun Heo wrote:
-> On Tue, Aug 28, 2012 at 10:37:32AM -0700, Kent Overstreet wrote:
-> > @@ -385,7 +386,7 @@ struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
-> >  	bio->bi_flags |= BIO_POOL_NONE << BIO_POOL_OFFSET;
-> >  	bio->bi_max_vecs = nr_iovecs;
-> >  	bio->bi_io_vec = bio->bi_inline_vecs;
-> > -	bio->bi_destructor = bio_kmalloc_destructor;
-> > +	bio->bi_pool = NULL;
+On Tue, Aug 28, 2012 at 01:31:48PM -0700, Tejun Heo wrote:
+> Hello, Kent.
 > 
-> Doesn't bio_init() already memset the whole thing?
+> On Tue, Aug 28, 2012 at 10:37:30AM -0700, Kent Overstreet wrote:
+> > Reusing bios is something that's been highly frowned upon in the past,
+> > but driver code keeps doing it anyways. If it's going to happen anyways,
+> > we should provide a generic method.
+> > 
+> > This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
+> > was open coding it, by doing a bio_init() and resetting bi_destructor.
+> 
+> Better to explain why some bio fields are re-ordered and why that
+> shouldn't make things worse cacheline-wise?
 
-Yes it does, holdover from BIO_KMALLOC_POOL. Dropping it.
+Well it may (struct bio is what, 3 or 4 cachelines now?) but even on
+ridiculous million iop devices struct bio just isn't hot enough for this
+kind of stuff to show up in the profiles... and I've done enough
+profiling to be pretty confident of that.
+
+So um, if there was anything to say performance wise I would, but to me
+it seems more that there isn't.
+
+(pruning struct bio would have more of an effect performance wise, which
+you know is something I'd like to do.)
+
+> 
+> > +void bio_reset(struct bio *bio)
+> > +{
+> 
+> Function comment explaining what it does and why it does what it does
+> with integrity / bi_css / whatnot?
+
+Yeah, good idea.
+
+> 
+> > +	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
+> > +
+> > +	if (bio_integrity(bio))
+> > +		bio_integrity_free(bio, bio->bi_pool);
+> > +
+> > +	bio_disassociate_task(bio);
+> 
+> Is this desirable?  Why?
+
+*twitch* I should've thought more when I made that change.
+
+It occurs to me now that we specifically talked about that and decided
+to do it the other way - when I changed that I was just looking at
+bio_free() and decided they needed to be symmetrical.
+
+I still think they should be symmetrical, but if that's true bi_ioc and
+bi_css need to be moved, and also bio_disassociate_task() should be
+getting called from bio_free(), not bio_put().
+
+Were you the one that added that call? I know you've been working on
+that area of the code recently. Sticking it in bio_put() instead of
+bio_free() seems odd to be, and they're completely equivalent now that
+bio_free() is only called from bio_put() (save one instance I should
+probably fix).
