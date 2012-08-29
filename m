@@ -1,66 +1,25 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
- stacking drivers
-Date: Wed, 29 Aug 2012 09:50:06 -0700
-Message-ID: <20120829165006.GB20312@google.com>
-References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-10-git-send-email-koverstreet@google.com>
- <Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com>
+From: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH v7 9/9] block: Avoid deadlocks with bio
+	allocation by stacking drivers
+Date: Wed, 29 Aug 2012 17:57:58 +0100
+Message-ID: <20120829165758.GA5576@agk-dp.fab.redhat.com>
+References: <1346175456-1572-1-git-send-email-koverstreet@google.com> <1346175456-1572-10-git-send-email-koverstreet@google.com> <Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com> <20120829165006.GB20312@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tj@kernel.org, vgoyal@redhat.com, bharrosh@panasas.com, Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <20120829165006.GB20312-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Aug 29, 2012 at 12:24:43PM -0400, Mikulas Patocka wrote:
-> Hi
-> 
-> This fixes the bio allocation problems, but doesn't fix a similar deadlock 
-> in device mapper when allocating from md->io_pool or other mempools in 
-> the target driver.
+On Wed, Aug 29, 2012 at 09:50:06AM -0700, Kent Overstreet wrote:
+> The other thing we could do is make the rescuer thread per block device
+> (which arguably makes more sense than per bio_set anyways), then
+> associate bio_sets with specific block devices/rescuers.
+ 
+For dm, it's equivalent - already one bioset required per live device:
+dm_alloc_md_mempools().
 
-Ick. That is a problem.
-
-There are a bunch of mempools in drivers/md too :(
-
-Though honestly bio_sets have the front_pad thing for a reason, for per
-bio state it makes sense to use that anyways - simpler code because
-you're doing fewer explicit allocations and more efficient too.
-
-So I wonder if we fixed that if it'd still be a problem.
-
-The other thing we could do is make the rescuer thread per block device
-(which arguably makes more sense than per bio_set anyways), then
-associate bio_sets with specific block devices/rescuers.
-
-Then the rescuer code can be abstracted out from the bio allocation
-code, and we just create a thin wrapper around mempool_alloc() that does
-the same dance bio_alloc_bioset() does now.
-
-I think that'd be pretty easy and work out really nicely.
-
-> The problem is that majority of device mapper code assumes that if we 
-> submit a bio, that bio will be finished in a finite time. The commit 
-> d89d87965dcbe6fe4f96a2a7e8421b3a75f634d1 in 2.6.22 broke this assumption.
-> 
-> I suggest - instead of writing workarounds for this current->bio_list 
-> misbehavior, why not remove current->bio_list at all? We could revert 
-> d89d87965dcbe6fe4f96a2a7e8421b3a75f634d1, allocate a per-device workqueue, 
-> test stack usage in generic_make_request, and if it is too high (more than 
-> half of the stack used, or so), put the bio to the target device's 
-> blockqueue.
-> 
-> That could be simpler than allocating per-bioset workqueue and it also 
-> solves more problems (possible deadlocks in dm).
-
-It certainly would be simpler, but honestly the potential for
-performance regressions scares me (and bcache at least is used on fast
-enough devices where it's going to matter). Also it's not so much the
-performance overhead - we can just measure that - it's that if we're
-just using the workqueue code the scheduler's getting involved and we
-can't just measure what the effects of that are going to be in
-production.
+Alasdair
