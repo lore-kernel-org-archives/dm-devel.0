@@ -1,45 +1,83 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Kent Overstreet <koverstreet@google.com>
 Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
  stacking drivers
-Date: Tue, 28 Aug 2012 21:31:50 -0400
-Message-ID: <20120829013150.GA9269@redhat.com>
+Date: Tue, 28 Aug 2012 20:25:58 -0700
+Message-ID: <20120829032558.GA22214@moria.home.lan>
 References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
  <1346175456-1572-10-git-send-email-koverstreet@google.com>
  <20120828204910.GG24608@dhcp-172-17-108-109.mtv.corp.google.com>
  <20120828222800.GG1048@moria.home.lan>
  <20120828230108.GI1048@moria.home.lan>
+ <20120829013150.GA9269@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120828230108.GI1048-jC9Py7bek1znysI04z7BkA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+In-Reply-To: <20120829013150.GA9269@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, mpatocka@redhat.com, bharrosh@panasas.com, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-On Tue, Aug 28, 2012 at 04:01:08PM -0700, Kent Overstreet wrote:
-> On Tue, Aug 28, 2012 at 03:28:00PM -0700, Kent Overstreet wrote:
-> > On Tue, Aug 28, 2012 at 01:49:10PM -0700, Tejun Heo wrote:
-> > > Overall, I *think* this is correct but need to think more about it to
-> > > be sure.
+On Tue, Aug 28, 2012 at 09:31:50PM -0400, Vivek Goyal wrote:
+> On Tue, Aug 28, 2012 at 04:01:08PM -0700, Kent Overstreet wrote:
+> > On Tue, Aug 28, 2012 at 03:28:00PM -0700, Kent Overstreet wrote:
+> > > On Tue, Aug 28, 2012 at 01:49:10PM -0700, Tejun Heo wrote:
+> > > > Overall, I *think* this is correct but need to think more about it to
+> > > > be sure.
+> > > 
+> > > Please do. As much time as I've spent staring at this kind of stuff,
+> > > I'm pretty sure I've got it correct but it still makes my head hurt to
+> > > work out all the various possible deadlocks.
 > > 
-> > Please do. As much time as I've spent staring at this kind of stuff,
-> > I'm pretty sure I've got it correct but it still makes my head hurt to
-> > work out all the various possible deadlocks.
+> > Hilarious thought: We're punting bios to a rescuer thread that's
+> > specific to a certain bio_set, right? What if we happen to punt bios
+> > from a different bio_set? And then the rescuer goes to resubmit those
+> > bios, and in the process they happen to have dependencies on the
+> > original bio_set...
 > 
-> Hilarious thought: We're punting bios to a rescuer thread that's
-> specific to a certain bio_set, right? What if we happen to punt bios
-> from a different bio_set? And then the rescuer goes to resubmit those
-> bios, and in the process they happen to have dependencies on the
-> original bio_set...
+> Are they not fully allocated bios and when you submit these to underlying
+> device, ideally we should not be sharing memory pool at different layers
+> of stack otherwise we will deadlock any way as stack depth increases. So
+> there should not be a dependency on original bio_set?
+> 
+> Or, am I missing something. May be an example will help.
 
-Are they not fully allocated bios and when you submit these to underlying
-device, ideally we should not be sharing memory pool at different layers
-of stack otherwise we will deadlock any way as stack depth increases. So
-there should not be a dependency on original bio_set?
+Uh, it's more complicated than that. My brain is too fried right now to
+walk through it in detail, but the problem (if it is a problem; I can't
+convince myself one way or the other) is roughly:
 
-Or, am I missing something. May be an example will help.
+one virt block device stacked on top of another - they both do arbitrary
+splitting:
 
-Thanks
-Vivek
+So once they've submitted a bio, that bio needs to make forward progress
+even if the thread goes to allocate another bio and blocks before it
+returns from its make_request fn.
+
+That much my patch solves, with the rescuer thread; if the thread goes
+to block, it punts those blocked bios off to a rescuer thread - and we
+create one rescuer per bio set.
+
+So going back to the stacked block devices, if you've got say dm on top
+of md (or something else since md doesn't really do much splitting) -
+each block device will have its own rescuer and everything should be
+hunky dory.
+
+Except that when thread a goes to punt those blocked bios to its
+rescuer, it punts _all_ the bios on current->bio_list. Even those
+generated by/belonging to other bio_sets.
+
+So thread 1 in device b punts bios to its rescuer, thread 2
+
+But thread 2 ends up with bios for both device a and b - because they're
+stacked.
+
+Thread 2 starts on bios for device a before it gets to those for device
+b. But a is stacked on top of b, so in the process it generates more
+bios for b.
+
+So now it's uhm...
+
+yeah, I'm gonna sleep on this. I'm pretty sure to be rigorously correct
+filtering the right bios when we punt them to the rescuer is needed,
+though.
