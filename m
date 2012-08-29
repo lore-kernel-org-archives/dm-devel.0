@@ -1,49 +1,45 @@
-From: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v6 04/13] pktcdvd: Switch to bio_kmalloc()
-Date: Tue, 28 Aug 2012 16:19:20 -0700 (PDT)
-Message-ID: <alpine.LNX.2.00.1208281608560.22447@pobox.suse.cz>
-References: <1345655050-28199-1-git-send-email-koverstreet@google.com> <1345655050-28199-5-git-send-email-koverstreet@google.com> <20120822195546.GG19212@google.com>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
+ stacking drivers
+Date: Tue, 28 Aug 2012 21:31:50 -0400
+Message-ID: <20120829013150.GA9269@redhat.com>
+References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
+ <1346175456-1572-10-git-send-email-koverstreet@google.com>
+ <20120828204910.GG24608@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120828222800.GG1048@moria.home.lan>
+ <20120828230108.GI1048@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120822195546.GG19212-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120828230108.GI1048-jC9Py7bek1znysI04z7BkA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, 22 Aug 2012, Tejun Heo wrote:
-
-> (cc'ing Jiri, hi!)
-
-Hi there! :)
-
-> On Wed, Aug 22, 2012 at 10:04:01AM -0700, Kent Overstreet wrote:
-> > This is prep work for killing bi_destructor - previously, pktcdvd had
-> > its own pkt_bio_alloc which was basically duplication bio_kmalloc(),
-> > necessitating its own bi_destructor implementation.
+On Tue, Aug 28, 2012 at 04:01:08PM -0700, Kent Overstreet wrote:
+> On Tue, Aug 28, 2012 at 03:28:00PM -0700, Kent Overstreet wrote:
+> > On Tue, Aug 28, 2012 at 01:49:10PM -0700, Tejun Heo wrote:
+> > > Overall, I *think* this is correct but need to think more about it to
+> > > be sure.
 > > 
-> > v5: Un-reorder some functions, to make the patch easier to review
-> > 
-> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> > CC: Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>
+> > Please do. As much time as I've spent staring at this kind of stuff,
+> > I'm pretty sure I've got it correct but it still makes my head hurt to
+> > work out all the various possible deadlocks.
 > 
-> Apart from bio_reset() not resetting bi_end_io and bi_private, this
-> looks fine to me but lack of testing makes me a bit hesitant to ack
-> it.
-> 
-> Peter doesn't want to be the maintainer of pktcdvd anymore.  Maybe
-> Jiri can be tricked into taking this one too?  :)
+> Hilarious thought: We're punting bios to a rescuer thread that's
+> specific to a certain bio_set, right? What if we happen to punt bios
+> from a different bio_set? And then the rescuer goes to resubmit those
+> bios, and in the process they happen to have dependencies on the
+> original bio_set...
 
-Gah, seems like the floppy saga is going to cause me some more trouble in 
-the future ... :)
+Are they not fully allocated bios and when you submit these to underlying
+device, ideally we should not be sharing memory pool at different layers
+of stack otherwise we will deadlock any way as stack depth increases. So
+there should not be a dependency on original bio_set?
 
-Well, I definitely have hardware back at home that supports this, so I can 
-take it. Doesn't seem to be heavy traffic code either.
+Or, am I missing something. May be an example will help.
 
-Peter, ok with that? Also, how was this usually fed upstream -- through 
-Jens' tree?
-
--- 
-Jiri Kosina
-SUSE Labs
+Thanks
+Vivek
