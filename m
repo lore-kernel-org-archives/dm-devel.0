@@ -1,12 +1,14 @@
-From: Robin Dong <sanbai@taobao.com>
-Subject: [PATCH 1/2] md: add new interface 'mk_rq' in target_type
-Date: Mon,  3 Sep 2012 10:07:22 +0800
-Message-ID: <1346638043-419-1-git-send-email-sanbai@taobao.com>
+From: David Jeffery <djeffery@redhat.com>
+Subject: [PATCH] multipath queues build invalid requests when all
+ paths are lost
+Date: Fri, 31 Aug 2012 11:04:28 -0400
+Message-ID: <20120831150428.GA31566@fury.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,86 +18,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Robin Dong <sanbai@taobao.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We are now trying to modify flashcache(https://github.com/facebook/flashcache)
-to make it request based so that
-we can let cfq io-controller control the bandwidth between different
-io cgroups.
 
-A search in the dm directory tells me that only multipath is a request
-based dm target and its functionality
-is very simple and map_rq() is used to map the request to different underlying devices.
-We can't work in this way because:
+The DM module recalculates queue limits based only on devices which currently
+exist in the table.  This creates a problem in the event all devices are
+temporarily removed such as all fibre channel paths being lost in multipath.
+DM will reset the limits to the maximum permissible, which can then assemble
+requests which exceed the limits of the paths when the paths are restored.  The
+request will fail the blk_rq_check_limits() test when sent to a path with
+lower limits, and will be retried without end by multipath.
 
-1. the request which processed by map_rq() need to be issued to
-	different lower devices (disk device and cache device, in flashcache), therefore the request
-	can't be totally remapped by simply changing its queue and returning DM_MAPIO_REMAPPED in map_rq() like multipath_map()
-2. to submit bios drectly in map_rq() (by return DM_MAPIO_SUBMITTED) will cause BUG_ON(!irqs_disabled())
-	in dm_request_fn() because the submit_bio()->generic_make_request()->blk_queue_bio() will definitly call spin_unlock_irq to enable the irqs
+This becomes a much bigger issue after fe86cdcef73ba19a2246a124f0ddbd19b14fb549.
+Previously, most storage had max_sector limits which exceeded the default
+value used.  This meant most setups wouldn't trigger this issue as the default
+values used when there were no paths were still less than the limits of the
+underlying devices.  Now that the default stacking values are no longer
+constrained, any hardware setup can potentially hit this issue.
 
+This proposed patch alters the DM limit behavior.  With the patch, DM queue
+limits only go one way: more restrictive.  As paths are removed, the queue's
+limits will maintain their current settings.  As paths are added, the queue's
+limits may become more restrictive.
 
-As above,the interface map_rq() provided by devcie-mapper framework
-is not enough for an autonomous target, like flashcache.
+Signed-off-by: David Jeffery <djeffery@redhat.com>
 
-We propose to add a new
-mk_rq interface so that we can make the requests
-by ourselves.
-
-Signed-off-by: Robin Dong <sanbai@taobao.com>
 ---
- drivers/md/dm.c               |   10 ++++++++++
- include/linux/device-mapper.h |    3 +++
- 2 files changed, 13 insertions(+), 0 deletions(-)
+ dm-table.c |    2 --
+ dm.c       |    2 ++
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index f900690..5e7e3ca 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1222,8 +1222,6 @@ int dm_calculate_queue_limits(struct dm_table *table,
+ 	struct queue_limits ti_limits;
+ 	unsigned i = 0;
+ 
+-	blk_set_stacking_limits(limits);
+-
+ 	while (i < dm_table_get_num_targets(table)) {
+ 		blk_set_stacking_limits(&ti_limits);
+ 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 4e09b6f..3ae67de 100644
+index 4e09b6f..fbf89d5 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1459,11 +1459,21 @@ static int dm_request_based(struct mapped_device *md)
- static void dm_request(struct request_queue *q, struct bio *bio)
- {
- 	struct mapped_device *md = q->queuedata;
-+	struct dm_table *map = dm_get_live_table(md);
-+	struct dm_target *ti = dm_table_find_target(map, bio->bi_sector);
-+
-+	if (ti->type->mk_rq) {
-+		ti->type->mk_rq(ti, q, bio);
-+		goto out;
-+	}
- 
- 	if (dm_request_based(md))
- 		blk_queue_bio(q, bio);
- 	else
- 		_dm_request(q, bio);
-+
-+out:
-+	dm_table_put(map);
+@@ -1832,6 +1832,7 @@ static void dm_init_md_queue(struct mapped_device *md)
+ 	blk_queue_make_request(md->queue, dm_request);
+ 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
+ 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
++	blk_set_stacking_limits(&md->queue->limits);
  }
  
- void dm_dispatch_request(struct request *rq)
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 38d27a1..2386389 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -50,6 +50,8 @@ typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio,
- 			  union map_info *map_context);
- typedef int (*dm_map_request_fn) (struct dm_target *ti, struct request *clone,
- 				  union map_info *map_context);
-+typedef int (*dm_make_request_fn) (struct dm_target *ti,
-+				struct request_queue *q, struct bio *bio);
- 
  /*
-  * Returns:
-@@ -136,6 +138,7 @@ struct target_type {
- 	dm_dtr_fn dtr;
- 	dm_map_fn map;
- 	dm_map_request_fn map_rq;
-+	dm_make_request_fn mk_rq;
- 	dm_endio_fn end_io;
- 	dm_request_endio_fn rq_end_io;
- 	dm_presuspend_fn presuspend;
--- 
-1.7.1
+@@ -2419,6 +2420,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
+ 	if (!dm_suspended_md(md))
+ 		goto out;
+ 
++	limits = md->queue->limits;
+ 	r = dm_calculate_queue_limits(table, &limits);
+ 	if (r) {
+ 		map = ERR_PTR(r);
