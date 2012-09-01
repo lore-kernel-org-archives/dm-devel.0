@@ -1,38 +1,51 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v7 6/9] block: Consolidate bio_alloc_bioset(),
- bio_kmalloc()
-Date: Fri, 31 Aug 2012 19:17:03 -0700
-Message-ID: <20120901021703.GC19535@dhcp-172-17-108-109.mtv.corp.google.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 7/9] block: Add bio_clone_bioset(),
+ bio_clone_kmalloc()
+Date: Fri, 31 Aug 2012 19:19:16 -0700
+Message-ID: <20120901021916.GD19535@dhcp-172-17-108-109.mtv.corp.google.com>
 References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-7-git-send-email-koverstreet@google.com>
- <20120828204148.GE24608@dhcp-172-17-108-109.mtv.corp.google.com>
- <20120828220332.GA1048@moria.home.lan>
+ <1346175456-1572-8-git-send-email-koverstreet@google.com>
+ <20120828204401.GF24608@dhcp-172-17-108-109.mtv.corp.google.com>
+ <20120828220532.GB1048@moria.home.lan>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120828220332.GA1048@moria.home.lan>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, vgoyal@redhat.com, mpatocka@redhat.com, bharrosh@panasas.com, Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <20120828220532.GB1048-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Garzik <jeff-o2qLIJkoznsdnm+yROfE0A@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Aug 28, 2012 at 03:03:32PM -0700, Kent Overstreet wrote:
-> On Tue, Aug 28, 2012 at 01:41:48PM -0700, Tejun Heo wrote:
-> > Hello, Kent.
-> > 
-> > On Tue, Aug 28, 2012 at 10:37:33AM -0700, Kent Overstreet wrote:
-> > > v7: Re-add dropped comments, improv patch description
-> > 
-> > I don't think you did the former part.  Other than that looks good to
-> > me.
-> 
-> I folded them into the bio_alloc_bioset() comments - so all the
-> information that was there previously should still be there, just
-> centralized. That good enough for your acked-by?
+Hello,
 
-I think it would still be better to at least refer to
-bio_alloc_bioset() from bio_alloc*()'s comments.
+On Tue, Aug 28, 2012 at 03:05:32PM -0700, Kent Overstreet wrote:
+> On Tue, Aug 28, 2012 at 01:44:01PM -0700, Tejun Heo wrote:
+> > On Tue, Aug 28, 2012 at 10:37:34AM -0700, Kent Overstreet wrote:
+> > > +static inline struct bio *bio_clone(struct bio *bio, gfp_t gfp_mask)
+> > > +{
+> > > +	return bio_clone_bioset(bio, gfp_mask, fs_bio_set);
+> > > +}
+> > > +
+> > ...
+> > > +static inline struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
+> > > +{
+> > > +	return bio_clone_bioset(bio, gfp_mask, NULL);
+> > > +
+> > > +}
+> > 
+> > Do we really need these wrappers?  I'd prefer requiring users to
+> > explicit choose @bioset when cloning.
+> 
+> bio_clone() is an existing api, I agree but I'd prefer to convert
+> existing users in a separate patch and when I do that I want to spend
+> some time actually looking at the existing code instead of doing the
+> conversion blindly (at least some of the existing users are incorrect
+> and I'll have to add bio_sets for them).
+
+Aren't there like three users in kernel?  If you wanna clean it up
+later, that's fine too but I don't think it would make much difference
+either way.
 
 Thanks.
 
