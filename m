@@ -1,14 +1,15 @@
-From: David Jeffery <djeffery@redhat.com>
-Subject: [PATCH] multipath queues build invalid requests when all
- paths are lost
-Date: Fri, 31 Aug 2012 11:04:28 -0400
-Message-ID: <20120831150428.GA31566@fury.redhat.com>
+From: Robin Dong <sanbai@taobao.com>
+Subject: [PATCH 2/2] md: modify dm_io() so it could return bios
+	instead of submitting it
+Date: Mon,  3 Sep 2012 10:07:23 +0800
+Message-ID: <1346638043-419-2-git-send-email-sanbai@taobao.com>
+References: <1346638043-419-1-git-send-email-sanbai@taobao.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <1346638043-419-1-git-send-email-sanbai@taobao.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,67 +19,275 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Robin Dong <sanbai@taobao.com>
 List-Id: dm-devel.ids
 
+When trying to modify flashcache to request based (current it's bio based), we need
+to make request from bios by ourselves, but dm_io() will submit these bios directly,
+so we propose to modify the dm_io() to return bios instead of submiting it.
 
-The DM module recalculates queue limits based only on devices which currently
-exist in the table.  This creates a problem in the event all devices are
-temporarily removed such as all fibre channel paths being lost in multipath.
-DM will reset the limits to the maximum permissible, which can then assemble
-requests which exceed the limits of the paths when the paths are restored.  The
-request will fail the blk_rq_check_limits() test when sent to a path with
-lower limits, and will be retried without end by multipath.
+This could also improve the flexibility of dm_io().
 
-This becomes a much bigger issue after fe86cdcef73ba19a2246a124f0ddbd19b14fb549.
-Previously, most storage had max_sector limits which exceeded the default
-value used.  This meant most setups wouldn't trigger this issue as the default
-values used when there were no paths were still less than the limits of the
-underlying devices.  Now that the default stacking values are no longer
-constrained, any hardware setup can potentially hit this issue.
-
-This proposed patch alters the DM limit behavior.  With the patch, DM queue
-limits only go one way: more restrictive.  As paths are removed, the queue's
-limits will maintain their current settings.  As paths are added, the queue's
-limits may become more restrictive.
-
-Signed-off-by: David Jeffery <djeffery@redhat.com>
-
+Signed-off-by: Robin Dong <sanbai@taobao.com>
 ---
- dm-table.c |    2 --
- dm.c       |    2 ++
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-bufio.c           |    2 +
+ drivers/md/dm-io.c              |   58 +++++++++++++++++++++++----------------
+ drivers/md/dm-kcopyd.c          |    1 +
+ drivers/md/dm-log.c             |    1 +
+ drivers/md/dm-raid1.c           |    3 ++
+ drivers/md/dm-snap-persistent.c |    1 +
+ include/linux/dm-io.h           |    3 ++
+ 7 files changed, 45 insertions(+), 24 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index f900690..5e7e3ca 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1222,8 +1222,6 @@ int dm_calculate_queue_limits(struct dm_table *table,
- 	struct queue_limits ti_limits;
- 	unsigned i = 0;
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index cc06a1e..f5867b9 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -487,6 +487,7 @@ static void use_dmio(struct dm_buffer *b, int rw, sector_t block,
+ 		.notify.fn = dmio_complete,
+ 		.notify.context = b,
+ 		.client = b->c->dm_io,
++		.submit_bio = 1,
+ 	};
+ 	struct dm_io_region region = {
+ 		.bdev = b->c->bdev,
+@@ -1200,6 +1201,7 @@ int dm_bufio_issue_flush(struct dm_bufio_client *c)
+ 		.mem.type = DM_IO_KMEM,
+ 		.mem.ptr.addr = NULL,
+ 		.client = c->dm_io,
++		.submit_bio = 1,
+ 	};
+ 	struct dm_io_region io_reg = {
+ 		.bdev = c->bdev,
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index ea5dd28..f235182 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -287,8 +287,8 @@ static void km_dp_init(struct dpages *dp, void *data)
+ /*-----------------------------------------------------------------
+  * IO routines that accept a list of pages.
+  *---------------------------------------------------------------*/
+-static void do_region(int rw, unsigned region, struct dm_io_region *where,
+-		      struct dpages *dp, struct io *io)
++static void do_region(struct dm_io_request *io_req, unsigned region,
++		struct dm_io_region *where, struct dpages *dp, struct io *io)
+ {
+ 	struct bio *bio;
+ 	struct page *page;
+@@ -298,6 +298,7 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 	sector_t remaining = where->count;
+ 	struct request_queue *q = bdev_get_queue(where->bdev);
+ 	sector_t discard_sectors;
++	int rw = io_req->bi_rw;
  
--	blk_set_stacking_limits(limits);
--
- 	while (i < dm_table_get_num_targets(table)) {
- 		blk_set_stacking_limits(&ti_limits);
+ 	/*
+ 	 * where->count may be zero if rw holds a flush and we need to
+@@ -339,15 +340,26 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 		}
  
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 4e09b6f..fbf89d5 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1832,6 +1832,7 @@ static void dm_init_md_queue(struct mapped_device *md)
- 	blk_queue_make_request(md->queue, dm_request);
- 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
- 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
-+	blk_set_stacking_limits(&md->queue->limits);
+ 		atomic_inc(&io->count);
+-		submit_bio(rw, bio);
++		if (io_req->submit_bio)
++			submit_bio(rw, bio);
++		else {
++			bio->bi_rw |= rw;
++			if (io_req->start) {
++				io_req->end->bi_next = bio;
++				io_req->end = bio;
++			} else
++				io_req->start = io_req->end = bio;
++			bio->bi_next = NULL;
++		}
+ 	} while (remaining);
  }
  
- /*
-@@ -2419,6 +2420,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
- 	if (!dm_suspended_md(md))
- 		goto out;
+-static void dispatch_io(int rw, unsigned int num_regions,
++static void dispatch_io(struct dm_io_request *io_req, unsigned int num_regions,
+ 			struct dm_io_region *where, struct dpages *dp,
+ 			struct io *io, int sync)
+ {
+ 	int i;
++	int rw = io_req->bi_rw;
+ 	struct dpages old_pages = *dp;
  
-+	limits = md->queue->limits;
- 	r = dm_calculate_queue_limits(table, &limits);
- 	if (r) {
- 		map = ERR_PTR(r);
+ 	BUG_ON(num_regions > DM_IO_MAX_REGIONS);
+@@ -362,7 +374,7 @@ static void dispatch_io(int rw, unsigned int num_regions,
+ 	for (i = 0; i < num_regions; i++) {
+ 		*dp = old_pages;
+ 		if (where[i].count || (rw & REQ_FLUSH))
+-			do_region(rw, i, where + i, dp, io);
++			do_region(io_req, i, where + i, dp, io);
+ 	}
+ 
+ 	/*
+@@ -372,8 +384,8 @@ static void dispatch_io(int rw, unsigned int num_regions,
+ 	dec_count(io, 0, 0);
+ }
+ 
+-static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+-		   struct dm_io_region *where, int rw, struct dpages *dp,
++static int sync_io(struct dm_io_request *io_req,  unsigned int num_regions,
++		   struct dm_io_region *where, struct dpages *dp,
+ 		   unsigned long *error_bits)
+ {
+ 	/*
+@@ -385,7 +397,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	volatile char io_[sizeof(struct io) + __alignof__(struct io) - 1];
+ 	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
+ 
+-	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
++	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
+ 		WARN_ON(1);
+ 		return -EIO;
+ 	}
+@@ -393,12 +405,12 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->error_bits = 0;
+ 	atomic_set(&io->count, 1); /* see dispatch_io() */
+ 	io->sleeper = current;
+-	io->client = client;
++	io->client = io_req->client;
+ 
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(rw, num_regions, where, dp, io, 1);
++	dispatch_io(io_req, num_regions, where, dp, io, 1);
+ 
+ 	while (1) {
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+@@ -416,30 +428,29 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	return io->error_bits ? -EIO : 0;
+ }
+ 
+-static int async_io(struct dm_io_client *client, unsigned int num_regions,
+-		    struct dm_io_region *where, int rw, struct dpages *dp,
+-		    io_notify_fn fn, void *context)
++static int async_io(struct dm_io_request *io_req, unsigned int num_regions,
++		    struct dm_io_region *where, struct dpages *dp)
+ {
+ 	struct io *io;
+ 
+-	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
++	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
+ 		WARN_ON(1);
+-		fn(1, context);
++		io_req->notify.fn(1, io_req->notify.context);
+ 		return -EIO;
+ 	}
+ 
+-	io = mempool_alloc(client->pool, GFP_NOIO);
++	io = mempool_alloc(io_req->client->pool, GFP_NOIO);
+ 	io->error_bits = 0;
+ 	atomic_set(&io->count, 1); /* see dispatch_io() */
+ 	io->sleeper = NULL;
+-	io->client = client;
+-	io->callback = fn;
+-	io->context = context;
++	io->client = io_req->client;
++	io->callback = io_req->notify.fn;
++	io->context = io_req->notify.context;
+ 
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(rw, num_regions, where, dp, io, 0);
++	dispatch_io(io_req, num_regions, where, dp, io, 0);
+ 	return 0;
+ }
+ 
+@@ -499,11 +510,10 @@ int dm_io(struct dm_io_request *io_req, unsigned num_regions,
+ 		return r;
+ 
+ 	if (!io_req->notify.fn)
+-		return sync_io(io_req->client, num_regions, where,
+-			       io_req->bi_rw, &dp, sync_error_bits);
++		return sync_io(io_req, num_regions, where,
++				&dp, sync_error_bits);
+ 
+-	return async_io(io_req->client, num_regions, where, io_req->bi_rw,
+-			&dp, io_req->notify.fn, io_req->notify.context);
++	return async_io(io_req, num_regions, where, &dp);
+ }
+ EXPORT_SYMBOL(dm_io);
+ 
+diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
+index bed444c..6a8ecc9 100644
+--- a/drivers/md/dm-kcopyd.c
++++ b/drivers/md/dm-kcopyd.c
+@@ -387,6 +387,7 @@ static int run_io_job(struct kcopyd_job *job)
+ 		.notify.fn = complete_io,
+ 		.notify.context = job,
+ 		.client = job->kc->io_client,
++		.submit_bio = 1,
+ 	};
+ 
+ 	if (job->rw == READ)
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 627d191..8425e84 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -463,6 +463,7 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
+ 			kfree(lc);
+ 			return r;
+ 		}
++		lc->io_req.submit_bio = 1;
+ 
+ 		lc->disk_header = vmalloc(buf_size);
+ 		if (!lc->disk_header) {
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index bc5ddba..338d726 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -261,6 +261,7 @@ static int mirror_flush(struct dm_target *ti)
+ 		.mem.type = DM_IO_KMEM,
+ 		.mem.ptr.addr = NULL,
+ 		.client = ms->io_client,
++		.submit_bio = 1,
+ 	};
+ 
+ 	for (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++) {
+@@ -530,6 +531,7 @@ static void read_async_bio(struct mirror *m, struct bio *bio)
+ 		.notify.fn = read_callback,
+ 		.notify.context = bio,
+ 		.client = m->ms->io_client,
++		.submit_bio = 1,
+ 	};
+ 
+ 	map_region(&io, m, bio);
+@@ -633,6 +635,7 @@ static void do_write(struct mirror_set *ms, struct bio *bio)
+ 		.notify.fn = write_callback,
+ 		.notify.context = bio,
+ 		.client = ms->io_client,
++		.submit_bio = 1,
+ 	};
+ 
+ 	if (bio->bi_rw & REQ_DISCARD) {
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 3ac4156..0600e1d 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -241,6 +241,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
+ 		.mem.ptr.vma = area,
+ 		.client = ps->io_client,
+ 		.notify.fn = NULL,
++		.submit_bio = 1,
+ 	};
+ 	struct mdata_req req;
+ 
+diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
+index f4b0aa3..45f576b 100644
+--- a/include/linux/dm-io.h
++++ b/include/linux/dm-io.h
+@@ -61,6 +61,9 @@ struct dm_io_request {
+ 	struct dm_io_memory mem;	/* Memory to use for io */
+ 	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
+ 	struct dm_io_client *client;	/* Client memory handler */
++	int submit_bio;
++	struct bio *start;
++	struct bio *end;
+ };
+ 
+ /*
+-- 
+1.7.1
