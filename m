@@ -1,32 +1,101 @@
-From: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v7 4/9] pktcdvd: Switch to bio_kmalloc()
-Date: Tue, 4 Sep 2012 11:05:06 +0200 (CEST)
-Message-ID: <alpine.LRH.2.00.1209041104020.26301@twin.jikos.cz>
-References: <1346175456-1572-1-git-send-email-koverstreet@google.com> <1346175456-1572-5-git-send-email-koverstreet@google.com> <20120828203247.GC24608@dhcp-172-17-108-109.mtv.corp.google.com>
+From: Robin Dong <sanbai@taobao.com>
+Subject: [PATCH 1/2] md: add new interface 'mk_rq' in target_type
+Date: Mon,  3 Sep 2012 10:07:22 +0800
+Message-ID: <1346638043-419-1-git-send-email-sanbai@taobao.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120828203247.GC24608-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Robin Dong <sanbai@taobao.com>
 List-Id: dm-devel.ids
 
-On Tue, 28 Aug 2012, Tejun Heo wrote:
+We are now trying to modify flashcache(https://github.com/facebook/flashcache)
+to make it request based so that
+we can let cfq io-controller control the bandwidth between different
+io cgroups.
 
-> > This is prep work for killing bi_destructor - previously, pktcdvd had
-> > its own pkt_bio_alloc which was basically duplication bio_kmalloc(),
-> > necessitating its own bi_destructor implementation.
-> 
-> How was this tested?
+A search in the dm directory tells me that only multipath is a request
+based dm target and its functionality
+is very simple and map_rq() is used to map the request to different underlying devices.
+We can't work in this way because:
 
-I have now tested it and it works properly. You can add
+1. the request which processed by map_rq() need to be issued to
+	different lower devices (disk device and cache device, in flashcache), therefore the request
+	can't be totally remapped by simply changing its queue and returning DM_MAPIO_REMAPPED in map_rq() like multipath_map()
+2. to submit bios drectly in map_rq() (by return DM_MAPIO_SUBMITTED) will cause BUG_ON(!irqs_disabled())
+	in dm_request_fn() because the submit_bio()->generic_make_request()->blk_queue_bio() will definitly call spin_unlock_irq to enable the irqs
 
-	Signed-off-by: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
 
-once you will be pushing the patchset through (I will be pushing 
-MAINTAINERS update through my tree to Jens separately).
+As above,the interface map_rq() provided by devcie-mapper framework
+is not enough for an autonomous target, like flashcache.
 
+We propose to add a new
+mk_rq interface so that we can make the requests
+by ourselves.
+
+Signed-off-by: Robin Dong <sanbai@taobao.com>
+---
+ drivers/md/dm.c               |   10 ++++++++++
+ include/linux/device-mapper.h |    3 +++
+ 2 files changed, 13 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4e09b6f..3ae67de 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1459,11 +1459,21 @@ static int dm_request_based(struct mapped_device *md)
+ static void dm_request(struct request_queue *q, struct bio *bio)
+ {
+ 	struct mapped_device *md = q->queuedata;
++	struct dm_table *map = dm_get_live_table(md);
++	struct dm_target *ti = dm_table_find_target(map, bio->bi_sector);
++
++	if (ti->type->mk_rq) {
++		ti->type->mk_rq(ti, q, bio);
++		goto out;
++	}
+ 
+ 	if (dm_request_based(md))
+ 		blk_queue_bio(q, bio);
+ 	else
+ 		_dm_request(q, bio);
++
++out:
++	dm_table_put(map);
+ }
+ 
+ void dm_dispatch_request(struct request *rq)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 38d27a1..2386389 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -50,6 +50,8 @@ typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio,
+ 			  union map_info *map_context);
+ typedef int (*dm_map_request_fn) (struct dm_target *ti, struct request *clone,
+ 				  union map_info *map_context);
++typedef int (*dm_make_request_fn) (struct dm_target *ti,
++				struct request_queue *q, struct bio *bio);
+ 
+ /*
+  * Returns:
+@@ -136,6 +138,7 @@ struct target_type {
+ 	dm_dtr_fn dtr;
+ 	dm_map_fn map;
+ 	dm_map_request_fn map_rq;
++	dm_make_request_fn mk_rq;
+ 	dm_endio_fn end_io;
+ 	dm_request_endio_fn rq_end_io;
+ 	dm_presuspend_fn presuspend;
 -- 
-Jiri Kosina
-SUSE Labs
+1.7.1
