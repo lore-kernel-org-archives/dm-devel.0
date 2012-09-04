@@ -1,77 +1,92 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive
-	hashtable
-Date: Tue, 4 Sep 2012 12:32:20 -0400
-Message-ID: <20120904163220.GA31698@Krystal>
-References: <20120824212348.GK21325@google.com> <5038074D.300@gmail.com> <20120824230740.GN21325@google.com> <20120825042419.GA27240@Krystal> <503C95E4.3010000@gmail.com> <20120828101148.GA21683@Krystal> <503CAB1E.5010408@gmail.com> <20120828115638.GC23818@Krystal> <20120828230050.GA3337@Krystal> <1346772948.27919.9.camel@gandalf.local.home>
+From: Pedro Alves <palves@redhat.com>
+Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive hashtable
+Date: Tue, 04 Sep 2012 17:40:08 +0100
+Message-ID: <50462EE8.1090903@redhat.com>
+References: <20120824203332.GF21325@google.com> <5037E9D9.9000605@gmail.com>  <20120824212348.GK21325@google.com> <5038074D.300@gmail.com>  <20120824230740.GN21325@google.com> <20120825042419.GA27240@Krystal>  <503C95E4.3010000@gmail.com> <20120828101148.GA21683@Krystal>  <503CAB1E.5010408@gmail.com> <20120828115638.GC23818@Krystal>  <20120828230050.GA3337@Krystal> <1346772948.27919.9.camel@gandalf.local.home> <50462C99.5000007@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1346772948.27919.9.camel-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jesse-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <50462C99.5000007@redhat.com>
+Sender: owner-linux-mm@kvack.org
+Cc: Steven Rostedt <rostedt@goodmis.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Sasha Levin <levinsasha928@gmail.com>, Tejun Heo <tj@kernel.org>, torvalds@linux-foundation.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org
 List-Id: dm-devel.ids
 
-* Steven Rostedt (rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org) wrote:
-> On Tue, 2012-08-28 at 19:00 -0400, Mathieu Desnoyers wrote:
+On 09/04/2012 05:30 PM, Pedro Alves wrote:
+> On 09/04/2012 04:35 PM, Steven Rostedt wrote:
+>> On Tue, 2012-08-28 at 19:00 -0400, Mathieu Desnoyers wrote:
+>>
+>>> Looking again at:
+>>>
+>>> +#define hash_for_each_size(name, bits, bkt, node, obj, member)                 \
+>>> +       for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)                             \
+>>> +               hlist_for_each_entry(obj, node, &name[bkt], member)
+>>>
+>>> you will notice that a "break" or "continue" in the inner loop will not
+>>> affect the outer loop, which is certainly not what the programmer would
+>>> expect!
+>>>
+>>> I advise strongly against creating such error-prone construct.
+>>>
+>>
+>> A few existing loop macros do this. But they require a do { } while ()
+>> approach, and all have a comment.
+>>
+>> It's used by do_each_thread() in sched.h and ftrace does this as well.
+>> Look at kernel/trace/ftrace.c at do_for_each_ftrace_rec().
+>>
+>> Yes it breaks 'break' but it does not break 'continue' as it would just
+>> go to the next item that would have been found (like a normal for
+>> would).
 > 
-> > Looking again at:
-> > 
-> > +#define hash_for_each_size(name, bits, bkt, node, obj, member)                 \
-> > +       for (bkt = 0; bkt < HASH_SIZE(bits); bkt++)                             \
-> > +               hlist_for_each_entry(obj, node, &name[bkt], member)
-> > 
-> > you will notice that a "break" or "continue" in the inner loop will not
-> > affect the outer loop, which is certainly not what the programmer would
-> > expect!
-> > 
-> > I advise strongly against creating such error-prone construct.
-> > 
-> 
-> A few existing loop macros do this. But they require a do { } while ()
-> approach, and all have a comment.
-> 
-> It's used by do_each_thread() in sched.h 
-
-Yes. It's worth noting that it is a do_each_thread() /
-while_each_thread() pair.
-
-
-> and ftrace does this as well.
-> Look at kernel/trace/ftrace.c at do_for_each_ftrace_rec().
-
-Same here.
-
-> 
-> Yes it breaks 'break' but it does not break 'continue' as it would just
-> go to the next item that would have been found (like a normal for
-> would).
-
-Good point.
-
-So would changing hash_for_each_size() to a
-
-do_each_hash_size()/while_each_hash_size() make it clearer that this
-contains a double-loop ? (along with an appropriate comment about
-break).
-
-Thanks,
-
-Mathieu
-
-> 
-> -- Steve
+> /*
+>  * This is a double for. Do not use 'break' to break out of the loop,
+>  * you must use a goto.
+>  */
+> #define do_for_each_ftrace_rec(pg, rec)                                 \
+>         for (pg = ftrace_pages_start; pg; pg = pg->next) {              \
+>                 int _____i;                                             \
+>                 for (_____i = 0; _____i < pg->index; _____i++) {        \
+>                         rec = &pg->records[_____i];
 > 
 > 
+> 
+> You can make 'break' also work as expected if you can embed a little knowledge
+> of the inner loop's condition in the outer loop's condition.  Sometimes it's
+> trivial, most often when the inner loop's iterator is a pointer that goes
+> NULL at the end, but other times not so much.  Something like (completely untested):
+> 
+> #define do_for_each_ftrace_rec(pg, rec)                                 \
+>         for (pg = ftrace_pages_start, rec = &pg->records[pg->index];    \
+>              pg && rec == &pg->records[pg->index];                      \
+>              pg = pg->next) {                                           \
+>                 int _____i;                                             \
+>                 for (_____i = 0; _____i < pg->index; _____i++) {        \
+>                         rec = &pg->records[_____i];
+>
+> 
+> (other variants possible)
+> 
+> IOW, the outer loop only iterates if the inner loop completes.  If there's
+> a break in the inner loop, then the outer loop breaks too.  Of course, it
+> all depends on whether the generated code looks sane or hideous, if
+> the uses of the macro care for it over bug avoidance.
+> 
+
+BTW, you can also go a step further and remove the need to close with double }},
+with something like:
+
+#define do_for_each_ftrace_rec(pg, rec)                                          \
+        for (pg = ftrace_pages_start, rec = &pg->records[pg->index];             \
+             pg && rec == &pg->records[pg->index];                               \
+             pg = pg->next)                                                      \
+          for (rec = pg->records; rec < &pg->records[pg->index]; rec++)
 
 -- 
-Mathieu Desnoyers
-Operating System Efficiency R&D Consultant
-EfficiOS Inc.
-http://www.efficios.com
+Pedro Alves
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
