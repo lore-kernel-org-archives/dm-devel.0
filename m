@@ -1,51 +1,32 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
- stacking drivers
-Date: Mon, 3 Sep 2012 20:41:00 -0700
-Message-ID: <20120904034100.GA21602@moria.home.lan>
-References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-10-git-send-email-koverstreet@google.com>
- <Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com>
- <20120829165006.GB20312@google.com>
- <20120829170711.GC12504@redhat.com>
- <20120829171345.GC20312@google.com>
- <20120830220745.GI27257@redhat.com>
- <20120831014359.GB15218@moria.home.lan>
- <Pine.LNX.4.64.1209031638110.15620@file.rdu.redhat.com>
+From: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v7 4/9] pktcdvd: Switch to bio_kmalloc()
+Date: Tue, 4 Sep 2012 11:05:06 +0200 (CEST)
+Message-ID: <alpine.LRH.2.00.1209041104020.26301@twin.jikos.cz>
+References: <1346175456-1572-1-git-send-email-koverstreet@google.com> <1346175456-1572-5-git-send-email-koverstreet@google.com> <20120828203247.GC24608@dhcp-172-17-108-109.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1209031638110.15620-e+HWlsje6Db1wF9wiOj0lkEOCMrvLtNR@public.gmane.org>
+In-Reply-To: <20120828203247.GC24608-RcKxWJ4Cfj1J2suj2OqeGauc2jM2gXBXkQQo+JxHRPFibQn6LdNjmg@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Mon, Sep 03, 2012 at 04:41:37PM -0400, Mikulas Patocka wrote:
-> ... or another possibility - start a timer when something is put to 
-> current->bio_list and use that timer to pop entries off current->bio_list 
-> and submit them to a workqueue. The timer can be cpu-local so only 
-> interrupt masking is required to synchronize against the timer.
+On Tue, 28 Aug 2012, Tejun Heo wrote:
+
+> > This is prep work for killing bi_destructor - previously, pktcdvd had
+> > its own pkt_bio_alloc which was basically duplication bio_kmalloc(),
+> > necessitating its own bi_destructor implementation.
 > 
-> This would normally run just like the current kernel and in case of 
-> deadlock, the timer would kick in and resolve the deadlock.
+> How was this tested?
 
-Ugh. That's a _terrible_ idea.
+I have now tested it and it works properly. You can add
 
-Remember the old plugging code? You ever have to debug performance
-issues caused by it?
+	Signed-off-by: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
 
-> 
-> > I could be convinced, but right now I prefer my solution.
-> 
-> It fixes bio allocation problem, but not other similar mempool problems in 
-> dm and md.
+once you will be pushing the patchset through (I will be pushing 
+MAINTAINERS update through my tree to Jens separately).
 
-I looked a bit more, and actually I think the rest of the problem is
-pretty limited in scope - most of those mempool allocations are per
-request, not per split.
-
-I'm willing to put some time into converting dm/md over to bioset's
-front_pad. I'm having to learn the code for the immutable biovec work,
-anyways.
+-- 
+Jiri Kosina
+SUSE Labs
