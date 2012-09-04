@@ -1,72 +1,61 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
- stacking drivers
-Date: Tue, 4 Sep 2012 15:26:19 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1209041509160.22689@file.rdu.redhat.com>
-References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-10-git-send-email-koverstreet@google.com>
- <Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com> <20120829165006.GB20312@google.com>
- <20120829170711.GC12504@redhat.com> <20120829171345.GC20312@google.com>
- <20120830220745.GI27257@redhat.com> <20120831014359.GB15218@moria.home.lan>
- <Pine.LNX.4.64.1209031638110.15620@file.rdu.redhat.com>
- <20120904034100.GA21602@moria.home.lan>
+From: "Diego  \(yahoo\)" <damade@yahoo.com>
+Subject: Linux DMMP and IBM DS4500
+Date: Tue, 4 Sep 2012 12:30:58 -0700 (PDT)
+Message-ID: <1346787058.56842.YahooMailNeo@web122501.mail.ne1.yahoo.com>
+Reply-To: "Diego  \(yahoo\)" <damade@yahoo.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120904034100.GA21602-jC9Py7bek1znysI04z7BkA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============6450466756983736373=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+--===============6450466756983736373==
+Content-Type: multipart/alternative;
+	boundary="-1149815241-1488808732-1346787058=:56842"
+
+---1149815241-1488808732-1346787058=:56842
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi List!=0A=0AI=A0 have searched the Net and i couldn=B4t find consistent i=
+nfo about it.. Please help.=0A=0Ai have review the compatibility informatio=
+n about=A0 IBM storage DS4500 and Linux multipath drivers and i only saw me=
+ntions to MPP RDAC multipath.=0A=0AI would like to know if the DS4500 works=
+ fine with Linux Device Mapper Multipath (DMMP) or if exist any known issue=
+ between them.=0A=0AI also appreciate the recommended entries for /etc/mult=
+ipath.conf=A0 for the DS4500.=0A=0AThanks a Lot
+---1149815241-1488808732-1346787058=:56842
+Content-Type: text/html; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><div style=3D"color:#000; background-color:#fff; font-family:ti=
+mes new roman, new york, times, serif;font-size:12pt">Hi List!<br><br>I&nbs=
+p; have searched the Net and i couldn=B4t find consistent info about it.. P=
+lease help.<br><br>i have review the compatibility information about&nbsp; =
+IBM storage DS4500 and Linux multipath drivers and i only saw mentions to M=
+PP RDAC multipath.<br><br>I would like to know if the DS4500 works fine wit=
+h Linux Device Mapper Multipath (DMMP) or if exist any known issue between =
+them.<br><br>I also appreciate the recommended entries for /etc/multipath.c=
+onf&nbsp; for the DS4500.<br><br>Thanks a Lot<br><br><br><div><br></div></d=
+iv></body></html>
+---1149815241-1488808732-1346787058=:56842--
 
 
-On Mon, 3 Sep 2012, Kent Overstreet wrote:
+--===============6450466756983736373==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> On Mon, Sep 03, 2012 at 04:41:37PM -0400, Mikulas Patocka wrote:
-> > ... or another possibility - start a timer when something is put to 
-> > current->bio_list and use that timer to pop entries off current->bio_list 
-> > and submit them to a workqueue. The timer can be cpu-local so only 
-> > interrupt masking is required to synchronize against the timer.
-> > 
-> > This would normally run just like the current kernel and in case of 
-> > deadlock, the timer would kick in and resolve the deadlock.
-> 
-> Ugh. That's a _terrible_ idea.
-> 
-> Remember the old plugging code? You ever have to debug performance
-> issues caused by it?
 
-Yes, I do remember it (and I fixed one bug that resulted in missed unplug 
-and degraded performance).
-
-But currently, deadlocks due to exhausted mempools and bios being stalled 
-in current->bio_list don't happen (or do happen below so rarely that they 
-aren't reported).
-
-If we add a timer, it will turn a deadlock into an i/o delay, but it can't 
-make things any worse.
-
-BTW. can these new-style timerless plugs introduce deadlocks too? What 
-happens when some bios are indefinitely delayed because their requests are 
-held in a plug and a mempool runs out?
-
-> > > I could be convinced, but right now I prefer my solution.
-> > 
-> > It fixes bio allocation problem, but not other similar mempool problems in 
-> > dm and md.
-> 
-> I looked a bit more, and actually I think the rest of the problem is
-> pretty limited in scope - most of those mempool allocations are per
-> request, not per split.
-> 
-> I'm willing to put some time into converting dm/md over to bioset's
-> front_pad. I'm having to learn the code for the immutable biovec work,
-> anyways.
-
-Currently, dm targets allocate request-specific data from target-specific 
-mempool. mempools are in dm-crypt, dm-delay, dm-mirror, dm-snapshot, 
-dm-thin, dm-verity. You can change it to allocate request-specific data 
-with the bio.
-
-Mikulas
+--===============6450466756983736373==--
