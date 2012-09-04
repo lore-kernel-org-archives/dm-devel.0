@@ -1,293 +1,75 @@
-From: Robin Dong <sanbai@taobao.com>
-Subject: [PATCH 2/2] md: modify dm_io() so it could return bios
-	instead of submitting it
-Date: Mon,  3 Sep 2012 10:07:23 +0800
-Message-ID: <1346638043-419-2-git-send-email-sanbai@taobao.com>
-References: <1346638043-419-1-git-send-email-sanbai@taobao.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
+ stacking drivers
+Date: Tue, 4 Sep 2012 09:54:23 -0400
+Message-ID: <20120904135422.GC13768@redhat.com>
+References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
+ <1346175456-1572-10-git-send-email-koverstreet@google.com>
+ <Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com>
+ <20120829165006.GB20312@google.com>
+ <20120829170711.GC12504@redhat.com>
+ <20120829171345.GC20312@google.com>
+ <20120830220745.GI27257@redhat.com>
+ <20120903004927.GM15292@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1346638043-419-1-git-send-email-sanbai@taobao.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Robin Dong <sanbai@taobao.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120903004927.GM15292@dastard>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 List-Id: dm-devel.ids
 
-When trying to modify flashcache to request based (current it's bio based), we need
-to make request from bios by ourselves, but dm_io() will submit these bios directly,
-so we propose to modify the dm_io() to return bios instead of submiting it.
+On Mon, Sep 03, 2012 at 10:49:27AM +1000, Dave Chinner wrote:
+> On Thu, Aug 30, 2012 at 06:07:45PM -0400, Vivek Goyal wrote:
+> > On Wed, Aug 29, 2012 at 10:13:45AM -0700, Kent Overstreet wrote:
+> > 
+> > [..]
+> > > > Performance aside, punting submission to per device worker in case of deep
+> > > > stack usage sounds cleaner solution to me.
+> > > 
+> > > Agreed, but performance tends to matter in the real world. And either
+> > > way the tricky bits are going to be confined to a few functions, so I
+> > > don't think it matters that much.
+> > > 
+> > > If someone wants to code up the workqueue version and test it, they're
+> > > more than welcome...
+> > 
+> > Here is one quick and dirty proof of concept patch. It checks for stack
+> > depth and if remaining space is less than 20% of stack size, then it
+> > defers the bio submission to per queue worker.
+> 
+> Given that we are working around stack depth issues in the
+> filesystems already in several places, and now it seems like there's
+> a reason to work around it in the block layers as well, shouldn't we
+> simply increase the default stack size rather than introduce
+> complexity and performance regressions to try and work around not
+> having enough stack?
 
-This could also improve the flexibility of dm_io().
+Dave,
 
-Signed-off-by: Robin Dong <sanbai@taobao.com>
----
- drivers/md/dm-bufio.c           |    2 +
- drivers/md/dm-io.c              |   58 +++++++++++++++++++++++----------------
- drivers/md/dm-kcopyd.c          |    1 +
- drivers/md/dm-log.c             |    1 +
- drivers/md/dm-raid1.c           |    3 ++
- drivers/md/dm-snap-persistent.c |    1 +
- include/linux/dm-io.h           |    3 ++
- 7 files changed, 45 insertions(+), 24 deletions(-)
+In this particular instance, we really don't have any bug reports of
+stack overflowing. Just discussing what will happen if we make 
+generic_make_request() recursive again.
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index cc06a1e..f5867b9 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -487,6 +487,7 @@ static void use_dmio(struct dm_buffer *b, int rw, sector_t block,
- 		.notify.fn = dmio_complete,
- 		.notify.context = b,
- 		.client = b->c->dm_io,
-+		.submit_bio = 1,
- 	};
- 	struct dm_io_region region = {
- 		.bdev = b->c->bdev,
-@@ -1200,6 +1201,7 @@ int dm_bufio_issue_flush(struct dm_bufio_client *c)
- 		.mem.type = DM_IO_KMEM,
- 		.mem.ptr.addr = NULL,
- 		.client = c->dm_io,
-+		.submit_bio = 1,
- 	};
- 	struct dm_io_region io_reg = {
- 		.bdev = c->bdev,
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index ea5dd28..f235182 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -287,8 +287,8 @@ static void km_dp_init(struct dpages *dp, void *data)
- /*-----------------------------------------------------------------
-  * IO routines that accept a list of pages.
-  *---------------------------------------------------------------*/
--static void do_region(int rw, unsigned region, struct dm_io_region *where,
--		      struct dpages *dp, struct io *io)
-+static void do_region(struct dm_io_request *io_req, unsigned region,
-+		struct dm_io_region *where, struct dpages *dp, struct io *io)
- {
- 	struct bio *bio;
- 	struct page *page;
-@@ -298,6 +298,7 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
- 	sector_t remaining = where->count;
- 	struct request_queue *q = bdev_get_queue(where->bdev);
- 	sector_t discard_sectors;
-+	int rw = io_req->bi_rw;
- 
- 	/*
- 	 * where->count may be zero if rw holds a flush and we need to
-@@ -339,15 +340,26 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
- 		}
- 
- 		atomic_inc(&io->count);
--		submit_bio(rw, bio);
-+		if (io_req->submit_bio)
-+			submit_bio(rw, bio);
-+		else {
-+			bio->bi_rw |= rw;
-+			if (io_req->start) {
-+				io_req->end->bi_next = bio;
-+				io_req->end = bio;
-+			} else
-+				io_req->start = io_req->end = bio;
-+			bio->bi_next = NULL;
-+		}
- 	} while (remaining);
- }
- 
--static void dispatch_io(int rw, unsigned int num_regions,
-+static void dispatch_io(struct dm_io_request *io_req, unsigned int num_regions,
- 			struct dm_io_region *where, struct dpages *dp,
- 			struct io *io, int sync)
- {
- 	int i;
-+	int rw = io_req->bi_rw;
- 	struct dpages old_pages = *dp;
- 
- 	BUG_ON(num_regions > DM_IO_MAX_REGIONS);
-@@ -362,7 +374,7 @@ static void dispatch_io(int rw, unsigned int num_regions,
- 	for (i = 0; i < num_regions; i++) {
- 		*dp = old_pages;
- 		if (where[i].count || (rw & REQ_FLUSH))
--			do_region(rw, i, where + i, dp, io);
-+			do_region(io_req, i, where + i, dp, io);
- 	}
- 
- 	/*
-@@ -372,8 +384,8 @@ static void dispatch_io(int rw, unsigned int num_regions,
- 	dec_count(io, 0, 0);
- }
- 
--static int sync_io(struct dm_io_client *client, unsigned int num_regions,
--		   struct dm_io_region *where, int rw, struct dpages *dp,
-+static int sync_io(struct dm_io_request *io_req,  unsigned int num_regions,
-+		   struct dm_io_region *where, struct dpages *dp,
- 		   unsigned long *error_bits)
- {
- 	/*
-@@ -385,7 +397,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 	volatile char io_[sizeof(struct io) + __alignof__(struct io) - 1];
- 	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
- 
--	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
-+	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
- 		WARN_ON(1);
- 		return -EIO;
- 	}
-@@ -393,12 +405,12 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 	io->error_bits = 0;
- 	atomic_set(&io->count, 1); /* see dispatch_io() */
- 	io->sleeper = current;
--	io->client = client;
-+	io->client = io_req->client;
- 
- 	io->vma_invalidate_address = dp->vma_invalidate_address;
- 	io->vma_invalidate_size = dp->vma_invalidate_size;
- 
--	dispatch_io(rw, num_regions, where, dp, io, 1);
-+	dispatch_io(io_req, num_regions, where, dp, io, 1);
- 
- 	while (1) {
- 		set_current_state(TASK_UNINTERRUPTIBLE);
-@@ -416,30 +428,29 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 	return io->error_bits ? -EIO : 0;
- }
- 
--static int async_io(struct dm_io_client *client, unsigned int num_regions,
--		    struct dm_io_region *where, int rw, struct dpages *dp,
--		    io_notify_fn fn, void *context)
-+static int async_io(struct dm_io_request *io_req, unsigned int num_regions,
-+		    struct dm_io_region *where, struct dpages *dp)
- {
- 	struct io *io;
- 
--	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
-+	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
- 		WARN_ON(1);
--		fn(1, context);
-+		io_req->notify.fn(1, io_req->notify.context);
- 		return -EIO;
- 	}
- 
--	io = mempool_alloc(client->pool, GFP_NOIO);
-+	io = mempool_alloc(io_req->client->pool, GFP_NOIO);
- 	io->error_bits = 0;
- 	atomic_set(&io->count, 1); /* see dispatch_io() */
- 	io->sleeper = NULL;
--	io->client = client;
--	io->callback = fn;
--	io->context = context;
-+	io->client = io_req->client;
-+	io->callback = io_req->notify.fn;
-+	io->context = io_req->notify.context;
- 
- 	io->vma_invalidate_address = dp->vma_invalidate_address;
- 	io->vma_invalidate_size = dp->vma_invalidate_size;
- 
--	dispatch_io(rw, num_regions, where, dp, io, 0);
-+	dispatch_io(io_req, num_regions, where, dp, io, 0);
- 	return 0;
- }
- 
-@@ -499,11 +510,10 @@ int dm_io(struct dm_io_request *io_req, unsigned num_regions,
- 		return r;
- 
- 	if (!io_req->notify.fn)
--		return sync_io(io_req->client, num_regions, where,
--			       io_req->bi_rw, &dp, sync_error_bits);
-+		return sync_io(io_req, num_regions, where,
-+				&dp, sync_error_bits);
- 
--	return async_io(io_req->client, num_regions, where, io_req->bi_rw,
--			&dp, io_req->notify.fn, io_req->notify.context);
-+	return async_io(io_req, num_regions, where, &dp);
- }
- EXPORT_SYMBOL(dm_io);
- 
-diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-index bed444c..6a8ecc9 100644
---- a/drivers/md/dm-kcopyd.c
-+++ b/drivers/md/dm-kcopyd.c
-@@ -387,6 +387,7 @@ static int run_io_job(struct kcopyd_job *job)
- 		.notify.fn = complete_io,
- 		.notify.context = job,
- 		.client = job->kc->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	if (job->rw == READ)
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 627d191..8425e84 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -463,6 +463,7 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
- 			kfree(lc);
- 			return r;
- 		}
-+		lc->io_req.submit_bio = 1;
- 
- 		lc->disk_header = vmalloc(buf_size);
- 		if (!lc->disk_header) {
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index bc5ddba..338d726 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -261,6 +261,7 @@ static int mirror_flush(struct dm_target *ti)
- 		.mem.type = DM_IO_KMEM,
- 		.mem.ptr.addr = NULL,
- 		.client = ms->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	for (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++) {
-@@ -530,6 +531,7 @@ static void read_async_bio(struct mirror *m, struct bio *bio)
- 		.notify.fn = read_callback,
- 		.notify.context = bio,
- 		.client = m->ms->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	map_region(&io, m, bio);
-@@ -633,6 +635,7 @@ static void do_write(struct mirror_set *ms, struct bio *bio)
- 		.notify.fn = write_callback,
- 		.notify.context = bio,
- 		.client = ms->io_client,
-+		.submit_bio = 1,
- 	};
- 
- 	if (bio->bi_rw & REQ_DISCARD) {
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index 3ac4156..0600e1d 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -241,6 +241,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
- 		.mem.ptr.vma = area,
- 		.client = ps->io_client,
- 		.notify.fn = NULL,
-+		.submit_bio = 1,
- 	};
- 	struct mdata_req req;
- 
-diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
-index f4b0aa3..45f576b 100644
---- a/include/linux/dm-io.h
-+++ b/include/linux/dm-io.h
-@@ -61,6 +61,9 @@ struct dm_io_request {
- 	struct dm_io_memory mem;	/* Memory to use for io */
- 	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
- 	struct dm_io_client *client;	/* Client memory handler */
-+	int submit_bio;
-+	struct bio *start;
-+	struct bio *end;
- };
- 
- /*
--- 
-1.7.1
+> 
+> I mean, we can deal with it like the ia32 4k stack issue was dealt
+> with (i.e. ignore those stupid XFS people, that's an XFS bug), or
+> we can face the reality that storage stacks have become so complex
+> that 8k is no longer a big enough stack for a modern system....
+
+So first question will be, what's the right stack size? If we make
+generic_make_request() recursive, then at some storage stack depth we will
+overflow stack anyway (if we have created too deep a stack). Hence
+keeping current logic kind of makes sense as in theory we can support
+arbitrary depth of storage stack.
+
+Yes, if higher layers are consuming more stack, then it does raise the
+question whether to offload work to worker and take performance hit or
+increase stack depth. I don't know what's the answer to that question.
+I have only tried going through the archive where some people seem to have
+pushed for even smaller stack size (4K).
+
+Thanks
+Vivek
