@@ -1,42 +1,55 @@
-From: Pedro Alves <palves@redhat.com>
-Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and naive hashtable
-Date: Tue, 04 Sep 2012 23:58:00 +0100
-Message-ID: <50468778.5000207@redhat.com>
-References: <20120824203332.GF21325@google.com> <5037E9D9.9000605@gmail.com>     <20120824212348.GK21325@google.com> <5038074D.300@gmail.com>     <20120824230740.GN21325@google.com> <20120825042419.GA27240@Krystal>     <503C95E4.3010000@gmail.com> <20120828101148.GA21683@Krystal>     <503CAB1E.5010408@gmail.com> <20120828115638.GC23818@Krystal>     <20120828230050.GA3337@Krystal>    <1346772948.27919.9.camel@gandalf.local.home>   <50462C99.5000007@redhat.com>  <50462EE8.1090903@redhat.com>   <1346779027.27919.15.camel@gandalf.local.home>   <50463883.8080706@redhat.com>  <1346792345.27919.18.camel@gandalf.local.home>  <504677C8.3050801@redhat.com> <1346798509.27919.25.camel@gandalf.local.home>
+From: Ric Wheeler <ricwheeler@gmail.com>
+Subject: Re: RFC: use TRIM data from filesystems to speed up array rebuild?
+Date: Tue, 04 Sep 2012 18:59:33 -0400
+Message-ID: <504687D5.4020302@gmail.com>
+References: <50464322.3010509@genband.com> <5046525E.10500@gmail.com> <20120905062405.3741239a@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1346798509.27919.25.camel@gandalf.local.home>
-Sender: owner-linux-mm@kvack.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Sasha Levin <levinsasha928@gmail.com>, Tejun Heo <tj@kernel.org>, torvalds@linux-foundation.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujits
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20120905062405.3741239a@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Chris Friesen <chris.friesen@genband.com>, linux-raid@vger.kernel.org, Joe Thornber <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 09/04/2012 11:41 PM, Steven Rostedt wrote:
-> Ah, I missed the condition with the rec == &pg->records[pg->index]. But
-> if ftrace_pages_start is NULL, the rec = &pg->records[pg->index] will
-> fault.
+On 09/04/2012 04:24 PM, NeilBrown wrote:
+> On Tue, 04 Sep 2012 15:11:26 -0400 Ric Wheeler <ricwheeler@gmail.com> wrote:
+>
+>> On 09/04/2012 02:06 PM, Chris Friesen wrote:
+>>> Hi,
+>>>
+>>> I'm not really a filesystem guy so this may be a really dumb question.
+>>>
+>>> We currently have an issue where we have a ~1TB RAID1 array that is mostly
+>>> given over to LVM.  If we swap one of the disks it will rebuild everything,
+>>> even though we may only be using a small fraction of the space.
+>>>
+>>> This got me thinking.  Has anyone given thought to using the TRIM information
+>>> from filesystems to allow the RAID code to maintain a bitmask of used disk
+>>> blocks and only sync the ones that are actually used?
+>>>
+>>> Presumably this bitmask would itself need to be stored on the disk.
+>>>
+>>> Thanks,
+>>> Chris
+>>>
+>> Device mapper has a "thin" target now that tracks blocks that are allocated or
+>> free (and works with discard).
+>>
+>> That might be a basis for doing an focused RAID rebuild,
+> I wonder how....
+> Maybe the block-later interface could grow something equivalent to
+> "SEEK_HOLE" and friends so that the upper level can find "holes" and
+> "allocated space" in the underlying device.
+> I wonder if it is time to discard the 'block device' abstraction and just use
+> files every .... but I seriously doubt it.
+>
+> NeilBrown
 
-Right.
+I don't think that we have to go to that extreme, but I think it would be very 
+useful to see if the device mapper people have ideas in how the thin target 
+might be used in combination with MD :)
 
-> 
-> You could do something like rec = pg ? &pg->records[pg->index] : NULL,
+ric
 
-Right.
-
-> but IIRC, the comma operator does not guarantee order evaluation. That
-> is, the compiler is allowed to process "a , b" as "b; a;" and not "a;
-> b;".
-
-Not true.  The comma operator introduces a sequence point.  It's the comma
-that separates function parameters that doesn't guarantee ordering.
-
--- 
-Pedro Alves
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
