@@ -1,45 +1,90 @@
-From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH v3 01/17] hashtable: introduce a small and
- naive hashtable
-Date: Tue, 04 Sep 2012 19:27:07 -0400
-Message-ID: <1346801227.27919.40.camel@gandalf.local.home>
-References: <20120824203332.GF21325@google.com> <5037E9D9.9000605@gmail.com>
-	<20120824212348.GK21325@google.com> <5038074D.300@gmail.com>
-	<20120824230740.GN21325@google.com> <20120825042419.GA27240@Krystal>
-	<503C95E4.3010000@gmail.com> <20120828101148.GA21683@Krystal>
-	<503CAB1E.5010408@gmail.com> <20120828115638.GC23818@Krystal>
-	<20120828230050.GA3337@Krystal>
-	<1346772948.27919.9.camel@gandalf.local.home>
-	<50462C99.5000007@redhat.com>  <50462EE8.1090903@redhat.com>
-	<1346779027.27919.15.camel@gandalf.local.home>
-	<50463883.8080706@redhat.com>
-	<1346792345.27919.18.camel@gandalf.local.home>
-	<504677C8.3050801@redhat.com>
-	<1346798509.27919.25.camel@gandalf.local.home>
-	<50468778.5000207@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio
+ allocation by stacking drivers
+Date: Wed, 5 Sep 2012 13:57:59 +1000
+Message-ID: <20120905035758.GF13691@dastard>
+References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
+	<1346175456-1572-10-git-send-email-koverstreet@google.com>
+	<Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com>
+	<20120829165006.GB20312@google.com>
+	<20120829170711.GC12504@redhat.com>
+	<20120829171345.GC20312@google.com>
+	<20120830220745.GI27257@redhat.com>
+	<20120903004927.GM15292@dastard>
+	<20120904135422.GC13768@redhat.com>
+	<20120904182633.GB3638@dhcp-172-17-108-109.mtv.corp.google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
-In-Reply-To: <50468778.5000207-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://openvswitch.org/pipermail/dev>
-List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
-List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
-List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
-Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-To: Pedro Alves <palves-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20120904182633.GB3638@dhcp-172-17-108-109.mtv.corp.google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Tejun Heo <tj@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <koverstreet@google.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, bharrosh@panasas.com, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2012-09-04 at 23:58 +0100, Pedro Alves wrote:
+On Tue, Sep 04, 2012 at 11:26:33AM -0700, Tejun Heo wrote:
+> Hello,
+> 
+> On Tue, Sep 04, 2012 at 09:54:23AM -0400, Vivek Goyal wrote:
+> > > Given that we are working around stack depth issues in the
+> > > filesystems already in several places, and now it seems like there's
+> > > a reason to work around it in the block layers as well, shouldn't we
+> > > simply increase the default stack size rather than introduce
+> > > complexity and performance regressions to try and work around not
+> > > having enough stack?
+> > 
+> > Dave,
+> > 
+> > In this particular instance, we really don't have any bug reports of
+> > stack overflowing. Just discussing what will happen if we make 
+> > generic_make_request() recursive again.
+> 
+> I think there was one and that's why we added the bio_list thing.
 
-> Not true.  The comma operator introduces a sequence point.  It's the comma
-> that separates function parameters that doesn't guarantee ordering.
+There was more than one - it was a regular enough to be considered a
+feature... :/
 
-Bah! C language is almost as confusing as English.
+> > > I mean, we can deal with it like the ia32 4k stack issue was dealt
+> > > with (i.e. ignore those stupid XFS people, that's an XFS bug), or
+> > > we can face the reality that storage stacks have become so complex
+> > > that 8k is no longer a big enough stack for a modern system....
+> > 
+> > So first question will be, what's the right stack size? If we make
+> > generic_make_request() recursive, then at some storage stack depth we will
+> > overflow stack anyway (if we have created too deep a stack). Hence
+> > keeping current logic kind of makes sense as in theory we can support
+> > arbitrary depth of storage stack.
+> 
+> But, yeah, this can't be solved by enlarging the stack size.  The
+> upper limit is unbound.
 
--- Steve
+Sure, but recursion issue is isolated to the block layer.
+
+If we can still submit IO directly through the block layer without
+pushing it off to a work queue, then the overall stack usage problem
+still exists. But if the block layer always pushes the IO off into
+another workqueue to avoid stack overflows, then the context
+switches are going to cause significant performance regressions for
+high IOPS workloads.  I don't really like either situation.
+
+So while you are discussing stack issues, think a little about the
+bigger picture outside of the immediate issue at hand - a better
+solution for everyone might pop up....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
