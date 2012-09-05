@@ -1,212 +1,141 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v8 6/8] block: Kill bi_destructor
-Date: Wed,  5 Sep 2012 13:27:27 -0700
-Message-ID: <1346876849-15820-7-git-send-email-koverstreet@google.com>
+Subject: [PATCH v8 3/8] dm: Use bioset's front_pad for
+	dm_rq_clone_bio_info
+Date: Wed,  5 Sep 2012 13:27:24 -0700
+Message-ID: <1346876849-15820-4-git-send-email-koverstreet@google.com>
 References: <1346876849-15820-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1346876849-15820-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, vgoyal@redhat.com, Kent Overstreet <koverstreet@google.com>, Jens Axboe <axboe@kernel.dk>
+Cc: tj@kernel.org, Kent Overstreet <koverstreet@google.com>, Alasdair Kergon <agk@redhat.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Now that we've got generic code for freeing bios allocated from bio
-pools, this isn't needed anymore.
+Previously, dm_rq_clone_bio_info needed to be freed by the bio's
+destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
+This gets rid of a memory allocation and means we can kill
+dm_rq_bio_destructor.
 
-This patch also makes bio_free() static, since without bi_destructor
-there should be no need for it to be called anywhere else.
+The _rq_bio_info_cache kmem cache is unused now and needs to be deleted,
+but due to the way io_pool is used and overloaded this looks not quite
+trivial so I'm leaving it for a later patch.
 
-While we're at it, since bio_free() is now only called from one place,
-refactor it a bit and pull out __bio_free() for bio_reset() to use.
-
-v5: Switch to BIO_KMALLOC_POOL ((void *)~0), per Boaz
-v6: BIO_KMALLOC_POOL now NULL, drop bio_free's EXPORT_SYMBOL
-v7: No #define BIO_KMALLOC_POOL anymore
+v6: Fix comment on struct dm_rq_clone_bio_info, per Tejun
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
+CC: Alasdair Kergon <agk@redhat.com>
+Acked-by: Tejun Heo <tj@kernel.org>
 ---
- Documentation/block/biodoc.txt |  5 ----
- block/blk-core.c               |  2 +-
- fs/bio.c                       | 64 +++++++++++++++++-------------------------
- include/linux/bio.h            |  1 -
- include/linux/blk_types.h      |  3 --
- 5 files changed, 27 insertions(+), 48 deletions(-)
+ drivers/md/dm.c | 44 ++++++++++++++++----------------------------
+ 1 file changed, 16 insertions(+), 28 deletions(-)
 
-diff --git a/Documentation/block/biodoc.txt b/Documentation/block/biodoc.txt
-index e418dc0..8df5e8e 100644
---- a/Documentation/block/biodoc.txt
-+++ b/Documentation/block/biodoc.txt
-@@ -465,7 +465,6 @@ struct bio {
-        bio_end_io_t	*bi_end_io;  /* bi_end_io (bio) */
-        atomic_t		bi_cnt;	     /* pin count: free when it hits zero */
-        void             *bi_private;
--       bio_destructor_t *bi_destructor; /* bi_destructor (bio) */
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f43aaf6..f2eb730 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -86,12 +86,17 @@ struct dm_rq_target_io {
  };
  
- With this multipage bio design:
-@@ -647,10 +646,6 @@ for a non-clone bio. There are the 6 pools setup for different size biovecs,
- so bio_alloc(gfp_mask, nr_iovecs) will allocate a vec_list of the
- given size from these slabs.
+ /*
+- * For request-based dm.
+- * One of these is allocated per bio.
++ * For request-based dm - the bio clones we allocate are embedded in these
++ * structs.
++ *
++ * We allocate these with bio_alloc_bioset, using the front_pad parameter when
++ * the bioset is created - this means the bio has to come at the end of the
++ * struct.
+  */
+ struct dm_rq_clone_bio_info {
+ 	struct bio *orig;
+ 	struct dm_rq_target_io *tio;
++	struct bio clone;
+ };
  
--The bi_destructor() routine takes into account the possibility of the bio
--having originated from a different source (see later discussions on
--n/w to block transfers and kvec_cb)
--
- The bio_get() routine may be used to hold an extra reference on a bio prior
- to i/o submission, if the bio fields are likely to be accessed after the
- i/o is issued (since the bio may otherwise get freed in case i/o completion
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 95c4935..b776cc9 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -2807,7 +2807,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ union map_info *dm_get_mapinfo(struct bio *bio)
+@@ -211,6 +216,11 @@ struct dm_md_mempools {
+ static struct kmem_cache *_io_cache;
+ static struct kmem_cache *_tio_cache;
+ static struct kmem_cache *_rq_tio_cache;
++
++/*
++ * Unused now, and needs to be deleted. But since io_pool is overloaded and it's
++ * still used for _io_cache, I'm leaving this for a later cleanup
++ */
+ static struct kmem_cache *_rq_bio_info_cache;
  
- free_and_out:
- 	if (bio)
--		bio_free(bio, bs);
-+		bio_put(bio);
- 	blk_rq_unprep_clone(rq);
- 
- 	return -ENOMEM;
-diff --git a/fs/bio.c b/fs/bio.c
-index 208141f..d807fe2 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -233,26 +233,37 @@ fallback:
- 	return bvl;
+ static int __init local_init(void)
+@@ -467,16 +477,6 @@ static void free_rq_tio(struct dm_rq_target_io *tio)
+ 	mempool_free(tio, tio->md->tio_pool);
  }
  
--void bio_free(struct bio *bio, struct bio_set *bs)
-+static void __bio_free(struct bio *bio)
- {
--	void *p;
--
--	if (bio_has_allocated_vec(bio))
--		bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
-+	bio_disassociate_task(bio);
- 
- 	if (bio_integrity(bio))
- 		bio_integrity_free(bio);
-+}
- 
--	/*
--	 * If we have front padding, adjust the bio pointer before freeing
--	 */
--	p = bio;
--	if (bs->front_pad)
-+static void bio_free(struct bio *bio)
-+{
-+	struct bio_set *bs = bio->bi_pool;
-+	void *p;
-+
-+	__bio_free(bio);
-+
-+	if (bs) {
-+		if (bio_has_allocated_vec(bio))
-+			bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
-+
-+		/*
-+		 * If we have front padding, adjust the bio pointer before freeing
-+		 */
-+		p = bio;
- 		p -= bs->front_pad;
- 
--	mempool_free(p, bs->bio_pool);
-+		mempool_free(p, bs->bio_pool);
-+	} else {
-+		/* Bio was allocated by bio_kmalloc() */
-+		kfree(bio);
-+	}
- }
--EXPORT_SYMBOL(bio_free);
- 
- void bio_init(struct bio *bio)
- {
-@@ -266,10 +277,7 @@ void bio_reset(struct bio *bio)
- {
- 	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
- 
--	if (bio_integrity(bio))
--		bio_integrity_free(bio, bio->bi_pool);
--
--	bio_disassociate_task(bio);
-+	__bio_free(bio);
- 
- 	memset(bio, 0, BIO_RESET_BYTES);
- 	bio->bi_flags = flags|(1 << BIO_UPTODATE);
-@@ -352,13 +360,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
- }
- EXPORT_SYMBOL(bio_alloc);
- 
--static void bio_kmalloc_destructor(struct bio *bio)
+-static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
 -{
--	if (bio_integrity(bio))
--		bio_integrity_free(bio);
--	kfree(bio);
+-	return mempool_alloc(md->io_pool, GFP_ATOMIC);
 -}
 -
- /**
-  * bio_kmalloc - allocate a bio for I/O using kmalloc()
-  * @gfp_mask:   the GFP_ mask given to the slab allocator
-@@ -385,7 +386,6 @@ struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
- 	bio->bi_flags |= BIO_POOL_NONE << BIO_POOL_OFFSET;
- 	bio->bi_max_vecs = nr_iovecs;
- 	bio->bi_io_vec = bio->bi_inline_vecs;
--	bio->bi_destructor = bio_kmalloc_destructor;
- 
- 	return bio;
- }
-@@ -421,20 +421,8 @@ void bio_put(struct bio *bio)
- 	/*
- 	 * last put frees it
- 	 */
--	if (atomic_dec_and_test(&bio->bi_cnt)) {
--		bio_disassociate_task(bio);
--		bio->bi_next = NULL;
+-static void free_bio_info(struct dm_rq_clone_bio_info *info)
+-{
+-	mempool_free(info, info->tio->md->io_pool);
+-}
 -
--		/*
--		 * This if statement is temporary - bi_pool is replacing
--		 * bi_destructor, but bi_destructor will be taken out in another
--		 * patch.
--		 */
--		if (bio->bi_pool)
--			bio_free(bio, bio->bi_pool);
--		else
--			bio->bi_destructor(bio);
--	}
-+	if (atomic_dec_and_test(&bio->bi_cnt))
-+		bio_free(bio);
+ static int md_in_flight(struct mapped_device *md)
+ {
+ 	return atomic_read(&md->pending[READ]) +
+@@ -1460,30 +1460,17 @@ void dm_dispatch_request(struct request *rq)
  }
- EXPORT_SYMBOL(bio_put);
+ EXPORT_SYMBOL_GPL(dm_dispatch_request);
  
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 76f6c25..04944c9 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -216,7 +216,6 @@ extern struct bio *bio_alloc(gfp_t, unsigned int);
- extern struct bio *bio_kmalloc(gfp_t, unsigned int);
- extern struct bio *bio_alloc_bioset(gfp_t, int, struct bio_set *);
- extern void bio_put(struct bio *);
--extern void bio_free(struct bio *, struct bio_set *);
- 
- extern void bio_endio(struct bio *, int);
- struct request_queue;
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 1b607c2..3eefbb2 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -84,11 +84,8 @@ struct bio {
- 
- 	struct bio_vec		*bi_io_vec;	/* the actual vec list */
- 
--	/* If bi_pool is non NULL, bi_destructor is not called */
- 	struct bio_set		*bi_pool;
- 
--	bio_destructor_t	*bi_destructor;	/* destructor */
+-static void dm_rq_bio_destructor(struct bio *bio)
+-{
+-	struct dm_rq_clone_bio_info *info = bio->bi_private;
+-	struct mapped_device *md = info->tio->md;
 -
- 	/*
- 	 * We can inline a number of vecs at the end of the bio, to avoid
- 	 * double allocations for a small number of bio_vecs. This member
+-	free_bio_info(info);
+-	bio_free(bio, md->bs);
+-}
+-
+ static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
+ 				 void *data)
+ {
+ 	struct dm_rq_target_io *tio = data;
+-	struct mapped_device *md = tio->md;
+-	struct dm_rq_clone_bio_info *info = alloc_bio_info(md);
+-
+-	if (!info)
+-		return -ENOMEM;
++	struct dm_rq_clone_bio_info *info =
++		container_of(bio, struct dm_rq_clone_bio_info, clone);
+ 
+ 	info->orig = bio_orig;
+ 	info->tio = tio;
+ 	bio->bi_end_io = end_clone_bio;
+ 	bio->bi_private = info;
+-	bio->bi_destructor = dm_rq_bio_destructor;
+ 
+ 	return 0;
+ }
+@@ -2718,7 +2705,8 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
+ 	if (!pools->tio_pool)
+ 		goto free_io_pool_and_out;
+ 
+-	pools->bs = bioset_create(pool_size, 0);
++	pools->bs = bioset_create(pool_size,
++				  offsetof(struct dm_rq_clone_bio_info, clone));
+ 	if (!pools->bs)
+ 		goto free_tio_pool_and_out;
+ 
 -- 
 1.7.12
