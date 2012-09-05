@@ -1,58 +1,37 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 9/9] block: Avoid deadlocks with bio allocation by
- stacking drivers
-Date: Tue, 4 Sep 2012 21:37:37 -0700
-Message-ID: <20120905043737.GA2737@mtj.dyndns.org>
-References: <1346175456-1572-10-git-send-email-koverstreet@google.com>
- <Pine.LNX.4.64.1208291210180.774@file.rdu.redhat.com>
- <20120829165006.GB20312@google.com>
- <20120829170711.GC12504@redhat.com>
- <20120829171345.GC20312@google.com>
- <20120830220745.GI27257@redhat.com>
- <20120903004927.GM15292@dastard>
- <20120904135422.GC13768@redhat.com>
- <20120904182633.GB3638@dhcp-172-17-108-109.mtv.corp.google.com>
- <20120905035758.GF13691@dastard>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v7 4/9] pktcdvd: Switch to bio_kmalloc()
+Date: Wed, 5 Sep 2012 12:44:27 -0700
+Message-ID: <20120905194427.GF25236@google.com>
+References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
+ <1346175456-1572-5-git-send-email-koverstreet@google.com>
+ <20120828203247.GC24608@dhcp-172-17-108-109.mtv.corp.google.com>
+ <alpine.LRH.2.00.1209041104020.26301@twin.jikos.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120905035758.GF13691@dastard>
+In-Reply-To: <alpine.LRH.2.00.1209041104020.26301-1ReQVI26iDCaZKY3DrU6dA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+To: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Peter Osterlund <petero2-zq6IREYz3ykAvxtiuMwx3w@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hello, Dave.
-
-On Wed, Sep 05, 2012 at 01:57:59PM +1000, Dave Chinner wrote:
-> > But, yeah, this can't be solved by enlarging the stack size.  The
-> > upper limit is unbound.
+On Tue, Sep 04, 2012 at 11:05:06AM +0200, Jiri Kosina wrote:
+> On Tue, 28 Aug 2012, Tejun Heo wrote:
 > 
-> Sure, but recursion issue is isolated to the block layer.
+> > > This is prep work for killing bi_destructor - previously, pktcdvd had
+> > > its own pkt_bio_alloc which was basically duplication bio_kmalloc(),
+> > > necessitating its own bi_destructor implementation.
+> > 
+> > How was this tested?
 > 
-> If we can still submit IO directly through the block layer without
-> pushing it off to a work queue, then the overall stack usage problem
-> still exists. But if the block layer always pushes the IO off into
-> another workqueue to avoid stack overflows, then the context
-> switches are going to cause significant performance regressions for
-> high IOPS workloads.  I don't really like either situation.
+> I have now tested it and it works properly. You can add
+> 
+> 	Signed-off-by: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
+> 
+> once you will be pushing the patchset through (I will be pushing 
+> MAINTAINERS update through my tree to Jens separately).
 
-Kent's proposed solution doesn't do that.  The rescuer work item is
-used iff mempool allocation fails w/o GFP_WAIT.  IOW, we're already
-under severe memory pressure and stalls are expected all around the
-kernel (somehow this sounds festive...)  It doesn't alter the
-breadth-first walk of bio decomposition and shouldn't degrade
-performance in any noticeable way.
-
-> So while you are discussing stack issues, think a little about the
-> bigger picture outside of the immediate issue at hand - a better
-> solution for everyone might pop up....
-
-It's probably because I haven't been bitten much from stack overflow
-but I'd like to keep thinking that stack overflows are extremely
-unusual and the ones causing them are the bad ones.  Thank you very
-much. :p
-
--- 
-tejun
+Thanks! I'll make sure and add you to the cc next time - I'll have
+another patch or two for pktcdvd coming soon as I clean up the next
+patch series.
