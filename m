@@ -1,41 +1,52 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH v7 3/9] block: Add bio_reset()
-Date: Wed, 5 Sep 2012 13:13:46 -0700
-Message-ID: <20120905201346.GG25236@google.com>
-References: <1346175456-1572-1-git-send-email-koverstreet@google.com>
- <1346175456-1572-4-git-send-email-koverstreet@google.com>
- <20120828203148.GB24608@dhcp-172-17-108-109.mtv.corp.google.com>
- <20120828221715.GD1048@moria.home.lan>
- <20120901022305.GE19535@dhcp-172-17-108-109.mtv.corp.google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120901022305.GE19535@dhcp-172-17-108-109.mtv.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, vgoyal@redhat.com, mpatocka@redhat.com, bharrosh@panasas.com, Jens Axboe <axboe@kernel.dk>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v8 0/8] Block cleanups
+Date: Wed,  5 Sep 2012 13:27:21 -0700
+Message-ID: <1346876849-15820-1-git-send-email-koverstreet@google.com>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Fri, Aug 31, 2012 at 07:23:05PM -0700, Tejun Heo wrote:
-> On Tue, Aug 28, 2012 at 03:17:15PM -0700, Kent Overstreet wrote:
-> > I still think they should be symmetrical, but if that's true bi_ioc and
-> > bi_css need to be moved, and also bio_disassociate_task() should be
-> > getting called from bio_free(), not bio_put().
-> > 
-> > Were you the one that added that call? I know you've been working on
-> > that area of the code recently. Sticking it in bio_put() instead of
-> > bio_free() seems odd to be, and they're completely equivalent now that
-> > bio_free() is only called from bio_put() (save one instance I should
-> > probably fix).
-> 
-> Maybe I botched symmetry but anyways I *suspect* it probably would be
-> better to keep css association across bio_reset() give the current
-> usages of both mechanisms.  css association indicates the ownership of
-> the bio which isn't likely to change while recycling the bio.
+Since v7:
 
-Thought about it more and while you're right that css association isn't
-likely to change, it'd just be a needless difference. bio_reset() should
-be as close to a bio_free()/bio_alloc() as possible, IMO.
+Split off the deadlock fix, this is now just cleanups
 
-Fixed my patches to do it right, though.
+Noticed a minor issue with bio integrity freeing, and decided the best way to
+fix it was to just make it use bi_pool directly which simplifies the code
+anyways.
+
+Tested the integrity stuff with the scsi debug module.
+
+Cleaned up bio_reset()/bio_free() a bit, introduce a __bio_free() helper used
+by both and made bio_free() static.
+
+Kent Overstreet (8):
+  block: Generalized bio pool freeing
+  block: Ues bi_pool for bio_integrity_alloc()
+  dm: Use bioset's front_pad for dm_rq_clone_bio_info
+  block: Add bio_reset()
+  pktcdvd: Switch to bio_kmalloc()
+  block: Kill bi_destructor
+  block: Consolidate bio_alloc_bioset(), bio_kmalloc()
+  block: Add bio_clone_bioset(), bio_clone_kmalloc()
+
+ Documentation/block/biodoc.txt      |   5 -
+ block/blk-core.c                    |  10 +-
+ drivers/block/drbd/drbd_main.c      |  13 +--
+ drivers/block/osdblk.c              |   3 +-
+ drivers/block/pktcdvd.c             |  52 ++--------
+ drivers/md/dm-crypt.c               |  16 +--
+ drivers/md/dm-io.c                  |  11 --
+ drivers/md/dm.c                     |  72 ++++---------
+ drivers/md/md.c                     |  44 +-------
+ drivers/target/target_core_iblock.c |   9 --
+ fs/bio-integrity.c                  |  44 +++-----
+ fs/bio.c                            | 196 +++++++++++++++---------------------
+ fs/exofs/ore.c                      |   5 +-
+ include/linux/bio.h                 |  44 +++++---
+ include/linux/blk_types.h           |  27 +++--
+ 15 files changed, 183 insertions(+), 368 deletions(-)
+
+-- 
+1.7.12
