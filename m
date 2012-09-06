@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v9 7/9] block: Kill bi_destructor
-Date: Thu,  6 Sep 2012 14:32:56 -0700
-Message-ID: <1346967179-28596-10-git-send-email-koverstreet@google.com>
+Subject: [PATCH v8 6/8] block: Kill bi_destructor
+Date: Thu,  6 Sep 2012 14:32:54 -0700
+Message-ID: <1346967179-28596-8-git-send-email-koverstreet@google.com>
 References: <1346967179-28596-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1346967179-28596-1-git-send-email-koverstreet@google.com>
@@ -16,9 +16,8 @@ pools, this isn't needed anymore.
 This patch also makes bio_free() static, since without bi_destructor
 there should be no need for it to be called anywhere else.
 
-bio_free() is now only called from bio_put, so we can refactor those a
-bit - move some code from bio_put() to bio_free() and kill the redundant
-bio->bi_next = NULL.
+While we're at it, since bio_free() is now only called from one place,
+refactor it a bit and pull out __bio_free() for bio_reset() to use.
 
 v5: Switch to BIO_KMALLOC_POOL ((void *)~0), per Boaz
 v6: BIO_KMALLOC_POOL now NULL, drop bio_free's EXPORT_SYMBOL
@@ -71,7 +70,7 @@ index 95c4935..b776cc9 100644
  
  	return -ENOMEM;
 diff --git a/fs/bio.c b/fs/bio.c
-index 74ab3f0..e6691f6 100644
+index 208141f..d807fe2 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
 @@ -233,26 +233,37 @@ fallback:
@@ -124,7 +123,7 @@ index 74ab3f0..e6691f6 100644
  
  void bio_init(struct bio *bio)
  {
-@@ -290,10 +301,7 @@ void bio_reset(struct bio *bio)
+@@ -266,10 +277,7 @@ void bio_reset(struct bio *bio)
  {
  	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
  
@@ -136,7 +135,7 @@ index 74ab3f0..e6691f6 100644
  
  	memset(bio, 0, BIO_RESET_BYTES);
  	bio->bi_flags = flags|(1 << BIO_UPTODATE);
-@@ -376,13 +384,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+@@ -352,13 +360,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
  }
  EXPORT_SYMBOL(bio_alloc);
  
@@ -150,7 +149,7 @@ index 74ab3f0..e6691f6 100644
  /**
   * bio_kmalloc - allocate a bio for I/O using kmalloc()
   * @gfp_mask:   the GFP_ mask given to the slab allocator
-@@ -409,7 +410,6 @@ struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+@@ -385,7 +386,6 @@ struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
  	bio->bi_flags |= BIO_POOL_NONE << BIO_POOL_OFFSET;
  	bio->bi_max_vecs = nr_iovecs;
  	bio->bi_io_vec = bio->bi_inline_vecs;
@@ -158,7 +157,7 @@ index 74ab3f0..e6691f6 100644
  
  	return bio;
  }
-@@ -445,20 +445,8 @@ void bio_put(struct bio *bio)
+@@ -421,20 +421,8 @@ void bio_put(struct bio *bio)
  	/*
  	 * last put frees it
  	 */
