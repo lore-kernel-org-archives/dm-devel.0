@@ -1,44 +1,38 @@
 From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v10 7/8] block: Consolidate bio_alloc_bioset(),
- bio_kmalloc()
-Date: Thu, 6 Sep 2012 16:45:10 -0700
-Message-ID: <20120906234510.GB9426@google.com>
+Subject: Re: [PATCH v10 8/8] block: Add bio_clone_bioset(),
+ bio_clone_kmalloc()
+Date: Thu, 6 Sep 2012 16:46:03 -0700
+Message-ID: <20120906234603.GC9426@google.com>
 References: <1346970902-10931-1-git-send-email-koverstreet@google.com>
- <1346970902-10931-8-git-send-email-koverstreet@google.com>
+ <1346970902-10931-9-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1346970902-10931-8-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1346970902-10931-9-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>, Jeff Garzik <jeff-o2qLIJkoznsdnm+yROfE0A@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Thu, Sep 06, 2012 at 03:35:01PM -0700, Kent Overstreet wrote:
-> Previously, bio_kmalloc() and bio_alloc_bioset() behaved slightly
-> different because there was some almost-duplicated code - this fixes
-> some of that.
+On Thu, Sep 06, 2012 at 03:35:02PM -0700, Kent Overstreet wrote:
+> Previously, there was bio_clone() but it only allocated from the fs bio
+> set; as a result various users were open coding it and using
+> __bio_clone().
 > 
-> The important change is that previously bio_kmalloc() always set
-> bi_io_vec = bi_inline_vecs, even if nr_iovecs == 0 - unlike
-> bio_alloc_bioset(). This would cause bio_has_data() to return true; I
-> don't know if this resulted in any actual bugs but it was certainly
-> wrong.
+> This changes bio_clone() to become bio_clone_bioset(), and then we add
+> bio_clone() and bio_clone_kmalloc() as wrappers around it, making use of
+> the functionality the last patch adedd.
 > 
-> bio_kmalloc() and bio_alloc_bioset() also have different arbitrary
-> limits on nr_iovecs - 1024 (UIO_MAXIOV) for bio_kmalloc(), 256
-> (BIO_MAX_PAGES) for bio_alloc_bioset(). This patch doesn't fix that, but
-> at least they're enforced closer together and hopefully they will be
-> fixed in a later patch.
-> 
-> This'll also help with some future cleanups - there are a fair number of
-> functions that allocate bios (e.g. bio_clone()), and now they don't have
-> to be duplicated for bio_alloc(), bio_alloc_bioset(), and bio_kmalloc().
+> This will also help in a later patch changing how bio cloning works.
 > 
 > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-> v7: Re-add dropped comments, improv patch description
+> CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+> CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> CC: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+> CC: Jeff Garzik <jeff-o2qLIJkoznsdnm+yROfE0A@public.gmane.org>
+> Acked-by: Jeff Garzik <jgarzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
 Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
