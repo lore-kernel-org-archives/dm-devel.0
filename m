@@ -1,35 +1,40 @@
-From: "Jun'ichi Nomura" <j-nomura-JhyGz2TFV9J8UrSeD/g0lQ@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v8 3/8] dm: Use bioset's front_pad for dm_rq_clone_bio_info
-Date: Thu, 06 Sep 2012 12:21:15 +0900
-Message-ID: <504816AB.8080105@ce.jp.nec.com>
-References: <1346876849-15820-1-git-send-email-koverstreet@google.com> <1346876849-15820-4-git-send-email-koverstreet@google.com>
+From: Wei Yongjun <weiyj.lk@gmail.com>
+Subject: [PATCH] dm-bufio: use list_move instead of list_del/list_add
+Date: Thu, 6 Sep 2012 12:35:53 +0800
+Message-ID: <CAPgLHd-8yZNyqj1saoD8M4QRYqs_kruJijoj14XPHRBbp0hVsQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1346876849-15820-4-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: agk@redhat.com, neilb@suse.de
+Cc: yongjun_wei@trendmicro.com.cn, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 09/06/12 05:27, Kent Overstreet wrote:
-> @@ -2718,7 +2705,8 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
->  	if (!pools->tio_pool)
->  		goto free_io_pool_and_out;
->  
-> -	pools->bs = bioset_create(pool_size, 0);
-> +	pools->bs = bioset_create(pool_size,
-> +				  offsetof(struct dm_rq_clone_bio_info, clone));
->  	if (!pools->bs)
->  		goto free_tio_pool_and_out;
+From: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
 
-frontpad is not necessary if type is DM_TYPE_BIO_BASED.
+Using list_move() instead of list_del() + list_add().
 
-Other pool creation in that function do something like:
-	pools->bs = (type == DM_TYPE_BIO_BASED) ?
-		    bioset_create(pool_size, 0) :
-		    bioset_create(pool_size, offsetof(struct dm_rq_clone_bio_info, clone));
+spatch with a semantic match is used to found this problem.
+(http://coccinelle.lip6.fr/)
 
--- 
-Jun'ichi Nomura, NEC Corporation
+Signed-off-by: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
+---
+ drivers/md/dm-bufio.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index cc06a1e..b9e006a 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -441,8 +441,7 @@ static void __relink_lru(struct dm_buffer *b, int dirty)
+ 	c->n_buffers[b->list_mode]--;
+ 	c->n_buffers[dirty]++;
+ 	b->list_mode = dirty;
+-	list_del(&b->lru_list);
+-	list_add(&b->lru_list, &c->lru[dirty]);
++	list_move(&b->lru_list, &c->lru[dirty]);
+ }
+ 
+ /*----------------------------------------------------------------
+
+
