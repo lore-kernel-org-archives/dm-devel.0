@@ -1,45 +1,142 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v10 0/8] Block cleanups
-Date: Thu,  6 Sep 2012 15:34:54 -0700
-Message-ID: <1346970902-10931-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v10 4/8] block: Add bio_reset()
+Date: Thu,  6 Sep 2012 15:34:58 -0700
+Message-ID: <1346970902-10931-5-git-send-email-koverstreet@google.com>
+References: <1346970902-10931-1-git-send-email-koverstreet@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1346970902-10931-1-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-Screwed up the bio_reset() patch in the last patch series when I went to edit
-the description, fixed that here.
+Reusing bios is something that's been highly frowned upon in the past,
+but driver code keeps doing it anyways. If it's going to happen anyways,
+we should provide a generic method.
 
-Only other change is the dm patch - made the front_pad conditional on
-DM_TYPE_BIO_BASED.
+This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
+was open coding it, by doing a bio_init() and resetting bi_destructor.
 
-Kent Overstreet (8):
-  block: Generalized bio pool freeing
-  block: Ues bi_pool for bio_integrity_alloc()
-  dm: Use bioset's front_pad for dm_rq_clone_bio_info
-  block: Add bio_reset()
-  pktcdvd: Switch to bio_kmalloc()
-  block: Kill bi_destructor
-  block: Consolidate bio_alloc_bioset(), bio_kmalloc()
-  block: Add bio_clone_bioset(), bio_clone_kmalloc()
+This required reordering struct bio, but the block layer is not yet
+nearly fast enough for any cacheline effects to matter here.
 
- Documentation/block/biodoc.txt      |   5 -
- block/blk-core.c                    |  10 +-
- drivers/block/drbd/drbd_main.c      |  13 +--
- drivers/block/osdblk.c              |   3 +-
- drivers/block/pktcdvd.c             |  52 ++-------
- drivers/md/dm-crypt.c               |  16 +--
- drivers/md/dm-io.c                  |  11 --
- drivers/md/dm.c                     |  74 ++++---------
- drivers/md/md.c                     |  44 +-------
- drivers/target/target_core_iblock.c |   9 --
- fs/bio-integrity.c                  |  44 +++-----
- fs/bio.c                            | 206 ++++++++++++++++--------------------
- fs/exofs/ore.c                      |   5 +-
- include/linux/bio.h                 |  44 +++++---
- include/linux/blk_types.h           |  27 +++--
- 15 files changed, 195 insertions(+), 368 deletions(-)
+v5: Add a define BIO_RESET_BITS, to be very explicit about what parts of
+bio->bi_flags are saved.
+v6: Further commenting verbosity, per Tejun
+v9: Add a function comment
 
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
+Acked-by: Tejun Heo <tj@kernel.org>
+---
+ fs/bio.c                  | 24 ++++++++++++++++++++++++
+ include/linux/bio.h       |  1 +
+ include/linux/blk_types.h | 25 +++++++++++++++++++------
+ 3 files changed, 44 insertions(+), 6 deletions(-)
+
+diff --git a/fs/bio.c b/fs/bio.c
+index b14f71a..919ee9a 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -263,6 +263,30 @@ void bio_init(struct bio *bio)
+ EXPORT_SYMBOL(bio_init);
+ 
+ /**
++ * bio_reset - reinitialize a bio
++ * @bio:	bio to reset
++ *
++ * Description:
++ *   After calling bio_reset(), @bio will be in the same state as a freshly
++ *   allocated bio returned bio bio_alloc_bioset() - the only fields that are
++ *   preserved are the ones that are initialized by bio_alloc_bioset(). See
++ *   comment in struct bio.
++ */
++void bio_reset(struct bio *bio)
++{
++	unsigned long flags = bio->bi_flags & (~0UL << BIO_RESET_BITS);
++
++	if (bio_integrity(bio))
++		bio_integrity_free(bio);
++
++	bio_disassociate_task(bio);
++
++	memset(bio, 0, BIO_RESET_BYTES);
++	bio->bi_flags = flags|(1 << BIO_UPTODATE);
++}
++EXPORT_SYMBOL(bio_reset);
++
++/**
+  * bio_alloc_bioset - allocate a bio for I/O
+  * @gfp_mask:   the GFP_ mask given to the slab allocator
+  * @nr_iovecs:	number of iovecs to pre-allocate
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index a11f74b..76f6c25 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -226,6 +226,7 @@ extern void __bio_clone(struct bio *, struct bio *);
+ extern struct bio *bio_clone(struct bio *, gfp_t);
+ 
+ extern void bio_init(struct bio *);
++extern void bio_reset(struct bio *);
+ 
+ extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
+ extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index af9dd9d..1b607c2 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -59,12 +59,6 @@ struct bio {
+ 	unsigned int		bi_seg_front_size;
+ 	unsigned int		bi_seg_back_size;
+ 
+-	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
+-
+-	atomic_t		bi_cnt;		/* pin count */
+-
+-	struct bio_vec		*bi_io_vec;	/* the actual vec list */
+-
+ 	bio_end_io_t		*bi_end_io;
+ 
+ 	void			*bi_private;
+@@ -80,6 +74,16 @@ struct bio {
+ 	struct bio_integrity_payload *bi_integrity;  /* data integrity */
+ #endif
+ 
++	/*
++	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
++	 */
++
++	unsigned int		bi_max_vecs;	/* max bvl_vecs we can hold */
++
++	atomic_t		bi_cnt;		/* pin count */
++
++	struct bio_vec		*bi_io_vec;	/* the actual vec list */
++
+ 	/* If bi_pool is non NULL, bi_destructor is not called */
+ 	struct bio_set		*bi_pool;
+ 
+@@ -93,6 +97,8 @@ struct bio {
+ 	struct bio_vec		bi_inline_vecs[0];
+ };
+ 
++#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
++
+ /*
+  * bio flags
+  */
+@@ -108,6 +114,13 @@ struct bio {
+ #define BIO_FS_INTEGRITY 9	/* fs owns integrity data, not block layer */
+ #define BIO_QUIET	10	/* Make BIO Quiet */
+ #define BIO_MAPPED_INTEGRITY 11/* integrity metadata has been remapped */
++
++/*
++ * Flags starting here get preserved by bio_reset() - this includes
++ * BIO_POOL_IDX()
++ */
++#define BIO_RESET_BITS	12
++
+ #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
+ 
+ /*
 -- 
 1.7.12
