@@ -1,86 +1,74 @@
-From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Subject: Re: [PATCH v10 4/8] block: Add bio_reset()
-Date: Fri, 07 Sep 2012 16:44:00 -0600
-Message-ID: <504A78B0.8010105@kernel.dk>
-References: <1346970902-10931-1-git-send-email-koverstreet@google.com> <1346970902-10931-5-git-send-email-koverstreet@google.com> <50494F1A.4080207@kernel.dk> <20120907205823.GD16360@google.com> <504A6D57.1030607@kernel.dk> <504A6FF5.3090603@kernel.dk> <20120907222522.GE16360@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 0/9] Prep work for immutable bio vecs
+Date: Fri,  7 Sep 2012 15:59:11 -0700
+Message-ID: <1347058760-30794-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120907222522.GE16360-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
 List-Id: dm-devel.ids
 
-On 2012-09-07 16:25, Kent Overstreet wrote:
-> On Fri, Sep 07, 2012 at 04:06:45PM -0600, Jens Axboe wrote:
->> On 2012-09-07 15:55, Jens Axboe wrote:
->>> On 2012-09-07 14:58, Kent Overstreet wrote:
->>>> On Thu, Sep 06, 2012 at 07:34:18PM -0600, Jens Axboe wrote:
->>>>> On 2012-09-06 16:34, Kent Overstreet wrote:
->>>>>> Reusing bios is something that's been highly frowned upon in the past,
->>>>>> but driver code keeps doing it anyways. If it's going to happen anyways,
->>>>>> we should provide a generic method.
->>>>>>
->>>>>> This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
->>>>>> was open coding it, by doing a bio_init() and resetting bi_destructor.
->>>>>>
->>>>>> This required reordering struct bio, but the block layer is not yet
->>>>>> nearly fast enough for any cacheline effects to matter here.
->>>>>
->>>>> That's an odd and misplaced comment. Was just doing testing today at 5M
->>>>> IOPS, and even years back we've had cache effects for O_DIRECT in higher
->>>>> speed setups.
->>>>
->>>> Ah, I wasn't aware that you were pushing that many iops through the
->>>> block layer - most I've tested myself was around 1M. It wouldn't
->>>> surprise me if cache effects in struct bio mattered around 5M...
->>>
->>> 5M is nothing, just did 13.5M :-)
->>>
->>> But we can reshuffle for now. As mentioned, we're way overdue for a
->>> decent look at cache profiling in any case.
->>
->> No ill effects seen so far, fwiw:
->>
->>   read : io=1735.8GB, bw=53690MB/s, iops=13745K, runt= 33104msec
-> 
-> Cool!
-> 
-> I'd be really curious to see a profile. Of the patches I've got queued
-> up I don't think anything's going to significantly affect performance
-> yet, but I'm hoping the cleanups/immutable bvec stuff/efficient bio
-> splitting enables some performance gains.
+Random assortment of refactoring and trivial cleanups.
 
-Got more work to do, but certainly not a problem sharing.
+Immutable bio vecs and efficient bio splitting require auditing and removing
+pretty much all bi_idx uses, among other things.
 
-> Well, it certainly will for stacking drivers, but I'm less sure what
-> it's going to look like running on just a raw flash device.
-> 
-> My end goal is making generic_make_request handle arbitrary sized bios,
-> and have (efficient) splitting happen as required. This'll get rid of a
-> bunch of code and complexity in the upper layers, in bio_add_page() and
-> elsewhere. More in the stacking drivers - merge_bvec_fn is horrendous to
-> support.
+The reason is that with immutable bio vecs we can't use the bvec array
+directly; if we have a partially completed bvec, that'll be indicated with a
+field in struct bvec_iter (which gets embedded in struct bio) - bi_bvec_done.
 
-It is a nasty interface, in retrospect probably a mistake. As long as we
-don't split ever on non-stacking drivers, I don't care too much. And it
-would get rid of complexity in those drivers, so that's a nice win.
-merge_bvec_fn not only a bad interface, it's also pretty slow...
+bio_for_each_segments() will handle this transparently, so code needs to be
+converted to use it or some other generic accessor.
 
-> I think I might be able to efficiently get rid of the
-> segments-after-merging precalculating, and just have segments merged
-> once. That'd get rid of a couple fields in struct bio, and get it under
-> 2 cachelines last I counted.
+Also, bio splitting means that when a driver gets a bio, bi_idx and
+bi_bvec_done may both be nonzero. Again, just need to use generic accessors.
 
-It's 2 cachelines now, but reducing is always a great thing. Getting rid
-of the repeated recalculate after merge would be a nice win.
+Kent Overstreet (9):
+  block: Convert integrity to bvec_alloc_bs(), and a bugfix
+  block: Add bio_advance()
+  block: Refactor blk_update_request()
+  md: Convert md_trim_bio() to use bio_advance()
+  block: Add bio_end()
+  block: Use bio_sectors() more consistently
+  block: Don't use bi_idx in bio_split() or require it to be 0
+  block: Remove bi_idx references
+  block: Remove some unnecessary bi_vcnt usage
 
-> Course, all this doesn't matter as much for 4k bios so it may just be a
-> wash for you.
-
-Right, for me it doesn't matter. As long as you don't slow me down :-)
+ block/blk-core.c                         |  86 ++++-----------------
+ block/cfq-iosched.c                      |   7 +-
+ block/deadline-iosched.c                 |   2 +-
+ drivers/block/aoe/aoeblk.c               |   2 +-
+ drivers/block/aoe/aoecmd.c               |   2 +-
+ drivers/block/brd.c                      |   3 +-
+ drivers/block/drbd/drbd_req.c            |   8 +-
+ drivers/block/floppy.c                   |   1 -
+ drivers/block/pktcdvd.c                  |   8 +-
+ drivers/block/ps3vram.c                  |   2 +-
+ drivers/md/dm-raid1.c                    |   2 +-
+ drivers/md/dm-stripe.c                   |   2 +-
+ drivers/md/dm-verity.c                   |   4 +-
+ drivers/md/faulty.c                      |   6 +-
+ drivers/md/linear.c                      |   3 +-
+ drivers/md/md.c                          |  19 ++---
+ drivers/md/raid0.c                       |   9 +--
+ drivers/md/raid1.c                       |  21 +++--
+ drivers/md/raid10.c                      |  28 +++----
+ drivers/md/raid5.c                       |  22 +++---
+ drivers/message/fusion/mptsas.c          |   6 +-
+ drivers/s390/block/dcssblk.c             |   3 +-
+ drivers/scsi/libsas/sas_expander.c       |   6 +-
+ drivers/scsi/mpt2sas/mpt2sas_transport.c |  10 +--
+ fs/bio-integrity.c                       | 128 ++++++++++---------------------
+ fs/bio.c                                 |  48 +++++++++++-
+ fs/btrfs/extent_io.c                     |   3 +-
+ fs/buffer.c                              |   1 -
+ fs/gfs2/lops.c                           |   2 +-
+ fs/jfs/jfs_logmgr.c                      |   2 -
+ fs/logfs/dev_bdev.c                      |   5 --
+ include/linux/bio.h                      |   8 +-
+ include/trace/events/block.h             |  10 +--
+ mm/page_io.c                             |   1 -
+ 34 files changed, 192 insertions(+), 278 deletions(-)
 
 -- 
-Jens Axboe
+1.7.12
