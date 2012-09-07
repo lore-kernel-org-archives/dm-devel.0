@@ -1,48 +1,25 @@
-From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Subject: Re: [PATCH v10 4/8] block: Add bio_reset()
-Date: Fri, 07 Sep 2012 16:06:45 -0600
-Message-ID: <504A6FF5.3090603@kernel.dk>
-References: <1346970902-10931-1-git-send-email-koverstreet@google.com> <1346970902-10931-5-git-send-email-koverstreet@google.com> <50494F1A.4080207@kernel.dk> <20120907205823.GD16360@google.com> <504A6D57.1030607@kernel.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 0/2] Avoid deadlocks with bio allocation
+Date: Fri,  7 Sep 2012 15:12:51 -0700
+Message-ID: <1347055973-11581-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <504A6D57.1030607-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
 List-Id: dm-devel.ids
 
-On 2012-09-07 15:55, Jens Axboe wrote:
-> On 2012-09-07 14:58, Kent Overstreet wrote:
->> On Thu, Sep 06, 2012 at 07:34:18PM -0600, Jens Axboe wrote:
->>> On 2012-09-06 16:34, Kent Overstreet wrote:
->>>> Reusing bios is something that's been highly frowned upon in the past,
->>>> but driver code keeps doing it anyways. If it's going to happen anyways,
->>>> we should provide a generic method.
->>>>
->>>> This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
->>>> was open coding it, by doing a bio_init() and resetting bi_destructor.
->>>>
->>>> This required reordering struct bio, but the block layer is not yet
->>>> nearly fast enough for any cacheline effects to matter here.
->>>
->>> That's an odd and misplaced comment. Was just doing testing today at 5M
->>> IOPS, and even years back we've had cache effects for O_DIRECT in higher
->>> speed setups.
->>
->> Ah, I wasn't aware that you were pushing that many iops through the
->> block layer - most I've tested myself was around 1M. It wouldn't
->> surprise me if cache effects in struct bio mattered around 5M...
-> 
-> 5M is nothing, just did 13.5M :-)
-> 
-> But we can reshuffle for now. As mentioned, we're way overdue for a
-> decent look at cache profiling in any case.
+These patches were part of the block cleanups series I just sent out, but I
+split them off. Nothing's changed with them lately, the last thing I added was
+a bit of logic to the "punt to rescue" code to only punt bios that were
+allocated from the current bio_set.
 
-No ill effects seen so far, fwiw:
+Kent Overstreet (2):
+  block: Reorder struct bio_set
+  block: Avoid deadlocks with bio allocation by stacking drivers
 
-  read : io=1735.8GB, bw=53690MB/s, iops=13745K, runt= 33104msec
+ fs/bio.c            | 87 +++++++++++++++++++++++++++++++++++++++++++++++++++--
+ include/linux/bio.h | 75 +++++++++++++++++++++++++--------------------
+ 2 files changed, 126 insertions(+), 36 deletions(-)
 
 -- 
-Jens Axboe
+1.7.12
