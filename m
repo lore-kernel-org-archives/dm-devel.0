@@ -1,43 +1,47 @@
 From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Subject: Re: [PATCH v10 4/8] block: Add bio_reset()
-Date: Thu, 06 Sep 2012 19:34:18 -0600
-Message-ID: <50494F1A.4080207@kernel.dk>
-References: <1346970902-10931-1-git-send-email-koverstreet@google.com> <1346970902-10931-5-git-send-email-koverstreet@google.com>
+Subject: Re: [PATCH v10 0/8] Block cleanups
+Date: Thu, 06 Sep 2012 19:37:10 -0600
+Message-ID: <50494FC6.3050502@kernel.dk>
+References: <1346970902-10931-1-git-send-email-koverstreet@google.com> <20120906234805.GD9426@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1346970902-10931-5-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120906234805.GD9426-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 2012-09-06 16:34, Kent Overstreet wrote:
-> Reusing bios is something that's been highly frowned upon in the past,
-> but driver code keeps doing it anyways. If it's going to happen anyways,
-> we should provide a generic method.
+On 2012-09-06 17:48, Tejun Heo wrote:
+> Hello, guys.
 > 
-> This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
-> was open coding it, by doing a bio_init() and resetting bi_destructor.
+> (cc'ing Jens, Alasdair and Neil)
 > 
-> This required reordering struct bio, but the block layer is not yet
-> nearly fast enough for any cacheline effects to matter here.
+> On Thu, Sep 06, 2012 at 03:34:54PM -0700, Kent Overstreet wrote:
+>> Screwed up the bio_reset() patch in the last patch series when I went to edit
+>> the description, fixed that here.
+>>
+>> Only other change is the dm patch - made the front_pad conditional on
+>> DM_TYPE_BIO_BASED.
+>>
+>> Kent Overstreet (8):
+>>   block: Generalized bio pool freeing
+>>   block: Ues bi_pool for bio_integrity_alloc()
+>>   dm: Use bioset's front_pad for dm_rq_clone_bio_info
+>>   block: Add bio_reset()
+>>   pktcdvd: Switch to bio_kmalloc()
+>>   block: Kill bi_destructor
+>>   block: Consolidate bio_alloc_bioset(), bio_kmalloc()
+>>   block: Add bio_clone_bioset(), bio_clone_kmalloc()
+> 
+> This series looks good to me now.  If someone can ack the dm patch, I
+> think it's good to go.  Jens, what do you think?
 
-That's an odd and misplaced comment. Was just doing testing today at 5M
-IOPS, and even years back we've had cache effects for O_DIRECT in higher
-speed setups.
+Looks OK to me too. I'll run a quick perf test on this tomorrow, and get
+it queued up for 3.7 if it looks fine.
 
-That said, we haven't done cache analysis in a long time. So moving
-members around isn't necessarily a huge deal.
-
-Lastly, this isn't a great commit message for other reasons. Anyone can
-see that it moves members around. It'd be a lot better to explain _why_
-it is reordering the struct.
-
-BTW, I looked over the rest of the patches, and it looks OK to me.
-However, you didn't CC me on the full series, so I'm missing bits 3 and
-5.
+Kent, are to resend 3+5 to me?
 
 -- 
 Jens Axboe
