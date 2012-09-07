@@ -1,75 +1,86 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Subject: Re: [PATCH v10 4/8] block: Add bio_reset()
-Date: Fri, 7 Sep 2012 15:25:22 -0700
-Message-ID: <20120907222522.GE16360@google.com>
-References: <1346970902-10931-1-git-send-email-koverstreet@google.com>
- <1346970902-10931-5-git-send-email-koverstreet@google.com>
- <50494F1A.4080207@kernel.dk>
- <20120907205823.GD16360@google.com>
- <504A6D57.1030607@kernel.dk>
- <504A6FF5.3090603@kernel.dk>
+Date: Fri, 07 Sep 2012 16:44:00 -0600
+Message-ID: <504A78B0.8010105@kernel.dk>
+References: <1346970902-10931-1-git-send-email-koverstreet@google.com> <1346970902-10931-5-git-send-email-koverstreet@google.com> <50494F1A.4080207@kernel.dk> <20120907205823.GD16360@google.com> <504A6D57.1030607@kernel.dk> <504A6FF5.3090603@kernel.dk> <20120907222522.GE16360@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <504A6FF5.3090603-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+In-Reply-To: <20120907222522.GE16360-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, Sep 07, 2012 at 04:06:45PM -0600, Jens Axboe wrote:
-> On 2012-09-07 15:55, Jens Axboe wrote:
-> > On 2012-09-07 14:58, Kent Overstreet wrote:
-> >> On Thu, Sep 06, 2012 at 07:34:18PM -0600, Jens Axboe wrote:
-> >>> On 2012-09-06 16:34, Kent Overstreet wrote:
-> >>>> Reusing bios is something that's been highly frowned upon in the past,
-> >>>> but driver code keeps doing it anyways. If it's going to happen anyways,
-> >>>> we should provide a generic method.
-> >>>>
-> >>>> This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
-> >>>> was open coding it, by doing a bio_init() and resetting bi_destructor.
-> >>>>
-> >>>> This required reordering struct bio, but the block layer is not yet
-> >>>> nearly fast enough for any cacheline effects to matter here.
-> >>>
-> >>> That's an odd and misplaced comment. Was just doing testing today at 5M
-> >>> IOPS, and even years back we've had cache effects for O_DIRECT in higher
-> >>> speed setups.
-> >>
-> >> Ah, I wasn't aware that you were pushing that many iops through the
-> >> block layer - most I've tested myself was around 1M. It wouldn't
-> >> surprise me if cache effects in struct bio mattered around 5M...
-> > 
-> > 5M is nothing, just did 13.5M :-)
-> > 
-> > But we can reshuffle for now. As mentioned, we're way overdue for a
-> > decent look at cache profiling in any case.
+On 2012-09-07 16:25, Kent Overstreet wrote:
+> On Fri, Sep 07, 2012 at 04:06:45PM -0600, Jens Axboe wrote:
+>> On 2012-09-07 15:55, Jens Axboe wrote:
+>>> On 2012-09-07 14:58, Kent Overstreet wrote:
+>>>> On Thu, Sep 06, 2012 at 07:34:18PM -0600, Jens Axboe wrote:
+>>>>> On 2012-09-06 16:34, Kent Overstreet wrote:
+>>>>>> Reusing bios is something that's been highly frowned upon in the past,
+>>>>>> but driver code keeps doing it anyways. If it's going to happen anyways,
+>>>>>> we should provide a generic method.
+>>>>>>
+>>>>>> This'll help with getting rid of bi_destructor - drivers/block/pktcdvd.c
+>>>>>> was open coding it, by doing a bio_init() and resetting bi_destructor.
+>>>>>>
+>>>>>> This required reordering struct bio, but the block layer is not yet
+>>>>>> nearly fast enough for any cacheline effects to matter here.
+>>>>>
+>>>>> That's an odd and misplaced comment. Was just doing testing today at 5M
+>>>>> IOPS, and even years back we've had cache effects for O_DIRECT in higher
+>>>>> speed setups.
+>>>>
+>>>> Ah, I wasn't aware that you were pushing that many iops through the
+>>>> block layer - most I've tested myself was around 1M. It wouldn't
+>>>> surprise me if cache effects in struct bio mattered around 5M...
+>>>
+>>> 5M is nothing, just did 13.5M :-)
+>>>
+>>> But we can reshuffle for now. As mentioned, we're way overdue for a
+>>> decent look at cache profiling in any case.
+>>
+>> No ill effects seen so far, fwiw:
+>>
+>>   read : io=1735.8GB, bw=53690MB/s, iops=13745K, runt= 33104msec
 > 
-> No ill effects seen so far, fwiw:
+> Cool!
 > 
->   read : io=1735.8GB, bw=53690MB/s, iops=13745K, runt= 33104msec
+> I'd be really curious to see a profile. Of the patches I've got queued
+> up I don't think anything's going to significantly affect performance
+> yet, but I'm hoping the cleanups/immutable bvec stuff/efficient bio
+> splitting enables some performance gains.
 
-Cool!
+Got more work to do, but certainly not a problem sharing.
 
-I'd be really curious to see a profile. Of the patches I've got queued
-up I don't think anything's going to significantly affect performance
-yet, but I'm hoping the cleanups/immutable bvec stuff/efficient bio
-splitting enables some performance gains.
+> Well, it certainly will for stacking drivers, but I'm less sure what
+> it's going to look like running on just a raw flash device.
+> 
+> My end goal is making generic_make_request handle arbitrary sized bios,
+> and have (efficient) splitting happen as required. This'll get rid of a
+> bunch of code and complexity in the upper layers, in bio_add_page() and
+> elsewhere. More in the stacking drivers - merge_bvec_fn is horrendous to
+> support.
 
-Well, it certainly will for stacking drivers, but I'm less sure what
-it's going to look like running on just a raw flash device.
+It is a nasty interface, in retrospect probably a mistake. As long as we
+don't split ever on non-stacking drivers, I don't care too much. And it
+would get rid of complexity in those drivers, so that's a nice win.
+merge_bvec_fn not only a bad interface, it's also pretty slow...
 
-My end goal is making generic_make_request handle arbitrary sized bios,
-and have (efficient) splitting happen as required. This'll get rid of a
-bunch of code and complexity in the upper layers, in bio_add_page() and
-elsewhere. More in the stacking drivers - merge_bvec_fn is horrendous to
-support.
+> I think I might be able to efficiently get rid of the
+> segments-after-merging precalculating, and just have segments merged
+> once. That'd get rid of a couple fields in struct bio, and get it under
+> 2 cachelines last I counted.
 
-I think I might be able to efficiently get rid of the
-segments-after-merging precalculating, and just have segments merged
-once. That'd get rid of a couple fields in struct bio, and get it under
-2 cachelines last I counted.
+It's 2 cachelines now, but reducing is always a great thing. Getting rid
+of the repeated recalculate after merge would be a nice win.
 
-Course, all this doesn't matter as much for 4k bios so it may just be a
-wash for you.
+> Course, all this doesn't matter as much for 4k bios so it may just be a
+> wash for you.
+
+Right, for me it doesn't matter. As long as you don't slow me down :-)
+
+-- 
+Jens Axboe
