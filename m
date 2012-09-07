@@ -1,128 +1,51 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v10 3/8] dm: Use bioset's front_pad for dm_rq_clone_bio_info
-Date: Fri,  7 Sep 2012 13:44:01 -0700
-Message-ID: <1347050642-7080-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: Re: [PATCH v10 0/8] Block cleanups
+Date: Fri, 7 Sep 2012 13:44:18 -0700
+Message-ID: <20120907204418.GC16360@google.com>
+References: <1346970902-10931-1-git-send-email-koverstreet@google.com>
+ <20120906234805.GD9426@google.com>
+ <50494FC6.3050502@kernel.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <50494FC6.3050502@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Tejun Heo <tj@kernel.org>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-Previously, dm_rq_clone_bio_info needed to be freed by the bio's
-destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
-This gets rid of a memory allocation and means we can kill
-dm_rq_bio_destructor.
+On Thu, Sep 06, 2012 at 07:37:10PM -0600, Jens Axboe wrote:
+> On 2012-09-06 17:48, Tejun Heo wrote:
+> > Hello, guys.
+> > 
+> > (cc'ing Jens, Alasdair and Neil)
+> > 
+> > On Thu, Sep 06, 2012 at 03:34:54PM -0700, Kent Overstreet wrote:
+> >> Screwed up the bio_reset() patch in the last patch series when I went to edit
+> >> the description, fixed that here.
+> >>
+> >> Only other change is the dm patch - made the front_pad conditional on
+> >> DM_TYPE_BIO_BASED.
+> >>
+> >> Kent Overstreet (8):
+> >>   block: Generalized bio pool freeing
+> >>   block: Ues bi_pool for bio_integrity_alloc()
+> >>   dm: Use bioset's front_pad for dm_rq_clone_bio_info
+> >>   block: Add bio_reset()
+> >>   pktcdvd: Switch to bio_kmalloc()
+> >>   block: Kill bi_destructor
+> >>   block: Consolidate bio_alloc_bioset(), bio_kmalloc()
+> >>   block: Add bio_clone_bioset(), bio_clone_kmalloc()
+> > 
+> > This series looks good to me now.  If someone can ack the dm patch, I
+> > think it's good to go.  Jens, what do you think?
+> 
+> Looks OK to me too. I'll run a quick perf test on this tomorrow, and get
+> it queued up for 3.7 if it looks fine.
 
-The _rq_bio_info_cache kmem cache is unused now and needs to be deleted,
-but due to the way io_pool is used and overloaded this looks not quite
-trivial so I'm leaving it for a later patch.
+Thanks!
 
-v6: Fix comment on struct dm_rq_clone_bio_info, per Tejun
+> Kent, are to resend 3+5 to me?
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
----
- drivers/md/dm.c | 46 ++++++++++++++++++----------------------------
- 1 file changed, 18 insertions(+), 28 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f43aaf6..33470f0 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -86,12 +86,17 @@ struct dm_rq_target_io {
- };
- 
- /*
-- * For request-based dm.
-- * One of these is allocated per bio.
-+ * For request-based dm - the bio clones we allocate are embedded in these
-+ * structs.
-+ *
-+ * We allocate these with bio_alloc_bioset, using the front_pad parameter when
-+ * the bioset is created - this means the bio has to come at the end of the
-+ * struct.
-  */
- struct dm_rq_clone_bio_info {
- 	struct bio *orig;
- 	struct dm_rq_target_io *tio;
-+	struct bio clone;
- };
- 
- union map_info *dm_get_mapinfo(struct bio *bio)
-@@ -211,6 +216,11 @@ struct dm_md_mempools {
- static struct kmem_cache *_io_cache;
- static struct kmem_cache *_tio_cache;
- static struct kmem_cache *_rq_tio_cache;
-+
-+/*
-+ * Unused now, and needs to be deleted. But since io_pool is overloaded and it's
-+ * still used for _io_cache, I'm leaving this for a later cleanup
-+ */
- static struct kmem_cache *_rq_bio_info_cache;
- 
- static int __init local_init(void)
-@@ -467,16 +477,6 @@ static void free_rq_tio(struct dm_rq_target_io *tio)
- 	mempool_free(tio, tio->md->tio_pool);
- }
- 
--static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
--{
--	return mempool_alloc(md->io_pool, GFP_ATOMIC);
--}
--
--static void free_bio_info(struct dm_rq_clone_bio_info *info)
--{
--	mempool_free(info, info->tio->md->io_pool);
--}
--
- static int md_in_flight(struct mapped_device *md)
- {
- 	return atomic_read(&md->pending[READ]) +
-@@ -1460,30 +1460,17 @@ void dm_dispatch_request(struct request *rq)
- }
- EXPORT_SYMBOL_GPL(dm_dispatch_request);
- 
--static void dm_rq_bio_destructor(struct bio *bio)
--{
--	struct dm_rq_clone_bio_info *info = bio->bi_private;
--	struct mapped_device *md = info->tio->md;
--
--	free_bio_info(info);
--	bio_free(bio, md->bs);
--}
--
- static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
- 				 void *data)
- {
- 	struct dm_rq_target_io *tio = data;
--	struct mapped_device *md = tio->md;
--	struct dm_rq_clone_bio_info *info = alloc_bio_info(md);
--
--	if (!info)
--		return -ENOMEM;
-+	struct dm_rq_clone_bio_info *info =
-+		container_of(bio, struct dm_rq_clone_bio_info, clone);
- 
- 	info->orig = bio_orig;
- 	info->tio = tio;
- 	bio->bi_end_io = end_clone_bio;
- 	bio->bi_private = info;
--	bio->bi_destructor = dm_rq_bio_destructor;
- 
- 	return 0;
- }
-@@ -2718,7 +2705,10 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity)
- 	if (!pools->tio_pool)
- 		goto free_io_pool_and_out;
- 
--	pools->bs = bioset_create(pool_size, 0);
-+	pools->bs = (type == DM_TYPE_BIO_BASED) ?
-+		bioset_create(pool_size, 0) :
-+		bioset_create(pool_size,
-+			      offsetof(struct dm_rq_clone_bio_info, clone));
- 	if (!pools->bs)
- 		goto free_tio_pool_and_out;
- 
--- 
-1.7.12
+You should have it now.
