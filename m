@@ -1,113 +1,115 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: multipath queues build invalid requests when all
-	paths are lost
-Date: Sat, 8 Sep 2012 12:50:13 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1209081242500.13731@file.rdu.redhat.com>
-References: <20120831150428.GA31566@fury.redhat.com>
-	<20120904145843.GA19388@redhat.com>
-	<20120904161016.GA20209@redhat.com> <20120904161242.GB20209@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 2/2] block: Avoid deadlocks with bio allocation by
+ stacking drivers
+Date: Sat, 8 Sep 2012 12:36:41 -0700
+Message-ID: <20120908193641.GB12773@dhcp-172-17-108-109.mtv.corp.google.com>
+References: <1347055973-11581-1-git-send-email-koverstreet@google.com>
+ <1347055973-11581-3-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120904161242.GB20209@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, David Jeffery <djeffery@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1347055973-11581-3-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
 List-Id: dm-devel.ids
 
+(Restoring cc list from the previous discussion.  Please retain the cc
+list of the people who discussed in the previous postings.)
 
+On Fri, Sep 07, 2012 at 03:12:53PM -0700, Kent Overstreet wrote:
+> But this is tricky and not a generic solution. This patch solves it for
+> all users by inverting the previously described technique. We allocate a
+> rescuer workqueue for each bio_set, and then in the allocation code if
+> there are bios on current->bio_list we would be blocking, we punt them
+> to the rescuer workqueue to be submitted.
 
-On Tue, 4 Sep 2012, Mike Snitzer wrote:
+It would be great if this explanation can be expanded a bit.  Why does
+it make the deadlock condition go away?  What are the restrictions -
+e.g. using other mempools for additional per-bio data structure
+wouldn't work, right?
 
-> On Tue, Sep 04 2012 at 12:10pm -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
-> 
-> > On Tue, Sep 04 2012 at 10:58am -0400,
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> > 
-> > > On Fri, Aug 31 2012 at 11:04am -0400,
-> > > David Jeffery <djeffery@redhat.com> wrote:
-> > > 
-> > > > 
-> > > > The DM module recalculates queue limits based only on devices which currently
-> > > > exist in the table.  This creates a problem in the event all devices are
-> > > > temporarily removed such as all fibre channel paths being lost in multipath.
-> > > > DM will reset the limits to the maximum permissible, which can then assemble
-> > > > requests which exceed the limits of the paths when the paths are restored.  The
-> > > > request will fail the blk_rq_check_limits() test when sent to a path with
-> > > > lower limits, and will be retried without end by multipath.
-> > > > 
-> > > > This becomes a much bigger issue after fe86cdcef73ba19a2246a124f0ddbd19b14fb549.
-> > > > Previously, most storage had max_sector limits which exceeded the default
-> > > > value used.  This meant most setups wouldn't trigger this issue as the default
-> > > > values used when there were no paths were still less than the limits of the
-> > > > underlying devices.  Now that the default stacking values are no longer
-> > > > constrained, any hardware setup can potentially hit this issue.
-> > > > 
-> > > > This proposed patch alters the DM limit behavior.  With the patch, DM queue
-> > > > limits only go one way: more restrictive.  As paths are removed, the queue's
-> > > > limits will maintain their current settings.  As paths are added, the queue's
-> > > > limits may become more restrictive.
-> > > 
-> > > With your proposed patch you could still hit the problem if the
-> > > initial multipath table load were to occur when no paths exist, e.g.:
-> > > echo "0 1024 multipath 0 0 0 0" | dmsetup create mpath_nodevs 
-> > > 
-> > > (granted, this shouldn't ever happen.. as is evidenced by the fact
-> > > that doing so will trigger an existing mpath bug; commit a490a07a67b
-> > > "dm mpath: allow table load with no priority groups" clearly wasn't
-> > > tested with the initial table load having no priority groups)
-> > 
-> > Hi Mikulas, 
-> > 
-> > It seems your new retry in multipath_ioctl (commit 3599165) is causing
-> > problems for the above dmsetup create.
-> > 
-> > Here is the stack trace for a hang that resulted as a side-effect of
-> > udev starting blkid for the newly created multipath device:
-> > 
-> > blkid           D 0000000000000002     0 23936      1 0x00000000
-> >  ffff8802b89e5cd8 0000000000000082 ffff8802b89e5fd8 0000000000012440
-> >  ffff8802b89e4010 0000000000012440 0000000000012440 0000000000012440
-> >  ffff8802b89e5fd8 0000000000012440 ffff88030c2aab30 ffff880325794040
-> > Call Trace:
-> >  [<ffffffff814ce099>] schedule+0x29/0x70
-> >  [<ffffffff814cc312>] schedule_timeout+0x182/0x2e0
-> >  [<ffffffff8104dee0>] ? lock_timer_base+0x70/0x70
-> >  [<ffffffff814cc48e>] schedule_timeout_uninterruptible+0x1e/0x20
-> >  [<ffffffff8104f840>] msleep+0x20/0x30
-> >  [<ffffffffa0000839>] multipath_ioctl+0x109/0x170 [dm_multipath]
-> >  [<ffffffffa06bfb9c>] dm_blk_ioctl+0xbc/0xd0 [dm_mod]
-> >  [<ffffffff8122a408>] __blkdev_driver_ioctl+0x28/0x30
-> >  [<ffffffff8122a79e>] blkdev_ioctl+0xce/0x730
-> >  [<ffffffff811970ac>] block_ioctl+0x3c/0x40
-> >  [<ffffffff8117321c>] do_vfs_ioctl+0x8c/0x340
-> >  [<ffffffff81166293>] ? sys_newfstat+0x33/0x40
-> >  [<ffffffff81173571>] sys_ioctl+0xa1/0xb0
-> >  [<ffffffff814d70a9>] system_call_fastpath+0x16/0x1b
-> 
-> FYI, here is the full blkid command line:
-> /sbin/blkid -o udev -p /dev/dm-8
+> +static void punt_bios_to_rescuer(struct bio_set *bs)
+> +{
+> +	struct bio_list punt, nopunt;
+> +	struct bio *bio;
+> +
+> +	bio_list_init(&punt);
+> +	bio_list_init(&nopunt);
+> +
+> +	while ((bio = bio_list_pop(current->bio_list)))
+> +		bio_list_add(bio->bi_pool == bs ? &punt : &nopunt, bio);
+> +
+> +	*current->bio_list = nopunt;
 
-It's hard to say what should be done correctly ... if you create a 
-multipath device with "queue_if_no_path" and no active path, it should 
-delay all requests until a path becomes available ... and it is doing 
-that.
+Why this is necessary needs explanation and it's done in rather
+unusual way.  I suppose the weirdness is from bio_list API
+restriction?
 
-Maybe we could move the waiting loop up to dm_blk_ioctl so that it unlocks 
-when someone reloads the target?
+> +	spin_lock(&bs->rescue_lock);
+> +	bio_list_merge(&bs->rescue_list, &punt);
+> +	spin_unlock(&bs->rescue_lock);
+> +
+> +	queue_work(bs->rescue_workqueue, &bs->rescue_work);
+> +}
+> +
+>  /**
+>   * bio_alloc_bioset - allocate a bio for I/O
+>   * @gfp_mask:   the GFP_ mask given to the slab allocator
+> @@ -317,6 +354,7 @@ EXPORT_SYMBOL(bio_reset);
+>   */
+>  struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>  {
+> +	gfp_t saved_gfp = gfp_mask;
+>  	unsigned front_pad;
+>  	unsigned inline_vecs;
+>  	unsigned long idx = BIO_POOL_NONE;
+> @@ -334,13 +372,37 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+>  		front_pad = 0;
+>  		inline_vecs = nr_iovecs;
+>  	} else {
+> +		/*
+> +		 * generic_make_request() converts recursion to iteration; this
+> +		 * means if we're running beneath it, any bios we allocate and
+> +		 * submit will not be submitted (and thus freed) until after we
+> +		 * return.
+> +		 *
+> +		 * This exposes us to a potential deadlock if we allocate
+> +		 * multiple bios from the same bio_set() while running
+> +		 * underneath generic_make_request(). If we were to allocate
+> +		 * multiple bios (say a stacking block driver that was splitting
+> +		 * bios), we would deadlock if we exhausted the mempool's
+> +		 * reserve.
+> +		 *
+> +		 * We solve this, and guarantee forward progress, with a rescuer
+> +		 * workqueue per bio_set. If we go to allocate and there are
+> +		 * bios on current->bio_list, we first try the allocation
+> +		 * without __GFP_WAIT; if that fails, we punt those bios we
+> +		 * would be blocking to the rescuer workqueue before we retry
+> +		 * with the original gfp_flags.
+> +		 */
+> +
+> +		if (current->bio_list && !bio_list_empty(current->bio_list))
+> +			gfp_mask &= ~__GFP_WAIT;
+> +retry:
+>  		p = mempool_alloc(bs->bio_pool, gfp_mask);
+>  		front_pad = bs->front_pad;
+>  		inline_vecs = BIO_INLINE_VECS;
+>  	}
 
-BTW. there is also -EAGAIN dm_blk_ioctl if dm_suspended_md ... should this 
--EAGAIN be removed too or not?
+Wouldn't the following be better?
 
-Mikulas
+	p = mempool_alloc(bs->bi_pool, gfp_mask);
+	if (unlikely(!p) && gfp_mask != saved_gfp) {
+		punt_bios_to_rescuer(bs);
+		p = mempool_alloc(bs->bi_pool, saved_gfp);
+	}
+
+I really hope the usage restriction (don't mix with mempool) for
+bioset is clearly documented somewhere appropriate.
+
+Thanks.
+
+-- 
+tejun
