@@ -1,72 +1,99 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v10 4/8] block: Add bio_reset()
-Date: Fri, 7 Sep 2012 16:25:31 -0700
-Message-ID: <20120907232531.GF16360@google.com>
-References: <1346970902-10931-1-git-send-email-koverstreet@google.com>
- <1346970902-10931-5-git-send-email-koverstreet@google.com>
- <50494F1A.4080207@kernel.dk>
- <20120907205823.GD16360@google.com>
- <504A6D57.1030607@kernel.dk>
- <504A6FF5.3090603@kernel.dk>
- <20120907222522.GE16360@google.com>
- <504A78B0.8010105@kernel.dk>
- <20120907231433.GE10309@agk-dp.fab.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] reworked dm-switch target
+Date: Sat, 8 Sep 2012 12:35:22 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1209081219070.13731@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1208151832280.8587@file.rdu.redhat.com>
+	<20120816070955.GA32526@agk-dp.fab.redhat.com>
+	<C3B343EE19BD2940B6AEC40C9BE99426094C0C@AUSX10MPS302.AMER.DELL.COM>
+	<Pine.LNX.4.64.1208201429110.18279@file.rdu.redhat.com>
+	<20120821163329.GA21395@freewill.lab.equallogic.com>
+	<Pine.LNX.4.64.1208212026500.1653@file.rdu.redhat.com>
+	<20120824181444.GC27819@freewill.lab.equallogic.com>
+	<Pine.LNX.4.64.1208292038560.17228@file.rdu.redhat.com>
+	<20120907195851.GA30209@freewill.lab.equallogic.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120907231433.GE10309-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20120907195851.GA30209@freewill.lab.equallogic.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jim Ramsay <jim_ramsay@dell.com>
+Cc: dm-devel@redhat.com, Jason_Shamberger@dell.com, agk@redhat.com, Kevin_OKelley@dell.com
 List-Id: dm-devel.ids
 
-On Sat, Sep 08, 2012 at 12:14:33AM +0100, Alasdair G Kergon wrote:
-> As I indicated already in this discussion, dm started to use
-> merge_bvec_fn as a cheap way of avoiding splitting and this improved
-> overall efficiency.  Often it's better to pay the small price of calling
-> that function to ensure the bio is created the right size in the first
-> place so it won't have to get split later.
+Hi
 
-When I say cheap, I mean _cheap_:
+On Fri, 7 Sep 2012, Jim Ramsay wrote:
 
-split = bio_clone_bioset(bio, gfp_flags, bs);
+> On Wed, Aug 29, 2012 at 08:51:06PM -0400, Mikulas Patocka wrote:
+> > Basically, the worst performance brake is the spinlock in your code, 
+> > otherwise there is not much difference. vmalloc doesn't slow it down 
+> > (actually it was slightly faster with vmalloc than with kmalloc).
+> 
+> Thanks very much for your performance testing.  I've completed my
+> testing too, and my results agree with yours.  When running against our
+> actual iSCSI storage solution, the IO performance for this vmalloc-based
+> code is equivalent to the 2-step kmalloc code.
+> 
+> I also did a side-by-side comparison of uploading 1048576 page table
+> entries.  The netlink code averaged out to 0.0026s, and the DM message
+> code averaged out to 0.042s.  As expected, the message code is slower,
+> but well within reasonable performance expectations.
+> 
+> I am attaching below an updated version of your 'dm-switch.c' file,
+> based on your latest post in
+> http://www.redhat.com/archives/dm-devel/2012-August/msg00224.html that
+> makes the following changes:
+> 
+>  1. Support for FLUSH and DISCARD operations by implementing
+>     target_type.iterate_devices and handling (bio->bi_rw & REQ_FLUSH) in
+>     switch_map.  Sends DISCARD to one path, FLUSH to each path.
+> 
+>  2. Send IOCTLs to the device who owns sector 0, instead of
+>     pctx->dev_list[0]
+> 
+>  3. Copyright notice update in header, plus adding myself to
+>     MODULE_AUTHOR
+> 
+> (Question: Would you prefer these as a patch series against your dm-switch.c
+> instead?)
 
-bio_advance(bio, sectors << 9);
-split->bi_iter.bi_size = sectors << 9;
+You don't have to send it as a patch, I can trivially create the patch on 
+my own.
 
-And the clone doesn't copy the bvecs - split->bi_io_vec ==
-bio->bi_io_vec.
+Your changes are ok, it could be included in the kernel.
 
-> I'm as yet unconvinced that removing merge_bvec_fn would be an overall
-> win.  Some of Kent's other changes that make splitting cheaper will
-> improve the balance in some situations, but that might be handled by
-> simplifying the merge_bvec_fn calculations in those situations.
-> (Or changing the mechanism to avoid repeating performing the mapping
-> when it hasn't changed.)
+Regarding flushes ... could you please explain how write-back caching 
+works in your design?
 
-The current situation is what causes you to repeatedly do the mapping
-lookup, since you'll often get contiguous bios that don't need to be
-split at the mapping level (because of other requirements of the
-underlying devices or because implementing merge_bvec_fn correctly was
-too hard).
+Is there some write-back cache in the host adapter?
 
-Splitting only when required is going to _improve_ that.
+Is there some write-back cache in the individual storage nodes? (i.e. does 
+the node signal end of I/O before it finishes writing data to the disk) 
 
-> IOW Any proposal to remove merge_bvec_fn from dm needs careful 
-> evaluation to ensure it doesn't introduce any significant
-> performance regressions for some sets of users.
+How does the node deal with write-back cache in the disk? Does the node 
+turn on write back cache in the disk? Does the node send SYNCHRONIZE CACHE 
+commands to the disk automatically? Or does it send SYNCHRONIZE CACHE 
+commands only when flush is received over the network?
 
-There's also the 1000+ lines of deleted code to consider. In my
-immutable bvec branch I've deleted over 400 lines of code, and that's
-without actually trying to delete code. Getting rid of merge_bvec_fn
-deletes another 800 lines of code on top of that.
+I'd like to know these things to better understand the behavior of the 
+flush request.
 
-CPU wise, there won't be any performance regressions. The only cause for
-concern I can think of is where the upper layer could've made use of
-partial completions - i.e. it submitted a 1 mb bio instead of a bunch of
-128k bios, but it could've made use of that first 128k if it went to a
-different device and completed sooner.
 
-Only thing I know of that'd be affected by that though is readahead, and
-I have a couple ideas for easily solving that if it actually becomes an
-issue.
+Another thing - please resend your code with "Signed-off-by". Read the 
+meaning of "Signed-off-by" in Documentation/SubmittingPatches, agree to 
+the terms and append "Signed-off-by: Jim Ramsay <jim_ramsay@dell.com>" to 
+the code. It is a legal requirement, so that you certify that the code is 
+under the open source license and that you have the right to distribute 
+the code.
+
+Mikulas
