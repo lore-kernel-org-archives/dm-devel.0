@@ -1,74 +1,150 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 22/26] block: Add bio_alloc_pages()
-Date: Mon, 10 Sep 2012 17:22:33 -0700
-Message-ID: <1347322957-25260-23-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 21/26] block: Convert some code to bio_for_each_segment_all()
+Date: Mon, 10 Sep 2012 17:22:32 -0700
+Message-ID: <1347322957-25260-22-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, neilb@suse.de
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-More utility code to replace stuff that's getting open coded.
+A few places in the code were either open coding or using the wrong
+version - fix.
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
 ---
- fs/bio.c            | 28 ++++++++++++++++++++++++++++
- include/linux/bio.h |  1 +
- 2 files changed, 29 insertions(+)
+ drivers/md/dm-crypt.c |  3 +--
+ drivers/md/raid1.c    | 10 +++-------
+ fs/bio.c              | 20 ++++++++++----------
+ fs/direct-io.c        |  8 ++++----
+ 4 files changed, 18 insertions(+), 23 deletions(-)
 
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index bbf459b..f50798e 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -858,8 +858,7 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone)
+ 	unsigned int i;
+ 	struct bio_vec *bv;
+ 
+-	for (i = 0; i < clone->bi_vcnt; i++) {
+-		bv = bio_iovec_idx(clone, i);
++	bio_for_each_segment_all(bv, clone, i) {
+ 		BUG_ON(!bv->bv_page);
+ 		mempool_free(bv->bv_page, cc->page_pool);
+ 		bv->bv_page = NULL;
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index ade95ac..d30b4cb 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -921,7 +921,7 @@ static void alloc_behind_pages(struct bio *bio, struct r1bio *r1_bio)
+ 	if (unlikely(!bvecs))
+ 		return;
+ 
+-	bio_for_each_segment(bvec, bio, i) {
++	bio_for_each_segment_all(bvec, bio, i) {
+ 		bvecs[i] = *bvec;
+ 		bvecs[i].bv_page = alloc_page(GFP_NOIO);
+ 		if (unlikely(!bvecs[i].bv_page))
+@@ -1276,12 +1276,8 @@ read_again:
+ 			struct bio_vec *bvec;
+ 			int j;
+ 
+-			/* Yes, I really want the '__' version so that
+-			 * we clear any unused pointer in the io_vec, rather
+-			 * than leave them unchanged.  This is important
+-			 * because when we come to free the pages, we won't
+-			 * know the original bi_idx, so we just free
+-			 * them all
++			/*
++			 * We trimmed the bio, so _all is legit
+ 			 */
+ 			bio_for_each_segment_all(bvec, mbio, j)
+ 				bvec->bv_page = r1_bio->behind_bvecs[j].bv_page;
 diff --git a/fs/bio.c b/fs/bio.c
-index d88ad77..65e6eac 100644
+index efdc437..d88ad77 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -828,6 +828,34 @@ void bio_advance(struct bio *bio, unsigned bytes)
- EXPORT_SYMBOL(bio_advance);
+@@ -1546,11 +1546,11 @@ EXPORT_SYMBOL(bio_copy_kern);
+  */
+ void bio_set_pages_dirty(struct bio *bio)
+ {
+-	struct bio_vec *bvec = bio->bi_io_vec;
++	struct bio_vec *bvec;
+ 	int i;
  
- /**
-+ * bio_alloc_pages - allocates a single page for each bvec in a bio
-+ * @bio: bio to allocate pages for
-+ * @gfp_mask: flags for allocation
-+ *
-+ * Allocates pages up to @bio->bi_vcnt.
-+ *
-+ * Returns 0 on success, -ENOMEM on failure. On failure, any allocated pages are
-+ * freed.
-+ */
-+int bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
-+{
-+	int i;
-+	struct bio_vec *bv;
-+
-+	bio_for_each_segment_all(bv, bio, i) {
-+		bv->bv_page = alloc_page(gfp_mask);
-+		if (!bv->bv_page) {
-+			while (bv-- != bio->bi_io_vec)
-+				__free_page(bv->bv_page);
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(bio_alloc_pages);
-+
-+/**
-  * bio_copy_data - copy contents of data buffers from one chain of bios to
-  * another
-  * @src: source bio list
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index b433ff8..bd45154 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -289,6 +289,7 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
- #endif
+-	for (i = 0; i < bio->bi_vcnt; i++) {
+-		struct page *page = bvec[i].bv_page;
++	bio_for_each_segment_all(bvec, bio, i) {
++		struct page *page = bvec->bv_page;
  
- extern void bio_copy_data(struct bio *dst, struct bio *src);
-+extern int bio_alloc_pages(struct bio *bio, gfp_t gfp);
+ 		if (page && !PageCompound(page))
+ 			set_page_dirty_lock(page);
+@@ -1559,11 +1559,11 @@ void bio_set_pages_dirty(struct bio *bio)
  
- extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
- 				 unsigned long, unsigned int, int, gfp_t);
+ static void bio_release_pages(struct bio *bio)
+ {
+-	struct bio_vec *bvec = bio->bi_io_vec;
++	struct bio_vec *bvec;
+ 	int i;
+ 
+-	for (i = 0; i < bio->bi_vcnt; i++) {
+-		struct page *page = bvec[i].bv_page;
++	bio_for_each_segment_all(bvec, bio, i) {
++		struct page *page = bvec->bv_page;
+ 
+ 		if (page)
+ 			put_page(page);
+@@ -1612,16 +1612,16 @@ static void bio_dirty_fn(struct work_struct *work)
+ 
+ void bio_check_pages_dirty(struct bio *bio)
+ {
+-	struct bio_vec *bvec = bio->bi_io_vec;
++	struct bio_vec *bvec;
+ 	int nr_clean_pages = 0;
+ 	int i;
+ 
+-	for (i = 0; i < bio->bi_vcnt; i++) {
+-		struct page *page = bvec[i].bv_page;
++	bio_for_each_segment_all(bvec, bio, i) {
++		struct page *page = bvec->bv_page;
+ 
+ 		if (PageDirty(page) || PageCompound(page)) {
+ 			page_cache_release(page);
+-			bvec[i].bv_page = NULL;
++			bvec->bv_page = NULL;
+ 		} else {
+ 			nr_clean_pages++;
+ 		}
+diff --git a/fs/direct-io.c b/fs/direct-io.c
+index f86c720..6089916 100644
+--- a/fs/direct-io.c
++++ b/fs/direct-io.c
+@@ -441,8 +441,8 @@ static struct bio *dio_await_one(struct dio *dio)
+ static int dio_bio_complete(struct dio *dio, struct bio *bio)
+ {
+ 	const int uptodate = test_bit(BIO_UPTODATE, &bio->bi_flags);
+-	struct bio_vec *bvec = bio->bi_io_vec;
+-	int page_no;
++	struct bio_vec *bvec;
++	unsigned i;
+ 
+ 	if (!uptodate)
+ 		dio->io_error = -EIO;
+@@ -450,8 +450,8 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
+ 	if (dio->is_async && dio->rw == READ) {
+ 		bio_check_pages_dirty(bio);	/* transfers ownership */
+ 	} else {
+-		for (page_no = 0; page_no < bio->bi_vcnt; page_no++) {
+-			struct page *page = bvec[page_no].bv_page;
++		bio_for_each_segment_all(bvec, bio, i) {
++			struct page *page = bvec->bv_page;
+ 
+ 			if (dio->rw == READ && !PageCompound(page))
+ 				set_page_dirty_lock(page);
 -- 
 1.7.12
