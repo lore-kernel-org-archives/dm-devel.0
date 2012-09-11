@@ -1,139 +1,52 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 19/26] bounce: Refactor __blk_queue_bounce to not use bi_io_vec
-Date: Mon, 10 Sep 2012 17:22:30 -0700
-Message-ID: <1347322957-25260-20-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v2 17/26] pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
+Date: Mon, 10 Sep 2012 17:22:28 -0700
+Message-ID: <1347322957-25260-18-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, neilb@suse.de, Jiri Kosina <jkosina@suse.cz>
 List-Id: dm-devel.ids
 
-A bunch of what __blk_queue_bounce() was doing was problematic for the
-immutable bvec work; this cleans that up and the code is quite a bit
-smaller, too.
+In the short term this'll help with code auditing, and if this code ever
+gets used now it's converted :)
 
-The __bio_for_each_segment() in copy_to_high_bio_irq() was changed
-because that one's looping over the original bio, not the bounce bio -
-since the bounce code doesn't own that bio the __ version wasn't
-correct.
-
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jiri Kosina <jkosina@suse.cz>
 ---
- mm/bounce.c | 73 ++++++++++++++++---------------------------------------------
- 1 file changed, 19 insertions(+), 54 deletions(-)
+ drivers/block/pktcdvd.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
 
-diff --git a/mm/bounce.c b/mm/bounce.c
-index 0420867..3068300 100644
---- a/mm/bounce.c
-+++ b/mm/bounce.c
-@@ -101,7 +101,7 @@ static void copy_to_high_bio_irq(struct bio *to, struct bio *from)
- 	struct bio_vec *tovec, *fromvec;
- 	int i;
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 1079a77..5318ad39 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -1156,16 +1156,15 @@ static int pkt_start_recovery(struct packet_data *pkt)
+ 	new_sector = new_block * (CD_FRAMESIZE >> 9);
+ 	pkt->sector = new_sector;
  
--	__bio_for_each_segment(tovec, to, i, 0) {
-+	bio_for_each_segment(tovec, to, i) {
- 		fromvec = from->bi_io_vec + i;
- 
- 		/*
-@@ -181,78 +181,43 @@ static void bounce_end_io_read_isa(struct bio *bio, int err)
- static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
- 			       mempool_t *pool)
- {
--	struct page *page;
--	struct bio *bio = NULL;
--	int i, rw = bio_data_dir(*bio_orig);
-+	struct bio *bio;
-+	int rw = bio_data_dir(*bio_orig);
- 	struct bio_vec *to, *from;
-+	unsigned i;
- 
--	bio_for_each_segment(from, *bio_orig, i) {
--		page = from->bv_page;
-+	bio_for_each_segment(from, *bio_orig, i)
-+		if (page_to_pfn(from->bv_page) > queue_bounce_pfn(q))
-+			goto bounce;
- 
--		/*
--		 * is destination page below bounce pfn?
--		 */
--		if (page_to_pfn(page) <= queue_bounce_pfn(q))
--			continue;
++	bio_reset(pkt->bio);
++	pkt->bio->bi_bdev = pd->bdev;
++	pkt->bio->bi_rw = REQ_WRITE;
+ 	pkt->bio->bi_sector = new_sector;
+-	pkt->bio->bi_next = NULL;
+-	pkt->bio->bi_flags = 1 << BIO_UPTODATE;
+-	pkt->bio->bi_idx = 0;
 -
--		/*
--		 * irk, bounce it
--		 */
--		if (!bio) {
--			unsigned int cnt = (*bio_orig)->bi_vcnt;
-+	return;
-+bounce:
-+	bio = bio_clone_bioset(*bio_orig, GFP_NOIO, fs_bio_set);
- 
--			bio = bio_alloc(GFP_NOIO, cnt);
--			memset(bio->bi_io_vec, 0, cnt * sizeof(struct bio_vec));
--		}
--			
-+	bio_for_each_segment(to, bio, i) {
-+		struct page *page = to->bv_page;
- 
--		to = bio->bi_io_vec + i;
-+		if (page_to_pfn(page) <= queue_bounce_pfn(q))
-+			continue;
- 
--		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
--		to->bv_len = from->bv_len;
--		to->bv_offset = from->bv_offset;
- 		inc_zone_page_state(to->bv_page, NR_BOUNCE);
-+		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
- 
- 		if (rw == WRITE) {
- 			char *vto, *vfrom;
- 
--			flush_dcache_page(from->bv_page);
-+			flush_dcache_page(page);
+-	BUG_ON(pkt->bio->bi_rw != REQ_WRITE);
+-	BUG_ON(pkt->bio->bi_vcnt != pkt->frames);
+-	BUG_ON(pkt->bio->bi_size != pkt->frames * CD_FRAMESIZE);
+-	BUG_ON(pkt->bio->bi_end_io != pkt_end_io_packet_write);
+-	BUG_ON(pkt->bio->bi_private != pkt);
++	pkt->bio->bi_size = pkt->frames * CD_FRAMESIZE;
++	pkt->bio->bi_vcnt = pkt->frames;
 +
- 			vto = page_address(to->bv_page) + to->bv_offset;
--			vfrom = kmap(from->bv_page) + from->bv_offset;
-+			vfrom = kmap_atomic(page) + to->bv_offset;
- 			memcpy(vto, vfrom, to->bv_len);
--			kunmap(from->bv_page);
-+			kunmap_atomic(vfrom);
- 		}
- 	}
++	pkt->bio->bi_end_io = pkt_end_io_packet_write;
++	pkt->bio->bi_private = pkt;
  
--	/*
--	 * no pages bounced
--	 */
--	if (!bio)
--		return;
--
- 	trace_block_bio_bounce(q, *bio_orig);
- 
--	/*
--	 * at least one page was bounced, fill in possible non-highmem
--	 * pages
--	 */
--	__bio_for_each_segment(from, *bio_orig, i, 0) {
--		to = bio_iovec_idx(bio, i);
--		if (!to->bv_page) {
--			to->bv_page = from->bv_page;
--			to->bv_len = from->bv_len;
--			to->bv_offset = from->bv_offset;
--		}
--	}
--
--	bio->bi_bdev = (*bio_orig)->bi_bdev;
- 	bio->bi_flags |= (1 << BIO_BOUNCED);
--	bio->bi_sector = (*bio_orig)->bi_sector;
--	bio->bi_rw = (*bio_orig)->bi_rw;
--
--	bio->bi_vcnt = (*bio_orig)->bi_vcnt;
--	bio->bi_idx = (*bio_orig)->bi_idx;
--	bio->bi_size = (*bio_orig)->bi_size;
- 
- 	if (pool == page_pool) {
- 		bio->bi_end_io = bounce_end_io_write;
+ 	drop_super(sb);
+ 	return 1;
 -- 
 1.7.12
