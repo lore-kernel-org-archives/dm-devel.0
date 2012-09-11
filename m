@@ -1,126 +1,154 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 11/26] raid10: Use bio_reset()
-Date: Mon, 10 Sep 2012 17:22:22 -0700
-Message-ID: <1347322957-25260-12-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 08/26] block: Remove bi_idx references
+Date: Mon, 10 Sep 2012 17:22:19 -0700
+Message-ID: <1347322957-25260-9-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, neilb@suse.de
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-More prep work for immutable bio vecs, mainly getting rid of references
-to bi_idx.
+These were harmless but uneccessary,andt getting rid of them makes the
+code easier to audit since most of them need to be removed.
 
-bio_reset was being open coded in a few places. The one in sync_request
-was a bit nontrivial to convert, so could use some extra eyeballs.
-
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
-CC: NeilBrown <neilb@suse.de>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 ---
- drivers/md/raid10.c | 31 +++++++++----------------------
- 1 file changed, 9 insertions(+), 22 deletions(-)
+ drivers/block/floppy.c | 1 -
+ drivers/md/dm-verity.c | 2 +-
+ drivers/md/raid10.c    | 1 -
+ fs/buffer.c            | 1 -
+ fs/jfs/jfs_logmgr.c    | 2 --
+ fs/logfs/dev_bdev.c    | 5 -----
+ mm/page_io.c           | 1 -
+ 7 files changed, 1 insertion(+), 12 deletions(-)
 
+diff --git a/drivers/block/floppy.c b/drivers/block/floppy.c
+index 95e52879..24e5cef 100644
+--- a/drivers/block/floppy.c
++++ b/drivers/block/floppy.c
+@@ -3778,7 +3778,6 @@ static int __floppy_read_block_0(struct block_device *bdev)
+ 	bio_vec.bv_len = size;
+ 	bio_vec.bv_offset = 0;
+ 	bio.bi_vcnt = 1;
+-	bio.bi_idx = 0;
+ 	bio.bi_size = size;
+ 	bio.bi_bdev = bdev;
+ 	bio.bi_sector = 0;
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 18ef6c5..6956626 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -496,7 +496,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio,
+ 
+ 	bio->bi_end_io = verity_end_io;
+ 	bio->bi_private = io;
+-	io->io_vec_size = bio->bi_vcnt - bio->bi_idx;
++	io->io_vec_size = bio_segments(bio);
+ 	if (io->io_vec_size < DM_VERITY_IO_VEC_INLINE)
+ 		io->io_vec = io->io_vec_inline;
+ 	else
 diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index f001c1b..6b83207 100644
+index bbd08f5..6d06d83 100644
 --- a/drivers/md/raid10.c
 +++ b/drivers/md/raid10.c
-@@ -1958,13 +1958,10 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 		 * First we need to fixup bv_offset, bv_len and
- 		 * bi_vecs, as the read request might have corrupted these
- 		 */
-+		bio_reset(tbio);
-+
- 		tbio->bi_vcnt = vcnt;
- 		tbio->bi_size = r10_bio->sectors << 9;
--		tbio->bi_idx = 0;
--		tbio->bi_phys_segments = 0;
--		tbio->bi_flags &= ~(BIO_POOL_MASK - 1);
--		tbio->bi_flags |= 1 << BIO_UPTODATE;
--		tbio->bi_next = NULL;
- 		tbio->bi_rw = WRITE;
- 		tbio->bi_private = r10_bio;
- 		tbio->bi_sector = r10_bio->devs[i].addr;
-@@ -2970,6 +2967,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 					}
- 				}
- 				bio = r10_bio->devs[0].bio;
-+				bio_reset(bio);
- 				bio->bi_next = biolist;
- 				biolist = bio;
- 				bio->bi_private = r10_bio;
-@@ -2994,6 +2992,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				rdev = mirror->rdev;
- 				if (!test_bit(In_sync, &rdev->flags)) {
- 					bio = r10_bio->devs[1].bio;
-+					bio_reset(bio);
- 					bio->bi_next = biolist;
- 					biolist = bio;
- 					bio->bi_private = r10_bio;
-@@ -3022,6 +3021,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				if (rdev == NULL || bio == NULL ||
- 				    test_bit(Faulty, &rdev->flags))
- 					break;
-+				bio_reset(bio);
- 				bio->bi_next = biolist;
- 				biolist = bio;
- 				bio->bi_private = r10_bio;
-@@ -3120,7 +3120,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				r10_bio->devs[i].repl_bio->bi_end_io = NULL;
+@@ -4249,7 +4249,6 @@ read_more:
+ 	read_bio->bi_flags &= ~(BIO_POOL_MASK - 1);
+ 	read_bio->bi_flags |= 1 << BIO_UPTODATE;
+ 	read_bio->bi_vcnt = 0;
+-	read_bio->bi_idx = 0;
+ 	read_bio->bi_size = 0;
+ 	r10_bio->master_bio = read_bio;
+ 	r10_bio->read_slot = r10_bio->devs[r10_bio->read_slot].devnum;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 58e2e7b..38d8793 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -2893,7 +2893,6 @@ int submit_bh(int rw, struct buffer_head * bh)
+ 	bio->bi_io_vec[0].bv_offset = bh_offset(bh);
  
- 			bio = r10_bio->devs[i].bio;
--			bio->bi_end_io = NULL;
-+			bio_reset(bio);
- 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
- 			if (conf->mirrors[d].rdev == NULL ||
- 			    test_bit(Faulty, &conf->mirrors[d].rdev->flags))
-@@ -3157,6 +3157,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
+ 	bio->bi_vcnt = 1;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = bh->b_size;
  
- 			/* Need to set up for writing to the replacement */
- 			bio = r10_bio->devs[i].repl_bio;
-+			bio_reset(bio);
- 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
+ 	bio->bi_end_io = end_bio_bh_io_sync;
+diff --git a/fs/jfs/jfs_logmgr.c b/fs/jfs/jfs_logmgr.c
+index 2eb952c..8ae5e35 100644
+--- a/fs/jfs/jfs_logmgr.c
++++ b/fs/jfs/jfs_logmgr.c
+@@ -2004,7 +2004,6 @@ static int lbmRead(struct jfs_log * log, int pn, struct lbuf ** bpp)
+ 	bio->bi_io_vec[0].bv_offset = bp->l_offset;
  
- 			sector = r10_bio->devs[i].addr;
-@@ -3190,17 +3191,6 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 		}
+ 	bio->bi_vcnt = 1;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = LOGPSIZE;
+ 
+ 	bio->bi_end_io = lbmIODone;
+@@ -2145,7 +2144,6 @@ static void lbmStartIO(struct lbuf * bp)
+ 	bio->bi_io_vec[0].bv_offset = bp->l_offset;
+ 
+ 	bio->bi_vcnt = 1;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = LOGPSIZE;
+ 
+ 	bio->bi_end_io = lbmIODone;
+diff --git a/fs/logfs/dev_bdev.c b/fs/logfs/dev_bdev.c
+index e784a21..550475c 100644
+--- a/fs/logfs/dev_bdev.c
++++ b/fs/logfs/dev_bdev.c
+@@ -32,7 +32,6 @@ static int sync_request(struct page *page, struct block_device *bdev, int rw)
+ 	bio_vec.bv_len = PAGE_SIZE;
+ 	bio_vec.bv_offset = 0;
+ 	bio.bi_vcnt = 1;
+-	bio.bi_idx = 0;
+ 	bio.bi_size = PAGE_SIZE;
+ 	bio.bi_bdev = bdev;
+ 	bio.bi_sector = page->index * (PAGE_SIZE >> 9);
+@@ -108,7 +107,6 @@ static int __bdev_writeseg(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		if (i >= max_pages) {
+ 			/* Block layer cannot split bios :( */
+ 			bio->bi_vcnt = i;
+-			bio->bi_idx = 0;
+ 			bio->bi_size = i * PAGE_SIZE;
+ 			bio->bi_bdev = super->s_bdev;
+ 			bio->bi_sector = ofs >> 9;
+@@ -136,7 +134,6 @@ static int __bdev_writeseg(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		unlock_page(page);
  	}
- 
--	for (bio = biolist; bio ; bio=bio->bi_next) {
--
--		bio->bi_flags &= ~(BIO_POOL_MASK - 1);
--		if (bio->bi_end_io)
--			bio->bi_flags |= 1 << BIO_UPTODATE;
--		bio->bi_vcnt = 0;
+ 	bio->bi_vcnt = nr_pages;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = nr_pages * PAGE_SIZE;
+ 	bio->bi_bdev = super->s_bdev;
+ 	bio->bi_sector = ofs >> 9;
+@@ -202,7 +199,6 @@ static int do_erase(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		if (i >= max_pages) {
+ 			/* Block layer cannot split bios :( */
+ 			bio->bi_vcnt = i;
+-			bio->bi_idx = 0;
+ 			bio->bi_size = i * PAGE_SIZE;
+ 			bio->bi_bdev = super->s_bdev;
+ 			bio->bi_sector = ofs >> 9;
+@@ -224,7 +220,6 @@ static int do_erase(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		bio->bi_io_vec[i].bv_offset = 0;
+ 	}
+ 	bio->bi_vcnt = nr_pages;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = nr_pages * PAGE_SIZE;
+ 	bio->bi_bdev = super->s_bdev;
+ 	bio->bi_sector = ofs >> 9;
+diff --git a/mm/page_io.c b/mm/page_io.c
+index 78eee32..8d3c0c0 100644
+--- a/mm/page_io.c
++++ b/mm/page_io.c
+@@ -35,7 +35,6 @@ static struct bio *get_swap_bio(gfp_t gfp_flags,
+ 		bio->bi_io_vec[0].bv_len = PAGE_SIZE;
+ 		bio->bi_io_vec[0].bv_offset = 0;
+ 		bio->bi_vcnt = 1;
 -		bio->bi_idx = 0;
--		bio->bi_phys_segments = 0;
--		bio->bi_size = 0;
--	}
--
- 	nr_sectors = 0;
- 	if (sector_nr + max_sync < max_sector)
- 		max_sector = sector_nr + max_sync;
-@@ -4253,17 +4243,14 @@ read_more:
- 		}
- 		if (!rdev2 || test_bit(Faulty, &rdev2->flags))
- 			continue;
-+
-+		bio_reset(b);
- 		b->bi_bdev = rdev2->bdev;
- 		b->bi_sector = r10_bio->devs[s/2].addr + rdev2->new_data_offset;
- 		b->bi_private = r10_bio;
- 		b->bi_end_io = end_reshape_write;
- 		b->bi_rw = WRITE;
--		b->bi_flags &= ~(BIO_POOL_MASK - 1);
--		b->bi_flags |= 1 << BIO_UPTODATE;
- 		b->bi_next = blist;
--		b->bi_vcnt = 0;
--		b->bi_idx = 0;
--		b->bi_size = 0;
- 		blist = b;
+ 		bio->bi_size = PAGE_SIZE;
+ 		bio->bi_end_io = end_io;
  	}
- 
 -- 
 1.7.12
