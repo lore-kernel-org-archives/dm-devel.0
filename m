@@ -1,287 +1,164 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [dm-devel] [PATCH v2 01/26] block: Convert integrity to
- bvec_alloc_bs(), and a bugfix
-Date: Tue, 11 Sep 2012 13:48:44 -0700
-Message-ID: <20120911204844.GL19739@google.com>
+From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+Subject: Re: [PATCH v2 12/26] raid1: use bio_reset()
+Date: Wed, 12 Sep 2012 07:17:36 +1000
+Message-ID: <20120912071736.715627f0@notabene.brown>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
- <1347322957-25260-2-git-send-email-koverstreet@google.com>
- <20120911203643.GC17113@redhat.com>
+	<1347322957-25260-13-git-send-email-koverstreet@google.com>
+	<20120911145913.3f8a0a30@notabene.brown>
+	<20120911182825.GG19739@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120911203643.GC17113@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, tj@kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/gUZHsiirQy8go3/VlnJ1049"; protocol="application/pgp-signature"
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120911182825.GG19739-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 11, 2012 at 04:36:43PM -0400, Vivek Goyal wrote:
-> On Mon, Sep 10, 2012 at 05:22:12PM -0700, Kent Overstreet wrote:
-> > This adds a pointer to the bvec array to struct bio_integrity_payload,
-> > instead of the bvecs always being inline; then the bvecs are allocated
-> > with bvec_alloc_bs().
-> 
-> If you starting allocating bvec from same mempool for  bio and bip, 
-> are you not breaking the principle of multiple allocations from a
-> mempool and hence increasing the possibility of deadlock?
+--Sig_/gUZHsiirQy8go3/VlnJ1049
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Argh, you're right. I should've thought about that.
+On Tue, 11 Sep 2012 11:28:25 -0700 Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+wrote:
 
-It might be nice if mempools had some kind of internal watermark... here
-we know we're only going to do at most 2 allocations from the same
-mempool, so if we just passed the number we already had allocated to
-mempool_alloc(), it could do the right thing and ensure we never
-deadlocked.
+> On Tue, Sep 11, 2012 at 02:59:13PM +1000, NeilBrown wrote:
+> > On Mon, 10 Sep 2012 17:22:23 -0700 Kent Overstreet <koverstreet@google.=
+com>
+> > wrote:
+> >=20
+> > > I couldn't figure out what sbio->bi_end_io in process_checks() was
+> > > supposed to be, so I took the easy way out.
+> >=20
+> > Almost.
+> > You save 'sbio->bi_end_io' to 'bi_end_io', then do nothing with it...
+>=20
+> Whoops :) I think I must've gotten distracted and forgot to finish with
+> that patch, I wasn't setting bi_private either.
+>=20
+> >=20
+> > A little way above the 'fixup the bio for reuse' comment you'll find:
+> >=20
+> > 		struct bio *sbio =3D r1_bio->bios[i];
+> > ....
+> > 		if (r1_bio->bios[i]->bi_end_io !=3D end_sync_read)
+> > 			continue;
+> >=20
+> > which implies that if we don't 'continue', then sbio->bi_end_io =3D=3D
+> > end_sync_read.
+>=20
+> Ahh. I remember reading that, but I missed that that was sbio that was
+> being checked.
+>=20
+> >=20
+> > So I suspect you want to add
+> >     sbio->bi_end_io =3D end_sync_read;
+> > somewhere after the 'bio_reset()'.
+> >=20
+> > If you happened to also fix that 'if' that I quoted so that it reads:
+> >=20
+> >      if (sbio->bi_end_io !=3D end_sync_read)
+> >            continue;
+>=20
+> Will do! How's this look?
 
-I _think_ that'd let us make more efficient use of the reserve. But, for
-just this it's not really worth the extra code, I think I'll just have
-to add another mempool.
+Looks good.
 
-> Also there seems to be too much happening in this patch. Please break
-> it down in 2. First fix the bio integrity bug you mentioned then
-> introduce your changes on top.
+Acked-by: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
 
-Ok, I can do that.
+NeilBrown
 
-> Thanks
-> Vivek
-> 
-> > 
-> > This is needed eventually for immutable bio vecs - immutable bvecs
-> > aren't useful if we still have to copy them, hence the need for the
-> > pointer. Less code is always nice too, though.
-> > 
-> > Also fix an amusing bug in bio_integrity_split() - struct bio_pair
-> > doesn't have the integrity bvecs after the bio_integrity_payloads, so
-> > there was a buffer overrun. The code was confusing pointers with arrays.
-> > 
-> > Signed-off-by: Kent Overstreet <koverstreet@google.com>
-> > CC: Jens Axboe <axboe@kernel.dk>
-> > CC: Martin K. Petersen <martin.petersen@oracle.com>
-> > ---
-> >  fs/bio-integrity.c  | 124 +++++++++++++++++-----------------------------------
-> >  include/linux/bio.h |   5 ++-
-> >  2 files changed, 43 insertions(+), 86 deletions(-)
-> > 
-> > diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-> > index a3f28f3..1d64f7f 100644
-> > --- a/fs/bio-integrity.c
-> > +++ b/fs/bio-integrity.c
-> > @@ -27,48 +27,11 @@
-> >  #include <linux/workqueue.h>
-> >  #include <linux/slab.h>
-> >  
-> > -struct integrity_slab {
-> > -	struct kmem_cache *slab;
-> > -	unsigned short nr_vecs;
-> > -	char name[8];
-> > -};
-> > -
-> > -#define IS(x) { .nr_vecs = x, .name = "bip-"__stringify(x) }
-> > -struct integrity_slab bip_slab[BIOVEC_NR_POOLS] __read_mostly = {
-> > -	IS(1), IS(4), IS(16), IS(64), IS(128), IS(BIO_MAX_PAGES),
-> > -};
-> > -#undef IS
-> > +#define BIP_INLINE_VECS	4
-> >  
-> > +static struct kmem_cache *bip_slab;
-> >  static struct workqueue_struct *kintegrityd_wq;
-> >  
-> > -static inline unsigned int vecs_to_idx(unsigned int nr)
-> > -{
-> > -	switch (nr) {
-> > -	case 1:
-> > -		return 0;
-> > -	case 2 ... 4:
-> > -		return 1;
-> > -	case 5 ... 16:
-> > -		return 2;
-> > -	case 17 ... 64:
-> > -		return 3;
-> > -	case 65 ... 128:
-> > -		return 4;
-> > -	case 129 ... BIO_MAX_PAGES:
-> > -		return 5;
-> > -	default:
-> > -		BUG();
-> > -	}
-> > -}
-> > -
-> > -static inline int use_bip_pool(unsigned int idx)
-> > -{
-> > -	if (idx == BIOVEC_MAX_IDX)
-> > -		return 1;
-> > -
-> > -	return 0;
-> > -}
-> > -
-> >  /**
-> >   * bio_integrity_alloc - Allocate integrity payload and attach it to bio
-> >   * @bio:	bio to attach integrity metadata to
-> > @@ -84,37 +47,38 @@ struct bio_integrity_payload *bio_integrity_alloc(struct bio *bio,
-> >  						  unsigned int nr_vecs)
-> >  {
-> >  	struct bio_integrity_payload *bip;
-> > -	unsigned int idx = vecs_to_idx(nr_vecs);
-> >  	struct bio_set *bs = bio->bi_pool;
-> > +	unsigned long idx = BIO_POOL_NONE;
-> > +	unsigned inline_vecs;
-> > +
-> > +	if (!bs) {
-> > +		bip = kmalloc(sizeof(struct bio_integrity_payload) +
-> > +			      sizeof(struct bio_vec) * nr_vecs, gfp_mask);
-> > +		inline_vecs = nr_vecs;
-> > +	} else {
-> > +		bip = mempool_alloc(bs->bio_integrity_pool, gfp_mask);
-> > +		inline_vecs = BIP_INLINE_VECS;
-> > +	}
-> >  
-> > -	if (!bs)
-> > -		bs = fs_bio_set;
-> > -
-> > -	BUG_ON(bio == NULL);
-> > -	bip = NULL;
-> > +	if (unlikely(!bip))
-> > +		return NULL;
-> >  
-> > -	/* Lower order allocations come straight from slab */
-> > -	if (!use_bip_pool(idx))
-> > -		bip = kmem_cache_alloc(bip_slab[idx].slab, gfp_mask);
-> > +	memset(bip, 0, sizeof(struct bio_integrity_payload));
-> >  
-> > -	/* Use mempool if lower order alloc failed or max vecs were requested */
-> > -	if (bip == NULL) {
-> > -		idx = BIOVEC_MAX_IDX;  /* so we free the payload properly later */
-> > -		bip = mempool_alloc(bs->bio_integrity_pool, gfp_mask);
-> > -
-> > -		if (unlikely(bip == NULL)) {
-> > -			printk(KERN_ERR "%s: could not alloc bip\n", __func__);
-> > -			return NULL;
-> > -		}
-> > +	if (nr_vecs > inline_vecs) {
-> > +		bip->bip_vec = bvec_alloc_bs(gfp_mask, nr_vecs, &idx, bs);
-> > +		if (!bip->bip_vec)
-> > +			goto err;
-> >  	}
-> >  
-> > -	memset(bip, 0, sizeof(*bip));
-> > -
-> >  	bip->bip_slab = idx;
-> >  	bip->bip_bio = bio;
-> >  	bio->bi_integrity = bip;
-> >  
-> >  	return bip;
-> > +err:
-> > +	mempool_free(bip, bs->bio_integrity_pool);
-> > +	return NULL;
-> >  }
-> >  EXPORT_SYMBOL(bio_integrity_alloc);
-> >  
-> > @@ -130,20 +94,19 @@ void bio_integrity_free(struct bio *bio)
-> >  	struct bio_integrity_payload *bip = bio->bi_integrity;
-> >  	struct bio_set *bs = bio->bi_pool;
-> >  
-> > -	if (!bs)
-> > -		bs = fs_bio_set;
-> > -
-> > -	BUG_ON(bip == NULL);
-> > -
-> >  	/* A cloned bio doesn't own the integrity metadata */
-> >  	if (!bio_flagged(bio, BIO_CLONED) && !bio_flagged(bio, BIO_FS_INTEGRITY)
-> >  	    && bip->bip_buf != NULL)
-> >  		kfree(bip->bip_buf);
-> >  
-> > -	if (use_bip_pool(bip->bip_slab))
-> > +	if (bs) {
-> > +		if (bip->bip_slab != BIO_POOL_NONE)
-> > +			bvec_free_bs(bs, bip->bip_vec, bip->bip_slab);
-> > +
-> >  		mempool_free(bip, bs->bio_integrity_pool);
-> > -	else
-> > -		kmem_cache_free(bip_slab[bip->bip_slab].slab, bip);
-> > +	} else {
-> > +		kfree(bip);
-> > +	}
-> >  
-> >  	bio->bi_integrity = NULL;
-> >  }
-> > @@ -697,8 +660,8 @@ void bio_integrity_split(struct bio *bio, struct bio_pair *bp, int sectors)
-> >  	bp->iv1 = bip->bip_vec[0];
-> >  	bp->iv2 = bip->bip_vec[0];
-> >  
-> > -	bp->bip1.bip_vec[0] = bp->iv1;
-> > -	bp->bip2.bip_vec[0] = bp->iv2;
-> > +	bp->bip1.bip_vec = &bp->iv1;
-> > +	bp->bip2.bip_vec = &bp->iv2;
-> >  
-> >  	bp->iv1.bv_len = sectors * bi->tuple_size;
-> >  	bp->iv2.bv_offset += sectors * bi->tuple_size;
-> > @@ -746,13 +709,10 @@ EXPORT_SYMBOL(bio_integrity_clone);
-> >  
-> >  int bioset_integrity_create(struct bio_set *bs, int pool_size)
-> >  {
-> > -	unsigned int max_slab = vecs_to_idx(BIO_MAX_PAGES);
-> > -
-> >  	if (bs->bio_integrity_pool)
-> >  		return 0;
-> >  
-> > -	bs->bio_integrity_pool =
-> > -		mempool_create_slab_pool(pool_size, bip_slab[max_slab].slab);
-> > +	bs->bio_integrity_pool = mempool_create_slab_pool(pool_size, bip_slab);
-> >  
-> >  	if (!bs->bio_integrity_pool)
-> >  		return -1;
-> > @@ -770,8 +730,6 @@ EXPORT_SYMBOL(bioset_integrity_free);
-> >  
-> >  void __init bio_integrity_init(void)
-> >  {
-> > -	unsigned int i;
-> > -
-> >  	/*
-> >  	 * kintegrityd won't block much but may burn a lot of CPU cycles.
-> >  	 * Make it highpri CPU intensive wq with max concurrency of 1.
-> > @@ -781,14 +739,10 @@ void __init bio_integrity_init(void)
-> >  	if (!kintegrityd_wq)
-> >  		panic("Failed to create kintegrityd\n");
-> >  
-> > -	for (i = 0 ; i < BIOVEC_NR_POOLS ; i++) {
-> > -		unsigned int size;
-> > -
-> > -		size = sizeof(struct bio_integrity_payload)
-> > -			+ bip_slab[i].nr_vecs * sizeof(struct bio_vec);
-> > -
-> > -		bip_slab[i].slab =
-> > -			kmem_cache_create(bip_slab[i].name, size, 0,
-> > -					  SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
-> > -	}
-> > +	bip_slab = kmem_cache_create("bio_integrity_payload",
-> > +				     sizeof(struct bio_integrity_payload) +
-> > +				     sizeof(struct bio_vec) * BIP_INLINE_VECS,
-> > +				     0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
-> > +	if (!bip_slab)
-> > +		panic("Failed to create slab\n");
-> >  }
-> > diff --git a/include/linux/bio.h b/include/linux/bio.h
-> > index c32ea0d..7873465 100644
-> > --- a/include/linux/bio.h
-> > +++ b/include/linux/bio.h
-> > @@ -182,7 +182,10 @@ struct bio_integrity_payload {
-> >  	unsigned short		bip_idx;	/* current bip_vec index */
-> >  
-> >  	struct work_struct	bip_work;	/* I/O completion */
-> > -	struct bio_vec		bip_vec[0];	/* embedded bvec array */
-> > +
-> > +	struct bio_vec		*bip_vec;
-> > +	struct bio_vec		bip_inline_vecs[0];/* embedded bvec array */
-> > +
-> >  };
-> >  #endif /* CONFIG_BLK_DEV_INTEGRITY */
-> >  
-> > -- 
-> > 1.7.12
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
+
+>=20
+>=20
+> commit 40a4645a4346edd040066baedcf2184ac4211ba7
+> Author: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> Date:   Tue Sep 11 11:26:12 2012 -0700
+>=20
+>     raid1: use bio_reset()
+>    =20
+>     Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>     CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+>     CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+>=20
+> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+> index ee85154..df68691 100644
+> --- a/drivers/md/raid1.c
+> +++ b/drivers/md/raid1.c
+> @@ -1851,7 +1851,7 @@ static int process_checks(struct r1bio *r1_bio)
+>  		struct bio *sbio =3D r1_bio->bios[i];
+>  		int size;
+> =20
+> -		if (r1_bio->bios[i]->bi_end_io !=3D end_sync_read)
+> +		if (sbio->bi_end_io !=3D end_sync_read)
+>  			continue;
+> =20
+>  		if (test_bit(BIO_UPTODATE, &sbio->bi_flags)) {
+> @@ -1876,16 +1876,15 @@ static int process_checks(struct r1bio *r1_bio)
+>  			continue;
+>  		}
+>  		/* fixup the bio for reuse */
+> +		bio_reset(sbio);
+>  		sbio->bi_vcnt =3D vcnt;
+>  		sbio->bi_size =3D r1_bio->sectors << 9;
+> -		sbio->bi_idx =3D 0;
+> -		sbio->bi_phys_segments =3D 0;
+> -		sbio->bi_flags &=3D ~(BIO_POOL_MASK - 1);
+> -		sbio->bi_flags |=3D 1 << BIO_UPTODATE;
+> -		sbio->bi_next =3D NULL;
+>  		sbio->bi_sector =3D r1_bio->sector +
+>  			conf->mirrors[i].rdev->data_offset;
+>  		sbio->bi_bdev =3D conf->mirrors[i].rdev->bdev;
+> +		sbio->bi_end_io =3D end_sync_read;
+> +		sbio->bi_private =3D r1_bio;
+> +
+>  		size =3D sbio->bi_size;
+>  		for (j =3D 0; j < vcnt ; j++) {
+>  			struct bio_vec *bi;
+> @@ -2426,18 +2425,7 @@ static sector_t sync_request(struct mddev *mddev, =
+sector_t sector_nr, int *skipp
+>  	for (i =3D 0; i < conf->raid_disks * 2; i++) {
+>  		struct md_rdev *rdev;
+>  		bio =3D r1_bio->bios[i];
+> -
+> -		/* take from bio_init */
+> -		bio->bi_next =3D NULL;
+> -		bio->bi_flags &=3D ~(BIO_POOL_MASK-1);
+> -		bio->bi_flags |=3D 1 << BIO_UPTODATE;
+> -		bio->bi_rw =3D READ;
+> -		bio->bi_vcnt =3D 0;
+> -		bio->bi_idx =3D 0;
+> -		bio->bi_phys_segments =3D 0;
+> -		bio->bi_size =3D 0;
+> -		bio->bi_end_io =3D NULL;
+> -		bio->bi_private =3D NULL;
+> +		bio_reset(bio);
+> =20
+>  		rdev =3D rcu_dereference(conf->mirrors[i].rdev);
+>  		if (rdev =3D=3D NULL ||
+
+
+--Sig_/gUZHsiirQy8go3/VlnJ1049
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.18 (GNU/Linux)
+
+iQIVAwUBUE+qcDnsnt1WYoG5AQJEFg//Y4BmNeQ/5ijba8iQlMFc+w6yynLCCnI+
+vZxkbJjTAuhBxjmHvXK9lx1Gc4np4fejhlwE2AI/KqoCQIZnOg0wWyT4zXBl/CCn
+NgcqITYbgiSfJ9vYuG1dnTOx1iUcug62HKS7erntvaOmV/TMo2jGLGKE6HR95Blz
+GJYgmD6zEtVrJFSi/6zERmuMGxvu6W8jk6e9p4m3xNKlBPwKKpiB4eX1POKUPv5c
+19pME0DFqz6dwljlPidJ9XyHHSzncRVac8x+PS4ajidkv1srq9Jqd0yuy71JAYxX
++3+pGAqmvF1s93myJVrGKKsQ0xqRmp5ZdSEBLOBNLZm6SnCz+xhEErMPWakhCFMk
+WzE9rCOVsZakVztQF+9OOiPTlHrQTHKdTtS/UIaYHH9a6/tlclynR/N4O0HHOinA
+jVAISIjZq7g55IQHT2kAKfTrCUY2Lx9+Cn4TWt3xYaAfQXjYiEJQ1ZF1Pb48sv9c
++BLGXOTWeGADXY+/uzRNig6pw346v2OA07Z25rbRYKHfIRSBsGkhf0qoal8dr464
+vrQYXBiORwxDKbj+ZDFJZj5INTrkwSKp7p4BQJDAjjhXTtGVyncYgsEv4UQWNZRR
+MuUlLR11xZ1YIynkZnXquXHWDZoOYgk/xcrwIkEAdy8Zu3vO1ca0c/EqBOsd1LMr
+MTiIptdYVLA=
+=Ik4f
+-----END PGP SIGNATURE-----
+
+--Sig_/gUZHsiirQy8go3/VlnJ1049--
