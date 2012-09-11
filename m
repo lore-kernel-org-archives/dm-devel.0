@@ -1,121 +1,89 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH v2 12/26] raid1: use bio_reset()
-Date: Tue, 11 Sep 2012 11:28:25 -0700
-Message-ID: <20120911182825.GG19739@google.com>
-References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
- <1347322957-25260-13-git-send-email-koverstreet@google.com>
- <20120911145913.3f8a0a30@notabene.brown>
+From: Muthu Kumar <muthu.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/2] block: Avoid deadlocks with bio allocation by
+ stacking drivers
+Date: Tue, 11 Sep 2012 11:36:28 -0700
+Message-ID: <CAFR8ued=Le4B4i_Rf4eECXsVgKvce9J7bO9sDSS91PFzBZ6j5w@mail.gmail.com>
+References: <1347055973-11581-1-git-send-email-koverstreet@google.com>
+	<1347055973-11581-3-git-send-email-koverstreet@google.com>
+	<20120908193641.GB12773@dhcp-172-17-108-109.mtv.corp.google.com>
+	<20120910002810.GA23241@moria.home.lan>
+	<20120910172210.GC14103@google.com>
+	<20120910202435.GG16360@google.com>
+	<20120910204010.GA32310@google.com>
+	<20120910213349.GH16360@google.com>
+	<20120910213710.GA7677@google.com>
+	<20120910215633.GA19739@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120911145913.3f8a0a30@notabene.brown>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, tj@kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120910215633.GA19739-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 11, 2012 at 02:59:13PM +1000, NeilBrown wrote:
-> On Mon, 10 Sep 2012 17:22:23 -0700 Kent Overstreet <koverstreet@google.com>
-> wrote:
-> 
-> > I couldn't figure out what sbio->bi_end_io in process_checks() was
-> > supposed to be, so I took the easy way out.
-> 
-> Almost.
-> You save 'sbio->bi_end_io' to 'bi_end_io', then do nothing with it...
+Kent,
 
-Whoops :) I think I must've gotten distracted and forgot to finish with
-that patch, I wasn't setting bi_private either.
+On Mon, Sep 10, 2012 at 2:56 PM, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+..
+<snip>
+..
 
-> 
-> A little way above the 'fixup the bio for reuse' comment you'll find:
-> 
-> 		struct bio *sbio = r1_bio->bios[i];
-> ....
-> 		if (r1_bio->bios[i]->bi_end_io != end_sync_read)
-> 			continue;
-> 
-> which implies that if we don't 'continue', then sbio->bi_end_io ==
-> end_sync_read.
+>
+> +static void bio_alloc_rescue(struct work_struct *work)
+> +{
+> +       struct bio_set *bs = container_of(work, struct bio_set, rescue_work);
+> +       struct bio *bio;
+> +
+> +       while (1) {
+> +               spin_lock(&bs->rescue_lock);
+> +               bio = bio_list_pop(&bs->rescue_list);
+> +               spin_unlock(&bs->rescue_lock);
+> +
+> +               if (!bio)
+> +                       break;
+> +
+> +               generic_make_request(bio);
+> +       }
+> +}
+> +
+> +static void punt_bios_to_rescuer(struct bio_set *bs)
+> +{
+> +       struct bio_list punt, nopunt;
+> +       struct bio *bio;
+> +
+> +       /*
+> +        * In order to guarantee forward progress we must punt only bios that
+> +        * were allocated from this bio_set; otherwise, if there was a bio on
+> +        * there for a stacking driver higher up in the stack, processing it
+> +        * could require allocating bios from this bio_set, and doing that from
+> +        * our own rescuer would be bad.
+> +        *
+> +        * Since bio lists are singly linked, pop them all instead of trying to
+> +        * remove from the middle of the list:
+> +        */
+> +
+> +       bio_list_init(&punt);
+> +       bio_list_init(&nopunt);
+> +
+> +       while ((bio = bio_list_pop(current->bio_list)))
+> +               bio_list_add(bio->bi_pool == bs ? &punt : &nopunt, bio);
+> +
+> +       *current->bio_list = nopunt;
+> +
+> +       spin_lock(&bs->rescue_lock);
+> +       bio_list_merge(&bs->rescue_list, &punt);
+> +       spin_unlock(&bs->rescue_lock);
+> +
+> +       queue_work(bs->rescue_workqueue, &bs->rescue_work);
+> +}
 
-Ahh. I remember reading that, but I missed that that was sbio that was
-being checked.
 
-> 
-> So I suspect you want to add
->     sbio->bi_end_io = end_sync_read;
-> somewhere after the 'bio_reset()'.
-> 
-> If you happened to also fix that 'if' that I quoted so that it reads:
-> 
->      if (sbio->bi_end_io != end_sync_read)
->            continue;
+Does this preserve the CPU from which the bio was submitted
+originally. Not familiar with cmwq, may be Tejun can clarify.
 
-Will do! How's this look?
+Tejun - the question is, do we honor the rq_affinity with the above
+rescue worker implementation?
 
-
-commit 40a4645a4346edd040066baedcf2184ac4211ba7
-Author: Kent Overstreet <koverstreet@google.com>
-Date:   Tue Sep 11 11:26:12 2012 -0700
-
-    raid1: use bio_reset()
-    
-    Signed-off-by: Kent Overstreet <koverstreet@google.com>
-    CC: Jens Axboe <axboe@kernel.dk>
-    CC: NeilBrown <neilb@suse.de>
-
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index ee85154..df68691 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -1851,7 +1851,7 @@ static int process_checks(struct r1bio *r1_bio)
- 		struct bio *sbio = r1_bio->bios[i];
- 		int size;
- 
--		if (r1_bio->bios[i]->bi_end_io != end_sync_read)
-+		if (sbio->bi_end_io != end_sync_read)
- 			continue;
- 
- 		if (test_bit(BIO_UPTODATE, &sbio->bi_flags)) {
-@@ -1876,16 +1876,15 @@ static int process_checks(struct r1bio *r1_bio)
- 			continue;
- 		}
- 		/* fixup the bio for reuse */
-+		bio_reset(sbio);
- 		sbio->bi_vcnt = vcnt;
- 		sbio->bi_size = r1_bio->sectors << 9;
--		sbio->bi_idx = 0;
--		sbio->bi_phys_segments = 0;
--		sbio->bi_flags &= ~(BIO_POOL_MASK - 1);
--		sbio->bi_flags |= 1 << BIO_UPTODATE;
--		sbio->bi_next = NULL;
- 		sbio->bi_sector = r1_bio->sector +
- 			conf->mirrors[i].rdev->data_offset;
- 		sbio->bi_bdev = conf->mirrors[i].rdev->bdev;
-+		sbio->bi_end_io = end_sync_read;
-+		sbio->bi_private = r1_bio;
-+
- 		size = sbio->bi_size;
- 		for (j = 0; j < vcnt ; j++) {
- 			struct bio_vec *bi;
-@@ -2426,18 +2425,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr, int *skipp
- 	for (i = 0; i < conf->raid_disks * 2; i++) {
- 		struct md_rdev *rdev;
- 		bio = r1_bio->bios[i];
--
--		/* take from bio_init */
--		bio->bi_next = NULL;
--		bio->bi_flags &= ~(BIO_POOL_MASK-1);
--		bio->bi_flags |= 1 << BIO_UPTODATE;
--		bio->bi_rw = READ;
--		bio->bi_vcnt = 0;
--		bio->bi_idx = 0;
--		bio->bi_phys_segments = 0;
--		bio->bi_size = 0;
--		bio->bi_end_io = NULL;
--		bio->bi_private = NULL;
-+		bio_reset(bio);
- 
- 		rdev = rcu_dereference(conf->mirrors[i].rdev);
- 		if (rdev == NULL ||
+Regards,
+Muthu
