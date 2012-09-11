@@ -1,137 +1,130 @@
 From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH v2 12/26] raid1: use bio_reset()
-Date: Tue, 11 Sep 2012 14:59:13 +1000
-Message-ID: <20120911145913.3f8a0a30@notabene.brown>
+Subject: Re: [PATCH v2 13/26] raid5: use bio_reset()
+Date: Tue, 11 Sep 2012 15:03:26 +1000
+Message-ID: <20120911150326.79f066c0@notabene.brown>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-	<1347322957-25260-13-git-send-email-koverstreet@google.com>
+	<1347322957-25260-14-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/RDdTm0fG.7iEMRmf1C_a4VQ"; protocol="application/pgp-signature"
+ boundary="Sig_/GuKwZFHvt3YJqbNxrq9M8j+"; protocol="application/pgp-signature"
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1347322957-25260-13-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1347322957-25260-14-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: dm-devel.ids
 
---Sig_/RDdTm0fG.7iEMRmf1C_a4VQ
+--Sig_/GuKwZFHvt3YJqbNxrq9M8j+
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 10 Sep 2012 17:22:23 -0700 Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+On Mon, 10 Sep 2012 17:22:24 -0700 Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 wrote:
 
-> I couldn't figure out what sbio->bi_end_io in process_checks() was
-> supposed to be, so I took the easy way out.
-
-Almost.
-You save 'sbio->bi_end_io' to 'bi_end_io', then do nothing with it...
-
-A little way above the 'fixup the bio for reuse' comment you'll find:
-
-		struct bio *sbio =3D r1_bio->bios[i];
-....
-		if (r1_bio->bios[i]->bi_end_io !=3D end_sync_read)
-			continue;
-
-which implies that if we don't 'continue', then sbio->bi_end_io =3D=3D
-end_sync_read.
-
-So I suspect you want to add
-    sbio->bi_end_io =3D end_sync_read;
-somewhere after the 'bio_reset()'.
-
-If you happened to also fix that 'if' that I quoted so that it reads:
-
-     if (sbio->bi_end_io !=3D end_sync_read)
-           continue;
-
-I wouldn't complain at all :-)
-
-Thanks,
-NeilBrown
-
-
+> Had to shuffle the code around a bit (where bi_rw and bi_end_io were
+> set), but shouldn't really be anything tricky here
 >=20
 > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 > CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
 > ---
->  drivers/md/raid1.c | 22 +++++-----------------
->  1 file changed, 5 insertions(+), 17 deletions(-)
+>  drivers/md/raid5.c | 28 ++++++++++++++--------------
+>  1 file changed, 14 insertions(+), 14 deletions(-)
 >=20
-> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-> index ee85154..bd3e3b9 100644
-> --- a/drivers/md/raid1.c
-> +++ b/drivers/md/raid1.c
-> @@ -1835,6 +1835,7 @@ static int process_checks(struct r1bio *r1_bio)
->  	int primary;
->  	int i;
->  	int vcnt;
-> +	bio_end_io_t *bi_end_io;
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index 7c19dbe..ebe43f7 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -561,14 +561,6 @@ static void ops_run_io(struct stripe_head *sh, struc=
+t stripe_head_state *s)
+>  		bi =3D &sh->dev[i].req;
+>  		rbi =3D &sh->dev[i].rreq; /* For writing to replacement */
 > =20
->  	for (primary =3D 0; primary < conf->raid_disks * 2; primary++)
->  		if (r1_bio->bios[primary]->bi_end_io =3D=3D end_sync_read &&
-> @@ -1876,13 +1877,11 @@ static int process_checks(struct r1bio *r1_bio)
->  			continue;
->  		}
->  		/* fixup the bio for reuse */
-> +		bi_end_io =3D sbio->bi_end_io;
-> +		bio_reset(sbio);
-> +
->  		sbio->bi_vcnt =3D vcnt;
->  		sbio->bi_size =3D r1_bio->sectors << 9;
-> -		sbio->bi_idx =3D 0;
-> -		sbio->bi_phys_segments =3D 0;
-> -		sbio->bi_flags &=3D ~(BIO_POOL_MASK - 1);
-> -		sbio->bi_flags |=3D 1 << BIO_UPTODATE;
-> -		sbio->bi_next =3D NULL;
->  		sbio->bi_sector =3D r1_bio->sector +
->  			conf->mirrors[i].rdev->data_offset;
->  		sbio->bi_bdev =3D conf->mirrors[i].rdev->bdev;
-> @@ -2426,18 +2425,7 @@ static sector_t sync_request(struct mddev *mddev, =
-sector_t sector_nr, int *skipp
->  	for (i =3D 0; i < conf->raid_disks * 2; i++) {
->  		struct md_rdev *rdev;
->  		bio =3D r1_bio->bios[i];
+> -		bi->bi_rw =3D rw;
+> -		rbi->bi_rw =3D rw;
+> -		if (rw & WRITE) {
+> -			bi->bi_end_io =3D raid5_end_write_request;
+> -			rbi->bi_end_io =3D raid5_end_write_request;
+> -		} else
+> -			bi->bi_end_io =3D raid5_end_read_request;
 > -
-> -		/* take from bio_init */
-> -		bio->bi_next =3D NULL;
-> -		bio->bi_flags &=3D ~(BIO_POOL_MASK-1);
-> -		bio->bi_flags |=3D 1 << BIO_UPTODATE;
-> -		bio->bi_rw =3D READ;
-> -		bio->bi_vcnt =3D 0;
-> -		bio->bi_idx =3D 0;
-> -		bio->bi_phys_segments =3D 0;
-> -		bio->bi_size =3D 0;
-> -		bio->bi_end_io =3D NULL;
-> -		bio->bi_private =3D NULL;
-> +		bio_reset(bio);
+>  		rcu_read_lock();
+>  		rrdev =3D rcu_dereference(conf->disks[i].replacement);
+>  		smp_mb(); /* Ensure that if rrdev is NULL, rdev won't be */
+> @@ -643,7 +635,14 @@ static void ops_run_io(struct stripe_head *sh, struc=
+t stripe_head_state *s)
 > =20
->  		rdev =3D rcu_dereference(conf->mirrors[i].rdev);
->  		if (rdev =3D=3D NULL ||
+>  			set_bit(STRIPE_IO_STARTED, &sh->state);
+> =20
+> +			bio_reset(bi);
+>  			bi->bi_bdev =3D rdev->bdev;
+> +			bi->bi_rw =3D rw;
+> +			bi->bi_end_io =3D (rw & WRITE)
+> +				? raid5_end_write_request
+> +				: raid5_end_read_request;
+> +			bi->bi_private =3D sh;
+> +
+>  			pr_debug("%s: for %llu schedule op %ld on disc %d\n",
+>  				__func__, (unsigned long long)sh->sector,
+>  				bi->bi_rw, i);
+> @@ -657,12 +656,9 @@ static void ops_run_io(struct stripe_head *sh, struc=
+t stripe_head_state *s)
+>  			if (test_bit(R5_ReadNoMerge, &sh->dev[i].flags))
+>  				bi->bi_rw |=3D REQ_FLUSH;
+> =20
+> -			bi->bi_flags =3D 1 << BIO_UPTODATE;
+> -			bi->bi_idx =3D 0;
+>  			bi->bi_io_vec[0].bv_len =3D STRIPE_SIZE;
+>  			bi->bi_io_vec[0].bv_offset =3D 0;
+>  			bi->bi_size =3D STRIPE_SIZE;
+> -			bi->bi_next =3D NULL;
+>  			if (rrdev)
+>  				set_bit(R5_DOUBLE_LOCKED, &sh->dev[i].flags);
+>  			generic_make_request(bi);
+> @@ -674,7 +670,14 @@ static void ops_run_io(struct stripe_head *sh, struc=
+t stripe_head_state *s)
+> =20
+>  			set_bit(STRIPE_IO_STARTED, &sh->state);
+> =20
+> +			bio_reset(rbi);
+>  			rbi->bi_bdev =3D rrdev->bdev;
+> +			rbi->bi_rw =3D rw;
+> +			rbi->bi_end_io =3D (rw & WRITE)
+> +				? raid5_end_write_request
+> +				: raid5_end_read_request;
+
+'rbi->bi_end_io' can only ever be raid5_end_write_request.  We only get here
+on a write.
+I'd be OK with=20
+    BUG_ON(!(rw & WRITE));
+but I don't want the condition in the assignment.
+
+The rest looks quite sane.
+
+Thanks
+NeilBrown
 
 
---Sig_/RDdTm0fG.7iEMRmf1C_a4VQ
+--Sig_/GuKwZFHvt3YJqbNxrq9M8j+
 Content-Type: application/pgp-signature; name=signature.asc
 Content-Disposition: attachment; filename=signature.asc
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2.0.18 (GNU/Linux)
 
-iQIVAwUBUE7FITnsnt1WYoG5AQL2gA//cp6Q4m70OasVsD53jaT/MGMgFAHBxrfX
-YGnMtHmiFOG+sTo8h7uXPWOo9N1kGVFgWnWLOmTCghn2bXU4fGmIO2k4WaQF9tvb
-m4AA3JUFpP4Su80iFYb87JWF9gs8y/Yf9Ycbip+6QyF+MocltD7NLGUbOaRj2Ldu
-sNRwlUYtizTznQE3d/x6sxQqo+8XqHjXRx9gHip77PVc261lAXOl9rKbX6aNfNNk
-A+K2QTgh8DI+M08M+lozY8/675msxVoFq1LXjz3yFPRN0HPkazYUKkMXOForJDH+
-vi6VpCcQymTty5bwSvGH3zldk3ZvXbegkWu2PggeezEyVAROzxPZO4o7mqu4jD0k
-Vy2B8m0/lVfyYd9rF1sk/6DcwCBph0qE0LxsbYMBdlAgMswQ8idUnlDIC5Y+u3ww
-n/E5OzUaMtFlWLJLGDmr5vFs7b1GhfhxM9jgugKXV+yb4SnL0leGW0LSTUW8Nuo/
-WGOVf0LpoUwfPAOhYJtt405xPIA5wV0j0zLR8wgS8kbSYI8lDCNqtOiG3v1v7+Sd
-zHMLzkLnLncU9EJVcMvxNDdxm5q3bmDctoitwERCipiVgmAxEVKhy6rcczfGk+cK
-7ZUQ5xJ6rnHIHWOi54vQLaWtm0OWTOpSArHE7TJMMldu0cXCInuTvll/HxvuK/y9
-Fkgz4mVJ7Ic=
-=/+mb
+iQIVAwUBUE7GHjnsnt1WYoG5AQL6kBAAmgyeYyjUqOlRvWLVaXtHo9arv6VWhlsf
+rfEj057kWkSCOAoIrg8VCXnlzAxJtb5SDDS8QGHlx1Y1m9uLBPNN0osUgnhTWAO7
+AqH4LypQ/uqwk4JcSd5p+dnGyXizr7oRlPNp1DrIlbnlpqBa0yBdLO+qljfcMVID
+Dn5vwK/1XwIPfuPhpsjtse/GgFPUTmVcBSQcrP03uaiYqgpO4EJgLTmAju1WYnMS
+LcO4Vsd+TfqKz3IjoBPPuom0cm2tX116TWIkI7M4TR4iircph+LkBjqpysXm4VVO
+WrDY0vyqSFyo0jQJtd3jrfV8l83m5/D6Y59wvbjbovCcnwJucNzjsI6BeVjgg9PB
+xmsSIYlsxnQuxXAjPkfR9bADnat40clp/hY8ZIrmEugS3fcTa9qmqKF9a28RhNut
+4ft6pt0q+wLOjAJ9JhHgbKwgRumxQ/4jORlieDO2LVYHk9oQ+JonqDCnF3q1ZAo1
+c/HxFAy5ARu9Fz28O+bPQGJ14fvsG8NhQ+KKqmIKGBJa0DyScwCreLZdMeO4uO0E
+8gmaRImIkKvr3V7H1AucTYdW4n96ZPPC1Tzqx6Bu+sUv2k5ipDCiuTfstCfLWWo5
+obLM03El8IjYSNcrB3j1+oiGXPz6AuCKaJqx9GpznhmnyHu5dOW8sHSyTEpSuuNn
+5SwE7qRS/Q0=
+=vViI
 -----END PGP SIGNATURE-----
 
---Sig_/RDdTm0fG.7iEMRmf1C_a4VQ--
+--Sig_/GuKwZFHvt3YJqbNxrq9M8j+--
