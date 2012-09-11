@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 13/26] raid5: use bio_reset()
-Date: Mon, 10 Sep 2012 17:22:24 -0700
-Message-ID: <1347322957-25260-14-git-send-email-koverstreet@google.com>
+Subject: [PATCH v2 07/26] block: Don't use bi_idx in bio_split() or require it to be 0
+Date: Mon, 10 Sep 2012 17:22:18 -0700
+Message-ID: <1347322957-25260-8-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet@google.com>
@@ -10,90 +10,108 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, neilb@suse.de
 List-Id: dm-devel.ids
 
-Had to shuffle the code around a bit (where bi_rw and bi_end_io were
-set), but shouldn't really be anything tricky here
+Prep work for immutable bio_vecs/efficient bio splitting: they require
+auditing and removing most uses of bi_idx.
+
+So here we convert bio_split() to respect the current value of bi_idx
+and use the bio_iovec() macro, instead of assuming bi_idx will be 0.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: NeilBrown <neilb@suse.de>
 ---
- drivers/md/raid5.c | 28 ++++++++++++++--------------
- 1 file changed, 14 insertions(+), 14 deletions(-)
+ drivers/block/drbd/drbd_req.c | 6 +++---
+ drivers/md/raid0.c            | 3 +--
+ drivers/md/raid10.c           | 3 +--
+ fs/bio-integrity.c            | 4 ++--
+ fs/bio.c                      | 7 +++----
+ 5 files changed, 10 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 7c19dbe..ebe43f7 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -561,14 +561,6 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
- 		bi = &sh->dev[i].req;
- 		rbi = &sh->dev[i].rreq; /* For writing to replacement */
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index af69a96..57eb253 100644
+--- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -1155,11 +1155,11 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
  
--		bi->bi_rw = rw;
--		rbi->bi_rw = rw;
--		if (rw & WRITE) {
--			bi->bi_end_io = raid5_end_write_request;
--			rbi->bi_end_io = raid5_end_write_request;
--		} else
--			bi->bi_end_io = raid5_end_read_request;
--
- 		rcu_read_lock();
- 		rrdev = rcu_dereference(conf->disks[i].replacement);
- 		smp_mb(); /* Ensure that if rrdev is NULL, rdev won't be */
-@@ -643,7 +635,14 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
+ 	/* can this bio be split generically?
+ 	 * Maybe add our own split-arbitrary-bios function. */
+-	if (bio->bi_vcnt != 1 || bio->bi_idx != 0 || bio->bi_size > DRBD_MAX_BIO_SIZE) {
++	if (bio_segments(bio) != 1 || bio->bi_size > DRBD_MAX_BIO_SIZE) {
+ 		/* rather error out here than BUG in bio_split */
+ 		dev_err(DEV, "bio would need to, but cannot, be split: "
+-		    "(vcnt=%u,idx=%u,size=%u,sector=%llu)\n",
+-		    bio->bi_vcnt, bio->bi_idx, bio->bi_size,
++		    "(segments=%u,size=%u,sector=%llu)\n",
++		    bio_segments(bio), bio->bi_size,
+ 		    (unsigned long long)bio->bi_sector);
+ 		bio_endio(bio, -EINVAL);
+ 	} else {
+diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+index 387cb89..0587450 100644
+--- a/drivers/md/raid0.c
++++ b/drivers/md/raid0.c
+@@ -509,8 +509,7 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
+ 		sector_t sector = bio->bi_sector;
+ 		struct bio_pair *bp;
+ 		/* Sanity check -- queue functions should prevent this happening */
+-		if (bio->bi_vcnt != 1 ||
+-		    bio->bi_idx != 0)
++		if (bio_segments(bio) != 1)
+ 			goto bad_map;
+ 		/* This is a one page bio that upper layers
+ 		 * refuse to split for us, so we need to split it.
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 9715aaf..bbd08f5 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -1081,8 +1081,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
+ 			 || conf->prev.near_copies < conf->prev.raid_disks))) {
+ 		struct bio_pair *bp;
+ 		/* Sanity check -- queue functions should prevent this happening */
+-		if (bio->bi_vcnt != 1 ||
+-		    bio->bi_idx != 0)
++		if (bio_segments(bio) != 1)
+ 			goto bad_map;
+ 		/* This is a one page bio that upper layers
+ 		 * refuse to split for us, so we need to split it.
+diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
+index 1d64f7f..e8555a5 100644
+--- a/fs/bio-integrity.c
++++ b/fs/bio-integrity.c
+@@ -657,8 +657,8 @@ void bio_integrity_split(struct bio *bio, struct bio_pair *bp, int sectors)
+ 	bp->bio1.bi_integrity = &bp->bip1;
+ 	bp->bio2.bi_integrity = &bp->bip2;
  
- 			set_bit(STRIPE_IO_STARTED, &sh->state);
+-	bp->iv1 = bip->bip_vec[0];
+-	bp->iv2 = bip->bip_vec[0];
++	bp->iv1 = bip->bip_vec[bip->bip_idx];
++	bp->iv2 = bip->bip_vec[bip->bip_idx];
  
-+			bio_reset(bi);
- 			bi->bi_bdev = rdev->bdev;
-+			bi->bi_rw = rw;
-+			bi->bi_end_io = (rw & WRITE)
-+				? raid5_end_write_request
-+				: raid5_end_read_request;
-+			bi->bi_private = sh;
-+
- 			pr_debug("%s: for %llu schedule op %ld on disc %d\n",
- 				__func__, (unsigned long long)sh->sector,
- 				bi->bi_rw, i);
-@@ -657,12 +656,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
- 			if (test_bit(R5_ReadNoMerge, &sh->dev[i].flags))
- 				bi->bi_rw |= REQ_FLUSH;
+ 	bp->bip1.bip_vec = &bp->iv1;
+ 	bp->bip2.bip_vec = &bp->iv2;
+diff --git a/fs/bio.c b/fs/bio.c
+index 07587c0..addeac2 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -1616,8 +1616,7 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
+ 	trace_block_split(bdev_get_queue(bi->bi_bdev), bi,
+ 				bi->bi_sector + first_sectors);
  
--			bi->bi_flags = 1 << BIO_UPTODATE;
--			bi->bi_idx = 0;
- 			bi->bi_io_vec[0].bv_len = STRIPE_SIZE;
- 			bi->bi_io_vec[0].bv_offset = 0;
- 			bi->bi_size = STRIPE_SIZE;
--			bi->bi_next = NULL;
- 			if (rrdev)
- 				set_bit(R5_DOUBLE_LOCKED, &sh->dev[i].flags);
- 			generic_make_request(bi);
-@@ -674,7 +670,14 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
+-	BUG_ON(bi->bi_vcnt != 1);
+-	BUG_ON(bi->bi_idx != 0);
++	BUG_ON(bio_segments(bi) != 1);
+ 	atomic_set(&bp->cnt, 3);
+ 	bp->error = 0;
+ 	bp->bio1 = *bi;
+@@ -1626,8 +1625,8 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
+ 	bp->bio2.bi_size -= first_sectors << 9;
+ 	bp->bio1.bi_size = first_sectors << 9;
  
- 			set_bit(STRIPE_IO_STARTED, &sh->state);
- 
-+			bio_reset(rbi);
- 			rbi->bi_bdev = rrdev->bdev;
-+			rbi->bi_rw = rw;
-+			rbi->bi_end_io = (rw & WRITE)
-+				? raid5_end_write_request
-+				: raid5_end_read_request;
-+			rbi->bi_private = sh;
-+
- 			pr_debug("%s: for %llu schedule op %ld on "
- 				 "replacement disc %d\n",
- 				__func__, (unsigned long long)sh->sector,
-@@ -686,12 +689,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
- 			else
- 				rbi->bi_sector = (sh->sector
- 						  + rrdev->data_offset);
--			rbi->bi_flags = 1 << BIO_UPTODATE;
--			rbi->bi_idx = 0;
- 			rbi->bi_io_vec[0].bv_len = STRIPE_SIZE;
- 			rbi->bi_io_vec[0].bv_offset = 0;
- 			rbi->bi_size = STRIPE_SIZE;
--			rbi->bi_next = NULL;
- 			generic_make_request(rbi);
- 		}
- 		if (!rdev && !rrdev) {
+-	bp->bv1 = bi->bi_io_vec[0];
+-	bp->bv2 = bi->bi_io_vec[0];
++	bp->bv1 = *bio_iovec(bi);
++	bp->bv2 = *bio_iovec(bi);
+ 	bp->bv2.bv_offset += first_sectors << 9;
+ 	bp->bv2.bv_len -= first_sectors << 9;
+ 	bp->bv1.bv_len = first_sectors << 9;
 -- 
 1.7.12
