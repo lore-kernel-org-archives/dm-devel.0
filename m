@@ -1,8 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 10/26] block: Add submit_bio_wait(),
-	remove from md
-Date: Mon, 10 Sep 2012 17:22:21 -0700
-Message-ID: <1347322957-25260-11-git-send-email-koverstreet@google.com>
+Subject: [PATCH v2 02/26] block: Add bio_advance()
+Date: Mon, 10 Sep 2012 17:22:13 -0700
+Message-ID: <1347322957-25260-3-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,139 +22,82 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: axboe@kernel.dk, tj@kernel.org, Kent Overstreet <koverstreet@google.com>
 List-Id: dm-devel.ids
 
-Random cleanup - this code was duplicated and it's not really specific
-to md.
+This is prep work for immutable bio vecs; we first want to centralize
+where bvecs are modified.
 
-Also added the ability to return the actual error code.
+Next two patches convert some existing code to use this function.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: NeilBrown <neilb@suse.de>
 ---
- drivers/md/raid1.c  | 19 -------------------
- drivers/md/raid10.c | 19 -------------------
- fs/bio.c            | 36 ++++++++++++++++++++++++++++++++++++
- include/linux/bio.h |  1 +
- 4 files changed, 37 insertions(+), 38 deletions(-)
+ fs/bio.c            | 41 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  2 ++
+ 2 files changed, 43 insertions(+)
 
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 2488440..ee85154 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -2048,25 +2048,6 @@ static void fix_read_error(struct r1conf *conf, int read_disk,
- 	}
- }
- 
--static void bi_complete(struct bio *bio, int error)
--{
--	complete((struct completion *)bio->bi_private);
--}
--
--static int submit_bio_wait(int rw, struct bio *bio)
--{
--	struct completion event;
--	rw |= REQ_SYNC;
--
--	init_completion(&event);
--	bio->bi_private = &event;
--	bio->bi_end_io = bi_complete;
--	submit_bio(rw, bio);
--	wait_for_completion(&event);
--
--	return test_bit(BIO_UPTODATE, &bio->bi_flags);
--}
--
- static int narrow_write_error(struct r1bio *r1_bio, int i)
- {
- 	struct mddev *mddev = r1_bio->mddev;
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 6d06d83..f001c1b 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -2410,25 +2410,6 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
- 	}
- }
- 
--static void bi_complete(struct bio *bio, int error)
--{
--	complete((struct completion *)bio->bi_private);
--}
--
--static int submit_bio_wait(int rw, struct bio *bio)
--{
--	struct completion event;
--	rw |= REQ_SYNC;
--
--	init_completion(&event);
--	bio->bi_private = &event;
--	bio->bi_end_io = bi_complete;
--	submit_bio(rw, bio);
--	wait_for_completion(&event);
--
--	return test_bit(BIO_UPTODATE, &bio->bi_flags);
--}
--
- static int narrow_write_error(struct r10bio *r10_bio, int i)
- {
- 	struct bio *bio = r10_bio->master_bio;
 diff --git a/fs/bio.c b/fs/bio.c
-index addeac2..1342a16 100644
+index 4783e31..07587c0 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -750,6 +750,42 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
+@@ -750,6 +750,47 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
  }
  EXPORT_SYMBOL(bio_add_page);
  
-+struct submit_bio_ret {
-+	struct completion event;
-+	int error;
-+};
-+
-+static void submit_bio_wait_endio(struct bio *bio, int error)
-+{
-+	struct submit_bio_ret *ret = bio->bi_private;
-+
-+	ret->error = error;
-+	complete(&ret->event);
-+}
-+
 +/**
-+ * submit_bio_wait - submit a bio, and wait until it completes
-+ * @rw: whether to %READ or %WRITE, or maybe to %READA (read ahead)
-+ * @bio: The &struct bio which describes the I/O
++ * bio_advance - increment/complete a bio by some number of bytes
++ * @bio:	bio to advance
++ * @bytes:	number of bytes to complete
 + *
-+ * Simple wrapper around submit_bio(). Returns 0 on success, or the error from
-+ * bio_endio() on failure.
++ * This updates bi_sector, bi_size and bi_idx; if the number of bytes to
++ * complete doesn't align with a bvec boundary, then bv_len and bv_offset will
++ * be updated on the last bvec as well.
++ *
++ * @bio will then represent the remaining, uncompleted portion of the io.
 + */
-+int submit_bio_wait(int rw, struct bio *bio)
++void bio_advance(struct bio *bio, unsigned bytes)
 +{
-+	struct submit_bio_ret ret;
++	if (bio_integrity(bio))
++		bio_integrity_advance(bio, bytes);
 +
-+	rw |= REQ_SYNC;
-+	init_completion(&ret.event);
-+	bio->bi_private = &ret;
-+	bio->bi_end_io = submit_bio_wait_endio;
-+	submit_bio(rw, bio);
-+	wait_for_completion(&ret.event);
++	bio->bi_sector += bytes >> 0;
++	bio->bi_size -= bytes;
 +
-+	return ret.error;
++	if (!bio->bi_size)
++		return;
++
++	while (bytes) {
++		if (unlikely(bio->bi_idx >= bio->bi_vcnt)) {
++			printk(KERN_ERR "%s: bio idx %d >= vcnt %d\n",
++			       __func__, bio->bi_idx, bio->bi_vcnt);
++			break;
++		}
++
++		if (bytes >= bio_iovec(bio)->bv_len) {
++			bytes -= bio_iovec(bio)->bv_len;
++			bio->bi_idx++;
++		} else {
++			bio_iovec(bio)->bv_len -= bytes;
++			bio_iovec(bio)->bv_offset += bytes;
++			bytes = 0;
++		}
++	}
 +}
-+EXPORT_SYMBOL(submit_bio_wait);
++EXPORT_SYMBOL(bio_advance);
 +
- /**
-  * bio_advance - increment/complete a bio by some number of bytes
-  * @bio:	bio to advance
+ struct bio_map_data {
+ 	struct bio_vec *iovecs;
+ 	struct sg_iovec *sgvecs;
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 92bff0e..949c48a 100644
+index 7873465..6763cdf 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -249,6 +249,7 @@ extern void bio_endio(struct bio *, int);
+@@ -248,6 +248,8 @@ extern void bio_endio(struct bio *, int);
  struct request_queue;
  extern int bio_phys_segments(struct request_queue *, struct bio *);
  
-+extern int submit_bio_wait(int rw, struct bio *bio);
- void bio_advance(struct bio *, unsigned);
- 
++void bio_advance(struct bio *, unsigned);
++
  extern void bio_init(struct bio *);
+ extern void bio_reset(struct bio *);
+ 
 -- 
 1.7.12
