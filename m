@@ -1,26 +1,103 @@
-From: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH 2/2] block: Avoid deadlocks with bio
-	allocation by stacking drivers
-Date: Tue, 11 Sep 2012 00:45:34 +0100
-Message-ID: <20120910234534.GD10477@agk-dp.fab.redhat.com>
-References: <20120910202435.GG16360@google.com> <20120910204010.GA32310@google.com> <20120910213349.GH16360@google.com> <20120910213710.GA7677@google.com> <20120910215633.GA19739@google.com> <20120910220910.GB7677@google.com> <20120910225057.GA10477@agk-dp.fab.redhat.com> <CAOS58YO5puV2iPhwe0vbyEydPnR=eWPStNRm=xEpMeo-TMHCaw@mail.gmail.com> <20120910230917.GB10477@agk-dp.fab.redhat.com> <20120910233502.GH7677@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 00/26] Prep work for immutable bio vecs
+Date: Mon, 10 Sep 2012 17:22:11 -0700
+Message-ID: <1347322957-25260-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120910233502.GH7677-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Sep 10, 2012 at 04:35:02PM -0700, Tejun Heo wrote:
-> debug.  Would it be difficult to convert dm drivers to collect size
-> requirements and use front-pad for all per-bio data?
- 
-I can't give a quick answer because a single bio may require a variable
-number (depending on the bio content) of (sequential) mempool_allocs from the
-same mempool to complete its processing, so we do have to audit all this very
-carefully to see what can/can't be pulled out.
+Random assortment of refactoring and trivial cleanups;
 
-Alasdair
+Immutable bio vecs and efficient bio splitting require auditing and
+removing pretty much all bi_idx uses, among other things.
+
+The reason is that with immutable bio vecs we can't use the bvec array
+directly; if we have a partially completed bvec, that'll be indicated
+with a field in struct bvec_iter (which gets embedded in struct bio) -
+bi_bvec_done.
+
+bio_for_each_segments() will handle this transparently, so code needs to
+be converted to use it or some other generic accessor.
+
+Also, bio splitting means that when a driver gets a bio, bi_idx and
+bi_bvec_done may both be nonzero. Again, just need to use generic
+accessors.
+
+v2: Patch series now has all the prep work to be done before abstracting
+out the bio iterator, I think.
+
+Kent Overstreet (26):
+  block: Convert integrity to bvec_alloc_bs(), and a bugfix
+  block: Add bio_advance()
+  block: Refactor blk_update_request()
+  md: Convert md_trim_bio() to use bio_advance()
+  block: Add bio_end()
+  block: Use bio_sectors() more consistently
+  block: Don't use bi_idx in bio_split() or require it to be 0
+  block: Remove bi_idx references
+  block: Remove some unnecessary bi_vcnt usage
+  block: Add submit_bio_wait(), remove from md
+  raid10: Use bio_reset()
+  raid1: use bio_reset()
+  raid5: use bio_reset()
+  raid1: Refactor narrow_write_error() to not use bi_idx
+  block: Add bio_copy_data()
+  pktcdvd: use bio_copy_data()
+  pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
+  raid1: use bio_copy_data()
+  bounce: Refactor __blk_queue_bounce to not use bi_io_vec
+  block: Add bio_for_each_segment_all()
+  block: Convert some code to bio_for_each_segment_all()
+  block: Add bio_alloc_pages()
+  raid1: use bio_alloc_pages()
+  block: Add an explicit bio flag for bios that own their bvec
+  bio-integrity: Add explicit field for owner of bip_buf
+  block: Add BIO_SUBMITTED flag, kill BIO_CLONED
+
+ block/blk-core.c                         |  88 +++---------
+ block/cfq-iosched.c                      |   7 +-
+ block/deadline-iosched.c                 |   2 +-
+ drivers/block/aoe/aoeblk.c               |   2 +-
+ drivers/block/aoe/aoecmd.c               |   2 +-
+ drivers/block/brd.c                      |   3 +-
+ drivers/block/drbd/drbd_req.c            |   8 +-
+ drivers/block/floppy.c                   |   1 -
+ drivers/block/pktcdvd.c                  | 102 ++++----------
+ drivers/block/ps3vram.c                  |   2 +-
+ drivers/md/dm-crypt.c                    |   3 +-
+ drivers/md/dm-raid1.c                    |   2 +-
+ drivers/md/dm-stripe.c                   |   2 +-
+ drivers/md/dm-verity.c                   |   4 +-
+ drivers/md/dm.c                          |   1 -
+ drivers/md/faulty.c                      |   6 +-
+ drivers/md/linear.c                      |   3 +-
+ drivers/md/md.c                          |  19 +--
+ drivers/md/raid0.c                       |   9 +-
+ drivers/md/raid1.c                       | 131 ++++++------------
+ drivers/md/raid10.c                      |  78 +++--------
+ drivers/md/raid5.c                       |  50 +++----
+ drivers/message/fusion/mptsas.c          |   6 +-
+ drivers/s390/block/dcssblk.c             |   3 +-
+ drivers/scsi/libsas/sas_expander.c       |   6 +-
+ drivers/scsi/mpt2sas/mpt2sas_transport.c |  10 +-
+ fs/bio-integrity.c                       | 134 ++++++------------
+ fs/bio.c                                 | 226 +++++++++++++++++++++++++++----
+ fs/btrfs/extent_io.c                     |   3 +-
+ fs/buffer.c                              |   1 -
+ fs/direct-io.c                           |   8 +-
+ fs/exofs/ore.c                           |   2 +-
+ fs/exofs/ore_raid.c                      |   2 +-
+ fs/gfs2/lops.c                           |   2 +-
+ fs/jfs/jfs_logmgr.c                      |   2 -
+ fs/logfs/dev_bdev.c                      |   5 -
+ include/linux/bio.h                      |  34 +++--
+ include/linux/blk_types.h                |   3 +-
+ include/trace/events/block.h             |  10 +-
+ mm/bounce.c                              |  75 +++-------
+ mm/page_io.c                             |   1 -
+ 41 files changed, 471 insertions(+), 587 deletions(-)
+
+-- 
+1.7.12
