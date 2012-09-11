@@ -1,79 +1,69 @@
-From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH v2 00/26] Prep work for immutable bio vecs
-Date: Tue, 11 Sep 2012 15:22:56 +1000
-Message-ID: <20120911152256.74cb184f@notabene.brown>
-References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
+From: Jim Ramsay <jim_ramsay@dell.com>
+Subject: Re: [PATCH] reworked dm-switch target
+Date: Tue, 11 Sep 2012 09:07:02 -0400
+Message-ID: <20120911130702.GA12315@freewill.lab.equallogic.com>
+References: <Pine.LNX.4.64.1208151832280.8587@file.rdu.redhat.com>
+	<20120816070955.GA32526@agk-dp.fab.redhat.com>
+	<C3B343EE19BD2940B6AEC40C9BE99426094C0C@AUSX10MPS302.AMER.DELL.COM>
+	<Pine.LNX.4.64.1208201429110.18279@file.rdu.redhat.com>
+	<20120821163329.GA21395@freewill.lab.equallogic.com>
+	<Pine.LNX.4.64.1208212026500.1653@file.rdu.redhat.com>
+	<20120824181444.GC27819@freewill.lab.equallogic.com>
+	<Pine.LNX.4.64.1208292038560.17228@file.rdu.redhat.com>
+	<20120907195851.GA30209@freewill.lab.equallogic.com>
+	<Pine.LNX.4.64.1209081219070.13731@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/6vrj0jrTvFhDGbTB1jVmyqi"; protocol="application/pgp-signature"
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1209081219070.13731@file.rdu.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Jason_Shamberger@dell.com, agk@redhat.com, Kevin_OKelley@dell.com
 List-Id: dm-devel.ids
 
---Sig_/6vrj0jrTvFhDGbTB1jVmyqi
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
 
-On Mon, 10 Sep 2012 17:22:11 -0700 Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-wrote:
+On Sat, Sep 08, 2012 at 12:35:22PM -0400, Mikulas Patocka wrote:
+> Your changes are ok, it could be included in the kernel.
+> 
+> Regarding flushes ... could you please explain how write-back caching 
+> works in your design?
 
-> Random assortment of refactoring and trivial cleanups;
->=20
-> Immutable bio vecs and efficient bio splitting require auditing and
-> removing pretty much all bi_idx uses, among other things.
->=20
-> The reason is that with immutable bio vecs we can't use the bvec array
-> directly; if we have a partially completed bvec, that'll be indicated
-> with a field in struct bvec_iter (which gets embedded in struct bio) -
-> bi_bvec_done.
->=20
-> bio_for_each_segments() will handle this transparently, so code needs to
-> be converted to use it or some other generic accessor.
->=20
-> Also, bio splitting means that when a driver gets a bio, bi_idx and
-> bi_bvec_done may both be nonzero. Again, just need to use generic
-> accessors.
->=20
-> v2: Patch series now has all the prep work to be done before abstracting
-> out the bio iterator, I think.
+We are not actually using write-back caching in our design at all, but
+assumed that for a general-purpose DM device like dm-switch, some
+underlying storage may rely on REQ_FLUSH to ensure proper data
+synchronization, so the switch should do the right thing when required.
+The code is modeled on dm-stripe.
 
-Hi Kent,
- this looks pretty good to me.  I've only really looked closely at the md
- bits, but they all seem to make sense (with the minor issues that I report=
-ed
- separately).
+> Is there some write-back cache in the host adapter?
 
- If/when there is another posting I'll try to allocate some time to testing
- them and looking more closely.
+No, there is not at this time.
 
-thanks!
+> Is there some write-back cache in the individual storage nodes? (i.e. does 
+> the node signal end of I/O before it finishes writing data to the disk) 
 
-NeilBrown
+No, there is not at this time.  The iSCSI-backed SD devices we are
+ultimately using do not advertise any write-back cache ('sdparm
+--get=WCE' returns 0).
 
+> Another thing - please resend your code with "Signed-off-by". Read the 
+> meaning of "Signed-off-by" in Documentation/SubmittingPatches, agree to 
+> the terms and append "Signed-off-by: Jim Ramsay <jim_ramsay@dell.com>" to 
+> the code. It is a legal requirement, so that you certify that the code is 
+> under the open source license and that you have the right to distribute 
+> the code.
 
---Sig_/6vrj0jrTvFhDGbTB1jVmyqi
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
+Will do shortly.  Thanks!
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
-
-iQIVAwUBUE7KsDnsnt1WYoG5AQLWtw//Z7btOAU20pywaejQ5GY7uxagQKVyIXYd
-3fnU399mkuAtqTcUyKkh6sZVyAoactue/9YtDLTSeNm+oJMLDpltH8+yaoT9cCsi
-TkGs72jtlJZs8Doh2Yl0esRWPEan6fb3VqPJAcwLUI0QU0PAive4sxneNiB5h5hp
-L9fbJvzyvV71AaasKT1f4S5MSXkBv8XNcEjrmYF9sx98UmOeCYo/PTfxNiR1y5YV
-6+zxEA8sMpLmgdr8uezV1OWn54/+5cW4qrsQVr5J00fDrhb3L/A98nYAhEfcWv63
-ayXnsv+InMliQkG6LQMOIiKVVNk6hdFnYzeYKQpdCRKvcJihIWIp81gT9ETdqbDS
-6aEZptdQ3naYeMUlEMQquEo3HekD/bO43MNRrMDyntn22kahzHwJDqgp0d1eFhSk
-fRcRUK/JD1+QZMP6ZlOoDY8gsGm6GmIAOc4/DdrxmPXI4I408p0whqPfPq2KcN/U
-QYMxRQMCrwGFrwetPVr6SLDzafYbtx/5owWnM3c+teuLgi/hhbF1goNYPVPD1ZQN
-gUjSGgpPJJwDT99jQxOFKa7u3rLq0NnzONYxOi2OH/h3AP2pBXnIN0vMjpPsLOyU
-kQ7MELW13JZcs1dEdPzFtatmPebJ674q+RtbXwUQYgcNhjURMxqvpt7K9AIZkgft
-npQP1Eh2T24=
-=TsPP
------END PGP SIGNATURE-----
-
---Sig_/6vrj0jrTvFhDGbTB1jVmyqi--
+-- 
+Jim Ramsay
