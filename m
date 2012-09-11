@@ -1,173 +1,139 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 20/26] block: Add bio_for_each_segment_all()
-Date: Mon, 10 Sep 2012 17:22:31 -0700
-Message-ID: <1347322957-25260-21-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 19/26] bounce: Refactor __blk_queue_bounce to not use bi_io_vec
+Date: Mon, 10 Sep 2012 17:22:30 -0700
+Message-ID: <1347322957-25260-20-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, neilb@suse.de
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-This is part of the immutable bvec prep work; bio_for_each_segment() is
-going to have a different implementation so these need to be split
-apart.
+A bunch of what __blk_queue_bounce() was doing was problematic for the
+immutable bvec work; this cleans that up and the code is quite a bit
+smaller, too.
 
-This change is also to better document the intent of code that's using
-it - bio_for_each_segment_all() is only legal to use for code that owns
-the bio.
+The __bio_for_each_segment() in copy_to_high_bio_irq() was changed
+because that one's looping over the original bio, not the bounce bio -
+since the bounce code doesn't own that bio the __ version wasn't
+correct.
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 ---
- drivers/md/raid1.c  |  2 +-
- fs/bio.c            | 12 ++++++------
- fs/exofs/ore.c      |  2 +-
- fs/exofs/ore_raid.c |  2 +-
- include/linux/bio.h | 16 +++++++++-------
- mm/bounce.c         |  2 +-
- 6 files changed, 19 insertions(+), 17 deletions(-)
+ mm/bounce.c | 73 ++++++++++++++++---------------------------------------------
+ 1 file changed, 19 insertions(+), 54 deletions(-)
 
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 6cd1fb2..ade95ac 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -1283,7 +1283,7 @@ read_again:
- 			 * know the original bi_idx, so we just free
- 			 * them all
- 			 */
--			__bio_for_each_segment(bvec, mbio, j, 0)
-+			bio_for_each_segment_all(bvec, mbio, j)
- 				bvec->bv_page = r1_bio->behind_bvecs[j].bv_page;
- 			if (test_bit(WriteMostly, &conf->mirrors[i].rdev->flags))
- 				atomic_inc(&r1_bio->behind_remaining);
-diff --git a/fs/bio.c b/fs/bio.c
-index 7fb9f4e..efdc437 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -959,7 +959,7 @@ static int __bio_copy_iov(struct bio *bio, struct bio_vec *iovecs,
- 	int iov_idx = 0;
- 	unsigned int iov_off = 0;
- 
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		char *bv_addr = page_address(bvec->bv_page);
- 		unsigned int bv_len = iovecs[i].bv_len;
- 
-@@ -1141,7 +1141,7 @@ struct bio *bio_copy_user_iov(struct request_queue *q,
- 	return bio;
- cleanup:
- 	if (!map_data)
--		bio_for_each_segment(bvec, bio, i)
-+		bio_for_each_segment_all(bvec, bio, i)
- 			__free_page(bvec->bv_page);
- 
- 	bio_put(bio);
-@@ -1355,7 +1355,7 @@ static void __bio_unmap_user(struct bio *bio)
- 	/*
- 	 * make sure we dirty pages we wrote to
- 	 */
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		if (bio_data_dir(bio) == READ)
- 			set_page_dirty_lock(bvec->bv_page);
- 
-@@ -1461,7 +1461,7 @@ static void bio_copy_kern_endio(struct bio *bio, int err)
- 	int i;
- 	char *p = bmd->sgvecs[0].iov_base;
- 
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		char *addr = page_address(bvec->bv_page);
- 		int len = bmd->iovecs[i].bv_len;
- 
-@@ -1501,7 +1501,7 @@ struct bio *bio_copy_kern(struct request_queue *q, void *data, unsigned int len,
- 	if (!reading) {
- 		void *p = data;
- 
--		bio_for_each_segment(bvec, bio, i) {
-+		bio_for_each_segment_all(bvec, bio, i) {
- 			char *addr = page_address(bvec->bv_page);
- 
- 			memcpy(addr, p, bvec->bv_len);
-@@ -1780,7 +1780,7 @@ sector_t bio_sector_offset(struct bio *bio, unsigned short index,
- 	if (index >= bio->bi_idx)
- 		index = bio->bi_vcnt - 1;
- 
--	__bio_for_each_segment(bv, bio, i, 0) {
-+	bio_for_each_segment_all(bv, bio, i) {
- 		if (i == index) {
- 			if (offset > bv->bv_offset)
- 				sectors += (offset - bv->bv_offset) / sector_sz;
-diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
-index f936cb5..b744228 100644
---- a/fs/exofs/ore.c
-+++ b/fs/exofs/ore.c
-@@ -401,7 +401,7 @@ static void _clear_bio(struct bio *bio)
- 	struct bio_vec *bv;
- 	unsigned i;
- 
--	__bio_for_each_segment(bv, bio, i, 0) {
-+	bio_for_each_segment_all(bv, bio, i) {
- 		unsigned this_count = bv->bv_len;
- 
- 		if (likely(PAGE_SIZE == this_count))
-diff --git a/fs/exofs/ore_raid.c b/fs/exofs/ore_raid.c
-index 5f376d1..4dec928 100644
---- a/fs/exofs/ore_raid.c
-+++ b/fs/exofs/ore_raid.c
-@@ -432,7 +432,7 @@ static void _mark_read4write_pages_uptodate(struct ore_io_state *ios, int ret)
- 		if (!bio)
- 			continue;
- 
--		__bio_for_each_segment(bv, bio, i, 0) {
-+		bio_for_each_segment_all(bv, bio, i) {
- 			struct page *page = bv->bv_page;
- 
- 			SetPageUptodate(page);
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 92015ce..b433ff8 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -137,16 +137,18 @@ static inline int bio_has_allocated_vec(struct bio *bio)
- #define bio_io_error(bio) bio_endio((bio), -EIO)
- 
- /*
-- * drivers should not use the __ version unless they _really_ want to
-- * run through the entire bio and not just pending pieces
-+ * drivers should _never_ use the all version - the bio may have been split
-+ * before it got to the driver and the driver won't own all of it
-  */
--#define __bio_for_each_segment(bvl, bio, i, start_idx)			\
--	for (bvl = bio_iovec_idx((bio), (start_idx)), i = (start_idx);	\
--	     i < (bio)->bi_vcnt;					\
--	     bvl++, i++)
-+#define bio_for_each_segment_all(bvl, bio, i)				\
-+	for (i = 0;							\
-+	     bvl = bio_iovec_idx((bio), (i)), i < (bio)->bi_vcnt;	\
-+	     i++)
- 
- #define bio_for_each_segment(bvl, bio, i)				\
--	__bio_for_each_segment(bvl, bio, i, (bio)->bi_idx)
-+	for (i = (bio)->bi_idx;						\
-+	     bvl = bio_iovec_idx((bio), (i)), i < (bio)->bi_vcnt;	\
-+	     i++)
- 
- /*
-  * get a reference to a bio, so it won't disappear. the intended use is
 diff --git a/mm/bounce.c b/mm/bounce.c
-index 3068300..89324e2 100644
+index 0420867..3068300 100644
 --- a/mm/bounce.c
 +++ b/mm/bounce.c
-@@ -134,7 +134,7 @@ static void bounce_end_io(struct bio *bio, mempool_t *pool, int err)
- 	/*
- 	 * free up bounce indirect pages used
- 	 */
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		org_vec = bio_orig->bi_io_vec + i;
- 		if (bvec->bv_page == org_vec->bv_page)
- 			continue;
+@@ -101,7 +101,7 @@ static void copy_to_high_bio_irq(struct bio *to, struct bio *from)
+ 	struct bio_vec *tovec, *fromvec;
+ 	int i;
+ 
+-	__bio_for_each_segment(tovec, to, i, 0) {
++	bio_for_each_segment(tovec, to, i) {
+ 		fromvec = from->bi_io_vec + i;
+ 
+ 		/*
+@@ -181,78 +181,43 @@ static void bounce_end_io_read_isa(struct bio *bio, int err)
+ static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
+ 			       mempool_t *pool)
+ {
+-	struct page *page;
+-	struct bio *bio = NULL;
+-	int i, rw = bio_data_dir(*bio_orig);
++	struct bio *bio;
++	int rw = bio_data_dir(*bio_orig);
+ 	struct bio_vec *to, *from;
++	unsigned i;
+ 
+-	bio_for_each_segment(from, *bio_orig, i) {
+-		page = from->bv_page;
++	bio_for_each_segment(from, *bio_orig, i)
++		if (page_to_pfn(from->bv_page) > queue_bounce_pfn(q))
++			goto bounce;
+ 
+-		/*
+-		 * is destination page below bounce pfn?
+-		 */
+-		if (page_to_pfn(page) <= queue_bounce_pfn(q))
+-			continue;
+-
+-		/*
+-		 * irk, bounce it
+-		 */
+-		if (!bio) {
+-			unsigned int cnt = (*bio_orig)->bi_vcnt;
++	return;
++bounce:
++	bio = bio_clone_bioset(*bio_orig, GFP_NOIO, fs_bio_set);
+ 
+-			bio = bio_alloc(GFP_NOIO, cnt);
+-			memset(bio->bi_io_vec, 0, cnt * sizeof(struct bio_vec));
+-		}
+-			
++	bio_for_each_segment(to, bio, i) {
++		struct page *page = to->bv_page;
+ 
+-		to = bio->bi_io_vec + i;
++		if (page_to_pfn(page) <= queue_bounce_pfn(q))
++			continue;
+ 
+-		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+-		to->bv_len = from->bv_len;
+-		to->bv_offset = from->bv_offset;
+ 		inc_zone_page_state(to->bv_page, NR_BOUNCE);
++		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+ 
+ 		if (rw == WRITE) {
+ 			char *vto, *vfrom;
+ 
+-			flush_dcache_page(from->bv_page);
++			flush_dcache_page(page);
++
+ 			vto = page_address(to->bv_page) + to->bv_offset;
+-			vfrom = kmap(from->bv_page) + from->bv_offset;
++			vfrom = kmap_atomic(page) + to->bv_offset;
+ 			memcpy(vto, vfrom, to->bv_len);
+-			kunmap(from->bv_page);
++			kunmap_atomic(vfrom);
+ 		}
+ 	}
+ 
+-	/*
+-	 * no pages bounced
+-	 */
+-	if (!bio)
+-		return;
+-
+ 	trace_block_bio_bounce(q, *bio_orig);
+ 
+-	/*
+-	 * at least one page was bounced, fill in possible non-highmem
+-	 * pages
+-	 */
+-	__bio_for_each_segment(from, *bio_orig, i, 0) {
+-		to = bio_iovec_idx(bio, i);
+-		if (!to->bv_page) {
+-			to->bv_page = from->bv_page;
+-			to->bv_len = from->bv_len;
+-			to->bv_offset = from->bv_offset;
+-		}
+-	}
+-
+-	bio->bi_bdev = (*bio_orig)->bi_bdev;
+ 	bio->bi_flags |= (1 << BIO_BOUNCED);
+-	bio->bi_sector = (*bio_orig)->bi_sector;
+-	bio->bi_rw = (*bio_orig)->bi_rw;
+-
+-	bio->bi_vcnt = (*bio_orig)->bi_vcnt;
+-	bio->bi_idx = (*bio_orig)->bi_idx;
+-	bio->bi_size = (*bio_orig)->bi_size;
+ 
+ 	if (pool == page_pool) {
+ 		bio->bi_end_io = bounce_end_io_write;
 -- 
 1.7.12
