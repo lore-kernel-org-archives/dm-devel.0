@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 18/26] raid1: use bio_copy_data()
-Date: Mon, 10 Sep 2012 17:22:29 -0700
-Message-ID: <1347322957-25260-19-git-send-email-koverstreet@google.com>
+Subject: [PATCH v2 14/26] raid1: Refactor narrow_write_error() to not use bi_idx
+Date: Mon, 10 Sep 2012 17:22:25 -0700
+Message-ID: <1347322957-25260-15-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet@google.com>
@@ -10,32 +10,78 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, neilb@suse.de
 List-Id: dm-devel.ids
 
-This doesn't really delete any code _yet_, but once immutable bvecs are
-done we can just delete the rest of the code in that loop.
+More bi_idx removal. This code was just open coding bio_clone(). This
+could probably be further improved by using bio_advance() instead of
+skipping over null pages, but that'd be a larger rework.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
 CC: NeilBrown <neilb@suse.de>
 ---
- drivers/md/raid1.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ drivers/md/raid1.c | 36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
 
 diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index b1072da..6cd1fb2 100644
+index bd3e3b9..b1072da 100644
 --- a/drivers/md/raid1.c
 +++ b/drivers/md/raid1.c
-@@ -1895,10 +1895,9 @@ static int process_checks(struct r1bio *r1_bio)
- 			else
- 				bi->bv_len = size;
- 			size -= PAGE_SIZE;
--			memcpy(page_address(bi->bv_page),
--			       page_address(pbio->bi_io_vec[j].bv_page),
--			       PAGE_SIZE);
- 		}
+@@ -2052,8 +2052,6 @@ static int narrow_write_error(struct r1bio *r1_bio, int i)
+ 	struct mddev *mddev = r1_bio->mddev;
+ 	struct r1conf *conf = mddev->private;
+ 	struct md_rdev *rdev = conf->mirrors[i].rdev;
+-	int vcnt, idx;
+-	struct bio_vec *vec;
+ 
+ 	/* bio has the data to be written to device 'i' where
+ 	 * we just recently had a write error.
+@@ -2081,30 +2079,32 @@ static int narrow_write_error(struct r1bio *r1_bio, int i)
+ 		   & ~(sector_t)(block_sectors - 1))
+ 		- sector;
+ 
+-	if (test_bit(R1BIO_BehindIO, &r1_bio->state)) {
+-		vcnt = r1_bio->behind_page_count;
+-		vec = r1_bio->behind_bvecs;
+-		idx = 0;
+-		while (vec[idx].bv_page == NULL)
+-			idx++;
+-	} else {
+-		vcnt = r1_bio->master_bio->bi_vcnt;
+-		vec = r1_bio->master_bio->bi_io_vec;
+-		idx = r1_bio->master_bio->bi_idx;
+-	}
+ 	while (sect_to_write) {
+ 		struct bio *wbio;
+ 		if (sectors > sect_to_write)
+ 			sectors = sect_to_write;
+ 		/* Write at 'sector' for 'sectors'*/
+ 
+-		wbio = bio_alloc_mddev(GFP_NOIO, vcnt, mddev);
+-		memcpy(wbio->bi_io_vec, vec, vcnt * sizeof(struct bio_vec));
+-		wbio->bi_sector = r1_bio->sector;
++		if (test_bit(R1BIO_BehindIO, &r1_bio->state)) {
++			unsigned vcnt = r1_bio->behind_page_count;
++			struct bio_vec *vec = r1_bio->behind_bvecs;
 +
-+		bio_copy_data(sbio, pbio);
- 	}
- 	return 0;
- }
++			while (!vec->bv_page) {
++				vec++;
++				vcnt--;
++			}
++
++			wbio = bio_alloc_mddev(GFP_NOIO, vcnt, mddev);
++			memcpy(wbio->bi_io_vec, vec, vcnt * sizeof(struct bio_vec));
++
++			wbio->bi_vcnt = vcnt;
++		} else {
++			wbio = bio_clone_mddev(r1_bio->master_bio, GFP_NOIO, mddev);
++		}
++
+ 		wbio->bi_rw = WRITE;
+-		wbio->bi_vcnt = vcnt;
++		wbio->bi_sector = r1_bio->sector;
+ 		wbio->bi_size = r1_bio->sectors << 9;
+-		wbio->bi_idx = idx;
+ 
+ 		md_trim_bio(wbio, sector - r1_bio->sector, sectors);
+ 		wbio->bi_sector += rdev->data_offset;
 -- 
 1.7.12
