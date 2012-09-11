@@ -1,261 +1,63 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 01/26] block: Convert integrity to
-	bvec_alloc_bs(), and a bugfix
-Date: Mon, 10 Sep 2012 17:22:12 -0700
-Message-ID: <1347322957-25260-2-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 23/26] raid1: use bio_alloc_pages()
+Date: Mon, 10 Sep 2012 17:22:34 -0700
+Message-ID: <1347322957-25260-24-git-send-email-koverstreet@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, tj@kernel.org, Kent Overstreet <koverstreet@google.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1347322957-25260-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-This adds a pointer to the bvec array to struct bio_integrity_payload,
-instead of the bvecs always being inline; then the bvecs are allocated
-with bvec_alloc_bs().
-
-This is needed eventually for immutable bio vecs - immutable bvecs
-aren't useful if we still have to copy them, hence the need for the
-pointer. Less code is always nice too, though.
-
-Also fix an amusing bug in bio_integrity_split() - struct bio_pair
-doesn't have the integrity bvecs after the bio_integrity_payloads, so
-there was a buffer overrun. The code was confusing pointers with arrays.
-
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
-CC: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
 ---
- fs/bio-integrity.c  | 124 +++++++++++++++++-----------------------------------
- include/linux/bio.h |   5 ++-
- 2 files changed, 43 insertions(+), 86 deletions(-)
+ drivers/md/raid1.c | 16 +++-------------
+ 1 file changed, 3 insertions(+), 13 deletions(-)
 
-diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-index a3f28f3..1d64f7f 100644
---- a/fs/bio-integrity.c
-+++ b/fs/bio-integrity.c
-@@ -27,48 +27,11 @@
- #include <linux/workqueue.h>
- #include <linux/slab.h>
- 
--struct integrity_slab {
--	struct kmem_cache *slab;
--	unsigned short nr_vecs;
--	char name[8];
--};
--
--#define IS(x) { .nr_vecs = x, .name = "bip-"__stringify(x) }
--struct integrity_slab bip_slab[BIOVEC_NR_POOLS] __read_mostly = {
--	IS(1), IS(4), IS(16), IS(64), IS(128), IS(BIO_MAX_PAGES),
--};
--#undef IS
-+#define BIP_INLINE_VECS	4
- 
-+static struct kmem_cache *bip_slab;
- static struct workqueue_struct *kintegrityd_wq;
- 
--static inline unsigned int vecs_to_idx(unsigned int nr)
--{
--	switch (nr) {
--	case 1:
--		return 0;
--	case 2 ... 4:
--		return 1;
--	case 5 ... 16:
--		return 2;
--	case 17 ... 64:
--		return 3;
--	case 65 ... 128:
--		return 4;
--	case 129 ... BIO_MAX_PAGES:
--		return 5;
--	default:
--		BUG();
--	}
--}
--
--static inline int use_bip_pool(unsigned int idx)
--{
--	if (idx == BIOVEC_MAX_IDX)
--		return 1;
--
--	return 0;
--}
--
- /**
-  * bio_integrity_alloc - Allocate integrity payload and attach it to bio
-  * @bio:	bio to attach integrity metadata to
-@@ -84,37 +47,38 @@ struct bio_integrity_payload *bio_integrity_alloc(struct bio *bio,
- 						  unsigned int nr_vecs)
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index d30b4cb..18b743a 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -92,7 +92,6 @@ static void r1bio_pool_free(void *r1_bio, void *data)
+ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
  {
- 	struct bio_integrity_payload *bip;
--	unsigned int idx = vecs_to_idx(nr_vecs);
- 	struct bio_set *bs = bio->bi_pool;
-+	unsigned long idx = BIO_POOL_NONE;
-+	unsigned inline_vecs;
-+
-+	if (!bs) {
-+		bip = kmalloc(sizeof(struct bio_integrity_payload) +
-+			      sizeof(struct bio_vec) * nr_vecs, gfp_mask);
-+		inline_vecs = nr_vecs;
-+	} else {
-+		bip = mempool_alloc(bs->bio_integrity_pool, gfp_mask);
-+		inline_vecs = BIP_INLINE_VECS;
-+	}
+ 	struct pool_info *pi = data;
+-	struct page *page;
+ 	struct r1bio *r1_bio;
+ 	struct bio *bio;
+ 	int i, j;
+@@ -122,14 +121,10 @@ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
+ 		j = 1;
+ 	while(j--) {
+ 		bio = r1_bio->bios[j];
+-		for (i = 0; i < RESYNC_PAGES; i++) {
+-			page = alloc_page(gfp_flags);
+-			if (unlikely(!page))
+-				goto out_free_pages;
++		bio->bi_vcnt = RESYNC_PAGES;
  
--	if (!bs)
--		bs = fs_bio_set;
--
--	BUG_ON(bio == NULL);
--	bip = NULL;
-+	if (unlikely(!bip))
-+		return NULL;
- 
--	/* Lower order allocations come straight from slab */
--	if (!use_bip_pool(idx))
--		bip = kmem_cache_alloc(bip_slab[idx].slab, gfp_mask);
-+	memset(bip, 0, sizeof(struct bio_integrity_payload));
- 
--	/* Use mempool if lower order alloc failed or max vecs were requested */
--	if (bip == NULL) {
--		idx = BIOVEC_MAX_IDX;  /* so we free the payload properly later */
--		bip = mempool_alloc(bs->bio_integrity_pool, gfp_mask);
--
--		if (unlikely(bip == NULL)) {
--			printk(KERN_ERR "%s: could not alloc bip\n", __func__);
--			return NULL;
+-			bio->bi_io_vec[i].bv_page = page;
+-			bio->bi_vcnt = i+1;
 -		}
-+	if (nr_vecs > inline_vecs) {
-+		bip->bip_vec = bvec_alloc_bs(gfp_mask, nr_vecs, &idx, bs);
-+		if (!bip->bip_vec)
-+			goto err;
++		if (bio_alloc_pages(bio, gfp_flags))
++			goto out_free_bio;
  	}
+ 	/* If not user-requests, copy the page pointers to all bios */
+ 	if (!test_bit(MD_RECOVERY_REQUESTED, &pi->mddev->recovery)) {
+@@ -143,11 +138,6 @@ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
  
--	memset(bip, 0, sizeof(*bip));
--
- 	bip->bip_slab = idx;
- 	bip->bip_bio = bio;
- 	bio->bi_integrity = bip;
+ 	return r1_bio;
  
- 	return bip;
-+err:
-+	mempool_free(bip, bs->bio_integrity_pool);
-+	return NULL;
- }
- EXPORT_SYMBOL(bio_integrity_alloc);
- 
-@@ -130,20 +94,19 @@ void bio_integrity_free(struct bio *bio)
- 	struct bio_integrity_payload *bip = bio->bi_integrity;
- 	struct bio_set *bs = bio->bi_pool;
- 
--	if (!bs)
--		bs = fs_bio_set;
--
--	BUG_ON(bip == NULL);
--
- 	/* A cloned bio doesn't own the integrity metadata */
- 	if (!bio_flagged(bio, BIO_CLONED) && !bio_flagged(bio, BIO_FS_INTEGRITY)
- 	    && bip->bip_buf != NULL)
- 		kfree(bip->bip_buf);
- 
--	if (use_bip_pool(bip->bip_slab))
-+	if (bs) {
-+		if (bip->bip_slab != BIO_POOL_NONE)
-+			bvec_free_bs(bs, bip->bip_vec, bip->bip_slab);
-+
- 		mempool_free(bip, bs->bio_integrity_pool);
--	else
--		kmem_cache_free(bip_slab[bip->bip_slab].slab, bip);
-+	} else {
-+		kfree(bip);
-+	}
- 
- 	bio->bi_integrity = NULL;
- }
-@@ -697,8 +660,8 @@ void bio_integrity_split(struct bio *bio, struct bio_pair *bp, int sectors)
- 	bp->iv1 = bip->bip_vec[0];
- 	bp->iv2 = bip->bip_vec[0];
- 
--	bp->bip1.bip_vec[0] = bp->iv1;
--	bp->bip2.bip_vec[0] = bp->iv2;
-+	bp->bip1.bip_vec = &bp->iv1;
-+	bp->bip2.bip_vec = &bp->iv2;
- 
- 	bp->iv1.bv_len = sectors * bi->tuple_size;
- 	bp->iv2.bv_offset += sectors * bi->tuple_size;
-@@ -746,13 +709,10 @@ EXPORT_SYMBOL(bio_integrity_clone);
- 
- int bioset_integrity_create(struct bio_set *bs, int pool_size)
- {
--	unsigned int max_slab = vecs_to_idx(BIO_MAX_PAGES);
--
- 	if (bs->bio_integrity_pool)
- 		return 0;
- 
--	bs->bio_integrity_pool =
--		mempool_create_slab_pool(pool_size, bip_slab[max_slab].slab);
-+	bs->bio_integrity_pool = mempool_create_slab_pool(pool_size, bip_slab);
- 
- 	if (!bs->bio_integrity_pool)
- 		return -1;
-@@ -770,8 +730,6 @@ EXPORT_SYMBOL(bioset_integrity_free);
- 
- void __init bio_integrity_init(void)
- {
--	unsigned int i;
--
- 	/*
- 	 * kintegrityd won't block much but may burn a lot of CPU cycles.
- 	 * Make it highpri CPU intensive wq with max concurrency of 1.
-@@ -781,14 +739,10 @@ void __init bio_integrity_init(void)
- 	if (!kintegrityd_wq)
- 		panic("Failed to create kintegrityd\n");
- 
--	for (i = 0 ; i < BIOVEC_NR_POOLS ; i++) {
--		unsigned int size;
--
--		size = sizeof(struct bio_integrity_payload)
--			+ bip_slab[i].nr_vecs * sizeof(struct bio_vec);
--
--		bip_slab[i].slab =
--			kmem_cache_create(bip_slab[i].name, size, 0,
--					  SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
--	}
-+	bip_slab = kmem_cache_create("bio_integrity_payload",
-+				     sizeof(struct bio_integrity_payload) +
-+				     sizeof(struct bio_vec) * BIP_INLINE_VECS,
-+				     0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
-+	if (!bip_slab)
-+		panic("Failed to create slab\n");
- }
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index c32ea0d..7873465 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -182,7 +182,10 @@ struct bio_integrity_payload {
- 	unsigned short		bip_idx;	/* current bip_vec index */
- 
- 	struct work_struct	bip_work;	/* I/O completion */
--	struct bio_vec		bip_vec[0];	/* embedded bvec array */
-+
-+	struct bio_vec		*bip_vec;
-+	struct bio_vec		bip_inline_vecs[0];/* embedded bvec array */
-+
- };
- #endif /* CONFIG_BLK_DEV_INTEGRITY */
- 
+-out_free_pages:
+-	for (j=0 ; j < pi->raid_disks; j++)
+-		for (i=0; i < r1_bio->bios[j]->bi_vcnt ; i++)
+-			put_page(r1_bio->bios[j]->bi_io_vec[i].bv_page);
+-	j = -1;
+ out_free_bio:
+ 	while (++j < pi->raid_disks)
+ 		bio_put(r1_bio->bios[j]);
 -- 
 1.7.12
