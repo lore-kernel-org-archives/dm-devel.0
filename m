@@ -1,81 +1,125 @@
-From: Stefan Behrens <sbehrens-yx7LkcorvrlcxY2q9kLzMw@public.gmane.org>
-Subject: Re: [PATCH] btrfs: Kill some bi_idx references
-Date: Wed, 12 Sep 2012 13:15:06 +0200
-Message-ID: <50506EBA.7040907@giantdisaster.de>
-References: <1347399074-23546-1-git-send-email-koverstreet@google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm mpath: only retry ioctl if queue_if_no_path
+	was configured
+Date: Wed, 12 Sep 2012 11:37:56 -0400
+Message-ID: <20120912153756.GA15930@redhat.com>
+References: <20120831150428.GA31566@fury.redhat.com>
+	<20120904145843.GA19388@redhat.com>
+	<20120904161016.GA20209@redhat.com>
+	<20120904161242.GB20209@redhat.com>
+	<Pine.LNX.4.64.1209081242500.13731@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1347399074-23546-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Chris Mason <chris.mason-5c4llco8/ftWk0Htik3J/w@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1209081242500.13731@file.rdu.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, David Jeffery <djeffery@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 11 Sep 2012 14:31:14 -0700, Kent Overstreet wrote:
-> For immutable bio vecs, I've been auditing and removing bi_idx
-> references. These were harmless, but removing them will make auditing
-> easier.
+On Sat, Sep 08 2012 at 12:50pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+ 
+> It's hard to say what should be done correctly ... if you create a 
+> multipath device with "queue_if_no_path" and no active path, it should 
+> delay all requests until a path becomes available ... and it is doing 
+> that.
 > 
-> scrub_bio_end_io_worker() was open coding a bio_reset() - but this
-> doesn't appear to have been needed for anything as right after it does a
-> bio_put(), and perusing the code it doesn't appear anything else was
-> holding a reference to the bio.
-> 
-> The other use end_bio_extent_readpage() was just for a pr_debug() -
-> changed it to something that might be a bit more useful.
-> 
-> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> CC: Chris Mason <chris.mason-5c4llco8/ftWk0Htik3J/w@public.gmane.org>
-> CC: Stefan Behrens <sbehrens-yx7LkcorvrlcxY2q9kLzMw@public.gmane.org>
-> ---
->  fs/btrfs/extent_io.c |  4 ++--
->  fs/btrfs/scrub.c     | 15 ---------------
->  2 files changed, 2 insertions(+), 17 deletions(-)
-> 
-> diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
-> index 4c87847..8d7fb96 100644
-> --- a/fs/btrfs/extent_io.c
-> +++ b/fs/btrfs/extent_io.c
-> @@ -2298,8 +2298,8 @@ static void end_bio_extent_readpage(struct bio *bio, int err)
->  		struct extent_state *cached = NULL;
->  		struct extent_state *state;
->  
-> -		pr_debug("end_bio_extent_readpage: bi_vcnt=%d, idx=%d, err=%d, "
-> -			 "mirror=%ld\n", bio->bi_vcnt, bio->bi_idx, err,
-> +		pr_debug("end_bio_extent_readpage: bi_sector=%llu, err=%d, "
-> +			 "mirror=%ld\n", (u64)bio->bi_sector, err,
->  			 (long int)bio->bi_bdev);
->  		tree = &BTRFS_I(page->mapping->host)->io_tree;
->  
-> diff --git a/fs/btrfs/scrub.c b/fs/btrfs/scrub.c
-> index b223620..2683ea7 100644
-> --- a/fs/btrfs/scrub.c
-> +++ b/fs/btrfs/scrub.c
-> @@ -1666,21 +1666,6 @@ static void scrub_bio_end_io_worker(struct btrfs_work *work)
->  		scrub_block_put(sblock);
->  	}
->  
-> -	if (sbio->err) {
-> -		/* what is this good for??? */
-> -		sbio->bio->bi_flags &= ~(BIO_POOL_MASK - 1);
-> -		sbio->bio->bi_flags |= 1 << BIO_UPTODATE;
-> -		sbio->bio->bi_phys_segments = 0;
-> -		sbio->bio->bi_idx = 0;
-> -
-> -		for (i = 0; i < sbio->page_count; i++) {
-> -			struct bio_vec *bi;
-> -			bi = &sbio->bio->bi_io_vec[i];
-> -			bi->bv_offset = 0;
-> -			bi->bv_len = PAGE_SIZE;
-> -		}
-> -	}
-> -
->  	bio_put(sbio->bio);
->  	sbio->bio = NULL;
->  	spin_lock(&sdev->list_lock);
-> 
+> Maybe we could move the waiting loop up to dm_blk_ioctl so that it unlocks 
+> when someone reloads the target?
 
-Yes, it is correct to remove these lines in the btrfs scrub code. They
-are a relict from the past.
+I think it much more likely that multipathd will restore a path then an
+entirely new table be loaded.
+ 
+> BTW. there is also -EAGAIN dm_blk_ioctl if dm_suspended_md ... should this 
+> -EAGAIN be removed too or not?
+
+Don't think it needs to be removed.  Here is a patch that addresses the
+issue for me.
+
+---
+
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm mpath: only retry ioctl if queue_if_no_path was configured
+
+commit 35991652b ("dm mpath: allow ioctls to trigger pg init") should
+have checked if queue_if_no_path was configured before queueing IO.
+
+Checking for the queue_if_no_path feature, like is done in map_io(),
+allows the following table load to work without blocking in the
+multipath_ioctl retry loop:
+
+  echo "0 1024 multipath 0 0 0 0" | dmsetup create mpath_nodevs
+
+Without this fix the multipath_ioctl will block with the following stack
+trace:
+
+  blkid           D 0000000000000002     0 23936      1 0x00000000
+   ffff8802b89e5cd8 0000000000000082 ffff8802b89e5fd8 0000000000012440
+   ffff8802b89e4010 0000000000012440 0000000000012440 0000000000012440
+   ffff8802b89e5fd8 0000000000012440 ffff88030c2aab30 ffff880325794040
+  Call Trace:
+   [<ffffffff814ce099>] schedule+0x29/0x70
+   [<ffffffff814cc312>] schedule_timeout+0x182/0x2e0
+   [<ffffffff8104dee0>] ? lock_timer_base+0x70/0x70
+   [<ffffffff814cc48e>] schedule_timeout_uninterruptible+0x1e/0x20
+   [<ffffffff8104f840>] msleep+0x20/0x30
+   [<ffffffffa0000839>] multipath_ioctl+0x109/0x170 [dm_multipath]
+   [<ffffffffa06bfb9c>] dm_blk_ioctl+0xbc/0xd0 [dm_mod]
+   [<ffffffff8122a408>] __blkdev_driver_ioctl+0x28/0x30
+   [<ffffffff8122a79e>] blkdev_ioctl+0xce/0x730
+   [<ffffffff811970ac>] block_ioctl+0x3c/0x40
+   [<ffffffff8117321c>] do_vfs_ioctl+0x8c/0x340
+   [<ffffffff81166293>] ? sys_newfstat+0x33/0x40
+   [<ffffffff81173571>] sys_ioctl+0xa1/0xb0
+   [<ffffffff814d70a9>] system_call_fastpath+0x16/0x1b
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-mpath.c |   11 +++++++----
+ 1 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index d8abb90..034233e 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1555,6 +1555,7 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+ 			   unsigned long arg)
+ {
+ 	struct multipath *m = ti->private;
++	struct pgpath *pgpath;
+ 	struct block_device *bdev;
+ 	fmode_t mode;
+ 	unsigned long flags;
+@@ -1570,12 +1571,14 @@ again:
+ 	if (!m->current_pgpath)
+ 		__choose_pgpath(m, 0);
+ 
+-	if (m->current_pgpath) {
+-		bdev = m->current_pgpath->path.dev->bdev;
+-		mode = m->current_pgpath->path.dev->mode;
++	pgpath = m->current_pgpath;
++
++	if (pgpath) {
++		bdev = pgpath->path.dev->bdev;
++		mode = pgpath->path.dev->mode;
+ 	}
+ 
+-	if (m->queue_io)
++	if ((pgpath && m->queue_io) || (!pgpath && m->queue_if_no_path))
+ 		r = -EAGAIN;
+ 	else if (!bdev)
+ 		r = -EIO;
+-- 
+1.7.1
