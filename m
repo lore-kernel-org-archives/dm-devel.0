@@ -1,39 +1,76 @@
-From: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v10 3/8] dm: Use bioset's front_pad for
-	dm_rq_clone_bio_info
-Date: Fri, 14 Sep 2012 20:05:38 +0100
-Message-ID: <20120914190538.GN15728@agk-dp.fab.redhat.com>
-References: <1347050642-7080-1-git-send-email-koverstreet@google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] dm table: do not allow queue limits that will
+ exceed hardware limits
+Date: Fri, 14 Sep 2012 16:41:33 -0400
+Message-ID: <20120914204133.GA376@redhat.com>
+References: <20120831150428.GA31566@fury.redhat.com>
+	<20120904145843.GA19388@redhat.com>
+	<20120912193706.GA17101@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1347050642-7080-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20120912193706.GA17101@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: David Jeffery <djeffery@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 07, 2012 at 01:44:01PM -0700, Kent Overstreet wrote:
-> Previously, dm_rq_clone_bio_info needed to be freed by the bio's
-> destructor to avoid a memory leak in the blk_rq_prep_clone() error path.
-> This gets rid of a memory allocation and means we can kill
-> dm_rq_bio_destructor.
-> 
-> The _rq_bio_info_cache kmem cache is unused now and needs to be deleted,
-> but due to the way io_pool is used and overloaded this looks not quite
-> trivial so I'm leaving it for a later patch.
+DM recalculates queue limits based only on devices which currently exist
+in the table.  This creates a problem in the event all devices are
+temporarily removed such as all fibre channel paths being lost in
+multipath.  DM will reset the limits to the maximum permissible, which
+can then assemble requests which exceed the limits of the paths when the
+paths are restored.  The request will fail the blk_rq_check_limits()
+test when sent to a path with lower limits, and will be retried without
+end by multipath.  This became a much bigger issue after commit
+fe86cdcef ("block: do not artificially constrain max_sectors for
+stacking drivers").
+
+Add a safety net that will establish safe default limits, via
+blk_set_default_limits, in the event that a table temporarily doesn't
+have any component devices.  The default limits may be too conservative
+once paths are reinstated but adding a path to a multipath device
+requires a table reload.  Once the table is reloaded proper limits
+will be established based on the available component device(s).
+
+Reported-by: David Jeffery <djeffery@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
+
+v2: adjust the patch header to be more succinct
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index f6979ad..9b931b4 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1264,6 +1264,15 @@ combine_limits:
+ 			       (unsigned long long) ti->len);
+ 	}
  
-Acked-by: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
-> +/*
-> + * Unused now, and needs to be deleted. But since io_pool is overloaded and it's
-> + * still used for _io_cache, I'm leaving this for a later cleanup
-> + */
-
-Please avoid "I" in a source file unless you are the author of the file or
-put your name after your comments.
-
-An unattributed "FIXME" style of comment here would be fine.
-
-Alasdair
++	/*
++	 * If a table doesn't have any component devices (e.g. multipath
++	 * loses all paths) don't allow the queue_limits to be left at
++	 * their maximum (as established by blk_set_stacking_limits() so
++	 * limits could be inherited from component devices).
++	 */
++	if (limits->max_sectors == UINT_MAX)
++		blk_set_default_limits(limits);
++
+ 	return validate_hardware_logical_block_alignment(table, limits);
+ }
+ 
+-- 
+1.7.1
