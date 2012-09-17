@@ -1,15 +1,17 @@
-From: David Jeffery <djeffery@redhat.com>
-Subject: Re: [PATCH v2] dm table: do not allow queue limits that
- will exceed hardware limits
-Date: Mon, 17 Sep 2012 15:44:29 -0400 (EDT)
-Message-ID: <213748621.1049831.1347911069189.JavaMail.root@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH v2] dm table: do not allow queue limits
+	that	will exceed hardware limits
+Date: Mon, 17 Sep 2012 20:52:33 +0100
+Message-ID: <20120917195233.GE16447@agk-dp.fab.redhat.com>
 References: <20120914204133.GA376@redhat.com>
+	<213748621.1049831.1347911069189.JavaMail.root@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20120914204133.GA376@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <213748621.1049831.1347911069189.JavaMail.root@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,66 +21,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
------ Original Message -----
-> v2: adjust the patch header to be more succinct
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index f6979ad..9b931b4 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1264,6 +1264,15 @@ combine_limits:
->  			       (unsigned long long) ti->len);
->  	}
->  
-> +	/*
-> +	 * If a table doesn't have any component devices (e.g. multipath
-> +	 * loses all paths) don't allow the queue_limits to be left at
-> +	 * their maximum (as established by blk_set_stacking_limits() so
-> +	 * limits could be inherited from component devices).
-> +	 */
-> +	if (limits->max_sectors == UINT_MAX)
-> +		blk_set_default_limits(limits);
-> +
->  	return validate_hardware_logical_block_alignment(table, limits);
->  }
->  
-> --
-> 1.7.1
-> 
-> 
-
-Instead of setting to defaults, how about maintaining previous limits?
-The initial queue setup sets defaults when a queue is first configured,
-and this maintains known, working limits if all paths are temporarly
-lost.  For example, I have a test setup with a lower than normal max
-segment list.  It can fail a test with the previous patch as the
-default limits exceed the hardware limits. But this setup will work if
-we leave queue limits unchanged in the special case of there being no
-target devices.
-
-David Jeffery
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 4e09b6f..89ec9ee 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2425,6 +2425,15 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
- 		goto out;
- 	}
+On Mon, Sep 17, 2012 at 03:44:29PM -0400, David Jeffery wrote:
+> Instead of setting to defaults, how about maintaining previous limits?
+> The initial queue setup sets defaults when a queue is first configured,
+> and this maintains known, working limits if all paths are temporarly
+> lost.  For example, I have a test setup with a lower than normal max
+> segment list.  It can fail a test with the previous patch as the
+> default limits exceed the hardware limits. But this setup will work if
+> we leave queue limits unchanged in the special case of there being no
+> target devices.
  
-+	/*
-+	 * If a table doesn't have any component devices (e.g. multipath
-+	 * loses all paths) don't allow the queue_limits to be left at
-+	 * their maximum (as established by blk_set_stacking_limits()).
-+	 * Instead, maintain the previous limits.
-+	 */
-+	if (limits.max_sectors == UINT_MAX)
-+		limits = md->queue->limits;
-+
- 	map = __bind(md, table, &limits);
- 
- out:
+Firstly, the problem cannot be fixed completely - so let's make sure the
+patch header doesn't claim that, and does explain how different
+situations are handled and why.
+
+Secondly, it's a mpath problem, so the solution should be a patch to 
+dm-mpath that does NOT change the way any non-mpath dm devices are handled.
+
+Now my question is whether this can be fixed adequately within the existing
+interface, or whether userspace needs the ability to control whether
+limits are reset or not (either by message or ioctl flag).
+
+Alasdair
