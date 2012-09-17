@@ -1,51 +1,58 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v10 1/8] block: Generalized bio pool freeing
-Date: Mon, 17 Sep 2012 13:51:39 -0700
-Message-ID: <20120917205139.GB14492@google.com>
-References: <1346970902-10931-1-git-send-email-koverstreet@google.com>
- <1346970902-10931-2-git-send-email-koverstreet@google.com>
- <20120914182828.GK15728@agk-dp.fab.redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 01/26] block: Convert integrity to
+ bvec_alloc_bs(), and a bugfix
+Date: Mon, 17 Sep 2012 14:08:58 -0700
+Message-ID: <20120917210858.GC14492@google.com>
+References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
+ <1347322957-25260-2-git-send-email-koverstreet@google.com>
+ <20120911203643.GC17113@redhat.com>
+ <20120911220750.GM19739@google.com>
+ <yq1wqzzrpy1.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120914182828.GK15728-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
+In-Reply-To: <yq1wqzzrpy1.fsf-+q57XtR/GgMb6DWv4sQWN6xOck334EZe@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
+To: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, Sep 14, 2012 at 07:28:28PM +0100, Alasdair G Kergon wrote:
-> On Thu, Sep 06, 2012 at 03:34:55PM -0700, Kent Overstreet wrote:
-> > With the old code, when you allocate a bio from a bio pool you have to
-> > implement your own destructor that knows how to find the bio pool the
-> > bio was originally allocated from.
-> > 
-> > This adds a new field to struct bio (bi_pool) and changes
-> > bio_alloc_bioset() to use it. This makes various bio destructors
-> > unnecessary, so they're then deleted.
-> > 
-> > v6: Explain the temporary if statement in bio_put
->  
-> This patch also silently reverts 
-> commit 4d7b38b7d944a79da3793b6c92d38682f3905ac9
-> "dm: clear bi_end_io on remapping failure"
+On Wed, Sep 12, 2012 at 03:39:18PM -0400, Martin K. Petersen wrote:
+> >>>>> "Kent" == Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> writes:
 > 
-> Why?
+> Kent,
 > 
-> If it's intentional, please explain it in your patch header and
-> copy Hannes to reconsider the matter.
+> Kent> To fix the bug first, I'd have to reorder struct bio_pair and then
+> Kent> just delete two lines of code from bio_integrity_split(). But the
+> Kent> reordering is unnecessary with the refactoring.
+> 
+> Well, a bug is a bug and the fix needs to go into stable. So we will
+> need a patch that does not depend on your changes.
 
-Never noticed that was introduced in its own patch until you pointed it
-out.
+Alright, good point.
 
-That isn't a very good patch - it says it's clearing bi_end_io as a
-precaution, but as a precaution to what?
+> I don't have a problem with adding a pointer so clones can point to the
+> parent's vector. But embedding the vector into the bip was a feature.
+> If you check the git log you'll see that originally I did use separate
+> vector allocations.
 
-As far as I can tell, it was never necessary. The bio is about to be
-freed - there shouldn't be any other references on it (__bio_map() is
-called on freshly allocated bios, and bio_get() is never called in dm.c)
-Nothing else should've been looking at bi_end_io, certainly the
-destructor didn't.
+Looks like that was 7878cba9f0037f5599004b03a1260b32d9050360 - If I
+follow your commit message your primary goal was to back the bip vecs by
+a per bio set mempool?
 
-Now that there's no destructor, it makes even less sense to have it -
-after that bio_put() that bio isn't being touched by dm code anymore.
+I didn't break that (excepting the issue Vivek noted) - but it is true
+that my patch adds another allocation (when nr_vecs > BIP_INLINE_VECS,
+anyways).
+
+I don't know how big of a deal you think that extra allocation is. If
+you're against it, this patch isn't really necessary for the immutable
+bvecs I'm working on - just need it if we want integrity bvecs to be
+shared like regular bvecs will be.
+
+Something else I noticed is bio_integrity_add_page() doesn't merge bvecs
+when possible, like the regular bio_add_page(). If changing it to merge
+bvecs wouldn't break anything, then probably most integrity bvecs would
+be under BIP_INLINE_VECS.
+
+Thoughts?
