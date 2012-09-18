@@ -1,53 +1,27 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm table: do not allow queue limits that
- will exceed hardware limits
-Date: Tue, 18 Sep 2012 09:02:26 -0400
-Message-ID: <20120918130226.GA8065@redhat.com>
-References: <20120914204133.GA376@redhat.com>
-	<213748621.1049831.1347911069189.JavaMail.root@redhat.com>
-	<20120918114022.GA17356@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH v10 8/8] block: Add bio_clone_bioset(),
+	bio_clone_kmalloc()
+Date: Tue, 18 Sep 2012 17:15:29 +0100
+Message-ID: <20120918161529.GB17356@agk-dp.fab.redhat.com>
+References: <1346970902-10931-1-git-send-email-koverstreet@google.com> <1346970902-10931-9-git-send-email-koverstreet@google.com> <20120914215059.GQ15728@agk-dp.fab.redhat.com> <20120917204227.GA14492@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120918114022.GA17356@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, David Jeffery <djeffery@redhat.com>
+In-Reply-To: <20120917204227.GA14492-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Jeff Garzik <jeff-o2qLIJkoznsdnm+yROfE0A@public.gmane.org>, Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Sep 18 2012 at  7:40am -0400,
-Alasdair G Kergon <agk@redhat.com> wrote:
+On Mon, Sep 17, 2012 at 01:42:27PM -0700, Kent Overstreet wrote:
+> Previously, it was open coding __bio_clone(), that's what the setting
+> bi_idx to 0 was from. With the change to bio_clone_bioset() that's no
+> longer necessary (and dangerous, since bi_idx needs to be consistent
+> with bi_sector/bi_size).
+ 
+It was performing a partial clone, deleting any no-longer-needed entries
+from the array.  This patch undoes that which is presumably OK because
+you propose to eliminate them again in a later one of your patches.
 
-> On Mon, Sep 17, 2012 at 03:44:29PM -0400, David Jeffery wrote:
-> > @@ -2425,6 +2425,15 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
-> 
-> > +	if (limits.max_sectors == UINT_MAX)
->   
-> Specifically, I don't want dm.c to be peering directly into limits.
-
-That's fine.  I agree, it is wrong to have DM code be so fragile
-relative to potential block layer changes.
-
-> It just called calculate_queue_limits() above that.
-> Why is calculate_queue_limits getting the limits wrong?
-
-Because, in the mpath case David reported, there are no longer any
-devices in the table.  So .iterate_devices doesn't have anything to work
-with; which means the blk_set_stacking_limits()' limits are left
-unchanged (e.g. limits.max_sectors is UINT_MAX).
-
-I'll try to think of a way to get dm_calculate_queue_limits() to detect:
-1) that there are no devices in the table
-2) that there is a live table that already has established limits
-3) if 1 && 2, then use existing limits (should address David's request)
+Alasdair
