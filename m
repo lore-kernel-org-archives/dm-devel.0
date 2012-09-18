@@ -1,8 +1,9 @@
 From: Jeff Moyer <jmoyer@redhat.com>
 Subject: Re: [PATCH 0/4] Fix a crash when block device is read and block size is changed at the same time
-Date: Tue, 18 Sep 2012 14:58:54 -0400
-Message-ID: <x49ipbbrwcx.fsf@segfault.boston.devel.redhat.com>
+Date: Tue, 18 Sep 2012 16:11:26 -0400
+Message-ID: <x49ehlzrt01.fsf@segfault.boston.devel.redhat.com>
 References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+	<20120628111541.GB17515@quack.suse.cz>
 	<Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
 	<x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
 	<Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
@@ -19,13 +20,11 @@ References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
 	<x49liguyg6r.fsf@segfault.boston.devel.redhat.com>
 	<x49wqzswdn3.fsf@segfault.boston.devel.redhat.com>
 	<Pine.LNX.4.64.1209181257410.11735@file.rdu.redhat.com>
-	<x49obl3s0tb.fsf@segfault.boston.devel.redhat.com>
-	<Pine.LNX.4.64.1209181453060.32195@file.rdu.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1209181453060.32195@file.rdu.redhat.com> (Mikulas
-	Patocka's message of "Tue, 18 Sep 2012 14:55:29 -0400 (EDT)")
+In-Reply-To: <Pine.LNX.4.64.1209181257410.11735@file.rdu.redhat.com> (Mikulas
+	Patocka's message of "Tue, 18 Sep 2012 13:04:58 -0400 (EDT)")
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Eric Dumazet <eric.dumazet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
@@ -33,34 +32,188 @@ List-Id: dm-devel.ids
 
 Mikulas Patocka <mpatocka@redhat.com> writes:
 
-> On Tue, 18 Sep 2012, Jeff Moyer wrote:
+> Hi Jeff
 >
->> Mikulas Patocka <mpatocka@redhat.com> writes:
->> 
->> > Hi Jeff
->> >
->> > Thanks for testing.
->> >
->> > It would be interesting ... what happens if you take the patch 3, leave 
->> > "struct percpu_rw_semaphore bd_block_size_semaphore" in "struct 
->> > block_device", but remove any use of the semaphore from fs/block_dev.c? - 
->> > will the performance be like unpatched kernel or like patch 3? It could be 
->> > that the change in the alignment affects performance on your CPU too, just 
->> > differently than on my CPU.
->> 
->> I'll give it a try and report back.
->> 
->> > What is the CPU model that you used for testing?
->> 
->> http://ark.intel.com/products/53570/Intel-Xeon-Processor-E7-2860-%2824M-Cache-2_26-GHz-6_40-GTs-Intel-QPI%29
->> 
-> BTW. why did you use just 4 processes? - the processor has 10 cores and 20 
-> threads (so theoretically, you could run 20 processes bound on a single 
-> numa node). Were the results not stable with more than 4 processes?
+> Thanks for testing.
+>
+> It would be interesting ... what happens if you take the patch 3, leave 
+> "struct percpu_rw_semaphore bd_block_size_semaphore" in "struct 
+> block_device", but remove any use of the semaphore from fs/block_dev.c? - 
+> will the performance be like unpatched kernel or like patch 3? It could be 
+> that the change in the alignment affects performance on your CPU too, just 
+> differently than on my CPU.
 
-There is no good reason for it.  Since I was able to show some
-differences in performance, I didn't see the need to scale beyond 4.  I
-can certainly bump the count up if/when that becomes interesting.
+It turns out to be exactly the same performance as with the 3rd patch
+applied, so I guess it does have something to do with cache alignment.
+Here is the patch (against vanilla) I ended up testing.  Let me know if
+I've botched it somehow.
 
-Cheers,
+So, I next up I'll play similar tricks to what you did (padding struct
+block_device in all kernels) to eliminate the differences due to
+structure alignment and provide a clear picture of what the locking
+effects are.
+
+Thanks!
 Jeff
+
+
+diff --git a/drivers/char/raw.c b/drivers/char/raw.c
+index 54a3a6d..0bb207e 100644
+--- a/drivers/char/raw.c
++++ b/drivers/char/raw.c
+@@ -285,7 +285,7 @@ static long raw_ctl_compat_ioctl(struct file *file, unsigned int cmd,
+ 
+ static const struct file_operations raw_fops = {
+ 	.read		= do_sync_read,
+-	.aio_read	= generic_file_aio_read,
++	.aio_read	= blkdev_aio_read,
+ 	.write		= do_sync_write,
+ 	.aio_write	= blkdev_aio_write,
+ 	.fsync		= blkdev_fsync,
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 38e721b..c7514b5 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -116,6 +116,8 @@ EXPORT_SYMBOL(invalidate_bdev);
+ 
+ int set_blocksize(struct block_device *bdev, int size)
+ {
++	struct address_space *mapping;
++
+ 	/* Size must be a power of two, and between 512 and PAGE_SIZE */
+ 	if (size > PAGE_SIZE || size < 512 || !is_power_of_2(size))
+ 		return -EINVAL;
+@@ -124,6 +126,16 @@ int set_blocksize(struct block_device *bdev, int size)
+ 	if (size < bdev_logical_block_size(bdev))
+ 		return -EINVAL;
+ 
++	/* Check that the block device is not memory mapped */
++	mapping = bdev->bd_inode->i_mapping;
++	mutex_lock(&mapping->i_mmap_mutex);
++	if (!prio_tree_empty(&mapping->i_mmap) ||
++	    !list_empty(&mapping->i_mmap_nonlinear)) {
++		mutex_unlock(&mapping->i_mmap_mutex);
++		return -EBUSY;
++	}
++	mutex_unlock(&mapping->i_mmap_mutex);
++
+ 	/* Don't change the size if it is same as current */
+ 	if (bdev->bd_block_size != size) {
+ 		sync_blockdev(bdev);
+@@ -131,6 +143,7 @@ int set_blocksize(struct block_device *bdev, int size)
+ 		bdev->bd_inode->i_blkbits = blksize_bits(size);
+ 		kill_bdev(bdev);
+ 	}
++
+ 	return 0;
+ }
+ 
+@@ -441,6 +454,12 @@ static struct inode *bdev_alloc_inode(struct super_block *sb)
+ 	struct bdev_inode *ei = kmem_cache_alloc(bdev_cachep, GFP_KERNEL);
+ 	if (!ei)
+ 		return NULL;
++
++	if (unlikely(percpu_init_rwsem(&ei->bdev.bd_block_size_semaphore))) {
++		kmem_cache_free(bdev_cachep, ei);
++		return NULL;
++	}
++
+ 	return &ei->vfs_inode;
+ }
+ 
+@@ -449,6 +468,8 @@ static void bdev_i_callback(struct rcu_head *head)
+ 	struct inode *inode = container_of(head, struct inode, i_rcu);
+ 	struct bdev_inode *bdi = BDEV_I(inode);
+ 
++	percpu_free_rwsem(&bdi->bdev.bd_block_size_semaphore);
++
+ 	kmem_cache_free(bdev_cachep, bdi);
+ }
+ 
+@@ -1567,6 +1588,19 @@ static long block_ioctl(struct file *file, unsigned cmd, unsigned long arg)
+ 	return blkdev_ioctl(bdev, mode, cmd, arg);
+ }
+ 
++ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
++			unsigned long nr_segs, loff_t pos)
++{
++	ssize_t ret;
++	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
++	percpu_rwsem_ptr p;
++
++	ret = generic_file_aio_read(iocb, iov, nr_segs, pos);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(blkdev_aio_read);
++
+ /*
+  * Write data to the block device.  Only intended for the block device itself
+  * and the raw driver which basically is a fake block device.
+@@ -1578,6 +1612,7 @@ ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
+ 			 unsigned long nr_segs, loff_t pos)
+ {
+ 	struct file *file = iocb->ki_filp;
++	struct block_device *bdev = I_BDEV(file->f_mapping->host);
+ 	struct blk_plug plug;
+ 	ssize_t ret;
+ 
+@@ -1597,6 +1632,16 @@ ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
+ }
+ EXPORT_SYMBOL_GPL(blkdev_aio_write);
+ 
++int blkdev_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	int ret;
++	struct block_device *bdev = I_BDEV(file->f_mapping->host);
++
++	ret = generic_file_mmap(file, vma);
++
++	return ret;
++}
++
+ /*
+  * Try to release a page associated with block device when the system
+  * is under memory pressure.
+@@ -1627,9 +1672,9 @@ const struct file_operations def_blk_fops = {
+ 	.llseek		= block_llseek,
+ 	.read		= do_sync_read,
+ 	.write		= do_sync_write,
+-  	.aio_read	= generic_file_aio_read,
++  	.aio_read	= blkdev_aio_read,
+ 	.aio_write	= blkdev_aio_write,
+-	.mmap		= generic_file_mmap,
++	.mmap		= blkdev_mmap,
+ 	.fsync		= blkdev_fsync,
+ 	.unlocked_ioctl	= block_ioctl,
+ #ifdef CONFIG_COMPAT
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index aa11047..15c481d 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -10,6 +10,7 @@
+ #include <linux/ioctl.h>
+ #include <linux/blk_types.h>
+ #include <linux/types.h>
++#include <linux/percpu-rwsem.h>
+ 
+ /*
+  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
+@@ -724,6 +725,8 @@ struct block_device {
+ 	int			bd_fsfreeze_count;
+ 	/* Mutex for freeze */
+ 	struct mutex		bd_fsfreeze_mutex;
++	/* A semaphore that prevents I/O while block size is being changed */
++	struct percpu_rw_semaphore	bd_block_size_semaphore;
+ };
+ 
+ /*
+@@ -2564,6 +2567,8 @@ extern int generic_segment_checks(const struct iovec *iov,
+ 		unsigned long *nr_segs, size_t *count, int access_flags);
+ 
+ /* fs/block_dev.c */
++extern ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
++			       unsigned long nr_segs, loff_t pos);
+ extern ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
+ 				unsigned long nr_segs, loff_t pos);
+ extern int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
