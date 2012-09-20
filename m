@@ -1,100 +1,49 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: gracefully fail any request beyond the end
-	of the device
-Date: Thu, 20 Sep 2012 15:28:13 -0400
-Message-ID: <20120920192812.GA31495@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 01/26] block: Convert integrity to bvec_alloc_bs(),
+ and a bugfix
+Date: Thu, 20 Sep 2012 14:53:13 -0700
+Message-ID: <20120920215313.GE7264@google.com>
+References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
+ <1347322957-25260-2-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mike Christie <michaelc@cs.wisc.edu>
+In-Reply-To: <1347322957-25260-2-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-The access beyond the end of device BUG_ON that was introduced to
-dm_request_fn via commit 29e4013de7ad950280e4b2208 ("dm: implement
-REQ_FLUSH/FUA support for request-based dm") is an overly drastic
-response.  Use dm_kill_unmapped_request() to fail the original and
-clone request with -EIO.
+Hello,
 
-map_request() will assign the valid target returned by
-dm_table_find_target() to tio->ti.  But in the case where the target
-isn't valid tio->ti is never assigned (because map_request isn't
-called); so add a check for tio->ti != NULL to dm_done().
+On Mon, Sep 10, 2012 at 05:22:12PM -0700, Kent Overstreet wrote:
+> This adds a pointer to the bvec array to struct bio_integrity_payload,
+> instead of the bvecs always being inline; then the bvecs are allocated
+> with bvec_alloc_bs().
+> 
+> This is needed eventually for immutable bio vecs - immutable bvecs
+> aren't useful if we still have to copy them, hence the need for the
+> pointer. Less code is always nice too, though.
+> 
+> Also fix an amusing bug in bio_integrity_split() - struct bio_pair
+> doesn't have the integrity bvecs after the bio_integrity_payloads, so
+> there was a buffer overrun. The code was confusing pointers with arrays.
 
-Reported-by: Mike Christie <michaelc@cs.wisc.edu>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org # v2.6.37+
----
- drivers/md/dm.c |   22 +++++++++++++++++-----
- 1 files changed, 17 insertions(+), 5 deletions(-)
+Aside from what Martin and Vivek already pointed out, it generally
+looks okay to me but here are some thoughts.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 4e09b6f..27fb739 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -865,7 +865,10 @@ static void dm_done(struct request *clone, int error, bool mapped)
- {
- 	int r = error;
- 	struct dm_rq_target_io *tio = clone->end_io_data;
--	dm_request_endio_fn rq_end_io = tio->ti->type->rq_end_io;
-+	dm_request_endio_fn rq_end_io = NULL;
-+
-+	if (tio->ti)
-+		rq_end_io = tio->ti->type->rq_end_io;
- 
- 	if (mapped && rq_end_io)
- 		r = rq_end_io(tio->ti, clone, error, &tio->info);
-@@ -1651,19 +1654,30 @@ static void dm_request_fn(struct request_queue *q)
- 		if (!rq)
- 			goto delay_and_out;
- 
-+		clone = rq->special;
-+
- 		/* always use block 0 to find the target for flushes for now */
- 		pos = 0;
- 		if (!(rq->cmd_flags & REQ_FLUSH))
- 			pos = blk_rq_pos(rq);
- 
- 		ti = dm_table_find_target(map, pos);
--		BUG_ON(!dm_target_is_valid(ti));
-+		if (!dm_target_is_valid(ti)) {
-+			/*
-+			 * Must perform setup, that dm_done() requires,
-+			 * before calling dm_kill_unmapped_request
-+			 */
-+			blk_start_request(rq);
-+			atomic_inc(&md->pending[rq_data_dir(clone)]);
-+			dm_get(md);
-+			dm_kill_unmapped_request(clone, -EIO);
-+			goto out;
-+		}
- 
- 		if (ti->type->busy && ti->type->busy(ti))
- 			goto delay_and_out;
- 
- 		blk_start_request(rq);
--		clone = rq->special;
- 		atomic_inc(&md->pending[rq_data_dir(clone)]);
- 
- 		spin_unlock(q->queue_lock);
-@@ -1684,8 +1698,6 @@ delay_and_out:
- 	blk_delay_queue(q, HZ / 10);
- out:
- 	dm_table_put(map);
--
--	return;
- }
- 
- int dm_underlying_device_busy(struct request_queue *q)
+I'm quite doubtful how much we're gaining by this complex set of slabs
+and mempools approach compared to just using kmalloc + one mempool for
+the largest size.  I can't think of anything to be gained in terms of
+cacheline hotness.  In terms of memory usage too, we're proabably
+introducing more fragmentation with all the different slabs.
+
+Jens, what are you thoughts?  For forward progress guarantee, single
+mempool per bioset serving the largest one is enough and we can
+significantly simplify the whole bioset thing.
+
+Thanks.
+
+-- 
+tejun
