@@ -1,219 +1,221 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH 0/4] Fix a crash when block device is read and block size is changed at the same time
-Date: Tue, 18 Sep 2012 16:11:26 -0400
-Message-ID: <x49ehlzrt01.fsf@segfault.boston.devel.redhat.com>
-References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
-	<20120628111541.GB17515@quack.suse.cz>
-	<Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
-	<x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
-	<Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
-	<x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
-	<Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
-	<1343508252.2626.13184.camel@edumazet-glaptop>
-	<Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
-	<1343556630.2626.13257.camel@edumazet-glaptop>
-	<1343586962.2626.13266.camel@edumazet-glaptop>
-	<Pine.LNX.4.64.1208011601280.21832@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1208311433480.2212@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1208311518340.16960@file.rdu.redhat.com>
-	<x49liguyg6r.fsf@segfault.boston.devel.redhat.com>
-	<x49wqzswdn3.fsf@segfault.boston.devel.redhat.com>
-	<Pine.LNX.4.64.1209181257410.11735@file.rdu.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Robin Dong <robin.k.dong@gmail.com>
+Subject: [PATCH 1/2] md: add new interface 'mk_rq' in target_type
+Date: Thu, 20 Sep 2012 11:18:41 +0800
+Message-ID: <1348111122-27400-1-git-send-email-robin.k.dong@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1209181257410.11735@file.rdu.redhat.com> (Mikulas
-	Patocka's message of "Tue, 18 Sep 2012 13:04:58 -0400 (EDT)")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Robin Dong <sanbai@taobao.com>
 List-Id: dm-devel.ids
 
-Mikulas Patocka <mpatocka@redhat.com> writes:
+From: Robin Dong <sanbai@taobao.com>
 
-> Hi Jeff
->
-> Thanks for testing.
->
-> It would be interesting ... what happens if you take the patch 3, leave 
-> "struct percpu_rw_semaphore bd_block_size_semaphore" in "struct 
-> block_device", but remove any use of the semaphore from fs/block_dev.c? - 
-> will the performance be like unpatched kernel or like patch 3? It could be 
-> that the change in the alignment affects performance on your CPU too, just 
-> differently than on my CPU.
+We are now trying to modify flashcache(https://github.com/facebook/flashcache)
+to make it request based so that
+we can let cfq io-controller control the bandwidth between different
+io cgroups.
 
-It turns out to be exactly the same performance as with the 3rd patch
-applied, so I guess it does have something to do with cache alignment.
-Here is the patch (against vanilla) I ended up testing.  Let me know if
-I've botched it somehow.
+A search in the dm directory tells me that only multipath is a request
+based dm target and its functionality
+is very simple and map_rq() is used to map the request to different underlying devices.
+We can't work in this way because:
 
-So, I next up I'll play similar tricks to what you did (padding struct
-block_device in all kernels) to eliminate the differences due to
-structure alignment and provide a clear picture of what the locking
-effects are.
+1. the request which processed by map_rq() need to be issued to
+	different lower devices (disk device and cache device, in flashcache), therefore the request
+	can't be totally remapped by simply changing its queue and returning DM_MAPIO_REMAPPED in map_rq() like multipath_map()
+2. to submit bios drectly in map_rq() (by return DM_MAPIO_SUBMITTED) will cause BUG_ON(!irqs_disabled())
+	in dm_request_fn() because the submit_bio()->generic_make_request()->blk_queue_bio() will definitly call spin_unlock_irq to enable the irqs
 
-Thanks!
-Jeff
+As above,the interface map_rq() provided by devcie-mapper framework
+is not enough for an autonomous target, like flashcache.
 
+We propose to add a new
+mk_rq interface so that we can make the requests
+by ourselves.
 
-diff --git a/drivers/char/raw.c b/drivers/char/raw.c
-index 54a3a6d..0bb207e 100644
---- a/drivers/char/raw.c
-+++ b/drivers/char/raw.c
-@@ -285,7 +285,7 @@ static long raw_ctl_compat_ioctl(struct file *file, unsigned int cmd,
- 
- static const struct file_operations raw_fops = {
- 	.read		= do_sync_read,
--	.aio_read	= generic_file_aio_read,
-+	.aio_read	= blkdev_aio_read,
- 	.write		= do_sync_write,
- 	.aio_write	= blkdev_aio_write,
- 	.fsync		= blkdev_fsync,
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 38e721b..c7514b5 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -116,6 +116,8 @@ EXPORT_SYMBOL(invalidate_bdev);
- 
- int set_blocksize(struct block_device *bdev, int size)
+Signed-off-by: Robin Dong <sanbai@taobao.com>
+---
+ drivers/md/dm-io.c    |   58 ++++++++++++++++++++++++++++--------------------
+ drivers/md/dm-log.c   |    1 +
+ include/linux/dm-io.h |    3 ++
+ 3 files changed, 38 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index ea5dd28..f767792 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -287,8 +287,8 @@ static void km_dp_init(struct dpages *dp, void *data)
+ /*-----------------------------------------------------------------
+  * IO routines that accept a list of pages.
+  *---------------------------------------------------------------*/
+-static void do_region(int rw, unsigned region, struct dm_io_region *where,
+-		      struct dpages *dp, struct io *io)
++static void do_region(struct dm_io_request *io_req, unsigned region,
++		struct dm_io_region *where, struct dpages *dp, struct io *io)
  {
-+	struct address_space *mapping;
-+
- 	/* Size must be a power of two, and between 512 and PAGE_SIZE */
- 	if (size > PAGE_SIZE || size < 512 || !is_power_of_2(size))
- 		return -EINVAL;
-@@ -124,6 +126,16 @@ int set_blocksize(struct block_device *bdev, int size)
- 	if (size < bdev_logical_block_size(bdev))
- 		return -EINVAL;
+ 	struct bio *bio;
+ 	struct page *page;
+@@ -298,6 +298,7 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 	sector_t remaining = where->count;
+ 	struct request_queue *q = bdev_get_queue(where->bdev);
+ 	sector_t discard_sectors;
++	int rw = io_req->bi_rw;
  
-+	/* Check that the block device is not memory mapped */
-+	mapping = bdev->bd_inode->i_mapping;
-+	mutex_lock(&mapping->i_mmap_mutex);
-+	if (!prio_tree_empty(&mapping->i_mmap) ||
-+	    !list_empty(&mapping->i_mmap_nonlinear)) {
-+		mutex_unlock(&mapping->i_mmap_mutex);
-+		return -EBUSY;
-+	}
-+	mutex_unlock(&mapping->i_mmap_mutex);
-+
- 	/* Don't change the size if it is same as current */
- 	if (bdev->bd_block_size != size) {
- 		sync_blockdev(bdev);
-@@ -131,6 +143,7 @@ int set_blocksize(struct block_device *bdev, int size)
- 		bdev->bd_inode->i_blkbits = blksize_bits(size);
- 		kill_bdev(bdev);
+ 	/*
+ 	 * where->count may be zero if rw holds a flush and we need to
+@@ -339,15 +340,26 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 		}
+ 
+ 		atomic_inc(&io->count);
+-		submit_bio(rw, bio);
++		if (!io_req->only_create_bio)
++			submit_bio(rw, bio);
++		else {
++			bio->bi_rw |= rw;
++			if (io_req->start) {
++				io_req->end->bi_next = bio;
++				io_req->end = bio;
++			} else
++				io_req->start = io_req->end = bio;
++			bio->bi_next = NULL;
++		}
+ 	} while (remaining);
+ }
+ 
+-static void dispatch_io(int rw, unsigned int num_regions,
++static void dispatch_io(struct dm_io_request *io_req, unsigned int num_regions,
+ 			struct dm_io_region *where, struct dpages *dp,
+ 			struct io *io, int sync)
+ {
+ 	int i;
++	int rw = io_req->bi_rw;
+ 	struct dpages old_pages = *dp;
+ 
+ 	BUG_ON(num_regions > DM_IO_MAX_REGIONS);
+@@ -362,7 +374,7 @@ static void dispatch_io(int rw, unsigned int num_regions,
+ 	for (i = 0; i < num_regions; i++) {
+ 		*dp = old_pages;
+ 		if (where[i].count || (rw & REQ_FLUSH))
+-			do_region(rw, i, where + i, dp, io);
++			do_region(io_req, i, where + i, dp, io);
  	}
-+
+ 
+ 	/*
+@@ -372,8 +384,8 @@ static void dispatch_io(int rw, unsigned int num_regions,
+ 	dec_count(io, 0, 0);
+ }
+ 
+-static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+-		   struct dm_io_region *where, int rw, struct dpages *dp,
++static int sync_io(struct dm_io_request *io_req,  unsigned int num_regions,
++		   struct dm_io_region *where, struct dpages *dp,
+ 		   unsigned long *error_bits)
+ {
+ 	/*
+@@ -385,7 +397,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	volatile char io_[sizeof(struct io) + __alignof__(struct io) - 1];
+ 	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
+ 
+-	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
++	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
+ 		WARN_ON(1);
+ 		return -EIO;
+ 	}
+@@ -393,12 +405,12 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->error_bits = 0;
+ 	atomic_set(&io->count, 1); /* see dispatch_io() */
+ 	io->sleeper = current;
+-	io->client = client;
++	io->client = io_req->client;
+ 
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(rw, num_regions, where, dp, io, 1);
++	dispatch_io(io_req, num_regions, where, dp, io, 1);
+ 
+ 	while (1) {
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+@@ -416,30 +428,29 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	return io->error_bits ? -EIO : 0;
+ }
+ 
+-static int async_io(struct dm_io_client *client, unsigned int num_regions,
+-		    struct dm_io_region *where, int rw, struct dpages *dp,
+-		    io_notify_fn fn, void *context)
++static int async_io(struct dm_io_request *io_req, unsigned int num_regions,
++		struct dm_io_region *where, struct dpages *dp)
+ {
+ 	struct io *io;
+ 
+-	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
++	if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
+ 		WARN_ON(1);
+-		fn(1, context);
++		io_req->notify.fn(1, io_req->notify.context);
+ 		return -EIO;
+ 	}
+ 
+-	io = mempool_alloc(client->pool, GFP_NOIO);
++	io = mempool_alloc(io_req->client->pool, GFP_NOIO);
+ 	io->error_bits = 0;
+ 	atomic_set(&io->count, 1); /* see dispatch_io() */
+ 	io->sleeper = NULL;
+-	io->client = client;
+-	io->callback = fn;
+-	io->context = context;
++	io->client = io_req->client;
++	io->callback = io_req->notify.fn;
++	io->context = io_req->notify.context;
+ 
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(rw, num_regions, where, dp, io, 0);
++	dispatch_io(io_req, num_regions, where, dp, io, 0);
  	return 0;
  }
  
-@@ -441,6 +454,12 @@ static struct inode *bdev_alloc_inode(struct super_block *sb)
- 	struct bdev_inode *ei = kmem_cache_alloc(bdev_cachep, GFP_KERNEL);
- 	if (!ei)
- 		return NULL;
-+
-+	if (unlikely(percpu_init_rwsem(&ei->bdev.bd_block_size_semaphore))) {
-+		kmem_cache_free(bdev_cachep, ei);
-+		return NULL;
-+	}
-+
- 	return &ei->vfs_inode;
+@@ -499,11 +510,10 @@ int dm_io(struct dm_io_request *io_req, unsigned num_regions,
+ 		return r;
+ 
+ 	if (!io_req->notify.fn)
+-		return sync_io(io_req->client, num_regions, where,
+-			       io_req->bi_rw, &dp, sync_error_bits);
++		return sync_io(io_req, num_regions, where,
++				&dp, sync_error_bits);
+ 
+-	return async_io(io_req->client, num_regions, where, io_req->bi_rw,
+-			&dp, io_req->notify.fn, io_req->notify.context);
++	return async_io(io_req, num_regions, where, &dp);
  }
+ EXPORT_SYMBOL(dm_io);
  
-@@ -449,6 +468,8 @@ static void bdev_i_callback(struct rcu_head *head)
- 	struct inode *inode = container_of(head, struct inode, i_rcu);
- 	struct bdev_inode *bdi = BDEV_I(inode);
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 627d191..3bf065a 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -463,6 +463,7 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
+ 			kfree(lc);
+ 			return r;
+ 		}
++		lc->io_req.only_create_bio = 0;
  
-+	percpu_free_rwsem(&bdi->bdev.bd_block_size_semaphore);
-+
- 	kmem_cache_free(bdev_cachep, bdi);
- }
- 
-@@ -1567,6 +1588,19 @@ static long block_ioctl(struct file *file, unsigned cmd, unsigned long arg)
- 	return blkdev_ioctl(bdev, mode, cmd, arg);
- }
- 
-+ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
-+			unsigned long nr_segs, loff_t pos)
-+{
-+	ssize_t ret;
-+	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
-+	percpu_rwsem_ptr p;
-+
-+	ret = generic_file_aio_read(iocb, iov, nr_segs, pos);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(blkdev_aio_read);
-+
- /*
-  * Write data to the block device.  Only intended for the block device itself
-  * and the raw driver which basically is a fake block device.
-@@ -1578,6 +1612,7 @@ ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
- 			 unsigned long nr_segs, loff_t pos)
- {
- 	struct file *file = iocb->ki_filp;
-+	struct block_device *bdev = I_BDEV(file->f_mapping->host);
- 	struct blk_plug plug;
- 	ssize_t ret;
- 
-@@ -1597,6 +1632,16 @@ ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
- }
- EXPORT_SYMBOL_GPL(blkdev_aio_write);
- 
-+int blkdev_mmap(struct file *file, struct vm_area_struct *vma)
-+{
-+	int ret;
-+	struct block_device *bdev = I_BDEV(file->f_mapping->host);
-+
-+	ret = generic_file_mmap(file, vma);
-+
-+	return ret;
-+}
-+
- /*
-  * Try to release a page associated with block device when the system
-  * is under memory pressure.
-@@ -1627,9 +1672,9 @@ const struct file_operations def_blk_fops = {
- 	.llseek		= block_llseek,
- 	.read		= do_sync_read,
- 	.write		= do_sync_write,
--  	.aio_read	= generic_file_aio_read,
-+  	.aio_read	= blkdev_aio_read,
- 	.aio_write	= blkdev_aio_write,
--	.mmap		= generic_file_mmap,
-+	.mmap		= blkdev_mmap,
- 	.fsync		= blkdev_fsync,
- 	.unlocked_ioctl	= block_ioctl,
- #ifdef CONFIG_COMPAT
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index aa11047..15c481d 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -10,6 +10,7 @@
- #include <linux/ioctl.h>
- #include <linux/blk_types.h>
- #include <linux/types.h>
-+#include <linux/percpu-rwsem.h>
- 
- /*
-  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
-@@ -724,6 +725,8 @@ struct block_device {
- 	int			bd_fsfreeze_count;
- 	/* Mutex for freeze */
- 	struct mutex		bd_fsfreeze_mutex;
-+	/* A semaphore that prevents I/O while block size is being changed */
-+	struct percpu_rw_semaphore	bd_block_size_semaphore;
+ 		lc->disk_header = vmalloc(buf_size);
+ 		if (!lc->disk_header) {
+diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
+index f4b0aa3..8782163 100644
+--- a/include/linux/dm-io.h
++++ b/include/linux/dm-io.h
+@@ -61,6 +61,9 @@ struct dm_io_request {
+ 	struct dm_io_memory mem;	/* Memory to use for io */
+ 	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
+ 	struct dm_io_client *client;	/* Client memory handler */
++	int only_create_bio;
++	struct bio *start;
++	struct bio *end;
  };
  
  /*
-@@ -2564,6 +2567,8 @@ extern int generic_segment_checks(const struct iovec *iov,
- 		unsigned long *nr_segs, size_t *count, int access_flags);
- 
- /* fs/block_dev.c */
-+extern ssize_t blkdev_aio_read(struct kiocb *iocb, const struct iovec *iov,
-+			       unsigned long nr_segs, loff_t pos);
- extern ssize_t blkdev_aio_write(struct kiocb *iocb, const struct iovec *iov,
- 				unsigned long nr_segs, loff_t pos);
- extern int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
+-- 
+1.7.1
