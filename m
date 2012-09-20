@@ -1,63 +1,49 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH v2 02/26] block: Add bio_advance()
-Date: Thu, 20 Sep 2012 16:13:08 -0700
-Message-ID: <20120920231308.GB5519@google.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 03/26] block: Refactor blk_update_request()
+Date: Thu, 20 Sep 2012 16:20:00 -0700
+Message-ID: <20120920232000.GG7264@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
- <1347322957-25260-3-git-send-email-koverstreet@google.com>
- <20120920215827.GF7264@google.com>
+ <1347322957-25260-4-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20120920215827.GF7264@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, neilb@suse.de
+In-Reply-To: <1347322957-25260-4-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Thu, Sep 20, 2012 at 02:58:27PM -0700, Tejun Heo wrote:
-> On Mon, Sep 10, 2012 at 05:22:13PM -0700, Kent Overstreet wrote:
-> > +/**
-> > + * bio_advance - increment/complete a bio by some number of bytes
-> > + * @bio:	bio to advance
-> > + * @bytes:	number of bytes to complete
-> > + *
-> > + * This updates bi_sector, bi_size and bi_idx; if the number of bytes to
-> > + * complete doesn't align with a bvec boundary, then bv_len and bv_offset will
-> > + * be updated on the last bvec as well.
-> > + *
-> > + * @bio will then represent the remaining, uncompleted portion of the io.
-> > + */
-> > +void bio_advance(struct bio *bio, unsigned bytes)
-> > +{
-> > +	if (bio_integrity(bio))
-> > +		bio_integrity_advance(bio, bytes);
-> > +
-> > +	bio->bi_sector += bytes >> 0;
-> 
-> Hmmm.... bytes >> 0?
+Hello,
 
-Whoops...
+On Mon, Sep 10, 2012 at 05:22:14PM -0700, Kent Overstreet wrote:
+>  static void req_bio_endio(struct request *rq, struct bio *bio,
+>  			  unsigned int nbytes, int error)
+>  {
+> +	/*
+> +	 * XXX: bio_endio() does this. only need this because of the weird
+> +	 * flush seq thing.
+> +	 */
+>  	if (error)
+>  		clear_bit(BIO_UPTODATE, &bio->bi_flags);
+>  	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+>  		error = -EIO;
 
-> > +	bio->bi_size -= bytes;
-> > +
-> > +	if (!bio->bi_size)
-> > +		return;
-> > +
-> > +	while (bytes) {
-> > +		if (unlikely(bio->bi_idx >= bio->bi_vcnt)) {
-> > +			printk(KERN_ERR "%s: bio idx %d >= vcnt %d\n",
-> 
-> pr_err() is preferred but maybe WARN_ON_ONCE() is better fit here?
-> This happening would be a bug, right?
+Isn't this also necessary to record errors on partial completions?
 
-I just cut and pasted that from blk_update_request(), which is what the
-next patch refactors...
+Other than that, I definitely like this.  It would be nice to note
+that the custom partial bio advancing in blk_update_request() is
+replaced with multiple calls to req_bio_endio().  I don't think it has
+any meaningful performance implications.  It's just nice to future
+readers of the commit.
 
-But yes it would be a bug. It gets converted to a BUG_ON() in a later
-patch (not in this series), as this gets further abstracted into a
-wrapper around bvec_advance_iter() which doesn't know about struct bio
-(as bio integrity gets its own iterator).
+Also, it would be really nice if you can verify this actually works
+with partial blk_update_request().  sector update bug in the previous
+patch scares me a bit.  Implementing some debug hacks in the
+completion path might be the easiest way to verify.  A subtle bug here
+could be pretty painful.
 
-Might drop it entirely, depending on what exactly I end up doing with
-bi_vcnt...
+Thanks.
+
+-- 
+tejun
