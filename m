@@ -1,33 +1,132 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v2 11/26] raid10: Use bio_reset()
-Date: Thu, 20 Sep 2012 16:59:25 -0700
-Message-ID: <20120920235925.GR7264@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 07/26] block: Don't use bi_idx in bio_split() or
+ require it to be 0
+Date: Thu, 20 Sep 2012 17:00:48 -0700
+Message-ID: <20120921000048.GH5519@google.com>
 References: <1347322957-25260-1-git-send-email-koverstreet@google.com>
- <1347322957-25260-12-git-send-email-koverstreet@google.com>
+ <1347322957-25260-8-git-send-email-koverstreet@google.com>
+ <20120920234544.GN7264@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1347322957-25260-12-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, neilb@suse.de
+In-Reply-To: <20120920234544.GN7264-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Sep 10, 2012 at 05:22:22PM -0700, Kent Overstreet wrote:
-> More prep work for immutable bio vecs, mainly getting rid of references
-> to bi_idx.
+On Thu, Sep 20, 2012 at 04:45:44PM -0700, Tejun Heo wrote:
+> On Mon, Sep 10, 2012 at 05:22:18PM -0700, Kent Overstreet wrote:
+> > Prep work for immutable bio_vecs/efficient bio splitting: they require
+> > auditing and removing most uses of bi_idx.
+> > 
+> > So here we convert bio_split() to respect the current value of bi_idx
+> > and use the bio_iovec() macro, instead of assuming bi_idx will be 0.
 > 
-> bio_reset was being open coded in a few places. The one in sync_request
-> was a bit nontrivial to convert, so could use some extra eyeballs.
+> I find the description a bit cryptic.
+
+Yeah, I wasn't able to come up with a better description at the time...
+how's this:
+
+Change bio_split() to respect the current value of bi_idx
+
+In the current code bio_split() won't be seeing partially completed bios
+so this doesn't change any behaviour, but this makes the code a bit
+clearer as to what bio_split() actually requires.
+
+The immediate purpose of the patch is removing unnecessary bi_idx
+references, but the end goal is to allow partial completed bios to be
+submitted, which along with immutable biovecs enables effecient bio
+splitting.
+
+
 > 
-> Signed-off-by: Kent Overstreet <koverstreet@google.com>
-> CC: Jens Axboe <axboe@kernel.dk>
-> CC: NeilBrown <neilb@suse.de>
-
-No idea at all.  Neil?
-
-Thanks.
-
--- 
-tejun
+> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> > CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+> > ---
+> >  drivers/block/drbd/drbd_req.c | 6 +++---
+> >  drivers/md/raid0.c            | 3 +--
+> >  drivers/md/raid10.c           | 3 +--
+> >  fs/bio-integrity.c            | 4 ++--
+> >  fs/bio.c                      | 7 +++----
+> >  5 files changed, 10 insertions(+), 13 deletions(-)
+> > 
+> > diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+> > index af69a96..57eb253 100644
+> > --- a/drivers/block/drbd/drbd_req.c
+> > +++ b/drivers/block/drbd/drbd_req.c
+> > @@ -1155,11 +1155,11 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
+> >  
+> >  	/* can this bio be split generically?
+> >  	 * Maybe add our own split-arbitrary-bios function. */
+> > -	if (bio->bi_vcnt != 1 || bio->bi_idx != 0 || bio->bi_size > DRBD_MAX_BIO_SIZE) {
+> > +	if (bio_segments(bio) != 1 || bio->bi_size > DRBD_MAX_BIO_SIZE) {
+> >  		/* rather error out here than BUG in bio_split */
+> >  		dev_err(DEV, "bio would need to, but cannot, be split: "
+> > -		    "(vcnt=%u,idx=%u,size=%u,sector=%llu)\n",
+> > -		    bio->bi_vcnt, bio->bi_idx, bio->bi_size,
+> > +		    "(segments=%u,size=%u,sector=%llu)\n",
+> > +		    bio_segments(bio), bio->bi_size,
+> >  		    (unsigned long long)bio->bi_sector);
+> >  		bio_endio(bio, -EINVAL);
+> >  	} else {
+> > diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+> > index 387cb89..0587450 100644
+> > --- a/drivers/md/raid0.c
+> > +++ b/drivers/md/raid0.c
+> > @@ -509,8 +509,7 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
+> >  		sector_t sector = bio->bi_sector;
+> >  		struct bio_pair *bp;
+> >  		/* Sanity check -- queue functions should prevent this happening */
+> > -		if (bio->bi_vcnt != 1 ||
+> > -		    bio->bi_idx != 0)
+> > +		if (bio_segments(bio) != 1)
+> >  			goto bad_map;
+> >  		/* This is a one page bio that upper layers
+> >  		 * refuse to split for us, so we need to split it.
+> > diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+> > index 9715aaf..bbd08f5 100644
+> > --- a/drivers/md/raid10.c
+> > +++ b/drivers/md/raid10.c
+> > @@ -1081,8 +1081,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
+> >  			 || conf->prev.near_copies < conf->prev.raid_disks))) {
+> >  		struct bio_pair *bp;
+> >  		/* Sanity check -- queue functions should prevent this happening */
+> > -		if (bio->bi_vcnt != 1 ||
+> > -		    bio->bi_idx != 0)
+> > +		if (bio_segments(bio) != 1)
+> >  			goto bad_map;
+> >  		/* This is a one page bio that upper layers
+> >  		 * refuse to split for us, so we need to split it.
+> 
+> And wonder how the description applies to the above.
+> 
+> > --- a/fs/bio.c
+> > +++ b/fs/bio.c
+> > @@ -1616,8 +1616,7 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
+> >  	trace_block_split(bdev_get_queue(bi->bi_bdev), bi,
+> >  				bi->bi_sector + first_sectors);
+> >  
+> > -	BUG_ON(bi->bi_vcnt != 1);
+> > -	BUG_ON(bi->bi_idx != 0);
+> > +	BUG_ON(bio_segments(bi) != 1);
+> >  	atomic_set(&bp->cnt, 3);
+> >  	bp->error = 0;
+> >  	bp->bio1 = *bi;
+> > @@ -1626,8 +1625,8 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
+> >  	bp->bio2.bi_size -= first_sectors << 9;
+> >  	bp->bio1.bi_size = first_sectors << 9;
+> >  
+> > -	bp->bv1 = bi->bi_io_vec[0];
+> > -	bp->bv2 = bi->bi_io_vec[0];
+> > +	bp->bv1 = *bio_iovec(bi);
+> > +	bp->bv2 = *bio_iovec(bi);
+> 
+> This conflicts with a recent commit from Martin.  You probably wanna
+> rebase.
+> 
+> Thanks.
+> 
+> -- 
+> tejun
