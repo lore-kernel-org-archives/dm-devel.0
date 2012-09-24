@@ -1,142 +1,87 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 17/26] pktcdvd: use bio_copy_data()
-Date: Mon, 24 Sep 2012 15:34:57 -0700
-Message-ID: <1348526106-17074-18-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 15/26] raid1: Refactor narrow_write_error() to not use bi_idx
+Date: Mon, 24 Sep 2012 15:34:55 -0700
+Message-ID: <1348526106-17074-16-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com, Jiri Kosina <jkosina@suse.cz>
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com
 List-Id: dm-devel.ids
+
+More bi_idx removal. This code was just open coding bio_clone(). This
+could probably be further improved by using bio_advance() instead of
+skipping over null pages, but that'd be a larger rework.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: Jiri Kosina <jkosina@suse.cz>
+CC: NeilBrown <neilb@suse.de>
 ---
- drivers/block/pktcdvd.c | 79 ++++++++-----------------------------------------
- 1 file changed, 12 insertions(+), 67 deletions(-)
+ drivers/md/raid1.c | 36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 2c27744..783c96c 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -948,31 +948,6 @@ static int pkt_set_segment_merging(struct pktcdvd_device *pd, struct request_que
- }
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 4614b9e..af39f74 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -2052,8 +2052,6 @@ static int narrow_write_error(struct r1bio *r1_bio, int i)
+ 	struct mddev *mddev = r1_bio->mddev;
+ 	struct r1conf *conf = mddev->private;
+ 	struct md_rdev *rdev = conf->mirrors[i].rdev;
+-	int vcnt, idx;
+-	struct bio_vec *vec;
  
- /*
-- * Copy CD_FRAMESIZE bytes from src_bio into a destination page
-- */
--static void pkt_copy_bio_data(struct bio *src_bio, int seg, int offs, struct page *dst_page, int dst_offs)
--{
--	unsigned int copy_size = CD_FRAMESIZE;
--
--	while (copy_size > 0) {
--		struct bio_vec *src_bvl = bio_iovec_idx(src_bio, seg);
--		void *vfrom = kmap_atomic(src_bvl->bv_page) +
--			src_bvl->bv_offset + offs;
--		void *vto = page_address(dst_page) + dst_offs;
--		int len = min_t(int, copy_size, src_bvl->bv_len - offs);
--
--		BUG_ON(len < 0);
--		memcpy(vto, vfrom, len);
--		kunmap_atomic(vfrom);
--
--		seg++;
--		offs = 0;
--		dst_offs += len;
--		copy_size -= len;
+ 	/* bio has the data to be written to device 'i' where
+ 	 * we just recently had a write error.
+@@ -2081,30 +2079,32 @@ static int narrow_write_error(struct r1bio *r1_bio, int i)
+ 		   & ~(sector_t)(block_sectors - 1))
+ 		- sector;
+ 
+-	if (test_bit(R1BIO_BehindIO, &r1_bio->state)) {
+-		vcnt = r1_bio->behind_page_count;
+-		vec = r1_bio->behind_bvecs;
+-		idx = 0;
+-		while (vec[idx].bv_page == NULL)
+-			idx++;
+-	} else {
+-		vcnt = r1_bio->master_bio->bi_vcnt;
+-		vec = r1_bio->master_bio->bi_io_vec;
+-		idx = r1_bio->master_bio->bi_idx;
 -	}
--}
--
--/*
-  * Copy all data for this packet to pkt->pages[], so that
-  * a) The number of required segments for the write bio is minimized, which
-  *    is necessary for some scsi controllers.
-@@ -1325,55 +1300,35 @@ try_next_bio:
-  */
- static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
- {
--	struct bio *bio;
- 	int f;
--	int frames_write;
- 	struct bio_vec *bvec = pkt->w_bio->bi_io_vec;
+ 	while (sect_to_write) {
+ 		struct bio *wbio;
+ 		if (sectors > sect_to_write)
+ 			sectors = sect_to_write;
+ 		/* Write at 'sector' for 'sectors'*/
  
-+	bio_reset(pkt->w_bio);
-+	pkt->w_bio->bi_sector = pkt->sector;
-+	pkt->w_bio->bi_bdev = pd->bdev;
-+	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
-+	pkt->w_bio->bi_private = pkt;
+-		wbio = bio_alloc_mddev(GFP_NOIO, vcnt, mddev);
+-		memcpy(wbio->bi_io_vec, vec, vcnt * sizeof(struct bio_vec));
+-		wbio->bi_sector = r1_bio->sector;
++		if (test_bit(R1BIO_BehindIO, &r1_bio->state)) {
++			unsigned vcnt = r1_bio->behind_page_count;
++			struct bio_vec *vec = r1_bio->behind_bvecs;
 +
-+	/* XXX: locking? */
- 	for (f = 0; f < pkt->frames; f++) {
- 		bvec[f].bv_page = pkt->pages[(f * CD_FRAMESIZE) / PAGE_SIZE];
- 		bvec[f].bv_offset = (f * CD_FRAMESIZE) % PAGE_SIZE;
-+		if (!bio_add_page(pkt->w_bio, bvec[f].bv_page, CD_FRAMESIZE, bvec[f].bv_offset))
-+			BUG();
- 	}
-+	VPRINTK(DRIVER_NAME": vcnt=%d\n", pkt->w_bio->bi_vcnt);
++			while (!vec->bv_page) {
++				vec++;
++				vcnt--;
++			}
++
++			wbio = bio_alloc_mddev(GFP_NOIO, vcnt, mddev);
++			memcpy(wbio->bi_io_vec, vec, vcnt * sizeof(struct bio_vec));
++
++			wbio->bi_vcnt = vcnt;
++		} else {
++			wbio = bio_clone_mddev(r1_bio->master_bio, GFP_NOIO, mddev);
++		}
++
+ 		wbio->bi_rw = WRITE;
+-		wbio->bi_vcnt = vcnt;
++		wbio->bi_sector = r1_bio->sector;
+ 		wbio->bi_size = r1_bio->sectors << 9;
+-		wbio->bi_idx = idx;
  
- 	/*
- 	 * Fill-in bvec with data from orig_bios.
- 	 */
--	frames_write = 0;
- 	spin_lock(&pkt->lock);
--	bio_list_for_each(bio, &pkt->orig_bios) {
--		int segment = bio->bi_idx;
--		int src_offs = 0;
--		int first_frame = (bio->bi_sector - pkt->sector) / (CD_FRAMESIZE >> 9);
--		int num_frames = bio->bi_size / CD_FRAMESIZE;
--		BUG_ON(first_frame < 0);
--		BUG_ON(first_frame + num_frames > pkt->frames);
--		for (f = first_frame; f < first_frame + num_frames; f++) {
--			struct bio_vec *src_bvl = bio_iovec_idx(bio, segment);
--
--			while (src_offs >= src_bvl->bv_len) {
--				src_offs -= src_bvl->bv_len;
--				segment++;
--				BUG_ON(segment >= bio->bi_vcnt);
--				src_bvl = bio_iovec_idx(bio, segment);
--			}
-+	bio_copy_data(pkt->w_bio, pkt->orig_bios.head);
- 
--			if (src_bvl->bv_len - src_offs >= CD_FRAMESIZE) {
--				bvec[f].bv_page = src_bvl->bv_page;
--				bvec[f].bv_offset = src_bvl->bv_offset + src_offs;
--			} else {
--				pkt_copy_bio_data(bio, segment, src_offs,
--						  bvec[f].bv_page, bvec[f].bv_offset);
--			}
--			src_offs += CD_FRAMESIZE;
--			frames_write++;
--		}
--	}
- 	pkt_set_state(pkt, PACKET_WRITE_WAIT_STATE);
- 	spin_unlock(&pkt->lock);
- 
- 	VPRINTK("pkt_start_write: Writing %d frames for zone %llx\n",
--		frames_write, (unsigned long long)pkt->sector);
--	BUG_ON(frames_write != pkt->write_size);
-+		pkt->write_size, (unsigned long long)pkt->sector);
- 
- 	if (test_bit(PACKET_MERGE_SEGS, &pd->flags) || (pkt->write_size < pkt->frames)) {
- 		pkt_make_local_copy(pkt, bvec);
-@@ -1383,16 +1338,6 @@ static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
- 	}
- 
- 	/* Start the write request */
--	bio_reset(pkt->w_bio);
--	pkt->w_bio->bi_sector = pkt->sector;
--	pkt->w_bio->bi_bdev = pd->bdev;
--	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
--	pkt->w_bio->bi_private = pkt;
--	for (f = 0; f < pkt->frames; f++)
--		if (!bio_add_page(pkt->w_bio, bvec[f].bv_page, CD_FRAMESIZE, bvec[f].bv_offset))
--			BUG();
--	VPRINTK(DRIVER_NAME": vcnt=%d\n", pkt->w_bio->bi_vcnt);
--
- 	atomic_set(&pkt->io_wait, 1);
- 	pkt->w_bio->bi_rw = WRITE;
- 	pkt_queue_bio(pd, pkt->w_bio);
+ 		md_trim_bio(wbio, sector - r1_bio->sector, sectors);
+ 		wbio->bi_sector += rdev->data_offset;
 -- 
 1.7.12
