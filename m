@@ -1,126 +1,121 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 08/26] block: Change bio_split() to respect the current value of bi_idx
-Date: Mon, 24 Sep 2012 15:34:48 -0700
-Message-ID: <1348526106-17074-9-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 26/26] block: Add BIO_SUBMITTED flag, kill BIO_CLONED
+Date: Mon, 24 Sep 2012 15:35:06 -0700
+Message-ID: <1348526106-17074-27-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com, Alasdair Kergon <agk@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-In the current code bio_split() won't be seeing partially completed bios
-so this doesn't change any behaviour, but this makes the code a bit
-clearer as to what bio_split() actually requires.
+BIO_CLONED wasn't very useful, and didn't have very clear semantics, so
+kill it.
 
-The immediate purpose of the patch is removing unnecessary bi_idx
-references, but the end goal is to allow partial completed bios to be
-submitted, which along with immutable biovecs enables effecient bio
-splitting.
+Replace it with a more useful flag - BIO_SUBMITTED means the bio has
+been passed to generic_make_request() and the bvec can no longer be
+modified.
 
-Some of the callers were (double) checking that bios could be split, so
-update their checks too.
+Roll both changes into the same patch so we can steal the old bit for
+the new flag.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: Lars Ellenberg <drbd-dev@lists.linbit.com>
-CC: Neil Brown <neilb@suse.de>
+CC: Alasdair Kergon <agk@redhat.com>
+CC: dm-devel@redhat.com
 CC: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- drivers/block/drbd/drbd_req.c | 6 +++---
- drivers/md/raid0.c            | 3 +--
- drivers/md/raid10.c           | 3 +--
- fs/bio-integrity.c            | 4 ++--
- fs/bio.c                      | 7 +++----
- 5 files changed, 10 insertions(+), 13 deletions(-)
+ block/blk-core.c          | 2 ++
+ drivers/md/dm.c           | 1 -
+ fs/bio-integrity.c        | 1 -
+ fs/bio.c                  | 8 +++++---
+ include/linux/blk_types.h | 2 +-
+ 5 files changed, 8 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-index d90a1fd..4d09e74 100644
---- a/drivers/block/drbd/drbd_req.c
-+++ b/drivers/block/drbd/drbd_req.c
-@@ -1155,11 +1155,11 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
+diff --git a/block/blk-core.c b/block/blk-core.c
+index df9bb5f..fcf4335 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1631,6 +1631,8 @@ generic_make_request_checks(struct bio *bio)
  
- 	/* can this bio be split generically?
- 	 * Maybe add our own split-arbitrary-bios function. */
--	if (bio->bi_vcnt != 1 || bio->bi_idx != 0 || bio->bi_size > DRBD_MAX_BIO_SIZE) {
-+	if (bio_segments(bio) != 1 || bio->bi_size > DRBD_MAX_BIO_SIZE) {
- 		/* rather error out here than BUG in bio_split */
- 		dev_err(DEV, "bio would need to, but cannot, be split: "
--		    "(vcnt=%u,idx=%u,size=%u,sector=%llu)\n",
--		    bio->bi_vcnt, bio->bi_idx, bio->bi_size,
-+		    "(segments=%u,size=%u,sector=%llu)\n",
-+		    bio_segments(bio), bio->bi_size,
- 		    (unsigned long long)bio->bi_sector);
- 		bio_endio(bio, -EINVAL);
- 	} else {
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 89016cb..769b3cb 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -510,8 +510,7 @@ static void raid0_make_request(struct mddev *mddev, struct bio *bio)
- 		sector_t sector = bio->bi_sector;
- 		struct bio_pair *bp;
- 		/* Sanity check -- queue functions should prevent this happening */
--		if (bio->bi_vcnt != 1 ||
--		    bio->bi_idx != 0)
-+		if (bio_segments(bio) != 1)
- 			goto bad_map;
- 		/* This is a one page bio that upper layers
- 		 * refuse to split for us, so we need to split it.
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 9715aaf..bbd08f5 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1081,8 +1081,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 			 || conf->prev.near_copies < conf->prev.raid_disks))) {
- 		struct bio_pair *bp;
- 		/* Sanity check -- queue functions should prevent this happening */
--		if (bio->bi_vcnt != 1 ||
--		    bio->bi_idx != 0)
-+		if (bio_segments(bio) != 1)
- 			goto bad_map;
- 		/* This is a one page bio that upper layers
- 		 * refuse to split for us, so we need to split it.
+ 	might_sleep();
+ 
++	bio->bi_flags |= 1 << BIO_SUBMITTED;
++
+ 	if (bio_check_eod(bio, nr_sectors))
+ 		goto end_io;
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8378797..777e70d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1065,7 +1065,6 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
+ 	clone->bi_size = to_bytes(len);
+ 	clone->bi_io_vec->bv_offset = offset;
+ 	clone->bi_io_vec->bv_len = clone->bi_size;
+-	clone->bi_flags |= 1 << BIO_CLONED;
+ 
+ 	if (bio_integrity(bio)) {
+ 		bio_integrity_clone(clone, bio, GFP_NOIO);
 diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-index 65b708d..f175814 100644
+index c5f33b4..93ec7d9 100644
 --- a/fs/bio-integrity.c
 +++ b/fs/bio-integrity.c
-@@ -659,8 +659,8 @@ void bio_integrity_split(struct bio *bio, struct bio_pair *bp, int sectors)
- 	bp->bio1.bi_integrity = &bp->bip1;
- 	bp->bio2.bi_integrity = &bp->bip2;
+@@ -623,7 +623,6 @@ void bio_integrity_trim(struct bio *bio, unsigned int offset,
  
--	bp->iv1 = bip->bip_vec[0];
--	bp->iv2 = bip->bip_vec[0];
-+	bp->iv1 = bip->bip_vec[bip->bip_idx];
-+	bp->iv2 = bip->bip_vec[bip->bip_idx];
+ 	BUG_ON(bip == NULL);
+ 	BUG_ON(bi == NULL);
+-	BUG_ON(!bio_flagged(bio, BIO_CLONED));
  
- 	bp->bip1.bip_vec = &bp->iv1;
- 	bp->bip2.bip_vec = &bp->iv2;
+ 	nr_sectors = bio_integrity_hw_sectors(bi, sectors);
+ 	bip->bip_sector = bip->bip_sector + offset;
 diff --git a/fs/bio.c b/fs/bio.c
-index 9a3935f..062ba8f 100644
+index 00639e6..dab51bf 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -1616,8 +1616,7 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
- 	trace_block_split(bdev_get_queue(bi->bi_bdev), bi,
- 				bi->bi_sector + first_sectors);
+@@ -531,7 +531,7 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ 	 */
+ 	bio->bi_sector = bio_src->bi_sector;
+ 	bio->bi_bdev = bio_src->bi_bdev;
+-	bio->bi_flags |= 1 << BIO_CLONED;
++	bio->bi_flags |= (bio_src->bi_flags & (1 << BIO_SUBMITTED));
+ 	bio->bi_rw = bio_src->bi_rw;
+ 	bio->bi_vcnt = bio_src->bi_vcnt;
+ 	bio->bi_size = bio_src->bi_size;
+@@ -604,9 +604,9 @@ static int __bio_add_page(struct request_queue *q, struct bio *bio, struct page
+ 	struct bio_vec *bvec;
  
--	BUG_ON(bi->bi_vcnt != 1);
--	BUG_ON(bi->bi_idx != 0);
-+	BUG_ON(bio_segments(bi) != 1);
- 	atomic_set(&bp->cnt, 3);
- 	bp->error = 0;
- 	bp->bio1 = *bi;
-@@ -1626,8 +1625,8 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
- 	bp->bio2.bi_size -= first_sectors << 9;
- 	bp->bio1.bi_size = first_sectors << 9;
+ 	/*
+-	 * cloned bio must not modify vec list
++	 * submitted bio must not modify vec list
+ 	 */
+-	if (unlikely(bio_flagged(bio, BIO_CLONED)))
++	if (unlikely(bio_flagged(bio, BIO_SUBMITTED)))
+ 		return 0;
  
--	bp->bv1 = bi->bi_io_vec[0];
--	bp->bv2 = bi->bi_io_vec[0];
-+	bp->bv1 = *bio_iovec(bi);
-+	bp->bv2 = *bio_iovec(bi);
+ 	if (((bio->bi_size + len) >> 9) > max_sectors)
+@@ -844,6 +844,8 @@ int bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
+ 	int i;
+ 	struct bio_vec *bv;
  
- 	if (bio_is_rw(bi)) {
- 		bp->bv2.bv_offset += first_sectors << 9;
++	BUG_ON(bio_flagged(bio, BIO_SUBMITTED));
++
+ 	bio_for_each_segment_all(bv, bio, i) {
+ 		bv->bv_page = alloc_page(gfp_mask);
+ 		if (!bv->bv_page) {
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 6547103..3958888 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -103,7 +103,7 @@ struct bio {
+ #define BIO_RW_BLOCK	1	/* RW_AHEAD set, and read/write would block */
+ #define BIO_EOF		2	/* out-out-bounds error */
+ #define BIO_SEG_VALID	3	/* bi_phys_segments valid */
+-#define BIO_CLONED	4	/* doesn't own data */
++#define BIO_SUBMITTED	4	/* bio has been submitted */
+ #define BIO_BOUNCED	5	/* bio is a bounce bio */
+ #define BIO_USER_MAPPED 6	/* contains user pages */
+ #define BIO_EOPNOTSUPP	7	/* not supported */
 -- 
 1.7.12
