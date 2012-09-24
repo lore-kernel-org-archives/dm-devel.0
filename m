@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 24/26] block: Add an explicit bio flag for bios that own their bvec
-Date: Mon, 24 Sep 2012 15:35:04 -0700
-Message-ID: <1348526106-17074-25-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 03/26] block: Add bio_advance()
+Date: Mon, 24 Sep 2012 15:34:43 -0700
+Message-ID: <1348526106-17074-4-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
@@ -10,68 +10,82 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-This is for the new bio splitting code. When we split a bio, if the
-split occured on a bvec boundry we reuse the bvec for the new bio. But
-that means bio_free() can't free it, hence the explicit flag.
+This is prep work for immutable bio vecs; we first want to centralize
+where bvecs are modified.
+
+Next two patches convert some existing code to use this function.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-Acked-by: Tejun Heo <tj@kernel.org>
 ---
- fs/bio.c                  | 4 +++-
- include/linux/bio.h       | 5 -----
- include/linux/blk_types.h | 1 +
- 3 files changed, 4 insertions(+), 6 deletions(-)
+ fs/bio.c            | 41 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  2 ++
+ 2 files changed, 43 insertions(+)
 
 diff --git a/fs/bio.c b/fs/bio.c
-index 8e10d49..00639e6 100644
+index ac8b443..9a3935f 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -250,7 +250,7 @@ static void bio_free(struct bio *bio)
- 	__bio_free(bio);
+@@ -750,6 +750,47 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
+ }
+ EXPORT_SYMBOL(bio_add_page);
  
- 	if (bs) {
--		if (bio_has_allocated_vec(bio))
-+		if (bio_flagged(bio, BIO_OWNS_VEC))
- 			bvec_free_bs(bs->bvec_pool, bio->bi_io_vec, BIO_POOL_IDX(bio));
- 
- 		/*
-@@ -449,6 +449,8 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- 
- 		if (unlikely(!bvl))
- 			goto err_free;
++/**
++ * bio_advance - increment/complete a bio by some number of bytes
++ * @bio:	bio to advance
++ * @bytes:	number of bytes to complete
++ *
++ * This updates bi_sector, bi_size and bi_idx; if the number of bytes to
++ * complete doesn't align with a bvec boundary, then bv_len and bv_offset will
++ * be updated on the last bvec as well.
++ *
++ * @bio will then represent the remaining, uncompleted portion of the io.
++ */
++void bio_advance(struct bio *bio, unsigned bytes)
++{
++	if (bio_integrity(bio))
++		bio_integrity_advance(bio, bytes);
 +
-+		bio->bi_flags |= 1 << BIO_OWNS_VEC;
- 	} else if (nr_iovecs) {
- 		bvl = bio->bi_inline_vecs;
- 	}
++	bio->bi_sector += bytes >> 9;
++	bio->bi_size -= bytes;
++
++	if (!bio->bi_size)
++		return;
++
++	while (bytes) {
++		if (unlikely(bio->bi_idx >= bio->bi_vcnt)) {
++			WARN_ONCE(1, "bio idx %d >= vcnt %d\n",
++				  bio->bi_idx, bio->bi_vcnt);
++			break;
++		}
++
++		if (bytes >= bio_iovec(bio)->bv_len) {
++			bytes -= bio_iovec(bio)->bv_len;
++			bio->bi_idx++;
++		} else {
++			bio_iovec(bio)->bv_len -= bytes;
++			bio_iovec(bio)->bv_offset += bytes;
++			bytes = 0;
++		}
++	}
++}
++EXPORT_SYMBOL(bio_advance);
++
+ struct bio_map_data {
+ 	struct bio_vec *iovecs;
+ 	struct sg_iovec *sgvecs;
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 5a55ce5..bd130b6 100644
+index a7c021d..4e32be1 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -85,11 +85,6 @@ static inline void *bio_data(struct bio *bio)
- 	return NULL;
- }
+@@ -251,6 +251,8 @@ extern void bio_endio(struct bio *, int);
+ struct request_queue;
+ extern int bio_phys_segments(struct request_queue *, struct bio *);
  
--static inline int bio_has_allocated_vec(struct bio *bio)
--{
--	return bio->bi_io_vec && bio->bi_io_vec != bio->bi_inline_vecs;
--}
--
- /*
-  * will die
-  */
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index cdf1119..6547103 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -117,6 +117,7 @@ struct bio {
-  * BIO_POOL_IDX()
-  */
- #define BIO_RESET_BITS	12
-+#define BIO_OWNS_VEC	12	/* bio_free() should free bvec */
- 
- #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
++extern void bio_advance(struct bio *, unsigned);
++
+ extern void bio_init(struct bio *);
+ extern void bio_reset(struct bio *);
  
 -- 
 1.7.12
