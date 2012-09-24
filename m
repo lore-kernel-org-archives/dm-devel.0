@@ -1,416 +1,171 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 07/26] block: Use bio_sectors() more
-	consistently
-Date: Mon, 24 Sep 2012 15:34:47 -0700
-Message-ID: <1348526106-17074-8-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 09/26] block: Remove bi_idx references
+Date: Mon, 24 Sep 2012 15:34:49 -0700
+Message-ID: <1348526106-17074-10-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, Nick Piggin <npiggin@kernel.dk>, "Ed L. Cashin" <ecashin@coraid.com>, Jiri Kosina <jkosina@suse.cz>, Kent Overstreet <koverstreet@google.com>, Jim Paris <jim@jtan.com>, Geoff Levand <geoff@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Alasdair Kergon <agk@redhat.com>, tj@kernel.org, vgoyal@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Bunch of places in the code weren't using it where they could be -
-this'll reduce the size of the patch that puts bi_sector/bi_size/bi_idx
-into a struct bvec_iter.
+For immutable bvecs, all bi_idx usage needs to be audited - so here
+we're removing all the unnecessary uses.
+
+Most of these are places where it was being initialized on a bio that
+was just allocated, a few others are conversions to standard macros.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: "Ed L. Cashin" <ecashin@coraid.com>
-CC: Nick Piggin <npiggin@kernel.dk>
-CC: Jiri Kosina <jkosina@suse.cz>
-CC: Jim Paris <jim@jtan.com>
-CC: Geoff Levand <geoff@infradead.org>
-CC: Alasdair Kergon <agk@redhat.com>
-CC: dm-devel@redhat.com
-CC: Neil Brown <neilb@suse.de>
-CC: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/block/aoe/aoecmd.c   |  2 +-
- drivers/block/brd.c          |  3 +--
- drivers/block/pktcdvd.c      |  2 +-
- drivers/block/ps3vram.c      |  2 +-
- drivers/md/dm-raid1.c        |  2 +-
- drivers/md/raid0.c           |  6 +++---
- drivers/md/raid1.c           | 17 ++++++++---------
- drivers/md/raid10.c          | 24 +++++++++++-------------
- drivers/md/raid5.c           |  8 ++++----
- include/trace/events/block.h | 10 +++++-----
- 10 files changed, 36 insertions(+), 40 deletions(-)
+ drivers/block/aoe/aoeblk.c | 2 +-
+ drivers/block/floppy.c     | 1 -
+ drivers/md/dm-verity.c     | 2 +-
+ drivers/md/raid10.c        | 1 -
+ fs/buffer.c                | 1 -
+ fs/jfs/jfs_logmgr.c        | 2 --
+ fs/logfs/dev_bdev.c        | 5 -----
+ mm/page_io.c               | 1 -
+ 8 files changed, 2 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
-index de0435e..2b52ebc 100644
---- a/drivers/block/aoe/aoecmd.c
-+++ b/drivers/block/aoe/aoecmd.c
-@@ -720,7 +720,7 @@ gettgt(struct aoedev *d, char *addr)
- static inline void
- diskstats(struct gendisk *disk, struct bio *bio, ulong duration, sector_t sector)
- {
--	unsigned long n_sect = bio->bi_size >> 9;
-+	unsigned long n_sect = bio_sectors(bio);
- 	const int rw = bio_data_dir(bio);
- 	struct hd_struct *part;
- 	int cpu;
-diff --git a/drivers/block/brd.c b/drivers/block/brd.c
-index 531ceb3..d5c4978 100644
---- a/drivers/block/brd.c
-+++ b/drivers/block/brd.c
-@@ -334,8 +334,7 @@ static void brd_make_request(struct request_queue *q, struct bio *bio)
- 	int err = -EIO;
+diff --git a/drivers/block/aoe/aoeblk.c b/drivers/block/aoe/aoeblk.c
+index 321de7b..6e4420a 100644
+--- a/drivers/block/aoe/aoeblk.c
++++ b/drivers/block/aoe/aoeblk.c
+@@ -199,7 +199,7 @@ aoeblk_make_request(struct request_queue *q, struct bio *bio)
+ 	buf->bio = bio;
+ 	buf->resid = bio->bi_size;
+ 	buf->sector = bio->bi_sector;
+-	buf->bv = &bio->bi_io_vec[bio->bi_idx];
++	buf->bv = bio_iovec(bio);
+ 	buf->bv_resid = buf->bv->bv_len;
+ 	WARN_ON(buf->bv_resid == 0);
+ 	buf->bv_off = buf->bv->bv_offset;
+diff --git a/drivers/block/floppy.c b/drivers/block/floppy.c
+index 95e52879..24e5cef 100644
+--- a/drivers/block/floppy.c
++++ b/drivers/block/floppy.c
+@@ -3778,7 +3778,6 @@ static int __floppy_read_block_0(struct block_device *bdev)
+ 	bio_vec.bv_len = size;
+ 	bio_vec.bv_offset = 0;
+ 	bio.bi_vcnt = 1;
+-	bio.bi_idx = 0;
+ 	bio.bi_size = size;
+ 	bio.bi_bdev = bdev;
+ 	bio.bi_sector = 0;
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 8f95664..4431503 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -496,7 +496,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio,
  
- 	sector = bio->bi_sector;
--	if (sector + (bio->bi_size >> SECTOR_SHIFT) >
--						get_capacity(bdev->bd_disk))
-+	if (sector + bio_sectors(bio) > get_capacity(bdev->bd_disk))
- 		goto out;
- 
- 	if (unlikely(bio->bi_rw & REQ_DISCARD)) {
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 26938e8..2c27744 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -2433,7 +2433,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
- 		cloned_bio->bi_bdev = pd->bdev;
- 		cloned_bio->bi_private = psd;
- 		cloned_bio->bi_end_io = pkt_end_io_read_cloned;
--		pd->stats.secs_r += bio->bi_size >> 9;
-+		pd->stats.secs_r += bio_sectors(bio);
- 		pkt_queue_bio(pd, cloned_bio);
- 		return;
- 	}
-diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
-index f58cdcf..1ff38e8 100644
---- a/drivers/block/ps3vram.c
-+++ b/drivers/block/ps3vram.c
-@@ -553,7 +553,7 @@ static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
- 	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
- 	int write = bio_data_dir(bio) == WRITE;
- 	const char *op = write ? "write" : "read";
--	loff_t offset = bio->bi_sector << 9;
-+	loff_t offset = bio_sectors(bio);
- 	int error = 0;
- 	struct bio_vec *bvec;
- 	unsigned int i;
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index bc5ddba8..3dac2de 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -457,7 +457,7 @@ static void map_region(struct dm_io_region *io, struct mirror *m,
- {
- 	io->bdev = m->dev->bdev;
- 	io->sector = map_sector(m, bio);
--	io->count = bio->bi_size >> 9;
-+	io->count = bio_sectors(bio);
- }
- 
- static void hold_bio(struct mirror_set *ms, struct bio *bio)
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index a9e4fa9..89016cb 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -485,11 +485,11 @@ static inline int is_io_in_chunk_boundary(struct mddev *mddev,
- {
- 	if (likely(is_power_of_2(chunk_sects))) {
- 		return chunk_sects >= ((bio->bi_sector & (chunk_sects-1))
--					+ (bio->bi_size >> 9));
-+					+ bio_sectors(bio));
- 	} else{
- 		sector_t sector = bio->bi_sector;
- 		return chunk_sects >= (sector_div(sector, chunk_sects)
--						+ (bio->bi_size >> 9));
-+						+ bio_sectors(bio));
- 	}
- }
- 
-@@ -543,7 +543,7 @@ bad_map:
- 	printk("md/raid0:%s: make_request bug: can't convert block across chunks"
- 	       " or bigger than %dk %llu %d\n",
- 	       mdname(mddev), chunk_sects / 2,
--	       (unsigned long long)bio->bi_sector, bio->bi_size >> 10);
-+	       (unsigned long long)bio->bi_sector, bio_sectors(bio) / 2);
- 
- 	bio_io_error(bio);
- 	return;
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 32eab5b..deff0cd 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -267,7 +267,7 @@ static void raid_end_bio_io(struct r1bio *r1_bio)
- 			 (bio_data_dir(bio) == WRITE) ? "write" : "read",
- 			 (unsigned long long) bio->bi_sector,
- 			 (unsigned long long) bio->bi_sector +
--			 (bio->bi_size >> 9) - 1);
-+			 bio_sectors(bio) - 1);
- 
- 		call_bio_endio(r1_bio);
- 	}
-@@ -458,7 +458,7 @@ static void raid1_end_write_request(struct bio *bio, int error)
- 					 " %llu-%llu\n",
- 					 (unsigned long long) mbio->bi_sector,
- 					 (unsigned long long) mbio->bi_sector +
--					 (mbio->bi_size >> 9) - 1);
-+					 bio_sectors(mbio) - 1);
- 				call_bio_endio(r1_bio);
- 			}
- 		}
-@@ -1041,7 +1041,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
- 
- 	r1_bio->master_bio = bio;
--	r1_bio->sectors = bio->bi_size >> 9;
-+	r1_bio->sectors = bio_sectors(bio);
- 	r1_bio->state = 0;
- 	r1_bio->mddev = mddev;
- 	r1_bio->sector = bio->bi_sector;
-@@ -1119,7 +1119,7 @@ read_again:
- 			r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
- 
- 			r1_bio->master_bio = bio;
--			r1_bio->sectors = (bio->bi_size >> 9) - sectors_handled;
-+			r1_bio->sectors = bio_sectors(bio) - sectors_handled;
- 			r1_bio->state = 0;
- 			r1_bio->mddev = mddev;
- 			r1_bio->sector = bio->bi_sector + sectors_handled;
-@@ -1320,14 +1320,14 @@ read_again:
- 	/* Mustn't call r1_bio_write_done before this next test,
- 	 * as it could result in the bio being freed.
- 	 */
--	if (sectors_handled < (bio->bi_size >> 9)) {
-+	if (sectors_handled < bio_sectors(bio)) {
- 		r1_bio_write_done(r1_bio);
- 		/* We need another r1_bio.  It has already been counted
- 		 * in bio->bi_phys_segments
- 		 */
- 		r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
- 		r1_bio->master_bio = bio;
--		r1_bio->sectors = (bio->bi_size >> 9) - sectors_handled;
-+		r1_bio->sectors = bio_sectors(bio) - sectors_handled;
- 		r1_bio->state = 0;
- 		r1_bio->mddev = mddev;
- 		r1_bio->sector = bio->bi_sector + sectors_handled;
-@@ -1936,7 +1936,7 @@ static void sync_request_write(struct mddev *mddev, struct r1bio *r1_bio)
- 		wbio->bi_rw = WRITE;
- 		wbio->bi_end_io = end_sync_write;
- 		atomic_inc(&r1_bio->remaining);
--		md_sync_acct(conf->mirrors[i].rdev->bdev, wbio->bi_size >> 9);
-+		md_sync_acct(conf->mirrors[i].rdev->bdev, bio_sectors(wbio));
- 
- 		generic_make_request(wbio);
- 	}
-@@ -2272,8 +2272,7 @@ read_more:
- 			r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
- 
- 			r1_bio->master_bio = mbio;
--			r1_bio->sectors = (mbio->bi_size >> 9)
--					  - sectors_handled;
-+			r1_bio->sectors = bio_sectors(mbio) - sectors_handled;
- 			r1_bio->state = 0;
- 			set_bit(R1BIO_ReadError, &r1_bio->state);
- 			r1_bio->mddev = mddev;
+ 	bio->bi_end_io = verity_end_io;
+ 	bio->bi_private = io;
+-	io->io_vec_size = bio->bi_vcnt - bio->bi_idx;
++	io->io_vec_size = bio_segments(bio);
+ 	if (io->io_vec_size < DM_VERITY_IO_VEC_INLINE)
+ 		io->io_vec = io->io_vec_inline;
+ 	else
 diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 1c2eb38..9715aaf 100644
+index bbd08f5..6d06d83 100644
 --- a/drivers/md/raid10.c
 +++ b/drivers/md/raid10.c
-@@ -1075,7 +1075,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	/* If this request crosses a chunk boundary, we need to
- 	 * split it.  This will only happen for 1 PAGE (or less) requests.
- 	 */
--	if (unlikely((bio->bi_sector & chunk_mask) + (bio->bi_size >> 9)
-+	if (unlikely((bio->bi_sector & chunk_mask) + bio_sectors(bio)
- 		     > chunk_sects
- 		     && (conf->geo.near_copies < conf->geo.raid_disks
- 			 || conf->prev.near_copies < conf->prev.raid_disks))) {
-@@ -1115,7 +1115,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	bad_map:
- 		printk("md/raid10:%s: make_request bug: can't convert block across chunks"
- 		       " or bigger than %dk %llu %d\n", mdname(mddev), chunk_sects/2,
--		       (unsigned long long)bio->bi_sector, bio->bi_size >> 10);
-+		       (unsigned long long)bio->bi_sector, bio_sectors(bio) / 2);
+@@ -4249,7 +4249,6 @@ read_more:
+ 	read_bio->bi_flags &= ~(BIO_POOL_MASK - 1);
+ 	read_bio->bi_flags |= 1 << BIO_UPTODATE;
+ 	read_bio->bi_vcnt = 0;
+-	read_bio->bi_idx = 0;
+ 	read_bio->bi_size = 0;
+ 	r10_bio->master_bio = read_bio;
+ 	r10_bio->read_slot = r10_bio->devs[r10_bio->read_slot].devnum;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 58e2e7b..38d8793 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -2893,7 +2893,6 @@ int submit_bh(int rw, struct buffer_head * bh)
+ 	bio->bi_io_vec[0].bv_offset = bh_offset(bh);
  
- 		bio_io_error(bio);
- 		return;
-@@ -1130,7 +1130,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	 */
- 	wait_barrier(conf);
+ 	bio->bi_vcnt = 1;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = bh->b_size;
  
--	sectors = bio->bi_size >> 9;
-+	sectors = bio_sectors(bio);
- 	while (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
- 	    bio->bi_sector < conf->reshape_progress &&
- 	    bio->bi_sector + sectors > conf->reshape_progress) {
-@@ -1232,8 +1232,7 @@ read_again:
- 			r10_bio = mempool_alloc(conf->r10bio_pool, GFP_NOIO);
+ 	bio->bi_end_io = end_bio_bh_io_sync;
+diff --git a/fs/jfs/jfs_logmgr.c b/fs/jfs/jfs_logmgr.c
+index 2eb952c..8ae5e35 100644
+--- a/fs/jfs/jfs_logmgr.c
++++ b/fs/jfs/jfs_logmgr.c
+@@ -2004,7 +2004,6 @@ static int lbmRead(struct jfs_log * log, int pn, struct lbuf ** bpp)
+ 	bio->bi_io_vec[0].bv_offset = bp->l_offset;
  
- 			r10_bio->master_bio = bio;
--			r10_bio->sectors = ((bio->bi_size >> 9)
--					    - sectors_handled);
-+			r10_bio->sectors = bio_sectors(bio) - sectors_handled;
- 			r10_bio->state = 0;
- 			r10_bio->mddev = mddev;
- 			r10_bio->sector = bio->bi_sector + sectors_handled;
-@@ -1455,7 +1454,7 @@ retry_write:
- 	 * after checking if we need to go around again.
- 	 */
+ 	bio->bi_vcnt = 1;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = LOGPSIZE;
  
--	if (sectors_handled < (bio->bi_size >> 9)) {
-+	if (sectors_handled < bio_sectors(bio)) {
- 		one_write_done(r10_bio);
- 		/* We need another r10_bio.  It has already been counted
- 		 * in bio->bi_phys_segments.
-@@ -1463,7 +1462,7 @@ retry_write:
- 		r10_bio = mempool_alloc(conf->r10bio_pool, GFP_NOIO);
+ 	bio->bi_end_io = lbmIODone;
+@@ -2145,7 +2144,6 @@ static void lbmStartIO(struct lbuf * bp)
+ 	bio->bi_io_vec[0].bv_offset = bp->l_offset;
  
- 		r10_bio->master_bio = bio;
--		r10_bio->sectors = (bio->bi_size >> 9) - sectors_handled;
-+		r10_bio->sectors = bio_sectors(bio) - sectors_handled;
+ 	bio->bi_vcnt = 1;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = LOGPSIZE;
  
- 		r10_bio->mddev = mddev;
- 		r10_bio->sector = bio->bi_sector + sectors_handled;
-@@ -1984,7 +1983,7 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 		d = r10_bio->devs[i].devnum;
- 		atomic_inc(&conf->mirrors[d].rdev->nr_pending);
- 		atomic_inc(&r10_bio->remaining);
--		md_sync_acct(conf->mirrors[d].rdev->bdev, tbio->bi_size >> 9);
-+		md_sync_acct(conf->mirrors[d].rdev->bdev, bio_sectors(tbio));
- 
- 		tbio->bi_sector += conf->mirrors[d].rdev->data_offset;
- 		tbio->bi_bdev = conf->mirrors[d].rdev->bdev;
-@@ -2009,7 +2008,7 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 		d = r10_bio->devs[i].devnum;
- 		atomic_inc(&r10_bio->remaining);
- 		md_sync_acct(conf->mirrors[d].replacement->bdev,
--			     tbio->bi_size >> 9);
-+			     bio_sectors(tbio));
- 		generic_make_request(tbio);
+ 	bio->bi_end_io = lbmIODone;
+diff --git a/fs/logfs/dev_bdev.c b/fs/logfs/dev_bdev.c
+index e784a21..550475c 100644
+--- a/fs/logfs/dev_bdev.c
++++ b/fs/logfs/dev_bdev.c
+@@ -32,7 +32,6 @@ static int sync_request(struct page *page, struct block_device *bdev, int rw)
+ 	bio_vec.bv_len = PAGE_SIZE;
+ 	bio_vec.bv_offset = 0;
+ 	bio.bi_vcnt = 1;
+-	bio.bi_idx = 0;
+ 	bio.bi_size = PAGE_SIZE;
+ 	bio.bi_bdev = bdev;
+ 	bio.bi_sector = page->index * (PAGE_SIZE >> 9);
+@@ -108,7 +107,6 @@ static int __bdev_writeseg(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		if (i >= max_pages) {
+ 			/* Block layer cannot split bios :( */
+ 			bio->bi_vcnt = i;
+-			bio->bi_idx = 0;
+ 			bio->bi_size = i * PAGE_SIZE;
+ 			bio->bi_bdev = super->s_bdev;
+ 			bio->bi_sector = ofs >> 9;
+@@ -136,7 +134,6 @@ static int __bdev_writeseg(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		unlock_page(page);
  	}
- 
-@@ -2135,13 +2134,13 @@ static void recovery_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 	wbio2 = r10_bio->devs[1].repl_bio;
- 	if (wbio->bi_end_io) {
- 		atomic_inc(&conf->mirrors[d].rdev->nr_pending);
--		md_sync_acct(conf->mirrors[d].rdev->bdev, wbio->bi_size >> 9);
-+		md_sync_acct(conf->mirrors[d].rdev->bdev, bio_sectors(wbio));
- 		generic_make_request(wbio);
+ 	bio->bi_vcnt = nr_pages;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = nr_pages * PAGE_SIZE;
+ 	bio->bi_bdev = super->s_bdev;
+ 	bio->bi_sector = ofs >> 9;
+@@ -202,7 +199,6 @@ static int do_erase(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		if (i >= max_pages) {
+ 			/* Block layer cannot split bios :( */
+ 			bio->bi_vcnt = i;
+-			bio->bi_idx = 0;
+ 			bio->bi_size = i * PAGE_SIZE;
+ 			bio->bi_bdev = super->s_bdev;
+ 			bio->bi_sector = ofs >> 9;
+@@ -224,7 +220,6 @@ static int do_erase(struct super_block *sb, u64 ofs, pgoff_t index,
+ 		bio->bi_io_vec[i].bv_offset = 0;
  	}
- 	if (wbio2 && wbio2->bi_end_io) {
- 		atomic_inc(&conf->mirrors[d].replacement->nr_pending);
- 		md_sync_acct(conf->mirrors[d].replacement->bdev,
--			     wbio2->bi_size >> 9);
-+			     bio_sectors(wbio2));
- 		generic_make_request(wbio2);
+ 	bio->bi_vcnt = nr_pages;
+-	bio->bi_idx = 0;
+ 	bio->bi_size = nr_pages * PAGE_SIZE;
+ 	bio->bi_bdev = super->s_bdev;
+ 	bio->bi_sector = ofs >> 9;
+diff --git a/mm/page_io.c b/mm/page_io.c
+index 78eee32..8d3c0c0 100644
+--- a/mm/page_io.c
++++ b/mm/page_io.c
+@@ -35,7 +35,6 @@ static struct bio *get_swap_bio(gfp_t gfp_flags,
+ 		bio->bi_io_vec[0].bv_len = PAGE_SIZE;
+ 		bio->bi_io_vec[0].bv_offset = 0;
+ 		bio->bi_vcnt = 1;
+-		bio->bi_idx = 0;
+ 		bio->bi_size = PAGE_SIZE;
+ 		bio->bi_end_io = end_io;
  	}
- }
-@@ -2571,8 +2570,7 @@ read_more:
- 		r10_bio = mempool_alloc(conf->r10bio_pool,
- 					GFP_NOIO);
- 		r10_bio->master_bio = mbio;
--		r10_bio->sectors = (mbio->bi_size >> 9)
--			- sectors_handled;
-+		r10_bio->sectors = bio_sectors(mbio) - sectors_handled;
- 		r10_bio->state = 0;
- 		set_bit(R10BIO_ReadError,
- 			&r10_bio->state);
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 45a632c..cbfc424 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -88,7 +88,7 @@ static inline struct hlist_head *stripe_hash(struct r5conf *conf, sector_t sect)
-  */
- static inline struct bio *r5_next_bio(struct bio *bio, sector_t sector)
- {
--	int sectors = bio->bi_size >> 9;
-+	int sectors = bio_sectors(bio);
- 	if (bio->bi_sector + sectors < sector + STRIPE_SECTORS)
- 		return bio->bi_next;
- 	else
-@@ -3771,7 +3771,7 @@ static int in_chunk_boundary(struct mddev *mddev, struct bio *bio)
- {
- 	sector_t sector = bio->bi_sector + get_start_sect(bio->bi_bdev);
- 	unsigned int chunk_sectors = mddev->chunk_sectors;
--	unsigned int bio_sectors = bio->bi_size >> 9;
-+	unsigned int bio_sectors = bio_sectors(bio);
- 
- 	if (mddev->new_chunk_sectors < mddev->chunk_sectors)
- 		chunk_sectors = mddev->new_chunk_sectors;
-@@ -3861,7 +3861,7 @@ static int bio_fits_rdev(struct bio *bi)
- {
- 	struct request_queue *q = bdev_get_queue(bi->bi_bdev);
- 
--	if ((bi->bi_size>>9) > queue_max_sectors(q))
-+	if (bio_sectors(bi) > queue_max_sectors(q))
- 		return 0;
- 	blk_recount_segments(q, bi);
- 	if (bi->bi_phys_segments > queue_max_segments(q))
-@@ -3931,7 +3931,7 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
- 		align_bi->bi_flags &= ~(1 << BIO_SEG_VALID);
- 
- 		if (!bio_fits_rdev(align_bi) ||
--		    is_badblock(rdev, align_bi->bi_sector, align_bi->bi_size>>9,
-+		    is_badblock(rdev, align_bi->bi_sector, bio_sectors(align_bi),
- 				&first_bad, &bad_sectors)) {
- 			/* too big in some way, or has a known bad block */
- 			bio_put(align_bi);
-diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-index 05c5e61..3c210ac 100644
---- a/include/trace/events/block.h
-+++ b/include/trace/events/block.h
-@@ -193,7 +193,7 @@ TRACE_EVENT(block_bio_bounce,
- 		__entry->dev		= bio->bi_bdev ?
- 					  bio->bi_bdev->bd_dev : 0;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
- 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
- 	),
-@@ -230,7 +230,7 @@ TRACE_EVENT(block_bio_complete,
- 	TP_fast_assign(
- 		__entry->dev		= bio->bi_bdev->bd_dev;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		__entry->error		= error;
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
- 	),
-@@ -258,7 +258,7 @@ DECLARE_EVENT_CLASS(block_bio,
- 	TP_fast_assign(
- 		__entry->dev		= bio->bi_bdev->bd_dev;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
- 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
- 	),
-@@ -330,7 +330,7 @@ DECLARE_EVENT_CLASS(block_get_rq,
- 	TP_fast_assign(
- 		__entry->dev		= bio ? bio->bi_bdev->bd_dev : 0;
- 		__entry->sector		= bio ? bio->bi_sector : 0;
--		__entry->nr_sector	= bio ? bio->bi_size >> 9 : 0;
-+		__entry->nr_sector	= bio ? bio_sectors(bio) : 0;
- 		blk_fill_rwbs(__entry->rwbs,
- 			      bio ? bio->bi_rw : 0, __entry->nr_sector);
- 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
-@@ -506,7 +506,7 @@ TRACE_EVENT(block_bio_remap,
- 	TP_fast_assign(
- 		__entry->dev		= bio->bi_bdev->bd_dev;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		__entry->old_dev	= dev;
- 		__entry->old_sector	= from;
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
 -- 
 1.7.12
