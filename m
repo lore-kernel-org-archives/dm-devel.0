@@ -1,8 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 11/26] block: Add submit_bio_wait(),
-	remove from md
-Date: Mon, 24 Sep 2012 15:34:51 -0700
-Message-ID: <1348526106-17074-12-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 13/26] raid1: use bio_reset()
+Date: Mon, 24 Sep 2012 15:34:53 -0700
+Message-ID: <1348526106-17074-14-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,140 +22,66 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Random cleanup - this code was duplicated and it's not really specific
-to md.
-
-Also added the ability to return the actual error code.
-
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
 CC: NeilBrown <neilb@suse.de>
-Acked-by: Tejun Heo <tj@kernel.org>
 ---
- drivers/md/raid1.c  | 19 -------------------
- drivers/md/raid10.c | 19 -------------------
- fs/bio.c            | 36 ++++++++++++++++++++++++++++++++++++
- include/linux/bio.h |  1 +
- 4 files changed, 37 insertions(+), 38 deletions(-)
+ drivers/md/raid1.c | 24 ++++++------------------
+ 1 file changed, 6 insertions(+), 18 deletions(-)
 
 diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index deff0cd..28f506a 100644
+index 28f506a..4614b9e 100644
 --- a/drivers/md/raid1.c
 +++ b/drivers/md/raid1.c
-@@ -2048,25 +2048,6 @@ static void fix_read_error(struct r1conf *conf, int read_disk,
- 	}
- }
+@@ -1851,7 +1851,7 @@ static int process_checks(struct r1bio *r1_bio)
+ 		struct bio *sbio = r1_bio->bios[i];
+ 		int size;
  
--static void bi_complete(struct bio *bio, int error)
--{
--	complete((struct completion *)bio->bi_private);
--}
--
--static int submit_bio_wait(int rw, struct bio *bio)
--{
--	struct completion event;
--	rw |= REQ_SYNC;
--
--	init_completion(&event);
--	bio->bi_private = &event;
--	bio->bi_end_io = bi_complete;
--	submit_bio(rw, bio);
--	wait_for_completion(&event);
--
--	return test_bit(BIO_UPTODATE, &bio->bi_flags);
--}
--
- static int narrow_write_error(struct r1bio *r1_bio, int i)
- {
- 	struct mddev *mddev = r1_bio->mddev;
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 6d06d83..f001c1b 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -2410,25 +2410,6 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
- 	}
- }
+-		if (r1_bio->bios[i]->bi_end_io != end_sync_read)
++		if (sbio->bi_end_io != end_sync_read)
+ 			continue;
  
--static void bi_complete(struct bio *bio, int error)
--{
--	complete((struct completion *)bio->bi_private);
--}
+ 		if (test_bit(BIO_UPTODATE, &sbio->bi_flags)) {
+@@ -1876,16 +1876,15 @@ static int process_checks(struct r1bio *r1_bio)
+ 			continue;
+ 		}
+ 		/* fixup the bio for reuse */
++		bio_reset(sbio);
+ 		sbio->bi_vcnt = vcnt;
+ 		sbio->bi_size = r1_bio->sectors << 9;
+-		sbio->bi_idx = 0;
+-		sbio->bi_phys_segments = 0;
+-		sbio->bi_flags &= ~(BIO_POOL_MASK - 1);
+-		sbio->bi_flags |= 1 << BIO_UPTODATE;
+-		sbio->bi_next = NULL;
+ 		sbio->bi_sector = r1_bio->sector +
+ 			conf->mirrors[i].rdev->data_offset;
+ 		sbio->bi_bdev = conf->mirrors[i].rdev->bdev;
++		sbio->bi_end_io = end_sync_read;
++		sbio->bi_private = r1_bio;
++
+ 		size = sbio->bi_size;
+ 		for (j = 0; j < vcnt ; j++) {
+ 			struct bio_vec *bi;
+@@ -2426,18 +2425,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr, int *skipp
+ 	for (i = 0; i < conf->raid_disks * 2; i++) {
+ 		struct md_rdev *rdev;
+ 		bio = r1_bio->bios[i];
 -
--static int submit_bio_wait(int rw, struct bio *bio)
--{
--	struct completion event;
--	rw |= REQ_SYNC;
--
--	init_completion(&event);
--	bio->bi_private = &event;
--	bio->bi_end_io = bi_complete;
--	submit_bio(rw, bio);
--	wait_for_completion(&event);
--
--	return test_bit(BIO_UPTODATE, &bio->bi_flags);
--}
--
- static int narrow_write_error(struct r10bio *r10_bio, int i)
- {
- 	struct bio *bio = r10_bio->master_bio;
-diff --git a/fs/bio.c b/fs/bio.c
-index 062ba8f..9a30dcf 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -750,6 +750,42 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
- }
- EXPORT_SYMBOL(bio_add_page);
+-		/* take from bio_init */
+-		bio->bi_next = NULL;
+-		bio->bi_flags &= ~(BIO_POOL_MASK-1);
+-		bio->bi_flags |= 1 << BIO_UPTODATE;
+-		bio->bi_rw = READ;
+-		bio->bi_vcnt = 0;
+-		bio->bi_idx = 0;
+-		bio->bi_phys_segments = 0;
+-		bio->bi_size = 0;
+-		bio->bi_end_io = NULL;
+-		bio->bi_private = NULL;
++		bio_reset(bio);
  
-+struct submit_bio_ret {
-+	struct completion event;
-+	int error;
-+};
-+
-+static void submit_bio_wait_endio(struct bio *bio, int error)
-+{
-+	struct submit_bio_ret *ret = bio->bi_private;
-+
-+	ret->error = error;
-+	complete(&ret->event);
-+}
-+
-+/**
-+ * submit_bio_wait - submit a bio, and wait until it completes
-+ * @rw: whether to %READ or %WRITE, or maybe to %READA (read ahead)
-+ * @bio: The &struct bio which describes the I/O
-+ *
-+ * Simple wrapper around submit_bio(). Returns 0 on success, or the error from
-+ * bio_endio() on failure.
-+ */
-+int submit_bio_wait(int rw, struct bio *bio)
-+{
-+	struct submit_bio_ret ret;
-+
-+	rw |= REQ_SYNC;
-+	init_completion(&ret.event);
-+	bio->bi_private = &ret;
-+	bio->bi_end_io = submit_bio_wait_endio;
-+	submit_bio(rw, bio);
-+	wait_for_completion(&ret.event);
-+
-+	return ret.error;
-+}
-+EXPORT_SYMBOL(submit_bio_wait);
-+
- /**
-  * bio_advance - increment/complete a bio by some number of bytes
-  * @bio:	bio to advance
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index d985e90..3bf696b 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -252,6 +252,7 @@ extern void bio_endio(struct bio *, int);
- struct request_queue;
- extern int bio_phys_segments(struct request_queue *, struct bio *);
- 
-+extern int submit_bio_wait(int rw, struct bio *bio);
- extern void bio_advance(struct bio *, unsigned);
- 
- extern void bio_init(struct bio *);
+ 		rdev = rcu_dereference(conf->mirrors[i].rdev);
+ 		if (rdev == NULL ||
 -- 
 1.7.12
