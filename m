@@ -1,8 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 20/26] bounce: Refactor __blk_queue_bounce to
-	not use bi_io_vec
-Date: Mon, 24 Sep 2012 15:35:00 -0700
-Message-ID: <1348526106-17074-21-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 12/26] raid10: Use bio_reset()
+Date: Mon, 24 Sep 2012 15:34:52 -0700
+Message-ID: <1348526106-17074-13-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,131 +22,118 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-A bunch of what __blk_queue_bounce() was doing was problematic for the
-immutable bvec work; this cleans that up and the code is quite a bit
-smaller, too.
+More prep work for immutable bio vecs, mainly getting rid of references
+to bi_idx.
 
-The __bio_for_each_segment() in copy_to_high_bio_irq() was changed
-because that one's looping over the original bio, not the bounce bio -
-a later patch renames __bio_for_each_segment() ->
-bio_for_each_segment_all(), and documents that
-bio_for_each_segment_all() is only for code that owns the bio.
+bio_reset was being open coded in a few places. The one in sync_request
+was a bit nontrivial to convert, so could use some extra eyeballs.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
+CC: NeilBrown <neilb@suse.de>
+Acked-by: NeilBrown <neilb@suse.de>
 ---
- mm/bounce.c | 73 ++++++++++++++++---------------------------------------------
- 1 file changed, 19 insertions(+), 54 deletions(-)
+ drivers/md/raid10.c | 31 +++++++++----------------------
+ 1 file changed, 9 insertions(+), 22 deletions(-)
 
-diff --git a/mm/bounce.c b/mm/bounce.c
-index 0420867..3068300 100644
---- a/mm/bounce.c
-+++ b/mm/bounce.c
-@@ -101,7 +101,7 @@ static void copy_to_high_bio_irq(struct bio *to, struct bio *from)
- 	struct bio_vec *tovec, *fromvec;
- 	int i;
- 
--	__bio_for_each_segment(tovec, to, i, 0) {
-+	bio_for_each_segment(tovec, to, i) {
- 		fromvec = from->bi_io_vec + i;
- 
- 		/*
-@@ -181,78 +181,43 @@ static void bounce_end_io_read_isa(struct bio *bio, int err)
- static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
- 			       mempool_t *pool)
- {
--	struct page *page;
--	struct bio *bio = NULL;
--	int i, rw = bio_data_dir(*bio_orig);
-+	struct bio *bio;
-+	int rw = bio_data_dir(*bio_orig);
- 	struct bio_vec *to, *from;
-+	unsigned i;
- 
--	bio_for_each_segment(from, *bio_orig, i) {
--		page = from->bv_page;
-+	bio_for_each_segment(from, *bio_orig, i)
-+		if (page_to_pfn(from->bv_page) > queue_bounce_pfn(q))
-+			goto bounce;
- 
--		/*
--		 * is destination page below bounce pfn?
--		 */
--		if (page_to_pfn(page) <= queue_bounce_pfn(q))
--			continue;
--
--		/*
--		 * irk, bounce it
--		 */
--		if (!bio) {
--			unsigned int cnt = (*bio_orig)->bi_vcnt;
-+	return;
-+bounce:
-+	bio = bio_clone_bioset(*bio_orig, GFP_NOIO, fs_bio_set);
- 
--			bio = bio_alloc(GFP_NOIO, cnt);
--			memset(bio->bi_io_vec, 0, cnt * sizeof(struct bio_vec));
--		}
--			
-+	bio_for_each_segment(to, bio, i) {
-+		struct page *page = to->bv_page;
- 
--		to = bio->bi_io_vec + i;
-+		if (page_to_pfn(page) <= queue_bounce_pfn(q))
-+			continue;
- 
--		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
--		to->bv_len = from->bv_len;
--		to->bv_offset = from->bv_offset;
- 		inc_zone_page_state(to->bv_page, NR_BOUNCE);
-+		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
- 
- 		if (rw == WRITE) {
- 			char *vto, *vfrom;
- 
--			flush_dcache_page(from->bv_page);
-+			flush_dcache_page(page);
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index f001c1b..6b83207 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -1958,13 +1958,10 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
+ 		 * First we need to fixup bv_offset, bv_len and
+ 		 * bi_vecs, as the read request might have corrupted these
+ 		 */
++		bio_reset(tbio);
 +
- 			vto = page_address(to->bv_page) + to->bv_offset;
--			vfrom = kmap(from->bv_page) + from->bv_offset;
-+			vfrom = kmap_atomic(page) + to->bv_offset;
- 			memcpy(vto, vfrom, to->bv_len);
--			kunmap(from->bv_page);
-+			kunmap_atomic(vfrom);
+ 		tbio->bi_vcnt = vcnt;
+ 		tbio->bi_size = r10_bio->sectors << 9;
+-		tbio->bi_idx = 0;
+-		tbio->bi_phys_segments = 0;
+-		tbio->bi_flags &= ~(BIO_POOL_MASK - 1);
+-		tbio->bi_flags |= 1 << BIO_UPTODATE;
+-		tbio->bi_next = NULL;
+ 		tbio->bi_rw = WRITE;
+ 		tbio->bi_private = r10_bio;
+ 		tbio->bi_sector = r10_bio->devs[i].addr;
+@@ -2970,6 +2967,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
+ 					}
+ 				}
+ 				bio = r10_bio->devs[0].bio;
++				bio_reset(bio);
+ 				bio->bi_next = biolist;
+ 				biolist = bio;
+ 				bio->bi_private = r10_bio;
+@@ -2994,6 +2992,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
+ 				rdev = mirror->rdev;
+ 				if (!test_bit(In_sync, &rdev->flags)) {
+ 					bio = r10_bio->devs[1].bio;
++					bio_reset(bio);
+ 					bio->bi_next = biolist;
+ 					biolist = bio;
+ 					bio->bi_private = r10_bio;
+@@ -3022,6 +3021,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
+ 				if (rdev == NULL || bio == NULL ||
+ 				    test_bit(Faulty, &rdev->flags))
+ 					break;
++				bio_reset(bio);
+ 				bio->bi_next = biolist;
+ 				biolist = bio;
+ 				bio->bi_private = r10_bio;
+@@ -3120,7 +3120,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
+ 				r10_bio->devs[i].repl_bio->bi_end_io = NULL;
+ 
+ 			bio = r10_bio->devs[i].bio;
+-			bio->bi_end_io = NULL;
++			bio_reset(bio);
+ 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
+ 			if (conf->mirrors[d].rdev == NULL ||
+ 			    test_bit(Faulty, &conf->mirrors[d].rdev->flags))
+@@ -3157,6 +3157,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
+ 
+ 			/* Need to set up for writing to the replacement */
+ 			bio = r10_bio->devs[i].repl_bio;
++			bio_reset(bio);
+ 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
+ 
+ 			sector = r10_bio->devs[i].addr;
+@@ -3190,17 +3191,6 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
  		}
  	}
  
--	/*
--	 * no pages bounced
--	 */
--	if (!bio)
--		return;
+-	for (bio = biolist; bio ; bio=bio->bi_next) {
 -
- 	trace_block_bio_bounce(q, *bio_orig);
- 
--	/*
--	 * at least one page was bounced, fill in possible non-highmem
--	 * pages
--	 */
--	__bio_for_each_segment(from, *bio_orig, i, 0) {
--		to = bio_iovec_idx(bio, i);
--		if (!to->bv_page) {
--			to->bv_page = from->bv_page;
--			to->bv_len = from->bv_len;
--			to->bv_offset = from->bv_offset;
--		}
+-		bio->bi_flags &= ~(BIO_POOL_MASK - 1);
+-		if (bio->bi_end_io)
+-			bio->bi_flags |= 1 << BIO_UPTODATE;
+-		bio->bi_vcnt = 0;
+-		bio->bi_idx = 0;
+-		bio->bi_phys_segments = 0;
+-		bio->bi_size = 0;
 -	}
 -
--	bio->bi_bdev = (*bio_orig)->bi_bdev;
- 	bio->bi_flags |= (1 << BIO_BOUNCED);
--	bio->bi_sector = (*bio_orig)->bi_sector;
--	bio->bi_rw = (*bio_orig)->bi_rw;
--
--	bio->bi_vcnt = (*bio_orig)->bi_vcnt;
--	bio->bi_idx = (*bio_orig)->bi_idx;
--	bio->bi_size = (*bio_orig)->bi_size;
+ 	nr_sectors = 0;
+ 	if (sector_nr + max_sync < max_sector)
+ 		max_sector = sector_nr + max_sync;
+@@ -4253,17 +4243,14 @@ read_more:
+ 		}
+ 		if (!rdev2 || test_bit(Faulty, &rdev2->flags))
+ 			continue;
++
++		bio_reset(b);
+ 		b->bi_bdev = rdev2->bdev;
+ 		b->bi_sector = r10_bio->devs[s/2].addr + rdev2->new_data_offset;
+ 		b->bi_private = r10_bio;
+ 		b->bi_end_io = end_reshape_write;
+ 		b->bi_rw = WRITE;
+-		b->bi_flags &= ~(BIO_POOL_MASK - 1);
+-		b->bi_flags |= 1 << BIO_UPTODATE;
+ 		b->bi_next = blist;
+-		b->bi_vcnt = 0;
+-		b->bi_idx = 0;
+-		b->bi_size = 0;
+ 		blist = b;
+ 	}
  
- 	if (pool == page_pool) {
- 		bio->bi_end_io = bounce_end_io_write;
 -- 
 1.7.12
