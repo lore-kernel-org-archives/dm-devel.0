@@ -1,118 +1,72 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v3 23/26] block: Add bio_alloc_pages()
-Date: Mon, 24 Sep 2012 15:35:03 -0700
-Message-ID: <1348526106-17074-24-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v3 01/26] block: Fix a buffer overrun in
+	bio_integrity_split()
+Date: Mon, 24 Sep 2012 15:34:41 -0700
+Message-ID: <1348526106-17074-2-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: axboe@kernel.dk, "Martin K. Petersen" <martin.petersen@oracle.com>, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-More utility code to replace stuff that's getting open coded.
+bio_integrity_split() seemed to be confusing pointers and arrays -
+bip_vec in bio_integrity_payload is an array appended to the end of the
+payload, so the bio_vecs in struct bio_pair need to come immediately
+after the bio_integrity_payload they're for, and there was an assignment
+in bio_integrity_split() that didn't make any sense.
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
+CC: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- drivers/md/raid1.c  | 16 +++-------------
- fs/bio.c            | 28 ++++++++++++++++++++++++++++
- include/linux/bio.h |  1 +
- 3 files changed, 32 insertions(+), 13 deletions(-)
+ fs/bio-integrity.c  | 3 ---
+ include/linux/bio.h | 6 ++++--
+ 2 files changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index dff0473..97f80b9 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -92,7 +92,6 @@ static void r1bio_pool_free(void *r1_bio, void *data)
- static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
- {
- 	struct pool_info *pi = data;
--	struct page *page;
- 	struct r1bio *r1_bio;
- 	struct bio *bio;
- 	int i, j;
-@@ -122,14 +121,10 @@ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
- 		j = 1;
- 	while(j--) {
- 		bio = r1_bio->bios[j];
--		for (i = 0; i < RESYNC_PAGES; i++) {
--			page = alloc_page(gfp_flags);
--			if (unlikely(!page))
--				goto out_free_pages;
-+		bio->bi_vcnt = RESYNC_PAGES;
+diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
+index a3f28f3..c7b6b52 100644
+--- a/fs/bio-integrity.c
++++ b/fs/bio-integrity.c
+@@ -697,9 +697,6 @@ void bio_integrity_split(struct bio *bio, struct bio_pair *bp, int sectors)
+ 	bp->iv1 = bip->bip_vec[0];
+ 	bp->iv2 = bip->bip_vec[0];
  
--			bio->bi_io_vec[i].bv_page = page;
--			bio->bi_vcnt = i+1;
--		}
-+		if (bio_alloc_pages(bio, gfp_flags))
-+			goto out_free_bio;
- 	}
- 	/* If not user-requests, copy the page pointers to all bios */
- 	if (!test_bit(MD_RECOVERY_REQUESTED, &pi->mddev->recovery)) {
-@@ -143,11 +138,6 @@ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
- 
- 	return r1_bio;
- 
--out_free_pages:
--	for (j=0 ; j < pi->raid_disks; j++)
--		for (i=0; i < r1_bio->bios[j]->bi_vcnt ; i++)
--			put_page(r1_bio->bios[j]->bi_io_vec[i].bv_page);
--	j = -1;
- out_free_bio:
- 	while (++j < pi->raid_disks)
- 		bio_put(r1_bio->bios[j]);
-diff --git a/fs/bio.c b/fs/bio.c
-index 6ba9f27..8e10d49 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -828,6 +828,34 @@ void bio_advance(struct bio *bio, unsigned bytes)
- EXPORT_SYMBOL(bio_advance);
- 
- /**
-+ * bio_alloc_pages - allocates a single page for each bvec in a bio
-+ * @bio: bio to allocate pages for
-+ * @gfp_mask: flags for allocation
-+ *
-+ * Allocates pages up to @bio->bi_vcnt.
-+ *
-+ * Returns 0 on success, -ENOMEM on failure. On failure, any allocated pages are
-+ * freed.
-+ */
-+int bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
-+{
-+	int i;
-+	struct bio_vec *bv;
-+
-+	bio_for_each_segment_all(bv, bio, i) {
-+		bv->bv_page = alloc_page(gfp_mask);
-+		if (!bv->bv_page) {
-+			while (--bv >= bio->bi_io_vec)
-+				__free_page(bv->bv_page);
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(bio_alloc_pages);
-+
-+/**
-  * bio_copy_data - copy contents of data buffers from one chain of bios to
-  * another
-  * @src: source bio list
+-	bp->bip1.bip_vec[0] = bp->iv1;
+-	bp->bip2.bip_vec[0] = bp->iv2;
+-
+ 	bp->iv1.bv_len = sectors * bi->tuple_size;
+ 	bp->iv2.bv_offset += sectors * bi->tuple_size;
+ 	bp->iv2.bv_len -= sectors * bi->tuple_size;
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 32966c9..5a55ce5 100644
+index b31036f..8e2d108 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -292,6 +292,7 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
+@@ -200,8 +200,10 @@ struct bio_pair {
+ 	struct bio			bio1, bio2;
+ 	struct bio_vec			bv1, bv2;
+ #if defined(CONFIG_BLK_DEV_INTEGRITY)
+-	struct bio_integrity_payload	bip1, bip2;
+-	struct bio_vec			iv1, iv2;
++	struct bio_integrity_payload	bip1;
++	struct bio_vec			iv1;
++	struct bio_integrity_payload	bip2;
++	struct bio_vec			iv2;
  #endif
- 
- extern void bio_copy_data(struct bio *dst, struct bio *src);
-+extern int bio_alloc_pages(struct bio *bio, gfp_t gfp);
- 
- extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
- 				 unsigned long, unsigned int, int, gfp_t);
+ 	atomic_t			cnt;
+ 	int				error;
 -- 
 1.7.12
