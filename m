@@ -1,7 +1,8 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 19/26] raid1: use bio_copy_data()
-Date: Mon, 24 Sep 2012 15:34:59 -0700
-Message-ID: <1348526106-17074-20-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 18/26] pktcdvd: Use bio_reset() in disabled
+	code to kill bi_idx usage
+Date: Mon, 24 Sep 2012 15:34:58 -0700
+Message-ID: <1348526106-17074-19-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,35 +20,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
+Cc: axboe@kernel.dk, Jiri Kosina <jkosina@suse.cz>, Kent Overstreet <koverstreet@google.com>, tj@kernel.org, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-This doesn't really delete any code _yet_, but once immutable bvecs are
-done we can just delete the rest of the code in that loop.
+In the short term this'll help with code auditing, and if this code ever
+gets used now it's converted :)
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
-CC: NeilBrown <neilb@suse.de>
+CC: Jiri Kosina <jkosina@suse.cz>
 ---
- drivers/md/raid1.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ drivers/block/pktcdvd.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index af39f74..1c40d90 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -1895,10 +1895,9 @@ static int process_checks(struct r1bio *r1_bio)
- 			else
- 				bi->bv_len = size;
- 			size -= PAGE_SIZE;
--			memcpy(page_address(bi->bv_page),
--			       page_address(pbio->bi_io_vec[j].bv_page),
--			       PAGE_SIZE);
- 		}
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 783c96c..1119042 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -1156,16 +1156,15 @@ static int pkt_start_recovery(struct packet_data *pkt)
+ 	new_sector = new_block * (CD_FRAMESIZE >> 9);
+ 	pkt->sector = new_sector;
+ 
++	bio_reset(pkt->bio);
++	pkt->bio->bi_bdev = pd->bdev;
++	pkt->bio->bi_rw = REQ_WRITE;
+ 	pkt->bio->bi_sector = new_sector;
+-	pkt->bio->bi_next = NULL;
+-	pkt->bio->bi_flags = 1 << BIO_UPTODATE;
+-	pkt->bio->bi_idx = 0;
+-
+-	BUG_ON(pkt->bio->bi_rw != REQ_WRITE);
+-	BUG_ON(pkt->bio->bi_vcnt != pkt->frames);
+-	BUG_ON(pkt->bio->bi_size != pkt->frames * CD_FRAMESIZE);
+-	BUG_ON(pkt->bio->bi_end_io != pkt_end_io_packet_write);
+-	BUG_ON(pkt->bio->bi_private != pkt);
++	pkt->bio->bi_size = pkt->frames * CD_FRAMESIZE;
++	pkt->bio->bi_vcnt = pkt->frames;
 +
-+		bio_copy_data(sbio, pbio);
- 	}
- 	return 0;
- }
++	pkt->bio->bi_end_io = pkt_end_io_packet_write;
++	pkt->bio->bi_private = pkt;
+ 
+ 	drop_super(sb);
+ 	return 1;
 -- 
 1.7.12
