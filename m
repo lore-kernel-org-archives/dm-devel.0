@@ -1,117 +1,332 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 10/26] block: Remove some unnecessary bi_vcnt usage
-Date: Mon, 24 Sep 2012 15:34:50 -0700
-Message-ID: <1348526106-17074-11-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 06/26] block: Add bio_end_sector()
+Date: Mon, 24 Sep 2012 15:34:46 -0700
+Message-ID: <1348526106-17074-7-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com, Eric Moore <Eric.Moore@lsi.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, linux-scsi@vger.kernel.org
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com, Lars Ellenberg <drbd-dev@lists.linbit.com>, Jiri Kosina <jkosina@suse.cz>, Alasdair Kergon <agk@redhat.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-s390@vger.kernel.org, Chris Mason <chris.mason@fusionio.com>, Steven Whitehouse <swhiteho@redhat.com>
 List-Id: dm-devel.ids
 
-More prep work for immutable bvecs/effecient bio splitting - usage of
-bi_vcnt has to be auditing, so getting rid of all the unnecessary usage
-makes that easier.
-
-Plus, bio_segments() is really what this code wanted, as it respects the
-current value of bi_idx.
+Just a little convenience macro - main reason to add it now is preparing
+for immutable bio vecs, it'll reduce the size of the patch that puts
+bi_sector/bi_size/bi_idx into a struct bvec_iter.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: Eric Moore <Eric.Moore@lsi.com>
-CC: "James E.J. Bottomley" <JBottomley@parallels.com>
-CC: linux-scsi@vger.kernel.org
+CC: Lars Ellenberg <drbd-dev@lists.linbit.com>
+CC: Jiri Kosina <jkosina@suse.cz>
+CC: Alasdair Kergon <agk@redhat.com>
+CC: dm-devel@redhat.com
+CC: Neil Brown <neilb@suse.de>
+CC: Martin Schwidefsky <schwidefsky@de.ibm.com>
+CC: Heiko Carstens <heiko.carstens@de.ibm.com>
+CC: linux-s390@vger.kernel.org
+CC: Chris Mason <chris.mason@fusionio.com>
+CC: Steven Whitehouse <swhiteho@redhat.com>
+Acked-by: Steven Whitehouse <swhiteho@redhat.com>
 ---
- drivers/message/fusion/mptsas.c          |  6 +++---
- drivers/scsi/libsas/sas_expander.c       |  6 +++---
- drivers/scsi/mpt2sas/mpt2sas_transport.c | 10 +++++-----
- 3 files changed, 11 insertions(+), 11 deletions(-)
+ block/blk-core.c              |  2 +-
+ block/cfq-iosched.c           |  7 ++-----
+ block/deadline-iosched.c      |  2 +-
+ drivers/block/drbd/drbd_req.c |  2 +-
+ drivers/block/pktcdvd.c       |  6 +++---
+ drivers/md/dm-stripe.c        |  2 +-
+ drivers/md/dm-verity.c        |  2 +-
+ drivers/md/faulty.c           |  6 ++----
+ drivers/md/linear.c           |  3 +--
+ drivers/md/raid1.c            |  4 ++--
+ drivers/md/raid5.c            | 14 +++++++-------
+ drivers/s390/block/dcssblk.c  |  3 +--
+ fs/btrfs/extent_io.c          |  3 +--
+ fs/gfs2/lops.c                |  2 +-
+ include/linux/bio.h           |  1 +
+ 15 files changed, 26 insertions(+), 33 deletions(-)
 
-diff --git a/drivers/message/fusion/mptsas.c b/drivers/message/fusion/mptsas.c
-index 551262e..5406a9f 100644
---- a/drivers/message/fusion/mptsas.c
-+++ b/drivers/message/fusion/mptsas.c
-@@ -2235,10 +2235,10 @@ static int mptsas_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+diff --git a/block/blk-core.c b/block/blk-core.c
+index a8a1a9e..df9bb5f 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1550,7 +1550,7 @@ static void handle_bad_sector(struct bio *bio)
+ 	printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
+ 			bdevname(bio->bi_bdev, b),
+ 			bio->bi_rw,
+-			(unsigned long long)bio->bi_sector + bio_sectors(bio),
++			(unsigned long long)bio_end_sector(bio),
+ 			(long long)(i_size_read(bio->bi_bdev->bd_inode) >> 9));
+ 
+ 	set_bit(BIO_EOF, &bio->bi_flags);
+diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+index fb52df9..59b64b7 100644
+--- a/block/cfq-iosched.c
++++ b/block/cfq-iosched.c
+@@ -1883,11 +1883,8 @@ cfq_find_rq_fmerge(struct cfq_data *cfqd, struct bio *bio)
+ 		return NULL;
+ 
+ 	cfqq = cic_to_cfqq(cic, cfq_bio_sync(bio));
+-	if (cfqq) {
+-		sector_t sector = bio->bi_sector + bio_sectors(bio);
+-
+-		return elv_rb_find(&cfqq->sort_list, sector);
+-	}
++	if (cfqq)
++		return elv_rb_find(&cfqq->sort_list, bio_end_sector(bio));
+ 
+ 	return NULL;
+ }
+diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
+index 599b12e..ef19d5f 100644
+--- a/block/deadline-iosched.c
++++ b/block/deadline-iosched.c
+@@ -132,7 +132,7 @@ deadline_merge(struct request_queue *q, struct request **req, struct bio *bio)
+ 	 * check for front merge
+ 	 */
+ 	if (dd->front_merges) {
+-		sector_t sector = bio->bi_sector + bio_sectors(bio);
++		sector_t sector = bio_end_sector(bio);
+ 
+ 		__rq = elv_rb_find(&dd->sort_list[bio_data_dir(bio)], sector);
+ 		if (__rq) {
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index 01b2ac6..d90a1fd 100644
+--- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -1144,7 +1144,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
+ 	/* to make some things easier, force alignment of requests within the
+ 	 * granularity of our hash tables */
+ 	s_enr = bio->bi_sector >> HT_SHIFT;
+-	e_enr = bio->bi_size ? (bio->bi_sector+(bio->bi_size>>9)-1) >> HT_SHIFT : s_enr;
++	e_enr = (bio_end_sector(bio) - 1) >> HT_SHIFT;
+ 
+ 	if (likely(s_enr == e_enr)) {
+ 		do {
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 2e7de7a..26938e8 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -901,7 +901,7 @@ static void pkt_iosched_process_queue(struct pktcdvd_device *pd)
+ 			pd->iosched.successive_reads += bio->bi_size >> 10;
+ 		else {
+ 			pd->iosched.successive_reads = 0;
+-			pd->iosched.last_write = bio->bi_sector + bio_sectors(bio);
++			pd->iosched.last_write = bio_end_sector(bio);
+ 		}
+ 		if (pd->iosched.successive_reads >= HI_SPEED_SWITCH) {
+ 			if (pd->read_speed == pd->write_speed) {
+@@ -2454,7 +2454,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
+ 	zone = ZONE(bio->bi_sector, pd);
+ 	VPRINTK("pkt_make_request: start = %6llx stop = %6llx\n",
+ 		(unsigned long long)bio->bi_sector,
+-		(unsigned long long)(bio->bi_sector + bio_sectors(bio)));
++		(unsigned long long)bio_end_sector(bio));
+ 
+ 	/* Check if we have to split the bio */
+ 	{
+@@ -2462,7 +2462,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
+ 		sector_t last_zone;
+ 		int first_sectors;
+ 
+-		last_zone = ZONE(bio->bi_sector + bio_sectors(bio) - 1, pd);
++		last_zone = ZONE(bio_end_sector(bio) - 1, pd);
+ 		if (last_zone != zone) {
+ 			BUG_ON(last_zone != zone + pd->settings.size);
+ 			first_sectors = last_zone - bio->bi_sector;
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index a087bf2..ac1a8cd 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -257,7 +257,7 @@ static int stripe_map_discard(struct stripe_c *sc, struct bio *bio,
+ 	sector_t begin, end;
+ 
+ 	stripe_map_range_sector(sc, bio->bi_sector, target_stripe, &begin);
+-	stripe_map_range_sector(sc, bio->bi_sector + bio_sectors(bio),
++	stripe_map_range_sector(sc, bio_end_sector(bio),
+ 				target_stripe, &end);
+ 	if (begin < end) {
+ 		bio->bi_bdev = sc->stripe[target_stripe].dev->bdev;
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 254d192..8f95664 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -477,7 +477,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio,
+ 		return -EIO;
  	}
  
- 	/* do we need to support multiple segments? */
--	if (req->bio->bi_vcnt > 1 || rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1 || bio_segments(rsp->bio) > 1) {
- 		printk(MYIOC_s_ERR_FMT "%s: multiple segments req %u %u, rsp %u %u\n",
--		    ioc->name, __func__, req->bio->bi_vcnt, blk_rq_bytes(req),
--		    rsp->bio->bi_vcnt, blk_rq_bytes(rsp));
-+		    ioc->name, __func__, bio_segments(req->bio), blk_rq_bytes(req),
-+		    bio_segments(rsp->bio), blk_rq_bytes(rsp));
- 		return -EINVAL;
- 	}
+-	if ((bio->bi_sector + bio_sectors(bio)) >>
++	if (bio_end_sector(bio) >>
+ 	    (v->data_dev_block_bits - SECTOR_SHIFT) > v->data_blocks) {
+ 		DMERR_LIMIT("io out of range");
+ 		return -EIO;
+diff --git a/drivers/md/faulty.c b/drivers/md/faulty.c
+index 45135f6..4a5ca4b 100644
+--- a/drivers/md/faulty.c
++++ b/drivers/md/faulty.c
+@@ -185,8 +185,7 @@ static void make_request(struct mddev *mddev, struct bio *bio)
+ 			return;
+ 		}
  
-diff --git a/drivers/scsi/libsas/sas_expander.c b/drivers/scsi/libsas/sas_expander.c
-index efc6e72..ee331a7 100644
---- a/drivers/scsi/libsas/sas_expander.c
-+++ b/drivers/scsi/libsas/sas_expander.c
-@@ -2151,10 +2151,10 @@ int sas_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	}
- 
- 	/* do we need to support multiple segments? */
--	if (req->bio->bi_vcnt > 1 || rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1 || bio_segments(rsp->bio) > 1) {
- 		printk("%s: multiple segments req %u %u, rsp %u %u\n",
--		       __func__, req->bio->bi_vcnt, blk_rq_bytes(req),
--		       rsp->bio->bi_vcnt, blk_rq_bytes(rsp));
-+		       __func__, bio_segments(req->bio), blk_rq_bytes(req),
-+		       bio_segments(rsp->bio), blk_rq_bytes(rsp));
- 		return -EINVAL;
- 	}
- 
-diff --git a/drivers/scsi/mpt2sas/mpt2sas_transport.c b/drivers/scsi/mpt2sas/mpt2sas_transport.c
-index c6cf20f..403a57b 100644
---- a/drivers/scsi/mpt2sas/mpt2sas_transport.c
-+++ b/drivers/scsi/mpt2sas/mpt2sas_transport.c
-@@ -1939,7 +1939,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	ioc->transport_cmds.status = MPT2_CMD_PENDING;
- 
- 	/* Check if the request is split across multiple segments */
--	if (req->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1) {
- 		u32 offset = 0;
- 
- 		/* Allocate memory and copy the request */
-@@ -1971,7 +1971,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 
- 	/* Check if the response needs to be populated across
- 	 * multiple segments */
--	if (rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(rsp->bio) > 1) {
- 		pci_addr_in = pci_alloc_consistent(ioc->pdev, blk_rq_bytes(rsp),
- 		    &pci_dma_in);
- 		if (!pci_addr_in) {
-@@ -2038,7 +2038,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	sgl_flags = (MPI2_SGE_FLAGS_SIMPLE_ELEMENT |
- 	    MPI2_SGE_FLAGS_END_OF_BUFFER | MPI2_SGE_FLAGS_HOST_TO_IOC);
- 	sgl_flags = sgl_flags << MPI2_SGE_FLAGS_SHIFT;
--	if (req->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1) {
- 		ioc->base_add_sg_single(psge, sgl_flags |
- 		    (blk_rq_bytes(req) - 4), pci_dma_out);
+-		if (check_sector(conf, bio->bi_sector, bio->bi_sector+(bio->bi_size>>9),
+-				 WRITE))
++		if (check_sector(conf, bio->bi_sector, bio_end_sector(bio), WRITE))
+ 			failit = 1;
+ 		if (check_mode(conf, WritePersistent)) {
+ 			add_sector(conf, bio->bi_sector, WritePersistent);
+@@ -196,8 +195,7 @@ static void make_request(struct mddev *mddev, struct bio *bio)
+ 			failit = 1;
  	} else {
-@@ -2054,7 +2054,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	    MPI2_SGE_FLAGS_LAST_ELEMENT | MPI2_SGE_FLAGS_END_OF_BUFFER |
- 	    MPI2_SGE_FLAGS_END_OF_LIST);
- 	sgl_flags = sgl_flags << MPI2_SGE_FLAGS_SHIFT;
--	if (rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(rsp->bio) > 1) {
- 		ioc->base_add_sg_single(psge, sgl_flags |
- 		    (blk_rq_bytes(rsp) + 4), pci_dma_in);
- 	} else {
-@@ -2099,7 +2099,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 		    le16_to_cpu(mpi_reply->ResponseDataLength);
- 		/* check if the resp needs to be copied from the allocated
- 		 * pci mem */
--		if (rsp->bio->bi_vcnt > 1) {
-+		if (bio_segments(rsp->bio) > 1) {
- 			u32 offset = 0;
- 			u32 bytes_to_copy =
- 			    le16_to_cpu(mpi_reply->ResponseDataLength);
+ 		/* read request */
+-		if (check_sector(conf, bio->bi_sector, bio->bi_sector + (bio->bi_size>>9),
+-				 READ))
++		if (check_sector(conf, bio->bi_sector, bio_end_sector(bio), READ))
+ 			failit = 1;
+ 		if (check_mode(conf, ReadTransient))
+ 			failit = 1;
+diff --git a/drivers/md/linear.c b/drivers/md/linear.c
+index fa211d8..af391db 100644
+--- a/drivers/md/linear.c
++++ b/drivers/md/linear.c
+@@ -304,8 +304,7 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
+ 		bio_io_error(bio);
+ 		return;
+ 	}
+-	if (unlikely(bio->bi_sector + (bio->bi_size >> 9) >
+-		     tmp_dev->end_sector)) {
++	if (unlikely(bio_end_sector(bio) > tmp_dev->end_sector)) {
+ 		/* This bio crosses a device boundary, so we have to
+ 		 * split it.
+ 		 */
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 611b5f7..32eab5b 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1010,7 +1010,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
+ 	md_write_start(mddev, bio); /* wait on superblock update early */
+ 
+ 	if (bio_data_dir(bio) == WRITE &&
+-	    bio->bi_sector + bio->bi_size/512 > mddev->suspend_lo &&
++	    bio_end_sector(bio) > mddev->suspend_lo &&
+ 	    bio->bi_sector < mddev->suspend_hi) {
+ 		/* As the suspend_* range is controlled by
+ 		 * userspace, we want an interruptible
+@@ -1021,7 +1021,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
+ 			flush_signals(current);
+ 			prepare_to_wait(&conf->wait_barrier,
+ 					&w, TASK_INTERRUPTIBLE);
+-			if (bio->bi_sector + bio->bi_size/512 <= mddev->suspend_lo ||
++			if (bio_end_sector(bio) <= mddev->suspend_lo ||
+ 			    bio->bi_sector >= mddev->suspend_hi)
+ 				break;
+ 			schedule();
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index adda94d..45a632c 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -2377,11 +2377,11 @@ static int add_stripe_bio(struct stripe_head *sh, struct bio *bi, int dd_idx, in
+ 	} else
+ 		bip = &sh->dev[dd_idx].toread;
+ 	while (*bip && (*bip)->bi_sector < bi->bi_sector) {
+-		if ((*bip)->bi_sector + ((*bip)->bi_size >> 9) > bi->bi_sector)
++		if (bio_end_sector(*bip) > bi->bi_sector)
+ 			goto overlap;
+ 		bip = & (*bip)->bi_next;
+ 	}
+-	if (*bip && (*bip)->bi_sector < bi->bi_sector + ((bi->bi_size)>>9))
++	if (*bip && (*bip)->bi_sector < bio_end_sector(bi))
+ 		goto overlap;
+ 
+ 	BUG_ON(*bip && bi->bi_next && (*bip) != bi->bi_next);
+@@ -2397,8 +2397,8 @@ static int add_stripe_bio(struct stripe_head *sh, struct bio *bi, int dd_idx, in
+ 		     sector < sh->dev[dd_idx].sector + STRIPE_SECTORS &&
+ 			     bi && bi->bi_sector <= sector;
+ 		     bi = r5_next_bio(bi, sh->dev[dd_idx].sector)) {
+-			if (bi->bi_sector + (bi->bi_size>>9) >= sector)
+-				sector = bi->bi_sector + (bi->bi_size>>9);
++			if (bio_end_sector(bi) >= sector)
++				sector = bio_end_sector(bi);
+ 		}
+ 		if (sector >= sh->dev[dd_idx].sector + STRIPE_SECTORS)
+ 			set_bit(R5_OVERWRITE, &sh->dev[dd_idx].flags);
+@@ -3908,7 +3908,7 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
+ 						    0,
+ 						    &dd_idx, NULL);
+ 
+-	end_sector = align_bi->bi_sector + (align_bi->bi_size >> 9);
++	end_sector = bio_end_sector(align_bi);
+ 	rcu_read_lock();
+ 	rdev = rcu_dereference(conf->disks[dd_idx].replacement);
+ 	if (!rdev || test_bit(Faulty, &rdev->flags) ||
+@@ -4090,7 +4090,7 @@ static void make_request(struct mddev *mddev, struct bio * bi)
+ 		return;
+ 
+ 	logical_sector = bi->bi_sector & ~((sector_t)STRIPE_SECTORS-1);
+-	last_sector = bi->bi_sector + (bi->bi_size>>9);
++	last_sector = bio_end_sector(bi);
+ 	bi->bi_next = NULL;
+ 	bi->bi_phys_segments = 1;	/* over-loaded to count active stripes */
+ 
+@@ -4553,7 +4553,7 @@ static int  retry_aligned_read(struct r5conf *conf, struct bio *raid_bio)
+ 	logical_sector = raid_bio->bi_sector & ~((sector_t)STRIPE_SECTORS-1);
+ 	sector = raid5_compute_sector(conf, logical_sector,
+ 				      0, &dd_idx, NULL);
+-	last_sector = raid_bio->bi_sector + (raid_bio->bi_size>>9);
++	last_sector = bio_end_sector(raid_bio);
+ 
+ 	for (; logical_sector < last_sector;
+ 	     logical_sector += STRIPE_SECTORS,
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index a5a55da..1d2826b 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -832,8 +832,7 @@ dcssblk_make_request(struct request_queue *q, struct bio *bio)
+ 	if ((bio->bi_sector & 7) != 0 || (bio->bi_size & 4095) != 0)
+ 		/* Request is not page-aligned. */
+ 		goto fail;
+-	if (((bio->bi_size >> 9) + bio->bi_sector)
+-			> get_capacity(bio->bi_bdev->bd_disk)) {
++	if (bio_end_sector(bio) > get_capacity(bio->bi_bdev->bd_disk)) {
+ 		/* Request beyond end of DCSS segment. */
+ 		goto fail;
+ 	}
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index 4c87847..e1122a6 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -2480,8 +2480,7 @@ static int submit_extent_page(int rw, struct extent_io_tree *tree,
+ 		if (old_compressed)
+ 			contig = bio->bi_sector == sector;
+ 		else
+-			contig = bio->bi_sector + (bio->bi_size >> 9) ==
+-				sector;
++			contig = bio_end_sector(bio) == sector;
+ 
+ 		if (prev_bio_flags != bio_flags || !contig ||
+ 		    merge_bio(tree, page, offset, page_size, bio, bio_flags) ||
+diff --git a/fs/gfs2/lops.c b/fs/gfs2/lops.c
+index 8ff95a2..4245a7e 100644
+--- a/fs/gfs2/lops.c
++++ b/fs/gfs2/lops.c
+@@ -300,7 +300,7 @@ static struct bio *gfs2_log_get_bio(struct gfs2_sbd *sdp, u64 blkno)
+ 	u64 nblk;
+ 
+ 	if (bio) {
+-		nblk = bio->bi_sector + bio_sectors(bio);
++		nblk = bio_end_sector(bio);
+ 		nblk >>= sdp->sd_fsb2bb_shift;
+ 		if (blkno == nblk)
+ 			return bio;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 4e32be1..d985e90 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -67,6 +67,7 @@
+ #define bio_offset(bio)		bio_iovec((bio))->bv_offset
+ #define bio_segments(bio)	((bio)->bi_vcnt - (bio)->bi_idx)
+ #define bio_sectors(bio)	((bio)->bi_size >> 9)
++#define bio_end_sector(bio)	((bio)->bi_sector + bio_sectors(bio))
+ 
+ static inline unsigned int bio_cur_bytes(struct bio *bio)
+ {
 -- 
 1.7.12
