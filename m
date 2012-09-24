@@ -1,8 +1,8 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 22/26] block: Convert some code to
-	bio_for_each_segment_all()
-Date: Mon, 24 Sep 2012 15:35:02 -0700
-Message-ID: <1348526106-17074-23-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 20/26] bounce: Refactor __blk_queue_bounce to
+	not use bi_io_vec
+Date: Mon, 24 Sep 2012 15:35:00 -0700
+Message-ID: <1348526106-17074-21-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,172 +20,134 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com, tj@kernel.org, Alasdair Kergon <agk@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-More prep work for immutable bvecs:
+A bunch of what __blk_queue_bounce() was doing was problematic for the
+immutable bvec work; this cleans that up and the code is quite a bit
+smaller, too.
 
-A few places in the code were either open coding or using the wrong
-version - fix.
-
-After we introduce the bvec iter, it'll no longer be possible to modify
-the biovec through bio_for_each_segment_all() - it doesn't increment a
-pointer to the current bvec, you pass in a struct bio_vec (not a
-pointer) which is updated with what the current biovec would be (taking
-into account bi_bvec_done and bi_size).
-
-So because of that it's more worthwhile to be consistent about
-bio_for_each_segment()/bio_for_each_segment_all() usage.
+The __bio_for_each_segment() in copy_to_high_bio_irq() was changed
+because that one's looping over the original bio, not the bounce bio -
+a later patch renames __bio_for_each_segment() ->
+bio_for_each_segment_all(), and documents that
+bio_for_each_segment_all() is only for code that owns the bio.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: NeilBrown <neilb@suse.de>
-CC: Alasdair Kergon <agk@redhat.com>
-CC: dm-devel@redhat.com
-CC: Alexander Viro <viro@zeniv.linux.org.uk>
 ---
- drivers/md/dm-crypt.c |  3 +--
- drivers/md/raid1.c    | 10 +++-------
- fs/bio.c              | 20 ++++++++++----------
- fs/direct-io.c        |  8 ++++----
- mm/bounce.c           |  2 +-
- 5 files changed, 19 insertions(+), 24 deletions(-)
+ mm/bounce.c | 73 ++++++++++++++++---------------------------------------------
+ 1 file changed, 19 insertions(+), 54 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index bbf459b..f50798e 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -858,8 +858,7 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone)
- 	unsigned int i;
- 	struct bio_vec *bv;
- 
--	for (i = 0; i < clone->bi_vcnt; i++) {
--		bv = bio_iovec_idx(clone, i);
-+	bio_for_each_segment_all(bv, clone, i) {
- 		BUG_ON(!bv->bv_page);
- 		mempool_free(bv->bv_page, cc->page_pool);
- 		bv->bv_page = NULL;
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 6a96e1f..dff0473 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -921,7 +921,7 @@ static void alloc_behind_pages(struct bio *bio, struct r1bio *r1_bio)
- 	if (unlikely(!bvecs))
- 		return;
- 
--	bio_for_each_segment(bvec, bio, i) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		bvecs[i] = *bvec;
- 		bvecs[i].bv_page = alloc_page(GFP_NOIO);
- 		if (unlikely(!bvecs[i].bv_page))
-@@ -1276,12 +1276,8 @@ read_again:
- 			struct bio_vec *bvec;
- 			int j;
- 
--			/* Yes, I really want the '__' version so that
--			 * we clear any unused pointer in the io_vec, rather
--			 * than leave them unchanged.  This is important
--			 * because when we come to free the pages, we won't
--			 * know the original bi_idx, so we just free
--			 * them all
-+			/*
-+			 * We trimmed the bio, so _all is legit
- 			 */
- 			bio_for_each_segment_all(bvec, mbio, j)
- 				bvec->bv_page = r1_bio->behind_bvecs[j].bv_page;
-diff --git a/fs/bio.c b/fs/bio.c
-index a641efd..6ba9f27 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -1546,11 +1546,11 @@ EXPORT_SYMBOL(bio_copy_kern);
-  */
- void bio_set_pages_dirty(struct bio *bio)
- {
--	struct bio_vec *bvec = bio->bi_io_vec;
-+	struct bio_vec *bvec;
- 	int i;
- 
--	for (i = 0; i < bio->bi_vcnt; i++) {
--		struct page *page = bvec[i].bv_page;
-+	bio_for_each_segment_all(bvec, bio, i) {
-+		struct page *page = bvec->bv_page;
- 
- 		if (page && !PageCompound(page))
- 			set_page_dirty_lock(page);
-@@ -1559,11 +1559,11 @@ void bio_set_pages_dirty(struct bio *bio)
- 
- static void bio_release_pages(struct bio *bio)
- {
--	struct bio_vec *bvec = bio->bi_io_vec;
-+	struct bio_vec *bvec;
- 	int i;
- 
--	for (i = 0; i < bio->bi_vcnt; i++) {
--		struct page *page = bvec[i].bv_page;
-+	bio_for_each_segment_all(bvec, bio, i) {
-+		struct page *page = bvec->bv_page;
- 
- 		if (page)
- 			put_page(page);
-@@ -1612,16 +1612,16 @@ static void bio_dirty_fn(struct work_struct *work)
- 
- void bio_check_pages_dirty(struct bio *bio)
- {
--	struct bio_vec *bvec = bio->bi_io_vec;
-+	struct bio_vec *bvec;
- 	int nr_clean_pages = 0;
- 	int i;
- 
--	for (i = 0; i < bio->bi_vcnt; i++) {
--		struct page *page = bvec[i].bv_page;
-+	bio_for_each_segment_all(bvec, bio, i) {
-+		struct page *page = bvec->bv_page;
- 
- 		if (PageDirty(page) || PageCompound(page)) {
- 			page_cache_release(page);
--			bvec[i].bv_page = NULL;
-+			bvec->bv_page = NULL;
- 		} else {
- 			nr_clean_pages++;
- 		}
-diff --git a/fs/direct-io.c b/fs/direct-io.c
-index f86c720..6089916 100644
---- a/fs/direct-io.c
-+++ b/fs/direct-io.c
-@@ -441,8 +441,8 @@ static struct bio *dio_await_one(struct dio *dio)
- static int dio_bio_complete(struct dio *dio, struct bio *bio)
- {
- 	const int uptodate = test_bit(BIO_UPTODATE, &bio->bi_flags);
--	struct bio_vec *bvec = bio->bi_io_vec;
--	int page_no;
-+	struct bio_vec *bvec;
-+	unsigned i;
- 
- 	if (!uptodate)
- 		dio->io_error = -EIO;
-@@ -450,8 +450,8 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
- 	if (dio->is_async && dio->rw == READ) {
- 		bio_check_pages_dirty(bio);	/* transfers ownership */
- 	} else {
--		for (page_no = 0; page_no < bio->bi_vcnt; page_no++) {
--			struct page *page = bvec[page_no].bv_page;
-+		bio_for_each_segment_all(bvec, bio, i) {
-+			struct page *page = bvec->bv_page;
- 
- 			if (dio->rw == READ && !PageCompound(page))
- 				set_page_dirty_lock(page);
 diff --git a/mm/bounce.c b/mm/bounce.c
-index 89324e2..bd7079a 100644
+index 0420867..3068300 100644
 --- a/mm/bounce.c
 +++ b/mm/bounce.c
-@@ -194,7 +194,7 @@ static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
- bounce:
- 	bio = bio_clone_bioset(*bio_orig, GFP_NOIO, fs_bio_set);
+@@ -101,7 +101,7 @@ static void copy_to_high_bio_irq(struct bio *to, struct bio *from)
+ 	struct bio_vec *tovec, *fromvec;
+ 	int i;
  
--	bio_for_each_segment(to, bio, i) {
-+	bio_for_each_segment_all(to, bio, i) {
- 		struct page *page = to->bv_page;
+-	__bio_for_each_segment(tovec, to, i, 0) {
++	bio_for_each_segment(tovec, to, i) {
+ 		fromvec = from->bi_io_vec + i;
  
- 		if (page_to_pfn(page) <= queue_bounce_pfn(q))
+ 		/*
+@@ -181,78 +181,43 @@ static void bounce_end_io_read_isa(struct bio *bio, int err)
+ static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
+ 			       mempool_t *pool)
+ {
+-	struct page *page;
+-	struct bio *bio = NULL;
+-	int i, rw = bio_data_dir(*bio_orig);
++	struct bio *bio;
++	int rw = bio_data_dir(*bio_orig);
+ 	struct bio_vec *to, *from;
++	unsigned i;
+ 
+-	bio_for_each_segment(from, *bio_orig, i) {
+-		page = from->bv_page;
++	bio_for_each_segment(from, *bio_orig, i)
++		if (page_to_pfn(from->bv_page) > queue_bounce_pfn(q))
++			goto bounce;
+ 
+-		/*
+-		 * is destination page below bounce pfn?
+-		 */
+-		if (page_to_pfn(page) <= queue_bounce_pfn(q))
+-			continue;
+-
+-		/*
+-		 * irk, bounce it
+-		 */
+-		if (!bio) {
+-			unsigned int cnt = (*bio_orig)->bi_vcnt;
++	return;
++bounce:
++	bio = bio_clone_bioset(*bio_orig, GFP_NOIO, fs_bio_set);
+ 
+-			bio = bio_alloc(GFP_NOIO, cnt);
+-			memset(bio->bi_io_vec, 0, cnt * sizeof(struct bio_vec));
+-		}
+-			
++	bio_for_each_segment(to, bio, i) {
++		struct page *page = to->bv_page;
+ 
+-		to = bio->bi_io_vec + i;
++		if (page_to_pfn(page) <= queue_bounce_pfn(q))
++			continue;
+ 
+-		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+-		to->bv_len = from->bv_len;
+-		to->bv_offset = from->bv_offset;
+ 		inc_zone_page_state(to->bv_page, NR_BOUNCE);
++		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+ 
+ 		if (rw == WRITE) {
+ 			char *vto, *vfrom;
+ 
+-			flush_dcache_page(from->bv_page);
++			flush_dcache_page(page);
++
+ 			vto = page_address(to->bv_page) + to->bv_offset;
+-			vfrom = kmap(from->bv_page) + from->bv_offset;
++			vfrom = kmap_atomic(page) + to->bv_offset;
+ 			memcpy(vto, vfrom, to->bv_len);
+-			kunmap(from->bv_page);
++			kunmap_atomic(vfrom);
+ 		}
+ 	}
+ 
+-	/*
+-	 * no pages bounced
+-	 */
+-	if (!bio)
+-		return;
+-
+ 	trace_block_bio_bounce(q, *bio_orig);
+ 
+-	/*
+-	 * at least one page was bounced, fill in possible non-highmem
+-	 * pages
+-	 */
+-	__bio_for_each_segment(from, *bio_orig, i, 0) {
+-		to = bio_iovec_idx(bio, i);
+-		if (!to->bv_page) {
+-			to->bv_page = from->bv_page;
+-			to->bv_len = from->bv_len;
+-			to->bv_offset = from->bv_offset;
+-		}
+-	}
+-
+-	bio->bi_bdev = (*bio_orig)->bi_bdev;
+ 	bio->bi_flags |= (1 << BIO_BOUNCED);
+-	bio->bi_sector = (*bio_orig)->bi_sector;
+-	bio->bi_rw = (*bio_orig)->bi_rw;
+-
+-	bio->bi_vcnt = (*bio_orig)->bi_vcnt;
+-	bio->bi_idx = (*bio_orig)->bi_idx;
+-	bio->bi_size = (*bio_orig)->bi_size;
+ 
+ 	if (pool == page_pool) {
+ 		bio->bi_end_io = bounce_end_io_write;
 -- 
 1.7.12
