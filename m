@@ -1,7 +1,8 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 12/26] raid10: Use bio_reset()
-Date: Mon, 24 Sep 2012 15:34:52 -0700
-Message-ID: <1348526106-17074-13-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 11/26] block: Add submit_bio_wait(),
+	remove from md
+Date: Mon, 24 Sep 2012 15:34:51 -0700
+Message-ID: <1348526106-17074-12-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,118 +23,140 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-More prep work for immutable bio vecs, mainly getting rid of references
-to bi_idx.
+Random cleanup - this code was duplicated and it's not really specific
+to md.
 
-bio_reset was being open coded in a few places. The one in sync_request
-was a bit nontrivial to convert, so could use some extra eyeballs.
+Also added the ability to return the actual error code.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
 CC: NeilBrown <neilb@suse.de>
-Acked-by: NeilBrown <neilb@suse.de>
+Acked-by: Tejun Heo <tj@kernel.org>
 ---
- drivers/md/raid10.c | 31 +++++++++----------------------
- 1 file changed, 9 insertions(+), 22 deletions(-)
+ drivers/md/raid1.c  | 19 -------------------
+ drivers/md/raid10.c | 19 -------------------
+ fs/bio.c            | 36 ++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  1 +
+ 4 files changed, 37 insertions(+), 38 deletions(-)
 
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index deff0cd..28f506a 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -2048,25 +2048,6 @@ static void fix_read_error(struct r1conf *conf, int read_disk,
+ 	}
+ }
+ 
+-static void bi_complete(struct bio *bio, int error)
+-{
+-	complete((struct completion *)bio->bi_private);
+-}
+-
+-static int submit_bio_wait(int rw, struct bio *bio)
+-{
+-	struct completion event;
+-	rw |= REQ_SYNC;
+-
+-	init_completion(&event);
+-	bio->bi_private = &event;
+-	bio->bi_end_io = bi_complete;
+-	submit_bio(rw, bio);
+-	wait_for_completion(&event);
+-
+-	return test_bit(BIO_UPTODATE, &bio->bi_flags);
+-}
+-
+ static int narrow_write_error(struct r1bio *r1_bio, int i)
+ {
+ 	struct mddev *mddev = r1_bio->mddev;
 diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index f001c1b..6b83207 100644
+index 6d06d83..f001c1b 100644
 --- a/drivers/md/raid10.c
 +++ b/drivers/md/raid10.c
-@@ -1958,13 +1958,10 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 		 * First we need to fixup bv_offset, bv_len and
- 		 * bi_vecs, as the read request might have corrupted these
- 		 */
-+		bio_reset(tbio);
-+
- 		tbio->bi_vcnt = vcnt;
- 		tbio->bi_size = r10_bio->sectors << 9;
--		tbio->bi_idx = 0;
--		tbio->bi_phys_segments = 0;
--		tbio->bi_flags &= ~(BIO_POOL_MASK - 1);
--		tbio->bi_flags |= 1 << BIO_UPTODATE;
--		tbio->bi_next = NULL;
- 		tbio->bi_rw = WRITE;
- 		tbio->bi_private = r10_bio;
- 		tbio->bi_sector = r10_bio->devs[i].addr;
-@@ -2970,6 +2967,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 					}
- 				}
- 				bio = r10_bio->devs[0].bio;
-+				bio_reset(bio);
- 				bio->bi_next = biolist;
- 				biolist = bio;
- 				bio->bi_private = r10_bio;
-@@ -2994,6 +2992,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				rdev = mirror->rdev;
- 				if (!test_bit(In_sync, &rdev->flags)) {
- 					bio = r10_bio->devs[1].bio;
-+					bio_reset(bio);
- 					bio->bi_next = biolist;
- 					biolist = bio;
- 					bio->bi_private = r10_bio;
-@@ -3022,6 +3021,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				if (rdev == NULL || bio == NULL ||
- 				    test_bit(Faulty, &rdev->flags))
- 					break;
-+				bio_reset(bio);
- 				bio->bi_next = biolist;
- 				biolist = bio;
- 				bio->bi_private = r10_bio;
-@@ -3120,7 +3120,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				r10_bio->devs[i].repl_bio->bi_end_io = NULL;
- 
- 			bio = r10_bio->devs[i].bio;
--			bio->bi_end_io = NULL;
-+			bio_reset(bio);
- 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
- 			if (conf->mirrors[d].rdev == NULL ||
- 			    test_bit(Faulty, &conf->mirrors[d].rdev->flags))
-@@ -3157,6 +3157,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 
- 			/* Need to set up for writing to the replacement */
- 			bio = r10_bio->devs[i].repl_bio;
-+			bio_reset(bio);
- 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
- 
- 			sector = r10_bio->devs[i].addr;
-@@ -3190,17 +3191,6 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 		}
+@@ -2410,25 +2410,6 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
  	}
+ }
  
--	for (bio = biolist; bio ; bio=bio->bi_next) {
+-static void bi_complete(struct bio *bio, int error)
+-{
+-	complete((struct completion *)bio->bi_private);
+-}
 -
--		bio->bi_flags &= ~(BIO_POOL_MASK - 1);
--		if (bio->bi_end_io)
--			bio->bi_flags |= 1 << BIO_UPTODATE;
--		bio->bi_vcnt = 0;
--		bio->bi_idx = 0;
--		bio->bi_phys_segments = 0;
--		bio->bi_size = 0;
--	}
+-static int submit_bio_wait(int rw, struct bio *bio)
+-{
+-	struct completion event;
+-	rw |= REQ_SYNC;
 -
- 	nr_sectors = 0;
- 	if (sector_nr + max_sync < max_sector)
- 		max_sector = sector_nr + max_sync;
-@@ -4253,17 +4243,14 @@ read_more:
- 		}
- 		if (!rdev2 || test_bit(Faulty, &rdev2->flags))
- 			continue;
+-	init_completion(&event);
+-	bio->bi_private = &event;
+-	bio->bi_end_io = bi_complete;
+-	submit_bio(rw, bio);
+-	wait_for_completion(&event);
+-
+-	return test_bit(BIO_UPTODATE, &bio->bi_flags);
+-}
+-
+ static int narrow_write_error(struct r10bio *r10_bio, int i)
+ {
+ 	struct bio *bio = r10_bio->master_bio;
+diff --git a/fs/bio.c b/fs/bio.c
+index 062ba8f..9a30dcf 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -750,6 +750,42 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
+ }
+ EXPORT_SYMBOL(bio_add_page);
+ 
++struct submit_bio_ret {
++	struct completion event;
++	int error;
++};
 +
-+		bio_reset(b);
- 		b->bi_bdev = rdev2->bdev;
- 		b->bi_sector = r10_bio->devs[s/2].addr + rdev2->new_data_offset;
- 		b->bi_private = r10_bio;
- 		b->bi_end_io = end_reshape_write;
- 		b->bi_rw = WRITE;
--		b->bi_flags &= ~(BIO_POOL_MASK - 1);
--		b->bi_flags |= 1 << BIO_UPTODATE;
- 		b->bi_next = blist;
--		b->bi_vcnt = 0;
--		b->bi_idx = 0;
--		b->bi_size = 0;
- 		blist = b;
- 	}
++static void submit_bio_wait_endio(struct bio *bio, int error)
++{
++	struct submit_bio_ret *ret = bio->bi_private;
++
++	ret->error = error;
++	complete(&ret->event);
++}
++
++/**
++ * submit_bio_wait - submit a bio, and wait until it completes
++ * @rw: whether to %READ or %WRITE, or maybe to %READA (read ahead)
++ * @bio: The &struct bio which describes the I/O
++ *
++ * Simple wrapper around submit_bio(). Returns 0 on success, or the error from
++ * bio_endio() on failure.
++ */
++int submit_bio_wait(int rw, struct bio *bio)
++{
++	struct submit_bio_ret ret;
++
++	rw |= REQ_SYNC;
++	init_completion(&ret.event);
++	bio->bi_private = &ret;
++	bio->bi_end_io = submit_bio_wait_endio;
++	submit_bio(rw, bio);
++	wait_for_completion(&ret.event);
++
++	return ret.error;
++}
++EXPORT_SYMBOL(submit_bio_wait);
++
+ /**
+  * bio_advance - increment/complete a bio by some number of bytes
+  * @bio:	bio to advance
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index d985e90..3bf696b 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -252,6 +252,7 @@ extern void bio_endio(struct bio *, int);
+ struct request_queue;
+ extern int bio_phys_segments(struct request_queue *, struct bio *);
  
++extern int submit_bio_wait(int rw, struct bio *bio);
+ extern void bio_advance(struct bio *, unsigned);
+ 
+ extern void bio_init(struct bio *);
 -- 
 1.7.12
