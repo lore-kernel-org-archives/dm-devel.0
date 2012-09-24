@@ -1,162 +1,118 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 04/26] block: Refactor blk_update_request()
-Date: Mon, 24 Sep 2012 15:34:44 -0700
-Message-ID: <1348526106-17074-5-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 16/26] block: Add bio_copy_data()
+Date: Mon, 24 Sep 2012 15:34:56 -0700
+Message-ID: <1348526106-17074-17-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Converts it to use bio_advance(), simplifying it quite a bit in the
-process.
-
-Note that req_bio_endio() now always calls bio_advance() - which means
-it always loops over the biovec, not just on partial completions. Don't
-expect it to affect performance, but worth noting.
-
-Tested it by forcing partial updates, and dumping before and after on
-various bio/bvec fields when doing a partial update.
+This gets open coded quite a bit and it's tricky to get right, so make a
+generic version and convert some existing users over to it instead.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
 ---
- block/blk-core.c | 80 +++++++++-----------------------------------------------
- 1 file changed, 12 insertions(+), 68 deletions(-)
+ fs/bio.c            | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  2 ++
+ 2 files changed, 72 insertions(+)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index a17869f..a8a1a9e 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -158,20 +158,10 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
- 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
- 		error = -EIO;
+diff --git a/fs/bio.c b/fs/bio.c
+index 9a30dcf..d433825 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -827,6 +827,76 @@ void bio_advance(struct bio *bio, unsigned bytes)
+ }
+ EXPORT_SYMBOL(bio_advance);
  
--	if (unlikely(nbytes > bio->bi_size)) {
--		printk(KERN_ERR "%s: want %u bytes done, %u left\n",
--		       __func__, nbytes, bio->bi_size);
--		nbytes = bio->bi_size;
--	}
--
- 	if (unlikely(rq->cmd_flags & REQ_QUIET))
- 		set_bit(BIO_QUIET, &bio->bi_flags);
++/**
++ * bio_copy_data - copy contents of data buffers from one chain of bios to
++ * another
++ * @src: source bio list
++ * @dst: destination bio list
++ *
++ * If @src and @dst are single bios, bi_next must be NULL - otherwise, treats
++ * @src and @dst as linked lists of bios.
++ *
++ * Stops when it reaches the end of either @src or @dst - that is, copies
++ * min(src->bi_size, dst->bi_size) bytes (or the equivalent for lists of bios).
++ */
++void bio_copy_data(struct bio *dst, struct bio *src)
++{
++	struct bio_vec *src_bv, *dst_bv;
++	unsigned src_offset, dst_offset, bytes;
++	void *src_p, *dst_p;
++
++	src_bv = bio_iovec(src);
++	dst_bv = bio_iovec(dst);
++
++	src_offset = src_bv->bv_offset;
++	dst_offset = dst_bv->bv_offset;
++
++	while (1) {
++		if (src_offset == src_bv->bv_offset + src_bv->bv_len) {
++			src_bv++;
++			if (src_bv == bio_iovec_idx(src, src->bi_vcnt)) {
++				src = src->bi_next;
++				if (!src)
++					break;
++
++				src_bv = bio_iovec(src);
++			}
++
++			src_offset = src_bv->bv_offset;
++		}
++
++		if (dst_offset == dst_bv->bv_offset + dst_bv->bv_len) {
++			dst_bv++;
++			if (dst_bv == bio_iovec_idx(dst, dst->bi_vcnt)) {
++				dst = dst->bi_next;
++				if (!dst)
++					break;
++
++				dst_bv = bio_iovec(dst);
++			}
++
++			dst_offset = dst_bv->bv_offset;
++		}
++
++		bytes = min(dst_bv->bv_offset + dst_bv->bv_len - dst_offset,
++			    src_bv->bv_offset + src_bv->bv_len - src_offset);
++
++		src_p = kmap_atomic(src_bv->bv_page);
++		dst_p = kmap_atomic(dst_bv->bv_page);
++
++		memcpy(dst_p + dst_bv->bv_offset,
++		       src_p + src_bv->bv_offset,
++		       bytes);
++
++		kunmap_atomic(dst_p);
++		kunmap_atomic(src_p);
++
++		src_offset += bytes;
++		dst_offset += bytes;
++	}
++}
++EXPORT_SYMBOL(bio_copy_data);
++
+ struct bio_map_data {
+ 	struct bio_vec *iovecs;
+ 	struct sg_iovec *sgvecs;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 3bf696b..467e101 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -289,6 +289,8 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
+ }
+ #endif
  
--	bio->bi_size -= nbytes;
--	bio->bi_sector += (nbytes >> 9);
--
--	if (bio_integrity(bio))
--		bio_integrity_advance(bio, nbytes);
-+	bio_advance(bio, nbytes);
- 
- 	/* don't actually finish bio if it's part of flush sequence */
- 	if (bio->bi_size == 0 && !(rq->cmd_flags & REQ_FLUSH_SEQ))
-@@ -2219,8 +2209,7 @@ EXPORT_SYMBOL(blk_fetch_request);
-  **/
- bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
- {
--	int total_bytes, bio_nbytes, next_idx = 0;
--	struct bio *bio;
-+	int total_bytes;
- 
- 	if (!req->bio)
- 		return false;
-@@ -2264,56 +2253,21 @@ bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
- 
- 	blk_account_io_completion(req, nr_bytes);
- 
--	total_bytes = bio_nbytes = 0;
--	while ((bio = req->bio) != NULL) {
--		int nbytes;
-+	total_bytes = 0;
-+	while (req->bio) {
-+		struct bio *bio = req->bio;
-+		unsigned bio_bytes = min(bio->bi_size, nr_bytes);
- 
--		if (nr_bytes >= bio->bi_size) {
-+		if (bio_bytes == bio->bi_size)
- 			req->bio = bio->bi_next;
--			nbytes = bio->bi_size;
--			req_bio_endio(req, bio, nbytes, error);
--			next_idx = 0;
--			bio_nbytes = 0;
--		} else {
--			int idx = bio->bi_idx + next_idx;
--
--			if (unlikely(idx >= bio->bi_vcnt)) {
--				blk_dump_rq_flags(req, "__end_that");
--				printk(KERN_ERR "%s: bio idx %d >= vcnt %d\n",
--				       __func__, idx, bio->bi_vcnt);
--				break;
--			}
--
--			nbytes = bio_iovec_idx(bio, idx)->bv_len;
--			BIO_BUG_ON(nbytes > bio->bi_size);
--
--			/*
--			 * not a complete bvec done
--			 */
--			if (unlikely(nbytes > nr_bytes)) {
--				bio_nbytes += nr_bytes;
--				total_bytes += nr_bytes;
--				break;
--			}
- 
--			/*
--			 * advance to the next vector
--			 */
--			next_idx++;
--			bio_nbytes += nbytes;
--		}
-+		req_bio_endio(req, bio, bio_bytes, error);
- 
--		total_bytes += nbytes;
--		nr_bytes -= nbytes;
-+		total_bytes += bio_bytes;
-+		nr_bytes -= bio_bytes;
- 
--		bio = req->bio;
--		if (bio) {
--			/*
--			 * end more in this run, or just return 'not-done'
--			 */
--			if (unlikely(nr_bytes <= 0))
--				break;
--		}
-+		if (!nr_bytes)
-+			break;
- 	}
- 
- 	/*
-@@ -2329,16 +2283,6 @@ bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
- 		return false;
- 	}
- 
--	/*
--	 * if the request wasn't completed, update state
--	 */
--	if (bio_nbytes) {
--		req_bio_endio(req, bio, bio_nbytes, error);
--		bio->bi_idx += next_idx;
--		bio_iovec(bio)->bv_offset += nr_bytes;
--		bio_iovec(bio)->bv_len -= nr_bytes;
--	}
--
- 	req->__data_len -= total_bytes;
- 	req->buffer = bio_data(req->bio);
- 
++extern void bio_copy_data(struct bio *dst, struct bio *src);
++
+ extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
+ 				 unsigned long, unsigned int, int, gfp_t);
+ extern struct bio *bio_copy_user_iov(struct request_queue *,
 -- 
 1.7.12
