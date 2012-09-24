@@ -1,118 +1,110 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v3 16/26] block: Add bio_copy_data()
-Date: Mon, 24 Sep 2012 15:34:56 -0700
-Message-ID: <1348526106-17074-17-git-send-email-koverstreet@google.com>
+Subject: [PATCH v3 14/26] raid5: use bio_reset()
+Date: Mon, 24 Sep 2012 15:34:54 -0700
+Message-ID: <1348526106-17074-15-git-send-email-koverstreet@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1348526106-17074-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com
+Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-This gets open coded quite a bit and it's tricky to get right, so make a
-generic version and convert some existing users over to it instead.
+Had to shuffle the code around a bit (where bi_rw and bi_end_io were
+set), but shouldn't really be anything tricky here
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
+CC: NeilBrown <neilb@suse.de>
 ---
- fs/bio.c            | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/bio.h |  2 ++
- 2 files changed, 72 insertions(+)
+ drivers/md/raid5.c | 27 +++++++++++++--------------
+ 1 file changed, 13 insertions(+), 14 deletions(-)
 
-diff --git a/fs/bio.c b/fs/bio.c
-index 9a30dcf..d433825 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -827,6 +827,76 @@ void bio_advance(struct bio *bio, unsigned bytes)
- }
- EXPORT_SYMBOL(bio_advance);
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index cbfc424..5e327ae 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -561,14 +561,6 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
+ 		bi = &sh->dev[i].req;
+ 		rbi = &sh->dev[i].rreq; /* For writing to replacement */
  
-+/**
-+ * bio_copy_data - copy contents of data buffers from one chain of bios to
-+ * another
-+ * @src: source bio list
-+ * @dst: destination bio list
-+ *
-+ * If @src and @dst are single bios, bi_next must be NULL - otherwise, treats
-+ * @src and @dst as linked lists of bios.
-+ *
-+ * Stops when it reaches the end of either @src or @dst - that is, copies
-+ * min(src->bi_size, dst->bi_size) bytes (or the equivalent for lists of bios).
-+ */
-+void bio_copy_data(struct bio *dst, struct bio *src)
-+{
-+	struct bio_vec *src_bv, *dst_bv;
-+	unsigned src_offset, dst_offset, bytes;
-+	void *src_p, *dst_p;
-+
-+	src_bv = bio_iovec(src);
-+	dst_bv = bio_iovec(dst);
-+
-+	src_offset = src_bv->bv_offset;
-+	dst_offset = dst_bv->bv_offset;
-+
-+	while (1) {
-+		if (src_offset == src_bv->bv_offset + src_bv->bv_len) {
-+			src_bv++;
-+			if (src_bv == bio_iovec_idx(src, src->bi_vcnt)) {
-+				src = src->bi_next;
-+				if (!src)
-+					break;
-+
-+				src_bv = bio_iovec(src);
-+			}
-+
-+			src_offset = src_bv->bv_offset;
-+		}
-+
-+		if (dst_offset == dst_bv->bv_offset + dst_bv->bv_len) {
-+			dst_bv++;
-+			if (dst_bv == bio_iovec_idx(dst, dst->bi_vcnt)) {
-+				dst = dst->bi_next;
-+				if (!dst)
-+					break;
-+
-+				dst_bv = bio_iovec(dst);
-+			}
-+
-+			dst_offset = dst_bv->bv_offset;
-+		}
-+
-+		bytes = min(dst_bv->bv_offset + dst_bv->bv_len - dst_offset,
-+			    src_bv->bv_offset + src_bv->bv_len - src_offset);
-+
-+		src_p = kmap_atomic(src_bv->bv_page);
-+		dst_p = kmap_atomic(dst_bv->bv_page);
-+
-+		memcpy(dst_p + dst_bv->bv_offset,
-+		       src_p + src_bv->bv_offset,
-+		       bytes);
-+
-+		kunmap_atomic(dst_p);
-+		kunmap_atomic(src_p);
-+
-+		src_offset += bytes;
-+		dst_offset += bytes;
-+	}
-+}
-+EXPORT_SYMBOL(bio_copy_data);
-+
- struct bio_map_data {
- 	struct bio_vec *iovecs;
- 	struct sg_iovec *sgvecs;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 3bf696b..467e101 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -289,6 +289,8 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
- }
- #endif
+-		bi->bi_rw = rw;
+-		rbi->bi_rw = rw;
+-		if (rw & WRITE) {
+-			bi->bi_end_io = raid5_end_write_request;
+-			rbi->bi_end_io = raid5_end_write_request;
+-		} else
+-			bi->bi_end_io = raid5_end_read_request;
+-
+ 		rcu_read_lock();
+ 		rrdev = rcu_dereference(conf->disks[i].replacement);
+ 		smp_mb(); /* Ensure that if rrdev is NULL, rdev won't be */
+@@ -643,7 +635,14 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
  
-+extern void bio_copy_data(struct bio *dst, struct bio *src);
+ 			set_bit(STRIPE_IO_STARTED, &sh->state);
+ 
++			bio_reset(bi);
+ 			bi->bi_bdev = rdev->bdev;
++			bi->bi_rw = rw;
++			bi->bi_end_io = (rw & WRITE)
++				? raid5_end_write_request
++				: raid5_end_read_request;
++			bi->bi_private = sh;
 +
- extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
- 				 unsigned long, unsigned int, int, gfp_t);
- extern struct bio *bio_copy_user_iov(struct request_queue *,
+ 			pr_debug("%s: for %llu schedule op %ld on disc %d\n",
+ 				__func__, (unsigned long long)sh->sector,
+ 				bi->bi_rw, i);
+@@ -657,12 +656,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
+ 			if (test_bit(R5_ReadNoMerge, &sh->dev[i].flags))
+ 				bi->bi_rw |= REQ_FLUSH;
+ 
+-			bi->bi_flags = 1 << BIO_UPTODATE;
+-			bi->bi_idx = 0;
+ 			bi->bi_io_vec[0].bv_len = STRIPE_SIZE;
+ 			bi->bi_io_vec[0].bv_offset = 0;
+ 			bi->bi_size = STRIPE_SIZE;
+-			bi->bi_next = NULL;
+ 			if (rrdev)
+ 				set_bit(R5_DOUBLE_LOCKED, &sh->dev[i].flags);
+ 			generic_make_request(bi);
+@@ -674,7 +670,13 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
+ 
+ 			set_bit(STRIPE_IO_STARTED, &sh->state);
+ 
++			bio_reset(rbi);
+ 			rbi->bi_bdev = rrdev->bdev;
++			rbi->bi_rw = rw;
++			BUG_ON(!(rw & WRITE));
++			rbi->bi_end_io = raid5_end_write_request;
++			rbi->bi_private = sh;
++
+ 			pr_debug("%s: for %llu schedule op %ld on "
+ 				 "replacement disc %d\n",
+ 				__func__, (unsigned long long)sh->sector,
+@@ -686,12 +688,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
+ 			else
+ 				rbi->bi_sector = (sh->sector
+ 						  + rrdev->data_offset);
+-			rbi->bi_flags = 1 << BIO_UPTODATE;
+-			rbi->bi_idx = 0;
+ 			rbi->bi_io_vec[0].bv_len = STRIPE_SIZE;
+ 			rbi->bi_io_vec[0].bv_offset = 0;
+ 			rbi->bi_size = STRIPE_SIZE;
+-			rbi->bi_next = NULL;
+ 			generic_make_request(rbi);
+ 		}
+ 		if (!rdev && !rrdev) {
 -- 
 1.7.12
