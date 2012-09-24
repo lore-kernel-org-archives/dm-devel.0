@@ -1,58 +1,100 @@
-From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Subject: Re: [PATCH 0/1] dm-integrity: integrity protection device-mapper target
-Date: Mon, 24 Sep 2012 19:20:45 +0300
-Message-ID: <CALLzPKbRk0NSS44Wq46SMPq7--NLG0+rjK8QxVfnaz25q=LX8Q@mail.gmail.com>
-References: <cover.1348480396.git.dmitry.kasatkin@intel.com>
-	<50606456.7020607@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <50606456.7020607@redhat.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v3 00/26] Prep work for immutable bio vecs
+Date: Mon, 24 Sep 2012 15:34:40 -0700
+Message-ID: <1348526106-17074-1-git-send-email-koverstreet@google.com>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Sep 24, 2012 at 4:47 PM, Milan Broz <mbroz@redhat.com> wrote:
-> On 09/24/2012 11:55 AM, Dmitry Kasatkin wrote:
->> Both dm-verity and dm-crypt provide block level integrity protection.
->
-> This is not correct. dm-crypt is transparent block encryption target,
-> where always size of plaintext == size of ciphertext.
->
+Random assortment of refactoring and trivial cleanups;
 
-Of course... It is just said in relation to integrity protection.
-It is said about encryption in following paragraphs...
+Previous posting: http://thread.gmane.org/gmane.linux.kernel.bcache.devel/1055
 
-> So it can provide confidentiality but it CANNOT provide integrity protection.
->
+No big changes since v2 - incorporated review feedback - mostly documentation,
+did more testing, and fixed the deadlock Vivek noticed in my "convert integrity
+to bvec_alloc_bs()" patch.
 
-Yes, it provides confidentiality and via encryption it provides
-certain level of integrity protection.
-Data cannot be modified without being detected.
-Decryption will result in garbage...
+Patch series is on top of my patches for fixing a bio allocation deadlock with
+stacked blocked devices, which is on top of Jens' tree.
 
-> We need extra space to store auth tag which dmcrypt cannot provide currently.
->
->> dm-integrity provides a lighter weight read-write block level integrity
->> protection for file systems not requiring full disk encryption, but
->> which do require writability.
->
-> Obvious question: can be dm-verity extended to provide read-write integrity?
->
+Git tree is at:
+http://evilpiepirate.org/git/linux-bcache.git block_stuff
 
-I think re-calculating hash trees all the time and syncing block
-hashes and tree itself
-is heavier operation...
+v2: Patch series now has all the prep work to be done before abstracting
+out the bio iterator, I think.
 
-> I would prefer to use standard mode like GCM to provide both encryption and
-> integrity protection than inventing something new.
+Kent Overstreet (26):
+  block: Fix a buffer overrun in bio_integrity_split()
+  block: Convert integrity to bvec_alloc_bs()
+  block: Add bio_advance()
+  block: Refactor blk_update_request()
+  md: Convert md_trim_bio() to use bio_advance()
+  block: Add bio_end_sector()
+  block: Use bio_sectors() more consistently
+  block: Change bio_split() to respect the current value of bi_idx
+  block: Remove bi_idx references
+  block: Remove some unnecessary bi_vcnt usage
+  block: Add submit_bio_wait(), remove from md
+  raid10: Use bio_reset()
+  raid1: use bio_reset()
+  raid5: use bio_reset()
+  raid1: Refactor narrow_write_error() to not use bi_idx
+  block: Add bio_copy_data()
+  pktcdvd: use bio_copy_data()
+  pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
+  raid1: use bio_copy_data()
+  bounce: Refactor __blk_queue_bounce to not use bi_io_vec
+  block: Add bio_for_each_segment_all()
+  block: Convert some code to bio_for_each_segment_all()
+  block: Add bio_alloc_pages()
+  block: Add an explicit bio flag for bios that own their bvec
+  bio-integrity: Add explicit field for owner of bip_buf
+  block: Add BIO_SUBMITTED flag, kill BIO_CLONED
 
-As said, if encryption is considered heavy operation in term of CPU
-and battery usage
-and also if encryption is not desired for some reasons that would be an option.
+ block/blk-core.c                         |  84 ++--------
+ block/cfq-iosched.c                      |   7 +-
+ block/deadline-iosched.c                 |   2 +-
+ drivers/block/aoe/aoeblk.c               |   2 +-
+ drivers/block/aoe/aoecmd.c               |   2 +-
+ drivers/block/brd.c                      |   3 +-
+ drivers/block/drbd/drbd_req.c            |   8 +-
+ drivers/block/floppy.c                   |   1 -
+ drivers/block/pktcdvd.c                  | 102 +++---------
+ drivers/block/ps3vram.c                  |   2 +-
+ drivers/md/dm-crypt.c                    |   3 +-
+ drivers/md/dm-raid1.c                    |   2 +-
+ drivers/md/dm-stripe.c                   |   2 +-
+ drivers/md/dm-verity.c                   |   4 +-
+ drivers/md/dm.c                          |   1 -
+ drivers/md/faulty.c                      |   6 +-
+ drivers/md/linear.c                      |   3 +-
+ drivers/md/md.c                          |  19 +--
+ drivers/md/raid0.c                       |   9 +-
+ drivers/md/raid1.c                       | 133 +++++-----------
+ drivers/md/raid10.c                      |  78 +++-------
+ drivers/md/raid5.c                       |  49 +++---
+ drivers/message/fusion/mptsas.c          |   6 +-
+ drivers/s390/block/dcssblk.c             |   3 +-
+ drivers/scsi/libsas/sas_expander.c       |   6 +-
+ drivers/scsi/mpt2sas/mpt2sas_transport.c |  10 +-
+ fs/bio-integrity.c                       | 143 +++++++----------
+ fs/bio.c                                 | 260 +++++++++++++++++++++++++------
+ fs/btrfs/extent_io.c                     |   3 +-
+ fs/buffer.c                              |   1 -
+ fs/direct-io.c                           |   8 +-
+ fs/exofs/ore.c                           |   2 +-
+ fs/exofs/ore_raid.c                      |   2 +-
+ fs/gfs2/lops.c                           |   2 +-
+ fs/jfs/jfs_logmgr.c                      |   2 -
+ fs/logfs/dev_bdev.c                      |   5 -
+ include/linux/bio.h                      |  48 +++---
+ include/linux/blk_types.h                |   3 +-
+ include/trace/events/block.h             |  10 +-
+ mm/bounce.c                              |  75 +++------
+ mm/page_io.c                             |   1 -
+ 41 files changed, 499 insertions(+), 613 deletions(-)
 
-- Dmitry
-
->
-> Milan
+-- 
+1.7.12
