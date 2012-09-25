@@ -1,55 +1,746 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [dm-devel] [PATCH v3 11/26] block: Add submit_bio_wait(), remove
- from md
-Date: Tue, 25 Sep 2012 15:15:08 -0700
-Message-ID: <20120925221508.GD22647@google.com>
-References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
- <1348526106-17074-12-git-send-email-koverstreet@google.com>
- <5061464B.4090002@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 1/3] dm bio prison: factor bio prison code out to
+	standalone library
+Date: Tue, 25 Sep 2012 18:35:27 -0400
+Message-ID: <1348612529-2437-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5061464B.4090002@suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, tj@kernel.org, axboe@kernel.dk, vgoyal@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Sep 25, 2012 at 07:51:07AM +0200, Hannes Reinecke wrote:
-> On 09/25/2012 12:34 AM, Kent Overstreet wrote:
-> > +/**
-> > + * submit_bio_wait - submit a bio, and wait until it completes
-> > + * @rw: whether to %READ or %WRITE, or maybe to %READA (read ahead)
-> > + * @bio: The &struct bio which describes the I/O
-> > + *
-> > + * Simple wrapper around submit_bio(). Returns 0 on success, or the error from
-> > + * bio_endio() on failure.
-> > + */
-> > +int submit_bio_wait(int rw, struct bio *bio)
-> > +{
-> > +	struct submit_bio_ret ret;
-> > +
-> > +	rw |= REQ_SYNC;
-> > +	init_completion(&ret.event);
-> > +	bio->bi_private = &ret;
-> > +	bio->bi_end_io = submit_bio_wait_endio;
-> 
-> Hmm. As this is meant to be a generic function, blindly overwriting
-> the bi_end_io pointer doesn't look like a good idea; the caller
-> could have set something there.
-> 
-> Please add at least a WARN_ON(bio->bi_end_io) prior to modifying it.
+The bio prison code will be useful to other future DM targets.  No
+functional change, code was factored out to facilitate code re-use.
 
-Nah, the general rule with bios is after it's completed anything
-could've been modified; we don't document or enforce otherwise with
-bi_end_io (and there's a fair amount of code that saves/sets bi_end_io,
-and I don't think it all restores the original before calling it).
-I'm not going to special case this unless we start documenting/enforcing
-it in general.
+Old bio-prison code in dm-thin.c was commented out to avoid all the code
+removal noise in favor of focusing on the non-removal changes needed to
+separate the code out of dm-thin.c
 
-Besides that, setting a callback on something that's being used
-synchronously is just dumb. Personally, I make damn sure to read and
-understand code I'm using. I mean, maybe if this restriction was in the
-slightest way subtle, but... how else would submit_bio_wait() be
-implemented? It's kind of obvious if you think for two seconds about it.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+---
+ drivers/md/Kconfig         |    7 +
+ drivers/md/Makefile        |    1 +
+ drivers/md/dm-bio-prison.c |  429 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-bio-prison.h |   76 ++++++++
+ drivers/md/dm-thin.c       |   40 +++--
+ 5 files changed, 537 insertions(+), 16 deletions(-)
+ create mode 100644 drivers/md/dm-bio-prison.c
+ create mode 100644 drivers/md/dm-bio-prison.h
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index d949b78..78c70a8 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -216,6 +216,12 @@ config DM_BUFIO
+ 	 as a cache, holding recently-read blocks in memory and performing
+ 	 delayed writes.
+ 
++config DM_BIO_PRISON
++       tristate
++       depends on BLK_DEV_DM && EXPERIMENTAL
++       ---help---
++         Some bio locking schemes used by device-mapper targets.
++
+ source "drivers/md/persistent-data/Kconfig"
+ 
+ config DM_CRYPT
+@@ -247,6 +253,7 @@ config DM_THIN_PROVISIONING
+        tristate "Thin provisioning target (EXPERIMENTAL)"
+        depends on BLK_DEV_DM && EXPERIMENTAL
+        select DM_PERSISTENT_DATA
++       select DM_BIO_PRISON
+        ---help---
+          Provides thin provisioning and snapshots that share a data store.
+ 
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index 8b2e0df..94dce8b 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -29,6 +29,7 @@ obj-$(CONFIG_MD_FAULTY)		+= faulty.o
+ obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
+ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
+ obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
++obj-$(CONFIG_DM_BIO_PRISON)	+= dm-bio-prison.o
+ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
+ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+ obj-$(CONFIG_DM_FLAKEY)		+= dm-flakey.o
+diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
+new file mode 100644
+index 0000000..fdf9c19
+--- /dev/null
++++ b/drivers/md/dm-bio-prison.c
+@@ -0,0 +1,429 @@
++/*
++ * Copyright (C) 2012 Red Hat UK.
++ *
++ * This file is released under the GPL.
++ */
++
++#include "dm.h"
++#include "dm-bio-prison.h"
++
++#include <linux/spinlock.h>
++#include <linux/mempool.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++
++/*----------------------------------------------------------------*/
++
++struct dm_bio_prison_cell {
++	struct hlist_node list;
++	struct bio_prison *prison;
++	struct cell_key key;
++	struct bio *holder;
++	struct bio_list bios;
++};
++
++struct bio_prison {
++	spinlock_t lock;
++	mempool_t *cell_pool;
++
++	unsigned nr_buckets;
++	unsigned hash_mask;
++	struct hlist_head *cells;
++};
++
++/*----------------------------------------------------------------*/
++
++static uint32_t calc_nr_buckets(unsigned nr_cells)
++{
++	uint32_t n = 128;
++
++	nr_cells /= 4;
++	nr_cells = min(nr_cells, 8192u);
++
++	while (n < nr_cells)
++		n <<= 1;
++
++	return n;
++}
++
++static struct kmem_cache *_cell_cache;
++
++/*
++ * @nr_cells should be the number of cells you want in use _concurrently_.
++ * Don't confuse it with the number of distinct keys.
++ */
++struct bio_prison *prison_create(unsigned nr_cells)
++{
++	unsigned i;
++	uint32_t nr_buckets = calc_nr_buckets(nr_cells);
++	size_t len = sizeof(struct bio_prison) +
++		(sizeof(struct hlist_head) * nr_buckets);
++	struct bio_prison *prison = kmalloc(len, GFP_KERNEL);
++
++	if (!prison)
++		return NULL;
++
++	spin_lock_init(&prison->lock);
++	prison->cell_pool = mempool_create_slab_pool(nr_cells, _cell_cache);
++	if (!prison->cell_pool) {
++		kfree(prison);
++		return NULL;
++	}
++
++	prison->nr_buckets = nr_buckets;
++	prison->hash_mask = nr_buckets - 1;
++	prison->cells = (struct hlist_head *) (prison + 1);
++	for (i = 0; i < nr_buckets; i++)
++		INIT_HLIST_HEAD(prison->cells + i);
++
++	return prison;
++}
++EXPORT_SYMBOL_GPL(prison_create);
++
++void prison_destroy(struct bio_prison *prison)
++{
++	mempool_destroy(prison->cell_pool);
++	kfree(prison);
++}
++EXPORT_SYMBOL_GPL(prison_destroy);
++
++static uint32_t hash_key(struct bio_prison *prison, struct cell_key *key)
++{
++	const unsigned long BIG_PRIME = 4294967291UL;
++	uint64_t hash = key->block * BIG_PRIME;
++
++	return (uint32_t) (hash & prison->hash_mask);
++}
++
++static int keys_equal(struct cell_key *lhs, struct cell_key *rhs)
++{
++	       return (lhs->virtual == rhs->virtual) &&
++		       (lhs->dev == rhs->dev) &&
++		       (lhs->block == rhs->block);
++}
++
++static struct dm_bio_prison_cell *__search_bucket(struct hlist_head *bucket,
++						  struct cell_key *key)
++{
++	struct dm_bio_prison_cell *cell;
++	struct hlist_node *tmp;
++
++	hlist_for_each_entry(cell, tmp, bucket, list)
++		if (keys_equal(&cell->key, key))
++			return cell;
++
++	return NULL;
++}
++
++int bio_detain(struct bio_prison *prison, struct cell_key *key,
++	       struct bio *inmate, struct dm_bio_prison_cell **ref)
++{
++	int r = 1;
++	unsigned long flags;
++	uint32_t hash = hash_key(prison, key);
++	struct dm_bio_prison_cell *cell, *cell2;
++
++	BUG_ON(hash > prison->nr_buckets);
++
++	spin_lock_irqsave(&prison->lock, flags);
++
++	cell = __search_bucket(prison->cells + hash, key);
++	if (cell) {
++		bio_list_add(&cell->bios, inmate);
++		goto out;
++	}
++
++	/*
++	 * Allocate a new cell
++	 */
++	spin_unlock_irqrestore(&prison->lock, flags);
++	cell2 = mempool_alloc(prison->cell_pool, GFP_NOIO);
++	spin_lock_irqsave(&prison->lock, flags);
++
++	/*
++	 * We've been unlocked, so we have to double check that
++	 * nobody else has inserted this cell in the meantime.
++	 */
++	cell = __search_bucket(prison->cells + hash, key);
++	if (cell) {
++		mempool_free(cell2, prison->cell_pool);
++		bio_list_add(&cell->bios, inmate);
++		goto out;
++	}
++
++	/*
++	 * Use new cell.
++	 */
++	cell = cell2;
++
++	cell->prison = prison;
++	memcpy(&cell->key, key, sizeof(cell->key));
++	cell->holder = inmate;
++	bio_list_init(&cell->bios);
++	hlist_add_head(&cell->list, prison->cells + hash);
++
++	r = 0;
++
++out:
++	spin_unlock_irqrestore(&prison->lock, flags);
++
++	*ref = cell;
++	return r;
++}
++EXPORT_SYMBOL_GPL(bio_detain);
++
++int bio_detain_if_occupied(struct bio_prison *prison, struct cell_key *key,
++			   struct bio *inmate)
++{
++	int r = 0;
++	unsigned long flags;
++	uint32_t hash = hash_key(prison, key);
++	struct dm_bio_prison_cell *cell;
++
++	BUG_ON(hash > prison->nr_buckets);
++
++	spin_lock_irqsave(&prison->lock, flags);
++
++	cell = __search_bucket(prison->cells + hash, key);
++	if (cell) {
++		bio_list_add(&cell->bios, inmate);
++		r = 1;
++	}
++
++	spin_unlock_irqrestore(&prison->lock, flags);
++	return r;
++}
++EXPORT_SYMBOL_GPL(bio_detain_if_occupied);
++
++/*
++ * @inmates must have been initialised prior to this call
++ */
++static void __cell_release(struct dm_bio_prison_cell *cell, struct bio_list *inmates)
++{
++	struct bio_prison *prison = cell->prison;
++
++	hlist_del(&cell->list);
++
++	if (inmates) {
++		bio_list_add(inmates, cell->holder);
++		bio_list_merge(inmates, &cell->bios);
++	}
++
++	mempool_free(cell, prison->cell_pool);
++}
++
++void cell_release(struct dm_bio_prison_cell *cell, struct bio_list *bios)
++{
++	unsigned long flags;
++	struct bio_prison *prison = cell->prison;
++
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release(cell, bios);
++	spin_unlock_irqrestore(&prison->lock, flags);
++}
++EXPORT_SYMBOL_GPL(cell_release);
++
++/*
++ * There are a couple of places where we put a bio into a cell briefly
++ * before taking it out again.  In these situations we know that no other
++ * bio may be in the cell.  This function releases the cell, and also does
++ * a sanity check.
++ */
++static void __cell_release_singleton(struct dm_bio_prison_cell *cell, struct bio *bio)
++{
++	BUG_ON(cell->holder != bio);
++	BUG_ON(!bio_list_empty(&cell->bios));
++
++	__cell_release(cell, NULL);
++}
++
++void cell_release_singleton(struct dm_bio_prison_cell *cell, struct bio *bio)
++{
++	unsigned long flags;
++	struct bio_prison *prison = cell->prison;
++
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release_singleton(cell, bio);
++	spin_unlock_irqrestore(&prison->lock, flags);
++}
++EXPORT_SYMBOL_GPL(cell_release_singleton);
++
++/*
++ * Sometimes we don't want the holder, just the additional bios.
++ */
++static void __cell_release_no_holder(struct dm_bio_prison_cell *cell, struct bio_list *inmates)
++{
++	struct bio_prison *prison = cell->prison;
++
++	hlist_del(&cell->list);
++	bio_list_merge(inmates, &cell->bios);
++
++	mempool_free(cell, prison->cell_pool);
++}
++
++void cell_release_no_holder(struct dm_bio_prison_cell *cell, struct bio_list *inmates)
++{
++	unsigned long flags;
++	struct bio_prison *prison = cell->prison;
++
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release_no_holder(cell, inmates);
++	spin_unlock_irqrestore(&prison->lock, flags);
++}
++EXPORT_SYMBOL_GPL(cell_release_no_holder);
++
++void cell_error(struct dm_bio_prison_cell *cell)
++{
++	struct bio_prison *prison = cell->prison;
++	struct bio_list bios;
++	struct bio *bio;
++	unsigned long flags;
++
++	bio_list_init(&bios);
++
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release(cell, &bios);
++	spin_unlock_irqrestore(&prison->lock, flags);
++
++	while ((bio = bio_list_pop(&bios)))
++		bio_io_error(bio);
++}
++EXPORT_SYMBOL_GPL(cell_error);
++
++/*----------------------------------------------------------------*/
++
++#define DEFERRED_SET_SIZE 64
++
++struct deferred_entry {
++	struct deferred_set *ds;
++	unsigned count;
++	struct list_head work_items;
++};
++
++struct deferred_set {
++	spinlock_t lock;
++	unsigned current_entry;
++	unsigned sweeper;
++	struct deferred_entry entries[DEFERRED_SET_SIZE];
++};
++
++struct deferred_set *ds_create(void)
++{
++	int i;
++	struct deferred_set *ds;
++
++	ds = kmalloc(sizeof(*ds), GFP_KERNEL);
++
++	spin_lock_init(&ds->lock);
++	ds->current_entry = 0;
++	ds->sweeper = 0;
++	for (i = 0; i < DEFERRED_SET_SIZE; i++) {
++		ds->entries[i].ds = ds;
++		ds->entries[i].count = 0;
++		INIT_LIST_HEAD(&ds->entries[i].work_items);
++	}
++
++	return ds;
++}
++EXPORT_SYMBOL_GPL(ds_create);
++
++void ds_destroy(struct deferred_set *ds)
++{
++	kfree(ds);
++}
++EXPORT_SYMBOL_GPL(ds_destroy);
++
++struct deferred_entry *ds_inc(struct deferred_set *ds)
++{
++	unsigned long flags;
++	struct deferred_entry *entry;
++
++	spin_lock_irqsave(&ds->lock, flags);
++	entry = ds->entries + ds->current_entry;
++	entry->count++;
++	spin_unlock_irqrestore(&ds->lock, flags);
++
++	return entry;
++}
++EXPORT_SYMBOL_GPL(ds_inc);
++
++static unsigned ds_next(unsigned index)
++{
++	return (index + 1) % DEFERRED_SET_SIZE;
++}
++
++static void __sweep(struct deferred_set *ds, struct list_head *head)
++{
++	while ((ds->sweeper != ds->current_entry) &&
++	       !ds->entries[ds->sweeper].count) {
++		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
++		ds->sweeper = ds_next(ds->sweeper);
++	}
++
++	if ((ds->sweeper == ds->current_entry) && !ds->entries[ds->sweeper].count)
++		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
++}
++
++void ds_dec(struct deferred_entry *entry, struct list_head *head)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&entry->ds->lock, flags);
++	BUG_ON(!entry->count);
++	--entry->count;
++	__sweep(entry->ds, head);
++	spin_unlock_irqrestore(&entry->ds->lock, flags);
++}
++EXPORT_SYMBOL_GPL(ds_dec);
++
++/*
++ * Returns 1 if deferred or 0 if no pending items to delay job.
++ */
++int ds_add_work(struct deferred_set *ds, struct list_head *work)
++{
++	int r = 1;
++	unsigned long flags;
++	unsigned next_entry;
++
++	spin_lock_irqsave(&ds->lock, flags);
++	if ((ds->sweeper == ds->current_entry) &&
++	    !ds->entries[ds->current_entry].count)
++		r = 0;
++	else {
++		list_add(work, &ds->entries[ds->current_entry].work_items);
++		next_entry = ds_next(ds->current_entry);
++		if (!ds->entries[next_entry].count)
++			ds->current_entry = next_entry;
++	}
++	spin_unlock_irqrestore(&ds->lock, flags);
++
++	return r;
++}
++EXPORT_SYMBOL_GPL(ds_add_work);
++
++/*----------------------------------------------------------------*/
++
++static int __init dm_bio_prison_init(void)
++{
++	_cell_cache = KMEM_CACHE(dm_bio_prison_cell, 0);
++	if (!_cell_cache)
++		return -ENOMEM;
++
++	return 0;
++}
++
++static void __exit dm_bio_prison_exit(void)
++{
++	kmem_cache_destroy(_cell_cache);
++	_cell_cache = NULL;
++}
++
++/*
++ * module hooks
++ */
++module_init(dm_bio_prison_init);
++module_exit(dm_bio_prison_exit);
++
++MODULE_DESCRIPTION(DM_NAME " bio prison");
++MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
+new file mode 100644
+index 0000000..0d9d270
+--- /dev/null
++++ b/drivers/md/dm-bio-prison.h
+@@ -0,0 +1,76 @@
++/*
++ * Copyright (C) 2012 Red Hat UK.  All rights reserved.
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_BIO_PRISON_H
++#define DM_BIO_PRISON_H
++
++#include "persistent-data/dm-block-manager.h" /* FIXME: for dm_block_t */
++#include "dm-thin-metadata.h" /* FIXME: for dm_thin_id */
++
++#include <linux/list.h>
++#include <linux/bio.h>
++
++/*----------------------------------------------------------------*/
++
++/* FIXME: prefix everything */
++
++/*
++ * Sometimes we can't deal with a bio straight away.  We put them in prison
++ * where they can't cause any mischief.  Bios are put in a cell identified
++ * by a key, multiple bios can be in the same cell.  When the cell is
++ * subsequently unlocked the bios become available.
++ */
++struct bio_prison;
++struct dm_bio_prison_cell;
++
++/* FIXME: this needs to be more abstract */
++struct cell_key {
++	int virtual;
++	dm_thin_id dev;
++	dm_block_t block;
++};
++
++struct bio_prison *prison_create(unsigned nr_cells);
++void prison_destroy(struct bio_prison *prison);
++
++/*
++ * This may block if a new cell needs allocating.  You must ensure that
++ * cells will be unlocked even if the calling thread is blocked.
++ *
++ * Returns 1 if the cell was already held, 0 if @inmate is the new holder.
++ */
++int bio_detain(struct bio_prison *prison, struct cell_key *key,
++	       struct bio *inmate, struct dm_bio_prison_cell **ref);
++int bio_detain_if_occupied(struct bio_prison *prison, struct cell_key *key,
++			   struct bio *inmate);
++
++void cell_release(struct dm_bio_prison_cell *cell, struct bio_list *bios);
++void cell_release_singleton(struct dm_bio_prison_cell *cell, struct bio *bio); // FIXME: bio arg not needed
++void cell_release_no_holder(struct dm_bio_prison_cell *cell, struct bio_list *inmates);
++void cell_error(struct dm_bio_prison_cell *cell);
++
++/*----------------------------------------------------------------*/
++
++/*
++ * We use the deferred set to keep track of pending reads to shared blocks.
++ * We do this to ensure the new mapping caused by a write isn't performed
++ * until these prior reads have completed.  Otherwise the insertion of the
++ * new mapping could free the old block that the read bios are mapped to.
++ */
++
++struct deferred_set;
++struct deferred_entry;
++
++struct deferred_set *ds_create(void);
++void ds_destroy(struct deferred_set *ds);
++
++struct deferred_entry *ds_inc(struct deferred_set *ds);
++void ds_dec(struct deferred_entry *entry, struct list_head *head);
++int ds_add_work(struct deferred_set *ds, struct list_head *work);
++
++/*----------------------------------------------------------------*/
++
++#endif
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 8e73f43..39f4d40 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include "dm-thin-metadata.h"
++#include "dm-bio-prison.h"
+ #include "dm.h"
+ 
+ #include <linux/device-mapper.h>
+@@ -21,7 +22,6 @@
+  * Tunable constants
+  */
+ #define ENDIO_HOOK_POOL_SIZE 1024
+-#define DEFERRED_SET_SIZE 64
+ #define MAPPING_POOL_SIZE 1024
+ #define PRISON_CELLS 1024
+ #define COMMIT_PERIOD HZ
+@@ -98,6 +98,7 @@
+ 
+ /*----------------------------------------------------------------*/
+ 
++#if 0
+ /*
+  * Sometimes we can't deal with a bio straight away.  We put them in prison
+  * where they can't cause any mischief.  Bios are put in a cell identified
+@@ -467,6 +468,8 @@ static int ds_add_work(struct deferred_set *ds, struct list_head *work)
+ 	return r;
+ }
+ 
++#endif
++
+ /*----------------------------------------------------------------*/
+ 
+ /*
+@@ -552,8 +555,8 @@ struct pool {
+ 
+ 	struct bio_list retry_on_resume_list;
+ 
+-	struct deferred_set shared_read_ds;
+-	struct deferred_set all_io_ds;
++	struct deferred_set *shared_read_ds;
++	struct deferred_set *all_io_ds;
+ 
+ 	struct dm_thin_new_mapping *next_mapping;
+ 	mempool_t *mapping_pool;
+@@ -1067,7 +1070,7 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+ 	m->err = 0;
+ 	m->bio = NULL;
+ 
+-	if (!ds_add_work(&pool->shared_read_ds, &m->list))
++	if (!ds_add_work(pool->shared_read_ds, &m->list))
+ 		m->quiesced = 1;
+ 
+ 	/*
+@@ -1326,7 +1329,7 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
+ 			m->err = 0;
+ 			m->bio = bio;
+ 
+-			if (!ds_add_work(&pool->all_io_ds, &m->list)) {
++			if (!ds_add_work(pool->all_io_ds, &m->list)) {
+ 				spin_lock_irqsave(&pool->lock, flags);
+ 				list_add(&m->list, &pool->prepared_discards);
+ 				spin_unlock_irqrestore(&pool->lock, flags);
+@@ -1410,7 +1413,7 @@ static void process_shared_bio(struct thin_c *tc, struct bio *bio,
+ 	else {
+ 		struct dm_thin_endio_hook *h = dm_get_mapinfo(bio)->ptr;
+ 
+-		h->shared_read_entry = ds_inc(&pool->shared_read_ds);
++		h->shared_read_entry = ds_inc(pool->shared_read_ds);
+ 
+ 		cell_release_singleton(cell, bio);
+ 		remap_and_issue(tc, bio, lookup_result->block);
+@@ -1718,7 +1721,7 @@ static struct dm_thin_endio_hook *thin_hook_bio(struct thin_c *tc, struct bio *b
+ 
+ 	h->tc = tc;
+ 	h->shared_read_entry = NULL;
+-	h->all_io_entry = bio->bi_rw & REQ_DISCARD ? NULL : ds_inc(&pool->all_io_ds);
++	h->all_io_entry = bio->bi_rw & REQ_DISCARD ? NULL : ds_inc(pool->all_io_ds);
+ 	h->overwrite_mapping = NULL;
+ 
+ 	return h;
+@@ -1938,6 +1941,8 @@ static void __pool_destroy(struct pool *pool)
+ 		mempool_free(pool->next_mapping, pool->mapping_pool);
+ 	mempool_destroy(pool->mapping_pool);
+ 	mempool_destroy(pool->endio_hook_pool);
++	ds_destroy(pool->shared_read_ds);
++	ds_destroy(pool->all_io_ds);
+ 	kfree(pool);
+ }
+ 
+@@ -2012,8 +2017,14 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 	pool->low_water_triggered = 0;
+ 	pool->no_free_space = 0;
+ 	bio_list_init(&pool->retry_on_resume_list);
+-	ds_init(&pool->shared_read_ds);
+-	ds_init(&pool->all_io_ds);
++
++	pool->shared_read_ds = ds_create();
++	if (!pool->shared_read_ds)
++		goto bad_shared_ds;
++
++	pool->all_io_ds = ds_create();
++	if (!pool->all_io_ds)
++		goto bad_all_io_ds;
+ 
+ 	pool->next_mapping = NULL;
+ 	pool->mapping_pool = mempool_create_slab_pool(MAPPING_POOL_SIZE,
+@@ -2042,6 +2053,10 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ bad_endio_hook_pool:
+ 	mempool_destroy(pool->mapping_pool);
+ bad_mapping_pool:
++	ds_destroy(pool->all_io_ds);
++bad_all_io_ds:
++	ds_destroy(pool->shared_read_ds);
++bad_shared_ds:
+ 	destroy_workqueue(pool->wq);
+ bad_wq:
+ 	dm_kcopyd_client_destroy(pool->copier);
+@@ -3129,10 +3144,6 @@ static int __init dm_thin_init(void)
+ 
+ 	r = -ENOMEM;
+ 
+-	_cell_cache = KMEM_CACHE(dm_bio_prison_cell, 0);
+-	if (!_cell_cache)
+-		goto bad_cell_cache;
+-
+ 	_new_mapping_cache = KMEM_CACHE(dm_thin_new_mapping, 0);
+ 	if (!_new_mapping_cache)
+ 		goto bad_new_mapping_cache;
+@@ -3146,8 +3157,6 @@ static int __init dm_thin_init(void)
+ bad_endio_hook_cache:
+ 	kmem_cache_destroy(_new_mapping_cache);
+ bad_new_mapping_cache:
+-	kmem_cache_destroy(_cell_cache);
+-bad_cell_cache:
+ 	dm_unregister_target(&pool_target);
+ bad_pool_target:
+ 	dm_unregister_target(&thin_target);
+@@ -3160,7 +3169,6 @@ static void dm_thin_exit(void)
+ 	dm_unregister_target(&thin_target);
+ 	dm_unregister_target(&pool_target);
+ 
+-	kmem_cache_destroy(_cell_cache);
+ 	kmem_cache_destroy(_new_mapping_cache);
+ 	kmem_cache_destroy(_endio_hook_cache);
+ }
+-- 
+1.7.1
