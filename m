@@ -1,226 +1,92 @@
-From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Subject: Re: [PATCH 0/1] dm-integrity: integrity protection device-mapper target
-Date: Tue, 25 Sep 2012 18:42:09 +0300
-Message-ID: <CALLzPKYofrP8w-yim89cGdNKSLGOas3yyaQ9AuZEc3i1DYCvwg@mail.gmail.com>
-References: <cover.1348480396.git.dmitry.kasatkin@intel.com>
-	<50606456.7020607@redhat.com>
-	<CALLzPKbRk0NSS44Wq46SMPq7--NLG0+rjK8QxVfnaz25q=LX8Q@mail.gmail.com>
-	<5061A071.2090104@redhat.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH 0/4] Fix a crash when block device is read and block size is changed at the same time
+Date: Tue, 25 Sep 2012 13:49:51 -0400
+Message-ID: <x49sja6ouv4.fsf@segfault.boston.devel.redhat.com>
+References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+	<20120628111541.GB17515@quack.suse.cz>
+	<Pine.LNX.4.64.1207152051490.4240@file.rdu.redhat.com>
+	<x49ipdmyz4q.fsf@segfault.boston.devel.redhat.com>
+	<Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
+	<x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
+	<Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
+	<1343508252.2626.13184.camel@edumazet-glaptop>
+	<Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
+	<1343556630.2626.13257.camel@edumazet-glaptop>
+	<1343586962.2626.13266.camel@edumazet-glaptop>
+	<Pine.LNX.4.64.1208011601280.21832@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1208311433480.2212@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1208311518340.16960@file.rdu.redhat.com>
+	<x49liguyg6r.fsf@segfault.boston.devel.redhat.com>
+	<x49wqzswdn3.fsf@segfault.boston.devel.redhat.com>
+	<Pine.LNX.4.64.1209181257410.11735@file.rdu.redhat.com>
+	<x49ehlzrt01.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <5061A071.2090104@redhat.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <x49ehlzrt01.fsf@segfault.boston.devel.redhat.com> (Jeff Moyer's
+	message of "Tue, 18 Sep 2012 16:11:26 -0400")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Eric Dumazet <eric.dumazet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 25, 2012 at 3:15 PM, Milan Broz <mbroz@redhat.com> wrote:
->
-> On 09/24/2012 06:20 PM, Kasatkin, Dmitry wrote:
->
->>> So it can provide confidentiality but it CANNOT provide integrity protection.
->>>
->> Yes, it provides confidentiality and via encryption it provides
->> certain level of integrity protection.
->> Data cannot be modified without being detected.
->> Decryption will result in garbage...
->
-> It should, but it is not cryptographic integrity protection.
-> Moreover, you can revert ciphertext sector content.
->
-> Btw I think dm-integrity doesn't solve the reply problem as well.
->
-> (IOW can you replace/revert both data and hash, still using the same key
-> in keyring, without dm-integrity able to detect it?)
+Jeff Moyer <jmoyer@redhat.com> writes:
 
-Yes, reply problem is the same. It is context free.
-
+> Mikulas Patocka <mpatocka@redhat.com> writes:
 >
-> In dm-verity, root hash will change after such data tampering.
->
-
-yes, I know.
-
->>> Obvious question: can be dm-verity extended to provide read-write integrity?
->>>
+>> Hi Jeff
 >>
->> I think re-calculating hash trees all the time and syncing block
->> hashes and tree itself is heavier operation...
+>> Thanks for testing.
+>>
+>> It would be interesting ... what happens if you take the patch 3, leave 
+>> "struct percpu_rw_semaphore bd_block_size_semaphore" in "struct 
+>> block_device", but remove any use of the semaphore from fs/block_dev.c? - 
+>> will the performance be like unpatched kernel or like patch 3? It could be 
+>> that the change in the alignment affects performance on your CPU too, just 
+>> differently than on my CPU.
 >
-> Then why not extend dm-verity to use you hash format? There are options
-> for that and we can redefine table line if necessary.
+> It turns out to be exactly the same performance as with the 3rd patch
+> applied, so I guess it does have something to do with cache alignment.
+> Here is the patch (against vanilla) I ended up testing.  Let me know if
+> I've botched it somehow.
 >
+> So, I next up I'll play similar tricks to what you did (padding struct
+> block_device in all kernels) to eliminate the differences due to
+> structure alignment and provide a clear picture of what the locking
+> effects are.
 
-dm-integrity does not use hash tree.
-switching tree to hmac needs to recalculating everything.
-It simply does not make sense.
+After trying again with the same padding you used in the struct
+bdev_inode, I see no performance differences between any of the
+patches.  I tried bumping up the number of threads to saturate the
+number of cpus on a single NUMA node on my hardware, but that resulted
+in lower IOPS to the device, and hence consumption of less CPU time.
+So, I believe my results to be inconclusive.
 
-> (You are duplicating a lot of code here otherwise, not counting userspace yet.)
->
-All targets have similarities here and there.
-At the end they work in different way.
-From source code point of it is clearer to keep them separately as
-they do things in different way.
+After talking with Vivek about the problem, he had mentioned that it
+might be worth investigating whether bd_block_size could be protected
+using SRCU.  I looked into it, and the one thing I couldn't reconcile is
+updating both the bd_block_size and the inode->i_blkbits at the same
+time.  It would involve (afaiui) adding fields to both the inode and the
+block_device data structures and using rcu_assign_pointer  and
+rcu_dereference to modify and access the fields, and both fields would
+need to protected by the same struct srcu_struct.  I'm not sure whether
+that's a desirable approach.  When I started to implement it, it got
+ugly pretty quickly.  What do others think?
 
-It does not require any user space tools.
+For now, my preference is to get the full patch set in.  I will continue
+to investigate the performance impact of the data structure size changes
+that I've been seeing.
 
-> Whatever, I shortly read the code and have some notes.
->
-> First, device-mapper is variable system, you can stack devices in arbitrary order.
->
-> Unfortunately, this is something what can be dangerous in crypto, here you can e.g.
->  - do mac (integrity) then encrypt
->  - do encrypt, then check integrity
->
-> In many implementations mac-then-encrypt system was not secure.
-> Are we sure that it cannot provide side channels here?
->
-> Note read-only integrity target (like dm-verity) is specific case, you should
-> not be able to run any chosen ciphertext attacks here, it is read-only device.
->
-> In fact, I am not sure if we should provide separate read-write block integrity
-> (wihtout encryption) target at all.
->
-> Either it should use standard mode of authenticated encryption (like GCM)
-> or data integrity should be upper layer business (which knows better which data
-> really need integrity checking and which areas are just unused garbage.
-> If you consider hashing and encryption as "heavy operation" you should minimize
-> it to only really used area - and only upper layer know about real used data content.)
->
-> (Again, this is different for read-only target, where it usually uses compressed
-> RO fs image which uses all available space.)
->
+So, for the four patches:
 
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
 
-Again, as it is written in cover letter.
-It can be used for certain use cases, which does not want encryption
-for performance
-or data transforming reasons...
+Jens, can you have a look at the patch set?  We are seeing problem
+reports of this in the wild[1][2].
 
+Cheers,
+Jeff
 
->
-> 1) discards
-> It seems the dm-integrity target doesn't solve problem with discards.
->
-> If you send discard request to underlying device, data content of discarded area
-> is undefined (or zeroed if discards zeroes data) but is is definitely "invalid"
-> form the dm-integrity point of view. And you are allowing discard IOs there.
->
-
-I will check about it.
-
-> I am not sure what should happen, but the behaviour should be documented (at least)
-> or disabled.
->
-> 2)
-> All used hash algorithms must be configurable.
->
-
-dm-integrity uses HASH and HMAC together for HW enabling reasons...
-Hash is calculated using async API and HMAC is sync.
-
-Hash algorithm is configurable. There is a target parameter for that
-
-<dev_path> <offset> <hdev_path> <hoffset> <hash_algo> <key_desc> [<opt_params>]
-
-HMAC is different...
-Because of using key, hmac(sha1) is not vulnerable to attacks as sha1...
-There is currently absolutely no reason to use hmac(sha256) or other.
-hmac(sha1) is absolutely enough...
-
-Before I used only sync API and it was a parameter for hmac only.
-Now there is hash only parameter..
-
-But this is not an issue. I could easily have a parameter for hmac..
-
-> From your doc:
->
-> +While NIST does recommend to use SHA256 hash algorithm instead of SHA1,
-> +this does not apply to HMAC(SHA1), because of keying.
-> +This target uses HMAC(SHA1), because it takes much less space and it is
-> +faster to calculate. There is no parameter to change hmac hash algorithm.
->
-> While this is technically true, http://csrc.nist.gov/groups/ST/hash/policy.html
-> disallowing use of another hash algorithm is wrong, and in fact it is regression
-> in comparison with dm-verity (which already implements all needed calculations
-> and uses hash name as table line option).
->
-> +HMAC(SHA1) size is 20 bytes. So every 4k block on the integrity device can
-> +store 204 hmacs. In order to get the required size of the integrity device,
-> +it is necessary to divide data device size by 204.
->
-
-This is just an example to understand space requirements
-Documentation/device-mapper/dm-integrity.txt
-has scripts examples how to enable target.
-No user space tools are required...
-
-
-> Why are you hardcoding block and hash sizes?
-> Again, dm-verity have this configurable with some good default.
->
-
-I do not hard-code hash sized...
-there are:
-crypto_shash_digestsize(dmi->hmac);
-crypto_ahash_digestsize(dmi->ahash)
-
-Yes... block size is hard coded..
-Did not use other then 4k.
-
-> ditto for kernel keyring:
-> +       const char *hmac_algo = "hmac(sha1)"; /* uncompromized yet */
->
-
-Explained above...
-
-> 3)
-> I like that this target can use kernel keyring, in fact, we should implement
-> similar option to dm crypt/verity. But the target should not be limited
-> to use TPM keys only.
-> (And key is stored directly in kernel memory later for hash calculation anyway
-> allowing hw attacks reading it from RAM.)
-
-No... It is not limited to TPM....
-Encrypted keys use either user master key or TPM to encrypt the key...
-
-Kernel keyring keeps keys in the memory..
-And dm-crypt also keeps key in the memory. Right?
-
-
->
-> 4)
-> reboot notifier cannot be used this way in generic storage stacking IMHO,
-> but I think there was discussion with Mikulas already
-> http://www.redhat.com/archives/dm-devel/2012-March/msg00164.html
->
-
-Yes. I had a question..
-
-reboot norifier is a last resort here...
-file system first is remount "RO"... and flushed..
-And then dm-integrity will also need to write buffers to the storage...
-
-Are there better way?
-
-> 5)
-> output target table should not translate device to device symbolic names
-
-I thought so as well when last time looked to that.
-
->
-> Anyway, code can be changed. But the high level questions remains...
->
-
-Block size parameter might be easily added. Just did not use other
-then page size.
-
-Based on my clarifications about hash and hmac do you still think that
-hmac(sha1) should also be configurable?
-
-Thanks,
-Dmitry
-
-
-> Milan
+[1] https://bugzilla.redhat.com/show_bug.cgi?id=824107
+[2] https://bugzilla.redhat.com/show_bug.cgi?id=812129
