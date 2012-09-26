@@ -1,127 +1,49 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 0/4] Fix a crash when block device is read and block size
- is changed at the same time
-Date: Wed, 26 Sep 2012 10:35:21 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1209261026200.31027@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
- <x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
- <Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
- <Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
- <1343508252.2626.13184.camel@edumazet-glaptop>
- <Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
- <1343556630.2626.13257.camel@edumazet-glaptop> <1343586962.2626.13266.camel@edumazet-glaptop>
- <Pine.LNX.4.64.1208011601280.21832@file.rdu.redhat.com>
- <Pine.LNX.4.64.1208311433480.2212@file.rdu.redhat.com>
- <Pine.LNX.4.64.1208311518340.16960@file.rdu.redhat.com>
- <x49liguyg6r.fsf@segfault.boston.devel.redhat.com>
- <x49wqzswdn3.fsf@segfault.boston.devel.redhat.com>
- <Pine.LNX.4.64.1209181257410.11735@file.rdu.redhat.com>
- <x49ehlzrt01.fsf@segfault.boston.devel.redhat.com>
- <x49sja6ouv4.fsf@segfault.boston.devel.redhat.com>
- <Pine.LNX.4.64.1209251850380.21075@file.rdu.redhat.com>
- <x49obkskiac.fsf@segfault.boston.devel.redhat.com>
+From: Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 06/26] block: Add bio_end_sector()
+Date: Wed, 26 Sep 2012 17:16:48 +0200
+Message-ID: <20120926151648.GB17722@soda.linbit>
+References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
+ <1348526106-17074-7-git-send-email-koverstreet@google.com>
+ <20120925115452.GF8143@soda.linbit>
+ <20120925220624.GC22647@google.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <x49obkskiac.fsf@segfault.boston.devel.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20120925220624.GC22647-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <chris.mason-5c4llco8/ftWk0Htik3J/w@public.gmane.org>, neilb-l3A5Bk7waGM@public.gmane.org, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
+On Tue, Sep 25, 2012 at 03:06:24PM -0700, Kent Overstreet wrote:
+> On Tue, Sep 25, 2012 at 01:54:52PM +0200, Lars Ellenberg wrote:
+> > On Mon, Sep 24, 2012 at 03:34:46PM -0700, Kent Overstreet wrote:
+> > > Just a little convenience macro - main reason to add it now is preparing
+> > > for immutable bio vecs, it'll reduce the size of the patch that puts
+> > > bi_sector/bi_size/bi_idx into a struct bvec_iter.
+> > 
+> > 
+> > For the DRBD part:
 
-
-On Wed, 26 Sep 2012, Jeff Moyer wrote:
-
-> Mikulas Patocka <mpatocka@redhat.com> writes:
+> Version below look good?
 > 
-> > On Tue, 25 Sep 2012, Jeff Moyer wrote:
-> >
-> >> Jeff Moyer <jmoyer@redhat.com> writes:
-> >> 
-> >> > Mikulas Patocka <mpatocka@redhat.com> writes:
-> >> >
-> >> >> Hi Jeff
-> >> >>
-> >> >> Thanks for testing.
-> >> >>
-> >> >> It would be interesting ... what happens if you take the patch 3, leave 
-> >> >> "struct percpu_rw_semaphore bd_block_size_semaphore" in "struct 
-> >> >> block_device", but remove any use of the semaphore from fs/block_dev.c? - 
-> >> >> will the performance be like unpatched kernel or like patch 3? It could be 
-> >> >> that the change in the alignment affects performance on your CPU too, just 
-> >> >> differently than on my CPU.
-> >> >
-> >> > It turns out to be exactly the same performance as with the 3rd patch
-> >> > applied, so I guess it does have something to do with cache alignment.
-> >> > Here is the patch (against vanilla) I ended up testing.  Let me know if
-> >> > I've botched it somehow.
-> >> >
-> >> > So, I next up I'll play similar tricks to what you did (padding struct
-> >> > block_device in all kernels) to eliminate the differences due to
-> >> > structure alignment and provide a clear picture of what the locking
-> >> > effects are.
-> >> 
-> >> After trying again with the same padding you used in the struct
-> >> bdev_inode, I see no performance differences between any of the
-> >> patches.  I tried bumping up the number of threads to saturate the
-> >> number of cpus on a single NUMA node on my hardware, but that resulted
-> >> in lower IOPS to the device, and hence consumption of less CPU time.
-> >> So, I believe my results to be inconclusive.
-> >
-> > For me, the fourth patch with RCU-based locks performed better, so I am 
-> > submitting that.
-> >
-> >> After talking with Vivek about the problem, he had mentioned that it
-> >> might be worth investigating whether bd_block_size could be protected
-> >> using SRCU.  I looked into it, and the one thing I couldn't reconcile is
-> >> updating both the bd_block_size and the inode->i_blkbits at the same
-> >> time.  It would involve (afaiui) adding fields to both the inode and the
-> >> block_device data structures and using rcu_assign_pointer  and
-> >> rcu_dereference to modify and access the fields, and both fields would
-> >> need to protected by the same struct srcu_struct.  I'm not sure whether
-> >> that's a desirable approach.  When I started to implement it, it got
-> >> ugly pretty quickly.  What do others think?
-> >
-> > Using RCU doesn't seem sensible to me (except for lock implementation, as 
-> > it is in patch 4). The major problem is that the block layer reads 
-> > blocksize multiple times and when different values are read, a crash may 
-> > happen - RCU doesn't protect you against that - if you read a variable 
-> > multiple times in a RCU-protected section, you can still get different 
-> > results.
-> 
-> SRCU is sleepable, so could be (I think) used in the same manner as your
-> rw semaphore.  The only difference is that it would require changing the
-> bd_blocksize and the i_blkbits to pointers and protecting them both with
-> the same srcu struct.  Then, the inode i_blkbits would also need to be
-> special cased, so that we only require such handling when it is
-> associated with a block device.  It got messy.
+> diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+> index 01b2ac6..47f55db 100644
+> --- a/drivers/block/drbd/drbd_req.c
+> +++ b/drivers/block/drbd/drbd_req.c
+> @@ -1144,7 +1144,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
+>  	/* to make some things easier, force alignment of requests within the
+>  	 * granularity of our hash tables */
+>  	s_enr = bio->bi_sector >> HT_SHIFT;
+> -	e_enr = bio->bi_size ? (bio->bi_sector+(bio->bi_size>>9)-1) >> HT_SHIFT : s_enr;
+> +	e_enr = bio->bi_size ? (bio_end_sector(bio) - 1) >> HT_SHIFT : s_enr;
+>  
+>  	if (likely(s_enr == e_enr)) {
+>  		do {
 
-No, it couldn't be used this way.
+Sure.
 
-If you do
-srcu_read_lock(&srcu)
-ptr1 = srcu_dereference(pointer, &srcu);
-ptr2 = srcu_dereference(pointer, &srcu);
-srcu_read_unlock(&srcu)
+Cheers,
 
-it doesn't guarantee that ptr1 == ptr2.
-
-All that it guarantees is that when synchronize_srcu exits, there are no 
-references to the old structure. But after rcu_assign_pointer and before 
-synchronize_srcu exits, readers can read both old and new value of the 
-pointer and it is not specified which value do they read.
-
-> > If we wanted to use RCU, we would have to read blocksize just once and 
-> > pass the value between all functions involved - that would result in a 
-> > massive code change.
-> 
-> If we did that, we wouldn't need rcu at all, would we?
-
-Yes, we wouldn't need RCU then.
-
-Mikulas
-
-> Cheers,
-> Jeff
-> 
+	Lars
