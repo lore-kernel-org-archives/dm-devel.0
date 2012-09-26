@@ -1,49 +1,33 @@
-From: Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 06/26] block: Add bio_end_sector()
-Date: Wed, 26 Sep 2012 17:16:48 +0200
-Message-ID: <20120926151648.GB17722@soda.linbit>
-References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
- <1348526106-17074-7-git-send-email-koverstreet@google.com>
- <20120925115452.GF8143@soda.linbit>
- <20120925220624.GC22647@google.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: shutting down logical volumes once an underlying device
+	fails?
+Date: Wed, 26 Sep 2012 12:11:06 -0400
+Message-ID: <20120926161106.GA12653@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20120925220624.GC22647-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <chris.mason-5c4llco8/ftWk0Htik3J/w@public.gmane.org>, neilb-l3A5Bk7waGM@public.gmane.org, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Sep 25, 2012 at 03:06:24PM -0700, Kent Overstreet wrote:
-> On Tue, Sep 25, 2012 at 01:54:52PM +0200, Lars Ellenberg wrote:
-> > On Mon, Sep 24, 2012 at 03:34:46PM -0700, Kent Overstreet wrote:
-> > > Just a little convenience macro - main reason to add it now is preparing
-> > > for immutable bio vecs, it'll reduce the size of the patch that puts
-> > > bi_sector/bi_size/bi_idx into a struct bvec_iter.
-> > 
-> > 
-> > For the DRBD part:
+A coworker has been testing failure scenarious using lvm, and noticed
+that when a PV fail a filesystem on a logical volume that spans multiple
+PVs only fails once it accesses the actually failed physical device.
 
-> Version below look good?
-> 
-> diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-> index 01b2ac6..47f55db 100644
-> --- a/drivers/block/drbd/drbd_req.c
-> +++ b/drivers/block/drbd/drbd_req.c
-> @@ -1144,7 +1144,7 @@ void drbd_make_request(struct request_queue *q, struct bio *bio)
->  	/* to make some things easier, force alignment of requests within the
->  	 * granularity of our hash tables */
->  	s_enr = bio->bi_sector >> HT_SHIFT;
-> -	e_enr = bio->bi_size ? (bio->bi_sector+(bio->bi_size>>9)-1) >> HT_SHIFT : s_enr;
-> +	e_enr = bio->bi_size ? (bio_end_sector(bio) - 1) >> HT_SHIFT : s_enr;
->  
->  	if (likely(s_enr == e_enr)) {
->  		do {
-
-Sure.
-
-Cheers,
-
-	Lars
+At least for system using higher level error detection and replication
+behaviour that fails a LV as soon as one of the underlying devices fails
+would be much more helpful.  Is the current LVM behaviour intention and
+should we work around this using userspace monitoring, or would be
+patches to introduce a shutdown state similar to what we have in XFS for
+example be welcome?
