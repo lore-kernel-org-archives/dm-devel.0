@@ -1,47 +1,48 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: shutting down logical volumes once an underlying
-	device fails?
-Date: Wed, 26 Sep 2012 16:11:17 -0400
-Message-ID: <20120926201116.GD7882@redhat.com>
-References: <20120926161106.GA12653@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] 3.6 device-mapper fixes
+Date: Thu, 27 Sep 2012 03:19:09 +0100
+Message-ID: <20120927021909.GF24740@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20120926161106.GA12653@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, David Jeffery <djeffery@redhat.com>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Mike Christie <michaelc@cs.wisc.edu>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 26 2012 at 12:11pm -0400,
-Christoph Hellwig <hch@infradead.org> wrote:
+Please pull from:
+ 
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.6-fixes
+ 
+to get the following device-mapper fixes.
 
-> A coworker has been testing failure scenarious using lvm, and noticed
-> that when a PV fail a filesystem on a logical volume that spans multiple
-> PVs only fails once it accesses the actually failed physical device.
-> 
-> At least for system using higher level error detection and replication
-> behaviour that fails a LV as soon as one of the underlying devices fails
-> would be much more helpful.  Is the current LVM behaviour intention and
-> should we work around this using userspace monitoring, or would be
-> patches to introduce a shutdown state similar to what we have in XFS for
-> example be welcome?
+----------------------------------------------------------------
+A few fixes for problems discovered during the 3.6 cycle.
 
-Don't think any shutdown should be initiated by the kernel.
+Of particular note, are fixes to the thin target's discard support,
+which I hope is finally working correctly; and fixes for multipath
+ioctls and device limits when there are no paths.
 
-But events that userspace could respond to by deactivating (an
-arbitrarily complex) lvm device would be the way forward IMHO.
+----------------------------------------------------------------
+Mike Snitzer (6):
+      dm thin: do not set discard_zeroes_data
+      dm mpath: only retry ioctl when no paths if queue_if_no_path set
+      dm: handle requests beyond end of device instead of using BUG_ON
+      dm: retain table limits when swapping to new table with no devices
+      dm thin: tidy discard support
+      dm thin: fix discard support for data devices
 
-Could this tie back to needing better UA handling/notification between
-kernel<->userspace?
+Mikulas Patocka (1):
+      dm verity: fix overflow check
+
+Milan Broz (1):
+      dm table: clear add_random unless all devices have it set
+
+ drivers/md/dm-mpath.c  |   11 ++--
+ drivers/md/dm-table.c  |   61 ++++++++++++++++++++--
+ drivers/md/dm-thin.c   |  135 +++++++++++++++++++++++++++++++-----------------
+ drivers/md/dm-verity.c |    8 +--
+ drivers/md/dm.c        |   71 ++++++++++++++++++-------
+ drivers/md/dm.h        |    1 +
+ 6 files changed, 209 insertions(+), 78 deletions(-)
