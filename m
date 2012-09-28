@@ -1,44 +1,43 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 05/26] md: Convert md_trim_bio() to use bio_advance()
-Date: Wed, 26 Sep 2012 21:41:37 -0700
-Message-ID: <20120927044137.GC29160@moria.home.lan>
-References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
- <1348526106-17074-6-git-send-email-koverstreet@google.com>
- <20120926103827.4d880cf4@notabene.brown>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: shutting down logical volumes once an underlying
+ device fails?
+Date: Fri, 28 Sep 2012 09:05:05 -0400
+Message-ID: <20120928130505.GA16549@infradead.org>
+References: <20120926161106.GA12653@infradead.org>
+	<20120926201116.GD7882@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20120926103827.4d880cf4-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+In-Reply-To: <20120926201116.GD7882@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On Wed, Sep 26, 2012 at 10:38:27AM +1000, NeilBrown wrote:
-> On Mon, 24 Sep 2012 15:34:45 -0700 Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> wrote:
+On Wed, Sep 26, 2012 at 04:11:17PM -0400, Mike Snitzer wrote:
 > 
-> > Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> > CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-> > CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-> > ---
-> >  drivers/md/md.c | 19 +++++--------------
-> >  1 file changed, 5 insertions(+), 14 deletions(-)
-> > 
-> > diff --git a/drivers/md/md.c b/drivers/md/md.c
-> > index 7a2b079..51ce48c 100644
-> > --- a/drivers/md/md.c
-> > +++ b/drivers/md/md.c
-> > @@ -190,25 +190,16 @@ void md_trim_bio(struct bio *bio, int offset, int size)
-> >  	struct bio_vec *bvec;
-> >  	int sofar = 0;
-> >  
-> > -	size <<= 9;
-> >  	if (offset == 0 && size == bio->bi_size)
-> >  		return;
+> Don't think any shutdown should be initiated by the kernel.
 > 
-> Safer to leave the "size <<= 9" where it is, otherwise that condition will
-> always fail.
+> But events that userspace could respond to by deactivating (an
+> arbitrarily complex) lvm device would be the way forward IMHO.
 
-Whoops, moving that certainly didn't make sense. Thanks!
+Deactivating is maybe a bit of a too strong word.  But I'd expect we'll
+get EIO from al sectors not just those on the failed device.
+
+> Could this tie back to needing better UA handling/notification between
+> kernel<->userspace?
+
+That current proposed solution we have internally is to simply poll
+the status output for the PVs and handle it all in userspace.  To me
+this seems a bit clumsy, but at least it's easily doable in short time.
