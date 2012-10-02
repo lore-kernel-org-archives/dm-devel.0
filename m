@@ -1,38 +1,56 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v3 06/26] block: Add bio_end_sector()
-Date: Tue, 2 Oct 2012 14:10:01 -0400
-Message-ID: <20121002181001.GB3283@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [dm-devel] [PATCH v3 04/26] block: Refactor blk_update_request()
+Date: Tue, 2 Oct 2012 14:43:59 -0400
+Message-ID: <20121002184359.GC3283@redhat.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
- <1348526106-17074-7-git-send-email-koverstreet@google.com>
+ <1348526106-17074-5-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1348526106-17074-7-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <chris.mason-5c4llco8/ftWk0Htik3J/w@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <1348526106-17074-5-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tj@kernel.org, axboe@kernel.dk
 List-Id: dm-devel.ids
 
-On Mon, Sep 24, 2012 at 03:34:46PM -0700, Kent Overstreet wrote:
+On Mon, Sep 24, 2012 at 03:34:44PM -0700, Kent Overstreet wrote:
+> Converts it to use bio_advance(), simplifying it quite a bit in the
+> process.
+> 
+> Note that req_bio_endio() now always calls bio_advance() - which means
+> it always loops over the biovec, not just on partial completions. Don't
+> expect it to affect performance, but worth noting.
+> 
+> Tested it by forcing partial updates, and dumping before and after on
+> various bio/bvec fields when doing a partial update.
+> 
+> Signed-off-by: Kent Overstreet <koverstreet@google.com>
+> CC: Jens Axboe <axboe@kernel.dk>
+> ---
+>  block/blk-core.c | 80 +++++++++-----------------------------------------------
+>  1 file changed, 12 insertions(+), 68 deletions(-)
+> 
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index a17869f..a8a1a9e 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -158,20 +158,10 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+>  	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+>  		error = -EIO;
+>  
+> -	if (unlikely(nbytes > bio->bi_size)) {
+> -		printk(KERN_ERR "%s: want %u bytes done, %u left\n",
+> -		       __func__, nbytes, bio->bi_size);
+> -		nbytes = bio->bi_size;
+> -	}
+> -
 
-[..]
-> diff --git a/include/linux/bio.h b/include/linux/bio.h
-> index 4e32be1..d985e90 100644
-> --- a/include/linux/bio.h
-> +++ b/include/linux/bio.h
-> @@ -67,6 +67,7 @@
->  #define bio_offset(bio)		bio_iovec((bio))->bv_offset
->  #define bio_segments(bio)	((bio)->bi_vcnt - (bio)->bi_idx)
->  #define bio_sectors(bio)	((bio)->bi_size >> 9)
-> +#define bio_end_sector(bio)	((bio)->bi_sector + bio_sectors(bio))
+You are dropping this warning because nobody is calling req_bio_endio()
+with bytes greater than bio size in current code?
 
-May be it is just me. But bio_end_sector() kind of sounds that it will
-calculate to the last sector of bio. So I thought of it more as
-bio_last_sector() and not the sector which is next to the last sector.
-
-Will it make sense to introduce bio_last_sector() and use +1 everywhere.
-Or may be we need a better name. Can't think of one though.
+Otherwise this looks like a good simplification of blk_update_request()
+code.
 
 Thanks
 Vivek
