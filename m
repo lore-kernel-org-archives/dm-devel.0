@@ -1,51 +1,38 @@
 From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v3 02/26] block: Convert integrity to
- bvec_alloc_bs()
-Date: Tue, 2 Oct 2012 11:37:37 -0400
-Message-ID: <20121002153736.GA3283@redhat.com>
+Subject: Re: [dm-devel] [PATCH v3 06/26] block: Add bio_end_sector()
+Date: Tue, 2 Oct 2012 14:10:01 -0400
+Message-ID: <20121002181001.GB3283@redhat.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
- <1348526106-17074-3-git-send-email-koverstreet@google.com>
+ <1348526106-17074-7-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1348526106-17074-3-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1348526106-17074-7-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <chris.mason-5c4llco8/ftWk0Htik3J/w@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Mon, Sep 24, 2012 at 03:34:42PM -0700, Kent Overstreet wrote:
+On Mon, Sep 24, 2012 at 03:34:46PM -0700, Kent Overstreet wrote:
 
 [..]
->  /**
->   * bio_integrity_alloc - Allocate integrity payload and attach it to bio
->   * @bio:	bio to attach integrity metadata to
-> @@ -84,37 +47,39 @@ struct bio_integrity_payload *bio_integrity_alloc(struct bio *bio,
->  						  unsigned int nr_vecs)
->  {
->  	struct bio_integrity_payload *bip;
-> -	unsigned int idx = vecs_to_idx(nr_vecs);
->  	struct bio_set *bs = bio->bi_pool;
-> +	unsigned long idx = BIO_POOL_NONE;
-> +	unsigned inline_vecs;
-> +
-> +	if (!bs) {
-> +		bip = kmalloc(sizeof(struct bio_integrity_payload) +
-> +			      sizeof(struct bio_vec) * nr_vecs, gfp_mask);
-> +		inline_vecs = nr_vecs;
-> +	} else {
-> +		bip = mempool_alloc(bs->bio_integrity_pool, gfp_mask);
-> +		inline_vecs = BIP_INLINE_VECS;
-> +	}
->  
-> -	if (!bs)
-> -		bs = fs_bio_set;
+> diff --git a/include/linux/bio.h b/include/linux/bio.h
+> index 4e32be1..d985e90 100644
+> --- a/include/linux/bio.h
+> +++ b/include/linux/bio.h
+> @@ -67,6 +67,7 @@
+>  #define bio_offset(bio)		bio_iovec((bio))->bv_offset
+>  #define bio_segments(bio)	((bio)->bi_vcnt - (bio)->bi_idx)
+>  #define bio_sectors(bio)	((bio)->bi_size >> 9)
+> +#define bio_end_sector(bio)	((bio)->bi_sector + bio_sectors(bio))
 
-Ok, this is change of behavior. Previously we will fall back to fs_bio_set
-and now you do kmalloc. This change looks to be independent of bip_vec
-pointer. Can you please break it out in a separate patch and also explain
-that how does this change help.
+May be it is just me. But bio_end_sector() kind of sounds that it will
+calculate to the last sector of bio. So I thought of it more as
+bio_last_sector() and not the sector which is next to the last sector.
+
+Will it make sense to introduce bio_last_sector() and use +1 everywhere.
+Or may be we need a better name. Can't think of one though.
 
 Thanks
 Vivek
