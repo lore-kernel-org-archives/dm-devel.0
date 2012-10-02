@@ -1,28 +1,51 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v3 11/26] block: Add submit_bio_wait(), remove
- from md
-Date: Tue, 2 Oct 2012 15:41:32 -0400
-Message-ID: <20121002194132.GF3283@redhat.com>
-References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
- <1348526106-17074-12-git-send-email-koverstreet@google.com>
+From: alireza sadeh seighalan <seighalani@gmail.com>
+Subject: hba qlogic installation
+Date: Tue, 2 Oct 2012 23:36:20 +0330
+Message-ID: <CAFj7pBHUBfOzM4-YabdJ5rYmc2V79fGvmHVy3p5KNUDNV=2Yxw@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1348526106-17074-12-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
+Content-Type: multipart/mixed; boundary="===============5615800887420703698=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 24, 2012 at 03:34:51PM -0700, Kent Overstreet wrote:
-> Random cleanup - this code was duplicated and it's not really specific
-> to md.
-> 
-> Also added the ability to return the actual error code.
+--===============5615800887420703698==
+Content-Type: multipart/alternative; boundary=14dae93407cf3c280904cb190eea
 
-Who is going to make use of actual error code and why checking
-BIO_UPTODATE is not sufficient (as existing code is doing)?
+--14dae93407cf3c280904cb190eea
+Content-Type: text/plain; charset=ISO-8859-1
 
-Thanks
-Vivek 
+hi everyone
+
+how can i install HBA Qlogic (2port 4Gbps) install on  redhat enterprise
+linux 5.3   64 bit?  how can i check hba card  install correctly? thanks in
+advance
+
+--14dae93407cf3c280904cb190eea
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+hi everyone<div><br></div><div>how can i install HBA Qlogic (2port 4Gbps) i=
+nstall on =A0redhat enterprise linux 5.3 =A0 64 bit? =A0how can i check hba=
+ card =A0install correctly? thanks in advance</div>
+
+--14dae93407cf3c280904cb190eea--
+
+
+--===============5615800887420703698==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5615800887420703698==--
