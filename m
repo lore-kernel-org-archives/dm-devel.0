@@ -1,51 +1,41 @@
-From: alireza sadeh seighalan <seighalani@gmail.com>
-Subject: hba qlogic installation
-Date: Tue, 2 Oct 2012 23:36:20 +0330
-Message-ID: <CAFj7pBHUBfOzM4-YabdJ5rYmc2V79fGvmHVy3p5KNUDNV=2Yxw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH v3 04/26] block: Refactor blk_update_request()
+Date: Tue, 2 Oct 2012 13:09:46 -0700
+Message-ID: <20121002200946.GJ26488@google.com>
+References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
+ <1348526106-17074-5-git-send-email-koverstreet@google.com>
+ <20121002185955.GD3283@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5615800887420703698=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20121002185955.GD3283-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
 List-Id: dm-devel.ids
 
---===============5615800887420703698==
-Content-Type: multipart/alternative; boundary=14dae93407cf3c280904cb190eea
+On Tue, Oct 02, 2012 at 02:59:55PM -0400, Vivek Goyal wrote:
+> On Mon, Sep 24, 2012 at 03:34:44PM -0700, Kent Overstreet wrote:
+> > Converts it to use bio_advance(), simplifying it quite a bit in the
+> > process.
+> > 
+> > Note that req_bio_endio() now always calls bio_advance() - which means
+> > it always loops over the biovec, not just on partial completions. Don't
+> > expect it to affect performance, but worth noting.
+> > 
+> > Tested it by forcing partial updates, and dumping before and after on
+> > various bio/bvec fields when doing a partial update.
+> 
+> Kent,
+> 
+> In general, have you tested all these changes with FLUSH and DISCARD 
+> bios/requests. Some of the code paths tend to break down because of these
+> special bios don't have payload.
 
---14dae93407cf3c280904cb190eea
-Content-Type: text/plain; charset=ISO-8859-1
+Believe so, I should double check - also, I changed the bio_advance()
+patch since the one I posted to make it handle DISCARD and WRITE_SAME
+requests more explicitly.
 
-hi everyone
-
-how can i install HBA Qlogic (2port 4Gbps) install on  redhat enterprise
-linux 5.3   64 bit?  how can i check hba card  install correctly? thanks in
-advance
-
---14dae93407cf3c280904cb190eea
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-hi everyone<div><br></div><div>how can i install HBA Qlogic (2port 4Gbps) i=
-nstall on =A0redhat enterprise linux 5.3 =A0 64 bit? =A0how can i check hba=
- card =A0install correctly? thanks in advance</div>
-
---14dae93407cf3c280904cb190eea--
-
-
---===============5615800887420703698==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5615800887420703698==--
+(At this level, discards do (sometimes) have payloads, it's just always
+a single page)
