@@ -1,45 +1,44 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH v3 06/26] block: Add bio_end_sector()
-Date: Tue, 2 Oct 2012 13:20:26 -0700
-Message-ID: <20121002202026.GN26488@google.com>
+Subject: Re: [dm-devel] [PATCH v3 11/26] block: Add submit_bio_wait(), remove
+ from md
+Date: Tue, 2 Oct 2012 13:22:27 -0700
+Message-ID: <20121002202227.GO26488@google.com>
 References: <1348526106-17074-1-git-send-email-koverstreet@google.com>
- <1348526106-17074-7-git-send-email-koverstreet@google.com>
- <20121002181001.GB3283@redhat.com>
+ <1348526106-17074-12-git-send-email-koverstreet@google.com>
+ <20121002194132.GF3283@redhat.com>
+ <20121002201105.GL26488@google.com>
+ <20121002201630.GI758@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20121002181001.GB3283-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20121002201630.GI758-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <chris.mason-5c4llco8/ftWk0Htik3J/w@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Oct 02, 2012 at 02:10:01PM -0400, Vivek Goyal wrote:
-> On Mon, Sep 24, 2012 at 03:34:46PM -0700, Kent Overstreet wrote:
+On Tue, Oct 02, 2012 at 04:16:30PM -0400, Vivek Goyal wrote:
+> On Tue, Oct 02, 2012 at 01:11:05PM -0700, Kent Overstreet wrote:
+> > On Tue, Oct 02, 2012 at 03:41:32PM -0400, Vivek Goyal wrote:
+> > > On Mon, Sep 24, 2012 at 03:34:51PM -0700, Kent Overstreet wrote:
+> > > > Random cleanup - this code was duplicated and it's not really specific
+> > > > to md.
+> > > > 
+> > > > Also added the ability to return the actual error code.
+> > > 
+> > > Who is going to make use of actual error code and why checking
+> > > BIO_UPTODATE is not sufficient (as existing code is doing)?
+> > 
+> > Some things do, though it's not common and I forget where I saw it -
+> > checking for -ENOTSUPPORTED vs. other stuff
 > 
-> [..]
-> > diff --git a/include/linux/bio.h b/include/linux/bio.h
-> > index 4e32be1..d985e90 100644
-> > --- a/include/linux/bio.h
-> > +++ b/include/linux/bio.h
-> > @@ -67,6 +67,7 @@
-> >  #define bio_offset(bio)		bio_iovec((bio))->bv_offset
-> >  #define bio_segments(bio)	((bio)->bi_vcnt - (bio)->bi_idx)
-> >  #define bio_sectors(bio)	((bio)->bi_size >> 9)
-> > +#define bio_end_sector(bio)	((bio)->bi_sector + bio_sectors(bio))
-> 
-> May be it is just me. But bio_end_sector() kind of sounds that it will
-> calculate to the last sector of bio. So I thought of it more as
-> bio_last_sector() and not the sector which is next to the last sector.
-> 
-> Will it make sense to introduce bio_last_sector() and use +1 everywhere.
-> Or may be we need a better name. Can't think of one though.
+> May be we can introduce "submit_bio_ret" stuff when we find the actual
+> user in the series. Justifying code change becomes easier. 
 
-Ugh, that sounds like it'd be just begging for fencepost errors. I've
-never ran into a situation where I needed bio->bi_sector +
-bio_sectors(bio) - 1, either.
+Eh, IMO as generic code it's just better/more sensible that way;
+bio_endio() does pass an actual error code, so the sync version should
+pass it up too. Otherwise it's a needless inconsistency.
 
-I kind of see your point... it seems like there should be a name for
-this concept (same as a pointer to the end of an array), but I can't
-think of one.
+Honestly I would prefer sticking an error field in struct bio. That'd be
+useful for other things, too.
