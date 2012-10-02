@@ -1,30 +1,24 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [patch] dm thin: check kmalloc in dm_deferred_set_create()
-Date: Tue, 2 Oct 2012 14:46:49 +0300
-Message-ID: <20121002114649.GA1413@elgon.mountain>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [patch] dm thin: check kmalloc in
+	dm_deferred_set_create()
+Date: Tue, 2 Oct 2012 13:58:08 +0100
+Message-ID: <20121002125807.GB27325@agk-dp.fab.redhat.com>
+References: <20121002114649.GA1413@elgon.mountain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20121002114649.GA1413@elgon.mountain>
 Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, kernel-janitors@vger.kernel.org
+To: Dan Carpenter <dan.carpenter@oracle.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, kernel-janitors@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-We can simply return NULL here.  The callers already handle that.
-
-Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index da0d5d1..fa7d21e 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -394,6 +394,8 @@ static struct dm_deferred_set *dm_deferred_set_create(void)
- 	struct dm_deferred_set *ds;
+On Tue, Oct 02, 2012 at 02:46:49PM +0300, Dan Carpenter wrote:
+> We can simply return NULL here.  The callers already handle that.
  
- 	ds = kmalloc(sizeof(*ds), GFP_KERNEL);
-+	if (!ds)
-+		return NULL;
- 
- 	spin_lock_init(&ds->lock);
- 	ds->current_entry = 0;
+Folded into dm-thin-prepare-to-separate-bio_prison-code.patch in
+linux-next, thanks.
+
+Alasdair
+
