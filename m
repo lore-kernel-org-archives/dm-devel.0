@@ -1,129 +1,40 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 5/5] aio: Refactor aio_read_evt, use cmxchg(), fix bug
-Date: Tue, 9 Oct 2012 15:55:09 -0700
-Message-ID: <20121009225509.GA26835@google.com>
+From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 4/5] aio: vmap ringbuffer
+Date: Tue, 9 Oct 2012 15:58:36 -0700
+Message-ID: <20121009225836.GU26187@lenny.home.zabbo.net>
 References: <1349764760-21093-1-git-send-email-koverstreet@google.com>
- <1349764760-21093-5-git-send-email-koverstreet@google.com>
- <20121009183753.GP26187@lenny.home.zabbo.net>
- <20121009212724.GD29494@google.com>
- <20121009224703.GT26187@lenny.home.zabbo.net>
+ <1349764760-21093-4-git-send-email-koverstreet@google.com>
+ <20121009182949.GO26187@lenny.home.zabbo.net>
+ <20121009213111.GE29494@google.com>
+ <20121009223210.GR26187@lenny.home.zabbo.net>
+ <20121009224428.GH29494@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20121009224703.GT26187-fypN+1c5dIyjpB87vu3CluTW4wlIGRCZ@public.gmane.org>
+In-Reply-To: <20121009224428.GH29494-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Oct 09, 2012 at 03:47:03PM -0700, Zach Brown wrote:
-> > If libaio is the only thing in userspace looking at the ringbuffer, and
-> > if I'm looking at the latest libaio code this shouldn't break
-> > anything...
-> 
-> We can't assume that libaio is the only thing in userspace using the
-> mapped buffer -- as scary a thought as that is :).
-> 
-> If we wanted to change the behaviour of the ring we'd give userspace a
-> way to indicate that it accepts the new semantics.  I'm not immediately
-> sure how best to do that -- haven't given it much thought.
+> Not if we decouple the ringbuffer size from max_requests.
 
-Well, the ringbuffer does have those compat flags and incompat flags.
-Which libaio conveniently doesn't check, but for what it does it
-shouldn't really matter I guess.
+Hmm, interesting.
 
-I figure if anyone else is using the ringbuffer directly and not
-checking the flag fields... well, they deserve to have their stuff
-broken :P
+> This would be useful to do anyways because right now, allocating a kiocb
+> has to take a global refcount and check head and tail in the ringbuffer
+> just so it can avoid overflowing the ringbuffer.
 
-OTOH, that is the same situation the tracing stuff was in... but the
-stuff that used the tracing fields incorrectly was more widespread.
+I'm not sure what you mean by a 'global refcount'.. do you mean the
+per-mm ctx_lock?
 
-Anyways, if we can't change the ringbuffer at all we could always create
-a new version of the io_setup() syscall that gives you a new ringbuffer
-format.
+> If we change aio_complete() so that if the ringbuffer is full then the
+> kiocb just goes on a linked list - we can size the ringbuffer so this
+> doesn't happen normally and avoid the global synchronization in the fast
+> path.
 
-That'd arguably be better anyways, since if we went the incompat flags
-route old code would be stuck with not being able to use the ringbuffer
-at all on newer kernels. But it would be more of a pain and more kernel
-code.
+How would completion events make their way from the list to the ring if
+an app is only checking the ring for completions from userspace?
 
-
-> > Sticking the head and tail pointers on the same cacheline is one of my
-> > main complaints. If you could find that comment I'd be interested in
-> > reading it, though.
-> 
-> Yeah, that was on my list.. Heh, found it!
-
-Thanks!
-
-I'm wondering what interest there is in creating a new aio interface to
-solve these and other issues.
-
-I kind of feel like as long as we've got a list of complaints, we should
-prototype something in one place that fixes all our complaints... think
-of it as documenting all the known issues, if nothing else.
-
-> 
-> /*
-> * This structure defines the head of a ring of events that is mapped into user
-> * space.  It isn't used anymore because it has a number of design flaws.  I'll
-> * mention them here in the hopes that people read this when considering a
-> * design for a ring shared between user and kernel space.
-> *
-> * - The head and tail pointers are in the same cacheline.  This introduces
-> * false sharing between producers and consumers which could otherwise operate
-> * independent of one-another, presuming that the producers know ahead of time
-> * that room has been reserved for them.
-> *
-> * - The head and tail semantics are unconventional.  They're always less than
-> * the number of events in the ring and their meaning is reversed from the
-> * usual construct that one sees in, for example, ethernet hardware where the
-> * ring is a power of two and the indexes wrap but are masked when used to
-> * dereference elements.
-> *
-> * - Because of the weird head and tail semantics one can't distinguish from
-> * completely empty and full rings.  To work around this the ring is actually
-> * created with more events than the aio user asked for and that number is
-> * accounted for separately.  The number of free elements in the ring is
-> * greater than the number of operations that the kernel aio submission will
-> * allow.
-> *
-> * - Synchronizing head and tail updates between the kernel and user space
-> * requires a u32 cmpxchg.  futexes have infrastructure for this which requires
-> * working with user addresses.  Trying to nicely re-use the futex code leads
-> * to awkward code in aio which sometimes wants to work through kmap()
-> * addresses and other times want to work through the mmaped user space
-> * pointers.
-> *
-> * - The head and tail pointers are restricted in value to being less than the
-> * number of elements in the ring.  This means that a cmpxchg can see a index
-> * which has wrapped and confuse it for the index that it read before trying
-> * cmpxchg.  This can end up sending a duplicated previous event instead of a
-> * currently queued event in the worst case.
-> *
-> * - User space doesn't explicitly indicate that it wants to work with the ring
-> * from user space.  Even if user space never touches the ring the kernel still
-> * has pay the cost of the potential sharing with user space when inserting
-> * events.
-> *
-> * - The kernel magically maps it into the address space.  Users can't put it
-> * in whatever memory they like, like shared mem or hugetlb pages or tmpfs
-> * pages that they want to sendfile out of.
-> *
-> * - The ring is allocated out of unswappable kernel memory.  It would be
-> * better to have the ring allocated in userspace and given to the kernel.  In
-> * the common case the pages will be present and the overhead is minimal and
-> * complexity is kept out of the kernel.  In the worst case of memory pressure
-> * the kernel has fewer pinned pages tying its hands.
-> */
-> 
-> The submission and completion interface that I threw together for the
-> acall experiments took all this into account:
-> 
->  http://lwn.net/Articles/316806/
-> 
-> Man, this all brings back memories :).
-> 
-> - z
+- z
