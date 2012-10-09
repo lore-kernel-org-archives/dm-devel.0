@@ -1,35 +1,35 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [PATCH 4/5] aio: vmap ringbuffer
-Date: Tue, 9 Oct 2012 14:31:11 -0700
-Message-ID: <20121009213111.GE29494@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 2/5] aio: kiocb_cancel()
+Date: Tue, 9 Oct 2012 14:37:00 -0700
+Message-ID: <20121009213700.GF29494@google.com>
 References: <1349764760-21093-1-git-send-email-koverstreet@google.com>
- <1349764760-21093-4-git-send-email-koverstreet@google.com>
- <20121009182949.GO26187@lenny.home.zabbo.net>
+ <1349764760-21093-2-git-send-email-koverstreet@google.com>
+ <20121009182625.GM26187@lenny.home.zabbo.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20121009182949.GO26187@lenny.home.zabbo.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Zach Brown <zab@redhat.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tytso@mit.edu
+In-Reply-To: <20121009182625.GM26187-fypN+1c5dIyjpB87vu3CluTW4wlIGRCZ@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Oct 09, 2012 at 11:29:49AM -0700, Zach Brown wrote:
-> On Mon, Oct 08, 2012 at 11:39:19PM -0700, Kent Overstreet wrote:
-> > It simplifies a lot of stuff if the ringbuffer is contiguously mapped
-> > into kernel space, and we can delete a lot of code - in particular, this
-> > is useful for converting read_events() to cmpxchg.
+On Tue, Oct 09, 2012 at 11:26:25AM -0700, Zach Brown wrote:
+> On Mon, Oct 08, 2012 at 11:39:17PM -0700, Kent Overstreet wrote:
+> > Minor refactoring, to get rid of some duplicated code
 > 
-> 1) I'm concerned that Our Favourite Database Benchmarkers will see an
-> effect of having more TLB pressure from that mapping.  kmap_atomic()
-> should be cheaper.  We'll need to measure the difference.
+> Honestly: I wouldn't bother.  Nothing of consequence uses cancel.
+> 
+> I have an RFC patch series that tears it out.  Let me polish that up
+> send it out, I'll cc: you.
 
-If it is measurable I'll take another stab at using memory from
-__get_free_pages() for the ringbuffer. That really would be the ideal
-solution.
+Even better :)
 
-The other reason I wanted to do this was for the aio attributes stuff -
-for return values, I think the only sane way is for the return values to
-go in the ringbuffer, which means records are no longer fixed size so
-dealing with pages is even more of a pain.
+I've been looking at aio locking the past few days, and I was getting
+ready to write something up about cancellation to the lists.
+
+Short version, supporting cancellation without global sychronization is
+possible but it'd require help from the allocator.
+
+If we can just rip it out though that'd really make me happy.
