@@ -1,135 +1,36 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 2/5] aio: kiocb_cancel()
-Date: Mon,  8 Oct 2012 23:39:17 -0700
-Message-ID: <1349764760-21093-2-git-send-email-koverstreet@google.com>
+From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 1/5] aio: Kill return value of aio_complete()
+Date: Tue, 9 Oct 2012 11:25:31 -0700
+Message-ID: <20121009182531.GL26187@lenny.home.zabbo.net>
 References: <1349764760-21093-1-git-send-email-koverstreet@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
 In-Reply-To: <1349764760-21093-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
 List-Id: dm-devel.ids
 
-Minor refactoring, to get rid of some duplicated code
+On Mon, Oct 08, 2012 at 11:39:16PM -0700, Kent Overstreet wrote:
+> Nothing used the return value, and it probably wasn't possible to use it
+> safely for the locked versions (aio_complete(), aio_put_req()). Just
+> kill it.
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- fs/aio.c |   72 ++++++++++++++++++++++++++++++++++----------------------------
- 1 file changed, 39 insertions(+), 33 deletions(-)
+Nice, seems reasonable enough.  (Queue the timer for complaints from out
+of tree code?)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 1ad2d97..95419c4 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -229,6 +229,29 @@ static inline void put_ioctx(struct kioctx *kioctx)
- 		__put_ioctx(kioctx);
- }
- 
-+static int kiocb_cancel(struct kioctx *ctx, struct kiocb *kiocb,
-+			struct io_event *res)
-+{
-+	int (*cancel)(struct kiocb *, struct io_event *);
-+	int ret = -EINVAL;
-+
-+	cancel = kiocb->ki_cancel;
-+	kiocbSetCancelled(kiocb);
-+	if (cancel) {
-+		kiocb->ki_users++;
-+		spin_unlock_irq(&ctx->ctx_lock);
-+
-+		memset(res, 0, sizeof(*res));
-+		res->obj = (u64) kiocb->ki_obj.user;
-+		res->data = kiocb->ki_user_data;
-+		ret = cancel(kiocb, res);
-+
-+		spin_lock_irq(&ctx->ctx_lock);
-+	}
-+
-+	return ret;
-+}
-+
- /* ioctx_alloc
-  *	Allocates and initializes an ioctx.  Returns an ERR_PTR if it failed.
-  */
-@@ -304,7 +327,6 @@ out_freectx:
-  */
- static void kill_ctx(struct kioctx *ctx)
- {
--	int (*cancel)(struct kiocb *, struct io_event *);
- 	struct task_struct *tsk = current;
- 	DECLARE_WAITQUEUE(wait, tsk);
- 	struct io_event res;
-@@ -315,14 +337,8 @@ static void kill_ctx(struct kioctx *ctx)
- 		struct list_head *pos = ctx->active_reqs.next;
- 		struct kiocb *iocb = list_kiocb(pos);
- 		list_del_init(&iocb->ki_list);
--		cancel = iocb->ki_cancel;
--		kiocbSetCancelled(iocb);
--		if (cancel) {
--			iocb->ki_users++;
--			spin_unlock_irq(&ctx->ctx_lock);
--			cancel(iocb, &res);
--			spin_lock_irq(&ctx->ctx_lock);
--		}
-+
-+		kiocb_cancel(ctx, iocb, &res);
- 	}
- 
- 	if (!ctx->reqs_active)
-@@ -1709,7 +1725,7 @@ static struct kiocb *lookup_kiocb(struct kioctx *ctx, struct iocb __user *iocb,
- SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
- 		struct io_event __user *, result)
- {
--	int (*cancel)(struct kiocb *iocb, struct io_event *res);
-+	struct io_event res;
- 	struct kioctx *ctx;
- 	struct kiocb *kiocb;
- 	u32 key;
-@@ -1724,32 +1740,22 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
- 		return -EINVAL;
- 
- 	spin_lock_irq(&ctx->ctx_lock);
--	ret = -EAGAIN;
-+
- 	kiocb = lookup_kiocb(ctx, iocb, key);
--	if (kiocb && kiocb->ki_cancel) {
--		cancel = kiocb->ki_cancel;
--		kiocb->ki_users ++;
--		kiocbSetCancelled(kiocb);
--	} else
--		cancel = NULL;
-+	if (kiocb)
-+		ret = kiocb_cancel(ctx, kiocb, &res);
-+	else
-+		ret = -EAGAIN;
-+
- 	spin_unlock_irq(&ctx->ctx_lock);
- 
--	if (NULL != cancel) {
--		struct io_event tmp;
--		pr_debug("calling cancel\n");
--		memset(&tmp, 0, sizeof(tmp));
--		tmp.obj = (u64)(unsigned long)kiocb->ki_obj.user;
--		tmp.data = kiocb->ki_user_data;
--		ret = cancel(kiocb, &tmp);
--		if (!ret) {
--			/* Cancellation succeeded -- copy the result
--			 * into the user's buffer.
--			 */
--			if (copy_to_user(result, &tmp, sizeof(tmp)))
--				ret = -EFAULT;
--		}
--	} else
--		ret = -EINVAL;
-+	if (!ret) {
-+		/* Cancellation succeeded -- copy the result
-+		 * into the user's buffer.
-+		 */
-+		if (copy_to_user(result, &res, sizeof(res)))
-+			ret = -EFAULT;
-+	}
- 
- 	put_ioctx(ctx);
- 
--- 
-1.7.10.4
+Acked-by: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+Though, in the future please cc: aio patches to the maintainers.  I'd
+have missed this if I wasn't sifting through lkml:
+
+$ ./scripts/get_maintainer.pl -f fs/aio.c
+Benjamin LaHaise <bcrl-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org> (supporter:AIO)
+Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> (maintainer:FILESYSTEMS (VFS...)
+linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org (open list:AIO)
+linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org (open list:FILESYSTEMS (VFS...)
+linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org (open list)
+
+- z
