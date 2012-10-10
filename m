@@ -1,69 +1,38 @@
-From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 5/5] aio: Refactor aio_read_evt, use cmxchg(), fix bug
-Date: Wed, 10 Oct 2012 14:43:15 -0700
-Message-ID: <20121010214315.GE6371@lenny.home.zabbo.net>
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: Re: [PATCH 2/5] aio: kiocb_cancel()
+Date: Wed, 10 Oct 2012 19:21:51 -0400
+Message-ID: <20121010232151.GC11468@thunk.org>
 References: <1349764760-21093-1-git-send-email-koverstreet@google.com>
- <1349764760-21093-5-git-send-email-koverstreet@google.com>
- <20121009183753.GP26187@lenny.home.zabbo.net>
- <20121009212724.GD29494@google.com>
- <20121009224703.GT26187@lenny.home.zabbo.net>
- <20121009225509.GA26835@google.com>
- <20121009231059.GV26187@lenny.home.zabbo.net>
- <20121010000600.GB26835@google.com>
- <20121010002634.GX26187@lenny.home.zabbo.net>
- <20121010004746.GF26835@google.com>
+ <1349764760-21093-2-git-send-email-koverstreet@google.com>
+ <20121009182625.GM26187@lenny.home.zabbo.net>
+ <20121009213700.GF29494@google.com>
+ <20121010110356.GA11468@thunk.org>
+ <20121010212051.GD6371@lenny.home.zabbo.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20121010004746.GF26835-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20121010212051.GD6371-fypN+1c5dIyjpB87vu3CluTW4wlIGRCZ@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
+To: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-> True. But that could be solved with a separate interface that either
-> doesn't use a context to submit a call synchronously, or uses an
-> implicit per thread context.
-
-Sure, but why bother if we can make the one submission interface fast
-enough to satisfy quick callers?  Less is more, and all that.
-
-> I don't have a _strong_ opinion there, but my intuition is that we
-> shouldn't be creating new types of handles without a good reason. I
-> don't think the annoyances are for the most part particular to file
-> descriptors, I think the tend to be applicable to handles in general and
-> at least with file descriptors they're known and solved.
-
-I strongly disagree.  That descriptors are an expensive limited
-resources is a perfectly good reason to not make them required to access
-the ring.
-
-> That would be awesome, though for it to be worthwhile there couldn't be
-> any kernel notion of a context at all and I'm not sure if that's
-> practical. But the idea hadn't occured to me before and I'm sure you've
-> thought about it more than I have... hrm.
+On Wed, Oct 10, 2012 at 02:20:51PM -0700, Zach Brown wrote:
 > 
-> Oh hey, that's what acall does :P
+> I sympathize, but the reality is that the current infrastructure
+> is very bad and no one is using it.
+> 
+> It's not like we're getting rid of the syscall.  I'll be behaving
+> exactly as it does today: returning the error code that indicates that
+> cancellation failed because it lost the race with completion.  Every
+> caller has to cope with that to use cancel safely.
 
-:)
+Yes, I realize it doesn't work today.  But hopefully we'll be able to
+reimplement it in a cleaner way.  That's why I said, I hope we don't
+give up on the functionality of aio_cancel --- not that I'm against
+removing what we currently have.
 
-> For completions though you really want the ringbuffer pinned... what do
-> you do about that?
+Cheers,
 
-I don't think the kernel has to mandate that, no.  The code has to deal
-with completions faulting, but they probably won't.  In acall it
-happened that completions always came from threads that could block so
-its coping mechanism was to just use put_user() :).
-
-If userspace wants them rings locked, they can mlock() the memory.
-
-Think about it from another angle: the current mechanism of creating an
-aio ring is a way to allocate pinned memory outside of the usual mlock
-accounting.  This could be abused, so aio grew an additional tunable to
-limit the number of total entries in rings in the system.
-
-By putting the ring in normal user memory we avoid that problem
-entirely.
-
-- z
+					- Ted
