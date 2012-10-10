@@ -1,104 +1,44 @@
 From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 5/5] aio: Refactor aio_read_evt, use cmxchg(), fix bug
-Date: Tue, 9 Oct 2012 17:47:46 -0700
-Message-ID: <20121010004746.GF26835@google.com>
+Subject: Re: [PATCH 4/5] aio: vmap ringbuffer
+Date: Tue, 9 Oct 2012 18:09:03 -0700
+Message-ID: <20121010010903.GC24174@moria.home.lan>
 References: <1349764760-21093-1-git-send-email-koverstreet@google.com>
- <1349764760-21093-5-git-send-email-koverstreet@google.com>
- <20121009183753.GP26187@lenny.home.zabbo.net>
- <20121009212724.GD29494@google.com>
- <20121009224703.GT26187@lenny.home.zabbo.net>
- <20121009225509.GA26835@google.com>
- <20121009231059.GV26187@lenny.home.zabbo.net>
- <20121010000600.GB26835@google.com>
- <20121010002634.GX26187@lenny.home.zabbo.net>
+ <1349764760-21093-4-git-send-email-koverstreet@google.com>
+ <20121009182949.GO26187@lenny.home.zabbo.net>
+ <20121009213111.GE29494@google.com>
+ <20121009223210.GR26187@lenny.home.zabbo.net>
+ <20121009224428.GH29494@google.com>
+ <20121009225836.GU26187@lenny.home.zabbo.net>
+ <20121010001630.GC26835@google.com>
+ <20121010003626.GY26187@lenny.home.zabbo.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20121010002634.GX26187-fypN+1c5dIyjpB87vu3CluTW4wlIGRCZ@public.gmane.org>
+In-Reply-To: <20121010003626.GY26187-fypN+1c5dIyjpB87vu3CluTW4wlIGRCZ@public.gmane.org>
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Oct 09, 2012 at 05:26:34PM -0700, Zach Brown wrote:
-> > The AIO ringbuffer stuff just annoys me more than most
+On Tue, Oct 09, 2012 at 05:36:26PM -0700, Zach Brown wrote:
+> > The only situation you have to worry about is when the ringbuffer fills
+> > up and stuff goes on the list, and then completions completely stop -
+> > this should be a rare enough situation that maybe we could just hack
+> > around it with a timer that gets flipped on when the list isn't empty.
 > 
-> Not more than everyone, though, I can personally promise you that :).
+> Right.  And this is when we hopefully realize that we're adding overhead
+> and complexity (how long's the timer?  always fire it?  MAKE IT STOP)
+> and are actually making the system worse, not better.
+
+Can still prototype it, and if it's that ugly... I throw away code all
+the time :P
+
+> > Also, for this to be an issue at all, _all_ the reaping would have to be
+> > done from userspace - since existing libaio doesn't do that, there may
+> > not be any code out there which triggers it.
 > 
-> > (it wasn't until
-> > the other day that I realized it was actually exported to userspace...
-> > what led to figuring that out was noticing aio_context_t was a ulong,
-> > and got truncated to 32 bits with a 32 bit program running on a 64 bit
-> > kernel. I'd been horribly misled by the code comments and the lack of
-> > documentation.) 
-> 
-> Yeah.  It's the userspace address of the mmaped ring.  This has annoyed
-> the process migration people who can't recreate the context in a new
-> kernel because there's no userspace interface to specify creation of a
-> context at a specific address.
+> And there may be.  We default to not breaking interfaces.  Seriously.
 
-Yeah I did finally figure that out - and a file descriptor that
-userspace then mmap()ed would solve that problem...
-
-> 
-> > But if we do have an explicit handle, I don't see why it shouldn't be a
-> > file descriptor.
-> 
-> Because they're expensive to create and destroy when compared to a
-> single system call.  Imagine that we're using waiting for a single
-> completion to implement a cheap one-off sync call.  Imagine it's a
-> buffered op which happens to hit the cache and is really quick.
-
-True. But that could be solved with a separate interface that either
-doesn't use a context to submit a call synchronously, or uses an
-implicit per thread context.
-
-> (And they're annoying to manage: libraries and O_CLOEXEC, running into
-> fd/file limit tunables, bleh.)
-
-I don't have a _strong_ opinion there, but my intuition is that we
-shouldn't be creating new types of handles without a good reason. I
-don't think the annoyances are for the most part particular to file
-descriptors, I think the tend to be applicable to handles in general and
-at least with file descriptors they're known and solved.
-
-Also, with a file descriptor it naturally works with an epoll event
-loop. (eventfd for aio is a hack).
-
-> If the 'completion context' is no more than a structure in userspace
-> memory then a lot of stuff just works.  Tasks can share it amongst
-> themselves as they see fit.  A trivial one-off sync call can just dump
-> it on the stack and point to it.  It doesn't have to be specifically
-> torn down on task exit.
-
-That would be awesome, though for it to be worthwhile there couldn't be
-any kernel notion of a context at all and I'm not sure if that's
-practical. But the idea hadn't occured to me before and I'm sure you've
-thought about it more than I have... hrm.
-
-Oh hey, that's what acall does :P
-
-For completions though you really want the ringbuffer pinned... what do
-you do about that?
-
-> > > And perhaps obviously, I'd start with the acall stuff :).  It was a lot
-> > > lighter.  We could talk about how to make it extensible without going
-> > > all the way to the generic packed variable size duplicating or not and
-> > > returning or not or.. attributes :).
-> > 
-> > Link? I haven't heard of acall before.
-> 
-> I linked to it after that giant silly comment earlier in the thread,
-> here it is again:
-> 
->   http://lwn.net/Articles/316806/
-
-Oh whoops, hadn't started reading yet - looking at it now :)
-
-> There's a mostly embarassing video of a jetlagged me giving that talk at
-> LCA kicking around.. ah, here:
-> 
->  http://mirror.linux.org.au/pub/linux.conf.au/2009/Thursday/131.ogg
-> 
-> - z
+All the more reason to think about it now so we don't screw up the next
+interfaces :)
