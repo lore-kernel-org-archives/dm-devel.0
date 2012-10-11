@@ -1,64 +1,126 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: linux-next oops
-Date: Wed, 10 Oct 2012 21:12:41 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1210102108250.13693@file.rdu.redhat.com>
-References: <20121010032726.35920801A1@viridian.itc.virginia.edu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 2/5] aio: kiocb_cancel()
+Date: Wed, 10 Oct 2012 19:41:53 -0700
+Message-ID: <20121011024152.GD24174@moria.home.lan>
+References: <1349764760-21093-1-git-send-email-koverstreet@google.com>
+ <1349764760-21093-2-git-send-email-koverstreet@google.com>
+ <20121009182625.GM26187@lenny.home.zabbo.net>
+ <20121009213700.GF29494@google.com>
+ <20121010110356.GA11468@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20121010032726.35920801A1@viridian.itc.virginia.edu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bill Pemberton <wfp5p@viridian.itc.virginia.edu>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20121010110356.GA11468-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-
-
-On Tue, 9 Oct 2012, Bill Pemberton wrote:
-
-> > I pulled linux-next, set up multipath and executed fsync() on it, and 
-> > there was no crash for me.
+On Wed, Oct 10, 2012 at 07:03:56AM -0400, Theodore Ts'o wrote:
+> On Tue, Oct 09, 2012 at 02:37:00PM -0700, Kent Overstreet wrote:
+> > > Honestly: I wouldn't bother.  Nothing of consequence uses cancel.
+> > > 
+> > > I have an RFC patch series that tears it out.  Let me polish that up
+> > > send it out, I'll cc: you.
 > > 
+> > Even better :)
+> > 
+> > I've been looking at aio locking the past few days, and I was getting
+> > ready to write something up about cancellation to the lists.
 > 
-> Ok, I've got two machines that won't boot with it.... it doesn't get
-> far enough to run anything.
+> I can definitely think of use cases (inside of Google) where we could
+> really use aio_cancel.  The issue is it's hard use it safely (i.e., we
+> need to know whether the file system has already extended the file
+> before we can know whether or not we can safely cancel the I/O).
 > 
-> -- 
-> Bill
+> > Short version, supporting cancellation without global sychronization is
+> > possible but it'd require help from the allocator.
+> 
+> Well, we would need some kind of flag to indicate whether cancellation
+> is possible, yes.  But if we're doing AIO to a raw disk, or we're
+> talking about a read request, we wouldn't need any help from the
+> file system's block allocator.
+> 
+> And maybe the current way of doing things isn't the best way.  But it
+> would be nice if we didn't completely give up on the functionality of
+> aio_cancel.
 
-Try this. In my original patch that I sent, I removed bio_alloc_bioset and 
-left __bio_clone. But meanwhile, Kent Overstreet sent another patch that 
-replaces both bio_alloc_bioset and __bio_clone with bio_clone_bioset. The 
-reason for this crash is incorrect resolution of this conflict - 
-bio_clone_bioset was removed (although my patch removed only 
-bio_alloc_bioset) and __bio_clone was not added back.
+I thought about this more, and I think ripping out cancellation is a bad
+idea in the long term too.
 
-Mikulas
+With what aio is capable of now (O_DIRECT), it's certainly arguable that
+cancellation doesn't give you much and isn't worth the hassle of
+implementing.
 
----
- drivers/md/dm.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+But, if we ever fix aio (and I certainly hope we do) and implement
+something capable of doing arbitrary IO asynchronously, then we really
+are going to need cancellation, because of io to sockets/pipes that can
+be blocked for an unbounded amount of time.
 
-Index: linux-next-copy/drivers/md/dm.c
-===================================================================
---- linux-next-copy.orig/drivers/md/dm.c	2012-10-11 02:55:34.000000000 +0200
-+++ linux-next-copy/drivers/md/dm.c	2012-10-11 02:55:58.000000000 +0200
-@@ -1160,7 +1160,7 @@ static void __issue_target_request(struc
- 	 * ci->bio->bi_max_vecs is BIO_INLINE_VECS anyway, for both flush
- 	 * and discard, so no need for concern about wasted bvec allocations.
- 	 */
--
-+	__bio_clone(clone, ci->bio);
- 	if (len) {
- 		clone->bi_sector = ci->sector;
- 		clone->bi_size = to_bytes(len);
+Even if it turns out programs don't ever need cancellation in practice,
+the real kicker is checkpoint/restore - for checkpoint/restore we've got
+to enumerate all the outstanding operations or wait for them to complete
+(for the ones that do complete in bounded time), and that's the hard
+part of cancellation right there.
+
+Zach might object here and point out that if we implement asynchronous
+operations with kernel threads, we can implement cancelling by just
+killing the thread. But this is only relevant if we _only_ implement
+asynchronous operations with threads in aio v2, and I personally think
+that's a lousy idea.
+
+The reason is there's a lot of things that need to be fixed with aio in
+aio v2, so aio v2 really needs to be a complete replacement for existing
+aio users. It won't be if we start using kernel threads where we weren't
+before - kernel threads are cheap but they aren't free, we'll regress on
+performance and that means the new interfaces probably won't get used at
+all by the existing users.
+
+This isn't a big deal - we can implement aio v2 as a generic async
+syscall mechanism, and then the default implementation for any given
+syscall will just be the thread pool stuff but use optimized async
+implementations for cases where it's available - this'll let us make use
+of much of the existing infrastructure.
+
+But it does mean we need a cancellation mechanism that isn't tied to
+threads - i.e. does basically what the existing aio cancellation does.
+
+So, IMO we should bite the bullet and do cancellation right now.
+
+Also, I don't think there's anything really terrible about the existing
+cancellation mechanism (unlike retrys, that code is... wtf), it's just
+problematic for locking/performance. But that's fixable.
+
+It is definitely possible to implement cancellation such that it doesn't
+cost anything when it's not being used, but we do need some help from
+the allocator.
+
+Say we had a way of iterating over all the slabs in the kiocb cache:
+if we pass a constructor to kmem_cache_create() we can guarantee that
+all the refcounts are initialized to 0. Combine that with
+SLAB_DESTROY_BY_RCU, and we can safely do a try_get_kiocb() when we're
+iterating over all the kiocbs looking for the one we want.
+
+The missing piece is a way to iterate over all those slabs, I haven't
+been able to find any exposed interface for that.
+
+If we could implement such a mechanism, that would be the way to go (and
+I don't think it'd be useful for just aio, this sort of thing comes up
+elsewhere. Anything that has to time out operations in particular). 
+
+The other option would be to use a simpler dedicated allocator - I have
+a simple fast percpu allocator I wrote awhile back for some driver code,
+that allocates out of a fixed sized array (I needed to be able to
+reference objects by a 16 bit id, i.e. index in the array). I could
+easily change that to allocate pages (i.e. slabs) lazily... then we'd
+have one of these allocator structs per kioctx so they'd get freed when
+the kioctx goes away and we'd have less to look through when we want to
+cancel something.
+
+This'd probably be the shortest path, but - while it's no slower than
+the existing slab allocators, it doesn't do numa allocation. I don't
+know how much that matters on in practice with objects this small.
+Besides that, adding another general purpose allocator would IMO be a
+little silly.
+
+Either way, IMO the right way to do it is with help from the allocator.
