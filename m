@@ -1,59 +1,38 @@
-From: wfp5p@viridian.itc.virginia.edu (Bill Pemberton)
-Subject: Re: linux-next oops
-Date: Thu, 11 Oct 2012 09:52:24 -0400
-Message-ID: <20121011135224.8E34380225@viridian.itc.virginia.edu>
-References: <Pine.LNX.4.64.1210102108250.13693@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 5/5] aio: Refactor aio_read_evt, use cmxchg(), fix bug
+Date: Thu, 11 Oct 2012 09:43:12 -0700
+Message-ID: <20121011164312.GD8768@lenny.home.zabbo.net>
+References: <20121009183753.GP26187@lenny.home.zabbo.net>
+ <20121009212724.GD29494@google.com>
+ <20121009224703.GT26187@lenny.home.zabbo.net>
+ <20121009225509.GA26835@google.com>
+ <20121009231059.GV26187@lenny.home.zabbo.net>
+ <20121010000600.GB26835@google.com>
+ <20121010002634.GX26187@lenny.home.zabbo.net>
+ <20121010004746.GF26835@google.com>
+ <20121010214315.GE6371@lenny.home.zabbo.net>
+ <20121011025102.GE24174@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1210102108250.13693@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20121011025102.GE24174-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
 List-Id: dm-devel.ids
 
-Mikulas Patocka writes:
->
-> Try this. In my original patch that I sent, I removed bio_alloc_bioset and 
-> left __bio_clone. But meanwhile, Kent Overstreet sent another patch that 
-> replaces both bio_alloc_bioset and __bio_clone with bio_clone_bioset. The 
-> reason for this crash is incorrect resolution of this conflict - 
-> bio_clone_bioset was removed (although my patch removed only 
-> bio_alloc_bioset) and __bio_clone was not added back.
-> 
-> Mikulas
-> 
-> ---
->  drivers/md/dm.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> Index: linux-next-copy/drivers/md/dm.c
-> ===================================================================
-> --- linux-next-copy.orig/drivers/md/dm.c	2012-10-11 02:55:34.000000000 +0200
-> +++ linux-next-copy/drivers/md/dm.c	2012-10-11 02:55:58.000000000 +0200
-> @@ -1160,7 +1160,7 @@ static void __issue_target_request(struc
->  	 * ci->bio->bi_max_vecs is BIO_INLINE_VECS anyway, for both flush
->  	 * and discard, so no need for concern about wasted bvec allocations.
->  	 */
-> -
-> +	__bio_clone(clone, ci->bio);
->  	if (len) {
->  		clone->bi_sector = ci->sector;
->  		clone->bi_size = to_bytes(len);
-> 
+> Yeah, but that means the completion has to be delivered from process
+> context. That's not what aio does today, and it'd be a real performance
+> regression.
 
+It'd only have to to complete from process context if it faults. The
+cheapest possible delivery mechanism is simple cpu stores.  In the vast
+majority of cases the ring will be resident and it'll be done.  In rare
+cases it could fall back to a deferred completion.  If apps can't
+stomach that latency and want to pay the overhead of pinning to remove
+that risk, they're welcome to do so.
 
-Yes, this fixes the crashes for me.
+That's my hope, anyway.
 
--- 
-Bill
+- z
