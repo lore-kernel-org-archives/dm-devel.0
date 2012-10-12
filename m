@@ -1,117 +1,81 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Remove _tio_cache
-Date: Fri, 12 Oct 2012 14:25:17 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1210121415380.3884@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Michael Zugelder <michael@zugelder.org>
+Subject: PROBLEM: [dm-crypt] read starvation during writeback
+Date: Fri, 12 Oct 2012 21:37:36 +0200
+Message-ID: <1350070656.2554.6.camel@vpcz1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Remove _tio_cache
+Hi
 
-Remove _tio_cache and use tio_pool only for request-based devices.
+this mail was originally only sent to the dm-crypt mailing list
+(dm-crypt@saout.de), but since it didn't exactly attract a lot of
+feedback, I'm resending it to reach a larger target audience.
 
-Since we moved dm_target_io to bio front pad, we no longer need _tio_cache.
-tio_pool is needed only for request-based devices.
+Please keep me in CC, since I'm not subscribed to the LKML.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+I'm having an issue reading data via dm-crypt when there is heavy
+writeback going on (i.e. copying large files or using dd). A single
+read takes anywhere from a few seconds to multiple minutes.
 
----
- drivers/md/dm.c |   27 ++++++++++-----------------
- 1 file changed, 10 insertions(+), 17 deletions(-)
+Testing setup:
+ * Fedora 17, stock 3.5.4-2.fc17 kernel and a self-compiled 3.6.1 kernel
+ * 320 GiB USB hard drive (sdb)
+ * dmsetup library version 1.02.74 (2012-03-06), driver version 4.23.0
+ * dm-crypt set up using cipher_null:
+   echo "0 $(blockdev --getsize /dev/sdb) crypt cipher_null - 0 /dev/sdb 0"|dmsetup create test
+ * seeker [1] to benchmark random read performance
+ * writeback induced by running 'dd if=/dev/zero of=$target bs=1M'
 
-Index: linux-3.6.1-fast/drivers/md/dm.c
-===================================================================
---- linux-3.6.1-fast.orig/drivers/md/dm.c	2012-10-12 19:39:04.000000000 +0200
-+++ linux-3.6.1-fast/drivers/md/dm.c	2012-10-12 20:17:23.000000000 +0200
-@@ -220,7 +220,6 @@ struct dm_md_mempools {
- #define RESERVED_BIO_BASED_IOS		16
- #define RESERVED_REQUEST_BASED_IOS	256
- static struct kmem_cache *_io_cache;
--static struct kmem_cache *_tio_cache;
- static struct kmem_cache *_rq_tio_cache;
- static struct kmem_cache *_rq_bio_info_cache;
- 
-@@ -233,14 +232,9 @@ static int __init local_init(void)
- 	if (!_io_cache)
- 		return r;
- 
--	/* allocate a slab for the target ios */
--	_tio_cache = KMEM_CACHE(dm_target_io, 0);
--	if (!_tio_cache)
--		goto out_free_io_cache;
--
- 	_rq_tio_cache = KMEM_CACHE(dm_rq_target_io, 0);
- 	if (!_rq_tio_cache)
--		goto out_free_tio_cache;
-+		goto out_free_io_cache;
- 
- 	_rq_bio_info_cache = KMEM_CACHE(dm_rq_clone_bio_info, 0);
- 	if (!_rq_bio_info_cache)
-@@ -266,8 +260,6 @@ out_free_rq_bio_info_cache:
- 	kmem_cache_destroy(_rq_bio_info_cache);
- out_free_rq_tio_cache:
- 	kmem_cache_destroy(_rq_tio_cache);
--out_free_tio_cache:
--	kmem_cache_destroy(_tio_cache);
- out_free_io_cache:
- 	kmem_cache_destroy(_io_cache);
- 
-@@ -278,7 +270,6 @@ static void local_exit(void)
- {
- 	kmem_cache_destroy(_rq_bio_info_cache);
- 	kmem_cache_destroy(_rq_tio_cache);
--	kmem_cache_destroy(_tio_cache);
- 	kmem_cache_destroy(_io_cache);
- 	unregister_blkdev(_major, _name);
- 	dm_uevent_exit();
-@@ -2008,7 +1999,7 @@ static void __bind_mempools(struct mappe
- {
- 	struct dm_md_mempools *p;
- 
--	if (md->io_pool && md->tio_pool && md->bs)
-+	if (md->io_pool && (md->tio_pool || dm_table_get_type(t) == DM_TYPE_BIO_BASED) && md->bs)
- 		/* the md already has necessary mempools */
- 		goto out;
- 
-@@ -2777,11 +2768,12 @@ struct dm_md_mempools *dm_alloc_md_mempo
- 	if (!pools->io_pool)
- 		goto free_pools_and_out;
- 
--	pools->tio_pool = (type == DM_TYPE_BIO_BASED) ?
--			  mempool_create_slab_pool(pool_size, _tio_cache) :
--			  mempool_create_slab_pool(pool_size, _rq_tio_cache);
--	if (!pools->tio_pool)
--		goto free_io_pool_and_out;
-+	pools->tio_pool = NULL;
-+	if (type == DM_TYPE_REQUEST_BASED) {
-+		pools->tio_pool = mempool_create_slab_pool(pool_size, _rq_tio_cache);
-+		if (!pools->tio_pool)
-+			goto free_io_pool_and_out;
-+	}
- 
- 	pools->bs = bioset_create(pool_size, (type == DM_TYPE_BIO_BASED) ?
- 		offsetof(struct dm_target_io, clone) : 0);
-@@ -2797,7 +2789,8 @@ free_bioset_and_out:
- 	bioset_free(pools->bs);
- 
- free_tio_pool_and_out:
--	mempool_destroy(pools->tio_pool);
-+	if (pools->tio_pool)
-+		mempool_destroy(pools->tio_pool);
- 
- free_io_pool_and_out:
- 	mempool_destroy(pools->io_pool);
+Raw device performance (idle):
+  55 seeks/second, 18.15 ms random access time
+
+dm-crypt performance (idle):
+  54 seeks/second, 18.33 ms random access time
+
+Raw device performance (during writeback):
+  49 seeks/second, 20.35 ms random access time
+
+dm-crypt performance (during writeback):
+  0 seeks/second, 3750.00 ms random access time
+  0 seeks/second, 30000.00 ms random access time
+  0 seeks/second, 30000.00 ms random access time
+  3 seeks/second, 297.03 ms random access time
+  47 seeks/second, 21.14 ms random access time
+  15 seeks/second, 64.24 ms random access time
+  0 seeks/second, 10000.00 ms random access time
+
+Sometimes it almost works, but most of the time, the device is
+completely unusable.
+
+I experimented a bit with the other device mapper targets, namely linear
+and stripe, but both worked completely fine. I also tried putting a
+linear mapping above dm-crypt, with no impact on performance. Comparing
+the content of the /sys/block/$DEV files of the linear mapping and
+dm-crypt, there are no differences beside the name, dev no, stats,
+uevent and inflight files.
+
+But the inflight counters seem to provide some interesting data. When
+writing to the raw device, there are 127--131 writes in flight and a
+single read (seeker seems to use a queue depth of 1). But in the
+dm-crypt case, there are about 160000--250000 writes in flight for the
+mapping device, with 127--300 on the raw device. There is also a single
+read but only at the dm-crypt device, the raw device stays at
+0 reads the whole time. The linear mapping, in contrast, has "only" 
+~3500--9000 writes in flight, and the reads actually reach the raw
+device.
+
+Any pointers would be appreciated, I haven't found much on the web about
+this issue.
+
+Keep up the good work.
+
+
+Michael
+
+[1] http://www.linuxinsight.com/files/seeker.c
