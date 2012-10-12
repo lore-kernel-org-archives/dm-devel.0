@@ -1,81 +1,76 @@
-From: Michael Zugelder <michael@zugelder.org>
-Subject: PROBLEM: [dm-crypt] read starvation during writeback
-Date: Fri, 12 Oct 2012 21:37:36 +0200
-Message-ID: <1350070656.2554.6.camel@vpcz1>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: PROBLEM: [dm-crypt] read starvation during writeback
+Date: Fri, 12 Oct 2012 22:34:19 +0200
+Message-ID: <50787ECB.1050803@gmail.com>
+References: <1350070656.2554.6.camel@vpcz1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1350070656.2554.6.camel@vpcz1>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: dm-devel@redhat.com
+To: Michael Zugelder <michael@zugelder.org>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, dm-crypt <dm-crypt@saout.de>
 List-Id: dm-devel.ids
 
-Hi
+On 10/12/2012 09:37 PM, Michael Zugelder wrote:
+> I'm having an issue reading data via dm-crypt when there is heavy
+> writeback going on (i.e. copying large files or using dd). A single
+> read takes anywhere from a few seconds to multiple minutes.
+> 
+> Testing setup:
+>  * Fedora 17, stock 3.5.4-2.fc17 kernel and a self-compiled 3.6.1 kernel
+>  * 320 GiB USB hard drive (sdb)
 
-this mail was originally only sent to the dm-crypt mailing list
-(dm-crypt@saout.de), but since it didn't exactly attract a lot of
-feedback, I'm resending it to reach a larger target audience.
+I guess that USB is the key factor here... I remember to have similar
+problem some time ago even without dmcrypt.
 
-Please keep me in CC, since I'm not subscribed to the LKML.
+Is it reproducible with the same kernel cfg but with internal disk?
 
-I'm having an issue reading data via dm-crypt when there is heavy
-writeback going on (i.e. copying large files or using dd). A single
-read takes anywhere from a few seconds to multiple minutes.
+You can also test completely fake underlying device,
+use device-mapper- zero target:
+dmsetup create dev_zero --table "0 <sectors size> zero"
+(All writes are dropped and all reads returns zero in this case.)
 
-Testing setup:
- * Fedora 17, stock 3.5.4-2.fc17 kernel and a self-compiled 3.6.1 kernel
- * 320 GiB USB hard drive (sdb)
- * dmsetup library version 1.02.74 (2012-03-06), driver version 4.23.0
- * dm-crypt set up using cipher_null:
-   echo "0 $(blockdev --getsize /dev/sdb) crypt cipher_null - 0 /dev/sdb 0"|dmsetup create test
- * seeker [1] to benchmark random read performance
- * writeback induced by running 'dd if=/dev/zero of=$target bs=1M'
+Is there any starvation with this setup? (It shouldn't.)
 
-Raw device performance (idle):
-  55 seeks/second, 18.15 ms random access time
+>  * dmsetup library version 1.02.74 (2012-03-06), driver version 4.23.0
+>  * dm-crypt set up using cipher_null:
+>    echo "0 $(blockdev --getsize /dev/sdb) crypt cipher_null - 0 /dev/sdb 0"|dmsetup create test
 
-dm-crypt performance (idle):
-  54 seeks/second, 18.33 ms random access time
+Btw you can use cryptsetup with cipher "null" to simplify
+(I added to cryptsetup to test exactly such scenarios).
 
-Raw device performance (during writeback):
-  49 seeks/second, 20.35 ms random access time
+So, it means that encryption is not the problem.
+The crypto_null will cause that there is no crypto operation
+(it is just plain data copy) but the remaining dmcrypt overhead remains
+exactly the same.
 
-dm-crypt performance (during writeback):
-  0 seeks/second, 3750.00 ms random access time
-  0 seeks/second, 30000.00 ms random access time
-  0 seeks/second, 30000.00 ms random access time
-  3 seeks/second, 297.03 ms random access time
-  47 seeks/second, 21.14 ms random access time
-  15 seeks/second, 64.24 ms random access time
-  0 seeks/second, 10000.00 ms random access time
+> * writeback induced by running 'dd if=/dev/zero of=$target bs=1M'
 
-Sometimes it almost works, but most of the time, the device is
-completely unusable.
+Any change if you use oflag=direct ? (iow using direct io)
 
-I experimented a bit with the other device mapper targets, namely linear
-and stripe, but both worked completely fine. I also tried putting a
-linear mapping above dm-crypt, with no impact on performance. Comparing
-the content of the /sys/block/$DEV files of the linear mapping and
-dm-crypt, there are no differences beside the name, dev no, stats,
-uevent and inflight files.
+> I experimented a bit with the other device mapper targets, namely linear
+> and stripe, but both worked completely fine. I also tried putting a
+> linear mapping above dm-crypt, with no impact on performance. Comparing
+> the content of the /sys/block/$DEV files of the linear mapping and
+> dm-crypt, there are no differences beside the name, dev no, stats,
+> uevent and inflight files.
 
-But the inflight counters seem to provide some interesting data. When
-writing to the raw device, there are 127--131 writes in flight and a
-single read (seeker seems to use a queue depth of 1). But in the
-dm-crypt case, there are about 160000--250000 writes in flight for the
-mapping device, with 127--300 on the raw device. There is also a single
-read but only at the dm-crypt device, the raw device stays at
-0 reads the whole time. The linear mapping, in contrast, has "only" 
-~3500--9000 writes in flight, and the reads actually reach the raw
-device.
+There is crucial difference between linear/stripe and dmcrypt:
+linear just remaps IO target device, dmcrypt queues operations
+(using kernel workqueue) and creates full bio clones.
+So comparison here is IMHO not much helpful.
 
-Any pointers would be appreciated, I haven't found much on the web about
-this issue.
+There are two internal dmcrypt queues, but I think that the problem
+is triggered by some combination with USB storage backend.
 
-Keep up the good work.
+> Any pointers would be appreciated, I haven't found much on the web about
+> this issue.
 
+Btw there was a proposed rewrite of internal dmcrypt queues, if you have time,
+you can try if it changes anything for your use case.
+Patches in dm-devel archive
+http://www.redhat.com/archives/dm-devel/2012-August/msg00210.html
 
-Michael
-
-[1] http://www.linuxinsight.com/files/seeker.c
+Milan
