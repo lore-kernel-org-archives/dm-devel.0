@@ -1,126 +1,130 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 11/26] raid10: Use bio_reset()
-Date: Mon, 15 Oct 2012 13:09:14 -0700
-Message-ID: <1350331769-14856-41-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v4 14/24] block: Add bio_copy_data()
+Date: Mon, 15 Oct 2012 13:08:48 -0700
+Message-ID: <1350331769-14856-15-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-More prep work for immutable bio vecs, mainly getting rid of references
-to bi_idx.
+This gets open coded quite a bit and it's tricky to get right, so make a
+generic version and convert some existing users over to it instead.
 
-bio_reset was being open coded in a few places. The one in sync_request
-was a bit nontrivial to convert, so could use some extra eyeballs.
-
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
 ---
- drivers/md/raid10.c | 31 +++++++++----------------------
- 1 file changed, 9 insertions(+), 22 deletions(-)
+ fs/bio.c            | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  2 ++
+ 2 files changed, 72 insertions(+)
 
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index f001c1b..6b83207 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1958,13 +1958,10 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 		 * First we need to fixup bv_offset, bv_len and
- 		 * bi_vecs, as the read request might have corrupted these
- 		 */
-+		bio_reset(tbio);
+diff --git a/fs/bio.c b/fs/bio.c
+index aeb74b8..d698f29d 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -827,6 +827,76 @@ void bio_advance(struct bio *bio, unsigned bytes)
+ }
+ EXPORT_SYMBOL(bio_advance);
+ 
++/**
++ * bio_copy_data - copy contents of data buffers from one chain of bios to
++ * another
++ * @src: source bio list
++ * @dst: destination bio list
++ *
++ * If @src and @dst are single bios, bi_next must be NULL - otherwise, treats
++ * @src and @dst as linked lists of bios.
++ *
++ * Stops when it reaches the end of either @src or @dst - that is, copies
++ * min(src->bi_size, dst->bi_size) bytes (or the equivalent for lists of bios).
++ */
++void bio_copy_data(struct bio *dst, struct bio *src)
++{
++	struct bio_vec *src_bv, *dst_bv;
++	unsigned src_offset, dst_offset, bytes;
++	void *src_p, *dst_p;
 +
- 		tbio->bi_vcnt = vcnt;
- 		tbio->bi_size = r10_bio->sectors << 9;
--		tbio->bi_idx = 0;
--		tbio->bi_phys_segments = 0;
--		tbio->bi_flags &= ~(BIO_POOL_MASK - 1);
--		tbio->bi_flags |= 1 << BIO_UPTODATE;
--		tbio->bi_next = NULL;
- 		tbio->bi_rw = WRITE;
- 		tbio->bi_private = r10_bio;
- 		tbio->bi_sector = r10_bio->devs[i].addr;
-@@ -2970,6 +2967,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 					}
- 				}
- 				bio = r10_bio->devs[0].bio;
-+				bio_reset(bio);
- 				bio->bi_next = biolist;
- 				biolist = bio;
- 				bio->bi_private = r10_bio;
-@@ -2994,6 +2992,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				rdev = mirror->rdev;
- 				if (!test_bit(In_sync, &rdev->flags)) {
- 					bio = r10_bio->devs[1].bio;
-+					bio_reset(bio);
- 					bio->bi_next = biolist;
- 					biolist = bio;
- 					bio->bi_private = r10_bio;
-@@ -3022,6 +3021,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				if (rdev == NULL || bio == NULL ||
- 				    test_bit(Faulty, &rdev->flags))
- 					break;
-+				bio_reset(bio);
- 				bio->bi_next = biolist;
- 				biolist = bio;
- 				bio->bi_private = r10_bio;
-@@ -3120,7 +3120,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 				r10_bio->devs[i].repl_bio->bi_end_io = NULL;
- 
- 			bio = r10_bio->devs[i].bio;
--			bio->bi_end_io = NULL;
-+			bio_reset(bio);
- 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
- 			if (conf->mirrors[d].rdev == NULL ||
- 			    test_bit(Faulty, &conf->mirrors[d].rdev->flags))
-@@ -3157,6 +3157,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 
- 			/* Need to set up for writing to the replacement */
- 			bio = r10_bio->devs[i].repl_bio;
-+			bio_reset(bio);
- 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
- 
- 			sector = r10_bio->devs[i].addr;
-@@ -3190,17 +3191,6 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr,
- 		}
- 	}
- 
--	for (bio = biolist; bio ; bio=bio->bi_next) {
--
--		bio->bi_flags &= ~(BIO_POOL_MASK - 1);
--		if (bio->bi_end_io)
--			bio->bi_flags |= 1 << BIO_UPTODATE;
--		bio->bi_vcnt = 0;
--		bio->bi_idx = 0;
--		bio->bi_phys_segments = 0;
--		bio->bi_size = 0;
--	}
--
- 	nr_sectors = 0;
- 	if (sector_nr + max_sync < max_sector)
- 		max_sector = sector_nr + max_sync;
-@@ -4253,17 +4243,14 @@ read_more:
- 		}
- 		if (!rdev2 || test_bit(Faulty, &rdev2->flags))
- 			continue;
++	src_bv = bio_iovec(src);
++	dst_bv = bio_iovec(dst);
 +
-+		bio_reset(b);
- 		b->bi_bdev = rdev2->bdev;
- 		b->bi_sector = r10_bio->devs[s/2].addr + rdev2->new_data_offset;
- 		b->bi_private = r10_bio;
- 		b->bi_end_io = end_reshape_write;
- 		b->bi_rw = WRITE;
--		b->bi_flags &= ~(BIO_POOL_MASK - 1);
--		b->bi_flags |= 1 << BIO_UPTODATE;
- 		b->bi_next = blist;
--		b->bi_vcnt = 0;
--		b->bi_idx = 0;
--		b->bi_size = 0;
- 		blist = b;
- 	}
++	src_offset = src_bv->bv_offset;
++	dst_offset = dst_bv->bv_offset;
++
++	while (1) {
++		if (src_offset == src_bv->bv_offset + src_bv->bv_len) {
++			src_bv++;
++			if (src_bv == bio_iovec_idx(src, src->bi_vcnt)) {
++				src = src->bi_next;
++				if (!src)
++					break;
++
++				src_bv = bio_iovec(src);
++			}
++
++			src_offset = src_bv->bv_offset;
++		}
++
++		if (dst_offset == dst_bv->bv_offset + dst_bv->bv_len) {
++			dst_bv++;
++			if (dst_bv == bio_iovec_idx(dst, dst->bi_vcnt)) {
++				dst = dst->bi_next;
++				if (!dst)
++					break;
++
++				dst_bv = bio_iovec(dst);
++			}
++
++			dst_offset = dst_bv->bv_offset;
++		}
++
++		bytes = min(dst_bv->bv_offset + dst_bv->bv_len - dst_offset,
++			    src_bv->bv_offset + src_bv->bv_len - src_offset);
++
++		src_p = kmap_atomic(src_bv->bv_page);
++		dst_p = kmap_atomic(dst_bv->bv_page);
++
++		memcpy(dst_p + dst_bv->bv_offset,
++		       src_p + src_bv->bv_offset,
++		       bytes);
++
++		kunmap_atomic(dst_p);
++		kunmap_atomic(src_p);
++
++		src_offset += bytes;
++		dst_offset += bytes;
++	}
++}
++EXPORT_SYMBOL(bio_copy_data);
++
+ struct bio_map_data {
+ 	struct bio_vec *iovecs;
+ 	struct sg_iovec *sgvecs;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index b20a9cd..90d36c6 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -286,6 +286,8 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
+ }
+ #endif
  
++extern void bio_copy_data(struct bio *dst, struct bio *src);
++
+ extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
+ 				 unsigned long, unsigned int, int, gfp_t);
+ extern struct bio *bio_copy_user_iov(struct request_queue *,
 -- 
 1.7.12
