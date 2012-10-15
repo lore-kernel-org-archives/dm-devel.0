@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 04/26] md: Convert md_trim_bio() to use bio_advance()
-Date: Mon, 15 Oct 2012 13:09:07 -0700
-Message-ID: <1350331769-14856-34-git-send-email-koverstreet@google.com>
+Subject: [PATCH v2 15/26] block: Add bio_copy_data()
+Date: Mon, 15 Oct 2012 13:09:18 -0700
+Message-ID: <1350331769-14856-45-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
@@ -10,47 +10,109 @@ To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.
 Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de
 List-Id: dm-devel.ids
 
+This gets open coded quite a bit and it's tricky to get right, so make a
+generic version and convert some existing users over to it instead.
+
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: NeilBrown <neilb@suse.de>
 ---
- drivers/md/md.c | 19 +++++--------------
- 1 file changed, 5 insertions(+), 14 deletions(-)
+ fs/bio.c            | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  2 ++
+ 2 files changed, 72 insertions(+)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 7a2b079..51ce48c 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -190,25 +190,16 @@ void md_trim_bio(struct bio *bio, int offset, int size)
- 	struct bio_vec *bvec;
- 	int sofar = 0;
+diff --git a/fs/bio.c b/fs/bio.c
+index 1342a16..7fb9f4e 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -827,6 +827,76 @@ void bio_advance(struct bio *bio, unsigned bytes)
+ }
+ EXPORT_SYMBOL(bio_advance);
  
--	size <<= 9;
- 	if (offset == 0 && size == bio->bi_size)
- 		return;
- 
--	bio->bi_sector += offset;
--	bio->bi_size = size;
--	offset <<= 9;
- 	clear_bit(BIO_SEG_VALID, &bio->bi_flags);
- 
--	while (bio->bi_idx < bio->bi_vcnt &&
--	       bio->bi_io_vec[bio->bi_idx].bv_len <= offset) {
--		/* remove this whole bio_vec */
--		offset -= bio->bi_io_vec[bio->bi_idx].bv_len;
--		bio->bi_idx++;
--	}
--	if (bio->bi_idx < bio->bi_vcnt) {
--		bio->bi_io_vec[bio->bi_idx].bv_offset += offset;
--		bio->bi_io_vec[bio->bi_idx].bv_len -= offset;
--	}
-+	bio_advance(bio, offset << 9);
++/**
++ * bio_copy_data - copy contents of data buffers from one chain of bios to
++ * another
++ * @src: source bio list
++ * @dst: destination bio list
++ *
++ * If @src and @dst are single bios, bi_next must be NULL - otherwise, treats
++ * @src and @dst as linked lists of bios.
++ *
++ * Stops when it reaches the end of either @src or @dst - that is, copies
++ * min(src->bi_size, dst->bi_size) bytes (or the equivalent for lists of bios).
++ */
++void bio_copy_data(struct bio *dst, struct bio *src)
++{
++	struct bio_vec *src_bv, *dst_bv;
++	unsigned src_offset, dst_offset, bytes;
++	void *src_p, *dst_p;
 +
-+	size <<= 9;
-+	bio->bi_size = size;
++	src_bv = bio_iovec(src);
++	dst_bv = bio_iovec(dst);
 +
- 	/* avoid any complications with bi_idx being non-zero*/
- 	if (bio->bi_idx) {
- 		memmove(bio->bi_io_vec, bio->bi_io_vec+bio->bi_idx,
++	src_offset = src_bv->bv_offset;
++	dst_offset = dst_bv->bv_offset;
++
++	while (1) {
++		if (src_offset == src_bv->bv_offset + src_bv->bv_len) {
++			src_bv++;
++			if (src_bv == bio_iovec_idx(src, src->bi_vcnt)) {
++				src = src->bi_next;
++				if (!src)
++					break;
++
++				src_bv = bio_iovec(src);
++			}
++
++			src_offset = src_bv->bv_offset;
++		}
++
++		if (dst_offset == dst_bv->bv_offset + dst_bv->bv_len) {
++			dst_bv++;
++			if (dst_bv == bio_iovec_idx(dst, dst->bi_vcnt)) {
++				dst = dst->bi_next;
++				if (!dst)
++					break;
++
++				dst_bv = bio_iovec(dst);
++			}
++
++			dst_offset = dst_bv->bv_offset;
++		}
++
++		bytes = min(dst_bv->bv_offset + dst_bv->bv_len - dst_offset,
++			    src_bv->bv_offset + src_bv->bv_len - src_offset);
++
++		src_p = kmap_atomic(src_bv->bv_page);
++		dst_p = kmap_atomic(dst_bv->bv_page);
++
++		memcpy(dst_p + dst_bv->bv_offset,
++		       src_p + src_bv->bv_offset,
++		       bytes);
++
++		kunmap_atomic(dst_p);
++		kunmap_atomic(src_p);
++
++		src_offset += bytes;
++		dst_offset += bytes;
++	}
++}
++EXPORT_SYMBOL(bio_copy_data);
++
+ struct bio_map_data {
+ 	struct bio_vec *iovecs;
+ 	struct sg_iovec *sgvecs;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 949c48a..92015ce 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -286,6 +286,8 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
+ }
+ #endif
+ 
++extern void bio_copy_data(struct bio *dst, struct bio *src);
++
+ extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
+ 				 unsigned long, unsigned int, int, gfp_t);
+ extern struct bio *bio_copy_user_iov(struct request_queue *,
 -- 
 1.7.12
