@@ -1,52 +1,149 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v4 16/24] pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
-Date: Mon, 15 Oct 2012 13:08:50 -0700
-Message-ID: <1350331769-14856-17-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v4 09/24] block: Add submit_bio_wait(), remove from md
+Date: Mon, 15 Oct 2012 13:08:43 -0700
+Message-ID: <1350331769-14856-10-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com, Jiri Kosina <jkosina@suse.cz>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-In the short term this'll help with code auditing, and if this code ever
-gets used now it's converted :)
+Random cleanup - this code was duplicated and it's not really specific
+to md.
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jiri Kosina <jkosina@suse.cz>
+Also added the ability to return the actual error code.
+
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- drivers/block/pktcdvd.c | 17 ++++++++---------
- 1 file changed, 8 insertions(+), 9 deletions(-)
+ drivers/md/raid1.c  | 19 -------------------
+ drivers/md/raid10.c | 19 -------------------
+ fs/bio.c            | 36 ++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  1 +
+ 4 files changed, 37 insertions(+), 38 deletions(-)
 
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 783c96c..1119042 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -1156,16 +1156,15 @@ static int pkt_start_recovery(struct packet_data *pkt)
- 	new_sector = new_block * (CD_FRAMESIZE >> 9);
- 	pkt->sector = new_sector;
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index deff0cd..28f506a 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -2048,25 +2048,6 @@ static void fix_read_error(struct r1conf *conf, int read_disk,
+ 	}
+ }
  
-+	bio_reset(pkt->bio);
-+	pkt->bio->bi_bdev = pd->bdev;
-+	pkt->bio->bi_rw = REQ_WRITE;
- 	pkt->bio->bi_sector = new_sector;
--	pkt->bio->bi_next = NULL;
--	pkt->bio->bi_flags = 1 << BIO_UPTODATE;
--	pkt->bio->bi_idx = 0;
+-static void bi_complete(struct bio *bio, int error)
+-{
+-	complete((struct completion *)bio->bi_private);
+-}
 -
--	BUG_ON(pkt->bio->bi_rw != REQ_WRITE);
--	BUG_ON(pkt->bio->bi_vcnt != pkt->frames);
--	BUG_ON(pkt->bio->bi_size != pkt->frames * CD_FRAMESIZE);
--	BUG_ON(pkt->bio->bi_end_io != pkt_end_io_packet_write);
--	BUG_ON(pkt->bio->bi_private != pkt);
-+	pkt->bio->bi_size = pkt->frames * CD_FRAMESIZE;
-+	pkt->bio->bi_vcnt = pkt->frames;
-+
-+	pkt->bio->bi_end_io = pkt_end_io_packet_write;
-+	pkt->bio->bi_private = pkt;
+-static int submit_bio_wait(int rw, struct bio *bio)
+-{
+-	struct completion event;
+-	rw |= REQ_SYNC;
+-
+-	init_completion(&event);
+-	bio->bi_private = &event;
+-	bio->bi_end_io = bi_complete;
+-	submit_bio(rw, bio);
+-	wait_for_completion(&event);
+-
+-	return test_bit(BIO_UPTODATE, &bio->bi_flags);
+-}
+-
+ static int narrow_write_error(struct r1bio *r1_bio, int i)
+ {
+ 	struct mddev *mddev = r1_bio->mddev;
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 6d06d83..f001c1b 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -2410,25 +2410,6 @@ static void fix_read_error(struct r10conf *conf, struct mddev *mddev, struct r10
+ 	}
+ }
  
- 	drop_super(sb);
- 	return 1;
+-static void bi_complete(struct bio *bio, int error)
+-{
+-	complete((struct completion *)bio->bi_private);
+-}
+-
+-static int submit_bio_wait(int rw, struct bio *bio)
+-{
+-	struct completion event;
+-	rw |= REQ_SYNC;
+-
+-	init_completion(&event);
+-	bio->bi_private = &event;
+-	bio->bi_end_io = bi_complete;
+-	submit_bio(rw, bio);
+-	wait_for_completion(&event);
+-
+-	return test_bit(BIO_UPTODATE, &bio->bi_flags);
+-}
+-
+ static int narrow_write_error(struct r10bio *r10_bio, int i)
+ {
+ 	struct bio *bio = r10_bio->master_bio;
+diff --git a/fs/bio.c b/fs/bio.c
+index 4ae3382..aeb74b8 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -750,6 +750,42 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
+ }
+ EXPORT_SYMBOL(bio_add_page);
+ 
++struct submit_bio_ret {
++	struct completion event;
++	int error;
++};
++
++static void submit_bio_wait_endio(struct bio *bio, int error)
++{
++	struct submit_bio_ret *ret = bio->bi_private;
++
++	ret->error = error;
++	complete(&ret->event);
++}
++
++/**
++ * submit_bio_wait - submit a bio, and wait until it completes
++ * @rw: whether to %READ or %WRITE, or maybe to %READA (read ahead)
++ * @bio: The &struct bio which describes the I/O
++ *
++ * Simple wrapper around submit_bio(). Returns 0 on success, or the error from
++ * bio_endio() on failure.
++ */
++int submit_bio_wait(int rw, struct bio *bio)
++{
++	struct submit_bio_ret ret;
++
++	rw |= REQ_SYNC;
++	init_completion(&ret.event);
++	bio->bi_private = &ret;
++	bio->bi_end_io = submit_bio_wait_endio;
++	submit_bio(rw, bio);
++	wait_for_completion(&ret.event);
++
++	return ret.error;
++}
++EXPORT_SYMBOL(submit_bio_wait);
++
+ /**
+  * bio_advance - increment/complete a bio by some number of bytes
+  * @bio:	bio to advance
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 20507eb..b20a9cd 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -249,6 +249,7 @@ extern void bio_endio(struct bio *, int);
+ struct request_queue;
+ extern int bio_phys_segments(struct request_queue *, struct bio *);
+ 
++extern int submit_bio_wait(int rw, struct bio *bio);
+ extern void bio_advance(struct bio *, unsigned);
+ 
+ extern void bio_init(struct bio *);
 -- 
 1.7.12
