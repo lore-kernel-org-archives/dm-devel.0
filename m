@@ -1,77 +1,85 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 24/26] block: Add an explicit bio flag for bios that own their bvec
-Date: Mon, 15 Oct 2012 13:09:27 -0700
-Message-ID: <1350331769-14856-54-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v2 12/26] raid1: use bio_reset()
+Date: Mon, 15 Oct 2012 13:09:15 -0700
+Message-ID: <1350331769-14856-42-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>
 List-Id: dm-devel.ids
 
-This is for the new bio splitting code. When we split a bio, if the
-split occured on a bvec boundry we reuse the bvec for the new bio. But
-that means bio_free() can't free it, hence the explicit flag.
+I couldn't figure out what sbio->bi_end_io in process_checks() was
+supposed to be, so I took the easy way out.
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
+CC: NeilBrown <neilb@suse.de>
 ---
- fs/bio.c                  | 4 +++-
- include/linux/bio.h       | 5 -----
- include/linux/blk_types.h | 1 +
- 3 files changed, 4 insertions(+), 6 deletions(-)
+ drivers/md/raid1.c | 22 +++++-----------------
+ 1 file changed, 5 insertions(+), 17 deletions(-)
 
-diff --git a/fs/bio.c b/fs/bio.c
-index 65e6eac..5e91e36 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -250,7 +250,7 @@ static void bio_free(struct bio *bio)
- 	__bio_free(bio);
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index ee85154..bd3e3b9 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1835,6 +1835,7 @@ static int process_checks(struct r1bio *r1_bio)
+ 	int primary;
+ 	int i;
+ 	int vcnt;
++	bio_end_io_t *bi_end_io;
  
- 	if (bs) {
--		if (bio_has_allocated_vec(bio))
-+		if (bio_flagged(bio, BIO_OWNS_VEC))
- 			bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
- 
- 		/*
-@@ -449,6 +449,8 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- 
- 		if (unlikely(!bvl))
- 			goto err_free;
+ 	for (primary = 0; primary < conf->raid_disks * 2; primary++)
+ 		if (r1_bio->bios[primary]->bi_end_io == end_sync_read &&
+@@ -1876,13 +1877,11 @@ static int process_checks(struct r1bio *r1_bio)
+ 			continue;
+ 		}
+ 		/* fixup the bio for reuse */
++		bi_end_io = sbio->bi_end_io;
++		bio_reset(sbio);
 +
-+		bio->bi_flags |= 1 << BIO_OWNS_VEC;
- 	} else if (nr_iovecs) {
- 		bvl = bio->bi_inline_vecs;
- 	}
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index bd45154..edd66f3 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -85,11 +85,6 @@ static inline void *bio_data(struct bio *bio)
- 	return NULL;
- }
- 
--static inline int bio_has_allocated_vec(struct bio *bio)
--{
--	return bio->bi_io_vec && bio->bi_io_vec != bio->bi_inline_vecs;
--}
+ 		sbio->bi_vcnt = vcnt;
+ 		sbio->bi_size = r1_bio->sectors << 9;
+-		sbio->bi_idx = 0;
+-		sbio->bi_phys_segments = 0;
+-		sbio->bi_flags &= ~(BIO_POOL_MASK - 1);
+-		sbio->bi_flags |= 1 << BIO_UPTODATE;
+-		sbio->bi_next = NULL;
+ 		sbio->bi_sector = r1_bio->sector +
+ 			conf->mirrors[i].rdev->data_offset;
+ 		sbio->bi_bdev = conf->mirrors[i].rdev->bdev;
+@@ -2426,18 +2425,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr, int *skipp
+ 	for (i = 0; i < conf->raid_disks * 2; i++) {
+ 		struct md_rdev *rdev;
+ 		bio = r1_bio->bios[i];
 -
- /*
-  * will die
-  */
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 3eefbb2..e9375cf 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -117,6 +117,7 @@ struct bio {
-  * BIO_POOL_IDX()
-  */
- #define BIO_RESET_BITS	12
-+#define BIO_OWNS_VEC	12	/* bio_free() should free bvec */
+-		/* take from bio_init */
+-		bio->bi_next = NULL;
+-		bio->bi_flags &= ~(BIO_POOL_MASK-1);
+-		bio->bi_flags |= 1 << BIO_UPTODATE;
+-		bio->bi_rw = READ;
+-		bio->bi_vcnt = 0;
+-		bio->bi_idx = 0;
+-		bio->bi_phys_segments = 0;
+-		bio->bi_size = 0;
+-		bio->bi_end_io = NULL;
+-		bio->bi_private = NULL;
++		bio_reset(bio);
  
- #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
- 
+ 		rdev = rcu_dereference(conf->mirrors[i].rdev);
+ 		if (rdev == NULL ||
 -- 
 1.7.12
