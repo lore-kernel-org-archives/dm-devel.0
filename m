@@ -1,118 +1,60 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 15/26] block: Add bio_copy_data()
-Date: Mon, 15 Oct 2012 13:09:18 -0700
-Message-ID: <1350331769-14856-45-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 25/26] bio-integrity: Add explicit field for owner of bip_buf
+Date: Mon, 15 Oct 2012 13:09:28 -0700
+Message-ID: <1350331769-14856-55-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-This gets open coded quite a bit and it's tricky to get right, so make a
-generic version and convert some existing users over to it instead.
+This was the only real user of BIO_CLONED, which didn't have very clear
+semantics. Convert to its own flag so we can get rid of BIO_CLONED.
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+CC: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 ---
- fs/bio.c            | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/bio.h |  2 ++
- 2 files changed, 72 insertions(+)
+ fs/bio-integrity.c  | 5 ++---
+ include/linux/bio.h | 1 +
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/fs/bio.c b/fs/bio.c
-index 1342a16..7fb9f4e 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -827,6 +827,76 @@ void bio_advance(struct bio *bio, unsigned bytes)
- }
- EXPORT_SYMBOL(bio_advance);
+diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
+index e8555a5..462a131 100644
+--- a/fs/bio-integrity.c
++++ b/fs/bio-integrity.c
+@@ -94,9 +94,7 @@ void bio_integrity_free(struct bio *bio)
+ 	struct bio_integrity_payload *bip = bio->bi_integrity;
+ 	struct bio_set *bs = bio->bi_pool;
  
-+/**
-+ * bio_copy_data - copy contents of data buffers from one chain of bios to
-+ * another
-+ * @src: source bio list
-+ * @dst: destination bio list
-+ *
-+ * If @src and @dst are single bios, bi_next must be NULL - otherwise, treats
-+ * @src and @dst as linked lists of bios.
-+ *
-+ * Stops when it reaches the end of either @src or @dst - that is, copies
-+ * min(src->bi_size, dst->bi_size) bytes (or the equivalent for lists of bios).
-+ */
-+void bio_copy_data(struct bio *dst, struct bio *src)
-+{
-+	struct bio_vec *src_bv, *dst_bv;
-+	unsigned src_offset, dst_offset, bytes;
-+	void *src_p, *dst_p;
-+
-+	src_bv = bio_iovec(src);
-+	dst_bv = bio_iovec(dst);
-+
-+	src_offset = src_bv->bv_offset;
-+	dst_offset = dst_bv->bv_offset;
-+
-+	while (1) {
-+		if (src_offset == src_bv->bv_offset + src_bv->bv_len) {
-+			src_bv++;
-+			if (src_bv == bio_iovec_idx(src, src->bi_vcnt)) {
-+				src = src->bi_next;
-+				if (!src)
-+					break;
-+
-+				src_bv = bio_iovec(src);
-+			}
-+
-+			src_offset = src_bv->bv_offset;
-+		}
-+
-+		if (dst_offset == dst_bv->bv_offset + dst_bv->bv_len) {
-+			dst_bv++;
-+			if (dst_bv == bio_iovec_idx(dst, dst->bi_vcnt)) {
-+				dst = dst->bi_next;
-+				if (!dst)
-+					break;
-+
-+				dst_bv = bio_iovec(dst);
-+			}
-+
-+			dst_offset = dst_bv->bv_offset;
-+		}
-+
-+		bytes = min(dst_bv->bv_offset + dst_bv->bv_len - dst_offset,
-+			    src_bv->bv_offset + src_bv->bv_len - src_offset);
-+
-+		src_p = kmap_atomic(src_bv->bv_page);
-+		dst_p = kmap_atomic(dst_bv->bv_page);
-+
-+		memcpy(dst_p + dst_bv->bv_offset,
-+		       src_p + src_bv->bv_offset,
-+		       bytes);
-+
-+		kunmap_atomic(dst_p);
-+		kunmap_atomic(src_p);
-+
-+		src_offset += bytes;
-+		dst_offset += bytes;
-+	}
-+}
-+EXPORT_SYMBOL(bio_copy_data);
-+
- struct bio_map_data {
- 	struct bio_vec *iovecs;
- 	struct sg_iovec *sgvecs;
+-	/* A cloned bio doesn't own the integrity metadata */
+-	if (!bio_flagged(bio, BIO_CLONED) && !bio_flagged(bio, BIO_FS_INTEGRITY)
+-	    && bip->bip_buf != NULL)
++	if (bip->bip_owns_buf)
+ 		kfree(bip->bip_buf);
+ 
+ 	if (bs) {
+@@ -382,6 +380,7 @@ int bio_integrity_prep(struct bio *bio)
+ 		return -EIO;
+ 	}
+ 
++	bip->bip_owns_buf = 1;
+ 	bip->bip_buf = buf;
+ 	bip->bip_size = len;
+ 	bip->bip_sector = bio->bi_sector;
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 949c48a..92015ce 100644
+index edd66f3..f429d0f 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -286,6 +286,8 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
- }
- #endif
+@@ -178,6 +178,7 @@ struct bio_integrity_payload {
+ 	unsigned short		bip_slab;	/* slab the bip came from */
+ 	unsigned short		bip_vcnt;	/* # of integrity bio_vecs */
+ 	unsigned short		bip_idx;	/* current bip_vec index */
++	unsigned		bip_owns_buf:1;	/* should free bip_buf */
  
-+extern void bio_copy_data(struct bio *dst, struct bio *src);
-+
- extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
- 				 unsigned long, unsigned int, int, gfp_t);
- extern struct bio *bio_copy_user_iov(struct request_queue *,
+ 	struct work_struct	bip_work;	/* I/O completion */
+ 
 -- 
 1.7.12
