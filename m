@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 13/26] raid5: use bio_reset()
-Date: Mon, 15 Oct 2012 13:09:16 -0700
-Message-ID: <1350331769-14856-43-git-send-email-koverstreet@google.com>
+Subject: [PATCH v4 11/24] raid1: use bio_reset()
+Date: Mon, 15 Oct 2012 13:08:45 -0700
+Message-ID: <1350331769-14856-12-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,93 +19,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>
+Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
 List-Id: dm-devel.ids
-
-Had to shuffle the code around a bit (where bi_rw and bi_end_io were
-set), but shouldn't really be anything tricky here
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
 CC: NeilBrown <neilb@suse.de>
 ---
- drivers/md/raid5.c | 28 ++++++++++++++--------------
- 1 file changed, 14 insertions(+), 14 deletions(-)
+ drivers/md/raid1.c | 24 ++++++------------------
+ 1 file changed, 6 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 7c19dbe..ebe43f7 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -561,14 +561,6 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
- 		bi = &sh->dev[i].req;
- 		rbi = &sh->dev[i].rreq; /* For writing to replacement */
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 28f506a..4614b9e 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1851,7 +1851,7 @@ static int process_checks(struct r1bio *r1_bio)
+ 		struct bio *sbio = r1_bio->bios[i];
+ 		int size;
  
--		bi->bi_rw = rw;
--		rbi->bi_rw = rw;
--		if (rw & WRITE) {
--			bi->bi_end_io = raid5_end_write_request;
--			rbi->bi_end_io = raid5_end_write_request;
--		} else
--			bi->bi_end_io = raid5_end_read_request;
--
- 		rcu_read_lock();
- 		rrdev = rcu_dereference(conf->disks[i].replacement);
- 		smp_mb(); /* Ensure that if rrdev is NULL, rdev won't be */
-@@ -643,7 +635,14 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
+-		if (r1_bio->bios[i]->bi_end_io != end_sync_read)
++		if (sbio->bi_end_io != end_sync_read)
+ 			continue;
  
- 			set_bit(STRIPE_IO_STARTED, &sh->state);
- 
-+			bio_reset(bi);
- 			bi->bi_bdev = rdev->bdev;
-+			bi->bi_rw = rw;
-+			bi->bi_end_io = (rw & WRITE)
-+				? raid5_end_write_request
-+				: raid5_end_read_request;
-+			bi->bi_private = sh;
-+
- 			pr_debug("%s: for %llu schedule op %ld on disc %d\n",
- 				__func__, (unsigned long long)sh->sector,
- 				bi->bi_rw, i);
-@@ -657,12 +656,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
- 			if (test_bit(R5_ReadNoMerge, &sh->dev[i].flags))
- 				bi->bi_rw |= REQ_FLUSH;
- 
--			bi->bi_flags = 1 << BIO_UPTODATE;
--			bi->bi_idx = 0;
- 			bi->bi_io_vec[0].bv_len = STRIPE_SIZE;
- 			bi->bi_io_vec[0].bv_offset = 0;
- 			bi->bi_size = STRIPE_SIZE;
--			bi->bi_next = NULL;
- 			if (rrdev)
- 				set_bit(R5_DOUBLE_LOCKED, &sh->dev[i].flags);
- 			generic_make_request(bi);
-@@ -674,7 +670,14 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
- 
- 			set_bit(STRIPE_IO_STARTED, &sh->state);
- 
-+			bio_reset(rbi);
- 			rbi->bi_bdev = rrdev->bdev;
-+			rbi->bi_rw = rw;
-+			rbi->bi_end_io = (rw & WRITE)
-+				? raid5_end_write_request
-+				: raid5_end_read_request;
-+			rbi->bi_private = sh;
-+
- 			pr_debug("%s: for %llu schedule op %ld on "
- 				 "replacement disc %d\n",
- 				__func__, (unsigned long long)sh->sector,
-@@ -686,12 +689,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
- 			else
- 				rbi->bi_sector = (sh->sector
- 						  + rrdev->data_offset);
--			rbi->bi_flags = 1 << BIO_UPTODATE;
--			rbi->bi_idx = 0;
- 			rbi->bi_io_vec[0].bv_len = STRIPE_SIZE;
- 			rbi->bi_io_vec[0].bv_offset = 0;
- 			rbi->bi_size = STRIPE_SIZE;
--			rbi->bi_next = NULL;
- 			generic_make_request(rbi);
+ 		if (test_bit(BIO_UPTODATE, &sbio->bi_flags)) {
+@@ -1876,16 +1876,15 @@ static int process_checks(struct r1bio *r1_bio)
+ 			continue;
  		}
- 		if (!rdev && !rrdev) {
+ 		/* fixup the bio for reuse */
++		bio_reset(sbio);
+ 		sbio->bi_vcnt = vcnt;
+ 		sbio->bi_size = r1_bio->sectors << 9;
+-		sbio->bi_idx = 0;
+-		sbio->bi_phys_segments = 0;
+-		sbio->bi_flags &= ~(BIO_POOL_MASK - 1);
+-		sbio->bi_flags |= 1 << BIO_UPTODATE;
+-		sbio->bi_next = NULL;
+ 		sbio->bi_sector = r1_bio->sector +
+ 			conf->mirrors[i].rdev->data_offset;
+ 		sbio->bi_bdev = conf->mirrors[i].rdev->bdev;
++		sbio->bi_end_io = end_sync_read;
++		sbio->bi_private = r1_bio;
++
+ 		size = sbio->bi_size;
+ 		for (j = 0; j < vcnt ; j++) {
+ 			struct bio_vec *bi;
+@@ -2426,18 +2425,7 @@ static sector_t sync_request(struct mddev *mddev, sector_t sector_nr, int *skipp
+ 	for (i = 0; i < conf->raid_disks * 2; i++) {
+ 		struct md_rdev *rdev;
+ 		bio = r1_bio->bios[i];
+-
+-		/* take from bio_init */
+-		bio->bi_next = NULL;
+-		bio->bi_flags &= ~(BIO_POOL_MASK-1);
+-		bio->bi_flags |= 1 << BIO_UPTODATE;
+-		bio->bi_rw = READ;
+-		bio->bi_vcnt = 0;
+-		bio->bi_idx = 0;
+-		bio->bi_phys_segments = 0;
+-		bio->bi_size = 0;
+-		bio->bi_end_io = NULL;
+-		bio->bi_private = NULL;
++		bio_reset(bio);
+ 
+ 		rdev = rcu_dereference(conf->mirrors[i].rdev);
+ 		if (rdev == NULL ||
 -- 
 1.7.12
