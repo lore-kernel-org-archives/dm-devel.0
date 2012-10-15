@@ -1,52 +1,142 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 17/26] pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
-Date: Mon, 15 Oct 2012 13:09:20 -0700
-Message-ID: <1350331769-14856-47-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 16/26] pktcdvd: use bio_copy_data()
+Date: Mon, 15 Oct 2012 13:09:19 -0700
+Message-ID: <1350331769-14856-46-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, Jiri Kosina <jkosina@suse.cz>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-In the short term this'll help with code auditing, and if this code ever
-gets used now it's converted :)
-
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jiri Kosina <jkosina@suse.cz>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+CC: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
 ---
- drivers/block/pktcdvd.c | 17 ++++++++---------
- 1 file changed, 8 insertions(+), 9 deletions(-)
+ drivers/block/pktcdvd.c | 79 ++++++++-----------------------------------------
+ 1 file changed, 12 insertions(+), 67 deletions(-)
 
 diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 1079a77..5318ad39 100644
+index 0824627..1079a77 100644
 --- a/drivers/block/pktcdvd.c
 +++ b/drivers/block/pktcdvd.c
-@@ -1156,16 +1156,15 @@ static int pkt_start_recovery(struct packet_data *pkt)
- 	new_sector = new_block * (CD_FRAMESIZE >> 9);
- 	pkt->sector = new_sector;
+@@ -948,31 +948,6 @@ static int pkt_set_segment_merging(struct pktcdvd_device *pd, struct request_que
+ }
  
-+	bio_reset(pkt->bio);
-+	pkt->bio->bi_bdev = pd->bdev;
-+	pkt->bio->bi_rw = REQ_WRITE;
- 	pkt->bio->bi_sector = new_sector;
--	pkt->bio->bi_next = NULL;
--	pkt->bio->bi_flags = 1 << BIO_UPTODATE;
--	pkt->bio->bi_idx = 0;
+ /*
+- * Copy CD_FRAMESIZE bytes from src_bio into a destination page
+- */
+-static void pkt_copy_bio_data(struct bio *src_bio, int seg, int offs, struct page *dst_page, int dst_offs)
+-{
+-	unsigned int copy_size = CD_FRAMESIZE;
 -
--	BUG_ON(pkt->bio->bi_rw != REQ_WRITE);
--	BUG_ON(pkt->bio->bi_vcnt != pkt->frames);
--	BUG_ON(pkt->bio->bi_size != pkt->frames * CD_FRAMESIZE);
--	BUG_ON(pkt->bio->bi_end_io != pkt_end_io_packet_write);
--	BUG_ON(pkt->bio->bi_private != pkt);
-+	pkt->bio->bi_size = pkt->frames * CD_FRAMESIZE;
-+	pkt->bio->bi_vcnt = pkt->frames;
-+
-+	pkt->bio->bi_end_io = pkt_end_io_packet_write;
-+	pkt->bio->bi_private = pkt;
+-	while (copy_size > 0) {
+-		struct bio_vec *src_bvl = bio_iovec_idx(src_bio, seg);
+-		void *vfrom = kmap_atomic(src_bvl->bv_page) +
+-			src_bvl->bv_offset + offs;
+-		void *vto = page_address(dst_page) + dst_offs;
+-		int len = min_t(int, copy_size, src_bvl->bv_len - offs);
+-
+-		BUG_ON(len < 0);
+-		memcpy(vto, vfrom, len);
+-		kunmap_atomic(vfrom);
+-
+-		seg++;
+-		offs = 0;
+-		dst_offs += len;
+-		copy_size -= len;
+-	}
+-}
+-
+-/*
+  * Copy all data for this packet to pkt->pages[], so that
+  * a) The number of required segments for the write bio is minimized, which
+  *    is necessary for some scsi controllers.
+@@ -1325,55 +1300,35 @@ try_next_bio:
+  */
+ static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
+ {
+-	struct bio *bio;
+ 	int f;
+-	int frames_write;
+ 	struct bio_vec *bvec = pkt->w_bio->bi_io_vec;
  
- 	drop_super(sb);
- 	return 1;
++	bio_reset(pkt->w_bio);
++	pkt->w_bio->bi_sector = pkt->sector;
++	pkt->w_bio->bi_bdev = pd->bdev;
++	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
++	pkt->w_bio->bi_private = pkt;
++
++	/* XXX: locking? */
+ 	for (f = 0; f < pkt->frames; f++) {
+ 		bvec[f].bv_page = pkt->pages[(f * CD_FRAMESIZE) / PAGE_SIZE];
+ 		bvec[f].bv_offset = (f * CD_FRAMESIZE) % PAGE_SIZE;
++		if (!bio_add_page(pkt->w_bio, bvec[f].bv_page, CD_FRAMESIZE, bvec[f].bv_offset))
++			BUG();
+ 	}
++	VPRINTK(DRIVER_NAME": vcnt=%d\n", pkt->w_bio->bi_vcnt);
+ 
+ 	/*
+ 	 * Fill-in bvec with data from orig_bios.
+ 	 */
+-	frames_write = 0;
+ 	spin_lock(&pkt->lock);
+-	bio_list_for_each(bio, &pkt->orig_bios) {
+-		int segment = bio->bi_idx;
+-		int src_offs = 0;
+-		int first_frame = (bio->bi_sector - pkt->sector) / (CD_FRAMESIZE >> 9);
+-		int num_frames = bio->bi_size / CD_FRAMESIZE;
+-		BUG_ON(first_frame < 0);
+-		BUG_ON(first_frame + num_frames > pkt->frames);
+-		for (f = first_frame; f < first_frame + num_frames; f++) {
+-			struct bio_vec *src_bvl = bio_iovec_idx(bio, segment);
+-
+-			while (src_offs >= src_bvl->bv_len) {
+-				src_offs -= src_bvl->bv_len;
+-				segment++;
+-				BUG_ON(segment >= bio->bi_vcnt);
+-				src_bvl = bio_iovec_idx(bio, segment);
+-			}
++	bio_copy_data(pkt->w_bio, pkt->orig_bios.head);
+ 
+-			if (src_bvl->bv_len - src_offs >= CD_FRAMESIZE) {
+-				bvec[f].bv_page = src_bvl->bv_page;
+-				bvec[f].bv_offset = src_bvl->bv_offset + src_offs;
+-			} else {
+-				pkt_copy_bio_data(bio, segment, src_offs,
+-						  bvec[f].bv_page, bvec[f].bv_offset);
+-			}
+-			src_offs += CD_FRAMESIZE;
+-			frames_write++;
+-		}
+-	}
+ 	pkt_set_state(pkt, PACKET_WRITE_WAIT_STATE);
+ 	spin_unlock(&pkt->lock);
+ 
+ 	VPRINTK("pkt_start_write: Writing %d frames for zone %llx\n",
+-		frames_write, (unsigned long long)pkt->sector);
+-	BUG_ON(frames_write != pkt->write_size);
++		pkt->write_size, (unsigned long long)pkt->sector);
+ 
+ 	if (test_bit(PACKET_MERGE_SEGS, &pd->flags) || (pkt->write_size < pkt->frames)) {
+ 		pkt_make_local_copy(pkt, bvec);
+@@ -1383,16 +1338,6 @@ static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
+ 	}
+ 
+ 	/* Start the write request */
+-	bio_reset(pkt->w_bio);
+-	pkt->w_bio->bi_sector = pkt->sector;
+-	pkt->w_bio->bi_bdev = pd->bdev;
+-	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
+-	pkt->w_bio->bi_private = pkt;
+-	for (f = 0; f < pkt->frames; f++)
+-		if (!bio_add_page(pkt->w_bio, bvec[f].bv_page, CD_FRAMESIZE, bvec[f].bv_offset))
+-			BUG();
+-	VPRINTK(DRIVER_NAME": vcnt=%d\n", pkt->w_bio->bi_vcnt);
+-
+ 	atomic_set(&pkt->io_wait, 1);
+ 	pkt->w_bio->bi_rw = WRITE;
+ 	pkt_queue_bio(pd, pkt->w_bio);
 -- 
 1.7.12
