@@ -1,177 +1,52 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 19/24] block: Add bio_for_each_segment_all()
-Date: Mon, 15 Oct 2012 13:08:53 -0700
-Message-ID: <1350331769-14856-20-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v4 16/24] pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
+Date: Mon, 15 Oct 2012 13:08:50 -0700
+Message-ID: <1350331769-14856-17-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com, Jiri Kosina <jkosina@suse.cz>
 List-Id: dm-devel.ids
 
-__bio_for_each_segment() iterates bvecs from the specified index
-instead of bio->bv_idx.  Currently, the only usage is to walk all the
-bvecs after the bio has been advanced by specifying 0 index.
+In the short term this'll help with code auditing, and if this code ever
+gets used now it's converted :)
 
-For immutable bvecs, we need to split these apart;
-bio_for_each_segment() is going to have a different implementation.
-This will also help document the intent of code that's using it -
-bio_for_each_segment_all() is only legal to use for code that owns the
-bio.
-
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-CC: Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>
-CC: Boaz Harrosh <bharrosh-C4P08NqkoRlBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jiri Kosina <jkosina@suse.cz>
 ---
- drivers/md/raid1.c  |  2 +-
- fs/bio.c            | 12 ++++++------
- fs/exofs/ore.c      |  2 +-
- fs/exofs/ore_raid.c |  2 +-
- include/linux/bio.h | 16 +++++++++-------
- mm/bounce.c         |  2 +-
- 6 files changed, 19 insertions(+), 17 deletions(-)
+ drivers/block/pktcdvd.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 1c40d90..6a96e1f 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -1283,7 +1283,7 @@ read_again:
- 			 * know the original bi_idx, so we just free
- 			 * them all
- 			 */
--			__bio_for_each_segment(bvec, mbio, j, 0)
-+			bio_for_each_segment_all(bvec, mbio, j)
- 				bvec->bv_page = r1_bio->behind_bvecs[j].bv_page;
- 			if (test_bit(WriteMostly, &conf->mirrors[i].rdev->flags))
- 				atomic_inc(&r1_bio->behind_remaining);
-diff --git a/fs/bio.c b/fs/bio.c
-index d698f29d..b2cccfe 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -959,7 +959,7 @@ static int __bio_copy_iov(struct bio *bio, struct bio_vec *iovecs,
- 	int iov_idx = 0;
- 	unsigned int iov_off = 0;
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 783c96c..1119042 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -1156,16 +1156,15 @@ static int pkt_start_recovery(struct packet_data *pkt)
+ 	new_sector = new_block * (CD_FRAMESIZE >> 9);
+ 	pkt->sector = new_sector;
  
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		char *bv_addr = page_address(bvec->bv_page);
- 		unsigned int bv_len = iovecs[i].bv_len;
++	bio_reset(pkt->bio);
++	pkt->bio->bi_bdev = pd->bdev;
++	pkt->bio->bi_rw = REQ_WRITE;
+ 	pkt->bio->bi_sector = new_sector;
+-	pkt->bio->bi_next = NULL;
+-	pkt->bio->bi_flags = 1 << BIO_UPTODATE;
+-	pkt->bio->bi_idx = 0;
+-
+-	BUG_ON(pkt->bio->bi_rw != REQ_WRITE);
+-	BUG_ON(pkt->bio->bi_vcnt != pkt->frames);
+-	BUG_ON(pkt->bio->bi_size != pkt->frames * CD_FRAMESIZE);
+-	BUG_ON(pkt->bio->bi_end_io != pkt_end_io_packet_write);
+-	BUG_ON(pkt->bio->bi_private != pkt);
++	pkt->bio->bi_size = pkt->frames * CD_FRAMESIZE;
++	pkt->bio->bi_vcnt = pkt->frames;
++
++	pkt->bio->bi_end_io = pkt_end_io_packet_write;
++	pkt->bio->bi_private = pkt;
  
-@@ -1141,7 +1141,7 @@ struct bio *bio_copy_user_iov(struct request_queue *q,
- 	return bio;
- cleanup:
- 	if (!map_data)
--		bio_for_each_segment(bvec, bio, i)
-+		bio_for_each_segment_all(bvec, bio, i)
- 			__free_page(bvec->bv_page);
- 
- 	bio_put(bio);
-@@ -1355,7 +1355,7 @@ static void __bio_unmap_user(struct bio *bio)
- 	/*
- 	 * make sure we dirty pages we wrote to
- 	 */
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		if (bio_data_dir(bio) == READ)
- 			set_page_dirty_lock(bvec->bv_page);
- 
-@@ -1461,7 +1461,7 @@ static void bio_copy_kern_endio(struct bio *bio, int err)
- 	int i;
- 	char *p = bmd->sgvecs[0].iov_base;
- 
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		char *addr = page_address(bvec->bv_page);
- 		int len = bmd->iovecs[i].bv_len;
- 
-@@ -1501,7 +1501,7 @@ struct bio *bio_copy_kern(struct request_queue *q, void *data, unsigned int len,
- 	if (!reading) {
- 		void *p = data;
- 
--		bio_for_each_segment(bvec, bio, i) {
-+		bio_for_each_segment_all(bvec, bio, i) {
- 			char *addr = page_address(bvec->bv_page);
- 
- 			memcpy(addr, p, bvec->bv_len);
-@@ -1785,7 +1785,7 @@ sector_t bio_sector_offset(struct bio *bio, unsigned short index,
- 	if (index >= bio->bi_idx)
- 		index = bio->bi_vcnt - 1;
- 
--	__bio_for_each_segment(bv, bio, i, 0) {
-+	bio_for_each_segment_all(bv, bio, i) {
- 		if (i == index) {
- 			if (offset > bv->bv_offset)
- 				sectors += (offset - bv->bv_offset) / sector_sz;
-diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
-index f936cb5..b744228 100644
---- a/fs/exofs/ore.c
-+++ b/fs/exofs/ore.c
-@@ -401,7 +401,7 @@ static void _clear_bio(struct bio *bio)
- 	struct bio_vec *bv;
- 	unsigned i;
- 
--	__bio_for_each_segment(bv, bio, i, 0) {
-+	bio_for_each_segment_all(bv, bio, i) {
- 		unsigned this_count = bv->bv_len;
- 
- 		if (likely(PAGE_SIZE == this_count))
-diff --git a/fs/exofs/ore_raid.c b/fs/exofs/ore_raid.c
-index 5f376d1..4dec928 100644
---- a/fs/exofs/ore_raid.c
-+++ b/fs/exofs/ore_raid.c
-@@ -432,7 +432,7 @@ static void _mark_read4write_pages_uptodate(struct ore_io_state *ios, int ret)
- 		if (!bio)
- 			continue;
- 
--		__bio_for_each_segment(bv, bio, i, 0) {
-+		bio_for_each_segment_all(bv, bio, i) {
- 			struct page *page = bv->bv_page;
- 
- 			SetPageUptodate(page);
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 90d36c6..be080d2 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -137,16 +137,18 @@ static inline int bio_has_allocated_vec(struct bio *bio)
- #define bio_io_error(bio) bio_endio((bio), -EIO)
- 
- /*
-- * drivers should not use the __ version unless they _really_ want to
-- * run through the entire bio and not just pending pieces
-+ * drivers should _never_ use the all version - the bio may have been split
-+ * before it got to the driver and the driver won't own all of it
-  */
--#define __bio_for_each_segment(bvl, bio, i, start_idx)			\
--	for (bvl = bio_iovec_idx((bio), (start_idx)), i = (start_idx);	\
--	     i < (bio)->bi_vcnt;					\
--	     bvl++, i++)
-+#define bio_for_each_segment_all(bvl, bio, i)				\
-+	for (i = 0;							\
-+	     bvl = bio_iovec_idx((bio), (i)), i < (bio)->bi_vcnt;	\
-+	     i++)
- 
- #define bio_for_each_segment(bvl, bio, i)				\
--	__bio_for_each_segment(bvl, bio, i, (bio)->bi_idx)
-+	for (i = (bio)->bi_idx;						\
-+	     bvl = bio_iovec_idx((bio), (i)), i < (bio)->bi_vcnt;	\
-+	     i++)
- 
- /*
-  * get a reference to a bio, so it won't disappear. the intended use is
-diff --git a/mm/bounce.c b/mm/bounce.c
-index 3068300..89324e2 100644
---- a/mm/bounce.c
-+++ b/mm/bounce.c
-@@ -134,7 +134,7 @@ static void bounce_end_io(struct bio *bio, mempool_t *pool, int err)
- 	/*
- 	 * free up bounce indirect pages used
- 	 */
--	__bio_for_each_segment(bvec, bio, i, 0) {
-+	bio_for_each_segment_all(bvec, bio, i) {
- 		org_vec = bio_orig->bi_io_vec + i;
- 		if (bvec->bv_page == org_vec->bv_page)
- 			continue;
+ 	drop_super(sb);
+ 	return 1;
 -- 
 1.7.12
