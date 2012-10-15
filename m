@@ -1,118 +1,103 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 26/26] block: Add BIO_SUBMITTED flag, kill BIO_CLONED
-Date: Mon, 15 Oct 2012 13:09:29 -0700
-Message-ID: <1350331769-14856-56-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v2 02/26] block: Add bio_advance()
+Date: Mon, 15 Oct 2012 13:09:05 -0700
+Message-ID: <1350331769-14856-32-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>
 List-Id: dm-devel.ids
 
-BIO_CLONED wasn't very useful, and didn't have very clear semantics, so
-kill it.
+This is prep work for immutable bio vecs; we first want to centralize
+where bvecs are modified.
 
-Replace it with a more useful flag - BIO_SUBMITTED means the bio has
-been passed to generic_make_request() and the bvec can no longer be
-modified.
+Next two patches convert some existing code to use this function.
 
-Roll both changes into the same patch so we can steal the old bit for
-the new flag.
-
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
 ---
- block/blk-core.c          | 2 ++
- drivers/md/dm.c           | 1 -
- fs/bio-integrity.c        | 1 -
- fs/bio.c                  | 8 +++++---
- include/linux/blk_types.h | 2 +-
- 5 files changed, 8 insertions(+), 6 deletions(-)
+ fs/bio.c            | 41 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |  2 ++
+ 2 files changed, 43 insertions(+)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 97511cb..1d4e893 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1638,6 +1638,8 @@ generic_make_request_checks(struct bio *bio)
- 
- 	might_sleep();
- 
-+	bio->bi_flags |= 1 << BIO_SUBMITTED;
-+
- 	if (bio_check_eod(bio, nr_sectors))
- 		goto end_io;
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8378797..777e70d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1065,7 +1065,6 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
- 	clone->bi_size = to_bytes(len);
- 	clone->bi_io_vec->bv_offset = offset;
- 	clone->bi_io_vec->bv_len = clone->bi_size;
--	clone->bi_flags |= 1 << BIO_CLONED;
- 
- 	if (bio_integrity(bio)) {
- 		bio_integrity_clone(clone, bio, GFP_NOIO);
-diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-index 462a131..a77a566 100644
---- a/fs/bio-integrity.c
-+++ b/fs/bio-integrity.c
-@@ -621,7 +621,6 @@ void bio_integrity_trim(struct bio *bio, unsigned int offset,
- 
- 	BUG_ON(bip == NULL);
- 	BUG_ON(bi == NULL);
--	BUG_ON(!bio_flagged(bio, BIO_CLONED));
- 
- 	nr_sectors = bio_integrity_hw_sectors(bi, sectors);
- 	bip->bip_sector = bip->bip_sector + offset;
 diff --git a/fs/bio.c b/fs/bio.c
-index 5e91e36..d3b6e2a 100644
+index 4783e31..07587c0 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -531,7 +531,7 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
- 	 */
- 	bio->bi_sector = bio_src->bi_sector;
- 	bio->bi_bdev = bio_src->bi_bdev;
--	bio->bi_flags |= 1 << BIO_CLONED;
-+	bio->bi_flags |= (bio_src->bi_flags & (1 << BIO_SUBMITTED));
- 	bio->bi_rw = bio_src->bi_rw;
- 	bio->bi_vcnt = bio_src->bi_vcnt;
- 	bio->bi_size = bio_src->bi_size;
-@@ -604,9 +604,9 @@ static int __bio_add_page(struct request_queue *q, struct bio *bio, struct page
- 	struct bio_vec *bvec;
+@@ -750,6 +750,47 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,
+ }
+ EXPORT_SYMBOL(bio_add_page);
  
- 	/*
--	 * cloned bio must not modify vec list
-+	 * submitted bio must not modify vec list
- 	 */
--	if (unlikely(bio_flagged(bio, BIO_CLONED)))
-+	if (unlikely(bio_flagged(bio, BIO_SUBMITTED)))
- 		return 0;
- 
- 	if (((bio->bi_size + len) >> 9) > max_sectors)
-@@ -844,6 +844,8 @@ int bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
- 	int i;
- 	struct bio_vec *bv;
- 
-+	BUG_ON(bio_flagged(bio, BIO_SUBMITTED));
++/**
++ * bio_advance - increment/complete a bio by some number of bytes
++ * @bio:	bio to advance
++ * @bytes:	number of bytes to complete
++ *
++ * This updates bi_sector, bi_size and bi_idx; if the number of bytes to
++ * complete doesn't align with a bvec boundary, then bv_len and bv_offset will
++ * be updated on the last bvec as well.
++ *
++ * @bio will then represent the remaining, uncompleted portion of the io.
++ */
++void bio_advance(struct bio *bio, unsigned bytes)
++{
++	if (bio_integrity(bio))
++		bio_integrity_advance(bio, bytes);
 +
- 	bio_for_each_segment_all(bv, bio, i) {
- 		bv->bv_page = alloc_page(gfp_mask);
- 		if (!bv->bv_page) {
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index e9375cf..fb49107 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -103,7 +103,7 @@ struct bio {
- #define BIO_RW_BLOCK	1	/* RW_AHEAD set, and read/write would block */
- #define BIO_EOF		2	/* out-out-bounds error */
- #define BIO_SEG_VALID	3	/* bi_phys_segments valid */
--#define BIO_CLONED	4	/* doesn't own data */
-+#define BIO_SUBMITTED	4	/* bio has been submitted */
- #define BIO_BOUNCED	5	/* bio is a bounce bio */
- #define BIO_USER_MAPPED 6	/* contains user pages */
- #define BIO_EOPNOTSUPP	7	/* not supported */
++	bio->bi_sector += bytes >> 0;
++	bio->bi_size -= bytes;
++
++	if (!bio->bi_size)
++		return;
++
++	while (bytes) {
++		if (unlikely(bio->bi_idx >= bio->bi_vcnt)) {
++			printk(KERN_ERR "%s: bio idx %d >= vcnt %d\n",
++			       __func__, bio->bi_idx, bio->bi_vcnt);
++			break;
++		}
++
++		if (bytes >= bio_iovec(bio)->bv_len) {
++			bytes -= bio_iovec(bio)->bv_len;
++			bio->bi_idx++;
++		} else {
++			bio_iovec(bio)->bv_len -= bytes;
++			bio_iovec(bio)->bv_offset += bytes;
++			bytes = 0;
++		}
++	}
++}
++EXPORT_SYMBOL(bio_advance);
++
+ struct bio_map_data {
+ 	struct bio_vec *iovecs;
+ 	struct sg_iovec *sgvecs;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 7873465..6763cdf 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -248,6 +248,8 @@ extern void bio_endio(struct bio *, int);
+ struct request_queue;
+ extern int bio_phys_segments(struct request_queue *, struct bio *);
+ 
++void bio_advance(struct bio *, unsigned);
++
+ extern void bio_init(struct bio *);
+ extern void bio_reset(struct bio *);
+ 
 -- 
 1.7.12
