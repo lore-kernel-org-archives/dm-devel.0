@@ -1,60 +1,139 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 25/26] bio-integrity: Add explicit field for owner of bip_buf
-Date: Mon, 15 Oct 2012 13:09:28 -0700
-Message-ID: <1350331769-14856-55-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v2 19/26] bounce: Refactor __blk_queue_bounce to not use bi_io_vec
+Date: Mon, 15 Oct 2012 13:09:22 -0700
+Message-ID: <1350331769-14856-49-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de
 List-Id: dm-devel.ids
 
-This was the only real user of BIO_CLONED, which didn't have very clear
-semantics. Convert to its own flag so we can get rid of BIO_CLONED.
+A bunch of what __blk_queue_bounce() was doing was problematic for the
+immutable bvec work; this cleans that up and the code is quite a bit
+smaller, too.
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-CC: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+The __bio_for_each_segment() in copy_to_high_bio_irq() was changed
+because that one's looping over the original bio, not the bounce bio -
+since the bounce code doesn't own that bio the __ version wasn't
+correct.
+
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
 ---
- fs/bio-integrity.c  | 5 ++---
- include/linux/bio.h | 1 +
- 2 files changed, 3 insertions(+), 3 deletions(-)
+ mm/bounce.c | 73 ++++++++++++++++---------------------------------------------
+ 1 file changed, 19 insertions(+), 54 deletions(-)
 
-diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-index e8555a5..462a131 100644
---- a/fs/bio-integrity.c
-+++ b/fs/bio-integrity.c
-@@ -94,9 +94,7 @@ void bio_integrity_free(struct bio *bio)
- 	struct bio_integrity_payload *bip = bio->bi_integrity;
- 	struct bio_set *bs = bio->bi_pool;
+diff --git a/mm/bounce.c b/mm/bounce.c
+index 0420867..3068300 100644
+--- a/mm/bounce.c
++++ b/mm/bounce.c
+@@ -101,7 +101,7 @@ static void copy_to_high_bio_irq(struct bio *to, struct bio *from)
+ 	struct bio_vec *tovec, *fromvec;
+ 	int i;
  
--	/* A cloned bio doesn't own the integrity metadata */
--	if (!bio_flagged(bio, BIO_CLONED) && !bio_flagged(bio, BIO_FS_INTEGRITY)
--	    && bip->bip_buf != NULL)
-+	if (bip->bip_owns_buf)
- 		kfree(bip->bip_buf);
+-	__bio_for_each_segment(tovec, to, i, 0) {
++	bio_for_each_segment(tovec, to, i) {
+ 		fromvec = from->bi_io_vec + i;
  
- 	if (bs) {
-@@ -382,6 +380,7 @@ int bio_integrity_prep(struct bio *bio)
- 		return -EIO;
+ 		/*
+@@ -181,78 +181,43 @@ static void bounce_end_io_read_isa(struct bio *bio, int err)
+ static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
+ 			       mempool_t *pool)
+ {
+-	struct page *page;
+-	struct bio *bio = NULL;
+-	int i, rw = bio_data_dir(*bio_orig);
++	struct bio *bio;
++	int rw = bio_data_dir(*bio_orig);
+ 	struct bio_vec *to, *from;
++	unsigned i;
+ 
+-	bio_for_each_segment(from, *bio_orig, i) {
+-		page = from->bv_page;
++	bio_for_each_segment(from, *bio_orig, i)
++		if (page_to_pfn(from->bv_page) > queue_bounce_pfn(q))
++			goto bounce;
+ 
+-		/*
+-		 * is destination page below bounce pfn?
+-		 */
+-		if (page_to_pfn(page) <= queue_bounce_pfn(q))
+-			continue;
+-
+-		/*
+-		 * irk, bounce it
+-		 */
+-		if (!bio) {
+-			unsigned int cnt = (*bio_orig)->bi_vcnt;
++	return;
++bounce:
++	bio = bio_clone_bioset(*bio_orig, GFP_NOIO, fs_bio_set);
+ 
+-			bio = bio_alloc(GFP_NOIO, cnt);
+-			memset(bio->bi_io_vec, 0, cnt * sizeof(struct bio_vec));
+-		}
+-			
++	bio_for_each_segment(to, bio, i) {
++		struct page *page = to->bv_page;
+ 
+-		to = bio->bi_io_vec + i;
++		if (page_to_pfn(page) <= queue_bounce_pfn(q))
++			continue;
+ 
+-		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+-		to->bv_len = from->bv_len;
+-		to->bv_offset = from->bv_offset;
+ 		inc_zone_page_state(to->bv_page, NR_BOUNCE);
++		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+ 
+ 		if (rw == WRITE) {
+ 			char *vto, *vfrom;
+ 
+-			flush_dcache_page(from->bv_page);
++			flush_dcache_page(page);
++
+ 			vto = page_address(to->bv_page) + to->bv_offset;
+-			vfrom = kmap(from->bv_page) + from->bv_offset;
++			vfrom = kmap_atomic(page) + to->bv_offset;
+ 			memcpy(vto, vfrom, to->bv_len);
+-			kunmap(from->bv_page);
++			kunmap_atomic(vfrom);
+ 		}
  	}
  
-+	bip->bip_owns_buf = 1;
- 	bip->bip_buf = buf;
- 	bip->bip_size = len;
- 	bip->bip_sector = bio->bi_sector;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index edd66f3..f429d0f 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -178,6 +178,7 @@ struct bio_integrity_payload {
- 	unsigned short		bip_slab;	/* slab the bip came from */
- 	unsigned short		bip_vcnt;	/* # of integrity bio_vecs */
- 	unsigned short		bip_idx;	/* current bip_vec index */
-+	unsigned		bip_owns_buf:1;	/* should free bip_buf */
+-	/*
+-	 * no pages bounced
+-	 */
+-	if (!bio)
+-		return;
+-
+ 	trace_block_bio_bounce(q, *bio_orig);
  
- 	struct work_struct	bip_work;	/* I/O completion */
+-	/*
+-	 * at least one page was bounced, fill in possible non-highmem
+-	 * pages
+-	 */
+-	__bio_for_each_segment(from, *bio_orig, i, 0) {
+-		to = bio_iovec_idx(bio, i);
+-		if (!to->bv_page) {
+-			to->bv_page = from->bv_page;
+-			to->bv_len = from->bv_len;
+-			to->bv_offset = from->bv_offset;
+-		}
+-	}
+-
+-	bio->bi_bdev = (*bio_orig)->bi_bdev;
+ 	bio->bi_flags |= (1 << BIO_BOUNCED);
+-	bio->bi_sector = (*bio_orig)->bi_sector;
+-	bio->bi_rw = (*bio_orig)->bi_rw;
+-
+-	bio->bi_vcnt = (*bio_orig)->bi_vcnt;
+-	bio->bi_idx = (*bio_orig)->bi_idx;
+-	bio->bi_size = (*bio_orig)->bi_size;
  
+ 	if (pool == page_pool) {
+ 		bio->bi_end_io = bounce_end_io_write;
 -- 
 1.7.12
