@@ -1,80 +1,95 @@
-From: Michael Zugelder <michael@zugelder.org>
-Subject: Re: [dm-crypt] PROBLEM:  read starvation during writeback
-Date: Sat, 13 Oct 2012 22:56:17 +0200
-Message-ID: <1350161777.6495.46.camel@vpcz1>
-References: <1350070656.2554.6.camel@vpcz1> <50787ECB.1050803@gmail.com>
-	 <1350083207.2673.5.camel@vpcz1>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH v4 00/24] Prep work for immutable bio vecs
+Date: Mon, 15 Oct 2012 13:08:34 -0700
+Message-ID: <1350331769-14856-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1350083207.2673.5.camel@vpcz1>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: dm-crypt <dm-crypt@saout.de>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+Since last time - split bio integrity stuff out into its own 2 patch series.
 
-I have a small update on my previously posted test case. I noticed
-'cryptsetup -c null' uses cipher_null in ecb mode, and in that case, I
-don't observe any read starvation. I'm not sure what the default cipher
-mode is (cryptsetup uses cbc-essiv:sha256), but I can reproduce the
-problem using just 'cipher_null-cbc-plain'.
+Also changed bio_advance() a bit - it now explicitly special cases discard and
+WRITE_SAME requests, so that partial completions will work. Previously, partial
+completions worked for other requests but would've silently blown up for those
+- this'll be of use later too, for generic bio splitting.
 
-The revised test case is as follows:
+I've got 3 patch series queued up but they all should be independent - git tree
+is at
 
-Preparation:
-  # dmsetup create dev_zero --table "0 $((1024*1024*1024)) zero"
-  # dmsetup create cipher_null-cbc-plain --table "0 $((1024*1024*1024)) crypt cipher_null-cbc-plain - 0 /dev/mapper/dev_zero 0"
-  # dmsetup create cipher_null-ecb --table "0 $((1024*1024*1024)) crypt cipher_null-ecb - 0 /dev/mapper/dev_zero 0"
+http://evilpiepirate.org/git/linux-bcache.git for-jens
 
-Testing cipher_null-cbc-plain:
-  # dd if=/dev/zero bs=1M of=/dev/mapper/cipher_null-cbc-plain
-  # ioping -R /dev/mapper/cipher_null-cbc-plain
-    1 requests completed in 9530.3 ms, 0 iops, 0.0 mb/s
-
-Note that for some reason, dd writes extremely slow (below 100.0 MB/s on
-my machine) in this test.
-
-On the other hand, cipher_null-ecb works fine.
-  # dd if=/dev/zero bs=1M of=/dev/mapper/cipher_null-ecb
-  # ioping -R /dev/mapper/cipher_null-ecb
-    32337 requests completed in 3000.0 ms, 54042 iops, 211.1 mb/s
-    min/avg/max/mdev = 0.0/0.0/18.8/0.2 ms
-
-dd writes at around 850 MB/s in that case (1.8 GB/s directly to the null
-target).
-
-I tried similar benchmarks using aes instead of cipher_null, but found
-no bothersome spikes with aes-ecb, aes-cbc-plain, aes-cbc-essiv:sha256.
-But aes-xts-plain sometimes drops down to 5 iops (over the course of 3
-seconds).
-
-So there is probably something very wrong with cipher_null-cbc-plain
-being an order of magnitude slower than aes-cbc-plain, but the cbc mode
-itself doesn't seem to cause the problem.
-
-I also ran the benchmarks on an old Athlon 64 X2 3800+ box running
-kernel 3.2 and could reproduce it with very first try for every cipher
-spec I tried (cipher_null-cbc-plain, cipher_null-ecb, aes-cbc-plain,
-aes-ecb, aes-xts-plain). Best I could achieve was 5 iops. But
-interestingly, I didn't observe the really huge spikes (upwards of 20
-seconds), as I do on my 1nd gen Core i5 Notebook.
-
-On Sat, 2012-10-13 at 01:06 +0200, Michael Zugelder wrote:
-> On Fri, 2012-10-12 at 22:34 +0200, Milan Broz wrote:
-> > Btw there was a proposed rewrite of internal dmcrypt queues, if you have time,
-> > you can try if it changes anything for your use case.
-> > Patches in dm-devel archive
-> > http://www.redhat.com/archives/dm-devel/2012-August/msg00210.html
-> 
-> Seems interesting, I'll try it out tomorrow.
-
-I tried the patch set earlier today, but had the same issues when
-reading while writing to a 'crypt_null' mapping.
-
-Anything else I could do to diagnose this problem?
+It's on top of jens' for-next branch.
 
 
-Michael
+Kent Overstreet (24):
+  block: Add bio_advance()
+  block: Refactor blk_update_request()
+  md: Convert md_trim_bio() to use bio_advance()
+  block: Add bio_end_sector()
+  block: Use bio_sectors() more consistently
+  block: Change bio_split() to respect the current value of bi_idx
+  block: Remove bi_idx references
+  block: Remove some unnecessary bi_vcnt usage
+  block: Add submit_bio_wait(), remove from md
+  raid10: Use bio_reset()
+  raid1: use bio_reset()
+  raid5: use bio_reset()
+  raid1: Refactor narrow_write_error() to not use bi_idx
+  block: Add bio_copy_data()
+  pktcdvd: use bio_copy_data()
+  pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
+  raid1: use bio_copy_data()
+  bounce: Refactor __blk_queue_bounce to not use bi_io_vec
+  block: Add bio_for_each_segment_all()
+  block: Convert some code to bio_for_each_segment_all()
+  block: Add bio_alloc_pages()
+  block: Add an explicit bio flag for bios that own their bvec
+  bio-integrity: Add explicit field for owner of bip_buf
+  block: Add BIO_SUBMITTED flag, kill BIO_CLONED
+
+ block/blk-core.c                         |  84 ++----------
+ block/cfq-iosched.c                      |   7 +-
+ block/deadline-iosched.c                 |   2 +-
+ drivers/block/aoe/aoeblk.c               |   2 +-
+ drivers/block/aoe/aoecmd.c               |   2 +-
+ drivers/block/brd.c                      |   3 +-
+ drivers/block/drbd/drbd_req.c            |   8 +-
+ drivers/block/floppy.c                   |   1 -
+ drivers/block/pktcdvd.c                  | 102 ++++----------
+ drivers/md/dm-crypt.c                    |   3 +-
+ drivers/md/dm-raid1.c                    |   2 +-
+ drivers/md/dm-stripe.c                   |   2 +-
+ drivers/md/dm-verity.c                   |   4 +-
+ drivers/md/dm.c                          |   1 -
+ drivers/md/faulty.c                      |   6 +-
+ drivers/md/linear.c                      |   3 +-
+ drivers/md/md.c                          |  17 +--
+ drivers/md/raid0.c                       |   9 +-
+ drivers/md/raid1.c                       | 133 ++++++------------
+ drivers/md/raid10.c                      |  78 +++--------
+ drivers/md/raid5.c                       |  49 ++++---
+ drivers/message/fusion/mptsas.c          |   6 +-
+ drivers/s390/block/dcssblk.c             |   3 +-
+ drivers/scsi/libsas/sas_expander.c       |   6 +-
+ drivers/scsi/mpt2sas/mpt2sas_transport.c |  10 +-
+ fs/bio-integrity.c                       |  10 +-
+ fs/bio.c                                 | 226 +++++++++++++++++++++++++++----
+ fs/btrfs/extent_io.c                     |   3 +-
+ fs/buffer.c                              |   1 -
+ fs/direct-io.c                           |   8 +-
+ fs/exofs/ore.c                           |   2 +-
+ fs/exofs/ore_raid.c                      |   2 +-
+ fs/gfs2/lops.c                           |   2 +-
+ fs/jfs/jfs_logmgr.c                      |   2 -
+ fs/logfs/dev_bdev.c                      |   5 -
+ include/linux/bio.h                      |  29 ++--
+ include/linux/blk_types.h                |   5 +-
+ include/trace/events/block.h             |  10 +-
+ mm/bounce.c                              |  75 +++-------
+ mm/page_io.c                             |   1 -
+ 40 files changed, 424 insertions(+), 500 deletions(-)
+
+-- 
+1.7.12
