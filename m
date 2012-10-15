@@ -1,100 +1,257 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v4 13/24] raid1: Refactor narrow_write_error() to
-	not use bi_idx
-Date: Mon, 15 Oct 2012 13:08:47 -0700
-Message-ID: <1350331769-14856-14-git-send-email-koverstreet@google.com>
+Subject: [PATCH v4 2/2] block: Avoid deadlocks with bio allocation by stacking drivers
+Date: Mon, 15 Oct 2012 13:09:00 -0700
+Message-ID: <1350331769-14856-27-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-More bi_idx removal. This code was just open coding bio_clone(). This
-could probably be further improved by using bio_advance() instead of
-skipping over null pages, but that'd be a larger rework.
+Previously, if we ever try to allocate more than once from the same bio
+set while running under generic_make_request() (i.e. a stacking block
+driver), we risk deadlock.
+
+This is because of the code in generic_make_request() that converts
+recursion to iteration; any bios we submit won't actually be submitted
+(so they can complete and eventually be freed) until after we return -
+this means if we allocate a second bio, we're blocking the first one
+from ever being freed.
+
+Thus if enough threads call into a stacking block driver at the same
+time with bios that need multiple splits, and the bio_set's reserve gets
+used up, we deadlock.
+
+This can be worked around in the driver code - we could check if we're
+running under generic_make_request(), then mask out __GFP_WAIT when we
+go to allocate a bio, and if the allocation fails punt to workqueue and
+retry the allocation.
+
+But this is tricky and not a generic solution. This patch solves it for
+all users by inverting the previously described technique. We allocate a
+rescuer workqueue for each bio_set, and then in the allocation code if
+there are bios on current->bio_list we would be blocking, we punt them
+to the rescuer workqueue to be submitted.
+
+This guarantees forward progress for bio allocations under
+generic_make_request() provided each bio is submitted before allocating
+the next, and provided the bios are freed after they complete.
+
+Note that this doesn't do anything for allocation from other mempools.
+Instead of allocating per bio data structures from a mempool, code
+should use bio_set's front_pad.
+
+Tested it by forcing the rescue codepath to be taken (by disabling the
+first GFP_NOWAIT) attempt, and then ran it with bcache (which does a lot
+of arbitrary bio splitting) and verified that the rescuer was being
+invoked.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: NeilBrown <neilb@suse.de>
+Acked-by: Tejun Heo <tj@kernel.org>
+Reviewed-by: Muthukumar Ratty <muthur@gmail.com>
 ---
- drivers/md/raid1.c | 36 ++++++++++++++++++------------------
- 1 file changed, 18 insertions(+), 18 deletions(-)
+ fs/bio.c            | 116 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+ include/linux/bio.h |   9 ++++
+ 2 files changed, 123 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 4614b9e..af39f74 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -2052,8 +2052,6 @@ static int narrow_write_error(struct r1bio *r1_bio, int i)
- 	struct mddev *mddev = r1_bio->mddev;
- 	struct r1conf *conf = mddev->private;
- 	struct md_rdev *rdev = conf->mirrors[i].rdev;
--	int vcnt, idx;
--	struct bio_vec *vec;
+diff --git a/fs/bio.c b/fs/bio.c
+index 9298c65..9aa1938 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -295,6 +295,54 @@ void bio_reset(struct bio *bio)
+ }
+ EXPORT_SYMBOL(bio_reset);
  
- 	/* bio has the data to be written to device 'i' where
- 	 * we just recently had a write error.
-@@ -2081,30 +2079,32 @@ static int narrow_write_error(struct r1bio *r1_bio, int i)
- 		   & ~(sector_t)(block_sectors - 1))
- 		- sector;
- 
--	if (test_bit(R1BIO_BehindIO, &r1_bio->state)) {
--		vcnt = r1_bio->behind_page_count;
--		vec = r1_bio->behind_bvecs;
--		idx = 0;
--		while (vec[idx].bv_page == NULL)
--			idx++;
--	} else {
--		vcnt = r1_bio->master_bio->bi_vcnt;
--		vec = r1_bio->master_bio->bi_io_vec;
--		idx = r1_bio->master_bio->bi_idx;
--	}
- 	while (sect_to_write) {
- 		struct bio *wbio;
- 		if (sectors > sect_to_write)
- 			sectors = sect_to_write;
- 		/* Write at 'sector' for 'sectors'*/
- 
--		wbio = bio_alloc_mddev(GFP_NOIO, vcnt, mddev);
--		memcpy(wbio->bi_io_vec, vec, vcnt * sizeof(struct bio_vec));
--		wbio->bi_sector = r1_bio->sector;
-+		if (test_bit(R1BIO_BehindIO, &r1_bio->state)) {
-+			unsigned vcnt = r1_bio->behind_page_count;
-+			struct bio_vec *vec = r1_bio->behind_bvecs;
++static void bio_alloc_rescue(struct work_struct *work)
++{
++	struct bio_set *bs = container_of(work, struct bio_set, rescue_work);
++	struct bio *bio;
 +
-+			while (!vec->bv_page) {
-+				vec++;
-+				vcnt--;
-+			}
++	while (1) {
++		spin_lock(&bs->rescue_lock);
++		bio = bio_list_pop(&bs->rescue_list);
++		spin_unlock(&bs->rescue_lock);
 +
-+			wbio = bio_alloc_mddev(GFP_NOIO, vcnt, mddev);
-+			memcpy(wbio->bi_io_vec, vec, vcnt * sizeof(struct bio_vec));
++		if (!bio)
++			break;
 +
-+			wbio->bi_vcnt = vcnt;
-+		} else {
-+			wbio = bio_clone_mddev(r1_bio->master_bio, GFP_NOIO, mddev);
++		generic_make_request(bio);
++	}
++}
++
++static void punt_bios_to_rescuer(struct bio_set *bs)
++{
++	struct bio_list punt, nopunt;
++	struct bio *bio;
++
++	/*
++	 * In order to guarantee forward progress we must punt only bios that
++	 * were allocated from this bio_set; otherwise, if there was a bio on
++	 * there for a stacking driver higher up in the stack, processing it
++	 * could require allocating bios from this bio_set, and doing that from
++	 * our own rescuer would be bad.
++	 *
++	 * Since bio lists are singly linked, pop them all instead of trying to
++	 * remove from the middle of the list:
++	 */
++
++	bio_list_init(&punt);
++	bio_list_init(&nopunt);
++
++	while ((bio = bio_list_pop(current->bio_list)))
++		bio_list_add(bio->bi_pool == bs ? &punt : &nopunt, bio);
++
++	*current->bio_list = nopunt;
++
++	spin_lock(&bs->rescue_lock);
++	bio_list_merge(&bs->rescue_list, &punt);
++	spin_unlock(&bs->rescue_lock);
++
++	queue_work(bs->rescue_workqueue, &bs->rescue_work);
++}
++
+ /**
+  * bio_alloc_bioset - allocate a bio for I/O
+  * @gfp_mask:   the GFP_ mask given to the slab allocator
+@@ -312,11 +360,27 @@ EXPORT_SYMBOL(bio_reset);
+  *   previously allocated bio for IO before attempting to allocate a new one.
+  *   Failure to do so can cause deadlocks under memory pressure.
+  *
++ *   Note that when running under generic_make_request() (i.e. any block
++ *   driver), bios are not submitted until after you return - see the code in
++ *   generic_make_request() that converts recursion into iteration, to prevent
++ *   stack overflows.
++ *
++ *   This would normally mean allocating multiple bios under
++ *   generic_make_request() would be susceptible to deadlocks, but we have
++ *   deadlock avoidance code that resubmits any blocked bios from a rescuer
++ *   thread.
++ *
++ *   However, we do not guarantee forward progress for allocations from other
++ *   mempools. Doing multiple allocations from the same mempool under
++ *   generic_make_request() should be avoided - instead, use bio_set's front_pad
++ *   for per bio allocations.
++ *
+  *   RETURNS:
+  *   Pointer to new bio on success, NULL on failure.
+  */
+ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ {
++	gfp_t saved_gfp = gfp_mask;
+ 	unsigned front_pad;
+ 	unsigned inline_vecs;
+ 	unsigned long idx = BIO_POOL_NONE;
+@@ -334,7 +398,37 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ 		front_pad = 0;
+ 		inline_vecs = nr_iovecs;
+ 	} else {
++		/*
++		 * generic_make_request() converts recursion to iteration; this
++		 * means if we're running beneath it, any bios we allocate and
++		 * submit will not be submitted (and thus freed) until after we
++		 * return.
++		 *
++		 * This exposes us to a potential deadlock if we allocate
++		 * multiple bios from the same bio_set() while running
++		 * underneath generic_make_request(). If we were to allocate
++		 * multiple bios (say a stacking block driver that was splitting
++		 * bios), we would deadlock if we exhausted the mempool's
++		 * reserve.
++		 *
++		 * We solve this, and guarantee forward progress, with a rescuer
++		 * workqueue per bio_set. If we go to allocate and there are
++		 * bios on current->bio_list, we first try the allocation
++		 * without __GFP_WAIT; if that fails, we punt those bios we
++		 * would be blocking to the rescuer workqueue before we retry
++		 * with the original gfp_flags.
++		 */
++
++		if (current->bio_list && !bio_list_empty(current->bio_list))
++			gfp_mask &= ~__GFP_WAIT;
++
+ 		p = mempool_alloc(bs->bio_pool, gfp_mask);
++		if (!p && gfp_mask != saved_gfp) {
++			punt_bios_to_rescuer(bs);
++			gfp_mask = saved_gfp;
++			p = mempool_alloc(bs->bio_pool, gfp_mask);
 +		}
 +
- 		wbio->bi_rw = WRITE;
--		wbio->bi_vcnt = vcnt;
-+		wbio->bi_sector = r1_bio->sector;
- 		wbio->bi_size = r1_bio->sectors << 9;
--		wbio->bi_idx = idx;
+ 		front_pad = bs->front_pad;
+ 		inline_vecs = BIO_INLINE_VECS;
+ 	}
+@@ -347,6 +441,12 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
  
- 		md_trim_bio(wbio, sector - r1_bio->sector, sectors);
- 		wbio->bi_sector += rdev->data_offset;
+ 	if (nr_iovecs > inline_vecs) {
+ 		bvl = bvec_alloc_bs(gfp_mask, nr_iovecs, &idx, bs);
++		if (!bvl && gfp_mask != saved_gfp) {
++			punt_bios_to_rescuer(bs);
++			gfp_mask = saved_gfp;
++			bvl = bvec_alloc_bs(gfp_mask, nr_iovecs, &idx, bs);
++		}
++
+ 		if (unlikely(!bvl))
+ 			goto err_free;
+ 	} else if (nr_iovecs) {
+@@ -1575,6 +1675,9 @@ static void biovec_free_pools(struct bio_set *bs)
+ 
+ void bioset_free(struct bio_set *bs)
+ {
++	if (bs->rescue_workqueue)
++		destroy_workqueue(bs->rescue_workqueue);
++
+ 	if (bs->bio_pool)
+ 		mempool_destroy(bs->bio_pool);
+ 
+@@ -1610,6 +1713,10 @@ struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
+ 
+ 	bs->front_pad = front_pad;
+ 
++	spin_lock_init(&bs->rescue_lock);
++	bio_list_init(&bs->rescue_list);
++	INIT_WORK(&bs->rescue_work, bio_alloc_rescue);
++
+ 	bs->bio_slab = bio_find_or_create_slab(front_pad + back_pad);
+ 	if (!bs->bio_slab) {
+ 		kfree(bs);
+@@ -1620,9 +1727,14 @@ struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
+ 	if (!bs->bio_pool)
+ 		goto bad;
+ 
+-	if (!biovec_create_pools(bs, pool_size))
+-		return bs;
++	if (biovec_create_pools(bs, pool_size))
++		goto bad;
++
++	bs->rescue_workqueue = alloc_workqueue("bioset", WQ_MEM_RECLAIM, 0);
++	if (!bs->rescue_workqueue)
++		goto bad;
+ 
++	return bs;
+ bad:
+ 	bioset_free(bs);
+ 	return NULL;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 93d3d17..b31036f 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -513,6 +513,15 @@ struct bio_set {
+ 	mempool_t *bio_integrity_pool;
+ #endif
+ 	mempool_t *bvec_pool;
++
++	/*
++	 * Deadlock avoidance for stacking block drivers: see comments in
++	 * bio_alloc_bioset() for details
++	 */
++	spinlock_t		rescue_lock;
++	struct bio_list		rescue_list;
++	struct work_struct	rescue_work;
++	struct workqueue_struct	*rescue_workqueue;
+ };
+ 
+ struct biovec_slab {
 -- 
 1.7.12
