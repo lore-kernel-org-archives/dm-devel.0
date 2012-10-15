@@ -1,68 +1,118 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v4 1/2] block: Fix a buffer overrun in bio_integrity_split()
-Date: Mon, 15 Oct 2012 13:09:01 -0700
-Message-ID: <1350331769-14856-28-git-send-email-koverstreet@google.com>
+Subject: [PATCH v4 21/24] block: Add bio_alloc_pages()
+Date: Mon, 15 Oct 2012 13:08:55 -0700
+Message-ID: <1350331769-14856-22-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, vgoyal@redhat.com, martin.petersen@oracle.com
+Cc: Kent Overstreet <koverstreet@google.com>, tj@kernel.org, axboe@kernel.dk, neilb@suse.de, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-bio_integrity_split() seemed to be confusing pointers and arrays -
-bip_vec in bio_integrity_payload was an array appended to the end of the
-payload, so the bio_vecs in struct bio_pair should have come after the
-bio_integrity_payload they're for.
-
-Fix it by making bip_vec a pointer to the inline vecs - a later patch is
-going to make more use of this pointer.
+More utility code to replace stuff that's getting open coded.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: Martin K. Petersen <martin.petersen@oracle.com>
+CC: NeilBrown <neilb@suse.de>
 ---
- fs/bio-integrity.c  | 5 +++--
- include/linux/bio.h | 4 +++-
- 2 files changed, 6 insertions(+), 3 deletions(-)
+ drivers/md/raid1.c  | 16 +++-------------
+ fs/bio.c            | 28 ++++++++++++++++++++++++++++
+ include/linux/bio.h |  1 +
+ 3 files changed, 32 insertions(+), 13 deletions(-)
 
-diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-index a3f28f3..94fa1c5 100644
---- a/fs/bio-integrity.c
-+++ b/fs/bio-integrity.c
-@@ -112,6 +112,7 @@ struct bio_integrity_payload *bio_integrity_alloc(struct bio *bio,
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index dff0473..97f80b9 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -92,7 +92,6 @@ static void r1bio_pool_free(void *r1_bio, void *data)
+ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
+ {
+ 	struct pool_info *pi = data;
+-	struct page *page;
+ 	struct r1bio *r1_bio;
+ 	struct bio *bio;
+ 	int i, j;
+@@ -122,14 +121,10 @@ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
+ 		j = 1;
+ 	while(j--) {
+ 		bio = r1_bio->bios[j];
+-		for (i = 0; i < RESYNC_PAGES; i++) {
+-			page = alloc_page(gfp_flags);
+-			if (unlikely(!page))
+-				goto out_free_pages;
++		bio->bi_vcnt = RESYNC_PAGES;
  
- 	bip->bip_slab = idx;
- 	bip->bip_bio = bio;
-+	bip->bip_vec = bip->bip_inline_vecs;
- 	bio->bi_integrity = bip;
+-			bio->bi_io_vec[i].bv_page = page;
+-			bio->bi_vcnt = i+1;
+-		}
++		if (bio_alloc_pages(bio, gfp_flags))
++			goto out_free_bio;
+ 	}
+ 	/* If not user-requests, copy the page pointers to all bios */
+ 	if (!test_bit(MD_RECOVERY_REQUESTED, &pi->mddev->recovery)) {
+@@ -143,11 +138,6 @@ static void * r1buf_pool_alloc(gfp_t gfp_flags, void *data)
  
- 	return bip;
-@@ -697,8 +698,8 @@ void bio_integrity_split(struct bio *bio, struct bio_pair *bp, int sectors)
- 	bp->iv1 = bip->bip_vec[0];
- 	bp->iv2 = bip->bip_vec[0];
+ 	return r1_bio;
  
--	bp->bip1.bip_vec[0] = bp->iv1;
--	bp->bip2.bip_vec[0] = bp->iv2;
-+	bp->bip1.bip_vec = &bp->iv1;
-+	bp->bip2.bip_vec = &bp->iv2;
+-out_free_pages:
+-	for (j=0 ; j < pi->raid_disks; j++)
+-		for (i=0; i < r1_bio->bios[j]->bi_vcnt ; i++)
+-			put_page(r1_bio->bios[j]->bi_io_vec[i].bv_page);
+-	j = -1;
+ out_free_bio:
+ 	while (++j < pi->raid_disks)
+ 		bio_put(r1_bio->bios[j]);
+diff --git a/fs/bio.c b/fs/bio.c
+index de4b0e2..b3dceff 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -828,6 +828,34 @@ void bio_advance(struct bio *bio, unsigned bytes)
+ EXPORT_SYMBOL(bio_advance);
  
- 	bp->iv1.bv_len = sectors * bi->tuple_size;
- 	bp->iv2.bv_offset += sectors * bi->tuple_size;
+ /**
++ * bio_alloc_pages - allocates a single page for each bvec in a bio
++ * @bio: bio to allocate pages for
++ * @gfp_mask: flags for allocation
++ *
++ * Allocates pages up to @bio->bi_vcnt.
++ *
++ * Returns 0 on success, -ENOMEM on failure. On failure, any allocated pages are
++ * freed.
++ */
++int bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
++{
++	int i;
++	struct bio_vec *bv;
++
++	bio_for_each_segment_all(bv, bio, i) {
++		bv->bv_page = alloc_page(gfp_mask);
++		if (!bv->bv_page) {
++			while (--bv >= bio->bi_io_vec)
++				__free_page(bv->bv_page);
++			return -ENOMEM;
++		}
++	}
++
++	return 0;
++}
++EXPORT_SYMBOL(bio_alloc_pages);
++
++/**
+  * bio_copy_data - copy contents of data buffers from one chain of bios to
+  * another
+  * @src: source bio list
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index b31036f..81004fd 100644
+index be080d2..8c02317 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -182,7 +182,9 @@ struct bio_integrity_payload {
- 	unsigned short		bip_idx;	/* current bip_vec index */
+@@ -289,6 +289,7 @@ static inline void bio_flush_dcache_pages(struct bio *bi)
+ #endif
  
- 	struct work_struct	bip_work;	/* I/O completion */
--	struct bio_vec		bip_vec[0];	/* embedded bvec array */
-+
-+	struct bio_vec		*bip_vec;
-+	struct bio_vec		bip_inline_vecs[0];/* embedded bvec array */
- };
- #endif /* CONFIG_BLK_DEV_INTEGRITY */
+ extern void bio_copy_data(struct bio *dst, struct bio *src);
++extern int bio_alloc_pages(struct bio *bio, gfp_t gfp);
  
+ extern struct bio *bio_copy_user(struct request_queue *, struct rq_map_data *,
+ 				 unsigned long, unsigned int, int, gfp_t);
 -- 
 1.7.12
