@@ -1,119 +1,77 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v4 1/2] block: Reorder struct bio_set
-Date: Mon, 15 Oct 2012 13:08:59 -0700
-Message-ID: <1350331769-14856-26-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 24/26] block: Add an explicit bio flag for bios that own their bvec
+Date: Mon, 15 Oct 2012 13:09:27 -0700
+Message-ID: <1350331769-14856-54-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>, vgoyal@redhat.com
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-This is prep work for the next patch, which embeds a struct bio_list in
-struct bio_set.
+This is for the new bio splitting code. When we split a bio, if the
+split occured on a bvec boundry we reuse the bvec for the new bio. But
+that means bio_free() can't free it, hence the explicit flag.
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- include/linux/bio.h | 66 ++++++++++++++++++++++++++---------------------------
- 1 file changed, 33 insertions(+), 33 deletions(-)
+ fs/bio.c                  | 4 +++-
+ include/linux/bio.h       | 5 -----
+ include/linux/blk_types.h | 1 +
+ 3 files changed, 4 insertions(+), 6 deletions(-)
 
+diff --git a/fs/bio.c b/fs/bio.c
+index 65e6eac..5e91e36 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -250,7 +250,7 @@ static void bio_free(struct bio *bio)
+ 	__bio_free(bio);
+ 
+ 	if (bs) {
+-		if (bio_has_allocated_vec(bio))
++		if (bio_flagged(bio, BIO_OWNS_VEC))
+ 			bvec_free_bs(bs, bio->bi_io_vec, BIO_POOL_IDX(bio));
+ 
+ 		/*
+@@ -449,6 +449,8 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ 
+ 		if (unlikely(!bvl))
+ 			goto err_free;
++
++		bio->bi_flags |= 1 << BIO_OWNS_VEC;
+ 	} else if (nr_iovecs) {
+ 		bvl = bio->bi_inline_vecs;
+ 	}
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 820e7aa..93d3d17 100644
+index bd45154..edd66f3 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -298,39 +298,6 @@ static inline int bio_associate_current(struct bio *bio) { return -ENOENT; }
- static inline void bio_disassociate_task(struct bio *bio) { }
- #endif	/* CONFIG_BLK_CGROUP */
- 
--/*
-- * bio_set is used to allow other portions of the IO system to
-- * allocate their own private memory pools for bio and iovec structures.
-- * These memory pools in turn all allocate from the bio_slab
-- * and the bvec_slabs[].
-- */
--#define BIO_POOL_SIZE 2
--#define BIOVEC_NR_POOLS 6
--#define BIOVEC_MAX_IDX	(BIOVEC_NR_POOLS - 1)
--
--struct bio_set {
--	struct kmem_cache *bio_slab;
--	unsigned int front_pad;
--
--	mempool_t *bio_pool;
--#if defined(CONFIG_BLK_DEV_INTEGRITY)
--	mempool_t *bio_integrity_pool;
--#endif
--	mempool_t *bvec_pool;
--};
--
--struct biovec_slab {
--	int nr_vecs;
--	char *name;
--	struct kmem_cache *slab;
--};
--
--/*
-- * a small number of entries is fine, not going to be performance critical.
-- * basically we just need to survive
-- */
--#define BIO_SPLIT_ENTRIES 2
--
- #ifdef CONFIG_HIGHMEM
- /*
-  * remember never ever reenable interrupts between a bvec_kmap_irq and
-@@ -527,6 +494,39 @@ static inline struct bio *bio_list_get(struct bio_list *bl)
- 	return bio;
+@@ -85,11 +85,6 @@ static inline void *bio_data(struct bio *bio)
+ 	return NULL;
  }
  
-+/*
-+ * bio_set is used to allow other portions of the IO system to
-+ * allocate their own private memory pools for bio and iovec structures.
-+ * These memory pools in turn all allocate from the bio_slab
-+ * and the bvec_slabs[].
-+ */
-+#define BIO_POOL_SIZE 2
-+#define BIOVEC_NR_POOLS 6
-+#define BIOVEC_MAX_IDX	(BIOVEC_NR_POOLS - 1)
-+
-+struct bio_set {
-+	struct kmem_cache *bio_slab;
-+	unsigned int front_pad;
-+
-+	mempool_t *bio_pool;
-+#if defined(CONFIG_BLK_DEV_INTEGRITY)
-+	mempool_t *bio_integrity_pool;
-+#endif
-+	mempool_t *bvec_pool;
-+};
-+
-+struct biovec_slab {
-+	int nr_vecs;
-+	char *name;
-+	struct kmem_cache *slab;
-+};
-+
-+/*
-+ * a small number of entries is fine, not going to be performance critical.
-+ * basically we just need to survive
-+ */
-+#define BIO_SPLIT_ENTRIES 2
-+
- #if defined(CONFIG_BLK_DEV_INTEGRITY)
+-static inline int bio_has_allocated_vec(struct bio *bio)
+-{
+-	return bio->bi_io_vec && bio->bi_io_vec != bio->bi_inline_vecs;
+-}
+-
+ /*
+  * will die
+  */
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 3eefbb2..e9375cf 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -117,6 +117,7 @@ struct bio {
+  * BIO_POOL_IDX()
+  */
+ #define BIO_RESET_BITS	12
++#define BIO_OWNS_VEC	12	/* bio_free() should free bvec */
  
- #define bip_vec_idx(bip, idx)	(&(bip->bip_vec[(idx)]))
+ #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
+ 
 -- 
 1.7.12
