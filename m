@@ -1,52 +1,52 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 03/24] md: Convert md_trim_bio() to use bio_advance()
-Date: Mon, 15 Oct 2012 13:08:37 -0700
-Message-ID: <1350331769-14856-4-git-send-email-koverstreet@google.com>
-References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-raid1: remove unused condition
+Date: Mon, 15 Oct 2012 16:38:35 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1210151638030.10685@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-CC: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Acked-by: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
----
- drivers/md/md.c | 17 ++++-------------
- 1 file changed, 4 insertions(+), 13 deletions(-)
+dm-raid1: remove unused condition
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 7a2b079..404a0ba 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -194,21 +194,12 @@ void md_trim_bio(struct bio *bio, int offset, int size)
- 	if (offset == 0 && size == bio->bi_size)
- 		return;
+mempool_alloc can't fail if __GFP_WAIT is specified, so the condition
+that tests if read_record is non-NULL is always true.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-raid1.c |    8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+Index: linux-3.6.2-fast/drivers/md/dm-raid1.c
+===================================================================
+--- linux-3.6.2-fast.orig/drivers/md/dm-raid1.c	2012-10-15 21:31:57.000000000 +0200
++++ linux-3.6.2-fast/drivers/md/dm-raid1.c	2012-10-15 21:34:20.000000000 +0200
+@@ -1198,11 +1198,9 @@ static int mirror_map(struct dm_target *
+ 		return -EIO;
  
--	bio->bi_sector += offset;
--	bio->bi_size = size;
--	offset <<= 9;
- 	clear_bit(BIO_SEG_VALID, &bio->bi_flags);
+ 	read_record = mempool_alloc(ms->read_record_pool, GFP_NOIO);
+-	if (likely(read_record)) {
+-		dm_bio_record(&read_record->details, bio);
+-		map_context->ptr = read_record;
+-		read_record->m = m;
+-	}
++	dm_bio_record(&read_record->details, bio);
++	map_context->ptr = read_record;
++	read_record->m = m;
  
--	while (bio->bi_idx < bio->bi_vcnt &&
--	       bio->bi_io_vec[bio->bi_idx].bv_len <= offset) {
--		/* remove this whole bio_vec */
--		offset -= bio->bi_io_vec[bio->bi_idx].bv_len;
--		bio->bi_idx++;
--	}
--	if (bio->bi_idx < bio->bi_vcnt) {
--		bio->bi_io_vec[bio->bi_idx].bv_offset += offset;
--		bio->bi_io_vec[bio->bi_idx].bv_len -= offset;
--	}
-+	bio_advance(bio, offset << 9);
-+
-+	bio->bi_size = size;
-+
- 	/* avoid any complications with bi_idx being non-zero*/
- 	if (bio->bi_idx) {
- 		memmove(bio->bi_io_vec, bio->bi_io_vec+bio->bi_idx,
--- 
-1.7.12
+ 	map_bio(m, bio);
+ 
