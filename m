@@ -1,117 +1,118 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH v2 00/26] Prep work for immutable bio vecs
-Date: Mon, 15 Oct 2012 13:09:03 -0700
-Message-ID: <1350331769-14856-30-git-send-email-koverstreet@google.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 26/26] block: Add BIO_SUBMITTED flag, kill BIO_CLONED
+Date: Mon, 15 Oct 2012 13:09:29 -0700
+Message-ID: <1350331769-14856-56-git-send-email-koverstreet@google.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: tj@kernel.org, axboe@kernel.dk, Kent Overstreet <koverstreet@google.com>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1350331769-14856-1-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org
 List-Id: dm-devel.ids
 
-Random assortment of refactoring and trivial cleanups;
+BIO_CLONED wasn't very useful, and didn't have very clear semantics, so
+kill it.
 
-Immutable bio vecs and efficient bio splitting require auditing and
-removing pretty much all bi_idx uses, among other things.
+Replace it with a more useful flag - BIO_SUBMITTED means the bio has
+been passed to generic_make_request() and the bvec can no longer be
+modified.
 
-The reason is that with immutable bio vecs we can't use the bvec array
-directly; if we have a partially completed bvec, that'll be indicated
-with a field in struct bvec_iter (which gets embedded in struct bio) -
-bi_bvec_done.
+Roll both changes into the same patch so we can steal the old bit for
+the new flag.
 
-bio_for_each_segments() will handle this transparently, so code needs to
-be converted to use it or some other generic accessor.
+Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+---
+ block/blk-core.c          | 2 ++
+ drivers/md/dm.c           | 1 -
+ fs/bio-integrity.c        | 1 -
+ fs/bio.c                  | 8 +++++---
+ include/linux/blk_types.h | 2 +-
+ 5 files changed, 8 insertions(+), 6 deletions(-)
 
-Also, bio splitting means that when a driver gets a bio, bi_idx and
-bi_bvec_done may both be nonzero. Again, just need to use generic
-accessors.
-
-v2: Patch series now has all the prep work to be done before abstracting
-out the bio iterator, I think.
-
-Kent Overstreet (26):
-  block: Convert integrity to bvec_alloc_bs(), and a bugfix
-  block: Add bio_advance()
-  block: Refactor blk_update_request()
-  md: Convert md_trim_bio() to use bio_advance()
-  block: Add bio_end()
-  block: Use bio_sectors() more consistently
-  block: Don't use bi_idx in bio_split() or require it to be 0
-  block: Remove bi_idx references
-  block: Remove some unnecessary bi_vcnt usage
-  block: Add submit_bio_wait(), remove from md
-  raid10: Use bio_reset()
-  raid1: use bio_reset()
-  raid5: use bio_reset()
-  raid1: Refactor narrow_write_error() to not use bi_idx
-  block: Add bio_copy_data()
-  pktcdvd: use bio_copy_data()
-  pktcdvd: Use bio_reset() in disabled code to kill bi_idx usage
-  raid1: use bio_copy_data()
-  bounce: Refactor __blk_queue_bounce to not use bi_io_vec
-  block: Add bio_for_each_segment_all()
-  block: Convert some code to bio_for_each_segment_all()
-  block: Add bio_alloc_pages()
-  raid1: use bio_alloc_pages()
-  block: Add an explicit bio flag for bios that own their bvec
-  bio-integrity: Add explicit field for owner of bip_buf
-  block: Add BIO_SUBMITTED flag, kill BIO_CLONED
-
- block/blk-core.c                         |  88 +++---------
- block/cfq-iosched.c                      |   7 +-
- block/deadline-iosched.c                 |   2 +-
- drivers/block/aoe/aoeblk.c               |   2 +-
- drivers/block/aoe/aoecmd.c               |   2 +-
- drivers/block/brd.c                      |   3 +-
- drivers/block/drbd/drbd_req.c            |   8 +-
- drivers/block/floppy.c                   |   1 -
- drivers/block/pktcdvd.c                  | 102 ++++----------
- drivers/block/ps3vram.c                  |   2 +-
- drivers/md/dm-crypt.c                    |   3 +-
- drivers/md/dm-raid1.c                    |   2 +-
- drivers/md/dm-stripe.c                   |   2 +-
- drivers/md/dm-verity.c                   |   4 +-
- drivers/md/dm.c                          |   1 -
- drivers/md/faulty.c                      |   6 +-
- drivers/md/linear.c                      |   3 +-
- drivers/md/md.c                          |  19 +--
- drivers/md/raid0.c                       |   9 +-
- drivers/md/raid1.c                       | 131 ++++++------------
- drivers/md/raid10.c                      |  78 +++--------
- drivers/md/raid5.c                       |  50 +++----
- drivers/message/fusion/mptsas.c          |   6 +-
- drivers/s390/block/dcssblk.c             |   3 +-
- drivers/scsi/libsas/sas_expander.c       |   6 +-
- drivers/scsi/mpt2sas/mpt2sas_transport.c |  10 +-
- fs/bio-integrity.c                       | 134 ++++++------------
- fs/bio.c                                 | 226 +++++++++++++++++++++++++++----
- fs/btrfs/extent_io.c                     |   3 +-
- fs/buffer.c                              |   1 -
- fs/direct-io.c                           |   8 +-
- fs/exofs/ore.c                           |   2 +-
- fs/exofs/ore_raid.c                      |   2 +-
- fs/gfs2/lops.c                           |   2 +-
- fs/jfs/jfs_logmgr.c                      |   2 -
- fs/logfs/dev_bdev.c                      |   5 -
- include/linux/bio.h                      |  34 +++--
- include/linux/blk_types.h                |   3 +-
- include/trace/events/block.h             |  10 +-
- mm/bounce.c                              |  75 +++-------
- mm/page_io.c                             |   1 -
- 41 files changed, 471 insertions(+), 587 deletions(-)
-
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 97511cb..1d4e893 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1638,6 +1638,8 @@ generic_make_request_checks(struct bio *bio)
+ 
+ 	might_sleep();
+ 
++	bio->bi_flags |= 1 << BIO_SUBMITTED;
++
+ 	if (bio_check_eod(bio, nr_sectors))
+ 		goto end_io;
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8378797..777e70d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1065,7 +1065,6 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
+ 	clone->bi_size = to_bytes(len);
+ 	clone->bi_io_vec->bv_offset = offset;
+ 	clone->bi_io_vec->bv_len = clone->bi_size;
+-	clone->bi_flags |= 1 << BIO_CLONED;
+ 
+ 	if (bio_integrity(bio)) {
+ 		bio_integrity_clone(clone, bio, GFP_NOIO);
+diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
+index 462a131..a77a566 100644
+--- a/fs/bio-integrity.c
++++ b/fs/bio-integrity.c
+@@ -621,7 +621,6 @@ void bio_integrity_trim(struct bio *bio, unsigned int offset,
+ 
+ 	BUG_ON(bip == NULL);
+ 	BUG_ON(bi == NULL);
+-	BUG_ON(!bio_flagged(bio, BIO_CLONED));
+ 
+ 	nr_sectors = bio_integrity_hw_sectors(bi, sectors);
+ 	bip->bip_sector = bip->bip_sector + offset;
+diff --git a/fs/bio.c b/fs/bio.c
+index 5e91e36..d3b6e2a 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -531,7 +531,7 @@ void __bio_clone(struct bio *bio, struct bio *bio_src)
+ 	 */
+ 	bio->bi_sector = bio_src->bi_sector;
+ 	bio->bi_bdev = bio_src->bi_bdev;
+-	bio->bi_flags |= 1 << BIO_CLONED;
++	bio->bi_flags |= (bio_src->bi_flags & (1 << BIO_SUBMITTED));
+ 	bio->bi_rw = bio_src->bi_rw;
+ 	bio->bi_vcnt = bio_src->bi_vcnt;
+ 	bio->bi_size = bio_src->bi_size;
+@@ -604,9 +604,9 @@ static int __bio_add_page(struct request_queue *q, struct bio *bio, struct page
+ 	struct bio_vec *bvec;
+ 
+ 	/*
+-	 * cloned bio must not modify vec list
++	 * submitted bio must not modify vec list
+ 	 */
+-	if (unlikely(bio_flagged(bio, BIO_CLONED)))
++	if (unlikely(bio_flagged(bio, BIO_SUBMITTED)))
+ 		return 0;
+ 
+ 	if (((bio->bi_size + len) >> 9) > max_sectors)
+@@ -844,6 +844,8 @@ int bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
+ 	int i;
+ 	struct bio_vec *bv;
+ 
++	BUG_ON(bio_flagged(bio, BIO_SUBMITTED));
++
+ 	bio_for_each_segment_all(bv, bio, i) {
+ 		bv->bv_page = alloc_page(gfp_mask);
+ 		if (!bv->bv_page) {
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index e9375cf..fb49107 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -103,7 +103,7 @@ struct bio {
+ #define BIO_RW_BLOCK	1	/* RW_AHEAD set, and read/write would block */
+ #define BIO_EOF		2	/* out-out-bounds error */
+ #define BIO_SEG_VALID	3	/* bi_phys_segments valid */
+-#define BIO_CLONED	4	/* doesn't own data */
++#define BIO_SUBMITTED	4	/* bio has been submitted */
+ #define BIO_BOUNCED	5	/* bio is a bounce bio */
+ #define BIO_USER_MAPPED 6	/* contains user pages */
+ #define BIO_EOPNOTSUPP	7	/* not supported */
 -- 
 1.7.12
