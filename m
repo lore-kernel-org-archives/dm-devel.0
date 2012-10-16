@@ -1,45 +1,22 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-raid: use DM_ENDIO_INCOMPLETE
-Date: Mon, 15 Oct 2012 16:39:03 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1210151638360.10685@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ed Cashin <ecashin@coraid.com>
+Subject: Re: [PATCH v4 05/24] block: Use bio_sectors() more consistently
+Date: Mon, 15 Oct 2012 20:54:50 -0500
+Message-ID: <FCC1E3FC-FE23-4BC7-A437-04471143D8B9@coraid.com>
+References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+ <1350331769-14856-6-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1350331769-14856-6-git-send-email-koverstreet@google.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>
+Cc: "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "tj@kernel.org" <tj@kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "neilb@suse.de" <neilb@suse.de>, "vgoyal@redhat.com" <vgoyal@redhat.com>, Nick Piggin <npiggin@kernel.dk>, Jiri Kosina <jkosina@suse.cz>, Jim Paris <jim@jtan.com>, Geoff Levand <geoff@infradead.org>, Alasdair Kergon <agk@redhat.com>, Steven Rostedt <rostedt@goodmis.org>
 List-Id: dm-devel.ids
 
-dm-raid: use DM_ENDIO_INCOMPLETE
+The aoe changes look OK, thanks.
 
-Use a defined macro DM_ENDIO_INCOMPLETE instead of a numeric constant.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-raid1.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Index: linux-3.6.2-fast/drivers/md/dm-raid1.c
-===================================================================
---- linux-3.6.2-fast.orig/drivers/md/dm-raid1.c	2012-10-15 21:39:30.000000000 +0200
-+++ linux-3.6.2-fast/drivers/md/dm-raid1.c	2012-10-15 21:40:55.000000000 +0200
-@@ -1260,7 +1260,7 @@ static int mirror_end_io(struct dm_targe
- 			mempool_free(read_record, ms->read_record_pool);
- 			map_context->ptr = NULL;
- 			queue_bio(ms, bio, rw);
--			return 1;
-+			return DM_ENDIO_INCOMPLETE;
- 		}
- 		DMERR("All replicated volumes dead, failing I/O");
- 	}
+-- 
+  Ed Cashin
+  ecashin@coraid.com
