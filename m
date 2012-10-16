@@ -1,22 +1,56 @@
-From: Ed Cashin <ecashin@coraid.com>
-Subject: Re: [PATCH v4 05/24] block: Use bio_sectors() more consistently
-Date: Mon, 15 Oct 2012 20:54:50 -0500
-Message-ID: <FCC1E3FC-FE23-4BC7-A437-04471143D8B9@coraid.com>
-References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
- <1350331769-14856-6-git-send-email-koverstreet@google.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-snap: optimize track_chunk
+Date: Tue, 16 Oct 2012 19:04:50 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1210161904120.19889@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1350331769-14856-6-git-send-email-koverstreet@google.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "tj@kernel.org" <tj@kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "neilb@suse.de" <neilb@suse.de>, "vgoyal@redhat.com" <vgoyal@redhat.com>, Nick Piggin <npiggin@kernel.dk>, Jiri Kosina <jkosina@suse.cz>, Jim Paris <jim@jtan.com>, Geoff Levand <geoff@infradead.org>, Alasdair Kergon <agk@redhat.com>, Steven Rostedt <rostedt@goodmis.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The aoe changes look OK, thanks.
+dm-snap: optimize track_chunk
 
--- 
-  Ed Cashin
-  ecashin@coraid.com
+track_chunk is always called with interrupts enabled. Consequently, we
+do not need to save and restore interrupt state in "flags" variable.
+This patch changes spin_lock_irqsave to spin_lock_irq and
+spin_unlock_irqrestore to spin_unlock_irq.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-snap.c |    5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+Index: linux-3.6.2-fast/drivers/md/dm-snap.c
+===================================================================
+--- linux-3.6.2-fast.orig/drivers/md/dm-snap.c	2012-10-17 00:43:01.000000000 +0200
++++ linux-3.6.2-fast/drivers/md/dm-snap.c	2012-10-17 00:43:22.000000000 +0200
+@@ -201,14 +201,13 @@ static struct dm_snap_tracked_chunk *tra
+ {
+ 	struct dm_snap_tracked_chunk *c = mempool_alloc(s->tracked_chunk_pool,
+ 							GFP_NOIO);
+-	unsigned long flags;
+ 
+ 	c->chunk = chunk;
+ 
+-	spin_lock_irqsave(&s->tracked_chunk_lock, flags);
++	spin_lock_irq(&s->tracked_chunk_lock);
+ 	hlist_add_head(&c->node,
+ 		       &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)]);
+-	spin_unlock_irqrestore(&s->tracked_chunk_lock, flags);
++	spin_unlock_irq(&s->tracked_chunk_lock);
+ 
+ 	return c;
+ }
