@@ -1,43 +1,29 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-persistent-data: rename node to btree_node
-Date: Thu, 18 Oct 2012 10:44:10 +0100
-Message-ID: <20121018094408.GA5564@ubuntu>
-References: <Pine.LNX.4.64.1210172233240.6304@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4 1/2] block: Reorder struct bio_set
+Date: Thu, 18 Oct 2012 18:14:01 -0700
+Message-ID: <20121019011401.GI13370@google.com>
+References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+ <1350331769-14856-26-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1210172233240.6304@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+In-Reply-To: <1350331769-14856-26-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Oct 17, 2012 at 10:48:00PM -0400, Mikulas Patocka wrote:
-> dm-persistent-data: rename node to btree_node
+On Mon, Oct 15, 2012 at 01:08:59PM -0700, Kent Overstreet wrote:
+> This is prep work for the next patch, which embeds a struct bio_list in
+> struct bio_set.
 > 
-> This patch fixes compilation failure on sparc32
-> 
-> struct node is already defined in include/linux/node.h. On sparc32, it
-> happens to be included through other dependencies and persistent-data
-> doesn't compile because of conflicting declarations.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Signed-off-by: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> CC: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 
-Thanks Mikulas,
+Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
-I've merged into the thin-dev branch of my github tree.
+Thanks.
 
-Alasdair could you push this upstream please.
-
-- Joe
+-- 
+tejun
