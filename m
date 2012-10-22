@@ -1,40 +1,45 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 01/26] block: Convert integrity to bvec_alloc_bs(),
- and a bugfix
-Date: Fri, 19 Oct 2012 13:36:06 -0700
-Message-ID: <20121019203606.GU13370@google.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH v4 1/2] block: Fix a buffer overrun in
+ bio_integrity_split()
+Date: Mon, 22 Oct 2012 11:39:07 -0400
+Message-ID: <20121022153907.GC3401@redhat.com>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
- <1350331769-14856-31-git-send-email-koverstreet@google.com>
- <20121019203421.GT13370@google.com>
+ <1350331769-14856-28-git-send-email-koverstreet@google.com>
+ <20121019203015.GS13370@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20121019203421.GT13370-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20121019203015.GS13370@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Kent Overstreet <koverstreet@google.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 19, 2012 at 01:34:21PM -0700, Tejun Heo wrote:
-> On Mon, Oct 15, 2012 at 01:09:04PM -0700, Kent Overstreet wrote:
-> > This adds a pointer to the bvec array to struct bio_integrity_payload,
-> > instead of the bvecs always being inline; then the bvecs are allocated
-> > with bvec_alloc_bs().
+On Fri, Oct 19, 2012 at 01:30:15PM -0700, Tejun Heo wrote:
+> On Mon, Oct 15, 2012 at 01:09:01PM -0700, Kent Overstreet wrote:
+> > bio_integrity_split() seemed to be confusing pointers and arrays -
+> > bip_vec in bio_integrity_payload was an array appended to the end of the
+> > payload, so the bio_vecs in struct bio_pair should have come after the
+> > bio_integrity_payload they're for.
 > > 
-> > This is needed eventually for immutable bio vecs - immutable bvecs
-> > aren't useful if we still have to copy them, hence the need for the
-> > pointer. Less code is always nice too, though.
+> > Fix it by making bip_vec a pointer to the inline vecs - a later patch is
+> > going to make more use of this pointer.
 > > 
-> > Also fix an amusing bug in bio_integrity_split() - struct bio_pair
-> > doesn't have the integrity bvecs after the bio_integrity_payloads, so
-> > there was a buffer overrun. The code was confusing pointers with arrays.
+> > Signed-off-by: Kent Overstreet <koverstreet@google.com>
+> > CC: Jens Axboe <axboe@kernel.dk>
+> > CC: Martin K. Petersen <martin.petersen@oracle.com>
 > 
-> Ummm... patch description doesn't agree with the patch content?
+> This being an apparent bug, I think it would be better to create a
+> patch to simply reorder bio_pair fields to fix it and mark it w/ Cc:
+> stable and introduce bip_vec pointer separately.
 
-And the patch posted doesn't match the commit in git branch.
+Initially he had reordered the bio_pair fields but there were couple of
+issues. We could not assume that there is no padding between fields and
+secondly some of the initializtion of looked plain ugly.
 
-Dazed and confused.  Bailing out.  Let's retry next time.
+IMHO, introduction of bip_vec to fix this issue is small and cleaner
+then reordering fields.
 
--- 
-tejun
+Thanks
+Vivek
