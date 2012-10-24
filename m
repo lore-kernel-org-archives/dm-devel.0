@@ -1,36 +1,32 @@
 From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 2/2] block: Convert integrity to bvec_alloc_bs()
-Date: Wed, 24 Oct 2012 12:54:49 -0400
-Message-ID: <yq1ip9zbyjq.fsf@sermon.lab.mkp.net>
+Subject: Re: [PATCH v4 1/2] block: Fix a buffer overrun in bio_integrity_split()
+Date: Wed, 24 Oct 2012 12:57:45 -0400
+Message-ID: <yq1ehknbyeu.fsf@sermon.lab.mkp.net>
 References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
-	<1350331769-14856-29-git-send-email-koverstreet@google.com>
+	<1350331769-14856-28-git-send-email-koverstreet@google.com>
+	<20121019203015.GS13370@google.com> <20121022153907.GC3401@redhat.com>
+	<yq1mwzbbzi1.fsf@sermon.lab.mkp.net>
+	<CAOS58YPFq_rt1Pw-v1XtX7-tnPGceXP5Chpp9JhkkMtnWnNQsg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1350331769-14856-29-git-send-email-koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> (Kent
-	Overstreet's message of "Mon, 15 Oct 2012 13:09:02 -0700")
+In-Reply-To: <CAOS58YPFq_rt1Pw-v1XtX7-tnPGceXP5Chpp9JhkkMtnWnNQsg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Tejun Heo's message of "Wed, 24 Oct 2012 12:42:46 -0400")
 Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
 List-Id: dm-devel.ids
 
->>>>> "Kent" == Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> writes:
+>>>>> "Tejun" == Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> writes:
 
-Kent> Also, bio_integrity_alloc() was using fs_bio_set if no bio_set was
-Kent> specified. This was wrong
+Tejun> If Martin is happy with it, I'm not gonna push it but putting the
+Tejun> respective storage member after one containing vararray at the
+Tejun> end is a legit way to allocate the area statically. As long as
+Tejun> the storage field is marked as such and not accessed directly, it
+Tejun> doesn't matter whether there's padding inbetween or not. 
 
-You did that, I didn't.
-
-
-Kent> - using the bio_set doesn't protect us from memory allocation
-Kent>   failures, because we just used kmalloc for the
-Kent>   bio_integrity_payload.
-
-I don't understand this comment. kmalloc where?
-
-The bip includes an embedded bvec array and comes from either one of the
-dedicated slabs or - in the case of the max bvec size - from a
-mempool. These slabs and the mempool are per bio_set.
+The embedded array is still at the end. Kent just added an explicit
+pointer for use in the bio_pair corner case.
 
 -- 
 Martin K. Petersen	Oracle Linux Engineering
