@@ -1,93 +1,122 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v7 01/16] hashtable: introduce a small and
-	naive	hashtable
-Date: Mon, 29 Oct 2012 12:29:04 -0400
-Message-ID: <20121029162904.GA19509@Krystal>
-References: <1351450948-15618-1-git-send-email-levinsasha928@gmail.com>
-	<20121029112907.GA9115@Krystal>
-	<CA+1xoqfQn92igbFS1TtrpYuSiy7+Ro02ar=axgqSOJOuE_EVuA@mail.gmail.com>
-	<20121029161412.GB18944@Krystal>
-	<CA+1xoqfBXM4sjvcZtUncnWAaUxA9_YBod3Hjx3ZO=K1oJO_j7g@mail.gmail.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 2/2] dm: stay in blk_queue_bypass until queue becomes
+ initialized
+Date: Mon, 29 Oct 2012 12:38:45 -0400
+Message-ID: <20121029163845.GB7709@redhat.com>
+References: <50890937.7010809@ce.jp.nec.com>
+ <20121026202105.GF24687@redhat.com>
+ <508E572C.6000707@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CA+1xoqfBXM4sjvcZtUncnWAaUxA9_YBod3Hjx3ZO=K1oJO_j7g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://openvswitch.org/pipermail/dev>
-List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
-List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
-List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
-Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-To: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+In-Reply-To: <508E572C.6000707@ce.jp.nec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Tejun Heo <tj@kernel.org>, Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: dm-devel.ids
 
-* Sasha Levin (levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org) wrote:
-> On Mon, Oct 29, 2012 at 12:14 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-> > * Sasha Levin (levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org) wrote:
-> >> On Mon, Oct 29, 2012 at 7:29 AM, Mathieu Desnoyers
-> >> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-> >> > * Sasha Levin (levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org) wrote:
-> >> >> +
-> >> >> +     for (i = 0; i < sz; i++)
-> >> >> +             INIT_HLIST_HEAD(&ht[sz]);
-> >> >
-> >> > ouch. How did this work ? Has it been tested at all ?
-> >> >
-> >> > sz -> i
+On Mon, Oct 29, 2012 at 07:15:08PM +0900, Jun'ichi Nomura wrote:
+> On 10/27/12 05:21, Vivek Goyal wrote:
+> > On Thu, Oct 25, 2012 at 06:41:11PM +0900, Jun'ichi Nomura wrote:
+> >> [PATCH] dm: stay in blk_queue_bypass until queue becomes initialized
 > >>
-> >> Funny enough, it works perfectly. Generally as a test I boot the
-> >> kernel in a VM and let it fuzz with trinity for a bit, doing that with
-> >> the code above worked flawlessly.
+> >> With 749fefe677 ("block: lift the initial queue bypass mode on
+> >> blk_register_queue() instead of blk_init_allocated_queue()"),
+> >> add_disk() eventually calls blk_queue_bypass_end().
+> >> This change invokes the following warning when multipath is used.
 > >>
-> >> While it works, it's obviously wrong. Why does it work though? Usually
-> >> there's a list op happening pretty soon after that which brings the
-> >> list into proper state.
+> >>   BUG: scheduling while atomic: multipath/2460/0x00000002
+> >>   1 lock held by multipath/2460:
+> >>    #0:  (&md->type_lock){......}, at: [<ffffffffa019fb05>] dm_lock_md_type+0x17/0x19 [dm_mod]
+> >>   Modules linked in: ...
+> >>   Pid: 2460, comm: multipath Tainted: G        W    3.7.0-rc2 #1
+> >>   Call Trace:
+> >>    [<ffffffff810723ae>] __schedule_bug+0x6a/0x78
+> >>    [<ffffffff81428ba2>] __schedule+0xb4/0x5e0
+> >>    [<ffffffff814291e6>] schedule+0x64/0x66
+> >>    [<ffffffff8142773a>] schedule_timeout+0x39/0xf8
+> >>    [<ffffffff8108ad5f>] ? put_lock_stats+0xe/0x29
+> >>    [<ffffffff8108ae30>] ? lock_release_holdtime+0xb6/0xbb
+> >>    [<ffffffff814289e3>] wait_for_common+0x9d/0xee
+> >>    [<ffffffff8107526c>] ? try_to_wake_up+0x206/0x206
+> >>    [<ffffffff810c0eb8>] ? kfree_call_rcu+0x1c/0x1c
+> >>    [<ffffffff81428aec>] wait_for_completion+0x1d/0x1f
+> >>    [<ffffffff810611f9>] wait_rcu_gp+0x5d/0x7a
+> >>    [<ffffffff81061216>] ? wait_rcu_gp+0x7a/0x7a
+> >>    [<ffffffff8106fb18>] ? complete+0x21/0x53
+> >>    [<ffffffff810c0556>] synchronize_rcu+0x1e/0x20
+> >>    [<ffffffff811dd903>] blk_queue_bypass_start+0x5d/0x62
+> >>    [<ffffffff811ee109>] blkcg_activate_policy+0x73/0x270
+> >>    [<ffffffff81130521>] ? kmem_cache_alloc_node_trace+0xc7/0x108
+> >>    [<ffffffff811f04b3>] cfq_init_queue+0x80/0x28e
+> >>    [<ffffffffa01a1600>] ? dm_blk_ioctl+0xa7/0xa7 [dm_mod]
+> >>    [<ffffffff811d8c41>] elevator_init+0xe1/0x115
+> >>    [<ffffffff811e229f>] ? blk_queue_make_request+0x54/0x59
+> >>    [<ffffffff811dd743>] blk_init_allocated_queue+0x8c/0x9e
+> >>    [<ffffffffa019ffcd>] dm_setup_md_queue+0x36/0xaa [dm_mod]
+> >>    [<ffffffffa01a60e6>] table_load+0x1bd/0x2c8 [dm_mod]
+> >>    [<ffffffffa01a7026>] ctl_ioctl+0x1d6/0x236 [dm_mod]
+> >>    [<ffffffffa01a5f29>] ? table_clear+0xaa/0xaa [dm_mod]
+> >>    [<ffffffffa01a7099>] dm_ctl_ioctl+0x13/0x17 [dm_mod]
+> >>    [<ffffffff811479fc>] do_vfs_ioctl+0x3fb/0x441
+> >>    [<ffffffff811b643c>] ? file_has_perm+0x8a/0x99
+> >>    [<ffffffff81147aa0>] sys_ioctl+0x5e/0x82
+> >>    [<ffffffff812010be>] ? trace_hardirqs_on_thunk+0x3a/0x3f
+> >>    [<ffffffff814310d9>] system_call_fastpath+0x16/0x1b
 > >>
-> >> I've been playing with a patch that adds a magic value into list_head
-> >> if CONFIG_DEBUG_LIST is set, and checks that magic in the list debug
-> >> code in lib/list_debug.c.
-> >>
-> >> Does it sound like something useful? If so I'll send that patch out.
-> >
-> > Most of the calls to this initialization function apply it on zeroed
-> > memory (static/kzalloc'd...), which makes it useless. I'd actually be in
-> > favor of removing those redundant calls (as I pointed out in another
-> > email), and document that zeroed memory don't need to be explicitly
-> > initialized.
+> >> The warning means during queue initialization blk_queue_bypass_start()
+> >> calls sleeping function (synchronize_rcu) while dm holds md->type_lock.
+> > 
+> > md->type_lock is a mutex, isn't it? I thought we are allowed to block
+> > and schedule out under mutex?
 > 
-> Why would that make it useless? The idea is that the init functions
-> will set the magic field to something random, like:
-> 
-> .magic = 0xBADBEEF0;
-> 
-> And have list_add() and friends WARN(.magic != 0xBADBEEF0, "Using an
-> uninitialized list\n");
-> 
-> This way we'll catch all places that don't go through list initialization code.
+> Hm, you are right. It's a mutex.
+> The warning occurs only if I turned on CONFIG_PREEMPT=y.
 
-As I replied to Tejun Heo already, I agree that keeping the
-initialization in place makes sense for future-proofness. This intent
-should probably be documented in a comment about the initialization
-function though, just to make sure nobody will try to skip it.
-
-Thanks,
-
-Mathieu
+Ok, so the question is what's wrong with calling synchronize_rcu() inside
+a mutex with CONFIG_PREEMPT=y. I don't know. Ccing paul mckenney  and
+peterz.
 
 > 
+> > add_disk() also calls disk_alloc_events() which does kzalloc(GFP_KERNEL).
+> > So we already have code which can block/wait under md->type_lock. I am
+> > not sure why should we get this warning under a mutex.
 > 
-> Thanks,
-> Sasha
+> add_disk() is called without md->type_lock.
+> 
+> Call flow is like this:
+> 
+> dm_create
+>   alloc_dev
+>     blk_alloc_queue
+>     alloc_disk
+>     add_disk
+>       blk_queue_bypass_end [with 3.7-rc2]
+> 
+> table_load
+>   dm_lock_md_type [takes md->type_lock]
+>   dm_setup_md_queue
+>     blk_init_allocated_queue [when DM_TYPE_REQUEST_BASED]
+>       elevator_init
+>         blkcg_activate_policy
+>           blk_queue_bypass_start <-- THIS triggers the warning
+>           blk_queue_bypass_end
+>       blk_queue_bypass_end [with 3.6]
+>   dm_unlock_md_type
+> 
+> blk_queue_bypass_start() in blkcg_activate_policy was nested call,
+> that did nothing, with 3.6.
+> With 3.7-rc2, it becomes the initial call and does
+> actual draining stuff.
 
--- 
-Mathieu Desnoyers
-Operating System Efficiency R&D Consultant
-EfficiOS Inc.
-http://www.efficios.com
+Ok. Once we know what's wrong, we should be able to figure out the 
+right solution. Artificially putting queue one level deep in bypass
+to avoid calling synchronize_rcu() sounds bad.
+
+Thanks
+Vivek
+
+> 
+> -- 
+> Jun'ichi Nomura, NEC Corporation
