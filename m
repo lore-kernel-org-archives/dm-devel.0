@@ -1,106 +1,306 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 2/2] dm: stay in blk_queue_bypass until queue becomes
- initialized
-Date: Mon, 29 Oct 2012 19:15:08 +0900
-Message-ID: <508E572C.6000707@ce.jp.nec.com>
-References: <50890937.7010809@ce.jp.nec.com> <20121026202105.GF24687@redhat.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH v7 01/16] hashtable: introduce a small and naive
+	hashtable
+Date: Mon, 29 Oct 2012 07:29:08 -0400
+Message-ID: <20121029112907.GA9115@Krystal>
+References: <1351450948-15618-1-git-send-email-levinsasha928@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20121026202105.GF24687@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Tejun Heo <tj@kernel.org>, Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1351450948-15618-1-git-send-email-levinsasha928@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Sasha Levin <levinsasha928@gmail.com>
+Cc: torvalds@linux-foundation.org, tj@kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, rostedt@goodmis.org, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
 List-Id: dm-devel.ids
 
-On 10/27/12 05:21, Vivek Goyal wrote:
-> On Thu, Oct 25, 2012 at 06:41:11PM +0900, Jun'ichi Nomura wrote:
->> [PATCH] dm: stay in blk_queue_bypass until queue becomes initialized
->>
->> With 749fefe677 ("block: lift the initial queue bypass mode on
->> blk_register_queue() instead of blk_init_allocated_queue()"),
->> add_disk() eventually calls blk_queue_bypass_end().
->> This change invokes the following warning when multipath is used.
->>
->>   BUG: scheduling while atomic: multipath/2460/0x00000002
->>   1 lock held by multipath/2460:
->>    #0:  (&md->type_lock){......}, at: [<ffffffffa019fb05>] dm_lock_md_type+0x17/0x19 [dm_mod]
->>   Modules linked in: ...
->>   Pid: 2460, comm: multipath Tainted: G        W    3.7.0-rc2 #1
->>   Call Trace:
->>    [<ffffffff810723ae>] __schedule_bug+0x6a/0x78
->>    [<ffffffff81428ba2>] __schedule+0xb4/0x5e0
->>    [<ffffffff814291e6>] schedule+0x64/0x66
->>    [<ffffffff8142773a>] schedule_timeout+0x39/0xf8
->>    [<ffffffff8108ad5f>] ? put_lock_stats+0xe/0x29
->>    [<ffffffff8108ae30>] ? lock_release_holdtime+0xb6/0xbb
->>    [<ffffffff814289e3>] wait_for_common+0x9d/0xee
->>    [<ffffffff8107526c>] ? try_to_wake_up+0x206/0x206
->>    [<ffffffff810c0eb8>] ? kfree_call_rcu+0x1c/0x1c
->>    [<ffffffff81428aec>] wait_for_completion+0x1d/0x1f
->>    [<ffffffff810611f9>] wait_rcu_gp+0x5d/0x7a
->>    [<ffffffff81061216>] ? wait_rcu_gp+0x7a/0x7a
->>    [<ffffffff8106fb18>] ? complete+0x21/0x53
->>    [<ffffffff810c0556>] synchronize_rcu+0x1e/0x20
->>    [<ffffffff811dd903>] blk_queue_bypass_start+0x5d/0x62
->>    [<ffffffff811ee109>] blkcg_activate_policy+0x73/0x270
->>    [<ffffffff81130521>] ? kmem_cache_alloc_node_trace+0xc7/0x108
->>    [<ffffffff811f04b3>] cfq_init_queue+0x80/0x28e
->>    [<ffffffffa01a1600>] ? dm_blk_ioctl+0xa7/0xa7 [dm_mod]
->>    [<ffffffff811d8c41>] elevator_init+0xe1/0x115
->>    [<ffffffff811e229f>] ? blk_queue_make_request+0x54/0x59
->>    [<ffffffff811dd743>] blk_init_allocated_queue+0x8c/0x9e
->>    [<ffffffffa019ffcd>] dm_setup_md_queue+0x36/0xaa [dm_mod]
->>    [<ffffffffa01a60e6>] table_load+0x1bd/0x2c8 [dm_mod]
->>    [<ffffffffa01a7026>] ctl_ioctl+0x1d6/0x236 [dm_mod]
->>    [<ffffffffa01a5f29>] ? table_clear+0xaa/0xaa [dm_mod]
->>    [<ffffffffa01a7099>] dm_ctl_ioctl+0x13/0x17 [dm_mod]
->>    [<ffffffff811479fc>] do_vfs_ioctl+0x3fb/0x441
->>    [<ffffffff811b643c>] ? file_has_perm+0x8a/0x99
->>    [<ffffffff81147aa0>] sys_ioctl+0x5e/0x82
->>    [<ffffffff812010be>] ? trace_hardirqs_on_thunk+0x3a/0x3f
->>    [<ffffffff814310d9>] system_call_fastpath+0x16/0x1b
->>
->> The warning means during queue initialization blk_queue_bypass_start()
->> calls sleeping function (synchronize_rcu) while dm holds md->type_lock.
+* Sasha Levin (levinsasha928@gmail.com) wrote:
+> This hashtable implementation is using hlist buckets to provide a simple
+> hashtable to prevent it from getting reimplemented all over the kernel.
 > 
-> md->type_lock is a mutex, isn't it? I thought we are allowed to block
-> and schedule out under mutex?
+> Signed-off-by: Sasha Levin <levinsasha928@gmail.com>
+> ---
+> 
+> Sorry for the long delay, I was busy with a bunch of personal things.
+> 
+> Changes since v6:
+> 
+>  - Use macros that point to internal static inline functions instead of
+>  implementing everything as a macro.
+>  - Rebase on latest -next.
+>  - Resending the enter patch series on request.
+>  - Break early from hash_empty() if found to be non-empty.
+>  - DECLARE_HASHTABLE/DEFINE_HASHTABLE.
+> 
+> 
+>  include/linux/hashtable.h | 193 ++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 193 insertions(+)
+>  create mode 100644 include/linux/hashtable.h
+> 
+> diff --git a/include/linux/hashtable.h b/include/linux/hashtable.h
+> new file mode 100644
+> index 0000000..1fb8c97
+> --- /dev/null
+> +++ b/include/linux/hashtable.h
+> @@ -0,0 +1,193 @@
+> +/*
+> + * Statically sized hash table implementation
+> + * (C) 2012  Sasha Levin <levinsasha928@gmail.com>
+> + */
+> +
+> +#ifndef _LINUX_HASHTABLE_H
+> +#define _LINUX_HASHTABLE_H
+> +
+> +#include <linux/list.h>
+> +#include <linux/types.h>
+> +#include <linux/kernel.h>
+> +#include <linux/hash.h>
+> +#include <linux/rculist.h>
+> +
+> +#define DEFINE_HASHTABLE(name, bits)						\
+> +	struct hlist_head name[1 << bits] =					\
+> +			{ [0 ... ((1 << bits) - 1)] = HLIST_HEAD_INIT }
 
-Hm, you are right. It's a mutex.
-The warning occurs only if I turned on CONFIG_PREEMPT=y.
+Although it's unlikely that someone would use this with a binary
+operator with lower precedence than "<<" (see e.g.
+http://www.swansontec.com/sopc.html) as "bits", lack of parenthesis
+around "bits" would be unexpected by the caller, and could introduce
+bugs. Please review all macros with the precedence table in mind, and
+ask yourself if lack of parenthesis could introduce a subtle bug.
 
-> add_disk() also calls disk_alloc_events() which does kzalloc(GFP_KERNEL).
-> So we already have code which can block/wait under md->type_lock. I am
-> not sure why should we get this warning under a mutex.
+> +
+> +#define DECLARE_HASHTABLE(name, bits)                                   	\
+> +	struct hlist_head name[1 << (bits)]
 
-add_disk() is called without md->type_lock.
+Here, you have parenthesis around "bits", but not above (inconsistency).
 
-Call flow is like this:
+> +
+> +#define HASH_SIZE(name) (ARRAY_SIZE(name))
+> +#define HASH_BITS(name) ilog2(HASH_SIZE(name))
+> +
+> +/* Use hash_32 when possible to allow for fast 32bit hashing in 64bit kernels. */
+> +#define hash_min(val, bits)							\
+> +({										\
+> +	sizeof(val) <= 4 ?							\
+> +	hash_32(val, bits) :							\
+> +	hash_long(val, bits);							\
+> +})
+> +
+> +static inline void __hash_init(struct hlist_head *ht, int sz)
 
-dm_create
-  alloc_dev
-    blk_alloc_queue
-    alloc_disk
-    add_disk
-      blk_queue_bypass_end [with 3.7-rc2]
+int -> unsigned int.
 
-table_load
-  dm_lock_md_type [takes md->type_lock]
-  dm_setup_md_queue
-    blk_init_allocated_queue [when DM_TYPE_REQUEST_BASED]
-      elevator_init
-        blkcg_activate_policy
-          blk_queue_bypass_start <-- THIS triggers the warning
-          blk_queue_bypass_end
-      blk_queue_bypass_end [with 3.6]
-  dm_unlock_md_type
+> +{
+> +	int i;
 
-blk_queue_bypass_start() in blkcg_activate_policy was nested call,
-that did nothing, with 3.6.
-With 3.7-rc2, it becomes the initial call and does
-actual draining stuff.
+int -> unsigned int.
+
+> +
+> +	for (i = 0; i < sz; i++)
+> +		INIT_HLIST_HEAD(&ht[sz]);
+
+ouch. How did this work ? Has it been tested at all ?
+
+sz -> i
+
+
+> +}
+> +
+> +/**
+> + * hash_init - initialize a hash table
+> + * @hashtable: hashtable to be initialized
+> + *
+> + * Calculates the size of the hashtable from the given parameter, otherwise
+> + * same as hash_init_size.
+> + *
+> + * This has to be a macro since HASH_BITS() will not work on pointers since
+> + * it calculates the size during preprocessing.
+> + */
+> +#define hash_init(hashtable) __hash_init(hashtable, HASH_SIZE(hashtable))
+> +
+> +/**
+> + * hash_add - add an object to a hashtable
+> + * @hashtable: hashtable to add to
+> + * @node: the &struct hlist_node of the object to be added
+> + * @key: the key of the object to be added
+> + */
+> +#define hash_add(hashtable, node, key)						\
+> +	hlist_add_head(node, &hashtable[hash_min(key, HASH_BITS(hashtable))]);
+
+extra ";" at the end to remove.
+
+> +
+> +/**
+> + * hash_add_rcu - add an object to a rcu enabled hashtable
+> + * @hashtable: hashtable to add to
+> + * @node: the &struct hlist_node of the object to be added
+> + * @key: the key of the object to be added
+> + */
+> +#define hash_add_rcu(hashtable, node, key)					\
+> +	hlist_add_head_rcu(node, &hashtable[hash_min(key, HASH_BITS(hashtable))]);
+
+extra ";" at the end to remove.
+
+> +
+> +/**
+> + * hash_hashed - check whether an object is in any hashtable
+> + * @node: the &struct hlist_node of the object to be checked
+> + */
+> +#define hash_hashed(node) (!hlist_unhashed(node))
+
+Please use a static inline for this instead of a macro.
+
+> +
+> +static inline bool __hash_empty(struct hlist_head *ht, int sz)
+
+int -> unsigned int.
+
+> +{
+> +	int i;
+
+int -> unsigned int.
+
+> +
+> +	for (i = 0; i < sz; i++)
+> +		if (!hlist_empty(&ht[i]))
+> +			return false;
+> +
+> +	return true;
+> +}
+> +
+> +/**
+> + * hash_empty - check whether a hashtable is empty
+> + * @hashtable: hashtable to check
+> + *
+> + * This has to be a macro since HASH_BITS() will not work on pointers since
+> + * it calculates the size during preprocessing.
+> + */
+> +#define hash_empty(hashtable) __hash_empty(hashtable, HASH_SIZE(hashtable))
+> +
+> +/**
+> + * hash_del - remove an object from a hashtable
+> + * @node: &struct hlist_node of the object to remove
+> + */
+> +static inline void hash_del(struct hlist_node *node)
+> +{
+> +	hlist_del_init(node);
+> +}
+> +
+> +/**
+> + * hash_del_rcu - remove an object from a rcu enabled hashtable
+> + * @node: &struct hlist_node of the object to remove
+> + */
+> +static inline void hash_del_rcu(struct hlist_node *node)
+> +{
+> +	hlist_del_init_rcu(node);
+> +}
+> +
+> +/**
+> + * hash_for_each - iterate over a hashtable
+> + * @name: hashtable to iterate
+> + * @bkt: integer to use as bucket loop cursor
+> + * @node: the &struct list_head to use as a loop cursor for each entry
+> + * @obj: the type * to use as a loop cursor for each entry
+> + * @member: the name of the hlist_node within the struct
+> + */
+> +#define hash_for_each(name, bkt, node, obj, member)				\
+> +	for (bkt = 0, node = NULL; node == NULL && bkt < HASH_SIZE(name); bkt++)\
+
+if "bkt" happens to be a dereferenced pointer (unary operator '*'), we
+get into a situation where "*blah" has higher precedence than "=",
+higher than "<", but lower than "++". Any thoughts on fixing this ?
+
+> +		hlist_for_each_entry(obj, node, &name[bkt], member)
+> +
+> +/**
+> + * hash_for_each_rcu - iterate over a rcu enabled hashtable
+> + * @name: hashtable to iterate
+> + * @bkt: integer to use as bucket loop cursor
+> + * @node: the &struct list_head to use as a loop cursor for each entry
+> + * @obj: the type * to use as a loop cursor for each entry
+> + * @member: the name of the hlist_node within the struct
+> + */
+> +#define hash_for_each_rcu(name, bkt, node, obj, member)				\
+> +	for (bkt = 0, node = NULL; node == NULL && bkt < HASH_SIZE(name); bkt++)\
+
+Same comment as above about "bkt".
+
+> +		hlist_for_each_entry_rcu(obj, node, &name[bkt], member)
+> +
+> +/**
+> + * hash_for_each_safe - iterate over a hashtable safe against removal of
+> + * hash entry
+> + * @name: hashtable to iterate
+> + * @bkt: integer to use as bucket loop cursor
+> + * @node: the &struct list_head to use as a loop cursor for each entry
+> + * @tmp: a &struct used for temporary storage
+> + * @obj: the type * to use as a loop cursor for each entry
+> + * @member: the name of the hlist_node within the struct
+> + */
+> +#define hash_for_each_safe(name, bkt, node, tmp, obj, member)			\
+> +	for (bkt = 0, node = NULL; node == NULL && bkt < HASH_SIZE(name); bkt++)\
+
+Same comment as above about "bkt".
+
+Thanks,
+
+Mathieu
+
+> +		hlist_for_each_entry_safe(obj, node, tmp, &name[bkt], member)
+> +
+> +/**
+> + * hash_for_each_possible - iterate over all possible objects hashing to the
+> + * same bucket
+> + * @name: hashtable to iterate
+> + * @obj: the type * to use as a loop cursor for each entry
+> + * @node: the &struct list_head to use as a loop cursor for each entry
+> + * @member: the name of the hlist_node within the struct
+> + * @key: the key of the objects to iterate over
+> + */
+> +#define hash_for_each_possible(name, obj, node, member, key)			\
+> +	hlist_for_each_entry(obj, node,	&name[hash_min(key, HASH_BITS(name))], member)
+> +
+> +/**
+> + * hash_for_each_possible_rcu - iterate over all possible objects hashing to the
+> + * same bucket in an rcu enabled hashtable
+> + * in a rcu enabled hashtable
+> + * @name: hashtable to iterate
+> + * @obj: the type * to use as a loop cursor for each entry
+> + * @node: the &struct list_head to use as a loop cursor for each entry
+> + * @member: the name of the hlist_node within the struct
+> + * @key: the key of the objects to iterate over
+> + */
+> +#define hash_for_each_possible_rcu(name, obj, node, member, key)		\
+> +	hlist_for_each_entry_rcu(obj, node, &name[hash_min(key, HASH_BITS(name))], member)
+> +
+> +/**
+> + * hash_for_each_possible_safe - iterate over all possible objects hashing to the
+> + * same bucket safe against removals
+> + * @name: hashtable to iterate
+> + * @obj: the type * to use as a loop cursor for each entry
+> + * @node: the &struct list_head to use as a loop cursor for each entry
+> + * @tmp: a &struct used for temporary storage
+> + * @member: the name of the hlist_node within the struct
+> + * @key: the key of the objects to iterate over
+> + */
+> +#define hash_for_each_possible_safe(name, obj, node, tmp, member, key)		\
+> +	hlist_for_each_entry_safe(obj, node, tmp,				\
+> +		&name[hash_min(key, HASH_BITS(name))], member)
+> +
+> +
+> +#endif
+> -- 
+> 1.7.12.4
+> 
 
 -- 
-Jun'ichi Nomura, NEC Corporation
+Mathieu Desnoyers
+Operating System Efficiency R&D Consultant
+EfficiOS Inc.
+http://www.efficios.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
