@@ -1,11 +1,11 @@
 From: Staci Page <danalmmp79437@yahoo.com>
-Subject: Re: [PATCH v7 06/16] tracepoint: use new hashtable
+Subject: Re: [PATCH v7 10/16] dlm: use new hashtable
 	implementation
-Date: Tue, 30 Oct 2012 04:29:08 -0700 (PDT)
-Message-ID: <1351596548.94008.YahooMailClassic@web124902.mail.ne1.yahoo.com>
+Date: Tue, 30 Oct 2012 04:29:20 -0700 (PDT)
+Message-ID: <1351596560.53894.YahooMailClassic@web124906.mail.ne1.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0334357077936935586=="
+Content-Type: multipart/mixed; boundary="===============1421431277387389488=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,34 +19,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============0334357077936935586==
+--===============1421431277387389488==
 Content-Type: multipart/alternative;
-	boundary="-61840014-60011746-1351596548=:94008"
+	boundary="576311973-1809186527-1351596560=:53894"
 
----61840014-60011746-1351596548=:94008
+--576311973-1809186527-1351596560=:53894
 Content-Type: text/plain; charset=us-ascii
 
- I just now got yer mail, apologies if u sent it a while ago it landed in my junkbox. I'm really liking your post for sure I really feel like we will be a good match.
+Took ya long enough! haha! It is alright tho I am just now came home from working. Well do u figure that maybe you'd be up for a little meetup tonight or tomorrow? I am free whichever day.
 
 
-I am wondering if you've met with anyone thru Craigslist before? I did, but have had a few super bad meetings unluckily.  I've been screening who I want to meet through this site for a couple months to keep out the riff raff and its worked so far.
+A bit about me, I think I am attractive, fun to be around, a little bit of a freak in the sheets perhaps.. I've got a page on this page w/ my details about me and a few pix in the event you wanna have a gander.
 
 
-Well if u wanna peep my pics over there and check if I am yer what you're looking for we'll take it from that point. Its easier if u just text or gimme a call when u verify so theres no chance that I'll miss yer e-mail plus I am not sure how long I am going to be at my laptop. 
----61840014-60011746-1351596548=:94008
+I've got my cell number is on there too, did not know if you would wanna gimme a ring or not in the event I am not your kind of woman. Anyways like I told you I am up for getting together tonight or tomorrow so shoot me a text if you wanna fuck. 
+--576311973-1809186527-1351596560=:53894
 Content-Type: text/html; charset=us-ascii
 
-<table cellspacing="0" cellpadding="0" border="0" ><tr><td valign="top" style="font: inherit;"> I just now got yer mail, apologies if u sent it a while ago it landed in my junkbox. I'm really liking your post for sure I really feel like we will be a good match.<br><br>
-I am wondering if you've met with anyone thru Craigslist before? I did, but have had a few super bad meetings unluckily.  I've been screening who I want to meet through <a href="http://bit.ly/OUa9ee">this site</a> for a couple months to keep out the riff raff and its worked so far.<br><br>
-Well if u wanna peep my pics over there and check if I am yer what you're looking for we'll take it from that point. Its easier if u just text or gimme a call when u verify so theres no chance that I'll miss yer e-mail plus I am not sure how long I am going to be at my laptop. </td></tr></table>
----61840014-60011746-1351596548=:94008--
+<table cellspacing="0" cellpadding="0" border="0" ><tr><td valign="top" style="font: inherit;">Took ya long enough! haha! It is alright tho I am just now came home from working. Well do u figure that maybe you'd be up for a little meetup tonight or tomorrow? I am free whichever day.<br><br>
+A bit about me, I think I am attractive, fun to be around, a little bit of a freak in the sheets perhaps.. I've got a page on <a href="http://bit.ly/Qx4kSq">this page</a> w/ my details about me and a few pix in the event you wanna have a gander.<br><br>
+I've got my cell number is on there too, did not know if you would wanna gimme a ring or not in the event I am not your kind of woman. Anyways like I told you I am up for getting together tonight or tomorrow so shoot me a text if you wanna fuck. </td></tr></table>
+--576311973-1809186527-1351596560=:53894--
 
 
---===============0334357077936935586==
+--===============1421431277387389488==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0334357077936935586==--
+--===============1421431277387389488==--
