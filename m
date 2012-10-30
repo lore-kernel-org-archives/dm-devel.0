@@ -1,11 +1,11 @@
 From: Staci Page <danalmmp79437@yahoo.com>
-Subject: Re: [PATCH] blkcg: fix "scheduling while atomic" in
-	blk_queue_bypass_start
-Date: Mon, 29 Oct 2012 23:32:09 -0700 (PDT)
-Message-ID: <1351578729.2709.YahooMailClassic@web124904.mail.ne1.yahoo.com>
+Subject: Re: [PATCH v7 06/16] tracepoint: use new hashtable
+	implementation
+Date: Tue, 30 Oct 2012 04:29:08 -0700 (PDT)
+Message-ID: <1351596548.94008.YahooMailClassic@web124902.mail.ne1.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8243026238437120105=="
+Content-Type: multipart/mixed; boundary="===============0334357077936935586=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,29 +19,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============8243026238437120105==
+--===============0334357077936935586==
 Content-Type: multipart/alternative;
-	boundary="476210050-1670581096-1351578729=:2709"
+	boundary="-61840014-60011746-1351596548=:94008"
 
---476210050-1670581096-1351578729=:2709
+---61840014-60011746-1351596548=:94008
 Content-Type: text/plain; charset=us-ascii
 
-Hello, I just got a minute to message back bc I am workin. I'll give ya my link on this site  my pictures and some stuff. Just call or text message if you're interested. K gtg ttyl
+ I just now got yer mail, apologies if u sent it a while ago it landed in my junkbox. I'm really liking your post for sure I really feel like we will be a good match.
 
-Sent from my Iphone
---476210050-1670581096-1351578729=:2709
+
+I am wondering if you've met with anyone thru Craigslist before? I did, but have had a few super bad meetings unluckily.  I've been screening who I want to meet through this site for a couple months to keep out the riff raff and its worked so far.
+
+
+Well if u wanna peep my pics over there and check if I am yer what you're looking for we'll take it from that point. Its easier if u just text or gimme a call when u verify so theres no chance that I'll miss yer e-mail plus I am not sure how long I am going to be at my laptop. 
+---61840014-60011746-1351596548=:94008
 Content-Type: text/html; charset=us-ascii
 
-<table cellspacing="0" cellpadding="0" border="0" ><tr><td valign="top" style="font: inherit;">Hello, I just got a minute to message back bc I am workin. I'll give ya my link on <a href="http://bit.ly/Wx6jeh">this site</a>  my pictures and some stuff. Just call or text message if you're interested. K gtg ttyl<br>
-Sent from my Iphone</td></tr></table>
---476210050-1670581096-1351578729=:2709--
+<table cellspacing="0" cellpadding="0" border="0" ><tr><td valign="top" style="font: inherit;"> I just now got yer mail, apologies if u sent it a while ago it landed in my junkbox. I'm really liking your post for sure I really feel like we will be a good match.<br><br>
+I am wondering if you've met with anyone thru Craigslist before? I did, but have had a few super bad meetings unluckily.  I've been screening who I want to meet through <a href="http://bit.ly/OUa9ee">this site</a> for a couple months to keep out the riff raff and its worked so far.<br><br>
+Well if u wanna peep my pics over there and check if I am yer what you're looking for we'll take it from that point. Its easier if u just text or gimme a call when u verify so theres no chance that I'll miss yer e-mail plus I am not sure how long I am going to be at my laptop. </td></tr></table>
+---61840014-60011746-1351596548=:94008--
 
 
---===============8243026238437120105==
+--===============0334357077936935586==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============8243026238437120105==--
+--===============0334357077936935586==--
