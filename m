@@ -1,81 +1,49 @@
-From: "David Laight" <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH v8 01/16] hashtable: introduce a small and naive hashtable
-Date: Wed, 31 Oct 2012 09:46:20 -0000
-Message-ID: <AE90C24D6B3A694183C094C60CF0A2F6026B7080@saturn3.aculab.com>
-References: <1351622772-16400-1-git-send-email-levinsasha928@gmail.com> <20121030214257.GB2681@htj.dyndns.org> <CA+1xoqeCKS2E4TWCUCELjDqV2pWS4v6EyV6K-=w-GRi_K6quiQ@mail.gmail.com> <1351646186.4004.41.camel@gandalf.local.home>
+From: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v8 01/16] hashtable: introduce a small and
+	naive hashtable
+Date: Fri, 2 Nov 2012 00:23:48 -0400
+Message-ID: <CA+1xoqdu-ar=-hh-+uVPtj=jy=rN0OiOGr09OxZsyphYzyJuEw@mail.gmail.com>
+References: <1351622772-16400-1-git-send-email-levinsasha928@gmail.com>
+	<20121030214257.GB2681@htj.dyndns.org>
+	<CA+1xoqeCKS2E4TWCUCELjDqV2pWS4v6EyV6K-=w-GRi_K6quiQ@mail.gmail.com>
+	<1351646186.4004.41.camel@gandalf.local.home>
+	<CA+55aFzFMrOUwdHHJ5-YUtEzTHGvdRosQc+K+trjub0K-w-D3A@mail.gmail.com>
+	<CA+1xoqd8vAn+N1JuhpXRjSr74OPtnnw_1UBhf8=c4WDC3jOirw@mail.gmail.com>
+	<CA+55aFxK+xr0Gc+ZLgi3Ch8YgoV78vvr+Q-7cP=kC7asFB5k5w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="ISO-8859-15"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-Content-class: urn:content-classes:message
-In-Reply-To: <1351646186.4004.41.camel@gandalf.local.home>
-Sender: owner-linux-mm@kvack.org
-To: Steven Rostedt <rostedt@goodmis.org>, Sasha Levin <levinsasha928@gmail.com>
-Cc: Tejun Heo <tj@kernel.org>, torvalds@linux-foundation.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, paul.gortmaker@windriver.com, davem@davemloft.net, mingo@elte.hu, ebiederm@xmission.com, aarcange@redhat.com, ericvh@gmail.com, netdev@vger.kernel.org, josh@joshtriplett.org, eric.dumazet@gmail.com, mathieu.desnoyers@efficios.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, ccaulfie@redhat.com, teigland@redhat.com, Trond.Myklebust@netapp.com, bfields@fieldses.org, fweisbec@gmail.com, jesse@nicira.com, venkat.x.venkatsubra@oracle.com, ejt@redhat.com, snitzer@redhat.com, edumazet@google.com, linux-nfs@vger.kernel.org, dev@openvswitch.org, rds-devel@oss.oracle.com, lw@cn.fujitsu.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+In-Reply-To: <CA+55aFxK+xr0Gc+ZLgi3Ch8YgoV78vvr+Q-7cP=kC7asFB5k5w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://openvswitch.org/pipermail/dev>
+List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
+List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
+List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
+	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
+Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: dm-devel.ids
 
-> > > On Tue, Oct 30, 2012 at 02:45:57PM -0400, Sasha Levin wrote:
-> > >> +/* Use hash_32 when possible to allow for fast 32bit hashing in =
-64bit kernels. */
-> > >> +#define hash_min(val, bits)                                      =
-            \
-> > >> +({                                                               =
-            \
-> > >> +     sizeof(val) <=3D 4 ?                                        =
-              \
-> > >> +     hash_32(val, bits) :                                        =
-            \
-> > >> +     hash_long(val, bits);                                       =
-            \
-> > >> +})
-> > >
-> > > Doesn't the above fit in 80 column.  Why is it broken into =
-multiple
-> > > lines?  Also, you probably want () around at least @val.  In =
-general,
-> > > it's a good idea to add () around any macro argument to avoid =
-nasty
-> > > surprises.
-> >
-> > It was broken to multiple lines because it looks nicer that way =
-(IMO).
-> >
-> > If we wrap it with () it's going to go over 80, so it's going to =
-stay
-> > broken down either way :)
->=20
-> ({								      \
-> 	sizeof(val) <=3D 4 ? hash_32(val, bits) : hash_long(val, bits); \
-> })
->=20
-> Is the better way to go. We are C programmers, we like to see the ?: =
-on
-> a single line if possible. The way you have it, looks like three
-> statements run consecutively.
+On Tue, Oct 30, 2012 at 10:23 PM, Linus Torvalds
+<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+> On Tue, Oct 30, 2012 at 6:36 PM, Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>
+>> I can either rebase that on top of mainline, or we can ask maintainers
+>> to take it to their own trees if you take only 01/16 into mainline.
+>> What would you prefer?
+>
+> I don't really care deeply. The only reason to merge it now would be
+> to avoid any pain with it during the next merge window. Just taking
+> 01/16 might be the sanest way to do that, then the rest can trickle in
+> independently at their own leisure.
 
-To add some more colour (not color):
-
-In any case, this is a normal C #define, it doesn't need the {}.
-So it can just be:
-# define hash_min(val, bits) \
-	(sizeof(val) <=3D 4 ? hash_32(val, bits) : hash_long(val, bits))
-
-I don't think that s/val/(val)/g and s/bits/(bits)/g are needed
-because the tokens are already ',' separated.
-
-I do actually wonder how many of these hash lists should be replaced
-with some kind of tree structure in order to get O(log(n)) searches.
-After all hashing is still O(n).
-(apologies if I mean o(n) not O(n) - it's a long time since I did
-my maths degree!)
-
-	David
+Okay, I'll keep working on converting everything else as soon as 01/16
+makes it in your tree.
 
 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+Sasha
