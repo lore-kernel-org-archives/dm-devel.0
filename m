@@ -1,49 +1,49 @@
-From: Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v8 01/16] hashtable: introduce a small and
-	naive hashtable
-Date: Fri, 2 Nov 2012 00:23:48 -0400
-Message-ID: <CA+1xoqdu-ar=-hh-+uVPtj=jy=rN0OiOGr09OxZsyphYzyJuEw@mail.gmail.com>
-References: <1351622772-16400-1-git-send-email-levinsasha928@gmail.com>
-	<20121030214257.GB2681@htj.dyndns.org>
-	<CA+1xoqeCKS2E4TWCUCELjDqV2pWS4v6EyV6K-=w-GRi_K6quiQ@mail.gmail.com>
-	<1351646186.4004.41.camel@gandalf.local.home>
-	<CA+55aFzFMrOUwdHHJ5-YUtEzTHGvdRosQc+K+trjub0K-w-D3A@mail.gmail.com>
-	<CA+1xoqd8vAn+N1JuhpXRjSr74OPtnnw_1UBhf8=c4WDC3jOirw@mail.gmail.com>
-	<CA+55aFxK+xr0Gc+ZLgi3Ch8YgoV78vvr+Q-7cP=kC7asFB5k5w@mail.gmail.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [PATCH] Remove VLAIS usage from dm-crypt
+Date: Sat, 03 Nov 2012 20:30:08 +0100
+Message-ID: <509570C0.30208@redhat.com>
+References: <1351620956-17583-1-git-send-email-behanw@converseincode.com> <1351620956-17583-2-git-send-email-behanw@converseincode.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
-In-Reply-To: <CA+55aFxK+xr0Gc+ZLgi3Ch8YgoV78vvr+Q-7cP=kC7asFB5k5w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <http://openvswitch.org/mailman/options/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://openvswitch.org/pipermail/dev>
-List-Post: <mailto:dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org>
-List-Help: <mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=help>
-List-Subscribe: <http://openvswitch.org/mailman/listinfo/dev>,
-	<mailto:dev-request-yBygre7rU0TnMu66kgdUjQ@public.gmane.org?subject=subscribe>
-Sender: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-Errors-To: dev-bounces-yBygre7rU0TnMu66kgdUjQ@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Trond.Myklebust-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, venkat.x.venkatsubra-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, ccaulfie-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, dev-yBygre7rU0TnMu66kgdUjQ@public.gmane.org, ericvh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, lw-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, teigland-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1351620956-17583-2-git-send-email-behanw@converseincode.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Behan Webster <behanw@converseincode.com>
+Cc: agk@redhat.com, dm-devel@redhat.com, linux-raid@vger.kernel.org, =?UTF-8?B?SmFuLVNpbW9uIE3DtmxsZXI=?= <dl9pf@gmx.de>, pageexec@freemail.hu
 List-Id: dm-devel.ids
 
-On Tue, Oct 30, 2012 at 10:23 PM, Linus Torvalds
-<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> On Tue, Oct 30, 2012 at 6:36 PM, Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>
->> I can either rebase that on top of mainline, or we can ask maintainers
->> to take it to their own trees if you take only 01/16 into mainline.
->> What would you prefer?
->
-> I don't really care deeply. The only reason to merge it now would be
-> to avoid any pain with it during the next merge window. Just taking
-> 01/16 might be the sanest way to do that, then the rest can trickle in
-> independently at their own leisure.
+On 10/30/2012 07:15 PM, Behan Webster wrote:
+> From: Jan-Simon M=C3=B6ller <dl9pf@gmx.de>
+>=20
+> The use of variable length arrays in structs (VLAIS) in the Linux Ker=
+nel code
+> precludes the use of compilers which don't implement VLAIS (for insta=
+nce the
+> Clang compiler). This patch instead allocates the appropriate amount =
+of memory
+> using an char array.
 
-Okay, I'll keep working on converting everything else as soon as 01/16
-makes it in your tree.
+The dmcrypt code should use the same code practices as crypto API.
 
+Apparently, your approach was not accepted there
 
-Thanks,
-Sasha
+http://article.gmane.org/gmane.linux.kernel/1386451
+http://article.gmane.org/gmane.linux.kernel.cryptoapi/7993
+
+> +	char sdesc[sizeof(struct shash_desc)
+> +		+ crypto_shash_descsize(lmk->hash_tfm)
+> +		+ CRYPTO_MINALIGN] CRYPTO_MINALIGN_ATTR;
+> +	struct shash_desc *desc =3D (struct shash_desc *)sdesc;
+
+I would like to see kenrel compilable by Clang but obfuscating the code
+this way is perhaps not the ideal way.
+
+Until it is accepted in crypto layer, NACK.
+
+Milan
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
