@@ -1,49 +1,132 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [PATCH] Remove VLAIS usage from dm-crypt
-Date: Sat, 03 Nov 2012 20:30:08 +0100
-Message-ID: <509570C0.30208@redhat.com>
-References: <1351620956-17583-1-git-send-email-behanw@converseincode.com> <1351620956-17583-2-git-send-email-behanw@converseincode.com>
+From: "Reddy, Sreekanth" <Sreekanth.Reddy@lsi.com>
+Subject: RE: [PATCH v4 08/24] block: Remove some unnecessary bi_vcnt usage
+Date: Tue, 6 Nov 2012 16:49:46 +0530
+Message-ID: <DCD177647606E9419ED923E0C8C4AA7223E7397F74@inbmail02.lsi.com>
+References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
+ <1350331769-14856-9-git-send-email-koverstreet@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1351620956-17583-2-git-send-email-behanw@converseincode.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Behan Webster <behanw@converseincode.com>
-Cc: agk@redhat.com, dm-devel@redhat.com, linux-raid@vger.kernel.org, =?UTF-8?B?SmFuLVNpbW9uIE3DtmxsZXI=?= <dl9pf@gmx.de>, pageexec@freemail.hu
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1350331769-14856-9-git-send-email-koverstreet@google.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <koverstreet@google.com>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "tj@kernel.org" <tj@kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "neilb@suse.de" <neilb@suse.de>, "vgoyal@redhat.com" <vgoyal@redhat.com>, "Moore, Eric" <Eric.Moore@lsi.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 10/30/2012 07:15 PM, Behan Webster wrote:
-> From: Jan-Simon M=C3=B6ller <dl9pf@gmx.de>
->=20
-> The use of variable length arrays in structs (VLAIS) in the Linux Ker=
-nel code
-> precludes the use of compilers which don't implement VLAIS (for insta=
-nce the
-> Clang compiler). This patch instead allocates the appropriate amount =
-of memory
-> using an char array.
+This patch seem to be fine. Please consider this patch.
 
-The dmcrypt code should use the same code practices as crypto API.
+Regards,
+Sreekanth.
 
-Apparently, your approach was not accepted there
+-----Original Message-----
+From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-owner@vger.kernel.org] On Behalf Of Kent Overstreet
+Sent: Tuesday, October 16, 2012 1:39 AM
+To: linux-bcache@vger.kernel.org; linux-kernel@vger.kernel.org; dm-devel@redhat.com
+Cc: Kent Overstreet; tj@kernel.org; axboe@kernel.dk; neilb@suse.de; vgoyal@redhat.com; Moore, Eric; James E.J. Bottomley; linux-scsi@vger.kernel.org
+Subject: [PATCH v4 08/24] block: Remove some unnecessary bi_vcnt usage
 
-http://article.gmane.org/gmane.linux.kernel/1386451
-http://article.gmane.org/gmane.linux.kernel.cryptoapi/7993
+More prep work for immutable bvecs/effecient bio splitting - usage of bi_vcnt has to be auditing, so getting rid of all the unnecessary usage makes that easier.
 
-> +	char sdesc[sizeof(struct shash_desc)
-> +		+ crypto_shash_descsize(lmk->hash_tfm)
-> +		+ CRYPTO_MINALIGN] CRYPTO_MINALIGN_ATTR;
-> +	struct shash_desc *desc =3D (struct shash_desc *)sdesc;
+Plus, bio_segments() is really what this code wanted, as it respects the current value of bi_idx.
 
-I would like to see kenrel compilable by Clang but obfuscating the code
-this way is perhaps not the ideal way.
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+CC: Jens Axboe <axboe@kernel.dk>
+CC: Eric Moore <Eric.Moore@lsi.com>
+CC: "James E.J. Bottomley" <JBottomley@parallels.com>
+CC: linux-scsi@vger.kernel.org
+---
+ drivers/message/fusion/mptsas.c          |  6 +++---
+ drivers/scsi/libsas/sas_expander.c       |  6 +++---
+ drivers/scsi/mpt2sas/mpt2sas_transport.c | 10 +++++-----
+ 3 files changed, 11 insertions(+), 11 deletions(-)
 
-Until it is accepted in crypto layer, NACK.
-
-Milan
+diff --git a/drivers/message/fusion/mptsas.c b/drivers/message/fusion/mptsas.c index 551262e..5406a9f 100644
+--- a/drivers/message/fusion/mptsas.c
++++ b/drivers/message/fusion/mptsas.c
+@@ -2235,10 +2235,10 @@ static int mptsas_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+ 	}
+ 
+ 	/* do we need to support multiple segments? */
+-	if (req->bio->bi_vcnt > 1 || rsp->bio->bi_vcnt > 1) {
++	if (bio_segments(req->bio) > 1 || bio_segments(rsp->bio) > 1) {
+ 		printk(MYIOC_s_ERR_FMT "%s: multiple segments req %u %u, rsp %u %u\n",
+-		    ioc->name, __func__, req->bio->bi_vcnt, blk_rq_bytes(req),
+-		    rsp->bio->bi_vcnt, blk_rq_bytes(rsp));
++		    ioc->name, __func__, bio_segments(req->bio), blk_rq_bytes(req),
++		    bio_segments(rsp->bio), blk_rq_bytes(rsp));
+ 		return -EINVAL;
+ 	}
+ 
+diff --git a/drivers/scsi/libsas/sas_expander.c b/drivers/scsi/libsas/sas_expander.c
+index efc6e72..ee331a7 100644
+--- a/drivers/scsi/libsas/sas_expander.c
++++ b/drivers/scsi/libsas/sas_expander.c
+@@ -2151,10 +2151,10 @@ int sas_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+ 	}
+ 
+ 	/* do we need to support multiple segments? */
+-	if (req->bio->bi_vcnt > 1 || rsp->bio->bi_vcnt > 1) {
++	if (bio_segments(req->bio) > 1 || bio_segments(rsp->bio) > 1) {
+ 		printk("%s: multiple segments req %u %u, rsp %u %u\n",
+-		       __func__, req->bio->bi_vcnt, blk_rq_bytes(req),
+-		       rsp->bio->bi_vcnt, blk_rq_bytes(rsp));
++		       __func__, bio_segments(req->bio), blk_rq_bytes(req),
++		       bio_segments(rsp->bio), blk_rq_bytes(rsp));
+ 		return -EINVAL;
+ 	}
+ 
+diff --git a/drivers/scsi/mpt2sas/mpt2sas_transport.c b/drivers/scsi/mpt2sas/mpt2sas_transport.c
+index c6cf20f..403a57b 100644
+--- a/drivers/scsi/mpt2sas/mpt2sas_transport.c
++++ b/drivers/scsi/mpt2sas/mpt2sas_transport.c
+@@ -1939,7 +1939,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+ 	ioc->transport_cmds.status = MPT2_CMD_PENDING;
+ 
+ 	/* Check if the request is split across multiple segments */
+-	if (req->bio->bi_vcnt > 1) {
++	if (bio_segments(req->bio) > 1) {
+ 		u32 offset = 0;
+ 
+ 		/* Allocate memory and copy the request */ @@ -1971,7 +1971,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+ 
+ 	/* Check if the response needs to be populated across
+ 	 * multiple segments */
+-	if (rsp->bio->bi_vcnt > 1) {
++	if (bio_segments(rsp->bio) > 1) {
+ 		pci_addr_in = pci_alloc_consistent(ioc->pdev, blk_rq_bytes(rsp),
+ 		    &pci_dma_in);
+ 		if (!pci_addr_in) {
+@@ -2038,7 +2038,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+ 	sgl_flags = (MPI2_SGE_FLAGS_SIMPLE_ELEMENT |
+ 	    MPI2_SGE_FLAGS_END_OF_BUFFER | MPI2_SGE_FLAGS_HOST_TO_IOC);
+ 	sgl_flags = sgl_flags << MPI2_SGE_FLAGS_SHIFT;
+-	if (req->bio->bi_vcnt > 1) {
++	if (bio_segments(req->bio) > 1) {
+ 		ioc->base_add_sg_single(psge, sgl_flags |
+ 		    (blk_rq_bytes(req) - 4), pci_dma_out);
+ 	} else {
+@@ -2054,7 +2054,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+ 	    MPI2_SGE_FLAGS_LAST_ELEMENT | MPI2_SGE_FLAGS_END_OF_BUFFER |
+ 	    MPI2_SGE_FLAGS_END_OF_LIST);
+ 	sgl_flags = sgl_flags << MPI2_SGE_FLAGS_SHIFT;
+-	if (rsp->bio->bi_vcnt > 1) {
++	if (bio_segments(rsp->bio) > 1) {
+ 		ioc->base_add_sg_single(psge, sgl_flags |
+ 		    (blk_rq_bytes(rsp) + 4), pci_dma_in);
+ 	} else {
+@@ -2099,7 +2099,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+ 		    le16_to_cpu(mpi_reply->ResponseDataLength);
+ 		/* check if the resp needs to be copied from the allocated
+ 		 * pci mem */
+-		if (rsp->bio->bi_vcnt > 1) {
++		if (bio_segments(rsp->bio) > 1) {
+ 			u32 offset = 0;
+ 			u32 bytes_to_copy =
+ 			    le16_to_cpu(mpi_reply->ResponseDataLength);
 --
-To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+1.7.12
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" in the body of a message to majordomo@vger.kernel.org More majordomo info at  http://vger.kernel.org/majordomo-info.html
