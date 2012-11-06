@@ -1,132 +1,111 @@
-From: "Reddy, Sreekanth" <Sreekanth.Reddy@lsi.com>
-Subject: RE: [PATCH v4 08/24] block: Remove some unnecessary bi_vcnt usage
-Date: Tue, 6 Nov 2012 16:49:46 +0530
-Message-ID: <DCD177647606E9419ED923E0C8C4AA7223E7397F74@inbmail02.lsi.com>
-References: <1350331769-14856-1-git-send-email-koverstreet@google.com>
- <1350331769-14856-9-git-send-email-koverstreet@google.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH] Fix deadlock with request based dm and some
+	drivers
+Date: Tue, 06 Nov 2012 21:14:30 +0900
+Message-ID: <5098FF26.4070907@ce.jp.nec.com>
+References: <5098F47F.9030201@fusionio.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1350331769-14856-9-git-send-email-koverstreet@google.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: "tj@kernel.org" <tj@kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "neilb@suse.de" <neilb@suse.de>, "vgoyal@redhat.com" <vgoyal@redhat.com>, "Moore, Eric" <Eric.Moore@lsi.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5098F47F.9030201@fusionio.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <jaxboe@fusionio.com>, Alasdair Kergon <agk@redhat.com>
+Cc: "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch seem to be fine. Please consider this patch.
+(Cc to dm-devel)
 
-Regards,
-Sreekanth.
+On 11/06/12 20:29, Jens Axboe wrote:
+> I recently fixed a deadlock for a customer we have with
+> the below patch. I have queued it up in my tree as not
+> to lose it. Can I have an ack from you, or do you want
+> to submit it yourself? I've marked it stable as well.
 
------Original Message-----
-From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-owner@vger.kernel.org] On Behalf Of Kent Overstreet
-Sent: Tuesday, October 16, 2012 1:39 AM
-To: linux-bcache@vger.kernel.org; linux-kernel@vger.kernel.org; dm-devel@redhat.com
-Cc: Kent Overstreet; tj@kernel.org; axboe@kernel.dk; neilb@suse.de; vgoyal@redhat.com; Moore, Eric; James E.J. Bottomley; linux-scsi@vger.kernel.org
-Subject: [PATCH v4 08/24] block: Remove some unnecessary bi_vcnt usage
+Could you tell details about how the deadlock happened?
 
-More prep work for immutable bvecs/effecient bio splitting - usage of bi_vcnt has to be auditing, so getting rid of all the unnecessary usage makes that easier.
+dm's end_io always throws the completion handling to softirq:
+  end_clone_request()
+    dm_complete_request()
+      blk_complete_request()
 
-Plus, bio_segments() is really what this code wanted, as it respects the current value of bi_idx.
+then it is processed in softirq context:
+  dm_softirq_done()
+    dm_done()
+      dm_end_request()
+        rq_completed(run_queue=true)
+          blk_run_queue()
 
-Signed-off-by: Kent Overstreet <koverstreet@google.com>
-CC: Jens Axboe <axboe@kernel.dk>
-CC: Eric Moore <Eric.Moore@lsi.com>
-CC: "James E.J. Bottomley" <JBottomley@parallels.com>
-CC: linux-scsi@vger.kernel.org
----
- drivers/message/fusion/mptsas.c          |  6 +++---
- drivers/scsi/libsas/sas_expander.c       |  6 +++---
- drivers/scsi/mpt2sas/mpt2sas_transport.c | 10 +++++-----
- 3 files changed, 11 insertions(+), 11 deletions(-)
+Since queue_lock is always held with interrupt disabled,
+I couldn't see why it could deadlock.
 
-diff --git a/drivers/message/fusion/mptsas.c b/drivers/message/fusion/mptsas.c index 551262e..5406a9f 100644
---- a/drivers/message/fusion/mptsas.c
-+++ b/drivers/message/fusion/mptsas.c
-@@ -2235,10 +2235,10 @@ static int mptsas_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	}
- 
- 	/* do we need to support multiple segments? */
--	if (req->bio->bi_vcnt > 1 || rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1 || bio_segments(rsp->bio) > 1) {
- 		printk(MYIOC_s_ERR_FMT "%s: multiple segments req %u %u, rsp %u %u\n",
--		    ioc->name, __func__, req->bio->bi_vcnt, blk_rq_bytes(req),
--		    rsp->bio->bi_vcnt, blk_rq_bytes(rsp));
-+		    ioc->name, __func__, bio_segments(req->bio), blk_rq_bytes(req),
-+		    bio_segments(rsp->bio), blk_rq_bytes(rsp));
- 		return -EINVAL;
- 	}
- 
-diff --git a/drivers/scsi/libsas/sas_expander.c b/drivers/scsi/libsas/sas_expander.c
-index efc6e72..ee331a7 100644
---- a/drivers/scsi/libsas/sas_expander.c
-+++ b/drivers/scsi/libsas/sas_expander.c
-@@ -2151,10 +2151,10 @@ int sas_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	}
- 
- 	/* do we need to support multiple segments? */
--	if (req->bio->bi_vcnt > 1 || rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1 || bio_segments(rsp->bio) > 1) {
- 		printk("%s: multiple segments req %u %u, rsp %u %u\n",
--		       __func__, req->bio->bi_vcnt, blk_rq_bytes(req),
--		       rsp->bio->bi_vcnt, blk_rq_bytes(rsp));
-+		       __func__, bio_segments(req->bio), blk_rq_bytes(req),
-+		       bio_segments(rsp->bio), blk_rq_bytes(rsp));
- 		return -EINVAL;
- 	}
- 
-diff --git a/drivers/scsi/mpt2sas/mpt2sas_transport.c b/drivers/scsi/mpt2sas/mpt2sas_transport.c
-index c6cf20f..403a57b 100644
---- a/drivers/scsi/mpt2sas/mpt2sas_transport.c
-+++ b/drivers/scsi/mpt2sas/mpt2sas_transport.c
-@@ -1939,7 +1939,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	ioc->transport_cmds.status = MPT2_CMD_PENDING;
- 
- 	/* Check if the request is split across multiple segments */
--	if (req->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1) {
- 		u32 offset = 0;
- 
- 		/* Allocate memory and copy the request */ @@ -1971,7 +1971,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 
- 	/* Check if the response needs to be populated across
- 	 * multiple segments */
--	if (rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(rsp->bio) > 1) {
- 		pci_addr_in = pci_alloc_consistent(ioc->pdev, blk_rq_bytes(rsp),
- 		    &pci_dma_in);
- 		if (!pci_addr_in) {
-@@ -2038,7 +2038,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	sgl_flags = (MPI2_SGE_FLAGS_SIMPLE_ELEMENT |
- 	    MPI2_SGE_FLAGS_END_OF_BUFFER | MPI2_SGE_FLAGS_HOST_TO_IOC);
- 	sgl_flags = sgl_flags << MPI2_SGE_FLAGS_SHIFT;
--	if (req->bio->bi_vcnt > 1) {
-+	if (bio_segments(req->bio) > 1) {
- 		ioc->base_add_sg_single(psge, sgl_flags |
- 		    (blk_rq_bytes(req) - 4), pci_dma_out);
- 	} else {
-@@ -2054,7 +2054,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 	    MPI2_SGE_FLAGS_LAST_ELEMENT | MPI2_SGE_FLAGS_END_OF_BUFFER |
- 	    MPI2_SGE_FLAGS_END_OF_LIST);
- 	sgl_flags = sgl_flags << MPI2_SGE_FLAGS_SHIFT;
--	if (rsp->bio->bi_vcnt > 1) {
-+	if (bio_segments(rsp->bio) > 1) {
- 		ioc->base_add_sg_single(psge, sgl_flags |
- 		    (blk_rq_bytes(rsp) + 4), pci_dma_in);
- 	} else {
-@@ -2099,7 +2099,7 @@ _transport_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
- 		    le16_to_cpu(mpi_reply->ResponseDataLength);
- 		/* check if the resp needs to be copied from the allocated
- 		 * pci mem */
--		if (rsp->bio->bi_vcnt > 1) {
-+		if (bio_segments(rsp->bio) > 1) {
- 			u32 offset = 0;
- 			u32 bytes_to_copy =
- 			    le16_to_cpu(mpi_reply->ResponseDataLength);
---
-1.7.12
+Request-based dm followed the completion model of scsi
+mid layer. So similar code path exists in scsi, too.
+For example:
+  scsi_request_fn()
+    scsi_kill_request()
+      blk_complete_request()
+then:
+  scsi_softirq_done()
+    scsi_io_completion()
+      scsi_next_command()
+        scsi_run_queue()
+          spin_lock queue_lock
+          __blk_run_queue()
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" in the body of a message to majordomo@vger.kernel.org More majordomo info at  http://vger.kernel.org/majordomo-info.html
+If calling run-queue from softirq_done_fn() can cause deadlock,
+I'm afraid the problem is not limited to dm.
+
+> From 8ca211056519ac06bc96fb134dca1f8eb2141407 Mon Sep 17 00:00:00 2001
+> From: Jens Axboe <axboe@kernel.dk>
+> Date: Tue, 6 Nov 2012 12:24:26 +0100
+> Subject: [PATCH] dm: fix deadlock with request based dm and queue request_fn
+>  recursion
+> 
+> Request based dm attempts to re-run the request queue off the
+> request completion path. If used with a driver that potentially does
+> end_io from its request_fn, we could deadlock trying to recurse
+> back into request dispatch. Fix this by punting the request queue
+> run to kblockd.
+> 
+> Tested to fix a quickly reproducible deadlock in such a scenario.
+> 
+> Cc: stable@kernel.org
+> Signed-off-by: Jens Axboe <axboe@kernel.dk>
+> ---
+>  drivers/md/dm.c | 8 +++++++-
+>  1 file changed, 7 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 02db918..77e6eff 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -740,8 +740,14 @@ static void rq_completed(struct mapped_device *md, int rw, int run_queue)
+>  	if (!md_in_flight(md))
+>  		wake_up(&md->wait);
+>  
+> +	/*
+> +	 * Run this off this callpath, as drivers could invoke end_io while
+> +	 * inside their request_fn (and holding the queue lock). Calling
+> +	 * back into ->request_fn() could deadlock attempting to grab the
+> +	 * queue lock again.
+> +	 */
+>  	if (run_queue)
+> -		blk_run_queue(md->queue);
+> +		blk_run_queue_async(md->queue);
+>  
+>  	/*
+>  	 * dm_put() must be at the end of this function. See the comment above
+
+
+-- 
+Jun'ichi Nomura, NEC Corporation
