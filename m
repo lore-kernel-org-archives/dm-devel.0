@@ -1,111 +1,78 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH] Fix deadlock with request based dm and some
-	drivers
-Date: Tue, 06 Nov 2012 21:14:30 +0900
-Message-ID: <5098FF26.4070907@ce.jp.nec.com>
-References: <5098F47F.9030201@fusionio.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jaxboe@fusionio.com>
+Subject: Re: [PATCH] Fix deadlock with request based dm and some drivers
+Date: Tue, 6 Nov 2012 13:35:28 +0100
+Message-ID: <50990410.8080207@fusionio.com>
+References: <5098F47F.9030201@fusionio.com> <5098FF26.4070907@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5098F47F.9030201@fusionio.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jaxboe@fusionio.com>, Alasdair Kergon <agk@redhat.com>
-Cc: "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <5098FF26.4070907@ce.jp.nec.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Alasdair Kergon <agk@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-(Cc to dm-devel)
-
-On 11/06/12 20:29, Jens Axboe wrote:
-> I recently fixed a deadlock for a customer we have with
-> the below patch. I have queued it up in my tree as not
-> to lose it. Can I have an ack from you, or do you want
-> to submit it yourself? I've marked it stable as well.
-
-Could you tell details about how the deadlock happened?
-
-dm's end_io always throws the completion handling to softirq:
-  end_clone_request()
-    dm_complete_request()
-      blk_complete_request()
-
-then it is processed in softirq context:
-  dm_softirq_done()
-    dm_done()
-      dm_end_request()
-        rq_completed(run_queue=true)
-          blk_run_queue()
-
-Since queue_lock is always held with interrupt disabled,
-I couldn't see why it could deadlock.
-
-Request-based dm followed the completion model of scsi
-mid layer. So similar code path exists in scsi, too.
-For example:
-  scsi_request_fn()
-    scsi_kill_request()
-      blk_complete_request()
-then:
-  scsi_softirq_done()
-    scsi_io_completion()
-      scsi_next_command()
-        scsi_run_queue()
-          spin_lock queue_lock
-          __blk_run_queue()
-
-If calling run-queue from softirq_done_fn() can cause deadlock,
-I'm afraid the problem is not limited to dm.
-
-> From 8ca211056519ac06bc96fb134dca1f8eb2141407 Mon Sep 17 00:00:00 2001
-> From: Jens Axboe <axboe@kernel.dk>
-> Date: Tue, 6 Nov 2012 12:24:26 +0100
-> Subject: [PATCH] dm: fix deadlock with request based dm and queue request_fn
->  recursion
+On 2012-11-06 13:14, Jun'ichi Nomura wrote:
+> (Cc to dm-devel)
 > 
-> Request based dm attempts to re-run the request queue off the
-> request completion path. If used with a driver that potentially does
-> end_io from its request_fn, we could deadlock trying to recurse
-> back into request dispatch. Fix this by punting the request queue
-> run to kblockd.
+> On 11/06/12 20:29, Jens Axboe wrote:
+>> I recently fixed a deadlock for a customer we have with
+>> the below patch. I have queued it up in my tree as not
+>> to lose it. Can I have an ack from you, or do you want
+>> to submit it yourself? I've marked it stable as well.
 > 
-> Tested to fix a quickly reproducible deadlock in such a scenario.
+> Could you tell details about how the deadlock happened?
 > 
-> Cc: stable@kernel.org
-> Signed-off-by: Jens Axboe <axboe@kernel.dk>
-> ---
->  drivers/md/dm.c | 8 +++++++-
->  1 file changed, 7 insertions(+), 1 deletion(-)
+> dm's end_io always throws the completion handling to softirq:
+>   end_clone_request()
+>     dm_complete_request()
+>       blk_complete_request()
 > 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 02db918..77e6eff 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -740,8 +740,14 @@ static void rq_completed(struct mapped_device *md, int rw, int run_queue)
->  	if (!md_in_flight(md))
->  		wake_up(&md->wait);
->  
-> +	/*
-> +	 * Run this off this callpath, as drivers could invoke end_io while
-> +	 * inside their request_fn (and holding the queue lock). Calling
-> +	 * back into ->request_fn() could deadlock attempting to grab the
-> +	 * queue lock again.
-> +	 */
->  	if (run_queue)
-> -		blk_run_queue(md->queue);
-> +		blk_run_queue_async(md->queue);
->  
->  	/*
->  	 * dm_put() must be at the end of this function. See the comment above
+> then it is processed in softirq context:
+>   dm_softirq_done()
+>     dm_done()
+>       dm_end_request()
+>         rq_completed(run_queue=true)
+>           blk_run_queue()
+> 
+> Since queue_lock is always held with interrupt disabled,
+> I couldn't see why it could deadlock.
+> 
+> Request-based dm followed the completion model of scsi
+> mid layer. So similar code path exists in scsi, too.
+> For example:
+>   scsi_request_fn()
+>     scsi_kill_request()
+>       blk_complete_request()
+> then:
+>   scsi_softirq_done()
+>     scsi_io_completion()
+>       scsi_next_command()
+>         scsi_run_queue()
+>           spin_lock queue_lock
+>           __blk_run_queue()
+> 
+> If calling run-queue from softirq_done_fn() can cause deadlock,
+> I'm afraid the problem is not limited to dm.
 
+dm_softirq_done()
+    rq_completed()
+        blk_run_queue()
+            dm_request_fn()
+                dm_dispatch_request()
+                    blk_insert_cloned_request()
+                        __elv_add_request()
+                            elv_insert()
+                                blk_run_queue()
+                                    ...
+
+Basically you recurse back into the request handler, since it ends up
+running the queue. But I see I've been too focused on the older release,
+since we don't actually do that anymore after the plugging rewrite. So
+it should actually be safe in current kernels and hence the patch only
+needed for the stable series where that is not the case.
 
 -- 
-Jun'ichi Nomura, NEC Corporation
+Jens Axboe
+
