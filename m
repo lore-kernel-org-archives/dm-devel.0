@@ -1,23 +1,44 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH] Fix deadlock with request based dm and some
-	drivers
-Date: Wed, 7 Nov 2012 10:59:12 +0000
-Message-ID: <20121107105912.GA2683@agk-dp.fab.redhat.com>
-References: <5098F47F.9030201@fusionio.com> <5098FF26.4070907@ce.jp.nec.com> <50990410.8080207@fusionio.com> <5099A80B.8070900@ce.jp.nec.com> <509A1539.3060203@fusionio.com> <509A1D59.2020508@ce.jp.nec.com>
+From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Subject: calling dm_io
+Date: Thu, 8 Nov 2012 18:04:44 +0200
+Message-ID: <CALLzPKYkCC6T=azFKm-ebJhL5Mob+6dvihG3RyUU+MnJR1rw_w@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <509A1D59.2020508@ce.jp.nec.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Jens Axboe <jaxboe@fusionio.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 07, 2012 at 05:35:37PM +0900, Jun'ichi Nomura wrote:
-> If it's good for performance, the patch is fine with me.
- 
-Acked-by: Alasdair G Kergon <agk@redhat.com>
+Hello,
 
-Alasdair
+dm_io() does following:
 
+	if (!io_req->notify.fn)
+
+So it expects caller to initialize notify.fn, but in couple of places
+it is not done when allocating on stack...
+
+dm-bufio.c:dm_bufio_issue_flush()
+dm-raid1.c:mirror_flush()
+
+
+chunk_io() does it correctly...
+
+	struct dm_io_request io_req = {
+		....,
+		.notify.fn = NULL,
+	};
+
+I wonder how raid and buf io then works. By chance...
+
+- Dmitry
