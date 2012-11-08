@@ -1,12 +1,15 @@
-From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Subject: calling dm_io
-Date: Thu, 8 Nov 2012 18:04:44 +0200
-Message-ID: <CALLzPKYkCC6T=azFKm-ebJhL5Mob+6dvihG3RyUU+MnJR1rw_w@mail.gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: calling dm_io
+Date: Thu, 8 Nov 2012 17:22:18 +0000
+Message-ID: <20121108172218.GD2683@agk-dp.fab.redhat.com>
+References: <CALLzPKYkCC6T=azFKm-ebJhL5Mob+6dvihG3RyUU+MnJR1rw_w@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CALLzPKYkCC6T=azFKm-ebJhL5Mob+6dvihG3RyUU+MnJR1rw_w@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,26 +22,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
+On Thu, Nov 08, 2012 at 06:04:44PM +0200, Kasatkin, Dmitry wrote:
+> So it expects caller to initialize notify.fn, but in couple of places
+> it is not done when allocating on stack...
+ 
+As far as I can see it is initialised where it needs to be.
 
-dm_io() does following:
+> 	struct dm_io_request io_req = {
+> 		....,
+> 		.notify.fn = NULL,
+> 	};
+ 
+(Struct members not listed explicitly are initialised according to the same
+rules used for initialising static variables.  IOW a pointer is initialised
+to NULL.)
 
-	if (!io_req->notify.fn)
-
-So it expects caller to initialize notify.fn, but in couple of places
-it is not done when allocating on stack...
-
-dm-bufio.c:dm_bufio_issue_flush()
-dm-raid1.c:mirror_flush()
-
-
-chunk_io() does it correctly...
-
-	struct dm_io_request io_req = {
-		....,
-		.notify.fn = NULL,
-	};
-
-I wonder how raid and buf io then works. By chance...
-
-- Dmitry
+Alasdair
