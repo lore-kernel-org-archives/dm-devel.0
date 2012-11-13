@@ -1,12 +1,15 @@
-From: Jason Butler <jason.butler@zycko.com>
-Subject: prio_callout
-Date: Tue, 13 Nov 2012 17:02:35 +0000
-Message-ID: <1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8@ukswexch1.simiangroup.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: prio_callout
+Date: Tue, 13 Nov 2012 22:15:53 +0100
+Message-ID: <1352841353.20902.8.camel@lapoo.opensvc.com>
+References: <1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8@ukswexch1.simiangroup.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2500854314922135586=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8@ukswexch1.simiangroup.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,131 +19,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============2500854314922135586==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_"
-
---_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: quoted-printable
-
-All,
-
-I have a specific need to use my own path priorities =96 now you have remo=
-ved the prio_callout from Redhat 6.2 =96 are there any other ways I can do=
- this?
-
-Or do you have some instructions for defining custom path priorities?
-
-Thanks,
-
-Jason Butler
-Senior Technical Consultant
-Zycko Ltd
-
-T: +44 (0) 1285 868 567
-F: +44 (0) 1285 868 501
-M: +44 (0) 7920 061 152
-www.zycko.com
-
-
-_______________________________________________________________________
-
-This email is confidential and intended solely for the use of the individu=
-al to whom it is addressed. Any views or opinions presented are solely tho=
-se of the author and do not necessarily represent those of Zycko Limited. =
-If you are not the intended recipient, be advised that you have received t=
-his email in error and that any use, dissemination, forwarding, printing, =
-or copying of this email is strictly prohibited. If you have received this=
- email in error please notify Zycko Limited on +44 1285 868500.
-All emailed quotes are valid for 14 days, subject to availability, unless =
-otherwise stated.  All emailed quotes are subject to Zycko's standard Term=
-s and Conditions.
-
-This e-mail has been scanned for all viruses by Star Internet. The
-service is powered by MessageLabs. For more information on a proactive
-anti-virus service working around the clock, around the globe, visit:
-http://www.star.net.uk
-________________________________________________________________________
---_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_
-Content-Type: text/html; charset="Windows-1252"
-Content-ID: <C33704394829AD4998660446D7A95F86@zycko.com>
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DWindows-=
-1252">
-</head>
-<body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; -webkit-li=
-ne-break: after-white-space; color: rgb(0, 0, 0); font-size: 14px; font-fa=
-mily: Calibri, sans-serif; ">
-<div>All,</div>
-<div><br>
-</div>
-<div>I have a specific need to use my own path priorities =96 now you have=
- removed the prio_callout from Redhat 6.2 =96 are there any other ways I c=
-an do this?</div>
-<div><br>
-</div>
-<div>Or do you have some instructions for defining custom path priorities?=
-</div>
-<div><br>
-</div>
-<div>
-<div><span style=3D"font-family: Calibri; ">Thanks,</span></div>
-<div><span style=3D"font-family: Calibri; "><br>
-</span></div>
-<div><span style=3D"font-family: Calibri; ">Jason Butler</span></div>
-<div><span style=3D"font-family: Calibri; ">Senior Technical Consultant</s=
-pan></div>
-<div><span style=3D"font-family: Calibri; ">Zycko Ltd</span></div>
-<div><span style=3D"font-family: Calibri; "><br>
-</span></div>
-<div>T: &#43;44 (0) 1285 868 567</div>
-<div>F: &#43;44 (0) 1285 868 501</div>
-<div>M: &#43;44 (0) 7920 061 152</div>
-<div><span style=3D"font-family: Calibri; ">www.zycko.com</span></div>
-<div><span style=3D"font-family: Calibri; "><br>
-</span></div>
-</div>
-<br clear=3D"both">
-_______________________________________________________________________<BR=
->
-<BR>
-This email is confidential and intended solely for the use of the individu=
-al to whom it is addressed. Any views or opinions presented are solely tho=
-se of the author and do not necessarily represent those of Zycko Limited. =
-If you are not the intended recipient, be advised that you have received t=
-his email in error and that any use, dissemination, forwarding, printing, =
-or copying of this email is strictly prohibited. If you have received this=
- email in error please notify Zycko Limited on +44 1285 868500.<BR>
-All emailed quotes are valid for 14 days, subject to availability, unless =
-otherwise stated.  All emailed quotes are subject to Zycko's standard Term=
-s and Conditions.<BR>
-<BR>
-This e-mail has=20been scanned for all viruses by Star Internet. The<BR>
-service is powered by MessageLabs. For more information on a proactive<BR>=
-
-anti-virus service working around the clock, around the globe, visit:<BR>
-http://www.star.net.uk<BR>
-________________________________________________________________________<B=
-R>
-</body>
-</html>
-
---_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_--
-
-
---===============2500854314922135586==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2500854314922135586==--
+T24gbWFyLiwgMjAxMi0xMS0xMyBhdCAxNzowMiArMDAwMCwgSmFzb24gQnV0bGVyIHdyb3RlOgo+
+IEFsbCwKPiAKPiAKPiBJIGhhdmUgYSBzcGVjaWZpYyBuZWVkIHRvIHVzZSBteSBvd24gcGF0aCBw
+cmlvcml0aWVzIOKAkyBub3cgeW91IGhhdmUKPiByZW1vdmVkIHRoZSBwcmlvX2NhbGxvdXQgZnJv
+bSBSZWRoYXQgNi4yIOKAkyBhcmUgdGhlcmUgYW55IG90aGVyIHdheXMgSQo+IGNhbiBkbyB0aGlz
+Pwo+IAo+IAo+IE9yIGRvIHlvdSBoYXZlIHNvbWUgaW5zdHJ1Y3Rpb25zIGZvciBkZWZpbmluZyBj
+dXN0b20gcGF0aCBwcmlvcml0aWVzPwo+IApZb3UgY2FuIHBvaW50IG11bHRpcGF0aGQgdG8gYSBj
+dXN0b20gc2hhcmVkIGxpYnJhcnkuClRvIGRldmVsb3Agb25lLCB0aGUgZWFzaWVzdCBwYXRoIGlz
+IAoKLSBjbG9uaW5nIHRoZSB1cHN0ZWFtIHJlcG8KLSBjb3B5IGFuIGV4aXN0aW5nIHByaW9yaXRp
+emVyIChleC4gbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9jb25zdC5jKQotIG1vZGlmeSBpdCB0
+byBzdWl0IHlvdXIgbmVlZHMKLSBhZGQgaXQgdG8gbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9N
+YWtlZmlsZQotIHJlYnVpbGQKCgpPbmx5IHRoZSBnZXRwcmlvIGZ1bmN0aW9uIGlzIGNhbGxlZCBi
+eSBtdWx0aXBhdGhkLCBhbmQgaXRzIHJldHVybiBjb2RlCmlzIHRoZSB3ZWlnaHQgb2YgdGhlIHBh
+dGggcGFzc2VkIGFzIGFyZ3VtZW50LiBOb3QgYXMgZWFzeSBhcyBhIHNjcmlwdCwKYnV0IGNsb3Nl
+IC4uLiBhbmQgeW91IGdhaW4gdGhlIG1lbWxvY2tpbmcgb2YgdGhlIHNoYXJlZCBsaWIgYXQKbXVs
+dGlwYXRoZCBzdGFydHVwLgoKWW91IG1heSBhbHNvIGNoZWNrIGlmIHRoZSB3ZWlnaGVkcGF0aCBw
+cmlvcml0aXplciBpbXBsZW1lbnRzIHdoYXQgeW91Cm5lZWQuCgpCZXN0IHJlZ2FyZHMsCmNocmlz
+dG9waGUgdmFyb3F1aQpodHRwOi8vd3d3Lm9wZW5zdmMuY29tCgoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVs
