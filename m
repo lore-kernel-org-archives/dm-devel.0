@@ -1,14 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: FW: Re:  calling dm_io
-Date: Mon, 12 Nov 2012 20:27:29 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1211122019450.11950@file.rdu.redhat.com>
-References: <20121108180038.GE2683@agk-dp.fab.redhat.com>
+From: Jason Butler <jason.butler@zycko.com>
+Subject: prio_callout
+Date: Tue, 13 Nov 2012 17:02:35 +0000
+Message-ID: <1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8@ukswexch1.simiangroup.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2500854314922135586=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20121108180038.GE2683@agk-dp.fab.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,96 +16,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-It doesn't seem to matter if you use REQ_FLUSH or WRITE_FLUSH, but for 
-consistency, you can apply this patch.
+--===============2500854314922135586==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_"
+
+--_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
+
+All,
+
+I have a specific need to use my own path priorities =96 now you have remo=
+ved the prio_callout from Redhat 6.2 =96 are there any other ways I can do=
+ this?
+
+Or do you have some instructions for defining custom path priorities?
+
+Thanks,
+
+Jason Butler
+Senior Technical Consultant
+Zycko Ltd
+
+T: +44 (0) 1285 868 567
+F: +44 (0) 1285 868 501
+M: +44 (0) 7920 061 152
+www.zycko.com
 
 
-On Thu, 8 Nov 2012, Alasdair G Kergon wrote:
+_______________________________________________________________________
 
-> We use a mixture of REQ_FLUSH and WRITE_FLUSH in dm.
-> 
-> fs.h:#define WRITE_FLUSH		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_FLUSH)
-> 
-> Could you do a quick check that we always use the right one in the right 
-> places?
-> 
-> Alasdair
-> 
-> ----- Forwarded message from "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com> -----
-> 
-> Date: Thu, 8 Nov 2012 19:51:36 +0200
-> From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-> Subject: Re: [dm-devel] calling dm_io
-> To: device-mapper development <dm-devel@redhat.com>
-> 
-> On Thu, Nov 8, 2012 at 7:22 PM, Alasdair G Kergon <agk@redhat.com> wrote:
-> > On Thu, Nov 08, 2012 at 06:04:44PM +0200, Kasatkin, Dmitry wrote:
-> >> So it expects caller to initialize notify.fn, but in couple of places
-> >> it is not done when allocating on stack...
-> >
-> > As far as I can see it is initialised where it needs to be.
-> >
-> >>       struct dm_io_request io_req = {
-> >>               ....,
-> >>               .notify.fn = NULL,
-> >>       };
-> >
-> > (Struct members not listed explicitly are initialised according to the same
-> > rules used for initialising static variables.  IOW a pointer is initialised
-> > to NULL.)
-> 
-> oh. indeed.
-> 
-> 
-> dm_bufio_issue_flush() uses REQ_FLUSH, but all other places in the
-> kernel use WRITE_FLUSH...
-> Should dm_bufio_issue_flush() also use WRITE_FLUSH?
-> 
-> - Dmitry
-> 
-> 
-> >
-> > Alasdair
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> ----- End forwarded message -----
-> 
+This email is confidential and intended solely for the use of the individu=
+al to whom it is addressed. Any views or opinions presented are solely tho=
+se of the author and do not necessarily represent those of Zycko Limited. =
+If you are not the intended recipient, be advised that you have received t=
+his email in error and that any use, dissemination, forwarding, printing, =
+or copying of this email is strictly prohibited. If you have received this=
+ email in error please notify Zycko Limited on +44 1285 868500.
+All emailed quotes are valid for 14 days, subject to availability, unless =
+otherwise stated.  All emailed quotes are subject to Zycko's standard Term=
+s and Conditions.
 
-dm-bufio: use WRITE_FLUSH instead of REQ_FLUSH
+This e-mail has been scanned for all viruses by Star Internet. The
+service is powered by MessageLabs. For more information on a proactive
+anti-virus service working around the clock, around the globe, visit:
+http://www.star.net.uk
+________________________________________________________________________
+--_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_
+Content-Type: text/html; charset="Windows-1252"
+Content-ID: <C33704394829AD4998660446D7A95F86@zycko.com>
+Content-Transfer-Encoding: quoted-printable
 
-Use WRITE_FLUSH instead of REQ_FLUSH to make it consistent with the rest
-of the kernel. There is no functional change - the kernel accepts either
-WRITE_FLUSH or REQ_FLUSH.
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DWindows-=
+1252">
+</head>
+<body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; -webkit-li=
+ne-break: after-white-space; color: rgb(0, 0, 0); font-size: 14px; font-fa=
+mily: Calibri, sans-serif; ">
+<div>All,</div>
+<div><br>
+</div>
+<div>I have a specific need to use my own path priorities =96 now you have=
+ removed the prio_callout from Redhat 6.2 =96 are there any other ways I c=
+an do this?</div>
+<div><br>
+</div>
+<div>Or do you have some instructions for defining custom path priorities?=
+</div>
+<div><br>
+</div>
+<div>
+<div><span style=3D"font-family: Calibri; ">Thanks,</span></div>
+<div><span style=3D"font-family: Calibri; "><br>
+</span></div>
+<div><span style=3D"font-family: Calibri; ">Jason Butler</span></div>
+<div><span style=3D"font-family: Calibri; ">Senior Technical Consultant</s=
+pan></div>
+<div><span style=3D"font-family: Calibri; ">Zycko Ltd</span></div>
+<div><span style=3D"font-family: Calibri; "><br>
+</span></div>
+<div>T: &#43;44 (0) 1285 868 567</div>
+<div>F: &#43;44 (0) 1285 868 501</div>
+<div>M: &#43;44 (0) 7920 061 152</div>
+<div><span style=3D"font-family: Calibri; ">www.zycko.com</span></div>
+<div><span style=3D"font-family: Calibri; "><br>
+</span></div>
+</div>
+<br clear=3D"both">
+_______________________________________________________________________<BR=
+>
+<BR>
+This email is confidential and intended solely for the use of the individu=
+al to whom it is addressed. Any views or opinions presented are solely tho=
+se of the author and do not necessarily represent those of Zycko Limited. =
+If you are not the intended recipient, be advised that you have received t=
+his email in error and that any use, dissemination, forwarding, printing, =
+or copying of this email is strictly prohibited. If you have received this=
+ email in error please notify Zycko Limited on +44 1285 868500.<BR>
+All emailed quotes are valid for 14 days, subject to availability, unless =
+otherwise stated.  All emailed quotes are subject to Zycko's standard Term=
+s and Conditions.<BR>
+<BR>
+This e-mail has=20been scanned for all viruses by Star Internet. The<BR>
+service is powered by MessageLabs. For more information on a proactive<BR>=
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+anti-virus service working around the clock, around the globe, visit:<BR>
+http://www.star.net.uk<BR>
+________________________________________________________________________<B=
+R>
+</body>
+</html>
 
----
- drivers/md/dm-bufio.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+--_000_1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8ukswexch1simian_--
 
-Index: linux-3.6.6-fast/drivers/md/dm-bufio.c
-===================================================================
---- linux-3.6.6-fast.orig/drivers/md/dm-bufio.c	2012-11-13 02:13:01.000000000 +0100
-+++ linux-3.6.6-fast/drivers/md/dm-bufio.c	2012-11-13 02:13:08.000000000 +0100
-@@ -1194,7 +1194,7 @@ EXPORT_SYMBOL_GPL(dm_bufio_write_dirty_b
- int dm_bufio_issue_flush(struct dm_bufio_client *c)
- {
- 	struct dm_io_request io_req = {
--		.bi_rw = REQ_FLUSH,
-+		.bi_rw = WRITE_FLUSH,
- 		.mem.type = DM_IO_KMEM,
- 		.mem.ptr.addr = NULL,
- 		.client = c->dm_io,
+
+--===============2500854314922135586==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2500854314922135586==--
