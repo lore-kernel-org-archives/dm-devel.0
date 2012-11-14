@@ -1,43 +1,235 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: prio_callout
-Date: Tue, 13 Nov 2012 22:15:53 +0100
-Message-ID: <1352841353.20902.8.camel@lapoo.opensvc.com>
-References: <1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8@ukswexch1.simiangroup.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Robin Dong <robin.k.dong@gmail.com>
+Subject: Re: [PATCH 1/2] md: add new interface 'mk_rq' in target_type
+Date: Wed, 14 Nov 2012 11:08:20 +0800
+Message-ID: <CANsebLGKQcDM8rkiZdqAVqf8JLPt4UMhz4keNs9KYh=1VjdiLQ@mail.gmail.com>
+References: <1348111122-27400-1-git-send-email-robin.k.dong@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1955D85E41D51C419BC8F7EACD8B94DA3F9C8FD8@ukswexch1.simiangroup.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1348111122-27400-1-git-send-email-robin.k.dong@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gbWFyLiwgMjAxMi0xMS0xMyBhdCAxNzowMiArMDAwMCwgSmFzb24gQnV0bGVyIHdyb3RlOgo+
-IEFsbCwKPiAKPiAKPiBJIGhhdmUgYSBzcGVjaWZpYyBuZWVkIHRvIHVzZSBteSBvd24gcGF0aCBw
-cmlvcml0aWVzIOKAkyBub3cgeW91IGhhdmUKPiByZW1vdmVkIHRoZSBwcmlvX2NhbGxvdXQgZnJv
-bSBSZWRoYXQgNi4yIOKAkyBhcmUgdGhlcmUgYW55IG90aGVyIHdheXMgSQo+IGNhbiBkbyB0aGlz
-Pwo+IAo+IAo+IE9yIGRvIHlvdSBoYXZlIHNvbWUgaW5zdHJ1Y3Rpb25zIGZvciBkZWZpbmluZyBj
-dXN0b20gcGF0aCBwcmlvcml0aWVzPwo+IApZb3UgY2FuIHBvaW50IG11bHRpcGF0aGQgdG8gYSBj
-dXN0b20gc2hhcmVkIGxpYnJhcnkuClRvIGRldmVsb3Agb25lLCB0aGUgZWFzaWVzdCBwYXRoIGlz
-IAoKLSBjbG9uaW5nIHRoZSB1cHN0ZWFtIHJlcG8KLSBjb3B5IGFuIGV4aXN0aW5nIHByaW9yaXRp
-emVyIChleC4gbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9jb25zdC5jKQotIG1vZGlmeSBpdCB0
-byBzdWl0IHlvdXIgbmVlZHMKLSBhZGQgaXQgdG8gbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9N
-YWtlZmlsZQotIHJlYnVpbGQKCgpPbmx5IHRoZSBnZXRwcmlvIGZ1bmN0aW9uIGlzIGNhbGxlZCBi
-eSBtdWx0aXBhdGhkLCBhbmQgaXRzIHJldHVybiBjb2RlCmlzIHRoZSB3ZWlnaHQgb2YgdGhlIHBh
-dGggcGFzc2VkIGFzIGFyZ3VtZW50LiBOb3QgYXMgZWFzeSBhcyBhIHNjcmlwdCwKYnV0IGNsb3Nl
-IC4uLiBhbmQgeW91IGdhaW4gdGhlIG1lbWxvY2tpbmcgb2YgdGhlIHNoYXJlZCBsaWIgYXQKbXVs
-dGlwYXRoZCBzdGFydHVwLgoKWW91IG1heSBhbHNvIGNoZWNrIGlmIHRoZSB3ZWlnaGVkcGF0aCBw
-cmlvcml0aXplciBpbXBsZW1lbnRzIHdoYXQgeW91Cm5lZWQuCgpCZXN0IHJlZ2FyZHMsCmNocmlz
-dG9waGUgdmFyb3F1aQpodHRwOi8vd3d3Lm9wZW5zdmMuY29tCgoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+ping
+
+2012/9/20 Robin Dong <robin.k.dong@gmail.com>:
+> From: Robin Dong <sanbai@taobao.com>
+>
+> We are now trying to modify flashcache(https://github.com/facebook/flashcache)
+> to make it request based so that
+> we can let cfq io-controller control the bandwidth between different
+> io cgroups.
+>
+> A search in the dm directory tells me that only multipath is a request
+> based dm target and its functionality
+> is very simple and map_rq() is used to map the request to different underlying devices.
+> We can't work in this way because:
+>
+> 1. the request which processed by map_rq() need to be issued to
+>         different lower devices (disk device and cache device, in flashcache), therefore the request
+>         can't be totally remapped by simply changing its queue and returning DM_MAPIO_REMAPPED in map_rq() like multipath_map()
+> 2. to submit bios drectly in map_rq() (by return DM_MAPIO_SUBMITTED) will cause BUG_ON(!irqs_disabled())
+>         in dm_request_fn() because the submit_bio()->generic_make_request()->blk_queue_bio() will definitly call spin_unlock_irq to enable the irqs
+>
+> As above,the interface map_rq() provided by devcie-mapper framework
+> is not enough for an autonomous target, like flashcache.
+>
+> We propose to add a new
+> mk_rq interface so that we can make the requests
+> by ourselves.
+>
+> Signed-off-by: Robin Dong <sanbai@taobao.com>
+> ---
+>  drivers/md/dm-io.c    |   58 ++++++++++++++++++++++++++++--------------------
+>  drivers/md/dm-log.c   |    1 +
+>  include/linux/dm-io.h |    3 ++
+>  3 files changed, 38 insertions(+), 24 deletions(-)
+>
+> diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+> index ea5dd28..f767792 100644
+> --- a/drivers/md/dm-io.c
+> +++ b/drivers/md/dm-io.c
+> @@ -287,8 +287,8 @@ static void km_dp_init(struct dpages *dp, void *data)
+>  /*-----------------------------------------------------------------
+>   * IO routines that accept a list of pages.
+>   *---------------------------------------------------------------*/
+> -static void do_region(int rw, unsigned region, struct dm_io_region *where,
+> -                     struct dpages *dp, struct io *io)
+> +static void do_region(struct dm_io_request *io_req, unsigned region,
+> +               struct dm_io_region *where, struct dpages *dp, struct io *io)
+>  {
+>         struct bio *bio;
+>         struct page *page;
+> @@ -298,6 +298,7 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+>         sector_t remaining = where->count;
+>         struct request_queue *q = bdev_get_queue(where->bdev);
+>         sector_t discard_sectors;
+> +       int rw = io_req->bi_rw;
+>
+>         /*
+>          * where->count may be zero if rw holds a flush and we need to
+> @@ -339,15 +340,26 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+>                 }
+>
+>                 atomic_inc(&io->count);
+> -               submit_bio(rw, bio);
+> +               if (!io_req->only_create_bio)
+> +                       submit_bio(rw, bio);
+> +               else {
+> +                       bio->bi_rw |= rw;
+> +                       if (io_req->start) {
+> +                               io_req->end->bi_next = bio;
+> +                               io_req->end = bio;
+> +                       } else
+> +                               io_req->start = io_req->end = bio;
+> +                       bio->bi_next = NULL;
+> +               }
+>         } while (remaining);
+>  }
+>
+> -static void dispatch_io(int rw, unsigned int num_regions,
+> +static void dispatch_io(struct dm_io_request *io_req, unsigned int num_regions,
+>                         struct dm_io_region *where, struct dpages *dp,
+>                         struct io *io, int sync)
+>  {
+>         int i;
+> +       int rw = io_req->bi_rw;
+>         struct dpages old_pages = *dp;
+>
+>         BUG_ON(num_regions > DM_IO_MAX_REGIONS);
+> @@ -362,7 +374,7 @@ static void dispatch_io(int rw, unsigned int num_regions,
+>         for (i = 0; i < num_regions; i++) {
+>                 *dp = old_pages;
+>                 if (where[i].count || (rw & REQ_FLUSH))
+> -                       do_region(rw, i, where + i, dp, io);
+> +                       do_region(io_req, i, where + i, dp, io);
+>         }
+>
+>         /*
+> @@ -372,8 +384,8 @@ static void dispatch_io(int rw, unsigned int num_regions,
+>         dec_count(io, 0, 0);
+>  }
+>
+> -static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+> -                  struct dm_io_region *where, int rw, struct dpages *dp,
+> +static int sync_io(struct dm_io_request *io_req,  unsigned int num_regions,
+> +                  struct dm_io_region *where, struct dpages *dp,
+>                    unsigned long *error_bits)
+>  {
+>         /*
+> @@ -385,7 +397,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+>         volatile char io_[sizeof(struct io) + __alignof__(struct io) - 1];
+>         struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
+>
+> -       if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
+> +       if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
+>                 WARN_ON(1);
+>                 return -EIO;
+>         }
+> @@ -393,12 +405,12 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+>         io->error_bits = 0;
+>         atomic_set(&io->count, 1); /* see dispatch_io() */
+>         io->sleeper = current;
+> -       io->client = client;
+> +       io->client = io_req->client;
+>
+>         io->vma_invalidate_address = dp->vma_invalidate_address;
+>         io->vma_invalidate_size = dp->vma_invalidate_size;
+>
+> -       dispatch_io(rw, num_regions, where, dp, io, 1);
+> +       dispatch_io(io_req, num_regions, where, dp, io, 1);
+>
+>         while (1) {
+>                 set_current_state(TASK_UNINTERRUPTIBLE);
+> @@ -416,30 +428,29 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+>         return io->error_bits ? -EIO : 0;
+>  }
+>
+> -static int async_io(struct dm_io_client *client, unsigned int num_regions,
+> -                   struct dm_io_region *where, int rw, struct dpages *dp,
+> -                   io_notify_fn fn, void *context)
+> +static int async_io(struct dm_io_request *io_req, unsigned int num_regions,
+> +               struct dm_io_region *where, struct dpages *dp)
+>  {
+>         struct io *io;
+>
+> -       if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
+> +       if (num_regions > 1 && (io_req->bi_rw & RW_MASK) != WRITE) {
+>                 WARN_ON(1);
+> -               fn(1, context);
+> +               io_req->notify.fn(1, io_req->notify.context);
+>                 return -EIO;
+>         }
+>
+> -       io = mempool_alloc(client->pool, GFP_NOIO);
+> +       io = mempool_alloc(io_req->client->pool, GFP_NOIO);
+>         io->error_bits = 0;
+>         atomic_set(&io->count, 1); /* see dispatch_io() */
+>         io->sleeper = NULL;
+> -       io->client = client;
+> -       io->callback = fn;
+> -       io->context = context;
+> +       io->client = io_req->client;
+> +       io->callback = io_req->notify.fn;
+> +       io->context = io_req->notify.context;
+>
+>         io->vma_invalidate_address = dp->vma_invalidate_address;
+>         io->vma_invalidate_size = dp->vma_invalidate_size;
+>
+> -       dispatch_io(rw, num_regions, where, dp, io, 0);
+> +       dispatch_io(io_req, num_regions, where, dp, io, 0);
+>         return 0;
+>  }
+>
+> @@ -499,11 +510,10 @@ int dm_io(struct dm_io_request *io_req, unsigned num_regions,
+>                 return r;
+>
+>         if (!io_req->notify.fn)
+> -               return sync_io(io_req->client, num_regions, where,
+> -                              io_req->bi_rw, &dp, sync_error_bits);
+> +               return sync_io(io_req, num_regions, where,
+> +                               &dp, sync_error_bits);
+>
+> -       return async_io(io_req->client, num_regions, where, io_req->bi_rw,
+> -                       &dp, io_req->notify.fn, io_req->notify.context);
+> +       return async_io(io_req, num_regions, where, &dp);
+>  }
+>  EXPORT_SYMBOL(dm_io);
+>
+> diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+> index 627d191..3bf065a 100644
+> --- a/drivers/md/dm-log.c
+> +++ b/drivers/md/dm-log.c
+> @@ -463,6 +463,7 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
+>                         kfree(lc);
+>                         return r;
+>                 }
+> +               lc->io_req.only_create_bio = 0;
+>
+>                 lc->disk_header = vmalloc(buf_size);
+>                 if (!lc->disk_header) {
+> diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
+> index f4b0aa3..8782163 100644
+> --- a/include/linux/dm-io.h
+> +++ b/include/linux/dm-io.h
+> @@ -61,6 +61,9 @@ struct dm_io_request {
+>         struct dm_io_memory mem;        /* Memory to use for io */
+>         struct dm_io_notify notify;     /* Synchronous if notify.fn is NULL */
+>         struct dm_io_client *client;    /* Client memory handler */
+> +       int only_create_bio;
+> +       struct bio *start;
+> +       struct bio *end;
+>  };
+>
+>  /*
+> --
+> 1.7.1
+>
+
+
+
+-- 
+--
+Best Regard
+Robin Dong
