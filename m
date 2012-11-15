@@ -1,40 +1,34 @@
-From: majianpeng <majianpeng@gmail.com>
-Subject: [PATCH 1/3] md:Add a func 'dm_md_stop' for dm-raid to clear up md resources.
-Date: Thu, 15 Nov 2012 16:46:59 +0800
-Message-ID: <201211151646546882035@gmail.com>
-Reply-To: majianpeng <majianpeng@gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/3] md:Add a func 'dm_md_stop' for dm-raid to clear up
+	md resources.
+Date: Thu, 15 Nov 2012 11:45:29 +0000
+Message-ID: <20121115114529.GA12798@agk-dp.fab.redhat.com>
+References: <201211151646546882035@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="gb2312"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <201211151646546882035@gmail.com>
 Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>, agk <agk@redhat.com>
-Cc: linux-raid <linux-raid@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
+To: majianpeng <majianpeng@gmail.com>
+Cc: NeilBrown <neilb@suse.de>, agk <agk@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-QmVjYXVzZSBkbS1yYWlkIHVzZWQgbWQgZHJpdmVyLCB3aGVuIHN0b3BlZCBkbS1yYWlkIGl0IG9u
-bHkgY2FsbA0KbWRfc3RvcC4gSXQgY2F1c2VkIHNvbWUgcmVzb3VyY2VzIG9taXRlZCwgbGlrZSBi
-aXRtYXAsIG1kZGV2LT5iaW9fc2V0Lg0KU28gYWRkIGEgZnVuYyBkbV9tZF9zdG9wIHRvIGNsZWFy
-IHVwIHJlc291cmNlLg0KDQpTaWduZWQtb2ZmLWJ5OiBKaWFucGVuZyBNYSA8bWFqaWFucGVuZ0Bn
-bWFpbC5jb20+DQotLS0NCiBkcml2ZXJzL21kL21kLmMgfCAgICA5ICsrKysrKysrKw0KIGRyaXZl
-cnMvbWQvbWQuaCB8ICAgIDEgKw0KIDIgZmlsZXMgY2hhbmdlZCwgMTAgaW5zZXJ0aW9ucygrKQ0K
-DQpkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9tZC5jIGIvZHJpdmVycy9tZC9tZC5jDQppbmRleCA5
-YWI3NjhhLi41NzRiMGE4IDEwMDY0NA0KLS0tIGEvZHJpdmVycy9tZC9tZC5jDQorKysgYi9kcml2
-ZXJzL21kL21kLmMNCkBAIC01MzA2LDYgKzUzMDYsMTUgQEAgdm9pZCBtZF9zdG9wKHN0cnVjdCBt
-ZGRldiAqbWRkZXYpDQogfQ0KIEVYUE9SVF9TWU1CT0xfR1BMKG1kX3N0b3ApOw0KIA0KK3ZvaWQg
-ZG1fbWRfc3RvcChzdHJ1Y3QgbWRkZXYgKm1kZGV2KQ0KK3sNCisJbWRfc3RvcChtZGRldik7DQor
-CWJpdG1hcF9kZXN0cm95KG1kZGV2KTsNCisJaWYgKG1kZGV2LT5iaW9fc2V0KQ0KKwkJYmlvc2V0
-X2ZyZWUobWRkZXYtPmJpb19zZXQpOw0KK30NCitFWFBPUlRfU1lNQk9MX0dQTChkbV9tZF9zdG9w
-KTsNCisNCiBzdGF0aWMgaW50IG1kX3NldF9yZWFkb25seShzdHJ1Y3QgbWRkZXYgKm1kZGV2LCBz
-dHJ1Y3QgYmxvY2tfZGV2aWNlICpiZGV2KQ0KIHsNCiAJaW50IGVyciA9IDA7DQpkaWZmIC0tZ2l0
-IGEvZHJpdmVycy9tZC9tZC5oIGIvZHJpdmVycy9tZC9tZC5oDQppbmRleCBhZjQ0M2FiLi5hMzcw
-ZWNlIDEwMDY0NA0KLS0tIGEvZHJpdmVycy9tZC9tZC5oDQorKysgYi9kcml2ZXJzL21kL21kLmgN
-CkBAIC02MjEsNiArNjIxLDcgQEAgZXh0ZXJuIHZvaWQgbWRfc3RvcChzdHJ1Y3QgbWRkZXYgKm1k
-ZGV2KTsNCiBleHRlcm4gdm9pZCBtZF9zdG9wX3dyaXRlcyhzdHJ1Y3QgbWRkZXYgKm1kZGV2KTsN
-CiBleHRlcm4gaW50IG1kX3JkZXZfaW5pdChzdHJ1Y3QgbWRfcmRldiAqcmRldik7DQogZXh0ZXJu
-IHZvaWQgbWRfcmRldl9jbGVhcihzdHJ1Y3QgbWRfcmRldiAqcmRldik7DQorZXh0ZXJuIHZvaWQg
-ZG1fbWRfc3RvcChzdHJ1Y3QgbWRkZXYgKm1kZGV2KTsNCiANCiBleHRlcm4gdm9pZCBtZGRldl9z
-dXNwZW5kKHN0cnVjdCBtZGRldiAqbWRkZXYpOw0KIGV4dGVybiB2b2lkIG1kZGV2X3Jlc3VtZShz
-dHJ1Y3QgbWRkZXYgKm1kZGV2KTsNCi0tIA0KMS43LjkuNQ0K
+On Thu, Nov 15, 2012 at 04:46:59PM +0800, majianpeng wrote:
+> So add a func dm_md_stop to clear up resource.
+ 
+> +++ b/drivers/md/md.c
+
+> +void dm_md_stop(struct mddev *mddev)
+> +{
+> +	md_stop(mddev);
+> +	bitmap_destroy(mddev);
+> +	if (mddev->bio_set)
+> +		bioset_free(mddev->bio_set);
+> +}
+> +EXPORT_SYMBOL_GPL(dm_md_stop);
+
+Let's not put a function with a dm_ prefix in an md file?
+
+Alasdair
 
