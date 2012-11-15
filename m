@@ -1,90 +1,40 @@
-From: Robin Dong <robin.k.dong@gmail.com>
-Subject: Re: [PATCH 2/2] md: modify dm_io() so it could return bios instead of
- submitting it
-Date: Wed, 14 Nov 2012 11:08:31 +0800
-Message-ID: <CANsebLGsjC7FWUEVi6aW86Bx1gNtJVpHeewRxiO3X-YtkVNk4Q@mail.gmail.com>
-References: <1348111122-27400-1-git-send-email-robin.k.dong@gmail.com>
-	<1348111122-27400-2-git-send-email-robin.k.dong@gmail.com>
+From: majianpeng <majianpeng@gmail.com>
+Subject: [PATCH 0/3] Add a new func to handle with clearing up for stoping dm-raid.
+Date: Thu, 15 Nov 2012 16:46:54 +0800
+Message-ID: <201211151646510171304@gmail.com>
+Reply-To: majianpeng <majianpeng@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1348111122-27400-2-git-send-email-robin.k.dong@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain;
+	charset="gb2312"
+Content-Transfer-Encoding: base64
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>, agk <agk@redhat.com>
+Cc: linux-raid <linux-raid@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-ping
+QmVjYXVzZSBkbS1yYWlkIGNhbGwgbWRfc3RvcCB0byBjbGVhciB1cCxidXQgbWRfc3RvcCBjYW4n
+dCBjbGVhciB1cCBjb21wbGV0ZWx5Lg0KU28gYWRkIGEgbmV3IGZ1bmMgdG8gZG8uDQoNCkppYW5w
+ZW5nIE1hICgzKToNCiAgbWQ6QWRkIGEgZnVuYyAnZG1fbWRfc3RvcCcgZm9yIGRtLXJhaWQgdG8g
+Y2xlYXIgdXAgbWQgcmVzb3VyY2UuDQogIGRtOiBXaGVuIHN0b3BpbmcgZG0tcmFpZCwgaXQgY2Fs
+bCBkbV9tZF9zdG9wIHJhdGhlciB0aGFuIG1kX3N0b3AgdG8NCiAgICBkbyBjbGVhci11cCB3b3Jr
+Lg0KICBtZDogUmVtb3ZlIEVYUE9SVF9TWU1CT0xfR1BMKG1kX3N0b3ApLg0KDQogZHJpdmVycy9t
+ZC9kbS1yYWlkLmMgfCAgICA0ICsrLS0NCiBkcml2ZXJzL21kL21kLmMgICAgICB8ICAgMTAgKysr
+KysrKysrLQ0KIGRyaXZlcnMvbWQvbWQuaCAgICAgIHwgICAgMSArDQogMyBmaWxlcyBjaGFuZ2Vk
+LCAxMiBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQ0KDQotLSANCjEuNy45LjUNCg0Kcm9v
+dEBtYWppYW5wZW5nOi9tbnQva2VybmVsL2xpbnV4IyBjYXQgMDAwMC1jb3Zlci1sZXR0ZXIucGF0
+Y2ggDQpGcm9tIGY0M2YyMmNiNTMwN2Q1YWQ4ZGZlMTdhYTQ3MWUzZjM5ZDJjOWYxZGMgTW9uIFNl
+cCAxNyAwMDowMDowMCAyMDAxDQpGcm9tOiBKaWFucGVuZyBNYSA8bWFqaWFucGVuZ0BnbWFpbC5j
+b20+DQpEYXRlOiBGcmksIDE2IE5vdiAyMDEyIDA3OjA0OjU2ICswODAwDQpTdWJqZWN0OiBbUEFU
+Q0ggMC8zXSBBZGQgYSBuZXcgZnVuYyB0byBoYW5kbGUgd2l0aCBjbGVhcmluZyB1cCBmb3Igc3Rv
+cGluZw0KZG0tcmFpZC4NCg0KQmVjYXVzZSBkbS1yYWlkIGNhbGwgbWRfc3RvcCB0byBjbGVhciB1
+cCxidXQgbWRfc3RvcCBjYW4ndCBjbGVhciB1cCBjb21wbGV0ZWx5Lg0KU28gYWRkIGEgbmV3IGZ1
+bmMgdG8gZG8uDQoNCkppYW5wZW5nIE1hICgzKToNCiAgbWQ6QWRkIGEgZnVuYyAnZG1fbWRfc3Rv
+cCcgZm9yIGRtLXJhaWQgdG8gY2xlYXIgdXAgbWQgcmVzb3VyY2UuDQogIGRtOiBXaGVuIHN0b3Bp
+bmcgZG0tcmFpZCwgaXQgY2FsbCBkbV9tZF9zdG9wIHJhdGhlciB0aGFuIG1kX3N0b3AgdG8NCiAg
+ICBkbyBjbGVhci11cCB3b3JrLg0KICBtZDogUmVtb3ZlIEVYUE9SVF9TWU1CT0xfR1BMKG1kX3N0
+b3ApLg0KDQogZHJpdmVycy9tZC9kbS1yYWlkLmMgfCAgICA0ICsrLS0NCiBkcml2ZXJzL21kL21k
+LmMgICAgICB8ICAgMTAgKysrKysrKysrLQ0KIGRyaXZlcnMvbWQvbWQuaCAgICAgIHwgICAgMSAr
+DQogMyBmaWxlcyBjaGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQ0KDQot
+LSANCjEuNy45LjUNCg==
 
-2012/9/20 Robin Dong <robin.k.dong@gmail.com>:
-> From: Robin Dong <sanbai@taobao.com>
->
-> When trying to modify flashcache to request based (current it's bio based), we need
-> to make request from bios by ourselves, but dm_io() will submit these bios directly,
-> so we propose to modify the dm_io() to return bios instead of submiting it.
->
-> This could also improve the flexibility of dm_io().
->
-> Signed-off-by: Robin Dong <sanbai@taobao.com>
-> ---
->  drivers/md/dm.c               |   11 +++++++++++
->  include/linux/device-mapper.h |    3 +++
->  2 files changed, 14 insertions(+), 0 deletions(-)
->
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 4e09b6f..bf6e3bb 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1459,11 +1459,22 @@ static int dm_request_based(struct mapped_device *md)
->  static void dm_request(struct request_queue *q, struct bio *bio)
->  {
->         struct mapped_device *md = q->queuedata;
-> +       struct dm_table *map = dm_get_live_table(md);
-> +       struct dm_target *ti = dm_table_find_target(map, bio->bi_sector);
-> +
-> +       if (ti->type->mk_rq) {
-> +               ti->type->mk_rq(ti, q, bio);
-> +               goto out;
-> +       }
->
->         if (dm_request_based(md))
->                 blk_queue_bio(q, bio);
->         else
->                 _dm_request(q, bio);
-> +
-> +out:
-> +       dm_table_put(map);
-> +       return;
->  }
->
->  void dm_dispatch_request(struct request *rq)
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index 38d27a1..2386389 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -50,6 +50,8 @@ typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio,
->                           union map_info *map_context);
->  typedef int (*dm_map_request_fn) (struct dm_target *ti, struct request *clone,
->                                   union map_info *map_context);
-> +typedef int (*dm_make_request_fn) (struct dm_target *ti,
-> +                               struct request_queue *q, struct bio *bio);
->
->  /*
->   * Returns:
-> @@ -136,6 +138,7 @@ struct target_type {
->         dm_dtr_fn dtr;
->         dm_map_fn map;
->         dm_map_request_fn map_rq;
-> +       dm_make_request_fn mk_rq;
->         dm_endio_fn end_io;
->         dm_request_endio_fn rq_end_io;
->         dm_presuspend_fn presuspend;
-> --
-> 1.7.1
->
-
-
-
--- 
---
-Best Regard
-Robin Dong
