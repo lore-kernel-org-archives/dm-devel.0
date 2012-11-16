@@ -1,44 +1,44 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/3] md:Add a func 'dm_md_stop' for dm-raid to clear up
- md resources.
-Date: Thu, 15 Nov 2012 08:52:41 -0500
-Message-ID: <20121115135241.GB15279@redhat.com>
-References: <201211151646546882035@gmail.com>
- <20121115114529.GA12798@agk-dp.fab.redhat.com>
- <201211151951429245011@gmail.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH 1/2] Fix a crash when block device is read and block size is changed at the same time
+Date: Fri, 16 Nov 2012 17:02:37 -0500
+Message-ID: <x4939096waq.fsf@segfault.boston.devel.redhat.com>
+References: <Pine.LNX.4.64.1206272226050.22857@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1207181512530.10923@file.rdu.redhat.com>
+	<x49k3xzq3jc.fsf@segfault.boston.devel.redhat.com>
+	<Pine.LNX.4.64.1207281236230.30415@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1207281240270.30415@file.rdu.redhat.com>
+	<1343508252.2626.13184.camel@edumazet-glaptop>
+	<Pine.LNX.4.64.1207290107460.29910@file.rdu.redhat.com>
+	<1343556630.2626.13257.camel@edumazet-glaptop>
+	<1343586962.2626.13266.camel@edumazet-glaptop>
+	<Pine.LNX.4.64.1208011601280.21832@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1208311433480.2212@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1208311518340.16960@file.rdu.redhat.com>
+	<x49liguyg6r.fsf@segfault.boston.devel.redhat.com>
+	<x49wqzswdn3.fsf@segfault.boston.devel.redhat.com>
+	<Pine.LNX.4.64.1209181257410.11735@file.rdu.redhat.com>
+	<x49ehlzrt01.fsf@segfault.boston.devel.redhat.com>
+	<x49sja6ouv4.fsf@segfault.boston.devel.redhat.com>
+	<5061F0E6.5000403@kernel.dk> <5061F3D2.6050502@kernel.dk>
+	<Pine.LNX.4.64.1209251847340.21075@file.rdu.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <201211151951429245011@gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: majianpeng <majianpeng@gmail.com>
-Cc: agk <agk@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1209251847340.21075@file.rdu.redhat.com> (Mikulas
+	Patocka's message of "Tue, 25 Sep 2012 18:49:19 -0400 (EDT)")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Eric Dumazet <eric.dumazet@gmail.com>, Andrea Arcangeli <aarcange@redhat.com>, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, kosaki.motohiro@jp.fujitsu.com, linux-fsdevel@vger.kernel.org, lwoodman@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Nov 15 2012 at  6:51am -0500,
-majianpeng <majianpeng@gmail.com> wrote:
+Mikulas Patocka <mpatocka@redhat.com> writes:
 
-> >On Thu, Nov 15, 2012 at 04:46:59PM +0800, majianpeng wrote:
-> >> So add a func dm_md_stop to clear up resource.
-> > 
-> >> +++ b/drivers/md/md.c
-> >
-> >> +void dm_md_stop(struct mddev *mddev)
-> >> +{
-> >> +	md_stop(mddev);
-> >> +	bitmap_destroy(mddev);
-> >> +	if (mddev->bio_set)
-> >> +		bioset_free(mddev->bio_set);
-> >> +}
-> >> +EXPORT_SYMBOL_GPL(dm_md_stop);
-> >
-> >Let's not put a function with a dm_ prefix in an md file?
-> >
-> >Alasdair
-> >
-> Can you give me a hint? My thought is this func only by dm to call and there was a md_stop already?
-> I firstly want to add those statements in dm driver like md_stop rather than a func include those.
-> But i think dm don't know to much.
+> blockdev: fix a crash when block size is changed and I/O is issued simultaneously
+>
+> The kernel may crash when block size is changed and I/O is issued
+> simultaneously.
 
-Nmae it mddev_stop_and_cleanup?
+Mikulas, do you plan to submit a variant of this for stable as well?
+
+Cheers,
+Jeff
