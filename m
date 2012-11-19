@@ -1,127 +1,64 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [PATCH 0/3] Add a new func to handle with clearing up for
- stoping dm-raid.
-Date: Mon, 19 Nov 2012 10:49:53 +1100
-Message-ID: <20121119104953.359f60ed@notabene.brown>
-References: <201211151646510171304@gmail.com>
+From: majianpeng <majianpeng@gmail.com>
+Subject: Re: Re: [PATCH 0/3] Add a new func to handle with clearing up for stoping dm-raid.
+Date: Mon, 19 Nov 2012 08:36:53 +0800
+Message-ID: <201211190836499417920@gmail.com>
+References: <201211151646510171304@gmail.com>,
+	<20121119104953.359f60ed@notabene.brown>
+Reply-To: majianpeng <majianpeng@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/XTAnAm=iBJbP/TsKNbNmGtf"; protocol="application/pgp-signature"
+Content-Type: text/plain;
+	charset="gb2312"
+Content-Transfer-Encoding: base64
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <201211151646510171304@gmail.com>
 Sender: linux-raid-owner@vger.kernel.org
-To: majianpeng <majianpeng@gmail.com>
+To: NeilBrown <neilb@suse.de>
 Cc: agk <agk@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---Sig_/XTAnAm=iBJbP/TsKNbNmGtf
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Pk9uIFRodSwgMTUgTm92IDIwMTIgMTY6NDY6NTQgKzA4MDAgbWFqaWFucGVuZyA8bWFqaWFucGVu
+Z0BnbWFpbC5jb20+IHdyb3RlOg0KPg0KPj4gQmVjYXVzZSBkbS1yYWlkIGNhbGwgbWRfc3RvcCB0
+byBjbGVhciB1cCxidXQgbWRfc3RvcCBjYW4ndCBjbGVhciB1cCBjb21wbGV0ZWx5Lg0KPj4gU28g
+YWRkIGEgbmV3IGZ1bmMgdG8gZG8uDQo+PiANCj4+IEppYW5wZW5nIE1hICgzKToNCj4+ICAgbWQ6
+QWRkIGEgZnVuYyAnZG1fbWRfc3RvcCcgZm9yIGRtLXJhaWQgdG8gY2xlYXIgdXAgbWQgcmVzb3Vy
+Y2UuDQo+PiAgIGRtOiBXaGVuIHN0b3BpbmcgZG0tcmFpZCwgaXQgY2FsbCBkbV9tZF9zdG9wIHJh
+dGhlciB0aGFuIG1kX3N0b3AgdG8NCj4+ICAgICBkbyBjbGVhci11cCB3b3JrLg0KPj4gICBtZDog
+UmVtb3ZlIEVYUE9SVF9TWU1CT0xfR1BMKG1kX3N0b3ApLg0KPj4gDQo+PiAgZHJpdmVycy9tZC9k
+bS1yYWlkLmMgfCAgICA0ICsrLS0NCj4+ICBkcml2ZXJzL21kL21kLmMgICAgICB8ICAgMTAgKysr
+KysrKysrLQ0KPj4gIGRyaXZlcnMvbWQvbWQuaCAgICAgIHwgICAgMSArDQo+PiAgMyBmaWxlcyBj
+aGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQ0KPj4gDQo+DQo+WW91IGRv
+bid0IHJlYWxseSBuZWVkIDMgcGF0Y2hlcyBmb3IgdGhpcyBvbmUgbGl0dGxlIGNoYW5nZS4NCj4N
+Cj5JJ3ZlIGFwcGxpZWQgdGhlIGZvbGxvd2luZy4NCj4NCj5UaGFua3MgZm9yIHRoZSByZXBvcnQu
+DQo+DQo+TmVpbEJyb3duDQo+DQo+RnJvbSA0YmE2OWUxYTg4NDgwMjQ5OTE4ZWQyZGY4YmUwODk2
+YmU2YmE3OTUyIE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KPkZyb206IE5laWxCcm93biA8bmVp
+bGJAc3VzZS5kZT4NCj5EYXRlOiBNb24sIDE5IE5vdiAyMDEyIDEwOjQ3OjQ4ICsxMTAwDQo+U3Vi
+amVjdDogW1BBVENIXSBtZDogbWFrZSBzdXJlIGV2ZXJ5dGhpbmcgaXMgZnJlZWQgd2hlbiBkbS1y
+YWlkIHN0b3BzIGFuDQo+IGFycmF5Lg0KPg0KPm1kX3N0b3AoKSB3b3VsZCBzdG9wIGFuIGFycmF5
+LCBidXQgbm90IGZyZWUgdmFyaW91cyBhdHRhY2hlZA0KPmRhdGEgc3RydWN0dXJlcy4NCj5Gb3Ig
+aW50ZXJuYWwgYXJyYXlzLCB0aGVzZSBhcmUgZnJlZWQgbGF0ZXIgaW4gZG9fbWRfc3RvcCgpIG9y
+DQo+bWRkZXZfcHV0KCksIGJ1dCB0aGV5IGRvbid0IGFwcGx5IGZvciBkbS1yYWlkIGFycmF5cy4N
+Cj5TbyBnZXQgbWRfc3RvcCgpIHRvIGZyZWUgdGhlbSwgYW5kIG9ubHkgYWxsIGl0IGZyb20gZG0t
+cmFpZC4NCj5Gb3IgaW50ZXJuYWwgYXJyYXlzIHdlIG5vdyBjYWxsIF9fbWRfc3RvcC4NCj4NCj5S
+ZXBvcnRlZC1ieTogbWFqaWFucGVuZyA8bWFqaWFucGVuZ0BnbWFpbC5jb20+DQo+U2lnbmVkLW9m
+Zi1ieTogTmVpbEJyb3duIDxuZWlsYkBzdXNlLmRlPg0KPg0KPmRpZmYgLS1naXQgYS9kcml2ZXJz
+L21kL21kLmMgYi9kcml2ZXJzL21kL21kLmMNCj5pbmRleCA5OGUxNDg0Li43MWRmM2MyIDEwMDY0
+NA0KPi0tLSBhL2RyaXZlcnMvbWQvbWQuYw0KPisrKyBiL2RyaXZlcnMvbWQvbWQuYw0KPkBAIC01
+Mjk0LDcgKzUyOTQsNyBAQCB2b2lkIG1kX3N0b3Bfd3JpdGVzKHN0cnVjdCBtZGRldiAqbWRkZXYp
+DQo+IH0NCj4gRVhQT1JUX1NZTUJPTF9HUEwobWRfc3RvcF93cml0ZXMpOw0KPiANCj4tdm9pZCBt
+ZF9zdG9wKHN0cnVjdCBtZGRldiAqbWRkZXYpDQo+K3ZvaWQgX19tZF9zdG9wKHN0cnVjdCBtZGRl
+diAqbWRkZXYpDQo+IHsNCj4gCW1kZGV2LT5yZWFkeSA9IDA7DQo+IAltZGRldi0+cGVycy0+c3Rv
+cChtZGRldik7DQo+QEAgLTUzMDQsNiArNTMwNCwxOCBAQCB2b2lkIG1kX3N0b3Aoc3RydWN0IG1k
+ZGV2ICptZGRldikNCj4gCW1kZGV2LT5wZXJzID0gTlVMTDsNCj4gCWNsZWFyX2JpdChNRF9SRUNP
+VkVSWV9GUk9aRU4sICZtZGRldi0+cmVjb3ZlcnkpOw0KPiB9DQo+Kw0KPit2b2lkIG1kX3N0b3Ao
+c3RydWN0IG1kZGV2ICptZGRldikNCj4rew0KPisJLyogc3RvcCB0aGUgYXJyYXkgYW5kIGZyZWUg
+YW4gYXR0YWNoZWQgZGF0YSBzdHJ1Y3R1cmVzLg0KPisJICogVGhpcyBpcyBjYWxsZWQgZnJvbSBk
+bS1yYWlkDQo+KwkgKi8NCj4rCV9fbWRfc3RvcChtZGRldik7DQo+KwliaXRtYXBfZGVzdHJveSht
+ZGRldik7DQo+KwlpZiAobWRkZXYtPmJpb19zZXQpDQo+KwkJYmlvc2V0X2ZyZWUobWRkZXYtPmJp
+b19zZXQpOw0KPit9DQo+Kw0KPiBFWFBPUlRfU1lNQk9MX0dQTChtZF9zdG9wKTsNCj4gDQo+IHN0
+YXRpYyBpbnQgbWRfc2V0X3JlYWRvbmx5KHN0cnVjdCBtZGRldiAqbWRkZXYsIHN0cnVjdCBibG9j
+a19kZXZpY2UgKmJkZXYpDQo+QEAgLTUzNjQsNyArNTM3Niw3IEBAIHN0YXRpYyBpbnQgZG9fbWRf
+c3RvcChzdHJ1Y3QgbWRkZXYgKiBtZGRldiwgaW50IG1vZGUsDQo+IAkJCXNldF9kaXNrX3JvKGRp
+c2ssIDApOw0KPiANCj4gCQlfX21kX3N0b3Bfd3JpdGVzKG1kZGV2KTsNCj4tCQltZF9zdG9wKG1k
+ZGV2KTsNCj4rCQlfX21kX3N0b3AobWRkZXYpOw0KPiAJCW1kZGV2LT5xdWV1ZS0+bWVyZ2VfYnZl
+Y19mbiA9IE5VTEw7DQo+IAkJbWRkZXYtPnF1ZXVlLT5iYWNraW5nX2Rldl9pbmZvLmNvbmdlc3Rl
+ZF9mbiA9IE5VTEw7DQo+IA0KPg0KVGhhbmtzISANCkppYW5wZW5n
 
-On Thu, 15 Nov 2012 16:46:54 +0800 majianpeng <majianpeng@gmail.com> wrote:
-
-> Because dm-raid call md_stop to clear up,but md_stop can't clear up compl=
-etely.
-> So add a new func to do.
->=20
-> Jianpeng Ma (3):
->   md:Add a func 'dm_md_stop' for dm-raid to clear up md resource.
->   dm: When stoping dm-raid, it call dm_md_stop rather than md_stop to
->     do clear-up work.
->   md: Remove EXPORT_SYMBOL_GPL(md_stop).
->=20
->  drivers/md/dm-raid.c |    4 ++--
->  drivers/md/md.c      |   10 +++++++++-
->  drivers/md/md.h      |    1 +
->  3 files changed, 12 insertions(+), 3 deletions(-)
->=20
-
-You don't really need 3 patches for this one little change.
-
-I've applied the following.
-
-Thanks for the report.
-
-NeilBrown
-
-=46rom 4ba69e1a88480249918ed2df8be0896be6ba7952 Mon Sep 17 00:00:00 2001
-From: NeilBrown <neilb@suse.de>
-Date: Mon, 19 Nov 2012 10:47:48 +1100
-Subject: [PATCH] md: make sure everything is freed when dm-raid stops an
- array.
-
-md_stop() would stop an array, but not free various attached
-data structures.
-For internal arrays, these are freed later in do_md_stop() or
-mddev_put(), but they don't apply for dm-raid arrays.
-So get md_stop() to free them, and only all it from dm-raid.
-For internal arrays we now call __md_stop.
-
-Reported-by: majianpeng <majianpeng@gmail.com>
-Signed-off-by: NeilBrown <neilb@suse.de>
-
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 98e1484..71df3c2 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -5294,7 +5294,7 @@ void md_stop_writes(struct mddev *mddev)
- }
- EXPORT_SYMBOL_GPL(md_stop_writes);
-=20
--void md_stop(struct mddev *mddev)
-+void __md_stop(struct mddev *mddev)
- {
- 	mddev->ready =3D 0;
- 	mddev->pers->stop(mddev);
-@@ -5304,6 +5304,18 @@ void md_stop(struct mddev *mddev)
- 	mddev->pers =3D NULL;
- 	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- }
-+
-+void md_stop(struct mddev *mddev)
-+{
-+	/* stop the array and free an attached data structures.
-+	 * This is called from dm-raid
-+	 */
-+	__md_stop(mddev);
-+	bitmap_destroy(mddev);
-+	if (mddev->bio_set)
-+		bioset_free(mddev->bio_set);
-+}
-+
- EXPORT_SYMBOL_GPL(md_stop);
-=20
- static int md_set_readonly(struct mddev *mddev, struct block_device *bdev)
-@@ -5364,7 +5376,7 @@ static int do_md_stop(struct mddev * mddev, int mode,
- 			set_disk_ro(disk, 0);
-=20
- 		__md_stop_writes(mddev);
--		md_stop(mddev);
-+		__md_stop(mddev);
- 		mddev->queue->merge_bvec_fn =3D NULL;
- 		mddev->queue->backing_dev_info.congested_fn =3D NULL;
-=20
-
---Sig_/XTAnAm=iBJbP/TsKNbNmGtf
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIVAwUBUKl0ITnsnt1WYoG5AQJtzBAAlUG4BnmHY7WB0BNUtM98+vflGNBkVQRj
-7XIkO6oxCS6Ep1rnu+sAA6oDN71RIrd67dhgvP1+it6yNdTlMALUb1XHsvUuZOJq
-9gbmTPTcj7kL8SqX57nH4MImmPlaXavR8WpIaEmPhIKMvvpMpaOz2iwwdM7tJASj
-PMnqF1kI36ONVUH1/crGMGioCSo75PUI0mV8QrBpgUq28nawEoSd5vUXLFRxkGue
-usu9hcarqQj8E3HCaJOug4xQeE3Il5XePuKBBz5b9D/cXAHB9LxneX+QbCjcCoUx
-VR9DEpkWuscB012bNaviYllJpkx4edTjJuZXZcfQI+YlzAhuBslnlv63miJULxfl
-fi+3Efu2hTdsylJHg6QEL/v+yAXO6AMh7hr2lyKGWZ5AjJ8aPLfyYpji5tJOPfBf
-W6/QrqjsImaA+psDwScuqZhtEPZrgGGO4JgSZRNUM+mYCpSpxsS+qId01AdRhLDJ
-Ba2ie/OFct5iC39lpiHnULt2Bu1Bfzev6H6ntABADMaCyyJgKiH7O4sqKkOaix8V
-jWyB4aGw3PQvb3L3N+S2dDl8glPHoyzilyR1Q2PIwYuTC7Wad6xrKq/MZqhB75DE
-UC43WRN9mTZmGMtC8v3/ZvvGR/BpWfpH6ARRJ/60TGDkyTzSRLobX/n66KrKw6pV
-S4lPNMYHZqE=
-=GZ3O
------END PGP SIGNATURE-----
-
---Sig_/XTAnAm=iBJbP/TsKNbNmGtf--
