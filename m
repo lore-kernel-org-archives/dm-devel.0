@@ -1,64 +1,32 @@
-From: majianpeng <majianpeng@gmail.com>
-Subject: Re: Re: [PATCH 0/3] Add a new func to handle with clearing up for stoping dm-raid.
-Date: Mon, 19 Nov 2012 08:36:53 +0800
-Message-ID: <201211190836499417920@gmail.com>
-References: <201211151646510171304@gmail.com>,
-	<20121119104953.359f60ed@notabene.brown>
-Reply-To: majianpeng <majianpeng@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCHES] allocate per-bio data for targets
+Date: Mon, 19 Nov 2012 19:42:34 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1211191940210.8231@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="gb2312"
-Content-Transfer-Encoding: base64
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: agk <agk@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Pk9uIFRodSwgMTUgTm92IDIwMTIgMTY6NDY6NTQgKzA4MDAgbWFqaWFucGVuZyA8bWFqaWFucGVu
-Z0BnbWFpbC5jb20+IHdyb3RlOg0KPg0KPj4gQmVjYXVzZSBkbS1yYWlkIGNhbGwgbWRfc3RvcCB0
-byBjbGVhciB1cCxidXQgbWRfc3RvcCBjYW4ndCBjbGVhciB1cCBjb21wbGV0ZWx5Lg0KPj4gU28g
-YWRkIGEgbmV3IGZ1bmMgdG8gZG8uDQo+PiANCj4+IEppYW5wZW5nIE1hICgzKToNCj4+ICAgbWQ6
-QWRkIGEgZnVuYyAnZG1fbWRfc3RvcCcgZm9yIGRtLXJhaWQgdG8gY2xlYXIgdXAgbWQgcmVzb3Vy
-Y2UuDQo+PiAgIGRtOiBXaGVuIHN0b3BpbmcgZG0tcmFpZCwgaXQgY2FsbCBkbV9tZF9zdG9wIHJh
-dGhlciB0aGFuIG1kX3N0b3AgdG8NCj4+ICAgICBkbyBjbGVhci11cCB3b3JrLg0KPj4gICBtZDog
-UmVtb3ZlIEVYUE9SVF9TWU1CT0xfR1BMKG1kX3N0b3ApLg0KPj4gDQo+PiAgZHJpdmVycy9tZC9k
-bS1yYWlkLmMgfCAgICA0ICsrLS0NCj4+ICBkcml2ZXJzL21kL21kLmMgICAgICB8ICAgMTAgKysr
-KysrKysrLQ0KPj4gIGRyaXZlcnMvbWQvbWQuaCAgICAgIHwgICAgMSArDQo+PiAgMyBmaWxlcyBj
-aGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQ0KPj4gDQo+DQo+WW91IGRv
-bid0IHJlYWxseSBuZWVkIDMgcGF0Y2hlcyBmb3IgdGhpcyBvbmUgbGl0dGxlIGNoYW5nZS4NCj4N
-Cj5JJ3ZlIGFwcGxpZWQgdGhlIGZvbGxvd2luZy4NCj4NCj5UaGFua3MgZm9yIHRoZSByZXBvcnQu
-DQo+DQo+TmVpbEJyb3duDQo+DQo+RnJvbSA0YmE2OWUxYTg4NDgwMjQ5OTE4ZWQyZGY4YmUwODk2
-YmU2YmE3OTUyIE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KPkZyb206IE5laWxCcm93biA8bmVp
-bGJAc3VzZS5kZT4NCj5EYXRlOiBNb24sIDE5IE5vdiAyMDEyIDEwOjQ3OjQ4ICsxMTAwDQo+U3Vi
-amVjdDogW1BBVENIXSBtZDogbWFrZSBzdXJlIGV2ZXJ5dGhpbmcgaXMgZnJlZWQgd2hlbiBkbS1y
-YWlkIHN0b3BzIGFuDQo+IGFycmF5Lg0KPg0KPm1kX3N0b3AoKSB3b3VsZCBzdG9wIGFuIGFycmF5
-LCBidXQgbm90IGZyZWUgdmFyaW91cyBhdHRhY2hlZA0KPmRhdGEgc3RydWN0dXJlcy4NCj5Gb3Ig
-aW50ZXJuYWwgYXJyYXlzLCB0aGVzZSBhcmUgZnJlZWQgbGF0ZXIgaW4gZG9fbWRfc3RvcCgpIG9y
-DQo+bWRkZXZfcHV0KCksIGJ1dCB0aGV5IGRvbid0IGFwcGx5IGZvciBkbS1yYWlkIGFycmF5cy4N
-Cj5TbyBnZXQgbWRfc3RvcCgpIHRvIGZyZWUgdGhlbSwgYW5kIG9ubHkgYWxsIGl0IGZyb20gZG0t
-cmFpZC4NCj5Gb3IgaW50ZXJuYWwgYXJyYXlzIHdlIG5vdyBjYWxsIF9fbWRfc3RvcC4NCj4NCj5S
-ZXBvcnRlZC1ieTogbWFqaWFucGVuZyA8bWFqaWFucGVuZ0BnbWFpbC5jb20+DQo+U2lnbmVkLW9m
-Zi1ieTogTmVpbEJyb3duIDxuZWlsYkBzdXNlLmRlPg0KPg0KPmRpZmYgLS1naXQgYS9kcml2ZXJz
-L21kL21kLmMgYi9kcml2ZXJzL21kL21kLmMNCj5pbmRleCA5OGUxNDg0Li43MWRmM2MyIDEwMDY0
-NA0KPi0tLSBhL2RyaXZlcnMvbWQvbWQuYw0KPisrKyBiL2RyaXZlcnMvbWQvbWQuYw0KPkBAIC01
-Mjk0LDcgKzUyOTQsNyBAQCB2b2lkIG1kX3N0b3Bfd3JpdGVzKHN0cnVjdCBtZGRldiAqbWRkZXYp
-DQo+IH0NCj4gRVhQT1JUX1NZTUJPTF9HUEwobWRfc3RvcF93cml0ZXMpOw0KPiANCj4tdm9pZCBt
-ZF9zdG9wKHN0cnVjdCBtZGRldiAqbWRkZXYpDQo+K3ZvaWQgX19tZF9zdG9wKHN0cnVjdCBtZGRl
-diAqbWRkZXYpDQo+IHsNCj4gCW1kZGV2LT5yZWFkeSA9IDA7DQo+IAltZGRldi0+cGVycy0+c3Rv
-cChtZGRldik7DQo+QEAgLTUzMDQsNiArNTMwNCwxOCBAQCB2b2lkIG1kX3N0b3Aoc3RydWN0IG1k
-ZGV2ICptZGRldikNCj4gCW1kZGV2LT5wZXJzID0gTlVMTDsNCj4gCWNsZWFyX2JpdChNRF9SRUNP
-VkVSWV9GUk9aRU4sICZtZGRldi0+cmVjb3ZlcnkpOw0KPiB9DQo+Kw0KPit2b2lkIG1kX3N0b3Ao
-c3RydWN0IG1kZGV2ICptZGRldikNCj4rew0KPisJLyogc3RvcCB0aGUgYXJyYXkgYW5kIGZyZWUg
-YW4gYXR0YWNoZWQgZGF0YSBzdHJ1Y3R1cmVzLg0KPisJICogVGhpcyBpcyBjYWxsZWQgZnJvbSBk
-bS1yYWlkDQo+KwkgKi8NCj4rCV9fbWRfc3RvcChtZGRldik7DQo+KwliaXRtYXBfZGVzdHJveSht
-ZGRldik7DQo+KwlpZiAobWRkZXYtPmJpb19zZXQpDQo+KwkJYmlvc2V0X2ZyZWUobWRkZXYtPmJp
-b19zZXQpOw0KPit9DQo+Kw0KPiBFWFBPUlRfU1lNQk9MX0dQTChtZF9zdG9wKTsNCj4gDQo+IHN0
-YXRpYyBpbnQgbWRfc2V0X3JlYWRvbmx5KHN0cnVjdCBtZGRldiAqbWRkZXYsIHN0cnVjdCBibG9j
-a19kZXZpY2UgKmJkZXYpDQo+QEAgLTUzNjQsNyArNTM3Niw3IEBAIHN0YXRpYyBpbnQgZG9fbWRf
-c3RvcChzdHJ1Y3QgbWRkZXYgKiBtZGRldiwgaW50IG1vZGUsDQo+IAkJCXNldF9kaXNrX3JvKGRp
-c2ssIDApOw0KPiANCj4gCQlfX21kX3N0b3Bfd3JpdGVzKG1kZGV2KTsNCj4tCQltZF9zdG9wKG1k
-ZGV2KTsNCj4rCQlfX21kX3N0b3AobWRkZXYpOw0KPiAJCW1kZGV2LT5xdWV1ZS0+bWVyZ2VfYnZl
-Y19mbiA9IE5VTEw7DQo+IAkJbWRkZXYtPnF1ZXVlLT5iYWNraW5nX2Rldl9pbmZvLmNvbmdlc3Rl
-ZF9mbiA9IE5VTEw7DQo+IA0KPg0KVGhhbmtzISANCkppYW5wZW5n
+Hi
 
+I placed patches that use per-bio data here:
+
+http://people.redhat.com/~mpatocka/patches/kernel/per-request-data/series.html
+
+The patches remove some mempools (and replace them with bio front pad 
+allocated data) and they remove map_info for bio-based devices.
+
+Mikulas
