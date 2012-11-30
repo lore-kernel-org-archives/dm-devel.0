@@ -1,57 +1,43 @@
-From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [PATCH] libdm: add "|" to _is_whitelisted_char()
-Date: Wed, 28 Nov 2012 13:50:39 +0100
-Message-ID: <50B6089F.6040603@redhat.com>
-References: <20121127191123.GZ19704@osdn.org.ua> <50B5FDCD.2030605@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Lars Marowsky-Bree <lmb@suse.com>
+Subject: Re: [dm-devel] [PATCH 2/3] dm raid1: add interface to set resync
+ speed
+Date: Fri, 30 Nov 2012 12:39:28 +0100
+Message-ID: <20121130113928.GO29064@suse.de>
+References: <1353565673-4233-1-git-send-email-gzhao@suse.com>
+ <1353565673-4233-3-git-send-email-gzhao@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <50B5FDCD.2030605@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Sergey Vlasov <vsu@altlinux.ru>, Michael Shigorin <mike@osdn.org.ua>, "Dmitry V. Levin" <ldv@altlinux.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1353565673-4233-3-git-send-email-gzhao@suse.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 11/28/2012 01:04 PM, Peter Rajnoha wrote:
-> Now, if you *really* intend to bypass this mangling and udev,
-> you can use:
-> 
->   dmsetup <dm_command> --manglename none ...
-> 
+On 2012-11-22T14:27:52, Guangliang Zhao <gzhao@suse.com> wrote:
 
-If you use libdevmapper to handle device-mapper devices, have
-a look at libdevmapper.h. You can bypass default mangling with
-dm_set_name_mangling_mode(DM_STRING_MANGLING_NONE):
+Hi Guangliang,
 
----
-/*
- * Mangling support
- *
- * Character whitelist: 0-9, A-Z, a-z, #+-.:=@_
- * HEX mangling format: \xNN, NN being the hex value of the character.
- * (whitelist and format supported by udev)
-*/
-typedef enum {
-        DM_STRING_MANGLING_NONE, /* do not mangle at all */
-        DM_STRING_MANGLING_AUTO, /* mangle only if not already mangled with hex, error when mixed */
-        DM_STRING_MANGLING_HEX   /* always mangle with hex encoding, no matter what the input is */
-} dm_string_mangling_t;
+thanks for adding this. I think this approach is a good direction to
+take, just one feedback:
 
-/*
- * Set/get mangling mode used for device-mapper names and uuids.
- */
-int dm_set_name_mangling_mode(dm_string_mangling_t name_mangling);
-dm_string_mangling_t dm_get_name_mangling_mode(void);
----
+> Add ioctl to control resync speed, userspace tool
+> is dmsetup message, message format is:
+> 	dmsetup message $device 0 "set $speed"
+> e.g.
+> 	dmsetup message /dev/dm-2 "set 12345"
 
-Peter
+I think this should be "set-max-resync-rate" or something; "set" is ver=
+y
+generic and not very extensible going forward, should the need arise.
+
+Regards,
+    Lars
+
+--=20
+Architect Storage/HA
+SUSE LINUX Products GmbH, GF: Jeff Hawn, Jennifer Guild, Felix Imend=F6=
+rffer, HRB 21284 (AG N=FCrnberg)
+"Experience is the name everyone gives to their mistakes." -- Oscar Wil=
+de
