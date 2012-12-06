@@ -1,13 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 1/4] dm thin: replace calls to
-	dm_cell_release_singleton with cell_defer_no_holder
-Date: Thu,  6 Dec 2012 09:43:44 -0500
-Message-ID: <1354805027-29118-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 2/4] dm thin: eliminate race when io and
+	discards are issued simultaneously to the same block
+Date: Thu,  6 Dec 2012 09:43:45 -0500
+Message-ID: <1354805027-29118-2-git-send-email-snitzer@redhat.com>
+References: <1354805027-29118-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1354805027-29118-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,163 +24,226 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-In every case dm_cell_release_singleton is called the bio in question
-is the holder.  If there are no non-holder entries in the cell then
-cell_defer_no_holder (renamed from cell_defer_except) behaves
-identically to dm_cell_release_singleton.  If there *are* non-holder
-entries then dm_cell_release_singleton is the wrong thing to call
-because those entries must be deferred.
+There is a race when discard bios and non-discard bios are issued
+simultaneously to the same block.
 
-This patch offers no functional change but is a pre-requisite for
-"dm thin: eliminate race when io and discards are issued
-simultaneously the same block".
+Discard support is expensive for all thin devices precisely because you
+have to be careful to quiesce the area you're discarding.  DM thin must
+handle this conflicting IO pattern (simultaneous non-discard vs discard)
+even though a sane application shouldn't be issuing such IO.
+
+The race manifests as follows:
+1. non-discard bio is mapped in thin_bio_map without first locking the
+   bio in a dm_bio_prison_cell (locking convention DM thin uses)
+2. discard bio is issued to the same block as the non-discard bio
+3. discard bio is locked in a dm_bio_prison_cell in process_discard
+4. non-discard bio's mapping continues and it's all_io_entry is
+   incremented so the bio is accounted for in the thin pool's all_io_ds
+   (dm_deferred_set used to track time locality of non-discard IO)
+5. non-discard bio is finally locked in a dm_bio_prison_cell in
+   process_bio
+
+The race can result in deadlock, leaving the block layer hanging waiting
+for completion of a discard bio that never completes, e.g.:
+
+INFO: task ruby:15354 blocked for more than 120 seconds.
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+ruby            D ffffffff8160f0e0     0 15354  15314 0x00000000
+ ffff8802fb08bc58 0000000000000082 ffff8802fb08bfd8 0000000000012900
+ ffff8802fb08a010 0000000000012900 0000000000012900 0000000000012900
+ ffff8802fb08bfd8 0000000000012900 ffff8803324b9480 ffff88032c6f14c0
+Call Trace:
+ [<ffffffff814e5a19>] schedule+0x29/0x70
+ [<ffffffff814e3d85>] schedule_timeout+0x195/0x220
+ [<ffffffffa06b9bc1>] ? _dm_request+0x111/0x160 [dm_mod]
+ [<ffffffff814e589e>] wait_for_common+0x11e/0x190
+ [<ffffffff8107a170>] ? try_to_wake_up+0x2b0/0x2b0
+ [<ffffffff814e59ed>] wait_for_completion+0x1d/0x20
+ [<ffffffff81233289>] blkdev_issue_discard+0x219/0x260
+ [<ffffffff81233e79>] blkdev_ioctl+0x6e9/0x7b0
+ [<ffffffff8119a65c>] block_ioctl+0x3c/0x40
+ [<ffffffff8117539c>] do_vfs_ioctl+0x8c/0x340
+ [<ffffffff8119a547>] ? block_llseek+0x67/0xb0
+ [<ffffffff811756f1>] sys_ioctl+0xa1/0xb0
+ [<ffffffff810561f6>] ? sys_rt_sigprocmask+0x86/0xd0
+ [<ffffffff814ef099>] system_call_fastpath+0x16/0x1b
+
+(The thinp-test-suite's test_discard_random_sectors reliably hits this
+deadlock on fast SSD storage)
+
+The fix for this race is that the all_io_entry for a bio must be
+incremented whilst the dm_bio_prison_cell is held for the bio's
+associated virtual and physical blocks.  That cell locking wasn't
+occuring early enough (in thin_bio_map).  This patch fixes this.
+
+Also, now that thin_bio_map may lock bios in a cell, process_bio is no
+longer the only thread that will do so.  Because of this we must be sure
+to use cell_defer_no_holder to release all non-holder entries, that were
+added by the other thread, because they must be deferred.  This patch
+depends on "dm thin: replace calls to dm_cell_release_singleton with
+cell_defer_no_holder".
+
+Lastly, now that issue() handles incrementing a bio's all_io_entry the
+unlocking of the the bio's associated cells (via cell_defer_no_holder)
+must be done after issue().
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-thin.c |   38 +++++++++++++++++++-------------------
- 1 files changed, 19 insertions(+), 19 deletions(-)
+ drivers/md/dm-thin.c |   68 +++++++++++++++++++++++++++++++++----------------
+ 1 files changed, 46 insertions(+), 22 deletions(-)
+
+[v2: split cell_defer_no_holder to prereq patch, rebased on DMERR_LIMIT series, revised patch header]
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index ceb17be..2fadaef 100644
+index 2fadaef..6b86d9e 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -513,10 +513,10 @@ static void cell_defer(struct thin_c *tc, struct dm_bio_prison_cell *cell,
+@@ -368,11 +368,24 @@ static int bio_triggers_commit(struct thin_c *tc, struct bio *bio)
+ 		dm_thin_changed_this_transaction(tc->td);
  }
  
- /*
-- * Same as cell_defer above, except it omits one particular detainee,
-- * a write bio that covers the block and has already been processed.
-+ * Same as cell_defer except it omits the original holder of the cell.
-  */
--static void cell_defer_except(struct thin_c *tc, struct dm_bio_prison_cell *cell)
-+static void cell_defer_no_holder(struct thin_c *tc,
-+				 struct dm_bio_prison_cell *cell)
++static void inc_all_io_entry(struct pool *pool, struct bio *bio)
++{
++	struct dm_thin_endio_hook *h;
++
++	if (bio->bi_rw & REQ_DISCARD)
++		return;
++
++	h = dm_get_mapinfo(bio)->ptr;
++	h->all_io_entry = dm_deferred_entry_inc(pool->all_io_ds);
++}
++
+ static void issue(struct thin_c *tc, struct bio *bio)
  {
- 	struct bio_list bios;
  	struct pool *pool = tc->pool;
-@@ -573,7 +573,7 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- 	 * the bios in the cell.
- 	 */
- 	if (bio) {
--		cell_defer_except(tc, m->cell);
-+		cell_defer_no_holder(tc, m->cell);
- 		bio_endio(bio, 0);
- 	} else
- 		cell_defer(tc, m->cell, m->data_block);
-@@ -588,8 +588,8 @@ static void process_prepared_discard_fail(struct dm_thin_new_mapping *m)
- 	struct thin_c *tc = m->tc;
+ 	unsigned long flags;
  
- 	bio_io_error(m->bio);
--	cell_defer_except(tc, m->cell);
--	cell_defer_except(tc, m->cell2);
-+	cell_defer_no_holder(tc, m->cell);
-+	cell_defer_no_holder(tc, m->cell2);
- 	mempool_free(m, tc->pool->mapping_pool);
- }
- 
-@@ -602,8 +602,8 @@ static void process_prepared_discard_passdown(struct dm_thin_new_mapping *m)
- 	else
- 		bio_endio(m->bio, 0);
- 
--	cell_defer_except(tc, m->cell);
--	cell_defer_except(tc, m->cell2);
-+	cell_defer_no_holder(tc, m->cell);
-+	cell_defer_no_holder(tc, m->cell2);
- 	mempool_free(m, tc->pool->mapping_pool);
- }
- 
-@@ -936,7 +936,7 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
- 		 */
- 		build_data_key(tc->td, lookup_result.block, &key2);
- 		if (dm_bio_detain(tc->pool->prison, &key2, bio, &cell2)) {
--			dm_cell_release_singleton(cell, bio);
-+			cell_defer_no_holder(tc, cell);
- 			break;
- 		}
- 
-@@ -967,8 +967,8 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
++	inc_all_io_entry(pool, bio);
++
+ 	if (!bio_triggers_commit(tc, bio)) {
+ 		generic_make_request(bio);
+ 		return;
+@@ -967,12 +980,13 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
  			 * a block boundary.  So we submit the discard of a
  			 * partial block appropriately.
  			 */
--			dm_cell_release_singleton(cell, bio);
--			dm_cell_release_singleton(cell2, bio);
-+			cell_defer_no_holder(tc, cell);
-+			cell_defer_no_holder(tc, cell2);
+-			cell_defer_no_holder(tc, cell);
+-			cell_defer_no_holder(tc, cell2);
  			if ((!lookup_result.shared) && pool->pf.discard_passdown)
  				remap_and_issue(tc, bio, lookup_result.block);
  			else
-@@ -980,14 +980,14 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
- 		/*
- 		 * It isn't provisioned, just forget it.
- 		 */
--		dm_cell_release_singleton(cell, bio);
-+		cell_defer_no_holder(tc, cell);
- 		bio_endio(bio, 0);
+ 				bio_endio(bio, 0);
++
++			cell_defer_no_holder(tc, cell);
++			cell_defer_no_holder(tc, cell2);
+ 		}
  		break;
  
- 	default:
- 		DMERR_LIMIT("%s: dm_thin_find_block() failed, error = %d",
- 			    __func__, r);
--		dm_cell_release_singleton(cell, bio);
-+		cell_defer_no_holder(tc, cell);
- 		bio_io_error(bio);
- 		break;
- 	}
-@@ -1043,7 +1043,7 @@ static void process_shared_bio(struct thin_c *tc, struct bio *bio,
+@@ -1043,8 +1057,8 @@ static void process_shared_bio(struct thin_c *tc, struct bio *bio,
  
  		h->shared_read_entry = dm_deferred_entry_inc(pool->shared_read_ds);
  
--		dm_cell_release_singleton(cell, bio);
-+		cell_defer_no_holder(tc, cell);
+-		cell_defer_no_holder(tc, cell);
  		remap_and_issue(tc, bio, lookup_result->block);
++		cell_defer_no_holder(tc, cell);
  	}
  }
-@@ -1058,7 +1058,7 @@ static void provision_block(struct thin_c *tc, struct bio *bio, dm_block_t block
+ 
+@@ -1058,8 +1072,8 @@ static void provision_block(struct thin_c *tc, struct bio *bio, dm_block_t block
  	 * Remap empty bios (flushes) immediately, without provisioning.
  	 */
  	if (!bio->bi_size) {
--		dm_cell_release_singleton(cell, bio);
-+		cell_defer_no_holder(tc, cell);
+-		cell_defer_no_holder(tc, cell);
  		remap_and_issue(tc, bio, 0);
++		cell_defer_no_holder(tc, cell);
  		return;
  	}
-@@ -1068,7 +1068,7 @@ static void provision_block(struct thin_c *tc, struct bio *bio, dm_block_t block
- 	 */
- 	if (bio_data_dir(bio) == READ) {
- 		zero_fill_bio(bio);
--		dm_cell_release_singleton(cell, bio);
-+		cell_defer_no_holder(tc, cell);
- 		bio_endio(bio, 0);
- 		return;
- 	}
-@@ -1123,7 +1123,7 @@ static void process_bio(struct thin_c *tc, struct bio *bio)
- 		 * TODO: this will probably have to change when discard goes
- 		 * back in.
- 		 */
--		dm_cell_release_singleton(cell, bio);
-+		cell_defer_no_holder(tc, cell);
  
+@@ -1114,27 +1128,22 @@ static void process_bio(struct thin_c *tc, struct bio *bio)
+ 	r = dm_thin_find_block(tc->td, block, 1, &lookup_result);
+ 	switch (r) {
+ 	case 0:
+-		/*
+-		 * We can release this cell now.  This thread is the only
+-		 * one that puts bios into a cell, and we know there were
+-		 * no preceding bios.
+-		 */
+-		/*
+-		 * TODO: this will probably have to change when discard goes
+-		 * back in.
+-		 */
+-		cell_defer_no_holder(tc, cell);
+-
  		if (lookup_result.shared)
  			process_shared_bio(tc, bio, block, &lookup_result);
-@@ -1133,7 +1133,7 @@ static void process_bio(struct thin_c *tc, struct bio *bio)
+ 		else
+ 			remap_and_issue(tc, bio, lookup_result.block);
++
++		/*
++		 * We can release this cell now.  But there may be other
++		 * other bios in the cell from the thin_map function.
++		 */
++		cell_defer_no_holder(tc, cell);
+ 		break;
  
  	case -ENODATA:
  		if (bio_data_dir(bio) == READ && tc->origin_dev) {
--			dm_cell_release_singleton(cell, bio);
-+			cell_defer_no_holder(tc, cell);
+-			cell_defer_no_holder(tc, cell);
  			remap_to_origin_and_issue(tc, bio);
++			cell_defer_no_holder(tc, cell);
  		} else
  			provision_block(tc, bio, block, cell);
-@@ -1142,7 +1142,7 @@ static void process_bio(struct thin_c *tc, struct bio *bio)
- 	default:
- 		DMERR_LIMIT("%s: dm_thin_find_block() failed, error = %d",
- 			    __func__, r);
--		dm_cell_release_singleton(cell, bio);
-+		cell_defer_no_holder(tc, cell);
- 		bio_io_error(bio);
  		break;
- 	}
+@@ -1352,7 +1361,7 @@ static struct dm_thin_endio_hook *thin_hook_bio(struct thin_c *tc, struct bio *b
+ 
+ 	h->tc = tc;
+ 	h->shared_read_entry = NULL;
+-	h->all_io_entry = bio->bi_rw & REQ_DISCARD ? NULL : dm_deferred_entry_inc(pool->all_io_ds);
++	h->all_io_entry = NULL;
+ 	h->overwrite_mapping = NULL;
+ 
+ 	return h;
+@@ -1369,6 +1378,8 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio,
+ 	dm_block_t block = get_bio_block(tc, bio);
+ 	struct dm_thin_device *td = tc->td;
+ 	struct dm_thin_lookup_result result;
++	struct dm_bio_prison_cell *cell1, *cell2;
++	struct dm_cell_key key;
+ 
+ 	map_context->ptr = thin_hook_bio(tc, bio);
+ 
+@@ -1405,12 +1416,25 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio,
+ 			 * shared flag will be set in their case.
+ 			 */
+ 			thin_defer_bio(tc, bio);
+-			r = DM_MAPIO_SUBMITTED;
+-		} else {
+-			remap(tc, bio, result.block);
+-			r = DM_MAPIO_REMAPPED;
++			return DM_MAPIO_SUBMITTED;
+ 		}
+-		break;
++
++		build_virtual_key(tc->td, block, &key);
++		if (dm_bio_detain(tc->pool->prison, &key, bio, &cell1))
++			return DM_MAPIO_SUBMITTED;
++
++		build_data_key(tc->td, result.block, &key);
++		if (dm_bio_detain(tc->pool->prison, &key, bio, &cell2)) {
++			cell_defer_no_holder(tc, cell1);
++			return DM_MAPIO_SUBMITTED;
++		}
++
++		inc_all_io_entry(tc->pool, bio);
++		cell_defer_no_holder(tc, cell2);
++		cell_defer_no_holder(tc, cell1);
++
++		remap(tc, bio, result.block);
++		return DM_MAPIO_REMAPPED;
+ 
+ 	case -ENODATA:
+ 		if (get_pool_mode(tc->pool) == PM_READ_ONLY) {
 -- 
 1.7.1
