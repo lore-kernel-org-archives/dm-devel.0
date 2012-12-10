@@ -1,49 +1,67 @@
-From: James Robertson <j@mesrobertson.com>
-Subject: kpartx mounted vmdk images and bad write performance
-Date: Mon, 10 Dec 2012 20:14:32 +1100
-Message-ID: <CAMALoy_KGkU9TyNeB_HZPK_Nm5xrpmMvVyPGT52mCSGA01kB+Q@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Guangliang Zhao <gzhao@suse.com>
+Subject: Re: [dm-devel] [PATCH 0/3] add resync speed control for dm-raid1
+Date: Mon, 10 Dec 2012 20:27:35 +0800
+Message-ID: <20121210122735.GB2310@glzhao-laptop.site>
+References: <1353565673-4233-1-git-send-email-gzhao@suse.com>
+ <20121210132123.5a4ab015@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20121210132123.5a4ab015@notabene.brown>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-I am using kpartx to mount some VMware vmdk virtual disks in order to
-write some data to the partitions contained therein.
+On Mon, Dec 10, 2012 at 01:21:23PM +1100, NeilBrown wrote:
+> On Thu, 22 Nov 2012 14:27:50 +0800 Guangliang Zhao <gzhao@suse.com> wrote:
+> 
+> > Hi,
+> > 
+> > These patches are used to add resync speed control for dm-raid1. The
+> > second and third patch provide support for user-space tool dmsetup.
+> > 
+> > Guangliang Zhao (3):
+> >   dm raid1: add resync speed control for dm-raid1
+> >   dm raid1: add interface to set resync speed
+> >   dm raid1: add interface to get resync speed
+> > 
+> >  drivers/md/dm-raid1.c |   93 +++++++++++++++++++++++++++++++++++++++++++++++--
+> >  1 file changed, 90 insertions(+), 3 deletions(-)
+> > 
+> 
+> The problem with this approach is that it slows down resync even when there
+> is no other IO happening.
+> If that is deemed to be acceptable, then the patch set seems fine, though I
+> would probably make the default a lot higher so as not to change current
+> default behaviour for anyone.
+Yes, the users who don't need this feature will not be affected, fully
+accepted.
 
-Initially writing the data starts off fine, but within about 30
-seconds or after a few hundred megabytes is written, everything grinds
-to a halt and IO plummets.
+> 
+> If it isn't acceptable, then you either need to monitor the number of
+> requests going to the underlying devices - like md does - or monitor the
+> number of requests coming in to the dm-raid1 target - which is probably
+> easier with dm.
+> 
+> i.e. only impose the rate limit if there have been any requests for the
+> dm-raid1 target in the last 'RESYNC_JIFFIES'.
+Good idea, that's would be on my TODO list. But anyway these patches are
+still required.
 
-When mounting the vmdk partitions using losesetup, performance is
-better and doesn't stop but it does appear to slow down at times.
+> 
+> What do you think of that?
+> 
+> NeilBrown
 
-The vmdk's are located on a USB3 disk and the disk performance is good
-when writing to the disk itself.  I am copying one of the vmdk's to a
-local disk on the server to see if the USB disk is a factor and will
-advise.
 
-When I monitor it using "atop" I can see high utilisation that seems
-to swap between the physical disk and the loop device being written
-to.
 
-I am using Debian Wheezy with Kernel 3.2.0-4-amd64 and kpartx
-0.4.9+git0.4dfdaf2b-6
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
-Is this is a known limitation or something that kpartx was never
-intended to support... or perhaps a bug?
 
-Kind Regards,
-
-James
+-- 
+Best regards,
+Guangliang
