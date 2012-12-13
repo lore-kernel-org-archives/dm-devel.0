@@ -1,7 +1,8 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 7/8] [persistent-data] transactional bitset
-Date: Thu, 13 Dec 2012 20:19:15 +0000
-Message-ID: <1355429956-22785-8-git-send-email-ejt@redhat.com>
+Subject: [PATCH 5/8] [dm-thin] Fix a race condition between
+	discard bios and ordinary bios.
+Date: Thu, 13 Dec 2012 20:19:13 +0000
+Message-ID: <1355429956-22785-6-git-send-email-ejt@redhat.com>
 References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,260 +23,130 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-A wrapper around dm-array.
+The deferred_set entries should not be incremented until the bio
+prison cells are held.  Otherwise quiescing a block for discard may
+end up waiting for a bio that's held in the discard bios cell.
 ---
- drivers/md/persistent-data/Makefile    |    1 +
- drivers/md/persistent-data/dm-bitset.c |  163 ++++++++++++++++++++++++++++++++
- drivers/md/persistent-data/dm-bitset.h |   59 ++++++++++++
- 3 files changed, 223 insertions(+)
- create mode 100644 drivers/md/persistent-data/dm-bitset.c
- create mode 100644 drivers/md/persistent-data/dm-bitset.h
+ drivers/md/dm-thin.c |   59 +++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 44 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/md/persistent-data/Makefile b/drivers/md/persistent-data/Makefile
-index ebd8d80..ff52879 100644
---- a/drivers/md/persistent-data/Makefile
-+++ b/drivers/md/persistent-data/Makefile
-@@ -1,6 +1,7 @@
- obj-$(CONFIG_DM_PERSISTENT_DATA) += dm-persistent-data.o
- dm-persistent-data-objs := \
- 	dm-array.o \
-+	dm-bitset.o \
- 	dm-block-manager.o \
- 	dm-space-map-common.o \
- 	dm-space-map-disk.o \
-diff --git a/drivers/md/persistent-data/dm-bitset.c b/drivers/md/persistent-data/dm-bitset.c
-new file mode 100644
-index 0000000..dc67736
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-bitset.c
-@@ -0,0 +1,163 @@
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 504f3d6..8e47f44 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -222,10 +222,28 @@ struct thin_c {
+ 
+ 	struct pool *pool;
+ 	struct dm_thin_device *td;
++
++	/*
++	 * The cell structures are too big to put on the stack, so we have
++	 * a couple here for use by the main mapping function.
++	 */
++	spinlock_t lock;
++	struct dm_bio_prison_cell cell1, cell2;
+ };
+ 
+ /*----------------------------------------------------------------*/
+ 
 +/*
-+ * Copyright (C) 2012 Red Hat, Inc.
-+ *
-+ * This file is released under the GPL.
++ * wake_worker() is used when new work is queued and when pool_resume is
++ * ready to continue deferred IO processing.
 + */
-+
-+#include "dm-bitset.h"
-+#include "dm-transaction-manager.h"
-+
-+#include <linux/export.h>
-+#include <linux/device-mapper.h>
-+
-+#define DM_MSG_PREFIX "bitset"
-+#define BITS_PER_ARRAY_ENTRY 64
++static void wake_worker(struct pool *pool)
++{
++	queue_work(pool->wq, &pool->worker);
++}
 +
 +/*----------------------------------------------------------------*/
 +
-+static struct dm_btree_value_type bitset_bvt = {
-+	.context = NULL,
-+	.size = sizeof(__le64),
-+	.inc = NULL,
-+	.dec = NULL,
-+	.equal = NULL,
-+};
-+
-+/*----------------------------------------------------------------*/
-+
-+void dm_bitset_info_init(struct dm_transaction_manager *tm,
-+			 struct dm_bitset_info *info)
+ static int bio_detain(struct pool *pool, struct dm_cell_key *key, struct bio *bio,
+ 		      struct dm_bio_prison_cell **result)
+ {
+@@ -264,6 +282,19 @@ static void cell_release_no_holder(struct pool *pool,
+ 	dm_bio_prison_free_cell(pool->prison, cell);
+ }
+ 
++static void cell_defer_no_holder_no_free(struct thin_c *tc,
++					 struct dm_bio_prison_cell *cell)
 +{
-+	dm_setup_array_info(&info->array_info, tm, &bitset_bvt);
-+	info->current_index_set = false;
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_info_init);
++	struct pool *pool = tc->pool;
++	unsigned long flags;
 +
-+int dm_bitset_empty(struct dm_bitset_info *info, dm_block_t *root)
-+{
-+	return dm_array_empty(&info->array_info, root);
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_empty);
++	spin_lock_irqsave(&pool->lock, flags);
++	dm_cell_release_no_holder(pool->prison, cell, &pool->deferred_bios);
++	spin_unlock_irqrestore(&pool->lock, flags);
 +
-+int dm_bitset_resize(struct dm_bitset_info *info, dm_block_t root,
-+		     uint32_t old_nr_entries, uint32_t new_nr_entries,
-+		     bool default_value, dm_block_t *new_root)
-+{
-+	uint32_t old_blocks = dm_div_up(old_nr_entries, BITS_PER_ARRAY_ENTRY);
-+	uint32_t new_blocks = dm_div_up(new_nr_entries, BITS_PER_ARRAY_ENTRY);
-+	__le64 value = default_value ? cpu_to_le64(~0) : cpu_to_le64(0);
-+
-+	__dm_bless_for_disk(&value);
-+	return dm_array_resize(&info->array_info, root, old_blocks, new_blocks,
-+			       &value, new_root);
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_resize);
-+
-+int dm_bitset_del(struct dm_bitset_info *info, dm_block_t root)
-+{
-+	return dm_array_del(&info->array_info, root);
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_del);
-+
-+int dm_bitset_flush(struct dm_bitset_info *info, dm_block_t root,
-+		    dm_block_t *new_root)
-+{
-+	int r;
-+	__le64 value;
-+
-+	if (!info->current_index_set)
-+		return 0;
-+
-+	value = cpu_to_le64(info->current_bits);
-+
-+	__dm_bless_for_disk(&value);
-+	r = dm_array_set(&info->array_info, root, info->current_index,
-+			 &value, new_root);
-+	if (r)
-+		return r;
-+
-+	info->current_index_set = false;
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_flush);
-+
-+static int read_bits(struct dm_bitset_info *info, dm_block_t root,
-+		     uint32_t array_index)
-+{
-+	int r;
-+	__le64 value;
-+
-+	r = dm_array_get(&info->array_info, root, array_index, &value);
-+	if (r)
-+		return r;
-+
-+	info->current_bits = le64_to_cpu(value);
-+	info->current_index_set = true;
-+	info->current_index = array_index;
-+	return 0;
++	wake_worker(pool);
 +}
 +
-+static int get_array_entry(struct dm_bitset_info *info, dm_block_t root,
-+			   uint32_t index, dm_block_t *new_root)
-+{
-+	int r;
-+	unsigned array_index = index / BITS_PER_ARRAY_ENTRY;
+ static void cell_error(struct pool *pool,
+ 		       struct dm_bio_prison_cell *cell)
+ {
+@@ -467,15 +498,6 @@ static void remap_and_issue(struct thin_c *tc, struct bio *bio,
+ 	issue(tc, bio);
+ }
+ 
+-/*
+- * wake_worker() is used when new work is queued and when pool_resume is
+- * ready to continue deferred IO processing.
+- */
+-static void wake_worker(struct pool *pool)
+-{
+-	queue_work(pool->wq, &pool->worker);
+-}
+-
+ /*----------------------------------------------------------------*/
+ 
+ /*
+@@ -1429,8 +1451,8 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 	dm_block_t block = get_bio_block(tc, bio);
+ 	struct dm_thin_device *td = tc->td;
+ 	struct dm_thin_lookup_result result;
+-	struct dm_bio_prison_cell *cell1, *cell2;
+ 	struct dm_cell_key key;
++	struct dm_bio_prison_cell *cell_result;
+ 
+ 	thin_hook_bio(tc, bio);
+ 
+@@ -1470,19 +1492,24 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 			return DM_MAPIO_SUBMITTED;
+ 		}
+ 
++		spin_lock(&tc->lock);
+ 		build_virtual_key(tc->td, block, &key);
+-		if (bio_detain(tc->pool, &key, bio, &cell1))
++		if (dm_bio_detain(tc->pool->prison, &key, bio, &tc->cell1, &cell_result)) {
++			spin_unlock(&tc->lock);
+ 			return DM_MAPIO_SUBMITTED;
++		}
+ 
+ 		build_data_key(tc->td, result.block, &key);
+-		if (bio_detain(tc->pool, &key, bio, &cell2)) {
+-			cell_defer_no_holder(tc, cell1);
++		if (dm_bio_detain(tc->pool->prison, &key, bio, &tc->cell2, &cell_result)) {
++			cell_defer_no_holder_no_free(tc, &tc->cell1);
++			spin_unlock(&tc->lock);
+ 			return DM_MAPIO_SUBMITTED;
+ 		}
+ 
+ 		inc_all_io_entry(tc->pool, bio);
+-		cell_defer_no_holder(tc, cell2);
+-		cell_defer_no_holder(tc, cell1);
++		cell_defer_no_holder_no_free(tc, &tc->cell2);
++		cell_defer_no_holder_no_free(tc, &tc->cell1);
++		spin_unlock(&tc->lock);
+ 
+ 		remap(tc, bio, result.block);
+ 		return DM_MAPIO_REMAPPED;
+@@ -2638,6 +2665,8 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	if (r)
+ 		goto bad_thin_open;
+ 
++	spin_lock_init(&tc->lock);
 +
-+	if (info->current_index_set) {
-+		if (info->current_index == array_index)
-+			return 0;
-+
-+		r = dm_bitset_flush(info, root, new_root);
-+		if (r)
-+			return r;
-+	}
-+
-+	return read_bits(info, root, array_index);
-+}
-+
-+int dm_bitset_set_bit(struct dm_bitset_info *info, dm_block_t root,
-+		      uint32_t index, dm_block_t *new_root)
-+{
-+	int r;
-+	unsigned b = index % BITS_PER_ARRAY_ENTRY;
-+
-+	r = get_array_entry(info, root, index, new_root);
-+	if (r)
-+		return r;
-+
-+	set_bit(b, (unsigned long *) &info->current_bits);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_set_bit);
-+
-+int dm_bitset_clear_bit(struct dm_bitset_info *info, dm_block_t root,
-+			uint32_t index, dm_block_t *new_root)
-+{
-+	int r;
-+	unsigned b = index % BITS_PER_ARRAY_ENTRY;
-+
-+	r = get_array_entry(info, root, index, new_root);
-+	if (r)
-+		return r;
-+
-+	clear_bit(b, (unsigned long *) &info->current_bits);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_clear_bit);
-+
-+int dm_bitset_test_bit(struct dm_bitset_info *info, dm_block_t root,
-+		       uint32_t index, dm_block_t *new_root, bool *result)
-+{
-+	int r;
-+	unsigned b = index % BITS_PER_ARRAY_ENTRY;
-+
-+	r = get_array_entry(info, root, index, new_root);
-+	if (r)
-+		return r;
-+
-+	*result = test_bit(b, (unsigned long *) &info->current_bits);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_bitset_test_bit);
-+
-+/*----------------------------------------------------------------*/
-diff --git a/drivers/md/persistent-data/dm-bitset.h b/drivers/md/persistent-data/dm-bitset.h
-new file mode 100644
-index 0000000..513ab1e
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-bitset.h
-@@ -0,0 +1,59 @@
-+/*
-+ * Copyright (C) 2012 Red Hat, Inc.
-+ *
-+ * This file is released under the GPL.
-+ */
-+#ifndef _LINUX_DM_BITSET_H
-+#define _LINUX_DM_BITSET_H
-+
-+#include "dm-array.h"
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * Bitsets are a thin wrapper around the dm_array data type.  Rather than
-+ * updating the 64bit array entry for each access it batches the updates.
-+ * Use the flush method to ensure everything has hit the disk.
-+ */
-+
-+struct dm_bitset_info {
-+	struct dm_array_info array_info;
-+
-+	uint32_t current_index;
-+	uint64_t current_bits;
-+
-+	bool current_index_set:1;
-+};
-+
-+void dm_bitset_info_init(struct dm_transaction_manager *tm,
-+			 struct dm_bitset_info *info);
-+
-+int dm_bitset_empty(struct dm_bitset_info *info, dm_block_t *root);
-+
-+int dm_bitset_resize(struct dm_bitset_info *info, dm_block_t root,
-+		     uint32_t old_nr_entries, uint32_t new_nr_entries,
-+		     bool default_value, dm_block_t *new_root);
-+
-+int dm_bitset_del(struct dm_bitset_info *info, dm_block_t root);
-+
-+/*
-+ * May flush and thus update the root.
-+ */
-+int dm_bitset_set_bit(struct dm_bitset_info *info, dm_block_t root,
-+		      uint32_t index, dm_block_t *new_root);
-+
-+int dm_bitset_clear_bit(struct dm_bitset_info *info, dm_block_t root,
-+			uint32_t index, dm_block_t *new_root);
-+
-+int dm_bitset_test_bit(struct dm_bitset_info *info, dm_block_t root,
-+		       uint32_t index, dm_block_t *new_root, bool *result);
-+
-+/*
-+ * You must call this to flush recent changes to disk.
-+ */
-+int dm_bitset_flush(struct dm_bitset_info *info, dm_block_t root,
-+		    dm_block_t *new_root);
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
+ 	ti->num_flush_requests = 1;
+ 	ti->flush_supported = true;
+ 	ti->per_bio_data_size = sizeof(struct dm_thin_endio_hook);
 -- 
 1.7.10.4
