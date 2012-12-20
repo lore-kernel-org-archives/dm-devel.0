@@ -1,47 +1,72 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt: never use write same (was Re: [v3.7 Regression] [SCSI]
- sd: Implement support for WRITE SAME)
-Date: Thu, 20 Dec 2012 00:47:26 -0500
-Message-ID: <20121220054725.GA17619@redhat.com>
-References: <50CB8C74.3090102@canonical.com>
- <yq11uesdzya.fsf@sermon.lab.mkp.net>
- <50D0C971.1000907@canonical.com>
- <yq1bodq7zdv.fsf@sermon.lab.mkp.net>
- <20121219195801.GA14456@redhat.com>
- <50D22766.9090107@redhat.com>
- <50D22C7F.2020201@redhat.com>
- <yq1mwx960ri.fsf@sermon.lab.mkp.net>
+Subject: [PATCH 4/4] dm stripe: add WRITE SAME support
+Date: Thu, 20 Dec 2012 00:57:13 -0500
+Message-ID: <1355983033-17863-4-git-send-email-snitzer@redhat.com>
+References: <20121220054725.GA17619@redhat.com>
+	<1355983033-17863-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <yq1mwx960ri.fsf@sermon.lab.mkp.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Milan Broz <mbroz@redhat.com>, Joseph Salisbury <joseph.salisbury@canonical.com>, Kernel Team <kernel-team@lists.ubuntu.com>, linux-kernel@vger.kernel.org, jgarzik@redhat.com, JBottomley@Parallels.com, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1355983033-17863-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 19 2012 at  7:11pm -0500,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+Rename stripe_map_discard to stripe_map_range and reuse it for WRITE
+SAME bio processing.
 
-> >>>>> "Milan" == Milan Broz <mbroz@redhat.com> writes:
-> 
-> Milan> dm-crypt: never use write same
-> 
-> Milan> Ciphertext device is not compatible with WRITE SAME, disable it
-> Milan> for all dmcrypt devices.
-> 
-> Milan> Signed-off-by: Milan Broz <mbroz@redhat.com>
-> 
-> Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-stripe.c |   10 ++++++----
+ 1 files changed, 6 insertions(+), 4 deletions(-)
 
-I've developed more comprehensive WRITE SAME support for DM.  It can be
-used in conjunction with Milan's patch (which enables Milan's patch to
-go in too and be more easily tagged for v3.7 stable).
-
-Anyway, my changes are available in the 'dm-write-same' branch of my
-github tree: git://github.com/snitm/linux.git
-
-See the top 5 commits: https://github.com/snitm/linux/commits/dm-write-same
-(topmost needs to be folded, I'll do that when posting to dm-devel in
-reply to this mail)
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 6b0e5ea..c89cde8 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -162,6 +162,7 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	ti->num_flush_requests = stripes;
+ 	ti->num_discard_requests = stripes;
++	ti->num_write_same_requests = stripes;
+ 
+ 	sc->chunk_size = chunk_size;
+ 	if (chunk_size & (chunk_size - 1))
+@@ -251,8 +252,8 @@ static void stripe_map_range_sector(struct stripe_c *sc, sector_t sector,
+ 		*result += sc->chunk_size;		/* next chunk */
+ }
+ 
+-static int stripe_map_discard(struct stripe_c *sc, struct bio *bio,
+-			      uint32_t target_stripe)
++static int stripe_map_range(struct stripe_c *sc, struct bio *bio,
++			    uint32_t target_stripe)
+ {
+ 	sector_t begin, end;
+ 
+@@ -283,10 +284,11 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
+ 		bio->bi_bdev = sc->stripe[target_request_nr].dev->bdev;
+ 		return DM_MAPIO_REMAPPED;
+ 	}
+-	if (unlikely(bio->bi_rw & REQ_DISCARD)) {
++	if (unlikely(bio->bi_rw & REQ_DISCARD) ||
++	    unlikely(bio->bi_rw & REQ_WRITE_SAME)) {
+ 		target_request_nr = dm_bio_get_target_request_nr(bio);
+ 		BUG_ON(target_request_nr >= sc->stripes);
+-		return stripe_map_discard(sc, bio, target_request_nr);
++		return stripe_map_range(sc, bio, target_request_nr);
+ 	}
+ 
+ 	stripe_map_sector(sc, bio->bi_sector, &stripe, &bio->bi_sector);
+-- 
+1.7.1
