@@ -1,110 +1,79 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] 3.8 device-mapper updates
-Date: Fri, 21 Dec 2012 22:46:50 +0000
-Message-ID: <20121221224649.GA3228@agk-dp.fab.redhat.com>
+From: Greg Stark <stark@mit.edu>
+Subject: Re: How to force a snapshot status to valid when I know
+ very well it's valid?
+Date: Fri, 21 Dec 2012 22:54:21 +0000
+Message-ID: <CAM-w4HPxTMGQd76C_Dqt56vQ1WFA7KrG4o3fbQWU1x5y=XHm5Q@mail.gmail.com>
+References: <CAM-w4HM0-Cov_KtRE410etrh+v795tsPX1UM9WkV-o4MXaQBAQ@mail.gmail.com>
+	<CAEcBt+UtiFrBw778r85JfZi7FegEgO6nXxkyoAUPRGXnvFXhmQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: stable-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org, Milan Broz <mbroz@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAEcBt+UtiFrBw778r85JfZi7FegEgO6nXxkyoAUPRGXnvFXhmQ@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Please pull from:
- 
-  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.8-fixes
- 
-to get the following device-mapper updates:
+> See
+> https://fedoraproject.org/wiki/LiveOS_image#Overlay_recovery
 
-----------------------------------------------------------------
-Miscellaneous device-mapper fixes, cleanups and performance improvements.
+THANK YOU. That was enormously helpful and saved my bacon big time.
+The lvm snapshot is active and the filesystem is back.
 
-Of particular note:
-- Disable broken WRITE SAME support in all targets except linear and striped.
-  Use it when kcopyd is zeroing blocks.
-- Remove several mempools from targets by moving the data into the bio's new
-  front_pad area(which dm calls 'per_bio_data').
-- Fix a race in thin provisioning if discards are misused.
-- Prevent userspace from interfering with the ioctl parameters and
-  use kmalloc for the data buffer if it's small instead of vmalloc.
-- Throttle some annoying error messages when I/O fails.
+For future reference what I actually did was find the cow dm device
+for the invalid lvm snapshot from dmsetup which was the device with
+the same name as the snapshot plus "-cow":
 
-----------------------------------------------------------------
-Alasdair G Kergon (1):
-      dm ioctl: prevent unsafe change to dm_ioctl data_size
+# dmsetup status
+vg_root-lv_u01_dev: 0 4724490240 snapshot Invalid
+vg_root-lv_u01_dev-cow: 0 1048576000 linear
 
-Joe Thornber (7):
-      dm thin: replace dm_cell_release_singleton with cell_defer_except
-      dm thin: fix race between simultaneous io and discards to same block
-      dm thin: wake worker when discard is prepared
-      dm persistent data: fix nested btree deletion
-      dm thin: rename cell_defer_except to cell_defer_no_holder
-      dm thin: cleanup dead code
-      dm persistent data: improve improve space map block alloc failure message
+Then I ran the command from that doc to set the valid bit:
+# echo $'\x01' | dd of=/dev/mapper/vg_root-lv_u01_dev-cow bs=1 count=1
+seek=4 conv=notrunc
+1+0 records in
+1+0 records out
+1 byte (1 B) copied, 2.9e-05 seconds, 34.5 kB/s
 
-Jonathan Brassow (1):
-      dm raid: round region_size to power of two
+Then I didn't know how to reload the dm state so I rebooted the
+machine. This caused a bit of a scare because loading the lvm volumes
+took about 30 minutes. I don't know why or what happened there. But it
+eventually did come up. Then I ran fsck a a few times, the third time
+it found no problems (the first time actually seemed to corrupt the
+filesystem!).
 
-Mike Snitzer (10):
-      dm: disable WRITE SAME
-      dm thin: emit ignore_discard in status when discards disabled
-      dm block manager: reinstate message when validator fails
-      dm persistent data: use DMERR_LIMIT for errors
-      dm thin: use DMERR_LIMIT for errors
-      dm: prepare to support WRITE SAME
-      dm: add WRITE SAME support
-      dm linear: add WRITE SAME support
-      dm kcopyd: add WRITE SAME support to dm_kcopyd_zero
-      dm stripe: add WRITE SAME support
+So actually a few things didn't work as expected. Firstly the lvm
+snapshot expiring actually made one of the pv's in the vg invalid:
+  --- Physical volume ---
+  PV Name               unknown device
+  VG Name               vg_root
 
-Mikulas Patocka (17):
-      dm persistent data: rename node to btree_node
-      dm raid1: remove impossible mempool_alloc error test
-      dm raid: use DM_ENDIO_INCOMPLETE
-      dm snapshot: optimize track_chunk
-      dm ioctl: remove PF_MEMALLOC
-      dm ioctl: use kmalloc if possible
-      dm: introduce per_bio_data
-      dm raid1: use per_bio_data
-      dm verity: use per_bio_data
-      dm snapshot: use per_bio_data
-      dm: move target request nr to dm_target_io
-      dm raid1: rename read_record to bio_record
-      dm flakey: dont use map_context
-      dm raid1: dont use map_context
-      dm thin: dont use map_context
-      dm snapshot: do not use map_context
-      dm: remove map_info
+This caused a lot of confusion since it looked like a hardware
+problem. There were no hardware errors and after rebooting that device
+seems fine so I think this was caused by dm.
 
- drivers/md/dm-bio-prison.c                         |   25 ---
- drivers/md/dm-bio-prison.h                         |    1 -
- drivers/md/dm-crypt.c                              |    5 +-
- drivers/md/dm-delay.c                              |    5 +-
- drivers/md/dm-flakey.c                             |   21 +-
- drivers/md/dm-io.c                                 |   23 +-
- drivers/md/dm-ioctl.c                              |   64 ++++--
- drivers/md/dm-kcopyd.c                             |   18 +-
- drivers/md/dm-linear.c                             |    6 +-
- drivers/md/dm-raid.c                               |    8 +-
- drivers/md/dm-raid1.c                              |   75 ++-----
- drivers/md/dm-snap.c                               |   90 +++-----
- drivers/md/dm-stripe.c                             |   20 +-
- drivers/md/dm-table.c                              |   41 +++-
- drivers/md/dm-target.c                             |    5 +-
- drivers/md/dm-thin-metadata.c                      |    2 +-
- drivers/md/dm-thin.c                               |  234 ++++++++++----------
- drivers/md/dm-verity.c                             |   25 +--
- drivers/md/dm-zero.c                               |    5 +-
- drivers/md/dm.c                                    |   84 ++++---
- drivers/md/dm.h                                    |    2 +-
- drivers/md/persistent-data/dm-block-manager.c      |   12 +-
- drivers/md/persistent-data/dm-btree-internal.h     |   16 +-
- drivers/md/persistent-data/dm-btree-remove.c       |   50 ++---
- drivers/md/persistent-data/dm-btree-spine.c        |   20 +-
- drivers/md/persistent-data/dm-btree.c              |   31 +--
- drivers/md/persistent-data/dm-space-map-common.c   |   16 +-
- drivers/md/persistent-data/dm-space-map-metadata.c |    2 +-
- include/linux/device-mapper.h                      |   55 ++++-
- include/uapi/linux/dm-ioctl.h                      |    4 +-
- 30 files changed, 522 insertions(+), 443 deletions(-)
+Then rebooting after the bit was twiddled rebooting froze for a very
+long time on this step in the redhat boot process:
+Setting up Logical Volume Management:
+It was about 30 minutes before this appeared:
+Setting up Logical Volume Management:   4 logical volume(s) in volume
+group "vg_root"
+
+I don't know what could possibly have caused that. It wasn't even
+mounting anything at this stage.  I actually went for a drink at this
+point sure that I had corrupted the snapshot data structures in some
+weird way. One catch is I had done lvextend already -- does the
+snapshot dm need to initialize all the blocks of the newly extended
+cow table?
+
+-- 
+greg
