@@ -1,21 +1,13 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: basic cache policy module fix [was: Re: Another
- cache target]
-Date: Thu, 20 Dec 2012 18:02:36 +0100
-Message-ID: <50D344AC.20109@redhat.com>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<20121213215715.GA19419@redhat.com>
-	<20121214011643.GB9845@blackbox.djwong.org>
-	<50CF4E61.5030904@redhat.com> <20121218154403.GA1389@redhat.com>
-	<20121220011430.GB4878@blackbox.djwong.org>
-	<50D30B57.6030403@redhat.com> <20121220132459.GA20026@redhat.com>
-	<20121220161040.GB10972@blackbox.djwong.org>
+From: Greg Stark <stark@mit.edu>
+Subject: How to force a snapshot status to valid when I know very
+	well it's valid?
+Date: Fri, 21 Dec 2012 18:31:54 +0000
+Message-ID: <CAM-w4HM0-Cov_KtRE410etrh+v795tsPX1UM9WkV-o4MXaQBAQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20121220161040.GB10972@blackbox.djwong.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,34 +20,11 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMTIvMjAvMjAxMiAwNToxMCBQTSwgRGFycmljayBKLiBXb25nIHdyb3RlOgo+IE9uIFRodSwg
-RGVjIDIwLCAyMDEyIGF0IDA4OjI0OjU5QU0gLTA1MDAsIE1pa2UgU25pdHplciB3cm90ZToKPj4g
-T24gVGh1LCBEZWMgMjAgMjAxMiBhdCAgNzo1N2FtIC0wNTAwLAo+PiBIZWlueiBNYXVlbHNoYWdl
-biA8aGVpbnptQHJlZGhhdC5jb20+IHdyb3RlOgo+Pgo+Pj4gRGFycmljaywKPj4+Cj4+PiB0aGFu
-a3MgZm9yIHRlc3RpbmcuCj4+Pgo+Pj4gQnVnJ3MgYSBzdXBlcmZsdW91cyBpbmNyZW1lbnQgb2Yg
-dGhlIG51bWJlciBvZiBhbGxvY2F0ZWQgY2FjaGUKPj4+IGJsb2NrcyBpbiBkbS1jYWNoZS1wb2xp
-Y3ktYmFzaWM6bG9hZF9tYXBwaW5ncygpLgo+Pj4KPj4+IFBhdGNoIGlzIGF0dGFjaGVkIGFuZCBv
-biBteSBnaXRAZ2l0aHViLmNvbTpsdm1ndXkvbGludXgtMi42LCBicmFuY2gKPj4+IGRtLWRldmVs
-LWNhY2hlLgo+PiBGWUksIEkgbWVyZ2VkIHRoZSBmaXggaW50byBteSBkbS1kZXZlbC1jYWNoZSB0
-b28uCj4ga2J1aWxkIGhhZCB0aGlzIHRvIHNheToKPiBkcml2ZXJzL21kL2RtLWNhY2hlLXBvbGlj
-eS1iYXNpYy5jOiBJbiBmdW5jdGlvbiDigJhiYXNpY19tYXDigJk6Cj4gZHJpdmVycy9tZC9kbS1j
-YWNoZS1wb2xpY3ktYmFzaWMuYzoxMjUyOjM5OiB3YXJuaW5nOiDigJh0cWXigJkgbWF5IGJlIHVz
-ZWQgdW5pbml0aWFsaXplZCBpbiB0aGlzIGZ1bmN0aW9uIFstV3VuaW5pdGlhbGl6ZWRdCj4gZHJp
-dmVycy9tZC9kbS1jYWNoZS1wb2xpY3ktYmFzaWMuYzoxMjcxOjI4OiBub3RlOiDigJh0cWXigJkg
-d2FzIGRlY2xhcmVkIGhlcmUKPgo+IEkgX3RoaW5rXyBpdCdzIGFjdHVhbGx5IG9rLCBidXQgSSdt
-IG5vdCAxMDAlIHN1cmUuCgpBd2FyZSBvZiB0aGF0IGFuZCBpdCBpcyBvaywgX2J1dF8gSSB3YW50
-IHRvIHJlcGhyYXNlIHRoZSBjb2RlIHRvIGdldCByaWQgCm9mIGl0LgoKPgo+IE90aGVyd2lzZSBp
-dCBzZWVtcyB0byBoYXZlIHBhc3NlZCB0aGUgcmVtb3ZlL3JlY3JlYXRlIHRlc3QuCgpOaWNlLgoK
-PiBJJ2xsIGtlZXAgcG91bmRpbmcKPiBvbiBpdC4KCkNvb2wsIHRoYW5rcy4KCkhlaW56Cgo+Cj4g
-LS1ECj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1kZXZlbEByZWRoYXQuY29t
-Cj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+IC0t
-Cj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAoKLS0gCj09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQpIZWlu
-eiBNYXVlbHNoYWdlbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICArNDkgMjYyNiAxNDEy
-MDAKQ29uc3VsdGluZyBEZXZlbG9wbWVudCBFbmdpbmVlciAgICAgICAgICAgICBGQVggKzQ5IDI2
-MjYgOTI0NDQ2ClJlZCBIYXQgR21iSApBbSBTb25uZW5oYW5nIDExCjU2MjQyIE1hcmllbnJhY2hk
-b3JmCkdlcm1hbnkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBoZWluem1A
-cmVkaGF0LmNvbQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT0KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+I have a snapshot whose cow table became full. I understand full well
+why snapshots become invalid at this point but the source volume was
+not mounted anywhere and hasn't been written to. I can add more space
+to the cow table now but is there any way to force the status to be
+valid again?
+
+-- 
+greg
