@@ -1,80 +1,110 @@
-From: Frederick Grose <fgrose@gmail.com>
-Subject: Re: How to force a snapshot status to valid when I know
- very well it's valid?
-Date: Fri, 21 Dec 2012 10:46:18 -0800
-Message-ID: <CAEcBt+UtiFrBw778r85JfZi7FegEgO6nXxkyoAUPRGXnvFXhmQ@mail.gmail.com>
-References: <CAM-w4HM0-Cov_KtRE410etrh+v795tsPX1UM9WkV-o4MXaQBAQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] 3.8 device-mapper updates
+Date: Fri, 21 Dec 2012 22:46:50 +0000
+Message-ID: <20121221224649.GA3228@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1011562882097801844=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAM-w4HM0-Cov_KtRE410etrh+v795tsPX1UM9WkV-o4MXaQBAQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: stable-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org, Milan Broz <mbroz@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
---===============1011562882097801844==
-Content-Type: multipart/alternative; boundary=20cf307f32b0b55bc104d1614575
+Please pull from:
+ 
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.8-fixes
+ 
+to get the following device-mapper updates:
 
---20cf307f32b0b55bc104d1614575
-Content-Type: text/plain; charset=ISO-8859-1
+----------------------------------------------------------------
+Miscellaneous device-mapper fixes, cleanups and performance improvements.
 
-On Fri, Dec 21, 2012 at 10:31 AM, Greg Stark <stark@mit.edu> wrote:
+Of particular note:
+- Disable broken WRITE SAME support in all targets except linear and striped.
+  Use it when kcopyd is zeroing blocks.
+- Remove several mempools from targets by moving the data into the bio's new
+  front_pad area(which dm calls 'per_bio_data').
+- Fix a race in thin provisioning if discards are misused.
+- Prevent userspace from interfering with the ioctl parameters and
+  use kmalloc for the data buffer if it's small instead of vmalloc.
+- Throttle some annoying error messages when I/O fails.
 
-> I have a snapshot whose cow table became full. I understand full well
-> why snapshots become invalid at this point but the source volume was
-> not mounted anywhere and hasn't been written to. I can add more space
-> to the cow table now but is there any way to force the status to be
-> valid again?
->
-> --
-> greg
+----------------------------------------------------------------
+Alasdair G Kergon (1):
+      dm ioctl: prevent unsafe change to dm_ioctl data_size
 
+Joe Thornber (7):
+      dm thin: replace dm_cell_release_singleton with cell_defer_except
+      dm thin: fix race between simultaneous io and discards to same block
+      dm thin: wake worker when discard is prepared
+      dm persistent data: fix nested btree deletion
+      dm thin: rename cell_defer_except to cell_defer_no_holder
+      dm thin: cleanup dead code
+      dm persistent data: improve improve space map block alloc failure message
 
-See
-https://fedoraproject.org/wiki/LiveOS_image#Overlay_recovery
+Jonathan Brassow (1):
+      dm raid: round region_size to power of two
 
-    --Fred
+Mike Snitzer (10):
+      dm: disable WRITE SAME
+      dm thin: emit ignore_discard in status when discards disabled
+      dm block manager: reinstate message when validator fails
+      dm persistent data: use DMERR_LIMIT for errors
+      dm thin: use DMERR_LIMIT for errors
+      dm: prepare to support WRITE SAME
+      dm: add WRITE SAME support
+      dm linear: add WRITE SAME support
+      dm kcopyd: add WRITE SAME support to dm_kcopyd_zero
+      dm stripe: add WRITE SAME support
 
---20cf307f32b0b55bc104d1614575
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Mikulas Patocka (17):
+      dm persistent data: rename node to btree_node
+      dm raid1: remove impossible mempool_alloc error test
+      dm raid: use DM_ENDIO_INCOMPLETE
+      dm snapshot: optimize track_chunk
+      dm ioctl: remove PF_MEMALLOC
+      dm ioctl: use kmalloc if possible
+      dm: introduce per_bio_data
+      dm raid1: use per_bio_data
+      dm verity: use per_bio_data
+      dm snapshot: use per_bio_data
+      dm: move target request nr to dm_target_io
+      dm raid1: rename read_record to bio_record
+      dm flakey: dont use map_context
+      dm raid1: dont use map_context
+      dm thin: dont use map_context
+      dm snapshot: do not use map_context
+      dm: remove map_info
 
-On Fri, Dec 21, 2012 at 10:31 AM, Greg Stark <span dir=3D"ltr">&lt;<a href=
-=3D"mailto:stark@mit.edu" target=3D"_blank">stark@mit.edu</a>&gt;</span> wr=
-ote:<br><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=
-=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">
-
-I have a snapshot whose cow table became full. I understand full well<br>
-why snapshots become invalid at this point but the source volume was<br>
-not mounted anywhere and hasn&#39;t been written to. I can add more space<b=
-r>
-to the cow table now but is there any way to force the status to be<br>
-valid again?<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
---<br>
-greg</font></span></blockquote><div><br></div><div>See</div><div><a href=3D=
-"https://fedoraproject.org/wiki/LiveOS_image#Overlay_recovery">https://fedo=
-raproject.org/wiki/LiveOS_image#Overlay_recovery</a></div><div><br></div>
-
-<div>=A0 =A0 --Fred=A0</div></div>
-
---20cf307f32b0b55bc104d1614575--
-
-
---===============1011562882097801844==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1011562882097801844==--
+ drivers/md/dm-bio-prison.c                         |   25 ---
+ drivers/md/dm-bio-prison.h                         |    1 -
+ drivers/md/dm-crypt.c                              |    5 +-
+ drivers/md/dm-delay.c                              |    5 +-
+ drivers/md/dm-flakey.c                             |   21 +-
+ drivers/md/dm-io.c                                 |   23 +-
+ drivers/md/dm-ioctl.c                              |   64 ++++--
+ drivers/md/dm-kcopyd.c                             |   18 +-
+ drivers/md/dm-linear.c                             |    6 +-
+ drivers/md/dm-raid.c                               |    8 +-
+ drivers/md/dm-raid1.c                              |   75 ++-----
+ drivers/md/dm-snap.c                               |   90 +++-----
+ drivers/md/dm-stripe.c                             |   20 +-
+ drivers/md/dm-table.c                              |   41 +++-
+ drivers/md/dm-target.c                             |    5 +-
+ drivers/md/dm-thin-metadata.c                      |    2 +-
+ drivers/md/dm-thin.c                               |  234 ++++++++++----------
+ drivers/md/dm-verity.c                             |   25 +--
+ drivers/md/dm-zero.c                               |    5 +-
+ drivers/md/dm.c                                    |   84 ++++---
+ drivers/md/dm.h                                    |    2 +-
+ drivers/md/persistent-data/dm-block-manager.c      |   12 +-
+ drivers/md/persistent-data/dm-btree-internal.h     |   16 +-
+ drivers/md/persistent-data/dm-btree-remove.c       |   50 ++---
+ drivers/md/persistent-data/dm-btree-spine.c        |   20 +-
+ drivers/md/persistent-data/dm-btree.c              |   31 +--
+ drivers/md/persistent-data/dm-space-map-common.c   |   16 +-
+ drivers/md/persistent-data/dm-space-map-metadata.c |    2 +-
+ include/linux/device-mapper.h                      |   55 ++++-
+ include/uapi/linux/dm-ioctl.h                      |    4 +-
+ 30 files changed, 522 insertions(+), 443 deletions(-)
