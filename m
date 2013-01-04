@@ -1,20 +1,13 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: How to force a snapshot status to valid when I
-	know	very well it's valid?
-Date: Wed, 2 Jan 2013 17:23:38 +0000
-Message-ID: <20130102172338.GB18415@agk-dp.fab.redhat.com>
-References: <CAM-w4HM0-Cov_KtRE410etrh+v795tsPX1UM9WkV-o4MXaQBAQ@mail.gmail.com>
-	<CAEcBt+UtiFrBw778r85JfZi7FegEgO6nXxkyoAUPRGXnvFXhmQ@mail.gmail.com>
-	<CAM-w4HPxTMGQd76C_Dqt56vQ1WFA7KrG4o3fbQWU1x5y=XHm5Q@mail.gmail.com>
-	<20121221231311.GD14851@agk-dp.fab.redhat.com>
-	<CAM-w4HNV_eXMXmLKuHrAkvOT+wS15qzBUx1BEmW7CROKhJ1vUA@mail.gmail.com>
+From: Wang Sheng-Hui <shhuiw@gmail.com>
+Subject: [PATCH] dm: cleanup: remove the unnecessary NULL set to
+ the local var *t after kfreed in dm_table_create
+Date: Fri, 04 Jan 2013 08:26:52 +0800
+Message-ID: <50E621CC.8040009@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAM-w4HNV_eXMXmLKuHrAkvOT+wS15qzBUx1BEmW7CROKhJ1vUA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,22 +17,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Greg Stark <stark@mit.edu>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Dec 21, 2012 at 11:35:31PM +0000, Greg Stark wrote:
-> I have another question while I'm here and people are being so
-> helpful. Is there a way to grow the size of the actual snapshot
-> device? Not the cow table but the device that the snapshot is
-> presenting? If I change the size of the underlying device I don't
-> think it changes the size of the snapshot and if I extend the snapshot
-> it just changes the size of the cow table. It seems like it should be
-> possible to add another dm mapping for the added space using a simple
-> linear mapping.
- 
-We discused this sort of thing but never implemented it.
+If allocation fails, the local var *t is not used any more after kfreed.
+Don't need to reset it to NULL. Remove the unnecesary NULL set here.
 
-Perhaps we will offer more resizing options with the new thin snapshots.
+Signed-off-by: Wang Sheng-Hui <shhuiw@gmail.com>
+---
+  drivers/md/dm-table.c |    1 -
+  1 file changed, 1 deletion(-)
 
-Alasdair
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index daf25d0..c95405d 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -217,7 +217,6 @@ int dm_table_create(struct dm_table **result, 
+fmode_t mode,
+
+      if (alloc_targets(t, num_targets)) {
+          kfree(t);
+-        t = NULL;
+          return -ENOMEM;
+      }
+
+-- 
+1.7.10.4
