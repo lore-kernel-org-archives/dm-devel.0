@@ -1,13 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/2] dm thin: make use of
-	block_size_is_power_of_two to make code clearer
-Date: Fri,  4 Jan 2013 22:22:53 -0500
-Message-ID: <1357356174-20661-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH] libmpathpersist: correct function
+ description in mpath_persist.h and man file
+Date: Sat, 05 Jan 2013 20:38:17 +0100
+Message-ID: <1357414697.9240.1.camel@lapoo.opensvc.com>
+References: <50E7FD69.4050105@gmail.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <50E7FD69.4050105@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,74 +20,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Wang Sheng-Hui <shhuiw@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use rather block_size_is_power_of_two() than checking
-sectors_per_block_shift directly.  Also introduce local pool variable in
-get_bio_block() to eliminate redundant tc->pool dereferences.
+On sam., 2013-01-05 at 18:16 +0800, Wang Sheng-Hui wrote:
+> * For mpath_persistent_reserve_out, we have "#define MPATH_PRTPE_EA_RO 
+>      0x06".
+>    Correct the description of the function prototype 
+> mpath_persistent_reserve_out
+>    in mpath_persist.h and man file.
+> * Correct typo in the description for the function prototype
+>    mpath_persistent_reserve_in in mpath_persist.h
+> 
+Applied.
+Thanks.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-thin.c |   25 +++++++++++++------------
- 1 files changed, 13 insertions(+), 12 deletions(-)
-
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 675ae52..abc2c78 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -330,14 +330,20 @@ static void requeue_io(struct thin_c *tc)
-  * target.
-  */
- 
-+static bool block_size_is_power_of_two(struct pool *pool)
-+{
-+	return pool->sectors_per_block_shift >= 0;
-+}
-+
- static dm_block_t get_bio_block(struct thin_c *tc, struct bio *bio)
- {
-+	struct pool *pool = tc->pool;
- 	sector_t block_nr = bio->bi_sector;
- 
--	if (tc->pool->sectors_per_block_shift < 0)
--		(void) sector_div(block_nr, tc->pool->sectors_per_block);
-+	if (block_size_is_power_of_two(pool))
-+		block_nr >>= pool->sectors_per_block_shift;
- 	else
--		block_nr >>= tc->pool->sectors_per_block_shift;
-+		(void) sector_div(block_nr, pool->sectors_per_block);
- 
- 	return block_nr;
- }
-@@ -348,12 +354,12 @@ static void remap(struct thin_c *tc, struct bio *bio, dm_block_t block)
- 	sector_t bi_sector = bio->bi_sector;
- 
- 	bio->bi_bdev = tc->pool_dev->bdev;
--	if (tc->pool->sectors_per_block_shift < 0)
--		bio->bi_sector = (block * pool->sectors_per_block) +
--				 sector_div(bi_sector, pool->sectors_per_block);
--	else
-+	if (block_size_is_power_of_two(pool))
- 		bio->bi_sector = (block << pool->sectors_per_block_shift) |
- 				(bi_sector & (pool->sectors_per_block - 1));
-+	else
-+		bio->bi_sector = (block * pool->sectors_per_block) +
-+				 sector_div(bi_sector, pool->sectors_per_block);
- }
- 
- static void remap_to_origin(struct thin_c *tc, struct bio *bio)
-@@ -2414,11 +2420,6 @@ static int pool_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
- 	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
- }
- 
--static bool block_size_is_power_of_two(struct pool *pool)
--{
--	return pool->sectors_per_block_shift >= 0;
--}
--
- static void set_discard_limits(struct pool_c *pt, struct queue_limits *limits)
- {
- 	struct pool *pool = pt->pool;
--- 
-1.7.4.4
+> Signed-off-by: Wang Sheng-Hui <shhuiw@gmail.com>
+> ---
+>   libmpathpersist/mpath_persist.h                |    8 ++++----
+>   libmpathpersist/mpath_persistent_reserve_out.3 |    2 +-
+>   2 files changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/libmpathpersist/mpath_persist.h 
+> b/libmpathpersist/mpath_persist.h
+> index 42294e9..d8ff6f2 100644
+> --- a/libmpathpersist/mpath_persist.h
+> +++ b/libmpathpersist/mpath_persist.h
+> @@ -194,15 +194,15 @@ extern int mpath_lib_exit (void );
+>    *
+>    * @fd:    The file descriptor of a multipath device. Input argument.
+>    * @rq_servact: PRIN command service action. Input argument
+> - * @resp: The response from PRIN service action. The resp is a struct 
+> specified below. The caller should
+> + * @resp: The response from PRIN service action. The resp is a struct 
+> specified above. The caller should
+>    *     manage the memory allocation of this struct
+>    * @noisy: Turn on debugging trace: Input argument. 0->Disable, 1->Enable
+>    * @verbose: Set verbosity level. Input argument. value:[0-3]. 
+> 0->disabled, 3->Max verbose
+>    *
+>    * RESTRICTIONS:
+>    *
+> - * RETURNS: MPATH_PR_SUCCESS if PR command successful else returns any 
+> of the PR status (specified
+> - *     above).
+> + * RETURNS: MPATH_PR_SUCCESS if PR command successful else returns any 
+> of the status specified
+> + *       above in RETURN_STATUS.
+>    *
+>    */
+>   extern int mpath_persistent_reserve_in (int fd, int rq_servact, struct 
+> prin_resp *resp,
+> @@ -217,7 +217,7 @@ extern int mpath_persistent_reserve_in (int fd, int 
+> rq_servact, struct prin_resp
+>    * @rq_scope: Persistent reservation scope. The value should be always 
+> LU_SCOPE (0h).
+>    * @rq_type: Persistent reservation type. The valid values of 
+> persistent reservation types are
+>    *    5h (Write exclusive - registrants only)
+> - *    8h (Exclusive access - registrants only)
+> + *    6h (Exclusive access - registrants only)
+>    *    7h (Write exclusive - All registrants)
+>    *    8h (Exclusive access - All registrants).
+>    * @paramp: PROUT command parameter data. The paramp is a struct which 
+> describes PROUT
+> diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 
+> b/libmpathpersist/mpath_persistent_reserve_out.3
+> index 44f950b..f7f84ff 100644
+> --- a/libmpathpersist/mpath_persistent_reserve_out.3
+> +++ b/libmpathpersist/mpath_persistent_reserve_out.3
+> @@ -26,7 +26,7 @@ sends PR OUT command to the DM device and gets the 
+> response.
+>   .I rq_type
+>   .B Persistent reservation type. The valid values of persistent 
+> reservation types are
+>         5h (Write exclusive - registrants only)
+> -      8h (Exclusive access - registrants only)
+> +      6h (Exclusive access - registrants only)
+>         7h (Write exclusive - All registrants)
+>         8h (Exclusive access - All registrants).
+>   .br
