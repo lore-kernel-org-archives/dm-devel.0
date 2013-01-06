@@ -1,16 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] libmpathpersist: correct function
- description in mpath_persist.h and man file
-Date: Sat, 05 Jan 2013 20:38:17 +0100
-Message-ID: <1357414697.9240.1.camel@lapoo.opensvc.com>
-References: <50E7FD69.4050105@gmail.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: [PATCH] fix extended partition mapping
+Date: Sat,  5 Jan 2013 21:57:30 -0500
+Message-ID: <1357441050-21997-1-git-send-email-psusi@ubuntu.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <50E7FD69.4050105@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,84 +16,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Wang Sheng-Hui <shhuiw@gmail.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On sam., 2013-01-05 at 18:16 +0800, Wang Sheng-Hui wrote:
-> * For mpath_persistent_reserve_out, we have "#define MPATH_PRTPE_EA_RO 
->      0x06".
->    Correct the description of the function prototype 
-> mpath_persistent_reserve_out
->    in mpath_persist.h and man file.
-> * Correct typo in the description for the function prototype
->    mpath_persistent_reserve_in in mpath_persist.h
-> 
-Applied.
-Thanks.
+The linux kernel maps the extended partition only
+so that LILO can be installed there.  The length is always set
+to two sectors to allow this, and most tools know to ignore the
+device.  kpartx was mapping the entire extended partition, then
+stacking the logical partitions on top of it.  This presented
+a device that looked like an entirely separate disk that
+contains only the logical partitions.  This patch fixes kpartx
+to conform with the normal Linux behavior.
+---
+ kpartx/dos.c    |    2 ++
+ kpartx/kpartx.c |    9 +++------
+ 2 files changed, 5 insertions(+), 6 deletions(-)
 
-> Signed-off-by: Wang Sheng-Hui <shhuiw@gmail.com>
-> ---
->   libmpathpersist/mpath_persist.h                |    8 ++++----
->   libmpathpersist/mpath_persistent_reserve_out.3 |    2 +-
->   2 files changed, 5 insertions(+), 5 deletions(-)
-> 
-> diff --git a/libmpathpersist/mpath_persist.h 
-> b/libmpathpersist/mpath_persist.h
-> index 42294e9..d8ff6f2 100644
-> --- a/libmpathpersist/mpath_persist.h
-> +++ b/libmpathpersist/mpath_persist.h
-> @@ -194,15 +194,15 @@ extern int mpath_lib_exit (void );
->    *
->    * @fd:    The file descriptor of a multipath device. Input argument.
->    * @rq_servact: PRIN command service action. Input argument
-> - * @resp: The response from PRIN service action. The resp is a struct 
-> specified below. The caller should
-> + * @resp: The response from PRIN service action. The resp is a struct 
-> specified above. The caller should
->    *     manage the memory allocation of this struct
->    * @noisy: Turn on debugging trace: Input argument. 0->Disable, 1->Enable
->    * @verbose: Set verbosity level. Input argument. value:[0-3]. 
-> 0->disabled, 3->Max verbose
->    *
->    * RESTRICTIONS:
->    *
-> - * RETURNS: MPATH_PR_SUCCESS if PR command successful else returns any 
-> of the PR status (specified
-> - *     above).
-> + * RETURNS: MPATH_PR_SUCCESS if PR command successful else returns any 
-> of the status specified
-> + *       above in RETURN_STATUS.
->    *
->    */
->   extern int mpath_persistent_reserve_in (int fd, int rq_servact, struct 
-> prin_resp *resp,
-> @@ -217,7 +217,7 @@ extern int mpath_persistent_reserve_in (int fd, int 
-> rq_servact, struct prin_resp
->    * @rq_scope: Persistent reservation scope. The value should be always 
-> LU_SCOPE (0h).
->    * @rq_type: Persistent reservation type. The valid values of 
-> persistent reservation types are
->    *    5h (Write exclusive - registrants only)
-> - *    8h (Exclusive access - registrants only)
-> + *    6h (Exclusive access - registrants only)
->    *    7h (Write exclusive - All registrants)
->    *    8h (Exclusive access - All registrants).
->    * @paramp: PROUT command parameter data. The paramp is a struct which 
-> describes PROUT
-> diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 
-> b/libmpathpersist/mpath_persistent_reserve_out.3
-> index 44f950b..f7f84ff 100644
-> --- a/libmpathpersist/mpath_persistent_reserve_out.3
-> +++ b/libmpathpersist/mpath_persistent_reserve_out.3
-> @@ -26,7 +26,7 @@ sends PR OUT command to the DM device and gets the 
-> response.
->   .I rq_type
->   .B Persistent reservation type. The valid values of persistent 
-> reservation types are
->         5h (Write exclusive - registrants only)
-> -      8h (Exclusive access - registrants only)
-> +      6h (Exclusive access - registrants only)
->         7h (Write exclusive - All registrants)
->         8h (Exclusive access - All registrants).
->   .br
+diff --git a/kpartx/dos.c b/kpartx/dos.c
+index 1691105..a1a9961 100644
+--- a/kpartx/dos.c
++++ b/kpartx/dos.c
+@@ -98,6 +98,8 @@ read_dos_pt(int fd, struct slice all, struct slice *sp, int ns) {
+ 			break;
+ 		}
+ 		if (is_extended(p.sys_type)) {
++			sp[i].size = 2; /* extended partitions only get two
++					   sectors mapped for LILO to install */
+ 			n += read_extended_partition(fd, &p, i, sp+n, ns-n);
+ 		}
+ 	}
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index b5e0a32..f359afe 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -515,7 +515,6 @@ main(int argc, char **argv){
+ 			d = c;
+ 			while (c) {
+ 				for (j = 0; j < n; j++) {
+-					uint64_t start;
+ 					int k = slices[j].container - 1;
+ 
+ 					if (slices[j].size == 0)
+@@ -541,11 +540,9 @@ main(int argc, char **argv){
+ 					}
+ 					strip_slash(partname);
+ 
+-					start = slices[j].start - slices[k].start;
+-					if (safe_sprintf(params, "%d:%d %" PRIu64,
+-							 slices[k].major,
+-							 slices[k].minor,
+-							 start)) {
++					if (safe_sprintf(params, "%s %" PRIu64,
++							 device,
++							 slices[j].start)) {
+ 						fprintf(stderr, "params too small\n");
+ 						exit(1);
+ 					}
+-- 
+1.7.10.4
