@@ -1,15 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: use WRITE_FLUSH instead of REQ_FLUSH
-Date: Mon, 7 Jan 2013 09:23:49 -0500
-Message-ID: <20130107142348.GA5097@redhat.com>
-References: <Pine.LNX.4.64.1301070009230.7490@file.rdu.redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: [PATCH] Don't add 'p' delimiter when you shouldn't
+Date: Mon,  7 Jan 2013 14:56:21 -0500
+Message-ID: <1357588581-29831-1-git-send-email-psusi@ubuntu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1301070009230.7490@file.rdu.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,29 +16,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: Phillip Susi <psusi@ubuntu.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 07 2013 at 12:12am -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+The 'p' delimiter is supposed to be added when the base disk name ends
+in a digit.  This decision was based on the name given on the command
+line, not the canonical device name, so giving /dev/dm-0 instead of
+/dev/mapper/foo triggered the digit test and added the 'p'.  Changed
+test to use the canonical name rather than the given name.
 
-> Hi Alasdair
-> 
-> Please push this patch to 3.8 kernel. (I already sent it before, but it 
-> was forgotten somehow).
-> 
-> Mikulas
-> 
-> ---
-> 
-> dm-bufio: use WRITE_FLUSH instead of REQ_FLUSH
-> 
-> Use WRITE_FLUSH instead of REQ_FLUSH to make it consistent with the rest
-> of the kernel. There is no functional change - the kernel accepts either
-> WRITE_FLUSH or REQ_FLUSH.
+Signed-off-by: Phillip Susi <psusi@ubuntu.com>
+---
+ kpartx/kpartx.c |   12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-Well the important distinction is the flush bio is originating in
-dm-bufio whereas other DM targets that test for REQ_FLUSH are just
-passing the flush through.  Saying as much makes the need for this patch
-more explicit.
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 0711450..08f3407 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -323,12 +323,6 @@ main(int argc, char **argv){
+ 		device = loopdev;
+ 	}
+ 
+-	if (delim == NULL) {
+-		delim = malloc(DELIM_SIZE);
+-		memset(delim, 0, DELIM_SIZE);
+-		set_delimiter(device, delim);
+-	}
+-
+ 	off = find_devname_offset(device);
+ 
+ 	if (!loopdev) {
+@@ -350,6 +344,12 @@ main(int argc, char **argv){
+ 		return 0;
+ 	}
+ 
++	if (delim == NULL) {
++		delim = malloc(DELIM_SIZE);
++		memset(delim, 0, DELIM_SIZE);
++		set_delimiter(mapname, delim);
++	}
++
+ 	fd = open(device, O_RDONLY);
+ 
+ 	if (fd == -1) {
+-- 
+1.7.9.5
