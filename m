@@ -1,23 +1,14 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: Another cache target
-Date: Mon, 7 Jan 2013 16:19:28 -0800
-Message-ID: <20130108001928.GA20108@blackbox.djwong.org>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<20121213215715.GA19419@redhat.com>
-	<20121214011643.GB9845@blackbox.djwong.org>
-	<20121214021918.GA29561@redhat.com>
-	<20121214023425.GG9453@blackbox.djwong.org>
-	<20121214102443.GB3022@raspberrypi>
-	<20121214121143.GD3022@raspberrypi>
-	<20121214215119.GJ9453@blackbox.djwong.org>
-	<20121215082309.GA5330@reti.lambda.co.uk>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: make devt2devname use lstat to check
+	sysfs links
+Date: Mon, 7 Jan 2013 23:36:27 -0600
+Message-ID: <20130108053626.GV19059@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20121215082309.GA5330@reti.lambda.co.uk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,75 +18,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Joe Thornber <ejt@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Sat, Dec 15, 2012 at 08:23:09AM +0000, Joe Thornber wrote:
-> On Fri, Dec 14, 2012 at 01:51:19PM -0800, Darrick J. Wong wrote:
-> > Yeah, I think I've seen some odd behavior too - on one of my runs, blkid
-> > reported that the cache device had the same superblock as the aggregate device.
-> > My guess is that block 0 on the exported device got mapped to block 0 of the
-> > cache.  I'll see if I can make it happen again, but that brings me to another
-> > set of questions.
-> 
-> This is normal.
-> 
-> > First, is there a plan to have userspace tools to set up the cache, provide
-> > protective superblocks, etc.?
-> 
-> Yes, lvm2 will support it soon (hopefully).  Tools like cache_check,
-> cache_dump, cache_restore that manipulate the metadata device are
-> nearly ready.
+dm_reassign wasn't working correctly for me because devt2devname used stat()
+to check if /sys/dev/block/major:minor was a symlink.  But stat() never returns
+a symlink. It follows it. It needs to use lstat() instead.  Also, I made
+multipath log a message when a dm device gets reassigned to use multipath.
 
-Are these tools available anywhere for testing?
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c |    4 +++-
+ libmultipath/sysfs.c     |    6 ++++--
+ libmultipath/util.c      |    3 ++-
+ 3 files changed, 9 insertions(+), 4 deletions(-)
 
---D
-> 
-> >  As far as I can tell, the slow disk and the fast
-> > disk don't have headers to declare the existence of the cache, so blkid and
-> > friends can end up seeing things they shouldn't.  How were you planning to keep
-> > users from mounting the slow device before the cache comes up?
-> 
-> We don't label the origin device or ssd in anyway.
-> 
-> > Second, if the cache is in WB mode, is there a way to force it to flush the
-> > cache contents to disk?  Or does it do that at dmsetup create time?
-> 
->   Reload the cache target with the cleaner policy.  Once it's finished
->   writing everything back it'll trigger a dm event that you can catch
->   with 'dmsetup wait'.  Then check the status to double check there
->   are no dirty blocks.  At this point you can ditch the cache and use
->   the origin directly.  See test below.
-> 
-> 
->   def wait_for_all_clean(cache)
->     cache.event_tracker.wait(cache) do |cache|
->       status = CacheStatus.new(cache)
->       status.nr_dirty == 0
->     end
->   end
-> 
->   def test_cleaner_policy
->     with_standard_cache(:format => true) do |cache|
->       git_prepare(cache, :ext4)
-> 
->       cache.pause do
->         table = cache.active_table
->         table.targets[0].args[6] = 'cleaner'
->         cache.load(table)
->       end
-> 
->       wait_for_all_clean(cache)
->     end
-> 
->     # We should be able to use the origin directly now
->     with_standard_linear do |origin|
->       fs = FS::file_system(:ext4, origin)
->       fs.with_mount('./kernel_builds', :discard => true) do
->         # triggers fsck
->       end
->     end
->   end
-> 
-> 
-> - Joe
+Index: multipath-tools-120821/libmultipath/devmapper.c
+===================================================================
+--- multipath-tools-120821.orig/libmultipath/devmapper.c
++++ multipath-tools-120821/libmultipath/devmapper.c
+@@ -1370,8 +1370,10 @@ int dm_reassign(const char *mapname)
+ 		return 1;
+ 	}
+ 
+-	if (!(dmt = dm_task_create(DM_DEVICE_DEPS)))
++	if (!(dmt = dm_task_create(DM_DEVICE_DEPS))) {
++		condlog(3, "%s: couldn't make dm task", mapname);
+ 		return 0;
++	}
+ 
+ 	if (!dm_task_set_name(dmt, mapname))
+ 		goto out;
+Index: multipath-tools-120821/libmultipath/sysfs.c
+===================================================================
+--- multipath-tools-120821.orig/libmultipath/sysfs.c
++++ multipath-tools-120821/libmultipath/sysfs.c
+@@ -125,8 +125,10 @@ int sysfs_check_holders(char * check_dev
+ 		return 0;
+ 	}
+ 
+-	if (devt2devname(check_dev, PATH_SIZE, check_devt))
++	if (devt2devname(check_dev, PATH_SIZE, check_devt)) {
++		condlog(1, "can't get devname for %s", check_devt);
+ 		return 0;
++	}
+ 
+ 	condlog(3, "%s: checking holder", check_dev);
+ 
+@@ -153,7 +155,7 @@ int sysfs_check_holders(char * check_dev
+ 		}
+ 		table_name = dm_mapname(major, table_minor);
+ 
+-		condlog(3, "%s: reassign table %s old %s new %s", check_dev,
++		condlog(0, "%s: reassign table %s old %s new %s", check_dev,
+ 			table_name, check_devt, new_devt);
+ 
+ 		dm_reassign_table(table_name, check_devt, new_devt);
+Index: multipath-tools-120821/libmultipath/util.c
+===================================================================
+--- multipath-tools-120821.orig/libmultipath/util.c
++++ multipath-tools-120821/libmultipath/util.c
+@@ -161,6 +161,7 @@ devt2devname (char *devname, int devname
+ 	struct stat statbuf;
+ 
+ 	memset(block_path, 0, sizeof(block_path));
++	memset(dev, 0, sizeof(dev));
+ 	if (sscanf(devt, "%u:%u", &major, &minor) != 2) {
+ 		condlog(0, "Invalid device number %s", devt);
+ 		return 1;
+@@ -172,7 +173,7 @@ devt2devname (char *devname, int devname
+ 	if (stat("/sys/dev/block", &statbuf) == 0) {
+ 		/* Newer kernels have /sys/dev/block */
+ 		sprintf(block_path,"/sys/dev/block/%u:%u", major, minor);
+-		if (stat(block_path, &statbuf) == 0) {
++		if (lstat(block_path, &statbuf) == 0) {
+ 			if (S_ISLNK(statbuf.st_mode) &&
+ 			    readlink(block_path, dev, FILE_NAME_SIZE) > 0) {
+ 				char *p = strrchr(dev, '/');
