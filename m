@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: storagetek 6180 config
-Date: Mon, 7 Jan 2013 23:55:08 -0600
-Message-ID: <20130108055508.GF19059@ether.msp.redhat.com>
+Subject: [PATCH] multipath: Fix kpartx and udevd race
+Date: Mon, 7 Jan 2013 23:56:35 -0600
+Message-ID: <20130108055635.GG19059@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,36 +21,47 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-New StorageTek default config.
+Sometimes when kpartx is used to view partition data on disk image files,
+udev still has the loop device open when kpartx is trying to tear it down.
+This causes the LOOP_CLR_FD ioctl to fail with EBUSY.  kpartx now retries
+in this case.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/hwtable.c |   15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ kpartx/lopart.c |   16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-Index: multipath-tools-120821/libmultipath/hwtable.c
+Index: multipath-tools-130107/kpartx/lopart.c
 ===================================================================
---- multipath-tools-120821.orig/libmultipath/hwtable.c
-+++ multipath-tools-120821/libmultipath/hwtable.c
-@@ -1120,6 +1120,21 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
- 	},
-+	/* StorageTek 6180 */
-+	{
-+		.vendor        = "SUN",
-+		.product       = "SUN_6180",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = "1 rdac",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
-+		.minio         = DEFAULT_MINIO,
-+		.minio_rq      = DEFAULT_MINIO_RQ,
-+		.checker_name  = RDAC,
-+		.prio_name     = PRIO_RDAC,
-+	},
- 	/* LSI/Engenio/NetApp E-Series RDAC storage */
- 	{
- 		.vendor        = "(LSI|ENGENIO)",
+--- multipath-tools-130107.orig/kpartx/lopart.c
++++ multipath-tools-130107/kpartx/lopart.c
+@@ -286,6 +286,7 @@ set_loop (const char *device, const char
+ extern int 
+ del_loop (const char *device)
+ {
++	int retries = 3;
+ 	int fd;
+ 
+ 	if ((fd = open (device, O_RDONLY)) < 0) {
+@@ -295,10 +296,17 @@ del_loop (const char *device)
+ 		return 1;
+ 	}
+ 
+-	if (ioctl (fd, LOOP_CLR_FD, 0) < 0) {
+-		perror ("ioctl: LOOP_CLR_FD");
+-		close (fd);
+-		return 1;
++	while (ioctl (fd, LOOP_CLR_FD, 0) < 0) {
++		if (errno != EBUSY || retries-- <= 0) {
++			perror ("ioctl: LOOP_CLR_FD");
++			close (fd);
++			return 1;
++		}
++		fprintf(stderr,
++			"loop: device %s still in use, retrying delete\n",
++			device);
++		sleep(1);
++		continue;
+ 	}
+ 
+ 	close (fd);
