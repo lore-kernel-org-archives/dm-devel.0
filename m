@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 42/42] multipathd: lock vectors during initial
-	configuration
-Date: Tue,  8 Jan 2013 14:54:19 +0100
-Message-ID: <1357653259-62650-42-git-send-email-hare@suse.de>
+Subject: [PATCH 29/42] libmultipath: Print out uevent sequence
+	number
+Date: Tue,  8 Jan 2013 14:54:07 +0100
+Message-ID: <1357653259-62650-30-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,45 +23,51 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-During initial configuration the CLI thread is already running,
-so we need to lock the vectors here to not race with the
-'reconfigure' CLI command.
+For debugging we should be printing out the sequence number.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c |    4 +---
- 1 files changed, 1 insertions(+), 3 deletions(-)
+ libmultipath/uevent.c |   11 ++++++++++-
+ libmultipath/uevent.h |    1 +
+ 2 files changed, 11 insertions(+), 1 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 395307e..8917499 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1389,7 +1389,6 @@ reconfigure (struct vectors * vecs)
- 	struct config * old = conf;
- 	int retval = 1;
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 5b0b258..bc74d38 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -361,11 +361,20 @@ int failback_listen(void)
+ 			key = &buffer[bufpos];
+ 			keylen = strlen(key);
+ 			uev->envp[i] = key;
++			/* Filter out sequence number */
++			if (strncmp(key, "SEQNUM=", 7) == 0) {
++				char *eptr;
++
++				uev->seqnum = strtoul(key + 7, &eptr, 10);
++				if (eptr == key + 7)
++					uev->seqnum = -1;
++			}
+ 			bufpos += keylen + 1;
+ 		}
+ 		uev->envp[i] = NULL;
  
--	lock(vecs->lock);
- 	/*
- 	 * free old map and path vectors ... they use old conf state
- 	 */
-@@ -1410,7 +1409,6 @@ reconfigure (struct vectors * vecs)
- 		retval = 0;
- 	}
+-		condlog(3, "uevent '%s' from '%s'", uev->action, uev->devpath);
++		condlog(3, "uevent %ld '%s' from '%s'", uev->seqnum,
++			uev->action, uev->devpath);
+ 		uev->kernel = strrchr(uev->devpath, '/');
+ 		if (uev->kernel)
+ 			uev->kernel++;
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 64f00b7..762595a 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -20,6 +20,7 @@ struct uevent {
+ 	char *devpath;
+ 	char *action;
+ 	char *kernel;
++	unsigned long seqnum;
+ 	char *envp[HOTPLUG_NUM_ENVP];
+ };
  
--	unlock(vecs->lock);
- 	return retval;
- }
- 
-@@ -1641,9 +1639,9 @@ child (void * param)
- 	/*
- 	 * fetch and configure both paths and multipaths
- 	 */
--	lock(vecs->lock);
- 	running_state = DAEMON_CONFIGURE;
- 
-+	lock(vecs->lock);
- 	if (configure(vecs, 1)) {
- 		unlock(vecs->lock);
- 		condlog(0, "failure during configuration");
 -- 
 1.7.4.2
