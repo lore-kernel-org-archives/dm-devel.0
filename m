@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: make devt2devname use lstat to check
-	sysfs links
-Date: Mon, 7 Jan 2013 23:36:27 -0600
-Message-ID: <20130108053626.GV19059@ether.msp.redhat.com>
+Subject: [PATCH] multipath: change default configuration
+	parameters
+Date: Mon, 7 Jan 2013 23:34:59 -0600
+Message-ID: <20130108053459.GU19059@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,77 +22,564 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-dm_reassign wasn't working correctly for me because devt2devname used stat()
-to check if /sys/dev/block/major:minor was a symlink.  But stat() never returns
-a symlink. It follows it. It needs to use lstat() instead.  Also, I made
-multipath log a message when a dm device gets reassigned to use multipath.
+This patch makes multipath devices default to setting fast_io_fail,
+switches the default selector to service-time and removes the
+round-robin setting of the builtin device configurations. The goal is
+to give multipath devices better performance "out of the box".
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c |    4 +++-
- libmultipath/sysfs.c     |    6 ++++--
- libmultipath/util.c      |    3 ++-
- 3 files changed, 9 insertions(+), 4 deletions(-)
+ libmultipath/config.c   |    1 
+ libmultipath/defaults.h |    2 -
+ libmultipath/hwtable.c  |   65 ------------------------------------------------
+ 3 files changed, 2 insertions(+), 66 deletions(-)
 
-Index: multipath-tools-120821/libmultipath/devmapper.c
+Index: multipath-tools-120821/libmultipath/config.c
 ===================================================================
---- multipath-tools-120821.orig/libmultipath/devmapper.c
-+++ multipath-tools-120821/libmultipath/devmapper.c
-@@ -1370,8 +1370,10 @@ int dm_reassign(const char *mapname)
- 		return 1;
- 	}
+--- multipath-tools-120821.orig/libmultipath/config.c
++++ multipath-tools-120821/libmultipath/config.c
+@@ -516,6 +516,7 @@ load_config (char * file)
+ 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+ 	conf->checkint = DEFAULT_CHECKINT;
+ 	conf->max_checkint = MAX_CHECKINT(conf->checkint);
++	conf->fast_io_fail = 5;
  
--	if (!(dmt = dm_task_create(DM_DEVICE_DEPS)))
-+	if (!(dmt = dm_task_create(DM_DEVICE_DEPS))) {
-+		condlog(3, "%s: couldn't make dm task", mapname);
- 		return 0;
-+	}
- 
- 	if (!dm_task_set_name(dmt, mapname))
- 		goto out;
-Index: multipath-tools-120821/libmultipath/sysfs.c
+ 	/*
+ 	 * preload default hwtable
+Index: multipath-tools-120821/libmultipath/hwtable.c
 ===================================================================
---- multipath-tools-120821.orig/libmultipath/sysfs.c
-+++ multipath-tools-120821/libmultipath/sysfs.c
-@@ -125,8 +125,10 @@ int sysfs_check_holders(char * check_dev
- 		return 0;
- 	}
- 
--	if (devt2devname(check_dev, PATH_SIZE, check_devt))
-+	if (devt2devname(check_dev, PATH_SIZE, check_devt)) {
-+		condlog(1, "can't get devname for %s", check_devt);
- 		return 0;
-+	}
- 
- 	condlog(3, "%s: checking holder", check_dev);
- 
-@@ -153,7 +155,7 @@ int sysfs_check_holders(char * check_dev
- 		}
- 		table_name = dm_mapname(major, table_minor);
- 
--		condlog(3, "%s: reassign table %s old %s new %s", check_dev,
-+		condlog(0, "%s: reassign table %s old %s new %s", check_dev,
- 			table_name, check_devt, new_devt);
- 
- 		dm_reassign_table(table_name, check_devt, new_devt);
-Index: multipath-tools-120821/libmultipath/util.c
+--- multipath-tools-120821.orig/libmultipath/hwtable.c
++++ multipath-tools-120821/libmultipath/hwtable.c
+@@ -28,7 +28,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "Compellent Vol",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -50,7 +49,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "Xserve RAID ",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -72,7 +70,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "VV",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -88,7 +85,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "HSG80",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 hp_sw",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -104,7 +100,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "A6189A",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -121,7 +116,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "(MSA|HSV)1.0.*",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 hp_sw",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -137,7 +131,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "MSA VOLUME",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -153,7 +146,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "HSV1[01]1|HSV2[01]0|HSV300|HSV4[05]0",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -169,7 +161,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "MSA2[02]12fc|MSA2012i",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -185,7 +176,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "MSA2012sa|MSA23(12|24)(fc|i|sa)|MSA2000s VOLUME",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -202,7 +192,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "HSVX700",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 alua",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -219,7 +208,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "LOGICAL VOLUME.*",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -236,7 +224,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "P2000 G3 FC|P2000G3 FC/iSCSI|P2000 G3 SAS|P2000 G3 iSCSI",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -258,7 +245,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "SAN DataDirector",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -280,7 +266,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "SYMMETRIX",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -297,7 +282,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "LUNZ",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 emc",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -314,7 +298,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "LUNZ",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -336,7 +319,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "CentricStor",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -352,7 +334,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "ETERNUS_DX(L|400|8000)",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -373,7 +354,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "OPEN-.*",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -389,7 +369,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "DF.*",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -411,7 +390,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "ProFibre 4000R",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -429,7 +407,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -447,7 +424,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -465,7 +441,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -483,7 +458,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -500,7 +474,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -518,7 +491,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -536,7 +508,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -554,7 +525,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -572,7 +542,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -589,7 +558,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "^3542",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -606,7 +574,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "^2105800",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -623,7 +590,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "^2105F20",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -640,7 +606,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "^1750500",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -657,7 +622,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "^2107900",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -674,7 +638,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "^2145",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -693,7 +656,6 @@ static struct hwentry default_hw[] = {
+ 		.uid_attribute = "ID_UID",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -712,7 +674,6 @@ static struct hwentry default_hw[] = {
+ 		.uid_attribute = "ID_UID",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -729,7 +690,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "^IPR.*",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 alua",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -746,7 +706,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "1820N00",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -763,7 +722,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "2810XIV",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = 15,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -786,7 +744,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "VDASD",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -803,7 +760,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "3303      NVDISK",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = FAILOVER,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -820,7 +776,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "NVDISK",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 alua",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -838,7 +793,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -856,7 +810,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -874,7 +827,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -892,7 +844,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -914,7 +865,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "LUN.*",
+ 		.features      = "3 queue_if_no_path pg_init_retries 50",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.flush_on_last_del = FLUSH_ENABLED,
+@@ -936,7 +886,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "COMSTAR",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -957,7 +906,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "Nseries.*",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -978,7 +926,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "Axiom.*",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1001,7 +948,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "TP9[13]00",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1018,7 +964,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1035,7 +980,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1052,7 +996,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "DISK ARRAY",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 alua",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1075,7 +1018,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1097,7 +1039,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "(StorEdge 3510|T4)",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1113,7 +1054,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "FC2502",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1135,7 +1075,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "RAIGE VOLUME",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1151,7 +1090,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1169,7 +1107,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1187,7 +1124,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+@@ -1204,7 +1140,6 @@ static struct hwentry default_hw[] = {
+ 		.bl_product    = "Universal Xport",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = "1 rdac",
+-		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+Index: multipath-tools-120821/libmultipath/defaults.h
 ===================================================================
---- multipath-tools-120821.orig/libmultipath/util.c
-+++ multipath-tools-120821/libmultipath/util.c
-@@ -161,6 +161,7 @@ devt2devname (char *devname, int devname
- 	struct stat statbuf;
- 
- 	memset(block_path, 0, sizeof(block_path));
-+	memset(dev, 0, sizeof(dev));
- 	if (sscanf(devt, "%u:%u", &major, &minor) != 2) {
- 		condlog(0, "Invalid device number %s", devt);
- 		return 1;
-@@ -172,7 +173,7 @@ devt2devname (char *devname, int devname
- 	if (stat("/sys/dev/block", &statbuf) == 0) {
- 		/* Newer kernels have /sys/dev/block */
- 		sprintf(block_path,"/sys/dev/block/%u:%u", major, minor);
--		if (stat(block_path, &statbuf) == 0) {
-+		if (lstat(block_path, &statbuf) == 0) {
- 			if (S_ISLNK(statbuf.st_mode) &&
- 			    readlink(block_path, dev, FILE_NAME_SIZE) > 0) {
- 				char *p = strrchr(dev, '/');
+--- multipath-tools-120821.orig/libmultipath/defaults.h
++++ multipath-tools-120821/libmultipath/defaults.h
+@@ -1,7 +1,7 @@
+ #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
+ #define DEFAULT_UDEVDIR		"/dev"
+ #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
+-#define DEFAULT_SELECTOR	"round-robin 0"
++#define DEFAULT_SELECTOR	"service-time 0"
+ #define DEFAULT_ALIAS_PREFIX	"mpath"
+ #define DEFAULT_FEATURES	"0"
+ #define DEFAULT_HWHANDLER	"0"
