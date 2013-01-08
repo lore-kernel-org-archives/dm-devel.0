@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/42] Do not trigger a map reload on priority
-	updates
-Date: Tue,  8 Jan 2013 14:53:47 +0100
-Message-ID: <1357653259-62650-10-git-send-email-hare@suse.de>
+Subject: [PATCH 27/42] Update 'no_path_retry' correctly for
+	failed paths
+Date: Tue,  8 Jan 2013 14:54:05 +0100
+Message-ID: <1357653259-62650-28-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,119 +20,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+Cc: Martin Wilck <martin.wilck@ts.fujitsu.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-update_path_groups() is just there to update the priority groups,
-so it should trigger a table reload only if the priority has
-indeed changed.
+The bug is triggered if path failed event is received by multipathd after all
+paths have been already marked as failed. Surprisingly enough, it seems to
+happen quite often; colleague of mine who tested this hit this bug every time.
 
+Here is event sequence that explains this bug. I left some messages for
+clarity; full log is available on request. We have completed initialization and
+set feature queue_if_no_path for map CX_201 by virtue of using no_path_retry >
+0.
+
+Aug 31 10:49:09 | CX_201: devmap event #18
+Aug 31 10:49:09 | CX_201: discover
+Aug 31 10:49:09 | CX_201: rr_weight = 1 (internal default)
+Aug 31 10:49:09 | CX_201: pgfailback = -2 (controller setting)
+Aug 31 10:49:09 | CX_201: no_path_retry = 2 (controller setting)
+Aug 31 10:49:09 | pg_timeout = NONE (internal default)
+Aug 31 10:49:09 | 65:192: mark as failed
+Aug 31 10:49:09 | CX_201: remaining active paths: 3
+Aug 31 10:49:09 | 8:192: mark as failed
+Aug 31 10:49:09 | CX_201: remaining active paths: 2
+Aug 31 10:49:09 | CX_201: devmap event #19
+Aug 31 10:49:09 | CX_201: discover
+Aug 31 10:49:09 | CX_201: rr_weight = 1 (internal default)
+Aug 31 10:49:09 | CX_201: pgfailback = -2 (controller setting)
+Aug 31 10:49:09 | CX_201: no_path_retry = 2 (controller setting)
+Aug 31 10:49:09 | pg_timeout = NONE (internal default)
+
+Two paths failed by driver, multipahd marked them as failed.
+
+Aug 31 10:49:09 | checker failed path 66:0 in map CX_201
+Aug 31 10:49:09 | CX_201: remaining active paths: 1
+
+Checker failed third path
+
+Aug 31 10:49:09 | checker failed path 8:96 in map CX_201
+Aug 31 10:49:09 | CX_201: Entering recovery mode: max_retries=2
+Aug 31 10:49:09 | CX_201: remaining active paths: 0
+
+Checker failed last path; multipathd entered retry loop.
+
+Aug 31 10:49:10 | CX_201: devmap event #20
+
+We got late event about failed path
+
+Aug 31 10:49:10 | CX_201: discover
+
+Start discovery. Call update_multipath -> setup_multipath ->
+update_multipath_strings -> update_multipath_tablle -> disassemble_map.
+
+Now disassemble_map tries to set no_path_retry value from kernel. This
+obviously is not going to work as kernel is able remembering only Boolean
+(queue/fail), while no_path_retry is arbitrary integer. So no_path_retry is set
+to NO_PATH_RETRY_QUEUE from kernel.
+
+Aug 31 10:49:10 | CX_201: rr_weight = 1 (internal default)
+Aug 31 10:49:10 | CX_201: pgfailback = -2 (controller setting)
+
+At this point we call set_no_path_retry:
+
+set_no_path_retry(struct multipath *mpp)
+{
+        mpp->retry_tick = 0;
+        mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
+        if (mpp->nr_active > 0)
+                select_no_path_retry(mpp);
+
+So
+
+1) retry_tick is reset
+2) nr_active = 0 (no active path)
+3) we do not set no_path_retry from config file because nr_active == 0 => left
+with NO_PATH_RETRY_QUEUE.
+
+Aug 31 10:49:10 | pg_timeout = NONE (internal default)
+
+From now on there is no state changes, so map is hung forever.
+
+Signed-off-by: Martin Wilck <martin.wilck@ts.fujitsu.com>
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/configure.c  |   13 ++++++++-----
- libmultipath/configure.h  |    2 +-
- multipathd/cli_handlers.c |    2 +-
- multipathd/main.c         |   27 ++++++---------------------
- 4 files changed, 16 insertions(+), 28 deletions(-)
+ libmultipath/structs_vec.c |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 1bb45a3..0f1fe43 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -765,14 +765,17 @@ out:
- 	return NULL;
- }
- 
--extern int reload_map(struct vectors *vecs, struct multipath *mpp)
-+extern int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh)
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 384afb7..7073915 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -306,8 +306,7 @@ set_no_path_retry(struct multipath *mpp)
  {
--	char params[PARAMS_SIZE];
--	int r;
-+	char params[PARAMS_SIZE] = {0};
-+	struct path *pp;
-+	int i, r;
+ 	mpp->retry_tick = 0;
+ 	mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
+-	if (mpp->nr_active > 0)
+-		select_no_path_retry(mpp);
++	select_no_path_retry(mpp);
  
- 	update_mpp_paths(mpp, vecs->pathvec);
--
--	params[0] = '\0';
-+	if (refresh) {
-+		vector_foreach_slot (mpp->paths, pp, i)
-+			pathinfo(pp, conf->hwtable, DI_PRIO);
-+	}
- 	if (setup_map(mpp, params, PARAMS_SIZE)) {
- 		condlog(0, "%s: failed to setup map", mpp->alias);
- 		return 1;
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 6c1c493..d13c0ac 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -28,5 +28,5 @@ int domap (struct multipath * mpp, char * params);
- int reinstate_paths (struct multipath *mpp);
- int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload);
- char * get_refwwid (char * dev, enum devtypes dev_type, vector pathvec);
--int reload_map(struct vectors *vecs, struct multipath *mpp);
-+int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh);
- 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 544cbfb..6053b5a 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -561,7 +561,7 @@ cli_reload(void *v, char **reply, int *len, void *data)
- 		return 1;
- 	}
- 
--	return reload_map(vecs, mpp);
-+	return reload_map(vecs, mpp, 0);
- }
- 
- int resize_map(struct multipath *mpp, unsigned long long size,
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 84574b2..7fe9c5b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -674,11 +674,12 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 				uev->kernel);
- 			return 1;
- 		}
--		if (pp->mpp)
--			retval = reload_map(vecs, pp->mpp);
-+		if (pp->mpp) {
-+			retval = reload_map(vecs, pp->mpp, 0);
- 
--		condlog(2, "%s: map %s reloaded (retval %d)",
--			uev->kernel, pp->mpp->alias, retval);
-+			condlog(2, "%s: map %s reloaded (retval %d)",
-+				uev->kernel, pp->mpp->alias, retval);
-+		}
- 
- 	}
- 
-@@ -1086,25 +1087,9 @@ int update_prio(struct path *pp, int refresh_all)
- 
- int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
- {
--	int i;
--	struct path * pp;
--	char params[PARAMS_SIZE];
--
--	update_mpp_paths(mpp, vecs->pathvec);
--	if (refresh) {
--		vector_foreach_slot (mpp->paths, pp, i)
--			pathinfo(pp, conf->hwtable, DI_PRIO);
--	}
--	params[0] = '\0';
--	if (setup_map(mpp, params, PARAMS_SIZE))
-+	if (reload_map(vecs, mpp, refresh))
- 		return 1;
- 
--	mpp->action = ACT_RELOAD;
--	if (domap(mpp, params) <= 0) {
--		condlog(0, "%s: failed to update map : %s", mpp->alias,
--			strerror(errno));
--		return 1;
--	}
- 	dm_lib_release();
- 	if (setup_multipath(vecs, mpp) != 0)
- 		return 1;
+ 	switch (mpp->no_path_retry) {
+ 	case NO_PATH_RETRY_UNDEF:
 -- 
 1.7.4.2
