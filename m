@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 12/42] Valgrind fixes for prioritizer
-Date: Tue,  8 Jan 2013 14:53:50 +0100
-Message-ID: <1357653259-62650-13-git-send-email-hare@suse.de>
+Subject: [PATCH 40/42] multipathd: sighandlers might use
+	uninitialized gvecs
+Date: Tue,  8 Jan 2013 14:54:17 +0100
+Message-ID: <1357653259-62650-40-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,51 +23,37 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Declaring an array does not zero out its contents. So we might
-be reading random garbage here.
+gvecs are initialized after signal handlers, which in turn
+might access the vectors.
+So the signal handlers might access uninitialized variables.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/prioritizers/hds.c   |    1 +
- libmultipath/prioritizers/ontap.c |    1 +
- libmultipath/prioritizers/rdac.c  |    1 +
- 3 files changed, 3 insertions(+), 0 deletions(-)
+ multipathd/main.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
-index b22e1df..5d75f84 100644
---- a/libmultipath/prioritizers/hds.c
-+++ b/libmultipath/prioritizers/hds.c
-@@ -105,6 +105,7 @@ int hds_modular_prio (const char *dev, int fd)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3a6e88f..f491a24 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1617,14 +1617,14 @@ child (void * param)
+ 
  	}
  
- 	memset (&io_hdr, 0, sizeof (sg_io_hdr_t));
-+	memset (inqBuff, 0, INQ_REPLY_LEN);
- 	io_hdr.interface_id = 'S';
- 	io_hdr.cmd_len = sizeof (inqCmdBlk);
- 	io_hdr.mx_sb_len = sizeof (sense_buffer);
-diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/ontap.c
-index 0d34092..026d45d 100644
---- a/libmultipath/prioritizers/ontap.c
-+++ b/libmultipath/prioritizers/ontap.c
-@@ -80,6 +80,7 @@ static int send_gva(const char *dev, int fd, unsigned char pg,
- 	int ret = -1;
+-	signal_init();
+-	setscheduler();
+-	set_oom_adj();
+ 	vecs = gvecs = init_vecs();
+-
+ 	if (!vecs)
+ 		exit(1);
  
- 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
-+	memset(results, 0, *results_size);
- 	io_hdr.interface_id = 'S';
- 	io_hdr.cmd_len = sizeof (cdb);
- 	io_hdr.mx_sb_len = sizeof (sb);
-diff --git a/libmultipath/prioritizers/rdac.c b/libmultipath/prioritizers/rdac.c
-index 8667790..441b3b0 100644
---- a/libmultipath/prioritizers/rdac.c
-+++ b/libmultipath/prioritizers/rdac.c
-@@ -22,6 +22,7 @@ int rdac_prio(const char *dev, int fd)
- 	int ret = 0;
- 
- 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
-+	memset(sense_buffer, 0, 256);
- 	io_hdr.interface_id = 'S';
- 	io_hdr.cmd_len = sizeof (inqCmdBlk);
- 	io_hdr.mx_sb_len = sizeof (sb);
++	signal_init();
++	setscheduler();
++	set_oom_adj();
++
+ 	conf->daemon = 1;
+ 	udev_set_sync_support(0);
+ 	/*
 -- 
 1.7.4.2
