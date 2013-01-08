@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 32/42] Make 'allocated' an integer in vector.h
-Date: Tue,  8 Jan 2013 14:54:10 +0100
-Message-ID: <1357653259-62650-33-git-send-email-hare@suse.de>
+Subject: [PATCH 24/42] Do not call sysfs_get_timeout for non-SCSI
+	devices
+Date: Tue,  8 Jan 2013 14:54:02 +0100
+Message-ID: <1357653259-62650-25-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,41 +23,34 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I don't trust the programmers here, as we're unconditionally
-decreasing the 'allocated' setting on vector_free().
-So better make that an integer to catch underflows.
+Only SCSI devices have a timeout, so there is no point in
+trying to set a timeout for other types.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/vector.c |    2 +-
- libmultipath/vector.h |    2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c |    8 +++++---
+ 1 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/vector.c b/libmultipath/vector.c
-index 74079a4..dcf69bf 100644
---- a/libmultipath/vector.c
-+++ b/libmultipath/vector.c
-@@ -114,7 +114,7 @@ vector_del_slot(vector v, int slot)
- 
- 	v->allocated -= VECTOR_DEFAULT_SIZE;
- 
--	if (!v->allocated) {
-+	if (v->allocated <= 0) {
- 		FREE(v->slot);
- 		v->slot = NULL;
- 		v->allocated = 0;
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 6779186..7612b4c 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -25,7 +25,7 @@
- 
- /* vector definition */
- struct _vector {
--	unsigned int allocated;
-+	int allocated;
- 	void **slot;
- };
- typedef struct _vector *vector;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 7ed8556..3ffdc62 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -761,11 +761,13 @@ get_state (struct path * pp, int daemon)
+ 	checker_clear_message(c);
+ 	if (daemon)
+ 		checker_set_async(c);
+-	if (!conf->checker_timeout)
+-		sysfs_get_timeout(pp, &(c->timeout));
++	if (!conf->checker_timeout &&
++	    (pp->bus != SYSFS_BUS_SCSI ||
++	     sysfs_get_timeout(pp, &(c->timeout))))
++		c->timeout = DEF_TIMEOUT;
+ 	state = checker_check(c);
+ 	condlog(3, "%s: state = %s", pp->dev, checker_state_name(state));
+-	if (state == PATH_DOWN && strlen(checker_message(c)))
++	if (state != PATH_UP && strlen(checker_message(c)))
+ 		condlog(3, "%s: checker msg is \"%s\"",
+ 			pp->dev, checker_message(c));
+ 	return state;
 -- 
 1.7.4.2
