@@ -1,13 +1,15 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: check for NULL from udev_device_get_*
-Date: Tue, 8 Jan 2013 00:00:00 -0600
-Message-ID: <20130108060000.GI19059@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH] Don't add 'p' delimiter when you shouldn't
+Date: Tue, 08 Jan 2013 08:04:59 +0100
+Message-ID: <1357628699.3819.4.camel@lapoo.opensvc.com>
+References: <1357588581-29831-1-git-send-email-psusi@ubuntu.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <1357588581-29831-1-git-send-email-psusi@ubuntu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,77 +20,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: Phillip Susi <psusi@ubuntu.com>
 List-Id: dm-devel.ids
 
-The udev_device_get_* functions can return NULL, an occassionally do
-so in the multipathd code.  multipath needs to check if the result
-is NULL before dereferencing it.
+On lun., 2013-01-07 at 14:56 -0500, Phillip Susi wrote:
+> The 'p' delimiter is supposed to be added when the base disk name ends
+> in a digit.  This decision was based on the name given on the command
+> line, not the canonical device name, so giving /dev/dm-0 instead of
+> /dev/mapper/foo triggered the digit test and added the 'p'.  Changed
+> test to use the canonical name rather than the given name.
+> 
+Isn't that already merged ?
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/discovery.c |   16 +++++++++++-----
- 1 file changed, 11 insertions(+), 5 deletions(-)
+commit 02ce0e8f40f10c0d0c6ad15b3abd02cb43653879
+Author: Phillip Susi <psusi@ubuntu.com>
+Date:   Thu Feb 9 21:16:21 2012 +0100
 
-Index: multipath-tools-120821/libmultipath/discovery.c
-===================================================================
---- multipath-tools-120821.orig/libmultipath/discovery.c
-+++ multipath-tools-120821/libmultipath/discovery.c
-@@ -113,6 +113,7 @@ path_discovery (vector pathvec, struct c
- 
- 	udev_list_entry_foreach(entry,
- 				udev_enumerate_get_list_entry(udev_iter)) {
-+		const char *devtype;
- 		devpath = udev_list_entry_get_name(entry);
- 		condlog(4, "Discover device %s", devpath);
- 		udevice = udev_device_new_from_syspath(conf->udev, devpath);
-@@ -121,7 +122,8 @@ path_discovery (vector pathvec, struct c
- 			r++;
- 			continue;
- 		}
--		if(!strncmp(udev_device_get_devtype(udevice), "disk", 4))
-+		devtype = udev_device_get_devtype(udevice);
-+		if(devtype && !strncmp(devtype, "disk", 4))
- 			r += path_discover(pathvec, conf, udevice, flag);
- 		udev_device_unref(udevice);
- 	}
-@@ -459,7 +461,8 @@ scsi_sysfs_pathinfo (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "scsi", 4)) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4)) {
- 			attr_path = udev_device_get_sysname(parent);
- 			if (!attr_path)
- 				break;
-@@ -525,7 +528,8 @@ ccw_sysfs_pathinfo (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "ccw", 3))
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "ccw", 3))
- 			break;
- 		parent = udev_device_get_parent(parent);
- 	}
-@@ -581,7 +585,8 @@ cciss_sysfs_pathinfo (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "cciss", 5)) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "cciss", 5)) {
- 			attr_path = udev_device_get_sysname(parent);
- 			if (!attr_path)
- 				break;
-@@ -662,7 +667,8 @@ path_offline (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "scsi", 4))
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4))
- 			break;
- 		parent = udev_device_get_parent(parent);
- 	}
+    [kpartx] Don't add 'p' delimiter when you shouldn't
+    
+    The 'p' delimiter is supposed to be added when the base disk name
+    ends in a digit.  This decision was based on the name given on the
+    command line, not the canonical device name, so giving /dev/dm-0
+    instead of /dev/mapper/foo triggered the digit test and added the
+    'p'.  Changed test to use the canonical name rather than the given
+    name.
+
+Regards,
+Christophe Varoqui
+www.opensvc.com
+
+> Signed-off-by: Phillip Susi <psusi@ubuntu.com>
+> ---
+>  kpartx/kpartx.c |   12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
+> 
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index 0711450..08f3407 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+> @@ -323,12 +323,6 @@ main(int argc, char **argv){
+>  		device = loopdev;
+>  	}
+>  
+> -	if (delim == NULL) {
+> -		delim = malloc(DELIM_SIZE);
+> -		memset(delim, 0, DELIM_SIZE);
+> -		set_delimiter(device, delim);
+> -	}
+> -
+>  	off = find_devname_offset(device);
+>  
+>  	if (!loopdev) {
+> @@ -350,6 +344,12 @@ main(int argc, char **argv){
+>  		return 0;
+>  	}
+>  
+> +	if (delim == NULL) {
+> +		delim = malloc(DELIM_SIZE);
+> +		memset(delim, 0, DELIM_SIZE);
+> +		set_delimiter(mapname, delim);
+> +	}
+> +
+>  	fd = open(device, O_RDONLY);
+>  
+>  	if (fd == -1) {
