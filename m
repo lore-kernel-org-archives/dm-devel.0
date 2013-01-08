@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 01/42] libmultipath: Invalid check for mpp->wwid
-	in dm_addmap()
-Date: Tue,  8 Jan 2013 14:53:39 +0100
-Message-ID: <1357653259-62650-2-git-send-email-hare@suse.de>
+Subject: [PATCH 11/42] Checker name is not displayed on failure
+Date: Tue,  8 Jan 2013 14:53:49 +0100
+Message-ID: <1357653259-62650-12-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,27 +22,33 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-mpp->wwid is an array, and so a check against NULL
-is wrong; we need to use strlen here.
-Found by coverity.
+If add_checker() isn't able to locate the checker
+it won't display the name in free_checker().
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/devmapper.c |    2 +-
+ libmultipath/prio.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index de7d446..5132399 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -281,7 +281,7 @@ dm_addmap (int task, const char *target, struct multipath *mpp, char * params,
- 	if (ro)
- 		dm_task_set_ro(dmt);
- 
--	if (use_uuid && mpp->wwid){
-+	if (use_uuid && strlen(mpp->wwid) > 0){
- 		prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(mpp->wwid) + 1);
- 		if (!prefixed_uuid) {
- 			condlog(0, "cannot create prefixed uuid : %s\n",
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index cf97fad..8e6b93e 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -86,6 +86,7 @@ struct prio * add_prio (char * name)
+ 	p = alloc_prio();
+ 	if (!p)
+ 		return NULL;
++	snprintf(p->name, PRIO_NAME_LEN, "%s", name);
+ 	snprintf(libname, LIB_PRIO_NAMELEN, "%s/libprio%s.so",
+ 		 conf->multipath_dir, name);
+ 	if (stat(libname,&stbuf) < 0) {
+@@ -107,7 +108,6 @@ struct prio * add_prio (char * name)
+ 		condlog(0, "A dynamic linking error occurred: (%s)", errstr);
+ 	if (!p->getprio)
+ 		goto out;
+-	snprintf(p->name, PRIO_NAME_LEN, "%s", name);
+ 	list_add(&p->node, &prioritizers);
+ 	return p;
+ out:
 -- 
 1.7.4.2
