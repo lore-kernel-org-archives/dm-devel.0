@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 16/42] libmultipath: error checking in
-	remove_features()
-Date: Tue,  8 Jan 2013 14:53:54 +0100
-Message-ID: <1357653259-62650-17-git-send-email-hare@suse.de>
+Subject: [PATCH 17/42] Increase parameter buffer
+Date: Tue,  8 Jan 2013 14:53:55 +0100
+Message-ID: <1357653259-62650-18-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,26 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-An error check was missing in remove_features().
+Multipath is using an internal static buffer for assembling
+device-mapper tables, which might be too small for large setups.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/structs.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ libmultipath/structs.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 88e8706..049f17d 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -559,6 +559,9 @@ remove_feature(char **f, char *o)
- 	 * about to be removed
- 	 */
- 	p = strchr(*f, ' ');
-+	if (!p)
-+		/* Internal error, feature string inconsistent */
-+		return 1;
- 	while (*p == ' ')
- 		p++;
- 	p--;
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 312014b..16e940b 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -9,7 +9,7 @@
+ #define SERIAL_SIZE		65
+ #define NODE_NAME_SIZE		224
+ #define PATH_STR_SIZE		16
+-#define PARAMS_SIZE		1024
++#define PARAMS_SIZE		4096
+ #define FILE_NAME_SIZE		256
+ #define CALLOUT_MAX_SIZE	256
+ #define BLK_DEV_SIZE		33
 -- 
 1.7.4.2
