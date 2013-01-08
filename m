@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: make reservation_key print out
-	correctly
-Date: Mon, 7 Jan 2013 23:54:07 -0600
-Message-ID: <20130108055407.GE19059@ether.msp.redhat.com>
+Subject: [PATCH] multipath: storagetek 6180 config
+Date: Mon, 7 Jan 2013 23:55:08 -0600
+Message-ID: <20130108055508.GF19059@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,79 +18,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-This patch fixes the reservation_key print functions, so they print
-it out like it was in the configuration file.  Also, it keeps
-cli_getprstatus() from writing over random memory.
+New StorageTek default config.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c       |   31 +++++++++++++++++++++++++++++--
- multipathd/cli_handlers.c |    2 +-
- 2 files changed, 30 insertions(+), 3 deletions(-)
+ libmultipath/hwtable.c |   15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-Index: multipath-tools-120821/libmultipath/dict.c
+Index: multipath-tools-120821/libmultipath/hwtable.c
 ===================================================================
---- multipath-tools-120821.orig/libmultipath/dict.c
-+++ multipath-tools-120821/libmultipath/dict.c
-@@ -2052,8 +2052,22 @@ snprint_mp_prio_args(char * buff, int le
- static int
- snprint_mp_reservation_key (char * buff, int len, void * data)
- {
-+	int i;
-+	unsigned char *keyp;
-+	uint64_t prkey = 0;
- 	struct mpentry * mpe = (struct mpentry *)data;
--	return snprintf(buff, len, "%s" , mpe->reservation_key);
-+
-+	if (!mpe->reservation_key)
-+		return 0;
-+	keyp = (unsigned char *)mpe->reservation_key;
-+	for (i = 0; i < 8; i++) {
-+		if (i > 0)
-+			prkey <<= 8;
-+		prkey |= *keyp;
-+		keyp++;
-+	}
-+
-+	return snprintf(buff, len, "0x%" PRIx64, prkey);
- }
- 
- 	static int
-@@ -2721,7 +2735,20 @@ snprint_def_wwids_file (char * buff, int
- static int
- snprint_def_reservation_key(char * buff, int len, void * data)
- {
--	return snprintf(buff, len, "%s", conf->reservation_key);
-+	int i;
-+	unsigned char *keyp;
-+	uint64_t prkey = 0;
-+
-+	if (!conf->reservation_key)
-+		return 0;
-+	keyp = (unsigned char *)conf->reservation_key;
-+	for (i = 0; i < 8; i++) {
-+		if (i > 0)
-+			prkey <<= 8;
-+		prkey |= *keyp;
-+		keyp++;
-+	}
-+	return snprintf(buff, len, "0x%" PRIx64, prkey);
- }
- 
- static int
-Index: multipath-tools-120821/multipathd/cli_handlers.c
-===================================================================
---- multipath-tools-120821.orig/multipathd/cli_handlers.c
-+++ multipath-tools-120821/multipathd/cli_handlers.c
-@@ -947,7 +947,7 @@ cli_getprstatus (void * v, char ** reply
- 
- 
- 	sprintf(*reply,"%d",mpp->prflag);
--	*reply[1]='\0';
-+	(*reply)[1]='\0';
- 
- 
- 	condlog(3, "%s: reply = %s", param, *reply);
+--- multipath-tools-120821.orig/libmultipath/hwtable.c
++++ multipath-tools-120821/libmultipath/hwtable.c
+@@ -1120,6 +1120,21 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 		.prio_args     = NULL,
+ 	},
++	/* StorageTek 6180 */
++	{
++		.vendor        = "SUN",
++		.product       = "SUN_6180",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 rdac",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.minio         = DEFAULT_MINIO,
++		.minio_rq      = DEFAULT_MINIO_RQ,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
+ 	/* LSI/Engenio/NetApp E-Series RDAC storage */
+ 	{
+ 		.vendor        = "(LSI|ENGENIO)",
