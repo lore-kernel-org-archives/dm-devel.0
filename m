@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 05/42] prio: fix merging of prioritizers with
-	different args
-Date: Tue,  8 Jan 2013 14:53:43 +0100
-Message-ID: <1357653259-62650-6-git-send-email-hare@suse.de>
+Subject: [PATCH 19/42] Inconsistent string quoting
+Date: Tue,  8 Jan 2013 14:53:57 +0100
+Message-ID: <1357653259-62650-20-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,387 +19,363 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Petr Uzel <petr.uzel@suse.cz>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Petr Uzel <petr.uzel@suse.cz>
+When printing the hardware table strings are quoted twice, and
+even numerical values have single quotes. This patch removes
+the double quotes and retains single quotes only for string
+values.
 
-Signed-off-by: Petr Uzel <petr.uzel@suse.cz>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c                 |   12 ++++---
- libmultipath/prio.c                      |   49 +++++++++++++++++++++++++++++-
- libmultipath/prio.h                      |    9 +++++-
- libmultipath/prioritizers/alua.c         |    1 +
- libmultipath/prioritizers/datacore.c     |    1 +
- libmultipath/prioritizers/emc.c          |    1 +
- libmultipath/prioritizers/hds.c          |    1 +
- libmultipath/prioritizers/hp_sw.c        |    1 +
- libmultipath/prioritizers/ontap.c        |    1 +
- libmultipath/prioritizers/rdac.c         |    1 +
- libmultipath/prioritizers/weightedpath.c |    6 +++-
- libmultipath/propsel.c                   |   15 ++++-----
- libmultipath/structs.c                   |    3 ++
- libmultipath/structs.h                   |    6 +++-
- libmultipath/structs_vec.c               |    2 +-
- 15 files changed, 90 insertions(+), 19 deletions(-)
+ libmultipath/dict.c |   98 +++++++++++++++++++++++++-------------------------
+ 1 files changed, 49 insertions(+), 49 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 33e44b6..6f5470f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -777,21 +777,23 @@ get_prio (struct path * pp)
- 	if (!pp)
- 		return 0;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index ab9fdeb..6dae335 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -1062,11 +1062,11 @@ hw_failback_handler(vector strvec)
  
--	if (!pp->prio) {
-+	struct prio * p = &pp->prio;
-+
-+	if (!prio_selected(p)) {
- 		select_prio(pp);
--		if (!pp->prio) {
-+		if (!prio_selected(p)) {
- 			condlog(3, "%s: no prio selected", pp->dev);
- 			return 1;
- 		}
- 	}
--	pp->priority = prio_getprio(pp->prio, pp);
-+	pp->priority = prio_getprio(p, pp);
- 	if (pp->priority < 0) {
--		condlog(3, "%s: %s prio error", pp->dev, prio_name(pp->prio));
-+		condlog(3, "%s: %s prio error", pp->dev, prio_name(p));
- 		pp->priority = PRIO_UNDEF;
- 		return 1;
- 	}
- 	condlog(3, "%s: %s prio = %u",
--		pp->dev, prio_name(pp->prio), pp->priority);
-+		pp->dev, prio_name(p), pp->priority);
+ 	buff = set_value(strvec);
+ 
+-	if (strlen(buff) == 6 && !strcmp(buff, "manual"))
++	if (strlen(buff) == 6 && !strcmp(buff, "\"manual\""))
+ 		hwe->pgfailback = -FAILBACK_MANUAL;
+-	else if (strlen(buff) == 9 && !strcmp(buff, "immediate"))
++	else if (strlen(buff) == 9 && !strcmp(buff, "\"immediate\""))
+ 		hwe->pgfailback = -FAILBACK_IMMEDIATE;
+-	else if (strlen(buff) == 10 && !strcmp(buff, "followover"))
++	else if (strlen(buff) == 10 && !strcmp(buff, "\"followover\""))
+ 		hwe->pgfailback = -FAILBACK_FOLLOWOVER;
+ 	else
+ 		hwe->pgfailback = atoi(buff);
+@@ -1757,7 +1757,7 @@ snprint_mp_path_grouping_policy (char * buff, int len, void * data)
+ 		return 0;
+ 	get_pgpolicy_name(str, POLICY_NAME_SIZE, mpe->pgpolicy);
+ 
+-	return snprintf(buff, len, "%s", str);
++	return snprintf(buff, len, "\"%s\"", str);
+ }
+ 
+ static int
+@@ -1832,9 +1832,9 @@ snprint_mp_rr_weight (char * buff, int len, void * data)
+ 	if (!mpe->rr_weight)
+ 		return 0;
+ 	if (mpe->rr_weight == RR_WEIGHT_PRIO)
+-		return snprintf(buff, len, "priorities");
++		return snprintf(buff, len, "\"priorities\"");
+ 	if (mpe->rr_weight == RR_WEIGHT_NONE)
+-		return snprintf(buff, len, "uniform");
++		return snprintf(buff, len, "\"uniform\"");
+ 
  	return 0;
  }
- 
-diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-index 61c19b7..cf97fad 100644
---- a/libmultipath/prio.c
-+++ b/libmultipath/prio.c
-@@ -22,13 +22,23 @@ static struct prio * alloc_prio (void)
- 	struct prio *p;
- 
- 	p = MALLOC(sizeof(struct prio));
--	if (p)
-+	if (p) {
- 		INIT_LIST_HEAD(&p->node);
-+		p->refcount = 1;
-+	}
- 	return p;
- }
- 
- void free_prio (struct prio * p)
- {
-+	if (!p)
-+		return;
-+	p->refcount--;
-+	if (p->refcount) {
-+		condlog(3, "%s prioritizer refcount %d",
-+			p->name, p->refcount);
-+		return;
-+	}
- 	condlog(3, "unloading %s prioritizer", p->name);
- 	list_del(&p->node);
- 	if (p->handle) {
-@@ -110,6 +120,13 @@ int prio_getprio (struct prio * p, struct path * pp)
- 	return p->getprio(pp, p->args);
- }
- 
-+int prio_selected (struct prio * p)
-+{
-+	if (!p || !p->getprio)
-+		return 0;
-+	return (p->getprio) ? 1 : 0;
-+}
-+
- char * prio_name (struct prio * p)
- {
- 	return p->name;
-@@ -119,3 +136,33 @@ char * prio_args (struct prio * p)
- {
- 	return p->args;
- }
-+
-+void prio_get (struct prio * dst, char * name, char * args)
-+{
-+	struct prio * src = prio_lookup(name);
-+
-+	if (!src) {
-+		dst->getprio = NULL;
-+		return;
-+	}
-+
-+	strncpy(dst->name, src->name, PRIO_NAME_LEN);
-+	if (args)
-+		strncpy(dst->args, args, PRIO_ARGS_LEN);
-+	dst->getprio = src->getprio;
-+	dst->handle = NULL;
-+
-+	src->refcount++;
-+}
-+
-+void prio_put (struct prio * dst)
-+{
-+	struct prio * src;
-+
-+	if (!dst)
-+		return;
-+
-+	src = prio_lookup(dst->name);
-+	memset(dst, 0x0, sizeof(struct prio));
-+	free_prio(src);
-+}
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-index 36929fb..4eeb216 100644
---- a/libmultipath/prio.h
-+++ b/libmultipath/prio.h
-@@ -6,7 +6,10 @@
-  */
- #include "checkers.h"
- #include "vector.h"
--#include "structs.h"
-+
-+/* forward declaration to avoid circular dependency */
-+struct path;
-+
- #include "list.h"
- #include "memory.h"
- 
-@@ -41,6 +44,7 @@
- 
- struct prio {
- 	void *handle;
-+	int refcount;
- 	struct list_head node;
- 	char name[PRIO_NAME_LEN];
- 	char args[PRIO_ARGS_LEN];
-@@ -52,6 +56,9 @@ void cleanup_prio (void);
- struct prio * add_prio (char *);
- struct prio * prio_lookup (char *);
- int prio_getprio (struct prio *, struct path *);
-+void prio_get (struct prio *, char *, char *);
-+void prio_put (struct prio *);
-+int prio_selected (struct prio *);
- char * prio_name (struct prio *);
- char * prio_args (struct prio *);
- int prio_set_args (struct prio *, char *);
-diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
-index 4da3ee7..b9493a4 100644
---- a/libmultipath/prioritizers/alua.c
-+++ b/libmultipath/prioritizers/alua.c
-@@ -16,6 +16,7 @@
- 
- #include <debug.h>
- #include <prio.h>
-+#include <structs.h>
- 
- #include "alua.h"
- 
-diff --git a/libmultipath/prioritizers/datacore.c b/libmultipath/prioritizers/datacore.c
-index 2c16c6c..e3e6a51 100644
---- a/libmultipath/prioritizers/datacore.c
-+++ b/libmultipath/prioritizers/datacore.c
-@@ -24,6 +24,7 @@
- #include <sg_include.h>
- #include <debug.h>
- #include <prio.h>
-+#include <structs.h>
- 
- #define INQ_REPLY_LEN 255
- #define INQ_CMD_CODE 0x12
-diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/emc.c
-index 20d727e..87e9a8d 100644
---- a/libmultipath/prioritizers/emc.c
-+++ b/libmultipath/prioritizers/emc.c
-@@ -5,6 +5,7 @@
- #include <sg_include.h>
- #include <debug.h>
- #include <prio.h>
-+#include <structs.h>
- 
- #define INQUIRY_CMD     0x12
- #define INQUIRY_CMDLEN  6
-diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
-index 4789340..b22e1df 100644
---- a/libmultipath/prioritizers/hds.c
-+++ b/libmultipath/prioritizers/hds.c
-@@ -75,6 +75,7 @@
- #include <sg_include.h>
- #include <debug.h>
- #include <prio.h>
-+#include <structs.h>
- 
- #define INQ_REPLY_LEN 255
- #define INQ_CMD_CODE 0x12
-diff --git a/libmultipath/prioritizers/hp_sw.c b/libmultipath/prioritizers/hp_sw.c
-index 2de460f..c24baad 100644
---- a/libmultipath/prioritizers/hp_sw.c
-+++ b/libmultipath/prioritizers/hp_sw.c
-@@ -15,6 +15,7 @@
- #include <sg_include.h>
- #include <debug.h>
- #include <prio.h>
-+#include <structs.h>
- 
- #define TUR_CMD_LEN		6
- #define SCSI_CHECK_CONDITION	0x2
-diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/ontap.c
-index 6e6e3d3..0d34092 100644
---- a/libmultipath/prioritizers/ontap.c
-+++ b/libmultipath/prioritizers/ontap.c
-@@ -22,6 +22,7 @@
- #include <sg_include.h>
- #include <debug.h>
- #include <prio.h>
-+#include <structs.h>
- 
- #define INQUIRY_CMD	0x12
- #define INQUIRY_CMDLEN	6
-diff --git a/libmultipath/prioritizers/rdac.c b/libmultipath/prioritizers/rdac.c
-index 41ea887..8667790 100644
---- a/libmultipath/prioritizers/rdac.c
-+++ b/libmultipath/prioritizers/rdac.c
-@@ -5,6 +5,7 @@
- #include <sg_include.h>
- #include <debug.h>
- #include <prio.h>
-+#include <structs.h>
- 
- #define INQUIRY_CMD     0x12
- #define INQUIRY_CMDLEN  6
-diff --git a/libmultipath/prioritizers/weightedpath.c b/libmultipath/prioritizers/weightedpath.c
-index d6c81f0..54c9039 100644
---- a/libmultipath/prioritizers/weightedpath.c
-+++ b/libmultipath/prioritizers/weightedpath.c
-@@ -60,6 +60,10 @@ int prio_path_weight(struct path *pp, char *prio_args)
- 
- 	regex = get_next_string(&temp, split_char);
- 
-+	/* Return default priority if the argument is not parseable */
-+	if (!regex)
-+		return priority;
-+
- 	if (!strcmp(regex, HBTL)) {
- 		sprintf(path, "%d:%d:%d:%d", pp->sg_id.host_no,
- 			pp->sg_id.channel, pp->sg_id.scsi_id, pp->sg_id.lun);
-@@ -67,7 +71,7 @@ int prio_path_weight(struct path *pp, char *prio_args)
- 		strcpy(path, pp->dev);
- 	} else {
- 		condlog(0, "%s: %s - Invalid arguments", pp->dev,
--			pp->prio->name);
-+			pp->prio.name);
- 		return priority;
+@@ -1851,9 +1851,9 @@ snprint_mp_no_path_retry (char * buff, int len, void * data)
+ 	case NO_PATH_RETRY_UNDEF:
+ 		break;
+ 	case NO_PATH_RETRY_FAIL:
+-		return snprintf(buff, len, "fail");
++		return snprintf(buff, len, "\"fail\"");
+ 	case NO_PATH_RETRY_QUEUE:
+-		return snprintf(buff, len, "queue");
++		return snprintf(buff, len, "\"queue\"");
+ 	default:
+ 		return snprintf(buff, len, "%i",
+ 				mpe->no_path_retry);
+@@ -1892,7 +1892,7 @@ snprint_mp_pg_timeout (char * buff, int len, void * data)
+ 	case PGTIMEOUT_UNDEF:
+ 		break;
+ 	case -PGTIMEOUT_NONE:
+-		return snprintf(buff, len, "none");
++		return snprintf(buff, len, "\"none\"");
+ 	default:
+ 		return snprintf(buff, len, "%i", mpe->pg_timeout);
  	}
- 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 6ac4caa..17bd893 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -383,20 +383,19 @@ extern int
- select_prio (struct path * pp)
- {
- 	struct mpentry * mpe;
-+	struct prio * p = &pp->prio;
- 
- 	if ((mpe = find_mpe(pp->wwid))) {
- 		if (mpe->prio_name) {
--			pp->prio = prio_lookup(mpe->prio_name);
--			prio_set_args(pp->prio, mpe->prio_args);
-+			prio_get(p, mpe->prio_name, mpe->prio_args);
- 			condlog(3, "%s: prio = %s (LUN setting)",
--				pp->dev, pp->prio->name);
-+				pp->dev, prio_name(p));
- 			return 0;
- 		}
- 	}
- 
- 	if (pp->hwe && pp->hwe->prio_name) {
--		pp->prio = prio_lookup(pp->hwe->prio_name);
--		prio_set_args(pp->prio, pp->hwe->prio_args);
-+		prio_get(p, pp->hwe->prio_name, pp->hwe->prio_name);
- 		condlog(3, "%s: prio = %s (controller setting)",
- 			pp->dev, pp->hwe->prio_name);
- 		condlog(3, "%s: prio args = %s (controller setting)",
-@@ -404,16 +403,14 @@ select_prio (struct path * pp)
+@@ -1910,7 +1910,7 @@ snprint_mp_features (char * buff, int len, void * data)
+ 	    !strcmp(mpe->features, conf->features))
  		return 0;
+ 
+-	return snprintf(buff, len, "%s", mpe->features);
++	return snprintf(buff, len, "\"%s\"", mpe->features);
+ }
+ 
+ static int
+@@ -1920,9 +1920,9 @@ snprint_mp_flush_on_last_del (char * buff, int len, void * data)
+ 
+ 	switch (mpe->flush_on_last_del) {
+ 	case FLUSH_DISABLED:
+-		return snprintf(buff, len, "no");
++		return snprintf(buff, len, "\"no\"");
+ 	case FLUSH_ENABLED:
+-		return snprintf(buff, len, "yes");
++		return snprintf(buff, len, "\"yes\"");
  	}
- 	if (conf->prio_name) {
--		pp->prio = prio_lookup(conf->prio_name);
--		prio_set_args(pp->prio, conf->prio_args);
-+		prio_get(p, conf->prio_name, conf->prio_args);
- 		condlog(3, "%s: prio = %s (config file default)",
- 			pp->dev, conf->prio_name);
- 		condlog(3, "%s: prio args = %s (config file default)",
- 			pp->dev, conf->prio_args);
+ 	return 0;
+ }
+@@ -1935,7 +1935,7 @@ snprint_mp_prio(char * buff, int len, void * data)
+ 	if (!mpe->prio_name)
  		return 0;
+ 
+-	return snprintf(buff, len, "%s", mpe->prio_name);
++	return snprintf(buff, len, "\"%s\"", mpe->prio_name);
+ }
+ 
+ static int
+@@ -1946,7 +1946,7 @@ snprint_mp_prio_args(char * buff, int len, void * data)
+ 	if (!mpe->prio_args)
+ 		return 0;
+ 
+-	return snprintf(buff, len, "%s", mpe->prio_args);
++	return snprintf(buff, len, "\"%s\"", mpe->prio_args);
+ }
+ 
+ static int
+@@ -1978,7 +1978,7 @@ snprint_hw_fast_io_fail(char * buff, int len, void * data)
+ 	if (hwe->fast_io_fail == conf->fast_io_fail)
+ 		return 0;
+ 	if (hwe->fast_io_fail == MP_FAST_IO_FAIL_OFF)
+-		return snprintf(buff, len, "off");
++		return snprintf(buff, len, "\"off\"");
+ 	if (hwe->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
+ 		return snprintf(buff, len, "0");
+ 	return snprintf(buff, len, "%d", hwe->fast_io_fail);
+@@ -1993,7 +1993,7 @@ snprint_hw_dev_loss(char * buff, int len, void * data)
+ 	if (hwe->dev_loss == conf->dev_loss)
+ 		return 0;
+ 	if (hwe->dev_loss >= MAX_DEV_LOSS_TMO)
+-		return snprintf(buff, len, "infinity");
++		return snprintf(buff, len, "\"infinity\"");
+ 
+ 	return snprintf(buff, len, "%u", hwe->dev_loss);
+ }
+@@ -2061,7 +2061,7 @@ snprint_hw_prio (char * buff, int len, void * data)
+ 	if (!hwe->prio_name)
+ 		return 0;
+ 
+-	return snprintf(buff, len, "%s", hwe->prio_name);
++	return snprintf(buff, len, "\"%s\"", hwe->prio_name);
+ }
+ 
+ static int
+@@ -2131,7 +2131,7 @@ snprint_hw_path_grouping_policy (char * buff, int len, void * data)
+ 
+ 	get_pgpolicy_name(str, POLICY_NAME_SIZE, hwe->pgpolicy);
+ 
+-	return snprintf(buff, len, "%s", str);
++	return snprintf(buff, len, "\"%s\"", str);
+ }
+ 
+ static int
+@@ -2165,9 +2165,9 @@ snprint_hw_rr_weight (char * buff, int len, void * data)
+ 	if (!hwe->rr_weight)
+ 		return 0;
+ 	if (hwe->rr_weight == RR_WEIGHT_PRIO)
+-		return snprintf(buff, len, "priorities");
++		return snprintf(buff, len, "\"priorities\"");
+ 	if (hwe->rr_weight == RR_WEIGHT_NONE)
+-		return snprintf(buff, len, "uniform");
++		return snprintf(buff, len, "\"uniform\"");
+ 
+ 	return 0;
+ }
+@@ -2184,9 +2184,9 @@ snprint_hw_no_path_retry (char * buff, int len, void * data)
+ 	case NO_PATH_RETRY_UNDEF:
+ 		break;
+ 	case NO_PATH_RETRY_FAIL:
+-		return snprintf(buff, len, "fail");
++		return snprintf(buff, len, "\"fail\"");
+ 	case NO_PATH_RETRY_QUEUE:
+-		return snprintf(buff, len, "queue");
++		return snprintf(buff, len, "\"queue\"");
+ 	default:
+ 		return snprintf(buff, len, "%i",
+ 				hwe->no_path_retry);
+@@ -2228,7 +2228,7 @@ snprint_hw_pg_timeout (char * buff, int len, void * data)
+ 	case PGTIMEOUT_UNDEF:
+ 		break;
+ 	case -PGTIMEOUT_NONE:
+-		return snprintf(buff, len, "none");
++		return snprintf(buff, len, "\"none\"");
+ 	default:
+ 		return snprintf(buff, len, "%i", hwe->pg_timeout);
  	}
--	pp->prio = prio_lookup(DEFAULT_PRIO);
--	prio_set_args(pp->prio, DEFAULT_PRIO_ARGS);
-+	prio_get(p, DEFAULT_PRIO, DEFAULT_PRIO_ARGS);
- 	condlog(3, "%s: prio = %s (internal default)",
- 		pp->dev, DEFAULT_PRIO);
- 	condlog(3, "%s: prio = %s (internal default)",
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 3c0fe90..ab57559 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -45,6 +45,9 @@ free_path (struct path * pp)
- 	if (checker_selected(&pp->checker))
- 		checker_put(&pp->checker);
+@@ -2242,9 +2242,9 @@ snprint_hw_flush_on_last_del (char * buff, int len, void * data)
  
-+	if (prio_selected(&pp->prio))
-+		prio_put(&pp->prio);
-+
- 	if (pp->fd >= 0)
- 		close(pp->fd);
+ 	switch (hwe->flush_on_last_del) {
+ 	case FLUSH_DISABLED:
+-		return snprintf(buff, len, "no");
++		return snprintf(buff, len, "\"no\"");
+ 	case FLUSH_ENABLED:
+-		return snprintf(buff, len, "yes");
++		return snprintf(buff, len, "\"yes\"");
+ 	}
+ 	return 0;
+ }
+@@ -2257,7 +2257,7 @@ snprint_hw_path_checker (char * buff, int len, void * data)
+ 	if (!hwe->checker_name)
+ 		return 0;
  
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 991ea6e..312014b 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -3,6 +3,8 @@
+-	return snprintf(buff, len, "%s", hwe->checker_name);
++	return snprintf(buff, len, "\"%s\"", hwe->checker_name);
+ }
  
- #include <sys/types.h>
+ 	static int
+@@ -2285,7 +2285,7 @@ snprint_def_fast_io_fail(char * buff, int len, void * data)
+ 	if (conf->fast_io_fail == MP_FAST_IO_FAIL_UNSET)
+ 		return 0;
+ 	if (conf->fast_io_fail == MP_FAST_IO_FAIL_OFF)
+-		return snprintf(buff, len, "off");
++		return snprintf(buff, len, "\"off\"");
+ 	if (conf->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
+ 		return snprintf(buff, len, "0");
+ 	return snprintf(buff, len, "%d", conf->fast_io_fail);
+@@ -2297,7 +2297,7 @@ snprint_def_dev_loss(char * buff, int len, void * data)
+ 	if (!conf->dev_loss)
+ 		return 0;
+ 	if (conf->dev_loss >= MAX_DEV_LOSS_TMO)
+-		return snprintf(buff, len, "infinity");
++		return snprintf(buff, len, "\"infinity\"");
+ 	return snprintf(buff, len, "%u", conf->dev_loss);
+ }
  
-+#include "prio.h"
-+
- #define WWID_SIZE		128
- #define SERIAL_SIZE		65
- #define NODE_NAME_SIZE		224
-@@ -132,6 +134,7 @@ struct hd_geometry {
-       unsigned long start;
- };
- #endif
-+
- struct path {
- 	char dev[FILE_NAME_SIZE];
- 	char dev_t[BLK_DEV_SIZE];
-@@ -157,7 +160,8 @@ struct path {
- 	int priority;
- 	int pgindex;
- 	char * uid_attribute;
--	struct prio * prio;
-+	struct prio prio;
-+	char * prio_args;
- 	struct checker checker;
- 	struct multipath * mpp;
- 	int fd;
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index f998708..d914435 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -82,7 +82,7 @@ orphan_path (struct path * pp)
- 	pp->mpp = NULL;
- 	pp->dmstate = PSTATE_UNDEF;
- 	pp->uid_attribute = NULL;
--	pp->prio = NULL;
-+	prio_put(&pp->prio);
- 	checker_put(&pp->checker);
- 	if (pp->fd >= 0)
- 		close(pp->fd);
+@@ -2320,7 +2320,7 @@ snprint_reassign_maps (char * buff, int len, void * data)
+ {
+ 	if (conf->reassign_maps == DEFAULT_REASSIGN_MAPS)
+ 		return 0;
+-	return snprintf(buff, len, "%s",
++	return snprintf(buff, len, "\"%s\"",
+ 			conf->reassign_maps?"yes":"no");
+ }
+ 
+@@ -2353,7 +2353,7 @@ snprint_def_path_grouping_policy (char * buff, int len, void * data)
+ 
+ 	get_pgpolicy_name(str, POLICY_NAME_SIZE, pgpolicy);
+ 
+-	return snprintf(buff, len, "%s", str);
++	return snprintf(buff, len, "\"%s\"", str);
+ }
+ 
+ static int
+@@ -2369,9 +2369,9 @@ static int
+ snprint_def_prio (char * buff, int len, void * data)
+ {
+ 	if (!conf->prio_name)
+-		return snprintf(buff, len, "%s", DEFAULT_PRIO);
++		return snprintf(buff, len, "\"%s\"", DEFAULT_PRIO);
+ 
+-	return snprintf(buff, len, "%s", conf->prio_name);
++	return snprintf(buff, len, "\"%s\"", conf->prio_name);
+ }
+ 
+ static int
+@@ -2396,9 +2396,9 @@ static int
+ snprint_def_path_checker (char * buff, int len, void * data)
+ {
+ 	if (!conf->checker_name)
+-		return snprintf(buff, len, "%s", DEFAULT_CHECKER);
++		return snprintf(buff, len, "\"%s\"", DEFAULT_CHECKER);
+ 
+-	return snprintf(buff, len, "%s", conf->checker_name);
++	return snprintf(buff, len, "\"%s\"", conf->checker_name);
+ }
+ 
+ static int
+@@ -2412,11 +2412,11 @@ snprint_def_failback (char * buff, int len, void * data)
+ 	case  FAILBACK_UNDEF:
+ 		break;
+ 	case -FAILBACK_MANUAL:
+-		return snprintf(buff, len, "manual");
++		return snprintf(buff, len, "\"manual\"");
+ 	case -FAILBACK_IMMEDIATE:
+-		return snprintf(buff, len, "immediate");
++		return snprintf(buff, len, "\"immediate\"");
+ 	case -FAILBACK_FOLLOWOVER:
+-		return snprintf(buff, len, "followover");
++		return snprintf(buff, len, "\"followover\"");
+ 	default:
+ 		return snprintf(buff, len, "%i", conf->pgfailback);
+ 	}
+@@ -2478,9 +2478,9 @@ static int
+ snprint_def_rr_weight (char * buff, int len, void * data)
+ {
+ 	if (!conf->rr_weight || conf->rr_weight == RR_WEIGHT_NONE)
+-		return snprintf(buff, len, "uniform");
++		return snprintf(buff, len, "\"uniform\"");
+ 	if (conf->rr_weight == RR_WEIGHT_PRIO)
+-		return snprintf(buff, len, "priorities");
++		return snprintf(buff, len, "\"priorities\"");
+ 
+ 	return 0;
+ }
+@@ -2492,9 +2492,9 @@ snprint_def_no_path_retry (char * buff, int len, void * data)
+ 	case NO_PATH_RETRY_UNDEF:
+ 		break;
+ 	case NO_PATH_RETRY_FAIL:
+-		return snprintf(buff, len, "fail");
++		return snprintf(buff, len, "\"fail\"");
+ 	case NO_PATH_RETRY_QUEUE:
+-		return snprintf(buff, len, "queue");
++		return snprintf(buff, len, "\"queue\"");
+ 	default:
+ 		return snprintf(buff, len, "%i",
+ 				conf->no_path_retry);
+@@ -2507,10 +2507,10 @@ snprint_def_queue_without_daemon (char * buff, int len, void * data)
+ {
+ 	switch (conf->queue_without_daemon) {
+ 	case QUE_NO_DAEMON_OFF:
+-		return snprintf(buff, len, "no");
++		return snprintf(buff, len, "\"no\"");
+ 	case QUE_NO_DAEMON_ON:
+ 	case QUE_NO_DAEMON_UNDEF:
+-		return snprintf(buff, len, "yes");
++		return snprintf(buff, len, "\"yes\"");
+ 	}
+ 	return 0;
+ }
+@@ -2530,7 +2530,7 @@ snprint_def_pg_timeout (char * buff, int len, void * data)
+ 	switch (conf->pg_timeout) {
+ 	case PGTIMEOUT_UNDEF:
+ 	case -PGTIMEOUT_NONE:
+-		return snprintf(buff, len, "none");
++		return snprintf(buff, len, "\"none\"");
+ 	default:
+ 		return snprintf(buff, len, "%i", conf->pg_timeout);
+ 	}
+@@ -2543,10 +2543,10 @@ snprint_def_flush_on_last_del (char * buff, int len, void * data)
+ 	switch (conf->flush_on_last_del) {
+ 	case FLUSH_UNDEF:
+ 	case FLUSH_DISABLED:
+-		return snprintf(buff, len, "no");
++		return snprintf(buff, len, "\"no\"");
+ 	case FLUSH_ENABLED:
+ 	case FLUSH_IN_PROGRESS:
+-		return snprintf(buff, len, "yes");
++		return snprintf(buff, len, "\"yes\"");
+ 	}
+ 	return 0;
+ }
+@@ -2563,9 +2563,9 @@ static int
+ snprint_def_user_friendly_names (char * buff, int len, void * data)
+ {
+ 	if (conf->user_friendly_names  == USER_FRIENDLY_NAMES_ON)
+-		return snprintf(buff, len, "yes");
++		return snprintf(buff, len, "\"yes\"");
+ 	else
+-		return snprintf(buff, len, "no");
++		return snprintf(buff, len, "\"no\"");
+ }
+ 
+ static int
+@@ -2581,7 +2581,7 @@ snprint_def_bindings_file (char * buff, int len, void * data)
+ {
+ 	if (conf->bindings_file == NULL)
+ 		return 0;
+-	return snprintf(buff, len, "%s", conf->bindings_file);
++	return snprintf(buff, len, "\"%s\"", conf->bindings_file);
+ }
+ 
+ static int
 -- 
 1.7.4.2
