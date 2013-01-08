@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 28/42] Clean up uevent queue on shutdown
-Date: Tue,  8 Jan 2013 14:54:06 +0100
-Message-ID: <1357653259-62650-29-git-send-email-hare@suse.de>
+Subject: [PATCH 42/42] multipathd: lock vectors during initial
+	configuration
+Date: Tue,  8 Jan 2013 14:54:19 +0100
+Message-ID: <1357653259-62650-42-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,43 +23,45 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-During shutdown there might be some unprocessed events
-in the queue. So clear them up.
+During initial configuration the CLI thread is already running,
+so we need to lock the vectors here to not race with the
+'reconfigure' CLI command.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/uevent.c |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+ multipathd/main.c |    4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index b74fb08..5b0b258 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -132,6 +132,17 @@ static void uevq_stop(void *arg)
- 	pthread_mutex_unlock(uevq_lockp);
- }
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 395307e..8917499 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1389,7 +1389,6 @@ reconfigure (struct vectors * vecs)
+ 	struct config * old = conf;
+ 	int retval = 1;
  
-+void
-+uevq_cleanup(struct list_head *tmpq)
-+{
-+	struct uevent *uev, *tmp;
-+
-+	list_for_each_entry_safe(uev, tmp, tmpq, node) {
-+		list_del_init(&uev->node);
-+		FREE(uev);
-+	}
-+}
-+
- /*
-  * Service the uevent queue.
-  */
-@@ -163,6 +174,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
- 		service_uevq(&uevq_tmp);
+-	lock(vecs->lock);
+ 	/*
+ 	 * free old map and path vectors ... they use old conf state
+ 	 */
+@@ -1410,7 +1409,6 @@ reconfigure (struct vectors * vecs)
+ 		retval = 0;
  	}
- 	condlog(3, "Terminating uev service queue");
-+	uevq_cleanup(&uevq);
- 	return 0;
+ 
+-	unlock(vecs->lock);
+ 	return retval;
  }
  
+@@ -1641,9 +1639,9 @@ child (void * param)
+ 	/*
+ 	 * fetch and configure both paths and multipaths
+ 	 */
+-	lock(vecs->lock);
+ 	running_state = DAEMON_CONFIGURE;
+ 
++	lock(vecs->lock);
+ 	if (configure(vecs, 1)) {
+ 		unlock(vecs->lock);
+ 		condlog(0, "failure during configuration");
 -- 
 1.7.4.2
