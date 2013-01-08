@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 33/42] Syntax error in /etc/init.d/boot.multipath
-Date: Tue,  8 Jan 2013 14:54:11 +0100
-Message-ID: <1357653259-62650-34-git-send-email-hare@suse.de>
+Subject: [PATCH 28/42] Clean up uevent queue on shutdown
+Date: Tue,  8 Jan 2013 14:54:06 +0100
+Message-ID: <1357653259-62650-29-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,25 +22,43 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The multipath init script has a syntax error in line 113.
+During shutdown there might be some unprocessed events
+in the queue. So clear them up.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/multipath.init.suse |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ libmultipath/uevent.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-diff --git a/multipath/multipath.init.suse b/multipath/multipath.init.suse
-index cc7c04b..c7cd5c7 100644
---- a/multipath/multipath.init.suse
-+++ b/multipath/multipath.init.suse
-@@ -110,7 +110,7 @@ case "$1" in
- 		partlist=$(/sbin/kpartx -l -p _part /dev/disk/by-id/dm-name-$map | sed 's/\([^ ]*\) :.*/\1/p')
- 		for part in $partlist; do
- 		    [ -e /dev/disk/by-id/dm-name-$part ] && continue
--		    num$((num + 1))
-+		    num=$((num + 1))
- 		done
- 	    done
- 	    [ $num -eq 0 ] && break
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index b74fb08..5b0b258 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -132,6 +132,17 @@ static void uevq_stop(void *arg)
+ 	pthread_mutex_unlock(uevq_lockp);
+ }
+ 
++void
++uevq_cleanup(struct list_head *tmpq)
++{
++	struct uevent *uev, *tmp;
++
++	list_for_each_entry_safe(uev, tmp, tmpq, node) {
++		list_del_init(&uev->node);
++		FREE(uev);
++	}
++}
++
+ /*
+  * Service the uevent queue.
+  */
+@@ -163,6 +174,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
+ 		service_uevq(&uevq_tmp);
+ 	}
+ 	condlog(3, "Terminating uev service queue");
++	uevq_cleanup(&uevq);
+ 	return 0;
+ }
+ 
 -- 
 1.7.4.2
