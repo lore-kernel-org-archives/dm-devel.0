@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 23/42] Path checker should return PATH_DOWN when
-	no path is found
-Date: Tue,  8 Jan 2013 14:54:01 +0100
-Message-ID: <1357653259-62650-24-git-send-email-hare@suse.de>
+Subject: [PATCH 35/42] multipath.conf.5: Clarify dev_loss_tmo
+	settings
+Date: Tue,  8 Jan 2013 14:54:13 +0100
+Message-ID: <1357653259-62650-36-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,33 +23,33 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If the path checker fails to lookup the path in sysfs it's
-already gone, so we should rather return 'PATH_DOWN' here.
-Otherwise the path will never marked failed and no failover
-will happen.
+We need to document that dev_loss_tmo is in fact modified
+by no_path_retry.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ multipath/multipath.conf.5 |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6848b70..7ed8556 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -659,11 +659,11 @@ path_offline (struct path * pp)
- 
- 	if (!parent) {
- 		condlog(1, "%s: failed to get sysfs information", pp->dev);
--		return PATH_WILD;
-+		return PATH_DOWN;
- 	}
- 
- 	if (sysfs_get_state(parent, buff, SCSI_STATE_SIZE))
--		return PATH_WILD;
-+		return PATH_DOWN;
- 
- 	condlog(3, "%s: path state = %s", pp->dev, buff);
- 
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 9d6266c..247cdc0 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -334,9 +334,14 @@ will disable the timeout.
+ .TP
+ .B dev_loss_tmo
+ Specify the number of seconds the scsi layer will wait after a problem has
++<<<<<<< HEAD
+ been detected on a FC remote port before removing it from the system. This
+ can be set to "infinity" which sets it to the max value of 2147483647
+-seconds, or 68 years.
++seconds, or 68 years. It will be automatically adjusted to the overall
++retry interval
++\fIno_path_retry\fR * \fIpolling_interval\fR
++if a number of retries is given with \fIno_path_retry\fR and the
++overall retry interval is longer than the specified \fIdev_loss_tmo\fR value.
+ .TP
+ .B queue_without_daemon
+ If set to
 -- 
 1.7.4.2
