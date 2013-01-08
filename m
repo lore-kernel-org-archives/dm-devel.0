@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 38/42] multipathd: Ignore errors when creating
-	pidfile
-Date: Tue,  8 Jan 2013 14:54:15 +0100
-Message-ID: <1357653259-62650-38-git-send-email-hare@suse.de>
+Subject: [PATCH 13/42] Incorrect inquiry vendor length in hds
+	prioritizer
+Date: Tue,  8 Jan 2013 14:53:51 +0100
+Message-ID: <1357653259-62650-14-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,53 +23,36 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We can use CLI commands to communicate with the daemon,
-so we don't need the pidfile for correct operation.
-Hence any errors from creating the pidfile can be safely
-ignored.
+The inquiry vendor length is 8 bytes, but snprintf writes
+the given number of bytes _including_ the NULL byte. So
+we need to supply a 9 byte buffer here.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c |   13 +++++++------
- 1 files changed, 7 insertions(+), 6 deletions(-)
+ libmultipath/prioritizers/hds.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 7fe9c5b..6c5e243 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1560,7 +1560,7 @@ child (void * param)
- 	struct vectors * vecs;
- 	struct multipath * mpp;
- 	int i;
--	int rc;
-+	int rc, pid_rc;
+diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
+index 5d75f84..f748707 100644
+--- a/libmultipath/prioritizers/hds.c
++++ b/libmultipath/prioritizers/hds.c
+@@ -87,7 +87,7 @@
+ int hds_modular_prio (const char *dev, int fd)
+ {
+ 	int k;
+-	char vendor[8];
++	char vendor[9];
+ 	char product[32];
+ 	char serial[32];
+ 	char ldev[32];
+@@ -125,7 +125,7 @@ int hds_modular_prio (const char *dev, int fd)
+ 		return -1;
+ 	}
  
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 
-@@ -1667,9 +1667,8 @@ child (void * param)
- 
- 	pthread_mutex_lock(&exit_mutex);
- 	/* Startup complete, create logfile */
--	if (pidfile_create(DEFAULT_PIDFILE, daemon_pid))
--		/* Ignore errors, we can live without */
--		condlog(1, "failed to create pidfile");
-+	pid_rc = pidfile_create(DEFAULT_PIDFILE, daemon_pid);
-+	/* Ignore errors, we can live without */
- 
- 	running_state = DAEMON_RUNNING;
- 	pthread_cond_wait(&exit_cond, &exit_mutex);
-@@ -1715,8 +1714,10 @@ child (void * param)
- 	dm_lib_exit();
- 
- 	/* We're done here */
--	condlog(3, "unlink pidfile");
--	unlink(DEFAULT_PIDFILE);
-+	if (!pid_rc) {
-+		condlog(3, "unlink pidfile");
-+		unlink(DEFAULT_PIDFILE);
-+	}
- 
- 	condlog(2, "--------shut down-------");
- 
+-	snprintf (vendor, 8, "%.8s", inqBuffp + 8);
++	snprintf (vendor, 9, "%.8s", inqBuffp + 8);
+ 	snprintf (product, 17, "%.16s", inqBuffp + 16);
+ 	snprintf (serial, 5, "%.4s", inqBuffp + 40);
+ 	snprintf (ldev, 5, "%.4s", inqBuffp + 44);
 -- 
 1.7.4.2
