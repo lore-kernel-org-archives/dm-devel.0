@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 36/42] Clarify dev_loss_tmo capping in
-	multipath.conf.5
-Date: Tue,  8 Jan 2013 14:54:14 +0100
-Message-ID: <1357653259-62650-37-git-send-email-hare@suse.de>
+Subject: [PATCH 23/42] Path checker should return PATH_DOWN when
+	no path is found
+Date: Tue,  8 Jan 2013 14:54:01 +0100
+Message-ID: <1357653259-62650-24-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,27 +23,33 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The linux kernel will not allow any dev_loss_tmo setting larger
-than 300 if fast_io_fail is not set. So we should document this
-in the manpage.
+If the path checker fails to lookup the path in sysfs it's
+already gone, so we should rather return 'PATH_DOWN' here.
+Otherwise the path will never marked failed and no failover
+will happen.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/multipath.conf.5 |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ libmultipath/discovery.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 247cdc0..35021f6 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -342,6 +342,8 @@ retry interval
- \fIno_path_retry\fR * \fIpolling_interval\fR
- if a number of retries is given with \fIno_path_retry\fR and the
- overall retry interval is longer than the specified \fIdev_loss_tmo\fR value.
-+The linux kernel will cap this value to \fI300\fR if \fBfast_io_fail_tmo\fR
-+is not set.
- .TP
- .B queue_without_daemon
- If set to
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 6848b70..7ed8556 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -659,11 +659,11 @@ path_offline (struct path * pp)
+ 
+ 	if (!parent) {
+ 		condlog(1, "%s: failed to get sysfs information", pp->dev);
+-		return PATH_WILD;
++		return PATH_DOWN;
+ 	}
+ 
+ 	if (sysfs_get_state(parent, buff, SCSI_STATE_SIZE))
+-		return PATH_WILD;
++		return PATH_DOWN;
+ 
+ 	condlog(3, "%s: path state = %s", pp->dev, buff);
+ 
 -- 
 1.7.4.2
