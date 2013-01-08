@@ -1,24 +1,14 @@
-From: thornber@redhat.com
-Subject: Re: Another cache target
-Date: Tue, 8 Jan 2013 13:55:04 +0000
-Message-ID: <20130108135504.GC4078@raspberrypi>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<20121213215715.GA19419@redhat.com>
-	<20121214011643.GB9845@blackbox.djwong.org>
-	<20121214021918.GA29561@redhat.com>
-	<20121214023425.GG9453@blackbox.djwong.org>
-	<20121214102443.GB3022@raspberrypi>
-	<20121214121143.GD3022@raspberrypi>
-	<20121214215119.GJ9453@blackbox.djwong.org>
-	<20121215082309.GA5330@reti.lambda.co.uk>
-	<20130108001928.GA20108@blackbox.djwong.org>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 21/42] Double free in disassemble_map()
+Date: Tue,  8 Jan 2013 14:53:59 +0100
+Message-ID: <1357653259-62650-22-git-send-email-hare@suse.de>
+References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20130108001928.GA20108@blackbox.djwong.org>
+In-Reply-To: <1357653259-62650-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,13 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jan 07, 2013 at 04:19:28PM -0800, Darrick J. Wong wrote:
-> Are these tools available anywhere for testing?
+Label 'out1' already frees 'word'; no need to do it here.
 
-Not yet.  Give it a couple of weeks.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ libmultipath/dmparser.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
 
-- Joe
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index a45854d..5184c41 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -276,7 +276,6 @@ disassemble_map (vector pathvec, char * params, struct multipath * mpp)
+ 			num_pg_args = atoi(word);
+ 
+ 			if (merge_words(&mpp->selector, word, 1)) {
+-				FREE(word);
+ 				goto out1;
+ 			}
+ 			FREE(word);
+-- 
+1.7.4.2
