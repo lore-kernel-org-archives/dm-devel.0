@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 07/42] Add TAGS makefile target
-Date: Tue,  8 Jan 2013 14:53:45 +0100
-Message-ID: <1357653259-62650-8-git-send-email-hare@suse.de>
+Subject: [PATCH 16/42] libmultipath: error checking in
+	remove_features()
+Date: Tue,  8 Jan 2013 14:53:54 +0100
+Message-ID: <1357653259-62650-17-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,28 +23,26 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+An error check was missing in remove_features().
+
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- Makefile |    7 +++++++
- 1 files changed, 7 insertions(+), 0 deletions(-)
+ libmultipath/structs.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile b/Makefile
-index 5b0c61a..baf7753 100644
---- a/Makefile
-+++ b/Makefile
-@@ -66,6 +66,13 @@ install:	recurse_install
- 
- uninstall:	recurse_uninstall
- 
-+.PHONY:	TAGS
-+TAGS:
-+	etags -a libmultipath/*.c
-+	etags -a libmultipath/*.h
-+	etags -a multipathd/*.c
-+	etags -a multipathd/*.h
-+
- release:
- 	sed -e "s/__VERSION__/${VERSION}/" \
- 	multipath-tools.spec.in > multipath-tools.spec
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 88e8706..049f17d 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -559,6 +559,9 @@ remove_feature(char **f, char *o)
+ 	 * about to be removed
+ 	 */
+ 	p = strchr(*f, ' ');
++	if (!p)
++		/* Internal error, feature string inconsistent */
++		return 1;
+ 	while (*p == ' ')
+ 		p++;
+ 	p--;
 -- 
 1.7.4.2
