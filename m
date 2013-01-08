@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 18/42] Check return code from pathinfo()
-Date: Tue,  8 Jan 2013 14:53:56 +0100
-Message-ID: <1357653259-62650-19-git-send-email-hare@suse.de>
+Subject: [PATCH 14/42] Print out multipath alias for
+	flush_on_last_del messages
+Date: Tue,  8 Jan 2013 14:53:52 +0100
+Message-ID: <1357653259-62650-15-git-send-email-hare@suse.de>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,45 +23,49 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Pathinfo might fail, which indicates that the path is not
-available anymore. So check the return value and take
-appropriate action.
+Added for consistency.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c   |    2 +-
- libmultipath/structs_vec.c |    6 +++---
- 2 files changed, 4 insertions(+), 4 deletions(-)
+ libmultipath/propsel.c |   15 ++++++++-------
+ 1 files changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index e328332..b5df8e3 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -680,7 +680,7 @@ path_offline (struct path * pp)
- 	return PATH_DOWN;
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 756aced..a02a644 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -606,24 +606,25 @@ select_flush_on_last_del(struct multipath *mp)
+ 		return 0;
+ 	if (mp->mpe && mp->mpe->flush_on_last_del != FLUSH_UNDEF) {
+ 		mp->flush_on_last_del = mp->mpe->flush_on_last_del;
+-		condlog(3, "flush_on_last_del = %i (multipath setting)",
+-				mp->flush_on_last_del);
++		condlog(3, "%s: flush_on_last_del = %i (multipath setting)",
++			mp->alias, mp->flush_on_last_del);
+ 		return 0;
+ 	}
+ 	if (mp->hwe && mp->hwe->flush_on_last_del != FLUSH_UNDEF) {
+ 		mp->flush_on_last_del = mp->hwe->flush_on_last_del;
+-		condlog(3, "flush_on_last_del = %i (controler setting)",
+-				mp->flush_on_last_del);
++		condlog(3, "%s: flush_on_last_del = %i (controler setting)",
++			mp->alias, mp->flush_on_last_del);
+ 		return 0;
+ 	}
+ 	if (conf->flush_on_last_del != FLUSH_UNDEF) {
+ 		mp->flush_on_last_del = conf->flush_on_last_del;
+-		condlog(3, "flush_on_last_del = %i (config file default)",
+-				mp->flush_on_last_del);
++		condlog(3, "%s: flush_on_last_del = %i (config file default)",
++			mp->alias, mp->flush_on_last_del);
+ 		return 0;
+ 	}
+ 	mp->flush_on_last_del = FLUSH_UNDEF;
+-	condlog(3, "flush_on_last_del = DISABLED (internal default)");
++	condlog(3, "%s: flush_on_last_del = DISABLED (internal default)",
++		mp->alias);
+ 	return 0;
  }
  
--extern int
-+int
- sysfs_pathinfo(struct path * pp)
- {
- 	if (common_sysfs_pathinfo(pp))
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index d914435..6d36d58 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -68,9 +68,9 @@ adopt_paths (vector pathvec, struct multipath * mpp, int get_info)
- 			if (!find_path_by_dev(mpp->paths, pp->dev) &&
- 			    store_path(mpp->paths, pp))
- 					return 1;
--			if (get_info)
--				pathinfo(pp, conf->hwtable,
--					 DI_PRIO | DI_CHECKER);
-+			if (get_info && pathinfo(pp, conf->hwtable,
-+						 DI_PRIO | DI_CHECKER))
-+				return 1;
- 		}
- 	}
- 	return 0;
 -- 
 1.7.4.2
