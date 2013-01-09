@@ -1,186 +1,66 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] mirror throttling
-Date: Wed, 9 Jan 2013 00:44:38 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1301090044170.29917@file.rdu.redhat.com>
-References: <1357552933-26126-1-git-send-email-gzhao@suse.com>
- <Pine.LNX.4.64.1301090043270.29917@file.rdu.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 42/42] multipathd: lock vectors during
+	initial configuration
+Date: Wed, 09 Jan 2013 08:01:17 +0100
+Message-ID: <50ED15BD.6070706@suse.de>
+References: <1357653259-62650-1-git-send-email-hare@suse.de>
+	<1357653259-62650-42-git-send-email-hare@suse.de>
+	<1357688242.12137.3.camel@lapoo.opensvc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1301090043270.29917@file.rdu.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Guangliang Zhao <gzhao@suse.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, lucienchao@gmail.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1357688242.12137.3.camel@lapoo.opensvc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-dm-kcopyd: use throttle
-
-This patch allows the administrator to limit kcopyd rate.
-
-We maintain a history of kcopyd usage in variables io_period and
-total_period. The actual kcopyd activity is "(100 * io_period /
-total_period)" percent of time. If we exceed user-defined percentage
-threshold, we sleep.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-kcopyd.c |  110 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 110 insertions(+)
-
-Index: linux-3.8-rc1-fast/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-3.8-rc1-fast.orig/drivers/md/dm-kcopyd.c	2013-01-02 23:23:17.000000000 +0100
-+++ linux-3.8-rc1-fast/drivers/md/dm-kcopyd.c	2013-01-02 23:23:25.000000000 +0100
-@@ -22,6 +22,7 @@
- #include <linux/vmalloc.h>
- #include <linux/workqueue.h>
- #include <linux/mutex.h>
-+#include <linux/delay.h>
- #include <linux/device-mapper.h>
- #include <linux/dm-kcopyd.h>
- 
-@@ -51,6 +52,8 @@ struct dm_kcopyd_client {
- 	struct workqueue_struct *kcopyd_wq;
- 	struct work_struct kcopyd_work;
- 
-+	struct dm_kcopyd_throttle *throttle;
-+
- /*
-  * We maintain three lists of jobs:
-  *
-@@ -68,6 +71,108 @@ struct dm_kcopyd_client {
- 
- static struct page_list zero_page_list;
- 
-+static DEFINE_SPINLOCK(throttle_spinlock);
-+
-+/*
-+ * IO/IDLE accounting slowly decays after (1 << ACOUNT_INTERVAL_SHIFT) period.
-+ * When total_period >= (1 << ACOUNT_INTERVAL_SHIFT) the counters are divided
-+ * by 2.
-+ */
-+#define ACOUNT_INTERVAL_SHIFT		SHIFT_HZ
-+
-+/*
-+ * Sleep this number of milliseconds.
-+ *
-+ * It is experimentally found value.
-+ * Smaller values cause increased copy rate above the limit. The reason for
-+ * this is unknown. A possible explanations could be jiffies rounding errors
-+ * or read/write cache inside the disk.
-+ */
-+#define SLEEP_MSEC			100
-+
-+/*
-+ * Maximum number of sleep events. There is a theoretical livelock if more
-+ * kcopyd clients do work simultaneously, this limit allows us to get out of
-+ * the livelock.
-+ */
-+#define MAX_SLEEPS			10
-+
-+static void io_job_start(struct dm_kcopyd_throttle *t)
-+{
-+	unsigned throttle, now, difference;
-+	int slept, skew;
-+
-+	if (unlikely(!t))
-+		return;
-+
-+	slept = 0;
-+
-+try_again:
-+	spin_lock_irq(&throttle_spinlock);
-+
-+	throttle = ACCESS_ONCE(t->throttle);
-+
-+	if (likely(throttle >= 100))
-+		goto skip_limit;
-+
-+	now = jiffies;
-+	difference = now - t->last_jiffies;
-+	t->last_jiffies = now;
-+	if (t->num_io_jobs)
-+		t->io_period += difference;
-+	t->total_period += difference;
-+
-+	if (unlikely(t->total_period >= (1 << ACOUNT_INTERVAL_SHIFT))) {
-+		int shift = fls(t->total_period >> ACOUNT_INTERVAL_SHIFT);
-+		t->total_period >>= shift;
-+		t->io_period >>= shift;
-+	}
-+
-+	skew = t->io_period - throttle * t->total_period / 100;
-+	/* skew = t->io_period * 100 / throttle - t->total_period; */
-+	if (unlikely(skew > 0) && slept < MAX_SLEEPS) {
-+		slept++;
-+		spin_unlock_irq(&throttle_spinlock);
-+		msleep(SLEEP_MSEC);
-+		goto try_again;
-+	}
-+
-+skip_limit:
-+	t->num_io_jobs++;
-+
-+	spin_unlock_irq(&throttle_spinlock);
-+}
-+
-+static void io_job_finish(struct dm_kcopyd_throttle *t)
-+{
-+	unsigned long flags;
-+
-+	if (unlikely(!t))
-+		return;
-+
-+	spin_lock_irqsave(&throttle_spinlock, flags);
-+
-+	t->num_io_jobs--;
-+
-+	if (likely(ACCESS_ONCE(t->throttle) >= 100))
-+		goto skip_limit;
-+
-+	if (!t->num_io_jobs) {
-+		unsigned now, difference;
-+
-+		now = jiffies;
-+		difference = now - t->last_jiffies;
-+		t->last_jiffies = now;
-+
-+		t->io_period += difference;
-+		t->total_period += difference;
-+	}
-+
-+skip_limit:
-+	spin_unlock_irqrestore(&throttle_spinlock, flags);
-+}
-+
-+
- static void wake(struct dm_kcopyd_client *kc)
- {
- 	queue_work(kc->kcopyd_wq, &kc->kcopyd_work);
-@@ -348,6 +453,8 @@ static void complete_io(unsigned long er
- 	struct kcopyd_job *job = (struct kcopyd_job *) context;
- 	struct dm_kcopyd_client *kc = job->kc;
- 
-+	io_job_finish(kc->throttle);
-+
- 	if (error) {
- 		if (job->rw & WRITE)
- 			job->write_err |= error;
-@@ -389,6 +496,8 @@ static int run_io_job(struct kcopyd_job 
- 		.client = job->kc->io_client,
- 	};
- 
-+	io_job_start(job->kc->throttle);
-+
- 	if (job->rw == READ)
- 		r = dm_io(&io_req, 1, &job->source, NULL);
- 	else
-@@ -708,6 +817,7 @@ struct dm_kcopyd_client *dm_kcopyd_clien
- 	INIT_LIST_HEAD(&kc->complete_jobs);
- 	INIT_LIST_HEAD(&kc->io_jobs);
- 	INIT_LIST_HEAD(&kc->pages_jobs);
-+	kc->throttle = throttle;
- 
- 	kc->job_pool = mempool_create_slab_pool(MIN_JOBS, _job_cache);
- 	if (!kc->job_pool)
+T24gMDEvMDkvMjAxMyAxMjozNyBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IE9uIG1h
+ci4sIDIwMTMtMDEtMDggYXQgMTQ6NTQgKzAxMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4g
+RHVyaW5nIGluaXRpYWwgY29uZmlndXJhdGlvbiB0aGUgQ0xJIHRocmVhZCBpcyBhbHJlYWR5IHJ1
+bm5pbmcsCj4+IHNvIHdlIG5lZWQgdG8gbG9jayB0aGUgdmVjdG9ycyBoZXJlIHRvIG5vdCByYWNl
+IHdpdGggdGhlCj4+ICdyZWNvbmZpZ3VyZScgQ0xJIGNvbW1hbmQuCj4+Cj4gQXJlIHlvdSBzdXJl
+IG9mIHRoZSA0MSAtIDQyIHBhdGNoZXMgPwo+Cj4gLSA0MSBtb3ZlcyB0aGUgdmVjcyBsb2NraW5n
+IGZyb20gcmVjb25maWd1cmUgY2FsbGVyIHRvIHJlY29uZmlndXJlCj4gLSA0MiByZW1vdmVzIHRo
+ZSBsb2NraW5nIGZyb20gcmVjb25maWd1cmUKPgo+IFJlZ2FyZHMsCj4gQ2hyaXN0b3BoZSBWYXJv
+cXVpCj4gd3d3Lm9wZW5zdmMuY29tCj4KPj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tl
+IDxoYXJlQHN1c2UuZGU+Cj4+IC0tLQo+PiAgIG11bHRpcGF0aGQvbWFpbi5jIHwgICAgNCArLS0t
+Cj4+ICAgMSBmaWxlcyBjaGFuZ2VkLCAxIGluc2VydGlvbnMoKyksIDMgZGVsZXRpb25zKC0pCj4+
+Cj4+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCj4+
+IGluZGV4IDM5NTMwN2UuLjg5MTc0OTkgMTAwNjQ0Cj4+IC0tLSBhL211bHRpcGF0aGQvbWFpbi5j
+Cj4+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4+IEBAIC0xMzg5LDcgKzEzODksNiBAQCByZWNv
+bmZpZ3VyZSAoc3RydWN0IHZlY3RvcnMgKiB2ZWNzKQo+PiAgIAlzdHJ1Y3QgY29uZmlnICogb2xk
+ID0gY29uZjsKPj4gICAJaW50IHJldHZhbCA9IDE7Cj4+Cj4+IC0JbG9jayh2ZWNzLT5sb2NrKTsK
+Pj4gICAJLyoKPj4gICAJICogZnJlZSBvbGQgbWFwIGFuZCBwYXRoIHZlY3RvcnMgLi4uIHRoZXkg
+dXNlIG9sZCBjb25mIHN0YXRlCj4+ICAgCSAqLwo+PiBAQCAtMTQxMCw3ICsxNDA5LDYgQEAgcmVj
+b25maWd1cmUgKHN0cnVjdCB2ZWN0b3JzICogdmVjcykKPj4gICAJCXJldHZhbCA9IDA7Cj4+ICAg
+CX0KPj4KPj4gLQl1bmxvY2sodmVjcy0+bG9jayk7Cj4+ICAgCXJldHVybiByZXR2YWw7Cj4+ICAg
+fQo+Pgo+PiBAQCAtMTY0MSw5ICsxNjM5LDkgQEAgY2hpbGQgKHZvaWQgKiBwYXJhbSkKPj4gICAJ
+LyoKPj4gICAJICogZmV0Y2ggYW5kIGNvbmZpZ3VyZSBib3RoIHBhdGhzIGFuZCBtdWx0aXBhdGhz
+Cj4+ICAgCSAqLwo+PiAtCWxvY2sodmVjcy0+bG9jayk7Cj4+ICAgCXJ1bm5pbmdfc3RhdGUgPSBE
+QUVNT05fQ09ORklHVVJFOwo+Pgo+PiArCWxvY2sodmVjcy0+bG9jayk7Cj4+ICAgCWlmIChjb25m
+aWd1cmUodmVjcywgMSkpIHsKPj4gICAJCXVubG9jayh2ZWNzLT5sb2NrKTsKPj4gICAJCWNvbmRs
+b2coMCwgImZhaWx1cmUgZHVyaW5nIGNvbmZpZ3VyYXRpb24iKTsKPgo+Cj4KWWVzLgoKUHJvYmxl
+bSBpcyB3ZSdyZSBhbHJlYWR5IHRha2luZyB0aGUgbG9jayBwcmlvciB0byBydW5uaW5nIGFueSBD
+TEkKY29tbWFuZHMgaW4gbXVsdGlwYXRoZC9tYWluLmM6dXhzb2NrX3RyaWdnZXIoKS4KU28gd2Ug
+Y2Fubm90IHRha2UgdGhlIGxvY2sgaW4gcmVjb25maWd1cmUoKS4KCldlIGFsc28gc2hvdWxkIG5v
+dCB0YWtlIHRoZSBsb2NrIGZyb20gdGhlIGludGVycnVwdCBoYW5kbGVyLAphcyB3ZSBtaWdodCBi
+ZSBpbiBnb2Qga25vd3Mgd2hpY2ggc3RhdGUuCgpJZiB5b3UncmUgYm90aGVyZWQgYnkgdGhpcyBJ
+J2QgcmF0aGVyIHJlbW92ZSB0aGUgU0lHSFVQIHNpZ25hbCAKaGFuZGxlcjsgd2UgY2FuIGFjaGll
+dmUgdmVyeSBtdWNoIHRoZSBzYW1lIHdpdGggdGhlICdyZWNvbmZpZ3VyZScKQ0xJIGNvbW1hbmQu
+CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMg
+JiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElO
+VVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBI
+YXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykK
+Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
