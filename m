@@ -1,48 +1,228 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Bcache upstreaming
-Date: Wed, 9 Jan 2013 11:12:06 -0500
-Message-ID: <CAMM=eLdxz17qG8=Px5VoRpv2pGsGhVn3erCQLrcr=Lm-vCOrWw@mail.gmail.com>
-References: <20130104235040.GA26407@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20130104235040.GA26407-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH 1/5] block: add missing block_bio_complete() tracepoint
+Date: Wed,  9 Jan 2013 08:45:04 -0800
+Message-ID: <1357749908-16562-2-git-send-email-tj@kernel.org>
+References: <1357749908-16562-1-git-send-email-tj@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1357749908-16562-1-git-send-email-tj@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@kernel.dk
+Cc: linux-kernel@vger.kernel.org, chavey@google.com, Tejun Heo <tj@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-(take3 with feeling.. I reverted to the gmail's old compose so all
-should be right in my plain-text gmail world... apologies to Kent and
-dm-devel for the redundant messages)
+bio completion didn't kick block_bio_complete TP.  Only dm was
+explicitly triggering the TP on IO completion.  This makes
+block_bio_complete TP useless for tracers which want to know about
+bios, and all other bio based drivers skip generating blktrace
+completion events.
 
-Hey Kent,
+This patch makes all bio completions via bio_endio() generate
+block_bio_complete TP.
 
-On Fri, Jan 4, 2013 at 6:50 PM, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> I've (finally!) got a bcache branch hacked up that ought to be suitable
-> to go upstream, possibly in staging initially.
->
-> It's currently closer to the dev branch than the stable branch, plus
-> some additional minor changes to make it all more self contained. The
-> code has seen a decent amount of testing and I think it's in good shape,
-> but I'd like it if it could see a bit more testing before I see about
-> pushing it upstream.
->
-> If anyone wants to try it out, checkout the bcache-for-staging branch.
-> It's against Linux 3.7.
+* Explicit trace_block_bio_complete() invocation removed from dm and
+  the trace point is unexported.
 
-I pulled your 'bcache-for-staging' code into a 'dm-devel-cache-bcache'
-branch on my github:
-https://github.com/snitm/linux
+* @rq dropped from trace_block_bio_complete().  bios may fly around
+  w/o queue associated.  Verifying and accessing the assocaited queue
+  belongs to TP probes.
 
-Purpose is to have a single kernel to compare dm-cache and bcache.  My
-branch is against 3.8-rc2.  While importing your code I needed the
-following change to get bcache to compile:
-https://github.com/snitm/linux/commit/400b1257e93975864fd6c4b827537a0234551253
+* blktrace now gets both request and bio completions.  Make it ignore
+  bio completions if request completion path is happening.
 
-It now builds without issue but I haven't tested the resulting bcache
-to know if I broke the sysfs interface due to s/cache/bcache/ on some
-local variables, I don't think I did but I'll defer to you.  (BTW
-those crafty sysfs macros you have were pretty opaque; not really
-seeing what they buy in the grand scheme.  And #include "sysfs.c" is
-different than any code I've seen in the kernel).
+This makes all bio based drivers generate blktrace completion events
+properly and makes the block_bio_complete TP actually useful.
+
+v2: With this change, block_bio_complete TP could be invoked on sg
+    commands which have bio's with %NULL bi_bdev.  Update TP
+    assignment code to check whether bio->bi_bdev is %NULL before
+    dereferencing.
+
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Original-patch-by: Namhyung Kim <namhyung@gmail.com>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: dm-devel@redhat.com
+---
+ block/blk-core.c             |  1 -
+ drivers/md/dm.c              |  1 -
+ drivers/md/raid5.c           | 11 +----------
+ fs/bio.c                     |  2 ++
+ include/linux/blktrace_api.h |  1 +
+ include/trace/events/block.h |  8 ++++----
+ kernel/trace/blktrace.c      | 26 +++++++++++++++++++++++---
+ 7 files changed, 31 insertions(+), 19 deletions(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index c973249..d915d07 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -39,7 +39,6 @@
+ 
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_unplug);
+ 
+ DEFINE_IDA(blk_queue_ida);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c72e4d5..650ec28 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -627,7 +627,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 19d77a0..9ab506d 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -184,8 +184,6 @@ static void return_io(struct bio *return_bi)
+ 		return_bi = bi->bi_next;
+ 		bi->bi_next = NULL;
+ 		bi->bi_size = 0;
+-		trace_block_bio_complete(bdev_get_queue(bi->bi_bdev),
+-					 bi, 0);
+ 		bio_endio(bi, 0);
+ 		bi = return_bi;
+ 	}
+@@ -3917,8 +3915,6 @@ static void raid5_align_endio(struct bio *bi, int error)
+ 	rdev_dec_pending(rdev, conf->mddev);
+ 
+ 	if (!error && uptodate) {
+-		trace_block_bio_complete(bdev_get_queue(raid_bi->bi_bdev),
+-					 raid_bi, 0);
+ 		bio_endio(raid_bi, 0);
+ 		if (atomic_dec_and_test(&conf->active_aligned_reads))
+ 			wake_up(&conf->wait_for_stripe);
+@@ -4377,8 +4373,6 @@ static void make_request(struct mddev *mddev, struct bio * bi)
+ 		if ( rw == WRITE )
+ 			md_write_end(mddev);
+ 
+-		trace_block_bio_complete(bdev_get_queue(bi->bi_bdev),
+-					 bi, 0);
+ 		bio_endio(bi, 0);
+ 	}
+ }
+@@ -4755,11 +4749,8 @@ static int  retry_aligned_read(struct r5conf *conf, struct bio *raid_bio)
+ 		handled++;
+ 	}
+ 	remaining = raid5_dec_bi_active_stripes(raid_bio);
+-	if (remaining == 0) {
+-		trace_block_bio_complete(bdev_get_queue(raid_bio->bi_bdev),
+-					 raid_bio, 0);
++	if (remaining == 0)
+ 		bio_endio(raid_bio, 0);
+-	}
+ 	if (atomic_dec_and_test(&conf->active_aligned_reads))
+ 		wake_up(&conf->wait_for_stripe);
+ 	return handled;
+diff --git a/fs/bio.c b/fs/bio.c
+index b96fc6c..bb5768f 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -1428,6 +1428,8 @@ void bio_endio(struct bio *bio, int error)
+ 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+ 		error = -EIO;
+ 
++	trace_block_bio_complete(bio, error);
++
+ 	if (bio->bi_end_io)
+ 		bio->bi_end_io(bio, error);
+ }
+diff --git a/include/linux/blktrace_api.h b/include/linux/blktrace_api.h
+index 7c2e030..0ea61e0 100644
+--- a/include/linux/blktrace_api.h
++++ b/include/linux/blktrace_api.h
+@@ -12,6 +12,7 @@
+ 
+ struct blk_trace {
+ 	int trace_state;
++	bool rq_based;
+ 	struct rchan *rchan;
+ 	unsigned long __percpu *sequence;
+ 	unsigned char __percpu *msg_data;
+diff --git a/include/trace/events/block.h b/include/trace/events/block.h
+index 05c5e61..8a168db 100644
+--- a/include/trace/events/block.h
++++ b/include/trace/events/block.h
+@@ -206,7 +206,6 @@ TRACE_EVENT(block_bio_bounce,
+ 
+ /**
+  * block_bio_complete - completed all work on the block operation
+- * @q: queue holding the block operation
+  * @bio: block operation completed
+  * @error: io error value
+  *
+@@ -215,9 +214,9 @@ TRACE_EVENT(block_bio_bounce,
+  */
+ TRACE_EVENT(block_bio_complete,
+ 
+-	TP_PROTO(struct request_queue *q, struct bio *bio, int error),
++	TP_PROTO(struct bio *bio, int error),
+ 
+-	TP_ARGS(q, bio, error),
++	TP_ARGS(bio, error),
+ 
+ 	TP_STRUCT__entry(
+ 		__field( dev_t,		dev		)
+@@ -228,7 +227,8 @@ TRACE_EVENT(block_bio_complete,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= bio->bi_bdev->bd_dev;
++		__entry->dev		= bio->bi_bdev ?
++					  bio->bi_bdev->bd_dev : 0;
+ 		__entry->sector		= bio->bi_sector;
+ 		__entry->nr_sector	= bio->bi_size >> 9;
+ 		__entry->error		= error;
+diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
+index c0bd030..190d98f 100644
+--- a/kernel/trace/blktrace.c
++++ b/kernel/trace/blktrace.c
+@@ -739,6 +739,12 @@ static void blk_add_trace_rq_complete(void *ignore,
+ 				      struct request_queue *q,
+ 				      struct request *rq)
+ {
++	struct blk_trace *bt = q->blk_trace;
++
++	/* if control ever passes through here, it's a request based driver */
++	if (unlikely(bt && !bt->rq_based))
++		bt->rq_based = true;
++
+ 	blk_add_trace_rq(q, rq, BLK_TA_COMPLETE);
+ }
+ 
+@@ -774,10 +780,24 @@ static void blk_add_trace_bio_bounce(void *ignore,
+ 	blk_add_trace_bio(q, bio, BLK_TA_BOUNCE, 0);
+ }
+ 
+-static void blk_add_trace_bio_complete(void *ignore,
+-				       struct request_queue *q, struct bio *bio,
+-				       int error)
++static void blk_add_trace_bio_complete(void *ignore, struct bio *bio, int error)
+ {
++	struct request_queue *q;
++	struct blk_trace *bt;
++
++	if (!bio->bi_bdev)
++		return;
++
++	q = bdev_get_queue(bio->bi_bdev);
++	bt = q->blk_trace;
++
++	/*
++	 * Request based drivers will generate both rq and bio completions.
++	 * Ignore bio ones.
++	 */
++	if (likely(!bt) || bt->rq_based)
++		return;
++
+ 	blk_add_trace_bio(q, bio, BLK_TA_COMPLETE, error);
+ }
+ 
+-- 
+1.8.0.2
