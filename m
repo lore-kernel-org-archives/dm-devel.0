@@ -1,17 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 42/42] multipathd: lock vectors during
-	initial configuration
-Date: Wed, 09 Jan 2013 08:01:17 +0100
-Message-ID: <50ED15BD.6070706@suse.de>
-References: <1357653259-62650-1-git-send-email-hare@suse.de>
-	<1357653259-62650-42-git-send-email-hare@suse.de>
-	<1357688242.12137.3.camel@lapoo.opensvc.com>
+Subject: Re: [multipath tools] pgp->priority average calculation
+Date: Wed, 09 Jan 2013 08:35:44 +0100
+Message-ID: <50ED1DD0.9090900@suse.de>
+References: <50ECA2F3.7070501@cs.wisc.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1357688242.12137.3.camel@lapoo.opensvc.com>
+In-Reply-To: <50ECA2F3.7070501@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,46 +18,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: device-mapper development <dm-devel@redhat.com>, christophe.varoqui@gmail.com
 List-Id: dm-devel.ids
 
-T24gMDEvMDkvMjAxMyAxMjozNyBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IE9uIG1h
-ci4sIDIwMTMtMDEtMDggYXQgMTQ6NTQgKzAxMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4g
-RHVyaW5nIGluaXRpYWwgY29uZmlndXJhdGlvbiB0aGUgQ0xJIHRocmVhZCBpcyBhbHJlYWR5IHJ1
-bm5pbmcsCj4+IHNvIHdlIG5lZWQgdG8gbG9jayB0aGUgdmVjdG9ycyBoZXJlIHRvIG5vdCByYWNl
-IHdpdGggdGhlCj4+ICdyZWNvbmZpZ3VyZScgQ0xJIGNvbW1hbmQuCj4+Cj4gQXJlIHlvdSBzdXJl
-IG9mIHRoZSA0MSAtIDQyIHBhdGNoZXMgPwo+Cj4gLSA0MSBtb3ZlcyB0aGUgdmVjcyBsb2NraW5n
-IGZyb20gcmVjb25maWd1cmUgY2FsbGVyIHRvIHJlY29uZmlndXJlCj4gLSA0MiByZW1vdmVzIHRo
-ZSBsb2NraW5nIGZyb20gcmVjb25maWd1cmUKPgo+IFJlZ2FyZHMsCj4gQ2hyaXN0b3BoZSBWYXJv
-cXVpCj4gd3d3Lm9wZW5zdmMuY29tCj4KPj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tl
-IDxoYXJlQHN1c2UuZGU+Cj4+IC0tLQo+PiAgIG11bHRpcGF0aGQvbWFpbi5jIHwgICAgNCArLS0t
-Cj4+ICAgMSBmaWxlcyBjaGFuZ2VkLCAxIGluc2VydGlvbnMoKyksIDMgZGVsZXRpb25zKC0pCj4+
-Cj4+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCj4+
-IGluZGV4IDM5NTMwN2UuLjg5MTc0OTkgMTAwNjQ0Cj4+IC0tLSBhL211bHRpcGF0aGQvbWFpbi5j
-Cj4+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4+IEBAIC0xMzg5LDcgKzEzODksNiBAQCByZWNv
-bmZpZ3VyZSAoc3RydWN0IHZlY3RvcnMgKiB2ZWNzKQo+PiAgIAlzdHJ1Y3QgY29uZmlnICogb2xk
-ID0gY29uZjsKPj4gICAJaW50IHJldHZhbCA9IDE7Cj4+Cj4+IC0JbG9jayh2ZWNzLT5sb2NrKTsK
-Pj4gICAJLyoKPj4gICAJICogZnJlZSBvbGQgbWFwIGFuZCBwYXRoIHZlY3RvcnMgLi4uIHRoZXkg
-dXNlIG9sZCBjb25mIHN0YXRlCj4+ICAgCSAqLwo+PiBAQCAtMTQxMCw3ICsxNDA5LDYgQEAgcmVj
-b25maWd1cmUgKHN0cnVjdCB2ZWN0b3JzICogdmVjcykKPj4gICAJCXJldHZhbCA9IDA7Cj4+ICAg
-CX0KPj4KPj4gLQl1bmxvY2sodmVjcy0+bG9jayk7Cj4+ICAgCXJldHVybiByZXR2YWw7Cj4+ICAg
-fQo+Pgo+PiBAQCAtMTY0MSw5ICsxNjM5LDkgQEAgY2hpbGQgKHZvaWQgKiBwYXJhbSkKPj4gICAJ
-LyoKPj4gICAJICogZmV0Y2ggYW5kIGNvbmZpZ3VyZSBib3RoIHBhdGhzIGFuZCBtdWx0aXBhdGhz
-Cj4+ICAgCSAqLwo+PiAtCWxvY2sodmVjcy0+bG9jayk7Cj4+ICAgCXJ1bm5pbmdfc3RhdGUgPSBE
-QUVNT05fQ09ORklHVVJFOwo+Pgo+PiArCWxvY2sodmVjcy0+bG9jayk7Cj4+ICAgCWlmIChjb25m
-aWd1cmUodmVjcywgMSkpIHsKPj4gICAJCXVubG9jayh2ZWNzLT5sb2NrKTsKPj4gICAJCWNvbmRs
-b2coMCwgImZhaWx1cmUgZHVyaW5nIGNvbmZpZ3VyYXRpb24iKTsKPgo+Cj4KWWVzLgoKUHJvYmxl
-bSBpcyB3ZSdyZSBhbHJlYWR5IHRha2luZyB0aGUgbG9jayBwcmlvciB0byBydW5uaW5nIGFueSBD
-TEkKY29tbWFuZHMgaW4gbXVsdGlwYXRoZC9tYWluLmM6dXhzb2NrX3RyaWdnZXIoKS4KU28gd2Ug
-Y2Fubm90IHRha2UgdGhlIGxvY2sgaW4gcmVjb25maWd1cmUoKS4KCldlIGFsc28gc2hvdWxkIG5v
-dCB0YWtlIHRoZSBsb2NrIGZyb20gdGhlIGludGVycnVwdCBoYW5kbGVyLAphcyB3ZSBtaWdodCBi
-ZSBpbiBnb2Qga25vd3Mgd2hpY2ggc3RhdGUuCgpJZiB5b3UncmUgYm90aGVyZWQgYnkgdGhpcyBJ
-J2QgcmF0aGVyIHJlbW92ZSB0aGUgU0lHSFVQIHNpZ25hbCAKaGFuZGxlcjsgd2UgY2FuIGFjaGll
-dmUgdmVyeSBtdWNoIHRoZSBzYW1lIHdpdGggdGhlICdyZWNvbmZpZ3VyZScKQ0xJIGNvbW1hbmQu
-CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMg
-JiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElO
-VVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBI
-YXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 01/08/2013 11:51 PM, Mike Christie wrote:
+> Hey Ben and Hannes and Christophe,
+>
+> Happy multipath-tools patch submission day :)
+>
+> I had a question on the pgp->priority average calculation and its
+> display to the user.
+>
+>
+> Ben, you added the patch
+>
+> commit cd21bd290a57eed350d564bac403da9d6941a144
+> Author: Benjamin Marzinski <bmarzins@redhat.com>
+> Date:   Wed Nov 10 12:52:20 2010 -0600
+>
+>      multipath: sort all pathgroups by priority
+>
+>
+> which did
+>
+> @@ -25,14 +25,17 @@ path_group_prio_update (struct pathgroup * pgp)
+>                          pgp->enabled_paths++;
+>                  }
+>          }
+> -       pgp->priority =3D priority;
+> +       if (pgp->enabled_paths)
+> +               pgp->priority =3D priority / pgp->enabled_paths;
+> +       else
+> +
+>
+> and
+>
+> @@ -387,9 +386,7 @@ snprint_pg_pri (char * buff, size_t len, struct
+> pathgroup *
+>           * Printing is another reason to update.
+>           */
+>          path_group_prio_update(pgp);
+> -       if (pgp->enabled_paths)
+> -               avg_priority =3D pgp->priority / pgp->enabled_paths;
+> -       return snprint_int(buff, len, avg_priority);
+> +
+>
+>
+> but then Hannes later added the patch:
+>
+>
+> commit 750db1f0dc08bf1d96ce64d32786dfe07b8ae3f9
+> Author: Hannes Reinecke <hare@suse.de>
+> Date:   Wed Mar 17 08:32:51 2010 +0100
+>
+>      Display avg priority as group priority
+>
+>
+> which added it back in the print code:
+>
+>
+> -       return snprint_int(buff, len, pgp->priority);
+> +       if (pgp->enabled_paths)
+> +               avg_priority =3D pgp->priority / pgp->enabled_paths;
+> +       return snprint_int(buff, len, avg_priority);
+>
+>
+> So when we print the prio, it ends up getting divided by the number of
+> enabled paths twice.
+>
+>
+> Was Hannes's patch a mistake? Should it be reverted?
+>
+Yeah, that seems to be an error.
+Please revert.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
