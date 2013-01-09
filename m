@@ -1,81 +1,117 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH repost] blkcg: fix "scheduling while atomic" in
- blk_queue_bypass_start
-Date: Wed, 9 Jan 2013 07:55:28 -0800
-Message-ID: <20130109155528.GJ3926@htj.dyndns.org>
-References: <50890937.7010809@ce.jp.nec.com>
- <20121026202105.GF24687@redhat.com>
- <508E572C.6000707@ce.jp.nec.com>
- <20121029163845.GB7709@redhat.com>
- <1351529115.24721.40.camel@twins>
- <20121029171346.GC3308@redhat.com>
- <50EBCB52.6020003@ce.jp.nec.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Bcache upstreaming
+Date: Wed, 9 Jan 2013 11:01:13 -0500
+Message-ID: <CAMM=eLdJ18zr1kbMhK+nGKQZrzRXSN9iOaPKXt=or_iuyD3P2A@mail.gmail.com>
+References: <20130104235040.GA26407@google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <50EBCB52.6020003@ce.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Vivek Goyal <vgoyal@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: multipart/mixed; boundary="===============4526563176508570106=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20130104235040.GA26407@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kent Overstreet <koverstreet@google.com>
+Cc: linux-bcache@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 08, 2013 at 04:31:30PM +0900, Jun'ichi Nomura wrote:
-> With 749fefe677 in v3.7 ("block: lift the initial queue bypass mode
-> on blk_register_queue() instead of blk_init_allocated_queue()"),
-> the following warning appears when multipath is used with CONFIG_PREEMPT=y.
-> 
-> This patch moves blk_queue_bypass_start() before radix_tree_preload()
-> to avoid the sleeping call while preemption is disabled.
-> 
->   BUG: scheduling while atomic: multipath/2460/0x00000002
->   1 lock held by multipath/2460:
->    #0:  (&md->type_lock){......}, at: [<ffffffffa019fb05>] dm_lock_md_type+0x17/0x19 [dm_mod]
->   Modules linked in: ...
->   Pid: 2460, comm: multipath Tainted: G        W    3.7.0-rc2 #1
->   Call Trace:
->    [<ffffffff810723ae>] __schedule_bug+0x6a/0x78
->    [<ffffffff81428ba2>] __schedule+0xb4/0x5e0
->    [<ffffffff814291e6>] schedule+0x64/0x66
->    [<ffffffff8142773a>] schedule_timeout+0x39/0xf8
->    [<ffffffff8108ad5f>] ? put_lock_stats+0xe/0x29
->    [<ffffffff8108ae30>] ? lock_release_holdtime+0xb6/0xbb
->    [<ffffffff814289e3>] wait_for_common+0x9d/0xee
->    [<ffffffff8107526c>] ? try_to_wake_up+0x206/0x206
->    [<ffffffff810c0eb8>] ? kfree_call_rcu+0x1c/0x1c
->    [<ffffffff81428aec>] wait_for_completion+0x1d/0x1f
->    [<ffffffff810611f9>] wait_rcu_gp+0x5d/0x7a
->    [<ffffffff81061216>] ? wait_rcu_gp+0x7a/0x7a
->    [<ffffffff8106fb18>] ? complete+0x21/0x53
->    [<ffffffff810c0556>] synchronize_rcu+0x1e/0x20
->    [<ffffffff811dd903>] blk_queue_bypass_start+0x5d/0x62
->    [<ffffffff811ee109>] blkcg_activate_policy+0x73/0x270
->    [<ffffffff81130521>] ? kmem_cache_alloc_node_trace+0xc7/0x108
->    [<ffffffff811f04b3>] cfq_init_queue+0x80/0x28e
->    [<ffffffffa01a1600>] ? dm_blk_ioctl+0xa7/0xa7 [dm_mod]
->    [<ffffffff811d8c41>] elevator_init+0xe1/0x115
->    [<ffffffff811e229f>] ? blk_queue_make_request+0x54/0x59
->    [<ffffffff811dd743>] blk_init_allocated_queue+0x8c/0x9e
->    [<ffffffffa019ffcd>] dm_setup_md_queue+0x36/0xaa [dm_mod]
->    [<ffffffffa01a60e6>] table_load+0x1bd/0x2c8 [dm_mod]
->    [<ffffffffa01a7026>] ctl_ioctl+0x1d6/0x236 [dm_mod]
->    [<ffffffffa01a5f29>] ? table_clear+0xaa/0xaa [dm_mod]
->    [<ffffffffa01a7099>] dm_ctl_ioctl+0x13/0x17 [dm_mod]
->    [<ffffffff811479fc>] do_vfs_ioctl+0x3fb/0x441
->    [<ffffffff811b643c>] ? file_has_perm+0x8a/0x99
->    [<ffffffff81147aa0>] sys_ioctl+0x5e/0x82
->    [<ffffffff812010be>] ? trace_hardirqs_on_thunk+0x3a/0x3f
->    [<ffffffff814310d9>] system_call_fastpath+0x16/0x1b
-> 
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Acked-by: Vivek Goyal <vgoyal@redhat.com>
-> Cc: Tejun Heo <tj@kernel.org>
-> Cc: Jens Axboe <axboe@kernel.dk>
-> Cc: Alasdair G Kergon <agk@redhat.com>
+--===============4526563176508570106==
+Content-Type: multipart/alternative; boundary=bcaec55556541d954004d2dd2d15
 
-Acked-by: Tejun Heo <tj@kernel.org>
+--bcaec55556541d954004d2dd2d15
+Content-Type: text/plain; charset=ISO-8859-1
 
-Thanks.
+(take 2 since linux-bcache rejected the mail due to HTML parts.. gmail's
+new interface is a dream ;)
 
--- 
-tejun
+Hey Kent,
+
+On Fri, Jan 4, 2013 at 6:50 PM, Kent Overstreet <koverstreet@google.com>
+wrote:
+>
+> I've (finally!) got a bcache branch hacked up that ought to be suitable
+> to go upstream, possibly in staging initially.
+>
+> It's currently closer to the dev branch than the stable branch, plus
+> some additional minor changes to make it all more self contained. The
+> code has seen a decent amount of testing and I think it's in good shape,
+> but I'd like it if it could see a bit more testing before I see about
+> pushing it upstream.
+>
+> If anyone wants to try it out, checkout the bcache-for-staging branch.
+> It's against Linux 3.7.
+
+
+I pulled your 'bcache-for-staging' code into a 'dm-devel-cache-bcache'
+branch on my github:
+https://github.com/snitm/linux
+
+Purpose is to have a single kernel to compare dm-cache and bcache.  My
+branch is against 3.8-rc2.  While importing your code I needed the
+following change to get bcache to compile:
+https://github.com/snitm/linux/commit/400b1257e93975864fd6c4b827537a0234551253
+
+It now builds without issue but I haven't tested the resulting bcache to
+know if I broke the sysfs interface due to s/cache/bcache/ on some local
+variables, I don't think I did but I'll defer to you.  (BTW those crafty
+sysfs macros you have were pretty opaque; not really seeing what they buy
+in the grand scheme.  And #include "sysfs.c" is different than any code
+I've seen in the kernel).
+
+--bcaec55556541d954004d2dd2d15
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">(take 2 since linux-bcache rejected the mail due to HTML p=
+arts.. gmail&#39;s new interface is a dream ;)<br><br>Hey Kent,<br><br>On F=
+ri, Jan 4, 2013 at 6:50 PM, Kent Overstreet &lt;<a href=3D"mailto:koverstre=
+et@google.com">koverstreet@google.com</a>&gt; wrote:<br>
+
+&gt;<br>&gt; I&#39;ve (finally!) got a bcache branch hacked up that ought t=
+o be suitable<br>&gt; to go upstream, possibly in staging initially.<br>&gt=
+;<br>&gt; It&#39;s currently closer to the dev branch than the stable branc=
+h, plus<br>
+
+&gt; some additional minor changes to make it all more self contained. The<=
+br>&gt; code has seen a decent amount of testing and I think it&#39;s in go=
+od shape,<br>&gt; but I&#39;d like it if it could see a bit more testing be=
+fore I see about<br>
+
+&gt; pushing it upstream.<br>&gt;<br>&gt; If anyone wants to try it out, ch=
+eckout the bcache-for-staging branch.<br>&gt; It&#39;s against Linux 3.7.<b=
+r><br><br>I pulled your &#39;bcache-for-staging&#39; code into a &#39;dm-de=
+vel-cache-bcache&#39; branch on my github:<br>
+
+<a href=3D"https://github.com/snitm/linux">https://github.com/snitm/linux</=
+a><br><br>Purpose is to have a single kernel to compare dm-cache and bcache=
+. =A0My branch is against 3.8-rc2. =A0While importing your code I needed th=
+e following change to get bcache to compile:<br>
+
+<a href=3D"https://github.com/snitm/linux/commit/400b1257e93975864fd6c4b827=
+537a0234551253">https://github.com/snitm/linux/commit/400b1257e93975864fd6c=
+4b827537a0234551253</a><br><br>It now builds without issue but I haven&#39;=
+t tested the resulting bcache to know if I broke the sysfs interface due to=
+ s/cache/bcache/ on some local variables, I don&#39;t think I did but I&#39=
+;ll defer to you. =A0(BTW those crafty sysfs macros you have were pretty op=
+aque; not really seeing what they buy in the grand scheme. =A0And #include =
+&quot;sysfs.c&quot; is different than any code I&#39;ve seen in the kernel)=
+.</div>
+
+
+--bcaec55556541d954004d2dd2d15--
+
+
+--===============4526563176508570106==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4526563176508570106==--
