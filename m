@@ -1,13 +1,12 @@
 From: Ritesh Raj Sarraf <rrs@debian.org>
-Subject: [PATCH 2/3] Minor spelling error fixes for Debian's
-	lintian cleanliness
-Date: Wed,  9 Jan 2013 15:35:55 +0530
-Message-ID: <1357725956-24346-3-git-send-email-rrs@debian.org>
+Subject: [PATCH 1/3] explicitly include posix_types.h
+Date: Wed,  9 Jan 2013 15:35:54 +0530
+Message-ID: <1357725956-24346-2-git-send-email-rrs@debian.org>
 References: <1357725956-24346-1-git-send-email-rrs@debian.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1357725956-24346-1-git-send-email-rrs@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -20,128 +19,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: christophe.varoqui@opensvc.com
-Cc: Ritesh Raj Sarraf <rrs@debian.org>, dm-devel@redhat.com
+Cc: Ritesh Raj Sarraf <rrs@debian.org>, dm-devel@redhat.com, =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
 List-Id: dm-devel.ids
 
-fix missed-out hyphen
-
-Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
----
- kpartx/kpartx.8            |    8 ++++----
- multipath/main.c           |    2 +-
- multipath/multipath.conf.5 |    8 ++++----
- multipathd/multipathd.8    |    4 ++--
- 4 files changed, 11 insertions(+), 11 deletions(-)
-
-diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
-index 8a37d4f..021ddc0 100644
---- a/kpartx/kpartx.8
-+++ b/kpartx/kpartx.8
-@@ -18,7 +18,7 @@ creation and deletion.
- Add partition mappings
- .TP
- .B \-r
--Readonly partition mappings
-+Read-only partition mappings
- .TP
- .B \-d
- Delete partition mappings
-@@ -27,7 +27,7 @@ Delete partition mappings
- Update partition mappings
- .TP
- .B \-l
--List partition mappings that would be added -a
-+List partition mappings that would be added \-a
- .TP
- .B \-p
- set device name-partition number delimiter
-@@ -46,7 +46,7 @@ Sync mode. Don't return until the partitions are created
- .SH EXAMPLE
- To mount all the partitions in a raw disk image:
- .IP
--kpartx -av disk.img
-+kpartx \-av disk.img
- .PP
- This will output lines such as:
- .IP
-@@ -62,7 +62,7 @@ fsck /dev/mapper/loop3p1
- .PP
- When you're done, you need to remove the devices:
- .IP
--kpartx -d disk.img
-+kpartx \-d disk.img
- .SH "SEE ALSO"
- .BR multipath (8)
- .BR multipathd (8)
-diff --git a/multipath/main.c b/multipath/main.c
-index 396c4b9..0083ef4 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -504,7 +504,7 @@ main (int argc, char *argv[])
- 			usage(argv[0]);
- 			exit(0);
- 		case ':':
--			fprintf(stderr, "Missing option arguement\n");
-+			fprintf(stderr, "Missing option argument\n");
- 			usage(argv[0]);
- 			exit(1);
- 		case '?':
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 92fb0c1..eb96c61 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -301,7 +301,7 @@ to assign a persistent and unique alias to the multipath, in the form of mpath<n
- If set to 
- .I no
- use the WWID as the alias. In either case this be will
--be overriden by any specific aliases in the \fImultipaths\fR section.
-+be overridden by any specific aliases in the \fImultipaths\fR section.
- Default is
- .I no
- .TP
-@@ -314,7 +314,7 @@ deleted. Default is
- .TP
- .B max_fds
- Specify the maximum number of file descriptors that can be opened by multipath
--and multipathd.  This is equivalent to ulimit -n. A value of \fImax\fR will set
-+and multipathd.  This is equivalent to ulimit \-n. A value of \fImax\fR will set
- this to the system limit from /proc/sys/fs/nr_open. If this is not set, the
- maximum number of open fds is taken from the calling process. It is usually
- 1024. To be safe, this should be set to the maximum number of paths plus 32,
-@@ -322,7 +322,7 @@ if that number is greated than 1024.
- .TP
- .B checker_timeout
- Specify the timeout to user for path checkers that issue scsi commands with an
--explict timeout, in seconds; default taken from
-+explicit timeout, in seconds; default taken from
- .I /sys/block/sd<x>/device/timeout
- .TP
- .B fast_io_fail_tmo
-@@ -405,7 +405,7 @@ The
- section is used to revert the actions of the
- .I blacklist
- section, ie to include specific device in the
--multipath topology. This allows to selectively include devices which
-+multipath topology. This allows one to selectively include devices which
- would normally be excluded via the
- .I blacklist
- section.
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index cbc40a4..ccc5f54 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -53,10 +53,10 @@ Show the status of all multipath devices that the multipathd is monitoring.
- Show some statistics of all multipath devices that the multipathd is monitoring.
- .TP
- .B list|show maps|multipaths topology
--Show the current multipath topology. Same as "multipath -ll".
-+Show the current multipath topology. Same as "multipath \-ll".
- .TP
- .B list|show topology
--Show the current multipath topology. Same as "multipath -ll".
-+Show the current multipath topology. Same as "multipath \-ll".
- .TP
- .B list|show map|multipath $map topology
- Show topology of a single multipath device specified by $map, e.g. 36005076303ffc56200000000000010aa.
--- 
-1.7.10.4
+RnJvbTogR3VpZG8gR8O8bnRoZXIgPGFneEBzaWd4Y3B1Lm9yZz4KCnRvIGdldCB0aGUgY29ycmVj
+dCB0eXBlIGZvciBfX2tlcm5lbF9vbGRfZGV2X3QKCkNsb3NlczogIzU1ODk5MAoKU2lnbmVkLW9m
+Zi1ieTogUml0ZXNoIFJhaiBTYXJyYWYgPHJyc0BkZWJpYW4ub3JnPgotLS0KIGtwYXJ0eC9sb3Bh
+cnQuYyB8ICAgMTMgKy0tLS0tLS0tLS0tLQogMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCsp
+LCAxMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9rcGFydHgvbG9wYXJ0LmMgYi9rcGFydHgv
+bG9wYXJ0LmMKaW5kZXggNzlkODMyOC4uNTcwYzhhZCAxMDA2NDQKLS0tIGEva3BhcnR4L2xvcGFy
+dC5jCisrKyBiL2twYXJ0eC9sb3BhcnQuYwpAQCAtMjYsMTggKzI2LDcgQEAKICNpbmNsdWRlIDxz
+eXMvc3RhdC5oPgogI2luY2x1ZGUgPHN5cy9tbWFuLmg+CiAjaW5jbHVkZSA8c3lzbWFjcm9zLmg+
+Ci0KLSNpZiBkZWZpbmVkKF9faHBwYV9fKSB8fCBkZWZpbmVkKF9fcG93ZXJwYzY0X18pIHx8IGRl
+ZmluZWQgKF9fYWxwaGFfXykgXAotIHx8IGRlZmluZWQgKF9feDg2XzY0X18pCi10eXBlZGVmIHVu
+c2lnbmVkIGxvbmcgX19rZXJuZWxfb2xkX2Rldl90OwotI2VsaWYgZGVmaW5lZChfX3Bvd2VycGNf
+XykgfHwgZGVmaW5lZChfX2lhNjRfXykgfHwgKGRlZmluZWQoX19zcGFyY19fKSAmJiBkZWZpbmVk
+IChfX2FyY2g2NF9fKSkKLXR5cGVkZWYgdW5zaWduZWQgaW50IF9fa2VybmVsX29sZF9kZXZfdDsK
+LSNlbHNlCi10eXBlZGVmIHVuc2lnbmVkIHNob3J0IF9fa2VybmVsX29sZF9kZXZfdDsKLSNlbmRp
+ZgotCi0jZGVmaW5lIGRldl90IF9fa2VybmVsX29sZF9kZXZfdAotCisjaW5jbHVkZSA8YXNtL3Bv
+c2l4X3R5cGVzLmg+CiAjaW5jbHVkZSA8bGludXgvbG9vcC5oPgogCiAjaW5jbHVkZSAibG9wYXJ0
+LmgiCi0tIAoxLjcuMTAuNAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
