@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2] multipath: update documentation
-Date: Thu, 10 Jan 2013 14:50:46 -0600
-Message-ID: <20130110205046.GW19059@ether.msp.redhat.com>
+Subject: [PATCH v2] multipath: make multipathd work with new
+	dm/lvm systemd	activation method
+Date: Thu, 10 Jan 2013 14:51:55 -0600
+Message-ID: <20130110205155.GX19059@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,113 +22,34 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Add some missing options to the documentation.
+multipathd needs to get setup before lvm (lvm2-activation-early.service).
+To do this, it needs to get started in sysinit.target like the other
+dm services.
 
+Signed-off-by: Peter Rajnoha <prajnoha@redhat.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/main.c           |    1 +
- multipath/multipath.8      |   14 +++++++++++++-
- multipath/multipath.conf.5 |   31 +++++++++++++++++++++++++++++++
- 3 files changed, 45 insertions(+), 1 deletion(-)
+ multipathd/multipathd.service |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-Index: multipath-tools-130109/multipath/main.c
+Index: multipath-tools-120821/multipathd/multipathd.service
 ===================================================================
---- multipath-tools-130109.orig/multipath/main.c
-+++ multipath-tools-130109/multipath/main.c
-@@ -101,6 +101,7 @@ usage (char * progname)
- 		"  -d      dry run, do not create or update devmaps\n" \
- 		"  -t      dump internal hardware table\n" \
- 		"  -r      force devmap reload\n" \
-+		"  -B      treat the bindings file as read only\n" \
- 		"  -p      policy failover|multibus|group_by_serial|group_by_prio\n" \
- 		"  -b fil  bindings file location\n" \
- 		"  -p pol  force all maps to specified path grouping policy :\n" \
-Index: multipath-tools-130109/multipath/multipath.8
-===================================================================
---- multipath-tools-130109.orig/multipath/multipath.8
-+++ multipath-tools-130109/multipath/multipath.8
-@@ -5,8 +5,10 @@ multipath \- Device mapper target autoco
- .B multipath
- .RB [\| \-v\ \c
- .IR verbosity \|]
-+.RB [\| \-b\ \c
-+.IR bindings_file \|]
- .RB [\| \-d \|]
--.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F \| \-B \|]
-+.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r \|]
- .RB [\| \-p\ \c
- .BR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
- .RB [\| device \|]
-@@ -56,6 +58,16 @@ force devmap reload
- .B \-B
- treat the bindings file as read only
- .TP
-+.B \-b " bindings_file"
-+set user_friendly_names bindings file location.  The default is
-+/etc/multipath/bindings
-+.TP
-+.B \-c
-+check if a block device should be a path in a multipath device
-+.TP
-+.B \-q
-+allow device tables with queue_if_no_path when multipathd is not running
-+.TP
- .BI \-p " policy"
- force new maps to use the specified policy:
- .RS 1.2i
-Index: multipath-tools-130109/multipath/multipath.conf.5
-===================================================================
---- multipath-tools-130109.orig/multipath/multipath.conf.5
-+++ multipath-tools-130109/multipath/multipath.conf.5
-@@ -375,6 +375,31 @@ errors are logged at level 3 until the d
- .I always
- , multipathd always logs the path checker error at logging level 2. Default is
- .I always
-+.TP
-+.B reservation_key
-+This is the service action reservation key used by mpathpersist.  It must be
-+set for all multipath devices using persistent reservations, and it must be
-+the same as the RESERVATION KEY field of the PERSISTENT RESERVE OUT parameter
-+list which contains an 8-byte value provided by the application client to the
-+device server to identify the I_T nexus. It is unset by default.
-+.TP
-+.B retain_attached_hw_handler
-+If set to
-+.I yes
-+and the scsi layer has already attached a hardware_handler to the device,
-+multipath will not force the device to use the hardware_handler specified by
-+mutipath.conf. If the scsi layer has not attached a hardware handler,
-+multipath will continue to use its configured hardware handler. Default is
-+.I no
-+.TP
-+.B detect_prio
-+If set to
-+.I yes
-+, multipath will try to detect if the device supports ALUA. If so, the device
-+will automatically use the
-+.I alua
-+prioritizer. If not, the prioritizer will be selected as usual. Default is
-+.I no
- .
- .SH "blacklist section"
- The
-@@ -474,6 +499,8 @@ section:
- .B rr_min_io_q
- .TP
- .B features
-+.TP
-+.B reservation_key
- .RE
- .PD
- .LP
-@@ -560,6 +587,10 @@ section:
- .B dev_loss_tmo
- .TP
- .B flush_on_last_del
-+.TP
-+.B retain_attached_hw_handler
-+.TP
-+.B detect_prio
- .RE
- .PD
- .LP
+--- multipath-tools-120821.orig/multipathd/multipathd.service
++++ multipath-tools-120821/multipathd/multipathd.service
+@@ -1,7 +1,9 @@
+ [Unit]
+ Description=Device-Mapper Multipath Device Controller
+-Before=iscsi.service iscsid.service
++Before=iscsi.service iscsid.service lvm2-activation-early.service
+ After=syslog.target
++DefaultDependencies=no
++Conflicts=shutdown.target
+ 
+ [Service]
+ Type=forking
+@@ -11,4 +13,4 @@ ExecReload=/sbin/multipathd reconfigure
+ #ExecStop=/path/to/scrip delete-me if not necessary
+ 
+ [Install]
+-WantedBy=multi-user.target
++WantedBy=sysinit.target
