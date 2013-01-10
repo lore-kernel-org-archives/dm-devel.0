@@ -1,54 +1,55 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Bcache upstreaming
-Date: Thu, 10 Jan 2013 09:59:54 -0800
-Message-ID: <20130110175954.GR26407@google.com>
-References: <20130104235040.GA26407@google.com>
- <CAMM=eLeeh6jb28KXGE9ZBbkMV1ysE-6NH2BjfpTsQcHAawEs+w@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath: update netapp config
+Date: Thu, 10 Jan 2013 19:07:31 +0100
+Message-ID: <50EF0363.5090404@gmail.com>
+References: <20130108054443.GZ19059@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAMM=eLeeh6jb28KXGE9ZBbkMV1ysE-6NH2BjfpTsQcHAawEs+w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20130108054443.GZ19059@ether.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 09, 2013 at 10:49:04AM -0500, Mike Snitzer wrote:
-> Hey Kent,
+On 01/08/2013 06:44 AM, Benjamin Marzinski wrote:
+> The netapp config now used the retain_attached_hwhandler and
+> detect_prio options to automatically configure correctly for both ALUA and
+> non-ALUA setups. NetApp also requested that dev_loss_tmo be set to
+> the maximum for netapp devices.
 > 
-> On Fri, Jan 4, 2013 at 6:50 PM, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>wrote:
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  libmultipath/hwtable.c |    3 +++
+>  1 file changed, 3 insertions(+)
 > 
-> > I've (finally!) got a bcache branch hacked up that ought to be suitable
-> > to go upstream, possibly in staging initially.
-> >
-> > It's currently closer to the dev branch than the stable branch, plus
-> > some additional minor changes to make it all more self contained. The
-> > code has seen a decent amount of testing and I think it's in good shape,
-> > but I'd like it if it could see a bit more testing before I see about
-> > pushing it upstream.
-> >
-> > If anyone wants to try it out, checkout the bcache-for-staging branch.
-> > It's against Linux 3.7.
+> Index: multipath-tools-120821/libmultipath/hwtable.c
+> ===================================================================
+> --- multipath-tools-120821.orig/libmultipath/hwtable.c
+> +++ multipath-tools-120821/libmultipath/hwtable.c
+> @@ -871,9 +871,12 @@ static struct hwentry default_hw[] = {
+>  		.rr_weight     = RR_WEIGHT_NONE,
+>  		.no_path_retry = NO_PATH_RETRY_UNDEF,
+>  		.minio         = 128,
+> +		.dev_loss      = MAX_DEV_LOSS_TMO,
+>  		.checker_name  = TUR,
+>  		.prio_name     = PRIO_ONTAP,
+>  		.prio_args     = NULL,
+> +		.retain_hwhandler = RETAIN_HWHANDLER_ON,
+> +		.detect_prio   = DETECT_PRIO_ON,
+>  	},
+>  	/*
+>  	 * NEXENTA/COMSTAR controller family
 > 
-> 
-> I pulled your 'bcache-for-staging' code into a 'dm-devel-cache-bcache'
-> branch on my github:
-> https://github.com/snitm/linux
-> 
-> Purpose is to have a single kernel to compare dm-cache and bcache.  My
-> branch is against 3.8-rc2.  While importing your code I needed the
-> following change to get bcache to compile:
-> https://github.com/snitm/linux/commit/400b1257e93975864fd6c4b827537a0234551253
-> 
-> It now builds without issue but I haven't tested the resulting bcache to
-> know if I broke the sysfs interface due to s/cache/bcache/ on some local
-> variables, I don't think I did but I'll defer to you.  (BTW those crafty
-> sysfs macros you have were pretty opaque; not really seeing what they buy
-> in the grand scheme.  And #include "sysfs.c" is different than any code
-> I've seen in the kernel).
 
-Yeah, it was an ugly hack when I pulled the sysfs code out of super.c so
-I could avoid adding a bunch of non static symbols. But apparantly the
-various functions weren't even static in the first place, heh. I'll fix
-this the right way, thanks.
+ditto.
