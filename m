@@ -1,16 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 25/42] Make log_pthread more robust
-Date: Wed, 09 Jan 2013 20:15:02 +0100
-Message-ID: <50EDC1B6.2010608@gmail.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 00/42] SLES resync
+Date: Wed, 9 Jan 2013 23:36:03 -0600
+Message-ID: <20130110053603.GN19059@ether.msp.redhat.com>
 References: <1357653259-62650-1-git-send-email-hare@suse.de>
-	<1357653259-62650-26-git-send-email-hare@suse.de>
-	<1357690572.12137.17.camel@lapoo.opensvc.com>
+	<1357689191.12137.15.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1357690572.12137.17.camel@lapoo.opensvc.com>
+Content-Disposition: inline
+In-Reply-To: <1357689191.12137.15.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,56 +23,127 @@ Errors-To: dm-devel-bounces@redhat.com
 To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/09/2013 01:16 AM, Christophe Varoqui wrote:
-> On mar., 2013-01-08 at 14:54 +0100, Hannes Reinecke wrote:
->> We don't need to allocate memory for mutexes, we can just
->> be using static variables. And valgrind complained about
->> logqueue flush from shutdown, so don't do this.
->> The normal shutdown process should be flushing the log
->> queue anyway.
->>
-> It seems the log_thread_flush() function is missing from the patchset.
-> Care to send the incremental patch ?
+On Wed, Jan 09, 2013 at 12:53:11AM +0100, Christophe Varoqui wrote:
+> On mar., 2013-01-08 at 14:53 +0100, Hannes Reinecke wrote:
+> > Hi Christophe,
+> > 
+> > here are some patches and bugfixes with have accumulated on
+> > my SLES11 branch. Please apply.
+> > 
+> > (Patch 37 is blank due to merging, so it'll be missing from
+> >  the patch set).
+> > 
+> Applied the full set before Ben's set ... this one big larger.
+> Ruined my evening, but definitely worth it.
+> 
+> I only add to remove a merge resolution conflict label from
+> "Clarify dev_loss_tmo settings" and resolve a conflict with latest
+> vector.c::find_slot() patch from Mike.
+> 
+> Benjamin, please let me know if you will rebase your set. If not I'll be
+> able to work on rebasing myself next week.
 
-and also log_reset()
+Yeah. I should be able to get to it tomorrow.
 
-chuchi:~/tmp/multipath-tools $ make -i
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/libmultipath'
-make[1]: Nothing to be done for `all'.
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/libmultipath'
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/libmultipath/prioritizers'
-make[1]: Nothing to be done for `all'.
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/libmultipath/prioritizers'
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/libmultipath/checkers'
-make[1]: Nothing to be done for `all'.
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/libmultipath/checkers'
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/libmpathpersist'
-make[1]: Nothing to be done for `all'.
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/libmpathpersist'
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/multipath'
-cc -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath main.o -o multipath -lpthread -ldevmapper -ldl -L../libmultipath -lmultipath
-../libmultipath/libmultipath.so: undefined reference to `log_thread_flush'
-../libmultipath/libmultipath.so: undefined reference to `log_reset'
-collect2: error: ld returned 1 exit status
-make[1]: [multipath] Error 1 (ignored)
-/bin/gzip -9 -c multipath.8 > multipath.8.gz
-/bin/gzip -9 -c multipath.conf.5 > multipath.conf.5.gz
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/multipath'
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/multipathd'
-cc -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath -I../libmpathpersist main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o -lpthread -ldevmapper -lreadline -lncurses -ludev -ldl -L../libmultipath -lmultipath -L../libmpathpersist -lmpathpersist -o multipathd
-../libmultipath/libmultipath.so: undefined reference to `log_thread_flush'
-../libmultipath/libmultipath.so: undefined reference to `log_reset'
-collect2: error: ld returned 1 exit status
-make[1]: [multipathd] Error 1 (ignored)
-/bin/gzip -9 -c multipathd.8 > multipathd.8.gz
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/multipathd'
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/mpathpersist'
-cc -g main.o  -o mpathpersist -lpthread -ldevmapper -L../libmpathpersist -lmpathpersist -L../libmultipath -lmultipath  -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath -I../libmpathpersist ../libmultipath/libmultipath.so: undefined reference to `log_thread_flush'
-../libmultipath/libmultipath.so: undefined reference to `log_reset'
-collect2: error: ld returned 1 exit status
-make[1]: [mpathpersist] Error 1 (ignored)
-/bin/gzip -9 -c mpathpersist.8 > mpathpersist.8.gz
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/mpathpersist'
-make[1]: Entering directory `/home/xose/tmp/multipath-tools/kpartx'
-make[1]: Nothing to be done for `all'.
-make[1]: Leaving directory `/home/xose/tmp/multipath-tools/kpartx'
+-Ben
+
+> 
+> Thanks,
+> Christophe Varoqui
+> www.opensvc.com 
+> 
+> 
+> > Hannes Reinecke (41):
+> >   libmultipath: Invalid check for mpp->wwid in dm_addmap()
+> >   Remove newline from condlog()
+> >   Fixup pathgroup allocation in disassemble_map()
+> >   libmultipath: resource leak in read_value_block()
+> >   Accept several whitespaces in bindings file
+> >   Add TAGS makefile target
+> >   libmultipath: Fix typo in mp_prio_handler()
+> >   Do not trigger a map reload on priority updates
+> >   Introduce MP_FAST_IO_FAIL_UNSET
+> >   Checker name is not displayed on failure
+> >   Valgrind fixes for prioritizer
+> >   Incorrect inquiry vendor length in hds prioritizer
+> >   Print out multipath alias for flush_on_last_del messages
+> >   Clarify setting origin in propsel.c
+> >   libmultipath: error checking in remove_features()
+> >   Increase parameter buffer
+> >   Check return code from pathinfo()
+> >   Inconsistent string quoting
+> >   Switch off 'queue_if_no_path' before removing maps
+> >   Double free in disassemble_map()
+> >   libmultipath: prio keyword ignored for multipath config
+> >   Path checker should return PATH_DOWN when no path is found
+> >   Do not call sysfs_get_timeout for non-SCSI devices
+> >   Make log_pthread more robust
+> >   Print log messages when updating tables failed
+> >   Update 'no_path_retry' correctly for failed paths
+> >   Clean up uevent queue on shutdown
+> >   libmultipath: Print out uevent sequence number
+> >   Fix race condition in stop_waiter_thread()
+> >   Use VECTOR_SIZE() defines
+> >   Make 'allocated' an integer in vector.h
+> >   Syntax error in /etc/init.d/boot.multipath
+> >   multipath.init.suse: Update usage message
+> >   multipath.conf.5: Clarify dev_loss_tmo settings
+> >   Clarify dev_loss_tmo capping in multipath.conf.5
+> >   multipathd: Ignore errors when creating pidfile
+> >   multipathd deadlocks during restart
+> >   multipathd: sighandlers might use uninitialized gvecs
+> >   multipathd: crash in reconfigure CLI command
+> >   multipathd: lock vectors during initial configuration
+> > 
+> > Petr Uzel (1):
+> >   prio: fix merging of prioritizers with different args
+> > 
+> >  Makefile                                 |    7 ++
+> >  libmultipath/alias.c                     |    2 +-
+> >  libmultipath/config.h                    |    1 +
+> >  libmultipath/configure.c                 |   13 ++--
+> >  libmultipath/configure.h                 |    2 +-
+> >  libmultipath/devmapper.c                 |   36 ++++++++--
+> >  libmultipath/devmapper.h                 |    1 +
+> >  libmultipath/dict.c                      |  108 +++++++++++++++---------------
+> >  libmultipath/discovery.c                 |   38 ++++++-----
+> >  libmultipath/dmparser.c                  |   20 +++---
+> >  libmultipath/log_pthread.c               |  101 +++++++++++++++++++---------
+> >  libmultipath/log_pthread.h               |   10 ++-
+> >  libmultipath/parser.c                    |   32 +++++----
+> >  libmultipath/prio.c                      |   51 ++++++++++++++-
+> >  libmultipath/prio.h                      |    9 ++-
+> >  libmultipath/prioritizers/alua.c         |    1 +
+> >  libmultipath/prioritizers/datacore.c     |    1 +
+> >  libmultipath/prioritizers/emc.c          |    1 +
+> >  libmultipath/prioritizers/hds.c          |    6 +-
+> >  libmultipath/prioritizers/hp_sw.c        |    1 +
+> >  libmultipath/prioritizers/ontap.c        |    2 +
+> >  libmultipath/prioritizers/rdac.c         |    2 +
+> >  libmultipath/prioritizers/weightedpath.c |    6 ++-
+> >  libmultipath/propsel.c                   |   53 ++++++++-------
+> >  libmultipath/structs.c                   |    7 ++
+> >  libmultipath/structs.h                   |    8 ++-
+> >  libmultipath/structs_vec.c               |   29 +++++---
+> >  libmultipath/sysfs.c                     |    2 +-
+> >  libmultipath/uevent.c                    |   27 +++++++-
+> >  libmultipath/uevent.h                    |    1 +
+> >  libmultipath/util.c                      |   12 ++--
+> >  libmultipath/vector.c                    |   10 ++--
+> >  libmultipath/vector.h                    |   12 ++--
+> >  libmultipath/waiter.c                    |    5 +-
+> >  multipath.conf.annotated                 |    1 +
+> >  multipath/main.c                         |    8 +-
+> >  multipath/multipath.conf.5               |    9 ++-
+> >  multipath/multipath.init.suse            |    6 +-
+> >  multipathd/cli_handlers.c                |    2 +-
+> >  multipathd/main.c                        |   98 ++++++++++++---------------
+> >  40 files changed, 468 insertions(+), 273 deletions(-)
+> > 
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
