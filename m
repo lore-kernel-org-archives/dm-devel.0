@@ -1,15 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath: change default configuration
-	parameters
-Date: Thu, 10 Jan 2013 18:33:59 +0100
-Message-ID: <50EEFB87.1060707@gmail.com>
-References: <20130108053459.GU19059@ether.msp.redhat.com>
+Subject: Re: [PATCH] multipath: storagetek 6180 config
+Date: Thu, 10 Jan 2013 18:45:30 +0100
+Message-ID: <50EEFE3A.4040406@gmail.com>
+References: <20130108055508.GF19059@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130108053459.GU19059@ether.msp.redhat.com>
+In-Reply-To: <20130108055508.GF19059@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,18 +22,53 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 01/08/2013 06:34 AM, Benjamin Marzinski wrote:
-
-> This patch makes multipath devices default to setting fast_io_fail,
-> switches the default selector to service-time and removes the
-> round-robin setting of the builtin device configurations. The goal is
-> to give multipath devices better performance "out of the box".
+On 01/08/2013 06:55 AM, Benjamin Marzinski wrote:
+> New StorageTek default config.
 > 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/config.c   |    1 
->  libmultipath/defaults.h |    2 -
->  libmultipath/hwtable.c  |   65 ------------------------------------------------
->  3 files changed, 2 insertions(+), 66 deletions(-)
+>  libmultipath/hwtable.c |   15 +++++++++++++++
+>  1 file changed, 15 insertions(+)
+> 
+> Index: multipath-tools-120821/libmultipath/hwtable.c
+> ===================================================================
+> --- multipath-tools-120821.orig/libmultipath/hwtable.c
+> +++ multipath-tools-120821/libmultipath/hwtable.c
+> @@ -1120,6 +1120,21 @@ static struct hwentry default_hw[] = {
+>  		.prio_name     = PRIO_RDAC,
+>  		.prio_args     = NULL,
+>  	},
+> +	/* StorageTek 6180 */
+> +	{
+> +		.vendor        = "SUN",
+> +		.product       = "SUN_6180",
+> +		.features      = DEFAULT_FEATURES,
+> +		.hwhandler     = "1 rdac",
+> +		.pgpolicy      = GROUP_BY_PRIO,
+> +		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.rr_weight     = RR_WEIGHT_NONE,
+> +		.no_path_retry = NO_PATH_RETRY_QUEUE,
+> +		.minio         = DEFAULT_MINIO,
+> +		.minio_rq      = DEFAULT_MINIO_RQ,
+> +		.checker_name  = RDAC,
+> +		.prio_name     = PRIO_RDAC,
+> +	},
+>  	/* LSI/Engenio/NetApp E-Series RDAC storage */
+>  	{
+>  		.vendor        = "(LSI|ENGENIO)",
+> 
 
-These changes should also translate to the multipath.conf.defaults file.
+These changes should also translate to the multipath.conf.defaults
+file.
+
+By the way, DEVICES in multipath.conf.defaults and hwtable.c are
+a bit out of sync:
+
+multipath.conf.defaults		hwtable.c
+=======================		=========
+	15 IBM			23 IBM
+	4 HP			6 HP
+	3 EMC			2 EMC
+	-			4 DELL
+	-			1 (LSI|ENGENIO)
+	-			1 COMPELNT
