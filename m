@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2] multipath: make multipathd work with new
-	dm/lvm systemd	activation method
-Date: Thu, 10 Jan 2013 14:51:55 -0600
-Message-ID: <20130110205155.GX19059@ether.msp.redhat.com>
+Subject: [PATCH v2] multipath: make reservation_key print out
+	correctly
+Date: Thu, 10 Jan 2013 14:53:47 -0600
+Message-ID: <20130110205347.GY19059@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,37 +19,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-multipathd needs to get setup before lvm (lvm2-activation-early.service).
-To do this, it needs to get started in sysinit.target like the other
-dm services.
+This patch fixes the reservation_key print functions, so they print
+it out like it was in the configuration file.  Also, it keeps
+cli_getprstatus() from writing over random memory.
 
-Signed-off-by: Peter Rajnoha <prajnoha@redhat.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/multipathd.service |    6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ libmultipath/dict.c       |   31 +++++++++++++++++++++++++++++--
+ multipathd/cli_handlers.c |    2 +-
+ 2 files changed, 30 insertions(+), 3 deletions(-)
 
-Index: multipath-tools-120821/multipathd/multipathd.service
+Index: multipath-tools-120821/libmultipath/dict.c
 ===================================================================
---- multipath-tools-120821.orig/multipathd/multipathd.service
-+++ multipath-tools-120821/multipathd/multipathd.service
-@@ -1,7 +1,9 @@
- [Unit]
- Description=Device-Mapper Multipath Device Controller
--Before=iscsi.service iscsid.service
-+Before=iscsi.service iscsid.service lvm2-activation-early.service
- After=syslog.target
-+DefaultDependencies=no
-+Conflicts=shutdown.target
+--- multipath-tools-120821.orig/libmultipath/dict.c
++++ multipath-tools-120821/libmultipath/dict.c
+@@ -2052,8 +2052,22 @@ snprint_mp_prio_args(char * buff, int le
+ static int
+ snprint_mp_reservation_key (char * buff, int len, void * data)
+ {
++	int i;
++	unsigned char *keyp;
++	uint64_t prkey = 0;
+ 	struct mpentry * mpe = (struct mpentry *)data;
+-	return snprintf(buff, len, "%s" , mpe->reservation_key);
++
++	if (!mpe->reservation_key)
++		return 0;
++	keyp = (unsigned char *)mpe->reservation_key;
++	for (i = 0; i < 8; i++) {
++		if (i > 0)
++			prkey <<= 8;
++		prkey |= *keyp;
++		keyp++;
++	}
++
++	return snprintf(buff, len, "0x%" PRIx64, prkey);
+ }
  
- [Service]
- Type=forking
-@@ -11,4 +13,4 @@ ExecReload=/sbin/multipathd reconfigure
- #ExecStop=/path/to/scrip delete-me if not necessary
+ 	static int
+@@ -2721,7 +2735,20 @@ snprint_def_wwids_file (char * buff, int
+ static int
+ snprint_def_reservation_key(char * buff, int len, void * data)
+ {
+-	return snprintf(buff, len, "%s", conf->reservation_key);
++	int i;
++	unsigned char *keyp;
++	uint64_t prkey = 0;
++
++	if (!conf->reservation_key)
++		return 0;
++	keyp = (unsigned char *)conf->reservation_key;
++	for (i = 0; i < 8; i++) {
++		if (i > 0)
++			prkey <<= 8;
++		prkey |= *keyp;
++		keyp++;
++	}
++	return snprintf(buff, len, "0x%" PRIx64, prkey);
+ }
  
- [Install]
--WantedBy=multi-user.target
-+WantedBy=sysinit.target
+ static int
+Index: multipath-tools-120821/multipathd/cli_handlers.c
+===================================================================
+--- multipath-tools-120821.orig/multipathd/cli_handlers.c
++++ multipath-tools-120821/multipathd/cli_handlers.c
+@@ -947,7 +947,7 @@ cli_getprstatus (void * v, char ** reply
+ 
+ 
+ 	sprintf(*reply,"%d",mpp->prflag);
+-	*reply[1]='\0';
++	(*reply)[1]='\0';
+ 
+ 
+ 	condlog(3, "%s: reply = %s", param, *reply);
