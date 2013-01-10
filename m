@@ -1,74 +1,62 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath: storagetek 6180 config
-Date: Thu, 10 Jan 2013 18:45:30 +0100
-Message-ID: <50EEFE3A.4040406@gmail.com>
-References: <20130108055508.GF19059@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Bcache upstreaming
+Date: Thu, 10 Jan 2013 12:56:13 -0500
+Message-ID: <20130110175613.GA31228@redhat.com>
+References: <20130104235040.GA26407@google.com>
+ <CAMM=eLdxz17qG8=Px5VoRpv2pGsGhVn3erCQLrcr=Lm-vCOrWw@mail.gmail.com>
+ <20130110164704.GA30790@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130108055508.GF19059@ether.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20130110164704.GA30790-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 01/08/2013 06:55 AM, Benjamin Marzinski wrote:
-> New StorageTek default config.
-> 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/hwtable.c |   15 +++++++++++++++
->  1 file changed, 15 insertions(+)
-> 
-> Index: multipath-tools-120821/libmultipath/hwtable.c
-> ===================================================================
-> --- multipath-tools-120821.orig/libmultipath/hwtable.c
-> +++ multipath-tools-120821/libmultipath/hwtable.c
-> @@ -1120,6 +1120,21 @@ static struct hwentry default_hw[] = {
->  		.prio_name     = PRIO_RDAC,
->  		.prio_args     = NULL,
->  	},
-> +	/* StorageTek 6180 */
-> +	{
-> +		.vendor        = "SUN",
-> +		.product       = "SUN_6180",
-> +		.features      = DEFAULT_FEATURES,
-> +		.hwhandler     = "1 rdac",
-> +		.pgpolicy      = GROUP_BY_PRIO,
-> +		.pgfailback    = -FAILBACK_IMMEDIATE,
-> +		.rr_weight     = RR_WEIGHT_NONE,
-> +		.no_path_retry = NO_PATH_RETRY_QUEUE,
-> +		.minio         = DEFAULT_MINIO,
-> +		.minio_rq      = DEFAULT_MINIO_RQ,
-> +		.checker_name  = RDAC,
-> +		.prio_name     = PRIO_RDAC,
-> +	},
->  	/* LSI/Engenio/NetApp E-Series RDAC storage */
->  	{
->  		.vendor        = "(LSI|ENGENIO)",
-> 
+On Thu, Jan 10 2013 at 11:47am -0500,
+Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-These changes should also translate to the multipath.conf.defaults
-file.
+> On Wed, Jan 09 2013 at 11:12am -0500,
+> Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> 
+> > (take3 with feeling.. I reverted to the gmail's old compose so all
+> > should be right in my plain-text gmail world... apologies to Kent and
+> > dm-devel for the redundant messages)
+> > 
+> > Hey Kent,
+> > 
+> > On Fri, Jan 4, 2013 at 6:50 PM, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> > > I've (finally!) got a bcache branch hacked up that ought to be suitable
+> > > to go upstream, possibly in staging initially.
+> > >
+> > > It's currently closer to the dev branch than the stable branch, plus
+> > > some additional minor changes to make it all more self contained. The
+> > > code has seen a decent amount of testing and I think it's in good shape,
+> > > but I'd like it if it could see a bit more testing before I see about
+> > > pushing it upstream.
+> > >
+> > > If anyone wants to try it out, checkout the bcache-for-staging branch.
+> > > It's against Linux 3.7.
+> > 
+> > I pulled your 'bcache-for-staging' code into a 'dm-devel-cache-bcache'
+> > branch on my github:
+> > https://github.com/snitm/linux
+> > 
+> > Purpose is to have a single kernel to compare dm-cache and bcache.  My
+> > branch is against 3.8-rc2.  While importing your code I needed the
+> > following change to get bcache to compile:
+> > https://github.com/snitm/linux/commit/400b1257e93975864fd6c4b827537a0234551253
+> > 
+> > It now builds without issue but I haven't tested the resulting bcache
+> 
+> Just tried to use bcache at it locked up:
 
-By the way, DEVICES in multipath.conf.defaults and hwtable.c are
-a bit out of sync:
+And I get the same lockup when I try v3.7 with the following config:
 
-multipath.conf.defaults		hwtable.c
-=======================		=========
-	15 IBM			23 IBM
-	4 HP			6 HP
-	3 EMC			2 EMC
-	-			4 DELL
-	-			1 (LSI|ENGENIO)
-	-			1 COMPELNT
+CONFIG_BCACHE=m
+# CONFIG_BCACHE_DEBUG is not set
+# CONFIG_BCACHE_EDEBUG is not set
+# CONFIG_BCACHE_CLOSURES_DEBUG is not set
+# CONFIG_CGROUP_BCACHE is not set
