@@ -1,275 +1,230 @@
-From: Sasha Levin <levinsasha928@gmail.com>
-Subject: Re: [PATCH 11/15] dm: use new hashtable implementation
-Date: Fri, 11 Jan 2013 13:49:50 -0500
-Message-ID: <CA+1xoqfUHMVdFm2_S9DC=pba1tuLRvkFSG6nn-jtspNmmXzGiw@mail.gmail.com>
-References: <1355756497-15834-1-git-send-email-sasha.levin@oracle.com> <1355756497-15834-11-git-send-email-sasha.levin@oracle.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1355756497-15834-11-git-send-email-sasha.levin@oracle.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Sasha Levin <sasha.levin@oracle.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH 1/5] block: add missing block_bio_complete() tracepoint
+Date: Fri, 11 Jan 2013 13:06:33 -0800
+Message-ID: <1357938397-5413-2-git-send-email-tj@kernel.org>
+References: <1357938397-5413-1-git-send-email-tj@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1357938397-5413-1-git-send-email-tj@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@kernel.dk
+Cc: linux-kernel@vger.kernel.org, chavey@google.com, fengguang.wu@intel.com, Tejun Heo <tj@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-Ping?
+bio completion didn't kick block_bio_complete TP.  Only dm was
+explicitly triggering the TP on IO completion.  This makes
+block_bio_complete TP useless for tracers which want to know about
+bios, and all other bio based drivers skip generating blktrace
+completion events.
 
-On Mon, Dec 17, 2012 at 10:01 AM, Sasha Levin <sasha.levin@oracle.com> wrote:
-> Switch dm to use the new hashtable implementation. This reduces the amount of
-> generic unrelated code in the dm.
->
-> This patch depends on d9b482c ("hashtable: introduce a small and naive
-> hashtable") which was merged in v3.6.
->
-> Signed-off-by: Sasha Levin <sasha.levin@oracle.com>
-> ---
->  drivers/md/dm-snap.c                               | 24 +++++------------
->  drivers/md/persistent-data/dm-block-manager.c      |  1 -
->  .../persistent-data/dm-persistent-data-internal.h  | 19 --------------
->  .../md/persistent-data/dm-transaction-manager.c    | 30 +++++++---------------
->  4 files changed, 16 insertions(+), 58 deletions(-)
->  delete mode 100644 drivers/md/persistent-data/dm-persistent-data-internal.h
->
-> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-> index 223e7eb..4b19fa0 100644
-> --- a/drivers/md/dm-snap.c
-> +++ b/drivers/md/dm-snap.c
-> @@ -34,9 +34,7 @@ static const char dm_snapshot_merge_target_name[] = "snapshot-merge";
->   */
->  #define MIN_IOS 256
->
-> -#define DM_TRACKED_CHUNK_HASH_SIZE     16
-> -#define DM_TRACKED_CHUNK_HASH(x)       ((unsigned long)(x) & \
-> -                                        (DM_TRACKED_CHUNK_HASH_SIZE - 1))
-> +#define DM_TRACKED_CHUNK_HASH_BITS     4
->
->  struct dm_exception_table {
->         uint32_t hash_mask;
-> @@ -80,7 +78,7 @@ struct dm_snapshot {
->         /* Chunks with outstanding reads */
->         spinlock_t tracked_chunk_lock;
->         mempool_t *tracked_chunk_pool;
-> -       struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
-> +       DECLARE_HASHTABLE(tracked_chunk_hash, DM_TRACKED_CHUNK_HASH_BITS);
->
->         /* The on disk metadata handler */
->         struct dm_exception_store *store;
-> @@ -202,8 +200,7 @@ static struct dm_snap_tracked_chunk *track_chunk(struct dm_snapshot *s,
->         c->chunk = chunk;
->
->         spin_lock_irq(&s->tracked_chunk_lock);
-> -       hlist_add_head(&c->node,
-> -                      &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)]);
-> +       hash_add(s->tracked_chunk_hash, &c->node, chunk);
->         spin_unlock_irq(&s->tracked_chunk_lock);
->
->         return c;
-> @@ -215,7 +212,7 @@ static void stop_tracking_chunk(struct dm_snapshot *s,
->         unsigned long flags;
->
->         spin_lock_irqsave(&s->tracked_chunk_lock, flags);
-> -       hlist_del(&c->node);
-> +       hash_del(&c->node);
->         spin_unlock_irqrestore(&s->tracked_chunk_lock, flags);
->
->         mempool_free(c, s->tracked_chunk_pool);
-> @@ -229,8 +226,7 @@ static int __chunk_is_tracked(struct dm_snapshot *s, chunk_t chunk)
->
->         spin_lock_irq(&s->tracked_chunk_lock);
->
-> -       hlist_for_each_entry(c, hn,
-> -           &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)], node) {
-> +       hash_for_each_possible(s->tracked_chunk_hash, c, hn, node, chunk) {
->                 if (c->chunk == chunk) {
->                         found = 1;
->                         break;
-> @@ -1032,7 +1028,6 @@ static void stop_merge(struct dm_snapshot *s)
->  static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  {
->         struct dm_snapshot *s;
-> -       int i;
->         int r = -EINVAL;
->         char *origin_path, *cow_path;
->         unsigned args_used, num_flush_requests = 1;
-> @@ -1127,8 +1122,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->                 goto bad_tracked_chunk_pool;
->         }
->
-> -       for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
-> -               INIT_HLIST_HEAD(&s->tracked_chunk_hash[i]);
-> +       hash_init(s->tracked_chunk_hash);
->
->         spin_lock_init(&s->tracked_chunk_lock);
->
-> @@ -1252,9 +1246,6 @@ static void __handover_exceptions(struct dm_snapshot *snap_src,
->
->  static void snapshot_dtr(struct dm_target *ti)
->  {
-> -#ifdef CONFIG_DM_DEBUG
-> -       int i;
-> -#endif
->         struct dm_snapshot *s = ti->private;
->         struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
->
-> @@ -1285,8 +1276,7 @@ static void snapshot_dtr(struct dm_target *ti)
->         smp_mb();
->
->  #ifdef CONFIG_DM_DEBUG
-> -       for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
-> -               BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
-> +       BUG_ON(!hash_empty(s->tracked_chunk_hash));
->  #endif
->
->         mempool_destroy(s->tracked_chunk_pool);
-> diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
-> index 28c3ed0..083a133 100644
-> --- a/drivers/md/persistent-data/dm-block-manager.c
-> +++ b/drivers/md/persistent-data/dm-block-manager.c
-> @@ -4,7 +4,6 @@
->   * This file is released under the GPL.
->   */
->  #include "dm-block-manager.h"
-> -#include "dm-persistent-data-internal.h"
->  #include "../dm-bufio.h"
->
->  #include <linux/crc32c.h>
-> diff --git a/drivers/md/persistent-data/dm-persistent-data-internal.h b/drivers/md/persistent-data/dm-persistent-data-internal.h
-> deleted file mode 100644
-> index c49e26f..0000000
-> --- a/drivers/md/persistent-data/dm-persistent-data-internal.h
-> +++ /dev/null
-> @@ -1,19 +0,0 @@
-> -/*
-> - * Copyright (C) 2011 Red Hat, Inc.
-> - *
-> - * This file is released under the GPL.
-> - */
-> -
-> -#ifndef _DM_PERSISTENT_DATA_INTERNAL_H
-> -#define _DM_PERSISTENT_DATA_INTERNAL_H
-> -
-> -#include "dm-block-manager.h"
-> -
-> -static inline unsigned dm_hash_block(dm_block_t b, unsigned hash_mask)
-> -{
-> -       const unsigned BIG_PRIME = 4294967291UL;
-> -
-> -       return (((unsigned) b) * BIG_PRIME) & hash_mask;
-> -}
-> -
-> -#endif /* _PERSISTENT_DATA_INTERNAL_H */
-> diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-> index d247a35..9eb9417 100644
-> --- a/drivers/md/persistent-data/dm-transaction-manager.c
-> +++ b/drivers/md/persistent-data/dm-transaction-manager.c
-> @@ -7,11 +7,11 @@
->  #include "dm-space-map.h"
->  #include "dm-space-map-disk.h"
->  #include "dm-space-map-metadata.h"
-> -#include "dm-persistent-data-internal.h"
->
->  #include <linux/export.h>
->  #include <linux/slab.h>
->  #include <linux/device-mapper.h>
-> +#include <linux/hashtable.h>
->
->  #define DM_MSG_PREFIX "transaction manager"
->
-> @@ -25,8 +25,7 @@ struct shadow_info {
->  /*
->   * It would be nice if we scaled with the size of transaction.
->   */
-> -#define HASH_SIZE 256
-> -#define HASH_MASK (HASH_SIZE - 1)
-> +#define DM_HASH_BITS 8
->
->  struct dm_transaction_manager {
->         int is_clone;
-> @@ -36,7 +35,7 @@ struct dm_transaction_manager {
->         struct dm_space_map *sm;
->
->         spinlock_t lock;
-> -       struct hlist_head buckets[HASH_SIZE];
-> +       DECLARE_HASHTABLE(hash, DM_HASH_BITS);
->  };
->
->  /*----------------------------------------------------------------*/
-> @@ -44,12 +43,11 @@ struct dm_transaction_manager {
->  static int is_shadow(struct dm_transaction_manager *tm, dm_block_t b)
->  {
->         int r = 0;
-> -       unsigned bucket = dm_hash_block(b, HASH_MASK);
->         struct shadow_info *si;
->         struct hlist_node *n;
->
->         spin_lock(&tm->lock);
-> -       hlist_for_each_entry(si, n, tm->buckets + bucket, hlist)
-> +       hash_for_each_possible(tm->hash, si, n, hlist, b)
->                 if (si->where == b) {
->                         r = 1;
->                         break;
-> @@ -65,15 +63,13 @@ static int is_shadow(struct dm_transaction_manager *tm, dm_block_t b)
->   */
->  static void insert_shadow(struct dm_transaction_manager *tm, dm_block_t b)
->  {
-> -       unsigned bucket;
->         struct shadow_info *si;
->
->         si = kmalloc(sizeof(*si), GFP_NOIO);
->         if (si) {
->                 si->where = b;
-> -               bucket = dm_hash_block(b, HASH_MASK);
->                 spin_lock(&tm->lock);
-> -               hlist_add_head(&si->hlist, tm->buckets + bucket);
-> +               hash_add(tm->hash, &si->hlist, b);
->                 spin_unlock(&tm->lock);
->         }
->  }
-> @@ -82,18 +78,12 @@ static void wipe_shadow_table(struct dm_transaction_manager *tm)
->  {
->         struct shadow_info *si;
->         struct hlist_node *n, *tmp;
-> -       struct hlist_head *bucket;
->         int i;
->
->         spin_lock(&tm->lock);
-> -       for (i = 0; i < HASH_SIZE; i++) {
-> -               bucket = tm->buckets + i;
-> -               hlist_for_each_entry_safe(si, n, tmp, bucket, hlist)
-> -                       kfree(si);
-> -
-> -               INIT_HLIST_HEAD(bucket);
-> -       }
-> -
-> +       hash_for_each_safe(tm->hash, i, n, tmp, si, hlist)
-> +               kfree(si);
-> +       hash_init(tm->hash);
->         spin_unlock(&tm->lock);
->  }
->
-> @@ -102,7 +92,6 @@ static void wipe_shadow_table(struct dm_transaction_manager *tm)
->  static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
->                                                    struct dm_space_map *sm)
->  {
-> -       int i;
->         struct dm_transaction_manager *tm;
->
->         tm = kmalloc(sizeof(*tm), GFP_KERNEL);
-> @@ -115,8 +104,7 @@ static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
->         tm->sm = sm;
->
->         spin_lock_init(&tm->lock);
-> -       for (i = 0; i < HASH_SIZE; i++)
-> -               INIT_HLIST_HEAD(tm->buckets + i);
-> +       hash_init(tm->hash);
->
->         return tm;
->  }
-> --
-> 1.8.0
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+This patch makes all bio completions via bio_endio() generate
+block_bio_complete TP.
+
+* Explicit trace_block_bio_complete() invocation removed from dm and
+  the trace point is unexported.
+
+* @rq dropped from trace_block_bio_complete().  bios may fly around
+  w/o queue associated.  Verifying and accessing the assocaited queue
+  belongs to TP probes.
+
+* blktrace now gets both request and bio completions.  Make it ignore
+  bio completions if request completion path is happening.
+
+This makes all bio based drivers generate blktrace completion events
+properly and makes the block_bio_complete TP actually useful.
+
+v2: With this change, block_bio_complete TP could be invoked on sg
+    commands which have bio's with %NULL bi_bdev.  Update TP
+    assignment code to check whether bio->bi_bdev is %NULL before
+    dereferencing.
+
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Original-patch-by: Namhyung Kim <namhyung@gmail.com>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+Cc: Neil Brown <neilb@suse.de>
+---
+ block/blk-core.c             |  1 -
+ drivers/md/dm.c              |  1 -
+ drivers/md/raid5.c           | 11 +----------
+ fs/bio.c                     |  2 ++
+ include/linux/blktrace_api.h |  1 +
+ include/trace/events/block.h |  8 ++++----
+ kernel/trace/blktrace.c      | 26 +++++++++++++++++++++++---
+ 7 files changed, 31 insertions(+), 19 deletions(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index c973249..d915d07 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -39,7 +39,6 @@
+ 
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_unplug);
+ 
+ DEFINE_IDA(blk_queue_ida);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c72e4d5..650ec28 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -627,7 +627,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 19d77a0..9ab506d 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -184,8 +184,6 @@ static void return_io(struct bio *return_bi)
+ 		return_bi = bi->bi_next;
+ 		bi->bi_next = NULL;
+ 		bi->bi_size = 0;
+-		trace_block_bio_complete(bdev_get_queue(bi->bi_bdev),
+-					 bi, 0);
+ 		bio_endio(bi, 0);
+ 		bi = return_bi;
+ 	}
+@@ -3917,8 +3915,6 @@ static void raid5_align_endio(struct bio *bi, int error)
+ 	rdev_dec_pending(rdev, conf->mddev);
+ 
+ 	if (!error && uptodate) {
+-		trace_block_bio_complete(bdev_get_queue(raid_bi->bi_bdev),
+-					 raid_bi, 0);
+ 		bio_endio(raid_bi, 0);
+ 		if (atomic_dec_and_test(&conf->active_aligned_reads))
+ 			wake_up(&conf->wait_for_stripe);
+@@ -4377,8 +4373,6 @@ static void make_request(struct mddev *mddev, struct bio * bi)
+ 		if ( rw == WRITE )
+ 			md_write_end(mddev);
+ 
+-		trace_block_bio_complete(bdev_get_queue(bi->bi_bdev),
+-					 bi, 0);
+ 		bio_endio(bi, 0);
+ 	}
+ }
+@@ -4755,11 +4749,8 @@ static int  retry_aligned_read(struct r5conf *conf, struct bio *raid_bio)
+ 		handled++;
+ 	}
+ 	remaining = raid5_dec_bi_active_stripes(raid_bio);
+-	if (remaining == 0) {
+-		trace_block_bio_complete(bdev_get_queue(raid_bio->bi_bdev),
+-					 raid_bio, 0);
++	if (remaining == 0)
+ 		bio_endio(raid_bio, 0);
+-	}
+ 	if (atomic_dec_and_test(&conf->active_aligned_reads))
+ 		wake_up(&conf->wait_for_stripe);
+ 	return handled;
+diff --git a/fs/bio.c b/fs/bio.c
+index b96fc6c..bb5768f 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -1428,6 +1428,8 @@ void bio_endio(struct bio *bio, int error)
+ 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+ 		error = -EIO;
+ 
++	trace_block_bio_complete(bio, error);
++
+ 	if (bio->bi_end_io)
+ 		bio->bi_end_io(bio, error);
+ }
+diff --git a/include/linux/blktrace_api.h b/include/linux/blktrace_api.h
+index 7c2e030..0ea61e0 100644
+--- a/include/linux/blktrace_api.h
++++ b/include/linux/blktrace_api.h
+@@ -12,6 +12,7 @@
+ 
+ struct blk_trace {
+ 	int trace_state;
++	bool rq_based;
+ 	struct rchan *rchan;
+ 	unsigned long __percpu *sequence;
+ 	unsigned char __percpu *msg_data;
+diff --git a/include/trace/events/block.h b/include/trace/events/block.h
+index 05c5e61..8a168db 100644
+--- a/include/trace/events/block.h
++++ b/include/trace/events/block.h
+@@ -206,7 +206,6 @@ TRACE_EVENT(block_bio_bounce,
+ 
+ /**
+  * block_bio_complete - completed all work on the block operation
+- * @q: queue holding the block operation
+  * @bio: block operation completed
+  * @error: io error value
+  *
+@@ -215,9 +214,9 @@ TRACE_EVENT(block_bio_bounce,
+  */
+ TRACE_EVENT(block_bio_complete,
+ 
+-	TP_PROTO(struct request_queue *q, struct bio *bio, int error),
++	TP_PROTO(struct bio *bio, int error),
+ 
+-	TP_ARGS(q, bio, error),
++	TP_ARGS(bio, error),
+ 
+ 	TP_STRUCT__entry(
+ 		__field( dev_t,		dev		)
+@@ -228,7 +227,8 @@ TRACE_EVENT(block_bio_complete,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= bio->bi_bdev->bd_dev;
++		__entry->dev		= bio->bi_bdev ?
++					  bio->bi_bdev->bd_dev : 0;
+ 		__entry->sector		= bio->bi_sector;
+ 		__entry->nr_sector	= bio->bi_size >> 9;
+ 		__entry->error		= error;
+diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
+index c0bd030..190d98f 100644
+--- a/kernel/trace/blktrace.c
++++ b/kernel/trace/blktrace.c
+@@ -739,6 +739,12 @@ static void blk_add_trace_rq_complete(void *ignore,
+ 				      struct request_queue *q,
+ 				      struct request *rq)
+ {
++	struct blk_trace *bt = q->blk_trace;
++
++	/* if control ever passes through here, it's a request based driver */
++	if (unlikely(bt && !bt->rq_based))
++		bt->rq_based = true;
++
+ 	blk_add_trace_rq(q, rq, BLK_TA_COMPLETE);
+ }
+ 
+@@ -774,10 +780,24 @@ static void blk_add_trace_bio_bounce(void *ignore,
+ 	blk_add_trace_bio(q, bio, BLK_TA_BOUNCE, 0);
+ }
+ 
+-static void blk_add_trace_bio_complete(void *ignore,
+-				       struct request_queue *q, struct bio *bio,
+-				       int error)
++static void blk_add_trace_bio_complete(void *ignore, struct bio *bio, int error)
+ {
++	struct request_queue *q;
++	struct blk_trace *bt;
++
++	if (!bio->bi_bdev)
++		return;
++
++	q = bdev_get_queue(bio->bi_bdev);
++	bt = q->blk_trace;
++
++	/*
++	 * Request based drivers will generate both rq and bio completions.
++	 * Ignore bio ones.
++	 */
++	if (likely(!bt) || bt->rq_based)
++		return;
++
+ 	blk_add_trace_bio(q, bio, BLK_TA_COMPLETE, error);
+ }
+ 
+-- 
+1.8.0.2
