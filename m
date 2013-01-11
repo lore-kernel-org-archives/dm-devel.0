@@ -1,247 +1,275 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2] multipath: remove duplicates
-	from	multipath configuration
-Date: Fri, 11 Jan 2013 11:52:20 -0600
-Message-ID: <20130111175220.GF19059@ether.msp.redhat.com>
-References: <20130110201022.GR19059@ether.msp.redhat.com>
-	<50EFBC17.1070401@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Sasha Levin <levinsasha928@gmail.com>
+Subject: Re: [PATCH 11/15] dm: use new hashtable implementation
+Date: Fri, 11 Jan 2013 13:49:50 -0500
+Message-ID: <CA+1xoqfUHMVdFm2_S9DC=pba1tuLRvkFSG6nn-jtspNmmXzGiw@mail.gmail.com>
+References: <1355756497-15834-1-git-send-email-sasha.levin@oracle.com> <1355756497-15834-11-git-send-email-sasha.levin@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <50EFBC17.1070401@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1355756497-15834-11-git-send-email-sasha.levin@oracle.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Sasha Levin <sasha.levin@oracle.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Jan 11, 2013 at 08:15:35AM +0100, Hannes Reinecke wrote:
-> On 01/10/2013 09:10 PM, Benjamin Marzinski wrote:
->> Added code to remove duplcate entries in the devices section, and the
->> blacklist devices section of the builtin configuration table. The only
->> change to setup_default_blist is the addition of _blacklist_device()
->> to check if the device's bl_product entry already exists.
->>
->> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
->> ---
->>   libmultipath/blacklist.c |   91 ++++++++++++++++++++++++--------------=
----------
->>   libmultipath/config.c    |   16 ++++++--
->>   2 files changed, 60 insertions(+), 47 deletions(-)
->>
->> Index: multipath-tools-120821/libmultipath/blacklist.c
->> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->> --- multipath-tools-120821.orig/libmultipath/blacklist.c
->> +++ multipath-tools-120821/libmultipath/blacklist.c
->> @@ -96,50 +96,6 @@ set_ble_device (vector blist, char * ven
->>   }
->>
->>   int
->> -setup_default_blist (struct config * conf)
->> -{
->> -	struct blentry * ble;
->> -	struct hwentry *hwe;
->> -	char * str;
->> -	int i;
->> -
->> -	str =3D STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*");
->> -	if (!str)
->> -		return 1;
->> -	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
->> -		return 1;
->> -
->> -	str =3D STRDUP("^hd[a-z]");
->> -	if (!str)
->> -		return 1;
->> -	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
->> -		return 1;
->> -
->> -	str =3D STRDUP("^dcssblk[0-9]*");
->> -	if (!str)
->> -		return 1;
->> -	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
->> -		return 1;
->> -
->> -	vector_foreach_slot (conf->hwtable, hwe, i) {
->> -		if (hwe->bl_product) {
->> -			if (alloc_ble_device(conf->blist_device))
->> -				return 1;
->> -			ble =3D VECTOR_SLOT(conf->blist_device,
->> -					  VECTOR_SIZE(conf->blist_device) -1);
->> -			if (set_ble_device(conf->blist_device,
->> -					   STRDUP(hwe->vendor),
->> -					   STRDUP(hwe->bl_product),
->> -					   ORIGIN_DEFAULT)) {
->> -				FREE(ble);
->> -				return 1;
->> -			}
->> -		}
->> -	}
->> -	return 0;
->> -}
->> -
->> -int
->>   _blacklist_exceptions (vector elist, char * str)
->>   {
->>   	int i;
->> @@ -192,6 +148,53 @@ _blacklist_device (vector blist, char *
->>   	}
->>   	return 0;
->>   }
->> +
->> +int
->> +setup_default_blist (struct config * conf)
->> +{
->> +	struct blentry * ble;
->> +	struct hwentry *hwe;
->> +	char * str;
->> +	int i;
->> +
->> +	str =3D STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*");
->> +	if (!str)
->> +		return 1;
->> +	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
->> +		return 1;
->> +
->> +	str =3D STRDUP("^hd[a-z]");
->> +	if (!str)
->> +		return 1;
->> +	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
->> +		return 1;
->> +
->> +	str =3D STRDUP("^dcssblk[0-9]*");
->> +	if (!str)
->> +		return 1;
->> +	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
->> +		return 1;
->> +
->> +	vector_foreach_slot (conf->hwtable, hwe, i) {
->> +		if (hwe->bl_product) {
->> +			if (_blacklist_device(conf->blist_device, hwe->vendor,
->> +					      hwe->bl_product))
->> +				continue;
->> +			if (alloc_ble_device(conf->blist_device))
->> +				return 1;
->> +			ble =3D VECTOR_SLOT(conf->blist_device,
->> +					  VECTOR_SIZE(conf->blist_device) -1);
->> +			if (set_ble_device(conf->blist_device,
->> +					   STRDUP(hwe->vendor),
->> +					   STRDUP(hwe->bl_product),
->> +					   ORIGIN_DEFAULT)) {
->> +				FREE(ble);
->> +				return 1;
->> +			}
->> +		}
->> +	}
->> +	return 0;
->> +}
->>
->>   #define LOG_BLIST(M) \
->>   	if (vendor && product)						 \
->> Index: multipath-tools-120821/libmultipath/config.c
->> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->> --- multipath-tools-120821.orig/libmultipath/config.c
->> +++ multipath-tools-120821/libmultipath/config.c
->> @@ -25,13 +25,16 @@
->>   static int
->>   hwe_strmatch (struct hwentry *hwe1, struct hwentry *hwe2)
->>   {
->> -	if (hwe1->vendor && hwe2->vendor && strcmp(hwe1->vendor, hwe2->vendor))
->> +	if ((!!(hwe1->vendor) !=3D !!(hwe2->vendor)) ||
->> +	    (hwe1->vendor && strcmp(hwe1->vendor, hwe2->vendor)))
->>   		return 1;
->>
->> -	if (hwe1->product && hwe2->product && strcmp(hwe1->product, hwe2->prod=
-uct))
->> +	if ((!!(hwe1->product) !=3D !!(hwe2->product)) ||
->> +	    (hwe1->product && strcmp(hwe1->product, hwe2->product)))
->>   		return 1;
->>
->> -	if (hwe1->revision && hwe2->revision && strcmp(hwe1->revision, hwe2->r=
-evision))
->> +	if ((!!(hwe1->revision) !=3D !!(hwe2->revision)) ||
->> +	    (hwe1->revision && strcmp(hwe1->revision, hwe2->revision)))
->>   		return 1;
->>
->>   	return 0;
-> I hate the '!!' constructs.
+Ping?
 
-noted. If I respin this patch, I'll change it to something like
-
-if ((hwe2->revision && !hwe1->revision) ||
-    (hwe1->revision && (!hwe2->revision || strcmp(hwe1->revision, hwe2->rev=
-ision))))
-
-But there are many other instances of !! in the multipath tools code.
-
+On Mon, Dec 17, 2012 at 10:01 AM, Sasha Levin <sasha.levin@oracle.com> wrote:
+> Switch dm to use the new hashtable implementation. This reduces the amount of
+> generic unrelated code in the dm.
 >
->> @@ -416,6 +419,13 @@ factorize_hwtable (vector hw, int n)
->>   				continue;
->>   			/* dup */
->>   			merge_hwe(hwe2, hwe1);
->> +			if (hwe_strmatch(hwe2, hwe1) =3D=3D 0) {
->> +				vector_del_slot(hw, i);
->> +				free_hwe(hwe1);
->> +				n -=3D 1;
->> +				i -=3D 1;
->> +				j -=3D 1;
->> +			}
->>   		}
->>   	}
->>   	return 0;
->>
-> Is the 'hwe_strmatch' required here?
-
-It should help clear up some user confusion.  If the user adds a
-new config that only regex matches the built-in config, but doesn't
-string match it, you obviously need to keep the built-in config to
-correctly configure devices that match the built-in config but not
-the user config.
-
-However if the user's config string matches the built-in, then the
-built-in config will never be used.  Any device what would match the
-built-in config will match the user's merged config first.  However, if
-the user dumps the config, and goes looking through it to make sure that
-everything got merged correctly, the first config they will see is the
-built-in config.  Then they call support, who needs to explain to them
-that their config is further down in the output, and the last config in
-the output is what gets used.
-
-It's easy to avoid all that by simply deleting the built-in config in
-the case where it string matches the user's config.
-
-> Also I'm not sure if just decrementing the indices is the correct
-> way of doing things; I had a version which just restarted
-> the outer loop if we encountered a duplicate.
-
-Oops. You're correct. Looks like I am respinning the patch.
-
--Ben
-
-> Cheers,
+> This patch depends on d9b482c ("hashtable: introduce a small and naive
+> hashtable") which was merged in v3.6.
 >
-> Hannes
-> -- =
-
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+> Signed-off-by: Sasha Levin <sasha.levin@oracle.com>
+> ---
+>  drivers/md/dm-snap.c                               | 24 +++++------------
+>  drivers/md/persistent-data/dm-block-manager.c      |  1 -
+>  .../persistent-data/dm-persistent-data-internal.h  | 19 --------------
+>  .../md/persistent-data/dm-transaction-manager.c    | 30 +++++++---------------
+>  4 files changed, 16 insertions(+), 58 deletions(-)
+>  delete mode 100644 drivers/md/persistent-data/dm-persistent-data-internal.h
+>
+> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+> index 223e7eb..4b19fa0 100644
+> --- a/drivers/md/dm-snap.c
+> +++ b/drivers/md/dm-snap.c
+> @@ -34,9 +34,7 @@ static const char dm_snapshot_merge_target_name[] = "snapshot-merge";
+>   */
+>  #define MIN_IOS 256
+>
+> -#define DM_TRACKED_CHUNK_HASH_SIZE     16
+> -#define DM_TRACKED_CHUNK_HASH(x)       ((unsigned long)(x) & \
+> -                                        (DM_TRACKED_CHUNK_HASH_SIZE - 1))
+> +#define DM_TRACKED_CHUNK_HASH_BITS     4
+>
+>  struct dm_exception_table {
+>         uint32_t hash_mask;
+> @@ -80,7 +78,7 @@ struct dm_snapshot {
+>         /* Chunks with outstanding reads */
+>         spinlock_t tracked_chunk_lock;
+>         mempool_t *tracked_chunk_pool;
+> -       struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
+> +       DECLARE_HASHTABLE(tracked_chunk_hash, DM_TRACKED_CHUNK_HASH_BITS);
+>
+>         /* The on disk metadata handler */
+>         struct dm_exception_store *store;
+> @@ -202,8 +200,7 @@ static struct dm_snap_tracked_chunk *track_chunk(struct dm_snapshot *s,
+>         c->chunk = chunk;
+>
+>         spin_lock_irq(&s->tracked_chunk_lock);
+> -       hlist_add_head(&c->node,
+> -                      &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)]);
+> +       hash_add(s->tracked_chunk_hash, &c->node, chunk);
+>         spin_unlock_irq(&s->tracked_chunk_lock);
+>
+>         return c;
+> @@ -215,7 +212,7 @@ static void stop_tracking_chunk(struct dm_snapshot *s,
+>         unsigned long flags;
+>
+>         spin_lock_irqsave(&s->tracked_chunk_lock, flags);
+> -       hlist_del(&c->node);
+> +       hash_del(&c->node);
+>         spin_unlock_irqrestore(&s->tracked_chunk_lock, flags);
+>
+>         mempool_free(c, s->tracked_chunk_pool);
+> @@ -229,8 +226,7 @@ static int __chunk_is_tracked(struct dm_snapshot *s, chunk_t chunk)
+>
+>         spin_lock_irq(&s->tracked_chunk_lock);
+>
+> -       hlist_for_each_entry(c, hn,
+> -           &s->tracked_chunk_hash[DM_TRACKED_CHUNK_HASH(chunk)], node) {
+> +       hash_for_each_possible(s->tracked_chunk_hash, c, hn, node, chunk) {
+>                 if (c->chunk == chunk) {
+>                         found = 1;
+>                         break;
+> @@ -1032,7 +1028,6 @@ static void stop_merge(struct dm_snapshot *s)
+>  static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  {
+>         struct dm_snapshot *s;
+> -       int i;
+>         int r = -EINVAL;
+>         char *origin_path, *cow_path;
+>         unsigned args_used, num_flush_requests = 1;
+> @@ -1127,8 +1122,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>                 goto bad_tracked_chunk_pool;
+>         }
+>
+> -       for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
+> -               INIT_HLIST_HEAD(&s->tracked_chunk_hash[i]);
+> +       hash_init(s->tracked_chunk_hash);
+>
+>         spin_lock_init(&s->tracked_chunk_lock);
+>
+> @@ -1252,9 +1246,6 @@ static void __handover_exceptions(struct dm_snapshot *snap_src,
+>
+>  static void snapshot_dtr(struct dm_target *ti)
+>  {
+> -#ifdef CONFIG_DM_DEBUG
+> -       int i;
+> -#endif
+>         struct dm_snapshot *s = ti->private;
+>         struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
+>
+> @@ -1285,8 +1276,7 @@ static void snapshot_dtr(struct dm_target *ti)
+>         smp_mb();
+>
+>  #ifdef CONFIG_DM_DEBUG
+> -       for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
+> -               BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
+> +       BUG_ON(!hash_empty(s->tracked_chunk_hash));
+>  #endif
+>
+>         mempool_destroy(s->tracked_chunk_pool);
+> diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
+> index 28c3ed0..083a133 100644
+> --- a/drivers/md/persistent-data/dm-block-manager.c
+> +++ b/drivers/md/persistent-data/dm-block-manager.c
+> @@ -4,7 +4,6 @@
+>   * This file is released under the GPL.
+>   */
+>  #include "dm-block-manager.h"
+> -#include "dm-persistent-data-internal.h"
+>  #include "../dm-bufio.h"
+>
+>  #include <linux/crc32c.h>
+> diff --git a/drivers/md/persistent-data/dm-persistent-data-internal.h b/drivers/md/persistent-data/dm-persistent-data-internal.h
+> deleted file mode 100644
+> index c49e26f..0000000
+> --- a/drivers/md/persistent-data/dm-persistent-data-internal.h
+> +++ /dev/null
+> @@ -1,19 +0,0 @@
+> -/*
+> - * Copyright (C) 2011 Red Hat, Inc.
+> - *
+> - * This file is released under the GPL.
+> - */
+> -
+> -#ifndef _DM_PERSISTENT_DATA_INTERNAL_H
+> -#define _DM_PERSISTENT_DATA_INTERNAL_H
+> -
+> -#include "dm-block-manager.h"
+> -
+> -static inline unsigned dm_hash_block(dm_block_t b, unsigned hash_mask)
+> -{
+> -       const unsigned BIG_PRIME = 4294967291UL;
+> -
+> -       return (((unsigned) b) * BIG_PRIME) & hash_mask;
+> -}
+> -
+> -#endif /* _PERSISTENT_DATA_INTERNAL_H */
+> diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
+> index d247a35..9eb9417 100644
+> --- a/drivers/md/persistent-data/dm-transaction-manager.c
+> +++ b/drivers/md/persistent-data/dm-transaction-manager.c
+> @@ -7,11 +7,11 @@
+>  #include "dm-space-map.h"
+>  #include "dm-space-map-disk.h"
+>  #include "dm-space-map-metadata.h"
+> -#include "dm-persistent-data-internal.h"
+>
+>  #include <linux/export.h>
+>  #include <linux/slab.h>
+>  #include <linux/device-mapper.h>
+> +#include <linux/hashtable.h>
+>
+>  #define DM_MSG_PREFIX "transaction manager"
+>
+> @@ -25,8 +25,7 @@ struct shadow_info {
+>  /*
+>   * It would be nice if we scaled with the size of transaction.
+>   */
+> -#define HASH_SIZE 256
+> -#define HASH_MASK (HASH_SIZE - 1)
+> +#define DM_HASH_BITS 8
+>
+>  struct dm_transaction_manager {
+>         int is_clone;
+> @@ -36,7 +35,7 @@ struct dm_transaction_manager {
+>         struct dm_space_map *sm;
+>
+>         spinlock_t lock;
+> -       struct hlist_head buckets[HASH_SIZE];
+> +       DECLARE_HASHTABLE(hash, DM_HASH_BITS);
+>  };
+>
+>  /*----------------------------------------------------------------*/
+> @@ -44,12 +43,11 @@ struct dm_transaction_manager {
+>  static int is_shadow(struct dm_transaction_manager *tm, dm_block_t b)
+>  {
+>         int r = 0;
+> -       unsigned bucket = dm_hash_block(b, HASH_MASK);
+>         struct shadow_info *si;
+>         struct hlist_node *n;
+>
+>         spin_lock(&tm->lock);
+> -       hlist_for_each_entry(si, n, tm->buckets + bucket, hlist)
+> +       hash_for_each_possible(tm->hash, si, n, hlist, b)
+>                 if (si->where == b) {
+>                         r = 1;
+>                         break;
+> @@ -65,15 +63,13 @@ static int is_shadow(struct dm_transaction_manager *tm, dm_block_t b)
+>   */
+>  static void insert_shadow(struct dm_transaction_manager *tm, dm_block_t b)
+>  {
+> -       unsigned bucket;
+>         struct shadow_info *si;
+>
+>         si = kmalloc(sizeof(*si), GFP_NOIO);
+>         if (si) {
+>                 si->where = b;
+> -               bucket = dm_hash_block(b, HASH_MASK);
+>                 spin_lock(&tm->lock);
+> -               hlist_add_head(&si->hlist, tm->buckets + bucket);
+> +               hash_add(tm->hash, &si->hlist, b);
+>                 spin_unlock(&tm->lock);
+>         }
+>  }
+> @@ -82,18 +78,12 @@ static void wipe_shadow_table(struct dm_transaction_manager *tm)
+>  {
+>         struct shadow_info *si;
+>         struct hlist_node *n, *tmp;
+> -       struct hlist_head *bucket;
+>         int i;
+>
+>         spin_lock(&tm->lock);
+> -       for (i = 0; i < HASH_SIZE; i++) {
+> -               bucket = tm->buckets + i;
+> -               hlist_for_each_entry_safe(si, n, tmp, bucket, hlist)
+> -                       kfree(si);
+> -
+> -               INIT_HLIST_HEAD(bucket);
+> -       }
+> -
+> +       hash_for_each_safe(tm->hash, i, n, tmp, si, hlist)
+> +               kfree(si);
+> +       hash_init(tm->hash);
+>         spin_unlock(&tm->lock);
+>  }
+>
+> @@ -102,7 +92,6 @@ static void wipe_shadow_table(struct dm_transaction_manager *tm)
+>  static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
+>                                                    struct dm_space_map *sm)
+>  {
+> -       int i;
+>         struct dm_transaction_manager *tm;
+>
+>         tm = kmalloc(sizeof(*tm), GFP_KERNEL);
+> @@ -115,8 +104,7 @@ static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
+>         tm->sm = sm;
+>
+>         spin_lock_init(&tm->lock);
+> -       for (i = 0; i < HASH_SIZE; i++)
+> -               INIT_HLIST_HEAD(tm->buckets + i);
+> +       hash_init(tm->hash);
+>
+>         return tm;
+>  }
+> --
+> 1.8.0
 >
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
