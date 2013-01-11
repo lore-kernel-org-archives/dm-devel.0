@@ -1,17 +1,17 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2] multipath: change default
-	configuration	parameters
-Date: Fri, 11 Jan 2013 11:01:42 -0600
-Message-ID: <20130111170142.GE19059@ether.msp.redhat.com>
-References: <20130110200508.GO19059@ether.msp.redhat.com>
-	<50EFB886.7050707@suse.de>
+Subject: Re: [PATCH v2] multipath: remove duplicates
+	from	multipath configuration
+Date: Fri, 11 Jan 2013 11:52:20 -0600
+Message-ID: <20130111175220.GF19059@ether.msp.redhat.com>
+References: <20130110201022.GR19059@ether.msp.redhat.com>
+	<50EFBC17.1070401@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <50EFB886.7050707@suse.de>
+In-Reply-To: <50EFBC17.1070401@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,118 +24,210 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 11, 2013 at 08:00:22AM +0100, Hannes Reinecke wrote:
-> On 01/10/2013 09:05 PM, Benjamin Marzinski wrote:
->> This patch makes multipath devices default to setting fast_io_fail,
->> switches the default selector to service-time and removes the
->> round-robin setting of the builtin device configurations. The goal is
->> to give multipath devices better performance "out of the box".
+On Fri, Jan 11, 2013 at 08:15:35AM +0100, Hannes Reinecke wrote:
+> On 01/10/2013 09:10 PM, Benjamin Marzinski wrote:
+>> Added code to remove duplcate entries in the devices section, and the
+>> blacklist devices section of the builtin configuration table. The only
+>> change to setup_default_blist is the addition of _blacklist_device()
+>> to check if the device's bl_product entry already exists.
 >>
-> Couldn't you split it off in three patches?
-> (Bad) experience tells me one always run into problems when
-> munching together unrelated pieces ...
->
-
-I suppose.  However, each config change is easily isolatable by editting
-multipath.conf. =
-
-
 >> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 >> ---
->>   libmultipath/config.c   |    1
->>   libmultipath/defaults.h |    2 -
->>   libmultipath/hwtable.c  |   65 ---------------------------------------=
+>>   libmultipath/blacklist.c |   91 ++++++++++++++++++++++++--------------=
 ---------
->>   3 files changed, 2 insertions(+), 66 deletions(-)
+>>   libmultipath/config.c    |   16 ++++++--
+>>   2 files changed, 60 insertions(+), 47 deletions(-)
 >>
+>> Index: multipath-tools-120821/libmultipath/blacklist.c
+>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>> --- multipath-tools-120821.orig/libmultipath/blacklist.c
+>> +++ multipath-tools-120821/libmultipath/blacklist.c
+>> @@ -96,50 +96,6 @@ set_ble_device (vector blist, char * ven
+>>   }
+>>
+>>   int
+>> -setup_default_blist (struct config * conf)
+>> -{
+>> -	struct blentry * ble;
+>> -	struct hwentry *hwe;
+>> -	char * str;
+>> -	int i;
+>> -
+>> -	str =3D STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*");
+>> -	if (!str)
+>> -		return 1;
+>> -	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+>> -		return 1;
+>> -
+>> -	str =3D STRDUP("^hd[a-z]");
+>> -	if (!str)
+>> -		return 1;
+>> -	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+>> -		return 1;
+>> -
+>> -	str =3D STRDUP("^dcssblk[0-9]*");
+>> -	if (!str)
+>> -		return 1;
+>> -	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+>> -		return 1;
+>> -
+>> -	vector_foreach_slot (conf->hwtable, hwe, i) {
+>> -		if (hwe->bl_product) {
+>> -			if (alloc_ble_device(conf->blist_device))
+>> -				return 1;
+>> -			ble =3D VECTOR_SLOT(conf->blist_device,
+>> -					  VECTOR_SIZE(conf->blist_device) -1);
+>> -			if (set_ble_device(conf->blist_device,
+>> -					   STRDUP(hwe->vendor),
+>> -					   STRDUP(hwe->bl_product),
+>> -					   ORIGIN_DEFAULT)) {
+>> -				FREE(ble);
+>> -				return 1;
+>> -			}
+>> -		}
+>> -	}
+>> -	return 0;
+>> -}
+>> -
+>> -int
+>>   _blacklist_exceptions (vector elist, char * str)
+>>   {
+>>   	int i;
+>> @@ -192,6 +148,53 @@ _blacklist_device (vector blist, char *
+>>   	}
+>>   	return 0;
+>>   }
+>> +
+>> +int
+>> +setup_default_blist (struct config * conf)
+>> +{
+>> +	struct blentry * ble;
+>> +	struct hwentry *hwe;
+>> +	char * str;
+>> +	int i;
+>> +
+>> +	str =3D STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*");
+>> +	if (!str)
+>> +		return 1;
+>> +	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+>> +		return 1;
+>> +
+>> +	str =3D STRDUP("^hd[a-z]");
+>> +	if (!str)
+>> +		return 1;
+>> +	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+>> +		return 1;
+>> +
+>> +	str =3D STRDUP("^dcssblk[0-9]*");
+>> +	if (!str)
+>> +		return 1;
+>> +	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+>> +		return 1;
+>> +
+>> +	vector_foreach_slot (conf->hwtable, hwe, i) {
+>> +		if (hwe->bl_product) {
+>> +			if (_blacklist_device(conf->blist_device, hwe->vendor,
+>> +					      hwe->bl_product))
+>> +				continue;
+>> +			if (alloc_ble_device(conf->blist_device))
+>> +				return 1;
+>> +			ble =3D VECTOR_SLOT(conf->blist_device,
+>> +					  VECTOR_SIZE(conf->blist_device) -1);
+>> +			if (set_ble_device(conf->blist_device,
+>> +					   STRDUP(hwe->vendor),
+>> +					   STRDUP(hwe->bl_product),
+>> +					   ORIGIN_DEFAULT)) {
+>> +				FREE(ble);
+>> +				return 1;
+>> +			}
+>> +		}
+>> +	}
+>> +	return 0;
+>> +}
+>>
+>>   #define LOG_BLIST(M) \
+>>   	if (vendor && product)						 \
 >> Index: multipath-tools-120821/libmultipath/config.c
 >> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 >> --- multipath-tools-120821.orig/libmultipath/config.c
 >> +++ multipath-tools-120821/libmultipath/config.c
->> @@ -516,6 +516,7 @@ load_config (char * file)
->>   	conf->reassign_maps =3D DEFAULT_REASSIGN_MAPS;
->>   	conf->checkint =3D DEFAULT_CHECKINT;
->>   	conf->max_checkint =3D MAX_CHECKINT(conf->checkint);
->> +	conf->fast_io_fail =3D 5;
+>> @@ -25,13 +25,16 @@
+>>   static int
+>>   hwe_strmatch (struct hwentry *hwe1, struct hwentry *hwe2)
+>>   {
+>> -	if (hwe1->vendor && hwe2->vendor && strcmp(hwe1->vendor, hwe2->vendor))
+>> +	if ((!!(hwe1->vendor) !=3D !!(hwe2->vendor)) ||
+>> +	    (hwe1->vendor && strcmp(hwe1->vendor, hwe2->vendor)))
+>>   		return 1;
 >>
->>   	/*
->>   	 * preload default hwtable
->
-> Please use #define DEFAULT_FAST_IO_FAIL here.
-
-fine.
-
->> Index: multipath-tools-120821/libmultipath/hwtable.c
->> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->> --- multipath-tools-120821.orig/libmultipath/hwtable.c
->> +++ multipath-tools-120821/libmultipath/hwtable.c
->> @@ -28,7 +28,6 @@ static struct hwentry default_hw[] =3D {
->>   		.product       =3D "Compellent Vol",
->>   		.features      =3D DEFAULT_FEATURES,
->>   		.hwhandler     =3D DEFAULT_HWHANDLER,
->> -		.selector      =3D DEFAULT_SELECTOR,
->>   		.pgpolicy      =3D MULTIBUS,
->>   		.pgfailback    =3D -FAILBACK_IMMEDIATE,
->>   		.rr_weight     =3D RR_WEIGHT_NONE,
->
-> Can't we get rid of _all_ 'DEFAULT_XXX' settings in the
-> hardware table? They _should_ be set to default during
-> init anyway, shouldn't they?
-> And that would shorten the hardware table by quite a lot ...
-
-Not all of them, I think.  For instance, for many devices, we know that
-we don't want a hardware handler. Someone could set the hardware handler
-in their defaults section to deal with all their devices that don't
-already have a device specific config built in.  In this case, we want
-the devices with a built-in config to not use that new hwhandler
-setting. I think a good question would be, "will changing this option
-make the device not work correctly?"  If so, then it should be
-explicitly set in the device config.  If not, then it can inherit it
-from default. =
-
-
-So, DEFAULT_HWHANDLER, DEFAULT_CHECKER, and DEFAULT_PRIO, must be stay
-explicitly set. DEFAULT_FEATURES is kind of questionable but I think it
-should stay as well.  DEFAULT_MINIO and DEFAULT_MINIO_RQ are safe to
-inherit from the defaults section.  Does that sound reasonable?
-
-
->> Index: multipath-tools-120821/libmultipath/defaults.h
->> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->> --- multipath-tools-120821.orig/libmultipath/defaults.h
->> +++ multipath-tools-120821/libmultipath/defaults.h
->> @@ -1,7 +1,7 @@
->>   #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
->>   #define DEFAULT_UDEVDIR		"/dev"
->>   #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
->> -#define DEFAULT_SELECTOR	"round-robin 0"
->> +#define DEFAULT_SELECTOR	"service-time 0"
->>   #define DEFAULT_ALIAS_PREFIX	"mpath"
->>   #define DEFAULT_FEATURES	"0"
->>   #define DEFAULT_HWHANDLER	"0"
+>> -	if (hwe1->product && hwe2->product && strcmp(hwe1->product, hwe2->prod=
+uct))
+>> +	if ((!!(hwe1->product) !=3D !!(hwe2->product)) ||
+>> +	    (hwe1->product && strcmp(hwe1->product, hwe2->product)))
+>>   		return 1;
 >>
-> Hmm.
+>> -	if (hwe1->revision && hwe2->revision && strcmp(hwe1->revision, hwe2->r=
+evision))
+>> +	if ((!!(hwe1->revision) !=3D !!(hwe2->revision)) ||
+>> +	    (hwe1->revision && strcmp(hwe1->revision, hwe2->revision)))
+>>   		return 1;
+>>
+>>   	return 0;
+> I hate the '!!' constructs.
+
+noted. If I respin this patch, I'll change it to something like
+
+if ((hwe2->revision && !hwe1->revision) ||
+    (hwe1->revision && (!hwe2->revision || strcmp(hwe1->revision, hwe2->rev=
+ision))))
+
+But there are many other instances of !! in the multipath tools code.
+
 >
-> And you _have_ tested 'service-time' thoroughly, now have you?
+>> @@ -416,6 +419,13 @@ factorize_hwtable (vector hw, int n)
+>>   				continue;
+>>   			/* dup */
+>>   			merge_hwe(hwe2, hwe1);
+>> +			if (hwe_strmatch(hwe2, hwe1) =3D=3D 0) {
+>> +				vector_del_slot(hw, i);
+>> +				free_hwe(hwe1);
+>> +				n -=3D 1;
+>> +				i -=3D 1;
+>> +				j -=3D 1;
+>> +			}
+>>   		}
+>>   	}
+>>   	return 0;
+>>
+> Is the 'hwe_strmatch' required here?
 
-I've tested it with the admittedly non-exhaustive supply of hardware I
-have available.  In my experience, service-time or queue-length are
-both pefectly good choices.  But on some loads to some arrays, they
-do outperform round-robin, and I've never seen them noticeably worse.
+It should help clear up some user confusion.  If the user adds a
+new config that only regex matches the built-in config, but doesn't
+string match it, you obviously need to keep the built-in config to
+correctly configure devices that match the built-in config but not
+the user config.
 
-When people ask for performance tuning tips and we have them try out the
-dynamic load balancing selectors, I've never heard a report that they
-underperform round-robin.  Have you seen different results?  If there's
-a good reason to think it might cause problems, I'm fine with leaving
-round-robin as the default. But I think we should try to get the
-defaults to what we believe will provide the best performance on most
-devices.
+However if the user's config string matches the built-in, then the
+built-in config will never be used.  Any device what would match the
+built-in config will match the user's merged config first.  However, if
+the user dumps the config, and goes looking through it to make sure that
+everything got merged correctly, the first config they will see is the
+built-in config.  Then they call support, who needs to explain to them
+that their config is further down in the output, and the last config in
+the output is what gets used.
+
+It's easy to avoid all that by simply deleting the built-in config in
+the case where it string matches the user's config.
+
+> Also I'm not sure if just decrementing the indices is the correct
+> way of doing things; I had a version which just restarted
+> the outer loop if we encountered a duplicate.
+
+Oops. You're correct. Looks like I am respinning the patch.
 
 -Ben
 
