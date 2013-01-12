@@ -1,17 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH v2] multipath: add detect_prio option to
- autodetect prioitizer
-Date: Sat, 12 Jan 2013 13:26:20 +0100
-Message-ID: <1357993580.4263.5.camel@lapoo.opensvc.com>
-References: <20130110201358.GS19059@ether.msp.redhat.com>
-	<50EFBC71.5080109@suse.de>
+Subject: Re: [PATCH 1/3] explicitly include posix_types.h
+Date: Sat, 12 Jan 2013 14:14:35 +0100
+Message-ID: <1357996475.4263.15.camel@lapoo.opensvc.com>
+References: <1357725956-24346-1-git-send-email-rrs@debian.org>
+	<1357725956-24346-2-git-send-email-rrs@debian.org>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <50EFBC71.5080109@suse.de>
+In-Reply-To: <1357725956-24346-2-git-send-email-rrs@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +20,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Ritesh Raj Sarraf <rrs@debian.org>
+Cc: dm-devel@redhat.com, Guido =?ISO-8859-1?Q?G=FCnther?= <agx@sigxcpu.org>
 List-Id: dm-devel.ids
 
-On ven., 2013-01-11 at 08:17 +0100, Hannes Reinecke wrote:
-> On 01/10/2013 09:13 PM, Benjamin Marzinski wrote:
-> > This patch adds a new multipath.conf option, detect_prio.  If set to yes,
-> > multipathd will try to determine the correct prioritizer for the device. If
-> > it finds one, that will be used instead of its configured prioritizer.  If
-> > none is found, the configured prioritizer will be used.  It can currently
-> > only detect ALUA devices.
-> >
-> > Also fixed and issue with select_prio where in the devices section, it was
-> > passing in the prio name string instead of the prio args string to prio_get()
-> >
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> Good idea.
-> 
-Don"t you think it would be fair to fallback to autodetection if no
-prioritizer is set, instead ? Admins would expect the values they care
-to set in the config file are honored.
-
-Best regards,
-Christophe Varoqui
-www.opensvc.com
+T24gbWVyLiwgMjAxMy0wMS0wOSBhdCAxNTozNSArMDUzMCwgUml0ZXNoIFJhaiBTYXJyYWYgd3Jv
+dGU6Cj4gRnJvbTogR3VpZG8gR8O8bnRoZXIgPGFneEBzaWd4Y3B1Lm9yZz4KPiAKPiB0byBnZXQg
+dGhlIGNvcnJlY3QgdHlwZSBmb3IgX19rZXJuZWxfb2xkX2Rldl90Cj4gCj4gQ2xvc2VzOiAjNTU4
+OTkwCj4gCk1lcmdlZC4KCj4gU2lnbmVkLW9mZi1ieTogUml0ZXNoIFJhaiBTYXJyYWYgPHJyc0Bk
+ZWJpYW4ub3JnPgo+IC0tLQo+ICBrcGFydHgvbG9wYXJ0LmMgfCAgIDEzICstLS0tLS0tLS0tLS0K
+PiAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxMiBkZWxldGlvbnMoLSkKPiAKPiBk
+aWZmIC0tZ2l0IGEva3BhcnR4L2xvcGFydC5jIGIva3BhcnR4L2xvcGFydC5jCj4gaW5kZXggNzlk
+ODMyOC4uNTcwYzhhZCAxMDA2NDQKPiAtLS0gYS9rcGFydHgvbG9wYXJ0LmMKPiArKysgYi9rcGFy
+dHgvbG9wYXJ0LmMKPiBAQCAtMjYsMTggKzI2LDcgQEAKPiAgI2luY2x1ZGUgPHN5cy9zdGF0Lmg+
+Cj4gICNpbmNsdWRlIDxzeXMvbW1hbi5oPgo+ICAjaW5jbHVkZSA8c3lzbWFjcm9zLmg+Cj4gLQo+
+IC0jaWYgZGVmaW5lZChfX2hwcGFfXykgfHwgZGVmaW5lZChfX3Bvd2VycGM2NF9fKSB8fCBkZWZp
+bmVkIChfX2FscGhhX18pIFwKPiAtIHx8IGRlZmluZWQgKF9feDg2XzY0X18pCj4gLXR5cGVkZWYg
+dW5zaWduZWQgbG9uZyBfX2tlcm5lbF9vbGRfZGV2X3Q7Cj4gLSNlbGlmIGRlZmluZWQoX19wb3dl
+cnBjX18pIHx8IGRlZmluZWQoX19pYTY0X18pIHx8IChkZWZpbmVkKF9fc3BhcmNfXykgJiYgZGVm
+aW5lZCAoX19hcmNoNjRfXykpCj4gLXR5cGVkZWYgdW5zaWduZWQgaW50IF9fa2VybmVsX29sZF9k
+ZXZfdDsKPiAtI2Vsc2UKPiAtdHlwZWRlZiB1bnNpZ25lZCBzaG9ydCBfX2tlcm5lbF9vbGRfZGV2
+X3Q7Cj4gLSNlbmRpZgo+IC0KPiAtI2RlZmluZSBkZXZfdCBfX2tlcm5lbF9vbGRfZGV2X3QKPiAt
+Cj4gKyNpbmNsdWRlIDxhc20vcG9zaXhfdHlwZXMuaD4KPiAgI2luY2x1ZGUgPGxpbnV4L2xvb3Au
+aD4KPiAgCj4gICNpbmNsdWRlICJsb3BhcnQuaCIKCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
