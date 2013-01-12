@@ -1,16 +1,17 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH 1/3] explicitly include posix_types.h
-Date: Sat, 12 Jan 2013 14:14:35 +0100
-Message-ID: <1357996475.4263.15.camel@lapoo.opensvc.com>
+Subject: Re: [PATCH 2/3] Minor spelling error fixes for Debian's
+ lintian cleanliness
+Date: Sat, 12 Jan 2013 14:14:01 +0100
+Message-ID: <1357996441.4263.13.camel@lapoo.opensvc.com>
 References: <1357725956-24346-1-git-send-email-rrs@debian.org>
-	<1357725956-24346-2-git-send-email-rrs@debian.org>
+	<1357725956-24346-3-git-send-email-rrs@debian.org>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1357725956-24346-2-git-send-email-rrs@debian.org>
+In-Reply-To: <1357725956-24346-3-git-send-email-rrs@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,27 +22,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Ritesh Raj Sarraf <rrs@debian.org>
-Cc: dm-devel@redhat.com, Guido =?ISO-8859-1?Q?G=FCnther?= <agx@sigxcpu.org>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gbWVyLiwgMjAxMy0wMS0wOSBhdCAxNTozNSArMDUzMCwgUml0ZXNoIFJhaiBTYXJyYWYgd3Jv
-dGU6Cj4gRnJvbTogR3VpZG8gR8O8bnRoZXIgPGFneEBzaWd4Y3B1Lm9yZz4KPiAKPiB0byBnZXQg
-dGhlIGNvcnJlY3QgdHlwZSBmb3IgX19rZXJuZWxfb2xkX2Rldl90Cj4gCj4gQ2xvc2VzOiAjNTU4
-OTkwCj4gCk1lcmdlZC4KCj4gU2lnbmVkLW9mZi1ieTogUml0ZXNoIFJhaiBTYXJyYWYgPHJyc0Bk
-ZWJpYW4ub3JnPgo+IC0tLQo+ICBrcGFydHgvbG9wYXJ0LmMgfCAgIDEzICstLS0tLS0tLS0tLS0K
-PiAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxMiBkZWxldGlvbnMoLSkKPiAKPiBk
-aWZmIC0tZ2l0IGEva3BhcnR4L2xvcGFydC5jIGIva3BhcnR4L2xvcGFydC5jCj4gaW5kZXggNzlk
-ODMyOC4uNTcwYzhhZCAxMDA2NDQKPiAtLS0gYS9rcGFydHgvbG9wYXJ0LmMKPiArKysgYi9rcGFy
-dHgvbG9wYXJ0LmMKPiBAQCAtMjYsMTggKzI2LDcgQEAKPiAgI2luY2x1ZGUgPHN5cy9zdGF0Lmg+
-Cj4gICNpbmNsdWRlIDxzeXMvbW1hbi5oPgo+ICAjaW5jbHVkZSA8c3lzbWFjcm9zLmg+Cj4gLQo+
-IC0jaWYgZGVmaW5lZChfX2hwcGFfXykgfHwgZGVmaW5lZChfX3Bvd2VycGM2NF9fKSB8fCBkZWZp
-bmVkIChfX2FscGhhX18pIFwKPiAtIHx8IGRlZmluZWQgKF9feDg2XzY0X18pCj4gLXR5cGVkZWYg
-dW5zaWduZWQgbG9uZyBfX2tlcm5lbF9vbGRfZGV2X3Q7Cj4gLSNlbGlmIGRlZmluZWQoX19wb3dl
-cnBjX18pIHx8IGRlZmluZWQoX19pYTY0X18pIHx8IChkZWZpbmVkKF9fc3BhcmNfXykgJiYgZGVm
-aW5lZCAoX19hcmNoNjRfXykpCj4gLXR5cGVkZWYgdW5zaWduZWQgaW50IF9fa2VybmVsX29sZF9k
-ZXZfdDsKPiAtI2Vsc2UKPiAtdHlwZWRlZiB1bnNpZ25lZCBzaG9ydCBfX2tlcm5lbF9vbGRfZGV2
-X3Q7Cj4gLSNlbmRpZgo+IC0KPiAtI2RlZmluZSBkZXZfdCBfX2tlcm5lbF9vbGRfZGV2X3QKPiAt
-Cj4gKyNpbmNsdWRlIDxhc20vcG9zaXhfdHlwZXMuaD4KPiAgI2luY2x1ZGUgPGxpbnV4L2xvb3Au
-aD4KPiAgCj4gICNpbmNsdWRlICJsb3BhcnQuaCIKCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVs
+On mer., 2013-01-09 at 15:35 +0530, Ritesh Raj Sarraf wrote:
+> fix missed-out hyphen
+> 
+Merged.
+
+> Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
+> ---
+>  kpartx/kpartx.8            |    8 ++++----
+>  multipath/main.c           |    2 +-
+>  multipath/multipath.conf.5 |    8 ++++----
+>  multipathd/multipathd.8    |    4 ++--
+>  4 files changed, 11 insertions(+), 11 deletions(-)
+> 
+> diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
+> index 8a37d4f..021ddc0 100644
+> --- a/kpartx/kpartx.8
+> +++ b/kpartx/kpartx.8
+> @@ -18,7 +18,7 @@ creation and deletion.
+>  Add partition mappings
+>  .TP
+>  .B \-r
+> -Readonly partition mappings
+> +Read-only partition mappings
+>  .TP
+>  .B \-d
+>  Delete partition mappings
+> @@ -27,7 +27,7 @@ Delete partition mappings
+>  Update partition mappings
+>  .TP
+>  .B \-l
+> -List partition mappings that would be added -a
+> +List partition mappings that would be added \-a
+>  .TP
+>  .B \-p
+>  set device name-partition number delimiter
+> @@ -46,7 +46,7 @@ Sync mode. Don't return until the partitions are created
+>  .SH EXAMPLE
+>  To mount all the partitions in a raw disk image:
+>  .IP
+> -kpartx -av disk.img
+> +kpartx \-av disk.img
+>  .PP
+>  This will output lines such as:
+>  .IP
+> @@ -62,7 +62,7 @@ fsck /dev/mapper/loop3p1
+>  .PP
+>  When you're done, you need to remove the devices:
+>  .IP
+> -kpartx -d disk.img
+> +kpartx \-d disk.img
+>  .SH "SEE ALSO"
+>  .BR multipath (8)
+>  .BR multipathd (8)
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 396c4b9..0083ef4 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -504,7 +504,7 @@ main (int argc, char *argv[])
+>  			usage(argv[0]);
+>  			exit(0);
+>  		case ':':
+> -			fprintf(stderr, "Missing option arguement\n");
+> +			fprintf(stderr, "Missing option argument\n");
+>  			usage(argv[0]);
+>  			exit(1);
+>  		case '?':
+> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> index 92fb0c1..eb96c61 100644
+> --- a/multipath/multipath.conf.5
+> +++ b/multipath/multipath.conf.5
+> @@ -301,7 +301,7 @@ to assign a persistent and unique alias to the multipath, in the form of mpath<n
+>  If set to 
+>  .I no
+>  use the WWID as the alias. In either case this be will
+> -be overriden by any specific aliases in the \fImultipaths\fR section.
+> +be overridden by any specific aliases in the \fImultipaths\fR section.
+>  Default is
+>  .I no
+>  .TP
+> @@ -314,7 +314,7 @@ deleted. Default is
+>  .TP
+>  .B max_fds
+>  Specify the maximum number of file descriptors that can be opened by multipath
+> -and multipathd.  This is equivalent to ulimit -n. A value of \fImax\fR will set
+> +and multipathd.  This is equivalent to ulimit \-n. A value of \fImax\fR will set
+>  this to the system limit from /proc/sys/fs/nr_open. If this is not set, the
+>  maximum number of open fds is taken from the calling process. It is usually
+>  1024. To be safe, this should be set to the maximum number of paths plus 32,
+> @@ -322,7 +322,7 @@ if that number is greated than 1024.
+>  .TP
+>  .B checker_timeout
+>  Specify the timeout to user for path checkers that issue scsi commands with an
+> -explict timeout, in seconds; default taken from
+> +explicit timeout, in seconds; default taken from
+>  .I /sys/block/sd<x>/device/timeout
+>  .TP
+>  .B fast_io_fail_tmo
+> @@ -405,7 +405,7 @@ The
+>  section is used to revert the actions of the
+>  .I blacklist
+>  section, ie to include specific device in the
+> -multipath topology. This allows to selectively include devices which
+> +multipath topology. This allows one to selectively include devices which
+>  would normally be excluded via the
+>  .I blacklist
+>  section.
+> diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
+> index cbc40a4..ccc5f54 100644
+> --- a/multipathd/multipathd.8
+> +++ b/multipathd/multipathd.8
+> @@ -53,10 +53,10 @@ Show the status of all multipath devices that the multipathd is monitoring.
+>  Show some statistics of all multipath devices that the multipathd is monitoring.
+>  .TP
+>  .B list|show maps|multipaths topology
+> -Show the current multipath topology. Same as "multipath -ll".
+> +Show the current multipath topology. Same as "multipath \-ll".
+>  .TP
+>  .B list|show topology
+> -Show the current multipath topology. Same as "multipath -ll".
+> +Show the current multipath topology. Same as "multipath \-ll".
+>  .TP
+>  .B list|show map|multipath $map topology
+>  Show topology of a single multipath device specified by $map, e.g. 36005076303ffc56200000000000010aa.
