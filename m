@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH V3 14/18] multipath: storagetek 6180 config
-Date: Sat, 12 Jan 2013 00:04:51 -0600
-Message-ID: <1357970695-3396-14-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH V3 12/18] multipath: make multipathd work with
+	new dm/lvm
+Date: Sat, 12 Jan 2013 00:04:49 -0600
+Message-ID: <1357970695-3396-12-git-send-email-bmarzins@redhat.com>
 References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,38 +23,36 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-New StorageTek default config.
+multipathd needs to get setup before lvm (lvm2-activation-early.service).
+To do this, it needs to get started in sysinit.target like the other
+dm services.
 
+Signed-off-by: Peter Rajnoha <prajnoha@redhat.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/hwtable.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ multipathd/multipathd.service | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 6a8dfe3..6924a61 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1018,6 +1018,21 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
- 	},
-+	/* StorageTek 6180 */
-+	{
-+		.vendor        = "SUN",
-+		.product       = "SUN_6180",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = "1 rdac",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
-+		.minio         = DEFAULT_MINIO,
-+		.minio_rq      = DEFAULT_MINIO_RQ,
-+		.checker_name  = RDAC,
-+		.prio_name     = PRIO_RDAC,
-+	},
- 	/* LSI/Engenio/NetApp E-Series RDAC storage */
- 	{
- 		.vendor        = "(LSI|ENGENIO)",
+diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
+index 38189c5..d6da067 100644
+--- a/multipathd/multipathd.service
++++ b/multipathd/multipathd.service
+@@ -1,7 +1,9 @@
+ [Unit]
+ Description=Device-Mapper Multipath Device Controller
+-Before=iscsi.service iscsid.service
++Before=iscsi.service iscsid.service lvm2-activation-early.service
+ After=syslog.target
++DefaultDependencies=no
++Conflicts=shutdown.target
+ 
+ [Service]
+ Type=forking
+@@ -11,4 +13,4 @@ ExecReload=/sbin/multipathd reconfigure
+ #ExecStop=/path/to/scrip delete-me if not necessary
+ 
+ [Install]
+-WantedBy=multi-user.target
++WantedBy=sysinit.target
 -- 
 1.8.0
