@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH V3 17/18] multipath: check for NULL from
-	udev_device_get_*
-Date: Sat, 12 Jan 2013 00:04:54 -0600
-Message-ID: <1357970695-3396-17-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH V3 14/18] multipath: storagetek 6180 config
+Date: Sat, 12 Jan 2013 00:04:51 -0600
+Message-ID: <1357970695-3396-14-git-send-email-bmarzins@redhat.com>
 References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,76 +22,38 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The udev_device_get_* functions can return NULL, an occassionally do
-so in the multipathd code.  multipath needs to check if the result
-is NULL before dereferencing it.
+New StorageTek default config.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 16 +++++++++++-----
- 1 file changed, 11 insertions(+), 5 deletions(-)
+ libmultipath/hwtable.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b8a5cd1..831cfef 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -113,6 +113,7 @@ path_discovery (vector pathvec, struct config * conf, int flag)
- 
- 	udev_list_entry_foreach(entry,
- 				udev_enumerate_get_list_entry(udev_iter)) {
-+		const char *devtype;
- 		devpath = udev_list_entry_get_name(entry);
- 		condlog(4, "Discover device %s", devpath);
- 		udevice = udev_device_new_from_syspath(conf->udev, devpath);
-@@ -121,7 +122,8 @@ path_discovery (vector pathvec, struct config * conf, int flag)
- 			r++;
- 			continue;
- 		}
--		if(!strncmp(udev_device_get_devtype(udevice), "disk", 4))
-+		devtype = udev_device_get_devtype(udevice);
-+		if(devtype && !strncmp(devtype, "disk", 4))
- 			r += path_discover(pathvec, conf, udevice, flag);
- 		udev_device_unref(udevice);
- 	}
-@@ -459,7 +461,8 @@ scsi_sysfs_pathinfo (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "scsi", 4)) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4)) {
- 			attr_path = udev_device_get_sysname(parent);
- 			if (!attr_path)
- 				break;
-@@ -525,7 +528,8 @@ ccw_sysfs_pathinfo (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "ccw", 3))
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "ccw", 3))
- 			break;
- 		parent = udev_device_get_parent(parent);
- 	}
-@@ -581,7 +585,8 @@ cciss_sysfs_pathinfo (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "cciss", 5)) {
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "cciss", 5)) {
- 			attr_path = udev_device_get_sysname(parent);
- 			if (!attr_path)
- 				break;
-@@ -662,7 +667,8 @@ path_offline (struct path * pp)
- 
- 	parent = pp->udev;
- 	while (parent) {
--		if (!strncmp(udev_device_get_subsystem(parent), "scsi", 4))
-+		const char *subsys = udev_device_get_subsystem(parent);
-+		if (subsys && !strncmp(subsys, "scsi", 4))
- 			break;
- 		parent = udev_device_get_parent(parent);
- 	}
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 6a8dfe3..6924a61 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1018,6 +1018,21 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 		.prio_args     = NULL,
+ 	},
++	/* StorageTek 6180 */
++	{
++		.vendor        = "SUN",
++		.product       = "SUN_6180",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 rdac",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.minio         = DEFAULT_MINIO,
++		.minio_rq      = DEFAULT_MINIO_RQ,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
+ 	/* LSI/Engenio/NetApp E-Series RDAC storage */
+ 	{
+ 		.vendor        = "(LSI|ENGENIO)",
 -- 
 1.8.0
