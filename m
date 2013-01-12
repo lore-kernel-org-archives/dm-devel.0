@@ -1,15 +1,17 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH V3 13/18] multipath: make reservation_key print
-	out correctly
-Date: Sat, 12 Jan 2013 00:04:50 -0600
-Message-ID: <1357970695-3396-13-git-send-email-bmarzins@redhat.com>
-References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH v2] multipath: add detect_prio option to
+ autodetect prioitizer
+Date: Sat, 12 Jan 2013 13:26:20 +0100
+Message-ID: <1357993580.4263.5.camel@lapoo.opensvc.com>
+References: <20130110201358.GS19059@ether.msp.redhat.com>
+	<50EFBC71.5080109@suse.de>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <50EFBC71.5080109@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,81 +22,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-This patch fixes the reservation_key print functions, so they print
-it out like it was in the configuration file.  Also, it keeps
-cli_getprstatus() from writing over random memory.
+On ven., 2013-01-11 at 08:17 +0100, Hannes Reinecke wrote:
+> On 01/10/2013 09:13 PM, Benjamin Marzinski wrote:
+> > This patch adds a new multipath.conf option, detect_prio.  If set to yes,
+> > multipathd will try to determine the correct prioritizer for the device. If
+> > it finds one, that will be used instead of its configured prioritizer.  If
+> > none is found, the configured prioritizer will be used.  It can currently
+> > only detect ALUA devices.
+> >
+> > Also fixed and issue with select_prio where in the devices section, it was
+> > passing in the prio name string instead of the prio args string to prio_get()
+> >
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> 
+> Good idea.
+> 
+Don"t you think it would be fair to fallback to autodetection if no
+prioritizer is set, instead ? Admins would expect the values they care
+to set in the config file are honored.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/dict.c       | 31 +++++++++++++++++++++++++++++--
- multipathd/cli_handlers.c |  2 +-
- 2 files changed, 30 insertions(+), 3 deletions(-)
-
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 788ffae..a54dda9 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -2052,8 +2052,22 @@ snprint_mp_prio_args(char * buff, int len, void * data)
- static int
- snprint_mp_reservation_key (char * buff, int len, void * data)
- {
-+	int i;
-+	unsigned char *keyp;
-+	uint64_t prkey = 0;
- 	struct mpentry * mpe = (struct mpentry *)data;
--	return snprintf(buff, len, "%s" , mpe->reservation_key);
-+
-+	if (!mpe->reservation_key)
-+		return 0;
-+	keyp = (unsigned char *)mpe->reservation_key;
-+	for (i = 0; i < 8; i++) {
-+		if (i > 0)
-+			prkey <<= 8;
-+		prkey |= *keyp;
-+		keyp++;
-+	}
-+
-+	return snprintf(buff, len, "0x%" PRIx64, prkey);
- }
- 
- 	static int
-@@ -2721,7 +2735,20 @@ snprint_def_wwids_file (char * buff, int len, void * data)
- static int
- snprint_def_reservation_key(char * buff, int len, void * data)
- {
--	return snprintf(buff, len, "%s", conf->reservation_key);
-+	int i;
-+	unsigned char *keyp;
-+	uint64_t prkey = 0;
-+
-+	if (!conf->reservation_key)
-+		return 0;
-+	keyp = (unsigned char *)conf->reservation_key;
-+	for (i = 0; i < 8; i++) {
-+		if (i > 0)
-+			prkey <<= 8;
-+		prkey |= *keyp;
-+		keyp++;
-+	}
-+	return snprintf(buff, len, "0x%" PRIx64, prkey);
- }
- 
- static int
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 6053b5a..4df37fe 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -947,7 +947,7 @@ cli_getprstatus (void * v, char ** reply, int * len, void * data)
- 
- 
- 	sprintf(*reply,"%d",mpp->prflag);
--	*reply[1]='\0';
-+	(*reply)[1]='\0';
- 
- 
- 	condlog(3, "%s: reply = %s", param, *reply);
--- 
-1.8.0
+Best regards,
+Christophe Varoqui
+www.opensvc.com
