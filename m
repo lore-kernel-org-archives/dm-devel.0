@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH V3 12/18] multipath: make multipathd work with
-	new dm/lvm
-Date: Sat, 12 Jan 2013 00:04:49 -0600
-Message-ID: <1357970695-3396-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH V3 13/18] multipath: make reservation_key print
+	out correctly
+Date: Sat, 12 Jan 2013 00:04:50 -0600
+Message-ID: <1357970695-3396-13-git-send-email-bmarzins@redhat.com>
 References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,36 +23,78 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-multipathd needs to get setup before lvm (lvm2-activation-early.service).
-To do this, it needs to get started in sysinit.target like the other
-dm services.
+This patch fixes the reservation_key print functions, so they print
+it out like it was in the configuration file.  Also, it keeps
+cli_getprstatus() from writing over random memory.
 
-Signed-off-by: Peter Rajnoha <prajnoha@redhat.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/multipathd.service | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ libmultipath/dict.c       | 31 +++++++++++++++++++++++++++++--
+ multipathd/cli_handlers.c |  2 +-
+ 2 files changed, 30 insertions(+), 3 deletions(-)
 
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index 38189c5..d6da067 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -1,7 +1,9 @@
- [Unit]
- Description=Device-Mapper Multipath Device Controller
--Before=iscsi.service iscsid.service
-+Before=iscsi.service iscsid.service lvm2-activation-early.service
- After=syslog.target
-+DefaultDependencies=no
-+Conflicts=shutdown.target
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 788ffae..a54dda9 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -2052,8 +2052,22 @@ snprint_mp_prio_args(char * buff, int len, void * data)
+ static int
+ snprint_mp_reservation_key (char * buff, int len, void * data)
+ {
++	int i;
++	unsigned char *keyp;
++	uint64_t prkey = 0;
+ 	struct mpentry * mpe = (struct mpentry *)data;
+-	return snprintf(buff, len, "%s" , mpe->reservation_key);
++
++	if (!mpe->reservation_key)
++		return 0;
++	keyp = (unsigned char *)mpe->reservation_key;
++	for (i = 0; i < 8; i++) {
++		if (i > 0)
++			prkey <<= 8;
++		prkey |= *keyp;
++		keyp++;
++	}
++
++	return snprintf(buff, len, "0x%" PRIx64, prkey);
+ }
  
- [Service]
- Type=forking
-@@ -11,4 +13,4 @@ ExecReload=/sbin/multipathd reconfigure
- #ExecStop=/path/to/scrip delete-me if not necessary
+ 	static int
+@@ -2721,7 +2735,20 @@ snprint_def_wwids_file (char * buff, int len, void * data)
+ static int
+ snprint_def_reservation_key(char * buff, int len, void * data)
+ {
+-	return snprintf(buff, len, "%s", conf->reservation_key);
++	int i;
++	unsigned char *keyp;
++	uint64_t prkey = 0;
++
++	if (!conf->reservation_key)
++		return 0;
++	keyp = (unsigned char *)conf->reservation_key;
++	for (i = 0; i < 8; i++) {
++		if (i > 0)
++			prkey <<= 8;
++		prkey |= *keyp;
++		keyp++;
++	}
++	return snprintf(buff, len, "0x%" PRIx64, prkey);
+ }
  
- [Install]
--WantedBy=multi-user.target
-+WantedBy=sysinit.target
+ static int
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 6053b5a..4df37fe 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -947,7 +947,7 @@ cli_getprstatus (void * v, char ** reply, int * len, void * data)
+ 
+ 
+ 	sprintf(*reply,"%d",mpp->prflag);
+-	*reply[1]='\0';
++	(*reply)[1]='\0';
+ 
+ 
+ 	condlog(3, "%s: reply = %s", param, *reply);
 -- 
 1.8.0
