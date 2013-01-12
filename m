@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH V3 06/18] multipath: remove duplicates from
-	multipath
-Date: Sat, 12 Jan 2013 00:04:43 -0600
-Message-ID: <1357970695-3396-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH V3 07/18] multipath: add detect_prio option to
+	autodetect
+Date: Sat, 12 Jan 2013 00:04:44 -0600
+Message-ID: <1357970695-3396-7-git-send-email-bmarzins@redhat.com>
 References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,166 +23,340 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Added code to remove duplcate entries in the devices section, and the
-blacklist devices section of the builtin configuration table. The only
-change to setup_default_blist is the addition of _blacklist_device()
-to check if the device's bl_product entry already exists.
+This patch adds a new multipath.conf option, detect_prio.  If set to yes,
+multipathd will try to determine the correct prioritizer for the device. If
+it finds one, that will be used instead of its configured prioritizer.  If
+none is found, the configured prioritizer will be used.  It can currently
+only detect ALUA devices.
+
+Also fixed and issue with select_prio where in the devices section, it was
+passing in the prio name string instead of the prio args string to prio_get()
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/blacklist.c | 91 +++++++++++++++++++++++++-----------------------
- libmultipath/config.c    | 19 ++++++++--
- 2 files changed, 63 insertions(+), 47 deletions(-)
+ libmultipath/Makefile    |  2 +-
+ libmultipath/config.c    |  3 ++
+ libmultipath/config.h    |  2 ++
+ libmultipath/defaults.h  |  1 +
+ libmultipath/dict.c      | 74 ++++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/discovery.c |  1 +
+ libmultipath/propsel.c   | 39 ++++++++++++++++++++++++-
+ libmultipath/propsel.h   |  1 +
+ libmultipath/structs.h   |  7 +++++
+ 9 files changed, 128 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index f369517..49a40f9 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -96,50 +96,6 @@ set_ble_device (vector blist, char * vendor, char * product, int origin)
- }
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index 0395602..22d3844 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -15,7 +15,7 @@ OBJS = memory.o parser.o vector.o devmapper.o \
+        pgpolicies.o debug.o regex.o defaults.o uevent.o \
+        switchgroup.o uxsock.o print.o alias.o log_pthread.o \
+        log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
+-       lock.o waiter.o file.o wwids.o
++       lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o
  
- int
--setup_default_blist (struct config * conf)
--{
--	struct blentry * ble;
--	struct hwentry *hwe;
--	char * str;
--	int i;
--
--	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*");
--	if (!str)
--		return 1;
--	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
--		return 1;
--
--	str = STRDUP("^hd[a-z]");
--	if (!str)
--		return 1;
--	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
--		return 1;
--
--	str = STRDUP("^dcssblk[0-9]*");
--	if (!str)
--		return 1;
--	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
--		return 1;
--
--	vector_foreach_slot (conf->hwtable, hwe, i) {
--		if (hwe->bl_product) {
--			if (alloc_ble_device(conf->blist_device))
--				return 1;
--			ble = VECTOR_SLOT(conf->blist_device,
--					  VECTOR_SIZE(conf->blist_device) -1);
--			if (set_ble_device(conf->blist_device,
--					   STRDUP(hwe->vendor),
--					   STRDUP(hwe->bl_product),
--					   ORIGIN_DEFAULT)) {
--				FREE(ble);
--				return 1;
--			}
--		}
--	}
--	return 0;
--}
--
--int
- _blacklist_exceptions (vector elist, char * str)
- {
- 	int i;
-@@ -193,6 +149,53 @@ _blacklist_device (vector blist, char * vendor, char * product)
+ LIBDM_API_FLUSH = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_no_flush' /usr/include/libdevmapper.h)
+ 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 50863b2..b317e32 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -333,6 +333,7 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ 	merge_num(dev_loss);
+ 	merge_num(user_friendly_names);
+ 	merge_num(retain_hwhandler);
++	merge_num(detect_prio);
+ 
+ 	return 0;
+ }
+@@ -393,6 +394,7 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
+ 	hwe->dev_loss = dhwe->dev_loss;
+ 	hwe->user_friendly_names = dhwe->user_friendly_names;
+ 	hwe->retain_hwhandler = dhwe->retain_hwhandler;
++	hwe->detect_prio = dhwe->detect_prio;
+ 
+ 	if (dhwe->bl_product && !(hwe->bl_product = set_param_str(dhwe->bl_product)))
+ 		goto out;
+@@ -533,6 +535,7 @@ load_config (char * file)
+ 	conf->max_checkint = MAX_CHECKINT(conf->checkint);
+ 	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+ 	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
++	conf->detect_prio = DEFAULT_DETECT_PRIO;
+ 
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 7a1409f..4ade355 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -47,6 +47,7 @@ struct hwentry {
+ 	unsigned int dev_loss;
+ 	int user_friendly_names;
+ 	int retain_hwhandler;
++	int detect_prio;
+ 	char * bl_product;
+ };
+ 
+@@ -110,6 +111,7 @@ struct config {
+ 	uint32_t cookie;
+ 	int reassign_maps;
+ 	int retain_hwhandler;
++	int detect_prio;
+ 	unsigned int version[3];
+ 
+ 	char * dev;
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index f8a8774..32948d8 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -17,6 +17,7 @@
+ #define DEFAULT_REASSIGN_MAPS	1
+ #define DEFAULT_FAST_IO_FAIL	5
+ #define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
++#define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 88b4aba..788ffae 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -652,6 +652,29 @@ def_retain_hwhandler_handler(vector strvec)
  	return 0;
  }
  
-+int
-+setup_default_blist (struct config * conf)
++static int
++def_detect_prio_handler(vector strvec)
 +{
-+	struct blentry * ble;
-+	struct hwentry *hwe;
-+	char * str;
-+	int i;
++	char * buff;
 +
-+	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*");
-+	if (!str)
-+		return 1;
-+	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
++	buff = set_value(strvec);
++
++	if (!buff)
 +		return 1;
 +
-+	str = STRDUP("^hd[a-z]");
-+	if (!str)
-+		return 1;
-+	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
-+		return 1;
++	if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
++	    (strlen(buff) == 1 && !strcmp(buff, "0")))
++		conf->detect_prio = DETECT_PRIO_OFF;
++	else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
++		 (strlen(buff) == 1 && !strcmp(buff, "1")))
++		conf->detect_prio = DETECT_PRIO_ON;
++	else
++		conf->detect_prio = DETECT_PRIO_UNDEF;
 +
-+	str = STRDUP("^dcssblk[0-9]*");
-+	if (!str)
-+		return 1;
-+	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
-+		return 1;
-+
-+	vector_foreach_slot (conf->hwtable, hwe, i) {
-+		if (hwe->bl_product) {
-+			if (_blacklist_device(conf->blist_device, hwe->vendor,
-+					      hwe->bl_product))
-+				continue;
-+			if (alloc_ble_device(conf->blist_device))
-+				return 1;
-+			ble = VECTOR_SLOT(conf->blist_device,
-+					  VECTOR_SIZE(conf->blist_device) -1);
-+			if (set_ble_device(conf->blist_device,
-+					   STRDUP(hwe->vendor),
-+					   STRDUP(hwe->bl_product),
-+					   ORIGIN_DEFAULT)) {
-+				FREE(ble);
-+				return 1;
-+			}
-+		}
-+	}
++	FREE(buff);
 +	return 0;
 +}
 +
- #define LOG_BLIST(M) \
- 	if (vendor && product)						 \
- 		condlog(3, "%s: (%s:%s) %s", dev, vendor, product, (M)); \
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 5b26298..50863b2 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -25,13 +25,19 @@
+ /*
+  * blacklist block handlers
+  */
+@@ -1300,6 +1323,33 @@ hw_retain_hwhandler_handler(vector strvec)
+ 	return 0;
+ }
+ 
++static int
++hw_detect_prio_handler(vector strvec)
++{
++	struct hwentry *hwe = VECTOR_LAST_SLOT(conf->hwtable);
++	char * buff;
++
++	if (!hwe)
++		return 1;
++
++	buff = set_value(strvec);
++
++	if (!buff)
++		return 1;
++
++	if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
++	    (strlen(buff) == 1 && !strcmp(buff, "0")))
++		hwe->detect_prio = DETECT_PRIO_OFF;
++	else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
++		 (strlen(buff) == 1 && !strcmp(buff, "1")))
++		hwe->detect_prio = DETECT_PRIO_ON;
++	else
++		hwe->detect_prio = DETECT_PRIO_UNDEF;
++
++	FREE(buff);
++	return 0;
++}
++
+ /*
+  * multipaths block handlers
+  */
+@@ -2337,6 +2387,19 @@ snprint_hw_retain_hwhandler_handler(char * buff, int len, void * data)
+ }
+ 
  static int
- hwe_strmatch (struct hwentry *hwe1, struct hwentry *hwe2)
++snprint_detect_prio(char * buff, int len, void * data)
++{
++	struct hwentry * hwe = (struct hwentry *)data;
++
++	if (hwe->detect_prio == DETECT_PRIO_ON)
++		return snprintf(buff, len, "yes");
++	else if (hwe->detect_prio == DETECT_PRIO_OFF)
++		return snprintf(buff, len, "no");
++	else
++		return 0;
++}
++
++static int
+ snprint_def_polling_interval (char * buff, int len, void * data)
  {
--	if (hwe1->vendor && hwe2->vendor && strcmp(hwe1->vendor, hwe2->vendor))
-+	if ((hwe2->vendor && !hwe1->vendor) ||
-+	    (hwe1->vendor && (!hwe2->vendor ||
-+			      strcmp(hwe1->vendor, hwe2->vendor))))
- 		return 1;
+ 	return snprintf(buff, len, "%i", conf->checkint);
+@@ -2671,6 +2734,15 @@ snprint_def_retain_hwhandler_handler(char * buff, int len, void * data)
+ }
  
--	if (hwe1->product && hwe2->product && strcmp(hwe1->product, hwe2->product))
-+	if ((hwe2->product && !hwe1->product) ||
-+	    (hwe1->product && (!hwe2->product ||
-+			      strcmp(hwe1->product, hwe2->product))))
- 		return 1;
+ static int
++snprint_def_detect_prio(char * buff, int len, void * data)
++{
++	if (conf->detect_prio == DETECT_PRIO_ON)
++		return snprintf(buff, len, "yes");
++	else
++		return snprintf(buff, len, "no");
++}
++
++static int
+ snprint_ble_simple (char * buff, int len, void * data)
+ {
+ 	struct blentry * ble = (struct blentry *)data;
+@@ -2735,6 +2807,7 @@ init_keywords(void)
+ 	install_keyword("log_checker_err", &def_log_checker_err_handler, &snprint_def_log_checker_err);
+ 	install_keyword("reservation_key", &def_reservation_key_handler, &snprint_def_reservation_key);
+ 	install_keyword("retain_attached_hw_handler", &def_retain_hwhandler_handler, &snprint_def_retain_hwhandler_handler);
++	install_keyword("detect_prio", &def_detect_prio_handler, &snprint_def_detect_prio);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+@@ -2797,6 +2870,7 @@ init_keywords(void)
+ 	install_keyword("dev_loss_tmo", &hw_dev_loss_handler, &snprint_hw_dev_loss);
+ 	install_keyword("user_friendly_names", &hw_names_handler, &snprint_hw_user_friendly_names);
+ 	install_keyword("retain_attached_hw_handler", &hw_retain_hwhandler_handler, &snprint_hw_retain_hwhandler_handler);
++	install_keyword("detect_prio", &hw_detect_prio_handler, &snprint_detect_prio);
+ 	install_sublevel_end();
  
--	if (hwe1->revision && hwe2->revision && strcmp(hwe1->revision, hwe2->revision))
-+	if ((hwe2->revision && !hwe1->revision) ||
-+	    (hwe1->revision && (!hwe2->revision ||
-+			      strcmp(hwe1->revision, hwe2->revision))))
- 		return 1;
+ 	install_keyword_root("multipaths", &multipaths_handler);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3ffdc62..45570dc 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -782,6 +782,7 @@ get_prio (struct path * pp)
+ 	struct prio * p = &pp->prio;
  
+ 	if (!prio_selected(p)) {
++		select_detect_prio(pp);
+ 		select_prio(pp);
+ 		if (!prio_selected(p)) {
+ 			condlog(3, "%s: no prio selected", pp->dev);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index c03926a..a7e1fc2 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -17,6 +17,7 @@
+ #include "devmapper.h"
+ #include "prio.h"
+ #include "discovery.h"
++#include "prioritizers/alua_rtpg.h"
+ #include <inttypes.h>
+ 
+ pgpolicyfn *pgpolicies[] = {
+@@ -382,12 +383,30 @@ select_getuid (struct path * pp)
  	return 0;
-@@ -416,6 +422,13 @@ factorize_hwtable (vector hw, int n)
- 				continue;
- 			/* dup */
- 			merge_hwe(hwe2, hwe1);
-+			if (hwe_strmatch(hwe2, hwe1) == 0) {
-+				vector_del_slot(hw, i);
-+				free_hwe(hwe1);
-+				n -= 1;
-+				i -= 1;
-+				break;
-+			}
- 		}
+ }
+ 
++void
++detect_prio(struct path * pp)
++{
++	struct prio *p = &pp->prio;
++
++	if (get_target_port_group_support(pp->fd) > 0)
++		prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
++}
++
+ extern int
+ select_prio (struct path * pp)
+ {
+ 	struct mpentry * mpe;
+ 	struct prio * p = &pp->prio;
+ 
++	if (pp->detect_prio == DETECT_PRIO_ON) {
++		detect_prio(pp);
++		if (prio_selected(p)) {
++			condlog(3, "%s: prio = %s (detected setting)",
++				pp->dev, prio_name(p));
++			return 0;
++		}
++	}
++
+ 	if ((mpe = find_mpe(pp->wwid))) {
+ 		if (mpe->prio_name) {
+ 			prio_get(p, mpe->prio_name, mpe->prio_args);
+@@ -398,7 +417,7 @@ select_prio (struct path * pp)
  	}
+ 
+ 	if (pp->hwe && pp->hwe->prio_name) {
+-		prio_get(p, pp->hwe->prio_name, pp->hwe->prio_name);
++		prio_get(p, pp->hwe->prio_name, pp->hwe->prio_args);
+ 		condlog(3, "%s: prio = %s (controller setting)",
+ 			pp->dev, pp->hwe->prio_name);
+ 		condlog(3, "%s: prio args = %s (controller setting)",
+@@ -706,3 +725,21 @@ select_retain_hwhandler (struct multipath * mp)
+ 	condlog(3, "%s: retain_attached_hw_handler = %d (compiled in default)", mp->alias, mp->retain_hwhandler);
  	return 0;
+ }
++
++extern int
++select_detect_prio (struct path * pp)
++{
++	if (pp->hwe && pp->hwe->detect_prio) {
++		pp->detect_prio = pp->hwe->detect_prio;
++		condlog(3, "%s: detect_prio = %d (controller default)", pp->dev, pp->detect_prio);
++		return 0;
++	}
++	if (conf->detect_prio) {
++		pp->detect_prio = conf->detect_prio;
++		condlog(3, "%s: detect_prio = %d (config file default)", pp->dev, pp->detect_prio);
++		return 0;
++	}
++	pp->detect_prio = 0;
++	condlog(3, "%s: detect_prio = %d (compiled in default)", pp->dev, pp->detect_prio);
++	return 0;
++}
+diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
+index 1bf6e45..eb1e534 100644
+--- a/libmultipath/propsel.h
++++ b/libmultipath/propsel.h
+@@ -19,3 +19,4 @@ int select_fast_io_fail(struct multipath *mp);
+ int select_dev_loss(struct multipath *mp);
+ int select_reservation_key(struct multipath *mp);
+ int select_retain_hwhandler (struct multipath * mp);
++int select_detect_prio(struct path * pp);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 92cd2e4..2beccb3 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -107,6 +107,12 @@ enum retain_hwhandler_states {
+ 	RETAIN_HWHANDLER_ON,
+ };
+ 
++enum detect_prio_states {
++	DETECT_PRIO_UNDEF,
++	DETECT_PRIO_OFF,
++	DETECT_PRIO_ON,
++};
++
+ struct scsi_idlun {
+ 	int dev_id;
+ 	int host_unique_id;
+@@ -165,6 +171,7 @@ struct path {
+ 	int failcount;
+ 	int priority;
+ 	int pgindex;
++	int detect_prio;
+ 	char * uid_attribute;
+ 	struct prio prio;
+ 	char * prio_args;
 -- 
 1.8.0
