@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH V3 18/18] multipath: make path devices readonly
-	again.
-Date: Sat, 12 Jan 2013 00:04:55 -0600
-Message-ID: <1357970695-3396-18-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH V3 03/18] multipath: change default path_selector
+	to
+Date: Sat, 12 Jan 2013 00:04:40 -0600
+Message-ID: <1357970695-3396-3-git-send-email-bmarzins@redhat.com>
 References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,31 +23,27 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Path device fds were changed to be opened read/write when the
-mpathpersist code was added. However, I have talked with Vijay, and
-this doesn't appear to be necessary for mpathpersist to work correctly.
-If the path fds are opened read/write, when the are closed a change
-uevent is triggered, which was causing problems during shutdown with
-LVM on top of multipath devices. This patch reverts them to being read-only
-again.
+My testing has showed service-time to be as good and occassionally
+noticeably better than round-robin.  So the patch switches the
+default selector to give better performance out of the box.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 2 +-
+ libmultipath/defaults.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 831cfef..8b6f74d 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -886,7 +886,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 	 * fetch info not available through sysfs
- 	 */
- 	if (pp->fd < 0)
--		pp->fd = open(udev_device_get_devnode(pp->udev), O_RDWR);
-+		pp->fd = open(udev_device_get_devnode(pp->udev), O_RDONLY);
- 
- 	if (pp->fd < 0) {
- 		condlog(4, "Couldn't open node for %s: %s",
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index f647ee0..097c66f 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -1,7 +1,7 @@
+ #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
+ #define DEFAULT_UDEVDIR		"/dev"
+ #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
+-#define DEFAULT_SELECTOR	"round-robin 0"
++#define DEFAULT_SELECTOR	"service-time 0"
+ #define DEFAULT_ALIAS_PREFIX	"mpath"
+ #define DEFAULT_FEATURES	"0"
+ #define DEFAULT_HWHANDLER	"0"
 -- 
 1.8.0
