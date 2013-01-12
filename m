@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH V3 09/18] multipath: fix set_oom_adj
-Date: Sat, 12 Jan 2013 00:04:46 -0600
-Message-ID: <1357970695-3396-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH V3 08/18] multipath: update netapp config
+Date: Sat, 12 Jan 2013 00:04:45 -0600
+Message-ID: <1357970695-3396-8-git-send-email-bmarzins@redhat.com>
 References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,30 +22,32 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Fix set_oom_adj() to work correclty if OOM_ADJUST_MIN isn't
-defined.
+The netapp config now used the retain_attached_hwhandler and
+detect_prio options to automatically configure correctly for both ALUA and
+non-ALUA setups. They also requested that dev_loss_tmo be set to
+the maximum for netapp devices.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ libmultipath/hwtable.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 8917499..a6afebb 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1542,8 +1542,12 @@ set_oom_adj (void)
- 				strerror(errno));
- 			return;
- 		}
-+#ifdef OOM_ADJUST_MIN
- 		file = "/proc/self/oom_adj";
- 		score = OOM_ADJUST_MIN;
-+#else
-+		retry = 0;
-+#endif
- 	} while (retry--);
- 	condlog(0, "couldn't adjust oom score");
- }
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 595edba..6a8dfe3 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -789,9 +789,12 @@ static struct hwentry default_hw[] = {
+ 		.rr_weight     = RR_WEIGHT_NONE,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+ 		.minio         = 128,
++		.dev_loss      = MAX_DEV_LOSS_TMO,
+ 		.checker_name  = TUR,
+ 		.prio_name     = PRIO_ONTAP,
+ 		.prio_args     = NULL,
++		.retain_hwhandler = RETAIN_HWHANDLER_ON,
++		.detect_prio   = DETECT_PRIO_ON,
+ 	},
+ 	/*
+ 	 * NEXENTA/COMSTAR controller family
 -- 
 1.8.0
