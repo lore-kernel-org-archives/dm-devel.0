@@ -1,230 +1,460 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 1/5] block: add missing block_bio_complete() tracepoint
-Date: Fri, 11 Jan 2013 13:06:33 -0800
-Message-ID: <1357938397-5413-2-git-send-email-tj@kernel.org>
-References: <1357938397-5413-1-git-send-email-tj@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1357938397-5413-1-git-send-email-tj@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: linux-kernel@vger.kernel.org, chavey@google.com, fengguang.wu@intel.com, Tejun Heo <tj@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH V3 05/18] multipath: add support for
+Date: Sat, 12 Jan 2013 00:04:42 -0600
+Message-ID: <1357970695-3396-5-git-send-email-bmarzins@redhat.com>
+References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-bio completion didn't kick block_bio_complete TP.  Only dm was
-explicitly triggering the TP on IO completion.  This makes
-block_bio_complete TP useless for tracers which want to know about
-bios, and all other bio based drivers skip generating blktrace
-completion events.
+This adds support for the retain_attached_hw_handler. When this is set to
+"yes", if the kernel has already attached a hardware handler to the multipath
+path devices, multipath will use that one, instead of its configured one. If
+no hardware handler is already attached, multipath use its configured one, if
+any.  To properly ignore this on older kernels, I had to makes some changes
+to the version checking code.
 
-This patch makes all bio completions via bio_endio() generate
-block_bio_complete TP.
-
-* Explicit trace_block_bio_complete() invocation removed from dm and
-  the trace point is unexported.
-
-* @rq dropped from trace_block_bio_complete().  bios may fly around
-  w/o queue associated.  Verifying and accessing the assocaited queue
-  belongs to TP probes.
-
-* blktrace now gets both request and bio completions.  Make it ignore
-  bio completions if request completion path is happening.
-
-This makes all bio based drivers generate blktrace completion events
-properly and makes the block_bio_complete TP actually useful.
-
-v2: With this change, block_bio_complete TP could be invoked on sg
-    commands which have bio's with %NULL bi_bdev.  Update TP
-    assignment code to check whether bio->bi_bdev is %NULL before
-    dereferencing.
-
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Original-patch-by: Namhyung Kim <namhyung@gmail.com>
-Cc: Tejun Heo <tj@kernel.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
-Cc: Neil Brown <neilb@suse.de>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- block/blk-core.c             |  1 -
- drivers/md/dm.c              |  1 -
- drivers/md/raid5.c           | 11 +----------
- fs/bio.c                     |  2 ++
- include/linux/blktrace_api.h |  1 +
- include/trace/events/block.h |  8 ++++----
- kernel/trace/blktrace.c      | 26 +++++++++++++++++++++++---
- 7 files changed, 31 insertions(+), 19 deletions(-)
+ libmultipath/config.c    |  5 +++-
+ libmultipath/config.h    |  4 ++-
+ libmultipath/configure.c |  7 +++--
+ libmultipath/defaults.h  |  1 +
+ libmultipath/devmapper.c | 34 ++++------------------
+ libmultipath/devmapper.h |  8 +++++-
+ libmultipath/dict.c      | 74 ++++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/dmparser.c  |  3 ++
+ libmultipath/propsel.c   | 29 ++++++++++++++++++-
+ libmultipath/propsel.h   |  1 +
+ libmultipath/structs.h   |  7 +++++
+ 11 files changed, 138 insertions(+), 35 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index c973249..d915d07 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -39,7 +39,6 @@
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 51b4f45..5b26298 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -326,6 +326,7 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ 	merge_num(fast_io_fail);
+ 	merge_num(dev_loss);
+ 	merge_num(user_friendly_names);
++	merge_num(retain_hwhandler);
  
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
--EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_unplug);
- 
- DEFINE_IDA(blk_queue_ida);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index c72e4d5..650ec28 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -627,7 +627,6 @@ static void dec_pending(struct dm_io *io, int error)
- 			queue_io(md, bio);
- 		} else {
- 			/* done with normal IO or empty flush */
--			trace_block_bio_complete(md->queue, bio, io_error);
- 			bio_endio(bio, io_error);
- 		}
- 	}
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 19d77a0..9ab506d 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -184,8 +184,6 @@ static void return_io(struct bio *return_bi)
- 		return_bi = bi->bi_next;
- 		bi->bi_next = NULL;
- 		bi->bi_size = 0;
--		trace_block_bio_complete(bdev_get_queue(bi->bi_bdev),
--					 bi, 0);
- 		bio_endio(bi, 0);
- 		bi = return_bi;
- 	}
-@@ -3917,8 +3915,6 @@ static void raid5_align_endio(struct bio *bi, int error)
- 	rdev_dec_pending(rdev, conf->mddev);
- 
- 	if (!error && uptodate) {
--		trace_block_bio_complete(bdev_get_queue(raid_bi->bi_bdev),
--					 raid_bi, 0);
- 		bio_endio(raid_bi, 0);
- 		if (atomic_dec_and_test(&conf->active_aligned_reads))
- 			wake_up(&conf->wait_for_stripe);
-@@ -4377,8 +4373,6 @@ static void make_request(struct mddev *mddev, struct bio * bi)
- 		if ( rw == WRITE )
- 			md_write_end(mddev);
- 
--		trace_block_bio_complete(bdev_get_queue(bi->bi_bdev),
--					 bi, 0);
- 		bio_endio(bi, 0);
- 	}
+ 	return 0;
  }
-@@ -4755,11 +4749,8 @@ static int  retry_aligned_read(struct r5conf *conf, struct bio *raid_bio)
- 		handled++;
+@@ -385,6 +386,7 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
+ 	hwe->fast_io_fail = dhwe->fast_io_fail;
+ 	hwe->dev_loss = dhwe->dev_loss;
+ 	hwe->user_friendly_names = dhwe->user_friendly_names;
++	hwe->retain_hwhandler = dhwe->retain_hwhandler;
+ 
+ 	if (dhwe->bl_product && !(hwe->bl_product = set_param_str(dhwe->bl_product)))
+ 		goto out;
+@@ -501,7 +503,7 @@ load_config (char * file)
+ 		conf->verbosity = DEFAULT_VERBOSITY;
+ 
+ 	conf->udev = udev_new();
+-	conf->dmrq = dm_drv_get_rq();
++	dm_drv_version(conf->version, TGT_MPATH);
+ 	conf->dev_type = DEV_NONE;
+ 	conf->minio = DEFAULT_MINIO;
+ 	conf->minio_rq = DEFAULT_MINIO_RQ;
+@@ -517,6 +519,7 @@ load_config (char * file)
+ 	conf->checkint = DEFAULT_CHECKINT;
+ 	conf->max_checkint = MAX_CHECKINT(conf->checkint);
+ 	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
++	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+ 
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 51fc492..7a1409f 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -46,6 +46,7 @@ struct hwentry {
+ 	int fast_io_fail;
+ 	unsigned int dev_loss;
+ 	int user_friendly_names;
++	int retain_hwhandler;
+ 	char * bl_product;
+ };
+ 
+@@ -75,7 +76,6 @@ struct mpentry {
+ };
+ 
+ struct config {
+-	int dmrq;
+ 	int verbosity;
+ 	int dry_run;
+ 	int list;
+@@ -109,6 +109,8 @@ struct config {
+ 	mode_t mode;
+ 	uint32_t cookie;
+ 	int reassign_maps;
++	int retain_hwhandler;
++	unsigned int version[3];
+ 
+ 	char * dev;
+ 	struct udev * udev;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 0f1fe43..131b5ad 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -76,6 +76,7 @@ setup_map (struct multipath * mpp, char * params, int params_size)
+ 	select_fast_io_fail(mpp);
+ 	select_dev_loss(mpp);
+ 	select_reservation_key(mpp);
++	select_retain_hwhandler(mpp);
+ 
+ 	sysfs_set_scsi_tmo(mpp);
+ 	/*
+@@ -217,8 +218,10 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+ 			mpp->alias);
+ 		return;
  	}
- 	remaining = raid5_dec_bi_active_stripes(raid_bio);
--	if (remaining == 0) {
--		trace_block_bio_complete(bdev_get_queue(raid_bio->bi_bdev),
--					 raid_bio, 0);
-+	if (remaining == 0)
- 		bio_endio(raid_bio, 0);
+-	if (!cmpp->selector || strncmp(cmpp->hwhandler, mpp->hwhandler,
+-		    strlen(mpp->hwhandler))) {
++	if (mpp->retain_hwhandler != RETAIN_HWHANDLER_ON &&
++            (strlen(cmpp->hwhandler) != strlen(mpp->hwhandler) ||
++	     strncmp(cmpp->hwhandler, mpp->hwhandler,
++		    strlen(mpp->hwhandler)))) {
+ 		mpp->action = ACT_RELOAD;
+ 		condlog(3, "%s: set ACT_RELOAD (hwhandler change)",
+ 			mpp->alias);
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 097c66f..f8a8774 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -16,6 +16,7 @@
+ #define DEFAULT_VERBOSITY	2
+ #define DEFAULT_REASSIGN_MAPS	1
+ #define DEFAULT_FAST_IO_FAIL	5
++#define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 89615b0..f474e97 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -98,12 +98,6 @@ dm_init(void) {
+ 	dm_log_init_verbose(conf ? conf->verbosity + 3 : 0);
+ }
+ 
+-#define VERSION_GE(v, minv) ( \
+- (v[0] > minv[0]) || \
+- ((v[0] == minv[0]) && (v[1] > minv[1])) || \
+- ((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])) \
+-)
+-
+ static int
+ dm_lib_prereq (void)
+ {
+@@ -126,7 +120,7 @@ dm_lib_prereq (void)
+ 	return 1;
+ }
+ 
+-static int
++int
+ dm_drv_version (unsigned int * version, char * str)
+ {
+ 	int r = 2;
+@@ -135,6 +129,10 @@ dm_drv_version (unsigned int * version, char * str)
+ 	struct dm_versions *last_target;
+ 	unsigned int *v;
+ 
++	version[0] = 0;
++	version[1] = 0;
++	version[2] = 0;
++
+ 	if (!(dmt = dm_task_create(DM_DEVICE_LIST_VERSIONS)))
+ 		return 1;
+ 
+@@ -169,28 +167,6 @@ out:
+ 	return r;
+ }
+ 
+-int
+-dm_drv_get_rq (void)
+-{
+-	unsigned int minv_dmrq[3] = {1, 1, 0};
+-	unsigned int version[3] = {0, 0, 0};
+-        unsigned int * v = version;
+-
+-	if (dm_drv_version(v, TGT_MPATH)) {
+-		/* in doubt return least capable */
+-		return 0;
 -	}
- 	if (atomic_dec_and_test(&conf->active_aligned_reads))
- 		wake_up(&conf->wait_for_stripe);
- 	return handled;
-diff --git a/fs/bio.c b/fs/bio.c
-index b96fc6c..bb5768f 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -1428,6 +1428,8 @@ void bio_endio(struct bio *bio, int error)
- 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
- 		error = -EIO;
+-
+-	/* test request based multipath capability */
+-	if VERSION_GE(v, minv_dmrq) {
+-		condlog(3, "activate request-based multipathing mode "
+-			   "(driver >= v%u.%u.%u)",
+-			minv_dmrq[0], minv_dmrq[1], minv_dmrq[2]);
+-		return 1;
+-	}
+-	return 0;
+-}
+-
+ static int
+ dm_drv_prereq (void)
+ {
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index b08aa31..bf8ee91 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -8,7 +8,7 @@
  
-+	trace_block_bio_complete(bio, error);
+ void dm_init(void);
+ int dm_prereq (void);
+-int dm_drv_get_rq (void);
++int dm_drv_version (unsigned int * version, char * str);
+ int dm_simplecmd_flush (int, const char *, int);
+ int dm_simplecmd_noflush (int, const char *);
+ int dm_addmap_create (struct multipath *mpp, char *params);
+@@ -47,4 +47,10 @@ int dm_setgeometry(struct multipath *mpp);
+ void udev_wait(unsigned int c);
+ void udev_set_sync_support(int c);
+ 
++#define VERSION_GE(v, minv) ( \
++ (v[0] > minv[0]) || \
++ ((v[0] == minv[0]) && (v[1] > minv[1])) || \
++ ((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])) \
++)
 +
- 	if (bio->bi_end_io)
- 		bio->bi_end_io(bio, error);
+ #endif /* _DEVMAPPER_H */
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 6dae335..88b4aba 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -629,6 +629,29 @@ wwids_file_handler(vector strvec)
+ 	return 0;
  }
-diff --git a/include/linux/blktrace_api.h b/include/linux/blktrace_api.h
-index 7c2e030..0ea61e0 100644
---- a/include/linux/blktrace_api.h
-+++ b/include/linux/blktrace_api.h
-@@ -12,6 +12,7 @@
  
- struct blk_trace {
- 	int trace_state;
-+	bool rq_based;
- 	struct rchan *rchan;
- 	unsigned long __percpu *sequence;
- 	unsigned char __percpu *msg_data;
-diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-index 05c5e61..8a168db 100644
---- a/include/trace/events/block.h
-+++ b/include/trace/events/block.h
-@@ -206,7 +206,6 @@ TRACE_EVENT(block_bio_bounce,
- 
- /**
-  * block_bio_complete - completed all work on the block operation
-- * @q: queue holding the block operation
-  * @bio: block operation completed
-  * @error: io error value
-  *
-@@ -215,9 +214,9 @@ TRACE_EVENT(block_bio_bounce,
++static int
++def_retain_hwhandler_handler(vector strvec)
++{
++	char * buff;
++
++	buff = set_value(strvec);
++
++	if (!buff)
++		return 1;
++
++	if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
++	    (strlen(buff) == 1 && !strcmp(buff, "0")))
++		conf->retain_hwhandler = RETAIN_HWHANDLER_OFF;
++	else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
++		 (strlen(buff) == 1 && !strcmp(buff, "1")))
++		conf->retain_hwhandler = RETAIN_HWHANDLER_ON;
++	else
++		conf->retain_hwhandler = RETAIN_HWHANDLER_UNDEF;
++
++	FREE(buff);
++	return 0;
++}
++
+ /*
+  * blacklist block handlers
   */
- TRACE_EVENT(block_bio_complete,
+@@ -1250,6 +1273,33 @@ hw_names_handler(vector strvec)
+ 	return 0;
+ }
  
--	TP_PROTO(struct request_queue *q, struct bio *bio, int error),
-+	TP_PROTO(struct bio *bio, int error),
++static int
++hw_retain_hwhandler_handler(vector strvec)
++{
++	struct hwentry *hwe = VECTOR_LAST_SLOT(conf->hwtable);
++	char * buff;
++
++	if (!hwe)
++		return 1;
++
++	buff = set_value(strvec);
++
++	if (!buff)
++		return 1;
++
++	if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
++	    (strlen(buff) == 1 && !strcmp(buff, "0")))
++		hwe->retain_hwhandler = RETAIN_HWHANDLER_OFF;
++	else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
++		 (strlen(buff) == 1 && !strcmp(buff, "1")))
++		hwe->retain_hwhandler = RETAIN_HWHANDLER_ON;
++	else
++		hwe->user_friendly_names = RETAIN_HWHANDLER_UNDEF;
++
++	FREE(buff);
++	return 0;
++}
++
+ /*
+  * multipaths block handlers
+  */
+@@ -2274,6 +2324,19 @@ snprint_hw_user_friendly_names (char * buff, int len, void * data)
+ }
  
--	TP_ARGS(q, bio, error),
-+	TP_ARGS(bio, error),
- 
- 	TP_STRUCT__entry(
- 		__field( dev_t,		dev		)
-@@ -228,7 +227,8 @@ TRACE_EVENT(block_bio_complete,
- 	),
- 
- 	TP_fast_assign(
--		__entry->dev		= bio->bi_bdev->bd_dev;
-+		__entry->dev		= bio->bi_bdev ?
-+					  bio->bi_bdev->bd_dev : 0;
- 		__entry->sector		= bio->bi_sector;
- 		__entry->nr_sector	= bio->bi_size >> 9;
- 		__entry->error		= error;
-diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
-index c0bd030..190d98f 100644
---- a/kernel/trace/blktrace.c
-+++ b/kernel/trace/blktrace.c
-@@ -739,6 +739,12 @@ static void blk_add_trace_rq_complete(void *ignore,
- 				      struct request_queue *q,
- 				      struct request *rq)
+ static int
++snprint_hw_retain_hwhandler_handler(char * buff, int len, void * data)
++{
++	struct hwentry * hwe = (struct hwentry *)data;
++
++	if (hwe->retain_hwhandler == RETAIN_HWHANDLER_ON)
++		return snprintf(buff, len, "yes");
++	else if (hwe->retain_hwhandler == RETAIN_HWHANDLER_OFF)
++		return snprintf(buff, len, "no");
++	else
++		return 0;
++}
++
++static int
+ snprint_def_polling_interval (char * buff, int len, void * data)
  {
-+	struct blk_trace *bt = q->blk_trace;
-+
-+	/* if control ever passes through here, it's a request based driver */
-+	if (unlikely(bt && !bt->rq_based))
-+		bt->rq_based = true;
-+
- 	blk_add_trace_rq(q, rq, BLK_TA_COMPLETE);
+ 	return snprintf(buff, len, "%i", conf->checkint);
+@@ -2599,6 +2662,15 @@ snprint_def_reservation_key(char * buff, int len, void * data)
  }
  
-@@ -774,10 +780,24 @@ static void blk_add_trace_bio_bounce(void *ignore,
- 	blk_add_trace_bio(q, bio, BLK_TA_BOUNCE, 0);
- }
- 
--static void blk_add_trace_bio_complete(void *ignore,
--				       struct request_queue *q, struct bio *bio,
--				       int error)
-+static void blk_add_trace_bio_complete(void *ignore, struct bio *bio, int error)
+ static int
++snprint_def_retain_hwhandler_handler(char * buff, int len, void * data)
++{
++	if (conf->retain_hwhandler == RETAIN_HWHANDLER_ON)
++		return snprintf(buff, len, "yes");
++	else
++		return snprintf(buff, len, "no");
++}
++
++static int
+ snprint_ble_simple (char * buff, int len, void * data)
  {
-+	struct request_queue *q;
-+	struct blk_trace *bt;
+ 	struct blentry * ble = (struct blentry *)data;
+@@ -2662,6 +2734,7 @@ init_keywords(void)
+ 	install_keyword("wwids_file", &wwids_file_handler, &snprint_def_wwids_file);
+ 	install_keyword("log_checker_err", &def_log_checker_err_handler, &snprint_def_log_checker_err);
+ 	install_keyword("reservation_key", &def_reservation_key_handler, &snprint_def_reservation_key);
++	install_keyword("retain_attached_hw_handler", &def_retain_hwhandler_handler, &snprint_def_retain_hwhandler_handler);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+@@ -2723,6 +2796,7 @@ init_keywords(void)
+ 	install_keyword("fast_io_fail_tmo", &hw_fast_io_fail_handler, &snprint_hw_fast_io_fail);
+ 	install_keyword("dev_loss_tmo", &hw_dev_loss_handler, &snprint_hw_dev_loss);
+ 	install_keyword("user_friendly_names", &hw_names_handler, &snprint_hw_user_friendly_names);
++	install_keyword("retain_attached_hw_handler", &hw_retain_hwhandler_handler, &snprint_hw_retain_hwhandler_handler);
+ 	install_sublevel_end();
+ 
+ 	install_keyword_root("multipaths", &multipaths_handler);
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 5184c41..2562ba1 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -56,6 +56,7 @@ assemble_map (struct multipath * mp, char * params, int len)
+ 	int nr_priority_groups, initial_pg_nr;
+ 	char * p, * f;
+ 	char no_path_retry[] = "queue_if_no_path";
++	char retain_hwhandler[] = "retain_attached_hw_handler";
+ 	struct pathgroup * pgp;
+ 	struct path * pp;
+ 
+@@ -81,6 +82,8 @@ assemble_map (struct multipath * mp, char * params, int len)
+ 	} else {
+ 		add_feature(&f, no_path_retry);
+ 	}
++	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON)
++		add_feature(&f, retain_hwhandler);
+ 
+ 	shift = snprintf(p, freechar, "%s %s %i %i",
+ 			 f, mp->hwhandler,
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index b8c6b08..c03926a 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -513,7 +513,9 @@ select_minio_bio (struct multipath * mp)
+ extern int
+ select_minio (struct multipath * mp)
+ {
+-	if (conf->dmrq)
++	unsigned int minv_dmrq[3] = {1, 1, 0};
 +
-+	if (!bio->bi_bdev)
-+		return;
-+
-+	q = bdev_get_queue(bio->bi_bdev);
-+	bt = q->blk_trace;
-+
-+	/*
-+	 * Request based drivers will generate both rq and bio completions.
-+	 * Ignore bio ones.
-+	 */
-+	if (likely(!bt) || bt->rq_based)
-+		return;
-+
- 	blk_add_trace_bio(q, bio, BLK_TA_COMPLETE, error);
++	if (VERSION_GE(conf->version, minv_dmrq))
+ 		return select_minio_rq(mp);
+ 	else
+ 		return select_minio_bio(mp);
+@@ -679,3 +681,28 @@ select_reservation_key (struct multipath * mp)
+ 	return 0;
  }
  
++extern int
++select_retain_hwhandler (struct multipath * mp)
++{
++	unsigned int minv_dm_retain[3] = {1, 5, 0};
++
++	if (!VERSION_GE(conf->version, minv_dm_retain)) {
++		mp->retain_hwhandler = RETAIN_HWHANDLER_OFF;
++		condlog(3, "%s: retain_attached_hw_hander disabled (requires kernel version >= 1.5.0)", mp->alias);
++		return 0;
++	}
++
++	if (mp->hwe && mp->hwe->retain_hwhandler) {
++		mp->retain_hwhandler = mp->hwe->retain_hwhandler;
++		condlog(3, "%s: retain_attached_hw_handler = %d (controller default)", mp->alias, mp->retain_hwhandler);
++		return 0;
++	}
++	if (conf->retain_hwhandler) {
++		mp->retain_hwhandler = conf->retain_hwhandler;
++		condlog(3, "%s: retain_attached_hw_handler = %d (config file default)", mp->alias, mp->retain_hwhandler);
++		return 0;
++	}
++	mp->retain_hwhandler = 0;
++	condlog(3, "%s: retain_attached_hw_handler = %d (compiled in default)", mp->alias, mp->retain_hwhandler);
++	return 0;
++}
+diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
+index 4e931d4..1bf6e45 100644
+--- a/libmultipath/propsel.h
++++ b/libmultipath/propsel.h
+@@ -18,3 +18,4 @@ int select_gid(struct multipath *mp);
+ int select_fast_io_fail(struct multipath *mp);
+ int select_dev_loss(struct multipath *mp);
+ int select_reservation_key(struct multipath *mp);
++int select_retain_hwhandler (struct multipath * mp);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 16e940b..92cd2e4 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -101,6 +101,12 @@ enum user_friendly_names_states {
+ 	USER_FRIENDLY_NAMES_ON,
+ };
+ 
++enum retain_hwhandler_states {
++	RETAIN_HWHANDLER_UNDEF,
++	RETAIN_HWHANDLER_OFF,
++	RETAIN_HWHANDLER_ON,
++};
++
+ struct scsi_idlun {
+ 	int dev_id;
+ 	int host_unique_id;
+@@ -192,6 +198,7 @@ struct multipath {
+ 	int flush_on_last_del;
+ 	int attribute_flags;
+ 	int fast_io_fail;
++	int retain_hwhandler;
+ 	unsigned int dev_loss;
+ 	uid_t uid;
+ 	gid_t gid;
 -- 
-1.8.0.2
+1.8.0
