@@ -1,17 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2] multipath: add detect_prio option to
- autodetect prioitizer
-Date: Mon, 14 Jan 2013 08:02:10 +0100
-Message-ID: <50F3AD72.5070109@suse.de>
-References: <20130110201358.GS19059@ether.msp.redhat.com>
-	<50EFBC71.5080109@suse.de>
-	<1357993580.4263.5.camel@lapoo.opensvc.com>
+Subject: Re: [PATCH V3 01/18] multipath: default fast_io_fail to
+ 5 seconds
+Date: Mon, 14 Jan 2013 08:03:12 +0100
+Message-ID: <50F3ADB0.5090105@suse.de>
+References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
+	<1357996610.4263.17.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1357993580.4263.5.camel@lapoo.opensvc.com>
+In-Reply-To: <1357996610.4263.17.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,38 +23,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 01/12/2013 01:26 PM, Christophe Varoqui wrote:
-> On ven., 2013-01-11 at 08:17 +0100, Hannes Reinecke wrote:
->> On 01/10/2013 09:13 PM, Benjamin Marzinski wrote:
->>> This patch adds a new multipath.conf option, detect_prio.  If set to ye=
-s,
->>> multipathd will try to determine the correct prioritizer for the device=
-. If
->>> it finds one, that will be used instead of its configured prioritizer. =
- If
->>> none is found, the configured prioritizer will be used.  It can current=
-ly
->>> only detect ALUA devices.
->>>
->>> Also fixed and issue with select_prio where in the devices section, it =
-was
->>> passing in the prio name string instead of the prio args string to prio=
-_get()
->>>
->>> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On 01/12/2013 02:16 PM, Christophe Varoqui wrote:
+> On sam., 2013-01-12 at 00:04 -0600, Benjamin Marzinski wrote:
+>> This patch sets fast_io_fail to 5 seconds in the defaults section.
 >>
->> Good idea.
->>
-> Don"t you think it would be fair to fallback to autodetection if no
-> prioritizer is set, instead ? Admins would expect the values they care
-> to set in the config file are honored.
+> Merged 1-18.
+> Thanks.
 >
-It would, if we had autodetection for more (or, better, all) =
+> I also imported the log_thread_flush() and log_reset() missing
+> functions from Hannes tree. Which makes the tree buildable again.
+>
+Yikes. Sorry.
 
-hardware handlers.
-Shouldn't be too hard.
+I got sidetracked and forgot to check for that patch.
 
-I'll give it a go at it once this patchset is merged.
+Thanks for fixing it up.
 
 Cheers,
 
