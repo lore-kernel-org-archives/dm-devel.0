@@ -1,16 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH V3 01/18] multipath: default fast_io_fail to
- 5 seconds
-Date: Mon, 14 Jan 2013 08:03:12 +0100
-Message-ID: <50F3ADB0.5090105@suse.de>
-References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
-	<1357996610.4263.17.camel@lapoo.opensvc.com>
+From: Stefan Weinhuber <WEIN@de.ibm.com>
+Subject: Re: multipath-tool: gcc warnings
+Date: Mon, 14 Jan 2013 09:46:51 +0100
+Message-ID: <OF50C364B6.D8557717-ONC1257AF3.002FF264-C1257AF3.00303FAB@de.ibm.com>
+References: <50F196C2.4050104@gmail.com>
+	<1358018522.4263.23.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1357996610.4263.17.camel@lapoo.opensvc.com>
+In-Reply-To: <1358018522.4263.23.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +19,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 01/12/2013 02:16 PM, Christophe Varoqui wrote:
-> On sam., 2013-01-12 at 00:04 -0600, Benjamin Marzinski wrote:
->> This patch sets fast_io_fail to 5 seconds in the defaults section.
->>
-> Merged 1-18.
-> Thanks.
->
-> I also imported the log_thread_flush() and log_reset() missing
-> functions from Hannes tree. Which makes the tree buildable again.
->
-Yikes. Sorry.
+Christophe Varoqui <christophe.varoqui@gmail.com> wrote on 2013-01-12 =
 
-I got sidetracked and forgot to check for that patch.
+20:22:02:
 
-Thanks for fixing it up.
+> On sam., 2013-01-12 at 18:00 +0100, Xose Vazquez Perez wrote:
+> > hi,
+> > =
 
-Cheers,
+> > I built multipath-tool with -Wextra and gcc shows a lot
+> > of warnings. But I believe two of them are relevant:
+> ...
+> > dasd.c:233:4: warning: comparison is always false due to limited =
 
-Hannes
+> range of data type [-Wtype-limits]
+> > - wrong type
+> =
+
+> Stephan,
+> =
+
+> would you approve this patch to the kpartx dasd parser you contributed
+> back in 2009 ?
+> =
+
+> diff --git a/kpartx/dasd.h b/kpartx/dasd.h
+> index 0ed7c80..42f94db 100644
+> --- a/kpartx/dasd.h
+> +++ b/kpartx/dasd.h
+> @@ -68,7 +68,7 @@ typedef struct volume_label
+>         char res2[4];           /* reserved   */
+>         char lvtoc[14];         /* owner code for LVTOC   */
+>         char res3[28];          /* reserved   */
+> -       char ldl_version;       /* version number, valid for ldl =
+
+> format      */
+> +       uint8_t ldl_version;    /* version number, valid for ldl =
+
+> format      */
+>         uint64_t formatted_blocks; /* valid when ldl_version >=3D f2   */
+>  } __attribute__ ((packed)) volume_label_t;
+> =
+
+> =
+
+> Best regards,
+> Christophe Varoqui
+> =
+
+
+Hi Christophe,
+
+yes,the change looks fine to me, thanks! =
+
+
+Mit freundlichen Gr=FC=DFen / Kind regards
+ =
+
+Stefan Weinhuber
+
 -- =
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Linux for zSeries kernel development
+IBM Systems &Technology Group, Systems Software Development / SW Linux f=FC=
+r =
+
+zSeries Entwicklung
+
+IBM Deutschland
+Schoenaicher Str. 220
+71032 Boeblingen
+Phone: +49-7031-16-4018
+E-Mail: wein@de.ibm.com
+
+IBM Deutschland Research & Development GmbH / Vorsitzender des =
+
+Aufsichtsrats: Martina Koederitz
+Gesch=E4ftsf=FChrung: Dirk Wittkopp
+Sitz der Gesellschaft: B=F6blingen / Registergericht: Amtsgericht Stuttgart=
+, =
+
+HRB 243294
