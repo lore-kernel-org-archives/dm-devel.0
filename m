@@ -1,314 +1,34 @@
-From: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [ANNOUNCE] cryptsetup 1.6.0
-Date: Mon, 14 Jan 2013 12:19:36 +0100
-Message-ID: <50F3E9C8.7090400@gmail.com>
+From: thornber@redhat.com
+Subject: Re: [PATCH 4/8] [dm-bio-prison] Change the bio-prison
+ interface so the memory for the cells is passed in.
+Date: Mon, 14 Jan 2013 14:06:58 +0000
+Message-ID: <20130114140657.GA2545@raspberrypi>
+References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
+	<1355429956-22785-5-git-send-email-ejt@redhat.com>
+	<20130114100259.GA18927@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt/>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: "dm-crypt" <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20130114100259.GA18927@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA256
-
-The stable cryptsetup 1.6.0 release is available at
-
-   http://code.google.com/p/cryptsetup/
-
-Feedback and bug reports are welcomed.
-
-
-Cryptsetup 1.6.0 Release Notes
-==============================
-
-Changes since version 1.6.0-rc1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
- * Change LUKS default cipher to to use XTS encryption mode,
-   aes-xts-plain64 (i.e. using AES128-XTS).
-
-   XTS mode becomes standard in hard disk encryption.
-
-   You can still use any old mode:
-
-    - compile cryptsetup with old default:
-      configure --with-luks1-cipher=aes --with-luks1-mode=cbc-essiv:sha256 --with-luks1-keybits=256
-
-    - format LUKS device with old default:
-      cryptsetup luksFormat -c aes-cbc-essiv:sha256 -s 256 <device>
-
- * Skip tests and fix error messages if running on old systems (or with old kernel).
-
- * Rename configure.in to configure.ac, fix issues with new automake and pkgconfig
-   and --disable-kernel_crypto option to allow compilation with old kernel headers.
-
- * Allow repair of 512 bits key header.
-
- * Fix status of device if path argument is used and fix double path prefix
-   for non-existent device path.
-
-
-Changes since version 1.5.1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Important changes
-~~~~~~~~~~~~~~~~~
-
- * Cryptsetup and libcryptsetup is now released under GPLv2+
-   (GPL version 2 or any later).
-   Some internal code handling files (loopaes, verity, tcrypt
-   and crypto backend wrapper) are LGPLv2+.
-
-   Previously code was GPL version 2 only.
-
-
- * Introducing new unified command open and close.
-
-   Example:
-      cryptsetup open --type plain|luks|loopaes|tcrypt <device> <name>
-      (type defaults to luks)
-
-   with backward-compatible aliases plainOpen, luksOpen, loopaesOpen,
-   tcryptOpen. Basically "open --type xyz" has alias "xyzOpen".
-
-   The "create" command (plain device create) is DEPRECATED but will
-   be still supported.
-   (This command is confusing because of switched arguments order.)
-
-   The close command is generic command to remove mapping and have
-   backward compatible aliases (remove, luksClose, ...) which behaves
-   exactly the same.
-
-   While all old syntax is still supported, I strongly suggest to use
-   new command syntax which is common for all device types (and possible
-   new formats added in future).
-
-
- * cryptsetup now support directly TCRYPT (TrueCrypt and compatible tc-play)
-   on-disk format
-   (Code is independent implementation not related to original project).
-
-   Only dump (tcryptDump command) and activation (open --type tcrypt or tcryptOpen)
-   of TCRYPT device are supported. No header changes are supported.
-
-   It is intended to easily access containers shared with other operating systems
-   without need to install 3rd party software. For native Linux installations LUKS
-   is the preferred format.
-
-   WARNING: TCRYPT extension requires kernel userspace crypto API to be
-   available (introduced in Linux kernel 2.6.38).
-   If you are configuring kernel yourself, enable "User-space interface
-   for symmetric key cipher algorithms" in "Cryptographic API" section
-   (CRYPTO_USER_API_SKCIPHER .config option).
-
-   Because  TCRYPT  header  is encrypted, you have to always provide valid
-   passphrase and keyfiles. Keyfiles are handled exactly the same as in original
-   format (basically, first 1MB of every keyfile is mixed using CRC32 into pool).
-
-   Cryptsetup should recognize all TCRYPT header variants ever released, except
-   legacy  cipher chains  using LRW encryption mode with 64 bits encryption block
-   (namely Blowfish in LRW mode is not recognized, this is limitation of kernel
-   crypto API).
-
-   Device activation is supported only for LRW/XTS modes (again, limitation
-   of kernel dmcrypt which do not implements TCRYPT extensions to CBC mode).
-   (So old containers cannot be activated, but you can use libcryptsetup
-   for lost password search, example of such code is included in misc directory.)
-
-   Hidden headers are supported using --tcrypt-hidden option, system encryption
-   using --tcrypt-system option.
-
-   For detailed description see man page.
-
-   EXAMPLE:
-     * Dump device parameters of container in file:
-
-     # cryptsetup tcryptDump tst
-       Enter passphrase: 
-
-     TCRYPT header information for tst
-     Version:        5
-     Driver req.:    7
-     Sector size:    512
-     MK offset:      131072
-     PBKDF2 hash:    sha512
-     Cipher chain:   serpent-twofish-aes
-     Cipher mode:    xts-plain64
-     MK bits:        1536
-
-     You can also dump master key using --dump-master-key.
-     Dump does not require superuser privilege.
-
-     * Activation of this container
-
-     # cryptsetup tcryptOpen tst tcrypt_dev
-       Enter passphrase: 
-      (Chain of dmcrypt devices is activated as /dev/mapper/tcrypt_dev.)
-
-     * See status of active TCRYPT device
-
-     # cryptsetup status tcrypt_dev
-
-     /dev/mapper/tcrypt_dev is active.
-     type:    TCRYPT
-     cipher:  serpent-twofish-aes-xts-plain64
-     keysize: 1536 bits
-     device:  /dev/loop0
-     loop:    /tmp/tst
-     offset:  256 sectors
-     size:    65024 sectors
-     skipped: 256 sectors
-     mode:    read/write
-
-    * And plaintext filesystem now ready to mount
-
-    # blkid /dev/mapper/tcrypt_dev
-    /dev/mapper/tcrypt_dev: SEC_TYPE="msdos" UUID="9F33-2954" TYPE="vfat"
-
-
- * Add (optional) support for lipwquality for new LUKS passwords.
-
-   If password is entered through terminal (no keyfile specified)
-   and cryptsetup is compiled with --enable-pwquality, default
-   system pwquality settings are used to check password quality.
-
-   You can always override this check by using new --force-password option.
-
-   For more info about pwquality project see http://libpwquality.fedorahosted.org/
-
-
- * Proper handle interrupt signals (ctrl+c and TERM signal) in tools
-
-   Code should now handle interrupt properly, release and explicitly wipe
-   in-memory key materials on interrupt.
-   (Direct users of libcryptsetup should always call crypt_free() when
-   code is interrupted to wipe all resources. There is no signal handling
-   in library, it is up to the tool using it.)
-
- 
- * Add new benchmark command
-
-   The "benchmark" command now tries to benchmark PBKDF2 and some block
-   cipher variants. You can specify you own parameters (--cipher/--key-size
-   for block ciphers, --hash for PBKDF2).
-
-   See man page for detailed description.
-
-   WARNING: benchmark command requires kernel userspace crypto API to be
-   available (introduced in Linux kernel 2.6.38).
-   If you are configuring kernel yourself, enable "User-space interface
-   for symmetric key cipher algorithms" in "Cryptographic API" section
-   (CRYPTO_USER_API_SKCIPHER .config option).
-
-   EXAMPLE:
-     # cryptsetup benchmark
-     # Tests are approximate using memory only (no storage IO).
-     PBKDF2-sha1       111077 iterations per second
-     PBKDF2-sha256      53718 iterations per second
-     PBKDF2-sha512      18832 iterations per second
-     PBKDF2-ripemd160   89775 iterations per second
-     PBKDF2-whirlpool   23918 iterations per second
-            #  Algorithm | Key | Encryption | Decryption
-          aes-cbc   128b  212.0 MiB/s  428.0 MiB/s
-      serpent-cbc   128b   23.1 MiB/s   66.0 MiB/s
-      twofish-cbc   128b   46.1 MiB/s   50.5 MiB/s
-          aes-cbc   256b  163.0 MiB/s  350.0 MiB/s
-      serpent-cbc   256b   23.1 MiB/s   66.0 MiB/s
-      twofish-cbc   256b   47.0 MiB/s   50.0 MiB/s
-          aes-xts   256b  190.0 MiB/s  190.0 MiB/s
-      serpent-xts   256b   58.4 MiB/s   58.0 MiB/s
-      twofish-xts   256b   49.0 MiB/s   49.5 MiB/s
-          aes-xts   512b  175.0 MiB/s  175.0 MiB/s
-      serpent-xts   512b   59.0 MiB/s   58.0 MiB/s
-      twofish-xts   512b   48.5 MiB/s   49.5 MiB/s
-
-     Or you can specify cipher yourself:
-     # cryptsetup benchmark --cipher cast5-cbc-essiv:sha256 -s 128
-     # Tests are approximate using memory only (no storage IO).
-     #  Algorithm | Key | Encryption | Decryption
-        cast5-cbc   128b   32.4 MiB/s   35.0 MiB/s
-
-     WARNING: these tests do not use dmcrypt, only crypto API.
-     You have to benchmark the whole device stack and you can get completely
-     different results. But is is usable for basic comparison.
-     (Note for example AES-NI decryption optimization effect in example above.)
-
-Features
-~~~~~~~~
-
- * Do not maintain ChangeLog file anymore, see git log for detailed changes,
-   e.g. here http://code.google.com/p/cryptsetup/source/list
-
- * Move change key into library, add crypt_keyslot_change_by_passphrase().
-   This change is useful mainly in FIPS mode, where we cannot
-   extract volume key directly from libcryptsetup.
-
- * Add verbose messages during reencryption.
-
- * Default LUKS PBKDF2 iteration time is now configurable.
-
- * Add simple cipher benchmarking API.
-
- * Add kernel skcipher backend.
-
- * Add CRC32 implementation (for TCRYPT).
-
- * Move PBKDF2 into crypto backend wrapper.
-   This allows use it in other formats, use library implementations and
-   also possible use of different KDF function in future.
-
- * New PBKDF2 benchmark using getrusage().
-
-Fixes
-~~~~~
-
- * Avoid O_DIRECT open if underlying storage doesn't support it.
-
- * Fix some non-translated messages.
-
- * Fix regression in header backup (1.5.1) with container in file.
-
- * Fix blockwise read/write for end writes near end of device.
-   (was not used in previous versions)
-
- * Ignore setpriority failure.
-
- * Code changes to fix/ignore problems found by Coverity static analysis, including
-   - Get page size should never fail.
-   - Fix time of check/use (TOCTOU test) in tools
-   - Fix time of check/use in loop/wipe utils.
-   - Fix time of check/use in device utils.
-
- * Disallow header restore if context is non-LUKS device.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQIcBAEBCAAGBQJQ8+m8AAoJENmwV3vZPpj8sfsP/A/hE/jJQ57V3p/cZStjw2Vl
-06pzQL34PnjPMTO6JvPtjEQVhHkEBzRrQuB0O6cOD57SO6Ew1H4zotk2ZywiRBei
-f6OK0R/SlhT1zqs1VgNi9ZCvkpO7bnxSbGkP7DMX5yZsiZTfjVlVFzq2mw2X5yJV
-AcjRZ7iWrjiLA7aOY3NvPY72FcWkHWlG7qw2BIKFUQ9+EvXJQByNoEOsiuYtmmo+
-smdPocX5ZtpPNEmpNe3M2JeCX6WBFZSX+hRRsx+AE8WOgf5ZJY6Z32fvphx8bxJA
-44lAJukhBI3EUpNmwCTTZKnNceWZlNqPVnJbk+MrcC1/T8+OfqDsB2UZaawkMI8I
-eat+fEB1L2bW7rAjpQekxvx/+uu8HGVJ6FrANcPB+lJ6juf3WQOhBUzTfsHFX0fJ
-ctYYYIdOdZEeWzwCD/o0LVunCwef/dOcOWjp3HMZMHXlqwotpVClK+6+5BnUJimA
-xRUye32jBb11OayqQYJtDnJL46nMtSfGGvbq1sh/w+AfRbsjUqG1pjJ5gXuRk8jV
-3/90d0td2yucXd6oCcCdVd0QHZDw6deIYp15Nmbleur7vZ0y/TuGc74mUrYuTGQ8
-5Qh9tmJE+XH3pwf4VqD7/vdG/3k7z9/9fEzzHngejzj379cOAJCG44NxoGqloCel
-PHTgWOW5aGnL/QZUqAjz
-=2T+g
------END PGP SIGNATURE-----
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
+On Mon, Jan 14, 2013 at 10:02:59AM +0000, Alasdair G Kergon wrote:
+> On Thu, Dec 13, 2012 at 08:19:12PM +0000, Joe Thornber wrote:
+> > ---
+> 
+> What is the motivation for changing this?
+
+Avoiding allocating memory on the main map path for dm-cache.
