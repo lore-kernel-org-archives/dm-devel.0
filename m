@@ -1,173 +1,108 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] dm-ioctl: optimize functions that don't take
- or produce arguments
-Date: Mon, 14 Jan 2013 23:21:31 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1301142321070.11994@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1301142320240.11994@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Amit Kale <akale@stec-inc.com>
+Subject: RE: Announcement: STEC EnhanceIO SSD caching software for Linux
+ kernel
+Date: Tue, 15 Jan 2013 21:19:10 +0800
+Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D6F3C@MYMBX.MY.STEC-INC.AD>
+ <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1301142320240.11994@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-dm-ioctl: optimize functions that don't take or produce arguments
+Hi Mike,
 
-libdevmapper supplies default buffer 16384 bytes to all ioctls. However,
-some ioctls don't take or produce any arguments, so allocating the
-memory for them is not necessary.
+> The github code you've referenced is in a strange place; it is
+> obviously in a bit of flux.
 
-This patch avoids the unnecessary allocation and also fixes a possible
-deadlock - when some device is suspended, and we send a resume ioctl, we
-shouldn't be doing any memory allocation at all.
 
-The variable "struct dm_ioctl tmp" is moved from the function
-copy_params to its caller ctl_ioctl. tmp is used directly when the ioctl
-function doesn't need any arguments.
+Git URLs for accessing these are - 
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+git clone https://github.com/stec-inc/EnhanceIO.git
+git clone git://github.com/stec-inc/EnhanceIO.git
 
----
- drivers/md/dm-ioctl.c |   52 ++++++++++++++++++++++++++++++++------------------
- 1 file changed, 34 insertions(+), 18 deletions(-)
+> 
+> > Repository location -  https://github.com/stec-inc/EnhanceIO
 
-Index: linux-3.8-rc3-fast/drivers/md/dm-ioctl.c
-===================================================================
---- linux-3.8-rc3-fast.orig/drivers/md/dm-ioctl.c	2013-01-15 05:17:56.000000000 +0100
-+++ linux-3.8-rc3-fast/drivers/md/dm-ioctl.c	2013-01-15 05:18:15.000000000 +0100
-@@ -1592,7 +1592,8 @@ static int check_version(unsigned int cm
- 	return r;
- }
- 
--#define DM_PARAMS_VMALLOC	0x0001	/* Params alloced with vmalloc not kmalloc */
-+#define DM_PARAMS_KMALLOC	0x0001	/* Params alloced with kmalloc */
-+#define DM_PARAMS_VMALLOC	0x0002	/* Params alloced with vmalloc */
- #define DM_WIPE_BUFFER		0x0010	/* Wipe input buffer before returning from ioctl */
- 
- static void free_params(struct dm_ioctl *param, size_t param_size, int param_flags)
-@@ -1600,66 +1601,80 @@ static void free_params(struct dm_ioctl 
- 	if (param_flags & DM_WIPE_BUFFER)
- 		memset(param, 0, param_size);
- 
-+	if (param_flags & DM_PARAMS_KMALLOC)
-+		kfree(param);
- 	if (param_flags & DM_PARAMS_VMALLOC)
- 		vfree(param);
--	else
--		kfree(param);
- }
- 
--static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl **param, int *param_flags)
-+static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *tmp,
-+		       int ioctl_flags,
-+		       struct dm_ioctl **param, int *param_flags)
- {
--	struct dm_ioctl tmp, *dmi;
-+	struct dm_ioctl *dmi;
- 	int secure_data;
-+	const size_t minimum_data_size = sizeof(*tmp) - sizeof(tmp->data);
- 
--	if (copy_from_user(&tmp, user, sizeof(tmp) - sizeof(tmp.data)))
-+	if (copy_from_user(tmp, user, minimum_data_size))
- 		return -EFAULT;
- 
--	if (tmp.data_size < (sizeof(tmp) - sizeof(tmp.data)))
-+	if (tmp->data_size < minimum_data_size)
- 		return -EINVAL;
- 
--	secure_data = tmp.flags & DM_SECURE_DATA_FLAG;
-+	secure_data = tmp->flags & DM_SECURE_DATA_FLAG;
- 
- 	*param_flags = secure_data ? DM_WIPE_BUFFER : 0;
- 
-+	if (ioctl_flags & IOCTL_FLAGS_NO_PARAMS) {
-+		dmi = tmp;
-+		dmi->data_size = minimum_data_size;
-+		goto data_copied;
-+	}
-+
- 	/*
- 	 * Try to avoid low memory issues when a device is suspended.
- 	 * Use kmalloc() rather than vmalloc() when we can.
- 	 */
- 	dmi = NULL;
--	if (tmp.data_size <= KMALLOC_MAX_SIZE)
--		dmi = kmalloc(tmp.data_size, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+	if (tmp->data_size <= KMALLOC_MAX_SIZE) {
-+		dmi = kmalloc(tmp->data_size, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+		if (dmi)
-+			*param_flags |= DM_PARAMS_KMALLOC;
-+	}
- 
- 	if (!dmi) {
--		dmi = __vmalloc(tmp.data_size, GFP_NOIO | __GFP_REPEAT | __GFP_HIGH, PAGE_KERNEL);
--		*param_flags |= DM_PARAMS_VMALLOC;
-+		dmi = __vmalloc(tmp->data_size, GFP_NOIO | __GFP_REPEAT | __GFP_HIGH, PAGE_KERNEL);
-+		if (dmi)
-+			*param_flags |= DM_PARAMS_VMALLOC;
- 	}
- 
- 	if (!dmi) {
--		if (secure_data && clear_user(user, tmp.data_size))
-+		if (secure_data && clear_user(user, tmp->data_size))
- 			return -EFAULT;
- 		return -ENOMEM;
- 	}
- 
--	if (copy_from_user(dmi, user, tmp.data_size))
-+	if (copy_from_user(dmi, user, tmp->data_size))
- 		goto bad;
- 
-+data_copied:
- 	/*
- 	 * Abort if something changed the ioctl data while it was being copied.
- 	 */
--	if (dmi->data_size != tmp.data_size) {
-+	if (dmi->data_size != tmp->data_size) {
- 		DMERR("rejecting ioctl: data size modified while processing parameters");
- 		goto bad;
- 	}
- 
- 	/* Wipe the user buffer so we do not return it to userspace */
--	if (secure_data && clear_user(user, tmp.data_size))
-+	if (secure_data && clear_user(user, tmp->data_size))
- 		goto bad;
- 
- 	*param = dmi;
- 	return 0;
- 
- bad:
--	free_params(dmi, tmp.data_size, *param_flags);
-+	free_params(dmi, tmp->data_size, *param_flags);
- 
- 	return -EFAULT;
- }
-@@ -1703,6 +1718,7 @@ static int ctl_ioctl(uint command, struc
- 	struct dm_ioctl *uninitialized_var(param);
- 	ioctl_fn fn = NULL;
- 	size_t input_param_size;
-+	struct dm_ioctl tmp;
- 
- 	/* only root can play with this */
- 	if (!capable(CAP_SYS_ADMIN))
-@@ -1736,7 +1752,7 @@ static int ctl_ioctl(uint command, struc
- 	/*
- 	 * Copy the parameters into kernel space.
- 	 */
--	r = copy_params(user, &param, &param_flags);
-+	r = copy_params(user, &tmp, ioctl_flags, &param, &param_flags);
- 
- 	if (r)
- 		return r;
+> > ----------------
+> > EnhanceIO driver is based on EnhanceIO SSD caching software product
+> developed by STEC Inc. EnhanceIO was derived from Facebook's open
+> source Flashcache project. EnhanceIO uses SSDs as cache devices for
+> traditional rotating hard disk drives (referred to as source volumes
+> throughout this document).
+> 
+> Earlier versions of EnhanceIO made use of Device Mapper (and your
+> github code still has artifacts from that historic DM dependency, e.g.
+> eio_map still returns DM_MAPIO_SUBMITTED).
+
+This is correct. First version of our product was based on DM.
+
+> 
+> As a DM target, EnhanceIO still implemented its own bio splitting
+> rather than just use the DM core's bio splitting, now you've decided to
+> move away from DM entirely.  Any reason why?
+
+1. EnhanceIO product was always created as a "transparent" cache. This meant the cached device path was identical to the original device path. In order to make this fit into device mapper scheme, we had a bunch of init and udev scripts to replace old device node by a new dm device node. The difficulty in this architecture was the principle reason for moving away from DM. Our transparent cache architecture has been a big winner with enterprise customers enabling easy deployments.
+
+2. EnhanceIO now is fully transparent. So applications can continue running while a cache is created or deleted. This is a significant improvement helping enterprise users reduce downtime.
+
+3. DM overhead is minimal compared to the CPU cycles spent in a cache block lookup. Since we weren't using DM's splitting anyways, that overhead was reduced by going away from DM.
+
+4. We can now create a cache for an entire HDD containing partitions. All the partitions will be cached automatically. User always has an option to cache partitions individually, if required.
+
+5. We have designed our writeback architecture from scratch. Coalescing/bunching together of metadata writes and cleanup is much improved after redesigning of the EnhanceIO-SSD interface. The DM interface would have been too restrictive for this. EnhanceIO uses set level locking, which improves parallelism of IO, particularly for writeback.
+
+> 
+> Joe Thornber published the new DM cache target on dm-devel a month ago:
+> https://www.redhat.com/archives/dm-devel/2012-December/msg00029.html
+
+Thanks for this link. Will review and get back to you.
+
+> 
+> ( I've also kept a functional git repo with that code, and additional
+> fixes, in the 'dm-devel-cache' branch of my github repo:
+> git://github.com/snitm/linux.git )
+> 
+> It would be unfortunate if Joe's publishing of the dm-cache codebase
+> somehow motivated STEC's switch away from DM (despite EnhanceIO's DM
+> roots given it was based on FB's flashcache which also uses DM).
+
+Not at all! We had working on a fully transparent cache architecture since a long time.
+
+> DM really does offer a compelling foundation for stacking storage
+> drivers in complementary ways (e.g. we envision dm-cache being stacked
+> in conjunction with dm-thinp).  So a DM-based caching layer has been of
+> real interest to Red Hat's DM team.
+
+IMHO caching does not DM architecture. DM is best suited for RAID requiring similar or even access to all component devices. Caching requires skewed or uneven access to SSD and HDD.
+
+Regards.
+-Amit
+
+
+> 
+> Given dm-cache's clean design and modular cache replacement policy
+> interface we were hopeful that any existing limitations in dm-cache
+> could be resolved through further work with the greater community (STEC
+> included).  Instead, in addition to bcache, with EnhanceIO we have more
+> fragmentation for a block caching layer (a layer which has been sorely
+> overdue in upstream Linux).
+> 
+> Hopefully upstream Linux will get this caching feature before its
+> utility is no longer needed.  The DM team welcomes review of dm-cache
+> from STEC and the greater community.  We're carrying on with dm-cache
+> review/fixes for hopeful upstream inclusion as soon as v3.9.
+> 
+> Mike
+
+PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+
+
+
+This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
