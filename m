@@ -1,108 +1,49 @@
-From: Amit Kale <akale@stec-inc.com>
-Subject: RE: Announcement: STEC EnhanceIO SSD caching software for Linux
- kernel
-Date: Tue, 15 Jan 2013 21:19:10 +0800
-Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
-References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D6F3C@MYMBX.MY.STEC-INC.AD>
- <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Dmitry Kasatkin <dmitry.kasatkin@intel.com>
+Subject: [PATCH v2.1 0/1] dm-integrity: integrity protection device-mapper target
+Date: Tue, 15 Jan 2013 22:35:56 +0200
+Message-ID: <cover.1358282111.git.dmitry.kasatkin@intel.com>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, akpm@linux-foundation.org, alan.cox@intel.com, mbroz@redhat.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+Device-mapper "integrity" target provides transparent cryptographic integrity
+protection of underlying read-write block device using hash-based message
+authentication codes (HMACs), which can be stored on the same or different
+block device.
 
-> The github code you've referenced is in a strange place; it is
-> obviously in a bit of flux.
+Target uses kernel keyring to obtain a secret key for using in cryptographic
+operations. It uses encrypted key type. Kernel never exposes those keys in
+plain form to user space. Encrypted keys are encrypted using master key,
+which can be either user or trusted type. User key type allows to supply a key
+from the user space and trusted key uses TPM.
 
+Secret key is usually device specific and binds integrity data to the device.
+Data blocks and corresponding HMACs cannot be copied over from other systems.
 
-Git URLs for accessing these are - 
+The key advantage over dm-verity is that the target supports read-write and
+requires less hash calculation operations. The key advantage over dm-crypt
+is that it does not require encryption when it is not desired by technical or
+other reasons. HMAC calculation generally requires less resources than
+encryption.
 
-git clone https://github.com/stec-inc/EnhanceIO.git
-git clone git://github.com/stec-inc/EnhanceIO.git
+The main purpose of the dm-integrity is to provide read-write capable local
+block data integrity protection without encryption.
 
-> 
-> > Repository location -  https://github.com/stec-inc/EnhanceIO
+I addressed all comments I got so far. Can it be now added to the DM tree?
 
-> > ----------------
-> > EnhanceIO driver is based on EnhanceIO SSD caching software product
-> developed by STEC Inc. EnhanceIO was derived from Facebook's open
-> source Flashcache project. EnhanceIO uses SSDs as cache devices for
-> traditional rotating hard disk drives (referred to as source volumes
-> throughout this document).
-> 
-> Earlier versions of EnhanceIO made use of Device Mapper (and your
-> github code still has artifacts from that historic DM dependency, e.g.
-> eio_map still returns DM_MAPIO_SUBMITTED).
+- Dmitry
 
-This is correct. First version of our product was based on DM.
+Dmitry Kasatkin (1):
+  dm-integrity: integrity protection device-mapper target
 
-> 
-> As a DM target, EnhanceIO still implemented its own bio splitting
-> rather than just use the DM core's bio splitting, now you've decided to
-> move away from DM entirely.  Any reason why?
+ Documentation/device-mapper/dm-integrity.txt |  137 ++++
+ drivers/md/Kconfig                           |   13 +
+ drivers/md/Makefile                          |    1 +
+ drivers/md/dm-integrity.c                    | 1051 ++++++++++++++++++++++++++
+ 4 files changed, 1202 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-integrity.txt
+ create mode 100644 drivers/md/dm-integrity.c
 
-1. EnhanceIO product was always created as a "transparent" cache. This meant the cached device path was identical to the original device path. In order to make this fit into device mapper scheme, we had a bunch of init and udev scripts to replace old device node by a new dm device node. The difficulty in this architecture was the principle reason for moving away from DM. Our transparent cache architecture has been a big winner with enterprise customers enabling easy deployments.
-
-2. EnhanceIO now is fully transparent. So applications can continue running while a cache is created or deleted. This is a significant improvement helping enterprise users reduce downtime.
-
-3. DM overhead is minimal compared to the CPU cycles spent in a cache block lookup. Since we weren't using DM's splitting anyways, that overhead was reduced by going away from DM.
-
-4. We can now create a cache for an entire HDD containing partitions. All the partitions will be cached automatically. User always has an option to cache partitions individually, if required.
-
-5. We have designed our writeback architecture from scratch. Coalescing/bunching together of metadata writes and cleanup is much improved after redesigning of the EnhanceIO-SSD interface. The DM interface would have been too restrictive for this. EnhanceIO uses set level locking, which improves parallelism of IO, particularly for writeback.
-
-> 
-> Joe Thornber published the new DM cache target on dm-devel a month ago:
-> https://www.redhat.com/archives/dm-devel/2012-December/msg00029.html
-
-Thanks for this link. Will review and get back to you.
-
-> 
-> ( I've also kept a functional git repo with that code, and additional
-> fixes, in the 'dm-devel-cache' branch of my github repo:
-> git://github.com/snitm/linux.git )
-> 
-> It would be unfortunate if Joe's publishing of the dm-cache codebase
-> somehow motivated STEC's switch away from DM (despite EnhanceIO's DM
-> roots given it was based on FB's flashcache which also uses DM).
-
-Not at all! We had working on a fully transparent cache architecture since a long time.
-
-> DM really does offer a compelling foundation for stacking storage
-> drivers in complementary ways (e.g. we envision dm-cache being stacked
-> in conjunction with dm-thinp).  So a DM-based caching layer has been of
-> real interest to Red Hat's DM team.
-
-IMHO caching does not DM architecture. DM is best suited for RAID requiring similar or even access to all component devices. Caching requires skewed or uneven access to SSD and HDD.
-
-Regards.
--Amit
-
-
-> 
-> Given dm-cache's clean design and modular cache replacement policy
-> interface we were hopeful that any existing limitations in dm-cache
-> could be resolved through further work with the greater community (STEC
-> included).  Instead, in addition to bcache, with EnhanceIO we have more
-> fragmentation for a block caching layer (a layer which has been sorely
-> overdue in upstream Linux).
-> 
-> Hopefully upstream Linux will get this caching feature before its
-> utility is no longer needed.  The DM team welcomes review of dm-cache
-> from STEC and the greater community.  We're carrying on with dm-cache
-> review/fixes for hopeful upstream inclusion as soon as v3.9.
-> 
-> Mike
-
-PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
-
-
-
-This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
+-- 
+1.7.10.4
