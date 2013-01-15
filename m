@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Subject: Re: [PATCH] multipath: change default configuration
 	parameters
-Date: Tue, 15 Jan 2013 22:48:29 +0100
-Message-ID: <50F5CEAD.8070809@gmail.com>
+Date: Tue, 15 Jan 2013 23:14:09 +0100
+Message-ID: <50F5D4B1.5070508@gmail.com>
 References: <20130108053459.GU19059@ether.msp.redhat.com>
 	<50EEFB87.1060707@gmail.com>
 	<1358283765.3854.1.camel@lapoo.opensvc.com>
@@ -41,16 +41,8 @@ On 01/15/2013 10:02 PM, Christophe Varoqui wrote:
 > -#      path_selector           "round-robin 0"
 > -#      path_grouping_policy    failover
 > -#      getuid_callout          "/lib/udev/scsi_id --whitelisted --device=/dev/%n"
-> -#      prio                    const
-> -#      prio_args               ""
-> -#      path_checker            directio
-> -#      rr_min_io               1000
-> -#      rr_weight               uniform
-> -#      failback                manual
-> -#      no_path_retry           fail
-> -#      user_friendly_names     no
-> +#      verbosity 2
-> +#      polling_interval 5
-> +#      multipath_dir "/lib64/multipath"
 
-multipath_dir should be removed, it's generated at compile time.
+scsi_id is going to be replaced in systemd(recently udev was
+included in systemd).
+
+See sg_inq(--export option) from sg3_utils.
