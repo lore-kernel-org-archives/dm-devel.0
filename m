@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 05/13] Add hardware entry for Intel Multi-Flex
-Date: Wed, 16 Jan 2013 13:14:08 +0100
-Message-ID: <1358338456-1234-6-git-send-email-hare@suse.de>
+Subject: [PATCH 01/13] Fixup .gitignore
+Date: Wed, 16 Jan 2013 13:14:04 +0100
+Message-ID: <1358338456-1234-2-git-send-email-hare@suse.de>
 References: <1358338456-1234-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,34 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Only exclude the binaries, not the entire directories ...
+And the nfs link, too.
+
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/hwtable.c |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+ .gitignore |    8 +++++---
+ 1 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 6924a61..174df7e 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1062,6 +1062,19 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
- 	},
-+	{
-+		.vendor	       = "Intel",
-+		.product       = "Multi-Flex",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = "1 alua",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
-+		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
-+		.prio_args     = NULL,
-+	},
- 	/*
- 	 * EOL
- 	 */
+diff --git a/.gitignore b/.gitignore
+index 9b3f663..7f25d0e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -5,6 +5,8 @@
+ *.so.0
+ *.a
+ *.gz
+-kpartx
+-multipath
+-multipathd
++kpartx/kpartx
++multipath/multipath
++multipathd/multipathd
++mpathpersist/mpathpersist
++.nfs*
 -- 
 1.7.4.2
