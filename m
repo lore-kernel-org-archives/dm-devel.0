@@ -1,15 +1,12 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 03/13] kpartx.rules: Check for accessible
-	device-mapper device
-Date: Wed, 16 Jan 2013 13:14:06 +0100
-Message-ID: <1358338456-1234-4-git-send-email-hare@suse.de>
-References: <1358338456-1234-1-git-send-email-hare@suse.de>
+Subject: [PATCH 00/13] More patches from SLES
+Date: Wed, 16 Jan 2013 13:14:03 +0100
+Message-ID: <1358338456-1234-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1358338456-1234-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,27 +20,37 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We need to check for accessible device-mapper devices
-right at the start, otherwise kpartx would be run on
-inactive devices.
+Hi Christophe,
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- kpartx/kpartx.rules |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+here are some more patches from SLES.
+Most are missing patches from the initial resync;
+however, the transport id stuff is a rework from
+the SLES sources and has been enhanced to cover SAS.
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index febac90..ba5c6cb 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -8,6 +8,8 @@ KERNEL!="dm-*", GOTO="kpartx_end"
- ACTION=="remove", GOTO="kpartx_end"
- 
- ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
-+ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
-+ENV{DM_DEPS}=="0", GOTO="kpartx_end"
- 
- ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
- 
+Please apply.
+
+Hannes Reinecke (13):
+  Fixup .gitignore
+  Check for !SUSPENDED in kpartx rules
+  kpartx.rules: Check for accessible device-mapper device
+  Correct persistent symlink for cciss
+  Add hardware entry for Intel Multi-Flex
+  Add Datacore SANSymphony to hwtable
+  Add SUN STK6580 to hardware table
+  Remove unused structures
+  Use transport identifiers when detecting devices
+  Discover target ids for ATA
+  Set recovery_tmo for iSCSI devices
+  Set I_T_nexus_loss_timeout on SAS devices
+  Rename variables in sysfs_get_tgt_nodename
+
+ .gitignore               |    8 +-
+ kpartx/kpartx.rules      |    4 +-
+ kpartx/kpartx_id         |    3 +
+ libmultipath/discovery.c |  190 ++++++++++++++++++++++++++++++++++++---------
+ libmultipath/hwtable.c   |   39 ++++++++++
+ libmultipath/structs.h   |   26 +++---
+ 6 files changed, 215 insertions(+), 55 deletions(-)
+
 -- 
 1.7.4.2
