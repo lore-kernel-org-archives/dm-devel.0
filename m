@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 02/13] Check for !SUSPENDED in kpartx rules
-Date: Wed, 16 Jan 2013 13:14:05 +0100
-Message-ID: <1358338456-1234-3-git-send-email-hare@suse.de>
+Subject: [PATCH 06/13] Add Datacore SANSymphony to hwtable
+Date: Wed, 16 Jan 2013 13:14:09 +0100
+Message-ID: <1358338456-1234-7-git-send-email-hare@suse.de>
 References: <1358338456-1234-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,27 +22,34 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Read-only devices appear as DM_STATE=READONLY, so we should
-invert the check in kpartx rules to have kpartx run on
-readonly devices, too.
-
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/kpartx.rules |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ libmultipath/hwtable.c |   13 +++++++++++++
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 64863a0..febac90 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -22,7 +22,7 @@ ENV{DM_PART}=="?*", \
-         SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}-part$env{DM_PART}"
- 
- # Create dm tables for partitions
--ENV{DM_STATE}=="ACTIVE", ENV{DM_UUID}=="mpath-*", \
-+ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
-         RUN+="/sbin/kpartx -u -p -part /dev/$name"
- 
- LABEL="kpartx_end"
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 174df7e..9ed3a82 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1075,6 +1075,19 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 		.prio_args     = NULL,
+ 	},
++	{
++		.vendor	       = "DataCore",
++		.product       = "SANmelody",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.checker_name  = TUR,
++		.prio_name     = PRIO_ALUA,
++		.prio_args     = NULL,
++	},
+ 	/*
+ 	 * EOL
+ 	 */
 -- 
 1.7.4.2
