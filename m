@@ -1,19 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath: change default configuration
- parameters
-Date: Wed, 16 Jan 2013 21:42:46 +0100
-Message-ID: <1358368966.8351.3.camel@lapoo.opensvc.com>
-References: <20130108053459.GU19059@ether.msp.redhat.com>
-	<50EEFB87.1060707@gmail.com>
-	<1358283765.3854.1.camel@lapoo.opensvc.com>
-	<50F5CEAD.8070809@gmail.com>
+Subject: Re: [PATCH 06/13] Add Datacore SANSymphony to hwtable
+Date: Wed, 16 Jan 2013 21:53:34 +0100
+Message-ID: <1358369614.8351.9.camel@lapoo.opensvc.com>
+References: <1358338456-1234-1-git-send-email-hare@suse.de>
+	<1358338456-1234-7-git-send-email-hare@suse.de>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <50F5CEAD.8070809@gmail.com>
+In-Reply-To: <1358338456-1234-7-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,39 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: development <dm-devel@redhat.com>, device-mapper@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On mar., 2013-01-15 at 22:48 +0100, Xose Vazquez Perez wrote:
-> On 01/15/2013 10:02 PM, Christophe Varoqui wrote:
+On mer., 2013-01-16 at 13:14 +0100, Hannes Reinecke wrote:
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  libmultipath/hwtable.c |   13 +++++++++++++
+>  1 files changed, 13 insertions(+), 0 deletions(-)
 > 
-> > I pushed a patch to resync the multipath.conf.defaults using the
-> > "multipathd show config" output.
-> 
-> > --- a/multipath.conf.defaults
-> > +++ b/multipath.conf.defaults
-> > @@ -2,775 +2,863 @@
-> >  # overwrite these values in your config file.
-> >  
-> >  #defaults {
-> > -#      udev_dir                /dev
-> > -#      polling_interval        5
-> > -#      path_selector           "round-robin 0"
-> > -#      path_grouping_policy    failover
-> > -#      getuid_callout          "/lib/udev/scsi_id --whitelisted --device=/dev/%n"
-> > -#      prio                    const
-> > -#      prio_args               ""
-> > -#      path_checker            directio
-> > -#      rr_min_io               1000
-> > -#      rr_weight               uniform
-> > -#      failback                manual
-> > -#      no_path_retry           fail
-> > -#      user_friendly_names     no
-> > +#      verbosity 2
-> > +#      polling_interval 5
-> > +#      multipath_dir "/lib64/multipath"
-> 
-> multipath_dir should be removed, it's generated at compile time.
+This configlet is for SANmelody, and the commit subject is
+about SANsymphony.
 
- True. Applied.
+I don't mind the subject being eroneous, but i'd like to be sure the
+configlet is correct.
+
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 174df7e..9ed3a82 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -1075,6 +1075,19 @@ static struct hwentry default_hw[] = {
+>  		.prio_name     = PRIO_ALUA,
+>  		.prio_args     = NULL,
+>  	},
+> +	{
+> +		.vendor	       = "DataCore",
+> +		.product       = "SANmelody",
+> +		.features      = DEFAULT_FEATURES,
+> +		.hwhandler     = DEFAULT_HWHANDLER,
+> +		.pgpolicy      = GROUP_BY_PRIO,
+> +		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.rr_weight     = RR_WEIGHT_NONE,
+> +		.no_path_retry = NO_PATH_RETRY_QUEUE,
+> +		.checker_name  = TUR,
+> +		.prio_name     = PRIO_ALUA,
+> +		.prio_args     = NULL,
+> +	},
+>  	/*
+>  	 * EOL
+>  	 */
