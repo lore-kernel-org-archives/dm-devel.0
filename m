@@ -1,94 +1,79 @@
-From: Guangliang Zhao <gzhao@suse.com>
-Subject: Re: [dm-devel] [PATCH 0/3 v3] add resync speed control for dm-raid1
-Date: Wed, 16 Jan 2013 16:21:09 +0800
-Message-ID: <20130116082109.GA2154@glzhao-laptop.site>
-References: <1357552933-26126-1-git-send-email-gzhao@suse.com>
- <Pine.LNX.4.64.1301090034200.29917@file.rdu.redhat.com>
+From: thornber@redhat.com
+Subject: Re: [dm-devel] Announcement: STEC EnhanceIO SSD caching software for
+ Linux kernel
+Date: Wed, 16 Jan 2013 10:45:47 +0000
+Message-ID: <20130116104546.GA3869@raspberrypi>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D6F3C@MYMBX.MY.STEC-INC.AD>
+ <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1301090034200.29917@file.rdu.redhat.com>
+In-Reply-To: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, mpatocka@redhat.com
-Cc: agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Jan 09, 2013 at 12:43:21AM -0500, Mikulas Patocka wrote:
-> Hi
-Hi,
+Hi Amit,
 
-I think it is very good that your patches could be used for other
-targets(snapshot, thin) after reviewing yours, but I find some issues
-(maybe not, please correct me if I am wrong).
+I'll look through EnhanceIO this week.
 
-> 
-> I did this already some times ago.
-> I'm sending my patches in the next mail.
-> 
-> Basically, my and Guangliang's patches have the following differences:
-> 
-> my patch: uses per-module throttle settings
-> Guangliang's patch: uses per-device settings
-> (my patch could be changed to use per-device throttle too, but without 
-> userspace support it isn't much useful because userspace lvm can 
-> reload the mirror and per-device settings would be lost)
+There are several cache solutions out there; bcache, my dm-cache and
+EnhanceIO seeming to be the favourites.  In suspect none of them are
+without drawbacks, so I'd like to see if we can maybe work together.
 
-We couldn't force every devices in the system hold the same throttle,
-IMHO, per-device settings couldn't be ignored. 
-Setting the global value by the parameters of module is a good way, and
-it could also be used to set the default value in my patches. In this way,
-the global setting wouldn't be lost, and we could also adjust every device's
-speed.
+I think the first thing we need to do is make it easy to compare the
+performance of these impls.
 
-> 
-> my patch: uses fine grained throttling of the individual IOs in kcopyd - 
-> it measures active/inactive ratio and if the disk is active more than the 
-> specified percentage of time, sleep is inserted.
+I'll create a branch in my github tree with all three caches in.  So
+it's easy to build a kernel with them.  (Mike's already combined
+dm-cache and bcache and done some preliminary testing).
 
-I think this policy might not be able to represent the exact write speed, 
-while other modules(such as md, drbd) monitor the real IO speed.
+We've got some small test scenarios in our test suite that we run [1].
+They certainly flatter dm-cache since it was developed using these.
+It would be really nice if you could describe and provide scripts for
+your test scenarios.  I'll integrate them with the test suite, and
+then I can have some confidence that I'm seeing EnhanceIO in its best
+light.
 
-> Guangliang's patch: throttles on segment granularity, it waits when 
-> starting new segment, but segment is copied unthrottled.
-> 
-> my patch: the user selects a percentage value (0 - 100) in 
-> "/sys/module/dm_mirror/parameters/raid1_resync_throttle", the device is 
-> kept active the specified percent of time
-> Guangliang's patch: limits the number of segments per a specified 
-> interval
-> 
-> My patch is noticeably bigger.
-> 
-> Mikulas
-> 
-> 
-> On Mon, 7 Jan 2013, Guangliang Zhao wrote:
-> 
-> > Hi,
-> > 
-> > These patches are used to add resync speed control for dm-raid1. The
-> > second and third patch provide support for user-space tool dmsetup.
-> > I have made some modifications by the comments. This is the third
-> > version.
-> > 
-> > Guangliang Zhao (3):
-> >   dm raid1: add resync speed control for dm-raid1
-> >   dm raid1: add interface to set resync speed
-> >   dm raid1: add interface to get resync speed
-> > 
-> >  drivers/md/dm-raid1.c |   90 ++++++++++++++++++++++++++++++++++++++++++++++++-
-> >  1 file changed, 89 insertions(+), 1 deletion(-)
-> > 
-> > -- 
-> > 1.7.10.4
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
+The 'transparent' cache issue is a valid one, but to be honest a bit
+orthogonal to cache.  Integrating dm more closely with the block layer
+such that a dm stack can replace any device has been discussed for
+years and I know Alasdair has done some preliminary design work on
+this.  Perhaps we can use your requirement to bump up the priority on
+this work.
 
--- 
-Best regards,
-Guangliang
+On Tue, Jan 15, 2013 at 09:19:10PM +0800, Amit Kale wrote:
+> 5. We have designed our writeback architecture from
+> scratch. Coalescing/bunching together of metadata writes and cleanup
+> is much improved after redesigning of the EnhanceIO-SSD
+> interface. The DM interface would have been too restrictive for
+> this. EnhanceIO uses set level locking, which improves parallelism
+> of IO, particularly for writeback.
+
+I sympathise with this; dm-cache would also like to see a higher level
+view of the io, rather than being given the ios to remap one by one.
+Let's start by working out how much of a benefit you've gained from
+this and then go from there.
+
+> PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+> 
+> This electronic transmission, and any documents attached hereto, may
+> contain confidential, proprietary and/or legally privileged
+> information. The information is intended only for use by the
+> recipient named above. If you received this electronic message in
+> error, please notify the sender and delete the electronic
+> message. Any disclosure, copying, distribution, or use of the
+> contents of information received in error is strictly prohibited,
+> and violators will be pursued legally.
+
+Please do not use this signature when sending to dm-devel.  If there's
+proprietary information in the email you need to tell people up front
+so they can choose not to read it.
+
+- Joe
+
+
+  [1] https://github.com/jthornber/thinp-test-suite/tree/master/tests/cache
