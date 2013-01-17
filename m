@@ -1,404 +1,195 @@
-From: lei yang <yanglei.fage@gmail.com>
-Subject: what's wrong with my build
-Date: Fri, 18 Jan 2013 00:09:08 +0800
-Message-ID: <CAHsH0E8sQYYs6jt6NaP8kQ=+jj5uxK8FJpUky=kUAuSmXss=6w@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
+Subject: RE: [dm-devel] Announcement: STEC EnhanceIO SSD caching software
+ for Linux kernel
+Date: Fri, 18 Jan 2013 01:17:17 +0800
+Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7247@MYMBX.MY.STEC-INC.AD>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D6F3C@MYMBX.MY.STEC-INC.AD>
+ <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
+ <20130116104546.GA3869@raspberrypi>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D720A@MYMBX.MY.STEC-INC.AD>
+ <20130117113940.GI10411@moria.home.lan>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20130117113940.GI10411-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+Content-Language: en-US
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi experts
+Thanks for a prompt reply.
+ 
+> Suppose I could fill out the bcache version...
+> 
+> On Thu, Jan 17, 2013 at 05:52:00PM +0800, Amit Kale wrote:
+> > Hi Joe, Kent,
+> >
+> > [Adding Kent as well since bcache is mentioned below as one of the
+> > contenders for being integrated into mainline kernel.]
+> >
+> > My understanding is that these three caching solutions all have three
+> principle blocks.
+> > 1. A cache block lookup - This refers to finding out whether a block
+> was cached or not and the location on SSD, if it was.
+> > 2. Block replacement policy - This refers to the algorithm for
+> replacing a block when a new free block can't be found.
+> > 3. IO handling - This is about issuing IO requests to SSD and HDD.
+> > 4. Dirty data clean-up algorithm (for write-back only) - The dirty
+> data clean-up algorithm decides when to write a dirty block in an SSD
+> to its original location on HDD and executes the copy.
+> >
+> > When comparing the three solutions we need to consider these aspects.
+> > 1. User interface - This consists of commands used by users for
+> creating, deleting, editing properties and recovering from error
+> conditions.
+> > 2. Software interface - Where it interfaces to Linux kernel and
+> applications.
+> 
+> Both done with sysfs, at least for now.
 
-I try to build multipath-tools, when I do below thing
+sysfs is the user interface. Bcache creates a new block device. So it interfaces to Linux kernel at block device layer. HDD and SSD interfaces would at using submit_bio (pl. correct if this is wrong).
 
-i586-wrs-linux-gcc  -m32   -march=i586
---sysroot=/home/lyang001/kvm_32/bitbake_build/tmp/sysroots/x86-kvm-guest
--pipe -g -Wall -Wunused -Wstrict-prototypes -fPIC
--DLIB_STRING=\"lib64\" -I../libmultipath -Wl,-O1 -Wl,--hash-style=gnu
--Wl,--as-needed -lpthread -ldevmapper -lreadline -lncurses -ldl
--lmultipath -L../libmultipath -o multipathd main.o pidfile.o uxlsnr.o
-uxclnt.o cli.o cli_handlers.o
+> 
+> > 3. Availability - What's the downtime when adding, deleting caches,
+> making changes to cache configuration, conversion between cache modes,
+> recovering after a crash, recovering from an error condition.
+> 
+> All of that is done at runtime, without any interruption. bcache
+> doesn't distinguish between clean and unclean shutdown, which is nice
+> because it means the recovery code gets tested. Registering a cache
+> device takes on the order of half a second, for a large (half terabyte)
+> cache.
+
+Since a new device is created, you need to bring down applications the first time a cache is created. There-onwards it would be online. Similarly applications need to be brought down when deleting a cache. Fstab changes etc also need to be done. My guess is all this requires some effort and understanding by a system administrator. Does fstab work without any manual editing if it contains labes instead of device paths?
+
+> 
+> > 4. Security - Security holes, if any.
+> 
+> Hope there aren't any!
+
+All the three caches can be operated only as root. So as long as there are no bugs, there is no need to worry about security loopholes.
+
+> 
+> > 5. Portability - Which HDDs, SSDs, partitions, other block devices it
+> works with.
+> 
+> Any block device.
+> 
+> > 6. Persistence of cache configuration - Once created does the cache
+> configuration stay persistent across reboots. How are changes in device
+> sequence or numbering handled.
+> 
+> Persistent. Device nodes are not stable across reboots, same as say
+> scsi devices if they get probed in a different order. It does persist a
+> label in the backing device superblock which can be used to implement
+> stable device nodes.
+
+Can this be embedded in a udev script so that the configuration becomes persistent regardless of probing order? What happens if either SSD or HDD are absent when a system comes up? Does it work with iSCSI HDDs? iSCSi HDDs can be tricky during shutdown, specifically if the iSCSI device goes offline before a cache saves metadata.
+
+> > 7. Persistence of cached data - Does cached data remain across
+> reboots/crashes/intermittent failures. Is the "sticky"ness of data
+> configurable.
+> 
+> Persists across reboots. Can't be switched off, though it could be if
+> there was any demand.
+
+Believe me, enterprise customers do require a cache to be non-persistent. This is because of a paranoia that HDD and SSD may go out of sync after a shutdown and before a reboot. This is primarily in an environment with a large number of HDDs accessed through a complicated iSCSI based setup perhaps with software RAID.
 
 
-I see it has use  -L../libmultipath to link related lib, but still
-meet below error
+> > 8. SSD life - Projected SSD life. Does the caching solution cause too
+> much of write amplification leading to an early SSD failure.
+> 
+> With LRU, there's only so much you can do to work around the SSD's FTL,
+> though bcache does try; allocation is done in terms of buckets, which
+> are on the order of a megabyte (configured when you format the cache
+> device). Buckets are written to sequentially, then rewritten later all
+> at once (and it'll issue a discard before rewriting a bucket if you
+> flip it on, it's not on by default because TRIM = slow).
+> 
+> Bcache also implements fifo cache replacement, and with that write
+> amplification should never be an issue.
 
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:251:
-undefined reference to `find_mp_by_alias'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:259:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:261:
-undefined reference to `xfree'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:268:
-undefined reference to `add_map_without_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:270:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:273:
-undefined reference to `get_refwwid'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:276:
-undefined reference to `coalesce_paths'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:277:
-undefined reference to `dm_lib_release'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:281:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:283:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:285:
-undefined reference to `xfree'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:286:
-undefined reference to `xfree'
-main.o: In function `uev_remove_map':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:293:
-undefined reference to `dlog'
-main.o: In function `ev_remove_map':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:302:
-undefined reference to `find_mp_by_str'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:305:
-undefined reference to `dlog'
-main.o: In function `uev_umount_map':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:319:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:321:
-undefined reference to `find_mp_by_str'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:326:
-undefined reference to `update_mpp_paths'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:327:
-undefined reference to `verify_paths'
-main.o: In function `uev_add_path':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:338:
-undefined reference to `dlog'
-main.o: In function `ev_add_path':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:360:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:364:
-undefined reference to `find_path_by_dev'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:367:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:376:
-undefined reference to `store_pathinfo'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:378:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:388:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:391:
-undefined reference to `filter_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:392:
-undefined reference to `find_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:394:
-undefined reference to `vector_del_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:395:
-undefined reference to `free_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:398:
-undefined reference to `find_mp_by_wwid'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:403:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:407:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:410:
-undefined reference to `find_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:412:
-undefined reference to `vector_del_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:413:
-undefined reference to `free_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:417:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:419:
-undefined reference to `adopt_paths'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:422:
-undefined reference to `verify_paths'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:428:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:430:
-undefined reference to `find_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:432:
-undefined reference to `vector_del_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:433:
-undefined reference to `free_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:437:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:438:
-undefined reference to `add_map_with_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:447:
-undefined reference to `setup_map'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:448:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:455:
-undefined reference to `domap'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:456:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:462:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:464:
-undefined reference to `update_mpp_paths'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:470:
-undefined reference to `dm_lib_release'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:475:
-undefined reference to `setup_multipath'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:481:
-undefined reference to `start_waiter_thread'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:484:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:488:
-undefined reference to `remove_map'
-main.o: In function `uev_remove_path':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:497:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:500:
-undefined reference to `sysfs_device_put'
-main.o: In function `ev_remove_path':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:512:
-undefined reference to `find_path_by_dev'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:516:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:528:
-undefined reference to `update_mpp_paths'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:529:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:533:
-undefined reference to `find_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:534:
-undefined reference to `vector_del_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:547:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:551:
-undefined reference to `dm_queue_if_no_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:554:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:565:
-undefined reference to `setup_map'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:566:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:575:
-undefined reference to `domap'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:576:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:584:
-undefined reference to `setup_multipath'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:589:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:595:
-undefined reference to `find_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:596:
-undefined reference to `vector_del_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:598:
-undefined reference to `free_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:603:
-undefined reference to `remove_map_and_stop_waiter'
-main.o: In function `map_discovery':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:613:
-undefined reference to `dm_get_maps'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:617:
-undefined reference to `setup_multipath'
-main.o: In function `uxsock_trigger':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:633:
-undefined reference to `cleanup_lock'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:633:
-undefined reference to `__pthread_register_cancel'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:650:
-undefined reference to `__pthread_unregister_cancel'
-main.o: In function `uev_discard':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:665:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:670:
-undefined reference to `dlog'
-main.o: In function `uev_trigger':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:688:
-undefined reference to `sysfs_device_get'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:718:
-undefined reference to `filter_devnode'
-main.o: In function `ueventloop':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:739:
-undefined reference to `block_signal'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:740:
-undefined reference to `block_signal'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:742:
-undefined reference to `uevent_listen'
-main.o: In function `uxlsnrloop':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:751:
-undefined reference to `block_signal'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:752:
-undefined reference to `block_signal'
-main.o: In function `exit_daemon':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:800:
-undefined reference to `dlog'
-main.o: In function `fail_path':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:816:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:819:
-undefined reference to `dm_fail_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:821:
-undefined reference to `update_queue_mode_del_path'
-main.o: In function `reinstate_path':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:833:
-undefined reference to `dm_reinstate_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:834:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:836:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:838:
-undefined reference to `update_queue_mode_add_path'
-main.o: In function `enable_group':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:860:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:861:
-undefined reference to `dm_enablegroup'
-main.o: In function `mpvec_garbage_collector':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:875:
-undefined reference to `dm_map_present'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:876:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:877:
-undefined reference to `remove_map_and_stop_waiter'
-main.o: In function `retry_count_tick':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:911:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:913:
-undefined reference to `dm_queue_if_no_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:914:
-undefined reference to `dlog'
-main.o: In function `check_path':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:937:
-undefined reference to `get_state'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:940:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:941:
-undefined reference to `pathinfo'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:955:
-undefined reference to `checker_message'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:955:
-undefined reference to `checker_message'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:955:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:964:
-undefined reference to `update_multipath_strings'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1010:
-undefined reference to `checker_message'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1010:
-undefined reference to `checker_message'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1010:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1021:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1025:
-undefined reference to `checker_message'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1025:
-undefined reference to `checker_message'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1025:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1032:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1033:
-undefined reference to `pathinfo'
-main.o: In function `checkerloop':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1060:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1070:
-undefined reference to `block_signal'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1071:
-undefined reference to `cleanup_lock'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1071:
-undefined reference to `__pthread_register_cancel'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1073:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1087:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1092:
-undefined reference to `__pthread_unregister_cancel'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1093:
-undefined reference to `pthread_sigmask'
-main.o: In function `configure':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1107:
-undefined reference to `vector_alloc'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1110:
-undefined reference to `vector_alloc'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1113:
-undefined reference to `vector_alloc'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1119:
-undefined reference to `path_discovery'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1122:
-undefined reference to `filter_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1123:
-undefined reference to `vector_del_slot'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1124:
-undefined reference to `free_path'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1136:
-undefined reference to `coalesce_paths'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1146:
-undefined reference to `dm_lib_release'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1153:
-undefined reference to `remove_maps'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1158:
-undefined reference to `vector_free'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1165:
-undefined reference to `setup_multipath'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1168:
-undefined reference to `start_waiter_thread'
-main.o: In function `reconfigure':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1183:
-undefined reference to `remove_maps_and_stop_waiters'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1186:
-undefined reference to `free_pathvec'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1191:
-undefined reference to `load_config'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1202:
-undefined reference to `free_config'
-main.o: In function `init_vecs':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1211:
-undefined reference to `zalloc'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1217:
-undefined reference to `zalloc'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1228:
-undefined reference to `xfree'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1229:
-undefined reference to `dlog'
-main.o: In function `sighup':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1255:
-undefined reference to `dlog'
-main.o: In function `sigusr1':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1275:
-undefined reference to `dlog'
-main.o: In function `setscheduler':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1299:
-undefined reference to `dlog'
-main.o: In function `setup_thread_attr':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1328:
-undefined reference to `pthread_attr_setstacksize'
-main.o: In function `child':
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1353:
-undefined reference to `waiter_attr'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1357:
-undefined reference to `log_thread_start'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1361:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1362:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1364:
-undefined reference to `load_config'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1367:
-undefined reference to `init_checkers'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1368:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1371:
-undefined reference to `init_prio'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1372:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1392:
-undefined reference to `dlog'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1398:
-undefined reference to `log_thread_stop'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1410:
-undefined reference to `sysfs_init'
-/home/lyang001/kvm_32/bitbake_build/tmp/work/i586-wrs-linux/multipath-tools-0.4.9-r0/multipathd/main.c:1411:
-undefin
+Most SSDs contain a fairly sophisticated FTL doing wear-leveling. Wear-leveling only helps by evenly balancing over-writes across an entire SSD. Do you have statistics on how many SSD writes are generated per block read from or written to HDD? Metadata writes should be done only for the affected sectors, or else they contribute to more SSD internal writes. There is also a common debate on whether writing a single sector is more beneficial compared writing a whole block containing that sector.
+
+> 
+> > 9. Performance - Throughput is generally most important. Latency is
+> also one more performance comparison point. Performance under different
+> load classes can be measured.
+> > 10. ACID properties - Atomicity, Concurrency, Idempotent, Durability.
+> Does the caching solution have these typical transactional database or
+> filesystem properties. This includes avoiding torn-page problem amongst
+> crash and failure scenarios.
+> 
+> Yes.
+> 
+> > 11. Error conditions - Handling power failures, intermittent and
+> permanent device failures.
+> 
+> Power failures and device failures yes, intermittent failures are not
+> explicitly handled.
+
+The IO completion guarantee offered on intermittent failures should be as good as HDD.
+
+> 
+> > 12. Configuration parameters for tuning according to applications.
+> 
+> Lots. The most important one is probably sequential bypass - you don't
+> typically want to cache your big sequential IO, because rotating disks
+> do fine at that. So bcache detects sequential IO and bypasses it with a
+> configurable threshold.
+> 
+> There's also stuff for bypassing more data if the SSD is overloaded -
+> if you're caching many disks with a single SSD, you don't want the SSD
+> to be the bottleneck. So it tracks latency to the SSD and cranks down
+> the sequential bypass threshold if it gets too high.
+
+That's interesting. I'll definitely want to read this part of the source code.
+
+> 
+> > We'll soon document EnhanceIO behavior in context of these aspects.
+> We'll appreciate if dm-cache and bcache is also documented.
+> >
+> > When comparing performance there are three levels at which it can be
+> > measured 1. Architectural elements 1.1. Throughput for 100% cache hit
+> > case (in absence of dirty data clean-up)
+> 
+> North of a million iops.
+> 
+> > 1.2. Throughput for 0% cache hit case (in absence of dirty data
+> > clean-up)
+> 
+> Also relevant whether you're adding the data to the cache. I'm sure
+> bcache is slightly slower than the raw backing device here, but if it's
+> noticable it's a bug (I haven't benchmarked that specifically in ages).
+> 
+> > 1.3. Dirty data clean-up rate (in absence of IO)
+> 
+> Background writeback is done by scanning the btree in the background
+> for dirty data, and then writing it out in lba order - so the writes
+> are as sequential as they're going to get. It's fast.
+
+Great.
+
+Thanks.
+-Amit
+> 
+> > 2. Performance of architectural elements combined 2.1. Varying mix of
+> > read/write, sustained performance.
+> 
+> Random write performance is definitely important, as there you've got
+> to keep an index up to date on stable storage (if you want to handle
+> unclean shutdown, anyways). Making that fast is non trivial. Bcache is
+> about as efficient as you're going to get w.r.t. metadata writes,
+> though.
+> 
+> > 3. Application level testing - The more real-life like benchmark we
+> work with, the better it is.
+
+PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+
+
+
+This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
