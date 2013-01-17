@@ -1,156 +1,141 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath: change default configuration
-	parameters
-Date: Thu, 17 Jan 2013 08:30:30 +0100
-Message-ID: <50F7A896.9040100@suse.de>
-References: <20130108053459.GU19059@ether.msp.redhat.com>
-	<50EEFB87.1060707@gmail.com>
-	<1358283765.3854.1.camel@lapoo.opensvc.com>
-	<50F5D4B1.5070508@gmail.com>
-	<1358371462.8351.18.camel@lapoo.opensvc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Amit Kale <akale@stec-inc.com>
+Subject: RE: [dm-devel] Announcement: STEC EnhanceIO SSD caching software
+ for Linux kernel
+Date: Thu, 17 Jan 2013 17:52:00 +0800
+Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D720A@MYMBX.MY.STEC-INC.AD>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D6F3C@MYMBX.MY.STEC-INC.AD>
+ <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
+ <20130116104546.GA3869@raspberrypi>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------050006060806070003010904"
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1358371462.8351.18.camel@lapoo.opensvc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Kay Sievers <kay.sievers@vrfy.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130116104546.GA3869@raspberrypi>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: "thornber@redhat.com" <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------050006060806070003010904
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
-X-MIME-Autoconverted: from 8bit to quoted-printable by mx4-phx2.redhat.com id r0H7UjnH013048
+Hi Joe, Kent,
 
-On 01/16/2013 10:24 PM, Christophe Varoqui wrote:
-> On mar., 2013-01-15 at 23:14 +0100, Xose Vazquez Perez wrote:
-> ...
->> scsi_id is going to be replaced in systemd(recently udev was
->> included in systemd).
->>
->> See sg_inq(--export option) from sg3_utils.
->
-> We will need to patch sg_inq to report a denser id than the documented
-> SCSI_IDENT_<assoc>_<type>=3D<ident>
->
-Why? It took me ages to implement that one properly.
-And it's only strings, which can be expanded at will.
-Plus I have a set of udev rules mangling those into the usual ID_XXX=20
-variables.
+[Adding Kent as well since bcache is mentioned below as one of the contenders for being integrated into mainline kernel.]
 
-I don't see why we need to change that ...
+My understanding is that these three caching solutions all have three principle blocks.
+1. A cache block lookup - This refers to finding out whether a block was cached or not and the location on SSD, if it was.
+2. Block replacement policy - This refers to the algorithm for replacing a block when a new free block can't be found.
+3. IO handling - This is about issuing IO requests to SSD and HDD.
+4. Dirty data clean-up algorithm (for write-back only) - The dirty data clean-up algorithm decides when to write a dirty block in an SSD to its original location on HDD and executes the copy. 
 
-> Time to launch a debate over the pertinence to maintain the '3' prefix
-> scsi_id insisted on prepending to the wwids ... Lennart will take the
-> blame without flinching I'm sure ;)
->
-It's not '3'.
+When comparing the three solutions we need to consider these aspects.
+1. User interface - This consists of commands used by users for creating, deleting, editing properties and recovering from error conditions.
+2. Software interface - Where it interfaces to Linux kernel and applications.
+3. Availability - What's the downtime when adding, deleting caches, making changes to cache configuration, conversion between cache modes, recovering after a crash, recovering from an error condition.
+4. Security - Security holes, if any.
+5. Portability - Which HDDs, SSDs, partitions, other block devices it works with.
+6. Persistence of cache configuration - Once created does the cache configuration stay persistent across reboots. How are changes in device sequence or numbering handled.
+7. Persistence of cached data - Does cached data remain across reboots/crashes/intermittent failures. Is the "sticky"ness of data configurable.
+8. SSD life - Projected SSD life. Does the caching solution cause too much of write amplification leading to an early SSD failure.
+9. Performance - Throughput is generally most important. Latency is also one more performance comparison point. Performance under different load classes can be measured.
+10. ACID properties - Atomicity, Concurrency, Idempotent, Durability. Does the caching solution have these typical transactional database or filesystem properties. This includes avoiding torn-page problem amongst crash and failure scenarios.
+11. Error conditions - Handling power failures, intermittent and permanent device failures.
+12. Configuration parameters for tuning according to applications.
 
-The '3' is the VPD designator ID as defined in the spec. And it's=20
-attached there so that you can differentiate between several IDs,=20
-which might be identical otherwise.
+We'll soon document EnhanceIO behavior in context of these aspects. We'll appreciate if dm-cache and bcache is also documented.
 
-The original idea behind the prefix was that each ID has a different=20
-level of 'uniqueness'.
-Basically, there are 5 possible designator IDs for the LUN:
+When comparing performance there are three levels at which it can be measured
+1. Architectural elements
+1.1. Throughput for 100% cache hit case (in absence of dirty data clean-up)
+1.2. Throughput for 0% cache hit case (in absence of dirty data clean-up)
+1.3. Dirty data clean-up rate (in absence of IO)
+2. Performance of architectural elements combined
+2.1. Varying mix of read/write, sustained performance.
+3. Application level testing - The more real-life like benchmark we work with, the better it is.
 
-0: Vendor specific
-1: T10 Vendor ID based
-2: EUI-64 based
-3: NAA
-8: SCSI Name string
+Thanks.
+-Amit
 
-of which 0, 1, and 8 are basically arbitrary. We only have a=20
-guaranteed unique ID when the designator is of type 2 or 3.
-So prefixing the designator number allows you to figure out whether=20
-it's a good idea for using that ID.
+> -----Original Message-----
+> From: linux-kernel-owner@vger.kernel.org [mailto:linux-kernel-
+> owner@vger.kernel.org] On Behalf Of thornber@redhat.com
+> Sent: Wednesday, January 16, 2013 4:16 PM
+> To: device-mapper development
+> Cc: Mike Snitzer; LKML
+> Subject: Re: [dm-devel] Announcement: STEC EnhanceIO SSD caching
+> software for Linux kernel
+> 
+> Hi Amit,
+> 
+> I'll look through EnhanceIO this week.
+> 
+> There are several cache solutions out there; bcache, my dm-cache and
+> EnhanceIO seeming to be the favourites.  In suspect none of them are
+> without drawbacks, so I'd like to see if we can maybe work together.
+> 
+> I think the first thing we need to do is make it easy to compare the
+> performance of these impls.
+> 
+> I'll create a branch in my github tree with all three caches in.  So
+> it's easy to build a kernel with them.  (Mike's already combined dm-
+> cache and bcache and done some preliminary testing).
+> 
+> We've got some small test scenarios in our test suite that we run [1].
+> They certainly flatter dm-cache since it was developed using these.
+> It would be really nice if you could describe and provide scripts for
+> your test scenarios.  I'll integrate them with the test suite, and then
+> I can have some confidence that I'm seeing EnhanceIO in its best light.
+> 
+> The 'transparent' cache issue is a valid one, but to be honest a bit
+> orthogonal to cache.  Integrating dm more closely with the block layer
+> such that a dm stack can replace any device has been discussed for
+> years and I know Alasdair has done some preliminary design work on
+> this.  Perhaps we can use your requirement to bump up the priority on
+> this work.
+> 
+> On Tue, Jan 15, 2013 at 09:19:10PM +0800, Amit Kale wrote:
+> > 5. We have designed our writeback architecture from scratch.
+> > Coalescing/bunching together of metadata writes and cleanup is much
+> > improved after redesigning of the EnhanceIO-SSD interface. The DM
+> > interface would have been too restrictive for this. EnhanceIO uses
+> set
+> > level locking, which improves parallelism of IO, particularly for
+> > writeback.
+> 
+> I sympathise with this; dm-cache would also like to see a higher level
+> view of the io, rather than being given the ios to remap one by one.
+> Let's start by working out how much of a benefit you've gained from
+> this and then go from there.
+> 
+> > PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+> >
+> > This electronic transmission, and any documents attached hereto, may
+> > contain confidential, proprietary and/or legally privileged
+> > information. The information is intended only for use by the
+> recipient
+> > named above. If you received this electronic message in error, please
+> > notify the sender and delete the electronic message. Any disclosure,
+> > copying, distribution, or use of the contents of information received
+> > in error is strictly prohibited, and violators will be pursued
+> > legally.
+> 
+> Please do not use this signature when sending to dm-devel.  If there's
+> proprietary information in the email you need to tell people up front
+> so they can choose not to read it.
+> 
+> - Joe
+> 
+> 
+>   [1] https://github.com/jthornber/thinp-test-
+> suite/tree/master/tests/cache
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel"
+> in the body of a message to majordomo@vger.kernel.org More majordomo
+> info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 
-Mind you, that was when all was encoded in scsi_id.
-Now that's all open-coded with udev rules you have different=20
-variables for each ID, so it's easy to figure out.
-
-But sorry, we can't change that.
-Upgrade will be _HELL_ if you do that.
-
-Btw, a patch to the udev rules is attached. It's not yet included in=20
-the upstream sources as Kay and I are still discussing whether we=20
-should split the original rule set.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
-
---------------050006060806070003010904
-Content-Type: text/x-patch;
- name="use-sg_inq-in-persistent-rules.patch"
-Content-Disposition: attachment;
-	filename="use-sg_inq-in-persistent-rules.patch"
-Content-Transfer-Encoding: 7bit
-
-diff --git a/rules/rules.d/60-persistent-storage.rules b/rules/rules.d/60-persistent-storage.rules
-index 1c4c2b2..a8377c6 100644
---- a/rules/rules.d/60-persistent-storage.rules
-+++ b/rules/rules.d/60-persistent-storage.rules
-@@ -38,17 +38,35 @@ KERNEL=="sd*[!0-9]|sr*", ENV{ID_SERIAL}!="?*", SUBSYSTEMS=="ata", IMPORT{program
- # ATA devices using the "scsi" subsystem
- KERNEL=="sd*[!0-9]|sr*", ENV{ID_SERIAL}!="?*", SUBSYSTEMS=="scsi", ATTRS{vendor}=="ATA", IMPORT{program}="ata_id --export $tempnode"
- # scsi devices
--KERNEL=="sd*[!0-9]|sr*", ENV{ID_SERIAL}!="?*", IMPORT{program}="scsi_id --export --whitelisted -d $tempnode", ENV{ID_BUS}="scsi"
--KERNEL=="cciss*", ENV{DEVTYPE}=="disk", ENV{ID_SERIAL}!="?*", IMPORT{program}="scsi_id --export --whitelisted -d $tempnode", ENV{ID_BUS}="cciss"
-+KERNEL=="sd*[!0-9]|sr*", IMPORT{program}="/usr/bin/sg_inq --export  $tempnode", ENV{ID_BUS}="scsi"
-+KERNEL=="cciss*", ENV{DEVTYPE}=="disk", ENV{ID_SERIAL}!="?*", IMPORT{program}="/usr/bin/sg_inq --export $tempnode", ENV{ID_BUS}="cciss"
-+# Select which identifier to use per default
-+# 1: NAA IEEE Registered Extended identifier
-+ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAA}=="6*", ENV{ID_SERIAL}="3$env{SCSI_IDENT_LUN_NAA}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAA}"
-+# 2: NAA IEEE Registered identifier
-+ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAA}=="5*", ENV{ID_SERIAL}="3$env{SCSI_IDENT_LUN_NAA}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAA}"
-+# 3: Unspecified NAA identfier
-+ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAA}=="?*", ENV{ID_SERIAL}="3$env{SCSI_IDENT_LUN_NAA}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAA}"
-+# 4: EUI-64 identifer
-+ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_EUI64}=="?*", ENV{ID_SERIAL}="2$env{SCSI_IDENT_LUN_EUI64}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_EUI64}"
-+# 5: SCSI name identifier
-+ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAME}=="?*", ENV{ID_SERIAL}="8$env{SCSI_IDENT_LUN_NAME}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAME}"
-+# 6: T10 Vendor identifer
-+ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_T10}=="?*", ENV{ID_SERIAL}="1$env{SCSI_IDENT_LUN_T10}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_T10}"
-+# 7: Vendor-specific identifier
-+ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_VENDOR}=="?*", ENV{ID_SERIAL}="0$env{SCSI_IDENT_LUN_VENDOR}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_VENDOR}"
- KERNEL=="sd*|sr*|cciss*", ENV{DEVTYPE}=="disk", ENV{ID_SERIAL}=="?*", SYMLINK+="disk/by-id/$env{ID_BUS}-$env{ID_SERIAL}"
- KERNEL=="sd*|cciss*", ENV{DEVTYPE}=="partition", ENV{ID_SERIAL}=="?*", SYMLINK+="disk/by-id/$env{ID_BUS}-$env{ID_SERIAL}-part%n"
- 
-+KERNEL=="sd*[!0-9]|sr*", ENV{ID_SCSI_SERIAL}!="?*", IMPORT{program}="/usr/bin/sg_inq --export -p 0x80 $tempnode", ENV{ID_SCSI_SERIAL}="$env{SCSI_IDENT_SERIAL}"
-+KERNEL=="cciss*", ENV{DEVTYPE}=="disk", ENV{ID_SCSI_SERIAL}!="?*", IMPORT{program}="/usr/bin/sg_inq --export -p 0x80 $tempnode", ENV{ID_SCSI_SERIAL}="$env{SCSI_IDENT_SERIAL}"
-+
- # firewire
- KERNEL=="sd*[!0-9]|sr*", ATTRS{ieee1394_id}=="?*", SYMLINK+="disk/by-id/ieee1394-$attr{ieee1394_id}"
- KERNEL=="sd*[0-9]", ATTRS{ieee1394_id}=="?*", SYMLINK+="disk/by-id/ieee1394-$attr{ieee1394_id}-part%n"
- 
- # scsi compat links for ATA devices
--KERNEL=="sd*[!0-9]", ENV{ID_BUS}=="ata", PROGRAM="scsi_id --whitelisted --replace-whitespace -p0x80 -d$tempnode", RESULT=="?*", ENV{ID_SCSI_COMPAT}="$result", SYMLINK+="disk/by-id/scsi-$env{ID_SCSI_COMPAT}"
-+KERNEL=="sd*[!0-9]", ENV{ID_BUS}=="ata", ENV{SCSI_IDENT_SERIAL}=="?*", ENV{ID_SCSI_COMPAT}="$env{SCSI_IDENT_SERIAL}", SYMLINK+="disk/by-id/scsi-$env{ID_SCSI_COMPAT}"
- KERNEL=="sd*[0-9]", ENV{ID_SCSI_COMPAT}=="?*", SYMLINK+="disk/by-id/scsi-$env{ID_SCSI_COMPAT}-part%n"
- 
- KERNEL=="mmcblk[0-9]", SUBSYSTEMS=="mmc", ATTRS{name}=="?*", ATTRS{serial}=="?*", ENV{ID_NAME}="$attr{name}", ENV{ID_SERIAL}="$attr{serial}", SYMLINK+="disk/by-id/mmc-$env{ID_NAME}_$env{ID_SERIAL}"
-
---------------050006060806070003010904
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Disposition: inline
-Content-Transfer-Encoding: 7bit
+PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
 
 
---------------050006060806070003010904--
+
+This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
