@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 04/11] Fix inconsistent entries after merging
-	hwtable with user's config
-Date: Thu, 17 Jan 2013 15:59:26 +0100
-Message-ID: <1358434773-2002-5-git-send-email-hare@suse.de>
+Subject: [PATCH 02/11] Provide correct persistent symlinks for
+	user_friendly_names
+Date: Thu, 17 Jan 2013 15:59:24 +0100
+Message-ID: <1358434773-2002-3-git-send-email-hare@suse.de>
 References: <1358434773-2002-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,40 +20,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Petr Uzel <petr.uzel@suse.cz>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Petr Uzel <petr.uzel@suse.cz>
+When the option 'user_friendly_names' is set we should provide
+both symlinks, the persistent one and that one generated for
+user_friendly_names.
 
-When merging the user provided configuration with the internal
-hwtable entry in merge_hwe(), it can happen that the resulting
-entry has a discrepancy between 'features' and 'no_path_retry'.
-Check for this special case and fix it.
-
-Signed-off-by: Petr Uzel <petr.uzel@suse.cz>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/config.c |    9 +++++++++
- 1 file changed, 9 insertions(+)
+ kpartx/kpartx.rules |    4 ++++
+ kpartx/kpartx_id    |    7 ++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index b317e32..2d88226 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -335,6 +335,15 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	merge_num(retain_hwhandler);
- 	merge_num(detect_prio);
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index ba5c6cb..8640094 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -18,10 +18,14 @@ OPTIONS="link_priority=50"
+ # Create persistent links for multipath tables
+ ENV{DM_UUID}=="mpath-*", \
+ 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
++ENV{DM_MPATH}=="?*", ENV{DM_PART}!="?*", \
++	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_MPATH}"
  
-+	/*
-+	 * Make sure features is consistent with
-+	 * no_path_retry
-+	 */
-+	if (dst->no_path_retry == NO_PATH_RETRY_FAIL)
-+		remove_feature(&dst->features, "queue_if_no_path");
-+	else if (dst->no_path_retry != NO_PATH_RETRY_UNDEF)
-+		add_feature(&dst->features, "queue_if_no_path");
-+
- 	return 0;
- }
+ # Create persistent links for partitions
+ ENV{DM_PART}=="?*", \
+         SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}-part$env{DM_PART}"
++ENV{DM_MPATH}=="?*", ENV{DM_PART}=="?*", \
++	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_MPATH}-part$env{DM_PART}"
  
+ # Create dm tables for partitions
+ ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
+diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
+index fa21b5b..afb589c 100644
+--- a/kpartx/kpartx_id
++++ b/kpartx/kpartx_id
+@@ -55,6 +55,9 @@ if [ "$dmtbl" = "part" ] ; then
+     # The name of the kpartx table is the name of the parent table
+     dmname=$($DMSETUP info  -c --noheadings -o name -u $dmuuid)
+     echo "DM_NAME=$dmname"
++    if [ "$dmname" != ${dmuuid#mpath-} ] ; then
++	echo "DM_MPATH=${dmuuid#mpath-}"
++    fi
+     # We need the dependencies of the parent table to figure out
+     # the type if the parent is a multipath table
+     case "$dmuuid" in
+@@ -63,7 +66,9 @@ if [ "$dmtbl" = "part" ] ; then
+ 	    ;;
+     esac
+ elif [ "$dmtbl" = "mpath" ] ; then
+-    dmname=$tblname
++    if [ -n "$DM_NAME" -a "$DM_NAME" != "$dmuuid" ] ; then
++	echo "DM_MPATH=$dmuuid"
++    fi
+     # We need the dependencies of the table to figure out the type
+     dmdeps=$($DMSETUP deps -u $UUID)
+ elif [ "$dmtbl" = "dmraid" ] ; then
 -- 
 1.7.10.4
