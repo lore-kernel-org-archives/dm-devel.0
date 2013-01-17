@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 08/11] multipathd: log message when check
-	interval has changed
-Date: Thu, 17 Jan 2013 15:59:30 +0100
-Message-ID: <1358434773-2002-9-git-send-email-hare@suse.de>
+Subject: [PATCH 06/11] Break out loop in factorize_hwtable()
+Date: Thu, 17 Jan 2013 15:59:28 +0100
+Message-ID: <1358434773-2002-7-git-send-email-hare@suse.de>
 References: <1358434773-2002-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,50 +22,58 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We should only log the message if the check interval has
-indeed changed.
+We need to break out of the loop in factorize_hwtable() as
+soon as we have removed a duplicate. Otherwise we might run
+onto an deleted element in the outer loop.
+Also we should declare factorize_hwtable() as 'void'
+as it doesn't return anything.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c |   26 ++++++++++++++------------
- 1 file changed, 14 insertions(+), 12 deletions(-)
+ libmultipath/config.c |   16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 8c0866d..7f83a7a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1209,18 +1209,20 @@ check_path (struct vectors * vecs, struct path * pp)
- 			reinstate_path(pp, 0);
- 		} else {
- 			LOG_MSG(4, checker_message(&pp->checker));
--			/*
--			 * double the next check delay.
--			 * max at conf->max_checkint
--			 */
--			if (pp->checkint < (conf->max_checkint / 2))
--				pp->checkint = 2 * pp->checkint;
--			else
--				pp->checkint = conf->max_checkint;
--
--			pp->tick = pp->checkint;
--			condlog(4, "%s: delay next check %is",
--				pp->dev_t, pp->tick);
-+			if (pp->checkint != conf->max_checkint) {
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 2d88226..25d3e3d 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -418,12 +418,13 @@ out:
+ 	return 1;
+ }
+ 
+-static int
++static void
+ factorize_hwtable (vector hw, int n)
+ {
+ 	struct hwentry *hwe1, *hwe2;
+ 	int i, j;
+ 
++restart:
+ 	vector_foreach_slot(hw, hwe1, i) {
+ 		if (i == n)
+ 			break;
+@@ -435,14 +436,17 @@ factorize_hwtable (vector hw, int n)
+ 			merge_hwe(hwe2, hwe1);
+ 			if (hwe_strmatch(hwe2, hwe1) == 0) {
+ 				vector_del_slot(hw, i);
+-				free_hwe(hwe1);
+-				n -= 1;
+-				i -= 1;
+-				break;
 +				/*
-+				 * double the next check delay.
-+				 * max at conf->max_checkint
++				 * Play safe here; we have modified
++				 * the original vector so the outer
++				 * vector_foreach_slot() might
++				 * become confused.
 +				 */
-+				if (pp->checkint < (conf->max_checkint / 2))
-+					pp->checkint = 2 * pp->checkint;
-+				else
-+					pp->checkint = conf->max_checkint;
-+
-+				pp->tick = pp->checkint;
-+				condlog(4, "%s: delay next check %is",
-+					pp->dev_t, pp->tick);
-+			}
++				goto restart;
+ 			}
  		}
  	}
- 	else if (newstate == PATH_DOWN) {
+-	return 0;
++	return;
+ }
+ 
+ struct config *
 -- 
 1.7.10.4
