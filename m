@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 11/11] kpartx: Deinstall kpartx_id
-Date: Thu, 17 Jan 2013 15:59:33 +0100
-Message-ID: <1358434773-2002-12-git-send-email-hare@suse.de>
+Subject: [PATCH 05/11] kpartx: Fix DASD name in kpartx_id
+Date: Thu, 17 Jan 2013 15:59:27 +0100
+Message-ID: <1358434773-2002-6-git-send-email-hare@suse.de>
 References: <1358434773-2002-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,24 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We've installed it, so we should be uninstalling it, too.
+The name of the DASD type is 'ccw', not 'dasd'.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/Makefile |    1 +
- 1 file changed, 1 insertion(+)
+ kpartx/kpartx_id |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index 1287053..b0d73a3 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -36,6 +36,7 @@ install: $(EXEC) $(EXEC).8
- uninstall:
- 	rm -f $(DESTDIR)$(bindir)/$(EXEC)
- 	rm -f $(DESTDIR)$(mandir)/$(EXEC).8.gz
-+	rm -f $(DESTDIR)$(libudevdir)/kpartx_id
- 
- clean:
- 	rm -f core *.o $(EXEC) *.gz
+diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
+index 47fab1a..517b856 100644
+--- a/kpartx/kpartx_id
++++ b/kpartx/kpartx_id
+@@ -83,7 +83,7 @@ fi
+ if [ -n "$dmdeps" ] ; then
+     case "$dmdeps" in
+ 	*\(94,*)
+-            echo "DM_TYPE=dasd"
++            echo "DM_TYPE=ccw"
+ 	    ;;
+ 	*\(104,* | *\(105,* | *\(106,* | *\(107,* | *\(108,* | *\(109,* | *\(110,* | *\(112,*)
+ 	    echo "DM_TYPE=cciss"
 -- 
 1.7.10.4
