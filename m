@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 02/11] Provide correct persistent symlinks for
-	user_friendly_names
-Date: Thu, 17 Jan 2013 15:59:24 +0100
-Message-ID: <1358434773-2002-3-git-send-email-hare@suse.de>
+Subject: [PATCH 07/11] multipathd: switch to abstract sockets for
+	CLI commands
+Date: Thu, 17 Jan 2013 15:59:29 +0100
+Message-ID: <1358434773-2002-8-git-send-email-hare@suse.de>
 References: <1358434773-2002-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,59 +23,87 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When the option 'user_friendly_names' is set we should provide
-both symlinks, the persistent one and that one generated for
-user_friendly_names.
+Instead of using file-based sockets we should be switching to
+abstract sockets. Otherwise multipathd won't be able to start
+if the directory is not available.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/kpartx.rules |    4 ++++
- kpartx/kpartx_id    |    7 ++++++-
- 2 files changed, 10 insertions(+), 1 deletion(-)
+ libmultipath/defaults.h |    2 +-
+ libmultipath/uxsock.c   |   27 ++++++++++++++-------------
+ 2 files changed, 15 insertions(+), 14 deletions(-)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index ba5c6cb..8640094 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -18,10 +18,14 @@ OPTIONS="link_priority=50"
- # Create persistent links for multipath tables
- ENV{DM_UUID}=="mpath-*", \
- 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
-+ENV{DM_MPATH}=="?*", ENV{DM_PART}!="?*", \
-+	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_MPATH}"
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 32948d8..b83d9fb 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -24,7 +24,7 @@
  
- # Create persistent links for partitions
- ENV{DM_PART}=="?*", \
-         SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}-part$env{DM_PART}"
-+ENV{DM_MPATH}=="?*", ENV{DM_PART}=="?*", \
-+	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_MPATH}-part$env{DM_PART}"
+ #define MAX_DEV_LOSS_TMO	0x7FFFFFFF
+ #define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
+-#define DEFAULT_SOCKET		"/var/run/multipathd.sock"
++#define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+ #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
+ #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index e786899..f3e8dec 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -25,19 +25,21 @@
+  */
+ int ux_socket_connect(const char *name)
+ {
+-	int fd;
++	int fd, len;
+ 	struct sockaddr_un addr;
  
- # Create dm tables for partitions
- ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
-diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
-index fa21b5b..afb589c 100644
---- a/kpartx/kpartx_id
-+++ b/kpartx/kpartx_id
-@@ -55,6 +55,9 @@ if [ "$dmtbl" = "part" ] ; then
-     # The name of the kpartx table is the name of the parent table
-     dmname=$($DMSETUP info  -c --noheadings -o name -u $dmuuid)
-     echo "DM_NAME=$dmname"
-+    if [ "$dmname" != ${dmuuid#mpath-} ] ; then
-+	echo "DM_MPATH=${dmuuid#mpath-}"
-+    fi
-     # We need the dependencies of the parent table to figure out
-     # the type if the parent is a multipath table
-     case "$dmuuid" in
-@@ -63,7 +66,9 @@ if [ "$dmtbl" = "part" ] ; then
- 	    ;;
-     esac
- elif [ "$dmtbl" = "mpath" ] ; then
--    dmname=$tblname
-+    if [ -n "$DM_NAME" -a "$DM_NAME" != "$dmuuid" ] ; then
-+	echo "DM_MPATH=$dmuuid"
-+    fi
-     # We need the dependencies of the table to figure out the type
-     dmdeps=$($DMSETUP deps -u $UUID)
- elif [ "$dmtbl" = "dmraid" ] ; then
+ 	memset(&addr, 0, sizeof(addr));
+-	addr.sun_family = AF_UNIX;
+-	strncpy(addr.sun_path, name, sizeof(addr.sun_path));
++	addr.sun_family = AF_LOCAL;
++	addr.sun_path[0] = '\0';
++	len = strlen(name) + 1;
++	strncpy(&addr.sun_path[1], name, len);
+ 
+-	fd = socket(AF_UNIX, SOCK_STREAM, 0);
++	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+ 	if (fd == -1) {
+ 		return -1;
+ 	}
+ 
+-	if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
++	if (connect(fd, (struct sockaddr *)&addr, len) == -1) {
+ 		close(fd);
+ 		return -1;
+ 	}
+@@ -51,20 +53,19 @@ int ux_socket_connect(const char *name)
+  */
+ int ux_socket_listen(const char *name)
+ {
+-	int fd;
++	int fd, len;
+ 	struct sockaddr_un addr;
+ 
+-	/* get rid of any old socket */
+-	unlink(name);
+-
+-	fd = socket(AF_UNIX, SOCK_STREAM, 0);
++	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+ 	if (fd == -1) return -1;
+ 
+ 	memset(&addr, 0, sizeof(addr));
+-	addr.sun_family = AF_UNIX;
+-	strncpy(addr.sun_path, name, sizeof(addr.sun_path));
++	addr.sun_family = AF_LOCAL;
++	addr.sun_path[0] = '\0';
++	len = strlen(name) + 1;
++	strncpy(&addr.sun_path[1], name, len);
+ 
+-	if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
++	if (bind(fd, (struct sockaddr *)&addr, len) == -1) {
+ 		close(fd);
+ 		return -1;
+ 	}
 -- 
 1.7.10.4
