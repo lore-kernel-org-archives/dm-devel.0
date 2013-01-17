@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 03/11] kpartx_id: Generate persistent symlinks
-	for 'wwn'
-Date: Thu, 17 Jan 2013 15:59:25 +0100
-Message-ID: <1358434773-2002-4-git-send-email-hare@suse.de>
+Subject: [PATCH 01/11] Cleanup whitespaces
+Date: Thu, 17 Jan 2013 15:59:23 +0100
+Message-ID: <1358434773-2002-2-git-send-email-hare@suse.de>
 References: <1358434773-2002-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,55 +22,40 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Newer udev versions generate /dev/disk/by-id/wwn-* symlinks.
-We should be adjusting those for multipathing, too.
-
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/kpartx.rules |    4 ++++
- kpartx/kpartx_id    |    2 ++
- 2 files changed, 6 insertions(+)
+ multipathd/uxlsnr.c |    6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 8640094..b96ec89 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -20,12 +20,16 @@ ENV{DM_UUID}=="mpath-*", \
- 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
- ENV{DM_MPATH}=="?*", ENV{DM_PART}!="?*", \
- 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_MPATH}"
-+ENV{DM_WWN}=="?*", ENV{DM_PART}!="?*", \
-+	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}"
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 85dbd70..71fc3b4 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -1,6 +1,6 @@
+ /*
+  * Original author : tridge@samba.org, January 2002
+- * 
++ *
+  * Copyright (c) 2005 Christophe Varoqui
+  * Copyright (c) 2005 Benjamin Marzinski, Redhat
+  */
+@@ -54,7 +54,7 @@ static void new_client(int ux_sock)
+ 	int fd;
  
- # Create persistent links for partitions
- ENV{DM_PART}=="?*", \
-         SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}-part$env{DM_PART}"
- ENV{DM_MPATH}=="?*", ENV{DM_PART}=="?*", \
- 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_MPATH}-part$env{DM_PART}"
-+ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
-+	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
+ 	fd = accept(ux_sock, &addr, &len);
+-	
++
+ 	if (fd == -1)
+ 		return;
  
- # Create dm tables for partitions
- ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
-diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
-index afb589c..47fab1a 100644
---- a/kpartx/kpartx_id
-+++ b/kpartx/kpartx_id
-@@ -69,6 +69,7 @@ elif [ "$dmtbl" = "mpath" ] ; then
-     if [ -n "$DM_NAME" -a "$DM_NAME" != "$dmuuid" ] ; then
- 	echo "DM_MPATH=$dmuuid"
-     fi
-+    dmname="$dmuuid"
-     # We need the dependencies of the table to figure out the type
-     dmdeps=$($DMSETUP deps -u $UUID)
- elif [ "$dmtbl" = "dmraid" ] ; then
-@@ -92,6 +93,7 @@ if [ -n "$dmdeps" ] ; then
- 	    ;;
- 	*)
-             echo "DM_TYPE=scsi"
-+	    echo "DM_WWN=0x${dmname#?}"
- 	    ;;
-     esac
- else
+@@ -133,7 +133,7 @@ void * uxsock_listen(int (*uxsock_trigger)(char *, char **, int *, void *),
+ 
+ 		/* most of our life is spent in this call */
+ 		poll_count = poll(polls, i, SLEEP_TIME);
+-		
++
+ 		if (poll_count == -1) {
+ 			if (errno == EINTR)
+ 				continue;
 -- 
 1.7.10.4
