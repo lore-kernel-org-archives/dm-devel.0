@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 05/11] kpartx: Fix DASD name in kpartx_id
-Date: Thu, 17 Jan 2013 15:59:27 +0100
-Message-ID: <1358434773-2002-6-git-send-email-hare@suse.de>
+Subject: [PATCH 09/11] multipathd: call 'reconfigure' during
+	startup
+Date: Thu, 17 Jan 2013 15:59:31 +0100
+Message-ID: <1358434773-2002-10-git-send-email-hare@suse.de>
 References: <1358434773-2002-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,25 +23,28 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The name of the DASD type is 'ccw', not 'dasd'.
+The init script should be calling 'reconfigure' cli command
+during startup. That not only checks if the daemon is running,
+but will also cause a complete reconfiguration, so all devices
+which might have been missed during init will be catched.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/kpartx_id |    2 +-
+ multipathd/multipathd.init.suse |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
-index 47fab1a..517b856 100644
---- a/kpartx/kpartx_id
-+++ b/kpartx/kpartx_id
-@@ -83,7 +83,7 @@ fi
- if [ -n "$dmdeps" ] ; then
-     case "$dmdeps" in
- 	*\(94,*)
--            echo "DM_TYPE=dasd"
-+            echo "DM_TYPE=ccw"
- 	    ;;
- 	*\(104,* | *\(105,* | *\(106,* | *\(107,* | *\(108,* | *\(109,* | *\(110,* | *\(112,*)
- 	    echo "DM_TYPE=cciss"
+diff --git a/multipathd/multipathd.init.suse b/multipathd/multipathd.init.suse
+index 03a1151..d1319b1 100644
+--- a/multipathd/multipathd.init.suse
++++ b/multipathd/multipathd.init.suse
+@@ -38,7 +38,7 @@ case "$1" in
+     start)
+ 	echo -n "Starting multipathd"
+ 	ulimit -c unlimited
+-	if $DAEMON -k"show daemon" > /dev/null 2>&1 ; then
++	if $DAEMON -k"reconfigure" > /dev/null 2>&1 ; then
+ 	    echo -n " (multipathd running)"
+ 	    rc_status -v
+ 	    rc_exit
 -- 
 1.7.10.4
