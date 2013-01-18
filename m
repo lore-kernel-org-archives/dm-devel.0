@@ -1,72 +1,88 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH 00/11] Final round of SLES resync patches
-Date: Fri, 18 Jan 2013 20:20:34 +0100
-Message-ID: <1358536834.4199.4.camel@lapoo.opensvc.com>
-References: <1358434773-2002-1-git-send-email-hare@suse.de>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [LSF/MM TOPIC] Re: [dm-devel] Announcement: STEC EnhanceIO SSD
+ caching software for Linux kernel
+Date: Fri, 18 Jan 2013 13:25:43 -0800
+Message-ID: <20130118212543.GB6425@blackbox.djwong.org>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D720A@MYMBX.MY.STEC-INC.AD>
+ <20130117132620.GA2438@raspberrypi>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7248@MYMBX.MY.STEC-INC.AD>
+ <50F844A3.9020300@warr.net>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D72F1@MYMBX.MY.STEC-INC.AD>
+ <50F970A3.4000403@warr.net>
+ <20130118161135.GA3118@raspberrypi>
+ <50F97C0F.9010405@warr.net>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7345@MYMBX.MY.STEC-INC.AD>
+ <50F9963A.2080608@warr.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1358434773-2002-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <50F9963A.2080608@warr.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Amit Kale <akale@stec-inc.com>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, lsf-pc@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On jeu., 2013-01-17 at 15:59 +0100, Hannes Reinecke wrote:
-> Hi Christophe,
-> 
-> and this is now the final round of SLES resync patches.
-> Mostly cleanup and minor fixes, except from the abstract
-> socket patch for CLI commands.
-> I _thought_ I had send this early, but apparently not.
-> Please apply.
-> 
-> Note that I've removed the rules file as it shouldn't
-> be necessary anymore; we're using libudev directly.
-> 
-Applied.
+Since Joe is putting together a testing tree to compare the three caching
+things, what do you all think of having a(nother) session about ssd caching at
+this year's LSFMM Summit?
 
-Best regards,
-Christophe Varoqui
-www.opensvc.com
+[Apologies for hijacking the thread.]
+[Adding lsf-pc to the cc list.]
 
-> Hannes Reinecke (10):
->   Cleanup whitespaces
->   Provide correct persistent symlinks for user_friendly_names
->   kpartx_id: Generate persistent symlinks for 'wwn'
->   kpartx: Fix DASD name in kpartx_id
->   Break out loop in factorize_hwtable()
->   multipathd: switch to abstract sockets for CLI commands
->   multipathd: log message when check interval has changed
->   multipathd: call 'reconfigure' during startup
->   multipath: do not install rules file
->   kpartx: Deinstall kpartx_id
+--D
+
+On Fri, Jan 18, 2013 at 12:36:42PM -0600, Jason Warr wrote:
 > 
-> Petr Uzel (1):
->   Fix inconsistent entries after merging hwtable with user's config
+> On 01/18/2013 11:44 AM, Amit Kale wrote:
+> >> As much as I dislike Oracle that is one of my primary applications.  I
+> >> > am attempting to get one of my customers to setup an Oracle instance
+> >> > that is modular in that I can move the storage around to fit a
+> >> > particular hardware setup and have a consistent benchmark that they use
+> >> > in the real world to gauge performance.  One of them is a debit card
+> >> > transaction clearing entity on multi-TB databases so latency REALLY
+> >> > matters there.  
+> > I am curious as to how SSD latency matters so much in the overall transaction times.
+> >
+> > We do a lot of performance measurements using SQL database benchmarks. Transaction times vary a lot depending on location of data, complexity of the transaction etc. Typically TPM (transactions per minute) is of primary interest for TPC-C.
+> >
 > 
->  kpartx/Makefile                 |    1 +
->  kpartx/kpartx.rules             |    8 ++++++++
->  kpartx/kpartx_id                |   11 +++++++++--
->  libmultipath/config.c           |   25 +++++++++++++++++++------
->  libmultipath/defaults.h         |    2 +-
->  libmultipath/uxsock.c           |   27 ++++++++++++++-------------
->  multipath/Makefile              |    3 ---
->  multipath/multipath.rules       |    7 -------
->  multipathd/main.c               |   26 ++++++++++++++------------
->  multipathd/multipathd.init.suse |    2 +-
->  multipathd/uxlsnr.c             |    6 +++---
->  11 files changed, 70 insertions(+), 48 deletions(-)
->  delete mode 100644 multipath/multipath.rules
+> It's not specifically SSD latency.  It's I/O transaction latency that
+> matters.  This particular application is very sensitive to that because
+> it is literally someone standing at a POS terminal swiping a
+> debit/credit card.  You only have a couple of seconds after the PIN is
+> entered for the transaction to go through your network, application
+> server to authorize against a DB and back to the POS.
 > 
+> The entire I/O stack on the DB is only a small time-slice of that round
+> trip.  Your 99th percentile needs to be under 20ms on the DB storage
+> side.  If your worst case DB I/O goes beyond 300ms it is considered an
+> outage because the POS transaction fails.  So it obviously takes allot
+> of planning and optimization work on the DB itself to get good
+> tablespace layout to even get into the realm where you can have that
+> predictable of latency with multi-million dollar FC storage frames. 
+> 
+> One of my goals is to be able to offer this level of I/O service on
+> commodity hardware.  Simplify the scope of hardware, reduce the number
+> of points of failure, make the systems more portable, reduce or
+> eliminate dependence on any specific vendor below the application and
+> save money.  Not to mention reduce the number of fingers that can point
+> away from themselves saying it is someone elses problem to find fault.
+> 
+> Allot of the pieces are already out there.  A good block caching target
+> is one of the missing pieces to help fill the ever growing canyon
+> between non-block device system performance and storage.  What they have
+> done with L2ARC and SLOG in ZFS/Solaris is good but it has some serious
+> short comings in other areas that DM/MD/LVM do extremely well.
+> 
+> I appreciate all of the brilliant work all of you guys do and hopefully
+> I can contribute a little bit of usefulness to this effort.
+> 
+> Thank you,
+> 
+> Jason
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
