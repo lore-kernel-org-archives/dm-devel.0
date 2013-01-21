@@ -1,58 +1,117 @@
-From: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
-Subject: RE: [LSF/MM TOPIC] Re: [dm-devel] Announcement: STEC EnhanceIO SSD
- caching software for Linux kernel
-Date: Mon, 21 Jan 2013 13:26:08 +0800
-Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D5D4D@MYMBX.MY.STEC-INC.AD>
-References: <20130117132620.GA2438@raspberrypi>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7248@MYMBX.MY.STEC-INC.AD>
- <50F844A3.9020300@warr.net>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D72F1@MYMBX.MY.STEC-INC.AD>
- <50F970A3.4000403@warr.net> <20130118161135.GA3118@raspberrypi>
- <50F97C0F.9010405@warr.net>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7345@MYMBX.MY.STEC-INC.AD>
- <50F9963A.2080608@warr.net> <20130118212543.GB6425@blackbox.djwong.org>
- <20130118213759.GA30278@redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Subject: Re: [PATCH V3 13/18] multipath: make reservation_key
+ print	out correctly
+Date: Mon, 21 Jan 2013 05:50:44 +0000
+Message-ID: <F200AD42A082BC4088B232D13A916A8911E1B1E8@SACEXCMBX02-PRD.hq.netapp.com>
+References: <1357970695-3396-1-git-send-email-bmarzins@redhat.com>
+	<1357970695-3396-13-git-send-email-bmarzins@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20130118213759.GA30278-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1357970695-3396-13-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "lsf-pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <lsf-pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Joe Thornber <ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Mike Snitzer [mailto:snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org]
-> Sent: Saturday, January 19, 2013 3:08 AM
-> To: Darrick J. Wong
-> Cc: device-mapper development; Amit Kale; linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
-> kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; LKML; lsf-pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org; Joe
-> Thornber
-> Subject: Re: [LSF/MM TOPIC] Re: [dm-devel] Announcement: STEC EnhanceIO
-> SSD caching software for Linux kernel
-> 
-> On Fri, Jan 18 2013 at  4:25pm -0500,
-> Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> 
-> > Since Joe is putting together a testing tree to compare the three
-> > caching things, what do you all think of having a(nother) session
-> > about ssd caching at this year's LSFMM Summit?
-> >
-> > [Apologies for hijacking the thread.]
-> > [Adding lsf-pc to the cc list.]
-> 
-> Hopefully we'll have some findings on the comparisons well before LSF
-> (since we currently have some momentum).  But yes it may be worthwhile
-> to discuss things further and/or report findings.
+Acked-by: Vijay Chauhan <vijay.chauhan@netapp.com>
 
-We should have performance comparisons presented well before the summit. It'll be good to have ssd caching session in any case. The likelihood that one of them will be included in Linux kernel before April is very low.
+Thanks,
+Vijay
 
--Amit
-
-PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
-
-
-
-This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
+On January 12, 2013 11:35 AM; Benjamin Marzinski wrote:
+>
+>This patch fixes the reservation_key print functions, so they print
+>it out like it was in the configuration file.  Also, it keeps
+>cli_getprstatus() from writing over random memory.
+>
+>Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+>---
+> libmultipath/dict.c       | 31 +++++++++++++++++++++++++++++--
+> multipathd/cli_handlers.c |  2 +-
+> 2 files changed, 30 insertions(+), 3 deletions(-)
+>
+>diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+>index 788ffae..a54dda9 100644
+>--- a/libmultipath/dict.c
+>+++ b/libmultipath/dict.c
+>@@ -2052,8 +2052,22 @@ snprint_mp_prio_args(char * buff, int len, void *
+>data)
+> static int
+> snprint_mp_reservation_key (char * buff, int len, void * data)
+> {
+>+	int i;
+>+	unsigned char *keyp;
+>+	uint64_t prkey = 0;
+> 	struct mpentry * mpe = (struct mpentry *)data;
+>-	return snprintf(buff, len, "%s" , mpe->reservation_key);
+>+
+>+	if (!mpe->reservation_key)
+>+		return 0;
+>+	keyp = (unsigned char *)mpe->reservation_key;
+>+	for (i = 0; i < 8; i++) {
+>+		if (i > 0)
+>+			prkey <<= 8;
+>+		prkey |= *keyp;
+>+		keyp++;
+>+	}
+>+
+>+	return snprintf(buff, len, "0x%" PRIx64, prkey);
+> }
+>
+> 	static int
+>@@ -2721,7 +2735,20 @@ snprint_def_wwids_file (char * buff, int len, void *
+>data)
+> static int
+> snprint_def_reservation_key(char * buff, int len, void * data)
+> {
+>-	return snprintf(buff, len, "%s", conf->reservation_key);
+>+	int i;
+>+	unsigned char *keyp;
+>+	uint64_t prkey = 0;
+>+
+>+	if (!conf->reservation_key)
+>+		return 0;
+>+	keyp = (unsigned char *)conf->reservation_key;
+>+	for (i = 0; i < 8; i++) {
+>+		if (i > 0)
+>+			prkey <<= 8;
+>+		prkey |= *keyp;
+>+		keyp++;
+>+	}
+>+	return snprintf(buff, len, "0x%" PRIx64, prkey);
+> }
+>
+> static int
+>diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+>index 6053b5a..4df37fe 100644
+>--- a/multipathd/cli_handlers.c
+>+++ b/multipathd/cli_handlers.c
+>@@ -947,7 +947,7 @@ cli_getprstatus (void * v, char ** reply, int * len,
+>void * data)
+>
+>
+> 	sprintf(*reply,"%d",mpp->prflag);
+>-	*reply[1]='\0';
+>+	(*reply)[1]='\0';
+>
+>
+> 	condlog(3, "%s: reply = %s", param, *reply);
+>--
+>1.8.0
+>
+>--
+>dm-devel mailing list
+>dm-devel@redhat.com
+>https://www.redhat.com/mailman/listinfo/dm-devel
