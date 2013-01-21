@@ -1,8 +1,8 @@
 From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
 Subject: Re: dm-integrity: integrity protection device-mapper
 	target
-Date: Mon, 21 Jan 2013 12:37:08 +0200
-Message-ID: <CALLzPKb-oW+8cACXpJ_YprnmvSfpbTGA7YW0iMmGKX7VLNOvnA@mail.gmail.com>
+Date: Mon, 21 Jan 2013 12:38:34 +0200
+Message-ID: <CALLzPKbgQkbpVw4xZyfKNCaJ2H-fLaX59OxUWzJ7=DY_VO319g@mail.gmail.com>
 References: <Pine.LNX.4.64.1301151955280.7468@file.rdu.redhat.com>
 	<CALLzPKZVo3ng=Hz4cg0qrw0nDYsPjKy5AR=AJtMg+3PU=epz1w@mail.gmail.com>
 	<20130118231633.GM27585@agk-dp.fab.redhat.com>
@@ -47,7 +47,7 @@ On Sat, Jan 19, 2013 at 1:16 AM, Alasdair G Kergon <agk@redhat.com> wrote:
 > Alasdair
 >
 
-Sorry, for repost, but it was from mobile in HTML format and it did
+Sorry, for re-post, but it was from mobile in HTML format and it did
 not go through...
 
 Do not look to it as integrity from reliability point of view. This
