@@ -1,16 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: A thin-p over 256 GiB fails with I/O errors with
- non-power-of-two chunk
-Date: Mon, 21 Jan 2013 13:49:55 -0500
-Message-ID: <20130121184954.GA18892@redhat.com>
-References: <201301180219.10467.db@kavod.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 4/8] [dm-bio-prison] Change the
+	bio-prison	interface so the memory for the cells is passed in.
+Date: Mon, 21 Jan 2013 23:32:45 +0000
+Message-ID: <20130121233245.GF27093@agk-dp.fab.redhat.com>
+References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
+	<1355429956-22785-5-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <201301180219.10467.db@kavod.com>
+In-Reply-To: <1355429956-22785-5-git-send-email-ejt@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,92 +21,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Daniel Browning <db@kavod.com>
-Cc: sandeen@redhat.com, dm-devel@redhat.com
+To: Joe Thornber <ejt@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 18 2013 at  5:19am -0500,
-Daniel Browning <db@kavod.com> wrote:
+On Thu, Dec 13, 2012 at 08:19:12PM +0000, Joe Thornber wrote:
+> @@ -87,6 +79,20 @@ void dm_bio_prison_destroy(struct dm_bio_prison *prison)
+>  }
+>  EXPORT_SYMBOL_GPL(dm_bio_prison_destroy);
+>  
+> +struct dm_bio_prison_cell *
+> +dm_bio_prison_alloc_cell(struct dm_bio_prison *prison, gfp_t gfp)
 
-> Why do I get the following error, and what should I do about it? When I 
-> create a raid0 md with a non-power-of-two chunk size (e.g. 1152K instead of 
-> 512K), then create a thinly-provisioned volume that is over 256 GiB, I get 
-> the following dmesg error when I try to create a file system on it:
-> 
->     "make_request bug: can't convert block across chunks or bigger than 1152k 4384 127"
-> 
-> This bubbles up to mkfs.xfs as
-> 
->     "libxfs_device_zero write failed: Input/output error"
-> 
-> What I find interesting is that it seems to require all three conditions 
-> (chunk size, thin-p, and >256 GiB) in order to fail. Without those, it seems 
-> to work fine:
-> 
->     * Power-of-two chunk (e.g. 512K), thin-p vol, >256 GiB? Works.
->     * Non-power-of-two chunk (e.g. 1152K), thin-p vol, <256 GiB? Works.
->     * Non-power-of-two chunk (e.g. 1152K), regular vol, >256 GiB? Works.
->     * Non-power-of-two chunk (e.g. 1152K), thin-p vol, >256 GiB? FAIL.
-> 
-> Attached is a self-contained test case to reproduce the error, version 
-> numbers, and an strace. Thank you in advance,
-> --
-> Daniel Browning
-> Kavod Technologies
-> 
-> Appendix A. Self-contained reproduce script
-> ===========================================================
-> dd if=/dev/zero of=loop0.img bs=1G count=150; losetup /dev/loop0 loop0.img
-> dd if=/dev/zero of=loop1.img bs=1G count=150; losetup /dev/loop1 loop1.img
-> mdadm --create /dev/md99 --verbose --level=0 --raid-devices=2 \
->       --chunk=1152K /dev/loop0 /dev/loop1
-> pvcreate /dev/md99
-> vgcreate test_vg /dev/md99
-> lvcreate --size 257G --type thin-pool --thinpool test_thin_pool test_vg
-> lvcreate --virtualsize 257G --thin test_vg/test_thin_pool --name test_lv
-> mkfs.xfs /dev/test_vg/test_lv
-> 
-> # That is where the error occurs. Next is cleanup.
-> lvremove -f /dev/test_vg/test_lv
-> lvremove -f /dev/mapper/test_vg-test_thin_pool
-> vgremove -f test_vg
-> pvremove /dev/md99
-> mdadm --stop /dev/md99
-> mdadm --zero-superblock /dev/loop0 /dev/loop1
-> losetup -d /dev/loop0 /dev/loop1
-> rm loop*.img
+Let's keep that on one line.
 
-Limits of the raid0 device (/dev/md99):
-cat /sys/block/md99/queue/minimum_io_size
-1179648
-cat /sys/block/md99/queue/optimal_io_size
-2359296
+> +int dm_bio_detain(struct dm_bio_prison *prison,
+> +		  struct dm_cell_key *key,
+> +		  struct bio *inmate,
+> +		  struct dm_bio_prison_cell *memory,
 
-Limits of the thin-pool device (/dev/test_vg/test_thin_pool):
-cat /sys/block/dm-9/queue/minimum_io_size
-512
-cat /sys/block/dm-9/queue/optimal_io_size
-262144
+The caller has already allocated 'memory' specifically to hold that struct.
+Call it 'new_cell' perhaps?   'cell_prealloc' ?
 
-Limits of the thin-device device (/dev/test_vg/test_lv):
-cat /sys/block/dm-10/queue/minimum_io_size
-512
-cat /sys/block/dm-10/queue/optimal_io_size
-262144
+> +		  struct dm_bio_prison_cell **ref)
 
-I notice that lvcreate is not using a thin-pool chunksize that matches
-the raid0's chunksize (just uses the lvm2 default of 256K).
+cell_ref ?
 
-Switching the thin-pool lvcreate to use --chunksize 1152K at least
-enables me to format the filesystem.
+> @@ -226,6 +226,53 @@ struct thin_c {
+>  
+>  /*----------------------------------------------------------------*/
+>  
+> +static int bio_detain(struct pool *pool, struct dm_cell_key *key, struct bio *bio,
+> +		      struct dm_bio_prison_cell **result)
+> +{
+> +	int r;
+> +	struct dm_bio_prison_cell *cell;
+> +
+> +	cell = dm_bio_prison_alloc_cell(pool->prison, GFP_NOIO);
+> +	if (!cell)
+> +		return -ENOMEM;
 
-And both the thin-pool and thin device have an optimal_io_size that
-matches the chunk_size of the underlying raid volume:
+Redundant test?  The mempool allocation always succeeds (or blocks).
 
-cat /sys/block/dm-9/queue/optimal_io_size
-1179648
-cat /sys/block/dm-10/queue/optimal_io_size
-1179648
+> +	r = dm_bio_detain(pool->prison, key, bio, cell, result);
+> +
+> +	if (r)
+> +		/*
+> +		 * We reused an old cell, or errored; we can get rid of
 
-I'm still investigating the limits issue when --chunksize 1152K isn't
-used for the thin-pool lvcreate.
+Can't have errored that I can see.
+
+> +		 * the new one.
+> +		 */
+> +		dm_bio_prison_free_cell(pool->prison, cell);
+> +
+> +	return r;
+> +}
+
+Alasdair
+
+
+
+--- a/dm-bio-prison.c	2013-01-14 19:32:36.000000000 +0000
++++ b/dm-bio-prison.c	2013-01-21 23:09:49.000000000 +0000
+@@ -79,8 +79,7 @@
+ }
+ EXPORT_SYMBOL_GPL(dm_bio_prison_destroy);
+ 
+-struct dm_bio_prison_cell *
+-dm_bio_prison_alloc_cell(struct dm_bio_prison *prison, gfp_t gfp)
++struct dm_bio_prison_cell *dm_bio_prison_alloc_cell(struct dm_bio_prison *prison, gfp_t gfp)
+ {
+ 	return mempool_alloc(prison->cell_pool, gfp);
+ }
+--- a/dm-thin.c	2013-01-18 15:00:00.000000000 +0000
++++ b/dm-thin.c	2013-01-21 23:09:48.000000000 +0000
+@@ -250,16 +250,16 @@
+ 	int r;
+ 	struct dm_bio_prison_cell *cell;
+ 
++	/*
++	 * Allocate a cell from the prison's mempool.
++	 * This might block but it can't fail.
++	 */
+ 	cell = dm_bio_prison_alloc_cell(pool->prison, GFP_NOIO);
+-	if (!cell)
+-		return -ENOMEM;
+ 
+ 	r = dm_bio_detain(pool->prison, key, bio, cell, result);
+-
+ 	if (r)
+ 		/*
+-		 * We reused an old cell, or errored; we can get rid of
+-		 * the new one.
++		 * We reused an old cell: get rid of the new one.
+ 		 */
+ 		dm_bio_prison_free_cell(pool->prison, cell);
+ 
