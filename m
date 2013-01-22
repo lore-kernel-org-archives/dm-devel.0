@@ -1,14 +1,18 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: "create snapshots of any block device"
-Date: Tue, 22 Jan 2013 11:22:27 +0000
-Message-ID: <50FE7673.7080407@redhat.com>
-References: <1766138.NkjTPulnJa@inno>
+From: thornber@redhat.com
+Subject: Re: [PATCH 4/8] [dm-bio-prison] Change the
+	bio-prison	interface so the memory for the cells is passed in.
+Date: Tue, 22 Jan 2013 11:31:49 +0000
+Message-ID: <20130122113148.GA5462@raspberrypi>
+References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
+	<1355429956-22785-5-git-send-email-ejt@redhat.com>
+	<20130121233245.GF27093@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1766138.NkjTPulnJa@inno>
+Content-Disposition: inline
+In-Reply-To: <20130121233245.GF27093@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,24 +22,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Hauke Laging <mailinglisten@hauke-laging.de>
+To: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 01/22/2013 11:12 AM, Hauke Laging wrote:
-> Isn't that at least misleading? Is it really possible to create a snapshot of
-> e.g. /dev/sda5 without creating an *additional* device as snapshot origin?
+Alasdair,
 
-It's possible but as you note you have to create the dm layers for the 
-snapshot. This means that if a non-dm device is in use you have to shut 
-its users down (unmount file systems etc.), create the snapshot and then 
-re-mount.
+I've pushed changes to the thin-dev and all-caches branches of my
+github tree:
 
-I've frequently used this in the past to snapshot large zero targets to 
-create sparse devices for testing (before --virtualsize was added to LVM2).
+https://github.com/jthornber/linux-2.6.git
 
-With device-mapper devices this is unnecessary since the top-level 
-device may be suspended while the snapshot layers are inserted.
+https://github.com/jthornber/linux-2.6/commit/ed52136ac238af0958b89b29749e27f049e0cb0c
+https://github.com/jthornber/linux-2.6/commit/cf5273fe5f4e77b3df3acdbfc6bb09ff76dafcbd
+https://github.com/jthornber/linux-2.6/commit/6e77ba56b8bbd21f43f00c2551c01a2e7d10aaf9
 
-Regards,
-Bryn.
+Note the mempool alloc _can_ fail with GFP_NOIO/GFP_NOWAIT.
+
+- Joe
