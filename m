@@ -1,41 +1,61 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 4/8] [dm-bio-prison] Change the
-	bio-prison	interface so the memory for the cells is passed in.
-Date: Tue, 22 Jan 2013 12:10:32 +0000
-Message-ID: <20130122121032.GI27093@agk-dp.fab.redhat.com>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<1355429956-22785-5-git-send-email-ejt@redhat.com>
-	<20130121233245.GF27093@agk-dp.fab.redhat.com>
-	<20130122113148.GA5462@raspberrypi>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20130122113148.GA5462@raspberrypi>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <ejt@redhat.com>
-Cc: dm-devel@redhat.com
+From: Dmitry Kasatkin <dmitry.kasatkin@intel.com>
+Subject: [PATCH v3 0/1] dm-integrity: integrity protection device-mapper target
+Date: Tue, 22 Jan 2013 14:36:59 +0200
+Message-ID: <cover.1358857891.git.dmitry.kasatkin@intel.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: dm-devel@redhat.com, mbroz@redhat.com, mpatocka@redhat.com
+Cc: linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org, alan.cox@intel.com
 List-Id: dm-devel.ids
 
-On Tue, Jan 22, 2013 at 11:31:49AM +0000, Joe Thornber wrote:
-> Note the mempool alloc _can_ fail with GFP_NOIO/GFP_NOWAIT.
+Device-mapper "integrity" target provides transparent cryptographic integrity
+protection of underlying read-write block device using hash-based message
+authentication codes (HMACs), which can be stored on the same or different
+block device.
 
-Not with GFP_NOIO.
+Target uses kernel keyring to obtain a secret key for using in cryptographic
+operations. It uses encrypted key type. Kernel never exposes those keys in
+plain form to user space. Encrypted keys are encrypted using master key,
+which can be either user or trusted type. User key type allows to supply a key
+from the user space and trusted key uses TPM.
 
-include/linux/gfp.h:
-#define GFP_NOIO        (__GFP_WAIT)
+Secret key is usually device specific and binds integrity data to the device.
+Data blocks and corresponding HMACs cannot be copied over from other systems.
 
-mempool_alloc():
-        might_sleep_if(gfp_mask & __GFP_WAIT);
+The key advantage over dm-verity is that the target supports read-write and
+requires less hash calculation operations. The key advantage over dm-crypt
+is that it does not require encryption when it is not desired by technical or
+other reasons. HMAC calculation generally requires less resources than
+encryption.
 
-Alasdair
+The main purpose of the dm-integrity is to provide read-write capable local
+block data integrity protection without encryption.
+
+Changes in v3:
+- removed unused variables and macros
+- made reboot notifier target specific
+- removed io counter
+- moved prefetch to the map function
+- added missing ti->error messages
+- replaced using of mempool with per bio data
+- replaced loff_t with sector_t for sectors and blocks
+- added new option 'zero_on_error' to return zeroed block instead of an error
+  default behavior is to return an error
+- improved error printing
+
+-Dmitry
+
+Dmitry Kasatkin (1):
+  dm-integrity: integrity protection device-mapper target
+
+ Documentation/device-mapper/dm-integrity.txt |  137 ++++
+ drivers/md/Kconfig                           |   13 +
+ drivers/md/Makefile                          |    1 +
+ drivers/md/dm-integrity.c                    |  991 ++++++++++++++++++++++++++
+ 4 files changed, 1142 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-integrity.txt
+ create mode 100644 drivers/md/dm-integrity.c
+
+-- 
+1.7.10.4
+
