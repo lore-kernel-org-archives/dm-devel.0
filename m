@@ -1,82 +1,195 @@
-From: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
-Subject: RE: [LSF/MM TOPIC] Re: [dm-devel] Announcement: STEC EnhanceIO SSD
- caching software for Linux kernel
-Date: Tue, 22 Jan 2013 13:00:35 +0800
-Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D5DFC@MYMBX.MY.STEC-INC.AD>
-References: <50F844A3.9020300@warr.net>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D72F1@MYMBX.MY.STEC-INC.AD>
- <50F970A3.4000403@warr.net> <20130118161135.GA3118@raspberrypi>
- <50F97C0F.9010405@warr.net>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7345@MYMBX.MY.STEC-INC.AD>
- <50F9963A.2080608@warr.net> <20130118212543.GB6425@blackbox.djwong.org>
- <20130118213759.GA30278@redhat.com>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D5D4D@MYMBX.MY.STEC-INC.AD>
- <20130121130951.GA16574@redhat.com>
+From: Stefan Maier <maier@idowa.de>
+Subject: multipathd: BUG: unable to handle kernel NULL pointer
+	dereference
+Date: Tue, 22 Jan 2013 11:19:50 +0100
+Message-ID: <20130122111950.149768tojz4wvgzq@webmail.idowa.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20130121130951.GA16574-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "lsf-pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org" <lsf-pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Joe Thornber <ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"; DelSp="Yes"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Mike Snitzer [mailto:snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org]
-> Sent: Monday, January 21, 2013 6:40 PM
-> To: Amit Kale
-> Cc: Darrick J. Wong; device-mapper development; linux-
-> bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; LKML; lsf-
-> pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org; Joe Thornber
-> Subject: Re: [LSF/MM TOPIC] Re: [dm-devel] Announcement: STEC EnhanceIO
-> SSD caching software for Linux kernel
-> 
-> On Mon, Jan 21 2013 at 12:26am -0500,
-> Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org> wrote:
-> 
-> > > -----Original Message-----
-> > > From: Mike Snitzer [mailto:snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org]
-> > > Sent: Saturday, January 19, 2013 3:08 AM
-> > > To: Darrick J. Wong
-> > > Cc: device-mapper development; Amit Kale;
-> > > linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; LKML;
-> > > lsf-pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org; Joe Thornber
-> > > Subject: Re: [LSF/MM TOPIC] Re: [dm-devel] Announcement: STEC
-> > > EnhanceIO SSD caching software for Linux kernel
-> > >
-> > > On Fri, Jan 18 2013 at  4:25pm -0500, Darrick J. Wong
-> > > <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> > >
-> > > > Since Joe is putting together a testing tree to compare the three
-> > > > caching things, what do you all think of having a(nother) session
-> > > > about ssd caching at this year's LSFMM Summit?
-> > > >
-> > > > [Apologies for hijacking the thread.] [Adding lsf-pc to the cc
-> > > > list.]
-> > >
-> > > Hopefully we'll have some findings on the comparisons well before
-> > > LSF (since we currently have some momentum).  But yes it may be
-> > > worthwhile to discuss things further and/or report findings.
-> >
-> > We should have performance comparisons presented well before the
-> > summit. It'll be good to have ssd caching session in any case. The
-> > likelihood that one of them will be included in Linux kernel before
-> > April is very low.
-> 
-> dm-cache is under active review for upstream inclusion.  I wouldn't
-> categorize the chances of dm-cache going upstream when the v3.9 merge
-> window opens as "very low".  But even if dm-cache does go upstream it
-> doesn't preclude bcache and/or enhanceio from going upstream too.
+Hi,
 
-I agree. We haven't seen a full comparison yet, IMHO. If different solutions offer mutually exclusive benefits, it'll be worthwhile including them all.
+I've got SuSE 11.4 running multipath tools compiled from git.
+It looks like I've got the same problem as described here:  =
 
-We haven't submitted EnhanceIO for an inclusion yet. Need more testing from the community before we can mark it Beta.
--Amit
+http://www.spinics.net/lists/dm-devel/msg17038.html
 
-PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+What is the status on this issue?
 
 
 
-This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
+Jan 22 10:59:20 kemper kernel: [  738.009813] device-mapper:  =
+
+multipath: adding disabled device 65:160
+Jan 22 10:59:20 kemper kernel: [  738.010368] BUG: unable to handle  =
+
+kernel NULL pointer dereference at           (null)
+Jan 22 10:59:20 kemper kernel: [  738.010379] IP: [<ffffffffa01f78a3>]  =
+
+dm_set_device_limits+0x23/0x140 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010392] PGD 84a9c9067 PUD  =
+
+84afd8067 PMD 0
+Jan 22 10:59:20 kemper kernel: [  738.010396] Oops: 0000 [#1] SMP
+Jan 22 10:59:20 kemper kernel: [  738.010400] last sysfs file:  =
+
+/sys/module/scsi_dh_emc/initstate
+Jan 22 10:59:20 kemper kernel: [  738.010404] CPU 6
+Jan 22 10:59:20 kemper kernel: [  738.010405] Modules linked in: raid1  =
+
+dm_service_time dm_round_robin scsi_dh_emc dm_multipath scsi_dh edd  =
+
+microcode cpufreq_conservative cpufreq_userspace cpufreq_powersave  =
+
+acpi_cpufreq mperf ext4 jbd2 crc16 dm_mod qla2xxx scsi_transport_fc  =
+
+scsi_tgt igb ghes pcspkr hed joydev sg i2c_i801 iTCO_wdt  =
+
+iTCO_vendor_support dca button container usbhid xfs exportfs ehci_hcd  =
+
+usbcore fan processor 3w_sas thermal thermal_sys
+Jan 22 10:59:20 kemper kernel: [  738.010438]
+Jan 22 10:59:20 kemper kernel: [  738.010442] Pid: 3008, comm:  =
+
+multipathd Not tainted 2.6.37.6-24-default #1 Thomas-Krenn.AG  =
+
+X9DR3-F/X9DR3-F
+Jan 22 10:59:20 kemper kernel: [  738.010449] RIP:  =
+
+0010:[<ffffffffa01f78a3>]  [<ffffffffa01f78a3>]  =
+
+dm_set_device_limits+0x23/0x140 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010457] RSP:  =
+
+0018:ffff880857bb9c78  EFLAGS: 00010296
+Jan 22 10:59:20 kemper kernel: [  738.010460] RAX: ffff8810447db9f8  =
+
+RBX: ffff8810493ba140 RCX: 0000000000200000
+Jan 22 10:59:20 kemper kernel: [  738.010464] RDX: 0000000000000000  =
+
+RSI: 0000000000000000 RDI: ffffc900207f1040
+Jan 22 10:59:20 kemper kernel: [  738.010468] RBP: ffffc900207f1040  =
+
+R08: ffff880857bb9d58 R09: 0000000000000200
+Jan 22 10:59:20 kemper kernel: [  738.010472] R10: 0000160000000000  =
+
+R11: 0000000000000001 R12: ffff8810447db9f8
+Jan 22 10:59:20 kemper kernel: [  738.010476] R13: 0000000000000000  =
+
+R14: ffff880857bb9d58 R15: ffff8810447db9c0
+Jan 22 10:59:20 kemper kernel: [  738.010480] FS:   =
+
+00007fb404e55700(0000) GS:ffff88107fc00000(0000) knlGS:0000000000000000
+Jan 22 10:59:20 kemper kernel: [  738.010484] CS:  0010 DS: 0000 ES:  =
+
+0000 CR0: 000000008005003b
+Jan 22 10:59:20 kemper kernel: [  738.010488] CR2: 0000000000000000  =
+
+CR3: 000000084c1c3000 CR4: 00000000000406e0
+Jan 22 10:59:20 kemper kernel: [  738.010491] DR0: 0000000000000000  =
+
+DR1: 0000000000000000 DR2: 0000000000000000
+Jan 22 10:59:20 kemper kernel: [  738.010495] DR3: 0000000000000000  =
+
+DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Jan 22 10:59:20 kemper kernel: [  738.010500] Process multipathd (pid:  =
+
+3008, threadinfo ffff880857bb8000, task ffff880857bb62c0)
+Jan 22 10:59:20 kemper kernel: [  738.010503] Stack:
+Jan 22 10:59:20 kemper kernel: [  738.010506]  00000000ffffffff  =
+
+ffff88087f85ab80 ffff880857bb9cc8 000000000000000d
+Jan 22 10:59:20 kemper kernel: [  738.010513]  ffff88087f85abe8  =
+
+0000000000000001 ffff88087f85aba0 ffffffff81071b9f
+Jan 22 10:59:20 kemper kernel: [  738.010519]  ffff880857bb9ce8  =
+
+ffffffff81041732 ffff8810493ba140 ffffc900207f1040
+Jan 22 10:59:20 kemper kernel: [  738.010525] Call Trace:
+Jan 22 10:59:20 kemper kernel: [  738.010548]  [<ffffffffa01b6425>]  =
+
+multipath_iterate_devices+0x55/0x80 [dm_multipath]
+Jan 22 10:59:20 kemper kernel: [  738.010559]  [<ffffffffa01f866c>]  =
+
+dm_calculate_queue_limits+0x8c/0x130 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010576]  [<ffffffffa01f657b>]  =
+
+dm_swap_table+0x6b/0x90 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010589]  [<ffffffffa01fae88>]  =
+
+do_resume+0x88/0x1b0 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010609]  [<ffffffffa01fbcac>]  =
+
+ctl_ioctl+0x1ac/0x250 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010629]  [<ffffffffa01fbd5e>]  =
+
+dm_ctl_ioctl+0xe/0x20 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010651]  [<ffffffff81159197>]  =
+
+do_vfs_ioctl+0x77/0x2f0
+Jan 22 10:59:20 kemper kernel: [  738.010660]  [<ffffffff81159490>]  =
+
+sys_ioctl+0x80/0xa0
+Jan 22 10:59:20 kemper kernel: [  738.010670]  [<ffffffff8100304b>]  =
+
+tracesys+0xd9/0xde
+Jan 22 10:59:20 kemper kernel: [  738.010677]  [<00007fb403926d87>]  =
+
+0x7fb403926d87
+Jan 22 10:59:20 kemper kernel: [  738.010680] Code: fd ff ff 0f 1f 44  =
+
+00 00 48 83 ec 78 48 89 6c 24 58 4c 89 64 24 60 48 89 fd 4c 89 6c 24  =
+
+68 48 89 5c 24 50 49 89 d5 4c 89 74 24 70 <4c> 8b 36 4d 89 c4 49 8b 86  =
+
+98 00 00 00 48 8b 98 08 03 00 00 48
+Jan 22 10:59:20 kemper kernel: [  738.010708] RIP   =
+
+[<ffffffffa01f78a3>] dm_set_device_limits+0x23/0x140 [dm_mod]
+Jan 22 10:59:20 kemper kernel: [  738.010714]  RSP <ffff880857bb9c78>
+Jan 22 10:59:20 kemper kernel: [  738.010717] CR2: 0000000000000000
+Jan 22 10:59:20 kemper kernel: [  738.119186] ---[ end trace  =
+
+61248b01dfe0b885 ]---
+
+
+
+-- =
+
+
+Mit freundlichen Gr=FC=DFen
+
+Stefan Maier
+
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
+Straubinger Tagblatt
+EDV-Abteilung                     FON:   +49 9421 940 5382
+Ludwigsplatz 32                   FAX:   +49 9421 940 5399
+D-94315 Straubing
+http://www.idowa.de               E-Mail: maier@idowa.de
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
+  Zeitungsgruppe Straubinger Tagblatt / Landshuter Zeitung
+        Cl. Attenkofer'sche Buch- und Kunstdruckerei
+              Verlagsbuchhandlung Straubing KG
+      Registergericht: Amtsgericht Straubing, HRA 1118
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
