@@ -1,16 +1,19 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath: add HSV3[46]0 to
-	multipath.conf.defaults
-Date: Tue, 22 Jan 2013 13:09:24 +0100
-Message-ID: <1358856564.1739.0.camel@lapoo.opensvc.com>
-References: <1358855343-3160-1-git-send-email-xose.vazquez@gmail.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 4/8] [dm-bio-prison] Change the
+	bio-prison	interface so the memory for the cells is passed in.
+Date: Tue, 22 Jan 2013 12:10:32 +0000
+Message-ID: <20130122121032.GI27093@agk-dp.fab.redhat.com>
+References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
+	<1355429956-22785-5-git-send-email-ejt@redhat.com>
+	<20130121233245.GF27093@agk-dp.fab.redhat.com>
+	<20130122113148.GA5462@raspberrypi>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1358855343-3160-1-git-send-email-xose.vazquez@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20130122113148.GA5462@raspberrypi>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +23,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Joe Thornber <ejt@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On mar., 2013-01-22 at 12:49 +0100, Xose Vazquez Perez wrote:
-> Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
-> Cc: Hannes Reinecke <hare@suse.de>
-> Cc: dm-devel@redhat.com
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  multipath.conf.defaults | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-Applied.
+On Tue, Jan 22, 2013 at 11:31:49AM +0000, Joe Thornber wrote:
+> Note the mempool alloc _can_ fail with GFP_NOIO/GFP_NOWAIT.
 
-> diff --git a/multipath.conf.defaults b/multipath.conf.defaults
-> index c9f58d5..ad32343 100644
-> --- a/multipath.conf.defaults
-> +++ b/multipath.conf.defaults
-> @@ -151,7 +151,7 @@
->  #	}
->  #	device {
->  #		vendor "(COMPAQ|HP)"
-> -#		product "HSV1[01]1|HSV2[01]0|HSV300|HSV4[05]0"
-> +#		product "HSV1[01]1|HSV2[01]0|HSV3[046]0|HSV4[05]0"
->  #		path_grouping_policy "group_by_prio"
->  #		path_checker "tur"
->  #		features "0"
+Not with GFP_NOIO.
+
+include/linux/gfp.h:
+#define GFP_NOIO        (__GFP_WAIT)
+
+mempool_alloc():
+        might_sleep_if(gfp_mask & __GFP_WAIT);
+
+Alasdair
