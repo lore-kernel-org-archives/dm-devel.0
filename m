@@ -1,14 +1,16 @@
-From: Stefan Maier <maier@idowa.de>
-Subject: multipathd: BUG: unable to handle kernel NULL pointer
-	dereference
-Date: Tue, 22 Jan 2013 11:19:50 +0100
-Message-ID: <20130122111950.149768tojz4wvgzq@webmail.idowa.de>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: A thin-p over 256 GiB fails with I/O errors with
+ non-power-of-two chunk
+Date: Tue, 22 Jan 2013 12:10:20 +0100
+Message-ID: <50FE739C.5090200@redhat.com>
+References: <201301180219.10467.db@kavod.com>
+	<20130121184954.GA18892@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"; DelSp="Yes"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20130121184954.GA18892@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,178 +20,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: sandeen@redhat.com, Daniel Browning <db@kavod.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Dne 21.1.2013 19:49, Mike Snitzer napsal(a):
+> On Fri, Jan 18 2013 at  5:19am -0500,
+> Daniel Browning <db@kavod.com> wrote:
+>
+>> Why do I get the following error, and what should I do about it? When I
+>> create a raid0 md with a non-power-of-two chunk size (e.g. 1152K instead of
+>> 512K), then create a thinly-provisioned volume that is over 256 GiB, I get
+>> the following dmesg error when I try to create a file system on it:
+>>
+>>      "make_request bug: can't convert block across chunks or bigger than 1152k 4384 127"
+>>
+>> This bubbles up to mkfs.xfs as
+>>
+>>      "libxfs_device_zero write failed: Input/output error"
+>>
+>> What I find interesting is that it seems to require all three conditions
+>> (chunk size, thin-p, and >256 GiB) in order to fail. Without those, it seems
+>> to work fine:
+>>
+>>      * Power-of-two chunk (e.g. 512K), thin-p vol, >256 GiB? Works.
+>>      * Non-power-of-two chunk (e.g. 1152K), thin-p vol, <256 GiB? Works.
+>>      * Non-power-of-two chunk (e.g. 1152K), regular vol, >256 GiB? Works.
+>>      * Non-power-of-two chunk (e.g. 1152K), thin-p vol, >256 GiB? FAIL.
+>>
+>> Attached is a self-contained test case to reproduce the error, version
+>> numbers, and an strace. Thank you in advance,
+>> --
+>> Daniel Browning
+>> Kavod Technologies
+>>
+>> Appendix A. Self-contained reproduce script
+>> ===========================================================
+>> dd if=/dev/zero of=loop0.img bs=1G count=150; losetup /dev/loop0 loop0.img
+>> dd if=/dev/zero of=loop1.img bs=1G count=150; losetup /dev/loop1 loop1.img
+>> mdadm --create /dev/md99 --verbose --level=0 --raid-devices=2 \
+>>        --chunk=1152K /dev/loop0 /dev/loop1
+>> pvcreate /dev/md99
+>> vgcreate test_vg /dev/md99
+>> lvcreate --size 257G --type thin-pool --thinpool test_thin_pool test_vg
+>> lvcreate --virtualsize 257G --thin test_vg/test_thin_pool --name test_lv
+>> mkfs.xfs /dev/test_vg/test_lv
+>>
+>> # That is where the error occurs. Next is cleanup.
+>> lvremove -f /dev/test_vg/test_lv
+>> lvremove -f /dev/mapper/test_vg-test_thin_pool
+>> vgremove -f test_vg
+>> pvremove /dev/md99
+>> mdadm --stop /dev/md99
+>> mdadm --zero-superblock /dev/loop0 /dev/loop1
+>> losetup -d /dev/loop0 /dev/loop1
+>> rm loop*.img
+>
+> Limits of the raid0 device (/dev/md99):
+> cat /sys/block/md99/queue/minimum_io_size
+> 1179648
+> cat /sys/block/md99/queue/optimal_io_size
+> 2359296
+>
+> Limits of the thin-pool device (/dev/test_vg/test_thin_pool):
+> cat /sys/block/dm-9/queue/minimum_io_size
+> 512
+> cat /sys/block/dm-9/queue/optimal_io_size
+> 262144
+>
+> Limits of the thin-device device (/dev/test_vg/test_lv):
+> cat /sys/block/dm-10/queue/minimum_io_size
+> 512
+> cat /sys/block/dm-10/queue/optimal_io_size
+> 262144
+>
+> I notice that lvcreate is not using a thin-pool chunksize that matches
+> the raid0's chunksize (just uses the lvm2 default of 256K).
+>
+> Switching the thin-pool lvcreate to use --chunksize 1152K at least
+> enables me to format the filesystem.
+>
+> And both the thin-pool and thin device have an optimal_io_size that
+> matches the chunk_size of the underlying raid volume:
+>
+> cat /sys/block/dm-9/queue/optimal_io_size
+> 1179648
+> cat /sys/block/dm-10/queue/optimal_io_size
+> 1179648
+>
+> I'm still investigating the limits issue when --chunksize 1152K isn't
+> used for the thin-pool lvcreate.
 
-I've got SuSE 11.4 running multipath tools compiled from git.
-It looks like I've got the same problem as described here:  =
+Just a comment for the selection of thin chunksize here -
 
-http://www.spinics.net/lists/dm-devel/msg17038.html
+I think it has couple aspects here - by default (unless changed via
+lvm.conf {allocation/thin_pool_chunk_size}) it is targeting for 64K
+and scales chunksize up to fit thin metadata within 128MB.
+(compiled in as DEFAULT_THIN_POOL_OPTIMAL_SIZE)
+So lvm2 here scaled from 64k to 256k in multiTB case.
 
-What is the status on this issue?
+lvcreate currently doesn't look out for geometry of underlying PV(s) during 
+its allocation (somewhat chicken-egg problem) - yet there are possible ways to 
+try to put this into equation - thought it might not be actually wanted by the 
+user - since for snapshots the smaller chunksize is more usable
+(>1MB is quite a lot here IMHO) - but it probably worth some thinking.
 
-
-
-Jan 22 10:59:20 kemper kernel: [  738.009813] device-mapper:  =
-
-multipath: adding disabled device 65:160
-Jan 22 10:59:20 kemper kernel: [  738.010368] BUG: unable to handle  =
-
-kernel NULL pointer dereference at           (null)
-Jan 22 10:59:20 kemper kernel: [  738.010379] IP: [<ffffffffa01f78a3>]  =
-
-dm_set_device_limits+0x23/0x140 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010392] PGD 84a9c9067 PUD  =
-
-84afd8067 PMD 0
-Jan 22 10:59:20 kemper kernel: [  738.010396] Oops: 0000 [#1] SMP
-Jan 22 10:59:20 kemper kernel: [  738.010400] last sysfs file:  =
-
-/sys/module/scsi_dh_emc/initstate
-Jan 22 10:59:20 kemper kernel: [  738.010404] CPU 6
-Jan 22 10:59:20 kemper kernel: [  738.010405] Modules linked in: raid1  =
-
-dm_service_time dm_round_robin scsi_dh_emc dm_multipath scsi_dh edd  =
-
-microcode cpufreq_conservative cpufreq_userspace cpufreq_powersave  =
-
-acpi_cpufreq mperf ext4 jbd2 crc16 dm_mod qla2xxx scsi_transport_fc  =
-
-scsi_tgt igb ghes pcspkr hed joydev sg i2c_i801 iTCO_wdt  =
-
-iTCO_vendor_support dca button container usbhid xfs exportfs ehci_hcd  =
-
-usbcore fan processor 3w_sas thermal thermal_sys
-Jan 22 10:59:20 kemper kernel: [  738.010438]
-Jan 22 10:59:20 kemper kernel: [  738.010442] Pid: 3008, comm:  =
-
-multipathd Not tainted 2.6.37.6-24-default #1 Thomas-Krenn.AG  =
-
-X9DR3-F/X9DR3-F
-Jan 22 10:59:20 kemper kernel: [  738.010449] RIP:  =
-
-0010:[<ffffffffa01f78a3>]  [<ffffffffa01f78a3>]  =
-
-dm_set_device_limits+0x23/0x140 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010457] RSP:  =
-
-0018:ffff880857bb9c78  EFLAGS: 00010296
-Jan 22 10:59:20 kemper kernel: [  738.010460] RAX: ffff8810447db9f8  =
-
-RBX: ffff8810493ba140 RCX: 0000000000200000
-Jan 22 10:59:20 kemper kernel: [  738.010464] RDX: 0000000000000000  =
-
-RSI: 0000000000000000 RDI: ffffc900207f1040
-Jan 22 10:59:20 kemper kernel: [  738.010468] RBP: ffffc900207f1040  =
-
-R08: ffff880857bb9d58 R09: 0000000000000200
-Jan 22 10:59:20 kemper kernel: [  738.010472] R10: 0000160000000000  =
-
-R11: 0000000000000001 R12: ffff8810447db9f8
-Jan 22 10:59:20 kemper kernel: [  738.010476] R13: 0000000000000000  =
-
-R14: ffff880857bb9d58 R15: ffff8810447db9c0
-Jan 22 10:59:20 kemper kernel: [  738.010480] FS:   =
-
-00007fb404e55700(0000) GS:ffff88107fc00000(0000) knlGS:0000000000000000
-Jan 22 10:59:20 kemper kernel: [  738.010484] CS:  0010 DS: 0000 ES:  =
-
-0000 CR0: 000000008005003b
-Jan 22 10:59:20 kemper kernel: [  738.010488] CR2: 0000000000000000  =
-
-CR3: 000000084c1c3000 CR4: 00000000000406e0
-Jan 22 10:59:20 kemper kernel: [  738.010491] DR0: 0000000000000000  =
-
-DR1: 0000000000000000 DR2: 0000000000000000
-Jan 22 10:59:20 kemper kernel: [  738.010495] DR3: 0000000000000000  =
-
-DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jan 22 10:59:20 kemper kernel: [  738.010500] Process multipathd (pid:  =
-
-3008, threadinfo ffff880857bb8000, task ffff880857bb62c0)
-Jan 22 10:59:20 kemper kernel: [  738.010503] Stack:
-Jan 22 10:59:20 kemper kernel: [  738.010506]  00000000ffffffff  =
-
-ffff88087f85ab80 ffff880857bb9cc8 000000000000000d
-Jan 22 10:59:20 kemper kernel: [  738.010513]  ffff88087f85abe8  =
-
-0000000000000001 ffff88087f85aba0 ffffffff81071b9f
-Jan 22 10:59:20 kemper kernel: [  738.010519]  ffff880857bb9ce8  =
-
-ffffffff81041732 ffff8810493ba140 ffffc900207f1040
-Jan 22 10:59:20 kemper kernel: [  738.010525] Call Trace:
-Jan 22 10:59:20 kemper kernel: [  738.010548]  [<ffffffffa01b6425>]  =
-
-multipath_iterate_devices+0x55/0x80 [dm_multipath]
-Jan 22 10:59:20 kemper kernel: [  738.010559]  [<ffffffffa01f866c>]  =
-
-dm_calculate_queue_limits+0x8c/0x130 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010576]  [<ffffffffa01f657b>]  =
-
-dm_swap_table+0x6b/0x90 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010589]  [<ffffffffa01fae88>]  =
-
-do_resume+0x88/0x1b0 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010609]  [<ffffffffa01fbcac>]  =
-
-ctl_ioctl+0x1ac/0x250 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010629]  [<ffffffffa01fbd5e>]  =
-
-dm_ctl_ioctl+0xe/0x20 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010651]  [<ffffffff81159197>]  =
-
-do_vfs_ioctl+0x77/0x2f0
-Jan 22 10:59:20 kemper kernel: [  738.010660]  [<ffffffff81159490>]  =
-
-sys_ioctl+0x80/0xa0
-Jan 22 10:59:20 kemper kernel: [  738.010670]  [<ffffffff8100304b>]  =
-
-tracesys+0xd9/0xde
-Jan 22 10:59:20 kemper kernel: [  738.010677]  [<00007fb403926d87>]  =
-
-0x7fb403926d87
-Jan 22 10:59:20 kemper kernel: [  738.010680] Code: fd ff ff 0f 1f 44  =
-
-00 00 48 83 ec 78 48 89 6c 24 58 4c 89 64 24 60 48 89 fd 4c 89 6c 24  =
-
-68 48 89 5c 24 50 49 89 d5 4c 89 74 24 70 <4c> 8b 36 4d 89 c4 49 8b 86  =
-
-98 00 00 00 48 8b 98 08 03 00 00 48
-Jan 22 10:59:20 kemper kernel: [  738.010708] RIP   =
-
-[<ffffffffa01f78a3>] dm_set_device_limits+0x23/0x140 [dm_mod]
-Jan 22 10:59:20 kemper kernel: [  738.010714]  RSP <ffff880857bb9c78>
-Jan 22 10:59:20 kemper kernel: [  738.010717] CR2: 0000000000000000
-Jan 22 10:59:20 kemper kernel: [  738.119186] ---[ end trace  =
-
-61248b01dfe0b885 ]---
-
-
-
--- =
-
-
-Mit freundlichen Gr=FC=DFen
-
-Stefan Maier
-
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
-Straubinger Tagblatt
-EDV-Abteilung                     FON:   +49 9421 940 5382
-Ludwigsplatz 32                   FAX:   +49 9421 940 5399
-D-94315 Straubing
-http://www.idowa.de               E-Mail: maier@idowa.de
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
-  Zeitungsgruppe Straubinger Tagblatt / Landshuter Zeitung
-        Cl. Attenkofer'sche Buch- und Kunstdruckerei
-              Verlagsbuchhandlung Straubing KG
-      Registergericht: Amtsgericht Straubing, HRA 1118
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
+Zdenek
