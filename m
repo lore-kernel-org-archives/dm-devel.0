@@ -1,16 +1,11 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: A thin-p over 256 GiB fails with I/O errors with
- non-power-of-two chunk
-Date: Tue, 22 Jan 2013 12:10:20 +0100
-Message-ID: <50FE739C.5090200@redhat.com>
-References: <201301180219.10467.db@kavod.com>
-	<20130121184954.GA18892@redhat.com>
+From: Hauke Laging <mailinglisten@hauke-laging.de>
+Subject: "create snapshots of any block device"
+Date: Tue, 22 Jan 2013 12:12:58 +0100
+Message-ID: <1766138.NkjTPulnJa@inno>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7964815174902455645=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130121184954.GA18892@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,108 +16,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: sandeen@redhat.com, Daniel Browning <db@kavod.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 21.1.2013 19:49, Mike Snitzer napsal(a):
-> On Fri, Jan 18 2013 at  5:19am -0500,
-> Daniel Browning <db@kavod.com> wrote:
->
->> Why do I get the following error, and what should I do about it? When I
->> create a raid0 md with a non-power-of-two chunk size (e.g. 1152K instead of
->> 512K), then create a thinly-provisioned volume that is over 256 GiB, I get
->> the following dmesg error when I try to create a file system on it:
->>
->>      "make_request bug: can't convert block across chunks or bigger than 1152k 4384 127"
->>
->> This bubbles up to mkfs.xfs as
->>
->>      "libxfs_device_zero write failed: Input/output error"
->>
->> What I find interesting is that it seems to require all three conditions
->> (chunk size, thin-p, and >256 GiB) in order to fail. Without those, it seems
->> to work fine:
->>
->>      * Power-of-two chunk (e.g. 512K), thin-p vol, >256 GiB? Works.
->>      * Non-power-of-two chunk (e.g. 1152K), thin-p vol, <256 GiB? Works.
->>      * Non-power-of-two chunk (e.g. 1152K), regular vol, >256 GiB? Works.
->>      * Non-power-of-two chunk (e.g. 1152K), thin-p vol, >256 GiB? FAIL.
->>
->> Attached is a self-contained test case to reproduce the error, version
->> numbers, and an strace. Thank you in advance,
->> --
->> Daniel Browning
->> Kavod Technologies
->>
->> Appendix A. Self-contained reproduce script
->> ===========================================================
->> dd if=/dev/zero of=loop0.img bs=1G count=150; losetup /dev/loop0 loop0.img
->> dd if=/dev/zero of=loop1.img bs=1G count=150; losetup /dev/loop1 loop1.img
->> mdadm --create /dev/md99 --verbose --level=0 --raid-devices=2 \
->>        --chunk=1152K /dev/loop0 /dev/loop1
->> pvcreate /dev/md99
->> vgcreate test_vg /dev/md99
->> lvcreate --size 257G --type thin-pool --thinpool test_thin_pool test_vg
->> lvcreate --virtualsize 257G --thin test_vg/test_thin_pool --name test_lv
->> mkfs.xfs /dev/test_vg/test_lv
->>
->> # That is where the error occurs. Next is cleanup.
->> lvremove -f /dev/test_vg/test_lv
->> lvremove -f /dev/mapper/test_vg-test_thin_pool
->> vgremove -f test_vg
->> pvremove /dev/md99
->> mdadm --stop /dev/md99
->> mdadm --zero-superblock /dev/loop0 /dev/loop1
->> losetup -d /dev/loop0 /dev/loop1
->> rm loop*.img
->
-> Limits of the raid0 device (/dev/md99):
-> cat /sys/block/md99/queue/minimum_io_size
-> 1179648
-> cat /sys/block/md99/queue/optimal_io_size
-> 2359296
->
-> Limits of the thin-pool device (/dev/test_vg/test_thin_pool):
-> cat /sys/block/dm-9/queue/minimum_io_size
-> 512
-> cat /sys/block/dm-9/queue/optimal_io_size
-> 262144
->
-> Limits of the thin-device device (/dev/test_vg/test_lv):
-> cat /sys/block/dm-10/queue/minimum_io_size
-> 512
-> cat /sys/block/dm-10/queue/optimal_io_size
-> 262144
->
-> I notice that lvcreate is not using a thin-pool chunksize that matches
-> the raid0's chunksize (just uses the lvm2 default of 256K).
->
-> Switching the thin-pool lvcreate to use --chunksize 1152K at least
-> enables me to format the filesystem.
->
-> And both the thin-pool and thin device have an optimal_io_size that
-> matches the chunk_size of the underlying raid volume:
->
-> cat /sys/block/dm-9/queue/optimal_io_size
-> 1179648
-> cat /sys/block/dm-10/queue/optimal_io_size
-> 1179648
->
-> I'm still investigating the limits issue when --chunksize 1152K isn't
-> used for the thin-pool lvcreate.
 
-Just a comment for the selection of thin chunksize here -
+--===============7964815174902455645==
+Content-Type: multipart/signed; boundary="nextPart2476536.tsRO0aVDiO";
+	micalg="pgp-sha256"; protocol="application/pgp-signature"
+Content-Transfer-Encoding: quoted-printable
 
-I think it has couple aspects here - by default (unless changed via
-lvm.conf {allocation/thin_pool_chunk_size}) it is targeting for 64K
-and scales chunksize up to fit thin metadata within 128MB.
-(compiled in as DEFAULT_THIN_POOL_OPTIMAL_SIZE)
-So lvm2 here scaled from 64k to 256k in multiTB case.
 
-lvcreate currently doesn't look out for geometry of underlying PV(s) during 
-its allocation (somewhat chicken-egg problem) - yet there are possible ways to 
-try to put this into equation - thought it might not be actually wanted by the 
-user - since for snapshots the smaller chunksize is more usable
-(>1MB is quite a lot here IMHO) - but it probably worth some thinking.
+--nextPart2476536.tsRO0aVDiO
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
 
-Zdenek
+Hello,
+
+I am a bit surprised to read this:
+"Device-mapper allows you, without massive data copying:
+
+*) To create snapshots of any block device [...]"
+
+here:
+http://www.kernel.org/doc/Documentation/device-mapper/snapshot.txt
+
+Isn't that at least misleading? Is it really possible to create a snaps=
+hot of=20
+e.g. /dev/sda5 without creating an *additional* device as snapshot orig=
+in?
+
+
+I export LVs to a VM where they appear as regular disks so that I canno=
+t use =20
+LVMs snapshot integration. Thus I create a dm device with a linear mapp=
+ing to=20
+each of these disks and mount the dm device, not the disk.
+
+I just had the idea to create these dm layer devices as snapshot-origin=
+s from=20
+the start (instead of loading this target when a snapshot is really goi=
+ng to=20
+be created). Is there anything to be said against this? Is there any re=
+ason at=20
+all to use linear instead of snapshot-origin for devices with just one =
+target=20
+(except for possible confusion)?
+
+
+Hauke
+--=20
+=E2=98=BA
+PGP: 7D82 FB9F D25A 2CE4 5241 6C37 BF4B 8EEF 1A57 1DF5 (seit 2012-11-04=
+)
+http://www.openpgp-schulungen.de/
+
+--nextPart2476536.tsRO0aVDiO
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iQFYBAABCABCBQJQ/nQ6OxpodHRwOi8vd3d3LmhhdWtlLWxhZ2luZy5kZS9vcGVu
+cGdwL3BvbGljeV9fMHgxYTU3MWRmNS5odG1sAAoJEEhrF6s/lq2OVxYH/RkU1NDh
+GPk0LoO68KH+3GZ6LnBCgk8PQccGPDpwXfxcbSMmhW2OKQAWXfp70QvvzLqLdjaF
+2WEbim5niBDpZWyHhBcspxr2wiMSNbAtFIQBRQwiYc8oqguPSxjNgrweotXJNKCv
+LhfxCiteSw56tzM0A20O4TBe+Q199Z1k0qQP8j+NNXBU/+igXjfsKWT0D7uB3g9V
+WGl5E8r3C3n74CgIhtz5EhFOH0xEXZ64tJWRiA3oLVq72YPZAJi8zScEo5n+o8Pm
+2XWoYhscwYJP639s/AsA7HuqbiievdrEwgX25AxT8f5ITw6sKh+OJLIwlnDcpAjB
+c1s7XyN3CxbSEsI=
+=PM8+
+-----END PGP SIGNATURE-----
+
+--nextPart2476536.tsRO0aVDiO--
+
+
+--===============7964815174902455645==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7964815174902455645==--
