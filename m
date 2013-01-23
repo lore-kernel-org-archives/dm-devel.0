@@ -1,102 +1,100 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 7/8] [persistent-data] transactional bitset
-Date: Tue, 22 Jan 2013 21:59:20 +0000
-Message-ID: <20130122215920.GC30267@agk-dp.fab.redhat.com>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<1355429956-22785-8-git-send-email-ejt@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-integrity: integrity protection device-mapper target
+Date: Tue, 22 Jan 2013 20:29:15 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1301221928350.21650@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1301151955280.7468@file.rdu.redhat.com>
+ <CALLzPKZVo3ng=Hz4cg0qrw0nDYsPjKy5AR=AJtMg+3PU=epz1w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1355429956-22785-8-git-send-email-ejt@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <ejt@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CALLzPKZVo3ng=Hz4cg0qrw0nDYsPjKy5AR=AJtMg+3PU=epz1w@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, alan.cox@intel.com, linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Please add more comments to the functions in dm-bitset.h to confirm
-what they do and how to use them.  (I've not repeated comments about
-dm-array.h that apply here too.)
 
-On Thu, Dec 13, 2012 at 08:19:15PM +0000, Joe Thornber wrote:
-> --- /dev/null
-> +++ b/drivers/md/persistent-data/dm-bitset.h
-> +struct dm_bitset_info {
-> +	struct dm_array_info array_info;
-> +
-> +	uint32_t current_index;
-> +	uint64_t current_bits;
 
-Put the uint64_t before the uint32_t perhaps?  (Better packing?)
+On Fri, 18 Jan 2013, Kasatkin, Dmitry wrote:
 
-> +
-> +	bool current_index_set:1;
-> +};
-> +
-> +void dm_bitset_info_init(struct dm_transaction_manager *tm,
-> +			 struct dm_bitset_info *info);
+> Hi Mikulas,
+> 
+> Thanks for looking into it.
+> 
+> On Thu, Jan 17, 2013 at 6:54 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > Hi Dmitry
+> >
+> > I looked at dm-integrity. The major problem is that if crash happens when
+> > data were written and checksum wasn't, the block has incorrect checksum
+> > and can't be read again.
+> >
+> 
+> This is how it works.
+> This is a purpose of integrity protection - do not allow "bad" content
+> to load and use.
+> 
+> But even with encryption it might happen that some blocks have been
+> updated and some not.
+> Even if  reading the blocks succeeds, the content can be a mess from
+> old and new blocks.
 
-Does this function populate info->array_info and track the array
-size so the caller doesn't need to do it in the way described in
-dm-array.h?
+dm-crypt encrypts each 512-byte sector individually, so (assuming that 
+there is no disk with sector size <512 bytes), it can't result in random 
+data. You read either new data or old data.
 
-> +int dm_bitset_empty(struct dm_bitset_info *info, dm_block_t *root);
-> +
-> +int dm_bitset_resize(struct dm_bitset_info *info, dm_block_t root,
-> +		     uint32_t old_nr_entries, uint32_t new_nr_entries,
-> +		     bool default_value, dm_block_t *new_root);
-> +
+> This patch I sent out has one missing feature what I have not pushed yet.
+> In the case of none-matching blocks, it just zeros blocks and returns
+> no error (zero-on-mismatch).
+> Writing to the block replaces the hmac.
+> It works quite nicely. mkfs and fsck is able to read and write/fix the
+> filesystem.
 
-But does the caller need to track old/new nr_entries?
+But it causes silent data corruption for the user. So it's worse than 
+returning an error.
 
-> +
-> +/*
-> + * May flush and thus update the root.
-> + */
-> +int dm_bitset_set_bit(struct dm_bitset_info *info, dm_block_t root,
-> +		      uint32_t index, dm_block_t *new_root);
+> > How is this integrity target going to be used? Will you use it in an
+> > environment where destroying data on crash doesn't matter? (can you
+> > describe such environment?)
+> >
+> 
+> We are looking for possibility to use it in LSM based environment,
+> where we do not want
+> attacker could make offline modification of the filesystem and modify
+> the TCB related stuff.
 
-What are the constraints on index?
-Can index be too big and require a resize first?  If so, what
-error is returned?
+What are the exact attach attack possibilities you are protecting against?
 
-> +int dm_bitset_clear_bit(struct dm_bitset_info *info, dm_block_t root,
-> +			uint32_t index, dm_block_t *new_root);
+Can the attacker observe or modify the data while system is running? (for 
+example the data is accessed remotely over an unsecured network 
+connection?) Or is it only protecting against modifications when the 
+system is down?
 
-Error if out of defined range?
+Can the attacker modify the partition with hashes? - or do you store it in 
+another place that is supposed to be secure?
 
-> +int dm_bitset_test_bit(struct dm_bitset_info *info, dm_block_t root,
-> +		       uint32_t index, dm_block_t *new_root, bool *result);
-> +
+What are you going to do if you get failed checksum because of a crash?
 
-Error if out of defined range?
+> > It could possibly be used with ext3 or ext4 with data=journal mode - in
+> > this mode, the filesystem writes everything to journal and overwrites data
+> > and metadata with copy from journal on reboot, so it wouldn't matter if a
+> > block that was being written is unreadable after the reboot. But even with
+> > data=journal there are still some corner cases where metadata are
+> > overwritten without journaling (for example fsck or tune2fs utilities) -
+> > and if a crash happens, it could make metadata unreadable.
+> >
+> 
+> In normal environment, if fsck crashes, it might corrupt file system
+> in the same way.
+> zero-on-mismatch makes block device still accessible/fixable for fsck.
 
-> +/*
-> + * You must call this to flush recent changes to disk.
-> + */
-> +int dm_bitset_flush(struct dm_bitset_info *info, dm_block_t root,
-> +		    dm_block_t *new_root);
+The problem is that it apmplifies filesystem damage. For example, suppose 
+that fsck is modifying an inode. You get a crash and on next reboot not 
+just one inode, but the whole block of inodes is unreadable (or replaced 
+with zeros). Fsck "fixes" it, but the user loses more files.
 
-If there's a disk error, does flush fail and then could it be retried?
-Or does the bitset become unusable or read-only after a disk error?
 
-> +
-> +/*----------------------------------------------------------------*/
-> +
-> +#endif
+I am thinking about possibly rewriting it so that it has two hashes per 
+sector so that if either old or new data is read, at least one hash 
+matches and it won't result in data corruption.
 
-Conventionally, add /* _LINUX_DM_BITSET_H */ after the #endif.
-(Helps when reading files with nested includes.)
-- dm-array.h similarly.
-
-Alasdair
+Mikulas
