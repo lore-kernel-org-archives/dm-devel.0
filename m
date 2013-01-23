@@ -1,122 +1,125 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [dm-devel] [PATCH 0/3 v3] add resync speed control for dm-raid1
-Date: Wed, 23 Jan 2013 15:20:44 +1100
-Message-ID: <20130123152044.3726fb4e@notabene.brown>
-References: <1357552933-26126-1-git-send-email-gzhao@suse.com>
-	<Pine.LNX.4.64.1301090034200.29917@file.rdu.redhat.com>
-	<20130116082109.GA2154@glzhao-laptop.site>
-	<Pine.LNX.4.64.1301222033290.4723@file.rdu.redhat.com>
+From: Will Drewry <redpig@dataspill.org>
+Subject: Re: [dm-devel] dm-integrity: integrity protection device-mapper target
+Date: Tue, 22 Jan 2013 22:09:48 -0800
+Message-ID: <CABmXcB8bv_nNGdoRVc2ukEO2Z+gBnhUiYo2fJ755snTRouji6w@mail.gmail.com>
+References: <Pine.LNX.4.64.1301151955280.7468@file.rdu.redhat.com>
+	<CALLzPKZVo3ng=Hz4cg0qrw0nDYsPjKy5AR=AJtMg+3PU=epz1w@mail.gmail.com>
+	<Pine.LNX.4.64.1301221928350.21650@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/zVE4vsHjutQTEIU.CG/q.he"; protocol="application/pgp-signature"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1301222033290.4723@file.rdu.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: mpatocka@redhat.com, Guangliang Zhao <gzhao@suse.com>, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1301221928350.21650@file.rdu.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
+Cc: alan.cox@intel.com, linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org, "Alasdair G. Kergon" <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
---Sig_/zVE4vsHjutQTEIU.CG/q.he
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Tue, Jan 22, 2013 at 5:29 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+>
+> On Fri, 18 Jan 2013, Kasatkin, Dmitry wrote:
+>
+>> Hi Mikulas,
+>>
+>> Thanks for looking into it.
+>>
+>> On Thu, Jan 17, 2013 at 6:54 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>> > Hi Dmitry
+>> >
+>> > I looked at dm-integrity. The major problem is that if crash happens when
+>> > data were written and checksum wasn't, the block has incorrect checksum
+>> > and can't be read again.
+>> >
+>>
+>> This is how it works.
+>> This is a purpose of integrity protection - do not allow "bad" content
+>> to load and use.
 
-On Tue, 22 Jan 2013 20:44:41 -0500 (EST) Mikulas Patocka
-<mpatocka@redhat.com> wrote:
+With respect to the use of "integrity", you may want to consider
+something like dm-integrity-hmac to disambiguate from the BIO
+integrity naming.  It's why I proposed the somewhat obtuse "verity"
+name for the other data-integrity target.
 
->=20
->=20
-> On Wed, 16 Jan 2013, Guangliang Zhao wrote:
->=20
-> > On Wed, Jan 09, 2013 at 12:43:21AM -0500, Mikulas Patocka wrote:
-> > > Hi
-> > Hi,
-> >=20
-> > I think it is very good that your patches could be used for other
-> > targets(snapshot, thin) after reviewing yours, but I find some issues
-> > (maybe not, please correct me if I am wrong).
-> >=20
-> > >=20
-> > > I did this already some times ago.
-> > > I'm sending my patches in the next mail.
-> > >=20
-> > > Basically, my and Guangliang's patches have the following differences:
-> > >=20
-> > > my patch: uses per-module throttle settings
-> > > Guangliang's patch: uses per-device settings
-> > > (my patch could be changed to use per-device throttle too, but withou=
-t=20
-> > > userspace support it isn't much useful because userspace lvm can=20
-> > > reload the mirror and per-device settings would be lost)
-> >=20
-> > We couldn't force every devices in the system hold the same throttle,
-> > IMHO, per-device settings couldn't be ignored.=20
-> > Setting the global value by the parameters of module is a good way, and
-> > it could also be used to set the default value in my patches. In this w=
-ay,
-> > the global setting wouldn't be lost, and we could also adjust every dev=
-ice's
-> > speed.
->=20
-> It could be good to have per-device throttle.
->=20
-> > > my patch: uses fine grained throttling of the individual IOs in kcopy=
-d -=20
-> > > it measures active/inactive ratio and if the disk is active more than=
- the=20
-> > > specified percentage of time, sleep is inserted.
-> >=20
-> > I think this policy might not be able to represent the exact write spee=
-d,=20
-> > while other modules(such as md, drbd) monitor the real IO speed.
->=20
-> But you don't want to limit raid resynchronization to a certain speed. A=
-=20
-> disk has varying speed, it is faster in the beginning and slower in the=20
-> end.
->=20
-> So if you want to limit raid resynchronization so that other tasks have=20
-> faster access to the disk, you need to limit percentage of time that is=20
-> spent on resynchronization, not resynchronization speed.
+>> But even with encryption it might happen that some blocks have been
+>> updated and some not.
+>> Even if  reading the blocks succeeds, the content can be a mess from
+>> old and new blocks.
+>
+> dm-crypt encrypts each 512-byte sector individually, so (assuming that
+> there is no disk with sector size <512 bytes), it can't result in random
+> data. You read either new data or old data.
+>
+>> This patch I sent out has one missing feature what I have not pushed yet.
+>> In the case of none-matching blocks, it just zeros blocks and returns
+>> no error (zero-on-mismatch).
+>> Writing to the block replaces the hmac.
+>> It works quite nicely. mkfs and fsck is able to read and write/fix the
+>> filesystem.
+>
+> But it causes silent data corruption for the user. So it's worse than
+> returning an error.
+>
+>> > How is this integrity target going to be used? Will you use it in an
+>> > environment where destroying data on crash doesn't matter? (can you
+>> > describe such environment?)
+>> >
+>>
+>> We are looking for possibility to use it in LSM based environment,
+>> where we do not want
+>> attacker could make offline modification of the filesystem and modify
+>> the TCB related stuff.
+>
+> What are the exact attach attack possibilities you are protecting against?
+>
+> Can the attacker observe or modify the data while system is running? (for
+> example the data is accessed remotely over an unsecured network
+> connection?) Or is it only protecting against modifications when the
+> system is down?
+>
+> Can the attacker modify the partition with hashes? - or do you store it in
+> another place that is supposed to be secure?
 
-Sounds good ..... not that easy though.
+Given that HMACs are being used to authenticate blocks, I'd assume,
+until corrected, that the HMACs aren't required to be on secure
+storage.  To that end, it seems like there is a distinct risk that an
+attacker could use old data blocks and old HMACs to construct an
+"authentic" dm-integrity target that doesn't match anything the
+user/TPM ever saw in aggregate before.  Perhaps I missed something
+when I skimmed the code, but it doesn't seem trivial to version the
+data or bind them to a large enough group of adjacent blocks without
+paying more computational costs (like using a Merkle tree with an
+HMAC'd root node). Technically, all the blocks would still be
+authentic, but the ordering in time and space wouldn't be. I'd love to
+know what ideas you have for that, or if that sort of attack is out of
+scope?  For ordering in space, inclusion of the sector index in the
+HMAC might help.
 
-But if the disk is otherwise idle, I want 100% of the time to be spend on
-synchronisation.  If it isn't otherwise idle, I want a much more modest
-faction to be used.
+thanks!
+will
 
-Getting this "right" is very hard.  You want to resync aggressively if there
-is no other traffic, but to back off quickly to some small background rate =
-if
-there is any other traffic.  That is what md tries to do.
-
-dm-raid1 has an extra complication.  It is used in clusters (clvm) where
-multiple separate hosts might be accessing the device.  So the host which is
-driving the resync cannot know what other IO there might be.
-In that case the only thing that seems to be practical is an maximum sync
-speed that can be set by the admin.
-
-NeilBrown
-
---Sig_/zVE4vsHjutQTEIU.CG/q.he
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIVAwUBUP9lHDnsnt1WYoG5AQLkZg//XRJXQcolJuyKeqbEzYGb3dBEa0iSLmSA
-oLReWEjrLjTANIi7BbnwdkLkPf4z8o4YX/EV3WahBSj2zAGLIIBgGgAuNAX4hLW2
-dJL+87QZZkN7JFZcyutF2pn9X/VkPKMoVWHLvMHnKQ34ZsTKDshT7Dwsi3qrhqTe
-du9H9DlA4BWt9SvKG53n2WupbyGidcXoXpXdFygH5vBLq42Fbe0XDLMLEoPtb//b
-ScYyUIIP71qar6kJgs6s2LjnWFL3lZK0KfcqRrMLB0AepJXri7BfW6WP16C9T2Ut
-5RygynE/Ef6tGPciVfSf7X1G8DILEOYKkpppO0Q1ylu66g1y+5ASOPPGDhfoldPw
-K0fVO1W5swy6KN75U1LoMN4fwKQT8fIcHCDGdtnzhGmyqAbsIMk5AbVpNM4DJ5uv
-3ao9vN0E7TNMiC5SwhBrW4xXDVXaLblhvg//Ym+vtbWwUjIMSCHYjty+GPQ9XWmR
-GT26CKlBWcs/ZS52nhHcJYHY2qxaaw9HUiqJHg+RvjjZTqMBw2PtBinvOAJl+sC4
-2BAy/9/HxbBvKIJ9Nh0d5PlVZw2GDJHR6UhAuRTDFyLzjnaanH8pl2oJ1AL3XANX
-YOrvIOlSfV30s6QXg9NQq53iFsbnuwwAvDoLptuwCavoRCLOSHAhmscLL3uGmIo9
-7X3tzdjegSE=
-=4qQg
------END PGP SIGNATURE-----
-
---Sig_/zVE4vsHjutQTEIU.CG/q.he--
+> What are you going to do if you get failed checksum because of a crash?
+>
+>> > It could possibly be used with ext3 or ext4 with data=journal mode - in
+>> > this mode, the filesystem writes everything to journal and overwrites data
+>> > and metadata with copy from journal on reboot, so it wouldn't matter if a
+>> > block that was being written is unreadable after the reboot. But even with
+>> > data=journal there are still some corner cases where metadata are
+>> > overwritten without journaling (for example fsck or tune2fs utilities) -
+>> > and if a crash happens, it could make metadata unreadable.
+>> >
+>>
+>> In normal environment, if fsck crashes, it might corrupt file system
+>> in the same way.
+>> zero-on-mismatch makes block device still accessible/fixable for fsck.
+>
+> The problem is that it apmplifies filesystem damage. For example, suppose
+> that fsck is modifying an inode. You get a crash and on next reboot not
+> just one inode, but the whole block of inodes is unreadable (or replaced
+> with zeros). Fsck "fixes" it, but the user loses more files.
+>
+>
+> I am thinking about possibly rewriting it so that it has two hashes per
+> sector so that if either old or new data is read, at least one hash
+> matches and it won't result in data corruption.
+>
+> Mikulas
