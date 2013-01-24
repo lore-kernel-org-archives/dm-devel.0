@@ -1,18 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm thin: fix queue limits stacking when data
- device has compulsory merge_bvec_fn
-Date: Wed, 23 Jan 2013 17:16:53 -0500
-Message-ID: <20130123221653.GA1545@redhat.com>
-References: <201301180219.10467.db@kavod.com>
-	<20130121184954.GA18892@redhat.com> <50FE739C.5090200@redhat.com>
-	<20130122135132.GA24851@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 5/8] [dm-thin] Fix a race condition
+	between	discard bios and ordinary bios.
+Date: Thu, 24 Jan 2013 02:35:03 +0000
+Message-ID: <20130124023503.GG30267@agk-dp.fab.redhat.com>
+References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
+	<1355429956-22785-6-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20130122135132.GA24851@redhat.com>
+In-Reply-To: <1355429956-22785-6-git-send-email-ejt@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,82 +21,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: sandeen@redhat.com, Daniel Browning <db@kavod.com>, ejt@redhat.com, Jeff Moyer <jmoyer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Joe Thornber <ejt@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-When a thin-pool uses an MD device for the data device a thin device
-from the thin-pool must respect MD's constraints about disallowing a bio
-to span multiple chunks.  Otherwise we can see problems.  If the raid0
-chunksize is 1152K and thin-pool chunksize is 256K I see the following
-md/radi0 error (with extra debug tracing added to thin_endio) when
-mkfs.xfs is executed against the thin device:
+On Thu, Dec 13, 2012 at 08:19:13PM +0000, Joe Thornber wrote:
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index 504f3d6..8e47f44 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -222,10 +222,28 @@ struct thin_c {
+>  
+>  	struct pool *pool;
+>  	struct dm_thin_device *td;
+> +
+> +	/*
+> +	 * The cell structures are too big to put on the stack, so we have
+> +	 * a couple here for use by the main mapping function.
+> +	 */
+> +	spinlock_t lock;
+> +	struct dm_bio_prison_cell cell1, cell2;
 
-md/raid0:md99: make_request bug: can't convert block across chunks or bigger than 1152k 6688 127
-device-mapper: thin: bio sector=2080 err=-5 bi_size=130560 bi_rw=17 bi_vcnt=32 bi_idx=0
+We're also trying to cut down on locking on these code paths.
+(High i/o load, many many cores?)
 
-This extra DM debugging shows that the failing bio is spanning across
-the first and second logical 1152K chunk (sector 2080 + 255 takes the
-bio beyond the first chunk's boundary of sector 2304).  So the bio
-splitting that DM is doing clearly isn't respecting the MD limits.
+Have you hit any problems while testing due to the stack size?
+The cells don't seem ridiculously big - could we perhaps just put them on 
+the stack for now?  If we do hit stack size problems in real world
+configurations, then we can try to compare the locking approach with an
+approach that uses a separate (local) mempool for each cell (or a
+mempool with double-sized elements).
 
-max_hw_sectors_kb is 127 for both the thin-pool and thin device
-(queue_max_hw_sectors returns 255 so we'll excuse sysfs's lack of
-precision).  So this explains why bi_size is 130560.
+> -		if (bio_detain(tc->pool, &key, bio, &cell1))
+> +		if (dm_bio_detain(tc->pool->prison, &key, bio, &tc->cell1, &cell_result)) {
 
-But the thin device's max_hw_sectors_kb should be 4 (PAGE_SIZE) given
-that it doesn't have a .merge function (for bio_add_page to consult
-indirectly via dm_merge_bvec) yet the thin-pool does sit above an MD
-device that has a compulsory merge_bvec_fn.  This scenario is exactly
-why DM must resort to sending single PAGE_SIZE bios to the underlying
-layer -- some additional context for this is available in the header for
-commit 8cbeb67a.
+This deals with the existing upstream mempool deadlock, but there are
+still some other calls to bio_detain() remaining in the file in other
+functions that take one cell from a mempool and, before returning it,
+may require a second cell from the same mempool, which could lead
+to a deadlock.
 
-Look story short, the reason a thin device doesn't properly get
-configured to have a max_hw_sectors_kb of 4 (PAGE_SIZE) is that
-thin_io_hints() is blindly copying the queue limits from the thin-pool
-device directly to the thin device's queue limits.
+Can they be fixed too?  (Multiple mempools/larger mempool elements where
+there isn't such an easy on-stack fix?  In the worst case we might
+later end up unable to avoid having to use the bio front_pad.)
 
-Fix this by eliminating thin_io_hints.  Doing so is safe because the
-block layer's queue limits stacking already enables the upper level thin
-device to inherit the thin-pool device's discard and minimum_io_size and
-optimal_io_size limits that get set in pool_io_hints.  But avoiding the
-queue limits copy allows the thin and thin-pool limits to be different
-where it is important, namely max_hw_sectors_kb.
-
-Reported-by: Daniel Browning <db@kavod.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org
----
- drivers/md/dm-thin.c |   11 -----------
- 1 files changed, 0 insertions(+), 11 deletions(-)
-
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 074e570..9bd59ae 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -2819,16 +2819,6 @@ static int thin_iterate_devices(struct dm_target *ti,
- 	return 0;
- }
- 
--/*
-- * A thin device always inherits its queue limits from its pool.
-- */
--static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
--{
--	struct thin_c *tc = ti->private;
--
--	*limits = bdev_get_queue(tc->pool_dev->bdev)->limits;
--}
--
- static struct target_type thin_target = {
- 	.name = "thin",
- 	.version = {1, 6, 0},
-@@ -2840,7 +2830,6 @@ static struct target_type thin_target = {
- 	.postsuspend = thin_postsuspend,
- 	.status = thin_status,
- 	.iterate_devices = thin_iterate_devices,
--	.io_hints = thin_io_hints,
- };
- 
- /*----------------------------------------------------------------*/
+Alasdair
