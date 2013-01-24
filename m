@@ -1,136 +1,55 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] userspace: dm statistics
-Date: Thu, 24 Jan 2013 15:13:00 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1301241511050.8036@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1301241507590.8036@file.rdu.redhat.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] Announcement: STEC EnhanceIO SSD caching software for
+ Linux kernel
+Date: Thu, 24 Jan 2013 15:45:24 -0800
+Message-ID: <20130124234524.GQ26407@google.com>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D6F3C@MYMBX.MY.STEC-INC.AD>
+ <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
+ <20130116104546.GA3869@raspberrypi>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D720A@MYMBX.MY.STEC-INC.AD>
+ <20130117113940.GI10411@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1301241507590.8036@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com, lvm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20130117113940.GI10411-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
+Cc: "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: dm-devel.ids
 
-This is the userspace patch for two-way messages that are needed for 
-statistics.
+On Thu, Jan 17, 2013 at 03:39:40AM -0800, Kent Overstreet wrote:
+> Suppose I could fill out the bcache version...
+> 
+> On Thu, Jan 17, 2013 at 05:52:00PM +0800, Amit Kale wrote:
+> > 11. Error conditions - Handling power failures, intermittent and permanent device failures.
+> 
+> Power failures and device failures yes, intermittent failures are not
+> explicitly handled.
 
-BTW. when querying large data sets, dmsetup fails with "Huge memory 
-allocation (size 67108864) rejected - metadata corruption?"
+Coworker pointed out bcache actually does handle some intermittent io errors. I
+just added error handling to the documentation: 
+http://atlas.evilpiepirate.org/git/linux-bcache.git/tree/Documentation/bcache.txt?h=bcache-dev
 
-- do you think this limit should be removed from dmsetup?
+To cut and paste,
 
-Mikulas
+Bcache tries to transparently handle IO errors to/from the cache device without
+affecting normal operation; if it sees too many errors (the threshold is
+configurable, and defaults to 0) it shuts down the cache device and switches all
+the backing devices to passthrough mode.
 
----
- libdm/ioctl/libdm-iface.c |   19 +++++++++++++++++++
- libdm/libdevmapper.h      |    1 +
- libdm/misc/dm-ioctl.h     |    5 +++++
- tools/dmsetup.c           |    9 +++++++++
- 4 files changed, 34 insertions(+)
+ - For reads from the cache, if they error we just retry the read from the
+   backing device.
 
-Index: LVM2.2.02.98/libdm/misc/dm-ioctl.h
-===================================================================
---- LVM2.2.02.98.orig/libdm/misc/dm-ioctl.h	2012-10-15 16:24:58.000000000 +0200
-+++ LVM2.2.02.98/libdm/misc/dm-ioctl.h	2013-01-23 10:18:48.000000000 +0100
-@@ -338,4 +338,9 @@ enum {
-  */
- #define DM_SECURE_DATA_FLAG		(1 << 15) /* In */
+ - For writethrough writes, if the write to the cache errors we just switch to
+   invalidating the data at that lba in the cache (i.e. the same thing we do for
+   a write that bypasses the cache)
  
-+/*
-+ * If set, message generated output.
-+ */
-+#define DM_MESSAGE_OUT_FLAG		(1 << 16) /* Out */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
-Index: LVM2.2.02.98/libdm/ioctl/libdm-iface.c
-===================================================================
---- LVM2.2.02.98.orig/libdm/ioctl/libdm-iface.c	2013-01-23 10:22:09.000000000 +0100
-+++ LVM2.2.02.98/libdm/ioctl/libdm-iface.c	2013-01-23 13:03:38.000000000 +0100
-@@ -700,6 +700,24 @@ struct dm_versions *dm_task_get_versions
- 				       dmt->dmi.v4->data_start);
- }
- 
-+const char *dm_task_get_message_result(struct dm_task *dmt)
-+{
-+	const char *start, *end;
-+	if (!(dmt->dmi.v4->flags & DM_MESSAGE_OUT_FLAG))
-+		return NULL;
-+	start = (const char *) dmt->dmi.v4 + dmt->dmi.v4->data_start;
-+	end = (const char *) dmt->dmi.v4 + dmt->dmi.v4->data_size;
-+	if (end < start) {
-+		log_error(INTERNAL_ERROR "Corrupted message structure returned: %d > %d", (int)dmt->dmi.v4->data_start, (int)dmt->dmi.v4->data_size);
-+		return NULL;
-+	}
-+	if (!memchr(start, 0, end - start)) {
-+		log_error(INTERNAL_ERROR "Message result doesn't contain terminating nul character");
-+		return NULL;
-+	}
-+	return start;
-+}
-+
- int dm_task_set_ro(struct dm_task *dmt)
- {
- 	dmt->read_only = 1;
-@@ -1870,6 +1888,7 @@ repeat_ioctl:
- 		case DM_DEVICE_STATUS:
- 		case DM_DEVICE_TABLE:
- 		case DM_DEVICE_WAITEVENT:
-+		case DM_DEVICE_TARGET_MSG:
- 			_ioctl_buffer_double_factor++;
- 			_dm_zfree_dmi(dmi);
- 			goto repeat_ioctl;
-Index: LVM2.2.02.98/libdm/libdevmapper.h
-===================================================================
---- LVM2.2.02.98.orig/libdm/libdevmapper.h	2013-01-23 10:42:52.000000000 +0100
-+++ LVM2.2.02.98/libdm/libdevmapper.h	2013-01-23 10:46:26.000000000 +0100
-@@ -178,6 +178,7 @@ const char *dm_task_get_uuid(const struc
- 
- struct dm_deps *dm_task_get_deps(struct dm_task *dmt);
- struct dm_versions *dm_task_get_versions(struct dm_task *dmt);
-+const char *dm_task_get_message_result(struct dm_task *dmt);
- 
- /*
-  * These functions return device-mapper names based on the value
-Index: LVM2.2.02.98/tools/dmsetup.c
-===================================================================
---- LVM2.2.02.98.orig/tools/dmsetup.c	2013-01-23 10:50:18.000000000 +0100
-+++ LVM2.2.02.98/tools/dmsetup.c	2013-01-24 12:28:47.000000000 +0100
-@@ -770,6 +770,7 @@ static int _message(CMD_ARGS)
- 	size_t sz = 1;
- 	struct dm_task *dmt;
- 	char *str;
-+	const char *result;
- 	uint64_t sector;
- 	char *endptr;
- 
-@@ -833,6 +834,14 @@ static int _message(CMD_ARGS)
- 	if (!dm_task_run(dmt))
- 		goto out;
- 
-+	result = dm_task_get_message_result(dmt);
-+	if (result) {
-+		if (!*result || result[strlen(result) - 1] == '\n')
-+			fputs(result, stdout);
-+		else
-+			puts(result);
-+	}
-+
- 	r = 1;
- 
-       out:
+ - For writeback writes, we currently pass that error back up to the
+   filesystem/userspace. This could be improved - we could retry it as a write
+   that skips the cache so we don't have to error the write.
 
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+ - When we detach, we first try to flush any dirty data (if we were running in
+   writeback mode). It currently doesn't do anything intelligent if it fails to
+   read some of the dirty data, though.
