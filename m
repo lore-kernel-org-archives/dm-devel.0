@@ -1,69 +1,98 @@
-From: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] Announcement: STEC EnhanceIO SSD caching software for
- Linux kernel
-Date: Thu, 24 Jan 2013 15:55:41 -0800
-Message-ID: <20130124235541.GR26407@google.com>
-References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D6F3C@MYMBX.MY.STEC-INC.AD>
- <CAMM=eLdgD8GKeK48SU2rfC49u3H4WRf9-xFxM4ymVPbKkx+mCw@mail.gmail.com>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D70CE@MYMBX.MY.STEC-INC.AD>
- <20130116104546.GA3869@raspberrypi>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D720A@MYMBX.MY.STEC-INC.AD>
- <20130117132620.GA2438@raspberrypi>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7248@MYMBX.MY.STEC-INC.AD>
- <50F844A3.9020300@warr.net>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D72F1@MYMBX.MY.STEC-INC.AD>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 6/8] [persistent-data] Add a
+	transactional	array.
+Date: Fri, 25 Jan 2013 20:11:06 +0000
+Message-ID: <20130125201106.GJ3122@agk-dp.fab.redhat.com>
+References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
+	<1355429956-22785-7-git-send-email-ejt@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D72F1-AQg6BlXVjylhNUoibfp7lHKnxlUjViKd@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
-Cc: Jason Warr <jason-/cow75dQlsI@public.gmane.org>, "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1355429956-22785-7-git-send-email-ejt@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Joe Thornber <ejt@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 18, 2013 at 05:08:37PM +0800, Amit Kale wrote:
-> > From: Jason Warr [mailto:jason-/cow75dQlsI@public.gmane.org]
-> > On 01/17/2013 11:53 AM, Amit Kale wrote:
-> > >>> 9. Performance - Throughput is generally most important. Latency is
-> > >> >   also one more performance comparison point. Performance under
-> > >> >   different load classes can be measured.
-> > >> >
-> > >> >   I think latency is more important than throughput.  Spindles are
-> > >> >   pretty good at throughput.  In fact the mq policy tries to spot
-> > when
-> > >> >   we're doing large linear ios and stops hit counting; best leave
-> > this
-> > >> >   stuff on the spindle.
-> > > I disagree. Latency is taken care of automatically when the number of
-> > application threads rises.
-> > >
-> > 
-> > Can you explain what you mean by that in a little more detail?
-> 
-> Let's say latency of a block device is 10ms for 4kB requests. With single threaded IO, the throughput will be 4kB/10ms = 400kB/s. If the device is capable of more throughput, a multithreaded IO will generate more throughput. So with 2 threads the throughput will be roughly 800kB/s. We can keep increasing the number of threads resulting in an approximately linear throughput. It'll saturate at the maximum capacity the device has. So it could saturate at perhaps at 8MB/s. Increasing the number of threads beyond this will not increase throughput.
-> 
-> This is a simplistic computation. Throughput, latency and number of threads are related in a more complex relationship. Latency is still important, but throughput is more important.
-> 
-> The way all this matters for SSD caching is, caching will typically show a higher latency compared to the base SSD, even for a 100% hit ratio. It may be possible to reach the maximum throughput achievable with the base SSD using a high number of threads. Let's say an SSD shows 450MB/s with 4 threads. A cache may show 440MB/s with 8 threads.
-
-Going through the cache should only (measurably) increase latency for
-writes, not reads (assuming they're cache hits, not misses). It sounds
-like you're talking about the overhead for keeping the index up to date,
-which is only a factor for writes, but I'm not quite sure since you talk
-about hit rate.
-
-I don't know of any reason why throughput or latency should be noticably
-worse than raw for reads from cache.
-
-But for writes, yeah - as number of of concurrent IOs goes up, you can
-amortize the metadata writes more and more so throughput compared to raw
-goes up. I don't think latency would change much vs. raw, you're always
-going to have an extra metadata write to wait on... though there are
-tricks you can do so the metadata write and data write can go down in
-parallel. Bcache doesn't do those yet.
-
-_But_, you only have to pay the metadata write penalty when you see a
-cache flush/FUA write. In the absense of cache flushes/FUA, for
-metadata purposes you can basically treat a stream as sequential writes
-as going down in parallel.
+T24gVGh1LCBEZWMgMTMsIDIwMTIgYXQgMDg6MTk6MTRQTSArMDAwMCwgSm9lIFRob3JuYmVyIHdy
+b3RlOgo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL3BlcnNpc3RlbnQtZGF0YS9kbS1hcnJheS5j
+IGIvZHJpdmVycy9tZC9wZXJzaXN0ZW50LWRhdGEvZG0tYXJyYXkuYwo+IG5ldyBmaWxlIG1vZGUg
+MTAwNjQ0Cj4gaW5kZXggMDAwMDAwMC4uZDc2MmNhZgo+IC0tLSAvZGV2L251bGwKPiArKysgYi9k
+cml2ZXJzL21kL3BlcnNpc3RlbnQtZGF0YS9kbS1hcnJheS5jCj4gQEAgLTAsMCArMSw4MTggQEAK
+Cj4gK3N0YXRpYyBpbnQgYXJyYXlfYmxvY2tfY2hlY2soc3RydWN0IGRtX2Jsb2NrX3ZhbGlkYXRv
+ciAqdiwKPiArCQkJICAgICBzdHJ1Y3QgZG1fYmxvY2sgKmIsCj4gKwkJCSAgICAgc2l6ZV90IGJs
+b2NrX3NpemUpCgpQbGVhc2UgcmVuYW1lIGJsb2NrX3NpemUgdGhyb3VnaG91dCB0byBhdm9pZCBh
+bnkgcG9zc2libGUgY29uZnVzaW9uCndpdGggdGhlIGlubGluZSBmdW5jdGlvbiBvZiB0aGUgc2Ft
+ZSBuYW1lLgoKPiArewo+ICsJc3RydWN0IGFycmF5X2Jsb2NrICpiaF9sZSA9IGRtX2Jsb2NrX2Rh
+dGEoYik7Cj4gKwlfX2xlMzIgY3N1bV9kaXNrOwo+ICsKPiArCWlmIChkbV9ibG9ja19sb2NhdGlv
+bihiKSAhPSBsZTY0X3RvX2NwdShiaF9sZS0+YmxvY2tucikpIHsKPiArCQlETUVSUl9MSU1JVCgi
+YXJyYXlfYmxvY2tfY2hlY2sgZmFpbGVkOiBibG9ja25yICVsbHUgIT0gd2FudGVkICVsbHUiLAo+
+ICsJCQkgICAgbGU2NF90b19jcHUoYmhfbGUtPmJsb2NrbnIpLCBkbV9ibG9ja19sb2NhdGlvbihi
+KSk7CgpXZSBnZW5lcmFsbHkgdXNlIGFuIGV4cGxpY2l0IGNhc3QgdG8gKHVuc2lnbmVkIGxvbmcg
+bG9uZykgdG8gYXZvaWQgd2FybmluZ3MKb24gc29tZSBhcmNocy4gIChDaGVjayB0aGUgb3RoZXIg
+cGxhY2VzIHdpdGggZm9ybWF0IHN0cmluZ3MgdG9vLikKCj4gK3N0YXRpYyB1aW50MzJfdCBjYWxj
+X21heF9lbnRyaWVzKHNpemVfdCB2YWx1ZV9zaXplLCBzaXplX3QgYmxvY2tfc2l6ZSkKPiArewo+
+ICsJcmV0dXJuIChibG9ja19zaXplIC0gc2l6ZW9mKHN0cnVjdCBhcnJheV9ibG9jaykpIC8gdmFs
+dWVfc2l6ZTsKPiArfQoKOiB3YXJuaW5nOiBjb252ZXJzaW9uIHRvIOKAmHVpbnQzMl904oCZIGZy
+b20g4oCYbG9uZyB1bnNpZ25lZCBpbnTigJkgbWF5IGFsdGVyIGl0cyB2YWx1ZQoKUGVyaGFwcyBz
+b21lIG9mIHRoZSBpbXBsaWN0IGNhc3RpbmcgY291bGQgYmUgdGlkaWVkIGEgYml0LCBidXQgSSBo
+YXZlbid0IHNwb3R0ZWQKYW55IHBsYWNlcyB3aGVyZSBpdCBjYXVzZXMgcmVhbCBwcm9ibGVtcy4K
+Cj4gK3N0YXRpYyBpbnQgaW5zZXJ0X2Z1bGxfYWJsb2NrcyhzdHJ1Y3QgZG1fYXJyYXlfaW5mbyAq
+aW5mbywgc2l6ZV90IGJsb2NrX3NpemUsCj4gKwkJCSAgICAgICB1bnNpZ25lZCBiZWdpbl9ibG9j
+aywgdW5zaWduZWQgZW5kX2Jsb2NrLAo+ICsJCQkgICAgICAgdW5zaWduZWQgbWF4X2VudHJpZXMs
+IGNvbnN0IHZvaWQgKnZhbHVlLAo+ICsJCQkgICAgICAgZG1fYmxvY2tfdCAqcm9vdCkKPiArewo+
+ICsJaW50IHI7Cj4gKwlzdHJ1Y3QgZG1fYmxvY2sgKmJsb2NrOwo+ICsJc3RydWN0IGFycmF5X2Js
+b2NrICphYjsKPiArCj4gKwoKRXh0cmEgYmxhbmsgbGluZS4KCj4gKwl3aGlsZSAoYmVnaW5fYmxv
+Y2sgIT0gZW5kX2Jsb2NrKSB7Cj4gKwkJciA9IGFsbG9jX2FibG9jayhpbmZvLCBibG9ja19zaXpl
+LCAmYmxvY2ssICZhYik7Cj4gKwkJaWYgKHIpCj4gKwkJCXJldHVybiByOwo+ICsKPiArCQlmaWxs
+X2FibG9jayhpbmZvLCBhYiwgdmFsdWUsIGxlMzJfdG9fY3B1KGFiLT5tYXhfZW50cmllcykpOwoK
+bWF4X2VudHJpZXMgZnVuY3Rpb24gcGFyYW1ldGVyIGlzIHVudXNlZCAtIHdoaWNoIHNob3VsZCBp
+dCBiZT8KCj4gK3N0YXRpYyBpbnQgZ3JvdyhzdHJ1Y3QgcmVzaXplICpyZXNpemUpCj4gK3sKPiAr
+CWludCByOwo+ICsJc3RydWN0IGRtX2Jsb2NrICpibG9jazsKPiArCXN0cnVjdCBhcnJheV9ibG9j
+ayAqYWI7Cj4gKwo+ICsJaWYgKHJlc2l6ZS0+bmV3X25yX2Z1bGxfYmxvY2tzID4gcmVzaXplLT5v
+bGRfbnJfZnVsbF9ibG9ja3MpIHsKPiArCQkvKgo+ICsJCSAqIFBhZCB0aGUgZW5kIG9mIHRoZSBv
+bGQgYmxvY2s/Cj4gKwkJICovCj4gKwkJaWYgKHJlc2l6ZS0+b2xkX25yX2VudHJpZXNfaW5fbGFz
+dF9ibG9jayA+IDApIHsKPiArCQkJciA9IHNoYWRvd19hYmxvY2socmVzaXplLT5pbmZvLCAmcmVz
+aXplLT5yb290LAo+ICsJCQkJCSAgcmVzaXplLT5vbGRfbnJfZnVsbF9ibG9ja3MsICZibG9jaywg
+JmFiKTsKPiArCQkJaWYgKHIpCj4gKwkJCQlyZXR1cm4gcjsKPiArCj4gKwkJCWZpbGxfYWJsb2Nr
+KHJlc2l6ZS0+aW5mbywgYWIsIHJlc2l6ZS0+dmFsdWUsIHJlc2l6ZS0+bWF4X2VudHJpZXMpOwo+
+ICsJCQl1bmxvY2tfYWJsb2NrKHJlc2l6ZS0+aW5mbywgYmxvY2spOwo+ICsJCX0KPiArCj4gKwkJ
+LyoKPiArCQkgKiBBZGQgdGhlIGZ1bGwgYmxvY2tzLgo+ICsJCSAqLwo+ICsJCXIgPSBpbnNlcnRf
+ZnVsbF9hYmxvY2tzKHJlc2l6ZS0+aW5mbywgcmVzaXplLT5ibG9ja19zaXplLAo+ICsJCQkJCXJl
+c2l6ZS0+b2xkX25yX2Z1bGxfYmxvY2tzLAo+ICsJCQkJCXJlc2l6ZS0+bmV3X25yX2Z1bGxfYmxv
+Y2tzLAo+ICsJCQkJCXJlc2l6ZS0+bWF4X2VudHJpZXMsIHJlc2l6ZS0+dmFsdWUsCj4gKwkJCQkJ
+JnJlc2l6ZS0+cm9vdCk7Cj4gKwkJaWYgKHIpCj4gKwkJCXJldHVybiByOwo+ICsKPiArCQkvKgo+
+ICsJCSAqIEFkZCBuZXcgdGFpbCBibG9jaz8KPiArCQkgKi8KPiArCQlpZiAocmVzaXplLT5uZXdf
+bnJfZW50cmllc19pbl9sYXN0X2Jsb2NrKQo+ICsJCQlyID0gaW5zZXJ0X3BhcnRpYWxfYWJsb2Nr
+KHJlc2l6ZS0+aW5mbywgcmVzaXplLT5ibG9ja19zaXplLAo+ICsJCQkJCQkgIHJlc2l6ZS0+bmV3
+X25yX2Z1bGxfYmxvY2tzLAo+ICsJCQkJCQkgIHJlc2l6ZS0+bmV3X25yX2VudHJpZXNfaW5fbGFz
+dF9ibG9jaywKPiArCQkJCQkJICByZXNpemUtPnZhbHVlLCAmcmVzaXplLT5yb290KTsKCnJldHVy
+biBkaXJlY3RseSBoZXJlIGFuZCBkcm9wIHRoZSBlbHNlIChtYXliZSBpbnZlcnRpbmcgdGhlIGlm
+IHRlc3QpIGFuZApyZWR1Y2luZyB0aGUgaW5kZW50YXRpb24/Cgo+ICsJfSBlbHNlIHsKPiArCQlp
+ZiAoIXJlc2l6ZS0+b2xkX25yX2VudHJpZXNfaW5fbGFzdF9ibG9jaykgewo+ICsJCQlyID0gaW5z
+ZXJ0X3BhcnRpYWxfYWJsb2NrKHJlc2l6ZS0+aW5mbywgcmVzaXplLT5ibG9ja19zaXplLAoKUmVk
+dW5kYW50IHt9Cgo+ICsJCQkJCQkgIHJlc2l6ZS0+bmV3X25yX2Z1bGxfYmxvY2tzLAo+ICsJCQkJ
+CQkgIHJlc2l6ZS0+bmV3X25yX2VudHJpZXNfaW5fbGFzdF9ibG9jaywKPiArCQkJCQkJICByZXNp
+emUtPnZhbHVlLCAmcmVzaXplLT5yb290KTsKPiArCQl9IGVsc2UgewoKLi4uCgo+ICsJciA9IGRt
+X3RtX3JlZihpbmZvLT5idHJlZV9pbmZvLnRtLCBiLCAmcmVmX2NvdW50KTsKPiArCWlmIChyKSB7
+Cj4gKwkJRE1FUlJfTElNSVQoImNvdWxkbid0IGdldCByZWZlcmVuY2UgY291bnQiKTsKPiArCQly
+ZXR1cm47Cj4gKwl9Cj4gKwo+ICsJaWYgKHJlZl9jb3VudCA9PSAxKSB7Cj4gKwkJLyoKPiArCQkg
+KiBXZSdyZSBhYm91dCB0byBkcm9wIHRoZSBsYXN0IHJlZmVyZW5jZSB0byB0aGlzIGFibG9jay4K
+PiArCQkgKiBTbyB3ZSBuZWVkIHRvIGRlY3JlbWVudCB0aGUgcmVmIGNvdW50IG9mIHRoZSBjb250
+ZW50cy4KPiArCQkgKi8KPiArCQlyID0gZ2V0X2FibG9jayhpbmZvLCBiLCAmYmxvY2ssICZhYik7
+Cj4gKwkJaWYgKHIpIHsKPiArCQkJRE1FUlJfTElNSVQoImNvdWxkbid0IGdldCBhcnJheSBibG9j
+ayIpOwo+ICsJCQlyZXR1cm47Cj4gKwkJfQoKQ2FuIHdlIGFkZCBtb3JlIGNvbnRleHQgdG8gdGhl
+c2UgZXJyb3IgbWVzc2FnZXMgLSBlLmcuIHRoZSBibG9jayBudW1iZXI/CgpBbGFzZGFpcgoKLS0K
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
+aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
