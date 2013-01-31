@@ -1,35 +1,55 @@
-From: Dharmesh Kamdar <kamdard71@yahoo.com>
-Subject: What does prio=-1 signify ?
-Date: Thu, 31 Jan 2013 10:50:58 -0800 (PST)
-Message-ID: <1359658258.64853.YahooMailNeo@web122104.mail.ne1.yahoo.com>
-Reply-To: Dharmesh Kamdar <kamdard71@yahoo.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Bcache upstreaming
+Date: Thu, 31 Jan 2013 14:02:49 -0500
+Message-ID: <20130131190249.GA12786@redhat.com>
+References: <20130110175954.GR26407@google.com>
+ <20130114223722.GZ26407@google.com>
+ <20130114225330.GA1365@redhat.com>
+ <20130117022728.GA16148@redhat.com>
+ <20130117114104.GJ10411@moria.home.lan>
+ <20130130233643.GD12631@moria.home.lan>
+ <20130131001020.GA7541@redhat.com>
+ <20130131012627.GF12631@moria.home.lan>
+ <20130131012747.GG12631@moria.home.lan>
+ <20130131014835.GH12631@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20130131014835.GH12631-jC9Py7bek1znysI04z7BkA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi,
+On Wed, Jan 30 2013 at  8:48pm -0500,
+Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
 
-In the" multipath -l" output, what does the "prio=3D-1" signify ?
+> On Wed, Jan 30, 2013 at 05:27:47PM -0800, Kent Overstreet wrote:
+> > On Wed, Jan 30, 2013 at 05:26:27PM -0800, Kent Overstreet wrote:
+> > > On Wed, Jan 30, 2013 at 07:10:21PM -0500, Mike Snitzer wrote:
+> > > > On Wed, Jan 30 2013 at  6:36pm -0500,
+> > > > Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> > > > 
+> > > > > Fixed a bunch of other bugs today too... notably the bug where it'd
+> > > > > crash if you enabled discards. Was there anything else you or anyone
+> > > > > else was hitting?
+> > > > 
+> > > > Great, thanks, the other outstanding report was this one:
+> > > > https://lkml.org/lkml/2013/1/17/554
+> > > 
+> > > Yep, that was the discard bug I just fixed.
+> > 
+> > Err I misread - nope, I missed that one. Taking a look now.
+> 
+> Fucking shrinkers, i swear that's one of the most nonsensical APIs I've
+> yet encountered.
+> 
+> This is going to take some thought. For now, just disable the shrinker:
+> 
+> echo 1 > /sys/fs/bcache/<uuid>/internal/btree_shrinker_disabled
 
-I've not been able to find it in any DM-MP guides so far. The question rela=
-tes to OEL 5.7 with=A0multipath-0.4.9-23.0.9.el5 and=A0kernel-uek-2.6.32-20=
-0.13.1.el5uek.=A0
+Oddly I don't have a /sys/fs/bcache/<uuid> even though I have created
+/dev/bcache0
 
-
-Hope someone can provide more info.
-
-Thanks,
-Dharmesh.
+The only files I have in /sys/fs/bcache/ are: register  register_quiet
