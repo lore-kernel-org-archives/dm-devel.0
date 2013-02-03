@@ -1,69 +1,123 @@
-From: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
-Subject: RE: [RFC] [DONOTAPPLY] [PATCH] enhanceio: STEC EnhanceIO SSD
- caching software for Linux kernel
-Date: Sat, 2 Feb 2013 09:39:00 +0800
-Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D6474@MYMBX.MY.STEC-INC.AD>
-References: <20130202004459.GA4760@blackbox.djwong.org>
-	<CANN689ExTyhZBiQ-pg3jw+sA4X459qcy3kpt82n3obJ=9AVceQ@mail.gmail.com>
-	<CAH+dOxLDVsrmuh2b+RVxwOd0+JOQ+LsbuRYB5zqTE7DnoA+XTA@mail.gmail.com>
- <CAH+dOxKUdxF1Ds9ogncBF1K-A979j46SqGq1rVeqii8LtgHxQw@mail.gmail.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH 31/62] dm: convert to idr_alloc()
+Date: Sat,  2 Feb 2013 17:20:32 -0800
+Message-ID: <1359854463-2538-32-git-send-email-tj@kernel.org>
+References: <1359854463-2538-1-git-send-email-tj@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAH+dOxKUdxF1Ds9ogncBF1K-A979j46SqGq1rVeqii8LtgHxQw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-bcache <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jason Warr <jason-/cow75dQlsI@public.gmane.org>, "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1359854463-2538-1-git-send-email-tj@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: akpm@linux-foundation.org
+Cc: axboe@kernel.dk, skinsbursky@parallels.com, rusty@rustcorp.com.au, jmorris@namei.org, linux-kernel@vger.kernel.org, bfields@fieldses.org, dm-devel@redhat.com, ebiederm@xmission.com, Tejun Heo <tj@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-End user documentation is on our github. I think it should go with the user level utilities, rather than the kernel driver.
--Amit
+Convert to the much saner new idr interface.
 
-> -----Original Message-----
-> From: Kent Overstreet [mailto:koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org]
-> Sent: Friday, February 01, 2013 5:25 PM
-> To: Michel Lespinasse
-> Cc: Darrick J. Wong; Amit Kale; linux-bcache; device-mapper
-> development; Kent Overstreet; Mike Snitzer; LKML; Jason Warr;
-> thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-> Subject: Re: [RFC] [DONOTAPPLY] [PATCH] enhanceio: STEC EnhanceIO SSD
-> caching software for Linux kernel
-> 
-> Also, where's the end user documentation?
-> 
-> On Fri, Feb 1, 2013 at 5:23 PM, Kent Overstreet
-> <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> > On Fri, Feb 1, 2013 at 4:57 PM, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> wrote:
-> >> On Fri, Feb 1, 2013 at 4:44 PM, Darrick J. Wong
-> <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> >>> This is a patch to migrate STEC's enhanceio driver out of their
-> >>> github repository and into the staging tree.  From their README:
-> >>>
-> >>> "EnhanceIO driver is based on EnhanceIO SSD caching software
-> product
-> >>> developed by STEC Inc. EnhanceIO was derived from Facebook's open
-> >>> source Flashcache project. EnhanceIO uses SSDs as cache devices for
-> >>> traditional rotating hard disk drives (referred to as source
-> volumes throughout this document).
-> >>> EnhanceIO can work with any block device, be it an entire physical
-> >>> disk, an individual disk partition,  a RAIDed DAS device, a SAN
-> >>> volume, a device mapper volume or a software RAID (md) device."
-> >>
-> >> What's your take on the benefits of this vs bcache ?
-> >
-> > I've been trying to review it it for cache coherency and consistency
-> > wrt. power failures, but the complete lack of high level
-> documentation
-> > is making that difficult.
-> >
-> > I saw some benchmarks the other day where on writes EIO was faster
-> > than the raw device, which was... suspicious.
+Only compile tested.
 
-PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+---
+This patch depends on an earlier idr changes and I think it would be
+best to route these together through -mm.  Please holler if there's
+any objection.  Thanks.
 
+ drivers/md/dm.c | 54 +++++++++++++++---------------------------------------
+ 1 file changed, 15 insertions(+), 39 deletions(-)
 
-
-This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ea1a6ca..29cd4e2 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1753,62 +1753,38 @@ static void free_minor(int minor)
+  */
+ static int specific_minor(int minor)
+ {
+-	int r, m;
++	int r;
+ 
+ 	if (minor >= (1 << MINORBITS))
+ 		return -EINVAL;
+ 
+-	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
+-	if (!r)
+-		return -ENOMEM;
+-
++	idr_preload(GFP_KERNEL);
+ 	spin_lock(&_minor_lock);
+ 
+-	if (idr_find(&_minor_idr, minor)) {
+-		r = -EBUSY;
+-		goto out;
+-	}
+-
+-	r = idr_get_new_above(&_minor_idr, MINOR_ALLOCED, minor, &m);
+-	if (r)
+-		goto out;
++	r = idr_alloc(&_minor_idr, MINOR_ALLOCED, minor, minor + 1, GFP_NOWAIT);
+ 
+-	if (m != minor) {
+-		idr_remove(&_minor_idr, m);
+-		r = -EBUSY;
+-		goto out;
+-	}
+-
+-out:
+ 	spin_unlock(&_minor_lock);
+-	return r;
++	idr_preload_end();
++	if (r < 0)
++		return r == -ENOSPC ? -EBUSY : r;
++	return 0;
+ }
+ 
+ static int next_free_minor(int *minor)
+ {
+-	int r, m;
+-
+-	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
+-	if (!r)
+-		return -ENOMEM;
++	int r;
+ 
++	idr_preload(GFP_KERNEL);
+ 	spin_lock(&_minor_lock);
+ 
+-	r = idr_get_new(&_minor_idr, MINOR_ALLOCED, &m);
+-	if (r)
+-		goto out;
+-
+-	if (m >= (1 << MINORBITS)) {
+-		idr_remove(&_minor_idr, m);
+-		r = -ENOSPC;
+-		goto out;
+-	}
+-
+-	*minor = m;
++	r = idr_alloc(&_minor_idr, MINOR_ALLOCED, 0, 1 << MINORBITS, GFP_NOWAIT);
+ 
+-out:
+ 	spin_unlock(&_minor_lock);
+-	return r;
++	idr_preload_end();
++	if (r < 0)
++		return r;
++	*minor = r;
++	return 0;
+ }
+ 
+ static const struct block_device_operations dm_blk_dops;
+-- 
+1.8.1
