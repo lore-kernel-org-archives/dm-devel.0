@@ -1,123 +1,27 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 31/62] dm: convert to idr_alloc()
-Date: Sat,  2 Feb 2013 17:20:32 -0800
-Message-ID: <1359854463-2538-32-git-send-email-tj@kernel.org>
-References: <1359854463-2538-1-git-send-email-tj@kernel.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Subject: Re: [RFC] [DONOTAPPLY] [PATCH] enhanceio: STEC EnhanceIO SSD caching
+ software for Linux kernel
+Date: Mon, 4 Feb 2013 14:40:17 +0000
+Message-ID: <20130204144016.GA2522@raspberrypi>
+References: <20130202004459.GA4760@blackbox.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1359854463-2538-1-git-send-email-tj@kernel.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: akpm@linux-foundation.org
-Cc: axboe@kernel.dk, skinsbursky@parallels.com, rusty@rustcorp.com.au, jmorris@namei.org, linux-kernel@vger.kernel.org, bfields@fieldses.org, dm-devel@redhat.com, ebiederm@xmission.com, Tejun Heo <tj@kernel.org>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20130202004459.GA4760-yuuUpGxbzT9UbpRmUfBrXUB+6BGkLq7r@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, linux-bcache <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jason Warr <jason-/cow75dQlsI@public.gmane.org>
 List-Id: dm-devel.ids
 
-Convert to the much saner new idr interface.
+On Fri, Feb 01, 2013 at 04:44:59PM -0800, Darrick J. Wong wrote:
+> I will start reviewing the code as soon as this patch posts.  Be warned that I
+> haven't even compile tested this yet. :)
 
-Only compile tested.
+Has the code been updated since I looked at it a couple of weeks ago?
+For example addressing all the 'sparse' warnings?
 
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
-This patch depends on an earlier idr changes and I think it would be
-best to route these together through -mm.  Please holler if there's
-any objection.  Thanks.
+If you've not compiled or reviewed this code, what do you mean by the
+'signed-off by' tag?
 
- drivers/md/dm.c | 54 +++++++++++++++---------------------------------------
- 1 file changed, 15 insertions(+), 39 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ea1a6ca..29cd4e2 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1753,62 +1753,38 @@ static void free_minor(int minor)
-  */
- static int specific_minor(int minor)
- {
--	int r, m;
-+	int r;
- 
- 	if (minor >= (1 << MINORBITS))
- 		return -EINVAL;
- 
--	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
--	if (!r)
--		return -ENOMEM;
--
-+	idr_preload(GFP_KERNEL);
- 	spin_lock(&_minor_lock);
- 
--	if (idr_find(&_minor_idr, minor)) {
--		r = -EBUSY;
--		goto out;
--	}
--
--	r = idr_get_new_above(&_minor_idr, MINOR_ALLOCED, minor, &m);
--	if (r)
--		goto out;
-+	r = idr_alloc(&_minor_idr, MINOR_ALLOCED, minor, minor + 1, GFP_NOWAIT);
- 
--	if (m != minor) {
--		idr_remove(&_minor_idr, m);
--		r = -EBUSY;
--		goto out;
--	}
--
--out:
- 	spin_unlock(&_minor_lock);
--	return r;
-+	idr_preload_end();
-+	if (r < 0)
-+		return r == -ENOSPC ? -EBUSY : r;
-+	return 0;
- }
- 
- static int next_free_minor(int *minor)
- {
--	int r, m;
--
--	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
--	if (!r)
--		return -ENOMEM;
-+	int r;
- 
-+	idr_preload(GFP_KERNEL);
- 	spin_lock(&_minor_lock);
- 
--	r = idr_get_new(&_minor_idr, MINOR_ALLOCED, &m);
--	if (r)
--		goto out;
--
--	if (m >= (1 << MINORBITS)) {
--		idr_remove(&_minor_idr, m);
--		r = -ENOSPC;
--		goto out;
--	}
--
--	*minor = m;
-+	r = idr_alloc(&_minor_idr, MINOR_ALLOCED, 0, 1 << MINORBITS, GFP_NOWAIT);
- 
--out:
- 	spin_unlock(&_minor_lock);
--	return r;
-+	idr_preload_end();
-+	if (r < 0)
-+		return r;
-+	*minor = r;
-+	return 0;
- }
- 
- static const struct block_device_operations dm_blk_dops;
--- 
-1.8.1
+- Joe
