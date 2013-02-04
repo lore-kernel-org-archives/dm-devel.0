@@ -1,42 +1,33 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: [LSF/MM TOPIC] Re: [dm-devel] Announcement: STEC EnhanceIO SSD
- caching software for Linux kernel
-Date: Mon, 4 Feb 2013 12:33:26 -0800
-Message-ID: <20130204203326.GA21532@google.com>
-References: <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7248@MYMBX.MY.STEC-INC.AD>
- <50F844A3.9020300@warr.net>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D72F1@MYMBX.MY.STEC-INC.AD>
- <50F970A3.4000403@warr.net>
- <20130118161135.GA3118@raspberrypi>
- <50F97C0F.9010405@warr.net>
- <C4B5704C6FEB5244B2A1BCC8CF83B86B07CE4D7345@MYMBX.MY.STEC-INC.AD>
- <50F9963A.2080608@warr.net>
- <20130118212543.GB6425@blackbox.djwong.org>
- <20130118213759.GA30278@redhat.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC] [DONOTAPPLY] [PATCH] enhanceio: STEC EnhanceIO SSD caching
+ software for Linux kernel
+Date: Mon, 4 Feb 2013 12:53:39 -0800
+Message-ID: <20130204205339.GI4761@blackbox.djwong.org>
+References: <20130202004459.GA4760@blackbox.djwong.org>
+ <20130204144016.GA2522@raspberrypi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20130118213759.GA30278@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, device-mapper development <dm-devel@redhat.com>, Amit Kale <akale@stec-inc.com>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, LKML <linux-kernel@vger.kernel.org>, lsf-pc@lists.linux-foundation.org, Joe Thornber <ejt@redhat.com>
+In-Reply-To: <20130204144016.GA2522@raspberrypi>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, linux-bcache <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jason Warr <jason-/cow75dQlsI@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Fri, Jan 18, 2013 at 04:37:59PM -0500, Mike Snitzer wrote:
-> On Fri, Jan 18 2013 at  4:25pm -0500,
-> Darrick J. Wong <darrick.wong@oracle.com> wrote:
+On Mon, Feb 04, 2013 at 02:40:17PM +0000, thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wrote:
+> On Fri, Feb 01, 2013 at 04:44:59PM -0800, Darrick J. Wong wrote:
+> > I will start reviewing the code as soon as this patch posts.  Be warned that I
+> > haven't even compile tested this yet. :)
 > 
-> > Since Joe is putting together a testing tree to compare the three caching
-> > things, what do you all think of having a(nother) session about ssd caching at
-> > this year's LSFMM Summit?
-> > 
-> > [Apologies for hijacking the thread.]
-> > [Adding lsf-pc to the cc list.]
+> Has the code been updated since I looked at it a couple of weeks ago?
+> For example addressing all the 'sparse' warnings?
 > 
-> Hopefully we'll have some findings on the comparisons well before LSF
-> (since we currently have some momentum).  But yes it may be worthwhile
-> to discuss things further and/or report findings.
+> If you've not compiled or reviewed this code, what do you mean by the
+> 'signed-off by' tag?
 
-I'd be willing to go and talk a bit about bcache. Curious to hear more
-about the dm caching stuff, too.
+I changed a couple of things in the Kconfig file, most notably setting default
+to n and depending on BLK_DEV.
+
+--D
+> 
+> - Joe
