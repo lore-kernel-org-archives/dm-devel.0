@@ -1,33 +1,43 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC] [DONOTAPPLY] [PATCH] enhanceio: STEC EnhanceIO SSD caching
- software for Linux kernel
-Date: Mon, 4 Feb 2013 12:53:39 -0800
-Message-ID: <20130204205339.GI4761@blackbox.djwong.org>
-References: <20130202004459.GA4760@blackbox.djwong.org>
- <20130204144016.GA2522@raspberrypi>
+From: "M. Mohan Kumar" <mohan@in.ibm.com>
+Subject: Default low water mark threshold for a new thin pool
+Date: Tue, 05 Feb 2013 14:30:00 +0530
+Message-ID: <87ehgv16gf.fsf@in.ibm.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20130204144016.GA2522@raspberrypi>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, linux-bcache <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jason Warr <jason-/cow75dQlsI@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 04, 2013 at 02:40:17PM +0000, thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wrote:
-> On Fri, Feb 01, 2013 at 04:44:59PM -0800, Darrick J. Wong wrote:
-> > I will start reviewing the code as soon as this patch posts.  Be warned that I
-> > haven't even compile tested this yet. :)
-> 
-> Has the code been updated since I looked at it a couple of weeks ago?
-> For example addressing all the 'sparse' warnings?
-> 
-> If you've not compiled or reviewed this code, what do you mean by the
-> 'signed-off by' tag?
 
-I changed a couple of things in the Kconfig file, most notably setting default
-to n and depending on BLK_DEV.
+Hello,
 
---D
-> 
-> - Joe
+We are adding a lvm2api for creating a thin pool. During thin pool
+creation if user does not specify anything for the low water mark
+thresold, it would result in 0 and no events will be generated when thin
+pool capacity is reaching its full size. IMHO, if user does not specify
+anything during thin pool creation, we can assume some value something
+like 25%, so that when a thin pool is consumed more than 75%, there will
+be an event generated for that pool.
+
+I am not sure what should be the default low water threshold
+percentage. Is there any recommended value for low water threshold value
+in dm thin pools?
+
+Regards,
+M. Mohan Kumar 
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
