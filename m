@@ -1,70 +1,113 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 5/8] [dm-thin] Fix a race condition between
- discard bios and ordinary bios.
-Date: Tue, 5 Feb 2013 19:11:37 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1302051904120.30143@file.rdu.redhat.com>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<1355429956-22785-6-git-send-email-ejt@redhat.com>
-	<20130124023503.GG30267@agk-dp.fab.redhat.com>
-	<20130124132259.GA6658@raspberrypi>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH 0/3 v3] add resync speed control for dm-raid1
+Date: Tue, 5 Feb 2013 19:24:10 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1302051911590.30143@file.rdu.redhat.com>
+References: <1357552933-26126-1-git-send-email-gzhao@suse.com>
+ <Pine.LNX.4.64.1301090034200.29917@file.rdu.redhat.com>
+ <20130116082109.GA2154@glzhao-laptop.site> <Pine.LNX.4.64.1301222033290.4723@file.rdu.redhat.com>
+ <20130123152044.3726fb4e@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130124132259.GA6658@raspberrypi>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: thornber@redhat.com
-Cc: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130123152044.3726fb4e@notabene.brown>
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Guangliang Zhao <gzhao@suse.com>, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
 
 
-On Thu, 24 Jan 2013, thornber@redhat.com wrote:
+On Wed, 23 Jan 2013, NeilBrown wrote:
 
-> On Thu, Jan 24, 2013 at 02:35:03AM +0000, Alasdair G Kergon wrote:
-> > On Thu, Dec 13, 2012 at 08:19:13PM +0000, Joe Thornber wrote:
-> > > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> > > index 504f3d6..8e47f44 100644
-> > > --- a/drivers/md/dm-thin.c
-> > > +++ b/drivers/md/dm-thin.c
-> > > @@ -222,10 +222,28 @@ struct thin_c {
-> > >  
-> > >  	struct pool *pool;
-> > >  	struct dm_thin_device *td;
-> > > +
-> > > +	/*
-> > > +	 * The cell structures are too big to put on the stack, so we have
-> > > +	 * a couple here for use by the main mapping function.
-> > > +	 */
-> > > +	spinlock_t lock;
-> > > +	struct dm_bio_prison_cell cell1, cell2;
-> > 
-> > We're also trying to cut down on locking on these code paths.
-> > (High i/o load, many many cores?)
-> > 
-> > Have you hit any problems while testing due to the stack size?
-> > The cells don't seem ridiculously big - could we perhaps just put them on 
-> > the stack for now?  If we do hit stack size problems in real world
-> > configurations, then we can try to compare the locking approach with an
-> > approach that uses a separate (local) mempool for each cell (or a
-> > mempool with double-sized elements).
+> On Tue, 22 Jan 2013 20:44:41 -0500 (EST) Mikulas Patocka
+> <mpatocka@redhat.com> wrote:
 > 
-> I haven't hit any stack size issues.  But the cell structures are 60
-> bytes each and putting two of them on the stack seems wasteful.  I
-> don't have enough knowledge to say this will be ok for all
-> architectures and so took the safe option.
+> > 
+> > 
+> > On Wed, 16 Jan 2013, Guangliang Zhao wrote:
+> > 
+> > > On Wed, Jan 09, 2013 at 12:43:21AM -0500, Mikulas Patocka wrote:
+> > > > Hi
+> > > Hi,
+> > > 
+> > > I think it is very good that your patches could be used for other
+> > > targets(snapshot, thin) after reviewing yours, but I find some issues
+> > > (maybe not, please correct me if I am wrong).
+> > > 
+> > > > 
+> > > > I did this already some times ago.
+> > > > I'm sending my patches in the next mail.
+> > > > 
+> > > > Basically, my and Guangliang's patches have the following differences:
+> > > > 
+> > > > my patch: uses per-module throttle settings
+> > > > Guangliang's patch: uses per-device settings
+> > > > (my patch could be changed to use per-device throttle too, but without 
+> > > > userspace support it isn't much useful because userspace lvm can 
+> > > > reload the mirror and per-device settings would be lost)
+> > > 
+> > > We couldn't force every devices in the system hold the same throttle,
+> > > IMHO, per-device settings couldn't be ignored. 
+> > > Setting the global value by the parameters of module is a good way, and
+> > > it could also be used to set the default value in my patches. In this way,
+> > > the global setting wouldn't be lost, and we could also adjust every device's
+> > > speed.
+> > 
+> > It could be good to have per-device throttle.
+> > 
+> > > > my patch: uses fine grained throttling of the individual IOs in kcopyd - 
+> > > > it measures active/inactive ratio and if the disk is active more than the 
+> > > > specified percentage of time, sleep is inserted.
+> > > 
+> > > I think this policy might not be able to represent the exact write speed, 
+> > > while other modules(such as md, drbd) monitor the real IO speed.
+> > 
+> > But you don't want to limit raid resynchronization to a certain speed. A 
+> > disk has varying speed, it is faster in the beginning and slower in the 
+> > end.
+> > 
+> > So if you want to limit raid resynchronization so that other tasks have 
+> > faster access to the disk, you need to limit percentage of time that is 
+> > spent on resynchronization, not resynchronization speed.
+> 
+> Sounds good ..... not that easy though.
+> 
+> But if the disk is otherwise idle, I want 100% of the time to be spend on
+> synchronisation.  If it isn't otherwise idle, I want a much more modest
+> faction to be used.
 
-I think it's better to put the structures on the stack (it is not that 
-much, the stack has 8k, so 120 bytes is 1/68 of the stack) and remove the 
-spinlock.
+So, hack the i/o scheduler - the scheduler can make such decisions, it is 
+impossible to do this decision in the dm-mirror layer, because the 
+dm-mirror layer has no knowledge of how much is the disk loaded.
+
+It is clearly better solution to solve it in the scheduler, this throttle 
+is a simple solution for the case when the i/o scheduler isn't right.
+
+> Getting this "right" is very hard.  You want to resync aggressively if there
+> is no other traffic, but to back off quickly to some small background rate if
+> there is any other traffic.  That is what md tries to do.
+> 
+> dm-raid1 has an extra complication.  It is used in clusters (clvm) where
+> multiple separate hosts might be accessing the device.  So the host which is
+> driving the resync cannot know what other IO there might be.
+
+The same problem arises on a single computer - there may be multiple 
+logical volumes or multiple partitions on the same disk.
+
+> In that case the only thing that seems to be practical is an maximum sync
+> speed that can be set by the admin.
+
+Maximum speed sync doesn't work well because the disk has a different 
+speed in the beginning and in the end. For example, if you set maximum 
+speed as 50% of the resync speed when you start resynchronizing, the 
+throttle stops working at the end of the disk, because the disk itself is 
+50% slower at the end.
+
+A better solution is to limit the time spent doing i/o. If you set it to 
+50%, it is 50% loaded and 50% idle for the whole duration of the 
+resynchronization, regardless of different transfer speed in each disk 
+region.
+
+> NeilBrown
 
 Mikulas
