@@ -1,119 +1,58 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 47/77] dm: convert to idr_alloc()
-Date: Wed,  6 Feb 2013 11:40:19 -0800
-Message-ID: <1360179649-22465-48-git-send-email-tj@kernel.org>
-References: <1360179649-22465-1-git-send-email-tj@kernel.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Amit Kale <akale@stec-inc.com>
+Subject: RE: [RFC] [DONOTAPPLY] [PATCH] enhanceio: STEC EnhanceIO SSD
+ caching software for Linux kernel
+Date: Thu, 7 Feb 2013 06:57:40 +0800
+Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D66FE@MYMBX.MY.STEC-INC.AD>
+References: <20130202004459.GA4760@blackbox.djwong.org>
+ <CANN689ExTyhZBiQ-pg3jw+sA4X459qcy3kpt82n3obJ=9AVceQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1360179649-22465-1-git-send-email-tj@kernel.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: akpm@linux-foundation.org
-Cc: Tejun Heo <tj@kernel.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CANN689ExTyhZBiQ-pg3jw+sA4X459qcy3kpt82n3obJ=9AVceQ@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michel Lespinasse <walken@google.com>, "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: linux-bcache <linux-bcache@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Jason Warr <jason@warr.net>, "thornber@redhat.com" <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-Convert to the much saner new idr interface.
+> -----Original Message-----
+> From: Michel Lespinasse [mailto:walken@google.com]
+> Sent: Friday, February 01, 2013 4:58 PM
+> To: Darrick J. Wong
+> Cc: Amit Kale; linux-bcache; device-mapper development; Kent
+> Overstreet; Mike Snitzer; LKML; Jason Warr; thornber@redhat.com
+> Subject: Re: [RFC] [DONOTAPPLY] [PATCH] enhanceio: STEC EnhanceIO SSD
+> caching software for Linux kernel
+> 
+> On Fri, Feb 1, 2013 at 4:44 PM, Darrick J. Wong
+> <darrick.wong@oracle.com> wrote:
+> > This is a patch to migrate STEC's enhanceio driver out of their
+> github
+> > repository and into the staging tree.  From their README:
+> >
+> > "EnhanceIO driver is based on EnhanceIO SSD caching software product
+> > developed by STEC Inc. EnhanceIO was derived from Facebook's open
+> > source Flashcache project. EnhanceIO uses SSDs as cache devices for
+> > traditional rotating hard disk drives (referred to as source volumes
+> throughout this document).
+> > EnhanceIO can work with any block device, be it an entire physical
+> > disk, an individual disk partition,  a RAIDed DAS device, a SAN
+> > volume, a device mapper volume or a software RAID (md) device."
+> 
+> What's your take on the benefits of this vs bcache ?
 
-Only compile tested.
+EnhanceIO was designed for and has been validated in enterprise environments. The important benefits are - 
+1. There is no downtime for cache creation, deletion, editing properties, writeback/readonly/writethrough mode change.
+2. Wb mode comes with an option to control whether dirty data should be clean-up across reboots, which prevents SSD/HDD going out of sync.
+3. Our in-house testing was done for large setups with 500GB+SSDs and proportionately large HDDs, on 24CPU machines with plenty of RAM. It's survived heavy IO loads without any locking or corruption problems.
+4. Error handling is exactly what enterprises look for - writethrough/readonly modes work seamlessly regardless of SSD failures. In all the three caching modes, the guarantees of completion in presence of IO errors or shutdowns, in terms of granularity and persistence of data written, is identical to underlying HDDs.
+5. It works for all known block devices - Software RAIDs, full block devices with or without partitions, individual partitions, various intelligent block devices.
 
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
- drivers/md/dm.c | 54 +++++++++++++++---------------------------------------
- 1 file changed, 15 insertions(+), 39 deletions(-)
+-Amit
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index c644eb6..ac74b81 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1801,62 +1801,38 @@ static void free_minor(int minor)
-  */
- static int specific_minor(int minor)
- {
--	int r, m;
-+	int r;
- 
- 	if (minor >= (1 << MINORBITS))
- 		return -EINVAL;
- 
--	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
--	if (!r)
--		return -ENOMEM;
--
-+	idr_preload(GFP_KERNEL);
- 	spin_lock(&_minor_lock);
- 
--	if (idr_find(&_minor_idr, minor)) {
--		r = -EBUSY;
--		goto out;
--	}
--
--	r = idr_get_new_above(&_minor_idr, MINOR_ALLOCED, minor, &m);
--	if (r)
--		goto out;
-+	r = idr_alloc(&_minor_idr, MINOR_ALLOCED, minor, minor + 1, GFP_NOWAIT);
- 
--	if (m != minor) {
--		idr_remove(&_minor_idr, m);
--		r = -EBUSY;
--		goto out;
--	}
--
--out:
- 	spin_unlock(&_minor_lock);
--	return r;
-+	idr_preload_end();
-+	if (r < 0)
-+		return r == -ENOSPC ? -EBUSY : r;
-+	return 0;
- }
- 
- static int next_free_minor(int *minor)
- {
--	int r, m;
--
--	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
--	if (!r)
--		return -ENOMEM;
-+	int r;
- 
-+	idr_preload(GFP_KERNEL);
- 	spin_lock(&_minor_lock);
- 
--	r = idr_get_new(&_minor_idr, MINOR_ALLOCED, &m);
--	if (r)
--		goto out;
--
--	if (m >= (1 << MINORBITS)) {
--		idr_remove(&_minor_idr, m);
--		r = -ENOSPC;
--		goto out;
--	}
--
--	*minor = m;
-+	r = idr_alloc(&_minor_idr, MINOR_ALLOCED, 0, 1 << MINORBITS, GFP_NOWAIT);
- 
--out:
- 	spin_unlock(&_minor_lock);
--	return r;
-+	idr_preload_end();
-+	if (r < 0)
-+		return r;
-+	*minor = r;
-+	return 0;
- }
- 
- static const struct block_device_operations dm_blk_dops;
--- 
-1.8.1
+PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+
+
+
+This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
