@@ -1,62 +1,48 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: fix limits initialization when there are no data devices
-Date: Thu,  7 Feb 2013 10:11:19 -0500
-Message-ID: <1360249879-29636-1-git-send-email-snitzer@redhat.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: Mike Christie <michaelc@cs.wisc.edu>, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org.#.v3.6+
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-snapshot: add module aliases
+Date: Thu, 7 Feb 2013 15:10:38 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1302071509080.6952@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mike Christie <michaelc@cs.wisc.edu>
+Hi. This is a fix for bug 889973.
 
-dm_calculate_queue_limits will first reset the provided limits to
-defaults using blk_set_stacking_limits; whereby defeating the purpose of
-retaining the original live table's limits -- as was intended via commit
-3ae706561637331aa578e52bb89ecbba5edcb7a9 ("dm: retain table limits when
-swapping to new table with no devices").
+Mikulas
 
-Fix this improper limits initialization (in the no data devices case) by
-avoiding the call to dm_calculate_queue_limits.
-
-[patch header was revised by Mike Snitzer]
-
-Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org # v3.6+
 ---
- drivers/md/dm.c |   12 +++++++-----
- 1 files changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 314a0e2..21f294b 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2421,7 +2421,7 @@ static void dm_queue_flush(struct mapped_device *md)
-  */
- struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
- {
--	struct dm_table *live_map, *map = ERR_PTR(-EINVAL);
-+	struct dm_table *live_map = NULL, *map = ERR_PTR(-EINVAL);
- 	struct queue_limits limits;
- 	int r;
- 
-@@ -2444,10 +2444,12 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
- 		dm_table_put(live_map);
- 	}
- 
--	r = dm_calculate_queue_limits(table, &limits);
--	if (r) {
--		map = ERR_PTR(r);
--		goto out;
-+	if (!live_map) {
-+		r = dm_calculate_queue_limits(table, &limits);
-+		if (r) {
-+			map = ERR_PTR(r);
-+			goto out;
-+		}
- 	}
- 
- 	map = __bind(md, table, &limits);
--- 
-1.7.4.4
+dm-snapshot: add module aliases
+
+Add module aliases so that autoloading works if the user tries to
+activate "snapshot-origin" or "snapshot-merge" targets.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-snap.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+Index: linux-3.8-rc6-fast/drivers/md/dm-snap.c
+===================================================================
+--- linux-3.8-rc6-fast.orig/drivers/md/dm-snap.c	2013-02-07 21:05:00.000000000 +0100
++++ linux-3.8-rc6-fast/drivers/md/dm-snap.c	2013-02-07 21:06:44.000000000 +0100
+@@ -2310,3 +2310,5 @@ module_exit(dm_snapshot_exit);
+ MODULE_DESCRIPTION(DM_NAME " snapshot target");
+ MODULE_AUTHOR("Joe Thornber");
+ MODULE_LICENSE("GPL");
++MODULE_ALIAS("dm-snapshot-origin");
++MODULE_ALIAS("dm-snapshot-merge");
