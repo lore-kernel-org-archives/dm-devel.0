@@ -1,44 +1,62 @@
-From: thornber@redhat.com
-Subject: Re: [PATCH 5/8] [dm-thin] Fix a race condition between
- discard bios and ordinary bios.
-Date: Thu, 7 Feb 2013 11:20:23 +0000
-Message-ID: <20130207112023.GA4237@raspberrypi>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<1355429956-22785-6-git-send-email-ejt@redhat.com>
-	<20130124023503.GG30267@agk-dp.fab.redhat.com>
-	<20130124132259.GA6658@raspberrypi>
-	<Pine.LNX.4.64.1302051904120.30143@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1302051904120.30143@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm: fix limits initialization when there are no data devices
+Date: Thu,  7 Feb 2013 10:11:19 -0500
+Message-ID: <1360249879-29636-1-git-send-email-snitzer@redhat.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: Mike Christie <michaelc@cs.wisc.edu>, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org.#.v3.6+
 List-Id: dm-devel.ids
 
-On Tue, Feb 05, 2013 at 07:11:37PM -0500, Mikulas Patocka wrote:
-> On Thu, 24 Jan 2013, thornber@redhat.com wrote:
-> > I haven't hit any stack size issues.  But the cell structures are 60
-> > bytes each and putting two of them on the stack seems wasteful.  I
-> > don't have enough knowledge to say this will be ok for all
-> > architectures and so took the safe option.
-> 
-> I think it's better to put the structures on the stack (it is not that 
-> much, the stack has 8k, so 120 bytes is 1/68 of the stack) and remove the 
-> spinlock.
+From: Mike Christie <michaelc@cs.wisc.edu>
 
-ok, will change.  Thanks for looking at this Mikulas.
+dm_calculate_queue_limits will first reset the provided limits to
+defaults using blk_set_stacking_limits; whereby defeating the purpose of
+retaining the original live table's limits -- as was intended via commit
+3ae706561637331aa578e52bb89ecbba5edcb7a9 ("dm: retain table limits when
+swapping to new table with no devices").
 
-- Joe
+Fix this improper limits initialization (in the no data devices case) by
+avoiding the call to dm_calculate_queue_limits.
+
+[patch header was revised by Mike Snitzer]
+
+Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org # v3.6+
+---
+ drivers/md/dm.c |   12 +++++++-----
+ 1 files changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 314a0e2..21f294b 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2421,7 +2421,7 @@ static void dm_queue_flush(struct mapped_device *md)
+  */
+ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
+ {
+-	struct dm_table *live_map, *map = ERR_PTR(-EINVAL);
++	struct dm_table *live_map = NULL, *map = ERR_PTR(-EINVAL);
+ 	struct queue_limits limits;
+ 	int r;
+ 
+@@ -2444,10 +2444,12 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
+ 		dm_table_put(live_map);
+ 	}
+ 
+-	r = dm_calculate_queue_limits(table, &limits);
+-	if (r) {
+-		map = ERR_PTR(r);
+-		goto out;
++	if (!live_map) {
++		r = dm_calculate_queue_limits(table, &limits);
++		if (r) {
++			map = ERR_PTR(r);
++			goto out;
++		}
+ 	}
+ 
+ 	map = __bind(md, table, &limits);
+-- 
+1.7.4.4
