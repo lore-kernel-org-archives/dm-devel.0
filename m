@@ -1,48 +1,21 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-snapshot: add module aliases
-Date: Thu, 7 Feb 2013 15:10:38 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1302071509080.6952@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [LSF/MM ATTEND] aio/dio/bcache
+Date: Fri, 8 Feb 2013 16:55:23 -0800
+Message-ID: <20130209005523.GI27179@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+Sender: owner-linux-aio@kvack.org
+To: lsf-pc@lists.linux-foundation.org
+Cc: linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi. This is a fix for bug 889973.
+Hi, I'm interested in attending to discuss what's going on in the
+aio/dio code, and also the various flash caching things and whatnot.
 
-Mikulas
-
----
-
-dm-snapshot: add module aliases
-
-Add module aliases so that autoloading works if the user tries to
-activate "snapshot-origin" or "snapshot-merge" targets.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-snap.c |    2 ++
- 1 file changed, 2 insertions(+)
-
-Index: linux-3.8-rc6-fast/drivers/md/dm-snap.c
-===================================================================
---- linux-3.8-rc6-fast.orig/drivers/md/dm-snap.c	2013-02-07 21:05:00.000000000 +0100
-+++ linux-3.8-rc6-fast/drivers/md/dm-snap.c	2013-02-07 21:06:44.000000000 +0100
-@@ -2310,3 +2310,5 @@ module_exit(dm_snapshot_exit);
- MODULE_DESCRIPTION(DM_NAME " snapshot target");
- MODULE_AUTHOR("Joe Thornber");
- MODULE_LICENSE("GPL");
-+MODULE_ALIAS("dm-snapshot-origin");
-+MODULE_ALIAS("dm-snapshot-merge");
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
