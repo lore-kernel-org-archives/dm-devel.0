@@ -1,17 +1,13 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH 8/8] [dm-cache] cache target
-Date: Thu, 14 Feb 2013 14:05:50 +0000
-Message-ID: <20130214140549.GB5045@Barry.lambda.co.uk>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<1355429956-22785-9-git-send-email-ejt@redhat.com>
-	<20130212152733.GH12499@agk-dp.fab.redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: [PATCH for multipath-tools] Handle SCSI device states
+ "quiesce" and "transport-offline" properly
+Date: Thu, 14 Feb 2013 15:17:28 +0100
+Message-ID: <511CF1F8.4040100@acm.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20130212152733.GH12499@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,15 +17,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 12, 2013 at 03:27:33PM +0000, Alasdair G Kergon wrote:
-> Log like other modules (e.g. dm-queue-length.c):
-> 	DMINFO("version " CLEANER_VERSION " loaded");
-> 
-> Similar DMINFO changes in dm-cache-policy-mq.c.
+Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+---
+ libmultipath/discovery.c |    5 +++--
+ libmultipath/structs.h   |    2 +-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
 
-When we've discussed this sort of thing before we've always decided
-not to version sub modules and instead just rely on the overall kernel
-version.  Who are you intending should consume this DMINFO?
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3fbc181..0b5fd1d 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -797,12 +797,13 @@ path_offline (struct path * pp)
+ 
+ 	condlog(3, "%s: path state = %s", pp->dev, buff);
+ 
+-	if (!strncmp(buff, "offline", 7)) {
++	if (!strncmp(buff, "offline", 7) ||
++	    !strncmp(buff, "transport-offline", 17)) {
+ 		pp->offline = 1;
+ 		return PATH_DOWN;
+ 	}
+ 	pp->offline = 0;
+-	if (!strncmp(buff, "blocked", 7))
++	if (!strncmp(buff, "blocked", 7) || !strncmp(buff, "quiesce", 7))
+ 		return PATH_PENDING;
+ 	else if (!strncmp(buff, "running", 7))
+ 		return PATH_UP;
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index ab05a78..b9ace36 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -20,7 +20,7 @@
+ #define SCSI_VENDOR_SIZE	9
+ #define SCSI_PRODUCT_SIZE	17
+ #define SCSI_REV_SIZE		5
+-#define SCSI_STATE_SIZE		9
++#define SCSI_STATE_SIZE		19
+ 
+ #define NO_PATH_RETRY_UNDEF	0
+ #define NO_PATH_RETRY_FAIL	-1
+-- 
+1.7.10.4
