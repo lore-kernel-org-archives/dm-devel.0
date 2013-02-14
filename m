@@ -1,18 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 8/8] [dm-cache] cache target
-Date: Thu, 14 Feb 2013 21:06:16 +0000
-Message-ID: <20130214210615.GJ24130@agk-dp.fab.redhat.com>
-References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
-	<1355429956-22785-9-git-send-email-ejt@redhat.com>
-	<20130212152733.GH12499@agk-dp.fab.redhat.com>
-	<20130214140549.GB5045@Barry.lambda.co.uk>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] dm-ioctl: enhanced messages
+Date: Thu, 14 Feb 2013 18:06:26 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1302141805440.5031@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20130214140549.GB5045@Barry.lambda.co.uk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,30 +16,135 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <ejt@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 14, 2013 at 02:05:50PM +0000, Joe Thornber wrote:
-> When we've discussed this sort of thing before we've always decided
-> not to version sub modules and instead just rely on the overall kernel
-> version.  Who are you intending should consume this DMINFO?
+dm-ioctl: enhanced messages
+
+This patch introduces enhanced message support that is needed for the
+following statistics patch.
+
+This patch allows processing of special messages in the device mapper in
+the function "message_for_md". If the device mapper doesn't support the
+message, it is passed to the target driver..
+
+This patch allows two-way messages, that is messages that may return
+some data. If the message returns data, the kernel signals it with
+DM_MESSAGE_OUT_FLAG flag.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-ioctl.c         |   55 +++++++++++++++++++++++++++++++++++++++++-
+ include/uapi/linux/dm-ioctl.h |    5 +++
+ 2 files changed, 59 insertions(+), 1 deletion(-)
+
+Index: linux-3.8-rc7-fast/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-3.8-rc7-fast.orig/drivers/md/dm-ioctl.c	2013-02-14 23:31:21.000000000 +0100
++++ linux-3.8-rc7-fast/drivers/md/dm-ioctl.c	2013-02-14 23:42:59.000000000 +0100
+@@ -1451,6 +1451,52 @@ static int table_status(struct dm_ioctl 
+ 	return 0;
+ }
  
-People who have reason to look at their system logs when something
-they can't explain has happened (and then us, when they send
-snippets of the logs).
-
-All the optional dm sub-modules that plug into other modules report when they
-are loaded/unloaded.  Then given that they are writing a line to the log,
-they might as well supply a version number in it, particularly if we're
-anticipating that once the core has settled down, future change will be
-concentrated around tuning these modules so we can't necessarily deduce
-which version of sub-module code is running from the module code version.
-
-Relying on the core kernel version just turns this into a lookup table
-maintenance problem to find out what patch was applied to what distro
-when.  dm versioning gives us a quick distro-independent way to guess
-which version of our code was likely to have been running from
-information often included in the intial report of the problem.
-
-Alasdair
++struct dm_message_output_callback {
++	struct dm_ioctl *param;
++	size_t param_size;
++};
++
++static int dm_output_message_string(struct dm_message_output_callback *c,
++				    const char *string)
++{
++	size_t len;
++	char *p;
++	if (c->param->flags & DM_BUFFER_FULL_FLAG)
++		return -1;
++	if (!(c->param->flags & DM_MESSAGE_OUT_FLAG)) {
++		p = get_result_buffer(c->param, c->param_size, &len);
++		if (!len) {
++			c->param->flags |= DM_BUFFER_FULL_FLAG;
++			return -1;
++		}
++		*p = 0;
++		c->param->data_size = c->param->data_start + 1;
++		c->param->flags |= DM_MESSAGE_OUT_FLAG;
++	}
++	p = (char *)c->param + c->param->data_size - 1;
++	len = strlen(string);
++	if (c->param->data_size + len > c->param_size) {
++		c->param->flags |= DM_BUFFER_FULL_FLAG;
++		c->param->flags &= ~DM_MESSAGE_OUT_FLAG;
++		return -1;
++	}
++	c->param->data_size += len;
++	strcpy(p, string);
++	return 0;
++}
++
++/*
++ * Process device-mapper dependent messages.
++ * Returns a number <= 0 if message was processed by device mapper.
++ * Returns 1 if message should be delivered to the target.
++ */
++static int message_for_md(struct mapped_device *md,
++			  struct dm_message_output_callback *c,
++			  unsigned argc, char **argv)
++{
++	return 1;
++}
++
+ /*
+  * Pass a message to the target that's at the supplied device offset.
+  */
+@@ -1463,6 +1509,7 @@ static int target_message(struct dm_ioct
+ 	struct dm_target *ti;
+ 	struct dm_target_msg *tmsg = (void *) param + param->data_start;
+ 	int srcu_idx;
++	struct dm_message_output_callback c = { param, param_size };
+ 
+ 	md = find_device(param);
+ 	if (!md)
+@@ -1486,6 +1533,10 @@ static int target_message(struct dm_ioct
+ 		goto out_argv;
+ 	}
+ 
++	r = message_for_md(md, &c, argc, argv);
++	if (r <= 0)
++		goto out_argv;
++
+ 	table = dm_get_live_table(md, &srcu_idx);
+ 	if (!table)
+ 		goto out_table;
+@@ -1511,7 +1562,8 @@ static int target_message(struct dm_ioct
+  out_argv:
+ 	kfree(argv);
+  out:
+-	param->data_size = 0;
++	if (!(param->flags & (DM_MESSAGE_OUT_FLAG | DM_BUFFER_FULL_FLAG)))
++		param->data_size = 0;
+ 	dm_put(md);
+ 	return r;
+ }
+@@ -1685,6 +1737,7 @@ static int validate_params(uint cmd, str
+ 	param->flags &= ~DM_BUFFER_FULL_FLAG;
+ 	param->flags &= ~DM_UEVENT_GENERATED_FLAG;
+ 	param->flags &= ~DM_SECURE_DATA_FLAG;
++	param->flags &= ~DM_MESSAGE_OUT_FLAG;
+ 
+ 	/* Ignores parameters */
+ 	if (cmd == DM_REMOVE_ALL_CMD ||
+Index: linux-3.8-rc7-fast/include/uapi/linux/dm-ioctl.h
+===================================================================
+--- linux-3.8-rc7-fast.orig/include/uapi/linux/dm-ioctl.h	2013-02-14 23:39:39.000000000 +0100
++++ linux-3.8-rc7-fast/include/uapi/linux/dm-ioctl.h	2013-02-14 23:40:39.000000000 +0100
+@@ -336,4 +336,9 @@ enum {
+  */
+ #define DM_SECURE_DATA_FLAG		(1 << 15) /* In */
+ 
++/*
++ * If set, message generated output.
++ */
++#define DM_MESSAGE_OUT_FLAG		(1 << 16) /* Out */
++
+ #endif				/* _LINUX_DM_IOCTL_H */
