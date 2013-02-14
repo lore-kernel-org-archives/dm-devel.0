@@ -1,16 +1,18 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH for multipath-tools] Handle SCSI device
- states "quiesce" and "transport-offline" properly
-Date: Thu, 14 Feb 2013 19:02:49 +0100
-Message-ID: <1360864969.4660.0.camel@lapoo.opensvc.com>
-References: <511CF1F8.4040100@acm.org>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 8/8] [dm-cache] cache target
+Date: Thu, 14 Feb 2013 21:06:16 +0000
+Message-ID: <20130214210615.GJ24130@agk-dp.fab.redhat.com>
+References: <1355429956-22785-1-git-send-email-ejt@redhat.com>
+	<1355429956-22785-9-git-send-email-ejt@redhat.com>
+	<20130212152733.GH12499@agk-dp.fab.redhat.com>
+	<20130214140549.GB5045@Barry.lambda.co.uk>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <511CF1F8.4040100@acm.org>
+Content-Disposition: inline
+In-Reply-To: <20130214140549.GB5045@Barry.lambda.co.uk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +22,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Joe Thornber <ejt@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On jeu., 2013-02-14 at 15:17 +0100, Bart Van Assche wrote:
-> Signed-off-by: Bart Van Assche <bvanassche@acm.org>
-> ---
+On Thu, Feb 14, 2013 at 02:05:50PM +0000, Joe Thornber wrote:
+> When we've discussed this sort of thing before we've always decided
+> not to version sub modules and instead just rely on the overall kernel
+> version.  Who are you intending should consume this DMINFO?
+ 
+People who have reason to look at their system logs when something
+they can't explain has happened (and then us, when they send
+snippets of the logs).
 
-Applied.
+All the optional dm sub-modules that plug into other modules report when they
+are loaded/unloaded.  Then given that they are writing a line to the log,
+they might as well supply a version number in it, particularly if we're
+anticipating that once the core has settled down, future change will be
+concentrated around tuning these modules so we can't necessarily deduce
+which version of sub-module code is running from the module code version.
 
-Thanks,
-Christophe Varoqui
-www.opensvc.com
+Relying on the core kernel version just turns this into a lookup table
+maintenance problem to find out what patch was applied to what distro
+when.  dm versioning gives us a quick distro-independent way to guess
+which version of our code was likely to have been running from
+information often included in the intial report of the problem.
 
->  libmultipath/discovery.c |    5 +++--
->  libmultipath/structs.h   |    2 +-
->  2 files changed, 4 insertions(+), 3 deletions(-)
-> 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index 3fbc181..0b5fd1d 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -797,12 +797,13 @@ path_offline (struct path * pp)
->  
->  	condlog(3, "%s: path state = %s", pp->dev, buff);
->  
-> -	if (!strncmp(buff, "offline", 7)) {
-> +	if (!strncmp(buff, "offline", 7) ||
-> +	    !strncmp(buff, "transport-offline", 17)) {
->  		pp->offline = 1;
->  		return PATH_DOWN;
->  	}
->  	pp->offline = 0;
-> -	if (!strncmp(buff, "blocked", 7))
-> +	if (!strncmp(buff, "blocked", 7) || !strncmp(buff, "quiesce", 7))
->  		return PATH_PENDING;
->  	else if (!strncmp(buff, "running", 7))
->  		return PATH_UP;
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index ab05a78..b9ace36 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -20,7 +20,7 @@
->  #define SCSI_VENDOR_SIZE	9
->  #define SCSI_PRODUCT_SIZE	17
->  #define SCSI_REV_SIZE		5
-> -#define SCSI_STATE_SIZE		9
-> +#define SCSI_STATE_SIZE		19
->  
->  #define NO_PATH_RETRY_UNDEF	0
->  #define NO_PATH_RETRY_FAIL	-1
+Alasdair
