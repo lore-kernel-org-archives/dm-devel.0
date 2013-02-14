@@ -1,10 +1,11 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
 Subject: Re: [PATCH for multipath-tools] Handle SCSI device
  states "quiesce" and "transport-offline" properly
-Date: Thu, 14 Feb 2013 10:03:15 -0600
-Message-ID: <511D0AC3.6090409@cs.wisc.edu>
+Date: Thu, 14 Feb 2013 19:02:49 +0100
+Message-ID: <1360864969.4660.0.camel@lapoo.opensvc.com>
 References: <511CF1F8.4040100@acm.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -20,21 +21,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-Patch looks ok to me. When I added transport-offline to scsi-ml, I
-forgot to modify userspace apps. Thanks for fixing.
-
-For the second part, I think it makes sense to handle quiesce like
-blocked since drivers use that state like how fc/iscsi use blocked.
-
-Reviewed-by: Mike Christie <michaelc@cs.wisc.edu>
-
-
-On 02/14/2013 08:17 AM, Bart Van Assche wrote:
+On jeu., 2013-02-14 at 15:17 +0100, Bart Van Assche wrote:
 > Signed-off-by: Bart Van Assche <bvanassche@acm.org>
 > ---
+
+Applied.
+
+Thanks,
+Christophe Varoqui
+www.opensvc.com
+
 >  libmultipath/discovery.c |    5 +++--
 >  libmultipath/structs.h   |    2 +-
 >  2 files changed, 4 insertions(+), 3 deletions(-)
@@ -72,4 +70,3 @@ On 02/14/2013 08:17 AM, Bart Van Assche wrote:
 >  
 >  #define NO_PATH_RETRY_UNDEF	0
 >  #define NO_PATH_RETRY_FAIL	-1
-> 
