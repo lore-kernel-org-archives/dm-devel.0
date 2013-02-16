@@ -1,16 +1,12 @@
-From: Eric Wheeler <dm-devel@ew.ewheeler.org>
-Subject: Re: dm-thinp BUG at
- drivers/md/persistent-data/dm-btree-remove.c:188
-Date: Fri, 15 Feb 2013 15:21:41 -0800 (PST)
-Message-ID: <alpine.DEB.2.00.1302151517240.48618@ware.dreamhost.com>
-References: <alpine.DEB.2.00.1302141757240.50852@ware.dreamhost.com>
-	<20130215105226.GA9053@raspberrypi>
+From: Phileas Fogg <phileas-fogg@mail.ru>
+Subject: [PATCH] Add PS3 HDD partition table support
+Date: Sat, 16 Feb 2013 13:52:37 +0100
+Message-ID: <511F8115.5000501@mail.ru>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130215105226.GA9053@raspberrypi>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,38 +16,136 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: thornber@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 15 Feb 2013, thornber@redhat.com wrote:
-> On Thu, Feb 14, 2013 at 06:07:56PM -0800, Eric Wheeler wrote:
-> Discard support is the main user of the btree_remove, so turning off
-> discard support in the pool should be a good temporary fix.
+Hi,
 
-Yep, I did just that and it seems to be stable at the moment.
+i would like to submit a patch which adds the PS3 HDD partition table support to 
+kpartx.
 
-> Could you let me know what sort of work load you were applying to the
-> ext4 fs to cause this to happen?  If I can reproduce this I should be
-> able to get a fix to you v. quickly.
+--- a/kpartx/Makefile    2012-09-07 00:15:06.163999993 -0800
++++ b/kpartx/Makefile    2012-09-07 00:15:25.935999993 -0800
+@@ -14,7 +14,7 @@
 
-I'm sure it was very light load.  Backups happen at night using 
-rdiff-backup, but the failure was happening during the day outside of a 
-backup period.
+  LDFLAGS = -ldevmapper
+  OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o sun.o \
+-       gpt.o mac.o crc32.o lopart.o xstrncpy.o devmapper.o
++       gpt.o mac.o ps3.o crc32.o lopart.o xstrncpy.o devmapper.o
+  EXEC = kpartx
 
-I do have a MySQL replication writing to a volume, so that would generate 
-a few writes---but its an extremely-low-write database, so that seems 
-unlikely.
+  all: $(EXEC)
+--- a/kpartx/byteorder.h    2012-09-07 00:30:30.679999971 -0800
++++ b/kpartx/byteorder.h    2012-09-07 00:31:08.075999971 -0800
+@@ -12,12 +12,16 @@
+  #  define le16_to_cpu(x) (x)
+  #  define be16_to_cpu(x) bswap_16(x)
+  #  define le32_to_cpu(x) (x)
++#  define le64_to_cpu(x) (x)
+  #  define be32_to_cpu(x) bswap_32(x)
++#  define be64_to_cpu(x) bswap_64(x)
+  #elif BYTE_ORDER == BIG_ENDIAN
+  #  define le16_to_cpu(x) bswap_16(x)
+  #  define be16_to_cpu(x) (x)
+  #  define le32_to_cpu(x) bswap_32(x)
++#  define le64_to_cpu(x) bswap_64(x)
+  #  define be32_to_cpu(x) (x)
++#  define be64_to_cpu(x) (x)
+  #else
+  #  error unsupported
+  #endif
+--- a/kpartx/kpartx.h    2012-09-07 00:17:56.503999989 -0800
++++ b/kpartx/kpartx.h    2012-09-07 00:18:08.495999989 -0800
+@@ -39,6 +39,7 @@
+  extern ptreader read_dasd_pt;
+  extern ptreader read_mac_pt;
+  extern ptreader read_sun_pt;
++extern ptreader read_ps3_pt;
 
-The best I can think is something like mlocate was scanning the disk, so 
-maybe just a filesystem traversal was doing it---but mlocate would have 
-been read-only.
+  char *getblock(int fd, unsigned int secnr);
 
-I wouldn't think so, but is it possible for a read to cause a discard 
-under dm-thinp?
+--- a/kpartx/kpartx.c    2012-09-07 00:15:37.567999993 -0800
++++ b/kpartx/kpartx.c    2012-09-07 00:16:05.635999993 -0800
+@@ -80,6 +80,7 @@
+      addpts("dasd", read_dasd_pt);
+      addpts("mac", read_mac_pt);
+      addpts("sun", read_sun_pt);
++    addpts("ps3", read_ps3_pt);
+  }
 
--Eric
-
---
-Eric Wheeler
-www.globallinuxsecurity.pro
+  static char short_opts[] = "rladfgvp:t:su";
+--- /dev/null    2012-09-07 00:07:55.900000003 -0800
++++ b/kpartx/ps3.c    2012-09-07 00:29:52.987999973 -0800
+@@ -0,0 +1,72 @@
++#include "kpartx.h"
++#include "byteorder.h"
++#include <sys/types.h>
++#include <string.h>
++
++#define SECTOR_SIZE        512
++#define MAX_ACL_ENTRIES        8
++#define MAX_PARTITIONS        8
++
++#define MAGIC1            0x0FACE0FFULL
++#define MAGIC2            0xDEADFACEULL
++
++struct p_acl_entry {
++    u_int64_t laid;
++    u_int64_t rights;
++};
++
++struct d_partition {
++    u_int64_t p_start;
++    u_int64_t p_size;
++    struct p_acl_entry p_acl[MAX_ACL_ENTRIES];
++};
++
++struct disklabel {
++    u_int8_t d_res1[16];
++    u_int64_t d_magic1;
++    u_int64_t d_magic2;
++    u_int64_t d_res2;
++    u_int64_t d_res3;
++    struct d_partition d_partitions[MAX_PARTITIONS];
++    u_int8_t d_pad[0x600 - MAX_PARTITIONS * sizeof(struct d_partition)- 0x30];
++};
++
++static int
++read_disklabel(int fd, struct disklabel *label) {
++    unsigned char *data;
++    int i;
++
++    for (i = 0; i < sizeof(struct disklabel) / SECTOR_SIZE; i++) {
++        data = (unsigned char *) getblock(fd, i);
++        if (!data)
++            return 0;
++
++        memcpy((unsigned char *) label + i * SECTOR_SIZE, data, SECTOR_SIZE);
++    }
++
++    return 1;
++}
++
++int
++read_ps3_pt(int fd, struct slice all, struct slice *sp, int ns) {
++    struct disklabel label;
++        int n = 0;
++    int i;
++
++    if (!read_disklabel(fd, &label))
++        return -1;
++
++    if ((be64_to_cpu(label.d_magic1) != MAGIC1) ||
++        (be64_to_cpu(label.d_magic2) != MAGIC2))
++        return -1;
++
++    for (i = 0; i < MAX_PARTITIONS; i++) {
++        if (label.d_partitions[i].p_start && label.d_partitions[i].p_size) {
++            sp[n].start = be64_to_cpu(label.d_partitions[i].p_start);
++            sp[n].size = be64_to_cpu(label.d_partitions[i].p_size);
++            n++;
++        }
++    }
++
++    return n;
++}
