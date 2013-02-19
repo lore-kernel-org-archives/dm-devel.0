@@ -1,432 +1,109 @@
-From: Sanoj Unnikrishnan <sunnikrishnan@stec-inc.com>
-Subject: RE: [PATCH] EnhanceIO ssd caching software
-Date: Mon, 18 Feb 2013 17:42:38 +0800
-Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B0C746B4948@MYMBX.MY.STEC-INC.AD>
-References: <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D6AAF@MYMBX.MY.STEC-INC.AD>
- <20130215203139.GE26292@blackbox.djwong.org>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: v3.8-rc7: Kernel oops in end_clone_bio()
+Date: Tue, 19 Feb 2013 19:47:41 +0100
+Message-ID: <5123C8CD.9010207@acm.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130215203139.GE26292@blackbox.djwong.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>, OS Engineering <osengineering@stec-inc.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, LKML <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, =?iso-2022-jp?B?GyRCMiY2YjE6GyhC?= <jinpuwang@gmail.com>, Amit Kale <akale@stec-inc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "koverstreet@google.com" <koverstreet@google.com>, "thornber@redhat.com" <thornber@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Darrick J. Wong [mailto:darrick.wong@oracle.com]
-> Sent: Saturday, February 16, 2013 2:02 AM
-> To: OS Engineering
-> Cc: Greg Kroah-Hartman; LKML; Jens Axboe; Sanoj Unnikrishnan; 王金浦;
-> Amit Kale; dm-devel@redhat.com; koverstreet@google.com;
-> thornber@redhat.com
-> Subject: Re: [PATCH] EnhanceIO ssd caching software
-> 
-> [Resending with dm-devel, Kent, and Joe on cc.  Sorry for the noise.]
-> 
-> On Fri, Feb 15, 2013 at 02:02:38PM +0800, OS Engineering wrote:
-> > Hi Greg, Jens,
-> >
-> > We are submitting EnhanceIO(TM) software driver for an inclusion in
-> linux
-> > staging tree. Present state of this driver is beta. We have been
-> posting it
-> > for a few weeks, while it was maintained at github. It is still being
-> > cleaned-up and is being tested by LKML members. Inclusion in linux
-> staging
-> > tree will make testing and reviewing easier and help a future
-> integration in
-> > Linux kernel.
-> >
-> > Could you please include it?
+Hello,
 
-> >
-> > Signed-off-by:
-> > Amit Kale <akale@stec-inc.com>
-> > Sanoj Unnikrishnan <sunnikrishnan@stec-inc.com>
-> > Darrick J. Wong <darrick.wong@oracle.com>
-> > Jinpu Wang <jinpuwang@gmail.com>
-> 
-> Each of these email addresses needs to have the "S-o-b:" prefix
+I can trigger the kernel oops mentioned below about once every two times 
+I block communication between SRP initiator and SRP target via 
+ibportstate disable. Reverting the source code in the drivers/md 
+directory to v3.7 and updating include/linux/device-mapper.h accordingly 
+makes this crash disappear. Does that mean that I hit a regression in 
+the device mapper code ?
 
-> Also, you ought to run this patch through scripts/checkpatch.pl, as
-> there are
-> quite a lot of style errors.
+Kernel log messages obtained via netconsole:
 
-we will fix these in the next patch.
+scsi host12: ib_srp: SRP reset_host called
+scsi host8: ib_srp: DREQ received - connection closed
+scsi host12: ib_srp: reconnect succeeded
+scsi host8: ib_srp: connection closed
+general protection fault: 0000 [#1] SMP
+Modules linked in: ext4 jbd2 crc16 dm_round_robin dm_multipath dm_mod 
+ib_srp scsi_transport_srp netconsole configfs af_packet rdma_ucm rdma_cm 
+iw_cm ib_addr scsi_tgt ib_ipoib ib_cm ib_uverbs ib_umad mlx4_ib ib_sa 
+ib_mad ib_core cpufreq_conservative cpufreq_userspace cpufreq_powersave 
+snd_hda_codec_hdmi snd_hda_codec_analog acpi_cpufreq mperf snd_hda_intel 
+snd_hda_codec snd_hwdep snd_pcm snd_seq sg sr_mod cdrom snd_timer 
+snd_seq_device snd skge pcspkr i2c_i801 i2c_core ehci_pci soundcore 
+snd_page_alloc scsi_transport_fc mlx4_core intel_agp intel_gtt agpgart 
+button microcode autofs4 ext3 jbd mbcache sd_mod crc_t10dif uhci_hcd 
+processor ehci_hcd usbcore usb_common thermal_sys hwmon scsi_dh_alua 
+scsi_dh ata_generic ata_piix ahci libahci pata_marvell libata scsi_mod 
+[last unloaded: scsi_transport_srp]
+CPU 1
+Pid: 198, comm: kworker/1:1H Not tainted 3.8.0-rc7-debug+ #2 System 
+manufacturer P5Q DELUXE/P5Q DELUXE
+RIP: 0010:[<ffffffff810fe754>]  [<ffffffff810fe754>] mempool_free+0x24/0xb0
+RSP: 0018:ffff8801b9003c00  EFLAGS: 00010282
+RAX: 00000000a53d0790 RBX: dead000000100100 RCX: 0000000000000008
+RDX: 0000000000001000 RSI: dead000000100100 RDI: ffff88010d4e9480
+RBP: ffff8801b9003c20 R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000001 R11: 0000000000000003 R12: ffff88010d4e9480
+R13: 0000000000000000 R14: 0000000000001000 R15: 0000000000001000
+FS:  0000000000000000(0000) GS:ffff8801b9000000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 00007f0b84ada000 CR3: 000000019cd9d000 CR4: 00000000000407e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process kworker/1:1H (pid: 198, threadinfo ffff8801b3276000, task 
+ffff8801b3ae2500)
+Stack:
+  ffff8801b9003c30 ffff8801b28b9c10 ffff8801b6771600 0000000000000000
+  ffff8801b9003c40 ffffffff81187417 ffff8801b33a16c0 ffff8801b3159900
+  ffff8801b9003c70 ffffffffa02247a5 ffff8801b28b9c10 0000000000000000
+Call Trace:
+  <IRQ>
+  [<ffffffff81187417>] bio_put+0x97/0xc0
+  [<ffffffffa02247a5>] end_clone_bio+0x35/0x90 [dm_mod]
+  [<ffffffff81185efd>] bio_endio+0x1d/0x30
+  [<ffffffff811f03a3>] req_bio_endio.isra.51+0xa3/0xe0
+  [<ffffffff811f2f68>] blk_update_request+0x118/0x520
+  [<ffffffff811f3397>] blk_update_bidi_request+0x27/0xa0
+  [<ffffffff811f343c>] blk_end_bidi_request+0x2c/0x80
+  [<ffffffff811f34d0>] blk_end_request+0x10/0x20
+  [<ffffffffa000b32b>] scsi_io_completion+0xfb/0x6c0 [scsi_mod]
+  [<ffffffffa000107d>] scsi_finish_command+0xbd/0x120 [scsi_mod]
+  [<ffffffffa000b12f>] scsi_softirq_done+0x13f/0x160 [scsi_mod]
+  [<ffffffff811f9fd0>] blk_done_softirq+0x80/0xa0
+  [<ffffffff81044551>] __do_softirq+0xf1/0x250
+  [<ffffffff8142ee8c>] call_softirq+0x1c/0x30
+  [<ffffffff8100420d>] do_softirq+0x8d/0xc0
+  [<ffffffff81044885>] irq_exit+0xd5/0xe0
+  [<ffffffff8142f3e3>] do_IRQ+0x63/0xe0
+  [<ffffffff814257af>] common_interrupt+0x6f/0x6f
+  <EOI>
+  [<ffffffffa021737c>] srp_queuecommand+0x8c/0xcb0 [ib_srp]
+  [<ffffffffa0002f18>] scsi_dispatch_cmd+0x148/0x310 [scsi_mod]
+  [<ffffffffa000a38e>] scsi_request_fn+0x31e/0x520 [scsi_mod]
+  [<ffffffff811f1e57>] __blk_run_queue+0x37/0x50
+  [<ffffffff811f1f69>] blk_delay_work+0x29/0x40
+  [<ffffffff81059003>] process_one_work+0x1c3/0x5c0
+  [<ffffffff8105b22e>] worker_thread+0x15e/0x440
+  [<ffffffff8106164b>] kthread+0xdb/0xe0
+  [<ffffffff8142db9c>] ret_from_fork+0x7c/0xb0
+Code: ff 5d c3 0f 1f 40 00 66 66 66 66 90 55 48 89 e5 48 83 ec 20 48 85 
+ff 4c 89 65 f0 49 89 fc 48 89 5d e8 4c 89 6d f8 74 33 48 89 f3 <8b> 46 
+48 39 46 4c 7d 1e 48 89 f7 e8 3c 62 32 00 49 89 c5 8b 43
+RIP  [<ffffffff810fe754>] mempool_free+0x24/0xb0
+  RSP <ffff8801b9003c00>
+---[ end trace 02286fe9057d9fc9 ]---
+Kernel panic - not syncing: Fatal exception in interrupt
 
-
-> > +ACTION!="add|change", GOTO="EIO_EOF"
-> > +SUBSYSTEM!="block", GOTO="EIO_EOF"
-> > +
-> > +<cache_match_expr>, GOTO="EIO_CACHE"
-> > +
-> > +<source_match_expr>, GOTO="EIO_SOURCE"
-> > +
-> > +# If none of the rules above matched then it isn't an EnhanceIO
-> device so ignore it.
-> > +GOTO="EIO_EOF"
-> > +
-> > +# If we just found the cache device and the source already exists
-> then we can setup
-> > +LABEL="EIO_CACHE"
-> > +       TEST!="/dev/enhanceio/<cache_name>", PROGRAM="/bin/mkdir -p
-> /dev/enhanceio/<cache_name>"
-> > +       PROGRAM="/bin/sh -c 'echo $kernel >
-> /dev/enhanceio/<cache_name>/.ssd_name'"
-> > +
-> > +       TEST=="/dev/enhanceio/<cache_name>/.disk_name",
-> GOTO="EIO_SETUP"
-> > +GOTO="EIO_EOF"
-> > +
-> > +# If we just found the source device and the cache already exists
-> then we can setup
-> > +LABEL="EIO_SOURCE"
-> > +       TEST!="/dev/enhanceio/<cache_name>", PROGRAM="/bin/mkdir -p
-> /dev/enhanceio/<cache_name>"
-> > +       PROGRAM="/bin/sh -c 'echo $kernel >
-> /dev/enhanceio/<cache_name>/.disk_name'"
-> > +
-> > +       TEST=="/dev/enhanceio/<cache_name>/.ssd_name",
-> GOTO="EIO_SETUP"
-> 
-> If the cache is running in wb mode, perhaps we should make it ro until
-> the SSD
-> shows up and we run eio_cli?  Run blockdev --setro in the EIO_CACHE
-> part, and
-> blockdev --setrw in the EIO_SOURCE part?
-> 
-> <shrug> not a udev developer, take that with a grain of salt.
-
-We were exploring hiding source node as an option. This seems to be better.
- 
-> > +How to create persistent cache
-> > +==============================
-> > +
-> > +Use the 94-Enhanceio-template file to create a per cache udev-rule
-> file named /etc/udev/rules.d/94-enhancio-<cache_name>.rules
-> > +
-> > +1) Change <cache_match_expr> to ENV{ID_SERIAL}=="<ID SERIAL OF YOUR
-> CACHE DEVICE>", ENV{DEVTYPE}==<DEVICE TYPE OF YOUR CACHE DEVICE>
-> > +
-> > +2) Change <source_match_expr> to ENV{ID_SERIAL}=="<ID SERIAL OF YOUR
-> HARD DISK>", ENV{DEVTYPE}==<DEVICE TYPE OF YOUR SOURCE DEVICE>
-> > +
-> > +3) Replace all instances of <cache_name> with the name of your cache
-> 
-> I wonder if there's a better way to do this than manually cutting and
-> pasting
-> all these IDs into a udev rules file.  Or, how about a quick script at
-> cache
-> creation time that spits out files into /etc/udev/rules.d/ ?
-
-agreed!! Will add one in the next patch.
-
-> > +       Write-back improves write latency by writing application
-> requested data
-> > +       only to SSD. This data, referred to as dirty data, is copied
-> later to
-> 
-> How much later?
->
-
-This is triggered by a set of thresholds.
-per cache dirty high and low watermark.
-per cache set dirty high and low watermark.
-and a time based threshold.
-If any of the high watermarks or time based interval is triggered clean is initiated.
-
-These thresholds are all configurable through sysctl.
-
-> > +       Failure of an SSD device in write-back mode obviously results
-> in the
-> > +       loss of dirty blocks in the cache. To guard against this data
-> loss, two
-> > +       SSD devices can be mirrored via RAID 1.
-> 
-> What happens to writes that happen after the SSD goes down?  Are they
-> simply
-> passed through to the slow disk?
-
-
-It does so in the current code. Maybe, we could make the source device read only and
-change it to read-write only cache deletion.
-
-> > +#if defined(__KERNEL__) && !defined(CONFIG_PROC_FS)
-> > +#error "EnhanceIO requires CONFIG_PROC_FS"
-> > +#endif                          /* __KERNEL__ && !CONFIG_PROC_FS */
-> 
-> This dependency should be stated in the Kconfig file.  'depends
-> PROC_FS' or
-> something like that.
-
-Will fix this!
-
-> > +struct eio_control_s {
-> > +       volatile unsigned long synch_flags;
-> 
-> Are you sure that this volatile does what you think it does?
-> http://www.kernel.org/doc/Documentation/volatile-considered-harmful.txt
-> 
-> afaict all the uses of synch_flags seem to use atomic operations
-> already...
-> 
-> > +};
-
-Use of volatiles in Enhanceio is very similar to use of jiffies. However,
-we will consider replacing them.
-
-
-> > + * This file has three sections as follows:
-> > + *
-> > + *      Section 1: User space only
-> > + *      Section 2: User space and kernel
-> > + *      Section 3: Kernel only
-> > + *
-> > + * Each section may contain its own subsections.
-> > + */
-> > +
-> > +/*
-> > + * Begin Section 1: User space only.
-> > + */
-> 
-> Empty?
-
-Yes, Need to figure out how to include C header file in python (looking at cffi module,
-for this purpose). Certain constants and structures such as ioctl numbers and structure
-have to be moved here. Currently it is duplicated.
-
-> > +/*
-> > + * End Section 1: User space only.
-> > + */
-> > +
-> > +/*
-> > + * Begin Section 2: User space and kernel.
-> > + */
-> > +
-> > +/* States of a cache block */
-> > +#define INVALID                 0x0001
-> > +#define VALID                   0x0002  /* Valid */
-> > +#define DISKREADINPROG          0x0004  /* Read from disk in
-> progress */
-> > +#define DISKWRITEINPROG         0x0008  /* Write to disk in progress
-> */
-> > +#define CACHEREADINPROG         0x0010  /* Read from cache in
-> progress */
-> > +#define CACHEWRITEINPROG        0x0020  /* Write to cache in
-> progress */
-> > +#define DIRTY                   0x0040  /* Dirty, needs writeback to
-> disk */
-> > +#define QUEUED                  0x0080  /* Other requests are queued
-> for this block */
-> > +
-> > +#define BLOCK_IO_INPROG (DISKREADINPROG | DISKWRITEINPROG | \
-> > +                        CACHEREADINPROG | CACHEWRITEINPROG)
-> > +#define DIRTY_INPROG    (VALID | DIRTY | CACHEWRITEINPROG)      /*
-> block being dirtied */
-> > +#define CLEAN_INPROG    (VALID | DIRTY | DISKWRITEINPROG)       /*
-> ongoing clean */
-> > +#define ALREADY_DIRTY   (VALID | DIRTY)                         /*
-> block which is dirty to begin with for an I/O */
-> 
-> These shouldn't go past 80 columns.
-> 
-> > +/*
-> > + * This is a special state used only in the following scenario as
-> > + * part of device (SSD) failure handling:
-> > + *
-> > + * ------| dev fail |------| dev resume |------------
-> > + *   ...-<--- Tf --><- Td -><---- Tr ---><-- Tn ---...
-> > + * |---- Normal ----|-- Degraded -------|-- Normal ---|
-> > + *
-> > + * Tf: Time during device failure.
-> > + * Td: Time after failure when the cache is in degraded mode.
-> > + * Tr: Time when the SSD comes back online.
-> > + *
-> > + * When a failed SSD is added back again, it should be treated
-> > + * as a cold SSD.
-> > + *
-> > + * If Td is very small, then there can be IOs that were initiated
-> > + * before or during Tf, and did not finish until the end of Tr.
-> From
-> > + * the IO's viewpoint, the SSD was there when the IO was initiated
-> > + * and it was there when the IO was finished.  These IOs need
-> special
-> > + * handling as described below.
-> > + *
-> > + * To add the SSD as a cold cache device, we initialize all blocks
-> > + * to INVALID, execept for the ones that had IOs in progress before
-> > + * or during Tf.  We mark such blocks as both VALID and INVALID.
-> > + * These blocks will be marked INVALID when finished.
-> > + */
-> > +#define NO_SSD_IO_INPROG        (VALID | INVALID)
-> > +
-> > +/*
-> > + * On Flash (cache metadata) Structures
-> > + */
-> > +#define CACHE_MD_STATE_DIRTY            0x55daddee
-> > +#define CACHE_MD_STATE_CLEAN            0xacceded1
-> > +#define CACHE_MD_STATE_FASTCLEAN        0xcafebabf
-> > +#define CACHE_MD_STATE_UNSTABLE         0xdeaddeee
-> > +
-> > +/* Do we have a read cache or a read-write cache */
-> > +#define CACHE_MODE_WB           1
-> > +#define CACHE_MODE_RO           2
-> > +#define CACHE_MODE_WT           3
-> > +#define CACHE_MODE_FIRST        CACHE_MODE_WB
-> > +#define CACHE_MODE_LAST         CACHE_MODE_WT
-> > +#define CACHE_MODE_DEFAULT      CACHE_MODE_WT
-> > +
-> > +#define DEV_PATHLEN             128
-> > +#define EIO_SUPERBLOCK_SIZE     4096
-> > +
-> > +#define EIO_CLEAN_ABORT         0x00000000
-> > +#define EIO_CLEAN_START         0x00000001
-> > +#define EIO_CLEAN_KEEP          0x00000002
-> > +
-> > +/* EIO magic number */
-> > +#define EIO_MAGIC               0xE10CAC6E
-> > +#define EIO_BAD_MAGIC           0xBADCAC6E
-> > +
-> > +/* EIO version */
-> > +#define EIO_SB_VERSION          3       /* kernel superblock version
-> */
-> > +#define EIO_SB_MAGIC_VERSION    3       /* version in which magic
-> number was introduced */
-> > +
-> > +typedef union eio_superblock {
-> > +       struct superblock_fields {
-> > +               sector_t size;                  /* Cache size */
-> 
-> sector_t is 32 bits on !LBDAF 32-bit systems and 64 bits otherwise.
-> This
-> structure seems reflect an on-disk format, which means that I can badly
-> screw
-> things up if I move a cache disk between machines with differently
-> configured
-> kernels.  Plus, if we ever change the definition of sector_t then this
-> structure will be broken.
-> 
-> This field should be declared with an explicit size, i.e. __le64.
-> 
-> > +               u_int32_t block_size;           /* Cache block size
-> */
-> 
-> Worse yet, these fields should use endianness notations (e.g. __le32)
-> and when
-> you write out the superblock, you need to wrap the assignments with a
-> cpu_to_leXX() call.  Otherwise, enhanceio caches created on ppc64 won't
-> load on
-> a x64 box (and vice versa) because all the bytes are swapped.
-> 
-> These two grumblings also apply to any other on-disk-format structs in
-> this
-> patch.
-
-Will fix these ASAP.
-
-
-> 
-> > +               u_int32_t assoc;                /* Cache
-> associativity */
-> > +               u_int32_t cache_sb_state;       /* Clean shutdown ?
-> */
-> > +               char cache_devname[DEV_PATHLEN];
-> > +               sector_t cache_devsize;
-> > +               char disk_devname[DEV_PATHLEN];
-> > +               sector_t disk_devsize;
-> > +               u_int32_t cache_version;
-> > +               char cache_name[DEV_PATHLEN];
-> > +               u_int32_t mode;
-> > +               u_int32_t repl_policy;
-> > +               u_int32_t cache_flags;
-> > +               /*
-> > +                * Version 1.1 superblock ends here.
-> > +                * Don't modify any of the above fields.
-> > +                */
-> > +               u_int32_t magic;                /* Has to be the 1st
-> field afer 1.1 superblock */
-> > +               u_int32_t cold_boot;            /* cache to be
-> started as cold after boot */
-> > +               char ssd_uuid[DEV_PATHLEN];
-> > +               sector_t cache_md_start_sect;   /* cache metadata
-> start (8K aligned) */
-> > +               sector_t cache_data_start_sect; /* cache data start
-> (8K aligned) */
-> > +               u_int32_t dirty_high_threshold;
-> > +               u_int32_t dirty_low_threshold;
-> > +               u_int32_t dirty_set_high_threshold;
-> > +               u_int32_t dirty_set_low_threshold;
-> > +               u_int32_t time_based_clean_interval;
-> > +               u_int32_t autoclean_threshold;
-> > +       } sbf;
-> > +       u_int8_t padding[EIO_SUPERBLOCK_SIZE];
-> > +} eio_superblock_t;
-> 
-> Why does this in-memory data structure need to be 4096 bytes long?
-> 'padding'
-> doesn't seem to be used anywhere.
-
-We have assumed that superblock would require at most 4096 bytes (considering future
-Additions too). 
- 
-> > + * Rethink on max, min, default values
-> > + */
-> > +#define DIRTY_HIGH_THRESH_DEF           30
-> > +#define DIRTY_LOW_THRESH_DEF            10
-> > +#define DIRTY_SET_HIGH_THRESH_DEF       100
-> > +#define DIRTY_SET_LOW_THRESH_DEF        30
-> 
-> What are the units of these values?  I suspect that they're used to
-> decide when
-> to start (and stop) flushing dirty blocks out of a wb cache, but please
-> write
-> down in Documentation/enhanceio/README.txt or somewhere what the sysctl
-> values
-> do, and in what units they are expressed.
-
-These are the auto clean thresholds (mentioned previously in the mail).
-Will update the Documentation.
-
-> > +#include "eio_ioctl.h"
-> > +
-> > +/* resolve conflict with scsi/scsi_device.h */
-> > +#ifdef __KERNEL__
-> > +#ifdef VERIFY
-> > +#undef VERIFY
-> > +#endif
-> > +#define ENABLE_VERIFY
-> > +#ifdef ENABLE_VERIFY
-> > +/* Like ASSERT() but always compiled in */
-> > +#define VERIFY(x) do { \
-> > +               if (unlikely(!(x))) { \
-> > +                       dump_stack(); \
-> > +                       panic("VERIFY: assertion (%s) failed at %s
-> (%d)\n", \
-> > +                             # x,  __FILE__, __LINE__);
-> \
-> > +               } \
-> > +} while (0)
-> > +#else                           /* ENABLE_VERIFY */
-> > +#define VERIFY(x) do { } while (0);
-> > +#endif                          /* ENABLE_VERIFY */
-> 
-> BUG_ON()?
-> 
-
-Will Fix this
- 
-> Ooookay, that's enough, I need a break, I'll review more later.
-> 
-> --D
-
-Sure,  Thanks for the elaborate review.
-Sanoj
-
-PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
-
-
-
-This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
+Bart.
