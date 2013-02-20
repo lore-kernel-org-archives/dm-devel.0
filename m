@@ -1,384 +1,333 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH 09/27] block: Use bio_sectors() more consistently
-Date: Tue, 19 Feb 2013 16:22:23 -0800
-Message-ID: <1361319761-23873-10-git-send-email-koverstreet@google.com>
+Subject: [PATCH 08/27] block: Add bio_end_sector()
+Date: Tue, 19 Feb 2013 16:22:22 -0800
+Message-ID: <1361319761-23873-9-git-send-email-koverstreet@google.com>
 References: <1361319761-23873-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1361319761-23873-1-git-send-email-koverstreet@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Kent Overstreet <koverstreet@google.com>, axboe@kernel.dk, "Ed L. Cashin" <ecashin@coraid.com>, Nick Piggin <npiggin@kernel.dk>, Jiri Kosina <jkosina@suse.cz>, Jim Paris <jim@jtan.com>, Geoff Levand <geoff@infradead.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, Steven Rostedt <rostedt@goodmis.org>
+Cc: Kent Overstreet <koverstreet@google.com>, axboe@kernel.dk, Lars Ellenberg <drbd-dev@lists.linbit.com>, Jiri Kosina <jkosina@suse.cz>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-s390@vger.kernel.org, Chris Mason <chris.mason@fusionio.com>, Steven Whitehouse <swhiteho@redhat.com>
 List-Id: dm-devel.ids
 
-Bunch of places in the code weren't using it where they could be -
-this'll reduce the size of the patch that puts bi_sector/bi_size/bi_idx
-into a struct bvec_iter.
+Just a little convenience macro - main reason to add it now is preparing
+for immutable bio vecs, it'll reduce the size of the patch that puts
+bi_sector/bi_size/bi_idx into a struct bvec_iter.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 CC: Jens Axboe <axboe@kernel.dk>
-CC: "Ed L. Cashin" <ecashin@coraid.com>
-CC: Nick Piggin <npiggin@kernel.dk>
+CC: Lars Ellenberg <drbd-dev@lists.linbit.com>
 CC: Jiri Kosina <jkosina@suse.cz>
-CC: Jim Paris <jim@jtan.com>
-CC: Geoff Levand <geoff@infradead.org>
 CC: Alasdair Kergon <agk@redhat.com>
 CC: dm-devel@redhat.com
 CC: Neil Brown <neilb@suse.de>
-CC: Steven Rostedt <rostedt@goodmis.org>
-Acked-by: Ed Cashin <ecashin@coraid.com>
+CC: Martin Schwidefsky <schwidefsky@de.ibm.com>
+CC: Heiko Carstens <heiko.carstens@de.ibm.com>
+CC: linux-s390@vger.kernel.org
+CC: Chris Mason <chris.mason@fusionio.com>
+CC: Steven Whitehouse <swhiteho@redhat.com>
+Acked-by: Steven Whitehouse <swhiteho@redhat.com>
 ---
- drivers/block/pktcdvd.c      |  2 +-
- drivers/md/dm-raid1.c        |  2 +-
- drivers/md/raid0.c           |  6 +++---
- drivers/md/raid1.c           | 17 ++++++++---------
- drivers/md/raid10.c          | 24 +++++++++++-------------
- drivers/md/raid5.c           |  8 ++++----
- fs/btrfs/volumes.c           |  2 +-
- include/trace/events/block.h | 12 ++++++------
- 8 files changed, 35 insertions(+), 38 deletions(-)
+ block/blk-core.c             |  2 +-
+ block/cfq-iosched.c          |  7 ++-----
+ block/deadline-iosched.c     |  2 +-
+ drivers/block/brd.c          |  3 +--
+ drivers/block/pktcdvd.c      |  6 +++---
+ drivers/md/dm-stripe.c       |  2 +-
+ drivers/md/dm-verity.c       |  2 +-
+ drivers/md/faulty.c          |  6 ++----
+ drivers/md/linear.c          |  3 +--
+ drivers/md/raid1.c           |  4 ++--
+ drivers/md/raid5.c           | 14 +++++++-------
+ drivers/s390/block/dcssblk.c |  3 +--
+ fs/btrfs/extent_io.c         |  3 +--
+ fs/gfs2/lops.c               |  2 +-
+ include/linux/bio.h          |  1 +
+ 15 files changed, 26 insertions(+), 34 deletions(-)
 
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 8f9f19b..9a285f4 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1581,7 +1581,7 @@ static void handle_bad_sector(struct bio *bio)
+ 	printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
+ 			bdevname(bio->bi_bdev, b),
+ 			bio->bi_rw,
+-			(unsigned long long)bio->bi_sector + bio_sectors(bio),
++			(unsigned long long)bio_end_sector(bio),
+ 			(long long)(i_size_read(bio->bi_bdev->bd_inode) >> 9));
+ 
+ 	set_bit(BIO_EOF, &bio->bi_flags);
+diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+index b66365b..83b8c88 100644
+--- a/block/cfq-iosched.c
++++ b/block/cfq-iosched.c
+@@ -2271,11 +2271,8 @@ cfq_find_rq_fmerge(struct cfq_data *cfqd, struct bio *bio)
+ 		return NULL;
+ 
+ 	cfqq = cic_to_cfqq(cic, cfq_bio_sync(bio));
+-	if (cfqq) {
+-		sector_t sector = bio->bi_sector + bio_sectors(bio);
+-
+-		return elv_rb_find(&cfqq->sort_list, sector);
+-	}
++	if (cfqq)
++		return elv_rb_find(&cfqq->sort_list, bio_end_sector(bio));
+ 
+ 	return NULL;
+ }
+diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
+index 90037b5..ba19a3a 100644
+--- a/block/deadline-iosched.c
++++ b/block/deadline-iosched.c
+@@ -132,7 +132,7 @@ deadline_merge(struct request_queue *q, struct request **req, struct bio *bio)
+ 	 * check for front merge
+ 	 */
+ 	if (dd->front_merges) {
+-		sector_t sector = bio->bi_sector + bio_sectors(bio);
++		sector_t sector = bio_end_sector(bio);
+ 
+ 		__rq = elv_rb_find(&dd->sort_list[bio_data_dir(bio)], sector);
+ 		if (__rq) {
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 531ceb3..f1a29f8 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -334,8 +334,7 @@ static void brd_make_request(struct request_queue *q, struct bio *bio)
+ 	int err = -EIO;
+ 
+ 	sector = bio->bi_sector;
+-	if (sector + (bio->bi_size >> SECTOR_SHIFT) >
+-						get_capacity(bdev->bd_disk))
++	if (bio_end_sector(bio) > get_capacity(bdev->bd_disk))
+ 		goto out;
+ 
+ 	if (unlikely(bio->bi_rw & REQ_DISCARD)) {
 diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 26938e8..2c27744 100644
+index 2e7de7a..26938e8 100644
 --- a/drivers/block/pktcdvd.c
 +++ b/drivers/block/pktcdvd.c
-@@ -2433,7 +2433,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
- 		cloned_bio->bi_bdev = pd->bdev;
- 		cloned_bio->bi_private = psd;
- 		cloned_bio->bi_end_io = pkt_end_io_read_cloned;
--		pd->stats.secs_r += bio->bi_size >> 9;
-+		pd->stats.secs_r += bio_sectors(bio);
- 		pkt_queue_bio(pd, cloned_bio);
- 		return;
- 	}
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index fa51918..b61ed2b 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -455,7 +455,7 @@ static void map_region(struct dm_io_region *io, struct mirror *m,
- {
- 	io->bdev = m->dev->bdev;
- 	io->sector = map_sector(m, bio);
--	io->count = bio->bi_size >> 9;
-+	io->count = bio_sectors(bio);
- }
- 
- static void hold_bio(struct mirror_set *ms, struct bio *bio)
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 24b3597..1ff39e6 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -495,11 +495,11 @@ static inline int is_io_in_chunk_boundary(struct mddev *mddev,
- {
- 	if (likely(is_power_of_2(chunk_sects))) {
- 		return chunk_sects >= ((bio->bi_sector & (chunk_sects-1))
--					+ (bio->bi_size >> 9));
-+					+ bio_sectors(bio));
- 	} else{
- 		sector_t sector = bio->bi_sector;
- 		return chunk_sects >= (sector_div(sector, chunk_sects)
--						+ (bio->bi_size >> 9));
-+						+ bio_sectors(bio));
- 	}
- }
- 
-@@ -560,7 +560,7 @@ bad_map:
- 	printk("md/raid0:%s: make_request bug: can't convert block across chunks"
- 	       " or bigger than %dk %llu %d\n",
- 	       mdname(mddev), chunk_sects / 2,
--	       (unsigned long long)bio->bi_sector, bio->bi_size >> 10);
-+	       (unsigned long long)bio->bi_sector, bio_sectors(bio) / 2);
- 
- 	bio_io_error(bio);
- 	return;
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 2117622..b47503b 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -267,7 +267,7 @@ static void raid_end_bio_io(struct r1bio *r1_bio)
- 			 (bio_data_dir(bio) == WRITE) ? "write" : "read",
- 			 (unsigned long long) bio->bi_sector,
- 			 (unsigned long long) bio->bi_sector +
--			 (bio->bi_size >> 9) - 1);
-+			 bio_sectors(bio) - 1);
- 
- 		call_bio_endio(r1_bio);
- 	}
-@@ -458,7 +458,7 @@ static void raid1_end_write_request(struct bio *bio, int error)
- 					 " %llu-%llu\n",
- 					 (unsigned long long) mbio->bi_sector,
- 					 (unsigned long long) mbio->bi_sector +
--					 (mbio->bi_size >> 9) - 1);
-+					 bio_sectors(mbio) - 1);
- 				call_bio_endio(r1_bio);
- 			}
+@@ -901,7 +901,7 @@ static void pkt_iosched_process_queue(struct pktcdvd_device *pd)
+ 			pd->iosched.successive_reads += bio->bi_size >> 10;
+ 		else {
+ 			pd->iosched.successive_reads = 0;
+-			pd->iosched.last_write = bio->bi_sector + bio_sectors(bio);
++			pd->iosched.last_write = bio_end_sector(bio);
  		}
-@@ -1047,7 +1047,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
+ 		if (pd->iosched.successive_reads >= HI_SPEED_SWITCH) {
+ 			if (pd->read_speed == pd->write_speed) {
+@@ -2454,7 +2454,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
+ 	zone = ZONE(bio->bi_sector, pd);
+ 	VPRINTK("pkt_make_request: start = %6llx stop = %6llx\n",
+ 		(unsigned long long)bio->bi_sector,
+-		(unsigned long long)(bio->bi_sector + bio_sectors(bio)));
++		(unsigned long long)bio_end_sector(bio));
  
- 	r1_bio->master_bio = bio;
--	r1_bio->sectors = bio->bi_size >> 9;
-+	r1_bio->sectors = bio_sectors(bio);
- 	r1_bio->state = 0;
- 	r1_bio->mddev = mddev;
- 	r1_bio->sector = bio->bi_sector;
-@@ -1125,7 +1125,7 @@ read_again:
- 			r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
+ 	/* Check if we have to split the bio */
+ 	{
+@@ -2462,7 +2462,7 @@ static void pkt_make_request(struct request_queue *q, struct bio *bio)
+ 		sector_t last_zone;
+ 		int first_sectors;
  
- 			r1_bio->master_bio = bio;
--			r1_bio->sectors = (bio->bi_size >> 9) - sectors_handled;
-+			r1_bio->sectors = bio_sectors(bio) - sectors_handled;
- 			r1_bio->state = 0;
- 			r1_bio->mddev = mddev;
- 			r1_bio->sector = bio->bi_sector + sectors_handled;
-@@ -1326,14 +1326,14 @@ read_again:
- 	/* Mustn't call r1_bio_write_done before this next test,
- 	 * as it could result in the bio being freed.
- 	 */
--	if (sectors_handled < (bio->bi_size >> 9)) {
-+	if (sectors_handled < bio_sectors(bio)) {
- 		r1_bio_write_done(r1_bio);
- 		/* We need another r1_bio.  It has already been counted
- 		 * in bio->bi_phys_segments
- 		 */
- 		r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
- 		r1_bio->master_bio = bio;
--		r1_bio->sectors = (bio->bi_size >> 9) - sectors_handled;
-+		r1_bio->sectors = bio_sectors(bio) - sectors_handled;
- 		r1_bio->state = 0;
- 		r1_bio->mddev = mddev;
- 		r1_bio->sector = bio->bi_sector + sectors_handled;
-@@ -1944,7 +1944,7 @@ static void sync_request_write(struct mddev *mddev, struct r1bio *r1_bio)
- 		wbio->bi_rw = WRITE;
- 		wbio->bi_end_io = end_sync_write;
- 		atomic_inc(&r1_bio->remaining);
--		md_sync_acct(conf->mirrors[i].rdev->bdev, wbio->bi_size >> 9);
-+		md_sync_acct(conf->mirrors[i].rdev->bdev, bio_sectors(wbio));
+-		last_zone = ZONE(bio->bi_sector + bio_sectors(bio) - 1, pd);
++		last_zone = ZONE(bio_end_sector(bio) - 1, pd);
+ 		if (last_zone != zone) {
+ 			BUG_ON(last_zone != zone + pd->settings.size);
+ 			first_sectors = last_zone - bio->bi_sector;
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index c89cde86..c6ec571 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -258,7 +258,7 @@ static int stripe_map_range(struct stripe_c *sc, struct bio *bio,
+ 	sector_t begin, end;
  
- 		generic_make_request(wbio);
+ 	stripe_map_range_sector(sc, bio->bi_sector, target_stripe, &begin);
+-	stripe_map_range_sector(sc, bio->bi_sector + bio_sectors(bio),
++	stripe_map_range_sector(sc, bio_end_sector(bio),
+ 				target_stripe, &end);
+ 	if (begin < end) {
+ 		bio->bi_bdev = sc->stripe[target_stripe].dev->bdev;
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 52cde98..03d6d21 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -472,7 +472,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
+ 		return -EIO;
  	}
-@@ -2281,8 +2281,7 @@ read_more:
- 			r1_bio = mempool_alloc(conf->r1bio_pool, GFP_NOIO);
  
- 			r1_bio->master_bio = mbio;
--			r1_bio->sectors = (mbio->bi_size >> 9)
--					  - sectors_handled;
-+			r1_bio->sectors = bio_sectors(mbio) - sectors_handled;
- 			r1_bio->state = 0;
- 			set_bit(R1BIO_ReadError, &r1_bio->state);
- 			r1_bio->mddev = mddev;
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 64d4824..4c6705f 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1121,7 +1121,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	/* If this request crosses a chunk boundary, we need to
- 	 * split it.  This will only happen for 1 PAGE (or less) requests.
- 	 */
--	if (unlikely((bio->bi_sector & chunk_mask) + (bio->bi_size >> 9)
-+	if (unlikely((bio->bi_sector & chunk_mask) + bio_sectors(bio)
- 		     > chunk_sects
- 		     && (conf->geo.near_copies < conf->geo.raid_disks
- 			 || conf->prev.near_copies < conf->prev.raid_disks))) {
-@@ -1161,7 +1161,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	bad_map:
- 		printk("md/raid10:%s: make_request bug: can't convert block across chunks"
- 		       " or bigger than %dk %llu %d\n", mdname(mddev), chunk_sects/2,
--		       (unsigned long long)bio->bi_sector, bio->bi_size >> 10);
-+		       (unsigned long long)bio->bi_sector, bio_sectors(bio) / 2);
+-	if ((bio->bi_sector + bio_sectors(bio)) >>
++	if (bio_end_sector(bio) >>
+ 	    (v->data_dev_block_bits - SECTOR_SHIFT) > v->data_blocks) {
+ 		DMERR_LIMIT("io out of range");
+ 		return -EIO;
+diff --git a/drivers/md/faulty.c b/drivers/md/faulty.c
+index 5e7dc77..3193aef 100644
+--- a/drivers/md/faulty.c
++++ b/drivers/md/faulty.c
+@@ -185,8 +185,7 @@ static void make_request(struct mddev *mddev, struct bio *bio)
+ 			return;
+ 		}
  
+-		if (check_sector(conf, bio->bi_sector, bio->bi_sector+(bio->bi_size>>9),
+-				 WRITE))
++		if (check_sector(conf, bio->bi_sector, bio_end_sector(bio), WRITE))
+ 			failit = 1;
+ 		if (check_mode(conf, WritePersistent)) {
+ 			add_sector(conf, bio->bi_sector, WritePersistent);
+@@ -196,8 +195,7 @@ static void make_request(struct mddev *mddev, struct bio *bio)
+ 			failit = 1;
+ 	} else {
+ 		/* read request */
+-		if (check_sector(conf, bio->bi_sector, bio->bi_sector + (bio->bi_size>>9),
+-				 READ))
++		if (check_sector(conf, bio->bi_sector, bio_end_sector(bio), READ))
+ 			failit = 1;
+ 		if (check_mode(conf, ReadTransient))
+ 			failit = 1;
+diff --git a/drivers/md/linear.c b/drivers/md/linear.c
+index 2101483..f03fabd 100644
+--- a/drivers/md/linear.c
++++ b/drivers/md/linear.c
+@@ -317,8 +317,7 @@ static void linear_make_request(struct mddev *mddev, struct bio *bio)
  		bio_io_error(bio);
  		return;
-@@ -1176,7 +1176,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
- 	 */
- 	wait_barrier(conf);
- 
--	sectors = bio->bi_size >> 9;
-+	sectors = bio_sectors(bio);
- 	while (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
- 	    bio->bi_sector < conf->reshape_progress &&
- 	    bio->bi_sector + sectors > conf->reshape_progress) {
-@@ -1278,8 +1278,7 @@ read_again:
- 			r10_bio = mempool_alloc(conf->r10bio_pool, GFP_NOIO);
- 
- 			r10_bio->master_bio = bio;
--			r10_bio->sectors = ((bio->bi_size >> 9)
--					    - sectors_handled);
-+			r10_bio->sectors = bio_sectors(bio) - sectors_handled;
- 			r10_bio->state = 0;
- 			r10_bio->mddev = mddev;
- 			r10_bio->sector = bio->bi_sector + sectors_handled;
-@@ -1519,7 +1518,7 @@ retry_write:
- 	 * after checking if we need to go around again.
- 	 */
- 
--	if (sectors_handled < (bio->bi_size >> 9)) {
-+	if (sectors_handled < bio_sectors(bio)) {
- 		one_write_done(r10_bio);
- 		/* We need another r10_bio.  It has already been counted
- 		 * in bio->bi_phys_segments.
-@@ -1527,7 +1526,7 @@ retry_write:
- 		r10_bio = mempool_alloc(conf->r10bio_pool, GFP_NOIO);
- 
- 		r10_bio->master_bio = bio;
--		r10_bio->sectors = (bio->bi_size >> 9) - sectors_handled;
-+		r10_bio->sectors = bio_sectors(bio) - sectors_handled;
- 
- 		r10_bio->mddev = mddev;
- 		r10_bio->sector = bio->bi_sector + sectors_handled;
-@@ -2053,7 +2052,7 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 		d = r10_bio->devs[i].devnum;
- 		atomic_inc(&conf->mirrors[d].rdev->nr_pending);
- 		atomic_inc(&r10_bio->remaining);
--		md_sync_acct(conf->mirrors[d].rdev->bdev, tbio->bi_size >> 9);
-+		md_sync_acct(conf->mirrors[d].rdev->bdev, bio_sectors(tbio));
- 
- 		tbio->bi_sector += conf->mirrors[d].rdev->data_offset;
- 		tbio->bi_bdev = conf->mirrors[d].rdev->bdev;
-@@ -2078,7 +2077,7 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 		d = r10_bio->devs[i].devnum;
- 		atomic_inc(&r10_bio->remaining);
- 		md_sync_acct(conf->mirrors[d].replacement->bdev,
--			     tbio->bi_size >> 9);
-+			     bio_sectors(tbio));
- 		generic_make_request(tbio);
  	}
+-	if (unlikely(bio->bi_sector + (bio->bi_size >> 9) >
+-		     tmp_dev->end_sector)) {
++	if (unlikely(bio_end_sector(bio) > tmp_dev->end_sector)) {
+ 		/* This bio crosses a device boundary, so we have to
+ 		 * split it.
+ 		 */
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index d5bddfc..2117622 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1016,7 +1016,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
+ 	md_write_start(mddev, bio); /* wait on superblock update early */
  
-@@ -2204,13 +2203,13 @@ static void recovery_request_write(struct mddev *mddev, struct r10bio *r10_bio)
- 	wbio2 = r10_bio->devs[1].repl_bio;
- 	if (wbio->bi_end_io) {
- 		atomic_inc(&conf->mirrors[d].rdev->nr_pending);
--		md_sync_acct(conf->mirrors[d].rdev->bdev, wbio->bi_size >> 9);
-+		md_sync_acct(conf->mirrors[d].rdev->bdev, bio_sectors(wbio));
- 		generic_make_request(wbio);
- 	}
- 	if (wbio2 && wbio2->bi_end_io) {
- 		atomic_inc(&conf->mirrors[d].replacement->nr_pending);
- 		md_sync_acct(conf->mirrors[d].replacement->bdev,
--			     wbio2->bi_size >> 9);
-+			     bio_sectors(wbio2));
- 		generic_make_request(wbio2);
- 	}
- }
-@@ -2640,8 +2639,7 @@ read_more:
- 		r10_bio = mempool_alloc(conf->r10bio_pool,
- 					GFP_NOIO);
- 		r10_bio->master_bio = mbio;
--		r10_bio->sectors = (mbio->bi_size >> 9)
--			- sectors_handled;
-+		r10_bio->sectors = bio_sectors(mbio) - sectors_handled;
- 		r10_bio->state = 0;
- 		set_bit(R10BIO_ReadError,
- 			&r10_bio->state);
+ 	if (bio_data_dir(bio) == WRITE &&
+-	    bio->bi_sector + bio->bi_size/512 > mddev->suspend_lo &&
++	    bio_end_sector(bio) > mddev->suspend_lo &&
+ 	    bio->bi_sector < mddev->suspend_hi) {
+ 		/* As the suspend_* range is controlled by
+ 		 * userspace, we want an interruptible
+@@ -1027,7 +1027,7 @@ static void make_request(struct mddev *mddev, struct bio * bio)
+ 			flush_signals(current);
+ 			prepare_to_wait(&conf->wait_barrier,
+ 					&w, TASK_INTERRUPTIBLE);
+-			if (bio->bi_sector + bio->bi_size/512 <= mddev->suspend_lo ||
++			if (bio_end_sector(bio) <= mddev->suspend_lo ||
+ 			    bio->bi_sector >= mddev->suspend_hi)
+ 				break;
+ 			schedule();
 diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index a203039..0ba12c3 100644
+index 9ab506d..a203039 100644
 --- a/drivers/md/raid5.c
 +++ b/drivers/md/raid5.c
-@@ -90,7 +90,7 @@ static inline struct hlist_head *stripe_hash(struct r5conf *conf, sector_t sect)
-  */
- static inline struct bio *r5_next_bio(struct bio *bio, sector_t sector)
- {
--	int sectors = bio->bi_size >> 9;
-+	int sectors = bio_sectors(bio);
- 	if (bio->bi_sector + sectors < sector + STRIPE_SECTORS)
- 		return bio->bi_next;
- 	else
-@@ -3841,7 +3841,7 @@ static int in_chunk_boundary(struct mddev *mddev, struct bio *bio)
- {
- 	sector_t sector = bio->bi_sector + get_start_sect(bio->bi_bdev);
- 	unsigned int chunk_sectors = mddev->chunk_sectors;
--	unsigned int bio_sectors = bio->bi_size >> 9;
-+	unsigned int bio_sectors = bio_sectors(bio);
+@@ -2421,11 +2421,11 @@ static int add_stripe_bio(struct stripe_head *sh, struct bio *bi, int dd_idx, in
+ 	} else
+ 		bip = &sh->dev[dd_idx].toread;
+ 	while (*bip && (*bip)->bi_sector < bi->bi_sector) {
+-		if ((*bip)->bi_sector + ((*bip)->bi_size >> 9) > bi->bi_sector)
++		if (bio_end_sector(*bip) > bi->bi_sector)
+ 			goto overlap;
+ 		bip = & (*bip)->bi_next;
+ 	}
+-	if (*bip && (*bip)->bi_sector < bi->bi_sector + ((bi->bi_size)>>9))
++	if (*bip && (*bip)->bi_sector < bio_end_sector(bi))
+ 		goto overlap;
  
- 	if (mddev->new_chunk_sectors < mddev->chunk_sectors)
- 		chunk_sectors = mddev->new_chunk_sectors;
-@@ -3931,7 +3931,7 @@ static int bio_fits_rdev(struct bio *bi)
- {
- 	struct request_queue *q = bdev_get_queue(bi->bi_bdev);
+ 	BUG_ON(*bip && bi->bi_next && (*bip) != bi->bi_next);
+@@ -2441,8 +2441,8 @@ static int add_stripe_bio(struct stripe_head *sh, struct bio *bi, int dd_idx, in
+ 		     sector < sh->dev[dd_idx].sector + STRIPE_SECTORS &&
+ 			     bi && bi->bi_sector <= sector;
+ 		     bi = r5_next_bio(bi, sh->dev[dd_idx].sector)) {
+-			if (bi->bi_sector + (bi->bi_size>>9) >= sector)
+-				sector = bi->bi_sector + (bi->bi_size>>9);
++			if (bio_end_sector(bi) >= sector)
++				sector = bio_end_sector(bi);
+ 		}
+ 		if (sector >= sh->dev[dd_idx].sector + STRIPE_SECTORS)
+ 			set_bit(R5_OVERWRITE, &sh->dev[dd_idx].flags);
+@@ -3978,7 +3978,7 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
+ 						    0,
+ 						    &dd_idx, NULL);
  
--	if ((bi->bi_size>>9) > queue_max_sectors(q))
-+	if (bio_sectors(bi) > queue_max_sectors(q))
- 		return 0;
- 	blk_recount_segments(q, bi);
- 	if (bi->bi_phys_segments > queue_max_segments(q))
-@@ -4001,7 +4001,7 @@ static int chunk_aligned_read(struct mddev *mddev, struct bio * raid_bio)
- 		align_bi->bi_flags &= ~(1 << BIO_SEG_VALID);
- 
- 		if (!bio_fits_rdev(align_bi) ||
--		    is_badblock(rdev, align_bi->bi_sector, align_bi->bi_size>>9,
-+		    is_badblock(rdev, align_bi->bi_sector, bio_sectors(align_bi),
- 				&first_bad, &bad_sectors)) {
- 			/* too big in some way, or has a known bad block */
- 			bio_put(align_bi);
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 5cce6aa..07ff012 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -4722,7 +4722,7 @@ static int bio_size_ok(struct block_device *bdev, struct bio *bio,
+-	end_sector = align_bi->bi_sector + (align_bi->bi_size >> 9);
++	end_sector = bio_end_sector(align_bi);
+ 	rcu_read_lock();
+ 	rdev = rcu_dereference(conf->disks[dd_idx].replacement);
+ 	if (!rdev || test_bit(Faulty, &rdev->flags) ||
+@@ -4253,7 +4253,7 @@ static void make_request(struct mddev *mddev, struct bio * bi)
  	}
  
- 	prev = &bio->bi_io_vec[bio->bi_vcnt - 1];
--	if ((bio->bi_size >> 9) > max_sectors)
-+	if (bio_sectors(bio) > max_sectors)
- 		return 0;
+ 	logical_sector = bi->bi_sector & ~((sector_t)STRIPE_SECTORS-1);
+-	last_sector = bi->bi_sector + (bi->bi_size>>9);
++	last_sector = bio_end_sector(bi);
+ 	bi->bi_next = NULL;
+ 	bi->bi_phys_segments = 1;	/* over-loaded to count active stripes */
  
- 	if (!q->merge_bvec_fn)
-diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-index 9961726..5a28843 100644
---- a/include/trace/events/block.h
-+++ b/include/trace/events/block.h
-@@ -244,7 +244,7 @@ TRACE_EVENT(block_bio_bounce,
- 		__entry->dev		= bio->bi_bdev ?
- 					  bio->bi_bdev->bd_dev : 0;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
- 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
- 	),
-@@ -281,7 +281,7 @@ TRACE_EVENT(block_bio_complete,
- 		__entry->dev		= bio->bi_bdev ?
- 					  bio->bi_bdev->bd_dev : 0;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		__entry->error		= error;
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
- 	),
-@@ -309,7 +309,7 @@ DECLARE_EVENT_CLASS(block_bio_merge,
- 	TP_fast_assign(
- 		__entry->dev		= bio->bi_bdev->bd_dev;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
- 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
- 	),
-@@ -376,7 +376,7 @@ TRACE_EVENT(block_bio_queue,
- 	TP_fast_assign(
- 		__entry->dev		= bio->bi_bdev->bd_dev;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
- 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
- 	),
-@@ -404,7 +404,7 @@ DECLARE_EVENT_CLASS(block_get_rq,
- 	TP_fast_assign(
- 		__entry->dev		= bio ? bio->bi_bdev->bd_dev : 0;
- 		__entry->sector		= bio ? bio->bi_sector : 0;
--		__entry->nr_sector	= bio ? bio->bi_size >> 9 : 0;
-+		__entry->nr_sector	= bio ? bio_sectors(bio) : 0;
- 		blk_fill_rwbs(__entry->rwbs,
- 			      bio ? bio->bi_rw : 0, __entry->nr_sector);
- 		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
-@@ -580,7 +580,7 @@ TRACE_EVENT(block_bio_remap,
- 	TP_fast_assign(
- 		__entry->dev		= bio->bi_bdev->bd_dev;
- 		__entry->sector		= bio->bi_sector;
--		__entry->nr_sector	= bio->bi_size >> 9;
-+		__entry->nr_sector	= bio_sectors(bio);
- 		__entry->old_dev	= dev;
- 		__entry->old_sector	= from;
- 		blk_fill_rwbs(__entry->rwbs, bio->bi_rw, bio->bi_size);
+@@ -4716,7 +4716,7 @@ static int  retry_aligned_read(struct r5conf *conf, struct bio *raid_bio)
+ 	logical_sector = raid_bio->bi_sector & ~((sector_t)STRIPE_SECTORS-1);
+ 	sector = raid5_compute_sector(conf, logical_sector,
+ 				      0, &dd_idx, NULL);
+-	last_sector = raid_bio->bi_sector + (raid_bio->bi_size>>9);
++	last_sector = bio_end_sector(raid_bio);
+ 
+ 	for (; logical_sector < last_sector;
+ 	     logical_sector += STRIPE_SECTORS,
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index b6ad0de..12d08b4 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -826,8 +826,7 @@ dcssblk_make_request(struct request_queue *q, struct bio *bio)
+ 	if ((bio->bi_sector & 7) != 0 || (bio->bi_size & 4095) != 0)
+ 		/* Request is not page-aligned. */
+ 		goto fail;
+-	if (((bio->bi_size >> 9) + bio->bi_sector)
+-			> get_capacity(bio->bi_bdev->bd_disk)) {
++	if (bio_end_sector(bio) > get_capacity(bio->bi_bdev->bd_disk)) {
+ 		/* Request beyond end of DCSS segment. */
+ 		goto fail;
+ 	}
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index 1b319df..a291f44 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -2526,8 +2526,7 @@ static int submit_extent_page(int rw, struct extent_io_tree *tree,
+ 		if (old_compressed)
+ 			contig = bio->bi_sector == sector;
+ 		else
+-			contig = bio->bi_sector + (bio->bi_size >> 9) ==
+-				sector;
++			contig = bio_end_sector(bio) == sector;
+ 
+ 		if (prev_bio_flags != bio_flags || !contig ||
+ 		    merge_bio(tree, page, offset, page_size, bio, bio_flags) ||
+diff --git a/fs/gfs2/lops.c b/fs/gfs2/lops.c
+index 9ceccb1..ada9c6a 100644
+--- a/fs/gfs2/lops.c
++++ b/fs/gfs2/lops.c
+@@ -300,7 +300,7 @@ static struct bio *gfs2_log_get_bio(struct gfs2_sbd *sdp, u64 blkno)
+ 	u64 nblk;
+ 
+ 	if (bio) {
+-		nblk = bio->bi_sector + bio_sectors(bio);
++		nblk = bio_end_sector(bio);
+ 		nblk >>= sdp->sd_fsb2bb_shift;
+ 		if (blkno == nblk)
+ 			return bio;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index fcb4dba..20507eb 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -67,6 +67,7 @@
+ #define bio_offset(bio)		bio_iovec((bio))->bv_offset
+ #define bio_segments(bio)	((bio)->bi_vcnt - (bio)->bi_idx)
+ #define bio_sectors(bio)	((bio)->bi_size >> 9)
++#define bio_end_sector(bio)	((bio)->bi_sector + bio_sectors((bio)))
+ 
+ static inline unsigned int bio_cur_bytes(struct bio *bio)
+ {
 -- 
 1.7.12
