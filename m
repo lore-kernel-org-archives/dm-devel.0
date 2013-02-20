@@ -1,30 +1,33 @@
-From: Paul Menzel <pm.debian@googlemail.com>
+From: NeilBrown <neilb@suse.de>
 Subject: Re: [PATCH linux-next] DM RAID: validate_raid_redundancy: Silence
  uninitialized variable warning
-Date: Wed, 20 Feb 2013 23:18:45 +0100
-Message-ID: <1361398725.4895.27.camel@mattotaupa>
+Date: Thu, 21 Feb 2013 09:37:44 +1100
+Message-ID: <20130221093744.3ad146c4@notabene.brown>
 References: <1361392278-59767-1-git-send-email-tim.gardner@canonical.com>
-	 <1361398597.4895.24.camel@mattotaupa>
+	<1361398597.4895.24.camel@mattotaupa>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
-	boundary="=-m0Bqxe9YQf/ZrhncsAvk"
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/Nzd5Is/CwURP9gl+pwoR1D0"; protocol="application/pgp-signature"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1361398597.4895.24.camel@mattotaupa>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tim Gardner <tim.gardner@canonical.com>
-Cc: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org
+To: Paul Menzel <pm.debian@googlemail.com>
+Cc: Tim Gardner <tim.gardner@canonical.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-
---=-m0Bqxe9YQf/ZrhncsAvk
-Content-Type: text/plain; charset="UTF-8"
+--Sig_/Nzd5Is/CwURP9gl+pwoR1D0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-Dear Tim,
+On Wed, 20 Feb 2013 23:16:37 +0100 Paul Menzel <pm.debian@googlemail.com>
+wrote:
 
-
-Am Mittwoch, den 20.02.2013, 23:16 +0100 schrieb Paul Menzel:
-
+> Dear Tim,
+>=20
+>=20
+> thanks for the patch.
+>=20
+>=20
 > Am Mittwoch, den 20.02.2013, 13:31 -0700 schrieb Tim Gardner:
 >=20
 > Noting the `gcc` version and build environment is never wrong. ;-)
@@ -38,31 +41,8 @@ re
 > > It appears unlikely that rebuilds_per_group could be used before set,
 >=20
 > Why? Otherwise the compiler would not complain, right?
->=20
-> > but set it to 0 anyways just to shutup GCC.
->=20
-> Unfortunately I do not know what linux-next version you tested, so the
-> line numbers are off in.
->=20
->         $ git describe
->         v3.7.5-4-g9c2ab66
 
-See below =E2=80=A6
-
-> > Cc: Alasdair Kergon <agk@redhat.com>
-> > Cc: dm-devel@redhat.com
-> > Cc: Neil Brown <neilb@suse.de>
-> > Cc: linux-raid@vger.kernel.org
-> > Signed-off-by: Tim Gardner <tim.gardner@canonical.com>
-> > ---
-> >  drivers/md/dm-raid.c |    2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> >=20
-> > diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> > index 9d6bf19..8005caf 100644
-
-Git to the rescue. I guess I should be able to find that commit to make
-sense of the line numbers.
+It is not simply unlikely, it is impossible.  But gcc isn't that clever yet.
 
 > > --- a/drivers/md/dm-raid.c
 > > +++ b/drivers/md/dm-raid.c
@@ -73,26 +53,44 @@ sense of the line numbers.
 > >  	unsigned i, rebuild_cnt =3D 0;
 > > -	unsigned rebuilds_per_group, copies, d;
 > > +	unsigned rebuilds_per_group =3D 0, copies, d;
-> >  	unsigned group_size, last_group_start;
-> > =20
-> >  	for (i =3D 0; i < rs->md.raid_disks; i++)
+
+This should either be:
+        unsigned uninitialized_var(rebuilds_per_group);
+        unsigned copies, d;
+
+which the old way and is being deprecated, but at least is consistent with
+the kernel as it is, or
+
+        unsigned rebuilds_per_group =3D 0 /* GCC */;
+	unsigned copies,d;
+
+which is apparently the new way which I believe is due to be imposed on the
+kernel immediately after 3.9-rc1
+   https://lwn.net/Articles/529954/
+
+NeilBrown
 
 
-Thanks,
-
-Paul
-
---=-m0Bqxe9YQf/ZrhncsAvk
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
+--Sig_/Nzd5Is/CwURP9gl+pwoR1D0
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
+Version: GnuPG v2.0.19 (GNU/Linux)
 
-iEYEABECAAYFAlElS8UACgkQPX1aK2wOHVjShACfZ44+CBAzUUudihswlpYeyOxV
-hzwAnjdaFOqXDPfB6FH7JshK7c2iNFI8
-=X7l1
+iQIVAwUBUSVQODnsnt1WYoG5AQLd3Q//UL3Ci1uFP3bUejUumo0dx6x4HAiopoYP
+88K1zfVw14QsX8lI4bXzQkBlVjnBhGeOLptZxqptN7ncbtVxpj2Mm576ZDj+cKkn
+DR/0z3sT9ezWlyqWizy0sjkOE/sP8XMs/Z7t11C1HjBLce2kO9NRbGjtD1zstYLD
+nYToJ8fjnrf5KeGd+TI/gL/02maiPIAKC6UiQR/auCnIg5Bc2m9aJYyUxgjHaxOI
+w91KLfPI6fMX1UJmWvIeYYCqOGctdbLnP4fB7CExDvgjEUSsd6CRpAaPvJe0+/g5
+R1Znn2MdqY5bDpMYE1LSeDGOecuEag1EOurNIkjhip9KKnegkfkvfvEZPtZ7fvNw
+O9t5OvYIi+bsGGxJTtNOldulcmWjL+sE7on2jLEGXKz/HSCu60YiXlfoU8XzXANc
+1tC3EoHE8LQ+bZzP1rMozBwmQk0dCHkJ6s+Nwu4Jch6/2czdGGvyvE1Ixrehogc5
+b6Y4ci+tXO1cZNJxWbawqlL3fFFwLuCBPPcVQkH2IiEPW1qQWDPemCnE4D1gubZS
+V1AGSqnRchRCGMxDe89i3uKJcbSUWTUbMoi8XDggjsNRsu8FtezHA7vGKJeJfOnB
+tKUETcKGmGiUPwsYkbn+3wDUAfprQyaIYZeo0RldmIBPyGM93MvtjgOQqx1vgLpV
+gmVI/MCdSgQ=
+=yQzY
 -----END PGP SIGNATURE-----
 
---=-m0Bqxe9YQf/ZrhncsAvk--
+--Sig_/Nzd5Is/CwURP9gl+pwoR1D0--
