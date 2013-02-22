@@ -1,52 +1,79 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/2] dm: Avoid use-after-free of a mapped device
-Date: Fri, 22 Feb 2013 06:28:36 -0500
-Message-ID: <20130222112836.GA30457@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH 1/2] block: Avoid invoking blk_run_queue() recursively
+Date: Fri, 22 Feb 2013 10:14:16 -0800
+Message-ID: <20130222181416.GO3570@htj.dyndns.org>
 References: <51274C2F.6070500@acm.org>
- <51274CC3.9070204@acm.org>
- <20130222110829.GA30269@redhat.com>
- <512754E1.9080008@acm.org>
+ <51274C76.8080007@acm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <512754E1.9080008@acm.org>
+In-Reply-To: <51274C76.8080007@acm.org>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bvanassche@acm.org>, Jens Axboe <axboe@kernel.dk>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <JBottomley@parallels.com>
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, James Bottomley <JBottomley@parallels.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 22 2013 at  6:22am -0500,
-Bart Van Assche <bvanassche@acm.org> wrote:
+Hello, Bart.
 
-> On 02/22/13 12:08, Mike Snitzer wrote:
-> >On Fri, Feb 22 2013 at  5:47am -0500,
-> >Bart Van Assche <bvanassche@acm.org> wrote:
-> >
-> >>As the comment above rq_completed() explains, md members must
-> >>not be touched after the dm_put() at the end of that function
-> >>has been invoked. Avoid that the md->queue can be run
-> >>asynchronously after the last md reference has been dropped by
-> >>running that queue synchronously.
-> >
-> >Your commit header should probably reference commit
-> >a8c32a5c98943d370ea606a2e7dc04717eb92206 ("dm: fix deadlock with request
-> >based dm and queue request_fn recursion") and cc: stable with "v3.7+"
-> >guidance.
-> >
-> >Acked-by: Mike Snitzer <snitzer@redhat.com>
+On Fri, Feb 22, 2013 at 11:46:14AM +0100, Bart Van Assche wrote:
+> Some block drivers, e.g. dm and SCSI, need to trigger a queue
+> run from inside functions that may be invoked by their request_fn()
+> implementation. Make sure that invoking blk_run_queue() instead
+> of blk_run_queue_async() from such functions does not trigger
+> recursion. Making blk_run_queue() skip queue processing when
+> invoked recursively is safe because the only two affected
+> request_fn() implementations (dm and SCSI) guarantee that the
+> request queue will be reexamined sooner or later before returning
+> from their request_fn() implementation.
 > 
-> Hello Mike,
+> Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+> Cc: Jens Axboe <axboe@kernel.dk>
+> Cc: Tejun Heo <tj@kernel.org>
+> Cc: James Bottomley <JBottomley@parallels.com>
+> Cc: Alasdair G Kergon <agk@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: <stable@vger.kernel.org>
+> ---
+>  block/blk-core.c |   21 +++++++++++++--------
+>  1 file changed, 13 insertions(+), 8 deletions(-)
 > 
-> Thanks for reviewing this patch and for the ack. Regarding the
-> stable tag: had you noticed that commit a8c32a5 had a "Cc: stable"
-> tag itself and hence probably has already been backported to kernels
-> older than v3.7 ?
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index c973249..cf26e3a 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -304,19 +304,24 @@ EXPORT_SYMBOL(blk_sync_queue);
+>   *    This variant runs the queue whether or not the queue has been
+>   *    stopped. Must be called with the queue lock held and interrupts
+>   *    disabled. See also @blk_run_queue.
+> + *
+> + * Note:
+> + *    Request handling functions are allowed to invoke __blk_run_queue() or
+> + *    blk_run_queue() directly or indirectly. This will not result in a
+> + *    recursive call of the request handler. However, such request handling
+> + *    functions must, before they return, either reexamine the request queue
+> + *    or invoke blk_delay_queue() to avoid that queue processing stops.
+> + *
+> + *    Some request handler implementations, e.g. scsi_request_fn() and
+> + *    dm_request_fn(), unlock the queue lock internally. Returning immediately
+> + *    if q->request_fn_active > 0 avoids that for the same queue multiple
+> + *    threads execute the request handling function concurrently.
+>   */
+>  inline void __blk_run_queue_uncond(struct request_queue *q)
+>  {
+> -	if (unlikely(blk_queue_dead(q)))
+> +	if (unlikely(blk_queue_dead(q) || q->request_fn_active))
+>  		return;
 
-Ah yes.  Good point.
+Hmmm... I can't say I like this.  Silently ignoring explicit
+blk_run_queue() call like this is likely to introduce nasty queue hang
+bugs later on even if it's okay for the current users and there isn't
+even debugging aid to detect what's going on.  If somebody invokes
+blk_run_queue(), block layer better guarantee that the queue will be
+run at least once afterwards no matter what, so please don't it this
+way.
 
-Jens, since this DM change is dependent on Bart's 1/2 block patch it'd
-be ideal if you could pick up both of these patches for v3.9.
+Thanks.
 
-Thanks,
-Mike
+-- 
+tejun
