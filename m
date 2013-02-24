@@ -1,42 +1,40 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH 1/2] block: Avoid invoking blk_run_queue() recursively
-Date: Sat, 23 Feb 2013 13:34:53 +0100
-Message-ID: <5128B76D.4040004@acm.org>
-References: <51274C2F.6070500@acm.org> <51274C76.8080007@acm.org> <20130222181416.GO3570@htj.dyndns.org> <5127BF8E.9080604@acm.org> <20130222190129.GD25064@kernel.dk>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH] Fix gzip path in Makefile.inc
+Date: Sun, 24 Feb 2013 16:43:47 +0100
+Message-ID: <1361720627.7812.4.camel@lapoo.opensvc.com>
+References: <5126A3FA.8070807@mail.ru>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20130222190129.GD25064@kernel.dk>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Tejun Heo <tj@kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, James Bottomley <JBottomley@parallels.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5126A3FA.8070807@mail.ru>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/22/13 20:01, Jens Axboe wrote:
-> That'd be fine. I agree with Tejun that just returning is error prone
-> and could cause hard-to-debug hangs or stalls. So something ala
->
->          if (blk_queue(dead))
->                  return;
->          else if (q->request_fn_active) {
->                  blk_delay_queue(q, 0);
->                  return;
->          }
->
-> would work. Alternatively, you could mark the queue as needing a re-run,
-> so any existing runner of it would notice and clear this flag and re-run
-> the queue. But that's somewhat more fragile, and since it isn't a
-> hot/performance path, I suspect the simple "just re-run me soon" is good
-> enough.
+On jeu., 2013-02-21 at 23:47 +0100, Phileas Fogg wrote:
+> i would like to submit a patch which fixes the path to gzip in
+> Makefile.inc
+> Makefile.inc uses the absolute path /bin/gzip which isn't valid on all
+> Linux 
+> distros. E.g. on Arch Linux which i'm cuurrently using the gzip tool
+> is 
+> installed in /usr/bin/gzip. The patch fixes the build problem on Linux
+> distros 
+> which do not have gzip in /bin directory.
 
-I'm worried that in the device mapper the approach using 
-blk_delay_queue() could trigger a queue run after the final dm_put(). 
-And I'm also afraid that that approach could trigger several needless 
-context switches before q->request_fn_active finally drops to zero. So 
-the approach with the "need re-run" flag seems preferable to me. But 
-maybe I'm overlooking something ?
+Applied.
 
-Bart.
-
-
+Thanks,
+Christophe Varoqui
+www.opensvc.com
