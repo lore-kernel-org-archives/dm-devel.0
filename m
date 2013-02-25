@@ -1,166 +1,130 @@
-From: Devin <delldudedevin@gmail.com>
-Subject: Re: Multipath / iSCSI issues
-Date: Sun, 24 Feb 2013 19:07:24 -0700
-Message-ID: <CAEctU6pWmJwJbZd0F+FDTM3YyOrogF4jYav=_hFRcyELqzDVfg@mail.gmail.com>
-References: <CAEctU6r9dnVnaMFgzO+8g0ktJ2VFTCaN47NiR5F4QH16_iX53g@mail.gmail.com>
-	<512AA728.7040507@cs.wisc.edu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH 2/2] dm: Avoid use-after-free of a mapped device
+Date: Mon, 25 Feb 2013 18:49:14 +0900
+Message-ID: <512B339A.7010606@ce.jp.nec.com>
+References: <51274C2F.6070500@acm.org> <51274CC3.9070204@acm.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5144029766239862452=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <512AA728.7040507@cs.wisc.edu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <51274CC3.9070204@acm.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <JBottomley@parallels.com>Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
---===============5144029766239862452==
-Content-Type: multipart/alternative; boundary=bcaec54eea708b44ed04d68300ea
+Hello Bart,
 
---bcaec54eea708b44ed04d68300ea
-Content-Type: text/plain; charset=ISO-8859-1
+On 02/22/13 19:47, Bart Van Assche wrote:
+> As the comment above rq_completed() explains, md members must
+> not be touched after the dm_put() at the end of that function
+> has been invoked. Avoid that the md->queue can be run
+> asynchronously after the last md reference has been dropped by
+> running that queue synchronously. This patch fixes the
+> following kernel oops:
 
-I am using the iscsi tools that is included with Oracle
-(iscsi-initiator-utils-6.2.0.872-13.0.1.el5).
+Calling blk_run_queue_async() there should be ok.
+After dm_put(), the dm device may be removed. But free_dev() in dm.c
+calls blk_queue_cleanup() and it should solve the race vs. delayed work.
 
-The values I have in my iscsid.conf are:
-node.session.timeo.replacement_timeout = 15
-node.conn[0].timeo.noop_out_timeout = 1
-node.conn[0].timeo.noop_out_interval = 1
+And I could reproduce very similar oops without removing dm device
+by following procedure:
+(please replace "mpathX" with your dm-multipath map name)
 
-{i have previously changed the settings from the values based upon some
-feedback I got from a tech guy but that didn't seem to make much
-difference}.
+  # t=`dmsetup table mpathX`
+  # while sleep 1; do \
+      echo "$t" | dmsetup load mpathX; dmsetup resume mpathX; done
 
-In regards to the scsi command timeout it appears to be set to 60.
+Looking at the following back trace:
 
-# cat /sys/block/sdw/device/timeout
-60
+> general protection fault: 0000 [#1] SMP
+> RIP: 0010:[<ffffffff810fe754>]  [<ffffffff810fe754>] mempool_free+0x24/0xb0
+> Call Trace:
+>   <IRQ>
+>   [<ffffffff81187417>] bio_put+0x97/0xc0
+>   [<ffffffffa02247a5>] end_clone_bio+0x35/0x90 [dm_mod]
+>   [<ffffffff81185efd>] bio_endio+0x1d/0x30
+>   [<ffffffff811f03a3>] req_bio_endio.isra.51+0xa3/0xe0
+>   [<ffffffff811f2f68>] blk_update_request+0x118/0x520
+>   [<ffffffff811f3397>] blk_update_bidi_request+0x27/0xa0
+>   [<ffffffff811f343c>] blk_end_bidi_request+0x2c/0x80
+>   [<ffffffff811f34d0>] blk_end_request+0x10/0x20
+>   [<ffffffffa000b32b>] scsi_io_completion+0xfb/0x6c0 [scsi_mod]
+>   [<ffffffffa000107d>] scsi_finish_command+0xbd/0x120 [scsi_mod]
+>   [<ffffffffa000b12f>] scsi_softirq_done+0x13f/0x160 [scsi_mod]
+>   [<ffffffff811f9fd0>] blk_done_softirq+0x80/0xa0
+>   [<ffffffff81044551>] __do_softirq+0xf1/0x250
+>   [<ffffffff8142ee8c>] call_softirq+0x1c/0x30
+>   [<ffffffff8100420d>] do_softirq+0x8d/0xc0
+>   [<ffffffff81044885>] irq_exit+0xd5/0xe0
+>   [<ffffffff8142f3e3>] do_IRQ+0x63/0xe0
+>   [<ffffffff814257af>] common_interrupt+0x6f/0x6f
+>   <EOI>
+>   [<ffffffffa021737c>] srp_queuecommand+0x8c/0xcb0 [ib_srp]
+>   [<ffffffffa0002f18>] scsi_dispatch_cmd+0x148/0x310 [scsi_mod]
+>   [<ffffffffa000a38e>] scsi_request_fn+0x31e/0x520 [scsi_mod]
+>   [<ffffffff811f1e57>] __blk_run_queue+0x37/0x50
+>   [<ffffffff811f1f69>] blk_delay_work+0x29/0x40
+>   [<ffffffff81059003>] process_one_work+0x1c3/0x5c0
+>   [<ffffffff8105b22e>] worker_thread+0x15e/0x440
+>   [<ffffffff8106164b>] kthread+0xdb/0xe0
+>   [<ffffffff8142db9c>] ret_from_fork+0x7c/0xb0
 
-So is my thinking correct that I will want to have the SCSI devices to
-timeout more quickly like 1 second versus the 60 seconds? If so where would
-i make this change in regards to the disks???
+it seems that the bioset was removed while being referenced.
 
-Thanks much.
+c0820cf5 "dm: introduce per_bio_data" started to replace dm bioset
+during table replacement because the size of bioset front_pad might
+change for bio-based dm.
+However, for request-based dm, it is not necessary because the size
+of front_pad is static. Also we can't simply replace bioset because
+prep-ed requests in queue have reference to the old bioset.
 
-Devin Acosta
+The patch below changes it not to replace bioset for request-based dm.
+(Brings back to the same behavior with v3.7)
+With this patch, I could not reproduce the problem.
+Could you try this?
 
+-- 
+Jun'ichi Nomura, NEC Corporation
 
-On Sun, Feb 24, 2013 at 4:50 PM, Mike Christie <michaelc@cs.wisc.edu> wrote:
-
-> On 02/24/2013 01:15 PM, Devin wrote:
-> >
-> > I am running Oracle Enterprise Linux 5.8 (which is really just Redhat).
-> > I am using Multipath and I have LUNS presented to me via iSCSI from a
-> > Hitachi SAN. I have the NICS bonded using the Linux bonding driver and
-> > using Active-Backup mode. I notice that when I loose a switch or
-> > connection to one of the switches that multipath freezes for at least 60
-> > seconds before it starts to respond again. Also it appears that IO being
-> > generated freezes until multipath responds again, this pause up to 60
-> > seconds is causing my Oracle instances to crash.
-> >
-> > I have not been able to easily find what settings i could possibly
-> > change to make it fail to a new path faster. It almost seems like it's
-> > taking multipath a bit to fail all IO to a new path that is working.
-> >
-> > Is there any information that might be useful for me that I can check on
-> > either the multipath side or the iSCSI side to see what is causing the
-> > issue???
-> >
->
-> What iscsi driver are you using? If you are using software iscsi that
-> comes with OEL 5.8 what are our node.session.timeo.replacement_timeout,
-> .timeo.noop_out_timeout and .timeo.noop_out_interval. And what is your
-> scsi command timeout. You can see that by doing:
->
-> cat /sys/block/sdX/device/timeout
->
->
->
-
---bcaec54eea708b44ed04d68300ea
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><br><div style>I am using the iscsi tools that is included=
- with Oracle (iscsi-initiator-utils-6.2.0.872-13.0.1.el5).=A0</div><div sty=
-le><br></div><div style>The values I have in my iscsid.conf are:</div><div =
-style>
-node.session.timeo.replacement_timeout =3D 15<br></div><div style><div>node=
-.conn[0].timeo.noop_out_timeout =3D 1</div><div><div>node.conn[0].timeo.noo=
-p_out_interval =3D 1</div></div><div><br></div><div style>{i have previousl=
-y changed the settings from the values based upon some feedback I got from =
-a tech guy but that didn&#39;t seem to make much difference}.</div>
-<div style><br></div><div style>In regards to the scsi command timeout it a=
-ppears to be set to 60.</div><div style><div><br></div><div># cat /sys/bloc=
-k/sdw/device/timeout=A0</div><div>60</div><div><br></div><div style>So is m=
-y thinking correct that I will want to have the SCSI devices to timeout mor=
-e quickly like 1 second versus the 60 seconds? If so where would i make thi=
-s change in regards to the disks???</div>
-<div style><br></div><div style>Thanks much.</div><div style><br></div><div=
- style>Devin Acosta</div></div></div></div><div class=3D"gmail_extra"><br><=
-br><div class=3D"gmail_quote">On Sun, Feb 24, 2013 at 4:50 PM, Mike Christi=
-e <span dir=3D"ltr">&lt;<a href=3D"mailto:michaelc@cs.wisc.edu" target=3D"_=
-blank">michaelc@cs.wisc.edu</a>&gt;</span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex"><div class=3D"HOEnZb"><div class=3D"h5">On 0=
-2/24/2013 01:15 PM, Devin wrote:<br>
-&gt;<br>
-&gt; I am running Oracle Enterprise Linux 5.8 (which is really just Redhat)=
-.<br>
-&gt; I am using Multipath and I have LUNS presented to me via iSCSI from a<=
-br>
-&gt; Hitachi SAN. I have the NICS bonded using the Linux bonding driver and=
-<br>
-&gt; using Active-Backup mode. I notice that when I loose a switch or<br>
-&gt; connection to one of the switches that multipath freezes for at least =
-60<br>
-&gt; seconds before it starts to respond again. Also it appears that IO bei=
-ng<br>
-&gt; generated freezes until multipath responds again, this pause up to 60<=
-br>
-&gt; seconds is causing my Oracle instances to crash.<br>
-&gt;<br>
-&gt; I have not been able to easily find what settings i could possibly<br>
-&gt; change to make it fail to a new path faster. It almost seems like it&#=
-39;s<br>
-&gt; taking multipath a bit to fail all IO to a new path that is working.<b=
-r>
-&gt;<br>
-&gt; Is there any information that might be useful for me that I can check =
-on<br>
-&gt; either the multipath side or the iSCSI side to see what is causing the=
-<br>
-&gt; issue???<br>
-&gt;<br>
-<br>
-</div></div>What iscsi driver are you using? If you are using software iscs=
-i that<br>
-comes with OEL 5.8 what are our node.session.timeo.replacement_timeout,<br>
-.timeo.noop_out_timeout and .timeo.noop_out_interval. And what is your<br>
-scsi command timeout. You can see that by doing:<br>
-<br>
-cat /sys/block/sdX/device/timeout<br>
-<br>
-<br>
-</blockquote></div><br></div>
-
---bcaec54eea708b44ed04d68300ea--
-
-
---===============5144029766239862452==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5144029766239862452==--
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 314a0e2..51fefb5 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1973,15 +1973,27 @@ static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
+ {
+ 	struct dm_md_mempools *p = dm_table_get_md_mempools(t);
+ 
+-	if (md->io_pool && (md->tio_pool || dm_table_get_type(t) == DM_TYPE_BIO_BASED) && md->bs) {
+-		/*
+-		 * The md already has necessary mempools. Reload just the
+-		 * bioset because front_pad may have changed because
+-		 * a different table was loaded.
+-		 */
+-		bioset_free(md->bs);
+-		md->bs = p->bs;
+-		p->bs = NULL;
++	if (md->io_pool && md->bs) {
++		/* The md already has necessary mempools. */
++		if (dm_table_get_type(t) == DM_TYPE_BIO_BASED) {
++			/*
++			 * Reload bioset because front_pad may have changed
++			 * because a different table was loaded.
++			 */
++			bioset_free(md->bs);
++			md->bs = p->bs;
++			p->bs = NULL;
++		} else if (dm_table_get_type(t) == DM_TYPE_REQUEST_BASED) {
++			BUG_ON(!md->tio_pool);
++			/*
++			 * No need to reload in case of request-based dm
++			 * because of fixed size front_pad.
++			 * Note for future: if you are to reload bioset,
++			 * prep-ed requests in queue may have reference
++			 * to bio from the old bioset.
++			 * So you must walk through the queue to unprep.
++			 */
++		}
+ 		goto out;
+ 	}
+ 
