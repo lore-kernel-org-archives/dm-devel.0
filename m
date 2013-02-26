@@ -1,113 +1,109 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] dm: do not replace bioset for request-based dm
-Date: Tue, 26 Feb 2013 13:49:54 +0900
-Message-ID: <512C3EF2.80204@ce.jp.nec.com>
+Subject: [PATCH repost] blkcg: fix "scheduling while atomic" in
+	blk_queue_bypass_start
+Date: Tue, 26 Feb 2013 13:53:49 +0900
+Message-ID: <512C3FDD.4080907@ce.jp.nec.com>
+References: <50890937.7010809@ce.jp.nec.com>
+	<20121026202105.GF24687@redhat.com>
+	<508E572C.6000707@ce.jp.nec.com> <20121029163845.GB7709@redhat.com>
+	<1351529115.24721.40.camel@twins>
+	<20121029171346.GC3308@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Bart Van Assche <bvanassche@acm.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20121029171346.GC3308@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Peter Zijlstra <peterz@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Tejun Heo <tj@kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-This patch fixes a regression introduced in v3.8, which causes oops
-like this when dm-multipath is used:
+Hello Jens,
 
-general protection fault: 0000 [#1] SMP
-RIP: 0010:[<ffffffff810fe754>]  [<ffffffff810fe754>] mempool_free+0x24/0xb0
-Call Trace:
-  <IRQ>
-  [<ffffffff81187417>] bio_put+0x97/0xc0
-  [<ffffffffa02247a5>] end_clone_bio+0x35/0x90 [dm_mod]
-  [<ffffffff81185efd>] bio_endio+0x1d/0x30
-  [<ffffffff811f03a3>] req_bio_endio.isra.51+0xa3/0xe0
-  [<ffffffff811f2f68>] blk_update_request+0x118/0x520
-  [<ffffffff811f3397>] blk_update_bidi_request+0x27/0xa0
-  [<ffffffff811f343c>] blk_end_bidi_request+0x2c/0x80
-  [<ffffffff811f34d0>] blk_end_request+0x10/0x20
-  [<ffffffffa000b32b>] scsi_io_completion+0xfb/0x6c0 [scsi_mod]
-  [<ffffffffa000107d>] scsi_finish_command+0xbd/0x120 [scsi_mod]
-  [<ffffffffa000b12f>] scsi_softirq_done+0x13f/0x160 [scsi_mod]
-  [<ffffffff811f9fd0>] blk_done_softirq+0x80/0xa0
-  [<ffffffff81044551>] __do_softirq+0xf1/0x250
-  [<ffffffff8142ee8c>] call_softirq+0x1c/0x30
-  [<ffffffff8100420d>] do_softirq+0x8d/0xc0
-  [<ffffffff81044885>] irq_exit+0xd5/0xe0
-  [<ffffffff8142f3e3>] do_IRQ+0x63/0xe0
-  [<ffffffff814257af>] common_interrupt+0x6f/0x6f
-  <EOI>
-  [<ffffffffa021737c>] srp_queuecommand+0x8c/0xcb0 [ib_srp]
-  [<ffffffffa0002f18>] scsi_dispatch_cmd+0x148/0x310 [scsi_mod]
-  [<ffffffffa000a38e>] scsi_request_fn+0x31e/0x520 [scsi_mod]
-  [<ffffffff811f1e57>] __blk_run_queue+0x37/0x50
-  [<ffffffff811f1f69>] blk_delay_work+0x29/0x40
-  [<ffffffff81059003>] process_one_work+0x1c3/0x5c0
-  [<ffffffff8105b22e>] worker_thread+0x15e/0x440
-  [<ffffffff8106164b>] kthread+0xdb/0xe0
-  [<ffffffff8142db9c>] ret_from_fork+0x7c/0xb0
+please consider to pick up this patch.
+Without this patch, the warning below splats every when a multipath
+device is created.
+I got acks from Vivek and Tejun when I posted this for v3.7
+and this same patch is still applicable to v3.8.
 
-The regression was introduced by the change
-c0820cf5 "dm: introduce per_bio_data", where dm started to replace
-bioset during table replacement.
-For bio-based dm, it is good because clone bios do not exist during the
-table replacement.
-For request-based dm, however, (not-yet-mapped) clone bios may stay in
-request queue and survive during the table replacement.
-So freeing the old bioset could cause the oops in bio_put().
 
-Since the size of front_pad may change only with bio-based dm,
-it is not necessary to replace bioset for request-based dm.
+Since 749fefe677 in v3.7 ("block: lift the initial queue bypass mode
+on blk_register_queue() instead of blk_init_allocated_queue()"),
+the following warning appears when multipath is used with CONFIG_PREEMPT=y.
 
-Reported-by: Bart Van Assche <bvanassche@acm.org>
-Tested-by: Bart Van Assche <bvanassche@acm.org>
+This patch moves blk_queue_bypass_start() before radix_tree_preload()
+to avoid the sleeping call while preemption is disabled.
+
+  BUG: scheduling while atomic: multipath/2460/0x00000002
+  1 lock held by multipath/2460:
+   #0:  (&md->type_lock){......}, at: [<ffffffffa019fb05>] dm_lock_md_type+0x17/0x19 [dm_mod]
+  Modules linked in: ...
+  Pid: 2460, comm: multipath Tainted: G        W    3.7.0-rc2 #1
+  Call Trace:
+   [<ffffffff810723ae>] __schedule_bug+0x6a/0x78
+   [<ffffffff81428ba2>] __schedule+0xb4/0x5e0
+   [<ffffffff814291e6>] schedule+0x64/0x66
+   [<ffffffff8142773a>] schedule_timeout+0x39/0xf8
+   [<ffffffff8108ad5f>] ? put_lock_stats+0xe/0x29
+   [<ffffffff8108ae30>] ? lock_release_holdtime+0xb6/0xbb
+   [<ffffffff814289e3>] wait_for_common+0x9d/0xee
+   [<ffffffff8107526c>] ? try_to_wake_up+0x206/0x206
+   [<ffffffff810c0eb8>] ? kfree_call_rcu+0x1c/0x1c
+   [<ffffffff81428aec>] wait_for_completion+0x1d/0x1f
+   [<ffffffff810611f9>] wait_rcu_gp+0x5d/0x7a
+   [<ffffffff81061216>] ? wait_rcu_gp+0x7a/0x7a
+   [<ffffffff8106fb18>] ? complete+0x21/0x53
+   [<ffffffff810c0556>] synchronize_rcu+0x1e/0x20
+   [<ffffffff811dd903>] blk_queue_bypass_start+0x5d/0x62
+   [<ffffffff811ee109>] blkcg_activate_policy+0x73/0x270
+   [<ffffffff81130521>] ? kmem_cache_alloc_node_trace+0xc7/0x108
+   [<ffffffff811f04b3>] cfq_init_queue+0x80/0x28e
+   [<ffffffffa01a1600>] ? dm_blk_ioctl+0xa7/0xa7 [dm_mod]
+   [<ffffffff811d8c41>] elevator_init+0xe1/0x115
+   [<ffffffff811e229f>] ? blk_queue_make_request+0x54/0x59
+   [<ffffffff811dd743>] blk_init_allocated_queue+0x8c/0x9e
+   [<ffffffffa019ffcd>] dm_setup_md_queue+0x36/0xaa [dm_mod]
+   [<ffffffffa01a60e6>] table_load+0x1bd/0x2c8 [dm_mod]
+   [<ffffffffa01a7026>] ctl_ioctl+0x1d6/0x236 [dm_mod]
+   [<ffffffffa01a5f29>] ? table_clear+0xaa/0xaa [dm_mod]
+   [<ffffffffa01a7099>] dm_ctl_ioctl+0x13/0x17 [dm_mod]
+   [<ffffffff811479fc>] do_vfs_ioctl+0x3fb/0x441
+   [<ffffffff811b643c>] ? file_has_perm+0x8a/0x99
+   [<ffffffff81147aa0>] sys_ioctl+0x5e/0x82
+   [<ffffffff812010be>] ? trace_hardirqs_on_thunk+0x3a/0x3f
+   [<ffffffff814310d9>] system_call_fastpath+0x16/0x1b
+
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Acked-by: Vivek Goyal <vgoyal@redhat.com>
+Acked-by: Tejun Heo <tj@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>
 Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: <stable@vger.kernel.org>
 ---
- drivers/md/dm.c |   30 +++++++++++++++++++++---------
- 1 file changed, 21 insertions(+), 9 deletions(-)
+ block/blk-cgroup.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 314a0e2..51fefb5 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1973,15 +1973,27 @@ static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
- {
- 	struct dm_md_mempools *p = dm_table_get_md_mempools(t);
+diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
+index b8858fb..53628e4 100644
+--- a/block/blk-cgroup.c
++++ b/block/blk-cgroup.c
+@@ -790,10 +790,10 @@ int blkcg_activate_policy(struct request_queue *q,
+ 	if (!blkg)
+ 		return -ENOMEM;
  
--	if (md->io_pool && (md->tio_pool || dm_table_get_type(t) == DM_TYPE_BIO_BASED) && md->bs) {
--		/*
--		 * The md already has necessary mempools. Reload just the
--		 * bioset because front_pad may have changed because
--		 * a different table was loaded.
--		 */
--		bioset_free(md->bs);
--		md->bs = p->bs;
--		p->bs = NULL;
-+	if (md->io_pool && md->bs) {
-+		/* The md already has necessary mempools. */
-+		if (dm_table_get_type(t) == DM_TYPE_BIO_BASED) {
-+			/*
-+			 * Reload bioset because front_pad may have changed
-+			 * because a different table was loaded.
-+			 */
-+			bioset_free(md->bs);
-+			md->bs = p->bs;
-+			p->bs = NULL;
-+		} else if (dm_table_get_type(t) == DM_TYPE_REQUEST_BASED) {
-+			BUG_ON(!md->tio_pool);
-+			/*
-+			 * No need to reload in case of request-based dm
-+			 * because of fixed size front_pad.
-+			 * Note for future: if you are to reload bioset,
-+			 * prep-ed requests in queue may have reference
-+			 * to bio from the old bioset.
-+			 * So you must walk through the queue to unprep.
-+			 */
-+		}
- 		goto out;
- 	}
+-	preloaded = !radix_tree_preload(GFP_KERNEL);
+-
+ 	blk_queue_bypass_start(q);
  
++	preloaded = !radix_tree_preload(GFP_KERNEL);
++
+ 	/* make sure the root blkg exists and count the existing blkgs */
+ 	spin_lock_irq(q->queue_lock);
