@@ -1,119 +1,113 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm: do not replace bioset for request-based dm
-Date: Tue, 26 Feb 2013 16:20:48 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1302261619570.5243@file.rdu.redhat.com>
-References: <512C3EF2.80204@ce.jp.nec.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH] EnhanceIO ssd caching software
+Date: Tue, 26 Feb 2013 13:45:28 -0800
+Message-ID: <20130226214528.GC4059@blackbox.djwong.org>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D6AAF@MYMBX.MY.STEC-INC.AD>
+	<20130215203139.GE26292@blackbox.djwong.org>
+	<C4B5704C6FEB5244B2A1BCC8CF83B86B0C746B4948@MYMBX.MY.STEC-INC.AD>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <512C3EF2.80204@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Bart Van Assche <bvanassche@acm.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <C4B5704C6FEB5244B2A1BCC8CF83B86B0C746B4948@MYMBX.MY.STEC-INC.AD>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Sanoj Unnikrishnan <sunnikrishnan@stec-inc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "thornber@redhat.com" <thornber@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "koverstreet@google.com" <koverstreet@google.com>, Amit Kale <akale@stec-inc.com>, LKML <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, =?utf-8?B?546L6YeR5rWm?= <jinpuwang@gmail.com>, OS Engineering <osengineering@stec-inc.com>
 List-Id: dm-devel.ids
 
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
-
-On Tue, 26 Feb 2013, Jun'ichi Nomura wrote:
-
-> This patch fixes a regression introduced in v3.8, which causes oops
-> like this when dm-multipath is used:
-> 
-> general protection fault: 0000 [#1] SMP
-> RIP: 0010:[<ffffffff810fe754>]  [<ffffffff810fe754>] mempool_free+0x24/0xb0
-> Call Trace:
->   <IRQ>
->   [<ffffffff81187417>] bio_put+0x97/0xc0
->   [<ffffffffa02247a5>] end_clone_bio+0x35/0x90 [dm_mod]
->   [<ffffffff81185efd>] bio_endio+0x1d/0x30
->   [<ffffffff811f03a3>] req_bio_endio.isra.51+0xa3/0xe0
->   [<ffffffff811f2f68>] blk_update_request+0x118/0x520
->   [<ffffffff811f3397>] blk_update_bidi_request+0x27/0xa0
->   [<ffffffff811f343c>] blk_end_bidi_request+0x2c/0x80
->   [<ffffffff811f34d0>] blk_end_request+0x10/0x20
->   [<ffffffffa000b32b>] scsi_io_completion+0xfb/0x6c0 [scsi_mod]
->   [<ffffffffa000107d>] scsi_finish_command+0xbd/0x120 [scsi_mod]
->   [<ffffffffa000b12f>] scsi_softirq_done+0x13f/0x160 [scsi_mod]
->   [<ffffffff811f9fd0>] blk_done_softirq+0x80/0xa0
->   [<ffffffff81044551>] __do_softirq+0xf1/0x250
->   [<ffffffff8142ee8c>] call_softirq+0x1c/0x30
->   [<ffffffff8100420d>] do_softirq+0x8d/0xc0
->   [<ffffffff81044885>] irq_exit+0xd5/0xe0
->   [<ffffffff8142f3e3>] do_IRQ+0x63/0xe0
->   [<ffffffff814257af>] common_interrupt+0x6f/0x6f
->   <EOI>
->   [<ffffffffa021737c>] srp_queuecommand+0x8c/0xcb0 [ib_srp]
->   [<ffffffffa0002f18>] scsi_dispatch_cmd+0x148/0x310 [scsi_mod]
->   [<ffffffffa000a38e>] scsi_request_fn+0x31e/0x520 [scsi_mod]
->   [<ffffffff811f1e57>] __blk_run_queue+0x37/0x50
->   [<ffffffff811f1f69>] blk_delay_work+0x29/0x40
->   [<ffffffff81059003>] process_one_work+0x1c3/0x5c0
->   [<ffffffff8105b22e>] worker_thread+0x15e/0x440
->   [<ffffffff8106164b>] kthread+0xdb/0xe0
->   [<ffffffff8142db9c>] ret_from_fork+0x7c/0xb0
-> 
-> The regression was introduced by the change
-> c0820cf5 "dm: introduce per_bio_data", where dm started to replace
-> bioset during table replacement.
-> For bio-based dm, it is good because clone bios do not exist during the
-> table replacement.
-> For request-based dm, however, (not-yet-mapped) clone bios may stay in
-> request queue and survive during the table replacement.
-> So freeing the old bioset could cause the oops in bio_put().
-> 
-> Since the size of front_pad may change only with bio-based dm,
-> it is not necessary to replace bioset for request-based dm.
-> 
-> Reported-by: Bart Van Assche <bvanassche@acm.org>
-> Tested-by: Bart Van Assche <bvanassche@acm.org>
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Cc: Alasdair G Kergon <agk@redhat.com>
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: <stable@vger.kernel.org>
-> ---
->  drivers/md/dm.c |   30 +++++++++++++++++++++---------
->  1 file changed, 21 insertions(+), 9 deletions(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 314a0e2..51fefb5 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1973,15 +1973,27 @@ static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
->  {
->  	struct dm_md_mempools *p = dm_table_get_md_mempools(t);
->  
-> -	if (md->io_pool && (md->tio_pool || dm_table_get_type(t) == DM_TYPE_BIO_BASED) && md->bs) {
-> -		/*
-> -		 * The md already has necessary mempools. Reload just the
-> -		 * bioset because front_pad may have changed because
-> -		 * a different table was loaded.
-> -		 */
-> -		bioset_free(md->bs);
-> -		md->bs = p->bs;
-> -		p->bs = NULL;
-> +	if (md->io_pool && md->bs) {
-> +		/* The md already has necessary mempools. */
-> +		if (dm_table_get_type(t) == DM_TYPE_BIO_BASED) {
-> +			/*
-> +			 * Reload bioset because front_pad may have changed
-> +			 * because a different table was loaded.
-> +			 */
-> +			bioset_free(md->bs);
-> +			md->bs = p->bs;
-> +			p->bs = NULL;
-> +		} else if (dm_table_get_type(t) == DM_TYPE_REQUEST_BASED) {
-> +			BUG_ON(!md->tio_pool);
-> +			/*
-> +			 * No need to reload in case of request-based dm
-> +			 * because of fixed size front_pad.
-> +			 * Note for future: if you are to reload bioset,
-> +			 * prep-ed requests in queue may have reference
-> +			 * to bio from the old bioset.
-> +			 * So you must walk through the queue to unprep.
-> +			 */
-> +		}
->  		goto out;
->  	}
->  
-> 
+T24gTW9uLCBGZWIgMTgsIDIwMTMgYXQgMDU6NDI6MzhQTSArMDgwMCwgU2Fub2ogVW5uaWtyaXNo
+bmFuIHdyb3RlOgo+ID4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0KPiA+IEZyb206IERhcnJp
+Y2sgSi4gV29uZyBbbWFpbHRvOmRhcnJpY2sud29uZ0BvcmFjbGUuY29tXQo+ID4gU2VudDogU2F0
+dXJkYXksIEZlYnJ1YXJ5IDE2LCAyMDEzIDI6MDIgQU0KPiA+IFRvOiBPUyBFbmdpbmVlcmluZwo+
+ID4gQ2M6IEdyZWcgS3JvYWgtSGFydG1hbjsgTEtNTDsgSmVucyBBeGJvZTsgU2Fub2ogVW5uaWty
+aXNobmFuOyDnjovph5HmtaY7Cj4gPiBBbWl0IEthbGU7IGRtLWRldmVsQHJlZGhhdC5jb207IGtv
+dmVyc3RyZWV0QGdvb2dsZS5jb207Cj4gPiB0aG9ybmJlckByZWRoYXQuY29tCj4gPiBTdWJqZWN0
+OiBSZTogW1BBVENIXSBFbmhhbmNlSU8gc3NkIGNhY2hpbmcgc29mdHdhcmUKPiA+IAo+ID4gW1Jl
+c2VuZGluZyB3aXRoIGRtLWRldmVsLCBLZW50LCBhbmQgSm9lIG9uIGNjLiAgU29ycnkgZm9yIHRo
+ZSBub2lzZS5dCj4gPiAKPiA+IE9uIEZyaSwgRmViIDE1LCAyMDEzIGF0IDAyOjAyOjM4UE0gKzA4
+MDAsIE9TIEVuZ2luZWVyaW5nIHdyb3RlOgo+ID4gPiBIaSBHcmVnLCBKZW5zLAo+ID4gPgo+ID4g
+PiBXZSBhcmUgc3VibWl0dGluZyBFbmhhbmNlSU8oVE0pIHNvZnR3YXJlIGRyaXZlciBmb3IgYW4g
+aW5jbHVzaW9uIGluCj4gPiBsaW51eAo+ID4gPiBzdGFnaW5nIHRyZWUuIFByZXNlbnQgc3RhdGUg
+b2YgdGhpcyBkcml2ZXIgaXMgYmV0YS4gV2UgaGF2ZSBiZWVuCj4gPiBwb3N0aW5nIGl0Cj4gPiA+
+IGZvciBhIGZldyB3ZWVrcywgd2hpbGUgaXQgd2FzIG1haW50YWluZWQgYXQgZ2l0aHViLiBJdCBp
+cyBzdGlsbCBiZWluZwo+ID4gPiBjbGVhbmVkLXVwIGFuZCBpcyBiZWluZyB0ZXN0ZWQgYnkgTEtN
+TCBtZW1iZXJzLiBJbmNsdXNpb24gaW4gbGludXgKPiA+IHN0YWdpbmcKPiA+ID4gdHJlZSB3aWxs
+IG1ha2UgdGVzdGluZyBhbmQgcmV2aWV3aW5nIGVhc2llciBhbmQgaGVscCBhIGZ1dHVyZQo+ID4g
+aW50ZWdyYXRpb24gaW4KPiA+ID4gTGludXgga2VybmVsLgo+ID4gPgo+ID4gPiBDb3VsZCB5b3Ug
+cGxlYXNlIGluY2x1ZGUgaXQ/Cj4gCj4gPiA+Cj4gPiA+IFNpZ25lZC1vZmYtYnk6Cj4gPiA+IEFt
+aXQgS2FsZSA8YWthbGVAc3RlYy1pbmMuY29tPgo+ID4gPiBTYW5vaiBVbm5pa3Jpc2huYW4gPHN1
+bm5pa3Jpc2huYW5Ac3RlYy1pbmMuY29tPgo+ID4gPiBEYXJyaWNrIEouIFdvbmcgPGRhcnJpY2su
+d29uZ0BvcmFjbGUuY29tPgo+ID4gPiBKaW5wdSBXYW5nIDxqaW5wdXdhbmdAZ21haWwuY29tPgo+
+ID4gCj4gPiBFYWNoIG9mIHRoZXNlIGVtYWlsIGFkZHJlc3NlcyBuZWVkcyB0byBoYXZlIHRoZSAi
+Uy1vLWI6IiBwcmVmaXgKPiAKPiA+IEFsc28sIHlvdSBvdWdodCB0byBydW4gdGhpcyBwYXRjaCB0
+aHJvdWdoIHNjcmlwdHMvY2hlY2twYXRjaC5wbCwgYXMKPiA+IHRoZXJlIGFyZQo+ID4gcXVpdGUg
+YSBsb3Qgb2Ygc3R5bGUgZXJyb3JzLgo+IAo+IHdlIHdpbGwgZml4IHRoZXNlIGluIHRoZSBuZXh0
+IHBhdGNoLgo+IAo+IAo+ID4gPiArQUNUSU9OIT0iYWRkfGNoYW5nZSIsIEdPVE89IkVJT19FT0Yi
+Cj4gPiA+ICtTVUJTWVNURU0hPSJibG9jayIsIEdPVE89IkVJT19FT0YiCj4gPiA+ICsKPiA+ID4g
+KzxjYWNoZV9tYXRjaF9leHByPiwgR09UTz0iRUlPX0NBQ0hFIgo+ID4gPiArCj4gPiA+ICs8c291
+cmNlX21hdGNoX2V4cHI+LCBHT1RPPSJFSU9fU09VUkNFIgo+ID4gPiArCj4gPiA+ICsjIElmIG5v
+bmUgb2YgdGhlIHJ1bGVzIGFib3ZlIG1hdGNoZWQgdGhlbiBpdCBpc24ndCBhbiBFbmhhbmNlSU8K
+PiA+IGRldmljZSBzbyBpZ25vcmUgaXQuCj4gPiA+ICtHT1RPPSJFSU9fRU9GIgo+ID4gPiArCj4g
+PiA+ICsjIElmIHdlIGp1c3QgZm91bmQgdGhlIGNhY2hlIGRldmljZSBhbmQgdGhlIHNvdXJjZSBh
+bHJlYWR5IGV4aXN0cwo+ID4gdGhlbiB3ZSBjYW4gc2V0dXAKPiA+ID4gK0xBQkVMPSJFSU9fQ0FD
+SEUiCj4gPiA+ICsgICAgICAgVEVTVCE9Ii9kZXYvZW5oYW5jZWlvLzxjYWNoZV9uYW1lPiIsIFBS
+T0dSQU09Ii9iaW4vbWtkaXIgLXAKPiA+IC9kZXYvZW5oYW5jZWlvLzxjYWNoZV9uYW1lPiIKPiA+
+ID4gKyAgICAgICBQUk9HUkFNPSIvYmluL3NoIC1jICdlY2hvICRrZXJuZWwgPgo+ID4gL2Rldi9l
+bmhhbmNlaW8vPGNhY2hlX25hbWU+Ly5zc2RfbmFtZSciCj4gPiA+ICsKPiA+ID4gKyAgICAgICBU
+RVNUPT0iL2Rldi9lbmhhbmNlaW8vPGNhY2hlX25hbWU+Ly5kaXNrX25hbWUiLAo+ID4gR09UTz0i
+RUlPX1NFVFVQIgo+ID4gPiArR09UTz0iRUlPX0VPRiIKPiA+ID4gKwo+ID4gPiArIyBJZiB3ZSBq
+dXN0IGZvdW5kIHRoZSBzb3VyY2UgZGV2aWNlIGFuZCB0aGUgY2FjaGUgYWxyZWFkeSBleGlzdHMK
+PiA+IHRoZW4gd2UgY2FuIHNldHVwCj4gPiA+ICtMQUJFTD0iRUlPX1NPVVJDRSIKPiA+ID4gKyAg
+ICAgICBURVNUIT0iL2Rldi9lbmhhbmNlaW8vPGNhY2hlX25hbWU+IiwgUFJPR1JBTT0iL2Jpbi9t
+a2RpciAtcAo+ID4gL2Rldi9lbmhhbmNlaW8vPGNhY2hlX25hbWU+Igo+ID4gPiArICAgICAgIFBS
+T0dSQU09Ii9iaW4vc2ggLWMgJ2VjaG8gJGtlcm5lbCA+Cj4gPiAvZGV2L2VuaGFuY2Vpby88Y2Fj
+aGVfbmFtZT4vLmRpc2tfbmFtZSciCj4gPiA+ICsKPiA+ID4gKyAgICAgICBURVNUPT0iL2Rldi9l
+bmhhbmNlaW8vPGNhY2hlX25hbWU+Ly5zc2RfbmFtZSIsCj4gPiBHT1RPPSJFSU9fU0VUVVAiCj4g
+PiAKPiA+IElmIHRoZSBjYWNoZSBpcyBydW5uaW5nIGluIHdiIG1vZGUsIHBlcmhhcHMgd2Ugc2hv
+dWxkIG1ha2UgaXQgcm8gdW50aWwKPiA+IHRoZSBTU0QKPiA+IHNob3dzIHVwIGFuZCB3ZSBydW4g
+ZWlvX2NsaT8gIFJ1biBibG9ja2RldiAtLXNldHJvIGluIHRoZSBFSU9fQ0FDSEUKPiA+IHBhcnQs
+IGFuZAo+ID4gYmxvY2tkZXYgLS1zZXRydyBpbiB0aGUgRUlPX1NPVVJDRSBwYXJ0Pwo+ID4gCj4g
+PiA8c2hydWc+IG5vdCBhIHVkZXYgZGV2ZWxvcGVyLCB0YWtlIHRoYXQgd2l0aCBhIGdyYWluIG9m
+IHNhbHQuCj4gCj4gV2Ugd2VyZSBleHBsb3JpbmcgaGlkaW5nIHNvdXJjZSBub2RlIGFzIGFuIG9w
+dGlvbi4gVGhpcyBzZWVtcyB0byBiZSBiZXR0ZXIuCj4gIAo+ID4gPiArSG93IHRvIGNyZWF0ZSBw
+ZXJzaXN0ZW50IGNhY2hlCj4gPiA+ICs9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KPiA+
+ID4gKwo+ID4gPiArVXNlIHRoZSA5NC1FbmhhbmNlaW8tdGVtcGxhdGUgZmlsZSB0byBjcmVhdGUg
+YSBwZXIgY2FjaGUgdWRldi1ydWxlCj4gPiBmaWxlIG5hbWVkIC9ldGMvdWRldi9ydWxlcy5kLzk0
+LWVuaGFuY2lvLTxjYWNoZV9uYW1lPi5ydWxlcwo+ID4gPiArCj4gPiA+ICsxKSBDaGFuZ2UgPGNh
+Y2hlX21hdGNoX2V4cHI+IHRvIEVOVntJRF9TRVJJQUx9PT0iPElEIFNFUklBTCBPRiBZT1VSCj4g
+PiBDQUNIRSBERVZJQ0U+IiwgRU5We0RFVlRZUEV9PT08REVWSUNFIFRZUEUgT0YgWU9VUiBDQUNI
+RSBERVZJQ0U+Cj4gPiA+ICsKPiA+ID4gKzIpIENoYW5nZSA8c291cmNlX21hdGNoX2V4cHI+IHRv
+IEVOVntJRF9TRVJJQUx9PT0iPElEIFNFUklBTCBPRiBZT1VSCj4gPiBIQVJEIERJU0s+IiwgRU5W
+e0RFVlRZUEV9PT08REVWSUNFIFRZUEUgT0YgWU9VUiBTT1VSQ0UgREVWSUNFPgo+ID4gPiArCj4g
+PiA+ICszKSBSZXBsYWNlIGFsbCBpbnN0YW5jZXMgb2YgPGNhY2hlX25hbWU+IHdpdGggdGhlIG5h
+bWUgb2YgeW91ciBjYWNoZQo+ID4gCj4gPiBJIHdvbmRlciBpZiB0aGVyZSdzIGEgYmV0dGVyIHdh
+eSB0byBkbyB0aGlzIHRoYW4gbWFudWFsbHkgY3V0dGluZyBhbmQKPiA+IHBhc3RpbmcKPiA+IGFs
+bCB0aGVzZSBJRHMgaW50byBhIHVkZXYgcnVsZXMgZmlsZS4gIE9yLCBob3cgYWJvdXQgYSBxdWlj
+ayBzY3JpcHQgYXQKPiA+IGNhY2hlCj4gPiBjcmVhdGlvbiB0aW1lIHRoYXQgc3BpdHMgb3V0IGZp
+bGVzIGludG8gL2V0Yy91ZGV2L3J1bGVzLmQvID8KPiAKPiBhZ3JlZWQhISBXaWxsIGFkZCBvbmUg
+aW4gdGhlIG5leHQgcGF0Y2guCj4gCj4gPiA+ICsgICAgICAgV3JpdGUtYmFjayBpbXByb3ZlcyB3
+cml0ZSBsYXRlbmN5IGJ5IHdyaXRpbmcgYXBwbGljYXRpb24KPiA+IHJlcXVlc3RlZCBkYXRhCj4g
+PiA+ICsgICAgICAgb25seSB0byBTU0QuIFRoaXMgZGF0YSwgcmVmZXJyZWQgdG8gYXMgZGlydHkg
+ZGF0YSwgaXMgY29waWVkCj4gPiBsYXRlciB0bwo+ID4gCj4gPiBIb3cgbXVjaCBsYXRlcj8KPiA+
+Cj4gCj4gVGhpcyBpcyB0cmlnZ2VyZWQgYnkgYSBzZXQgb2YgdGhyZXNob2xkcy4KPiBwZXIgY2Fj
+aGUgZGlydHkgaGlnaCBhbmQgbG93IHdhdGVybWFyay4KPiBwZXIgY2FjaGUgc2V0IGRpcnR5IGhp
+Z2ggYW5kIGxvdyB3YXRlcm1hcmsuCj4gYW5kIGEgdGltZSBiYXNlZCB0aHJlc2hvbGQuCj4gSWYg
+YW55IG9mIHRoZSBoaWdoIHdhdGVybWFya3Mgb3IgdGltZSBiYXNlZCBpbnRlcnZhbCBpcyB0cmln
+Z2VyZWQgY2xlYW4gaXMgaW5pdGlhdGVkLgo+IAo+IFRoZXNlIHRocmVzaG9sZHMgYXJlIGFsbCBj
+b25maWd1cmFibGUgdGhyb3VnaCBzeXNjdGwuCgpJcyB0aGVyZSBhIHdheSBmb3IgYSB1c2VyIGFw
+cGxpY2F0aW9uIHRvIGZvcmNlIGEgY2FjaGUgZmx1c2g/ICBJdCBsb29rcyBhcwp0aG91Z2ggYSBS
+RVFfRkxVU0ggd2lsbCBjYXVzZSBib3RoIFNTRCBhbmQgSEREIHRvIGZsdXNoIHRoZWlyIHdyaXRl
+IGNhY2hlcywgYnV0CkkgY291bGRuJ3QgZmluZCBhbnl0aGluZyB0aGF0IHdvdWxkIHN1Z2dlc3Qg
+d3JpdGluZyBhbGwgdGhlIGRpcnR5IGJsb2NrcyBpbiB0aGUKY2FjaGUgb3V0IHRvIHRoZSBIREQu
+CgotLUQKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBz
+Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
