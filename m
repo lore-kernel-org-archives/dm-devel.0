@@ -1,75 +1,40 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: do not replace bioset for request-based dm
-Date: Tue, 26 Feb 2013 17:33:25 -0500
-Message-ID: <20130226223325.GA31981@redhat.com>
-References: <512C3EF2.80204@ce.jp.nec.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [BUG] pvmove corrupting XFS filesystems (was Re: [BUG]
+	Internal error xfs_dir2_data_reada_verify)
+Date: Wed, 27 Feb 2013 01:04:14 +0000
+Message-ID: <20130227010414.GD1514@agk.fab.redhat.com>
+References: <87d2vnc34r.fsf@fftw.org> <20130226044039.GM5551@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <512C3EF2.80204@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>, linux-scsi <linux-scsi@vger.kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Tejun Heo <tj@kernel.org>, Alasdair G Kergon <agk@redhat.com>, Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20130226044039.GM5551@dastard>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Dave Chinner <david@fromorbit.com>, Matteo Frigo <athena@fftw.org>, dm-devel@redhat.com, xfs@oss.sgi.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 25 2013 at 11:49pm -0500,
-Jun'ichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+(Quick pointers that might be relevant)
 
-> This patch fixes a regression introduced in v3.8, which causes oops
-> like this when dm-multipath is used:
-> 
-> general protection fault: 0000 [#1] SMP
-> RIP: 0010:[<ffffffff810fe754>]  [<ffffffff810fe754>] mempool_free+0x24/0xb0
-> Call Trace:
->   <IRQ>
->   [<ffffffff81187417>] bio_put+0x97/0xc0
->   [<ffffffffa02247a5>] end_clone_bio+0x35/0x90 [dm_mod]
->   [<ffffffff81185efd>] bio_endio+0x1d/0x30
->   [<ffffffff811f03a3>] req_bio_endio.isra.51+0xa3/0xe0
->   [<ffffffff811f2f68>] blk_update_request+0x118/0x520
->   [<ffffffff811f3397>] blk_update_bidi_request+0x27/0xa0
->   [<ffffffff811f343c>] blk_end_bidi_request+0x2c/0x80
->   [<ffffffff811f34d0>] blk_end_request+0x10/0x20
->   [<ffffffffa000b32b>] scsi_io_completion+0xfb/0x6c0 [scsi_mod]
->   [<ffffffffa000107d>] scsi_finish_command+0xbd/0x120 [scsi_mod]
->   [<ffffffffa000b12f>] scsi_softirq_done+0x13f/0x160 [scsi_mod]
->   [<ffffffff811f9fd0>] blk_done_softirq+0x80/0xa0
->   [<ffffffff81044551>] __do_softirq+0xf1/0x250
->   [<ffffffff8142ee8c>] call_softirq+0x1c/0x30
->   [<ffffffff8100420d>] do_softirq+0x8d/0xc0
->   [<ffffffff81044885>] irq_exit+0xd5/0xe0
->   [<ffffffff8142f3e3>] do_IRQ+0x63/0xe0
->   [<ffffffff814257af>] common_interrupt+0x6f/0x6f
->   <EOI>
->   [<ffffffffa021737c>] srp_queuecommand+0x8c/0xcb0 [ib_srp]
->   [<ffffffffa0002f18>] scsi_dispatch_cmd+0x148/0x310 [scsi_mod]
->   [<ffffffffa000a38e>] scsi_request_fn+0x31e/0x520 [scsi_mod]
->   [<ffffffff811f1e57>] __blk_run_queue+0x37/0x50
->   [<ffffffff811f1f69>] blk_delay_work+0x29/0x40
->   [<ffffffff81059003>] process_one_work+0x1c3/0x5c0
->   [<ffffffff8105b22e>] worker_thread+0x15e/0x440
->   [<ffffffff8106164b>] kthread+0xdb/0xe0
->   [<ffffffff8142db9c>] ret_from_fork+0x7c/0xb0
-> 
-> The regression was introduced by the change
-> c0820cf5 "dm: introduce per_bio_data", where dm started to replace
-> bioset during table replacement.
-> For bio-based dm, it is good because clone bios do not exist during the
-> table replacement.
-> For request-based dm, however, (not-yet-mapped) clone bios may stay in
-> request queue and survive during the table replacement.
-> So freeing the old bioset could cause the oops in bio_put().
-> 
-> Since the size of front_pad may change only with bio-based dm,
-> it is not necessary to replace bioset for request-based dm.
-> 
-> Reported-by: Bart Van Assche <bvanassche@acm.org>
-> Tested-by: Bart Van Assche <bvanassche@acm.org>
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Cc: Alasdair G Kergon <agk@redhat.com>
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: <stable@vger.kernel.org>
+EAGAIN, I'm not aware of dm itself returning that on the i/o path.
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+For 3.8 issues, read dm-devel around https://www.redhat.com/archives/dm-devel/2013-February/msg00086.html
+(I queued the dm-side fixes for linux-next earlier today)
+
+For pvmove, check exactly which version and whether discards are enabled: there
+was a userspace bug for a short period some time ago when discards were enabled.
+
+Alasdair
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
