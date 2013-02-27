@@ -1,69 +1,99 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [dm-devel] [BUG] pvmove corrupting XFS filesystems (was Re:
-	[BUG] Internal error xfs_dir2_data_reada_verify)
-Date: Wed, 27 Feb 2013 13:29:28 +1100
-Message-ID: <20130227022927.GA5551@dastard>
-References: <87d2vnc34r.fsf@fftw.org> <20130226044039.GM5551@dastard>
-	<20130227010414.GD1514@agk.fab.redhat.com>
-	<20130227014900.GY5551@dastard> <87y5eah4xz.fsf@fftw.org>
+From: Sanoj Unnikrishnan <sunnikrishnan@stec-inc.com>
+Subject: RE: [PATCH] EnhanceIO ssd caching software
+Date: Wed, 27 Feb 2013 17:29:00 +0800
+Message-ID: <C4B5704C6FEB5244B2A1BCC8CF83B86B0D55E021E0@MYMBX.MY.STEC-INC.AD>
+References: <C4B5704C6FEB5244B2A1BCC8CF83B86B0A624D6AAF@MYMBX.MY.STEC-INC.AD>
+ <20130215203139.GE26292@blackbox.djwong.org>
+ <C4B5704C6FEB5244B2A1BCC8CF83B86B0C746B4948@MYMBX.MY.STEC-INC.AD>
+ <20130226214528.GC4059@blackbox.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <87y5eah4xz.fsf@fftw.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Matteo Frigo <athena@fftw.org>
-Cc: dm-devel@redhat.com, xfs@oss.sgi.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130226214528.GC4059@blackbox.djwong.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: OS Engineering <osengineering@stec-inc.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, LKML <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, =?utf-8?B?546L6YeR5rWm?= <jinpuwang@gmail.com>, Amit Kale <akale@stec-inc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "koverstreet@google.com" <koverstreet@google.com>, "thornber@redhat.com" <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Feb 26, 2013 at 09:21:44PM -0500, Matteo Frigo wrote:
-> Dave Chinner <david@fromorbit.com> writes:
-> 
-> > On Wed, Feb 27, 2013 at 01:04:14AM +0000, Alasdair G Kergon wrote:
-> >> (Quick pointers that might be relevant)
-> >> 
-> >> EAGAIN, I'm not aware of dm itself returning that on the i/o path.
-> >
-> > Neither am I, but it's coming from somewhere in the IO path...
-> 
-> Well, I don't really know anything about this topic, so I may be
-> completely off the mark, but dm-raid1.c:mirror_map() does indeed return
-> EWOULDBLOCK, and EWOULDBLOCK is #define'd to be EAGAIN, so it seems to
-> me that dm-raid1 does indeed return EAGAIN for "rw == READA" (which I
-> assume is read-ahead) if the "region is not in-sync":
-> 
-> 	/*
-> 	 * If region is not in-sync queue the bio.
-> 	 */
-> 	if (!r || (r == -EWOULDBLOCK)) {
-> 		if (rw == READA)
-> 			return -EWOULDBLOCK;
-> 
-> 		queue_bio(ms, bio, rw);
-> 		return DM_MAPIO_SUBMITTED;
-> 	}
-
-Trees, forest....
-
-Thanks for pointing out the obvious, Matteo. :)
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+SGkgRGFycmljaywgDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0N
+Cj4gRnJvbTogRGFycmljayBKLiBXb25nIFttYWlsdG86ZGFycmljay53b25n
+QG9yYWNsZS5jb21dDQo+IFNlbnQ6IFdlZG5lc2RheSwgRmVicnVhcnkgMjcs
+IDIwMTMgMzoxNSBBTQ0KPiBUbzogU2Fub2ogVW5uaWtyaXNobmFuDQo+IENj
+OiBPUyBFbmdpbmVlcmluZzsgR3JlZyBLcm9haC1IYXJ0bWFuOyBMS01MOyBK
+ZW5zIEF4Ym9lOyDnjovph5HmtaY7IEFtaXQNCj4gS2FsZTsgZG0tZGV2ZWxA
+cmVkaGF0LmNvbTsga292ZXJzdHJlZXRAZ29vZ2xlLmNvbTsgdGhvcm5iZXJA
+cmVkaGF0LmNvbQ0KPiBTdWJqZWN0OiBSZTogW1BBVENIXSBFbmhhbmNlSU8g
+c3NkIGNhY2hpbmcgc29mdHdhcmUNCj4gDQo+IE9uIE1vbiwgRmViIDE4LCAy
+MDEzIGF0IDA1OjQyOjM4UE0gKzA4MDAsIFNhbm9qIFVubmlrcmlzaG5hbiB3
+cm90ZToNCj4gPiA+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+ID4g
+PiBGcm9tOiBEYXJyaWNrIEouIFdvbmcgW21haWx0bzpkYXJyaWNrLndvbmdA
+b3JhY2xlLmNvbV0NCj4gPiA+IFNlbnQ6IFNhdHVyZGF5LCBGZWJydWFyeSAx
+NiwgMjAxMyAyOjAyIEFNDQo+ID4gPiBUbzogT1MgRW5naW5lZXJpbmcNCj4g
+PiA+IENjOiBHcmVnIEtyb2FoLUhhcnRtYW47IExLTUw7IEplbnMgQXhib2U7
+IFNhbm9qIFVubmlrcmlzaG5hbjsNCj4g546L6YeR5rWmOw0KPiA+ID4gQW1p
+dCBLYWxlOyBkbS1kZXZlbEByZWRoYXQuY29tOyBrb3ZlcnN0cmVldEBnb29n
+bGUuY29tOw0KPiA+ID4gdGhvcm5iZXJAcmVkaGF0LmNvbQ0KPiA+ID4gU3Vi
+amVjdDogUmU6IFtQQVRDSF0gRW5oYW5jZUlPIHNzZCBjYWNoaW5nIHNvZnR3
+YXJlDQo+ID4gPg0KPiA+ID4gW1Jlc2VuZGluZyB3aXRoIGRtLWRldmVsLCBL
+ZW50LCBhbmQgSm9lIG9uIGNjLiAgU29ycnkgZm9yIHRoZQ0KPiA+ID4gbm9p
+c2UuXQ0KPiA+ID4NCj4gPiA+IE9uIEZyaSwgRmViIDE1LCAyMDEzIGF0IDAy
+OjAyOjM4UE0gKzA4MDAsIE9TIEVuZ2luZWVyaW5nIHdyb3RlOg0KPiA+ID4g
+PiBIaSBHcmVnLCBKZW5zLA0KPiA+ID4gPg0KPiA+ID4gPiBXZSBhcmUgc3Vi
+bWl0dGluZyBFbmhhbmNlSU8oVE0pIHNvZnR3YXJlIGRyaXZlciBmb3IgYW4g
+aW5jbHVzaW9uDQo+ID4gPiA+IGluDQo+ID4gPiBsaW51eA0KPiA+ID4gPiBz
+dGFnaW5nIHRyZWUuIFByZXNlbnQgc3RhdGUgb2YgdGhpcyBkcml2ZXIgaXMg
+YmV0YS4gV2UgaGF2ZSBiZWVuDQo+ID4gPiBwb3N0aW5nIGl0DQo+ID4gPiA+
+IGZvciBhIGZldyB3ZWVrcywgd2hpbGUgaXQgd2FzIG1haW50YWluZWQgYXQg
+Z2l0aHViLiBJdCBpcyBzdGlsbA0KPiA+ID4gPiBiZWluZyBjbGVhbmVkLXVw
+IGFuZCBpcyBiZWluZyB0ZXN0ZWQgYnkgTEtNTCBtZW1iZXJzLiBJbmNsdXNp
+b24NCj4gaW4NCj4gPiA+ID4gbGludXgNCj4gPiA+IHN0YWdpbmcNCj4gPiA+
+ID4gdHJlZSB3aWxsIG1ha2UgdGVzdGluZyBhbmQgcmV2aWV3aW5nIGVhc2ll
+ciBhbmQgaGVscCBhIGZ1dHVyZQ0KPiA+ID4gaW50ZWdyYXRpb24gaW4NCj4g
+PiA+ID4gTGludXgga2VybmVsLg0KPiA+ID4gPg0KPiA+ID4gPiBDb3VsZCB5
+b3UgcGxlYXNlIGluY2x1ZGUgaXQ/DQo+ID4NCj4gPiA+ID4NCj4gPiA+ID4g
+U2lnbmVkLW9mZi1ieToNCj4gPiA+ID4gQW1pdCBLYWxlIDxha2FsZUBzdGVj
+LWluYy5jb20+DQo+ID4gPiA+IFNhbm9qIFVubmlrcmlzaG5hbiA8c3Vubmlr
+cmlzaG5hbkBzdGVjLWluYy5jb20+IERhcnJpY2sgSi4gV29uZw0KPiA+ID4g
+PiA8ZGFycmljay53b25nQG9yYWNsZS5jb20+IEppbnB1IFdhbmcgPGppbnB1
+d2FuZ0BnbWFpbC5jb20+DQo+ID4gPg0KPiA+ID4gRWFjaCBvZiB0aGVzZSBl
+bWFpbCBhZGRyZXNzZXMgbmVlZHMgdG8gaGF2ZSB0aGUgIlMtby1iOiIgcHJl
+Zml4DQo+ID4NCj4gPiA+IEFsc28sIHlvdSBvdWdodCB0byBydW4gdGhpcyBw
+YXRjaCB0aHJvdWdoIHNjcmlwdHMvY2hlY2twYXRjaC5wbCwgYXMNCj4gPiA+
+IHRoZXJlIGFyZSBxdWl0ZSBhIGxvdCBvZiBzdHlsZSBlcnJvcnMuDQo+ID4N
+Cj4gPiB3ZSB3aWxsIGZpeCB0aGVzZSBpbiB0aGUgbmV4dCBwYXRjaC4NCj4g
+Pg0KPiA+DQo+ID4gPiA+ICsgICAgICAgV3JpdGUtYmFjayBpbXByb3ZlcyB3
+cml0ZSBsYXRlbmN5IGJ5IHdyaXRpbmcgYXBwbGljYXRpb24NCj4gPiA+IHJl
+cXVlc3RlZCBkYXRhDQo+ID4gPiA+ICsgICAgICAgb25seSB0byBTU0QuIFRo
+aXMgZGF0YSwgcmVmZXJyZWQgdG8gYXMgZGlydHkgZGF0YSwgaXMNCj4gPiA+
+ID4gKyBjb3BpZWQNCj4gPiA+IGxhdGVyIHRvDQo+ID4gPg0KPiA+ID4gSG93
+IG11Y2ggbGF0ZXI/DQo+ID4gPg0KPiA+DQo+ID4gVGhpcyBpcyB0cmlnZ2Vy
+ZWQgYnkgYSBzZXQgb2YgdGhyZXNob2xkcy4NCj4gPiBwZXIgY2FjaGUgZGly
+dHkgaGlnaCBhbmQgbG93IHdhdGVybWFyay4NCj4gPiBwZXIgY2FjaGUgc2V0
+IGRpcnR5IGhpZ2ggYW5kIGxvdyB3YXRlcm1hcmsuDQo+ID4gYW5kIGEgdGlt
+ZSBiYXNlZCB0aHJlc2hvbGQuDQo+ID4gSWYgYW55IG9mIHRoZSBoaWdoIHdh
+dGVybWFya3Mgb3IgdGltZSBiYXNlZCBpbnRlcnZhbCBpcyB0cmlnZ2VyZWQN
+Cj4gY2xlYW4gaXMgaW5pdGlhdGVkLg0KPiA+DQo+ID4gVGhlc2UgdGhyZXNo
+b2xkcyBhcmUgYWxsIGNvbmZpZ3VyYWJsZSB0aHJvdWdoIHN5c2N0bC4NCj4g
+DQo+IElzIHRoZXJlIGEgd2F5IGZvciBhIHVzZXIgYXBwbGljYXRpb24gdG8g
+Zm9yY2UgYSBjYWNoZSBmbHVzaD8gIEl0IGxvb2tzDQo+IGFzIHRob3VnaCBh
+IFJFUV9GTFVTSCB3aWxsIGNhdXNlIGJvdGggU1NEIGFuZCBIREQgdG8gZmx1
+c2ggdGhlaXIgd3JpdGUNCj4gY2FjaGVzLCBidXQgSSBjb3VsZG4ndCBmaW5k
+IGFueXRoaW5nIHRoYXQgd291bGQgc3VnZ2VzdCB3cml0aW5nIGFsbCB0aGUN
+Cj4gZGlydHkgYmxvY2tzIGluIHRoZSBjYWNoZSBvdXQgdG8gdGhlIEhERC4N
+Cg0KDQpUaGVyZSBpcyBhIGNsZWFuIGNvbW1hbmQgaW4gZWlvX2NsaSB3aGlj
+aCBmbHVzaGVzIGFsbCB0aGUgZGlydHkgZGF0YSBvbiB1c2VyIGlucHV0Lg0K
+IA0KVGhhbmtzIGFuZCByZWdhcmRzLA0KU2Fub2oNCg0KClBST1BSSUVUQVJZ
+LUNPTkZJREVOVElBTCBJTkZPUk1BVElPTiBJTkNMVURFRA0KDQpUaGlzIGVs
+ZWN0cm9uaWMgdHJhbnNtaXNzaW9uLCBhbmQgYW55IGRvY3VtZW50cyBhdHRh
+Y2hlZCBoZXJldG8sIG1heSBjb250YWluIGNvbmZpZGVudGlhbCwgcHJvcHJp
+ZXRhcnkgYW5kL29yIGxlZ2FsbHkgcHJpdmlsZWdlZCBpbmZvcm1hdGlvbi4g
+VGhlIGluZm9ybWF0aW9uIGlzIGludGVuZGVkIG9ubHkgZm9yIHVzZSBieSB0
+aGUgcmVjaXBpZW50IG5hbWVkIGFib3ZlLiBJZiB5b3UgcmVjZWl2ZWQgdGhp
+cyBlbGVjdHJvbmljIG1lc3NhZ2UgaW4gZXJyb3IsIHBsZWFzZSBub3RpZnkg
+dGhlIHNlbmRlciBhbmQgZGVsZXRlIHRoZSBlbGVjdHJvbmljIG1lc3NhZ2Uu
+IEFueSBkaXNjbG9zdXJlLCBjb3B5aW5nLCBkaXN0cmlidXRpb24sIG9yIHVz
+ZSBvZiB0aGUgY29udGVudHMgb2YgaW5mb3JtYXRpb24gcmVjZWl2ZWQgaW4g
+ZXJyb3IgaXMgc3RyaWN0bHkgcHJvaGliaXRlZCwgYW5kIHZpb2xhdG9ycyB3
+aWxsIGJlIHB1cnN1ZWQgbGVnYWxseS4K
