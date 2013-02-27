@@ -1,56 +1,64 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: [PATCH v2 2/2] dm: Avoid running the md queue after the last dm_put()
-Date: Wed, 27 Feb 2013 15:48:07 +0100
-Message-ID: <512E1CA7.1030404@acm.org>
-References: <512E1C06.2000903@acm.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: pvmove corrupting XFS filesystems (was Re: [BUG] Internal error
+	xfs_dir2_data_reada_verify)
+Date: Wed, 27 Feb 2013 10:07:15 -0500
+Message-ID: <20130227150715.GA4492@redhat.com>
+References: <87d2vnc34r.fsf@fftw.org> <20130226044039.GM5551@dastard>
+	<20130227010414.GD1514@agk.fab.redhat.com>
+	<20130227014900.GY5551@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <512E1C06.2000903@acm.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
-Cc: Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <JBottomley@parallels.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Return-path: <xfs-bounces@oss.sgi.com>
+Content-Disposition: inline
+In-Reply-To: <20130227014900.GY5551@dastard>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Dave Chinner <david@fromorbit.com>
+Cc: dm-devel@redhat.com, xfs@oss.sgi.com, Matteo Frigo <athena@fftw.org>
 List-Id: dm-devel.ids
 
-At least in theory the mapped device can disappear after
-rq_completed() has invoked dm_put() and before the queue of
-the mapped device has been run. Avoid this by running the
-queue synchronously instead of asynchronously. Note: the
-previous patch makes invoking blk_run_queue() from inside
-dm_request_fn() safe.
+On Tue, Feb 26 2013 at  8:49pm -0500,
+Dave Chinner <david@fromorbit.com> wrote:
 
-Signed-off-by: Bart Van Assche <bvanassche@acm.org>
-Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Tejun Heo <tj@kernel.org>
-Cc: James Bottomley <JBottomley@parallels.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
----
- drivers/md/dm.c |    8 +-------
- 1 file changed, 1 insertion(+), 7 deletions(-)
+> On Wed, Feb 27, 2013 at 01:04:14AM +0000, Alasdair G Kergon wrote:
+> > (Quick pointers that might be relevant)
+> > 
+> > EAGAIN, I'm not aware of dm itself returning that on the i/o path.
+> 
+> Neither am I, but it's coming from somewhere in the IO path...
+> 
+> > For 3.8 issues, read dm-devel around https://www.redhat.com/archives/dm-devel/2013-February/msg00086.html
+> > (I queued the dm-side fixes for linux-next earlier today)
+> 
+> It's reproducable on lots of different kernels, apparently - 3.8,
+> 3.4.33, CentOS 6.3, debian sid/wheezy and Fedora 18 were mentioned
+> specifically by the OP - so it doesn't look like a recent
+> regression or constrained to a specific kernel.
+> 
+> > For pvmove, check exactly which version and whether discards are enabled: there
+> > was a userspace bug for a short period some time ago when discards were enabled.
+> 
+> The version I used to reproduce on a 3.8.0 kernel was:
+> 
+> $ pvmove --version
+>   LVM version:     2.02.95(2) (2012-03-06)
+>   Library version: 1.02.74 (2012-03-06)
+>   Driver version:  4.23.1
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 314a0e2..28b7ad4 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -728,14 +728,8 @@ static void rq_completed(struct mapped_device *md, int rw, int run_queue)
- 	if (!md_in_flight(md))
- 		wake_up(&md->wait);
- 
--	/*
--	 * Run this off this callpath, as drivers could invoke end_io while
--	 * inside their request_fn (and holding the queue lock). Calling
--	 * back into ->request_fn() could deadlock attempting to grab the
--	 * queue lock again.
--	 */
- 	if (run_queue)
--		blk_run_queue_async(md->queue);
-+		blk_run_queue(md->queue);
- 
- 	/*
- 	 * dm_put() must be at the end of this function. See the comment above
--- 
-1.7.10.4
+Was issue_discards enabled in lvm.conf?
 
+If so, as Alasdair said, this lvm2 2.02.97 fix is needed:
+http://git.fedorahosted.org/cgit/lvm2.git/commit/?id=07a25c249b3e
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
