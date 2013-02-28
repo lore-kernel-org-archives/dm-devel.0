@@ -1,94 +1,62 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: [Question] Is there any mean to know a bio split is the
- last one in the original bio?
-Date: Thu, 28 Feb 2013 19:56:06 +0900
-Message-ID: <CABmKtjf7sVhBUGF-JgfcSkkhh6iKcK+cmXHZT2-xQzUPmQLrRA@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v2 0/2] dm: Avoid use-after-free of a mapped device
+Date: Thu, 28 Feb 2013 14:00:00 +0100
+Message-ID: <512F54D0.5030405@acm.org>
+References: <512E1C06.2000903@acm.org> <512EA7F3.6010607@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4879552498644658904=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <512EA7F3.6010607@ce.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <JBottomley@parallels.com>
 List-Id: dm-devel.ids
 
---===============4879552498644658904==
-Content-Type: multipart/alternative; boundary=e0cb4efe3306d87d0304d6c6bcb8
+On 02/28/13 01:42, Jun'ichi Nomura wrote:
+> Hi Bart,
+>
+> On 02/27/13 23:45, Bart Van Assche wrote:
+>> This mini-series of two patches avoids that the device mapper
+>> implementation can trigger a use-after-free during removal of a
+>> mapped device. The two patches in this series are:
+>> - block: Convert blk_run_queue() recursion into iteration.
+>> - dm: Avoid running the md queue after the last dm_put().
+>>
+>> Note: these patches are the result of source reading. As far as I know this issue has not (yet) caused any harm.
+>
+> Ref-counting of mapped device is like this:
+>    - dm depends on the fact that the block device is opened while there
+>      is bio/request submitted.  So dm_get/put in dm_blk_open/close is
+>      enough to keep mapped device while there are bios.
+>    - Request-based target has a tiny window between dm_blk_close()
+>      and the end of rq_completed() because the opener may close the device
+>      once the last bio completes even if request is still finishing.
+>      dm_get/dm_put in dm_start_request/rq_completed closes this window.
+>      (See comments in dm_start_request())
+>    - So, when dm_put() puts the last reference, there should be no
+>      requests in the queue.
+>    - If there is no reference to the mapped device, dm_destroy() may
+>      start tearing it down.
+>      It is ok if there is pending delayed work for the request queue
+>      because blk_cleanup_queue() is called before freeing the mapped device
+>      and cancels the delayed work.
+>
+> So as far as blk_run_queue_async() in rq_completed() is concerned,
+> it is not a problem from "use-after-free" point of view.
 
---e0cb4efe3306d87d0304d6c6bcb8
-Content-Type: text/plain; charset=ISO-8859-1
+Hello Jun'ichi,
 
-Hi, I am Akira.
-Nice to meet you.
-I will post a question for your help.
+Thanks for the feedback. It is good to know that there is no risk of 
+triggering a use-after-free with the current approach.
 
-I have been developing a caching module now
-https://github.com/akiradeveloper/dm-lc
+How about reposting these patches as a performance optimization ? With 
+these patches I see a slightly lower latency and slightly higher 
+throughput. With a dm-linear mapping on top of a RAM disk (brd), a 
+request size of 512 bytes and 100% reads fio reports 2063K IOPS without 
+these patches and 2083K IOPS with these two patches applied. That's an 
+improvement of about 1%. It's not much but that comes on top of the 
+advantage that these two patches make the rq_completed() implementation 
+easier to understand and to reason about.
 
-and facing a big design problem related to handling REQ_FUA flag.
-
-Suppose we have 4KB split_io and
-the original bio is 8KB with REQ_FUA flag.
-
-The device-mapper dm_request function now
-splits the original one into two 4KB sized bios with REQ_FUA and
-then passes them to map function one by one.
-This eventually leads to inefficient code in my case.
-
-All I want to do is flushing the preceding split bios at last but
-I know that is not always the most efficient implementation in any dm
-modules and
-that's why device-mapper is what it is like now.
-
-My question is
-Is there any mean to know the second bio split is the last one in the split
-sequence?
-
-I need your help.
-Thanks.
-
-Akira Hayakawa
-
---e0cb4efe3306d87d0304d6c6bcb8
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Hi, I am Akira.<div>Nice to meet you.</div><div>I will post a question for =
-your help.<br><div><br></div><div>I have been developing a caching module n=
-ow</div><div><a href=3D"https://github.com/akiradeveloper/dm-lc">https://gi=
-thub.com/akiradeveloper/dm-lc</a></div>
-<div><br></div><div>and facing a big design problem related to handling REQ=
-_FUA flag.</div><div><br></div><div>Suppose we have 4KB split_io and</div><=
-div>the original bio is 8KB with REQ_FUA flag.</div><div><br></div><div>
-The device-mapper dm_request function now</div><div>splits the original one=
- into two 4KB sized bios with REQ_FUA and</div><div>then passes them to map=
- function one by one.</div><div>This eventually leads to inefficient code i=
-n my case.</div>
-<div><br></div><div>All I want to do is flushing the preceding split bios a=
-t last but</div><div>I know that is not always the most efficient implement=
-ation in any dm modules and</div><div>that&#39;s why device-mapper is what =
-it is like now.</div>
-<div><br></div><div>My question is</div><div>Is there any mean to know the =
-second bio split is the last one in the split sequence?</div><div><br></div=
-><div>I need your help.</div><div>Thanks.</div><div><br></div><div>Akira Ha=
-yakawa</div>
-</div>
-
---e0cb4efe3306d87d0304d6c6bcb8--
-
-
---===============4879552498644658904==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4879552498644658904==--
+Bart.
