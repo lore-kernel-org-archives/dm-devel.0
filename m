@@ -1,63 +1,38 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: BUG: sleeping function called during table_load()
-Date: Fri, 01 Mar 2013 09:12:48 +0100
-Message-ID: <51306300.40309@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH v2 0/2] dm: Avoid use-after-free of a mapped device
+Date: Fri, 01 Mar 2013 17:18:54 +0900
+Message-ID: <5130646E.1010803@ce.jp.nec.com>
+References: <512E1C06.2000903@acm.org> <512EA7F3.6010607@ce.jp.nec.com> <512F54D0.5030405@acm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <512F54D0.5030405@acm.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <JBottomley@parallels.com>
 List-Id: dm-devel.ids
 
-Hi all,
+On 02/28/13 22:00, Bart Van Assche wrote:
+> How about reposting these patches as a performance optimization ?
 
-during booting 3.8.0 I hit this:
+How and when do they improve performance?
 
-BUG: sleeping function called from invalid context at =
+> With these patches I see a slightly lower latency and slightly higher
+> throughput. With a dm-linear mapping on top of a RAM disk (brd), a
+> request size of 512 bytes and 100% reads fio reports 2063K IOPS without
+> these patches and 2083K IOPS with these two patches applied. That's an
+> improvement of about 1%. It's not much but that comes on top of the
 
-kernel/rcutree.c:2208
-in_atomic(): 1, irqs_disabled(): 0, pid: 1976, name: multipath
-Pid: 1976, comm: multipath Not tainted 3.8.0-default+ #18
-Call Trace:
-  [<ffffffff81078289>] __might_sleep+0xd9/0x100
-  [<ffffffff810e2f9c>] synchronize_sched+0x2c/0x80
-  [<ffffffff812e496f>] blk_queue_bypass_start+0x7f/0x90
-  [<ffffffff812fa8bd>] blkcg_activate_policy+0x8d/0x290
-  [<ffffffff812fef0f>] cfq_init_queue+0x6f/0x340
-  [<ffffffff812deec5>] elevator_init+0x85/0x120
-  [<ffffffffa022ec40>] ? dm_lld_busy+0x60/0x60 [dm_mod]
-  [<ffffffff812e43f8>] blk_init_allocated_queue+0xa8/0xc0
-  [<ffffffffa022c61c>] dm_setup_md_queue+0x3c/0xc0 [dm_mod]
-  [<ffffffffa02336a2>] table_load+0x1c2/0x330 [dm_mod]
-  [<ffffffffa0234929>] ctl_ioctl+0x1d9/0x270 [dm_mod]
-  [<ffffffffa02334e0>] ? table_clear+0x80/0x80 [dm_mod]
-  [<ffffffffa02349ce>] dm_ctl_ioctl+0xe/0x20 [dm_mod]
-  [<ffffffff8119262d>] do_vfs_ioctl+0x9d/0x380
-  [<ffffffff81181bc4>] ? fput+0x74/0xc0
-  [<ffffffff811929a1>] sys_ioctl+0x91/0xb0
-  [<ffffffff815ce469>] system_call_fastpath+0x16/0x1b
+dm-linear + brd is not appropriate for testing your patches.
+They are both bio-based drivers while your patches change request
+processing.  To test the patches, you have to use request-based drivers,
+e.g. dm-multipath on top of scsi.
 
-and several others of that ilk.
-System itself doesn't seem to be affected, but we might want to look =
+Also, IMO, the measurement should be done not only for IO performance
+but also how other processes are interrupted by IO processing.
+The use of blk_run_queue_async should have reduced the foot print of
+softirq handling.
 
-into it.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+-- 
+Jun'ichi Nomura, NEC Corporation
