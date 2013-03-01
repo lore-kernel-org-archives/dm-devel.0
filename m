@@ -1,38 +1,40 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH v2 0/2] dm: Avoid use-after-free of a mapped device
-Date: Fri, 01 Mar 2013 17:18:54 +0900
-Message-ID: <5130646E.1010803@ce.jp.nec.com>
-References: <512E1C06.2000903@acm.org> <512EA7F3.6010607@ce.jp.nec.com> <512F54D0.5030405@acm.org>
+Subject: Re: BUG: sleeping function called during table_load()
+Date: Fri, 01 Mar 2013 17:26:28 +0900
+Message-ID: <51306634.2010702@ce.jp.nec.com>
+References: <51306300.40309@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <512F54D0.5030405@acm.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Tejun Heo <tj@kernel.org>, James Bottomley <JBottomley@parallels.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <51306300.40309@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.de>, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-On 02/28/13 22:00, Bart Van Assche wrote:
-> How about reposting these patches as a performance optimization ?
+Hi Hannes,
 
-How and when do they improve performance?
+On 03/01/13 17:12, Hannes Reinecke wrote:
+> during booting 3.8.0 I hit this:
+> 
+> BUG: sleeping function called from invalid context at kernel/rcutree.c:2208
+> in_atomic(): 1, irqs_disabled(): 0, pid: 1976, name: multipath
+> Pid: 1976, comm: multipath Not tainted 3.8.0-default+ #18
 
-> With these patches I see a slightly lower latency and slightly higher
-> throughput. With a dm-linear mapping on top of a RAM disk (brd), a
-> request size of 512 bytes and 100% reads fio reports 2063K IOPS without
-> these patches and 2083K IOPS with these two patches applied. That's an
-> improvement of about 1%. It's not much but that comes on top of the
+It seems the same issue with this:
+  [PATCH repost] blkcg: fix "scheduling while atomic" in blk_queue_bypass_start
+  https://patchwork.kernel.org/patch/2183891/
 
-dm-linear + brd is not appropriate for testing your patches.
-They are both bio-based drivers while your patches change request
-processing.  To test the patches, you have to use request-based drivers,
-e.g. dm-multipath on top of scsi.
-
-Also, IMO, the measurement should be done not only for IO performance
-but also how other processes are interrupted by IO processing.
-The use of blk_run_queue_async should have reduced the foot print of
-softirq handling.
+I've been waiting for Jens to pick it up.
 
 -- 
 Jun'ichi Nomura, NEC Corporation
