@@ -1,16 +1,13 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: BUG: sleeping function called during table_load()
-Date: Fri, 1 Mar 2013 10:06:25 +0100
-Message-ID: <20130301090625.GS4727@kernel.dk>
+From: Christian May <christian_may@de.ibm.com>
+Subject: Missing /dev/disk/by-path directory
+Date: Fri, 1 Mar 2013 13:32:36 +0100
+Message-ID: <OFDD462AA6.3086AB55-ONC1257B21.00449638-C1257B21.0044EA7D@de.ibm.com>
 References: <51306300.40309@suse.de>
- <51306634.2010702@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0747560745278057913=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <51306634.2010702@ce.jp.nec.com>
+In-Reply-To: <51306300.40309@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,28 +17,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 01 2013, Jun'ichi Nomura wrote:
-> Hi Hannes,
-> 
-> On 03/01/13 17:12, Hannes Reinecke wrote:
-> > during booting 3.8.0 I hit this:
-> > 
-> > BUG: sleeping function called from invalid context at kernel/rcutree.c:2208
-> > in_atomic(): 1, irqs_disabled(): 0, pid: 1976, name: multipath
-> > Pid: 1976, comm: multipath Not tainted 3.8.0-default+ #18
-> 
-> It seems the same issue with this:
->   [PATCH repost] blkcg: fix "scheduling while atomic" in blk_queue_bypass_start
->   https://patchwork.kernel.org/patch/2183891/
-> 
-> I've been waiting for Jens to pick it up.
+This is a multipart message in MIME format.
+--===============0747560745278057913==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 0044E889C1257B21_="
 
-I just offloaded the bigger chunk for 3.9, there will be a 2nd round
-after -rc1 where this is going to be included (amongst other things).
+This is a multipart message in MIME format.
+--=_alternative 0044E889C1257B21_=
+Content-Type: text/plain; charset="US-ASCII"
 
--- 
-Jens Axboe
+Hi,
+
+my RHEL 5.9 host system has several SCSI LUNs attached. For some reason 
+the /dev/disk/by-path directory is missing...Does anybody has an idea what 
+went wrong
+or how to debug. Other RHEL 5.9 system are fine.
+
+Regards,
+
+Christian May
+IBM
+
+--=_alternative 0044E889C1257B21_=
+Content-Type: text/html; charset="US-ASCII"
+
+<font size=2 face="sans-serif">Hi,</font>
+<br>
+<br><font size=2 face="sans-serif">my RHEL 5.9 host system has several
+SCSI LUNs attached. For some reason the /dev/disk/by-path directory is
+missing...Does anybody has an idea what went wrong</font>
+<br><font size=2 face="sans-serif">or how to debug. Other RHEL 5.9 system
+are fine.</font>
+<br>
+<br><font size=2 face="sans-serif">Regards,</font>
+<br>
+<br><font size=2 face="sans-serif">Christian May</font>
+<br><font size=2 face="sans-serif">IBM</font>
+<br>
+--=_alternative 0044E889C1257B21_=--
+
+
+--===============0747560745278057913==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0747560745278057913==--
