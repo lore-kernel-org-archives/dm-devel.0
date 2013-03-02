@@ -1,146 +1,45 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper updates for 3.9
-Date: Fri, 1 Mar 2013 23:02:19 +0000
-Message-ID: <20130301230219.GB1877@agk.fab.redhat.com>
+From: "Andrei B." <andrixnet@yahoo.com>
+Subject: Chicken and egg problem with multipath-tools
+Date: Sat, 2 Mar 2013 02:43:19 -0800 (PST)
+Message-ID: <1362220999.44153.YahooMailClassic@web126202.mail.ne1.yahoo.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: stable-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Bart Van Assche <bvanassche@acm.org>, Chao Yang <chyang@redhat.com>, Dan Carpenter <dan.carpenter@oracle.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Heinz Mauelshagen <mauelshagen@redhat.com>, Joe Thornber <ejt@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kees Cook <keescook@chromium.org>, Mike Christie <michaelc@cs.wisc.edu>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, stable@vger.kernel.org, Wang Sheng-Hui <shhuiw@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Please pull from:
+Hi, 
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.9-changes
+I've been trying to install multipath-tools on a couple of linux servers with FC storage that I work with. 
+They run Linux Slackware.
+I've built from source, created an installable package (Slackware style) and deployed it. 
 
-to get the following device-mapper updates for 3.9.
+I have discovered the following problem (chicken and egg style):
 
-Thanks,
-Alasdair
+- multipathd, AFAIK, should start before LVM, because if several volumes need be assembled by LVM, they should exist before LVM starts. 
+- multipathd, AFAIK, should start before any service that has it's data stored on the remote storage. 
 
-----------------------------------------------------------------
-The main addition here is a long-desired target framework to allow
-an SSD to be used as a cache in front of a slower device.  Cache
-tuning is delegated to interchangeable policy modules so these can
-be developed independently of the mechanics needed to shuffle the
-data around.
+I am not familiar [enough] with the inner workings of the startup sequence on redhat/debian like systems. 
+Slackware's startup sequence is much simpler and I placed multipathd in file rc.S (which is the first one called by init) right before LVM. 
 
-Other than that, kcopyd users acquire a throttling parameter, ioctl
-buffer usage gets streamlined, more mempool reliance is reduced
-and there are a few other bug fixes and tidy-ups.
+And here lies the chicken-egg problem. At this point, only the root filesystem is mounted and it is mounted read-only. It is the correct and proper startup sequence in Slackware. Filesystems are checked for errors after LVM starts and then root is remounted read-write and the rest of the filesystems are mounted. 
 
-----------------------------------------------------------------
-Alasdair G Kergon (6):
-      dm: remove CONFIG_EXPERIMENTAL
-      dm: clean up clone_bio
-      dm: rename request variables to bios
-      dm: rename bio cloning functions
-      dm: refactor bio cloning
-      dm: add target num_write_bios fn
+The problem is that multipathd wants to create a PID file under /var (which is at this time readonly). This fails and multipathd fails to start. 
+It took me a lot of testing and reboots until I managed to determine this is the actual problem.
 
-Heinz Mauelshagen (1):
-      dm cache: add cleaner policy
+The stop-gap solution I have found, so far, is to load dm-multipath module and run multipath -v0 before LVM, thus creating the multipath devices, then later, after the filesystems are remounted rw, start multipathd. 
 
-Joe Thornber (7):
-      dm persistent data: add btree_walk
-      dm bio prison: pass cell memory in
-      dm thin: remove cells from stack
-      dm persistent data: add transactional array
-      dm persistent data: add bitset
-      dm: add cache target
-      dm cache: add mq policy
+Can you suggest a better way of doing this, so that the system can do multipath management during the startup sequence and filesystem checks, from the creation of the devices to the starting of multipathd later ? 
 
-Jun'ichi Nomura (3):
-      dm: do not replace bioset for request based dm
-      dm: remove unused _rq_bio_info_cache
-      dm: merge io_pool and tio_pool
-
-Kees Cook (1):
-      dm persistent data: remove CONFIG_EXPERIMENTAL
-
-Mike Christie (1):
-      dm: fix limits initialization when there are no data devices
-
-Mike Snitzer (3):
-      dm thin: support a non power of 2 discard_granularity
-      dm thin: use block_size_is_power_of_two
-      dm persistent data: set some btree fn parms const
-
-Mikulas Patocka (7):
-      dm: fix truncated status strings
-      dm bufio: use WRITE_FLUSH instead of REQ_FLUSH
-      dm snapshot: add missing module aliases
-      dm ioctl: introduce ioctl_flags
-      dm ioctl: optimize functions without variable params
-      dm ioctl: allow message to return data
-      dm kcopyd: introduce configurable throttling
-
-Wang Sheng-Hui (1):
-      dm table: remove superfluous variable reset
-
- Documentation/device-mapper/cache-policies.txt |   77 +
- Documentation/device-mapper/cache.txt          |  243 +++
- drivers/md/Kconfig                             |   55 +-
- drivers/md/Makefile                            |    6 +
- drivers/md/dm-bio-prison.c                     |  155 +-
- drivers/md/dm-bio-prison.h                     |   58 +-
- drivers/md/dm-bufio.c                          |    2 +-
- drivers/md/dm-cache-block-types.h              |   54 +
- drivers/md/dm-cache-metadata.c                 | 1146 +++++++++++
- drivers/md/dm-cache-metadata.h                 |  142 ++
- drivers/md/dm-cache-policy-cleaner.c           |  464 +++++
- drivers/md/dm-cache-policy-internal.h          |  124 ++
- drivers/md/dm-cache-policy-mq.c                | 1195 +++++++++++
- drivers/md/dm-cache-policy.c                   |  161 ++
- drivers/md/dm-cache-policy.h                   |  228 +++
- drivers/md/dm-cache-target.c                   | 2584 ++++++++++++++++++++++++
- drivers/md/dm-crypt.c                          |   45 +-
- drivers/md/dm-delay.c                          |   12 +-
- drivers/md/dm-flakey.c                         |   11 +-
- drivers/md/dm-ioctl.c                          |  166 +-
- drivers/md/dm-kcopyd.c                         |  121 +-
- drivers/md/dm-linear.c                         |   13 +-
- drivers/md/dm-mpath.c                          |   12 +-
- drivers/md/dm-raid.c                           |   10 +-
- drivers/md/dm-raid1.c                          |   17 +-
- drivers/md/dm-snap.c                           |   33 +-
- drivers/md/dm-stripe.c                         |   27 +-
- drivers/md/dm-table.c                          |   11 +-
- drivers/md/dm-target.c                         |    2 +-
- drivers/md/dm-thin-metadata.c                  |   12 +-
- drivers/md/dm-thin.c                           |  277 ++-
- drivers/md/dm-verity.c                         |    8 +-
- drivers/md/dm-zero.c                           |    2 +-
- drivers/md/dm.c                                |  452 +++--
- drivers/md/persistent-data/Kconfig             |    2 +-
- drivers/md/persistent-data/Makefile            |    2 +
- drivers/md/persistent-data/dm-array.c          |  808 ++++++++
- drivers/md/persistent-data/dm-array.h          |  166 ++
- drivers/md/persistent-data/dm-bitset.c         |  163 ++
- drivers/md/persistent-data/dm-bitset.h         |  165 ++
- drivers/md/persistent-data/dm-block-manager.c  |    1 +
- drivers/md/persistent-data/dm-btree-internal.h |    1 +
- drivers/md/persistent-data/dm-btree-spine.c    |    7 +
- drivers/md/persistent-data/dm-btree.c          |   52 +
- drivers/md/persistent-data/dm-btree.h          |   15 +-
- include/linux/device-mapper.h                  |   49 +-
- include/linux/dm-kcopyd.h                      |   25 +-
- include/uapi/linux/dm-ioctl.h                  |   11 +-
- 48 files changed, 8791 insertions(+), 601 deletions(-)
- create mode 100644 Documentation/device-mapper/cache-policies.txt
- create mode 100644 Documentation/device-mapper/cache.txt
- create mode 100644 drivers/md/dm-cache-block-types.h
- create mode 100644 drivers/md/dm-cache-metadata.c
- create mode 100644 drivers/md/dm-cache-metadata.h
- create mode 100644 drivers/md/dm-cache-policy-cleaner.c
- create mode 100644 drivers/md/dm-cache-policy-internal.h
- create mode 100644 drivers/md/dm-cache-policy-mq.c
- create mode 100644 drivers/md/dm-cache-policy.c
- create mode 100644 drivers/md/dm-cache-policy.h
- create mode 100644 drivers/md/dm-cache-target.c
- create mode 100644 drivers/md/persistent-data/dm-array.c
- create mode 100644 drivers/md/persistent-data/dm-array.h
- create mode 100644 drivers/md/persistent-data/dm-bitset.c
- create mode 100644 drivers/md/persistent-data/dm-bitset.h
+Thank you. 
