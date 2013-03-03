@@ -1,8 +1,8 @@
 From: Gabriel de Perthuis <g2p.code@gmail.com>
-Subject: linear writes on read-only zero devices,
-	any alternatives?
-Date: Sun, 3 Mar 2013 11:36:23 +0000 (UTC)
-Message-ID: <kgvcjn$l3e$3@ger.gmane.org>
+Subject: Re: Chicken and egg problem with multipath-tools
+Date: Sun, 3 Mar 2013 11:42:25 +0000 (UTC)
+Message-ID: <kgvcv1$l3e$4@ger.gmane.org>
+References: <1362220999.44153.YahooMailClassic@web126202.mail.ne1.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,19 +20,10 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+> The problem is that multipathd wants to create a PID file under /var
+> (which is at this time readonly). This fails and multipathd fails to
+> start.
 
-I'm trying to build a block device with a small writable area (a loopback
-device) and a large read-only area full of zeroes.
-
-Stacking a read-only zero device doesn't work, because linear writes to it
-anyway (tested in 3.8.1, steps below).
-
-It seems to be a bug, but in case it isn't or can't be fixed, could one 
-of the dm targets (linear, error, or zero) get a read-only flag that 
-ensures that writes do fail?
-
-Test case:
-sudo dmsetup create --readonly --table '0 1024 zero' rozero
-sudo dmsetup create --table '0 1024 linear /dev/mapper/rozero 0' synthetic
-sudo dd if=/dev/urandom of=/dev/mapper/synthetic bs=512 count=1024
+Distros handle this by putting pidfiles in /run, a tmpfs set up at early 
+boot. There might be some magic to ensure that later mounts don't shadow 
+it.
