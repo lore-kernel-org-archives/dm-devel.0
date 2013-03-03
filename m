@@ -1,7 +1,8 @@
-From: "Andrei B." <andrixnet@yahoo.com>
-Subject: Chicken and egg problem with multipath-tools
-Date: Sat, 2 Mar 2013 02:43:19 -0800 (PST)
-Message-ID: <1362220999.44153.YahooMailClassic@web126202.mail.ne1.yahoo.com>
+From: Gabriel de Perthuis <g2p.code@gmail.com>
+Subject: linear writes on read-only zero devices,
+	any alternatives?
+Date: Sun, 3 Mar 2013 11:36:23 +0000 (UTC)
+Message-ID: <kgvcjn$l3e$3@ger.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,27 +20,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi, 
+Hello,
 
-I've been trying to install multipath-tools on a couple of linux servers with FC storage that I work with. 
-They run Linux Slackware.
-I've built from source, created an installable package (Slackware style) and deployed it. 
+I'm trying to build a block device with a small writable area (a loopback
+device) and a large read-only area full of zeroes.
 
-I have discovered the following problem (chicken and egg style):
+Stacking a read-only zero device doesn't work, because linear writes to it
+anyway (tested in 3.8.1, steps below).
 
-- multipathd, AFAIK, should start before LVM, because if several volumes need be assembled by LVM, they should exist before LVM starts. 
-- multipathd, AFAIK, should start before any service that has it's data stored on the remote storage. 
+It seems to be a bug, but in case it isn't or can't be fixed, could one 
+of the dm targets (linear, error, or zero) get a read-only flag that 
+ensures that writes do fail?
 
-I am not familiar [enough] with the inner workings of the startup sequence on redhat/debian like systems. 
-Slackware's startup sequence is much simpler and I placed multipathd in file rc.S (which is the first one called by init) right before LVM. 
-
-And here lies the chicken-egg problem. At this point, only the root filesystem is mounted and it is mounted read-only. It is the correct and proper startup sequence in Slackware. Filesystems are checked for errors after LVM starts and then root is remounted read-write and the rest of the filesystems are mounted. 
-
-The problem is that multipathd wants to create a PID file under /var (which is at this time readonly). This fails and multipathd fails to start. 
-It took me a lot of testing and reboots until I managed to determine this is the actual problem.
-
-The stop-gap solution I have found, so far, is to load dm-multipath module and run multipath -v0 before LVM, thus creating the multipath devices, then later, after the filesystems are remounted rw, start multipathd. 
-
-Can you suggest a better way of doing this, so that the system can do multipath management during the startup sequence and filesystem checks, from the creation of the devices to the starting of multipathd later ? 
-
-Thank you. 
+Test case:
+sudo dmsetup create --readonly --table '0 1024 zero' rozero
+sudo dmsetup create --table '0 1024 linear /dev/mapper/rozero 0' synthetic
+sudo dd if=/dev/urandom of=/dev/mapper/synthetic bs=512 count=1024
