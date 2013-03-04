@@ -1,61 +1,118 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: Chicken and egg problem with multipath-tools
-Date: Mon, 04 Mar 2013 11:27:52 +0000
-Message-ID: <51348538.20406@redhat.com>
-References: <1362394847.623.YahooMailClassic@web126204.mail.ne1.yahoo.com>
-	<513481CF.8020405@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Paul Taysom <taysom@chromium.org>
+Subject: [PATCH] md: dm-verity: Fix to avoid a deadlock in dm-bufio
+Date: Mon,  4 Mar 2013 08:45:48 -0800
+Message-ID: <1362415549-18653-1-git-send-email-taysom@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <513481CF.8020405@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: agk@redhat.com
+Cc: dm-devel@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, msb@chromium.org, mpatocka@redhat.com, olofj@chromium.org, Paul Taysom <taysom@chromium.org>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Changed the dm-verity prefetching to use a worker thread to avoid
+a deadlock in dm-bufio.
 
-On 03/04/2013 11:13 AM, Hannes Reinecke wrote:
-> multipathd/main.c:1996 /* Startup complete, create logfile */ 
-> pid_rc = pidfile_create(DEFAULT_PIDFILE, daemon_pid); /* Ignore
-> errors, we can live without */
-> 
-> 
-> No option, but multipathd doesn't _need_ to create a pidfile. And
-> it certainly won't abort if it cannot create one.
+If generic_make_request is called recursively, it queues the I/O
+request on the current->bio_list without making the I/O request
+and returns. The routine making the recursive call cannot wait
+for the I/O to complete.
 
-Maybe an old version (prior to commit 6cda789 in May 2011)?
+The deadlock occurred when one thread grabbed the bufio_client
+mutex and waited for an I/O to complete but the I/O was queued
+on another thread=E2=80=99s current->bio_list and it was waiting to get
+the mutex held by the first thread.
 
-- -       if (pidfile_create(DEFAULT_PIDFILE, getpid())) {
-- -               if (logsink)
-- -                       log_thread_stop();
-+       if (pidfile_create(DEFAULT_PIDFILE, getpid()))
-+               /* Ignore errors, we can live without */
-+               condlog(1, "failed to create pidfile");
+The fix allows only one I/O request from dm-verity to dm-bufio
+per thread. To do this, the prefetch requests were queued on worker
+threads.
 
-- -               exit(1);
-- -       }
+In addition to avoiding the deadlock, this fix made a slight
+improvement in performance.
 
-If this is the case then using a more recent multipath-tools would
-definitely be a good plan.
+seconds_kernel_to_login:
+  with prefetch:    8.43s
+  without prefetch: 9.2s
+  worker prefetch:  8.28s
 
-Regards,
-Bryn.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
+Signed-off-by: Paul Taysom <taysom@chromium.org>
+---
+ drivers/md/dm-verity.c | 29 +++++++++++++++++++++++++++--
+ 1 file changed, 27 insertions(+), 2 deletions(-)
 
-iEYEARECAAYFAlE0hTgACgkQ6YSQoMYUY96+8wCdG/zOh6fDAOW2LzCNitHNTiek
-VzkAn3ovG1230AQMPV/uRcVk8pA1emN/
-=o2M/
------END PGP SIGNATURE-----
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 52cde98..7313498 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -93,6 +93,13 @@ struct dm_verity_io {
+ 	 */
+ };
+=20
++struct dm_verity_prefetch_work {
++	struct work_struct work;
++	struct dm_bufio_client *bufio;
++	sector_t block;
++	unsigned n_blocks;
++};
++
+ static struct shash_desc *io_hash_desc(struct dm_verity *v, struct dm_=
+verity_io *io)
+ {
+ 	return (struct shash_desc *)(io + 1);
+@@ -419,6 +426,17 @@ static void verity_end_io(struct bio *bio, int err=
+or)
+ 	queue_work(io->v->verify_wq, &io->work);
+ }
+=20
++
++static void do_verity_prefetch_work(struct work_struct *work)
++{
++	struct dm_verity_prefetch_work *vw =3D
++		container_of(work, struct dm_verity_prefetch_work, work);
++
++	dm_bufio_prefetch(vw->bufio, vw->block, vw->n_blocks);
++
++	kfree(vw);
++}
++
+ /*
+  * Prefetch buffers for the specified io.
+  * The root buffer is not prefetched, it is assumed that it will be ca=
+ched
+@@ -427,6 +445,7 @@ static void verity_end_io(struct bio *bio, int erro=
+r)
+ static void verity_prefetch_io(struct dm_verity *v, struct dm_verity_i=
+o *io)
+ {
+ 	int i;
++	struct dm_verity_prefetch_work *vw;
+=20
+ 	for (i =3D v->levels - 2; i >=3D 0; i--) {
+ 		sector_t hash_block_start;
+@@ -449,8 +468,14 @@ static void verity_prefetch_io(struct dm_verity *v=
+, struct dm_verity_io *io)
+ 				hash_block_end =3D v->hash_blocks - 1;
+ 		}
+ no_prefetch_cluster:
+-		dm_bufio_prefetch(v->bufio, hash_block_start,
+-				  hash_block_end - hash_block_start + 1);
++		vw =3D kmalloc(sizeof(*vw), GFP_KERNEL);
++		if (!vw)  /* Just prefetching, ignore errors */
++			return;
++		vw->bufio =3D v->bufio;
++		vw->block =3D hash_block_start;
++		vw->n_blocks =3D hash_block_end - hash_block_start + 1;
++		INIT_WORK(&vw->work, do_verity_prefetch_work);
++		queue_work(v->verify_wq, &vw->work);
+ 	}
+ }
+=20
+--=20
+1.8.1.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
