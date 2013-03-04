@@ -1,31 +1,89 @@
-From: Paul Taysom <taysom@google.com>
-Subject: Re: [PATCH] md: dm-verity: Fix to avoid a deadlock in dm-bufio
-Date: Mon, 4 Mar 2013 13:23:54 -0800
-Message-ID: <CAKwO_5GwN8PCtK6tM=KWvZMJHb357O+Bh3TpF3k3vB_0x_FtpQ@mail.gmail.com>
-References: <1362415549-18653-1-git-send-email-taysom@chromium.org>
-	<20130304174254.GF8913@agk.fab.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: linux-next: Tree for Mar 4 (dm-cache-target)
+Date: Mon, 4 Mar 2013 17:12:07 -0500
+Message-ID: <20130304221207.GA12140@redhat.com>
+References: <20130304144358.bd62a57601d4d4793921213e@canb.auug.org.au>
+ <5134EE05.30305@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130304174254.GF8913@agk.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Taysom <taysom@chromium.org>, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Mandeep Singh Baines <msb@chromium.org>, Mikulas Patocka <mpatocka@redhat.com>, Olof Johansson <olofj@chromium.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-next-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5134EE05.30305@infradead.org>
+Sender: linux-next-owner@vger.kernel.org
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: Stephen Rothwell <sfr@canb.auug.org.au>, dmdevel <dm-devel@redhat.com>, linux-next@vger.kernel.org, linux-kernel@vger.kernel.org, ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 4, 2013 at 9:42 AM, Alasdair G Kergon <agk@redhat.com> wrote:
-> On Mon, Mar 04, 2013 at 08:45:48AM -0800, Paul Taysom wrote:
->> @@ -449,8 +468,14 @@ static void verity_prefetch_io(struct dm_verity *v, struct dm_verity_io *io)
->>                               hash_block_end = v->hash_blocks - 1;
->>               }
->>  no_prefetch_cluster:
->> -             dm_bufio_prefetch(v->bufio, hash_block_start,
->> -                               hash_block_end - hash_block_start + 1);
->> +             vw = kmalloc(sizeof(*vw), GFP_KERNEL);
->
-> kmalloc?  mempool? ...
->
-> Alasdair
->
-The use of mempool would be a separate patch that would have to be
-measured for performance impact.
--Paul
+On Mon, Mar 04 2013 at  1:55pm -0500,
+Randy Dunlap <rdunlap@infradead.org> wrote:
+
+> On 03/03/13 19:43, Stephen Rothwell wrote:
+> > Hi all,
+> > 
+> > Changes since 20130301:
+> > 
+> > The device-mapper tree gained a conflict against Linus' tree.
+> > 
+> 
+> 
+> on i386:
+> 
+> drivers/built-in.o: In function `is_discarded_oblock':
+> dm-cache-target.c:(.text+0x1ea28e): undefined reference to `__udivdi3'
+> drivers/built-in.o: In function `remap_to_origin_clear_discard':
+> dm-cache-target.c:(.text+0x1ea3ac): undefined reference to `__udivdi3'
+> drivers/built-in.o: In function `remap_to_cache_dirty.part.21':
+> dm-cache-target.c:(.text+0x1ea48f): undefined reference to `__udivdi3'
+> drivers/built-in.o: In function `cache_ctr':
+> dm-cache-target.c:(.text+0x1eaa2b): undefined reference to `__udivdi3'
+> dm-cache-target.c:(.text+0x1eaa71): undefined reference to `__udivdi3'
+> drivers/built-in.o:dm-cache-target.c:(.text+0x1eac51): more undefined references to `__udivdi3' follow
+> 
+> 
+> 
+> Full randconfig file is attached.
+
+I was able to reproduce using your randconfig file.
+
+This patch fixed the build for my v3.9-rc1 tree:
+
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 0f4e84b..96bfec1 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -415,7 +415,7 @@ static bool block_size_is_power_of_two(struct cache *cache)
+ static dm_dblock_t oblock_to_dblock(struct cache *cache, dm_oblock_t oblock)
+ {
+ 	sector_t discard_blocks = cache->discard_block_size;
+-	dm_block_t b = from_oblock(oblock);
++	sector_t b = from_oblock(oblock);
+ 
+ 	if (!block_size_is_power_of_two(cache))
+ 		(void) sector_div(discard_blocks, cache->sectors_per_block);
+@@ -999,7 +999,7 @@ static void process_discard_bio(struct cache *cache, struct bio *bio)
+ {
+ 	dm_block_t start_block = dm_sector_div_up(bio->bi_sector,
+ 						  cache->discard_block_size);
+-	dm_block_t end_block = bio->bi_sector + bio_sectors(bio);
++	sector_t end_block = bio->bi_sector + bio_sectors(bio);
+ 	dm_block_t b;
+ 
+ 	(void) sector_div(end_block, cache->discard_block_size);
+@@ -1801,7 +1801,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 	char **error = &ca->ti->error;
+ 	struct cache *cache;
+ 	struct dm_target *ti = ca->ti;
+-	dm_block_t origin_blocks;
++	sector_t origin_blocks;
+ 	struct dm_cache_metadata *cmd;
+ 	bool may_format = ca->features.mode == CM_WRITE;
+ 
+@@ -1845,7 +1845,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 	}
+ 
+ 	if (ca->block_size & (ca->block_size - 1)) {
+-		dm_block_t cache_size = ca->cache_sectors;
++		sector_t cache_size = ca->cache_sectors;
+ 
+ 		cache->sectors_per_block_shift = -1;
+ 		(void) sector_div(cache_size, ca->block_size);
