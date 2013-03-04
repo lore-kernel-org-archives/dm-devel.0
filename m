@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
+From: "Bryn M. Reeves" <bmr@redhat.com>
 Subject: Re: Chicken and egg problem with multipath-tools
-Date: Mon, 04 Mar 2013 12:13:19 +0100
-Message-ID: <513481CF.8020405@suse.de>
+Date: Mon, 04 Mar 2013 11:27:52 +0000
+Message-ID: <51348538.20406@redhat.com>
 References: <1362394847.623.YahooMailClassic@web126204.mail.ne1.yahoo.com>
+	<513481CF.8020405@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1362394847.623.YahooMailClassic@web126204.mail.ne1.yahoo.com>
+In-Reply-To: <513481CF.8020405@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,51 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/04/2013 12:00 PM, Andrei B. wrote:
->
->
-> --- On Mon, 3/4/13, Hannes Reinecke <hare@suse.de> wrote:
->
->> From: Hannes Reinecke <hare@suse.de>
->
->>> The problem is that multipathd wants to create a PID
->> file under /var (which is at this time readonly).
->>> This fails and multipathd fails to start.
->>> It took me a lot of testing and reboots until I managed
->> to determine this is the actual problem.
->>>
->
->> Hmm. Why? multipathd can happily live without a PID file;
->> SUSE has been doing this for years (for precisely the same
->> reason).
->> Check the SUSE init scripts.
->
-> Official (from author's website) multipath-tools contain a
- > multipathd that has hardcoded PIDFILE location and there is
- > no runtime option to change its location or disable it.
- > Both manpage and source show this.
-> Maybe SUSE has a modified multipathd with added option to
- > control PIDFILE creation.
->
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-multipathd/main.c:1996
-         /* Startup complete, create logfile */
-         pid_rc =3D pidfile_create(DEFAULT_PIDFILE, daemon_pid);
-         /* Ignore errors, we can live without */
+On 03/04/2013 11:13 AM, Hannes Reinecke wrote:
+> multipathd/main.c:1996 /* Startup complete, create logfile */ 
+> pid_rc = pidfile_create(DEFAULT_PIDFILE, daemon_pid); /* Ignore
+> errors, we can live without */
+> 
+> 
+> No option, but multipathd doesn't _need_ to create a pidfile. And
+> it certainly won't abort if it cannot create one.
 
+Maybe an old version (prior to commit 6cda789 in May 2011)?
 
-No option, but multipathd doesn't _need_ to create a pidfile.
-And it certainly won't abort if it cannot create one.
+- -       if (pidfile_create(DEFAULT_PIDFILE, getpid())) {
+- -               if (logsink)
+- -                       log_thread_stop();
++       if (pidfile_create(DEFAULT_PIDFILE, getpid()))
++               /* Ignore errors, we can live without */
++               condlog(1, "failed to create pidfile");
 
-Cheers,
+- -               exit(1);
+- -       }
 
-Hannes
--- =
+If this is the case then using a more recent multipath-tools would
+definitely be a good plan.
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Regards,
+Bryn.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
+
+iEYEARECAAYFAlE0hTgACgkQ6YSQoMYUY96+8wCdG/zOh6fDAOW2LzCNitHNTiek
+VzkAn3ovG1230AQMPV/uRcVk8pA1emN/
+=o2M/
+-----END PGP SIGNATURE-----
