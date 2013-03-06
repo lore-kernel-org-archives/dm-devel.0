@@ -1,14 +1,14 @@
 From: Jim Minter <jminter@redhat.com>
-Subject: dm-thin discard issue
-Date: Wed, 6 Mar 2013 08:12:39 -0500 (EST)
-Message-ID: <23057571.57.1362575554699.JavaMail.javamailuser@localhost>
-References: <1801783.47.1362573815861.JavaMail.javamailuser@localhost>
+Subject: potential dm-thin recovery issue
+Date: Wed, 6 Mar 2013 08:26:55 -0500 (EST)
+Message-ID: <15744185.65.1362576412628.JavaMail.javamailuser@localhost>
+References: <1196562.58.1362575588488.JavaMail.javamailuser@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1801783.47.1362573815861.JavaMail.javamailuser@localhost>
+In-Reply-To: <1196562.58.1362575588488.JavaMail.javamailuser@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,72 +23,38 @@ List-Id: dm-devel.ids
 
 Hello,
 
-I think I've uncovered a problem when issuing the BLKDISCARD ioctl to a thin volume.  If I create a thin volume, fill it with data, snapshot it, then call BLKDISCARD on the thin volume, it looks like the kernel doesn't take into account the fact that the underlying blocks are shared with the snapshot, and just goes ahead and discards them.  This appears to then leave the metadata in an inconsistent state.
+Following on from my previous e-mail ("dm-thin discard issue"), I'm having trouble recovering from the metadata corruption state I got into.  I'm using the latest userland tools cloned from https://github.com/jthornber/thin-provisioning-tools .  Here's what I've tried; am I going wrong somewhere, or is there potentially an issue with the tools?
 
-Here's a reproducer (works on rawhide as of today, 3.9.0-0.rc1.git0.1.fc19.x86_64):
-(assumes volumes 253:2 for metadata and 253:3 for pool; uses blkdiscard from upstream util-linux to issue the BLKDISCARD ioctl)
+# thin_dump /dev/mapper/vg-meta >/tmp/meta
+# cat /tmp/meta
+<superblock uuid="" time="1" transaction="0" data_block_size="128" nr_data_blocks="16384">
+  <device dev_id="0" mapped_blocks="0" transaction="0" creation_time="0" snap_time="1">
+  </device>
+  <device dev_id="1" mapped_blocks="8192" transaction="0" creation_time="1" snap_time="1">
+    <range_mapping origin_begin="0" data_begin="0" length="8192" time="0"/>
+  </device>
+</superblock>
+# dmsetup table
+vg-pool: 0 2097152 linear 252:16 264192
+fedora-swap: 0 8257536 linear 252:2 2048
+fedora-root: 0 32653312 linear 252:2 8259584
+vg-meta: 0 262144 linear 252:16 2048
+# thin_restore -i /tmp/meta -o /dev/mapper/vg-meta
+recursive 'new_block()' not supported
+#
 
-=== 8< ===
-echo +++ Creating pool and thin...
-dmsetup create pool --table '0 2097152 thin-pool 253:2 253:3 128 0 1 no_discard_passdown'
-dmsetup message /dev/mapper/pool 0 "create_thin 0"
-dmsetup create thin --table "0 1048576 thin /dev/mapper/pool 0"
+# thin_dump -r /dev/mapper/vg-meta >/tmp/meta2
+# diff /tmp/meta /tmp/meta2
+#
 
-echo +++ Filling thin...
-dd if=/dev/zero of=/dev/mapper/thin bs=1M &>/dev/null
+(so the -r option doesn't help me here)
 
-echo +++ Creating snap...
-dmsetup suspend /dev/mapper/thin
-dmsetup message /dev/mapper/pool 0 "create_snap 1 0"
-dmsetup resume /dev/mapper/thin
+# dd if=/dev/zero of=/dev/mapper/vg-meta bs=1M &>/dev/null
+# thin_restore -i /tmp/meta -o /dev/mapper/vg-meta
+recursive 'new_block()' not supported
+#
 
-dmsetup create snap --table "0 1048576 thin /dev/mapper/pool 1"
-
-dmsetup status
-
-echo +++ Discarding thin...
-blkdiscard /dev/mapper/thin
-dmsetup status
-=== 8< ===
-
-Output is:
-
-=== 8< ===
-+++ Creating pool and thin...
-+++ Filling thin...
-+++ Creating snap...
-thin: 0 1048576 thin 1048576 1048575
-vg-pool: 0 2097152 linear 
-fedora-swap: 0 8257536 linear 
-fedora-root: 0 32653312 linear 
-vg-meta: 0 262144 linear 
-snap: 0 1048576 thin 1048576 1048575
-pool: 0 2097152 thin-pool 0 72/32768 8192/16384 - rw no_discard_passdown
-+++ Discarding thin...
-thin: 0 1048576 thin 0 -
-vg-pool: 0 2097152 linear 
-fedora-swap: 0 8257536 linear 
-fedora-root: 0 32653312 linear 
-vg-meta: 0 262144 linear 
-snap: 0 1048576 thin 1048576 1048575
-pool: 0 2097152 thin-pool 0 73/32768 0/16384 - rw no_discard_passdown
-=== 8< ===
--------------------------------------^
-At this point, pool's used data blocks looks wrong - I'd expect 8192 still, not 0.
-
-After 'dmsetup remove'ing snap, thin and pool, the output of thin_check /dev/mapper/vg-meta is:
-
-=== 8< ===
-Errors in metadata
-  Errors in data block reference counts
-    0: was 0, expected 1
-    1: was 0, expected 1
-...
-    8190: was 0, expected 1
-    8191: was 0, expected 1
-=== 8< ===
-
-I'm also having trouble recovering from this situation using the user-space tools, but I'll continue about that on a second thread.
+(so wiping the metadata volume before restoring doesn't help either)
 
 Cheers,
 
