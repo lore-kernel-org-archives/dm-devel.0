@@ -1,16 +1,12 @@
-From: Jim Minter <jminter@redhat.com>
-Subject: Re: potential dm-thin recovery issue
-Date: Wed, 06 Mar 2013 16:13:14 +0000
-Message-ID: <51376B1A.2090201@redhat.com>
-References: <1196562.58.1362575588488.JavaMail.javamailuser@localhost>
-	<15744185.65.1362576412628.JavaMail.javamailuser@localhost>
-	<20130306142706.GB4852@raspberrypi>
+From: "Andrei B." <andrixnet@yahoo.com>
+Subject: multipaths and timings
+Date: Wed, 6 Mar 2013 13:59:17 -0800 (PST)
+Message-ID: <1362607157.4684.YahooMailClassic@web126201.mail.ne1.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130306142706.GB4852@raspberrypi>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,22 +16,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/06/13 14:27, thornber@redhat.com wrote:
-> On Wed, Mar 06, 2013 at 08:26:55AM -0500, Jim Minter wrote:
->> Hello,
->>
->> Following on from my previous e-mail ("dm-thin discard issue"), I'm having trouble recovering from the metadata corruption state I got into.  I'm using the latest userland tools cloned from https://github.com/jthornber/thin-provisioning-tools .  Here's what I've tried; am I going wrong somewhere, or is there potentially an issue with the tools?
->
-> Are you using the v1.5 tag? or just taking my latest dev?
->
-> - Joe
->
+I have discovered that loading the dm-multipath and running multipath binary to map the paths, then immediately loading the configuration of LVM, that uses volumes configured via fibre channel does not work. At that stage in the boot process, LVM still does not find the multipathed devices. 
 
-I don't see a v1.5 tag -- I cloned straight from master.
+I introduced a delay of several seconds (sleep 5s) after multipath binary, and before LVM, and voila, the devices are correctly detected and initialized by LVM. 
 
-Cheers,
+I was just wandering : is this the proper way to do things? Or am I missing something (that causes LVM to be unable to detect devices immediately after multipath is run) ?
 
-Jim
+Thanks
