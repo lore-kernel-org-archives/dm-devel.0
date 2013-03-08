@@ -1,125 +1,39 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [dm-devel] [BUG] pvmove corrupting XFS filesystems (was Re:
-	[BUG] Internal error xfs_dir2_data_reada_verify)
-Date: Fri, 8 Mar 2013 12:57:23 +1100
-Message-ID: <20130308015723.GA23616@dastard>
-References: <87d2vnc34r.fsf@fftw.org> <20130226044039.GM5551@dastard>
-	<20130227010414.GD1514@agk.fab.redhat.com>
-	<20130227014900.GY5551@dastard> <87y5eah4xz.fsf@fftw.org>
-	<87k3pjs908.fsf@fftw.org> <20130307223140.GU23616@dastard>
-	<87hakmpxac.fsf@fftw.org>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] dm-cache: Add handle to contlr if
+	cache_create failed.
+Date: Fri, 8 Mar 2013 02:10:27 +0000
+Message-ID: <20130308021027.GV8913@agk.fab.redhat.com>
+References: <5139441C.7000309@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <87hakmpxac.fsf@fftw.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Matteo Frigo <athena@fftw.org>
-Cc: dm-devel@redhat.com, xfs@oss.sgi.com
+In-Reply-To: <5139441C.7000309@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: majianpeng <majianpeng@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Mar 07, 2013 at 07:09:31PM -0500, Matteo Frigo wrote:
-> Dave Chinner <david@fromorbit.com> writes:
-> 
-> > You need the XFS patch I posted so that readahead buffer
-> > verification is avoided in the case of an error being returned from
-> > the readahead.
-> 
-> I apologize if I was not clear in my previous post.  I mean to say that
-> returning -EIO from dm, even in conjunction with your patch, is not
-> sufficient to fix the problem.
-> 
-> Specifically, I repeated the experiment with v3.8.2 patched as discussed
-> below, running my original script (repeated here for completeness):
-> 
->    pvcreate /dev/vd[bc]
->    vgcreate test /dev/vd[bc]
->    lvcreate -L 8G -n vol test /dev/vdb
->    mkfs.xfs -f /dev/mapper/test-vol
->    mount -o noatime /dev/mapper/test-vol /mnt
->    cd /mnt
->    git clone ~/linux-stable
->    cd /
->    umount /mnt
-> 
->    mount -o noatime /dev/mapper/test-vol /mnt
->    pvmove -b /dev/vdb /dev/vdc
->    sleep 2
->    rm -rf /mnt/linux-stable
-> 
-> I obtained a string of errors that starts with this:
-> 
->   [  166.596574] XFS (dm-1): metadata I/O error: block 0x805060 ("xfs_trans_read_buf_map") error 5 numblks 8
->   [  166.599556] XFS (dm-1): metadata I/O error: block 0x805060 ("xfs_trans_read_buf_map") error 5 numblks 8
->   [  166.604845] XFS (dm-1): metadata I/O error: block 0x5285b8 ("xfs_trans_read_buf_map") error 5 numblks 8
->   [  166.607894] XFS (dm-1): metadata I/O error: block 0x5285b8 ("xfs_trans_read_buf_map") error 5 numblks 8
->   [  166.614242] XFS (dm-1): metadata I/O error: block 0x54f2b0 ("xfs_trans_read_buf_map") error 5 numblks 8
->   [  166.617307] XFS (dm-1): metadata I/O error: block 0x54f2b0 ("xfs_trans_read_buf_map") error 5 numblks 8
->   [  166.651373] XFS (dm-1): Corruption detected. Unmount and run xfs_repair
->   [  166.653517] XFS (dm-1): Corruption detected. Unmount and run xfs_repair
->   [  166.655545] XFS (dm-1): Corruption detected. Unmount and run xfs_repair
->   [  166.657614] XFS (dm-1): Corruption detected. Unmount and run xfs_repair
->   [  166.659685] XFS (dm-1): Corruption detected. Unmount and run xfs_repair
->   [  166.661731] XFS (dm-1): Corruption detected. Unmount and run xfs_repair
->   [  166.663761] XFS (dm-1): Corruption detected. Unmount and run xfs_repair
+On Fri, Mar 08, 2013 at 09:51:24AM +0800, majianpeng wrote:
+> It  ignored to judge the result of cache_create.
+> If cache_create failed, but the copy_ctr_args successed.
 
-Add the the patch below. If you still see errors, then they are real
-IO errors from the block device.
+Thanks for reporting this, but I already added this patch to linux-next today:
+  https://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=f1ccbd181202c660b237b9bef0af277b980d5073
 
-Cheers,
+and will push the batch of 7 patches upstream either Friday or early
+next week.  (I'm waiting to hear about two more patches first: a fix for
+a theoretical problem that's been discovered and a possible adjustment
+to the hints metadata.)
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
-
-xfs: ensure we capture IO errors correctly
-
-From: Dave Chinner <dchinner@redhat.com>
-
-Failed buffer readahead can leave the buffer in the cache marked
-with an error. Most callers that then issue a subsequent read on the
-buffer do not zero the b_error field out, and so we may incorectly
-detect an error during IO completion due to the stale error value
-left on the buffer.
-
-Avoid this problem by zeroing the error before IO submission. This
-ensures that the only IO errors that are detected those captured
-from are those captured from bio submission or completion.
-
-Signed-off-by: Dave Chinner <dchinner@redhat.com>
----
- fs/xfs/xfs_buf.c |    6 ++++++
- 1 file changed, 6 insertions(+)
-
-diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
-index 50eb603..82b70bd 100644
---- a/fs/xfs/xfs_buf.c
-+++ b/fs/xfs/xfs_buf.c
-@@ -1336,6 +1336,12 @@ _xfs_buf_ioapply(
- 	int		size;
- 	int		i;
- 
-+	/*
-+	 * Make sure we capture only current IO errors rather than stale errors
-+	 * left over from previous use of the buffer (e.g. failed readahead).
-+	 */
-+	bp->b_error = 0;
-+
- 	if (bp->b_flags & XBF_WRITE) {
- 		if (bp->b_flags & XBF_SYNCIO)
- 			rw = WRITE_SYNC;
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+Alasdair
