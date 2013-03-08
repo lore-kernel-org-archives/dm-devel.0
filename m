@@ -1,49 +1,48 @@
-From: majianpeng <majianpeng@gmail.com>
-Subject: Re: [PATCH] dm-cache: Add handle to contlr if
-	cache_create failed.
-Date: Fri, 8 Mar 2013 11:13:33 +0800
-Message-ID: <201303081113305023593@gmail.com>
-References: <5139441C.7000309@gmail.com>,
-	<20130308021027.GV8913@agk.fab.redhat.com>
-Reply-To: majianpeng <majianpeng@gmail.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: Matteo Frigo <athena@fftw.org>
+Subject: Re: [dm-devel] [BUG] pvmove corrupting XFS filesystems (was Re: [BUG]
+	Internal error xfs_dir2_data_reada_verify)
+Date: Fri, 08 Mar 2013 06:38:56 -0500
+Message-ID: <87ppza5df3.fsf@fftw.org>
+References: <87d2vnc34r.fsf@fftw.org> <20130226044039.GM5551@dastard>
+	<20130227010414.GD1514@agk.fab.redhat.com>
+	<20130227014900.GY5551@dastard> <87y5eah4xz.fsf@fftw.org>
+	<87k3pjs908.fsf@fftw.org> <20130307223140.GU23616@dastard>
+	<87hakmpxac.fsf@fftw.org> <20130308015723.GA23616@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk <agk@redhat.com>
-Cc: dm-devel <dm-devel@redhat.com>
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <20130308015723.GA23616@dastard> (Dave Chinner's message of "Fri,
+	8 Mar 2013 12:57:23 +1100")
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Dave Chinner <david@fromorbit.com>
+Cc: dm-devel@redhat.com, xfs@oss.sgi.com
 List-Id: dm-devel.ids
 
->On Fri, Mar 08, 2013 at 09:51:24AM +0800, majianpeng wrote:
->> It  ignored to judge the result of cache_create.
->> If cache_create failed, but the copy_ctr_args successed.
->
->Thanks for reporting this, but I already added this patch to linux-next today:
->  https://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=f1ccbd181202c660b237b9bef0af277b980d5073
->
->and will push the batch of 7 patches upstream either Friday or early
->next week.  (I'm waiting to hear about two more patches first: a fix for
->a theoretical problem that's been discovered and a possible adjustment
->to the hints metadata.)
->
->Alasdair
->
-I wanted to use dm-cache on softraid5 to improve the performance.
-But  i don't know how to use.I readed the document and found a example:
->dmsetup create my_cache --table '0 41943040 cache /dev/mapper/metadata \
->	/dev/mapper/ssd /dev/mapper/origin 512 1 writeback default 0'
-After the this,  mke2fs on /dev/mapper/origin met error.
- Did i use my_cache or origin to mkfs?
+Dave Chinner <david@fromorbit.com> writes:
 
-Thanks!
-Jianpeng Ma
+> Add the the patch below. If you still see errors, then they are real
+> IO errors from the block device.
+
+This patch fixes the problem for me.
+
+The patch works both when dm-raid1 returns -EIO and when it returns
+-EWOULDBLOCK.
+
+Thanks for your help.
+
+Cheers,
+Matteo
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
