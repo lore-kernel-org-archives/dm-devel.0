@@ -1,12 +1,15 @@
-From: majianpeng <majianpeng@gmail.com>
-Subject: How to use dm-cache-target?
-Date: Mon, 11 Mar 2013 10:28:07 +0800
-Message-ID: <513D4137.5090503@gmail.com>
+From: thornber@redhat.com
+Subject: Re: How to use dm-cache-target?
+Date: Mon, 11 Mar 2013 10:31:53 +0000
+Message-ID: <20130311103152.GA5038@raspberrypi>
+References: <513D4137.5090503@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <513D4137.5090503@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,29 +19,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi all,
-    I am trying to use dm-cache-target on raid5.But i met a question.
+On Mon, Mar 11, 2013 at 10:28:07AM +0800, majianpeng wrote:
+> Hi all,
+>     I am trying to use dm-cache-target on raid5.But i met a question.
+> 
+>  Supposed: /dev/sdb1(5GB) is metadata; /dev/sdb2(20GB) is cache;/dev/md0 is raid5.
+> 
+> 1:sutup my_cache
+> dmsetup create my_cache --table '0 41943040 cache /dev/sdb1 /dev/sdb2 /dev/md0 131072 1 writethrough default 0'
 
- Supposed: /dev/sdb1(5GB) is metadata; /dev/sdb2(20GB) is cache;/dev/md0 is raid5.
+41943040 - This is 20G, you should use the size of /dev/md0 in sectors
 
-1:sutup my_cache
-dmsetup create my_cache --table '0 41943040 cache /dev/sdb1 /dev/sdb2 /dev/md0 131072 1 writethrough default 0'
+Also I think your block size is way too big, try 2048 rather tha 131072.
 
-2:mkfs.ext4
-mkfs.ext4 /dev/mapper/my_cache
+> BTW, for dm-cache is it support plug-and-play?
 
-3:mount
-mount /dev/mapper/my_cache /media
+No idea what you mean.
 
-4:the size of ext4 is 20GB,but the /dev/md0 is 4TB.
-
-I think maybe my methods error. If so, how to do use?
-
-BTW, for dm-cache is it support plug-and-play?
-
-Thanks!
-Jianpeng Ma
+- Joe
