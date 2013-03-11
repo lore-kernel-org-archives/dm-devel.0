@@ -1,48 +1,44 @@
-From: Matteo Frigo <athena@fftw.org>
-Subject: Re: [dm-devel] [BUG] pvmove corrupting XFS filesystems (was Re: [BUG]
-	Internal error xfs_dir2_data_reada_verify)
-Date: Fri, 08 Mar 2013 06:38:56 -0500
-Message-ID: <87ppza5df3.fsf@fftw.org>
-References: <87d2vnc34r.fsf@fftw.org> <20130226044039.GM5551@dastard>
-	<20130227010414.GD1514@agk.fab.redhat.com>
-	<20130227014900.GY5551@dastard> <87y5eah4xz.fsf@fftw.org>
-	<87k3pjs908.fsf@fftw.org> <20130307223140.GU23616@dastard>
-	<87hakmpxac.fsf@fftw.org> <20130308015723.GA23616@dastard>
+From: majianpeng <majianpeng@gmail.com>
+Subject: How to use dm-cache-target?
+Date: Mon, 11 Mar 2013 10:28:07 +0800
+Message-ID: <513D4137.5090503@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <20130308015723.GA23616@dastard> (Dave Chinner's message of "Fri,
-	8 Mar 2013 12:57:23 +1100")
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Dave Chinner <david@fromorbit.com>
-Cc: dm-devel@redhat.com, xfs@oss.sgi.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dave Chinner <david@fromorbit.com> writes:
+Hi all,
+    I am trying to use dm-cache-target on raid5.But i met a question.
 
-> Add the the patch below. If you still see errors, then they are real
-> IO errors from the block device.
+ Supposed: /dev/sdb1(5GB) is metadata; /dev/sdb2(20GB) is cache;/dev/md0 is raid5.
 
-This patch fixes the problem for me.
+1:sutup my_cache
+dmsetup create my_cache --table '0 41943040 cache /dev/sdb1 /dev/sdb2 /dev/md0 131072 1 writethrough default 0'
 
-The patch works both when dm-raid1 returns -EIO and when it returns
--EWOULDBLOCK.
+2:mkfs.ext4
+mkfs.ext4 /dev/mapper/my_cache
 
-Thanks for your help.
+3:mount
+mount /dev/mapper/my_cache /media
 
-Cheers,
-Matteo
+4:the size of ext4 is 20GB,but the /dev/md0 is 4TB.
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+I think maybe my methods error. If so, how to do use?
+
+BTW, for dm-cache is it support plug-and-play?
+
+Thanks!
+Jianpeng Ma
