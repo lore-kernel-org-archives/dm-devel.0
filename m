@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 3/6] libmultipath: improve debugging messages in
-	sysfs_attr_set_value()
-Date: Thu, 14 Mar 2013 15:08:45 +0100
-Message-ID: <1363270128-20900-4-git-send-email-hare@suse.de>
+Subject: [PATCH 1/6] libmultipath: return PATH_DOWN for quiesced
+	paths
+Date: Thu, 14 Mar 2013 15:08:43 +0100
+Message-ID: <1363270128-20900-2-git-send-email-hare@suse.de>
 References: <1363270128-20900-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,36 +23,27 @@ To: dm-devel@redhat.com
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-We should be printing out debugging messages for all failure
-cases in sysfs_attr_set_value().
+When a SCSI device is quiesced we cannot send any I/O requests to
+it, so we should be returning 'PATH_DOWN' here.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/sysfs.c |    8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index d33747f..da228e4 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -58,12 +58,16 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 0b5fd1d..050264e 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -798,7 +798,8 @@ path_offline (struct path * pp)
+ 	condlog(3, "%s: path state = %s", pp->dev, buff);
+ 
+ 	if (!strncmp(buff, "offline", 7) ||
+-	    !strncmp(buff, "transport-offline", 17)) {
++	    !strncmp(buff, "transport-offline", 17) ||
++	    !strncmp(buff, "quiesce", 7)) {
+ 		pp->offline = 1;
+ 		return PATH_DOWN;
  	}
- 
- 	/* skip directories */
--	if (S_ISDIR(statbuf.st_mode))
-+	if (S_ISDIR(statbuf.st_mode)) {
-+		condlog(4, "%s is a directory", devpath);
- 		return 0;
-+	}
- 
- 	/* skip non-writeable files */
--	if ((statbuf.st_mode & S_IWUSR) == 0)
-+	if ((statbuf.st_mode & S_IWUSR) == 0) {
-+		condlog(4, "%s is not writeable", devpath);
- 		return 0;
-+	}
- 
- 	/* write attribute value */
- 	fd = open(devpath, O_WRONLY);
 -- 
 1.7.10.4
