@@ -1,15 +1,12 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Can DM-Multipath work on non-SCSI block device
-Date: Thu, 14 Mar 2013 11:44:03 +0100
-Message-ID: <5141A9F3.90801@suse.de>
-References: <CAKNWCPZGKuA=TGOm3_Wzq+vwFc75W-1yviLuMwvX85st5Y-i=A@mail.gmail.com>
-	<51419874.50308@suse.de> <5141A948.3010403@redhat.com>
+Subject: [PATCH 0/6] Handle blocked FC rports
+Date: Thu, 14 Mar 2013 15:08:42 +0100
+Message-ID: <1363270128-20900-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5141A948.3010403@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +16,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Bryn M. Reeves" <bmr@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 03/14/2013 11:41 AM, Bryn M. Reeves wrote:
-> On 03/14/2013 09:29 AM, Hannes Reinecke wrote:
->> On 03/14/2013 08:58 AM, Ahmed Al-Mehdi wrote:
->>> Hello,
->>>
->>> I read the documentation on the dm-multipath home page:
->>> htttp://christophe.varoqui.free.fr/refbook.html
->>> <http://christophe.varoqui.free.fr/refbook.html> , that describes
->>> how the userspace multipath tool detects and maps (scsi) devices.
->>> However, would like to confirm, does the dm-multipath utilty only
->>> work with SCSI devices.  Is there any option to make it (or fake it)
->>> to work with non-SCSI  block device.
->>>
->> If you can figure out a way on how to get a unique _disk_ id without
->> SCSI, sure.
->
-> E.g. cciss devices are supported using the cciss_id program - that's
-> a good example of a very "non-scsi" device type working with multipath.
->
-> As well as the WWID problem you'll need to come up with some scheme
-> for faking unique HCIL values for the devices since multipath
-> userspace cares about that. The cciss approach is to force lun and
-> channel to '0' for all devices and to use the CCISS controller (cN)
-> and disk (dN) values for the host and id (aka target) values.
->
-> See the functions in discovery.c with a cciss_ prefix for more
-> examples.
->
-Or the dasd variant of those.
+Occasionally, FC HBAs might lose track of the status of
+the attached remote ports. This will cause I/O to be
+stuck and the FC HBAs to invoke the error handler,
+which will take _LONG_ to complete (we're speaking hours here).
 
-However, the HCIL variable is mostly cosmetic.
-The disk id is the true issue; without it you cannot do multipathing.
+This patch implements a 'suspend path' mechanism in multipath
+for handling these situations. Key point is to have a
+writeable 'port_state' sysfs attribute for the remote ports.
+This is introduced by the patch
+'scsi_transport_fc: Make 'port_state' writeable'
+posted to linux-scsi.
 
-Cheers,
+There are two ways of suspending a path, either by a
+path checker returning 'PATH_TIMEOUT', or by the user
+invoking the new CLI command 'suspend path'.
+This will then set the 'port_state' attribute to 'blocked',
+causing the 'fast_io_fail' mechanism to trigger.
+This will eventually cause all outstanding I/O to be
+aborted and result in a quick failover.
 
-Hannes
--- =
+Paths will be resumed either from the FC HBA when a
+new RSCN state update is recieved from the SAN, or by
+the user by calling the new CLI command 'resume path'.
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+Hannes Reinecke (6):
+  libmultipath: return PATH_DOWN for quiesced paths
+  libmultipath: Implement PATH_TIMEOUT
+  libmultipath: improve debugging messages in sysfs_attr_set_value()
+  libmultipath: Implement sysfs_attr_get_value()
+  libmultipath: Implement sysfs_set_fc_rport_state()
+  multipathd: Implement 'suspend/resume path'
+
+ libmultipath/checkers.h     |    5 ++++
+ libmultipath/checkers/tur.c |    2 +-
+ libmultipath/discovery.c    |   65 ++++++++++++++++++++++++++++++++++++++++++-
+ libmultipath/discovery.h    |    1 +
+ libmultipath/print.c        |    4 +++
+ libmultipath/sysfs.c        |   64 ++++++++++++++++++++++++++++++++++++++++--
+ libmultipath/sysfs.h        |    2 ++
+ multipathd/cli.c            |    2 ++
+ multipathd/cli_handlers.c   |   50 +++++++++++++++++++++++++++++++++
+ multipathd/cli_handlers.h   |    2 ++
+ multipathd/main.c           |    7 +++++
+ 11 files changed, 200 insertions(+), 4 deletions(-)
+
+-- 
+1.7.10.4
