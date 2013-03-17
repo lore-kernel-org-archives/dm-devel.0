@@ -1,107 +1,75 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [PATCH] DM RAID:  Add message/status support for changing sync
- action
-Date: Mon, 18 Mar 2013 09:35:23 +1100
-Message-ID: <20130318093523.60bc52ac@notabene.brown>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH] DM RAID: Add message/status support for
+	changing sync action
+Date: Sun, 17 Mar 2013 22:52:16 +0000
+Message-ID: <20130317225216.GA20480@agk-dp.fab.redhat.com>
 References: <1363380503.5163.2.camel@f16>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/wYm.twq1uU2MGGBwxAN_SKe"; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <1363380503.5163.2.camel@f16>
 Sender: linux-raid-owner@vger.kernel.org
 To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: linux-raid@vger.kernel.org, agk@redhat.com, dm-devel@redhat.com
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
---Sig_/wYm.twq1uU2MGGBwxAN_SKe
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-
-On Fri, 15 Mar 2013 15:48:23 -0500 Jonathan Brassow <jbrassow@redhat.com>
-wrote:
-
+On Fri, Mar 15, 2013 at 03:48:23PM -0500, Jon Brassow wrote:
 > DM RAID:  Add message/status support for changing sync action
->=20
-> This patch adds a message interface to dm-raid to allow the user to more
-> finely control the sync actions being performed by the MD driver.  This
-> gives the user the ability to initiate "check" and "repair" (i.e. scrubbi=
-ng).
-> Two additional fields have been added to the status output to provide more
-> information about the type of sync action occurring and the results of th=
-ose
-> actions, specifically: <sync_action> and <mismatch_cnt>.  This is essenti=
-ally
+ 
+Quick points:
+
+> Two additional fields 
+
+(which are *always* populated)
+
+> have been added 
+
+appended
+
+> to the status output to provide more
+> information about the type of sync action occurring and the results of those
+> actions, specifically: <sync_action> and <mismatch_cnt>.  This is essentially
 > the device-mapper way of doing what MD controls through the 'sync_action'
 > sysfs file and shows through the 'mismatch_cnt' sysfs file.
->=20
-> This is a first patch and I still have two concerns:
-> 1) in 'raid_messages', reap_sync_thread() is not called when "frozen" or
->    "idle" is issued like it would be in  md.c:action_store() because it is
->    not available to dm-raid.c.  This hasn't prevented the thread from
->    shutting down properly in my tests, but there may be something I'm
->    not considering.
+ 
+> +	char *sync_action_type = "idle";
 
-I think the only real need for the reap_sync_thread() call is to make the
-change synchronous.  i.e. after "echo frozen > sync_action" completes, you
-know that the array actually is frozen, rather that it should be frozen very
-soon.  This can be important for code which wants to set 'frozen', then
-manipulate the array in a way that would be prevented if it was still
-undergoing a resync/recovery/check/etc.
+(const?)  
 
-I'm don't know how much I actually depend on that property, but it sounds
-like a good one to have.
-I would probably be OK to export reap_sync_thread() so that dm-raid can use
-it.
+> +		/*
+> +		 * Sync action:
+> +		 *   See Documentation/device-mapper/dm-raid.c for
+> +		 *   information on each of these states.
+> +		 */
+> +		if (test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
+> +			sync_action_type = "frozen";
+> +		else if (test_bit(MD_RECOVERY_RUNNING, &rs->md.recovery) ||
+> +			 (!rs->md.ro && test_bit(MD_RECOVERY_NEEDED,
+> +						 &rs->md.recovery))) {
+> +			if (test_bit(MD_RECOVERY_RESHAPE, &rs->md.recovery))
+> +				sync_action_type = "reshape";
+> +			else if (test_bit(MD_RECOVERY_SYNC, &rs->md.recovery)) {
+> +				if (!test_bit(MD_RECOVERY_REQUESTED,
+> +					      &rs->md.recovery))
+> +					sync_action_type = "resync";
+> +				else if (test_bit(MD_RECOVERY_CHECK,
+> +						  &rs->md.recovery))
+> +					sync_action_type = "check";
+> +				else
+> +					sync_action_type = "repair";
+> +			} else if (test_bit(MD_RECOVERY_RECOVER,
+> +					    &rs->md.recovery))
+> +				sync_action_type = "recover";
+> +		}
 
+Move this out into a fn that can simply return once it's selected
+the most appropriate string?
 
-> 2) (and this is more of an LVM problem)  The "in-sync ratio" field of the
->    status output has generally been used to determine the progress of the
->    initial synchronization or of rebuilding a device.  "check" and "repai=
-r"
->    have not been available options until now.  So, if this ratio also
->    shows the progress of a "check", older versions of LVM would seem to
->    indicate (through the 'sync%' field) that the array is not in-sync, wh=
-en
->    in fact it is.  Thus, this change might be perceived as a break to
->    backwards compatability.  (However, the old LVM tools would not be able
->    to /issue/ a "check" command and should never run into this.)  I don't
->    see this as a problem for this patch, but I thought it should be
->    brought up and considered.   Obviously, code in LVM will need to be
->    changed to adjust to this - perhaps to show the different types of sync
->    actions that might be occurring.
+> -	.version = {1, 4, 1},
+> +	.version = {1, 4, 2},
 
-I see your point.  I don't have any opinion on whether it is a real problem
-or just a theoretical one though.
+  1.5.0 - inc minor when the change affects interface or behaviour in a non-neglible way
 
-In general, the patch looks good - particular as it includes documentation
-changes!  When you get a very you are happy with I'll apply it.
+Alasdair
 
-Thanks,
-NeilBrown
-
-
-
---Sig_/wYm.twq1uU2MGGBwxAN_SKe
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIVAwUBUUZFKznsnt1WYoG5AQJHJw/8C4RGRR3vmmgIsGF3NIkCDAKt/UoNomKa
-HytHKWlHrkoXMOrCoA8iuFxeLzjUfRipvs9/BHld186gaW6G2hDSfmqd9gHRllSC
-DV2VtXsNwFgfmw+hdMISEJMzi1zi8NuXneEOLHn85FTCnn9TCXFKg9/Yrpp3wbib
-BmBL/omdP2SkrsuXelmzJcTSpVxC0ha46rtGLlPT6zxU4ZHFI3omQL8dhTpvzKYE
-HBt/fuZxdYHdt/tDJSKVI405VMdpMZ8139/WD093rfPTte7PEJw/AGrx8Gi7ayiq
-ODcCQzOWX5X3GgvS44qKG+Ajjhvc9QkzrbUYddjF8yp9KFqvC1sBO1K/n2nj9h35
-ga5j8XSBMUsG34JRqbPmDRB5WSTPmqI2d4BFeMds33HofCbM3eA0+d/SDUDZktCm
-gVsxByV5jD5akiw8BtXM2yShpIUBGOHH/RDQ6dmyV2VC8xqCewvsQRXW/zyXaQMt
-6iyoE81OaSWyCbspg5rAnigukrZ2HRRiPA9tQNOrkkRNLz5cdJUgSE1dNSyFb3W9
-j5adG+AdIjJzZTzfHss2eyEMqd6MplZo6ORgsZ0Vq5NqnU+fdE2FtDD0TtHlmYuu
-lQ5LA24BczcL48AsXRqt626C++hm7JsE4tR8e783u1XIk7PiwPAQI+cBszcmQWwP
-q29ebw7SOs8=
-=X9x7
------END PGP SIGNATURE-----
-
---Sig_/wYm.twq1uU2MGGBwxAN_SKe--
