@@ -1,75 +1,61 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH] DM RAID: Add message/status support for
-	changing sync action
-Date: Sun, 17 Mar 2013 22:52:16 +0000
-Message-ID: <20130317225216.GA20480@agk-dp.fab.redhat.com>
-References: <1363380503.5163.2.camel@f16>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH] dm-cache: Add handle to contlr if
+ cache_create failed.
+Date: Mon, 18 Mar 2013 16:13:57 -0700
+Message-ID: <20130318231357.GA10638@blackbox.djwong.org>
+References: <5139441C.7000309@gmail.com>
+	<20130308021027.GV8913@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1363380503.5163.2.camel@f16>
-Sender: linux-raid-owner@vger.kernel.org
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
+In-Reply-To: <20130308021027.GV8913@agk.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: majianpeng <majianpeng@gmail.com>, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Mar 15, 2013 at 03:48:23PM -0500, Jon Brassow wrote:
-> DM RAID:  Add message/status support for changing sync action
- 
-Quick points:
+On Fri, Mar 08, 2013 at 02:10:27AM +0000, Alasdair G Kergon wrote:
+> On Fri, Mar 08, 2013 at 09:51:24AM +0800, majianpeng wrote:
+> > It  ignored to judge the result of cache_create.
+> > If cache_create failed, but the copy_ctr_args successed.
+> 
+> Thanks for reporting this, but I already added this patch to linux-next today:
+>   https://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=f1ccbd181202c660b237b9bef0af277b980d5073
+> 
+> and will push the batch of 7 patches upstream either Friday or early
+> next week.  (I'm waiting to hear about two more patches first: a fix for
+> a theoretical problem that's been discovered and a possible adjustment
+> to the hints metadata.)
 
-> Two additional fields 
+Hmm... by 'adjustment', do you mean this commit?
+https://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=1005501c2f71931bd4cda2238b7698562a744f1a
 
-(which are *always* populated)
+I think this change modifies the on-disk format so that I have to flush the
+dirty parts of the cache, zero the superblock, and recreate the cache?
+Otherwise, reading in an old superblock will result in metadata_space_map_root
+being read from the wrong place on disk...
 
-> have been added 
+I realize dm-cache hasn't been in an upstream release yet, but could we add new
+fields at the end of the disk superblock?  And after 3.9, maybe have some sort
+of guard too?
 
-appended
+(Or maybe I've misunderstood the patch...)
 
-> to the status output to provide more
-> information about the type of sync action occurring and the results of those
-> actions, specifically: <sync_action> and <mismatch_cnt>.  This is essentially
-> the device-mapper way of doing what MD controls through the 'sync_action'
-> sysfs file and shows through the 'mismatch_cnt' sysfs file.
- 
-> +	char *sync_action_type = "idle";
-
-(const?)  
-
-> +		/*
-> +		 * Sync action:
-> +		 *   See Documentation/device-mapper/dm-raid.c for
-> +		 *   information on each of these states.
-> +		 */
-> +		if (test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
-> +			sync_action_type = "frozen";
-> +		else if (test_bit(MD_RECOVERY_RUNNING, &rs->md.recovery) ||
-> +			 (!rs->md.ro && test_bit(MD_RECOVERY_NEEDED,
-> +						 &rs->md.recovery))) {
-> +			if (test_bit(MD_RECOVERY_RESHAPE, &rs->md.recovery))
-> +				sync_action_type = "reshape";
-> +			else if (test_bit(MD_RECOVERY_SYNC, &rs->md.recovery)) {
-> +				if (!test_bit(MD_RECOVERY_REQUESTED,
-> +					      &rs->md.recovery))
-> +					sync_action_type = "resync";
-> +				else if (test_bit(MD_RECOVERY_CHECK,
-> +						  &rs->md.recovery))
-> +					sync_action_type = "check";
-> +				else
-> +					sync_action_type = "repair";
-> +			} else if (test_bit(MD_RECOVERY_RECOVER,
-> +					    &rs->md.recovery))
-> +				sync_action_type = "recover";
-> +		}
-
-Move this out into a fn that can simply return once it's selected
-the most appropriate string?
-
-> -	.version = {1, 4, 1},
-> +	.version = {1, 4, 2},
-
-  1.5.0 - inc minor when the change affects interface or behaviour in a non-neglible way
-
-Alasdair
-
+--D
+> 
+> Alasdair
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
