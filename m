@@ -1,8 +1,8 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH] dm-cache: Add handle to contlr
 	if	cache_create failed.
-Date: Tue, 19 Mar 2013 00:20:49 +0000
-Message-ID: <20130319002049.GD20480@agk-dp.fab.redhat.com>
+Date: Tue, 19 Mar 2013 00:44:00 +0000
+Message-ID: <20130319004400.GE20480@agk-dp.fab.redhat.com>
 References: <5139441C.7000309@gmail.com>
 	<20130308021027.GV8913@agk.fab.redhat.com>
 	<20130318231357.GA10638@blackbox.djwong.org>
@@ -27,12 +27,21 @@ Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, maji
 List-Id: dm-devel.ids
 
 On Mon, Mar 18, 2013 at 04:13:57PM -0700, Darrick J. Wong wrote:
-> Hmm... by 'adjustment', do you mean this commit?
-> https://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=1005501c2f71931bd4cda2238b7698562a744f1a
 > I realize dm-cache hasn't been in an upstream release yet, but could we add new
-> fields at the end of the disk superblock?  And after 3.9, maybe have some sort
+> fields at the end of the disk superblock?  
 
-The new field looks to be misaligned too?
-Thanks for pointing this out!
+Updated here:
+  http://people.redhat.com/agk/patches/linux/editing/dm-cache-policy-change-version-from-string-to-integer-set.patch
+
+I presume this will now be compatible (just losing the hints the first time
+after updating the kernel)?
+
+> And after 3.9, maybe have some sort
+> of guard too?
+ 
+There's already a version number CACHE_VERSION.
+
+I would hope the space after the superblock is automatically filled with zeros.
+If not, that will need to be fixed too.
 
 Alasdair
