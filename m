@@ -1,51 +1,94 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] Fix rr_min_io_rq keyword name in multipath.conf.5
-Date: Fri, 22 Mar 2013 13:02:55 +0100
-Message-ID: <1363953775-16166-1-git-send-email-hare@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [git pull] device-mapper fixes for 3.9
+Date: Fri, 22 Mar 2013 11:53:26 -0700
+Message-ID: <20130322185326.GA5357@blackbox.djwong.org>
+References: <20130321022625.GA25054@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Leonardo Chiquitto <lchiquitto@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130321022625.GA25054@agk-dp.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Paul Taysom <taysom@chromium.org>, Randy Dunlap <rdunlap@infradead.org>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Leonardo Chiquitto <lchiquitto@suse.com>
+On Thu, Mar 21, 2013 at 02:26:26AM +0000, Alasdair G Kergon wrote:
+> Please pull from:
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.9-fixes
+> 
+> to get the following device-mapper fixes for 3.9.
+> 
+> Thanks,
+> Alasdair
+> 
+> ----------------------------------------------------------------
+> A set of device-mapper fixes for 3.9.
+> 
+> Fix reported data loss with discards and thin snapshots; avoid a
+> deadlock observed in dm verity; fix a race in the new dm cache code
+> along with some other minor bugs; store the cache policy version on disk
+> to make the stored hints format future-proof.
+> 
+> ----------------------------------------------------------------
+> Heinz Mauelshagen (2):
+>       dm cache: detect cache_create failure
+>       dm cache: avoid calling policy destructor twice on error
+> 
+> Joe Thornber (5):
+>       dm thin: fix discard corruption
+>       dm thin: fix non power of two discard granularity calc
+>       dm cache: avoid 64 bit division on 32 bit
+>       dm cache: metadata clear dirty bits on clean shutdown
+>       dm cache: fix race in writethrough implementation
 
-Fix typo.
+I think I've found a bug in this new WT implementation.  /dev/sdb is an SSD,
+/dev/sda is a spinny disk, and both have been zeroed prior to running the
+following:
 
-Signed-off-by: Leonardo Chiquitto <lchiquitto@suse.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
+# pvcreate /dev/sdb
+# vgcreate -s 256K moocache /dev/sdb
+# lvcreate -n metadata moocache -l 17
+# lvcreate -n blocks moocache -l 2030
+# echo '0 67108864 cache /dev/mapper/moocache-metadata /dev/mapper/moocache-blocks /dev/sda 512 1 writethrough default 4 random_threshold 4 sequential_threshold 32768' | dmsetup create moocache
+# mkfs.ext4 /dev/mapper/moocache -U deadbeef-cafe-dead-beef-cafedeadbeef 
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 29106b0..7d689e6 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -270,7 +270,7 @@ The number of IO to route to a path before switching to the next in
- the same path group. This is only for BIO based multipath. Default is
- .I 1000
- .TP
--.B rr_min_io_q
-+.B rr_min_io_rq
- The number of IO requests to route to a path before switching to the
- next in the same path group. This is only for request based multipath.
- Default is
-@@ -496,7 +496,7 @@ section:
- .TP
- .B rr_min_io
- .TP
--.B rr_min_io_q
-+.B rr_min_io_rq
- .TP
- .B features
- .TP
+If I then run blkid, I only see this:
+/dev/sdb: UUID="jlKkqi-L3W1-QQqf-7HKR-jmjU-GL79-qDOdvP" TYPE="LVM2_member" 
+/dev/sda: UUID="deadbeef-cafe-dead-beef-cafedeadbeef" TYPE="ext4" 
+
+Curious -- it didn't find anything on /dev/mapper/moocache.  e2fsck/mount also
+see nothing, and dumping the first 256K shows zeroes.  Sometimes it finds no
+ext4 at all.
+
+If I create the cache in WB mode, I see that blkid finds the deadbeef fs on
+/dev/sda and /dev/mapper/moocache, like I'd expect:
+
+/dev/sdb: UUID="9hYUEh-OOKT-KuqF-6eDy-2cEZ-2eEa-y17lhN" TYPE="LVM2_member" 
+/dev/mapper/moocache-blocks: UUID="deadbeef-cafe-dead-beef-cafedeadbeef" TYPE="ext4" 
+/dev/mapper/moocache: UUID="deadbeef-cafe-dead-beef-cafedeadbeef" TYPE="ext4" 
+
+--D
+
+> 
+> Mike Snitzer (2):
+>       dm cache: policy change version from string to integer set
+>       dm cache: policy ignore hints if generated by different version
+> 
+> Mikulas Patocka (1):
+>       dm verity: avoid deadlock
+> 
+>  drivers/md/dm-bufio.c                        |    2 +
+>  drivers/md/dm-cache-metadata.c               |   64 ++++++++--
+>  drivers/md/dm-cache-metadata.h               |    2 +-
+>  drivers/md/dm-cache-policy-cleaner.c         |    7 +-
+>  drivers/md/dm-cache-policy-internal.h        |    2 +
+>  drivers/md/dm-cache-policy-mq.c              |    8 +-
+>  drivers/md/dm-cache-policy.c                 |    8 ++
+>  drivers/md/dm-cache-policy.h                 |    2 +
+>  drivers/md/dm-cache-target.c                 |  169 +++++++++++++++++---------
+>  drivers/md/dm-thin.c                         |   11 +-
+>  drivers/md/dm-verity.c                       |   39 +++++-
+>  drivers/md/persistent-data/dm-btree-remove.c |   46 +++----
+>  12 files changed, 252 insertions(+), 108 deletions(-)
+> 
