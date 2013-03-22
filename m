@@ -1,7 +1,7 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-raid: suppress uninitialized variable warning
-Date: Thu, 21 Mar 2013 17:32:17 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1303211722150.31035@file.rdu.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] Fix rr_min_io_rq keyword name in multipath.conf.5
+Date: Fri, 22 Mar 2013 13:02:55 +0100
+Message-ID: <1363953775-16166-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,40 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, neilb@suse.de, dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Leonardo Chiquitto <lchiquitto@suse.com>
 List-Id: dm-devel.ids
 
-dm-raid: suppress uninitialized variable warning
+From: Leonardo Chiquitto <lchiquitto@suse.com>
 
-This patch suppresses this warning:
+Fix typo.
 
-drivers/md/dm-raid.c: In function 'raid_ctr':
-drivers/md/dm-raid.c:427:54: warning: 'rebuilds_per_group' may be used uninitialized in this function [-Wmaybe-uninitialized]
-drivers/md/dm-raid.c:383:11: note: 'rebuilds_per_group' was declared here
+Signed-off-by: Leonardo Chiquitto <lchiquitto@suse.com>
+Acked-by: Hannes Reinecke <hare@suse.de>
 
-The warning doesn't represent a real bug (rebuilds_per_group is always
-initialized in the first iteration of a loop), but gcc can't deduce it.
-
-This patch should be backported to 3.8. It doesn't have to be backported 
-to 3.7 and below because they don't have the problem with this varning.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@kernel.org
-
----
- drivers/md/dm-raid.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Index: linux-3.9-rc3-fast/drivers/md/dm-raid.c
-===================================================================
---- linux-3.9-rc3-fast.orig/drivers/md/dm-raid.c	2013-03-21 22:16:42.000000000 +0100
-+++ linux-3.9-rc3-fast/drivers/md/dm-raid.c	2013-03-21 22:17:05.000000000 +0100
-@@ -380,7 +380,7 @@ static int validate_region_size(struct r
- static int validate_raid_redundancy(struct raid_set *rs)
- {
- 	unsigned i, rebuild_cnt = 0;
--	unsigned rebuilds_per_group, copies, d;
-+	unsigned uninitialized_var(rebuilds_per_group), copies, d;
- 	unsigned group_size, last_group_start;
- 
- 	for (i = 0; i < rs->md.raid_disks; i++)
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 29106b0..7d689e6 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -270,7 +270,7 @@ The number of IO to route to a path before switching to the next in
+ the same path group. This is only for BIO based multipath. Default is
+ .I 1000
+ .TP
+-.B rr_min_io_q
++.B rr_min_io_rq
+ The number of IO requests to route to a path before switching to the
+ next in the same path group. This is only for request based multipath.
+ Default is
+@@ -496,7 +496,7 @@ section:
+ .TP
+ .B rr_min_io
+ .TP
+-.B rr_min_io_q
++.B rr_min_io_rq
+ .TP
+ .B features
+ .TP
