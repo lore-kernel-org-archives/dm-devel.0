@@ -1,11 +1,15 @@
-From: "=?iso-8859-1?Q?Bj=F6rn_Nadrowski?=" <bjrnfrdnnd@gmail.com>
-Subject: vg disappeared after replacing disc in raid10
-Date: Mon, 25 Mar 2013 15:02:54 +0100
-Message-ID: <9F86A119-4171-4947-BFBE-B7E838F5DA6C@googlemail.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: dm-cache writethrough issue.
+Date: Mon, 25 Mar 2013 09:36:54 -0700
+Message-ID: <20130325163654.GF5357@blackbox.djwong.org>
+References: <20130325102500.GA6340@debian>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 6.3 \(1503\))
-Content-Type: multipart/mixed; boundary="===============8373960528705521798=="
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20130325102500.GA6340@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,72 +19,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
+On Mon, Mar 25, 2013 at 10:25:01AM +0000, Joe Thornber wrote:
+> Alasdair,
+> 
+> Could you push this upstream ASAP please?
+> 
+> I'm not happy that we're now adding such a large structure to the per
+> bio data, at the very least we should only do this if writethrough is
+> enabled.  But I'll improve this later, for now correctness is the
+> important thing.
+> 
+> - Joe
 
---===============8373960528705521798==
-Content-Type: multipart/alternative;
-	boundary="Apple-Mail=_C0DD552F-41A8-4AAC-A33F-2EE121477E11"
+Makes my problems go away on my setup, so you can add:
+Tested-by: Darrick J. Wong <darrick.wong@oracle.com>
 
-
---Apple-Mail=_C0DD552F-41A8-4AAC-A33F-2EE121477E11
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
-
-=10Hello,=20
-
-After replacing a disc in my raid10 system (ubuntu 12.04), my volume =
-group (that contained all my data and my system) was gone.
-
-Problem description is here:
-
-http://ubuntuforums.org/showthread.php?t=3D2128504
-
-I managed to retrieve the metadata of the volume group and the logical =
-volumes underneath, but I did not succeed using
-
-vgcfgrestore=20
-
-successfully in order to regain access to my data.
-
-It seems I might have to try dmsetup, but I am afraid I might destroy my =
-data if I use it. I have no experience with that program.
-
-
-If any of you has any idea or any experience with restoring lvm volumes =
-or using dsetup, please help me!
-
---Apple-Mail=_C0DD552F-41A8-4AAC-A33F-2EE121477E11
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/html;
-	charset=us-ascii
-
-<html><head><meta http-equiv=3D"Content-Type" content=3D"text/html =
-charset=3Dus-ascii"></head><body style=3D"word-wrap: break-word; =
--webkit-nbsp-mode: space; -webkit-line-break: after-white-space; =
-">=10Hello,&nbsp;<br><br>After replacing a disc in my raid10 system =
-(ubuntu 12.04), my volume group (that contained all my data and my =
-system) was gone.<br><br>Problem description is here:<br><br><a =
-href=3D"http://ubuntuforums.org/showthread.php?t=3D2128504">http://ubuntuf=
-orums.org/showthread.php?t=3D2128504</a><br><br>I managed to retrieve =
-the metadata of the volume group and the logical volumes underneath, but =
-I did not succeed using<br><br>vgcfgrestore&nbsp;<br><br>successfully in =
-order to regain access to my data.<br><br>It seems I might have to try =
-dmsetup, but I am afraid I might destroy my data if I use it. I have no =
-experience with that program.<br><br><br>If any of you has any idea or =
-any experience with restoring lvm volumes or using dsetup, please help =
-me!<br></body></html>=
-
---Apple-Mail=_C0DD552F-41A8-4AAC-A33F-2EE121477E11--
-
-
---===============8373960528705521798==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8373960528705521798==--
+--D
+> 
+> 
+> 
+> Author: Joe Thornber <ejt@redhat.com>
+> Date:   Mon Mar 25 10:10:58 2013 +0000
+> 
+>     [dm-cache] Writethrough mode wasn't resetting bio fields before reusing
+>     
+>     The writethrough mode reuses the same bio to write to both the origin
+>     and cache device.  It was recording the bi_sector and restoring this,
+>     but this was inadequate; lower level drivers can change all sorts of
+>     bio fields.
+>     
+>     This patch adds a struct dm_bio_details field, and uses
+>     dm_bio_record() and dm_bio_restore() to ensure the bio is restored
+>     before reissuing to the cache device.
+>     
+>     Issue discovered by Darrick Wong.
+> 
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index cf24a46..873f495 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -6,6 +6,7 @@
+>  
+>  #include "dm.h"
+>  #include "dm-bio-prison.h"
+> +#include "dm-bio-record.h"
+>  #include "dm-cache-metadata.h"
+>  
+>  #include <linux/dm-io.h>
+> @@ -205,6 +206,7 @@ struct per_bio_data {
+>         struct cache *cache;
+>         dm_cblock_t cblock;
+>         bio_end_io_t *saved_bi_end_io;
+> +       struct dm_bio_details bio_details;
+>  };
+>  
+>  struct dm_cache_migration {
+> @@ -642,6 +644,7 @@ static void writethrough_endio(struct bio *bio, int err)
+>                 return;
+>         }
+>  
+> +       dm_bio_restore(&pb->bio_details, bio);
+>         remap_to_cache(pb->cache, bio, pb->cblock);
+>  
+>         /*
+> @@ -665,6 +668,7 @@ static void remap_to_origin_then_cache(struct cache *cache, struct bio *bio,
+>         pb->cache = cache;
+>         pb->cblock = cblock;
+>         pb->saved_bi_end_io = bio->bi_end_io;
+> +       dm_bio_record(&pb->bio_details, bio);
+>         bio->bi_end_io = writethrough_endio;
+>  
+>         remap_to_origin_clear_discard(pb->cache, bio, oblock);
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
