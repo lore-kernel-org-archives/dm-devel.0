@@ -1,88 +1,33 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: dm-cache writethrough issue.
-Date: Mon, 25 Mar 2013 10:25:01 +0000
-Message-ID: <20130325102500.GA6340@debian>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH] dm: dm-cache fails to write the cache device in
+ writethrough mode
+Date: Mon, 25 Mar 2013 10:28:38 +0000
+Message-ID: <20130325102837.GB6340@debian>
+References: <20130322201151.GB5357@blackbox.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: agk@redhat.com
+In-Reply-To: <20130322201151.GB5357@blackbox.djwong.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Alasdair,
+Hi Darrick,
 
-Could you push this upstream ASAP please?
+On Fri, Mar 22, 2013 at 01:11:51PM -0700, Darrick J. Wong wrote:
+> The new writethrough strategy for dm-cache issues a bio to the origin device,
+> remaps the bio to the cache device, and issues the bio to the cache device.
+> However, the block layer modifies bi_sector and bi_size, so we need to preserve
+> these or else nothing gets written to the cache (bi_size == 0).  This fixes the
+> problem where someone writes a block through the cache, but a subsequent reread
+> (from the cache) returns old contents.
 
-I'm not happy that we're now adding such a large structure to the per
-bio data, at the very least we should only do this if writethrough is
-enabled.  But I'll improve this later, for now correctness is the
-important thing.
+Thanks for diagnosing this, as you may have gathered none of the
+hardware we're testing on does this.  I've pushed a patch to dm-devel
+that hopefully will make it's way upstream very quickly.  I used
+dm_bio_record/restore, since there are many more fields that
+underlying drivers make tweak in the bio.
 
 - Joe
-
-
-
-Author: Joe Thornber <ejt@redhat.com>
-Date:   Mon Mar 25 10:10:58 2013 +0000
-
-    [dm-cache] Writethrough mode wasn't resetting bio fields before reusing
-    
-    The writethrough mode reuses the same bio to write to both the origin
-    and cache device.  It was recording the bi_sector and restoring this,
-    but this was inadequate; lower level drivers can change all sorts of
-    bio fields.
-    
-    This patch adds a struct dm_bio_details field, and uses
-    dm_bio_record() and dm_bio_restore() to ensure the bio is restored
-    before reissuing to the cache device.
-    
-    Issue discovered by Darrick Wong.
-
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index cf24a46..873f495 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -6,6 +6,7 @@
- 
- #include "dm.h"
- #include "dm-bio-prison.h"
-+#include "dm-bio-record.h"
- #include "dm-cache-metadata.h"
- 
- #include <linux/dm-io.h>
-@@ -205,6 +206,7 @@ struct per_bio_data {
-        struct cache *cache;
-        dm_cblock_t cblock;
-        bio_end_io_t *saved_bi_end_io;
-+       struct dm_bio_details bio_details;
- };
- 
- struct dm_cache_migration {
-@@ -642,6 +644,7 @@ static void writethrough_endio(struct bio *bio, int err)
-                return;
-        }
- 
-+       dm_bio_restore(&pb->bio_details, bio);
-        remap_to_cache(pb->cache, bio, pb->cblock);
- 
-        /*
-@@ -665,6 +668,7 @@ static void remap_to_origin_then_cache(struct cache *cache, struct bio *bio,
-        pb->cache = cache;
-        pb->cblock = cblock;
-        pb->saved_bi_end_io = bio->bi_end_io;
-+       dm_bio_record(&pb->bio_details, bio);
-        bio->bi_end_io = writethrough_endio;
- 
-        remap_to_origin_clear_discard(pb->cache, bio, oblock);
