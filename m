@@ -1,92 +1,66 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] dm cache: fix writes to cache device in writethrough mode
-Date: Mon, 25 Mar 2013 19:59:18 -0400
-Message-ID: <20130325235918.GA28746@redhat.com>
-References: <20130322201151.GB5357@blackbox.djwong.org>
- <20130322223425.GA5638@redhat.com>
- <20130322231600.GD5357@blackbox.djwong.org>
- <20130323032715.GA7692@redhat.com>
- <20130323051549.GE5357@blackbox.djwong.org>
- <20130323210853.GA12164@redhat.com>
- <20130323225648.GA13583@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: dm-crypt performance
+Date: Mon, 25 Mar 2013 23:47:22 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1303252051520.9745@file.rdu.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130323225648.GA13583@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Alasdair G. Kergon" <agk@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-kernel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Darrick J. Wong <darrick.wong@oracle.com>
+Hi
 
-The dm-cache writethrough strategy introduced by commit e2e74d617eadc15
-("dm cache: fix race in writethrough implementation") issues a bio to
-the origin device, remaps and then issues the bio to the cache device.
-This more conservative in-series approach was selected to favor
-correctness over performance (of the previous parallel writethrough).
-However, this in-series implementation that reuses the same bio to write
-both the origin and cache device didn't take into account that the block
-layer's req_bio_endio() modifies a completing bio's bi_sector and
-bi_size.  So the new writethrough strategy needs to preserve these bio
-fields, and restore them before submission to the cache device,
-otherwise nothing gets written to the cache (because bi_size is 0).
+I performed some dm-crypt performance tests as Mike suggested.
 
-This patch adds a struct dm_bio_details field to struct per_bio_data,
-and uses dm_bio_record() and dm_bio_restore() to ensure the bio is
-restored before reissuing to the cache device.  Adding such a large
-structure to the per_bio_data is not ideal but we can improve this
-later, for now correctness is the important thing.
+It turns out that unbound workqueue performance has improved somewhere 
+between kernel 3.2 (when I made the dm-crypt patches) and 3.8, so the 
+patches for hand-built dispatch are no longer needed.
 
-This problem initially went unnoticed because the dm-cache test-suite
-uses a linear DM device for the dm-cache device's origin device.
-Writethrough worked as expected because DM submits a *clone* of the
-original bio, so the original bio which was reused for the cache was
-never touched.
+For RAID-0 composed of two disks with total throughput 260MB/s, the 
+unbound workqueue performs as well as the hand-built dispatch (both 
+sustain the 260MB/s transfer rate).
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Signed-off-by: Joe Thornber <ejt@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-cache-target.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+For ramdisk, unbound workqueue performs better than hand-built dispatch 
+(620MB/s vs 400MB/s). Unbound workqueue with the patch that Mike suggested 
+(git://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git) improves 
+performance slighlty on ramdisk compared to 3.8 (700MB/s vs. 620MB/s).
 
-v2: revised patch header on Darrick and Joe's behalf
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index cf24a46..873f495 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -6,6 +6,7 @@
- 
- #include "dm.h"
- #include "dm-bio-prison.h"
-+#include "dm-bio-record.h"
- #include "dm-cache-metadata.h"
- 
- #include <linux/dm-io.h>
-@@ -205,6 +206,7 @@ struct per_bio_data {
-        struct cache *cache;
-        dm_cblock_t cblock;
-        bio_end_io_t *saved_bi_end_io;
-+       struct dm_bio_details bio_details;
- };
- 
- struct dm_cache_migration {
-@@ -642,6 +644,7 @@ static void writethrough_endio(struct bio *bio, int err)
-                return;
-        }
- 
-+       dm_bio_restore(&pb->bio_details, bio);
-        remap_to_cache(pb->cache, bio, pb->cblock);
- 
-        /*
-@@ -665,6 +668,7 @@ static void remap_to_origin_then_cache(struct cache *cache, struct bio *bio,
-        pb->cache = cache;
-        pb->cblock = cblock;
-        pb->saved_bi_end_io = bio->bi_end_io;
-+       dm_bio_record(&pb->bio_details, bio);
-        bio->bi_end_io = writethrough_endio;
- 
-        remap_to_origin_clear_discard(pb->cache, bio, oblock);
+
+However, there is still the problem with request ordering. Milan found out 
+that under some circumstances parallel dm-crypt has worse performance than 
+the previous dm-crypt code. I found out that this is not caused by 
+deficiencies in the code that distributes work to individual processors. 
+Performance drop is caused by the fact that distributing write bios to 
+multiple processors causes the encryption to finish out of order and the 
+I/O scheduler is unable to merge these out-of-order bios.
+
+The deadline and noop schedulers perform better (only 50% slowdown 
+compared to old dm-crypt), CFQ performs very badly (8 times slowdown).
+
+
+If I sort the requests in dm-crypt to come out in the same order as they 
+were received, there is no longer any slowdown, the new crypt performs as 
+well as the old crypt, but the last time I submitted the patches, people 
+objected to sorting requests in dm-crypt, saying that the I/O scheduler 
+should sort them. But it doesn't. This problem still persists in the 
+current kernels.
+
+
+For best performance we could use the unbound workqueue implementation 
+with request sorting, if people don't object to the request sorting being 
+done in dm-crypt.
+
+
+Mikulas
