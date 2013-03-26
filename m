@@ -1,15 +1,16 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: dm-crypt performance
-Date: Tue, 26 Mar 2013 02:52:29 -0400
-Message-ID: <20130326065229.GA2884@infradead.org>
-References: <Pine.LNX.4.64.1303252051520.9745@file.rdu.redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-cache writethrough issue.
+Date: Tue, 26 Mar 2013 09:39:14 +0000
+Message-ID: <20130326093913.GC18061@debian>
+References: <20130325102500.GA6340@debian>
+	<20130325163654.GF5357@blackbox.djwong.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1303252051520.9745@file.rdu.redhat.com>
+In-Reply-To: <20130325163654.GF5357@blackbox.djwong.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,18 +21,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 25, 2013 at 11:47:22PM -0400, Mikulas Patocka wrote:
-> If I sort the requests in dm-crypt to come out in the same order as they 
-> were received, there is no longer any slowdown, the new crypt performs as 
-> well as the old crypt, but the last time I submitted the patches, people 
-> objected to sorting requests in dm-crypt, saying that the I/O scheduler 
-> should sort them. But it doesn't. This problem still persists in the 
-> current kernels.
+On Mon, Mar 25, 2013 at 09:36:54AM -0700, Darrick J. Wong wrote:
+> On Mon, Mar 25, 2013 at 10:25:01AM +0000, Joe Thornber wrote:
+> > Alasdair,
+> > 
+> > Could you push this upstream ASAP please?
+> > 
+> > I'm not happy that we're now adding such a large structure to the per
+> > bio data, at the very least we should only do this if writethrough is
+> > enabled.  But I'll improve this later, for now correctness is the
+> > important thing.
+> > 
+> > - Joe
+> 
+> Makes my problems go away on my setup, so you can add:
+> Tested-by: Darrick J. Wong <darrick.wong@oracle.com>
 
-FYI, XFS also does it's own request ordering for the metadata buffers,
-because it knows the needed ordering and has a bigger view than than
-than especially CFQ.  You at least have precedence in a widely used
-subsystem for this code.
+Excellent.  Thank you again for helping out.
