@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH 07/22] dm-verity: convert to bvec iter
-Date: Wed, 27 Mar 2013 10:39:37 -0700
-Message-ID: <1364405992-28424-8-git-send-email-koverstreet@google.com>
+Subject: [PATCH 10/22] dm-crypt: Convert to bvec_iter
+Date: Wed, 27 Mar 2013 10:39:40 -0700
+Message-ID: <1364405992-28424-11-git-send-email-koverstreet@google.com>
 References: <1364405992-28424-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -29,116 +29,123 @@ Signed-off-by: Kent Overstreet <koverstreet@google.com>
 Cc: Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 ---
- drivers/md/dm-verity.c | 51 +++++++++++++-------------------------------------
- 1 file changed, 13 insertions(+), 38 deletions(-)
+ drivers/md/dm-crypt.c | 52 +++++++++++++++++++++------------------------------
+ 1 file changed, 21 insertions(+), 31 deletions(-)
 
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index 782ee42..2d01c33 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -73,15 +73,10 @@ struct dm_verity_io {
- 	sector_t block;
- 	unsigned n_blocks;
- 
--	/* saved bio vector */
--	struct bio_vec *io_vec;
--	unsigned io_vec_size;
-+	struct bvec_iter iter;
- 
- 	struct work_struct work;
- 
--	/* A space for short vectors; longer vectors are allocated separately. */
--	struct bio_vec io_vec_inline[DM_VERITY_IO_VEC_INLINE];
--
- 	/*
- 	 * Three variably-size fields follow this struct:
- 	 *
-@@ -277,9 +272,9 @@ release_ret_r:
- static int verity_verify_io(struct dm_verity_io *io)
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index fca3bba..d97d824 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -38,10 +38,8 @@ struct convert_context {
+ 	struct completion restart;
+ 	struct bio *bio_in;
+ 	struct bio *bio_out;
+-	unsigned int offset_in;
+-	unsigned int offset_out;
+-	unsigned int idx_in;
+-	unsigned int idx_out;
++	struct bvec_iter iter_in;
++	struct bvec_iter iter_out;
+ 	sector_t cc_sector;
+ 	atomic_t cc_pending;
+ };
+@@ -650,10 +648,12 @@ static void crypt_convert_init(struct crypt_config *cc,
  {
- 	struct dm_verity *v = io->v;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_bio_data_size);
- 	unsigned b;
- 	int i;
--	unsigned vector = 0, offset = 0;
+ 	ctx->bio_in = bio_in;
+ 	ctx->bio_out = bio_out;
+-	ctx->offset_in = 0;
+-	ctx->offset_out = 0;
+-	ctx->idx_in = bio_in ? bio_in->bi_iter.bi_idx : 0;
+-	ctx->idx_out = bio_out ? bio_out->bi_iter.bi_idx : 0;
++
++	if (bio_in)
++		ctx->iter_in = bio_in->bi_iter;
++	if (bio_out)
++		ctx->iter_out = bio_out->bi_iter;
++
+ 	ctx->cc_sector = sector + cc->iv_offset;
+ 	init_completion(&ctx->restart);
+ }
+@@ -681,8 +681,8 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 			       struct convert_context *ctx,
+ 			       struct ablkcipher_request *req)
+ {
+-	struct bio_vec *bv_in = bio_iovec_idx(ctx->bio_in, ctx->idx_in);
+-	struct bio_vec *bv_out = bio_iovec_idx(ctx->bio_out, ctx->idx_out);
++	struct bio_vec bv_in = bio_iovec_iter(ctx->bio_in, ctx->iter_in);
++	struct bio_vec bv_out = bio_iovec_iter(ctx->bio_out, ctx->iter_out);
+ 	struct dm_crypt_request *dmreq;
+ 	u8 *iv;
+ 	int r;
+@@ -693,24 +693,15 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 	dmreq->iv_sector = ctx->cc_sector;
+ 	dmreq->ctx = ctx;
+ 	sg_init_table(&dmreq->sg_in, 1);
+-	sg_set_page(&dmreq->sg_in, bv_in->bv_page, 1 << SECTOR_SHIFT,
+-		    bv_in->bv_offset + ctx->offset_in);
++	sg_set_page(&dmreq->sg_in, bv_in.bv_page, 1 << SECTOR_SHIFT,
++		    bv_in.bv_offset);
  
- 	for (b = 0; b < io->n_blocks; b++) {
- 		struct shash_desc *desc;
-@@ -329,31 +324,22 @@ test_block_hash:
- 		}
+ 	sg_init_table(&dmreq->sg_out, 1);
+-	sg_set_page(&dmreq->sg_out, bv_out->bv_page, 1 << SECTOR_SHIFT,
+-		    bv_out->bv_offset + ctx->offset_out);
++	sg_set_page(&dmreq->sg_out, bv_out.bv_page, 1 << SECTOR_SHIFT,
++		    bv_out.bv_offset);
  
- 		todo = 1 << v->data_dev_block_bits;
--		do {
--			struct bio_vec *bv;
-+		while (io->iter.bi_size) {
- 			u8 *page;
--			unsigned len;
+-	ctx->offset_in += 1 << SECTOR_SHIFT;
+-	if (ctx->offset_in >= bv_in->bv_len) {
+-		ctx->offset_in = 0;
+-		ctx->idx_in++;
+-	}
 -
--			BUG_ON(vector >= io->io_vec_size);
--			bv = &io->io_vec[vector];
--			page = kmap_atomic(bv->bv_page);
--			len = bv->bv_len - offset;
--			if (likely(len >= todo))
--				len = todo;
--			r = crypto_shash_update(desc,
--					page + bv->bv_offset + offset, len);
-+			struct bio_vec bv = bio_iovec_iter(bio, io->iter);
-+
-+			page = kmap_atomic(bv.bv_page);
-+			r = crypto_shash_update(desc, page + bv.bv_offset,
-+						bv.bv_len);
- 			kunmap_atomic(page);
-+
- 			if (r < 0) {
- 				DMERR("crypto_shash_update failed: %d", r);
- 				return r;
- 			}
--			offset += len;
--			if (likely(offset == bv->bv_len)) {
--				offset = 0;
--				vector++;
--			}
--			todo -= len;
--		} while (todo);
-+
-+			bio_advance_iter(bio, &io->iter, bv.bv_len);
-+		}
+-	ctx->offset_out += 1 << SECTOR_SHIFT;
+-	if (ctx->offset_out >= bv_out->bv_len) {
+-		ctx->offset_out = 0;
+-		ctx->idx_out++;
+-	}
++	bio_advance_iter(ctx->bio_in, &ctx->iter_in, 1 << SECTOR_SHIFT);
++	bio_advance_iter(ctx->bio_out, &ctx->iter_out, 1 << SECTOR_SHIFT);
  
- 		if (!v->version) {
- 			r = crypto_shash_update(desc, v->salt, v->salt_size);
-@@ -376,8 +362,6 @@ test_block_hash:
- 			return -EIO;
- 		}
+ 	if (cc->iv_gen_ops) {
+ 		r = cc->iv_gen_ops->generator(cc, iv, dmreq);
+@@ -761,8 +752,8 @@ static int crypt_convert(struct crypt_config *cc,
+ 
+ 	atomic_set(&ctx->cc_pending, 1);
+ 
+-	while(ctx->idx_in < ctx->bio_in->bi_vcnt &&
+-	      ctx->idx_out < ctx->bio_out->bi_vcnt) {
++	while (ctx->iter_in.bi_size &&
++	       ctx->iter_out.bi_size) {
+ 
+ 		crypt_alloc_req(cc, ctx);
+ 
+@@ -1031,7 +1022,7 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
  	}
--	BUG_ON(vector != io->io_vec_size);
--	BUG_ON(offset);
  
- 	return 0;
- }
-@@ -393,9 +377,6 @@ static void verity_finish_io(struct dm_verity_io *io, int error)
- 	bio->bi_end_io = io->orig_bi_end_io;
- 	bio->bi_private = io->orig_bi_private;
+ 	/* crypt_convert should have filled the clone bio */
+-	BUG_ON(io->ctx.idx_out < clone->bi_vcnt);
++	BUG_ON(io->ctx.iter_out.bi_size);
  
--	if (io->io_vec != io->io_vec_inline)
--		mempool_free(io->io_vec, v->vec_mempool);
--
- 	bio_endio(bio, error);
- }
+ 	clone->bi_iter.bi_sector = cc->start + io->sector;
  
-@@ -491,13 +472,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
+@@ -1070,7 +1061,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 		}
  
- 	bio->bi_end_io = verity_end_io;
- 	bio->bi_private = io;
--	io->io_vec_size = bio_segments(bio);
--	if (io->io_vec_size < DM_VERITY_IO_VEC_INLINE)
--		io->io_vec = io->io_vec_inline;
--	else
--		io->io_vec = mempool_alloc(v->vec_mempool, GFP_NOIO);
--	memcpy(io->io_vec, __bio_iovec(bio),
--	       io->io_vec_size * sizeof(struct bio_vec));
-+	io->iter = bio->bi_iter;
+ 		io->ctx.bio_out = clone;
+-		io->ctx.idx_out = 0;
++		io->ctx.iter_out = clone->bi_iter;
  
- 	verity_prefetch_io(v, io);
+ 		remaining -= clone->bi_iter.bi_size;
+ 		sector += bio_sectors(clone);
+@@ -1114,8 +1105,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 			crypt_inc_pending(new_io);
+ 			crypt_convert_init(cc, &new_io->ctx, NULL,
+ 					   io->base_bio, sector);
+-			new_io->ctx.idx_in = io->ctx.idx_in;
+-			new_io->ctx.offset_in = io->ctx.offset_in;
++			new_io->ctx.iter_in = io->ctx.iter_in;
  
+ 			/*
+ 			 * Fragments after the first use the base_io
 -- 
 1.8.1.3
