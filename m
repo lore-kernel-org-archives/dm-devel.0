@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH 10/22] dm-crypt: Convert to bvec_iter
-Date: Wed, 27 Mar 2013 10:39:40 -0700
-Message-ID: <1364405992-28424-11-git-send-email-koverstreet@google.com>
+Subject: [PATCH 17/22] dm: Refactor for new bio cloning/splitting
+Date: Wed, 27 Mar 2013 10:39:47 -0700
+Message-ID: <1364405992-28424-18-git-send-email-koverstreet@google.com>
 References: <1364405992-28424-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,130 +22,257 @@ To: axboe@kernel.dk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
 Cc: tj@kernel.org, Kent Overstreet <koverstreet@google.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Use the new primitives which respect the current value of bi_idx and
-bi_bvec_done.
+We need to convert the dm code to the new bvec_iter primitives which
+respect bi_bvec_done; they also allow us to drastically simplify dm's
+bio splitting code.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 Cc: Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 ---
- drivers/md/dm-crypt.c | 52 +++++++++++++++++++++------------------------------
- 1 file changed, 21 insertions(+), 31 deletions(-)
+ drivers/md/dm.c | 170 ++++++--------------------------------------------------
+ 1 file changed, 18 insertions(+), 152 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index fca3bba..d97d824 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -38,10 +38,8 @@ struct convert_context {
- 	struct completion restart;
- 	struct bio *bio_in;
- 	struct bio *bio_out;
--	unsigned int offset_in;
--	unsigned int offset_out;
--	unsigned int idx_in;
--	unsigned int idx_out;
-+	struct bvec_iter iter_in;
-+	struct bvec_iter iter_out;
- 	sector_t cc_sector;
- 	atomic_t cc_pending;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 01a2451..d7ec2e6 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1014,7 +1014,6 @@ struct clone_info {
+ 	struct dm_io *io;
+ 	sector_t sector;
+ 	sector_t sector_count;
+-	unsigned short idx;
  };
-@@ -650,10 +648,12 @@ static void crypt_convert_init(struct crypt_config *cc,
- {
- 	ctx->bio_in = bio_in;
- 	ctx->bio_out = bio_out;
--	ctx->offset_in = 0;
--	ctx->offset_out = 0;
--	ctx->idx_in = bio_in ? bio_in->bi_iter.bi_idx : 0;
--	ctx->idx_out = bio_out ? bio_out->bi_iter.bi_idx : 0;
-+
-+	if (bio_in)
-+		ctx->iter_in = bio_in->bi_iter;
-+	if (bio_out)
-+		ctx->iter_out = bio_out->bi_iter;
-+
- 	ctx->cc_sector = sector + cc->iv_offset;
- 	init_completion(&ctx->restart);
+ 
+ static void bio_setup_sector(struct bio *bio, sector_t sector, sector_t len)
+@@ -1023,68 +1022,24 @@ static void bio_setup_sector(struct bio *bio, sector_t sector, sector_t len)
+ 	bio->bi_iter.bi_size = to_bytes(len);
  }
-@@ -681,8 +681,8 @@ static int crypt_convert_block(struct crypt_config *cc,
- 			       struct convert_context *ctx,
- 			       struct ablkcipher_request *req)
+ 
+-static void bio_setup_bv(struct bio *bio, unsigned short idx, unsigned short bv_count)
+-{
+-	bio->bi_iter.bi_idx = idx;
+-	bio->bi_vcnt = idx + bv_count;
+-	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
+-}
+-
+-static void clone_bio_integrity(struct bio *bio, struct bio *clone,
+-				unsigned short idx, unsigned len, unsigned offset,
+-				unsigned trim)
+-{
+-	if (!bio_integrity(bio))
+-		return;
+-
+-	bio_integrity_clone(clone, bio, GFP_NOIO);
+-
+-	if (trim)
+-		bio_integrity_trim(clone, bio_sector_offset(bio, idx, offset), len);
+-}
+-
+-/*
+- * Creates a little bio that just does part of a bvec.
+- */
+-static void clone_split_bio(struct dm_target_io *tio, struct bio *bio,
+-			    sector_t sector, unsigned short idx,
+-			    unsigned offset, unsigned len)
+-{
+-	struct bio *clone = &tio->clone;
+-	struct bio_vec *bv = bio->bi_io_vec + idx;
+-
+-	*clone->bi_io_vec = *bv;
+-
+-	bio_setup_sector(clone, sector, len);
+-
+-	clone->bi_bdev = bio->bi_bdev;
+-	clone->bi_rw = bio->bi_rw;
+-	clone->bi_vcnt = 1;
+-	clone->bi_io_vec->bv_offset = offset;
+-	clone->bi_io_vec->bv_len = clone->bi_iter.bi_size;
+-	clone->bi_flags |= 1 << BIO_CLONED;
+-
+-	clone_bio_integrity(bio, clone, idx, len, offset, 1);
+-}
+-
+ /*
+  * Creates a bio that consists of range of complete bvecs.
+  */
+ static void clone_bio(struct dm_target_io *tio, struct bio *bio,
+-		      sector_t sector, unsigned short idx,
+-		      unsigned short bv_count, unsigned len)
++		      sector_t sector, unsigned len)
  {
--	struct bio_vec *bv_in = bio_iovec_idx(ctx->bio_in, ctx->idx_in);
--	struct bio_vec *bv_out = bio_iovec_idx(ctx->bio_out, ctx->idx_out);
-+	struct bio_vec bv_in = bio_iovec_iter(ctx->bio_in, ctx->iter_in);
-+	struct bio_vec bv_out = bio_iovec_iter(ctx->bio_out, ctx->iter_out);
- 	struct dm_crypt_request *dmreq;
- 	u8 *iv;
- 	int r;
-@@ -693,24 +693,15 @@ static int crypt_convert_block(struct crypt_config *cc,
- 	dmreq->iv_sector = ctx->cc_sector;
- 	dmreq->ctx = ctx;
- 	sg_init_table(&dmreq->sg_in, 1);
--	sg_set_page(&dmreq->sg_in, bv_in->bv_page, 1 << SECTOR_SHIFT,
--		    bv_in->bv_offset + ctx->offset_in);
-+	sg_set_page(&dmreq->sg_in, bv_in.bv_page, 1 << SECTOR_SHIFT,
-+		    bv_in.bv_offset);
+ 	struct bio *clone = &tio->clone;
+-	unsigned trim = 0;
  
- 	sg_init_table(&dmreq->sg_out, 1);
--	sg_set_page(&dmreq->sg_out, bv_out->bv_page, 1 << SECTOR_SHIFT,
--		    bv_out->bv_offset + ctx->offset_out);
-+	sg_set_page(&dmreq->sg_out, bv_out.bv_page, 1 << SECTOR_SHIFT,
-+		    bv_out.bv_offset);
+ 	__bio_clone(clone, bio);
+-	bio_setup_sector(clone, sector, len);
+-	bio_setup_bv(clone, idx, bv_count);
  
--	ctx->offset_in += 1 << SECTOR_SHIFT;
--	if (ctx->offset_in >= bv_in->bv_len) {
--		ctx->offset_in = 0;
--		ctx->idx_in++;
+-	if (idx != bio->bi_iter.bi_idx ||
+-	    clone->bi_iter.bi_size < bio->bi_iter.bi_size)
+-		trim = 1;
+-	clone_bio_integrity(bio, clone, idx, len, 0, trim);
++	if (bio_integrity(bio))
++		bio_integrity_clone(clone, bio, GFP_NOIO);
++
++	bio_advance(clone, (sector - clone->bi_iter.bi_sector) << 9);
++	bio->bi_iter.bi_size = len << 9;
++
++	if (bio_integrity(bio))
++		bio_integrity_trim(clone, 0, len);
+ }
+ 
+ static struct dm_target_io *alloc_tio(struct clone_info *ci,
+@@ -1146,10 +1101,7 @@ static int __send_empty_flush(struct clone_info *ci)
+ }
+ 
+ static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
+-				     sector_t sector, int nr_iovecs,
+-				     unsigned short idx, unsigned short bv_count,
+-				     unsigned offset, unsigned len,
+-				     unsigned split_bvec)
++				     sector_t sector, unsigned len)
+ {
+ 	struct bio *bio = ci->bio;
+ 	struct dm_target_io *tio;
+@@ -1163,11 +1115,8 @@ static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti
+ 		num_target_bios = ti->num_write_bios(ti, bio);
+ 
+ 	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
+-		tio = alloc_tio(ci, ti, nr_iovecs, target_bio_nr);
+-		if (split_bvec)
+-			clone_split_bio(tio, bio, sector, idx, offset, len);
+-		else
+-			clone_bio(tio, bio, sector, idx, bv_count, len);
++		tio = alloc_tio(ci, ti, 0, target_bio_nr);
++		clone_bio(tio, bio, sector, len);
+ 		__map_bio(tio);
+ 	}
+ }
+@@ -1239,68 +1188,13 @@ static int __send_write_same(struct clone_info *ci)
+ }
+ 
+ /*
+- * Find maximum number of sectors / bvecs we can process with a single bio.
+- */
+-static sector_t __len_within_target(struct clone_info *ci, sector_t max, int *idx)
+-{
+-	struct bio *bio = ci->bio;
+-	sector_t bv_len, total_len = 0;
+-
+-	for (*idx = ci->idx; max && (*idx < bio->bi_vcnt); (*idx)++) {
+-		bv_len = to_sector(bio->bi_io_vec[*idx].bv_len);
+-
+-		if (bv_len > max)
+-			break;
+-
+-		max -= bv_len;
+-		total_len += bv_len;
 -	}
 -
--	ctx->offset_out += 1 << SECTOR_SHIFT;
--	if (ctx->offset_out >= bv_out->bv_len) {
--		ctx->offset_out = 0;
--		ctx->idx_out++;
+-	return total_len;
+-}
+-
+-static int __split_bvec_across_targets(struct clone_info *ci,
+-				       struct dm_target *ti, sector_t max)
+-{
+-	struct bio *bio = ci->bio;
+-	struct bio_vec *bv = bio->bi_io_vec + ci->idx;
+-	sector_t remaining = to_sector(bv->bv_len);
+-	unsigned offset = 0;
+-	sector_t len;
+-
+-	do {
+-		if (offset) {
+-			ti = dm_table_find_target(ci->map, ci->sector);
+-			if (!dm_target_is_valid(ti))
+-				return -EIO;
+-
+-			max = max_io_len(ci->sector, ti);
+-		}
+-
+-		len = min(remaining, max);
+-
+-		__clone_and_map_data_bio(ci, ti, ci->sector, 1, ci->idx, 0,
+-					 bv->bv_offset + offset, len, 1);
+-
+-		ci->sector += len;
+-		ci->sector_count -= len;
+-		offset += to_bytes(len);
+-	} while (remaining -= len);
+-
+-	ci->idx++;
+-
+-	return 0;
+-}
+-
+-/*
+  * Select the correct strategy for processing a non-flush bio.
+  */
+ static int __split_and_process_non_flush(struct clone_info *ci)
+ {
+ 	struct bio *bio = ci->bio;
+ 	struct dm_target *ti;
+-	sector_t len, max;
+-	int idx;
++	unsigned len;
+ 
+ 	if (unlikely(bio->bi_rw & REQ_DISCARD))
+ 		return __send_discard(ci);
+@@ -1311,41 +1205,14 @@ static int __split_and_process_non_flush(struct clone_info *ci)
+ 	if (!dm_target_is_valid(ti))
+ 		return -EIO;
+ 
+-	max = max_io_len(ci->sector, ti);
+-
+-	/*
+-	 * Optimise for the simple case where we can do all of
+-	 * the remaining io with a single clone.
+-	 */
+-	if (ci->sector_count <= max) {
+-		__clone_and_map_data_bio(ci, ti, ci->sector, bio->bi_max_vecs,
+-					 ci->idx, bio->bi_vcnt - ci->idx, 0,
+-					 ci->sector_count, 0);
+-		ci->sector_count = 0;
+-		return 0;
 -	}
-+	bio_advance_iter(ctx->bio_in, &ctx->iter_in, 1 << SECTOR_SHIFT);
-+	bio_advance_iter(ctx->bio_out, &ctx->iter_out, 1 << SECTOR_SHIFT);
+-
+-	/*
+-	 * There are some bvecs that don't span targets.
+-	 * Do as many of these as possible.
+-	 */
+-	if (to_sector(bio->bi_io_vec[ci->idx].bv_len) <= max) {
+-		len = __len_within_target(ci, max, &idx);
+-
+-		__clone_and_map_data_bio(ci, ti, ci->sector, bio->bi_max_vecs,
+-					 ci->idx, idx - ci->idx, 0, len, 0);
++	len = min_t(unsigned, max_io_len(ci->sector, ti), bio_sectors(bio));
  
- 	if (cc->iv_gen_ops) {
- 		r = cc->iv_gen_ops->generator(cc, iv, dmreq);
-@@ -761,8 +752,8 @@ static int crypt_convert(struct crypt_config *cc,
+-		ci->sector += len;
+-		ci->sector_count -= len;
+-		ci->idx = idx;
++	__clone_and_map_data_bio(ci, ti, ci->sector, len);
  
- 	atomic_set(&ctx->cc_pending, 1);
+-		return 0;
+-	}
++	ci->sector += len;
++	ci->sector_count -= len;
  
--	while(ctx->idx_in < ctx->bio_in->bi_vcnt &&
--	      ctx->idx_out < ctx->bio_out->bi_vcnt) {
-+	while (ctx->iter_in.bi_size &&
-+	       ctx->iter_out.bi_size) {
+-	/*
+-	 * Handle a bvec that must be split between two or more targets.
+-	 */
+-	return __split_bvec_across_targets(ci, ti, max);
++	return 0;
+ }
  
- 		crypt_alloc_req(cc, ctx);
+ /*
+@@ -1370,7 +1237,6 @@ static void __split_and_process_bio(struct mapped_device *md, struct bio *bio)
+ 	ci.io->md = md;
+ 	spin_lock_init(&ci.io->endio_lock);
+ 	ci.sector = bio->bi_iter.bi_sector;
+-	ci.idx = bio->bi_iter.bi_idx;
  
-@@ -1031,7 +1022,7 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
- 	}
+ 	start_io_acct(ci.io);
  
- 	/* crypt_convert should have filled the clone bio */
--	BUG_ON(io->ctx.idx_out < clone->bi_vcnt);
-+	BUG_ON(io->ctx.iter_out.bi_size);
- 
- 	clone->bi_iter.bi_sector = cc->start + io->sector;
- 
-@@ -1070,7 +1061,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- 		}
- 
- 		io->ctx.bio_out = clone;
--		io->ctx.idx_out = 0;
-+		io->ctx.iter_out = clone->bi_iter;
- 
- 		remaining -= clone->bi_iter.bi_size;
- 		sector += bio_sectors(clone);
-@@ -1114,8 +1105,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- 			crypt_inc_pending(new_io);
- 			crypt_convert_init(cc, &new_io->ctx, NULL,
- 					   io->base_bio, sector);
--			new_io->ctx.idx_in = io->ctx.idx_in;
--			new_io->ctx.offset_in = io->ctx.offset_in;
-+			new_io->ctx.iter_in = io->ctx.iter_in;
- 
- 			/*
- 			 * Fragments after the first use the base_io
 -- 
 1.8.1.3
