@@ -1,51 +1,131 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: dm-crypt performance
-Date: Tue, 26 Mar 2013 21:58:49 +0100
-Message-ID: <51520C09.9050808@gmail.com>
-References: <Pine.LNX.4.64.1303252051520.9745@file.rdu.redhat.com> <20130326122713.GC27610@agk-dp.fab.redhat.com> <5151FF82.6090405@gmail.com> <20130326202837.GA5599@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH 11/22] dm-io: Convert DM_IO_BVEC -> DM_IO_BIO
+Date: Wed, 27 Mar 2013 10:39:41 -0700
+Message-ID: <1364405992-28424-12-git-send-email-koverstreet@google.com>
+References: <1364405992-28424-1-git-send-email-koverstreet@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130326202837.GA5599@redhat.com>
+In-Reply-To: <1364405992-28424-1-git-send-email-koverstreet@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, tj@kernel.org
+To: axboe@kernel.dk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@vger.kernel.org
+Cc: tj@kernel.org, neilb@suse.de, Kent Overstreet <koverstreet@google.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 26.3.2013 21:28, Mike Snitzer wrote:
-> On Tue, Mar 26 2013 at  4:05pm -0400,
-> Milan Broz <gmazyland@gmail.com> wrote:
->
->>> On Mon, Mar 25, 2013 at 11:47:22PM -0400, Mikulas Patocka wrote:
->>>
->>>> For best performance we could use the unbound workqueue implementation
->>>> with request sorting, if people don't object to the request sorting being
->>>> done in dm-crypt.
->>
->> So again:
->>
->> - why IO scheduler is not working properly here? Do it need some extensions?
->> If fixed, it can help even is some other non-dmcrypt IO patterns.
->> (I mean dmcrypt can set some special parameter for underlying device queue
->> automagically to fine-tune sorting parameters.)
->
-> Not sure, but IO scheduler changes are fairly slow to materialize given
-> the potential for adverse side-effects.  Are you so surprised that a
-> shotgun blast of IOs might make the IO schduler less optimal than if
-> some basic sorting were done at the layer above?
+Can't work with raw biovecs anymore - have to use the bvec_iter
+primitives which respect bi_bvec_done.
 
-All I said is that I think the problems should be solved on proper layer where
-are already all mechanisms to properly control it.
-And only if it is not possible then use such workarounds.
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+---
+ drivers/md/dm-io.c    | 31 +++++++++++++++++--------------
+ drivers/md/dm-raid1.c |  8 ++++----
+ include/linux/dm-io.h |  4 ++--
+ 3 files changed, 23 insertions(+), 20 deletions(-)
 
-CPU bounded io in dmcrypt is in kernel for >2 years and I know about just
-few cases where it caused real problems. Maybe I am mistaken - then now is
-ideal time for people to complain :)
-
-Anyway, are we talking about the same Mikulas' patch I tested months ago
-or you have something new?
-I mean this part from series of dmcrypt patches:
-http://mbroz.fedorapeople.org/dm-crypt/3.6-rc/dm-crypt-25-sort-writes.patch
-
-Milan
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index a6de5c9..c2a6c34 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -202,26 +202,29 @@ static void list_dp_init(struct dpages *dp, struct page_list *pl, unsigned offse
+ /*
+  * Functions for getting the pages from a bvec.
+  */
+-static void bvec_get_page(struct dpages *dp,
++static void bio_get_page(struct dpages *dp,
+ 		  struct page **p, unsigned long *len, unsigned *offset)
+ {
+-	struct bio_vec *bvec = (struct bio_vec *) dp->context_ptr;
+-	*p = bvec->bv_page;
+-	*len = bvec->bv_len;
+-	*offset = bvec->bv_offset;
++	struct bio *bio = dp->context_ptr;
++	struct bio_vec bvec = bio_iovec(bio);
++	*p = bvec.bv_page;
++	*len = bvec.bv_len;
++	*offset = bvec.bv_offset;
+ }
+ 
+-static void bvec_next_page(struct dpages *dp)
++static void bio_next_page(struct dpages *dp)
+ {
+-	struct bio_vec *bvec = (struct bio_vec *) dp->context_ptr;
+-	dp->context_ptr = bvec + 1;
++	struct bio *bio = dp->context_ptr;
++	struct bio_vec bvec = bio_iovec(bio);
++
++	bio_advance(bio, bvec.bv_len);
+ }
+ 
+-static void bvec_dp_init(struct dpages *dp, struct bio_vec *bvec)
++static void bio_dp_init(struct dpages *dp, struct bio *bio)
+ {
+-	dp->get_page = bvec_get_page;
+-	dp->next_page = bvec_next_page;
+-	dp->context_ptr = bvec;
++	dp->get_page = bio_get_page;
++	dp->next_page = bio_next_page;
++	dp->context_ptr = bio;
+ }
+ 
+ /*
+@@ -459,8 +462,8 @@ static int dp_init(struct dm_io_request *io_req, struct dpages *dp,
+ 		list_dp_init(dp, io_req->mem.ptr.pl, io_req->mem.offset);
+ 		break;
+ 
+-	case DM_IO_BVEC:
+-		bvec_dp_init(dp, io_req->mem.ptr.bvec);
++	case DM_IO_BIO:
++		bio_dp_init(dp, io_req->mem.ptr.bio);
+ 		break;
+ 
+ 	case DM_IO_VMA:
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index e3efb91..56e8844 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -526,8 +526,8 @@ static void read_async_bio(struct mirror *m, struct bio *bio)
+ 	struct dm_io_region io;
+ 	struct dm_io_request io_req = {
+ 		.bi_rw = READ,
+-		.mem.type = DM_IO_BVEC,
+-		.mem.ptr.bvec = bio->bi_io_vec + bio->bi_iter.bi_idx,
++		.mem.type = DM_IO_BIO,
++		.mem.ptr.bio = bio,
+ 		.notify.fn = read_callback,
+ 		.notify.context = bio,
+ 		.client = m->ms->io_client,
+@@ -629,8 +629,8 @@ static void do_write(struct mirror_set *ms, struct bio *bio)
+ 	struct mirror *m;
+ 	struct dm_io_request io_req = {
+ 		.bi_rw = WRITE | (bio->bi_rw & WRITE_FLUSH_FUA),
+-		.mem.type = DM_IO_BVEC,
+-		.mem.ptr.bvec = bio->bi_io_vec + bio->bi_iter.bi_idx,
++		.mem.type = DM_IO_BIO,
++		.mem.ptr.bio = bio,
+ 		.notify.fn = write_callback,
+ 		.notify.context = bio,
+ 		.client = ms->io_client,
+diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
+index f4b0aa3..6cf1f62 100644
+--- a/include/linux/dm-io.h
++++ b/include/linux/dm-io.h
+@@ -29,7 +29,7 @@ typedef void (*io_notify_fn)(unsigned long error, void *context);
+ 
+ enum dm_io_mem_type {
+ 	DM_IO_PAGE_LIST,/* Page list */
+-	DM_IO_BVEC,	/* Bio vector */
++	DM_IO_BIO,
+ 	DM_IO_VMA,	/* Virtual memory area */
+ 	DM_IO_KMEM,	/* Kernel memory */
+ };
+@@ -41,7 +41,7 @@ struct dm_io_memory {
+ 
+ 	union {
+ 		struct page_list *pl;
+-		struct bio_vec *bvec;
++		struct bio *bio;
+ 		void *vma;
+ 		void *addr;
+ 	} ptr;
+-- 
+1.8.1.3
