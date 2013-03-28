@@ -1,182 +1,102 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm cache: conditionally reduce the
-	per_bio_data_size of the writethrough fix
-Date: Wed, 27 Mar 2013 15:59:25 -0400
-Message-ID: <1364414365-14523-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: dm-crypt performance
+Date: Thu, 28 Mar 2013 11:53:27 -0700
+Message-ID: <20130328185327.GF14088@htj.dyndns.org>
+References: <Pine.LNX.4.64.1303252051520.9745@file.rdu.redhat.com>
+ <20130326122713.GC27610@agk-dp.fab.redhat.com>
+ <5151FF82.6090405@gmail.com>
+ <20130326202837.GA5599@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130326202837.GA5599@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-When writethrough mode is used the per_bio_data structure includes a
-dm_bio_details structure which is 1056 bytes.  The dm_bio_details
-structure was added in "dm cache: fix writes to cache device in
-writethrough mode" which fixed commit e2e74d617e ("dm cache: fix race
-in writethrough implementation").  This patch significantly reduces
-the cache target's per_bio_data_size when writeback mode is used.
+Hello,
 
-If writeback mode is used we can avoid allocating the writethrough
-specific members of the per_bio_data structure (the dm_bio_details
-structure included).  So with this patch per_bio_data_size is 16 bytes
-if writeback mode is used and 1096 bytes if writethrough mode is used.
+(cc'ing Vivek and Jens for the iosched related bits)
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-cache-target.c |   47 ++++++++++++++++++++++++++++++-----------
- 1 files changed, 34 insertions(+), 13 deletions(-)
+On Tue, Mar 26, 2013 at 04:28:38PM -0400, Mike Snitzer wrote:
+> On Tue, Mar 26 2013 at  4:05pm -0400,
+> Milan Broz <gmazyland@gmail.com> wrote:
+> 
+> > >On Mon, Mar 25, 2013 at 11:47:22PM -0400, Mikulas Patocka wrote:
+> > >
+> > >>For best performance we could use the unbound workqueue implementation
+> > >>with request sorting, if people don't object to the request sorting being
+> > >>done in dm-crypt.
+> > 
+> > So again:
+> > 
+> > - why IO scheduler is not working properly here? Do it need some extensions?
+> > If fixed, it can help even is some other non-dmcrypt IO patterns.
+> > (I mean dmcrypt can set some special parameter for underlying device queue
+> > automagically to fine-tune sorting parameters.)
+> 
+> Not sure, but IO scheduler changes are fairly slow to materialize given
+> the potential for adverse side-effects.  Are you so surprised that a
+> shotgun blast of IOs might make the IO schduler less optimal than if
+> some basic sorting were done at the layer above?
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 1ab122a..7c984c0 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -202,7 +202,11 @@ struct per_bio_data {
- 	unsigned req_nr:2;
- 	struct dm_deferred_entry *all_io_entry;
- 
--	/* writethrough fields */
-+	/*
-+	 * writethrough fields.  These MUST remain at the end of this
-+	 * structure and the 'cache' member must be the first as it
-+	 * is used to determined the offsetof the writethrough fields.
-+	 */
- 	struct cache *cache;
- 	dm_cblock_t cblock;
- 	bio_end_io_t *saved_bi_end_io;
-@@ -515,16 +519,28 @@ static void save_stats(struct cache *cache)
- /*----------------------------------------------------------------
-  * Per bio data
-  *--------------------------------------------------------------*/
--static struct per_bio_data *get_per_bio_data(struct bio *bio)
-+
-+/*
-+ * If using writeback, leave out struct per_bio_data's writethrough fields.
-+ */
-+#define PB_DATA_SIZE_WB (offsetof(struct per_bio_data, cache))
-+#define PB_DATA_SIZE_WT (sizeof(struct per_bio_data))
-+
-+static size_t get_per_bio_data_size(struct cache *cache)
-+{
-+	return cache->features.write_through ? PB_DATA_SIZE_WT : PB_DATA_SIZE_WB;
-+}
-+
-+static struct per_bio_data *get_per_bio_data(struct bio *bio, size_t data_size)
- {
--	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
-+	struct per_bio_data *pb = dm_per_bio_data(bio, data_size);
- 	BUG_ON(!pb);
- 	return pb;
- }
- 
--static struct per_bio_data *init_per_bio_data(struct bio *bio)
-+static struct per_bio_data *init_per_bio_data(struct bio *bio, size_t data_size)
- {
--	struct per_bio_data *pb = get_per_bio_data(bio);
-+	struct per_bio_data *pb = get_per_bio_data(bio, data_size);
- 
- 	pb->tick = false;
- 	pb->req_nr = dm_bio_get_target_bio_nr(bio);
-@@ -558,7 +574,8 @@ static void remap_to_cache(struct cache *cache, struct bio *bio,
- static void check_if_tick_bio_needed(struct cache *cache, struct bio *bio)
- {
- 	unsigned long flags;
--	struct per_bio_data *pb = get_per_bio_data(bio);
-+	size_t pb_data_size = get_per_bio_data_size(cache);
-+	struct per_bio_data *pb = get_per_bio_data(bio, pb_data_size);
- 
- 	spin_lock_irqsave(&cache->lock, flags);
- 	if (cache->need_tick_bio &&
-@@ -637,7 +654,7 @@ static void defer_writethrough_bio(struct cache *cache, struct bio *bio)
- 
- static void writethrough_endio(struct bio *bio, int err)
- {
--	struct per_bio_data *pb = get_per_bio_data(bio);
-+	struct per_bio_data *pb = get_per_bio_data(bio, PB_DATA_SIZE_WT);
- 	bio->bi_end_io = pb->saved_bi_end_io;
- 
- 	if (err) {
-@@ -665,7 +682,7 @@ static void writethrough_endio(struct bio *bio, int err)
- static void remap_to_origin_then_cache(struct cache *cache, struct bio *bio,
- 				       dm_oblock_t oblock, dm_cblock_t cblock)
- {
--	struct per_bio_data *pb = get_per_bio_data(bio);
-+	struct per_bio_data *pb = get_per_bio_data(bio, PB_DATA_SIZE_WT);
- 
- 	pb->cache = cache;
- 	pb->cblock = cblock;
-@@ -1039,7 +1056,8 @@ static void defer_bio(struct cache *cache, struct bio *bio)
- 
- static void process_flush_bio(struct cache *cache, struct bio *bio)
- {
--	struct per_bio_data *pb = get_per_bio_data(bio);
-+	size_t pb_data_size = get_per_bio_data_size(cache);
-+	struct per_bio_data *pb = get_per_bio_data(bio, pb_data_size);
- 
- 	BUG_ON(bio->bi_size);
- 	if (!pb->req_nr)
-@@ -1111,7 +1129,8 @@ static void process_bio(struct cache *cache, struct prealloc *structs,
- 	dm_oblock_t block = get_bio_block(cache, bio);
- 	struct dm_bio_prison_cell *cell_prealloc, *old_ocell, *new_ocell;
- 	struct policy_result lookup_result;
--	struct per_bio_data *pb = get_per_bio_data(bio);
-+	size_t pb_data_size = get_per_bio_data_size(cache);
-+	struct per_bio_data *pb = get_per_bio_data(bio, pb_data_size);
- 	bool discarded_block = is_discarded_oblock(cache, block);
- 	bool can_migrate = discarded_block || spare_migration_bandwidth(cache);
- 
-@@ -1885,7 +1904,6 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 
- 	cache->ti = ca->ti;
- 	ti->private = cache;
--	ti->per_bio_data_size = sizeof(struct per_bio_data);
- 	ti->num_flush_bios = 2;
- 	ti->flush_supported = true;
- 
-@@ -1894,6 +1912,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 	ti->discard_zeroes_data_unsupported = true;
- 
- 	memcpy(&cache->features, &ca->features, sizeof(cache->features));
-+	ti->per_bio_data_size = get_per_bio_data_size(cache);
- 
- 	cache->callbacks.congested_fn = cache_is_congested;
- 	dm_table_add_target_callbacks(ti->table, &cache->callbacks);
-@@ -2096,6 +2115,7 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
- 
- 	int r;
- 	dm_oblock_t block = get_bio_block(cache, bio);
-+	size_t pb_data_size = get_per_bio_data_size(cache);
- 	bool can_migrate = false;
- 	bool discarded_block;
- 	struct dm_bio_prison_cell *cell;
-@@ -2112,7 +2132,7 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
- 		return DM_MAPIO_REMAPPED;
- 	}
- 
--	pb = init_per_bio_data(bio);
-+	pb = init_per_bio_data(bio, pb_data_size);
- 
- 	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA | REQ_DISCARD)) {
- 		defer_bio(cache, bio);
-@@ -2197,7 +2217,8 @@ static int cache_end_io(struct dm_target *ti, struct bio *bio, int error)
- {
- 	struct cache *cache = ti->private;
- 	unsigned long flags;
--	struct per_bio_data *pb = get_per_bio_data(bio);
-+	size_t pb_data_size = get_per_bio_data_size(cache);
-+	struct per_bio_data *pb = get_per_bio_data(bio, pb_data_size);
- 
- 	if (pb->tick) {
- 		policy_tick(cache->policy);
+My memory is already pretty hazy but Vivek should be able to correct
+me if I say something nonsense.  The thing is, the order and timings
+of IOs coming down from upper layers has certain meanings to ioscheds
+and they exploit those patterns to do better scheduling.
+
+Reordering IOs randomly actually makes certain information about the
+IO stream lost and makes ioscheds mis-classify the IO stream -
+e.g. what could have been classfied as "mostly consecutive streaming
+IO" could after such reordering fail to be detected as such.  Sure,
+ioscheds can probably be improved to compensate for such temporary
+localized reorderings but nothing is free and given that most of the
+upper stacks already do pretty good job of issuing IOs orderly when
+possible, it would be a bit silly to do more than usually necessary in
+ioscheds.
+
+So, no, I don't think maintaining IO order in stacking drivers is a
+bad idea.  I actually think all stacking drivers should do that;
+otherwise, they really are destroying actual useful side-band
+information.
+
+> > - can we have some cpu-bound workqueue which automatically switch to unbound
+> > (relocates work to another cpu) if it detects some saturation watermark etc?
+> > (Again, this can be used in other code.
+> > http://www.redhat.com/archives/dm-devel/2012-August/msg00288.html
+> > (Yes, I see skepticism there :-)
+> 
+> Question for Tejun? (now cc'd).
+
+Unbound workqueues went through quite a bit of improvements lately and
+are currently growing NUMA affinity support.  Once merged, all unbound
+work items issued on a NUMA node will be processed in the same NUMA
+node, which should mitigate some, unfortunately not all, of the
+disadvantages compared to per-cpu ones.  Mikulas, can you share more
+about your test setup?  Was it a NUMA machine?  Which wq branch did
+you use?
+
+The NUMA affinity support would have less severe but similar issue as
+per-cpu.  If all IOs are being issued from one node while other nodes
+are idle, that specific node can get saturated.  NUMA affinity support
+is adjusted both from inside kernel and userland via sysfs, so there
+are control knobs for corner cases.
+
+As for maintaining CPU or NUMA affinity until the CPU / node is
+saturated and spilling to other CPUs/nodes beyond that, yeah, an
+interesting idea.  It's non-trivial and would have to incorporate a
+lot of notions on "load" similar to the scheduler.  It really becomes
+a generic load balancing problem as it'd be pointless and actually
+harmful to, say, spill work items to each other between two saturated
+NUMA nodes.
+
+So, if the brunt of scattering workload across random CPUs can be
+avoided by NUMA affinity, that could be a reasonable tradeoff, I
+think.
+
+Thanks.
+
 -- 
-1.7.1
+tejun
