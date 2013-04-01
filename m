@@ -1,32 +1,29 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Ewan Milne <emilne@redhat.com>
 Subject: Re: [PATCH] scsi_dh_alua: Add module parameter to allow failover
  to non preferred path without STPG
-Date: Sun, 31 Mar 2013 18:24:22 +0200
-Message-ID: <51586336.9080802@suse.de>
+Date: Mon, 01 Apr 2013 10:24:40 -0400
+Message-ID: <1364826280.3828.120.camel@localhost.localdomain>
 References: <8255ED565A0EAA4A960625E27D49DBF21FF906FB@SACEXCMBX04-PRD.hq.netapp.com>
+Reply-To: emilne@redhat.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <8255ED565A0EAA4A960625E27D49DBF21FF906FB@SACEXCMBX04-PRD.hq.netapp.com>
 Sender: linux-scsi-owner@vger.kernel.org
 To: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
 List-Id: dm-devel.ids
 
-On 03/28/2013 11:07 PM, Stewart, Sean wrote:
-> Currently ALUA device handler sends STPG command during failover and failback.
-> Failover can be optimized by implicit failover (by not to sending STPG command),
-> when 1 is passed as hwhandler parameter in multipath.conf. ex "2 alua 1". We may
-> need to pass the parameter through module param for alua device handler to optimize
-> failover if incase retain_attached_hwhandler set in multipath.conf and hwhandler
-> is set with non-tpgs device handler ex: '1 rdac'.
->
-> Signed-off-by: Vijay Chauhan <vijay.chauhan@netapp.com>
-> Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
->
-Acked-by: Hannes Reinecke <hare@suse.de>
+On Thu, 2013-03-28 at 22:07 +0000, Stewart, Sean wrote:
+> +static uint optimize_stpg;
+> +module_param(optimize_stpg, uint, S_IRUGO|S_IWUSR);
+> +MODULE_PARM_DESC(optimize_stpg, "Send STPG command for Failover on non-preferred path(0=Yes,1=No). Default is 0.");
 
-Cheers,
+Could you possibly reword the description?  When I first read this, it
+seemed backwards to have 0=Yes and 1=No.
 
-Hannes
+-Ewan D. Milne <emilne@redhat.com>
+
+
+
