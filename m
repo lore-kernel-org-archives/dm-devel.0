@@ -1,32 +1,39 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH] Track block device users that created dirty pages
-Date: Mon, 01 Apr 2013 11:38:36 -0400
-Message-ID: <x491uau1csj.fsf@segfault.boston.devel.redhat.com>
-References: <Pine.LNX.4.64.1303291042100.23238@file.rdu.redhat.com>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: RE: [PATCH] scsi_dh_alua: Add module parameter to allow failover to
+ non preferred path without STPG
+Date: Mon, 1 Apr 2013 21:18:59 +0000
+Message-ID: <8255ED565A0EAA4A960625E27D49DBF21FF95717@SACEXCMBX04-PRD.hq.netapp.com>
+References: <8255ED565A0EAA4A960625E27D49DBF21FF906FB@SACEXCMBX04-PRD.hq.netapp.com>
+ <1364826280.3828.120.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1303291042100.23238@file.rdu.redhat.com> (Mikulas
-	Patocka's message of "Fri, 29 Mar 2013 12:08:34 -0400 (EDT)")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Tejun Heo <tj@kernel.org>, Mike Snitzer <msnitzer@redhat.com>, Christoph Hellwig <chellwig@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1364826280.3828.120.camel@localhost.localdomain>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "emilne@redhat.com" <emilne@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
 List-Id: dm-devel.ids
 
-Mikulas Patocka <mpatocka@redhat.com> writes:
-
-> The new semantics is: if a process did some buffered writes to the block
-> device (with write or mmap), the cache is flushed when the process
-> closes the block device. Processes that didn't do any buffered writes to
-> the device don't cause cache flush. It has these advantages:
-> * processes that don't do buffered writes (such as "lvm") don't flush
->   other process's data.
-> * if the user runs "dd" on a block device, it is actually guaranteed
->   that the data is flushed when "dd" exits.
-
-Why don't applications that want data to go to disk just call fsync
-instead of relying on being the last process to have had the device
-open?
-
-Cheers,
-Jeff
+SG93IGFib3V0IHRoZSBmb2xsb3dpbmc/ICBSZXdvcmRlZCBpbiBhIHdheSBzdWNoIHRoYXQgMCBt
+ZWFucyBubyBhbmQgMSBtZWFucyB5ZXMuDQoNCitzdGF0aWMgdWludCBvcHRpbWl6ZV9zdHBnOw0K
+K21vZHVsZV9wYXJhbShvcHRpbWl6ZV9zdHBnLCB1aW50LCBTX0lSVUdPfFNfSVdVU1IpOyANCitN
+T0RVTEVfUEFSTV9ERVNDKG9wdGltaXplX3N0cGcsICJBbGxvdyB1c2Ugb2YgYSBub24tb3B0aW1p
+emVkIHBhdGgsIHJhdGhlciB0aGFuIHNlbmRpbmcgYSBTVFBHLCB3aGVuIGltcGxpY2l0IFRQR1Mg
+aXMgc3VwcG9ydGVkICgwPU5vLDE9WWVzKS4gRGVmYXVsdCBpcyAwLiIpOw0KDQoNClRoYW5rcywN
+ClNlYW4gU3Rld2FydA0KDQotLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KRnJvbTogRXdhbiBN
+aWxuZSBbbWFpbHRvOmVtaWxuZUByZWRoYXQuY29tXSANClNlbnQ6IE1vbmRheSwgQXByaWwgMDEs
+IDIwMTMgOToyNSBBTQ0KVG86IFN0ZXdhcnQsIFNlYW4NCkNjOiBsaW51eC1zY3NpQHZnZXIua2Vy
+bmVsLm9yZzsgZG0tZGV2ZWxAcmVkaGF0LmNvbTsgSmFtZXMuQm90dG9tbGV5QHN1c2UuZGU7IHNu
+aXR6ZXJAcmVkaGF0LmNvbTsgaGFyZUBzdXNlLmRlDQpTdWJqZWN0OiBSZTogW1BBVENIXSBzY3Np
+X2RoX2FsdWE6IEFkZCBtb2R1bGUgcGFyYW1ldGVyIHRvIGFsbG93IGZhaWxvdmVyIHRvIG5vbiBw
+cmVmZXJyZWQgcGF0aCB3aXRob3V0IFNUUEcNCg0KT24gVGh1LCAyMDEzLTAzLTI4IGF0IDIyOjA3
+ICswMDAwLCBTdGV3YXJ0LCBTZWFuIHdyb3RlOg0KPiArc3RhdGljIHVpbnQgb3B0aW1pemVfc3Rw
+ZzsNCj4gK21vZHVsZV9wYXJhbShvcHRpbWl6ZV9zdHBnLCB1aW50LCBTX0lSVUdPfFNfSVdVU1Ip
+OyANCj4gK01PRFVMRV9QQVJNX0RFU0Mob3B0aW1pemVfc3RwZywgIlNlbmQgU1RQRyBjb21tYW5k
+IGZvciBGYWlsb3ZlciBvbiANCj4gK25vbi1wcmVmZXJyZWQgcGF0aCgwPVllcywxPU5vKS4gRGVm
+YXVsdCBpcyAwLiIpOw0KDQpDb3VsZCB5b3UgcG9zc2libHkgcmV3b3JkIHRoZSBkZXNjcmlwdGlv
+bj8gIFdoZW4gSSBmaXJzdCByZWFkIHRoaXMsIGl0IHNlZW1lZCBiYWNrd2FyZHMgdG8gaGF2ZSAw
+PVllcyBhbmQgMT1Oby4NCg0KLUV3YW4gRC4gTWlsbmUgPGVtaWxuZUByZWRoYXQuY29tPg0KDQoN
+Cg0K
