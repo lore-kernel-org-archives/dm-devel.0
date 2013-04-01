@@ -1,29 +1,32 @@
-From: Ewan Milne <emilne@redhat.com>
-Subject: Re: [PATCH] scsi_dh_alua: Add module parameter to allow failover
- to non preferred path without STPG
-Date: Mon, 01 Apr 2013 10:24:40 -0400
-Message-ID: <1364826280.3828.120.camel@localhost.localdomain>
-References: <8255ED565A0EAA4A960625E27D49DBF21FF906FB@SACEXCMBX04-PRD.hq.netapp.com>
-Reply-To: emilne@redhat.com
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH] Track block device users that created dirty pages
+Date: Mon, 01 Apr 2013 11:38:36 -0400
+Message-ID: <x491uau1csj.fsf@segfault.boston.devel.redhat.com>
+References: <Pine.LNX.4.64.1303291042100.23238@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <8255ED565A0EAA4A960625E27D49DBF21FF906FB@SACEXCMBX04-PRD.hq.netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1303291042100.23238@file.rdu.redhat.com> (Mikulas
+	Patocka's message of "Fri, 29 Mar 2013 12:08:34 -0400 (EDT)")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Tejun Heo <tj@kernel.org>, Mike Snitzer <msnitzer@redhat.com>, Christoph Hellwig <chellwig@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, 2013-03-28 at 22:07 +0000, Stewart, Sean wrote:
-> +static uint optimize_stpg;
-> +module_param(optimize_stpg, uint, S_IRUGO|S_IWUSR);
-> +MODULE_PARM_DESC(optimize_stpg, "Send STPG command for Failover on non-preferred path(0=Yes,1=No). Default is 0.");
+Mikulas Patocka <mpatocka@redhat.com> writes:
 
-Could you possibly reword the description?  When I first read this, it
-seemed backwards to have 0=Yes and 1=No.
+> The new semantics is: if a process did some buffered writes to the block
+> device (with write or mmap), the cache is flushed when the process
+> closes the block device. Processes that didn't do any buffered writes to
+> the device don't cause cache flush. It has these advantages:
+> * processes that don't do buffered writes (such as "lvm") don't flush
+>   other process's data.
+> * if the user runs "dd" on a block device, it is actually guaranteed
+>   that the data is flushed when "dd" exits.
 
--Ewan D. Milne <emilne@redhat.com>
+Why don't applications that want data to go to disk just call fsync
+instead of relying on being the last process to have had the device
+open?
 
-
-
+Cheers,
+Jeff
