@@ -1,39 +1,31 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: RE: [PATCH] scsi_dh_alua: Add module parameter to allow failover to
- non preferred path without STPG
-Date: Mon, 1 Apr 2013 21:18:59 +0000
-Message-ID: <8255ED565A0EAA4A960625E27D49DBF21FF95717@SACEXCMBX04-PRD.hq.netapp.com>
+From: Ewan Milne <emilne@redhat.com>
+Subject: RE: [PATCH] scsi_dh_alua: Add module parameter to allow failover
+ to non preferred path without STPG
+Date: Tue, 02 Apr 2013 08:38:16 -0400
+Message-ID: <1364906296.2647.0.camel@localhost.localdomain>
 References: <8255ED565A0EAA4A960625E27D49DBF21FF906FB@SACEXCMBX04-PRD.hq.netapp.com>
- <1364826280.3828.120.camel@localhost.localdomain>
+	 <1364826280.3828.120.camel@localhost.localdomain>
+	 <8255ED565A0EAA4A960625E27D49DBF21FF95717@SACEXCMBX04-PRD.hq.netapp.com>
+Reply-To: emilne@redhat.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1364826280.3828.120.camel@localhost.localdomain>
-Content-Language: en-US
+In-Reply-To: <8255ED565A0EAA4A960625E27D49DBF21FF95717@SACEXCMBX04-PRD.hq.netapp.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: "emilne@redhat.com" <emilne@redhat.com>
+To: "Stewart, Sean" <Sean.Stewart@netapp.com>
 Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
 List-Id: dm-devel.ids
 
-SG93IGFib3V0IHRoZSBmb2xsb3dpbmc/ICBSZXdvcmRlZCBpbiBhIHdheSBzdWNoIHRoYXQgMCBt
-ZWFucyBubyBhbmQgMSBtZWFucyB5ZXMuDQoNCitzdGF0aWMgdWludCBvcHRpbWl6ZV9zdHBnOw0K
-K21vZHVsZV9wYXJhbShvcHRpbWl6ZV9zdHBnLCB1aW50LCBTX0lSVUdPfFNfSVdVU1IpOyANCitN
-T0RVTEVfUEFSTV9ERVNDKG9wdGltaXplX3N0cGcsICJBbGxvdyB1c2Ugb2YgYSBub24tb3B0aW1p
-emVkIHBhdGgsIHJhdGhlciB0aGFuIHNlbmRpbmcgYSBTVFBHLCB3aGVuIGltcGxpY2l0IFRQR1Mg
-aXMgc3VwcG9ydGVkICgwPU5vLDE9WWVzKS4gRGVmYXVsdCBpcyAwLiIpOw0KDQoNClRoYW5rcywN
-ClNlYW4gU3Rld2FydA0KDQotLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KRnJvbTogRXdhbiBN
-aWxuZSBbbWFpbHRvOmVtaWxuZUByZWRoYXQuY29tXSANClNlbnQ6IE1vbmRheSwgQXByaWwgMDEs
-IDIwMTMgOToyNSBBTQ0KVG86IFN0ZXdhcnQsIFNlYW4NCkNjOiBsaW51eC1zY3NpQHZnZXIua2Vy
-bmVsLm9yZzsgZG0tZGV2ZWxAcmVkaGF0LmNvbTsgSmFtZXMuQm90dG9tbGV5QHN1c2UuZGU7IHNu
-aXR6ZXJAcmVkaGF0LmNvbTsgaGFyZUBzdXNlLmRlDQpTdWJqZWN0OiBSZTogW1BBVENIXSBzY3Np
-X2RoX2FsdWE6IEFkZCBtb2R1bGUgcGFyYW1ldGVyIHRvIGFsbG93IGZhaWxvdmVyIHRvIG5vbiBw
-cmVmZXJyZWQgcGF0aCB3aXRob3V0IFNUUEcNCg0KT24gVGh1LCAyMDEzLTAzLTI4IGF0IDIyOjA3
-ICswMDAwLCBTdGV3YXJ0LCBTZWFuIHdyb3RlOg0KPiArc3RhdGljIHVpbnQgb3B0aW1pemVfc3Rw
-ZzsNCj4gK21vZHVsZV9wYXJhbShvcHRpbWl6ZV9zdHBnLCB1aW50LCBTX0lSVUdPfFNfSVdVU1Ip
-OyANCj4gK01PRFVMRV9QQVJNX0RFU0Mob3B0aW1pemVfc3RwZywgIlNlbmQgU1RQRyBjb21tYW5k
-IGZvciBGYWlsb3ZlciBvbiANCj4gK25vbi1wcmVmZXJyZWQgcGF0aCgwPVllcywxPU5vKS4gRGVm
-YXVsdCBpcyAwLiIpOw0KDQpDb3VsZCB5b3UgcG9zc2libHkgcmV3b3JkIHRoZSBkZXNjcmlwdGlv
-bj8gIFdoZW4gSSBmaXJzdCByZWFkIHRoaXMsIGl0IHNlZW1lZCBiYWNrd2FyZHMgdG8gaGF2ZSAw
-PVllcyBhbmQgMT1Oby4NCg0KLUV3YW4gRC4gTWlsbmUgPGVtaWxuZUByZWRoYXQuY29tPg0KDQoN
-Cg0K
+On Mon, 2013-04-01 at 21:18 +0000, Stewart, Sean wrote:
+> How about the following?  Reworded in a way such that 0 means no and 1 means yes.
+> 
+> +static uint optimize_stpg;
+> +module_param(optimize_stpg, uint, S_IRUGO|S_IWUSR); 
+> +MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, rather than sending a STPG, when implicit TPGS is supported (0=No,1=Yes). Default is 0.");
+
+Great, thank you.
+
+-Ewan D. Milne <emilne@redhat.com>
+
+
