@@ -1,109 +1,50 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-mpath: do not change SCSI device handler
-Date: Wed, 3 Apr 2013 16:54:27 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1304031652290.20546@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
-	<20130403133234.GA2197@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH] Track block device users that created dirty pages
+Date: Wed, 3 Apr 2013 17:05:38 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1304031656420.31007@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1303291042100.23238@file.rdu.redhat.com>
+ <x491uau1csj.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130403133234.GA2197@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <x491uau1csj.fsf@segfault.boston.devel.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Tejun Heo <tj@kernel.org>, Mike Snitzer <msnitzer@redhat.com>, Christoph Hellwig <chellwig@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 
 
-On Wed, 3 Apr 2013, Mike Snitzer wrote:
+On Mon, 1 Apr 2013, Jeff Moyer wrote:
 
-> On Tue, Apr 02 2013 at  8:04pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> Mikulas Patocka <mpatocka@redhat.com> writes:
 > 
-> > Hi
-> > 
-> > This fixes BZ 912245 and 902595.
-> > 
-> > Mikulas
-> > 
-> > ---
->
-> We should include the currently attached scsi_dh in the DMERR message,
-> e.g.:
-> 	attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
-> 	DMERR("The %s device handler for devices %s is already attached.  ...",
-> 	      attached_handler_name, p->path.dev->name);
-> 	kfree(attached_handler_name);
-> 	goto bad;
+> > The new semantics is: if a process did some buffered writes to the block
+> > device (with write or mmap), the cache is flushed when the process
+> > closes the block device. Processes that didn't do any buffered writes to
+> > the device don't cause cache flush. It has these advantages:
+> > * processes that don't do buffered writes (such as "lvm") don't flush
+> >   other process's data.
+> > * if the user runs "dd" on a block device, it is actually guaranteed
+> >   that the data is flushed when "dd" exits.
 > 
-> Otherwise, looks good.
+> Why don't applications that want data to go to disk just call fsync
+> instead of relying on being the last process to have had the device
+> open?
 > 
-> Acked-by: Mike Snitzer <snitzer@redhat.com>
-> 
+> Cheers,
+> Jeff
 
-OK. This is the patch with these changes.
+Because the user may forget to specify "conv=fsync" on dd command line.
 
----
+Anyway, when using dd to copy partitions, it should either always flush 
+buffers on exit or never do it. The current state, when dd mostly flushes 
+buffers, but doesn't with very low probability (if it races with lvm or 
+udev) is confusing.
 
-dm-mpath: do not change SCSI device handler
+If the admin sees that dd flushes buffers on block devices for all his 
+trials, he assumes that dd always flushes buffers on block devices. He 
+doesn't know that there is a tiny race condition that makes dd not flush 
+buffers.
 
-This patch prevents the multipath target from changing the device handler.
-This fixes a kernel crash that can happen when changing the device
-handler.
-
-When we reload a multipath device, there are two instances of the
-multipath target - the first instance that is active and the second
-instance that is being constructed with "ctr" method.
-
-If the multipath constructor finds out that the device is using a
-different device handler, it detaches the existing handler and attaches a
-new handler. However, the first instance of the multipath target still
-exists and processes requests. If the first instance sends some
-path-management request with scsi_dh_activate and the second instance
-detaches the device handler while the path-management request is in
-flight, a crash happens. The reason for the crash is that the endio
-routine for the path-management request is working with structures that
-were freed when the handler was detached.
-
-There is no practical need to change device handlers on an active device,
-so this patch disables it.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-mpath.c |   12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
-
-Index: linux-3.9-rc5-fast/drivers/md/dm-mpath.c
-===================================================================
---- linux-3.9-rc5-fast.orig/drivers/md/dm-mpath.c	2013-04-02 21:54:25.000000000 +0200
-+++ linux-3.9-rc5-fast/drivers/md/dm-mpath.c	2013-04-03 22:51:11.000000000 +0200
-@@ -618,12 +618,12 @@ static struct pgpath *parse_path(struct 
- 		 */
- 		r = scsi_dh_attach(q, m->hw_handler_name);
- 		if (r == -EBUSY) {
--			/*
--			 * Already attached to different hw_handler:
--			 * try to reattach with correct one.
--			 */
--			scsi_dh_detach(q);
--			r = scsi_dh_attach(q, m->hw_handler_name);
-+			const char *a = scsi_dh_attached_handler_name(q, GFP_KERNEL);
-+			ti->error = "a different device handler is already attached";
-+			DMERR("The %s device handler for device %s is already attached. Can't attach new handler %s",
-+				a ? a : "none", p->path.dev->name, m->hw_handler_name);
-+			kfree(a);
-+			goto bad;
- 		}
- 
- 		if (r < 0) {
+Mikulas
