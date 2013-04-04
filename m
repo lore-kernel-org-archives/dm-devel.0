@@ -1,16 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] libmultipath/discovery: read sysfs files
-	uncached
-Date: Thu, 04 Apr 2013 08:43:39 +0200
-Message-ID: <515D211B.3080805@suse.de>
-References: <1364912936-14636-1-git-send-email-sebastian.riemer@profitbricks.com>
-	<1364936448.5344.8.camel@lapoo.opensvc.com>
+Subject: Re: [PATCH] dm-mpath: do not change SCSI device handler
+Date: Thu, 04 Apr 2013 08:47:07 +0200
+Message-ID: <515D21EB.8010701@suse.de>
+References: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1364936448.5344.8.camel@lapoo.opensvc.com>
+In-Reply-To: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +18,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, Sebastian Riemer <sebastian.riemer@profitbricks.com>, Bart Van Assche <bvanassche@acm.org>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMDQvMDIvMjAxMyAxMTowMCBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IE9uIG1h
-ci4sIDIwMTMtMDQtMDIgYXQgMTY6MjggKzAyMDAsIFNlYmFzdGlhbiBSaWVtZXIgd3JvdGU6Cj4+
-IFRoZSBsaWJ1ZGV2IGZ1bmN0aW9uIHVkZXZfZGV2aWNlX2dldF9zeXNhdHRyX3ZhbHVlKCkgcmVh
-ZHMgc3lzZnMKPj4gYXR0cmlidXRlcyBjYWNoZWQuIFRoaXMgaXMgdXNlbGVzcyBmb3IgY2hlY2tp
-bmcgYSBkZXZpY2Ugc3RhdGUuCj4+IFRoZXJlIHdlIHdhbnQgdG8gc2VlIGlmIGl0IGNoYW5nZXMu
-Cj4+Cj4+IFVuZm9ydHVuYXRlbHksIGxpYnVkZXYgZG9lc24ndCBwcm92aWRlIGFuIHVuY2FjaGVk
-IHZhcmlhbnQuIFRoaXMKPj4gaXMgd2h5IHdlIGhhdmUgdG8gcmVpbXBsZW1lbnQgdGhlIGZ1bmN0
-aW9uYWxpdHkgYW5kIHNvbWUgbGlidWRldgo+PiBpbnRlcm5hbCBmdW5jdGlvbnMgaGVyZS4KPj4K
-PiBIYW5uZXMsCj4gCj4gYXMgdGhlIGNvbW1pdCAwNThhMDA0NGNiMmFiN2NhYzZmN2MzZTJlMTdi
-MTZlMDBiNWU1N2ZhIGF1dGhvciwgd291bGQgeW91Cj4gc2lnbi1vZmYgdGhpcyBwYXRjaCA/IE9y
-IGRvIHlvdSBwcmVmZXIgdGhlIGlzc3VlIGFkZHJlc3NlZCBvbiB0aGUgdWRldgo+IHNpZGUgLi4u
-Cj4gCkhtbTsgdGhpcyBpcyBub3QgdGhlIG9ubHkgaXNzdWUgd2UgaGF2ZSB3aXRoIGxpYnVkZXYu
-Cl9TZXR0aW5nXyBvZiBzeXNmcyBhdHRyaWJ1dGVzIGlzIGFsc28gYSBwcm9ibGVtIChJIGp1c3Qg
-c2VuZCBhIHBhdGNoCnRvIEtheSBmb3IgdGhpcykuCkhvd2V2ZXIsIGhhdmluZyB0byBkdXBsaWNh
-dGUgdGhpbmdzIGZlZWxzIGxpa2UgYSB3YXN0ZTsgSSdkIHJhdGhlcgpoYXZlIGl0IGltcGxlbWVu
-dGVkIGF0IHRoZSBsaWJ1ZGV2IHNpZGUuCgpUaGUgcHJvYmxlbSB3aXRoIHRoaXMgcGF0Y2ggaXMg
-dGhhdCB3ZSdyZSBieXBhc3NpbmcgdGhlIGNhY2hlIG9mCmxpYnVkZXY7IHNvIGFueSBfb3RoZXJf
-IGFwcGxpY2F0aW9uIHVzaW5nIGxpYnVkZXYgd291bGQgc3RpbGwgYmUKcmVhZGluZyB0aGUgc3Rh
-bGUgdmFsdWUuCgpJJ2QgdmVyeSBtdWNoIHByZWZlciB0byBoYXZlIGEgJ3VuY2FjaGVkJyB2YXJp
-YW50IChvciBhZGRpbmcgYW5vdGhlcgphcmd1bWVudCAnZm9yY2UnKSB3aGljaCB3b3VsZCBmb3Jj
-ZSBsaWJ1ZGV2IHRvIGFsd2F5cyByZWFkIHRoZQpjdXJyZW50IHZhbHVlIGJ1dCBhbHNvIGFkZGlu
-ZyBpdCB0byB0aGUgaW50ZXJuYWwgY2FjaGUgZm9yIHRoZQpiZW5lZml0IG9mIG90aGVyIGFwcGxp
-Y2F0aW9ucy4KCktheT8KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJ
-ICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgKzQ5IDkxMSA3NDA1
-MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xy
-bmJlcmcKR0Y6IEouIEhhd24sIEouIEd1aWxkLCBGLiBJbWVuZMO2cmZmZXIsIEhSQiAxNjc0NiAo
-QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 04/03/2013 02:04 AM, Mikulas Patocka wrote:
+> Hi
+> =
+
+> This fixes BZ 912245 and 902595.
+> =
+
+> Mikulas
+> =
+
+> ---
+> =
+
+> dm-mpath: do not change SCSI device handler
+> =
+
+> This patch prevents the multipath target from changing the device handler.
+> This fixes a kernel crash that can happen when changing the device
+> handler.
+> =
+
+> When we reload a multipath device, there are two instances of the
+> multipath target - the first instance that is active and the second
+> instance that is being constructed with "ctr" method.
+> =
+
+> If the multipath constructor finds out that the device is using a
+> different device handler, it detaches the existing handler and attaches a
+> new handler. However, the first instance of the multipath target still
+> exists and processes requests. If the first instance sends some
+> path-management request with scsi_dh_activate and the second instance
+> detaches the device handler while the path-management request is in
+> flight, a crash happens. The reason for the crash is that the endio
+> routine for the path-management request is working with structures that
+> were freed when the handler was detached.
+> =
+
+> There is no practical need to change device handlers on an active device,
+> so this patch disables it.
+> =
+
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> =
+
+
+NACK.
+
+This kills multipath startup when scsi_dh_* modules are already loaded.
+After boot scsi_dh_* modules might already be loaded without
+multipath running.
+Multipath might have defined other hardware handlers in the
+configuration file, and will re-attach them on startup.
+
+With this patch multipath cannot configure the devices properly and
+will abort.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
