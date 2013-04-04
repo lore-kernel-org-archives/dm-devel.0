@@ -1,50 +1,54 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] Track block device users that created dirty pages
-Date: Wed, 3 Apr 2013 17:05:38 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1304031656420.31007@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1303291042100.23238@file.rdu.redhat.com>
- <x491uau1csj.fsf@segfault.boston.devel.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] libmultipath/discovery: read sysfs files
+	uncached
+Date: Thu, 04 Apr 2013 08:43:39 +0200
+Message-ID: <515D211B.3080805@suse.de>
+References: <1364912936-14636-1-git-send-email-sebastian.riemer@profitbricks.com>
+	<1364936448.5344.8.camel@lapoo.opensvc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <x491uau1csj.fsf@segfault.boston.devel.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Tejun Heo <tj@kernel.org>, Mike Snitzer <msnitzer@redhat.com>, Christoph Hellwig <chellwig@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1364936448.5344.8.camel@lapoo.opensvc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, Sebastian Riemer <sebastian.riemer@profitbricks.com>, Bart Van Assche <bvanassche@acm.org>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-
-
-On Mon, 1 Apr 2013, Jeff Moyer wrote:
-
-> Mikulas Patocka <mpatocka@redhat.com> writes:
-> 
-> > The new semantics is: if a process did some buffered writes to the block
-> > device (with write or mmap), the cache is flushed when the process
-> > closes the block device. Processes that didn't do any buffered writes to
-> > the device don't cause cache flush. It has these advantages:
-> > * processes that don't do buffered writes (such as "lvm") don't flush
-> >   other process's data.
-> > * if the user runs "dd" on a block device, it is actually guaranteed
-> >   that the data is flushed when "dd" exits.
-> 
-> Why don't applications that want data to go to disk just call fsync
-> instead of relying on being the last process to have had the device
-> open?
-> 
-> Cheers,
-> Jeff
-
-Because the user may forget to specify "conv=fsync" on dd command line.
-
-Anyway, when using dd to copy partitions, it should either always flush 
-buffers on exit or never do it. The current state, when dd mostly flushes 
-buffers, but doesn't with very low probability (if it races with lvm or 
-udev) is confusing.
-
-If the admin sees that dd flushes buffers on block devices for all his 
-trials, he assumes that dd always flushes buffers on block devices. He 
-doesn't know that there is a tiny race condition that makes dd not flush 
-buffers.
-
-Mikulas
+T24gMDQvMDIvMjAxMyAxMTowMCBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IE9uIG1h
+ci4sIDIwMTMtMDQtMDIgYXQgMTY6MjggKzAyMDAsIFNlYmFzdGlhbiBSaWVtZXIgd3JvdGU6Cj4+
+IFRoZSBsaWJ1ZGV2IGZ1bmN0aW9uIHVkZXZfZGV2aWNlX2dldF9zeXNhdHRyX3ZhbHVlKCkgcmVh
+ZHMgc3lzZnMKPj4gYXR0cmlidXRlcyBjYWNoZWQuIFRoaXMgaXMgdXNlbGVzcyBmb3IgY2hlY2tp
+bmcgYSBkZXZpY2Ugc3RhdGUuCj4+IFRoZXJlIHdlIHdhbnQgdG8gc2VlIGlmIGl0IGNoYW5nZXMu
+Cj4+Cj4+IFVuZm9ydHVuYXRlbHksIGxpYnVkZXYgZG9lc24ndCBwcm92aWRlIGFuIHVuY2FjaGVk
+IHZhcmlhbnQuIFRoaXMKPj4gaXMgd2h5IHdlIGhhdmUgdG8gcmVpbXBsZW1lbnQgdGhlIGZ1bmN0
+aW9uYWxpdHkgYW5kIHNvbWUgbGlidWRldgo+PiBpbnRlcm5hbCBmdW5jdGlvbnMgaGVyZS4KPj4K
+PiBIYW5uZXMsCj4gCj4gYXMgdGhlIGNvbW1pdCAwNThhMDA0NGNiMmFiN2NhYzZmN2MzZTJlMTdi
+MTZlMDBiNWU1N2ZhIGF1dGhvciwgd291bGQgeW91Cj4gc2lnbi1vZmYgdGhpcyBwYXRjaCA/IE9y
+IGRvIHlvdSBwcmVmZXIgdGhlIGlzc3VlIGFkZHJlc3NlZCBvbiB0aGUgdWRldgo+IHNpZGUgLi4u
+Cj4gCkhtbTsgdGhpcyBpcyBub3QgdGhlIG9ubHkgaXNzdWUgd2UgaGF2ZSB3aXRoIGxpYnVkZXYu
+Cl9TZXR0aW5nXyBvZiBzeXNmcyBhdHRyaWJ1dGVzIGlzIGFsc28gYSBwcm9ibGVtIChJIGp1c3Qg
+c2VuZCBhIHBhdGNoCnRvIEtheSBmb3IgdGhpcykuCkhvd2V2ZXIsIGhhdmluZyB0byBkdXBsaWNh
+dGUgdGhpbmdzIGZlZWxzIGxpa2UgYSB3YXN0ZTsgSSdkIHJhdGhlcgpoYXZlIGl0IGltcGxlbWVu
+dGVkIGF0IHRoZSBsaWJ1ZGV2IHNpZGUuCgpUaGUgcHJvYmxlbSB3aXRoIHRoaXMgcGF0Y2ggaXMg
+dGhhdCB3ZSdyZSBieXBhc3NpbmcgdGhlIGNhY2hlIG9mCmxpYnVkZXY7IHNvIGFueSBfb3RoZXJf
+IGFwcGxpY2F0aW9uIHVzaW5nIGxpYnVkZXYgd291bGQgc3RpbGwgYmUKcmVhZGluZyB0aGUgc3Rh
+bGUgdmFsdWUuCgpJJ2QgdmVyeSBtdWNoIHByZWZlciB0byBoYXZlIGEgJ3VuY2FjaGVkJyB2YXJp
+YW50IChvciBhZGRpbmcgYW5vdGhlcgphcmd1bWVudCAnZm9yY2UnKSB3aGljaCB3b3VsZCBmb3Jj
+ZSBsaWJ1ZGV2IHRvIGFsd2F5cyByZWFkIHRoZQpjdXJyZW50IHZhbHVlIGJ1dCBhbHNvIGFkZGlu
+ZyBpdCB0byB0aGUgaW50ZXJuYWwgY2FjaGUgZm9yIHRoZQpiZW5lZml0IG9mIG90aGVyIGFwcGxp
+Y2F0aW9ucy4KCktheT8KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJ
+ICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgKzQ5IDkxMSA3NDA1
+MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xy
+bmJlcmcKR0Y6IEouIEhhd24sIEouIEd1aWxkLCBGLiBJbWVuZMO2cmZmZXIsIEhSQiAxNjc0NiAo
+QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
