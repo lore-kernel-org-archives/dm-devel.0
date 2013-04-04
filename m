@@ -1,58 +1,27 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: btree vs. linear seach in device mapper
-Date: Thu, 4 Apr 2013 19:03:45 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1304041901170.29240@file.rdu.redhat.com>
-References: <515599DE.3050104@redhat.com>
-	<20130404085848.GC24402@stefanha-thinkpad.redhat.com>
-	<Pine.LNX.4.64.1304040916470.17024@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1304041021260.23945@file.rdu.redhat.com>
-	<20130404144320.GA8207@debian>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [dm-devel] [PATCH] scsi-dh-emc: fix activate vs set_params race
+Date: Thu, 04 Apr 2013 18:11:41 -0500
+Message-ID: <515E08AD.3060404@cs.wisc.edu>
+References: <Pine.LNX.4.64.1304021954420.27554@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130404144320.GA8207@debian>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1304021954420.27554@file.rdu.redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Chandra Seetharaman <sekharan@us.ibm.com>, linux-scsi@vger.kernel.org, Rob Evers <revers@redhat.com>
 List-Id: dm-devel.ids
 
-
-
-On Thu, 4 Apr 2013, Joe Thornber wrote:
-
-> On Thu, Apr 04, 2013 at 10:27:02AM -0400, Mikulas Patocka wrote:
-> > BTW. when I see that btree code in dm-table.c, I ask - why doesn't it use 
-> > binary search?
-> > 
-> > We only append targets at the end when constructing the device, we never 
-> > insert or remove them, so we don't need a tree. For these operations 
-> > binary search would be as good as btree and it is simpler.
+On 04/02/2013 07:09 PM, Mikulas Patocka wrote:
+> Hi
 > 
-> I originally expected dm tables to have many, many more entries than
-> they do these days (I remember benchmarking it with 1 million
-> entries).  I used a btree to try and be nicer to the cpu cache; the
-> idea being that each btree node could fit into a cache line.  Plain
-> binary search would have caused many more cache faults.
-> 
-> Given how dm is used these days I wouldn't mind a switch to a binary
-> search.
-> 
-> - Joe
+> This fixes a possible race in scsi_dh_emc. It is untested because I don't 
+> have the hardware. It could happen when we reload a multipath device and 
+> path failure happens at the same time.
 
-I see.
 
-If the btree helps to save a few cachelines and doesn't hurt, we can leave 
-it there. If it ever causes some code maintainability difficulties, we can 
-switch to a binary search...
+I think this patch is ok. I do not have the hw to test it anymore.
 
-Mikulas
+If you wanted to test just to make sure it is safe you should bug Rob
+Evers. He can help you find a machine in the westford lab that has it
