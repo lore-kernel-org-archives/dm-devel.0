@@ -1,19 +1,16 @@
-From: Sebastian Riemer <sebastian.riemer@profitbricks.com>
-Subject: Re: [PATCH] libmultipath/discovery: read sysfs files
-	uncached
-Date: Thu, 04 Apr 2013 12:47:26 +0200
-Message-ID: <515D5A3E.6000807@profitbricks.com>
-References: <1364912936-14636-1-git-send-email-sebastian.riemer@profitbricks.com>
-	<1364936448.5344.8.camel@lapoo.opensvc.com>
-	<515D211B.3080805@suse.de>
-	<CAPXgP1191ea0z-Cm3-_Yyb+K7Teubtz4hevR3f6=tPiTji_WeQ@mail.gmail.com>
-	<515D53FE.9050407@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mpath: do not change SCSI device handler
+Date: Thu, 4 Apr 2013 08:24:09 -0400
+Message-ID: <20130404122408.GA9996@redhat.com>
+References: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
+	<515D21EB.8010701@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <515D53FE.9050407@suse.de>
+Content-Disposition: inline
+In-Reply-To: <515D21EB.8010701@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,34 +21,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel <dm-devel@redhat.com>, Kay Sievers <kay@vrfy.org>, Bart Van Assche <bvanassche@acm.org>, Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On 04.04.2013 12:20, Hannes Reinecke wrote:
-> On 04/04/2013 12:00 PM, Kay Sievers wrote:
->> On Thu, Apr 4, 2013 at 8:43 AM, Hannes Reinecke <hare@suse.de> wrote:
->>>>> Unfortunately, libudev doesn't provide an uncached variant. This
->>>>> is why we have to reimplement the functionality and some libudev
->>>>> internal functions here.
->>
->> Hannes,
->>
->> didn't you intend to use udev_device_set_sysattr_value(..., attribute,
->> NULL); to clear the cached value?
->>
+On Thu, Apr 04 2013 at  2:47am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> NACK.
 > 
-> Yes, it should. Question remains, though, what happens to the actual
-> sysfs attribute.
-> Does it remain unchained? Will it be set to '0'?
+> This kills multipath startup when scsi_dh_* modules are already loaded.
 
-I had a look at systemd-200.tar.xz. If the value is NULL, then only the
-value length is set to zero. So the sysfs file is still opened and
-write() gets zero length as argument. So the file remains unchanged.
-Afterwards, NULL is stored in the cache as value. For me this isn't
-implemented right as you are bugging the kernel with open() and close()
-without a need. Furthermore, Debian Squeeze doesn't have that
-"udev_device_set_sysattr_value()" function. So at least that
-distribution could need a workaround.
+You mean an incorrect scsi_dh is already attached.
 
-Cheers,
-Sebastian
+> After boot scsi_dh_* modules might already be loaded without
+> multipath running.
+> Multipath might have defined other hardware handlers in the
+> configuration file, and will re-attach them on startup.
+> 
+> With this patch multipath cannot configure the devices properly and
+> will abort.
+
+In practice the scenario you describe is configuration error and can
+easily be avoided in a properly configured system.
+
+But that aside, Alasdair pointed out that it appears the heart of the
+problem which Mikulas described in his patch header is due the fact that
+the scsi_dh is switched, while IO may still be in-flight, during table
+load (multipath_ctr -> parse_priority_group -> parse_path) rather than
+deferring the switch until multipath_resume.  
+
+I'll take a look at fixing this by deferring the scsi_dh switch until
+resume.  This fix would assume multipath-tools is _not_ doing a noflush
+suspend/resume when it is switching the scsi_dh.
+
+Mike
