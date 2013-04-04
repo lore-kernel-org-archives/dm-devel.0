@@ -1,46 +1,47 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: btree vs. linear seach in device mapper
-Date: Thu, 4 Apr 2013 15:43:21 +0100
-Message-ID: <20130404144320.GA8207@debian>
-References: <515599DE.3050104@redhat.com>
-	<20130404085848.GC24402@stefanha-thinkpad.redhat.com>
-	<Pine.LNX.4.64.1304040916470.17024@file.rdu.redhat.com>
-	<Pine.LNX.4.64.1304041021260.23945@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: [dm-devel] [PATCH] [RESEND] scsi_dh_alua: Add module parameter to
+ allow failover to non preferred path without STPG
+Date: Thu, 4 Apr 2013 14:54:47 +0000
+Message-ID: <8255ED565A0EAA4A960625E27D49DBF21FF97F35@SACEXCMBX04-PRD.hq.netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1304041021260.23945@file.rdu.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 04, 2013 at 10:27:02AM -0400, Mikulas Patocka wrote:
-> BTW. when I see that btree code in dm-table.c, I ask - why doesn't it use 
-> binary search?
-> 
-> We only append targets at the end when constructing the device, we never 
-> insert or remove them, so we don't need a tree. For these operations 
-> binary search would be as good as btree and it is simpler.
+Resending with requested rewording of the parameter description.
+Currently ALUA device handler sends STPG command during failover and failback.
+Failover can be optimized by implicit failover (by not to sending STPG command), when 1 is passed as hwhandler parameter in multipath.conf. ex "2 alua 1". We may need to pass the parameter through module param for alua device handler to optimize failover if incase retain_attached_hwhandler set in multipath.conf and hwhandler is set with non-tpgs device handler ex: '1 rdac'.
 
-I originally expected dm tables to have many, many more entries than
-they do these days (I remember benchmarking it with 1 million
-entries).  I used a btree to try and be nicer to the cpu cache; the
-idea being that each btree node could fit into a cache line.  Plain
-binary search would have caused many more cache faults.
+Signed-off-by: Vijay Chauhan <vijay.chauhan@netapp.com>
+Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
 
-Given how dm is used these days I wouldn't mind a switch to a binary
-search.
-
-- Joe
+---
+--- a/drivers/scsi/device_handler/scsi_dh_alua.c.orig	2013-03-27 12:18:35.000000000 +0530
++++ b/drivers/scsi/device_handler/scsi_dh_alua.c	2013-03-27 13:23:16.000000000 +0530
+@@ -710,6 +710,10 @@ static int alua_set_params(struct scsi_d
+ 	return result;
+ }
+ 
++static uint optimize_stpg;
++module_param(optimize_stpg, uint, S_IRUGO|S_IWUSR); 
++MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, 
++rather than sending a STPG, when implicit TPGS is supported (0=No,1=Yes). Default is 0.");
++
+ /*
+  * alua_activate - activate a path
+  * @sdev: device on the path to be activated @@ -731,6 +735,9 @@ static int alua_activate(struct scsi_dev
+ 	if (err != SCSI_DH_OK)
+ 		goto out;
+ 
++	if (optimize_stpg)
++		h->flags |= ALUA_OPTIMIZE_STPG;
++
+ 	if (h->tpgs & TPGS_MODE_EXPLICIT) {
+ 		switch (h->state) {
+ 		case TPGS_STATE_NONOPTIMIZED:
+--
