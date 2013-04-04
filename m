@@ -1,14 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm-mpath: do not change SCSI device handler
-Date: Thu, 04 Apr 2013 08:47:07 +0200
-Message-ID: <515D21EB.8010701@suse.de>
-References: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
+From: Sebastian Riemer <sebastian.riemer@profitbricks.com>
+Subject: Re: [PATCH] libmultipath/discovery: read sysfs files
+	uncached
+Date: Thu, 04 Apr 2013 11:42:28 +0200
+Message-ID: <515D4B04.6010203@profitbricks.com>
+References: <1364912936-14636-1-git-send-email-sebastian.riemer@profitbricks.com>
+	<1364936448.5344.8.camel@lapoo.opensvc.com>
+	<515D211B.3080805@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
+In-Reply-To: <515D211B.3080805@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,71 +21,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-On 04/03/2013 02:04 AM, Mikulas Patocka wrote:
-> Hi
-> =
+On 04.04.2013 08:43, Hannes Reinecke wrote:
+> Hmm; this is not the only issue we have with libudev.
+> _Setting_ of sysfs attributes is also a problem (I just send a patch
+> to Kay for this).
+> However, having to duplicate things feels like a waste; I'd rather
+> have it implemented at the libudev side.
+> 
+> The problem with this patch is that we're bypassing the cache of
+> libudev; so any _other_ application using libudev would still be
+> reading the stale value.
+> 
+> I'd very much prefer to have a 'uncached' variant (or adding another
+> argument 'force') which would force libudev to always read the
+> current value but also adding it to the internal cache for the
+> benefit of other applications.
 
-> This fixes BZ 912245 and 902595.
-> =
+Fine for me. I just wanted to point out that there is an issue. In the
+long run it also makes most sense to me to improve libudev.
 
-> Mikulas
-> =
-
-> ---
-> =
-
-> dm-mpath: do not change SCSI device handler
-> =
-
-> This patch prevents the multipath target from changing the device handler.
-> This fixes a kernel crash that can happen when changing the device
-> handler.
-> =
-
-> When we reload a multipath device, there are two instances of the
-> multipath target - the first instance that is active and the second
-> instance that is being constructed with "ctr" method.
-> =
-
-> If the multipath constructor finds out that the device is using a
-> different device handler, it detaches the existing handler and attaches a
-> new handler. However, the first instance of the multipath target still
-> exists and processes requests. If the first instance sends some
-> path-management request with scsi_dh_activate and the second instance
-> detaches the device handler while the path-management request is in
-> flight, a crash happens. The reason for the crash is that the endio
-> routine for the path-management request is working with structures that
-> were freed when the handler was detached.
-> =
-
-> There is no practical need to change device handlers on an active device,
-> so this patch disables it.
-> =
-
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> =
-
-
-NACK.
-
-This kills multipath startup when scsi_dh_* modules are already loaded.
-After boot scsi_dh_* modules might already be loaded without
-multipath running.
-Multipath might have defined other hardware handlers in the
-configuration file, and will re-attach them on startup.
-
-With this patch multipath cannot configure the devices properly and
-will abort.
+For early adopters this can be a workaround as libraries aren't that
+easy to replace if they come from a binary distribution. The libudev is
+part of systemd by now. So back-porting fixes to an older variant of
+libudev from a distribution without systemd can be difficult. We already
+work like a distribution but we don't want to maintain a git repo for
+that stuff as well if we already need to maintain a git repo for the
+multipath-tools.
+For me as a kind of user in this case the mistake was to use a library
+function which doesn't do the expected instead of implementing
+differently and reporting the requirement to the library for future use.
+If it's in the library, then the workaround can be removed.
 
 Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Sebastian
