@@ -1,19 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mpath: do not change SCSI device handler
-Date: Thu, 4 Apr 2013 10:20:48 -0400
-Message-ID: <20130404142048.GB10208@redhat.com>
-References: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
-	<515D21EB.8010701@suse.de> <20130404122408.GA9996@redhat.com>
-	<Pine.LNX.4.64.1304040847580.13053@file.rdu.redhat.com>
-	<20130404131631.GA10208@redhat.com>
-	<Pine.LNX.4.64.1304040918460.17024@file.rdu.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: btree vs. linear seach in device mapper
+Date: Thu, 4 Apr 2013 10:27:02 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1304041021260.23945@file.rdu.redhat.com>
+References: <515599DE.3050104@redhat.com>
+	<20130404085848.GC24402@stefanha-thinkpad.redhat.com>
+	<Pine.LNX.4.64.1304040916470.17024@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1304040918460.17024@file.rdu.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1304040916470.17024@file.rdu.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,58 +20,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 04 2013 at  9:36am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> 
-> 
-> On Thu, 4 Apr 2013, Mike Snitzer wrote:
-> 
-> > On Thu, Apr 04 2013 at  8:55am -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > 
-> > > 
-> > > On Thu, 4 Apr 2013, Mike Snitzer wrote:
-> > > 
-> > > > I'll take a look at fixing this by deferring the scsi_dh switch until
-> > > > resume.  This fix would assume multipath-tools is _not_ doing a noflush
-> > > > suspend/resume when it is switching the scsi_dh.
-> > > > 
-> > > > Mike
-> > > 
-> > > This won't work because scsi_dh_attach allocates memory and you can't 
-> > > allocate memory when something is suspended.
-> > 
-> > Ah yeah, scsi_dh->attach allocates memory for scsi_dh_data.  But
-> > couldn't those scsi_dh_* attach allocations be switched from GFP_KERNEL
-> > to GFP_NOIO?
-> 
-> Yes and no.
-> 
-> GFP_NOIO allocations don't issue any IO, so they have higher possibility 
-> of failure - if the memory is full of user space pages or dirty file pages 
-> and there are no clean cache pages, then GFP_NOIO allocation can't make 
-> any progress and fails. GFP_KERNEL allocation could swap out some pages 
-> and succeed.
-> 
-> On the other hand, kernel developers use GFP_NOIO allocations and assume 
-> that they don't fail. And they don't fail most of the time. Although I 
-> have seen cases where it failed and caused trouble - when allocating 
-> inodes with GFP_NOIO under high memory stress. (the correct solution would 
-> be to allocate the inode with GFP_KERNEL earlier, when we are not holding 
-> any filesystem lock).
-> 
-> >From the point of formal correctness, relying on GFP_NOIO is wrong, but if 
-> the allocated space is small and it happens infrequently (only on 
-> activation), you can likely get away with it without being caught.
 
-I'm suggesting that switching the scsi_dh is not something that will be
-done on a system that is suffering from serious memory contention.
+On Thu, 4 Apr 2013, Mikulas Patocka wrote:
 
-But I think we need to get back to analyzing the scsi_dh change you
-mentioned before with tracking counts, etc.
+> There are no scalability problems regarding performance - device mapper 
+> uses btree to search the target table, so the number of target don't 
+> affect performance.
+> 
+> device mapper uses vmalloc to alloc all targets linearly, so it is limited 
+> by avaiable vmalloc space. It is not a problem on x86-64, but it is 
+> limited on x86 - vmalloc space can be as low as 128k (one target structure 
+> has 64 bytes for 32-bit architectures and 96 bytes for 64-bit 
+> architectures).
+
+BTW. when I see that btree code in dm-table.c, I ask - why doesn't it use 
+binary search?
+
+We only append targets at the end when constructing the device, we never 
+insert or remove them, so we don't need a tree. For these operations 
+binary search would be as good as btree and it is simpler.
+
+Mikulas
