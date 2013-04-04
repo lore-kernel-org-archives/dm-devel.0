@@ -1,47 +1,48 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: [dm-devel] [PATCH] [RESEND] scsi_dh_alua: Add module parameter to
- allow failover to non preferred path without STPG
-Date: Thu, 4 Apr 2013 14:54:47 +0000
-Message-ID: <8255ED565A0EAA4A960625E27D49DBF21FF97F35@SACEXCMBX04-PRD.hq.netapp.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-mpath: do not change SCSI device handler
+Date: Thu, 4 Apr 2013 11:13:06 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1304041106420.2172@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1304022000390.27554@file.rdu.redhat.com>
+	<515D21EB.8010701@suse.de> <20130404122408.GA9996@redhat.com>
+	<Pine.LNX.4.64.1304040847580.13053@file.rdu.redhat.com>
+	<20130404131631.GA10208@redhat.com>
+	<Pine.LNX.4.64.1304040918460.17024@file.rdu.redhat.com>
+	<20130404142048.GB10208@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
-Cc: "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20130404142048.GB10208@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Resending with requested rewording of the parameter description.
-Currently ALUA device handler sends STPG command during failover and failback.
-Failover can be optimized by implicit failover (by not to sending STPG command), when 1 is passed as hwhandler parameter in multipath.conf. ex "2 alua 1". We may need to pass the parameter through module param for alua device handler to optimize failover if incase retain_attached_hwhandler set in multipath.conf and hwhandler is set with non-tpgs device handler ex: '1 rdac'.
 
-Signed-off-by: Vijay Chauhan <vijay.chauhan@netapp.com>
-Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
 
----
---- a/drivers/scsi/device_handler/scsi_dh_alua.c.orig	2013-03-27 12:18:35.000000000 +0530
-+++ b/drivers/scsi/device_handler/scsi_dh_alua.c	2013-03-27 13:23:16.000000000 +0530
-@@ -710,6 +710,10 @@ static int alua_set_params(struct scsi_d
- 	return result;
- }
- 
-+static uint optimize_stpg;
-+module_param(optimize_stpg, uint, S_IRUGO|S_IWUSR); 
-+MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, 
-+rather than sending a STPG, when implicit TPGS is supported (0=No,1=Yes). Default is 0.");
-+
- /*
-  * alua_activate - activate a path
-  * @sdev: device on the path to be activated @@ -731,6 +735,9 @@ static int alua_activate(struct scsi_dev
- 	if (err != SCSI_DH_OK)
- 		goto out;
- 
-+	if (optimize_stpg)
-+		h->flags |= ALUA_OPTIMIZE_STPG;
-+
- 	if (h->tpgs & TPGS_MODE_EXPLICIT) {
- 		switch (h->state) {
- 		case TPGS_STATE_NONOPTIMIZED:
---
+On Thu, 4 Apr 2013, Mike Snitzer wrote:
+
+> I'm suggesting that switching the scsi_dh is not something that will be
+> done on a system that is suffering from serious memory contention.
+> 
+> But I think we need to get back to analyzing the scsi_dh change you
+> mentioned before with tracking counts, etc.
+
+When I look at the code, I see module_put(THIS_MODULE) in all scsi device 
+handlers. Moreover, there are many 'module_put(THIS_MODULE)' over the 
+whole kernel. It seems buggy, because when the function module_put 
+returns, reschedule happens, module is unloaded, the process that called 
+module_put(THIS_MODULE) is scheduled back again, crash happens because we 
+are running a code that no longer exists. Is it a bug or is there some 
+trick that prevents the kernel from crashing in this scenario?
+
+Mikulas
