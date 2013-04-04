@@ -1,14 +1,18 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: [PATCH] [RESEND] hwtable: Add vendor ID and update
- defaults for NetApp E-Series storage
-Date: Fri, 29 Mar 2013 18:25:27 +0000
-Message-ID: <8255ED565A0EAA4A960625E27D49DBF21FF92518@SACEXCMBX04-PRD.hq.netapp.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: btree vs. linear seach in device mapper
+Date: Thu, 4 Apr 2013 19:03:45 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1304041901170.29240@file.rdu.redhat.com>
+References: <515599DE.3050104@redhat.com>
+	<20130404085848.GC24402@stefanha-thinkpad.redhat.com>
+	<Pine.LNX.4.64.1304040916470.17024@file.rdu.redhat.com>
+	<Pine.LNX.4.64.1304041021260.23945@file.rdu.redhat.com>
+	<20130404144320.GA8207@debian>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20130404144320.GA8207@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,50 +22,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: "agk@redhat.com" <agk@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Attempting to resend because it did not seem to go through after several hours.  Please disregard if both went through.
-This patch provides hwtable updates for NETAPP/LSI/ENGENIO E-Series arrays, utilizing new features to detect TPGS support, automatically.
 
-Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
 
----
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c index 4d485a5..2e5500c 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1135,9 +1135,13 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = RDAC,
- 		.prio_name     = PRIO_RDAC,
- 	},
--	/* LSI/Engenio/NetApp E-Series RDAC storage */
-+	/* LSI/Engenio/NetApp E-Series RDAC storage
-+	 *
-+	 * Maintainer : Sean Stewart
-+	 * Mail : sean.stewart@netapp.com
-+	 */
- 	{
--		.vendor        = "(LSI|ENGENIO)",
-+		.vendor        = "(NETAPP|LSI|ENGENIO)",
- 		.product       = "INF-01-00",
- 		.bl_product    = "Universal Xport",
- 		.features      = "2 pg_init_retries 50",
-@@ -1145,12 +1149,14 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = 15,
-+		.no_path_retry = 30,
- 		.minio         = DEFAULT_MINIO,
- 		.minio_rq      = DEFAULT_MINIO_RQ,
- 		.checker_name  = RDAC,
- 		.prio_name     = PRIO_RDAC,
- 		.prio_args     = NULL,
-+		.detect_prio   = DETECT_PRIO_ON,
-+		.retain_hwhandler = RETAIN_HWHANDLER_ON,
- 	},
- 	{
- 		.vendor        = "STK",
+On Thu, 4 Apr 2013, Joe Thornber wrote:
 
---
+> On Thu, Apr 04, 2013 at 10:27:02AM -0400, Mikulas Patocka wrote:
+> > BTW. when I see that btree code in dm-table.c, I ask - why doesn't it use 
+> > binary search?
+> > 
+> > We only append targets at the end when constructing the device, we never 
+> > insert or remove them, so we don't need a tree. For these operations 
+> > binary search would be as good as btree and it is simpler.
+> 
+> I originally expected dm tables to have many, many more entries than
+> they do these days (I remember benchmarking it with 1 million
+> entries).  I used a btree to try and be nicer to the cpu cache; the
+> idea being that each btree node could fit into a cache line.  Plain
+> binary search would have caused many more cache faults.
+> 
+> Given how dm is used these days I wouldn't mind a switch to a binary
+> search.
+> 
+> - Joe
+
+I see.
+
+If the btree helps to save a few cachelines and doesn't hurt, we can leave 
+it there. If it ever causes some code maintainability difficulties, we can 
+switch to a binary search...
+
+Mikulas
