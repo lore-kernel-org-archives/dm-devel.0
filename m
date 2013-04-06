@@ -1,50 +1,38 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH] scsi-dh-emc: fix activate vs set_params race
-Date: Fri, 5 Apr 2013 17:27:39 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1304051725590.30904@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1304021954420.27554@file.rdu.redhat.com>
- <515E08AD.3060404@cs.wisc.edu> <D21B24A6-F860-4742-BAC8-3FF68EF5D29E@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper fixes for 3.9-rc6
+Date: Sat, 6 Apr 2013 02:47:48 +0100
+Message-ID: <20130406014748.GA10444@agk-dp.fab.redhat.com>
+References: <20130321022625.GA25054@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <D21B24A6-F860-4742-BAC8-3FF68EF5D29E@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Laurence Oberman <loberman@redhat.com>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Chandra Seetharaman <sekharan@us.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Rob Evers <revers@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130321022625.GA25054@agk-dp.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
+Please pull from:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/agk/linux-dm tags/dm-3.9-fixes-2
+ 
+to get the following device-mapper fixes for 3.9.
 
-On Thu, 4 Apr 2013, Laurence Oberman wrote:
+Thanks,
+Alasdair
+ 
+----------------------------------------------------------------
+A pair of patches to fix the writethrough mode of the device-mapper
+cache target when the device being cached is not itself wrapped with
+device-mapper.
 
-> I can test it. I have a clarion Cx3
-> Will get to it next week, traveling tomorrow
-> Laurence
-> 
-> Sent from my iPhone
+----------------------------------------------------------------
+Darrick J. Wong (1):
+      dm cache: fix writes to cache device in writethrough mode
 
-OK.
+Mike Snitzer (1):
+      dm cache: reduce bio front_pad size in writeback mode
 
-So, enable most debug options in kernel configuration and try the patch.
-
-Mikulas
-
-> On Apr 4, 2013, at 7:11 PM, Mike Christie <michaelc@cs.wisc.edu> wrote:
-> 
-> > On 04/02/2013 07:09 PM, Mikulas Patocka wrote:
-> >> Hi
-> >> 
-> >> This fixes a possible race in scsi_dh_emc. It is untested because I don't 
-> >> have the hardware. It could happen when we reload a multipath device and 
-> >> path failure happens at the same time.
-> > 
-> > 
-> > I think this patch is ok. I do not have the hw to test it anymore.
-> > 
-> > If you wanted to test just to make sure it is safe you should bug Rob
-> > Evers. He can help you find a machine in the westford lab that has it
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+ drivers/md/dm-cache-target.c |   51 +++++++++++++++++++++++++++++++-----------
+ 1 file changed, 38 insertions(+), 13 deletions(-)
