@@ -1,265 +1,119 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/2] dm mpath:  attach scsi_dh during table resume
-Date: Mon,  8 Apr 2013 17:50:16 -0400
-Message-ID: <1365457816-31475-2-git-send-email-snitzer@redhat.com>
-References: <20130404131631.GA10208@redhat.com>
- <1365457816-31475-1-git-send-email-snitzer@redhat.com>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1365457816-31475-1-git-send-email-snitzer@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
-Cc: hare@suse.de, mpatocka@redhat.com
+From: neha naik <nehanaik27@gmail.com>
+Subject: Performance of passthrough block device driver is low
+ for reads compared to writes
+Date: Mon, 8 Apr 2013 16:55:31 -0600
+Message-ID: <CAOb=_xLD0j_VUA8FLm7MPrP0MKSuvUFsXeJkdYKYNNTJFyEpEg@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5747757075339346374=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Preallocate scsi_dh_data using scsi_dh_alloc_data() during table load
-but attach the scsi_dh for each path during table resume.  This avoids a
-kernel crash that can happen when changing the scsi_dh during table
-load.
+--===============5747757075339346374==
+Content-Type: multipart/alternative; boundary=047d7b4147b47ac91e04d9e155c3
 
-When we reload a multipath device, there are two instances of the
-multipath target - the first instance that is active and the second
-instance that is being constructed during table load with "ctr" method.
+--047d7b4147b47ac91e04d9e155c3
+Content-Type: text/plain; charset=ISO-8859-1
 
-If the multipath constructor finds out that the device is using a
-different device handler, it detaches the existing handler and attaches
-a new handler. However, the first instance of the multipath target still
-exists and processes requests. If the first instance sends some
-path-management request with scsi_dh_activate and the second instance
-detaches the device handler while the path-management request is in
-flight, a crash happens. The reason for the crash is that the endio
-routine for the path-management request is working with structures that
-were freed when the handler was detached.
+Hi All,
+   If this is the wrong mailing list to ask my questions then i am sorry
+and tell me where i should post them.
+I have written a passthrough block device driver using 'make_request' call.
+This block device driver simply passes any request that comes to it down to
+lvm.
 
-References:
-  http://bugzilla.redhat.com/912245
-  http://bugzilla.redhat.com/902595
+However, the read performance for my passthrough driver is around 65MB/s
+(measured through dd) and write performance is around 140MB/s for dd block
+size 4096.
+The write performance matches with lvm's write performance more or less
+but, the read performance on lvm is around 365MB/s.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-mpath.c |  160 ++++++++++++++++++++++++++++++++++---------------
- 1 files changed, 111 insertions(+), 49 deletions(-)
+I am posting snippets of code which i think are relevant here:
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 37d9ead..fd16be1 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -36,6 +36,7 @@ struct pgpath {
- 
- 	struct dm_path path;
- 	struct delayed_work activate_path;
-+	struct scsi_dh_data *hw_handler_data;
- };
- 
- #define path_to_pgpath(__pgp) container_of((__pgp), struct pgpath, path)
-@@ -144,6 +145,7 @@ static struct pgpath *alloc_pgpath(void)
- 
- static void free_pgpath(struct pgpath *pgpath)
- {
-+	kfree(pgpath->hw_handler_data);
- 	kfree(pgpath);
- }
- 
-@@ -563,14 +565,53 @@ static int parse_path_selector(struct dm_arg_set *as, struct priority_group *pg,
- 	return 0;
- }
- 
-+/*
-+ * Return: @true if handler is already attached.
-+ */
-+static bool validate_attached_hardware_handler(struct multipath *m, struct pgpath *p)
-+{
-+	struct request_queue *q;
-+	const char *attached_handler_name;
-+	bool handler_already_attached = false;
-+
-+	q = bdev_get_queue(p->path.dev->bdev);
-+	attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
-+	if (attached_handler_name) {
-+		if (!strncmp(attached_handler_name, m->hw_handler_name,
-+			     strlen(attached_handler_name)))
-+			handler_already_attached = true;
-+
-+		if (!m->retain_attached_hw_handler) {
-+			kfree(attached_handler_name);
-+			return handler_already_attached;
-+		}
-+
-+		handler_already_attached = true;
-+		/*
-+		 * Reset hw_handler_name to match the attached handler
-+		 * and clear any hw_handler_params associated with the
-+		 * ignored handler.
-+		 *
-+		 * NB. This modifies the table line to show the actual
-+		 * handler instead of the original table passed in.
-+		 */
-+		kfree(m->hw_handler_name);
-+		m->hw_handler_name = attached_handler_name;
-+
-+		kfree(m->hw_handler_params);
-+		m->hw_handler_params = NULL;
-+	}
-+
-+	return handler_already_attached;
-+}
-+
- static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps,
--			       struct dm_target *ti)
-+				 struct dm_target *ti)
- {
- 	int r;
- 	struct pgpath *p;
- 	struct multipath *m = ti->private;
--	struct request_queue *q = NULL;
--	const char *attached_handler_name;
-+	bool skip_scsi_dh_alloc_data = false;
- 
- 	/* we need at least a path arg */
- 	if (as->argc < 1) {
-@@ -589,59 +630,25 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
- 		goto bad;
- 	}
- 
-+	/*
-+	 * Check if scsi_dh_data allocation can be avoided (as an optimization)
-+	 * based on which, if any, device handler is already attached.
-+	 */
- 	if (m->retain_attached_hw_handler || m->hw_handler_name)
--		q = bdev_get_queue(p->path.dev->bdev);
--
--	if (m->retain_attached_hw_handler) {
--		attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
--		if (attached_handler_name) {
--			/*
--			 * Reset hw_handler_name to match the attached handler
--			 * and clear any hw_handler_params associated with the
--			 * ignored handler.
--			 *
--			 * NB. This modifies the table line to show the actual
--			 * handler instead of the original table passed in.
--			 */
--			kfree(m->hw_handler_name);
--			m->hw_handler_name = attached_handler_name;
--
--			kfree(m->hw_handler_params);
--			m->hw_handler_params = NULL;
--		}
--	}
-+		skip_scsi_dh_alloc_data = validate_attached_hardware_handler(m, p);
- 
--	if (m->hw_handler_name) {
-+	if (m->hw_handler_name && !skip_scsi_dh_alloc_data) {
- 		/*
--		 * Increments scsi_dh reference, even when using an
--		 * already-attached handler.
-+		 * Pre-allocate the scsi_dh_data for this path.  Either the scsi_dh
-+		 * will take ownership of the memory or free_pgpath() will clean it up.
- 		 */
--		r = scsi_dh_attach(q, m->hw_handler_name, NULL);
--		if (r == -EBUSY) {
--			/*
--			 * Already attached to different hw_handler:
--			 * try to reattach with correct one.
--			 */
--			scsi_dh_detach(q);
--			r = scsi_dh_attach(q, m->hw_handler_name, NULL);
--		}
--
--		if (r < 0) {
--			ti->error = "error attaching hardware handler";
-+		p->hw_handler_data = scsi_dh_alloc_data(m->hw_handler_name, GFP_KERNEL);
-+		if (IS_ERR(p->hw_handler_data)) {
-+			ti->error = "error allocating hardware handler data";
- 			dm_put_device(ti, p->path.dev);
-+			r = PTR_ERR(p->hw_handler_data);
- 			goto bad;
- 		}
--
--		if (m->hw_handler_params) {
--			r = scsi_dh_set_params(q, m->hw_handler_params);
--			if (r < 0) {
--				ti->error = "unable to set hardware "
--							"handler parameters";
--				scsi_dh_detach(q);
--				dm_put_device(ti, p->path.dev);
--				goto bad;
--			}
--		}
- 	}
- 
- 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
-@@ -1349,16 +1356,71 @@ static void multipath_postsuspend(struct dm_target *ti)
- 	mutex_unlock(&m->work_mutex);
- }
- 
-+static void __attach_scsi_dh(struct multipath *m, struct pgpath *p)
-+{
-+	int r;
-+	char b[BDEVNAME_SIZE];
-+	struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
-+
-+	/*
-+	 * Increments scsi_dh reference, even when using an
-+	 * already-attached handler.  On success, scsi_dh_attach() will
-+	 * take ownership of p->hw_handler_data.
-+	 */
-+	r = scsi_dh_attach(q, m->hw_handler_name, p->hw_handler_data);
-+	if (r == -EBUSY) {
-+		/*
-+		 * Already attached to different hw_handler:
-+		 * try to reattach with correct one.
-+		 */
-+		scsi_dh_detach(q);
-+		r = scsi_dh_attach(q, m->hw_handler_name, p->hw_handler_data);
-+	}
-+
-+	if (r < 0) {
-+		DMERR("error attaching hardware handler to: %s",
-+		      bdevname(p->path.dev->bdev, b));
-+		return;
-+	}
-+	/*
-+	 * scsi_dh_attach() took ownership of p->hw_handler_data.
-+	 */
-+	p->hw_handler_data = NULL;
-+
-+	if (m->hw_handler_params) {
-+		r = scsi_dh_set_params(q, m->hw_handler_params);
-+		if (r < 0) {
-+			DMERR("unable to set hardware handler parameters, "
-+			      "detaching hardware handler from: %s",
-+			      bdevname(p->path.dev->bdev, b));
-+			scsi_dh_detach(q);
-+			return;
-+		}
-+	}
-+}
-+
- /*
-  * Restore the queue_if_no_path setting.
-  */
- static void multipath_resume(struct dm_target *ti)
- {
- 	struct multipath *m = (struct multipath *) ti->private;
-+	struct priority_group *pg;
-+	struct pgpath *p;
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&m->lock, flags);
- 	m->queue_if_no_path = m->saved_queue_if_no_path;
-+
-+	if (!m->hw_handler_name)
-+		goto out;
-+
-+	/* Attach the named scsi_dh to all paths in the priority groups */
-+	list_for_each_entry(pg, &m->priority_groups, list) {
-+		list_for_each_entry(p, &pg->pgpaths, list)
-+			__attach_scsi_dh(m, p);
-+	}
-+out:
- 	spin_unlock_irqrestore(&m->lock, flags);
- }
- 
--- 
-1.7.1
+static int passthrough_make_request(struct request_queue * queue, struct
+bio * bio)
+{
 
+        passthrough_device_t * passdev = queue->queuedata;
+        bio->bi_bdev = passdev->bdev_backing;
+        generic_make_request(bio);
+        return 0;
+}
+
+For initializing the queue i am using following:
+
+blk_queue_make_request(passdev->queue, passthrough_make_request);
+passdev->queue->queuedata = sbd;
+passdev->queue->unplug_fn = NULL;
+bdev_backing = passdev->bdev_backing;
+blk_queue_stack_limits(passdev->queue, bdev_get_queue(bdev_backing));
+if ((bdev_get_queue(bdev_backing))->merge_bvec_fn) {
+        blk_queue_merge_bvec(sbd->queue, sbd_merge_bvec_fn);
+}
+
+Now, I browsed through dm code in kernel to see if there is some flag or
+something which i am not using which is causing this huge performance
+penalty.
+But, I have not found anything.
+
+If you have any ideas about what i am possibly doing wrong then please tell
+me.
+
+Thanks in advance.
+
+Regards,
+Neha
+
+--047d7b4147b47ac91e04d9e155c3
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi All,<br>=A0=A0 If this is the wrong mailing list to ask my questions the=
+n i am sorry and tell me where i should post them.<br>I have written a pass=
+through block device driver using &#39;make_request&#39; call. This block d=
+evice driver simply passes any request that comes to it down to lvm.<br>
+<br>However, the read performance for my passthrough driver is around 65MB/=
+s (measured through dd) and write performance is around 140MB/s for dd bloc=
+k size 4096.<br>The write performance matches with lvm&#39;s write performa=
+nce more or less but, the read performance on lvm is around 365MB/s.<br>
+<br>I am posting snippets of code which i think are relevant here:<br><br>s=
+tatic int passthrough_make_request(struct request_queue * queue, struct bio=
+ * bio)<br>{<br><br>=A0=A0=A0=A0=A0=A0=A0 passthrough_device_t * passdev =
+=3D queue-&gt;queuedata;<br>
+=A0=A0=A0=A0=A0=A0=A0 bio-&gt;bi_bdev =3D passdev-&gt;bdev_backing;<br>=A0=
+=A0=A0=A0=A0=A0=A0 generic_make_request(bio);<br>=A0=A0=A0=A0=A0=A0=A0 retu=
+rn 0;<br>}<br><br>For initializing the queue i am using following:<br><br>b=
+lk_queue_make_request(passdev-&gt;queue, passthrough_make_request);<br>
+passdev-&gt;queue-&gt;queuedata =3D sbd;<br>passdev-&gt;queue-&gt;unplug_fn=
+ =3D NULL;<br>bdev_backing =3D passdev-&gt;bdev_backing;<br>blk_queue_stack=
+_limits(passdev-&gt;queue, bdev_get_queue(bdev_backing));<br>if ((bdev_get_=
+queue(bdev_backing))-&gt;merge_bvec_fn) {<br>
+=A0=A0=A0=A0=A0=A0=A0 blk_queue_merge_bvec(sbd-&gt;queue, sbd_merge_bvec_fn=
+);<br>}<br><br>Now, I browsed through dm code in kernel to see if there is =
+some flag or something which i am not using which is causing this huge perf=
+ormance penalty.<br>
+But, I have not found anything.<br><br>If you have any ideas about what i a=
+m possibly doing wrong then please tell me.<br><br>Thanks in advance.<br><b=
+r>Regards,<br>Neha<br>
+
+--047d7b4147b47ac91e04d9e155c3--
+
+
+--===============5747757075339346374==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5747757075339346374==--
