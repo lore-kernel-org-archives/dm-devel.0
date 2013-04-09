@@ -1,8 +1,9 @@
-From: Tejun Heo <tj@kernel.org>
+From: Vivek Goyal <vgoyal@redhat.com>
 Subject: Re: dm-crypt parallelization patches
-Date: Tue, 9 Apr 2013 14:03:56 -0700
-Message-ID: <20130409210356.GN6186@mtj.dyndns.org>
-References: <20130328203808.GC15969@redhat.com>
+Date: Tue, 9 Apr 2013 17:07:35 -0400
+Message-ID: <20130409210735.GR6320@redhat.com>
+References: <20130328194443.GG14088@htj.dyndns.org>
+ <20130328203808.GC15969@redhat.com>
  <20130328204522.GA25501@mtj.dyndns.org>
  <Pine.LNX.4.64.1304091242350.10025@file.rdu.redhat.com>
  <20130409175753.GA6186@mtj.dyndns.org>
@@ -11,28 +12,56 @@ References: <20130328203808.GC15969@redhat.com>
  <Pine.LNX.4.64.1304091450410.26327@file.rdu.redhat.com>
  <20130409195259.GL6186@mtj.dyndns.org>
  <Pine.LNX.4.64.1304091624110.19672@file.rdu.redhat.com>
- <20130409210201.GM6186@mtj.dyndns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20130409210201.GM6186@mtj.dyndns.org>
+In-Reply-To: <Pine.LNX.4.64.1304091624110.19672@file.rdu.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Vivek Goyal <vgoyal@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>
+Cc: Tejun Heo <tj@kernel.org>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>
 List-Id: dm-devel.ids
 
-On Tue, Apr 09, 2013 at 02:02:01PM -0700, Tejun Heo wrote:
-> For testing, copying bi_ioc and bi_css directly is fine but please add
-> another interface to copy those for the actual code.  Say,
-> bio_copy_association(@to_bio, @from_bio) or whatever.
+On Tue, Apr 09, 2013 at 04:32:28PM -0400, Mikulas Patocka wrote:
 
-Another and probably better possibility is just remembering the
-issuing task (you would of course need to hold an extra ref as long as
-you wanna use it) and use bio_associate_task() on it when creating new
-bios.
+[..]
+> Generally, we shouldn't associate bios with "current" task in device 
+> mapper targets. For example suppose that we have two stacked dm-crypt 
+> targets:
+>
+> In the "current" process pointer in lower dm-crypt target's request 
+> function always points to the workqueue of the upper dm-crypt target that 
+> submits the bios. So if we associate the bio with "current" in the lower 
+> target, we are associating it with a preallocated workqueue and we already 
+> lost the information who submitted it.
+> 
+> You should associate a bio with a task when you create the bio and "md" 
+> and "dm" midlayers should just forward this association to lower layer 
+> bios.
 
-Thanks.
+bio_associate_current() return -EBUSY if bio has already been associated
+with an io context.
 
--- 
-tejun
+So in a stack if every driver calls bio_associate_current(), upon bio
+submission, it will automatically amke sure bio gets associated with
+submitter task in top level device and calls by lower level device
+will be ignored.
+
+Lower level devices I think just need to make sure this context
+info is propogated to cloned bios.
+
+
+[..]
+> +#ifdef CONFIG_BLK_CGROUP
+> +	tio->clone.bi_ioc = ci->bio->bi_ioc;
+> +	tio->clone.bi_css = ci->bio->bi_css;
+
+You also need to take references to ioc and css objects. I guess a helper
+function will be better. May be something like.
+
+bio_associate_bio_context(bio1, bio2)
+
+And this initialize bio2's context with bio1's context.
+
+Thanks
+Vivek
