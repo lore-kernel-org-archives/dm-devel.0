@@ -1,9 +1,8 @@
-From: Vivek Goyal <vgoyal@redhat.com>
+From: Tejun Heo <tj@kernel.org>
 Subject: Re: dm-crypt parallelization patches
-Date: Tue, 9 Apr 2013 14:42:48 -0400
-Message-ID: <20130409184248.GO6320@redhat.com>
-References: <20130326202837.GA5599@redhat.com>
- <20130328185327.GF14088@htj.dyndns.org>
+Date: Tue, 9 Apr 2013 11:57:21 -0700
+Message-ID: <20130409185721.GF6186@mtj.dyndns.org>
+References: <20130328185327.GF14088@htj.dyndns.org>
  <20130328193343.GA15969@redhat.com>
  <20130328194443.GG14088@htj.dyndns.org>
  <20130328203808.GC15969@redhat.com>
@@ -12,42 +11,48 @@ References: <20130326202837.GA5599@redhat.com>
  <20130409175753.GA6186@mtj.dyndns.org>
  <Pine.LNX.4.64.1304091402150.10025@file.rdu.redhat.com>
  <20130409181031.GC6186@mtj.dyndns.org>
+ <20130409184248.GO6320@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20130409181031.GC6186@mtj.dyndns.org>
+In-Reply-To: <20130409184248.GO6320@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
+To: Vivek Goyal <vgoyal@redhat.com>
 Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>
 List-Id: dm-devel.ids
 
-On Tue, Apr 09, 2013 at 11:10:31AM -0700, Tejun Heo wrote:
-> Hey,
-> 
-> On Tue, Apr 09, 2013 at 02:08:06PM -0400, Mikulas Patocka wrote:
-> > > Hmmm? Why not just keep the issuing order along with plugging
-> > > boundaries?
-> > 
-> > What do you mean?
-> > 
-> > I used to have a patch that keeps order of requests as they were 
-> > introduced, but sorting the requests according to sector number is a bit 
-> > simpler.
-> 
-> You're still destroying the context information.  Please just keep the
-> issuing order along with plugging boundaries.
+Hello,
 
-I guess plugging boundary is more important than issuing order as 
-block layer should take care of mering the bio and put in right
-order (attempt_plug_merge()).
+On Tue, Apr 09, 2013 at 02:42:48PM -0400, Vivek Goyal wrote:
+> I guess plugging boundary is more important than issuing order as 
+> block layer should take care of mering the bio and put in right
+> order (attempt_plug_merge()).
 
-But to make use of plugging boundary, one would probably still need
-submission using single thread.
+Yeah, the exact order probably doesn't affect things too much but it's
+just a nice design principle to follow - if you're gonna step in in
+the middle and meddle with requests, preserve as much context as
+reasonably possible, and it's not like preserving that order is
+difficult.
 
-And if one is using single thread for submission, one will still get
-good performance (even if you are not using bio_associate_current()), as
-by default all bio will go to submitting thread's context.
+> But to make use of plugging boundary, one would probably still need
+> submission using single thread.
 
-Thanks
-Vivek
+It doesn't have to a specific task.  Whoever finishes the last bio /
+segment / whatever in the plugging domain can issue all of them.  I
+probably am missing details but the overall mechanism can be pretty
+simple.  Just keep the bios from the same plugging domain in the
+received order along with an atomic counter and issue them all when
+the counter hits zero.  No need to fiddle with sorting or whatever.
+
+> And if one is using single thread for submission, one will still get
+> good performance (even if you are not using bio_associate_current()), as
+> by default all bio will go to submitting thread's context.
+
+And destroy all per-ioc and cgroup logics in block layer in the
+process.
+
+Thanks.
+
+-- 
+tejun
