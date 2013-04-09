@@ -1,58 +1,34 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: dm-crypt parallelization patches
-Date: Tue, 9 Apr 2013 11:57:21 -0700
-Message-ID: <20130409185721.GF6186@mtj.dyndns.org>
-References: <20130328185327.GF14088@htj.dyndns.org>
- <20130328193343.GA15969@redhat.com>
- <20130328194443.GG14088@htj.dyndns.org>
- <20130328203808.GC15969@redhat.com>
- <20130328204522.GA25501@mtj.dyndns.org>
- <Pine.LNX.4.64.1304091242350.10025@file.rdu.redhat.com>
- <20130409175753.GA6186@mtj.dyndns.org>
- <Pine.LNX.4.64.1304091402150.10025@file.rdu.redhat.com>
- <20130409181031.GC6186@mtj.dyndns.org>
- <20130409184248.GO6320@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [dm-crypt] [dm-devel] dm-crypt performance
+Date: Tue, 09 Apr 2013 20:59:27 +0200
+Message-ID: <5164650F.50405@gmail.com>
+References: <Pine.LNX.4.64.1303252051520.9745@file.rdu.redhat.com> <20130326122713.GC27610@agk-dp.fab.redhat.com> <5151FF82.6090405@gmail.com> <Pine.LNX.4.64.1304091352320.10025@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130409184248.GO6320@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1304091352320.10025@file.rdu.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Mike Snitzer <msnitzer@redhat.com>, dm-crypt@saout.de, Christian Schmidt <schmidt@digadd.de>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>
 List-Id: dm-devel.ids
 
-Hello,
+On 9.4.2013 20:08, Mikulas Patocka wrote:
+> 
+> 
+> On Tue, 26 Mar 2013, Milan Broz wrote:
+> 
+>> - Are we sure we are not inroducing some another side channel in disc
+>> encryption? (Unprivileged user can measure timing here).
+>> (Perhaps stupid reason but please do not prefer performance to security
+>> in encryption. Enough we have timing attacks for AES implementations...)
+> 
+> So use serpent - it is implemented without any data-dependent lookup 
+> tables, so it has no timing attacks.
 
-On Tue, Apr 09, 2013 at 02:42:48PM -0400, Vivek Goyal wrote:
-> I guess plugging boundary is more important than issuing order as 
-> block layer should take care of mering the bio and put in right
-> order (attempt_plug_merge()).
+I wish using something different than AES is just such simple technical issue
+for many people. But e.g. just try it in FIPS mode where AES is the only option:-)
 
-Yeah, the exact order probably doesn't affect things too much but it's
-just a nice design principle to follow - if you're gonna step in in
-the middle and meddle with requests, preserve as much context as
-reasonably possible, and it's not like preserving that order is
-difficult.
+Anyway, using bio_associate_current() seems to be the right way to try now...
 
-> But to make use of plugging boundary, one would probably still need
-> submission using single thread.
-
-It doesn't have to a specific task.  Whoever finishes the last bio /
-segment / whatever in the plugging domain can issue all of them.  I
-probably am missing details but the overall mechanism can be pretty
-simple.  Just keep the bios from the same plugging domain in the
-received order along with an atomic counter and issue them all when
-the counter hits zero.  No need to fiddle with sorting or whatever.
-
-> And if one is using single thread for submission, one will still get
-> good performance (even if you are not using bio_associate_current()), as
-> by default all bio will go to submitting thread's context.
-
-And destroy all per-ioc and cgroup logics in block layer in the
-process.
-
-Thanks.
-
--- 
-tejun
+Milan
