@@ -1,45 +1,55 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] dm-crypt performance
-Date: Tue, 9 Apr 2013 14:08:59 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1304091352320.10025@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1303252051520.9745@file.rdu.redhat.com>
- <20130326122713.GC27610@agk-dp.fab.redhat.com> <5151FF82.6090405@gmail.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: dm-crypt parallelization patches
+Date: Tue, 9 Apr 2013 11:10:31 -0700
+Message-ID: <20130409181031.GC6186@mtj.dyndns.org>
+References: <5151FF82.6090405@gmail.com>
+ <20130326202837.GA5599@redhat.com>
+ <20130328185327.GF14088@htj.dyndns.org>
+ <20130328193343.GA15969@redhat.com>
+ <20130328194443.GG14088@htj.dyndns.org>
+ <20130328203808.GC15969@redhat.com>
+ <20130328204522.GA25501@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304091242350.10025@file.rdu.redhat.com>
+ <20130409175753.GA6186@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304091402150.10025@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-In-Reply-To: <5151FF82.6090405-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt/>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: "dm-crypt" <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-To: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-crypt-4q3lyFh4P1g@public.gmane.org, Christian Schmidt <schmidt-IABvq36EpHazQB+pC5nmwQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1304091402150.10025@file.rdu.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Vivek Goyal <vgoyal@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>
 List-Id: dm-devel.ids
 
+Hey,
 
+On Tue, Apr 09, 2013 at 02:08:06PM -0400, Mikulas Patocka wrote:
+> > Hmmm? Why not just keep the issuing order along with plugging
+> > boundaries?
+> 
+> What do you mean?
+> 
+> I used to have a patch that keeps order of requests as they were 
+> introduced, but sorting the requests according to sector number is a bit 
+> simpler.
 
-On Tue, 26 Mar 2013, Milan Broz wrote:
+You're still destroying the context information.  Please just keep the
+issuing order along with plugging boundaries.
 
-> - Are we sure we are not inroducing some another side channel in disc
-> encryption? (Unprivileged user can measure timing here).
-> (Perhaps stupid reason but please do not prefer performance to security
-> in encryption. Enough we have timing attacks for AES implementations...)
+> > As I wrote before, please use bio_associate_current().  Currently,
+> > dm-crypt is completely messing up all the context information that cfq
+> > depends on to schedule IOs.  Of course, it doesn't perform well.
+> 
+> bio_associate_current() is only valid on a system with cgroups and there 
+> are no cgroups on the kernel where I tested it. It is an empty function:
+> 
+> static inline int bio_associate_current(struct bio *bio) { return -ENOENT; }
 
-So use serpent - it is implemented without any data-dependent lookup 
-tables, so it has no timing attacks.
+Yeah, because blkcg was the only user.  Please feel free to drop the
+ifdefs.  It covers both iocontext and cgroup association.
 
-AES uses data-dependent lookup tables, on CPU with hyperthreding, the 
-second thread can observe L1 cache footprint done by the first thread and 
-get some information about data being encrypted...
+Thanks.
 
-Mikulas
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
+-- 
+tejun
