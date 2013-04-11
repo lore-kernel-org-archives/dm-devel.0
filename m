@@ -1,55 +1,46 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH] make dm and dm-crypt forward cgroup context (was:
- dm-crypt parallelization patches)
-Date: Wed, 10 Apr 2013 16:50:09 -0700
-Message-ID: <20130410235009.GI17641@mtj.dyndns.org>
-References: <20130409175753.GA6186@mtj.dyndns.org>
- <Pine.LNX.4.64.1304091402150.10025@file.rdu.redhat.com>
- <20130409181031.GC6186@mtj.dyndns.org>
- <Pine.LNX.4.64.1304091450410.26327@file.rdu.redhat.com>
- <20130409195259.GL6186@mtj.dyndns.org>
- <Pine.LNX.4.64.1304091624110.19672@file.rdu.redhat.com>
- <20130409210735.GR6320@redhat.com>
- <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
- <20130410192427.GA14911@redhat.com>
- <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: NULL pointer due to malformed bcache bio
+Date: Wed, 10 Apr 2013 20:03:42 -0400
+Message-ID: <20130411000342.GA19451@redhat.com>
+References: <20130410205439.GA18092@redhat.com>
+ <20130410224914.GD30871@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>
+In-Reply-To: <20130410224914.GD30871-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Apr 10, 2013 at 07:42:59PM -0400, Mikulas Patocka wrote:
->  /*
-> + * bio_clone_context copies cgroup context from the original bio to the new bio.
-> + * It is used by bio midlayer drivers that create new bio based on an original
-> + * bio and forward it to the lower layer.
-> + *
-> + * No reference counts are incremented - it is assumed that the lifestime of the
-> + * new bio is shorter than the lifetime of the original bio. If the new bio can
-> + * outlive the old bio, the caller must increment the reference counts.
-> + *
-> + * Before freeing the new bio, the caller must clear the context with
-> + * bio_clear_context function. If bio_clear_context were not called, the
-> + * reference counts would be decremented on both new and original bio, resulting
-> + * in crash due to reference count underflow.
-> + */
-> +static inline void bio_clone_context(struct bio *orig, struct bio *new)
-> +{
-> +#ifdef CONFIG_BLK_CGROUP
-> +	new->bi_ioc = orig->bi_ioc;
-> +	new->bi_css = orig->bi_css;
+On Wed, Apr 10 2013 at  6:49pm -0400,
+Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
 
-Hmmm... Let's not do this.  Sure, you'd be saving several instructions
-but the gain is unlikely to be significant given that those cachelines
-are likely to be hot anyway.  Also, please name it
-bio_copy_association().
+> On Wed, Apr 10, 2013 at 04:54:40PM -0400, Mike Snitzer wrote:
+> > Hey,
+> > 
+> > So DM core clearly needs to be more defensive about the possibility for
+> > a NULL return from bio_alloc_bioset() given I'm hitting a NULL pointer
+> > in DM's alloc_tio() because nr_iovecs=512.  bio_alloc_bioset()'s call to
+> > bvec_alloc() only supports nr_iovecs up to BIO_MAX_PAGES (256).
+> > 
+> > Seems bcache should be using bio_get_nr_vecs() or something else?
+> > 
+> > But by using a bcache bucket size of 2MB, with the bcache staged in
+> > Jens' for-next, I've caused bcache to issue bios with nr_iovecs=512:
+> 
+> Argh. Why is dm using bi_max_vecs instead of bi_vcnt? I could hack
+> around this in bcache but I think dm is doing the wrong thing here.
 
-Thanks.
+But even bio_alloc_bioset() sets: bio->bi_max_vecs = nr_iovecs;
+And bio_clone_bioset() calls bio_alloc_bioset() with bio->bi_max_vecs.
+Similarly, __bio_clone() is using bi_max_vecs when cloning the bi_io_vec.
+So I'm missing why DM is doing the wrong thing.
 
--- 
-tejun
+> Unless I've missed something in my testing (and bcache's BIO_MAX_PAGES
+> check isn't quite right, actually) bcache _is_ splitting its bios
+> whenever bio_segments(bio) > BIO_MAX_PAGES, it's only bi_max_vecs that's
+> potentially > BIO_MAX_PAGES.
+
+OK, but why drive bi_max_vecs larger than BIO_MAX_PAGES?
