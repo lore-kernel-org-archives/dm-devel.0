@@ -1,37 +1,69 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
- dm-crypt parallelization patches)
-Date: Thu, 11 Apr 2013 13:00:05 -0700
-Message-ID: <20130411200005.GB11956@mtj.dyndns.org>
-References: <Pine.LNX.4.64.1304091450410.26327@file.rdu.redhat.com>
- <20130409195259.GL6186@mtj.dyndns.org>
- <Pine.LNX.4.64.1304091624110.19672@file.rdu.redhat.com>
- <20130409210735.GR6320@redhat.com>
- <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
- <20130410192427.GA14911@redhat.com>
- <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
- <20130410235009.GI17641@mtj.dyndns.org>
- <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
- <20130411195203.GA11956@mtj.dyndns.org>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [dm-devel] [PATCH] [RESEND] scsi_dh_alua: Add module parameter
+ to allow failover to non preferred path without STPG
+Date: Thu, 11 Apr 2013 15:58:36 -0700
+Message-ID: <1365721116.6982.3.camel@dabdike>
+References: <8255ED565A0EAA4A960625E27D49DBF21FF97F35@SACEXCMBX04-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130411195203.GA11956@mtj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <8255ED565A0EAA4A960625E27D49DBF21FF97F35@SACEXCMBX04-PRD.hq.netapp.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 11, 2013 at 12:52:03PM -0700, Tejun Heo wrote:
-> If this becomes an actual bottleneck, the right thing to do is making
-> css ref per-cpu.  Please stop messing around with refcounting.
+On Thu, 2013-04-04 at 14:54 +0000, Stewart, Sean wrote:
+> Resending with requested rewording of the parameter description.
+> Currently ALUA device handler sends STPG command during failover and failback.
+> Failover can be optimized by implicit failover (by not to sending STPG command), when 1 is passed as hwhandler parameter in multipath.conf. ex "2 alua 1". We may need to pass the parameter through module param for alua device handler to optimize failover if incase retain_attached_hwhandler set in multipath.conf and hwhandler is set with non-tpgs device handler ex: '1 rdac'.
+> 
+> Signed-off-by: Vijay Chauhan <vijay.chauhan@netapp.com>
+> Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
 
-If you think this kind of hackery is acceptable, you really need to
-re-evaluate your priorities in making engineering decisions.  In
-tightly coupled code, maybe, but you're trying to introduce utterly
-broken error-prone thing as a generic block layer API.  I mean, are
-you for real?
+Growl, next time don't hand edit the patch.  Humans rarely understand
+patch language well enough to get it right.  I fixed it this time, but
+this is the last time ...
 
--- 
-tejun
+> ---
+> --- a/drivers/scsi/device_handler/scsi_dh_alua.c.orig	2013-03-27 12:18:35.000000000 +0530
+> +++ b/drivers/scsi/device_handler/scsi_dh_alua.c	2013-03-27 13:23:16.000000000 +0530
+> @@ -710,6 +710,10 @@ static int alua_set_params(struct scsi_d
+
+You actually added an extra line, so the second has to become +710,11
+
+>  	return result;
+>  }
+>  
+> +static uint optimize_stpg;
+> +module_param(optimize_stpg, uint, S_IRUGO|S_IWUSR); 
+> +MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, 
+> +rather than sending a STPG, when implicit TPGS is supported (0=No,1=Yes). Default is 0.");
+> +
+>  /*
+>   * alua_activate - activate a path
+>   * @sdev: device on the path to be activated @@ -731,6 +735,9 @@ static int alua_activate(struct scsi_dev
+
+
+This is mangled, I think ...
+
+James
+
+
+>  	if (err != SCSI_DH_OK)
+>  		goto out;
+>  
+> +	if (optimize_stpg)
+> +		h->flags |= ALUA_OPTIMIZE_STPG;
+> +
+>  	if (h->tpgs & TPGS_MODE_EXPLICIT) {
+>  		switch (h->state) {
+>  		case TPGS_STATE_NONOPTIMIZED:
+> --
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
