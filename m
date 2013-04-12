@@ -1,49 +1,51 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Tejun Heo <tj@kernel.org>
 Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
  dm-crypt parallelization patches)
-Date: Fri, 12 Apr 2013 14:17:06 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1304121405370.3359@file.rdu.redhat.com>
+Date: Fri, 12 Apr 2013 11:29:41 -0700
+Message-ID: <20130412182941.GF11956@mtj.dyndns.org>
 References: <Pine.LNX.4.64.1304091624110.19672@file.rdu.redhat.com>
- <20130409210735.GR6320@redhat.com> <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
- <20130410192427.GA14911@redhat.com> <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
- <20130410235009.GI17641@mtj.dyndns.org> <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
- <20130411195203.GA11956@mtj.dyndns.org> <20130411200005.GB11956@mtj.dyndns.org>
- <Pine.LNX.4.64.1304111943450.29691@file.rdu.redhat.com>
- <20130412002252.GD11956@mtj.dyndns.org>
+ <20130409210735.GR6320@redhat.com>
+ <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
+ <20130410192427.GA14911@redhat.com>
+ <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
+ <20130410235009.GI17641@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
+ <20130411195203.GA11956@mtj.dyndns.org>
+ <20130411200005.GB11956@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130412002252.GD11956@mtj.dyndns.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Fri, Apr 12, 2013 at 02:01:08PM -0400, Mikulas Patocka wrote:
+> So if you think that reference counts should be incremented by every clone 
+> of the original bio, what kind of bug should it protect against? If we 
+> don't increment reference counts for pages, why should we do it for cgroup 
+> pointers?
 
+These things are called trade-offs.  You look at the overhead of the
+things and how complex / fragile things get when certain shortcuts are
+taken and how well contained and easy to verify / debug when things go
+wrong and then make your choice.
 
-On Thu, 11 Apr 2013, Tejun Heo wrote:
+Do the two really look the same to you?  The page refs are much more
+expensive, mostly contained in and the main focus of dm.  ioc/css refs
+aren't that expensive to begin with, css refcnting is widely scattered
+across the kernel, the association interface is likely to be used by
+any entity issuing IOs asynchronously soonish, and there is much saner
+way to improve it - which would be beneficial not only to block / dm
+but everyone else using it.
 
-> On Thu, Apr 11, 2013 at 08:06:10PM -0400, Mikulas Patocka wrote:
-> > All that I can tell you is that adding an empty atomic operation 
-> > "cmpxchg(&bio->bi_css->refcnt, bio->bi_css->refcnt, bio->bi_css->refcnt);" 
-> > to bio_clone_context and bio_disassociate_task increases the time to run a 
-> > benchmark from 23 to 40 seconds.
-> 
-> Right, linear target on ramdisk, very realistic, and you know what,
-> hell with dm, let's just hand code everything into submit_bio().  I'm
-> sure it will speed up your test case significantly.
+Something being done in one place doesn't automatically make it okay
+everywhere else.  We can and do use hackery but *with* discretion.
 
-The purpose of this benchmarking is not to optimize linear target on 
-ramdisk. The purpose is to optimize the kernel for upcoming massively 
-parallel servers, with possibly hundreds of energy-efficient cores or so. 
-On these systems every single atomic reference really becomes a 
-bottleneck. And since I don't have such massively parallel server, I am 
-testing it on 12-core machine with ramdisk - the performance drop due to 
-atomic accesses can be measured even on that.
+If you still can't understand, I'm not sure what more I can tell you.
 
-I already eliminated most of the atomic operations with this patch 
-http://people.redhat.com/~mpatocka/patches/kernel/dm-lock-optimization/dm-optimize.patch 
-And I don't see a sense in adding more for cgroup, especially, if it can 
-be easily avoided.
-
-Mikulas
+-- 
+tejun
