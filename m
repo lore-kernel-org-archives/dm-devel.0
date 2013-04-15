@@ -1,83 +1,66 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
- dm-crypt parallelization patches)
-Date: Mon, 15 Apr 2013 09:02:06 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1304091624110.19672@file.rdu.redhat.com>
- <20130409210735.GR6320@redhat.com> <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
- <20130410192427.GA14911@redhat.com> <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
- <20130410235009.GI17641@mtj.dyndns.org> <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
- <20130411195203.GA11956@mtj.dyndns.org> <20130411200005.GB11956@mtj.dyndns.org>
- <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
- <20130412182941.GF11956@mtj.dyndns.org>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: bcache/dmcache/enhanceio bake-off
+Date: Mon, 15 Apr 2013 09:55:39 -0400
+Message-ID: <20130415135539.GA19977@redhat.com>
+References: <20130411072239.GD8910@blackbox.djwong.org>
+ <20130413160925.GA5236@debian>
+ <20130413193319.GD8156@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130412182941.GF11956@mtj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20130413193319.GD8156-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
+On Sat, Apr 13 2013 at  3:33pm -0400,
+Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-
-On Fri, 12 Apr 2013, Tejun Heo wrote:
-
-> On Fri, Apr 12, 2013 at 02:01:08PM -0400, Mikulas Patocka wrote:
-> > So if you think that reference counts should be incremented by every clone 
-> > of the original bio, what kind of bug should it protect against? If we 
-> > don't increment reference counts for pages, why should we do it for cgroup 
-> > pointers?
+> On Sat, Apr 13 2013 at 12:09pm -0400,
+> Joe Thornber <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 > 
-> These things are called trade-offs.  You look at the overhead of the
-> things and how complex / fragile things get when certain shortcuts are
-> taken and how well contained and easy to verify / debug when things go
-> wrong and then make your choice.
-
-So what we are here trading for what?
-
-
-The patch eliminates the atomic references when passing the bio down the 
-stack of bio drivers.
-
-
-The patch adds a flag BIO_DROP_CGROUP_REFCOUNT, modifies it at two places 
-and tests it on two places - that is not big.
-
-The flag BIO_DROP_CGROUP_REFCOUNT is never supposed to be used outside bio 
-cgroup functions, so it doesn't complicate interface to other subsystems.
-
-The patch is not bug-prone, because we already must make sure that the 
-cloned bio has shorter lifetime than the master bio - so the patch doesn't 
-introduce any new possibilities to make bugs.
-
-
-> Do the two really look the same to you?  The page refs are much more
-> expensive, mostly contained in and the main focus of dm.  ioc/css refs
-> aren't that expensive to begin with, css refcnting is widely scattered
-
-ioc is per-task, so it is likely to be cached (but there are processors 
-that have slow atomic operations even on cached data - on Pentium 4 it 
-takes about 100 cycles). But css is shared between tasks and produces the 
-cache ping-pong effect.
-
-> across the kernel, the association interface is likely to be used by
-> any entity issuing IOs asynchronously soonish, and there is much saner
-> way to improve it - which would be beneficial not only to block / dm
-> but everyone else using it.
+> > Hi Darrick,
+> > 
+> > On Thu, Apr 11, 2013 at 12:22:39AM -0700, Darrick J. Wong wrote:
+> > > Hi all,
+> > > 
+> > > Lately I've been having some fun playing with bcache, dmcache, and enhanceio.
+> > 
+> > I pushed some tweaks to the mq policy today to my thin-dev tree.  They
+> > show some improvements to these fio based tests.
+> > 
+> > In addition I've written a blog post trying to explain what's going on in dm-cache:
+> > http://device-mapper.org/blog/2013/04/13/benchmarking-dm-cache-with-fio/
 > 
-> Something being done in one place doesn't automatically make it okay
-> everywhere else.  We can and do use hackery but *with* discretion.
->
-> If you still can't understand, I'm not sure what more I can tell you.
+> Darrick,
 > 
-> -- 
-> tejun
+> Joe has a few other dm-cache-target.c changes in his thin-dev branch
+> that are required in order to realize the gains from his mq changes.  I
+> haven't yet isolated which changes are important but if I just use the
+> 3.9-rc6's dm-cache-tagret.c with thin-dev's mq changes I cannot
+> reproduce the improved performance Joe mentions in his blog post.
 
-I don't know what's wrong with 4 lines of code to manipulate a flag.
+I've now isolated the dm-cache-target.c commit in Joe's thin-dev that is
+important to have in conjunction with the mq changes (from commit 7362f43a):
 
-I understand that you don't want to do something complicated and bug-prone 
-to improve performance. But the patch is neither complicated nor 
-bug-prone.
+commit f134e6382a534dd3622c3850e4824ae5929885d9
+Author: Joe Thornber <ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Date:   Wed Mar 27 14:46:57 2013 +0000
 
-Mikulas
+    [dm-cache] Change the default migration_threshold to something more suitable.
+
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 8a4bcf3..f215307 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -1948,7 +1948,7 @@ static sector_t calculate_discard_block_size(sector_t cache_block_size,
+ 	return discard_block_size;
+ }
+ 
+-#define DEFAULT_MIGRATION_THRESHOLD (2048 * 100)
++#define DEFAULT_MIGRATION_THRESHOLD 2048
+ 
+ static int cache_create(struct cache_args *ca, struct cache **result)
+ {
