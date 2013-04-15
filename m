@@ -1,56 +1,83 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: bcache/dmcache/enhanceio bake-off
-Date: Sat, 13 Apr 2013 15:33:20 -0400
-Message-ID: <20130413193319.GD8156@redhat.com>
-References: <20130411072239.GD8910@blackbox.djwong.org>
- <20130413160925.GA5236@debian>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
+ dm-crypt parallelization patches)
+Date: Mon, 15 Apr 2013 09:02:06 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
+References: <Pine.LNX.4.64.1304091624110.19672@file.rdu.redhat.com>
+ <20130409210735.GR6320@redhat.com> <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
+ <20130410192427.GA14911@redhat.com> <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
+ <20130410235009.GI17641@mtj.dyndns.org> <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
+ <20130411195203.GA11956@mtj.dyndns.org> <20130411200005.GB11956@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
+ <20130412182941.GF11956@mtj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130413160925.GA5236@debian>
+In-Reply-To: <20130412182941.GF11956@mtj.dyndns.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Kent Overstreet <koverstreet@google.com>, Amit Kale <akale@stec-inc.com>, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Apr 13 2013 at 12:09pm -0400,
-Joe Thornber <thornber@redhat.com> wrote:
 
-> Hi Darrick,
+
+On Fri, 12 Apr 2013, Tejun Heo wrote:
+
+> On Fri, Apr 12, 2013 at 02:01:08PM -0400, Mikulas Patocka wrote:
+> > So if you think that reference counts should be incremented by every clone 
+> > of the original bio, what kind of bug should it protect against? If we 
+> > don't increment reference counts for pages, why should we do it for cgroup 
+> > pointers?
 > 
-> On Thu, Apr 11, 2013 at 12:22:39AM -0700, Darrick J. Wong wrote:
-> > Hi all,
-> > 
-> > Lately I've been having some fun playing with bcache, dmcache, and enhanceio.
+> These things are called trade-offs.  You look at the overhead of the
+> things and how complex / fragile things get when certain shortcuts are
+> taken and how well contained and easy to verify / debug when things go
+> wrong and then make your choice.
+
+So what we are here trading for what?
+
+
+The patch eliminates the atomic references when passing the bio down the 
+stack of bio drivers.
+
+
+The patch adds a flag BIO_DROP_CGROUP_REFCOUNT, modifies it at two places 
+and tests it on two places - that is not big.
+
+The flag BIO_DROP_CGROUP_REFCOUNT is never supposed to be used outside bio 
+cgroup functions, so it doesn't complicate interface to other subsystems.
+
+The patch is not bug-prone, because we already must make sure that the 
+cloned bio has shorter lifetime than the master bio - so the patch doesn't 
+introduce any new possibilities to make bugs.
+
+
+> Do the two really look the same to you?  The page refs are much more
+> expensive, mostly contained in and the main focus of dm.  ioc/css refs
+> aren't that expensive to begin with, css refcnting is widely scattered
+
+ioc is per-task, so it is likely to be cached (but there are processors 
+that have slow atomic operations even on cached data - on Pentium 4 it 
+takes about 100 cycles). But css is shared between tasks and produces the 
+cache ping-pong effect.
+
+> across the kernel, the association interface is likely to be used by
+> any entity issuing IOs asynchronously soonish, and there is much saner
+> way to improve it - which would be beneficial not only to block / dm
+> but everyone else using it.
 > 
-> I pushed some tweaks to the mq policy today to my thin-dev tree.  They
-> show some improvements to these fio based tests.
+> Something being done in one place doesn't automatically make it okay
+> everywhere else.  We can and do use hackery but *with* discretion.
+>
+> If you still can't understand, I'm not sure what more I can tell you.
 > 
-> In addition I've written a blog post trying to explain what's going on in dm-cache:
-> http://device-mapper.org/blog/2013/04/13/benchmarking-dm-cache-with-fio/
+> -- 
+> tejun
 
-Darrick,
+I don't know what's wrong with 4 lines of code to manipulate a flag.
 
-Joe has a few other dm-cache-target.c changes in his thin-dev branch
-that are required in order to realize the gains from his mq changes.  I
-haven't yet isolated which changes are important but if I just use the
-3.9-rc6's dm-cache-tagret.c with thin-dev's mq changes I cannot
-reproduce the improved performance Joe mentions in his blog post.
+I understand that you don't want to do something complicated and bug-prone 
+to improve performance. But the patch is neither complicated nor 
+bug-prone.
 
-Also, even before these changes I wasn't able to reproduce your dm-cache
-results (either the spike in performance or the inconsistencies you
-saw across runs).
-
-BTW, I have added 'test_fio_database_funtime' to both the cache and
-bcache testsuites in my thinp-test-suite repo (master branch):
-git://github.com/snitm/thinp-test-suite.git
-
-You'd run it with somwthing like:
-./run_tests --profile mix_fio --suite cache -n /test_fio_database_funtime/
-or
-./run_tests --profile mix_fio --suite bcache -n /test_fio_database_funtime/
-
-I've been testing against the v3.9-rc6 kernel with Jens' for-next bcache
-code merged in, see 'thin-dev-bcache' branch of my linux repo:
-git://github.com/snitm/linux.git
+Mikulas
