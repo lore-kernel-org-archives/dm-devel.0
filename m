@@ -1,70 +1,56 @@
-From: Tejun Heo <tj@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
  dm-crypt parallelization patches)
-Date: Tue, 16 Apr 2013 10:24:27 -0700
-Message-ID: <20130416172418.GB2874@mtj.dyndns.org>
+Date: Tue, 16 Apr 2013 15:41:23 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1304161506580.24453@file.rdu.redhat.com>
 References: <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
- <20130410192427.GA14911@redhat.com>
- <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
- <20130410235009.GI17641@mtj.dyndns.org>
- <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
- <20130411195203.GA11956@mtj.dyndns.org>
- <20130411200005.GB11956@mtj.dyndns.org>
+ <20130410192427.GA14911@redhat.com> <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
+ <20130410235009.GI17641@mtj.dyndns.org> <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
+ <20130411195203.GA11956@mtj.dyndns.org> <20130411200005.GB11956@mtj.dyndns.org>
  <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
- <20130412182941.GF11956@mtj.dyndns.org>
- <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
+ <20130412182941.GF11956@mtj.dyndns.org> <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
+ <20130416172418.GB2874@mtj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
+In-Reply-To: <20130416172418.GB2874@mtj.dyndns.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
+To: Tejun Heo <tj@kernel.org>
 Cc: Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hey,
 
-On Mon, Apr 15, 2013 at 09:02:06AM -0400, Mikulas Patocka wrote:
-> The patch is not bug-prone, because we already must make sure that the 
-> cloned bio has shorter lifetime than the master bio - so the patch doesn't 
-> introduce any new possibilities to make bugs.
 
-The whole world isn't composed of only your code.  As I said
-repeatedly, you're introducing an API which is misleading and can
-easily cause subtle bugs which are very difficult to reproduce.
+On Tue, 16 Apr 2013, Tejun Heo wrote:
 
-Imagine it being used to tag a metatdata or checksum update bio being
-sent down while processing another bio and used to "clone" the context
-of the original bio.  It'll work most of the time even if the original
-bio gets completed first but it'll break when it gets really unlucky -
-e.g. racing with other operations which can put the base css ref, and
-it'll be hellish to reproduce and everyone would have to pay for your
-silly hack.
-
-> > Do the two really look the same to you?  The page refs are much more
-> > expensive, mostly contained in and the main focus of dm.  ioc/css refs
-> > aren't that expensive to begin with, css refcnting is widely scattered
+> Hey,
 > 
-> ioc is per-task, so it is likely to be cached (but there are processors 
-> that have slow atomic operations even on cached data - on Pentium 4 it 
-> takes about 100 cycles). But css is shared between tasks and produces the 
-> cache ping-pong effect.
+> On Mon, Apr 15, 2013 at 09:02:06AM -0400, Mikulas Patocka wrote:
+> > The patch is not bug-prone, because we already must make sure that the 
+> > cloned bio has shorter lifetime than the master bio - so the patch doesn't 
+> > introduce any new possibilities to make bugs.
+> 
+> The whole world isn't composed of only your code.  As I said
+> repeatedly, you're introducing an API which is misleading and can
+> easily cause subtle bugs which are very difficult to reproduce.
+> 
+> Imagine it being used to tag a metatdata or checksum update bio being
+> sent down while processing another bio and used to "clone" the context
+> of the original bio.  It'll work most of the time even if the original
+> bio gets completed first but it'll break when it gets really unlucky -
+> e.g. racing with other operations which can put the base css ref, and
+> it'll be hellish to reproduce and everyone would have to pay for your
+> silly hack.
 
-For $DIETY's sake, how many times do I have to tell you to use per-cpu
-reference count?  Why do I have to repeat the same story over and over
-again?  What part of "make the reference count per-cpu" don't you get?
-It's not a complicated message.
+That's why the comment at the function says: "it is assumed that the 
+lifestime of the new bio is shorter than the lifetime of the original bio. 
+If the new bio can outlive the old bio, the caller must increment the 
+reference counts." - do you think that it is so bad that someone will use 
+the function without reading the comment?
 
-At this point, I can't even understand why or what the hell you're
-arguing.  There's a clearly better way to do it and you're just
-repeating yourself like a broken record that your hack in itself isn't
-broken.
+Anyway, the situation that you describe could only happen in dm-bufio or 
+dm-kcopyd files, so it's easy to control and increment the reference 
+counts there. There are no other places in device mapper where we create 
+bios that live longer than original one.
 
-So, if you wanna continue that way for whatever reason, you have my
-firm nack and I'm outta this thread.
-
-Bye bye.
-
--- 
-tejun
+Mikulas
