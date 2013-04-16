@@ -1,18 +1,70 @@
-From: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: bcache/dmcache/enhanceio bake-off
-Date: Tue, 16 Apr 2013 11:33:55 -0400 (EDT)
-Message-ID: <6dhy2cxu5ltjhm3k9oox7igm.1366126432572@email.android.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
+ dm-crypt parallelization patches)
+Date: Tue, 16 Apr 2013 10:24:27 -0700
+Message-ID: <20130416172418.GB2874@mtj.dyndns.org>
+References: <Pine.LNX.4.64.1304091710150.24735@file.rdu.redhat.com>
+ <20130410192427.GA14911@redhat.com>
+ <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
+ <20130410235009.GI17641@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
+ <20130411195203.GA11956@mtj.dyndns.org>
+ <20130411200005.GB11956@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
+ <20130412182941.GF11956@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: base64
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Joe Thornber <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kent Overstreet <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Amit Kale <akale-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, ejt-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Christian Schmidt <schmidt@digadd.de>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-WW91IG1pc3VuZGVyc3Rvb2QgbWUuICBJIHdhcyBqdXN0IG1ha2luZyBzdXJlIERhcnJpY2sga25l
-dyBhYm91dCB0aGlzIG90aGVyIG1pZ3JhdGlvbiBjaGFuZ2UgYmVjYXVzZSB3aXRob3V0IGl0IHRo
-ZSBzcGVjaWZpYyBjb21taXQgeW91IHBvaW50ZWQgdG8gZm9yIG1xIHdvbid0IGdldCB0aGUgcGVy
-Zm9ybWFuY2UgaW1wcm92ZW1lbnQuICBTbyBJIHdhcyBqdXN0IHRyeWluZyB0byBtYWtlIHN1cmUg
-aWYgRGFycmljayBvciBvdGhlcnMgY2hlcnJ5IHBpY2tlZCB0aGV5IGRpZG4ndCBtaXNzIG91dC4=
+Hey,
+
+On Mon, Apr 15, 2013 at 09:02:06AM -0400, Mikulas Patocka wrote:
+> The patch is not bug-prone, because we already must make sure that the 
+> cloned bio has shorter lifetime than the master bio - so the patch doesn't 
+> introduce any new possibilities to make bugs.
+
+The whole world isn't composed of only your code.  As I said
+repeatedly, you're introducing an API which is misleading and can
+easily cause subtle bugs which are very difficult to reproduce.
+
+Imagine it being used to tag a metatdata or checksum update bio being
+sent down while processing another bio and used to "clone" the context
+of the original bio.  It'll work most of the time even if the original
+bio gets completed first but it'll break when it gets really unlucky -
+e.g. racing with other operations which can put the base css ref, and
+it'll be hellish to reproduce and everyone would have to pay for your
+silly hack.
+
+> > Do the two really look the same to you?  The page refs are much more
+> > expensive, mostly contained in and the main focus of dm.  ioc/css refs
+> > aren't that expensive to begin with, css refcnting is widely scattered
+> 
+> ioc is per-task, so it is likely to be cached (but there are processors 
+> that have slow atomic operations even on cached data - on Pentium 4 it 
+> takes about 100 cycles). But css is shared between tasks and produces the 
+> cache ping-pong effect.
+
+For $DIETY's sake, how many times do I have to tell you to use per-cpu
+reference count?  Why do I have to repeat the same story over and over
+again?  What part of "make the reference count per-cpu" don't you get?
+It's not a complicated message.
+
+At this point, I can't even understand why or what the hell you're
+arguing.  There's a clearly better way to do it and you're just
+repeating yourself like a broken record that your hack in itself isn't
+broken.
+
+So, if you wanna continue that way for whatever reason, you have my
+firm nack and I'm outta this thread.
+
+Bye bye.
+
+-- 
+tejun
