@@ -1,40 +1,39 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
- dm-crypt parallelization patches)
-Date: Thu, 18 Apr 2013 10:03:17 -0700
-Message-ID: <20130418170317.GA9897@mtj.dyndns.org>
-References: <Pine.LNX.4.64.1304101938280.24258@file.rdu.redhat.com>
- <20130410235009.GI17641@mtj.dyndns.org>
- <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
- <20130411195203.GA11956@mtj.dyndns.org>
- <20130411200005.GB11956@mtj.dyndns.org>
- <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
- <20130412182941.GF11956@mtj.dyndns.org>
- <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
- <20130416172418.GB2874@mtj.dyndns.org>
- <20130418164742.GA8254@redhat.com>
+Subject: Re: [BUG REPORT] Kernel panic on 3.9.0-rc7-4-gbb33db7
+Date: Thu, 18 Apr 2013 10:27:32 -0700
+Message-ID: <20130418172732.GB9897@mtj.dyndns.org>
+References: <516E5EF8.9090507@cn.fujitsu.com>
+ <1366209997.8817.12.camel@pippen.local.home>
+ <20130418123738.GV4816@kernel.dk>
+ <516FED09.1040008@cn.fujitsu.com>
+ <20130418133546.GX4816@kernel.dk>
+ <516FFFAC.8040103@cn.fujitsu.com>
+ <20130418143014.GZ4816@kernel.dk>
+ <CA+55aFwA8njGh4v8ZfR_o4s4m=Hugnadeir=uxbeE4yxHiBKLg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20130418164742.GA8254@redhat.com>
+In-Reply-To: <CA+55aFwA8njGh4v8ZfR_o4s4m=Hugnadeir=uxbeE4yxHiBKLg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, dm-crypt@saout.de, Christian Schmidt <schmidt@digadd.de>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, "Alasdair G. Kergon" <agk@redhat.com>, Milan Broz <gmazyland@gmail.com>, Vivek Goyal <vgoyal@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Wanlong Gao <gaowanlong@cn.fujitsu.com>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@gmail.com>, Alasdair G Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Neil Brown <neilb@suse.de>, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hello, Mike.
+Hello,
 
-On Thu, Apr 18, 2013 at 12:47:42PM -0400, Mike Snitzer wrote:
-> I see you nack and raise you with: please reconsider in the near term.
+On Thu, Apr 18, 2013 at 09:08:34AM -0700, Linus Torvalds wrote:
+> On Thu, Apr 18, 2013 at 7:30 AM, Jens Axboe <axboe@kernel.dk> wrote:
+> >
+> > Could you capture the full dump? I'd like to see what rcx was, and that
+> > seems to have scrolled off.
+> 
+> You don't need it. The %cr2 value shows the address of the bad access,
+> and it's 0x00000001.
 
-The thing is that percpu-refcnting is already in mostly ready-form, so
-unless this dm series is planned to be merged for v3.10-rc1, I don't
-see the need for a separate near term solution.  Mikulas can just do
-the normal refcnting and cgroup will most likely adopt per-cpu ref
-anyway once percpu-refcnting is in, so it should all fall in places
-pretty quickly.  For devel / testing / whatever, Mikulas can surely
-turn off cgroup, right?
+If I'm not mistaken, it seems like we have a bio which has 1 as its
+->bi_bdev.  Ummm.... no idea whatsoever how that can happen tho right
+now.  Looking into it.
 
 Thanks.
 
