@@ -1,7 +1,7 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Tejun Heo <tj@kernel.org>
 Subject: Re: [BUG REPORT] Kernel panic on 3.9.0-rc7-4-gbb33db7
-Date: Thu, 18 Apr 2013 10:39:00 -0700
-Message-ID: <20130418173811.GF4816@kernel.dk>
+Date: Thu, 18 Apr 2013 10:52:51 -0700
+Message-ID: <20130418175251.GC9897@mtj.dyndns.org>
 References: <516E5EF8.9090507@cn.fujitsu.com>
  <1366209997.8817.12.camel@pippen.local.home>
  <20130418123738.GV4816@kernel.dk>
@@ -9,36 +9,72 @@ References: <516E5EF8.9090507@cn.fujitsu.com>
  <20130418133546.GX4816@kernel.dk>
  <516FFFAC.8040103@cn.fujitsu.com>
  <20130418143014.GZ4816@kernel.dk>
- <CA+55aFwA8njGh4v8ZfR_o4s4m=Hugnadeir=uxbeE4yxHiBKLg@mail.gmail.com>
- <20130418172732.GB9897@mtj.dyndns.org>
+ <517006F6.7030806@cn.fujitsu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20130418172732.GB9897@mtj.dyndns.org>
+In-Reply-To: <517006F6.7030806@cn.fujitsu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Wanlong Gao <gaowanlong@cn.fujitsu.com>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@gmail.com>, Alasdair G Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Neil Brown <neilb@suse.de>, LKML <linux-kernel@vger.kernel.org>
+To: Wanlong Gao <gaowanlong@cn.fujitsu.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Steven Rostedt <rostedt@goodmis.org>, namhyung@gmail.com, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, LKML <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Thu, Apr 18 2013, Tejun Heo wrote:
-> Hello,
-> 
-> On Thu, Apr 18, 2013 at 09:08:34AM -0700, Linus Torvalds wrote:
-> > On Thu, Apr 18, 2013 at 7:30 AM, Jens Axboe <axboe@kernel.dk> wrote:
-> > >
-> > > Could you capture the full dump? I'd like to see what rcx was, and that
-> > > seems to have scrolled off.
-> > 
-> > You don't need it. The %cr2 value shows the address of the bad access,
-> > and it's 0x00000001.
-> 
-> If I'm not mistaken, it seems like we have a bio which has 1 as its
-> ->bi_bdev.  Ummm.... no idea whatsoever how that can happen tho right
-> now.  Looking into it.
+Hello, Wanlong.
 
-Yep, thanks Linus for that hint... Must be someone abusing it for a
-flag field post submission? Crazy.
+On Thu, Apr 18, 2013 at 10:45:10PM +0800, Wanlong Gao wrote:
+> OK, but I should capture it tomorrow morning because this remote machine has already panicked
+> and need hard reboot.
 
--- 
-Jens Axboe
+Can you please apply the following patch when you try the next time
+and report the kernel log?  It should prevent the oops from happening
+and dump information on at least who are the involved parties.
+
+Thanks.
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 074b758..d5efebe 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -150,6 +150,8 @@ void blk_rq_init(struct request_queue *q, struct request *rq)
+ }
+ EXPORT_SYMBOL(blk_rq_init);
+ 
++
++
+ static void req_bio_endio(struct request *rq, struct bio *bio,
+ 			  unsigned int nbytes, int error)
+ {
+@@ -174,8 +176,15 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+ 		bio_integrity_advance(bio, nbytes);
+ 
+ 	/* don't actually finish bio if it's part of flush sequence */
+-	if (bio->bi_size == 0 && !(rq->cmd_flags & REQ_FLUSH_SEQ))
++	if (bio->bi_size == 0 && !(rq->cmd_flags & REQ_FLUSH_SEQ)) {
++		if (bio->bi_bdev && (unsigned long)bio->bi_bdev < 4096) {
++			printk_ratelimited("XXX req_bio_endio: queue %s bio=%p bi_bdev=%p bi_end_io=%pf\n",
++					   (rq->q && rq->q->backing_dev_info.dev) ?
++					   dev_name(rq->q->backing_dev_info.dev) : "<unknown>",
++					   bio, bio->bi_bdev, bio->bi_end_io);
++		}
+ 		bio_endio(bio, error);
++	}
+ }
+ 
+ void blk_dump_rq_flags(struct request *rq, char *msg)
+diff --git a/fs/bio.c b/fs/bio.c
+index bb5768f..da64e5a 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -1428,7 +1428,10 @@ void bio_endio(struct bio *bio, int error)
+ 	else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+ 		error = -EIO;
+ 
+-	trace_block_bio_complete(bio, error);
++	if (bio->bi_bdev && (unsigned long)bio->bi_bdev < 4096)
++		printk_ratelimited("XXX bio_endio: skipping TP for %p\n", bio);
++	else
++		trace_block_bio_complete(bio, error);
+ 
+ 	if (bio->bi_end_io)
+ 		bio->bi_end_io(bio, error);
