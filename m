@@ -1,35 +1,71 @@
-From: Wei Yongjun <weiyj.lk@gmail.com>
-Subject: [PATCH -next] dm cache: fix error return code in cache_create()
-Date: Fri, 19 Apr 2013 13:11:30 +0800
-Message-ID: <CAPgLHd8twedhKj8MNkCyHKTEtV421_251Ot-zm-=boCJZ5nc9w@mail.gmail.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [BUG REPORT] Kernel panic on 3.9.0-rc7-4-gbb33db7
+Date: Thu, 18 Apr 2013 22:57:54 -0700
+Message-ID: <20130419055754.GA9691@mtj.dyndns.org>
+References: <516E5EF8.9090507@cn.fujitsu.com>
+ <1366209997.8817.12.camel@pippen.local.home>
+ <20130418123738.GV4816@kernel.dk>
+ <516FED09.1040008@cn.fujitsu.com>
+ <20130418133546.GX4816@kernel.dk>
+ <516FFFAC.8040103@cn.fujitsu.com>
+ <20130418143014.GZ4816@kernel.dk>
+ <5170BB00.8080200@cn.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: agk@redhat.com, neilb@suse.de
-Cc: yongjun_wei@trendmicro.com.cn, dm-devel@redhat.com, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5170BB00.8080200@cn.fujitsu.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wanlong Gao <gaowanlong@cn.fujitsu.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Steven Rostedt <rostedt@goodmis.org>, namhyung@gmail.com, agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, LKML <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Chris Mason <chris.mason@fusionio.com>, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
+(cc'ing btrfs people)
 
-Fix to return -ENOMEM in the memory alloc error handing
-cases instead of 0, as done elsewhere in this function.
+On Fri, Apr 19, 2013 at 11:33:20AM +0800, Wanlong Gao wrote:
+> RIP: 0010:[<ffffffff812484d3>]  [<ffffffff812484d3>] ftrace_raw_event_block_bio_complete+0x73/0xf0
+...
+>  [<ffffffff811b6c10>] bio_endio+0x80/0x90
+>  [<ffffffffa0790d26>] btrfs_end_bio+0xf6/0x190 [btrfs]
+>  [<ffffffff811b6bcd>] bio_endio+0x3d/0x90
+>  [<ffffffff81249873>] req_bio_endio+0xa3/0xe0
 
-Signed-off-by: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
----
- drivers/md/dm-cache-target.c | 1 +
- 1 file changed, 1 insertion(+)
+Ugh....
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index c5ce8a3b..c44f5e5 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -1972,6 +1972,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 	atomic_set(&cache->nr_migrations, 0);
- 	init_waitqueue_head(&cache->migration_wait);
- 
-+	r = -ENOMEM;
- 	cache->nr_dirty = 0;
- 	cache->dirty_bitset = alloc_bitset(from_cblock(cache->cache_size));
- 	if (!cache->dirty_bitset) {
+In fs/btrfs/volumes.c
 
+  static void bbio_error(struct btrfs_bio *bbio, struct bio *bio, u64 logical)
+  {
+	...
+		bio->bi_bdev = (struct block_device *)
+			       	       (unsigned long)bbio->mirror_num;
+	...
+  }
+
+  static void btrfs_end_bio(struct bio *bio, int err)
+  {
+	...
+		bio->bi_bdev = (struct block_device *)
+					(unsigned long)bbio->mirror_num;
+									
+	...
+  }
+
+In fs/btrfs/extent_io.c
+
+  static void end_bio_extent_readpage(struct bio *bio, int err)
+  {
+	int mirror;
+	...
+		mirror = (int)(unsigned long)bio->bi_bdev;
+	...
+  }
+
+Ewweeeeeeeeeeeeeeeeeehh........
+
+No wonder this thing crashes.  Chris, can't the original bio carry
+bbio in bi_private and let end_bio_extent_readpage() free the bbio
+instead of abusing bi_bdev like this?
+
+-- 
+tejun
