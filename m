@@ -1,50 +1,35 @@
-From: "srostedt@gmail.com" <rostedt@goodmis.org>
-Subject: Re: [BUG REPORT] Kernel panic on 3.9.0-rc7-4-gbb33db7
-Date: Thu, 18 Apr 2013 21:08:54 -0400
-Message-ID: <292ec4c2-f2d3-47fc-816f-472e83c10959@email.android.com>
-References: <516FED09.1040008@cn.fujitsu.com> <20130418133546.GX4816@kernel.dk>
-	<516FFFAC.8040103@cn.fujitsu.com> <20130418143014.GZ4816@kernel.dk>
-	<CA+55aFwA8njGh4v8ZfR_o4s4m=Hugnadeir=uxbeE4yxHiBKLg@mail.gmail.com>
-	<20130418172732.GB9897@mtj.dyndns.org>
-	<20130418173811.GF4816@kernel.dk>
-	<20130418180752.GD9897@mtj.dyndns.org>
-	<20130418181318.GH4816@kernel.dk>
-	<CA+55aFxEThMJid_PiL=ko3duRPzzynkhMovsrm3TR_UXxUGciA@mail.gmail.com>
-	<20130418203705.GJ4816@kernel.dk>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Wei Yongjun <weiyj.lk@gmail.com>
+Subject: [PATCH -next] dm snapshot: fix error return code in snapshot_ctr()
+Date: Fri, 19 Apr 2013 09:26:07 +0800
+Message-ID: <CAPgLHd-ZjORYMQ9DSa_CBRipu8NnpOkpsqyswk8FG8cdi98dHQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130418203705.GJ4816@kernel.dk>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Namhyung Kim <namhyung@gmail.com>, LKML <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Wanlong Gao <gaowanlong@cn.fujitsu.com>, Tejun Heo <tj@kernel.org>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: agk@redhat.com, neilb@suse.de
+Cc: yongjun_wei@trendmicro.com.cn, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-Could it be a module not recompiled with a newer kernel?
+From: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
 
--- Steve
+Fix to return -ENOMEM in create slab pool error case
+instead of 0, as done elsewhere in this function.
 
+Signed-off-by: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
+---
+ drivers/md/dm-snap.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-Jens Axboe <axboe@kernel.dk> wrote:
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index eb32e35..fb3ea3c 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1121,6 +1121,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	s->pending_pool = mempool_create_slab_pool(MIN_IOS, pending_cache);
+ 	if (!s->pending_pool) {
+ 		ti->error = "Could not allocate mempool for pending exceptions";
++		r = -ENOMEM;
+ 		goto bad_pending_pool;
+ 	}
+ 
 
-
->
->Hmm dunno. It happens right after we've completed the bio, which
->touches
->a lot of fields too. bi_bdev sits between bi_next (which we definitely
->used) and bi_flags.
->
->But adding slab use-after-free debugging would show for sure.
-
--- 
-Sent from my Android phone with K-9 Mail. Please excuse my brevity.
