@@ -1,60 +1,65 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/2] dm mpath: attach scsi_dh during table resume
-Date: Mon, 22 Apr 2013 18:33:56 -0400
-Message-ID: <20130422223355.GA4803@redhat.com>
-References: <20130404131631.GA10208@redhat.com>
- <1365457816-31475-1-git-send-email-snitzer@redhat.com>
- <1365457816-31475-2-git-send-email-snitzer@redhat.com>
+From: "Levy, Jerome" <jerome.levy@emc.com>
+Subject: Patch to minimize noise with snapshots in emc_clariion
+ checker
+Date: Mon, 22 Apr 2013 20:34:14 +0000
+Message-ID: <454E18A46D7B064CA63B41E99AD179504EF34D8E@MX103CL02.corp.emc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1365457816-31475-2-git-send-email-snitzer@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
-Cc: mpatocka@redhat.com, hare@suse.de
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Apr 08 2013 at  5:50pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Patch to stop emc_clariion_checker from logging messages when probes 
+to snapshot LUNs occur. Notification is still available if logging is 
+turned up (see condlog()) but normal probing of snapshots will no 
+longer produce status messages. Path functionality on snapshot probes 
+is unchanged.
 
-> Preallocate scsi_dh_data using scsi_dh_alloc_data() during table load
-> but attach the scsi_dh for each path during table resume.  This avoids a
-> kernel crash that can happen when changing the scsi_dh during table
-> load.
-> 
-> When we reload a multipath device, there are two instances of the
-> multipath target - the first instance that is active and the second
-> instance that is being constructed during table load with "ctr" method.
-> 
-> If the multipath constructor finds out that the device is using a
-> different device handler, it detaches the existing handler and attaches
-> a new handler. However, the first instance of the multipath target still
-> exists and processes requests. If the first instance sends some
-> path-management request with scsi_dh_activate and the second instance
-> detaches the device handler while the path-management request is in
-> flight, a crash happens. The reason for the crash is that the endio
-> routine for the path-management request is working with structures that
-> were freed when the handler was detached.
-> 
-> References:
->   http://bugzilla.redhat.com/912245
->   http://bugzilla.redhat.com/902595
+Signed-off-by: Jerry Levy <jerome.levy@emc.com>
 
-While this patch addresses the problem of switching the SCSI device
-handler prematurely (during load rather than resume) it doesn't do
-anything to defend against the use after free NULL pointers that are
-possible with the scenario explained above (and as detailed in the
-referenced BZs).
-
-I spoke with Hannes at LSF, to address the potential crashes in the
-endio path (e.g. stpg_endio) we'd have to bump the scsi_dh_data kref
-where appropriate (e.g. for ALUA kref_get in submit_stpg and kref_put in
-stpg_endio).
-
-But that is just the tip of the iceberg relative to scsi_dh lifetime.
-Seems we've been playing it pretty fast and loose with scsi_dh issued
-requests vs detach for quite some time.
-
-I'm now inclined to not care about this issue.  Take away is: don't
-switch the device handler (attach the correct one from the start).
+--- ./libmultipath/checkers/emc_clariion.c      2013-04-22 15:50:19.081555624 -0400
++++ ./libmultipath/checkers/emc_clariion.c.orig 2013-04-22 14:07:36.966548097 -0400
+@@ -15,7 +15,6 @@
+ #include "../libmultipath/sg_include.h"
+ #include "libsg.h"
+ #include "checkers.h"
+-#include "debug.h"
+ 
+ #define INQUIRY_CMD     0x12
+ #define INQUIRY_CMDLEN  6
+@@ -199,8 +198,9 @@ int libcheck_check (struct checker * c)
+                                 * 02/04/03 not 05/25/01 on read.
+                                 */
+                                SET_INACTIVE_SNAP(c);
+-                               condlog(3, "emc_clariion_checker: Active path to "
+-                                       "inactive snapshot WWN %s.", wwnstr);
++                               MSG(c, "emc_clariion_checker: Active "
++                                       "path to inactive snapshot WWN %s.",
++                                       wwnstr);
+                        } else
+                                MSG(c, "emc_clariion_checker: Read "
+                                        "error for WWN %s.  Sense data are "
+@@ -219,8 +219,9 @@ int libcheck_check (struct checker * c)
+        } else {
+                if (IS_INACTIVE_SNAP(c)) {
+                        hexadecimal_to_ascii(ct->wwn, wwnstr);
+-                       condlog(3, "emc_clariion_checker: Passive path to "
+-                               "inactive snapshot WWN %s.", wwnstr);
++                       MSG(c, "emc_clariion_checker: Passive "
++                               "path to inactive snapshot WWN %s.",
++                               wwnstr);
+                        ret = PATH_DOWN;
+                } else {
+                        MSG(c,
