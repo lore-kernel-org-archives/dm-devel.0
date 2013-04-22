@@ -1,11 +1,13 @@
-From: Graeme H <graeme@sudo.ca>
-Subject: dm-cache vs enhanceio testing
-Date: Sun, 21 Apr 2013 10:36:43 -0700
-Message-ID: <CAJ4uuZb1iJzr1dePRMxU9xU3aETJsUanF6xyMLu+a_A=iHm2PA@mail.gmail.com>
+From: "Mears, Morgan" <Morgan.Mears@netapp.com>
+Subject: [BUG REPORT] ENOTBLK on create cache if metadata device
+ not zeroed (3.9.0-rc7)
+Date: Mon, 22 Apr 2013 16:47:16 +0000
+Message-ID: <33A0129EBFD46748804DE81B354CA1B2DB1BCB@SACEXCMBX06-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1186257560720001255=="
+Content-Type: multipart/mixed; boundary="===============7540648010033956586=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,83 +17,179 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1186257560720001255==
-Content-Type: multipart/alternative; boundary=089e0115f69845f05704dae265ad
+--===============7540648010033956586==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_33A0129EBFD46748804DE81B354CA1B2DB1BCBSACEXCMBX06PRDhqn_"
 
---089e0115f69845f05704dae265ad
-Content-Type: text/plain; charset=ISO-8859-1
+--_000_33A0129EBFD46748804DE81B354CA1B2DB1BCBSACEXCMBX06PRDhqn_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-This is a quick response to *msnitzer's *comments here:
+I was setting up for some dm-cache testing this weekend (using 3.9.0-rc7 x8=
+6_64) and ran into the following:
 
-http://lwn.net/Articles/541975/
+# dmsetup create cache --table '0 41943040 cache /dev/mapper/metadata /dev/=
+mapper/ssd /dev/mapper/origin 512 1 writeback default 0'
+device-mapper: reload ioctl on cache failed: Block device required
+Command failed
+#
+
+After this error, /var/log/messages contains:
+
+[75376.089354] device-mapper: cache metadata: sb_check failed: blocknr 1844=
+6744073709551615: wanted 0
+[75376.089362] device-mapper: block manager: superblock validator check fai=
+led for block 0
+[75376.089364] device-mapper: cache metadata: couldn't read lock superblock
+[75376.095173] device-mapper: table: 253:5: cache: Error creating metadata =
+object
+[75376.095180] device-mapper: ioctl: error adding target to table
+
+This comes from sb_check() in drivers/md/dm-cache-metadata.c and drivers/md=
+/dm-thin-metadata.c, and it motivated me to try:
+
+# dd if=3D/dev/zero of=3D/dev/mapper/metadata bs=3D4k conv=3Dnotrunc
+
+Afterwards, I tried "dmsetup create cache" again and it worked fine.
+
+Regards,
+Morgan Mears
 
 
-
-A big workload for us that I'd like to see evaluated between all potential
-kernel caching solutions in the sysbench OLTP benchmark against Percona
-Server or MariaDB. It is directly comparable to many of the workloads we've
-got in production, and I imagine is very similar to the workloads of
-numerous other shops.
-
-For simulation purposes, it's usually sufficient to set the InnoDB buffer
-pool size to some fraction of the working set size, which will force the DB
-to bring work in and out of RAM. That'll allow you to conduct a repeatable
-test regardless of the size of physical RAM in the system.
-
-The other use case that I'd like to see evaluated is hosting modern,
-managed filesystems (such as btrfs and zfs) on top of dm cache devices. In
-the past, this was quite difficult with FlashCache, and so it'd be useful
-to have examples of this in the dm cache docs, especially as it relates to
-boot issues.
-
-Thanks!
-Graeme Humphries
-
---089e0115f69845f05704dae265ad
-Content-Type: text/html; charset=ISO-8859-1
+--_000_33A0129EBFD46748804DE81B354CA1B2DB1BCBSACEXCMBX06PRDhqn_
+Content-Type: text/html; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Hi,<div><br></div><div style>This is a quick response to=
-=A0<b style=3D"color:rgb(0,0,0);font-family:&#39;Times New Roman&#39;;font-=
-size:medium">msnitzer&#39;s </b><span style=3D"color:rgb(0,0,0);font-family=
-:&#39;Times New Roman&#39;;font-size:medium">comments here:</span></div>
-<div style><span style=3D"color:rgb(0,0,0);font-family:&#39;Times New Roman=
-&#39;;font-size:medium"><br></span></div><div style><a href=3D"http://lwn.n=
-et/Articles/541975/">http://lwn.net/Articles/541975/</a><div style=3D"width=
-:16px;height:16px;display:inline-block">
-=A0</div><span style=3D"color:rgb(0,0,0);font-family:&#39;Times New Roman&#=
-39;;font-size:medium"><br></span></div><div style><br></div><div style>A bi=
-g workload for us that I&#39;d like to see evaluated between all potential =
-kernel caching solutions in the sysbench OLTP benchmark against Percona Ser=
-ver or MariaDB. It is directly comparable to many of the workloads we&#39;v=
-e got in production, and I imagine is very similar to the workloads of nume=
-rous other shops.</div>
-<div style><br></div><div style>For simulation purposes, it&#39;s usually s=
-ufficient to set the InnoDB buffer pool size to some fraction of the workin=
-g set size, which will force the DB to bring work in and out of RAM. That&#=
-39;ll allow you to conduct a repeatable test regardless of the size of phys=
-ical RAM in the system.</div>
-<div style><br></div><div style>The other use case that I&#39;d like to see=
- evaluated is hosting modern, managed filesystems (such as btrfs and zfs) o=
-n top of dm cache devices. In the past, this was quite difficult with Flash=
-Cache, and so it&#39;d be useful to have examples of this in the dm cache d=
-ocs, especially as it relates to boot issues.</div>
-<div style><br></div><div style>Thanks!</div><div style>Graeme Humphries</d=
-iv><div style><br></div></div>
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
+osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:x=3D"urn:schemas-microsoft-com:office:excel" xmlns:m=3D"http://schema=
+s.microsoft.com/office/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-html=
+40">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+<meta name=3D"Generator" content=3D"Microsoft Word 14 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page WordSection1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+	{page:WordSection1;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext=3D"edit">
+<o:idmap v:ext=3D"edit" data=3D"1" />
+</o:shapelayout></xml><![endif]-->
+</head>
+<body lang=3D"EN-US" link=3D"blue" vlink=3D"purple">
+<div class=3D"WordSection1">
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+Hi,<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+I was setting up for some dm-cache testing this weekend (using 3.9.0-rc7 x8=
+6_64) and ran into the following:<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+# dmsetup create cache --table '0 41943040 cache /dev/mapper/metadata /dev/=
+mapper/ssd /dev/mapper/origin 512 1 writeback default 0'<o:p></o:p></span><=
+/p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+device-mapper: reload ioctl on cache failed: Block device required<o:p></o:=
+p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+Command failed<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+#<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+After this error, /var/log/messages contains:<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+[75376.089354] device-mapper: cache metadata: sb_check failed: blocknr 1844=
+6744073709551615: wanted 0<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+[75376.089362] device-mapper: block manager: superblock validator check fai=
+led for block 0<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+[75376.089364] device-mapper: cache metadata: couldn't read lock superblock=
+<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+[75376.095173] device-mapper: table: 253:5: cache: Error creating metadata =
+object<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+[75376.095180] device-mapper: ioctl: error adding target to table<o:p></o:p=
+></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+This comes from sb_check() in drivers/md/dm-cache-metadata.c and drivers/md=
+/dm-thin-metadata.c, and it motivated me to try:<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+# dd if=3D/dev/zero of=3D/dev/mapper/metadata bs=3D4k conv=3Dnotrunc<o:p></=
+o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+Afterwards, I tried &#8220;dmsetup create cache&#8221; again and it worked =
+fine.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+Regards,<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+Morgan Mears<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"font-family:&quot;Courier New&quot;">=
+<o:p>&nbsp;</o:p></span></p>
+</div>
+</body>
+</html>
 
---089e0115f69845f05704dae265ad--
+--_000_33A0129EBFD46748804DE81B354CA1B2DB1BCBSACEXCMBX06PRDhqn_--
 
 
---===============1186257560720001255==
+--===============7540648010033956586==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1186257560720001255==--
+--===============7540648010033956586==--
