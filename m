@@ -1,25 +1,60 @@
-From: Kent Overstreet <koverstreet@google.com>
-Subject: Re: NULL pointer due to malformed bcache bio
-Date: Mon, 22 Apr 2013 14:22:18 -0700
-Message-ID: <20130422212218.GA4704@localhost>
-References: <20130410205439.GA18092@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/2] dm mpath: attach scsi_dh during table resume
+Date: Mon, 22 Apr 2013 18:33:56 -0400
+Message-ID: <20130422223355.GA4803@redhat.com>
+References: <20130404131631.GA10208@redhat.com>
+ <1365457816-31475-1-git-send-email-snitzer@redhat.com>
+ <1365457816-31475-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20130410205439.GA18092@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk
+In-Reply-To: <1365457816-31475-2-git-send-email-snitzer@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: mpatocka@redhat.com, hare@suse.de
 List-Id: dm-devel.ids
 
-On Wed, Apr 10, 2013 at 04:54:40PM -0400, Mike Snitzer wrote:
-> Hey,
-> 
-> So DM core clearly needs to be more defensive about the possibility for
-> a NULL return from bio_alloc_bioset() given I'm hitting a NULL pointer
-> in DM's alloc_tio() because nr_iovecs=512.  bio_alloc_bioset()'s call to
-> bvec_alloc() only supports nr_iovecs up to BIO_MAX_PAGES (256).
+On Mon, Apr 08 2013 at  5:50pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-I have a fix for this queued up in my bcache-for-upstream, if you want
-to check and make sure it works.
+> Preallocate scsi_dh_data using scsi_dh_alloc_data() during table load
+> but attach the scsi_dh for each path during table resume.  This avoids a
+> kernel crash that can happen when changing the scsi_dh during table
+> load.
+> 
+> When we reload a multipath device, there are two instances of the
+> multipath target - the first instance that is active and the second
+> instance that is being constructed during table load with "ctr" method.
+> 
+> If the multipath constructor finds out that the device is using a
+> different device handler, it detaches the existing handler and attaches
+> a new handler. However, the first instance of the multipath target still
+> exists and processes requests. If the first instance sends some
+> path-management request with scsi_dh_activate and the second instance
+> detaches the device handler while the path-management request is in
+> flight, a crash happens. The reason for the crash is that the endio
+> routine for the path-management request is working with structures that
+> were freed when the handler was detached.
+> 
+> References:
+>   http://bugzilla.redhat.com/912245
+>   http://bugzilla.redhat.com/902595
+
+While this patch addresses the problem of switching the SCSI device
+handler prematurely (during load rather than resume) it doesn't do
+anything to defend against the use after free NULL pointers that are
+possible with the scenario explained above (and as detailed in the
+referenced BZs).
+
+I spoke with Hannes at LSF, to address the potential crashes in the
+endio path (e.g. stpg_endio) we'd have to bump the scsi_dh_data kref
+where appropriate (e.g. for ALUA kref_get in submit_stpg and kref_put in
+stpg_endio).
+
+But that is just the tip of the iceberg relative to scsi_dh lifetime.
+Seems we've been playing it pretty fast and loose with scsi_dh issued
+requests vs detach for quite some time.
+
+I'm now inclined to not care about this issue.  Take away is: don't
+switch the device handler (attach the correct one from the start).
