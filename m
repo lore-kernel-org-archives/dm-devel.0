@@ -1,31 +1,50 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: NULL pointer due to malformed bcache bio
-Date: Tue, 23 Apr 2013 12:35:51 -0400
-Message-ID: <20130423163551.GA9958@redhat.com>
-References: <20130410205439.GA18092@redhat.com>
- <20130422212218.GA4704@localhost>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: [PATCH 1/2] [multipath-tools] Fix failback parameter
+	parsing in conf
+Date: Tue, 23 Apr 2013 21:21:18 +0000
+Message-ID: <8255ED565A0EAA4A960625E27D49DBF21FFB6B71@SACEXCMBX04-PRD.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130422212218.GA4704@localhost>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <koverstreet@google.com>
-Cc: linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Apr 22 2013 at  5:22pm -0400,
-Kent Overstreet <koverstreet@google.com> wrote:
+This patch fixes a problem introduced in this commit: http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=cef43b6f910f740c0e2d38761f58c5ebedfb7585;hp=41b85341ca514a50d18c592996a2ecb43a81fa90
+Currently, the string handler for failback on hw entries expects strings like "manual" to be quoted.  The buffer always strips quotes.
+As a result, the keywords manual, immediate, and followover cannot be used to change a failback parameter through multipath.conf
 
-> On Wed, Apr 10, 2013 at 04:54:40PM -0400, Mike Snitzer wrote:
-> > Hey,
-> > 
-> > So DM core clearly needs to be more defensive about the possibility for
-> > a NULL return from bio_alloc_bioset() given I'm hitting a NULL pointer
-> > in DM's alloc_tio() because nr_iovecs=512.  bio_alloc_bioset()'s call to
-> > bvec_alloc() only supports nr_iovecs up to BIO_MAX_PAGES (256).
-> 
-> I have a fix for this queued up in my bcache-for-upstream, if you want
-> to check and make sure it works.
+Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
 
-Works for me, thanks.
+---
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index a54dda9..5154cdd 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -1108,11 +1108,11 @@ hw_failback_handler(vector strvec)
+
+        buff = set_value(strvec);
+
+-       if (strlen(buff) == 6 && !strcmp(buff, "\"manual\""))
++       if (strlen(buff) == 6 && !strcmp(buff, "manual"))
+                hwe->pgfailback = -FAILBACK_MANUAL;
+-       else if (strlen(buff) == 9 && !strcmp(buff, "\"immediate\""))
++       else if (strlen(buff) == 9 && !strcmp(buff, "immediate"))
+                hwe->pgfailback = -FAILBACK_IMMEDIATE;
+-       else if (strlen(buff) == 10 && !strcmp(buff, "\"followover\""))
++       else if (strlen(buff) == 10 && !strcmp(buff, "followover"))
+                hwe->pgfailback = -FAILBACK_FOLLOWOVER;
+        else
+                hwe->pgfailback = atoi(buff);
+--
