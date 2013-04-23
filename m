@@ -1,15 +1,16 @@
 From: "Levy, Jerome" <jerome.levy@emc.com>
-Subject: Rediff: Patch to minimize noise with snapshots in
- emc_clariion checker
-Date: Tue, 23 Apr 2013 10:45:58 +0000
-Message-ID: <454E18A46D7B064CA63B41E99AD179504EF35053@MX103CL02.corp.emc.com>
+Subject: [PATCH v3] libmultipath: minimize noise with snapshots
+ in emc_clariion checker
+Date: Tue, 23 Apr 2013 13:34:03 +0000
+Message-ID: <454E18A46D7B064CA63B41E99AD179504EF35161@MX103CL02.corp.emc.com>
 References: <454E18A46D7B064CA63B41E99AD179504EF34D8E@MX103CL02.corp.emc.com>
+	<20130423132648.GA9083@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <454E18A46D7B064CA63B41E99AD179504EF34D8E@MX103CL02.corp.emc.com>
+In-Reply-To: <20130423132648.GA9083@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,11 +21,12 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, "christophe.varoqui@gmail.com" <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Looks like the diff went the wrong way. Sorry for the inconvenience, resubmitting:
-
+Corrections noted. Sorry for the inconvenience... changing include and inverting diff.
+Thanks, Mike!!!!
 --- 
 
 Patch to stop emc_clariion_checker from logging messages when probes to snapshot LUNs occur. Notification is still available if logging is turned up (see condlog()) but normal probing of snapshots will no longer produce status messages. Path functionality on snapshot probes is unchanged.
@@ -38,7 +40,7 @@ Signed-off-by: Jerry Levy <jerome.levy@emc.com>
  #include "../libmultipath/sg_include.h"
  #include "libsg.h"
  #include "checkers.h"
-+#include "debug.h"
++#include "../libmultipath/debug.h"
  
  #define INQUIRY_CMD     0x12
  #define INQUIRY_CMDLEN  6
