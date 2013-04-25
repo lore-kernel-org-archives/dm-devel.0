@@ -1,24 +1,25 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH -next] dm snapshot: fix error return code in
-	snapshot_ctr()
-Date: Thu, 25 Apr 2013 21:28:57 +0100
-Message-ID: <20130425202857.GC23535@agk-dp.fab.redhat.com>
-References: <CAPgLHd-ZjORYMQ9DSa_CBRipu8NnpOkpsqyswk8FG8cdi98dHQ@mail.gmail.com>
+Subject: Re: [PATCH -next] dm cache: fix error return code in cache_create()
+Date: Thu, 25 Apr 2013 21:30:36 +0100
+Message-ID: <20130425203036.GD23535@agk-dp.fab.redhat.com>
+References: <CAPgLHd8twedhKj8MNkCyHKTEtV421_251Ot-zm-=boCJZ5nc9w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAPgLHd-ZjORYMQ9DSa_CBRipu8NnpOkpsqyswk8FG8cdi98dHQ@mail.gmail.com>
+In-Reply-To: <CAPgLHd8twedhKj8MNkCyHKTEtV421_251Ot-zm-=boCJZ5nc9w@mail.gmail.com>
 Sender: linux-raid-owner@vger.kernel.org
 To: Wei Yongjun <weiyj.lk@gmail.com>
-Cc: agk@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, yongjun_wei@trendmicro.com.cn, dm-devel@redhat.com
+Cc: agk@redhat.com, neilb@suse.de, yongjun_wei@trendmicro.com.cn, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Apr 19, 2013 at 09:26:07AM +0800, Wei Yongjun wrote:
-> Fix to return -ENOMEM in create slab pool error case
-> instead of 0, as done elsewhere in this function.
+On Fri, Apr 19, 2013 at 01:11:30PM +0800, Wei Yongjun wrote:
+> Fix to return -ENOMEM in the memory alloc error handing
+> cases instead of 0, as done elsewhere in this function.
+ 
+Otherwise it dereferences a NULL pointer...
 
-Queued - thanks.
+Queued.
 
 Alasdair
 
