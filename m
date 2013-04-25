@@ -1,25 +1,24 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: [PATCH 2/2] dm mpath: attach scsi_dh during table resume
-Date: Thu, 25 Apr 2013 16:44:13 +0100
-Message-ID: <51794F4D.1020206@redhat.com>
-References: <20130404131631.GA10208@redhat.com> <1365457816-31475-1-git-send-email-snitzer@redhat.com> <1365457816-31475-2-git-send-email-snitzer@redhat.com> <20130422223355.GA4803@redhat.com> <Pine.LNX.4.64.1304250938480.8307@file.rdu.redhat.com> <20130425141707.GA1947@redhat.com> <Pine.LNX.4.64.1304251037320.18633@file.rdu.redhat.com> <51794B67.2000903@redhat.com> <20130425153757.GB2488@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH -next] dm snapshot: fix error return code in
+	snapshot_ctr()
+Date: Thu, 25 Apr 2013 21:28:57 +0100
+Message-ID: <20130425202857.GC23535@agk-dp.fab.redhat.com>
+References: <CAPgLHd-ZjORYMQ9DSa_CBRipu8NnpOkpsqyswk8FG8cdi98dHQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20130425153757.GB2488@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, hare@suse.de
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPgLHd-ZjORYMQ9DSa_CBRipu8NnpOkpsqyswk8FG8cdi98dHQ@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Wei Yongjun <weiyj.lk@gmail.com>
+Cc: agk@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, yongjun_wei@trendmicro.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 04/25/2013 04:37 PM, Mike Snitzer wrote:> clariion_match does more 
-than check the vendor and product; if tpgs is
- > set (ALUA mode) it returns false.
- >
- > So yes, while there is room for improvement in clariion_match the
- > current code should work just fine with reasoning between emc and alua.
+On Fri, Apr 19, 2013 at 09:26:07AM +0800, Wei Yongjun wrote:
+> Fix to return -ENOMEM in create slab pool error case
+> instead of 0, as done elsewhere in this function.
 
-Duh, sorry you're right. Completely missed the test for tpgs in emc.
+Queued - thanks.
 
+Alasdair
 
