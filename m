@@ -1,16 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 1/2] [multipath-tools] Fix failback parameter
  parsing in conf
-Date: Sat, 27 Apr 2013 10:18:27 +0200
-Message-ID: <1367050707.23503.6.camel@lapoo.opensvc.com>
+Date: Mon, 29 Apr 2013 08:01:30 +0200
+Message-ID: <517E0CBA.3060309@suse.de>
 References: <8255ED565A0EAA4A960625E27D49DBF21FFB6B71@SACEXCMBX04-PRD.hq.netapp.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+	<1367050707.23503.6.camel@lapoo.opensvc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8255ED565A0EAA4A960625E27D49DBF21FFB6B71@SACEXCMBX04-PRD.hq.netapp.com>
+In-Reply-To: <1367050707.23503.6.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +20,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "hare@suse.de" <hare@suse.de>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: christophe.varoqui@opensvc.com
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On mar., 2013-04-23 at 21:21 +0000, Stewart, Sean wrote:
-> This patch fixes a problem introduced in this commit: http://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=cef43b6f910f740c0e2d38761f58c5ebedfb7585;hp=41b85341ca514a50d18c592996a2ecb43a81fa90
-> Currently, the string handler for failback on hw entries expects strings like "manual" to be quoted.  The buffer always strips quotes.
-> As a result, the keywords manual, immediate, and followover cannot be used to change a failback parameter through multipath.conf
-> 
-Hannes,
-
-do you ack this one, which reverts part of
-cef43b6f910f740c0e2d38761f58c5ebedfb7585 from your tree ?
-
-Best regards,
-Christophe Varoqui
-www.opensvc.com
-
-
-> Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
-> 
-> ---
-> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> index a54dda9..5154cdd 100644
-> --- a/libmultipath/dict.c
-> +++ b/libmultipath/dict.c
-> @@ -1108,11 +1108,11 @@ hw_failback_handler(vector strvec)
-> 
->         buff = set_value(strvec);
-> 
-> -       if (strlen(buff) == 6 && !strcmp(buff, "\"manual\""))
-> +       if (strlen(buff) == 6 && !strcmp(buff, "manual"))
->                 hwe->pgfailback = -FAILBACK_MANUAL;
-> -       else if (strlen(buff) == 9 && !strcmp(buff, "\"immediate\""))
-> +       else if (strlen(buff) == 9 && !strcmp(buff, "immediate"))
->                 hwe->pgfailback = -FAILBACK_IMMEDIATE;
-> -       else if (strlen(buff) == 10 && !strcmp(buff, "\"followover\""))
-> +       else if (strlen(buff) == 10 && !strcmp(buff, "followover"))
->                 hwe->pgfailback = -FAILBACK_FOLLOWOVER;
->         else
->                 hwe->pgfailback = atoi(buff);
-> --
+T24gMDQvMjcvMjAxMyAxMDoxOCBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IE9uIG1h
+ci4sIDIwMTMtMDQtMjMgYXQgMjE6MjEgKzAwMDAsIFN0ZXdhcnQsIFNlYW4gd3JvdGU6Cj4+IFRo
+aXMgcGF0Y2ggZml4ZXMgYSBwcm9ibGVtIGludHJvZHVjZWQgaW4gdGhpcyBjb21taXQ6IGh0dHA6
+Ly9naXQub3BlbnN2Yy5jb20vZ2l0d2ViLmNnaT9wPW11bHRpcGF0aC10b29scy8uZ2l0O2E9Y29t
+bWl0ZGlmZjtoPWNlZjQzYjZmOTEwZjc0MGMwZTJkMzg3NjFmNThjNWViZWRmYjc1ODU7aHA9NDFi
+ODUzNDFjYTUxNGE1MGQxOGM1OTI5OTZhMmVjYjQzYTgxZmE5MAo+PiBDdXJyZW50bHksIHRoZSBz
+dHJpbmcgaGFuZGxlciBmb3IgZmFpbGJhY2sgb24gaHcgZW50cmllcyBleHBlY3RzIHN0cmluZ3Mg
+bGlrZSAibWFudWFsIiB0byBiZSBxdW90ZWQuICBUaGUgYnVmZmVyIGFsd2F5cyBzdHJpcHMgcXVv
+dGVzLgo+PiBBcyBhIHJlc3VsdCwgdGhlIGtleXdvcmRzIG1hbnVhbCwgaW1tZWRpYXRlLCBhbmQg
+Zm9sbG93b3ZlciBjYW5ub3QgYmUgdXNlZCB0byBjaGFuZ2UgYSBmYWlsYmFjayBwYXJhbWV0ZXIg
+dGhyb3VnaCBtdWx0aXBhdGguY29uZgo+Pgo+IEhhbm5lcywKPiAKPiBkbyB5b3UgYWNrIHRoaXMg
+b25lLCB3aGljaCByZXZlcnRzIHBhcnQgb2YKPiBjZWY0M2I2ZjkxMGY3NDBjMGUyZDM4NzYxZjU4
+YzVlYmVkZmI3NTg1IGZyb20geW91ciB0cmVlID8KPiAKWWVzLCBzb3JyeS4gV2FzIGFuIG92ZXJz
+aWdodCBvbiBteSBwYXJ0LgoKQWNrZWQtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRl
+PgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVz
+ICYgU3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJ
+TlVYIFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4g
+SGF3biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcp
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
