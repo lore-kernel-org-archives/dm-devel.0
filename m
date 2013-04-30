@@ -1,50 +1,28 @@
-From: Bharata B Rao <bharata.rao@gmail.com>
-Subject: BLKZEROOUT on dm devices
-Date: Tue, 30 Apr 2013 09:37:45 +0530
-Message-ID: <CAGZKiBq0igXmm-8vX++VD6P6HyHM=RS8L=_=SGOQOQ7prhyGBg@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ric Wheeler <ricwheeler@gmail.com>
+Subject: LPC2013: File and Storage Systems uconf Approved
+Date: Tue, 30 Apr 2013 12:19:40 -0400
+Message-ID: <517FEF1C.7020404@gmail.com>
+References: <wrfj38u8owm5.fsf@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <wrfj38u8owm5.fsf@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Cc: David Cantrell <dcantrel@redhat.com>, David Lehman <dlehman@redhat.com>, Tony Asleson <tasleson@redhat.com>, Kay Sievers <kay@redhat.com>, Lennart Poettering <lpoetter@redhat.com>, Matthew Garrett <mjg59@srcf.ucam.org>
 List-Id: dm-devel.ids
 
-SGksCgpJcyBCTEtaRVJPT1VUIGlvY3RsIHN1cHBvc2VkIHRvIHdvcmsgb24gZG0gZGV2aWNlcyA/
-IFdoZW4gSSB0cnkgdGhpcwppb2N0bCBvbiBhbiBMViB0aGF0IHNpdHMgb24gYSBXUklURSBTQU1F
-IGNhcGFibGUgU0NTSSBkZXZpY2UsIEkgc2VlCnRoYXQgY29udmVudGlvbmFsIHplcm9pbmcgaXMg
-ZG9uZSBzaW5jZSB0aGUgV1JJVEUgU0FNRSBzdXBwb3J0IGlzbid0CmFkdmVydGlzZWQgYnkgdGhl
-IGRtIGRldmljZS4KCiMgbHNibGsKTkFNRSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgTUFK
-Ok1JTiBSTSAgIFNJWkUgUk8gVFlQRSAgTU9VTlRQT0lOVApzZGEgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgIDg6MCAgICAwICAgIDUwRyAgMCBkaXNrCuKUlOKUgG1wYXRoYiAoZG0tMTIp
-ICAgICAgICAgICAgICAgICAyNTI6MTIgICAwICAgIDUwRyAgMCBtcGF0aAogIOKUlOKUgHdzX3Zn
-LWx2b2wwIChkbS0xMSkgICAgICAgICAgMjUyOjExICAgMCAgICAgMUcgIDAgbHZtCnNkZSAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgODo2NCAgIDAgICAgNTBHICAwIGRpc2sK4pSU4pSA
-bXBhdGhiIChkbS0xMikgICAgICAgICAgICAgICAgIDI1MjoxMiAgIDAgICAgNTBHICAwIG1wYXRo
-CiAg4pSU4pSAd3NfdmctbHZvbDAgKGRtLTExKSAgICAgICAgICAyNTI6MTEgICAwICAgICAxRyAg
-MCBsdm0KCiMgY2F0IC9zeXMvYmxvY2svc2RhL3F1ZXVlL3dyaXRlX3NhbWVfbWF4X2J5dGVzCjI2
-ODQzNTQ1NgojIGNhdCAvc3lzL2Jsb2NrL2RtLTEyL3F1ZXVlL3dyaXRlX3NhbWVfbWF4X2J5dGVz
-CjAKIyBjYXQgL3N5cy9ibG9jay9kbS0xMS9xdWV1ZS93cml0ZV9zYW1lX21heF9ieXRlcwowCgpb
-cm9vdEBsbG12bTAyIH5dIyBjYXQgL3N5cy9kZXYvYmxvY2svOFw6MC9xdWV1ZS93cml0ZV9zYW1l
-X21heF9ieXRlcwoyNjg0MzU0NTYKW3Jvb3RAbGxtdm0wMiB+XSMgY2F0IC9zeXMvZGV2L2Jsb2Nr
-LzI1Mlw6MTIvcXVldWUvd3JpdGVfc2FtZV9tYXhfYnl0ZXMKMApbcm9vdEBsbG12bTAyIH5dIyBj
-YXQgL3N5cy9kZXYvYmxvY2svMjUyXDoxMS9xdWV1ZS93cml0ZV9zYW1lX21heF9ieXRlcwowCgo+
-RnJvbSBjb21taXQgZDU0ZWFhNWEwZmRlMGEyMDJlNGU5MWYyMDBmODE4ZWRjZWYxNWJlZSwgSSBn
-YXRoZXIgdGhhdApXUklURSBTQU1FIGlzIGFkdmVydGlzZWQgYnkgYSBkbSBkZXZpY2UgaWYgYWxs
-IG9mIGl0cyB0YXJnZXQgYW5kCnVuZGVybHlpbmcgZGV2aWNlcyBzdXBwb3J0IFdSSVRFIFNBTUUu
-IEFsc28gYXMgcGVyCjRmMGI3MGIwNDc5MTAxNTIyYjg2NDVkZGMxZjVlZTcxMzc4MjFkYjMsIFdS
-SVRFIFNBTUUgaXMgc3VwcG9ydGVkIGZvcgpsaW5lYXIgZG0gZGV2aWNlcy4gQm90aCBvZiB0aGVz
-ZSBzZWVtIHRvIGJlIHRydWUgaW4gbXkgY2FzZSwgYnV0IHN0aWxsCkJMS1pFUk9PVVQgaW9jdGwg
-cmVzb3J0cyB0byBjb252ZW50aW9uYWwgemVyb2luZy4gV2hhdCBhbSBJIG1pc3NpbmcKaGVyZSA/
-CgpSZWdhcmRzLApCaGFyYXRhLgotLQpodHRwOi8vcmFvYmhhcmF0YS53b3JkcHJlc3MuY29tLwoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+Just a heads up, Linux Plumbers has approved the FS & Storage micro-conf for 
+this year. Please have a look at the wiki for details:
+
+http://www.linuxplumbersconf.org/2013/
+
+I have posted some suggested topics at the site, let's get the planning rolling 
+so we can get people registered in time for the early bird price :)
+
+Thanks!
+
+Ric
+
