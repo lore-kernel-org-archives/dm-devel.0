@@ -1,17 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm mpath: enable WRITE SAME support
-Date: Wed, 1 May 2013 09:29:22 -0400
-Message-ID: <20130501132922.GA10432@redhat.com>
+From: Bharata B Rao <bharata.rao@gmail.com>
+Subject: Re: [PATCH] dm mpath: enable WRITE SAME support
+Date: Wed, 1 May 2013 19:52:55 +0530
+Message-ID: <CAGZKiBqOa4DhySe1SjGoU+Ae2Xnk1LSJED0R1_doWk_MVxR88A@mail.gmail.com>
 References: <CAGZKiBq0igXmm-8vX++VD6P6HyHM=RS8L=_=SGOQOQ7prhyGBg@mail.gmail.com>
 	<20130430163214.GA22690@redhat.com>
 	<CAGZKiBrQmLGcUYKKBbyHSRsTSr28V=ap+OE1YuSDVcJnRb4Dqg@mail.gmail.com>
+	<20130501132922.GA10432@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAGZKiBrQmLGcUYKKBbyHSRsTSr28V=ap+OE1YuSDVcJnRb4Dqg@mail.gmail.com>
+In-Reply-To: <20130501132922.GA10432@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,42 +21,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bharata B Rao <bharata.rao@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCBNYXkgMDEgMjAxMyBhdCAgMjo1OGFtIC0wNDAwLApCaGFyYXRhIEIgUmFvIDxiaGFy
-YXRhLnJhb0BnbWFpbC5jb20+IHdyb3RlOgoKPiBPbiBUdWUsIEFwciAzMCwgMjAxMyBhdCAxMDow
-MiBQTSwgTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+IHdyb3RlOgo+ID4gT24gVHVl
-LCBBcHIgMzAgMjAxMyBhdCAxMjowN2FtIC0wNDAwLAo+ID4gQmhhcmF0YSBCIFJhbyA8YmhhcmF0
-YS5yYW9AZ21haWwuY29tPiB3cm90ZToKPiA+Cj4gPj4KPiA+PiAjIGxzYmxrCj4gPj4gTkFNRSAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgTUFKOk1JTiBSTSAgIFNJWkUgUk8gVFlQRSAgTU9V
-TlRQT0lOVAo+ID4+IHNkYSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgODowICAgIDAg
-ICAgNTBHICAwIGRpc2sKPiA+PiDilJTilIBtcGF0aGIgKGRtLTEyKSAgICAgICAgICAgICAgICAg
-MjUyOjEyICAgMCAgICA1MEcgIDAgbXBhdGgKPiA+PiAgIOKUlOKUgHdzX3ZnLWx2b2wwIChkbS0x
-MSkgICAgICAgICAgMjUyOjExICAgMCAgICAgMUcgIDAgbHZtCj4gPj4gc2RlICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICA4OjY0ICAgMCAgICA1MEcgIDAgZGlzawo+ID4+IOKUlOKUgG1w
-YXRoYiAoZG0tMTIpICAgICAgICAgICAgICAgICAyNTI6MTIgICAwICAgIDUwRyAgMCBtcGF0aAo+
-ID4+ICAg4pSU4pSAd3NfdmctbHZvbDAgKGRtLTExKSAgICAgICAgICAyNTI6MTEgICAwICAgICAx
-RyAgMCBsdm0KPiA+Pgo+ID4KPiA+Cj4gPiBBbnl3YXksIHRoaXMgcGF0Y2ggZml4ZXMgdGhpbmdz
-IGZvciBtZToKPiAKPiBUaGFua3MsIHRoaXMgZml4ZXMgdGhlIGlzc3VlIGZvciBtZSB0b28uIEhv
-d2V2ZXIgaWYgTFYvVkcvUFYgYXJlCj4gY3JlYXRlZCBvbiBtdWx0aXBhdGggZGV2aWNlLCB0aGVu
-IFdSSVRFIFNBTUUgc3RpbGwgZG9lc24ndCBnZXQKPiBhZHZlcnRpc2VkIGZvciB0aGUgTFYuIEkg
-aGFkIHRvIGRpc2FibGUgbXVsdGlwYXRoIGFuZCByZS1jcmVhdGUKPiBMVi9WRy9QViBvbiBhIG5v
-cm1hbCBkZXZpY2UgKC9kZXYvc2RhIGFzIGFnYWluc3QgL2Rldi9tYXBwZXIvbWFwYXRoYikKPiB0
-byBnZXQgQkxLWkVST1VUIHdvcmtpbmcgb24gTFYuCgpUaGUgbXVsdGlwYXRoIHRhcmdldCBkaWQg
-bm90IG9wdC1pbiB0byBzdXBwb3J0aW5nIFdSSVRFIFNBTUUuICBQbGVhc2UKdHJ5IHRoaXMgcGF0
-Y2guCgpGcm9tOiBNaWtlIFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4KU3ViamVjdDogW1BB
-VENIXSBkbSBtcGF0aDogZW5hYmxlIFdSSVRFIFNBTUUgc3VwcG9ydAoKVGhlcmUgaXMgbm8gcmVh
-c29uIHRvIGRpc2FsbG93IFdSSVRFIFNBTUUgc3VwcG9ydC4gIEFzIGZhciBhcyBtdWx0aXBhdGgK
-aXMgY29uY2VybmVkIGl0IGlzIGp1c3QgYW5vdGhlciB3cml0ZSByZXF1ZXN0LgoKU2lnbmVkLW9m
-Zi1ieTogTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+Ci0tLQogZHJpdmVycy9tZC9k
-bS1tcGF0aC5jIHwgICAgMSArCiAxIGZpbGVzIGNoYW5nZWQsIDEgaW5zZXJ0aW9ucygrKSwgMCBk
-ZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMgYi9kcml2ZXJz
-L21kL2RtLW1wYXRoLmMKaW5kZXggNTFiYjgxNi4uYmRmMjZmNSAxMDA2NDQKLS0tIGEvZHJpdmVy
-cy9tZC9kbS1tcGF0aC5jCisrKyBiL2RyaXZlcnMvbWQvZG0tbXBhdGguYwpAQCAtOTA3LDYgKzkw
-Nyw3IEBAIHN0YXRpYyBpbnQgbXVsdGlwYXRoX2N0cihzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5z
-aWduZWQgaW50IGFyZ2MsCiAKIAl0aS0+bnVtX2ZsdXNoX2Jpb3MgPSAxOwogCXRpLT5udW1fZGlz
-Y2FyZF9iaW9zID0gMTsKKwl0aS0+bnVtX3dyaXRlX3NhbWVfYmlvcyA9IDE7CiAKIAlyZXR1cm4g
-MDsKIAotLSAKMS43LjEKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
-Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Wed, May 1, 2013 at 6:59 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> The multipath target did not opt-in to supporting WRITE SAME.  Please
+> try this patch.
+>
+> From: Mike Snitzer <snitzer@redhat.com>
+> Subject: [PATCH] dm mpath: enable WRITE SAME support
+>
+> There is no reason to disallow WRITE SAME support.  As far as multipath
+> is concerned it is just another write request.
+>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm-mpath.c |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+>
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 51bb816..bdf26f5 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -907,6 +907,7 @@ static int multipath_ctr(struct dm_target *ti, unsigned int argc,
+>
+>         ti->num_flush_bios = 1;
+>         ti->num_discard_bios = 1;
+> +       ti->num_write_same_bios = 1;
+
+With this patch, I can see the LV that is on multipath device,
+advertising the WRITE SAME support and I am able to successfully issue
+BLKZEROOUT ioctl to that LV.
+
+Regards,
+Bharata.
