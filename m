@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 16/16] Use mapname to choose kpartx delimiter
-Date: Thu,  2 May 2013 16:46:37 -0500
-Message-ID: <1367531197-8987-17-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 13/16] Make multipathd deal better with
+	uninitialized paths
+Date: Thu,  2 May 2013 16:46:34 -0500
+Message-ID: <1367531197-8987-14-git-send-email-bmarzins@redhat.com>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,29 +23,73 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-When kpartx creates partition devices, it uses the mapname as the base
-for the partition device names. However when choosing the delimiter,
-it uses the device name passed in.  So if kpartx is called on /dev/dm-X
-it will always add a 'p', even if the mapname ends in a letter.  This
-patch fixes that by setting the delimiter based on the mapname.
+If multipathd cannot get all the necessary information from a path in
+pathinfo, it clears the path's wwid, and adds it to the pathvec without
+being initialized.  However, it never tries to reinitialize it later.
+This can cause problems at bootup if multipathd is started at around
+the same time as some path devices are discovered. multipathd may try
+to initalize them in configure() before they are all the way set up.
+After the paths are completely set up, multipathd will get a uevent for
+them, but it won't try to reinitialize them. This patch adds
+reinitialization code to uev_add_path().  Also, since getting the path
+uid now just involves reading an attribute set by udev, there's no
+reason no to try it for paths that are currently down.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/kpartx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c |  2 +-
+ multipathd/main.c        | 19 ++++++++++++++++++-
+ 2 files changed, 19 insertions(+), 2 deletions(-)
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 30b3bd9..98d88c0 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -348,7 +348,7 @@ main(int argc, char **argv){
- 	if (delim == NULL) {
- 		delim = malloc(DELIM_SIZE);
- 		memset(delim, 0, DELIM_SIZE);
--		set_delimiter(device, delim);
-+		set_delimiter(mapname, delim);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 4d452a1..26983ca 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1034,7 +1034,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 		}
  	}
  
- 	fd = open(device, O_RDONLY);
+-	if (path_state == PATH_UP && (mask & DI_WWID) && !strlen(pp->wwid))
++	if ((mask & DI_WWID) && !strlen(pp->wwid))
+ 		get_uid(pp);
+ 	if (mask & DI_BLACKLIST && mask & DI_WWID) {
+ 		if (filter_wwid(conf->blist_wwid, conf->elist_wwid,
+diff --git a/multipathd/main.c b/multipathd/main.c
+index df1c5b9..a8e4725 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -375,7 +375,7 @@ static int
+ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ {
+ 	struct path *pp;
+-	int ret;
++	int ret, i;
+ 
+ 	condlog(2, "%s: add path (uevent)", uev->kernel);
+ 	if (strstr(uev->kernel, "..") != NULL) {
+@@ -392,6 +392,23 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 			uev->kernel);
+ 		if (pp->mpp)
+ 			return 0;
++		if (!strlen(pp->wwid)) {
++			udev_device_unref(pp->udev);
++			pp->udev = udev_device_ref(uev->udev);
++			ret = pathinfo(pp, conf->hwtable,
++				       DI_ALL | DI_BLACKLIST);
++			if (ret == 2) {
++				i = find_slot(vecs->pathvec, (void *)pp);
++				if (i != -1)
++					vector_del_slot(vecs->pathvec, i);
++				free_path(pp);
++				return 0;
++			} else if (ret == 1) {
++				condlog(0, "%s: failed to reinitialize path",
++					uev->kernel);
++				return 1;
++			}
++		}
+ 	} else {
+ 		/*
+ 		 * get path vital state
 -- 
 1.8.2
