@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 03/16] Fix print_multipath_topology for large
-	outputs
-Date: Thu,  2 May 2013 16:46:24 -0500
-Message-ID: <1367531197-8987-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 08/16] Avoid race between ueventloop and uevqloop
+Date: Thu,  2 May 2013 16:46:29 -0500
+Message-ID: <1367531197-8987-9-git-send-email-bmarzins@redhat.com>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,71 +22,53 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-print_multipath_topology had a hard size limit. With a large number
-of LUNs and a large number of paths, it was possible to go over
-this limit, and have some of the output cut off.
-print_multipath_topology now checks for this, and resizes the
-buffer if necessary.
+ueventloop sets up uevq_lockp and uev_condp, which uevqloop uses.
+If uevqloop accesses these structures before ueventloop has
+initialized them, it will not wake up to process uevents. This patch
+statically initializes these structures so they will always be
+initialized. Also, since calling LIST_HEAD(uevq) initializes it,
+there is no reason to call INIT_LIST_HEAD on it later.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/print.c | 30 ++++++++++++++++++++++++++----
- 1 file changed, 26 insertions(+), 4 deletions(-)
+ libmultipath/uevent.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 0e2c680..274f5e7 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -8,6 +8,8 @@
- #include <sys/stat.h>
- #include <dirent.h>
- #include <unistd.h>
-+#include <string.h>
-+#include <errno.h>
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index bc74d38..0643e14 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -53,8 +53,10 @@ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
  
- #include "checkers.h"
- #include "vector.h"
-@@ -24,6 +26,7 @@
- #include "switchgroup.h"
- #include "devmapper.h"
- #include "uevent.h"
-+#include "debug.h"
+ pthread_t uevq_thr;
+ LIST_HEAD(uevq);
+-pthread_mutex_t uevq_lock, *uevq_lockp = &uevq_lock;
+-pthread_cond_t  uev_cond,  *uev_condp  = &uev_cond;
++pthread_mutex_t uevq_lock = PTHREAD_MUTEX_INITIALIZER;
++pthread_mutex_t *uevq_lockp = &uevq_lock;
++pthread_cond_t uev_cond = PTHREAD_COND_INITIALIZER;
++pthread_cond_t *uev_condp = &uev_cond;
+ uev_trigger *my_uev_trigger;
+ void * my_trigger_data;
+ int servicing_uev;
+@@ -409,10 +411,6 @@ int uevent_listen(void)
+ 	 * thereby not getting to empty the socket's receive buffer queue
+ 	 * often enough.
+ 	 */
+-	INIT_LIST_HEAD(&uevq);
+-
+-	pthread_mutex_init(uevq_lockp, NULL);
+-	pthread_cond_init(uev_condp, NULL);
+ 	pthread_cleanup_push(uevq_stop, NULL);
  
- #define MAX(x,y) (x > y) ? x : y
- #define TAIL     (line + len - 1 - c)
-@@ -754,11 +757,30 @@ snprint_pathgroup (char * line, int len, char * format,
- extern void
- print_multipath_topology (struct multipath * mpp, int verbosity)
- {
--	char buff[MAX_LINE_LEN * MAX_LINES] = {};
-+	int resize;
-+	char *buff = NULL;
-+	char *old = NULL;
-+	int len, maxlen = MAX_LINE_LEN * MAX_LINES;
-+
-+	buff = MALLOC(maxlen);
-+	do {
-+		if (!buff) {
-+			if (old)
-+				FREE(old);
-+			condlog(0, "couldn't allocate memory for list: %s\n",
-+				strerror(errno));
-+			return;
-+		}
-+
-+		len = snprint_multipath_topology(buff, maxlen, mpp, verbosity);
-+		resize = (len == maxlen - 1);
- 
--	memset(&buff[0], 0, MAX_LINE_LEN * MAX_LINES);
--	snprint_multipath_topology(&buff[0], MAX_LINE_LEN * MAX_LINES,
--				   mpp, verbosity);
-+		if (resize) {
-+			maxlen *= 2;
-+			old = buff;
-+			buff = REALLOC(buff, maxlen);
-+		}
-+	} while (resize);
- 	printf("%s", buff);
+ 	monitor = udev_monitor_new_from_netlink(conf->udev, "udev");
+@@ -525,8 +523,6 @@ out:
+ 	if (need_failback)
+ 		err = failback_listen();
+ 	pthread_cleanup_pop(1);
+-	pthread_mutex_destroy(uevq_lockp);
+-	pthread_cond_destroy(uev_condp);
+ 	return err;
  }
  
 -- 
