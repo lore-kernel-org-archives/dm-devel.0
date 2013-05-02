@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 01/16] Make kpartx advise modprobe instead of
-	insmod
-Date: Thu,  2 May 2013 16:46:22 -0500
-Message-ID: <1367531197-8987-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 06/16] Fix hardware entry matching code
+Date: Thu,  2 May 2013 16:46:27 -0500
+Message-ID: <1367531197-8987-7-git-send-email-bmarzins@redhat.com>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,33 +22,30 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Users usually want to use modprobe instead of insmod, since it
-handles finding the correct version and dependencies.
+When a user defined hardware table entry's identifiers exactly
+match a built-in one's, the built-in one is removed, and the list
+is rescaned.  However, the built-in entry is not freed, and on the
+rescan, the first user defined entry is treated as a built-in
+entry. This patch frees the built-in entry, and decrements the
+number of built-in entries, so that the rescan works as expected.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/lopart.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/config.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 9413ab1..79a7593 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -205,13 +205,13 @@ find_unused_loop_device (void)
- 		fprintf(stderr,
- 		    "mount: Could not find any loop device, and, according to %s,\n"
- 		    "       this kernel does not know about the loop device.\n"
--		    "       (If so, then recompile or `insmod loop.o'.)",
-+		    "       (If so, then recompile or `modprobe loop'.)",
- 		      PROC_DEVICES);
- 
- 	    else
- 		fprintf(stderr,
- 		    "mount: Could not find any loop device. Maybe this kernel does not know\n"
--		    "       about the loop device (then recompile or `insmod loop.o'), or\n"
-+		    "       about the loop device (then recompile or `modprobe loop'), or\n"
- 		    "       maybe /dev/loop# has the wrong major number?");
- 
- 	} else
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 25d3e3d..da676df 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -436,6 +436,8 @@ restart:
+ 			merge_hwe(hwe2, hwe1);
+ 			if (hwe_strmatch(hwe2, hwe1) == 0) {
+ 				vector_del_slot(hw, i);
++				free_hwe(hwe1);
++				n -= 1;
+ 				/*
+ 				 * Play safe here; we have modified
+ 				 * the original vector so the outer
 -- 
 1.8.2
