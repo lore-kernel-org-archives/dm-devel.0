@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 02/16] Make kpartx correctly handle non-512 byte
-	GPT
-Date: Thu,  2 May 2013 16:46:23 -0500
-Message-ID: <1367531197-8987-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 04/16] Don't print checker messages for ghost
+	paths
+Date: Thu,  2 May 2013 16:46:25 -0500
+Message-ID: <1367531197-8987-5-git-send-email-bmarzins@redhat.com>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,43 +23,27 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The gpt code in kpartx correctly handled non-512 byte gpt
-partitions right up until it was time to actually write out the
-slice data. At that point it forgot to convert the logical block
-address into a the proper slice offset. This patch fixes that.
+Since PATH_GHOST is not an unexpected state, we don't need to
+keep printing out checker messages for these paths.
 
-Signed-off-by: Philipp Schmidt <philipp@ppc.in-berlin.de>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/gpt.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ libmultipath/discovery.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/kpartx/gpt.c b/kpartx/gpt.c
-index 3082cae..0a22927 100644
---- a/kpartx/gpt.c
-+++ b/kpartx/gpt.c
-@@ -637,6 +637,7 @@ read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns)
- 	uint32_t i;
- 	int n = 0;
-         int last_used_index=-1;
-+	int sector_size_mul = get_sector_size(fd)/512;
- 
- 	if (!find_valid_gpt (fd, &gpt, &ptes) || !gpt || !ptes) {
- 		if (gpt)
-@@ -652,9 +653,11 @@ read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns)
- 			sp[n].size = 0;
- 			n++;
- 		} else {
--			sp[n].start = __le64_to_cpu(ptes[i].starting_lba);
--			sp[n].size  = __le64_to_cpu(ptes[i].ending_lba) -
--				__le64_to_cpu(ptes[i].starting_lba) + 1;
-+			sp[n].start = sector_size_mul *
-+				      __le64_to_cpu(ptes[i].starting_lba);
-+			sp[n].size  = sector_size_mul *
-+				      (__le64_to_cpu(ptes[i].ending_lba) -
-+				       __le64_to_cpu(ptes[i].starting_lba) + 1);
-                         last_used_index=n;
- 			n++;
- 		}
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 0b5fd1d..826ea75 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -898,7 +898,8 @@ get_state (struct path * pp, int daemon)
+ 		c->timeout = DEF_TIMEOUT;
+ 	state = checker_check(c);
+ 	condlog(3, "%s: state = %s", pp->dev, checker_state_name(state));
+-	if (state != PATH_UP && strlen(checker_message(c)))
++	if (state != PATH_UP && state != PATH_GHOST &&
++	    strlen(checker_message(c)))
+ 		condlog(3, "%s: checker msg is \"%s\"",
+ 			pp->dev, checker_message(c));
+ 	return state;
 -- 
 1.8.2
