@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 13/16] Make multipathd deal better with
-	uninitialized paths
-Date: Thu,  2 May 2013 16:46:34 -0500
-Message-ID: <1367531197-8987-14-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 03/16] Fix print_multipath_topology for large
+	outputs
+Date: Thu,  2 May 2013 16:46:24 -0500
+Message-ID: <1367531197-8987-4-git-send-email-bmarzins@redhat.com>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,73 +23,72 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-If multipathd cannot get all the necessary information from a path in
-pathinfo, it clears the path's wwid, and adds it to the pathvec without
-being initialized.  However, it never tries to reinitialize it later.
-This can cause problems at bootup if multipathd is started at around
-the same time as some path devices are discovered. multipathd may try
-to initalize them in configure() before they are all the way set up.
-After the paths are completely set up, multipathd will get a uevent for
-them, but it won't try to reinitialize them. This patch adds
-reinitialization code to uev_add_path().  Also, since getting the path
-uid now just involves reading an attribute set by udev, there's no
-reason no to try it for paths that are currently down.
+print_multipath_topology had a hard size limit. With a large number
+of LUNs and a large number of paths, it was possible to go over
+this limit, and have some of the output cut off.
+print_multipath_topology now checks for this, and resizes the
+buffer if necessary.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c |  2 +-
- multipathd/main.c        | 19 ++++++++++++++++++-
- 2 files changed, 19 insertions(+), 2 deletions(-)
+ libmultipath/print.c | 30 ++++++++++++++++++++++++++----
+ 1 file changed, 26 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 4d452a1..26983ca 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1034,7 +1034,7 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 		}
- 	}
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 0e2c680..274f5e7 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -8,6 +8,8 @@
+ #include <sys/stat.h>
+ #include <dirent.h>
+ #include <unistd.h>
++#include <string.h>
++#include <errno.h>
  
--	if (path_state == PATH_UP && (mask & DI_WWID) && !strlen(pp->wwid))
-+	if ((mask & DI_WWID) && !strlen(pp->wwid))
- 		get_uid(pp);
- 	if (mask & DI_BLACKLIST && mask & DI_WWID) {
- 		if (filter_wwid(conf->blist_wwid, conf->elist_wwid,
-diff --git a/multipathd/main.c b/multipathd/main.c
-index df1c5b9..a8e4725 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -375,7 +375,7 @@ static int
- uev_add_path (struct uevent *uev, struct vectors * vecs)
+ #include "checkers.h"
+ #include "vector.h"
+@@ -24,6 +26,7 @@
+ #include "switchgroup.h"
+ #include "devmapper.h"
+ #include "uevent.h"
++#include "debug.h"
+ 
+ #define MAX(x,y) (x > y) ? x : y
+ #define TAIL     (line + len - 1 - c)
+@@ -754,11 +757,30 @@ snprint_pathgroup (char * line, int len, char * format,
+ extern void
+ print_multipath_topology (struct multipath * mpp, int verbosity)
  {
- 	struct path *pp;
--	int ret;
-+	int ret, i;
- 
- 	condlog(2, "%s: add path (uevent)", uev->kernel);
- 	if (strstr(uev->kernel, "..") != NULL) {
-@@ -392,6 +392,23 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 			uev->kernel);
- 		if (pp->mpp)
- 			return 0;
-+		if (!strlen(pp->wwid)) {
-+			udev_device_unref(pp->udev);
-+			pp->udev = udev_device_ref(uev->udev);
-+			ret = pathinfo(pp, conf->hwtable,
-+				       DI_ALL | DI_BLACKLIST);
-+			if (ret == 2) {
-+				i = find_slot(vecs->pathvec, (void *)pp);
-+				if (i != -1)
-+					vector_del_slot(vecs->pathvec, i);
-+				free_path(pp);
-+				return 0;
-+			} else if (ret == 1) {
-+				condlog(0, "%s: failed to reinitialize path",
-+					uev->kernel);
-+				return 1;
-+			}
+-	char buff[MAX_LINE_LEN * MAX_LINES] = {};
++	int resize;
++	char *buff = NULL;
++	char *old = NULL;
++	int len, maxlen = MAX_LINE_LEN * MAX_LINES;
++
++	buff = MALLOC(maxlen);
++	do {
++		if (!buff) {
++			if (old)
++				FREE(old);
++			condlog(0, "couldn't allocate memory for list: %s\n",
++				strerror(errno));
++			return;
 +		}
- 	} else {
- 		/*
- 		 * get path vital state
++
++		len = snprint_multipath_topology(buff, maxlen, mpp, verbosity);
++		resize = (len == maxlen - 1);
+ 
+-	memset(&buff[0], 0, MAX_LINE_LEN * MAX_LINES);
+-	snprint_multipath_topology(&buff[0], MAX_LINE_LEN * MAX_LINES,
+-				   mpp, verbosity);
++		if (resize) {
++			maxlen *= 2;
++			old = buff;
++			buff = REALLOC(buff, maxlen);
++		}
++	} while (resize);
+ 	printf("%s", buff);
+ }
+ 
 -- 
 1.8.2
