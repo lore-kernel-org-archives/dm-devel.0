@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 11/16] Fix max path checker timing
-Date: Thu,  2 May 2013 16:46:32 -0500
-Message-ID: <1367531197-8987-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 14/16] Stop annoying prio_lookup warning messages
+Date: Thu,  2 May 2013 16:46:35 -0500
+Message-ID: <1367531197-8987-15-git-send-email-bmarzins@redhat.com>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,36 +22,29 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Due to some code being placed inside the wrong block, the number of
-seconds to wait between path checks (pp->tick), was only getting set to
-the path's individual check interval if that wasn't equal to the max
-check interval.  Otherwise it was using the default for a failed path.
-This patch makes sure that pp->ticks always always gets set correctly
-for active paths.
+Multipath shouldn't try to look up its prioritizer if it doesn't have
+one. Doing so just causes annoying warning messages.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ libmultipath/prio.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 440d254..df1c5b9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1219,11 +1219,10 @@ check_path (struct vectors * vecs, struct path * pp)
- 					pp->checkint = 2 * pp->checkint;
- 				else
- 					pp->checkint = conf->max_checkint;
--
--				pp->tick = pp->checkint;
--				condlog(4, "%s: delay next check %is",
--					pp->dev_t, pp->tick);
- 			}
-+			pp->tick = pp->checkint;
-+			condlog(4, "%s: delay next check %is",
-+				pp->dev_t, pp->tick);
- 		}
- 	}
- 	else if (newstate == PATH_DOWN) {
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 8e6b93e..186cc4d 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -162,7 +162,10 @@ void prio_put (struct prio * dst)
+ 	if (!dst)
+ 		return;
+ 
+-	src = prio_lookup(dst->name);
++	if (!strlen(dst->name))
++		src = NULL;
++	else
++		src = prio_lookup(dst->name);
+ 	memset(dst, 0x0, sizeof(struct prio));
+ 	free_prio(src);
+ }
 -- 
 1.8.2
