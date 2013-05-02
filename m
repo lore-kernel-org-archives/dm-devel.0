@@ -1,13 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 00/16] multipath-tools: miscellaneous multipath
-	patches
-Date: Thu,  2 May 2013 16:46:21 -0500
-Message-ID: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 01/16] Make kpartx advise modprobe instead of
+	insmod
+Date: Thu,  2 May 2013 16:46:22 -0500
+Message-ID: <1367531197-8987-2-git-send-email-bmarzins@redhat.com>
+References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,55 +23,33 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Here are the patches I've got since my last resync.
+Users usually want to use modprobe instead of insmod, since it
+handles finding the correct version and dependencies.
 
-Please apply.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ kpartx/lopart.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Philipp Schmidt (1):
-  Make kpartx correctly handle non-512 byte GPT partitions
-
-Benjamin Marzinski (15):
-  Make kpartx advise modprobe instead of insmod
-  Fix print_multipath_topology for large outputs
-  Don't print checker messages for ghost paths
-  Fix a couple of signal issues
-  Fix hardware entry matching code
-  Fix some socket issues
-  Avoid race between ueventloop and uevqloop
-  Add existing multipath devices to wwids file on configure
-  add wwids file cleanup options
-  Fix max path checker timing
-  Make set_multipath_wwid actually do something
-  Make multipathd deal better with uninitialized paths
-  Stop annoying prio_lookup warning messages
-  make multipathd disable queue_without_daemon by default
-  Use mapname to choose kpartx delimiter
-
- kpartx/gpt.c                      |   9 ++-
- kpartx/kpartx.c                   |   2 +-
- kpartx/lopart.c                   |   4 +-
- libmpathpersist/mpath_updatepr.c  |   3 +-
- libmultipath/config.c             |   2 +
- libmultipath/dict.c               |  10 ++-
- libmultipath/discovery.c          |   8 ++-
- libmultipath/log_pthread.c        |   3 +
- libmultipath/print.c              |  30 +++++++--
- libmultipath/prio.c               |   5 +-
- libmultipath/structs.h            |   2 +-
- libmultipath/structs_vec.c        |   2 +-
- libmultipath/uevent.c             |  12 ++--
- libmultipath/uxsock.c             |   4 +-
- libmultipath/wwids.c              | 130 ++++++++++++++++++++++++++++++++++++++
- libmultipath/wwids.h              |   2 +
- multipath/main.c                  |  51 +++++++++++++--
- multipath/multipath.8             |   8 ++-
- multipathd/cli.c                  |   3 +
- multipathd/cli.h                  |   2 +
- multipathd/cli_handlers.c         |  18 ++++++
- multipathd/cli_handlers.h         |   2 +
- multipathd/main.c                 |  41 ++++++++----
- multipathd/multipathd.init.redhat |  14 ++--
- 24 files changed, 313 insertions(+), 54 deletions(-)
-
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index 9413ab1..79a7593 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -205,13 +205,13 @@ find_unused_loop_device (void)
+ 		fprintf(stderr,
+ 		    "mount: Could not find any loop device, and, according to %s,\n"
+ 		    "       this kernel does not know about the loop device.\n"
+-		    "       (If so, then recompile or `insmod loop.o'.)",
++		    "       (If so, then recompile or `modprobe loop'.)",
+ 		      PROC_DEVICES);
+ 
+ 	    else
+ 		fprintf(stderr,
+ 		    "mount: Could not find any loop device. Maybe this kernel does not know\n"
+-		    "       about the loop device (then recompile or `insmod loop.o'), or\n"
++		    "       about the loop device (then recompile or `modprobe loop'), or\n"
+ 		    "       maybe /dev/loop# has the wrong major number?");
+ 
+ 	} else
 -- 
 1.8.2
