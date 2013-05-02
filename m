@@ -1,17 +1,14 @@
-From: Bharata B Rao <bharata.rao@gmail.com>
-Subject: Re: [PATCH] dm mpath: enable WRITE SAME support
-Date: Wed, 1 May 2013 19:52:55 +0530
-Message-ID: <CAGZKiBqOa4DhySe1SjGoU+Ae2Xnk1LSJED0R1_doWk_MVxR88A@mail.gmail.com>
-References: <CAGZKiBq0igXmm-8vX++VD6P6HyHM=RS8L=_=SGOQOQ7prhyGBg@mail.gmail.com>
-	<20130430163214.GA22690@redhat.com>
-	<CAGZKiBrQmLGcUYKKBbyHSRsTSr28V=ap+OE1YuSDVcJnRb4Dqg@mail.gmail.com>
-	<20130501132922.GA10432@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH 16/16] Use mapname to choose kpartx delimiter
+Date: Thu,  2 May 2013 16:46:37 -0500
+Message-ID: <1367531197-8987-17-git-send-email-bmarzins@redhat.com>
+References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130501132922.GA10432@redhat.com>
+In-Reply-To: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,39 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, May 1, 2013 at 6:59 PM, Mike Snitzer <snitzer@redhat.com> wrote:
->
-> The multipath target did not opt-in to supporting WRITE SAME.  Please
-> try this patch.
->
-> From: Mike Snitzer <snitzer@redhat.com>
-> Subject: [PATCH] dm mpath: enable WRITE SAME support
->
-> There is no reason to disallow WRITE SAME support.  As far as multipath
-> is concerned it is just another write request.
->
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm-mpath.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
->
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 51bb816..bdf26f5 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -907,6 +907,7 @@ static int multipath_ctr(struct dm_target *ti, unsigned int argc,
->
->         ti->num_flush_bios = 1;
->         ti->num_discard_bios = 1;
-> +       ti->num_write_same_bios = 1;
+When kpartx creates partition devices, it uses the mapname as the base
+for the partition device names. However when choosing the delimiter,
+it uses the device name passed in.  So if kpartx is called on /dev/dm-X
+it will always add a 'p', even if the mapname ends in a letter.  This
+patch fixes that by setting the delimiter based on the mapname.
 
-With this patch, I can see the LV that is on multipath device,
-advertising the WRITE SAME support and I am able to successfully issue
-BLKZEROOUT ioctl to that LV.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ kpartx/kpartx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Regards,
-Bharata.
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 30b3bd9..98d88c0 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -348,7 +348,7 @@ main(int argc, char **argv){
+ 	if (delim == NULL) {
+ 		delim = malloc(DELIM_SIZE);
+ 		memset(delim, 0, DELIM_SIZE);
+-		set_delimiter(device, delim);
++		set_delimiter(mapname, delim);
+ 	}
+ 
+ 	fd = open(device, O_RDONLY);
+-- 
+1.8.2
