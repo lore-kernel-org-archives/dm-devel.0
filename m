@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 12/16] Make set_multipath_wwid actually do
-	something
-Date: Thu,  2 May 2013 16:46:33 -0500
-Message-ID: <1367531197-8987-13-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 02/16] Make kpartx correctly handle non-512 byte
+	GPT
+Date: Thu,  2 May 2013 16:46:23 -0500
+Message-ID: <1367531197-8987-3-git-send-email-bmarzins@redhat.com>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,27 +23,43 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-mpp->wwid is a character array in the multipath struction, not a pointer,
-so it is never NULL. multipath needs to check if the string is empty
-instead.
+The gpt code in kpartx correctly handled non-512 byte gpt
+partitions right up until it was time to actually write out the
+slice data. At that point it forgot to convert the logical block
+address into a the proper slice offset. This patch fixes that.
 
+Signed-off-by: Philipp Schmidt <philipp@ppc.in-berlin.de>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs_vec.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kpartx/gpt.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 7073915..72622b0 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -106,7 +106,7 @@ orphan_paths (vector pathvec, struct multipath * mpp)
- static void
- set_multipath_wwid (struct multipath * mpp)
- {
--	if (mpp->wwid)
-+	if (strlen(mpp->wwid))
- 		return;
+diff --git a/kpartx/gpt.c b/kpartx/gpt.c
+index 3082cae..0a22927 100644
+--- a/kpartx/gpt.c
++++ b/kpartx/gpt.c
+@@ -637,6 +637,7 @@ read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns)
+ 	uint32_t i;
+ 	int n = 0;
+         int last_used_index=-1;
++	int sector_size_mul = get_sector_size(fd)/512;
  
- 	dm_get_uuid(mpp->alias, mpp->wwid);
+ 	if (!find_valid_gpt (fd, &gpt, &ptes) || !gpt || !ptes) {
+ 		if (gpt)
+@@ -652,9 +653,11 @@ read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns)
+ 			sp[n].size = 0;
+ 			n++;
+ 		} else {
+-			sp[n].start = __le64_to_cpu(ptes[i].starting_lba);
+-			sp[n].size  = __le64_to_cpu(ptes[i].ending_lba) -
+-				__le64_to_cpu(ptes[i].starting_lba) + 1;
++			sp[n].start = sector_size_mul *
++				      __le64_to_cpu(ptes[i].starting_lba);
++			sp[n].size  = sector_size_mul *
++				      (__le64_to_cpu(ptes[i].ending_lba) -
++				       __le64_to_cpu(ptes[i].starting_lba) + 1);
+                         last_used_index=n;
+ 			n++;
+ 		}
 -- 
 1.8.2
