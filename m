@@ -1,15 +1,15 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH 05/16] Fix a couple of signal issues
-Date: Fri, 03 May 2013 08:36:19 +0200
-Message-ID: <51835AE3.7070604@acm.org>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 11/16] Fix max path checker timing
+Date: Fri, 03 May 2013 08:59:11 +0200
+Message-ID: <5183603F.5000003@suse.de>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
-	<1367531197-8987-6-git-send-email-bmarzins@redhat.com>
+	<1367531197-8987-12-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1367531197-8987-6-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1367531197-8987-12-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,33 +19,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 05/02/13 23:46, Benjamin Marzinski wrote:
-> The patch cleans up some signal issues.
-> First, when the vecs locking around reconfigure got shuffled
-> around earlier, it was removed from sighup. This patch restores
-> that.
->
-> Second, a new sigusr1 handler was created. However the existing
-> one was never removed.  Since signal handlers are per-process, and
-> not per-thread, the original handler will get overwritten by the
-> new one, so this patch deletes the original handler.
->
-> Third, sighup locks the vecs lock and sigusr1 locks logq_lock.
-> However, these signals weren't being blocked before threads locked
-> those locks.  This patch blocks those signals while those locks
-> are being taken to avoid locking deadlocks.
+On 05/02/2013 11:46 PM, Benjamin Marzinski wrote:
+> Due to some code being placed inside the wrong block, the number of
+> seconds to wait between path checks (pp->tick), was only getting set to
+> the path's individual check interval if that wasn't equal to the max
+> check interval.  Otherwise it was using the default for a failed path.
+> This patch makes sure that pp->ticks always always gets set correctly
+> for active paths.
+> =
 
-Are you aware that POSIX does not allow any locking function to be 
-invoked from inside a signal handler ? See e.g. 
-http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04 
-and the text that starts with "The following table defines a set of 
-functions that shall be async-signal-safe. Therefore, applications can 
-invoke them, without restriction, from signal-catching functions" for a 
-list of C library functions that may be invoked from inside a signal 
-handler.
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  multipathd/main.c | 7 +++----
+>  1 file changed, 3 insertions(+), 4 deletions(-)
+> =
 
-Bart.
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 440d254..df1c5b9 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -1219,11 +1219,10 @@ check_path (struct vectors * vecs, struct path * =
+pp)
+>  					pp->checkint =3D 2 * pp->checkint;
+>  				else
+>  					pp->checkint =3D conf->max_checkint;
+> -
+> -				pp->tick =3D pp->checkint;
+> -				condlog(4, "%s: delay next check %is",
+> -					pp->dev_t, pp->tick);
+>  			}
+> +			pp->tick =3D pp->checkint;
+> +			condlog(4, "%s: delay next check %is",
+> +				pp->dev_t, pp->tick);
+>  		}
+>  	}
+>  	else if (newstate =3D=3D PATH_DOWN) {
+> =
+
+But then the message is wrong, isn't it?
+We should be printing the 'delay next check' message only
+if the check was actually delayed, ie inside the block.
+
+So I think something like this should be more appropriate
+(minus line-breaks, of course):
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 6471d24..9901b02 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1235,10 +1235,10 @@ check_path (struct vectors * vecs, struct
+path * pp)
+                                else
+                                        pp->checkint =3D
+conf->max_checkint;
+
+-                               pp->tick =3D pp->checkint;
+                                condlog(4, "%s: delay next check %is",
+                                        pp->dev_t, pp->tick);
+                        }
++                       pp->tick =3D pp->checkint;
+                }
+        }
+        else if (newstate =3D=3D PATH_DOWN) {
+
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
