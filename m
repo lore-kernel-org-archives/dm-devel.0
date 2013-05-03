@@ -1,15 +1,15 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 04/16] Don't print checker messages for ghost
-	paths
-Date: Thu,  2 May 2013 16:46:25 -0500
-Message-ID: <1367531197-8987-5-git-send-email-bmarzins@redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH 05/16] Fix a couple of signal issues
+Date: Fri, 03 May 2013 08:36:19 +0200
+Message-ID: <51835AE3.7070604@acm.org>
 References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
+	<1367531197-8987-6-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1367531197-8987-6-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,27 +23,29 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Since PATH_GHOST is not an unexpected state, we don't need to
-keep printing out checker messages for these paths.
+On 05/02/13 23:46, Benjamin Marzinski wrote:
+> The patch cleans up some signal issues.
+> First, when the vecs locking around reconfigure got shuffled
+> around earlier, it was removed from sighup. This patch restores
+> that.
+>
+> Second, a new sigusr1 handler was created. However the existing
+> one was never removed.  Since signal handlers are per-process, and
+> not per-thread, the original handler will get overwritten by the
+> new one, so this patch deletes the original handler.
+>
+> Third, sighup locks the vecs lock and sigusr1 locks logq_lock.
+> However, these signals weren't being blocked before threads locked
+> those locks.  This patch blocks those signals while those locks
+> are being taken to avoid locking deadlocks.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/discovery.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+Are you aware that POSIX does not allow any locking function to be 
+invoked from inside a signal handler ? See e.g. 
+http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04 
+and the text that starts with "The following table defines a set of 
+functions that shall be async-signal-safe. Therefore, applications can 
+invoke them, without restriction, from signal-catching functions" for a 
+list of C library functions that may be invoked from inside a signal 
+handler.
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 0b5fd1d..826ea75 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -898,7 +898,8 @@ get_state (struct path * pp, int daemon)
- 		c->timeout = DEF_TIMEOUT;
- 	state = checker_check(c);
- 	condlog(3, "%s: state = %s", pp->dev, checker_state_name(state));
--	if (state != PATH_UP && strlen(checker_message(c)))
-+	if (state != PATH_UP && state != PATH_GHOST &&
-+	    strlen(checker_message(c)))
- 		condlog(3, "%s: checker msg is \"%s\"",
- 			pp->dev, checker_message(c));
- 	return state;
--- 
-1.8.2
+Bart.
