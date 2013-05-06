@@ -1,16 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH 00/16] multipath-tools: miscellaneous
-	multipath patches
-Date: Mon, 06 May 2013 21:45:31 +0200
-Message-ID: <1367869531.5573.2.camel@lapoo.opensvc.com>
-References: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm stripe: fix regression in stripe_width
+	calculation
+Date: Mon,  6 May 2013 16:39:29 -0400
+Message-ID: <1367872769-4526-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1367531197-8987-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,67 +17,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On jeu., 2013-05-02 at 16:46 -0500, Benjamin Marzinski wrote:
-> Here are the patches I've got since my last resync.
-> 
-> Please apply.
-> 
-The series is applied and pushed.
+The stripe_width is the stripe device length divided by the number of
+stripes.  Unfortunately, commit eb850de ("dm stripe: support for non
+power of 2 chunksize") introduced a regression that resulted in the
+stripe_width being set to stripe device length divided by chunk_size *
+stripe_count.
 
-- 11v2/16 is merged in place of 11/16
-- 05/16 is left out pending analysis of the solution suggested by Bart
+For example, a stripe device's table with: 0 33553920 striped 3 512 ...
+should result in a stripe_width of 11184640 (33553920 / 3), but due to
+the bug it was being getting set to 21845 (33553920 / (512 * 3)).
 
-Thanks,
-Christophe Varoqui
-www.opensvc.com
+The impact of this bug is that device topologies that previously worked
+fine with the stripe target are no longer considered valid.  In
+particular, there is a higher risk of seeing this issue if one of the
+stripe devices has a 4K logical block size.  Resulting in an error
+message like this:
+"device-mapper: table: 253:4: len=21845 not aligned to h/w logical block size 4096 of dm-1"
 
-> Philipp Schmidt (1):
->   Make kpartx correctly handle non-512 byte GPT partitions
-> 
-> Benjamin Marzinski (15):
->   Make kpartx advise modprobe instead of insmod
->   Fix print_multipath_topology for large outputs
->   Don't print checker messages for ghost paths
->   Fix a couple of signal issues
->   Fix hardware entry matching code
->   Fix some socket issues
->   Avoid race between ueventloop and uevqloop
->   Add existing multipath devices to wwids file on configure
->   add wwids file cleanup options
->   Fix max path checker timing
->   Make set_multipath_wwid actually do something
->   Make multipathd deal better with uninitialized paths
->   Stop annoying prio_lookup warning messages
->   make multipathd disable queue_without_daemon by default
->   Use mapname to choose kpartx delimiter
-> 
->  kpartx/gpt.c                      |   9 ++-
->  kpartx/kpartx.c                   |   2 +-
->  kpartx/lopart.c                   |   4 +-
->  libmpathpersist/mpath_updatepr.c  |   3 +-
->  libmultipath/config.c             |   2 +
->  libmultipath/dict.c               |  10 ++-
->  libmultipath/discovery.c          |   8 ++-
->  libmultipath/log_pthread.c        |   3 +
->  libmultipath/print.c              |  30 +++++++--
->  libmultipath/prio.c               |   5 +-
->  libmultipath/structs.h            |   2 +-
->  libmultipath/structs_vec.c        |   2 +-
->  libmultipath/uevent.c             |  12 ++--
->  libmultipath/uxsock.c             |   4 +-
->  libmultipath/wwids.c              | 130 ++++++++++++++++++++++++++++++++++++++
->  libmultipath/wwids.h              |   2 +
->  multipath/main.c                  |  51 +++++++++++++--
->  multipath/multipath.8             |   8 ++-
->  multipathd/cli.c                  |   3 +
->  multipathd/cli.h                  |   2 +
->  multipathd/cli_handlers.c         |  18 ++++++
->  multipathd/cli_handlers.h         |   2 +
->  multipathd/main.c                 |  41 ++++++++----
->  multipathd/multipathd.init.redhat |  14 ++--
->  24 files changed, 313 insertions(+), 54 deletions(-)
-> 
+The fix is to not use the 'width' variable as a temporary variable that
+is modified as a side-effect of the sector_div() as part of an earlier
+negative check before the stripe_width calculation (which also uses the
+'width' variable).
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org # 3.6+
+---
+ drivers/md/dm-stripe.c |    7 ++++---
+ 1 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index ea5e878..9e1ec9b 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -94,7 +94,7 @@ static int get_stripe(struct dm_target *ti, struct stripe_c *sc,
+ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+ 	struct stripe_c *sc;
+-	sector_t width;
++	sector_t width, temp;
+ 	uint32_t stripes;
+ 	uint32_t chunk_size;
+ 	int r;
+@@ -115,13 +115,14 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -EINVAL;
+ 	}
+ 
+-	width = ti->len;
+-	if (sector_div(width, chunk_size)) {
++	temp = ti->len;
++	if (sector_div(temp, chunk_size)) {
+ 		ti->error = "Target length not divisible by "
+ 		    "chunk size";
+ 		return -EINVAL;
+ 	}
+ 
++	width = ti->len;
+ 	if (sector_div(width, stripes)) {
+ 		ti->error = "Target length not divisible by "
+ 		    "number of stripes";
+-- 
+1.7.1
