@@ -1,15 +1,12 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH 2/2] simplify multipath signal handlers
-Date: Wed, 08 May 2013 07:58:50 +0200
-Message-ID: <5189E99A.4000309@acm.org>
-References: <20130507221237.GT6253@ether.msp.redhat.com>
-	<20130507221557.GU6253@ether.msp.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] Correctly ignore empty prio names
+Date: Wed,  8 May 2013 11:13:43 +0200
+Message-ID: <1368004423-8338-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130507221557.GU6253@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,17 +16,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Christope Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 05/08/13 00:15, Benjamin Marzinski wrote:
-> +	sigprocmask(SIG_SETMASK, NULL, &mask);
+This is a partial revert of commit
+'Stop annoying prio_lookup warning messages',
+as that patch would only fix the 'prio_put' case.
+However, as the prio name might be empty even in
+in prio_get() we should rather fix this in
+prio_lookup() and handle both cases.
 
-Not sure this is relevant on Linux, but the POSIX specs require to use 
-pthread_sigmask() in multithreaded programs instead of sigprocmask() 
-(see also 
-http://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_sigmask.html). 
-Otherwise this patch looks fine to me.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-Bart.
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 186cc4d..05a8cf1 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -64,6 +64,9 @@ struct prio * prio_lookup (char * name)
+ {
+ 	struct prio * p;
+ 
++	if (!name || !strlen(name))
++		return NULL;
++
+ 	list_for_each_entry(p, &prioritizers, node) {
+ 		if (!strncmp(name, p->name, PRIO_NAME_LEN))
+ 			return p;
+@@ -162,10 +165,7 @@ void prio_put (struct prio * dst)
+ 	if (!dst)
+ 		return;
+ 
+-	if (!strlen(dst->name))
+-		src = NULL;
+-	else
+-		src = prio_lookup(dst->name);
++	src = prio_lookup(dst->name);
+ 	memset(dst, 0x0, sizeof(struct prio));
+ 	free_prio(src);
+ }
