@@ -1,59 +1,49 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: dm-cache not writing out cache metadata at reboot?
-Date: Wed, 8 May 2013 14:48:45 -0700
-Message-ID: <20130508214845.GA7729@blackbox.djwong.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-cache not writing out cache metadata at reboot?
+Date: Wed, 8 May 2013 18:05:26 -0400
+Message-ID: <20130508220526.GA24132@redhat.com>
+References: <20130508214845.GA7729@blackbox.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20130508214845.GA7729@blackbox.djwong.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <msnitzer@redhat.com>, Joe Thornber <thornber@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Joe Thornber <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi,
+On Wed, May 08 2013 at  5:48pm -0400,
+Darrick J. Wong <darrick.wong@oracle.com> wrote:
 
-So I've been watching the hit/miss counters in dmcache and I've noticed a
-couple of things that look like errors to me:
+> Hi,
+> 
+> So I've been watching the hit/miss counters in dmcache and I've noticed a
+> couple of things that look like errors to me:
+> 
+> First, I noticed that if I reboot the system, neither cache_postsuspend nor
+> cache_dtr get called.  This might simply be expected behavior, but it means
+> that the in-memory superblock structure doesn't get written out to disk upon
+> reboot.  Just to be sure, I put a printk into __commit_transaction.  It prints
+> out for 'dmsetup info' and 'dmsetup remove' but nothing at reboot.
 
-First, I noticed that if I reboot the system, neither cache_postsuspend nor
-cache_dtr get called.  This might simply be expected behavior, but it means
-that the in-memory superblock structure doesn't get written out to disk upon
-reboot.  Just to be sure, I put a printk into __commit_transaction.  It prints
-out for 'dmsetup info' and 'dmsetup remove' but nothing at reboot.
+We don't have reboot notifiers that auto-magically tear down an
+artbitrary DM stack.  Typically the device shutdown includes unmounting
+filesystems, stopping LVM (which tears down DM devices, etc).
 
-Second, cache_status calls dm_cache_commit, which writes out a superblock to
-the metadata device.  However, there's no call to save_stats to copy the
-current values of the counters out to the disk's copy prior to calling
-dm_cache_commit.  Therefore, we seem to be writing out stale copies of
-superblock fields.
-
-The second one seems fixable with the attached patch, but the first one I don't
-know about.  Any ideas?
-
----
-Subject: [PATCH] dmcache: flush superblock when retrieving status info
-
-When userspace queries dmcache for stats info, we should ensure that all the
-metadata gets flushed out of memory to disk.  The current code neglects to
-update at least the hit/miss counters, so take care of everything.
-
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- drivers/md/dm-cache-target.c |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 1074409..f476ada 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2451,8 +2451,7 @@ static void cache_status(struct dm_target *ti, status_type_t type,
- 	case STATUSTYPE_INFO:
- 		/* Commit to ensure statistics aren't out-of-date */
- 		if (!(status_flags & DM_STATUS_NOFLUSH_FLAG) && !dm_suspended(ti)) {
--			r = dm_cache_commit(cache->cmd, false);
--			if (r)
-+			if (!sync_metadata(cache))
- 				DMERR("could not commit metadata for accurate status");
- 		}
+So given that we don't have any userspace LVM2 support for dm-cache yet
+I'm not surprised by this.  In fact it is expected.
  
+> Second, cache_status calls dm_cache_commit, which writes out a superblock to
+> the metadata device.  However, there's no call to save_stats to copy the
+> current values of the counters out to the disk's copy prior to calling
+> dm_cache_commit.  Therefore, we seem to be writing out stale copies of
+> superblock fields.
+> 
+> The second one seems fixable with the attached patch
+
+I'll defer to Joe on this but I think sync_metadata() is pretty heavy to
+be doing every 'dmsetup info'.  BTW, with just dm_cache_commit() the
+superblock fields aren't stale; only the on-disk hints are.
+
+Mike
