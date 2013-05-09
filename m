@@ -1,53 +1,72 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 2/2] dmcache: Implement a flush message
-Date: Thu, 9 May 2013 13:47:51 -0700
-Message-ID: <20130509204751.GB5712@blackbox.djwong.org>
-References: <20130508214845.GA7729@blackbox.djwong.org>
- <20130508220526.GA24132@redhat.com>
- <20130509203616.GA5713@blackbox.djwong.org>
+From: neha naik <nehanaik27@gmail.com>
+Subject: device mapper v/s block device driver
+Date: Thu, 9 May 2013 16:27:05 -0600
+Message-ID: <CAOb=_x+xHq06wCYpT0kSGN=u4LYqHw96wm4MC+xoXx-f2UvE1g@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130509203616.GA5713@blackbox.djwong.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Joe Thornber <thornber@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============4349916986282848347=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Create a new 'flush' message that causes the dmcache to write all of its
-metadata out to disk.  This enables us to ensure that the disk reflects
-whatever's in memory without having to tear down the cache device.  This helps
-me in the case where I have a cached ro fs that I can't umount and therefore
-can't tear down the cache device, but want to save the cache metadata anyway.
-The command syntax is as follows:
+--===============4349916986282848347==
+Content-Type: multipart/alternative; boundary=047d7b1630c3d690d904dc508cf1
 
-# dmsetup message mycache 0 flush now
+--047d7b1630c3d690d904dc508cf1
+Content-Type: text/plain; charset=ISO-8859-1
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- drivers/md/dm-cache-target.c |    4 ++++
- 1 file changed, 4 insertions(+)
+Hi,
+  There is no clear documentation available on the net about the scenarios
+in which device mapper should be used and why block device driver cannot
+work there.
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 4fb7b4c..e26e5d2 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2522,6 +2522,7 @@ err:
- 
- static int process_config_option(struct cache *cache, char **argv)
- {
-+	bool res;
- 	unsigned long tmp;
- 
- 	if (!strcasecmp(argv[0], "migration_threshold")) {
-@@ -2530,6 +2531,9 @@ static int process_config_option(struct cache *cache, char **argv)
- 
- 		cache->migration_threshold = tmp;
- 		return 0;
-+	} else if (!strcasecmp(argv[0], "flush")) {
-+		res = sync_metadata(cache);
-+		return res ? 0 : -EIO;
- 	}
- 
- 	return NOT_CORE_OPTION;
+  So, i am posting this question directly to the device mapper community  :
+      One can write a block device driver which intercepts io , puts it in
+its own biolist, takes action and then passes it to the block device driver
+below it.
+      (in the form of stackable block device driver) The same can be done
+with the help of device mapper target. Then which should be used ?
+       Are there any advantages of using block device driver instead of
+device mapper (or vice versa)
+
+
+Regards,
+Neha
+
+--047d7b1630c3d690d904dc508cf1
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi,<br>=A0 There is no clear documentation available on the net about the s=
+cenarios in which device mapper should be used and why block device driver =
+cannot work there.<br><br>=A0 So, i am posting this question directly to th=
+e device mapper community=A0 :<br>
+=A0=A0=A0=A0=A0 One can write a block device driver which intercepts io , p=
+uts it in its own biolist, takes action and then passes it to the block dev=
+ice driver below it.<br>=A0=A0=A0=A0=A0 (in the form of stackable block dev=
+ice driver) The same can be done with the help of device mapper target. The=
+n which should be used ?<br>
+=A0=A0=A0=A0=A0=A0 Are there any advantages of using block device driver in=
+stead of device mapper (or vice versa)<br><br><br>Regards,<br>Neha<br>=A0 <=
+br>
+
+--047d7b1630c3d690d904dc508cf1--
+
+
+--===============4349916986282848347==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4349916986282848347==--
