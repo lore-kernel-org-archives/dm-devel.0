@@ -1,7 +1,7 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
 Subject: Re: dm-cache not writing out cache metadata at reboot?
-Date: Wed, 8 May 2013 16:23:01 -0700
-Message-ID: <20130508232301.GB8371@blackbox.djwong.org>
+Date: Thu, 9 May 2013 13:36:16 -0700
+Message-ID: <20130509203616.GA5713@blackbox.djwong.org>
 References: <20130508214845.GA7729@blackbox.djwong.org>
  <20130508220526.GA24132@redhat.com>
 Mime-Version: 1.0
@@ -35,10 +35,7 @@ On Wed, May 08, 2013 at 06:05:26PM -0400, Mike Snitzer wrote:
 > 
 > So given that we don't have any userspace LVM2 support for dm-cache yet
 > I'm not surprised by this.  In fact it is expected.
-
-Hmm, I wasn't aware that the lvm2 package had any teardown scripts.  It doesn't
-seem to have any in RHEL5.8 or Ubuntu...
-
+>  
 > > Second, cache_status calls dm_cache_commit, which writes out a superblock to
 > > the metadata device.  However, there's no call to save_stats to copy the
 > > current values of the counters out to the disk's copy prior to calling
@@ -51,19 +48,8 @@ seem to have any in RHEL5.8 or Ubuntu...
 > be doing every 'dmsetup info'.  BTW, with just dm_cache_commit() the
 > superblock fields aren't stale; only the on-disk hints are.
 
-How often does dmsetup info run?  I admit that it becomes slower with the
-patch, but I didn't think it was really in anyone's hot path.  But given that
-there's a comment just prior that says:
-
-/* Commit to ensure statistics aren't out-of-date */
-
-it feels like we ought at least to be calling save_stats() so that we update
-the on-disk statistics.  Though, given that the metadata size should be about
-10MB for a 100GB cache device, I don't mind flushing out 10MB of metadata to
-get the device info.
-
-Really the problem is that with both of these complaints active, the superblock
-counters and tables /never/ seem to get updated, even across multiple reboots.
-(I'm still digging for why I see such weird unreproduceable benchmark numbers.)
+Hrmm, how about this: dmsetup info will call save_stats so that the superblock
+gets written with the freshest hit/miss counts, and I'll create a new dmsetup
+message command that actually flushes everything out?
 
 --D
