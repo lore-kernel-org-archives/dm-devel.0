@@ -1,7 +1,7 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-cache not writing out cache metadata at reboot?
-Date: Thu, 9 May 2013 16:47:01 -0400
-Message-ID: <20130509204701.GA2383@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [PATCH 2/2] dmcache: Implement a flush message
+Date: Thu, 9 May 2013 13:47:51 -0700
+Message-ID: <20130509204751.GB5712@blackbox.djwong.org>
 References: <20130508214845.GA7729@blackbox.djwong.org>
  <20130508220526.GA24132@redhat.com>
  <20130509203616.GA5713@blackbox.djwong.org>
@@ -11,49 +11,43 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20130509203616.GA5713@blackbox.djwong.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Joe Thornber <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Joe Thornber <thornber@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, May 09 2013 at  4:36pm -0400,
-Darrick J. Wong <darrick.wong@oracle.com> wrote:
+Create a new 'flush' message that causes the dmcache to write all of its
+metadata out to disk.  This enables us to ensure that the disk reflects
+whatever's in memory without having to tear down the cache device.  This helps
+me in the case where I have a cached ro fs that I can't umount and therefore
+can't tear down the cache device, but want to save the cache metadata anyway.
+The command syntax is as follows:
 
-> On Wed, May 08, 2013 at 06:05:26PM -0400, Mike Snitzer wrote:
-> > On Wed, May 08 2013 at  5:48pm -0400,
-> > Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> > 
-> > > Hi,
-> > > 
-> > > So I've been watching the hit/miss counters in dmcache and I've noticed a
-> > > couple of things that look like errors to me:
-> > > 
-> > > First, I noticed that if I reboot the system, neither cache_postsuspend nor
-> > > cache_dtr get called.  This might simply be expected behavior, but it means
-> > > that the in-memory superblock structure doesn't get written out to disk upon
-> > > reboot.  Just to be sure, I put a printk into __commit_transaction.  It prints
-> > > out for 'dmsetup info' and 'dmsetup remove' but nothing at reboot.
-> > 
-> > We don't have reboot notifiers that auto-magically tear down an
-> > artbitrary DM stack.  Typically the device shutdown includes unmounting
-> > filesystems, stopping LVM (which tears down DM devices, etc).
-> > 
-> > So given that we don't have any userspace LVM2 support for dm-cache yet
-> > I'm not surprised by this.  In fact it is expected.
-> >  
-> > > Second, cache_status calls dm_cache_commit, which writes out a superblock to
-> > > the metadata device.  However, there's no call to save_stats to copy the
-> > > current values of the counters out to the disk's copy prior to calling
-> > > dm_cache_commit.  Therefore, we seem to be writing out stale copies of
-> > > superblock fields.
-> > > 
-> > > The second one seems fixable with the attached patch
-> > 
-> > I'll defer to Joe on this but I think sync_metadata() is pretty heavy to
-> > be doing every 'dmsetup info'.  BTW, with just dm_cache_commit() the
-> > superblock fields aren't stale; only the on-disk hints are.
-> 
-> Hrmm, how about this: dmsetup info will call save_stats so that the superblock
-> gets written with the freshest hit/miss counts, and I'll create a new dmsetup
-> message command that actually flushes everything out?
+# dmsetup message mycache 0 flush now
 
-That sounds better.
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ drivers/md/dm-cache-target.c |    4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 4fb7b4c..e26e5d2 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2522,6 +2522,7 @@ err:
+ 
+ static int process_config_option(struct cache *cache, char **argv)
+ {
++	bool res;
+ 	unsigned long tmp;
+ 
+ 	if (!strcasecmp(argv[0], "migration_threshold")) {
+@@ -2530,6 +2531,9 @@ static int process_config_option(struct cache *cache, char **argv)
+ 
+ 		cache->migration_threshold = tmp;
+ 		return 0;
++	} else if (!strcasecmp(argv[0], "flush")) {
++		res = sync_metadata(cache);
++		return res ? 0 : -EIO;
+ 	}
+ 
+ 	return NOT_CORE_OPTION;
