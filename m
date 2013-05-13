@@ -1,68 +1,88 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [dm-devel] [PATCH 2/2] dmcache: Implement a flush message
-Date: Mon, 13 May 2013 14:36:57 -0700
-Message-ID: <20130513213657.GA8043@blackbox.djwong.org>
-References: <20130508214845.GA7729@blackbox.djwong.org>
- <20130508220526.GA24132@redhat.com>
- <20130509203616.GA5713@blackbox.djwong.org>
- <20130509204751.GB5712@blackbox.djwong.org>
- <20130510102224.GF20880@debian>
- <20130510175149.GC5712@blackbox.djwong.org>
- <20130511152523.GA18988@redhat.com>
- <5190D6B8.7020905@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] bcache: Fix link errors on ARM
+Date: Mon, 13 May 2013 18:37:40 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1305131831110.32345@file.rdu.redhat.com>
+References: <5170B4C6.1030300@gmail.com>
+	<Pine.LNX.4.64.1304221318350.22065@file.rdu.redhat.com>
+	<5175C06B.4020805@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5190D6B8.7020905@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Joe Thornber <thornber@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5175C06B.4020805@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Rob Herring <robherring2@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com, linux-arm-kernel@lists.infradead.org
 List-Id: dm-devel.ids
 
-On Mon, May 13, 2013 at 02:04:08PM +0200, Peter Rajnoha wrote:
-> On 11.05.2013 17:25, Mike Snitzer wrote:> On Fri, May 10 2013 at  1:51pm
-> -0400,
-> > Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> >
-> ...
-> >> afaict, there isn't anything in the initscripts that tears down dm
-> devices
-> >> prior to invoking reboot(), and the kernel drivers don't have reboot
-> notifiers
-> >> to flush things out either.  I've been told that lvm does this, but I
-> don't see
-> >> anything in the Ubuntu or RHEL6 that would suggest a teardown script...
-> >
-> > See:
-> https://git.fedorahosted.org/cgit/lvm2.git/commit/?id=c698ee14bbb1310cf2383c8977d14a8e29139f8c
-> >
-> > But I'm not sure which distros have hooked blkdeactivate in (cc'ing
-> > prajnoha for his insight).
-> >
-> 
-> The blk-availability initscript/systemd unit that gets called at
-> shutdown/reboot and which in turn calls the blkdeactivate is already
-> used in RHEL 6.4 onwards and also in Fedora 18 onwards. However, for
-> Fedora, you need to enable the systemd unit explicitly at the moment
-> (systemctl enable blk-availability.service). To have it enabled by
-> default, the distro-wide default systemd configuration needs to be
-> edited which is controlled by systemd-preset file (I hope F19 is going
-> to have this enabled by default finally).
-> 
-> As for any other distros, it's up to the maintainers in that distro to
-> make use of the new script - I haven't looked if they started using it
-> or not. But upstream already provides it since lvm2 v2.02.98.
 
-Aha!  Thank you for providing the missing link.  Now it all makes sense. :)
 
-(fwiw Ubuntu's latest is 2.02.95.)
+On Mon, 22 Apr 2013, Rob Herring wrote:
 
---D
+> On 04/22/2013 12:32 PM, Mikulas Patocka wrote:
+> > 
+> > 
+> > On Thu, 18 Apr 2013, Rob Herring wrote:
+> > 
+> >> Current errors in linux-next for ARM multi-platform randconfig builds.
+> >>
+> >> Rob
+> >>
+> >> drivers/built-in.o:drivers/md/dm-cache-target.c:429: more undefined references to `__udivdi3' follow
+> >> /var/lib/jenkins/jobs/linux-randconfig/workspace/drivers/md/dm-cache-target.c:429: undefined reference to `__udivdi3'
+> >> /var/lib/jenkins/jobs/linux-randconfig/workspace/drivers/md/dm-cache-target.c:429: undefined reference to `__umoddi3'
+> >> driversdrivers/md/dm-cache-target.c:429: more undefined references to `__udivdi3' follow
+> >> drivers/md/dm-cache-target.c:429: undefined reference to `__udivdi3'
+> >> drivers/md/dm-cache-target.c:429: undefined reference to `__umoddi3'
+> > 
+> > Hi
+> > 
+> > I tried to cross-compile dm-cache on linux-next for arm and there were no 
+> > failures and no references to __udivdi3 and __umoddi3.
+> > 
+> > Please send the .config file that resulted in these faulures.
 > 
-> Peter
+> The config is attached. My guess is it might be related to CONFIG_AEABI
+> not set. The compiler is "gcc version 4.6.3 (Ubuntu/Linaro
+> 4.6.3-1ubuntu5)" which is ubuntu 12.04 arm cross compiler.
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Rob
+
+This is a problem in gcc-4.6. (gcc-4.7 is OK).
+
+---
+
+bcache: Fix link errors on ARM
+
+gcc-4.6 on ARM has some problem, it creates a function block_div.part.8,
+it references __udivdi3 and __umoddi3 and it is never called. The
+references to __udivdi3 and __umoddi3 cause a link failure.
+
+__always_inline works around the bug.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+Index: linux-2.6/drivers/md/dm-cache-target.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-cache-target.c	2013-05-14 00:03:53.276986022 +0200
++++ linux-2.6/drivers/md/dm-cache-target.c	2013-05-14 00:34:09.128986023 +0200
+@@ -425,6 +425,10 @@
+ 	return cache->sectors_per_block_shift >= 0;
+ }
+ 
++/* gcc on ARM generates spurious references to __udivdi3 and __umoddi3 */
++#if defined(CONFIG_ARM) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6
++__always_inline
++#endif
+ static dm_block_t block_div(dm_block_t b, uint32_t n)
+ {
+ 	do_div(b, n);
