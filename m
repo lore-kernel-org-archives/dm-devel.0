@@ -1,16 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] bcache: Fix link errors on ARM
-Date: Mon, 13 May 2013 18:37:40 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1305131831110.32345@file.rdu.redhat.com>
-References: <5170B4C6.1030300@gmail.com>
-	<Pine.LNX.4.64.1304221318350.22065@file.rdu.redhat.com>
-	<5175C06B.4020805@gmail.com>
+From: Pierre Beck <debian-bugs@pierre-beck.de>
+Subject: dm-cache policy mq: promotion very picky?
+Date: Mon, 13 May 2013 23:23:04 +0200
+Message-ID: <519159B7.3030205@pierre-beck.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5175C06B.4020805@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,69 +16,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Rob Herring <robherring2@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com, linux-arm-kernel@lists.infradead.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi,
 
+experimenting with dm-cache, I came across the following issue:
 
-On Mon, 22 Apr 2013, Rob Herring wrote:
+Having a rather large SSD available, I wanted to promote sequential I/O 
+just like random I/O. Recurring sequential I/O is just as bad in a 
+multi-user scenario, especially with unpromoted random I/O mixed in. So 
+my dmsetup line looks like this:
 
-> On 04/22/2013 12:32 PM, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Thu, 18 Apr 2013, Rob Herring wrote:
-> > 
-> >> Current errors in linux-next for ARM multi-platform randconfig builds.
-> >>
-> >> Rob
-> >>
-> >> drivers/built-in.o:drivers/md/dm-cache-target.c:429: more undefined references to `__udivdi3' follow
-> >> /var/lib/jenkins/jobs/linux-randconfig/workspace/drivers/md/dm-cache-target.c:429: undefined reference to `__udivdi3'
-> >> /var/lib/jenkins/jobs/linux-randconfig/workspace/drivers/md/dm-cache-target.c:429: undefined reference to `__umoddi3'
-> >> driversdrivers/md/dm-cache-target.c:429: more undefined references to `__udivdi3' follow
-> >> drivers/md/dm-cache-target.c:429: undefined reference to `__udivdi3'
-> >> drivers/md/dm-cache-target.c:429: undefined reference to `__umoddi3'
-> > 
-> > Hi
-> > 
-> > I tried to cross-compile dm-cache on linux-next for arm and there were no 
-> > failures and no references to __udivdi3 and __umoddi3.
-> > 
-> > Please send the .config file that resulted in these faulures.
-> 
-> The config is attached. My guess is it might be related to CONFIG_AEABI
-> not set. The compiler is "gcc version 4.6.3 (Ubuntu/Linaro
-> 4.6.3-1ubuntu5)" which is ubuntu 12.04 arm cross compiler.
-> 
-> Rob
+# dmsetup create hybridStorage --table "0 7771064048 cache 
+/dev/disk/by-id/xxx-part4 /dev/disk/by-id/yyy-part3 /dev/md/zzz 512 1 
+writethrough mq 4 sequential_threshold 4294967295 random_threshold 0";
 
-This is a problem in gcc-4.6. (gcc-4.7 is OK).
+(I would appreciate a parameter to just turn random I/O detection off, btw.)
 
----
+On top of "hybridStorage" an ext4 with external journal. Then, I repeat:
 
-bcache: Fix link errors on ARM
+# echo 1 > /proc/sys/vm/drop_caches; pv smallwrite.0 > /dev/null
 
-gcc-4.6 on ARM has some problem, it creates a function block_div.part.8,
-it references __udivdi3 and __umoddi3 and it is never called. The
-references to __udivdi3 and __umoddi3 cause a link failure.
+And watch a dstat with all relevant partitions. The 70 MB file 
+"smallwrite.0" is always being read from HDD and never gets promoted. 
+Only a few blocks got promoted at some point in the past.
 
-__always_inline works around the bug.
+# echo 1 > /proc/sys/vm/drop_caches; ioping -R smallwrite.0
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+This doesn't promote blocks, either, although it is random I/O.
 
-Index: linux-2.6/drivers/md/dm-cache-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-cache-target.c	2013-05-14 00:03:53.276986022 +0200
-+++ linux-2.6/drivers/md/dm-cache-target.c	2013-05-14 00:34:09.128986023 +0200
-@@ -425,6 +425,10 @@
- 	return cache->sectors_per_block_shift >= 0;
- }
- 
-+/* gcc on ARM generates spurious references to __udivdi3 and __umoddi3 */
-+#if defined(CONFIG_ARM) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6
-+__always_inline
-+#endif
- static dm_block_t block_div(dm_block_t b, uint32_t n)
- {
- 	do_div(b, n);
+# echo 1 > /proc/sys/vm/drop_caches; ioping -s 1m -R smallwrite.0
+
+This does promote a few blocks every iteration.
+
+# dd if=/dev/zero of=testfile bs=4096 count=100000; sync
+
+This file was promoted halfway. Again, just piping it with pv doesn't 
+promote any blocks. Piping with "cat" does promote a few blocks every 
+iteration.
+
+All in all, dm-cache policy mq seems to be very hesitant (way too 
+hesitant for my taste) promoting blocks, even with sequential I/O allowed.
+
+Maybe I'm misunderstanding how the heuristics work - what makes mq pick 
+a block for promotion?
+
+Regards,
+
+Pierre Beck
