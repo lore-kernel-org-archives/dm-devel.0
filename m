@@ -1,11 +1,10 @@
-From: Pierre Beck <debian-bugs@pierre-beck.de>
-Subject: dm-cache policy mq: promotion very picky?
-Date: Mon, 13 May 2013 23:23:04 +0200
-Message-ID: <519159B7.3030205@pierre-beck.de>
+From: "=?ISO-8859-1?B?U3RyaXZlci9zag==?=" <striver.wang@qq.com>
+Subject: A question about dm-raid1 on CentOS5.8
+Date: Tue, 14 May 2013 15:36:00 +0800
+Message-ID: <tencent_33741930094DEBBE0A3858F5@qq.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7521549763075389348=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,52 +15,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: =?ISO-8859-1?B?ZG0tZGV2ZWw=?= <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+This is a multi-part message in MIME format.
 
-experimenting with dm-cache, I came across the following issue:
+--===============7521549763075389348==
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_5191E960_08BA0F30_75E5DEB8"
+Content-Transfer-Encoding: 8Bit
 
-Having a rather large SSD available, I wanted to promote sequential I/O 
-just like random I/O. Recurring sequential I/O is just as bad in a 
-multi-user scenario, especially with unpromoted random I/O mixed in. So 
-my dmsetup line looks like this:
+This is a multi-part message in MIME format.
 
-# dmsetup create hybridStorage --table "0 7771064048 cache 
-/dev/disk/by-id/xxx-part4 /dev/disk/by-id/yyy-part3 /dev/md/zzz 512 1 
-writethrough mq 4 sequential_threshold 4294967295 random_threshold 0";
+------=_NextPart_5191E960_08BA0F30_75E5DEB8
+Content-Type: text/plain;
+	charset="ISO-8859-1"
+Content-Transfer-Encoding: base64
 
-(I would appreciate a parameter to just turn random I/O detection off, btw.)
+SGkgZ3V5c0kgY3JlYXRlIGEgbWlycm9yIGRldmljZSBvbiBDZW50T1M1LjgsIHRoZSB0YWJs
+ZSBpcyANCiIwIDgzNzIyMjQgbWlycm9yIGNvcmUgMyA0MDk2IG5vc3luYyBibG9ja19vbl9l
+cnJvciAyIDg6MTYgODE5MiA4OjMyIDgxOTIiDQpCdXQgSSBmb3VuZCB3aGVuIEkgb2ZmbGlu
+ZSB0aGUgZmlyc3QgbGVnIG9mIHRoZSBtaXJyb3IgZGV2aWNlLiBBbGwgd3JpdGUgSU8gaXMg
+aHVuZyB1cC4NCkJ1dCBpdCB3aWxsIG5vdCBvY2N1ciBvbiBDZW50T1M1LjMvNS40LCBpbiBt
+eSBvcGluaW9uLCBpZiBvbmUgbGVnIHJldHVybnMgSU8gZXJyb3IsIA0KSU8gd2lsbCBjb250
+aW51ZSBpZiB0aGVyZSBpcyBzdGlsbCBvdGhlciBnb29kIGxlZy4NClNvIGRvZXMgdGhpcyBz
+aG91bGQgYmUgZGVhbCB3aXRoIGJ5IHVzZXIgc3BhY2UgKGRtZXZlbnRkKT8gT3IgSSBtYWtl
+IHNvbWV0aGluZyBlcnJvci4gDQoNCg0KVGhhbmtzIGEgbG90
 
-On top of "hybridStorage" an ext4 with external journal. Then, I repeat:
+------=_NextPart_5191E960_08BA0F30_75E5DEB8
+Content-Type: text/html;
+	charset="ISO-8859-1"
+Content-Transfer-Encoding: base64
 
-# echo 1 > /proc/sys/vm/drop_caches; pv smallwrite.0 > /dev/null
+Jm5ic3A7IEhpIGd1eXM8ZGl2PkkgY3JlYXRlIGEgbWlycm9yIGRldmljZSBvbiBDZW50T1M1
+LjgsIHRoZSB0YWJsZSBpcyZuYnNwOzwvZGl2PjxkaXY+IjAgODM3MjIyNCBtaXJyb3IgY29y
+ZSAzIDQwOTYgbm9zeW5jIGJsb2NrX29uX2Vycm9yIDIgODoxNiA4MTkyIDg6MzIgODE5MiI8
+L2Rpdj48ZGl2PkJ1dCBJIGZvdW5kIHdoZW4gSSBvZmZsaW5lIHRoZSBmaXJzdCBsZWcgb2Yg
+dGhlIG1pcnJvciBkZXZpY2UuIEFsbCB3cml0ZSBJTyBpcyBodW5nIHVwLjwvZGl2PjxkaXY+
+QnV0IGl0IHdpbGwgbm90IG9jY3VyIG9uIENlbnRPUzUuMy81LjQsIGluIG15IG9waW5pb24s
+IGlmIG9uZSBsZWcgcmV0dXJucyBJTyBlcnJvciwmbmJzcDs8L2Rpdj48ZGl2PklPIHdpbGwg
+Y29udGludWUgaWYgdGhlcmUgaXMgc3RpbGwgb3RoZXIgZ29vZCBsZWcuPC9kaXY+PGRpdj5T
+byBkb2VzIHRoaXMgc2hvdWxkIGJlIGRlYWwgd2l0aCBieSB1c2VyIHNwYWNlIChkbWV2ZW50
+ZCk/IE9yIEkgbWFrZSBzb21ldGhpbmcgZXJyb3IuJm5ic3A7PC9kaXY+PGRpdj48YnI+PC9k
+aXY+PGRpdj5UaGFua3MgYSBsb3Q8L2Rpdj4=
 
-And watch a dstat with all relevant partitions. The 70 MB file 
-"smallwrite.0" is always being read from HDD and never gets promoted. 
-Only a few blocks got promoted at some point in the past.
+------=_NextPart_5191E960_08BA0F30_75E5DEB8--
 
-# echo 1 > /proc/sys/vm/drop_caches; ioping -R smallwrite.0
 
-This doesn't promote blocks, either, although it is random I/O.
+--===============7521549763075389348==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-# echo 1 > /proc/sys/vm/drop_caches; ioping -s 1m -R smallwrite.0
 
-This does promote a few blocks every iteration.
-
-# dd if=/dev/zero of=testfile bs=4096 count=100000; sync
-
-This file was promoted halfway. Again, just piping it with pv doesn't 
-promote any blocks. Piping with "cat" does promote a few blocks every 
-iteration.
-
-All in all, dm-cache policy mq seems to be very hesitant (way too 
-hesitant for my taste) promoting blocks, even with sequential I/O allowed.
-
-Maybe I'm misunderstanding how the heuristics work - what makes mq pick 
-a block for promotion?
-
-Regards,
-
-Pierre Beck
+--===============7521549763075389348==--
