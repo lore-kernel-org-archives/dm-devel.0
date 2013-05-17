@@ -1,14 +1,11 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: A question about dm-raid1 on CentOS5.8
-Date: Thu, 16 May 2013 16:22:25 -0500
-Message-ID: <7EEBF643-98D5-4051-A028-F1BF87CDFB3D@redhat.com>
-References: <tencent_33741930094DEBBE0A3858F5@qq.com>
+From: Karthi <karthikeyani.palanisami@gmail.com>
+Subject: Reg. Persistent Metadata API
+Date: Fri, 17 May 2013 12:36:03 -0400
+Message-ID: <CANPE0nUeTkLYTU3vDCdvKhF_zm0Kb0K9YKPrcM+7qHJ7Yhuwfw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2518810980269814065=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <tencent_33741930094DEBBE0A3858F5@qq.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,23 +15,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Vasily Tarasov <tarasov@vasily.name>, Erez Zadok <ezk@cs.stonybrook.edu>
 List-Id: dm-devel.ids
 
+--===============2518810980269814065==
+Content-Type: multipart/alternative; boundary=001a11c3c3485ee6f704dcec955b
 
-On May 14, 2013, at 2:36 AM, Striver/sj wrote:
+--001a11c3c3485ee6f704dcec955b
+Content-Type: text/plain; charset=UTF-8
 
->   Hi guys
-> I create a mirror device on CentOS5.8, the table is 
-> "0 8372224 mirror core 3 4096 nosync block_on_error 2 8:16 8192 8:32 8192"
-> But I found when I offline the first leg of the mirror device. All write IO is hung up.
-> But it will not occur on CentOS5.3/5.4, in my opinion, if one leg returns IO error, 
-> IO will continue if there is still other good leg.
-> So does this should be deal with by user space (dmeventd)? Or I make something error. 
-> 
+Hi everyone,
 
-Yes, it should be handled by dmeventd.  (dmeventd will notice the event raised by the kernel and attempt a 'lvconvert --repair vg/lv' or 'vgreduce --removemissing vg if old enough.)
+Our group works on a device mapper target called dmDedup that performs
+inline data deduplication. The dmDedup target internally uses the
+Persistent Metadata API (located in linux/drivers/md/persistent-data)to
+manage its meta-data.
 
-You should find that a 2-way mirror is converted to a linear device when one of the legs fails.
+In our system, there is a main writer thread (or several of them) and a
+separate flusher thread. When a write request comes in, the writer thread
+checks for the duplicates in the data and updates corresponding meta-data.
+The flusher thread periodically (10 sec) flushes the meta-data to disk by
+calling the commit function in the transaction manager of Persistant
+Metadata API.
 
- brassow
+When we benchmark dmDedup target with a sequential unique data write
+workload, we observed that write performance periodically drops to 0
+ops/sec for 8 to 15 seconds. It happens because the flusher thread blocks
+the writer thread. Our further analysis showed that, the writer thread is
+blocked on the dm_bufio mutex lock, which is acquired by the flusher thread
+on the dm_bufio_client  when the dirty buffers are being flushed as a part
+of transaction. Though these dirty buffers are flushed asynchronously, the
+function enters a loop with the lock acquired and exits only when it places
+the request for all the dirty buffers. (drivers/md/dm-bufio.c -
+dm_bufio_write_dirty_buffers()). The writer thread is blocked as it needs
+this lock to lookup the metadata. The underlying I/O queue size is 128. The
+flusher thread waits to place IO request for all dirty buffers (which is
+much greater than 128) onto the queue. This way the writes becomes
+synchronous during this entire period, thus blocking the other writer
+thread.
+
+We want a metadata flush which is not affected by the writer thread so
+drastically. Specifically, we would like the flush to write out dirty
+buffers, while the writer still can update metadata (using COW to preserve
+consistency). Is it something that is possible with a current design of
+persistent metadata subsystem? Our current understanding is that during the
+commit all updates to the meta-data are blocked until all of the meta-data
+is written out.
+
+We appreciate any suggestions!
+
+Thank you!
+
+--001a11c3c3485ee6f704dcec955b
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Hi everyone,<br>
+<br>
+Our group works on a device mapper target called dmDedup that performs
+inline data deduplication. The dmDedup target internally uses the Persisten=
+t Metadata API (located in linux/drivers/md/persistent-data)to manage its m=
+eta-data.<br><div>
+<br>
+In our system, there is a main writer thread (or several of them) and a sep=
+arate flusher thread. When a write request comes in, the writer
+thread checks for the duplicates in the data and updates corresponding
+meta-data. The flusher thread periodically (10 sec) flushes the meta-data t=
+o disk by calling the commit function in the transaction manager of Persist=
+ant Metadata API.<br><div>
+<br>
+</div>When we benchmark dmDedup target with a sequential unique data write =
+workload, we observed that write performance periodically drops to 0
+ops/sec for 8 to 15 seconds. It happens because the flusher thread
+blocks the writer thread. Our further analysis showed that, the writer thre=
+ad is blocked on the dm_bufio mutex lock, which is acquired by the flusher =
+thread on the dm_bufio_client =C2=A0when the dirty buffers are being flushe=
+d as a part of transaction. Though these dirty buffers are flushed asynchro=
+nously, the function enters a loop with the lock acquired and exits only wh=
+en it places the request for all the dirty buffers. (drivers/md/dm-bufio.c =
+- dm_bufio_write_dirty_buffers()). The writer thread is blocked as it needs=
+ this lock to lookup the metadata. The underlying I/O queue size is 128. Th=
+e flusher thread waits to place IO request for all dirty buffers (which is =
+much greater than 128) onto the queue. This way the writes becomes synchron=
+ous during this entire period, thus blocking the other writer thread.<br>
+
+
+<br>We want a metadata flush which is not affected by the writer thread so =
+drastically. Specifically, we would like the flush to write out dirty
+buffers, while the writer still can update metadata (using COW to preserve
+consistency). Is it something that is possible with a current design of per=
+sistent metadata subsystem? Our current understanding is that
+during the commit all updates to the meta-data are blocked until all
+of the meta-data is written out.<br>
+<br>
+We appreciate any suggestions!<br>
+<br>
+Thank you!</div>
+
+--001a11c3c3485ee6f704dcec955b--
+
+
+--===============2518810980269814065==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2518810980269814065==--
