@@ -1,14 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Reg. Persistent Metadata API
-Date: Mon, 20 May 2013 20:09:13 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1305201955210.22151@file.rdu.redhat.com>
-References: <CANPE0nUeTkLYTU3vDCdvKhF_zm0Kb0K9YKPrcM+7qHJ7Yhuwfw@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: multipath-tools: scsi_id based path priorities and
+ multiple prioritizers
+Date: Tue, 21 May 2013 16:19:34 +0200
+Message-ID: <519B8276.9070203@suse.de>
+References: <001301ce53be$64265b10$2c731130$@larionov@salva.ee>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CANPE0nUeTkLYTU3vDCdvKhF_zm0Kb0K9YKPrcM+7qHJ7Yhuwfw@mail.gmail.com>
+In-Reply-To: <001301ce53be$64265b10$2c731130$@larionov@salva.ee>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,281 +19,271 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Vasily Tarasov <tarasov@vasily.name>, Erez Zadok <ezk@cs.stonybrook.edu>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On 05/18/2013 01:54 PM, Viktor Larionov wrote:
+> Hi everybody!
+> =
 
+>  =
 
-On Fri, 17 May 2013, Karthi wrote:
+> =
 
-> Hi everyone,
-> 
-> Our group works on a device mapper target called dmDedup that performs
-> inline data deduplication. The dmDedup target internally uses the
-> Persistent Metadata API (located in linux/drivers/md/persistent-data)to
-> manage its meta-data.
-> 
-> In our system, there is a main writer thread (or several of them) and a
-> separate flusher thread. When a write request comes in, the writer thread
-> checks for the duplicates in the data and updates corresponding meta-data.
-> The flusher thread periodically (10 sec) flushes the meta-data to disk by
-> calling the commit function in the transaction manager of Persistant
-> Metadata API.
-> 
-> When we benchmark dmDedup target with a sequential unique data write
-> workload, we observed that write performance periodically drops to 0
-> ops/sec for 8 to 15 seconds. It happens because the flusher thread blocks
-> the writer thread. Our further analysis showed that, the writer thread is
-> blocked on the dm_bufio mutex lock, which is acquired by the flusher thread
-> on the dm_bufio_client  when the dirty buffers are being flushed as a part
-> of transaction. Though these dirty buffers are flushed asynchronously, the
-> function enters a loop with the lock acquired and exits only when it places
-> the request for all the dirty buffers. (drivers/md/dm-bufio.c -
-> dm_bufio_write_dirty_buffers()). The writer thread is blocked as it needs
-> this lock to lookup the metadata. The underlying I/O queue size is 128. The
-> flusher thread waits to place IO request for all dirty buffers (which is
-> much greater than 128) onto the queue. This way the writes becomes
-> synchronous during this entire period, thus blocking the other writer
-> thread.
-> 
-> We want a metadata flush which is not affected by the writer thread so
-> drastically. Specifically, we would like the flush to write out dirty
-> buffers, while the writer still can update metadata (using COW to preserve
-> consistency). Is it something that is possible with a current design of
-> persistent metadata subsystem? Our current understanding is that during the
-> commit all updates to the meta-data are blocked until all of the meta-data
-> is written out.
-> 
-> We appreciate any suggestions!
-> 
-> Thank you!
-> 
+> First of all, thanks for all the hard work you guys have been doing
+> developing dm. It=92s an amazing piece of work you have done!
+> =
 
-Hi
+> While working with dm-multipath we have bumped into some limitations
+> which we felt bit uncomfortable with, and seems like managed to
+> change. I=92d thought I share the experience on that with others, in
+> hope that this would help somebody.
+> =
 
-Try this patch, it moves the code to submit buffers outside of the lock.
+>  =
 
-Tell us if it improves performance for you.
+> =
 
-Mikulas
+> Long story short =96 our servers are connected to our SAN with both fc
+> and iscsi links. (same targets, same wwid=92s are exported both
+> through fc and iscsi)
+> =
 
----
+> Pretty much a standard installation =96 two independent controllers on
+> the storage side (fc and iscsi each), dual port fc controllers on
+> the server side + iscsi.
+> =
 
-dm-bufio: drop lock when submitting writes
+> All this leaves us with approximate of 6 paths per device. (2 fc,
+> and 4 iscsi =96 1 fc, and 2 iscsi per storage controller)
+> =
 
-This patch changes dm-bufio so that it submits write I/Os outside of the
-lock. If the number of submitted buffers is greater than the number of
-requests on the target queue, submit_bio blocks. We want to block outside
-of the lock to improve latency of other threads that may need the lock.
+>  =
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> =
 
----
- drivers/md/dm-bufio.c |   73 +++++++++++++++++++++++++++++++++++++++-----------
- 1 file changed, 58 insertions(+), 15 deletions(-)
+> Now if we use ALUA, which is standard for our infra (IBM Storewize
+> V3700), the picture looks pretty much like this:
+> =
 
-Index: linux-3.9.3-fast/drivers/md/dm-bufio.c
-===================================================================
---- linux-3.9.3-fast.orig/drivers/md/dm-bufio.c	2013-05-21 01:24:15.000000000 +0200
-+++ linux-3.9.3-fast/drivers/md/dm-bufio.c	2013-05-21 02:03:26.000000000 +0200
-@@ -145,6 +145,7 @@ struct dm_buffer {
- 	unsigned long state;
- 	unsigned long last_accessed;
- 	struct dm_bufio_client *c;
-+	struct list_head write_list;
- 	struct bio bio;
- 	struct bio_vec bio_vec[DM_BUFIO_INLINE_VECS];
- };
-@@ -630,7 +631,8 @@ static int do_io_schedule(void *word)
-  * - Submit our write and don't wait on it. We set B_WRITING indicating
-  *   that there is a write in progress.
-  */
--static void __write_dirty_buffer(struct dm_buffer *b)
-+static void __write_dirty_buffer(struct dm_buffer *b,
-+				 struct list_head *write_list)
- {
- 	if (!test_bit(B_DIRTY, &b->state))
- 		return;
-@@ -639,7 +641,24 @@ static void __write_dirty_buffer(struct 
- 	wait_on_bit_lock(&b->state, B_WRITING,
- 			 do_io_schedule, TASK_UNINTERRUPTIBLE);
- 
--	submit_io(b, WRITE, b->block, write_endio);
-+	if (!write_list)
-+		submit_io(b, WRITE, b->block, write_endio);
-+	else
-+		list_add_tail(&b->write_list, write_list);
-+}
-+
-+static void __flush_write_list(struct list_head *write_list)
-+{
-+	struct blk_plug plug;
-+	blk_start_plug(&plug);
-+	while (!list_empty(write_list)) {
-+		struct dm_buffer *b =
-+			list_entry(write_list->next, struct dm_buffer, write_list);
-+		list_del(&b->write_list);
-+		submit_io(b, WRITE, b->block, write_endio);
-+		dm_bufio_cond_resched();
-+	}
-+	blk_finish_plug(&plug);
- }
- 
- /*
-@@ -655,7 +674,7 @@ static void __make_buffer_clean(struct d
- 		return;
- 
- 	wait_on_bit(&b->state, B_READING, do_io_schedule, TASK_UNINTERRUPTIBLE);
--	__write_dirty_buffer(b);
-+	__write_dirty_buffer(b, NULL);
- 	wait_on_bit(&b->state, B_WRITING, do_io_schedule, TASK_UNINTERRUPTIBLE);
- }
- 
-@@ -802,7 +821,8 @@ static void __free_buffer_wake(struct dm
- 	wake_up(&c->free_buffer_wait);
- }
- 
--static void __write_dirty_buffers_async(struct dm_bufio_client *c, int no_wait)
-+static void __write_dirty_buffers_async(struct dm_bufio_client *c, int no_wait,
-+					struct list_head *write_list)
- {
- 	struct dm_buffer *b, *tmp;
- 
-@@ -818,7 +838,7 @@ static void __write_dirty_buffers_async(
- 		if (no_wait && test_bit(B_WRITING, &b->state))
- 			return;
- 
--		__write_dirty_buffer(b);
-+		__write_dirty_buffer(b, write_list);
- 		dm_bufio_cond_resched();
- 	}
- }
-@@ -853,7 +873,8 @@ static void __get_memory_limit(struct dm
-  * If we are over threshold_buffers, start freeing buffers.
-  * If we're over "limit_buffers", block until we get under the limit.
-  */
--static void __check_watermark(struct dm_bufio_client *c)
-+static void __check_watermark(struct dm_bufio_client *c,
-+			      struct list_head *write_list)
- {
- 	unsigned long threshold_buffers, limit_buffers;
- 
-@@ -872,7 +893,7 @@ static void __check_watermark(struct dm_
- 	}
- 
- 	if (c->n_buffers[LIST_DIRTY] > threshold_buffers)
--		__write_dirty_buffers_async(c, 1);
-+		__write_dirty_buffers_async(c, 1, write_list);
- }
- 
- /*
-@@ -897,7 +918,8 @@ static struct dm_buffer *__find(struct d
-  *--------------------------------------------------------------*/
- 
- static struct dm_buffer *__bufio_new(struct dm_bufio_client *c, sector_t block,
--				     enum new_flag nf, int *need_submit)
-+				     enum new_flag nf, int *need_submit,
-+				     struct list_head *write_list)
- {
- 	struct dm_buffer *b, *new_b = NULL;
- 
-@@ -924,7 +946,7 @@ static struct dm_buffer *__bufio_new(str
- 		goto found_buffer;
- 	}
- 
--	__check_watermark(c);
-+	__check_watermark(c, write_list);
- 
- 	b = new_b;
- 	b->hold_count = 1;
-@@ -992,10 +1014,14 @@ static void *new_read(struct dm_bufio_cl
- 	int need_submit;
- 	struct dm_buffer *b;
- 
-+	LIST_HEAD(write_list);
-+
- 	dm_bufio_lock(c);
--	b = __bufio_new(c, block, nf, &need_submit);
-+	b = __bufio_new(c, block, nf, &need_submit, &write_list);
- 	dm_bufio_unlock(c);
- 
-+	__flush_write_list(&write_list);
-+
- 	if (!b)
- 		return b;
- 
-@@ -1047,6 +1073,8 @@ void dm_bufio_prefetch(struct dm_bufio_c
- {
- 	struct blk_plug plug;
- 
-+	LIST_HEAD(write_list);
-+
- 	BUG_ON(dm_bufio_in_request());
- 
- 	blk_start_plug(&plug);
-@@ -1055,7 +1083,15 @@ void dm_bufio_prefetch(struct dm_bufio_c
- 	for (; n_blocks--; block++) {
- 		int need_submit;
- 		struct dm_buffer *b;
--		b = __bufio_new(c, block, NF_PREFETCH, &need_submit);
-+		b = __bufio_new(c, block, NF_PREFETCH, &need_submit,
-+				&write_list);
-+		if (unlikely(!list_empty(&write_list))) {
-+			dm_bufio_unlock(c);
-+			blk_finish_plug(&plug);
-+			__flush_write_list(&write_list);
-+			blk_start_plug(&plug);
-+			dm_bufio_lock(c);
-+		}
- 		if (unlikely(b != NULL)) {
- 			dm_bufio_unlock(c);
- 
-@@ -1069,7 +1105,6 @@ void dm_bufio_prefetch(struct dm_bufio_c
- 				goto flush_plug;
- 			dm_bufio_lock(c);
- 		}
--
- 	}
- 
- 	dm_bufio_unlock(c);
-@@ -1126,11 +1161,14 @@ EXPORT_SYMBOL_GPL(dm_bufio_mark_buffer_d
- 
- void dm_bufio_write_dirty_buffers_async(struct dm_bufio_client *c)
- {
-+	LIST_HEAD(write_list);
-+
- 	BUG_ON(dm_bufio_in_request());
- 
- 	dm_bufio_lock(c);
--	__write_dirty_buffers_async(c, 0);
-+	__write_dirty_buffers_async(c, 0, &write_list);
- 	dm_bufio_unlock(c);
-+	__flush_write_list(&write_list);
- }
- EXPORT_SYMBOL_GPL(dm_bufio_write_dirty_buffers_async);
- 
-@@ -1147,8 +1185,13 @@ int dm_bufio_write_dirty_buffers(struct 
- 	unsigned long buffers_processed = 0;
- 	struct dm_buffer *b, *tmp;
- 
-+	LIST_HEAD(write_list);
-+
-+	dm_bufio_lock(c);
-+	__write_dirty_buffers_async(c, 0, &write_list);
-+	dm_bufio_unlock(c);
-+	__flush_write_list(&write_list);
- 	dm_bufio_lock(c);
--	__write_dirty_buffers_async(c, 0);
- 
- again:
- 	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_DIRTY], lru_list) {
-@@ -1274,7 +1317,7 @@ retry:
- 	BUG_ON(!b->hold_count);
- 	BUG_ON(test_bit(B_READING, &b->state));
- 
--	__write_dirty_buffer(b);
-+	__write_dirty_buffer(b, NULL);
- 	if (b->hold_count == 1) {
- 		wait_on_bit(&b->state, B_WRITING,
- 			    do_io_schedule, TASK_UNINTERRUPTIBLE);
+>  =
+
+> =
+
+> alessandra viktor.larionov # multipath -ll www-2-mysql
+> =
+
+> www-2-mysql (360050763008080581000000000000029) dm-37 IBM,2145
+> =
+
+> size=3D10G features=3D'1 queue_if_no_path' hwhandler=3D'0' wp=3Drw
+> =
+
+> |-+- policy=3D'round-robin 0' prio=3D50 status=3Dactive
+> =
+
+> | |- 2:0:0:9  sdak 66:64   active ready running
+> =
+
+> | |- 3:0:0:9  sdcf 69:48   active ready running
+> =
+
+> | `- 4:0:0:9  sdcy 70:96   active ready running
+> =
+
+> `-+- policy=3D'round-robin 0' prio=3D10 status=3Denabled
+> =
+
+>   |- 1:0:0:9  sdl  8:176   active ready running
+> =
+
+>   |- 5:0:0:9  sdcb 68:240  active ready running
+> =
+
+>   `- 6:0:0:9  sdct 70:16   active ready running
+> =
+
+>  =
+
+> =
+
+> Where sdak and sdl are fiber links and the rest of those are iscsi.
+> Priorities come from alua which correspond to san controller
+> preference at this particular moment.
+> =
+
+> What we don=92t like about this setup is that fc and iscsi links end
+> up with the same prioriy in the same group. The idea behind having
+> iscsi links on machines having fc at all, is redundancy to fc failures.
+> =
+
+> But we surely don=92t want to operate iscsi links the times when
+> either primary or backup fc are fully operational.
+> =
+
+>  =
+
+> =
+
+> So this led us to the idea, of somehow telling the prioritizer to be
+> more granular and separate fc and iscsi controller priorities. After
+> doing some several hour googling, I found out that we are not the
+> only ones with such a story, and there has been no solution to the
+> point. (take this one for example
+> http://www.redhat.com/archives/dm-devel/2008-August/msg00083.html)
+> In fact prio_callout which could possibly solve this kind of thing,
+> is deprecated.
+> =
+
+>  =
+
+> =
+
+> It=92s true that there=92s no easy or trivial way to determine if a path
+> behing an sg is fiber or iscsi (or something else). But thinking on
+> this issue, we thought that we actully can satisfy if we could just
+> assign a custom priority based on a scsi_id of the device. The idea
+> behind it is simple =96 say in our case we have an IBM ServeRAID
+> controller, which is SCSI host 0, Emulex Light Pulse which is SCSI
+> host 1 and 2 (for each port respectively and all of the rest is
+> iSCSI. So if we could give static priorities based on this
+> information this could do the trick.
+> =
+
+>  =
+
+> =
+
+> So, we poked up with code a bit, and wrote up a custom prioritizer,
+> called sg_id. (patch for the latest multipath-tools available here:
+> http://viktor.ee/multipath-tools-patches/sg_id_prio.patch)
+> =
+
+> Usage is very simple: in /etc/multipath.conf: prio =84sg_id=93, and
+> priorities are passed through prio_args as regexes: e.g. a prio_args of
+> =
+
+> prio_sg_id(default)=3D0 prio_sg_id(^[0-2]:0)=3D40 prio_sg_id(^5:[2-3]:)=
+=3D30
+> =
+
+> will give prio 40 for everything on SCSI hosts 0, 1 and 2, channel
+> 0. 30 on scsi_host 5 channels 2 and 3, and everything else will get 0.
+> =
+
+>  =
+
+> =
+
+> Using sg_id in the upper example we will have sdl and sdak in the
+> first group, and all othe other stuff in the second. Which is ok,
+> but not quite.
+> =
+
+> The problem with this approach for us is that ALUA gives us valuable
+> information on our storage priorities (which controller is primary
+> and which is secondary for that particular lun at this particular
+> moment), and we=92re not quite ready to sacrifice this information
+> even for sg_id prios. If there only would be a way to use multiple
+> prioritizers.
+> =
+
+> And so we=92ve played another couple of our hours with multipath-tools
+> code allowing it to accept multiple prioritizers in prio
+> configuration. (patch here
+> http://viktor.ee/multipath-tools-patches/multiprio.patch)
+> =
+
+> In this case, prioritizers should be separated by coma, semicolon or
+> space, and the end priority would be a sum of priorities given by
+> all of the specified prioritizers. (a single prioritizer value is
+> also accepted of course.)
+> =
+
+> As an example:
+> =
+
+>         prio                  "sg_id, alua"
+> =
+
+>         prio_args             "prio_sg_id(default)=3D0
+> prio_sg_id(^[0-2]:0)=3D100"
+> =
+
+>  =
+
+> =
+
+> So combining the two of above with the same example we get:
+> =
+
+>  =
+
+> =
+
+> alessandra multipath-tools-0.4.9 # multipath -r www-2-mysql
+> =
+
+> reload: www-2-mysql (360050763008080581000000000000029) undef IBM,2145
+> =
+
+> size=3D10G features=3D'1 queue_if_no_path' hwhandler=3D'0' wp=3Dundef
+> =
+
+> |-+- policy=3D'round-robin 0' prio=3D150 status=3Dundef
+> =
+
+> | `- 2:0:0:9  sdak 66:64   active ready running
+> =
+
+> |-+- policy=3D'round-robin 0' prio=3D110 status=3Dundef
+> =
+
+> | `- 1:0:0:9  sdl  8:176   active ready running
+> =
+
+> |-+- policy=3D'round-robin 0' prio=3D50 status=3Dundef
+> =
+
+> | |- 3:0:0:9  sdcf 69:48   active ready running
+> =
+
+> | `- 4:0:0:9  sdcy 70:96   active ready running
+> =
+
+> `-+- policy=3D'round-robin 0' prio=3D10 status=3Dundef
+> =
+
+>   |- 5:0:0:9  sdcb 68:240  active ready running
+> =
+
+>   `- 6:0:0:9  sdct 70:16   active ready running
+> =
+
+>  =
+
+> =
+
+> Exactly what we needed: primary FC link with 150, secondary 110, and
+> then follow primary and secondary ISCSI links with 50 and 10
+> respectively.
+> =
+
+> All in all this one seems to have solved our problem, and well maybe
+> can help anybody elses too.
+> =
+
+Actually, I like the idea with the stackable prioritizers.
+Not sure about the 'sg_id' thing; that's still too much to configure.
+We should be identifying the transport, and base some priorities
+based on the transport.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
