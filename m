@@ -1,51 +1,50 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: DM-Verity Tool
-Date: Wed, 22 May 2013 18:46:36 +0200
-Message-ID: <519CF66C.8010808@gmail.com>
-References: <22416.192.168.200.1.1369149109.squirrel@gesmail.globaledgesoft.com>
-	<519CA6F0.3000309@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] make dm and dm-crypt forward cgroup context (was:
+ dm-crypt parallelization patches)
+Date: Wed, 22 May 2013 14:50:14 -0400
+Message-ID: <20130522185014.GA17423@redhat.com>
+References: <20130410235009.GI17641@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304111544050.32536@file.rdu.redhat.com>
+ <20130411195203.GA11956@mtj.dyndns.org>
+ <20130411200005.GB11956@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304121340350.3359@file.rdu.redhat.com>
+ <20130412182941.GF11956@mtj.dyndns.org>
+ <Pine.LNX.4.64.1304150827480.1859@file.rdu.redhat.com>
+ <20130416172418.GB2874@mtj.dyndns.org>
+ <20130418164742.GA8254@redhat.com>
+ <20130418170317.GA9897@mtj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <519CA6F0.3000309@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: pavankumar.p@globaledgesoft.com, Marian Csontos <mcsontos@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130418170317.GA9897@mtj.dyndns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-crypt@saout.de, Christian Schmidt <schmidt@digadd.de>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, Mikulas Patocka <mpatocka@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Milan Broz <gmazyland@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/22/2013 01:07 PM, Marian Csontos wrote:
-> On 05/21/2013 05:11 PM, pavankumar.p@globaledgesoft.com wrote:
->> Hello Mandeep,
->>
->> I was trying to download the source code to generate the hash from the
->> following location. But looks like this is moved. Pls share the latest git
->> hub location of the source.
->> http://git.chromium.org/cgi-bin/gitweb.cgi?p=dm-verity.git;a=tree
+On Thu, Apr 18 2013 at  1:03pm -0400,
+Tejun Heo <tj@kernel.org> wrote:
+
+> Hello, Mike.
 > 
-> Hi Pavan, dm-verity is in upstream kernel tree now:
+> On Thu, Apr 18, 2013 at 12:47:42PM -0400, Mike Snitzer wrote:
+> > I see you nack and raise you with: please reconsider in the near term.
 > 
-> http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-verity.c
+> The thing is that percpu-refcnting is already in mostly ready-form, so
+> unless this dm series is planned to be merged for v3.10-rc1, I don't
+> see the need for a separate near term solution.  Mikulas can just do
+> the normal refcnting and cgroup will most likely adopt per-cpu ref
+> anyway once percpu-refcnting is in, so it should all fall in places
+> pretty quickly.  For devel / testing / whatever, Mikulas can surely
+> turn off cgroup, right?
 
-I think the question was about tool to generate hash,
-not the target itself.
+Hey Tejun,
 
-In any case, dm-verity is in kernel and veritysetup tool is part of upstream
-cryptsetup package.
+Was wondering: how is percpu-refcounting coming along?  Do you have a
+pointer to the code that can be pulled in for use by Mikulas' dm-crypt
+changes?
 
-Documentation to kernel dm-verity
-http://code.google.com/p/cryptsetup/wiki/DMVerity
+Would be nice to get this stuff sorted out for the 3.11 merge window.
 
-And some release notes info about veritysetup (see man page as well)
-http://code.google.com/p/cryptsetup/wiki/Cryptsetup150
-
-Milan
+Mike
