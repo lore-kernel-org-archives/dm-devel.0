@@ -1,15 +1,15 @@
 From: pavankumar.p@globaledgesoft.com
 Subject: Re: DM-Verity Tool
-Date: Thu, 23 May 2013 12:11:15 +0530 (IST)
-Message-ID: <20204.192.168.200.1.1369291275.squirrel@gesmail.globaledgesoft.com>
+Date: Wed, 22 May 2013 21:30:03 +0530 (IST)
+Message-ID: <9159.192.168.200.1.1369238403.squirrel@gesmail.globaledgesoft.com>
 References: <22416.192.168.200.1.1369149109.squirrel@gesmail.globaledgesoft.com>
-	<519CA6F0.3000309@redhat.com> <519CF66C.8010808@gmail.com>
+	<519CA6F0.3000309@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <519CF66C.8010808@gmail.com>
+In-Reply-To: <519CA6F0.3000309@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,26 +19,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>, mpatocka@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Marian Csontos <mcsontos@redhat.com>, pavankumar.p@globaledgesoft.com
+To: Marian Csontos <mcsontos@redhat.com>
+Cc: dm-devel@redhat.com, pavankumar.p@globaledgesoft.com
 List-Id: dm-devel.ids
 
-Hi Milan,
+Thanks Marian & Mikulas,
 
-Thanks for the reply.
+I'm able to download & compile veritysetup. Also able to configure verity
+target.
 
-> I think the question was about tool to generate hash,
-> not the target itself.
-
-As mentioned by you, I was looking for a tool which generates the root
-hash (digest) which can be used as a parameter to dmsetup tool. I used
-sha256sum tool to generate the hash but dmsetup is not accepting this
-hash.
-
-Thanks to Mikulas for providing the link to veritysetup using which I
-could configure verity target. But still I have some doubts regarding
-dmsetup & veritysetup
-
+I have few queries with respect to dmsetup & veritysetup
 1. What are the difference between configuring a verity target using
 dmsetup & veritysetup. Can these be used interchangeably?
 
@@ -54,33 +44,38 @@ the following error
 target for corrupted case (As soon as creating the status is Verified (V))
 ?
 
-Thanks in advance
+Regards,
 Pavan
 
-> On 05/22/2013 01:07 PM, Marian Csontos wrote:
->> On 05/21/2013 05:11 PM, pavankumar.p@globaledgesoft.com wrote:
->>> Hello Mandeep,
->>> I was trying to download the source code to generate the hash from the
-following location. But looks like this is moved. Pls share the latest
-git
->>> hub location of the source.
->>> http://git.chromium.org/cgi-bin/gitweb.cgi?p=dm-verity.git;a=tree
->> Hi Pavan, dm-verity is in upstream kernel tree now:
->> http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-verity.c
+
+> On 05/21/2013 05:11 PM, pavankumar.p@globaledgesoft.com wrote:
+>> Hello Mandeep,
+>>
+>> I was trying to download the source code to generate the hash from the
+>> following location. But looks like this is moved. Pls share the latest
+>> git
+>> hub location of the source.
+>> http://git.chromium.org/cgi-bin/gitweb.cgi?p=dm-verity.git;a=tree
 >
-> I think the question was about tool to generate hash,
-> not the target itself.
+> Hi Pavan, dm-verity is in upstream kernel tree now:
 >
-> In any case, dm-verity is in kernel and veritysetup tool is part of
-upstream
-> cryptsetup package.
+> http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-verity.c
 >
-> Documentation to kernel dm-verity
-> http://code.google.com/p/cryptsetup/wiki/DMVerity
+> -- Marian
 >
-> And some release notes info about veritysetup (see man page as well)
-http://code.google.com/p/cryptsetup/wiki/Cryptsetup150
+> /* Wow! Kudos to Mikulas, the source looks rather neatly! I should print
+> it and hang over my bed to get enlightened... */
 >
-> Milan
->
+>>
+>>
+>> Regards,
+>> Pavan
+>>
+>>
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
 >
