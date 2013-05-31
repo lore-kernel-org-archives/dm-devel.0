@@ -1,202 +1,90 @@
-From: Jingoo Han <jg1.han@samsung.com>
-Subject: [PATCH] md: replace strict_strto*() with kstrto*()
-Date: Sat, 01 Jun 2013 16:15:16 +0900
-Message-ID: <000601ce5e97$c4870a20$4d951e60$@samsung.com>
+From: pavankumar.p@globaledgesoft.com
+Subject: [Fwd: Re: DM-Verity Tool]
+Date: Fri, 31 May 2013 18:58:08 +0530 (IST)
+Message-ID: <62980.192.168.200.1.1370006888.squirrel@gesmail.globaledgesoft.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-language: ko
-Sender: linux-raid-owner@vger.kernel.org
-To: 'Neil Brown' <neilb@suse.de>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, 'Alasdair Kergon' <agk@redhat.com>, Jingoo Han <jg1.han@samsung.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <gmazyland@gmail.com>, mpatocka@redhat.com, device-mapper development <dm-devel@redhat.com>, Marian Csontos <mcsontos@redhat.com>
 List-Id: dm-devel.ids
 
-The usage of strict_strtoul() is not preferred, because
-strict_strtoul() is obsolete. Thus, kstrtoul() should be
-used.
+---------------------------- Original Message ----------------------------
+Subject: Re: DM-Verity Tool
+From:    pavankumar.p@globaledgesoft.com
+Date:    Mon, May 27, 2013 9:22 pm
+To:      "Milan Broz" <gmazyland@gmail.com>
+         mpatocka@redhat.com
+         "device-mapper development" <dm-devel@redhat.com>
+         "Marian Csontos" <mcsontos@redhat.com>
+--------------------------------------------------------------------------
 
-Signed-off-by: Jingoo Han <jg1.han@samsung.com>
----
- drivers/md/bitmap.c  |    8 ++++----
- drivers/md/dm-raid.c |    8 ++++----
- drivers/md/md.c      |   16 ++++++++--------
- drivers/md/raid5.c   |    4 ++--
- 4 files changed, 18 insertions(+), 18 deletions(-)
+Hello Mikulas,
 
-diff --git a/drivers/md/bitmap.c b/drivers/md/bitmap.c
-index 5a2c754..a7fd821 100644
---- a/drivers/md/bitmap.c
-+++ b/drivers/md/bitmap.c
-@@ -2002,9 +2002,9 @@ location_store(struct mddev *mddev, const char *buf, size_t len)
- 		} else {
- 			int rv;
- 			if (buf[0] == '+')
--				rv = strict_strtoll(buf+1, 10, &offset);
-+				rv = kstrtoll(buf+1, 10, &offset);
- 			else
--				rv = strict_strtoll(buf, 10, &offset);
-+				rv = kstrtoll(buf, 10, &offset);
- 			if (rv)
- 				return rv;
- 			if (offset == 0)
-@@ -2139,7 +2139,7 @@ static ssize_t
- backlog_store(struct mddev *mddev, const char *buf, size_t len)
- {
- 	unsigned long backlog;
--	int rv = strict_strtoul(buf, 10, &backlog);
-+	int rv = kstrtoul(buf, 10, &backlog);
- 	if (rv)
- 		return rv;
- 	if (backlog > COUNTER_MAX)
-@@ -2165,7 +2165,7 @@ chunksize_store(struct mddev *mddev, const char *buf, size_t len)
- 	unsigned long csize;
- 	if (mddev->bitmap)
- 		return -EBUSY;
--	rv = strict_strtoul(buf, 10, &csize);
-+	rv = kstrtoul(buf, 10, &csize);
- 	if (rv)
- 		return rv;
- 	if (csize < 512 ||
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 0f5a6fb..21e8e46 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -504,7 +504,7 @@ static int parse_raid_params(struct raid_set *rs, char **argv,
- 	 * First, parse the in-order required arguments
- 	 * "chunk_size" is the only argument of this type.
- 	 */
--	if ((strict_strtoul(argv[0], 10, &value) < 0)) {
-+	if ((kstrtoul(argv[0], 10, &value) < 0)) {
- 		rs->ti->error = "Bad chunk size";
- 		return -EINVAL;
- 	} else if (rs->raid_type->level == 1) {
-@@ -585,7 +585,7 @@ static int parse_raid_params(struct raid_set *rs, char **argv,
- 			continue;
- 		}
- 
--		if (strict_strtoul(argv[i], 10, &value) < 0) {
-+		if (kstrtoul(argv[i], 10, &value) < 0) {
- 			rs->ti->error = "Bad numerical argument given in raid params";
- 			return -EINVAL;
- 		}
-@@ -1181,7 +1181,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	argv++;
- 
- 	/* number of RAID parameters */
--	if (strict_strtoul(argv[0], 10, &num_raid_params) < 0) {
-+	if (kstrtoul(argv[0], 10, &num_raid_params) < 0) {
- 		ti->error = "Cannot understand number of RAID parameters";
- 		return -EINVAL;
- 	}
-@@ -1194,7 +1194,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		return -EINVAL;
- 	}
- 
--	if ((strict_strtoul(argv[num_raid_params], 10, &num_raid_devs) < 0) ||
-+	if ((kstrtoul(argv[num_raid_params], 10, &num_raid_devs) < 0) ||
- 	    (num_raid_devs >= INT_MAX)) {
- 		ti->error = "Cannot understand number of raid devices";
- 		return -EINVAL;
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 0bbe710..76f5a8b 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -2870,7 +2870,7 @@ static ssize_t
- offset_store(struct md_rdev *rdev, const char *buf, size_t len)
- {
- 	unsigned long long offset;
--	if (strict_strtoull(buf, 10, &offset) < 0)
-+	if (kstrtoull(buf, 10, &offset) < 0)
- 		return -EINVAL;
- 	if (rdev->mddev->pers && rdev->raid_disk >= 0)
- 		return -EBUSY;
-@@ -2898,7 +2898,7 @@ static ssize_t new_offset_store(struct md_rdev *rdev,
- 	unsigned long long new_offset;
- 	struct mddev *mddev = rdev->mddev;
- 
--	if (strict_strtoull(buf, 10, &new_offset) < 0)
-+	if (kstrtoull(buf, 10, &new_offset) < 0)
- 		return -EINVAL;
- 
- 	if (mddev->sync_thread)
-@@ -2964,7 +2964,7 @@ static int strict_blocks_to_sectors(const char *buf, sector_t *sectors)
- 	unsigned long long blocks;
- 	sector_t new;
- 
--	if (strict_strtoull(buf, 10, &blocks) < 0)
-+	if (kstrtoull(buf, 10, &blocks) < 0)
- 		return -EINVAL;
- 
- 	if (blocks & 1ULL << (8 * sizeof(blocks) - 1))
-@@ -3072,7 +3072,7 @@ static ssize_t recovery_start_store(struct md_rdev *rdev, const char *buf, size_
- 
- 	if (cmd_match(buf, "none"))
- 		recovery_start = MaxSector;
--	else if (strict_strtoull(buf, 10, &recovery_start))
-+	else if (kstrtoull(buf, 10, &recovery_start))
- 		return -EINVAL;
- 
- 	if (rdev->mddev->pers &&
-@@ -3500,7 +3500,7 @@ level_store(struct mddev *mddev, const char *buf, size_t len)
- 	if (clevel[len-1] == '\n')
- 		len--;
- 	clevel[len] = 0;
--	if (strict_strtol(clevel, 10, &level))
-+	if (kstrtol(clevel, 10, &level))
- 		level = LEVEL_NONE;
- 
- 	if (request_module("md-%s", clevel) != 0)
-@@ -4359,7 +4359,7 @@ sync_force_parallel_store(struct mddev *mddev, const char *buf, size_t len)
- {
- 	long n;
- 
--	if (strict_strtol(buf, 10, &n))
-+	if (kstrtol(buf, 10, &n))
- 		return -EINVAL;
- 
- 	if (n != 0 && n != 1)
-@@ -4427,7 +4427,7 @@ static ssize_t
- min_sync_store(struct mddev *mddev, const char *buf, size_t len)
- {
- 	unsigned long long min;
--	if (strict_strtoull(buf, 10, &min))
-+	if (kstrtoull(buf, 10, &min))
- 		return -EINVAL;
- 	if (min > mddev->resync_max)
- 		return -EINVAL;
-@@ -4464,7 +4464,7 @@ max_sync_store(struct mddev *mddev, const char *buf, size_t len)
- 		mddev->resync_max = MaxSector;
- 	else {
- 		unsigned long long max;
--		if (strict_strtoull(buf, 10, &max))
-+		if (kstrtoull(buf, 10, &max))
- 			return -EINVAL;
- 		if (max < mddev->resync_min)
- 			return -EINVAL;
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index e1bcd75..d06eaa0 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -4929,7 +4929,7 @@ raid5_store_stripe_cache_size(struct mddev *mddev, const char *page, size_t len)
- 	if (!conf)
- 		return -ENODEV;
- 
--	if (strict_strtoul(page, 10, &new))
-+	if (kstrtoul(page, 10, &new))
- 		return -EINVAL;
- 	err = raid5_set_cache_size(mddev, new);
- 	if (err)
-@@ -4962,7 +4962,7 @@ raid5_store_preread_threshold(struct mddev *mddev, const char *page, size_t len)
- 	if (!conf)
- 		return -ENODEV;
- 
--	if (strict_strtoul(page, 10, &new))
-+	if (kstrtoul(page, 10, &new))
- 		return -EINVAL;
- 	if (new > conf->max_nr_stripes)
- 		return -EINVAL;
--- 
-1.7.10.4
+> By corrupting the image? :) See tests/verity-compat-test in cryptsetup
+> tree, it is basic regression test which is simulating both data and hash
+> corruption (it just dd random data to know offset and expects failure.)
+
+In tests/verity-compat-test, in the following line
+"check_root_hash  512
+9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174 $SALT 1
+sha256 8388608"
+
+How's the last parameter (hash_offset) calculated? it's hard coded
+here(8388608).
+
+Regards,
+Pavan
 
 
+> Hi All,
+>
+> Thanks a lot for your support. Now I am able to configure verity target
+> using both veritysetup & dmsetup.
+>
+> Regards,
+> Pavan
+>
+>
+>>
+>> On 05/23/2013 08:41 AM, pavankumar.p@globaledgesoft.com wrote:
+>>> 1. What are the difference between configuring a verity target using
+>>> dmsetup & veritysetup. Can these be used interchangeably?
+>>
+>> dmsetup is just low level tool, you need to know all table parameters
+>> while veritysetup will prepare table for you using high level commands
+>> and on-disk metadata (if present).
+>>
+>>> 2. I tried passing the root hash value generated by veritysetup as a
+>>> parameter to dmsetup but this doesn't work. On doing dmsetup status,
+>>> the
+>>> output is showing as the target corrupted (C). I examined dmesg & found
+>>> the following error
+>>
+>> Be sure you are using proper parameters, metadata version etc.
+>>
+>> Try activate device with veritysetup, then run "dmsetup table" and
+>> check what is different in your dmsetup line.
+>>
+>>> 3. After creating a verity target using "veritysetup" how to test the
+>>> target for corrupted case (As soon as creating the status is Verified
+>>> (V))
+>>
+>> By corrupting the image? :) See tests/verity-compat-test in cryptsetup
+>> tree, it is basic regression test which is simulating both data and hash
+>> corruption (it just dd random data to know offset and expects failure.)
+>>
+>> Milan
+>>
+>
+>
