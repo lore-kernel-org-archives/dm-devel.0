@@ -1,55 +1,202 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: Clustered RAID1 performance
-Date: Fri, 31 May 2013 10:58:35 -0500
-Message-ID: <6948BCF9-4B9B-420F-B95E-150F38A6D567@redhat.com>
-References: <20130530095955.GE11926@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset="us-ascii"
+From: Jingoo Han <jg1.han@samsung.com>
+Subject: [PATCH] md: replace strict_strto*() with kstrto*()
+Date: Sat, 01 Jun 2013 16:15:16 +0900
+Message-ID: <000601ce5e97$c4870a20$4d951e60$@samsung.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130530095955.GE11926@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-language: ko
+Sender: linux-raid-owner@vger.kernel.org
+To: 'Neil Brown' <neilb@suse.de>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, 'Alasdair Kergon' <agk@redhat.com>, Jingoo Han <jg1.han@samsung.com>
 List-Id: dm-devel.ids
 
+The usage of strict_strtoul() is not preferred, because
+strict_strtoul() is obsolete. Thus, kstrtoul() should be
+used.
 
-On May 30, 2013, at 4:59 AM, Lars Marowsky-Bree wrote:
+Signed-off-by: Jingoo Han <jg1.han@samsung.com>
+---
+ drivers/md/bitmap.c  |    8 ++++----
+ drivers/md/dm-raid.c |    8 ++++----
+ drivers/md/md.c      |   16 ++++++++--------
+ drivers/md/raid5.c   |    4 ++--
+ 4 files changed, 18 insertions(+), 18 deletions(-)
 
-> Hi all,
-> 
-> we see a significant performance hit when mirroring is used for a cLVM2
-> LV.
-> 
-> That's clearly due to the performance overhead of bouncing to user-space
-> (and worse, to the network) for locking etc.
-> 
-> I wonder if consideration has been given to how this could be improved?
-> Using the in-kernel DLM and holding locks for regions the local node
-> writes to for longer, exclusive locks while noone is reading,
-> parallelizing the resync ...? How is the long-term perspective for this
-> given the dm-raid/md raid stuff?
-> 
-> Before we go drafting I wanted to ask for ideas that are already
-> floating around ;-) Anyone working on this?
+diff --git a/drivers/md/bitmap.c b/drivers/md/bitmap.c
+index 5a2c754..a7fd821 100644
+--- a/drivers/md/bitmap.c
++++ b/drivers/md/bitmap.c
+@@ -2002,9 +2002,9 @@ location_store(struct mddev *mddev, const char *buf, size_t len)
+ 		} else {
+ 			int rv;
+ 			if (buf[0] == '+')
+-				rv = strict_strtoll(buf+1, 10, &offset);
++				rv = kstrtoll(buf+1, 10, &offset);
+ 			else
+-				rv = strict_strtoll(buf, 10, &offset);
++				rv = kstrtoll(buf, 10, &offset);
+ 			if (rv)
+ 				return rv;
+ 			if (offset == 0)
+@@ -2139,7 +2139,7 @@ static ssize_t
+ backlog_store(struct mddev *mddev, const char *buf, size_t len)
+ {
+ 	unsigned long backlog;
+-	int rv = strict_strtoul(buf, 10, &backlog);
++	int rv = kstrtoul(buf, 10, &backlog);
+ 	if (rv)
+ 		return rv;
+ 	if (backlog > COUNTER_MAX)
+@@ -2165,7 +2165,7 @@ chunksize_store(struct mddev *mddev, const char *buf, size_t len)
+ 	unsigned long csize;
+ 	if (mddev->bitmap)
+ 		return -EBUSY;
+-	rv = strict_strtoul(buf, 10, &csize);
++	rv = kstrtoul(buf, 10, &csize);
+ 	if (rv)
+ 		return rv;
+ 	if (csize < 512 ||
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 0f5a6fb..21e8e46 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -504,7 +504,7 @@ static int parse_raid_params(struct raid_set *rs, char **argv,
+ 	 * First, parse the in-order required arguments
+ 	 * "chunk_size" is the only argument of this type.
+ 	 */
+-	if ((strict_strtoul(argv[0], 10, &value) < 0)) {
++	if ((kstrtoul(argv[0], 10, &value) < 0)) {
+ 		rs->ti->error = "Bad chunk size";
+ 		return -EINVAL;
+ 	} else if (rs->raid_type->level == 1) {
+@@ -585,7 +585,7 @@ static int parse_raid_params(struct raid_set *rs, char **argv,
+ 			continue;
+ 		}
+ 
+-		if (strict_strtoul(argv[i], 10, &value) < 0) {
++		if (kstrtoul(argv[i], 10, &value) < 0) {
+ 			rs->ti->error = "Bad numerical argument given in raid params";
+ 			return -EINVAL;
+ 		}
+@@ -1181,7 +1181,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	argv++;
+ 
+ 	/* number of RAID parameters */
+-	if (strict_strtoul(argv[0], 10, &num_raid_params) < 0) {
++	if (kstrtoul(argv[0], 10, &num_raid_params) < 0) {
+ 		ti->error = "Cannot understand number of RAID parameters";
+ 		return -EINVAL;
+ 	}
+@@ -1194,7 +1194,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		return -EINVAL;
+ 	}
+ 
+-	if ((strict_strtoul(argv[num_raid_params], 10, &num_raid_devs) < 0) ||
++	if ((kstrtoul(argv[num_raid_params], 10, &num_raid_devs) < 0) ||
+ 	    (num_raid_devs >= INT_MAX)) {
+ 		ti->error = "Cannot understand number of raid devices";
+ 		return -EINVAL;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 0bbe710..76f5a8b 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -2870,7 +2870,7 @@ static ssize_t
+ offset_store(struct md_rdev *rdev, const char *buf, size_t len)
+ {
+ 	unsigned long long offset;
+-	if (strict_strtoull(buf, 10, &offset) < 0)
++	if (kstrtoull(buf, 10, &offset) < 0)
+ 		return -EINVAL;
+ 	if (rdev->mddev->pers && rdev->raid_disk >= 0)
+ 		return -EBUSY;
+@@ -2898,7 +2898,7 @@ static ssize_t new_offset_store(struct md_rdev *rdev,
+ 	unsigned long long new_offset;
+ 	struct mddev *mddev = rdev->mddev;
+ 
+-	if (strict_strtoull(buf, 10, &new_offset) < 0)
++	if (kstrtoull(buf, 10, &new_offset) < 0)
+ 		return -EINVAL;
+ 
+ 	if (mddev->sync_thread)
+@@ -2964,7 +2964,7 @@ static int strict_blocks_to_sectors(const char *buf, sector_t *sectors)
+ 	unsigned long long blocks;
+ 	sector_t new;
+ 
+-	if (strict_strtoull(buf, 10, &blocks) < 0)
++	if (kstrtoull(buf, 10, &blocks) < 0)
+ 		return -EINVAL;
+ 
+ 	if (blocks & 1ULL << (8 * sizeof(blocks) - 1))
+@@ -3072,7 +3072,7 @@ static ssize_t recovery_start_store(struct md_rdev *rdev, const char *buf, size_
+ 
+ 	if (cmd_match(buf, "none"))
+ 		recovery_start = MaxSector;
+-	else if (strict_strtoull(buf, 10, &recovery_start))
++	else if (kstrtoull(buf, 10, &recovery_start))
+ 		return -EINVAL;
+ 
+ 	if (rdev->mddev->pers &&
+@@ -3500,7 +3500,7 @@ level_store(struct mddev *mddev, const char *buf, size_t len)
+ 	if (clevel[len-1] == '\n')
+ 		len--;
+ 	clevel[len] = 0;
+-	if (strict_strtol(clevel, 10, &level))
++	if (kstrtol(clevel, 10, &level))
+ 		level = LEVEL_NONE;
+ 
+ 	if (request_module("md-%s", clevel) != 0)
+@@ -4359,7 +4359,7 @@ sync_force_parallel_store(struct mddev *mddev, const char *buf, size_t len)
+ {
+ 	long n;
+ 
+-	if (strict_strtol(buf, 10, &n))
++	if (kstrtol(buf, 10, &n))
+ 		return -EINVAL;
+ 
+ 	if (n != 0 && n != 1)
+@@ -4427,7 +4427,7 @@ static ssize_t
+ min_sync_store(struct mddev *mddev, const char *buf, size_t len)
+ {
+ 	unsigned long long min;
+-	if (strict_strtoull(buf, 10, &min))
++	if (kstrtoull(buf, 10, &min))
+ 		return -EINVAL;
+ 	if (min > mddev->resync_max)
+ 		return -EINVAL;
+@@ -4464,7 +4464,7 @@ max_sync_store(struct mddev *mddev, const char *buf, size_t len)
+ 		mddev->resync_max = MaxSector;
+ 	else {
+ 		unsigned long long max;
+-		if (strict_strtoull(buf, 10, &max))
++		if (kstrtoull(buf, 10, &max))
+ 			return -EINVAL;
+ 		if (max < mddev->resync_min)
+ 			return -EINVAL;
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index e1bcd75..d06eaa0 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -4929,7 +4929,7 @@ raid5_store_stripe_cache_size(struct mddev *mddev, const char *page, size_t len)
+ 	if (!conf)
+ 		return -ENODEV;
+ 
+-	if (strict_strtoul(page, 10, &new))
++	if (kstrtoul(page, 10, &new))
+ 		return -EINVAL;
+ 	err = raid5_set_cache_size(mddev, new);
+ 	if (err)
+@@ -4962,7 +4962,7 @@ raid5_store_preread_threshold(struct mddev *mddev, const char *page, size_t len)
+ 	if (!conf)
+ 		return -ENODEV;
+ 
+-	if (strict_strtoul(page, 10, &new))
++	if (kstrtoul(page, 10, &new))
+ 		return -EINVAL;
+ 	if (new > conf->max_nr_stripes)
+ 		return -EINVAL;
+-- 
+1.7.10.4
 
-There isn't any active work being done in this area right now.
 
-What is your test set-up in which you are seeing the performance hit?  In the past when I have tested with GFS2, I did see some performance degradation, but it's not what I would have called significant.  I was not testing with SSDs at the time though.  Also, people are using cluster mirrors in different ways these days.  They may have the mirror active on multiple hosts concurrently, but they only really use it from one host.  Clearly in that case, the ideas you mentioned could make a difference.
-
-I have given some thought to making MD RAID1 cluster-aware.  (RAID10 would come for free, but RAID4/5/6 would be excluded.)  Device-mapper would then make use of this code via the dm-raid.c wrapper.  My idea for the new implementation would have been to keep a separate bitmap area for each machine.  This way, there would be no locking and no need to keep the log state collectively in-sync during nominal operation.  When machines come, go or fail, their bitmaps would have to be merged and responsibility for recovery/initialization/scrubbing would have to be decided.  Additionally, handling device failures is more tricky in MD RAID.  This is because MD RAID (and by extension, the device-mapper targets that leverage it) simply marks a device as failed in the superblock and keeps working while
-  DM "mirror" blocks I/O until the failed device is cleared.  This makes a difference in the cluster because one machine may suffer a device failure due to connectivity and another machine m!
- ay not.  If the machine suffering the failure simply marks the failure in the superblock (which will also need to be coordinated) and proceeds, the other machine may then attempt a read from the device and grab a copy of data that is stale.
-
-So, there are some things to think through, but nothing insurmountable.
-
-thanks for your interest,
- brassow
