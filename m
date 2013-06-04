@@ -1,116 +1,248 @@
-From: Lars Marowsky-Bree <lmb@suse.com>
-Subject: Re: Clustered RAID1 performance
-Date: Mon, 3 Jun 2013 22:45:27 +0200
-Message-ID: <20130603204527.GZ10694@suse.de>
-References: <20130530095955.GE11926@suse.de>
-	<6948BCF9-4B9B-420F-B95E-150F38A6D567@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [PATCH] md: replace strict_strto*() with kstrto*()
+Date: Tue, 4 Jun 2013 12:00:42 +1000
+Message-ID: <20130604120042.4e0a697f@notabene.brown>
+References: <000601ce5e97$c4870a20$4d951e60$@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <6948BCF9-4B9B-420F-B95E-150F38A6D567@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/krKFON5C8=4qGCOJQSQNTjC"; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <000601ce5e97$c4870a20$4d951e60$@samsung.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jingoo Han <jg1.han@samsung.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, 'Alasdair Kergon' <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 2013-05-31T10:58:35, Brassow Jonathan <jbrassow@redhat.com> wrote:
+--Sig_/krKFON5C8=4qGCOJQSQNTjC
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Hi Jon, thanks for the response.
+On Sat, 01 Jun 2013 16:15:16 +0900 Jingoo Han <jg1.han@samsung.com> wrote:
 
-> What is your test set-up in which you are seeing the performance hit?
+> The usage of strict_strtoul() is not preferred, because
+> strict_strtoul() is obsolete. Thus, kstrtoul() should be
+> used.
+>=20
+> Signed-off-by: Jingoo Han <jg1.han@samsung.com>
+> ---
+>  drivers/md/bitmap.c  |    8 ++++----
+>  drivers/md/dm-raid.c |    8 ++++----
+>  drivers/md/md.c      |   16 ++++++++--------
+>  drivers/md/raid5.c   |    4 ++--
+>  4 files changed, 18 insertions(+), 18 deletions(-)
+>=20
+> diff --git a/drivers/md/bitmap.c b/drivers/md/bitmap.c
+> index 5a2c754..a7fd821 100644
+> --- a/drivers/md/bitmap.c
+> +++ b/drivers/md/bitmap.c
+> @@ -2002,9 +2002,9 @@ location_store(struct mddev *mddev, const char *buf=
+, size_t len)
+>  		} else {
+>  			int rv;
+>  			if (buf[0] =3D=3D '+')
+> -				rv =3D strict_strtoll(buf+1, 10, &offset);
+> +				rv =3D kstrtoll(buf+1, 10, &offset);
+>  			else
+> -				rv =3D strict_strtoll(buf, 10, &offset);
+> +				rv =3D kstrtoll(buf, 10, &offset);
+>  			if (rv)
+>  				return rv;
+>  			if (offset =3D=3D 0)
+> @@ -2139,7 +2139,7 @@ static ssize_t
+>  backlog_store(struct mddev *mddev, const char *buf, size_t len)
+>  {
+>  	unsigned long backlog;
+> -	int rv =3D strict_strtoul(buf, 10, &backlog);
+> +	int rv =3D kstrtoul(buf, 10, &backlog);
+>  	if (rv)
+>  		return rv;
+>  	if (backlog > COUNTER_MAX)
+> @@ -2165,7 +2165,7 @@ chunksize_store(struct mddev *mddev, const char *bu=
+f, size_t len)
+>  	unsigned long csize;
+>  	if (mddev->bitmap)
+>  		return -EBUSY;
+> -	rv =3D strict_strtoul(buf, 10, &csize);
+> +	rv =3D kstrtoul(buf, 10, &csize);
+>  	if (rv)
+>  		return rv;
+>  	if (csize < 512 ||
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 0f5a6fb..21e8e46 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -504,7 +504,7 @@ static int parse_raid_params(struct raid_set *rs, cha=
+r **argv,
+>  	 * First, parse the in-order required arguments
+>  	 * "chunk_size" is the only argument of this type.
+>  	 */
+> -	if ((strict_strtoul(argv[0], 10, &value) < 0)) {
+> +	if ((kstrtoul(argv[0], 10, &value) < 0)) {
+>  		rs->ti->error =3D "Bad chunk size";
+>  		return -EINVAL;
+>  	} else if (rs->raid_type->level =3D=3D 1) {
+> @@ -585,7 +585,7 @@ static int parse_raid_params(struct raid_set *rs, cha=
+r **argv,
+>  			continue;
+>  		}
+> =20
+> -		if (strict_strtoul(argv[i], 10, &value) < 0) {
+> +		if (kstrtoul(argv[i], 10, &value) < 0) {
+>  			rs->ti->error =3D "Bad numerical argument given in raid params";
+>  			return -EINVAL;
+>  		}
+> @@ -1181,7 +1181,7 @@ static int raid_ctr(struct dm_target *ti, unsigned =
+argc, char **argv)
+>  	argv++;
+> =20
+>  	/* number of RAID parameters */
+> -	if (strict_strtoul(argv[0], 10, &num_raid_params) < 0) {
+> +	if (kstrtoul(argv[0], 10, &num_raid_params) < 0) {
+>  		ti->error =3D "Cannot understand number of RAID parameters";
+>  		return -EINVAL;
+>  	}
+> @@ -1194,7 +1194,7 @@ static int raid_ctr(struct dm_target *ti, unsigned =
+argc, char **argv)
+>  		return -EINVAL;
+>  	}
+> =20
+> -	if ((strict_strtoul(argv[num_raid_params], 10, &num_raid_devs) < 0) ||
+> +	if ((kstrtoul(argv[num_raid_params], 10, &num_raid_devs) < 0) ||
+>  	    (num_raid_devs >=3D INT_MAX)) {
+>  		ti->error =3D "Cannot understand number of raid devices";
+>  		return -EINVAL;
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 0bbe710..76f5a8b 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -2870,7 +2870,7 @@ static ssize_t
+>  offset_store(struct md_rdev *rdev, const char *buf, size_t len)
+>  {
+>  	unsigned long long offset;
+> -	if (strict_strtoull(buf, 10, &offset) < 0)
+> +	if (kstrtoull(buf, 10, &offset) < 0)
+>  		return -EINVAL;
+>  	if (rdev->mddev->pers && rdev->raid_disk >=3D 0)
+>  		return -EBUSY;
+> @@ -2898,7 +2898,7 @@ static ssize_t new_offset_store(struct md_rdev *rde=
+v,
+>  	unsigned long long new_offset;
+>  	struct mddev *mddev =3D rdev->mddev;
+> =20
+> -	if (strict_strtoull(buf, 10, &new_offset) < 0)
+> +	if (kstrtoull(buf, 10, &new_offset) < 0)
+>  		return -EINVAL;
+> =20
+>  	if (mddev->sync_thread)
+> @@ -2964,7 +2964,7 @@ static int strict_blocks_to_sectors(const char *buf=
+, sector_t *sectors)
+>  	unsigned long long blocks;
+>  	sector_t new;
+> =20
+> -	if (strict_strtoull(buf, 10, &blocks) < 0)
+> +	if (kstrtoull(buf, 10, &blocks) < 0)
+>  		return -EINVAL;
+> =20
+>  	if (blocks & 1ULL << (8 * sizeof(blocks) - 1))
+> @@ -3072,7 +3072,7 @@ static ssize_t recovery_start_store(struct md_rdev =
+*rdev, const char *buf, size_
+> =20
+>  	if (cmd_match(buf, "none"))
+>  		recovery_start =3D MaxSector;
+> -	else if (strict_strtoull(buf, 10, &recovery_start))
+> +	else if (kstrtoull(buf, 10, &recovery_start))
+>  		return -EINVAL;
+> =20
+>  	if (rdev->mddev->pers &&
+> @@ -3500,7 +3500,7 @@ level_store(struct mddev *mddev, const char *buf, s=
+ize_t len)
+>  	if (clevel[len-1] =3D=3D '\n')
+>  		len--;
+>  	clevel[len] =3D 0;
+> -	if (strict_strtol(clevel, 10, &level))
+> +	if (kstrtol(clevel, 10, &level))
+>  		level =3D LEVEL_NONE;
+> =20
+>  	if (request_module("md-%s", clevel) !=3D 0)
+> @@ -4359,7 +4359,7 @@ sync_force_parallel_store(struct mddev *mddev, cons=
+t char *buf, size_t len)
+>  {
+>  	long n;
+> =20
+> -	if (strict_strtol(buf, 10, &n))
+> +	if (kstrtol(buf, 10, &n))
+>  		return -EINVAL;
+> =20
+>  	if (n !=3D 0 && n !=3D 1)
+> @@ -4427,7 +4427,7 @@ static ssize_t
+>  min_sync_store(struct mddev *mddev, const char *buf, size_t len)
+>  {
+>  	unsigned long long min;
+> -	if (strict_strtoull(buf, 10, &min))
+> +	if (kstrtoull(buf, 10, &min))
+>  		return -EINVAL;
+>  	if (min > mddev->resync_max)
+>  		return -EINVAL;
+> @@ -4464,7 +4464,7 @@ max_sync_store(struct mddev *mddev, const char *buf=
+, size_t len)
+>  		mddev->resync_max =3D MaxSector;
+>  	else {
+>  		unsigned long long max;
+> -		if (strict_strtoull(buf, 10, &max))
+> +		if (kstrtoull(buf, 10, &max))
+>  			return -EINVAL;
+>  		if (max < mddev->resync_min)
+>  			return -EINVAL;
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index e1bcd75..d06eaa0 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -4929,7 +4929,7 @@ raid5_store_stripe_cache_size(struct mddev *mddev, =
+const char *page, size_t len)
+>  	if (!conf)
+>  		return -ENODEV;
+> =20
+> -	if (strict_strtoul(page, 10, &new))
+> +	if (kstrtoul(page, 10, &new))
+>  		return -EINVAL;
+>  	err =3D raid5_set_cache_size(mddev, new);
+>  	if (err)
+> @@ -4962,7 +4962,7 @@ raid5_store_preread_threshold(struct mddev *mddev, =
+const char *page, size_t len)
+>  	if (!conf)
+>  		return -ENODEV;
+> =20
+> -	if (strict_strtoul(page, 10, &new))
+> +	if (kstrtoul(page, 10, &new))
+>  		return -EINVAL;
+>  	if (new > conf->max_nr_stripes)
+>  		return -EINVAL;
 
-We saw it essentially as soon as we used "lvcreate -m1" on an LV; the
-performance drop would be about 70% compared to -m0. Exclusive
-activation would bring it back to ~95%.
 
-(I wonder if that could be related to still using an older lvm2
-user-space. Hm. Need to benchmark again with the latest.)
+Applied, thanks.
 
-Actually concurrency via OCFS2 would of course have a worse impact.
+NeilBrown
 
-I'm not quite sure where the split is; many use cases are "One active
-process, but they want the LV to be visible everywhere and the election
-to be automatic", but a fair share is "concurrent processes/OCFS2/GFS2,
-replacing traditional expensive SAN mirroring (while not being ready
-for ceph/gluster)" too.
+--Sig_/krKFON5C8=4qGCOJQSQNTjC
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
-The first part is reasonably trivial - enforce the one open process via
-an exclusive lock automatically, and get to avoid the entire rest of the
-cluster overhead.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
 
-Optimizing the latter case is harder.
+iQIVAwUBUa1KSjnsnt1WYoG5AQI6MxAAs7yfh7F0KEPYRsMwEFSEM8q4o4+Yl4gr
+YyVaCfYlawt5WzOA8ZiapHpUS3L9fFQnZQ+P25lJ20ppZFLMk2Otdv0UUQKBez6v
+FthJ+W+bmb8YRdvgl3JGtA3iOl+ZIigpygT2j2tEvPdHfwGVkxA+Y5zpZF1J53Rk
+zDmL6seVNlEzm0grAhvStxxc3GfXFCeJ3+Ct2uye47wBBXtSL+DAXze6/2nbO2Jz
+pZCN32PEIFcs6n4tpnR9pmnXARZi381deV30W3+lp1bLPcKPC32V4+5YMtzF8Una
+flsPrKE8MjZCXHmMLGtBmb2Nm234qAPw6isstQ+vJYHsyjkQwqAShZMB6o9rL/8i
+makdJj8q1hGoC7XVg2ncnb6K3hN3Fdb2Q5WwfZspnU4BqvziMSs9QQ5gRBYW9+si
+5XLYWa6u1swMoQETPq9gevqThCRCSIE8/jWGSLbG2kM/7XJICvnx6T8605mHsDKT
+bMP42zQoJ3YIncrfrbpxWJS+XGrznb2goQzCCe/l/yyn4HBVp9OmYllKlaXh2iRe
+JrDy5LnQvpcr9+nMYZEDitkHXjMCUSIRikvOZqPJdbke7QFZfWrsG8351yEWY3cU
+GAGyK06tcenLOxLE1r3b0X9y1vLYQICY22nsFErNGot1DLeFz44bnOidXGd6+Vgz
+gDEG9AFfOV0=
+=FkaZ
+-----END PGP SIGNATURE-----
 
-> I have given some thought to making MD RAID1 cluster-aware.  (RAID10
-> would come for free, but RAID4/5/6 would be excluded.) =
-
-
-Yes, I guess that cover 99% of the interesting pieces anyway.
-
-> would then make use of this code via the dm-raid.c wrapper.  My idea
-> for the new implementation would have been to keep a separate bitmap
-> area for each machine.  This way, there would be no locking and no
-> need to keep the log state collectively in-sync during nominal
-> operation.
-
-Yes, I can see this could work. (Similarly to how OCFS2/GFS2 keep a
-per-node journal too.)
-
-Could be a bit tricky to get to the point where you could do full
-read-balancing.
-
-And, of course, this whole complexity is only needed for the truly
-concurrent IO.
-
-> When machines come, go or fail, their bitmaps would have
-> to be merged and responsibility for recovery/initialization/scrubbing
-> would have to be decided.
-
-Right, but that's easy enough.
-
-> Additionally, handling device failures is
-> more tricky in MD RAID.  This is because MD RAID (and by extension,
-> the device-mapper targets that leverage it) simply marks a device as
-> failed in the superblock and keeps working while DM "mirror" blocks
-> I/O until the failed device is cleared.
-
-I guess though that could be enhanced.
-
-> This makes a difference in the cluster because one machine may suffer
-> a device failure due to connectivity and another machine may not.
-
-Yes, understood. And we then want to degrade as gracefully as we can,
-too.
-
-(I sometimes keep wondering if, depending on the interconnect in the
-cluster, the "ship all writes to a central process, read locally,
-fail-over that process" isn't cheaper. I'm pretty sure that for
-read-intensive workloads, it probably is.)
-
-> If the machine suffering the failure simply marks the failure in the
-> superblock (which will also need to be coordinated) and proceeds, the
-> other machine may then attempt a read from the device and grab a copy
-> of data that is stale.
-
-Right. Cheapest way is to mark the drive failed on all nodes at the same
-time; anything else actually does require write-shipping.
-
-
-Regards,
-    Lars
-
--- =
-
-Architect Storage/HA
-SUSE LINUX Products GmbH, GF: Jeff Hawn, Jennifer Guild, Felix Imend=F6rffe=
-r, HRB 21284 (AG N=FCrnberg)
-"Experience is the name everyone gives to their mistakes." -- Oscar Wilde
+--Sig_/krKFON5C8=4qGCOJQSQNTjC--
