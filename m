@@ -1,15 +1,12 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] updated dm-switch
-Date: Fri, 7 Jun 2013 12:16:19 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1306071214001.22600@file.rdu.redhat.com>
-References: <Pine.LNX.4.64.1305221709160.22686@file.rdu.redhat.com>
-	<20130606224518.GU19749@earth.li>
+Subject: [PATCH] dm: avoid a possible __vmalloc deadlock
+Date: Sat, 8 Jun 2013 19:23:13 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1306081922230.19670@file.rdu.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130606224518.GU19749@earth.li>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +16,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan McDowell <noodles@earth.li>
-Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+dm: avoid a possible __vmalloc deadlock
 
+__vmalloc doesn't fully respect gfp flags (see commit
+502624bdad3dba45dfaacaf36b7d83e39e74b2d2) for explanation.
 
-On Thu, 6 Jun 2013, Jonathan McDowell wrote:
+So we need to set noio flag with memalloc_noio_save().
 
-> On Wed, May 22, 2013 at 05:14:18PM -0400, Mikulas Patocka wrote:
-> 
-> > This is updated dm-switch. It has better documentation and better error
-> > reporting in message function.
-> ...
-> > ---
-> > 
-> > From: Jim Ramsay <jim_ramsay@dell.com>
-> > 
-> > dm-switch is a new target that maps IO to underlying block devices
-> > efficiently when there are a large number of fixed-sized address regions
-> > but there is no simple pattern to allow for a compact mapping
-> > representation such as dm-stripe.
-> 
-> Interesting. I have been working on something similar recently, for not
-> dissimilar reasons. However the approach I had been taking was to extend
-> __choose_pgpath to take a pos parameter indicating the block being
-> requested, and then add a new dm-pref-hint multipath driver, which
-> effectively does a round-robin but prefers any path that has the "pref"
-> bit. Currently the dm-pref-hint driver is extremely hacky and reaches
-> down into the scsi_device to do an appropriate CDB along each path to
-> get the pref-map, or I'd post it for comments.
-> 
-> I'm interested in why the decision was made to have dm-switch as a separate
-> device-mapper layer? Are there a corresponding set of patches to
-> multipath-tools which know how to do the setup of each individual path?
-> 
-> J.
+This should be backported to stable kernels 3.8 and newer. The kernel 3.8
+doesn't have memalloc_noio_save(), so we should set and restore process
+flag PF_MEMALLOC instead.
 
-It is a separate target because it was originally developed as such by 
-Dell.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@kernel.org
 
-It could be possible to turn it into a plugin to dm-mpath but that would 
-require changes in the userspace code that is driving it.
+---
+ drivers/md/dm-ioctl.c |    3 +++
+ 1 file changed, 3 insertions(+)
 
-Mikulas
+Index: linux-3.9.4-fast/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-3.9.4-fast.orig/drivers/md/dm-ioctl.c	2013-06-07 15:28:59.000000000 +0200
++++ linux-3.9.4-fast/drivers/md/dm-ioctl.c	2013-06-07 15:29:46.000000000 +0200
+@@ -1686,7 +1686,10 @@ static int copy_params(struct dm_ioctl _
+ 	}
+ 
+ 	if (!dmi) {
++		unsigned noio_flag;
++		noio_flag = memalloc_noio_save();
+ 		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_REPEAT | __GFP_HIGH, PAGE_KERNEL);
++		memalloc_noio_restore(noio_flag);
+ 		if (dmi)
+ 			*param_flags |= DM_PARAMS_VMALLOC;
+ 	}
