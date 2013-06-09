@@ -1,227 +1,277 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH 05/26] block: Convert bio_iovec() to bvec_iter
-Date: Sat,  8 Jun 2013 19:18:47 -0700
-Message-ID: <1370744348-15407-6-git-send-email-koverstreet@google.com>
+Subject: [PATCH 22/26] block: Make generic_make_request handle arbitrary sized bios
+Date: Sat,  8 Jun 2013 19:19:04 -0700
+Message-ID: <1370744348-15407-23-git-send-email-koverstreet@google.com>
 References: <1370744348-15407-1-git-send-email-koverstreet@google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1370744348-15407-1-git-send-email-koverstreet@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: axboe@kernel.dk, tytso@mit.edu, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Cc: Kent Overstreet <koverstreet@google.com>, dm-devel@redhat.com, "James E.J. Bottomley" <JBottomley@parallels.com>, Alasdair Kergon <agk@redhat.com>, "Ed L. Cashin" <ecashin@coraid.com>
+Cc: Kent Overstreet <koverstreet@google.com>, Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-For immutable biovecs, we'll be introducing a new bio_iovec() that uses
-our new bvec iterator to construct a biovec, taking into account
-bvec_iter->bi_bvec_done - this patch updates existing users for the new
-usage.
+The way the block layer is currently written, it goes to great lengths
+to avoid having to split bios; upper layer code (such as bio_add_page())
+checks what the underlying device can handle and tries to always create
+bios that don't need to be split.
 
-Some of the existing users really do need a pointer into the bvec array
-- those uses are all going to be removed, but we'll need the
-functionality from immutable to remove them - so for now rename the
-existing bio_iovec() -> __bio_iovec(), and it'll be removed in a couple
-patches.
+But this approach becomes unwieldy and eventually breaks down with
+stacked devices and devices with dynamic limits, and it adds a lot of
+complexity. If the block layer could split bios as needed, we could
+eliminate a lot of complexity elsewhere - particularly in stacked
+drivers. Code that creates bios can then create whatever size bios are
+convenient, and more importantly stacked drivers don't have to deal with
+both their own bio size limitations and the limitations of the
+(potentially multiple) devices underneath them.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 Cc: Jens Axboe <axboe@kernel.dk>
-Cc: "Ed L. Cashin" <ecashin@coraid.com>
+Cc: Neil Brown <neilb@suse.de>
 Cc: Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
-Cc: "James E.J. Bottomley" <JBottomley@parallels.com>
 ---
- drivers/block/aoe/aoecmd.c |  2 +-
- drivers/md/bcache/io.c     | 13 +++++++------
- drivers/md/dm-verity.c     |  2 +-
- drivers/scsi/sd.c          |  2 +-
- fs/bio.c                   | 20 ++++++++++----------
- include/linux/bio.h        | 10 ++++++----
- 6 files changed, 26 insertions(+), 23 deletions(-)
+ block/blk-core.c       |  24 ++++++----
+ block/blk-merge.c      | 120 +++++++++++++++++++++++++++++++++++++++++++++++++
+ block/blk.h            |   3 ++
+ include/linux/blkdev.h |   4 ++
+ 4 files changed, 142 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
-index 8716181..1fb2d6d 100644
---- a/drivers/block/aoe/aoecmd.c
-+++ b/drivers/block/aoe/aoecmd.c
-@@ -926,7 +926,7 @@ bufinit(struct buf *buf, struct request *rq, struct bio *bio)
- 	buf->resid = bio->bi_iter.bi_size;
- 	buf->sector = bio->bi_iter.bi_sector;
- 	bio_pageinc(bio);
--	buf->bv = bio_iovec(bio);
-+	buf->bv = __bio_iovec(bio);
- 	buf->bv_resid = buf->bv->bv_len;
- 	WARN_ON(buf->bv_resid == 0);
- }
-diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
-index 28f06ca..13580e5 100644
---- a/drivers/md/bcache/io.c
-+++ b/drivers/md/bcache/io.c
-@@ -20,11 +20,12 @@ static void bch_bi_idx_hack_endio(struct bio *bio, int error)
- static void bch_generic_make_request_hack(struct bio *bio)
- {
- 	if (bio->bi_iter.bi_idx) {
-+		int i;
-+		struct bio_vec *bv;
- 		struct bio *clone = bio_alloc(GFP_NOIO, bio_segments(bio));
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 4d6eb60..f43bf1a 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -599,6 +599,10 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 	if (q->id < 0)
+ 		goto fail_q;
  
--		memcpy(clone->bi_io_vec,
--		       bio_iovec(bio),
--		       bio_segments(bio) * sizeof(struct bio_vec));
-+		bio_for_each_segment(bv, bio, i)
-+			clone->bi_io_vec[clone->bi_vcnt++] = *bv;
- 
- 		clone->bi_iter.bi_sector = bio->bi_iter.bi_sector;
- 		clone->bi_bdev		= bio->bi_bdev;
-@@ -93,7 +94,7 @@ struct bio *bch_bio_split(struct bio *bio, int sectors,
- 			if (!ret)
- 				return NULL;
- 
--			memcpy(ret->bi_io_vec, bio_iovec(bio),
-+			memcpy(ret->bi_io_vec, __bio_iovec(bio),
- 			       sizeof(struct bio_vec) * vcnt);
- 
- 			break;
-@@ -102,7 +103,7 @@ struct bio *bch_bio_split(struct bio *bio, int sectors,
- 			if (!ret)
- 				return NULL;
- 
--			memcpy(ret->bi_io_vec, bio_iovec(bio),
-+			memcpy(ret->bi_io_vec, __bio_iovec(bio),
- 			       sizeof(struct bio_vec) * vcnt);
- 
- 			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
-@@ -178,7 +179,7 @@ static unsigned bch_bio_max_sectors(struct bio *bio)
- 	ret = min(ret, queue_max_sectors(q));
- 
- 	WARN_ON(!ret);
--	ret = max_t(int, ret, bio_iovec(bio)->bv_len >> 9);
-+	ret = max_t(int, ret, bio_iovec(bio).bv_len >> 9);
- 
- 	return ret;
- }
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index 90ce9e0..f3a4dcb 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -525,7 +525,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
- 		io->io_vec = io->io_vec_inline;
- 	else
- 		io->io_vec = mempool_alloc(v->vec_mempool, GFP_NOIO);
--	memcpy(io->io_vec, bio_iovec(bio),
-+	memcpy(io->io_vec, __bio_iovec(bio),
- 	       io->io_vec_size * sizeof(struct bio_vec));
- 
- 	verity_submit_prefetch(v, io);
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index c1c5552..73aec6a 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -786,7 +786,7 @@ static int sd_setup_write_same_cmnd(struct scsi_device *sdp, struct request *rq)
- 	if (sdkp->device->no_write_same)
- 		return BLKPREP_KILL;
- 
--	BUG_ON(bio_offset(bio) || bio_iovec(bio)->bv_len != sdp->sector_size);
-+	BUG_ON(bio_offset(bio) || bio_iovec(bio).bv_len != sdp->sector_size);
- 
- 	sector >>= ilog2(sdp->sector_size) - 9;
- 	nr_sectors >>= ilog2(sdp->sector_size) - 9;
-diff --git a/fs/bio.c b/fs/bio.c
-index b7c02b0..f1e7c68 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -821,12 +821,12 @@ void bio_advance(struct bio *bio, unsigned bytes)
- 			break;
- 		}
- 
--		if (bytes >= bio_iovec(bio)->bv_len) {
--			bytes -= bio_iovec(bio)->bv_len;
-+		if (bytes >= bio_iovec(bio).bv_len) {
-+			bytes -= bio_iovec(bio).bv_len;
- 			bio->bi_iter.bi_idx++;
- 		} else {
--			bio_iovec(bio)->bv_len -= bytes;
--			bio_iovec(bio)->bv_offset += bytes;
-+			bio_iovec(bio).bv_len -= bytes;
-+			bio_iovec(bio).bv_offset += bytes;
- 			bytes = 0;
- 		}
- 	}
-@@ -879,8 +879,8 @@ void bio_copy_data(struct bio *dst, struct bio *src)
- 	unsigned src_offset, dst_offset, bytes;
- 	void *src_p, *dst_p;
- 
--	src_bv = bio_iovec(src);
--	dst_bv = bio_iovec(dst);
-+	src_bv = __bio_iovec(src);
-+	dst_bv = __bio_iovec(dst);
- 
- 	src_offset = src_bv->bv_offset;
- 	dst_offset = dst_bv->bv_offset;
-@@ -893,7 +893,7 @@ void bio_copy_data(struct bio *dst, struct bio *src)
- 				if (!src)
- 					break;
- 
--				src_bv = bio_iovec(src);
-+				src_bv = __bio_iovec(src);
- 			}
- 
- 			src_offset = src_bv->bv_offset;
-@@ -906,7 +906,7 @@ void bio_copy_data(struct bio *dst, struct bio *src)
- 				if (!dst)
- 					break;
- 
--				dst_bv = bio_iovec(dst);
-+				dst_bv = __bio_iovec(dst);
- 			}
- 
- 			dst_offset = dst_bv->bv_offset;
-@@ -1766,8 +1766,8 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
- 	bp->bio1.bi_iter.bi_size = first_sectors << 9;
- 
- 	if (bi->bi_vcnt != 0) {
--		bp->bv1 = *bio_iovec(bi);
--		bp->bv2 = *bio_iovec(bi);
-+		bp->bv1 = bio_iovec(bi);
-+		bp->bv2 = bio_iovec(bi);
- 
- 		if (bio_is_rw(bi)) {
- 			bp->bv2.bv_offset += first_sectors << 9;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index d321e63..580c9ae 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -62,9 +62,11 @@
-  * on highmem page vectors
-  */
- #define bio_iovec_idx(bio, idx)	(&((bio)->bi_io_vec[(idx)]))
--#define bio_iovec(bio)		bio_iovec_idx((bio), (bio)->bi_iter.bi_idx)
--#define bio_page(bio)		bio_iovec((bio))->bv_page
--#define bio_offset(bio)		bio_iovec((bio))->bv_offset
-+#define __bio_iovec(bio)	bio_iovec_idx((bio), (bio)->bi_iter.bi_idx)
-+#define bio_iovec(bio)		(*__bio_iovec(bio))
++	q->bio_split = bioset_create(4, 0);
++	if (!q->bio_split)
++		goto fail_split;
 +
-+#define bio_page(bio)		(bio_iovec((bio)).bv_page)
-+#define bio_offset(bio)		(bio_iovec((bio)).bv_offset)
- #define bio_segments(bio)	((bio)->bi_vcnt - (bio)->bi_iter.bi_idx)
- #define bio_sectors(bio)	((bio)->bi_iter.bi_size >> 9)
- #define bio_end_sector(bio)	((bio)->bi_iter.bi_sector + bio_sectors((bio)))
-@@ -72,7 +74,7 @@
- static inline unsigned int bio_cur_bytes(struct bio *bio)
+ 	q->backing_dev_info.ra_pages =
+ 			(VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE;
+ 	q->backing_dev_info.state = 0;
+@@ -651,6 +655,8 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 
+ fail_id:
+ 	ida_simple_remove(&blk_queue_ida, q->id);
++fail_split:
++	bioset_free(q->bio_split);
+ fail_q:
+ 	kmem_cache_free(blk_requestq_cachep, q);
+ 	return NULL;
+@@ -1687,15 +1693,6 @@ generic_make_request_checks(struct bio *bio)
+ 		goto end_io;
+ 	}
+ 
+-	if (likely(bio_is_rw(bio) &&
+-		   nr_sectors > queue_max_hw_sectors(q))) {
+-		printk(KERN_ERR "bio too big device %s (%u > %u)\n",
+-		       bdevname(bio->bi_bdev, b),
+-		       bio_sectors(bio),
+-		       queue_max_hw_sectors(q));
+-		goto end_io;
+-	}
+-
+ 	part = bio->bi_bdev->bd_part;
+ 	if (should_fail_request(part, bio->bi_iter.bi_size) ||
+ 	    should_fail_request(&part_to_disk(part)->part0,
+@@ -1820,6 +1817,7 @@ void generic_make_request(struct bio *bio)
+ 	current->bio_list = &bio_list_on_stack;
+ 	do {
+ 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
++		struct bio *split = NULL;
+ 
+ 		/*
+ 		 * low level driver can indicate that it wants pages above a
+@@ -1828,6 +1826,14 @@ void generic_make_request(struct bio *bio)
+ 		 */
+ 		blk_queue_bounce(q, &bio);
+ 
++		if (!blk_queue_largebios(q))
++			split = blk_bio_segment_split(q, bio, q->bio_split);
++		if (split) {
++			bio_chain(split, bio);
++			bio_list_add(current->bio_list, bio);
++			bio = split;
++		}
++
+ 		q->make_request_fn(q, bio);
+ 
+ 		bio = bio_list_pop(current->bio_list);
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index ba48830..fbbcfc5 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -9,6 +9,126 @@
+ 
+ #include "blk.h"
+ 
++static struct bio *blk_bio_discard_split(struct request_queue *q,
++					 struct bio *bio,
++					 struct bio_set *bs)
++{
++	sector_t max_discard_sectors, granularity, alignment, tmp;
++	unsigned split_sectors;
++
++	/* Zero-sector (unknown) and one-sector granularities are the same.  */
++	granularity = max(q->limits.discard_granularity >> 9, 1U);
++
++	max_discard_sectors = min(q->limits.max_discard_sectors, UINT_MAX >> 9);
++	sector_div(max_discard_sectors, granularity);
++	max_discard_sectors *= granularity;
++
++	if (unlikely(!max_discard_sectors)) {
++		/* XXX: warn */
++		return NULL;
++	}
++
++	if (bio_sectors(bio) <= max_discard_sectors)
++		return NULL;
++
++	split_sectors = max_discard_sectors;
++
++	/*
++	 * If splitting a request, and the next starting sector would be
++	 * misaligned, stop the discard at the previous aligned sector.
++	 */
++	alignment = q->limits.discard_alignment >> 9;
++	alignment = sector_div(alignment, granularity);
++
++	tmp = bio->bi_iter.bi_sector + split_sectors - alignment;
++	tmp = sector_div(tmp, granularity);
++
++	if (split_sectors > tmp)
++		split_sectors -= tmp;
++
++	return bio_split(bio, split_sectors, GFP_NOIO, bs);
++}
++
++static struct bio *blk_bio_write_same_split(struct request_queue *q,
++					    struct bio *bio,
++					    struct bio_set *bs)
++{
++	if (!q->limits.max_write_same_sectors)
++		return NULL;
++
++	if (bio_sectors(bio) <= q->limits.max_write_same_sectors)
++		return NULL;
++
++	return bio_split(bio, q->limits.max_write_same_sectors, GFP_NOIO, bs);
++}
++
++struct bio *blk_bio_segment_split(struct request_queue *q, struct bio *bio,
++				  struct bio_set *bs)
++{
++	struct bio *split;
++	struct bio_vec bv, bvprv;
++	struct bvec_iter iter;
++	unsigned seg_size = 0, nsegs = 0;
++	int prev = 0;
++
++	struct bvec_merge_data bvm = {
++		.bi_bdev	= bio->bi_bdev,
++		.bi_sector	= bio->bi_iter.bi_sector,
++		.bi_size	= 0,
++		.bi_rw		= bio->bi_rw,
++	};
++
++	if (bio->bi_rw & REQ_DISCARD)
++		return blk_bio_discard_split(q, bio, bs);
++
++	if (bio->bi_rw & REQ_WRITE_SAME)
++		return blk_bio_write_same_split(q, bio, bs);
++
++	bio_for_each_segment(bv, bio, iter) {
++		if (q->merge_bvec_fn &&
++		    q->merge_bvec_fn(q, &bvm, &bv) < (int) bv.bv_len)
++			goto split;
++
++		bvm.bi_size += bv.bv_len;
++
++		if (prev && blk_queue_cluster(q)) {
++			if (seg_size + bv.bv_len > queue_max_segment_size(q))
++				goto new_segment;
++			if (!BIOVEC_PHYS_MERGEABLE(&bvprv, &bv))
++				goto new_segment;
++			if (!BIOVEC_SEG_BOUNDARY(q, &bvprv, &bv))
++				goto new_segment;
++
++			seg_size += bv.bv_len;
++			bvprv = bv;
++			prev = 1;
++			continue;
++		}
++new_segment:
++		if (nsegs == queue_max_segments(q))
++			goto split;
++
++		nsegs++;
++		bvprv = bv;
++		prev = 1;
++		seg_size = bv.bv_len;
++	}
++
++	return NULL;
++split:
++	split = bio_clone_bioset(bio, GFP_NOIO, bs);
++
++	split->bi_iter.bi_size -= iter.bi_size;
++	bio->bi_iter = iter;
++
++	if (bio_integrity(bio)) {
++		bio_integrity_advance(bio, split->bi_iter.bi_size);
++		bio_integrity_trim(split, 0, bio_sectors(split));
++	}
++
++	return split;
++}
++
+ static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
+ 					     struct bio *bio)
  {
- 	if (bio->bi_vcnt)
--		return bio_iovec(bio)->bv_len;
-+		return bio_iovec(bio).bv_len;
- 	else /* dataless requests such as discard */
- 		return bio->bi_iter.bi_size;
+diff --git a/block/blk.h b/block/blk.h
+index e837b8f..387afbd 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -130,6 +130,9 @@ static inline int blk_should_fake_timeout(struct request_queue *q)
  }
+ #endif
+ 
++struct bio *blk_bio_segment_split(struct request_queue *q, struct bio *bio,
++				  struct bio_set *bs);
++
+ int ll_back_merge_fn(struct request_queue *q, struct request *req,
+ 		     struct bio *bio);
+ int ll_front_merge_fn(struct request_queue *q, struct request *req, 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 2a16de2..9a32ed8 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -445,6 +445,7 @@ struct request_queue {
+ 	struct throtl_data *td;
+ #endif
+ 	struct rcu_head		rcu_head;
++	struct bio_set		*bio_split;
+ };
+ 
+ #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
+@@ -467,6 +468,7 @@ struct request_queue {
+ #define QUEUE_FLAG_SECDISCARD  17	/* supports SECDISCARD */
+ #define QUEUE_FLAG_SAME_FORCE  18	/* force complete on same CPU */
+ #define QUEUE_FLAG_DEAD        19	/* queue tear-down finished */
++#define QUEUE_FLAG_LARGEBIOS   19	/* no limits on bio size */
+ 
+ #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
+ 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
+@@ -550,6 +552,8 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
+ #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+ #define blk_queue_secdiscard(q)	(blk_queue_discard(q) && \
+ 	test_bit(QUEUE_FLAG_SECDISCARD, &(q)->queue_flags))
++#define blk_queue_largebios(q)				\
++	test_bit(QUEUE_FLAG_LARGEBIOS, &(q)->queue_flags)
+ 
+ #define blk_noretry_request(rq) \
+ 	((rq)->cmd_flags & (REQ_FAILFAST_DEV|REQ_FAILFAST_TRANSPORT| \
 -- 
 1.8.3.rc1
