@@ -1,7 +1,7 @@
 From: Kent Overstreet <koverstreet@google.com>
-Subject: [PATCH 13/26] dm: Refactor for new bio cloning/splitting
-Date: Sat,  8 Jun 2013 19:18:55 -0700
-Message-ID: <1370744348-15407-14-git-send-email-koverstreet@google.com>
+Subject: [PATCH 05/26] block: Convert bio_iovec() to bvec_iter
+Date: Sat,  8 Jun 2013 19:18:47 -0700
+Message-ID: <1370744348-15407-6-git-send-email-koverstreet@google.com>
 References: <1370744348-15407-1-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,327 +19,209 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: axboe@kernel.dk, tytso@mit.edu, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Cc: Kent Overstreet <koverstreet@google.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+Cc: Kent Overstreet <koverstreet@google.com>, dm-devel@redhat.com, "James E.J. Bottomley" <JBottomley@parallels.com>, Alasdair Kergon <agk@redhat.com>, "Ed L. Cashin" <ecashin@coraid.com>
 List-Id: dm-devel.ids
 
-We need to convert the dm code to the new bvec_iter primitives which
-respect bi_bvec_done; they also allow us to drastically simplify dm's
-bio splitting code.
+For immutable biovecs, we'll be introducing a new bio_iovec() that uses
+our new bvec iterator to construct a biovec, taking into account
+bvec_iter->bi_bvec_done - this patch updates existing users for the new
+usage.
 
-Also kill bio_sector_offset(), dm was the only user and it doesn't make
-much sense anymore.
+Some of the existing users really do need a pointer into the bvec array
+- those uses are all going to be removed, but we'll need the
+functionality from immutable to remove them - so for now rename the
+existing bio_iovec() -> __bio_iovec(), and it'll be removed in a couple
+patches.
 
 Signed-off-by: Kent Overstreet <koverstreet@google.com>
 Cc: Jens Axboe <axboe@kernel.dk>
+Cc: "Ed L. Cashin" <ecashin@coraid.com>
 Cc: Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
+Cc: "James E.J. Bottomley" <JBottomley@parallels.com>
 ---
- drivers/md/dm.c     | 170 ++++++----------------------------------------------
- fs/bio.c            |  38 ------------
- include/linux/bio.h |   1 -
- 3 files changed, 18 insertions(+), 191 deletions(-)
+ drivers/block/aoe/aoecmd.c |  2 +-
+ drivers/md/bcache/io.c     | 13 +++++++------
+ drivers/md/dm-verity.c     |  2 +-
+ drivers/scsi/sd.c          |  2 +-
+ fs/bio.c                   | 20 ++++++++++----------
+ include/linux/bio.h        | 10 ++++++----
+ 6 files changed, 26 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index d67c6a9..8aac97b 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1013,7 +1013,6 @@ struct clone_info {
- 	struct dm_io *io;
- 	sector_t sector;
- 	sector_t sector_count;
--	unsigned short idx;
- };
- 
- static void bio_setup_sector(struct bio *bio, sector_t sector, sector_t len)
-@@ -1022,68 +1021,24 @@ static void bio_setup_sector(struct bio *bio, sector_t sector, sector_t len)
- 	bio->bi_iter.bi_size = to_bytes(len);
+diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
+index 8716181..1fb2d6d 100644
+--- a/drivers/block/aoe/aoecmd.c
++++ b/drivers/block/aoe/aoecmd.c
+@@ -926,7 +926,7 @@ bufinit(struct buf *buf, struct request *rq, struct bio *bio)
+ 	buf->resid = bio->bi_iter.bi_size;
+ 	buf->sector = bio->bi_iter.bi_sector;
+ 	bio_pageinc(bio);
+-	buf->bv = bio_iovec(bio);
++	buf->bv = __bio_iovec(bio);
+ 	buf->bv_resid = buf->bv->bv_len;
+ 	WARN_ON(buf->bv_resid == 0);
  }
- 
--static void bio_setup_bv(struct bio *bio, unsigned short idx, unsigned short bv_count)
--{
--	bio->bi_iter.bi_idx = idx;
--	bio->bi_vcnt = idx + bv_count;
--	bio->bi_flags &= ~(1 << BIO_SEG_VALID);
--}
--
--static void clone_bio_integrity(struct bio *bio, struct bio *clone,
--				unsigned short idx, unsigned len, unsigned offset,
--				unsigned trim)
--{
--	if (!bio_integrity(bio))
--		return;
--
--	bio_integrity_clone(clone, bio, GFP_NOIO);
--
--	if (trim)
--		bio_integrity_trim(clone, bio_sector_offset(bio, idx, offset), len);
--}
--
--/*
-- * Creates a little bio that just does part of a bvec.
-- */
--static void clone_split_bio(struct dm_target_io *tio, struct bio *bio,
--			    sector_t sector, unsigned short idx,
--			    unsigned offset, unsigned len)
--{
--	struct bio *clone = &tio->clone;
--	struct bio_vec *bv = bio->bi_io_vec + idx;
--
--	*clone->bi_io_vec = *bv;
--
--	bio_setup_sector(clone, sector, len);
--
--	clone->bi_bdev = bio->bi_bdev;
--	clone->bi_rw = bio->bi_rw;
--	clone->bi_vcnt = 1;
--	clone->bi_io_vec->bv_offset = offset;
--	clone->bi_io_vec->bv_len = clone->bi_iter.bi_size;
--	clone->bi_flags |= 1 << BIO_CLONED;
--
--	clone_bio_integrity(bio, clone, idx, len, offset, 1);
--}
--
- /*
-  * Creates a bio that consists of range of complete bvecs.
-  */
- static void clone_bio(struct dm_target_io *tio, struct bio *bio,
--		      sector_t sector, unsigned short idx,
--		      unsigned short bv_count, unsigned len)
-+		      sector_t sector, unsigned len)
+diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
+index 28f06ca..13580e5 100644
+--- a/drivers/md/bcache/io.c
++++ b/drivers/md/bcache/io.c
+@@ -20,11 +20,12 @@ static void bch_bi_idx_hack_endio(struct bio *bio, int error)
+ static void bch_generic_make_request_hack(struct bio *bio)
  {
- 	struct bio *clone = &tio->clone;
--	unsigned trim = 0;
+ 	if (bio->bi_iter.bi_idx) {
++		int i;
++		struct bio_vec *bv;
+ 		struct bio *clone = bio_alloc(GFP_NOIO, bio_segments(bio));
  
- 	__bio_clone(clone, bio);
--	bio_setup_sector(clone, sector, len);
--	bio_setup_bv(clone, idx, bv_count);
+-		memcpy(clone->bi_io_vec,
+-		       bio_iovec(bio),
+-		       bio_segments(bio) * sizeof(struct bio_vec));
++		bio_for_each_segment(bv, bio, i)
++			clone->bi_io_vec[clone->bi_vcnt++] = *bv;
  
--	if (idx != bio->bi_iter.bi_idx ||
--	    clone->bi_iter.bi_size < bio->bi_iter.bi_size)
--		trim = 1;
--	clone_bio_integrity(bio, clone, idx, len, 0, trim);
-+	if (bio_integrity(bio))
-+		bio_integrity_clone(clone, bio, GFP_NOIO);
-+
-+	bio_advance(clone, (sector - clone->bi_iter.bi_sector) << 9);
-+	bio->bi_iter.bi_size = len << 9;
-+
-+	if (bio_integrity(bio))
-+		bio_integrity_trim(clone, 0, len);
+ 		clone->bi_iter.bi_sector = bio->bi_iter.bi_sector;
+ 		clone->bi_bdev		= bio->bi_bdev;
+@@ -93,7 +94,7 @@ struct bio *bch_bio_split(struct bio *bio, int sectors,
+ 			if (!ret)
+ 				return NULL;
+ 
+-			memcpy(ret->bi_io_vec, bio_iovec(bio),
++			memcpy(ret->bi_io_vec, __bio_iovec(bio),
+ 			       sizeof(struct bio_vec) * vcnt);
+ 
+ 			break;
+@@ -102,7 +103,7 @@ struct bio *bch_bio_split(struct bio *bio, int sectors,
+ 			if (!ret)
+ 				return NULL;
+ 
+-			memcpy(ret->bi_io_vec, bio_iovec(bio),
++			memcpy(ret->bi_io_vec, __bio_iovec(bio),
+ 			       sizeof(struct bio_vec) * vcnt);
+ 
+ 			ret->bi_io_vec[vcnt - 1].bv_len = nbytes;
+@@ -178,7 +179,7 @@ static unsigned bch_bio_max_sectors(struct bio *bio)
+ 	ret = min(ret, queue_max_sectors(q));
+ 
+ 	WARN_ON(!ret);
+-	ret = max_t(int, ret, bio_iovec(bio)->bv_len >> 9);
++	ret = max_t(int, ret, bio_iovec(bio).bv_len >> 9);
+ 
+ 	return ret;
  }
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 90ce9e0..f3a4dcb 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -525,7 +525,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
+ 		io->io_vec = io->io_vec_inline;
+ 	else
+ 		io->io_vec = mempool_alloc(v->vec_mempool, GFP_NOIO);
+-	memcpy(io->io_vec, bio_iovec(bio),
++	memcpy(io->io_vec, __bio_iovec(bio),
+ 	       io->io_vec_size * sizeof(struct bio_vec));
  
- static struct dm_target_io *alloc_tio(struct clone_info *ci,
-@@ -1145,10 +1100,7 @@ static int __send_empty_flush(struct clone_info *ci)
- }
+ 	verity_submit_prefetch(v, io);
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index c1c5552..73aec6a 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -786,7 +786,7 @@ static int sd_setup_write_same_cmnd(struct scsi_device *sdp, struct request *rq)
+ 	if (sdkp->device->no_write_same)
+ 		return BLKPREP_KILL;
  
- static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
--				     sector_t sector, int nr_iovecs,
--				     unsigned short idx, unsigned short bv_count,
--				     unsigned offset, unsigned len,
--				     unsigned split_bvec)
-+				     sector_t sector, unsigned len)
- {
- 	struct bio *bio = ci->bio;
- 	struct dm_target_io *tio;
-@@ -1162,11 +1114,8 @@ static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti
- 		num_target_bios = ti->num_write_bios(ti, bio);
+-	BUG_ON(bio_offset(bio) || bio_iovec(bio)->bv_len != sdp->sector_size);
++	BUG_ON(bio_offset(bio) || bio_iovec(bio).bv_len != sdp->sector_size);
  
- 	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
--		tio = alloc_tio(ci, ti, nr_iovecs, target_bio_nr);
--		if (split_bvec)
--			clone_split_bio(tio, bio, sector, idx, offset, len);
--		else
--			clone_bio(tio, bio, sector, idx, bv_count, len);
-+		tio = alloc_tio(ci, ti, 0, target_bio_nr);
-+		clone_bio(tio, bio, sector, len);
- 		__map_bio(tio);
- 	}
- }
-@@ -1238,68 +1187,13 @@ static int __send_write_same(struct clone_info *ci)
- }
- 
- /*
-- * Find maximum number of sectors / bvecs we can process with a single bio.
-- */
--static sector_t __len_within_target(struct clone_info *ci, sector_t max, int *idx)
--{
--	struct bio *bio = ci->bio;
--	sector_t bv_len, total_len = 0;
--
--	for (*idx = ci->idx; max && (*idx < bio->bi_vcnt); (*idx)++) {
--		bv_len = to_sector(bio->bi_io_vec[*idx].bv_len);
--
--		if (bv_len > max)
--			break;
--
--		max -= bv_len;
--		total_len += bv_len;
--	}
--
--	return total_len;
--}
--
--static int __split_bvec_across_targets(struct clone_info *ci,
--				       struct dm_target *ti, sector_t max)
--{
--	struct bio *bio = ci->bio;
--	struct bio_vec *bv = bio->bi_io_vec + ci->idx;
--	sector_t remaining = to_sector(bv->bv_len);
--	unsigned offset = 0;
--	sector_t len;
--
--	do {
--		if (offset) {
--			ti = dm_table_find_target(ci->map, ci->sector);
--			if (!dm_target_is_valid(ti))
--				return -EIO;
--
--			max = max_io_len(ci->sector, ti);
--		}
--
--		len = min(remaining, max);
--
--		__clone_and_map_data_bio(ci, ti, ci->sector, 1, ci->idx, 0,
--					 bv->bv_offset + offset, len, 1);
--
--		ci->sector += len;
--		ci->sector_count -= len;
--		offset += to_bytes(len);
--	} while (remaining -= len);
--
--	ci->idx++;
--
--	return 0;
--}
--
--/*
-  * Select the correct strategy for processing a non-flush bio.
-  */
- static int __split_and_process_non_flush(struct clone_info *ci)
- {
- 	struct bio *bio = ci->bio;
- 	struct dm_target *ti;
--	sector_t len, max;
--	int idx;
-+	unsigned len;
- 
- 	if (unlikely(bio->bi_rw & REQ_DISCARD))
- 		return __send_discard(ci);
-@@ -1310,41 +1204,14 @@ static int __split_and_process_non_flush(struct clone_info *ci)
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
- 
--	max = max_io_len(ci->sector, ti);
--
--	/*
--	 * Optimise for the simple case where we can do all of
--	 * the remaining io with a single clone.
--	 */
--	if (ci->sector_count <= max) {
--		__clone_and_map_data_bio(ci, ti, ci->sector, bio->bi_max_vecs,
--					 ci->idx, bio->bi_vcnt - ci->idx, 0,
--					 ci->sector_count, 0);
--		ci->sector_count = 0;
--		return 0;
--	}
--
--	/*
--	 * There are some bvecs that don't span targets.
--	 * Do as many of these as possible.
--	 */
--	if (to_sector(bio->bi_io_vec[ci->idx].bv_len) <= max) {
--		len = __len_within_target(ci, max, &idx);
--
--		__clone_and_map_data_bio(ci, ti, ci->sector, bio->bi_max_vecs,
--					 ci->idx, idx - ci->idx, 0, len, 0);
-+	len = min_t(unsigned, max_io_len(ci->sector, ti), bio_sectors(bio));
- 
--		ci->sector += len;
--		ci->sector_count -= len;
--		ci->idx = idx;
-+	__clone_and_map_data_bio(ci, ti, ci->sector, len);
- 
--		return 0;
--	}
-+	ci->sector += len;
-+	ci->sector_count -= len;
- 
--	/*
--	 * Handle a bvec that must be split between two or more targets.
--	 */
--	return __split_bvec_across_targets(ci, ti, max);
-+	return 0;
- }
- 
- /*
-@@ -1369,7 +1236,6 @@ static void __split_and_process_bio(struct mapped_device *md, struct bio *bio)
- 	ci.io->md = md;
- 	spin_lock_init(&ci.io->endio_lock);
- 	ci.sector = bio->bi_iter.bi_sector;
--	ci.idx = bio->bi_iter.bi_idx;
- 
- 	start_io_acct(ci.io);
- 
+ 	sector >>= ilog2(sdp->sector_size) - 9;
+ 	nr_sectors >>= ilog2(sdp->sector_size) - 9;
 diff --git a/fs/bio.c b/fs/bio.c
-index d4200f4..24271ce 100644
+index b7c02b0..f1e7c68 100644
 --- a/fs/bio.c
 +++ b/fs/bio.c
-@@ -1762,44 +1762,6 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
- }
- EXPORT_SYMBOL(bio_split);
+@@ -821,12 +821,12 @@ void bio_advance(struct bio *bio, unsigned bytes)
+ 			break;
+ 		}
  
--/**
-- *      bio_sector_offset - Find hardware sector offset in bio
-- *      @bio:           bio to inspect
-- *      @index:         bio_vec index
-- *      @offset:        offset in bv_page
-- *
-- *      Return the number of hardware sectors between beginning of bio
-- *      and an end point indicated by a bio_vec index and an offset
-- *      within that vector's page.
-- */
--sector_t bio_sector_offset(struct bio *bio, unsigned short index,
--			   unsigned int offset)
--{
--	unsigned int sector_sz;
--	struct bio_vec *bv;
--	sector_t sectors;
--	int i;
--
--	sector_sz = queue_logical_block_size(bio->bi_bdev->bd_disk->queue);
--	sectors = 0;
--
--	if (index >= bio->bi_iter.bi_idx)
--		index = bio->bi_vcnt - 1;
--
--	bio_for_each_segment_all(bv, bio, i) {
--		if (i == index) {
--			if (offset > bv->bv_offset)
--				sectors += (offset - bv->bv_offset) / sector_sz;
--			break;
--		}
--
--		sectors += bv->bv_len / sector_sz;
--	}
--
--	return sectors;
--}
--EXPORT_SYMBOL(bio_sector_offset);
--
- /*
-  * create memory pools for biovec's in a bio_set.
-  * use the global biovec slabs created for general use.
+-		if (bytes >= bio_iovec(bio)->bv_len) {
+-			bytes -= bio_iovec(bio)->bv_len;
++		if (bytes >= bio_iovec(bio).bv_len) {
++			bytes -= bio_iovec(bio).bv_len;
+ 			bio->bi_iter.bi_idx++;
+ 		} else {
+-			bio_iovec(bio)->bv_len -= bytes;
+-			bio_iovec(bio)->bv_offset += bytes;
++			bio_iovec(bio).bv_len -= bytes;
++			bio_iovec(bio).bv_offset += bytes;
+ 			bytes = 0;
+ 		}
+ 	}
+@@ -879,8 +879,8 @@ void bio_copy_data(struct bio *dst, struct bio *src)
+ 	unsigned src_offset, dst_offset, bytes;
+ 	void *src_p, *dst_p;
+ 
+-	src_bv = bio_iovec(src);
+-	dst_bv = bio_iovec(dst);
++	src_bv = __bio_iovec(src);
++	dst_bv = __bio_iovec(dst);
+ 
+ 	src_offset = src_bv->bv_offset;
+ 	dst_offset = dst_bv->bv_offset;
+@@ -893,7 +893,7 @@ void bio_copy_data(struct bio *dst, struct bio *src)
+ 				if (!src)
+ 					break;
+ 
+-				src_bv = bio_iovec(src);
++				src_bv = __bio_iovec(src);
+ 			}
+ 
+ 			src_offset = src_bv->bv_offset;
+@@ -906,7 +906,7 @@ void bio_copy_data(struct bio *dst, struct bio *src)
+ 				if (!dst)
+ 					break;
+ 
+-				dst_bv = bio_iovec(dst);
++				dst_bv = __bio_iovec(dst);
+ 			}
+ 
+ 			dst_offset = dst_bv->bv_offset;
+@@ -1766,8 +1766,8 @@ struct bio_pair *bio_split(struct bio *bi, int first_sectors)
+ 	bp->bio1.bi_iter.bi_size = first_sectors << 9;
+ 
+ 	if (bi->bi_vcnt != 0) {
+-		bp->bv1 = *bio_iovec(bi);
+-		bp->bv2 = *bio_iovec(bi);
++		bp->bv1 = bio_iovec(bi);
++		bp->bv2 = bio_iovec(bi);
+ 
+ 		if (bio_is_rw(bi)) {
+ 			bp->bv2.bv_offset += first_sectors << 9;
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 1967b64..80ffe15 100644
+index d321e63..580c9ae 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -331,7 +331,6 @@ extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
- extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
- 			   unsigned int, unsigned int);
- extern int bio_get_nr_vecs(struct block_device *);
--extern sector_t bio_sector_offset(struct bio *, unsigned short, unsigned int);
- extern struct bio *bio_map_user(struct request_queue *, struct block_device *,
- 				unsigned long, unsigned int, int, gfp_t);
- struct sg_iovec;
+@@ -62,9 +62,11 @@
+  * on highmem page vectors
+  */
+ #define bio_iovec_idx(bio, idx)	(&((bio)->bi_io_vec[(idx)]))
+-#define bio_iovec(bio)		bio_iovec_idx((bio), (bio)->bi_iter.bi_idx)
+-#define bio_page(bio)		bio_iovec((bio))->bv_page
+-#define bio_offset(bio)		bio_iovec((bio))->bv_offset
++#define __bio_iovec(bio)	bio_iovec_idx((bio), (bio)->bi_iter.bi_idx)
++#define bio_iovec(bio)		(*__bio_iovec(bio))
++
++#define bio_page(bio)		(bio_iovec((bio)).bv_page)
++#define bio_offset(bio)		(bio_iovec((bio)).bv_offset)
+ #define bio_segments(bio)	((bio)->bi_vcnt - (bio)->bi_iter.bi_idx)
+ #define bio_sectors(bio)	((bio)->bi_iter.bi_size >> 9)
+ #define bio_end_sector(bio)	((bio)->bi_iter.bi_sector + bio_sectors((bio)))
+@@ -72,7 +74,7 @@
+ static inline unsigned int bio_cur_bytes(struct bio *bio)
+ {
+ 	if (bio->bi_vcnt)
+-		return bio_iovec(bio)->bv_len;
++		return bio_iovec(bio).bv_len;
+ 	else /* dataless requests such as discard */
+ 		return bio->bi_iter.bi_size;
+ }
 -- 
 1.8.3.rc1
