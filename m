@@ -1,61 +1,68 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: use __GFP_HIGHMEM in __vmalloc
-Date: Sat, 8 Jun 2013 19:23:36 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1306081923150.19670@file.rdu.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+From: Kent Overstreet <koverstreet@google.com>
+Subject: [PATCH 04/26] dm: Use bvec_iter for dm_bio_record()
+Date: Sat,  8 Jun 2013 19:18:46 -0700
+Message-ID: <1370744348-15407-5-git-send-email-koverstreet@google.com>
+References: <1370744348-15407-1-git-send-email-koverstreet@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1370744348-15407-1-git-send-email-koverstreet@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@kernel.dk, tytso@mit.edu, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: Kent Overstreet <koverstreet@google.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm: use __GFP_HIGHMEM in __vmalloc
+This patch doesn't itself have any functional changes, but immutable
+biovecs are going to add a bi_bvec_done member to bi_iter, which will
+need to be saved too here.
 
-Pages allocated with __vmalloc can be allocated in high memory that is not
-directly mapped to kernel space, so use __GFP_HIGHMEM just like vmalloc
-does. This patch reduces memory pressure slightly because pages can be
-allocated in the high zone.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
+Signed-off-by: Kent Overstreet <koverstreet@google.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 ---
- drivers/md/dm-bufio.c |    2 
- drivers/md/dm-ioctl.c |  189 +++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 188 insertions(+), 3 deletions(-)
+ drivers/md/dm-bio-record.h | 12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
 
-Index: linux-3.9.5-fast/drivers/md/dm-bufio.c
-===================================================================
---- linux-3.9.5-fast.orig/drivers/md/dm-bufio.c	2013-06-09 01:16:45.000000000 +0200
-+++ linux-3.9.5-fast/drivers/md/dm-bufio.c	2013-06-09 01:20:24.000000000 +0200
-@@ -350,7 +350,7 @@ static void *alloc_buffer_data(struct dm
- 	if (gfp_mask & __GFP_NORETRY)
- 		noio_flag = memalloc_noio_save();
+diff --git a/drivers/md/dm-bio-record.h b/drivers/md/dm-bio-record.h
+index 5ace48e..4f46e8e 100644
+--- a/drivers/md/dm-bio-record.h
++++ b/drivers/md/dm-bio-record.h
+@@ -28,11 +28,9 @@ struct dm_bio_vec_details {
+ };
  
--	ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
-+	ptr = __vmalloc(c->block_size, gfp_mask | __GFP_HIGHMEM, PAGE_KERNEL);
+ struct dm_bio_details {
+-	sector_t bi_sector;
+ 	struct block_device *bi_bdev;
+-	unsigned int bi_size;
+-	unsigned short bi_idx;
+ 	unsigned long bi_flags;
++	struct bvec_iter bi_iter;
+ 	struct dm_bio_vec_details bi_io_vec[BIO_MAX_PAGES];
+ };
  
- 	if (gfp_mask & __GFP_NORETRY)
- 		memalloc_noio_restore(noio_flag);
-Index: linux-3.9.5-fast/drivers/md/dm-ioctl.c
-===================================================================
---- linux-3.9.5-fast.orig/drivers/md/dm-ioctl.c	2013-06-09 01:20:14.000000000 +0200
-+++ linux-3.9.5-fast/drivers/md/dm-ioctl.c	2013-06-09 01:20:32.000000000 +0200
-@@ -1688,7 +1873,7 @@ static int copy_params(struct dm_ioctl _
- 	if (!dmi) {
- 		unsigned noio_flag;
- 		noio_flag = memalloc_noio_save();
--		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_REPEAT | __GFP_HIGH, PAGE_KERNEL);
-+		dmi = __vmalloc(param_kernel->data_size, GFP_NOIO | __GFP_REPEAT | __GFP_HIGH | __GFP_HIGHMEM, PAGE_KERNEL);
- 		memalloc_noio_restore(noio_flag);
- 		if (dmi)
- 			*param_flags |= DM_PARAMS_VMALLOC;
+@@ -40,11 +38,9 @@ static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
+ {
+ 	unsigned i;
+ 
+-	bd->bi_sector = bio->bi_iter.bi_sector;
+ 	bd->bi_bdev = bio->bi_bdev;
+-	bd->bi_size = bio->bi_iter.bi_size;
+-	bd->bi_idx = bio->bi_iter.bi_idx;
+ 	bd->bi_flags = bio->bi_flags;
++	bd->bi_iter = bio->bi_iter;
+ 
+ 	for (i = 0; i < bio->bi_vcnt; i++) {
+ 		bd->bi_io_vec[i].bv_len = bio->bi_io_vec[i].bv_len;
+@@ -56,11 +52,9 @@ static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
+ {
+ 	unsigned i;
+ 
+-	bio->bi_iter.bi_sector = bd->bi_sector;
+ 	bio->bi_bdev = bd->bi_bdev;
+-	bio->bi_iter.bi_size = bd->bi_size;
+-	bio->bi_iter.bi_idx = bd->bi_idx;
+ 	bio->bi_flags = bd->bi_flags;
++	bio->bi_iter = bd->bi_iter;
+ 
+ 	for (i = 0; i < bio->bi_vcnt; i++) {
+ 		bio->bi_io_vec[i].bv_len = bd->bi_io_vec[i].bv_len;
+-- 
+1.8.3.rc1
