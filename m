@@ -1,11 +1,11 @@
-From: folkert <folkert@vanheusden.com>
-Subject: write intent bitmap on external disk
-Date: Mon, 10 Jun 2013 11:14:12 +0200
-Message-ID: <20130610091411.GE5247@belle.intranet.vanheusden.com>
+From: Till Maas <opensource@till.name>
+Subject: [PATCH] kpartx: Properly support read-only files
+Date: Mon, 10 Jun 2013 18:40:58 +0200
+Message-ID: <20130610164058.GF12715@genius.invalid>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -20,23 +20,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
-
-I think it would be helpfull to improve i/o performance of my server if
-I put the RAID-1 write intent map on a seperate disk (an SSD).
-
-It is unclear to me how to do this.
-I tried setting it to /dev/VGJOURNALS/LVWRITEINTENT but that fails: I
-would expect a device to work?
-Because if I put a filesystem on LVWRITEINTENT then mount it on e.g.
-/var/wib, then how does the initramfs know how to set this up?
-
-
-Folkert van Heusden
-
--- 
-To MultiTail einai ena polymorfiko ergaleio gia ta logfiles kai tin
-eksodo twn entolwn. Prosferei: filtrarisma, xrwmatismo, sygxwneysi,
-diaforetikes provoles. http://www.vanheusden.com/multitail/
-----------------------------------------------------------------------
-Phone: +31-6-41278122, PGP-key: 1F28D8AE, www.vanheusden.com
+LSBVc2Ugb25seSB2YXJpYWJsZSBsb29wcm8gaW5zdGVhZCBvZiBhZGRpdGlvbmFsbHkgdmFyaWFi
+bGUgcm86IElmIHRoZQogIGZpbGUgY2FuIG9ubHkgYmUgb3BlbmVkIHJlYWQtb25seSwgaXQgZG9l
+cyBub3QgbWFrZSBzZW5zZSB0byBjcmVhdGUgYQogIHdyaXRhYmxlIG1hcHBpbmcuCi0gRmFsbCBi
+YWNrIHRvIHJlYWQtb25seSBtYXBwaW5nIG9uIEVBQ0NFU1MgaW5zdGVhZCBvZiBvbmx5IG9uIEVS
+T0ZTLAogIHNpbmNlIGltbXV0YWJsZSBmaWxlcyBjYXVzZXMgRUFDQ0VTUy4KLS0tCiBrcGFydHgv
+a3BhcnR4LmMgfCA4ICsrKystLS0tCiBrcGFydHgvbG9wYXJ0LmMgfCAyICstCiAyIERhdGVpZW4g
+Z2XDpG5kZXJ0LCA1IFplaWxlbiBoaW56dWdlZsO8Z3QoKyksIDUgWmVpbGVuIGVudGZlcm50KC0p
+CgpkaWZmIC0tZ2l0IGEva3BhcnR4L2twYXJ0eC5jIGIva3BhcnR4L2twYXJ0eC5jCmluZGV4IDk4
+ZDg4YzAuLjgyYzNiYjIgMTAwNjQ0Ci0tLSBhL2twYXJ0eC9rcGFydHguYworKysgYi9rcGFydHgv
+a3BhcnR4LmMKQEAgLTE5Miw3ICsxOTIsNyBAQCBnZXRfaG90cGx1Z19kZXZpY2Uodm9pZCkKIAog
+aW50CiBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7Ci0JaW50IGksIGosIG0sIG4sIG9wLCBv
+ZmYsIGFyZywgYywgZCwgcm89MDsKKwlpbnQgaSwgaiwgbSwgbiwgb3AsIG9mZiwgYXJnLCBjLCBk
+OwogCWludCBmZCA9IC0xOwogCXN0cnVjdCBzbGljZSBhbGw7CiAJc3RydWN0IHB0ICpwdHA7CkBA
+IC0yNDEsNyArMjQxLDcgQEAgbWFpbihpbnQgYXJnYywgY2hhciAqKmFyZ3YpewogCiAJd2hpbGUg
+KChhcmcgPSBnZXRvcHQoYXJnYywgYXJndiwgc2hvcnRfb3B0cykpICE9IEVPRikgc3dpdGNoKGFy
+ZykgewogCQljYXNlICdyJzoKLQkJCXJvPTE7CisJCQlsb29wcm89MTsKIAkJCWJyZWFrOwogCQlj
+YXNlICdmJzoKIAkJCWZvcmNlX2Rldm1hcD0xOwpAQCAtNDg5LDcgKzQ4OSw3IEBAIG1haW4oaW50
+IGFyZ2MsIGNoYXIgKiphcmd2KXsKIAkJCQkJRE1fREVWSUNFX1JFTE9BRCA6IERNX0RFVklDRV9D
+UkVBVEUpOwogCiAJCQkJaWYgKCFkbV9hZGRtYXAob3AsIHBhcnRuYW1lLCBETV9UQVJHRVQsIHBh
+cmFtcywKLQkJCQkJICAgICAgIHNsaWNlc1tqXS5zaXplLCBybywgdXVpZCwgaisxLAorCQkJCQkg
+ICAgICAgc2xpY2VzW2pdLnNpemUsIGxvb3BybywgdXVpZCwgaisxLAogCQkJCQkgICAgICAgYnVm
+LnN0X21vZGUgJiAwNzc3LCBidWYuc3RfdWlkLAogCQkJCQkgICAgICAgYnVmLnN0X2dpZCwgJmNv
+b2tpZSkpIHsKIAkJCQkJZnByaW50ZihzdGRlcnIsICJjcmVhdGUvcmVsb2FkIGZhaWxlZCBvbiAl
+c1xuIiwKQEAgLTU1Miw3ICs1NTIsNyBAQCBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7CiAJ
+CQkJCSAgICAgIERNX0RFVklDRV9SRUxPQUQgOiBETV9ERVZJQ0VfQ1JFQVRFKTsKIAogCQkJCQlk
+bV9hZGRtYXAob3AsIHBhcnRuYW1lLCBETV9UQVJHRVQsIHBhcmFtcywKLQkJCQkJCSAgc2xpY2Vz
+W2pdLnNpemUsIHJvLCB1dWlkLCBqKzEsCisJCQkJCQkgIHNsaWNlc1tqXS5zaXplLCBsb29wcm8s
+IHV1aWQsIGorMSwKIAkJCQkJCSAgYnVmLnN0X21vZGUgJiAwNzc3LAogCQkJCQkJICBidWYuc3Rf
+dWlkLCBidWYuc3RfZ2lkLAogCQkJCQkJICAmY29va2llKTsKZGlmZiAtLWdpdCBhL2twYXJ0eC9s
+b3BhcnQuYyBiL2twYXJ0eC9sb3BhcnQuYwppbmRleCA3OWE3NTkzLi45MDgyY2E4IDEwMDY0NAot
+LS0gYS9rcGFydHgvbG9wYXJ0LmMKKysrIGIva3BhcnR4L2xvcGFydC5jCkBAIC0yMzAsNyArMjMw
+LDcgQEAgc2V0X2xvb3AgKGNvbnN0IGNoYXIgKmRldmljZSwgY29uc3QgY2hhciAqZmlsZSwgaW50
+IG9mZnNldCwgaW50ICpsb29wcm8pCiAKIAlpZiAoKGZmZCA9IG9wZW4gKGZpbGUsIG1vZGUpKSA8
+IDApIHsKIAotCQlpZiAoISpsb29wcm8gJiYgZXJybm8gPT0gRVJPRlMpCisJCWlmICghKmxvb3By
+byAmJiAoZXJybm8gPT0gRVJPRlMgfHwgZXJybm8gPT0gRUFDQ0VTKSkKIAkJCWZmZCA9IG9wZW4g
+KGZpbGUsIG1vZGUgPSBPX1JET05MWSk7CiAKIAkJaWYgKGZmZCA8IDApIHsKLS0gCjEuNy4xMS43
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
