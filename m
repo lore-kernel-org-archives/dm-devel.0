@@ -1,60 +1,71 @@
-From: Till Maas <opensource@till.name>
-Subject: [PATCH] kpartx: Properly support read-only files
-Date: Mon, 10 Jun 2013 18:40:58 +0200
-Message-ID: <20130610164058.GF12715@genius.invalid>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: OS Engineering <osengineering-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
+Subject: Performance Comparison among EnhanceIO, bcache and dm-cache.
+Date: Tue, 11 Jun 2013 15:05:07 +0000
+Message-ID: <D399C715A2AD7F4F891A75871FC3117507866B@MYMBX3.stec-inc.ad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Language: en-US
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org" <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: Padmini Balasubramaniyan <padminib-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, Amit Phansalkar <aphansalkar-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
 List-Id: dm-devel.ids
 
-LSBVc2Ugb25seSB2YXJpYWJsZSBsb29wcm8gaW5zdGVhZCBvZiBhZGRpdGlvbmFsbHkgdmFyaWFi
-bGUgcm86IElmIHRoZQogIGZpbGUgY2FuIG9ubHkgYmUgb3BlbmVkIHJlYWQtb25seSwgaXQgZG9l
-cyBub3QgbWFrZSBzZW5zZSB0byBjcmVhdGUgYQogIHdyaXRhYmxlIG1hcHBpbmcuCi0gRmFsbCBi
-YWNrIHRvIHJlYWQtb25seSBtYXBwaW5nIG9uIEVBQ0NFU1MgaW5zdGVhZCBvZiBvbmx5IG9uIEVS
-T0ZTLAogIHNpbmNlIGltbXV0YWJsZSBmaWxlcyBjYXVzZXMgRUFDQ0VTUy4KLS0tCiBrcGFydHgv
-a3BhcnR4LmMgfCA4ICsrKystLS0tCiBrcGFydHgvbG9wYXJ0LmMgfCAyICstCiAyIERhdGVpZW4g
-Z2XDpG5kZXJ0LCA1IFplaWxlbiBoaW56dWdlZsO8Z3QoKyksIDUgWmVpbGVuIGVudGZlcm50KC0p
-CgpkaWZmIC0tZ2l0IGEva3BhcnR4L2twYXJ0eC5jIGIva3BhcnR4L2twYXJ0eC5jCmluZGV4IDk4
-ZDg4YzAuLjgyYzNiYjIgMTAwNjQ0Ci0tLSBhL2twYXJ0eC9rcGFydHguYworKysgYi9rcGFydHgv
-a3BhcnR4LmMKQEAgLTE5Miw3ICsxOTIsNyBAQCBnZXRfaG90cGx1Z19kZXZpY2Uodm9pZCkKIAog
-aW50CiBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7Ci0JaW50IGksIGosIG0sIG4sIG9wLCBv
-ZmYsIGFyZywgYywgZCwgcm89MDsKKwlpbnQgaSwgaiwgbSwgbiwgb3AsIG9mZiwgYXJnLCBjLCBk
-OwogCWludCBmZCA9IC0xOwogCXN0cnVjdCBzbGljZSBhbGw7CiAJc3RydWN0IHB0ICpwdHA7CkBA
-IC0yNDEsNyArMjQxLDcgQEAgbWFpbihpbnQgYXJnYywgY2hhciAqKmFyZ3YpewogCiAJd2hpbGUg
-KChhcmcgPSBnZXRvcHQoYXJnYywgYXJndiwgc2hvcnRfb3B0cykpICE9IEVPRikgc3dpdGNoKGFy
-ZykgewogCQljYXNlICdyJzoKLQkJCXJvPTE7CisJCQlsb29wcm89MTsKIAkJCWJyZWFrOwogCQlj
-YXNlICdmJzoKIAkJCWZvcmNlX2Rldm1hcD0xOwpAQCAtNDg5LDcgKzQ4OSw3IEBAIG1haW4oaW50
-IGFyZ2MsIGNoYXIgKiphcmd2KXsKIAkJCQkJRE1fREVWSUNFX1JFTE9BRCA6IERNX0RFVklDRV9D
-UkVBVEUpOwogCiAJCQkJaWYgKCFkbV9hZGRtYXAob3AsIHBhcnRuYW1lLCBETV9UQVJHRVQsIHBh
-cmFtcywKLQkJCQkJICAgICAgIHNsaWNlc1tqXS5zaXplLCBybywgdXVpZCwgaisxLAorCQkJCQkg
-ICAgICAgc2xpY2VzW2pdLnNpemUsIGxvb3BybywgdXVpZCwgaisxLAogCQkJCQkgICAgICAgYnVm
-LnN0X21vZGUgJiAwNzc3LCBidWYuc3RfdWlkLAogCQkJCQkgICAgICAgYnVmLnN0X2dpZCwgJmNv
-b2tpZSkpIHsKIAkJCQkJZnByaW50ZihzdGRlcnIsICJjcmVhdGUvcmVsb2FkIGZhaWxlZCBvbiAl
-c1xuIiwKQEAgLTU1Miw3ICs1NTIsNyBAQCBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7CiAJ
-CQkJCSAgICAgIERNX0RFVklDRV9SRUxPQUQgOiBETV9ERVZJQ0VfQ1JFQVRFKTsKIAogCQkJCQlk
-bV9hZGRtYXAob3AsIHBhcnRuYW1lLCBETV9UQVJHRVQsIHBhcmFtcywKLQkJCQkJCSAgc2xpY2Vz
-W2pdLnNpemUsIHJvLCB1dWlkLCBqKzEsCisJCQkJCQkgIHNsaWNlc1tqXS5zaXplLCBsb29wcm8s
-IHV1aWQsIGorMSwKIAkJCQkJCSAgYnVmLnN0X21vZGUgJiAwNzc3LAogCQkJCQkJICBidWYuc3Rf
-dWlkLCBidWYuc3RfZ2lkLAogCQkJCQkJICAmY29va2llKTsKZGlmZiAtLWdpdCBhL2twYXJ0eC9s
-b3BhcnQuYyBiL2twYXJ0eC9sb3BhcnQuYwppbmRleCA3OWE3NTkzLi45MDgyY2E4IDEwMDY0NAot
-LS0gYS9rcGFydHgvbG9wYXJ0LmMKKysrIGIva3BhcnR4L2xvcGFydC5jCkBAIC0yMzAsNyArMjMw
-LDcgQEAgc2V0X2xvb3AgKGNvbnN0IGNoYXIgKmRldmljZSwgY29uc3QgY2hhciAqZmlsZSwgaW50
-IG9mZnNldCwgaW50ICpsb29wcm8pCiAKIAlpZiAoKGZmZCA9IG9wZW4gKGZpbGUsIG1vZGUpKSA8
-IDApIHsKIAotCQlpZiAoISpsb29wcm8gJiYgZXJybm8gPT0gRVJPRlMpCisJCWlmICghKmxvb3By
-byAmJiAoZXJybm8gPT0gRVJPRlMgfHwgZXJybm8gPT0gRUFDQ0VTKSkKIAkJCWZmZCA9IG9wZW4g
-KGZpbGUsIG1vZGUgPSBPX1JET05MWSk7CiAKIAkJaWYgKGZmZCA8IDApIHsKLS0gCjEuNy4xMS43
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Hi Jens,
+
+In continuation with our previous communication, we have carried out performance comparison among EnhanceIO, bcache and dm-cache.
+
+We found that EnhanceIO provides better throughput on zipf workload (with theta=1.2) in comparison to bcache and dm-cache for write through caches.
+However, for write back caches, we found that dm-cache had best throughput followed by EnhanceIO and then bcache. Dm-cache commits on-disk metadata every time a REQ_SYNC or REQ_FUA bio is written. If no such requests are made then it commits metadata once every second. If power is lost, it may lose some recent writes. However, EnhanceIO and bcache do not acknowledge IO completion until both IO and metadata hits the SSD. Hence, EnhanceIO and bcache provide higher data integrity at a cost of performance.
+
+The fio config and setup information follows:
+HDD              : 100GB
+SSD              :  20GB
+Mode             : write through / write back
+Cache block_size : 4KB for bcache, EnhanceIO and 256KB for dm-cache
+
+The other options have been left to their default values.
+
+Note:
+1) In case of dm-cache, we used 2 partitions of same SSD with 1GB partition as metadata and 20GB partition as caching device. This has been done so as to ensure a fair comparison as EnhanceIO and bcache do not have a separate metadata device.
+
+2) In order to ensure proper cache warm up, We have turned off sequential bypass in bcache. This does not impact our performance results as they are taken for random workload.
+
+For each test, we first performed a warm up run using the following fio options:
+fio --direct=1 --size=90% --filesize=20G --blocksize=4k --ioengine=libaio --rw=rw --rwmixread=100 --rwmixwrite=0 --iodepth=8 ...
+
+Then, we performed our actual run with the following fio options:
+fio --direct=1 --size=100% --filesize=20G --blocksize=4k --ioengine=libaio --rw=randrw --rwmixread=90 --rwmixwrite=10 --iodepth=8 --numjobs=4 --random_distribution=zipf:1.2 ...
+
+============================= Write Through ===============================
+Type      Read Latency(ms)   Write Latency(ms)    Read(MB/s)    Write(MB/s)
+===========================================================================
+EnhanceIO      1.58              16.53               32.91       3.65
+bcache         0.58              31.05               27.17       3.02
+dm-cache       0.24              27.45               31.05       3.44
+
+============================= Write Back ==================================
+Type      Read Latency(ms)    Write Latency(ms)    Read(MB/s)   Write(MB/s)
+===========================================================================
+EnhanceIO      0.34               4.98               138.72      15.40
+bcache         0.95               1.76               106.82      11.85
+dm-cache       0.58               0.55               193.76      21.52
+
+============================ Base Line ====================================
+Type      Read Latency(ms)    Write Latency(ms)    Read(MB/s)   Write(MB/s)
+===========================================================================
+HDD            6.22              27.23                13.51       1.49
+SSD            0.47               0.42               235.87      26.21
+
+We have written scripts that aid in cache creation, deletion and performance run for all these caching solutions. These scripts can be found at:
+https://github.com/stec-inc/EnhanceIO/tree/master/performance_test
+
+Thanks and Regards,
+sTec Team
+
+PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
+
+
+
+This electronic transmission, and any documents attached hereto, may contain confidential, proprietary and/or legally privileged information. The information is intended only for use by the recipient named above. If you received this electronic message in error, please notify the sender and delete the electronic message. Any disclosure, copying, distribution, or use of the contents of information received in error is strictly prohibited, and violators will be pursued legally.
