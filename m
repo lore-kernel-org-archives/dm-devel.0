@@ -1,123 +1,137 @@
-From: Amit Kale <amitkale-Gl6SwLIDy+bjyqlaT+yXCw@public.gmane.org>
-Subject: Re: Performance Comparison among EnhanceIO, bcache and dm-cache.
-Date: Wed, 12 Jun 2013 10:28:03 +0530
-Message-ID: <201306121028.03278.amitkale@geeksofpune.in>
-References: <D399C715A2AD7F4F891A75871FC3117507866B@MYMBX3.stec-inc.ad>
+From: amit mehta <gmate.amit@gmail.com>
+Subject: Query: Significance of libmultipath/hwtable.c
+Date: Wed, 12 Jun 2013 11:45:56 +0530
+Message-ID: <CAOUxTKPCj_k9JaAwS9w6zg56mzA+HGQOV_6aw8HzHRU_GpXj-g@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <D399C715A2AD7F4F891A75871FC3117507866B-/Mge6msRHKZU8iYRzhpb3QxBAXYc4onH@public.gmane.org>
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: OS Engineering <osengineering-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
-Cc: "koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org" <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Padmini Balasubramaniyan <padminib-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, Amit Phansalkar <aphansalkar-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============6935936343420094128=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tuesday 11 Jun 2013, OS Engineering wrote:
-> Hi Jens,
-> 
-> In continuation with our previous communication, we have carried out
-> performance comparison among EnhanceIO, bcache and dm-cache.
-> 
-> We found that EnhanceIO provides better throughput on zipf workload (with
-> theta=1.2) in comparison to bcache and dm-cache for write through caches.
-> However, for write back caches, we found that dm-cache had best throughput
-> followed by EnhanceIO and then bcache. Dm-cache commits on-disk metadata
-> every time a REQ_SYNC or REQ_FUA bio is written. If no such requests are
-> made then it commits metadata once every second. If power is lost, it may
-> lose some recent writes. However, EnhanceIO and bcache do not acknowledge
-> IO completion until both IO and metadata hits the SSD. Hence, EnhanceIO
-> and bcache provide higher data integrity at a cost of performance.
+--===============6935936343420094128==
+Content-Type: multipart/alternative; boundary=089e01293fe260332304deeef2b3
 
-So it won't be fair to compare them with dm-cache in write-back mode since 
-guarantees are different. I am sure if similar (SYNC/FUA enforcement for 
-persistence) guarantees are implemented in bcache/EnhanceIO, they'll offer a 
-much better performance. 
+--089e01293fe260332304deeef2b3
+Content-Type: text/plain; charset=UTF-8
 
-> 
-> The fio config and setup information follows:
-> HDD              : 100GB
-> SSD              :  20GB
-> Mode             : write through / write back
-> Cache block_size : 4KB for bcache, EnhanceIO and 256KB for dm-cache
-> 
-> The other options have been left to their default values.
-> 
-> Note:
-> 1) In case of dm-cache, we used 2 partitions of same SSD with 1GB partition
-> as metadata and 20GB partition as caching device. This has been done so as
-> to ensure a fair comparison as EnhanceIO and bcache do not have a separate
-> metadata device.
-> 
-> 2) In order to ensure proper cache warm up, We have turned off sequential
-> bypass in bcache. This does not impact our performance results as they are
-> taken for random workload.
-> 
-> For each test, we first performed a warm up run using the following fio
-> options: fio --direct=1 --size=90% --filesize=20G --blocksize=4k
-> --ioengine=libaio --rw=rw --rwmixread=100 --rwmixwrite=0 --iodepth=8 ...
-> 
-> Then, we performed our actual run with the following fio options:
-> fio --direct=1 --size=100% --filesize=20G --blocksize=4k --ioengine=libaio
-> --rw=randrw --rwmixread=90 --rwmixwrite=10 --iodepth=8 --numjobs=4
-> --random_distribution=zipf:1.2 ...
+What is the significance of libmultipath/hwtable.c file. I see there
+is a list of vendors mentioned over here.
 
-Did you experiment a little with varying iodepth and numjobs? Is this the best 
-combination you found out? The numbers below appear low considering a 90% hit 
-ratio for EnhanceIO. SSD baseline performance shown below appears low. However 
-it should not affect this comparison. All caching solutions are being subjected 
-to the same ratio of HDD/SSD performance.
+<snip>
+grep -i vendor libmultipath/hwtable.c|uniq
+        .vendor        = "COMPELNT",
+        .vendor        = "APPLE*",
+        .vendor        = "3PARdata",
+        .vendor        = "DEC",
+        .vendor        = "HP",
+        .vendor        = "(COMPAQ|HP)",
+        .vendor        = "HP",
+        .vendor        = "DDN",
+        .vendor        = "EMC",
+        .vendor        = "DGC",
+        .vendor        = "EMC",
+        .vendor        = "FSC",
+        .vendor        = "FUJITSU",
+        .vendor        = "HITACHI",
+        .vendor        = "IBM",
+        .vendor        = "IBM",
+        .vendor        = "AIX",
+        .vendor        = "IBM",
+        .vendor        = "AIX",
+        .vendor        = "IBM",
+        .vendor        = "AIX",
+        .vendor        = "DELL",
+        .vendor        = "NETAPP",
+        .vendor        = "IBM",
+        .vendor        = "Pillar",
+        .vendor        = "SGI",
+        .vendor        = "STK",
+        .vendor        = "SUN",
+        .vendor        = "PIVOT3",
+        .vendor        = "SUN",
+        .vendor        = "(LSI|ENGENIO)",
+        .vendor        = "STK",
+        .vendor        = "EUROLOGC",
+        .vendor        = "NEC",
+        .vendor        = NULL,
+<snip>
 
-> 
-> ============================= Write Through ===============================
-> Type      Read Latency(ms)   Write Latency(ms)    Read(MB/s)    Write(MB/s)
-> ===========================================================================
-> EnhanceIO      1.58              16.53               32.91       3.65
-> bcache         0.58              31.05               27.17       3.02
-> dm-cache       0.24              27.45               31.05       3.44
-
-EnhanceIO shows much higher read latency here. Is that because of READFILLs ? 
-Write latency, read-write throughputs are good.
-
-> 
-> ============================= Write Back ==================================
-> Type      Read Latency(ms)    Write Latency(ms)    Read(MB/s)   Write(MB/s)
-> ===========================================================================
-> EnhanceIO      0.34               4.98               138.72      15.40
-> bcache         0.95               1.76               106.82      11.85
-> dm-cache       0.58               0.55               193.76      21.52
-
-Here EnhanceIO's read latency is better compared the other two. Write latency 
-is larger than the other two. 
+Under each of these vendors, there is a list of products from the same
+vendor as well. So does that mean, if the vendor and or product is not
+mentioned in this file, that particular storage hardware may not be
+supported by dm-multipath?
 
 -Amit
 
-> 
-> ============================ Base Line ====================================
-> Type      Read Latency(ms)    Write Latency(ms)    Read(MB/s)   Write(MB/s)
-> ===========================================================================
-> HDD            6.22              27.23                13.51       1.49
-> SSD            0.47               0.42               235.87      26.21
-> 
-> We have written scripts that aid in cache creation, deletion and
-> performance run for all these caching solutions. These scripts can be
-> found at:
-> https://github.com/stec-inc/EnhanceIO/tree/master/performance_test
-> 
-> Thanks and Regards,
-> sTec Team
-> 
-> PROPRIETARY-CONFIDENTIAL INFORMATION INCLUDED
-> 
-> This electronic transmission, and any documents attached hereto, may
-> contain confidential, proprietary and/or legally privileged information.
-> The information is intended only for use by the recipient named above. If
-> you received this electronic message in error, please notify the sender
-> and delete the electronic message. Any disclosure, copying, distribution,
-> or use of the contents of information received in error is strictly
-> prohibited, and violators will be pursued legally. --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+--089e01293fe260332304deeef2b3
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PldoYXQgaXMgdGhlIHNpZ25pZmljYW5jZSBvZiBsaWJt
+dWx0aXBhdGgvaHd0YWJsZS5jIGZpbGUuIEkgc2VlIHRoZXJlPGJyPmlzIGEgbGlzdCBvZiB2ZW5k
+b3JzIG1lbnRpb25lZCBvdmVyIGhlcmUuPGJyPjxicj4mbHQ7c25pcCZndDs8YnI+PC9kaXY+Z3Jl
+cCAtaSB2ZW5kb3IgbGlibXVsdGlwYXRoL2h3dGFibGUuY3x1bmlxPGJyPsKgwqDCoCDCoMKgwqAg
+LnZlbmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1b3Q7Q09NUEVMTlQmcXVvdDssPGJyPg0KwqDCoMKg
+IMKgwqDCoCAudmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAmcXVvdDtBUFBMRSomcXVvdDssPGJyPsKg
+wqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1b3Q7M1BBUmRhdGEmcXVvdDss
+PGJyPsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1b3Q7REVDJnF1b3Q7
+LDxicj7CoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90O0hQJnF1b3Q7
+LDxicj7CoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90OyhDT01QQVF8
+SFApJnF1b3Q7LDxicj4NCsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1
+b3Q7SFAmcXVvdDssPGJyPsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1
+b3Q7REROJnF1b3Q7LDxicj7CoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZx
+dW90O0VNQyZxdW90Oyw8YnI+wqDCoMKgIMKgwqDCoCAudmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAm
+cXVvdDtER0MmcXVvdDssPGJyPsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKgID0g
+JnF1b3Q7RU1DJnF1b3Q7LDxicj4NCsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKg
+ID0gJnF1b3Q7RlNDJnF1b3Q7LDxicj7CoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDC
+oCA9ICZxdW90O0ZVSklUU1UmcXVvdDssPGJyPsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKg
+wqDCoMKgID0gJnF1b3Q7SElUQUNISSZxdW90Oyw8YnI+wqDCoMKgIMKgwqDCoCAudmVuZG9ywqDC
+oMKgwqDCoMKgwqAgPSAmcXVvdDtJQk0mcXVvdDssPGJyPsKgwqDCoMKgwqDCoMKgIC52ZW5kb3LC
+oMKgwqDCoMKgwqDCoCA9ICZxdW90O0lCTSZxdW90Oyw8YnI+DQrCoMKgwqAgwqDCoMKgIC52ZW5k
+b3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90O0FJWCZxdW90Oyw8YnI+wqDCoMKgIMKgwqDCoCAudmVu
+ZG9ywqDCoMKgwqDCoMKgwqAgPSAmcXVvdDtJQk0mcXVvdDssPGJyPsKgwqDCoCDCoMKgwqAgLnZl
+bmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1b3Q7QUlYJnF1b3Q7LDxicj7CoMKgwqAgwqDCoMKgIC52
+ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90O0lCTSZxdW90Oyw8YnI+wqDCoMKgIMKgwqDCoCAu
+dmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAmcXVvdDtBSVgmcXVvdDssPGJyPg0KwqDCoMKgIMKgwqDC
+oCAudmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAmcXVvdDtERUxMJnF1b3Q7LDxicj7CoMKgwqAgwqDC
+oMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90O05FVEFQUCZxdW90Oyw8YnI+wqDCoMKg
+IMKgwqDCoCAudmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAmcXVvdDtJQk0mcXVvdDssPGJyPsKgwqDC
+oCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1b3Q7UGlsbGFyJnF1b3Q7LDxicj7C
+oMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90O1NHSSZxdW90Oyw8YnI+
+DQrCoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90O1NUSyZxdW90Oyw8
+YnI+wqDCoMKgIMKgwqDCoCAudmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAmcXVvdDtTVU4mcXVvdDss
+PGJyPsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKgID0gJnF1b3Q7UElWT1QzJnF1
+b3Q7LDxicj7CoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDCoCA9ICZxdW90O1NVTiZx
+dW90Oyw8YnI+wqDCoMKgIMKgwqDCoCAudmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAmcXVvdDsoTFNJ
+fEVOR0VOSU8pJnF1b3Q7LDxicj4NCsKgwqDCoCDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDCoMKg
+ID0gJnF1b3Q7U1RLJnF1b3Q7LDxicj7CoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDCoMKgwqDC
+oCA9ICZxdW90O0VVUk9MT0dDJnF1b3Q7LDxicj7CoMKgwqAgwqDCoMKgIC52ZW5kb3LCoMKgwqDC
+oMKgwqDCoCA9ICZxdW90O05FQyZxdW90Oyw8YnI+wqDCoMKgIMKgwqDCoCAudmVuZG9ywqDCoMKg
+wqDCoMKgwqAgPSBOVUxMLDxicj48L2Rpdj4mbHQ7c25pcCZndDs8YnI+PGRpdj48ZGl2Pjxicj48
+L2Rpdj48ZGl2Pg0KVW5kZXIgZWFjaCBvZiB0aGVzZSB2ZW5kb3JzLCB0aGVyZSBpcyBhIGxpc3Qg
+b2YgcHJvZHVjdHMgZnJvbSB0aGUgc2FtZTxicj52ZW5kb3IgYXMgd2VsbC4gU28gZG9lcyB0aGF0
+IG1lYW4sIGlmIHRoZSB2ZW5kb3IgYW5kIG9yIHByb2R1Y3QgaXMgbm90IDxicj5tZW50aW9uZWQg
+aW4gdGhpcyBmaWxlLCB0aGF0IHBhcnRpY3VsYXIgc3RvcmFnZSBoYXJkd2FyZSBtYXkgbm90IGJl
+IDxicj4NCnN1cHBvcnRlZCBieSBkbS1tdWx0aXBhdGg/PGJyPjxicj48L2Rpdj48ZGl2Pi1BbWl0
+PGJyPjwvZGl2PjwvZGl2PjwvZGl2Pg0K
+--089e01293fe260332304deeef2b3--
+
+
+--===============6935936343420094128==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6935936343420094128==--
