@@ -1,141 +1,87 @@
-From: OS Engineering <osengineering-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
-Subject: RE: Performance Comparison among EnhanceIO, bcache and dm-cache.
-Date: Wed, 12 Jun 2013 11:39:30 +0000
-Message-ID: <D399C715A2AD7F4F891A75871FC3117507B9E6@MYMBX3.stec-inc.ad>
-References: <D399C715A2AD7F4F891A75871FC3117507866B@MYMBX3.stec-inc.ad>
- <201306121028.03278.amitkale@geeksofpune.in>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: Query: Significance of libmultipath/hwtable.c
+Date: Wed, 12 Jun 2013 20:15:04 +0200
+Message-ID: <1371060904.30106.4.camel@lapoo.opensvc.com>
+References: <CAOUxTKPCj_k9JaAwS9w6zg56mzA+HGQOV_6aw8HzHRU_GpXj-g@mail.gmail.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201306121028.03278.amitkale-Gl6SwLIDy+bjyqlaT+yXCw@public.gmane.org>
-Content-Language: en-US
-Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Amit Kale <amitkale-Gl6SwLIDy+bjyqlaT+yXCw@public.gmane.org>
-Cc: "koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org" <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Padmini Balasubramaniyan <padminib-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, Amit Phansalkar <aphansalkar-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAOUxTKPCj_k9JaAwS9w6zg56mzA+HGQOV_6aw8HzHRU_GpXj-g@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Amit Kale [mailto:amitkale-Gl6SwLIDy+bjyqlaT+yXCw@public.gmane.org]
-> Sent: Wednesday, June 12, 2013 10:28 AM
-> To: OS Engineering
-> Cc: koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org; linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
-> thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org; dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org; LKML; Jens Axboe; Padmini
-> Balasubramaniyan; Amit Phansalkar
-> Subject: Re: Performance Comparison among EnhanceIO, bcache and dm-
-> cache.
+On mer., 2013-06-12 at 11:45 +0530, amit mehta wrote:
+> What is the significance of libmultipath/hwtable.c file. I see there
+> is a list of vendors mentioned over here.
 > 
-> On Tuesday 11 Jun 2013, OS Engineering wrote:
-> > Hi Jens,
-> >
-> > In continuation with our previous communication, we have carried out
-> > performance comparison among EnhanceIO, bcache and dm-cache.
-> >
-> > We found that EnhanceIO provides better throughput on zipf workload
-> > (with
-> > theta=1.2) in comparison to bcache and dm-cache for write through caches.
-> > However, for write back caches, we found that dm-cache had best
-> > throughput followed by EnhanceIO and then bcache. Dm-cache commits
-> > on-disk metadata every time a REQ_SYNC or REQ_FUA bio is written. If
-> > no such requests are made then it commits metadata once every second.
-> > If power is lost, it may lose some recent writes. However, EnhanceIO
-> > and bcache do not acknowledge IO completion until both IO and metadata
-> > hits the SSD. Hence, EnhanceIO and bcache provide higher data integrity at
-> a cost of performance.
+> <snip>
 > 
-> So it won't be fair to compare them with dm-cache in write-back mode since
-> guarantees are different. I am sure if similar (SYNC/FUA enforcement for
-> persistence) guarantees are implemented in bcache/EnhanceIO, they'll offer
-> a much better performance.
-> 
-> >
-> > The fio config and setup information follows:
-> > HDD              : 100GB
-> > SSD              :  20GB
-> > Mode             : write through / write back
-> > Cache block_size : 4KB for bcache, EnhanceIO and 256KB for dm-cache
-> >
-> > The other options have been left to their default values.
-> >
-> > Note:
-> > 1) In case of dm-cache, we used 2 partitions of same SSD with 1GB partition
-> > as metadata and 20GB partition as caching device. This has been done so as
-> > to ensure a fair comparison as EnhanceIO and bcache do not have a
-> separate
-> > metadata device.
-> >
-> > 2) In order to ensure proper cache warm up, We have turned off
-> sequential
-> > bypass in bcache. This does not impact our performance results as they are
-> > taken for random workload.
-> >
-> > For each test, we first performed a warm up run using the following fio
-> > options: fio --direct=1 --size=90% --filesize=20G --blocksize=4k
-> > --ioengine=libaio --rw=rw --rwmixread=100 --rwmixwrite=0 --iodepth=8 ...
-> >
-> > Then, we performed our actual run with the following fio options:
-> > fio --direct=1 --size=100% --filesize=20G --blocksize=4k --ioengine=libaio
-> > --rw=randrw --rwmixread=90 --rwmixwrite=10 --iodepth=8 --numjobs=4
-> > --random_distribution=zipf:1.2 ...
-> 
-> Did you experiment a little with varying iodepth and numjobs? Is this the
-> best
-> combination you found out? The numbers below appear low considering a
-> 90% hit
-> ratio for EnhanceIO. SSD baseline performance shown below appears low.
-> However
-> it should not affect this comparison. All caching solutions are being subjected
-> to the same ratio of HDD/SSD performance.
+It's a database of defaults settings for known devices.
+Those settings apply when not overriden by explicit settings in
+multipath.conf.
+  
 
-We have chosen a representative workload for our tests, we could do more experiments  
-that tests SSD to its performance limits.  
-
-
-> >
-> > ============================= Write Through ===============================
-> > Type      Read Latency(ms)   Write Latency(ms)    Read(MB/s)    Write(MB/s)
-> > ========================================================================
-> > EnhanceIO      1.58                             16.53                           32.91               3.65
-> > bcache             0.58                             31.05                           27.17                3.02
-> > dm-cache       0.24                             27.45                           31.05                3.44
+> grep -i vendor libmultipath/hwtable.c|uniq
+>         .vendor        = "COMPELNT",
+>         .vendor        = "APPLE*",
+>         .vendor        = "3PARdata",
+>         .vendor        = "DEC",
+>         .vendor        = "HP",
+>         .vendor        = "(COMPAQ|HP)",
+>         .vendor        = "HP",
+>         .vendor        = "DDN",
+>         .vendor        = "EMC",
+>         .vendor        = "DGC",
+>         .vendor        = "EMC",
+>         .vendor        = "FSC",
+>         .vendor        = "FUJITSU",
+>         .vendor        = "HITACHI",
+>         .vendor        = "IBM",
+>         .vendor        = "IBM",
+>         .vendor        = "AIX",
+>         .vendor        = "IBM",
+>         .vendor        = "AIX",
+>         .vendor        = "IBM",
+>         .vendor        = "AIX",
+>         .vendor        = "DELL",
+>         .vendor        = "NETAPP",
+>         .vendor        = "IBM",
+>         .vendor        = "Pillar",
+>         .vendor        = "SGI",
+>         .vendor        = "STK",
+>         .vendor        = "SUN",
+>         .vendor        = "PIVOT3",
+>         .vendor        = "SUN",
+>         .vendor        = "(LSI|ENGENIO)",
+>         .vendor        = "STK",
+>         .vendor        = "EUROLOGC",
+>         .vendor        = "NEC",
+>         .vendor        = NULL,
 > 
-> EnhanceIO shows much higher read latency here. Is that because of
-> READFILLs ?
-> Write latency, read-write throughputs are good.
+> <snip>
 > 
-
-Yes, READFILL's (SSD writes at the time of read of an uncached block) is the reason for higher read latency in EnhanceIO. 
-
-
-> >
-> > ============================= Write Back ==================================
-> > Type      Read Latency(ms)    Write Latency(ms)    Read(MB/s)   Write(MB/s)
-> >
->>==========================================================================
-> > EnhanceIO      0.34                         4.98                                 138.72                15.40
-> > bcache             0.95                          1.76                                 106.82                11.85
-> > dm-cache       0.58                          0.55                                 193.76                21.52
 > 
-> Here EnhanceIO's read latency is better compared the other two. Write
-> latency
-> is larger than the other two.
+> Under each of these vendors, there is a list of products from the same
+> vendor as well. So does that mean, if the vendor and or product is
+> not 
+> mentioned in this file, that particular storage hardware may not be 
+> supported by dm-multipath?
 > 
-> -Amit
- 
-EnhanceIO has higher write latencies as it acknowledges IO completion only when both data and metadata has
-hit the SSD.
+It only means that the top-level defaults settings will be applied to
+those multipaths.
 
-> >
-> > ============================ Base Line ====================================
-> > Type      Read Latency(ms)    Write Latency(ms)    Read(MB/s)   Write(MB/s)
->> ==========================================================================
-> > HDD            6.22                              27.23                               13.51                1.49
-> > SSD             0.47                                0.42                             235.87              26.21
-> >
-> > We have written scripts that aid in cache creation, deletion and
-> > performance run for all these caching solutions. These scripts can be
-> > found at:
-> > https://github.com/stec-inc/EnhanceIO/tree/master/performance_test
-> >
-> > Thanks and Regards,
-> > sTec Team
+Best regards,
+Christophe Varoqui
+www.opensvc.com
