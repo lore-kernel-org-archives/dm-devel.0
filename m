@@ -1,52 +1,66 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: kernel crash with multipath-tools v0.4.7
-Date: Thu, 13 Jun 2013 10:25:54 +0200
-Message-ID: <51B98212.3070903@suse.de>
-References: <975E8BE292621F4CA5B67883EB72497A03C2597E@nonamew.ptu.promise.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tommi Rantala <tt.rantala@gmail.com>
+Subject: Re: [PATCH linux-next v2] DM RAID: validate_raid_redundancy: Silence
+ uninitialized variable warning
+Date: Thu, 13 Jun 2013 18:30:45 +0300
+Message-ID: <CA+ydwtq_THgL87ESb4Z4T8pMhZUQiAX_9qac2agPwHABGEjuRA@mail.gmail.com>
+References: <20130221131931.GA29577@agk-dp.fab.redhat.com>
+	<1361458226-8142-1-git-send-email-tim.gardner@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <975E8BE292621F4CA5B67883EB72497A03C2597E@nonamew.ptu.promise.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mohan Rowlands - PTU <mohanr@promise.com>, Manoj Mathew - PTU <manojm@promise.com>, Praveen Dhanasekaran - PTI <praveend@promise.com>, Nagendra Vadlakunta - PTU <nagendra.vadlakunta@promise.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1361458226-8142-1-git-send-email-tim.gardner@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tim Gardner <tim.gardner@canonical.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 06/12/2013 01:03 PM, Praveen Dhanasekaran - PTI wrote:
-> Hello All,
->  =
+2013/2/21 Tim Gardner <tim.gardner@canonical.com>:
+> drivers/md/dm-raid.c:453:53: warning: 'rebuilds_per_group' may be used uninitialized in this function [-Wuninitialized]
+> drivers/md/dm-raid.c:383:11: note: 'rebuilds_per_group' was declared here
 
-> I have a RAID storage box connected to a Linux server through fc
-> cables. The server is using
-> kernel 2.6.26, and multipath-tools v0.4.7 (with dm-mpath target
-> version 1.0.5) is installed on it
-> to handle the disk scsi devices from the storage box. The multipath
-> device is mounted and
-> used for a file system.
->  =
+Hello, is this patch getting merged? I'm also seeing this exact same
+compiler warning in my mainline builds.
 
-This kernel is ancient, and there were several fixes for the SCSI
-layer to fixup these issues.
-Update the kernel or talk to your linux distributor.
+Tommi
 
-(I know of one who'd be happy to help you out :-)
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+>
+> It is impossible that rebuilds_per_group could be used before set, but set
+> it to 0 anyways to silence GCC warnings.
+>
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: dm-devel@redhat.com
+> Cc: Neil Brown <neilb@suse.de>
+> Cc: linux-raid@vger.kernel.org
+> Signed-off-by: Tim Gardner <tim.gardner@canonical.com>
+> ---
+>
+> v2 - Added GCC comment. Update commit log with a more definite explanation.
+>
+> As Neil has pointed out, https://lwn.net/Articles/529954/ indicates
+> uninitialized_var() is going away.
+>
+>  drivers/md/dm-raid.c |    3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 9d6bf19..1dbc341 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -380,7 +380,8 @@ static int validate_region_size(struct raid_set *rs, unsigned long region_size)
+>  static int validate_raid_redundancy(struct raid_set *rs)
+>  {
+>         unsigned i, rebuild_cnt = 0;
+> -       unsigned rebuilds_per_group, copies, d;
+> +       unsigned rebuilds_per_group = 0; /* GCC 4.6.3 */
+> +       unsigned copies, d;
+>         unsigned group_size, last_group_start;
+>
+>         for (i = 0; i < rs->md.raid_disks; i++)
+> --
+> 1.7.9.5
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
