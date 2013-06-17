@@ -1,63 +1,31 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipathd/cli_handlers cli_resize : check
- pp and pgp before calling them to avoid multipathd core dump.
-Date: Mon, 17 Jun 2013 07:43:20 +0200
-Message-ID: <1371447800.30106.12.camel@lapoo.opensvc.com>
-References: <1371441202-10938-1-git-send-email-taget@linux.vnet.ibm.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Joe Thornber <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Performance Comparison among EnhanceIO, bcache and dm-cache.
+Date: Mon, 17 Jun 2013 11:29:44 +0100
+Message-ID: <20130617102943.GA11121@debian>
+References: <D399C715A2AD7F4F891A75871FC3117507866B@MYMBX3.stec-inc.ad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1371441202-10938-1-git-send-email-taget@linux.vnet.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Eli Qiao <taget@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <D399C715A2AD7F4F891A75871FC3117507866B-/Mge6msRHKZU8iYRzhpb3QxBAXYc4onH@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: OS Engineering <osengineering-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
+Cc: "koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org" <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Padmini Balasubramaniyan <padminib-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, Amit Phansalkar <aphansalkar-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
 List-Id: dm-devel.ids
 
-On lun., 2013-06-17 at 11:53 +0800, taget@linux.vnet.ibm.com wrote:
-> From: Eli Qiao <taget@linux.vnet.ibm.com>
-> 
-Applied.
-Thanks,
+On Tue, Jun 11, 2013 at 03:05:07PM +0000, OS Engineering wrote:
 
-Christophe Varoqui
-www.opensvc.com
+...
 
-> Signed-off-by: Eli Qiao <taget@linux.vnet.ibm.com>
-> ---
->  multipathd/cli_handlers.c | 11 +++++++++++
->  1 file changed, 11 insertions(+)
-> 
-> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-> index 7b1cb62..4b860bb 100644
-> --- a/multipathd/cli_handlers.c
-> +++ b/multipathd/cli_handlers.c
-> @@ -603,7 +603,18 @@ cli_resize(void *v, char **reply, int *len, void *data)
->  	}
->  
->  	pgp = VECTOR_SLOT(mpp->pg, 0);
-> +
-> +	if (!pgp){
-> +		condlog(0, "%s: couldn't get path group. cannot resize",
-> +			mapname);
-> +		return 1;
-> +	}
->  	pp = VECTOR_SLOT(pgp->paths, 0);
-> +
-> +	if (!pp){
-> +		condlog(0, "%s: couldn't get path. cannot resize", mapname);
-> +		return 1;
-> +	}
->  	if (!pp->udev || sysfs_get_size(pp, &size)) {
->  		condlog(0, "%s: couldn't get size for sysfs. cannot resize",
->  			mapname);
+> Dm-cache commits on-disk metadata every time a REQ_SYNC or REQ_FUA
+> bio is written. If no such requests are made then it commits
+> metadata once every second. If power is lost, it may lose some
+> recent writes.
+
+Not true (though it is true for thinp, which may be where you got this
+idea?).  For caching we have to commit whenever data is moved about,
+otherwise a crash could result in us reading data that is not just out
+of date (acceptable for some), but used to belong to a totally
+different part of the device (always unacceptable).
+
+- Joe
