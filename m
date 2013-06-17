@@ -1,11 +1,12 @@
-From: "Eli Qiao(Li Yong Qiao)" <taget@linux.vnet.ibm.com>
-Subject: multipathd coredump when calling resizing.
-Date: Mon, 17 Jun 2013 11:34:42 +0800
-Message-ID: <51BE83D2.4020004@linux.vnet.ibm.com>
+From: taget@linux.vnet.ibm.com
+Subject: [PATCH] multipathd/cli_handlers cli_resize : check pp
+	and pgp before calling them to avoid multipathd core dump.
+Date: Mon, 17 Jun 2013 11:53:22 +0800
+Message-ID: <1371441202-10938-1-git-send-email-taget@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,56 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Eli Qiao <taget@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-aGkgYWxsOgoKSSBnb3QgYSBjb3JlZHVtcCB3aGVuIEkgcmFuIG11bHRpcGF0aGQgLWsgcmVzaXpl
-IG11bHRpcGF0aCAkbXlwYXRoCgpsb29rZWQgYXQgdGhlIGNvcmUgdHJhY2UodmVyc2lvbiBpcyAw
-LjQuOS02NCk6CgooZ2RiKSBmcmFtZSAwCiMwIGNsaV9yZXNpemUgKHY9PHZhbHVlIG9wdGltaXpl
-ZCBvdXQ+LCByZXBseT08dmFsdWUgb3B0aW1pemVkIG91dD4sCmxlbj08dmFsdWUgb3B0aW1pemVk
-IG91dD4sIGRhdGE9MHgxOGIyZWYwKSBhdCBjbGlfaGFuZGxlcnMuYzo1MzkKNTM5IHBwID0gVkVD
-VE9SX1NMT1QocGdwLT5wYXRocywgMCk7CihnZGIpIGwKNTM0IGNvbmRsb2coMCwgIiVzOiBpbnZh
-bGlkIG1hcCBuYW1lLiBjYW5ub3QgcmVzaXplIiwgbWFwbmFtZSk7CjUzNSByZXR1cm4gMTsKNTM2
-IH0KNTM3CjUzOCBwZ3AgPSBWRUNUT1JfU0xPVChtcHAtPnBnLCAwKTsKNTM5IHBwID0gVkVDVE9S
-X1NMT1QocGdwLT5wYXRocywgMCk7CjU0MCBpZiAoc3lzZnNfZ2V0X3NpemUocHAtPnN5c2Rldiwg
-JnNpemUpKSB7CjU0MSBjb25kbG9nKDAsICIlczogY291bGRuJ3QgZ2V0IHNpemUgZm9yIHN5c2Zz
-LiBjYW5ub3QgcmVzaXplIiwKNTQyIG1hcG5hbWUpOwo1NDMgcmV0dXJuIDE7CihnZGIpIHAgbXBw
-LT5wZwokMSA9ICh2ZWN0b3IpIDB4MAooZ2RiKSBwICptcHAKJDIgPSB7Cnd3aWQgPSAiMzYwMDUw
-NzY4MDI4MDgxNTlhYyIsICcwJyA8cmVwZWF0cyAxMiB0aW1lcz4sICI5OCIsICdcMDAwJwo8cmVw
-ZWF0cyA5NCB0aW1lcz4sIGFsaWFzX29sZCA9ICdcMDAwJyA8cmVwZWF0cyAxMjcgdGltZXM+LCBw
-Z3BvbGljeSA9IDQsCnBncG9saWN5Zm4gPSAweDdmOTZkZjNkMTYxMCA8Z3JvdXBfYnlfcHJpbz4s
-IG5leHRwZyA9IDAsIGJlc3RwZyA9IDEsCnF1ZXVlZGlvID0gMCwKYWN0aW9uID0gMSwgcGdmYWls
-YmFjayA9IC0yLCBmYWlsYmFja190aWNrID0gMCwgcnJfd2VpZ2h0ID0gMSwgbnJfYWN0aXZlCj0g
-MCwKbm9fcGF0aF9yZXRyeSA9IDUsIHJldHJ5X3RpY2sgPSAxNDksIG1pbmlvID0gMSwgcGdfdGlt
-ZW91dCA9IDAsCmZsdXNoX29uX2xhc3RfZGVsID0gMCwgYXR0cmlidXRlX2ZsYWdzID0gMCwgZmFz
-dF9pb19mYWlsID0gMCwKcmV0YWluX2h3aGFuZGxlciA9IDEsCmRldl9sb3NzID0gMCwgdWlkID0g
-MCwgZ2lkID0gMCwgbW9kZSA9IDAsIHNpemUgPSAzMzU1NDQzMiwgcGF0aHMgPSAweDAsCnBnID0g
-MHgwLApwYXJhbXMgPSAiMSBxdWV1ZV9pZl9ub19wYXRoIDAgMCAwIFwwMDBvdW5kLXJvYmluIDAg
-MSAxIDY2OjIwOAoxXDAwMFwwNjZcMDY2OjE3NiAxXDAwMGluIDAgMiAxIDY2OjIwOCAxIDY2OjE3
-NiAxXDAwMFwwNjZcMDY2OjE3NiAxICIsCidcMDAwJyA8cmVwZWF0cyA5MjYgdGltZXM+LApzdGF0
-dXMgPSAiMiAwIDAgMCAwIDAgXDAwMCAwIDIgMCA2NjoxOTIgRiAxIDY2OjE2MCBGIDEgRSAwIDIg
-MCA2NjoyMDggRgoxIDY2OjE3NiBGIDEgIiwgJ1wwMDAnIDxyZXBlYXRzIDk1MSB0aW1lcz4sIGRt
-aSA9IDB4N2Y5NmM4MDI1MjAwLAphbGlhcyA9IDB4N2Y5NmM4MDcxNTkwICIzNjAwNTA3NjgwMjgw
-ODE1OWFjIiwgJzAnIDxyZXBlYXRzIDEyIHRpbWVzPiwgIjk4IiwKc2VsZWN0b3IgPSAweDE4YWQ1
-MDAgInJvdW5kLXJvYmluIDAiLCBmZWF0dXJlcyA9IDB4N2Y5NmQ4MDAyMTgwICIxCnF1ZXVlX2lm
-X25vX3BhdGgiLApod2hhbmRsZXIgPSAweDdmOTZkODAwMjk5MCAiMCIsIG1wZSA9IDB4MCwgaHdl
-ID0gMHgxOGFkM2EwLCB3YWl0ZXIgPQoweDdmOTZjODAyMTdmMCwKc3RhdF9zd2l0Y2hncm91cCA9
-IDAsIHN0YXRfcGF0aF9mYWlsdXJlcyA9IDQsIHN0YXRfbWFwX2xvYWRzID0gNSwKc3RhdF90b3Rh
-bF9xdWV1ZWluZ190aW1lID0gMTUyLCBzdGF0X3F1ZXVlaW5nX3RpbWVvdXRzID0gMSwgbXBjb250
-ZXh0ID0KMHgwLApyZXNlcnZhdGlvbl9rZXkgPSAweDAsIHByZmxhZyA9IDAgJ1wwMDAnfQooZ2Ri
-KQoKCmZvciBzb21lIHJlYXNvbiwgcGF0aHMgPSAweDAsIHBnID0gMHgwLAptdWx0aXBhdGhkIGRp
-ZG4ndCBjaGVjayB0aGVzZSB2YWx1ZXMgYmVmb3JlIHVzaW5nIGl0Lgp3aGVuIHRyeSB0byBjYWxs
-IFZFQ1RPUl9TTE9ULCBhY2Nlc3MgbnVsbCBwb2ludGVyICwgaXQgY29yZSBkdW1wZWQuCgo1Mzgg
-cGdwID0gVkVDVE9SX1NMT1QobXBwLT5wZywgMCk7CjUzOSBwcCA9IFZFQ1RPUl9TTE9UKHBncC0+
-cGF0aHMsIDApOwoKKGdkYikgcCBwZ3AKJDMgPSAoc3RydWN0IHBhdGhncm91cCAqKSAweDAKCndo
-ZW4gdHJ5IHRvIGFjY2VzcyBwZ3AtPnBhdGhzLCB3ZSBnb3QgYSBjb3JlIGR1bXAuCgp3ZSBuZWVk
-IHRvIGNoZWNrIHRoZSB2YWx1ZSBiZWZvcmUgY2FsbGluZyB0aGUgbWVtYmVyIG9mIHBncC4KCmFu
-eSB0aG91Z2h0ID8KCkkgZ28gdGhvdWdoIHRoZSBsYXRlc3QgdXBzdGVhbSBjb2RlLCBwcC0+dWRl
-diBpcyBjaGVja2VkLgoKcGdwID0gVkVDVE9SX1NMT1QobXBwLT5wZywgMCk7CnBwID0gVkVDVE9S
-X1NMT1QocGdwLT5wYXRocywgMCk7CmlmICghcHAtPnVkZXYgfHwgc3lzZnNfZ2V0X3NpemUocHAs
-ICZzaXplKSkgewpjb25kbG9nKDAsICIlczogY291bGRuJ3QgZ2V0IHNpemUgZm9yIHN5c2ZzLiBj
-YW5ub3QgcmVzaXplIiwKbWFwbmFtZSk7CnJldHVybiAxOwp9Cgp0aGlzIGlzIG5vdCBlbm91Z2gg
-LCB3ZSBuZWVkIHRvIGNoZWNrCgpwZ3AgLCBhbmQgcHAKCkkgd2lsbCBzZW5kIGEgcGF0aCB0byBm
-aXggaXQuIHRoYW5rcy4KCi0tIApUaGFua3MgRWxpLihMaSBZb25nIFFpYW8vcWlhb2x5QGNuLmli
-bS5jb20gQ2hpbmVzZSBOYW1lOsfHwaLTwikKTFRDLCBDaGlhbiBDU1RMCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+From: Eli Qiao <taget@linux.vnet.ibm.com>
+
+Signed-off-by: Eli Qiao <taget@linux.vnet.ibm.com>
+---
+ multipathd/cli_handlers.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 7b1cb62..4b860bb 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -603,7 +603,18 @@ cli_resize(void *v, char **reply, int *len, void *data)
+ 	}
+ 
+ 	pgp = VECTOR_SLOT(mpp->pg, 0);
++
++	if (!pgp){
++		condlog(0, "%s: couldn't get path group. cannot resize",
++			mapname);
++		return 1;
++	}
+ 	pp = VECTOR_SLOT(pgp->paths, 0);
++
++	if (!pp){
++		condlog(0, "%s: couldn't get path. cannot resize", mapname);
++		return 1;
++	}
+ 	if (!pp->udev || sysfs_get_size(pp, &size)) {
+ 		condlog(0, "%s: couldn't get size for sysfs. cannot resize",
+ 			mapname);
+-- 
+1.8.1.4
