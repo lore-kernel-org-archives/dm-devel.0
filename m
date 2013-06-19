@@ -1,192 +1,110 @@
-From: Will Drewry <wad@chromium.org>
-Subject: Re: [PATCH v2] dm: verity: Add support for emitting uevents on
- dm-verity errors.
-Date: Sun, 23 Jun 2013 21:57:01 -0500
-Message-ID: <CABqD9harhkD_n8b2y6e6Kc5jzSCjFFAJL+yAxy80qduwLVUntw@mail.gmail.com>
-References: <1371783624-23962-1-git-send-email-gcondra@google.com>
+From: Alex Williamson <alex.williamson@redhat.com>
+Subject: Re: [PATCH 07/10] idr: Rename idr_alloc() ->
+	idr_alloc_range()
+Date: Wed, 19 Jun 2013 10:44:11 -0600
+Message-ID: <1371660251.22659.110.camel@ul30vt.home>
+References: <1371600150-23557-1-git-send-email-koverstreet@google.com>
+	<1371600150-23557-8-git-send-email-koverstreet@google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1371783624-23962-1-git-send-email-gcondra@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Geremy Condra <gcondra@google.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1371600150-23557-8-git-send-email-koverstreet@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kent Overstreet <koverstreet@google.com>
+Cc: Wolfram Sang <wsa@the-dreams.de>, Tatyana Nikolova <Tatyana.E.Nikolova@intel.com>, Walleij <linus.walleij@linaro.org>, Paul Mackerras <paulus@samba.org>, Christoph Hellwig <hch@lst.de>, Alon Levy <alevy@redhat.com>, Davidlohr Bueso <davidlohr.bueso@hp.com>, Ohad Ben-Cohen <ohad@wizery.com>, Dan@redhat.com, "John W. Linville" <linville@tuxdriver.com>, Dae <inki.dae@samsung.com>, David Teigland <teigland@redhat.com>, Joel Becker <jlbec@evilplan.org>, Tim Gardner <tim.gardner@canonical.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Seung-Woo Kim <sw0312.kim@samsung.com>, linux-kernel@vger.kernel.org, Li Zefan <lizefan@huawei.com>, tj@kernel.org, Guo Chao <yan@linux.vnet.ibm.com>, akpm@linux-foundation.org, Andy Grover <agrover@redhat.com>, Dmitry Torokhov <dtor@vmware.>
 List-Id: dm-devel.ids
 
-On Thu, Jun 20, 2013 at 10:00 PM, Geremy Condra <gcondra@google.com> wrote:
-> With this change dm-verity errors will cause uevents to be
-> sent to userspace, notifying it that an error has occurred
-> and potentially triggering recovery actions.
->
-> Signed-off-by: Geremy Condra <gcondra@google.com>
-> ---
-> Changelog since v1:
-> - Removed the DM_VERITY_ERROR_NOTIFY config option
->
->  drivers/md/dm-uevent.c | 40 ++++++++++++++++++++++++++++++++++++++++
->  drivers/md/dm-uevent.h | 12 ++++++++++--
->  drivers/md/dm-verity.c | 28 ++++++++++++++++++++++++++++
->  3 files changed, 78 insertions(+), 2 deletions(-)
->
-> diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
-> index 8efe033..17a6662 100644
-> --- a/drivers/md/dm-uevent.c
-> +++ b/drivers/md/dm-uevent.c
-> @@ -36,6 +36,8 @@ static const struct {
->  } _dm_uevent_type_names[] = {
->         {DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
->         {DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
-> +       {DM_UEVENT_VERITY_DATA_ERROR, KOBJ_CHANGE, "VERITY_DATA_ERROR"},
-> +       {DM_UEVENT_VERITY_HASH_ERROR, KOBJ_CHANGE, "VERITY_HASH_ERROR"},
->  };
->
->  static struct kmem_cache *_dm_event_cache;
-> @@ -202,6 +204,44 @@ void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
->  }
->  EXPORT_SYMBOL_GPL(dm_path_uevent);
->
-> +void dm_send_verity_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
-> +                                               unsigned long long block_nr)
-> +{
-> +       struct mapped_device *md = dm_table_get_md(ti->table);
-> +       struct dm_uevent *event = dm_uevent_alloc(md);
-> +       struct gendisk *disk = dm_disk(md);
-> +
-> +       if (!event) {
-> +               DMERR("%s: dm_uevent_alloc() failed", __func__);
-> +               return;
-> +       }
-> +
-> +       if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
-> +               DMERR("%s: Invalid event_type %d", __func__, event_type);
-> +               goto out;
-> +       }
-> +
-> +       if (add_uevent_var(&event->ku_env, "DM_VERITY_BLOCK_NR=%llu", block_nr)) {
-> +               DMERR("%s: add_uevent_var() for DM_VERITY_BLOCK failed", __func__);
-> +               goto out;
-> +       }
-> +
-> +       if (add_uevent_var(&event->ku_env, "DM_ACTION=%s",
-> +                       _dm_uevent_type_names[event_type].name)) {
-> +               DMERR("%s: add_uevent_var() for DM_ACTION failed", __func__);
-> +               goto out;
-> +       }
-> +
-> +       if (kobject_uevent_env(&disk_to_dev(disk)->kobj, event_type,
-> +                               event->ku_env.envp)) {
-> +               DMERR("%s: kobject_uevent_env failed", __func__);
-> +       }
-> +
-> +out:
-> +       dm_uevent_free(event);
-> +}
-> +EXPORT_SYMBOL_GPL(dm_send_verity_uevent);
-> +
->  int dm_uevent_init(void)
->  {
->         _dm_event_cache = KMEM_CACHE(dm_uevent, 0);
-> diff --git a/drivers/md/dm-uevent.h b/drivers/md/dm-uevent.h
-> index 2eccc8b..1c59dba 100644
-> --- a/drivers/md/dm-uevent.h
-> +++ b/drivers/md/dm-uevent.h
-> @@ -24,6 +24,8 @@
->  enum dm_uevent_type {
->         DM_UEVENT_PATH_FAILED,
->         DM_UEVENT_PATH_REINSTATED,
-> +       DM_UEVENT_VERITY_DATA_ERROR,
-> +       DM_UEVENT_VERITY_HASH_ERROR,
->  };
->
->  #ifdef CONFIG_DM_UEVENT
-> @@ -34,7 +36,9 @@ extern void dm_send_uevents(struct list_head *events, struct kobject *kobj);
->  extern void dm_path_uevent(enum dm_uevent_type event_type,
->                            struct dm_target *ti, const char *path,
->                            unsigned nr_valid_paths);
-> -
-> +extern void dm_send_verity_uevent(enum dm_uevent_type event_type,
-> +                                       struct dm_target *ti,
-> +                                       unsigned long long block_nr);
->  #else
->
->  static inline int dm_uevent_init(void)
-> @@ -53,7 +57,11 @@ static inline void dm_path_uevent(enum dm_uevent_type event_type,
->                                   unsigned nr_valid_paths)
->  {
->  }
-> -
-> +static inline void dm_send_verity_uevent(enum dm_uevent_type event_type,
-> +                                       struct dm_target *ti,
-> +                                       unsigned long long block_nr)
-> +{
-> +}
->  #endif /* CONFIG_DM_UEVENT */
->
->  #endif /* DM_UEVENT_H */
-> diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-> index 68bf5c3..2e3695b 100644
-> --- a/drivers/md/dm-verity.c
-> +++ b/drivers/md/dm-verity.c
-> @@ -20,6 +20,8 @@
->  #include <linux/device-mapper.h>
->  #include <crypto/hash.h>
->
-> +#include "dm-uevent.h"
-> +
->  #define DM_MSG_PREFIX                  "verity"
->
->  #define DM_VERITY_IO_VEC_INLINE                16
-> @@ -137,6 +139,30 @@ static void dm_bufio_alloc_callback(struct dm_buffer *buf)
->  }
->
->  /*
-> + * Trigger userspace data corruption handler.
-> + */
-> +#ifdef CONFIG_DM_UEVENT
-> +static void verity_data_error(struct dm_verity *v, unsigned long long block_nr)
-> +{
-> +       dm_send_verity_uevent(DM_UEVENT_VERITY_DATA_ERROR, v->ti, block_nr);
-> +}
-> +
-> +static void verity_hash_error(struct dm_verity *v, unsigned long long block_nr)
-> +{
-> +       dm_send_verity_uevent(DM_UEVENT_VERITY_HASH_ERROR, v->ti, block_nr);
-> +}
-> +#else
-> +static inline void verity_data_error(struct dm_verity *v,
-> +                                       unsigned long long block_nr)
-> +{
-> +}
-> +static inline void verity_hash_error(struct dm_verity *v,
-> +                                       unsigned long long block_nr)
-> +{
-> +}
-> +#endif
-> +
-> +/*
->   * Translate input sector number to the sector number on the target device.
->   */
->  static sector_t verity_map_sector(struct dm_verity *v, sector_t bi_sector)
-> @@ -255,6 +281,7 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
->                                 (unsigned long long)hash_block);
->                         v->hash_failed = 1;
->                         r = -EIO;
-> +                       verity_hash_error(v, (unsigned long long)hash_block);
->                         goto release_ret_r;
->                 } else
->                         aux->hash_verified = 1;
-> @@ -375,6 +402,7 @@ test_block_hash:
->                         DMERR_LIMIT("data block %llu is corrupted",
->                                 (unsigned long long)(io->block + b));
->                         v->hash_failed = 1;
-> +                       verity_data_error(v, (unsigned long long)(io->block + b));
->                         return -EIO;
->                 }
->         }
-> --
-> 1.8.3
-
-
-Thanks for doing this!  (I much prefer this to using notifiers chains!)
-
-Acked-by: Will Drewry <wad@chromium.org>
+T24gVHVlLCAyMDEzLTA2LTE4IGF0IDE3OjAyIC0wNzAwLCBLZW50IE92ZXJzdHJlZXQgd3JvdGU6
+Cj4gVGhlbiBhbHNvIGFkZCBhbiBpZHJfYWxsb2MoKSB3cmFwcGVyLCB3aXRob3V0IHRoZSBzdGFy
+dC9lbmQgYXJndW1lbnRzIC0KPiBmb3IgY29uc2lzdGVuY3kgd2l0aCB0aGUgaWRhIGludGVyZmFj
+ZXMuCj4gCj4gU2lnbmVkLW9mZi1ieTogS2VudCBPdmVyc3RyZWV0IDxrb3ZlcnN0cmVldEBnb29n
+bGUuY29tPgo+IENjOiBBbmRyZXcgTW9ydG9uIDxha3BtQGxpbnV4LWZvdW5kYXRpb24ub3JnPgo+
+IENjOiBUZWp1biBIZW8gPHRqQGtlcm5lbC5vcmc+Cj4gQ2M6IEZVSklUQSBUb21vbm9yaSA8ZnVq
+aXRhLnRvbW9ub3JpQGxhYi5udHQuY28uanA+Cj4gQ2M6IEplbnMgQXhib2UgPGF4Ym9lQGtlcm5l
+bC5kaz4KPiBDYzogQ2hhcyBXaWxsaWFtcyA8Y2hhc0BjbWYubnJsLm5hdnkubWlsPgo+IENjOiBM
+YXJzIEVsbGVuYmVyZyA8ZHJiZC1kZXZAbGlzdHMubGluYml0LmNvbT4KPiBDYzogRGFuIFdpbGxp
+YW1zIDxkamJ3QGZiLmNvbT4KPiBDYzogVmlub2QgS291bCA8dmlub2Qua291bEBpbnRlbC5jb20+
+Cj4gQ2M6IFN0ZWZhbiBSaWNodGVyIDxzdGVmYW5yQHM1cjYuaW4tYmVybGluLmRlPgo+IENjOiBH
+cmFudCBMaWtlbHkgPGdyYW50Lmxpa2VseUBsaW5hcm8ub3JnPgo+IENjOiBMaW51cyBXYWxsZWlq
+IDxsaW51cy53YWxsZWlqQGxpbmFyby5vcmc+Cj4gQ2M6IERhdmlkIEFpcmxpZSA8YWlybGllZEBs
+aW51eC5pZT4KPiBDYzogSW5raSBEYWUgPGlua2kuZGFlQHNhbXN1bmcuY29tPgo+IENjOiBKb29u
+eW91bmcgU2hpbSA8ankwOTIyLnNoaW1Ac2Ftc3VuZy5jb20+Cj4gQ2M6IFNldW5nLVdvbyBLaW0g
+PHN3MDMxMi5raW1Ac2Ftc3VuZy5jb20+Cj4gQ2M6IEt5dW5nbWluIFBhcmsgPGt5dW5nbWluLnBh
+cmtAc2Ftc3VuZy5jb20+Cj4gQ2M6IERhbmllbCBWZXR0ZXIgPGRhbmllbC52ZXR0ZXJAZmZ3bGwu
+Y2g+Cj4gQ2M6IFdvbGZyYW0gU2FuZyA8d3NhQHRoZS1kcmVhbXMuZGU+Cj4gQ2M6IFJvbGFuZCBE
+cmVpZXIgPHJvbGFuZEBrZXJuZWwub3JnPgo+IENjOiBTZWFuIEhlZnR5IDxzZWFuLmhlZnR5QGlu
+dGVsLmNvbT4KPiBDYzogSGFsIFJvc2Vuc3RvY2sgPGhhbC5yb3NlbnN0b2NrQGdtYWlsLmNvbT4K
+PiBDYzogU3RldmUgV2lzZSA8c3dpc2VAY2hlbHNpby5jb20+Cj4gQ2M6IEhvYW5nLU5hbSBOZ3V5
+ZW4gPGhuZ3V5ZW5AZGUuaWJtLmNvbT4KPiBDYzogQ2hyaXN0b3BoIFJhaXNjaCA8cmFpc2NoQGRl
+LmlibS5jb20+Cj4gQ2M6IE1pa2UgTWFyY2luaXN6eW4gPGluZmluaXBhdGhAaW50ZWwuY29tPgo+
+IENjOiBBbGFzZGFpciBLZXJnb24gPGFna0ByZWRoYXQuY29tPgo+IENjOiBkbS1kZXZlbEByZWRo
+YXQuY29tCj4gQ2M6IFNhbXVlbCBPcnRpeiA8c2FtZW9AbGludXguaW50ZWwuY29tPgo+IENjOiBB
+bGV4IER1Ym92IDxvYWthZEB5YWhvby5jb20+Cj4gQ2M6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJu
+ZGIuZGU+Cj4gQ2M6IEdyZWcgS3JvYWgtSGFydG1hbiA8Z3JlZ2toQGxpbnV4Zm91bmRhdGlvbi5v
+cmc+Cj4gQ2M6IENocmlzIEJhbGwgPGNqYkBsYXB0b3Aub3JnPgo+IENjOiBEYXZpZCBXb29kaG91
+c2UgPGR3bXcyQGluZnJhZGVhZC5vcmc+Cj4gQ2M6IFBhdWwgTWFja2VycmFzIDxwYXVsdXNAc2Ft
+YmEub3JnPgo+IENjOiBBbnRvbiBWb3JvbnRzb3YgPGNib3VAbWFpbC5ydT4KPiBDYzogUm9kb2xm
+byBHaW9tZXR0aSA8Z2lvbWV0dGlAZW5uZWVubmUuY29tPgo+IENjOiBPaGFkIEJlbi1Db2hlbiA8
+b2hhZEB3aXplcnkuY29tPgo+IENjOiBBbmlsIEd1cnVtdXJ0aHkgPGFndXJ1bXVyQGJyb2NhZGUu
+Y29tPgo+IENjOiBWaWpheWEgTW9oYW4gR3V2dmEgPHZtb2hhbkBicm9jYWRlLmNvbT4KPiBDYzog
+IkphbWVzIEUuSi4gQm90dG9tbGV5IiA8SkJvdHRvbWxleUBwYXJhbGxlbHMuY29tPgo+IENjOiBK
+YW1lcyBTbWFydCA8amFtZXMuc21hcnRAZW11bGV4LmNvbT4KPiBDYzogRG91ZyBHaWxiZXJ0IDxk
+Z2lsYmVydEBpbnRlcmxvZy5jb20+Cj4gQ2M6IFdpbGxlbSBSaWVkZSA8b3NzdEByaWVkZS5vcmc+
+Cj4gQ2M6ICJLYWkgTcOka2lzYXJhIiA8S2FpLk1ha2lzYXJhQGtvbHVtYnVzLmZpPgo+IENjOiBP
+bWFyIFJhbWlyZXogTHVuYSA8b21hci5yYW1pcmV6QGNvcGl0bC5jb20+Cj4gQ2M6ICJOaWNob2xh
+cyBBLiBCZWxsaW5nZXIiIDxuYWJAbGludXgtaXNjc2kub3JnPgo+IENjOiBaaGFuZyBSdWkgPHJ1
+aS56aGFuZ0BpbnRlbC5jb20+Cj4gQ2M6IEVkdWFyZG8gVmFsZW50aW4gPGVkdWFyZG8udmFsZW50
+aW5AdGkuY29tPgo+IENjOiAiSGFucyBKLiBLb2NoIiA8aGprQGhhbnNqa29jaC5kZT4KPiBDYzog
+QWxleCBXaWxsaWFtc29uIDxhbGV4LndpbGxpYW1zb25AcmVkaGF0LmNvbT4KPiBDYzogQ2hyaXN0
+aW5lIENhdWxmaWVsZCA8Y2NhdWxmaWVAcmVkaGF0LmNvbT4KPiBDYzogRGF2aWQgVGVpZ2xhbmQg
+PHRlaWdsYW5kQHJlZGhhdC5jb20+Cj4gQ2M6IFRyb25kIE15a2xlYnVzdCA8VHJvbmQuTXlrbGVi
+dXN0QG5ldGFwcC5jb20+Cj4gQ2M6IE1hcmsgRmFzaGVoIDxtZmFzaGVoQHN1c2UuY29tPgo+IENj
+OiBKb2VsIEJlY2tlciA8amxiZWNAZXZpbHBsYW4ub3JnPgo+IENjOiBMaSBaZWZhbiA8bGl6ZWZh
+bkBodWF3ZWkuY29tPgo+IENjOiBQZXRlciBaaWpsc3RyYSA8YS5wLnppamxzdHJhQGNoZWxsby5u
+bD4KPiBDYzogSW5nbyBNb2xuYXIgPG1pbmdvQHJlZGhhdC5jb20+Cj4gQ2M6IEFybmFsZG8gQ2Fy
+dmFsaG8gZGUgTWVsbyA8YWNtZUBnaG9zdHByb3RvY29scy5uZXQ+Cj4gQ2M6ICJEYXZpZCBTLiBN
+aWxsZXIiIDxkYXZlbUBkYXZlbWxvZnQubmV0Pgo+IENjOiBKb2hhbm5lcyBCZXJnIDxqb2hhbm5l
+c0BzaXBzb2x1dGlvbnMubmV0Pgo+IENjOiAiSm9obiBXLiBMaW52aWxsZSIgPGxpbnZpbGxlQHR1
+eGRyaXZlci5jb20+Cj4gQ2M6IEd1byBDaGFvIDx5YW5AbGludXgudm5ldC5pYm0uY29tPgo+IENj
+OiBBbCBWaXJvIDx2aXJvQHplbml2LmxpbnV4Lm9yZy51az4KPiBDYzogRGF2ZSBBaXJsaWUgPGFp
+cmxpZWRAcmVkaGF0LmNvbT4KPiBDYzogQWxvbiBMZXZ5IDxhbGV2eUByZWRoYXQuY29tPgo+IENj
+OiAiUGF1bCBFLiBNY0tlbm5leSIgPHBhdWxtY2tAbGludXgudm5ldC5pYm0uY29tPgo+IENjOiBE
+YXZpZCBIb3dlbGxzIDxkaG93ZWxsc0ByZWRoYXQuY29tPgo+IENjOiBUaG9tYXMgSGVsbHN0cm9t
+IDx0aGVsbHN0cm9tQHZtd2FyZS5jb20+Cj4gQ2M6IEJyaWFuIFBhdWwgPGJyaWFucEB2bXdhcmUu
+Y29tPgo+IENjOiBNYWFydGVuIExhbmtob3JzdCA8bWFhcnRlbi5sYW5raG9yc3RAY2Fub25pY2Fs
+LmNvbT4KPiBDYzogRG1pdHJ5IFRvcm9raG92IDxkdG9yQHZtd2FyZS5jb20+Cj4gQ2M6IFNhc2hh
+IExldmluIDxzYXNoYS5sZXZpbkBvcmFjbGUuY29tPgo+IENjOiBFcmV6IFNoaXRyaXQgPGVyZXpz
+aEBtZWxsYW5veC5jby5pbD4KPiBDYzogVGF0eWFuYSBOaWtvbG92YSA8VGF0eWFuYS5FLk5pa29s
+b3ZhQGludGVsLmNvbT4KPiBDYzogSGFnZ2FpIEVyYW4gPGhhZ2dhaWVAbWVsbGFub3guY29tPgo+
+IENjOiBHdWVubmFkaSBMaWFraG92ZXRza2kgPGcubGlha2hvdmV0c2tpQGdteC5kZT4KPiBDYzog
+SmFzb24gV2FuZyA8amFzb3dhbmdAcmVkaGF0LmNvbT4KPiBDYzogRXJpYyBEdW1hemV0IDxlZHVt
+YXpldEBnb29nbGUuY29tPgo+IENjOiAiTWljaGFlbCBTLiBUc2lya2luIiA8bXN0QHJlZGhhdC5j
+b20+Cj4gQ2M6IERhbiBNYWdlbmhlaW1lciA8ZGFuLm1hZ2VuaGVpbWVyQG9yYWNsZS5jb20+Cj4g
+Q2M6IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPgo+IENjOiBBbmR5IEdyb3ZlciA8YWdy
+b3ZlckByZWRoYXQuY29tPgo+IENjOiBNYXNhbmFyaSBJaWRhIDxzdGFuZGJ5MjR4N0BnbWFpbC5j
+b20+Cj4gQ2M6IFRpbSBHYXJkbmVyIDx0aW0uZ2FyZG5lckBjYW5vbmljYWwuY29tPgo+IENjOiBE
+YXZpZGxvaHIgQnVlc28gPGRhdmlkbG9oci5idWVzb0BocC5jb20+Cj4gQ2M6IFJpayB2YW4gUmll
+bCA8cmllbEByZWRoYXQuY29tPgo+IENjOiBNaWNoZWwgTGVzcGluYXNzZSA8d2Fsa2VuQGdvb2ds
+ZS5jb20+CgpGb3IgdmZpbwoKQWNrZWQtYnk6IEFsZXggV2lsbGlhbXNvbiA8YWxleC53aWxsaWFt
+c29uQHJlZGhhdC5jb20+Cgo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL3ZmaW8vdmZpby5jIGIvZHJp
+dmVycy92ZmlvL3ZmaW8uYwo+IGluZGV4IDZkNzg3MzYuLmNlNjY3Y2IgMTAwNjQ0Cj4gLS0tIGEv
+ZHJpdmVycy92ZmlvL3ZmaW8uYwo+ICsrKyBiL2RyaXZlcnMvdmZpby92ZmlvLmMKPiBAQCAtMTQy
+LDcgKzE0Miw3IEBAIEVYUE9SVF9TWU1CT0xfR1BMKHZmaW9fdW5yZWdpc3Rlcl9pb21tdV9kcml2
+ZXIpOwo+ICBzdGF0aWMgaW50IHZmaW9fYWxsb2NfZ3JvdXBfbWlub3Ioc3RydWN0IHZmaW9fZ3Jv
+dXAgKmdyb3VwKQo+ICB7Cj4gIAkvKiBpbmRleCAwIGlzIHVzZWQgYnkgL2Rldi92ZmlvL3ZmaW8g
+Ki8KPiAtCXJldHVybiBpZHJfYWxsb2MoJnZmaW8uZ3JvdXBfaWRyLCBncm91cCwgMSwgTUlOT1JN
+QVNLICsgMSwgR0ZQX0tFUk5FTCk7Cj4gKwlyZXR1cm4gaWRyX2FsbG9jX3JhbmdlKCZ2ZmlvLmdy
+b3VwX2lkciwgZ3JvdXAsIDEsIE1JTk9STUFTSyArIDEsIEdGUF9LRVJORUwpOwo+ICB9Cj4gIAo+
+ICBzdGF0aWMgdm9pZCB2ZmlvX2ZyZWVfZ3JvdXBfbWlub3IoaW50IG1pbm9yKQoKCi0tCmRtLWRl
+dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
+b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
