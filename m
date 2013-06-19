@@ -1,8 +1,8 @@
-From: Alex Williamson <alex.williamson@redhat.com>
+From: Davidlohr Bueso <davidlohr.bueso@hp.com>
 Subject: Re: [PATCH 07/10] idr: Rename idr_alloc() ->
 	idr_alloc_range()
-Date: Wed, 19 Jun 2013 10:44:11 -0600
-Message-ID: <1371660251.22659.110.camel@ul30vt.home>
+Date: Wed, 19 Jun 2013 10:28:24 -0700
+Message-ID: <1371662904.1776.0.camel@buesod1.americas.hpqcorp.net>
 References: <1371600150-23557-1-git-send-email-koverstreet@google.com>
 	<1371600150-23557-8-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -21,7 +21,8 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Kent Overstreet <koverstreet@google.com>
-Cc: Wolfram Sang <wsa@the-dreams.de>, Tatyana Nikolova <Tatyana.E.Nikolova@intel.com>, Walleij <linus.walleij@linaro.org>, Paul Mackerras <paulus@samba.org>, Christoph Hellwig <hch@lst.de>, Alon Levy <alevy@redhat.com>, Davidlohr Bueso <davidlohr.bueso@hp.com>, Ohad Ben-Cohen <ohad@wizery.com>, Dan@redhat.com, "John W. Linville" <linville@tuxdriver.com>, Dae <inki.dae@samsung.com>, David Teigland <teigland@redhat.com>, Joel Becker <jlbec@evilplan.org>, Tim Gardner <tim.gardner@canonical.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Seung-Woo Kim <sw0312.kim@samsung.com>, linux-kernel@vger.kernel.org, Li Zefan <lizefan@huawei.com>, tj@kernel.org, Guo Chao <yan@linux.vnet.ibm.com>, akpm@linux-foundation.org, Andy Grover <agrover@redhat.com>, Dmitry Torokhov <dtor@vmware.>
+Cc: Arnaldo@redhat.com, Wolfram Sang <wsa@the-dreams.de>, Tatyana Nikolova <Tatyana.E.Nikolova@intel.com>, Walleij <linus.walleij@linaro.org>, Paul Mackerras <paulus@samba.org>, Christoph Hellwig <hch@lst.de>, Trond@redhat.com, Levy <alevy@redhat.com>, Ohad Ben-Cohen <ohad@wizery.com>, Dan@redhat.com, "John W.
+	Linville" <linville@tuxdriver.com>, Dae <inki.dae@samsung.com>, Williamson <alex.williamson@redhat.com>, David Teigland <teigland@redhat.com>, Joel Becker <jlbec@evilplan.org>, Tim Gardner <tim.gardner@canonical.com>, Alex@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Seung-Woo Kim <sw0312.kim@samsung.com>, linux-kernel@vger.kernel.org, Li Zefan <lizefan@huawei.com>, tj@kernel.org, Guo Chao <yan@linux.vnet.ibm.com>, akpm@linux-foundation.org, Andy Grover <agrover@>
 List-Id: dm-devel.ids
 
 T24gVHVlLCAyMDEzLTA2LTE4IGF0IDE3OjAyIC0wNzAwLCBLZW50IE92ZXJzdHJlZXQgd3JvdGU6
@@ -95,16 +96,6 @@ b3ZlckByZWRoYXQuY29tPgo+IENjOiBNYXNhbmFyaSBJaWRhIDxzdGFuZGJ5MjR4N0BnbWFpbC5j
 b20+Cj4gQ2M6IFRpbSBHYXJkbmVyIDx0aW0uZ2FyZG5lckBjYW5vbmljYWwuY29tPgo+IENjOiBE
 YXZpZGxvaHIgQnVlc28gPGRhdmlkbG9oci5idWVzb0BocC5jb20+Cj4gQ2M6IFJpayB2YW4gUmll
 bCA8cmllbEByZWRoYXQuY29tPgo+IENjOiBNaWNoZWwgTGVzcGluYXNzZSA8d2Fsa2VuQGdvb2ds
-ZS5jb20+CgpGb3IgdmZpbwoKQWNrZWQtYnk6IEFsZXggV2lsbGlhbXNvbiA8YWxleC53aWxsaWFt
-c29uQHJlZGhhdC5jb20+Cgo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL3ZmaW8vdmZpby5jIGIvZHJp
-dmVycy92ZmlvL3ZmaW8uYwo+IGluZGV4IDZkNzg3MzYuLmNlNjY3Y2IgMTAwNjQ0Cj4gLS0tIGEv
-ZHJpdmVycy92ZmlvL3ZmaW8uYwo+ICsrKyBiL2RyaXZlcnMvdmZpby92ZmlvLmMKPiBAQCAtMTQy
-LDcgKzE0Miw3IEBAIEVYUE9SVF9TWU1CT0xfR1BMKHZmaW9fdW5yZWdpc3Rlcl9pb21tdV9kcml2
-ZXIpOwo+ICBzdGF0aWMgaW50IHZmaW9fYWxsb2NfZ3JvdXBfbWlub3Ioc3RydWN0IHZmaW9fZ3Jv
-dXAgKmdyb3VwKQo+ICB7Cj4gIAkvKiBpbmRleCAwIGlzIHVzZWQgYnkgL2Rldi92ZmlvL3ZmaW8g
-Ki8KPiAtCXJldHVybiBpZHJfYWxsb2MoJnZmaW8uZ3JvdXBfaWRyLCBncm91cCwgMSwgTUlOT1JN
-QVNLICsgMSwgR0ZQX0tFUk5FTCk7Cj4gKwlyZXR1cm4gaWRyX2FsbG9jX3JhbmdlKCZ2ZmlvLmdy
-b3VwX2lkciwgZ3JvdXAsIDEsIE1JTk9STUFTSyArIDEsIEdGUF9LRVJORUwpOwo+ICB9Cj4gIAo+
-ICBzdGF0aWMgdm9pZCB2ZmlvX2ZyZWVfZ3JvdXBfbWlub3IoaW50IG1pbm9yKQoKCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+ZS5jb20+CgpGb3IgaXBjIGNvZGU6CgpBY2tlZC1ieTogRGF2aWRsb2hyIEJ1ZXNvIDxkYXZpZGxv
+aHIuYnVlc29AaHAuY29tPgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
