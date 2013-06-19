@@ -1,12 +1,11 @@
-From: Alex Elsayed <eternaleye@gmail.com>
-Subject: Re: dm-cache caching network volume
-Date: Tue, 18 Jun 2013 18:23 -0700
-Message-ID: <kpr15n$a53$1@ger.gmane.org>
-References: <1371547972.6128.8.camel@expiron>
+From: Kyle Manna <kyle.manna@gmail.com>
+Subject: Proper dm-cache shutdown
+Date: Tue, 18 Jun 2013 18:39:48 -0700
+Message-ID: <CAM9fjH4PYKsidH+buZkmRQ5GMMNd_sOkxvqfxpctP-zQn9y9uw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,33 +19,30 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-w4l0aWVubmUgQkVSU0FDIHdyb3RlOgoKPiBIaSwKPiAKPiBJJ20gdGVzdGluZyBkbS1jYWNoZSBm
-b3IgdXNpbmcgYSBsb2NhbCBTU0QgYXMgYSBjYWNoZSBmb3IgYSBuZXR3b3JrCj4gdm9sdW1lLiBN
-eSBnb2FsIGlzIHRvIHRlc3QgZG0tY2FjaGUgYmVoYXZpb3VyIHdoZW4gbmV0d29yayBpcyBkb3du
-Lgo+IAo+IFRoZSBkZXZpY2UgaXMgc2hhcmVkIHRocm91Z2ggaVNDU0kuIFRoZSBmaXJzdCB0ZXN0
-IGlzIGZpbGxpbmcgYSBodWdlCj4gZmlsZSB3aXRoIGRkIGZyb20gL2Rldi96ZXJvLiBTbywgdGhp
-cyBpcyBzZXF1ZW50aWFsIGFjY2Vzcy4gV2hpbGUgZGQgaXMKPiBydW5uaW5nLCBpIHJlbW92ZSB0
-aGUgdHVuIGlmYWNlIGZyb20gdGhlIGJyaWRnZSBvbiB0aGUgaG9zdC4gaVNDU0kKPiBwcm9wZXJs
-eSBkZXRlY3RzIHRoZSBuZXR3b3JrIGZhaWx1cmUuCj4gCj4gSSBleHBlY3RlZCBkbS1jYWNoZSB0
-byBjb250aW51ZSBmaWxsaW5nIGRpcnR5IGJsb2NrcywgZXZlbiBpZiB0aGUKPiBuZXR3b3JrIGRl
-dmljZSBpcyBibG9ja2luZy4gQnV0IGl0IGRvZXNuJ3QuIFRoZSBzdGF0dXMgc2hvd3MgdGhhdCBk
-aXJ0eQo+IGJsb2NrcyBjb3VudCBzdGF5cyB0aGUgc2FtZS4gZGQgaXMgYmxvY2tpbmcuCj4gCj4g
-SSdtIHdvbmRlcmluZyBpZiB0aGVyZSBpcyBzb21lIGNhY2hlIGRlc2FjdGl2YXRpb24gZHVlIHRv
-Cj4gc2VxdWVudGlhbF90aHJlc2hvbGQuIEJ1dCBpbmNyZWFzaW5nIHNlcXVlbnRpYWxfdGhyZXNo
-b2xkIGRpZCBub3QgaGVscC4KPiBXaGVyZSBkb2VzIGRtLWNhY2hlIGJsb2NrcyA/Cj4gCj4gSXMg
-aXQgcG9zc2libGUgdG8gaGF2ZSBkbS1jYWNoZSAiYnVmZmVyaXplIiBibG9ja3MgZm9yIG5ldHdv
-cmsKPiBmYWlsdXJlcyA/Cj4gCj4gUmVnYXJkcywKCkRpc2NsYWltZXI6IE5vdCBhbiBleHBlcnQs
-IGFuZCBub3QgYWN0dWFsbHkgaW52b2x2ZWQgaW4gd3JpdGluZyBiY2FjaGUKCldlbGwsIHNpbmNl
-IHlvdSBkaWRuJ3QgbWVudGlvbiBjaGFuZ2luZyBpdCwgSSBzdXNwZWN0IHlvdSBhcmUgb3BlcmF0
-aW5nIGluIAp0aGUgZGVmYXVsdCAid3JpdGV0aHJvdWdoIiBtb2RlIC0gdGhpcyBkb2Vzbid0IHJl
-dHVybiB0byB1c2Vyc3BhY2UgdW50aWwgdGhlIApkYXRhIGlzIG9uIHRoZSBiYWNraW5nIChpU0NT
-SSBpbiB5b3VyIGNhc2UpIGRldmljZS4gRm9yIGJjYWNoZSBvdmVyIGEgCm5ldHdvcmsgdm9sdW1l
-LCB0aGlzIGlzIHRoZSBzYWZlIG9wdGlvbiwgc2luY2UgdGhlIGNsaWVudCBtYWNoaW5lIGR5aW5n
-IAp3b24ndCBsb3NlIGRhdGEuCgpJZiB5b3UgcHV0IGJjYWNoZSBpbiB3cml0ZXRocm91Z2ggbW9k
-ZSwgaXQgbWF5IHdlbGwgZG8gZXhhY3RseSBhcyB5b3UgCmRlc2NyaWJlLCBidXQgb25seSBpZiBp
-U0NTSSBpdHNlbGYgcmVjb3ZlcnMgZnJvbSB0aGUgY29ubmVjdGlvbiBsb3NzIChhbmQgCnBvc3Np
-Ymx5IG90aGVyIGNhdmVhdHMgSSdtIG5vdCB0aGlua2luZyBvZikuIElmIGl0IGRvZXNuJ3QsIG9y
-IGlmIGl0IGRvZXMgCmJ1dCBkb2Vzbid0IG1hbmFnZSB0byBtYWludGFpbiB0aGUgZXhhY3Qgc3Rh
-dGUgaXQgd2FzIGluIG9uIGRpc2Nvbm5lY3Rpb24sIAp0aGVuIHlvdSB3aWxsIGxvc2UgZGF0YS4K
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hi,
+
+What is the proper shutdown sequence for dm-cache?  Should I be
+disassembling the dm device everytime?
+
+There is a section in Documentation/device-mapper/cache.txt that
+suggests that I should:
+
+    The 'dirty' state for a cache block changes far too frequently for us
+    to keep updating it on the fly.  So we treat it as a hint.  In normal
+    operation it will be written when the dm device is suspended.  If the
+    system crashes all cache blocks will be assumed dirty when restarted.
+
+Right now I'm using the following:
+
+    (wait for standard init system to unmount the filesystem)
+    dmsetup suspend home-cached
+    dmsetup remove home-cached
+    dmsetup remove ssd-blocks
+    dmsetup remove ssd-metadata
+
+I assume the suspend will accomplish the syncing of the metadata
+according to the Docs.  Is tearing down the dm nodes under it of any
+value during a shutdown or reboot?
+
+Thanks,
+- Kyle
