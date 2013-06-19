@@ -1,11 +1,12 @@
-From: Kyle Manna <kyle.manna@gmail.com>
-Subject: Proper dm-cache shutdown
-Date: Tue, 18 Jun 2013 18:39:48 -0700
-Message-ID: <CAM9fjH4PYKsidH+buZkmRQ5GMMNd_sOkxvqfxpctP-zQn9y9uw@mail.gmail.com>
+From: Alex Elsayed <eternaleye@gmail.com>
+Subject: Re: dm-cache caching network volume
+Date: Tue, 18 Jun 2013 19:07:03 -0700
+Message-ID: <kpr9c9$iej$1@ger.gmane.org>
+References: <1371547972.6128.8.camel@expiron> <kpr15n$a53$1@ger.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,30 +20,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
-
-What is the proper shutdown sequence for dm-cache?  Should I be
-disassembling the dm device everytime?
-
-There is a section in Documentation/device-mapper/cache.txt that
-suggests that I should:
-
-    The 'dirty' state for a cache block changes far too frequently for us
-    to keep updating it on the fly.  So we treat it as a hint.  In normal
-    operation it will be written when the dm device is suspended.  If the
-    system crashes all cache blocks will be assumed dirty when restarted.
-
-Right now I'm using the following:
-
-    (wait for standard init system to unmount the filesystem)
-    dmsetup suspend home-cached
-    dmsetup remove home-cached
-    dmsetup remove ssd-blocks
-    dmsetup remove ssd-metadata
-
-I assume the suspend will accomplish the syncing of the metadata
-according to the Docs.  Is tearing down the dm nodes under it of any
-value during a shutdown or reboot?
-
-Thanks,
-- Kyle
+QWxleCBFbHNheWVkIHdyb3RlOgoKPiDDiXRpZW5uZSBCRVJTQUMgd3JvdGU6Cj4gCj4+IEhpLAo+
+PiAKPj4gSSdtIHRlc3RpbmcgZG0tY2FjaGUgZm9yIHVzaW5nIGEgbG9jYWwgU1NEIGFzIGEgY2Fj
+aGUgZm9yIGEgbmV0d29yawo+PiB2b2x1bWUuIE15IGdvYWwgaXMgdG8gdGVzdCBkbS1jYWNoZSBi
+ZWhhdmlvdXIgd2hlbiBuZXR3b3JrIGlzIGRvd24uCj4+IAo+PiBUaGUgZGV2aWNlIGlzIHNoYXJl
+ZCB0aHJvdWdoIGlTQ1NJLiBUaGUgZmlyc3QgdGVzdCBpcyBmaWxsaW5nIGEgaHVnZQo+PiBmaWxl
+IHdpdGggZGQgZnJvbSAvZGV2L3plcm8uIFNvLCB0aGlzIGlzIHNlcXVlbnRpYWwgYWNjZXNzLiBX
+aGlsZSBkZCBpcwo+PiBydW5uaW5nLCBpIHJlbW92ZSB0aGUgdHVuIGlmYWNlIGZyb20gdGhlIGJy
+aWRnZSBvbiB0aGUgaG9zdC4gaVNDU0kKPj4gcHJvcGVybHkgZGV0ZWN0cyB0aGUgbmV0d29yayBm
+YWlsdXJlLgo+PiAKPj4gSSBleHBlY3RlZCBkbS1jYWNoZSB0byBjb250aW51ZSBmaWxsaW5nIGRp
+cnR5IGJsb2NrcywgZXZlbiBpZiB0aGUKPj4gbmV0d29yayBkZXZpY2UgaXMgYmxvY2tpbmcuIEJ1
+dCBpdCBkb2Vzbid0LiBUaGUgc3RhdHVzIHNob3dzIHRoYXQgZGlydHkKPj4gYmxvY2tzIGNvdW50
+IHN0YXlzIHRoZSBzYW1lLiBkZCBpcyBibG9ja2luZy4KPj4gCj4+IEknbSB3b25kZXJpbmcgaWYg
+dGhlcmUgaXMgc29tZSBjYWNoZSBkZXNhY3RpdmF0aW9uIGR1ZSB0bwo+PiBzZXF1ZW50aWFsX3Ro
+cmVzaG9sZC4gQnV0IGluY3JlYXNpbmcgc2VxdWVudGlhbF90aHJlc2hvbGQgZGlkIG5vdCBoZWxw
+Lgo+PiBXaGVyZSBkb2VzIGRtLWNhY2hlIGJsb2NrcyA/Cj4+IAo+PiBJcyBpdCBwb3NzaWJsZSB0
+byBoYXZlIGRtLWNhY2hlICJidWZmZXJpemUiIGJsb2NrcyBmb3IgbmV0d29yawo+PiBmYWlsdXJl
+cyA/Cj4+IAo+PiBSZWdhcmRzLAo+IAo+IERpc2NsYWltZXI6IE5vdCBhbiBleHBlcnQsIGFuZCBu
+b3QgYWN0dWFsbHkgaW52b2x2ZWQgaW4gd3JpdGluZyBiY2FjaGUKPiAKPiBXZWxsLCBzaW5jZSB5
+b3UgZGlkbid0IG1lbnRpb24gY2hhbmdpbmcgaXQsIEkgc3VzcGVjdCB5b3UgYXJlIG9wZXJhdGlu
+ZyBpbgo+IHRoZSBkZWZhdWx0ICJ3cml0ZXRocm91Z2giIG1vZGUgLSB0aGlzIGRvZXNuJ3QgcmV0
+dXJuIHRvIHVzZXJzcGFjZSB1bnRpbAo+IHRoZSBkYXRhIGlzIG9uIHRoZSBiYWNraW5nIChpU0NT
+SSBpbiB5b3VyIGNhc2UpIGRldmljZS4gRm9yIGJjYWNoZSBvdmVyIGEKPiBuZXR3b3JrIHZvbHVt
+ZSwgdGhpcyBpcyB0aGUgc2FmZSBvcHRpb24sIHNpbmNlIHRoZSBjbGllbnQgbWFjaGluZSBkeWlu
+Zwo+IHdvbid0IGxvc2UgZGF0YS4KPiAKPiBJZiB5b3UgcHV0IGJjYWNoZSBpbiB3cml0ZXRocm91
+Z2ggbW9kZSwgaXQgbWF5IHdlbGwgZG8gZXhhY3RseSBhcyB5b3UKPiBkZXNjcmliZSwgYnV0IG9u
+bHkgaWYgaVNDU0kgaXRzZWxmIHJlY292ZXJzIGZyb20gdGhlIGNvbm5lY3Rpb24gbG9zcyAoYW5k
+Cj4gcG9zc2libHkgb3RoZXIgY2F2ZWF0cyBJJ20gbm90IHRoaW5raW5nIG9mKS4gSWYgaXQgZG9l
+c24ndCwgb3IgaWYgaXQgZG9lcwo+IGJ1dCBkb2Vzbid0IG1hbmFnZSB0byBtYWludGFpbiB0aGUg
+ZXhhY3Qgc3RhdGUgaXQgd2FzIGluIG9uIGRpc2Nvbm5lY3Rpb24sCj4gdGhlbiB5b3Ugd2lsbCBs
+b3NlIGRhdGEuCgpNeSBhcG9sb2dpZXMsIEkgZGlkbid0IHJlYWxpemUgdW50aWwgSSByZWFkeSBt
+eSBvd24gcmVwbHkgb24gdGhlIHdheSBiYWNrIAp0aGF0IHRoaXMgd2FzIG9uIHRoZSB0b3BpYyBv
+ZiBkbS1jYWNoZSByYXRoZXIgdGhhbiBiY2FjaGUuCgpUbyBwcm9wZXJseSByZXNwb25kLCBhcyBJ
+IHVuZGVyc3RhbmQgaXQgZG0tY2FjaGUgd29ya3MgYnkgbWlncmF0aW5nIGNodW5rcyAKYmV0d2Vl
+biB0aGUgYmFja2luZyBkZXZpY2UgYW5kIHRoZSBmYXN0ZXIgY2FjaGUuIElmIHlvdXIgd3JpdGUg
+d291bGQgZ28gdG8gCnRoZSBiYWNraW5nIGRldmljZSwgaXQgd291bGQgYmxvY2sgZXhhY3RseSBh
+cyBub3JtYWwuCgooSSBob3BlIEkgZGlkbid0IGdldCB0aGlzIGVncmVnaW91c2x5IHdyb25nLi4u
+KQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
