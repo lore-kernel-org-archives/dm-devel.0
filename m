@@ -1,91 +1,196 @@
-From: =?ISO-8859-1?Q?=C9tienne?= BERSAC <etienne.bersac@nonstop.fr>
-Subject: Re: dm-cache caching network volume
-Date: Thu, 20 Jun 2013 11:31:27 +0200
-Message-ID: <1371720687.30405.5.camel@expiron>
-References: <mailman.51.1371657606.18923.dm-devel@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5172534590809672899=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <mailman.51.1371657606.18923.dm-devel@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+From: Geremy Condra <gcondra@google.com>
+Subject: [PATCH] dm: verity: Add support for emitting uevents on dm-verity  errors.
+Date: Thu, 20 Jun 2013 14:21:00 -0700
+Message-ID: <1371763260-9933-1-git-send-email-gcondra@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com
+Cc: wad@chromium.org, agk@redhat.com, linux-kernel@vger.kernel.org, Geremy Condra <gcondra@google.com>
 List-Id: dm-devel.ids
 
+With this change and config option, dm-verity errors
+will cause uevents to be sent to userspace, notifying
+it that an error has occurred and potentially
+triggering recovery actions.
 
---===============5172534590809672899==
-Content-Type: multipart/signed; micalg="pgp-sha1";
-	protocol="application/pgp-signature";
-	boundary="=-abnb1+PTcwJ2xMu/xV4u"
+Signed-off-by: Geremy Condra <gcondra@google.com>
+Change-Id: If3d9c00770d1a640faa0d42318cce675da40c000
+---
+ drivers/md/Kconfig     |  6 ++++++
+ drivers/md/dm-uevent.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-uevent.h | 12 ++++++++++--
+ drivers/md/dm-verity.c | 28 ++++++++++++++++++++++++++++
+ 4 files changed, 84 insertions(+), 2 deletions(-)
 
-
---=-abnb1+PTcwJ2xMu/xV4u
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-Hi,
-
-Thanks for the reply :-)
-
-I actually uses write-back. Here are the tables :
-
-----8<----
-cache_cacher: 0 1024 linear 254:32 2097152
-cache_origin: 0 2048 linear 8:0 0
-cache: 0 2048 cache 253:3 253:4 253:2 512 1 writeback default 4 sequential_=
-threshold 2147483648 random_threshold 4
-cache_metadata: 0 2097152 linear 254:32 0
----->8----
-
-8:0 is /dev/sda, the iSCSI target.
-254:32 is /dev/vdc, a virtio volume accessing a LV on a SSD.
-
-The thing is : the cache status properlay state that new blocks in cache
-are filled, they are even marked as dirty. Which suggest they are not in
-the backing device. But actually, it blocks when iSCSI detects the
-network failure.
-
-Can dm-cache handle writes without querying the backing device until it
-needs demotion ?
-
-Regards,
---=20
-=C3=89tienne BERSAC <etienne.bersac@nonstop.fr>
-NON STOP Systems
-
---=-abnb1+PTcwJ2xMu/xV4u
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQEcBAABAgAGBQJRwsvvAAoJEF5WQ9pdAIwZkgoIALTb0C2RARwn5QrDPkGpocBy
-uO11Y3lQoEi/NV0/ATStJh1x5JjRq7Pc6eB8acBJ6w4kTv5xzh7A8rv1Et5BmXyv
-Sxlv2+nev7uploZTLM8T+TExQDBBs+b/Kxt7zbI9XAh/G+qVLAkbm3WXNRH9b4Wa
-5sWvCYLaZTrLFPGQ6HU7L0SrS/KOtU+h4L3LMe7xxYpHbusvX6DqDdl29VuidIAJ
-1hCEZl6GM/kJwDgfRT1GJV2TwIA17OBkbveizt53Z8Z8TUckHPzi8htEY8uInhJv
-3JWAbYV5Cip6t2lF/vG2q1YawiBUP5ZkRNLQ1bsG6wPgvLYgXxSoW405bv1hAfQ=
-=3eOq
------END PGP SIGNATURE-----
-
---=-abnb1+PTcwJ2xMu/xV4u--
-
-
---===============5172534590809672899==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5172534590809672899==--
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 10f122a..fab9c32 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -390,4 +390,10 @@ config DM_VERITY
+ 
+ 	  If unsure, say N.
+ 
++config DM_VERITY_ERROR_NOTIFY
++	tristate "Notify userspace of verity errors through uevents"
++	depends on DM_VERITY && DM_UEVENT
++	---help---
++	  This option instructs dm-verity to send uevents on error.
++
+ endif # MD
+diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
+index 8efe033..17a6662 100644
+--- a/drivers/md/dm-uevent.c
++++ b/drivers/md/dm-uevent.c
+@@ -36,6 +36,8 @@ static const struct {
+ } _dm_uevent_type_names[] = {
+ 	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
+ 	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
++	{DM_UEVENT_VERITY_DATA_ERROR, KOBJ_CHANGE, "VERITY_DATA_ERROR"},
++	{DM_UEVENT_VERITY_HASH_ERROR, KOBJ_CHANGE, "VERITY_HASH_ERROR"},
+ };
+ 
+ static struct kmem_cache *_dm_event_cache;
+@@ -202,6 +204,44 @@ void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
+ }
+ EXPORT_SYMBOL_GPL(dm_path_uevent);
+ 
++void dm_send_verity_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
++						unsigned long long block_nr)
++{
++	struct mapped_device *md = dm_table_get_md(ti->table);
++	struct dm_uevent *event = dm_uevent_alloc(md);
++	struct gendisk *disk = dm_disk(md);
++
++	if (!event) {
++		DMERR("%s: dm_uevent_alloc() failed", __func__);
++		return;
++	}
++
++	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
++		DMERR("%s: Invalid event_type %d", __func__, event_type);
++		goto out;
++	}
++
++	if (add_uevent_var(&event->ku_env, "DM_VERITY_BLOCK_NR=%llu", block_nr)) {
++		DMERR("%s: add_uevent_var() for DM_VERITY_BLOCK failed", __func__);
++		goto out;
++	}
++
++	if (add_uevent_var(&event->ku_env, "DM_ACTION=%s",
++			_dm_uevent_type_names[event_type].name)) {
++		DMERR("%s: add_uevent_var() for DM_ACTION failed", __func__);
++		goto out;
++	}
++
++	if (kobject_uevent_env(&disk_to_dev(disk)->kobj, event_type,
++				event->ku_env.envp)) {
++		DMERR("%s: kobject_uevent_env failed", __func__);
++	}
++
++out:
++	dm_uevent_free(event);
++}
++EXPORT_SYMBOL_GPL(dm_send_verity_uevent);
++
+ int dm_uevent_init(void)
+ {
+ 	_dm_event_cache = KMEM_CACHE(dm_uevent, 0);
+diff --git a/drivers/md/dm-uevent.h b/drivers/md/dm-uevent.h
+index 2eccc8b..1c59dba 100644
+--- a/drivers/md/dm-uevent.h
++++ b/drivers/md/dm-uevent.h
+@@ -24,6 +24,8 @@
+ enum dm_uevent_type {
+ 	DM_UEVENT_PATH_FAILED,
+ 	DM_UEVENT_PATH_REINSTATED,
++	DM_UEVENT_VERITY_DATA_ERROR,
++	DM_UEVENT_VERITY_HASH_ERROR,
+ };
+ 
+ #ifdef CONFIG_DM_UEVENT
+@@ -34,7 +36,9 @@ extern void dm_send_uevents(struct list_head *events, struct kobject *kobj);
+ extern void dm_path_uevent(enum dm_uevent_type event_type,
+ 			   struct dm_target *ti, const char *path,
+ 			   unsigned nr_valid_paths);
+-
++extern void dm_send_verity_uevent(enum dm_uevent_type event_type,
++					struct dm_target *ti,
++					unsigned long long block_nr);
+ #else
+ 
+ static inline int dm_uevent_init(void)
+@@ -53,7 +57,11 @@ static inline void dm_path_uevent(enum dm_uevent_type event_type,
+ 				  unsigned nr_valid_paths)
+ {
+ }
+-
++static inline void dm_send_verity_uevent(enum dm_uevent_type event_type,
++					struct dm_target *ti,
++					unsigned long long block_nr)
++{
++}
+ #endif	/* CONFIG_DM_UEVENT */
+ 
+ #endif	/* DM_UEVENT_H */
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 68bf5c3..c9c9ecc 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -20,6 +20,8 @@
+ #include <linux/device-mapper.h>
+ #include <crypto/hash.h>
+ 
++#include "dm-uevent.h"
++
+ #define DM_MSG_PREFIX			"verity"
+ 
+ #define DM_VERITY_IO_VEC_INLINE		16
+@@ -137,6 +139,30 @@ static void dm_bufio_alloc_callback(struct dm_buffer *buf)
+ }
+ 
+ /*
++ * Trigger userspace data corruption handler.
++ */
++#ifdef CONFIG_DM_VERITY_ERROR_NOTIFY
++static void verity_data_error(struct dm_verity *v, unsigned long long block_nr)
++{
++	dm_send_verity_uevent(DM_UEVENT_VERITY_DATA_ERROR, v->ti, block_nr);
++}
++
++static void verity_hash_error(struct dm_verity *v, unsigned long long block_nr)
++{
++	dm_send_verity_uevent(DM_UEVENT_VERITY_HASH_ERROR, v->ti, block_nr);
++}
++#else
++static inline void verity_data_error(struct dm_verity *v,
++					unsigned long long block_nr)
++{
++}
++static inline void verity_hash_error(struct dm_verity *v,
++					unsigned long long block_nr)
++{
++}
++#endif
++
++/*
+  * Translate input sector number to the sector number on the target device.
+  */
+ static sector_t verity_map_sector(struct dm_verity *v, sector_t bi_sector)
+@@ -255,6 +281,7 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
+ 				(unsigned long long)hash_block);
+ 			v->hash_failed = 1;
+ 			r = -EIO;
++			verity_hash_error(v, (unsigned long long)hash_block);
+ 			goto release_ret_r;
+ 		} else
+ 			aux->hash_verified = 1;
+@@ -375,6 +402,7 @@ test_block_hash:
+ 			DMERR_LIMIT("data block %llu is corrupted",
+ 				(unsigned long long)(io->block + b));
+ 			v->hash_failed = 1;
++			verity_data_error(v, (unsigned long long)(io->block + b));
+ 			return -EIO;
+ 		}
+ 	}
+-- 
+1.8.3
