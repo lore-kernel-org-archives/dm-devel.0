@@ -1,196 +1,35 @@
-From: Geremy Condra <gcondra@google.com>
-Subject: [PATCH] dm: verity: Add support for emitting uevents on dm-verity  errors.
-Date: Thu, 20 Jun 2013 14:21:00 -0700
-Message-ID: <1371763260-9933-1-git-send-email-gcondra@google.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm: verity: Add support for emitting
+	uevents on dm-verity errors.
+Date: Fri, 21 Jun 2013 01:59:05 +0100
+Message-ID: <20130621005905.GI23042@agk-dp.fab.redhat.com>
+References: <1371763260-9933-1-git-send-email-gcondra@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1371763260-9933-1-git-send-email-gcondra@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: wad@chromium.org, agk@redhat.com, linux-kernel@vger.kernel.org, Geremy Condra <gcondra@google.com>
+To: Geremy Condra <gcondra@google.com>
+Cc: dm-devel@redhat.com, wad@chromium.org, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-With this change and config option, dm-verity errors
-will cause uevents to be sent to userspace, notifying
-it that an error has occurred and potentially
-triggering recovery actions.
+On Thu, Jun 20, 2013 at 02:21:00PM -0700, Geremy Condra wrote:
+> With this change and config option, dm-verity errors
+> will cause uevents to be sent to userspace, notifying
+> it that an error has occurred and potentially
+> triggering recovery actions.
+ 
+> +config DM_VERITY_ERROR_NOTIFY
+> +	tristate "Notify userspace of verity errors through uevents"
+> +	depends on DM_VERITY && DM_UEVENT
+> +	---help---
+> +	  This option instructs dm-verity to send uevents on error.
+> +
 
-Signed-off-by: Geremy Condra <gcondra@google.com>
-Change-Id: If3d9c00770d1a640faa0d42318cce675da40c000
----
- drivers/md/Kconfig     |  6 ++++++
- drivers/md/dm-uevent.c | 40 ++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-uevent.h | 12 ++++++++++--
- drivers/md/dm-verity.c | 28 ++++++++++++++++++++++++++++
- 4 files changed, 84 insertions(+), 2 deletions(-)
+Would it cause any problems if we had this feature enabled all the time,
+controlled only by DM_UEVENT?
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 10f122a..fab9c32 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -390,4 +390,10 @@ config DM_VERITY
- 
- 	  If unsure, say N.
- 
-+config DM_VERITY_ERROR_NOTIFY
-+	tristate "Notify userspace of verity errors through uevents"
-+	depends on DM_VERITY && DM_UEVENT
-+	---help---
-+	  This option instructs dm-verity to send uevents on error.
-+
- endif # MD
-diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
-index 8efe033..17a6662 100644
---- a/drivers/md/dm-uevent.c
-+++ b/drivers/md/dm-uevent.c
-@@ -36,6 +36,8 @@ static const struct {
- } _dm_uevent_type_names[] = {
- 	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
- 	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
-+	{DM_UEVENT_VERITY_DATA_ERROR, KOBJ_CHANGE, "VERITY_DATA_ERROR"},
-+	{DM_UEVENT_VERITY_HASH_ERROR, KOBJ_CHANGE, "VERITY_HASH_ERROR"},
- };
- 
- static struct kmem_cache *_dm_event_cache;
-@@ -202,6 +204,44 @@ void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
- }
- EXPORT_SYMBOL_GPL(dm_path_uevent);
- 
-+void dm_send_verity_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
-+						unsigned long long block_nr)
-+{
-+	struct mapped_device *md = dm_table_get_md(ti->table);
-+	struct dm_uevent *event = dm_uevent_alloc(md);
-+	struct gendisk *disk = dm_disk(md);
-+
-+	if (!event) {
-+		DMERR("%s: dm_uevent_alloc() failed", __func__);
-+		return;
-+	}
-+
-+	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
-+		DMERR("%s: Invalid event_type %d", __func__, event_type);
-+		goto out;
-+	}
-+
-+	if (add_uevent_var(&event->ku_env, "DM_VERITY_BLOCK_NR=%llu", block_nr)) {
-+		DMERR("%s: add_uevent_var() for DM_VERITY_BLOCK failed", __func__);
-+		goto out;
-+	}
-+
-+	if (add_uevent_var(&event->ku_env, "DM_ACTION=%s",
-+			_dm_uevent_type_names[event_type].name)) {
-+		DMERR("%s: add_uevent_var() for DM_ACTION failed", __func__);
-+		goto out;
-+	}
-+
-+	if (kobject_uevent_env(&disk_to_dev(disk)->kobj, event_type,
-+				event->ku_env.envp)) {
-+		DMERR("%s: kobject_uevent_env failed", __func__);
-+	}
-+
-+out:
-+	dm_uevent_free(event);
-+}
-+EXPORT_SYMBOL_GPL(dm_send_verity_uevent);
-+
- int dm_uevent_init(void)
- {
- 	_dm_event_cache = KMEM_CACHE(dm_uevent, 0);
-diff --git a/drivers/md/dm-uevent.h b/drivers/md/dm-uevent.h
-index 2eccc8b..1c59dba 100644
---- a/drivers/md/dm-uevent.h
-+++ b/drivers/md/dm-uevent.h
-@@ -24,6 +24,8 @@
- enum dm_uevent_type {
- 	DM_UEVENT_PATH_FAILED,
- 	DM_UEVENT_PATH_REINSTATED,
-+	DM_UEVENT_VERITY_DATA_ERROR,
-+	DM_UEVENT_VERITY_HASH_ERROR,
- };
- 
- #ifdef CONFIG_DM_UEVENT
-@@ -34,7 +36,9 @@ extern void dm_send_uevents(struct list_head *events, struct kobject *kobj);
- extern void dm_path_uevent(enum dm_uevent_type event_type,
- 			   struct dm_target *ti, const char *path,
- 			   unsigned nr_valid_paths);
--
-+extern void dm_send_verity_uevent(enum dm_uevent_type event_type,
-+					struct dm_target *ti,
-+					unsigned long long block_nr);
- #else
- 
- static inline int dm_uevent_init(void)
-@@ -53,7 +57,11 @@ static inline void dm_path_uevent(enum dm_uevent_type event_type,
- 				  unsigned nr_valid_paths)
- {
- }
--
-+static inline void dm_send_verity_uevent(enum dm_uevent_type event_type,
-+					struct dm_target *ti,
-+					unsigned long long block_nr)
-+{
-+}
- #endif	/* CONFIG_DM_UEVENT */
- 
- #endif	/* DM_UEVENT_H */
-diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-index 68bf5c3..c9c9ecc 100644
---- a/drivers/md/dm-verity.c
-+++ b/drivers/md/dm-verity.c
-@@ -20,6 +20,8 @@
- #include <linux/device-mapper.h>
- #include <crypto/hash.h>
- 
-+#include "dm-uevent.h"
-+
- #define DM_MSG_PREFIX			"verity"
- 
- #define DM_VERITY_IO_VEC_INLINE		16
-@@ -137,6 +139,30 @@ static void dm_bufio_alloc_callback(struct dm_buffer *buf)
- }
- 
- /*
-+ * Trigger userspace data corruption handler.
-+ */
-+#ifdef CONFIG_DM_VERITY_ERROR_NOTIFY
-+static void verity_data_error(struct dm_verity *v, unsigned long long block_nr)
-+{
-+	dm_send_verity_uevent(DM_UEVENT_VERITY_DATA_ERROR, v->ti, block_nr);
-+}
-+
-+static void verity_hash_error(struct dm_verity *v, unsigned long long block_nr)
-+{
-+	dm_send_verity_uevent(DM_UEVENT_VERITY_HASH_ERROR, v->ti, block_nr);
-+}
-+#else
-+static inline void verity_data_error(struct dm_verity *v,
-+					unsigned long long block_nr)
-+{
-+}
-+static inline void verity_hash_error(struct dm_verity *v,
-+					unsigned long long block_nr)
-+{
-+}
-+#endif
-+
-+/*
-  * Translate input sector number to the sector number on the target device.
-  */
- static sector_t verity_map_sector(struct dm_verity *v, sector_t bi_sector)
-@@ -255,6 +281,7 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
- 				(unsigned long long)hash_block);
- 			v->hash_failed = 1;
- 			r = -EIO;
-+			verity_hash_error(v, (unsigned long long)hash_block);
- 			goto release_ret_r;
- 		} else
- 			aux->hash_verified = 1;
-@@ -375,6 +402,7 @@ test_block_hash:
- 			DMERR_LIMIT("data block %llu is corrupted",
- 				(unsigned long long)(io->block + b));
- 			v->hash_failed = 1;
-+			verity_data_error(v, (unsigned long long)(io->block + b));
- 			return -EIO;
- 		}
- 	}
--- 
-1.8.3
+In other words, if we delete DM_VERITY_ERROR_NOTIFY from the upstream patch?
+
+Alasdair
