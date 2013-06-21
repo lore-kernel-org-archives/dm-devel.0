@@ -1,15 +1,16 @@
-From: Davidlohr Bueso <davidlohr.bueso@hp.com>
+From: Vinod Koul <vinod.koul@intel.com>
 Subject: Re: [PATCH 07/10] idr: Rename idr_alloc() ->
 	idr_alloc_range()
-Date: Wed, 19 Jun 2013 10:28:24 -0700
-Message-ID: <1371662904.1776.0.camel@buesod1.americas.hpqcorp.net>
+Date: Fri, 21 Jun 2013 08:43:18 +0530
+Message-ID: <20130621031318.GC23141@intel.com>
 References: <1371600150-23557-1-git-send-email-koverstreet@google.com>
 	<1371600150-23557-8-git-send-email-koverstreet@google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <1371600150-23557-8-git-send-email-koverstreet@google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,81 +22,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Kent Overstreet <koverstreet@google.com>
-Cc: Arnaldo@redhat.com, Wolfram Sang <wsa@the-dreams.de>, Tatyana Nikolova <Tatyana.E.Nikolova@intel.com>, Walleij <linus.walleij@linaro.org>, Paul Mackerras <paulus@samba.org>, Christoph Hellwig <hch@lst.de>, Trond@redhat.com, Levy <alevy@redhat.com>, Ohad Ben-Cohen <ohad@wizery.com>, Dan@redhat.com, "John W.
-	Linville" <linville@tuxdriver.com>, Dae <inki.dae@samsung.com>, Williamson <alex.williamson@redhat.com>, David Teigland <teigland@redhat.com>, Joel Becker <jlbec@evilplan.org>, Tim Gardner <tim.gardner@canonical.com>, Alex@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Seung-Woo Kim <sw0312.kim@samsung.com>, linux-kernel@vger.kernel.org, Li Zefan <lizefan@huawei.com>, tj@kernel.org, Guo Chao <yan@linux.vnet.ibm.com>, akpm@linux-foundation.org, Andy Grover <agrover@>
+Cc: Wolfram Sang <wsa@the-dreams.de>, Tatyana Nikolova <Tatyana.E.Nikolova@intel.com>, Linus Walleij <linus.walleij@linaro.org>, Paul Mackerras <paulus@samba.org>, Christoph Hellwig <hch@lst.de>, Alon Levy <alevy@redhat.com>, Davidlohr Bueso <davidlohr.bueso@hp.com>, Ohad Ben-Cohen <ohad@wizery.com>, "John W. Linville" <linville@tuxdriver.com>, Inki Dae <inki.dae@samsung.com>, Alex Williamson <alex.williamson@redhat.com>, David Teigland <teigland@redhat.com>, Joel Becker <jlbec@evilplan.org>, Tim Gardner <tim.gardner@canonical.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Seung-Woo Kim <sw0312.kim@samsung.com>, linux-kernel@vger.kernel.org, Li Zefan <lizefan@huawei.com>, tj@kernel.org, Guo Chao <yan@linux.vnet.ibm.com>, akpm@linux-foundation.orgAndy Grover <a>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDEzLTA2LTE4IGF0IDE3OjAyIC0wNzAwLCBLZW50IE92ZXJzdHJlZXQgd3JvdGU6
-Cj4gVGhlbiBhbHNvIGFkZCBhbiBpZHJfYWxsb2MoKSB3cmFwcGVyLCB3aXRob3V0IHRoZSBzdGFy
-dC9lbmQgYXJndW1lbnRzIC0KPiBmb3IgY29uc2lzdGVuY3kgd2l0aCB0aGUgaWRhIGludGVyZmFj
-ZXMuCj4gCj4gU2lnbmVkLW9mZi1ieTogS2VudCBPdmVyc3RyZWV0IDxrb3ZlcnN0cmVldEBnb29n
-bGUuY29tPgo+IENjOiBBbmRyZXcgTW9ydG9uIDxha3BtQGxpbnV4LWZvdW5kYXRpb24ub3JnPgo+
-IENjOiBUZWp1biBIZW8gPHRqQGtlcm5lbC5vcmc+Cj4gQ2M6IEZVSklUQSBUb21vbm9yaSA8ZnVq
-aXRhLnRvbW9ub3JpQGxhYi5udHQuY28uanA+Cj4gQ2M6IEplbnMgQXhib2UgPGF4Ym9lQGtlcm5l
-bC5kaz4KPiBDYzogQ2hhcyBXaWxsaWFtcyA8Y2hhc0BjbWYubnJsLm5hdnkubWlsPgo+IENjOiBM
-YXJzIEVsbGVuYmVyZyA8ZHJiZC1kZXZAbGlzdHMubGluYml0LmNvbT4KPiBDYzogRGFuIFdpbGxp
-YW1zIDxkamJ3QGZiLmNvbT4KPiBDYzogVmlub2QgS291bCA8dmlub2Qua291bEBpbnRlbC5jb20+
-Cj4gQ2M6IFN0ZWZhbiBSaWNodGVyIDxzdGVmYW5yQHM1cjYuaW4tYmVybGluLmRlPgo+IENjOiBH
-cmFudCBMaWtlbHkgPGdyYW50Lmxpa2VseUBsaW5hcm8ub3JnPgo+IENjOiBMaW51cyBXYWxsZWlq
-IDxsaW51cy53YWxsZWlqQGxpbmFyby5vcmc+Cj4gQ2M6IERhdmlkIEFpcmxpZSA8YWlybGllZEBs
-aW51eC5pZT4KPiBDYzogSW5raSBEYWUgPGlua2kuZGFlQHNhbXN1bmcuY29tPgo+IENjOiBKb29u
-eW91bmcgU2hpbSA8ankwOTIyLnNoaW1Ac2Ftc3VuZy5jb20+Cj4gQ2M6IFNldW5nLVdvbyBLaW0g
-PHN3MDMxMi5raW1Ac2Ftc3VuZy5jb20+Cj4gQ2M6IEt5dW5nbWluIFBhcmsgPGt5dW5nbWluLnBh
-cmtAc2Ftc3VuZy5jb20+Cj4gQ2M6IERhbmllbCBWZXR0ZXIgPGRhbmllbC52ZXR0ZXJAZmZ3bGwu
-Y2g+Cj4gQ2M6IFdvbGZyYW0gU2FuZyA8d3NhQHRoZS1kcmVhbXMuZGU+Cj4gQ2M6IFJvbGFuZCBE
-cmVpZXIgPHJvbGFuZEBrZXJuZWwub3JnPgo+IENjOiBTZWFuIEhlZnR5IDxzZWFuLmhlZnR5QGlu
-dGVsLmNvbT4KPiBDYzogSGFsIFJvc2Vuc3RvY2sgPGhhbC5yb3NlbnN0b2NrQGdtYWlsLmNvbT4K
-PiBDYzogU3RldmUgV2lzZSA8c3dpc2VAY2hlbHNpby5jb20+Cj4gQ2M6IEhvYW5nLU5hbSBOZ3V5
-ZW4gPGhuZ3V5ZW5AZGUuaWJtLmNvbT4KPiBDYzogQ2hyaXN0b3BoIFJhaXNjaCA8cmFpc2NoQGRl
-LmlibS5jb20+Cj4gQ2M6IE1pa2UgTWFyY2luaXN6eW4gPGluZmluaXBhdGhAaW50ZWwuY29tPgo+
-IENjOiBBbGFzZGFpciBLZXJnb24gPGFna0ByZWRoYXQuY29tPgo+IENjOiBkbS1kZXZlbEByZWRo
-YXQuY29tCj4gQ2M6IFNhbXVlbCBPcnRpeiA8c2FtZW9AbGludXguaW50ZWwuY29tPgo+IENjOiBB
-bGV4IER1Ym92IDxvYWthZEB5YWhvby5jb20+Cj4gQ2M6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJu
-ZGIuZGU+Cj4gQ2M6IEdyZWcgS3JvYWgtSGFydG1hbiA8Z3JlZ2toQGxpbnV4Zm91bmRhdGlvbi5v
-cmc+Cj4gQ2M6IENocmlzIEJhbGwgPGNqYkBsYXB0b3Aub3JnPgo+IENjOiBEYXZpZCBXb29kaG91
-c2UgPGR3bXcyQGluZnJhZGVhZC5vcmc+Cj4gQ2M6IFBhdWwgTWFja2VycmFzIDxwYXVsdXNAc2Ft
-YmEub3JnPgo+IENjOiBBbnRvbiBWb3JvbnRzb3YgPGNib3VAbWFpbC5ydT4KPiBDYzogUm9kb2xm
-byBHaW9tZXR0aSA8Z2lvbWV0dGlAZW5uZWVubmUuY29tPgo+IENjOiBPaGFkIEJlbi1Db2hlbiA8
-b2hhZEB3aXplcnkuY29tPgo+IENjOiBBbmlsIEd1cnVtdXJ0aHkgPGFndXJ1bXVyQGJyb2NhZGUu
-Y29tPgo+IENjOiBWaWpheWEgTW9oYW4gR3V2dmEgPHZtb2hhbkBicm9jYWRlLmNvbT4KPiBDYzog
-IkphbWVzIEUuSi4gQm90dG9tbGV5IiA8SkJvdHRvbWxleUBwYXJhbGxlbHMuY29tPgo+IENjOiBK
-YW1lcyBTbWFydCA8amFtZXMuc21hcnRAZW11bGV4LmNvbT4KPiBDYzogRG91ZyBHaWxiZXJ0IDxk
-Z2lsYmVydEBpbnRlcmxvZy5jb20+Cj4gQ2M6IFdpbGxlbSBSaWVkZSA8b3NzdEByaWVkZS5vcmc+
-Cj4gQ2M6ICJLYWkgTcOka2lzYXJhIiA8S2FpLk1ha2lzYXJhQGtvbHVtYnVzLmZpPgo+IENjOiBP
-bWFyIFJhbWlyZXogTHVuYSA8b21hci5yYW1pcmV6QGNvcGl0bC5jb20+Cj4gQ2M6ICJOaWNob2xh
-cyBBLiBCZWxsaW5nZXIiIDxuYWJAbGludXgtaXNjc2kub3JnPgo+IENjOiBaaGFuZyBSdWkgPHJ1
-aS56aGFuZ0BpbnRlbC5jb20+Cj4gQ2M6IEVkdWFyZG8gVmFsZW50aW4gPGVkdWFyZG8udmFsZW50
-aW5AdGkuY29tPgo+IENjOiAiSGFucyBKLiBLb2NoIiA8aGprQGhhbnNqa29jaC5kZT4KPiBDYzog
-QWxleCBXaWxsaWFtc29uIDxhbGV4LndpbGxpYW1zb25AcmVkaGF0LmNvbT4KPiBDYzogQ2hyaXN0
-aW5lIENhdWxmaWVsZCA8Y2NhdWxmaWVAcmVkaGF0LmNvbT4KPiBDYzogRGF2aWQgVGVpZ2xhbmQg
-PHRlaWdsYW5kQHJlZGhhdC5jb20+Cj4gQ2M6IFRyb25kIE15a2xlYnVzdCA8VHJvbmQuTXlrbGVi
-dXN0QG5ldGFwcC5jb20+Cj4gQ2M6IE1hcmsgRmFzaGVoIDxtZmFzaGVoQHN1c2UuY29tPgo+IENj
-OiBKb2VsIEJlY2tlciA8amxiZWNAZXZpbHBsYW4ub3JnPgo+IENjOiBMaSBaZWZhbiA8bGl6ZWZh
-bkBodWF3ZWkuY29tPgo+IENjOiBQZXRlciBaaWpsc3RyYSA8YS5wLnppamxzdHJhQGNoZWxsby5u
-bD4KPiBDYzogSW5nbyBNb2xuYXIgPG1pbmdvQHJlZGhhdC5jb20+Cj4gQ2M6IEFybmFsZG8gQ2Fy
-dmFsaG8gZGUgTWVsbyA8YWNtZUBnaG9zdHByb3RvY29scy5uZXQ+Cj4gQ2M6ICJEYXZpZCBTLiBN
-aWxsZXIiIDxkYXZlbUBkYXZlbWxvZnQubmV0Pgo+IENjOiBKb2hhbm5lcyBCZXJnIDxqb2hhbm5l
-c0BzaXBzb2x1dGlvbnMubmV0Pgo+IENjOiAiSm9obiBXLiBMaW52aWxsZSIgPGxpbnZpbGxlQHR1
-eGRyaXZlci5jb20+Cj4gQ2M6IEd1byBDaGFvIDx5YW5AbGludXgudm5ldC5pYm0uY29tPgo+IENj
-OiBBbCBWaXJvIDx2aXJvQHplbml2LmxpbnV4Lm9yZy51az4KPiBDYzogRGF2ZSBBaXJsaWUgPGFp
-cmxpZWRAcmVkaGF0LmNvbT4KPiBDYzogQWxvbiBMZXZ5IDxhbGV2eUByZWRoYXQuY29tPgo+IENj
-OiAiUGF1bCBFLiBNY0tlbm5leSIgPHBhdWxtY2tAbGludXgudm5ldC5pYm0uY29tPgo+IENjOiBE
-YXZpZCBIb3dlbGxzIDxkaG93ZWxsc0ByZWRoYXQuY29tPgo+IENjOiBUaG9tYXMgSGVsbHN0cm9t
-IDx0aGVsbHN0cm9tQHZtd2FyZS5jb20+Cj4gQ2M6IEJyaWFuIFBhdWwgPGJyaWFucEB2bXdhcmUu
-Y29tPgo+IENjOiBNYWFydGVuIExhbmtob3JzdCA8bWFhcnRlbi5sYW5raG9yc3RAY2Fub25pY2Fs
-LmNvbT4KPiBDYzogRG1pdHJ5IFRvcm9raG92IDxkdG9yQHZtd2FyZS5jb20+Cj4gQ2M6IFNhc2hh
-IExldmluIDxzYXNoYS5sZXZpbkBvcmFjbGUuY29tPgo+IENjOiBFcmV6IFNoaXRyaXQgPGVyZXpz
-aEBtZWxsYW5veC5jby5pbD4KPiBDYzogVGF0eWFuYSBOaWtvbG92YSA8VGF0eWFuYS5FLk5pa29s
-b3ZhQGludGVsLmNvbT4KPiBDYzogSGFnZ2FpIEVyYW4gPGhhZ2dhaWVAbWVsbGFub3guY29tPgo+
-IENjOiBHdWVubmFkaSBMaWFraG92ZXRza2kgPGcubGlha2hvdmV0c2tpQGdteC5kZT4KPiBDYzog
-SmFzb24gV2FuZyA8amFzb3dhbmdAcmVkaGF0LmNvbT4KPiBDYzogRXJpYyBEdW1hemV0IDxlZHVt
-YXpldEBnb29nbGUuY29tPgo+IENjOiAiTWljaGFlbCBTLiBUc2lya2luIiA8bXN0QHJlZGhhdC5j
-b20+Cj4gQ2M6IERhbiBNYWdlbmhlaW1lciA8ZGFuLm1hZ2VuaGVpbWVyQG9yYWNsZS5jb20+Cj4g
-Q2M6IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPgo+IENjOiBBbmR5IEdyb3ZlciA8YWdy
-b3ZlckByZWRoYXQuY29tPgo+IENjOiBNYXNhbmFyaSBJaWRhIDxzdGFuZGJ5MjR4N0BnbWFpbC5j
-b20+Cj4gQ2M6IFRpbSBHYXJkbmVyIDx0aW0uZ2FyZG5lckBjYW5vbmljYWwuY29tPgo+IENjOiBE
-YXZpZGxvaHIgQnVlc28gPGRhdmlkbG9oci5idWVzb0BocC5jb20+Cj4gQ2M6IFJpayB2YW4gUmll
-bCA8cmllbEByZWRoYXQuY29tPgo+IENjOiBNaWNoZWwgTGVzcGluYXNzZSA8d2Fsa2VuQGdvb2ds
-ZS5jb20+CgpGb3IgaXBjIGNvZGU6CgpBY2tlZC1ieTogRGF2aWRsb2hyIEJ1ZXNvIDxkYXZpZGxv
-aHIuYnVlc29AaHAuY29tPgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Tue, Jun 18, 2013 at 05:02:27PM -0700, Kent Overstreet wrote:
+> Then also add an idr_alloc() wrapper, without the start/end arguments -
+> for consistency with the ida interfaces.
+> =
+
+> Signed-off-by: Kent Overstreet <koverstreet@google.com>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Tejun Heo <tj@kernel.org>
+> Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+> Cc: Jens Axboe <axboe@kernel.dk>
+> Cc: Chas Williams <chas@cmf.nrl.navy.mil>
+> Cc: Lars Ellenberg <drbd-dev@lists.linbit.com>
+> Cc: Dan Williams <djbw@fb.com>
+> Cc: Vinod Koul <vinod.koul@intel.com>
+> Cc: Stefan Richter <stefanr@s5r6.in-berlin.de>
+> Cc: Grant Likely <grant.likely@linaro.org>
+> Cc: Linus Walleij <linus.walleij@linaro.org>
+> Cc: David Airlie <airlied@linux.ie>
+> Cc: Inki Dae <inki.dae@samsung.com>
+> Cc: Joonyoung Shim <jy0922.shim@samsung.com>
+> Cc: Seung-Woo Kim <sw0312.kim@samsung.com>
+> Cc: Kyungmin Park <kyungmin.park@samsung.com>
+> Cc: Daniel Vetter <daniel.vetter@ffwll.ch>
+> Cc: Wolfram Sang <wsa@the-dreams.de>
+> Cc: Roland Dreier <roland@kernel.org>
+> Cc: Sean Hefty <sean.hefty@intel.com>
+> Cc: Hal Rosenstock <hal.rosenstock@gmail.com>
+> Cc: Steve Wise <swise@chelsio.com>
+> Cc: Hoang-Nam Nguyen <hnguyen@de.ibm.com>
+> Cc: Christoph Raisch <raisch@de.ibm.com>
+> Cc: Mike Marciniszyn <infinipath@intel.com>
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: dm-devel@redhat.com
+> Cc: Samuel Ortiz <sameo@linux.intel.com>
+> Cc: Alex Dubov <oakad@yahoo.com>
+> Cc: Arnd Bergmann <arnd@arndb.de>
+> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> Cc: Chris Ball <cjb@laptop.org>
+> Cc: David Woodhouse <dwmw2@infradead.org>
+> Cc: Paul Mackerras <paulus@samba.org>
+> Cc: Anton Vorontsov <cbou@mail.ru>
+> Cc: Rodolfo Giometti <giometti@enneenne.com>
+> Cc: Ohad Ben-Cohen <ohad@wizery.com>
+> Cc: Anil Gurumurthy <agurumur@brocade.com>
+> Cc: Vijaya Mohan Guvva <vmohan@brocade.com>
+> Cc: "James E.J. Bottomley" <JBottomley@parallels.com>
+> Cc: James Smart <james.smart@emulex.com>
+> Cc: Doug Gilbert <dgilbert@interlog.com>
+> Cc: Willem Riede <osst@riede.org>
+> Cc: "Kai M=E4kisara" <Kai.Makisara@kolumbus.fi>
+> Cc: Omar Ramirez Luna <omar.ramirez@copitl.com>
+> Cc: "Nicholas A. Bellinger" <nab@linux-iscsi.org>
+> Cc: Zhang Rui <rui.zhang@intel.com>
+> Cc: Eduardo Valentin <eduardo.valentin@ti.com>
+> Cc: "Hans J. Koch" <hjk@hansjkoch.de>
+> Cc: Alex Williamson <alex.williamson@redhat.com>
+> Cc: Christine Caulfield <ccaulfie@redhat.com>
+> Cc: David Teigland <teigland@redhat.com>
+> Cc: Trond Myklebust <Trond.Myklebust@netapp.com>
+> Cc: Mark Fasheh <mfasheh@suse.com>
+> Cc: Joel Becker <jlbec@evilplan.org>
+> Cc: Li Zefan <lizefan@huawei.com>
+> Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
+> Cc: "David S. Miller" <davem@davemloft.net>
+> Cc: Johannes Berg <johannes@sipsolutions.net>
+> Cc: "John W. Linville" <linville@tuxdriver.com>
+> Cc: Guo Chao <yan@linux.vnet.ibm.com>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> Cc: Dave Airlie <airlied@redhat.com>
+> Cc: Alon Levy <alevy@redhat.com>
+> Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+> Cc: David Howells <dhowells@redhat.com>
+> Cc: Thomas Hellstrom <thellstrom@vmware.com>
+> Cc: Brian Paul <brianp@vmware.com>
+> Cc: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+> Cc: Dmitry Torokhov <dtor@vmware.com>
+> Cc: Sasha Levin <sasha.levin@oracle.com>
+> Cc: Erez Shitrit <erezsh@mellanox.co.il>
+> Cc: Tatyana Nikolova <Tatyana.E.Nikolova@intel.com>
+> Cc: Haggai Eran <haggaie@mellanox.com>
+> Cc: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
+> Cc: Jason Wang <jasowang@redhat.com>
+> Cc: Eric Dumazet <edumazet@google.com>
+> Cc: "Michael S. Tsirkin" <mst@redhat.com>
+> Cc: Dan Magenheimer <dan.magenheimer@oracle.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Andy Grover <agrover@redhat.com>
+> Cc: Masanari Iida <standby24x7@gmail.com>
+> Cc: Tim Gardner <tim.gardner@canonical.com>
+> Cc: Davidlohr Bueso <davidlohr.bueso@hp.com>
+> Cc: Rik van Riel <riel@redhat.com>
+> Cc: Michel Lespinasse <walken@google.com>
+
+For dmaengine:
+
+Acked-by: Vinod Koul <vinod.koul@intel.com>
+  =
+
+> diff --git a/drivers/dma/dmaengine.c b/drivers/dma/dmaengine.c
+> index 93f7992..0300f5b 100644
+> --- a/drivers/dma/dmaengine.c
+> +++ b/drivers/dma/dmaengine.c
+> @@ -697,7 +697,7 @@ static int get_dma_id(struct dma_device *device)
+>  =
+
+>  	mutex_lock(&dma_list_mutex);
+>  =
+
+> -	rc =3D idr_alloc(&dma_idr, NULL, 0, 0, GFP_KERNEL);
+> +	rc =3D idr_alloc(&dma_idr, NULL, GFP_KERNEL);
+>  	if (rc >=3D 0)
+>  		device->dev_id =3D rc;
+>
+
+--
+~Vinod  =
