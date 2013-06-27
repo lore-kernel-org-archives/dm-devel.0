@@ -1,215 +1,104 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH v2] dm: verity: Add support for emitting
- uevents on dm-verity errors.
-Date: Wed, 26 Jun 2013 13:20:54 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1306261304290.29719@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1371783624-23962-1-git-send-email-gcondra@google.com>
+Subject: Re: Not able to create a device mapper target node
+Date: Thu, 27 Jun 2013 10:02:14 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1306270937450.23378@file01.intranet.prod.int.rdu2.redhat.com>
+References: <CABmd-rm-6P-+bkoHVAK25pEVgVBNswELepV5qvweTUd1J2Poag@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1371783624-23962-1-git-send-email-gcondra@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Geremy Condra <gcondra@google.com>, device-mapper development <dm-devel@redhat.com>
-Cc: wad@chromium.org, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: MULTIPART/MIXED;
+	BOUNDARY="185206533-1123065246-1372340422=:23378"
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABmd-rm-6P-+bkoHVAK25pEVgVBNswELepV5qvweTUd1J2Poag@mail.gmail.com>
+Content-ID: <alpine.LRH.2.02.1306270940250.23378@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: monica g <monica.knmt@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--185206533-1123065246-1372340422=:23378
+Content-Type: TEXT/PLAIN; CHARSET=ISO-8859-15
+Content-ID: <alpine.LRH.2.02.1306270940251.23378@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Transfer-Encoding: quoted-printable
+X-MIME-Autoconverted: from 8bit to quoted-printable by mx3-phx2.redhat.com id r5RE2GDi013063
+
+
+
+On Mon, 24 Jun 2013, monica g wrote:
+
+> Hi,
+>=20
+> I wrote a basic device mapper driver which caches reads.
+>=20
+> I gave dm msg prefix as below
+> =A0#define DM_MSG_PREFIX "cacheread".
+>=20
+> When i try to create a device mapper node using the below command
+> echo "0 `blockdev --getsize /dev/sda2` cacheread /dev/sda2 0" | dmsetup
+> create cacheread
+>=20
+> the system hangs.I am not getting any error messages.
+>=20
+> When i try to create a device mapper node for linear target(this target=
+ is
+> already present with the device mapper code) using below command
+>=20
+> echo "0 `blockdev --getsize /dev/sda2` linear /dev/sda2 0" | dmsetup cr=
+eate
+> linear
+> it succeeds and creates device node linear in /dev/mapper directory.
+>=20
+> I am stuck with this issue and not able to proceed furthur.
+>=20
+> Please let me know if you have any suggestions.
+>=20
+> Any help is truely appreciated.
+>=20
+> Thanks in advance.
+>=20
+> Regards,
+> Monica
 
 Hi
 
-I think the idea is fine.
+How to debug hangs:
 
-There is architecture problem - that target specific routines are being 
-pushed into generic dm core.
+If the system is still responsive, just the process that loads your devic=
+e=20
+mapper target hangs, switch to console and use Alt-Sysrq-W (or run
+echo w >/proc/sysrq-trigger;dmesg ). It should display a stacktrace, and=20
+from the stacktrace you can find where did it hang.
 
-I suggest that instead of dm_send_verity_uevent and dm_path_uevent you 
-create just one generic function (for example dm_send_uevent) that takes 
-variable argument list of target-specific uevent variables and that can be 
-used for both multipath and verity. Something like: dm_send_uevent(ti, 
-"DM_VERITY_BLOCK_NR=123", "DM_ACTION=VERITY_DATA_ERROR", NULL);
-
-There is GFP_ATOMIC allocation and this type of allocation can fail 
-anytime. Could it be a problem if uevent is lost? It's probably not a 
-problem for dm-verity, because uevents are generated only in errorneous 
-state ... but what about multipath? Can it misbehave if we lose uevent?
+Otherwise (if you can't get the stacktrace or you don't find the reason=20
+for the hang from the stacktrace), find a function that is the most likel=
+y=20
+cause (in your case, it would be the constructor of your device mapper=20
+target, if you don't find the hang in the constructor, try other=20
+functions, such as a map routine) and put statements such as=20
+printk("step1\n") ... printk("step2\n") ... printk("step3\n") ... etc at=20
+various places in that function. Switch to console (don't do it in=20
+x-window), load your target and from the messages printed on the console,=
+=20
+you can find out where did the hang happen - for example, if it prints=20
+"step1" and "step2" and doesn't print "step3", you know that the hang=20
+happened between step2 and step3.
 
 Mikulas
+--185206533-1123065246-1372340422=:23378
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Transfer-Encoding: 7bit
 
 
-On Thu, 20 Jun 2013, Geremy Condra wrote:
-
-> With this change dm-verity errors will cause uevents to be
-> sent to userspace, notifying it that an error has occurred
-> and potentially triggering recovery actions.
-> 
-> Signed-off-by: Geremy Condra <gcondra@google.com>
-> ---
-> Changelog since v1:
-> - Removed the DM_VERITY_ERROR_NOTIFY config option
-> 
->  drivers/md/dm-uevent.c | 40 ++++++++++++++++++++++++++++++++++++++++
->  drivers/md/dm-uevent.h | 12 ++++++++++--
->  drivers/md/dm-verity.c | 28 ++++++++++++++++++++++++++++
->  3 files changed, 78 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-uevent.c b/drivers/md/dm-uevent.c
-> index 8efe033..17a6662 100644
-> --- a/drivers/md/dm-uevent.c
-> +++ b/drivers/md/dm-uevent.c
-> @@ -36,6 +36,8 @@ static const struct {
->  } _dm_uevent_type_names[] = {
->  	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
->  	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
-> +	{DM_UEVENT_VERITY_DATA_ERROR, KOBJ_CHANGE, "VERITY_DATA_ERROR"},
-> +	{DM_UEVENT_VERITY_HASH_ERROR, KOBJ_CHANGE, "VERITY_HASH_ERROR"},
->  };
->  
->  static struct kmem_cache *_dm_event_cache;
-> @@ -202,6 +204,44 @@ void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
->  }
->  EXPORT_SYMBOL_GPL(dm_path_uevent);
->  
-> +void dm_send_verity_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
-> +						unsigned long long block_nr)
-> +{
-> +	struct mapped_device *md = dm_table_get_md(ti->table);
-> +	struct dm_uevent *event = dm_uevent_alloc(md);
-> +	struct gendisk *disk = dm_disk(md);
-> +
-> +	if (!event) {
-> +		DMERR("%s: dm_uevent_alloc() failed", __func__);
-> +		return;
-> +	}
-> +
-> +	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
-> +		DMERR("%s: Invalid event_type %d", __func__, event_type);
-> +		goto out;
-> +	}
-> +
-> +	if (add_uevent_var(&event->ku_env, "DM_VERITY_BLOCK_NR=%llu", block_nr)) {
-> +		DMERR("%s: add_uevent_var() for DM_VERITY_BLOCK failed", __func__);
-> +		goto out;
-> +	}
-> +
-> +	if (add_uevent_var(&event->ku_env, "DM_ACTION=%s",
-> +			_dm_uevent_type_names[event_type].name)) {
-> +		DMERR("%s: add_uevent_var() for DM_ACTION failed", __func__);
-> +		goto out;
-> +	}
-> +
-> +	if (kobject_uevent_env(&disk_to_dev(disk)->kobj, event_type,
-> +				event->ku_env.envp)) {
-> +		DMERR("%s: kobject_uevent_env failed", __func__);
-> +	}
-> +
-> +out:
-> +	dm_uevent_free(event);
-> +}
-> +EXPORT_SYMBOL_GPL(dm_send_verity_uevent);
-> +
->  int dm_uevent_init(void)
->  {
->  	_dm_event_cache = KMEM_CACHE(dm_uevent, 0);
-> diff --git a/drivers/md/dm-uevent.h b/drivers/md/dm-uevent.h
-> index 2eccc8b..1c59dba 100644
-> --- a/drivers/md/dm-uevent.h
-> +++ b/drivers/md/dm-uevent.h
-> @@ -24,6 +24,8 @@
->  enum dm_uevent_type {
->  	DM_UEVENT_PATH_FAILED,
->  	DM_UEVENT_PATH_REINSTATED,
-> +	DM_UEVENT_VERITY_DATA_ERROR,
-> +	DM_UEVENT_VERITY_HASH_ERROR,
->  };
->  
->  #ifdef CONFIG_DM_UEVENT
-> @@ -34,7 +36,9 @@ extern void dm_send_uevents(struct list_head *events, struct kobject *kobj);
->  extern void dm_path_uevent(enum dm_uevent_type event_type,
->  			   struct dm_target *ti, const char *path,
->  			   unsigned nr_valid_paths);
-> -
-> +extern void dm_send_verity_uevent(enum dm_uevent_type event_type,
-> +					struct dm_target *ti,
-> +					unsigned long long block_nr);
->  #else
->  
->  static inline int dm_uevent_init(void)
-> @@ -53,7 +57,11 @@ static inline void dm_path_uevent(enum dm_uevent_type event_type,
->  				  unsigned nr_valid_paths)
->  {
->  }
-> -
-> +static inline void dm_send_verity_uevent(enum dm_uevent_type event_type,
-> +					struct dm_target *ti,
-> +					unsigned long long block_nr)
-> +{
-> +}
->  #endif	/* CONFIG_DM_UEVENT */
->  
->  #endif	/* DM_UEVENT_H */
-> diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
-> index 68bf5c3..2e3695b 100644
-> --- a/drivers/md/dm-verity.c
-> +++ b/drivers/md/dm-verity.c
-> @@ -20,6 +20,8 @@
->  #include <linux/device-mapper.h>
->  #include <crypto/hash.h>
->  
-> +#include "dm-uevent.h"
-> +
->  #define DM_MSG_PREFIX			"verity"
->  
->  #define DM_VERITY_IO_VEC_INLINE		16
-> @@ -137,6 +139,30 @@ static void dm_bufio_alloc_callback(struct dm_buffer *buf)
->  }
->  
->  /*
-> + * Trigger userspace data corruption handler.
-> + */
-> +#ifdef CONFIG_DM_UEVENT
-> +static void verity_data_error(struct dm_verity *v, unsigned long long block_nr)
-> +{
-> +	dm_send_verity_uevent(DM_UEVENT_VERITY_DATA_ERROR, v->ti, block_nr);
-> +}
-> +
-> +static void verity_hash_error(struct dm_verity *v, unsigned long long block_nr)
-> +{
-> +	dm_send_verity_uevent(DM_UEVENT_VERITY_HASH_ERROR, v->ti, block_nr);
-> +}
-> +#else
-> +static inline void verity_data_error(struct dm_verity *v,
-> +					unsigned long long block_nr)
-> +{
-> +}
-> +static inline void verity_hash_error(struct dm_verity *v,
-> +					unsigned long long block_nr)
-> +{
-> +}
-> +#endif
-> +
-> +/*
->   * Translate input sector number to the sector number on the target device.
->   */
->  static sector_t verity_map_sector(struct dm_verity *v, sector_t bi_sector)
-> @@ -255,6 +281,7 @@ static int verity_verify_level(struct dm_verity_io *io, sector_t block,
->  				(unsigned long long)hash_block);
->  			v->hash_failed = 1;
->  			r = -EIO;
-> +			verity_hash_error(v, (unsigned long long)hash_block);
->  			goto release_ret_r;
->  		} else
->  			aux->hash_verified = 1;
-> @@ -375,6 +402,7 @@ test_block_hash:
->  			DMERR_LIMIT("data block %llu is corrupted",
->  				(unsigned long long)(io->block + b));
->  			v->hash_failed = 1;
-> +			verity_data_error(v, (unsigned long long)(io->block + b));
->  			return -EIO;
->  		}
->  	}
-> -- 
-> 1.8.3
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+--185206533-1123065246-1372340422=:23378--
