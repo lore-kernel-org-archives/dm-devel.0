@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 5/8] Don't detect prioritizers that don't work
-Date: Fri, 28 Jun 2013 18:26:18 -0500
-Message-ID: <1372461981-6333-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/8] Fix multipath rename from user_friendly_name
+	to wwid
+Date: Fri, 28 Jun 2013 18:26:16 -0500
+Message-ID: <1372461981-6333-4-git-send-email-bmarzins@redhat.com>
 References: <1372461981-6333-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,40 +23,102 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The current method used by detect_prio was selecting the ALUA
-prioritizer for devices that didn't have ALUA enabled.  This patch
-makes detect_prio go through all the steps to get a priority with the
-ALUA prioritizer.  If it is able to successfully get a priority, then
-it selects the ALUA proritizer for the device.
+When multipath was selecting an alias for a device on reload, if it
+didn't have an explicit alias, and user_friendly_names wasn't set,
+multipath would use the existing alias, if one existed.  This made it
+impossible to turn off user_friendly_names, and then reconfigure to
+change the device names back to wwids.
+
+Instead, multipath should just use the wwid as an alias, if that's
+what it's configured to do, regardless of the existing name.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/propsel.c | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
+ libmultipath/devmapper.c | 45 ---------------------------------------------
+ libmultipath/devmapper.h |  1 -
+ libmultipath/propsel.c   |  2 --
+ 3 files changed, 48 deletions(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 8ba3b44..079b704 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -384,10 +384,17 @@ select_getuid (struct path * pp)
- void
- detect_prio(struct path * pp)
- {
-+	int ret;
- 	struct prio *p = &pp->prio;
- 
--	if (get_target_port_group_support(pp->fd) > 0)
--		prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-+	if (get_target_port_group_support(pp->fd) <= 0)
-+		return;
-+	ret = get_target_port_group(pp->fd);
-+	if (ret < 0)
-+		return;
-+	if (get_asymmetric_access_state(pp->fd, ret) < 0)
-+		return;
-+	prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 67481c4..1f3b64c 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -917,51 +917,6 @@ out:
+ 	return r;
  }
  
- extern int
+-extern char *
+-dm_get_name(char *uuid)
+-{
+-	struct dm_task *dmt;
+-	struct dm_info info;
+-	char *prefixed_uuid, *name = NULL;
+-	const char *nametmp;
+-
+-	dmt = dm_task_create(DM_DEVICE_INFO);
+-	if (!dmt)
+-		return NULL;
+-
+-	prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(uuid) + 1);
+-	if (!prefixed_uuid) {
+-		condlog(0, "cannot create prefixed uuid : %s",
+-			strerror(errno));
+-		goto freeout;
+-	}
+-	sprintf(prefixed_uuid, UUID_PREFIX "%s", uuid);
+-	if (!dm_task_set_uuid(dmt, prefixed_uuid))
+-		goto freeout;
+-
+-	if (!dm_task_run(dmt))
+-		goto freeout;
+-
+-	if (!dm_task_get_info(dmt, &info) || !info.exists)
+-		goto freeout;
+-
+-	nametmp = dm_task_get_name(dmt);
+-	if (nametmp && strlen(nametmp)) {
+-		name = MALLOC(strlen(nametmp) + 1);
+-		if (name)
+-			strcpy(name, nametmp);
+-	} else {
+-		condlog(2, "%s: no device-mapper name found", uuid);
+-	}
+-
+-freeout:
+-	if (prefixed_uuid)
+-		FREE(prefixed_uuid);
+-	dm_task_destroy(dmt);
+-
+-	return name;
+-}
+-
+ int
+ dm_geteventnr (char *name)
+ {
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index bf8ee91..d27fe7f 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -40,7 +40,6 @@ int dm_remove_partmaps (const char * mapname, int need_sync);
+ int dm_get_uuid(char *name, char *uuid);
+ int dm_get_info (char * mapname, struct dm_info ** dmi);
+ int dm_rename (char * old, char * new);
+-char * dm_get_name(char * uuid);
+ int dm_reassign(const char * mapname);
+ int dm_reassign_table(const char *name, char *old, char *new);
+ int dm_setgeometry(struct multipath *mpp);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index a7e1fc2..8ba3b44 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -263,8 +263,6 @@ select_alias (struct multipath * mp)
+ 					conf->bindings_file, mp->alias_prefix, conf->bindings_read_only);
+ 		}
+ 		if (mp->alias == NULL)
+-			mp->alias = dm_get_name(mp->wwid);
+-		if (mp->alias == NULL)
+ 			mp->alias = STRDUP(mp->wwid);
+ 	}
+ 
 -- 
 1.8.2
