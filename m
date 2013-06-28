@@ -1,13 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-verity: Fix a boundary condition that caused
- failure for certain device sizes
-Date: Fri, 28 Jun 2013 10:12:12 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1306281007500.16553@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH] dm-verity: Fix a boundary condition that
+ caused failure for certain device sizes
+Date: Fri, 28 Jun 2013 10:53:03 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1306281023280.16714@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1306281007500.16553@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1306281007500.16553@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,43 +23,40 @@ To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 Cc: xuelingko@gmail.com, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Fix a boundary condition that caused failure for certain device sizes
 
-The problem is reported at
-http://code.google.com/p/cryptsetup/issues/detail?id=160
 
-For certain device sizes the number of hashes at a specific level was
-calculated incorrectly.
+On Fri, 28 Jun 2013, Mikulas Patocka wrote:
 
-It happens for example for a device with data and metadata block size 4096
-that has 16385 blocks and algorithm sha256.
+> Fix a boundary condition that caused failure for certain device sizes
+> 
+> The problem is reported at
+> http://code.google.com/p/cryptsetup/issues/detail?id=160
+> 
+> For certain device sizes the number of hashes at a specific level was
+> calculated incorrectly.
+> 
+> It happens for example for a device with data and metadata block size 4096
+> that has 16385 blocks and algorithm sha256.
+> 
+> This patch fixes it.
+> 
+> The same bug exists in the veritysetup tool, so you must use fixed
+> veritysetup too if you want to use devices that are affected by this
+> boundary condition.
 
-This patch fixes it.
+The user can test if he is affected by this bug by running the 
+"veritysetup verify" command and also by activating the dm-verity kernel 
+driver and reading the whole block device. If it passes without an error, 
+then the user is not affected.
 
-The same bug exists in the veritysetup tool, so you must use fixed
-veritysetup too if you want to use devices that are affected by this
-boundary condition.
+The condition for the bug is:
 
-Cc: stable@kernel.org  # 3.4+
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Split the total number of data blocks (data_block_bits) into bit strings, 
+each string has hash_per_block_bits bits. hash_per_block_bits is 
+rounddown(log2(metadata_block_size/hash_digest_size)). Equivalently, you 
+can say that you convert data_blocks_bits to 2^hash_per_block_bits base.
 
----
- drivers/md/dm-verity.c |    5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+If there some zero bit string below the most significant bit string and at 
+least one bit below this zero bit string is set, then the bug happens.
 
-Index: linux-3.9.8-fast/drivers/md/dm-verity.c
-===================================================================
---- linux-3.9.8-fast.orig/drivers/md/dm-verity.c	2013-06-28 00:58:12.000000000 +0200
-+++ linux-3.9.8-fast/drivers/md/dm-verity.c	2013-06-28 02:01:32.000000000 +0200
-@@ -831,9 +831,8 @@ static int verity_ctr(struct dm_target *
- 	for (i = v->levels - 1; i >= 0; i--) {
- 		sector_t s;
- 		v->hash_level_block[i] = hash_position;
--		s = verity_position_at_level(v, v->data_blocks, i);
--		s = (s >> v->hash_per_block_bits) +
--		    !!(s & ((1 << v->hash_per_block_bits) - 1));
-+		s = (v->data_blocks + ((sector_t)1 << ((i + 1) * v->hash_per_block_bits)) - 1)
-+					>> ((i + 1) * v->hash_per_block_bits);
- 		if (hash_position + s < hash_position) {
- 			ti->error = "Hash device offset overflow";
- 			r = -E2BIG;
+Mikulas
