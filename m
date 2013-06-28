@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 6/8] Only load a multipath device RO if RW load
-	fails with
-Date: Fri, 28 Jun 2013 18:26:19 -0500
-Message-ID: <1372461981-6333-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 7/8] signal waiter thread to stop waiting on dm
+	events
+Date: Fri, 28 Jun 2013 18:26:20 -0500
+Message-ID: <1372461981-6333-8-git-send-email-bmarzins@redhat.com>
 References: <1372461981-6333-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,135 +23,85 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-If a transient error keeps multipath from being able to reload a
-multipath device read/write, it will retry the reload with the
-device set to read-only.  This can suddenly turn a read/write
-multipath device read-only.  If device-mapper cannot load the
-device read/write because a path device can't be opened for writing,
-it will return EROFS.  This is the only time it makes sense to
-reload the device read-only.
+The ioctl syscall is not a pthread cancellation point. So, when
+device-mapper is waiting on events, pthread_cancel won't cancel
+the waiter thread.  This patch makes the waiter threads handle
+SIGUSR2, and has stop_waiter_thread() signal it to break out of
+waiting on dm events. Unfortunately, there is still a possibility
+of the signal arriving before the ioctl, and the waiter thread
+still hanging until the devices are reloaded.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/configure.c |  7 -------
- libmultipath/devmapper.c | 53 +++++++++++++++++++++++-------------------------
- libmultipath/devmapper.h |  2 --
- 3 files changed, 25 insertions(+), 37 deletions(-)
+ libmultipath/waiter.c | 9 +++++++++
+ multipathd/main.c     | 8 ++++++++
+ 2 files changed, 17 insertions(+)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index e5048eb..8b1385a 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -384,24 +384,17 @@ domap (struct multipath * mpp, char * params)
- 
- 		r = dm_addmap_create(mpp, params);
- 
--		if (!r)
--			r = dm_addmap_create_ro(mpp, params);
--
- 		lock_multipath(mpp, 0);
- 		break;
- 
- 	case ACT_RELOAD:
- 		r = dm_addmap_reload(mpp, params);
--		if (!r)
--			r = dm_addmap_reload_ro(mpp, params);
- 		if (r)
- 			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias);
- 		break;
- 
- 	case ACT_RESIZE:
- 		r = dm_addmap_reload(mpp, params);
--		if (!r)
--			r = dm_addmap_reload_ro(mpp, params);
- 		if (r)
- 			r = dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias, 1);
- 		break;
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 1f3b64c..356661a 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -298,42 +298,39 @@ dm_addmap (int task, const char *target, struct multipath *mpp, char * params,
- 	return r;
+diff --git a/libmultipath/waiter.c b/libmultipath/waiter.c
+index 5094290..7cedd4b 100644
+--- a/libmultipath/waiter.c
++++ b/libmultipath/waiter.c
+@@ -57,6 +57,7 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+ 	thread = mpp->waiter;
+ 	mpp->waiter = (pthread_t)0;
+ 	pthread_cancel(thread);
++	pthread_kill(thread, SIGUSR2);
  }
  
--static int
--_dm_addmap_create (struct multipath *mpp, char * params, int ro) {
--	int r;
--	r = dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, 1, ro);
--	/*
--	 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
--	 * Failing the second part leaves an empty map. Clean it up.
--	 */
--	if (!r && dm_map_present(mpp->alias)) {
--		condlog(3, "%s: failed to load map (a path might be in use)",
--			mpp->alias);
--		dm_flush_map_nosync(mpp->alias);
-+extern int
-+dm_addmap_create (struct multipath *mpp, char * params) {
-+	int ro;
+ /*
+@@ -65,6 +66,7 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+  */
+ int waiteventloop (struct event_thread *waiter)
+ {
++	sigset_t set, oldset;
+ 	int event_nr;
+ 	int r;
+ 
+@@ -97,8 +99,15 @@ int waiteventloop (struct event_thread *waiter)
+ 	dm_task_no_open_count(waiter->dmt);
+ 
+ 	/* wait */
++	sigemptyset(&set);
++	sigaddset(&set, SIGUSR2);
++	pthread_sigmask(SIG_UNBLOCK, &set, &oldset);
 +
-+	for (ro = 0; ro <= 1; ro++) {
-+		int err;
++	pthread_testcancel();
+ 	r = dm_task_run(waiter->dmt);
++	pthread_testcancel();
+ 
++	pthread_sigmask(SIG_SETMASK, &oldset, NULL);
+ 	dm_task_destroy(waiter->dmt);
+ 	waiter->dmt = NULL;
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 0fa1b17..82f8577 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1501,6 +1501,12 @@ sigusr1 (int sig)
+ }
+ 
+ static void
++sigusr2 (int sig)
++{
++	condlog(3, "SIGUSR2 received");
++}
 +
-+		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, 1, ro))
-+			return 1;
-+		/*
-+		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
-+		 * Failing the second part leaves an empty map. Clean it up.
-+		 */
-+		err = errno;
-+		if (dm_map_present(mpp->alias)) {
-+			condlog(3, "%s: failed to load map (a path might be in use)", mpp->alias);
-+			dm_flush_map_nosync(mpp->alias);
-+		}
-+		if (err != EROFS)
-+			break;
- 	}
--	return r;
-+	return 0;
- }
++static void
+ signal_init(void)
+ {
+ 	sigset_t set;
+@@ -1508,10 +1514,12 @@ signal_init(void)
+ 	sigemptyset(&set);
+ 	sigaddset(&set, SIGHUP);
+ 	sigaddset(&set, SIGUSR1);
++	sigaddset(&set, SIGUSR2);
+ 	pthread_sigmask(SIG_BLOCK, &set, NULL);
  
- #define ADDMAP_RW 0
- #define ADDMAP_RO 1
- 
- extern int
--dm_addmap_create (struct multipath *mpp, char *params) {
--	return _dm_addmap_create(mpp, params, ADDMAP_RW);
--}
--
--extern int
--dm_addmap_create_ro (struct multipath *mpp, char *params) {
--	return _dm_addmap_create(mpp, params, ADDMAP_RO);
--}
--
--extern int
- dm_addmap_reload (struct multipath *mpp, char *params) {
--	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, 0, ADDMAP_RW);
--}
--
--extern int
--dm_addmap_reload_ro (struct multipath *mpp, char *params) {
-+	if (dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, 0, ADDMAP_RW))
-+		return 1;
-+	if (errno != EROFS)
-+		return 0;
- 	return dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params, 0, ADDMAP_RO);
- }
- 
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index d27fe7f..464ae7b 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -12,9 +12,7 @@ int dm_drv_version (unsigned int * version, char * str);
- int dm_simplecmd_flush (int, const char *, int);
- int dm_simplecmd_noflush (int, const char *);
- int dm_addmap_create (struct multipath *mpp, char *params);
--int dm_addmap_create_ro (struct multipath *mpp, char *params);
- int dm_addmap_reload (struct multipath *mpp, char *params);
--int dm_addmap_reload_ro (struct multipath *mpp, char *params);
- int dm_map_present (const char *);
- int dm_get_map(char *, unsigned long long *, char *);
- int dm_get_status(char *, char *);
+ 	signal_set(SIGHUP, sighup);
+ 	signal_set(SIGUSR1, sigusr1);
++	signal_set(SIGUSR2, sigusr2);
+ 	signal_set(SIGINT, sigend);
+ 	signal_set(SIGTERM, sigend);
+ 	signal(SIGPIPE, SIG_IGN);
 -- 
 1.8.2
