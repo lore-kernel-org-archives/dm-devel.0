@@ -1,12 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 0/8] multipath: miscellaneous fixes and features
-Date: Fri, 28 Jun 2013 18:26:13 -0500
-Message-ID: <1372461981-6333-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/8] load the dm-multipath module on multipathd
+	startup
+Date: Fri, 28 Jun 2013 18:26:15 -0500
+Message-ID: <1372461981-6333-3-git-send-email-bmarzins@redhat.com>
+References: <1372461981-6333-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1372461981-6333-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +23,24 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Here's some patches that have been piling up.
+This makes systemd modprobe dm-multipath before starting multipathd
 
-Benjamin Marzinski (8):
-  Add multipath path format wildcard
-  load the dm-multipath module on multipathd startup
-  Fix multipath rename from user_friendly_name to wwid
-  Turn off user_friendly_names for netapp devices
-  Don't detect prioritizers that don't work
-  Only load a multipath device RO if RW load fails with EROFS
-  signal waiter thread to stop waiting on dm events
-  fix mutipath -W on empty wwids file
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/multipathd.service | 1 +
+ 1 file changed, 1 insertion(+)
 
- libmultipath/configure.c      |  7 ----
- libmultipath/devmapper.c      | 98 +++++++++++--------------------------------
- libmultipath/devmapper.h      |  3 --
- libmultipath/hwtable.c        |  1 +
- libmultipath/print.c          | 11 +++++
- libmultipath/propsel.c        | 13 ++++--
- libmultipath/waiter.c         |  9 ++++
- libmultipath/wwids.c          |  6 +++
- multipathd/main.c             |  8 ++++
- multipathd/multipathd.service |  1 +
- 10 files changed, 70 insertions(+), 87 deletions(-)
-
+diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
+index d6da067..b9f1210 100644
+--- a/multipathd/multipathd.service
++++ b/multipathd/multipathd.service
+@@ -8,6 +8,7 @@ Conflicts=shutdown.target
+ [Service]
+ Type=forking
+ PIDFile=/var/run/multipathd.pid
++ExecStartPre=/sbin/modprobe dm-multipath
+ ExecStart=/sbin/multipathd
+ ExecReload=/sbin/multipathd reconfigure
+ #ExecStop=/path/to/scrip delete-me if not necessary
 -- 
 1.8.2
