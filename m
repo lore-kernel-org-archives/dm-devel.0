@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/8] Add multipath path format wildcard
-Date: Fri, 28 Jun 2013 18:26:14 -0500
-Message-ID: <1372461981-6333-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/8] Turn off user_friendly_names for netapp
+	devices
+Date: Fri, 28 Jun 2013 18:26:17 -0500
+Message-ID: <1372461981-6333-5-git-send-email-bmarzins@redhat.com>
 References: <1372461981-6333-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,45 +23,25 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-This adds a new format wildcard, 'm', to be used with
-
-multipathd show paths format
-
-It prints the multipath device associated with the path.
+Netapp has requested that even if user friendly names is enabled in the
+defaults section, they would like it disabled for their devices.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/print.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ libmultipath/hwtable.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 274f5e7..c00f5d7 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -422,6 +422,16 @@ snprint_path_serial (char * buff, size_t len, struct path * pp)
- }
- 
- static int
-+snprint_path_mpp (char * buff, size_t len, struct path * pp)
-+{
-+	if (!pp->mpp)
-+		return snprintf(buff, len, "[orphan]");
-+	if (!pp->mpp->alias)
-+		return snprintf(buff, len, "[unknown]");
-+	return snprint_str(buff, len, pp->mpp->alias);
-+}
-+
-+static int
- snprint_path_checker (char * buff, size_t len, struct path * pp)
- {
- 	struct checker * c = &pp->checker;
-@@ -464,6 +474,7 @@ struct path_data pd[] = {
- 	{'p', "pri",           0, snprint_pri},
- 	{'S', "size",          0, snprint_path_size},
- 	{'z', "serial",        0, snprint_path_serial},
-+	{'m', "multipath",     0, snprint_path_mpp},
- 	{0, NULL, 0 , NULL}
- };
- 
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index c317cde..197a1d7 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -794,6 +794,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ONTAP,
+ 		.prio_args     = NULL,
+ 		.retain_hwhandler = RETAIN_HWHANDLER_ON,
++		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+ 		.detect_prio   = DETECT_PRIO_ON,
+ 	},
+ 	/*
 -- 
 1.8.2
