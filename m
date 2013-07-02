@@ -1,15 +1,12 @@
-From: Bharata B Rao <bharata.rao@gmail.com>
-Subject: Re: Max length limitation with BLKZEROOUT on dm device ?
-Date: Mon, 1 Jul 2013 21:26:24 +0530
-Message-ID: <CAGZKiBpznZpCo_LdT5Hm6me+mhrsirSGa0btC0qBG_oUn4e7mw@mail.gmail.com>
-References: <CAGZKiBoyAZcCyMKT1yjwR+79JCfWj2cJ4TWkXojORS44Baz_Bw@mail.gmail.com>
-	<20130701125427.GA20241@redhat.com>
+From: Teng-Feng Yang <shinrairis@gmail.com>
+Subject: dm-thin btree and incremental backup issue
+Date: Tue, 2 Jul 2013 10:41:31 +0800
+Message-ID: <CAKTMprP=7G-b83cHeo4OfYSKVktm5HAdofQhJY0=LKH2=dgWpQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130701125427.GA20241@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,83 +16,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 1, 2013 at 6:24 PM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Mon, Jul 01 2013 at  5:04am -0400,
-> Bharata B Rao <bharata.rao@gmail.com> wrote:
->
->> Hi,
->>
->> While experimenting on zeroing out a dm device from a storage that
->> supports WRITE SAME, I see the below warnings from kernel (3.10.0):
->>
->> ******************
->> INFO: task a.out:21365 blocked for more than 120 seconds.
->> "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
->> a.out           D ffffffff8182d620     0 21365  19945 0x00000080
->> ffff882079321bf8 0000000000000086 ffff882079321fd8 0000000000013fc0
->> ffff882079320010 0000000000013fc0 0000000000013fc0 0000000000013fc0
->> ffff882079321fd8 0000000000013fc0 ffff882032a6eb10 ffff8810795ea0c0
->> Call Trace:
->> [<ffffffff816426f9>] schedule+0x29/0x70
->> [<ffffffff81640945>] schedule_timeout+0x195/0x220
->> [<ffffffff812ad777>] ? __blk_run_queue+0x37/0x50
->> [<ffffffff812af53f>] ? blk_queue_bio+0x2ff/0x3b0
->> [<ffffffff81064859>] ? read_tsc+0x9/0x20
->> [<ffffffff810f5ebc>] ? ktime_get_ts+0x4c/0xf0
->> [<ffffffff81641c4f>] io_schedule_timeout+0x9f/0x100
->> [<ffffffff812ae44a>] ? generic_make_request+0xca/0x100
->> [<ffffffff81642aec>] wait_for_completion_io+0xdc/0x110
->> [<ffffffff810d8fb0>] ? try_to_wake_up+0x2b0/0x2b0
->> [<ffffffff812b5c3c>] blkdev_issue_write_same+0x1bc/0x1d0
->> [<ffffffff812b5cfd>] blkdev_issue_zeroout+0xad/0x120
->> [<ffffffff812b6c68>] blkdev_ioctl+0x728/0x7b0
->> [<ffffffff8120296c>] block_ioctl+0x3c/0x40
->> [<ffffffff811ddb89>] do_vfs_ioctl+0x89/0x350
->> [<ffffffff811ddef1>] SyS_ioctl+0xa1/0xb0
->> [<ffffffff8164ca99>] system_call_fastpath+0x16/0x1b
->> ******************
->>
->> My test program looks like this:
->>
->> {
->> unsigned long arg[2] = {0, 21474836480}; /* len = 20G */
->> fd = open("/dev/mapper/ws_vg-lvol0", O_RDWR);
->> ioctl(fd, BLKZEROOUT, &arg);
->> }
->>
->> # ls -l /dev/mapper/ws_vg-lvol0
->> lrwxrwxrwx. 1 root root 8 Jul  1 12:25 /dev/mapper/ws_vg-lvol0 -> ../dm-17
->>
->> # cat /sys/block/dm-17/queue/write_same_max_bytes
->> 268435456
->>
->> I don't see such messages when len is 512M, 1G, 10G or 15G, but with
->> 20G, such messages are seen.
->>
->> Though I don't see any limitation on the number of bytes that could be
->> zeroed out from a single BLKZEROOUT ioctl call, could this be the
->> result of using a len as large as 20G in a single ioctl ?
->
-> It is quite likely a function of the storage.  The 20G BLKZEROOUT
-> eventually completes right?
+Hi folks,
 
-Yes, the 20G BLKZEROOUT eventually completes, but shouldn't
-blkdev_issue_write_same() limit the number of bio's submitted in a
-batch instead of submitting bio's covering the entire 20G range and
-then waiting for all of them at once ? Correct me I am wrong, but
-that's what I understood from the code. Shouldn't
-blkdev_issue_write_same() issue bio's at the rate which the device can
-handle ?
+I am currently implementing an incremental backup tool of
+dm-thin-provisioning volumes based on this post
+(https://www.redhat.com/archives/dm-devel/2012-May/msg00140.html).
+I clone the latest thin-provisioning-tools from github and use ubuntu
+13.04 (linux 3.8.0-19) as host OS. However, as I try to perform some
+stress tests on my backup tool, I find a weird output of thin_dump
+which I cannot be sure if it is a bug or not.
 
->
-> It could be that 15G just happens to complete before the 120s threshold,
-> but 20G causes it to exceed the 120s hung task timeout?
+This output can be reproduced by the following steps:
+1. create an origin logical volume lv1 with lvm2
+2. write some data into lv1
+3. take a snapshot on lv1
+4. create another origin logical volume lv2
+5. write some data into lv2
 
-Yes very likely.
+As you can see from the output of thin_dump listed below, the data
+mappings of lv2 (dev_id="3") is duplicated in both lv1 (dev_id="1")
+and its snapshot (dev_id="2").
+Is this normal?
 
-Regards,
-Bharata.
+Any help would be grateful
+Thanks
+
+Dennis
+
+The output of thin_dump is summarized as follow:
+
+<superblock uuid="" time="1" transaction="3" data_block_size="2048"
+nr_data_blocks="9216 metadata_snap="3">
+  <device dev_id="1" mapped_blocks="1753" transaction="0"
+creation_time="0" snap_time="1">
+    <single_mapping origin_block="0" data_block="1753" time="1"/>
+    <range_mapping origin_begin="1" data_begin="72" length="31" time="0"/>
+    <single_mapping origin_block="32" data_block="1" time="0"/>
+    <range_mapping origin_begin="33" data_begin="103" length="2" time="0"/>
+    <single_mapping origin_block="35" data_block="968" time="0"/>
+    <range_mapping origin_begin="36" data_begin="1049" length="2" time="0"/>
+    <single_mapping origin_block="38" data_block="1207" time="0"/>
+    <range_mapping origin_begin="39" data_begin="1281" length="3" time="0"/>
+    <range_mapping origin_begin="42" data_begin="1465" length="2" time="0"/>
+    <single_mapping origin_block="128" data_block="2" time="0"/>
+    <range_mapping origin_begin="129" data_begin="105" length="63" time="0"/>
+    <range_mapping origin_begin="192" data_begin="867" length="21" time="0"/>
+    <range_mapping origin_begin="213" data_begin="922" length="11" time="0"/>
+    <range_mapping origin_begin="224" data_begin="168" length="12" time="0"/>
+    <range_mapping origin_begin="236" data_begin="863" length="4" time="0"/>
+    <range_mapping origin_begin="240" data_begin="180" length="144" time="0"/>
+    <single_mapping origin_block="384" data_block="3" time="0"/>
+    <range_mapping origin_begin="385" data_begin="933" length="7" time="0"/>
+    <range_mapping origin_begin="392" data_begin="324" length="248" time="0"/>
+    <single_mapping origin_block="640" data_block="4" time="0"/>
+    <range_mapping origin_begin="641" data_begin="940" length="7" time="0"/>
+    <range_mapping origin_begin="648" data_begin="572" length="243" time="0"/>
+    <range_mapping origin_begin="891" data_begin="947" length="5" time="0"/>
+    <single_mapping origin_block="896" data_block="5" time="0"/>
+    <range_mapping origin_begin="897" data_begin="920" length="2" time="0"/>
+    <range_mapping origin_begin="899" data_begin="952" length="5" time="0"/>
+    <range_mapping origin_begin="904" data_begin="815" length="48" time="0"/>
+    <range_mapping origin_begin="952" data_begin="888" length="32" time="0"/>
+                                        continue ...
+    <single_mapping origin_block="0" data_block="1754" time="1"/>
+    <single_mapping origin_block="32" data_block="1755" time="1"/>
+    <single_mapping origin_block="128" data_block="1756" time="1"/>
+    <single_mapping origin_block="384" data_block="1757" time="1"/>
+    <single_mapping origin_block="640" data_block="1758" time="1"/>
+    <single_mapping origin_block="896" data_block="1759" time="1"/>
+    <range_mapping origin_begin="1024" data_begin="1760" length="64" time="1"/>
+    <single_mapping origin_block="1152" data_block="1824" time="1"/>
+    <single_mapping origin_block="2047" data_block="1825" time="1"/>
+  </device>
+  <device dev_id="2" mapped_blocks="1753" transaction="1"
+creation_time="1" snap_time="1">
+    <single_mapping origin_block="0" data_block="0" time="0"/>
+    <range_mapping origin_begin="1" data_begin="72" length="31" time="0"/>
+    <single_mapping origin_block="32" data_block="1" time="0"/>
+    <range_mapping origin_begin="33" data_begin="103" length="2" time="0"/>
+    <single_mapping origin_block="35" data_block="968" time="0"/>
+    <range_mapping origin_begin="36" data_begin="1049" length="2" time="0"/>
+    <single_mapping origin_block="38" data_block="1207" time="0"/>
+    <range_mapping origin_begin="39" data_begin="1281" length="3" time="0"/>
+    <range_mapping origin_begin="42" data_begin="1465" length="2" time="0"/>
+    <single_mapping origin_block="128" data_block="2" time="0"/>
+    <range_mapping origin_begin="129" data_begin="105" length="63" time="0"/>
+    <range_mapping origin_begin="192" data_begin="867" length="21" time="0"/>
+    <range_mapping origin_begin="213" data_begin="922" length="11" time="0"/>
+                                         continue ...
+    <single_mapping origin_block="0" data_block="1754" time="1"/>
+    <single_mapping origin_block="32" data_block="1755" time="1"/>
+    <single_mapping origin_block="128" data_block="1756" time="1"/>
+    <single_mapping origin_block="384" data_block="1757" time="1"/>
+    <single_mapping origin_block="640" data_block="1758" time="1"/>
+    <single_mapping origin_block="896" data_block="1759" time="1"/>
+    <range_mapping origin_begin="1024" data_begin="1760" length="64" time="1"/>
+    <single_mapping origin_block="1152" data_block="1824" time="1"/>
+    <single_mapping origin_block="2047" data_block="1825" time="1"/>
+  </device>
+  <device dev_id="3" mapped_blocks="72" transaction="2"
+creation_time="1" snap_time="1">
+    <single_mapping origin_block="0" data_block="1754" time="1"/>
+    <single_mapping origin_block="32" data_block="1755" time="1"/>
+    <single_mapping origin_block="128" data_block="1756" time="1"/>
+    <single_mapping origin_block="384" data_block="1757" time="1"/>
+    <single_mapping origin_block="640" data_block="1758" time="1"/>
+    <single_mapping origin_block="896" data_block="1759" time="1"/>
+    <range_mapping origin_begin="1024" data_begin="1760" length="64" time="1"/>
+    <single_mapping origin_block="1152" data_block="1824" time="1"/>
+    <single_mapping origin_block="2047" data_block="1825" time="1"/>
+  </device>
+</superblock>
