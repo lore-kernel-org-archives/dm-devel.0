@@ -1,41 +1,70 @@
-From: Yann Droneaud <ydroneaud@opteya.com>
-Subject: [PATCH] MAINTAINERS: dm-devel@redhat.com is a list
-Date: Tue,  2 Jul 2013 17:01:47 +0200
-Message-ID: <1372777307-4259-1-git-send-email-ydroneaud@opteya.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: Yann Droneaud <ydroneaud@opteya.com>
+From: Teng-Feng Yang <shinrairis@gmail.com>
+Subject: Re: dm-thin btree and incremental backup issue
+Date: Wed, 3 Jul 2013 01:18:14 +0800
+Message-ID: <CAKTMprN8ctu4p7x55n1WTBEEnc4W0G_ux4Dwq7fUtFXr5CQ+0A@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch changes type of dm-devel@redhat.com
+> On Tue, Jul 02, 2013 at 10:41:31AM +0800, Teng-Feng Yang wrote:
+>> Hi folks,
+>>
+>> I am currently implementing an incremental backup tool of
+>> dm-thin-provisioning volumes based on this post
+>
+> Well done!  I've been meaning to do this for ages.  Is your code
+> published so I can help out?
+>
 
-The output of ./scripts/get_maintainer.pl is
-modified to report dm-devel@redhat.com as a list:
+Good to know :)
+This project is not yet published, since it is still not very stable
+at this point of time.
+I think it may still require lots of effort on testing and
+verification to make sure it is ready for production use.
 
- Alasdair Kergon <agk@redhat.com> (maintainer:DEVICE-MAPPER  (LVM))
--dm-devel@redhat.com (maintainer:DEVICE-MAPPER  (LVM))
- Neil Brown <neilb@suse.de> (supporter:SOFTWARE RAID (Mu...)
-+dm-devel@redhat.com (open list:DEVICE-MAPPER  (LVM))
- linux-raid@vger.kernel.org (open list:SOFTWARE RAID (Mu...)
- linux-kernel@vger.kernel.org (open list)
+>> (https://www.redhat.com/archives/dm-devel/2012-May/msg00140.html).
+>> I clone the latest thin-provisioning-tools from github and use ubuntu
+>> 13.04 (linux 3.8.0-19) as host OS. However, as I try to perform some
+>> stress tests on my backup tool, I find a weird output of thin_dump
+>> which I cannot be sure if it is a bug or not.
+>
+> Yep, it's a bug, and was fixed on Friday.
+>
+> https://github.com/jthornber/thin-provisioning-tools/commit/e701b966427111f50fee21ae3d9eb5703268152c
+> https://github.com/jthornber/thin-provisioning-tools/commit/fe8e1592a98abc580750aaa4ad5c20a496646d4f
+>
 
-Signed-off-by: Yann Droneaud <ydroneaud@opteya.com>
----
- MAINTAINERS | 1 -
- 1 file changed, 1 deletion(-)
+I pulled the latest commit from github today, and I still confirmed
+the same behavior as described in my previous mail. Therefore, I spent
+some time trying to fix this issue, and I think I might find where the
+problem is. When a device has only a few data mappings, it seems that
+the subroot node of this devices' bottom-level btree will be a LEAF
+node instead of an INTERNAL node. Since metadata_dump only checks if
+current key matches to target dev_id when it visits an INTERNAL node,
+the data mappings of other devices with only a few data mappings still
+appends to all the devices' data mapping dump. Therefore, I apply the
+same dev_id checking when metadata_dumper visits LEAF node as well,
+and it works. However, I am not quite sure if this fix is correct and
+has no "side effects" to mess things up.
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 7b6ab51..fefd17f 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -2527,7 +2527,6 @@ S:	Maintained
- 
- DEVICE-MAPPER  (LVM)
- M:	Alasdair Kergon <agk@redhat.com>
--M:	dm-devel@redhat.com
- L:	dm-devel@redhat.com
- W:	http://sources.redhat.com/dm
- Q:	http://patchwork.kernel.org/project/dm-devel/list/
--- 
-1.8.3.1
+>
+> However I suggest you stick to the tagged 0.1.4 release (there is a
+> new release due in the next couple of days).
+>
+> - Joe
+
+Thanks for your help
+Dennis
