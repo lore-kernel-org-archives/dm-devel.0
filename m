@@ -1,78 +1,46 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 4/4] scsi: Return ENODATA on medium error
-Date: Tue, 02 Jul 2013 12:14:41 +0900
-Message-ID: <51D245A1.6000106@ce.jp.nec.com>
-References: <1372684586-41829-1-git-send-email-hare@suse.de> <1372684586-41829-5-git-send-email-hare@suse.de>
+From: OS Engineering <osengineering-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>
+Subject: RE: Performance Comparison among EnhanceIO, bcache and dm-cache.
+Date: Tue, 2 Jul 2013 08:25:17 +0000
+Message-ID: <D399C715A2AD7F4F891A75871FC3117508A112@MYMBX3.stec-inc.ad>
+References: <D399C715A2AD7F4F891A75871FC3117507866B@MYMBX3.stec-inc.ad>
+ <CAMM=eLfKku3CuHUS-0Akv=FdEzk_OWz3j+3oTAWCrFnFLZ0b1g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1372684586-41829-5-git-send-email-hare@suse.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: James Bottomley <jbottomley@parallels.com>, linux-scsi@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Ren Mingxin <renmx@cn.fujitsu.com>, Theodore Tso <tytso@mit.edu>, linux-fsdevel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMM=eLfKku3CuHUS-0Akv=FdEzk_OWz3j+3oTAWCrFnFLZ0b1g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Snitzer <snitzer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Amit Phansalkar <aphansalkar-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, "thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <thornber-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Padmini Balasubramaniyan <padminib-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org>, "koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org" <koverstreet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi Hannes,
+>On Jun 11, 2013 11:06 AM, "OS Engineering" <osengineering-FZ1t8LVTR2ZWk0Htik3J/w@public.gmane.org=
+> wrote:
+>>
+>> Hi Jens,
+>>
+>> In continuation with our previous communication, we have carried out=
+ performance comparison among EnhanceIO, bcache and dm-cache.
 
-On 07/01/13 22:16, Hannes Reinecke wrote:
-> When a medium error is detected the SCSI stack should return
-> ENODATA to the upper layers.
-> 
-> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  block/blk-core.c          |  3 +++
->  drivers/md/dm-mpath.c     | 16 +++++++++++++++-
->  drivers/scsi/scsi_error.c |  2 +-
->  drivers/scsi/scsi_lib.c   |  5 +++++
->  include/scsi/scsi.h       |  1 +
->  5 files changed, 25 insertions(+), 2 deletions(-)
-..
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index bdf26f5..57896cea 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
+>How reproducible are these results?=A0 Any chance you could do 5-10 ru=
+ns to get the avg and stddev?=A0 May (or may not) prove interesting.
 
-Thank you for including the change.
-But I think this change to dm should be a separate patch in this series
-(prerequisite to the SCSI error code change) and Cc to dm-devel.
+Hi mike,
 
-> @@ -1261,6 +1261,20 @@ static void activate_path(struct work_struct *work)
->  				pg_init_done, pgpath);
->  }
->  
-> +static int noretry_error(int error)
-> +{
-> +	switch(error) {
-> +	case -EOPNOTSUPP:
-> +	case -EREMOTEIO:
-> +	case -EILSEQ:
-> +	case -ENODATA:
+We found that, in case of write through caches, the test results were c=
+onsistent for all caching solution with EnhanceIO providing better thro=
+ughput in comparison to bcache and dm-cache. However, under write-back =
+mode, dm-cache showed a large standard deviation. The results for Enhan=
+ceIO and bcache were consistent with EnhanceIO providing higher through=
+put when compared to bcache.
 
-   	case -ENOSPC:
+We have performed 5 runs for all our performance tests and observed the=
+ir mean and standard deviations.=20
+The test results can be found at: https://gist.github.com/sanoj-stec/58=
+58574
+The test scripts can be found at:  https://github.com/stec-inc/EnhanceI=
+O/tree/master/performance_test
 
-We don't want to fail the path for -ENOSPC, do we?
-
-> +		return 1;
-> +	}
-> +
-> +	/* Anything else could be a path failure, so should be retried */
-> +	return 0;
-> +}
-> +
->  /*
->   * end_io handling
->   */
-> @@ -1284,7 +1298,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
->  	if (!error && !clone->errors)
->  		return 0;	/* I/O complete */
->  
-> -	if (error == -EOPNOTSUPP || error == -EREMOTEIO || error == -EILSEQ)
-> +	if (noretry_error(error))
->  		return error;
->  
->  	if (mpio->pgpath)
-
--- 
-Jun'ichi Nomura, NEC Corporation
+Regards,
+Sanoj
