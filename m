@@ -1,17 +1,17 @@
-From: Dan Williams <djbw@fb.com>
-Subject: Re: [PATCH 07/10] idr: Rename idr_alloc() ->
-	idr_alloc_range()
-Date: Sat, 6 Jul 2013 05:26:08 +0000
-Message-ID: <84A937D219C2B44EB8EA44831ACA1E4917268C93@PRN-MBX01-3.TheFacebook.com>
-References: <1373087301-23730-8-git-send-email-kmo@daterainc.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: make alloc error info more clearly.
+Date: Mon, 8 Jul 2013 06:39:52 -0400
+Message-ID: <20130708103951.GB6853@redhat.com>
+References: <1373180926-29264-1-git-send-email-robin.k.dong@gmail.com>
+	<20130707093119.GB13191@agk-dp.fab.redhat.com>
+	<CANsebLFx6vAYZuvQULb62fdLZPbDwtF9Ru9dRsW89DHmk2n_0w@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1373087301-23730-8-git-send-email-kmo@daterainc.com>
-Content-Language: en-US
-Content-ID: <08CD1683A9D2B34AA655A5DD785F23F4@fb.com>
+Content-Disposition: inline
+In-Reply-To: <CANsebLFx6vAYZuvQULb62fdLZPbDwtF9Ru9dRsW89DHmk2n_0w@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,40 +21,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kent Overstreet <kmo@daterainc.com>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: Wolfram Sang <wsa@the-dreams.de>, Tatyana Nikolova <Tatyana.E.Nikolova@intel.com>, Linus Walleij <linus.walleij@linaro.org>, Paul Mackerras <paulus@samba.org>, Christoph Hellwig <hch@lst.de>, Alon Levy <alevy@redhat.com>, Jason Wang <jasowang@redhat.com>, Ohad Ben-Cohen <ohad@wizery.com>, "John W. Linville" <linville@tuxdriver.com>, Inki Dae <inki.dae@samsung.com>, Alex Williamson <alex.williamson@redhat.com>, David Teigland <teigland@redhat.com>, Joel Becker <jlbec@evilplan.org>, Tim Gardner <tim.gardner@canonical.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Seung-Woo Kim <sw0312.kim@samsung.com>, Li Zefan <lizefan@huawei.com>, "tj@kernel.org" <tj@kernel.org>, Guo Chao <yan@linux.vnet.ibm.com>, Andy Grover <agrover@redhat.com>, Dmitry Torokhov <dtor@vmware.com>
+To: Robin Dong <robin.k.dong@gmail.com>
+Cc: dm-devel@redhat.com, Robin Dong <sanbai@taobao.com>
 List-Id: dm-devel.ids
 
+On Sun, Jul 07 2013 at  8:29am -0400,
+Robin Dong <robin.k.dong@gmail.com> wrote:
 
-
-On 7/5/13 10:08 PM, "Kent Overstreet" <kmo@daterainc.com> wrote:
-
->From: Kent Overstreet <koverstreet@google.com>
->
->Then also add an idr_alloc() wrapper, without the start/end arguments -
->for consistency with the ida interfaces.
->
->Signed-off-by: Kent Overstreet <koverstreet@google.com>
->Cc: Andrew Morton <akpm@linux-foundation.org>
->Cc: Tejun Heo <tj@kernel.org>
->Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
->Cc: Jens Axboe <axboe@kernel.dk>
->Cc: Chas Williams <chas@cmf.nrl.navy.mil>
->Cc: Lars Ellenberg <drbd-dev@lists.linbit.com>
->Cc: Dan Williams <djbw@fb.com>
-[..]
->diff --git a/drivers/dca/dca-sysfs.c b/drivers/dca/dca-sysfs.c
->index 126cf29..effda66 100644
->--- a/drivers/dca/dca-sysfs.c
->+++ b/drivers/dca/dca-sysfs.c
->@@ -58,7 +58,7 @@ int dca_sysfs_add_provider(struct dca_provider *dca,
->struct device *dev)
-> 	idr_preload(GFP_KERNEL);
-> 	spin_lock(&dca_idr_lock);
+> 2013/7/7 Alasdair G Kergon <agk@redhat.com>
+> >
+> > On Sun, Jul 07, 2013 at 03:08:46PM +0800, Robin Dong wrote:
+> > > If dm-delay structure allocation failed, report more precise error
+> information.
+> >
+> > Do you have some test result that shows this?
+> >
+> >   DMERR("%s: %s: %s", dm_device_name(t->md), type, tgt->error);
+> >
+> > ?
 > 
->-	ret = idr_alloc(&dca_idr, dca, 0, 0, GFP_NOWAIT);
->+	ret = idr_alloc(&dca_idr, dca, GFP_NOWAIT);
-> 	if (ret >= 0)
-> 		dca->id = ret;
+> Oh, sorry for my omission.
+> But I stil think that print "Cannot allocate linear context" in dm-flakey
+> is puzzling...
 
-DCA portion Acked-by: Dan Williams <djbw@fb.com>
+Yeah, that should get fixed up (with s/linear //), clearly got
+introduced via cut and paste.
