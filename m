@@ -1,26 +1,39 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH] MAINTAINERS: dm-devel@redhat.com is a list
-Date: Mon, 8 Jul 2013 18:37:44 +0100
-Message-ID: <20130708173744.GB4870@agk-dp.fab.redhat.com>
-References: <1372777307-4259-1-git-send-email-ydroneaud@opteya.com> <20130708171009.GA4870@agk-dp.fab.redhat.com> <1373304103.9458.2.camel@joe-AO722>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: test needed for a dm-bufio patch
+Date: Tue, 9 Jul 2013 18:00:49 +0100
+Message-ID: <20130709170048.GA25314@debian>
+References: <alpine.LRH.2.02.1307021747280.2229@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1373304103.9458.2.camel@joe-AO722>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Joe Perches <joe@perches.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Yann Droneaud <ydroneaud@opteya.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+In-Reply-To: <alpine.LRH.2.02.1307021747280.2229@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jul 08, 2013 at 10:21:43AM -0700, Joe Perches wrote:
-> I think this Q entry isn't as useful as it could be
-> because it doesn't show the status of any patch.
- 
-When kernel.org patchwork was unavailable for many months we migrated
-over to a private instance - and we still haven't moved back!  I
-discussed this with Mike a couple of weeks ago and we decided to have a
-go at moving back to the public instance again before the next merge
-window.
+On Tue, Jul 02, 2013 at 05:51:50PM -0400, Mikulas Patocka wrote:
+> Hi Joe
+>
+> Could you please try this patch
+> http://people.redhat.com/agk/patches/linux/editing/dm-bufio-submit-writes-outside-lock.patch
+> and test if it generates some regressions for dm-thin?
 
-Alasdair
+Hi Mikulas,
+
+I've run a couple of cache tests and don't see any regressions.
+performance is similar.  I'll include it in my tree since it seems to
+be a good thing.
+
+- Joe
