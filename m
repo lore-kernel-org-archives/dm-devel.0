@@ -1,77 +1,44 @@
-From: Stephen Rothwell <sfr@canb.auug.org.au>
-Subject: Re: [dm-devel] [git pull] device-mapper changes for 3.11
-Date: Fri, 12 Jul 2013 11:03:03 +1000
-Message-ID: <20130712110303.06095e7b41c49c35bcd61fab@canb.auug.org.au>
-References: <20130711013448.GD32399@agk-dp.fab.redhat.com>
-	<20130711162040.8a82cb97a6c647c4f61f919b@canb.auug.org.au>
-	<20130711135522.GN8530@agk-dp.fab.redhat.com>
+From: Ric Wheeler <ricwheeler@gmail.com>
+Subject: Linux Plumbers IO & File System Micro-conference
+Date: Fri, 12 Jul 2013 13:20:59 -0400
+Message-ID: <51E03AFB.1000000@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pgp-signature";
- micalg="PGP-SHA256";
- boundary="Signature=_Fri__12_Jul_2013_11_03_03_+1000_tYJy6HCLoj8f9sKQ"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130711135522.GN8530@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Yann Droneaud <ydroneaud@opteya.com>, Mike Snitzer <snitzer@redhat.com>, Robin Dong <sanbai@taobao.com>, linux-kernel@vger.kernel.org, Jim Ramsay <jim_ramsay@dell.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Rob Herring <robherring2@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Milan Broz <gmazyland@gmail.com>, Guenter Roeck <linux@roeck-us.net>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, xfs-oss <xfs@oss.sgi.com>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, IDE/ATA development list <linux-ide@vger.kernel.org>, anaconda-devel-list@redhat.com
 List-Id: dm-devel.ids
 
---Signature=_Fri__12_Jul_2013_11_03_03_+1000_tYJy6HCLoj8f9sKQ
-Content-Type: text/plain; charset=US-ASCII
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-Hi Alasdair,
+Linux Plumbers has approved a file and storage microconference. The overview 
+page is here:
 
-On Thu, 11 Jul 2013 14:55:22 +0100 Alasdair G Kergon <agk@redhat.com> wrote:
->
-> On Thu, Jul 11, 2013 at 04:20:40PM +1000, Stephen Rothwell wrote:
-> > Alistair, is there some reason that you cannot maintain some relatively
-> > stable git tree for me to fetch (instead of the quilt series). =20
->=20
-> Well Mike Snitzer is becoming a joint maintainer and this also requires
-> changes to the workflow so watch this space.
+http://wiki.linuxplumbersconf.org/2013:file_and_storage_systems
 
-OK, noted.
+I would like to started gathering in ideas for topics. I have been approached 
+already with a request to cover the copy_range work Zach Brown kicked off at LSF 
+which I think is a great topic since it has impact throughout the stack, all the 
+way up to applications programmers.
 
-> > Also,
-> > there is not real reason to keep rebasing this stuff (especially just
-> > before sending it to Linus).
-> =20
-> Most of the time the patches are decoupled from the rest of the tree
-> and the final linux-next kernel is the same regardless of where the
-> quilt tree is attached.  I maintain a single sequence of patches=20
-> where the ones ready for upstream float up to the top and the
-> linux-next export is a by-product and not the primary output.
->=20
-> Anyway, like I say, we'll be changing things during the next couple of
-> cycles and we'll bear your suggestions in mind.
+A similar request was made to give some time to non-volatile memory devices and 
+the proposed "persistent memory" backed block device and persistent memory file 
+system from Intel. That also seems to fall in nicely with the plumbers mission 
+statement since it clearly will impact everything from the application on down 
+through the kernel.
 
-Thanks, I will watch for developments.
+Last year, we had a good discussion on management of storage (anaconda, yast, 
+libstoragemgt, etc) - that also might be worth giving updates on.
 
---=20
-Cheers,
-Stephen Rothwell                    sfr@canb.auug.org.au
+The instructions for submitting ideas will be updated later today at:
 
---Signature=_Fri__12_Jul_2013_11_03_03_+1000_tYJy6HCLoj8f9sKQ
-Content-Type: application/pgp-signature
+http://www.linuxplumbersconf.org/2013/submitting-topic/
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.20 (GNU/Linux)
+If you have topics that you would like to add, wait until the instructions get 
+posted at the link above. If you are impatient, feel free to email me directly 
+(but probably best to drop the broad mailing lists from the reply).
 
-iQIcBAEBCAAGBQJR31XHAAoJEECxmPOUX5FEVKMP/j1Y1hl23A+XOcKZqeHSqlo2
-mWigXgDm1kB9vPPTzHDdOVoqnY7+vv9XGN78jleov/cS4C2uDUQ5gFMvn1PbvJBX
-DdiOgyd8brlM8a3l1SFOGQ5qFOjNbrxkavWQ7pgle63hbPrtNdrAcbOxVDdrUGrn
-3giKcu4oNlex7JUUihhuBo2yzyJOumo4tVSlIV+RFZqlzQd8mBZwT4r1r9mAxPbq
-kPa1uR8qu4MRsEgjjpZV9cLwBtMxhKsMA6jYqGzccMfezbWX5dciz35pWvXhDMB5
-Dk1uwP4W+yz0KDRLfzl4nR0dq1RGGTyQE9PioRkJG3cXJ4GUky1SczXtM/yPONhH
-v3InRiJTWiVM8tDfWDXMuN0buQyRXdIP7aMS0AoPclvr4xdDnL23ZrDb1XjBEuaI
-doODRcx6YxdMPF6wdbn8Rjc6gq5Y4Tz7wY9KwF4HRiFGdAmIqQVzLYKfZWLXTaSQ
-Eb0AWnl9IjSmel3QuAz1KLrWWEyHTR8s3dAn/6L+YOxzZeYnyF56nJ1yuW43CZiP
-aMVwgFZalR+8p+biVulMIp41XTi9XwsGri3dQWLv2uLGEgOXakkQygNyyJbMd8S0
-Yjlfnm7kJZ5R5WA13dGgwwurQn8Dn/8qP5Q+sr9HDCD7092mN6S5nLsIKmJWzYY+
-x+2ipYu7Jew9bmKyf0IT
-=oHHk
------END PGP SIGNATURE-----
+Thanks!
 
---Signature=_Fri__12_Jul_2013_11_03_03_+1000_tYJy6HCLoj8f9sKQ--
+Ric
+
