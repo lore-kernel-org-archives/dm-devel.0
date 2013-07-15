@@ -1,62 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-cache: can the same cache be used with multiple
- origin devices?
-Date: Mon, 15 Jul 2013 15:59:11 -0400
-Message-ID: <20130715195911.GC15172@redhat.com>
-References: <33A0129EBFD46748804DE81B354CA1B2165B1533@SACEXCMBX06-PRD.hq.netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ric Wheeler <ricwheeler@gmail.com>
+Subject: Re: Linux Plumbers IO & File System Micro-conference
+Date: Mon, 15 Jul 2013 17:22:46 -0400
+Message-ID: <51E46826.20709@gmail.com>
+References: <51E03AFB.1000000@gmail.com> <F0897B83F4BC10458936F08DADF233160F65F99416@MX02A.corp.emc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <33A0129EBFD46748804DE81B354CA1B2165B1533@SACEXCMBX06-PRD.hq.netapp.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Mears, Morgan" <Morgan.Mears@netapp.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <F0897B83F4BC10458936F08DADF233160F65F99416@MX02A.corp.emc.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "faibish, sorin" <faibish_sorin@emc.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, xfs-oss <xfs@oss.sgi.com>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, IDE/ATA development list <linux-ide@vger.kernel.org>, "anaconda-devel-list@redhat.com" <anaconda-devel-list@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jul 15 2013 at  3:01pm -0400,
-Mears, Morgan <Morgan.Mears@netapp.com> wrote:
+On 07/12/2013 01:42 PM, faibish, sorin wrote:
+> Can we have a discussion on Lustre client in the kernel? Thanks
+>
+> ./Sorin
 
-> Hi,
-> 
-> In reference to dm-cache: can the same cache and metadata devices be
-> used with multiple origin devices?  This can be configured, and we've
-> done some tests that appear to show that it works - we're looking for
-> confirmation (or otherwise).
+I am not sure that we have that much to do for Lustre on the client side. Is 
+this a topic that would be of broad enough interest to include people outside of 
+the kernel developers?
 
-It is _not_ supported.
- 
-> Here's an example test setup to clarify -- ssd_metadata and ssd_blocks
-> are being used to cache sdc and sdd.  In testing, different patterns
-> were written to areas of sdc_cached and  sdd_cached; afterwards, the
-> contents of sdc and sdd were as expected.
-> 
-> dmsetup create sdc_cached --table '0 4194304 cache /dev/mapper/ssd_metadata /dev/mapper/ssd_blocks /dev/sdc 512 1 writethrough default 0'
-> dmsetup create sdd_cached --table '0 4194304 cache /dev/mapper/ssd_metadata /dev/mapper/ssd_blocks /dev/sdd 512 1 writethrough default 0'
+thanks!
 
-Interesting.
+Ric
 
-The current cache target obviously fails to detect that the metadata or
-data devices are already in use.  But that doesn't mean it is safe to
-utilize the cache in this mode (I'll have a think about where the code
-will break down).  But the cache is managed/written in a manner that
-only assumes a single backing origin for each cache.
+>
+> -----Original Message-----
+> From: linux-fsdevel-owner@vger.kernel.org [mailto:linux-fsdevel-owner@vger.kernel.org] On Behalf Of Ric Wheeler
+> Sent: Friday, July 12, 2013 1:21 PM
+> To: linux-scsi@vger.kernel.org; Linux FS Devel; linux-nfs@vger.kernel.org; linux-btrfs; xfs-oss; linux-ext4@vger.kernel.org; device-mapper development; IDE/ATA development list; anaconda-devel-list@redhat.com
+> Subject: Linux Plumbers IO & File System Micro-conference
+>
+>
+> Linux Plumbers has approved a file and storage microconference. The overview page is here:
+>
+> http://wiki.linuxplumbersconf.org/2013:file_and_storage_systems
+>
+> I would like to started gathering in ideas for topics. I have been approached already with a request to cover the copy_range work Zach Brown kicked off at LSF which I think is a great topic since it has impact throughout the stack, all the way up to applications programmers.
+>
+> A similar request was made to give some time to non-volatile memory devices and the proposed "persistent memory" backed block device and persistent memory file system from Intel. That also seems to fall in nicely with the plumbers mission statement since it clearly will impact everything from the application on down through the kernel.
+>
+> Last year, we had a good discussion on management of storage (anaconda, yast, libstoragemgt, etc) - that also might be worth giving updates on.
+>
+> The instructions for submitting ideas will be updated later today at:
+>
+> http://www.linuxplumbersconf.org/2013/submitting-topic/
+>
+> If you have topics that you would like to add, wait until the instructions get posted at the link above. If you are impatient, feel free to email me directly (but probably best to drop the broad mailing lists from the reply).
+>
+> Thanks!
+>
+> Ric
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in the body of a message to majordomo@vger.kernel.org More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 
-> Our thinking is that using one large cache for multiple origin devices
-> will result in a more efficient use of flash resources than statically
-> partitioning the flash amongst the origins.  Also, there's no need to
-> repartition or buy another SSD to start caching a newly-added origin.
-
-We originally thought about allowing a shared cache (metadata+data) for
-N origin devices but decided against it to reduce the complexity of the
-initial target code.
