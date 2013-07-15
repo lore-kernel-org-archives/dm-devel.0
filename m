@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 24/29] multipath: reference the udev context when
-	starting event queue
-Date: Mon, 15 Jul 2013 15:00:25 +0200
-Message-ID: <1373893230-26077-25-git-send-email-hare@suse.de>
+Subject: [PATCH 10/29] kpartx: support disk with non-512B sectors
+Date: Mon, 15 Jul 2013 15:00:11 +0200
+Message-ID: <1373893230-26077-11-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,121 +19,173 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, Petr Uzel <petr.uzel@suse.cz>
 List-Id: dm-devel.ids
 
-The uevent listener is running asynchronously, so it might still
-be active and receiving events when the main thread is already
-shut down. So it need to take a separate reference to the udev
-context to avoid the context becoming invalid while the listener
-is running.
+From: Petr Uzel <petr.uzel@suse.cz>
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+libdevmapper expects sector size to be recalculated to 512B, so we need
+to teach kpartx to do so if the underlying DM device has different
+sector size (for GPT and msods partition tables).
+
+Signed-off-by: Petr Uzel <petr.uzel@suse.cz>
 ---
- libmultipath/uevent.c |   16 ++++++++++++----
- libmultipath/uevent.h |    4 +++-
- multipathd/main.c     |    4 ++--
- 3 files changed, 17 insertions(+), 7 deletions(-)
+ kpartx/dos.c    |   17 ++++++++++-------
+ kpartx/gpt.c    |   20 +-------------------
+ kpartx/kpartx.c |   12 ++++++++++++
+ kpartx/kpartx.h |    8 ++++++++
+ 4 files changed, 31 insertions(+), 26 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 0643e14..9ee3ade 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -47,7 +47,6 @@
- #include "list.h"
- #include "uevent.h"
- #include "vector.h"
--#include "config.h"
+diff --git a/kpartx/dos.c b/kpartx/dos.c
+index a1a9961..0e57f0e 100644
+--- a/kpartx/dos.c
++++ b/kpartx/dos.c
+@@ -26,7 +26,9 @@ read_extended_partition(int fd, struct partition *ep, int en,
+ 	int moretodo = 1;
+ 	int i, n=0;
  
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
- 
-@@ -127,11 +126,14 @@ service_uevq(struct list_head *tmpq)
- 
- static void uevq_stop(void *arg)
- {
-+	struct udev *udev = arg;
+-	next = start = le32_to_cpu(ep->start_sect);
++	int sector_size_mul = get_sector_size(fd)/512;
 +
- 	condlog(3, "Stopping uev queue");
- 	pthread_mutex_lock(uevq_lockp);
- 	my_uev_trigger = NULL;
- 	pthread_cond_signal(uev_condp);
- 	pthread_mutex_unlock(uevq_lockp);
-+	udev_unref(udev);
++	next = start = sector_size_mul * le32_to_cpu(ep->start_sect);
+ 
+ 	while (moretodo) {
+ 		here = next;
+@@ -45,14 +47,14 @@ read_extended_partition(int fd, struct partition *ep, int en,
+ 			memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
+ 			if (is_extended(p.sys_type)) {
+ 				if (p.nr_sects && !moretodo) {
+-					next = start + le32_to_cpu(p.start_sect);
++					next = start + sector_size_mul * le32_to_cpu(p.start_sect);
+ 					moretodo = 1;
+ 				}
+ 				continue;
+ 			}
+ 			if (n < ns) {
+-				sp[n].start = here + le32_to_cpu(p.start_sect);
+-				sp[n].size = le32_to_cpu(p.nr_sects);
++				sp[n].start = here + sector_size_mul * le32_to_cpu(p.start_sect);
++				sp[n].size = sector_size_mul * le32_to_cpu(p.nr_sects);
+ 				sp[n].container = en + 1;
+ 				n++;
+ 			} else {
+@@ -77,6 +79,7 @@ read_dos_pt(int fd, struct slice all, struct slice *sp, int ns) {
+ 	unsigned long offset = all.start;
+ 	int i, n=4;
+ 	unsigned char *bp;
++	int sector_size_mul = get_sector_size(fd)/512;
+ 
+ 	bp = (unsigned char *)getblock(fd, offset);
+ 	if (bp == NULL)
+@@ -90,15 +93,15 @@ read_dos_pt(int fd, struct slice all, struct slice *sp, int ns) {
+ 		if (is_gpt(p.sys_type))
+ 			return 0;
+ 		if (i < ns) {
+-			sp[i].start =  le32_to_cpu(p.start_sect);
+-			sp[i].size = le32_to_cpu(p.nr_sects);
++			sp[i].start =  sector_size_mul * le32_to_cpu(p.start_sect);
++			sp[i].size = sector_size_mul * le32_to_cpu(p.nr_sects);
+ 		} else {
+ 			fprintf(stderr,
+ 				"dos_partition: too many slices\n");
+ 			break;
+ 		}
+ 		if (is_extended(p.sys_type)) {
+-			sp[i].size = 2; /* extended partitions only get two
++			sp[i].size = sector_size_mul * 2; /* extended partitions only get two
+ 					   sectors mapped for LILO to install */
+ 			n += read_extended_partition(fd, &p, i, sp+n, ns-n);
+ 		}
+diff --git a/kpartx/gpt.c b/kpartx/gpt.c
+index 0a22927..5a54970 100644
+--- a/kpartx/gpt.c
++++ b/kpartx/gpt.c
+@@ -38,6 +38,7 @@
+ #include <byteswap.h>
+ #include <linux/fs.h>
+ #include "crc32.h"
++#include "kpartx.h"
+ 
+ #if BYTE_ORDER == LITTLE_ENDIAN
+ #  define __le16_to_cpu(x) (x)
+@@ -116,25 +117,6 @@ is_pmbr_valid(legacy_mbr *mbr)
+ 
+ 
+ /************************************************************
+- * get_sector_size
+- * Requires:
+- *  - filedes is an open file descriptor, suitable for reading
+- * Modifies: nothing
+- * Returns:
+- *  sector size, or 512.
+- ************************************************************/
+-static int
+-get_sector_size(int filedes)
+-{
+-	int rc, sector_size = 512;
+-
+-	rc = ioctl(filedes, BLKSSZGET, &sector_size);
+-	if (rc)
+-		sector_size = 512;
+-	return sector_size;
+-}
+-
+-/************************************************************
+  * _get_num_sectors
+  * Requires:
+  *  - filedes is an open file descriptor, suitable for reading
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 98d88c0..1369542 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -26,6 +26,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <stdint.h>
++#include <sys/ioctl.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <ctype.h>
+@@ -695,3 +696,14 @@ getblock (int fd, unsigned int secnr) {
+ 
+ 	return bp->block;
  }
- 
- void
-@@ -399,7 +401,7 @@ exit:
- 	return 1;
- }
- 
--int uevent_listen(void)
-+int uevent_listen(struct udev *udev)
- {
- 	int err;
- 	struct udev_monitor *monitor = NULL;
-@@ -411,11 +413,17 @@ int uevent_listen(void)
- 	 * thereby not getting to empty the socket's receive buffer queue
- 	 * often enough.
- 	 */
--	pthread_cleanup_push(uevq_stop, NULL);
-+	if (!udev) {
-+		condlog(1, "no udev context");
-+		return 1;
-+	}
-+	udev_ref(udev);
-+	pthread_cleanup_push(uevq_stop, udev);
- 
--	monitor = udev_monitor_new_from_netlink(conf->udev, "udev");
-+	monitor = udev_monitor_new_from_netlink(udev, "udev");
- 	if (!monitor) {
- 		condlog(2, "failed to create udev monitor");
-+		err = 2;
- 		goto out;
- 	}
- #ifdef LIBUDEV_API_RECVBUF
-diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
-index 762595a..e5fdfcc 100644
---- a/libmultipath/uevent.h
-+++ b/libmultipath/uevent.h
-@@ -13,6 +13,8 @@
- #define NETLINK_KOBJECT_UEVENT		15
- #endif
- 
-+struct udev;
 +
- struct uevent {
- 	struct list_head node;
- 	struct udev_device *udev;
-@@ -27,7 +29,7 @@ struct uevent {
- int is_uevent_busy(void);
- void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
++int
++get_sector_size(int filedes)
++{
++	int rc, sector_size = 512;
++
++	rc = ioctl(filedes, BLKSSZGET, &sector_size);
++	if (rc)
++		sector_size = 512;
++	return sector_size;
++}
+diff --git a/kpartx/kpartx.h b/kpartx/kpartx.h
+index 61d31b6..a55c211 100644
+--- a/kpartx/kpartx.h
++++ b/kpartx/kpartx.h
+@@ -2,6 +2,7 @@
+ #define _KPARTX_H
  
--int uevent_listen(void);
-+int uevent_listen(struct udev *udev);
- int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
- 		    void * trigger_data);
- int uevent_get_major(struct uevent *uev);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index aa5a298..b41fc64 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -835,7 +835,7 @@ out:
- static void *
- ueventloop (void * ap)
- {
--	if (uevent_listen())
-+	if (uevent_listen(udev))
- 		condlog(0, "error starting uevent listener");
+ #include <stdint.h>
++#include <sys/ioctl.h>
  
- 	return NULL;
-@@ -1658,7 +1658,7 @@ child (void * param)
- 	/*
- 	 * Start uevent listener early to catch events
- 	 */
--	if ((rc = pthread_create(&uevent_thr, &misc_attr, ueventloop, vecs))) {
-+	if ((rc = pthread_create(&uevent_thr, &misc_attr, ueventloop, udev))) {
- 		condlog(0, "failed to create uevent thread: %d", rc);
- 		exit(1);
- 	}
+ /*
+  * For each partition type there is a routine that takes
+@@ -18,6 +19,13 @@
+ #define safe_sprintf(var, format, args...)	\
+ 	snprintf(var, sizeof(var), format, ##args) >= sizeof(var)
+ 
++#ifndef BLKSSZGET
++#define BLKSSZGET  _IO(0x12,104)	/* get block device sector size */
++#endif
++
++int
++get_sector_size(int filedes);
++
+ /*
+  * units: 512 byte sectors
+  */
 -- 
 1.7.10.4
