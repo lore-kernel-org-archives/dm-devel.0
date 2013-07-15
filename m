@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 16/29] Correctly print out 'max' for max_fds
-Date: Mon, 15 Jul 2013 15:00:17 +0200
-Message-ID: <1373893230-26077-17-git-send-email-hare@suse.de>
+Subject: [PATCH 17/29] Correctly set max_fds in case of failure
+Date: Mon, 15 Jul 2013 15:00:18 +0200
+Message-ID: <1373893230-26077-18-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,35 +22,56 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If the value specified for 'max_fds' is the system-wide limit
-we should be printing out 'max', and not that value.
+If we fail to get the system limit for max_fds we should assume
+a safe value of 4096.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/dict.c |    8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ libmultipath/dict.c |   15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
 
 diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index b747fcd..6a58fa2 100644
+index 6a58fa2..4b840de 100644
 --- a/libmultipath/dict.c
 +++ b/libmultipath/dict.c
-@@ -2565,10 +2565,16 @@ snprint_def_rr_min_io_rq (char * buff, int len, void * data)
- static int
- snprint_max_fds (char * buff, int len, void * data)
+@@ -290,18 +290,27 @@ static int
+ max_fds_handler(vector strvec)
  {
+ 	char * buff;
+-	int r = 0;
 +	int r = 0, max_fds;
+ 
+ 	buff = set_value(strvec);
+ 
+ 	if (!buff)
+ 		return 1;
+ 
++	r = get_sys_max_fds(&max_fds);
++	if (r) {
++		/* Assume safe limit */
++		max_fds = 4096;
++	}
+ 	if (strlen(buff) == 3 &&
+ 	    !strcmp(buff, "max"))
+-		r = get_sys_max_fds(&conf->max_fds);
++		conf->max_fds = max_fds;
+ 	else
+ 		conf->max_fds = atoi(buff);
 +
- 	if (!conf->max_fds)
++	if (conf->max_fds > max_fds)
++		conf->max_fds = max_fds;
++
+ 	FREE(buff);
+ 
+ 	return r;
+@@ -2571,7 +2580,7 @@ snprint_max_fds (char * buff, int len, void * data)
  		return 0;
  
--	return snprintf(buff, len, "%d", conf->max_fds);
-+	r = get_sys_max_fds(&max_fds);
-+	if (!r && max_fds == conf->max_fds)
-+		return snprintf(buff, len, "\"max\"");
-+	else
-+		return snprintf(buff, len, "%d", conf->max_fds);
- }
- 
- static int
+ 	r = get_sys_max_fds(&max_fds);
+-	if (!r && max_fds == conf->max_fds)
++	if (!r && conf->max_fds >= max_fds)
+ 		return snprintf(buff, len, "\"max\"");
+ 	else
+ 		return snprintf(buff, len, "%d", conf->max_fds);
 -- 
 1.7.10.4
