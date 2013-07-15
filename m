@@ -1,8 +1,7 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 11/29] multipath: Add 'Datacore Virtual Disk' to
-	internal hardware table
-Date: Mon, 15 Jul 2013 15:00:12 +0200
-Message-ID: <1373893230-26077-12-git-send-email-hare@suse.de>
+From: Sebastian Riemer <sebastian.riemer@profitbricks.com>
+Subject: Re: [PATCH 00/29] SLES resync
+Date: Mon, 15 Jul 2013 15:53:51 +0200
+Message-ID: <51E3FEEF.7050301@profitbricks.com>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,40 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Add 'Datacore Virtual Disk' to internal hardware table.
+On 15.07.2013 15:00, Hannes Reinecke wrote:
+[...]
+> - When using libudev to read attribute variables we'd be getting
+>   an automated caching from libudev. Which is nice, unless the
+>   data changed in between. So I'd have to go back an roll our
+>   own accessors, skipping libudev here.
+[...]
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/hwtable.c |   13 +++++++++++++
- 1 file changed, 13 insertions(+)
+Hi Hannes,
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index c317cde..ce12cbb 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1107,6 +1107,19 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.prio_args     = NULL,
- 	},
-+	{
-+		.vendor	       = "DataCore",
-+		.product       = "Virtual Disk",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
-+		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
-+		.prio_args     = NULL,
-+	},
- 	/*
- 	 * EOL
- 	 */
--- 
-1.7.10.4
+nice, that's what I've already reported. Could you point me to the fix
+commit(s) for this please?
+
+I couldn't find any related code in the series. Also here is still the
+cached behavior for the device state:
+https://github.com/hreinecke/multipath-tools/blob/sles-resync/libmultipath/discovery.c
+
+Or is this planned as future work?
+
+Cheers,
+Sebastian
