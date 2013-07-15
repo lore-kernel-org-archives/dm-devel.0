@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 27/29] Specify checker_timeout in seconds
-Date: Mon, 15 Jul 2013 15:00:28 +0200
-Message-ID: <1373893230-26077-28-git-send-email-hare@suse.de>
+Subject: [PATCH 15/29] multipath.conf.annotated: Document
+	rr_min_io_rq
+Date: Mon, 15 Jul 2013 15:00:16 +0200
+Message-ID: <1373893230-26077-16-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,146 +23,43 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Commit 8d3f07da changed the internal value for checker_timeout
-to be in milliseconds, which wasn't reflected in the tur checker.
-So better scale it back to seconds, and change the callers to
-scale it to milliseconds where appropriate.
+rr_min_io_rq wasn't documented in multipath.conf.annotated.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/checkers/emc_clariion.c |    2 +-
- libmultipath/checkers/hp_sw.c        |    4 ++--
- libmultipath/checkers/libsg.c        |    2 +-
- libmultipath/checkers/rdac.c         |    4 ++--
- libmultipath/checkers/tur.c          |    2 +-
- libmultipath/discovery.c             |    2 +-
- libmultipath/discovery.h             |    2 +-
- libmultipath/propsel.c               |    4 ++--
- 8 files changed, 11 insertions(+), 11 deletions(-)
+ multipath.conf.annotated |   18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index 5d87bfd..a797734 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -114,7 +114,7 @@ int libcheck_check (struct checker * c)
- 	io_hdr.dxferp = sense_buffer;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sb;
--	io_hdr.timeout = c->timeout;
-+	io_hdr.timeout = c->timeout * 1000;
- 	io_hdr.pack_id = 0;
- 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
- 		MSG(c, "emc_clariion_checker: sending query command failed");
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index b50ac0c..fe5e0f9 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -70,7 +70,7 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
- 	io_hdr.dxferp = resp;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sense_b;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 
- 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
- 		return 1;
-@@ -111,7 +111,7 @@ do_tur (int fd, unsigned int timeout)
- 	io_hdr.dxfer_direction = SG_DXFER_NONE;
- 	io_hdr.cmdp = turCmdBlk;
- 	io_hdr.sbp = sense_buffer;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = 0;
- 
- 	if (ioctl(fd, SG_IO, &io_hdr) < 0)
-diff --git a/libmultipath/checkers/libsg.c b/libmultipath/checkers/libsg.c
-index 5a989d3..0d3af1f 100644
---- a/libmultipath/checkers/libsg.c
-+++ b/libmultipath/checkers/libsg.c
-@@ -53,7 +53,7 @@ sg_read (int sg_fd, unsigned char * buff, int buff_len,
- 	io_hdr.dxferp = buff;
- 	io_hdr.mx_sb_len = sense_len;
- 	io_hdr.sbp = sense;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = (int)start_block;
- 	if (diop && *diop)
- 	io_hdr.flags |= SG_FLAG_DIRECT_IO;
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index 5f24f55..2e64dd3 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -74,7 +74,7 @@ int libcheck_init (struct checker * c)
- 	io_hdr.dxferp = &current;
- 	io_hdr.cmdp = cmd;
- 	io_hdr.sbp = sense_b;
--	io_hdr.timeout = c->timeout;
-+	io_hdr.timeout = c->timeout * 1000;
- 
- 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0)
- 		goto out;
-@@ -150,7 +150,7 @@ retry:
- 	io_hdr.dxferp = resp;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sense_b;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 
- 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
- 		return 1;
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 6f5d4d9..b76dcec 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -116,7 +116,7 @@ tur_check(int fd, unsigned int timeout, char *msg)
- 	io_hdr.dxfer_direction = SG_DXFER_NONE;
- 	io_hdr.cmdp = turCmdBlk;
- 	io_hdr.sbp = sense_buffer;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = 0;
- 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
- 		TUR_MSG(msg, MSG_TUR_DOWN);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index c59dbc2..adfb1ba 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -204,7 +204,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- 		return 1;
- 	}
- 
--	*timeout = t * 1000;
-+	*timeout = t;
- 
- 	return 0;
- }
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 1a614ee..d049ead 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -14,7 +14,7 @@
- #endif
- 
- #ifndef DEF_TIMEOUT
--#define DEF_TIMEOUT	300000
-+#define DEF_TIMEOUT	30
- #endif
- 
- /*
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index cea8c1c..e47d0ca 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -347,8 +347,8 @@ select_checker(struct path *pp)
- 		pp->dev, checker_name(c));
- out:
- 	if (conf->checker_timeout) {
--		c->timeout = conf->checker_timeout * 1000;
--		condlog(3, "%s: checker timeout = %u ms (config file default)",
-+		c->timeout = conf->checker_timeout;
-+		condlog(3, "%s: checker timeout = %u s (config file default)",
- 				pp->dev, c->timeout);
- 	}
- 	else if (pp->udev && sysfs_get_timeout(pp, &c->timeout) == 0)
+diff --git a/multipath.conf.annotated b/multipath.conf.annotated
+index 15ec468..7ed62de 100644
+--- a/multipath.conf.annotated
++++ b/multipath.conf.annotated
+@@ -128,10 +128,24 @@
+ #	# name    : rr_min_io
+ #	# scope   : multipath & multipathd
+ #	# desc    : the number of IO to route to a path before switching
+-#	#           to the next in the same path group
++#	#           to the next in the same path group for the bio-based
++#	#           multipath implementation. This parameter is used for
++#	#           kernels version up to 2.6.31; newer kernel version
++#	#           use the parameter rr_min_io_rq
+ #	# default : 1000
+ #	#
+-#	rr_min_io	100
++#	rr_min_io	1000
++#
++#	#
++#	# name    : rr_min_io_rq
++#	# scope   : multipath & multipathd
++#	# desc    : the number of IO to route to a path before switching
++#	#           to the next in the same path group for the request-based
++#	#           multipath implementation. This parameter is used for
++#	#           kernels versions later than 2.6.31.
++#	# default : 1
++#	#
++#	rr_min_io_rq	1
+ #
+ #	#
+ #	# name    : flush_on_last_del
 -- 
 1.7.10.4
