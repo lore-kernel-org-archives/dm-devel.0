@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 13/29] Check return value from pathinfo()
-Date: Mon, 15 Jul 2013 15:00:14 +0200
-Message-ID: <1373893230-26077-14-git-send-email-hare@suse.de>
+Subject: [PATCH 24/29] multipath: reference the udev context when
+	starting event queue
+Date: Mon, 15 Jul 2013 15:00:25 +0200
+Message-ID: <1373893230-26077-25-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,84 +23,118 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-pathinfo() has a return value, which should be checked to catch
-any abnormal behaviour.
+The uevent listener is running asynchronously, so it might still
+be active and receiving events when the main thread is already
+shut down. So it need to take a separate reference to the udev
+context to avoid the context becoming invalid while the listener
+is running.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/configure.c |   10 ++++++++--
- libmultipath/discovery.c |    6 ++++--
- multipath/main.c         |   15 ++++++++++-----
- 3 files changed, 22 insertions(+), 9 deletions(-)
+ libmultipath/uevent.c |   16 ++++++++++++----
+ libmultipath/uevent.h |    4 +++-
+ multipathd/main.c     |    4 ++--
+ 3 files changed, 17 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 1cf46cc..7f5e065 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -793,8 +793,14 @@ extern int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh)
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 0643e14..9ee3ade 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -47,7 +47,6 @@
+ #include "list.h"
+ #include "uevent.h"
+ #include "vector.h"
+-#include "config.h"
  
- 	update_mpp_paths(mpp, vecs->pathvec);
- 	if (refresh) {
--		vector_foreach_slot (mpp->paths, pp, i)
--			pathinfo(pp, conf->hwtable, DI_PRIO);
-+		vector_foreach_slot (mpp->paths, pp, i) {
-+			r = pathinfo(pp, conf->hwtable, DI_PRIO);
-+			if (r) {
-+				condlog(2, "%s: failed to refresh pathinfo",
-+					mpp->alias);
-+				return 1;
-+			}
-+		}
- 	}
- 	if (setup_map(mpp, params, PARAMS_SIZE)) {
- 		condlog(0, "%s: failed to setup map", mpp->alias);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index a482c53..96fe985 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -125,8 +125,10 @@ path_discovery (vector pathvec, struct config * conf, int flag)
- 			continue;
- 		}
- 		devtype = udev_device_get_devtype(udevice);
--		if(devtype && !strncmp(devtype, "disk", 4))
--			r += path_discover(pathvec, conf, udevice, flag);
-+		if(devtype && !strncmp(devtype, "disk", 4)) {
-+			r += path_discover(pathvec, conf,
-+						   udevice, flag);
-+		}
- 		udev_device_unref(udevice);
- 	}
- 	udev_enumerate_unref(udev_iter);
-diff --git a/multipath/main.c b/multipath/main.c
-index 4a8b966..842a787 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -152,16 +152,21 @@ update_paths (struct multipath * mpp)
- 					continue;
- 				}
- 				pp->mpp = mpp;
--				pathinfo(pp, conf->hwtable, DI_ALL);
-+				if (pathinfo(pp, conf->hwtable, DI_ALL))
-+					pp->state = PATH_UNCHECKED;
- 				continue;
- 			}
- 			pp->mpp = mpp;
- 			if (pp->state == PATH_UNCHECKED ||
--			    pp->state == PATH_WILD)
--				pathinfo(pp, conf->hwtable, DI_CHECKER);
-+			    pp->state == PATH_WILD) {
-+				if (pathinfo(pp, conf->hwtable, DI_CHECKER))
-+					pp->state = PATH_UNCHECKED;
-+			}
+ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
  
--			if (pp->priority == PRIO_UNDEF)
--				pathinfo(pp, conf->hwtable, DI_PRIO);
-+			if (pp->priority == PRIO_UNDEF) {
-+				if (pathinfo(pp, conf->hwtable, DI_PRIO))
-+					pp->priority = PRIO_UNDEF;
-+			}
- 		}
+@@ -127,11 +126,14 @@ service_uevq(struct list_head *tmpq)
+ 
+ static void uevq_stop(void *arg)
+ {
++	struct udev *udev = arg;
++
+ 	condlog(3, "Stopping uev queue");
+ 	pthread_mutex_lock(uevq_lockp);
+ 	my_uev_trigger = NULL;
+ 	pthread_cond_signal(uev_condp);
+ 	pthread_mutex_unlock(uevq_lockp);
++	udev_unref(udev);
+ }
+ 
+ void
+@@ -399,7 +401,7 @@ exit:
+ 	return 1;
+ }
+ 
+-int uevent_listen(void)
++int uevent_listen(struct udev *udev)
+ {
+ 	int err;
+ 	struct udev_monitor *monitor = NULL;
+@@ -411,11 +413,17 @@ int uevent_listen(void)
+ 	 * thereby not getting to empty the socket's receive buffer queue
+ 	 * often enough.
+ 	 */
+-	pthread_cleanup_push(uevq_stop, NULL);
++	if (!udev) {
++		condlog(1, "no udev context");
++		return 1;
++	}
++	udev_ref(udev);
++	pthread_cleanup_push(uevq_stop, udev);
+ 
+-	monitor = udev_monitor_new_from_netlink(conf->udev, "udev");
++	monitor = udev_monitor_new_from_netlink(udev, "udev");
+ 	if (!monitor) {
+ 		condlog(2, "failed to create udev monitor");
++		err = 2;
+ 		goto out;
  	}
- 	return 0;
+ #ifdef LIBUDEV_API_RECVBUF
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 762595a..e5fdfcc 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -13,6 +13,8 @@
+ #define NETLINK_KOBJECT_UEVENT		15
+ #endif
+ 
++struct udev;
++
+ struct uevent {
+ 	struct list_head node;
+ 	struct udev_device *udev;
+@@ -27,7 +29,7 @@ struct uevent {
+ int is_uevent_busy(void);
+ void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
+ 
+-int uevent_listen(void);
++int uevent_listen(struct udev *udev);
+ int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
+ 		    void * trigger_data);
+ int uevent_get_major(struct uevent *uev);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index aa5a298..b41fc64 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -835,7 +835,7 @@ out:
+ static void *
+ ueventloop (void * ap)
+ {
+-	if (uevent_listen())
++	if (uevent_listen(udev))
+ 		condlog(0, "error starting uevent listener");
+ 
+ 	return NULL;
+@@ -1658,7 +1658,7 @@ child (void * param)
+ 	/*
+ 	 * Start uevent listener early to catch events
+ 	 */
+-	if ((rc = pthread_create(&uevent_thr, &misc_attr, ueventloop, vecs))) {
++	if ((rc = pthread_create(&uevent_thr, &misc_attr, ueventloop, udev))) {
+ 		condlog(0, "failed to create uevent thread: %d", rc);
+ 		exit(1);
+ 	}
 -- 
 1.7.10.4
