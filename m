@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 23/29] Do not print error when rport is blocked
-Date: Mon, 15 Jul 2013 15:00:24 +0200
-Message-ID: <1373893230-26077-24-git-send-email-hare@suse.de>
+Subject: [PATCH 25/29] multipathd: valgrind fixes
+Date: Mon, 15 Jul 2013 15:00:26 +0200
+Message-ID: <1373893230-26077-26-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,193 +22,137 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When an rport is blocked any write to the dev_loss_tmo
-attribute will fail with EBUSY. But that's perfectly
-normal and nothing to worry about, so decrease the
-logging priority for these cases.
+valgrind complained about uninitialized memory.
+As usual, valgrind was right, although the memory never was
+actually referenced.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c |   52 ++++++++++++++++++++++++++++++----------------
- libmultipath/sysfs.c     |   20 +++++++++---------
- 2 files changed, 44 insertions(+), 28 deletions(-)
+ libmultipath/discovery.c |   27 +++++++++++++++++----------
+ libmultipath/sysfs.c     |    6 ++++--
+ 2 files changed, 21 insertions(+), 12 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index e9c6a50..092930a 100644
+index 092930a..c59dbc2 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -324,6 +324,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	char value[11];
+@@ -321,7 +321,7 @@ static void
+ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ {
+ 	struct udev_device *rport_dev = NULL;
+-	char value[11];
++	char value[16];
  	char rport_id[32];
  	unsigned long long tmo = 0;
-+	int ret;
- 
- 	sprintf(rport_id, "rport-%d:%d-%d",
- 		pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.transport_id);
-@@ -353,15 +354,16 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 	int ret;
+@@ -349,7 +349,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 	 * then set fast_io_fail, and _then_ set dev_loss_tmo
+ 	 * to the correct value.
+ 	 */
+-	value[0] = '\0';
++	memset(value, 0, 16);
+ 	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET &&
  	    mpp->fast_io_fail != MP_FAST_IO_FAIL_ZERO &&
  	    mpp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
- 		/* Check if we need to temporarily increase dev_loss_tmo */
--		if (sysfs_attr_get_value(rport_dev, "dev_loss_tmo",
--					 value, 16) <= 0) {
-+		ret = sysfs_attr_get_value(rport_dev, "dev_loss_tmo",
-+					   value, 16);
-+		if (ret <= 0) {
- 			condlog(0, "%s: failed to read dev_loss_tmo value, "
--				"error %d", pp->dev, errno);
-+				"error %d", rport_id, -ret);
- 			goto out;
- 		}
- 		if (sscanf(value, "%llu\n", &tmo) != 1) {
- 			condlog(0, "%s: Cannot parse dev_loss_tmo "
--				"attribute '%s'",pp->dev, value);
-+				"attribute '%s'", rport_id, value);
+@@ -367,17 +367,18 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
  			goto out;
  		}
  		if (mpp->fast_io_fail >= tmo) {
-@@ -369,16 +371,21 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+-			snprintf(value, 11, "%u", mpp->fast_io_fail);
++			snprintf(value, 16, "%u", mpp->fast_io_fail);
  		}
  	} else if (mpp->dev_loss > 600) {
  		condlog(3, "%s: limiting dev_loss_tmo to 600, since "
--			"fast_io_fail is not set", pp->dev);
-+			"fast_io_fail is not set", rport_id);
- 		snprintf(value, 11, "%u", 600);
+ 			"fast_io_fail is not set", rport_id);
+-		snprintf(value, 11, "%u", 600);
++		snprintf(value, 16, "%u", 600);
  	} else {
- 		snprintf(value, 11, "%u", mpp->dev_loss);
+-		snprintf(value, 11, "%u", mpp->dev_loss);
++		snprintf(value, 16, "%u", mpp->dev_loss);
  	}
--	if (strlen(value) &&
--	    sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11) <= 0) {
--		condlog(0, "%s failed to set dev_loss_tmo",
--			mpp->alias);
--		goto out;
-+	if (strlen(value)) {
-+		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11);
-+		if (ret <= 0) {
-+			if (ret == -EBUSY)
-+				condlog(3, "%s: rport blocked", rport_id);
-+			else
-+				condlog(0, "%s: failed to set dev_loss_tmo to %s, error %d",
-+					rport_id, value, -ret);
-+			goto out;
-+		}
- 	}
- 	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET) {
- 		if (mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
-@@ -387,18 +394,27 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 	if (strlen(value)) {
+-		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11);
++		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
++					   value, strlen(value));
+ 		if (ret <= 0) {
+ 			if (ret == -EBUSY)
+ 				condlog(3, "%s: rport blocked", rport_id);
+@@ -393,9 +394,9 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 		else if (mpp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
  			sprintf(value, "0");
  		else
- 			snprintf(value, 11, "%u", mpp->fast_io_fail);
--		if (sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
--					 value, 11) <= 0) {
--			condlog(0, "%s failed to set fast_io_fail_tmo",
--				mpp->alias);
-+		ret = sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
-+					   value, 11);
-+		if (ret <= 0) {
-+			if (ret == -EBUSY)
-+				condlog(3, "%s: rport blocked", rport_id);
-+			else
-+				condlog(0, "%s: failed to set fast_io_fail_tmo to %s, error %d",
-+					rport_id, value, -ret);
+-			snprintf(value, 11, "%u", mpp->fast_io_fail);
++			snprintf(value, 16, "%u", mpp->fast_io_fail);
+ 		ret = sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
+-					   value, 11);
++					   value, strlen(value));
+ 		if (ret <= 0) {
+ 			if (ret == -EBUSY)
+ 				condlog(3, "%s: rport blocked", rport_id);
+@@ -405,9 +406,9 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
  		}
  	}
  	if (tmo > 0) {
- 		snprintf(value, 11, "%u", mpp->dev_loss);
--		if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
--					 value, 11) <= 0)
--			condlog(0, "%s failed to set dev_loss_tmo",
--				mpp->alias);
-+		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
-+					   value, 11);
-+		if (ret <= 0) {
-+			if (ret == -EBUSY)
-+				condlog(3, "%s: rport blocked", rport_id);
-+			else
-+				condlog(0, "%s: failed to set dev_loss_tmo to %s, error %d",
-+					rport_id, value, -ret);
-+		}
- 	}
- out:
- 	udev_device_unref(rport_dev);
+-		snprintf(value, 11, "%u", mpp->dev_loss);
++		snprintf(value, 16, "%u", mpp->dev_loss);
+ 		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
+-					   value, 11);
++					   value, strlen(value));
+ 		if (ret <= 0) {
+ 			if (ret == -EBUSY)
+ 				condlog(3, "%s: rport blocked", rport_id);
+@@ -809,6 +810,9 @@ cciss_sysfs_pathinfo (struct path * pp)
+ static int
+ common_sysfs_pathinfo (struct path * pp)
+ {
++	if (!pp)
++		return 1;
++
+ 	if (!pp->udev) {
+ 		condlog(4, "%s: udev not initialised", pp->dev);
+ 		return 1;
+@@ -1059,6 +1063,9 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ {
+ 	int path_state;
+ 
++	if (!pp)
++		return 1;
++
+ 	condlog(3, "%s: mask = 0x%x", pp->dev, mask);
+ 
+ 	/*
 diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index bab3837..0670e0a 100644
+index 0670e0a..8ba27d4 100644
 --- a/libmultipath/sysfs.c
 +++ b/libmultipath/sysfs.c
-@@ -59,19 +59,19 @@ ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
- 	condlog(4, "open '%s'", devpath);
- 	if (stat(devpath, &statbuf) != 0) {
- 		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
--		return 0;
-+		return -errno;
+@@ -102,7 +102,7 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 	int fd;
+ 	ssize_t size = -1;
+ 
+-	if (!dev || !attr_name || !value)
++	if (!dev || !attr_name || !value || !value_len)
+ 		return 0;
+ 
+ 	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
+@@ -152,9 +152,10 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
+ 	char attr[255];
+ 	int r;
+ 
+-	if (!pp->udev)
++	if (!pp->udev || !size)
+ 		return 1;
+ 
++	attr[0] = '\0';
+ 	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) == 0) {
+ 		condlog(3, "%s: No size attribute in sysfs", pp->dev);
+ 		return 1;
+@@ -164,6 +165,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
+ 
+ 	if (r != 1) {
+ 		condlog(3, "%s: Cannot parse size attribute", pp->dev);
++		*size = 0;
+ 		return 1;
  	}
  
- 	/* skip directories */
- 	if (S_ISDIR(statbuf.st_mode)) {
- 		condlog(4, "%s is a directory", devpath);
--		return 0;
-+		return -EISDIR;
- 	}
- 
- 	/* skip non-writeable files */
- 	if ((statbuf.st_mode & S_IRUSR) == 0) {
- 		condlog(4, "%s is not readable", devpath);
--		return 0;
-+		return -EPERM;
- 	}
- 
- 	/* read attribute value */
-@@ -79,12 +79,12 @@ ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
- 	if (fd < 0) {
- 		condlog(4, "attribute '%s' can not be opened: %s",
- 			devpath, strerror(errno));
--		return 0;
-+		return -errno;
- 	}
- 	size = read(fd, value, value_len);
- 	if (size < 0) {
- 		condlog(4, "read from %s failed: %s", devpath, strerror(errno));
--		size = 0;
-+		size = -errno;
- 	} else if (size == value_len) {
- 		condlog(4, "overflow while reading from %s", devpath);
- 		size = 0;
-@@ -110,19 +110,19 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 	condlog(4, "open '%s'", devpath);
- 	if (stat(devpath, &statbuf) != 0) {
- 		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
--		return 0;
-+		return -errno;
- 	}
- 
- 	/* skip directories */
- 	if (S_ISDIR(statbuf.st_mode)) {
- 		condlog(4, "%s is a directory", devpath);
--		return 0;
-+		return -EISDIR;
- 	}
- 
- 	/* skip non-writeable files */
- 	if ((statbuf.st_mode & S_IWUSR) == 0) {
- 		condlog(4, "%s is not writeable", devpath);
--		return 0;
-+		return -EPERM;
- 	}
- 
- 	/* write attribute value */
-@@ -130,12 +130,12 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 	if (fd < 0) {
- 		condlog(4, "attribute '%s' can not be opened: %s",
- 			devpath, strerror(errno));
--		return 0;
-+		return -errno;
- 	}
- 	size = write(fd, value, value_len);
- 	if (size < 0) {
- 		condlog(4, "write to %s failed: %s", devpath, strerror(errno));
--		size = 0;
-+		size = -errno;
- 	} else if (size < value_len) {
- 		condlog(4, "tried to write %ld to %s. Wrote %ld",
- 			(long)value_len, devpath, (long)size);
 -- 
 1.7.10.4
