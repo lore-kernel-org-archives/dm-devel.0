@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 25/29] multipathd: valgrind fixes
-Date: Mon, 15 Jul 2013 15:00:26 +0200
-Message-ID: <1373893230-26077-26-git-send-email-hare@suse.de>
+Subject: [PATCH 06/29] libmultipath: Implement PATH_TIMEOUT
+Date: Mon, 15 Jul 2013 15:00:07 +0200
+Message-ID: <1373893230-26077-7-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,137 +22,96 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-valgrind complained about uninitialized memory.
-As usual, valgrind was right, although the memory never was
-actually referenced.
+The tur checker might run into a timeout, eg when a command is
+sent but the checker hasn't been able to receive a reply in time.
+Use a specific 'PATH_TIMEOUT' state for these cases.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c |   27 +++++++++++++++++----------
- libmultipath/sysfs.c     |    6 ++++--
- 2 files changed, 21 insertions(+), 12 deletions(-)
+ libmultipath/checkers.c     |    3 ++-
+ libmultipath/checkers.h     |    5 +++++
+ libmultipath/checkers/tur.c |    2 +-
+ libmultipath/discovery.c    |    2 ++
+ libmultipath/print.c        |    4 ++++
+ 5 files changed, 14 insertions(+), 2 deletions(-)
 
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index 01dafdd..47f5c68 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -16,7 +16,8 @@ char *checker_state_names[] = {
+       "up",
+       "shaky",
+       "ghost",
+-      "pending"
++      "pending",
++      "timeout",
+ };
+ 
+ static LIST_HEAD(checkers);
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 5a96165..1b6c22d 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -46,6 +46,10 @@
+  * PATH_PENDING:
+  * - Use: All async checkers
+  * - Description: Indicates a check IO is in flight.
++ *
++ * PATH_TIMEOUT:
++ * - Use: Only tur checker
++ * - Description: Command timed out
+  */
+ enum path_check_state {
+ 	PATH_WILD,
+@@ -55,6 +59,7 @@ enum path_check_state {
+ 	PATH_SHAKY,
+ 	PATH_GHOST,
+ 	PATH_PENDING,
++	PATH_TIMEOUT,
+ 	PATH_MAX_STATE
+ };
+ 
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 9c141aa..6f5d4d9 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -297,7 +297,7 @@ libcheck_check (struct checker * c)
+ 				pthread_cancel(ct->thread);
+ 				ct->running = 0;
+ 				MSG(c, MSG_TUR_TIMEOUT);
+-				tur_status = PATH_DOWN;
++				tur_status = PATH_TIMEOUT;
+ 				ct->state = PATH_UNCHECKED;
+ 			} else {
+ 				condlog(3, "%d:%d: tur checker not finished",
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 092930a..c59dbc2 100644
+index 04c6029..6af5083 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -321,7 +321,7 @@ static void
- sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- {
- 	struct udev_device *rport_dev = NULL;
--	char value[11];
-+	char value[16];
- 	char rport_id[32];
- 	unsigned long long tmo = 0;
- 	int ret;
-@@ -349,7 +349,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	 * then set fast_io_fail, and _then_ set dev_loss_tmo
- 	 * to the correct value.
- 	 */
--	value[0] = '\0';
-+	memset(value, 0, 16);
- 	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET &&
- 	    mpp->fast_io_fail != MP_FAST_IO_FAIL_ZERO &&
- 	    mpp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
-@@ -367,17 +367,18 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 			goto out;
- 		}
- 		if (mpp->fast_io_fail >= tmo) {
--			snprintf(value, 11, "%u", mpp->fast_io_fail);
-+			snprintf(value, 16, "%u", mpp->fast_io_fail);
- 		}
- 	} else if (mpp->dev_loss > 600) {
- 		condlog(3, "%s: limiting dev_loss_tmo to 600, since "
- 			"fast_io_fail is not set", rport_id);
--		snprintf(value, 11, "%u", 600);
-+		snprintf(value, 16, "%u", 600);
- 	} else {
--		snprintf(value, 11, "%u", mpp->dev_loss);
-+		snprintf(value, 16, "%u", mpp->dev_loss);
+@@ -1065,6 +1065,8 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 			if (pp->state == PATH_UNCHECKED ||
+ 			    pp->state == PATH_WILD)
+ 				goto blank;
++			if (pp->state == PATH_TIMEOUT)
++				pp->state = PATH_DOWN;
+ 		} else {
+ 			condlog(3, "%s: path inaccessible", pp->dev);
+ 			pp->chkrstate = pp->state = path_state;
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 274f5e7..b6d08b7 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -335,6 +335,10 @@ snprint_chk_state (char * buff, size_t len, struct path * pp)
+ 		return snprintf(buff, len, "shaky");
+ 	case PATH_GHOST:
+ 		return snprintf(buff, len, "ghost");
++	case PATH_PENDING:
++		return snprintf(buff, len, "i/o pending");
++	case PATH_TIMEOUT:
++		return snprintf(buff, len, "i/o timeout");
+ 	default:
+ 		return snprintf(buff, len, "undef");
  	}
- 	if (strlen(value)) {
--		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11);
-+		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
-+					   value, strlen(value));
- 		if (ret <= 0) {
- 			if (ret == -EBUSY)
- 				condlog(3, "%s: rport blocked", rport_id);
-@@ -393,9 +394,9 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 		else if (mpp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
- 			sprintf(value, "0");
- 		else
--			snprintf(value, 11, "%u", mpp->fast_io_fail);
-+			snprintf(value, 16, "%u", mpp->fast_io_fail);
- 		ret = sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
--					   value, 11);
-+					   value, strlen(value));
- 		if (ret <= 0) {
- 			if (ret == -EBUSY)
- 				condlog(3, "%s: rport blocked", rport_id);
-@@ -405,9 +406,9 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 		}
- 	}
- 	if (tmo > 0) {
--		snprintf(value, 11, "%u", mpp->dev_loss);
-+		snprintf(value, 16, "%u", mpp->dev_loss);
- 		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
--					   value, 11);
-+					   value, strlen(value));
- 		if (ret <= 0) {
- 			if (ret == -EBUSY)
- 				condlog(3, "%s: rport blocked", rport_id);
-@@ -809,6 +810,9 @@ cciss_sysfs_pathinfo (struct path * pp)
- static int
- common_sysfs_pathinfo (struct path * pp)
- {
-+	if (!pp)
-+		return 1;
-+
- 	if (!pp->udev) {
- 		condlog(4, "%s: udev not initialised", pp->dev);
- 		return 1;
-@@ -1059,6 +1063,9 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- {
- 	int path_state;
- 
-+	if (!pp)
-+		return 1;
-+
- 	condlog(3, "%s: mask = 0x%x", pp->dev, mask);
- 
- 	/*
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 0670e0a..8ba27d4 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -102,7 +102,7 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 	int fd;
- 	ssize_t size = -1;
- 
--	if (!dev || !attr_name || !value)
-+	if (!dev || !attr_name || !value || !value_len)
- 		return 0;
- 
- 	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
-@@ -152,9 +152,10 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
- 	char attr[255];
- 	int r;
- 
--	if (!pp->udev)
-+	if (!pp->udev || !size)
- 		return 1;
- 
-+	attr[0] = '\0';
- 	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) == 0) {
- 		condlog(3, "%s: No size attribute in sysfs", pp->dev);
- 		return 1;
-@@ -164,6 +165,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
- 
- 	if (r != 1) {
- 		condlog(3, "%s: Cannot parse size attribute", pp->dev);
-+		*size = 0;
- 		return 1;
- 	}
- 
 -- 
 1.7.10.4
