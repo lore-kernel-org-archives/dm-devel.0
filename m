@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 12/29] Minor fixes for priority handling
-Date: Mon, 15 Jul 2013 15:00:13 +0200
-Message-ID: <1373893230-26077-13-git-send-email-hare@suse.de>
+Subject: [PATCH 05/29] libmultipath: return PATH_DOWN for
+	quiesced paths
+Date: Mon, 15 Jul 2013 15:00:06 +0200
+Message-ID: <1373893230-26077-6-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,41 +23,25 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When no prio handler was selected we should be setting the
-priority to 'PRIO_UNDEF'.
-Also fixup a typo in the logging message when selecting
-the default prioritizer.
+When a SCSI device is quiesced we cannot send any I/O requests to
+it, so we should be returning 'PATH_DOWN' here.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
  libmultipath/discovery.c |    1 +
- libmultipath/propsel.c   |    2 +-
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ 1 file changed, 1 insertion(+)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index fcb8e4f..a482c53 100644
+index 18f72ec..04c6029 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -957,6 +957,7 @@ get_prio (struct path * pp)
- 		select_prio(pp);
- 		if (!prio_selected(p)) {
- 			condlog(3, "%s: no prio selected", pp->dev);
-+			pp->priority = PRIO_UNDEF;
- 			return 1;
- 		}
- 	}
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 65c2c7f..cea8c1c 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -447,7 +447,7 @@ select_prio (struct path * pp)
- 	prio_get(p, DEFAULT_PRIO, DEFAULT_PRIO_ARGS);
- 	condlog(3, "%s: prio = %s (internal default)",
- 		pp->dev, DEFAULT_PRIO);
--	condlog(3, "%s: prio = %s (internal default)",
-+	condlog(3, "%s: prio args = %s (internal default)",
- 		pp->dev, DEFAULT_PRIO_ARGS);
- 	return 0;
- }
+@@ -835,6 +835,7 @@ path_offline (struct path * pp)
+ 	condlog(3, "%s: path state = %s", pp->dev, buff);
+ 
+ 	if (!strncmp(buff, "offline", 7) ||
++	    !strncmp(buff, "quiesce", 7) ||
+ 	    !strncmp(buff, "transport-offline", 17)) {
+ 		pp->offline = 1;
+ 		return PATH_DOWN;
 -- 
 1.7.10.4
