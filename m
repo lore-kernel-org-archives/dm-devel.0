@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 21/29] multipath.conf.annotated: remove 'udev_dir'
-Date: Mon, 15 Jul 2013 15:00:22 +0200
-Message-ID: <1373893230-26077-22-git-send-email-hare@suse.de>
+Subject: [PATCH 20/29] multipath.conf.5: clarify 'no_path_retry'
+	default setting
+Date: Mon, 15 Jul 2013 15:00:21 +0200
+Message-ID: <1373893230-26077-21-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,30 +23,27 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Deprecated, remove it.
+The default setting for 'no_path_retry' is 'unset', so we should
+be stating this in the man page.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath.conf.annotated |    7 -------
- 1 file changed, 7 deletions(-)
+ multipath/multipath.conf.5 |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-index 7ed62de..a20302c 100644
---- a/multipath.conf.annotated
-+++ b/multipath.conf.annotated
-@@ -9,13 +9,6 @@
- ##
- #defaults {
- #	#
--#	# name    : udev_dir
--#	# desc    : directory where udev creates its device nodes
--#	# default : /dev
--#	#
--#	udev_dir	/dev
--#
--#	#
- #	# name    : polling_interval
- #	# scope   : multipathd
- #	# desc    : interval between two path checks in seconds. For
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index ade9885..a937db9 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -295,7 +295,8 @@ Specify the number of retries until disable queueing, or
+ .I fail
+ for immediate failure (no queueing),
+ .I queue
+-for never stop queueing. Default is 0.
++for never stop queueing. If unset no queueing is attempted.
++Default is unset.
+ .TP
+ .B user_friendly_names
+ If set to 
 -- 
 1.7.10.4
