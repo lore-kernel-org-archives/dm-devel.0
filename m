@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 08/29] kpartx: create correct symlinks for
-	PATH_FAILED events
-Date: Mon, 15 Jul 2013 15:00:09 +0200
-Message-ID: <1373893230-26077-9-git-send-email-hare@suse.de>
+Subject: [PATCH 27/29] Specify checker_timeout in seconds
+Date: Mon, 15 Jul 2013 15:00:28 +0200
+Message-ID: <1373893230-26077-28-git-send-email-hare@suse.de>
 References: <1373893230-26077-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,58 +22,146 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The kernel is sending out PATH_FAILED/PATH_REINSTATED events,
-upon each of which we need to regenerate the existing symlinks.
-However, for an all-paths-down scenario we cannot read from
-the disk, so we cannot execute blkid or kpartx.
-For these cases we need to import the existing data from the
-udev database.
+Commit 8d3f07da changed the internal value for checker_timeout
+to be in milliseconds, which wasn't reflected in the tur checker.
+So better scale it back to seconds, and change the callers to
+scale it to milliseconds where appropriate.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/kpartx.rules |   18 +++++++++++++++++-
- 1 file changed, 17 insertions(+), 1 deletion(-)
+ libmultipath/checkers/emc_clariion.c |    2 +-
+ libmultipath/checkers/hp_sw.c        |    4 ++--
+ libmultipath/checkers/libsg.c        |    2 +-
+ libmultipath/checkers/rdac.c         |    4 ++--
+ libmultipath/checkers/tur.c          |    2 +-
+ libmultipath/discovery.c             |    2 +-
+ libmultipath/discovery.h             |    2 +-
+ libmultipath/propsel.c               |    4 ++--
+ 8 files changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index b96ec89..5c0d0ff 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -8,11 +8,16 @@ KERNEL!="dm-*", GOTO="kpartx_end"
- ACTION=="remove", GOTO="kpartx_end"
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index 5d87bfd..a797734 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -114,7 +114,7 @@ int libcheck_check (struct checker * c)
+ 	io_hdr.dxferp = sense_buffer;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sb;
+-	io_hdr.timeout = c->timeout;
++	io_hdr.timeout = c->timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
+ 		MSG(c, "emc_clariion_checker: sending query command failed");
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index b50ac0c..fe5e0f9 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -70,7 +70,7 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+ 	io_hdr.dxferp = resp;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sense_b;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
  
- ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
--ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
- ENV{DM_DEPS}=="0", GOTO="kpartx_end"
+ 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+ 		return 1;
+@@ -111,7 +111,7 @@ do_tur (int fd, unsigned int timeout)
+ 	io_hdr.dxfer_direction = SG_DXFER_NONE;
+ 	io_hdr.cmdp = turCmdBlk;
+ 	io_hdr.sbp = sense_buffer;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = 0;
  
- ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
+ 	if (ioctl(fd, SG_IO, &io_hdr) < 0)
+diff --git a/libmultipath/checkers/libsg.c b/libmultipath/checkers/libsg.c
+index 5a989d3..0d3af1f 100644
+--- a/libmultipath/checkers/libsg.c
++++ b/libmultipath/checkers/libsg.c
+@@ -53,7 +53,7 @@ sg_read (int sg_fd, unsigned char * buff, int buff_len,
+ 	io_hdr.dxferp = buff;
+ 	io_hdr.mx_sb_len = sense_len;
+ 	io_hdr.sbp = sense;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = (int)start_block;
+ 	if (diop && *diop)
+ 	io_hdr.flags |= SG_FLAG_DIRECT_IO;
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+index 5f24f55..2e64dd3 100644
+--- a/libmultipath/checkers/rdac.c
++++ b/libmultipath/checkers/rdac.c
+@@ -74,7 +74,7 @@ int libcheck_init (struct checker * c)
+ 	io_hdr.dxferp = &current;
+ 	io_hdr.cmdp = cmd;
+ 	io_hdr.sbp = sense_b;
+-	io_hdr.timeout = c->timeout;
++	io_hdr.timeout = c->timeout * 1000;
  
-+ENV{DM_ACTION}=="PATH_FAILED", ENV{DM_NR_VALID_PATHS}=="0", \
-+	GOTO="blkid_end"
-+ENV{DM_UUID}=="mpath-*", IMPORT{program}="/sbin/blkid -o udev -p $tempnode"
-+ENV{DM_PART}=="?*", IMPORT{program}="/sbin/blkid -o udev -p $tempnode"
-+LABEL="blkid_end"
-+
- OPTIONS="link_priority=50"
+ 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0)
+ 		goto out;
+@@ -150,7 +150,7 @@ retry:
+ 	io_hdr.dxferp = resp;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sense_b;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
  
- # Create persistent links for multipath tables
-@@ -31,7 +36,18 @@ ENV{DM_MPATH}=="?*", ENV{DM_PART}=="?*", \
- ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
- 	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
+ 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+ 		return 1;
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 6f5d4d9..b76dcec 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -116,7 +116,7 @@ tur_check(int fd, unsigned int timeout, char *msg)
+ 	io_hdr.dxfer_direction = SG_DXFER_NONE;
+ 	io_hdr.cmdp = turCmdBlk;
+ 	io_hdr.sbp = sense_buffer;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+ 		TUR_MSG(msg, MSG_TUR_DOWN);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index c59dbc2..adfb1ba 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -204,7 +204,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
+ 		return 1;
+ 	}
  
-+# Create persistent by-label/by-uuid links
-+ENV{ID_FS_USAGE}=="?*", IMPORT{db}="ID_FS_USAGE"
-+ENV{ID_FS_UUID_ENC}=="?*", IMPORT{db}="ID_FS_UUID_ENC"
-+ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{ID_FS_UUID_ENC}=="?*", \
-+	SYMLINK+="disk/by-uuid/$env{ID_FS_UUID_ENC}"
-+ENV{ID_FS_LABEL_ENC}=="?*", IMPORT{db}="ID_FS_LABEL_ENC"
-+ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
-+	SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
-+
- # Create dm tables for partitions
-+ENV{DM_ACTION}=="PATH_FAILED", ENV{DM_NR_VALID_PATHS}=="0", \
-+	GOTO="kpartx_end"
- ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
-         RUN+="/sbin/kpartx -u -p -part /dev/$name"
+-	*timeout = t * 1000;
++	*timeout = t;
  
+ 	return 0;
+ }
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 1a614ee..d049ead 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -14,7 +14,7 @@
+ #endif
+ 
+ #ifndef DEF_TIMEOUT
+-#define DEF_TIMEOUT	300000
++#define DEF_TIMEOUT	30
+ #endif
+ 
+ /*
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index cea8c1c..e47d0ca 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -347,8 +347,8 @@ select_checker(struct path *pp)
+ 		pp->dev, checker_name(c));
+ out:
+ 	if (conf->checker_timeout) {
+-		c->timeout = conf->checker_timeout * 1000;
+-		condlog(3, "%s: checker timeout = %u ms (config file default)",
++		c->timeout = conf->checker_timeout;
++		condlog(3, "%s: checker timeout = %u s (config file default)",
+ 				pp->dev, c->timeout);
+ 	}
+ 	else if (pp->udev && sysfs_get_timeout(pp, &c->timeout) == 0)
 -- 
 1.7.10.4
