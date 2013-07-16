@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 15/30] multipath.conf.annotated: Document
-	rr_min_io_rq
-Date: Tue, 16 Jul 2013 09:13:06 +0200
-Message-ID: <1373958801-103613-16-git-send-email-hare@suse.de>
+Subject: [PATCH 13/30] Check return value from pathinfo()
+Date: Tue, 16 Jul 2013 09:13:04 +0200
+Message-ID: <1373958801-103613-14-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,43 +22,84 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-rr_min_io_rq wasn't documented in multipath.conf.annotated.
+pathinfo() has a return value, which should be checked to catch
+any abnormal behaviour.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath.conf.annotated | 18 ++++++++++++++++--
- 1 file changed, 16 insertions(+), 2 deletions(-)
+ libmultipath/configure.c | 10 ++++++++--
+ libmultipath/discovery.c |  6 ++++--
+ multipath/main.c         | 15 ++++++++++-----
+ 3 files changed, 22 insertions(+), 9 deletions(-)
 
-diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-index 15ec468..7ed62de 100644
---- a/multipath.conf.annotated
-+++ b/multipath.conf.annotated
-@@ -128,10 +128,24 @@
- #	# name    : rr_min_io
- #	# scope   : multipath & multipathd
- #	# desc    : the number of IO to route to a path before switching
--#	#           to the next in the same path group
-+#	#           to the next in the same path group for the bio-based
-+#	#           multipath implementation. This parameter is used for
-+#	#           kernels version up to 2.6.31; newer kernel version
-+#	#           use the parameter rr_min_io_rq
- #	# default : 1000
- #	#
--#	rr_min_io	100
-+#	rr_min_io	1000
-+#
-+#	#
-+#	# name    : rr_min_io_rq
-+#	# scope   : multipath & multipathd
-+#	# desc    : the number of IO to route to a path before switching
-+#	#           to the next in the same path group for the request-based
-+#	#           multipath implementation. This parameter is used for
-+#	#           kernels versions later than 2.6.31.
-+#	# default : 1
-+#	#
-+#	rr_min_io_rq	1
- #
- #	#
- #	# name    : flush_on_last_del
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 1cf46cc..7f5e065 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -793,8 +793,14 @@ extern int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh)
+ 
+ 	update_mpp_paths(mpp, vecs->pathvec);
+ 	if (refresh) {
+-		vector_foreach_slot (mpp->paths, pp, i)
+-			pathinfo(pp, conf->hwtable, DI_PRIO);
++		vector_foreach_slot (mpp->paths, pp, i) {
++			r = pathinfo(pp, conf->hwtable, DI_PRIO);
++			if (r) {
++				condlog(2, "%s: failed to refresh pathinfo",
++					mpp->alias);
++				return 1;
++			}
++		}
+ 	}
+ 	if (setup_map(mpp, params, PARAMS_SIZE)) {
+ 		condlog(0, "%s: failed to setup map", mpp->alias);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index a482c53..96fe985 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -125,8 +125,10 @@ path_discovery (vector pathvec, struct config * conf, int flag)
+ 			continue;
+ 		}
+ 		devtype = udev_device_get_devtype(udevice);
+-		if(devtype && !strncmp(devtype, "disk", 4))
+-			r += path_discover(pathvec, conf, udevice, flag);
++		if(devtype && !strncmp(devtype, "disk", 4)) {
++			r += path_discover(pathvec, conf,
++						   udevice, flag);
++		}
+ 		udev_device_unref(udevice);
+ 	}
+ 	udev_enumerate_unref(udev_iter);
+diff --git a/multipath/main.c b/multipath/main.c
+index 4a8b966..842a787 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -152,16 +152,21 @@ update_paths (struct multipath * mpp)
+ 					continue;
+ 				}
+ 				pp->mpp = mpp;
+-				pathinfo(pp, conf->hwtable, DI_ALL);
++				if (pathinfo(pp, conf->hwtable, DI_ALL))
++					pp->state = PATH_UNCHECKED;
+ 				continue;
+ 			}
+ 			pp->mpp = mpp;
+ 			if (pp->state == PATH_UNCHECKED ||
+-			    pp->state == PATH_WILD)
+-				pathinfo(pp, conf->hwtable, DI_CHECKER);
++			    pp->state == PATH_WILD) {
++				if (pathinfo(pp, conf->hwtable, DI_CHECKER))
++					pp->state = PATH_UNCHECKED;
++			}
+ 
+-			if (pp->priority == PRIO_UNDEF)
+-				pathinfo(pp, conf->hwtable, DI_PRIO);
++			if (pp->priority == PRIO_UNDEF) {
++				if (pathinfo(pp, conf->hwtable, DI_PRIO))
++					pp->priority = PRIO_UNDEF;
++			}
+ 		}
+ 	}
+ 	return 0;
 -- 
 1.7.12.4
