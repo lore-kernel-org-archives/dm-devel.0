@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 27/30] Specify checker_timeout in seconds
-Date: Tue, 16 Jul 2013 09:13:18 +0200
-Message-ID: <1373958801-103613-28-git-send-email-hare@suse.de>
+Subject: [PATCH 29/30] multipath: reset queue_if_no_path if flush
+	failed
+Date: Tue, 16 Jul 2013 09:13:20 +0200
+Message-ID: <1373958801-103613-30-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,146 +23,80 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Commit 8d3f07da changed the internal value for checker_timeout
-to be in milliseconds, which wasn't reflected in the tur checker.
-So better scale it back to seconds, and change the callers to
-scale it to milliseconds where appropriate.
+When flushing a map failed the 'queue_if_no_path' setting is
+getting lost.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/checkers/emc_clariion.c | 2 +-
- libmultipath/checkers/hp_sw.c        | 4 ++--
- libmultipath/checkers/libsg.c        | 2 +-
- libmultipath/checkers/rdac.c         | 4 ++--
- libmultipath/checkers/tur.c          | 2 +-
- libmultipath/discovery.c             | 2 +-
- libmultipath/discovery.h             | 2 +-
- libmultipath/propsel.c               | 4 ++--
- 8 files changed, 11 insertions(+), 11 deletions(-)
+ libmultipath/devmapper.c | 21 +++++++++++++++++----
+ libmultipath/devmapper.h |  2 +-
+ 2 files changed, 18 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index 5d87bfd..a797734 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -114,7 +114,7 @@ int libcheck_check (struct checker * c)
- 	io_hdr.dxferp = sense_buffer;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sb;
--	io_hdr.timeout = c->timeout;
-+	io_hdr.timeout = c->timeout * 1000;
- 	io_hdr.pack_id = 0;
- 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
- 		MSG(c, "emc_clariion_checker: sending query command failed");
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index b50ac0c..fe5e0f9 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -70,7 +70,7 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
- 	io_hdr.dxferp = resp;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sense_b;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 
- 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
- 		return 1;
-@@ -111,7 +111,7 @@ do_tur (int fd, unsigned int timeout)
- 	io_hdr.dxfer_direction = SG_DXFER_NONE;
- 	io_hdr.cmdp = turCmdBlk;
- 	io_hdr.sbp = sense_buffer;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = 0;
- 
- 	if (ioctl(fd, SG_IO, &io_hdr) < 0)
-diff --git a/libmultipath/checkers/libsg.c b/libmultipath/checkers/libsg.c
-index 5a989d3..0d3af1f 100644
---- a/libmultipath/checkers/libsg.c
-+++ b/libmultipath/checkers/libsg.c
-@@ -53,7 +53,7 @@ sg_read (int sg_fd, unsigned char * buff, int buff_len,
- 	io_hdr.dxferp = buff;
- 	io_hdr.mx_sb_len = sense_len;
- 	io_hdr.sbp = sense;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = (int)start_block;
- 	if (diop && *diop)
- 	io_hdr.flags |= SG_FLAG_DIRECT_IO;
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index 5f24f55..2e64dd3 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -74,7 +74,7 @@ int libcheck_init (struct checker * c)
- 	io_hdr.dxferp = &current;
- 	io_hdr.cmdp = cmd;
- 	io_hdr.sbp = sense_b;
--	io_hdr.timeout = c->timeout;
-+	io_hdr.timeout = c->timeout * 1000;
- 
- 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0)
- 		goto out;
-@@ -150,7 +150,7 @@ retry:
- 	io_hdr.dxferp = resp;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sense_b;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 
- 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
- 		return 1;
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 6f5d4d9..b76dcec 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -116,7 +116,7 @@ tur_check(int fd, unsigned int timeout, char *msg)
- 	io_hdr.dxfer_direction = SG_DXFER_NONE;
- 	io_hdr.cmdp = turCmdBlk;
- 	io_hdr.sbp = sense_buffer;
--	io_hdr.timeout = timeout;
-+	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = 0;
- 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
- 		TUR_MSG(msg, MSG_TUR_DOWN);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index c59dbc2..adfb1ba 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -204,7 +204,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- 		return 1;
- 	}
- 
--	*timeout = t * 1000;
-+	*timeout = t;
- 
- 	return 0;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 69f475c..4c8b923 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -366,7 +366,7 @@ out:
  }
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 1a614ee..d049ead 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -14,7 +14,7 @@
- #endif
  
- #ifndef DEF_TIMEOUT
--#define DEF_TIMEOUT	300000
-+#define DEF_TIMEOUT	30
- #endif
+ extern int
+-dm_get_map(char * name, unsigned long long * size, char * outparams)
++dm_get_map(const char * name, unsigned long long * size, char * outparams)
+ {
+ 	int r = 1;
+ 	struct dm_task *dmt;
+@@ -685,7 +685,9 @@ _dm_flush_map (const char * mapname, int need_sync)
+ extern int
+ dm_suspend_and_flush_map (const char * mapname)
+ {
+-	int s;
++	int s = 0, queue_if_no_path = 0;
++	unsigned long long mapsize;
++	char params[PARAMS_SIZE] = {0};
  
- /*
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index cea8c1c..e47d0ca 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -347,8 +347,8 @@ select_checker(struct path *pp)
- 		pp->dev, checker_name(c));
- out:
- 	if (conf->checker_timeout) {
--		c->timeout = conf->checker_timeout * 1000;
--		condlog(3, "%s: checker timeout = %u ms (config file default)",
-+		c->timeout = conf->checker_timeout;
-+		condlog(3, "%s: checker timeout = %u s (config file default)",
- 				pp->dev, c->timeout);
+ 	if (!dm_map_present(mapname))
+ 		return 0;
+@@ -693,8 +695,17 @@ dm_suspend_and_flush_map (const char * mapname)
+ 	if (dm_type(mapname, TGT_MPATH) <= 0)
+ 		return 0; /* nothing to do */
+ 
+-	s = dm_queue_if_no_path((char *)mapname, 0);
+-	if (!s)
++	if (!dm_get_map(mapname, &mapsize, params)) {
++		if (strstr(params, "queue_if_no_path"))
++			queue_if_no_path = 1;
++	}
++
++	if (queue_if_no_path)
++		s = dm_queue_if_no_path((char *)mapname, 0);
++	/* Leave queue_if_no_path alone if unset failed */
++	if (s)
++		queue_if_no_path = 0;
++	else
+ 		s = dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0);
+ 
+ 	if (!dm_flush_map(mapname)) {
+@@ -703,6 +714,8 @@ dm_suspend_and_flush_map (const char * mapname)
  	}
- 	else if (pp->udev && sysfs_get_timeout(pp, &c->timeout) == 0)
+ 	condlog(2, "failed to remove multipath map %s", mapname);
+ 	dm_simplecmd_noflush(DM_DEVICE_RESUME, mapname);
++	if (queue_if_no_path)
++		s = dm_queue_if_no_path((char *)mapname, 1);
+ 	return 1;
+ }
+ 
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 8ea9dd3..b27db56 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -16,7 +16,7 @@ int dm_addmap_create_ro (struct multipath *mpp, char *params);
+ int dm_addmap_reload (struct multipath *mpp, char *params);
+ int dm_addmap_reload_ro (struct multipath *mpp, char *params);
+ int dm_map_present (const char *);
+-int dm_get_map(char *, unsigned long long *, char *);
++int dm_get_map(const char *, unsigned long long *, char *);
+ int dm_get_status(char *, char *);
+ int dm_type(const char *, char *);
+ int _dm_flush_map (const char *, int);
 -- 
 1.7.12.4
