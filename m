@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 21/30] multipath.conf.annotated: remove 'udev_dir'
-Date: Tue, 16 Jul 2013 09:13:12 +0200
-Message-ID: <1373958801-103613-22-git-send-email-hare@suse.de>
+Subject: [PATCH 03/30] alua: Do not add preferred path priority
+	for active/optimized
+Date: Tue, 16 Jul 2013 09:12:54 +0200
+Message-ID: <1373958801-103613-4-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,30 +23,31 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Deprecated, remove it.
+When a path is in active/optimized we should disregard the
+'preferred path' bit when calculating the priority.
+Otherwise we'll end up with having two different priorities
+(one for 'active/optimized (preferred)' and one for
+'active/optimized (non-preferred)').
+Which will result in two different path groups and a
+sub-optimal path usage.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath.conf.annotated | 7 -------
- 1 file changed, 7 deletions(-)
+ libmultipath/prioritizers/alua.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-index 7ed62de..a20302c 100644
---- a/multipath.conf.annotated
-+++ b/multipath.conf.annotated
-@@ -9,13 +9,6 @@
- ##
- #defaults {
- #	#
--#	# name    : udev_dir
--#	# desc    : directory where udev creates its device nodes
--#	# default : /dev
--#	#
--#	udev_dir	/dev
--#
--#	#
- #	# name    : polling_interval
- #	# scope   : multipathd
- #	# desc    : interval between two path checks in seconds. For
+diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
+index b9493a4..4165ec6 100644
+--- a/libmultipath/prioritizers/alua.c
++++ b/libmultipath/prioritizers/alua.c
+@@ -108,7 +108,7 @@ int getprio (struct path * pp, char * args)
+ 			default:
+ 				rc = 0;
+ 		}
+-		if (priopath)
++		if (priopath && aas != AAS_OPTIMIZED)
+ 			rc += 80;
+ 	} else {
+ 		switch(-rc) {
 -- 
 1.7.12.4
