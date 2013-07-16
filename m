@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 18/30] Update multipath.conf.defaults
-Date: Wed, 17 Jul 2013 00:01:03 +0200
-Message-ID: <51E5C29F.1060902@gmail.com>
+Subject: Re: [PATCH] [RESEND] hwtable: Add vendor ID and update
+ defaults for NetApp E-Series storage
+Date: Wed, 17 Jul 2013 00:11:50 +0200
+Message-ID: <51E5C526.9090602@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,27 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>, device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.de>
+To: Sean Stewart <sean.stewart@netapp.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Hi,
+Sean Stewart <sean.stewart@netapp.com> wrote:
 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  multipath.conf.defaults | 110 +++++++++++++++++++++++++++---------------------
->  1 file changed, 62 insertions(+), 48 deletions(-)
+> Attempting to resend because it did not seem to go through after several hours.  Please disregard if both went through.
+> This patch provides hwtable updates for NETAPP/LSI/ENGENIO E-Series arrays, utilizing new features to detect TPGS support, automatically.
 > 
-> diff --git a/multipath.conf.defaults b/multipath.conf.defaults
-> index cd13369..f278f1f 100644
-> --- a/multipath.conf.defaults
-> +++ b/multipath.conf.defaults
-> @@ -4,6 +4,7 @@
->  #defaults {
->  #	verbosity 2
->  #	polling_interval 5
-> +#	multipath_dir "/lib64/multipath"
+> Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
+> 
+> ---
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c index 4d485a5..2e5500c 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -1135,9 +1135,13 @@ static struct hwentry default_hw[] = {
+>  		.checker_name  = RDAC,
+>  		.prio_name     = PRIO_RDAC,
+>  	},
+> -	/* LSI/Engenio/NetApp E-Series RDAC storage */
+> +	/* LSI/Engenio/NetApp E-Series RDAC storage
+> +	 *
+> +	 * Maintainer : Sean Stewart
+> +	 * Mail : sean.stewart@netapp.com
+> +	 */
+>  	{
+> -		.vendor        = "(LSI|ENGENIO)",
+> +		.vendor        = "(NETAPP|LSI|ENGENIO)",
+>  		.product       = "INF-01-00",
+>  		.bl_product    = "Universal Xport",
+>  		.features      = "2 pg_init_retries 50",
+> @@ -1145,12 +1149,14 @@ static struct hwentry default_hw[] = {
+>  		.pgpolicy      = GROUP_BY_PRIO,
+>  		.pgfailback    = -FAILBACK_IMMEDIATE,
+>  		.rr_weight     = RR_WEIGHT_NONE,
+> -		.no_path_retry = 15,
+> +		.no_path_retry = 30,
+>  		.minio         = DEFAULT_MINIO,
+>  		.minio_rq      = DEFAULT_MINIO_RQ,
+>  		.checker_name  = RDAC,
+>  		.prio_name     = PRIO_RDAC,
+>  		.prio_args     = NULL,
+> +		.detect_prio   = DETECT_PRIO_ON,
+> +		.retain_hwhandler = RETAIN_HWHANDLER_ON,
+>  	},
+>  	{
+>  		.vendor        = "STK",
+> 
+> --
 
-multipath_dir should be removed, it's generated at compile time.
-
-/lib64/multipath -> for 64bit
-/lib/multipath -> for 32bit
+This change should be also propagated to multipath.conf.defaults
