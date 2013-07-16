@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 06/30] libmultipath: Implement PATH_TIMEOUT
-Date: Tue, 16 Jul 2013 09:12:57 +0200
-Message-ID: <1373958801-103613-7-git-send-email-hare@suse.de>
+Subject: [PATCH 24/30] multipath: reference the udev context when
+	starting event queue
+Date: Tue, 16 Jul 2013 09:13:15 +0200
+Message-ID: <1373958801-103613-25-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,96 +23,118 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The tur checker might run into a timeout, eg when a command is
-sent but the checker hasn't been able to receive a reply in time.
-Use a specific 'PATH_TIMEOUT' state for these cases.
+The uevent listener is running asynchronously, so it might still
+be active and receiving events when the main thread is already
+shut down. So it need to take a separate reference to the udev
+context to avoid the context becoming invalid while the listener
+is running.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/checkers.c     | 3 ++-
- libmultipath/checkers.h     | 5 +++++
- libmultipath/checkers/tur.c | 2 +-
- libmultipath/discovery.c    | 2 ++
- libmultipath/print.c        | 4 ++++
- 5 files changed, 14 insertions(+), 2 deletions(-)
+ libmultipath/uevent.c | 16 ++++++++++++----
+ libmultipath/uevent.h |  4 +++-
+ multipathd/main.c     |  4 ++--
+ 3 files changed, 17 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 01dafdd..47f5c68 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -16,7 +16,8 @@ char *checker_state_names[] = {
-       "up",
-       "shaky",
-       "ghost",
--      "pending"
-+      "pending",
-+      "timeout",
- };
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 0643e14..9ee3ade 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -47,7 +47,6 @@
+ #include "list.h"
+ #include "uevent.h"
+ #include "vector.h"
+-#include "config.h"
  
- static LIST_HEAD(checkers);
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 5a96165..1b6c22d 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -46,6 +46,10 @@
-  * PATH_PENDING:
-  * - Use: All async checkers
-  * - Description: Indicates a check IO is in flight.
-+ *
-+ * PATH_TIMEOUT:
-+ * - Use: Only tur checker
-+ * - Description: Command timed out
-  */
- enum path_check_state {
- 	PATH_WILD,
-@@ -55,6 +59,7 @@ enum path_check_state {
- 	PATH_SHAKY,
- 	PATH_GHOST,
- 	PATH_PENDING,
-+	PATH_TIMEOUT,
- 	PATH_MAX_STATE
- };
+ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
  
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 9c141aa..6f5d4d9 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -297,7 +297,7 @@ libcheck_check (struct checker * c)
- 				pthread_cancel(ct->thread);
- 				ct->running = 0;
- 				MSG(c, MSG_TUR_TIMEOUT);
--				tur_status = PATH_DOWN;
-+				tur_status = PATH_TIMEOUT;
- 				ct->state = PATH_UNCHECKED;
- 			} else {
- 				condlog(3, "%d:%d: tur checker not finished",
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 04c6029..6af5083 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1065,6 +1065,8 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 			if (pp->state == PATH_UNCHECKED ||
- 			    pp->state == PATH_WILD)
- 				goto blank;
-+			if (pp->state == PATH_TIMEOUT)
-+				pp->state = PATH_DOWN;
- 		} else {
- 			condlog(3, "%s: path inaccessible", pp->dev);
- 			pp->chkrstate = pp->state = path_state;
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 274f5e7..b6d08b7 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -335,6 +335,10 @@ snprint_chk_state (char * buff, size_t len, struct path * pp)
- 		return snprintf(buff, len, "shaky");
- 	case PATH_GHOST:
- 		return snprintf(buff, len, "ghost");
-+	case PATH_PENDING:
-+		return snprintf(buff, len, "i/o pending");
-+	case PATH_TIMEOUT:
-+		return snprintf(buff, len, "i/o timeout");
- 	default:
- 		return snprintf(buff, len, "undef");
+@@ -127,11 +126,14 @@ service_uevq(struct list_head *tmpq)
+ 
+ static void uevq_stop(void *arg)
+ {
++	struct udev *udev = arg;
++
+ 	condlog(3, "Stopping uev queue");
+ 	pthread_mutex_lock(uevq_lockp);
+ 	my_uev_trigger = NULL;
+ 	pthread_cond_signal(uev_condp);
+ 	pthread_mutex_unlock(uevq_lockp);
++	udev_unref(udev);
+ }
+ 
+ void
+@@ -399,7 +401,7 @@ exit:
+ 	return 1;
+ }
+ 
+-int uevent_listen(void)
++int uevent_listen(struct udev *udev)
+ {
+ 	int err;
+ 	struct udev_monitor *monitor = NULL;
+@@ -411,11 +413,17 @@ int uevent_listen(void)
+ 	 * thereby not getting to empty the socket's receive buffer queue
+ 	 * often enough.
+ 	 */
+-	pthread_cleanup_push(uevq_stop, NULL);
++	if (!udev) {
++		condlog(1, "no udev context");
++		return 1;
++	}
++	udev_ref(udev);
++	pthread_cleanup_push(uevq_stop, udev);
+ 
+-	monitor = udev_monitor_new_from_netlink(conf->udev, "udev");
++	monitor = udev_monitor_new_from_netlink(udev, "udev");
+ 	if (!monitor) {
+ 		condlog(2, "failed to create udev monitor");
++		err = 2;
+ 		goto out;
+ 	}
+ #ifdef LIBUDEV_API_RECVBUF
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 762595a..e5fdfcc 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -13,6 +13,8 @@
+ #define NETLINK_KOBJECT_UEVENT		15
+ #endif
+ 
++struct udev;
++
+ struct uevent {
+ 	struct list_head node;
+ 	struct udev_device *udev;
+@@ -27,7 +29,7 @@ struct uevent {
+ int is_uevent_busy(void);
+ void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
+ 
+-int uevent_listen(void);
++int uevent_listen(struct udev *udev);
+ int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
+ 		    void * trigger_data);
+ int uevent_get_major(struct uevent *uev);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index aa5a298..b41fc64 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -835,7 +835,7 @@ out:
+ static void *
+ ueventloop (void * ap)
+ {
+-	if (uevent_listen())
++	if (uevent_listen(udev))
+ 		condlog(0, "error starting uevent listener");
+ 
+ 	return NULL;
+@@ -1658,7 +1658,7 @@ child (void * param)
+ 	/*
+ 	 * Start uevent listener early to catch events
+ 	 */
+-	if ((rc = pthread_create(&uevent_thr, &misc_attr, ueventloop, vecs))) {
++	if ((rc = pthread_create(&uevent_thr, &misc_attr, ueventloop, udev))) {
+ 		condlog(0, "failed to create uevent thread: %d", rc);
+ 		exit(1);
  	}
 -- 
 1.7.12.4
