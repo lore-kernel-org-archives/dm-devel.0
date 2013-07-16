@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 10/30] kpartx: support disk with non-512B sectors
-Date: Tue, 16 Jul 2013 09:13:01 +0200
-Message-ID: <1373958801-103613-11-git-send-email-hare@suse.de>
+Subject: [PATCH 27/30] Specify checker_timeout in seconds
+Date: Tue, 16 Jul 2013 09:13:18 +0200
+Message-ID: <1373958801-103613-28-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,173 +19,149 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com, Petr Uzel <petr.uzel@suse.cz>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Petr Uzel <petr.uzel@suse.cz>
+Commit 8d3f07da changed the internal value for checker_timeout
+to be in milliseconds, which wasn't reflected in the tur checker.
+So better scale it back to seconds, and change the callers to
+scale it to milliseconds where appropriate.
 
-libdevmapper expects sector size to be recalculated to 512B, so we need
-to teach kpartx to do so if the underlying DM device has different
-sector size (for GPT and msods partition tables).
-
-Signed-off-by: Petr Uzel <petr.uzel@suse.cz>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/dos.c    | 17 ++++++++++-------
- kpartx/gpt.c    | 20 +-------------------
- kpartx/kpartx.c | 12 ++++++++++++
- kpartx/kpartx.h |  8 ++++++++
- 4 files changed, 31 insertions(+), 26 deletions(-)
+ libmultipath/checkers/emc_clariion.c | 2 +-
+ libmultipath/checkers/hp_sw.c        | 4 ++--
+ libmultipath/checkers/libsg.c        | 2 +-
+ libmultipath/checkers/rdac.c         | 4 ++--
+ libmultipath/checkers/tur.c          | 2 +-
+ libmultipath/discovery.c             | 2 +-
+ libmultipath/discovery.h             | 2 +-
+ libmultipath/propsel.c               | 4 ++--
+ 8 files changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/kpartx/dos.c b/kpartx/dos.c
-index a1a9961..0e57f0e 100644
---- a/kpartx/dos.c
-+++ b/kpartx/dos.c
-@@ -26,7 +26,9 @@ read_extended_partition(int fd, struct partition *ep, int en,
- 	int moretodo = 1;
- 	int i, n=0;
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index 5d87bfd..a797734 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -114,7 +114,7 @@ int libcheck_check (struct checker * c)
+ 	io_hdr.dxferp = sense_buffer;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sb;
+-	io_hdr.timeout = c->timeout;
++	io_hdr.timeout = c->timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
+ 		MSG(c, "emc_clariion_checker: sending query command failed");
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index b50ac0c..fe5e0f9 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -70,7 +70,7 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+ 	io_hdr.dxferp = resp;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sense_b;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
  
--	next = start = le32_to_cpu(ep->start_sect);
-+	int sector_size_mul = get_sector_size(fd)/512;
-+
-+	next = start = sector_size_mul * le32_to_cpu(ep->start_sect);
+ 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+ 		return 1;
+@@ -111,7 +111,7 @@ do_tur (int fd, unsigned int timeout)
+ 	io_hdr.dxfer_direction = SG_DXFER_NONE;
+ 	io_hdr.cmdp = turCmdBlk;
+ 	io_hdr.sbp = sense_buffer;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = 0;
  
- 	while (moretodo) {
- 		here = next;
-@@ -45,14 +47,14 @@ read_extended_partition(int fd, struct partition *ep, int en,
- 			memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
- 			if (is_extended(p.sys_type)) {
- 				if (p.nr_sects && !moretodo) {
--					next = start + le32_to_cpu(p.start_sect);
-+					next = start + sector_size_mul * le32_to_cpu(p.start_sect);
- 					moretodo = 1;
- 				}
- 				continue;
- 			}
- 			if (n < ns) {
--				sp[n].start = here + le32_to_cpu(p.start_sect);
--				sp[n].size = le32_to_cpu(p.nr_sects);
-+				sp[n].start = here + sector_size_mul * le32_to_cpu(p.start_sect);
-+				sp[n].size = sector_size_mul * le32_to_cpu(p.nr_sects);
- 				sp[n].container = en + 1;
- 				n++;
- 			} else {
-@@ -77,6 +79,7 @@ read_dos_pt(int fd, struct slice all, struct slice *sp, int ns) {
- 	unsigned long offset = all.start;
- 	int i, n=4;
- 	unsigned char *bp;
-+	int sector_size_mul = get_sector_size(fd)/512;
+ 	if (ioctl(fd, SG_IO, &io_hdr) < 0)
+diff --git a/libmultipath/checkers/libsg.c b/libmultipath/checkers/libsg.c
+index 5a989d3..0d3af1f 100644
+--- a/libmultipath/checkers/libsg.c
++++ b/libmultipath/checkers/libsg.c
+@@ -53,7 +53,7 @@ sg_read (int sg_fd, unsigned char * buff, int buff_len,
+ 	io_hdr.dxferp = buff;
+ 	io_hdr.mx_sb_len = sense_len;
+ 	io_hdr.sbp = sense;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = (int)start_block;
+ 	if (diop && *diop)
+ 	io_hdr.flags |= SG_FLAG_DIRECT_IO;
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+index 5f24f55..2e64dd3 100644
+--- a/libmultipath/checkers/rdac.c
++++ b/libmultipath/checkers/rdac.c
+@@ -74,7 +74,7 @@ int libcheck_init (struct checker * c)
+ 	io_hdr.dxferp = &current;
+ 	io_hdr.cmdp = cmd;
+ 	io_hdr.sbp = sense_b;
+-	io_hdr.timeout = c->timeout;
++	io_hdr.timeout = c->timeout * 1000;
  
- 	bp = (unsigned char *)getblock(fd, offset);
- 	if (bp == NULL)
-@@ -90,15 +93,15 @@ read_dos_pt(int fd, struct slice all, struct slice *sp, int ns) {
- 		if (is_gpt(p.sys_type))
- 			return 0;
- 		if (i < ns) {
--			sp[i].start =  le32_to_cpu(p.start_sect);
--			sp[i].size = le32_to_cpu(p.nr_sects);
-+			sp[i].start =  sector_size_mul * le32_to_cpu(p.start_sect);
-+			sp[i].size = sector_size_mul * le32_to_cpu(p.nr_sects);
- 		} else {
- 			fprintf(stderr,
- 				"dos_partition: too many slices\n");
- 			break;
- 		}
- 		if (is_extended(p.sys_type)) {
--			sp[i].size = 2; /* extended partitions only get two
-+			sp[i].size = sector_size_mul * 2; /* extended partitions only get two
- 					   sectors mapped for LILO to install */
- 			n += read_extended_partition(fd, &p, i, sp+n, ns-n);
- 		}
-diff --git a/kpartx/gpt.c b/kpartx/gpt.c
-index 0a22927..5a54970 100644
---- a/kpartx/gpt.c
-+++ b/kpartx/gpt.c
-@@ -38,6 +38,7 @@
- #include <byteswap.h>
- #include <linux/fs.h>
- #include "crc32.h"
-+#include "kpartx.h"
+ 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0)
+ 		goto out;
+@@ -150,7 +150,7 @@ retry:
+ 	io_hdr.dxferp = resp;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sense_b;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
  
- #if BYTE_ORDER == LITTLE_ENDIAN
- #  define __le16_to_cpu(x) (x)
-@@ -116,25 +117,6 @@ is_pmbr_valid(legacy_mbr *mbr)
+ 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+ 		return 1;
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 6f5d4d9..b76dcec 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -116,7 +116,7 @@ tur_check(int fd, unsigned int timeout, char *msg)
+ 	io_hdr.dxfer_direction = SG_DXFER_NONE;
+ 	io_hdr.cmdp = turCmdBlk;
+ 	io_hdr.sbp = sense_buffer;
+-	io_hdr.timeout = timeout;
++	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+ 		TUR_MSG(msg, MSG_TUR_DOWN);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index c59dbc2..adfb1ba 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -204,7 +204,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
+ 		return 1;
+ 	}
  
+-	*timeout = t * 1000;
++	*timeout = t;
  
- /************************************************************
-- * get_sector_size
-- * Requires:
-- *  - filedes is an open file descriptor, suitable for reading
-- * Modifies: nothing
-- * Returns:
-- *  sector size, or 512.
-- ************************************************************/
--static int
--get_sector_size(int filedes)
--{
--	int rc, sector_size = 512;
--
--	rc = ioctl(filedes, BLKSSZGET, &sector_size);
--	if (rc)
--		sector_size = 512;
--	return sector_size;
--}
--
--/************************************************************
-  * _get_num_sectors
-  * Requires:
-  *  - filedes is an open file descriptor, suitable for reading
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 98d88c0..1369542 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -26,6 +26,7 @@
- #include <string.h>
- #include <unistd.h>
- #include <stdint.h>
-+#include <sys/ioctl.h>
- #include <sys/stat.h>
- #include <sys/types.h>
- #include <ctype.h>
-@@ -695,3 +696,14 @@ getblock (int fd, unsigned int secnr) {
- 
- 	return bp->block;
+ 	return 0;
  }
-+
-+int
-+get_sector_size(int filedes)
-+{
-+	int rc, sector_size = 512;
-+
-+	rc = ioctl(filedes, BLKSSZGET, &sector_size);
-+	if (rc)
-+		sector_size = 512;
-+	return sector_size;
-+}
-diff --git a/kpartx/kpartx.h b/kpartx/kpartx.h
-index 61d31b6..a55c211 100644
---- a/kpartx/kpartx.h
-+++ b/kpartx/kpartx.h
-@@ -2,6 +2,7 @@
- #define _KPARTX_H
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 1a614ee..d049ead 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -14,7 +14,7 @@
+ #endif
  
- #include <stdint.h>
-+#include <sys/ioctl.h>
+ #ifndef DEF_TIMEOUT
+-#define DEF_TIMEOUT	300000
++#define DEF_TIMEOUT	30
+ #endif
  
  /*
-  * For each partition type there is a routine that takes
-@@ -18,6 +19,13 @@
- #define safe_sprintf(var, format, args...)	\
- 	snprintf(var, sizeof(var), format, ##args) >= sizeof(var)
- 
-+#ifndef BLKSSZGET
-+#define BLKSSZGET  _IO(0x12,104)	/* get block device sector size */
-+#endif
-+
-+int
-+get_sector_size(int filedes);
-+
- /*
-  * units: 512 byte sectors
-  */
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index cea8c1c..e47d0ca 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -347,8 +347,8 @@ select_checker(struct path *pp)
+ 		pp->dev, checker_name(c));
+ out:
+ 	if (conf->checker_timeout) {
+-		c->timeout = conf->checker_timeout * 1000;
+-		condlog(3, "%s: checker timeout = %u ms (config file default)",
++		c->timeout = conf->checker_timeout;
++		condlog(3, "%s: checker timeout = %u s (config file default)",
+ 				pp->dev, c->timeout);
+ 	}
+ 	else if (pp->udev && sysfs_get_timeout(pp, &c->timeout) == 0)
 -- 
 1.7.12.4
