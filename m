@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 29/30] multipath: reset queue_if_no_path if flush
-	failed
-Date: Tue, 16 Jul 2013 09:13:20 +0200
-Message-ID: <1373958801-103613-30-git-send-email-hare@suse.de>
+Subject: [PATCH 14/30] Read directly from sysfs when checking the
+	device size
+Date: Tue, 16 Jul 2013 09:13:05 +0200
+Message-ID: <1373958801-103613-15-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,80 +23,75 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When flushing a map failed the 'queue_if_no_path' setting is
-getting lost.
+Device sizes might change, so we need to be reading from sysfs
+directly to avoid udev still caching the old value.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/devmapper.c | 21 +++++++++++++++++----
- libmultipath/devmapper.h |  2 +-
- 2 files changed, 18 insertions(+), 5 deletions(-)
+ libmultipath/discovery.c | 5 ++---
+ libmultipath/sysfs.c     | 8 +++-----
+ 2 files changed, 5 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 69f475c..4c8b923 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -366,7 +366,7 @@ out:
- }
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 96fe985..82f086b 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -320,7 +320,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 	struct udev_device *rport_dev = NULL;
+ 	char value[11];
+ 	char rport_id[32];
+-	unsigned long long tmo;
++	unsigned long long tmo = 0;
  
- extern int
--dm_get_map(char * name, unsigned long long * size, char * outparams)
-+dm_get_map(const char * name, unsigned long long * size, char * outparams)
+ 	sprintf(rport_id, "rport-%d:%d-%d",
+ 		pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.transport_id);
+@@ -347,6 +347,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 	 */
+ 	value[0] = '\0';
+ 	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET &&
++	    mpp->fast_io_fail != MP_FAST_IO_FAIL_ZERO &&
+ 	    mpp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
+ 		/* Check if we need to temporarily increase dev_loss_tmo */
+ 		if (sysfs_attr_get_value(rport_dev, "dev_loss_tmo",
+@@ -362,8 +363,6 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 		}
+ 		if (mpp->fast_io_fail >= tmo) {
+ 			snprintf(value, 11, "%u", mpp->fast_io_fail);
+-		} else {
+-			tmo = 0;
+ 		}
+ 	} else if (mpp->dev_loss > 600) {
+ 		condlog(3, "%s: limiting dev_loss_tmo to 600, since "
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 22b73b1..bab3837 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -149,14 +149,13 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ int
+ sysfs_get_size (struct path *pp, unsigned long long * size)
  {
- 	int r = 1;
- 	struct dm_task *dmt;
-@@ -685,7 +685,9 @@ _dm_flush_map (const char * mapname, int need_sync)
- extern int
- dm_suspend_and_flush_map (const char * mapname)
- {
--	int s;
-+	int s = 0, queue_if_no_path = 0;
-+	unsigned long long mapsize;
-+	char params[PARAMS_SIZE] = {0};
+-	const char * attr;
++	char attr[255];
+ 	int r;
  
- 	if (!dm_map_present(mapname))
- 		return 0;
-@@ -693,8 +695,17 @@ dm_suspend_and_flush_map (const char * mapname)
- 	if (dm_type(mapname, TGT_MPATH) <= 0)
- 		return 0; /* nothing to do */
+ 	if (!pp->udev)
+ 		return 1;
  
--	s = dm_queue_if_no_path((char *)mapname, 0);
--	if (!s)
-+	if (!dm_get_map(mapname, &mapsize, params)) {
-+		if (strstr(params, "queue_if_no_path"))
-+			queue_if_no_path = 1;
-+	}
-+
-+	if (queue_if_no_path)
-+		s = dm_queue_if_no_path((char *)mapname, 0);
-+	/* Leave queue_if_no_path alone if unset failed */
-+	if (s)
-+		queue_if_no_path = 0;
-+	else
- 		s = dm_simplecmd_flush(DM_DEVICE_SUSPEND, mapname, 0);
- 
- 	if (!dm_flush_map(mapname)) {
-@@ -703,6 +714,8 @@ dm_suspend_and_flush_map (const char * mapname)
+-	attr = udev_device_get_sysattr_value(pp->udev, "size");
+-	if (!attr) {
++	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) == 0) {
+ 		condlog(3, "%s: No size attribute in sysfs", pp->dev);
+ 		return 1;
  	}
- 	condlog(2, "failed to remove multipath map %s", mapname);
- 	dm_simplecmd_noflush(DM_DEVICE_RESUME, mapname);
-+	if (queue_if_no_path)
-+		s = dm_queue_if_no_path((char *)mapname, 1);
- 	return 1;
- }
+@@ -164,8 +163,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
+ 	r = sscanf(attr, "%llu\n", size);
  
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 8ea9dd3..b27db56 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -16,7 +16,7 @@ int dm_addmap_create_ro (struct multipath *mpp, char *params);
- int dm_addmap_reload (struct multipath *mpp, char *params);
- int dm_addmap_reload_ro (struct multipath *mpp, char *params);
- int dm_map_present (const char *);
--int dm_get_map(char *, unsigned long long *, char *);
-+int dm_get_map(const char *, unsigned long long *, char *);
- int dm_get_status(char *, char *);
- int dm_type(const char *, char *);
- int _dm_flush_map (const char *, int);
+ 	if (r != 1) {
+-		condlog(3, "%s: Cannot parse size attribute '%s'",
+-			pp->dev, attr);
++		condlog(3, "%s: Cannot parse size attribute", pp->dev);
+ 		return 1;
+ 	}
+ 
 -- 
 1.7.12.4
