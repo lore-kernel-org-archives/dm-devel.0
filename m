@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 04/30] multipath: Increase dev_loss_tmo prior to
-	fast_io_fail
-Date: Tue, 16 Jul 2013 09:12:55 +0200
-Message-ID: <1373958801-103613-5-git-send-email-hare@suse.de>
+Subject: [PATCH 18/30] Update multipath.conf.defaults
+Date: Tue, 16 Jul 2013 09:13:09 +0200
+Message-ID: <1373958801-103613-19-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,222 +22,459 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-There are several constraints when setting fast_io_fail and
-dev_loss_tmo.
-dev_loss_tmo will be capped automatically when fast_io_fail is
-not set. And fast_io_fail can not be raised beyond dev_loss_tmo.
-
-So to increase dev_loss_tmo and fast_io_fail we first need
-to increase dev_loss_tmo to the given fast_io_fail
-setting, then set fast_io_fail, and then set dev_loss_tmo
-to the final setting.
-
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 66 +++++++++++++++++++++++++++++++++++++-----------
- libmultipath/sysfs.c     | 64 ++++++++++++++++++++++++++++++++++++++++++++--
- libmultipath/sysfs.h     |  2 ++
- 3 files changed, 115 insertions(+), 17 deletions(-)
+ multipath.conf.defaults | 110 +++++++++++++++++++++++++++---------------------
+ 1 file changed, 62 insertions(+), 48 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 26983ca..18f72ec 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -317,6 +317,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	struct udev_device *rport_dev = NULL;
- 	char value[11];
- 	char rport_id[32];
-+	unsigned long long tmo;
- 
- 	sprintf(rport_id, "rport-%d:%d-%d",
- 		pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.transport_id);
-@@ -330,23 +331,51 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	condlog(4, "target%d:%d:%d -> %s", pp->sg_id.host_no,
- 		pp->sg_id.channel, pp->sg_id.scsi_id, rport_id);
- 
--	snprintf(value, 11, "%u", mpp->dev_loss);
--	if (mpp->dev_loss &&
--	    sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11) <= 0) {
--		if ((mpp->fast_io_fail == MP_FAST_IO_FAIL_UNSET ||
--		     mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
--		    && mpp->dev_loss > 600) {
--			condlog(3, "%s: limiting dev_loss_tmo to 600, since "
--				"fast_io_fail is not set", mpp->alias);
--			snprintf(value, 11, "%u", 600);
--			if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
--						 value, 11) <= 0)
--				condlog(0, "%s failed to set dev_loss_tmo",
--					mpp->alias);
-+	/*
-+	 * This is tricky.
-+	 * dev_loss_tmo will be limited to 600 if fast_io_fail
-+	 * is _not_ set.
-+	 * fast_io_fail will be limited by the current dev_loss_tmo
-+	 * setting.
-+	 * So to get everything right we first need to increase
-+	 * dev_loss_tmo to the fast_io_fail setting (if present),
-+	 * then set fast_io_fail, and _then_ set dev_loss_tmo
-+	 * to the correct value.
-+	 */
-+	value[0] = '\0';
-+	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET &&
-+	    mpp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
-+		/* Check if we need to temporarily increase dev_loss_tmo */
-+		if (sysfs_attr_get_value(rport_dev, "dev_loss_tmo",
-+					 value, 16) <= 0) {
-+			condlog(0, "%s: failed to read dev_loss_tmo value, "
-+				"error %d", pp->dev, errno);
-+			goto out;
-+		}
-+		if (sscanf(value, "%llu\n", &tmo) != 1) {
-+			condlog(0, "%s: Cannot parse dev_loss_tmo "
-+				"attribute '%s'",pp->dev, value);
- 			goto out;
- 		}
-+		if (mpp->fast_io_fail >= tmo) {
-+			snprintf(value, 11, "%u", mpp->fast_io_fail);
-+		} else {
-+			tmo = 0;
-+		}
-+	} else if (mpp->dev_loss > 600) {
-+		condlog(3, "%s: limiting dev_loss_tmo to 600, since "
-+			"fast_io_fail is not set", pp->dev);
-+		snprintf(value, 11, "%u", 600);
-+	} else {
-+		snprintf(value, 11, "%u", mpp->dev_loss);
- 	}
--	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET){
-+	if (strlen(value) &&
-+	    sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, 11) <= 0) {
-+		condlog(0, "%s failed to set dev_loss_tmo",
-+			mpp->alias);
-+		goto out;
-+	}
-+	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET) {
- 		if (mpp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
- 			sprintf(value, "off");
- 		else if (mpp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
-@@ -359,6 +388,13 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 				mpp->alias);
- 		}
- 	}
-+	if (tmo > 0) {
-+		snprintf(value, 11, "%u", mpp->dev_loss);
-+		if (sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
-+					 value, 11) <= 0)
-+			condlog(0, "%s failed to set dev_loss_tmo",
-+				mpp->alias);
-+	}
- out:
- 	udev_device_unref(rport_dev);
- }
-@@ -394,7 +430,7 @@ sysfs_set_session_tmo(struct multipath *mpp, struct path *pp)
- 		} else {
- 			snprintf(value, 11, "%u", mpp->fast_io_fail);
- 			if (sysfs_attr_set_value(session_dev, "recovery_tmo",
--						 value, 11)) {
-+						 value, 11) <= 0) {
- 				condlog(3, "%s: Failed to set recovery_tmo, "
- 					" error %d", pp->dev, errno);
- 			}
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index d33747f..22b73b1 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -38,6 +38,62 @@
- #include "debug.h"
- #include "devmapper.h"
- 
-+/*
-+ * When we modify an attribute value we cannot rely on libudev for now,
-+ * as libudev lacks the capability to update an attribute value.
-+ * So for modified attributes we need to implement our own function.
-+ */
-+ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
-+			     char * value, size_t value_len)
-+{
-+	char devpath[PATH_SIZE];
-+	struct stat statbuf;
-+	int fd;
-+	ssize_t size = -1;
-+
-+	if (!dev || !attr_name || !value)
-+		return 0;
-+
-+	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
-+		 attr_name);
-+	condlog(4, "open '%s'", devpath);
-+	if (stat(devpath, &statbuf) != 0) {
-+		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
-+		return 0;
-+	}
-+
-+	/* skip directories */
-+	if (S_ISDIR(statbuf.st_mode)) {
-+		condlog(4, "%s is a directory", devpath);
-+		return 0;
-+	}
-+
-+	/* skip non-writeable files */
-+	if ((statbuf.st_mode & S_IRUSR) == 0) {
-+		condlog(4, "%s is not readable", devpath);
-+		return 0;
-+	}
-+
-+	/* read attribute value */
-+	fd = open(devpath, O_RDONLY);
-+	if (fd < 0) {
-+		condlog(4, "attribute '%s' can not be opened: %s",
-+			devpath, strerror(errno));
-+		return 0;
-+	}
-+	size = read(fd, value, value_len);
-+	if (size < 0) {
-+		condlog(4, "read from %s failed: %s", devpath, strerror(errno));
-+		size = 0;
-+	} else if (size == value_len) {
-+		condlog(4, "overflow while reading from %s", devpath);
-+		size = 0;
-+	}
-+
-+	close(fd);
-+	return size;
-+}
-+
- ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 			     char * value, size_t value_len)
- {
-@@ -58,12 +114,16 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 	}
- 
- 	/* skip directories */
--	if (S_ISDIR(statbuf.st_mode))
-+	if (S_ISDIR(statbuf.st_mode)) {
-+		condlog(4, "%s is a directory", devpath);
- 		return 0;
-+	}
- 
- 	/* skip non-writeable files */
--	if ((statbuf.st_mode & S_IWUSR) == 0)
-+	if ((statbuf.st_mode & S_IWUSR) == 0) {
-+		condlog(4, "%s is not writeable", devpath);
- 		return 0;
-+	}
- 
- 	/* write attribute value */
- 	fd = open(devpath, O_WRONLY);
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index 13d7545..34f3e00 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -7,6 +7,8 @@
- 
- ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 			     char * value, size_t value_len);
-+ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
-+			     char * value, size_t value_len);
- int sysfs_get_size (struct path *pp, unsigned long long * size);
- int sysfs_check_holders(char * check_devt, char * new_devt);
- #endif
+diff --git a/multipath.conf.defaults b/multipath.conf.defaults
+index cd13369..f278f1f 100644
+--- a/multipath.conf.defaults
++++ b/multipath.conf.defaults
+@@ -4,6 +4,7 @@
+ #defaults {
+ #	verbosity 2
+ #	polling_interval 5
++#	multipath_dir "/lib64/multipath"
+ #	path_selector "service-time 0"
+ #	path_grouping_policy "failover"
+ #	uid_attribute "ID_SERIAL"
+@@ -12,9 +13,10 @@
+ #	features "0"
+ #	path_checker "directio"
+ #	alias_prefix "mpath"
++#	failback "manual"
+ #	rr_min_io 1000
+ #	rr_min_io_rq 1
+-#	max_fds 1048576
++#	max_fds "max"
+ #	rr_weight "uniform"
+ #	queue_without_daemon "yes"
+ #	flush_on_last_del "no"
+@@ -78,7 +80,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "const"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -143,7 +145,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 12
+ #		rr_min_io 100
+@@ -156,7 +158,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 12
+ #		rr_min_io 100
+@@ -169,7 +171,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "const"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 18
+ #		rr_min_io 100
+@@ -182,7 +184,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 18
+ #		rr_min_io 100
+@@ -195,7 +197,7 @@
+ #		features "0"
+ #		hardware_handler "1 alua"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 12
+ #		rr_min_io 100
+@@ -219,7 +221,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 18
+ #		rr_min_io 100
+@@ -254,7 +256,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "1 emc"
+ #		prio "emc"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 60
+ #	}
+@@ -288,7 +290,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 10
+ #	}
+@@ -310,7 +312,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "0"
+ #		prio "hds"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #	}
+ #	device {
+@@ -332,7 +334,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 300
+ #	}
+@@ -345,7 +347,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 300
+ #	}
+@@ -358,7 +360,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 300
+ #	}
+@@ -371,7 +373,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -384,7 +386,7 @@
+ #		features "2 pg_init_retries 50"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 15
+ #	}
+@@ -397,7 +399,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -410,7 +412,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -423,7 +425,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -436,7 +438,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -478,7 +480,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #	}
+ #	device {
+@@ -499,7 +501,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #	}
+ #	device {
+@@ -534,7 +536,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "1 alua"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #	}
+ #	device {
+@@ -545,7 +547,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #		rr_min_io 100
+@@ -570,7 +572,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "const"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 60
+ #	}
+@@ -582,7 +584,7 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "const"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 60
+ #	}
+@@ -594,7 +596,7 @@
+ #		features "0"
+ #		hardware_handler "1 alua"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 60
+ #	}
+@@ -607,7 +609,7 @@
+ #		features "2 pg_init_retries 50"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 15
+ #	}
+@@ -620,7 +622,7 @@
+ #		features "2 pg_init_retries 50"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 15
+ #	}
+@@ -633,7 +635,7 @@
+ #		features "2 pg_init_retries 50"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 15
+ #	}
+@@ -646,7 +648,7 @@
+ #		features "2 pg_init_retries 50"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 15
+ #	}
+@@ -658,13 +660,13 @@
+ #		features "3 queue_if_no_path pg_init_retries 50"
+ #		hardware_handler "0"
+ #		prio "ontap"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		rr_min_io 128
+ #		flush_on_last_del "yes"
+ #		dev_loss_tmo "infinity"
+-#		retain_attached_hw_handler yes
+-#		detect_prio yes
++#		retain_attached_hw_handler "yes"
++#		detect_prio "yes"
+ #	}
+ #	device {
+ #		vendor "NEXENTA"
+@@ -674,7 +676,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "0"
+ #		prio "const"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 30
+ #		rr_min_io 128
+@@ -687,7 +689,7 @@
+ #		features "1 queue_if_no_path"
+ #		hardware_handler "0"
+ #		prio "ontap"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		rr_min_io 128
+ #	}
+@@ -720,7 +722,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -733,7 +735,7 @@
+ #		features "2 pg_init_retries 50"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 15
+ #	}
+@@ -745,7 +747,7 @@
+ #		features "0"
+ #		hardware_handler "1 alua"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #	}
+ #	device {
+@@ -757,7 +759,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #	}
+ #	device {
+@@ -778,7 +780,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #	}
+ #	device {
+@@ -811,7 +813,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -824,7 +826,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -836,7 +838,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #		rr_min_io 1000
+@@ -851,7 +853,7 @@
+ #		features "2 pg_init_retries 50"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry 15
+ #	}
+@@ -864,7 +866,7 @@
+ #		features "0"
+ #		hardware_handler "1 rdac"
+ #		prio "rdac"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -876,7 +878,7 @@
+ #		features "0"
+ #		hardware_handler "1 alua"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
+@@ -888,7 +890,19 @@
+ #		features "0"
+ #		hardware_handler "0"
+ #		prio "alua"
+-#		failback immediate
++#		failback "immediate"
++#		rr_weight "uniform"
++#		no_path_retry "queue"
++#	}
++#	device {
++#		vendor "DataCore"
++#		product "Virtual Disk"
++#		path_grouping_policy "group_by_prio"
++#		path_checker "tur"
++#		features "0"
++#		hardware_handler "0"
++#		prio "alua"
++#		failback "immediate"
+ #		rr_weight "uniform"
+ #		no_path_retry "queue"
+ #	}
 -- 
 1.7.12.4
