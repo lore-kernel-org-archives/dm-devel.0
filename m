@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 16/30] Correctly print out 'max' for max_fds
-Date: Tue, 16 Jul 2013 09:13:07 +0200
-Message-ID: <1373958801-103613-17-git-send-email-hare@suse.de>
+Subject: [PATCH 08/30] kpartx: create correct symlinks for
+	PATH_FAILED events
+Date: Tue, 16 Jul 2013 09:12:59 +0200
+Message-ID: <1373958801-103613-9-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,35 +23,58 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If the value specified for 'max_fds' is the system-wide limit
-we should be printing out 'max', and not that value.
+The kernel is sending out PATH_FAILED/PATH_REINSTATED events,
+upon each of which we need to regenerate the existing symlinks.
+However, for an all-paths-down scenario we cannot read from
+the disk, so we cannot execute blkid or kpartx.
+For these cases we need to import the existing data from the
+udev database.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/dict.c | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ kpartx/kpartx.rules | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index b747fcd..6a58fa2 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -2565,10 +2565,16 @@ snprint_def_rr_min_io_rq (char * buff, int len, void * data)
- static int
- snprint_max_fds (char * buff, int len, void * data)
- {
-+	int r = 0, max_fds;
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index b96ec89..5c0d0ff 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -8,11 +8,16 @@ KERNEL!="dm-*", GOTO="kpartx_end"
+ ACTION=="remove", GOTO="kpartx_end"
+ 
+ ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
+-ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
+ ENV{DM_DEPS}=="0", GOTO="kpartx_end"
+ 
+ ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
+ 
++ENV{DM_ACTION}=="PATH_FAILED", ENV{DM_NR_VALID_PATHS}=="0", \
++	GOTO="blkid_end"
++ENV{DM_UUID}=="mpath-*", IMPORT{program}="/sbin/blkid -o udev -p $tempnode"
++ENV{DM_PART}=="?*", IMPORT{program}="/sbin/blkid -o udev -p $tempnode"
++LABEL="blkid_end"
 +
- 	if (!conf->max_fds)
- 		return 0;
+ OPTIONS="link_priority=50"
  
--	return snprintf(buff, len, "%d", conf->max_fds);
-+	r = get_sys_max_fds(&max_fds);
-+	if (!r && max_fds == conf->max_fds)
-+		return snprintf(buff, len, "\"max\"");
-+	else
-+		return snprintf(buff, len, "%d", conf->max_fds);
- }
+ # Create persistent links for multipath tables
+@@ -31,7 +36,18 @@ ENV{DM_MPATH}=="?*", ENV{DM_PART}=="?*", \
+ ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
+ 	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
  
- static int
++# Create persistent by-label/by-uuid links
++ENV{ID_FS_USAGE}=="?*", IMPORT{db}="ID_FS_USAGE"
++ENV{ID_FS_UUID_ENC}=="?*", IMPORT{db}="ID_FS_UUID_ENC"
++ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{ID_FS_UUID_ENC}=="?*", \
++	SYMLINK+="disk/by-uuid/$env{ID_FS_UUID_ENC}"
++ENV{ID_FS_LABEL_ENC}=="?*", IMPORT{db}="ID_FS_LABEL_ENC"
++ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
++	SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
++
+ # Create dm tables for partitions
++ENV{DM_ACTION}=="PATH_FAILED", ENV{DM_NR_VALID_PATHS}=="0", \
++	GOTO="kpartx_end"
+ ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
+         RUN+="/sbin/kpartx -u -p -part /dev/$name"
+ 
 -- 
 1.7.12.4
