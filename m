@@ -1,14 +1,12 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 17/30] Correctly set max_fds in case of failure
-Date: Tue, 16 Jul 2013 09:13:08 +0200
-Message-ID: <1373958801-103613-18-git-send-email-hare@suse.de>
-References: <1373958801-103613-1-git-send-email-hare@suse.de>
+Subject: [PATCH 00/30] SLES resync, second try
+Date: Tue, 16 Jul 2013 09:12:51 +0200
+Message-ID: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1373958801-103613-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,56 +20,118 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If we fail to get the system limit for max_fds we should assume
-a safe value of 4096.
+Hi Christophe,
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/dict.c | 15 ++++++++++++---
- 1 file changed, 12 insertions(+), 3 deletions(-)
+here as some patches which accumulated in my SLES repository.
+Most are plain bugfixes, but there are some nasty issues fixed
+with this:
+- The conversion to libudev was a bit overzealous; originally
+  we'd be skipping all devices which don't have a SCSI ID.
+  With libudev we'd be including even those, making multipath
+  claiming even USB flash disks 
+  So I've implemented a new 'property' blacklist which will
+  allow us to blacklist devices based on the udev property.
+- dev_loss_tmo setting continues to be tricky, but this time
+  I think we've got it sorted
+- When using libudev to read attribute variables we'd be getting
+  an automated caching from libudev. Which is nice, unless the
+  data changed in between. So I'd have to go back an roll our
+  own accessors, skipping libudev here.
+- Ripping out 'getuid_callout' rendered all old configuration
+  files still using in unworkable. So I've re-introduced it by
+  marked it 'obsolete'.
+- The confusion regarding directly reading from udev has been
+  cleared up; I've added another patch for reading the 'state'
+  attribute directly, too.
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 6a58fa2..4b840de 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -290,18 +290,27 @@ static int
- max_fds_handler(vector strvec)
- {
- 	char * buff;
--	int r = 0;
-+	int r = 0, max_fds;
- 
- 	buff = set_value(strvec);
- 
- 	if (!buff)
- 		return 1;
- 
-+	r = get_sys_max_fds(&max_fds);
-+	if (r) {
-+		/* Assume safe limit */
-+		max_fds = 4096;
-+	}
- 	if (strlen(buff) == 3 &&
- 	    !strcmp(buff, "max"))
--		r = get_sys_max_fds(&conf->max_fds);
-+		conf->max_fds = max_fds;
- 	else
- 		conf->max_fds = atoi(buff);
-+
-+	if (conf->max_fds > max_fds)
-+		conf->max_fds = max_fds;
-+
- 	FREE(buff);
- 
- 	return r;
-@@ -2571,7 +2580,7 @@ snprint_max_fds (char * buff, int len, void * data)
- 		return 0;
- 
- 	r = get_sys_max_fds(&max_fds);
--	if (!r && max_fds == conf->max_fds)
-+	if (!r && conf->max_fds >= max_fds)
- 		return snprintf(buff, len, "\"max\"");
- 	else
- 		return snprintf(buff, len, "%d", conf->max_fds);
+As usual, comments etc are welcome.
+
+The patchset can also be pulled from
+git://github.com/hreinecke/multipath-tools.git
+branch sles-resync
+
+Hannes Reinecke (28):
+  multipath: bind lifetime of udev context to main thread
+  Document 'infinity' as possible value for dev_loss_tmo
+  alua: Do not add preferred path priority for active/optimized
+  multipath: Increase dev_loss_tmo prior to fast_io_fail
+  libmultipath: return PATH_DOWN for quiesced paths
+  libmultipath: Implement PATH_TIMEOUT
+  Deprecate pg_timeout
+  kpartx: create correct symlinks for PATH_FAILED events
+  multipath: Deprecate 'getuid' configuration variable
+  multipath: Add 'Datacore Virtual Disk' to internal hardware table
+  Minor fixes for priority handling
+  Check return value from pathinfo()
+  Read directly from sysfs when checking the device size
+  multipath.conf.annotated: Document rr_min_io_rq
+  Correctly print out 'max' for max_fds
+  Correctly set max_fds in case of failure
+  Update multipath.conf.defaults
+  Correctly set pgfailback
+  multipath.conf.5: clarify 'no_path_retry' default setting
+  multipath.conf.annotated: remove 'udev_dir'
+  multipath: Implement 'property' blacklist
+  Do not print error when rport is blocked
+  multipath: reference the udev context when starting event queue
+  multipathd: valgrind fixes
+  multipathd: increase stacksize for uevent listener
+  Specify checker_timeout in seconds
+  multipath: reset queue_if_no_path if flush failed
+  libmultipath: read path state directly from sysfs
+
+Petr Uzel (2):
+  kpartx: support disk with non-512B sectors
+  multipath: fix setting of fast_io_fail_tmo
+
+ kpartx/dos.c                         |  17 +--
+ kpartx/gpt.c                         |  20 +---
+ kpartx/kpartx.c                      |  12 ++
+ kpartx/kpartx.h                      |   8 ++
+ kpartx/kpartx.rules                  |  18 ++-
+ libmpathpersist/mpath_persist.c      |   7 +-
+ libmpathpersist/mpath_persist.h      |   2 +-
+ libmpathpersist/mpath_pr_ioctl.c     |   5 +-
+ libmultipath/Makefile                |   2 +-
+ libmultipath/blacklist.c             | 105 +++++++++++++----
+ libmultipath/blacklist.h             |  19 +--
+ libmultipath/callout.c               | 216 +++++++++++++++++++++++++++++++++++
+ libmultipath/callout.h               |   7 ++
+ libmultipath/checkers.c              |   3 +-
+ libmultipath/checkers.h              |   5 +
+ libmultipath/checkers/emc_clariion.c |   2 +-
+ libmultipath/checkers/hp_sw.c        |   4 +-
+ libmultipath/checkers/libsg.c        |   2 +-
+ libmultipath/checkers/rdac.c         |   4 +-
+ libmultipath/checkers/tur.c          |   4 +-
+ libmultipath/config.c                |  44 +++++--
+ libmultipath/config.h                |  10 +-
+ libmultipath/configure.c             |  25 ++--
+ libmultipath/devmapper.c             |  31 ++---
+ libmultipath/devmapper.h             |   3 +-
+ libmultipath/dict.c                  | 195 +++++++++++++++++--------------
+ libmultipath/discovery.c             | 174 +++++++++++++++++++++-------
+ libmultipath/discovery.h             |   2 +-
+ libmultipath/hwtable.c               |  13 +++
+ libmultipath/print.c                 |  35 ++++++
+ libmultipath/prioritizers/alua.c     |   2 +-
+ libmultipath/propsel.c               |  57 +++------
+ libmultipath/propsel.h               |   1 -
+ libmultipath/structs.h               |   2 +-
+ libmultipath/structs_vec.c           |   2 +-
+ libmultipath/sysfs.c                 |  86 +++++++++++---
+ libmultipath/sysfs.h                 |   2 +
+ libmultipath/uevent.c                |  16 ++-
+ libmultipath/uevent.h                |   4 +-
+ mpathpersist/main.c                  |  11 +-
+ multipath.conf.annotated             |  40 +++++--
+ multipath.conf.defaults              | 112 ++++++++++--------
+ multipath/main.c                     |  27 +++--
+ multipath/multipath.conf.5           |  27 ++++-
+ multipathd/main.c                    |  19 ++-
+ 45 files changed, 1009 insertions(+), 393 deletions(-)
+ create mode 100644 libmultipath/callout.c
+ create mode 100644 libmultipath/callout.h
+
 -- 
 1.7.12.4
