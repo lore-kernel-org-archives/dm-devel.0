@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 14/30] Read directly from sysfs when checking the
-	device size
-Date: Tue, 16 Jul 2013 09:13:05 +0200
-Message-ID: <1373958801-103613-15-git-send-email-hare@suse.de>
+Subject: [PATCH 19/30] Correctly set pgfailback
+Date: Tue, 16 Jul 2013 09:13:10 +0200
+Message-ID: <1373958801-103613-20-git-send-email-hare@suse.de>
 References: <1373958801-103613-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,75 +22,76 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Device sizes might change, so we need to be reading from sysfs
-directly to avoid udev still caching the old value.
+Something weird happened to pgfailback; no default was assigned
+when loading the configuration, but then it got set (wrongly)
+to the default value when printing the configuration.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 5 ++---
- libmultipath/sysfs.c     | 8 +++-----
- 2 files changed, 5 insertions(+), 8 deletions(-)
+ libmultipath/config.c |  1 +
+ libmultipath/dict.c   | 16 +++++-----------
+ 2 files changed, 6 insertions(+), 11 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 96fe985..82f086b 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -320,7 +320,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	struct udev_device *rport_dev = NULL;
- 	char value[11];
- 	char rport_id[32];
--	unsigned long long tmo;
-+	unsigned long long tmo = 0;
- 
- 	sprintf(rport_id, "rport-%d:%d-%d",
- 		pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.transport_id);
-@@ -347,6 +347,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	 */
- 	value[0] = '\0';
- 	if (mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET &&
-+	    mpp->fast_io_fail != MP_FAST_IO_FAIL_ZERO &&
- 	    mpp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
- 		/* Check if we need to temporarily increase dev_loss_tmo */
- 		if (sysfs_attr_get_value(rport_dev, "dev_loss_tmo",
-@@ -362,8 +363,6 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 		}
- 		if (mpp->fast_io_fail >= tmo) {
- 			snprintf(value, 11, "%u", mpp->fast_io_fail);
--		} else {
--			tmo = 0;
- 		}
- 	} else if (mpp->dev_loss > 600) {
- 		condlog(3, "%s: limiting dev_loss_tmo to 600, since "
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 22b73b1..bab3837 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -149,14 +149,13 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- int
- sysfs_get_size (struct path *pp, unsigned long long * size)
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index cc44244..8013a07 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -556,6 +556,7 @@ load_config (char * file, struct udev *udev)
+ 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+ 	conf->checkint = DEFAULT_CHECKINT;
+ 	conf->max_checkint = MAX_CHECKINT(conf->checkint);
++	conf->pgfailback = DEFAULT_FAILBACK;
+ 	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+ 	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+ 	conf->detect_prio = DEFAULT_DETECT_PRIO;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 4b840de..0408e03 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -1869,12 +1869,11 @@ snprint_mp_failback (char * buff, int len, void * data)
  {
--	const char * attr;
-+	char attr[255];
- 	int r;
+ 	struct mpentry * mpe = (struct mpentry *)data;
  
- 	if (!pp->udev)
- 		return 1;
+-	if (!mpe->pgfailback)
++	if (mpe->pgfailback == FAILBACK_UNDEF ||
++	    mpe->pgfailback == DEFAULT_FAILBACK)
+ 		return 0;
  
--	attr = udev_device_get_sysattr_value(pp->udev, "size");
--	if (!attr) {
-+	if (sysfs_attr_get_value(pp->udev, "size", attr, 255) == 0) {
- 		condlog(3, "%s: No size attribute in sysfs", pp->dev);
- 		return 1;
- 	}
-@@ -164,8 +163,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
- 	r = sscanf(attr, "%llu\n", size);
+ 	switch(mpe->pgfailback) {
+-	case  FAILBACK_UNDEF:
+-		break;
+ 	case -FAILBACK_MANUAL:
+ 		return snprintf(buff, len, "\"manual\"");
+ 	case -FAILBACK_IMMEDIATE:
+@@ -2247,12 +2246,11 @@ snprint_hw_failback (char * buff, int len, void * data)
+ {
+ 	struct hwentry * hwe = (struct hwentry *)data;
  
- 	if (r != 1) {
--		condlog(3, "%s: Cannot parse size attribute '%s'",
--			pp->dev, attr);
-+		condlog(3, "%s: Cannot parse size attribute", pp->dev);
- 		return 1;
- 	}
+-	if (!hwe->pgfailback)
++	if (hwe->pgfailback == FAILBACK_UNDEF ||
++	    hwe->pgfailback == DEFAULT_FAILBACK)
+ 		return 0;
  
+ 	switch(hwe->pgfailback) {
+-	case  FAILBACK_UNDEF:
+-		break;
+ 	case -FAILBACK_MANUAL:
+ 		return snprintf(buff, len, "\"manual\"");
+ 	case -FAILBACK_IMMEDIATE:
+@@ -2534,13 +2532,9 @@ snprint_def_path_checker (char * buff, int len, void * data)
+ static int
+ snprint_def_failback (char * buff, int len, void * data)
+ {
+-	int pgfailback = conf->pgfailback;
+-	if (!pgfailback)
+-		pgfailback = DEFAULT_FAILBACK;
+-
+ 	switch(conf->pgfailback) {
+ 	case  FAILBACK_UNDEF:
+-		break;
++		return snprintf(buff, len, "\"undef\"");
+ 	case -FAILBACK_MANUAL:
+ 		return snprintf(buff, len, "\"manual\"");
+ 	case -FAILBACK_IMMEDIATE:
 -- 
 1.7.12.4
