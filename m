@@ -1,13 +1,13 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] [RESEND] hwtable: Add vendor ID and update
- defaults for NetApp E-Series storage
-Date: Wed, 17 Jul 2013 00:11:50 +0200
-Message-ID: <51E5C526.9090602@gmail.com>
+From: Vivek Subbarao <vskerneldevel@gmail.com>
+Subject: pseudo block device as metadata and cache device
+Date: Wed, 17 Jul 2013 22:59:25 +0530
+Message-ID: <20130717172923.GA4371@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,53 +17,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sean Stewart <sean.stewart@netapp.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Sean Stewart <sean.stewart@netapp.com> wrote:
+Hi,
 
-> Attempting to resend because it did not seem to go through after several hours.  Please disregard if both went through.
-> This patch provides hwtable updates for NETAPP/LSI/ENGENIO E-Series arrays, utilizing new features to detect TPGS support, automatically.
-> 
-> Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
-> 
-> ---
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c index 4d485a5..2e5500c 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1135,9 +1135,13 @@ static struct hwentry default_hw[] = {
->  		.checker_name  = RDAC,
->  		.prio_name     = PRIO_RDAC,
->  	},
-> -	/* LSI/Engenio/NetApp E-Series RDAC storage */
-> +	/* LSI/Engenio/NetApp E-Series RDAC storage
-> +	 *
-> +	 * Maintainer : Sean Stewart
-> +	 * Mail : sean.stewart@netapp.com
-> +	 */
->  	{
-> -		.vendor        = "(LSI|ENGENIO)",
-> +		.vendor        = "(NETAPP|LSI|ENGENIO)",
->  		.product       = "INF-01-00",
->  		.bl_product    = "Universal Xport",
->  		.features      = "2 pg_init_retries 50",
-> @@ -1145,12 +1149,14 @@ static struct hwentry default_hw[] = {
->  		.pgpolicy      = GROUP_BY_PRIO,
->  		.pgfailback    = -FAILBACK_IMMEDIATE,
->  		.rr_weight     = RR_WEIGHT_NONE,
-> -		.no_path_retry = 15,
-> +		.no_path_retry = 30,
->  		.minio         = DEFAULT_MINIO,
->  		.minio_rq      = DEFAULT_MINIO_RQ,
->  		.checker_name  = RDAC,
->  		.prio_name     = PRIO_RDAC,
->  		.prio_args     = NULL,
-> +		.detect_prio   = DETECT_PRIO_ON,
-> +		.retain_hwhandler = RETAIN_HWHANDLER_ON,
->  	},
->  	{
->  		.vendor        = "STK",
-> 
-> --
+Can a pseudo block device create using mknod be used to hold metadata
+and cached blocks ?
 
-This change should be also propagated to multipath.conf.defaults
+Thank you,
+Vivek S
