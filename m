@@ -1,17 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-cache: can the same cache be used with multiple
- origin devices?
-Date: Mon, 22 Jul 2013 10:35:37 -0400
-Message-ID: <20130722143537.GA13965@redhat.com>
-References: <33A0129EBFD46748804DE81B354CA1B2165B1533@SACEXCMBX06-PRD.hq.netapp.com>
-	<20130715195911.GC15172@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Device mapping without using initramfs
+Date: Mon, 22 Jul 2013 13:27:40 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1307221319230.22240@file01.intranet.prod.int.rdu2.redhat.com>
+References: <CACxrqpCvy_6V5ijupVBfdqGaOmY2Gwkhga1SshqtSxg-CQ4qxQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20130715195911.GC15172@redhat.com>
+In-Reply-To: <CACxrqpCvy_6V5ijupVBfdqGaOmY2Gwkhga1SshqtSxg-CQ4qxQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +18,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Mears, Morgan" <Morgan.Mears@netapp.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: ebelcrom ebelcrom <ebelcrom@googlemail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jul 15 2013 at  3:59pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
 
-> On Mon, Jul 15 2013 at  3:01pm -0400,
-> Mears, Morgan <Morgan.Mears@netapp.com> wrote:
+
+On Sun, 21 Jul 2013, ebelcrom ebelcrom wrote:
+
+> Hello folks,
 > 
-> > Hi,
-> > 
-> > In reference to dm-cache: can the same cache and metadata devices be
-> > used with multiple origin devices?  This can be configured, and we've
-> > done some tests that appear to show that it works - we're looking for
-> > confirmation (or otherwise).
+> I played around with dm-crypt without using initramfs for en-/decryption of
+> my root file system. The rootfs is encrypted plain with cryptsetup and the
+> key is stored at the disk containing the rootfs between MBR and the
+> partition. The kernel parameter given to it from the bootloader is
+> configured as it should be (cryptdevice, cryptkey, root mapper). The disk
+> driver (loaded before) is built-in as well as dm-crypt (loaded after). AES
+> support als ist built in as well as a 5 second root wait delay. The message
+> I got at boot time is this (cr_rootfs is the encrypted rootfs):
 > 
-> It is _not_ supported.
->  
-> > Here's an example test setup to clarify -- ssd_metadata and ssd_blocks
-> > are being used to cache sdc and sdd.  In testing, different patterns
-> > were written to areas of sdc_cached and  sdd_cached; afterwards, the
-> > contents of sdc and sdd were as expected.
-> > 
-> > dmsetup create sdc_cached --table '0 4194304 cache /dev/mapper/ssd_metadata /dev/mapper/ssd_blocks /dev/sdc 512 1 writethrough default 0'
-> > dmsetup create sdd_cached --table '0 4194304 cache /dev/mapper/ssd_metadata /dev/mapper/ssd_blocks /dev/sdd 512 1 writethrough default 0'
+> VFS: Cannot open root device "mapper/cr_rootfs" or unknown-block(0,0)
 > 
-> Interesting.
+> According to some hints in the web there is no need to have an initramfs. Is
+> that true? Is dm possible without initramfs? If yes what are the steps to
+> get there and what should I keep into account?
 > 
-> The current cache target obviously fails to detect that the metadata or
-> data devices are already in use.  But that doesn't mean it is safe to
-> utilize the cache in this mode (I'll have a think about where the code
-> will break down).  But the cache is managed/written in a manner that
-> only assumes a single backing origin for each cache.
+> Any suggestions are welcome!
 
-The dm-cache code is inherently unsafe to use in the above configuration
-because it results in disjoint tasks accessing the same metadata
-device.  This is inherently racey because cmd->root_lock (metadata) and
-cache->lock (cache device) are completely independent.
+Hi
 
-So things like tearing down one cache device (sdc_cached) while
-issuing discards to the other (sdd_cached) would be one example of
-competing tasks stepping all over one another.  More fundamental actions
-like allocating a new cache block is racey.  Etc.
+There is no way to activate dm-crypt on startup without initramfs. 
+"cryptdevice" and "cryptkey" are parameters for initramfs code, not 
+kernel.
 
-There are many other potential problems -- you apparently have just been
-"lucky" not to hit them yet.  These races would likely become much more
-transparent if you created 10 sdX_cached devices that share the same
-metadata device and you then data integrity sensitive workloads against
-each sdX_cached device (like repeat linux.git checkouts or even netapp's
-dt).
-
-Mike
+Mikulas
