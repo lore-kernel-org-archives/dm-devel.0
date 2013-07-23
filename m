@@ -1,12 +1,13 @@
-From: "Vijarnia, Anil" <Anil.Vijarnia@netapp.com>
-Subject: dm-cache: dirty state of blocks in writethrough mode
-Date: Tue, 23 Jul 2013 06:44:41 +0000
-Message-ID: <C91EDD5251EDF44CB434B1039B0DEEB82A8D0762@SACEXCMBX02-PRD.hq.netapp.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: dm-cache: dirty state of blocks in writethrough mode
+Date: Tue, 23 Jul 2013 15:26:08 +0200
+Message-ID: <51EE8470.6070302@redhat.com>
+References: <C91EDD5251EDF44CB434B1039B0DEEB82A8D0762@SACEXCMBX02-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6239836480377486894=="
+Content-Type: multipart/mixed; boundary="===============3408786159625775778=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <C91EDD5251EDF44CB434B1039B0DEEB82A8D0762@SACEXCMBX02-PRD.hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,55 +17,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============6239836480377486894==
-Content-Language: en-US
+This is a multi-part message in MIME format.
+--===============3408786159625775778==
 Content-Type: multipart/alternative;
-	boundary="_000_C91EDD5251EDF44CB434B1039B0DEEB82A8D0762SACEXCMBX02PRDh_"
+	boundary="------------000409000702040600070803"
 
---_000_C91EDD5251EDF44CB434B1039B0DEEB82A8D0762SACEXCMBX02PRDh_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+This is a multi-part message in MIME format.
+--------------000409000702040600070803
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello,
+On 07/23/2013 08:44 AM, Vijarnia, Anil wrote:
+> Hello,
+> In Documentation/cache.txt, section 'Updating on-disk metadata' mentions that "If the system crashes all cache blocks will be assumed dirty when restarted".
+> I am assuming that the above line is relevant for writeback mode only, and in writethrough mode the cache will always be coherent after a crash.
+> Can someone confirm/reject this assumption?
 
-In Documentation/cache.txt, section 'Updating on-disk metadata' mentions th=
-at "If the system crashes all cache blocks will be assumed dirty when resta=
-rted".
+That's correct
 
-I am assuming that the above line is relevant for writeback mode only, and =
-in writethrough mode the cache will always be coherent after a crash.
+Reason being that the cache never holds any dirty pages in writethrough 
+mode.
 
-Can someone confirm/reject this assumption?
+-- lvmguy
 
-
-
-Thanks
-
-
-
-
-
-
-
-
-
-
---_000_C91EDD5251EDF44CB434B1039B0DEEB82A8D0762SACEXCMBX02PRDh_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>   
+> Thanks
+>   
+>   
+>   
+>   
 >
-<meta name=3D"Generator" content=3D"Microsoft Word 14 (filtered medium)">
-<style><!--
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+--------------000409000702040600070803
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+
+<html>
+  <head>
+    <meta content="text/html; charset=ISO-8859-1"
+      http-equiv="Content-Type">
+  </head>
+  <body bgcolor="#FFFFFF" text="#000000">
+    On 07/23/2013 08:44 AM, Vijarnia, Anil wrote:<br>
+    <blockquote
+cite="mid:C91EDD5251EDF44CB434B1039B0DEEB82A8D0762@SACEXCMBX02-PRD.hq.netapp.com"
+      type="cite">
+      <meta http-equiv="Content-Type" content="text/html;
+        charset=ISO-8859-1">
+      <meta name="Generator" content="Microsoft Word 14 (filtered
+        medium)">
+      <style><!--
 /* Font Definitions */
 @font-face
 	{font-family:Calibri;
@@ -108,41 +120,58 @@ span.HTMLPreformattedChar
 div.WordSection1
 	{page:WordSection1;}
 --></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+<o:shapedefaults v:ext="edit" spidmax="1026" />
 </xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
+<o:shapelayout v:ext="edit">
+<o:idmap v:ext="edit" data="1" />
 </o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"blue" vlink=3D"purple">
-<div class=3D"WordSection1">
-<pre>Hello,<o:p></o:p></pre>
-<pre>In Documentation/cache.txt, section &#8216;Updating on-disk metadata&#=
-8217; mentions that &#8220;If the system crashes all cache blocks will be a=
-ssumed dirty when restarted&#8221;. <o:p></o:p></pre>
-<pre>I am assuming that the above line is relevant for writeback mode only,=
- and in writethrough mode the cache will always be coherent after a crash. =
-<o:p></o:p></pre>
-<pre>Can someone confirm/reject this assumption?<o:p></o:p></pre>
-<pre><o:p>&nbsp;</o:p></pre>
-<pre>Thanks<o:p></o:p></pre>
-<pre><o:p>&nbsp;</o:p></pre>
-<pre><o:p>&nbsp;</o:p></pre>
-<pre><o:p>&nbsp;</o:p></pre>
-<pre><o:p>&nbsp;</o:p></pre>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
+      <div class="WordSection1">
+        <pre>Hello,<o:p></o:p></pre>
+        <pre>In Documentation/cache.txt, section &#8216;Updating on-disk metadata&#8217; mentions that &#8220;If the system crashes all cache blocks will be assumed dirty when restarted&#8221;. <o:p></o:p></pre>
+        <pre>I am assuming that the above line is relevant for writeback mode only, and in writethrough mode the cache will always be coherent after a crash. <o:p></o:p></pre>
+        <pre>Can someone confirm/reject this assumption?<o:p></o:p></pre>
+      </div>
+    </blockquote>
+    <br>
+    That's correct<br>
+    <br>
+    Reason being that the cache never holds any dirty pages in
+    writethrough mode.<br>
+    <br>
+    -- lvmguy<br>
+    <br>
+    <blockquote
+cite="mid:C91EDD5251EDF44CB434B1039B0DEEB82A8D0762@SACEXCMBX02-PRD.hq.netapp.com"
+      type="cite">
+      <div class="WordSection1">
+        <pre><o:p>&nbsp;</o:p></pre>
+        <pre>Thanks<o:p></o:p></pre>
+        <pre><o:p>&nbsp;</o:p></pre>
+        <pre><o:p>&nbsp;</o:p></pre>
+        <pre><o:p>&nbsp;</o:p></pre>
+        <pre><o:p>&nbsp;</o:p></pre>
+        <p class="MsoNormal"><o:p>&nbsp;</o:p></p>
+      </div>
+      <br>
+      <fieldset class="mimeAttachmentHeader"></fieldset>
+      <br>
+      <pre wrap="">--
+dm-devel mailing list
+<a class="moz-txt-link-abbreviated" href="mailto:dm-devel@redhat.com">dm-devel@redhat.com</a>
+<a class="moz-txt-link-freetext" href="https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a></pre>
+    </blockquote>
+    <br>
+  </body>
 </html>
 
---_000_C91EDD5251EDF44CB434B1039B0DEEB82A8D0762SACEXCMBX02PRDh_--
+--------------000409000702040600070803--
 
 
---===============6239836480377486894==
+--===============3408786159625775778==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6239836480377486894==--
+--===============3408786159625775778==--
