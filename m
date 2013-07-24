@@ -1,722 +1,202 @@
-From: Kaul <mykaul@gmail.com>
-Subject: Re: Substantial performance difference when
- reading/writing to device-mapper vs. the individual device
-Date: Wed, 24 Jul 2013 14:49:05 +0300
-Message-ID: <CAKLAu3bcJEggXFbdR2qh=yJ=H6nyq2DZKHxUXoYQJ6o3Jk1Qfg@mail.gmail.com>
-References: <CAKLAu3bqSff-She6hiRB6+2e0syu0AgxtwYiR0A9CP-yLVBm6Q@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
+Subject: [PATCH] scsi_dh_rdac:Log batched lun information with mode select
+ command
+Date: Wed, 24 Jul 2013 13:04:45 +0000
+Message-ID: <FB8A412F33166C4A930D37BD63236C902ACB8559@SACEXCMBX02-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5527200849341125565=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKLAu3bqSff-She6hiRB6+2e0syu0AgxtwYiR0A9CP-yLVBm6Q@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "James.Bottomley@suse.de" <James.Bottomley@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
 List-Id: dm-devel.ids
 
---===============5527200849341125565==
-Content-Type: multipart/alternative; boundary=047d7b15a0d581f5d604e24081e5
-
---047d7b15a0d581f5d604e24081e5
-Content-Type: text/plain; charset=ISO-8859-1
-
-Reply to self:
-
-Could it be explained by the difference in max_segments between the
-different devices and the dm device?
-Sounds like https://bugzilla.redhat.com/show_bug.cgi?id=755046 which is
-supposed to be fixed in 6.4, I reckon:
-
-
-
-3514f0c5615a00003 dm-3 XtremIO,XtremApp
-
-size=1.0T features='0' hwhandler='0' wp=rw
-
-`-+- policy='queue-length 0' prio=1 status=active
-
-  |- 0:0:2:2 sdi  8:128  active ready running
-
-  |- 0:0:3:2 sdl  8:176  active ready running
-
-  |- 0:0:1:2 sdf  8:80   active ready running
-
-  |- 0:0:0:2 sdc  8:32   active ready running
-
-  |- 1:0:0:2 sds  65:32  active ready running
-
-  |- 1:0:3:2 sdab 65:176 active ready running
-
-  |- 1:0:2:2 sdy  65:128 active ready running
-
-  `- 1:0:1:2 sdv  65:80  active ready running
-
-
-
-[root@lg545 ~]# cat /sys/class/block/dm-3/queue/max_segments
-
-128
-
-[root@lg545 ~]# cat /sys/class/block/sdi/queue/max_segments
-
-1024
-
-[root@lg545 ~]# cat /sys/class/block/sdl/queue/max_segments
-
-1024
-
-[root@lg545 ~]# cat /sys/class/block/sdf/queue/max_segments
-
-1024
-
-[root@lg545 ~]# cat /sys/class/block/sdc/queue/max_segments
-
-1024
-
-[root@lg545 ~]# cat /sys/class/block/sds/queue/max_segments
-
-1024
-
-[root@lg545 ~]# cat /sys/class/block/sdab/queue/max_segments
-
-1024
-
-[root@lg545 ~]# cat /sys/class/block/sdy/queue/max_segments
-
-1024
-
-[root@lg545 ~]# cat /sys/class/block/sdv/queue/max_segments
-
-1024
-
-
-On Mon, Jul 22, 2013 at 2:47 PM, Kaul <mykaul@gmail.com> wrote:
-
-> We are seeing a substantial difference in performance when we perform a
-> read/write to /dev/mapper/... vs. the specific device (/dev/sdXX)
-> What can we do to further isolate the issue?
->
-> We are using CentOS 6.4, with all updates, 2 CPUs, 4 FC ports:
-> Here's a table comparing the results:
->
-> # of LUNs
->
-> # of Paths per device
->
-> Native Multipath Device
->
-> IO Pattern
->
-> IOPS
->
-> Latency Micro
->
-> BW KBps
->
-> 4
->
-> 16
->
-> No
->
-> 100% Read
->
-> 605,661.4
->
-> 3,381
->
-> 2,420,736
->
-> 4
->
-> 16
->
-> No
->
-> 100% Write
->
-> 477,515.1
->
-> 4,288
->
-> 1,908,736
->
-> 8
->
-> 16
->
-> No
->
-> 100% Read
->
-> 663,339.4
->
-> 6,174
->
-> 2,650,112
->
-> 8
->
-> 16
->
-> No
->
-> 100% Write
->
-> 536,936.9
->
-> 7,628
->
-> 2,146,304
->
-> 4
->
-> 16
->
-> Yes
->
-> 100% Read
->
-> 456,108.9
->
-> 1,122
->
-> 1,824,256
->
-> 4
->
-> 16
->
-> Yes
->
-> 100% Write
->
-> 371,665.8
->
-> 1,377
->
-> 1,486,336
->
-> 8
->
-> 16
->
-> Yes
->
-> 100% Read
->
-> 519,450.2
->
-> 1,971
->
-> 2,077,696
->
-> 8
->
-> 16
->
-> Yes
->
-> 100% Write
->
-> 448,840.4
->
-> 2,281
->
-> 1,795,072
->
-
---047d7b15a0d581f5d604e24081e5
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Reply to self:<div><br></div><div>Could it be explained by=
- the difference in max_segments between the different devices and the dm de=
-vice?</div><div>Sounds like=A0<a href=3D"https://bugzilla.redhat.com/show_b=
-ug.cgi?id=3D755046" style=3D"font-family:Calibri,sans-serif">https://bugzil=
-la.redhat.com/show_bug.cgi?id=3D755046</a>=A0which is supposed to be fixed =
-in 6.4, I reckon:</div>
-
-<div><p></p>
-
-<p>=A0</p>
-
-<p>3514f0c5615a00003 dm-3 XtremIO,XtremApp</p>
-
-<p>size=3D1.0T features=3D&#39;0&#39; hwhandler=3D&#39;0&#39; wp=3Drw</p>
-
-<p>`-+- policy=3D&#39;queue-length 0&#39; prio=3D1 status=3Dactive</p>
-
-<p>=A0 |- 0:0:2:2 sdi=A0 8:128=A0 active ready running</p>
-
-<p>=A0 |- 0:0:3:2 sdl=A0 8:176=A0 active ready running</p>
-
-<p>=A0 |- 0:0:1:2 sdf=A0 8:80=A0=A0 active ready running</p>
-
-<p>=A0 |- 0:0:0:2 sdc=A0 8:32=A0=A0 active ready running</p>
-
-<p>=A0 |- 1:0:0:2 sds=A0 65:32=A0 active ready running</p>
-
-<p>=A0 |- 1:0:3:2 sdab 65:176 active ready running</p>
-
-<p>=A0 |- 1:0:2:2 sdy=A0 65:128 active ready running</p>
-
-<p>=A0 `- 1:0:1:2 sdv=A0 65:80=A0 active ready running</p>
-
-<p>=A0</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/dm-3/queue/max_segments</p>
-
-<p>128</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sdi/queue/max_segments</p>
-
-<p>1024</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sdl/queue/max_segments</p>
-
-<p>1024</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sdf/queue/max_segments</p>
-
-<p>1024</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sdc/queue/max_segments</p>
-
-<p>1024</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sds/queue/max_segments</p>
-
-<p>1024</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sdab/queue/max_segments</p>
-
-<p>1024</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sdy/queue/max_segments</p>
-
-<p>1024</p>
-
-<p>[root@lg545 ~]# cat /sys/class/block/sdv/queue/max_segments</p>
-
-<p>1024</p></div></div><div class=3D"gmail_extra"><br><br><div class=3D"gma=
-il_quote">On Mon, Jul 22, 2013 at 2:47 PM, Kaul <span dir=3D"ltr">&lt;<a hr=
-ef=3D"mailto:mykaul@gmail.com" target=3D"_blank">mykaul@gmail.com</a>&gt;</=
-span> wrote:<br>
-
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex"><div dir=3D"ltr">We are seeing a substantial=
- difference in performance when we perform a read/write to /dev/mapper/... =
-vs. the specific device (/dev/sdXX)<div>
-
-What can we do to further isolate the issue?</div><div><br></div>
-<div>We are using CentOS 6.4, with all updates, 2 CPUs, 4 FC ports:</div><d=
-iv>Here&#39;s a table comparing the results:</div><div><table border=3D"0" =
-cellspacing=3D"0" cellpadding=3D"0" style=3D"border-collapse:collapse">
-
- <tbody><tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:solid solid solid none=
-;border-top-color:windowtext;border-right-color:windowtext;border-bottom-co=
-lor:windowtext;border-top-width:1pt;border-right-width:1pt;border-bottom-wi=
-dth:1pt;padding:0cm 5.4pt;min-height:15pt">
-
-
-
-  <p><span style># of LUNs</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:solid solid solid none=
-;border-top-color:windowtext;border-right-color:windowtext;border-bottom-co=
-lor:windowtext;border-top-width:1pt;border-right-width:1pt;border-bottom-wi=
-dth:1pt;padding:0cm 5.4pt;min-height:15pt">
-
-
-
-  <p><span style># of Paths per device</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:solid solid solid none=
-;border-top-color:windowtext;border-right-color:windowtext;border-bottom-co=
-lor:windowtext;border-top-width:1pt;border-right-width:1pt;border-bottom-wi=
-dth:1pt;padding:0cm 5.4pt;min-height:15pt">
-
-
-
-  <p><span style>Native Multipath Device</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:solid solid solid none=
-;border-top-color:windowtext;border-right-color:windowtext;border-bottom-co=
-lor:windowtext;border-top-width:1pt;border-right-width:1pt;border-bottom-wi=
-dth:1pt;padding:0cm 5.4pt;min-height:15pt">
-
-
-
-  <p><span style>IO Pattern</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:solid solid solid none=
-;border-top-color:windowtext;border-right-color:windowtext;border-bottom-co=
-lor:windowtext;border-top-width:1pt;border-right-width:1pt;border-bottom-wi=
-dth:1pt;padding:0cm 5.4pt;min-height:15pt">
-
-
-
-  <p><span style>IOPS</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:solid solid solid none=
-;border-top-color:windowtext;border-right-color:windowtext;border-bottom-co=
-lor:windowtext;border-top-width:1pt;border-right-width:1pt;border-bottom-wi=
-dth:1pt;padding:0cm 5.4pt;min-height:15pt">
-
-
-
-  <p><span style>Latency Micro</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:solid solid solid none=
-;border-top-color:windowtext;border-right-color:windowtext;border-bottom-co=
-lor:windowtext;border-top-width:1pt;border-right-width:1pt;border-bottom-wi=
-dth:1pt;padding:0cm 5.4pt;min-height:15pt">
-
-
-
-  <p><span style>BW KBps</span></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>4</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>No</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Read</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>605,661.4</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>3,381</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>2,420,736</span=
-></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>4</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>No</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Write</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>477,515.1</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>4,288</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>1,908,736</span=
-></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>8</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>No</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Read</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>663,339.4</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>6,174</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>2,650,112</span=
-></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>8</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>No</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Write</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>536,936.9</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>7,628</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>2,146,304</span=
-></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>4</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>Yes</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Read</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>456,108.9</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>1,122</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>1,824,256</span=
-></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>4</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>Yes</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Write</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>371,665.8</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>1,377</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>1,486,336</span=
-></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>8</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>Yes</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Read</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>519,450.2</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>1,971</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>2,077,696</span=
-></p>
-  </td>
- </tr>
- <tr style=3D"min-height:15pt">
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>8</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>16</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>Yes</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p><span style>100% Write</span></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>448,840.4</span=
-></p>
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>2,281</span></p=
->
-  </td>
-  <td nowrap valign=3D"bottom" style=3D"border-style:none solid solid none;=
-border-bottom-color:windowtext;border-bottom-width:1pt;border-right-color:w=
-indowtext;border-right-width:1pt;padding:0cm 5.4pt;min-height:15pt">
-  <p align=3D"right" style=3D"text-align:right"><span style>1,795,072</span=
-></p>
-  </td>
- </tr>
-</tbody></table></div></div>
-</blockquote></div><br></div>
-
---047d7b15a0d581f5d604e24081e5--
-
-
---===============5527200849341125565==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5527200849341125565==--
+With RDAC mode, mode select is batched together for multiple LUNs and sent to one of the path for failover.
+Currently Modeselect is logged without details of LUNs batched together. Modeselect command can be logged
+with batched lun id information so that failover command can be tracked on per LUN basis in the syslog.
+
+Incase if the luns involved in mode select are 16 or less, plain lun number information is logged.
+If luns are large, all the lun numbers are encoded into 256 bit format and logged as hex string.
+
+Encode Logic for each lun number into 32 byte string:
+lun_bit_string[lun/8] |= (1 << (lun % 8));
+
+Decode Logic for any specific lun number which is set in mode select in 32 byte string:
+lun number = number of bits before the specific byte +  position index [0-7] of the set bit in the specific byte from R->L.
+
+Log Snippet:
+
+Jul 24 17:46:05 Linux-215 kernel: sd 30:0:0:94: rdac: array Marryjane, ctlr 1, queueing MODE_SELECT command for 11 lun(s) [43,89,93,94,95,97,99,100,106,107,111]
+Jul 24 17:46:06 Linux-215 kernel: sd 30:0:0:94: rdac: array Marryjane, ctlr 1, MODE_SELECT completed for 11 lun(s) [43,89,93,94,95,97,99,100,106,107,111]
+
+Jul 24 17:49:17 Linux-215 kernel: sd 29:0:1:9: rdac: array Marryjane, ctlr 0, queueing MODE_SELECT command for 54 lun(s) [0082a0aa8aaaeaaaaafaeaeb5aad000000000000000000000000000000000000]
+Jul 24 17:49:19 Linux-215 kernel: sd 29:0:1:9: rdac: array Marryjane, ctlr 0, MODE_SELECT completed for 54 lun(s) [0082a0aa8aaaeaaaaafaeaeb5aad000000000000000000000000000000000000]
+
+Signed-off-by: Shiva Krishna Merla<shivakrishna.merla@netapp.com>
+Signed-off-by: Krishnasamy Somasundaram<somasundaram.krishnasamy@netapp.com>
+Signed-off-by: Sean Stewart <sean.stewart@netapp.com>
+
+---
+--- a/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2013-07-04 19:05:10.000000000 +0530
++++ b/drivers/scsi/device_handler/scsi_dh_rdac.c	2013-07-24 17:56:42.000000000 +0530
+@@ -257,6 +257,11 @@ do { \
+ 		sdev_printk(KERN_INFO, sdev, RDAC_NAME ": " f "\n", ## arg); \
+ } while (0);
+ 
++/* number of bytes needed to represent luns involved
++ * in mode select in bit string format
++ */
++#define LUN_FAILOVER_BYTES	32
++
+ static inline struct rdac_dh_data *get_rdac_data(struct scsi_device *sdev)
+ {
+ 	struct scsi_dh_data *scsi_dh_data = sdev->scsi_dh_data;
+@@ -295,7 +300,8 @@ static struct request *get_rdac_req(stru
+ }
+ 
+ static struct request *rdac_failover_get(struct scsi_device *sdev,
+-			struct rdac_dh_data *h, struct list_head *list)
++			struct rdac_dh_data *h, struct list_head *list,
++			unsigned int *num_luns)
+ {
+ 	struct request *rq;
+ 	struct rdac_mode_common *common;
+@@ -331,7 +337,10 @@ static struct request *rdac_failover_get
+ 	common->rdac_options = RDAC_FORCED_QUIESENCE;
+ 
+ 	list_for_each_entry(qdata, list, entry) {
+-		lun_table[qdata->h->lun] = 0x81;
++		if (lun_table[qdata->h->lun] != 0x81) {
++			lun_table[qdata->h->lun] = 0x81;
++			(*num_luns)++;
++		}
+ 	}
+ 
+ 	/* get request for block layer packet command */
+@@ -582,6 +591,77 @@ done:
+ 	return err;
+ }
+ 
++/* encode luns involved in mode select into 256 bits string.
++ * decode logic for lun number set in each byte is as follows:
++ * lun number = number of bits before the current byte +
++ * position index [0-7] of the set bit in the current byte from R->L -
++ */
++static void lun_table_bitstring(unsigned char *lun_table,
++		unsigned int lun_table_length, unsigned char *lun_str)
++{
++	u8 lun_bit_table[LUN_FAILOVER_BYTES] = {0};
++	u8 pos = 0, ret, byte;
++	unsigned int lun;
++
++	BUG_ON(lun_str == NULL);
++
++	for (lun = 0; lun < lun_table_length; ++lun) {
++		if (lun_table[lun] == 0x81)
++			lun_bit_table[lun/8] |= (1 << (lun % 8));
++	}
++	for (byte = 0; byte < LUN_FAILOVER_BYTES; ++byte) {
++		ret = snprintf(lun_str+pos, 3, "%02x",
++				lun_bit_table[byte]);
++		pos = pos+ret;
++	}
++	lun_str[pos] = '\0';
++	return ;
++}
++
++/* get lun id's in mode select in either bit encoded
++ * or plain string format based on number of luns batched
++ */
++static void lun_table_string(unsigned char *lun_table,
++		unsigned int lun_table_length,
++		unsigned char *lun_str, unsigned int num_luns)
++{
++	u8 ret;
++	unsigned int lun, pos = 0;
++
++	BUG_ON(lun_str == NULL);
++
++	/* prefer encoded bit string for large number or luns */
++	if (num_luns > 16) {
++		lun_table_bitstring(lun_table, lun_table_length, lun_str);
++	} else {
++		for (lun = 0; lun < lun_table_length; ++lun) {
++			if (lun_table[lun] == 0x81) {
++				ret = snprintf(lun_str+pos, 4, "%d", lun);
++				lun_str[pos+ret] = ',';
++				pos = pos+ret+1;
++			}
++		}
++		lun_str[pos-1] = '\0';
++	}
++	return ;
++}
++
++/* get mode select lun table string for debug pusposes */
++static void get_ms_lunstring(struct rdac_controller *ctlr,
++			unsigned char *lun_str, unsigned int num_luns)
++{
++	if (likely(ctlr->use_ms10)) {
++		struct rdac_pg_expanded *rdac_pg = &ctlr->mode_select.expanded;
++		lun_table_string(&rdac_pg->lun_table[0],
++			256, lun_str, num_luns);
++	} else {
++		struct rdac_pg_legacy *rdac_pg = &ctlr->mode_select.legacy;
++		lun_table_string(&rdac_pg->lun_table[0],
++			MODE6_MAX_LUN, lun_str, num_luns);
++	}
++	return ;
++}
++
+ static void send_mode_select(struct work_struct *work)
+ {
+ 	struct rdac_controller *ctlr =
+@@ -592,6 +672,8 @@ static void send_mode_select(struct work
+ 	struct request_queue *q = sdev->request_queue;
+ 	int err, retry_cnt = RDAC_RETRY_COUNT;
+ 	struct rdac_queue_data *tmp, *qdata;
++	unsigned int num_luns = 0;
++	unsigned char lun_str[LUN_FAILOVER_BYTES * 2 + 1] = {0};
+ 	LIST_HEAD(list);
+ 
+ 	spin_lock(&ctlr->ms_lock);
+@@ -602,14 +684,19 @@ static void send_mode_select(struct work
+ 
+ retry:
+ 	err = SCSI_DH_RES_TEMP_UNAVAIL;
+-	rq = rdac_failover_get(sdev, h, &list);
++	rq = rdac_failover_get(sdev, h, &list, &num_luns);
+ 	if (!rq)
+ 		goto done;
+ 
++	/* get lun debug string only once */
++	if (retry_cnt == RDAC_RETRY_COUNT)
++		get_ms_lunstring(ctlr, lun_str, num_luns);
++
+ 	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
+-		"%s MODE_SELECT command",
++		"%s MODE_SELECT command for %d lun(s) [%s]",
+ 		(char *) h->ctlr->array_name, h->ctlr->index,
+-		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
++		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" :
++		"retrying", num_luns, lun_str);
+ 
+ 	err = blk_execute_rq(q, NULL, rq, 1);
+ 	blk_put_request(rq);
+@@ -621,8 +708,9 @@ retry:
+ 	if (err == SCSI_DH_OK) {
+ 		h->state = RDAC_STATE_ACTIVE;
+ 		RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
+-				"MODE_SELECT completed",
+-				(char *) h->ctlr->array_name, h->ctlr->index);
++			"MODE_SELECT completed for %d lun(s) [%s]",
++			(char *) h->ctlr->array_name, h->ctlr->index,
++			num_luns, lun_str);
+ 	}
+ 
+ done:
+--
+
+--
