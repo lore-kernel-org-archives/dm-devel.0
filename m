@@ -1,64 +1,49 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: [PATCH] dm cache: Avoid conflicting remove_mapping() in mq policy
-Date: Fri, 26 Jul 2013 09:57:31 +0200
-Message-ID: <1374825451-30463-1-git-send-email-geert@linux-m68k.org>
-Return-path: <sparclinux-owner@vger.kernel.org>
-Sender: sparclinux-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, sparclinux@vger.kernel.org, linux-hexagon@vger.kernel.org, linux-kernel@vger.kernel.org, Geert Uytterhoeven <geert@linux-m68k.org>
+From: Kumar amit mehta <gmate.amit@gmail.com>
+Subject: Re: dm-cache: dirty state of blocks in writethrough mode
+Date: Thu, 25 Jul 2013 22:45:46 -0400
+Message-ID: <20130726024546.GA8707@gmail.com>
+References: <C91EDD5251EDF44CB434B1039B0DEEB82A8D0762@SACEXCMBX02-PRD.hq.netapp.com>
+	<51EE8470.6070302@redhat.com> <20130724102452.GA6963@gmail.com>
+	<51F00977.7060802@redhat.com> <20130724130220.GC6963@gmail.com>
+	<51F101CB.20900@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <51F101CB.20900@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On sparc32, which includes <linux/swap.h> from <asm/pgtable_32.h>:
+On Thu, Jul 25, 2013 at 12:45:31PM +0200, Heinz Mauelshagen wrote:
+> You can set up a mirrored metadata device to be resilient against
+> SSD failures.
 
-drivers/md/dm-cache-policy-mq.c:962:13: error: conflicting types for 'remove_mapping'
-include/linux/swap.h:285:12: note: previous declaration of 'remove_mapping' was here
+Okay
 
-As mq_remove_mapping() already exists, and the local remove_mapping() is
-used only once, inline it manually to avoid the conflict.
+> Plus you can take metadata snapshots at arbitrary points in time;
+> see the targets kernel documentation in thin-provisioning.txt for this
+> and the recent thin_dump support metadata snapshots  in the rawhide
+> device-mapper-persistent-data package.
+>
 
-Signed-off-by: Geert Uytterhoeven <geert@linux-m68k.org>
----
-I think this is also needed on hexagon, which includes <linux/swap.h> from
-<asm/pgtable.h>.
+So these feature is already upstream and also in fedora 20, but not in 
+Red Hat 6.4 yet ?
 
- drivers/md/dm-cache-policy-mq.c |   16 +++++++---------
- 1 file changed, 7 insertions(+), 9 deletions(-)
+> Either is subject to future LVM2 support and isn't supported as yet.
 
-diff --git a/drivers/md/dm-cache-policy-mq.c b/drivers/md/dm-cache-policy-mq.c
-index dc112a7..4296155 100644
---- a/drivers/md/dm-cache-policy-mq.c
-+++ b/drivers/md/dm-cache-policy-mq.c
-@@ -959,23 +959,21 @@ out:
- 	return r;
- }
- 
--static void remove_mapping(struct mq_policy *mq, dm_oblock_t oblock)
-+static void mq_remove_mapping(struct dm_cache_policy *p, dm_oblock_t oblock)
- {
--	struct entry *e = hash_lookup(mq, oblock);
-+	struct mq_policy *mq = to_mq_policy(p);
-+	struct entry *e;
-+
-+	mutex_lock(&mq->lock);
-+
-+	e = hash_lookup(mq, oblock);
- 
- 	BUG_ON(!e || !e->in_cache);
- 
- 	del(mq, e);
- 	e->in_cache = false;
- 	push(mq, e);
--}
- 
--static void mq_remove_mapping(struct dm_cache_policy *p, dm_oblock_t oblock)
--{
--	struct mq_policy *mq = to_mq_policy(p);
--
--	mutex_lock(&mq->lock);
--	remove_mapping(mq, oblock);
- 	mutex_unlock(&mq->lock);
- }
- 
--- 
-1.7.9.5
+So, if LVM2 doesn't support it as of now, Any idea if EVMS or any other
+volume Managers consume these features?
 
+!!amit
