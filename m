@@ -1,40 +1,38 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-cache warming
-Date: Mon, 29 Jul 2013 11:40:07 +0100
-Message-ID: <20130729104006.GC19261@debian>
-References: <51F294A0.6080103@cozx.com>
- <51F640EB.6050701@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [RFC] dm-lc target
+Date: Mon, 29 Jul 2013 15:39:17 +0100
+Message-ID: <20130729143916.GA20119@debian>
+References: <CABmKtjcsZUbafxtmPb=2-Gkxz9PkFq7KVsQBqRkHduEn7aaqkw@mail.gmail.com>
+ <51F48531.6040104@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <51F640EB.6050701@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <51F48531.6040104@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: sunnikrishnan@stec-inc.com, kmo@daterainc.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jul 29, 2013 at 12:16:11PM +0200, Heinz Mauelshagen wrote:
-> 
-> Hi,
-> 
-> dm-cache is a hot-spot cache. Ie. you need multiple accesses to the
-> same block to get it promoted into the cache (depending on the
-> policy plugin btw).
-> 
-> If your patterns is one-time-only access type, it ain't warm the cache.
+On Sun, Jul 28, 2013 at 11:42:57AM +0900, Akira Hayakawa wrote:
+> I wrote an introduction slide which is available in URL below:
+> https://github.com/akiradeveloper/dm-lc/blob/develop/what-is-dm-lc.pdf
+> access the page and click "view raw".
 
-Remember there's the page cache in front of dm-cache too.  You may be
-accessing data many times, but not actually hitting the disk with
-your requests.
+This is nicely orthogonal to dm-cache.
+
+dm-cache tries to move a working set of fixed size blocks into a cache
+to optimise both read and write.  dm-lc focusses solely on optimising
+bursty writes and uses a journal based structure to accomodate
+variable sized blocks.
+
+The next step is to get some third party users to post their
+experiences with it, and get some feedback on the code itself from
+Mike Snitzer.
+
+If I get time I'll integrate it with my test suite.
+
+https://github.com/jthornber/device-mapper-test-suite
+
 
 - Joe
