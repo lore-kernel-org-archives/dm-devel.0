@@ -1,38 +1,44 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [dm-devel] [RFC] dm-lc target
-Date: Mon, 29 Jul 2013 15:39:17 +0100
-Message-ID: <20130729143916.GA20119@debian>
-References: <CABmKtjcsZUbafxtmPb=2-Gkxz9PkFq7KVsQBqRkHduEn7aaqkw@mail.gmail.com>
- <51F48531.6040104@gmail.com>
+From: Kumar Amit Mehta <gmate.amit@gmail.com>
+Subject: [PATCH] dm-lc.c: return -ENOMEM if alloc_workqueue fails
+Date: Tue, 30 Jul 2013 02:18:10 +0530
+Message-ID: <1375130890-9279-1-git-send-email-gmate.amit@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <51F48531.6040104@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: sunnikrishnan@stec-inc.com, kmo@daterainc.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: ruby.wktk@gmail.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Jul 28, 2013 at 11:42:57AM +0900, Akira Hayakawa wrote:
-> I wrote an introduction slide which is available in URL below:
-> https://github.com/akiradeveloper/dm-lc/blob/develop/what-is-dm-lc.pdf
-> access the page and click "view raw".
+Audit the return value of alloc_workqueue and return -ENOMEM if it fails
 
-This is nicely orthogonal to dm-cache.
+Signed-off-by: Kumar Amit Mehta <gmate.amit@gmail.com>
+---
+ Driver/dm-lc.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-dm-cache tries to move a working set of fixed size blocks into a cache
-to optimise both read and write.  dm-lc focusses solely on optimising
-bursty writes and uses a journal based structure to accomodate
-variable sized blocks.
-
-The next step is to get some third party users to post their
-experiences with it, and get some feedback on the code itself from
-Mike Snitzer.
-
-If I get time I'll integrate it with my test suite.
-
-https://github.com/jthornber/device-mapper-test-suite
-
-
-- Joe
+diff --git a/Driver/dm-lc.c b/Driver/dm-lc.c
+index 4f48cf2..9d394ee 100644
+--- a/Driver/dm-lc.c
++++ b/Driver/dm-lc.c
+@@ -2963,6 +2963,8 @@ static int __init lc_module_init(void)
+ 
+ 	safe_io_wq = alloc_workqueue("safeiowq",
+ 				     WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
++	if (!safe_io_wq)
++		return -ENOMEM;
+ 
+ 	lc_io_client = dm_io_client_create();
+ 
+-- 
+1.8.3.1
