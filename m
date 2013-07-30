@@ -1,15 +1,13 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: [PATCH] dm-lc.c: return -ENOMEM if alloc_workqueue
-	fails
-Date: Tue, 30 Jul 2013 22:14:09 +0900
-Message-ID: <51F7BC21.6080007@gmail.com>
-References: <1375130890-9279-1-git-send-email-gmate.amit@gmail.com>
+From: Kumar Amit Mehta <gmate.amit@gmail.com>
+Subject: [PATCH] dm-lc.c: Audit return values of functions
+	invoked in module init routine
+Date: Wed, 31 Jul 2013 00:59:40 +0530
+Message-ID: <1375212580-6934-1-git-send-email-gmate.amit@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1375130890-9279-1-git-send-email-gmate.amit@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,35 +17,106 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kumar Amit Mehta <gmate.amit@gmail.com>
+To: ruby.wktk@gmail.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Kumar,
+Add missing checks for values returned by various functions for
+graceful exit in the event of failure.
 
-Thanks for your patch, applied.
+Signed-off-by: Kumar Amit Mehta <gmate.amit@gmail.com>
+---
+ Driver/dm-lc.c | 60 +++++++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 43 insertions(+), 17 deletions(-)
 
-Akira
-
-On 7/30/13 5:48 AM, Kumar Amit Mehta wrote:
-> Audit the return value of alloc_workqueue and return -ENOMEM if it fails
-> 
-> Signed-off-by: Kumar Amit Mehta <gmate.amit@gmail.com>
-> ---
->  Driver/dm-lc.c | 2 ++
->  1 file changed, 2 insertions(+)
-> 
-> diff --git a/Driver/dm-lc.c b/Driver/dm-lc.c
-> index 4f48cf2..9d394ee 100644
-> --- a/Driver/dm-lc.c
-> +++ b/Driver/dm-lc.c
-> @@ -2963,6 +2963,8 @@ static int __init lc_module_init(void)
->  
->  	safe_io_wq = alloc_workqueue("safeiowq",
->  				     WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
-> +	if (!safe_io_wq)
-> +		return -ENOMEM;
->  
->  	lc_io_client = dm_io_client_create();
->  
-> 
+diff --git a/Driver/dm-lc.c b/Driver/dm-lc.c
+index 9d394ee..3ac7173 100644
+--- a/Driver/dm-lc.c
++++ b/Driver/dm-lc.c
+@@ -2959,14 +2959,7 @@ static struct target_type lc_mgr_target = {
+ 
+ static int __init lc_module_init(void)
+ {
+-	int r;
+-
+-	safe_io_wq = alloc_workqueue("safeiowq",
+-				     WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
+-	if (!safe_io_wq)
+-		return -ENOMEM;
+-
+-	lc_io_client = dm_io_client_create();
++	int r = -ENOMEM;
+ 
+ 	r = dm_register_target(&lc_target);
+ 	if (r < 0) {
+@@ -2980,15 +2973,6 @@ static int __init lc_module_init(void)
+ 		return r;
+ 	}
+ 
+-	cache_id_ptr = 0;
+-
+-	size_t i;
+-	for (i = 0; i < LC_NR_SLOTS; i++)
+-		lc_devices[i] = NULL;
+-
+-	for (i = 0; i < LC_NR_SLOTS; i++)
+-		lc_caches[i] = NULL;
+-
+ 	/*
+ 	 * /sys/module/dm_lc/devices
+ 	 *                  /caches
+@@ -2996,10 +2980,52 @@ static int __init lc_module_init(void)
+ 
+ 	struct module *mod = THIS_MODULE;
+ 	struct kobject *lc_kobj = &(mod->mkobj.kobj);
++
+ 	devices_kobj = kobject_create_and_add("devices", lc_kobj);
++	if (!devices_kobj)
++		goto fail_kobj_devices;
++
+ 	caches_kobj = kobject_create_and_add("caches", lc_kobj);
++	if (!caches_kobj)
++		goto fail_kobj_caches;
++
++	safe_io_wq = alloc_workqueue("safeiowq",
++				     WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
++	if (!safe_io_wq) {
++		DMERR("failed to create workqueue safeiowq");
++		goto fail_wq;
++	}
++
++	lc_io_client = dm_io_client_create();
++	if (IS_ERR(lc_io_client)) {
++		r = PTR_ERR(lc_io_client);
++		goto fail_io_client;
++	}
++
++	cache_id_ptr = 0;
++
++	size_t i;
++	for (i = 0; i < LC_NR_SLOTS; i++)
++		lc_devices[i] = NULL;
++
++	for (i = 0; i < LC_NR_SLOTS; i++)
++		lc_caches[i] = NULL;
+ 
+ 	return 0;
++
++fail_io_client:
++	destroy_workqueue(safe_io_wq);
++
++fail_wq:
++	kobject_put(caches_kobj);
++
++fail_kobj_caches:
++	kobject_put(devices_kobj);
++
++fail_kobj_devices:
++	dm_unregister_target(&lc_mgr_target);
++	dm_unregister_target(&lc_target);
++	return ERR_PTR(r);
+ }
+ 
+ static void __exit lc_module_exit(void)
+-- 
+1.8.3.1
