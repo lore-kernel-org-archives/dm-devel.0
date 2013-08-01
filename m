@@ -1,16 +1,11 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: dm-lc code/design [was: Re: dm-lc.c: fix for a
- potential NULL pointer dereference]
-Date: Thu, 01 Aug 2013 21:45:50 +0900
-Message-ID: <51FA587E.4030405@gmail.com>
-References: <1375272568-2730-1-git-send-email-gmate.amit@gmail.com>
-	<51F90B49.60708@gmail.com> <20130731155717.GD17352@redhat.com>
+From: John Strange <johnstra10@gmail.com>
+Subject: Extending DM w/ new target type
+Date: Thu, 1 Aug 2013 11:04:37 -0600
+Message-ID: <CAH1aXXYQVnYndk7S6-6TM9hiuTE2xpN+4Qt8BA_36PvrQVQSsw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============3664482094823221403=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130731155717.GD17352@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,105 +15,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-VGhhbmtzIGZvciB5b3VyIGNvbW1lbnQsIE1pa2UuCgo+IERNIGRldmljZSBjcmVhdGlvbiBhbmQg
-ZGVsZXRpb24gYXJlIGRvbmUgaW4gdGVybXMgb2YgbG9hZCAoLmN0cikgYW5kCj4gcmVtb3ZlICgu
-ZHRyKS4KCkluIGRtLWxjLCB0aGVyZSBhcmUgdHdvIGFjdG9ycy4KCk9uZSBpcyBsY19kZXZpY2Ug
-d2hpY2ggaXMgdHJ1bHkgYSBETSBkZXZpY2UuCkl0IGlzIGZpcnN0IGNyZWF0ZWQgYXMgYSBsaW5l
-YXItbGlrZSBkZXZpY2UKc2ltcGx5IGJhY2tlZCBieSBhIGJhY2tpbmcgc3RvcmUKYW5kIGxhdGVy
-IGF0dGFjaGVkIHRvIGEgbGNfY2FjaGUgZm9yIGNhY2hpbmcgdG8gZ2V0IHN0YXJ0ZWQuCkkvT3Mg
-ZnJvbSB0aGUgdXBwZXIgbGF5ZXIgbGlrZSBmaWxlc3lzdGVtcyBhcmUgc3VibWl0dGVkIHRvIGxj
-X2RldmljZS4KClRoZSBhbm90aGVyIGlzIGxjX2NhY2hlIHdoaWNoIGlzIE5PVCBhIERNIGRldmlj
-ZS4KSXQgaXMganVzdCB0aGUgY29udGV4dCBvZiBhIGNhY2hlIGRldmljZS4KcmVzdW1lX2NhY2hl
-IHJvdXRpbmUgY2FsbGVkIGJ5IGxjLXJlc3VtZS1jYWNoZSBjb21tYW5kIHdyaXR0ZW4gaW4gUHl0
-aG9uCnJlYWRzIG1ldGFkYXRhIHJlZ2lvbnMgb24gYSBjYWNoZSBkZXZpY2UgbWVkaXVtCmFuZCBi
-dWlsZCBhbiBpbi1tZW1vcnkgc3RydWN0dXJlLiBUaGF0IGlzIGxjX2NhY2hlLgoKSSBhbSBzb3Jy
-eSB0byBwdXp6bGUgeW91LgpJIHdpbGwgbWFrZSBhIHNsaWRlIHRvIGV4cGxhaW4KaG93IHRoZXNl
-IHN0cnVjdHVyZXMgYXJlIGJ1aWx0IGFuZCByZWxhdGVkLgpJIGFscmVhZHkgbWFkZSBhIHNsaWRl
-IHRvIGV4cGxhaW4KaG93IHdyaXRlcyB0byBsY19kZXZpY2UgYXJlIHByb2Nlc3NlZCBidXQKSSBk
-b24ndCB0aGluayB0aGF0IGlzIGVub3VnaCBmb3IgcGVvcGxlCndobyB3YW50IHRvIGtub3cgaG93
-IGRtLWxjIGlzIGluaXRpYWxpemVkIGVpdGhlci4KCj4gQW5kIGFsbCB0aGVzZSBzeXNmcyBmaWxl
-cyBhcmUgZXhjZXNzaXZlIHRvby4gIFlvdSdsbCBub3RpY2UgdGhhdCBETQpkZXZpY2VzCj4gZG9u
-J3QgZXhwb3NlIGRpc2NyZXRlIHN5c2ZzIGZpbGVzIG9uIGEgcGVyIGRldmljZSBiYXNpcy4gIEFs
-bCBwZXItZGV2aWNlCj4gaW5mbyBpcyBleHBvc2VkIHZpYSAuc3RhdHVzCgpkbS1sYyBnaXZlcyBJ
-RCBudW1iZXJzIHRvIGJvdGggbGNfZGV2aWNlIGFuZCBsY19jYWNoZQphbmQgdGhlbiBtYW5hZ2Vz
-IHN5c2ZzIHVuZGVyIC9zeXMvbW9kdWxlL2RtX2xjIGxpa2UKCnJvb3RASGVyY3VsZXM6L3N5cy9t
-b2R1bGUvZG1fbGMjIHRyZWUgZGV2aWNlcy8gY2FjaGVzLwpkZXZpY2VzLwrilJTilIDilIAgNQog
-ICAg4pSc4pSA4pSAIGNhY2hlX2lkCiAgICDilJzilIDilIAgZGV2CiAgICDilJzilIDilIAgZGV2
-aWNlIC0+IC4uLy4uLy4uLy4uL2RldmljZXMvdmlydHVhbC9ibG9jay9kbS0wCiAgICDilJzilIDi
-lIAgbWlncmF0ZV90aHJlc2hvbGQKICAgIOKUlOKUgOKUgCBucl9kaXJ0eV9jYWNoZXMKY2FjaGVz
-LwrilJTilIDilIAgMwogICAg4pSc4pSA4pSAIGFsbG93X21pZ3JhdGUKICAgIOKUnOKUgOKUgCBi
-YXJyaWVyX2RlYWRsaW5lX21zCiAgICDilJzilIDilIAgY29tbWl0X3N1cGVyX2Jsb2NrCiAgICDi
-lJzilIDilIAgY29tbWl0X3N1cGVyX2Jsb2NrX2ludGVydmFsCiAgICDilJzilIDilIAgZGV2aWNl
-IC0+IC4uLy4uLy4uLy4uL2RldmljZXMvdmlydHVhbC9ibG9jay9kbS0xCiAgICDilJzilIDilIAg
-Zmx1c2hfY3VycmVudF9idWZmZXIKICAgIOKUnOKUgOKUgCBmbHVzaF9jdXJyZW50X2J1ZmZlcl9p
-bnRlcnZhbAogICAg4pSc4pSA4pSAIGZvcmNlX21pZ3JhdGUKICAgIOKUnOKUgOKUgCBsYXN0X2Zs
-dXNoZWRfc2VnbWVudF9pZAogICAg4pSc4pSA4pSAIGxhc3RfbWlncmF0ZWRfc2VnbWVudF9pZAog
-ICAg4pSc4pSA4pSAIG5yX21heF9iYXRjaGVkX21pZ3JhdGlvbgogICAg4pSU4pSA4pSAIHVwZGF0
-ZV9pbnRlcnZhbAoKSW4gdGhlIGNhc2UgYWJvdmUsIGxjX2RldmljZSB3aXRoIElEIDUgYW5kIGxj
-X2NhY2hlIHdpdGggSUQgMwphcmUgYnVpbHQgb24gbWVtb3J5IGFuZCB0aGUgbGNfZGV2aWNlIHVz
-ZXMgdGhlIGxjX2NhY2hlLgoKcm9vdEBIZXJjdWxlczovc3lzL21vZHVsZS9kbV9sYyMgY2F0IGRl
-dmljZXMvNS9jYWNoZV9pZAozCgpJIGtub3cgdGhhdCBkZXZpY2UtbWFwcGVyIGNhbiBub3QgZXN0
-YWJsaXNoIGEgc3lzZnMKZm9yIGEgRE0gZGV2aWNlIGFuZCB0aGF0J3Mgd2h5IEkgZWxhYm9yYXRl
-ZCB0aGlzIHdvcmthcm91bmQuCkFsbCB0aGUgc3lzZnMgYXJlIHBsYWNlZCBpbiBhIHN1YnRyZWUg
-bG9va3MgbWFuYWdlYWJsZS4KCi5zdGF0dXMgaXMgdXNlZC4KVGhlIGNvbW1hbmRzIGJlbG93IGNh
-biBzaG93IHRoZSBzdGF0dXMsCnN1Y2ggYXMgc3RhdGljIGluZm9ybWF0aW9uIGxpa2UgbWVtb3J5
-IGNvbnN1bXB0aW9uCmFuZCBjYWNoZSBzdGF0aXN0aWNzIG9mIHRoZSBjYWNoZSBkZXZpY2UuCklu
-IG15IGFyY2hpdGVjdHVyZSwKc3lzZnMgaXMgdXNlZCBmb3IgdmFyaWFibGVzIG5lZWRlZCB0byBj
-b250cm9sIHRoZSBtb2R1bGUgYmVoYXZpb3IgYW5kCnN0YXR1cyBpcyB1c2VkIGZvciBvdGhlcndp
-c2UuCgpyb290QEhlcmN1bGVzOi9zeXMvbW9kdWxlL2RtX2xjIyBkbXNldHVwIG1lc3NhZ2UgbGMt
-bWdyIDAgc3dpdGNoX3RvIDMKcm9vdEBIZXJjdWxlczovc3lzL21vZHVsZS9kbV9sYyMgZG1zZXR1
-cCBzdGF0dXMgbGMtbWdyIDAKbGMtbWdyOiAwIDEgbGMtbWdyCmN1cnJlbnQgY2FjaGVfaWRfcHRy
-OiAzCnN0YXRpYyBSQU0oYXBwcm94Lik6IDM3MDU2IChieXRlKQphbGxvd19taWdyYXRlOiAxCm5y
-X3NlZ21lbnRzOiAzCmxhc3RfbWlncmF0ZWRfc2VnbWVudF9pZDogNDAzCmxhc3RfZmx1c2hlZF9z
-ZWdtZW50X2lkOiA0MDMKY3VycmVudCBzZWdtZW50IGlkOiA0MDQKY3Vyc29yOiAyNTUKCndyaXRl
-PyBoaXQ/IG9uX2J1ZmZlcj8gZnVsbHNpemU/CjAgMCAwIDAgMAoxIDAgMCAwIDAKMCAxIDAgMCAw
-CjEgMSAwIDAgMAowIDAgMSAwIDAKMSAwIDEgMCAwCjAgMSAxIDAgMAoxIDEgMSAwIDAKMCAwIDAg
-MSA4MwoxIDAgMCAxIDAKMCAxIDAgMSAwCjEgMSAwIDEgMAowIDAgMSAxIDAKMSAwIDEgMSAwCjAg
-MSAxIDEgMAoKPiBBbGwgc2FpZCwgSSdsbCB0cnkgdG8gbWFrZSB0aW1lIGZvciBhIG1vcmUgZm9y
-bWFsIHJldmlldyBpbiB0aGUgY29taW5nCj4gd2Vla3MuICBQbGVhc2UgZmVlbCBmcmVlIHRvIGFz
-ayBtb3JlIHF1ZXN0aW9ucyBpbiB0aGUgbWVhbiB0aW1lLgpUaGFua3MsCkkgd2lsbCBkbyBteSBi
-ZXN0IHRvIGhlbHAgeW91ciBjb2RlIHJldmlldy4KSSB3aWxsIG1ha2UgdGhlIHNhaWQgc2xpZGUg
-b24gdGhpcyB3ZWVrZW5kIGFuZCB1cGxvYWQgdG8gbXkgcmVwby4KSSBhbSByZWFsbHkgbG9va2lu
-ZyBmb3J3YXJkIHRvIGdvIHRocm91Z2ggdGhlIGNvZGUgcmV2aWV3LgoKQWtpcmEKCk9uIDgvMS8x
-MyAxMjo1NyBBTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIFdlZCwgSnVsIDMxIDIwMTMgYXQg
-IDk6MDRhbSAtMDQwMCwKPiBBa2lyYSBIYXlha2F3YSA8cnVieS53a3RrQGdtYWlsLmNvbT4gd3Jv
-dGU6Cj4gCj4+IFRoYW5rcywgS3VtYXIuCj4+IFlvdXIgcGF0Y2ggaXMgYXBwbGllZC4KPj4KPj4g
-cmVzdW1lX2NhY2hlLAo+PiBhIHJvdXRpbmUgdG8gYnVpbGQgaW4tbWVtb3J5IGRhdGEgc3RydWN0
-dXJlcwo+PiBieSByZWFkaW5nIG1ldGFkYXRhIG9uIGNhY2hlIGRldmljZSwKPj4gaXMgc28gY29t
-cGxpY2F0ZWQgaW4gdGhlIGNvZGUgYW5kIHRoZSBsb2dpYwo+PiB0byB0aG9yb3VnaGx5IGltcGxl
-bWVudCB0aGUgZXJyb3IgY2hlY2tzLgo+Pgo+PiBJIGFtIHdvbmRlcmluZyBob3cgSSBzaG91bGQg
-ZmFjZSB0aGlzIHByb2JsZW0uCj4+IE9ubHkgY2FyaW5nIGFib3V0IGxpbmVzCj4+IHRoYXQgYWxs
-b2NhdGVzIGxhcmdlLXNpemVkIG1lbW9yaWVzCj4+IGFuZCBmb3JnZXQgYWJvdXQgYW55dGhpbmcg
-ZWxzZQo+PiBpcyB3aGF0IEkgYW0gdGhpbmtpbmcgbm93Lgo+PiBCdXQgaXQgaXMgY2xlYXIgdGhh
-dAo+PiBpdCBpcyBub3QgYSB3YXkga2VybmVsIG1vZHVsZSBzaG91bGQgYmUuCj4+Cj4+IERvIHlv
-dSBndXlzIGhhdmUgc29tZSB0aG91Z2h0cyBvbiB0aGlzIHByb2JsZW0/Cj4gCj4gSSBoYWQgYSBx
-dWljayBsb29rIGF0ICJyZXN1bWVfY2FjaGUiLiAgSSB3YXMgdGhpbmtpbmcgeW91IHdlcmUgcmVm
-ZXJyaW5nCj4gdG8gdGhlIC5yZXN1bWUgbWV0aG9kIG9mIHRoZSB0YXJnZXQuICBUaGUgLnJlc3Vt
-ZSBtZXRob2QgbXVzdCBub3QKPiBhbGxvY2F0ZSBfYW55XyBtZW1vcnkgKERNIGNvbnZlbnRpb24g
-cmVxdWlyZXMgYWxsIG1lbW9yeSBhbGxvY2F0aW9ucyB0bwo+IGJlIGRvbmUgaW4gdGVybXMgb2Yg
-cHJlYWxsb2NhdGVkIG1lbW9yeSBvciBtb3JlIGNvbW1vbmx5IGFzIHBhcnQgb2YgdGhlCj4gRE0g
-dGFibGUgbG9hZCwgdmlhIC5jdHIpLi4uIGFueXdheSBpZ25vcmluZyB0aGF0IGZvciBub3cuCj4g
-Cj4gSSB3YXMgdmVyeSBzdXJwcmlzZWQgdG8gc2VlIHRoYXQgeW91J3JlIG1hbmFnaW5nIGRldmlj
-ZXMgaW4gdGVybXMgb2YgRE0KPiBtZXNzYWdlcyBsaWtlICJyZXN1bWVfY2FjaGUiICh3aGljaCBJ
-IGFzc3VtZSB5b3VyIGRtLWxjIHVzZXJzcGFjZSB0b29scwo+IGluaXRpYXRlKS4gIFRoaXMgc2Vl
-bXMgd3JvbmcgLS0gSSdtIGFsc28gbm90IHNlZWluZyBwcm9wZXIgbG9ja2luZyBpbgo+IHRoZSBj
-b2RlIGVpdGhlciAod2hpY2ggeW91IGdldCBmb3IgZnJlZSBpZiB3aXRoIERNIGlmIHlvdSB1c2Ug
-dGhlCj4gdHJhZGl0aW9uYWwgRE0gaG9va3MgdmlhIHRhcmdldF90eXBlIG9wcykuICBCdXQgSSBo
-YXZlbid0IGJlZW4gYWJsZSB0bwo+IGRvIGEgcHJvcGVyIHJldmlldy4KPiAKPiBETSBkZXZpY2Ug
-Y3JlYXRpb24gYW5kIGRlbGV0aW9uIGFyZSBkb25lIGluIHRlcm1zIG9mIGxvYWQgKC5jdHIpIGFu
-ZAo+IHJlbW92ZSAoLmR0cikuCj4gCj4gQW5kIGFsbCB0aGVzZSBzeXNmcyBmaWxlcyBhcmUgZXhj
-ZXNzaXZlIHRvby4gIFlvdSdsbCBub3RpY2UgdGhhdCBETSBkZXZpY2VzCj4gZG9uJ3QgZXhwb3Nl
-IGRpc2NyZXRlIHN5c2ZzIGZpbGVzIG9uIGEgcGVyIGRldmljZSBiYXNpcy4gIEFsbCBwZXItZGV2
-aWNlCj4gaW5mbyBpcyBleHBvc2VkIHZpYSAuc3RhdHVzCj4gCj4gV2UgX2NvdWxkXyB0YWtlIHN0
-ZXBzIHRvIGVzdGFibGlzaCBhIHBlci1ETS1kZXZpY2Ugc3lzZnMgbmFtZXNwYWNlOyBidXQKPiB0
-aGF0IHdvdWxkIG5lZWQgdG8gYmUgc29tZXRoaW5nIHdpcmVkIHVwIHRvIHRoZSBETSBjb3JlLiAg
-U28gSSdkIHByZWZlcgo+IGRtLWxjIHVzZSB0cmFkaXRpb25hbCAuc3RhdHVzIChpbmZvIGFuZCB0
-YWJsZSkuCj4gCj4gQWxsIHNhaWQsIEknbGwgdHJ5IHRvIG1ha2UgdGltZSBmb3IgYSBtb3JlIGZv
-cm1hbCByZXZpZXcgaW4gdGhlIGNvbWluZwo+IHdlZWtzLiAgUGxlYXNlIGZlZWwgZnJlZSB0byBh
-c2sgbW9yZSBxdWVzdGlvbnMgaW4gdGhlIG1lYW4gdGltZS4KPiAKPiBUaGFua3MsCj4gTWlrZQo+
-IAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+--===============3664482094823221403==
+Content-Type: multipart/alternative; boundary=089e013cb6e44bb23304e2e5d631
+
+--089e013cb6e44bb23304e2e5d631
+Content-Type: text/plain; charset=ISO-8859-1
+
+two questions:
+
+1. I'd like to use DM with a new target type.  I'm porting our virtualized
+storage solution from Windows.  I've been able to register my target and
+get callbacks working, but in looking at the dm-raid code, I'm concerned
+with how tightly coupled it is with the routines in md.c (multiple devices
+implementation).  Is there an expectation that a DM target use the md_xxxx
+routines?
+
+2. I used dmsetup to create a mapping for a device that my target
+controls.  Is there a way to make the underlying device (e.g. /dev/sdb) not
+visible to the system?  I'm paranoid about external accesses to a LUN that
+I'm using.
+
+-john
+
+--089e013cb6e44bb23304e2e5d631
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><div><div>two questions:<br><br></div>1. I&#39;d like=
+ to use DM with a new target type.=A0 I&#39;m porting our virtualized stora=
+ge solution from Windows.=A0 I&#39;ve been able to register my target and g=
+et callbacks working, but in looking at the dm-raid code, I&#39;m concerned=
+ with how tightly coupled it is with the routines in md.c (multiple devices=
+ implementation).=A0 Is there an expectation that a DM target use the md_xx=
+xx routines?<br>
+<br></div>2. I used dmsetup to create a mapping for a device that my target=
+ controls.=A0 Is there a way to make the underlying device (e.g. /dev/sdb) =
+not visible to the system?=A0 I&#39;m paranoid about external accesses to a=
+ LUN that I&#39;m using.<br>
+<br></div>-john<br></div>
+
+--089e013cb6e44bb23304e2e5d631--
+
+
+--===============3664482094823221403==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3664482094823221403==--
