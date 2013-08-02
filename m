@@ -1,15 +1,14 @@
-From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
-Subject: Re: dm-cache with zero hit rate
-Date: Fri, 2 Aug 2013 10:49:10 +0200
-Message-ID: <20130802084910.GA21756@uio.no>
-References: <20130731185017.GA13215@uio.no> <20130731202522.GD18513@redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: Extending DM w/ new target type
+Date: Fri, 02 Aug 2013 14:07:43 +0200
+Message-ID: <51FBA10F.7070006@redhat.com>
+References: <CAH1aXXYQVnYndk7S6-6TM9hiuTE2xpN+4Qt8BA_36PvrQVQSsw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20130731202522.GD18513@redhat.com>
+In-Reply-To: <CAH1aXXYQVnYndk7S6-6TM9hiuTE2xpN+4Qt8BA_36PvrQVQSsw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, ejt@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: John Strange <johnstra10@gmail.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBKdWwgMzEsIDIwMTMgYXQgMDQ6MjU6MjJQTSAtMDQwMCwgTWlrZSBTbml0emVyIHdy
-b3RlOgo+PiBBZnRlciBhIGZhaXIgYW1vdW50IG9mIGZpZ2h0aW5nIHdpdGggdWRldiBhbmQgaW5p
-dHJhbWZzLXRvb2xzLCBwbHVzIHVwcGluZwo+PiB0aGUgYmxvY2sgc2l6ZSB0byAyMDQ4IHNpbmNl
-IDUxMiBjb21wbGFpbmVkIGFib3V0IG5vdCBlbm91Z2ggUkFNIChvbiBhIDI0R0IKPj4gbWFjaGlu
-ZSEpLCB0aGlzIHNlZW1zIHRvIGJvb3QgdXAgYW5kIHdvcmssIGJ1dCBJIHNlZW0gdG8gZ2V0IGFi
-c29sdXRlbHkgemVybwo+PiBjYWNoZSBoaXRzLgo+IEt1ZG9zIHRvIHlvdSBmb3IgaGFja2luZyB0
-aGF0IHRvIHdvcmsuCgpJdCdzIGFjdHVhbGx5IG5vdCB0aGF0IGhhcmQ7IG9uY2UgdGhpbmdzIHN0
-YWJpbGl6ZSBhbmQgSSBrbm93IHRoaXMgaXMKYWN0dWFsbHkgdGhlIHNvbHV0aW9uIEkgd2FudCB0
-byBoYXZlLCBJIHBsYW4gdG8gc2l0IGRvd24gYW5kIGRvY3VtZW50IGl0LCBhbmQKaXQncyBub3Qg
-Z29pbmcgdG8gYmUgYSBsb25nIGRvY3VtZW50LgoKPiBQbGVhc2Ugc2VlIHRoZSByZWNlbnQgImRt
-LWNhY2hlIHdhcm1pbmcgdGhyZWFkIjoKPiBodHRwczovL3d3dy5yZWRoYXQuY29tL2FyY2hpdmVz
-L2RtLWRldmVsLzIwMTMtSnVseS9tc2cwMDEzMy5odG1sCj4gCj4gVGhhdCBpc24ndCB0byBzYXkg
-d2UgY2Fubm90IHRha2Ugc3RlcHMgdG8gYmUgbW9yZSBhZ2dyZXNzaXZlOyBidXQgd2UnbGwKPiBu
-ZWVkIG1vcmUgY29udGV4dCBmb3Igd2hhdCB5b3UncmUgZG9pbmcuCj4gCj4gQSBub3JtYWwgc3lz
-dGVtIGJvb3QgaXMgbGlrZWx5IHByZWRvbWluYW50bHkgcmVhZCBvbmNlLCBhbmQvb3IgKGFzIEpv
-ZQo+IHBvaW50ZWQgb3V0KSB0aGUgcGFnZSBjYWNoZSBjb3VsZCBiZSBtYXNraW5nIHN1YnNlcXVl
-bnQgcmVhZHMuCj4gCj4gSWYgeW91J3JlIGRvaW5nIHdyaXRlIGhlYXZ5IHdvcmtsb2FkcyBhcmUg
-dGhleSBiZWluZyBlbGlkZWQgYnkgdGhlCj4gc2VxdWVudGlhbF90aHJlc2hvbGQ/Cj4gCj4gVHJ5
-IGEgZ2l0IGNoZWNrb3V0LCBhbmQgc3dpdGNoIGJyYW5jaGVzIGEgZmV3IHRpbWVzIChlLmcuIGNo
-ZWNrb3V0IHYzLjEsCj4gdGhlbiB2My44LCB0aGVuIHYzLjIsIHRoZW4gdjMuOSwgdGhlbiB2My4x
-LCBldGMpLgoKT0ssIHNvIGNvbnRleHQ6IFRoaXMgaXMgbXkgcGVyc29uYWwgZG8tZXZlcnl0aGlu
-ZyBzZXJ2ZXIsIHNvIGl0IGRvZXMgYWxsCmtpbmRzIG9mIHRoaW5nczsgd2ViIHNlcnZpbmcgKGJv
-dGggcGFnZXMsIHNjcmlwdHMgYW5kIG1pcnJvcnMpLCBsYXJnZSBmaWxlcywKZGF0YWJhc2Ugd29y
-aywgZW1haWwgKGxvY2FsLCBub3QgSU1BUCksIGJhY2t1cCB0aHJvdWdoIHJzeW5jLCBldGMuLiBB
-bHRob3VnaAppdCBoYXMgMjRHQiBvZiBSQU0sIHRoZSBkaXNrIHNldCBpcyA4VEIgKGFuZCB0aGUg
-Y2FjaGUgZGlza3MgfjQ1MEdCKSwgc28gb25lCndvdWxkIHRoaW5rIGl0IGZvdW5kIF9zb21ldGhp
-bmdfIHJlbGV2YW50IHRvIGNhY2hlLiBJbiBwYXJ0aWN1bGFyLCBteQpNYWlsZGlycyB3b3VsZCBz
-ZWVtIGxpa2UgYSBwcmltZSBjYW5kaWRhdGUgOi0pIFRoZXJlJ3MgSS9PIGdvaW5nIG9uIGFsbCB0
-aGUKdGltZSwgYW5kIEknbSBhIGJpdCBzdXJwcmlzZWQgdGhhdCBub3QgZXZlbiBhbnkgd3JpdGVz
-IGFyZSBjYWNoZWQuIAoKSSBkaWQgdGhlIGdpdCBjaGVja291dCBhcyB5b3UgYXNrZWQsIDEw4oCT
-MTUgdGltZXMgd2l0aCBkaWZmZXJlbnQgdmVyc2lvbgpudW1iZXJzLCBhbmQgYWx0aG91Z2ggdGhl
-IGdpdCBjb21tYW5kIHNlZW1lZCB0byBjcmVhdGUgSS9PIChpZS4sIHRoZSBwYWdlCmNhY2hlIHdh
-c24ndCBnb2JibGluZyBpdCBhbGwgdXAsIGFsdGhvdWdoIGl0IHdhcyBtb3N0bHkgd3JpdGUgSS9P
-KSwgYnV0IGl0CnN0aWxsIGRpZG4ndCBwdXQgYW55dGhpbmcgaW4gdGhlIGNhY2hlLgoKSSBzZWUg
-dGhlIHRocmVhZCB5b3UncmUgcmVmZXJyaW5nIHRvIHNheXMg4oCcdG9vIGxvd+KAnSwgYnV0IEkg
-cmVhbGx5IGhhdmUgemVybywKZXZlbiBhZnRlciBhbG1vc3QgNDAgaG91cnMgb2Ygbm9ybWFsIG9w
-ZXJhdGlvbjoKCiAgY2FjaGU6IDAgMjM0NDA4OTE5MDQgY2FjaGUgOTEzLzgxOTIgMCA2ODg4MTQ0
-IDAgMTY1MzY3NyAwIDAgMCAwIDAgMiBtaWdyYXRpb25fdGhyZXNob2xkIDIwNDggNCByYW5kb21f
-dGhyZXNob2xkIDggc2VxdWVudGlhbF90aHJlc2hvbGQgNTEyCgpDb3VsZCB0aGUgbGFyZ2UgYmxv
-Y2sgc2l6ZSBiZSByZWxhdGVkIHRvIHRoaXM/CgovKiBTdGVpbmFyICovCi0tIApIb21lcGFnZTog
-aHR0cDovL3d3dy5zZXNzZS5uZXQvCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWw=
+Dne 1.8.2013 19:04, John Strange napsal(a):
+> two questions:
+>
+> 1. I'd like to use DM with a new target type.  I'm porting our virtualized
+> storage solution from Windows.  I've been able to register my target and get
+> callbacks working, but in looking at the dm-raid code, I'm concerned with how
+> tightly coupled it is with the routines in md.c (multiple devices
+> implementation).  Is there an expectation that a DM target use the md_xxxx
+> routines?
+>
+> 2. I used dmsetup to create a mapping for a device that my target controls.
+> Is there a way to make the underlying device (e.g. /dev/sdb) not visible to
+> the system?  I'm paranoid about external accesses to a LUN that I'm using.
+
+In lvm2 it's solved in a way - that we use special flags for udev to avoid
+some scanning/watchrules - however all device are always available through 
+/dev/mapper but  user visible devices are accessible via   /dev/vg/lv name 
+which is the only suggested and supported way to use LVs.
+
+Obviously we often get reports where users are directly playing with 
+/dev/dm-XXX devices or /dev/mapper/vg-lv  in their scripts and configs...
+
+But you can't hide existing devices in  system from userland visibility.
+
+
+Zdenek
