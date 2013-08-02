@@ -1,14 +1,16 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Extending DM w/ new target type
-Date: Fri, 02 Aug 2013 14:07:43 +0200
-Message-ID: <51FBA10F.7070006@redhat.com>
-References: <CAH1aXXYQVnYndk7S6-6TM9hiuTE2xpN+4Qt8BA_36PvrQVQSsw@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-cache with zero hit rate
+Date: Fri, 2 Aug 2013 09:23:44 -0400
+Message-ID: <20130802132344.GA20629@redhat.com>
+References: <20130731185017.GA13215@uio.no> <20130731202522.GD18513@redhat.com>
+	<20130802084910.GA21756@uio.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAH1aXXYQVnYndk7S6-6TM9hiuTE2xpN+4Qt8BA_36PvrQVQSsw@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20130802084910.GA21756@uio.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: John Strange <johnstra10@gmail.com>
+To: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-Dne 1.8.2013 19:04, John Strange napsal(a):
-> two questions:
->
-> 1. I'd like to use DM with a new target type.  I'm porting our virtualized
-> storage solution from Windows.  I've been able to register my target and get
-> callbacks working, but in looking at the dm-raid code, I'm concerned with how
-> tightly coupled it is with the routines in md.c (multiple devices
-> implementation).  Is there an expectation that a DM target use the md_xxxx
-> routines?
->
-> 2. I used dmsetup to create a mapping for a device that my target controls.
-> Is there a way to make the underlying device (e.g. /dev/sdb) not visible to
-> the system?  I'm paranoid about external accesses to a LUN that I'm using.
-
-In lvm2 it's solved in a way - that we use special flags for udev to avoid
-some scanning/watchrules - however all device are always available through 
-/dev/mapper but  user visible devices are accessible via   /dev/vg/lv name 
-which is the only suggested and supported way to use LVs.
-
-Obviously we often get reports where users are directly playing with 
-/dev/dm-XXX devices or /dev/mapper/vg-lv  in their scripts and configs...
-
-But you can't hide existing devices in  system from userland visibility.
-
-
-Zdenek
+T24gRnJpLCBBdWcgMDIgMjAxMyBhdCAgNDo0OWFtIC0wNDAwLApTdGVpbmFyIEguIEd1bmRlcnNv
+biA8c2d1bmRlcnNvbkBiaWdmb290LmNvbT4gd3JvdGU6Cgo+IE9uIFdlZCwgSnVsIDMxLCAyMDEz
+IGF0IDA0OjI1OjIyUE0gLTA0MDAsIE1pa2UgU25pdHplciB3cm90ZToKPiA+PiBBZnRlciBhIGZh
+aXIgYW1vdW50IG9mIGZpZ2h0aW5nIHdpdGggdWRldiBhbmQgaW5pdHJhbWZzLXRvb2xzLCBwbHVz
+IHVwcGluZwo+ID4+IHRoZSBibG9jayBzaXplIHRvIDIwNDggc2luY2UgNTEyIGNvbXBsYWluZWQg
+YWJvdXQgbm90IGVub3VnaCBSQU0gKG9uIGEgMjRHQgo+ID4+IG1hY2hpbmUhKSwgdGhpcyBzZWVt
+cyB0byBib290IHVwIGFuZCB3b3JrLCBidXQgSSBzZWVtIHRvIGdldCBhYnNvbHV0ZWx5IHplcm8K
+PiA+PiBjYWNoZSBoaXRzLgo+ID4gS3Vkb3MgdG8geW91IGZvciBoYWNraW5nIHRoYXQgdG8gd29y
+ay4KPiAKPiBJdCdzIGFjdHVhbGx5IG5vdCB0aGF0IGhhcmQ7IG9uY2UgdGhpbmdzIHN0YWJpbGl6
+ZSBhbmQgSSBrbm93IHRoaXMgaXMKPiBhY3R1YWxseSB0aGUgc29sdXRpb24gSSB3YW50IHRvIGhh
+dmUsIEkgcGxhbiB0byBzaXQgZG93biBhbmQgZG9jdW1lbnQgaXQsIGFuZAo+IGl0J3Mgbm90IGdv
+aW5nIHRvIGJlIGEgbG9uZyBkb2N1bWVudC4KPiAKPiA+IFBsZWFzZSBzZWUgdGhlIHJlY2VudCAi
+ZG0tY2FjaGUgd2FybWluZyB0aHJlYWQiOgo+ID4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNo
+aXZlcy9kbS1kZXZlbC8yMDEzLUp1bHkvbXNnMDAxMzMuaHRtbAo+ID4gCj4gPiBUaGF0IGlzbid0
+IHRvIHNheSB3ZSBjYW5ub3QgdGFrZSBzdGVwcyB0byBiZSBtb3JlIGFnZ3Jlc3NpdmU7IGJ1dCB3
+ZSdsbAo+ID4gbmVlZCBtb3JlIGNvbnRleHQgZm9yIHdoYXQgeW91J3JlIGRvaW5nLgo+ID4gCj4g
+PiBBIG5vcm1hbCBzeXN0ZW0gYm9vdCBpcyBsaWtlbHkgcHJlZG9taW5hbnRseSByZWFkIG9uY2Us
+IGFuZC9vciAoYXMgSm9lCj4gPiBwb2ludGVkIG91dCkgdGhlIHBhZ2UgY2FjaGUgY291bGQgYmUg
+bWFza2luZyBzdWJzZXF1ZW50IHJlYWRzLgo+ID4gCj4gPiBJZiB5b3UncmUgZG9pbmcgd3JpdGUg
+aGVhdnkgd29ya2xvYWRzIGFyZSB0aGV5IGJlaW5nIGVsaWRlZCBieSB0aGUKPiA+IHNlcXVlbnRp
+YWxfdGhyZXNob2xkPwo+ID4gCj4gPiBUcnkgYSBnaXQgY2hlY2tvdXQsIGFuZCBzd2l0Y2ggYnJh
+bmNoZXMgYSBmZXcgdGltZXMgKGUuZy4gY2hlY2tvdXQgdjMuMSwKPiA+IHRoZW4gdjMuOCwgdGhl
+biB2My4yLCB0aGVuIHYzLjksIHRoZW4gdjMuMSwgZXRjKS4KPiAKPiBPSywgc28gY29udGV4dDog
+VGhpcyBpcyBteSBwZXJzb25hbCBkby1ldmVyeXRoaW5nIHNlcnZlciwgc28gaXQgZG9lcyBhbGwK
+PiBraW5kcyBvZiB0aGluZ3M7IHdlYiBzZXJ2aW5nIChib3RoIHBhZ2VzLCBzY3JpcHRzIGFuZCBt
+aXJyb3JzKSwgbGFyZ2UgZmlsZXMsCj4gZGF0YWJhc2Ugd29yaywgZW1haWwgKGxvY2FsLCBub3Qg
+SU1BUCksIGJhY2t1cCB0aHJvdWdoIHJzeW5jLCBldGMuLiBBbHRob3VnaAo+IGl0IGhhcyAyNEdC
+IG9mIFJBTSwgdGhlIGRpc2sgc2V0IGlzIDhUQiAoYW5kIHRoZSBjYWNoZSBkaXNrcyB+NDUwR0Ip
+LCBzbyBvbmUKPiB3b3VsZCB0aGluayBpdCBmb3VuZCBfc29tZXRoaW5nXyByZWxldmFudCB0byBj
+YWNoZS4gSW4gcGFydGljdWxhciwgbXkKPiBNYWlsZGlycyB3b3VsZCBzZWVtIGxpa2UgYSBwcmlt
+ZSBjYW5kaWRhdGUgOi0pIFRoZXJlJ3MgSS9PIGdvaW5nIG9uIGFsbCB0aGUKPiB0aW1lLCBhbmQg
+SSdtIGEgYml0IHN1cnByaXNlZCB0aGF0IG5vdCBldmVuIGFueSB3cml0ZXMgYXJlIGNhY2hlZC4g
+CgpZZXMsIGl0IGlzIHN1cnByaXNpbmcuICBDdXJpb3VzIHRvIGtub3cgaWYgdGhlIHByb21vdGlv
+bnMgYXJlbid0CmhhcHBlbmluZyBkdWUgdG8gdGhlIElPIHNjaGVkdWxlciBzb21laG93IG1lcmdp
+bmcgYWxsIHlvdXIgcmFuZG9tIHNtYWxsCklPLiAgV2UgZG9uJ3QgeWV0IGhhdmUgYSBkZXNjcmV0
+ZSBjb3VudGVyIHRvIHNob3cgdGhlIG51bWJlciBvZgptaWdyYXRpb25zIHRoYXQgd2VyZSBza2lw
+cGVkIGR1ZSB0byBzZXF1ZW50aWFsX3RocmVzaG9sZCBidXQgdGhhdCBpcwpzb21ldGhpbmcgd2Ug
+Y2FuIGFkZC4KCkJ1dCB5b3UgY2FuIGVmZmVjdGl2ZWx5IGRpc2FibGUgdGhlIHNlcXVlbnRpYWxf
+dGhyZXNob2xkIGJ5IHNldHRpbmcgaXQKcmVhbGx5IGhpZ2gsIGUuZy46CgpkbXNldHVwIG1lc3Nh
+Z2UgY2FjaGUgMCBzZXF1ZW50aWFsX3RocmVzaG9sZCAxNjM4NAoKPiBJIGRpZCB0aGUgZ2l0IGNo
+ZWNrb3V0IGFzIHlvdSBhc2tlZCwgMTDigJMxNSB0aW1lcyB3aXRoIGRpZmZlcmVudCB2ZXJzaW9u
+Cj4gbnVtYmVycywgYW5kIGFsdGhvdWdoIHRoZSBnaXQgY29tbWFuZCBzZWVtZWQgdG8gY3JlYXRl
+IEkvTyAoaWUuLCB0aGUgcGFnZQo+IGNhY2hlIHdhc24ndCBnb2JibGluZyBpdCBhbGwgdXAsIGFs
+dGhvdWdoIGl0IHdhcyBtb3N0bHkgd3JpdGUgSS9PKSwgYnV0IGl0Cj4gc3RpbGwgZGlkbid0IHB1
+dCBhbnl0aGluZyBpbiB0aGUgY2FjaGUuCgpQbGVhc2Ugd3JpdGUgYSBmaWxlIHRoYXQgaXMgc21h
+bGxlciB0aGFuIHlvdXIgc3BlY2lmaWVkCnNlcXVlbnRpYWxfdGhyZXNob2xkLCBhbmQgdGhlbiBy
+ZWFkIGl0IG51bWVyb3VzIHRpbWVzIHZpYSBkaXJlY3QgSU8sCmUuZy46CgpkZCBpZj08eW91ciBm
+aWxlPiBvZj0vZGV2L251bGwgaWZsYWc9ZGlyZWN0IGJzPTE2SwogCj4gSSBzZWUgdGhlIHRocmVh
+ZCB5b3UncmUgcmVmZXJyaW5nIHRvIHNheXMg4oCcdG9vIGxvd+KAnSwgYnV0IEkgcmVhbGx5IGhh
+dmUgemVybywKPiBldmVuIGFmdGVyIGFsbW9zdCA0MCBob3VycyBvZiBub3JtYWwgb3BlcmF0aW9u
+Ogo+IAo+ICAgY2FjaGU6IDAgMjM0NDA4OTE5MDQgY2FjaGUgOTEzLzgxOTIgMCA2ODg4MTQ0IDAg
+MTY1MzY3NyAwIDAgMCAwIDAgMiBtaWdyYXRpb25fdGhyZXNob2xkIDIwNDggNCByYW5kb21fdGhy
+ZXNob2xkIDggc2VxdWVudGlhbF90aHJlc2hvbGQgNTEyCj4gCj4gQ291bGQgdGhlIGxhcmdlIGJs
+b2NrIHNpemUgYmUgcmVsYXRlZCB0byB0aGlzPwoKTm8sIGEgbGFyZ2UgY2FjaGUgYmxvY2sgc2l6
+ZSBqdXN0IGJyaW5ncyBhIGxvdCBtb3JlIGludG8gdGhlIGNhY2hlIHdoZW4Kc29tZXRoaW5nIHdh
+cyBkZWVtZWQgd29ydGh5IG9mIHByb21vdGlvbi4KCldlIG5lZWQgdG8gYmV0dGVyIHVuZGVyc3Rh
+bmQvZGlhZ25vc2UgX3doeV8gbm90aGluZyBpcyBnZXR0aW5nIHByb21vdGVkLAp0byB0aGF0IGVu
+ZCBIZWlueiBhbmQgSm9lIHdpbGwgY29sbGFib3JhdGUgb24gdGhlIGRldmVsb3BtZW50IG9mIGEK
+ImNhY2hlX2R1bXAiIHV0aWxpdHkgdG8gYWxsb3cgdmlzaWJpbGl0eSBpbnRvIHRoZSBtcSBwb2xp
+Y3kncyBoaXQgY291bnRzCmFuZCBoaW50cyBhc3NvY2lhdGVkIHdpdGggZWFjaCBibG9jay4KCkJ1
+dCBpbiB0aGUgbWVhbnRpbWUsIGNyYW5raW5nIHVwIHNlcXVlbnRpYWxfdGhyZXNob2xkIG1heSBo
+ZWxwLgoKTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
