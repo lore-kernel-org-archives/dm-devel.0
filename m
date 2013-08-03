@@ -1,7 +1,7 @@
 From: Akira Hayakawa <ruby.wktk@gmail.com>
 Subject: dm-lc: new doc
-Date: Sat, 03 Aug 2013 19:08:43 +0900
-Message-ID: <51FCD6AB.3020603@gmail.com>
+Date: Sat, 03 Aug 2013 19:10:17 +0900
+Message-ID: <51FCD709.30909@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
