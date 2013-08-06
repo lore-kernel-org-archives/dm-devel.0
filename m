@@ -1,12 +1,15 @@
-From: =?Big5?B?seek5avb?= <burton.paramountcy@gmail.com>
-Subject: dm-thin - issue about the maximum size of the metadata
-	device
-Date: Tue, 6 Aug 2013 12:18:22 +0800
-Message-ID: <CAKG=6JXeGenwbFmgt9z+ScdMEAdxGHxH7NkoXxm_CmzCM8QxZQ@mail.gmail.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: dm-thin - issue about the maximum size of the
+ metadata device
+Date: Tue, 06 Aug 2013 12:39:35 +0200
+Message-ID: <5200D267.5060606@redhat.com>
+References: <CAKG=6JXeGenwbFmgt9z+ScdMEAdxGHxH7NkoXxm_CmzCM8QxZQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2839090799022553701=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAKG=6JXeGenwbFmgt9z+ScdMEAdxGHxH7NkoXxm_CmzCM8QxZQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,154 +19,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: =?UTF-8?B?5qKB5paH5b2l?= <burton.paramountcy@gmail.com>
 List-Id: dm-devel.ids
 
---===============2839090799022553701==
-Content-Type: multipart/alternative; boundary=001a11c227ee3388a804e33fb7a6
-
---001a11c227ee3388a804e33fb7a6
-Content-Type: text/plain; charset=ISO-8859-1
-
-Hi folks,
-
-I currently do some experiments on the dm-thin-provisioning targets.
-One of these experiments is trying to create/find-out the largest thin
-volumn on the pool.
-
-As I Know, each time we provision blocks from the pool, the metadata is
-comsumed for recording the mapping information.
-By executing the lvdisplay command, we can observe the status of the pool &
-metadata usage, such as
-$ sudo lvdisplay | grep Allocated
-  Allocated pool data    7.87%
-  Allocated metadata    6.09%
-
-And the following content is extracted from thin-provisioning.txt from
-Documentation\device-mapper in the source tree.
-"As a guide, we suggest you calculate the number of bytes to use in the
-metadata device as 48 * $data_dev_size / $data_block_size but round it up
-to 2MB if the answer is smaller."
-
-If the size of the metadata dev was fixed as 16G, and the block size of the
-pool dev was set as 64K,
-then we may infer that the largest volumn size of the thin is 21.33TB.
-
-(48 * $data_dev_size / 64K = 16G
- $data_dev_size = 16G * 64K / 48 = 21.33TB)
-
-If this inference was not correct, please kindly let me know why.
-
-Then I do the experiment with the following steps:
-1. create a thin-pool with size 21.33T on my RAID0, say, the largest size
-we infered, and block size 64K, metadata size 16G
-2. create a thin volumn with virtual size 21.33T.
-3. dd data(/dev/uramdom) to the thin device
-
-Finally, I observed that
-  Allocated pool data    100.00%
-  Allocated metadata     71.89%
-
-It seemed that the pool data had already out of usage, but the metadata was
-not.
-Did it means that, metadata 16G can be applied to record a thin dev with
-size bigger than 21.73T?
-
-I did another experiment. In this time, I enlarged the size of pool/ thin
-dev as big as I could offer.
-
-1. create a thin-pool on my RAID0 with size 36.20T, and block size 64K,
-metadata size 16G
-2. create a thin volumn with virtual size 36.20T.
-3. dd data to the thin device
-
-Finally, I observed that
-  Allocated pool data    84.52%
-  Allocated metadata    99.99%
-
-And these messages were shown in dmesge
-device-mapper: space map metadata: out of metadata space
-device-mapper: thin: pre_alloc_func: dm_thin_insert_block failed
-device-mapper: space map metadata: out of metadata space
-device-mapper: thin: commit failed, error = -28
-device-mapper: thin: switching pool to read-only mode
-
-In this experiment, we run out of the metadata, and by the "Allocated pool
-data" field, we infered that the maximum thin device was about 30.59TB, was
-it correct?
-
-Regards,
-Burton
-
---001a11c227ee3388a804e33fb7a6
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div>Hi folks,</div><div><br></div><div>I currently do som=
-e experiments on the dm-thin-provisioning targets.</div><div>One of these e=
-xperiments is trying to create/find-out the largest thin volumn on the pool=
-.</div>
-<div><br></div><div>As I Know, each time we provision blocks from the pool,=
- the metadata is comsumed for recording the mapping information.</div><div>=
-By executing the lvdisplay command, we can observe the status of the pool &=
-amp; metadata usage, such as</div>
-<div>$ sudo lvdisplay | grep Allocated</div><div>=A0 Allocated pool data =
-=A0 =A07.87%</div><div>=A0 Allocated metadata =A0 =A06.09%</div><div><br></=
-div><div>And the following content is extracted from thin-provisioning.txt =
-from Documentation\device-mapper in the source tree.</div>
-<div>&quot;As a guide, we suggest you calculate the number of bytes to use =
-in the</div><div>metadata device as 48 * $data_dev_size / $data_block_size =
-but round it up</div><div>to 2MB if the answer is smaller.&quot;</div><div>
-<br></div><div>If the size of the metadata dev was fixed as 16G, and the bl=
-ock size of the pool dev was set as 64K,=A0</div><div>then we may infer tha=
-t the largest volumn size of the thin is 21.33TB.</div><div><br></div><div>
-(48 * $data_dev_size / 64K =3D 16G</div><div>=A0$data_dev_size =3D 16G * 64=
-K / 48 =3D 21.33TB)</div><div><br></div><div>If this inference was not corr=
-ect, please kindly let me know why.</div><div><br></div><div>Then I do the =
-experiment with the following steps:</div>
-<div>1. create a thin-pool with size 21.33T on my RAID0, say, the largest s=
-ize we infered, and block size 64K, metadata size 16G</div><div>2. create a=
- thin volumn with virtual size 21.33T.</div><div>3. dd data(/dev/uramdom) t=
-o the thin device</div>
-<div><br></div><div>Finally, I observed that</div><div>=A0 Allocated pool d=
-ata =A0 =A0100.00%</div><div>=A0 Allocated metadata =A0 =A0 71.89%</div><di=
-v><br></div><div>It seemed that the pool data had already out of usage, but=
- the metadata was not.</div>
-<div>Did it means that, metadata 16G can be applied to record a thin dev wi=
-th size bigger than 21.73T?</div><div><br></div><div>I did another experime=
-nt. In this time, I enlarged the size of pool/ thin dev as big as I could o=
-ffer.</div>
-<div><br></div><div>1. create a thin-pool on my RAID0 with size 36.20T, and=
- block size 64K, metadata size 16G</div><div>2. create a thin volumn with v=
-irtual size 36.20T.</div><div>3. dd data to the thin device</div><div><br>
-</div><div>Finally, I observed that</div><div>=A0 Allocated pool data =A0 =
-=A084.52%</div><div>=A0 Allocated metadata =A0 =A099.99%</div><div><br></di=
-v><div>And these messages were shown in dmesge</div><div><span class=3D"" s=
-tyle=3D"white-space:pre">	</span>device-mapper: space map metadata: out of =
-metadata space</div>
-<div><span class=3D"" style=3D"white-space:pre">	</span>device-mapper: thin=
-: pre_alloc_func: dm_thin_insert_block failed</div><div><span class=3D"" st=
-yle=3D"white-space:pre">	</span>device-mapper: space map metadata: out of m=
-etadata space</div>
-<div><span class=3D"" style=3D"white-space:pre">	</span>device-mapper: thin=
-: commit failed, error =3D -28</div><div><span class=3D"" style=3D"white-sp=
-ace:pre">	</span>device-mapper: thin: switching pool to read-only mode</div=
-><div>
-<br></div><div>In this experiment, we run out of the metadata, and by the &=
-quot;Allocated pool data&quot; field, we infered that the maximum thin devi=
-ce was about 30.59TB, was it correct?</div><div><br></div><div>Regards,</di=
-v>
-<div>Burton</div><div><br></div>
-</div>
-
---001a11c227ee3388a804e33fb7a6--
-
-
---===============2839090799022553701==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2839090799022553701==--
+RG5lIDYuOC4yMDEzIDA2OjE4LCDmooHmloflvaUgbmFwc2FsKGEpOgo+IEhpIGZvbGtzLAo+Cj4g
+SSBjdXJyZW50bHkgZG8gc29tZSBleHBlcmltZW50cyBvbiB0aGUgZG0tdGhpbi1wcm92aXNpb25p
+bmcgdGFyZ2V0cy4KPiBPbmUgb2YgdGhlc2UgZXhwZXJpbWVudHMgaXMgdHJ5aW5nIHRvIGNyZWF0
+ZS9maW5kLW91dCB0aGUgbGFyZ2VzdCB0aGluIHZvbHVtbgo+IG9uIHRoZSBwb29sLgoKVGhlcmUg
+aXMgY3VycmVudGx5IG5vdCB5ZXQgbHZtMiBzdXBwb3J0IGZvciB0aGlzIG9wZXJhdGlvbi4KSXQg
+bmVlZHMgdG8gcGFyc2UgdGhpbl9kdW1wIG91dHB1dCBhbmQgZG8gYW4gYWNjb3VudGluZyBvZiBl
+YWNoIGJsb2NrCih3aGljaCBpcyBub3QgYSBjaGVhcCBvcGVyYXRpb24pLgpJdCdzIGFsc28gaGFy
+ZCB0byBzYXkgaG93IHRvIGFjY291bnQgc2hhcmVkIGJsb2NrcyBiZXR3ZWVuIG11bHRpcGxlIHZv
+bHVtZXMuClNvIHRoZXJlIGNvdWxkIGJlIGluZm9ybWF0aW9uIGFib3V0IHRvdGFsIHVzZWQgYmxv
+Y2tzLCBhbmQgaG93IG1hbnkgYmxvY2tzCndvdWxkIGJlIGZyZWUsIGlmIHRoaXMgdGhpbiB2b2x1
+bWUgd291bGQgYmUgcmVtb3ZlZC4KClRoZSBvbmx5IGRpc3BsYXllZCBpbmZvIG5vdyBpcyB0aGUg
+aGlnaGVzdCBtYXBwZWQgYmxvY2sgZm9yIHRoaW5fdm9sdW1lLAp3aGljaCBqdXN0IGdpdmVzIHlv
+dSB2ZXJ5ICdsaWdodCcgaW5mbyBhYm91dCB1c2FnZSBvZiBzdWNoIHZvbHVtZS4KCgo+IEFzIEkg
+S25vdywgZWFjaCB0aW1lIHdlIHByb3Zpc2lvbiBibG9ja3MgZnJvbSB0aGUgcG9vbCwgdGhlIG1l
+dGFkYXRhIGlzCj4gY29tc3VtZWQgZm9yIHJlY29yZGluZyB0aGUgbWFwcGluZyBpbmZvcm1hdGlv
+bi4KPiBCeSBleGVjdXRpbmcgdGhlIGx2ZGlzcGxheSBjb21tYW5kLCB3ZSBjYW4gb2JzZXJ2ZSB0
+aGUgc3RhdHVzIG9mIHRoZSBwb29sICYKPiBtZXRhZGF0YSB1c2FnZSwgc3VjaCBhcwo+ICQgc3Vk
+byBsdmRpc3BsYXkgfCBncmVwIEFsbG9jYXRlZAo+ICAgIEFsbG9jYXRlZCBwb29sIGRhdGEgICAg
+Ny44NyUKPiAgICBBbGxvY2F0ZWQgbWV0YWRhdGEgICAgNi4wOSUKPgo+IEFuZCB0aGUgZm9sbG93
+aW5nIGNvbnRlbnQgaXMgZXh0cmFjdGVkIGZyb20gdGhpbi1wcm92aXNpb25pbmcudHh0IGZyb20K
+PiBEb2N1bWVudGF0aW9uXGRldmljZS1tYXBwZXIgaW4gdGhlIHNvdXJjZSB0cmVlLgo+ICJBcyBh
+IGd1aWRlLCB3ZSBzdWdnZXN0IHlvdSBjYWxjdWxhdGUgdGhlIG51bWJlciBvZiBieXRlcyB0byB1
+c2UgaW4gdGhlCj4gbWV0YWRhdGEgZGV2aWNlIGFzIDQ4ICogJGRhdGFfZGV2X3NpemUgLyAkZGF0
+YV9ibG9ja19zaXplIGJ1dCByb3VuZCBpdCB1cAo+IHRvIDJNQiBpZiB0aGUgYW5zd2VyIGlzIHNt
+YWxsZXIuIgo+Cj4gSWYgdGhlIHNpemUgb2YgdGhlIG1ldGFkYXRhIGRldiB3YXMgZml4ZWQgYXMg
+MTZHLCBhbmQgdGhlIGJsb2NrIHNpemUgb2YgdGhlCj4gcG9vbCBkZXYgd2FzIHNldCBhcyA2NEss
+Cj4gdGhlbiB3ZSBtYXkgaW5mZXIgdGhhdCB0aGUgbGFyZ2VzdCB2b2x1bW4gc2l6ZSBvZiB0aGUg
+dGhpbiBpcyAyMS4zM1RCLgo+Cj4gKDQ4ICogJGRhdGFfZGV2X3NpemUgLyA2NEsgPSAxNkcKPiAg
+ICRkYXRhX2Rldl9zaXplID0gMTZHICogNjRLIC8gNDggPSAyMS4zM1RCKQo+Cj4gSWYgdGhpcyBp
+bmZlcmVuY2Ugd2FzIG5vdCBjb3JyZWN0LCBwbGVhc2Uga2luZGx5IGxldCBtZSBrbm93IHdoeS4K
+ClRoZSBmb3JtdWxhIHRoZXJlIGlzIGp1c3Qgc29tZSBhcHByb3hpbWF0aW9uLgpOZXdlc3QgZGV2
+aWNlLW1hcHBlci1wZXJzaXN0ZW50LWRhdGEgIGhhdmUgZXZlbiBiZXR0ZXIgaW1wcm92ZWQgZm9y
+bXVsYQp0byBjYWxjdWxhdGUgYWxzbyB3aXRoIG51bWJlciBvZiB0aGluIHZvbHVtZXMgaW5zaWRl
+IHBvb2wuCgpBbnl3YXkgY3VycmVudCBsaW1pdCBvZiBrZXJuZWwgbWRhICBzaXplIG9mIDE2RyAt
+IGl0IG1heSBiZQp1c2VkIGZvciBhZGRyZXNzaW5nIHZhcmlhYmxlIHNpemVkIHRoaW4gcG9vbHMu
+CihTbyBpdHMgbm90IGEgcHJvYmxlbSB0byB1c2UgaS5lLiAxRUIgdGhpbiBwb29sIHNpemUgLSBq
+dXN0CmluIHRoaXMgY2FzZSB5b3Ugc2hvdWxkIHByb2JhYmx5IHVzZSBtdWNoIGJpZ2dlciBjaHVu
+ayBzaXplIHRoZW4gNjRLKQoKCj4gVGhlbiBJIGRvIHRoZSBleHBlcmltZW50IHdpdGggdGhlIGZv
+bGxvd2luZyBzdGVwczoKPiAxLiBjcmVhdGUgYSB0aGluLXBvb2wgd2l0aCBzaXplIDIxLjMzVCBv
+biBteSBSQUlEMCwgc2F5LCB0aGUgbGFyZ2VzdCBzaXplIHdlCj4gaW5mZXJlZCwgYW5kIGJsb2Nr
+IHNpemUgNjRLLCBtZXRhZGF0YSBzaXplIDE2Rwo+IDIuIGNyZWF0ZSBhIHRoaW4gdm9sdW1uIHdp
+dGggdmlydHVhbCBzaXplIDIxLjMzVC4KPiAzLiBkZCBkYXRhKC9kZXYvdXJhbWRvbSkgdG8gdGhl
+IHRoaW4gZGV2aWNlCj4KPiBGaW5hbGx5LCBJIG9ic2VydmVkIHRoYXQKPiAgICBBbGxvY2F0ZWQg
+cG9vbCBkYXRhICAgIDEwMC4wMCUKPiAgICBBbGxvY2F0ZWQgbWV0YWRhdGEgICAgIDcxLjg5JQo+
+Cj4gSXQgc2VlbWVkIHRoYXQgdGhlIHBvb2wgZGF0YSBoYWQgYWxyZWFkeSBvdXQgb2YgdXNhZ2Us
+IGJ1dCB0aGUgbWV0YWRhdGEgd2FzIG5vdC4KPiBEaWQgaXQgbWVhbnMgdGhhdCwgbWV0YWRhdGEg
+MTZHIGNhbiBiZSBhcHBsaWVkIHRvIHJlY29yZCBhIHRoaW4gZGV2IHdpdGggc2l6ZQo+IGJpZ2dl
+ciB0aGFuIDIxLjczVD8KCldlbGwgaXQgYWx3YXlzIGRlcGVuZHMgd2hhdCBkbyB5b3Ugd2FudCB0
+byBkbyAtIGlmIHlvdSB3aWxsIHVzZSBpdCBmb3IgCnNuYXBzaG90IHlvdSB3aWxsIGxpa2VseSBy
+dW4gb3V0LW9mLXNwYWNlLgoKSWYgeW91IHVzZSBpdCBvbmx5IGZvciBwcm92aXNpb25pbmcgLSB5
+b3UgbWF5IHVzZSBtdWNoIGJpZ2dlciBjaHVua3NpemUKYW5kIHNpZ25pZmljYW50bHkgcmVkdWNl
+IG1ldGFkYXRhIHVzYWdlIGFuZCBpbXByb3ZlIHBlcmZvcm1hbmNlLgoKPiAxLiBjcmVhdGUgYSB0
+aGluLXBvb2wgb24gbXkgUkFJRDAgd2l0aCBzaXplIDM2LjIwVCwgYW5kIGJsb2NrIHNpemUgNjRL
+LAo+IG1ldGFkYXRhIHNpemUgMTZHCgpVc2luZyBibG9ja3NpemUvY2h1bmtzaXplKGluIGx2bTIg
+dGVybWlub2xvZ3kpIDY0SyBmb3IgIDM2VCBkZXZpY2UgaXMganVzdApub3QgYSBnb29kIGlkZWEu
+Cgo+IEluIHRoaXMgZXhwZXJpbWVudCwgd2UgcnVuIG91dCBvZiB0aGUgbWV0YWRhdGEsIGFuZCBi
+eSB0aGUgIkFsbG9jYXRlZCBwb29sCj4gZGF0YSIgZmllbGQsIHdlIGluZmVyZWQgdGhhdCB0aGUg
+bWF4aW11bSB0aGluIGRldmljZSB3YXMgYWJvdXQgMzAuNTlUQiwgd2FzIGl0Cj4gY29ycmVjdD8K
+ClRoZSBtYWpvciBydWxlIGhlcmUgaXMgdG8gb2JzZXJ2ZSBob3cgZnVsbCBtZXRhZGF0YSBhcmUg
+LSBhbmQgdGhleSBhcmUgZ2V0dGluZwp0b28gZnVsbCAtIHJlbW92ZSB2b2x1bWVzLgoKQXMgc2Fp
+ZCBhYm92ZSB5b3UgbmVlZCB0byBwbGFuIHRoZSB1c2UtY2FzZSAtIDY0SyBpcyBnb29kIGZvciBs
+b3RzIG9mIApzbmFwc2hvdCwgYmlnZ2VyIGNodW5rIHNpemVzIGFyZSBnb29kIGZvciBzcGFjZSBw
+cm92aXNpb25pbmcgKGkuZS4gMU1CKS4KCkJUVyAtIGRpZCB5b3UgcmVhbGx5IHdyb3RlIDM2VEIg
+b2YgZGF0YSAtIGhvdyBsb2cgd2FzIHRoaXMgdGVzdCAgcnVubmluZyA/CgpaZGVuZWsKCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
