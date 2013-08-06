@@ -1,202 +1,169 @@
-From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
-Subject: [PATCH] scsi_dh_rdac:Log batched lun information with mode select
- command
-Date: Mon, 5 Aug 2013 10:43:17 +0000
-Message-ID: <FB8A412F33166C4A930D37BD63236C902ACC352C@SACEXCMBX06-PRD.hq.netapp.com>
+From: =?Big5?B?seek5avb?= <burton.paramountcy@gmail.com>
+Subject: dm-thin - issue about the maximum size of the metadata
+	device
+Date: Tue, 6 Aug 2013 12:18:22 +0800
+Message-ID: <CAKG=6JXeGenwbFmgt9z+ScdMEAdxGHxH7NkoXxm_CmzCM8QxZQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: James Bottomley <jbottomley@parallels.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
+Content-Type: multipart/mixed; boundary="===============2839090799022553701=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-With RDAC mode, mode select is batched together for multiple LUNs and sent to one of the path for failover.
-Currently Modeselect is logged without details of LUNs batched together. Modeselect command can be logged
-with batched lun id information so that failover command can be tracked on per LUN basis in the syslog.
+--===============2839090799022553701==
+Content-Type: multipart/alternative; boundary=001a11c227ee3388a804e33fb7a6
 
-Incase if the luns involved in mode select are 16 or less, plain lun number information is logged.
-If luns are large, all the lun numbers are encoded into 256 bit format and logged as hex string.
+--001a11c227ee3388a804e33fb7a6
+Content-Type: text/plain; charset=ISO-8859-1
 
-Encode Logic for each lun number into 32 byte string:
-lun_bit_string[lun/8] |= (1 << (lun % 8));
+Hi folks,
 
-Decode Logic for any specific lun number which is set in mode select in 32 byte string:
-lun number = number of bits before the specific byte +  position index [0-7] of the set bit in the specific byte from R->L.
+I currently do some experiments on the dm-thin-provisioning targets.
+One of these experiments is trying to create/find-out the largest thin
+volumn on the pool.
 
-Log Snippet:
+As I Know, each time we provision blocks from the pool, the metadata is
+comsumed for recording the mapping information.
+By executing the lvdisplay command, we can observe the status of the pool &
+metadata usage, such as
+$ sudo lvdisplay | grep Allocated
+  Allocated pool data    7.87%
+  Allocated metadata    6.09%
 
-Jul 24 17:46:05 Linux-215 kernel: sd 30:0:0:94: rdac: array Marryjane, ctlr 1, queueing MODE_SELECT command for 11 lun(s) [43,89,93,94,95,97,99,100,106,107,111]
-Jul 24 17:46:06 Linux-215 kernel: sd 30:0:0:94: rdac: array Marryjane, ctlr 1, MODE_SELECT completed for 11 lun(s) [43,89,93,94,95,97,99,100,106,107,111]
+And the following content is extracted from thin-provisioning.txt from
+Documentation\device-mapper in the source tree.
+"As a guide, we suggest you calculate the number of bytes to use in the
+metadata device as 48 * $data_dev_size / $data_block_size but round it up
+to 2MB if the answer is smaller."
 
-Jul 24 17:49:17 Linux-215 kernel: sd 29:0:1:9: rdac: array Marryjane, ctlr 0, queueing MODE_SELECT command for 54 lun(s) [0082a0aa8aaaeaaaaafaeaeb5aad000000000000000000000000000000000000]
-Jul 24 17:49:19 Linux-215 kernel: sd 29:0:1:9: rdac: array Marryjane, ctlr 0, MODE_SELECT completed for 54 lun(s) [0082a0aa8aaaeaaaaafaeaeb5aad000000000000000000000000000000000000]
+If the size of the metadata dev was fixed as 16G, and the block size of the
+pool dev was set as 64K,
+then we may infer that the largest volumn size of the thin is 21.33TB.
 
-Signed-off-by: Shiva Krishna Merla<shivakrishna.merla@netapp.com>
-Signed-off-by: Krishnasamy Somasundaram<somasundaram.krishnasamy@netapp.com>
-Signed-off-by: Sean Stewart <sean.stewart@netapp.com>
+(48 * $data_dev_size / 64K = 16G
+ $data_dev_size = 16G * 64K / 48 = 21.33TB)
 
----
---- a/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2013-07-04 19:05:10.000000000 +0530
-+++ b/drivers/scsi/device_handler/scsi_dh_rdac.c	2013-07-24 17:56:42.000000000 +0530
-@@ -257,6 +257,11 @@ do { \
- 		sdev_printk(KERN_INFO, sdev, RDAC_NAME ": " f "\n", ## arg); \
- } while (0);
- 
-+/* number of bytes needed to represent luns involved
-+ * in mode select in bit string format
-+ */
-+#define LUN_FAILOVER_BYTES	32
-+
- static inline struct rdac_dh_data *get_rdac_data(struct scsi_device *sdev)
- {
- 	struct scsi_dh_data *scsi_dh_data = sdev->scsi_dh_data;
-@@ -295,7 +300,8 @@ static struct request *get_rdac_req(stru
- }
- 
- static struct request *rdac_failover_get(struct scsi_device *sdev,
--			struct rdac_dh_data *h, struct list_head *list)
-+			struct rdac_dh_data *h, struct list_head *list,
-+			unsigned int *num_luns)
- {
- 	struct request *rq;
- 	struct rdac_mode_common *common;
-@@ -331,7 +337,10 @@ static struct request *rdac_failover_get
- 	common->rdac_options = RDAC_FORCED_QUIESENCE;
- 
- 	list_for_each_entry(qdata, list, entry) {
--		lun_table[qdata->h->lun] = 0x81;
-+		if (lun_table[qdata->h->lun] != 0x81) {
-+			lun_table[qdata->h->lun] = 0x81;
-+			(*num_luns)++;
-+		}
- 	}
- 
- 	/* get request for block layer packet command */
-@@ -582,6 +591,77 @@ done:
- 	return err;
- }
- 
-+/* encode luns involved in mode select into 256 bits string.
-+ * decode logic for lun number set in each byte is as follows:
-+ * lun number = number of bits before the current byte +
-+ * position index [0-7] of the set bit in the current byte from R->L
-+ */
-+static void lun_table_bitstring(unsigned char *lun_table,
-+		unsigned int lun_table_length, unsigned char *lun_str)
-+{
-+	u8 lun_bit_table[LUN_FAILOVER_BYTES] = {0};
-+	u8 pos = 0, ret, byte;
-+	unsigned int lun;
-+
-+	BUG_ON(lun_str == NULL);
-+
-+	for (lun = 0; lun < lun_table_length; ++lun) {
-+		if (lun_table[lun] == 0x81)
-+			lun_bit_table[lun/8] |= (1 << (lun % 8));
-+	}
-+	for (byte = 0; byte < LUN_FAILOVER_BYTES; ++byte) {
-+		ret = snprintf(lun_str+pos, 3, "%02x",
-+				lun_bit_table[byte]);
-+		pos = pos+ret;
-+	}
-+	lun_str[pos] = '\0';
-+	return ;
-+}
-+
-+/* get lun id's in mode select in either bit encoded
-+ * or plain string format based on number of luns batched
-+ */
-+static void lun_table_string(unsigned char *lun_table,
-+		unsigned int lun_table_length,
-+		unsigned char *lun_str, unsigned int num_luns)
-+{
-+	u8 ret;
-+	unsigned int lun, pos = 0;
-+
-+	BUG_ON(lun_str == NULL);
-+
-+	/* prefer encoded bit string for large number or luns */
-+	if (num_luns > 16) {
-+		lun_table_bitstring(lun_table, lun_table_length, lun_str);
-+	} else {
-+		for (lun = 0; lun < lun_table_length; ++lun) {
-+			if (lun_table[lun] == 0x81) {
-+				ret = snprintf(lun_str+pos, 4, "%d", lun);
-+				lun_str[pos+ret] = ',';
-+				pos = pos+ret+1;
-+			}
-+		}
-+		lun_str[pos-1] = '\0';
-+	}
-+	return ;
-+}
-+
-+/* get mode select lun table string for debug pusposes */
-+static void get_ms_lunstring(struct rdac_controller *ctlr,
-+			unsigned char *lun_str, unsigned int num_luns)
-+{
-+	if (likely(ctlr->use_ms10)) {
-+		struct rdac_pg_expanded *rdac_pg = &ctlr->mode_select.expanded;
-+		lun_table_string(&rdac_pg->lun_table[0],
-+			256, lun_str, num_luns);
-+	} else {
-+		struct rdac_pg_legacy *rdac_pg = &ctlr->mode_select.legacy;
-+		lun_table_string(&rdac_pg->lun_table[0],
-+			MODE6_MAX_LUN, lun_str, num_luns);
-+	}
-+	return ;
-+}
-+
- static void send_mode_select(struct work_struct *work)
- {
- 	struct rdac_controller *ctlr =
-@@ -592,6 +672,8 @@ static void send_mode_select(struct work
- 	struct request_queue *q = sdev->request_queue;
- 	int err, retry_cnt = RDAC_RETRY_COUNT;
- 	struct rdac_queue_data *tmp, *qdata;
-+	unsigned int num_luns = 0;
-+	unsigned char lun_str[LUN_FAILOVER_BYTES * 2 + 1] = {0};
- 	LIST_HEAD(list);
- 
- 	spin_lock(&ctlr->ms_lock);
-@@ -602,14 +684,19 @@ static void send_mode_select(struct work
- 
- retry:
- 	err = SCSI_DH_RES_TEMP_UNAVAIL;
--	rq = rdac_failover_get(sdev, h, &list);
-+	rq = rdac_failover_get(sdev, h, &list, &num_luns);
- 	if (!rq)
- 		goto done;
- 
-+	/* get lun debug string only once */
-+	if (retry_cnt == RDAC_RETRY_COUNT)
-+		get_ms_lunstring(ctlr, lun_str, num_luns);
-+
- 	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
--		"%s MODE_SELECT command",
-+		"%s MODE_SELECT command for %d lun(s) [%s]",
- 		(char *) h->ctlr->array_name, h->ctlr->index,
--		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
-+		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" :
-+		"retrying", num_luns, lun_str);
- 
- 	err = blk_execute_rq(q, NULL, rq, 1);
- 	blk_put_request(rq);
-@@ -621,8 +708,9 @@ retry:
- 	if (err == SCSI_DH_OK) {
- 		h->state = RDAC_STATE_ACTIVE;
- 		RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
--				"MODE_SELECT completed",
--				(char *) h->ctlr->array_name, h->ctlr->index);
-+			"MODE_SELECT completed for %d lun(s) [%s]",
-+			(char *) h->ctlr->array_name, h->ctlr->index,
-+			num_luns, lun_str);
- 	}
- 
- done:
---
+If this inference was not correct, please kindly let me know why.
 
---
+Then I do the experiment with the following steps:
+1. create a thin-pool with size 21.33T on my RAID0, say, the largest size
+we infered, and block size 64K, metadata size 16G
+2. create a thin volumn with virtual size 21.33T.
+3. dd data(/dev/uramdom) to the thin device
+
+Finally, I observed that
+  Allocated pool data    100.00%
+  Allocated metadata     71.89%
+
+It seemed that the pool data had already out of usage, but the metadata was
+not.
+Did it means that, metadata 16G can be applied to record a thin dev with
+size bigger than 21.73T?
+
+I did another experiment. In this time, I enlarged the size of pool/ thin
+dev as big as I could offer.
+
+1. create a thin-pool on my RAID0 with size 36.20T, and block size 64K,
+metadata size 16G
+2. create a thin volumn with virtual size 36.20T.
+3. dd data to the thin device
+
+Finally, I observed that
+  Allocated pool data    84.52%
+  Allocated metadata    99.99%
+
+And these messages were shown in dmesge
+device-mapper: space map metadata: out of metadata space
+device-mapper: thin: pre_alloc_func: dm_thin_insert_block failed
+device-mapper: space map metadata: out of metadata space
+device-mapper: thin: commit failed, error = -28
+device-mapper: thin: switching pool to read-only mode
+
+In this experiment, we run out of the metadata, and by the "Allocated pool
+data" field, we infered that the maximum thin device was about 30.59TB, was
+it correct?
+
+Regards,
+Burton
+
+--001a11c227ee3388a804e33fb7a6
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi folks,</div><div><br></div><div>I currently do som=
+e experiments on the dm-thin-provisioning targets.</div><div>One of these e=
+xperiments is trying to create/find-out the largest thin volumn on the pool=
+.</div>
+<div><br></div><div>As I Know, each time we provision blocks from the pool,=
+ the metadata is comsumed for recording the mapping information.</div><div>=
+By executing the lvdisplay command, we can observe the status of the pool &=
+amp; metadata usage, such as</div>
+<div>$ sudo lvdisplay | grep Allocated</div><div>=A0 Allocated pool data =
+=A0 =A07.87%</div><div>=A0 Allocated metadata =A0 =A06.09%</div><div><br></=
+div><div>And the following content is extracted from thin-provisioning.txt =
+from Documentation\device-mapper in the source tree.</div>
+<div>&quot;As a guide, we suggest you calculate the number of bytes to use =
+in the</div><div>metadata device as 48 * $data_dev_size / $data_block_size =
+but round it up</div><div>to 2MB if the answer is smaller.&quot;</div><div>
+<br></div><div>If the size of the metadata dev was fixed as 16G, and the bl=
+ock size of the pool dev was set as 64K,=A0</div><div>then we may infer tha=
+t the largest volumn size of the thin is 21.33TB.</div><div><br></div><div>
+(48 * $data_dev_size / 64K =3D 16G</div><div>=A0$data_dev_size =3D 16G * 64=
+K / 48 =3D 21.33TB)</div><div><br></div><div>If this inference was not corr=
+ect, please kindly let me know why.</div><div><br></div><div>Then I do the =
+experiment with the following steps:</div>
+<div>1. create a thin-pool with size 21.33T on my RAID0, say, the largest s=
+ize we infered, and block size 64K, metadata size 16G</div><div>2. create a=
+ thin volumn with virtual size 21.33T.</div><div>3. dd data(/dev/uramdom) t=
+o the thin device</div>
+<div><br></div><div>Finally, I observed that</div><div>=A0 Allocated pool d=
+ata =A0 =A0100.00%</div><div>=A0 Allocated metadata =A0 =A0 71.89%</div><di=
+v><br></div><div>It seemed that the pool data had already out of usage, but=
+ the metadata was not.</div>
+<div>Did it means that, metadata 16G can be applied to record a thin dev wi=
+th size bigger than 21.73T?</div><div><br></div><div>I did another experime=
+nt. In this time, I enlarged the size of pool/ thin dev as big as I could o=
+ffer.</div>
+<div><br></div><div>1. create a thin-pool on my RAID0 with size 36.20T, and=
+ block size 64K, metadata size 16G</div><div>2. create a thin volumn with v=
+irtual size 36.20T.</div><div>3. dd data to the thin device</div><div><br>
+</div><div>Finally, I observed that</div><div>=A0 Allocated pool data =A0 =
+=A084.52%</div><div>=A0 Allocated metadata =A0 =A099.99%</div><div><br></di=
+v><div>And these messages were shown in dmesge</div><div><span class=3D"" s=
+tyle=3D"white-space:pre">	</span>device-mapper: space map metadata: out of =
+metadata space</div>
+<div><span class=3D"" style=3D"white-space:pre">	</span>device-mapper: thin=
+: pre_alloc_func: dm_thin_insert_block failed</div><div><span class=3D"" st=
+yle=3D"white-space:pre">	</span>device-mapper: space map metadata: out of m=
+etadata space</div>
+<div><span class=3D"" style=3D"white-space:pre">	</span>device-mapper: thin=
+: commit failed, error =3D -28</div><div><span class=3D"" style=3D"white-sp=
+ace:pre">	</span>device-mapper: thin: switching pool to read-only mode</div=
+><div>
+<br></div><div>In this experiment, we run out of the metadata, and by the &=
+quot;Allocated pool data&quot; field, we infered that the maximum thin devi=
+ce was about 30.59TB, was it correct?</div><div><br></div><div>Regards,</di=
+v>
+<div>Burton</div><div><br></div>
+</div>
+
+--001a11c227ee3388a804e33fb7a6--
+
+
+--===============2839090799022553701==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2839090799022553701==--
