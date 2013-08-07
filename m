@@ -1,157 +1,143 @@
 From: Kent Overstreet <kmo@daterainc.com>
-Subject: [PATCH 13/22] ceph: Convert to immutable biovecs
-Date: Wed,  7 Aug 2013 14:54:22 -0700
-Message-ID: <1375912471-5106-14-git-send-email-kmo@daterainc.com>
+Subject: [PATCH 14/22] block: Kill bio_iovec_idx(), __bio_iovec()
+Date: Wed,  7 Aug 2013 14:54:23 -0700
+Message-ID: <1375912471-5106-15-git-send-email-kmo@daterainc.com>
 References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: axboe@kernel.dk
-Cc: neilb@suse.de, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Kent Overstreet <kmo@daterainc.com>, Sage Weil <sage@inktank.com>, ceph-devel@vger.kernel.org
+Cc: neilb@suse.de, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Kent Overstreet <kmo@daterainc.com>
 List-Id: dm-devel.ids
 
-Now that we've got a mechanism for immutable biovecs -
-bi_iter.bi_bvec_done - we need to convert drivers to use primitives that
-respect it instead of using the bvec array directly.
+bio_iovec_idx() and __bio_iovec() don't have any valid uses anymore -
+previous users have been converted to bio_iovec_iter() or other methods.
+
+__BVEC_END() has to go too - the bvec array can't be used directly for
+the last biovec because we might only be using the first portion of it,
+we have to iterate over the bvec array with bio_for_each_segment() which
+checks against the current value of bi_iter.bi_size.
 
 Signed-off-by: Kent Overstreet <kmo@daterainc.com>
 Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Sage Weil <sage@inktank.com>
-Cc: ceph-devel@vger.kernel.org
 ---
- include/linux/ceph/messenger.h |  4 ++--
- net/ceph/messenger.c           | 43 +++++++++++++++++-------------------------
- 2 files changed, 19 insertions(+), 28 deletions(-)
+ block/blk-merge.c   | 13 +++++++++++--
+ include/linux/bio.h | 26 ++++++++------------------
+ 2 files changed, 19 insertions(+), 20 deletions(-)
 
-diff --git a/include/linux/ceph/messenger.h b/include/linux/ceph/messenger.h
-index 7c1420b..091fdb6 100644
---- a/include/linux/ceph/messenger.h
-+++ b/include/linux/ceph/messenger.h
-@@ -1,6 +1,7 @@
- #ifndef __FS_CEPH_MESSENGER_H
- #define __FS_CEPH_MESSENGER_H
- 
-+#include <linux/blk_types.h>
- #include <linux/kref.h>
- #include <linux/mutex.h>
- #include <linux/net.h>
-@@ -119,8 +120,7 @@ struct ceph_msg_data_cursor {
- #ifdef CONFIG_BLOCK
- 		struct {				/* bio */
- 			struct bio	*bio;		/* bio from list */
--			unsigned int	vector_index;	/* vector from bio */
--			unsigned int	vector_offset;	/* bytes from vector */
-+			struct bvec_iter bvec_iter;
- 		};
- #endif /* CONFIG_BLOCK */
- 		struct {				/* pages */
-diff --git a/net/ceph/messenger.c b/net/ceph/messenger.c
-index eb0a46a..86d336e 100644
---- a/net/ceph/messenger.c
-+++ b/net/ceph/messenger.c
-@@ -777,13 +777,12 @@ static void ceph_msg_data_bio_cursor_init(struct ceph_msg_data_cursor *cursor,
- 
- 	bio = data->bio;
- 	BUG_ON(!bio);
--	BUG_ON(!bio->bi_vcnt);
- 
- 	cursor->resid = min(length, data->bio_length);
- 	cursor->bio = bio;
--	cursor->vector_index = 0;
--	cursor->vector_offset = 0;
--	cursor->last_piece = length <= bio->bi_io_vec[0].bv_len;
-+	cursor->bvec_iter = bio->bi_iter;
-+	cursor->last_piece =
-+		cursor->resid <= bio_iter_len(bio, cursor->bvec_iter);
- }
- 
- static struct page *ceph_msg_data_bio_next(struct ceph_msg_data_cursor *cursor,
-@@ -792,71 +791,63 @@ static struct page *ceph_msg_data_bio_next(struct ceph_msg_data_cursor *cursor,
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index 8940562..b53ddac 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -88,6 +88,9 @@ EXPORT_SYMBOL(blk_recount_segments);
+ static int blk_phys_contig_segment(struct request_queue *q, struct bio *bio,
+ 				   struct bio *nxt)
  {
- 	struct ceph_msg_data *data = cursor->data;
- 	struct bio *bio;
--	struct bio_vec *bio_vec;
--	unsigned int index;
-+	struct bio_vec bio_vec;
++	struct bio_vec end_bv, nxt_bv;
++	struct bvec_iter iter;
++
+ 	if (!blk_queue_cluster(q))
+ 		return 0;
  
- 	BUG_ON(data->type != CEPH_MSG_DATA_BIO);
+@@ -98,14 +101,20 @@ static int blk_phys_contig_segment(struct request_queue *q, struct bio *bio,
+ 	if (!bio_has_data(bio))
+ 		return 1;
  
- 	bio = cursor->bio;
- 	BUG_ON(!bio);
+-	if (!BIOVEC_PHYS_MERGEABLE(__BVEC_END(bio), __BVEC_START(nxt)))
++	bio_for_each_segment(end_bv, bio, iter)
++		if (end_bv.bv_len == iter.bi_size)
++			break;
++
++	nxt_bv = bio_iovec(nxt);
++
++	if (!BIOVEC_PHYS_MERGEABLE(&end_bv, &nxt_bv))
+ 		return 0;
  
--	index = cursor->vector_index;
--	BUG_ON(index >= (unsigned int) bio->bi_vcnt);
-+	bio_vec = bio_iter_iovec(bio, cursor->bvec_iter);
+ 	/*
+ 	 * bio and nxt are contiguous in memory; check if the queue allows
+ 	 * these two to be merged into one
+ 	 */
+-	if (BIO_SEG_BOUNDARY(q, bio, nxt))
++	if (BIOVEC_SEG_BOUNDARY(q, &end_bv, &nxt_bv))
+ 		return 1;
  
--	bio_vec = &bio->bi_io_vec[index];
--	BUG_ON(cursor->vector_offset >= bio_vec->bv_len);
--	*page_offset = (size_t) (bio_vec->bv_offset + cursor->vector_offset);
-+	*page_offset = (size_t) bio_vec.bv_offset;
- 	BUG_ON(*page_offset >= PAGE_SIZE);
- 	if (cursor->last_piece) /* pagelist offset is always 0 */
- 		*length = cursor->resid;
- 	else
--		*length = (size_t) (bio_vec->bv_len - cursor->vector_offset);
-+		*length = (size_t) bio_vec.bv_len;
- 	BUG_ON(*length > cursor->resid);
- 	BUG_ON(*page_offset + *length > PAGE_SIZE);
+ 	return 0;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 9736683..486a997 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -61,9 +61,6 @@
+  * various member access, note that bio_data should of course not be used
+  * on highmem page vectors
+  */
+-#define bio_iovec_idx(bio, idx)	(&((bio)->bi_io_vec[(idx)]))
+-#define __bio_iovec(bio)	bio_iovec_idx((bio), (bio)->bi_iter.bi_idx)
+-
+ #define __bvec_iter_bvec(bvec, iter)	(&(bvec)[(iter).bi_idx])
  
--	return bio_vec->bv_page;
-+	return bio_vec.bv_page;
+ #define bvec_iter_page(bvec, iter)				\
+@@ -143,19 +140,16 @@ static inline void *bio_data(struct bio *bio)
+  * permanent PIO fall back, user is probably better off disabling highmem
+  * I/O completely on that queue (see ide-dma for example)
+  */
+-#define __bio_kmap_atomic(bio, idx)				\
+-	(kmap_atomic(bio_iovec_idx((bio), (idx))->bv_page) +	\
+-		bio_iovec_idx((bio), (idx))->bv_offset)
++#define __bio_kmap_atomic(bio, iter)				\
++	(kmap_atomic(bio_iter_iovec((bio), (iter)).bv_page) +	\
++		bio_iter_iovec((bio), (iter)).bv_offset)
+ 
+-#define __bio_kunmap_atomic(addr) kunmap_atomic(addr)
++#define __bio_kunmap_atomic(addr)	kunmap_atomic(addr)
+ 
+ /*
+  * merge helpers etc
+  */
+ 
+-#define __BVEC_END(bio)		bio_iovec_idx((bio), (bio)->bi_vcnt - 1)
+-#define __BVEC_START(bio)	bio_iovec_idx((bio), (bio)->bi_iter.bi_idx)
+-
+ /* Default implementation of BIOVEC_PHYS_MERGEABLE */
+ #define __BIOVEC_PHYS_MERGEABLE(vec1, vec2)	\
+ 	((bvec_to_phys((vec1)) + (vec1)->bv_len) == bvec_to_phys((vec2)))
+@@ -172,8 +166,6 @@ static inline void *bio_data(struct bio *bio)
+ 	(((addr1) | (mask)) == (((addr2) - 1) | (mask)))
+ #define BIOVEC_SEG_BOUNDARY(q, b1, b2) \
+ 	__BIO_SEG_BOUNDARY(bvec_to_phys((b1)), bvec_to_phys((b2)) + (b2)->bv_len, queue_segment_boundary((q)))
+-#define BIO_SEG_BOUNDARY(q, b1, b2) \
+-	BIOVEC_SEG_BOUNDARY((q), __BVEC_END((b1)), __BVEC_START((b2)))
+ 
+ #define bio_io_error(bio) bio_endio((bio), -EIO)
+ 
+@@ -182,9 +174,7 @@ static inline void *bio_data(struct bio *bio)
+  * before it got to the driver and the driver won't own all of it
+  */
+ #define bio_for_each_segment_all(bvl, bio, i)				\
+-	for (i = 0;							\
+-	     bvl = bio_iovec_idx((bio), (i)), i < (bio)->bi_vcnt;	\
+-	     i++)
++	for (i = 0, bvl = (bio)->bi_io_vec; i < (bio)->bi_vcnt; i++, bvl++)
+ 
+ static inline void bvec_iter_advance(struct bio_vec *bv, struct bvec_iter *iter,
+ 				     unsigned bytes)
+@@ -449,15 +439,15 @@ static inline void bvec_kunmap_irq(char *buffer, unsigned long *flags)
  }
+ #endif
  
- static bool ceph_msg_data_bio_advance(struct ceph_msg_data_cursor *cursor,
- 					size_t bytes)
+-static inline char *__bio_kmap_irq(struct bio *bio, unsigned short idx,
++static inline char *__bio_kmap_irq(struct bio *bio, struct bvec_iter iter,
+ 				   unsigned long *flags)
  {
- 	struct bio *bio;
--	struct bio_vec *bio_vec;
--	unsigned int index;
-+	struct bio_vec bio_vec;
+-	return bvec_kmap_irq(bio_iovec_idx(bio, idx), flags);
++	return bvec_kmap_irq(&bio_iter_iovec(bio, iter), flags);
+ }
+ #define __bio_kunmap_irq(buf, flags)	bvec_kunmap_irq(buf, flags)
  
- 	BUG_ON(cursor->data->type != CEPH_MSG_DATA_BIO);
+ #define bio_kmap_irq(bio, flags) \
+-	__bio_kmap_irq((bio), (bio)->bi_iter.bi_idx, (flags))
++	__bio_kmap_irq((bio), (bio)->bi_iter, (flags))
+ #define bio_kunmap_irq(buf,flags)	__bio_kunmap_irq(buf, flags)
  
- 	bio = cursor->bio;
- 	BUG_ON(!bio);
- 
--	index = cursor->vector_index;
--	BUG_ON(index >= (unsigned int) bio->bi_vcnt);
--	bio_vec = &bio->bi_io_vec[index];
-+	bio_vec = bio_iter_iovec(bio, cursor->bvec_iter);
- 
- 	/* Advance the cursor offset */
- 
- 	BUG_ON(cursor->resid < bytes);
- 	cursor->resid -= bytes;
--	cursor->vector_offset += bytes;
--	if (cursor->vector_offset < bio_vec->bv_len)
-+
-+	bio_advance_iter(bio, &cursor->bvec_iter, bytes);
-+
-+	if (bytes < bio_vec.bv_len)
- 		return false;	/* more bytes to process in this segment */
--	BUG_ON(cursor->vector_offset != bio_vec->bv_len);
- 
- 	/* Move on to the next segment, and possibly the next bio */
- 
--	if (++index == (unsigned int) bio->bi_vcnt) {
-+	if (!cursor->bvec_iter.bi_size) {
- 		bio = bio->bi_next;
--		index = 0;
-+		cursor->bvec_iter = bio->bi_iter;
- 	}
- 	cursor->bio = bio;
--	cursor->vector_index = index;
--	cursor->vector_offset = 0;
- 
- 	if (!cursor->last_piece) {
- 		BUG_ON(!cursor->resid);
- 		BUG_ON(!bio);
- 		/* A short read is OK, so use <= rather than == */
--		if (cursor->resid <= bio->bi_io_vec[index].bv_len)
-+		if (cursor->resid <= bio_iter_len(bio, cursor->bvec_iter))
- 			cursor->last_piece = true;
- 	}
- 
+ static inline bool bio_is_rw(struct bio *bio)
 -- 
 1.8.4.rc1
-
