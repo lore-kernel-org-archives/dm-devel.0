@@ -1,3377 +1,585 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: dm-lc: updates
-Date: Wed, 07 Aug 2013 23:19:15 +0900
-Message-ID: <52025763.8080502@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <kmo-PEzghdH756F8UrSeD/g0lQ@public.gmane.org>
+Subject: [PATCH 09/10] idr: Remove unneeded idr locking, idr_preload() usage
+Date: Wed,  7 Aug 2013 10:46:18 -0700
+Message-ID: <1375897579-8202-9-git-send-email-kmo@daterainc.com>
+References: <1375896905-6074-1-git-send-email-kmo@daterainc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1375896905-6074-1-git-send-email-kmo-PEzghdH756F8UrSeD/g0lQ@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Steve Wise <swise-7bPotxP6k4+P2YhJcF5u+vpXobYPEAuW@public.gmane.org>, Tom Tucker <tom-7bPotxP6k4+P2YhJcF5u+vpXobYPEAuW@public.gmane.org>, =?UTF-8?q?Kai=20M=C3=A4kisara?= <Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alon Levy <alevy-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Airlie <airlied-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, osst-users-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Chris Ball <cjb-2X9k7bc8m7Mdnm+yROfE0A@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Dubov <oakad-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>, Kent Overstreet <kmo-PEzghdH756F8UrSeD/g0lQ@public.gmane.org>, "Nicholas A. Bellinger" <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>, Greg
 List-Id: dm-devel.ids
 
-Hi, DM Guys
-
-Let me report on the latest updates on dm-lc.
-There are two major updates.
-
-(1) Error checks
-Error checks are added to
-where proper error checks is needed
-such as
-- lc_module_init (Thanks to Kumar)
-- lc_ctr
-- (lc-mgr message) "resume_cache"
-- (lc-mgr message) "format_cache"
-- make_arr
-
-They now exit gracefully on errors.
-Please report if my code is wrong.
-
-(2) C90 warnings all cleared
-The codes on the upstream tree
-seem to be without C99 features,
-all the variables are declared
-at the head of the routine.
-
-I have fixed all the codes
-that are against this convention.
-
-But, there is one thing I am wondering.
-
-Because dm-lc utilizes dm_io routines frequently
-that requires dm_io_request and dm_io_region structs
-as the arguments,
-I sometimes need to initialize the structs
-in the middle of a routine
-in designated initializer style for simplicity.
-
-I found that some other DM module factor out
-a I/O routine to
-declare them at the beginning of the routine
-to follow C90 convention
-but for dm-lc it doen't contribute
-to the readability or it may lose it.
-I don't want to give name to each of them to factor out
-because it is meaningless.
-
-As a workaround, I use casting.
-The code below is a code fragment that uses the technique.
-
-		struct dm_io_request io_req;
-		// ... many lines
-		io_req = (struct dm_io_request) {
-			.client = lc_io_client,
-			.bi_rw = WRITE,
-			.notify.fn = NULL,
-			.mem.type = DM_IO_KMEM,
-			.mem.ptr.addr = ctx->wb->data,
-		};
-
-My question is:
-Is this style acceptable?
-or is there any other technique
-to follow C90 convention with minimum efforts?
-
-The code is managed in my Github repo.
-You can access to the lastest code on
-https://github.com/akiradeveloper/dm-lc/blob/develop/Driver/dm-lc.c
-
-I will paste the snapshot at the end.
-It now has 3269 LOC.
-I think the code is converging.
-
-Thank you for reading,
-Akira
-
-(dm-lc.c)
-/*
- * dm-lc.c : Log-structured Caching for Linux.
- * Copyright (C) 2012-2013 Akira Hayakawa <ruby.wktk@gmail.com>
- *
- * This file is released under the GPL.
- */
-
-#define DM_MSG_PREFIX "lc"
-
-#include <linux/module.h>
-#include <linux/version.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/timer.h>
-#include <linux/device-mapper.h>
-#include <linux/dm-io.h>
-
-/*
- * (1 << x) sector.
- * 4 <= x <= 11
- * dm-lc supports segment size up to 1MB.
- *
- * All the comments are if
- * the segment size is the maximum 1MB.
- */
-#define LC_SEGMENTSIZE_ORDER 11
-
-/*
- * By default,
- * we allocate 64 * 1MB RAM buffers statically.
- */
-#define NR_WB_POOL 64
-
-/*
- * The first 4KB (1<<3 sectors) in segment
- * is for metadata.
- */
-#define NR_CACHES_INSEG ((1 << (LC_SEGMENTSIZE_ORDER - 3)) - 1)
-
-static void *do_kmalloc_retry(size_t size, gfp_t flags, int lineno)
-{
-	int count = 0;
-	void *p;
-
-retry_alloc:
-	p = kmalloc(size, flags);
-	if (!p) {
-		count++;
-		DMERR("L.%d: failed allocation(size:%lu, count:%d)",
-		      lineno, size, count);
-		schedule_timeout_interruptible(msecs_to_jiffies(1));
-		goto retry_alloc;
-	}
-	return p;
-}
-#define kmalloc_retry(size, flags) do_kmalloc_retry((size), (flags),
-__LINE__)
-
-struct part {
-	void *memory;
-};
-
-struct arr {
-	struct part *parts;
-	size_t nr_elems;
-	size_t elemsize;
-};
-
-#define ALLOC_SIZE (1 << 16)
-static size_t nr_elems_in_part(struct arr *arr)
-{
-	return ALLOC_SIZE / arr->elemsize;
-};
-
-static size_t nr_parts(struct arr *arr)
-{
-	return dm_div_up(arr->nr_elems, nr_elems_in_part(arr));
-}
-
-static struct arr *make_arr(size_t elemsize, size_t nr_elems)
-{
-	size_t i, j;
-	struct part *part;
-
-	struct arr *arr = kmalloc(sizeof(*arr), GFP_KERNEL);
-	if (!arr)
-		return NULL;
-
-	arr->elemsize = elemsize;
-	arr->nr_elems = nr_elems;
-	arr->parts = kmalloc(sizeof(struct part) * nr_parts(arr), GFP_KERNEL);
-	if (!arr->parts)
-		goto bad_alloc_parts;
-
-	for (i = 0; i < nr_parts(arr); i++) {
-		part = arr->parts + i;
-		part->memory = kmalloc(ALLOC_SIZE, GFP_KERNEL);
-		if (!part->memory) {
-			DMERR("failed to alloc memory in part");
-			for (j = 0; j < i; j++) {
-				part = arr->parts + j;
-				kfree(part->memory);
-			}
-			goto bad_alloc_parts_memory;
-		}
-	}
-	return arr;
-
-bad_alloc_parts_memory:
-	kfree(arr->parts);
-bad_alloc_parts:
-	kfree(arr);
-	return NULL;
-}
-
-static void kill_arr(struct arr *arr)
-{
-	size_t i;
-	for (i = 0; i < nr_parts(arr); i++) {
-		struct part *part = arr->parts + i;
-		kfree(part->memory);
-	}
-	kfree(arr->parts);
-	kfree(arr);
-}
-
-static void *arr_at(struct arr *arr, size_t i)
-{
-	size_t n = nr_elems_in_part(arr);
-	size_t j = i / n;
-	size_t k = i % n;
-	struct part *part = arr->parts + j;
-	return part->memory + (arr->elemsize * k);
-}
-
-static struct dm_io_client *lc_io_client;
-
-struct safe_io {
-	struct work_struct work;
-	int err;
-	unsigned long err_bits;
-	struct dm_io_request *io_req;
-	struct dm_io_region *region;
-	unsigned num_regions;
-};
-static struct workqueue_struct *safe_io_wq;
-
-static void safe_io_proc(struct work_struct *work)
-{
-	struct safe_io *io = container_of(work, struct safe_io, work);
-	io->err_bits = 0;
-	io->err = dm_io(io->io_req, io->num_regions, io->region, &io->err_bits);
-}
-
-/*
- * dm_io wrapper.
- * @thread run operation this in other thread to avoid deadlock.
- */
-static int dm_safe_io_internal(
-		struct dm_io_request *io_req,
-		struct dm_io_region *region, unsigned num_regions,
-		unsigned long *err_bits, bool thread, int lineno)
-{
-	int err;
-	dev_t dev;
-
-	if (thread) {
-		struct safe_io io = {
-			.io_req = io_req,
-			.region = region,
-			.num_regions = num_regions,
-		};
-
-		INIT_WORK_ONSTACK(&io.work, safe_io_proc);
-
-		queue_work(safe_io_wq, &io.work);
-		flush_work(&io.work);
-
-		err = io.err;
-		*err_bits = io.err_bits;
-	} else {
-		err = dm_io(io_req, num_regions, region, err_bits);
-	}
-
-	dev = region->bdev->bd_dev;
-	if (err || *err_bits) {
-		DMERR("L.%d: io err occurs err(%d), err_bits(%lu)",
-		      lineno, err, *err_bits);
-		DMERR("rw(%d), sector(%lu), dev(%u:%u)",
-		      io_req->bi_rw, region->sector,
-		      MAJOR(dev), MINOR(dev));
-	}
-
-	return err;
-}
-unsigned long err_bits_ignored;
-#define dm_safe_io(io_req, region, num_regions, thread) \
-	dm_safe_io_internal((io_req), (region), (num_regions), \
-			    &err_bits_ignored, (thread), __LINE__)
-
-static void dm_safe_io_retry_internal(
-		struct dm_io_request *io_req,
-		struct dm_io_region *region, unsigned num_regions,
-		bool thread, int lineno)
-{
-	int err, count = 0;
-	unsigned long err_bits;
-	dev_t dev;
-
-retry_io:
-	err_bits = 0;
-	err = dm_safe_io_internal(io_req, region, num_regions, &err_bits,
-				  thread, lineno);
-
-	dev = region->bdev->bd_dev;
-	if (err || err_bits) {
-		count++;
-		DMERR("failed io count(%d)", count);
-
-		schedule_timeout_interruptible(msecs_to_jiffies(1000));
-		goto retry_io;
-	}
-
-	if (count) {
-		DMERR("L.%d: io has just turned to OK.", lineno);
-		DMERR("rw(%d), sector(%lu), dev(%u:%u)",
-		      io_req->bi_rw, region->sector, MAJOR(dev), MINOR(dev));
-	}
-}
-#define dm_safe_io_retry(io_req, region, num_regions, thread) \
-	dm_safe_io_retry_internal((io_req), (region), \
-				  (num_regions), (thread), __LINE__)
-
-/*
- * device_id = 0
- * is reserved for invalid cache block.
- */
-typedef u8 device_id;
-
-struct lc_device {
-	struct kobject kobj;
-
-	unsigned char migrate_threshold;
-
-	struct lc_cache *cache;
-
-	device_id id;
-	struct dm_dev *device;
-
-	atomic64_t nr_dirty_caches;
-
-	struct mapped_device *md;
-};
-
-/*
- * cache_id = 0
- * is reserved for no cache.
- */
-typedef u8 cache_id;
-
-/*
- * dm-lc can't manange
- * more than (1 << 8)
- * virtual devices and cache devices.
- */
-#define LC_NR_SLOTS ((1 << 8) - 1)
-
-cache_id cache_id_ptr;
-
-struct lc_cache *lc_caches[LC_NR_SLOTS];
-
-struct lc_device *lc_devices[LC_NR_SLOTS];
-
-/*
- * Type for cache line index.
- *
- * dm-lc can supoort a cache device
- * with size less than 4KB * (1 << 32)
- * that is 16TB.
- */
-typedef u32 cache_nr;
-
-/*
- * Accounts for a 4KB cache line
- * which consists of 8 sectors
- * that is managed by dirty bit for each.
- */
-struct metablock {
-	sector_t sector;
-
-	cache_nr idx; /* Const */
-
-	struct hlist_node ht_list;
-
-	/*
-	 * 8 bit flag for dirtiness
-	 * for each sector in cache line.
-	 *
-	 * In the current implementation,
-	 * we recover only dirty caches
-	 * in crash recovery.
-	 *
-	 * Adding recover flag
-	 * to recover clean caches
-	 * badly complicates the code.
-	 * All in all, nearly meaningless
-	 * because caches are likely to be dirty.
-	 */
-	u8 dirty_bits;
-
-	device_id device_id;
-};
-
-static void inc_nr_dirty_caches(device_id id)
-{
-	struct lc_device *o = lc_devices[id];
-	BUG_ON(!o);
-	atomic64_inc(&o->nr_dirty_caches);
-}
-
-static void dec_nr_dirty_caches(device_id id)
-{
-	struct lc_device *o = lc_devices[id];
-	BUG_ON(!o);
-	atomic64_dec(&o->nr_dirty_caches);
-}
-
-/*
- * On-disk metablock
- */
-struct metablock_device {
-	sector_t sector;
-	device_id device_id;
-
-	u8 dirty_bits;
-
-	u32 lap;
-} __packed;
-
-struct writebuffer {
-	void *data;
-	struct completion done;
-};
-
-#define SZ_MAX (~(size_t)0) /* Renamed backport */
-struct segment_header {
-	struct metablock mb_array[NR_CACHES_INSEG];
-
-	/*
-	 * ID uniformly increases.
-	 * ID 0 is used to tell that the segment is invalid
-	 * and valid id >= 1.
-	 */
-	size_t global_id;
-
-	/*
-	 * Segment can be flushed half-done.
-	 * length is the number of
-	 * metablocks that must be counted in
-	 * in resuming.
-	 */
-	u8 length;
-
-	cache_nr start_idx; /* Const */
-	sector_t start_sector; /* Const */
-
-	struct list_head migrate_list;
-
-	struct completion flush_done;
-
-	struct completion migrate_done;
-
-	spinlock_t lock;
-
-	atomic_t nr_inflight_ios;
-};
-
-#define lockseg(seg, flags) spin_lock_irqsave(&(seg)->lock, flags)
-#define unlockseg(seg, flags) spin_unlock_irqrestore(&(seg)->lock, flags)
-
-static void cleanup_mb_if_dirty(struct segment_header *seg,
-				struct metablock *mb)
-{
-	unsigned long flags;
-
-	bool b = false;
-	lockseg(seg, flags);
-	if (mb->dirty_bits) {
-		mb->dirty_bits = 0;
-		b = true;
-	}
-	unlockseg(seg, flags);
-
-	if (b)
-		dec_nr_dirty_caches(mb->device_id);
-
-}
-
-static u8 atomic_read_mb_dirtiness(struct segment_header *seg,
-				   struct metablock *mb)
-{
-	unsigned long flags;
-	u8 r;
-
-	lockseg(seg, flags);
-	r = mb->dirty_bits;
-	unlockseg(seg, flags);
-
-	return r;
-}
-
-/*
- * On-disk segment header.
- * At most 4KB in total.
- */
-struct segment_header_device {
-	/* --- At most512 byte for atomicity. --- */
-	size_t global_id;
-	u8 length;
-	u32 lap; /* Initially 0. 1 for the first lap. */
-	/* -------------------------------------- */
-	/* This array must locate at the tail */
-	struct metablock_device mbarr[NR_CACHES_INSEG];
-} __packed;
-
-struct lookup_key {
-	device_id device_id;
-	sector_t sector;
-};
-
-enum STATFLAG {
-	STAT_WRITE = 0,
-	STAT_HIT,
-	STAT_ON_BUFFER,
-	STAT_FULLSIZE,
-};
-#define STATLEN (1 << 4)
-
-struct ht_head {
-	struct hlist_head ht_list;
-};
-
-struct lc_cache {
-	struct kobject kobj;
-
-	cache_id id;
-	struct dm_dev *device;
-	struct mutex io_lock;
-	cache_nr nr_caches; /* Const */
-	size_t nr_segments; /* Const */
-	struct arr *segment_header_array;
-
-	/*
-	 * Chained hashtable
-	 */
-	struct arr *htable;
-	size_t htsize;
-	struct ht_head *null_head;
-
-	cache_nr cursor; /* Index that has written */
-	struct segment_header *current_seg;
-	struct writebuffer *current_wb;
-	struct writebuffer *wb_pool;
-
-	size_t last_migrated_segment_id;
-	size_t last_flushed_segment_id;
-	size_t reserving_segment_id;
-
-	/*
-	 * For Flush daemon
-	 */
-	spinlock_t flush_queue_lock;
-	struct list_head flush_queue;
-	struct work_struct flush_work;
-	wait_queue_head_t flush_wait_queue;
-	struct workqueue_struct *flush_wq;
-
-	/*
-	 * For Migration daemon
-	 */
-	bool allow_migrate;
-	bool force_migrate;
-	struct workqueue_struct *migrate_wq;
-	struct work_struct migrate_work;
-
-	/*
-	 * For migration
-	 */
-	wait_queue_head_t migrate_wait_queue;
-	atomic_t migrate_fail_count;
-	atomic_t migrate_io_count;
-	bool migrate_dests[LC_NR_SLOTS];
-	size_t nr_max_batched_migration;
-	size_t nr_cur_batched_migration;
-	struct list_head migrate_list;
-	u8 *dirtiness_snapshot;
-	void *migrate_buffer;
-
-	/*
-	 * For deferred ack for barriers.
-	 */
-	struct timer_list barrier_deadline_timer;
-	struct bio_list barrier_ios;
-	unsigned long barrier_deadline_ms;
-	struct work_struct barrier_deadline_work;
-
-	bool on_terminate;
-
-	atomic64_t stat[STATLEN];
-
-	unsigned long update_interval;
-	unsigned long commit_super_block_interval;
-	unsigned long flush_current_buffer_interval;
-};
-
-static void inc_stat(struct lc_cache *cache,
-		     int rw, bool found, bool on_buffer, bool fullsize)
-{
-	atomic64_t *v;
-
-	int i = 0;
-	if (rw)
-		i |= (1 << STAT_WRITE);
-	if (found)
-		i |= (1 << STAT_HIT);
-	if (on_buffer)
-		i |= (1 << STAT_ON_BUFFER);
-	if (fullsize)
-		i |= (1 << STAT_FULLSIZE);
-
-	v = &cache->stat[i];
-	atomic64_inc(v);
-}
-
-static void clear_stat(struct lc_cache *cache)
-{
-	int i;
-	for (i = 0; i < STATLEN; i++) {
-		atomic64_t *v = &cache->stat[i];
-		atomic64_set(v, 0);
-	}
-}
-
-static struct metablock *mb_at(struct lc_cache *cache, cache_nr idx)
-{
-	size_t seg_idx = idx / NR_CACHES_INSEG;
-	struct segment_header *seg =
-		arr_at(cache->segment_header_array, seg_idx);
-	cache_nr idx_inseg = idx % NR_CACHES_INSEG;
-	return seg->mb_array + idx_inseg;
-}
-
-static void mb_array_empty_init(struct lc_cache *cache)
-{
-	size_t i;
-	for (i = 0; i < cache->nr_caches; i++) {
-		struct metablock *mb = mb_at(cache, i);
-		INIT_HLIST_NODE(&mb->ht_list);
-
-		mb->idx = i;
-		mb->dirty_bits = 0;
-	}
-}
-
-static int __must_check ht_empty_init(struct lc_cache *cache)
-{
-	cache_nr idx;
-	size_t i;
-	size_t nr_heads;
-	struct arr *arr;
-
-	cache->htsize = cache->nr_caches;
-	nr_heads = cache->htsize + 1;
-	arr = make_arr(sizeof(struct ht_head), nr_heads);
-	if (!arr) {
-		DMERR("failed to alloc htable heads");
-		return -ENOMEM;
-	}
-
-	cache->htable = arr;
-
-	for (i = 0; i < nr_heads; i++) {
-		struct ht_head *hd = arr_at(arr, i);
-		INIT_HLIST_HEAD(&hd->ht_list);
-	}
-
-	/*
-	 * Our hashtable has one special bucket called null head.
-	 * Orphan metablocks are linked to the null head.
-	 */
-	cache->null_head = arr_at(cache->htable, cache->htsize);
-
-	for (idx = 0; idx < cache->nr_caches; idx++) {
-		struct metablock *mb = mb_at(cache, idx);
-		hlist_add_head(&mb->ht_list, &cache->null_head->ht_list);
-	}
-
-	return 0;
-}
-
-static cache_nr ht_hash(struct lc_cache *cache, struct lookup_key *key)
-{
-	return key->sector % cache->htsize;
-}
-
-static bool mb_hit(struct metablock *mb, struct lookup_key *key)
-{
-	return (mb->sector == key->sector) && (mb->device_id == key->device_id);
-}
-
-static void ht_del(struct lc_cache *cache, struct metablock *mb)
-{
-	struct ht_head *null_head;
-
-	hlist_del(&mb->ht_list);
-
-	null_head = cache->null_head;
-	hlist_add_head(&mb->ht_list, &null_head->ht_list);
-}
-
-static void ht_register(struct lc_cache *cache, struct ht_head *head,
-			struct lookup_key *key, struct metablock *mb)
-{
-	hlist_del(&mb->ht_list);
-	hlist_add_head(&mb->ht_list, &head->ht_list);
-
-	mb->device_id = key->device_id;
-	mb->sector = key->sector;
-};
-
-static struct metablock *ht_lookup(struct lc_cache *cache,
-				   struct ht_head *head, struct lookup_key *key)
-{
-	struct metablock *mb, *found = NULL;
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
-	hlist_for_each_entry(mb, &head->ht_list, ht_list)
-#else
-	struct hlist_node *pos;
-	hlist_for_each_entry(mb, pos, &head->ht_list, ht_list)
-#endif
-	{
-		if (mb_hit(mb, key)) {
-			found = mb;
-			break;
-		}
-	}
-	return found;
-}
-
-static void discard_caches_inseg(struct lc_cache *cache,
-				 struct segment_header *seg)
-{
-	u8 i;
-	for (i = 0; i < NR_CACHES_INSEG; i++) {
-		struct metablock *mb = seg->mb_array + i;
-		ht_del(cache, mb);
-	}
-}
-
-static int __must_check init_segment_header_array(struct lc_cache *cache)
-{
-	size_t segment_idx, nr_segments = cache->nr_segments;
-	cache->segment_header_array =
-		make_arr(sizeof(struct segment_header), nr_segments);
-	if (!cache->segment_header_array) {
-		DMERR("failed to alloc segment header array");
-		return -ENOMEM;
-	}
-
-	for (segment_idx = 0; segment_idx < nr_segments; segment_idx++) {
-		struct segment_header *seg =
-			arr_at(cache->segment_header_array, segment_idx);
-		seg->start_idx = NR_CACHES_INSEG * segment_idx;
-		seg->start_sector =
-			((segment_idx % nr_segments) + 1) *
-			(1 << LC_SEGMENTSIZE_ORDER);
-
-		seg->length = 0;
-
-		atomic_set(&seg->nr_inflight_ios, 0);
-
-		spin_lock_init(&seg->lock);
-
-		INIT_LIST_HEAD(&seg->migrate_list);
-
-		init_completion(&seg->flush_done);
-		complete_all(&seg->flush_done);
-
-		init_completion(&seg->migrate_done);
-		complete_all(&seg->migrate_done);
-	}
-
-	return 0;
-}
-
-static struct segment_header *get_segment_header_by_id(struct lc_cache
-*cache,
-						       size_t segment_id)
-{
-	struct segment_header *r =
-		arr_at(cache->segment_header_array,
-		       (segment_id - 1) % cache->nr_segments);
-	return r;
-}
-
-static u32 calc_segment_lap(struct lc_cache *cache, size_t segment_id)
-{
-	u32 a = (segment_id - 1) / cache->nr_segments;
-	return a + 1;
-};
-
-static sector_t calc_mb_start_sector(struct segment_header *seg,
-				     cache_nr mb_idx)
-{
-	size_t k = 1 + (mb_idx % NR_CACHES_INSEG);
-	return seg->start_sector + (k << 3);
-}
-
-static u8 count_dirty_caches_remained(struct segment_header *seg)
-{
-	u8 i, count = 0;
-
-	struct metablock *mb;
-	for (i = 0; i < seg->length; i++) {
-		mb = seg->mb_array + i;
-		if (mb->dirty_bits)
-			count++;
-	}
-	return count;
-}
-
-static void prepare_segment_header_device(
-		struct segment_header_device *dest,
-		struct lc_cache *cache, struct segment_header *src)
-{
-	cache_nr i;
-	u8 left, right;
-
-	dest->global_id = src->global_id;
-	dest->length = src->length;
-	dest->lap = calc_segment_lap(cache, src->global_id);
-
-	left = src->length - 1;
-	right = (cache->cursor) % NR_CACHES_INSEG;
-	BUG_ON(left != right);
-
-	for (i = 0; i < src->length; i++) {
-		struct metablock *mb = src->mb_array + i;
-		struct metablock_device *mbdev = &dest->mbarr[i];
-		mbdev->device_id = mb->device_id;
-		mbdev->sector = mb->sector;
-		mbdev->dirty_bits = mb->dirty_bits;
-		mbdev->lap = dest->lap;
-	}
-}
-
-struct flush_context {
-	struct list_head flush_queue;
-	struct segment_header *seg;
-	struct writebuffer *wb;
-	struct bio_list barrier_ios;
-};
-
-static void flush_proc(struct work_struct *work)
-{
-	unsigned long flags;
-
-	struct lc_cache *cache =
-		container_of(work, struct lc_cache, flush_work);
-
-	while (true) {
-		struct flush_context *ctx;
-		struct segment_header *seg;
-		struct dm_io_request io_req;
-		struct dm_io_region region;
-
-		spin_lock_irqsave(&cache->flush_queue_lock, flags);
-		while (list_empty(&cache->flush_queue)) {
-			spin_unlock_irqrestore(&cache->flush_queue_lock, flags);
-			wait_event_interruptible_timeout(
-				cache->flush_wait_queue,
-				(!list_empty(&cache->flush_queue)),
-				msecs_to_jiffies(100));
-			spin_lock_irqsave(&cache->flush_queue_lock, flags);
-
-			if (cache->on_terminate)
-				return;
-		}
-
-		/* Pop the first entry */
-		ctx = list_first_entry(
-			&cache->flush_queue, struct flush_context, flush_queue);
-		list_del(&ctx->flush_queue);
-		spin_unlock_irqrestore(&cache->flush_queue_lock, flags);
-
-		seg = ctx->seg;
-
-		io_req = (struct dm_io_request) {
-			.client = lc_io_client,
-			.bi_rw = WRITE,
-			.notify.fn = NULL,
-			.mem.type = DM_IO_KMEM,
-			.mem.ptr.addr = ctx->wb->data,
-		};
-
-		region = (struct dm_io_region) {
-			.bdev = cache->device->bdev,
-			.sector = seg->start_sector,
-			.count = (seg->length + 1) << 3,
-		};
-
-		dm_safe_io_retry(&io_req, &region, 1, false);
-
-		cache->last_flushed_segment_id = seg->global_id;
-
-		complete_all(&seg->flush_done);
-
-		complete_all(&ctx->wb->done);
-
-		if (!bio_list_empty(&ctx->barrier_ios)) {
-			struct bio *bio;
-			blkdev_issue_flush(cache->device->bdev, GFP_NOIO, NULL);
-			while ((bio = bio_list_pop(&ctx->barrier_ios)))
-				bio_endio(bio, 0);
-
-			mod_timer(&cache->barrier_deadline_timer,
-				  msecs_to_jiffies(cache->barrier_deadline_ms));
-		}
-
-		kfree(ctx);
-	}
-}
-
-static void prepare_meta_writebuffer(void *writebuffer, struct lc_cache
-*cache,
-				     struct segment_header *seg)
-{
-	prepare_segment_header_device(writebuffer, cache, seg);
-}
-
-static void queue_flushing(struct lc_cache *cache)
-{
-	unsigned long flags;
-	struct segment_header *current_seg = cache->current_seg, *new_seg;
-	struct flush_context *ctx;
-	bool empty;
-	struct writebuffer *next_wb;
-	size_t next_id, n1 = 0, n2 = 0;
-
-	while (atomic_read(&current_seg->nr_inflight_ios)) {
-		n1++;
-		if (n1 == 100)
-			DMWARN(
-			"Too long to wait for current_seg ios to finish.");
-		schedule_timeout_interruptible(msecs_to_jiffies(1));
-	}
-
-	prepare_meta_writebuffer(cache->current_wb->data, cache,
-				 cache->current_seg);
-
-	INIT_COMPLETION(current_seg->migrate_done);
-	INIT_COMPLETION(current_seg->flush_done);
-
-	ctx = kmalloc_retry(sizeof(*ctx), GFP_NOIO);
-	INIT_LIST_HEAD(&ctx->flush_queue);
-	ctx->seg = current_seg;
-	ctx->wb = cache->current_wb;
-
-	bio_list_init(&ctx->barrier_ios);
-	bio_list_merge(&ctx->barrier_ios, &cache->barrier_ios);
-	bio_list_init(&cache->barrier_ios);
-
-	spin_lock_irqsave(&cache->flush_queue_lock, flags);
-	empty = list_empty(&cache->flush_queue);
-	list_add_tail(&ctx->flush_queue, &cache->flush_queue);
-	spin_unlock_irqrestore(&cache->flush_queue_lock, flags);
-	if (empty)
-		wake_up_interruptible(&cache->flush_wait_queue);
-
-	next_id = current_seg->global_id + 1;
-	new_seg = get_segment_header_by_id(cache, next_id);
-	new_seg->global_id = next_id;
-
-	while (atomic_read(&new_seg->nr_inflight_ios)) {
-		n2++;
-		if (n2 == 100)
-			DMWARN(
-			"Too long to wait for new_seg ios to finish.");
-		schedule_timeout_interruptible(msecs_to_jiffies(1));
-	}
-
-	BUG_ON(count_dirty_caches_remained(new_seg));
-
-	discard_caches_inseg(cache, new_seg);
-
-	/* Set the cursor to the last of the flushed segment. */
-	cache->cursor = current_seg->start_idx + (NR_CACHES_INSEG - 1);
-	new_seg->length = 0;
-
-	next_wb = cache->wb_pool + (next_id % NR_WB_POOL);
-	wait_for_completion(&next_wb->done);
-	INIT_COMPLETION(next_wb->done);
-
-	cache->current_wb = next_wb;
-
-	cache->current_seg = new_seg;
-}
-
-static void migrate_mb(
-		struct lc_cache *cache, struct segment_header *seg,
-		struct metablock *mb, u8 dirty_bits, bool thread)
-{
-	struct lc_device *lc = lc_devices[mb->device_id];
-
-	if (!dirty_bits)
-		return;
-
-	if (dirty_bits == 255) {
-		void *buf = kmalloc_retry(1 << 12, GFP_NOIO);
-		struct dm_io_request io_req_r, io_req_w;
-		struct dm_io_region region_r, region_w;
-
-		io_req_r = (struct dm_io_request) {
-			.client = lc_io_client,
-			.bi_rw = READ,
-			.notify.fn = NULL,
-			.mem.type = DM_IO_KMEM,
-			.mem.ptr.addr = buf,
-		};
-		region_r = (struct dm_io_region) {
-			.bdev = cache->device->bdev,
-			.sector = calc_mb_start_sector(seg, mb->idx),
-			.count = (1 << 3),
-		};
-
-		dm_safe_io_retry(&io_req_r, &region_r, 1, thread);
-
-		io_req_w = (struct dm_io_request) {
-			.client = lc_io_client,
-			.bi_rw = WRITE_FUA,
-			.notify.fn = NULL,
-			.mem.type = DM_IO_KMEM,
-			.mem.ptr.addr = buf,
-		};
-		region_w = (struct dm_io_region) {
-			.bdev = lc->device->bdev,
-			.sector = mb->sector,
-			.count = (1 << 3),
-		};
-		dm_safe_io_retry(&io_req_w, &region_w, 1, thread);
-
-		kfree(buf);
-	} else {
-		void *buf = kmalloc_retry(1 << SECTOR_SHIFT, GFP_NOIO);
-		size_t i;
-		for (i = 0; i < 8; i++) {
-			bool bit_on = dirty_bits & (1 << i);
-			struct dm_io_request io_req_r, io_req_w;
-			struct dm_io_region region_r, region_w;
-			sector_t src;
-
-			if (!bit_on)
-				continue;
-
-			io_req_r = (struct dm_io_request) {
-				.client = lc_io_client,
-				.bi_rw = READ,
-				.notify.fn = NULL,
-				.mem.type = DM_IO_KMEM,
-				.mem.ptr.addr = buf,
-			};
-			/* A tmp variable just to avoid 80 cols rule */
-			src = calc_mb_start_sector(seg, mb->idx) + i;
-			region_r = (struct dm_io_region) {
-				.bdev = cache->device->bdev,
-				.sector = src,
-				.count = 1,
-			};
-			dm_safe_io_retry(&io_req_r, &region_r, 1, thread);
-
-			io_req_w = (struct dm_io_request) {
-				.client = lc_io_client,
-				.bi_rw = WRITE,
-				.notify.fn = NULL,
-				.mem.type = DM_IO_KMEM,
-				.mem.ptr.addr = buf,
-			};
-			region_w = (struct dm_io_region) {
-				.bdev = lc->device->bdev,
-				.sector = mb->sector + 1 * i,
-				.count = 1,
-			};
-			dm_safe_io_retry(&io_req_w, &region_w, 1, thread);
-		}
-		kfree(buf);
-	}
-}
-
-static void migrate_endio(unsigned long error, void *context)
-{
-	struct lc_cache *cache = context;
-
-	if (error)
-		atomic_inc(&cache->migrate_fail_count);
-
-	if (atomic_dec_and_test(&cache->migrate_io_count))
-		wake_up_interruptible(&cache->migrate_wait_queue);
-}
-
-static void submit_migrate_io(struct lc_cache *cache,
-			      struct segment_header *seg, size_t k)
-{
-	u8 i, j;
-	size_t a = NR_CACHES_INSEG * k;
-	void *p = cache->migrate_buffer + (NR_CACHES_INSEG << 12) * k;
-
-	for (i = 0; i < seg->length; i++) {
-		struct metablock *mb = seg->mb_array + i;
-
-		struct lc_device *lc = lc_devices[mb->device_id];
-		u8 dirty_bits = *(cache->dirtiness_snapshot + (a + i));
-
-		unsigned long offset;
-		void *base, *addr;
-
-		struct dm_io_request io_req_w;
-		struct dm_io_region region_w;
-
-		if (!dirty_bits)
-			continue;
-
-		offset = i << 12;
-		base = p + offset;
-
-		if (dirty_bits == 255) {
-			addr = base;
-			io_req_w = (struct dm_io_request) {
-				.client = lc_io_client,
-				.bi_rw = WRITE,
-				.notify.fn = migrate_endio,
-				.notify.context = cache,
-				.mem.type = DM_IO_VMA,
-				.mem.ptr.vma = addr,
-			};
-			region_w = (struct dm_io_region) {
-				.bdev = lc->device->bdev,
-				.sector = mb->sector,
-				.count = (1 << 3),
-			};
-			dm_safe_io_retry(&io_req_w, &region_w, 1, false);
-		} else {
-			for (j = 0; j < 8; j++) {
-				bool b = dirty_bits & (1 << j);
-				if (!b)
-					continue;
-
-				addr = base + (j << SECTOR_SHIFT);
-				io_req_w = (struct dm_io_request) {
-					.client = lc_io_client,
-					.bi_rw = WRITE,
-					.notify.fn = migrate_endio,
-					.notify.context = cache,
-					.mem.type = DM_IO_VMA,
-					.mem.ptr.vma = addr,
-				};
-				region_w = (struct dm_io_region) {
-					.bdev = lc->device->bdev,
-					.sector = mb->sector + j,
-					.count = 1,
-				};
-				dm_safe_io_retry(
-					&io_req_w, &region_w, 1, false);
-			}
-		}
-	}
-}
-
-static void memorize_dirty_state(struct lc_cache *cache,
-				 struct segment_header *seg, size_t k,
-				 size_t *migrate_io_count)
-{
-	u8 i, j;
-	size_t a = NR_CACHES_INSEG * k;
-	void *p = cache->migrate_buffer + (NR_CACHES_INSEG << 12) * k;
-	struct metablock *mb;
-
-	struct dm_io_request io_req_r = {
-		.client = lc_io_client,
-		.bi_rw = READ,
-		.notify.fn = NULL,
-		.mem.type = DM_IO_VMA,
-		.mem.ptr.vma = p,
-	};
-	struct dm_io_region region_r = {
-		.bdev = cache->device->bdev,
-		.sector = seg->start_sector + (1 << 3),
-		.count = seg->length << 3,
-	};
-	dm_safe_io_retry(&io_req_r, &region_r, 1, false);
-
-	/*
-	 * We take snapshot of the dirtiness in the segments.
-	 * The snapshot segments
-	 * are dirtier than themselves of any future moment
-	 * and we will migrate the possible dirtiest
-	 * state of the segments
-	 * which won't lose any dirty data that was acknowledged.
-	 */
-	for (i = 0; i < seg->length; i++) {
-		mb = seg->mb_array + i;
-		*(cache->dirtiness_snapshot + (a + i)) =
-			atomic_read_mb_dirtiness(seg, mb);
-	}
-
-	for (i = 0; i < seg->length; i++) {
-		u8 dirty_bits;
-
-		mb = seg->mb_array + i;
-
-		dirty_bits = *(cache->dirtiness_snapshot + (a + i));
-
-		if (!dirty_bits)
-			continue;
-
-		*(cache->migrate_dests + mb->device_id) = true;
-
-		if (dirty_bits == 255) {
-			(*migrate_io_count)++;
-		} else {
-			for (j = 0; j < 8; j++) {
-				if (dirty_bits & (1 << j))
-					(*migrate_io_count)++;
-			}
-		}
-	}
-}
-
-static void cleanup_segment(struct lc_cache *cache, struct
-segment_header *seg)
-{
-	u8 i;
-	for (i = 0; i < seg->length; i++) {
-		struct metablock *mb = seg->mb_array + i;
-		cleanup_mb_if_dirty(seg, mb);
-	}
-}
-
-static void migrate_linked_segments(struct lc_cache *cache)
-{
-	struct segment_header *seg;
-	u8 i;
-	size_t k, migrate_io_count = 0;
-
-	for (i = 0; i < LC_NR_SLOTS; i++)
-		*(cache->migrate_dests + i) = false;
-
-	k = 0;
-	list_for_each_entry(seg, &cache->migrate_list, migrate_list) {
-		memorize_dirty_state(cache, seg, k, &migrate_io_count);
-		k++;
-	}
-
-migrate_write:
-	atomic_set(&cache->migrate_io_count, migrate_io_count);
-	atomic_set(&cache->migrate_fail_count, 0);
-
-	k = 0;
-	list_for_each_entry(seg, &cache->migrate_list, migrate_list) {
-		submit_migrate_io(cache, seg, k);
-		k++;
-	}
-
-	wait_event_interruptible(cache->migrate_wait_queue,
-				 (atomic_read(&cache->migrate_io_count) == 0));
-
-	if (atomic_read(&cache->migrate_fail_count)) {
-		DMERR("migrate failed. %u writebacks failed. redo.",
-		      atomic_read(&cache->migrate_fail_count));
-		goto migrate_write;
-	}
-
-	BUG_ON(atomic_read(&cache->migrate_io_count));
-
-	list_for_each_entry(seg, &cache->migrate_list, migrate_list) {
-		cleanup_segment(cache, seg);
-	}
-
-	for (i = 1; i < LC_NR_SLOTS; i++) {
-		struct lc_device *lc;
-		bool b = *(cache->migrate_dests + i);
-		if (!b)
-			continue;
-
-		lc = lc_devices[i];
-		blkdev_issue_flush(lc->device->bdev, GFP_NOIO, NULL);
-	}
-
-	/*
-	 * Discarding the migrated regions
-	 * can avoid unnecessary wear amplifier in the future.
-	 *
-	 * But note that we should not discard
-	 * the metablock region because
-	 * whether or not to ensure
-	 * the discarded block returns certain value
-	 * is depends on venders
-	 * and unexpected metablock data
-	 * will craze the cache.
-	 */
-	list_for_each_entry(seg, &cache->migrate_list, migrate_list) {
-		blkdev_issue_discard(
-			cache->device->bdev,
-			seg->start_sector + (1 << 3),
-			seg->length << 3,
-			GFP_NOIO, 0);
-	}
-}
-
-static void migrate_proc(struct work_struct *work)
-{
-	struct lc_cache *cache =
-		container_of(work, struct lc_cache, migrate_work);
-
-	while (true) {
-		bool allow_migrate;
-		size_t i, nr_mig_candidates, nr_mig;
-		struct segment_header *seg, *tmp;
-
-		if (cache->on_terminate)
-			return;
-
-		/*
-		 * reserving_id > 0 means
-		 * that migration is immediate.
-		 */
-		allow_migrate =
-			cache->reserving_segment_id || cache->allow_migrate;
-
-		if (!allow_migrate) {
-			schedule_timeout_interruptible(msecs_to_jiffies(1000));
-			continue;
-		}
-
-		nr_mig_candidates =
-			cache->last_flushed_segment_id -
-			cache->last_migrated_segment_id;
-
-		if (!nr_mig_candidates) {
-			schedule_timeout_interruptible(msecs_to_jiffies(1000));
-			continue;
-		}
-
-		if (cache->nr_cur_batched_migration !=
-		    cache->nr_max_batched_migration){
-			vfree(cache->migrate_buffer);
-			kfree(cache->dirtiness_snapshot);
-			cache->nr_cur_batched_migration =
-				cache->nr_max_batched_migration;
-			cache->migrate_buffer =
-				vmalloc(cache->nr_cur_batched_migration *
-					(NR_CACHES_INSEG << 12));
-			cache->dirtiness_snapshot =
-				kmalloc_retry(cache->nr_cur_batched_migration *
-					      NR_CACHES_INSEG,
-					      GFP_NOIO);
-
-			BUG_ON(!cache->migrate_buffer);
-			BUG_ON(!cache->dirtiness_snapshot);
-		}
-
-		/*
-		 * Batched Migration:
-		 * We will migrate at most nr_max_batched_migration
-		 * segments at a time.
-		 */
-		nr_mig = min(nr_mig_candidates,
-				    cache->nr_cur_batched_migration);
-
-		for (i = 1; i <= nr_mig; i++) {
-			seg = get_segment_header_by_id(
-					cache,
-					cache->last_migrated_segment_id + i);
-			list_add_tail(&seg->migrate_list, &cache->migrate_list);
-		}
-
-		migrate_linked_segments(cache);
-
-		/*
-		 * (Locking)
-		 * Only line of code changes
-		 * last_migrate_segment_id in runtime.
-		 */
-		cache->last_migrated_segment_id += nr_mig;
-
-		list_for_each_entry_safe(seg, tmp, &cache->migrate_list,
-					 migrate_list) {
-			complete_all(&seg->migrate_done);
-			list_del(&seg->migrate_list);
-		}
-	}
-}
-
-static void wait_for_migration(struct lc_cache *cache, size_t id)
-{
-	struct segment_header *seg = get_segment_header_by_id(cache, id);
-
-	cache->reserving_segment_id = id;
-	wait_for_completion(&seg->migrate_done);
-	cache->reserving_segment_id = 0;
-}
-
-struct superblock_device {
-	size_t last_migrated_segment_id;
-} __packed;
-
-static void commit_super_block(struct lc_cache *cache)
-{
-	struct superblock_device o;
-	void *buf;
-	struct dm_io_request io_req;
-	struct dm_io_region region;
-
-	o.last_migrated_segment_id = cache->last_migrated_segment_id;
-
-	buf = kmalloc_retry(1 << SECTOR_SHIFT, GFP_NOIO);
-	memcpy(buf, &o, sizeof(o));
-
-	io_req = (struct dm_io_request) {
-		.client = lc_io_client,
-		.bi_rw = WRITE_FUA,
-		.notify.fn = NULL,
-		.mem.type = DM_IO_KMEM,
-		.mem.ptr.addr = buf,
-	};
-	region = (struct dm_io_region) {
-		.bdev = cache->device->bdev,
-		.sector = 0,
-		.count = 1,
-	};
-	dm_safe_io_retry(&io_req, &region, 1, true);
-	kfree(buf);
-}
-
-static int __must_check read_superblock_device(struct superblock_device
-*dest,
-					       struct lc_cache *cache)
-{
-	int r = 0;
-	struct dm_io_request io_req;
-	struct dm_io_region region;
-
-	void *buf = kmalloc(1 << SECTOR_SHIFT, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
-
-	io_req = (struct dm_io_request) {
-		.client = lc_io_client,
-		.bi_rw = READ,
-		.notify.fn = NULL,
-		.mem.type = DM_IO_KMEM,
-		.mem.ptr.addr = buf,
-	};
-	region = (struct dm_io_region) {
-		.bdev = cache->device->bdev,
-		.sector = 0,
-		.count = 1,
-	};
-	r = dm_safe_io(&io_req, &region, 1, true);
-	if (r)
-		goto bad_io;
-	memcpy(dest, buf, sizeof(*dest));
-bad_io:
-	kfree(buf);
-	return r;
-}
-
-static sector_t calc_segment_header_start(size_t segment_idx)
-{
-	return (1 << LC_SEGMENTSIZE_ORDER) * (segment_idx + 1);
-}
-
-static int __must_check read_segment_header_device(
-		struct segment_header_device *dest,
-		struct lc_cache *cache, size_t segment_idx)
-{
-	int r = 0;
-	struct dm_io_request io_req;
-	struct dm_io_region region;
-	void *buf = kmalloc(1 << 12, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
-
-	io_req = (struct dm_io_request) {
-		.client = lc_io_client,
-		.bi_rw = READ,
-		.notify.fn = NULL,
-		.mem.type = DM_IO_KMEM,
-		.mem.ptr.addr = buf,
-	};
-	region = (struct dm_io_region) {
-		.bdev = cache->device->bdev,
-		.sector = calc_segment_header_start(segment_idx),
-		.count = (1 << 3),
-	};
-	r = dm_safe_io(&io_req, &region, 1, false);
-	if (r)
-		goto bad_io;
-	memcpy(dest, buf, sizeof(*dest));
-bad_io:
-	kfree(buf);
-	return r;
-}
-
-static void update_by_segment_header_device(struct lc_cache *cache,
-					    struct segment_header_device *src)
-{
-	cache_nr i;
-	struct segment_header *seg =
-		get_segment_header_by_id(cache, src->global_id);
-	seg->length = src->length;
-
-	INIT_COMPLETION(seg->migrate_done);
-
-	for (i = 0 ; i < src->length; i++) {
-		cache_nr k;
-		struct lookup_key key;
-		struct ht_head *head;
-		struct metablock *found, *mb = seg->mb_array + i;
-		struct metablock_device *mbdev = &src->mbarr[i];
-
-		if (!mbdev->dirty_bits)
-			continue;
-
-		mb->sector = mbdev->sector;
-		mb->device_id = mbdev->device_id;
-		mb->dirty_bits = mbdev->dirty_bits;
-
-		inc_nr_dirty_caches(mb->device_id);
-
-		key = (struct lookup_key) {
-			.device_id = mb->device_id,
-			.sector = mb->sector,
-		};
-
-		k = ht_hash(cache, &key);
-		head = arr_at(cache->htable, k);
-
-		found = ht_lookup(cache, head, &key);
-		if (found)
-			ht_del(cache, found);
-		ht_register(cache, head, &key, mb);
-	}
-}
-
-static bool checkup_atomicity(struct segment_header_device *header)
-{
-	size_t i;
-	struct metablock_device *o;
-	for (i = 0; i < header->length; i++) {
-		o = header->mbarr + i;
-		if (o->lap != header->lap)
-			return false;
-	}
-	return true;
-}
-
-static int __must_check recover_cache(struct lc_cache *cache)
-{
-	int r = 0;
-	struct segment_header_device *header;
-	struct segment_header *seg;
-	size_t i, j,
-	       max_id, oldest_id, last_flushed_id, init_segment_id,
-	       oldest_idx, nr_segments = cache->nr_segments;
-
-	struct superblock_device uninitialized_var(sup);
-	r = read_superblock_device(&sup, cache);
-	if (r) {
-		DMERR("failed to read superblock");
-		return r;
-	}
-
-	header = kmalloc(sizeof(*header), GFP_KERNEL);
-	if (!header)
-		return -ENOMEM;
-
-	/*
-	 * Finding the oldest, non-zero id and its index.
-	 */
-
-	max_id = SZ_MAX;
-	oldest_id = max_id;
-	oldest_idx = 0;
-	for (i = 0; i < nr_segments; i++) {
-		r = read_segment_header_device(header, cache, i);
-		if (r) {
-			kfree(header);
-			return r;
-		}
-
-		if (header->global_id < 1)
-			continue;
-
-		if (header->global_id < oldest_id) {
-			oldest_idx = i;
-			oldest_id = header->global_id;
-		}
-	}
-
-	last_flushed_id = 0;
-
-	/*
-	 * This is an invariant.
-	 * We always start from the segment
-	 * that is right after the last_flush_id.
-	 */
-	init_segment_id = last_flushed_id + 1;
-
-	/*
-	 * If no segment was flushed
-	 * then there is nothing to recover.
-	 */
-	if (oldest_id == max_id)
-		goto setup_init_segment;
-
-	/*
-	 * What we have to do in the next loop is to
-	 * revive the segments that are
-	 * flushed but yet not migrated.
-	 */
-
-	/*
-	 * Example:
-	 * There are only 5 segments.
-	 * The segments we will consider are of id k+2 and k+3
-	 * because they are dirty but not migrated.
-	 *
-	 * id: [     k+3    ][  k+4   ][   k    ][     k+1     ][  K+2  ]
-	 *      last_flushed  init_seg  migrated  last_migrated  flushed
-	 */
-	for (i = oldest_idx; i < (nr_segments + oldest_idx); i++) {
-		j = i % nr_segments;
-		r = read_segment_header_device(header, cache, j);
-		if (r) {
-			kfree(header);
-			return r;
-		}
-
-		/*
-		 * Valid global_id > 0.
-		 * We encounter header with global_id = 0 and
-		 * we can consider
-		 * this and the followings are all invalid.
-		 */
-		if (header->global_id <= last_flushed_id)
-			break;
-
-		if (!checkup_atomicity(header))
-			break;
-
-		/*
-		 * Now the header is proven valid.
-		 */
-
-		last_flushed_id = header->global_id;
-		init_segment_id = last_flushed_id + 1;
-
-		/*
-		 * If the data is already on the backing store,
-		 * we ignore the segment.
-		 */
-		if (header->global_id <= sup.last_migrated_segment_id)
-			continue;
-
-		update_by_segment_header_device(cache, header);
-	}
-
-setup_init_segment:
-	kfree(header);
-
-	seg = get_segment_header_by_id(cache, init_segment_id);
-	seg->global_id = init_segment_id;
-	atomic_set(&seg->nr_inflight_ios, 0);
-
-	cache->last_flushed_segment_id = seg->global_id - 1;
-
-	cache->last_migrated_segment_id =
-		cache->last_flushed_segment_id > cache->nr_segments ?
-		cache->last_flushed_segment_id - cache->nr_segments : 0;
-
-	if (sup.last_migrated_segment_id > cache->last_migrated_segment_id)
-		cache->last_migrated_segment_id = sup.last_migrated_segment_id;
-
-	wait_for_migration(cache, seg->global_id);
-
-	discard_caches_inseg(cache, seg);
-
-	/*
-	 * cursor is set to the first element of the segment.
-	 * This means that we will not use the element.
-	 */
-	cache->cursor = seg->start_idx;
-	seg->length = 1;
-
-	cache->current_seg = seg;
-
-	return 0;
-}
-
-static sector_t dm_devsize(struct dm_dev *dev)
-{
-	return i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
-}
-
-static size_t calc_nr_segments(struct dm_dev *dev)
-{
-	sector_t devsize = dm_devsize(dev);
-
-	/*
-	 * Disk format:
-	 * superblock(1MB) [segment(1MB)]+
-	 * We reserve the first segment (1MB) as the superblock.
-	 *
-	 * segment(1MB):
-	 * segment_header_device(4KB) metablock_device(4KB)*NR_CACHES_INSEG
-	 */
-	return devsize / (1 << LC_SEGMENTSIZE_ORDER) - 1;
-}
-
-struct format_segmd_context {
-	atomic64_t count;
-	int err;
-};
-
-static void format_segmd_endio(unsigned long error, void *__context)
-{
-	struct format_segmd_context *context = __context;
-	if (error)
-		context->err = 1;
-	atomic64_dec(&context->count);
-}
-
-static int __must_check format_cache_device(struct dm_dev *dev)
-{
-	size_t i, nr_segments = calc_nr_segments(dev);
-	struct format_segmd_context context;
-	struct dm_io_request io_req_sup;
-	struct dm_io_region region_sup;
-	void *buf;
-
-	int r = 0;
-
-	buf = kzalloc(1 << SECTOR_SHIFT, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
-
-	io_req_sup = (struct dm_io_request) {
-		.client = lc_io_client,
-		.bi_rw = WRITE_FUA,
-		.notify.fn = NULL,
-		.mem.type = DM_IO_KMEM,
-		.mem.ptr.addr = buf,
-	};
-	region_sup = (struct dm_io_region) {
-		.bdev = dev->bdev,
-		.sector = 0,
-		.count = 1,
-	};
-	r = dm_safe_io(&io_req_sup, &region_sup, 1, false);
-	kfree(buf);
-
-	if (r)
-		return r;
-
-	atomic64_set(&context.count, nr_segments);
-	context.err = 0;
-
-	buf = kzalloc(1 << 12, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
-
-	for (i = 0; i < nr_segments; i++) {
-		struct dm_io_request io_req_seg = {
-			.client = lc_io_client,
-			.bi_rw = WRITE,
-			.notify.fn = format_segmd_endio,
-			.notify.context = &context,
-			.mem.type = DM_IO_KMEM,
-			.mem.ptr.addr = buf,
-		};
-		struct dm_io_region region_seg = {
-			.bdev = dev->bdev,
-			.sector = calc_segment_header_start(i),
-			.count = (1 << 3),
-		};
-		r = dm_safe_io(&io_req_seg, &region_seg, 1, false);
-		if (r)
-			break;
-	}
-	kfree(buf);
-
-	if (r)
-		return r;
-
-	while (atomic64_read(&context.count))
-		schedule_timeout_interruptible(msecs_to_jiffies(100));
-
-	if (context.err) {
-		DMERR("formatting some segment header failed");
-		return -EIO;
-	}
-
-	return blkdev_issue_flush(dev->bdev, GFP_KERNEL, NULL);
-}
-
-static bool is_on_buffer(struct lc_cache *cache, cache_nr mb_idx)
-{
-	cache_nr start = cache->current_seg->start_idx;
-	if (mb_idx < start)
-		return false;
-
-	if (mb_idx >= (start + NR_CACHES_INSEG))
-		return false;
-
-	return true;
-}
-
-static void bio_remap(struct bio *bio, struct dm_dev *dev, sector_t sector)
-{
-	bio->bi_bdev = dev->bdev;
-	bio->bi_sector = sector;
-}
-
-static sector_t calc_cache_alignment(struct lc_cache *cache,
-				     sector_t bio_sector)
-{
-	return (bio_sector / (1 << 3)) * (1 << 3);
-}
-
-static void migrate_buffered_mb(struct lc_cache *cache,
-				struct metablock *mb, u8 dirty_bits)
-{
-	u8 i, k = 1 + (mb->idx % NR_CACHES_INSEG);
-	sector_t offset = (k << 3);
-
-	void *buf = kmalloc_retry(1 << SECTOR_SHIFT, GFP_NOIO);
-	for (i = 0; i < 8; i++) {
-		struct lc_device *lc;
-		struct dm_io_request io_req;
-		struct dm_io_region region;
-		void *src;
-		sector_t dest;
-
-		bool bit_on = dirty_bits & (1 << i);
-		if (!bit_on)
-			continue;
-
-		src = cache->current_wb->data +
-			    ((offset + i) << SECTOR_SHIFT);
-		memcpy(buf, src, 1 << SECTOR_SHIFT);
-
-		io_req = (struct dm_io_request) {
-			.client = lc_io_client,
-			.bi_rw = WRITE_FUA,
-			.notify.fn = NULL,
-			.mem.type = DM_IO_KMEM,
-			.mem.ptr.addr = buf,
-		};
-
-		lc = lc_devices[mb->device_id];
-		dest = mb->sector + 1 * i;
-		region = (struct dm_io_region) {
-			.bdev = lc->device->bdev,
-			.sector = dest,
-			.count = 1,
-		};
-
-		dm_safe_io_retry(&io_req, &region, 1, true);
-	}
-	kfree(buf);
-}
-
-static void queue_current_buffer(struct lc_cache *cache)
-{
-	/*
-	 * Before we get the next segment
-	 * we must wait until the segment is all clean.
-	 * A clean segment doesn't have
-	 * log to flush and dirties to migrate.
-	 */
-	size_t next_id = cache->current_seg->global_id + 1;
-
-	struct segment_header *next_seg =
-		get_segment_header_by_id(cache, next_id);
-
-	wait_for_completion(&next_seg->flush_done);
-
-	wait_for_migration(cache, next_id);
-
-	queue_flushing(cache);
-}
-
-static void flush_current_buffer_sync(struct lc_cache *cache)
-{
-	struct segment_header *old_seg;
-
-	mutex_lock(&cache->io_lock);
-	old_seg = cache->current_seg;
-
-	queue_current_buffer(cache);
-	cache->cursor = (cache->cursor + 1) % cache->nr_caches;
-	cache->current_seg->length = 1;
-	mutex_unlock(&cache->io_lock);
-
-	wait_for_completion(&old_seg->flush_done);
-}
-
-static void flush_barrier_ios(struct work_struct *work)
-{
-	struct lc_cache *cache =
-		container_of(work, struct lc_cache,
-			     barrier_deadline_work);
-
-	if (bio_list_empty(&cache->barrier_ios))
-		return;
-
-	flush_current_buffer_sync(cache);
-}
-
-static void barrier_deadline_proc(unsigned long data)
-{
-	struct lc_cache *cache = (struct lc_cache *) data;
-	schedule_work(&cache->barrier_deadline_work);
-}
-
-static void queue_barrier_io(struct lc_cache *cache, struct bio *bio)
-{
-	mutex_lock(&cache->io_lock);
-	bio_list_add(&cache->barrier_ios, bio);
-	mutex_unlock(&cache->io_lock);
-
-	if (!timer_pending(&cache->barrier_deadline_timer))
-		mod_timer(&cache->barrier_deadline_timer,
-			  msecs_to_jiffies(cache->barrier_deadline_ms));
-}
-
-#define PER_BIO_VERSION KERNEL_VERSION(3, 8, 0)
-#if LINUX_VERSION_CODE >= PER_BIO_VERSION
-struct per_bio_data {
-	void *ptr;
-};
-#endif
-
-static int lc_map(struct dm_target *ti, struct bio *bio
-#if LINUX_VERSION_CODE < PER_BIO_VERSION
-		, union map_info *map_context
-#endif
-		 )
-{
-	unsigned long flags;
-	struct lc_cache *cache;
-	struct segment_header *uninitialized_var(seg);
-	struct metablock *mb, *new_mb;
-#if LINUX_VERSION_CODE >= PER_BIO_VERSION
-	struct per_bio_data *map_context;
-#endif
-	sector_t bio_count, bio_offset, s;
-	bool bio_fullsize, found, on_buffer,
-	     refresh_segment, b;
-	int rw;
-	struct lookup_key key;
-	struct ht_head *head;
-	cache_nr update_mb_idx, idx_inseg, k;
-	size_t start;
-	void *data;
-
-	struct lc_device *lc = ti->private;
-	struct dm_dev *orig = lc->device;
-
-	if (!lc->cache) {
-		bio_remap(bio, orig, bio->bi_sector);
-		return DM_MAPIO_REMAPPED;
-	}
-
-	/*
-	 * We only discard only the backing store because
-	 * blocks on cache device are unlikely to be discarded.
-	 *
-	 * Discarding blocks is likely to be operated
-	 * long after writing;
-	 * the block is likely to be migrated before.
-	 * Moreover,
-	 * we discard the segment at the end of migration
-	 * and that's enough for discarding blocks.
-	 */
-	if (bio->bi_rw & REQ_DISCARD) {
-		bio_remap(bio, orig, bio->bi_sector);
-		return DM_MAPIO_REMAPPED;
-	}
-
-	cache = lc->cache;
-
-	if (bio->bi_rw & REQ_FLUSH) {
-		BUG_ON(bio->bi_size);
-		queue_barrier_io(cache, bio);
-		return DM_MAPIO_SUBMITTED;
-	}
-
-#if LINUX_VERSION_CODE >= PER_BIO_VERSION
-	map_context = dm_per_bio_data(bio, ti->per_bio_data_size);
-#endif
-	map_context->ptr = NULL;
-
-	bio_count = bio->bi_size >> SECTOR_SHIFT;
-	bio_fullsize = (bio_count == (1 << 3));
-	bio_offset = bio->bi_sector % (1 << 3);
-
-	rw = bio_data_dir(bio);
-
-	key = (struct lookup_key) {
-		.sector = calc_cache_alignment(cache, bio->bi_sector),
-		.device_id = lc->id,
-	};
-
-	k = ht_hash(cache, &key);
-	head = arr_at(cache->htable, k);
-
-	mutex_lock(&cache->io_lock);
-	mb = ht_lookup(cache, head, &key);
-	if (mb) {
-		seg = ((void *) mb) - (mb->idx % NR_CACHES_INSEG) *
-				      sizeof(struct metablock);
-		atomic_inc(&seg->nr_inflight_ios);
-	}
-
-	found = (mb != NULL);
-	on_buffer = false;
-	if (found)
-		on_buffer = is_on_buffer(cache, mb->idx);
-
-	inc_stat(cache, rw, found, on_buffer, bio_fullsize);
-
-	if (!rw) {
-		u8 dirty_bits;
-
-		mutex_unlock(&cache->io_lock);
-
-		if (!found) {
-			bio_remap(bio, orig, bio->bi_sector);
-			return DM_MAPIO_REMAPPED;
-		}
-
-		dirty_bits = atomic_read_mb_dirtiness(seg, mb);
-
-		if (unlikely(on_buffer)) {
-
-			if (dirty_bits)
-				migrate_buffered_mb(cache, mb, dirty_bits);
-
-			/*
-			 * Dirtiness of a live cache:
-			 *
-			 * We can assume dirtiness of a cache only increase
-			 * when it is on the buffer, we call this cache is live.
-			 * This eases the locking because
-			 * we don't worry the dirtiness of
-			 * a live cache fluctuates.
-			 */
-
-			atomic_dec(&seg->nr_inflight_ios);
-			bio_remap(bio, orig, bio->bi_sector);
-			return DM_MAPIO_REMAPPED;
-		}
-
-		wait_for_completion(&seg->flush_done);
-		if (likely(dirty_bits == 255)) {
-			bio_remap(
-				bio, cache->device,
-				calc_mb_start_sector(seg, mb->idx)
-				+ bio_offset);
-			map_context->ptr = seg;
-		} else {
-
-			/*
-			 * Dirtiness of a stable cache:
-			 *
-			 * Unlike the live caches that don't
-			 * fluctuate the dirtiness,
-			 * stable caches which are not on the buffer
-			 * but on the cache device
-			 * may decrease the dirtiness by other processes
-			 * than the migrate daemon.
-			 * This works fine
-			 * because migrating the same cache twice
-			 * doesn't craze the cache concistency.
-			 */
-
-			migrate_mb(cache, seg, mb, dirty_bits, true);
-			cleanup_mb_if_dirty(seg, mb);
-
-			atomic_dec(&seg->nr_inflight_ios);
-			bio_remap(bio, orig, bio->bi_sector);
-		}
-		return DM_MAPIO_REMAPPED;
-	}
-
-	if (found) {
-
-		if (unlikely(on_buffer)) {
-			mutex_unlock(&cache->io_lock);
-
-			update_mb_idx = mb->idx;
-			goto write_on_buffer;
-		} else {
-			u8 dirty_bits = atomic_read_mb_dirtiness(seg, mb);
-
-			/*
-			 * First clean up the previous cache
-			 * and migrate the cache if needed.
-			 */
-			bool needs_cleanup_prev_cache =
-				!bio_fullsize || !(dirty_bits == 255);
-
-			if (unlikely(needs_cleanup_prev_cache)) {
-				wait_for_completion(&seg->flush_done);
-				migrate_mb(cache, seg, mb, dirty_bits, true);
-			}
-
-			/*
-			 * Fullsize dirty cache
-			 * can be discarded without migration.
-			 */
-
-			cleanup_mb_if_dirty(seg, mb);
-
-			ht_del(cache, mb);
-
-			atomic_dec(&seg->nr_inflight_ios);
-			goto write_not_found;
-		}
-	}
-
-write_not_found:
-	;
-
-	/*
-	 * If cache->cursor is 254, 509, ...
-	 * that is the last cache line in the segment.
-	 * We must flush the current segment and
-	 * get the new one.
-	 */
-	refresh_segment = !((cache->cursor + 1) % NR_CACHES_INSEG);
-
-	if (refresh_segment)
-		queue_current_buffer(cache);
-
-	cache->cursor = (cache->cursor + 1) % cache->nr_caches;
-
-	/*
-	 * update_mb_idx is the cache line index to update.
-	 */
-	update_mb_idx = cache->cursor;
-
-	seg = cache->current_seg;
-	atomic_inc(&seg->nr_inflight_ios);
-
-	new_mb = seg->mb_array + (update_mb_idx % NR_CACHES_INSEG);
-	new_mb->dirty_bits = 0;
-	ht_register(cache, head, &key, new_mb);
-	mutex_unlock(&cache->io_lock);
-
-	mb = new_mb;
-
-write_on_buffer:
-	;
-	idx_inseg = update_mb_idx % NR_CACHES_INSEG;
-	s = (idx_inseg + 1) << 3;
-
-	b = false;
-	lockseg(seg, flags);
-	if (!mb->dirty_bits) {
-		seg->length++;
-		BUG_ON(seg->length >  NR_CACHES_INSEG);
-		b = true;
-	}
-
-	if (likely(bio_fullsize)) {
-		mb->dirty_bits = 255;
-	} else {
-		u8 i;
-		u8 acc_bits = 0;
-		s += bio_offset;
-		for (i = bio_offset; i < (bio_offset+bio_count); i++)
-			acc_bits += (1 << i);
-
-		mb->dirty_bits |= acc_bits;
-	}
-
-	BUG_ON(!mb->dirty_bits);
-
-	unlockseg(seg, flags);
-
-	if (b)
-		inc_nr_dirty_caches(mb->device_id);
-
-	start = s << SECTOR_SHIFT;
-	data = bio_data(bio);
-
-	memcpy(cache->current_wb->data + start, data, bio->bi_size);
-	atomic_dec(&seg->nr_inflight_ios);
-
-	if (bio->bi_rw & REQ_FUA) {
-		queue_barrier_io(cache, bio);
-		return DM_MAPIO_SUBMITTED;
-	}
-
-	bio_endio(bio, 0);
-	return DM_MAPIO_SUBMITTED;
-}
-
-static int lc_end_io(struct dm_target *ti, struct bio *bio, int error
-#if LINUX_VERSION_CODE < PER_BIO_VERSION
-		   , union map_info *map_context
-#endif
-		    )
-{
-	struct segment_header *seg;
-#if LINUX_VERSION_CODE >= PER_BIO_VERSION
-	struct per_bio_data *map_context =
-		dm_per_bio_data(bio, ti->per_bio_data_size);
-#endif
-	if (!map_context->ptr)
-		return 0;
-
-	seg = map_context->ptr;
-	atomic_dec(&seg->nr_inflight_ios);
-
-	return 0;
-}
-
-static ssize_t var_show(unsigned long var, char *page)
-{
-	return sprintf(page, "%lu\n", var);
-}
-
-static ssize_t var_store(unsigned long *var, const char *page, size_t len)
-{
-	char *p = (char *) page;
-	int r = kstrtoul(p, 10, var);
-	if (r)
-		return r;
-	return len;
-}
-
-static struct kobject *devices_kobj;
-
-struct device_sysfs_entry {
-	struct attribute attr;
-	ssize_t (*show)(struct lc_device *, char *);
-	ssize_t (*store)(struct lc_device *, const char *, size_t);
-};
-
-#define to_device(attr) container_of((attr), struct device_sysfs_entry,
-attr)
-static ssize_t device_attr_show(struct kobject *kobj, struct attribute
-*attr,
-				char *page)
-{
-	struct lc_device *device =
-		container_of(kobj, struct lc_device, kobj);
-	struct device_sysfs_entry *entry = to_device(attr);
-
-	return entry->show(device, page);
-}
-
-static ssize_t device_attr_store(struct kobject *kobj, struct attribute
-*attr,
-				 const char *page, size_t len)
-{
-	struct lc_device *device;
-	struct device_sysfs_entry *entry = to_device(attr);
-	if (!entry->store)
-		return -EIO;
-
-	device = container_of(kobj, struct lc_device, kobj);
-	return entry->store(device, page, len);
-}
-
-static cache_id cache_id_of(struct lc_device *device)
-{
-	cache_id id;
-	if (!device->cache)
-		id = 0;
-	else
-		id = device->cache->id;
-	return id;
-}
-
-static ssize_t cache_id_show(struct lc_device *device, char *page)
-{
-	return var_show(cache_id_of(device), (page));
-}
-
-static struct device_sysfs_entry cache_id_entry = {
-	.attr = { .name = "cache_id", .mode = S_IRUGO },
-	.show = cache_id_show,
-};
-
-static ssize_t dev_show(struct lc_device *device, char *page)
-{
-	return sprintf(page, "%s\n", dm_device_name(device->md));
-}
-
-static struct device_sysfs_entry dev_entry = {
-	.attr = { .name = "dev", .mode = S_IRUGO },
-	.show = dev_show,
-};
-
-static ssize_t migrate_threshold_show(struct lc_device *device, char *page)
-{
-	return var_show(device->migrate_threshold, (page));
-}
-
-static ssize_t migrate_threshold_store(struct lc_device *device,
-				       const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	device->migrate_threshold = x;
-	return r;
-}
-
-static struct device_sysfs_entry migrate_threshold_entry = {
-	.attr = { .name = "migrate_threshold", .mode = S_IRUGO | S_IWUSR },
-	.show = migrate_threshold_show,
-	.store = migrate_threshold_store,
-};
-
-static ssize_t nr_dirty_caches_show(struct lc_device *device, char *page)
-{
-	unsigned long val = atomic64_read(&device->nr_dirty_caches);
-	return var_show(val, page);
-}
-
-static struct device_sysfs_entry nr_dirty_caches_entry = {
-	.attr = { .name = "nr_dirty_caches", .mode = S_IRUGO },
-	.show = nr_dirty_caches_show,
-};
-
-static struct attribute *device_default_attrs[] = {
-	&cache_id_entry.attr,
-	&dev_entry.attr,
-	&migrate_threshold_entry.attr,
-	&nr_dirty_caches_entry.attr,
-	NULL,
-};
-
-static const struct sysfs_ops device_sysfs_ops = {
-	.show = device_attr_show,
-	.store = device_attr_store,
-};
-
-static void device_release(struct kobject *kobj)
-{
-	return;
-}
-
-static struct kobj_type device_ktype = {
-	.sysfs_ops = &device_sysfs_ops,
-	.default_attrs = device_default_attrs,
-	.release = device_release,
-};
-
-/*
- * <device-id> <path> <cache-id>
- */
-static int lc_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	int r = 0;
-	struct lc_device *lc;
-	unsigned device_id, cache_id;
-	struct dm_dev *dev;
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
-	r = dm_set_target_max_io_len(ti, (1 << 3));
-	if (r)
-		return r;
-
-#else
-	ti->split_io = (1 << 3);
-#endif
-
-	lc = kzalloc(sizeof(*lc), GFP_KERNEL);
-	if (!lc)
-		return -ENOMEM;
-
-	/*
-	 * EMC's textbook on storage system says
-	 * storage should keep its disk util less than 70%.
-	 */
-	lc->migrate_threshold = 70;
-
-	atomic64_set(&lc->nr_dirty_caches, 0);
-
-	if (sscanf(argv[0], "%u", &device_id) != 1) {
-		r = -EINVAL;
-		goto bad_device_id;
-	}
-	lc->id = device_id;
-
-	if (dm_get_device(ti, argv[1], dm_table_get_mode(ti->table), &dev)) {
-		r = -EINVAL;
-		goto bad_get_device;
-	}
-	lc->device = dev;
-
-	lc->cache = NULL;
-	if (sscanf(argv[2], "%u", &cache_id) != 1) {
-		r = -EINVAL;
-		goto bad_cache_id;
-	}
-	if (cache_id)
-		lc->cache = lc_caches[cache_id];
-
-	lc_devices[lc->id] = lc;
-	ti->private = lc;
-
-#if LINUX_VERSION_CODE >= PER_BIO_VERSION
-	ti->per_bio_data_size = sizeof(struct per_bio_data);
-#endif
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
-	ti->num_flush_bios = 1;
-	ti->num_discard_bios = 1;
-#else
-	ti->num_flush_requests = 1;
-	ti->num_discard_requests = 1;
-#endif
-
-	ti->discard_zeroes_data_unsupported = true;
-
-	/*
-	 * /sys/module/dm_lc/devices/$id/$atribute
-	 *                              /dev # -> Note
-	 *                              /device
-	 */
-
-	/*
-	 * Note:
-	 * Reference to the mapped_device
-	 * is used to show device name (major:minor).
-	 * major:minor is used in admin scripts
-	 * to get the sysfs node of a lc_device.
-	 */
-	lc->md = dm_table_get_md(ti->table);
-
-	return 0;
-
-bad_cache_id:
-	dm_put_device(ti, lc->device);
-bad_get_device:
-bad_device_id:
-	kfree(lc);
-	return r;
-}
-
-static void lc_dtr(struct dm_target *ti)
-{
-	struct lc_device *lc = ti->private;
-	dm_put_device(ti, lc->device);
-	ti->private = NULL;
-	kfree(lc);
-}
-
-struct kobject *get_bdev_kobject(struct block_device *bdev)
-{
-	return &disk_to_dev(bdev->bd_disk)->kobj;
-}
-
-static int lc_message(struct dm_target *ti, unsigned argc, char **argv)
-{
-	int r;
-	struct lc_device *lc = ti->private;
-	char *cmd = argv[0];
-
-	/*
-	 * We must separate
-	 * these add/remove sysfs code from .ctr
-	 * for a very complex reason.
-	 */
-	if (!strcasecmp(cmd, "add_sysfs")) {
-		struct kobject *dev_kobj;
-		r = kobject_init_and_add(&lc->kobj, &device_ktype,
-					 devices_kobj, "%u", lc->id);
-		if (r)
-			return r;
-
-		dev_kobj = get_bdev_kobject(lc->device->bdev);
-		r = sysfs_create_link(&lc->kobj, dev_kobj, "device");
-		if (r) {
-			kobject_del(&lc->kobj);
-			kobject_put(&lc->kobj);
-			return r;
-		}
-
-		kobject_uevent(&lc->kobj, KOBJ_ADD);
-		return 0;
-	}
-
-	if (!strcasecmp(cmd, "remove_sysfs")) {
-		kobject_uevent(&lc->kobj, KOBJ_REMOVE);
-
-		sysfs_remove_link(&lc->kobj, "device");
-		kobject_del(&lc->kobj);
-		kobject_put(&lc->kobj);
-
-		lc_devices[lc->id] = NULL;
-		return 0;
-	}
-
-	return -EINVAL;
-}
-
-static int lc_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-		    struct bio_vec *biovec, int max_size)
-{
-	struct lc_device *lc = ti->private;
-	struct dm_dev *device = lc->device;
-	struct request_queue *q = bdev_get_queue(device->bdev);
-
-	if (!q->merge_bvec_fn)
-		return max_size;
-
-	bvm->bi_bdev = device->bdev;
-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
-}
-
-static int lc_iterate_devices(struct dm_target *ti,
-			      iterate_devices_callout_fn fn, void *data)
-{
-	struct lc_device *lc = ti->private;
-	struct dm_dev *orig = lc->device;
-	sector_t start = 0;
-	sector_t len = dm_devsize(orig);
-	return fn(ti, orig, start, len, data);
-}
-
-static void lc_io_hints(struct dm_target *ti, struct queue_limits *limits)
-{
-	blk_limits_io_min(limits, 512);
-	blk_limits_io_opt(limits, 4096);
-}
-
-static
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
-void
-#else
-int
-#endif
-lc_status(
-		struct dm_target *ti, status_type_t type,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
-		unsigned flags,
-#endif
-		char *result,
-		unsigned maxlen)
-{
-	unsigned int sz = 0;
-	struct lc_device *lc = ti->private;
-
-	switch (type) {
-	case STATUSTYPE_INFO:
-		result[0] = '\0';
-		break;
-
-	case STATUSTYPE_TABLE:
-		DMEMIT("%d %s %d", lc->id, lc->device->name, cache_id_of(lc));
-		break;
-	}
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
-	return 0;
-#endif
-}
-
-static struct target_type lc_target = {
-	.name = "lc",
-	.version = {1, 0, 0},
-	.module = THIS_MODULE,
-	.map = lc_map,
-	.ctr = lc_ctr,
-	.dtr = lc_dtr,
-	.end_io = lc_end_io,
-	.merge = lc_merge,
-	.message = lc_message,
-	.status = lc_status,
-	.io_hints = lc_io_hints,
-	.iterate_devices = lc_iterate_devices,
-};
-
-static int lc_mgr_map(struct dm_target *ti, struct bio *bio
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
-		    , union map_info *map_context
-#endif
-		     )
-{
-	bio_endio(bio, 0);
-	return DM_MAPIO_SUBMITTED;
-}
-
-static int lc_mgr_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	return 0;
-}
-
-static void lc_mgr_dtr(struct dm_target *ti)
-{
-	return;
-}
-
-static struct kobject *caches_kobj;
-
-struct cache_sysfs_entry {
-	struct attribute attr;
-	ssize_t (*show)(struct lc_cache *, char *);
-	ssize_t (*store)(struct lc_cache *, const char *, size_t);
-};
-
-#define to_cache(attr) container_of((attr), struct cache_sysfs_entry, attr)
-static ssize_t cache_attr_show(struct kobject *kobj,
-			       struct attribute *attr, char *page)
-{
-	struct lc_cache *cache =
-		container_of(kobj, struct lc_cache, kobj);
-	struct cache_sysfs_entry *entry = to_cache(attr);
-
-	return entry->show(cache, page);
-}
-
-static ssize_t cache_attr_store(struct kobject *kobj, struct attribute
-*attr,
-		const char *page, size_t len)
-{
-	struct lc_cache *cache;
-	struct cache_sysfs_entry *entry = to_cache(attr);
-	if (!entry->store)
-		return -EIO;
-
-	cache = container_of(kobj, struct lc_cache, kobj);
-	return entry->store(cache, page, len);
-}
-
-static ssize_t commit_super_block_interval_show(struct lc_cache *cache,
-						char *page)
-{
-	return var_show(cache->commit_super_block_interval, (page));
-}
-
-static ssize_t commit_super_block_interval_store(struct lc_cache *cache,
-						 const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	cache->commit_super_block_interval = x;
-	return r;
-}
-
-static struct cache_sysfs_entry commit_super_block_interval_entry = {
-	.attr = { .name = "commit_super_block_interval",
-		  .mode = S_IRUGO | S_IWUSR },
-	.show = commit_super_block_interval_show,
-	.store = commit_super_block_interval_store,
-};
-
-static ssize_t nr_max_batched_migration_show(struct lc_cache *cache,
-					     char *page)
-{
-	return var_show(cache->nr_max_batched_migration, page);
-}
-
-static ssize_t nr_max_batched_migration_store(struct lc_cache *cache,
-					      const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	if (x < 1)
-		return -EIO;
-
-	cache->nr_max_batched_migration = x;
-	return r;
-}
-
-static struct cache_sysfs_entry nr_max_batched_migration_entry = {
-	.attr = { .name = "nr_max_batched_migration",
-		  .mode = S_IRUGO | S_IWUSR },
-	.show = nr_max_batched_migration_show,
-	.store = nr_max_batched_migration_store,
-};
-
-static ssize_t allow_migrate_show(struct lc_cache *cache, char *page)
-{
-	return var_show(cache->allow_migrate, (page));
-}
-
-static ssize_t allow_migrate_store(struct lc_cache *cache,
-				   const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	cache->allow_migrate = x;
-	return r;
-}
-
-static struct cache_sysfs_entry allow_migrate_entry = {
-	.attr = { .name = "allow_migrate", .mode = S_IRUGO | S_IWUSR },
-	.show = allow_migrate_show,
-	.store = allow_migrate_store,
-};
-
-static ssize_t force_migrate_show(struct lc_cache *cache, char *page)
-{
-	return var_show(cache->force_migrate, page);
-}
-
-static ssize_t force_migrate_store(struct lc_cache *cache,
-				   const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	cache->force_migrate = x;
-	return r;
-}
-
-static struct cache_sysfs_entry force_migrate_entry = {
-	.attr = { .name = "force_migrate", .mode = S_IRUGO | S_IWUSR },
-	.show = force_migrate_show,
-	.store = force_migrate_store,
-};
-
-static ssize_t update_interval_show(struct lc_cache *cache, char *page)
-{
-	return var_show(cache->update_interval, page);
-}
-
-static ssize_t update_interval_store(struct lc_cache *cache,
-				     const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	cache->update_interval = x;
-	return r;
-}
-
-static struct cache_sysfs_entry update_interval_entry = {
-	.attr = { .name = "update_interval", .mode = S_IRUGO | S_IWUSR },
-	.show = update_interval_show,
-	.store = update_interval_store,
-};
-
-static ssize_t flush_current_buffer_interval_show(struct lc_cache *cache,
-						  char *page)
-{
-	return var_show(cache->flush_current_buffer_interval, page);
-}
-
-static ssize_t flush_current_buffer_interval_store(
-		struct lc_cache *cache, const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	cache->flush_current_buffer_interval = x;
-	return r;
-}
-
-static struct cache_sysfs_entry flush_current_buffer_interval_entry = {
-	.attr = { .name = "flush_current_buffer_interval",
-		  .mode = S_IRUGO | S_IWUSR },
-	.show = flush_current_buffer_interval_show,
-	.store = flush_current_buffer_interval_store,
-};
-
-static ssize_t commit_super_block_show(struct lc_cache *cache, char *page)
-{
-	return var_show(0, (page));
-}
-
-static ssize_t commit_super_block_store(struct lc_cache *cache,
-					const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-
-	if (x < 1)
-		return -EIO;
-
-	mutex_lock(&cache->io_lock);
-	commit_super_block(cache);
-	mutex_unlock(&cache->io_lock);
-
-	return r;
-}
-
-static struct cache_sysfs_entry commit_super_block_entry = {
-	.attr = { .name = "commit_super_block", .mode = S_IRUGO | S_IWUSR },
-	.show = commit_super_block_show,
-	.store = commit_super_block_store,
-};
-
-static ssize_t flush_current_buffer_show(struct lc_cache *cache, char *page)
-{
-	return var_show(0, (page));
-}
-
-static ssize_t flush_current_buffer_store(struct lc_cache *cache,
-					  const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-	if (x < 1)
-		return -EIO;
-
-	flush_current_buffer_sync(cache);
-	return r;
-}
-
-static struct cache_sysfs_entry flush_current_buffer_entry = {
-	.attr = { .name = "flush_current_buffer", .mode = S_IRUGO | S_IWUSR },
-	.show = flush_current_buffer_show,
-	.store = flush_current_buffer_store,
-};
-
-static ssize_t last_flushed_segment_id_show(struct lc_cache *cache, char
-*page)
-{
-	return var_show(cache->last_flushed_segment_id, (page));
-}
-
-static struct cache_sysfs_entry last_flushed_segment_id_entry = {
-	.attr = { .name = "last_flushed_segment_id", .mode = S_IRUGO },
-	.show = last_flushed_segment_id_show,
-};
-
-static ssize_t last_migrated_segment_id_show(struct lc_cache *cache,
-char *page)
-{
-	return var_show(cache->last_migrated_segment_id, (page));
-}
-
-static struct cache_sysfs_entry last_migrated_segment_id_entry = {
-	.attr = { .name = "last_migrated_segment_id", .mode = S_IRUGO },
-	.show = last_migrated_segment_id_show,
-};
-
-static ssize_t barrier_deadline_ms_show(struct lc_cache *cache, char *page)
-{
-	return var_show(cache->barrier_deadline_ms, (page));
-}
-
-static ssize_t barrier_deadline_ms_store(struct lc_cache *cache,
-					 const char *page, size_t count)
-{
-	unsigned long x;
-	ssize_t r = var_store(&x, page, count);
-
-	cache->barrier_deadline_ms = x;
-	return r;
-}
-
-static struct cache_sysfs_entry barrier_deadline_ms_entry = {
-	.attr = { .name = "barrier_deadline_ms", .mode = S_IRUGO | S_IWUSR },
-	.show = barrier_deadline_ms_show,
-	.store = barrier_deadline_ms_store,
-};
-
-static struct attribute *cache_default_attrs[] = {
-	&commit_super_block_interval_entry.attr,
-	&nr_max_batched_migration_entry.attr,
-	&allow_migrate_entry.attr,
-	&commit_super_block_entry.attr,
-	&flush_current_buffer_entry.attr,
-	&flush_current_buffer_interval_entry.attr,
-	&force_migrate_entry.attr,
-	&update_interval_entry.attr,
-	&last_flushed_segment_id_entry.attr,
-	&last_migrated_segment_id_entry.attr,
-	&barrier_deadline_ms_entry.attr,
-	NULL,
-};
-
-static const struct sysfs_ops cache_sysfs_ops = {
-	.show = cache_attr_show,
-	.store = cache_attr_store,
-};
-
-static void cache_release(struct kobject *kobj)
-{
-	return;
-}
-
-static struct kobj_type cache_ktype = {
-	.sysfs_ops = &cache_sysfs_ops,
-	.default_attrs = cache_default_attrs,
-	.release = cache_release,
-};
-
-static int __must_check init_wb_pool(struct lc_cache *cache)
-{
-	size_t i, j;
-	struct writebuffer *wb;
-
-	cache->wb_pool = kmalloc(
-		sizeof(struct writebuffer) * NR_WB_POOL, GFP_KERNEL);
-	if (!cache->wb_pool) {
-		DMERR("failed to alloc wb_pool");
-		return -ENOMEM;
-	}
-
-	for (i = 0; i < NR_WB_POOL; i++) {
-		wb = cache->wb_pool + i;
-		init_completion(&wb->done);
-		complete_all(&wb->done);
-
-		wb->data = kmalloc(
-			1 << (LC_SEGMENTSIZE_ORDER + SECTOR_SHIFT),
-			GFP_KERNEL);
-		if (!wb->data) {
-			DMERR("failed to alloc wb_pool data");
-			for (j = 0; j < i; j++) {
-				wb = cache->wb_pool + j;
-				kfree(wb->data);
-			}
-			kfree(cache->wb_pool);
-			return -ENOMEM;
-		}
-	}
-
-	return 0;
-}
-
-static void free_wb_pool(struct lc_cache *cache)
-{
-	struct writebuffer *wb;
-	size_t i;
-	for (i = 0; i < NR_WB_POOL; i++) {
-		wb = cache->wb_pool + i;
-		kfree(wb->data);
-	}
-	kfree(cache->wb_pool);
-}
-
-static int lc_mgr_message(struct dm_target *ti, unsigned int argc, char
-**argv)
-{
-	char *cmd = argv[0];
-
-	/*
-	 * <path>
-	 * @path path to the cache device
-	 */
-	if (!strcasecmp(cmd, "format_cache_device")) {
-		int r;
-		struct dm_dev *dev;
-		if (dm_get_device(ti, argv[1],
-				  dm_table_get_mode(ti->table), &dev))
-			return -EINVAL;
-
-		r = format_cache_device(dev);
-
-		dm_put_device(ti, dev);
-		return r;
-	}
-
-	/*
-	 * <id>
-	 *
-	 * lc-mgr has cursor to point the
-	 * cache device to operate.
-	 */
-	if (!strcasecmp(cmd, "switch_to")) {
-		unsigned id;
-		if (sscanf(argv[1], "%u", &id) != 1)
-			return -EINVAL;
-
-		cache_id_ptr = id;
-		return 0;
-	}
-
-	if (!strcasecmp(cmd, "clear_stat")) {
-		struct lc_cache *cache = lc_caches[cache_id_ptr];
-		if (!cache)
-			return -EINVAL;
-
-		clear_stat(cache);
-		return 0;
-	}
-
-	/*
-	 * <path>
-	 */
-	if (!strcasecmp(cmd, "resume_cache")) {
-		int r = 0;
-		struct kobject *dev_kobj;
-		struct dm_dev *dev;
-
-		struct lc_cache *cache = kzalloc(sizeof(*cache), GFP_KERNEL);
-		if (!cache)
-			return -ENOMEM;
-
-		if (dm_get_device(ti, argv[1], dm_table_get_mode(ti->table),
-				  &dev)) {
-			r = -EINVAL;
-			goto bad_get_device;
-		}
-
-		cache->id = cache_id_ptr;
-		cache->device = dev;
-		cache->nr_segments = calc_nr_segments(cache->device);
-		cache->nr_caches = cache->nr_segments * NR_CACHES_INSEG;
-		cache->on_terminate = false;
-		cache->allow_migrate = false;
-		cache->force_migrate = false;
-		cache->reserving_segment_id = 0;
-		mutex_init(&cache->io_lock);
-
-		/*
-		 * /sys/module/dm_lc/caches/$id/$attribute
-		 *                             /device -> /sys/block/$name
-		 */
-		cache->update_interval = 1;
-		cache->commit_super_block_interval = 0;
-		cache->flush_current_buffer_interval = 0;
-		r = kobject_init_and_add(&cache->kobj, &cache_ktype,
-					 caches_kobj, "%u", cache->id);
-		if (r)
-			goto bad_kobj_add;
-
-		dev_kobj = get_bdev_kobject(cache->device->bdev);
-		r = sysfs_create_link(&cache->kobj, dev_kobj, "device");
-		if (r)
-			goto bad_device_lns;
-
-		kobject_uevent(&cache->kobj, KOBJ_ADD);
-
-		r = init_wb_pool(cache);
-		if (r)
-			goto bad_init_wb_pool;
-		/*
-		 * Select arbitrary one
-		 * as the initial writebuffer.
-		 */
-		cache->current_wb = cache->wb_pool + 0;
-
-		r = init_segment_header_array(cache);
-		if (r)
-			goto bad_alloc_segment_header_array;
-		mb_array_empty_init(cache);
-
-		r = ht_empty_init(cache);
-		if (r)
-			goto bad_alloc_ht;
-
-		cache->migrate_buffer = vmalloc(
-				NR_CACHES_INSEG << 12);
-		if (!cache->migrate_buffer)
-			goto bad_alloc_migrate_buffer;
-
-		cache->dirtiness_snapshot = kmalloc(
-				NR_CACHES_INSEG,
-				GFP_KERNEL);
-		if (!cache->dirtiness_snapshot)
-			goto bad_alloc_dirtiness_snapshot;
-
-		cache->migrate_wq = create_singlethread_workqueue("migratewq");
-		if (!cache->migrate_wq)
-			goto bad_migratewq;
-
-		INIT_WORK(&cache->migrate_work, migrate_proc);
-		init_waitqueue_head(&cache->migrate_wait_queue);
-		INIT_LIST_HEAD(&cache->migrate_list);
-		atomic_set(&cache->migrate_fail_count, 0);
-		atomic_set(&cache->migrate_io_count, 0);
-		cache->nr_max_batched_migration = 1;
-		cache->nr_cur_batched_migration = 1;
-		queue_work(cache->migrate_wq, &cache->migrate_work);
-
-		setup_timer(&cache->barrier_deadline_timer,
-			    barrier_deadline_proc, (unsigned long) cache);
-		bio_list_init(&cache->barrier_ios);
-		/*
-		 * Deadline is 3 ms by default.
-		 * 2.5 us to process on bio
-		 * and 3 ms is enough long to process 255 bios.
-		 * If the buffer doesn't get full within 3 ms,
-		 * we can doubt write starves
-		 * by waiting formerly submitted barrier to be complete.
-		 */
-		cache->barrier_deadline_ms = 3;
-		INIT_WORK(&cache->barrier_deadline_work, flush_barrier_ios);
-
-		cache->flush_wq = create_singlethread_workqueue("flushwq");
-		if (!cache->flush_wq)
-			goto bad_flushwq;
-		spin_lock_init(&cache->flush_queue_lock);
-		INIT_WORK(&cache->flush_work, flush_proc);
-		INIT_LIST_HEAD(&cache->flush_queue);
-		init_waitqueue_head(&cache->flush_wait_queue);
-		queue_work(cache->flush_wq, &cache->flush_work);
-
-		r = recover_cache(cache);
-		if (r)
-			goto bad_recover;
-
-		lc_caches[cache->id] = cache;
-
-		clear_stat(cache);
-
-		return 0;
-
-bad_recover:
-		cache->on_terminate = true;
-		cancel_work_sync(&cache->flush_work);
-		destroy_workqueue(cache->flush_wq);
-bad_flushwq:
-		cache->on_terminate = true;
-		cancel_work_sync(&cache->barrier_deadline_work);
-		cancel_work_sync(&cache->migrate_work);
-		destroy_workqueue(cache->migrate_wq);
-bad_migratewq:
-		kfree(cache->dirtiness_snapshot);
-bad_alloc_dirtiness_snapshot:
-		vfree(cache->migrate_buffer);
-bad_alloc_migrate_buffer:
-		kill_arr(cache->htable);
-bad_alloc_ht:
-		kill_arr(cache->segment_header_array);
-bad_alloc_segment_header_array:
-		free_wb_pool(cache);
-bad_init_wb_pool:
-		kobject_uevent(&cache->kobj, KOBJ_REMOVE);
-		sysfs_remove_link(&cache->kobj, "device");
-bad_device_lns:
-		kobject_del(&cache->kobj);
-		kobject_put(&cache->kobj);
-bad_kobj_add:
-		dm_put_device(ti, cache->device);
-bad_get_device:
-		kfree(cache);
-		lc_caches[cache_id_ptr] = NULL;
-		return r;
-	}
-
-	if (!strcasecmp(cmd, "free_cache")) {
-		struct lc_cache *cache = lc_caches[cache_id_ptr];
-
-		cache->on_terminate = true;
-
-		cancel_work_sync(&cache->flush_work);
-		destroy_workqueue(cache->flush_wq);
-
-		cancel_work_sync(&cache->barrier_deadline_work);
-
-		cancel_work_sync(&cache->migrate_work);
-		destroy_workqueue(cache->migrate_wq);
-		kfree(cache->dirtiness_snapshot);
-		vfree(cache->migrate_buffer);
-
-		kill_arr(cache->htable);
-		kill_arr(cache->segment_header_array);
-
-		free_wb_pool(cache);
-
-		kobject_uevent(&cache->kobj, KOBJ_REMOVE);
-		sysfs_remove_link(&cache->kobj, "device");
-		kobject_del(&cache->kobj);
-		kobject_put(&cache->kobj);
-
-		dm_put_device(ti, cache->device);
-		kfree(cache);
-
-		lc_caches[cache_id_ptr] = NULL;
-
-		return 0;
-	}
-
-	return -EINVAL;
-}
-
-static size_t calc_static_memory_consumption(struct lc_cache *cache)
-{
-	size_t seg = sizeof(struct segment_header) * cache->nr_segments;
-	size_t ht = sizeof(struct ht_head) * cache->htsize;
-
-	return seg + ht;
-};
-
-static
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
-void
-#else
-int
-#endif
-lc_mgr_status(
-		struct dm_target *ti, status_type_t type,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
-		unsigned flags,
-#endif
-		char *result, unsigned int maxlen)
-{
-	int i;
-	struct lc_cache *cache;
-	unsigned int sz = 0;
-
-	switch (type) {
-	case STATUSTYPE_INFO:
-		DMEMIT("\n");
-		DMEMIT("current cache_id_ptr: %u\n", cache_id_ptr);
-
-		if (cache_id_ptr == 0) {
-			DMEMIT("sizeof struct\n");
-			DMEMIT("metablock: %lu\n",
-			       sizeof(struct metablock));
-			DMEMIT("metablock_device: %lu\n",
-			       sizeof(struct metablock_device));
-			DMEMIT("segment_header: %lu\n",
-			       sizeof(struct segment_header));
-			DMEMIT("segment_header_device: %lu (<= 4096)",
-			       sizeof(struct segment_header_device));
-			break;
-		}
-
-		cache = lc_caches[cache_id_ptr];
-		if (!cache)
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
-			return -EINVAL;
-#else
-			return;
-#endif
-
-		DMEMIT("static RAM(approx.): %lu (byte)\n",
-		       calc_static_memory_consumption(cache));
-		DMEMIT("allow_migrate: %d\n", cache->allow_migrate);
-		DMEMIT("nr_segments: %lu\n", cache->nr_segments);
-		DMEMIT("last_migrated_segment_id: %lu\n",
-		       cache->last_migrated_segment_id);
-		DMEMIT("last_flushed_segment_id: %lu\n",
-		       cache->last_flushed_segment_id);
-		DMEMIT("current segment id: %lu\n",
-		       cache->current_seg->global_id);
-		DMEMIT("cursor: %u\n", cache->cursor);
-		DMEMIT("\n");
-		DMEMIT("write? hit? on_buffer? fullsize?\n");
-		for (i = 0; i < STATLEN; i++) {
-			atomic64_t *v;
-			if (i == (STATLEN-1))
-				break;
-
-			v = &cache->stat[i];
-			DMEMIT("%d %d %d %d %lu",
-				i & (1 << STAT_WRITE)      ? 1 : 0,
-				i & (1 << STAT_HIT)        ? 1 : 0,
-				i & (1 << STAT_ON_BUFFER)  ? 1 : 0,
-				i & (1 << STAT_FULLSIZE)   ? 1 : 0,
-				atomic64_read(v));
-			DMEMIT("\n");
-		}
-		break;
-
-	case STATUSTYPE_TABLE:
-		break;
-	}
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
-	return 0;
-#endif
-}
-
-static struct target_type lc_mgr_target = {
-	.name = "lc-mgr",
-	.version = {1, 0, 0},
-	.module = THIS_MODULE,
-	.map = lc_mgr_map,
-	.ctr = lc_mgr_ctr,
-	.dtr = lc_mgr_dtr,
-	.message = lc_mgr_message,
-	.status = lc_mgr_status,
-};
-
-static int __init lc_module_init(void)
-{
-	size_t i;
-	struct module *mod;
-	struct kobject *lc_kobj;
-	int r;
-
-	r = dm_register_target(&lc_target);
-	if (r < 0) {
-		DMERR("register lc failed %d", r);
-		return r;
-	}
-
-	r = dm_register_target(&lc_mgr_target);
-	if (r < 0) {
-		DMERR("register lc-mgr failed %d", r);
-		goto bad_register_mgr_target;
-	}
-
-	/*
-	 * /sys/module/dm_lc/devices
-	 *                  /caches
-	 */
-
-	mod = THIS_MODULE;
-	lc_kobj = &(mod->mkobj.kobj);
-
-	r = -ENOMEM;
-
-	devices_kobj = kobject_create_and_add("devices", lc_kobj);
-	if (!devices_kobj)
-		goto bad_kobj_devices;
-
-	caches_kobj = kobject_create_and_add("caches", lc_kobj);
-	if (!caches_kobj)
-		goto bad_kobj_caches;
-
-	safe_io_wq = alloc_workqueue("safeiowq",
-				     WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
-	if (!safe_io_wq) {
-		DMERR("failed to create workqueue safeiowq");
-		goto bad_wq;
-	}
-
-	lc_io_client = dm_io_client_create();
-	if (IS_ERR(lc_io_client)) {
-		r = PTR_ERR(lc_io_client);
-		goto bad_io_client;
-	}
-
-	cache_id_ptr = 0;
-
-	for (i = 0; i < LC_NR_SLOTS; i++)
-		lc_devices[i] = NULL;
-
-	for (i = 0; i < LC_NR_SLOTS; i++)
-		lc_caches[i] = NULL;
-
-	return 0;
-
-bad_io_client:
-	destroy_workqueue(safe_io_wq);
-bad_wq:
-	kobject_put(caches_kobj);
-bad_kobj_caches:
-	kobject_put(devices_kobj);
-bad_kobj_devices:
-	dm_unregister_target(&lc_mgr_target);
-bad_register_mgr_target:
-	dm_unregister_target(&lc_target);
-
-	return r;
-}
-
-static void __exit lc_module_exit(void)
-{
-	dm_io_client_destroy(lc_io_client);
-	destroy_workqueue(safe_io_wq);
-
-	kobject_put(caches_kobj);
-	kobject_put(devices_kobj);
-
-	dm_unregister_target(&lc_mgr_target);
-	dm_unregister_target(&lc_target);
-}
-
-module_init(lc_module_init);
-module_exit(lc_module_exit);
-
-MODULE_AUTHOR("Akira Hayakawa <ruby.wktk@gmail.com>");
-MODULE_DESCRIPTION(DM_NAME " lc target");
-MODULE_LICENSE("GPL");
+T3VyIG5ldyBpZHIgaW1wbGVtZW50YXRpb24gZG9lcyBpdHMgb3duIGxvY2tpbmcsIGluc3RlYWQg
+b2YgZm9yY2luZyBpdApvbnRvIHRoZSBjYWxsZXJzIGxpa2UgdGhlIG9sZCBpbXBsZW1lbnRhdGlv
+bi4KCk1hbnkgb2YgdGhlIGV4aXN0aW5nIGlkciB1c2VycyBuZWVkIGxvY2tpbmcgZm9yIG1vcmUg
+dGhhbiBqdXN0Cmlkcl9hbGxvYygpL2lkcl9yZW1vdmUoKS9pZHJfZmluZCgpIC0gdGhleSdyZSB0
+YWtpbmcgcmVmY291bnRzIGFuZCBzdWNoCnVuZGVyIHRoZWlyIGxvY2tzIGFuZCB3ZSBjYW4ndCB0
+b3VjaCB0aG9zZS4KCkJ1dCBhIHNpZ25pZmljYW50IG51bWJlciBvZiB1c2VycyBoYWQgbG9ja3Mg
+dGhhdCBwcm90ZWN0ZWQgbm90aGluZyBtb3JlCnRoYW4gdGhlIGlkciBkYXRhIHN0cnVjdHVyZXMg
+aXRzZWxmIC0gdGhvc2Ugd2UgY2FuIGdldCByaWQgb2YuCgpOb3RlIHRoYXQgd2UgaGF2ZSB0byBi
+ZSBjYXJlZnVsIHdoZW4gcmVtb3ZpbmcgbG9ja3M7IGluIHNvbWUgcGxhY2VzLApsb2NrcyBhcHBl
+YXIgdG8gb25seSBiZSBwcm90ZWN0aW5nIGlkcl9hbGxvYygpL2lkcl9yZW1vdmUoKSBjYWxscyBi
+dXQKdGhleSdyZSBhbHNvIHVzZWQgYnkgb3RoZXIgY29kZSB0aGF0IG5lZWRzIHRvIGVuc3VyZSB0
+aGUgaWRyIGlzbid0Cm1vZGlmaWVkIHdoaWxlIGl0J3MgZG9pbmcgc29tZXRoaW5nIGVsc2UgLSBz
+byBpZGVhbGx5IHdlIHdhbnQgdG8gZGVsZXRlCnRoZSBsb2NrIHRoYXQgcHJvdGVjdGVkIHRoZSBp
+ZHIsIG9yIGVsc2Ugd2UgaGF2ZSB0byBjYXJlZnVsbHkgYXVkaXQgYWxsCnRoZSBvdGhlciBwbGFj
+ZXMgaXQncyB1c2VkLgoKVGhlcmUncyBhbHNvIGEgZmFpciBudW1iZXIgb2YgcGxhY2VzIHdoZXJl
+IHRoaW5ncyB3ZXJlIGJlaW5nIGRvbmUgdW5kZXIKdGhlIGlkciBsb2NrIHVubmVjZXNzYXJpbHk7
+IGRyaXZlcnMvZGNhL2RjYS1zeXNmcy5jIGlzIGEgZ29vZCBleGFtcGxlLgpkY2EtPmlkIGlzIHNl
+dCB0byB0aGUgaWQgaWRyX2FsbG9jKCkgcmV0dXJucyB1bmRlciB0aGUgbG9jayAtIGJ1dAp0aGVy
+ZSdzIG5vIGlkcl9maW5kKCkgY2FsbHMgdW5kZXIgdGhlIGxvY2ssIGFuZCBkY2EtPmlkIGlzbid0
+IHRvdWNoZWQgaW4KdGhlIGlkcl9yZW1vdmUoKSBwYXRocy4gU28gdGhlIGxvY2sgY2FuIGJlIHNh
+ZmVseSBkZWxldGVkLgoKVGhlIHJlYWxseSBuaWNlIHRoaW5nIGFib3V0IGRlbGV0aW5nIHRoaXMg
+dW5uZWNlc3NhcnkgbG9ja2luZyBpcyB0aGF0IGl0CmxldHMgdXMgdHJpdmlhbGx5IGRlbGV0ZSBh
+IGxvdCBvZiBub3cgdW5uZWNlc3NhcnkgaWRyX3ByZWxvYWQoKSAtIHdpdGgKaWRyIGRvaW5nIGl0
+cyBvd24gbG9ja2luZywgd2UgY2FuIHBhc3MgR0ZQX0tFUk5FTCB0byBpZHJfYWxsb2MoKSBqdXN0
+CmZpbmUuCgpTaWduZWQtb2ZmLWJ5OiBLZW50IE92ZXJzdHJlZXQgPGttb0BkYXRlcmFpbmMuY29t
+PgpDYzogQW5kcmV3IE1vcnRvbiA8YWtwbUBsaW51eC1mb3VuZGF0aW9uLm9yZz4KQ2M6IFRlanVu
+IEhlbyA8dGpAa2VybmVsLm9yZz4KQ2M6IERhdmlkIEFpcmxpZSA8YWlybGllZEBsaW51eC5pZT4K
+Q2M6IFRvbSBUdWNrZXIgPHRvbUBvcGVuZ3JpZGNvbXB1dGluZy5jb20+CkNjOiBTdGV2ZSBXaXNl
+IDxzd2lzZUBvcGVuZ3JpZGNvbXB1dGluZy5jb20+CkNjOiBSb2xhbmQgRHJlaWVyIDxyb2xhbmRA
+a2VybmVsLm9yZz4KQ2M6IFNlYW4gSGVmdHkgPHNlYW4uaGVmdHlAaW50ZWwuY29tPgpDYzogSGFs
+IFJvc2Vuc3RvY2sgPGhhbC5yb3NlbnN0b2NrQGdtYWlsLmNvbT4KQ2M6IEFsYXNkYWlyIEtlcmdv
+biA8YWdrQHJlZGhhdC5jb20+CkNjOiBkbS1kZXZlbEByZWRoYXQuY29tCkNjOiBTYW11ZWwgT3J0
+aXogPHNhbWVvQGxpbnV4LmludGVsLmNvbT4KQ2M6IEFsZXggRHVib3YgPG9ha2FkQHlhaG9vLmNv
+bT4KQ2M6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+CkNjOiBHcmVnIEtyb2FoLUhhcnRt
+YW4gPGdyZWdraEBsaW51eGZvdW5kYXRpb24ub3JnPgpDYzogQ2hyaXMgQmFsbCA8Y2piQGxhcHRv
+cC5vcmc+CkNjOiAiSmFtZXMgRS5KLiBCb3R0b21sZXkiIDxKQm90dG9tbGV5QHBhcmFsbGVscy5j
+b20+CkNjOiBXaWxsZW0gUmllZGUgPG9zc3RAcmllZGUub3JnPgpDYzogIkthaSBNw6RraXNhcmEi
+IDxLYWkuTWFraXNhcmFAa29sdW1idXMuZmk+CkNjOiAiTmljaG9sYXMgQS4gQmVsbGluZ2VyIiA8
+bmFiQGxpbnV4LWlzY3NpLm9yZz4KQ2M6IExpIFplZmFuIDxsaXplZmFuQGh1YXdlaS5jb20+CkNj
+OiBWbGFkIFlhc2V2aWNoIDx2eWFzZXZpY2hAZ21haWwuY29tPgpDYzogTmVpbCBIb3JtYW4gPG5o
+b3JtYW5AdHV4ZHJpdmVyLmNvbT4KQ2M6ICJEYXZpZCBTLiBNaWxsZXIiIDxkYXZlbUBkYXZlbWxv
+ZnQubmV0PgpDYzogRGF2ZSBBaXJsaWUgPGFpcmxpZWRAcmVkaGF0LmNvbT4KQ2M6IEFsb24gTGV2
+eSA8YWxldnlAcmVkaGF0LmNvbT4KQ2M6IEd1ZW5uYWRpIExpYWtob3ZldHNraSA8Zy5saWFraG92
+ZXRza2lAZ214LmRlPgpDYzogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+CkNjOiBsaW51
+eC1rZXJuZWxAdmdlci5rZXJuZWwub3JnCkNjOiBkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Au
+b3JnCkNjOiBsaW51eC1yZG1hQHZnZXIua2VybmVsLm9yZwpDYzogbGludXgtbW1jQHZnZXIua2Vy
+bmVsLm9yZwpDYzogbGludXgtc2NzaUB2Z2VyLmtlcm5lbC5vcmcKQ2M6IG9zc3QtdXNlcnNAbGlz
+dHMuc291cmNlZm9yZ2UubmV0CkNjOiB0YXJnZXQtZGV2ZWxAdmdlci5rZXJuZWwub3JnCkNjOiBj
+b250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCkNjOiBjZ3JvdXBzQHZnZXIua2Vy
+bmVsLm9yZwpDYzogbGludXgtc2N0cEB2Z2VyLmtlcm5lbC5vcmcKQ2M6IG5ldGRldkB2Z2VyLmtl
+cm5lbC5vcmcKLS0tCiBkcml2ZXJzL2RjYS9kY2Etc3lzZnMuYyAgICAgICAgICAgICAgICAgICB8
+IDE4ICsrKy0tLS0tLS0tLS0tLS0tLQogZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfY21kLmMgICAg
+ICAgICAgICAgfCAgNCArLS0tCiBkcml2ZXJzL2dwdS9kcm0vcXhsL3F4bF9kcnYuaCAgICAgICAg
+ICAgICB8ICAxIC0KIGRyaXZlcnMvZ3B1L2RybS9xeGwvcXhsX2ttcy5jICAgICAgICAgICAgIHwg
+IDEgLQogZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfcmVsZWFzZS5jICAgICAgICAgfCAyMCArKysr
+Ky0tLS0tLS0tLS0tLS0tLQogZHJpdmVycy9pbmZpbmliYW5kL2h3L2Ftc28xMTAwL2MyLmggICAg
+ICAgfCAgMSAtCiBkcml2ZXJzL2luZmluaWJhbmQvaHcvYW1zbzExMDAvYzJfcXAuYyAgICB8IDIw
+ICsrLS0tLS0tLS0tLS0tLS0tLS0tCiBkcml2ZXJzL21kL2RtLmMgICAgICAgICAgICAgICAgICAg
+ICAgICAgICB8IDI0ICsrKystLS0tLS0tLS0tLS0tLS0tLS0tLQogZHJpdmVycy9tZW1zdGljay9j
+b3JlL21lbXN0aWNrLmMgICAgICAgICAgfCAxNyArKystLS0tLS0tLS0tLS0tLQogZHJpdmVycy9t
+ZmQvcnRzeF9wY3IuYyAgICAgICAgICAgICAgICAgICAgfCAxMyArKystLS0tLS0tLS0tCiBkcml2
+ZXJzL21pc2MvYzJwb3J0L2NvcmUuYyAgICAgICAgICAgICAgICB8IDExICstLS0tLS0tLS0tCiBk
+cml2ZXJzL21pc2MvdGlmbV9jb3JlLmMgICAgICAgICAgICAgICAgICB8IDE1ICsrKy0tLS0tLS0t
+LS0tLQogZHJpdmVycy9tbWMvY29yZS9ob3N0LmMgICAgICAgICAgICAgICAgICAgfCAxMyArKy0t
+LS0tLS0tLS0tCiBkcml2ZXJzL3Njc2kvY2guYyAgICAgICAgICAgICAgICAgICAgICAgICB8IDEz
+ICstLS0tLS0tLS0tLS0KIGRyaXZlcnMvc2NzaS9zdC5jICAgICAgICAgICAgICAgICAgICAgICAg
+IHwgMTMgKy0tLS0tLS0tLS0tLQogZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0LmMg
+ICAgICAgfCAxNyArKysrLS0tLS0tLS0tLS0tLQogZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lf
+dGFyZ2V0LmggICAgICAgfCAgMSAtCiBkcml2ZXJzL3RhcmdldC9pc2NzaS9pc2NzaV90YXJnZXRf
+bG9naW4uYyB8IDEyICsrLS0tLS0tLS0tLQogaW5jbHVkZS9saW51eC9jZ3JvdXAuaCAgICAgICAg
+ICAgICAgICAgICAgfCAgMSAtCiBpbmNsdWRlL25ldC9zY3RwL3NjdHAuaCAgICAgICAgICAgICAg
+ICAgICB8ICAxIC0KIGtlcm5lbC9jZ3JvdXAuYyAgICAgICAgICAgICAgICAgICAgICAgICAgIHwg
+IDkgKy0tLS0tLS0tCiBrZXJuZWwvd29ya3F1ZXVlLmMgICAgICAgICAgICAgICAgICAgICAgICB8
+IDE1ICsrLS0tLS0tLS0tLS0tLQogbmV0LzlwL3V0aWwuYyAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgfCAxNSArLS0tLS0tLS0tLS0tLS0KIG5ldC9zY3RwL2Fzc29jaW9sYS5jICAgICAgICAg
+ICAgICAgICAgICAgIHwgMTQgKystLS0tLS0tLS0tLS0KIG5ldC9zY3RwL3Byb3RvY29sLmMgICAg
+ICAgICAgICAgICAgICAgICAgIHwgIDEgLQogbmV0L3NjdHAvc29ja2V0LmMgICAgICAgICAgICAg
+ICAgICAgICAgICAgfCAgMiAtLQogMjYgZmlsZXMgY2hhbmdlZCwgNDEgaW5zZXJ0aW9ucygrKSwg
+MjMxIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZGNhL2RjYS1zeXNmcy5jIGIv
+ZHJpdmVycy9kY2EvZGNhLXN5c2ZzLmMKaW5kZXggZWZmZGE2Ni4uNmJlNWZiZCAxMDA2NDQKLS0t
+IGEvZHJpdmVycy9kY2EvZGNhLXN5c2ZzLmMKKysrIGIvZHJpdmVycy9kY2EvZGNhLXN5c2ZzLmMK
+QEAgLTMxLDcgKzMxLDYgQEAKIAogc3RhdGljIHN0cnVjdCBjbGFzcyAqZGNhX2NsYXNzOwogc3Rh
+dGljIHN0cnVjdCBpZHIgZGNhX2lkcjsKLXN0YXRpYyBzcGlubG9ja190IGRjYV9pZHJfbG9jazsK
+IAogaW50IGRjYV9zeXNmc19hZGRfcmVxKHN0cnVjdCBkY2FfcHJvdmlkZXIgKmRjYSwgc3RydWN0
+IGRldmljZSAqZGV2LCBpbnQgc2xvdCkKIHsKQEAgLTU1LDIzICs1NCwxNSBAQCBpbnQgZGNhX3N5
+c2ZzX2FkZF9wcm92aWRlcihzdHJ1Y3QgZGNhX3Byb3ZpZGVyICpkY2EsIHN0cnVjdCBkZXZpY2Ug
+KmRldikKIAlzdHJ1Y3QgZGV2aWNlICpjZDsKIAlpbnQgcmV0OwogCi0JaWRyX3ByZWxvYWQoR0ZQ
+X0tFUk5FTCk7Ci0Jc3Bpbl9sb2NrKCZkY2FfaWRyX2xvY2spOwotCi0JcmV0ID0gaWRyX2FsbG9j
+KCZkY2FfaWRyLCBkY2EsIEdGUF9OT1dBSVQpOwotCWlmIChyZXQgPj0gMCkKLQkJZGNhLT5pZCA9
+IHJldDsKLQotCXNwaW5fdW5sb2NrKCZkY2FfaWRyX2xvY2spOwotCWlkcl9wcmVsb2FkX2VuZCgp
+OworCXJldCA9IGlkcl9hbGxvYygmZGNhX2lkciwgZGNhLCBHRlBfS0VSTkVMKTsKIAlpZiAocmV0
+IDwgMCkKIAkJcmV0dXJuIHJldDsKIAorCWRjYS0+aWQgPSByZXQ7CisKIAljZCA9IGRldmljZV9j
+cmVhdGUoZGNhX2NsYXNzLCBkZXYsIE1LREVWKDAsIDApLCBOVUxMLCAiZGNhJWQiLCBkY2EtPmlk
+KTsKIAlpZiAoSVNfRVJSKGNkKSkgewotCQlzcGluX2xvY2soJmRjYV9pZHJfbG9jayk7CiAJCWlk
+cl9yZW1vdmUoJmRjYV9pZHIsIGRjYS0+aWQpOwotCQlzcGluX3VubG9jaygmZGNhX2lkcl9sb2Nr
+KTsKIAkJcmV0dXJuIFBUUl9FUlIoY2QpOwogCX0KIAlkY2EtPmNkID0gY2Q7CkBAIC04MiwxNSAr
+NzMsMTIgQEAgdm9pZCBkY2Ffc3lzZnNfcmVtb3ZlX3Byb3ZpZGVyKHN0cnVjdCBkY2FfcHJvdmlk
+ZXIgKmRjYSkKIHsKIAlkZXZpY2VfdW5yZWdpc3RlcihkY2EtPmNkKTsKIAlkY2EtPmNkID0gTlVM
+TDsKLQlzcGluX2xvY2soJmRjYV9pZHJfbG9jayk7CiAJaWRyX3JlbW92ZSgmZGNhX2lkciwgZGNh
+LT5pZCk7Ci0Jc3Bpbl91bmxvY2soJmRjYV9pZHJfbG9jayk7CiB9CiAKIGludCBfX2luaXQgZGNh
+X3N5c2ZzX2luaXQodm9pZCkKIHsKIAlpZHJfaW5pdCgmZGNhX2lkcik7Ci0Jc3Bpbl9sb2NrX2lu
+aXQoJmRjYV9pZHJfbG9jayk7CiAKIAlkY2FfY2xhc3MgPSBjbGFzc19jcmVhdGUoVEhJU19NT0RV
+TEUsICJkY2EiKTsKIAlpZiAoSVNfRVJSKGRjYV9jbGFzcykpIHsKZGlmZiAtLWdpdCBhL2RyaXZl
+cnMvZ3B1L2RybS9xeGwvcXhsX2NtZC5jIGIvZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfY21kLmMK
+aW5kZXggNTU1YTY5OC4uZTAxZjdkNSAxMDA2NDQKLS0tIGEvZHJpdmVycy9ncHUvZHJtL3F4bC9x
+eGxfY21kLmMKKysrIGIvZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfY21kLmMKQEAgLTQ0OSwxMSAr
+NDQ5LDkgQEAgaW50IHF4bF9zdXJmYWNlX2lkX2FsbG9jKHN0cnVjdCBxeGxfZGV2aWNlICpxZGV2
+LAogCWludCBpZHJfcmV0OwogCWludCBjb3VudCA9IDA7CiBhZ2FpbjoKLQlpZHJfcHJlbG9hZChH
+RlBfQVRPTUlDKTsKIAlzcGluX2xvY2soJnFkZXYtPnN1cmZfaWRfaWRyX2xvY2spOwotCWlkcl9y
+ZXQgPSBpZHJfYWxsb2NfcmFuZ2UoJnFkZXYtPnN1cmZfaWRfaWRyLCBOVUxMLCAxLCAwLCBHRlBf
+Tk9XQUlUKTsKKwlpZHJfcmV0ID0gaWRyX2FsbG9jX3JhbmdlKCZxZGV2LT5zdXJmX2lkX2lkciwg
+TlVMTCwgMSwgMCwgR0ZQX0FUT01JQyk7CiAJc3Bpbl91bmxvY2soJnFkZXYtPnN1cmZfaWRfaWRy
+X2xvY2spOwotCWlkcl9wcmVsb2FkX2VuZCgpOwogCWlmIChpZHJfcmV0IDwgMCkKIAkJcmV0dXJu
+IGlkcl9yZXQ7CiAJaGFuZGxlID0gaWRyX3JldDsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2Ry
+bS9xeGwvcXhsX2Rydi5oIGIvZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfZHJ2LmgKaW5kZXggN2U5
+NmY0Zi4uZGYyNWFmNSAxMDA2NDQKLS0tIGEvZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfZHJ2LmgK
+KysrIGIvZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfZHJ2LmgKQEAgLTI4NSw3ICsyODUsNiBAQCBz
+dHJ1Y3QgcXhsX2RldmljZSB7CiAJdWludDY0X3QJdmFfc2xvdF9tYXNrOwogCiAJc3RydWN0IGlk
+cglyZWxlYXNlX2lkcjsKLQlzcGlubG9ja190IHJlbGVhc2VfaWRyX2xvY2s7CiAJc3RydWN0IG11
+dGV4CWFzeW5jX2lvX211dGV4OwogCXVuc2lnbmVkIGludCBsYXN0X3NlbnRfaW9fY21kOwogCmRp
+ZmYgLS1naXQgYS9kcml2ZXJzL2dwdS9kcm0vcXhsL3F4bF9rbXMuYyBiL2RyaXZlcnMvZ3B1L2Ry
+bS9xeGwvcXhsX2ttcy5jCmluZGV4IDllOGRhOWUuLjM5NmMxZWIgMTAwNjQ0Ci0tLSBhL2RyaXZl
+cnMvZ3B1L2RybS9xeGwvcXhsX2ttcy5jCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9xeGwvcXhsX2tt
+cy5jCkBAIC0yMDQsNyArMjA0LDYgQEAgaW50IHF4bF9kZXZpY2VfaW5pdChzdHJ1Y3QgcXhsX2Rl
+dmljZSAqcWRldiwKIAkJCUdGUF9LRVJORUwpOwogCiAJaWRyX2luaXQoJnFkZXYtPnJlbGVhc2Vf
+aWRyKTsKLQlzcGluX2xvY2tfaW5pdCgmcWRldi0+cmVsZWFzZV9pZHJfbG9jayk7CiAKIAlpZHJf
+aW5pdCgmcWRldi0+c3VyZl9pZF9pZHIpOwogCXNwaW5fbG9ja19pbml0KCZxZGV2LT5zdXJmX2lk
+X2lkcl9sb2NrKTsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9xeGwvcXhsX3JlbGVhc2Uu
+YyBiL2RyaXZlcnMvZ3B1L2RybS9xeGwvcXhsX3JlbGVhc2UuYwppbmRleCA3Y2JlNjJhLi42Y2Iy
+YzgzIDEwMDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0vcXhsL3F4bF9yZWxlYXNlLmMKKysrIGIv
+ZHJpdmVycy9ncHUvZHJtL3F4bC9xeGxfcmVsZWFzZS5jCkBAIC00NCw3ICs0NCw2IEBAIHF4bF9y
+ZWxlYXNlX2FsbG9jKHN0cnVjdCBxeGxfZGV2aWNlICpxZGV2LCBpbnQgdHlwZSwKIAkJICBzdHJ1
+Y3QgcXhsX3JlbGVhc2UgKipyZXQpCiB7CiAJc3RydWN0IHF4bF9yZWxlYXNlICpyZWxlYXNlOwot
+CWludCBoYW5kbGU7CiAJc2l6ZV90IHNpemUgPSBzaXplb2YoKnJlbGVhc2UpOwogCWludCBpZHJf
+cmV0OwogCkBAIC01OCwyMSArNTcsMTYgQEAgcXhsX3JlbGVhc2VfYWxsb2Moc3RydWN0IHF4bF9k
+ZXZpY2UgKnFkZXYsIGludCB0eXBlLAogCXJlbGVhc2UtPnN1cmZhY2VfcmVsZWFzZV9pZCA9IDA7
+CiAJSU5JVF9MSVNUX0hFQUQoJnJlbGVhc2UtPmJvcyk7CiAKLQlpZHJfcHJlbG9hZChHRlBfS0VS
+TkVMKTsKLQlzcGluX2xvY2soJnFkZXYtPnJlbGVhc2VfaWRyX2xvY2spOwotCWlkcl9yZXQgPSBp
+ZHJfYWxsb2NfcmFuZ2UoJnFkZXYtPnJlbGVhc2VfaWRyLAotCQkJCSAgcmVsZWFzZSwgMSwgMCwg
+R0ZQX05PV0FJVCk7Ci0Jc3Bpbl91bmxvY2soJnFkZXYtPnJlbGVhc2VfaWRyX2xvY2spOwotCWlk
+cl9wcmVsb2FkX2VuZCgpOwotCWhhbmRsZSA9IGlkcl9yZXQ7CisJaWRyX3JldCA9IGlkcl9hbGxv
+Y19yYW5nZSgmcWRldi0+cmVsZWFzZV9pZHIsIHJlbGVhc2UsCisJCQkJICAxLCAwLCBHRlBfS0VS
+TkVMKTsKIAlpZiAoaWRyX3JldCA8IDApCiAJCWdvdG8gcmVsZWFzZV9mYWlsOwogCSpyZXQgPSBy
+ZWxlYXNlOwotCVFYTF9JTkZPKHFkZXYsICJhbGxvY2F0ZWQgcmVsZWFzZSAlbGxkXG4iLCBoYW5k
+bGUpOwotCXJlbGVhc2UtPmlkID0gaGFuZGxlOworCVFYTF9JTkZPKHFkZXYsICJhbGxvY2F0ZWQg
+cmVsZWFzZSAlbGxkXG4iLCBpZHJfcmV0KTsKKwlyZWxlYXNlLT5pZCA9IGlkcl9yZXQ7CiByZWxl
+YXNlX2ZhaWw6CiAKLQlyZXR1cm4gaGFuZGxlOworCXJldHVybiBpZHJfcmV0OwogfQogCiB2b2lk
+CkBAIC05NCw5ICs4OCw3IEBAIHF4bF9yZWxlYXNlX2ZyZWUoc3RydWN0IHF4bF9kZXZpY2UgKnFk
+ZXYsCiAJCXF4bF9mZW5jZV9yZW1vdmVfcmVsZWFzZSgmYm8tPmZlbmNlLCByZWxlYXNlLT5pZCk7
+CiAJCXF4bF9ib191bnJlZigmYm8pOwogCX0KLQlzcGluX2xvY2soJnFkZXYtPnJlbGVhc2VfaWRy
+X2xvY2spOwogCWlkcl9yZW1vdmUoJnFkZXYtPnJlbGVhc2VfaWRyLCByZWxlYXNlLT5pZCk7Ci0J
+c3Bpbl91bmxvY2soJnFkZXYtPnJlbGVhc2VfaWRyX2xvY2spOwogCWtmcmVlKHJlbGVhc2UpOwog
+fQogCkBAIC0yNzksOSArMjcxLDcgQEAgc3RydWN0IHF4bF9yZWxlYXNlICpxeGxfcmVsZWFzZV9m
+cm9tX2lkX2xvY2tlZChzdHJ1Y3QgcXhsX2RldmljZSAqcWRldiwKIHsKIAlzdHJ1Y3QgcXhsX3Jl
+bGVhc2UgKnJlbGVhc2U7CiAKLQlzcGluX2xvY2soJnFkZXYtPnJlbGVhc2VfaWRyX2xvY2spOwog
+CXJlbGVhc2UgPSBpZHJfZmluZCgmcWRldi0+cmVsZWFzZV9pZHIsIGlkKTsKLQlzcGluX3VubG9j
+aygmcWRldi0+cmVsZWFzZV9pZHJfbG9jayk7CiAJaWYgKCFyZWxlYXNlKSB7CiAJCURSTV9FUlJP
+UigiZmFpbGVkIHRvIGZpbmQgaWQgaW4gcmVsZWFzZV9pZHJcbiIpOwogCQlyZXR1cm4gTlVMTDsK
+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvaW5maW5pYmFuZC9ody9hbXNvMTEwMC9jMi5oIGIvZHJpdmVy
+cy9pbmZpbmliYW5kL2h3L2Ftc28xMTAwL2MyLmgKaW5kZXggZDYxOWQ3My4uNzNmMmU5NiAxMDA2
+NDQKLS0tIGEvZHJpdmVycy9pbmZpbmliYW5kL2h3L2Ftc28xMTAwL2MyLmgKKysrIGIvZHJpdmVy
+cy9pbmZpbmliYW5kL2h3L2Ftc28xMTAwL2MyLmgKQEAgLTI2NCw3ICsyNjQsNiBAQCBzdHJ1Y3Qg
+YzJfcGRfdGFibGUgewogCiBzdHJ1Y3QgYzJfcXBfdGFibGUgewogCXN0cnVjdCBpZHIgaWRyOwot
+CXNwaW5sb2NrX3QgbG9jazsKIH07CiAKIHN0cnVjdCBjMl9lbGVtZW50IHsKZGlmZiAtLWdpdCBh
+L2RyaXZlcnMvaW5maW5pYmFuZC9ody9hbXNvMTEwMC9jMl9xcC5jIGIvZHJpdmVycy9pbmZpbmli
+YW5kL2h3L2Ftc28xMTAwL2MyX3FwLmMKaW5kZXggODY3MDhkZS4uY2I4MGFhOSAxMDA2NDQKLS0t
+IGEvZHJpdmVycy9pbmZpbmliYW5kL2h3L2Ftc28xMTAwL2MyX3FwLmMKKysrIGIvZHJpdmVycy9p
+bmZpbmliYW5kL2h3L2Ftc28xMTAwL2MyX3FwLmMKQEAgLTM4MCwzNiArMzgwLDIxIEBAIHN0YXRp
+YyBpbnQgZGVzdHJveV9xcChzdHJ1Y3QgYzJfZGV2ICpjMmRldiwgc3RydWN0IGMyX3FwICpxcCkK
+IAogc3RhdGljIGludCBjMl9hbGxvY19xcG4oc3RydWN0IGMyX2RldiAqYzJkZXYsIHN0cnVjdCBj
+Ml9xcCAqcXApCiB7Ci0JaW50IHJldDsKLQotCWlkcl9wcmVsb2FkKEdGUF9LRVJORUwpOwotCXNw
+aW5fbG9ja19pcnEoJmMyZGV2LT5xcF90YWJsZS5sb2NrKTsKLQotCXJldCA9IGlkcl9hbGxvY19j
+eWNsaWMoJmMyZGV2LT5xcF90YWJsZS5pZHIsIHFwLCAwLCAwLCBHRlBfTk9XQUlUKTsKKwlpbnQg
+cmV0ID0gaWRyX2FsbG9jX2N5Y2xpYygmYzJkZXYtPnFwX3RhYmxlLmlkciwgcXAsIDAsIDAsIEdG
+UF9LRVJORUwpOwogCWlmIChyZXQgPj0gMCkKIAkJcXAtPnFwbiA9IHJldDsKIAotCXNwaW5fdW5s
+b2NrX2lycSgmYzJkZXYtPnFwX3RhYmxlLmxvY2spOwotCWlkcl9wcmVsb2FkX2VuZCgpOwogCXJl
+dHVybiByZXQgPCAwID8gcmV0IDogMDsKIH0KIAogc3RhdGljIHZvaWQgYzJfZnJlZV9xcG4oc3Ry
+dWN0IGMyX2RldiAqYzJkZXYsIGludCBxcG4pCiB7Ci0Jc3Bpbl9sb2NrX2lycSgmYzJkZXYtPnFw
+X3RhYmxlLmxvY2spOwogCWlkcl9yZW1vdmUoJmMyZGV2LT5xcF90YWJsZS5pZHIsIHFwbik7Ci0J
+c3Bpbl91bmxvY2tfaXJxKCZjMmRldi0+cXBfdGFibGUubG9jayk7CiB9CiAKIHN0cnVjdCBjMl9x
+cCAqYzJfZmluZF9xcG4oc3RydWN0IGMyX2RldiAqYzJkZXYsIGludCBxcG4pCiB7Ci0JdW5zaWdu
+ZWQgbG9uZyBmbGFnczsKLQlzdHJ1Y3QgYzJfcXAgKnFwOwotCi0Jc3Bpbl9sb2NrX2lycXNhdmUo
+JmMyZGV2LT5xcF90YWJsZS5sb2NrLCBmbGFncyk7Ci0JcXAgPSBpZHJfZmluZCgmYzJkZXYtPnFw
+X3RhYmxlLmlkciwgcXBuKTsKLQlzcGluX3VubG9ja19pcnFyZXN0b3JlKCZjMmRldi0+cXBfdGFi
+bGUubG9jaywgZmxhZ3MpOwotCXJldHVybiBxcDsKKwlyZXR1cm4gaWRyX2ZpbmQoJmMyZGV2LT5x
+cF90YWJsZS5pZHIsIHFwbik7CiB9CiAKIGludCBjMl9hbGxvY19xcChzdHJ1Y3QgYzJfZGV2ICpj
+MmRldiwKQEAgLTEwMTQsNyArOTk5LDYgQEAgb3V0OgogCiB2b2lkIGMyX2luaXRfcXBfdGFibGUo
+c3RydWN0IGMyX2RldiAqYzJkZXYpCiB7Ci0Jc3Bpbl9sb2NrX2luaXQoJmMyZGV2LT5xcF90YWJs
+ZS5sb2NrKTsKIAlpZHJfaW5pdCgmYzJkZXYtPnFwX3RhYmxlLmlkcik7CiB9CiAKZGlmZiAtLWdp
+dCBhL2RyaXZlcnMvbWQvZG0uYyBiL2RyaXZlcnMvbWQvZG0uYwppbmRleCBjNjNkMzVhLi4zMjFl
+ODkxIDEwMDY0NAotLS0gYS9kcml2ZXJzL21kL2RtLmMKKysrIGIvZHJpdmVycy9tZC9kbS5jCkBA
+IC0xODEyLDkgKzE4MTIsNyBAQCBzdGF0aWMgaW50IGRtX2FueV9jb25nZXN0ZWQodm9pZCAqY29u
+Z2VzdGVkX2RhdGEsIGludCBiZGlfYml0cykKICAqLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tKi8KIHN0YXRpYyB2b2lkIGZyZWVf
+bWlub3IoaW50IG1pbm9yKQogewotCXNwaW5fbG9jaygmX21pbm9yX2xvY2spOwogCWlkcl9yZW1v
+dmUoJl9taW5vcl9pZHIsIG1pbm9yKTsKLQlzcGluX3VubG9jaygmX21pbm9yX2xvY2spOwogfQog
+CiAvKgpAQCAtMTgyNywxNCArMTgyNSw4IEBAIHN0YXRpYyBpbnQgc3BlY2lmaWNfbWlub3IoaW50
+IG1pbm9yKQogCWlmIChtaW5vciA+PSAoMSA8PCBNSU5PUkJJVFMpKQogCQlyZXR1cm4gLUVJTlZB
+TDsKIAotCWlkcl9wcmVsb2FkKEdGUF9LRVJORUwpOwotCXNwaW5fbG9jaygmX21pbm9yX2xvY2sp
+OwotCi0JciA9IGlkcl9hbGxvY19yYW5nZSgmbWlub3JfaWRyLCBNSU5PUl9BTExPQ0VELAotCQkJ
+ICAgIG1pbm9yLCBtaW5vciArIDEsIEdGUF9OT1dBSVQpOwotCi0Jc3Bpbl91bmxvY2soJl9taW5v
+cl9sb2NrKTsKLQlpZHJfcHJlbG9hZF9lbmQoKTsKKwlyID0gaWRyX2FsbG9jX3JhbmdlKCZfbWlu
+b3JfaWRyLCBNSU5PUl9BTExPQ0VELCBtaW5vciwKKwkJCSAgICBtaW5vciArIDEsIEdGUF9LRVJO
+RUwpOwogCWlmIChyIDwgMCkKIAkJcmV0dXJuIHIgPT0gLUVOT1NQQyA/IC1FQlVTWSA6IHI7CiAJ
+cmV0dXJuIDA7CkBAIC0xODQ0LDE0ICsxODM2LDggQEAgc3RhdGljIGludCBuZXh0X2ZyZWVfbWlu
+b3IoaW50ICptaW5vcikKIHsKIAlpbnQgcjsKIAotCWlkcl9wcmVsb2FkKEdGUF9LRVJORUwpOwot
+CXNwaW5fbG9jaygmX21pbm9yX2xvY2spOwotCi0JciA9IGlkcl9hbGxvY19yYW5nZSgmbWlub3Jf
+aWRyLCBNSU5PUl9BTExPQ0VELCAwLAotCQkJICAgIDEgPDwgTUlOT1JCSVRTLCBHRlBfTk9XQUlU
+KTsKLQotCXNwaW5fdW5sb2NrKCZfbWlub3JfbG9jayk7Ci0JaWRyX3ByZWxvYWRfZW5kKCk7CisJ
+ciA9IGlkcl9hbGxvY19yYW5nZSgmX21pbm9yX2lkciwgTUlOT1JfQUxMT0NFRCwKKwkJCSAgICAw
+LCAxIDw8IE1JTk9SQklUUywgR0ZQX0tFUk5FTCk7CiAJaWYgKHIgPCAwKQogCQlyZXR1cm4gcjsK
+IAkqbWlub3IgPSByOwpAQCAtMTk2Miw5ICsxOTQ4LDcgQEAgc3RhdGljIHN0cnVjdCBtYXBwZWRf
+ZGV2aWNlICphbGxvY19kZXYoaW50IG1pbm9yKQogCW1kLT5mbHVzaF9iaW8uYmlfcncgPSBXUklU
+RV9GTFVTSDsKIAogCS8qIFBvcHVsYXRlIHRoZSBtYXBwaW5nLCBub2JvZHkga25vd3Mgd2UgZXhp
+c3QgeWV0ICovCi0Jc3Bpbl9sb2NrKCZfbWlub3JfbG9jayk7CiAJb2xkX21kID0gaWRyX3JlcGxh
+Y2UoJl9taW5vcl9pZHIsIG1kLCBtaW5vcik7Ci0Jc3Bpbl91bmxvY2soJl9taW5vcl9sb2NrKTsK
+IAogCUJVR19PTihvbGRfbWQgIT0gTUlOT1JfQUxMT0NFRCk7CiAKZGlmZiAtLWdpdCBhL2RyaXZl
+cnMvbWVtc3RpY2svY29yZS9tZW1zdGljay5jIGIvZHJpdmVycy9tZW1zdGljay9jb3JlL21lbXN0
+aWNrLmMKaW5kZXggNzBmYjA3Yy4uYjc1NDRhMyAxMDA2NDQKLS0tIGEvZHJpdmVycy9tZW1zdGlj
+ay9jb3JlL21lbXN0aWNrLmMKKysrIGIvZHJpdmVycy9tZW1zdGljay9jb3JlL21lbXN0aWNrLmMK
+QEAgLTI2LDcgKzI2LDYgQEAgbW9kdWxlX3BhcmFtKGNtZF9yZXRyaWVzLCB1aW50LCAwNjQ0KTsK
+IAogc3RhdGljIHN0cnVjdCB3b3JrcXVldWVfc3RydWN0ICp3b3JrcXVldWU7CiBzdGF0aWMgREVG
+SU5FX0lEUihtZW1zdGlja19ob3N0X2lkcik7Ci1zdGF0aWMgREVGSU5FX1NQSU5MT0NLKG1lbXN0
+aWNrX2hvc3RfbG9jayk7CiAKIHN0YXRpYyBpbnQgbWVtc3RpY2tfZGV2X21hdGNoKHN0cnVjdCBt
+ZW1zdGlja19kZXYgKmNhcmQsCiAJCQkgICAgICBzdHJ1Y3QgbWVtc3RpY2tfZGV2aWNlX2lkICpp
+ZCkKQEAgLTUxMiwyNSArNTExLDE3IEBAIGludCBtZW1zdGlja19hZGRfaG9zdChzdHJ1Y3QgbWVt
+c3RpY2tfaG9zdCAqaG9zdCkKIHsKIAlpbnQgcmM7CiAKLQlpZHJfcHJlbG9hZChHRlBfS0VSTkVM
+KTsKLQlzcGluX2xvY2soJm1lbXN0aWNrX2hvc3RfbG9jayk7Ci0KLQlyYyA9IGlkcl9hbGxvYygm
+bWVtc3RpY2tfaG9zdF9pZHIsIGhvc3QsIEdGUF9OT1dBSVQpOwotCWlmIChyYyA+PSAwKQotCQlo
+b3N0LT5pZCA9IHJjOwotCi0Jc3Bpbl91bmxvY2soJm1lbXN0aWNrX2hvc3RfbG9jayk7Ci0JaWRy
+X3ByZWxvYWRfZW5kKCk7CisJcmMgPSBpZHJfYWxsb2MoJm1lbXN0aWNrX2hvc3RfaWRyLCBob3N0
+LCBHRlBfS0VSTkVMKTsKIAlpZiAocmMgPCAwKQogCQlyZXR1cm4gcmM7CiAKKwlob3N0LT5pZCA9
+IHJjOworCiAJZGV2X3NldF9uYW1lKCZob3N0LT5kZXYsICJtZW1zdGljayV1IiwgaG9zdC0+aWQp
+OwogCiAJcmMgPSBkZXZpY2VfYWRkKCZob3N0LT5kZXYpOwogCWlmIChyYykgewotCQlzcGluX2xv
+Y2soJm1lbXN0aWNrX2hvc3RfbG9jayk7CiAJCWlkcl9yZW1vdmUoJm1lbXN0aWNrX2hvc3RfaWRy
+LCBob3N0LT5pZCk7Ci0JCXNwaW5fdW5sb2NrKCZtZW1zdGlja19ob3N0X2xvY2spOwogCQlyZXR1
+cm4gcmM7CiAJfQogCkBAIC01NTQsOSArNTQ1LDcgQEAgdm9pZCBtZW1zdGlja19yZW1vdmVfaG9z
+dChzdHJ1Y3QgbWVtc3RpY2tfaG9zdCAqaG9zdCkKIAlob3N0LT5zZXRfcGFyYW0oaG9zdCwgTUVN
+U1RJQ0tfUE9XRVIsIE1FTVNUSUNLX1BPV0VSX09GRik7CiAJbXV0ZXhfdW5sb2NrKCZob3N0LT5s
+b2NrKTsKIAotCXNwaW5fbG9jaygmbWVtc3RpY2tfaG9zdF9sb2NrKTsKIAlpZHJfcmVtb3ZlKCZt
+ZW1zdGlja19ob3N0X2lkciwgaG9zdC0+aWQpOwotCXNwaW5fdW5sb2NrKCZtZW1zdGlja19ob3N0
+X2xvY2spOwogCWRldmljZV9kZWwoJmhvc3QtPmRldik7CiB9CiBFWFBPUlRfU1lNQk9MKG1lbXN0
+aWNrX3JlbW92ZV9ob3N0KTsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWZkL3J0c3hfcGNyLmMgYi9k
+cml2ZXJzL21mZC9ydHN4X3Bjci5jCmluZGV4IDg2MmRlZWQuLmJlNTkxM2EgMTAwNjQ0Ci0tLSBh
+L2RyaXZlcnMvbWZkL3J0c3hfcGNyLmMKKysrIGIvZHJpdmVycy9tZmQvcnRzeF9wY3IuYwpAQCAt
+NDAsNyArNDAsNiBAQCBtb2R1bGVfcGFyYW0obXNpX2VuLCBib29sLCBTX0lSVUdPIHwgU19JV1VT
+Uik7CiBNT0RVTEVfUEFSTV9ERVNDKG1zaV9lbiwgIkVuYWJsZSBNU0kiKTsKIAogc3RhdGljIERF
+RklORV9JRFIocnRzeF9wY2lfaWRyKTsKLXN0YXRpYyBERUZJTkVfU1BJTkxPQ0socnRzeF9wY2lf
+bG9jayk7CiAKIHN0YXRpYyBzdHJ1Y3QgbWZkX2NlbGwgcnRzeF9wY3JfY2VsbHNbXSA9IHsKIAlb
+UlRTWF9TRF9DQVJEXSA9IHsKQEAgLTExMDEsMTYgKzExMDAsMTIgQEAgc3RhdGljIGludCBydHN4
+X3BjaV9wcm9iZShzdHJ1Y3QgcGNpX2RldiAqcGNpZGV2LAogCX0KIAloYW5kbGUtPnBjciA9IHBj
+cjsKIAotCWlkcl9wcmVsb2FkKEdGUF9LRVJORUwpOwotCXNwaW5fbG9jaygmcnRzeF9wY2lfbG9j
+ayk7Ci0JcmV0ID0gaWRyX2FsbG9jKCZydHN4X3BjaV9pZHIsIHBjciwgR0ZQX05PV0FJVCk7Ci0J
+aWYgKHJldCA+PSAwKQotCQlwY3ItPmlkID0gcmV0OwotCXNwaW5fdW5sb2NrKCZydHN4X3BjaV9s
+b2NrKTsKLQlpZHJfcHJlbG9hZF9lbmQoKTsKKwlyZXQgPSBpZHJfYWxsb2MoJnJ0c3hfcGNpX2lk
+ciwgcGNyLCBHRlBfS0VSTkVMKTsKIAlpZiAocmV0IDwgMCkKIAkJZ290byBmcmVlX2hhbmRsZTsK
+IAorCXBjci0+aWQgPSByZXQ7CisKIAlwY3ItPnBjaSA9IHBjaWRldjsKIAlkZXZfc2V0X2RydmRh
+dGEoJnBjaWRldi0+ZGV2LCBoYW5kbGUpOwogCkBAIC0xMjE2LDkgKzEyMTEsNyBAQCBzdGF0aWMg
+dm9pZCBydHN4X3BjaV9yZW1vdmUoc3RydWN0IHBjaV9kZXYgKnBjaWRldikKIAlwY2lfcmVsZWFz
+ZV9yZWdpb25zKHBjaWRldik7CiAJcGNpX2Rpc2FibGVfZGV2aWNlKHBjaWRldik7CiAKLQlzcGlu
+X2xvY2soJnJ0c3hfcGNpX2xvY2spOwogCWlkcl9yZW1vdmUoJnJ0c3hfcGNpX2lkciwgcGNyLT5p
+ZCk7Ci0Jc3Bpbl91bmxvY2soJnJ0c3hfcGNpX2xvY2spOwogCiAJa2ZyZWUocGNyLT5zbG90cyk7
+CiAJa2ZyZWUocGNyKTsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWlzYy9jMnBvcnQvY29yZS5jIGIv
+ZHJpdmVycy9taXNjL2MycG9ydC9jb3JlLmMKaW5kZXggOGExYWIxMC4uNWNkOGM5OSAxMDA2NDQK
+LS0tIGEvZHJpdmVycy9taXNjL2MycG9ydC9jb3JlLmMKKysrIGIvZHJpdmVycy9taXNjL2MycG9y
+dC9jb3JlLmMKQEAgLTI3LDcgKzI3LDYgQEAKICNkZWZpbmUgRFJJVkVSX05BTUUgICAgICAgICAg
+ICAgImMycG9ydCIKICNkZWZpbmUgRFJJVkVSX1ZFUlNJT04gICAgICAgICAgIjAuNTEuMCIKIAot
+c3RhdGljIERFRklORV9TUElOTE9DSyhjMnBvcnRfaWRyX2xvY2spOwogc3RhdGljIERFRklORV9J
+RFIoYzJwb3J0X2lkcik7CiAKIC8qCkBAIC04OTcsMTEgKzg5Niw3IEBAIHN0cnVjdCBjMnBvcnRf
+ZGV2aWNlICpjMnBvcnRfZGV2aWNlX3JlZ2lzdGVyKGNoYXIgKm5hbWUsCiAJaWYgKHVubGlrZWx5
+KCFjMmRldikpCiAJCXJldHVybiBFUlJfUFRSKC1FTk9NRU0pOwogCi0JaWRyX3ByZWxvYWQoR0ZQ
+X0tFUk5FTCk7Ci0Jc3Bpbl9sb2NrX2lycSgmYzJwb3J0X2lkcl9sb2NrKTsKLQlyZXQgPSBpZHJf
+YWxsb2MoJmMycG9ydF9pZHIsIGMyZGV2LCBHRlBfTk9XQUlUKTsKLQlzcGluX3VubG9ja19pcnEo
+JmMycG9ydF9pZHJfbG9jayk7Ci0JaWRyX3ByZWxvYWRfZW5kKCk7CisJcmV0ID0gaWRyX2FsbG9j
+KCZjMnBvcnRfaWRyLCBjMmRldiwgR0ZQX0tFUk5FTCk7CiAKIAlpZiAocmV0IDwgMCkKIAkJZ290
+byBlcnJvcl9pZHJfYWxsb2M7CkBAIC05NDEsOSArOTM2LDcgQEAgZXJyb3JfZGV2aWNlX2NyZWF0
+ZV9iaW5fZmlsZToKIAlkZXZpY2VfZGVzdHJveShjMnBvcnRfY2xhc3MsIDApOwogCiBlcnJvcl9k
+ZXZpY2VfY3JlYXRlOgotCXNwaW5fbG9ja19pcnEoJmMycG9ydF9pZHJfbG9jayk7CiAJaWRyX3Jl
+bW92ZSgmYzJwb3J0X2lkciwgYzJkZXYtPmlkKTsKLQlzcGluX3VubG9ja19pcnEoJmMycG9ydF9p
+ZHJfbG9jayk7CiAKIGVycm9yX2lkcl9hbGxvYzoKIAlrZnJlZShjMmRldik7CkBAIC05NjAsOSAr
+OTUzLDcgQEAgdm9pZCBjMnBvcnRfZGV2aWNlX3VucmVnaXN0ZXIoc3RydWN0IGMycG9ydF9kZXZp
+Y2UgKmMyZGV2KQogCWRldl9pbmZvKGMyZGV2LT5kZXYsICJDMiBwb3J0ICVzIHJlbW92ZWRcbiIs
+IGMyZGV2LT5uYW1lKTsKIAogCWRldmljZV9yZW1vdmVfYmluX2ZpbGUoYzJkZXYtPmRldiwgJmMy
+cG9ydF9iaW5fYXR0cnMpOwotCXNwaW5fbG9ja19pcnEoJmMycG9ydF9pZHJfbG9jayk7CiAJaWRy
+X3JlbW92ZSgmYzJwb3J0X2lkciwgYzJkZXYtPmlkKTsKLQlzcGluX3VubG9ja19pcnEoJmMycG9y
+dF9pZHJfbG9jayk7CiAKIAlkZXZpY2VfZGVzdHJveShjMnBvcnRfY2xhc3MsIGMyZGV2LT5pZCk7
+CiAKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWlzYy90aWZtX2NvcmUuYyBiL2RyaXZlcnMvbWlzYy90
+aWZtX2NvcmUuYwppbmRleCBjODI4YzI3Li5lZTdiMTgxIDEwMDY0NAotLS0gYS9kcml2ZXJzL21p
+c2MvdGlmbV9jb3JlLmMKKysrIGIvZHJpdmVycy9taXNjL3RpZm1fY29yZS5jCkBAIC0yMCw3ICsy
+MCw2IEBACiAKIHN0YXRpYyBzdHJ1Y3Qgd29ya3F1ZXVlX3N0cnVjdCAqd29ya3F1ZXVlOwogc3Rh
+dGljIERFRklORV9JRFIodGlmbV9hZGFwdGVyX2lkcik7Ci1zdGF0aWMgREVGSU5FX1NQSU5MT0NL
+KHRpZm1fYWRhcHRlcl9sb2NrKTsKIAogc3RhdGljIGNvbnN0IGNoYXIgKnRpZm1fbWVkaWFfdHlw
+ZV9uYW1lKHVuc2lnbmVkIGNoYXIgdHlwZSwgdW5zaWduZWQgY2hhciBudCkKIHsKQEAgLTE5Niwy
+MiArMTk1LDE2IEBAIGludCB0aWZtX2FkZF9hZGFwdGVyKHN0cnVjdCB0aWZtX2FkYXB0ZXIgKmZt
+KQogewogCWludCByYzsKIAotCWlkcl9wcmVsb2FkKEdGUF9LRVJORUwpOwotCXNwaW5fbG9jaygm
+dGlmbV9hZGFwdGVyX2xvY2spOwotCXJjID0gaWRyX2FsbG9jKCZ0aWZtX2FkYXB0ZXJfaWRyLCBm
+bSwgR0ZQX05PV0FJVCk7Ci0JaWYgKHJjID49IDApCi0JCWZtLT5pZCA9IHJjOwotCXNwaW5fdW5s
+b2NrKCZ0aWZtX2FkYXB0ZXJfbG9jayk7Ci0JaWRyX3ByZWxvYWRfZW5kKCk7CisJcmMgPSBpZHJf
+YWxsb2MoJnRpZm1fYWRhcHRlcl9pZHIsIGZtLCBHRlBfS0VSTkVMKTsKIAlpZiAocmMgPCAwKQog
+CQlyZXR1cm4gcmM7CiAKKwlmbS0+aWQgPSByYzsKKwogCWRldl9zZXRfbmFtZSgmZm0tPmRldiwg
+InRpZm0ldSIsIGZtLT5pZCk7CiAJcmMgPSBkZXZpY2VfYWRkKCZmbS0+ZGV2KTsKIAlpZiAocmMp
+IHsKLQkJc3Bpbl9sb2NrKCZ0aWZtX2FkYXB0ZXJfbG9jayk7CiAJCWlkcl9yZW1vdmUoJnRpZm1f
+YWRhcHRlcl9pZHIsIGZtLT5pZCk7Ci0JCXNwaW5fdW5sb2NrKCZ0aWZtX2FkYXB0ZXJfbG9jayk7
+CiAJfQogCiAJcmV0dXJuIHJjOwpAQCAtMjI4LDkgKzIyMSw3IEBAIHZvaWQgdGlmbV9yZW1vdmVf
+YWRhcHRlcihzdHJ1Y3QgdGlmbV9hZGFwdGVyICpmbSkKIAkJCWRldmljZV91bnJlZ2lzdGVyKCZm
+bS0+c29ja2V0c1tjbnRdLT5kZXYpOwogCX0KIAotCXNwaW5fbG9jaygmdGlmbV9hZGFwdGVyX2xv
+Y2spOwogCWlkcl9yZW1vdmUoJnRpZm1fYWRhcHRlcl9pZHIsIGZtLT5pZCk7Ci0Jc3Bpbl91bmxv
+Y2soJnRpZm1fYWRhcHRlcl9sb2NrKTsKIAlkZXZpY2VfZGVsKCZmbS0+ZGV2KTsKIH0KIEVYUE9S
+VF9TWU1CT0wodGlmbV9yZW1vdmVfYWRhcHRlcik7CmRpZmYgLS1naXQgYS9kcml2ZXJzL21tYy9j
+b3JlL2hvc3QuYyBiL2RyaXZlcnMvbW1jL2NvcmUvaG9zdC5jCmluZGV4IGRkMjIzZmEuLmQxODRi
+ZDQgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbW1jL2NvcmUvaG9zdC5jCisrKyBiL2RyaXZlcnMvbW1j
+L2NvcmUvaG9zdC5jCkBAIC01NSw3ICs1NSw2IEBAIHZvaWQgbW1jX3VucmVnaXN0ZXJfaG9zdF9j
+bGFzcyh2b2lkKQogfQogCiBzdGF0aWMgREVGSU5FX0lEUihtbWNfaG9zdF9pZHIpOwotc3RhdGlj
+IERFRklORV9TUElOTE9DSyhtbWNfaG9zdF9sb2NrKTsKIAogI2lmZGVmIENPTkZJR19NTUNfQ0xL
+R0FURQogc3RhdGljIHNzaXplX3QgY2xrZ2F0ZV9kZWxheV9zaG93KHN0cnVjdCBkZXZpY2UgKmRl
+diwKQEAgLTQ1NywxNiArNDU2LDExIEBAIHN0cnVjdCBtbWNfaG9zdCAqbW1jX2FsbG9jX2hvc3Qo
+aW50IGV4dHJhLCBzdHJ1Y3QgZGV2aWNlICpkZXYpCiAKIAkvKiBzY2FubmluZyB3aWxsIGJlIGVu
+YWJsZWQgd2hlbiB3ZSdyZSByZWFkeSAqLwogCWhvc3QtPnJlc2Nhbl9kaXNhYmxlID0gMTsKLQlp
+ZHJfcHJlbG9hZChHRlBfS0VSTkVMKTsKLQlzcGluX2xvY2soJm1tY19ob3N0X2xvY2spOwotCWVy
+ciA9IGlkcl9hbGxvYygmbW1jX2hvc3RfaWRyLCBob3N0LCBHRlBfTk9XQUlUKTsKLQlpZiAoZXJy
+ID49IDApCi0JCWhvc3QtPmluZGV4ID0gZXJyOwotCXNwaW5fdW5sb2NrKCZtbWNfaG9zdF9sb2Nr
+KTsKLQlpZHJfcHJlbG9hZF9lbmQoKTsKKwllcnIgPSBpZHJfYWxsb2MoJm1tY19ob3N0X2lkciwg
+aG9zdCwgR0ZQX0tFUk5FTCk7CiAJaWYgKGVyciA8IDApCiAJCWdvdG8gZnJlZTsKIAorCWhvc3Qt
+PmluZGV4ID0gZXJyOwogCWRldl9zZXRfbmFtZSgmaG9zdC0+Y2xhc3NfZGV2LCAibW1jJWQiLCBo
+b3N0LT5pbmRleCk7CiAKIAlob3N0LT5wYXJlbnQgPSBkZXY7CkBAIC01NzQsMTAgKzU2OCw3IEBA
+IEVYUE9SVF9TWU1CT0wobW1jX3JlbW92ZV9ob3N0KTsKICAqLwogdm9pZCBtbWNfZnJlZV9ob3N0
+KHN0cnVjdCBtbWNfaG9zdCAqaG9zdCkKIHsKLQlzcGluX2xvY2soJm1tY19ob3N0X2xvY2spOwog
+CWlkcl9yZW1vdmUoJm1tY19ob3N0X2lkciwgaG9zdC0+aW5kZXgpOwotCXNwaW5fdW5sb2NrKCZt
+bWNfaG9zdF9sb2NrKTsKLQogCXB1dF9kZXZpY2UoJmhvc3QtPmNsYXNzX2Rldik7CiB9CiAKZGlm
+ZiAtLWdpdCBhL2RyaXZlcnMvc2NzaS9jaC5jIGIvZHJpdmVycy9zY3NpL2NoLmMKaW5kZXggNGUw
+ZmZkYy4uMDY5Mzg3OSAxMDA2NDQKLS0tIGEvZHJpdmVycy9zY3NpL2NoLmMKKysrIGIvZHJpdmVy
+cy9zY3NpL2NoLmMKQEAgLTExNSw3ICsxMTUsNiBAQCB0eXBlZGVmIHN0cnVjdCB7CiB9IHNjc2lf
+Y2hhbmdlcjsKIAogc3RhdGljIERFRklORV9JRFIoY2hfaW5kZXhfaWRyKTsKLXN0YXRpYyBERUZJ
+TkVfU1BJTkxPQ0soY2hfaW5kZXhfbG9jayk7CiAKIHN0YXRpYyBjb25zdCBzdHJ1Y3QgewogCXVu
+c2lnbmVkIGNoYXIgIHNlbnNlOwpAQCAtNTgyLDE1ICs1ODEsMTIgQEAgY2hfb3BlbihzdHJ1Y3Qg
+aW5vZGUgKmlub2RlLCBzdHJ1Y3QgZmlsZSAqZmlsZSkKIAlpbnQgbWlub3IgPSBpbWlub3IoaW5v
+ZGUpOwogCiAJbXV0ZXhfbG9jaygmY2hfbXV0ZXgpOwotCXNwaW5fbG9jaygmY2hfaW5kZXhfbG9j
+ayk7CiAJY2ggPSBpZHJfZmluZCgmY2hfaW5kZXhfaWRyLCBtaW5vcik7CiAKIAlpZiAoTlVMTCA9
+PSBjaCB8fCBzY3NpX2RldmljZV9nZXQoY2gtPmRldmljZSkpIHsKLQkJc3Bpbl91bmxvY2soJmNo
+X2luZGV4X2xvY2spOwogCQltdXRleF91bmxvY2soJmNoX211dGV4KTsKIAkJcmV0dXJuIC1FTlhJ
+TzsKIAl9Ci0Jc3Bpbl91bmxvY2soJmNoX2luZGV4X2xvY2spOwogCiAJZmlsZS0+cHJpdmF0ZV9k
+YXRhID0gY2g7CiAJbXV0ZXhfdW5sb2NrKCZjaF9tdXRleCk7CkBAIC05MDUsMTMgKzkwMSw4IEBA
+IHN0YXRpYyBpbnQgY2hfcHJvYmUoc3RydWN0IGRldmljZSAqZGV2KQogCWlmIChOVUxMID09IGNo
+KQogCQlyZXR1cm4gLUVOT01FTTsKIAotCWlkcl9wcmVsb2FkKEdGUF9LRVJORUwpOwotCXNwaW5f
+bG9jaygmY2hfaW5kZXhfbG9jayk7CiAJcmV0ID0gaWRyX2FsbG9jX3JhbmdlKCZjaF9pbmRleF9p
+ZHIsIGNoLCAwLAotCQkJICAgICAgQ0hfTUFYX0RFVlMgKyAxLCBHRlBfTk9XQUlUKTsKLQlzcGlu
+X3VubG9jaygmY2hfaW5kZXhfbG9jayk7Ci0JaWRyX3ByZWxvYWRfZW5kKCk7Ci0KKwkJCSAgICAg
+IENIX01BWF9ERVZTICsgMSwgR0ZQX0tFUk5FTCk7CiAJaWYgKHJldCA8IDApIHsKIAkJaWYgKHJl
+dCA9PSAtRU5PU1BDKQogCQkJcmV0ID0gLUVOT0RFVjsKQEAgLTk1Miw5ICs5NDMsNyBAQCBzdGF0
+aWMgaW50IGNoX3JlbW92ZShzdHJ1Y3QgZGV2aWNlICpkZXYpCiB7CiAJc2NzaV9jaGFuZ2VyICpj
+aCA9IGRldl9nZXRfZHJ2ZGF0YShkZXYpOwogCi0Jc3Bpbl9sb2NrKCZjaF9pbmRleF9sb2NrKTsK
+IAlpZHJfcmVtb3ZlKCZjaF9pbmRleF9pZHIsIGNoLT5taW5vcik7Ci0Jc3Bpbl91bmxvY2soJmNo
+X2luZGV4X2xvY2spOwogCiAJZGV2aWNlX2Rlc3Ryb3koY2hfc3lzZnNfY2xhc3MsIE1LREVWKFND
+U0lfQ0hBTkdFUl9NQUpPUixjaC0+bWlub3IpKTsKIAlrZnJlZShjaC0+ZHQpOwpkaWZmIC0tZ2l0
+IGEvZHJpdmVycy9zY3NpL3N0LmMgYi9kcml2ZXJzL3Njc2kvc3QuYwppbmRleCA2MmFjMDE5Li5k
+MjU2NDEwIDEwMDY0NAotLS0gYS9kcml2ZXJzL3Njc2kvc3QuYworKysgYi9kcml2ZXJzL3Njc2kv
+c3QuYwpAQCAtMjE0LDcgKzIxNCw2IEBAIHN0YXRpYyB2b2lkIHNjc2lfdGFwZV9yZWxlYXNlKHN0
+cnVjdCBrcmVmICopOwogI2RlZmluZSB0b19zY3NpX3RhcGUob2JqKSBjb250YWluZXJfb2Yob2Jq
+LCBzdHJ1Y3Qgc2NzaV90YXBlLCBrcmVmKQogCiBzdGF0aWMgREVGSU5FX01VVEVYKHN0X3JlZl9t
+dXRleCk7Ci1zdGF0aWMgREVGSU5FX1NQSU5MT0NLKHN0X2luZGV4X2xvY2spOwogc3RhdGljIERF
+RklORV9TUElOTE9DSyhzdF91c2VfbG9jayk7CiBzdGF0aWMgREVGSU5FX0lEUihzdF9pbmRleF9p
+ZHIpOwogCkBAIC0yMzUsNyArMjM0LDYgQEAgc3RhdGljIHN0cnVjdCBzY3NpX3RhcGUgKnNjc2lf
+dGFwZV9nZXQoaW50IGRldikKIAlzdHJ1Y3Qgc2NzaV90YXBlICpTVHAgPSBOVUxMOwogCiAJbXV0
+ZXhfbG9jaygmc3RfcmVmX211dGV4KTsKLQlzcGluX2xvY2soJnN0X2luZGV4X2xvY2spOwogCiAJ
+U1RwID0gaWRyX2ZpbmQoJnN0X2luZGV4X2lkciwgZGV2KTsKIAlpZiAoIVNUcCkgZ290byBvdXQ7
+CkBAIC0yNTQsNyArMjUyLDYgQEAgb3V0X3B1dDoKIAlrcmVmX3B1dCgmU1RwLT5rcmVmLCBzY3Np
+X3RhcGVfcmVsZWFzZSk7CiAJU1RwID0gTlVMTDsKIG91dDoKLQlzcGluX3VubG9jaygmc3RfaW5k
+ZXhfbG9jayk7CiAJbXV0ZXhfdW5sb2NrKCZzdF9yZWZfbXV0ZXgpOwogCXJldHVybiBTVHA7CiB9
+CkBAIC00MTgyLDEyICs0MTc5LDggQEAgc3RhdGljIGludCBzdF9wcm9iZShzdHJ1Y3QgZGV2aWNl
+ICpkZXYpCiAJICAgIHRwbnQtPmJsa3NpemVfY2hhbmdlZCA9IDA7CiAJbXV0ZXhfaW5pdCgmdHBu
+dC0+bG9jayk7CiAKLQlpZHJfcHJlbG9hZChHRlBfS0VSTkVMKTsKLQlzcGluX2xvY2soJnN0X2lu
+ZGV4X2xvY2spOwogCWVycm9yID0gaWRyX2FsbG9jX3JhbmdlKCZzdF9pbmRleF9pZHIsIHRwbnQs
+IDAsCi0JCQkJU1RfTUFYX1RBUEVTICsgMSwgR0ZQX05PV0FJVCk7Ci0Jc3Bpbl91bmxvY2soJnN0
+X2luZGV4X2xvY2spOwotCWlkcl9wcmVsb2FkX2VuZCgpOworCQkJCVNUX01BWF9UQVBFUyArIDEs
+IEdGUF9LRVJORUwpOwogCWlmIChlcnJvciA8IDApIHsKIAkJcHJfd2Fybigic3Q6IGlkciBhbGxv
+Y2F0aW9uIGZhaWxlZDogJWRcbiIsIGVycm9yKTsKIAkJZ290byBvdXRfcHV0X3F1ZXVlOwpAQCAt
+NDIxMyw5ICs0MjA2LDcgQEAgc3RhdGljIGludCBzdF9wcm9iZShzdHJ1Y3QgZGV2aWNlICpkZXYp
+CiAKIG91dF9yZW1vdmVfZGV2czoKIAlyZW1vdmVfY2RldnModHBudCk7Ci0Jc3Bpbl9sb2NrKCZz
+dF9pbmRleF9sb2NrKTsKIAlpZHJfcmVtb3ZlKCZzdF9pbmRleF9pZHIsIHRwbnQtPmluZGV4KTsK
+LQlzcGluX3VubG9jaygmc3RfaW5kZXhfbG9jayk7CiBvdXRfcHV0X3F1ZXVlOgogCWJsa19wdXRf
+cXVldWUoZGlzay0+cXVldWUpOwogb3V0X3B1dF9kaXNrOgpAQCAtNDIzOSw5ICs0MjMwLDcgQEAg
+c3RhdGljIGludCBzdF9yZW1vdmUoc3RydWN0IGRldmljZSAqZGV2KQogCW11dGV4X2xvY2soJnN0
+X3JlZl9tdXRleCk7CiAJa3JlZl9wdXQoJnRwbnQtPmtyZWYsIHNjc2lfdGFwZV9yZWxlYXNlKTsK
+IAltdXRleF91bmxvY2soJnN0X3JlZl9tdXRleCk7Ci0Jc3Bpbl9sb2NrKCZzdF9pbmRleF9sb2Nr
+KTsKIAlpZHJfcmVtb3ZlKCZzdF9pbmRleF9pZHIsIGluZGV4KTsKLQlzcGluX3VubG9jaygmc3Rf
+aW5kZXhfbG9jayk7CiAJcmV0dXJuIDA7CiB9CiAKZGlmZiAtLWdpdCBhL2RyaXZlcnMvdGFyZ2V0
+L2lzY3NpL2lzY3NpX3RhcmdldC5jIGIvZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0
+LmMKaW5kZXggMWUwNTM5Yy4uYWYzYTlkNSAxMDA2NDQKLS0tIGEvZHJpdmVycy90YXJnZXQvaXNj
+c2kvaXNjc2lfdGFyZ2V0LmMKKysrIGIvZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0
+LmMKQEAgLTU5LDcgKzU5LDYgQEAgc3RhdGljIERFRklORV9TUElOTE9DSyhucF9sb2NrKTsKIHN0
+YXRpYyBzdHJ1Y3QgaWRyIHRpcW5faWRyOwogc3RydWN0IGlkciBzZXNzX2lkcjsKIHN0cnVjdCBt
+dXRleCBhdXRoX2lkX2xvY2s7Ci1zcGlubG9ja190IHNlc3NfaWRyX2xvY2s7CiAKIHN0cnVjdCBp
+c2NzaXRfZ2xvYmFsICppc2NzaXRfZ2xvYmFsOwogCkBAIC0xNDcsMjIgKzE0NiwxNyBAQCBzdHJ1
+Y3QgaXNjc2lfdGlxbiAqaXNjc2l0X2FkZF90aXFuKHVuc2lnbmVkIGNoYXIgKmJ1ZikKIAogCXRp
+cW4tPnRpcW5fc3RhdGUgPSBUSVFOX1NUQVRFX0FDVElWRTsKIAotCWlkcl9wcmVsb2FkKEdGUF9L
+RVJORUwpOwotCXNwaW5fbG9jaygmdGlxbl9sb2NrKTsKLQotCXJldCA9IGlkcl9hbGxvYygmdGlx
+bl9pZHIsIE5VTEwsIEdGUF9OT1dBSVQpOworCXJldCA9IGlkcl9hbGxvYygmdGlxbl9pZHIsIE5V
+TEwsIEdGUF9LRVJORUwpOwogCWlmIChyZXQgPCAwKSB7CiAJCXByX2VycigiaWRyX2FsbG9jKCkg
+ZmFpbGVkIGZvciB0aXFuLT50aXFuX2luZGV4XG4iKTsKLQkJc3Bpbl91bmxvY2soJnRpcW5fbG9j
+ayk7Ci0JCWlkcl9wcmVsb2FkX2VuZCgpOwogCQlrZnJlZSh0aXFuKTsKIAkJcmV0dXJuIEVSUl9Q
+VFIocmV0KTsKIAl9CiAJdGlxbi0+dGlxbl9pbmRleCA9IHJldDsKLQlsaXN0X2FkZF90YWlsKCZ0
+aXFuLT50aXFuX2xpc3QsICZnX3RpcW5fbGlzdCk7CiAKKwlzcGluX2xvY2soJnRpcW5fbG9jayk7
+CisJbGlzdF9hZGRfdGFpbCgmdGlxbi0+dGlxbl9saXN0LCAmZ190aXFuX2xpc3QpOwogCXNwaW5f
+dW5sb2NrKCZ0aXFuX2xvY2spOwotCWlkcl9wcmVsb2FkX2VuZCgpOwogCiAJcHJfZGVidWcoIkNP
+UkVbMF0gLSBBZGRlZCBpU0NTSSBUYXJnZXQgSVFOOiAlc1xuIiwgdGlxbi0+dGlxbik7CiAKQEAg
+LTIwMSw4ICsxOTUsOCBAQCB2b2lkIGlzY3NpdF9kZWxfdGlxbihzdHJ1Y3QgaXNjc2lfdGlxbiAq
+dGlxbikKIAogCXNwaW5fbG9jaygmdGlxbl9sb2NrKTsKIAlsaXN0X2RlbCgmdGlxbi0+dGlxbl9s
+aXN0KTsKLQlpZHJfcmVtb3ZlKCZ0aXFuX2lkciwgdGlxbi0+dGlxbl9pbmRleCk7CiAJc3Bpbl91
+bmxvY2soJnRpcW5fbG9jayk7CisJaWRyX3JlbW92ZSgmdGlxbl9pZHIsIHRpcW4tPnRpcW5faW5k
+ZXgpOwogCiAJcHJfZGVidWcoIkNPUkVbMF0gLSBEZWxldGVkIGlTQ1NJIFRhcmdldCBJUU46ICVz
+XG4iLAogCQkJdGlxbi0+dGlxbik7CkBAIC01MTksNyArNTEzLDYgQEAgc3RhdGljIGludCBfX2lu
+aXQgaXNjc2lfdGFyZ2V0X2luaXRfbW9kdWxlKHZvaWQpCiAJCXJldHVybiAtMTsKIAl9CiAJbXV0
+ZXhfaW5pdCgmYXV0aF9pZF9sb2NrKTsKLQlzcGluX2xvY2tfaW5pdCgmc2Vzc19pZHJfbG9jayk7
+CiAJaWRyX2luaXQoJnRpcW5faWRyKTsKIAlpZHJfaW5pdCgmc2Vzc19pZHIpOwogCkBAIC00NDQ5
+LDkgKzQ0NDIsNyBAQCBpbnQgaXNjc2l0X2Nsb3NlX3Nlc3Npb24oc3RydWN0IGlzY3NpX3Nlc3Np
+b24gKnNlc3MpCiAJcHJfZGVidWcoIkRlY3JlbWVudGVkIG51bWJlciBvZiBhY3RpdmUgaVNDU0kg
+U2Vzc2lvbnMgb24iCiAJCSIgaVNDU0kgVFBHOiAlaHUgdG8gJXVcbiIsIHRwZy0+dHBndCwgdHBn
+LT5uc2Vzc2lvbnMpOwogCi0Jc3Bpbl9sb2NrKCZzZXNzX2lkcl9sb2NrKTsKIAlpZHJfcmVtb3Zl
+KCZzZXNzX2lkciwgc2Vzcy0+c2Vzc2lvbl9pbmRleCk7Ci0Jc3Bpbl91bmxvY2soJnNlc3NfaWRy
+X2xvY2spOwogCiAJa2ZyZWUoc2Vzcy0+c2Vzc19vcHMpOwogCXNlc3MtPnNlc3Nfb3BzID0gTlVM
+TDsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvdGFyZ2V0L2lzY3NpL2lzY3NpX3RhcmdldC5oIGIvZHJp
+dmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0LmgKaW5kZXggMmM0MzdjYi4uZGI1MmRkZCAx
+MDA2NDQKLS0tIGEvZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0LmgKKysrIGIvZHJp
+dmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0LmgKQEAgLTQzLDcgKzQzLDYgQEAgZXh0ZXJu
+IHN0cnVjdCBrbWVtX2NhY2hlICpsaW9fcjJ0X2NhY2hlOwogCiBleHRlcm4gc3RydWN0IGlkciBz
+ZXNzX2lkcjsKIGV4dGVybiBzdHJ1Y3QgbXV0ZXggYXV0aF9pZF9sb2NrOwotZXh0ZXJuIHNwaW5s
+b2NrX3Qgc2Vzc19pZHJfbG9jazsKIAogCiAjZW5kaWYgICAvKioqIElTQ1NJX1RBUkdFVF9IICoq
+Ki8KZGlmZiAtLWdpdCBhL2RyaXZlcnMvdGFyZ2V0L2lzY3NpL2lzY3NpX3RhcmdldF9sb2dpbi5j
+IGIvZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0X2xvZ2luLmMKaW5kZXggNGRhNDJi
+MC4uMTc2Y2Q1NiAxMDA2NDQKLS0tIGEvZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0
+X2xvZ2luLmMKKysrIGIvZHJpdmVycy90YXJnZXQvaXNjc2kvaXNjc2lfdGFyZ2V0X2xvZ2luLmMK
+QEAgLTI4OSwxNCArMjg5LDcgQEAgc3RhdGljIGludCBpc2NzaV9sb2dpbl96ZXJvX3RzaWhfczEo
+CiAJc3Bpbl9sb2NrX2luaXQoJnNlc3MtPnNlc3Npb25fdXNhZ2VfbG9jayk7CiAJc3Bpbl9sb2Nr
+X2luaXQoJnNlc3MtPnR0dF9sb2NrKTsKIAotCWlkcl9wcmVsb2FkKEdGUF9LRVJORUwpOwotCXNw
+aW5fbG9ja19iaCgmc2Vzc19pZHJfbG9jayk7Ci0JcmV0ID0gaWRyX2FsbG9jKCZzZXNzX2lkciwg
+TlVMTCwgR0ZQX05PV0FJVCk7Ci0JaWYgKHJldCA+PSAwKQotCQlzZXNzLT5zZXNzaW9uX2luZGV4
+ID0gcmV0OwotCXNwaW5fdW5sb2NrX2JoKCZzZXNzX2lkcl9sb2NrKTsKLQlpZHJfcHJlbG9hZF9l
+bmQoKTsKLQorCXJldCA9IGlkcl9hbGxvYygmc2Vzc19pZHIsIE5VTEwsIEdGUF9LRVJORUwpOwog
+CWlmIChyZXQgPCAwKSB7CiAJCXByX2VycigiaWRyX2FsbG9jKCkgZm9yIHNlc3NfaWRyIGZhaWxl
+ZFxuIik7CiAJCWlzY3NpdF90eF9sb2dpbl9yc3AoY29ubiwgSVNDU0lfU1RBVFVTX0NMU19UQVJH
+RVRfRVJSLApAQCAtMzA1LDYgKzI5OCw3IEBAIHN0YXRpYyBpbnQgaXNjc2lfbG9naW5femVyb190
+c2loX3MxKAogCQlyZXR1cm4gLUVOT01FTTsKIAl9CiAKKwlzZXNzLT5zZXNzaW9uX2luZGV4ID0g
+cmV0OwogCXNlc3MtPmNyZWF0aW9uX3RpbWUgPSBnZXRfamlmZmllc182NCgpOwogCXNwaW5fbG9j
+a19pbml0KCZzZXNzLT5zZXNzaW9uX3N0YXRzX2xvY2spOwogCS8qCkBAIC0xMzEyLDkgKzEzMDYs
+NyBAQCBuZXdfc2Vzc19vdXQ6CiAJaWYgKGNvbm4tPnNlc3MtPnNlX3Nlc3MpCiAJCXRyYW5zcG9y
+dF9mcmVlX3Nlc3Npb24oY29ubi0+c2Vzcy0+c2Vfc2Vzcyk7CiAJaWYgKGNvbm4tPnNlc3MtPnNl
+c3Npb25faW5kZXggIT0gMCkgewotCQlzcGluX2xvY2tfYmgoJnNlc3NfaWRyX2xvY2spOwogCQlp
+ZHJfcmVtb3ZlKCZzZXNzX2lkciwgY29ubi0+c2Vzcy0+c2Vzc2lvbl9pbmRleCk7Ci0JCXNwaW5f
+dW5sb2NrX2JoKCZzZXNzX2lkcl9sb2NrKTsKIAl9CiAJa2ZyZWUoY29ubi0+c2Vzcy0+c2Vzc19v
+cHMpOwogCWtmcmVlKGNvbm4tPnNlc3MpOwpkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9jZ3Jv
+dXAuaCBiL2luY2x1ZGUvbGludXgvY2dyb3VwLmgKaW5kZXggZTlhYzg4Mi4uOTY0Nzc5YSAxMDA2
+NDQKLS0tIGEvaW5jbHVkZS9saW51eC9jZ3JvdXAuaAorKysgYi9pbmNsdWRlL2xpbnV4L2Nncm91
+cC5oCkBAIC02MjIsNyArNjIyLDYgQEAgc3RydWN0IGNncm91cF9zdWJzeXMgewogCXN0cnVjdCBs
+aXN0X2hlYWQgc2libGluZzsKIAkvKiB1c2VkIHdoZW4gdXNlX2lkID09IHRydWUgKi8KIAlzdHJ1
+Y3QgaWRyIGlkcjsKLQlzcGlubG9ja190IGlkX2xvY2s7CiAKIAkvKiBsaXN0IG9mIGNmdHlwZV9z
+ZXRzICovCiAJc3RydWN0IGxpc3RfaGVhZCBjZnRzZXRzOwpkaWZmIC0tZ2l0IGEvaW5jbHVkZS9u
+ZXQvc2N0cC9zY3RwLmggYi9pbmNsdWRlL25ldC9zY3RwL3NjdHAuaAppbmRleCBkOGUzN2VjLi41
+YTFhZDNkIDEwMDY0NAotLS0gYS9pbmNsdWRlL25ldC9zY3RwL3NjdHAuaAorKysgYi9pbmNsdWRl
+L25ldC9zY3RwL3NjdHAuaApAQCAtNTAyLDcgKzUwMiw2IEBAIGV4dGVybiBzdHJ1Y3QgcHJvdG8g
+c2N0cHY2X3Byb3Q7CiB2b2lkIHNjdHBfcHV0X3BvcnQoc3RydWN0IHNvY2sgKnNrKTsKIAogZXh0
+ZXJuIHN0cnVjdCBpZHIgc2N0cF9hc3NvY3NfaWQ7Ci1leHRlcm4gc3BpbmxvY2tfdCBzY3RwX2Fz
+c29jc19pZF9sb2NrOwogCiAvKiBTdGF0aWMgaW5saW5lIGZ1bmN0aW9ucy4gKi8KIApkaWZmIC0t
+Z2l0IGEva2VybmVsL2Nncm91cC5jIGIva2VybmVsL2Nncm91cC5jCmluZGV4IDViZjRmOTcuLmI3
+ZDBiZTEgMTAwNjQ0Ci0tLSBhL2tlcm5lbC9jZ3JvdXAuYworKysgYi9rZXJuZWwvY2dyb3VwLmMK
+QEAgLTUzOTMsOSArNTM5Myw3IEBAIHZvaWQgZnJlZV9jc3NfaWQoc3RydWN0IGNncm91cF9zdWJz
+eXMgKnNzLCBzdHJ1Y3QgY2dyb3VwX3N1YnN5c19zdGF0ZSAqY3NzKQogCiAJcmN1X2Fzc2lnbl9w
+b2ludGVyKGlkLT5jc3MsIE5VTEwpOwogCXJjdV9hc3NpZ25fcG9pbnRlcihjc3MtPmlkLCBOVUxM
+KTsKLQlzcGluX2xvY2soJnNzLT5pZF9sb2NrKTsKIAlpZHJfcmVtb3ZlKCZzcy0+aWRyLCBpZC0+
+aWQpOwotCXNwaW5fdW5sb2NrKCZzcy0+aWRfbG9jayk7CiAJa2ZyZWVfcmN1KGlkLCByY3VfaGVh
+ZCk7CiB9CiBFWFBPUlRfU1lNQk9MX0dQTChmcmVlX2Nzc19pZCk7CkBAIC01NDE3LDEyICs1NDE1
+LDggQEAgc3RhdGljIHN0cnVjdCBjc3NfaWQgKmdldF9uZXdfY3NzaWQoc3RydWN0IGNncm91cF9z
+dWJzeXMgKnNzLCBpbnQgZGVwdGgpCiAJaWYgKCFuZXdpZCkKIAkJcmV0dXJuIEVSUl9QVFIoLUVO
+T01FTSk7CiAKLQlpZHJfcHJlbG9hZChHRlBfS0VSTkVMKTsKLQlzcGluX2xvY2soJnNzLT5pZF9s
+b2NrKTsKIAkvKiBEb24ndCB1c2UgMC4gYWxsb2NhdGVzIGFuIElEIG9mIDEtNjU1MzUgKi8KLQly
+ZXQgPSBpZHJfYWxsb2NfcmFuZ2UoJnNzLT5pZHIsIG5ld2lkLCAxLCBDU1NfSURfTUFYICsgMSwg
+R0ZQX05PV0FJVCk7Ci0Jc3Bpbl91bmxvY2soJnNzLT5pZF9sb2NrKTsKLQlpZHJfcHJlbG9hZF9l
+bmQoKTsKKwlyZXQgPSBpZHJfYWxsb2NfcmFuZ2UoJnNzLT5pZHIsIG5ld2lkLCAxLCBDU1NfSURf
+TUFYICsgMSwgR0ZQX0tFUk5FTCk7CiAKIAkvKiBSZXR1cm5zIGVycm9yIHdoZW4gdGhlcmUgYXJl
+IG5vIGZyZWUgc3BhY2VzIGZvciBuZXcgSUQuKi8KIAlpZiAocmV0IDwgMCkKQEAgLTU0NDIsNyAr
+NTQzNiw2IEBAIHN0YXRpYyBpbnQgX19pbml0X29yX21vZHVsZSBjZ3JvdXBfaW5pdF9pZHIoc3Ry
+dWN0IGNncm91cF9zdWJzeXMgKnNzLAogewogCXN0cnVjdCBjc3NfaWQgKm5ld2lkOwogCi0Jc3Bp
+bl9sb2NrX2luaXQoJnNzLT5pZF9sb2NrKTsKIAlpZHJfaW5pdCgmc3MtPmlkcik7CiAKIAluZXdp
+ZCA9IGdldF9uZXdfY3NzaWQoc3MsIDApOwpkaWZmIC0tZ2l0IGEva2VybmVsL3dvcmtxdWV1ZS5j
+IGIva2VybmVsL3dvcmtxdWV1ZS5jCmluZGV4IGFlYjQxYmYuLmI5NzMwM2EgMTAwNjQ0Ci0tLSBh
+L2tlcm5lbC93b3JrcXVldWUuYworKysgYi9rZXJuZWwvd29ya3F1ZXVlLmMKQEAgLTE3MDMsMTMg
+KzE3MDMsNyBAQCBzdGF0aWMgc3RydWN0IHdvcmtlciAqY3JlYXRlX3dvcmtlcihzdHJ1Y3Qgd29y
+a2VyX3Bvb2wgKnBvb2wpCiAJICogSUQgaXMgbmVlZGVkIHRvIGRldGVybWluZSBrdGhyZWFkIG5h
+bWUuICBBbGxvY2F0ZSBJRCBmaXJzdAogCSAqIHdpdGhvdXQgaW5zdGFsbGluZyB0aGUgcG9pbnRl
+ci4KIAkgKi8KLQlpZHJfcHJlbG9hZChHRlBfS0VSTkVMKTsKLQlzcGluX2xvY2tfaXJxKCZwb29s
+LT5sb2NrKTsKLQotCWlkID0gaWRyX2FsbG9jKCZwb29sLT53b3JrZXJfaWRyLCBOVUxMLCBHRlBf
+Tk9XQUlUKTsKLQotCXNwaW5fdW5sb2NrX2lycSgmcG9vbC0+bG9jayk7Ci0JaWRyX3ByZWxvYWRf
+ZW5kKCk7CisJaWQgPSBpZHJfYWxsb2MoJnBvb2wtPndvcmtlcl9pZHIsIE5VTEwsIEdGUF9LRVJO
+RUwpOwogCWlmIChpZCA8IDApCiAJCWdvdG8gZmFpbDsKIApAQCAtMTc1MCwxOCArMTc0NCwxMyBA
+QCBzdGF0aWMgc3RydWN0IHdvcmtlciAqY3JlYXRlX3dvcmtlcihzdHJ1Y3Qgd29ya2VyX3Bvb2wg
+KnBvb2wpCiAJCXdvcmtlci0+ZmxhZ3MgfD0gV09SS0VSX1VOQk9VTkQ7CiAKIAkvKiBzdWNjZXNz
+ZnVsLCBjb21taXQgdGhlIHBvaW50ZXIgdG8gaWRyICovCi0Jc3Bpbl9sb2NrX2lycSgmcG9vbC0+
+bG9jayk7CiAJaWRyX3JlcGxhY2UoJnBvb2wtPndvcmtlcl9pZHIsIHdvcmtlciwgd29ya2VyLT5p
+ZCk7Ci0Jc3Bpbl91bmxvY2tfaXJxKCZwb29sLT5sb2NrKTsKIAogCXJldHVybiB3b3JrZXI7CiAK
+IGZhaWw6Ci0JaWYgKGlkID49IDApIHsKLQkJc3Bpbl9sb2NrX2lycSgmcG9vbC0+bG9jayk7CisJ
+aWYgKGlkID49IDApCiAJCWlkcl9yZW1vdmUoJnBvb2wtPndvcmtlcl9pZHIsIGlkKTsKLQkJc3Bp
+bl91bmxvY2tfaXJxKCZwb29sLT5sb2NrKTsKLQl9CiAJa2ZyZWUod29ya2VyKTsKIAlyZXR1cm4g
+TlVMTDsKIH0KZGlmZiAtLWdpdCBhL25ldC85cC91dGlsLmMgYi9uZXQvOXAvdXRpbC5jCmluZGV4
+IGNjMzFjNjIuLjIzNjkzZDYgMTAwNjQ0Ci0tLSBhL25ldC85cC91dGlsLmMKKysrIGIvbmV0Lzlw
+L3V0aWwuYwpAQCAtNDEsNyArNDEsNiBAQAogICovCiAKIHN0cnVjdCBwOV9pZHBvb2wgewotCXNw
+aW5sb2NrX3QgbG9jazsKIAlzdHJ1Y3QgaWRyIHBvb2w7CiB9OwogCkBAIC01OCw3ICs1Nyw2IEBA
+IHN0cnVjdCBwOV9pZHBvb2wgKnA5X2lkcG9vbF9jcmVhdGUodm9pZCkKIAlpZiAoIXApCiAJCXJl
+dHVybiBFUlJfUFRSKC1FTk9NRU0pOwogCi0Jc3Bpbl9sb2NrX2luaXQoJnAtPmxvY2spOwogCWlk
+cl9pbml0KCZwLT5wb29sKTsKIAogCXJldHVybiBwOwpAQCAtODgsMTYgKzg2LDkgQEAgRVhQT1JU
+X1NZTUJPTChwOV9pZHBvb2xfZGVzdHJveSk7CiBpbnQgcDlfaWRwb29sX2dldChzdHJ1Y3QgcDlf
+aWRwb29sICpwKQogewogCWludCBpOwotCXVuc2lnbmVkIGxvbmcgZmxhZ3M7Ci0KLQlpZHJfcHJl
+bG9hZChHRlBfTk9GUyk7Ci0Jc3Bpbl9sb2NrX2lycXNhdmUoJnAtPmxvY2ssIGZsYWdzKTsKIAog
+CS8qIG5vIG5lZWQgdG8gc3RvcmUgZXhhY3RseSBwLCB3ZSBqdXN0IG5lZWQgc29tZXRoaW5nIG5v
+bi1udWxsICovCi0JaSA9IGlkcl9hbGxvYygmcC0+cG9vbCwgcCwgR0ZQX05PV0FJVCk7Ci0KLQlz
+cGluX3VubG9ja19pcnFyZXN0b3JlKCZwLT5sb2NrLCBmbGFncyk7Ci0JaWRyX3ByZWxvYWRfZW5k
+KCk7CisJaSA9IGlkcl9hbGxvYygmcC0+cG9vbCwgcCwgR0ZQX05PRlMpOwogCWlmIChpIDwgMCkK
+IAkJcmV0dXJuIC0xOwogCkBAIC0xMTcsMTMgKzEwOCw5IEBAIEVYUE9SVF9TWU1CT0wocDlfaWRw
+b29sX2dldCk7CiAKIHZvaWQgcDlfaWRwb29sX3B1dChpbnQgaWQsIHN0cnVjdCBwOV9pZHBvb2wg
+KnApCiB7Ci0JdW5zaWduZWQgbG9uZyBmbGFnczsKLQogCXA5X2RlYnVnKFA5X0RFQlVHX01VWCwg
+IiBpZCAlZCBwb29sICVwXG4iLCBpZCwgcCk7CiAKLQlzcGluX2xvY2tfaXJxc2F2ZSgmcC0+bG9j
+aywgZmxhZ3MpOwogCWlkcl9yZW1vdmUoJnAtPnBvb2wsIGlkKTsKLQlzcGluX3VubG9ja19pcnFy
+ZXN0b3JlKCZwLT5sb2NrLCBmbGFncyk7CiB9CiBFWFBPUlRfU1lNQk9MKHA5X2lkcG9vbF9wdXQp
+OwogCmRpZmYgLS1naXQgYS9uZXQvc2N0cC9hc3NvY2lvbGEuYyBiL25ldC9zY3RwL2Fzc29jaW9s
+YS5jCmluZGV4IGJjZTViNzkuLmQ4OGZjNmQgMTAwNjQ0Ci0tLSBhL25ldC9zY3RwL2Fzc29jaW9s
+YS5jCisrKyBiL25ldC9zY3RwL2Fzc29jaW9sYS5jCkBAIC00NjQsMTEgKzQ2NCw4IEBAIHN0YXRp
+YyB2b2lkIHNjdHBfYXNzb2NpYXRpb25fZGVzdHJveShzdHJ1Y3Qgc2N0cF9hc3NvY2lhdGlvbiAq
+YXNvYykKIAlzY3RwX2VuZHBvaW50X3B1dChhc29jLT5lcCk7CiAJc29ja19wdXQoYXNvYy0+YmFz
+ZS5zayk7CiAKLQlpZiAoYXNvYy0+YXNzb2NfaWQgIT0gMCkgewotCQlzcGluX2xvY2tfYmgoJnNj
+dHBfYXNzb2NzX2lkX2xvY2spOworCWlmIChhc29jLT5hc3NvY19pZCAhPSAwKQogCQlpZHJfcmVt
+b3ZlKCZzY3RwX2Fzc29jc19pZCwgYXNvYy0+YXNzb2NfaWQpOwotCQlzcGluX3VubG9ja19iaCgm
+c2N0cF9hc3NvY3NfaWRfbG9jayk7Ci0JfQogCiAJV0FSTl9PTihhdG9taWNfcmVhZCgmYXNvYy0+
+cm1lbV9hbGxvYykpOwogCkBAIC0xNTcyLDIxICsxNTY5LDE0IEBAIGludCBzY3RwX2Fzc29jX2xv
+b2t1cF9sYWRkcihzdHJ1Y3Qgc2N0cF9hc3NvY2lhdGlvbiAqYXNvYywKIC8qIFNldCBhbiBhc3Nv
+Y2lhdGlvbiBpZCBmb3IgYSBnaXZlbiBhc3NvY2lhdGlvbiAqLwogaW50IHNjdHBfYXNzb2Nfc2V0
+X2lkKHN0cnVjdCBzY3RwX2Fzc29jaWF0aW9uICphc29jLCBnZnBfdCBnZnApCiB7Ci0JYm9vbCBw
+cmVsb2FkID0gZ2ZwICYgX19HRlBfV0FJVDsKIAlpbnQgcmV0OwogCiAJLyogSWYgdGhlIGlkIGlz
+IGFscmVhZHkgYXNzaWduZWQsIGtlZXAgaXQuICovCiAJaWYgKGFzb2MtPmFzc29jX2lkKQogCQly
+ZXR1cm4gMDsKIAotCWlmIChwcmVsb2FkKQotCQlpZHJfcHJlbG9hZChnZnApOwotCXNwaW5fbG9j
+a19iaCgmc2N0cF9hc3NvY3NfaWRfbG9jayk7CiAJLyogMCBpcyBub3QgYSB2YWxpZCBhc3NvY19p
+ZCwgbXVzdCBiZSA+PSAxICovCi0JcmV0ID0gaWRyX2FsbG9jX2N5Y2xpYygmc2N0cF9hc3NvY3Nf
+aWQsIGFzb2MsIDEsIDAsIEdGUF9OT1dBSVQpOwotCXNwaW5fdW5sb2NrX2JoKCZzY3RwX2Fzc29j
+c19pZF9sb2NrKTsKLQlpZiAocHJlbG9hZCkKLQkJaWRyX3ByZWxvYWRfZW5kKCk7CisJcmV0ID0g
+aWRyX2FsbG9jX2N5Y2xpYygmc2N0cF9hc3NvY3NfaWQsIGFzb2MsIDEsIDAsIGdmcCk7CiAJaWYg
+KHJldCA8IDApCiAJCXJldHVybiByZXQ7CiAKZGlmZiAtLWdpdCBhL25ldC9zY3RwL3Byb3RvY29s
+LmMgYi9uZXQvc2N0cC9wcm90b2NvbC5jCmluZGV4IDRhMTc0OTRkLi43ZGM0NjhhIDEwMDY0NAot
+LS0gYS9uZXQvc2N0cC9wcm90b2NvbC5jCisrKyBiL25ldC9zY3RwL3Byb3RvY29sLmMKQEAgLTcx
+LDcgKzcxLDYgQEAKIHN0cnVjdCBzY3RwX2dsb2JhbHMgc2N0cF9nbG9iYWxzIF9fcmVhZF9tb3N0
+bHk7CiAKIHN0cnVjdCBpZHIgc2N0cF9hc3NvY3NfaWQ7Ci1ERUZJTkVfU1BJTkxPQ0soc2N0cF9h
+c3NvY3NfaWRfbG9jayk7CiAKIHN0YXRpYyBzdHJ1Y3Qgc2N0cF9wZiAqc2N0cF9wZl9pbmV0Nl9z
+cGVjaWZpYzsKIHN0YXRpYyBzdHJ1Y3Qgc2N0cF9wZiAqc2N0cF9wZl9pbmV0X3NwZWNpZmljOwpk
+aWZmIC0tZ2l0IGEvbmV0L3NjdHAvc29ja2V0LmMgYi9uZXQvc2N0cC9zb2NrZXQuYwppbmRleCBj
+NjY3MGQyLi5lYjY4MTkyIDEwMDY0NAotLS0gYS9uZXQvc2N0cC9zb2NrZXQuYworKysgYi9uZXQv
+c2N0cC9zb2NrZXQuYwpAQCAtMjI2LDkgKzIyNiw3IEBAIHN0cnVjdCBzY3RwX2Fzc29jaWF0aW9u
+ICpzY3RwX2lkMmFzc29jKHN0cnVjdCBzb2NrICpzaywgc2N0cF9hc3NvY190IGlkKQogCWlmICgh
+aWQgfHwgKGlkID09IChzY3RwX2Fzc29jX3QpLTEpKQogCQlyZXR1cm4gTlVMTDsKIAotCXNwaW5f
+bG9ja19iaCgmc2N0cF9hc3NvY3NfaWRfbG9jayk7CiAJYXNvYyA9IChzdHJ1Y3Qgc2N0cF9hc3Nv
+Y2lhdGlvbiAqKWlkcl9maW5kKCZzY3RwX2Fzc29jc19pZCwgKGludClpZCk7Ci0Jc3Bpbl91bmxv
+Y2tfYmgoJnNjdHBfYXNzb2NzX2lkX2xvY2spOwogCiAJaWYgKCFhc29jIHx8IChhc29jLT5iYXNl
+LnNrICE9IHNrKSB8fCBhc29jLT5iYXNlLmRlYWQpCiAJCXJldHVybiBOVUxMOwotLSAKMS44LjQu
+cmMxCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250
+YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3Jn
+Cmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRh
+aW5lcnM=
