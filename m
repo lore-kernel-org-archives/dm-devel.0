@@ -1,48 +1,50 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: [PATCH] rdac: Always fail paths when controller reports
- unavailable AAS
-Date: Thu, 8 Aug 2013 20:04:17 +0000
-Message-ID: <8255ED565A0EAA4A960625E27D49DBF23DE903EE@SACEXCMBX04-PRD.hq.netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <kmo@daterainc.com>
+Subject: Re: [PATCH 0/22] Immutable biovecs, block layer changes
+Date: Thu, 8 Aug 2013 14:15:29 -0700
+Message-ID: <20130808211529.GB15409@kmo-pixel>
+References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
+ <20130808150954.GA30092@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130808150954.GA30092@infradead.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: axboe@kernel.dk, neilb@suse.de, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-The RDAC checker should always fail paths that report they are unavailable.
-Previously, it only failed paths where the controller was in service mode, but 
-in any case that reports an AAS of unavailable, the controller should not be 
-used to service I/O.
+On Thu, Aug 08, 2013 at 08:09:54AM -0700, Christoph Hellwig wrote:
+> On Wed, Aug 07, 2013 at 02:54:09PM -0700, Kent Overstreet wrote:
+> > _However_, I have more patches (that depend on this patch series) to get
+> > that back - segment merging improvements that get rid of
+> > bi_seg_front_size, bi_seg_back_size, and bi_phys_segments. Once all that
+> > is in it should be a net reduction to the size of struct bio.
+> 
+> What is preventing you from sending those out as well?  While it's not
+> absolutely nessecary it would certainly be good if we'd avoid a struct
+> bio size regression.
 
-Signed-off-by: Sean Stewart <Sean.Stewart@netapp.com>
----
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index 2e64dd3..b447c72 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -222,10 +222,9 @@ libcheck_check (struct checker * c)
- 		goto done;
- 	}
- 
--	/* check if controller is in service mode */
-+	/* check if controller is reporting asymmetric access state of unavailable */
- 	if ((inq.avtcvp & 0x10) &&
--	    ((inq.asym_access_state_cur & 0x0F) == 0x3) &&
--	    (inq.vendor_specific_cur == 0x7)) {
-+	    ((inq.asym_access_state_cur & 0x0F) == 0x3))
- 		ret = PATH_DOWN;
- 		goto done;
- 	}
---
+There's still some fairly significant changes, and I don't want to make
+too many invasive changes at once.
+
+Main thing is making generic_make_request() take arbitrary size bios.
+After this series that's just two simple patches, but then the changes
+to make use of that will be changing behaviour in non obvious ways.
+
+The way the merging changes work is it enables multi page bvecs - so a
+bvec can point to many physically contiguous pages. This moves segment
+merging to bio_add_page(), and gets rid of bi_phys_segments - now
+bi_vcnt == bi_phys_segments, we just split the bio if it's too big.
+
+Then, with bio_add_page() building up large bios and the block layer
+splitting them as necessary, there shouldn't be any need for segment
+merging across bios anymore (because generally when that would've
+happened before, now we'd just be sending one larger bio down).
+
+The remaining patches aren't terribly complicated though (less
+complicated than this patch series). Trickiest bit is multipage bvecs,
+and that's mostly just lots of code auditing - the way I convert
+existing code is by adding bio_for_each_page() - analagous to
+bio_for_each_segment, but giving you bvecs that point to single pages.
+So it's an easy conversion, just have to make sure nothing's missed.
