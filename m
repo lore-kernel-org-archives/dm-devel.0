@@ -1,53 +1,54 @@
-From: Ed Cashin <ecashin@coraid.com>
-Subject: Re: [PATCH 04/22] block: Abstract out bvec iterator
-Date: Fri, 9 Aug 2013 16:16:01 -0400
-Message-ID: <FEE91CF1-7CDE-45E5-B7BA-DA8522E7DFFE@coraid.com>
-References: <1375912471-5106-1-git-send-email-kmo@daterainc.com> <1375912471-5106-5-git-send-email-kmo@daterainc.com> <2D8F228B-65AE-4046-A910-6B354AF0058E@coraid.com> <20130809000943.GC15409@kmo-pixel> <F14F555B-1B1C-4E73-8AF8-DE57D77C610D@coraid.com> <20130809010530.GG15409@kmo-pixel>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130809010530.GG15409@kmo-pixel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "neilb@suse.de" <neilb@suse.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+From: John Strange <johnstra10@gmail.com>
+Subject: noob usage question
+Date: Fri, 9 Aug 2013 15:01:26 -0600
+Message-ID: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2173371426170785242=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Aug 8, 2013, at 9:05 PM, Kent Overstreet wrote:
-...
-> It's in the for-jens branch now.
+--===============2173371426170785242==
+Content-Type: multipart/alternative; boundary=089e01538594f9776904e38a13ac
+
+--089e01538594f9776904e38a13ac
+Content-Type: text/plain; charset=ISO-8859-1
+
+When I create a linear target, I can't create partitions or format the
+mapped drive.  I get an invalid parameter argument for an ioctl.  I'm
+obviously doing something stupid.  What do I need to do to create
+partitions, format, mount a dm-n?
+Thanks,
+-john
+
+--089e01538594f9776904e38a13ac
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><div>When I create a linear target, I can&#39;t creat=
+e partitions or format the mapped drive.=A0 I get an invalid parameter argu=
+ment for an ioctl.=A0 I&#39;m obviously doing something stupid.=A0 What do =
+I need to do to create partitions, format, mount a dm-n?<br>
+</div>Thanks,<br></div>-john<br></div>
+
+--089e01538594f9776904e38a13ac--
 
 
-Just examining the patches, I like the way it cleans up the aoe code.  I had a question about a new BUG added by the for-jens branch the read-response handling path of the aoe driver.
+--===============2173371426170785242==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-It looks like if a misbehaving AoE target has a bad (too high compared to the request) sector count, but sends a packet large enough for that sector count to seem legit in ktiocomplete, then the patched bvcpy will BUG.  An example would be the case where 1024 bytes was requested but a (bad but possible) AoE read response comes back with 4096 bytes in a jumbo frame.  Here's an excerpt from ktiocomplete:
 
-     n = ahout->scnt << 9;
-     switch (ahout->cmdstat) {
-     case ATA_CMD_PIO_READ:
-     case ATA_CMD_PIO_READ_EXT:
-          if (skb->len < n) {
-               pr_err("%s e%ld.%d.  skb->len=%d need=%ld\n",
-                    "aoe: runt data size in read from",
-                    (long) d->aoemajor, d->aoeminor,
-                      skb->len, n);
-               clear_bit(BIO_UPTODATE, &buf->bio->bi_flags);
-               break;
-          }
-          bvcpy(skb, f->buf->bio, f->iter, n);
-
-... and earlier in linux-bcache/for-jens aoecmd.c there's bvcpy ...
-
-static void
-bvcpy(struct sk_buff *skb, struct bio *bio, struct bvec_iter iter, long cnt)
-{
-     int soff = 0;
-     struct bio_vec bv;
-
-     BUG_ON(cnt > iter.bi_size);
-
-It seems like it would be better to treat that case as another indication of a problem with the target that gets logged when the AoE response is ignored, just as happens for "runt data size".  That way people working on or trying out experimental AoE targets don't panic the initiator system.
-
--- 
-  Ed Cashin
-  ecashin@coraid.com
+--===============2173371426170785242==--
