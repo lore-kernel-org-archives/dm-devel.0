@@ -1,14 +1,12 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: noob usage question
-Date: Fri, 9 Aug 2013 17:22:16 -0500
-Message-ID: <34D36EB6-401C-4825-8D1E-B277EDD39ACF@redhat.com>
-References: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: [Question] How to make a patch?
+Date: Sat, 10 Aug 2013 08:12:02 +0900
+Message-ID: <52057742.4070101@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,15 +19,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi,
 
-On Aug 9, 2013, at 4:01 PM, John Strange wrote:
+I am going to send you a patch of dm-lc on this weekend.
+But, I am wondering how I make a patch.
 
-> When I create a linear target, I can't create partitions or format the mapped drive.  I get an invalid parameter argument for an ioctl.  I'm obviously doing something stupid.  What do I need to do to create partitions, format, mount a dm-n?
+1. What tree do I need to use?
+2. Where should I make a patch on?
 
-You don't want to create partitions, do you?
+I git-cloned both linux-next and linux-dm.
+Which one should I use?
 
-Just create an mapping and use it.  If you need another, create another.  Need to remove one, just remove it.
+linux-dm seems to have a tag dm-3.11-changes.
+Should I make patch on this point?
 
-Also, I'm assuming you want to use device-mapper.  If you want persistent devices (ones that stick around after a reboot), you may wish to use LVM.
-
- brassow
+Sorry for too basic question,
+Akira
