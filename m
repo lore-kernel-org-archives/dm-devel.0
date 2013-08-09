@@ -1,12 +1,15 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: [Question] How to make a patch?
-Date: Sat, 10 Aug 2013 08:12:02 +0900
-Message-ID: <52057742.4070101@gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [Question] How to make a patch?
+Date: Sat, 10 Aug 2013 00:22:26 +0100
+Message-ID: <20130809232226.GA4493@agk-dp.fab.redhat.com>
+References: <52057742.4070101@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <52057742.4070101@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,19 +22,14 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+On Sat, Aug 10, 2013 at 08:12:02AM +0900, Akira Hayakawa wrote:
+> linux-dm seems to have a tag dm-3.11-changes.
+> Should I make patch on this point?
+ 
+At this stage, create a patch based against a released -rc kernel 
+from Linus.
 
-I am going to send you a patch of dm-lc on this weekend.
-But, I am wondering how I make a patch.
+If you use the linux-dm tree, then you can pick the tag v3.11-rc3,
+for example, which is the last time we updated.
 
-1. What tree do I need to use?
-2. Where should I make a patch on?
-
-I git-cloned both linux-next and linux-dm.
-Which one should I use?
-
-linux-dm seems to have a tag dm-3.11-changes.
-Should I make patch on this point?
-
-Sorry for too basic question,
-Akira
+Alasdair
