@@ -1,11 +1,14 @@
-From: John Strange <johnstra10@gmail.com>
-Subject: noob usage question
-Date: Fri, 9 Aug 2013 15:01:26 -0600
-Message-ID: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: noob usage question
+Date: Fri, 9 Aug 2013 17:22:16 -0500
+Message-ID: <34D36EB6-401C-4825-8D1E-B277EDD39ACF@redhat.com>
+References: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2173371426170785242=="
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,37 +21,15 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============2173371426170785242==
-Content-Type: multipart/alternative; boundary=089e01538594f9776904e38a13ac
 
---089e01538594f9776904e38a13ac
-Content-Type: text/plain; charset=ISO-8859-1
+On Aug 9, 2013, at 4:01 PM, John Strange wrote:
 
-When I create a linear target, I can't create partitions or format the
-mapped drive.  I get an invalid parameter argument for an ioctl.  I'm
-obviously doing something stupid.  What do I need to do to create
-partitions, format, mount a dm-n?
-Thanks,
--john
+> When I create a linear target, I can't create partitions or format the mapped drive.  I get an invalid parameter argument for an ioctl.  I'm obviously doing something stupid.  What do I need to do to create partitions, format, mount a dm-n?
 
---089e01538594f9776904e38a13ac
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+You don't want to create partitions, do you?
 
-<div dir=3D"ltr"><div><div>When I create a linear target, I can&#39;t creat=
-e partitions or format the mapped drive.=A0 I get an invalid parameter argu=
-ment for an ioctl.=A0 I&#39;m obviously doing something stupid.=A0 What do =
-I need to do to create partitions, format, mount a dm-n?<br>
-</div>Thanks,<br></div>-john<br></div>
+Just create an mapping and use it.  If you need another, create another.  Need to remove one, just remove it.
 
---089e01538594f9776904e38a13ac--
+Also, I'm assuming you want to use device-mapper.  If you want persistent devices (ones that stick around after a reboot), you may wish to use LVM.
 
-
---===============2173371426170785242==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2173371426170785242==--
+ brassow
