@@ -1,147 +1,120 @@
-From: John Strange <johnstra10@gmail.com>
-Subject: Re: noob usage question
-Date: Fri, 9 Aug 2013 20:19:24 -0600
-Message-ID: <CAH1aXXZHc8rYQUfbQsAXgrjrryLvZb-NfyTEdTx+a9oJSHwc-g@mail.gmail.com>
-References: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
-	<34D36EB6-401C-4825-8D1E-B277EDD39ACF@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kent Overstreet <kmo@daterainc.com>
+Subject: Re: [PATCH 18/22] block: Generic bio chaining
+Date: Sat, 10 Aug 2013 00:38:55 -0700
+Message-ID: <20130810073855.GA9349@kmo-pixel>
+References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
+ <1375912471-5106-19-git-send-email-kmo@daterainc.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5927404661709480009=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <34D36EB6-401C-4825-8D1E-B277EDD39ACF@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1375912471-5106-19-git-send-email-kmo@daterainc.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@kernel.dk
+Cc: neilb@suse.de, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============5927404661709480009==
-Content-Type: multipart/alternative; boundary=047d7b2e141b1b749404e38e85f3
+On Wed, Aug 07, 2013 at 02:54:27PM -0700, Kent Overstreet wrote:
+> This adds a generic mechanism for chaining bio completions. This is
+> going to be used for a bio_split() replacement, and some other things in
+> the future.
+> 
+> This is implemented with a new bio flag that bio_endio() checks; it
+> would definitely be cleaner to implement chaining with a bi_end_io
+> function, but since there's no limits on the depth of a bio chain (and
+> with arbitrary bio splitting coming this is going to be a real issue)
+> using an endio function would lead to unbounded stack usage.
+> 
+> Tail call optimization could solve that, but CONFIG_FRAME_POINTER
+> disables gcc's tail call optimization (-fno-optimize-sibling-calls) - so
+> we do it the hacky but safe way.
 
---047d7b2e141b1b749404e38e85f3
-Content-Type: text/plain; charset=ISO-8859-1
+Btw, if you saw this patch and went "Wtf? What's the justification for
+inflating struct bio and sticking another atomic op in the fast path?" -
+here's the justification: The below patch gets me a 5% increase in
+throughput (doing 4k random reads, and on one core on an old gulftown so
+cpu bound).
 
-Yes, I think I do want to create partitions.  My expectation is to create a
-mapping based on one or more raw physical device (luns).  There are a
-number features I would like implement behind my mapping target driver.  My
-understanding is that I can treat the mapping (the target device) as if it
-were a raw disk and that I can format it as appropriate for whatever
-workload will use it.
+(it also considerably simplifies a lot of random code, but there's a
+real performance win to drivers handling arbitrary size bios so upper
+layers don't have to care).
 
-For instance... I need to present a device (it would appear to the OS as a
-raw block device) composed of ranges of blocks from different devices -
-spinning media, ssd, PCIe flash, etc.  My target driver can guarantee a QOS
-(throughput, latency, combo) and it will service read requests across the
-range of physical media comprising the target.
-
-This target device would appear to the OS as a block device.  The workload
-that uses the device might require a filesystem on it, so I need to mount a
-FS.
-
-That's what I'm aiming for.  I ran into problems trying to format my target
-device so I created a linear mapping and it behaved the same way... could
-not put a partition on it or format it.
-
--john
-
-
-On Fri, Aug 9, 2013 at 4:22 PM, Brassow Jonathan <jbrassow@redhat.com>wrote:
-
->
-> On Aug 9, 2013, at 4:01 PM, John Strange wrote:
->
-> > When I create a linear target, I can't create partitions or format the
-> mapped drive.  I get an invalid parameter argument for an ioctl.  I'm
-> obviously doing something stupid.  What do I need to do to create
-> partitions, format, mount a dm-n?
->
-> You don't want to create partitions, do you?
->
-> Just create an mapping and use it.  If you need another, create another.
->  Need to remove one, just remove it.
->
-> Also, I'm assuming you want to use device-mapper.  If you want persistent
-> devices (ones that stick around after a reboot), you may wish to use LVM.
->
->  brassow
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---047d7b2e141b1b749404e38e85f3
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div><div><div><div>Yes, I think I do want to create parti=
-tions.=A0 My expectation is to create a mapping based on one or more raw ph=
-ysical device (luns).=A0 There are a number features I would like implement=
- behind my mapping target driver.=A0 My understanding is that I can treat t=
-he mapping (the target device) as if it were a raw disk and that I can form=
-at it as appropriate for whatever workload will use it.<br>
-<br></div>For instance... I need to present a device (it would appear to th=
-e OS as a raw block device) composed of ranges of blocks from different dev=
-ices - spinning media, ssd, PCIe flash, etc.=A0 My target driver can guaran=
-tee a QOS (throughput, latency, combo) and it will service read requests ac=
-ross the range of physical media comprising the target.<br>
-<br></div>This target device would appear to the OS as a block device.=A0 T=
-he workload that uses the device might require a filesystem on it, so I nee=
-d to mount a FS.<br><br></div>That&#39;s what I&#39;m aiming for.=A0 I ran =
-into problems trying to format my target device so I created a linear mappi=
-ng and it behaved the same way... could not put a partition on it or format=
- it.<br>
-<br></div>-john<br></div><div class=3D"gmail_extra"><br><br><div class=3D"g=
-mail_quote">On Fri, Aug 9, 2013 at 4:22 PM, Brassow Jonathan <span dir=3D"l=
-tr">&lt;<a href=3D"mailto:jbrassow@redhat.com" target=3D"_blank">jbrassow@r=
-edhat.com</a>&gt;</span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex"><div class=3D"im"><br>
-On Aug 9, 2013, at 4:01 PM, John Strange wrote:<br>
-<br>
-&gt; When I create a linear target, I can&#39;t create partitions or format=
- the mapped drive. =A0I get an invalid parameter argument for an ioctl. =A0=
-I&#39;m obviously doing something stupid. =A0What do I need to do to create=
- partitions, format, mount a dm-n?<br>
-
-<br>
-</div>You don&#39;t want to create partitions, do you?<br>
-<br>
-Just create an mapping and use it. =A0If you need another, create another. =
-=A0Need to remove one, just remove it.<br>
-<br>
-Also, I&#39;m assuming you want to use device-mapper. =A0If you want persis=
-tent devices (ones that stick around after a reboot), you may wish to use L=
-VM.<br>
-<br>
-=A0brassow<br>
-<br>
-<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
-nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
-</blockquote></div><br></div>
-
---047d7b2e141b1b749404e38e85f3--
+From a6b23c56c722ffbf30ca78c14d21dd8615e11474 Mon Sep 17 00:00:00 2001
+From: Kent Overstreet <kmo@daterainc.com>
+Date: Sat, 10 Aug 2013 00:14:03 -0700
+Subject: [PATCH] mtip32xx: handle arbitrary size bios
 
 
---===============5927404661709480009==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5927404661709480009==--
+diff --git a/drivers/block/mtip32xx/mtip32xx.c b/drivers/block/mtip32xx/mtip32xx.c
+index 3ea8234..058d86c 100644
+--- a/drivers/block/mtip32xx/mtip32xx.c
++++ b/drivers/block/mtip32xx/mtip32xx.c
+@@ -2645,24 +2645,6 @@ static void mtip_hw_submit_io(struct driver_data *dd, sector_t sector,
+ }
+ 
+ /*
+- * Release a command slot.
+- *
+- * @dd  Pointer to the driver data structure.
+- * @tag Slot tag
+- *
+- * return value
+- *      None
+- */
+-static void mtip_hw_release_scatterlist(struct driver_data *dd, int tag,
+-								int unaligned)
+-{
+-	struct semaphore *sem = unaligned ? &dd->port->cmd_slot_unal :
+-							&dd->port->cmd_slot;
+-	release_slot(dd->port, tag);
+-	up(sem);
+-}
+-
+-/*
+  * Obtain a command slot and return its associated scatter list.
+  *
+  * @dd  Pointer to the driver data structure.
+@@ -3913,21 +3895,22 @@ static void mtip_make_request(struct request_queue *queue, struct bio *bio)
+ 
+ 	sg = mtip_hw_get_scatterlist(dd, &tag, unaligned);
+ 	if (likely(sg != NULL)) {
+-		if (unlikely((bio)->bi_vcnt > MTIP_MAX_SG)) {
+-			dev_warn(&dd->pdev->dev,
+-				"Maximum number of SGL entries exceeded\n");
+-			bio_io_error(bio);
+-			mtip_hw_release_scatterlist(dd, tag, unaligned);
+-			return;
+-		}
+-
+ 		/* Create the scatter list for this bio. */
+ 		bio_for_each_segment(bvec, bio, iter) {
+-			sg_set_page(&sg[nents],
+-					bvec.bv_page,
+-					bvec.bv_len,
+-					bvec.bv_offset);
+-			nents++;
++			if (unlikely(nents == MTIP_MAX_SG)) {
++				struct bio *split = bio_clone(bio, GFP_NOIO);
++
++				split->bi_iter = iter;
++				bio->bi_iter.bi_size -= iter.bi_size;
++				bio_chain(split, bio);
++				generic_make_request(split);
++				break;
++			}
++
++			sg_set_page(&sg[nents++],
++				    bvec.bv_page,
++				    bvec.bv_len,
++				    bvec.bv_offset);
+ 		}
+ 
+ 		/* Issue the read/write. */
+@@ -4040,6 +4023,7 @@ skip_create_disk:
+ 	blk_queue_max_hw_sectors(dd->queue, 0xffff);
+ 	blk_queue_max_segment_size(dd->queue, 0x400000);
+ 	blk_queue_io_min(dd->queue, 4096);
++	set_bit(QUEUE_FLAG_LARGEBIOS,	&dd->queue->queue_flags);
+ 
+ 	/*
+ 	 * write back cache is not supported in the device. FUA depends on
