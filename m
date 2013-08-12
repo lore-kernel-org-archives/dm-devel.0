@@ -1,13 +1,16 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: [PATCH] bugfix: map_context->ptr must be nullify in
-	no-cache path.
-Date: Sat, 10 Aug 2013 23:39:35 +0900
-Message-ID: <520650A7.4030408@gmail.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: noob usage question
+Date: Mon, 12 Aug 2013 12:40:07 +0100
+Message-ID: <5208C997.503@redhat.com>
+References: <CAH1aXXbG68BSLqvZeoANUkVykcBnNnTfnPqYbCVke89kBU_WTQ@mail.gmail.com>
+	<34D36EB6-401C-4825-8D1E-B277EDD39ACF@redhat.com>
+	<CAH1aXXZHc8rYQUfbQsAXgrjrryLvZb-NfyTEdTx+a9oJSHwc-g@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAH1aXXZHc8rYQUfbQsAXgrjrryLvZb-NfyTEdTx+a9oJSHwc-g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,78 +21,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: =?UTF-8?B?6LydIOaXqeW3nQ==?= <ruby.wktk@gmail.com>
+Cc: John Strange <johnstra10@gmail.com>
 List-Id: dm-devel.ids
 
-Hi,
+On 08/10/2013 03:19 AM, John Strange wrote:
+> Yes, I think I do want to create partitions.  My expectation is to create a 
+> mapping based on one or more raw physical device (luns).  There are a number 
+> features I would like implement behind my mapping target driver.  My 
+> understanding is that I can treat the mapping (the target device) as if it were 
+> a raw disk and that I can format it as appropriate for whatever workload will 
+> use it.
 
-Please apply this patch after the previous patch.
-This will fix bug.
+For typical uses you would format the raw physical device and then use
+the kpartx device-mapper application to create linear maps for each
+partition contained on the device.
 
-First, sorry to forget adding signed-off to that patch.
+For e.g. this is how users work with partitions on multipath devices
+managed by multipath-tools and device-mapper.
 
-When running prepare script,
-the kernel sometimes halt was my annoying problem.
-I may solve this with this patch.
+> For instance... I need to present a device (it would appear to the OS as a raw 
+> block device) composed of ranges of blocks from different devices - spinning 
+> media, ssd, PCIe flash, etc.  My target driver can guarantee a QOS (throughput, 
+> latency, combo) and it will service read requests across the range of physical 
+> media comprising the target.
+> 
+> This target device would appear to the OS as a block device.  The workload that 
+> uses the device might require a filesystem on it, so I need to mount a FS.
 
-lc_end_io is a callback of a splitted bio.
-It atomic_dec some reference count
-if map_context->ptr is not NULL.
+Still not sure why you would want to place partitions on the linear maps
+but you can do it if you really want to:
 
-dmsetup create first calls lc_ctr and
-seems to submit few bios to the device just created.  
-At this stage, the device is without cache and
-it will later attach to cache.
+http://paste.fedoraproject.org/31461/76307438/
 
-Without cache,
-said atomic_dec is not only needless
-but also crash the kernel by NULL access.
+First example is creating and partitioning a linar mapping (I used a
+loop device as the backing but it will work with any block device).
 
-Maybe,
-map_context->ptr
-where map_context is per_bio_data within bio
-is NOT initialized zero-filled and
-that makes the process
-sometimes run through atomic_dec even though without cache.
+Following that is creating a file system on a partitioned linear device,
+and then on the whole linear device.
 
-Moving the line
-assigning NULL to map_context->ptr in lc_map
-to before "no-cache" path can solve this problem.
+There's no problem with either operation.
 
-After this patch applied,
-the kernel halt did not recur.
+> That's what I'm aiming for.  I ran into problems trying to format my target 
+> device so I created a linear mapping and it behaved the same way... could not 
+> put a partition on it or format it.
 
-Akira
+You do not need a partition to be able to format or use a device-mapper
+device - dm's devices do not support partitions (which is why you have
+to use the userspace kpartx - it reads partition tables and creates
+equivalend DM linear mappings for them).
 
+It sounds like something else is going on in your case - what errors do
+you get when you try to use the linear devices (busy for e.g.)?
 
-Signed-off-by: Akira Hayakawa <ruby.wktk@gmail.com>
----
- drivers/md/dm-lc.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm-lc.c b/drivers/md/dm-lc.c
-index b70ab38..8f76383 100644
---- a/drivers/md/dm-lc.c
-+++ b/drivers/md/dm-lc.c
-@@ -1889,6 +1889,9 @@ static int lc_map(struct dm_target *ti, struct bio *bio)
- 	struct lc_device *lc = ti->private;
- 	struct dm_dev *orig = lc->device;
- 
-+	map_context = dm_per_bio_data(bio, ti->per_bio_data_size);
-+	map_context->ptr = NULL;
-+
- 	if (!lc->cache) {
- 		bio_remap(bio, orig, bio->bi_sector);
- 		return DM_MAPIO_REMAPPED;
-@@ -1918,9 +1921,6 @@ static int lc_map(struct dm_target *ti, struct bio *bio)
- 		return DM_MAPIO_SUBMITTED;
- 	}
- 
--	map_context = dm_per_bio_data(bio, ti->per_bio_data_size);
--	map_context->ptr = NULL;
--
- 	bio_count = bio->bi_size >> SECTOR_SHIFT;
- 	bio_fullsize = (bio_count == (1 << 3));
- 	bio_offset = bio->bi_sector % (1 << 3);
--- 
-1.8.3.4
+Regards,
+Bryn.
