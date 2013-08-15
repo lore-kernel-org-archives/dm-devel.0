@@ -1,90 +1,65 @@
-From: Ed L Cashin <ecashin@coraid.com>
-Subject: Re: [PATCH 04/22] block: Abstract out bvec iterator
-Date: Tue, 13 Aug 2013 15:18:43 -0400
-Message-ID: <20130813191841.GA55109@Ed-Cashins-MacBook-Pro.local>
-References: <FEE91CF1-7CDE-45E5-B7BA-DA8522E7DFFE@coraid.com>
- <1375912471-5106-1-git-send-email-kmo@daterainc.com>
- <1375912471-5106-5-git-send-email-kmo@daterainc.com>
- <2D8F228B-65AE-4046-A910-6B354AF0058E@coraid.com>
- <20130809000943.GC15409@kmo-pixel>
- <F14F555B-1B1C-4E73-8AF8-DE57D77C610D@coraid.com>
- <20130809010530.GG15409@kmo-pixel>
- <54e7d248ba68ecf7e7ad4a4180145b72@coraid.com>
- <20130813185158.GA8981@kmo-pixel>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-verity: Verification fails but do not see
+ Input/Output Error on read
+Date: Wed, 14 Aug 2013 20:23:08 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1308142022070.14155@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20847BF06520E04D933186677BF7B724D1F523@VF2WDEXMB1.verifone.com>,
+	<20130808121858.GB31819@agk-dp.fab.redhat.com>
+	<20847BF06520E04D933186677BF7B724D1F55D@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308080849500.15699@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B724D1F58F@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308081256540.20081@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B724D231DC@VF2WDEXMB1.verifone.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130813185158.GA8981@kmo-pixel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "neilb@suse.de" <neilb@suse.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20847BF06520E04D933186677BF7B724D231DC@VF2WDEXMB1.verifone.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Chaitra Bhat <Chaitra.Bhat@VERIFONE.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Aug 13, 2013 at 11:51:58AM -0700, Kent Overstreet wrote:
-> On Tue, Aug 13, 2013 at 10:03:04AM -0400, Ed Cashin wrote:
-> > On Aug 9, 2013, Ed Cashin wrote:
-> > > On Aug 8, 2013, at 9:05 PM, Kent Overstreet wrote:
-> > > ...
-> > > > It's in the for-jens branch now.
-> > > 
-> > > 
-> > > Just examining the patches, I like the way it cleans up the aoe code.  I
-> > > had a question about a new BUG added by the for-jens branch the
-> > > read-response handling path of the aoe driver.
-> > 
-> > The aoe driver in linux-bcache/for-jens commit 4c36c973a8f45 is
-> > passing my tests.
-> > 
-> > Here is a patch against that branch illustrating my suggestion for
-> > handling bad target responses gracefully.
+On Tue, 13 Aug 2013, Chaitra Bhat wrote:
+
+> Hi Mikulas,
 > 
-> Thanks - shall I just fold that into the aoe immutable bvec patch?
+> I figured out what was happening - but I would need your help to explain 
+> these behaviours please :)
+> 
+> Case I - Format the hash device, verify and create the dm-verity target. 
+> Then modify data in the underlying data-device using dd. Read back the 
+> data from the modified location from the verity-device.
+> 
+> Result: Verify fails but 'NO' I/O error reported when reading back from 
+> the location using dd.
 
-Yes, that would be good, thanks.
+So, create a script that results in this scenario of not reporting I/O 
+error and send it to us.
 
-Unfortunately, the way I usually send patches to vger didn't work
-this time.  It looks like the MTA didn't retry after the
-greylisting used SMTP temporary failures.  So I'm trying a
-different way to send and including the same patch for the
-benefit of the Cc list.
+Mikulas
 
-commit 2c39f50b1ee02e2ac07fd072a883a91713da53cc
-Author: Ed Cashin <ecashin@coraid.com>
-Date:   Tue Aug 13 10:50:28 2013 -0400
-
-    aoe: bad AoE responses fail I/O without BUG
-    
-    Instead of having a BUG when the AoE target does something wrong,
-    just fail the I/O and log the problem with rate limiting.
-
-diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
-index cacd48e..b9916a6 100644
---- a/drivers/block/aoe/aoecmd.c
-+++ b/drivers/block/aoe/aoecmd.c
-@@ -1096,7 +1096,6 @@ bvcpy(struct sk_buff *skb, struct bio *bio, struct bvec_iter iter, long cnt)
- 	int soff = 0;
- 	struct bio_vec bv;
- 
--	BUG_ON(cnt > iter.bi_size);
- 	iter.bi_size = cnt;
- 
- 	__bio_for_each_segment(bv, bio, iter, iter) {
-@@ -1196,6 +1195,14 @@ noskb:		if (buf)
- 			clear_bit(BIO_UPTODATE, &buf->bio->bi_flags);
- 			break;
- 		}
-+		if (n > f->iter.bi_size) {
-+			pr_err_ratelimited("%s e%ld.%d.  bytes=%ld need=%u\n",
-+				"aoe: too-large data size in read from",
-+				(long) d->aoemajor, d->aoeminor,
-+				n, f->iter.bi_size);
-+			clear_bit(BIO_UPTODATE, &buf->bio->bi_flags);
-+			break;
-+		}
- 		bvcpy(skb, f->buf->bio, f->iter, n);
- 	case ATA_CMD_PIO_WRITE:
- 	case ATA_CMD_PIO_WRITE_EXT:
-
--- 
-  Ed
+> Case II - Format the hash device, verify and create the dm-verity target 
+> device. Remove the verity target, then modify the data in the 
+> data-device using dd. Load the verity target and read-back the data from 
+> the verity-device from the modified location.
+> 
+> Result: Verify fails and also get I/O error on reading that location 
+> using dd.
+> 
+> My understanding was that the verity-device could be created and mounted 
+> and then if the underlying data was corrupted somehow, then a read of 
+> invalid data from that corrupted location will return -EIO.
+> 
+> Chaitra
+> 
+> PS: I was following the examples in the verity-compat-test script.
