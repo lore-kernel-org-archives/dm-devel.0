@@ -1,107 +1,43 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [dm-devel] dm: Make MIN_IOS, et al, tunable via sysctl.
-Date: Tue, 20 Aug 2013 17:41:39 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1308201724110.8826@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1376070533.26057.244.camel@bobble.lax.corp.google.com> <20130819140016.GB27167@redhat.com>
+Date: Tue, 20 Aug 2013 17:44:39 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1308201742350.8826@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1376070533.26057.244.camel@bobble.lax.corp.google.com> <20130819140016.GB27167@redhat.com> <1376934845.24869.43.camel@bobble.lax.corp.google.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130819140016.GB27167@redhat.com>
+In-Reply-To: <1376934845.24869.43.camel@bobble.lax.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Frank Mayhar <fmayhar@google.com>, linux-kernel@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, Frank Mayhar <fmayhar@google.com>
 List-Id: dm-devel.ids
 
 
 
-On Mon, 19 Aug 2013, Mike Snitzer wrote:
+On Mon, 19 Aug 2013, Frank Mayhar wrote:
 
-> On Fri, Aug 16 2013 at  6:55pm -0400,
-> Frank Mayhar <fmayhar@google.com> wrote:
-> 
-> > The device mapper and some of its modules allocate memory pools at
-> > various points when setting up a device.  In some cases, these pools are
-> > fairly large, for example the multipath module allocates a 256-entry
-> > pool and the dm itself allocates three of that size.  In a
-> > memory-constrained environment where we're creating a lot of these
-> > devices, the memory use can quickly become significant.  Unfortunately,
-> > there's currently no way to change the size of the pools other than by
-> > changing a constant and rebuilding the kernel.
+> On Mon, 2013-08-19 at 10:00 -0400, Mike Snitzer wrote:
+> > Performance isn't the concern.  The concern is: does DM allow for
+> > forward progress if the system's memory is completely exhausted?
 > > 
-> > This patch fixes that by changing the hardcoded MIN_IOS (and certain
-> > other) #defines in dm-crypt, dm-io, dm-mpath, dm-snap and dm itself to
-> > sysctl-modifiable values.  This lets us change the size of these pools
-> > on the fly, we can reduce the size of the pools and reduce memory
-> > pressure.
+> > This is why request-based has such an extensive reserve, because it
+> > needs to account for cloning the largest possible request that comes in
+> > (with multiple bios).
 > 
-> These memory reserves are a long-standing issue with DM (made worse when
-> request-based mpath was introduced).  Two years ago, I assembled a patch
-> series that took one approach to trying to fix it:
-> http://people.redhat.com/msnitzer/patches/upstream/dm-rq-based-mempool-sharing/series.html
+> Thanks for the response.  In our particular case, I/O will be file
+> system based and over a network, which makes it pretty easy for us to be
+> sure that large I/Os never happen.  That notwithstanding, however, as
+> you said it just seems reasonable to make these values configurable.
 > 
-> But in the end I wasn't convinced sharing the memory reserve would allow
-> for 100s of mpath devices to make forward progress if memory is
-> depleted.
-> 
-> All said, I think adding the ability to control the size of the memory
-> reserves is reasonable.  It allows for informed admins to establish
-> lower reserves (based on the awareness that rq-based mpath doesn't need
-> to support really large IOs, etc) without compromising the ability to
-> make forward progress.
-> 
-> But, as mentioned in my porevious mail, I'd like to see this implemnted
-> in terms of module_param_named().
-> 
-> > We tested performance of dm-mpath with smaller MIN_IOS sizes for both dm
-> > and dm-mpath, from a value of 32 all the way down to zero.
-> 
-> Bio-based can safely be reduced, as this older (uncommitted) patch did:
-> http://people.redhat.com/msnitzer/patches/upstream/dm-rq-based-mempool-sharing/0000-dm-lower-bio-based-reservation.patch
-> 
-> > Bearing in mind that the underlying devices were network-based, we saw
-> > essentially no performance degradation; if there was any, it was down
-> > in the noise.  One might wonder why these sizes are the way they are;
-> > I investigated and they've been unchanged since at least 2006.
-> 
-> Performance isn't the concern.  The concern is: does DM allow for
-> forward progress if the system's memory is completely exhausted?
+> I'm also looking at making some similar constants in dm-verity and
+> dm-bufio configurable in the same way and for similar reasons.
 
-There is one possible deadlock that was introduced in commit 
-d89d87965dcbe6fe4f96a2a7e8421b3a75f634d1 in 2.6.22-rc1. Unfortunatelly, no 
-one found that bug at that time and now it seems to be hard to revert 
-that.
+Regarding dm-bufio: the user of dm-bufio sets the pool size as an argument 
+in dm_bufio_client_create. There is no need to make it configurable - if 
+the user selects too low value, deadlock is possible, if the user selects 
+too high value, there is no additional advantage.
 
-The problem is this:
-
-* we send bio1 to the device dm-1, device mapper splits it to bio2 and 
-bio3 and sends both of them to the device dm-2. These two bios are added 
-to current->bio_list.
-
-* bio2 is popped off current->bio_list, a mempool entry from device dm-2's 
-mempool is allocated, bio4 is created and sent to the device dm-3. bio4 is 
-added to the end of current->bio_list.
-
-* bio3 is popped off current->bio_list, a mempool entry from device dm-2's 
-mempool is allocated. Suppose that the mempool is exhausted, so we wait 
-until some existing work (bio2) finishes and returns the entry to the 
-mempool.
-
-So: bio3's request routine waits until bio2 finishes and refills the 
-mempool. bio2 is waiting for bio4 to finish. bio4 is in current->bio_list 
-and is waiting until bio3's request routine fininshes. Deadlock.
-
-In practice, it is not so serious because in mempool_alloc there is:
-/*
- * FIXME: this should be io_schedule().  The timeout is there as a
- * workaround for some DM problems in 2.6.18.
- */
-io_schedule_timeout(5*HZ);
-
-- so it waits for 5 seconds and retries. If there is something in the 
-system that is able to free memory, it resumes.
-
-> This is why request-based has such an extensive reserve, because it
-> needs to account for cloning the largest possible request that comes in
-> (with multiple bios).
+Regarding dm-verity: the mempool size is 4, there is no need to make it 
+bigger, there is no advantage from that.
 
 Mikulas
