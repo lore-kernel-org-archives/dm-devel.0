@@ -1,74 +1,31 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: dm: Make MIN_IOS, et al, tunable via sysctl.
-Date: Tue, 20 Aug 2013 18:24:39 -0400
-Message-ID: <20130820222439.GA5883@redhat.com>
-References: <1376070533.26057.244.camel@bobble.lax.corp.google.com>
- <alpine.LRH.2.02.1308201712090.8826@file01.intranet.prod.int.rdu2.redhat.com>
- <1377034118.24869.48.camel@bobble.lax.corp.google.com>
- <alpine.LRH.2.02.1308201745130.8826@file01.intranet.prod.int.rdu2.redhat.com>
- <1377035833.24869.57.camel@bobble.lax.corp.google.com>
+Date: Tue, 20 Aug 2013 18:52:57 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1308201852220.22284@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1376070533.26057.244.camel@bobble.lax.corp.google.com> <alpine.LRH.2.02.1308201712090.8826@file01.intranet.prod.int.rdu2.redhat.com> <1377034118.24869.48.camel@bobble.lax.corp.google.com> <alpine.LRH.2.02.1308201745130.8826@file01.intranet.prod.int.rdu2.redhat.com>
+ <1377035833.24869.57.camel@bobble.lax.corp.google.com> <20130820222439.GA5883@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1377035833.24869.57.camel@bobble.lax.corp.google.com>
+In-Reply-To: <20130820222439.GA5883@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Frank Mayhar <fmayhar@google.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Frank Mayhar <fmayhar@google.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Aug 20 2013 at  5:57pm -0400,
-Frank Mayhar <fmayhar@google.com> wrote:
 
-> On Tue, 2013-08-20 at 17:47 -0400, Mikulas Patocka wrote:
-> > 
-> > On Tue, 20 Aug 2013, Frank Mayhar wrote:
-> > 
-> > > On Tue, 2013-08-20 at 17:22 -0400, Mikulas Patocka wrote:
-> > > > On Fri, 16 Aug 2013, Frank Mayhar wrote:
-> > > > > The device mapper and some of its modules allocate memory pools at
-> > > > > various points when setting up a device.  In some cases, these pools are
-> > > > > fairly large, for example the multipath module allocates a 256-entry
-> > > > > pool and the dm itself allocates three of that size.  In a
-> > > > > memory-constrained environment where we're creating a lot of these
-> > > > > devices, the memory use can quickly become significant.  Unfortunately,
-> > > > > there's currently no way to change the size of the pools other than by
-> > > > > changing a constant and rebuilding the kernel.
-> > > > I think it would be better to set the values to some low value (1 should 
-> > > > be enough, there is 16 in some places that is already low enough). There 
-> > > > is no need to make it user-configurable, because the user will see no 
-> > > > additional benefit from bigger mempools.
-> > > > 
-> > > > Maybe multipath is the exception - but other dm targets don't really need 
-> > > > big mempools so there is no need to make the size configurable.
-> > > 
-> > > The point is not to make the mempools bigger, the point is to be able to
-> > > make them _smaller_ for memory-constrained environments.  In some cases,
-> > > even 16 can be too big, especially when creating a large number of
-> > > devices.
-> > > 
-> > > In any event, it seems unfortunate to me that these values are
-> > > hard-coded.  One shouldn't have to rebuild the kernel to change them,
-> > > IMHO.
-> > 
-> > So make a patch that changes 16 to 1 if it helps on your system (I'd like 
-> > to ask - what is the configuration where this kind of change helps?). 
-> > There is no need for that to be tunable, anyone can live with mempool size 
-> > being 1.
+
+On Tue, 20 Aug 2013, Mike Snitzer wrote:
+
+> Mikulas' point is that you cannot reduce the size to smaller than 1.
+> And aside from rq-based DM, 1 is sufficient to allow for forward
+> progress even when memory is completely consumed.
 > 
-> I reiterate:  It seems unfortunate that these values are hard-coded.  It
-> seems to me that a sysadmin should be able to tune them according to his
-> or her needs.  Particularly when the same kernel is being run on many
-> machines that may have different constraints; building a special kernel
-> for each set of constraints doesn't scale.
-> 
-> And as I said, it's a memory-constrained environment.
+> A patch that simply changes them to 1 but makes the rq-based DM
+> mempool's size configurable should actually be fine.
 
-Mikulas' point is that you cannot reduce the size to smaller than 1.
-And aside from rq-based DM, 1 is sufficient to allow for forward
-progress even when memory is completely consumed.
+Yes, I think it would be viable.
 
-A patch that simply changes them to 1 but makes the rq-based DM
-mempool's size configurable should actually be fine.
+Mikulas
 
-Mike
+> Mike
