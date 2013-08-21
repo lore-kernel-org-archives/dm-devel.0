@@ -1,63 +1,91 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 1/2] Revert "Revert "math64: New div64_u64_rem helper""
-Date: Wed, 21 Aug 2013 09:21:23 +0200
-Message-ID: <20130821072122.GA27360@gmail.com>
-References: <1376078164-23147-1-git-send-email-snitzer@redhat.com>
- <20130820070045.GA1665@redhat.com>
- <20130820080910.GA11072@gmail.com>
- <20130820192508.GA4799@redhat.com>
+From: Joe Jin <joe.jin@oracle.com>
+Subject: [PATCH] dm ioctl: allow change device target type to error
+Date: Wed, 21 Aug 2013 16:07:41 +0800
+Message-ID: <5214754D.7050203@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130820192508.GA4799@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Stanislaw Gruszka <sgruszka@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, Frederic Weisbecker <fweisbec@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Joe Jin <joe.jin@oracle.com>
 List-Id: dm-devel.ids
 
+commit a5664da "dm ioctl: make bio or request based device type immutable"
+prevented "dmsetup wape_table" change the target type to "error".
 
-* Mike Snitzer <snitzer@redhat.com> wrote:
+Signed-off-by: Joe Jin <joe.jin@oracle.com>
+---
+ drivers/md/dm-ioctl.c |  6 +++++-
+ drivers/md/dm-table.c | 12 ++++++++++++
+ drivers/md/dm.h       |  1 +
+ 3 files changed, 18 insertions(+), 1 deletion(-)
 
-> On Tue, Aug 20 2013 at  4:09am -0400,
-> Ingo Molnar <mingo@kernel.org> wrote:
-> 
-> > 
-> > * Stanislaw Gruszka <sgruszka@redhat.com> wrote:
-> > 
-> > > On Fri, Aug 09, 2013 at 03:56:03PM -0400, Mike Snitzer wrote:
-> > > > This reverts commit f3002134158092178be81339ec5a22ff80e6c308.
-> > > > 
-> > > > div64_u64_rem was removed because there were no other users.
-> > > > 
-> > > > But Device Mapper's I/O statistics support has a need for
-> > > > div64_u64_rem; reintroduce this helper.
-> > > 
-> > > This slows down div64_u64 operation, especially on 32-bit 
-> > > systems.
-> > > 
-> > > Since dm statistic code is possibly not performance 
-> > > critical perhaps you could use something like below 
-> > > instead to calculate remainder:
-> > > 
-> > > res = div64_u64(a, b);
-> > > rem = a - b*res;
-> > 
-> > Or introduce a separately named helper without touching the 
-> > existing methods.
-> 
-> Thanks for the feedback.
-> 
-> I've pushed "math64: New separate div64_u64_rem helper" to the DM tree's
-> 'for-next' branch:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=20e8125736d0e96b64c9b6127241d2a13529180a
-> 
-> Are you OK with me carrying this patch in the DM tree for 3.12
-> inclusion?
-
-Would be nice to include the actual latest patch here on 
-lkml.
-
-Thanks,
-
-	Ingo
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index f1b7586..1ee9e41 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1250,7 +1250,7 @@ static int populate_table(struct dm_table *table,
+ 
+ static int table_load(struct dm_ioctl *param, size_t param_size)
+ {
+-	int r;
++	int r = 0;
+ 	struct hash_cell *hc;
+ 	struct dm_table *t, *old_map = NULL;
+ 	struct mapped_device *md;
+@@ -1280,6 +1280,9 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 		goto out;
+ 	}
+ 
++	if (dm_is_error_target(t))
++		goto error_target;
++
+ 	/* Protect md->type and md->queue against concurrent table loads. */
+ 	dm_lock_md_type(md);
+ 	if (dm_get_md_type(md) == DM_TYPE_NONE)
+@@ -1303,6 +1306,7 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 	}
+ 	dm_unlock_md_type(md);
+ 
++error_target:
+ 	/* stage inactive table */
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index f221812..27be46a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -184,6 +184,18 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
+ 	return 0;
+ }
+ 
++bool dm_is_error_target(struct dm_table *t)
++{
++	unsigned i;
++
++	for (i = 0; i < t->num_targets; i++) {
++		struct dm_target *tgt = t->targets + i;
++		if (strcmp(tgt->type->name, "error") == 0)
++			return true;
++	}
++	return false;
++}
++
+ int dm_table_create(struct dm_table **result, fmode_t mode,
+ 		    unsigned num_targets, struct mapped_device *md)
+ {
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 45b97da..c7bceeb 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -69,6 +69,7 @@ unsigned dm_table_get_type(struct dm_table *t);
+ struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
+ bool dm_table_request_based(struct dm_table *t);
+ bool dm_table_supports_discards(struct dm_table *t);
++bool dm_is_error_target(struct dm_table *t);
+ int dm_table_alloc_md_mempools(struct dm_table *t);
+ void dm_table_free_md_mempools(struct dm_table *t);
+ struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+-- 
+1.8.3.1
