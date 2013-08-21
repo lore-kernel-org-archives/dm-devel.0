@@ -1,52 +1,67 @@
-From: Frank Mayhar <fmayhar@google.com>
-Subject: Re: dm: Make MIN_IOS, et al, tunable via sysctl.
-Date: Tue, 20 Aug 2013 16:14:22 -0700
-Message-ID: <1377040462.24869.70.camel@bobble.lax.corp.google.com>
-References: <1376070533.26057.244.camel@bobble.lax.corp.google.com>
-	 <alpine.LRH.2.02.1308201712090.8826@file01.intranet.prod.int.rdu2.redhat.com>
-	 <1377034118.24869.48.camel@bobble.lax.corp.google.com>
-	 <alpine.LRH.2.02.1308201745130.8826@file01.intranet.prod.int.rdu2.redhat.com>
-	 <1377035833.24869.57.camel@bobble.lax.corp.google.com>
-	 <20130820222439.GA5883@redhat.com>
+From: Kent Overstreet <kmo-PEzghdH756F8UrSeD/g0lQ@public.gmane.org>
+Subject: Re: [PATCH] bcache: Remove use of down/up_read_non_owner()
+Date: Tue, 20 Aug 2013 19:19:00 -0700
+Message-ID: <20130821021900.GB4051@kmo-pixel>
+References: <20130820111602.3cea203c@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130820222439.GA5883@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20130820111602.3cea203c-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
+Sender: linux-bcache-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, 2013-08-20 at 18:24 -0400, Mike Snitzer wrote:
-> Mikulas' point is that you cannot reduce the size to smaller than 1.
-> And aside from rq-based DM, 1 is sufficient to allow for forward
-> progress even when memory is completely consumed.
+On Tue, Aug 20, 2013 at 11:16:02AM -0400, Steven Rostedt wrote:
 > 
-> A patch that simply changes them to 1 but makes the rq-based DM
-> mempool's size configurable should actually be fine.
+> The down/up_read_non_owner() is a nasty hack in the API of the rwsem
+> operations. It was once removed, but then resurrected for use with
+> bcache. Not only is the API an abomination to the rwsem API, it also
+> prevents bcache from ever being compiled with PREEMPT_RT, as the RT
+> kernel requires all rwsems to have an owner.
+> 
+> Instead of keeping the down/up_read_non_owner() around, it is better to
+> modify the one user of it and have it do something a bit differently.
+> 
+> From reading the bcache code, the reason for the non_owner usage is
+> that a request is made, and writers must wait for that request to
+> finish before they can continue. But because the request is completed
+> by another task, the rwsem can not be held for read and then released
+> on completion.
+> 
+> Instead of abusing the rwsem code for this, I added a refcount
+> "nr_requests" to the cached_dev structure as well as a "write_waiters"
+> wait queue. When a request is to be made, the rwsem is still taken for
+> read, but this time with an owner. The refcount is incremented and
+> before exiting the function, the rwsem is released.
+> 
+> The writer will then take the rwsem for write, check the refcount, if
+> it is not zero, it will release the rwsem, add itself to a wait_event()
+> waiting for refcount to become zero, and then try again.
 
-So you're saying that I should submit a patch to drop the pool size for
-BIO_BASED to 1 and make the pool size for REQUEST_BASED configurable?
-At the moment, in dm.c the former is hardcoded to 16 and the latter is
-set via MIN_IOS (currently 256).  There's also io_pool, a slab pool,
-which is also set via MIN_IOS.
+I _really_ disagree with this approach.
 
-How does this relate to the rest of the DM modules?  Mpath also sets
-MIN_IOS to 256 and creates a slab pool from that, and there are a number
-of hardcoded constants in dm-io (MIN_IOS and MIN_BIOS), dm-snap
-(MIN_IOS), dm-crypt (MIN_IOS and MIN_POOL_PAGES), dm-bufio
-(DM_BUFIO_HASH_BITS, which is allocated via vmalloc per client) and
-dm-verity (DM_VERITY_MEMPOOL_SIZE, which is allocated per device).
+I get that there's a problem, but the bcache code REALLY IS USING THE
+RWSEM AS A LOCK; the answer isn't to open code the lock!
 
-For the most part I can't imagine that people will want to change these
-from their defaults, but when someone does need to change one of these,
-they need to do so badly and there's currently no good way to do that
-besides hacking the source and building a new kernel.
+Apologies to Christoph for getting distracted and not responding when
+you started to explain what the issues were for RT. I'm not really
+convinced they're that insurmountable (one of the issues was debugging,
+which the _non_owner() stuff always handled just fine), but I'll take it
+on faith that this usage is incompatible with rwsems + the RT
+functionality since I haven't actually had time to dig into it.
 
-By the way, I do appreciate the advice.  I'm just trying to clear up
-confusion on my part, make sure that our needs are met and, while I'm at
-it, make things a bit better for those who come after me.
--- 
-Frank Mayhar
-310-460-4042
+So assuming that's the case, IMO the sanest thing to do is make a new
+type of lock - "rwsem_non_process" or somesuch - and use _that_ in
+bcache. Not open coding the lock.
+
+It can even live in the bcache code if we want since there currently
+wouldn't be any other users, I don't really care. But open coding it?
+Come on... makes me wonder what other code in the kernel is open coding
+locks because it couldn't release it in the same process context that
+took the lock for whatever reason.
+
+Also, nack this patch because increasing the number of atomic ops to
+shared cachelines in our fast path. If it does end up being open coded,
+I'll make a more efficient version.
