@@ -1,65 +1,69 @@
-From: Frank Mayhar <fmayhar@google.com>
-Subject: Re: dm: Make MIN_IOS, et al, tunable via sysctl.
-Date: Thu, 22 Aug 2013 10:26:49 -0700
-Message-ID: <1377192409.24869.116.camel@bobble.lax.corp.google.com>
-References: <1376070533.26057.244.camel@bobble.lax.corp.google.com>
-	<alpine.LRH.2.02.1308201712090.8826@file01.intranet.prod.int.rdu2.redhat.com>
-	<1377034118.24869.48.camel@bobble.lax.corp.google.com>
-	<alpine.LRH.2.02.1308201745130.8826@file01.intranet.prod.int.rdu2.redhat.com>
-	<1377035833.24869.57.camel@bobble.lax.corp.google.com>
-	<20130820222439.GA5883@redhat.com>
-	<1377040462.24869.70.camel@bobble.lax.corp.google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm ioctl: allow change device target type to error
+Date: Thu, 22 Aug 2013 16:10:53 -0400
+Message-ID: <20130822201052.GA22556@redhat.com>
+References: <5214CC25.1070307@oracle.com>
+ <alpine.LRH.2.02.1308211041180.10797@file01.intranet.prod.int.rdu2.redhat.com>
+ <20130821150547.GA10987@redhat.com>
+ <52157A08.7080701@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1377040462.24869.70.camel@bobble.lax.corp.google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <52157A08.7080701@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joe Jin <joe.jin@oracle.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, 2013-08-20 at 16:14 -0700, Frank Mayhar wrote:
-> On Tue, 2013-08-20 at 18:24 -0400, Mike Snitzer wrote:
-> > Mikulas' point is that you cannot reduce the size to smaller than 1.
-> > And aside from rq-based DM, 1 is sufficient to allow for forward
-> > progress even when memory is completely consumed.
-> > 
-> > A patch that simply changes them to 1 but makes the rq-based DM
-> > mempool's size configurable should actually be fine.
-> 
-> So you're saying that I should submit a patch to drop the pool size for
-> BIO_BASED to 1 and make the pool size for REQUEST_BASED configurable?
-> At the moment, in dm.c the former is hardcoded to 16 and the latter is
-> set via MIN_IOS (currently 256).  There's also io_pool, a slab pool,
-> which is also set via MIN_IOS.
-> 
-> How does this relate to the rest of the DM modules?  Mpath also sets
-> MIN_IOS to 256 and creates a slab pool from that, and there are a number
-> of hardcoded constants in dm-io (MIN_IOS and MIN_BIOS), dm-snap
-> (MIN_IOS), dm-crypt (MIN_IOS and MIN_POOL_PAGES), dm-bufio
-> (DM_BUFIO_HASH_BITS, which is allocated via vmalloc per client) and
-> dm-verity (DM_VERITY_MEMPOOL_SIZE, which is allocated per device).
-> 
-> For the most part I can't imagine that people will want to change these
-> from their defaults, but when someone does need to change one of these,
-> they need to do so badly and there's currently no good way to do that
-> besides hacking the source and building a new kernel.
-> 
-> By the way, I do appreciate the advice.  I'm just trying to clear up
-> confusion on my part, make sure that our needs are met and, while I'm at
-> it, make things a bit better for those who come after me.
+On Wed, Aug 21 2013 at 10:40pm -0400,
+Joe Jin <joe.jin@oracle.com> wrote:
 
-Ping?  Can one of you guys answer my question, here?  Thanks!
--- 
-Frank Mayhar
-310-460-4042
+> On 08/21/13 23:06, Mike Snitzer wrote:
+> > On Wed, Aug 21 2013 at 10:48am -0400,
+> > Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > 
+> >>
+> >>
+> >> On Wed, 21 Aug 2013, Joe Jin wrote:
+> >>
+> >>> commit a5664da "dm ioctl: make bio or request based device type immutable"
+> >>> prevented "dmsetup wape_table" change the target type to "error".
+> >>
+> >> That commit a5664da is there for a reason (it is not possible to change 
+> >> bio-based device to request-based and vice versa) and I don't really see 
+> >> how this patch is supposed to work.
+> >>
+> >> If there are bios that are in flight and that already passed through 
+> >> blk_queue_bio, and you change the device from request-based to bio-based, 
+> >> what are you going to do with them? - The patch doesn't do anything about 
+> >> it.
+> >>
+> >> A better approach would be to create a new request-based target "error-rq" 
+> >> and change the multipath target to "error-rq" target. That way, you don't 
+> >> have to change device type from request based to bio based.
+> > 
+> > My thoughts _exactly_.  This patch is very confused.
+> > 
+> > Joe, what are you looking to be able to do?  Switch a dm-multipath
+> > device to error?  Or allowing switching a target that has
+> > DM_TARGET_IMMUTABLE flag set to be switched to error target?
+> > 
+> > The latter restriction was introduced with commit 36a0456fb ("dm table:
+> > add immutable feature").
+> 
+> Hi Mike,
+> 
+> So far dmsetup support wipe_table:
+> https://bugzilla.redhat.com/show_bug.cgi?id=742607
+> As description in the bug Doc Text, "This could be useful, for example, 
+> if a long-running process keeps a device open after it has finished using
+> it and you need to release the underlying devices before that process exits."
+> 
+> After apply the commit, wipe_table no long works.
+
+Well, it never _really_ worked even before that commit because it was
+switching from request-based to bio-based.  Some queued requests
+could've easily slipped through the cracks.
+
+But I now understand what it is you want to be able to do.
