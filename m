@@ -1,154 +1,127 @@
-From: Joe Jin <joe.jin@oracle.com>
-Subject: Re: [dm-devel] [PATCH v2] dm ioctl: allow change device target type
- to error
-Date: Thu, 22 Aug 2013 10:50:22 +0800
-Message-ID: <52157C6E.6080406@oracle.com>
-References: <5214CC25.1070307@oracle.com> <alpine.LRH.2.02.1308211041180.10797@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-verity: Verification fails but do not see
+ Input/Output Error on read
+Date: Thu, 22 Aug 2013 10:32:32 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1308221028030.25758@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20847BF06520E04D933186677BF7B724D1F523@VF2WDEXMB1.verifone.com>,
+	<20130808121858.GB31819@agk-dp.fab.redhat.com>
+	<20847BF06520E04D933186677BF7B724D1F55D@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308080849500.15699@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B724D1F58F@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308081256540.20081@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B724D231DC@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308142022070.14155@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B72401AF140E@VF2WDEXMB1.verifone.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1308211041180.10797@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20847BF06520E04D933186677BF7B72401AF140E@VF2WDEXMB1.verifone.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Chaitra Bhat <Chaitra.Bhat@VERIFONE.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Mikulas, thanks for you suggestions, I create new patch, can you please help
-review?
+Hi
 
-Subject: dm: add map_rq define for error
+There is a bug in the script - there is:
+$VERITYSETUP create $DEV_NAME $DEV_PARAMS $VERIFY_PARAMS $2 >>$DEV_OUT 
+2>&1 && \
+	fail "activation"
 
-commit a5664da "dm ioctl: make bio or request based device type immutable"
-prevented "dmsetup wape_table" change the target type to "error" for there
-is not map_rq for error target type.
+There should be "||" instead of "&&", so that the function fail is 
+executed on failure.
 
-Signed-off-by: Joe Jin <joe.jin@oracle.com>
----
- drivers/md/dm-target.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+If I replace "&&" with "||", the script behaves as expected - it fails and 
+writes this:
+# check_root_hash  512 9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174 $SALT 1 sha256 2
+[root hash][verify][activate][remove]verify fails
+FAILED
+VERITY header information for verity-hash
+UUID:                   613837c4-6ca8-4add-a2e9-c1acfd5c8e96
+Hash type:              1
+Data blocks:            16384
+Data block size:        512
+Hash block size:        512
+Hash algorithm:         sha256
+Salt:                   
+e48da609055204e89ae53b655ca2216dd983cf3cb829f34f63a297d106d53e2d
+Root hash:              
+9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174
+Verification failed at position 3072.
+Verification of data area failed.
+exit
 
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index 37ba5db..b690910 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -131,12 +131,19 @@ static int io_err_map(struct dm_target *tt, struct bio *bio)
- 	return -EIO;
- }
- 
-+static int io_err_map_rq(struct dm_target *ti, struct request *clone,
-+			 union map_info *map_context)
-+{
-+	return -EIO;
-+}
-+
- static struct target_type error_target = {
- 	.name = "error",
- 	.version = {1, 1, 0},
- 	.ctr  = io_err_ctr,
- 	.dtr  = io_err_dtr,
- 	.map  = io_err_map,
-+	.map_rq = io_err_map_rq,
- };
- 
- int __init dm_target_init(void)
--- 
-1.8.3.1
+Mikulas
 
-On 08/21/13 22:48, Mikulas Patocka wrote:
+
+On Thu, 15 Aug 2013, Chaitra Bhat wrote:
+
+> Hi Mikulas,
 > 
+> I have attached a simple script to demonstrate what I was trying to tell. It is based on the verify-compat-test script. Feel free to modify the script; the script is basically to get the idea across.
 > 
-> On Wed, 21 Aug 2013, Joe Jin wrote:
+> For the Successful Case
+> #source script_test
+> #check_root_hash  512 9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174 $SALT 1 sha256 2
 > 
->> commit a5664da "dm ioctl: make bio or request based device type immutable"
->> prevented "dmsetup wape_table" change the target type to "error".
+> For the Failure Case
+> #source script_test
+> #check_root_hash  512 9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174 $SALT 1 sha256 1
 > 
-> That commit a5664da is there for a reason (it is not possible to change 
-> bio-based device to request-based and vice versa) and I don't really see 
-> how this patch is supposed to work.
+> Regards,
+> Chaitra
+> ________________________________________
+> From: Mikulas Patocka [mpatocka@redhat.com]
+> Sent: 15 August 2013 01:23
+> To: Chaitra Bhat
+> Cc: device-mapper development; Alasdair G Kergon
+> Subject: RE: [dm-devel] dm-verity: Verification fails but do not see Input/Output Error on read
 > 
-> If there are bios that are in flight and that already passed through 
-> blk_queue_bio, and you change the device from request-based to bio-based, 
-> what are you going to do with them? - The patch doesn't do anything about 
-> it.
+> On Tue, 13 Aug 2013, Chaitra Bhat wrote:
 > 
-> A better approach would be to create a new request-based target "error-rq" 
-> and change the multipath target to "error-rq" target. That way, you don't 
-> have to change device type from request based to bio based.
+> > Hi Mikulas,
+> >
+> > I figured out what was happening - but I would need your help to explain
+> > these behaviours please :)
+> >
+> > Case I - Format the hash device, verify and create the dm-verity target.
+> > Then modify data in the underlying data-device using dd. Read back the
+> > data from the modified location from the verity-device.
+> >
+> > Result: Verify fails but 'NO' I/O error reported when reading back from
+> > the location using dd.
+> 
+> So, create a script that results in this scenario of not reporting I/O
+> error and send it to us.
 > 
 > Mikulas
 > 
->> -v2: setup md->queue even target type is "error".
->>
->> Signed-off-by: Joe Jin <joe.jin@oracle.com>
->> ---
->>  drivers/md/dm-ioctl.c |  4 ++++
->>  drivers/md/dm-table.c | 12 ++++++++++++
->>  drivers/md/dm.h       |  1 +
->>  3 files changed, 17 insertions(+)
->>
->> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
->> index f1b7586..2a9b63d 100644
->> --- a/drivers/md/dm-ioctl.c
->> +++ b/drivers/md/dm-ioctl.c
->> @@ -1280,6 +1280,9 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
->>  		goto out;
->>  	}
->>  
->> +	if (dm_is_error_target(t))
->> +		goto error_target;
->> +
->>  	/* Protect md->type and md->queue against concurrent table loads. */
->>  	dm_lock_md_type(md);
->>  	if (dm_get_md_type(md) == DM_TYPE_NONE)
->> @@ -1293,6 +1296,7 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
->>  		goto out;
->>  	}
->>  
->> +error_target:
->>  	/* setup md->queue to reflect md's type (may block) */
->>  	r = dm_setup_md_queue(md);
->>  	if (r) {
->> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
->> index f221812..27be46a 100644
->> --- a/drivers/md/dm-table.c
->> +++ b/drivers/md/dm-table.c
->> @@ -184,6 +184,18 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
->>  	return 0;
->>  }
->>  
->> +bool dm_is_error_target(struct dm_table *t)
->> +{
->> +	unsigned i;
->> +
->> +	for (i = 0; i < t->num_targets; i++) {
->> +		struct dm_target *tgt = t->targets + i;
->> +		if (strcmp(tgt->type->name, "error") == 0)
->> +			return true;
->> +	}
->> +	return false;
->> +}
->> +
->>  int dm_table_create(struct dm_table **result, fmode_t mode,
->>  		    unsigned num_targets, struct mapped_device *md)
->>  {
->> diff --git a/drivers/md/dm.h b/drivers/md/dm.h
->> index 45b97da..c7bceeb 100644
->> --- a/drivers/md/dm.h
->> +++ b/drivers/md/dm.h
->> @@ -69,6 +69,7 @@ unsigned dm_table_get_type(struct dm_table *t);
->>  struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
->>  bool dm_table_request_based(struct dm_table *t);
->>  bool dm_table_supports_discards(struct dm_table *t);
->> +bool dm_is_error_target(struct dm_table *t);
->>  int dm_table_alloc_md_mempools(struct dm_table *t);
->>  void dm_table_free_md_mempools(struct dm_table *t);
->>  struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
->> -- 
->> 1.8.3.1
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>
+> > Case II - Format the hash device, verify and create the dm-verity target
+> > device. Remove the verity target, then modify the data in the
+> > data-device using dd. Load the verity target and read-back the data from
+> > the verity-device from the modified location.
+> >
+> > Result: Verify fails and also get I/O error on reading that location
+> > using dd.
+> >
+> > My understanding was that the verity-device could be created and mounted
+> > and then if the underlying data was corrupted somehow, then a read of
+> > invalid data from that corrupted location will return -EIO.
+> >
+> > Chaitra
+> >
+> > PS: I was following the examples in the verity-compat-test script.
+> 
+> ________________________________
+> This electronic message, including attachments, is intended only for the use of the individual or company named above or to which it is addressed. The information contained in this message shall be considered confidential and proprietary, and may include confidential work product. If you are not the intended recipient, please be aware that any unauthorized use, dissemination, distribution or copying of this message is strictly prohibited. If you have received this email in error, please notify the sender by replying to this message and deleting this email immediately.
+> 
