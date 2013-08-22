@@ -1,69 +1,78 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH v2] dm ioctl: allow change device target type to error
-Date: Thu, 22 Aug 2013 16:10:53 -0400
-Message-ID: <20130822201052.GA22556@redhat.com>
+Date: Thu, 22 Aug 2013 16:19:00 -0400
+Message-ID: <20130822201900.GB22556@redhat.com>
 References: <5214CC25.1070307@oracle.com>
  <alpine.LRH.2.02.1308211041180.10797@file01.intranet.prod.int.rdu2.redhat.com>
- <20130821150547.GA10987@redhat.com>
- <52157A08.7080701@oracle.com>
+ <52157C6E.6080406@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <52157A08.7080701@oracle.com>
+In-Reply-To: <52157C6E.6080406@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Joe Jin <joe.jin@oracle.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
+Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Aug 21 2013 at 10:40pm -0400,
+On Wed, Aug 21 2013 at 10:50pm -0400,
 Joe Jin <joe.jin@oracle.com> wrote:
 
-> On 08/21/13 23:06, Mike Snitzer wrote:
-> > On Wed, Aug 21 2013 at 10:48am -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> >>
-> >>
-> >> On Wed, 21 Aug 2013, Joe Jin wrote:
-> >>
-> >>> commit a5664da "dm ioctl: make bio or request based device type immutable"
-> >>> prevented "dmsetup wape_table" change the target type to "error".
-> >>
-> >> That commit a5664da is there for a reason (it is not possible to change 
-> >> bio-based device to request-based and vice versa) and I don't really see 
-> >> how this patch is supposed to work.
-> >>
-> >> If there are bios that are in flight and that already passed through 
-> >> blk_queue_bio, and you change the device from request-based to bio-based, 
-> >> what are you going to do with them? - The patch doesn't do anything about 
-> >> it.
-> >>
-> >> A better approach would be to create a new request-based target "error-rq" 
-> >> and change the multipath target to "error-rq" target. That way, you don't 
-> >> have to change device type from request based to bio based.
-> > 
-> > My thoughts _exactly_.  This patch is very confused.
-> > 
-> > Joe, what are you looking to be able to do?  Switch a dm-multipath
-> > device to error?  Or allowing switching a target that has
-> > DM_TARGET_IMMUTABLE flag set to be switched to error target?
-> > 
-> > The latter restriction was introduced with commit 36a0456fb ("dm table:
-> > add immutable feature").
+> Mikulas, thanks for you suggestions, I create new patch, can you please help
+> review?
 > 
-> Hi Mike,
+> Subject: dm: add map_rq define for error
 > 
-> So far dmsetup support wipe_table:
-> https://bugzilla.redhat.com/show_bug.cgi?id=742607
-> As description in the bug Doc Text, "This could be useful, for example, 
-> if a long-running process keeps a device open after it has finished using
-> it and you need to release the underlying devices before that process exits."
+> commit a5664da "dm ioctl: make bio or request based device type immutable"
+> prevented "dmsetup wape_table" change the target type to "error" for there
+> is not map_rq for error target type.
 > 
-> After apply the commit, wipe_table no long works.
+> Signed-off-by: Joe Jin <joe.jin@oracle.com>
+> ---
+>  drivers/md/dm-target.c | 7 +++++++
+>  1 file changed, 7 insertions(+)
+> 
+> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+> index 37ba5db..b690910 100644
+> --- a/drivers/md/dm-target.c
+> +++ b/drivers/md/dm-target.c
+> @@ -131,12 +131,19 @@ static int io_err_map(struct dm_target *tt, struct bio *bio)
+>  	return -EIO;
+>  }
+>  
+> +static int io_err_map_rq(struct dm_target *ti, struct request *clone,
+> +			 union map_info *map_context)
+> +{
+> +	return -EIO;
+> +}
+> +
+>  static struct target_type error_target = {
+>  	.name = "error",
+>  	.version = {1, 1, 0},
+>  	.ctr  = io_err_ctr,
+>  	.dtr  = io_err_dtr,
+>  	.map  = io_err_map,
+> +	.map_rq = io_err_map_rq,
+>  };
+>  
+>  int __init dm_target_init(void)
+> -- 
+> 1.8.3.1
 
-Well, it never _really_ worked even before that commit because it was
-switching from request-based to bio-based.  Some queued requests
-could've easily slipped through the cracks.
+Hi Joe,
 
-But I now understand what it is you want to be able to do.
+Unfortunately this isn't going to work properly.  Mikulas suggested a
+new "error-rq" target.
+
+I do like the idea of a single error target that is hybrid (supports
+both bio-based and request-based) but the DM core would need to be
+updated to support this.
+
+Specifically, we'd need to check if the device (and active table) is
+already bio-based or request-based and select the appropriate type.  If
+it is a new device, default to selecting bio-based.
+
+There are some wrappers and other logic thoughout DM core that will need
+auditing too.
+
+Mike
