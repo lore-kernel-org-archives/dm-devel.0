@@ -1,23 +1,20 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-verity: Verification fails but do not see
- Input/Output Error on read
-Date: Thu, 22 Aug 2013 10:32:32 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1308221028030.25758@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20847BF06520E04D933186677BF7B724D1F523@VF2WDEXMB1.verifone.com>,
-	<20130808121858.GB31819@agk-dp.fab.redhat.com>
-	<20847BF06520E04D933186677BF7B724D1F55D@VF2WDEXMB1.verifone.com>,
-	<alpine.LRH.2.02.1308080849500.15699@file01.intranet.prod.int.rdu2.redhat.com>
-	<20847BF06520E04D933186677BF7B724D1F58F@VF2WDEXMB1.verifone.com>,
-	<alpine.LRH.2.02.1308081256540.20081@file01.intranet.prod.int.rdu2.redhat.com>
-	<20847BF06520E04D933186677BF7B724D231DC@VF2WDEXMB1.verifone.com>,
-	<alpine.LRH.2.02.1308142022070.14155@file01.intranet.prod.int.rdu2.redhat.com>
-	<20847BF06520E04D933186677BF7B72401AF140E@VF2WDEXMB1.verifone.com>
+From: Frank Mayhar <fmayhar@google.com>
+Subject: Re: dm: Make MIN_IOS, et al, tunable via sysctl.
+Date: Thu, 22 Aug 2013 10:26:49 -0700
+Message-ID: <1377192409.24869.116.camel@bobble.lax.corp.google.com>
+References: <1376070533.26057.244.camel@bobble.lax.corp.google.com>
+	<alpine.LRH.2.02.1308201712090.8826@file01.intranet.prod.int.rdu2.redhat.com>
+	<1377034118.24869.48.camel@bobble.lax.corp.google.com>
+	<alpine.LRH.2.02.1308201745130.8826@file01.intranet.prod.int.rdu2.redhat.com>
+	<1377035833.24869.57.camel@bobble.lax.corp.google.com>
+	<20130820222439.GA5883@redhat.com>
+	<1377040462.24869.70.camel@bobble.lax.corp.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20847BF06520E04D933186677BF7B72401AF140E@VF2WDEXMB1.verifone.com>
+In-Reply-To: <1377040462.24869.70.camel@bobble.lax.corp.google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,101 +24,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chaitra Bhat <Chaitra.Bhat@VERIFONE.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+On Tue, 2013-08-20 at 16:14 -0700, Frank Mayhar wrote:
+> On Tue, 2013-08-20 at 18:24 -0400, Mike Snitzer wrote:
+> > Mikulas' point is that you cannot reduce the size to smaller than 1.
+> > And aside from rq-based DM, 1 is sufficient to allow for forward
+> > progress even when memory is completely consumed.
+> > 
+> > A patch that simply changes them to 1 but makes the rq-based DM
+> > mempool's size configurable should actually be fine.
+> 
+> So you're saying that I should submit a patch to drop the pool size for
+> BIO_BASED to 1 and make the pool size for REQUEST_BASED configurable?
+> At the moment, in dm.c the former is hardcoded to 16 and the latter is
+> set via MIN_IOS (currently 256).  There's also io_pool, a slab pool,
+> which is also set via MIN_IOS.
+> 
+> How does this relate to the rest of the DM modules?  Mpath also sets
+> MIN_IOS to 256 and creates a slab pool from that, and there are a number
+> of hardcoded constants in dm-io (MIN_IOS and MIN_BIOS), dm-snap
+> (MIN_IOS), dm-crypt (MIN_IOS and MIN_POOL_PAGES), dm-bufio
+> (DM_BUFIO_HASH_BITS, which is allocated via vmalloc per client) and
+> dm-verity (DM_VERITY_MEMPOOL_SIZE, which is allocated per device).
+> 
+> For the most part I can't imagine that people will want to change these
+> from their defaults, but when someone does need to change one of these,
+> they need to do so badly and there's currently no good way to do that
+> besides hacking the source and building a new kernel.
+> 
+> By the way, I do appreciate the advice.  I'm just trying to clear up
+> confusion on my part, make sure that our needs are met and, while I'm at
+> it, make things a bit better for those who come after me.
 
-There is a bug in the script - there is:
-$VERITYSETUP create $DEV_NAME $DEV_PARAMS $VERIFY_PARAMS $2 >>$DEV_OUT 
-2>&1 && \
-	fail "activation"
-
-There should be "||" instead of "&&", so that the function fail is 
-executed on failure.
-
-If I replace "&&" with "||", the script behaves as expected - it fails and 
-writes this:
-# check_root_hash  512 9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174 $SALT 1 sha256 2
-[root hash][verify][activate][remove]verify fails
-FAILED
-VERITY header information for verity-hash
-UUID:                   613837c4-6ca8-4add-a2e9-c1acfd5c8e96
-Hash type:              1
-Data blocks:            16384
-Data block size:        512
-Hash block size:        512
-Hash algorithm:         sha256
-Salt:                   
-e48da609055204e89ae53b655ca2216dd983cf3cb829f34f63a297d106d53e2d
-Root hash:              
-9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174
-Verification failed at position 3072.
-Verification of data area failed.
-exit
-
-Mikulas
-
-
-On Thu, 15 Aug 2013, Chaitra Bhat wrote:
-
-> Hi Mikulas,
-> 
-> I have attached a simple script to demonstrate what I was trying to tell. It is based on the verify-compat-test script. Feel free to modify the script; the script is basically to get the idea across.
-> 
-> For the Successful Case
-> #source script_test
-> #check_root_hash  512 9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174 $SALT 1 sha256 2
-> 
-> For the Failure Case
-> #source script_test
-> #check_root_hash  512 9de18652fe74edfb9b805aaed72ae2aa48f94333f1ba5c452ac33b1c39325174 $SALT 1 sha256 1
-> 
-> Regards,
-> Chaitra
-> ________________________________________
-> From: Mikulas Patocka [mpatocka@redhat.com]
-> Sent: 15 August 2013 01:23
-> To: Chaitra Bhat
-> Cc: device-mapper development; Alasdair G Kergon
-> Subject: RE: [dm-devel] dm-verity: Verification fails but do not see Input/Output Error on read
-> 
-> On Tue, 13 Aug 2013, Chaitra Bhat wrote:
-> 
-> > Hi Mikulas,
-> >
-> > I figured out what was happening - but I would need your help to explain
-> > these behaviours please :)
-> >
-> > Case I - Format the hash device, verify and create the dm-verity target.
-> > Then modify data in the underlying data-device using dd. Read back the
-> > data from the modified location from the verity-device.
-> >
-> > Result: Verify fails but 'NO' I/O error reported when reading back from
-> > the location using dd.
-> 
-> So, create a script that results in this scenario of not reporting I/O
-> error and send it to us.
-> 
-> Mikulas
-> 
-> > Case II - Format the hash device, verify and create the dm-verity target
-> > device. Remove the verity target, then modify the data in the
-> > data-device using dd. Load the verity target and read-back the data from
-> > the verity-device from the modified location.
-> >
-> > Result: Verify fails and also get I/O error on reading that location
-> > using dd.
-> >
-> > My understanding was that the verity-device could be created and mounted
-> > and then if the underlying data was corrupted somehow, then a read of
-> > invalid data from that corrupted location will return -EIO.
-> >
-> > Chaitra
-> >
-> > PS: I was following the examples in the verity-compat-test script.
-> 
-> ________________________________
-> This electronic message, including attachments, is intended only for the use of the individual or company named above or to which it is addressed. The information contained in this message shall be considered confidential and proprietary, and may include confidential work product. If you are not the intended recipient, please be aware that any unauthorized use, dissemination, distribution or copying of this message is strictly prohibited. If you have received this email in error, please notify the sender by replying to this message and deleting this email immediately.
-> 
+Ping?  Can one of you guys answer my question, here?  Thanks!
+-- 
+Frank Mayhar
+310-460-4042
