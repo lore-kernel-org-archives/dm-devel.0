@@ -1,40 +1,46 @@
-From: Joe Jin <joe.jin@oracle.com>
-Subject: Re: [PATCH] dm: allow error target to replace either bio-based and
- request-based targets
-Date: Fri, 23 Aug 2013 09:06:00 +0800
-Message-ID: <5216B578.5050506@oracle.com>
-References: <5214CC25.1070307@oracle.com> <alpine.LRH.2.02.1308211041180.10797@file01.intranet.prod.int.rdu2.redhat.com> <52157C6E.6080406@oracle.com> <20130822201900.GB22556@redhat.com> <20130823001750.GA29366@redhat.com>
+From: Teng-Feng Yang <shinrairis@gmail.com>
+Subject: Allow read IO during share block breaking in dm-thin
+Date: Fri, 23 Aug 2013 10:35:30 +0800
+Message-ID: <CAKTMprMVgxTDjs+4JEJLgb+1BpLCnY_mXHzvROqKCEiGe5Ekpw@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130823001750.GA29366@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 08/23/13 08:17, Mike Snitzer wrote:
-> Here is a patch that should work for your needs (I tested it to work
-> with 'dmsetup wipe_table' on both request-based and bio-based devices):
+Hi folks,
 
-This really what I looking for, thanks!
+I have tried to perform some experiments and enhance dm-thin with some
+new features for couple of weeks.
+I notice that dm-thin uses a dm_deferred_set data structure to record
+all the share read IO and inserts new data mappings only when all
+share read IO are quiesced.
+This method is quite similar to the block tracking mechanism used by
+dm-snap, which tries to prevent write IO to the origin device from
+overwriting the block when some read IO from snap device has not yet
+completed
+Although it is reasonable to have something like this in dm-snap, it
+looks like an overkill to have the similar mechanism in dm-thin.
+Since the "redirect-on-write" nature of dm-thin makes all write IOs to
+a share block writes in a new allocated block instead, all preceding
+share read IO will still read the correct data even when there are
+multiple share write IO on-the-fly.
+So here is my question, do we really need to quiesce all share read
+IOs before adding a new data mapping, or the share read IO's deferred
+set is meant to deal with some other problems?
 
-> 
-> From: Mike Snitzer <snitzer@redhat.com>
-> Date: Thu, 22 Aug 2013 18:21:38 -0400
-> Subject: [PATCH] dm: allow error target to replace either bio-based and request-based targets
-> 
-> In may be useful to switch a request-based table to the "error" target.
-> Enhance the DM core to allow a single hybrid target to be capable of
-> handling either bios or requests.
-> 
-> Add a request-based (.map_rq) member to the error target_type and train
-> dm_table_set_type() to prefer the md's established type (request-based
-> or bio-based).  If the md doesn't have an established type default to
-> making the hybrid target bio-based.
+Any help would be grateful.
+Thanks
 
-Signed-off-by: Joe Jin <joe.jin@oracle.com>
-
-Thanks,
-Joe
+Dennis
