@@ -1,58 +1,61 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Allow read IO during share block breaking in dm-thin
-Date: Fri, 23 Aug 2013 10:59:29 +0100
-Message-ID: <20130823095929.GA24230@debian>
-References: <CAKTMprMVgxTDjs+4JEJLgb+1BpLCnY_mXHzvROqKCEiGe5Ekpw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: allow error target to replace either bio-based and
+ request-based targets
+Date: Fri, 23 Aug 2013 06:01:35 -0400
+Message-ID: <20130823100135.GA29137@redhat.com>
+References: <5214CC25.1070307@oracle.com>
+ <alpine.LRH.2.02.1308211041180.10797@file01.intranet.prod.int.rdu2.redhat.com>
+ <52157C6E.6080406@oracle.com>
+ <20130822201900.GB22556@redhat.com>
+ <20130823001750.GA29366@redhat.com>
+ <5216D3A2.8020209@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKTMprMVgxTDjs+4JEJLgb+1BpLCnY_mXHzvROqKCEiGe5Ekpw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <5216D3A2.8020209@ce.jp.nec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Joe Jin <joe.jin@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Dennis,
+On Thu, Aug 22 2013 at 11:14pm -0400,
+Jun'ichi Nomura <j-nomura@ce.jp.nec.com> wrote:
 
-On Fri, Aug 23, 2013 at 10:35:30AM +0800, Teng-Feng Yang wrote:
-> So here is my question, do we really need to quiesce all share read
-> IOs before adding a new data mapping, or the share read IO's deferred
-> set is meant to deal with some other problems?
+> Hello Mike,
+> 
+> On 08/23/13 09:17, Mike Snitzer wrote:
+> >> I do like the idea of a single error target that is hybrid (supports
+> >> both bio-based and request-based) but the DM core would need to be
+> >> updated to support this.
+> >>
+> >> Specifically, we'd need to check if the device (and active table) is
+> >> already bio-based or request-based and select the appropriate type.  If
+> >> it is a new device, default to selecting bio-based.
+> >>
+> >> There are some wrappers and other logic thoughout DM core that will need
+> >> auditing too.
+> > 
+> > Here is a patch that should work for your needs (I tested it to work
+> > with 'dmsetup wipe_table' on both request-based and bio-based devices):
+> 
+> How about moving the default handling in dm_table_set_type() outside of
+> the for-each-target loop, like the modified patch below?
+> 
+> For example, if a table has 2 targets, hybrid and request_based,
+> and live_md_type is DM_TYPE_NONE, the table should be considered as
+> request_based, not inconsistent.
+> Though the end result is same as such a table is rejected by other
+> constraint anyway, I think it's good to keep the semantics clean
+> and error messages consistent.
+> 
+> I.e. for the above case, the error message should be
+> "Request-based dm doesn't support multiple targets yet",
+> not "Inconsistent table: different target types can't be mixed up".
 
-This is a good question.
+Hi,
 
-As you say we could let the read ios continue to run to the old block.
-For large block sizes this could reduce latency of those reads.
+Looks good, I'll fold your changes in and add your Signed-off-by.
 
-I have a suspicion that I originally wrote things this way so we never
-complete a read bio with older data after earlier completing a write
-bio.  But if the bios were submitted concurrently there's no need to
-observe this restriction.
-
-There is one thing you need to consider if you're going to make this
-change.  The old block may well have it's reference count reduced to
-zero as a result of inserting the new mapping.  This in itself is
-fine; we're careful to never free and realloc a block within the same
-transaction.  But it does mean you'd need to start quiescing as part
-of the commit operation.  I worry that introducing quiescing at the
-commit level would impact the latency of ios to all blocks, rather
-than just the one that's having it's sharing broken.
-
-You could restructure the REQ_FUA/REQ_FLUSH code (which triggers the
-commits), such that only they get stalled waiting for the quiesce,
-but that's a chunk more work.
-
-Do some benchmarking, quantify the problem.  Then we can make a call
-on whether the development effort is worth it.
-
-- Joe
+Thanks,
+Mike
