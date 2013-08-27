@@ -1,75 +1,55 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm: Make MIN_IOS, et al, tunable via sysctl.
-Date: Mon, 26 Aug 2013 10:28:49 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1308261012400.12373@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1376070533.26057.244.camel@bobble.lax.corp.google.com>  <alpine.LRH.2.02.1308201712090.8826@file01.intranet.prod.int.rdu2.redhat.com>  <1377034118.24869.48.camel@bobble.lax.corp.google.com>  <alpine.LRH.2.02.1308201745130.8826@file01.intranet.prod.int.rdu2.redhat.com>
-  <1377035833.24869.57.camel@bobble.lax.corp.google.com>  <20130820222439.GA5883@redhat.com> <1377040462.24869.70.camel@bobble.lax.corp.google.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: Status dm-cache
+Date: Tue, 27 Aug 2013 12:33:25 +0200
+Message-ID: <521C8075.7060903@redhat.com>
+References: <521A7B1B.2070500@rolffokkens.nl>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1377040462.24869.70.camel@bobble.lax.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Frank Mayhar <fmayhar@google.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <521A7B1B.2070500@rolffokkens.nl>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Dne 25.8.2013 23:46, Rolf Fokkens napsal(a):
+> Hi!
+>
+> I'm trying to package some tools for "SSD caching" for Fedora 20, see:
+> https://bugzilla.redhat.com/show_bug.cgi?id=998543
+>
+> bcache has some nice bcache-tools, and packaging progresses well:
+> https://bugzilla.redhat.com/show_bug.cgi?id=999690
+>
+> Packaging dm-cache however seems seems hard. I'm not aware of any userland
+> tools, and using dm-cache (without them) seems quite complex. Looks like all
+> kinds of math are needed to make it work, e.g. :
+> http://blog.kylemanna.com/linux/2013/06/30/ssd-caching-using-dmcache-tutorial/.
+> - Is there a (well supported) toolset available that I'm missing?
+> - Is there any kind of autodetect possible, e.g. during boot?
+>
+> Any information on the status of dm-cache is appreciated.
 
 
-On Tue, 20 Aug 2013, Frank Mayhar wrote:
+For direct usage of dm-cache target:
 
-> On Tue, 2013-08-20 at 18:24 -0400, Mike Snitzer wrote:
-> > Mikulas' point is that you cannot reduce the size to smaller than 1.
-> > And aside from rq-based DM, 1 is sufficient to allow for forward
-> > progress even when memory is completely consumed.
-> > 
-> > A patch that simply changes them to 1 but makes the rq-based DM
-> > mempool's size configurable should actually be fine.
-> 
-> So you're saying that I should submit a patch to drop the pool size for
-> BIO_BASED to 1 and make the pool size for REQUEST_BASED configurable?
-> At the moment, in dm.c the former is hardcoded to 16 and the latter is
-> set via MIN_IOS (currently 256).  There's also io_pool, a slab pool,
-> which is also set via MIN_IOS.
+linux/Documentation/device-mapper/cache.txt
+linux/Documentation/device-mapper/cache-policies.txt
 
-In case of request-based io, yes, submit a patch that makes it 
-configurable.
+Userland tool here is  dmsetup.
 
-Regarding bio-based io - there is:
-pools->io_pool = mempool_create_slab_pool(MIN_IOS, cachep); allocating a 
-pool of 256 entries. I think it could be reduced to 16 for bio based 
-devices, like other pools.
+There will be a direct support for dm cache device stacking in lvm2 in the 
+future. It will use nearly the same code as is used for thin provisioning,
+so the code for now thinp is improved to handle recovery more autonomously 
+first before the caching support will be added.
 
-As for reducing 16 further down to 1 - do you have a setup where it really 
-helps? Please describe your system - the amount of memory, the number of 
-dm devices, and how much memory is saved by reducing the mempools from 16 
-to 1.
-
-> How does this relate to the rest of the DM modules?  Mpath also sets
-> MIN_IOS to 256 and creates a slab pool from that, and there are a number
-> of hardcoded constants in dm-io (MIN_IOS and MIN_BIOS), dm-snap
-> (MIN_IOS),
-
-In dm-snap you shouldn't reduce it because it can cause failure.
-
-> dm-crypt (MIN_IOS and MIN_POOL_PAGES), dm-bufio
-> (DM_BUFIO_HASH_BITS, which is allocated via vmalloc per client) and
-
-dm-bufio hash could be reduced - one possibility is to auto-tune it based 
-on device size, another possibility is to allocate shared hash table for 
-all devices.
-
-> dm-verity (DM_VERITY_MEMPOOL_SIZE, which is allocated per device).
-> 
-> For the most part I can't imagine that people will want to change these
-> from their defaults, but when someone does need to change one of these,
-> they need to do so badly and there's currently no good way to do that
-> besides hacking the source and building a new kernel.
-> 
-> By the way, I do appreciate the advice.  I'm just trying to clear up
-> confusion on my part, make sure that our needs are met and, while I'm at
-> it, make things a bit better for those who come after me.
-> -- 
-> Frank Mayhar
-> 310-460-4042
-
-Mikulas
+Zdenek
