@@ -1,15 +1,25 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Strange mapped block count kept by dm-thin driver
-	for thin devices
-Date: Wed, 28 Aug 2013 13:52:13 +0200
-Message-ID: <521DE46D.80609@redhat.com>
-References: <CAKTMprNbFvezaSpAx7c2w2+qBzHp8dmJQLSeKEXfYtjSK5vGiw@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-verity: Verification fails but do not see
+ Input/Output Error on read
+Date: Wed, 28 Aug 2013 12:23:56 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1308281223000.32659@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20847BF06520E04D933186677BF7B724D1F523@VF2WDEXMB1.verifone.com>,
+	<20130808121858.GB31819@agk-dp.fab.redhat.com>
+	<20847BF06520E04D933186677BF7B724D1F55D@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308080849500.15699@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B724D1F58F@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308081256540.20081@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B724D231DC@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308142022070.14155@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B72401AF140E@VF2WDEXMB1.verifone.com>,
+	<alpine.LRH.2.02.1308221028030.25758@file01.intranet.prod.int.rdu2.redhat.com>
+	<20847BF06520E04D933186677BF7B72401AF30DF@VF2WDEXMB1.verifone.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKTMprNbFvezaSpAx7c2w2+qBzHp8dmJQLSeKEXfYtjSK5vGiw@mail.gmail.com>
+In-Reply-To: <20847BF06520E04D933186677BF7B72401AF30DF@VF2WDEXMB1.verifone.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +29,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Teng-Feng Yang <shinrairis@gmail.com>
+To: Chaitra Bhat <Chaitra.Bhat@VERIFONE.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 28.8.2013 05:52, Teng-Feng Yang napsal(a):
-> Hi,
->
-> I have already noticed that the mapped block count of thin devices
-> shown by "dmsetup status" looked unreasonable to me for a couple of
-> times in the last six months.
-> Sometimes the mapped block count was zero, but sometimes it was a
-> large number which was obviously larger than the total available
-> blocks in thin-pool.
-> So I dig into the source code, and I find some codes look suspicious to me.
->
-> In dm_pool_metadata_close() in dm-thin-metadata.c, it will try to
-> commit transaction for the last time before it destroys the
-> pmd(dm_pool_metadata).
-> However, it does not lock the pool_metadata before transaction commit,
-> which I am not really sure if we still need to acquire lock when it
-> reaches here.
-> I know that this function is mainly called when users try to remove
-> pool, but it seems like we can still have some on-the-fly transaction
-> commit when dm-thin module calls this function.
-> Although I would like to test it by myself, this problem occurs in
-> random and I am still trying to find a way to reproduce it
-> systematically.
->
-> Any help would be grateful.
->
+On Wed, 28 Aug 2013, Chaitra Bhat wrote:
 
-I think it's good idea in this case to catch as much info in the moment you 
-think you see a problem.
+> Hi Mikulas,
+> 
+> Thanks for your e-mail. Yes, there was an error in the script which I 
+> have fixed now.
+> 
+> Also, on further analysis found that the behaviour that I was seeing was 
+> probably due to the dd command. When I read the verity device in 
+> multiple of block-size after having corrupted the underlying verity 
+> device, I always got I/O error. But if I tried to read back the specific 
+> error location, I did not get an I/O error.
 
-Take  output from:
+If you can reproduce the misbehavior, send a script that does it.
 
-dmsetup status/info/table
-safe content of your metadata device for further analysis with thin 
-provisioning tools.
+> Another odd behaviour - Create the verity target, corrupt the underlying 
+> device, remove the mapping and establish the mapping again. Then read 
+> the specific corrupted location through dd (not even block size), always 
+> get an I/O error. Seems like some kind of caching being done when the 
+> verity device is mapped - very odd.
+> 
+> Regards,
+> Chaitra
 
-Are you using lvm2 for thin volumes ?
-
-Zdenek
+Mikulas
