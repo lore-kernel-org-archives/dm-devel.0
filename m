@@ -1,15 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/3] dm ioctl: cleanup error handling in
-	table_load
-Date: Wed, 28 Aug 2013 23:21:03 -0400
-Message-ID: <1377746464-2437-2-git-send-email-snitzer@redhat.com>
-References: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 1/3] dm ioctl: increase granularity of type_lock
+	when loading table
+Date: Wed, 28 Aug 2013 23:21:02 -0400
+Message-ID: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,98 +20,63 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Make use of common cleanup code.
+Hold the mapped device's type_lock before calling populate_table() since
+it is where the table's type is determined based on the specified
+targets.  There is no need to allow concurrent table loads to race to
+establish the table's targets or type.
+
+This eliminates the need to grab the lock in dm_table_set_type().
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-ioctl.c | 32 +++++++++++++++-----------------
- 1 file changed, 15 insertions(+), 17 deletions(-)
+ drivers/md/dm-ioctl.c | 6 ++++--
+ drivers/md/dm-table.c | 2 --
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index ec69f23..301e0a5 100644
+index 40e6dce..ec69f23 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -1267,21 +1267,16 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
- 	/* Protect md->type and md->queue against concurrent table loads. */
- 	dm_lock_md_type(md);
- 	r = populate_table(t, param, param_size);
--	if (r) {
--		dm_table_destroy(t);
--		dm_unlock_md_type(md);
--		goto out;
--	}
-+	if (r)
-+		goto out_unlock_md_type;
+@@ -1264,9 +1264,12 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 	if (r)
+ 		goto out;
  
- 	immutable_target_type = dm_get_immutable_target_type(md);
- 	if (immutable_target_type &&
- 	    (immutable_target_type != dm_table_get_immutable_target_type(t))) {
++	/* Protect md->type and md->queue against concurrent table loads. */
++	dm_lock_md_type(md);
+ 	r = populate_table(t, param, param_size);
+ 	if (r) {
+ 		dm_table_destroy(t);
++		dm_unlock_md_type(md);
+ 		goto out;
+ 	}
+ 
+@@ -1276,12 +1279,11 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
  		DMWARN("can't replace immutable target type %s",
  		       immutable_target_type->name);
--		dm_table_destroy(t);
--		dm_unlock_md_type(md);
+ 		dm_table_destroy(t);
++		dm_unlock_md_type(md);
  		r = -EINVAL;
--		goto out;
-+		goto out_unlock_md_type;
+ 		goto out;
  	}
  
+-	/* Protect md->type and md->queue against concurrent table loads. */
+-	dm_lock_md_type(md);
  	if (dm_get_md_type(md) == DM_TYPE_NONE)
-@@ -1289,19 +1284,15 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 		/* Initial table load: acquire type of table. */
  		dm_set_md_type(md, dm_table_get_type(t));
- 	else if (dm_get_md_type(md) != dm_table_get_type(t)) {
- 		DMWARN("can't change device type after initial table load.");
--		dm_table_destroy(t);
--		dm_unlock_md_type(md);
- 		r = -EINVAL;
--		goto out;
-+		goto out_unlock_md_type;
- 	}
- 
- 	/* setup md->queue to reflect md's type (may block) */
- 	r = dm_setup_md_queue(md);
- 	if (r) {
- 		DMWARN("unable to set up device queue for new table.");
--		dm_table_destroy(t);
--		dm_unlock_md_type(md);
--		goto out;
-+		goto out_unlock_md_type;
- 	}
- 	dm_unlock_md_type(md);
- 
-@@ -1311,9 +1302,8 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
- 	if (!hc || hc->md != md) {
- 		DMWARN("device has been removed from the dev hash table.");
- 		up_write(&_hash_lock);
--		dm_table_destroy(t);
- 		r = -ENXIO;
--		goto out;
-+		goto out_destroy_table;
- 	}
- 
- 	if (hc->new_map)
-@@ -1324,7 +1314,6 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
- 	param->flags |= DM_INACTIVE_PRESENT_FLAG;
- 	__dev_status(md, param);
- 
--out:
- 	if (old_map) {
- 		dm_sync_table(md);
- 		dm_table_destroy(old_map);
-@@ -1332,6 +1321,15 @@ out:
- 
- 	dm_put(md);
- 
-+	return 0;
-+
-+out_unlock_md_type:
-+	dm_unlock_md_type(md);
-+out_destroy_table:
-+	dm_table_destroy(t);
-+out:
-+	dm_put(md);
-+
- 	return r;
- }
- 
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index f309477..8f87835 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -888,9 +888,7 @@ static int dm_table_set_type(struct dm_table *t)
+ 		 * Determine the type from the live device.
+ 		 * Default to bio-based if device is new.
+ 		 */
+-		dm_lock_md_type(t->md);
+ 		live_md_type = dm_get_md_type(t->md);
+-		dm_unlock_md_type(t->md);
+ 		if (live_md_type == DM_TYPE_REQUEST_BASED)
+ 			request_based = 1;
+ 		else
 -- 
 1.8.1.4
