@@ -1,60 +1,119 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [RFC] dm-lc: plan to go to staging
-Date: Wed, 28 Aug 2013 19:05:55 -0700
-Message-ID: <20130829020555.GA26206@kroah.com>
-References: <521EA567.1070801@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 2/3] dm ioctl: cleanup error handling in
+	table_load
+Date: Wed, 28 Aug 2013 23:21:03 -0400
+Message-ID: <1377746464-2437-2-git-send-email-snitzer@redhat.com>
+References: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <521EA567.1070801@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: dm-devel@redhat.com, kernelnewbies@kernelnewbies.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 29, 2013 at 10:35:35AM +0900, Akira Hayakawa wrote:
-> Hi,
-> 
-> I am happy to see that dm-lc is picked up by LWN.
-> http://lwn.net/Articles/562938/
-> 
-> Now I think I should consider the next step forward.
-> 
-> 
-> As Joe Thornber said before, what I have to do next are
-> 1. Get some feedback from 3rd party users.
-> 2. Reviewed by Mike Snitzer.
-> As in
-> http://www.redhat.com/archives/dm-devel/2013-July/msg00137.html
-> 
-> To achieve the first goal,
-> I am thinking of going to staging tree
-> for dm-lc to be widely available to people in community.
-> 
-> dm-lc is now managed in Github repo as a kernel module
-> however, getting available in the tree means a lot
-> to get 3rd party users.
-> 
-> Does this plan sound nice?
-> 
-> If so, what is the next step to go to staging?
-> I have a patch against 3.11-rc7 in linux-next locally.
-> Sending the patch to Greg is the next step?
-> And who and what should be included in CC?
+Make use of common cleanup code.
 
-That's fine with me.  For staging drivers, I need a TODO file that lists
-what needs to be done to the code to get it into a mergable state for
-the "real" part of the kernel, and an email address to cc: patches on.
-Also, a MAINTAINERS entry is good as that way the
-scripts/get_maintainer.pl tool will properly pick up your email address.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-ioctl.c | 32 +++++++++++++++-----------------
+ 1 file changed, 15 insertions(+), 17 deletions(-)
 
-You should generate the patch against the linux-next tree, as I have
-lots of new staging drivers in there, ready for 3.12, and if you make a
-patch against 3.11-rc7, odds are it will not apply properly.
-
-If you have any other questions, please let me know.
-
-thanks,
-
-greg k-h
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index ec69f23..301e0a5 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1267,21 +1267,16 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 	/* Protect md->type and md->queue against concurrent table loads. */
+ 	dm_lock_md_type(md);
+ 	r = populate_table(t, param, param_size);
+-	if (r) {
+-		dm_table_destroy(t);
+-		dm_unlock_md_type(md);
+-		goto out;
+-	}
++	if (r)
++		goto out_unlock_md_type;
+ 
+ 	immutable_target_type = dm_get_immutable_target_type(md);
+ 	if (immutable_target_type &&
+ 	    (immutable_target_type != dm_table_get_immutable_target_type(t))) {
+ 		DMWARN("can't replace immutable target type %s",
+ 		       immutable_target_type->name);
+-		dm_table_destroy(t);
+-		dm_unlock_md_type(md);
+ 		r = -EINVAL;
+-		goto out;
++		goto out_unlock_md_type;
+ 	}
+ 
+ 	if (dm_get_md_type(md) == DM_TYPE_NONE)
+@@ -1289,19 +1284,15 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 		dm_set_md_type(md, dm_table_get_type(t));
+ 	else if (dm_get_md_type(md) != dm_table_get_type(t)) {
+ 		DMWARN("can't change device type after initial table load.");
+-		dm_table_destroy(t);
+-		dm_unlock_md_type(md);
+ 		r = -EINVAL;
+-		goto out;
++		goto out_unlock_md_type;
+ 	}
+ 
+ 	/* setup md->queue to reflect md's type (may block) */
+ 	r = dm_setup_md_queue(md);
+ 	if (r) {
+ 		DMWARN("unable to set up device queue for new table.");
+-		dm_table_destroy(t);
+-		dm_unlock_md_type(md);
+-		goto out;
++		goto out_unlock_md_type;
+ 	}
+ 	dm_unlock_md_type(md);
+ 
+@@ -1311,9 +1302,8 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 	if (!hc || hc->md != md) {
+ 		DMWARN("device has been removed from the dev hash table.");
+ 		up_write(&_hash_lock);
+-		dm_table_destroy(t);
+ 		r = -ENXIO;
+-		goto out;
++		goto out_destroy_table;
+ 	}
+ 
+ 	if (hc->new_map)
+@@ -1324,7 +1314,6 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 	param->flags |= DM_INACTIVE_PRESENT_FLAG;
+ 	__dev_status(md, param);
+ 
+-out:
+ 	if (old_map) {
+ 		dm_sync_table(md);
+ 		dm_table_destroy(old_map);
+@@ -1332,6 +1321,15 @@ out:
+ 
+ 	dm_put(md);
+ 
++	return 0;
++
++out_unlock_md_type:
++	dm_unlock_md_type(md);
++out_destroy_table:
++	dm_table_destroy(t);
++out:
++	dm_put(md);
++
+ 	return r;
+ }
+ 
+-- 
+1.8.1.4
