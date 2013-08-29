@@ -1,18 +1,14 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 3/3] dm: allow error target to replace
-	immutable target
-Date: Thu, 29 Aug 2013 13:07:57 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1308291306200.14270@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
-	<1377746464-2437-3-git-send-email-snitzer@redhat.com>
-	<alpine.LRH.2.02.1308291036390.20142@file01.intranet.prod.int.rdu2.redhat.com>
-	<20130829144433.GA12858@redhat.com>
+Subject: Re: dm ioctl: prevent rename to empty name or uuid
+Date: Thu, 29 Aug 2013 13:48:57 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1308291348450.14270@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20130829153745.GA12181@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130829144433.GA12858@redhat.com>
+In-Reply-To: <20130829153745.GA12181@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,33 +18,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
 
+On Thu, 29 Aug 2013, Alasdair G Kergon wrote:
 
-On Thu, 29 Aug 2013, Mike Snitzer wrote:
-
-> On Thu, Aug 29 2013 at 10:37am -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> Try something like this?
 > 
-> > As I said - I think it would be better to remove the immutable flag than 
-> > to create more flags to bypass it.
+> From: Alasdair G Kergon <agk@redhat.com>
 > 
-> Immutable was introduced to prevent dangerous scenarios that weren't
-> accounted for in original design, etc.  It solved your crash when you
-> rep;aced a thin-pool with an empty table.
+> A device-mapper device must always have a name consisting of a non-empty
+> string.  If the device also has a uuid, this similarly must not be an
+> empty string.
 > 
-> immutable is staying for now.  And as it turns out allowing error target
-> to override an immutable target was always held to be a logical/possible
-> future relaxation of the immutable constraint.
+> The DM_DEV_CREATE_CMD ioctl enforces these rules when the device is
+> created, but this patch is needed to enforce them when DM_DEV_RENAME_CMD
+> is used to change the name or uuid.
 > 
-> Mike
-
-If you can replace a thin-pool target with an error target - so why can't 
-you replace a thin-pool target with linear (or any other) target?
-
-I don't see why the error target should be special.
-
-Mikulas
+> Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>                                                                                                                                                  
+> Cc: Mikulas Patocka <mpatocka@redhat.com>   
+> Reported-by: Zdenek Kabelac <zkabelac@redhat.com>    
+> 
+> ---
+>  drivers/md/dm-ioctl.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> Index: linux/drivers/md/dm-ioctl.c
+> ===================================================================
+> --- linux.orig/drivers/md/dm-ioctl.c
+> +++ linux/drivers/md/dm-ioctl.c
+> @@ -877,7 +877,7 @@ static int dev_rename(struct dm_ioctl *p
+>  	unsigned change_uuid = (param->flags & DM_UUID_FLAG) ? 1 : 0;
+>  
+>  	if (new_data < param->data ||
+> -	    invalid_str(new_data, (void *) param + param_size) ||
+> +	    invalid_str(new_data, (void *) param + param_size) || !*new_data ||
+>  	    strlen(new_data) > (change_uuid ? DM_UUID_LEN - 1 : DM_NAME_LEN - 1)) {
+>  		DMWARN("Invalid new mapped device name or uuid string supplied.");
+>  		return -EINVAL;
+> 
