@@ -1,13 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/3] dm ioctl: increase granularity of type_lock
-	when loading table
-Date: Wed, 28 Aug 2013 23:21:02 -0400
-Message-ID: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/3] dm: allow error target to replace immutable
+	target
+Date: Wed, 28 Aug 2013 23:21:04 -0400
+Message-ID: <1377746464-2437-3-git-send-email-snitzer@redhat.com>
+References: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +22,121 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hold the mapped device's type_lock before calling populate_table() since
-it is where the table's type is determined based on the specified
-targets.  There is no need to allow concurrent table loads to race to
-establish the table's targets or type.
+Introduce DM_TARGET_ALWAYS_RETURNS_IO_ERROR to indicate that a target
+always returns IO error.  Because the target will error all IO it can
+safely replace any target (including an immutable target) as along as
+the associated mapped device is not open.  If an error target replaces
+an immutable target it is elevated to the mapped device's immutable
+target type.
 
-This eliminates the need to grab the lock in dm_table_set_type().
+The "error" target can now replace an immutable target like the thin
+provisioning pool ("thin-pool") target.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-ioctl.c | 6 ++++--
- drivers/md/dm-table.c | 2 --
- 2 files changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/dm-ioctl.c         | 27 ++++++++++++++++++++++++++-
+ drivers/md/dm-table.c         |  9 ++++++++-
+ drivers/md/dm-target.c        |  1 +
+ include/linux/device-mapper.h | 10 ++++++++++
+ 4 files changed, 45 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 40e6dce..ec69f23 100644
+index 301e0a5..08186cb 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -1264,9 +1264,12 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
- 	if (r)
- 		goto out;
+@@ -1248,6 +1248,30 @@ static int populate_table(struct dm_table *table,
+ 	return dm_table_complete(table);
+ }
  
-+	/* Protect md->type and md->queue against concurrent table loads. */
-+	dm_lock_md_type(md);
- 	r = populate_table(t, param, param_size);
- 	if (r) {
- 		dm_table_destroy(t);
-+		dm_unlock_md_type(md);
- 		goto out;
- 	}
++static bool immutable_target_type_is_valid(struct mapped_device *md,
++					   struct target_type *immutable_tt,
++					   struct target_type *table_immutable_tt)
++{
++	if (immutable_tt == table_immutable_tt)
++		return true;
++
++	if (!table_immutable_tt)
++		return false;
++
++	if (dm_target_always_returns_io_error(table_immutable_tt)) {
++		/*
++		 * Only allow a transition to an error target_type if
++		 * the mapped_device is no longer open.
++		 */
++		if (!dm_open_count(md))
++			return true;
++
++		DMERR("can't change target type to error while device is in use");
++	}
++
++	return false;
++}
++
+ static int table_load(struct dm_ioctl *param, size_t param_size)
+ {
+ 	int r;
+@@ -1272,7 +1296,8 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
  
-@@ -1276,12 +1279,11 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 	immutable_target_type = dm_get_immutable_target_type(md);
+ 	if (immutable_target_type &&
+-	    (immutable_target_type != dm_table_get_immutable_target_type(t))) {
++	    !immutable_target_type_is_valid(md, immutable_target_type,
++					    dm_table_get_immutable_target_type(t))) {
  		DMWARN("can't replace immutable target type %s",
  		       immutable_target_type->name);
- 		dm_table_destroy(t);
-+		dm_unlock_md_type(md);
  		r = -EINVAL;
- 		goto out;
- 	}
- 
--	/* Protect md->type and md->queue against concurrent table loads. */
--	dm_lock_md_type(md);
- 	if (dm_get_md_type(md) == DM_TYPE_NONE)
- 		/* Initial table load: acquire type of table. */
- 		dm_set_md_type(md, dm_table_get_type(t));
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index f309477..8f87835 100644
+index 8f87835..70d3067 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
-@@ -888,9 +888,7 @@ static int dm_table_set_type(struct dm_table *t)
- 		 * Determine the type from the live device.
- 		 * Default to bio-based if device is new.
- 		 */
--		dm_lock_md_type(t->md);
- 		live_md_type = dm_get_md_type(t->md);
--		dm_unlock_md_type(t->md);
- 		if (live_md_type == DM_TYPE_REQUEST_BASED)
- 			request_based = 1;
- 		else
+@@ -745,7 +745,14 @@ int dm_table_add_target(struct dm_table *t, const char *type,
+ 		return -EINVAL;
+ 	}
+ 
+-	if (t->immutable_target_type) {
++	if (dm_target_always_returns_io_error(tgt->type) &&
++	    dm_get_immutable_target_type(t->md)) {
++		/*
++		 * This error target must be upgraded to immutable because
++		 * the mapped device is already using an immutable target.
++		 */
++		t->immutable_target_type = tgt->type;
++	} else if (t->immutable_target_type) {
+ 		if (t->immutable_target_type != tgt->type) {
+ 			DMERR("%s: immutable target type %s cannot be mixed with other target types",
+ 			      dm_device_name(t->md), t->immutable_target_type->name);
+diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+index 242e3ce..3b9a988 100644
+--- a/drivers/md/dm-target.c
++++ b/drivers/md/dm-target.c
+@@ -139,6 +139,7 @@ static int io_err_map_rq(struct dm_target *ti, struct request *clone,
+ 
+ static struct target_type error_target = {
+ 	.name = "error",
++	.features = DM_TARGET_ALWAYS_RETURNS_IO_ERROR,
+ 	.version = {1, 2, 0},
+ 	.ctr  = io_err_ctr,
+ 	.dtr  = io_err_dtr,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 653073d..2451e6b 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -192,6 +192,16 @@ struct target_type {
+ #define dm_target_is_immutable(type)	((type)->features & DM_TARGET_IMMUTABLE)
+ 
+ /*
++ * Indicates that a target always returns IO error.  Because the target will error
++ * all IO it can safely replace any target (including an immutable target) as long
++ * as the associated mapped device is not open.  If an error target replaces an
++ * immutable target it is elevated to the mapped device's immutable target type.
++ */
++#define DM_TARGET_ALWAYS_RETURNS_IO_ERROR	0x00000008
++#define dm_target_always_returns_io_error(type) \
++		((type)->features & DM_TARGET_ALWAYS_RETURNS_IO_ERROR)
++
++/*
+  * Some targets need to be sent the same WRITE bio severals times so
+  * that they can send copies of it to different devices.  This function
+  * examines any supplied bio and returns the number of copies of it the
 -- 
 1.8.1.4
