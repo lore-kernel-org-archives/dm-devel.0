@@ -1,78 +1,143 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 3/3] dm: allow error target to replace
-	immutable target
-Date: Thu, 29 Aug 2013 15:09:40 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1308291505490.28570@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1377746464-2437-1-git-send-email-snitzer@redhat.com>
-	<1377746464-2437-3-git-send-email-snitzer@redhat.com>
-	<alpine.LRH.2.02.1308291036390.20142@file01.intranet.prod.int.rdu2.redhat.com>
-	<20130829144433.GA12858@redhat.com>
-	<alpine.LRH.2.02.1308291306200.14270@file01.intranet.prod.int.rdu2.redhat.com>
-	<20130829180424.GB13786@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [dm-devel] [RFC] dm-lc: plan to go to staging
+Date: Fri, 30 Aug 2013 21:33:29 +0900
+Message-ID: <52209119.3070907@gmail.com>
+References: <521EA567.1070801@gmail.com> <20130829020555.GA26206@kroah.com> <20130829033023.GH4872@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1308291043410.20142@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130829180424.GB13786@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1308291043410.20142@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: mpatocka@redhat.com, agk@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, kernelnewbies@kernelnewbies.org
 List-Id: dm-devel.ids
 
+Thank you for your constructive comments,
 
+I want to first settle an agreement on the new name for current dm-lc
+according to Alasdair's comment:
+>> 2) Agree a new and meaningful target name with us so you don't have to
+>> change it later.  "lc" means nothing, I'm afraid.
 
-On Thu, 29 Aug 2013, Mike Snitzer wrote:
+After we agree on this issue, I will start tackling on the design issues.
+Choosing this issue first is because it may change the whole codebase
+and rename the Github repo which can be one of the elements in MAINTAINERS file.
 
-> On Thu, Aug 29 2013 at  1:07pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+Name is very important.
+
+First of all, let me make a tiny objection:
+1) The name dm-lc does means. lc is the initials from Log-structured Caching.
+2) LC is also the name of my a favorite anime character from "God only knows".
+   I did want to use her name for my creation.
+
+But,
+I can agree on Alasdair's opinion that dm-lc means nothing,
+for the potential future users.
+Abbreviation of some technical word to a software name looks nice
+but the unfortunate is that LC is not widely common like RAID or LFS.
+
+I have three candidates on my mind.
+I am thinking of removing the dm- prefix as bcache and enhanceio do.
+
+The Points are:
+1) The name should not be too long.
+   A name explaining too much about the software is noisy.
+2) Making clear the characteristics and the difference from other targets.
+   The characteristics to note are:
+   a) It writes in-coming writes in log-structured manner.
+   b) It is extremely fast in write.
+   c) It is caching software.
+
+Candidates:
+1) logcache
+Not too long but explaining enough
+but looks little bit dull to me.
+Futhermore, there still is dm-log
+and I feel like duplicating a little bit.
+
+2) lscache
+lscache sounds cool to me.
+But the problem is that there is a preceding one with the same name
+as to caching web-server workload.
+Unique name makes it easy to search for a web documents.
+
+3) writeboost or wboost
+Concentrating on the characteristic b)
+but doesn't mention cache.
+
+Up to this point,
+which do you think the best for the new name?
+or other candidate?
+
+I suppose logcache is an acceptable compromise.
+
+Thanks for reading,
+Akira
+
+On 8/29/13 11:45 PM, Mikulas Patocka wrote:
+> Another idea:
 > 
-> > 
-> > 
-> > On Thu, 29 Aug 2013, Mike Snitzer wrote:
-> > 
-> > > On Thu, Aug 29 2013 at 10:37am -0400,
-> > > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > > 
-> > > > As I said - I think it would be better to remove the immutable flag than 
-> > > > to create more flags to bypass it.
-> > > 
-> > > Immutable was introduced to prevent dangerous scenarios that weren't
-> > > accounted for in original design, etc.  It solved your crash when you
-> > > rep;aced a thin-pool with an empty table.
-> > > 
-> > > immutable is staying for now.  And as it turns out allowing error target
-> > > to override an immutable target was always held to be a logical/possible
-> > > future relaxation of the immutable constraint.
-> > > 
-> > > Mike
-> > 
-> > If you can replace a thin-pool target with an error target - so why can't 
-> > you replace a thin-pool target with linear (or any other) target?
-> > 
-> > I don't see why the error target should be special.
+> Make the interface of dm-lc (the arguments to constructor, messages and 
+> the status line) the same as dm-cache, so that they can be driven by the 
+> same userspace code.
 > 
-> error target gives us the ability to disconnect the thin-pool from the
-> underlying devices.  It is practical for testing, etc.
+> Mikulas
 > 
-> What use-case are you saying will be valid to switch a thin-pool target
-> to linear?
-
-There is no use case. The user can do many stupid useless things with 
-dmsetup and it is not the kernel's job to prevent him from doing them.
-
-What I am trying to say is that - adding an immutable flag and then adding 
-another flag that bypasses the immutable flag is just pointless 
-complication in the code. If you removed the immutable flag and then 
-removed the DM_TARGET_ALWAYS_RETURNS_IO_ERROR flag, you end up with 
-simpler code.
-
-Mikulas
+> 
+> On Thu, 29 Aug 2013, Alasdair G Kergon wrote:
+> 
+>> On Wed, Aug 28, 2013 at 07:05:55PM -0700, Greg KH wrote:
+>>> For staging drivers, I need a TODO file that lists
+>>> what needs to be done to the code to get it into a mergable state for
+>>> the "real" part of the kernel,
+>>
+>> Two simple requirements before putting your proof-of-concept into staging
+>> if you want to work that way:
+>>
+>> 1) Drop the major version number to 0.  Version 1 is reserved for
+>> supported modules.
+>>
+>> 2) Agree a new and meaningful target name with us so you don't have to
+>> change it later.  "lc" means nothing, I'm afraid.
+>>
+>> Then in general terms, you should continue to compare your device-mapper
+>> target with the existing targets and where there are differences, either
+>> change your target to be like something that already exists, or be ready
+>> to explain why that can't or shouldn't be done.
+>>
+>> In particular, the interface and architecture will need substantial
+>> changes and working these out should be your highest priority.
+>>
+>> For example, you write:
+>>
+>>   Be careful, you MUST create all the LVs as the destinations of
+>>   the dirty blocks on the cache device before this operation.  Otherwise,
+>>   the kernel may crash.
+>>
+>> I read a statement like that as an indication of an interface or
+>> architectural problem.  The device-mapper approach is to 'design out'
+>> problems, rather than relying on users not doing bad things.
+>> Study the existing interfaces used by other targets to understand
+>> some approaches that proved successful, then decide which ones
+>> come closest to your needs.
+>>
+>> (Your code also needs many more comments inline to explain what it does
+>> and how it works.)
+>>
+>> The documentation file will eventually need rewriting to follow the same
+>> format as the other targets recently added to the kernel.  We document
+>> the kernel interface rather than any particular userspace tools, which
+>> just have the status of convenient examples.
+>>
+>> Another little thing I noticed: look into using something like
+>> __dm_bless_for_disk() for your metadata and clearly segregate your
+>> on-disk structures and document the layout.
+>>
+>> Alasdair
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
