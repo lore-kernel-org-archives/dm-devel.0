@@ -1,55 +1,68 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
+From: Valdis.Kletnieks@vt.edu
 Subject: Re: [dm-devel] [RFC] dm-lc: plan to go to staging
-Date: Fri, 30 Aug 2013 23:41:16 +0900
-Message-ID: <5220AF0C.4020106@gmail.com>
-References: <521EA567.1070801@gmail.com> <20130829020555.GA26206@kroah.com> <20130829033023.GH4872@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1308291043410.20142@file01.intranet.prod.int.rdu2.redhat.com> <52209119.3070907@gmail.com> <20130830125014.GD12181@agk-dp.fab.redhat.com>
+Date: Fri, 30 Aug 2013 10:47:21 -0400
+Message-ID: <50810.1377874041@turing-police.cc.vt.edu>
+References: <521EA567.1070801@gmail.com> <20130829020555.GA26206@kroah.com> <20130829033023.GH4872@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1308291043410.20142@file01.intranet.prod.int.rdu2.redhat.com>
+            <52209119.3070907@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: multipart/signed; boundary="==_Exmh_1377874041_2619P";
+	 micalg=pgp-sha1; protocol="application/pgp-signature"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130830125014.GD12181@agk-dp.fab.redhat.com>
+In-Reply-To: Your message of "Fri, 30 Aug 2013 21:33:29 +0900."
+             <52209119.3070907@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: gregkh@linuxfoundation.org, mpatocka@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com, kernelnewbies@kernelnewbies.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, kernelnewbies@kernelnewbies.org
 List-Id: dm-devel.ids
 
-> (Within the codebase, the filename and module name would still need the
-> prefix: we use this for auto-module loading, function name/error message
-> scoping etc.)
+--==_Exmh_1377874041_2619P
+Content-Type: text/plain; charset=us-ascii
 
->> 3) writeboost or wboost
->> Concentrating on the characteristic b)
->> but doesn't mention cache.
-> 
-> I quite like that option.
+On Fri, 30 Aug 2013 21:33:29 +0900, Akira Hayakawa said:
 
-OK,
-I would like to rename from dm-lc to dm-writeboost.
-Do you agree?
+> Candidates:
+> 1) logcache
+> Not too long but explaining enough
+> but looks little bit dull to me.
 
-Akira
+Descriptive but dull naming is a much underrated quality in software packages.
 
-On 8/30/13 9:50 PM, Alasdair G Kergon wrote:
-> On Fri, Aug 30, 2013 at 09:33:29PM +0900, Akira Hayakawa wrote:
->> I have three candidates on my mind.
->> I am thinking of removing the dm- prefix as bcache and enhanceio do.
->  
-> Yes, that's fine for the general way of referring to this.
-> (Within the codebase, the filename and module name would still need the
-> prefix: we use this for auto-module loading, function name/error message
-> scoping etc.)
-> 
->>    a) It writes in-coming writes in log-structured manner.
->>    b) It is extremely fast in write.
->>    c) It is caching software.
-> 
-> Another candidate: 'lcache' - contrast with 'bcache
->  
->> 3) writeboost or wboost
->> Concentrating on the characteristic b)
->> but doesn't mention cache.
-> 
-> I quite like that option.
-> 
-> Alasdair
-> 
+Consider the package HarfBuzz.
+
+As my daughter put it, "Sounds like a bad coffee name".
+
+rpm -qi harfbuzz says:
+Description :
+HarfBuzz is an implementation of the OpenType Layout engine.
+
+(And don't get me started on the people who name packages enca, fros, serd,
+yajl, or yaml.  We aren't using ASR-33's anymore, brevity isn't as crucial :)
+
+dm-logcache works just fine for me as a name for this.  Or dm-lcache.
+
+
+
+--==_Exmh_1377874041_2619P
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.14 (GNU/Linux)
+Comment: Exmh version 2.5 07/13/2001
+
+iQIVAwUBUiCweQdmEQWDXROgAQKOJw/+P1nyFNS7Ky5KV+J8glshuUtyp5z48ZDZ
+gJ+bSe3s78ve91qyBXfck9609faVxs9WmgtfHzhZxHYRiUVlOfnywIiOVwB6igvT
+BwzZOFISOMofXVdTOK4vHU+lKOdw3pUdWrhES4keG9j5Gh6t2uAGI1wPQjOmFmng
+BWaR54OVyn+RlRoRf7AD1BePKLMhfYYEdV8F89TUoNazsIk9JjnOPa7pXe9CHis/
+XK+GOl6yuEjBTxAAyQ45tygorVvtWQuCtxHl2drc91JinV0tZGkoeGXUcyZHl/C2
+wH8iI1ncq7REdxlDK76COzab6NoKG67X9DhbVSruT7iijef1ghcBvl5uK6n1aesy
+8IoSGIKwLyLRnH2BJj2KpkvIy5fD+GKr77sWaYPvmDKazjYgyh2aEvVEYzPZvh8M
+iFhjCPb6xW6IH2+akaiJMSrh2R5P2wLCKeqj4VsCPtxJ6Z99YweM9HnS8K1G2Wrg
+LtY04ZK4Puu43mbnSnjtfm32tCNFylr3BnJ+mU00nLNwSkkrdK64qCfRCb+n+5aD
+L3U/nhDZjw0GoG88LpsjAbTb8IZ/araGJkOsJztv5rY7gqw/1rMJA0RTNalkHYKG
+NvZZ+gi4JdUUtwWPKr83qHLwsxRygxHjrdMzQEU/fu4VZbLzneVFuLhfkkrgxJtW
+oynvf+2S8nw=
+=hp9l
+-----END PGP SIGNATURE-----
+
+--==_Exmh_1377874041_2619P--
