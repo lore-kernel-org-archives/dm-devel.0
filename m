@@ -1,68 +1,102 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: [dm-devel] [RFC] dm-lc: plan to go to staging
-Date: Fri, 30 Aug 2013 10:47:21 -0400
-Message-ID: <50810.1377874041@turing-police.cc.vt.edu>
-References: <521EA567.1070801@gmail.com> <20130829020555.GA26206@kroah.com> <20130829033023.GH4872@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1308291043410.20142@file01.intranet.prod.int.rdu2.redhat.com>
-            <52209119.3070907@gmail.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [dm-devel] [RFC] dm-writeboost: plan to go to staging
+Date: Sat, 31 Aug 2013 23:25:36 +0900
+Message-ID: <5221FCE0.7020606@gmail.com>
+References: <521EA567.1070801@gmail.com> <20130829020555.GA26206@kroah.com> <20130829033023.GH4872@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1308291043410.20142@file01.intranet.prod.int.rdu2.redhat.com>            <52209119.3070907@gmail.com> <50810.1377874041@turing-police.cc.vt.edu>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="==_Exmh_1377874041_2619P";
-	 micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: Your message of "Fri, 30 Aug 2013 21:33:29 +0900."
-             <52209119.3070907@gmail.com>
+In-Reply-To: <50810.1377874041@turing-police.cc.vt.edu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, kernelnewbies@kernelnewbies.org
+To: dm-devel@redhat.com
+Cc: Valdis.Kletnieks@vt.edu, mpatocka@redhat.com, agk@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, kernelnewbies@kernelnewbies.org
 List-Id: dm-devel.ids
 
---==_Exmh_1377874041_2619P
-Content-Type: text/plain; charset=us-ascii
+Hi.
 
-On Fri, 30 Aug 2013 21:33:29 +0900, Akira Hayakawa said:
+Progress report for staging dm-writeboost.
 
-> Candidates:
-> 1) logcache
-> Not too long but explaining enough
-> but looks little bit dull to me.
+(1) Renaming to dm-writeboost
+Thanks for comments on renaming.
 
-Descriptive but dull naming is a much underrated quality in software packages.
+By a simple democratic,
+dm-lc will be renamed to dm-writeboost.
+I am really happy with the new name.
 
-Consider the package HarfBuzz.
+(2) Idea for smelling limitation on the kind of backing store
+Now I am tackling on the design issues.
+As Alasdair pointed out
+the statement below from my document really smells
+and seems to be the first priority at this point.
 
-As my daughter put it, "Sounds like a bad coffee name".
+  Be careful, you MUST create all the LVs as the destinations of
+  the dirty blocks on the cache device before this operation.  Otherwise,
+  the kernel may crash.
 
-rpm -qi harfbuzz says:
-Description :
-HarfBuzz is an implementation of the OpenType Layout engine.
+Aside from the two small requirements by Alasdair,
+I may have to shoot out this problem before sending patch to staging tree.
+> Two simple requirements before putting your proof-of-concept into staging
+> if you want to work that way:
+> 
+> 1) Drop the major version number to 0.  Version 1 is reserved for
+> supported modules.
+> 
+> 2) Agree a new and meaningful target name with us so you don't have to
+> change it later.  "lc" means nothing, I'm afraid.
 
-(And don't get me started on the people who name packages enca, fros, serd,
-yajl, or yaml.  We aren't using ASR-33's anymore, brevity isn't as crucial :)
+My investigation today revealed that this statement is too pessimistic.
+The truth is only that
+the backing store should not be some partition out of a disk,
+say /dev/sdd1 out of /dev/sdd.
 
-dm-logcache works just fine for me as a name for this.  Or dm-lcache.
+With the partition number,
+my userland script works badly in attaching a device to a cache.
+It failed to get the correct device name from sysfs.
 
+I am thinking of addressing this problem by
+adding new sysfs member to show device number(major:minor) of the backing store
+which is likely to maintain backward-compatibility and
+doing some modification on the Python scripts.
 
+That's very easy.
+I will do this before sending a patch for staging
+aside said two requirements.
 
---==_Exmh_1377874041_2619P
-Content-Type: application/pgp-signature
+(3) Draft for TODO and MAINTAINERS files
+These are the current drafts for TODO and MAINTAINERS files.
+Please let me know if you find more to write or simple mistakes.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.14 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
+(3-1) TODO file
+TODO:
+    - Get feedback from 3rd party users.
+    - Reviewed by Mike Snitzer.
+    - Audit userspace interfaces to make sure they are sane.
+      Should use the same approach that is proven successful.
+    - Fix document.
+      Should document the kernel interfaces
+      rather than particular userspace tools.
+    - Add more comments inline
+      to explain what it does and how it works.
 
-iQIVAwUBUiCweQdmEQWDXROgAQKOJw/+P1nyFNS7Ky5KV+J8glshuUtyp5z48ZDZ
-gJ+bSe3s78ve91qyBXfck9609faVxs9WmgtfHzhZxHYRiUVlOfnywIiOVwB6igvT
-BwzZOFISOMofXVdTOK4vHU+lKOdw3pUdWrhES4keG9j5Gh6t2uAGI1wPQjOmFmng
-BWaR54OVyn+RlRoRf7AD1BePKLMhfYYEdV8F89TUoNazsIk9JjnOPa7pXe9CHis/
-XK+GOl6yuEjBTxAAyQ45tygorVvtWQuCtxHl2drc91JinV0tZGkoeGXUcyZHl/C2
-wH8iI1ncq7REdxlDK76COzab6NoKG67X9DhbVSruT7iijef1ghcBvl5uK6n1aesy
-8IoSGIKwLyLRnH2BJj2KpkvIy5fD+GKr77sWaYPvmDKazjYgyh2aEvVEYzPZvh8M
-iFhjCPb6xW6IH2+akaiJMSrh2R5P2wLCKeqj4VsCPtxJ6Z99YweM9HnS8K1G2Wrg
-LtY04ZK4Puu43mbnSnjtfm32tCNFylr3BnJ+mU00nLNwSkkrdK64qCfRCb+n+5aD
-L3U/nhDZjw0GoG88LpsjAbTb8IZ/araGJkOsJztv5rY7gqw/1rMJA0RTNalkHYKG
-NvZZ+gi4JdUUtwWPKr83qHLwsxRygxHjrdMzQEU/fu4VZbLzneVFuLhfkkrgxJtW
-oynvf+2S8nw=
-=hp9l
------END PGP SIGNATURE-----
+Please send patches to Greg Kroah-Hartman <gregkh@linuxfoundation.org> and Cc:
+Akira Hayakawa <ruby.wktk@gmail.com>
 
---==_Exmh_1377874041_2619P--
+(3-2) part of MAINTAINERS file
+M:      Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+M:      Akira Hayakawa <ruby.wktk@gmail.com>
+S:      Maintained
+L:      dm-devel@redhat.com
+W:      https://github.com/akiradeveloper/dm-writeboost.git
+F:      drivers/staging/dm-writeboost.git
+
+(4) Next steps
+- Fixed all source codes and documents as they are of
+  dm-writeboost but not dm-lc.
+- Github repo will be renamed.
+- Complete the task said at (2).
+- Generating a patch against linux-next
+  and send it to Greg.
+
+Thanks for your reading,
+Akira
