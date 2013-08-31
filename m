@@ -1,41 +1,73 @@
 From: Akira Hayakawa <ruby.wktk@gmail.com>
 Subject: Re: [dm-devel] [RFC] dm-writeboost: plan to go to staging
-Date: Sat, 31 Aug 2013 23:25:36 +0900
-Message-ID: <5221FCE0.7020606@gmail.com>
-References: <521EA567.1070801@gmail.com> <20130829020555.GA26206@kroah.com> <20130829033023.GH4872@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1308291043410.20142@file01.intranet.prod.int.rdu2.redhat.com>            <52209119.3070907@gmail.com> <50810.1377874041@turing-police.cc.vt.edu>
+Date: Sat, 31 Aug 2013 23:32:55 +0900
+Message-ID: <5221FE97.1050504@gmail.com>
+References: <521EA567.1070801@gmail.com> <20130829020555.GA26206@kroah.com> <20130829033023.GH4872@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <50810.1377874041@turing-police.cc.vt.edu>
+In-Reply-To: <20130829033023.GH4872@agk-dp.fab.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: Valdis.Kletnieks@vt.edu, mpatocka@redhat.com, agk@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, kernelnewbies@kernelnewbies.org
+To: agk@redhat.com
+Cc: dm-devel@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, kernelnewbies@kernelnewbies.org
 List-Id: dm-devel.ids
 
-Hi.
+Thanks, Alasdair.
 
-Progress report for staging dm-writeboost.
+I will reply to some of your comments
+that is not answered up to now.
 
-(1) Renaming to dm-writeboost
-Thanks for comments on renaming.
+> The documentation file will eventually need rewriting to follow the same
+> format as the other targets recently added to the kernel.  We document
+> the kernel interface rather than any particular userspace tools, which
+> just have the status of convenient examples.
+dm-writeboost can be used by kicking kernel interfaces but
+it is not recommended.
+My userspace tools take care of all the
+implications in using the kernel interfaces.
+The fact dm-writeboost supports shared-caching and
+write-back caching with auto-modulated migration
+puts the interfaces and implementations under some constraints.
+That's simply a tradeoff.
 
-By a simple democratic,
-dm-lc will be renamed to dm-writeboost.
-I am really happy with the new name.
+OK, I will document the kernel interfaces
+and also mention the userspace tools.
 
-(2) Idea for smelling limitation on the kind of backing store
-Now I am tackling on the design issues.
-As Alasdair pointed out
-the statement below from my document really smells
-and seems to be the first priority at this point.
+> (Your code also needs many more comments inline to explain what it does
+> and how it works.)
+Comments are substantially noise is my philosophy.
+I will add comments with given feedback clearly mentioning
+what is clear and what is not clear about the source code.
+Even in that case,
+I'd better polish the code rather than write comments.
 
-  Be careful, you MUST create all the LVs as the destinations of
-  the dirty blocks on the cache device before this operation.  Otherwise,
-  the kernel may crash.
+> Another little thing I noticed: look into using something like
+> __dm_bless_for_disk() for your metadata and clearly segregate your
+> on-disk structures and document the layout.
+I couldn't understand what is __dm_bless_for_disk() for.
+What does the word "bless" mean in this context?
 
-Aside from the two small requirements by Alasdair,
-I may have to shoot out this problem before sending patch to staging tree.
+By the way,
+dm-cache and dm-writeboost are definitely different in a way that
+dm-cache has an another disk for metadata while dm-writeboost doesn't.
+dm-writeboost packs metadata and data within a log and
+submit it to the cache device like log-structured filesystem.
+
+So, the annotation checks can not be appropriated
+to apply to dm-writeboost.
+
+And what about moving these macros to
+include/linux/device-mapper.h?
+
+Akira
+
+On 8/29/13 12:30 PM, Alasdair G Kergon wrote:
+> On Wed, Aug 28, 2013 at 07:05:55PM -0700, Greg KH wrote:
+>> For staging drivers, I need a TODO file that lists
+>> what needs to be done to the code to get it into a mergable state for
+>> the "real" part of the kernel,
+> 
 > Two simple requirements before putting your proof-of-concept into staging
 > if you want to work that way:
 > 
@@ -44,59 +76,39 @@ I may have to shoot out this problem before sending patch to staging tree.
 > 
 > 2) Agree a new and meaningful target name with us so you don't have to
 > change it later.  "lc" means nothing, I'm afraid.
-
-My investigation today revealed that this statement is too pessimistic.
-The truth is only that
-the backing store should not be some partition out of a disk,
-say /dev/sdd1 out of /dev/sdd.
-
-With the partition number,
-my userland script works badly in attaching a device to a cache.
-It failed to get the correct device name from sysfs.
-
-I am thinking of addressing this problem by
-adding new sysfs member to show device number(major:minor) of the backing store
-which is likely to maintain backward-compatibility and
-doing some modification on the Python scripts.
-
-That's very easy.
-I will do this before sending a patch for staging
-aside said two requirements.
-
-(3) Draft for TODO and MAINTAINERS files
-These are the current drafts for TODO and MAINTAINERS files.
-Please let me know if you find more to write or simple mistakes.
-
-(3-1) TODO file
-TODO:
-    - Get feedback from 3rd party users.
-    - Reviewed by Mike Snitzer.
-    - Audit userspace interfaces to make sure they are sane.
-      Should use the same approach that is proven successful.
-    - Fix document.
-      Should document the kernel interfaces
-      rather than particular userspace tools.
-    - Add more comments inline
-      to explain what it does and how it works.
-
-Please send patches to Greg Kroah-Hartman <gregkh@linuxfoundation.org> and Cc:
-Akira Hayakawa <ruby.wktk@gmail.com>
-
-(3-2) part of MAINTAINERS file
-M:      Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-M:      Akira Hayakawa <ruby.wktk@gmail.com>
-S:      Maintained
-L:      dm-devel@redhat.com
-W:      https://github.com/akiradeveloper/dm-writeboost.git
-F:      drivers/staging/dm-writeboost.git
-
-(4) Next steps
-- Fixed all source codes and documents as they are of
-  dm-writeboost but not dm-lc.
-- Github repo will be renamed.
-- Complete the task said at (2).
-- Generating a patch against linux-next
-  and send it to Greg.
-
-Thanks for your reading,
-Akira
+> 
+> Then in general terms, you should continue to compare your device-mapper
+> target with the existing targets and where there are differences, either
+> change your target to be like something that already exists, or be ready
+> to explain why that can't or shouldn't be done.
+> 
+> In particular, the interface and architecture will need substantial
+> changes and working these out should be your highest priority.
+> 
+> For example, you write:
+> 
+>   Be careful, you MUST create all the LVs as the destinations of
+>   the dirty blocks on the cache device before this operation.  Otherwise,
+>   the kernel may crash.
+> 
+> I read a statement like that as an indication of an interface or
+> architectural problem.  The device-mapper approach is to 'design out'
+> problems, rather than relying on users not doing bad things.
+> Study the existing interfaces used by other targets to understand
+> some approaches that proved successful, then decide which ones
+> come closest to your needs.
+> 
+> (Your code also needs many more comments inline to explain what it does
+> and how it works.)
+> 
+> The documentation file will eventually need rewriting to follow the same
+> format as the other targets recently added to the kernel.  We document
+> the kernel interface rather than any particular userspace tools, which
+> just have the status of convenient examples.
+> 
+> Another little thing I noticed: look into using something like
+> __dm_bless_for_disk() for your metadata and clearly segregate your
+> on-disk structures and document the layout.
+> 
+> Alasdair
+> 
