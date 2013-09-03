@@ -1,14 +1,13 @@
-From: Andi Kleen <ak@linux.intel.com>
+From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: dm-crypt parallelization patches
-Date: Tue, 3 Sep 2013 13:07:02 -0700
-Message-ID: <20130903200702.GJ16724@tassilo.jf.intel.com>
+Date: Tue, 03 Sep 2013 22:49:08 +0200
+Message-ID: <52264B44.6050409@gmail.com>
 References: <alpine.LRH.2.02.1309031457480.28146@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <alpine.LRH.2.02.1309031457480.28146@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,10 +19,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com, Andi Kleen <ak@linux.intel.com>, Milan Broz <gmazyland@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 03, 2013 at 03:06:03PM -0400, Mikulas Patocka wrote:
+On 09/03/2013 09:06 PM, Mikulas Patocka wrote:
 > Hi Andi
 > 
 > You wrote the original dm-crypt paralllelization patch (commit 
@@ -31,18 +30,14 @@ On Tue, Sep 03, 2013 at 03:06:03PM -0400, Mikulas Patocka wrote:
 > parallelization, it makes data being encrypted on the same CPU that 
 > submitted the request.
 
-The motivation for my patches was to make large systems with many
-cores scale.
+Hi Mikulas,
 
-I think the motivation for yours is to make small systems without
-hardware crypto offload slightly faster.
+Do you have some recent reported performance problems with
+the current dmcrypt code?
 
-That's fine (although I suspect it's more and more obscure), as long as
-you don't impact the large systems scalability.
+Please post numbers from tests. Also include systems using AES-NI.
 
-Can you do some tests with a larger system with very parallel IO
-(many CPUs submitting)  and see if the IO rate is equivalent?
+You know I tested your patchset cca year ago and result was not clear
+improvement... So if this changed, it is good news.
 
-If that's given the patches are ok for me.
-
--Andi
+Milan
