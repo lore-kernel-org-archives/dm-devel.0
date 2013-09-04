@@ -1,43 +1,29 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: dm-crypt parallelization patches
-Date: Tue, 03 Sep 2013 22:49:08 +0200
-Message-ID: <52264B44.6050409@gmail.com>
-References: <alpine.LRH.2.02.1309031457480.28146@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Anatol Pomozov <anatol.pomozov@gmail.com>
+Subject: Re: [PATCH 1/2] Revert "Revert "math64: New div64_u64_rem helper""
+Date: Wed, 4 Sep 2013 09:11:25 -0700
+Message-ID: <CAOMFOmXhoBoFrkr8bgP5qV-jZXA=6ZfXnSsg1j5fEVv_RgRAyw@mail.gmail.com>
+References: <1376078164-23147-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1309031457480.28146@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Andi Kleen <ak@linux.intel.com>, Milan Broz <gmazyland@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1376078164-23147-1-git-send-email-snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Stanislaw Gruszka <sgruszka@redhat.com>, Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>
 List-Id: dm-devel.ids
 
-On 09/03/2013 09:06 PM, Mikulas Patocka wrote:
-> Hi Andi
-> 
-> You wrote the original dm-crypt paralllelization patch (commit 
-> c029772125594e31eb1a5ad9e0913724ed9891f2). This patch improves 
-> parallelization, it makes data being encrypted on the same CPU that 
-> submitted the request.
+Hi,
 
-Hi Mikulas,
+On Fri, Aug 9, 2013 at 12:56 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> This reverts commit f3002134158092178be81339ec5a22ff80e6c308.
+>
+> div64_u64_rem was removed because there were no other users.
 
-Do you have some recent reported performance problems with
-the current dmcrypt code?
+In the light of this discussion https://lkml.org/lkml/2013/8/30/417 we
+will have more users of div64_u64_rem
 
-Please post numbers from tests. Also include systems using AES-NI.
-
-You know I tested your patchset cca year ago and result was not clear
-improvement... So if this changed, it is good news.
-
-Milan
+For example code from ext4_mb_find_by_goal() function uses function
+do_div() with divisor sbi->s_stripe that has "unsigned long" type.
+do_div() silently truncates the type to 32bits and do_div() returns
+incorrect result (or crash if lower 32bits are zero). It should be
+either replaced with div64_u64_rem() posted here or with just "a % b".
