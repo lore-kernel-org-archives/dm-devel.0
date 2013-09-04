@@ -1,14 +1,16 @@
-From: Ross Anderson <rosander@dsotm.net>
-Subject: Re: multipath 4k partition block issues.
-Date: Wed, 04 Sep 2013 18:38:17 -0500
-Message-ID: <5227C469.6010200@dsotm.net>
-References: <52279FC1.4000707@dsotm.net> <20130904212705.GA28020@redhat.com>
+From: Jamie Bainbridge <jbainbri@redhat.com>
+Subject: Re: Bug 999761 - Review NetApp path_checker and features
+ for RHEL5 mpath
+Date: Wed, 4 Sep 2013 03:23:40 -0400 (EDT)
+Message-ID: <1109366671.9231767.1378279420548.JavaMail.root@redhat.com>
+References: <1038339233.8389724.1378165932561.JavaMail.root@redhat.com>
+	<5225A33F.80805@netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130904212705.GA28020@redhat.com>
+In-Reply-To: <5225A33F.80805@netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,101 +20,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
+To: Martin George <marting@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Greetings,
+Thanks Martin.
 
->> Greetings,
->>
->>
->> The current git version of multipath-tools doesn't properly handle
->> 4k block sizes and partions creation. There very little verbose
->> output but I will post what I can find. I would appreciate any help
->> getting this working.
->>
->> The raw devices detect the 4k partition.
-> Ben Marzinski had a patch to print the table _before_ it was sent to the
-> kernel so that we had something to go on beyond "253:6: multipath: error
-> getting device"...
->
-> As is the output is useless.  We have no idea _why_ it failed to get the
-> device (or which device it failed to get).  We can do better here in
-> both kernel and userspace error logging.  But chances are multipathd is
-> just looking to use multipath on devices that aren't meant for
-> multipathing (and they should be blacklisted in the multipath.conf).
+So it just seems the documentation in multipath.conf.defaults is outdated.
 
-I've very carefully blacklisted all the non-mp devices. They are all FC 
-from two target devices. Any non EMC device is 4k block. 512 partition 
-devices do detect.
+I've closed my previous bug, and logged a new bug with a patch for the docs:
 
+ Bug 1004179 - Documented NetApp device in multipath.conf.defaults is outdated
+ https://bugzilla.redhat.com/show_bug.cgi?id=1004179
 
+Regards,
+Jamie Bainbridge
+Red Hat Asia Pacific
 
-
-
-
->> A manual run of kpartx -a creates the dm points.
-> Which distro is this?
-
-This particular machine is a Gentoo disto. I have other debian and 
-Ubuntu. Udev v204
-
-
->
-> So samplelib and sfx4k are 4K devices that have partitions.
->
-> [multipathd] sfx4k: load table [0 165076992 multipath 0 0 1 1 service-time 0 2 1 8:192 4 8:144 4]
-> [multipathd] samplelib: load table [0 461373440 multipath 0 0 1 1 service-time 0 2 1 65:16 4 8:240 4]
->
-> I assume these devices map to sdp and sdr, and likely other devices not
-> provided in your log output.  multipathd -ll would be useful.
-
-I realize I trimmed a few of the extra devices out of the list to focus 
-down to the main set. Didn't want to flood the list with full logs. 
-here's -ll
-
-Thanks
-
-audio (26334336163623562) dm-4 SCST_FIO,audio
-size=2.5T features='0' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=1 status=active
-   |- 7:0:1:2 sdo 8:224 active ready running
-   `- 8:0:1:2 sdp 8:240 active ready running
-sfx4k (23836326166643837) dm-2 SCST_FIO,sfx4k
-size=79G features='0' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=1 status=active
-   |- 7:0:1:0 sdk 8:160 active ready running
-   `- 8:0:1:0 sdl 8:176 active ready running
-emc-test (36006048000018799014253594d313037) dm-0 EMC ,SYMMETRIX
-size=54G features='1 queue_if_no_path' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=1 status=active
-   |- 7:0:0:0 sdg 8:96  active ready running
-   `- 8:0:0:0 sdh 8:112 active ready running
-general (26562393662643538) dm-3 SCST_FIO,general
-size=600G features='0' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=1 status=active
-   |- 7:0:1:1 sdm 8:192 active ready running
-   `- 8:0:1:1 sdn 8:208 active ready running
-emc-bak (36006048000018799014253594d313238) dm-1 EMC ,SYMMETRIX
-size=3.8T features='1 queue_if_no_path' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=1 status=active
-   |- 7:0:0:1 sdi 8:128 active ready running
-   `- 8:0:0:1 sdj 8:144 active ready running
-samplelib (26266376537366261) dm-5 SCST_FIO,samplerlib
-size=220G features='0' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=1 status=active
-   |- 7:0:1:3 sdq 65:0  active ready running
-   `- 8:0:1:3 sdr 65:16 active ready running
-
-> Are you certain none-4K devices with partitions are created properly?
-> (I think multpathd leans on kpartx to be invoked by udev after the
-> multipathd device is established but I could be misrembering).. Could be
-> the udev hook isn't working in general?
->
-> Mike
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+----- Original Message -----
+> From: "Martin George" <marting@netapp.com>
+> To: "Jamie Bainbridge" <jbainbri@redhat.com>
+> Cc: "device-mapper development" <dm-devel@redhat.com>
+> Sent: Tuesday, 3 September, 2013 6:52:15 PM
+> Subject: Re: [dm-devel] Bug 999761 - Review NetApp path_checker and features for RHEL5 mpath
+> 
+> On 9/3/2013 5:22 AM, Jamie Bainbridge wrote:
+> > Hi all,
+> >
+> > I was wondering if I could get a response on this bug?
+> >
+> >   Bug 999761 - Review NetApp path_checker and features for RHEL5 mpath
+> >   https://bugzilla.redhat.com/show_bug.cgi?id=999761
+> >
+> > In Bug 799842 NetApp requested that we change the default path_checker for
+> > NETAPP devices in RHEL 6.3 from directio to tur.
+> >
+> > * Would we consider changing the default hwtable in RHEL5, considering it's
+> > in Production 2?
+> >
+> > * Given NetApp reference the async tur improvements from Bug 760852 as part
+> > of their decision to use tur, is tur suitable for current RHEL5, or should
+> > we stick with directio?
+> >
+> > * If tur is suitable for current RHEL5, should we change the default RHEL5
+> > hwtable to use tur?
+> >
+> > In Bug 799842 Comment 10 NetApp also requested we change the default
+> > features for NETAPP devices in RHEL 6.3 from "1 queue_if_no_path" to "3
+> > queue_if_no_path pg_init_retries 50".
+> >
+> > * pg_init_retries has been in RHEL5 since 5.2, is pg_init_retries suitable
+> > for current RHEL5 also? (this seems to be an easy "yes")
+> >
+> > * If pg_init_retries is suitable for current RHEL5, should we change the
+> > default RHEL5 hwtable to use pg_init_retries?
+> >
+> 
+> On newer RHEL5 kernels like RHEL 5.9, the above changes (i.e. 'tur' path
+> checker & enabling pg_init_retries) have already made it to the hwtable
+> for NetApp LUNs - addressed in device-mapper-multipath-0.4.7-51.el5.
+> 
+> -Martin
+> 
