@@ -1,17 +1,15 @@
 From: dongmao zhang <dmzhang@suse.com>
-Subject: [PATCH 1/1] improve the performance of dm-log-userspace
-Date: Tue, 10 Sep 2013 17:25:12 +0800
-Message-ID: <eedc507aeecd6c4e21e6a67867662e3dd7c2e443.1378804287.git.dmzhang@suse.com>
+Subject: [PATCH 0/1] ideas to improve the write performance of
+	cluster dm-raid1
+Date: Tue, 10 Sep 2013 17:25:11 +0800
+Message-ID: <cover.1378804287.git.dmzhang@suse.com>
 References: <yes>
- <cover.1378804287.git.dmzhang@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <cover.1378804287.git.dmzhang@suse.com>
-In-Reply-To: <cover.1378804287.git.dmzhang@suse.com>
-References: <cover.1378804287.git.dmzhang@suse.com>
+In-Reply-To: <yes>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,144 +23,57 @@ To: dm-devel@redhat.com
 Cc: dongmao zhang <dmzhang@suse.com>
 List-Id: dm-devel.ids
 
-In the cluster evironment, cluster write has poor performance.
-Because userspace_flush has to access userspace program(cmirrord)
-for clear/mark/flush request. But the mark and flush requests
-require cmirrord send message to  all the cluster nodes. This behave
-is realy slow. So the idea is merging mark and flush
-request together and to reduce the kernel-userspace-kernel time.
-Moreover, when only sending clear request, the flush request could
-be delayed. Added a workqueue to run delayed flush request.
+Dear list,
 
-Signed-off-by: dongmao zhang <dmzhang@suse.com>
----
+Based on my test result, the cluster raid1 writes loss 80% performance. I found
+that the most time is occupied by the function userspace_flush.
+
+Usually userspace_flush needs three stages(mark, clear, flush)to communicate with cmirrord.
+From the cmirrord's perspective, mark and flush functions run cluster_send first and then return to 
+the kernel. And we can ignore the clear request which is fast.
+
+In other words, the requests of mark_region and flush in userspace_flush 
+at least require a cluster_send period to finish. this is the root cause
+of bad performance.
+
+The idea is to merge flush and mark request together in both cmirrord and dm-log-userspace.
+
+A simple patch for cmirrord could be like this:
+
+--- lvm2-2_02_98.orig/daemons/cmirrord/functions.c
++++ lvm2-2_02_98/daemons/cmirrord/functions.c
+@@ -1720,7 +1720,8 @@ int do_request(struct clog_request *rq,
+		r = clog_flush(&rq->u_rq, server);
+		break;
+	case DM_ULOG_MARK_REGION:
+-   r = clog_mark_region(&rq->u_rq, rq->originator);
++   if (clog_mark_region(&rq->u_rq, rq->originator) == 0)
++     r = clog_flush(&rq->u_rq, server);
+		break;
+	case DM_ULOG_CLEAR_REGION:
+		r = clog_clear_region(&rq->u_rq, rq->originator);
+
+We run clog_flush directly after clog_mark_region. So the userspace_flush do not 
+have to request flush again after requesting mark_region.  Moreover, I think the flush 
+of clear region could be delayed. If we have both mark and clear region, only sending 
+a mark_region request is OK, because clog_flush will automatically run.(ignore the clean_region 
+time). It only takes one cluster_send period. If we have only mark region, 
+a mark_region request is also OK, it takes one cluster_send period. If we have only 
+clear_region, we could delay the flush of cleared_region for 3 seconds.
+
+Overall, before the patch, mark_region require approximately two cluster_send
+period(mark_region and flush), after the patch, mark_region only needs one 
+cluster_send period. Based on my test, the performance is as twice as before.
+
+So above are my some ideas to improve the performence. I have not tested it
+in some node failure situation. If I am wrong ,please correct me.
+
+
+dongmao zhang (1):
+  improve the performance of dm-log-userspace
+
  drivers/md/dm-log-userspace-base.c |   57 ++++++++++++++++++++++++++++++++---
  1 files changed, 52 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
-index 9429159..d9dcfac 100644
---- a/drivers/md/dm-log-userspace-base.c
-+++ b/drivers/md/dm-log-userspace-base.c
-@@ -11,6 +11,7 @@
- #include <linux/dm-log-userspace.h>
- #include <linux/module.h>
- 
-+#include <linux/workqueue.h>
- #include "dm-log-userspace-transfer.h"
- 
- #define DM_LOG_USERSPACE_VSN "1.1.0"
-@@ -58,6 +59,11 @@ struct log_c {
- 	spinlock_t flush_lock;
- 	struct list_head mark_list;
- 	struct list_head clear_list;
-+
-+	/*work queue for flush clear region*/
-+	struct workqueue_struct *dmlog_wq;
-+	struct delayed_work flush_log_work;
-+	atomic_t sched_flush;
- };
- 
- static mempool_t *flush_entry_pool;
-@@ -234,6 +240,17 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- 	lc->region_size = (uint32_t)rdata;
- 	lc->region_count = dm_sector_div_up(ti->len, lc->region_size);
- 
-+	lc->dmlog_wq =  alloc_workqueue("dmlogd",
-+			WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
-+	if (!lc->dmlog_wq) {
-+		DMERR("couldn't start dmlogd");
-+		r = -ENOMEM;
-+		goto out;
-+	}
-+
-+	INIT_DELAYED_WORK(&lc->flush_log_work, do_flush);
-+	atomic_set(&lc->sched_flush, 0);
-+
- 	if (devices_rdata_size) {
- 		if (devices_rdata[devices_rdata_size - 1] != '\0') {
- 			DMERR("DM_ULOG_CTR device return string not properly terminated");
-@@ -264,6 +281,13 @@ static void userspace_dtr(struct dm_dirty_log *log)
- {
- 	struct log_c *lc = log->context;
- 
-+	/*flush workqueue*/
-+	if (atomic_read(&lc->sched_flush))
-+		flush_delayed_work(&lc->flush_log_work);
-+
-+	flush_workqueue(lc->dmlog_wq);
-+	destroy_workqueue(lc->dmlog_wq);
-+
- 	(void) dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_DTR,
- 				 NULL, 0,
- 				 NULL, NULL);
-@@ -282,6 +306,10 @@ static int userspace_presuspend(struct dm_dirty_log *log)
- 	int r;
- 	struct log_c *lc = log->context;
- 
-+	/*run planed flush*/
-+	if (atomic_read(&lc->sched_flush))
-+		flush_delayed_work(&lc->flush_log_work);
-+
- 	r = dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_PRESUSPEND,
- 				 NULL, 0,
- 				 NULL, NULL);
-@@ -294,6 +322,9 @@ static int userspace_postsuspend(struct dm_dirty_log *log)
- 	int r;
- 	struct log_c *lc = log->context;
- 
-+	if (atomic_read(&lc->sched_flush))
-+		flush_delayed_work(&lc->flush_log_work);
-+
- 	r = dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_POSTSUSPEND,
- 				 NULL, 0,
- 				 NULL, NULL);
-@@ -474,6 +505,8 @@ static int userspace_flush(struct dm_dirty_log *log)
- 	int r = 0;
- 	unsigned long flags;
- 	struct log_c *lc = log->context;
-+	int is_mark_list_empty;
-+	int is_clear_list_empty;
- 	LIST_HEAD(mark_list);
- 	LIST_HEAD(clear_list);
- 	struct flush_entry *fe, *tmp_fe;
-@@ -483,19 +516,33 @@ static int userspace_flush(struct dm_dirty_log *log)
- 	list_splice_init(&lc->clear_list, &clear_list);
- 	spin_unlock_irqrestore(&lc->flush_lock, flags);
- 
--	if (list_empty(&mark_list) && list_empty(&clear_list))
-+	is_mark_list_empty = list_empty(&mark_list);
-+	is_clear_list_empty = list_empty(&clear_list);
-+
-+	if (is_mark_list_empty && is_clear_list_empty)
- 		return 0;
- 
--	r = flush_by_group(lc, &mark_list);
-+
-+	r = flush_by_group(lc, &clear_list);
- 	if (r)
- 		goto fail;
- 
--	r = flush_by_group(lc, &clear_list);
-+	r = flush_by_group(lc, &mark_list);
- 	if (r)
- 		goto fail;
- 
--	r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
--				 NULL, 0, NULL, NULL);
-+	if (!is_clear_list_empty && is_mark_list_empty
-+				 && !atomic_read(&lc->sched_flush)) {
-+		/* plan a flush */
-+		queue_delayed_work(lc->dmlog_wq, &lc->flush_log_work , 3 * HZ);
-+		atomic_set(&lc->sched_flush, 1);
-+	} else {
-+		/* cancel pending flush because already flushed in mark_region*/
-+		cancel_delayed_work(&lc->flush_log_work);
-+		atomic_set(&lc->sched_flush, 0);
-+	}
-+
-+
- 
- fail:
- 	/*
 -- 
 1.7.3.4
