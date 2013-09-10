@@ -1,129 +1,104 @@
-From: Amitai Alkalay <amitai.alkalay.work@gmail.com>
-Subject: multipath errors
-Date: Tue, 10 Sep 2013 14:29:52 +0300
-Message-ID: <CAFtbanG05NuiQCiZd0v+TEVW+5dUnn=-LZzoewrY0roFq0L7HQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device-mapper changes for 3.12
+Date: Tue, 10 Sep 2013 10:19:03 -0400
+Message-ID: <20130910141902.GA24038@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7467346147983095443=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Carlos Maiolino <cmaiolino@redhat.com>, Tejun Heo <tj@kernel.org>, Joe Thornber <ejt@redhat.com>, Stanislaw Gruszka <sgruszka@redhat.com>, Ingo Molnar <mingo@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Joe Jin <joe.jin@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
---===============7467346147983095443==
-Content-Type: multipart/alternative; boundary=089e0158aa9ad1051d04e605d2fa
+Hi Linus,
 
---089e0158aa9ad1051d04e605d2fa
-Content-Type: text/plain; charset=ISO-8859-1
+The following changes since commit b936bf8b785f0fbe083d203049e4da1c56ec788f:
 
-hi,
+  dm cache: avoid conflicting remove_mapping() in mq policy (2013-08-16 15:56:51 -0400)
 
-I sometimes see cases where io failed after some path failover, although
-there are other valid paths.
+are available in the git repository at:
 
-I seem to get a lot of the following errors during a path removal
-(failover):
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.12-changes
 
-Aug  1 08:59:37 lg641 multipathd: 3514f0c532d80000a: failed in domap
-for removal of path sdcy
-Aug  1 08:59:37 lg641 multipathd: uevent trigger error
-Aug  1 08:59:37 lg641 multipathd: sdt: remove path (uevent)
-Aug  1 08:59:37 lg641 kernel: device-mapper: table: 253:5: multipath:
-error getting device
-Aug  1 08:59:37 lg641 kernel: device-mapper: ioctl: error adding target to table
-Aug  1 08:59:37 lg641 multipathd: 3514f0c532d800001: load table [0
-21474836480 multipath 0 0 1 1 queue-length 0 12 1 66:240 1 66:80 1
-70:192 1 71:96 1 67:176 1 67:112 1 71:224 1 128:128 1 8:
-16 1 69:16 1 69:32 1 8:32 1]
-Aug  1 08:59:37 lg641 multipathd: sdt: path removed from map 3514f0c532d800001f
+for you to fetch changes up to 7fff5e8f727285cf54e6aba10f31b196f207b98a:
 
-All the other paths are there, and still multipath decided to fail the io
-with no apparent reason.
+  dm stripe: silence a couple sparse warnings (2013-09-06 11:36:01 -0400)
 
-I would appreciate any comment about:
+Please pull, thanks.
+Mike
 
-1. How can this happen.
-2. How can I increase the log level to understand multipath decisions.
-3. Why do I always see the errors regarding adding target to table.
-The only thing I can think think about, that multipath temporarily bypassed
-the other paths (maybe it got busy several times and gave up).
+----------------------------------------------------------------
+Add the ability to collect I/O statistics on user-defined regions of a
+device-mapper device.  This dm-stats code required the reintroduction of
+a div64_u64_rem() helper, but as a separate method that doesn't slow
+down div64_u64() -- especially on 32-bit systems.
 
-I'm using device-mapper-multipath-0.4.9-64.el6.x86_64.
+Allow the error target to replace request-based DM devices
+(e.g. multipath) in addition to bio-based DM devices.
 
-Thanks a lot,
-Amitai
+Various other small code fixes and improvements to thin-provisioning, DM
+cache and the DM ioctl interface.
 
---089e0158aa9ad1051d04e605d2fa
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+----------------------------------------------------------------
+Alasdair Kergon (1):
+      dm ioctl: prevent rename to empty name or uuid
 
-<div dir=3D"ltr"><font face=3D"verdana, sans-serif">hi,</font><div><font fa=
-ce=3D"verdana, sans-serif"><br></font></div><div><font face=3D"verdana, san=
-s-serif">I sometimes see cases where io failed after some path failover, al=
-though there are other valid paths.</font></div>
-<div><font face=3D"verdana, sans-serif"><br></font></div><div><font face=3D=
-"verdana, sans-serif">I seem to get a lot of the following errors during a =
-path removal (failover):</font></div><div><pre class=3D"" style=3D"backgrou=
-nd-color:rgb(247,247,247);border:1px solid rgb(215,215,215);margin-right:1.=
-75em;margin-left:1.75em;padding:0.25em;overflow:auto;color:rgb(0,0,0);font-=
-size:13px">
-Aug  1 08:59:37 lg641 multipathd: 3514f0c532d80000a: failed in domap for re=
-moval of path sdcy
-Aug  1 08:59:37 lg641 multipathd: uevent trigger error
-Aug  1 08:59:37 lg641 multipathd: sdt: remove path (uevent)
-Aug  1 08:59:37 lg641 kernel: device-mapper: table: 253:5: multipath: error=
- getting device
-Aug  1 08:59:37 lg641 kernel: device-mapper: ioctl: error adding target to =
-table
-Aug  1 08:59:37 lg641 multipathd: 3514f0c532d800001: load table [0 21474836=
-480 multipath 0 0 1 1 queue-length 0 12 1 66:240 1 66:80 1 70:192 1 71:96 1=
- 67:176 1 67:112 1 71:224 1 128:128 1 8:
-16 1 69:16 1 69:32 1 8:32 1]
-Aug  1 08:59:37 lg641 multipathd: sdt: path removed from map 3514f0c532d800=
-001f
-</pre></div><div><font face=3D"verdana, sans-serif"><span style=3D"color:rg=
-b(0,0,0)">All the other paths are there, and still multipath decided to fai=
-l the io with no apparent reason.=A0</span><br style=3D"color:rgb(0,0,0)"><=
-br>
-I would appreciate any comment about:<br><br style=3D"color:rgb(0,0,0)"><sp=
-an style=3D"color:rgb(0,0,0)">1. How can this happen.</span><br style=3D"co=
-lor:rgb(0,0,0)"><span style=3D"color:rgb(0,0,0)">2. How can I increase the =
-log level to understand multipath decisions.</span><br style=3D"color:rgb(0=
-,0,0)">
-<span style=3D"color:rgb(0,0,0)">3. Why do I always see the errors regardin=
-g adding target to table.</span><br style=3D"color:rgb(0,0,0)"><span style=
-=3D"color:rgb(0,0,0)">The only thing I can think think about, that multipat=
-h temporarily bypassed the other paths (maybe it got busy several times and=
- gave up).</span><br>
-</font></div><div><span style=3D"color:rgb(0,0,0);font-family:Verdana,Arial=
-,&#39;Bitstream Vera Sans&#39;,Helvetica,sans-serif"><br></span></div><div>=
-<span style=3D"color:rgb(0,0,0);font-family:Verdana,Arial,&#39;Bitstream Ve=
-ra Sans&#39;,Helvetica,sans-serif">I&#39;m using=A0</span><font color=3D"#0=
-00000" face=3D"Verdana, Arial, Bitstream Vera Sans, Helvetica, sans-serif">=
-device-mapper-multipath-0.4.9-64.el6.x86_64.</font></div>
-<div><span style=3D"color:rgb(0,0,0);font-family:Verdana,Arial,&#39;Bitstre=
-am Vera Sans&#39;,Helvetica,sans-serif"><br></span></div><div><span style=
-=3D"color:rgb(0,0,0);font-family:Verdana,Arial,&#39;Bitstream Vera Sans&#39=
-;,Helvetica,sans-serif">Thanks a lot,</span></div>
-<div><span style=3D"color:rgb(0,0,0);font-family:Verdana,Arial,&#39;Bitstre=
-am Vera Sans&#39;,Helvetica,sans-serif">Amitai</span></div></div>
+Carlos Maiolino (1):
+      dm thin: add data block size limits to Documentation
 
---089e0158aa9ad1051d04e605d2fa--
+Joe Thornber (3):
+      dm btree: use pop_frame in dm_btree_del to cleanup code
+      dm btree: prefetch child nodes when walking tree for a dm_btree_del
+      dm space map: optimise sm_ll_dec and sm_ll_inc
 
+Mike Snitzer (13):
+      dm cache: document metadata device is exclussive to a cache
+      dm cache: add data block size limits to code and Documentation
+      dm thin: fix stacking of geometry limits
+      dm cache: fix stacking of geometry limits
+      dm cache: eliminate holes in cache structure
+      math64: New separate div64_u64_rem helper
+      dm: allow error target to replace bio-based and request-based targets
+      dm thin: prefix pool error messages with pool device name
+      dm thin: set pool read-only if breaking_sharing fails block allocation
+      dm ioctl: increase granularity of type_lock when loading table
+      dm ioctl: cleanup error handling in table_load
+      dm thin: always return -ENOSPC if no_free_space is set
+      dm stripe: silence a couple sparse warnings
 
---===============7467346147983095443==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Mikulas Patocka (1):
+      dm: add statistics support
 
+Tejun Heo (1):
+      dm: stop using WQ_NON_REENTRANT
 
---===============7467346147983095443==--
+ Documentation/device-mapper/cache.txt             |   6 +-
+ Documentation/device-mapper/statistics.txt        | 186 +++++
+ Documentation/device-mapper/thin-provisioning.txt |  15 +-
+ drivers/md/Makefile                               |   2 +-
+ drivers/md/dm-cache-target.c                      |  59 +-
+ drivers/md/dm-crypt.c                             |  10 +-
+ drivers/md/dm-ioctl.c                             |  60 +-
+ drivers/md/dm-kcopyd.c                            |   3 +-
+ drivers/md/dm-raid1.c                             |   3 +-
+ drivers/md/dm-stats.c                             | 969 ++++++++++++++++++++++
+ drivers/md/dm-stats.h                             |  40 +
+ drivers/md/dm-stripe.c                            |   1 +
+ drivers/md/dm-table.c                             |  20 +-
+ drivers/md/dm-target.c                            |   9 +-
+ drivers/md/dm-thin.c                              | 122 ++-
+ drivers/md/dm.c                                   |  70 +-
+ drivers/md/dm.h                                   |  27 +
+ drivers/md/persistent-data/dm-block-manager.c     |   5 +
+ drivers/md/persistent-data/dm-block-manager.h     |   5 +
+ drivers/md/persistent-data/dm-btree.c             |  28 +-
+ drivers/md/persistent-data/dm-space-map-common.c  |  77 +-
+ include/linux/device-mapper.h                     |   9 +
+ include/linux/math64.h                            |  13 +
+ include/uapi/linux/dm-ioctl.h                     |   4 +-
+ lib/div64.c                                       |  40 +
+ 25 files changed, 1621 insertions(+), 162 deletions(-)
+ create mode 100644 Documentation/device-mapper/statistics.txt
+ create mode 100644 drivers/md/dm-stats.c
+ create mode 100644 drivers/md/dm-stats.h
