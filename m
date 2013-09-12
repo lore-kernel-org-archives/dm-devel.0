@@ -1,22 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 7/7] dm: optimize clone_rq() when
- track_peak_rq_based_ios is disabled
-Date: Fri, 13 Sep 2013 10:34:50 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1309131034310.1090@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 1/7] dm: lower bio-based mempool reservation
+Date: Thu, 12 Sep 2013 18:24:52 -0400
+Message-ID: <1379024698-10487-2-git-send-email-snitzer@redhat.com>
 References: <alpine.LRH.2.02.1308261012400.12373@file01.intranet.prod.int.rdu2.redhat.com>
 	<1379024698-10487-1-git-send-email-snitzer@redhat.com>
-	<1379024698-10487-8-git-send-email-snitzer@redhat.com>
-	<alpine.LRH.2.02.1309121857440.31794@file01.intranet.prod.int.rdu2.redhat.com>
-	<20130912230646.GA31577@redhat.com>
-	<alpine.LRH.2.02.1309121928140.3245@file01.intranet.prod.int.rdu2.redhat.com>
-	<20130912235346.GF31577@redhat.com>
-	<523298B3.9050400@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <523298B3.9050400@ce.jp.nec.com>
+In-Reply-To: <1379024698-10487-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,89 +19,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>
+To: Frank Mayhar <fmayhar@google.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is good idea.
+Bio-based device mapper processing doesn't need larger mempools (like
+request-based DM does), so lower the number of reserved entries for
+bio-based operation.  16 was already used for bio-based DM's bioset
+but mistakenly wasn't used for it's _io_cache.
 
-Mikulas
+Formalize difference between bio-based and request-based defaults by
+introducing RESERVED_BIO_BASED_IOS and RESERVED_REQUEST_BASED_IOS.
 
+(based on older code from Mikulas Patocka)
 
-On Fri, 13 Sep 2013, Jun'ichi Nomura wrote:
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-> Other approach might be putting the info on tracepoints.
-> Then the tracepoint framework will take care of the static_key thing.
-> 
-> Since 'the number of bios in a request' is a block-layer generic info,
-> you could extend the block layer events instead of having your own.
-> 
-> Attached patch adds it to block_rq_remap event.
-> You could do something like this to see requests with many bios:
->   echo 'nr_bios > 32' > /sys/kernel/debug/tracing/events/block/block_rq_remap/filter
->   echo 1 > /sys/kernel/debug/tracing/events/block/block_rq_remap/enable 
-> 
-> For example,
->      kworker/1:1H-308   [001] d..1   276.242448: block_rq_remap: 8,64 W 1967760 + 512 <- (253,1) 1967760 64
->      kworker/1:1H-308   [001] d..1   276.242482: block_rq_remap: 8,160 W 1968272 + 512 <- (253,1) 1968272 64
->      kworker/1:1H-308   [001] d..1   276.242515: block_rq_remap: 65,0 W 1968784 + 512 <- (253,1) 1968784 64
-> # the last item in line is the number of bios. ("64" in this case)
-> 
-> ---
-> Jun'ichi Nomura, NEC Corporation
-> 
-> 
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 2fdb4a4..0e6f765 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -862,6 +862,17 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq)
->  	return blk_queue_get_max_sectors(q, rq->cmd_flags);
->  }
->  
-> +static inline unsigned int blk_rq_count_bios(struct request *rq)
-> +{
-> +	unsigned int nr_bios = 0;
-> +	struct bio *bio;
-> +
-> +	__rq_for_each_bio(bio, rq)
-> +		nr_bios++;
-> +
-> +	return nr_bios;
-> +}
-> +
->  /*
->   * Request issue related functions.
->   */
-> diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-> index 60ae7c3..4c2301d 100644
-> --- a/include/trace/events/block.h
-> +++ b/include/trace/events/block.h
-> @@ -618,6 +618,7 @@ TRACE_EVENT(block_rq_remap,
->  		__field( unsigned int,	nr_sector	)
->  		__field( dev_t,		old_dev		)
->  		__field( sector_t,	old_sector	)
-> +		__field( unsigned int,	nr_bios		)
->  		__array( char,		rwbs,	RWBS_LEN)
->  	),
->  
-> @@ -627,15 +628,16 @@ TRACE_EVENT(block_rq_remap,
->  		__entry->nr_sector	= blk_rq_sectors(rq);
->  		__entry->old_dev	= dev;
->  		__entry->old_sector	= from;
-> +		__entry->nr_bios	= blk_rq_count_bios(rq);
->  		blk_fill_rwbs(__entry->rwbs, rq->cmd_flags, blk_rq_bytes(rq));
->  	),
->  
-> -	TP_printk("%d,%d %s %llu + %u <- (%d,%d) %llu",
-> +	TP_printk("%d,%d %s %llu + %u <- (%d,%d) %llu %u",
->  		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->rwbs,
->  		  (unsigned long long)__entry->sector,
->  		  __entry->nr_sector,
->  		  MAJOR(__entry->old_dev), MINOR(__entry->old_dev),
-> -		  (unsigned long long)__entry->old_sector)
-> +		  (unsigned long long)__entry->old_sector, __entry->nr_bios)
->  );
->  
->  #endif /* _TRACE_BLOCK_H */
-> 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 6a5e9ed..47bac14 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -211,7 +211,8 @@ struct dm_md_mempools {
+ 	struct bio_set *bs;
+ };
+ 
+-#define MIN_IOS 256
++#define RESERVED_BIO_BASED_IOS		16
++#define RESERVED_REQUEST_BASED_IOS	256
+ static struct kmem_cache *_io_cache;
+ static struct kmem_cache *_rq_tio_cache;
+ 
+@@ -2862,18 +2863,18 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+ 
+ 	if (type == DM_TYPE_BIO_BASED) {
+ 		cachep = _io_cache;
+-		pool_size = 16;
++		pool_size = RESERVED_BIO_BASED_IOS;
+ 		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
+ 	} else if (type == DM_TYPE_REQUEST_BASED) {
+ 		cachep = _rq_tio_cache;
+-		pool_size = MIN_IOS;
++		pool_size = RESERVED_REQUEST_BASED_IOS;
+ 		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
+ 		/* per_bio_data_size is not used. See __bind_mempools(). */
+ 		WARN_ON(per_bio_data_size != 0);
+ 	} else
+ 		goto out;
+ 
+-	pools->io_pool = mempool_create_slab_pool(MIN_IOS, cachep);
++	pools->io_pool = mempool_create_slab_pool(pool_size, cachep);
+ 	if (!pools->io_pool)
+ 		goto out;
+ 
+-- 
+1.8.1.4
