@@ -1,16 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 6/7] dm: track the maximum number of bios in a
-	cloned request
-Date: Thu, 12 Sep 2013 18:24:57 -0400
-Message-ID: <1379024698-10487-7-git-send-email-snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 1/7] dm: lower bio-based mempool reservation
+Date: Thu, 12 Sep 2013 18:40:44 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1309121840310.31794@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1308261012400.12373@file01.intranet.prod.int.rdu2.redhat.com>
 	<1379024698-10487-1-git-send-email-snitzer@redhat.com>
+	<1379024698-10487-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1379024698-10487-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1379024698-10487-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,72 +20,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Frank Mayhar <fmayhar@google.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Frank Mayhar <fmayhar@google.com>
 List-Id: dm-devel.ids
 
-If /sys/modules/dm_mod/parameters/track_peak_rq_based_ios is set to 1 it
-enables the tracking of the maximum number of bios in a cloned request.
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
 
-The maximum number of bios in a cloned request is then exposed through
-the following read-only parameter:
-/sys/modules/dm_mod/parameters/peak_rq_based_ios
+On Thu, 12 Sep 2013, Mike Snitzer wrote:
 
-This information can be useful when deciding on a value for dm_mod's
-'reserved_rq_based_ios' parameter.  Otherwise, 'track_peak_rq_based_ios'
-should be kept disabled (the default).
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 22 ++++++++++++++++++++++
- 1 file changed, 22 insertions(+)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 186f77d..de83930 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -239,6 +239,12 @@ static unsigned reserved_rq_based_ios;
- static unsigned reserved_rq_based_ios_latch;
- 
- /*
-+ * Optionally track the maximum numbers of IOs in a cloned request.
-+ */
-+static unsigned track_peak_rq_based_ios;
-+static unsigned peak_rq_based_ios;
-+
-+/*
-  * This mutex protects reserved_bio_based_ios_latch and reserved_rq_based_ios_latch.
-  */
- static DEFINE_MUTEX(dm_mempools_lock);
-@@ -1719,6 +1725,16 @@ static struct request *clone_rq(struct request *rq, struct mapped_device *md,
- 		return NULL;
- 	}
- 
-+	if (unlikely(ACCESS_ONCE(track_peak_rq_based_ios))) {
-+		struct bio *bio;
-+		unsigned num_bios = 0;
-+
-+		__rq_for_each_bio(bio, clone)
-+			num_bios++;
-+		if (num_bios > ACCESS_ONCE(peak_rq_based_ios))
-+			ACCESS_ONCE(peak_rq_based_ios) = num_bios;
-+	}
-+
- 	return clone;
- }
- 
-@@ -3034,6 +3050,12 @@ MODULE_PARM_DESC(reserved_bio_based_ios, "Reserved IOs in bio-based mempools");
- module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
- MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
- 
-+module_param(track_peak_rq_based_ios, uint, S_IRUGO | S_IWUSR);
-+MODULE_PARM_DESC(peak_rq_based_ios, "Enable tracking the maximum IOs in a cloned request");
-+
-+module_param(peak_rq_based_ios, uint, S_IRUGO);
-+MODULE_PARM_DESC(peak_rq_based_ios, "Tracks the maximum IOs in a cloned request");
-+
- MODULE_DESCRIPTION(DM_NAME " driver");
- MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");
- MODULE_LICENSE("GPL");
--- 
-1.8.1.4
+> Bio-based device mapper processing doesn't need larger mempools (like
+> request-based DM does), so lower the number of reserved entries for
+> bio-based operation.  16 was already used for bio-based DM's bioset
+> but mistakenly wasn't used for it's _io_cache.
+> 
+> Formalize difference between bio-based and request-based defaults by
+> introducing RESERVED_BIO_BASED_IOS and RESERVED_REQUEST_BASED_IOS.
+> 
+> (based on older code from Mikulas Patocka)
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm.c | 9 +++++----
+>  1 file changed, 5 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 6a5e9ed..47bac14 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -211,7 +211,8 @@ struct dm_md_mempools {
+>  	struct bio_set *bs;
+>  };
+>  
+> -#define MIN_IOS 256
+> +#define RESERVED_BIO_BASED_IOS		16
+> +#define RESERVED_REQUEST_BASED_IOS	256
+>  static struct kmem_cache *_io_cache;
+>  static struct kmem_cache *_rq_tio_cache;
+>  
+> @@ -2862,18 +2863,18 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+>  
+>  	if (type == DM_TYPE_BIO_BASED) {
+>  		cachep = _io_cache;
+> -		pool_size = 16;
+> +		pool_size = RESERVED_BIO_BASED_IOS;
+>  		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
+>  	} else if (type == DM_TYPE_REQUEST_BASED) {
+>  		cachep = _rq_tio_cache;
+> -		pool_size = MIN_IOS;
+> +		pool_size = RESERVED_REQUEST_BASED_IOS;
+>  		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
+>  		/* per_bio_data_size is not used. See __bind_mempools(). */
+>  		WARN_ON(per_bio_data_size != 0);
+>  	} else
+>  		goto out;
+>  
+> -	pools->io_pool = mempool_create_slab_pool(MIN_IOS, cachep);
+> +	pools->io_pool = mempool_create_slab_pool(pool_size, cachep);
+>  	if (!pools->io_pool)
+>  		goto out;
+>  
+> -- 
+> 1.8.1.4
+> 
