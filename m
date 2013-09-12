@@ -1,17 +1,17 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/7] dm: add reserved_rq_based_ios module
-	parameter
-Date: Thu, 12 Sep 2013 18:45:48 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1309121840470.31794@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH 6/7] dm: track the maximum number of bios in
+ a cloned request
+Date: Thu, 12 Sep 2013 18:55:31 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1309121851160.31794@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1308261012400.12373@file01.intranet.prod.int.rdu2.redhat.com>
 	<1379024698-10487-1-git-send-email-snitzer@redhat.com>
-	<1379024698-10487-3-git-send-email-snitzer@redhat.com>
+	<1379024698-10487-7-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1379024698-10487-3-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1379024698-10487-7-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,112 +25,86 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com, Frank Mayhar <fmayhar@google.com>
 List-Id: dm-devel.ids
 
-I think this is too complicated.
+There's a race condition (it's not serious):
 
-dm-bufio uses similar approach like this patch - but in dm-bufio the code 
-path is performance critical, we don't want to recalculate memory size 
-with each i/o request.
++               if (num_bios > ACCESS_ONCE(peak_rq_based_ios))
++                       ACCESS_ONCE(peak_rq_based_ios) = num_bios;
 
-Here it is not performance critical, so I'd drop the mutex, drop the 
-latch, drop the function __reserved_request_based_ios_refresh and add only 
-these lines:
+You can double-check it using code like this:
+if (num_bios > ACCESS_ONCE(peak_rq_based_ios)) {
+	spin_lock_irqsave(&peak_rq_based_ios_lock, flags);
+	if (num_bios > peak_rq_based_ios)
+		peak_rq_based_ios = num_bios;
+	spin_unlock_irqrestore(&peak_rq_based_ios_lock, flags);
+}
 
-pool_size = ACCESS_ONCE(reserved_rq_based_ios);
-if (!pool_size) pool_size = RESERVED_REQUEST_BASED_IOS;
+
+Maybe - reset the value peak_rq_based_ios if the user clears 
+track_peak_rq_based_ios?
 
 Mikulas
 
-
 On Thu, 12 Sep 2013, Mike Snitzer wrote:
 
-> Allow user to change the number of IOs that are reserved by
-> request-based DM's mempools by writing to this file:
-> /sys/module/dm_mod/parameters/reserved_rq_based_ios
+> If /sys/modules/dm_mod/parameters/track_peak_rq_based_ios is set to 1 it
+> enables the tracking of the maximum number of bios in a cloned request.
 > 
-> The default value is RESERVED_REQUEST_BASED_IOS (256).
+> The maximum number of bios in a cloned request is then exposed through
+> the following read-only parameter:
+> /sys/modules/dm_mod/parameters/peak_rq_based_ios
+> 
+> This information can be useful when deciding on a value for dm_mod's
+> 'reserved_rq_based_ios' parameter.  Otherwise, 'track_peak_rq_based_ios'
+> should be kept disabled (the default).
 > 
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 > ---
->  drivers/md/dm.c | 49 ++++++++++++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 48 insertions(+), 1 deletion(-)
+>  drivers/md/dm.c | 22 ++++++++++++++++++++++
+>  1 file changed, 22 insertions(+)
 > 
 > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 47bac14..8553d03 100644
+> index 186f77d..de83930 100644
 > --- a/drivers/md/dm.c
 > +++ b/drivers/md/dm.c
-> @@ -216,6 +216,38 @@ struct dm_md_mempools {
->  static struct kmem_cache *_io_cache;
->  static struct kmem_cache *_rq_tio_cache;
+> @@ -239,6 +239,12 @@ static unsigned reserved_rq_based_ios;
+>  static unsigned reserved_rq_based_ios_latch;
 >  
-> +/*
-> + * Request-based DM's mempools' reserved IOs set by the user
+>  /*
+> + * Optionally track the maximum numbers of IOs in a cloned request.
 > + */
-> +static unsigned reserved_rq_based_ios;
-> +
-> +/*
-> + * A copy of reserved_rq_based_ios because it can change anytime.
-> + * If values disagree, the user has changed reserved_rq_based_ios.
-> + */
-> +static unsigned reserved_rq_based_ios_latch;
+> +static unsigned track_peak_rq_based_ios;
+> +static unsigned peak_rq_based_ios;
 > +
 > +/*
-> + * This mutex protects reserved_rq_based_ios_latch.
-> + */
-> +static DEFINE_MUTEX(dm_mempools_lock);
+>   * This mutex protects reserved_bio_based_ios_latch and reserved_rq_based_ios_latch.
+>   */
+>  static DEFINE_MUTEX(dm_mempools_lock);
+> @@ -1719,6 +1725,16 @@ static struct request *clone_rq(struct request *rq, struct mapped_device *md,
+>  		return NULL;
+>  	}
+>  
+> +	if (unlikely(ACCESS_ONCE(track_peak_rq_based_ios))) {
+> +		struct bio *bio;
+> +		unsigned num_bios = 0;
 > +
-> +static void __reserved_request_based_ios_refresh(void)
-> +{
-> +	BUG_ON(!mutex_is_locked(&dm_mempools_lock));
-> +
-> +	reserved_rq_based_ios_latch = ACCESS_ONCE(reserved_rq_based_ios);
-> +
-> +	/*
-> +	 * If the user uses "0", it means default.  Modify
-> +	 * reserved_rq_based_ios to report the default to the user.
-> +	 */
-> +	if (!reserved_rq_based_ios_latch) {
-> +		(void)cmpxchg(&reserved_rq_based_ios, 0, RESERVED_REQUEST_BASED_IOS);
-> +		reserved_rq_based_ios_latch = reserved_rq_based_ios;
+> +		__rq_for_each_bio(bio, clone)
+> +			num_bios++;
+> +		if (num_bios > ACCESS_ONCE(peak_rq_based_ios))
+> +			ACCESS_ONCE(peak_rq_based_ios) = num_bios;
 > +	}
-> +}
 > +
->  static int __init local_init(void)
->  {
->  	int r = -ENOMEM;
-> @@ -241,6 +273,10 @@ static int __init local_init(void)
->  	if (!_major)
->  		_major = r;
+>  	return clone;
+>  }
 >  
-> +	mutex_lock(&dm_mempools_lock);
-> +	__reserved_request_based_ios_refresh();
-> +	mutex_unlock(&dm_mempools_lock);
-> +
->  	return 0;
+> @@ -3034,6 +3050,12 @@ MODULE_PARM_DESC(reserved_bio_based_ios, "Reserved IOs in bio-based mempools");
+>  module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
+>  MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
 >  
->  out_uevent_exit:
-> @@ -2867,7 +2903,14 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
->  		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
->  	} else if (type == DM_TYPE_REQUEST_BASED) {
->  		cachep = _rq_tio_cache;
-> -		pool_size = RESERVED_REQUEST_BASED_IOS;
+> +module_param(track_peak_rq_based_ios, uint, S_IRUGO | S_IWUSR);
+> +MODULE_PARM_DESC(peak_rq_based_ios, "Enable tracking the maximum IOs in a cloned request");
 > +
-> +		mutex_lock(&dm_mempools_lock);
-> +		/* Check if reserved_rq_based_ios changed. */
-> +		if (reserved_rq_based_ios != reserved_rq_based_ios_latch)
-> +			__reserved_request_based_ios_refresh();
-> +		pool_size = reserved_rq_based_ios_latch;
-> +		mutex_unlock(&dm_mempools_lock);
-> +
->  		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
->  		/* per_bio_data_size is not used. See __bind_mempools(). */
->  		WARN_ON(per_bio_data_size != 0);
-> @@ -2925,6 +2968,10 @@ module_exit(dm_exit);
->  
->  module_param(major, uint, 0);
->  MODULE_PARM_DESC(major, "The major number of the device mapper");
-> +
-> +module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
-> +MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
+> +module_param(peak_rq_based_ios, uint, S_IRUGO);
+> +MODULE_PARM_DESC(peak_rq_based_ios, "Tracks the maximum IOs in a cloned request");
 > +
 >  MODULE_DESCRIPTION(DM_NAME " driver");
 >  MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");
