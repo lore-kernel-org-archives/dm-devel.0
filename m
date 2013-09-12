@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 5/7] dm mpath: use dm_get_reserved_rq_based_ios
-	to size mempool
-Date: Thu, 12 Sep 2013 18:24:56 -0400
-Message-ID: <1379024698-10487-6-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/7] dm: add reserved_bio_based_ios module
+	parameter
+Date: Thu, 12 Sep 2013 18:24:54 -0400
+Message-ID: <1379024698-10487-4-git-send-email-snitzer@redhat.com>
 References: <alpine.LRH.2.02.1308261012400.12373@file01.intranet.prod.int.rdu2.redhat.com>
 	<1379024698-10487-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -24,91 +24,100 @@ To: Frank Mayhar <fmayhar@google.com>, Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Switch dm-mpath over to sizing its mempool using DM core's configurable
-'reserved_rq_based_ios'.
+Allow user to change the number of IOs that are reserved by
+bio-based DM's mempools by writing to this file:
+/sys/module/dm_mod/parameters/reserved_bio_based_ios
 
-Export dm_get_reserved_rq_based_ios() for use by DM targets and core
-code.
+The default value is RESERVED_BIO_BASED_IOS (16).
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-mpath.c |  6 +++---
- drivers/md/dm.c       | 12 ++++++++++++
- drivers/md/dm.h       |  1 +
- 3 files changed, 16 insertions(+), 3 deletions(-)
+ drivers/md/dm.c | 42 ++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 40 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 5adede1..ddef91f 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -7,6 +7,7 @@
- 
- #include <linux/device-mapper.h>
- 
-+#include "dm.h"
- #include "dm-path-selector.h"
- #include "dm-uevent.h"
- 
-@@ -116,8 +117,6 @@ struct dm_mpath_io {
- 
- typedef int (*action_fn) (struct pgpath *pgpath);
- 
--#define MIN_IOS 256	/* Mempool size */
--
- static struct kmem_cache *_mpio_cache;
- 
- static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
-@@ -190,6 +189,7 @@ static void free_priority_group(struct priority_group *pg,
- static struct multipath *alloc_multipath(struct dm_target *ti)
- {
- 	struct multipath *m;
-+	unsigned min_ios = dm_get_reserved_rq_based_ios();
- 
- 	m = kzalloc(sizeof(*m), GFP_KERNEL);
- 	if (m) {
-@@ -202,7 +202,7 @@ static struct multipath *alloc_multipath(struct dm_target *ti)
- 		INIT_WORK(&m->trigger_event, trigger_event);
- 		init_waitqueue_head(&m->pg_init_wait);
- 		mutex_init(&m->work_mutex);
--		m->mpio_pool = mempool_create_slab_pool(MIN_IOS, _mpio_cache);
-+		m->mpio_pool = mempool_create_slab_pool(min_ios, _mpio_cache);
- 		if (!m->mpio_pool) {
- 			kfree(m);
- 			return NULL;
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 3f96c86..186f77d 100644
+index 8553d03..b44ae19 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -287,6 +287,18 @@ static void __reserved_request_based_ios_refresh(void)
- 	}
- }
+@@ -217,6 +217,17 @@ static struct kmem_cache *_io_cache;
+ static struct kmem_cache *_rq_tio_cache;
  
-+unsigned dm_get_reserved_rq_based_ios(void)
-+{
-+	unsigned ios;
+ /*
++ * Bio-based DM's mempools' reserved IOs set by the user
++ */
++static unsigned reserved_bio_based_ios;
 +
-+	mutex_lock(&dm_mempools_lock);
-+	ios = reserved_rq_based_ios_latch;
-+	mutex_unlock(&dm_mempools_lock);
++/*
++ * A copy of reserved_bio_based_ios because it can change anytime.
++ * If values disagree, the user has changed reserved_bio_based_ios.
++ */
++static unsigned reserved_bio_based_ios_latch;
 +
-+	return (ios ? : RESERVED_REQUEST_BASED_IOS);
-+}
-+EXPORT_SYMBOL_GPL(dm_get_reserved_rq_based_ios);
-+
- static int __init local_init(void)
- {
- 	int r = -ENOMEM;
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index e1982eb..1d1ad7b 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -185,6 +185,7 @@ void dm_free_md_mempools(struct dm_md_mempools *pools);
-  * Helpers that are used by DM core
++/*
+  * Request-based DM's mempools' reserved IOs set by the user
   */
- unsigned dm_get_reserved_bio_based_ios(void);
-+unsigned dm_get_reserved_rq_based_ios(void);
+ static unsigned reserved_rq_based_ios;
+@@ -228,10 +239,26 @@ static unsigned reserved_rq_based_ios;
+ static unsigned reserved_rq_based_ios_latch;
  
- static inline bool dm_message_test_buffer_overflow(char *result, unsigned maxlen)
+ /*
+- * This mutex protects reserved_rq_based_ios_latch.
++ * This mutex protects reserved_bio_based_ios_latch and reserved_rq_based_ios_latch.
+  */
+ static DEFINE_MUTEX(dm_mempools_lock);
+ 
++static void __reserved_bio_based_ios_refresh(void)
++{
++	BUG_ON(!mutex_is_locked(&dm_mempools_lock));
++
++	reserved_bio_based_ios_latch = ACCESS_ONCE(reserved_bio_based_ios);
++
++	/*
++	 * If the user uses "0", it means default.  Modify
++	 * reserved_bio_based_ios to report the default to the user.
++	 */
++	if (!reserved_bio_based_ios_latch) {
++		(void)cmpxchg(&reserved_bio_based_ios, 0, RESERVED_BIO_BASED_IOS);
++		reserved_bio_based_ios_latch = reserved_bio_based_ios;
++	}
++}
++
+ static void __reserved_request_based_ios_refresh(void)
  {
+ 	BUG_ON(!mutex_is_locked(&dm_mempools_lock));
+@@ -274,6 +301,7 @@ static int __init local_init(void)
+ 		_major = r;
+ 
+ 	mutex_lock(&dm_mempools_lock);
++	__reserved_bio_based_ios_refresh();
+ 	__reserved_request_based_ios_refresh();
+ 	mutex_unlock(&dm_mempools_lock);
+ 
+@@ -2899,7 +2927,14 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+ 
+ 	if (type == DM_TYPE_BIO_BASED) {
+ 		cachep = _io_cache;
+-		pool_size = RESERVED_BIO_BASED_IOS;
++
++		mutex_lock(&dm_mempools_lock);
++		/* Check if reserved_bio_based_ios changed. */
++		if (reserved_bio_based_ios != reserved_bio_based_ios_latch)
++			__reserved_bio_based_ios_refresh();
++		pool_size = reserved_bio_based_ios_latch;
++		mutex_unlock(&dm_mempools_lock);
++
+ 		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
+ 	} else if (type == DM_TYPE_REQUEST_BASED) {
+ 		cachep = _rq_tio_cache;
+@@ -2969,6 +3004,9 @@ module_exit(dm_exit);
+ module_param(major, uint, 0);
+ MODULE_PARM_DESC(major, "The major number of the device mapper");
+ 
++module_param(reserved_bio_based_ios, uint, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(reserved_bio_based_ios, "Reserved IOs in bio-based mempools");
++
+ module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
+ MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
+ 
 -- 
 1.8.1.4
