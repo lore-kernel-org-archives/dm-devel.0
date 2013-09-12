@@ -1,16 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 7/7] dm: optimize clone_rq() when
-	track_peak_rq_based_ios is disabled
-Date: Thu, 12 Sep 2013 18:24:58 -0400
-Message-ID: <1379024698-10487-8-git-send-email-snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 2/7] dm: add reserved_rq_based_ios module
+	parameter
+Date: Thu, 12 Sep 2013 18:45:48 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1309121840470.31794@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1308261012400.12373@file01.intranet.prod.int.rdu2.redhat.com>
 	<1379024698-10487-1-git-send-email-snitzer@redhat.com>
+	<1379024698-10487-3-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1379024698-10487-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1379024698-10487-3-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,96 +21,120 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Frank Mayhar <fmayhar@google.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Frank Mayhar <fmayhar@google.com>
 List-Id: dm-devel.ids
 
-Make use of static keys to eliminate the relevant branch in clone_rq()
-when dm_mod's 'track_peak_rq_based_ios' paramter is set to 0 (disabled).
+I think this is too complicated.
 
-Even if 'track_peak_rq_based_ios' is set to 0 it will not take effect
-until the next request-based table reload.  Once it is disabled the
-'peak_rq_based_ios' parameter will be reset to 0.
+dm-bufio uses similar approach like this patch - but in dm-bufio the code 
+path is performance critical, we don't want to recalculate memory size 
+with each i/o request.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 33 +++++++++++++++++++++++++++++++--
- 1 file changed, 31 insertions(+), 2 deletions(-)
+Here it is not performance critical, so I'd drop the mutex, drop the 
+latch, drop the function __reserved_request_based_ios_refresh and add only 
+these lines:
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index de83930..d9e38a7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -19,6 +19,7 @@
- #include <linux/idr.h>
- #include <linux/hdreg.h>
- #include <linux/delay.h>
-+#include <linux/static_key.h>
- 
- #include <trace/events/block.h>
- 
-@@ -242,10 +243,14 @@ static unsigned reserved_rq_based_ios_latch;
-  * Optionally track the maximum numbers of IOs in a cloned request.
-  */
- static unsigned track_peak_rq_based_ios;
-+static unsigned track_peak_rq_based_ios_latch;
- static unsigned peak_rq_based_ios;
- 
-+static struct static_key_deferred track_peak_rq_based_ios_enabled; /* defaults to false */
-+
- /*
-- * This mutex protects reserved_bio_based_ios_latch and reserved_rq_based_ios_latch.
-+ * This mutex protects reserved_bio_based_ios_latch, reserved_rq_based_ios_latch
-+ * and track_peak_rq_based_ios_latch.
-  */
- static DEFINE_MUTEX(dm_mempools_lock);
- 
-@@ -305,6 +310,26 @@ unsigned dm_get_reserved_rq_based_ios(void)
- }
- EXPORT_SYMBOL_GPL(dm_get_reserved_rq_based_ios);
- 
-+static void __track_peak_rq_based_ios_refresh(void)
-+{
-+	bool enabled = static_key_false(&track_peak_rq_based_ios_enabled.key);
-+
-+	BUG_ON(!mutex_is_locked(&dm_mempools_lock));
-+
-+	track_peak_rq_based_ios_latch = ACCESS_ONCE(track_peak_rq_based_ios);
-+
-+	if (track_peak_rq_based_ios_latch) {
-+		if (enabled)
-+			return; /* already enabled */
-+		static_key_slow_inc(&track_peak_rq_based_ios_enabled.key);
-+	} else {
-+		if (!enabled)
-+			return; /* already disabled */
-+		static_key_slow_dec(&track_peak_rq_based_ios_enabled.key);
-+		ACCESS_ONCE(peak_rq_based_ios) = 0;
-+	}
-+}
-+
- static int __init local_init(void)
- {
- 	int r = -ENOMEM;
-@@ -1725,7 +1750,7 @@ static struct request *clone_rq(struct request *rq, struct mapped_device *md,
- 		return NULL;
- 	}
- 
--	if (unlikely(ACCESS_ONCE(track_peak_rq_based_ios))) {
-+	if (static_key_false(&track_peak_rq_based_ios_enabled.key)) {
- 		struct bio *bio;
- 		unsigned num_bios = 0;
- 
-@@ -2984,6 +3009,10 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
- 		if (reserved_rq_based_ios != reserved_rq_based_ios_latch)
- 			__reserved_request_based_ios_refresh();
- 		pool_size = reserved_rq_based_ios_latch;
-+
-+		/* Check if track_peak_rq_based_ios changed. */
-+		if (track_peak_rq_based_ios != track_peak_rq_based_ios_latch)
-+			__track_peak_rq_based_ios_refresh();
- 		mutex_unlock(&dm_mempools_lock);
- 
- 		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
--- 
-1.8.1.4
+pool_size = ACCESS_ONCE(reserved_rq_based_ios);
+if (!pool_size) pool_size = RESERVED_REQUEST_BASED_IOS;
+
+Mikulas
+
+
+On Thu, 12 Sep 2013, Mike Snitzer wrote:
+
+> Allow user to change the number of IOs that are reserved by
+> request-based DM's mempools by writing to this file:
+> /sys/module/dm_mod/parameters/reserved_rq_based_ios
+> 
+> The default value is RESERVED_REQUEST_BASED_IOS (256).
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm.c | 49 ++++++++++++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 48 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 47bac14..8553d03 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -216,6 +216,38 @@ struct dm_md_mempools {
+>  static struct kmem_cache *_io_cache;
+>  static struct kmem_cache *_rq_tio_cache;
+>  
+> +/*
+> + * Request-based DM's mempools' reserved IOs set by the user
+> + */
+> +static unsigned reserved_rq_based_ios;
+> +
+> +/*
+> + * A copy of reserved_rq_based_ios because it can change anytime.
+> + * If values disagree, the user has changed reserved_rq_based_ios.
+> + */
+> +static unsigned reserved_rq_based_ios_latch;
+> +
+> +/*
+> + * This mutex protects reserved_rq_based_ios_latch.
+> + */
+> +static DEFINE_MUTEX(dm_mempools_lock);
+> +
+> +static void __reserved_request_based_ios_refresh(void)
+> +{
+> +	BUG_ON(!mutex_is_locked(&dm_mempools_lock));
+> +
+> +	reserved_rq_based_ios_latch = ACCESS_ONCE(reserved_rq_based_ios);
+> +
+> +	/*
+> +	 * If the user uses "0", it means default.  Modify
+> +	 * reserved_rq_based_ios to report the default to the user.
+> +	 */
+> +	if (!reserved_rq_based_ios_latch) {
+> +		(void)cmpxchg(&reserved_rq_based_ios, 0, RESERVED_REQUEST_BASED_IOS);
+> +		reserved_rq_based_ios_latch = reserved_rq_based_ios;
+> +	}
+> +}
+> +
+>  static int __init local_init(void)
+>  {
+>  	int r = -ENOMEM;
+> @@ -241,6 +273,10 @@ static int __init local_init(void)
+>  	if (!_major)
+>  		_major = r;
+>  
+> +	mutex_lock(&dm_mempools_lock);
+> +	__reserved_request_based_ios_refresh();
+> +	mutex_unlock(&dm_mempools_lock);
+> +
+>  	return 0;
+>  
+>  out_uevent_exit:
+> @@ -2867,7 +2903,14 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+>  		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
+>  	} else if (type == DM_TYPE_REQUEST_BASED) {
+>  		cachep = _rq_tio_cache;
+> -		pool_size = RESERVED_REQUEST_BASED_IOS;
+> +
+> +		mutex_lock(&dm_mempools_lock);
+> +		/* Check if reserved_rq_based_ios changed. */
+> +		if (reserved_rq_based_ios != reserved_rq_based_ios_latch)
+> +			__reserved_request_based_ios_refresh();
+> +		pool_size = reserved_rq_based_ios_latch;
+> +		mutex_unlock(&dm_mempools_lock);
+> +
+>  		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
+>  		/* per_bio_data_size is not used. See __bind_mempools(). */
+>  		WARN_ON(per_bio_data_size != 0);
+> @@ -2925,6 +2968,10 @@ module_exit(dm_exit);
+>  
+>  module_param(major, uint, 0);
+>  MODULE_PARM_DESC(major, "The major number of the device mapper");
+> +
+> +module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
+> +MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
+> +
+>  MODULE_DESCRIPTION(DM_NAME " driver");
+>  MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");
+>  MODULE_LICENSE("GPL");
+> -- 
+> 1.8.1.4
+> 
