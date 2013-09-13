@@ -1,13 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-statistics: fix a possible counter corruption
- on 32-bit systems
-Date: Fri, 13 Sep 2013 17:42:24 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1309131739480.8872@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bastien ROUCARIES <roucaries.bastien@gmail.com>
+Subject: Re: [3.10.7] Reproductible soft lockup,
+	recover but freeze even the mouse
+Date: Fri, 13 Sep 2013 09:26:46 +0200
+Message-ID: <CAE2SPAazLJQ_fW+cJJ9hkhSXp_DaqQPJ=SbgZBJbrsDBjbn5kw@mail.gmail.com>
+References: <CAE2SPAa-2NY3OKKSbmTY1fsaSD62BXwjNTRhGnrqdRGKd4z4KQ@mail.gmail.com>
+	<20130909194826.74d5df39@notabene.brown>
+	<CAE2SPAbAderJBX7cHxDLVdX5KF2uOqnLT9Pbim+90wXwNHh=6g@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7911660084857015555=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAE2SPAbAderJBX7cHxDLVdX5KF2uOqnLT9Pbim+90wXwNHh=6g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,85 +20,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
-Cc: Mike Snitzer <msnitzer@redhat.com>
+To: dm-devel@redhat.com
+Cc: Andreas Dilger <adilger.kernel@dilger.ca>, Ted Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi
+--===============7911660084857015555==
+Content-Type: multipart/alternative; boundary=001a1133659ce848f604e63ec6e0
 
-I found this bug when reading through the statistics patch. That trick to 
-avoid irq disabling can be done on 64-bit architectures, but not on 
-32-bit.
+--001a1133659ce848f604e63ec6e0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Push this patch upstream.
+Le 9 sept. 2013 12:48, "Bastien ROUCARIES" <roucaries.bastien@gmail.com> a
+=C3=A9crit :
+>
+> On Mon, Sep 9, 2013 at 11:48 AM, NeilBrown <neilb@suse.de> wrote:
+> > On Mon, 9 Sep 2013 10:58:12 +0200 Bastien ROUCARIES
+> > <roucaries.bastien@gmail.com> wrote:
+> >
+> >> Hi,
+> >>
+> >> I experiment a soft lockup. during 20 s I have no mouse, could not
+> >> switch back to console and so on.
+> >>
+> >> I achieve to get a backtrace by echo 15 >
+> >> /proc/sys/kernel/hung_task_timeout_secs
+> >>
+> >> Seems file system related (hdd led is on).
 
-Mikulas
+Do you need some trace ? It is fairly reproducible.
 
----
+Bastien
 
-dm-statistics: fix a possible counter corruption on 32-bit systems
 
-There was a deliberate race condition in dm_stat_for_entry to avoid the
-overhead disabling and enabling interrupts. The race could result in some
-events not being counted.
+> >>
+> >> My filesystems are ext4 over raid0 so add some cc
+> >
+> > Appears to be "dm" raid0 rather than "md" raid0 - so not my area.
+> > May help to include dm-devel@redhat.com, and maybe include a
+description of
+> > the dm configuration.  e.g. "dmsetup table" output.
+>
+> dmsetup  table
+> VOL-ROOT: 0 195305472 linear 9:1 2048
+> VOL-HOME: 0 1562501120 linear 9:1 195307520
+>
+> >
+> > NeilBrown
 
-However, on 32-bit architectures, operations on long long variables are
-not atomic, so the race condition could cause the counter to jump by 2^32.
-Such jumps could be disruptive, so we need to do proper locking on 32-bit
-architectures.
+--001a1133659ce848f604e63ec6e0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+<p dir=3D"ltr"><br>
+Le 9 sept. 2013 12:48, &quot;Bastien ROUCARIES&quot; &lt;<a href=3D"mailto:=
+roucaries.bastien@gmail.com">roucaries.bastien@gmail.com</a>&gt; a =C3=A9cr=
+it=C2=A0:<br>
+&gt;<br>
+&gt; On Mon, Sep 9, 2013 at 11:48 AM, NeilBrown &lt;<a href=3D"mailto:neilb=
+@suse.de">neilb@suse.de</a>&gt; wrote:<br>
+&gt; &gt; On Mon, 9 Sep 2013 10:58:12 +0200 Bastien ROUCARIES<br>
+&gt; &gt; &lt;<a href=3D"mailto:roucaries.bastien@gmail.com">roucaries.bast=
+ien@gmail.com</a>&gt; wrote:<br>
+&gt; &gt;<br>
+&gt; &gt;&gt; Hi,<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; I experiment a soft lockup. during 20 s I have no mouse, coul=
+d not<br>
+&gt; &gt;&gt; switch back to console and so on.<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; I achieve to get a backtrace by echo 15 &gt;<br>
+&gt; &gt;&gt; /proc/sys/kernel/hung_task_timeout_secs<br>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; Seems file system related (hdd led is on).<br></p>
+<p dir=3D"ltr">Do you need some trace ? It is fairly reproducible.</p>
+<p dir=3D"ltr">Bastien<br><br><br></p>
+<p dir=3D"ltr">&gt; &gt;&gt;<br>
+&gt; &gt;&gt; My filesystems are ext4 over raid0 so add some cc<br>
+&gt; &gt;<br>
+&gt; &gt; Appears to be &quot;dm&quot; raid0 rather than &quot;md&quot; rai=
+d0 - so not my area.<br>
+&gt; &gt; May help to include <a href=3D"mailto:dm-devel@redhat.com">dm-dev=
+el@redhat.com</a>, and maybe include a description of<br>
+&gt; &gt; the dm configuration. =C2=A0e.g. &quot;dmsetup table&quot; output=
+.<br>
+&gt;<br>
+&gt; dmsetup =C2=A0table<br>
+&gt; VOL-ROOT: 0 195305472 linear 9:1 2048<br>
+&gt; VOL-HOME: 0 1562501120 linear 9:1 195307520<br>
+&gt;<br>
+&gt; &gt;<br>
+&gt; &gt; NeilBrown<br>
+</p>
 
----
- drivers/md/dm-stats.c |   23 +++++++++++++++++------
- 1 file changed, 17 insertions(+), 6 deletions(-)
+--001a1133659ce848f604e63ec6e0--
 
-Index: linux-3.11-fast/drivers/md/dm-stats.c
-===================================================================
---- linux-3.11-fast.orig/drivers/md/dm-stats.c	2013-09-13 22:26:00.000000000 +0200
-+++ linux-3.11-fast/drivers/md/dm-stats.c	2013-09-13 23:30:08.000000000 +0200
-@@ -451,19 +451,26 @@ static void dm_stat_for_entry(struct dm_
- 	struct dm_stat_percpu *p;
- 
- 	/*
--	 * For strict correctness we should use local_irq_disable/enable
-+	 * For strict correctness we should use local_irq_save/restore
- 	 * instead of preempt_disable/enable.
- 	 *
--	 * This is racy if the driver finishes bios from non-interrupt
--	 * context as well as from interrupt context or from more different
--	 * interrupts.
-+	 * preempt_disable/enable is racy if the driver finishes bios
-+	 * from non-interrupt context as well as from interrupt context
-+	 * or from more different interrupts.
- 	 *
--	 * However, the race only results in not counting some events,
--	 * so it is acceptable.
-+	 * On 64-bit architectures the race only results in not counting some
-+	 * events, so it is acceptable. On 32-bit architectures the race could
-+	 * cause the counter going off by 2^32, so we need to do proper locking
-+	 * there.
- 	 *
- 	 * part_stat_lock()/part_stat_unlock() have this race too.
- 	 */
-+#if BITS_PER_LONG == 32
-+	unsigned long flags;
-+	local_irq_save(flags);
-+#else
- 	preempt_disable();
-+#endif
- 	p = &s->stat_percpu[smp_processor_id()][entry];
- 
- 	if (!end) {
-@@ -478,7 +485,11 @@ static void dm_stat_for_entry(struct dm_
- 		p->ticks[idx] += duration;
- 	}
- 
-+#if BITS_PER_LONG == 32
-+	local_irq_restore(flags);
-+#else
- 	preempt_enable();
-+#endif
- }
- 
- static void __dm_stat_bio(struct dm_stat *s, unsigned long bi_rw,
+
+--===============7911660084857015555==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7911660084857015555==--
