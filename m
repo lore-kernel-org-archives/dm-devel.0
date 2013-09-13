@@ -1,16 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 3/3] dm: add reserved_bio_based_ios module
-	parameter
-Date: Fri, 13 Sep 2013 17:08:14 -0400
-Message-ID: <1379106494-16366-4-git-send-email-snitzer@redhat.com>
-References: <20130913203005.GA8635@redhat.com>
-	<1379106494-16366-1-git-send-email-snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-statistics: fix a possible counter corruption
+ on 32-bit systems
+Date: Fri, 13 Sep 2013 17:42:24 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1309131739480.8872@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1379106494-16366-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,121 +17,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Frank Mayhar <fmayhar@google.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+Cc: Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Allow user to change the number of IOs that are reserved by
-bio-based DM's mempools by writing to this file:
-/sys/module/dm_mod/parameters/reserved_bio_based_ios
+Hi
 
-The default value is RESERVED_BIO_BASED_IOS (16).  The maximum allowed
-value is RESERVED_MAX_IOS (1024).
+I found this bug when reading through the statistics patch. That trick to 
+avoid irq disabling can be done on 64-bit architectures, but not on 
+32-bit.
 
-Export dm_get_reserved_bio_based_ios() for use by DM targets and core
-code.  Switch to sizing dm-io's mempool and bioset using DM core's
-configurable 'reserved_bio_based_ios'.
+Push this patch upstream.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Mikulas
+
 ---
- drivers/md/dm-io.c |    7 +++----
- drivers/md/dm.c    |   17 ++++++++++++++++-
- drivers/md/dm.h    |    1 +
- 3 files changed, 20 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index ea49834..2a20986 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -19,8 +19,6 @@
- #define DM_MSG_PREFIX "io"
+dm-statistics: fix a possible counter corruption on 32-bit systems
+
+There was a deliberate race condition in dm_stat_for_entry to avoid the
+overhead disabling and enabling interrupts. The race could result in some
+events not being counted.
+
+However, on 32-bit architectures, operations on long long variables are
+not atomic, so the race condition could cause the counter to jump by 2^32.
+Such jumps could be disruptive, so we need to do proper locking on 32-bit
+architectures.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-stats.c |   23 +++++++++++++++++------
+ 1 file changed, 17 insertions(+), 6 deletions(-)
+
+Index: linux-3.11-fast/drivers/md/dm-stats.c
+===================================================================
+--- linux-3.11-fast.orig/drivers/md/dm-stats.c	2013-09-13 22:26:00.000000000 +0200
++++ linux-3.11-fast/drivers/md/dm-stats.c	2013-09-13 23:30:08.000000000 +0200
+@@ -451,19 +451,26 @@ static void dm_stat_for_entry(struct dm_
+ 	struct dm_stat_percpu *p;
  
- #define DM_IO_MAX_REGIONS	BITS_PER_LONG
--#define MIN_IOS		16
--#define MIN_BIOS	16
+ 	/*
+-	 * For strict correctness we should use local_irq_disable/enable
++	 * For strict correctness we should use local_irq_save/restore
+ 	 * instead of preempt_disable/enable.
+ 	 *
+-	 * This is racy if the driver finishes bios from non-interrupt
+-	 * context as well as from interrupt context or from more different
+-	 * interrupts.
++	 * preempt_disable/enable is racy if the driver finishes bios
++	 * from non-interrupt context as well as from interrupt context
++	 * or from more different interrupts.
+ 	 *
+-	 * However, the race only results in not counting some events,
+-	 * so it is acceptable.
++	 * On 64-bit architectures the race only results in not counting some
++	 * events, so it is acceptable. On 32-bit architectures the race could
++	 * cause the counter going off by 2^32, so we need to do proper locking
++	 * there.
+ 	 *
+ 	 * part_stat_lock()/part_stat_unlock() have this race too.
+ 	 */
++#if BITS_PER_LONG == 32
++	unsigned long flags;
++	local_irq_save(flags);
++#else
+ 	preempt_disable();
++#endif
+ 	p = &s->stat_percpu[smp_processor_id()][entry];
  
- struct dm_io_client {
- 	mempool_t *pool;
-@@ -50,16 +48,17 @@ static struct kmem_cache *_dm_io_cache;
- struct dm_io_client *dm_io_client_create(void)
- {
- 	struct dm_io_client *client;
-+	unsigned min_ios = dm_get_reserved_bio_based_ios();
+ 	if (!end) {
+@@ -478,7 +485,11 @@ static void dm_stat_for_entry(struct dm_
+ 		p->ticks[idx] += duration;
+ 	}
  
- 	client = kmalloc(sizeof(*client), GFP_KERNEL);
- 	if (!client)
- 		return ERR_PTR(-ENOMEM);
- 
--	client->pool = mempool_create_slab_pool(MIN_IOS, _dm_io_cache);
-+	client->pool = mempool_create_slab_pool(min_ios, _dm_io_cache);
- 	if (!client->pool)
- 		goto bad;
- 
--	client->bios = bioset_create(MIN_BIOS, 0);
-+	client->bios = bioset_create(min_ios, 0);
- 	if (!client->bios)
- 		goto bad;
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 93ba644..033dc26 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -218,6 +218,11 @@ static struct kmem_cache *_io_cache;
- static struct kmem_cache *_rq_tio_cache;
- 
- /*
-+ * Bio-based DM's mempools' reserved IOs set by the user.
-+ */
-+static unsigned reserved_bio_based_ios = RESERVED_BIO_BASED_IOS;
-+
-+/*
-  * Request-based DM's mempools' reserved IOs set by the user.
-  */
- static unsigned reserved_rq_based_ios = RESERVED_REQUEST_BASED_IOS;
-@@ -241,6 +246,13 @@ static unsigned __dm_get_reserved_ios(unsigned *reserved_ios,
- 	return ios;
++#if BITS_PER_LONG == 32
++	local_irq_restore(flags);
++#else
+ 	preempt_enable();
++#endif
  }
  
-+unsigned dm_get_reserved_bio_based_ios(void)
-+{
-+	return __dm_get_reserved_ios(&reserved_bio_based_ios,
-+				     RESERVED_BIO_BASED_IOS, RESERVED_MAX_IOS);
-+}
-+EXPORT_SYMBOL_GPL(dm_get_reserved_bio_based_ios);
-+
- unsigned dm_get_reserved_rq_based_ios(void)
- {
- 	return __dm_get_reserved_ios(&reserved_rq_based_ios,
-@@ -2895,7 +2907,7 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
- 
- 	if (type == DM_TYPE_BIO_BASED) {
- 		cachep = _io_cache;
--		pool_size = RESERVED_BIO_BASED_IOS;
-+		pool_size = dm_get_reserved_bio_based_ios();
- 		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
- 	} else if (type == DM_TYPE_REQUEST_BASED) {
- 		cachep = _rq_tio_cache;
-@@ -2958,6 +2970,9 @@ module_exit(dm_exit);
- module_param(major, uint, 0);
- MODULE_PARM_DESC(major, "The major number of the device mapper");
- 
-+module_param(reserved_bio_based_ios, uint, S_IRUGO | S_IWUSR);
-+MODULE_PARM_DESC(reserved_bio_based_ios, "Reserved IOs in bio-based mempools");
-+
- module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
- MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
- 
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 1539650..1d1ad7b 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -184,6 +184,7 @@ void dm_free_md_mempools(struct dm_md_mempools *pools);
- /*
-  * Helpers that are used by DM core
-  */
-+unsigned dm_get_reserved_bio_based_ios(void);
- unsigned dm_get_reserved_rq_based_ios(void);
- 
- static inline bool dm_message_test_buffer_overflow(char *result, unsigned maxlen)
--- 
-1.7.1
+ static void __dm_stat_bio(struct dm_stat *s, unsigned long bi_rw,
