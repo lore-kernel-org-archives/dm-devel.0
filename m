@@ -1,71 +1,56 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm mpath: do not fail path on -ENOSPC
-Date: Fri, 13 Sep 2013 07:58:35 +0200
-Message-ID: <5232A98B.2080301@suse.de>
-References: <5232A896.80803@ce.jp.nec.com>
+From: roucaries.bastien@gmail.com
+Subject: Re: [3.10.7] Reproductible soft lockup, recover but freeze even the mouse
+Date: Fri, 13 Sep 2013 09:29:49 +0200
+Message-ID: <eef6aca5-3ec5-488c-bd9f-09930313ba37@email.android.com>
+References: <CAE2SPAa-2NY3OKKSbmTY1fsaSD62BXwjNTRhGnrqdRGKd4z4KQ@mail.gmail.com> <20130909194826.74d5df39@notabene.brown> <CAE2SPAbAderJBX7cHxDLVdX5KF2uOqnLT9Pbim+90wXwNHh=6g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <5232A896.80803@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAE2SPAbAderJBX7cHxDLVdX5KF2uOqnLT9Pbim+90wXwNHh=6g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>
 List-Id: dm-devel.ids
 
-On 09/13/2013 07:54 AM, Jun'ichi Nomura wrote:
-> Since ENOSPC is a target-side error, dm-mpath should just pass the er=
-ror
-> information to upper layer instead of retrying itself with path failo=
-ver.
-> Otherwise it will end up failing all paths down while path checkers f=
-ind
-> all paths ok.
->=20
-> ENOSPC can now be returned from SCSI device after commit a9d6ceb8
-> ("[SCSI] return ENOSPC on thin provisioning failure").
->=20
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Cc: Hannes Reinecke <hare@suse.de>
-> ---
->  drivers/md/dm-mpath.c | 1 +
->  1 file changed, 1 insertion(+)
->=20
-> The patch is not actually tested as I don't have such a storage at my=
- hand.
-> Hannes, please let me know if you didn't change noretry_error() inten=
-tionally.
->=20
-No, you are correct. I've missed this bit when sending out the
-enhanced I/O errors patch.
 
-Acked-by: Hannes Reinecke <hare@suse.de>
 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index b759a12..075747e 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -1268,6 +1268,7 @@ static int noretry_error(int error)
->  	case -EREMOTEIO:
->  	case -EILSEQ:
->  	case -ENODATA:
-> +	case -ENOSPC:
->  		return 1;
->  	}
-> =20
->=20
 
-Cheers,
+Bastien ROUCARIES <roucaries.bastien@gmail.com> a =C3=A9crit=C2=A0:
+>On Mon, Sep 9, 2013 at 11:48 AM, NeilBrown <neilb@suse.de> wrote:
+>> On Mon, 9 Sep 2013 10:58:12 +0200 Bastien ROUCARIES
+>> <roucaries.bastien@gmail.com> wrote:
+>>
+>>> Hi,
+>>>
+>>> I experiment a soft lockup. during 20 s I have no mouse, could not
+>>> switch back to console and so on.
+>>>
+>>> I achieve to get a backtrace by echo 15 >
+>>> /proc/sys/kernel/hung_task_timeout_secs
+>>>
+>>> Seems file system related (hdd led is on).
 
-Hannes
+If needed I could add trace. Sorry for double post Google phone mail is=
+ by default HTML I expect now plain text.
+
+Bastien
+
+
+>>> My filesystems are ext4 over raid0 so add some cc
+>>
+>> Appears to be "dm" raid0 rather than "md" raid0 - so not my area.
+>> May help to include dm-devel@redhat.com, and maybe include a
+>description of
+>> the dm configuration.  e.g. "dmsetup table" output.
+>
+>dmsetup  table
+>VOL-ROOT: 0 195305472 linear 9:1 2048
+>VOL-HOME: 0 1562501120 linear 9:1 195307520
+>
+>>
+>> NeilBrown
+
 --=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
-GF: J. Hawn, J. Guild, F. Imend=C3=B6rffer, HRB 16746 (AG N=C3=BCrnberg=
-)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Envoy=C3=A9 de mon t=C3=A9l=C3=A9phone Android avec K-9 Mail. Excusez l=
+a bri=C3=A8vet=C3=A9.
