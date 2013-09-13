@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 1/3] dm: lower bio-based mempool reservation
-Date: Fri, 13 Sep 2013 17:08:12 -0400
-Message-ID: <1379106494-16366-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v3 3/3] dm: add reserved_bio_based_ios module
+	parameter
+Date: Fri, 13 Sep 2013 17:08:14 -0400
+Message-ID: <1379106494-16366-4-git-send-email-snitzer@redhat.com>
 References: <20130913203005.GA8635@redhat.com>
 	<1379106494-16366-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -23,57 +24,117 @@ To: Frank Mayhar <fmayhar@google.com>, Mikulas Patocka <mpatocka@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Bio-based device mapper processing doesn't need larger mempools (like
-request-based DM does), so lower the number of reserved entries for
-bio-based operation.  16 was already used for bio-based DM's bioset
-but mistakenly wasn't used for it's _io_cache.
+Allow user to change the number of IOs that are reserved by
+bio-based DM's mempools by writing to this file:
+/sys/module/dm_mod/parameters/reserved_bio_based_ios
 
-Formalize difference between bio-based and request-based defaults by
-introducing RESERVED_BIO_BASED_IOS and RESERVED_REQUEST_BASED_IOS.
+The default value is RESERVED_BIO_BASED_IOS (16).  The maximum allowed
+value is RESERVED_MAX_IOS (1024).
 
-(based on older code from Mikulas Patocka)
+Export dm_get_reserved_bio_based_ios() for use by DM targets and core
+code.  Switch to sizing dm-io's mempool and bioset using DM core's
+configurable 'reserved_bio_based_ios'.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm.c |    9 +++++----
- 1 files changed, 5 insertions(+), 4 deletions(-)
+ drivers/md/dm-io.c |    7 +++----
+ drivers/md/dm.c    |   17 ++++++++++++++++-
+ drivers/md/dm.h    |    1 +
+ 3 files changed, 20 insertions(+), 5 deletions(-)
 
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index ea49834..2a20986 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -19,8 +19,6 @@
+ #define DM_MSG_PREFIX "io"
+ 
+ #define DM_IO_MAX_REGIONS	BITS_PER_LONG
+-#define MIN_IOS		16
+-#define MIN_BIOS	16
+ 
+ struct dm_io_client {
+ 	mempool_t *pool;
+@@ -50,16 +48,17 @@ static struct kmem_cache *_dm_io_cache;
+ struct dm_io_client *dm_io_client_create(void)
+ {
+ 	struct dm_io_client *client;
++	unsigned min_ios = dm_get_reserved_bio_based_ios();
+ 
+ 	client = kmalloc(sizeof(*client), GFP_KERNEL);
+ 	if (!client)
+ 		return ERR_PTR(-ENOMEM);
+ 
+-	client->pool = mempool_create_slab_pool(MIN_IOS, _dm_io_cache);
++	client->pool = mempool_create_slab_pool(min_ios, _dm_io_cache);
+ 	if (!client->pool)
+ 		goto bad;
+ 
+-	client->bios = bioset_create(MIN_BIOS, 0);
++	client->bios = bioset_create(min_ios, 0);
+ 	if (!client->bios)
+ 		goto bad;
+ 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 6a5e9ed..47bac14 100644
+index 93ba644..033dc26 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -211,7 +211,8 @@ struct dm_md_mempools {
- 	struct bio_set *bs;
- };
- 
--#define MIN_IOS 256
-+#define RESERVED_BIO_BASED_IOS		16
-+#define RESERVED_REQUEST_BASED_IOS	256
- static struct kmem_cache *_io_cache;
+@@ -218,6 +218,11 @@ static struct kmem_cache *_io_cache;
  static struct kmem_cache *_rq_tio_cache;
  
-@@ -2862,18 +2863,18 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+ /*
++ * Bio-based DM's mempools' reserved IOs set by the user.
++ */
++static unsigned reserved_bio_based_ios = RESERVED_BIO_BASED_IOS;
++
++/*
+  * Request-based DM's mempools' reserved IOs set by the user.
+  */
+ static unsigned reserved_rq_based_ios = RESERVED_REQUEST_BASED_IOS;
+@@ -241,6 +246,13 @@ static unsigned __dm_get_reserved_ios(unsigned *reserved_ios,
+ 	return ios;
+ }
+ 
++unsigned dm_get_reserved_bio_based_ios(void)
++{
++	return __dm_get_reserved_ios(&reserved_bio_based_ios,
++				     RESERVED_BIO_BASED_IOS, RESERVED_MAX_IOS);
++}
++EXPORT_SYMBOL_GPL(dm_get_reserved_bio_based_ios);
++
+ unsigned dm_get_reserved_rq_based_ios(void)
+ {
+ 	return __dm_get_reserved_ios(&reserved_rq_based_ios,
+@@ -2895,7 +2907,7 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
  
  	if (type == DM_TYPE_BIO_BASED) {
  		cachep = _io_cache;
--		pool_size = 16;
-+		pool_size = RESERVED_BIO_BASED_IOS;
+-		pool_size = RESERVED_BIO_BASED_IOS;
++		pool_size = dm_get_reserved_bio_based_ios();
  		front_pad = roundup(per_bio_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
  	} else if (type == DM_TYPE_REQUEST_BASED) {
  		cachep = _rq_tio_cache;
--		pool_size = MIN_IOS;
-+		pool_size = RESERVED_REQUEST_BASED_IOS;
- 		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
- 		/* per_bio_data_size is not used. See __bind_mempools(). */
- 		WARN_ON(per_bio_data_size != 0);
- 	} else
- 		goto out;
+@@ -2958,6 +2970,9 @@ module_exit(dm_exit);
+ module_param(major, uint, 0);
+ MODULE_PARM_DESC(major, "The major number of the device mapper");
  
--	pools->io_pool = mempool_create_slab_pool(MIN_IOS, cachep);
-+	pools->io_pool = mempool_create_slab_pool(pool_size, cachep);
- 	if (!pools->io_pool)
- 		goto out;
++module_param(reserved_bio_based_ios, uint, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(reserved_bio_based_ios, "Reserved IOs in bio-based mempools");
++
+ module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
+ MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
  
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 1539650..1d1ad7b 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -184,6 +184,7 @@ void dm_free_md_mempools(struct dm_md_mempools *pools);
+ /*
+  * Helpers that are used by DM core
+  */
++unsigned dm_get_reserved_bio_based_ios(void);
+ unsigned dm_get_reserved_rq_based_ios(void);
+ 
+ static inline bool dm_message_test_buffer_overflow(char *result, unsigned maxlen)
 -- 
 1.7.1
