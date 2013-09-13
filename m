@@ -1,8 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH 7/7] dm: optimize clone_rq() when
  track_peak_rq_based_ios is disabled
-Date: Fri, 13 Sep 2013 09:04:29 -0400
-Message-ID: <20130913130429.GB3989@redhat.com>
+Date: Fri, 13 Sep 2013 10:34:50 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1309131034310.1090@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1308261012400.12373@file01.intranet.prod.int.rdu2.redhat.com>
 	<1379024698-10487-1-git-send-email-snitzer@redhat.com>
 	<1379024698-10487-8-git-send-email-snitzer@redhat.com>
@@ -16,7 +16,6 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <523298B3.9050400@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -28,53 +27,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: axboe@kernel.dk, Frank Mayhar <fmayhar@google.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 13 2013 at 12:46am -0400,
-Jun'ichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+This is good idea.
 
-> On 09/13/13 08:53, Mike Snitzer wrote:
-> > On Thu, Sep 12 2013 at  7:30pm -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> >>>>> Make use of static keys to eliminate the relevant branch in clone_rq()
-> >>>>> when dm_mod's 'track_peak_rq_based_ios' paramter is set to 0 (disabled).
-> >>>>>
-> >>>>> Even if 'track_peak_rq_based_ios' is set to 0 it will not take effect
-> >>>>> until the next request-based table reload.  Once it is disabled the
-> >>>>> 'peak_rq_based_ios' parameter will be reset to 0.
-> >>>>
-> >>>> This patch changes it so that the value track_peak_rq_based_ios is sampled 
-> >>>> only when reloading a table. I think it will be confusing to the user if 
-> >>>> he changes the value, but the change doesn't take effect until something 
-> >>>> reloads some table.
-> >>>
-> >>> Well we need to be able to notice the change but I do not wish to do so
-> >>> in a performance critical path (which clone_rq is).
-> >>
-> >> I think one condition isn't that bad so there is no need to use static 
-> >> keys.
-> > 
-> > Considering we're talking about the IO path I'd rather avoid it given
-> > 'track_peak_rq_based_ios' will almost always be disabled.
-> > 
-> >> If you want to use static keys, you need to refresh them in some place 
-> >> that it called regularly.
-> > 
-> > No you don't.  I'm assuming if someone enables 'track_peak_rq_based_ios'
-> > they know what they are doing.
-> > 
-> > But I'm open to suggestions on a more appropriate hook to be catching
-> > the update to track_peak_rq_based_ios.
-> 
+Mikulas
+
+
+On Fri, 13 Sep 2013, Jun'ichi Nomura wrote:
+
 > Other approach might be putting the info on tracepoints.
 > Then the tracepoint framework will take care of the static_key thing.
 > 
 > Since 'the number of bios in a request' is a block-layer generic info,
 > you could extend the block layer events instead of having your own.
-
-Sounds good, I like this better.
- 
+> 
 > Attached patch adds it to block_rq_remap event.
 > You could do something like this to see requests with many bios:
 >   echo 'nr_bios > 32' > /sys/kernel/debug/tracing/events/block/block_rq_remap/filter
@@ -85,23 +53,11 @@ Sounds good, I like this better.
 >      kworker/1:1H-308   [001] d..1   276.242482: block_rq_remap: 8,160 W 1968272 + 512 <- (253,1) 1968272 64
 >      kworker/1:1H-308   [001] d..1   276.242515: block_rq_remap: 65,0 W 1968784 + 512 <- (253,1) 1968784 64
 > # the last item in line is the number of bios. ("64" in this case)
-
-Acked-by: Mike Snitzer <snitzer@redhat.com>
-
-Any chance you'd be open to adding a proper header (with your
-Signed-off-by, my Ack, etc) and cc Jens on v2?
-
-I can do it if you'd like but figured it more appropriate for you to
-submit your work.
-
-Thanks,
-Mike
-
-Jens, FYI here is the patch Jun'ichi developed as an alternative to these
-2 DM-specific patches:
-http://www.redhat.com/archives/dm-devel/2013-September/msg00030.html
-http://www.redhat.com/archives/dm-devel/2013-September/msg00031.html
-
+> 
+> ---
+> Jun'ichi Nomura, NEC Corporation
+> 
+> 
 > diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
 > index 2fdb4a4..0e6f765 100644
 > --- a/include/linux/blkdev.h
@@ -156,7 +112,3 @@ http://www.redhat.com/archives/dm-devel/2013-September/msg00031.html
 >  
 >  #endif /* _TRACE_BLOCK_H */
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
