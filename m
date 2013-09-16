@@ -1,16 +1,13 @@
-From: Bastien ROUCARIES <roucaries.bastien@gmail.com>
-Subject: Re: [3.10.7] Reproductible soft lockup,
-	recover but freeze even the mouse
-Date: Fri, 13 Sep 2013 09:26:46 +0200
-Message-ID: <CAE2SPAazLJQ_fW+cJJ9hkhSXp_DaqQPJ=SbgZBJbrsDBjbn5kw@mail.gmail.com>
-References: <CAE2SPAa-2NY3OKKSbmTY1fsaSD62BXwjNTRhGnrqdRGKd4z4KQ@mail.gmail.com>
-	<20130909194826.74d5df39@notabene.brown>
-	<CAE2SPAbAderJBX7cHxDLVdX5KF2uOqnLT9Pbim+90wXwNHh=6g@mail.gmail.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: [RFC] dm-writeboost: Porting daemon modulating migration
+ from userland into the kernel
+Date: Mon, 16 Sep 2013 17:54:15 +0900
+Message-ID: <5236C737.7040306@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7911660084857015555=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAE2SPAbAderJBX7cHxDLVdX5KF2uOqnLT9Pbim+90wXwNHh=6g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,106 +18,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Andreas Dilger <adilger.kernel@dilger.ca>, Ted Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org
+Cc: gregkh@linuxfoundation.org
 List-Id: dm-devel.ids
 
---===============7911660084857015555==
-Content-Type: multipart/alternative; boundary=001a1133659ce848f604e63ec6e0
+Hi, DM Guys,
 
---001a1133659ce848f604e63ec6e0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-Le 9 sept. 2013 12:48, "Bastien ROUCARIES" <roucaries.bastien@gmail.com> a
-=C3=A9crit :
->
-> On Mon, Sep 9, 2013 at 11:48 AM, NeilBrown <neilb@suse.de> wrote:
-> > On Mon, 9 Sep 2013 10:58:12 +0200 Bastien ROUCARIES
-> > <roucaries.bastien@gmail.com> wrote:
-> >
-> >> Hi,
-> >>
-> >> I experiment a soft lockup. during 20 s I have no mouse, could not
-> >> switch back to console and so on.
-> >>
-> >> I achieve to get a backtrace by echo 15 >
-> >> /proc/sys/kernel/hung_task_timeout_secs
-> >>
-> >> Seems file system related (hdd led is on).
-
-Do you need some trace ? It is fairly reproducible.
-
-Bastien
+I am thinking of a little design change
+as to autonomous migration feature.
+I want to share this issue with you
+to first ask for your advice
+and for you to deeply understand the 
+functionality of dm-writeboost at the same time.
 
 
-> >>
-> >> My filesystems are ext4 over raid0 so add some cc
-> >
-> > Appears to be "dm" raid0 rather than "md" raid0 - so not my area.
-> > May help to include dm-devel@redhat.com, and maybe include a
-description of
-> > the dm configuration.  e.g. "dmsetup table" output.
->
-> dmsetup  table
-> VOL-ROOT: 0 195305472 linear 9:1 2048
-> VOL-HOME: 0 1562501120 linear 9:1 195307520
->
-> >
-> > NeilBrown
+dm-writeboost has a daemon that autonomouly turn on/off migration.
+Migration means writing back from cache device to backing store.
+The daemon checking the load of backing stores
+and turn on/off migration accoding to the load.
+Migration despite the backing store in high load
+causes long queuing to the backing store
+that makes the situation even worse.
 
---001a1133659ce848f604e63ec6e0
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+The daemon is now implemented in Python using PythonDaemon module
+since the daemon is not essential for dm-writeboost kernel module
+to run without failure.
 
-<p dir=3D"ltr"><br>
-Le 9 sept. 2013 12:48, &quot;Bastien ROUCARIES&quot; &lt;<a href=3D"mailto:=
-roucaries.bastien@gmail.com">roucaries.bastien@gmail.com</a>&gt; a =C3=A9cr=
-it=C2=A0:<br>
-&gt;<br>
-&gt; On Mon, Sep 9, 2013 at 11:48 AM, NeilBrown &lt;<a href=3D"mailto:neilb=
-@suse.de">neilb@suse.de</a>&gt; wrote:<br>
-&gt; &gt; On Mon, 9 Sep 2013 10:58:12 +0200 Bastien ROUCARIES<br>
-&gt; &gt; &lt;<a href=3D"mailto:roucaries.bastien@gmail.com">roucaries.bast=
-ien@gmail.com</a>&gt; wrote:<br>
-&gt; &gt;<br>
-&gt; &gt;&gt; Hi,<br>
-&gt; &gt;&gt;<br>
-&gt; &gt;&gt; I experiment a soft lockup. during 20 s I have no mouse, coul=
-d not<br>
-&gt; &gt;&gt; switch back to console and so on.<br>
-&gt; &gt;&gt;<br>
-&gt; &gt;&gt; I achieve to get a backtrace by echo 15 &gt;<br>
-&gt; &gt;&gt; /proc/sys/kernel/hung_task_timeout_secs<br>
-&gt; &gt;&gt;<br>
-&gt; &gt;&gt; Seems file system related (hdd led is on).<br></p>
-<p dir=3D"ltr">Do you need some trace ? It is fairly reproducible.</p>
-<p dir=3D"ltr">Bastien<br><br><br></p>
-<p dir=3D"ltr">&gt; &gt;&gt;<br>
-&gt; &gt;&gt; My filesystems are ext4 over raid0 so add some cc<br>
-&gt; &gt;<br>
-&gt; &gt; Appears to be &quot;dm&quot; raid0 rather than &quot;md&quot; rai=
-d0 - so not my area.<br>
-&gt; &gt; May help to include <a href=3D"mailto:dm-devel@redhat.com">dm-dev=
-el@redhat.com</a>, and maybe include a description of<br>
-&gt; &gt; the dm configuration. =C2=A0e.g. &quot;dmsetup table&quot; output=
-.<br>
-&gt;<br>
-&gt; dmsetup =C2=A0table<br>
-&gt; VOL-ROOT: 0 195305472 linear 9:1 2048<br>
-&gt; VOL-HOME: 0 1562501120 linear 9:1 195307520<br>
-&gt;<br>
-&gt; &gt;<br>
-&gt; &gt; NeilBrown<br>
-</p>
+My idea is to port this daemon to in-kernel.
 
---001a1133659ce848f604e63ec6e0--
+The reasons are:
+1. The daemon can be said to be "nearly" essential.
+   Who wants to use dm-writeboost without the daemon is my question.
+   I think none.
+2. Functionality of the kernel module should be self-sufficient in kernel.
+3. I think I should not depend on PythonDaemon module anymore
+   because the module sometime doesn't work as I expect,
+   stopping the daemon but it remains running,
+   and asking the maintainer doesn't respond for months.
+
+I have studies the implementation
+for this porting.
+
+The current implementation is
+parsing /proc/diskstats every seconds
+and the relavant code in kernel is to read
+disk_stats structure through part_stat_read(part, field) macro.
+
+Also, I have a good idea for locking.
+I supporse I don't need to add another lock in this porting.
+
+However, of course, possible cons to my idea
+is worrying the kernel code becoming more complex.
 
 
---===============7911660084857015555==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+If you have experienced the same situation
+and have some advice on this issue
+please tell me.
 
-
---===============7911660084857015555==--
+Akira
