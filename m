@@ -1,16 +1,13 @@
 From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: [RFC] dm-writeboost: Porting daemon modulating
- migration from userland into the kernel
-Date: Mon, 16 Sep 2013 20:49:03 +0900
-Message-ID: <5236F02F.2040609@gmail.com>
-References: <5236C737.7040306@gmail.com> <20130916092134.GA20647@debian>
-	<5236D9BF.4010501@gmail.com> <20130916110647.GA23933@debian>
+Subject: [RFC] dm-writeboost: Plan to add comments. Needs help to
+ make an objective list of where to comment
+Date: Mon, 16 Sep 2013 22:49:09 +0900
+Message-ID: <52370C55.6060906@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130916110647.GA23933@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,38 +18,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: gregkh@linuxfoundation.org
+Cc: gregkh@linuxfoundation.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-Joe,
+Hi,
 
-> Is anyone using your new target other than you?  You've posted on
-> dm-devel, you've posted on lkml, has anyone bothered to try it?
-Unfortunately, the answer is NO.
+I am thinking of adding more comments on the source code
+according to the Alasdair's advice.
 
-Some Japanese kernel developers once tried to use it
-but didn't reached operation eventually.
+According to the Chapter 8 "Commenting" in Documentation/CodingStyle
+WHAT it does should be commented
+while HOW it works should not be but should be explained by the source code.
 
-But, I am feeling dm-writeboost gathering attention from storage engineers.
-That I can not get 3rd party users right now is not because dm-writeboost is trivial.
-I believe the target is worth merging in the future.
+I was believing that only about the design issue
+should be commented for the code quality.
+But, on the second thought,
+Linux kernel is a huge OSS 
+that developers are living different timezone
+and in different physical locations.
+So, comments are almost all the information
+that they can get beside the source code
+because we can't easily chat with each other and ping pong Q&A.
+That I am living in Japan might make the situation even worse.
 
-For example, dm-writeboost is discussed in the Russian website below
-http://www.opennet.ru/opennews/art.shtml?num=37864
-AND
-also in Phoronix
-http://phoronix.com/forums/showthread.php?84073-A-New-Log-Structured-Linux-Caching-Software-Driver#post354983
+Now that dm-writeboost is consist of 3.5k lines of code
+and more 500 or 1000 lines of comments added
+doesn't affect the maintainability so much.
+Therefore, commenting will be paid in case of dm-writeboost.
 
-My conclusion is
-there are potential users and I think I can greet them as users trying dm-writeboost
-if the target is staged.
+I will be starting from commenting on WHAT it does
+in the source code
+including adding explanation on what the routine does
+in front of the routines.
 
-This issue of porting the userland daemon to in-kernel
-is for them to use software of my best efforts.
-If the design issue is raised again after all, all I can do it to nothing but fix it.
+But the problem is that
+I have no idea where to write comments at all.
 
-My regret is that I should have fixed this issue before proposal to staging tree.
-PythonDaemon module being unstable was already found before that
-although I didn't consider the design is bad.
+I want to make an _objective_ list of where to comment.
+Someone help me make the list?
+I ask you to
+read thru the code,
+pick up where you couldn't understand or feel needing comments
+and then report the list to me.
+It will be helping a lot.
 
+Thanks,
 Akira
