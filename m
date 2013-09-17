@@ -1,90 +1,218 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] block: Add nr_bios to block_rq_remap tracepoint
-Date: Tue, 17 Sep 2013 19:57:49 +0900
-Message-ID: <523835AD.1030300@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: staging: Add dm-writeboost
+Date: Tue, 17 Sep 2013 21:41:18 +0900
+Message-ID: <52384DEE.7050003@gmail.com>
+References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <20130916215357.GA5015@redhat.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: snitzer@redhat.com
+Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, cesarb@cesarb.net, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-Adding the number of bios in a remapped request to 'block_rq_remap'
-tracepoint.
+Mike,
 
-Request remapper clones bios in a request to track the completion
-status of each bio. So the number of bios can be useful information
-for investigation.
+First, thank you for your commenting.
+I was looking forward to your comments.
 
-Related discussions:
-  http://www.redhat.com/archives/dm-devel/2013-August/msg00084.html
-  http://www.redhat.com/archives/dm-devel/2013-September/msg00024.html
 
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Acked-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>
+I suppose you are sensing some "smell" in my design.
+You are worrying that dm-writeboost will not only confuse users
+but also fall into worst situation of giving up backward-compatibility
+after merging into tree.
 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 2fdb4a4..0e6f765 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -862,6 +862,17 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq)
- 	return blk_queue_get_max_sectors(q, rq->cmd_flags);
- }
- 
-+static inline unsigned int blk_rq_count_bios(struct request *rq)
-+{
-+	unsigned int nr_bios = 0;
-+	struct bio *bio;
-+
-+	__rq_for_each_bio(bio, rq)
-+		nr_bios++;
-+
-+	return nr_bios;
-+}
-+
- /*
-  * Request issue related functions.
-  */
-diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-index 60ae7c3..4c2301d 100644
---- a/include/trace/events/block.h
-+++ b/include/trace/events/block.h
-@@ -618,6 +618,7 @@ TRACE_EVENT(block_rq_remap,
- 		__field( unsigned int,	nr_sector	)
- 		__field( dev_t,		old_dev		)
- 		__field( sector_t,	old_sector	)
-+		__field( unsigned int,	nr_bios		)
- 		__array( char,		rwbs,	RWBS_LEN)
- 	),
- 
-@@ -627,15 +628,16 @@ TRACE_EVENT(block_rq_remap,
- 		__entry->nr_sector	= blk_rq_sectors(rq);
- 		__entry->old_dev	= dev;
- 		__entry->old_sector	= from;
-+		__entry->nr_bios	= blk_rq_count_bios(rq);
- 		blk_fill_rwbs(__entry->rwbs, rq->cmd_flags, blk_rq_bytes(rq));
- 	),
- 
--	TP_printk("%d,%d %s %llu + %u <- (%d,%d) %llu",
-+	TP_printk("%d,%d %s %llu + %u <- (%d,%d) %llu %u",
- 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->rwbs,
- 		  (unsigned long long)__entry->sector,
- 		  __entry->nr_sector,
- 		  MAJOR(__entry->old_dev), MINOR(__entry->old_dev),
--		  (unsigned long long)__entry->old_sector)
-+		  (unsigned long long)__entry->old_sector, __entry->nr_bios)
- );
- 
- #endif /* _TRACE_BLOCK_H */
+That dm-writeboost's design is too eccentric as a DM target makes you so.
+
+That you said
+>   determines whether a device needs formatting, etc.  Otherwise I cannot
+>   see how you can properly stack DM devices on writeboost devices
+>   (suspend+resume become tediously different)
+is a proof of smell.
+
+Alasdair also said
+> I read a statement like that as an indication of an interface or
+> architectural problem.  The device-mapper approach is to 'design out'
+> problems, rather than relying on users not doing bad things.
+> Study the existing interfaces used by other targets to understand
+> some approaches that proved successful, then decide which ones
+> come closest to your needs.
+
+and
+
+Mikulas said
+> Another idea:
+> 
+> Make the interface of dm-lc (the arguments to constructor, messages and 
+> the status line) the same as dm-cache, so that they can be driven by the 
+> same userspace code.
+Though I guess this is going too far
+since dm-writeboost and dm-cache are the different things
+designing them similar definitely makes sense.
+
+are also sensing of smell.
+
+
+I am afraid so I am and
+I am thinking of re-designing dm-writeboost
+at the fundamental architectural level.
+The interfaces will be similar to that of dm-cache as a result.
+
+This will be a really a BIG change.
+
+> Probably best for you to publish the dm-writeboost code a git repo on
+> github.com or the like.  I just don't see what benefit there is to
+> putting code like this in staging.  Users already need considerable
+> userspace tools and infrastructure will also be changing in the
+> near-term (e.g. the migration daemon).
+Yes, I agree with that regarding the current implementation.
+I withdraw from the proposal for staging.
+I am really sorry for Greg and others caring about dm-writeboost.
+But I will be back after re-designing.
+staging means lot to get 3rd party users is for sure.
+
+
+Since this will be a big change.
+I want to agree on the design before going forward.
+I will explain why the interfaces of dm-writeboost
+are designed so complicated.
+
+
+Essentially,
+it is because dm-writeboost supports "cache-sharing".
+The functionality of sharing a cache by devices is required in some cases.
+
+If I remove the functionality the design will be much simpler
+and the code will be slightly faster.
+
+
+What to be removed after re-designing follows
+and they are also explaining why cache-sharing makes the design bad.
+
+(1) writeboost-mgr (maybe)
+Mike said
+> - really dislike the use of an intermediate "writeboost-mgr" target to
+>   administer the writeboost devices.  There is no need for this.
+
+but I don't think having a singleton intermediate writeboost-mgr
+is completely weird.
+dm-thin target also has a singleton thin-pool target
+that create and destroy thin devices.
+
+Below is a description from Documentation/device-mapper/thin-provisioning.txt
+
+  Using an existing pool device
+  -----------------------------
+
+      dmsetup create pool \
+          --table "0 20971520 thin-pool $metadata_dev $data_dev \
+                   $data_block_size $low_water_mark"
+
+
+
+  i) Creating a new thinly-provisioned volume.
+
+    To create a new thinly- provisioned volume you must send a message to an
+    active pool device, /dev/mapper/pool in this example.
+
+      dmsetup message /dev/mapper/pool 0 "create_thin 0"
+
+    Here '0' is an identifier for the volume, a 24-bit number.  It's up
+    to the caller to allocate and manage these identifiers.  If the
+    identifier is already in use, the message will fail with -EEXIST.
+
+But I do agree on having writeboost-mgr is a smell of over-engineering.
+A target does nothing at all but being an admin looks little bit weird
+for a design of DM target.
+Maybe this should be removed.
+
+(2) device_id and cache_id
+To manage which backing devices are attached to a cache
+These IDs are needed like dm-thin.
+But they are not needed if I give up cache-sharing and
+
+> - the various typedefs aren't needed (e.g. device_id, cache_id,
+>   cache_nr)
+will be all cleared.
+
+(3) sysfs
+>   device it will establish a proper hierarchy (see: dm_get_device).  What
+>   advantages are you seeing from having/managing this sysfs tree?
+One of the advantages is 
+that userland tools can see the relations between devices.
+Some GUI application might want to draw that by refering the sysfs.
+
+If I get rid of the cache-sharing,
+the dimension of relations between devices
+will not be needed and will be removed toward userland
+and the alternative is to
+set/get the tunable parameters are thru message and status
+like dm-cache.
+
+In addition,
+there actually is a smelling code causing by this design.
+The code below add/remove the sysfs interfaces
+that should be done in .ctr but is separated for
+actually very complicated reason
+belonging to the minor behavior of dmsetup reload.
+
+I fully agree on removing this sysfs anyway because
+I don't think I will be able to maintain this sysfs forever
+and that one of the reasons why I provides userland tools in Python
+as an abstraction layer.
+
+        if (!strcasecmp(cmd, "add_sysfs")) {
+                struct kobject *dev_kobj;
+                r = kobject_init_and_add(&wb->kobj, &device_ktype,
+                                         devices_kobj, "%u", wb->id);
+                if (r) {
+                        WBERR();
+                        return r;
+                }
+
+                dev_kobj = get_bdev_kobject(wb->device->bdev);
+                r = sysfs_create_link(&wb->kobj, dev_kobj, "device");
+                if (r) {
+                        WBERR();
+                        kobject_del(&wb->kobj);
+                        kobject_put(&wb->kobj);
+                        return r;
+                }
+
+                kobject_uevent(&wb->kobj, KOBJ_ADD);
+                return 0;
+        }
+
+        if (!strcasecmp(cmd, "remove_sysfs")) {
+                kobject_uevent(&wb->kobj, KOBJ_REMOVE);
+
+                sysfs_remove_link(&wb->kobj, "device");
+                kobject_del(&wb->kobj);
+                kobject_put(&wb->kobj);
+
+                wb_devices[wb->id] = NULL;
+                return 0;
+        }
+
+
+Simplify the design and
+make it more possible to maintain the target
+for the future is what I fully agree with.
+Being adhere to cache-sharing by
+risking the future maintainability doesn't pay.
+Re-designing the dm-writeboost resemble to dm-cache
+is a leading candidate of course.
+
+I will ask for comment for the new design in the next reply.
+
+Akira
