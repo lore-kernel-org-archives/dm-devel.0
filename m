@@ -1,106 +1,70 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: staging: Add dm-writeboost
-Date: Tue, 17 Sep 2013 16:59:36 -0400
-Message-ID: <20130917205936.GB12001@redhat.com>
-References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
- <52384E66.6050101@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] dm-snapshot: workaround for a lockdep warning
+Date: Tue, 17 Sep 2013 19:24:18 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1309171920050.18335@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1309171646050.550@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <52384E66.6050101@gmail.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, cesarb@cesarb.net, m.chehab@samsung.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1309171646050.550@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, Stephen Boyd <sboyd@codeaurora.org>
 List-Id: dm-devel.ids
 
-On Tue, Sep 17 2013 at  8:43am -0400,
-Akira Hayakawa <ruby.wktk@gmail.com> wrote:
+BTW. this patch is no longer needed on 3.11 because md->io_lock was 
+removed there, so the false lockdep warning doesn't happen.
 
-> Hi, Mike
-> 
-> There are two designs in my mind
-> regarding the formatting cache.
-> 
-> You said
-> >   administer the writeboost devices.  There is no need for this.  Just
-> >   have a normal DM target whose .ctr takes care of validation and
-> >   determines whether a device needs formatting, etc.  
-> makes me wonder how I format the cache device.
-> 
-> 
-> There are two choices for formatting cache and create a writeboost device
-> standing on the point of removing writeboost-mgr existing in the current design.
-> I will explain them from how the interface will look like.
-> 
-> (1) dmsetup create myDevice ... "... $backing_path $cache_path"
-> which will returns error if the superblock of the given cache device
-> is invalid and needs formatting.
-> And then the user formats the cache device by some userland tool.
-> 
-> (2) dmsetup create myDevice ... "... $backing_path $cache_path $do_format"
-> which also returns error if the superblock of the given cache device
-> is invalid and needs formatting when $do_format is 0.
-> And then user formats the cache device by setting $do_format to 1 and try again.
-> 
-> There pros and cons about the design tradeoffs:
-> - (i)  (1) is simpler. do_format parameter in (2) doesn't seem to be sane.
->        (1) is like the interfaces of filesystems where dmsetup create is like mounting a filesystem.
-> - (ii) (2) can implement everything in kernel. It can gather all the information
->        about how the superblock in one place, kernel code.
-> 
-> Excuse for the current design:
-> - The reason I design writeboost-mgr is almost regarding (ii) above.
->   writeboost-mgr has a message "format_cache_device" and
->   writeboost-format-cache userland command kicks the message to format cache.
-> 
-> - writeboost-mgr has also a message "resume_cache"
->   that validates and builds a in-memory structure according to the cache binding to given $cache_id
->   and user later dmsetup create the writeboost device with the $cache_id.
->   However, resuming the cache metadata should be done under .ctr like dm-cache does
->   and should not relate LV to create and cache by external cache_id
->   is what I realized by looking at the code of dm-cache which
->   calls dm_cache_metadata_open() routines under .ctr .
+So we need to get this patch to stable trees 3.5 to 3.10, but not 
+upstream. How to push the patch there without pushing it upstream?
 
-Right, any in-core structures should be allocated in .ctr()
+Mikulas
 
-> writeboost-mgr is something like smell of over-engineering but
-> is useful for simplifying the design for above reasons.
+
+On Tue, 17 Sep 2013, Mikulas Patocka wrote:
+
+> dm-snapshot: workaround for a lockdep warning
 > 
+> The kernel reports a lockdep warning if a snapshot is invalidated because
+> it runs out of space.
 > 
-> Which do you think better?
-
-Have you looked at how both dm-cache and dm-thinp handle this?
-Userspace takes care to write all zeroes to the start of the metadata
-device before the first use in the kernel.
-
-In the kernel, see __superblock_all_zeroes(), the superblock on the
-metadata device is checked to see whether it is all 0s or not.  If it is
-all 0s then the kernel code knows it needs to format (writing the
-superblock, etc).
-
-I see no reason why dm-writeboost couldn't use the same design.
-
-Also, have you looked at forking dm-cache as a starting point for
-dm-writeboost?  It is an option, not yet clear if it'd help you as there
-is likely a fair amount of work picking through code that isn't
-relevant.  But it'd be nice to have the writeboost code follow the same
-basic design principles.
-
-Like I mentioned before, especially if the log structured block code
-could be factored out.  I haven't yet looked close enough at that aspect
-of writeboost code to know if it could benefit from the existing
-bio-prison code or persistent-data library at all.  writeboost would
-obviously need a new space map type, etc.
-
-Could be the log structured nature of writeboost is very different.
-I'll review this closer tomorrow.
+> The lockdep warning was triggered by commit
+> 0976dfc1d0cd80a4e9dfaf87bd8744612bde475a in the kernel 3.5.
+> 
+> The warning is false positive. The real cause for the warning is that the
+> lockdep engine treats different instances of md->lock as a single lock.
+> 
+> This patch is a workaround - we use flush_workqueue instead of flush_work.
+> This code path is not performance sensitive (it is called only on
+> initialization or invalidation), thus it doesn't matter that we flush the
+> whole workqueue.
+> 
+> The real fix for the problem would be to teach the lockdep engine to treat
+> different instances of md->lock as separate locks.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@kernel.org		# 3.5+
+> 
+> Index: linux-2.6-devel/drivers/md/dm-snap-persistent.c
+> ===================================================================
+> --- linux-2.6-devel.orig/drivers/md/dm-snap-persistent.c	2013-05-10 18:27:31.132358000 +0200
+> +++ linux-2.6-devel/drivers/md/dm-snap-persistent.c	2013-09-17 18:41:39.023940000 +0200
+> @@ -256,7 +256,7 @@
+>  	 */
+>  	INIT_WORK_ONSTACK(&req.work, do_metadata);
+>  	queue_work(ps->metadata_wq, &req.work);
+> -	flush_work(&req.work);
+> +	flush_workqueue(ps->metadata_wq);
+>  
+>  	return req.result;
+>  }
+> 
