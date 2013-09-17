@@ -1,33 +1,90 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: Re: staging: Add dm-writeboost
-Date: Tue, 17 Sep 2013 01:49:39 +0300
-Message-ID: <20130916224939.GT25896@mwanda>
-References: <5223208D.4000008@gmail.com>
- <20130916215357.GA5015@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] block: Add nr_bios to block_rq_remap tracepoint
+Date: Tue, 17 Sep 2013 19:57:49 +0900
+Message-ID: <523835AD.1030300@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <20130916215357.GA5015@redhat.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, Akira Hayakawa <ruby.wktk@gmail.com>, dm-devel@redhat.com, cesarb@cesarb.net, joe@perches.com, akpm@linux-foundation.org, agk@redhat.com, m.chehab@samsung.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Sep 16, 2013 at 05:53:57PM -0400, Mike Snitzer wrote:
-> - variable names need to be a bit more verbose (arr => array)
+Adding the number of bios in a remapped request to 'block_rq_remap'
+tracepoint.
 
-"struct array " is a horrible name.  :P  Please don't use either "arr"
-or "array".
+Request remapper clones bios in a request to track the completion
+status of each bio. So the number of bios can be useful information
+for investigation.
 
-regards,
-dan carpenter
+Related discussions:
+  http://www.redhat.com/archives/dm-devel/2013-August/msg00084.html
+  http://www.redhat.com/archives/dm-devel/2013-September/msg00024.html
+
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>
+
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 2fdb4a4..0e6f765 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -862,6 +862,17 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq)
+ 	return blk_queue_get_max_sectors(q, rq->cmd_flags);
+ }
+ 
++static inline unsigned int blk_rq_count_bios(struct request *rq)
++{
++	unsigned int nr_bios = 0;
++	struct bio *bio;
++
++	__rq_for_each_bio(bio, rq)
++		nr_bios++;
++
++	return nr_bios;
++}
++
+ /*
+  * Request issue related functions.
+  */
+diff --git a/include/trace/events/block.h b/include/trace/events/block.h
+index 60ae7c3..4c2301d 100644
+--- a/include/trace/events/block.h
++++ b/include/trace/events/block.h
+@@ -618,6 +618,7 @@ TRACE_EVENT(block_rq_remap,
+ 		__field( unsigned int,	nr_sector	)
+ 		__field( dev_t,		old_dev		)
+ 		__field( sector_t,	old_sector	)
++		__field( unsigned int,	nr_bios		)
+ 		__array( char,		rwbs,	RWBS_LEN)
+ 	),
+ 
+@@ -627,15 +628,16 @@ TRACE_EVENT(block_rq_remap,
+ 		__entry->nr_sector	= blk_rq_sectors(rq);
+ 		__entry->old_dev	= dev;
+ 		__entry->old_sector	= from;
++		__entry->nr_bios	= blk_rq_count_bios(rq);
+ 		blk_fill_rwbs(__entry->rwbs, rq->cmd_flags, blk_rq_bytes(rq));
+ 	),
+ 
+-	TP_printk("%d,%d %s %llu + %u <- (%d,%d) %llu",
++	TP_printk("%d,%d %s %llu + %u <- (%d,%d) %llu %u",
+ 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->rwbs,
+ 		  (unsigned long long)__entry->sector,
+ 		  __entry->nr_sector,
+ 		  MAJOR(__entry->old_dev), MINOR(__entry->old_dev),
+-		  (unsigned long long)__entry->old_sector)
++		  (unsigned long long)__entry->old_sector, __entry->nr_bios)
+ );
+ 
+ #endif /* _TRACE_BLOCK_H */
