@@ -1,13 +1,15 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: staging: Add dm-writeboost
-Date: Tue, 17 Sep 2013 21:43:18 +0900
-Message-ID: <52384E66.6050101@gmail.com>
+Date: Tue, 17 Sep 2013 16:18:23 -0400
+Message-ID: <20130917201822.GA12001@redhat.com>
 References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
+ <52384DEE.7050003@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <20130916215357.GA5015@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <52384DEE.7050003@gmail.com>
 List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
 List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
@@ -17,60 +19,95 @@ List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driver
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
 Errors-To: driverdev-devel-bounces@linuxdriverproject.org
 Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: snitzer@redhat.com
+To: Akira Hayakawa <ruby.wktk@gmail.com>
 Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, cesarb@cesarb.net, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-Hi, Mike
+On Tue, Sep 17 2013 at  8:41am -0400,
+Akira Hayakawa <ruby.wktk@gmail.com> wrote:
 
-There are two designs in my mind
-regarding the formatting cache.
+> Mike,
+> 
+> First, thank you for your commenting.
+> I was looking forward to your comments.
+> 
+> 
+> I suppose you are sensing some "smell" in my design.
+> You are worrying that dm-writeboost will not only confuse users
+> but also fall into worst situation of giving up backward-compatibility
+> after merging into tree.
+> 
+> That dm-writeboost's design is too eccentric as a DM target makes you so.
+> 
+> That you said
+> >   determines whether a device needs formatting, etc.  Otherwise I cannot
+> >   see how you can properly stack DM devices on writeboost devices
+> >   (suspend+resume become tediously different)
+> is a proof of smell.
+> 
+> Alasdair also said
+> > I read a statement like that as an indication of an interface or
+> > architectural problem.  The device-mapper approach is to 'design out'
+> > problems, rather than relying on users not doing bad things.
+> > Study the existing interfaces used by other targets to understand
+> > some approaches that proved successful, then decide which ones
+> > come closest to your needs.
+> 
+> and
+> 
+> Mikulas said
+> > Another idea:
+> > 
+> > Make the interface of dm-lc (the arguments to constructor, messages and 
+> > the status line) the same as dm-cache, so that they can be driven by the 
+> > same userspace code.
+> Though I guess this is going too far
+> since dm-writeboost and dm-cache are the different things
+> designing them similar definitely makes sense.
+> 
+> are also sensing of smell.
+> 
+> 
+> I am afraid so I am and
+> I am thinking of re-designing dm-writeboost
+> at the fundamental architectural level.
+> The interfaces will be similar to that of dm-cache as a result.
+> 
+> This will be a really a BIG change.
+> 
+> > Probably best for you to publish the dm-writeboost code a git repo on
+> > github.com or the like.  I just don't see what benefit there is to
+> > putting code like this in staging.  Users already need considerable
+> > userspace tools and infrastructure will also be changing in the
+> > near-term (e.g. the migration daemon).
+> Yes, I agree with that regarding the current implementation.
+> I withdraw from the proposal for staging.
+> I am really sorry for Greg and others caring about dm-writeboost.
+> But I will be back after re-designing.
 
-You said
->   administer the writeboost devices.  There is no need for this.  Just
->   have a normal DM target whose .ctr takes care of validation and
->   determines whether a device needs formatting, etc.  
-makes me wonder how I format the cache device.
+OK, appreciate your willingness to rework this.  
 
+> staging means lot to get 3rd party users is for sure.
 
-There are two choices for formatting cache and create a writeboost device
-standing on the point of removing writeboost-mgr existing in the current design.
-I will explain them from how the interface will look like.
+We don't need to go through staging.  If the dm-writeboost target is
+designed well and provides a tangible benefit it doesn't need
+wide-spread users as justification for going in.  The users will come if
+it is implemented well.
 
-(1) dmsetup create myDevice ... "... $backing_path $cache_path"
-which will returns error if the superblock of the given cache device
-is invalid and needs formatting.
-And then the user formats the cache device by some userland tool.
+> Simplify the design and
+> make it more possible to maintain the target
+> for the future is what I fully agree with.
+> Being adhere to cache-sharing by
+> risking the future maintainability doesn't pay.
+> Re-designing the dm-writeboost resemble to dm-cache
+> is a leading candidate of course.
 
-(2) dmsetup create myDevice ... "... $backing_path $cache_path $do_format"
-which also returns error if the superblock of the given cache device
-is invalid and needs formatting when $do_format is 0.
-And then user formats the cache device by setting $do_format to 1 and try again.
+Simplifying the code is certainly desirable.  So dropping the sharing
+sounds like a step in the right direction.  Plus you can share the cache
+by layering multiple linear devices ontop of the dm-writeboost device.
 
-There pros and cons about the design tradeoffs:
-- (i)  (1) is simpler. do_format parameter in (2) doesn't seem to be sane.
-       (1) is like the interfaces of filesystems where dmsetup create is like mounting a filesystem.
-- (ii) (2) can implement everything in kernel. It can gather all the information
-       about how the superblock in one place, kernel code.
+Also managing dm-writeboost devices with lvm2 is a priority, so any
+interface similarities dm-writeboost has with dm-cache will be
+beneficial.
 
-Excuse for the current design:
-- The reason I design writeboost-mgr is almost regarding (ii) above.
-  writeboost-mgr has a message "format_cache_device" and
-  writeboost-format-cache userland command kicks the message to format cache.
-
-- writeboost-mgr has also a message "resume_cache"
-  that validates and builds a in-memory structure according to the cache binding to given $cache_id
-  and user later dmsetup create the writeboost device with the $cache_id.
-  However, resuming the cache metadata should be done under .ctr like dm-cache does
-  and should not relate LV to create and cache by external cache_id
-  is what I realized by looking at the code of dm-cache which
-  calls dm_cache_metadata_open() routines under .ctr .
-  I don't know why I should not do this it is nicer to trust DM guys in RedHat on this point.
-
-writeboost-mgr is something like smell of over-engineering but
-is useful for simplifying the design for above reasons.
-
-
-Which do you think better?
-
-Akira
+Mike
