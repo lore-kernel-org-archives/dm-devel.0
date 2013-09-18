@@ -1,126 +1,190 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-snapshot: workaround for a lockdep warning
-Date: Wed, 18 Sep 2013 19:14:22 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1309181904530.2927@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1309171646050.550@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1309171920050.18335@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1309172006001.24061@file01.intranet.prod.int.rdu2.redhat.com>
-	<52394ED9.5010308@redhat.com>
-	<alpine.LRH.2.02.1309181156230.14936@file01.intranet.prod.int.rdu2.redhat.com>
-	<5239F9FF.2010407@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: [PATCH] dm-snapshot: fix performance degradation due to
+ small hash size (was: Snapshotted device gets slow)
+Date: Wed, 18 Sep 2013 19:40:42 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1309181938330.2927@file01.intranet.prod.int.rdu2.redhat.com>
+References: <kk5txhi7ss8.fsf@brer.local.valinux.co.jp>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5239F9FF.2010407@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: Tejun Heo <tj@kernel.org>, Stephen Boyd <sboyd@codeaurora.org>, "Alasdair G. Kergon" <agk@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
+In-Reply-To: <kk5txhi7ss8.fsf@brer.local.valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: =?ISO-2022-JP?Q?MINOURA_Makoto_=2F_=1B$BL'1=3A=1B=28J_=1B$B=3F=3F=1B=28J?= <minoura@valinux.co.jp>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
 
-On Wed, 18 Sep 2013, Zdenek Kabelac wrote:
+On Wed, 18 Sep 2013, MINOURA Makoto / ?? ? wrote:
 
-> Dne 18.9.2013 17:57, Mikulas Patocka napsal(a):
-> > 
-> > 
-> > On Wed, 18 Sep 2013, Zdenek Kabelac wrote:
-> > 
-> > > Dne 18.9.2013 02:08, Mikulas Patocka napsal(a):
-> > > > 
-> > > > It's more complicated than that - the original Zdenek's report 
-> > > > shows that the false warning happened on kernel 
-> > > > "3.11.1-300.fc20.x86_64+debug". But I am not able to reproduce the 
-> > > > bug on 3.11, I only reproduced it on 3.5-3.10 kernels.
-> > > > 
-> > > > Zdenek, could you reproduce the bug on kernel 3.11?
-> > > > 
-> > > > Mikulas
-> > > > 
-> > > 
-> > > 
-> > > Since I do not have clean 3.11 at my hands  - I've reproduced it with my
-> > > -rc6
-> > > kernel (few patches based on 8495e9c4a9616c9d19f23182d0536485902259db)
-> > > With enabled kmemleak=on lockdep.prove_locking=1 lockdep.lock_stat=1.
-> > 
-> > So - try this patch and tell me if it fixes the problem:
-> > 
-> > Index: linux-2.6-devel/drivers/md/dm-snap-persistent.c
-> > ===================================================================
-> > --- linux-2.6-devel.orig/drivers/md/dm-snap-persistent.c	2013-05-10
-> > 18:27:31.132358000 +0200
-> > +++ linux-2.6-devel/drivers/md/dm-snap-persistent.c	2013-09-17
-> > 18:41:39.023940000 +0200
-> > @@ -256,7 +256,7 @@
-> >   	 */
-> >   	INIT_WORK_ONSTACK(&req.work, do_metadata);
-> >   	queue_work(ps->metadata_wq, &req.work);
-> > -	flush_work(&req.work);
-> > +	flush_workqueue(ps->metadata_wq);
-> > 
-> >   	return req.result;
-> >   }
-> > 
 > 
-> Yes - this seems to eliminate reported INFO.
+> (I'm not on this list; please Cc me)
+> 
+> We are observing a problem that writes to a (thick) snapshot origin
+> device get way slooower on RHEL 6.3 than on EL 6.2 as the cow device
+> is consumed.  I tracked down the problem and found that the cause was
+> the commit f1aabd5c60ad721609e5d781e45c234ba62fe355 (Set delay_resume_
+> if_new on deptree snapshot origin.).
+> 
+> Here's detailed description.
+> 
+> On 6.3 the size of the exception hashes are too small; the lower bound
+> 64 for both completed and pending.
+> 
+> # lvcreate -n test -L 240g tank
+>   Logical volume "test" created
+> # lvcreate -s -n snap -l 100%FREE tank/test
+>   Logical volume "snap" created
+> # lvs /dev/tank
+>   LV   VG   Attr     LSize   Pool Origin Data%  Move Log Copy%  Convert
+>   snap tank swi-a-s- 207.13g      test     0.00                        
+>   test tank owi-a-s- 240.00g
+> # dmsetup ls | grep tank
+> tank-snap-cow	(253:6)
+> tank-snap	(253:4)
+> tank-test	(253:3)
+> tank-test-real	(253:5)
+> # crash
+> ....
+> (crash) print _origins[5]
+> $3 = {
+>   next = 0xffff880297977c08, 
+>   prev = 0xffff880297977c08
+> }
+> crash> struct -ox origin.hash_list
+> struct origin {
+>    [0x8] struct list_head hash_list;
+> }
+> crash> print *(struct origin*)0xffff880297977c00
+> $4 = {
+>   bdev = 0xffff880297519c80, 
+>   hash_list = {
+>     next = 0xffff880293c1b050, 
+>     prev = 0xffff880293c1b050
+>   }, 
+>   snapshots = {
+>     next = 0xffff880293456a40, 
+>     prev = 0xffff880293456a40
+>   }
+> }
+> crash> struct -ox dm_snapshot.list
+> struct dm_snapshot {
+>    [0x40] struct list_head list;
+> }
+> crash> print ((struct dm_snapshot*)0xffff880293456a00)->origin->name
+> $5 = "253:5\000\000\000\002\000\000\000st-a"
+> crash> print ((struct dm_snapshot*)0xffff880293456a00)->complete
+> $6 = {
+>   hash_mask = 63,				<=== !!
+>   hash_shift = 8, 
+>   table = 0xffffc900033ea000
+> }
+> crash> print ((struct dm_snapshot*)0xffff880293456a00)->pending
+> $7 = {
+>   hash_mask = 63,				<=== !!
+>   hash_shift = 0, 
+>   table = 0xffffc900033ed000
+> }
+> 
+> hash_mask+1 is the size of the hash. On EL6.2 they are 131072 and
+> 16384 respectively.
+> 
+> They are initialized at dm_ctl_ioctl()=>table_load()=>snapshot_ctr()
+> =>init_hash_tables() from the size of the cow device or the origin
+> device:
+> 
+> static int init_hash_tables(struct dm_snapshot *s)
+> {
+> 	[snip]
+> 
+> 	hash_size = min(origin_dev_size, cow_dev_size) >> s->store->chunk_shift;
+> 	hash_size = min(hash_size, max_buckets);
+> 
+> 	if (hash_size < 64)
+> 		hash_size = 64;
+> 	hash_size = rounddown_pow_of_two(hash_size);
+> 
+> Here, the origin device is not resumed yet (by that commit) and it's
+> size is 0.  Thus the hash_size is 0 and clipped at the lower bound 64.
+> 
+> 
+> I'm not familiar with the device-mapper code and am not sure
+> that reverting the patch is the right thing to do, but I
+> think the current situation is not intended.
+> 
+> Thanks,
+> 
+> -- 
+> Minoura Makoto <minoura@valinux.co.jp>
+> 
+> --
+> lvm-devel mailing list
+> lvm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/lvm-devel
+> 
 
-OK - so I am submitting the patch for the upstream kernel too.
-
-> Though I'm getting curious why some tests are running much much much slower
-> when kmemleak and lockdep is in use.
-
-Because these checks slow things down - that's nothing unexpected.
-
-> Zdenek
+I'd fix it with this.
 
 Mikulas
 
 ---
 
-dm-snapshot: workaround for a lockdep warning
+dm-snapshot: fix performance degradation due to small hash size
 
-The kernel reports a lockdep warning if a snapshot is invalidated because
-it runs out of space.
+LVM, since version 2.02.96, creates origin with zero size, then loads the
+snapshot driver and then loads the origin. Consequently, the snapshot
+driver sees the origin size zero and sets the hash size to the lower bound
+64. Such small hash table causes performance degradation.
 
-The lockdep warning was triggered by commit
-0976dfc1d0cd80a4e9dfaf87bd8744612bde475a in the kernel 3.5.
-
-The warning is false positive. The real cause for the warning is that the
-lockdep engine treats different instances of md->lock as a single lock.
-
-This patch is a workaround - we use flush_workqueue instead of flush_work.
-This code path is not performance sensitive (it is called only on
-initialization or invalidation), thus it doesn't matter that we flush the
-whole workqueue.
-
-The real fix for the problem would be to teach the lockdep engine to treat
-different instances of md->lock as separate locks.
+This patch changes it so that the hash size is determined by the size of
+snapshot volume, not minimum of origin and snapshot size. It doesn't make
+sense to set the snapshot size significantly larger than the origin size,
+so we do not need to take origin size into account when calculating the
+hash size.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Acked-by: Alasdair G Kergon <agk@redhat.com>
-Cc: stable@kernel.org # 3.5+
+Cc: stable@kernel.org
 
-Index: linux-2.6-devel/drivers/md/dm-snap-persistent.c
+---
+ drivers/md/dm-snap.c |    5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+Index: linux-3.10.12-fast/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6-devel.orig/drivers/md/dm-snap-persistent.c	2013-05-10 18:27:31.132358000 +0200
-+++ linux-2.6-devel/drivers/md/dm-snap-persistent.c	2013-09-17 18:41:39.023940000 +0200
-@@ -256,7 +256,7 @@
- 	 */
- 	INIT_WORK_ONSTACK(&req.work, do_metadata);
- 	queue_work(ps->metadata_wq, &req.work);
--	flush_work(&req.work);
-+	flush_workqueue(ps->metadata_wq);
+--- linux-3.10.12-fast.orig/drivers/md/dm-snap.c	2013-09-19 01:21:31.000000000 +0200
++++ linux-3.10.12-fast/drivers/md/dm-snap.c	2013-09-19 01:33:55.000000000 +0200
+@@ -725,17 +725,16 @@ static int calc_max_buckets(void)
+  */
+ static int init_hash_tables(struct dm_snapshot *s)
+ {
+-	sector_t hash_size, cow_dev_size, origin_dev_size, max_buckets;
++	sector_t hash_size, cow_dev_size, max_buckets;
  
- 	return req.result;
- }
+ 	/*
+ 	 * Calculate based on the size of the original volume or
+ 	 * the COW volume...
+ 	 */
+ 	cow_dev_size = get_dev_size(s->cow->bdev);
+-	origin_dev_size = get_dev_size(s->origin->bdev);
+ 	max_buckets = calc_max_buckets();
+ 
+-	hash_size = min(origin_dev_size, cow_dev_size) >> s->store->chunk_shift;
++	hash_size = cow_dev_size >> s->store->chunk_shift;
+ 	hash_size = min(hash_size, max_buckets);
+ 
+ 	if (hash_size < 64)
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
