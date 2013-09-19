@@ -1,190 +1,162 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-snapshot: fix performance degradation due to
- small hash size (was: Snapshotted device gets slow)
-Date: Wed, 18 Sep 2013 19:40:42 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1309181938330.2927@file01.intranet.prod.int.rdu2.redhat.com>
-References: <kk5txhi7ss8.fsf@brer.local.valinux.co.jp>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm mpath: disable WRITE SAME if it fails
+Date: Thu, 19 Sep 2013 12:13:58 -0400
+Message-ID: <20130919161043.GA27081@redhat.com>
+Reply-To: yq1fvwuoeck.fsf@sermon.lab.mkp.net
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
-In-Reply-To: <kk5txhi7ss8.fsf@brer.local.valinux.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: =?ISO-2022-JP?Q?MINOURA_Makoto_=2F_=1B$BL'1=3A=1B=28J_=1B$B=3F=3F=1B=28J?= <minoura@valinux.co.jp>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: lvm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: martin.petersen@oracle.com, hare@suse.de, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
+Workaround the SCSI layer's problematic WRITE SAME heuristics by
+disabling WRITE SAME in the DM multipath device's queue_limits if an
+underlying device disabled it.
 
+The WRITE SAME heuristics, with both the original commit 5db44863b6eb
+("[SCSI] sd: Implement support for WRITE SAME") and the updated commit
+66c28f971 ("[SCSI] sd: Update WRITE SAME heuristics"), default to enabling
+WRITE SAME(10) even without successfully determining it is supported.
+After the first failed WRITE SAME the SCSI layer will disable WRITE SAME
+for the device (by setting sdkp->device->no_write_same which results in
+'max_write_same_sectors' in device's queue_limits to be set to 0).
 
-On Wed, 18 Sep 2013, MINOURA Makoto / ?? ? wrote:
+When a device is stacked ontop of such a SCSI device any changes to that
+SCSI device's queue_limits do not automatically propagate up the stack.
+As such, a DM multipath device will not have its WRITE SAME support
+disabled.  This causes the block layer to continue to issue WRITE SAME
+requests to the mpath device which causes paths to fail and (if mpath IO
+isn't configured to queue when no paths are available) it will result in
+actual IO errors to the upper layers.
 
-> 
-> (I'm not on this list; please Cc me)
-> 
-> We are observing a problem that writes to a (thick) snapshot origin
-> device get way slooower on RHEL 6.3 than on EL 6.2 as the cow device
-> is consumed.  I tracked down the problem and found that the cause was
-> the commit f1aabd5c60ad721609e5d781e45c234ba62fe355 (Set delay_resume_
-> if_new on deptree snapshot origin.).
-> 
-> Here's detailed description.
-> 
-> On 6.3 the size of the exception hashes are too small; the lower bound
-> 64 for both completed and pending.
-> 
-> # lvcreate -n test -L 240g tank
->   Logical volume "test" created
-> # lvcreate -s -n snap -l 100%FREE tank/test
->   Logical volume "snap" created
-> # lvs /dev/tank
->   LV   VG   Attr     LSize   Pool Origin Data%  Move Log Copy%  Convert
->   snap tank swi-a-s- 207.13g      test     0.00                        
->   test tank owi-a-s- 240.00g
-> # dmsetup ls | grep tank
-> tank-snap-cow	(253:6)
-> tank-snap	(253:4)
-> tank-test	(253:3)
-> tank-test-real	(253:5)
-> # crash
-> ....
-> (crash) print _origins[5]
-> $3 = {
->   next = 0xffff880297977c08, 
->   prev = 0xffff880297977c08
-> }
-> crash> struct -ox origin.hash_list
-> struct origin {
->    [0x8] struct list_head hash_list;
-> }
-> crash> print *(struct origin*)0xffff880297977c00
-> $4 = {
->   bdev = 0xffff880297519c80, 
->   hash_list = {
->     next = 0xffff880293c1b050, 
->     prev = 0xffff880293c1b050
->   }, 
->   snapshots = {
->     next = 0xffff880293456a40, 
->     prev = 0xffff880293456a40
->   }
-> }
-> crash> struct -ox dm_snapshot.list
-> struct dm_snapshot {
->    [0x40] struct list_head list;
-> }
-> crash> print ((struct dm_snapshot*)0xffff880293456a00)->origin->name
-> $5 = "253:5\000\000\000\002\000\000\000st-a"
-> crash> print ((struct dm_snapshot*)0xffff880293456a00)->complete
-> $6 = {
->   hash_mask = 63,				<=== !!
->   hash_shift = 8, 
->   table = 0xffffc900033ea000
-> }
-> crash> print ((struct dm_snapshot*)0xffff880293456a00)->pending
-> $7 = {
->   hash_mask = 63,				<=== !!
->   hash_shift = 0, 
->   table = 0xffffc900033ed000
-> }
-> 
-> hash_mask+1 is the size of the hash. On EL6.2 they are 131072 and
-> 16384 respectively.
-> 
-> They are initialized at dm_ctl_ioctl()=>table_load()=>snapshot_ctr()
-> =>init_hash_tables() from the size of the cow device or the origin
-> device:
-> 
-> static int init_hash_tables(struct dm_snapshot *s)
-> {
-> 	[snip]
-> 
-> 	hash_size = min(origin_dev_size, cow_dev_size) >> s->store->chunk_shift;
-> 	hash_size = min(hash_size, max_buckets);
-> 
-> 	if (hash_size < 64)
-> 		hash_size = 64;
-> 	hash_size = rounddown_pow_of_two(hash_size);
-> 
-> Here, the origin device is not resumed yet (by that commit) and it's
-> size is 0.  Thus the hash_size is 0 and clipped at the lower bound 64.
-> 
-> 
-> I'm not familiar with the device-mapper code and am not sure
-> that reverting the patch is the right thing to do, but I
-> think the current situation is not intended.
-> 
-> Thanks,
-> 
-> -- 
-> Minoura Makoto <minoura@valinux.co.jp>
-> 
-> --
-> lvm-devel mailing list
-> lvm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/lvm-devel
-> 
+This fix doesn't help configurations that have additional devices
+stacked ontop of the mpath device (e.g. LVM created linear DM devices
+ontop).  A proper fix that restacks all the queue_limits from the bottom
+of the device stack up will need to be explored if SCSI will continue to
+use this model of optimistically allowing op codes and then disabling
+them after they fail for the first time.
 
-I'd fix it with this.
+Before this patch:
 
-Mikulas
+EXT4-fs (dm-6): mounted filesystem with ordered data mode. Opts: (null)
+device-mapper: multipath: XXX snitm debugging: got -EREMOTEIO (-121)
+device-mapper: multipath: XXX snitm debugging: failing WRITE SAME IO with error=-121
+end_request: critical target error, dev dm-6, sector 528
+dm-6: WRITE SAME failed. Manually zeroing.
+device-mapper: multipath: Failing path 8:112.
+end_request: I/O error, dev dm-6, sector 4616
+dm-6: WRITE SAME failed. Manually zeroing.
+end_request: I/O error, dev dm-6, sector 4616
+end_request: I/O error, dev dm-6, sector 5640
+end_request: I/O error, dev dm-6, sector 6664
+end_request: I/O error, dev dm-6, sector 7688
+end_request: I/O error, dev dm-6, sector 524288
+Buffer I/O error on device dm-6, logical block 65536
+lost page write due to I/O error on dm-6
+JBD2: Error -5 detected when updating journal superblock for dm-6-8.
+end_request: I/O error, dev dm-6, sector 524296
+Aborting journal on device dm-6-8.
+end_request: I/O error, dev dm-6, sector 524288
+Buffer I/O error on device dm-6, logical block 65536
+lost page write due to I/O error on dm-6
+JBD2: Error -5 detected when updating journal superblock for dm-6-8.
 
+# cat /sys/block/sdh/queue/write_same_max_bytes
+0
+# cat /sys/block/dm-6/queue/write_same_max_bytes
+33553920
+
+After this patch:
+
+EXT4-fs (dm-6): mounted filesystem with ordered data mode. Opts: (null)
+device-mapper: multipath: XXX snitm debugging: got -EREMOTEIO (-121)
+device-mapper: multipath: XXX snitm debugging: WRITE SAME I/O failed with error=-121
+end_request: critical target error, dev dm-6, sector 528
+dm-6: WRITE SAME failed. Manually zeroing.
+
+# cat /sys/block/sdh/queue/write_same_max_bytes
+0
+# cat /sys/block/dm-6/queue/write_same_max_bytes
+0
+
+It should be noted that WRITE SAME support wasn't enabled in DM
+multipath until v3.10.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: stable@vger.kernel.org # 3.10+
 ---
+ drivers/md/dm-mpath.c         |   11 ++++++++++-
+ drivers/md/dm.c               |   11 +++++++++++
+ include/linux/device-mapper.h |    3 ++-
+ 3 files changed, 23 insertions(+), 2 deletions(-)
 
-dm-snapshot: fix performance degradation due to small hash size
-
-LVM, since version 2.02.96, creates origin with zero size, then loads the
-snapshot driver and then loads the origin. Consequently, the snapshot
-driver sees the origin size zero and sets the hash size to the lower bound
-64. Such small hash table causes performance degradation.
-
-This patch changes it so that the hash size is determined by the size of
-snapshot volume, not minimum of origin and snapshot size. It doesn't make
-sense to set the snapshot size significantly larger than the origin size,
-so we do not need to take origin size into account when calculating the
-hash size.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@kernel.org
-
----
- drivers/md/dm-snap.c |    5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
-
-Index: linux-3.10.12-fast/drivers/md/dm-snap.c
-===================================================================
---- linux-3.10.12-fast.orig/drivers/md/dm-snap.c	2013-09-19 01:21:31.000000000 +0200
-+++ linux-3.10.12-fast/drivers/md/dm-snap.c	2013-09-19 01:33:55.000000000 +0200
-@@ -725,17 +725,16 @@ static int calc_max_buckets(void)
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 0b3955f..de570a5 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1299,8 +1299,17 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 	if (!error && !clone->errors)
+ 		return 0;	/* I/O complete */
+ 
+-	if (noretry_error(error))
++	if (noretry_error(error)) {
++		if ((clone->cmd_flags & REQ_WRITE_SAME) &&
++		    !clone->q->limits.max_write_same_sectors) {
++			struct queue_limits *limits;
++
++			/* device doesn't really support WRITE SAME, disable it */
++			limits = dm_get_queue_limits(dm_table_get_md(m->ti->table));
++			limits->max_write_same_sectors = 0;
++		}
+ 		return error;
++	}
+ 
+ 	if (mpio->pgpath)
+ 		fail_path(mpio->pgpath);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 033dc26..b3e26c7 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2323,6 +2323,17 @@ struct target_type *dm_get_immutable_target_type(struct mapped_device *md)
+ }
+ 
+ /*
++ * The queue_limits are only valid as long as you have a reference
++ * count on 'md'.
++ */
++struct queue_limits *dm_get_queue_limits(struct mapped_device *md)
++{
++	BUG_ON(!atomic_read(&md->holders));
++	return &md->queue->limits;
++}
++EXPORT_SYMBOL_GPL(dm_get_queue_limits);
++
++/*
+  * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
   */
- static int init_hash_tables(struct dm_snapshot *s)
- {
--	sector_t hash_size, cow_dev_size, origin_dev_size, max_buckets;
-+	sector_t hash_size, cow_dev_size, max_buckets;
+ static int dm_init_request_based_queue(struct mapped_device *md)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 653073d..ed419c6 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -406,13 +406,14 @@ int dm_noflush_suspending(struct dm_target *ti);
+ union map_info *dm_get_mapinfo(struct bio *bio);
+ union map_info *dm_get_rq_mapinfo(struct request *rq);
  
- 	/*
- 	 * Calculate based on the size of the original volume or
- 	 * the COW volume...
- 	 */
- 	cow_dev_size = get_dev_size(s->cow->bdev);
--	origin_dev_size = get_dev_size(s->origin->bdev);
- 	max_buckets = calc_max_buckets();
++struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
++
+ /*
+  * Geometry functions.
+  */
+ int dm_get_geometry(struct mapped_device *md, struct hd_geometry *geo);
+ int dm_set_geometry(struct mapped_device *md, struct hd_geometry *geo);
  
--	hash_size = min(origin_dev_size, cow_dev_size) >> s->store->chunk_shift;
-+	hash_size = cow_dev_size >> s->store->chunk_shift;
- 	hash_size = min(hash_size, max_buckets);
- 
- 	if (hash_size < 64)
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+-
+ /*-----------------------------------------------------------------
+  * Functions for manipulating device-mapper tables.
+  *---------------------------------------------------------------*/
