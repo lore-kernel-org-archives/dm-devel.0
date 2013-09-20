@@ -1,92 +1,67 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm thin: do not expose non-zero discard limits
- if discards are disabled
-Date: Thu, 19 Sep 2013 18:49:11 -0400
-Message-ID: <20130919224911.GA5477@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: SCSI's heuristics for enabling WRITE SAME still need work [was: dm
+ mpath: disable WRITE SAME if it fails]
+Date: Fri, 20 Sep 2013 17:21:42 -0400
+Message-ID: <20130920212142.GA17898@redhat.com>
+References: <20130919161043.GA27081@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: ejt@redhat.com
+In-Reply-To: <20130919161043.GA27081@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Fix issue where the block layer would stack the discard limits of the
-pool's data device even if the "ignore_discard" pool feature was
-specified.
+On Thu, Sep 19 2013 at 12:13pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-The pool and thin device(s) still had discards disabled because the
-QUEUE_FLAG_DISCARD request_queue flag wasn't set.  But to avoid user
-confusion when "ignore_discard" is used: both the pool device and the
-thin device(s) have zeroes for all discard limits.
+> Workaround the SCSI layer's problematic WRITE SAME heuristics by
+> disabling WRITE SAME in the DM multipath device's queue_limits if an
+> underlying device disabled it.
 
-Also, always set discard_zeroes_data_unsupported in targets because they
-should never advertise the 'discard_zeroes_data' capability (even if the
-pool's data device supports it).
+...
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-thin.c |   14 +++++++++++---
- 1 files changed, 11 insertions(+), 3 deletions(-)
+> This fix doesn't help configurations that have additional devices
+> stacked ontop of the mpath device (e.g. LVM created linear DM devices
+> ontop).  A proper fix that restacks all the queue_limits from the bottom
+> of the device stack up will need to be explored if SCSI will continue to
+> use this model of optimistically allowing op codes and then disabling
+> them after they fail for the first time.
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index ed06342..2c0cf51 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -2095,6 +2095,7 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	 * them down to the data device.  The thin device's discard
- 	 * processing will cause mappings to be removed from the btree.
- 	 */
-+	ti->discard_zeroes_data_unsupported = true;
- 	if (pf.discard_enabled && pf.discard_passdown) {
- 		ti->num_discard_bios = 1;
- 
-@@ -2104,7 +2105,6 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		 * thin devices' discard limits consistent).
- 		 */
- 		ti->discards_supported = true;
--		ti->discard_zeroes_data_unsupported = true;
- 	}
- 	ti->private = pt;
- 
-@@ -2689,8 +2689,16 @@ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	 * They get transferred to the live pool in bind_control_target()
- 	 * called from pool_preresume().
- 	 */
--	if (!pt->adjusted_pf.discard_enabled)
-+	if (!pt->adjusted_pf.discard_enabled) {
-+		/*
-+		 * Must explicitly disallow stacking discard limits otherwise the
-+		 * block layer will stack them if pool's data device has support.
-+		 * QUEUE_FLAG_DISCARD wouldn't be set but there is no way for the
-+		 * user to see that, so make sure to set all discard limits to 0.
-+		 */
-+		limits->discard_granularity = 0;
- 		return;
-+	}
- 
- 	disable_passdown_if_not_supported(pt);
- 
-@@ -2826,10 +2834,10 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	ti->per_bio_data_size = sizeof(struct dm_thin_endio_hook);
- 
- 	/* In case the pool supports discards, pass them on. */
-+	ti->discard_zeroes_data_unsupported = true;
- 	if (tc->pool->pf.discard_enabled) {
- 		ti->discards_supported = true;
- 		ti->num_discard_bios = 1;
--		ti->discard_zeroes_data_unsupported = true;
- 		/* Discard bios must be split on a block boundary */
- 		ti->split_discard_bios = true;
- 	}
+I really don't think we can afford to keep SCSI's current heuristics for
+enabling WRITE SAME, re-stating them for the benefit of others:
+1) check if WRITE SAME is supported by sending REPORT SUPPORTED
+   OPERATION CODES to the device
+2a) if REPORT SUPPORTED OPERATION CODES shows WRITE SAME is supported,
+    enable WRITE SAME
+2b) if REPORT SUPPORTED OPERATION CODES shows WRITE SAME is not
+    supported, disable WRITE SAME
+2c) if REPORT SUPPORTED OPERATION CODES isn't supported _and_ the device
+    doesn't have an ATA Information VPD page: enable WRITE SAME
+    - if/when WRITE SAME does fail, disable it on the failing device
+
+AFAIK the reason for these heuristics is: devices that do support WRITE
+SAME cannot properly report as much because they don't support REPORT
+SUPPORTED OPERATION CODES -- this lack of RSOC support is apparently
+very common?
+
+I can appreciate the idea behind the current heuristics but I think the
+prevelence of the other side of the spectrum (SCSI devices that don't
+support RSOC or WRITE SAME) was underestimated.  As such we're seeing a
+fair amount of WRITE SAME error noise on these systems -- that noise is
+itself considered a bug to many.
+
+Also, please see my comment in a related Fedora 19 BZ:
+https://bugzilla.redhat.com/show_bug.cgi?id=995271#c23
+
+As I say in that comment:
+"A proper fix could be to make SCSI's default be to disable WRITE SAME
+for devices that don't properly report they support it.  And possibly
+have a whitelist to opt-in to enabling WRITE SAME for select targets."
+
+I'm open to any ideas you might have.
+
+Thanks,
+Mike
