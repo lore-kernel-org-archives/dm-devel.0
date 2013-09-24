@@ -1,77 +1,28 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] SCSI's heuristics for enabling WRITE SAME still need
- work [was: dm mpath: disable WRITE SAME if it fails]
-Date: Tue, 24 Sep 2013 07:39:13 +0200
-Message-ID: <52412581.2010909@suse.de>
-References: <20130919161043.GA27081@redhat.com> <20130920212142.GA17898@redhat.com> <yq1eh8jf8wq.fsf@sermon.lab.mkp.net> <1379960325.4010.32.camel@localhost.localdomain>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: SCSI's heuristics for enabling WRITE SAME still need work [was:
+ dm mpath: disable WRITE SAME if it fails]
+Date: Tue, 24 Sep 2013 11:37:20 +0200
+Message-ID: <52415D50.508@redhat.com>
+References: <20130919161043.GA27081@redhat.com> <20130920212142.GA17898@redhat.com> <yq1eh8jf8wq.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1379960325.4010.32.camel@localhost.localdomain>
+In-Reply-To: <yq1eh8jf8wq.fsf@sermon.lab.mkp.net>
 Sender: linux-scsi-owner@vger.kernel.org
-To: emilne@redhat.com, device-mapper development <dm-devel@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, dgilbert@interlog.com, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 09/23/2013 08:18 PM, Ewan Milne wrote:
-> On Fri, 2013-09-20 at 18:03 -0400, Martin K. Petersen wrote:
-> ...
->> Only a handful of the very latest and greatest devices support RSOC.=
- The
->> number of devices that support WRITE SAME is orders of magnitude lar=
-ger.
->>
->> Last I checked I had exactly 1 out of about 100 devices in my lab th=
-at
->> supported RSOC.
-> ...
->> The major headache here of course is that WRITE SAME is inherently
->> destructive. We can't just fire off one during discovery and see if =
-it
->> works. For WRITE you can issue a command with a transfer length of 0=
- to
->> see if things work. But unfortunately for WRITE SAME a transfer leng=
-th
->> of zero means "wipe the entire device". Yikes!
->>
->> I guess we could read one sector and try to write it back using WRIT=
-E
->> SAME and a block count of one. But it's really icky. And I don't lik=
-e
->> the notion of actually writing things during discovery.
-> ...
->=20
-> Just out of curiosity, what do the devices that support WRITE SAME
-> report for the MAXIMUM WRITE SAME LENGTH field in VPD page B0?  The
-> spec says that this can be zero if there is no restriction, but is
-> there any chance that most/all of them report some nonzero value?
->=20
-> Expanding on Doug's thinking, perhaps there is some combination of
-> VPD page availability / field values that could be used to explicitly
-> enable WRITE SAME?  Or, have you been through that already?
->=20
-Hehe. Won't do any good.
+Il 21/09/2013 00:03, Martin K. Petersen ha scritto:
+> 
+> The major headache here of course is that WRITE SAME is inherently
+> destructive. We can't just fire off one during discovery and see if it
+> works. For WRITE you can issue a command with a transfer length of 0 to
+> see if things work. But unfortunately for WRITE SAME a transfer length
+> of zero means "wipe the entire device". Yikes!
 
-My drives support 'report opcodes', and report that write same is
-supported:
-=2E..
- 93                 16    Write same(16)
-=2E..
+What about WRITE SAME with an out-of-range lba?  Or lba equal to the
+size of the disk and #blocks equal to zero.
 
-but no support for page 'b0'. And yes, these are real SAS drives.
-
-Cheers,
-
-Hannes
-
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Paolo
