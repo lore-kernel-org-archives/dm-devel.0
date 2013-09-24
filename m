@@ -1,58 +1,58 @@
-From: Kent Overstreet <kmo@daterainc.com>
-Subject: Re: [PATCH 0/22] Immutable biovecs, block layer changes
-Date: Tue, 24 Sep 2013 12:19:54 -0700
-Message-ID: <20130924191954.GB2636@kmo-pixel>
-References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
- <20130808150954.GA30092@infradead.org>
- <20130808211529.GB15409@kmo-pixel>
- <20130924110012.GA7160@infradead.org>
- <20130924132014.GA16165@redhat.com>
+From: Douglas Gilbert <dgilbert@interlog.com>
+Subject: Re: [dm-devel] SCSI's heuristics for enabling WRITE SAME still need
+ work [was: dm mpath: disable WRITE SAME if it fails]
+Date: Tue, 24 Sep 2013 15:37:27 -0400
+Message-ID: <5241E9F7.1080303@interlog.com>
+References: <20130919161043.GA27081@redhat.com> <20130920212142.GA17898@redhat.com> <yq1eh8jf8wq.fsf@sermon.lab.mkp.net> <1379960325.4010.32.camel@localhost.localdomain> <52412581.2010909@suse.de> <5241E422.1010700@tributary.com>
+Reply-To: dgilbert@interlog.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130924132014.GA16165@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <5241E422.1010700@tributary.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Jeremy Linton <jlinton@tributary.com>, Hannes Reinecke <hare@suse.de>
+Cc: "emilne@redhat.com" <emilne@redhat.com>, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 24, 2013 at 09:20:14AM -0400, Mike Snitzer wrote:
-> On Tue, Sep 24 2013 at  7:00am -0400,
-> Christoph Hellwig <hch@infradead.org> wrote:
-> 
-> > Just curious, what's the state of the remaining immutable bio work?
-> 
-> Hey Christoph,
-> 
-> Have you been over the patchset?  Looks sane to you?
-> 
-> Given how disruptive this patchset is to the block layer I'm wondering
-> how painful this change will be in combination with Jens' blk-mq
-> changes.  I'd prefer to see blk-mq before immutable biovecs; but I have
-> my own selfish reasons for that.
-> 
-> I'm also concerned about DM regressions given that a lot of DM code to
-> handle splitting a bio that spans target boundaries is ripped out, see:
-> https://patchwork.kernel.org/patch/2840657/
+On 13-09-24 03:12 PM, Jeremy Linton wrote:
+> On 9/24/2013 12:39 AM, Hannes Reinecke wrote:
+>
+>> My drives support 'report opcodes', and report that write same is
+>> supported: ... 93                 16    Write same(16) ...
+>>
+>> but no support for page 'b0'. And yes, these are real SAS drives.
+>
+> 	So the question is, how many devices get the protect bit in the std inquiry
+> incorrect?
 
-Oh good, you had seen that :)
+To that specific question: all of them get it right because
+if they don't the disk (LU) does not support PI (or at least
+that is the conclusion the application client should reach).
+What the sales blurb for the device may say is another thing.
 
-Are you worried about performance regressions or actual bugs?
+More generally why are we using WRITE SAME:
+   a) associated with LB provisioning?
+   b) associated with PI (DIF)?
+   c) as an optimized multi-block write of the same contents?
 
-I _have_ explicitly tested that code path, but I don't know what corner
-cases I may have missed so it definitely needs your eyeballs and testing
-too.
+I'm not aware there is any special relationship between WS
+and PI. That leaves a) and c) . I'm guessing it is more
+important for a) .
 
-As for performance - this'll be more efficient than what the dm code was
-doing before. Especially when the multipage bvec patches go in.
+> 	If that is mostly correct, how about std inquiry (SPC>2), protect bit, and then
+> VPD page 0x86 (or alternatively then do the READ CAPACITY, P_TYPE instead of
+> page 0x86)?
+>
+> 	After all, the set of valid read/write opcodes is limited by the protection
+> mode format, yes?
 
-> But that is just handwaving/FUD at this point cause I haven't put the
-> time to looking at this patchset close enough to feel comfortable.  I
-> can make reviewing this patchset a priority this week though.
-> 
-> Kent, have you rebased this patchset at all?  Do you have a git tree I
-> can clone to save the pain of pulling these patches out my my mbox,
-> etc.
+Yes: READ(32), WRITE(32), WRITE SAME(32), VERIFY(32)
+and WRITE AND VERIFY(32) are only valid for protection
+type 2 (sbc3r35h 4.22.2.2). I'm sure T10 have a good
+reason for that but they are keeping that reason to
+themselves.
 
-Yeah: git://evilpiepirate.org/~kent/linux-bcache.git for-jens
+Doug Gilbert
+
+
