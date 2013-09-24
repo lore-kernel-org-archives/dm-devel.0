@@ -1,49 +1,71 @@
-From: Ewan Milne <emilne@redhat.com>
-Subject: Re: SCSI's heuristics for enabling WRITE SAME still need work
- [was: dm mpath: disable WRITE SAME if it fails]
-Date: Mon, 23 Sep 2013 14:18:45 -0400
-Message-ID: <1379960325.4010.32.camel@localhost.localdomain>
-References: <20130919161043.GA27081@redhat.com>
-	 <20130920212142.GA17898@redhat.com>  <yq1eh8jf8wq.fsf@sermon.lab.mkp.net>
-Reply-To: emilne@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 3.12
+Date: Mon, 23 Sep 2013 20:13:20 -0400
+Message-ID: <20130924001320.GA27767@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <yq1eh8jf8wq.fsf@sermon.lab.mkp.net>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>, dgilbert@interlog.com
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Joe Thornber <ejt@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Frank Mayhar <fmayhar@google.com>, Hannes Reinecke <hare@suse.de>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2013-09-20 at 18:03 -0400, Martin K. Petersen wrote:
-...
-> Only a handful of the very latest and greatest devices support RSOC. The
-> number of devices that support WRITE SAME is orders of magnitude larger.
-> 
-> Last I checked I had exactly 1 out of about 100 devices in my lab that
-> supported RSOC.
-...
-> The major headache here of course is that WRITE SAME is inherently
-> destructive. We can't just fire off one during discovery and see if it
-> works. For WRITE you can issue a command with a transfer length of 0 to
-> see if things work. But unfortunately for WRITE SAME a transfer length
-> of zero means "wipe the entire device". Yikes!
-> 
-> I guess we could read one sector and try to write it back using WRITE
-> SAME and a block count of one. But it's really icky. And I don't like
-> the notion of actually writing things during discovery.
-...
+The following changes since commit 272b98c6455f00884f0350f775c5342358ebb73f:
 
-Just out of curiosity, what do the devices that support WRITE SAME
-report for the MAXIMUM WRITE SAME LENGTH field in VPD page B0?  The
-spec says that this can be zero if there is no restriction, but is
-there any chance that most/all of them report some nonzero value?
+  Linux 3.12-rc1 (2013-09-16 16:17:51 -0400)
 
-Expanding on Doug's thinking, perhaps there is some combination of
-VPD page availability / field values that could be used to explicitly
-enable WRITE SAME?  Or, have you been through that already?
+are available in the git repository at:
 
--Ewan
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.12-fixes
 
+for you to fetch changes up to e8603136cb04ec2d0c9b4b5be7a071fc003cb399:
 
+  dm: add reserved_bio_based_ios module parameter (2013-09-23 10:42:24 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+A set of device-mapper fixes for 3.12.
+
+A few fixes for dm-snapshot, a 32 bit fix for dm-stats, a couple error
+handling fixes for dm-multipath.  A fix for the thin provisioning target
+to not expose non-zero discard limits if discards are disabled.
+
+Lastly, add two DM module parameters which allow users to tune the
+emergency memory reserves that DM mainatins per device -- this helps fix
+a long-standing issue for dm-multipath.  The conservative default
+reserve for request-based dm-multipath devices (256) has proven
+problematic for users with many multipathed SCSI devices but relatively
+little memory.  To responsibly select a smaller value users should use
+the new nr_bios tracepoint info (via commit 75afb352 "block: Add nr_bios
+to block_rq_remap tracepoint") to determine the peak number of bios
+their workloads create.
+
+----------------------------------------------------------------
+Jun'ichi Nomura (1):
+      dm mpath: do not fail path on -ENOSPC
+
+Mike Snitzer (5):
+      dm mpath: disable WRITE SAME if it fails
+      dm thin: do not expose non-zero discard limits if discards disabled
+      dm: lower bio-based mempool reservation
+      dm: add reserved_rq_based_ios module parameter
+      dm: add reserved_bio_based_ios module parameter
+
+Mikulas Patocka (3):
+      dm stats: fix possible counter corruption on 32-bit systems
+      dm snapshot: workaround for a false positive lockdep warning
+      dm-snapshot: fix performance degradation due to small hash size
+
+ drivers/md/dm-io.c              |  7 ++--
+ drivers/md/dm-mpath.c           | 18 ++++++++---
+ drivers/md/dm-snap-persistent.c |  2 +-
+ drivers/md/dm-snap.c            |  5 ++-
+ drivers/md/dm-stats.c           | 23 +++++++++----
+ drivers/md/dm-thin.c            | 14 ++++++--
+ drivers/md/dm.c                 | 71 ++++++++++++++++++++++++++++++++++++++---
+ drivers/md/dm.h                 |  3 ++
+ include/linux/device-mapper.h   |  3 +-
+ 9 files changed, 120 insertions(+), 26 deletions(-)
