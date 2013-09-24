@@ -1,58 +1,56 @@
-From: Douglas Gilbert <dgilbert@interlog.com>
-Subject: Re: [dm-devel] SCSI's heuristics for enabling WRITE SAME still need
- work [was: dm mpath: disable WRITE SAME if it fails]
-Date: Tue, 24 Sep 2013 15:37:27 -0400
-Message-ID: <5241E9F7.1080303@interlog.com>
-References: <20130919161043.GA27081@redhat.com> <20130920212142.GA17898@redhat.com> <yq1eh8jf8wq.fsf@sermon.lab.mkp.net> <1379960325.4010.32.camel@localhost.localdomain> <52412581.2010909@suse.de> <5241E422.1010700@tributary.com>
-Reply-To: dgilbert@interlog.com
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [dm-devel] SCSI's heuristics for enabling WRITE SAME still need work [was: dm mpath: disable WRITE SAME if it fails]
+Date: Tue, 24 Sep 2013 16:44:37 -0400
+Message-ID: <yq14n9aar0q.fsf@sermon.lab.mkp.net>
+References: <20130919161043.GA27081@redhat.com>
+	<20130920212142.GA17898@redhat.com>
+	<alpine.LRH.2.02.1309241415380.31619@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <5241E422.1010700@tributary.com>
+In-Reply-To: <alpine.LRH.2.02.1309241415380.31619@file01.intranet.prod.int.rdu2.redhat.com>
+	(Mikulas Patocka's message of "Tue, 24 Sep 2013 14:39:45 -0400 (EDT)")
 Sender: linux-scsi-owner@vger.kernel.org
-To: Jeremy Linton <jlinton@tributary.com>, Hannes Reinecke <hare@suse.de>
-Cc: "emilne@redhat.com" <emilne@redhat.com>, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 13-09-24 03:12 PM, Jeremy Linton wrote:
-> On 9/24/2013 12:39 AM, Hannes Reinecke wrote:
->
->> My drives support 'report opcodes', and report that write same is
->> supported: ... 93                 16    Write same(16) ...
->>
->> but no support for page 'b0'. And yes, these are real SAS drives.
->
-> 	So the question is, how many devices get the protect bit in the std inquiry
-> incorrect?
+>>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
 
-To that specific question: all of them get it right because
-if they don't the disk (LU) does not support PI (or at least
-that is the conclusion the application client should reach).
-What the sales blurb for the device may say is another thing.
+Mikulas> Propagating the limits up the tree won't work anyway because of
+Mikulas> a race condition. Think of this case:
 
-More generally why are we using WRITE SAME:
-   a) associated with LB provisioning?
-   b) associated with PI (DIF)?
-   c) as an optimized multi-block write of the same contents?
+Mikulas> 1. We test queue limits and find out that the device supports
+Mikulas>    WRITE_SAME
+Mikulas> 2. We build a WRITE_SAME bio to be submitted.
+Mikulas> 3. The user reconfigures a device so that it no longer supports
+Mikulas>    WRITE_SAME
+Mikulas> (for example, he adds a snapshot or converts linear volume to a
+Mikulas> mirror).
+Mikulas> 4. We submit the bio that we built in step 2.
+Mikulas> 5. The bio fails.
 
-I'm not aware there is any special relationship between WS
-and PI. That leaves a) and c) . I'm guessing it is more
-important for a) .
+The existing "fall back to writes if write same fails" mechanism isn't
+going away. We absolutely need that.
 
-> 	If that is mostly correct, how about std inquiry (SPC>2), protect bit, and then
-> VPD page 0x86 (or alternatively then do the READ CAPACITY, P_TYPE instead of
-> page 0x86)?
->
-> 	After all, the set of valid read/write opcodes is limited by the protection
-> mode format, yes?
+The principal headache is caused by host adapters that perform SCSI-ATA
+or SCSI-<internal RAID implementation> translation and which do not
+correctly fail a WRITE SAME command that we send down to the disk.
 
-Yes: READ(32), WRITE(32), WRITE SAME(32), VERIFY(32)
-and WRITE AND VERIFY(32) are only valid for protection
-type 2 (sbc3r35h 4.22.2.2). I'm sure T10 have a good
-reason for that but they are keeping that reason to
-themselves.
+Based on heuristics from querying the target we expect WRITE SAME to
+succeed so we enable it. But for whatever reason the controller is not
+able to handle the command. Most controllers/drivers will fail the
+command correctly and we'll disable WRITE SAME and fall back to manually
+zeroing. Some controllers, however, hang or fail the I/O in a way in
+which we do not pick up it's a WRITE SAME problem.
 
-Doug Gilbert
+The other headache is what happens if a stacking driver gets -EIO or
+-EREMOTEIO on a WRITE SAME request. That's what Mike was trying to fix
+with his patch. Maybe it would make sense for us to use -EINVAL or
+something similar to single out the ILLEGAL REQUEST case. While
+-EREMOTEIO specifically calls out for "no retry" it might be helpful to
+indicate that we're dealing with an unsupported command. That way DM or
+MD can reconfigure themselves accordingly.
 
-
+-- 
+Martin K. Petersen	Oracle Linux Engineering
