@@ -1,39 +1,62 @@
-From: Jeremy Linton <jlinton@tributary.com>
-Subject: Re: [dm-devel] SCSI's heuristics for enabling WRITE SAME still need
- work [was: dm mpath: disable WRITE SAME if it fails]
-Date: Tue, 24 Sep 2013 14:12:34 -0500
-Message-ID: <5241E422.1010700@tributary.com>
-References: <20130919161043.GA27081@redhat.com> <20130920212142.GA17898@redhat.com> <yq1eh8jf8wq.fsf@sermon.lab.mkp.net> <1379960325.4010.32.camel@localhost.localdomain> <52412581.2010909@suse.de>
+From: Kent Overstreet <kmo@daterainc.com>
+Subject: Re: [PATCH 0/22] Immutable biovecs, block layer changes
+Date: Tue, 24 Sep 2013 12:16:35 -0700
+Message-ID: <20130924191635.GA2636@kmo-pixel>
+References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
+ <20130808150954.GA30092@infradead.org>
+ <20130808211529.GB15409@kmo-pixel>
+ <20130924110012.GA7160@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <52412581.2010909@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: "emilne@redhat.com" <emilne@redhat.com>, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "dgilbert@interlog.com" <dgilbert@interlog.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130924110012.GA7160@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: axboe@kernel.dk, neilb@suse.de, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 9/24/2013 12:39 AM, Hannes Reinecke wrote:
+On Tue, Sep 24, 2013 at 04:00:12AM -0700, Christoph Hellwig wrote:
+> Just curious, what's the state of the remaining immutable bio work?
 
-> My drives support 'report opcodes', and report that write same is 
-> supported: ... 93                 16    Write same(16) ...
+Mostly just waiting for Jens to pull it, though I did discover an issue
+with the "generic bio chaining" patch last time I was testing it - but
+that's towards the end of the series and the rest could be pulled now.
+
+Going to work on the series more today - the reworked segment merging
+patches is what lets us shrink struct bio; those patches aren't ready
+yet (and they're more invasive than some other cleanup I was planning on
+getting in first) but I think they're logically independent from most of
+the other patches, I'll see if I can mail out a short series on top of
+this one for you to look at.
+
 > 
-> but no support for page 'b0'. And yes, these are real SAS drives.
-
-	So the question is, how many devices get the protect bit in the std inquiry
-incorrect?
-
-	If that is mostly correct, how about std inquiry (SPC>2), protect bit, and then
-VPD page 0x86 (or alternatively then do the READ CAPACITY, P_TYPE instead of
-page 0x86)?
-
-	After all, the set of valid read/write opcodes is limited by the protection
-mode format, yes?
-
-
-
-
-
-
-	
+> On Thu, Aug 08, 2013 at 02:15:29PM -0700, Kent Overstreet wrote:
+> > > What is preventing you from sending those out as well?  While it's not
+> > > absolutely nessecary it would certainly be good if we'd avoid a struct
+> > > bio size regression.
+> > 
+> > There's still some fairly significant changes, and I don't want to make
+> > too many invasive changes at once.
+> > 
+> > Main thing is making generic_make_request() take arbitrary size bios.
+> > After this series that's just two simple patches, but then the changes
+> > to make use of that will be changing behaviour in non obvious ways.
+> > 
+> > The way the merging changes work is it enables multi page bvecs - so a
+> > bvec can point to many physically contiguous pages. This moves segment
+> > merging to bio_add_page(), and gets rid of bi_phys_segments - now
+> > bi_vcnt == bi_phys_segments, we just split the bio if it's too big.
+> > 
+> > Then, with bio_add_page() building up large bios and the block layer
+> > splitting them as necessary, there shouldn't be any need for segment
+> > merging across bios anymore (because generally when that would've
+> > happened before, now we'd just be sending one larger bio down).
+> > 
+> > The remaining patches aren't terribly complicated though (less
+> > complicated than this patch series). Trickiest bit is multipage bvecs,
+> > and that's mostly just lots of code auditing - the way I convert
+> > existing code is by adding bio_for_each_page() - analagous to
+> > bio_for_each_segment, but giving you bvecs that point to single pages.
+> > So it's an easy conversion, just have to make sure nothing's missed.
+> ---end quoted text---
