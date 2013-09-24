@@ -1,45 +1,36 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/22] Immutable biovecs, block layer changes
-Date: Tue, 24 Sep 2013 09:20:14 -0400
-Message-ID: <20130924132014.GA16165@redhat.com>
-References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
- <20130808150954.GA30092@infradead.org>
- <20130808211529.GB15409@kmo-pixel>
- <20130924110012.GA7160@infradead.org>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: SCSI's heuristics for enabling WRITE SAME still need work [was:
+ dm mpath: disable WRITE SAME if it fails]
+Date: Tue, 24 Sep 2013 06:25:39 -0700
+Message-ID: <1380029139.2171.2.camel@dabdike.int.hansenpartnership.com>
+References: <20130919161043.GA27081@redhat.com>
+	 <20130920212142.GA17898@redhat.com> <yq1eh8jf8wq.fsf@sermon.lab.mkp.net>
+	 <52415D50.508@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130924110012.GA7160@infradead.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Kent Overstreet <kmo@daterainc.com>, axboe@kernel.dk, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <52415D50.508@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Paolo Bonzini <pbonzini@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 24 2013 at  7:00am -0400,
-Christoph Hellwig <hch@infradead.org> wrote:
+On Tue, 2013-09-24 at 11:37 +0200, Paolo Bonzini wrote:
+> Il 21/09/2013 00:03, Martin K. Petersen ha scritto:
+> > 
+> > The major headache here of course is that WRITE SAME is inherently
+> > destructive. We can't just fire off one during discovery and see if it
+> > works. For WRITE you can issue a command with a transfer length of 0 to
+> > see if things work. But unfortunately for WRITE SAME a transfer length
+> > of zero means "wipe the entire device". Yikes!
+> 
+> What about WRITE SAME with an out-of-range lba?  Or lba equal to the
+> size of the disk and #blocks equal to zero.
 
-> Just curious, what's the state of the remaining immutable bio work?
+That's inviting undefined behaviour in a data destructive command ...
+not something we really want to do.
 
-Hey Christoph,
+James
 
-Have you been over the patchset?  Looks sane to you?
 
-Given how disruptive this patchset is to the block layer I'm wondering
-how painful this change will be in combination with Jens' blk-mq
-changes.  I'd prefer to see blk-mq before immutable biovecs; but I have
-my own selfish reasons for that.
-
-I'm also concerned about DM regressions given that a lot of DM code to
-handle splitting a bio that spans target boundaries is ripped out, see:
-https://patchwork.kernel.org/patch/2840657/
-
-But that is just handwaving/FUD at this point cause I haven't put the
-time to looking at this patchset close enough to feel comfortable.  I
-can make reviewing this patchset a priority this week though.
-
-Kent, have you rebased this patchset at all?  Do you have a git tree I
-can clone to save the pain of pulling these patches out my my mbox,
-etc.
-
-Mike
