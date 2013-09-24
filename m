@@ -1,71 +1,45 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: SCSI's heuristics for enabling WRITE SAME still need work [was:
- dm mpath: disable WRITE SAME if it fails]
-Date: Tue, 24 Sep 2013 08:34:50 -0400
-Message-ID: <20130924123449.GA16083@redhat.com>
-References: <20130919161043.GA27081@redhat.com>
- <20130920212142.GA17898@redhat.com>
- <yq1eh8jf8wq.fsf@sermon.lab.mkp.net>
- <1379960325.4010.32.camel@localhost.localdomain>
- <52412581.2010909@suse.de>
+Subject: Re: [PATCH 0/22] Immutable biovecs, block layer changes
+Date: Tue, 24 Sep 2013 09:20:14 -0400
+Message-ID: <20130924132014.GA16165@redhat.com>
+References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
+ <20130808150954.GA30092@infradead.org>
+ <20130808211529.GB15409@kmo-pixel>
+ <20130924110012.GA7160@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <52412581.2010909@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: emilne@redhat.com, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, dgilbert@interlog.com, linux-scsi@vger.kernel.org
+In-Reply-To: <20130924110012.GA7160@infradead.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Kent Overstreet <kmo@daterainc.com>, axboe@kernel.dk, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 24 2013 at  1:39am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+On Tue, Sep 24 2013 at  7:00am -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-> On 09/23/2013 08:18 PM, Ewan Milne wrote:
-> > On Fri, 2013-09-20 at 18:03 -0400, Martin K. Petersen wrote:
-> > ...
-> >> Only a handful of the very latest and greatest devices support RSOC. The
-> >> number of devices that support WRITE SAME is orders of magnitude larger.
-> >>
-> >> Last I checked I had exactly 1 out of about 100 devices in my lab that
-> >> supported RSOC.
-> > ...
-> >> The major headache here of course is that WRITE SAME is inherently
-> >> destructive. We can't just fire off one during discovery and see if it
-> >> works. For WRITE you can issue a command with a transfer length of 0 to
-> >> see if things work. But unfortunately for WRITE SAME a transfer length
-> >> of zero means "wipe the entire device". Yikes!
-> >>
-> >> I guess we could read one sector and try to write it back using WRITE
-> >> SAME and a block count of one. But it's really icky. And I don't like
-> >> the notion of actually writing things during discovery.
-> > ...
-> > 
-> > Just out of curiosity, what do the devices that support WRITE SAME
-> > report for the MAXIMUM WRITE SAME LENGTH field in VPD page B0?  The
-> > spec says that this can be zero if there is no restriction, but is
-> > there any chance that most/all of them report some nonzero value?
-> > 
-> > Expanding on Doug's thinking, perhaps there is some combination of
-> > VPD page availability / field values that could be used to explicitly
-> > enable WRITE SAME?  Or, have you been through that already?
-> > 
-> Hehe. Won't do any good.
-> 
-> My drives support 'report opcodes', and report that write same is
-> supported:
-> ...
->  93                 16    Write same(16)
-> ...
-> 
-> but no support for page 'b0'. And yes, these are real SAS drives.
+> Just curious, what's the state of the remaining immutable bio work?
 
-Your drive would be fine then since it does support RSOC and specifies
-WRITE SAME is supported.  Pretty sure Ewan was only suggesting to resort
-to looking at the VPD page if RSOC isn't supported.
+Hey Christoph,
 
-So are there drives like this?:
-1) don't support RSOC
-2) do support WRITE SAME
-3) do populate VPD page with either WRITE SAME w/ discard bit set or
-UNMAP?
+Have you been over the patchset?  Looks sane to you?
+
+Given how disruptive this patchset is to the block layer I'm wondering
+how painful this change will be in combination with Jens' blk-mq
+changes.  I'd prefer to see blk-mq before immutable biovecs; but I have
+my own selfish reasons for that.
+
+I'm also concerned about DM regressions given that a lot of DM code to
+handle splitting a bio that spans target boundaries is ripped out, see:
+https://patchwork.kernel.org/patch/2840657/
+
+But that is just handwaving/FUD at this point cause I haven't put the
+time to looking at this patchset close enough to feel comfortable.  I
+can make reviewing this patchset a priority this week though.
+
+Kent, have you rebased this patchset at all?  Do you have a git tree I
+can clone to save the pain of pulling these patches out my my mbox,
+etc.
+
+Mike
