@@ -1,81 +1,160 @@
-From: Douglas Gilbert <dgilbert@interlog.com>
-Subject: Re: SCSI's heuristics for enabling WRITE SAME still need work [was:
- dm mpath: disable WRITE SAME if it fails]
-Date: Wed, 25 Sep 2013 18:12:37 -0400
-Message-ID: <52435FD5.6060308@interlog.com>
-References: <20130919161043.GA27081@redhat.com> <20130920212142.GA17898@redhat.com> <yq1eh8jf8wq.fsf@sermon.lab.mkp.net> <1379960325.4010.32.camel@localhost.localdomain> <52412581.2010909@suse.de> <20130924123449.GA16083@redhat.com> <yq1hadaba87.fsf@sermon.lab.mkp.net> <52434D0C.1090008@fastmail.fm>
-Reply-To: dgilbert@interlog.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Unable to receive overwrite BIO in dm-thin
+Date: Wed, 25 Sep 2013 18:59:12 -0400
+Message-ID: <20130925225911.GA25689@redhat.com>
+References: <CAKTMprP29Xjho0xir2xpWS3=izMTqbHLYL12FHza_9J=96mNQA@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <52434D0C.1090008@fastmail.fm>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bernd Schubert <bernd.schubert@fastmail.fm>, "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>, emilne@redhat.com, device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAKTMprP29Xjho0xir2xpWS3=izMTqbHLYL12FHza_9J=96mNQA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Teng-Feng Yang <shinrairis@gmail.com>
+Cc: Carlos Maiolino <cmaiolin@redhat.com>, dm-devel@redhat.com, Dave Chinner <dchinner@redhat.com>
 List-Id: dm-devel.ids
 
-On 13-09-25 04:52 PM, Bernd Schubert wrote:
-> On 09/24/2013 03:49 PM, Martin K. Petersen wrote:
->>>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
->>
->> Mike> So are there drives like this?:
->> Mike> 1) don't support RSOC
->> Mike> 2) do support WRITE SAME
->> Mike> 3) do populate VPD page with either WRITE SAME w/ discard bit set
->> Mike>    or UNMAP?
->>
->> Yes.
->>
->> But again, the fundamental issue here is not the drives. It's the
->> controller firmware. I am not aware of a single SPI/SAS/FC drive that
->> does not support at least WRITE SAME(10).
->>
->> For DIX and T10 PI I have a capabilities mask that each HBA driver fills
->> out that tells the sd driver what the controller can do. And this is
->> combined with whatever the drive reports to figure out whether integrity
->> protection can be enabled.
->>
->> I have been contemplating doing something similar for "fancy" SCSI
->> commands. We could have a flag in the scsi host template that controls
->> whether the device supports WRITE SAME, EXTENDED COPY, etc. The
->> advantage being that we do the matching at discovery time instead of
->> once a WRITE SAME is issued.
->>
->> This would also permit HBA drivers to toggle the feature on a per
->> instance basis. I.e. if "RAID controller firmware rev is lower than XYZ,
->> do not support WRITE SAME".
->>
->> I'll do a PoC later today...
->>
->
-> Martin,
->
-> I'm afraid we have another problem. I'm currently working on to get
-> discard working for our LSI2008 HBAs with attached sata-SSDs and the
-> heuristics in sd_read_write_same with based on VPD page 0x89 is not
-> correct for this HBA - its SATL supports write-same (although it does
-> "Logical block address out of range" at the end of the device, I'm going
-> to look into this tomorrow).
->
-> So allow LSI SATL or remove this check at all?
+On Mon, Sep 23 2013 at  7:06am -0400,
+Teng-Feng Yang <shinrairis@gmail.com> wrote:
 
-LSI implement their SATL in firmware inside their HBAs. Given
-their latest firmware release name (*Package_P17_IR_IT_Firmware*
-dated 9 August 2013) for their SAS-2 family *** you have 17
-versions of that firmware potentially out there in the field.
-Updating that firmware is a fiddly process; I use a USB stick
-with DOS on it! LSI do fix things in their SATL when flaws are
-pointed out.
+> Hi folks,
+> 
+> I have recently performed some experiments to get the IO performance
+> of thin devices created by dm-thin under different circumstances.
+> Therefore, I create a 100GB thin device from a thin pool (block size =
+> 1MB) created by a 3TB HD as the data device and a 128GB SSD as the
+> metadata device.
+> 
+> First, I want to know the IO performance of the raw HD
+> 
+> > dd if=/dev/zero of=/dev/sdg bs=1M count=10K
+> 10240+0 records in
+> 10240+0 records out
+> 10737418240 bytes (11 GB) copied, 79.3541 s, 135 MB/s
+> 
+> Then, I create a thin device and do the same IO.
+> 
+> > dd if=/dev/zero of=/dev/mapper/thin bs=1M count=10K
+> 1024+0 records in
+> 1024+0 records out
+> 1073741824 bytes (1.1 GB) copied, 22.4915 s, 47.7 MB/s
+> 
+> The write throughput is much more lower than the raw device, so I dig
+> a little deeper into the source code and turn the block_dump flag to
+> true.
+> It turns out that the "max_sectors_kb" of the thin device has been set
+> to 1024 sectors ( 512KB ). so the thin device can never receive 1MB
+> block size IO and try to zero block before every write.
+> So, I remove the whole pool and recreate the whole testing environment
+> and then set the max_sectors_kb to 2048.
+> 
+> > echo 2048 > /sys/block/dm-1/queue/max_sectors_kb
+> > dd if=/dev/zero of=/dev/mapper/thin bs=1M count=10K
+> 10240+0 records in
+> 10240+0 records out
+> 10737418240 bytes (11 GB) copied, 223.517 s, 48.0 MB/s
+> 
+> The performance is nearly the same, and the block_dump message shows
+> that the IO block_size is still 8 sectors per bio.
+> To test if the direct IO does the trick, I try:
+> 
+> > dd if=/dev/zero of=/dev/mapper/thin oflag=direct bs=1M count=10K
+> 10240+0 records in
+> 10240+0 records out
+> 10737418240 bytes (11 GB) copied, 192.099 s, 55.9 MB/s
+> 
+> However, the block_dump message shows the following line repeatedly:
+> [614644.643377] dd(20404): WRITE block 942080 on dm-1 (1344 sectors)
+> [614644.643398] dd(20404): WRITE block 943424 on dm-1 (704 sectors)
+> 
+> It looks like each IO request of dd has been split into 2 bios with
+> 1344 and 704 sectors.
+> In this circumstances, we can never follow the shorter path in dm-thin
+> since a single BIO seldom overwrites the whole 1MB block.
+> I also perform the same experiment with pool size equals to 512KB, and
+> everything works as expected.
+> 
+> So here are my questions:
+> 1. Is there anything else I can do to force or hint the kernel to
+> submit 1MB size bio when it is possible? Or the only thing I can do is
+> to stick with the block size lower or equal to 512KB instead?
 
-Generally speaking LSI's SATL is pretty good, at least compared
-to another SATL I can think of. They are both moving targets,
-and move independently.
+I tried to reproduce but couldn't using a 3.12-rc1 kernel:
 
-Doug Gilbert
+(the thin-pool is using a blocksize of 1024k, and the pool's underlying
+data device has max_sectors_kb of 1024.. all layers of the dm devices
+inherited that max_sectors_kb too just by the normal block layer's limit
+stacking)
 
+# dd if=/dev/zero of=/dev/vg/thinlv bs=1024k count=10 oflag=direct
 
-*** LSI's SAS-3 HBAs are still at "P1" which I assume is the
-     first publically released version.
+dd(16494): WRITE block 0 on dm-4 (2048 sectors)
+dd(16494): WRITE block 2048 on dm-4 (2048 sectors)
+dd(16494): WRITE block 4096 on dm-4 (2048 sectors)
+dd(16494): WRITE block 6144 on dm-4 (2048 sectors)
+dd(16494): WRITE block 8192 on dm-4 (2048 sectors)
+dd(16494): WRITE block 10240 on dm-4 (2048 sectors)
+dd(16494): WRITE block 12288 on dm-4 (2048 sectors)
+dd(16494): WRITE block 14336 on dm-4 (2048 sectors)
+dd(16494): WRITE block 16384 on dm-4 (2048 sectors)
+dd(16494): WRITE block 18432 on dm-4 (2048 sectors)
 
+A dd that uses buffered IO will issue $PAGE_SIZE IOs.  So 4K IO in most
+cases, unless the upper layers (or application) takes care to construct
+larger IOs (like XFS does).
 
+With XFS I see:
+
+# dd if=/dev/zero of=/mnt/test bs=1024k count=1
+
+dd(16708): WRITE block 96 on dm-4 (1952 sectors)
+dd(16708): WRITE block 2048 on dm-4 (96 sectors)
+
+# dd if=/dev/zero of=/mnt/test bs=1024k count=10
+
+dd(16838): WRITE block 96 on dm-4 (1952 sectors)
+dd(16838): WRITE block 2048 on dm-4 (96 sectors)
+dd(16838): WRITE block 2144 on dm-4 (1952 sectors)
+dd(16838): WRITE block 4096 on dm-4 (96 sectors)
+dd(16838): WRITE block 4192 on dm-4 (1952 sectors)
+dd(16838): WRITE block 6144 on dm-4 (96 sectors)
+dd(16838): WRITE block 6240 on dm-4 (1952 sectors)
+dd(16838): WRITE block 8192 on dm-4 (96 sectors)
+dd(16838): WRITE block 8288 on dm-4 (1952 sectors)
+dd(16838): WRITE block 10240 on dm-4 (96 sectors)
+dd(16838): WRITE block 10336 on dm-4 (1952 sectors)
+dd(16838): WRITE block 12288 on dm-4 (96 sectors)
+dd(16838): WRITE block 12384 on dm-4 (1952 sectors)
+dd(16838): WRITE block 14336 on dm-4 (96 sectors)
+dd(16838): WRITE block 14432 on dm-4 (1952 sectors)
+dd(16838): WRITE block 16384 on dm-4 (96 sectors)
+dd(16838): WRITE block 16480 on dm-4 (1952 sectors)
+dd(16838): WRITE block 18432 on dm-4 (96 sectors)
+dd(16838): WRITE block 18528 on dm-4 (1952 sectors)
+dd(16838): WRITE block 20480 on dm-4 (96 sectors)
+
+The splitting of the IOs to not always be 2048 sectors is likely due to
+the layout of XFS ontop of the thin LV.  Meaning the data area of XFS is
+offset so as not to be perfectly aligned to the underlying thin LV's
+blocksize.
+
+Dave? Carlos?  Any hints on how I can prove this misalignment by
+inspecting the XFS data areas relative to the underlying device?
+
+> 2. Should the max_sectors_kb's attribute of the thin device be
+> automatically set to block size?
+
+max_sectors_kb is bound by max_hw_sectors_kb.  So max_sectors_kb may not
+be able to scale to the thin-pool's blocksize.
+
+But if max_sectors_kb can be set to the blocksize it isn't unreasonable
+to do this.  I'll think a bit more about this.
