@@ -1,38 +1,50 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: Reworking dm-writeboost [was: Re: staging: Add dm-writeboost]
-Date: Wed, 25 Sep 2013 16:03:14 -0700
-Message-ID: <20130925230314.GA4802@kroah.com>
-References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
- <52384E66.6050101@gmail.com> <20130917205936.GB12001@redhat.com>
- <523E3522.2060607@gmail.com> <524183A2.9050301@gmail.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: SCSI's heuristics for enabling WRITE SAME still need work [was: dm mpath: disable WRITE SAME if it fails]
+Date: Wed, 25 Sep 2013 20:44:30 -0400
+Message-ID: <yq1vc1o9ztd.fsf@sermon.lab.mkp.net>
+References: <20130919161043.GA27081@redhat.com>
+	<20130920212142.GA17898@redhat.com>
+	<yq1eh8jf8wq.fsf@sermon.lab.mkp.net>
+	<1379960325.4010.32.camel@localhost.localdomain>
+	<52412581.2010909@suse.de> <20130924123449.GA16083@redhat.com>
+	<yq1hadaba87.fsf@sermon.lab.mkp.net> <52434D0C.1090008@fastmail.fm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <524183A2.9050301@gmail.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: devel@driverdev.osuosl.org, snitzer@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, dan.carpenter@oracle.com, joe@perches.com, akpm@linux-foundation.org, m.chehab@samsung.com, ejt@redhat.com, agk@redhat.com, cesarb@cesarb.net
+Content-Type: text/plain
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <52434D0C.1090008@fastmail.fm> (Bernd Schubert's message of "Wed,
+	25 Sep 2013 22:52:28 +0200")
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bernd Schubert <bernd.schubert@fastmail.fm>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>, emilne@redhat.com, device-mapper development <dm-devel@redhat.com>, dgilbert@interlog.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 24, 2013 at 09:20:50PM +0900, Akira Hayakawa wrote:
-> Hi, Mike
-> 
-> I am now working on redesigning and implementation
-> of dm-writeboost.
+>>>>> "Bernd" == Bernd Schubert <bernd.schubert@fastmail.fm> writes:
 
-Ok, I'm dropping your original patch, please resend when you have
-something you want merged into drivers/staging/
+Hey Bernd,
 
-thanks,
+Bernd> I'm afraid we have another problem. I'm currently working on to
+Bernd> get discard working for our LSI2008 HBAs with attached sata-SSDs
+Bernd> and the heuristics in sd_read_write_same with based on VPD page
+Bernd> 0x89 is not correct for this HBA - its SATL supports write-same
 
-greg k-h
+This has nothing to do with the WRITE SAME heuristics.
+
+It's true that depending on wind and whether we might issue WRITE
+SAME(10) or (16) with the UNMAP bit set to perform discard operations on
+the low level device. But we use a set of different (and somewhat more
+reliable) heuristics to decide which command to send down for that
+purpose.
+
+For discards to a SATA device to work you need a recent phase LSI
+firmware. And you need the target mode firmware (IT). There is no
+UNMAP->DSM TRIM translation in the RAID (IR) firmware.
+
+If your SATA SSDs reports DSM TRIM support, the LSI firmware will set
+LBPME=1 in READ CAPACITY(16) and the LOGICAL BLOCK PROVISIONING VPD page
+will indicate a preference for the UNMAP command (LBPU=1).
+
+Also, LSI firmware is well-behaved in general and will report ILLEGAL
+REQUEST when you send down a command that can't be handled.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
