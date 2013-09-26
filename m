@@ -1,12 +1,15 @@
-From: Frank Mayhar <fmayhar@google.com>
-Subject: RFC for multipath queue_if_no_path timeout.
-Date: Thu, 26 Sep 2013 10:14:56 -0700
-Message-ID: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH 0/2] patches to improve cluster raid1
+	performance [V2]
+Date: Thu, 26 Sep 2013 12:17:32 -0500
+Message-ID: <5CE90943-3783-472B-BCCD-BF1F392599C3@redhat.com>
+References: <cover.1380191501.git.dmzhang@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
+Mime-Version: 1.0 (Apple Message framework v1085)
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1380191501.git.dmzhang@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,41 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com, dongmao zhang <dmzhang@suse.com>
 List-Id: dm-devel.ids
 
-Hey, folks.  We're using multipath as an in-kernel failover mechanism,
-so that if an underlying device dies, multipath will switch to another
-in its list.  Further, we use queue_if_no_path so that a daemon can get
-involved and replace the list if the kernel runs out of alternatives.
-In testing, however, we ran into a problem.
+I'll try to look these patches over during the next couple days.  Thanks for sending.
 
-Obviously, if queue_if_no_path is on and multipath runs out of good
-paths, the I/Os will sit there queued forever barring user intervention.
-I was doing a lot of failure testing and encountered a daemon bug in
-which it would abandon its recovery in the middle, leaving the list
-intact and the I/Os queued, forever.  We fixed the daemon but the
-problem is potentially still there if for some reason the daemon dies
-and is not restarted.  This is a problem not solely (or even primarily)
-for the queued I/O, but also because things like slab shrink can get
-stuck behind that I/O and then other stuff becomes stuck behind _that_
-(since tries to get locks held by shrink and may itself hold
-semaphores), bringing the whole system to its knees in fairly short
-order, to the point that it's impossible to even get in via the network
-and reboot it.  I have an existence proof that this is the case. :-)
+One thing I'll be looking for is that any delays in the flush don't violate the need for dm-raid1.c to ensure that the log changes have hit the disk before performing any writes.
 
-My idea to deal with this in the kernel was to introduce a timeout on
-queue_if_no_path and make it settable either kernel-wide or per-table.
-By default it's disabled and is only armed when multipath runs out of
-valid paths and queue_if_no_path is on.  It's disabled again on table
-load.  If the timeout ever fires, all that happens is that the handler
-turns off queue_if_no_path; this causes all the outstanding I/O to get
-EIO and unsticks things all the way up the chain.  Losing those I/Os is
-far better than losing the entire system.
+ brassow
 
-I've actually implemented this and it works.  I've debated about talking
-with you folks about it but figured it was worth a shot.  I can post the
-patch if you're interested.
--- 
-Frank Mayhar
-310-460-4042
+On Sep 26, 2013, at 5:50 AM, dongmao zhang wrote:
+
+> This patch change DM_ULOG_REQUEST_VERSION from 2 to 3. It could
+> tell cmirrord that kernel is now supporting delay some flushes, and
+> cmirrord will do someting accordingly.
+> 
+> 
+> Based on my test result, the cluster raid1 writes loss 80% performance. I found
+> that the most time is occupied by the function userspace_flush.
+> 
+> Usually userspace_flush needs three stages(mark, clear, flush)to communicate with cmirrord.
+> 
+>> From the cmirrord's perspective, mark and flush functions run cluster_send first and then return to 
+> the kernel.
+> 
+> In other words, the requests of mark_region and flush in userspace_flush 
+> at least require a cluster_send period to finish. this is the root cause
+> of bad performance.
+> 
+> The idea is to merge flush and mark request together in both cmirrord and dm-log-userspace.
+> 
+> We run clog_flush directly after clog_mark_region. So the userspace_flush do not 
+> have to request flush again after requesting mark_region.  Moreover, I think the flush 
+> of clear region could be delayed. If we have both mark and clear region, only sending 
+> a mark_region request is OK, because clog_flush will automatically run.(ignore the clean_region 
+> time). It only takes one cluster_send period. If we have only mark region, 
+> a mark_region request is also OK, it takes one cluster_send period. If we have only 
+> clear_region, we could delay the flush of cleared_region for 3 seconds.
+> 
+> Overall, before the patch, mark_region require approximately two cluster_send
+> period(mark_region and flush), after the patch, mark_region only needs one 
+> cluster_send period. Based on my test, the performance is as twice as before.
+> 
+> 
+> 
+> dongmao zhang (2):
+>  improve the performance of dm-log-userspace
+>  change API of dm-log-userspace to support delay flush
+> 
+> drivers/md/dm-log-userspace-base.c    |  109 ++++++++++++++++++++++++++++++---
+> include/uapi/linux/dm-log-userspace.h |    2 +-
+> 2 files changed, 101 insertions(+), 10 deletions(-)
+> 
+> -- 
+> 1.7.3.4
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
