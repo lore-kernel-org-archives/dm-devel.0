@@ -1,69 +1,95 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/22] Immutable biovecs, block layer changes
-Date: Fri, 27 Sep 2013 14:38:52 -0400
-Message-ID: <20130927183851.GA16605@redhat.com>
-References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
- <20130808150954.GA30092@infradead.org>
- <20130808211529.GB15409@kmo-pixel>
- <20130924110012.GA7160@infradead.org>
- <20130924132014.GA16165@redhat.com>
- <20130924191954.GB2636@kmo-pixel>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: Fwd: multipath errors
+Date: Fri, 27 Sep 2013 15:11:04 -0500
+Message-ID: <20130927201104.GI1661@dhcp80-209.msp.redhat.com>
+References: <CAFtbanG05NuiQCiZd0v+TEVW+5dUnn=-LZzoewrY0roFq0L7HQ@mail.gmail.com>
+	<CAFtbanFoqNoSayniWmV=1k7nB+uk8wcyFek32OXDMN+RJTbsxg@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20130924191954.GB2636@kmo-pixel>
-Sender: linux-raid-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+In-Reply-To: <CAFtbanFoqNoSayniWmV=1k7nB+uk8wcyFek32OXDMN+RJTbsxg@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 24 2013 at  3:19pm -0400,
-Kent Overstreet <kmo@daterainc.com> wrote:
-
-> On Tue, Sep 24, 2013 at 09:20:14AM -0400, Mike Snitzer wrote:
-> > On Tue, Sep 24 2013 at  7:00am -0400,
-> > Christoph Hellwig <hch@infradead.org> wrote:
-> > 
-> > > Just curious, what's the state of the remaining immutable bio work?
-> > 
-> > Hey Christoph,
-> > 
-> > Have you been over the patchset?  Looks sane to you?
-> > 
-> > Given how disruptive this patchset is to the block layer I'm wondering
-> > how painful this change will be in combination with Jens' blk-mq
-> > changes.  I'd prefer to see blk-mq before immutable biovecs; but I have
-> > my own selfish reasons for that.
-> > 
-> > I'm also concerned about DM regressions given that a lot of DM code to
-> > handle splitting a bio that spans target boundaries is ripped out, see:
-> > https://patchwork.kernel.org/patch/2840657/
-> 
-> Oh good, you had seen that :)
-> 
-> Are you worried about performance regressions or actual bugs?
-
-Actual bugs.
- 
-> I _have_ explicitly tested that code path, but I don't know what corner
-> cases I may have missed so it definitely needs your eyeballs and testing
-> too.
->
-> As for performance - this'll be more efficient than what the dm code was
-> doing before. Especially when the multipage bvec patches go in.
-
-Sure, I can appreciate that.
- 
-> > But that is just handwaving/FUD at this point cause I haven't put the
-> > time to looking at this patchset close enough to feel comfortable.  I
-> > can make reviewing this patchset a priority this week though.
-> > 
-> > Kent, have you rebased this patchset at all?  Do you have a git tree I
-> > can clone to save the pain of pulling these patches out my my mbox,
-> > etc.
-> 
-> Yeah: git://evilpiepirate.org/~kent/linux-bcache.git for-jens
-
-Looking now, will build and kickoff some regression tests before I then
-jump into reviewing the code.
+T24gTW9uLCBTZXAgMjMsIDIwMTMgYXQgMTE6MDk6MThBTSArMDMwMCwgQW1pdGFpIEFsa2FsYXkg
+d3JvdGU6Cj4gICAgSGksCj4gICAgU29ycnkgZm9yIGJ1bXBpbmcsIGJ1dCBJIHdpbGwgYXBwcmVj
+aWF0ZSBhbnkgaGVscCBvbiB0aGlzIG1hdHRlci4uCj4gICAgVGhhbmtzLAo+ICAgIEFtaXRhaQo+
+IAo+ICAgIC0tLS0tLS0tLS0gRm9yd2FyZGVkIG1lc3NhZ2UgLS0tLS0tLS0tLQo+ICAgIEZyb206
+IEFtaXRhaSBBbGthbGF5IDxbMV1hbWl0YWkuYWxrYWxheS53b3JrQGdtYWlsLmNvbT4KPiAgICBE
+YXRlOiBUdWUsIFNlcCAxMCwgMjAxMyBhdCAyOjI5IFBNCj4gICAgU3ViamVjdDogbXVsdGlwYXRo
+IGVycm9ycwo+ICAgIFRvOiBbMl1kbS1kZXZlbEByZWRoYXQuY29tCj4gCj4gICAgaGksCj4gICAg
+SSBzb21ldGltZXMgc2VlIGNhc2VzIHdoZXJlIGlvIGZhaWxlZCBhZnRlciBzb21lIHBhdGggZmFp
+bG92ZXIsIGFsdGhvdWdoCj4gICAgdGhlcmUgYXJlIG90aGVyIHZhbGlkIHBhdGhzLgo+ICAgIEkg
+c2VlbSB0byBnZXQgYSBsb3Qgb2YgdGhlIGZvbGxvd2luZyBlcnJvcnMgZHVyaW5nIGEgcGF0aCBy
+ZW1vdmFsCj4gICAgKGZhaWxvdmVyKToKPiAKPiAgQXVnICAxIDA4OjU5OjM3IGxnNjQxIG11bHRp
+cGF0aGQ6IDM1MTRmMGM1MzJkODAwMDBhOiBmYWlsZWQgaW4gZG9tYXAgZm9yIHJlbW92YWwgb2Yg
+cGF0aCBzZGN5Cj4gIEF1ZyAgMSAwODo1OTozNyBsZzY0MSBtdWx0aXBhdGhkOiB1ZXZlbnQgdHJp
+Z2dlciBlcnJvcgo+ICBBdWcgIDEgMDg6NTk6MzcgbGc2NDEgbXVsdGlwYXRoZDogc2R0OiByZW1v
+dmUgcGF0aCAodWV2ZW50KQo+ICBBdWcgIDEgMDg6NTk6MzcgbGc2NDEga2VybmVsOiBkZXZpY2Ut
+bWFwcGVyOiB0YWJsZTogMjUzOjU6IG11bHRpcGF0aDogZXJyb3IgZ2V0dGluZyBkZXZpY2UKPiAg
+QXVnICAxIDA4OjU5OjM3IGxnNjQxIGtlcm5lbDogZGV2aWNlLW1hcHBlcjogaW9jdGw6IGVycm9y
+IGFkZGluZyB0YXJnZXQgdG8gdGFibGUKPiAgQXVnICAxIDA4OjU5OjM3IGxnNjQxIG11bHRpcGF0
+aGQ6IDM1MTRmMGM1MzJkODAwMDAxOiBsb2FkIHRhYmxlIFswIDIxNDc0ODM2NDgwIG11bHRpcGF0
+aCAwIDAgMSAxIHF1ZXVlLWxlbmd0aCAwIDEyIDEgNjY6MjQwIDEgNjY6ODAgMSA3MDoxOTIgMSA3
+MTo5NiAxIDY3OjE3NiAxIDY3OjExMiAxIDcxOjIyNCAxIDEyODoxMjggMSA4Ogo+ICAxNiAxIDY5
+OjE2IDEgNjk6MzIgMSA4OjMyIDFdCj4gIEF1ZyAgMSAwODo1OTozNyBsZzY0MSBtdWx0aXBhdGhk
+OiBzZHQ6IHBhdGggcmVtb3ZlZCBmcm9tIG1hcCAzNTE0ZjBjNTMyZDgwMDAwMWYKPiAKPiAgICBB
+bGwgdGhlIG90aGVyIHBhdGhzIGFyZSB0aGVyZSwgYW5kIHN0aWxsIG11bHRpcGF0aCBkZWNpZGVk
+IHRvIGZhaWwgdGhlIGlvCj4gICAgd2l0aCBubyBhcHBhcmVudCByZWFzb24u77+9Cj4gCj4gICAg
+SSB3b3VsZCBhcHByZWNpYXRlIGFueSBjb21tZW50IGFib3V0Ogo+IAo+ICAgIDEuIEhvdyBjYW4g
+dGhpcyBoYXBwZW4uCgpJdCBzaG91bGRuJ3QuICBUaGUga2VybmVsIHNob3VsZCBjaGVjayB0aHJv
+dWdoIGFsbCBvZiB0aGUgcGF0aHMgYmVmb3JlCmZhaWxpbmcuICBTb21ldGltZXMgc29tZSBhY3Rp
+b25zIG9uIHN0b3JhZ2UgYXJyYXlzIHRlbXBvcmFyaWx5IGJyaW5nIGFsbApwYXRocyBkb3duLCBi
+dXQgZXZlbiBpbiB0aGF0IGNhc2UsIHlvdSBzaG91bGQgc2VlIG1lc3NhZ2VzIGluIHRoZSBsb2dz
+Cm9mIG11bHRpcGF0aCB0cnlpbmcgYWxsIHRoZSBwYXRocyBiZWZvcmUgaXQgZmFpbHMuCgo+ICAg
+IDIuIEhvdyBjYW4gSSBpbmNyZWFzZSB0aGUgbG9nIGxldmVsIHRvIHVuZGVyc3RhbmQgbXVsdGlw
+YXRoIGRlY2lzaW9ucy4KCmluIC9ldGMvbXVsdGlwYXRoLmNvbmYKCmRlZmF1bHRzIHsKCS4uLgoJ
+dmVyYm9zaXR5IDMKfQoKVGhpcyB3aWxsIGFkZCBhIGxvdCBvZiBleHRyYSBsb2dnaW5nLiAgTWFr
+ZSBzdXJlIHRoYXQgeW91ciBsb2dnaW5nIGlzbid0CnJhdGUgbGltaXRlZCwgb3IgeW91IHdpbGwg
+bWlzcyBtZXNzYWdlcyBleGFjdGx5IHdoZW4gaXQncyBtb3N0IGltcG9ydGFudAp0byBzZWUgdGhl
+bS4KCgo+ICAgIDMuIFdoeSBkbyBJIGFsd2F5cyBzZWUgdGhlIGVycm9ycyByZWdhcmRpbmcgYWRk
+aW5nIHRhcmdldCB0byB0YWJsZS4KPiAgICBUaGUgb25seSB0aGluZyBJIGNhbiB0aGluayB0aGlu
+ayBhYm91dCwgdGhhdCBtdWx0aXBhdGggdGVtcG9yYXJpbHkKPiAgICBieXBhc3NlZCB0aGUgb3Ro
+ZXIgcGF0aHMgKG1heWJlIGl0IGdvdCBidXN5IHNldmVyYWwgdGltZXMgYW5kIGdhdmUgdXApLgo+
+ICAgIEknbSB1c2luZ++/vWRldmljZS1tYXBwZXItbXVsdGlwYXRoLTAuNC45LTY0LmVsNi54ODZf
+NjQuCgpUaGVzZSBtZXNzYWdlczoKCkF1ZyAgMSAwODo1OTozNyBsZzY0MSBrZXJuZWw6IGRldmlj
+ZS1tYXBwZXI6IHRhYmxlOiAyNTM6NTogbXVsdGlwYXRoOiBlcnJvciBnZXR0aW5nIGRldmljZQpB
+dWcgIDEgMDg6NTk6MzcgbGc2NDEga2VybmVsOiBkZXZpY2UtbWFwcGVyOiBpb2N0bDogZXJyb3Ig
+YWRkaW5nIHRhcmdldCB0byB0YWJsZQoKdXN1c2FsbHkgbWVhbiB0aGF0IHRoZSBkZXZpY2UgaXMg
+YWxyZWFkeSBpbiB1c2UuICBUaGV5IHNob3VsZG4ndCBiZSBpbgpyZWxhdGlvbiB0byB0aGUgZGV2
+aWNlIHlvdSBhcmUgcmVtb3ZpbmcuICBEbyB5b3UgZ2V0IHRoZW0gd2hlbiB5b3UKY3JlYXRlIHRo
+ZSBkZXZpY2UgYXMgd2VsbD8KCkFub3RoZXIgcG9zc2liaWxpdHkgaXMgdGhhdCB0aGUgZGV2aWNl
+IGhhcyB0aGUgd3JvbmcgcGVybWlzc2lvbnMuIEZvcgppbnN0YW5jZSwgdGhpcyBoYXBwZW5zIHdo
+ZW5ldmVyIG11bHRpcGF0aCB0cmllcyB0byBnZXQgYSByZWFkLW9ubHkKZGV2aWNlPyAgQWdhaW4s
+IHRoaXMgZG9lc24ndCBzZWVtIGxpa2UgaXQgY291bGQgYmUgcmVmZXJyaW5nIHRvIHRoZQpkZXZp
+Y2UgdGhhdCBpcyBiZWluZyByZW1vdmVkLiAgVW5mb3J0dW5hdGVseSwgdGhlIGtlcm5lbCBkb2Vz
+bid0IGdpdmUKYW55IGluZGljYXRpb24gd2hpY2ggcGF0aCBkZXZpY2UgaXMgZmFpbGluZywgb3Ig
+d2h5LiAgVGhhdCBzaG91bGQKcHJvYmFibHkgZ2V0IGZpeGVkLgoKQXJlIHlvdSBzZWVpbmcgSU8g
+ZXJyb3JzIGZvciB0aGUgbXVsdGlwYXRoIGRldmljZSBpbiB0aGUgbWVzc2FnZXM/CkNhbiB5b3Ug
+cG9zdCB0aG9zZT8KCkNvdWxkIHlvdSBwb3N0IGFsbCBvZiB0aGUgbG9nIG1lc3NhZ2VzIGFyb3Vu
+ZCB0aGUgZmFpbHVyZSAoSSBhc3N1bWUKdGhlcmUgdGhlcmUgaXMgYSBrZXJuZWwgbWVzc2FnZSBz
+YXlpbmcgdGhhdCBhbiBJTyBmYWlsZWQpLCBhbG9uZyB3aXRoCnRoZSBtdWx0aXBhdGggLWwgbGlz
+dGluZyBvZiB0aGUgZGV2aWNlIGJvdGggd2hlbiBubyBwYXRocyBhcmUgZmFpbGVkLAphbmQgaW1t
+ZWRpYXRlbHkgYWZ0ZXIgdGhlIGVycm9yIGhhcHBlbnMuCgpBbHNvLCBpdCB3b3VsZCBiZSBpbnRl
+cmVzdGluZyB0byBrbm93IGlmIHNldHRpbmcgc29tZXRoaW5nIGxpa2UKIm5vX3BhdGhfcmV0cnkg
+NSIgd291bGQgYXZvaWQgdGhlIGlzc3VlLiAgVGhlcmUncyBzdGlsbCBhIGJ1ZyBpZiBtdWx0aXBh
+dGgKaXNuJ3QgdHJ5aW5nIGFsbCB0aGUgcGF0aHMsIGJ1dCB0aGlzIHdvdWxkIG5hcnJvdyBkb3du
+IHdoZXJlIHRvIGxvb2suCgotQmVuCgo+ICAgIFRoYW5rcyBhIGxvdCwKPiAgICBBbWl0YWkKPiAK
+PiBSZWZlcmVuY2VzCj4gCj4gICAgVmlzaWJsZSBsaW5rcwo+ICAgIDEuIG1haWx0bzphbWl0YWku
+YWxrYWxheS53b3JrQGdtYWlsLmNvbQo+ICAgIDIuIG1haWx0bzpkbS1kZXZlbEByZWRoYXQuY29t
+Cgo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IGh0
+dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
