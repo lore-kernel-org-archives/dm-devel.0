@@ -1,91 +1,113 @@
-From: Frank Mayhar <fmayhar@google.com>
-Subject: Re: RFC for multipath queue_if_no_path timeout.
-Date: Fri, 27 Sep 2013 09:37:13 -0700
-Message-ID: <1380299833.25252.82.camel@bobble.lax.corp.google.com>
-References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
-	<20130926172422.GA31328@agk-dp.fab.redhat.com>
-	<1380216716.25252.39.camel@bobble.lax.corp.google.com>
-	<20130926173814.GB31328@agk-dp.fab.redhat.com>
-	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
-	<20130926232241.GC31328@agk-dp.fab.redhat.com>
-	<20130926234957.GA3658@redhat.com> <524520B0.6010003@suse.de>
-	<52453C76.6060403@suse.de> <20130927083742.GA683@agk-dp.fab.redhat.com>
-	<52458DBA.5090109@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Reworking dm-writeboost [was: Re: staging: Add dm-writeboost]
+Date: Fri, 27 Sep 2013 14:35:07 -0400
+Message-ID: <20130927183507.GA16553@redhat.com>
+References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
+ <52384E66.6050101@gmail.com> <20130917205936.GB12001@redhat.com>
+ <523E3522.2060607@gmail.com> <524183A2.9050301@gmail.com>
+ <20130925173757.GA24076@redhat.com> <5243922B.6070705@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52458DBA.5090109@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Disposition: inline
+In-Reply-To: <5243922B.6070705@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, dan.carpenter@oracle.com, ejt@redhat.com, cesarb@cesarb.net, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Fri, 2013-09-27 at 15:52 +0200, Hannes Reinecke wrote:
-> On 09/27/2013 10:37 AM, Alasdair G Kergon wrote:
-> > But this still dodges the fundamental problem:
-> > 
-> >   What is the right value to use for the timeout?
-> >   - How long should you wait for a path to (re)appear?
-> >     - In the current model, reinstating a path is a userspace 
-> >       responsibility.
-> > 
-> And with my proposed patch it would still be userspace which is
-> setting the timeout.
-> Currently, no_path_retry is not a proper measure anyway, as it's
-> depending on the time multipathd takes to complete a path check
-> round. Which depends on the number of device, the state of those etc.
+On Wed, Sep 25 2013 at  9:47pm -0400,
+Akira Hayakawa <ruby.wktk@gmail.com> wrote:
+
+> Hi, Mike
 > 
-> > The timeout, as proposed, is being used in two conflicting ways:
-> >   - How long to wait for path recovery when all paths went down
+> The monolithic source code (3.2k)
+> is nicely splitted into almost 20 *.c files
+> according to the functionality and
+> data strucutures in OOP style.
 > 
-> That would be set via the new 'no_path_timeout' feature, which would
-> be set instead of the (multipath-internal) no_path_retry
-> setting.
-
-Yes, this matches our setup as well.
-
-> >   - How long to wait when the system locks without enough free
-> >     memory even to reinstate a path (because of broken userspace
-> >     code) before having multipath fail queued I/O in a desperate
-> >     attempt at releasing memory to assist recovery
-> Do we even handle that case currently?
-
-My understanding is that the current code doesn't, no, but if it does I
-would love to know how.
-
-> Methinks this is precisely the use-case this is supposed to address.
-
-Yes, exactly.
-
-> When currently 'no_path_retry' is set _and_ we're running under a
-> low-mem condition there is a quite large likelyhood that the
-> multipath daemon will be killed by the OOM-killer or not able to
-> send any dm messages down to the kernel, as the latter most likely
-> require some memory allocations.
+> The aim of this posting
+> is to share how the splitting looks like.
 > 
-> So in the current 'no_path_retry' scenario the maps would have been
-> created with 'queue_if_no_path', and the daemon would have to reset
-> the 'queue_if_no_path' flag if the no_path_retry value expires.
-> Which it might not be able to do so due to the above scenario.
+> I believe that
+> at least reading the *.h files
+> can convince you the splitting is clear.
 > 
-> So with the proposed 'no_path_timeout' we would enable the dm-mpath
-> module to terminate all outstanding I/O, irrespective on all
-> userland conditions. Which seems like an improvement to me ...
+> The code is now tainted with
+> almost 20 version switch macros
+> and WB* debug macros
+> but I will clean them up
+> for sending patch.
+> 
+> Again,
+> the latest code can be cloned by
+> git clone https://github.com/akiradeveloper/dm-writeboost.git
+> 
+> I will make few updates to the source codes on this weekend
+> so please track it to follow the latest version.
+> Below is only the snapshot.
+> 
+> Akira
+> 
+> ---------- Summary ----------
+> 33 Makefile
+> 10 bigarray.h
+> 19 cache-alloc.h
+> 10 defer-barrier.h
+> 8 dirty-sync.h
+> 8 flush-daemon.h
+> 10 format-cache.h
+> 24 handle-io.h
+> 16 hashtable.h
+> 18 migrate-daemon.h
+> 7 migrate-modulator.h
+> 12 queue-flush-job.h
+> 8 rambuf.h
+> 13 recover.h
+> 18 segment.h
+> 8 superblock-recorder.h
+> 9 target.h
+> 30 util.h
+> 384 writeboost.h
+> 99 bigarray.c
+> 192 cache-alloc.c
+> 36 defer-barrier.c
+> 33 dirty-sync.c
+> 85 flush-daemon.c
+> 234 format-cache.c
+> 553 handle-io.c
+> 109 hashtable.c
+> 345 migrate-daemon.c
+> 41 migrate-modulator.c
+> 169 queue-flush-job.c
+> 52 rambuf.c
+> 308 recover.c
+> 118 segment.c
+> 61 superblock-recorder.c
+> 376 target.c
+> 126 util.c
 
-And to me, which is why I went in this direction in the first place.  I
-could see no dependable way to deal with outside of the kernel; if I
-had, I would have taken it, since userspace changes are _much_ easier
-for us to deal with than kernel changes.
--- 
-Frank Mayhar
-310-460-4042
+Unfortunately I think you went too far with all these different small
+files, I was hoping to see 2 or 3 .c files and a couple .h files.
+
+Maybe fold all the daemon code into a 1 .c and 1 .h ?
+
+The core of the writeboost target in dm-writeboost-target.c ?
+
+And fold all the other data structures into a 1 .c and 1 .h ?
+
+When folding these files together feel free to use dividers in the code
+like dm-thin.c and dm-cache-target.c do, e.g.:
+
+/*-----------------------------------------------------------------*/
+
+Mike
