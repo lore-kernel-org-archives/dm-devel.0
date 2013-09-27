@@ -1,20 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: RFC for multipath queue_if_no_path timeout.
-Date: Fri, 27 Sep 2013 08:07:44 +0200
-Message-ID: <524520B0.6010003@suse.de>
-References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
-	<20130926172422.GA31328@agk-dp.fab.redhat.com>
-	<1380216716.25252.39.camel@bobble.lax.corp.google.com>
-	<20130926173814.GB31328@agk-dp.fab.redhat.com>
-	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
-	<20130926232241.GC31328@agk-dp.fab.redhat.com>
-	<20130926234957.GA3658@redhat.com>
+From: Dongmao Zhang <dmzhang@suse.com>
+Subject: Re: [PATCH 0/2] patches to improve cluster raid1
+ performance [V2]
+Date: Fri, 27 Sep 2013 15:59:11 +0800
+Message-ID: <52453ACF.7050803@suse.com>
+References: <cover.1380191501.git.dmzhang@suse.com>
+	<5CE90943-3783-472B-BCCD-BF1F392599C3@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20130926234957.GA3658@redhat.com>
+In-Reply-To: <5CE90943-3783-472B-BCCD-BF1F392599C3@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,60 +20,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Brassow Jonathan <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 09/27/2013 01:49 AM, Mike Snitzer wrote:
-> On Thu, Sep 26 2013 at  7:22pm -0400,
-> Alasdair G Kergon <agk@redhat.com> wrote:
-> =
-
->> On Thu, Sep 26, 2013 at 10:47:13AM -0700, Frank Mayhar wrote:
->>> Launching it from ramdisk won't help, particularly, since it still goes
->>> through the block layer.  The other stuff won't help if a (potentially
->>> unrelated) bug in the daemon happens to be being tickled at the same
->>> time, or if some dependency happens to be broken and _that's_ what's
->>> preventing the daemon from making progress.
->>  =
-
->> Then put more effort into debugging your daemon so it doesn't have
->> bugs that make it die?  Implement the timeout in a robust independent
->> daemon if it's other code there that's unreliable?
->>
->>> And as far as lvm2 and multipath-tools, yeah, they cope okay in the kind
->>> of environments most people have, but that's not the kind of environment
->>> (or scale) we have to deal with.
->>
->> In what way are your requirements so different that a locked-into-memory
->> monitoring daemon cannot implement this timeout?
-> =
-
-> Frank, I had a look at your patch.  It leaves a lot to be desired, I was
-> starting to clean it up but ultimately found myself agreeing with
-> Alasdair's original point: that this policy should be implemented in the
-> userspace daemon.
-> =
-
-_Actually_ there is a way how this could be implemented properly:
-implement a blk_timeout function.
-
-Thing is, every request_queue might have a timeout function
-implemented, whose goal is to abort requests which are beyond that
-timeout. EG SCSI uses that for the dev_loss_tmo mechanism.
-
-Multipath what with it being request-based could easily implement
-the same mechanism, namely have to blk_timeout function which would
-just re-arm the timeout in the default case, but abort any queued
-I/O (after a timeout) if all paths are down.
-
-Hmm. I see to draft up a PoC.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Z3JlYXQsIHRoYW5rcyBmb3IgeW91ciByZXNwb25zZTopCgoK5LqOIDIwMTPlubQwOeaciDI35pel
+IDAxOjE3LCBCcmFzc293IEpvbmF0aGFuIOWGmemBkzoKPiBJJ2xsIHRyeSB0byBsb29rIHRoZXNl
+IHBhdGNoZXMgb3ZlciBkdXJpbmcgdGhlIG5leHQgY291cGxlIGRheXMuICBUaGFua3MgZm9yIHNl
+bmRpbmcuCj4KPiBPbmUgdGhpbmcgSSdsbCBiZSBsb29raW5nIGZvciBpcyB0aGF0IGFueSBkZWxh
+eXMgaW4gdGhlIGZsdXNoIGRvbid0IHZpb2xhdGUgdGhlIG5lZWQgZm9yIGRtLXJhaWQxLmMgdG8g
+ZW5zdXJlIHRoYXQgdGhlIGxvZyBjaGFuZ2VzIGhhdmUgaGl0IHRoZSBkaXNrIGJlZm9yZSBwZXJm
+b3JtaW5nIGFueSB3cml0ZXMuCj4KPiAgIGJyYXNzb3cKPgo+IE9uIFNlcCAyNiwgMjAxMywgYXQg
+NTo1MCBBTSwgZG9uZ21hbyB6aGFuZyB3cm90ZToKPgo+PiBUaGlzIHBhdGNoIGNoYW5nZSBETV9V
+TE9HX1JFUVVFU1RfVkVSU0lPTiBmcm9tIDIgdG8gMy4gSXQgY291bGQKPj4gdGVsbCBjbWlycm9y
+ZCB0aGF0IGtlcm5lbCBpcyBub3cgc3VwcG9ydGluZyBkZWxheSBzb21lIGZsdXNoZXMsIGFuZAo+
+PiBjbWlycm9yZCB3aWxsIGRvIHNvbWV0aW5nIGFjY29yZGluZ2x5Lgo+Pgo+Pgo+PiBCYXNlZCBv
+biBteSB0ZXN0IHJlc3VsdCwgdGhlIGNsdXN0ZXIgcmFpZDEgd3JpdGVzIGxvc3MgODAlIHBlcmZv
+cm1hbmNlLiBJIGZvdW5kCj4+IHRoYXQgdGhlIG1vc3QgdGltZSBpcyBvY2N1cGllZCBieSB0aGUg
+ZnVuY3Rpb24gdXNlcnNwYWNlX2ZsdXNoLgo+Pgo+PiBVc3VhbGx5IHVzZXJzcGFjZV9mbHVzaCBu
+ZWVkcyB0aHJlZSBzdGFnZXMobWFyaywgY2xlYXIsIGZsdXNoKXRvIGNvbW11bmljYXRlIHdpdGgg
+Y21pcnJvcmQuCj4+Cj4+PiAgRnJvbSB0aGUgY21pcnJvcmQncyBwZXJzcGVjdGl2ZSwgbWFyayBh
+bmQgZmx1c2ggZnVuY3Rpb25zIHJ1biBjbHVzdGVyX3NlbmQgZmlyc3QgYW5kIHRoZW4gcmV0dXJu
+IHRvCj4+IHRoZSBrZXJuZWwuCj4+Cj4+IEluIG90aGVyIHdvcmRzLCB0aGUgcmVxdWVzdHMgb2Yg
+bWFya19yZWdpb24gYW5kIGZsdXNoIGluIHVzZXJzcGFjZV9mbHVzaAo+PiBhdCBsZWFzdCByZXF1
+aXJlIGEgY2x1c3Rlcl9zZW5kIHBlcmlvZCB0byBmaW5pc2guIHRoaXMgaXMgdGhlIHJvb3QgY2F1
+c2UKPj4gb2YgYmFkIHBlcmZvcm1hbmNlLgo+Pgo+PiBUaGUgaWRlYSBpcyB0byBtZXJnZSBmbHVz
+aCBhbmQgbWFyayByZXF1ZXN0IHRvZ2V0aGVyIGluIGJvdGggY21pcnJvcmQgYW5kIGRtLWxvZy11
+c2Vyc3BhY2UuCj4+Cj4+IFdlIHJ1biBjbG9nX2ZsdXNoIGRpcmVjdGx5IGFmdGVyIGNsb2dfbWFy
+a19yZWdpb24uIFNvIHRoZSB1c2Vyc3BhY2VfZmx1c2ggZG8gbm90Cj4+IGhhdmUgdG8gcmVxdWVz
+dCBmbHVzaCBhZ2FpbiBhZnRlciByZXF1ZXN0aW5nIG1hcmtfcmVnaW9uLiAgTW9yZW92ZXIsIEkg
+dGhpbmsgdGhlIGZsdXNoCj4+IG9mIGNsZWFyIHJlZ2lvbiBjb3VsZCBiZSBkZWxheWVkLiBJZiB3
+ZSBoYXZlIGJvdGggbWFyayBhbmQgY2xlYXIgcmVnaW9uLCBvbmx5IHNlbmRpbmcKPj4gYSBtYXJr
+X3JlZ2lvbiByZXF1ZXN0IGlzIE9LLCBiZWNhdXNlIGNsb2dfZmx1c2ggd2lsbCBhdXRvbWF0aWNh
+bGx5IHJ1bi4oaWdub3JlIHRoZSBjbGVhbl9yZWdpb24KPj4gdGltZSkuIEl0IG9ubHkgdGFrZXMg
+b25lIGNsdXN0ZXJfc2VuZCBwZXJpb2QuIElmIHdlIGhhdmUgb25seSBtYXJrIHJlZ2lvbiwKPj4g
+YSBtYXJrX3JlZ2lvbiByZXF1ZXN0IGlzIGFsc28gT0ssIGl0IHRha2VzIG9uZSBjbHVzdGVyX3Nl
+bmQgcGVyaW9kLiBJZiB3ZSBoYXZlIG9ubHkKPj4gY2xlYXJfcmVnaW9uLCB3ZSBjb3VsZCBkZWxh
+eSB0aGUgZmx1c2ggb2YgY2xlYXJlZF9yZWdpb24gZm9yIDMgc2Vjb25kcy4KPj4KPj4gT3ZlcmFs
+bCwgYmVmb3JlIHRoZSBwYXRjaCwgbWFya19yZWdpb24gcmVxdWlyZSBhcHByb3hpbWF0ZWx5IHR3
+byBjbHVzdGVyX3NlbmQKPj4gcGVyaW9kKG1hcmtfcmVnaW9uIGFuZCBmbHVzaCksIGFmdGVyIHRo
+ZSBwYXRjaCwgbWFya19yZWdpb24gb25seSBuZWVkcyBvbmUKPj4gY2x1c3Rlcl9zZW5kIHBlcmlv
+ZC4gQmFzZWQgb24gbXkgdGVzdCwgdGhlIHBlcmZvcm1hbmNlIGlzIGFzIHR3aWNlIGFzIGJlZm9y
+ZS4KPj4KPj4KPj4KPj4gZG9uZ21hbyB6aGFuZyAoMik6Cj4+ICAgaW1wcm92ZSB0aGUgcGVyZm9y
+bWFuY2Ugb2YgZG0tbG9nLXVzZXJzcGFjZQo+PiAgIGNoYW5nZSBBUEkgb2YgZG0tbG9nLXVzZXJz
+cGFjZSB0byBzdXBwb3J0IGRlbGF5IGZsdXNoCj4+Cj4+IGRyaXZlcnMvbWQvZG0tbG9nLXVzZXJz
+cGFjZS1iYXNlLmMgICAgfCAgMTA5ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLQo+
+PiBpbmNsdWRlL3VhcGkvbGludXgvZG0tbG9nLXVzZXJzcGFjZS5oIHwgICAgMiArLQo+PiAyIGZp
+bGVzIGNoYW5nZWQsIDEwMSBpbnNlcnRpb25zKCspLCAxMCBkZWxldGlvbnMoLSkKPj4KPj4gLS0K
+Pj4gMS43LjMuNAo+Pgo+PiAtLQo+PiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPj4gZG0tZGV2ZWxA
+cmVkaGF0LmNvbQo+PiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
+ZGV2ZWwKPgo+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpo
+dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
