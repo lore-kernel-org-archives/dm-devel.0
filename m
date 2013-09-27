@@ -1,7 +1,7 @@
 From: Frank Mayhar <fmayhar@google.com>
 Subject: Re: RFC for multipath queue_if_no_path timeout.
-Date: Fri, 27 Sep 2013 09:32:09 -0700
-Message-ID: <1380299529.25252.78.camel@bobble.lax.corp.google.com>
+Date: Fri, 27 Sep 2013 09:37:13 -0700
+Message-ID: <1380299833.25252.82.camel@bobble.lax.corp.google.com>
 References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
 	<20130926172422.GA31328@agk-dp.fab.redhat.com>
 	<1380216716.25252.39.camel@bobble.lax.corp.google.com>
@@ -9,13 +9,14 @@ References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
 	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
 	<20130926232241.GC31328@agk-dp.fab.redhat.com>
 	<20130926234957.GA3658@redhat.com> <524520B0.6010003@suse.de>
-	<52453C76.6060403@suse.de>
+	<52453C76.6060403@suse.de> <20130927083742.GA683@agk-dp.fab.redhat.com>
+	<52458DBA.5090109@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52453C76.6060403@suse.de>
+In-Reply-To: <52458DBA.5090109@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,57 +30,62 @@ To: Hannes Reinecke <hare@suse.de>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2013-09-27 at 10:06 +0200, Hannes Reinecke wrote:
-> On 09/27/2013 08:07 AM, Hannes Reinecke wrote:
-> > On 09/27/2013 01:49 AM, Mike Snitzer wrote:
-> >> On Thu, Sep 26 2013 at  7:22pm -0400,
-> >> Alasdair G Kergon <agk@redhat.com> wrote:
-> >>
-> >>> On Thu, Sep 26, 2013 at 10:47:13AM -0700, Frank Mayhar wrote:
-> >>>> Launching it from ramdisk won't help, particularly, since it still goes
-> >>>> through the block layer.  The other stuff won't help if a (potentially
-> >>>> unrelated) bug in the daemon happens to be being tickled at the same
-> >>>> time, or if some dependency happens to be broken and _that's_ what's
-> >>>> preventing the daemon from making progress.
-> >>>  
-> >>> Then put more effort into debugging your daemon so it doesn't have
-> >>> bugs that make it die?  Implement the timeout in a robust independent
-> >>> daemon if it's other code there that's unreliable?
-> >>>
-> >>>> And as far as lvm2 and multipath-tools, yeah, they cope okay in the kind
-> >>>> of environments most people have, but that's not the kind of environment
-> >>>> (or scale) we have to deal with.
-> >>>
-> >>> In what way are your requirements so different that a locked-into-memory
-> >>> monitoring daemon cannot implement this timeout?
-> >>
-> >> Frank, I had a look at your patch.  It leaves a lot to be desired, I was
-> >> starting to clean it up but ultimately found myself agreeing with
-> >> Alasdair's original point: that this policy should be implemented in the
-> >> userspace daemon.
-> >>
-> > _Actually_ there is a way how this could be implemented properly:
-> > implement a blk_timeout function.
+On Fri, 2013-09-27 at 15:52 +0200, Hannes Reinecke wrote:
+> On 09/27/2013 10:37 AM, Alasdair G Kergon wrote:
+> > But this still dodges the fundamental problem:
 > > 
-> > Thing is, every request_queue might have a timeout function
-> > implemented, whose goal is to abort requests which are beyond that
-> > timeout. EG SCSI uses that for the dev_loss_tmo mechanism.
+> >   What is the right value to use for the timeout?
+> >   - How long should you wait for a path to (re)appear?
+> >     - In the current model, reinstating a path is a userspace 
+> >       responsibility.
 > > 
-> > Multipath what with it being request-based could easily implement
-> > the same mechanism, namely have to blk_timeout function which would
-> > just re-arm the timeout in the default case, but abort any queued
-> > I/O (after a timeout) if all paths are down.
-> > 
-> > Hmm. I see to draft up a PoC.
-> > 
-> And indeed, here it is.
+> And with my proposed patch it would still be userspace which is
+> setting the timeout.
+> Currently, no_path_retry is not a proper measure anyway, as it's
+> depending on the time multipathd takes to complete a path check
+> round. Which depends on the number of device, the state of those etc.
 > 
-> Completely untested, just to give you an idea what I was going on
-> about. Let's see if I can put this to test somewhere...
+> > The timeout, as proposed, is being used in two conflicting ways:
+> >   - How long to wait for path recovery when all paths went down
+> 
+> That would be set via the new 'no_path_timeout' feature, which would
+> be set instead of the (multipath-internal) no_path_retry
+> setting.
 
-Thanks, Hannes!  I'll grab this and test it today.  I clearly don't know
-enough about the block layer, since using blk_timeout never even crossed
-my mind.
+Yes, this matches our setup as well.
+
+> >   - How long to wait when the system locks without enough free
+> >     memory even to reinstate a path (because of broken userspace
+> >     code) before having multipath fail queued I/O in a desperate
+> >     attempt at releasing memory to assist recovery
+> Do we even handle that case currently?
+
+My understanding is that the current code doesn't, no, but if it does I
+would love to know how.
+
+> Methinks this is precisely the use-case this is supposed to address.
+
+Yes, exactly.
+
+> When currently 'no_path_retry' is set _and_ we're running under a
+> low-mem condition there is a quite large likelyhood that the
+> multipath daemon will be killed by the OOM-killer or not able to
+> send any dm messages down to the kernel, as the latter most likely
+> require some memory allocations.
+> 
+> So in the current 'no_path_retry' scenario the maps would have been
+> created with 'queue_if_no_path', and the daemon would have to reset
+> the 'queue_if_no_path' flag if the no_path_retry value expires.
+> Which it might not be able to do so due to the above scenario.
+> 
+> So with the proposed 'no_path_timeout' we would enable the dm-mpath
+> module to terminate all outstanding I/O, irrespective on all
+> userland conditions. Which seems like an improvement to me ...
+
+And to me, which is why I went in this direction in the first place.  I
+could see no dependable way to deal with outside of the kernel; if I
+had, I would have taken it, since userspace changes are _much_ easier
+for us to deal with than kernel changes.
 -- 
 Frank Mayhar
 310-460-4042
