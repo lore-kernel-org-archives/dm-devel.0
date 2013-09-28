@@ -1,208 +1,594 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 16/22] dm: Refactor for new bio cloning/splitting
-Date: Sat, 28 Sep 2013 00:59:09 -0400
-Message-ID: <20130928045909.GA19745@redhat.com>
-References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
- <1375912471-5106-17-git-send-email-kmo@daterainc.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: Reworking dm-writeboost [was: Re: staging: Add dm-writeboost]
+Date: Sat, 28 Sep 2013 20:29:01 +0900
+Message-ID: <5246BD7D.2000407@gmail.com>
+References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
+ <52384E66.6050101@gmail.com> <20130917205936.GB12001@redhat.com>
+ <523E3522.2060607@gmail.com> <524183A2.9050301@gmail.com>
+ <20130925173757.GA24076@redhat.com> <5243922B.6070705@gmail.com>
+ <20130927183507.GA16553@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1375912471-5106-17-git-send-email-kmo@daterainc.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <20130927183507.GA16553@redhat.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: snitzer@redhat.com
+Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, ruby.wktk@gmail.com, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, dan.carpenter@oracle.com, ejt@redhat.com, cesarb@cesarb.net, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 07 2013 at  5:54pm -0400,
-Kent Overstreet <kmo@daterainc.com> wrote:
+Hi,
 
-> We need to convert the dm code to the new bvec_iter primitives which
-> respect bi_bvec_done; they also allow us to drastically simplify dm's
-> bio splitting code.
+Two major progress:
+1) .ctr accepts segment size so .ctr now accepts 3 arguments: <backing dev> <cache dev> <segment size order>.
+2) fold the small files splitted that I suggested in the previous progress report.
+
+For 1) 
+I use zero length array to dynamically accept the segment size.
+writeboost had the parameter embedded previously and one must re-compile the code
+to change the parameter which badly loses usability was the problem.
+
+For 2)
+> Unfortunately I think you went too far with all these different small
+> files, I was hoping to see 2 or 3 .c files and a couple .h files.
 > 
-> Also kill bio_sector_offset(), dm was the only user and it doesn't make
-> much sense anymore.
+> Maybe fold all the daemon code into a 1 .c and 1 .h ?
 > 
-> Signed-off-by: Kent Overstreet <kmo@daterainc.com>
-> Cc: Jens Axboe <axboe@kernel.dk>
-> Cc: Alasdair Kergon <agk@redhat.com>
-> Cc: dm-devel@redhat.com
-> ---
->  drivers/md/dm.c     | 170 ++++++----------------------------------------------
->  fs/bio.c            |  38 ------------
->  include/linux/bio.h |   1 -
->  3 files changed, 18 insertions(+), 191 deletions(-)
+> The core of the writeboost target in dm-writeboost-target.c ?
 > 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 5544af7..696269d 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1050,7 +1050,6 @@ struct clone_info {
+> And fold all the other data structures into a 1 .c and 1 .h ?
+> 
+> When folding these files together feel free to use dividers in the code
+> like dm-thin.c and dm-cache-target.c do, e.g.:
+> 
+> /*-----------------------------------------------------------------*/
+As Mike pointed out splitting into almost 20 files went too far.
+I aggregated these files into 3 .c files and 3 .h files in total which are shown below.
 
-<snip>
+---------- Summary ----------
+39 dm-writeboost-daemon.h
+46 dm-writeboost-metadata.h
+413 dm-writeboost.h
+577 dm-writeboost-daemon.c
+1129 dm-writeboost-metadata.c
+1212 dm-writeboost-target.c
+81 dm-writeboost.mod.c
 
->  /*
->   * Creates a bio that consists of range of complete bvecs.
->   */
->  static void clone_bio(struct dm_target_io *tio, struct bio *bio,
-> -		      sector_t sector, unsigned short idx,
-> -		      unsigned short bv_count, unsigned len)
-> +		      sector_t sector, unsigned len)
->  {
->  	struct bio *clone = &tio->clone;
-> -	unsigned trim = 0;
->  
->  	__bio_clone(clone, bio);
-> -	bio_setup_sector(clone, sector, len);
-> -	bio_setup_bv(clone, idx, bv_count);
->  
-> -	if (idx != bio->bi_iter.bi_idx ||
-> -	    clone->bi_iter.bi_size < bio->bi_iter.bi_size)
-> -		trim = 1;
-> -	clone_bio_integrity(bio, clone, idx, len, 0, trim);
-> +	if (bio_integrity(bio))
-> +		bio_integrity_clone(clone, bio, GFP_NOIO);
-> +
-> +	bio_advance(clone, (sector - clone->bi_iter.bi_sector) << 9);
-> +	bio->bi_iter.bi_size = len << 9;
-> +
-> +	if (bio_integrity(bio))
-> +		bio_integrity_trim(clone, 0, len);
->  }
->  
->  static struct dm_target_io *alloc_tio(struct clone_info *ci,
-> @@ -1182,10 +1137,7 @@ static int __send_empty_flush(struct clone_info *ci)
->  }
->  
->  static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
-> -				     sector_t sector, int nr_iovecs,
-> -				     unsigned short idx, unsigned short bv_count,
-> -				     unsigned offset, unsigned len,
-> -				     unsigned split_bvec)
-> +				     sector_t sector, unsigned len)
->  {
->  	struct bio *bio = ci->bio;
->  	struct dm_target_io *tio;
-> @@ -1199,11 +1151,8 @@ static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti
->  		num_target_bios = ti->num_write_bios(ti, bio);
->  
->  	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
-> -		tio = alloc_tio(ci, ti, nr_iovecs, target_bio_nr);
-> -		if (split_bvec)
-> -			clone_split_bio(tio, bio, sector, idx, offset, len);
-> -		else
-> -			clone_bio(tio, bio, sector, idx, bv_count, len);
-> +		tio = alloc_tio(ci, ti, 0, target_bio_nr);
-> +		clone_bio(tio, bio, sector, len);
->  		__map_bio(tio);
->  	}
->  }
+The responsibilities of each .c file
+is the policy of this splitting.
 
-Hey Kent,
+a) dm-writeboost-metadata.c
+This file knows how the metadata is laid out on cache device.
+It can audit/format the cache device metadata
+and resume/free the in-core cache metadata from that on the cache device.
+Also provides accessor to the in-core metadata resumed.
 
-I haven't been able to pinpoint the issue yet, but using your for-jens
-branch, if I create a dm-thin volume with this lvm command:
-lvcreate -L20G -V20G -T vg/pool --name thinlv
+b) dm-writeboost-target.c
+This file contains all the methods to define target type.
+In terms of I/O processing, this files only defines
+from when bio is accepted to when flush job is queued
+which is described as "foreground processing" in the document.
+What happens after the job is queued is defined in -daemon.c file.
 
-and try to format /dev/vg/thinlv with XFS the kernel warns and then
-hangs with the following:
+c) dm-writeboost-daemon.c
+This file contains all the daemons as Mike suggested.
+Maybe, superblock_recorder should be in the -metadata.c file
+but I chose to put it on this file since for unity.
 
-WARNING: CPU: 0 PID: 11789 at include/linux/bio.h:202 bio_advance+0xd0/0xe0()
-Attempted to advance past end of bvec iter
-Modules linked in: dm_thin_pool dm_bio_prison dm_persistent_data dm_bufio libcrc32c skd(O) ebtable_nat ebtables xt_CHECKSUM iptable_mangle bridge autofs4 target_core_i
-block target_core_file target_core_pscsi target_core_mod configfs bnx2fc fcoe libfcoe 8021q libfc garp stp llc scsi_transport_fc scsi_tgt sunrpc cpufreq_ondemand ipt_R
-EJECT nf_conntrack_ipv4 nf_defrag_ipv4 iptable_filter ip_tables ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables bnx2i cni
-c uio ipv6 cxgb4i cxgb4 cxgb3i libcxgbi cxgb3 iscsi_tcp libiscsi_tcp libiscsi scsi_transport_iscsi dm_mirror dm_region_hash dm_log vhost_net macvtap macvlan vhost tun
-kvm_intel kvm iTCO_wdt iTCO_vendor_support microcode i2c_i801 lpc_ich mfd_core igb i2c_algo_bit i2c_core i7core_edac edac_core ixgbe dca ptp pps_core mdio dm_mod ses e
-nclosure sg acpi_cpufreq freq_table ext4 jbd2 mbcache sr_mod cdrom pata_acpi ata_generic ata_piix sd_mod crc_t10dif crct10dif_common megaraid_sas
-CPU: 0 PID: 11789 Comm: mkfs.xfs Tainted: G        W  O 3.12.0-rc2.snitm+ #74
-Hardware name: FUJITSU                          PRIMERGY RX300 S6             /D2619, BIOS 6.00 Rev. 1.10.2619.N1           05/24/2011
- 00000000000000ca ffff8803313156a8 ffffffff8151e8e8 00000000000000ca
- ffff8803313156f8 ffff8803313156e8 ffffffff8104c23c ffff880300000000
- ffff8802dd524220 0000000000000400 ffff8802ddfb9680 ffff8802dd524200
-Call Trace:
- [<ffffffff8151e8e8>] dump_stack+0x49/0x61
- [<ffffffff8104c23c>] warn_slowpath_common+0x8c/0xc0
- [<ffffffff8104c326>] warn_slowpath_fmt+0x46/0x50
- [<ffffffff811b1e40>] bio_advance+0xd0/0xe0
- [<ffffffffa015c63e>] __clone_and_map_data_bio+0xce/0x110 [dm_mod]
- [<ffffffffa015c706>] __split_and_process_non_flush+0x86/0xd0 [dm_mod]
- [<ffffffffa015c8ff>] __split_and_process_bio+0x1af/0x200 [dm_mod]
- [<ffffffffa015ca72>] _dm_request+0x122/0x190 [dm_mod]
- [<ffffffffa015cb08>] dm_request+0x28/0x40 [dm_mod]
- [<ffffffff81247040>] generic_make_request+0xc0/0x100
- [<ffffffff81247100>] submit_bio+0x80/0x170
- [<ffffffff811b7d9a>] do_direct_IO+0x6ea/0x10f0
- [<ffffffff811b8cf6>] do_blockdev_direct_IO+0x556/0x980
- [<ffffffff811b3d60>] ? I_BDEV+0x10/0x10
- [<ffffffff811b9175>] __blockdev_direct_IO+0x55/0x60
- [<ffffffff811b3d60>] ? I_BDEV+0x10/0x10
- [<ffffffff8112a53e>] ? lru_cache_add+0xe/0x10
- [<ffffffff811b4ce6>] blkdev_direct_IO+0x56/0x60
- [<ffffffff811b3d60>] ? I_BDEV+0x10/0x10
- [<ffffffff8111c5f2>] generic_file_direct_write+0xc2/0x180
- [<ffffffff81195b93>] ? file_update_time+0xa3/0xe0
- [<ffffffff8111ddf0>] __generic_file_aio_write+0x2d0/0x3b0
- [<ffffffff811b42e6>] blkdev_aio_write+0x56/0xa0
- [<ffffffff8117b8af>] do_sync_write+0x5f/0xa0
- [<ffffffff8117bb4d>] ? rw_verify_area+0x5d/0xe0
- [<ffffffff8117bc98>] vfs_write+0xc8/0x170
- [<ffffffff8117c2af>] SyS_write+0x5f/0xb0
- [<ffffffff8117c24e>] ? SyS_lseek+0x7e/0x80
- [<ffffffff8152b252>] system_call_fastpath+0x16/0x1b
----[ end trace 06fd13242c0bb957 ]---
+Thanks,
+Akira
 
-Looks to be stuck in bvec_iter_advance's while loop?
 
-BUG: soft lockup - CPU#0 stuck for 22s! [mkfs.xfs:11641]                                                                                                               
-Modules linked in: dm_thin_pool dm_bio_prison dm_persistent_data dm_bufio libcrc32c dm_mod ebtable_nat ebtables xt_CHECKSUM iptable_mangle bridge autofs4 target_core_i
-block target_core_file target_core_pscsi target_core_mod configfs bnx2fc fcoe libfcoe libfc 8021q garp scsi_transport_fc stp scsi_tgt llc sunrpc cpufreq_ondemand ipt_R
-EJECT nf_conntrack_ipv4 nf_defrag_ipv4 iptable_filter ip_tables ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables bnx2i cni
-c uio ipv6 cxgb4i cxgb4 cxgb3i libcxgbi cxgb3 iscsi_tcp libiscsi_tcp libiscsi scsi_transport_iscsi vhost_net macvtap macvlan vhost tun kvm_intel kvm iTCO_wdt iTCO_vend
-or_support microcode i2c_i801 lpc_ich mfd_core igb i2c_algo_bit i2c_core i7core_edac edac_core ixgbe dca ptp pps_core mdio sg ses enclosure acpi_cpufreq freq_table ext
-4 jbd2 mbcache sr_mod cdrom pata_acpi ata_generic ata_piix sd_mod crc_t10dif crct10dif_common megaraid_sas [last unloaded: dm_mod]                                     
-CPU: 0 PID: 11641 Comm: mkfs.xfs Tainted: G        W    3.12.0-rc2.snitm+ #74                                                                                          
-Hardware name: FUJITSU                          PRIMERGY RX300 S6             /D2619, BIOS 6.00 Rev. 1.10.2619.N1           05/24/2011                                 
-task: ffff88032c626040 ti: ffff88032418e000 task.ti: ffff88032418e000                                                                                                  
-RIP: 0010:[<ffffffff811b1dd4>]  [<ffffffff811b1dd4>] bio_advance+0x64/0xe0                                                                                             
-RSP: 0018:ffff88032418f768  EFLAGS: 00000206                                                                                                                           
-RAX: 0000000000000e00 RBX: ffff880321cec800 RCX: 0000000000000400                                                                                                      
-RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000009                                                                                                      
-RBP: ffff88032418f788 R08: 0000000000000000 R09: 0000000000000000                                                                                                      
-R10: 00000000000006bf R11: 00000000000006bf R12: ffff88032efeec60                                                                                                      
-R13: ffff88032418f6e8 R14: ffffffff8104c24f R15: ffff88032418f6f8                                                                                                      
-FS:  00007fdd500a2740(0000) GS:ffff88033fc00000(0000) knlGS:0000000000000000                                                                                           
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033                                                                                                                      
-CR2: 00007fdd4a210000 CR3: 0000000324296000 CR4: 00000000000007f0                                                                                                      
-Stack:                                                                                                                                                                 
- 0000000000000000 ffff8802cbc5c5c0 0000000000000088 0000000000001000                                                                                                   
- ffff88032418f7e8 ffffffffa036663c 0000000100000008 ffffc90006618040                                                                                                   
- ffff88032418f838 ffff88032efeec40 ffff880300000000 ffff88032418f838                                                                                                   
-Call Trace:                                                                                                                                                            
- [<ffffffffa036663c>] __clone_and_map_data_bio+0xcc/0x110 [dm_mod]                                                                                                     
- [<ffffffffa0366706>] __split_and_process_non_flush+0x86/0xd0 [dm_mod]                                                                                                 
- [<ffffffffa03668ff>] __split_and_process_bio+0x1af/0x200 [dm_mod]                                                                                                     
- [<ffffffffa0366a72>] _dm_request+0x122/0x190 [dm_mod]
- [<ffffffffa0366b08>] dm_request+0x28/0x40 [dm_mod]
- [<ffffffff81247040>] generic_make_request+0xc0/0x100
- [<ffffffff81247100>] submit_bio+0x80/0x170
- [<ffffffff811b7d9a>] do_direct_IO+0x6ea/0x10f0
- [<ffffffff811b8cf6>] do_blockdev_direct_IO+0x556/0x980
- [<ffffffff811b3d60>] ? I_BDEV+0x10/0x10
- [<ffffffff8112b179>] ? invalidate_inode_pages2_range+0x229/0x2c0
- [<ffffffff811b9175>] __blockdev_direct_IO+0x55/0x60
- [<ffffffff811b3d60>] ? I_BDEV+0x10/0x10
- [<ffffffff811b4ce6>] blkdev_direct_IO+0x56/0x60
- [<ffffffff811b3d60>] ? I_BDEV+0x10/0x10
- [<ffffffff8111c5f2>] generic_file_direct_write+0xc2/0x180
- [<ffffffff8111ddf0>] __generic_file_aio_write+0x2d0/0x3b0
- [<ffffffff811b42e6>] blkdev_aio_write+0x56/0xa0
- [<ffffffff8152667c>] ? __do_page_fault+0x25c/0x4b0
- [<ffffffff8117b8af>] do_sync_write+0x5f/0xa0
- [<ffffffff8117bb4d>] ? rw_verify_area+0x5d/0xe0
- [<ffffffff8117bc98>] vfs_write+0xc8/0x170
- [<ffffffff8117c89f>] SyS_pwrite64+0x9f/0xb0
- [<ffffffff8152b252>] system_call_fastpath+0x16/0x1b
-Code: 8b 6e 78 77 67 45 85 e4 74 4a 8b 53 08 eb 05 45 85 e4 74 40 8b 4b 0c 48 c1 e1 04 42 8b 44 29 08 2b 43 10 39 d0 0f 47 c2 44 39 e0 <41> 0f 47 c4 29 c2 41 29 c4 03
-43 10 89 53 08 89 43 10 42 3b 44
+followed by the current .h files.
+
+---------- dm-writeboost-daemon.h ----------
+/*
+ * Copyright (C) 2012-2013 Akira Hayakawa <ruby.wktk@gmail.com>
+ *
+ * This file is released under the GPL.
+ */
+
+#ifndef DM_WRITEBOOST_DAEMON_H
+#define DM_WRITEBOOST_DAEMON_H
+
+/*----------------------------------------------------------------*/
+
+void flush_proc(struct work_struct *);
+
+/*----------------------------------------------------------------*/
+
+void queue_barrier_io(struct wb_cache *, struct bio *);
+void barrier_deadline_proc(unsigned long data);
+void flush_barrier_ios(struct work_struct *);
+
+/*----------------------------------------------------------------*/
+
+void migrate_proc(struct work_struct *);
+void wait_for_migration(struct wb_cache *, u64 id);
+
+/*----------------------------------------------------------------*/
+
+void modulator_proc(struct work_struct *);
+
+/*----------------------------------------------------------------*/
+
+void sync_proc(struct work_struct *);
+
+/*----------------------------------------------------------------*/
+
+void recorder_proc(struct work_struct *);
+
+/*----------------------------------------------------------------*/
+
+#endif
+
+---------- dm-writeboost-metadata.h ----------
+/*
+ * Copyright (C) 2012-2013 Akira Hayakawa <ruby.wktk@gmail.com>
+ *
+ * This file is released under the GPL.
+ */
+
+#ifndef DM_WRITEBOOST_METADATA_H
+#define DM_WRITEBOOST_METADATA_H
+
+/*----------------------------------------------------------------*/
+
+struct segment_header *get_segment_header_by_id(struct wb_cache *, u64 segment_id);
+sector_t calc_mb_start_sector(struct wb_cache *, struct segment_header *, cache_nr mb_idx);
+bool is_on_buffer(struct wb_cache *, cache_nr mb_idx);
+
+/*----------------------------------------------------------------*/
+
+struct ht_head *ht_get_head(struct wb_cache *, struct lookup_key *);
+struct metablock *ht_lookup(struct wb_cache *,
+			    struct ht_head *, struct lookup_key *);
+void ht_register(struct wb_cache *, struct ht_head *,
+		 struct lookup_key *, struct metablock *);
+void ht_del(struct wb_cache *, struct metablock *);
+void discard_caches_inseg(struct wb_cache *,
+			  struct segment_header *);
+
+/*----------------------------------------------------------------*/
+
+int __must_check audit_cache_device(struct dm_dev *, struct wb_cache *,
+				    bool *need_format, bool *allow_format);
+int __must_check format_cache_device(struct dm_dev *, struct wb_cache *);
+
+/*----------------------------------------------------------------*/
+
+void prepare_segment_header_device(struct segment_header_device *dest,
+				   struct wb_cache *,
+				   struct segment_header *src);
+
+/*----------------------------------------------------------------*/
+
+int __must_check resume_cache(struct wb_cache *cache, struct dm_dev *dev);
+void free_cache(struct wb_cache *cache);
+
+/*----------------------------------------------------------------*/
+
+#endif
+
+---------- dm-writeboost.h ----------
+/*
+ * Copyright (C) 2012-2013 Akira Hayakawa <ruby.wktk@gmail.com>
+ *
+ * This file is released under the GPL.
+ */
+
+#ifndef DM_WRITEBOOST_H
+#define DM_WRITEBOOST_H
+
+/*----------------------------------------------------------------*/
+
+#define DM_MSG_PREFIX "writeboost"
+
+#include <linux/module.h>
+#include <linux/version.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/sched.h>
+#include <linux/timer.h>
+#include <linux/device-mapper.h>
+#include <linux/dm-io.h>
+
+#define WBERR(f, args...) \
+	DMERR("err@%d " f, __LINE__, ## args)
+#define WBWARN(f, args...) \
+	DMWARN("warn@%d " f, __LINE__, ## args)
+#define WBINFO(f, args...) \
+	DMINFO("info@%d " f, __LINE__, ## args)
+
+/*
+ * The amount of RAM buffer pool to pre-allocated.
+ */
+#define RAMBUF_POOL_ALLOCATED 64 /* MB */
+
+/*
+ * The Detail of the Disk Format
+ *
+ * Whole:
+ * Superblock (1MB) + Segment + Segment ...
+ * We reserve the first 1MB as the superblock.
+ *
+ * Superblock:
+ * head <----                                     ----> tail
+ * superblock header (512B) + ... + superblock record (512B)
+ *
+ * Segment:
+ * segment_header_device +
+ * metablock_device * nr_caches_inseg +
+ * (aligned first 4KB region)
+ * data[0] (4KB) + data{1] + ... + data{nr_cache_inseg - 1]
+ */
+
+/*
+ * Superblock Header
+ * First one sector of the super block region.
+ * The value is fixed after formatted.
+ */
+
+ /*
+  * Magic Number
+  * "WBst"
+  */
+#define WRITEBOOST_MAGIC 0x57427374
+struct superblock_header_device {
+	__le32 magic;
+	u8 segment_size_order;
+} __packed;
+
+/*
+ * Superblock Record (Mutable)
+ * Last one sector of the superblock region.
+ * Record the current cache status in need.
+ */
+struct superblock_record_device {
+	__le64 last_migrated_segment_id;
+} __packed;
+
+/*
+ * Cache line index.
+ *
+ * dm-writeboost can supoort a cache device
+ * with size less than 4KB * (1 << 32)
+ * that is 16TB.
+ */
+typedef u32 cache_nr;
+
+/*
+ * Metadata of a 4KB cache line
+ *
+ * Dirtiness is defined for each sector
+ * in this cache line.
+ */
+struct metablock {
+	sector_t sector; /* key */
+
+	cache_nr idx; /* Const */
+
+	struct hlist_node ht_list;
+
+	/*
+	 * 8 bit flag for dirtiness
+	 * for each sector in cache line.
+	 *
+	 * Current implementation
+	 * only recovers dirty caches.
+	 * Recovering clean caches complicates the code
+	 * but couldn't be effective
+	 * since only few of the caches are clean.
+	 */
+	u8 dirty_bits;
+};
+
+/*
+ * On-disk metablock
+ */
+struct metablock_device {
+	__le64 sector;
+
+	u8 dirty_bits;
+
+	__le32 lap;
+} __packed;
+
+#define SZ_MAX (~(size_t)0)
+struct segment_header {
+	/*
+	 * ID uniformly increases.
+	 * ID 0 is used to tell that the segment is invalid
+	 * and valid id >= 1.
+	 */
+	u64 global_id;
+
+	/*
+	 * Segment can be flushed half-done.
+	 * length is the number of
+	 * metablocks that must be counted in
+	 * in resuming.
+	 */
+	u8 length;
+
+	cache_nr start_idx; /* Const */
+	sector_t start_sector; /* Const */
+
+	struct list_head migrate_list;
+
+	/*
+	 * This segment can not be migrated
+	 * to backin store
+	 * until flushed.
+	 * Flushed segment is in cache device.
+	 */
+	struct completion flush_done;
+
+	/*
+	 * This segment can not be overwritten
+	 * until migrated.
+	 */
+	struct completion migrate_done;
+
+	spinlock_t lock;
+
+	atomic_t nr_inflight_ios;
+
+	struct metablock mb_array[0];
+};
+
+/*
+ * (Locking)
+ * Locking metablocks by their granularity
+ * needs too much memory space for lock structures.
+ * We only locks a metablock by locking the parent segment
+ * that includes the metablock.
+ */
+#define lockseg(seg, flags) spin_lock_irqsave(&(seg)->lock, flags)
+#define unlockseg(seg, flags) spin_unlock_irqrestore(&(seg)->lock, flags)
+
+/*
+ * On-disk segment header.
+ *
+ * Must be at most 4KB large.
+ */
+struct segment_header_device {
+	/* - FROM - At most512 byte for atomicity. --- */
+	__le64 global_id;
+	/*
+	 * How many cache lines in this segments
+	 * should be counted in resuming.
+	 */
+	u8 length;
+	/*
+	 * On what lap in rorating on cache device
+	 * used to find the head and tail in the
+	 * segments in cache device.
+	 */
+	__le32 lap;
+	/* - TO -------------------------------------- */
+	/* This array must locate at the tail */
+	struct metablock_device mbarr[0];
+} __packed;
+
+struct rambuffer {
+	void *data;
+	struct completion done;
+};
+
+enum STATFLAG {
+	STAT_WRITE = 0,
+	STAT_HIT,
+	STAT_ON_BUFFER,
+	STAT_FULLSIZE,
+};
+#define STATLEN (1 << 4)
+
+struct lookup_key {
+	sector_t sector;
+};
+
+struct ht_head {
+	struct hlist_head ht_list;
+};
+
+struct wb_device;
+struct wb_cache {
+	struct wb_device *wb;
+
+	struct dm_dev *device;
+	struct mutex io_lock;
+	cache_nr nr_caches; /* Const */
+	u64 nr_segments; /* Const */
+	u8 segment_size_order; /* Const */
+	u8 nr_caches_inseg; /* Const */
+	struct bigarray *segment_header_array;
+
+	/*
+	 * Chained hashtable
+	 *
+	 * Writeboost uses chained hashtable
+	 * to cache lookup.
+	 * Cache discarding often happedns
+	 * This structure fits our needs.
+	 */
+	struct bigarray *htable;
+	size_t htsize;
+	struct ht_head *null_head;
+
+	cache_nr cursor; /* Index that has been written the most lately */
+	struct segment_header *current_seg;
+
+	struct rambuffer *current_rambuf;
+	size_t nr_rambuf_pool; /* Const */
+	struct rambuffer *rambuf_pool;
+
+	u64 last_migrated_segment_id;
+	u64 last_flushed_segment_id;
+	u64 reserving_segment_id;
+
+	/*
+	 * Flush daemon
+	 *
+	 * Writeboost first queue the segment to flush
+	 * and flush daemon asynchronously
+	 * flush them to the cache device.
+	 */
+	struct work_struct flush_work;
+	struct workqueue_struct *flush_wq;
+	spinlock_t flush_queue_lock;
+	struct list_head flush_queue;
+	wait_queue_head_t flush_wait_queue;
+
+	/*
+	 * Deferred ACK for barriers.
+	 */
+	struct work_struct barrier_deadline_work;
+	struct timer_list barrier_deadline_timer;
+	struct bio_list barrier_ios;
+	unsigned long barrier_deadline_ms; /* param */
+
+	/*
+	 * Migration daemon
+	 *
+	 * Migartion also works in background.
+	 *
+	 * If allow_migrate is true,
+	 * migrate daemon goes into migration
+	 * if they are segments to migrate.
+	 */
+	struct work_struct migrate_work;
+	struct workqueue_struct *migrate_wq;
+	bool allow_migrate; /* param */
+
+	/*
+	 * Batched Migration
+	 *
+	 * Migration is done atomically
+	 * with number of segments batched.
+	 */
+	wait_queue_head_t migrate_wait_queue;
+	atomic_t migrate_fail_count;
+	atomic_t migrate_io_count;
+	struct list_head migrate_list;
+	u8 *dirtiness_snapshot;
+	void *migrate_buffer;
+	size_t nr_cur_batched_migration;
+	size_t nr_max_batched_migration; /* param */
+
+	/*
+	 * Migration modulator
+	 *
+	 * This daemon turns on and off
+	 * the migration
+	 * according to the load of backing store.
+	 */
+	struct work_struct modulator_work;
+	bool enable_migration_modulator; /* param */
+
+	/*
+	 * Superblock Recorder
+	 *
+	 * Update the superblock record
+	 * periodically.
+	 */
+	struct work_struct recorder_work;
+	unsigned long update_record_interval; /* param */
+
+	/*
+	 * Cache Synchronizer
+	 *
+	 * Sync the dirty writes
+	 * periodically.
+	 */
+	struct work_struct sync_work;
+	unsigned long sync_interval; /* param */
+
+	/*
+	 * on_terminate is true
+	 * to notify all the background daemons to
+	 * stop their operations.
+	 */
+	bool on_terminate;
+
+	atomic64_t stat[STATLEN];
+};
+
+struct wb_device {
+	struct dm_target *ti;
+
+	struct dm_dev *device;
+
+	struct wb_cache *cache;
+
+	u8 migrate_threshold;
+
+	atomic64_t nr_dirty_caches;
+};
+
+struct flush_job {
+	struct list_head flush_queue;
+	struct segment_header *seg;
+	/*
+	 * The data to flush to cache device.
+	 */
+	struct rambuffer *rambuf;
+	/*
+	 * List of bios with barrier flags.
+	 */
+	struct bio_list barrier_ios;
+};
+
+#define PER_BIO_VERSION KERNEL_VERSION(3, 8, 0)
+#if LINUX_VERSION_CODE >= PER_BIO_VERSION
+struct per_bio_data {
+	void *ptr;
+};
+#endif
+#endif
+
+/*----------------------------------------------------------------*/
+
+void flush_current_buffer(struct wb_cache *);
+void inc_nr_dirty_caches(struct wb_device *);
+void cleanup_mb_if_dirty(struct wb_cache *,
+			 struct segment_header *,
+			 struct metablock *);
+u8 atomic_read_mb_dirtiness(struct segment_header *,
+			    struct metablock *);
+
+/*----------------------------------------------------------------*/
+
+extern struct workqueue_struct *safe_io_wq;
+extern struct dm_io_client *wb_io_client;
+
+void *do_kmalloc_retry(size_t size, gfp_t flags, int lineno);
+#define kmalloc_retry(size, flags) \
+	do_kmalloc_retry((size), (flags), __LINE__)
+
+int dm_safe_io_internal(
+		struct dm_io_request *,
+		unsigned num_regions, struct dm_io_region *,
+		unsigned long *err_bits, bool thread, int lineno);
+#define dm_safe_io(io_req, num_regions, regions, err_bits, thread) \
+	dm_safe_io_internal((io_req), (num_regions), (regions), \
+			    (err_bits), (thread), __LINE__)
+
+void dm_safe_io_retry_internal(
+		struct dm_io_request *,
+		unsigned num_regions, struct dm_io_region *,
+		bool thread, int lineno);
+#define dm_safe_io_retry(io_req, num_regions, regions, thread) \
+	dm_safe_io_retry_internal((io_req), (num_regions), (regions), \
+				  (thread), __LINE__)
+
+sector_t dm_devsize(struct dm_dev *);
