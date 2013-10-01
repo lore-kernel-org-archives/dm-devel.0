@@ -1,60 +1,78 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Reworking dm-writeboost [was: Re: staging: Add dm-writeboost]
-Date: Tue, 1 Oct 2013 09:26:54 +0100
-Message-ID: <20131001082654.GA10326@debian>
-References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
- <52384E66.6050101@gmail.com> <20130917205936.GB12001@redhat.com>
- <523E3522.2060607@gmail.com> <524183A2.9050301@gmail.com>
- <20130926034325.GO26872@dastard>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] dm-mpath: requeue I/O during pg_init
+Date: Tue,  1 Oct 2013 11:49:56 +0200
+Message-ID: <1380620996-110162-1-git-send-email-hare@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <20130926034325.GO26872@dastard>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: devel@driverdev.osuosl.org, snitzer@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, Akira Hayakawa <ruby.wktk@gmail.com>, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, dan.carpenter@oracle.com, ejt@redhat.com, cesarb@cesarb.net, m.chehab@samsung.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 26, 2013 at 01:43:25PM +1000, Dave Chinner wrote:
-> On Tue, Sep 24, 2013 at 09:20:50PM +0900, Akira Hayakawa wrote:
-> > * Deferring ACK for barrier writes
-> > Barrier flags such as REQ_FUA and REQ_FLUSH are handled lazily.
-> > Immediately handling these bios badly slows down writeboost.
-> > It surveils the bios with these flags and forcefully flushes them
-> > at worst case within `barrier_deadline_ms` period.
-> 
-> That rings alarm bells.
-> 
-> If the filesystem is using REQ_FUA/REQ_FLUSH for ordering reasons,
-> delaying them to allow other IOs to be submitted and dispatched may
-> very well violate the IO ordering constraints the filesystem is
-> trying to acheive.
+When pg_init is running no I/O can be submitted to the underlying
+devices, as the path priority etc might change.
+When using queue_io for this requests will be piling up within
+multipath as the block I/O scheduler just sees a _very fast_
+device.
+All of these queued I/O has to be resubmitted from within
+multipathing once pg_init is done.
 
-If the fs is using REQ_FUA for ordering they need to wait for
-completion of that bio before issuing any subsequent bio that needs to
-be strictly ordered.  So I don't think there is any issue here.
+This approach has the problem that it's virtually impossible to
+abort I/O when pg_init is running, and we're adding heavy load
+to the devices after pg_init as all of these queued I/O need
+to be resubmitted _before_ any requests can be pulled of the
+request queue and normal operation continues.
 
-> Alternatively, delaying them will stall the filesystem because it's
-> waiting for said REQ_FUA IO to complete. For example, journal writes
-> in XFS are extremely IO latency sensitive in workloads that have a
-> signifincant number of ordering constraints (e.g. O_SYNC writes,
-> fsync, etc) and delaying even one REQ_FUA/REQ_FLUSH can stall the
-> filesystem for the majority of that barrier_deadline_ms.
+This patch will requeue the I/O which has been triggering
+the pg_init call, and return 'busy' when pg_init is in progress.
+With these changes the blk I/O scheduler will stop submitting
+I/O during pg_init, resulting in a quicker path switch and
+less I/O pressure (and memory consumption) after pg_init.
 
-Yes, this is a valid concern, but I assume Akira has benchmarked.
-With dm-thin, I delay the REQ_FUA/REQ_FLUSH for a tiny amount, just to
-see if there are any other FUA requests on my queue that can be
-aggregated into a single flush.  I agree with you that the target
-should never delay waiting for new io; that's asking for trouble.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-mpath.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-- Joe
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 5adede1..a1aaac9 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -390,7 +390,11 @@ static int map_io(struct multipath *m, struct request *clone,
+ 	if (was_queued)
+ 		m->queue_size--;
+ 
+-	if ((pgpath && m->queue_io) ||
++	if (m->pg_init_required) {
++		if (!m->pg_init_in_progress)
++			queue_work(kmultipathd, &m->process_queued_ios);
++		r = DM_MAPIO_REQUEUE;
++	} else if ((pgpath && m->queue_io) ||
+ 	    (!pgpath && m->queue_if_no_path)) {
+ 		/* Queue for the daemon to resubmit */
+ 		list_add_tail(&clone->queuelist, &m->queued_ios);
+@@ -1641,6 +1645,11 @@ static int multipath_busy(struct dm_target *ti)
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
++	/* pg_init in progress, requeue until done */
++	if (m->pg_init_in_progress) {
++		busy = 1;
++		goto out;
++	}
+ 	/* Guess which priority_group will be used at next mapping time */
+ 	if (unlikely(!m->current_pgpath && m->next_pg))
+ 		pg = m->next_pg;
+-- 
+1.7.12.4
