@@ -1,7 +1,8 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] dm-mpath: requeue I/O during pg_init
-Date: Tue,  1 Oct 2013 11:49:56 +0200
-Message-ID: <1380620996-110162-1-git-send-email-hare@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-cache: return -EINVAL, not -ENOMEM,
+ if the user specifies unknown policy
+Date: Tue, 1 Oct 2013 18:35:39 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1310011834190.25214@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,63 +17,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+Cc: Mike Snitzer <msnitzer@redhat.com>, Edward Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-When pg_init is running no I/O can be submitted to the underlying
-devices, as the path priority etc might change.
-When using queue_io for this requests will be piling up within
-multipath as the block I/O scheduler just sees a _very fast_
-device.
-All of these queued I/O has to be resubmitted from within
-multipathing once pg_init is done.
+dm-cache: return -EINVAL, not -ENOMEM, if the user specifies unknown 
+policy
 
-This approach has the problem that it's virtually impossible to
-abort I/O when pg_init is running, and we're adding heavy load
-to the devices after pg_init as all of these queued I/O need
-to be resubmitted _before_ any requests can be pulled of the
-request queue and normal operation continues.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-This patch will requeue the I/O which has been triggering
-the pg_init call, and return 'busy' when pg_init is in progress.
-With these changes the blk I/O scheduler will stop submitting
-I/O during pg_init, resulting in a quicker path switch and
-less I/O pressure (and memory consumption) after pg_init.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-mpath.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ drivers/md/dm-cache-policy.c |    4 ++--
+ drivers/md/dm-cache-target.c |    8 +++++---
+ 2 files changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 5adede1..a1aaac9 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -390,7 +390,11 @@ static int map_io(struct multipath *m, struct request *clone,
- 	if (was_queued)
- 		m->queue_size--;
+Index: linux-3.10.13-fast/drivers/md/dm-cache-target.c
+===================================================================
+--- linux-3.10.13-fast.orig/drivers/md/dm-cache-target.c	2013-10-01 16:30:54.000000000 +0200
++++ linux-3.10.13-fast/drivers/md/dm-cache-target.c	2013-10-01 17:29:43.000000000 +0200
+@@ -1865,15 +1865,17 @@ static int set_config_values(struct cach
+ static int create_cache_policy(struct cache *cache, struct cache_args *ca,
+ 			       char **error)
+ {
+-	cache->policy =	dm_cache_policy_create(ca->policy_name,
++	struct dm_cache_policy *p = dm_cache_policy_create(ca->policy_name,
+ 					       cache->cache_size,
+ 					       cache->origin_sectors,
+ 					       cache->sectors_per_block);
+-	if (!cache->policy) {
++	if (IS_ERR(p)) {
+ 		*error = "Error creating cache's policy";
+-		return -ENOMEM;
++		return PTR_ERR(p);
+ 	}
  
--	if ((pgpath && m->queue_io) ||
-+	if (m->pg_init_required) {
-+		if (!m->pg_init_in_progress)
-+			queue_work(kmultipathd, &m->process_queued_ios);
-+		r = DM_MAPIO_REQUEUE;
-+	} else if ((pgpath && m->queue_io) ||
- 	    (!pgpath && m->queue_if_no_path)) {
- 		/* Queue for the daemon to resubmit */
- 		list_add_tail(&clone->queuelist, &m->queued_ios);
-@@ -1641,6 +1645,11 @@ static int multipath_busy(struct dm_target *ti)
++	cache->policy = p;
++
+ 	return 0;
+ }
  
- 	spin_lock_irqsave(&m->lock, flags);
+Index: linux-3.10.13-fast/drivers/md/dm-cache-policy.c
+===================================================================
+--- linux-3.10.13-fast.orig/drivers/md/dm-cache-policy.c	2013-10-01 17:29:50.000000000 +0200
++++ linux-3.10.13-fast/drivers/md/dm-cache-policy.c	2013-10-01 17:30:05.000000000 +0200
+@@ -119,13 +119,13 @@ struct dm_cache_policy *dm_cache_policy_
+ 	type = get_policy(name);
+ 	if (!type) {
+ 		DMWARN("unknown policy type");
+-		return NULL;
++		return ERR_PTR(-EINVAL);
+ 	}
  
-+	/* pg_init in progress, requeue until done */
-+	if (m->pg_init_in_progress) {
-+		busy = 1;
-+		goto out;
-+	}
- 	/* Guess which priority_group will be used at next mapping time */
- 	if (unlikely(!m->current_pgpath && m->next_pg))
- 		pg = m->next_pg;
--- 
-1.7.12.4
+ 	p = type->create(cache_size, origin_size, cache_block_size);
+ 	if (!p) {
+ 		put_policy(type);
+-		return NULL;
++		return ERR_PTR(-ENOMEM);
+ 	}
+ 	p->private = type;
+ 
