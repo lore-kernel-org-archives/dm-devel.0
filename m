@@ -1,79 +1,87 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-writeboost testing
-Date: Fri, 4 Oct 2013 11:56:42 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1310041113230.22029@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
-	<524E27DD.2050809@gmail.com>
-	<alpine.LRH.2.02.1310040923320.8473@file01.intranet.prod.int.rdu2.redhat.com>
-	<524ECFC9.3000603@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 16/22] dm: Refactor for new bio cloning/splitting
+Date: Fri, 4 Oct 2013 13:07:32 -0400
+Message-ID: <20131004170732.GA30728@redhat.com>
+References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
+ <1375912471-5106-17-git-send-email-kmo@daterainc.com>
+ <20130928045909.GA19745@redhat.com>
+ <20131003031738.GA27418@kmo-pixel>
+ <20131003032320.GA15322@redhat.com>
+ <20131003214525.GA12183@kmo-pixel>
+ <20131003225009.GA24173@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <524ECFC9.3000603@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20131003225009.GA24173@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <kmo@daterainc.com>
+Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Thu, Oct 03 2013 at  6:50pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-
-On Fri, 4 Oct 2013, Akira Hayakawa wrote:
-
-> Mikulas,
+> On Thu, Oct 03 2013 at  5:45pm -0400,
+> Kent Overstreet <kmo@daterainc.com> wrote:
 > 
-> Thanks for your pointing out.
-> 
-> > The problem is that you are using workqueues the wrong way. You submit a 
-> > work item to a workqueue and the work item is active until the device is 
-> > unloaded.
+> > On Wed, Oct 02, 2013 at 11:23:21PM -0400, Mike Snitzer wrote:
+> > > Great, thanks for finding this, I'll test and review the code further.
 > > 
-> > If you submit a work item to a workqueue, it is required that the work 
-> > item finishes in finite time. Otherwise, it may stall stall other tasks. 
-> > The deadlock when I terminate Xserver is caused by this - the nvidia 
-> > driver tries to flush system workqueue and it waits for all work items to 
-> > terminate - but your work items don't terminate.
-> > 
-> > If you need a thread that runs for a long time, you should use 
-> > kthread_create, not workqueues (see this 
-> > http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-encryption-threads.patch 
-> > or this 
-> > http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-offload-writes-to-thread.patch 
-> > as an example how to use kthreads).
+> > Cool - let me know if you find anything else (how thoroughly do you
+> > think you've tested it so far?)
 > 
-> But I see no reason why you recommend
-> using a kthread for looping job
-> instead of putting a looping work item
-> into a single-threaded not-system workqueue.
->
-> For me, they both seem to be working.
+> Not very, the issue you resolved was a blocker for DM.  But I haven't
+> even verified your fix yet though... will do tomorrow with more
+> extensive testing using the dm-thinp and dm-cache test-suite.
 
-As I said, the system locks up when it tries to flush the system 
-workqueue. This happens for example when terminating Xwindow with the 
-nvidia binary driver, but it may happen in other parts of the kernel too. 
-The fact that it works in your setup doesn't mean that it is correct.
+With your latest fix I was able to create a thin device and format with
+XFS.  Unfortunately, when I tried to run the thinp-test-suite the very
+first BasicTests test (test_dd_benchmark) fails -- need to look closer
+but it would seem to me the thinp saved bio_endio path isn't happy.  We
+likely need an appropriately placed atomic_inc(&bio->bi_remaining); like
+you did in dm-cache-target.c
 
-> Is it documented that
-> looping job should not be put into
-> any type of workqueue?
-
-It is general assumption when workqueues were created. Maybe it's not 
-documented.
-
-> You are only mentioning that
-> putting a looping work item in system_wq
-> is the wrong way since
-> nvidia driver flush the workqueue.
-> 
-> Akira
-
-Mikulas
+------------[ cut here ]------------
+kernel BUG at fs/bio.c:1722!
+invalid opcode: 0000 [#1] SMP
+Modules linked in: dm_cache_cleaner dm_cache_mq dm_cache dm_thin_pool dm_bio_prison dm_persistent_data dm_bufio dm_mod xfs exportfs libcrc32c ebtable_nat ebtables xt_C
+HECKSUM iptable_mangle bridge autofs4 target_core_iblock target_core_file target_core_pscsi target_core_mod configfs bnx2fc fcoe 8021q libfcoe libfc garp stp llc scsi_
+transport_fc scsi_tgt sunrpc cpufreq_ondemand ipt_REJECT nf_conntrack_ipv4 nf_defrag_ipv4 iptable_filter ip_tables ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_stat
+e nf_conntrack ip6table_filter ip6_tables bnx2i cnic uio ipv6 cxgb4i cxgb4 cxgb3i libcxgbi cxgb3 iscsi_tcp libiscsi_tcp libiscsi scsi_transport_iscsi vhost_net macvtap
+ macvlan vhost tun kvm_intel kvm iTCO_wdt iTCO_vendor_support microcode i2c_i801 lpc_ich mfd_core igb i2c_algo_bit i2c_core i7core_edac edac_core ixgbe dca ptp pps_cor
+e mdio sg ses enclosure acpi_cpufreq freq_table ext4 jbd2 mbcache sr_mod cdrom pata_acpi ata_generic ata_piix sd_mod crc_t10dif crct10dif_common megaraid_sas [last unl
+oaded: dm_cache_mq]
+CPU: 0 PID: 342 Comm: kworker/u24:7 Tainted: G        W    3.12.0-rc2.snitm+ #76
+Hardware name: FUJITSU                          PRIMERGY RX300 S6             /D2619, BIOS 6.00 Rev. 1.10.2619.N1           05/24/2011
+Workqueue: dm-thin do_worker [dm_thin_pool]
+task: ffff88032cd88ab0 ti: ffff88032c5e6000 task.ti: ffff88032c5e6000
+RIP: 0010:[<ffffffff811b1464>]  [<ffffffff811b1464>] bio_endio+0x74/0x80
+RSP: 0018:ffff88032c5e7d48  EFLAGS: 00010246
+RAX: ffff88032f10a784 RBX: ffff88032d097450 RCX: 00000000ffffffff
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff88032f10a740
+RBP: ffff88032c5e7d48 R08: ffff88033fc12d00 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000002 R12: ffff88032f10a740
+R13: ffff88032def5880 R14: ffff88032d0c7c00 R15: ffff88032d457a05
+FS:  0000000000000000(0000) GS:ffff88033fc00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 0000003bfea13000 CR3: 0000000001a0b000 CR4: 00000000000007f0
+Stack:
+ ffff88032c5e7d98 ffffffffa05f2ef9 ffff88032c5e7da8 0000000000000000
+ ffff88032d0c7c00 ffff88032c5e7da8 ffff88032d0c7d98 ffff88032d0974a8
+ ffff88032d0c7d14 ffff88032d457a05 ffff88032c5e7dd8 ffffffffa05f2ba7
+Call Trace:
+ [<ffffffffa05f2ef9>] process_prepared_mapping+0x79/0x150 [dm_thin_pool]
+ [<ffffffffa05f2ba7>] process_prepared+0x87/0xa0 [dm_thin_pool]
+ [<ffffffffa05f58f3>] do_worker+0x33/0x60 [dm_thin_pool]
+ [<ffffffff81067862>] process_one_work+0x182/0x3b0
+ [<ffffffff81068c80>] worker_thread+0x120/0x3a0
+ [<ffffffff81068b60>] ? manage_workers+0x160/0x160
+ [<ffffffff8106eace>] kthread+0xce/0xe0
+ [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
+ [<ffffffff8152b1ac>] ret_from_fork+0x7c/0xb0
+ [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
+Code: 1f 84 00 00 00 00 00 48 8b 57 10 83 e2 01 0f 44 f1 eb cd 0f 1f 40 00 48 8b 7f 50 48 85 ff 74 dd 8b 57 44 48 8d 47 44 85 d2 7f ac <0f> 0b eb fe 0f 1f 84 00 00 00 00 00 55 48 89 e5 66 66 66 66 90 
+RIP  [<ffffffff811b1464>] bio_endio+0x74/0x80
+ RSP <ffff88032c5e7d48>
+---[ end trace acb5a7d638591b7b ]---
