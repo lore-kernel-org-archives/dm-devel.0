@@ -1,57 +1,158 @@
-From: Teng-Feng Yang <shinrairis@gmail.com>
-Subject: thin_dump cannot dump the correct data mapping of thin
-	pools
-Date: Fri, 4 Oct 2013 15:01:14 +0800
-Message-ID: <CAKTMprPZ01+JaT0YJhYjPd90gdhfcX-Qa1+wUcv85GffXh74aw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: [RFC] dm-writeboost: Persistent memory support
+Date: Fri, 04 Oct 2013 22:37:21 +0900
+Message-ID: <524EC491.30701@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, ejt@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi folks,
+Hi, all
 
-I have been working on an incremental backup tools of thin volumes
-created by dm-thin for a couple of months.
-This tool relies on the data mappings dumped by thin_dump from the
-thin-provisioing-tools.
-As I update thin_dump from version 0.1.5 to 0.2.7, it cannot work
-correctly as the earlier 0.1.5 version.
+Let me introduce my future plan
+of applying persistent memory to dm-writeboost.
+dm-writeboost can potentially
+gain many benefits by the persistent memory.
 
-The following things have been observed:
-1. thin_dump-0.2.7 cannot take user-specified "metadata_snap" as
-v0.1.5. It will always return "bad checksum in superblock".
-2. If "metadata_snap" is not given by users, thin_dump-0.2.7 only
-dumps the out-dated data mappings which can be recognized by observing
-the wrong "transaction id".
+(1) Problem
+The basic mechanism of dm-writeboost is
+(i) first stores the write data to RAM buffer
+    whose size is 1MB at maximum and
+    can include 255 * 4KB data.
+(ii) when the RAM buffer is fulfilled
+     it packs the data and its metadata 
+     which indicates where to write back,
+     into a structure called "log" and
+     queues it.
+(iii) the log is flushed to the cache device
+      in background.
+(iv) and later migrated or written back
+     to the backing store in background.
 
-Since it looked like thin_dump failed to get the most up-to-date
-metadata blocks in version 0.2.7, I dig a little deeper into the
-source code and find something that might cause the problem.
-The open flag used on metadata device has been changed from "O_DIRECT
-| O_SYNC" to "0" in commit 4deb1751a650010ce9c15910a064be1348dec8ba .
-After I changed this back to "O_DIRECT | O_SYNC" in version 0.2.7, it
-works as expected once again.
+The problem is in handling barrier writes
+flagged with REA_FUA or REQ_FLUSH.
+Upper layer waits for these kind of bios complete
+so waiting for log to be fulfilled and then queued
+may stall the upper layer.
+One of the methods in receiving these bios is that
+dm-writeboost makes a "partial" log and queues it
+which causes potentially random writes to the 
+cache device(SSD) which not only loses its performance
+but also fails to maximize the lifetime of the SSD device.
+Moreover, it consumes CPU cycles to make a partial log
+again and again. It is not free.
 
-So here is my question.
-Can I change this flag back to "O_DIRECT | O_SYNC" in any newer version?
-I am worry about that I might accidentally mess something up by
-changing this flag.
-Also, what's the purpose to get rid of the "O_DIRECT" and "O_SYNC"
-flags when we migrate to version 0.2.x?
+So, dm-writeboost provides a tunable parameter called
+barrier_deadline_ms that indicates the
+worst time guaranteed that these unusually flagged bios queued.
+Making a partial log is deferred and
+it means that the log can be fulfilled before the deadline
+if there are many processes submitting writes.
 
-Any help would be highly appreciated.
+In summary,
+due to the REQ_FUA and REQ_FLUSH flag
+dm-writeboost can not guarantee the log always fulfilled.
+Imagine there is only one process above the dm-writeboost device
+and rediculously submits REQ_FUAed bio and waits for the completion repeatly.
+This is the worst case for dm-writeboost
+the log is always partial and the process always waits for 
+the deadline.
 
-Best Regards,
-Dennis
+If the RAM buffer is smaller than 1MB
+the log is likely to be fulfilled.
+The size of the RAM buffer is tunable in constructor.
+However, this is not the ultimate solution.
+
+So, let's find the ultimate solution next.
+
+(2) What if RAM buffer is non-volatile
+If we use persistent memory for the RAM buffer instead of
+DRAM which is volatile
+we don't need to partially flush the log
+to complete these flagged bios quickly
+but can do away with only writing the data
+to the persistent RAM buffer and then returning ACK.
+
+This means
+the 1MB log will be always fulfilled
+and the upper layer will never be annoyed with
+how to handle the REQ_FUA or REQ_FLUSH flagged bios.
+This will always maximize the write thoughput to the SSD device
+and maximize its lifetime.
+
+Futhermore,
+upper layer can eliminate the
+optimization for these bios.
+For example, XFS also does the same technique
+of gathering the barriers as explained by Dave Chinner in
+https://lkml.org/lkml/2013/10/3/804
+
+Using dm-writeboost with persistent memory
+the upper layer will be alliviated
+from doing difficult things.
+Applying persistent memory to dm-writeboost is promising.
+
+Any comment?
+
+(3) Design Change
+I have read this thread in LKML
+"RFC Block Layer Extensions to Support NV-DIMMs"
+https://lkml.org/lkml/2013/9/4/555
+ 
+The interface design is still in discussion but
+I hope to see an interface design that deals with
+persistent memory as the new type of memory
+not the block device.
+
+Even if the RAM buffer is switch to 
+volatile to non-volatile
+the basic I/O path of dm-writeboost will not change.
+I think most of the code can be shared between
+volatile mode and non-volatile mode of dm-writeboost.
+So, switching the mode in constructor parameter
+will be my design choice.
+
+Maybe the constructor will be like this
+writeboost <mode> ...
+writeboost 0 <backing store> <cache device> ....
+writeboost 1 <backing store> <cache device> <persistent memory> ...
+
+If the mode is 0 it builds a writeboost device with volatile RAM buffer
+and the mode is 1 it builds with non-volatile RAM buffer.
+
+The current design doesn't have mode parameter
+so adding the parameter right now could be our design choice
+but even if we don't add it right now
+the backward-compatibility can be guaranteed
+by implicitly setting the mode to 0 if the first parameter is not a number.
+I prefer adding it right now for future design consistency.
+
+Should or Shouldn't I add the paramter before
+making a patch to device-mapper tree?
+
+(4) Prototype
+I think I can start prototyping
+by defining a pseudo persistent memory backed by a block device.
+
+The temporary interface will be defined like:
+struct pmem *pmem_alloc(struct block_device *, size_t start, size_t len);
+void pmem_write(struct pmem *, size_t start, size_t len, void *data);
+void pmem_read(struct pmem *, size_t start, size_t len, void *dest);
+void pmem_free(struct pmem *);
+
+Byte-addressableness is implemented by Read-Modify-Write.
+
+The difficulty in using the persistent memory instead
+is in recovering the data both on the RAM buffer and the cache device
+in rebooting.
+The implementation will be complicated but
+can mostly be limited under recover_cache() routine
+and the outside of it will not be badly tainted.
+
+Should I prototype before making patch to device-mapper tree?
+
+Akira
