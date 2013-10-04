@@ -1,19 +1,13 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [dm-devel] Reworking dm-writeboost [was: Re: staging: Add
- dm-writeboost]
-Date: Fri, 4 Oct 2013 12:04:17 +1000
-Message-ID: <20131004020417.GF4446@dastard>
-References: <5223208D.4000008@gmail.com> <20130916215357.GA5015@redhat.com>
- <52384E66.6050101@gmail.com> <20130917205936.GB12001@redhat.com>
- <523E3522.2060607@gmail.com> <524183A2.9050301@gmail.com>
- <20130926034325.GO26872@dastard> <20131001082654.GA10326@debian>
- <alpine.LRH.2.02.1310021956130.22612@file01.intranet.prod.int.rdu2.redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [dm-devel] dm-writeboost testing
+Date: Fri, 04 Oct 2013 11:28:45 +0900
+Message-ID: <524E27DD.2050809@gmail.com>
+References: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1310021956130.22612@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
 List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
@@ -23,58 +17,90 @@ List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driver
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
 Errors-To: driverdev-devel-bounces@linuxdriverproject.org
 Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: devel@driverdev.osuosl.org, Joe Thornber <thornber@redhat.com>, snitzer@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, Akira Hayakawa <ruby.wktk@gmail.com>, dm-devel@redhat.com, dan.carpenter@oracle.com, joe@perches.com, akpm@linux-foundation.org, m.chehab@samsung.com, ejt@redhat.com, agk@redhat.com, cesarb@cesarb.net
+To: mpatocka@redhat.com
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, ruby.wktk@gmail.com, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 02, 2013 at 08:01:45PM -0400, Mikulas Patocka wrote:
-> 
-> 
-> On Tue, 1 Oct 2013, Joe Thornber wrote:
-> 
-> > > Alternatively, delaying them will stall the filesystem because it's
-> > > waiting for said REQ_FUA IO to complete. For example, journal writes
-> > > in XFS are extremely IO latency sensitive in workloads that have a
-> > > signifincant number of ordering constraints (e.g. O_SYNC writes,
-> > > fsync, etc) and delaying even one REQ_FUA/REQ_FLUSH can stall the
-> > > filesystem for the majority of that barrier_deadline_ms.
-> > 
-> > Yes, this is a valid concern, but I assume Akira has benchmarked.
-> > With dm-thin, I delay the REQ_FUA/REQ_FLUSH for a tiny amount, just to
-> > see if there are any other FUA requests on my queue that can be
-> > aggregated into a single flush.  I agree with you that the target
-> > should never delay waiting for new io; that's asking for trouble.
-> > 
-> > - Joe
-> 
-> You could send the first REQ_FUA/REQ_FLUSH request directly to the disk 
-> and aggregate all the requests that were received while you processed the 
-> initial request. This way, you can do request batching without introducing 
-> artifical delays.
+Hi, Mikulas,
 
-Yes, that's what XFS does with it's log when lots of fsync requests
-come in. i.e. the first is dispatched immmediately, and the others
-are gathered into the next log buffer until it is either full or the
-original REQ_FUA log write completes.
+I am sorry to say that
+I don't have such machines to reproduce the problem.
 
-That's where arbitrary delays in the storage stack below XFS cause
-problems - if the first FUA log write is delayed, the next log
-buffer will get filled, issued and delayed, and when we run out of
-log buffers (there are 8 maximum) the entire log subsystem will
-stall, stopping *all* log commit operations until log buffer
-IOs complete and become free again. i.e. it can stall modifications
-across the entire filesystem while we wait for batch timeouts to
-expire and issue and complete FUA requests.
+But agree with that I am dealing with workqueue subsystem
+in a little bit weird way.
+I should clean them up.
 
-IMNSHO, REQ_FUA/REQ_FLUSH optimisations should be done at the
-point where they are issued - any attempt to further optimise them
-by adding delays down in the stack to aggregate FUA operations will
-only increase latency of the operations that the issuer want to have
-complete as fast as possible....
+For example,
+free_cache() routine below is
+a deconstructor of the cache metadata
+including all the workqueues.
 
-Cheers,
+void free_cache(struct wb_cache *cache)
+{
+        cache->on_terminate = true;
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+        /* Kill in-kernel daemons */
+        cancel_work_sync(&cache->sync_work);
+        cancel_work_sync(&cache->recorder_work);
+        cancel_work_sync(&cache->modulator_work);
+
+        cancel_work_sync(&cache->flush_work);
+        destroy_workqueue(cache->flush_wq);
+
+        cancel_work_sync(&cache->barrier_deadline_work);
+
+        cancel_work_sync(&cache->migrate_work);
+        destroy_workqueue(cache->migrate_wq);
+        free_migration_buffer(cache);
+
+        /* Destroy in-core structures */
+        free_ht(cache);
+        free_segment_header_array(cache);
+
+        free_rambuf_pool(cache);
+}
+
+cancel_work_sync() before destroy_workqueue()
+can probably be removed because destroy_workqueue() first
+flush all the works.
+
+Although I prepares independent workqueue
+for each flush_work and migrate_work
+other four works are queued into the system_wq
+through schedule_work() routine.
+This asymmetricity is not welcome for
+architecture-portable code.
+Dependencies to the subsystem should be minimized.
+In detail, workqueue subsystem is really changing
+about its concurrency support so
+trusting only the single threaded workqueue
+will be a good idea for stability.
+
+To begin with,
+these works are never out of queue
+until the deconstructor is called
+but they are repeating running and sleeping.
+Queuing these kind of works to system_wq
+may be unsupported.
+
+So,
+my strategy is to clean them up in a way that
+1. all daemons are having their own workqueue
+2. never use cancel_work_sync() but only calls destroy_workqueue()
+   in the deconstructor free_cache() and error handling in resume_cache().
+
+Could you please run the same test again
+after I fixed these points
+to see whether it is still reproducible?
+
+
+> On 3.11.3 on PA-RISC without preemption, the device unloads (although it 
+> takes many seconds and vmstat shows that the machine is idle during this 
+> time)
+This behavior is benign but probably should be improved.
+In said free_cache() it first turns `on_terminate` flag to true
+to notify all the daemons that we are shutting down.
+Since the `update_interval` and `sync_interval` are 60 seconds by default
+we must wait for them to finish for a while.
+
+Akira
