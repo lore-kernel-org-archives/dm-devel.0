@@ -1,119 +1,79 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [dm-devel] dm-writeboost testing
-Date: Fri, 4 Oct 2013 16:03:14 +0100
-Message-ID: <20131004150313.GB25523@debian>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-writeboost testing
+Date: Fri, 4 Oct 2013 11:56:42 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1310041113230.22029@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
- <524D70DA.8040308@gmail.com>
+	<524E27DD.2050809@gmail.com>
+	<alpine.LRH.2.02.1310040923320.8473@file01.intranet.prod.int.rdu2.redhat.com>
+	<524ECFC9.3000603@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <524D70DA.8040308@gmail.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: driverdev-devel-bounces@linuxdriverproject.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <524ECFC9.3000603@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: devel@driverdev.osuosl.org, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 03, 2013 at 10:27:54PM +0900, Akira Hayakawa wrote:
-
-> > dm-cache doesn't have this problem, if you overwrite the same piece of 
-> > data again and again, it goes to the cache device.
-> 
-> It is not a bug but should/can be optimized.
-> 
-> Below is the cache hit path for writes.
-> writeboost performs very poorly when a partial write hits
-> which then turns `needs_cleanup_perv_cache` to true.
-
-Are you using fixed size blocks for caching then?  The whole point of
-using a journal/log based disk layout for caching is you can slurp up
-all writes irrespective of their size.
-
-What are the scenarios where you out perform dm-cache?
-
-- Joe
 
 
+On Fri, 4 Oct 2013, Akira Hayakawa wrote:
 
+> Mikulas,
+> 
+> Thanks for your pointing out.
+> 
+> > The problem is that you are using workqueues the wrong way. You submit a 
+> > work item to a workqueue and the work item is active until the device is 
+> > unloaded.
+> > 
+> > If you submit a work item to a workqueue, it is required that the work 
+> > item finishes in finite time. Otherwise, it may stall stall other tasks. 
+> > The deadlock when I terminate Xserver is caused by this - the nvidia 
+> > driver tries to flush system workqueue and it waits for all work items to 
+> > terminate - but your work items don't terminate.
+> > 
+> > If you need a thread that runs for a long time, you should use 
+> > kthread_create, not workqueues (see this 
+> > http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-encryption-threads.patch 
+> > or this 
+> > http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-offload-writes-to-thread.patch 
+> > as an example how to use kthreads).
+> 
+> But I see no reason why you recommend
+> using a kthread for looping job
+> instead of putting a looping work item
+> into a single-threaded not-system workqueue.
+>
+> For me, they both seem to be working.
 
-> Partial write hits is believed to be unlikely so
-> I decided to give up this path to make other likely-paths optimized.
-> I think this is just a tradeoff issue of what to be optimized the most.
+As I said, the system locks up when it tries to flush the system 
+workqueue. This happens for example when terminating Xwindow with the 
+nvidia binary driver, but it may happen in other parts of the kernel too. 
+The fact that it works in your setup doesn't mean that it is correct.
+
+> Is it documented that
+> looping job should not be put into
+> any type of workqueue?
+
+It is general assumption when workqueues were created. Maybe it's not 
+documented.
+
+> You are only mentioning that
+> putting a looping work item in system_wq
+> is the wrong way since
+> nvidia driver flush the workqueue.
 > 
->         if (found) {
-> 
->                 if (unlikely(on_buffer)) {
->                         mutex_unlock(&cache->io_lock);
-> 
->                         update_mb_idx = mb->idx;
->                         goto write_on_buffer;
->                 } else {
->                         u8 dirty_bits = atomic_read_mb_dirtiness(seg, mb);
-> 
->                         /*
->                          * First clean up the previous cache
->                          * and migrate the cache if needed.
->                          */
->                         bool needs_cleanup_prev_cache =
->                                 !bio_fullsize || !(dirty_bits == 255);
-> 
->                         if (unlikely(needs_cleanup_prev_cache)) {
->                                 wait_for_completion(&seg->flush_done);
->                                 migrate_mb(cache, seg, mb, dirty_bits, true);
->                         }
-> 
-> I checked that the mkfs.ext4 writes only in 4KB size
-> so it is not gonna turn the boolean value true for going into the slowpath.
-> 
-> Problem:
-> Problem is that
-> it chooses the slowpath even though the bio is full-sized overwrite
-> in the test.
-> 
-> The reason is that the dirty bits is sometimes seen as 0
-> and the suspect is the migration daemon.
-> 
-> I guess you created the writeboost device with the default configuration.
-> In that case migration daemon always works and
-> some metadata is cleaned up in background.
-> 
-> If you turns both enable_migration_modulator and allow_migrate to 0
-> before beginning the test
-> to stop migration at all
-> it never goes into the slowpath with the test.
-> 
-> Solution:
-> Changing the code to
-> avoid going into the slowpath when the dirty bits is zero
-> will solve this problem.
-> 
-> And done. Please pull the latest one from the repo.
-> --- a/Driver/dm-writeboost-target.c
-> +++ b/Driver/dm-writeboost-target.c
-> @@ -688,6 +688,14 @@ static int writeboost_map(struct dm_target *ti, struct bio *bio
->                         bool needs_cleanup_prev_cache =
->                                 !bio_fullsize || !(dirty_bits == 255);
-> 
-> +                       /*
-> +                        * Migration works in background
-> +                        * and may have cleaned up the metablock.
-> +                        * If the metablock is clean we need not to migrate.
-> +                        */
-> +                       if (!dirty_bits)
-> +                               needs_cleanup_prev_cache = false;
-> +
->                         if (unlikely(needs_cleanup_prev_cache)) {
->                                 wait_for_completion(&seg->flush_done);
->                                 migrate_mb(cache, seg, mb, dirty_bits, true);
-> 
-> Thanks,
 > Akira
+
+Mikulas
