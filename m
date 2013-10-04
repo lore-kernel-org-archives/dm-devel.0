@@ -1,87 +1,119 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: thin_dump cannot dump the correct data mapping of
-	thin pools
-Date: Fri, 4 Oct 2013 15:56:30 +0100
-Message-ID: <20131004145630.GA25523@debian>
-References: <CAKTMprPZ01+JaT0YJhYjPd90gdhfcX-Qa1+wUcv85GffXh74aw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] dm-writeboost testing
+Date: Fri, 4 Oct 2013 16:03:14 +0100
+Message-ID: <20131004150313.GB25523@debian>
+References: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
+ <524D70DA.8040308@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
 Content-Disposition: inline
-In-Reply-To: <CAKTMprPZ01+JaT0YJhYjPd90gdhfcX-Qa1+wUcv85GffXh74aw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Teng-Feng Yang <shinrairis@gmail.com>
-Cc: dm-devel@redhat.com, ejt@redhat.com
+In-Reply-To: <524D70DA.8040308@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: devel@driverdev.osuosl.org, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-Hi,
+On Thu, Oct 03, 2013 at 10:27:54PM +0900, Akira Hayakawa wrote:
 
-Yes, this is a bug, thanks for looking into this.  O_DIRECT was
-dropped because it was slow, causing some dump/restores to take minutes.
-There should be no problem putting it back in.
+> > dm-cache doesn't have this problem, if you overwrite the same piece of 
+> > data again and again, it goes to the cache device.
+> 
+> It is not a bug but should/can be optimized.
+> 
+> Below is the cache hit path for writes.
+> writeboost performs very poorly when a partial write hits
+> which then turns `needs_cleanup_perv_cache` to true.
 
-Whether O_DIRECT is used or normal buffered IO shouldn't make a
-difference with normal offline dumping.
+Are you using fixed size blocks for caching then?  The whole point of
+using a journal/log based disk layout for caching is you can slurp up
+all writes irrespective of their size.
 
-However, you're dumping metadata snapshots from a live system, and
-somehow we're getting out of sync with the buffered io, and what's
-really on disk.  I'd hoped we'd avoid this, the kernel is *not*
-changing the metadata snapshot after all.  But I guess blocks are
-being held in the page cache longer than I expected.
-
-For now I'll change it so it uses O_DIRECT if the metadata_snap flag
-is given.  Longer term I need to improve my user land cache a bit so
-it preemptively flushes dirty data when we get low on space.  This
-will make O_DIRECT perform well.
-
-Thanks again,
+What are the scenarios where you out perform dm-cache?
 
 - Joe
 
 
-On Fri, Oct 04, 2013 at 03:01:14PM +0800, Teng-Feng Yang wrote:
-> Hi folks,
+
+
+> Partial write hits is believed to be unlikely so
+> I decided to give up this path to make other likely-paths optimized.
+> I think this is just a tradeoff issue of what to be optimized the most.
 > 
-> I have been working on an incremental backup tools of thin volumes
-> created by dm-thin for a couple of months.
-> This tool relies on the data mappings dumped by thin_dump from the
-> thin-provisioing-tools.
-> As I update thin_dump from version 0.1.5 to 0.2.7, it cannot work
-> correctly as the earlier 0.1.5 version.
+>         if (found) {
 > 
-> The following things have been observed:
-> 1. thin_dump-0.2.7 cannot take user-specified "metadata_snap" as
-> v0.1.5. It will always return "bad checksum in superblock".
-> 2. If "metadata_snap" is not given by users, thin_dump-0.2.7 only
-> dumps the out-dated data mappings which can be recognized by observing
-> the wrong "transaction id".
+>                 if (unlikely(on_buffer)) {
+>                         mutex_unlock(&cache->io_lock);
 > 
-> Since it looked like thin_dump failed to get the most up-to-date
-> metadata blocks in version 0.2.7, I dig a little deeper into the
-> source code and find something that might cause the problem.
-> The open flag used on metadata device has been changed from "O_DIRECT
-> | O_SYNC" to "0" in commit 4deb1751a650010ce9c15910a064be1348dec8ba .
-> After I changed this back to "O_DIRECT | O_SYNC" in version 0.2.7, it
-> works as expected once again.
+>                         update_mb_idx = mb->idx;
+>                         goto write_on_buffer;
+>                 } else {
+>                         u8 dirty_bits = atomic_read_mb_dirtiness(seg, mb);
 > 
-> So here is my question.
-> Can I change this flag back to "O_DIRECT | O_SYNC" in any newer version?
-> I am worry about that I might accidentally mess something up by
-> changing this flag.
-> Also, what's the purpose to get rid of the "O_DIRECT" and "O_SYNC"
-> flags when we migrate to version 0.2.x?
+>                         /*
+>                          * First clean up the previous cache
+>                          * and migrate the cache if needed.
+>                          */
+>                         bool needs_cleanup_prev_cache =
+>                                 !bio_fullsize || !(dirty_bits == 255);
 > 
-> Any help would be highly appreciated.
+>                         if (unlikely(needs_cleanup_prev_cache)) {
+>                                 wait_for_completion(&seg->flush_done);
+>                                 migrate_mb(cache, seg, mb, dirty_bits, true);
+>                         }
 > 
-> Best Regards,
-> Dennis
+> I checked that the mkfs.ext4 writes only in 4KB size
+> so it is not gonna turn the boolean value true for going into the slowpath.
+> 
+> Problem:
+> Problem is that
+> it chooses the slowpath even though the bio is full-sized overwrite
+> in the test.
+> 
+> The reason is that the dirty bits is sometimes seen as 0
+> and the suspect is the migration daemon.
+> 
+> I guess you created the writeboost device with the default configuration.
+> In that case migration daemon always works and
+> some metadata is cleaned up in background.
+> 
+> If you turns both enable_migration_modulator and allow_migrate to 0
+> before beginning the test
+> to stop migration at all
+> it never goes into the slowpath with the test.
+> 
+> Solution:
+> Changing the code to
+> avoid going into the slowpath when the dirty bits is zero
+> will solve this problem.
+> 
+> And done. Please pull the latest one from the repo.
+> --- a/Driver/dm-writeboost-target.c
+> +++ b/Driver/dm-writeboost-target.c
+> @@ -688,6 +688,14 @@ static int writeboost_map(struct dm_target *ti, struct bio *bio
+>                         bool needs_cleanup_prev_cache =
+>                                 !bio_fullsize || !(dirty_bits == 255);
+> 
+> +                       /*
+> +                        * Migration works in background
+> +                        * and may have cleaned up the metablock.
+> +                        * If the metablock is clean we need not to migrate.
+> +                        */
+> +                       if (!dirty_bits)
+> +                               needs_cleanup_prev_cache = false;
+> +
+>                         if (unlikely(needs_cleanup_prev_cache)) {
+>                                 wait_for_completion(&seg->flush_done);
+>                                 migrate_mb(cache, seg, mb, dirty_bits, true);
+> 
+> Thanks,
+> Akira
