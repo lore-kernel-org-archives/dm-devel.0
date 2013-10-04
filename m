@@ -1,158 +1,131 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: [RFC] dm-writeboost: Persistent memory support
-Date: Fri, 04 Oct 2013 22:37:21 +0900
-Message-ID: <524EC491.30701@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] dm-writeboost testing
+Date: Fri, 4 Oct 2013 09:38:50 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1310040923320.8473@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
+ <524E27DD.2050809@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <524E27DD.2050809@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-Hi, all
 
-Let me introduce my future plan
-of applying persistent memory to dm-writeboost.
-dm-writeboost can potentially
-gain many benefits by the persistent memory.
 
-(1) Problem
-The basic mechanism of dm-writeboost is
-(i) first stores the write data to RAM buffer
-    whose size is 1MB at maximum and
-    can include 255 * 4KB data.
-(ii) when the RAM buffer is fulfilled
-     it packs the data and its metadata 
-     which indicates where to write back,
-     into a structure called "log" and
-     queues it.
-(iii) the log is flushed to the cache device
-      in background.
-(iv) and later migrated or written back
-     to the backing store in background.
+On Fri, 4 Oct 2013, Akira Hayakawa wrote:
 
-The problem is in handling barrier writes
-flagged with REA_FUA or REQ_FLUSH.
-Upper layer waits for these kind of bios complete
-so waiting for log to be fulfilled and then queued
-may stall the upper layer.
-One of the methods in receiving these bios is that
-dm-writeboost makes a "partial" log and queues it
-which causes potentially random writes to the 
-cache device(SSD) which not only loses its performance
-but also fails to maximize the lifetime of the SSD device.
-Moreover, it consumes CPU cycles to make a partial log
-again and again. It is not free.
+> Hi, Mikulas,
+> 
+> I am sorry to say that
+> I don't have such machines to reproduce the problem.
+> 
+> But agree with that I am dealing with workqueue subsystem
+> in a little bit weird way.
+> I should clean them up.
+> 
+> For example,
+> free_cache() routine below is
+> a deconstructor of the cache metadata
+> including all the workqueues.
+> 
+> void free_cache(struct wb_cache *cache)
+> {
+>         cache->on_terminate = true;
+> 
+>         /* Kill in-kernel daemons */
+>         cancel_work_sync(&cache->sync_work);
+>         cancel_work_sync(&cache->recorder_work);
+>         cancel_work_sync(&cache->modulator_work);
+> 
+>         cancel_work_sync(&cache->flush_work);
+>         destroy_workqueue(cache->flush_wq);
+> 
+>         cancel_work_sync(&cache->barrier_deadline_work);
+> 
+>         cancel_work_sync(&cache->migrate_work);
+>         destroy_workqueue(cache->migrate_wq);
+>         free_migration_buffer(cache);
+> 
+>         /* Destroy in-core structures */
+>         free_ht(cache);
+>         free_segment_header_array(cache);
+> 
+>         free_rambuf_pool(cache);
+> }
+> 
+> cancel_work_sync() before destroy_workqueue()
+> can probably be removed because destroy_workqueue() first
+> flush all the works.
+> 
+> Although I prepares independent workqueue
+> for each flush_work and migrate_work
+> other four works are queued into the system_wq
+> through schedule_work() routine.
+> This asymmetricity is not welcome for
+> architecture-portable code.
+> Dependencies to the subsystem should be minimized.
+> In detail, workqueue subsystem is really changing
+> about its concurrency support so
+> trusting only the single threaded workqueue
+> will be a good idea for stability.
 
-So, dm-writeboost provides a tunable parameter called
-barrier_deadline_ms that indicates the
-worst time guaranteed that these unusually flagged bios queued.
-Making a partial log is deferred and
-it means that the log can be fulfilled before the deadline
-if there are many processes submitting writes.
+The problem is that you are using workqueues the wrong way. You submit a 
+work item to a workqueue and the work item is active until the device is 
+unloaded.
 
-In summary,
-due to the REQ_FUA and REQ_FLUSH flag
-dm-writeboost can not guarantee the log always fulfilled.
-Imagine there is only one process above the dm-writeboost device
-and rediculously submits REQ_FUAed bio and waits for the completion repeatly.
-This is the worst case for dm-writeboost
-the log is always partial and the process always waits for 
-the deadline.
+If you submit a work item to a workqueue, it is required that the work 
+item finishes in finite time. Otherwise, it may stall stall other tasks. 
+The deadlock when I terminate Xserver is caused by this - the nvidia 
+driver tries to flush system workqueue and it waits for all work items to 
+terminate - but your work items don't terminate.
 
-If the RAM buffer is smaller than 1MB
-the log is likely to be fulfilled.
-The size of the RAM buffer is tunable in constructor.
-However, this is not the ultimate solution.
+If you need a thread that runs for a long time, you should use 
+kthread_create, not workqueues (see this 
+http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-encryption-threads.patch 
+or this 
+http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-offload-writes-to-thread.patch 
+as an example how to use kthreads).
 
-So, let's find the ultimate solution next.
+Mikulas
 
-(2) What if RAM buffer is non-volatile
-If we use persistent memory for the RAM buffer instead of
-DRAM which is volatile
-we don't need to partially flush the log
-to complete these flagged bios quickly
-but can do away with only writing the data
-to the persistent RAM buffer and then returning ACK.
-
-This means
-the 1MB log will be always fulfilled
-and the upper layer will never be annoyed with
-how to handle the REQ_FUA or REQ_FLUSH flagged bios.
-This will always maximize the write thoughput to the SSD device
-and maximize its lifetime.
-
-Futhermore,
-upper layer can eliminate the
-optimization for these bios.
-For example, XFS also does the same technique
-of gathering the barriers as explained by Dave Chinner in
-https://lkml.org/lkml/2013/10/3/804
-
-Using dm-writeboost with persistent memory
-the upper layer will be alliviated
-from doing difficult things.
-Applying persistent memory to dm-writeboost is promising.
-
-Any comment?
-
-(3) Design Change
-I have read this thread in LKML
-"RFC Block Layer Extensions to Support NV-DIMMs"
-https://lkml.org/lkml/2013/9/4/555
- 
-The interface design is still in discussion but
-I hope to see an interface design that deals with
-persistent memory as the new type of memory
-not the block device.
-
-Even if the RAM buffer is switch to 
-volatile to non-volatile
-the basic I/O path of dm-writeboost will not change.
-I think most of the code can be shared between
-volatile mode and non-volatile mode of dm-writeboost.
-So, switching the mode in constructor parameter
-will be my design choice.
-
-Maybe the constructor will be like this
-writeboost <mode> ...
-writeboost 0 <backing store> <cache device> ....
-writeboost 1 <backing store> <cache device> <persistent memory> ...
-
-If the mode is 0 it builds a writeboost device with volatile RAM buffer
-and the mode is 1 it builds with non-volatile RAM buffer.
-
-The current design doesn't have mode parameter
-so adding the parameter right now could be our design choice
-but even if we don't add it right now
-the backward-compatibility can be guaranteed
-by implicitly setting the mode to 0 if the first parameter is not a number.
-I prefer adding it right now for future design consistency.
-
-Should or Shouldn't I add the paramter before
-making a patch to device-mapper tree?
-
-(4) Prototype
-I think I can start prototyping
-by defining a pseudo persistent memory backed by a block device.
-
-The temporary interface will be defined like:
-struct pmem *pmem_alloc(struct block_device *, size_t start, size_t len);
-void pmem_write(struct pmem *, size_t start, size_t len, void *data);
-void pmem_read(struct pmem *, size_t start, size_t len, void *dest);
-void pmem_free(struct pmem *);
-
-Byte-addressableness is implemented by Read-Modify-Write.
-
-The difficulty in using the persistent memory instead
-is in recovering the data both on the RAM buffer and the cache device
-in rebooting.
-The implementation will be complicated but
-can mostly be limited under recover_cache() routine
-and the outside of it will not be badly tainted.
-
-Should I prototype before making patch to device-mapper tree?
-
-Akira
+> To begin with,
+> these works are never out of queue
+> until the deconstructor is called
+> but they are repeating running and sleeping.
+> Queuing these kind of works to system_wq
+> may be unsupported.
+> 
+> So,
+> my strategy is to clean them up in a way that
+> 1. all daemons are having their own workqueue
+> 2. never use cancel_work_sync() but only calls destroy_workqueue()
+>    in the deconstructor free_cache() and error handling in resume_cache().
+> 
+> Could you please run the same test again
+> after I fixed these points
+> to see whether it is still reproducible?
+> 
+> 
+> > On 3.11.3 on PA-RISC without preemption, the device unloads (although it 
+> > takes many seconds and vmstat shows that the machine is idle during this 
+> > time)
+> This behavior is benign but probably should be improved.
+> In said free_cache() it first turns `on_terminate` flag to true
+> to notify all the daemons that we are shutting down.
+> Since the `update_interval` and `sync_interval` are 60 seconds by default
+> we must wait for them to finish for a while.
+> 
+> Akira
+> 
