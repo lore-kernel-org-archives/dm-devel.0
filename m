@@ -1,65 +1,172 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: thin_dump cannot dump the correct data mapping of
-	thin pools
-Date: Fri, 4 Oct 2013 10:07:28 -0400
-Message-ID: <20131004140728.GA29551@redhat.com>
-References: <CAKTMprPZ01+JaT0YJhYjPd90gdhfcX-Qa1+wUcv85GffXh74aw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [dm-devel] dm-writeboost testing
+Date: Fri, 04 Oct 2013 23:25:13 +0900
+Message-ID: <524ECFC9.3000603@gmail.com>
+References: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
+ <524E27DD.2050809@gmail.com>
+ <alpine.LRH.2.02.1310040923320.8473@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKTMprPZ01+JaT0YJhYjPd90gdhfcX-Qa1+wUcv85GffXh74aw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Teng-Feng Yang <shinrairis@gmail.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, ejt@redhat.com
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <alpine.LRH.2.02.1310040923320.8473@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: mpatocka@redhat.com
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, ruby.wktk@gmail.com, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 04 2013 at  3:01am -0400,
-Teng-Feng Yang <shinrairis@gmail.com> wrote:
+Mikulas,
 
-> Hi folks,
-> 
-> I have been working on an incremental backup tools of thin volumes
-> created by dm-thin for a couple of months.
-> This tool relies on the data mappings dumped by thin_dump from the
-> thin-provisioing-tools.
-> As I update thin_dump from version 0.1.5 to 0.2.7, it cannot work
-> correctly as the earlier 0.1.5 version.
-> 
-> The following things have been observed:
-> 1. thin_dump-0.2.7 cannot take user-specified "metadata_snap" as
-> v0.1.5. It will always return "bad checksum in superblock".
-> 2. If "metadata_snap" is not given by users, thin_dump-0.2.7 only
-> dumps the out-dated data mappings which can be recognized by observing
-> the wrong "transaction id".
-> 
-> Since it looked like thin_dump failed to get the most up-to-date
-> metadata blocks in version 0.2.7, I dig a little deeper into the
-> source code and find something that might cause the problem.
-> The open flag used on metadata device has been changed from "O_DIRECT
-> | O_SYNC" to "0" in commit 4deb1751a650010ce9c15910a064be1348dec8ba .
-> After I changed this back to "O_DIRECT | O_SYNC" in version 0.2.7, it
-> works as expected once again.
-> 
-> So here is my question.
-> Can I change this flag back to "O_DIRECT | O_SYNC" in any newer version?
-> I am worry about that I might accidentally mess something up by
-> changing this flag.
-> Also, what's the purpose to get rid of the "O_DIRECT" and "O_SYNC"
-> flags when we migrate to version 0.2.x?
+Thanks for your pointing out.
 
-Getting rid of O_DIRECT provided a fix for this issue:
-https://bugzilla.redhat.com/show_bug.cgi?id=960284
+> The problem is that you are using workqueues the wrong way. You submit a 
+> work item to a workqueue and the work item is active until the device is 
+> unloaded.
+> 
+> If you submit a work item to a workqueue, it is required that the work 
+> item finishes in finite time. Otherwise, it may stall stall other tasks. 
+> The deadlock when I terminate Xserver is caused by this - the nvidia 
+> driver tries to flush system workqueue and it waits for all work items to 
+> terminate - but your work items don't terminate.
+> 
+> If you need a thread that runs for a long time, you should use 
+> kthread_create, not workqueues (see this 
+> http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-encryption-threads.patch 
+> or this 
+> http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-offload-writes-to-thread.patch 
+> as an example how to use kthreads).
 
-It is strange that buffered IO breaks thin_dump though.  Joe and/or
-Heinz, any ideas?
+But I see no reason why you recommend
+using a kthread for looping job
+instead of putting a looping work item
+into a single-threaded not-system workqueue.
+
+For me, they both seem to be working.
+
+Is it documented that
+looping job should not be put into
+any type of workqueue?
+
+You are only mentioning that
+putting a looping work item in system_wq
+is the wrong way since
+nvidia driver flush the workqueue.
+
+Akira
+
+On 10/4/13 10:38 PM, Mikulas Patocka wrote:
+> 
+> 
+> On Fri, 4 Oct 2013, Akira Hayakawa wrote:
+> 
+>> Hi, Mikulas,
+>>
+>> I am sorry to say that
+>> I don't have such machines to reproduce the problem.
+>>
+>> But agree with that I am dealing with workqueue subsystem
+>> in a little bit weird way.
+>> I should clean them up.
+>>
+>> For example,
+>> free_cache() routine below is
+>> a deconstructor of the cache metadata
+>> including all the workqueues.
+>>
+>> void free_cache(struct wb_cache *cache)
+>> {
+>>         cache->on_terminate = true;
+>>
+>>         /* Kill in-kernel daemons */
+>>         cancel_work_sync(&cache->sync_work);
+>>         cancel_work_sync(&cache->recorder_work);
+>>         cancel_work_sync(&cache->modulator_work);
+>>
+>>         cancel_work_sync(&cache->flush_work);
+>>         destroy_workqueue(cache->flush_wq);
+>>
+>>         cancel_work_sync(&cache->barrier_deadline_work);
+>>
+>>         cancel_work_sync(&cache->migrate_work);
+>>         destroy_workqueue(cache->migrate_wq);
+>>         free_migration_buffer(cache);
+>>
+>>         /* Destroy in-core structures */
+>>         free_ht(cache);
+>>         free_segment_header_array(cache);
+>>
+>>         free_rambuf_pool(cache);
+>> }
+>>
+>> cancel_work_sync() before destroy_workqueue()
+>> can probably be removed because destroy_workqueue() first
+>> flush all the works.
+>>
+>> Although I prepares independent workqueue
+>> for each flush_work and migrate_work
+>> other four works are queued into the system_wq
+>> through schedule_work() routine.
+>> This asymmetricity is not welcome for
+>> architecture-portable code.
+>> Dependencies to the subsystem should be minimized.
+>> In detail, workqueue subsystem is really changing
+>> about its concurrency support so
+>> trusting only the single threaded workqueue
+>> will be a good idea for stability.
+> 
+> The problem is that you are using workqueues the wrong way. You submit a 
+> work item to a workqueue and the work item is active until the device is 
+> unloaded.
+> 
+> If you submit a work item to a workqueue, it is required that the work 
+> item finishes in finite time. Otherwise, it may stall stall other tasks. 
+> The deadlock when I terminate Xserver is caused by this - the nvidia 
+> driver tries to flush system workqueue and it waits for all work items to 
+> terminate - but your work items don't terminate.
+> 
+> If you need a thread that runs for a long time, you should use 
+> kthread_create, not workqueues (see this 
+> http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-encryption-threads.patch 
+> or this 
+> http://people.redhat.com/~mpatocka/patches/kernel/dm-crypt-paralelizace/old-3/dm-crypt-offload-writes-to-thread.patch 
+> as an example how to use kthreads).
+> 
+> Mikulas
+> 
+>> To begin with,
+>> these works are never out of queue
+>> until the deconstructor is called
+>> but they are repeating running and sleeping.
+>> Queuing these kind of works to system_wq
+>> may be unsupported.
+>>
+>> So,
+>> my strategy is to clean them up in a way that
+>> 1. all daemons are having their own workqueue
+>> 2. never use cancel_work_sync() but only calls destroy_workqueue()
+>>    in the deconstructor free_cache() and error handling in resume_cache().
+>>
+>> Could you please run the same test again
+>> after I fixed these points
+>> to see whether it is still reproducible?
+>>
+>>
+>>> On 3.11.3 on PA-RISC without preemption, the device unloads (although it 
+>>> takes many seconds and vmstat shows that the machine is idle during this 
+>>> time)
+>> This behavior is benign but probably should be improved.
+>> In said free_cache() it first turns `on_terminate` flag to true
+>> to notify all the daemons that we are shutting down.
+>> Since the `update_interval` and `sync_interval` are 60 seconds by default
+>> we must wait for them to finish for a while.
+>>
+>> Akira
+>>
