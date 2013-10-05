@@ -1,87 +1,476 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 16/22] dm: Refactor for new bio cloning/splitting
-Date: Fri, 4 Oct 2013 13:07:32 -0400
-Message-ID: <20131004170732.GA30728@redhat.com>
-References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
- <1375912471-5106-17-git-send-email-kmo@daterainc.com>
- <20130928045909.GA19745@redhat.com>
- <20131003031738.GA27418@kmo-pixel>
- <20131003032320.GA15322@redhat.com>
- <20131003214525.GA12183@kmo-pixel>
- <20131003225009.GA24173@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [dm-devel] dm-writeboost testing
+Date: Sat, 05 Oct 2013 16:05:35 +0900
+Message-ID: <524FBA3F.3050409@gmail.com>
+References: <alpine.LRH.2.02.1310021125150.19199@file01.intranet.prod.int.rdu2.redhat.com>
+ <524E27DD.2050809@gmail.com>
+ <alpine.LRH.2.02.1310040923320.8473@file01.intranet.prod.int.rdu2.redhat.com>
+ <524ECFC9.3000603@gmail.com>
+ <alpine.LRH.2.02.1310041113230.22029@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20131003225009.GA24173@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <alpine.LRH.2.02.1310041113230.22029@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: mpatocka@redhat.com
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, ruby.wktk@gmail.com, joe@perches.com, dm-devel@redhat.com, agk@redhat.com, tj@kernel.org, akpm@linux-foundation.org, dan.carpenter@oracle.com, ejt@redhat.com, cesarb@cesarb.net, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 03 2013 at  6:50pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Mikulas,
 
-> On Thu, Oct 03 2013 at  5:45pm -0400,
-> Kent Overstreet <kmo@daterainc.com> wrote:
-> 
-> > On Wed, Oct 02, 2013 at 11:23:21PM -0400, Mike Snitzer wrote:
-> > > Great, thanks for finding this, I'll test and review the code further.
-> > 
-> > Cool - let me know if you find anything else (how thoroughly do you
-> > think you've tested it so far?)
-> 
-> Not very, the issue you resolved was a blocker for DM.  But I haven't
-> even verified your fix yet though... will do tomorrow with more
-> extensive testing using the dm-thinp and dm-cache test-suite.
+> nvidia binary driver, but it may happen in other parts of the kernel too. 
+> The fact that it works in your setup doesn't mean that it is correct.
+You are right. I am convinced.
 
-With your latest fix I was able to create a thin device and format with
-XFS.  Unfortunately, when I tried to run the thinp-test-suite the very
-first BasicTests test (test_dd_benchmark) fails -- need to look closer
-but it would seem to me the thinp saved bio_endio path isn't happy.  We
-likely need an appropriately placed atomic_inc(&bio->bi_remaining); like
-you did in dm-cache-target.c
+As far as I looked around the kernel code,
+it seems to be choosing kthread when one needs looping in background.
+There are other examples such as loop_thread in drivers/block/loop.c .
 
-------------[ cut here ]------------
-kernel BUG at fs/bio.c:1722!
-invalid opcode: 0000 [#1] SMP
-Modules linked in: dm_cache_cleaner dm_cache_mq dm_cache dm_thin_pool dm_bio_prison dm_persistent_data dm_bufio dm_mod xfs exportfs libcrc32c ebtable_nat ebtables xt_C
-HECKSUM iptable_mangle bridge autofs4 target_core_iblock target_core_file target_core_pscsi target_core_mod configfs bnx2fc fcoe 8021q libfcoe libfc garp stp llc scsi_
-transport_fc scsi_tgt sunrpc cpufreq_ondemand ipt_REJECT nf_conntrack_ipv4 nf_defrag_ipv4 iptable_filter ip_tables ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_stat
-e nf_conntrack ip6table_filter ip6_tables bnx2i cnic uio ipv6 cxgb4i cxgb4 cxgb3i libcxgbi cxgb3 iscsi_tcp libiscsi_tcp libiscsi scsi_transport_iscsi vhost_net macvtap
- macvlan vhost tun kvm_intel kvm iTCO_wdt iTCO_vendor_support microcode i2c_i801 lpc_ich mfd_core igb i2c_algo_bit i2c_core i7core_edac edac_core ixgbe dca ptp pps_cor
-e mdio sg ses enclosure acpi_cpufreq freq_table ext4 jbd2 mbcache sr_mod cdrom pata_acpi ata_generic ata_piix sd_mod crc_t10dif crct10dif_common megaraid_sas [last unl
-oaded: dm_cache_mq]
-CPU: 0 PID: 342 Comm: kworker/u24:7 Tainted: G        W    3.12.0-rc2.snitm+ #76
-Hardware name: FUJITSU                          PRIMERGY RX300 S6             /D2619, BIOS 6.00 Rev. 1.10.2619.N1           05/24/2011
-Workqueue: dm-thin do_worker [dm_thin_pool]
-task: ffff88032cd88ab0 ti: ffff88032c5e6000 task.ti: ffff88032c5e6000
-RIP: 0010:[<ffffffff811b1464>]  [<ffffffff811b1464>] bio_endio+0x74/0x80
-RSP: 0018:ffff88032c5e7d48  EFLAGS: 00010246
-RAX: ffff88032f10a784 RBX: ffff88032d097450 RCX: 00000000ffffffff
-RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff88032f10a740
-RBP: ffff88032c5e7d48 R08: ffff88033fc12d00 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000002 R12: ffff88032f10a740
-R13: ffff88032def5880 R14: ffff88032d0c7c00 R15: ffff88032d457a05
-FS:  0000000000000000(0000) GS:ffff88033fc00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-CR2: 0000003bfea13000 CR3: 0000000001a0b000 CR4: 00000000000007f0
-Stack:
- ffff88032c5e7d98 ffffffffa05f2ef9 ffff88032c5e7da8 0000000000000000
- ffff88032d0c7c00 ffff88032c5e7da8 ffff88032d0c7d98 ffff88032d0974a8
- ffff88032d0c7d14 ffff88032d457a05 ffff88032c5e7dd8 ffffffffa05f2ba7
-Call Trace:
- [<ffffffffa05f2ef9>] process_prepared_mapping+0x79/0x150 [dm_thin_pool]
- [<ffffffffa05f2ba7>] process_prepared+0x87/0xa0 [dm_thin_pool]
- [<ffffffffa05f58f3>] do_worker+0x33/0x60 [dm_thin_pool]
- [<ffffffff81067862>] process_one_work+0x182/0x3b0
- [<ffffffff81068c80>] worker_thread+0x120/0x3a0
- [<ffffffff81068b60>] ? manage_workers+0x160/0x160
- [<ffffffff8106eace>] kthread+0xce/0xe0
- [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
- [<ffffffff8152b1ac>] ret_from_fork+0x7c/0xb0
- [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
-Code: 1f 84 00 00 00 00 00 48 8b 57 10 83 e2 01 0f 44 f1 eb cd 0f 1f 40 00 48 8b 7f 50 48 85 ff 74 dd 8b 57 44 48 8d 47 44 85 d2 7f ac <0f> 0b eb fe 0f 1f 84 00 00 00 00 00 55 48 89 e5 66 66 66 66 90 
-RIP  [<ffffffff811b1464>] bio_endio+0x74/0x80
- RSP <ffff88032c5e7d48>
----[ end trace acb5a7d638591b7b ]---
+And done. Please git pull.
+commit b6d2d3892e09145cd0b9c5ad69ea2d8c410fdeab is tested in my environment.
+All the looping daemons are running on kthread now.
+
+The diff between the older version (with wq) and the new version (with kthread)
+is shown below. I defined fancy CREATE_DAEMON macro.
+
+Another by-product is that
+you are no longer in need to wait for long time in dmsetup remove
+since kthread_stop() forcefully wakes the thread up.
+
+diff --git a/Driver/dm-writeboost-daemon.c b/Driver/dm-writeboost-daemon.c
+index 6090661..65974e2 100644
+--- a/Driver/dm-writeboost-daemon.c
++++ b/Driver/dm-writeboost-daemon.c
+@@ -10,12 +10,11 @@
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void flush_proc(struct work_struct *work)
++int flush_proc(void *data)
+ {
+ 	unsigned long flags;
+ 
+-	struct wb_cache *cache =
+-		container_of(work, struct wb_cache, flush_work);
++	struct wb_cache *cache = data;
+ 
+ 	while (true) {
+ 		struct flush_job *job;
+@@ -32,8 +31,12 @@ void flush_proc(struct work_struct *work)
+ 				msecs_to_jiffies(100));
+ 			spin_lock_irqsave(&cache->flush_queue_lock, flags);
+ 
+-			if (cache->on_terminate)
+-				return;
++			/*
++			 * flush daemon can exit
++			 * only if no flush job is queued.
++			 */
++			if (kthread_should_stop())
++				return 0;
+ 		}
+ 
+ 		/*
+@@ -84,6 +87,7 @@ void flush_proc(struct work_struct *work)
+ 
+ 		kfree(job);
+ 	}
++	return 0;
+ }
+ 
+ /*----------------------------------------------------------------*/
+@@ -353,19 +357,15 @@ migrate_write:
+ 	}
+ }
+ 
+-void migrate_proc(struct work_struct *work)
++int migrate_proc(void *data)
+ {
+-	struct wb_cache *cache =
+-		container_of(work, struct wb_cache, migrate_work);
++	struct wb_cache *cache = data;
+ 
+-	while (true) {
++	while (!kthread_should_stop()) {
+ 		bool allow_migrate;
+ 		size_t i, nr_mig_candidates, nr_mig, nr_max_batch;
+ 		struct segment_header *seg, *tmp;
+ 
+-		if (cache->on_terminate)
+-			return;
+-
+ 		/*
+ 		 * If reserving_id > 0
+ 		 * Migration should be immediate.
+@@ -430,6 +430,7 @@ void migrate_proc(struct work_struct *work)
+ 			list_del(&seg->migrate_list);
+ 		}
+ 	}
++	return 0;
+ }
+ 
+ /*
+@@ -453,19 +454,16 @@ void wait_for_migration(struct wb_cache *cache, u64 id)
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void modulator_proc(struct work_struct *work)
++int modulator_proc(void *data)
+ {
+-	struct wb_cache *cache =
+-		container_of(work, struct wb_cache, modulator_work);
++	struct wb_cache *cache = data;
+ 	struct wb_device *wb = cache->wb;
+ 
+ 	struct hd_struct *hd = wb->device->bdev->bd_part;
+ 	unsigned long old = 0, new, util;
+ 	unsigned long intvl = 1000;
+ 
+-	while (true) {
+-		if (cache->on_terminate)
+-			return;
++	while (!kthread_should_stop()) {
+ 
+ 		new = jiffies_to_msecs(part_stat_read(hd, io_ticks));
+ 
+@@ -484,6 +482,7 @@ modulator_update:
+ 
+ 		schedule_timeout_interruptible(msecs_to_jiffies(intvl));
+ 	}
++	return 0;
+ }
+ 
+ /*----------------------------------------------------------------*/
+@@ -517,16 +516,12 @@ static void update_superblock_record(struct wb_cache *cache)
+ 	kfree(buf);
+ }
+ 
+-void recorder_proc(struct work_struct *work)
++int recorder_proc(void *data)
+ {
+-	struct wb_cache *cache =
+-		container_of(work, struct wb_cache, recorder_work);
++	struct wb_cache *cache = data;
+ 	unsigned long intvl;
+ 
+-	while (true) {
+-		if (cache->on_terminate)
+-			return;
+-
++	while (!kthread_should_stop()) {
+ 		/* sec -> ms */
+ 		intvl = cache->update_record_interval * 1000;
+ 
+@@ -539,20 +534,17 @@ void recorder_proc(struct work_struct *work)
+ 
+ 		schedule_timeout_interruptible(msecs_to_jiffies(intvl));
+ 	}
++	return 0;
+ }
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void sync_proc(struct work_struct *work)
++int sync_proc(void *data)
+ {
+-	struct wb_cache *cache =
+-		container_of(work, struct wb_cache, sync_work);
++	struct wb_cache *cache = data;
+ 	unsigned long intvl;
+ 
+-	while (true) {
+-		if (cache->on_terminate)
+-			return;
+-
++	while (!kthread_should_stop()) {
+ 		/* sec -> ms */
+ 		intvl = cache->sync_interval * 1000;
+ 
+@@ -566,4 +558,5 @@ void sync_proc(struct work_struct *work)
+ 
+ 		schedule_timeout_interruptible(msecs_to_jiffies(intvl));
+ 	}
++	return 0;
+ }
+diff --git a/Driver/dm-writeboost-daemon.h b/Driver/dm-writeboost-daemon.h
+index 3bdd862..d21d66c 100644
+--- a/Driver/dm-writeboost-daemon.h
++++ b/Driver/dm-writeboost-daemon.h
+@@ -9,7 +9,7 @@
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void flush_proc(struct work_struct *);
++int flush_proc(void *);
+ 
+ /*----------------------------------------------------------------*/
+ 
+@@ -19,20 +19,20 @@ void flush_barrier_ios(struct work_struct *);
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void migrate_proc(struct work_struct *);
++int migrate_proc(void *);
+ void wait_for_migration(struct wb_cache *, u64 id);
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void modulator_proc(struct work_struct *);
++int modulator_proc(void *);
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void sync_proc(struct work_struct *);
++int sync_proc(void *);
+ 
+ /*----------------------------------------------------------------*/
+ 
+-void recorder_proc(struct work_struct *);
++int recorder_proc(void *);
+ 
+ /*----------------------------------------------------------------*/
+ 
+diff --git a/Driver/dm-writeboost-metadata.c b/Driver/dm-writeboost-metadata.c
+index 1cd9e0c..4f5fa5e 100644
+--- a/Driver/dm-writeboost-metadata.c
++++ b/Driver/dm-writeboost-metadata.c
+@@ -994,6 +994,17 @@ void free_migration_buffer(struct wb_cache *cache)
+ 
+ /*----------------------------------------------------------------*/
+ 
++#define CREATE_DAEMON(name)\
++	cache->name##_daemon = kthread_create(name##_proc, cache,\
++					      #name "_daemon");\
++	if (IS_ERR(cache->name##_daemon)) {\
++		r = PTR_ERR(cache->name##_daemon);\
++		cache->name##_daemon = NULL;\
++		WBERR("couldn't spawn" #name "daemon");\
++		goto bad_##name##_daemon;\
++	}\
++	wake_up_process(cache->name##_daemon);
++
+ int __must_check resume_cache(struct wb_cache *cache, struct dm_dev *dev)
+ {
+ 	int r = 0;
+@@ -1010,8 +1021,6 @@ int __must_check resume_cache(struct wb_cache *cache, struct dm_dev *dev)
+ 
+ 	mutex_init(&cache->io_lock);
+ 
+-	cache->on_terminate = false;
+-
+ 	/*
+ 	 * (i) Harmless Initializations
+ 	 */
+@@ -1042,12 +1051,6 @@ int __must_check resume_cache(struct wb_cache *cache, struct dm_dev *dev)
+ 	 * Recovering the cache metadata
+ 	 * prerequires the migration daemon working.
+ 	 */
+-	cache->migrate_wq = create_singlethread_workqueue("migratewq");
+-	if (!cache->migrate_wq) {
+-		r = -ENOMEM;
+-		WBERR();
+-		goto bad_migratewq;
+-	}
+ 
+ 	/* Migration Daemon */
+ 	atomic_set(&cache->migrate_fail_count, 0);
+@@ -1070,9 +1073,7 @@ int __must_check resume_cache(struct wb_cache *cache, struct dm_dev *dev)
+ 
+ 	cache->allow_migrate = true;
+ 	cache->reserving_segment_id = 0;
+-	INIT_WORK(&cache->migrate_work, migrate_proc);
+-	queue_work(cache->migrate_wq, &cache->migrate_work);
+-
++	CREATE_DAEMON(migrate);
+ 
+ 	r = recover_cache(cache);
+ 	if (r) {
+@@ -1086,19 +1087,12 @@ int __must_check resume_cache(struct wb_cache *cache, struct dm_dev *dev)
+ 	 * These are only working
+ 	 * after the logical device created.
+ 	 */
+-	cache->flush_wq = create_singlethread_workqueue("flushwq");
+-	if (!cache->flush_wq) {
+-		r = -ENOMEM;
+-		WBERR();
+-		goto bad_flushwq;
+-	}
+ 
+ 	/* Flush Daemon */
+-	INIT_WORK(&cache->flush_work, flush_proc);
+ 	spin_lock_init(&cache->flush_queue_lock);
+ 	INIT_LIST_HEAD(&cache->flush_queue);
+ 	init_waitqueue_head(&cache->flush_wait_queue);
+-	queue_work(cache->flush_wq, &cache->flush_work);
++	CREATE_DAEMON(flush);
+ 
+ 	/* Deferred ACK for barrier writes */
+ 
+@@ -1118,29 +1112,30 @@ int __must_check resume_cache(struct wb_cache *cache, struct dm_dev *dev)
+ 
+ 	/* Migartion Modulator */
+ 	cache->enable_migration_modulator = true;
+-	INIT_WORK(&cache->modulator_work, modulator_proc);
+-	schedule_work(&cache->modulator_work);
++	CREATE_DAEMON(modulator);
+ 
+ 	/* Superblock Recorder */
+ 	cache->update_record_interval = 60;
+-	INIT_WORK(&cache->recorder_work, recorder_proc);
+-	schedule_work(&cache->recorder_work);
++	CREATE_DAEMON(recorder);
+ 
+ 	/* Dirty Synchronizer */
+ 	cache->sync_interval = 60;
+-	INIT_WORK(&cache->sync_work, sync_proc);
+-	schedule_work(&cache->sync_work);
++	CREATE_DAEMON(sync);
+ 
+ 	return 0;
+ 
+-bad_flushwq:
++bad_sync_daemon:
++	kthread_stop(cache->recorder_daemon);
++bad_recorder_daemon:
++	kthread_stop(cache->modulator_daemon);
++bad_modulator_daemon:
++	kthread_stop(cache->flush_daemon);
++bad_flush_daemon:
+ bad_recover:
+-	cache->on_terminate = true;
+-	cancel_work_sync(&cache->migrate_work);
++	kthread_stop(cache->migrate_daemon);
++bad_migrate_daemon:
+ 	free_migration_buffer(cache);
+ bad_alloc_migrate_buffer:
+-	destroy_workqueue(cache->migrate_wq);
+-bad_migratewq:
+ 	free_ht(cache);
+ bad_alloc_ht:
+ 	free_segment_header_array(cache);
+@@ -1153,20 +1148,21 @@ bad_init_rambuf_pool:
+ 
+ void free_cache(struct wb_cache *cache)
+ {
+-	cache->on_terminate = true;
++	/*
++	 * Must clean up all the volatile data
++	 * before termination.
++	 */
++	flush_current_buffer(cache);
+ 
+-	/* Kill in-kernel daemons */
+-	cancel_work_sync(&cache->sync_work);
+-	cancel_work_sync(&cache->recorder_work);
+-	cancel_work_sync(&cache->modulator_work);
++	kthread_stop(cache->sync_daemon);
++	kthread_stop(cache->recorder_daemon);
++	kthread_stop(cache->modulator_daemon);
+ 
+-	cancel_work_sync(&cache->flush_work);
+-	destroy_workqueue(cache->flush_wq);
++	kthread_stop(cache->flush_daemon);
+ 
+ 	cancel_work_sync(&cache->barrier_deadline_work);
+ 
+-	cancel_work_sync(&cache->migrate_work);
+-	destroy_workqueue(cache->migrate_wq);
++	kthread_stop(cache->migrate_daemon);
+ 	free_migration_buffer(cache);
+ 
+ 	/* Destroy in-core structures */
+diff --git a/Driver/dm-writeboost-target.c b/Driver/dm-writeboost-target.c
+index 6aa4c7c..4b5b7aa 100644
+--- a/Driver/dm-writeboost-target.c
++++ b/Driver/dm-writeboost-target.c
+@@ -973,12 +973,6 @@ static void writeboost_dtr(struct dm_target *ti)
+ 	struct wb_device *wb = ti->private;
+ 	struct wb_cache *cache = wb->cache;
+ 
+-	/*
+-	 * Synchronize all the dirty writes
+-	 * before termination.
+-	 */
+-	cache->sync_interval = 1;
+-
+ 	free_cache(cache);
+ 	kfree(cache);
+ 
+diff --git a/Driver/dm-writeboost.h b/Driver/dm-writeboost.h
+index 74ff194..092c100 100644
+--- a/Driver/dm-writeboost.h
++++ b/Driver/dm-writeboost.h
+@@ -16,6 +16,7 @@
+ #include <linux/list.h>
+ #include <linux/slab.h>
+ #include <linux/mutex.h>
++#include <linux/kthread.h>
+ #include <linux/sched.h>
+ #include <linux/timer.h>
+ #include <linux/device-mapper.h>
+@@ -265,8 +266,7 @@ struct wb_cache {
+ 	 * and flush daemon asynchronously
+ 	 * flush them to the cache device.
+ 	 */
+-	struct work_struct flush_work;
+-	struct workqueue_struct *flush_wq;
++	struct task_struct *flush_daemon;
+ 	spinlock_t flush_queue_lock;
+ 	struct list_head flush_queue;
+ 	wait_queue_head_t flush_wait_queue;
+@@ -288,8 +288,7 @@ struct wb_cache {
+ 	 * migrate daemon goes into migration
+ 	 * if they are segments to migrate.
+ 	 */
+-	struct work_struct migrate_work;
+-	struct workqueue_struct *migrate_wq;
++	struct task_struct *migrate_daemon;
+ 	bool allow_migrate; /* param */
+ 
+ 	/*
+@@ -314,7 +313,7 @@ struct wb_cache {
+ 	 * the migration
+ 	 * according to the load of backing store.
+ 	 */
+-	struct work_struct modulator_work;
++	struct task_struct *modulator_daemon;
+ 	bool enable_migration_modulator; /* param */
+ 
+ 	/*
+@@ -323,7 +322,7 @@ struct wb_cache {
+ 	 * Update the superblock record
+ 	 * periodically.
+ 	 */
+-	struct work_struct recorder_work;
++	struct task_struct *recorder_daemon;
+ 	unsigned long update_record_interval; /* param */
+ 
+ 	/*
+@@ -332,16 +331,9 @@ struct wb_cache {
+ 	 * Sync the dirty writes
+ 	 * periodically.
+ 	 */
+-	struct work_struct sync_work;
++	struct task_struct *sync_daemon;
+ 	unsigned long sync_interval; /* param */
+ 
+-	/*
+-	 * on_terminate is true
+-	 * to notify all the background daemons to
+-	 * stop their operations.
+-	 */
+-	bool on_terminate;
+-
+ 	atomic64_t stat[STATLEN];
+ };
+
+Akira
