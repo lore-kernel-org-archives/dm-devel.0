@@ -1,183 +1,98 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: A review of dm-writeboost
-Date: Mon, 7 Oct 2013 14:03:22 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1310071327390.19115@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1310031719340.24440@file01.intranet.prod.int.rdu2.redhat.com>
- <52515BD6.5000701@gmail.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [dm-devel] Reworking dm-writeboost [was: Re: staging: Add
+ dm-writeboost]
+Date: Tue, 8 Oct 2013 10:43:07 +1100
+Message-ID: <20131007234307.GP4446@dastard>
+References: <20130916215357.GA5015@redhat.com>
+ <52384E66.6050101@gmail.com>
+ <20130917205936.GB12001@redhat.com>
+ <523E3522.2060607@gmail.com>
+ <524183A2.9050301@gmail.com>
+ <20130926034325.GO26872@dastard>
+ <20131001082654.GA10326@debian>
+ <alpine.LRH.2.02.1310021956130.22612@file01.intranet.prod.int.rdu2.redhat.com>
+ <20131004020417.GF4446@dastard>
+ <524FC4F4.6050401@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <52515BD6.5000701@gmail.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: driverdev-devel-bounces@linuxdriverproject.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <524FC4F4.6050401@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
+Cc: mpatocka@redhat.com, thornber@redhat.com, devel@driverdev.osuosl.org, snitzer@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, dan.carpenter@oracle.com, ejt@redhat.com, cesarb@cesarb.net, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-
-
-On Sun, 6 Oct 2013, Akira Hayakawa wrote:
-
-> Mikulas,
+On Sat, Oct 05, 2013 at 04:51:16PM +0900, Akira Hayakawa wrote:
+> Dave,
 > 
-> Thank you for your reviewing.
+> > That's where arbitrary delays in the storage stack below XFS cause
+> > problems - if the first FUA log write is delayed, the next log
+> > buffer will get filled, issued and delayed, and when we run out of
+> > log buffers (there are 8 maximum) the entire log subsystem will
+> > stall, stopping *all* log commit operations until log buffer
+> > IOs complete and become free again. i.e. it can stall modifications
+> > across the entire filesystem while we wait for batch timeouts to
+> > expire and issue and complete FUA requests.
+> To me, this sounds like design failure in XFS log subsystem.
+
+If you say so. As it is, XFS is the best of all the linux
+filesystems when it comes to performance under a heavy fsync
+workload, so if you consider it broken by design then you've got a
+horror show waiting for you on any other filesystem...
+
+> Or just the limitation of metadata journal.
+
+It's a recovery limitation - the more uncompleted log buffers we
+have outstanding, the more space in the log will be considered
+unrecoverable during a crash...
+
+> > IMNSHO, REQ_FUA/REQ_FLUSH optimisations should be done at the
+> > point where they are issued - any attempt to further optimise them
+> > by adding delays down in the stack to aggregate FUA operations will
+> > only increase latency of the operations that the issuer want to have
+> > complete as fast as possible....
+> That lower layer stack attempts to optimize further
+> can benefit any filesystems.
+> So, your opinion is not always correct although
+> it is always correct in error handling or memory management.
 > 
-> I will reply to polling issue first.
-> For the rest, I will reply later.
-> 
-> > Polling for state
-> > -----------------
-> > 
-> > Some of the kernel threads that you spawn poll for data in one-second 
-> > interval - see migrate_proc, modulator_proc, recorder_proc, sync_proc.
-> > 
-> > flush_proc correctly contains wait_event, but there is still some 100ms 
-> > polling timeout in flush_proc that shouldn't be there.
-> > 
-> > If you set the polling interval too low, it wastes CPU cycle and it wastes 
-> > energy due to CPU wake-ups. If you set the polling interval too high, it 
-> > causes artifical delays. For example, current middle-class SSDs can do 
-> > writes at a rate 500MB/s. Now, think that the user uses 400MB partition 
-> > for the cache - the partition is filled up in 0.8s and the kernel waits 
-> > for additional 0.2s doing absolutely nothing, until your polling code 
-> > wakes up and notices that it should start flusing the cache.
-> > 
-> > So - the polling code introduces artifical delays that can cause 
-> > performance degradation. You may think about lowering the polling interval 
-> > to lessen the performance impact, but if you lower the polling interval, 
-> > it increases CPU and power consumption when the driver is idle. Either 
-> > way, it is wrong. Just don't use polling.
-> 
-> You dislike the fact that looping thread sleeping
-> can delay to the newly coming jobs.
-> 
-> I am afraid your understanding
-> on the sleeping of flush daemon is wrong.
-> Please see queue_flushing() it wakes up the daemon
-> if the queue is empty.
-> 
-> spin_lock_irqsave(&cache->flush_queue_lock, flags);
-> empty = list_empty(&cache->flush_queue);        
-> list_add_tail(&job->flush_queue, &cache->flush_queue);
-> spin_unlock_irqrestore(&cache->flush_queue_lock, flags);
-> if (empty)
->         wake_up_interruptible(&cache->flush_wait_queue);
-> 
-> Even if this waking up lines are removed
-> the flush daemon wakes up by its self
-> 100ms at worst after the first 1MB written.
+> I have proposed future plan of using persistent memory.
+> I believe with this leap forward
+> filesystems are free from doing such optimization
+> relevant to write barriers. For more detail, please see my post.
+> https://lkml.org/lkml/2013/10/4/186
 
-flush_proc is woken up correctly. But the other threads aren't. 
-migrate_proc, modulator_proc, recorder_proc, sync_proc all do polling.
+Sure, we already do that in the storage stack to minimise the impact
+of FUA operations - it's called a non-volatile write cache, and most
+RAID controllers have them. They rely on immediate dispatch of FUA
+operations to get them into the write cache as quickly as possible
+(i.e. what filesystems do right now), and that is something your
+proposed behaviour will prevent.
 
-Waking up every 100ms in flush_proc is not good because it wastes CPU time 
-and energy if the driver is idle.
+i.e. there's no point justifying a behaviour with "we could do this
+in future so lets ignore the impact on current users"...
 
+> However,
+> I think I should leave option to disable the optimization
+> in case the upper layer doesn't like it.
+> Maybe, writeboost should disable deferring barriers
+> if barrier_deadline_ms parameter is especially 0.
+> Linux kernel's layered architecture is obviously not always perfect
+> so there are similar cases in other boundaries
+> such as O_DIRECT to bypass the page cache.
 
-BTW. You should use wait_event_interruptible_lock_irq instead of 
-wait_event_interruptible and wait_event_interruptible_lock_irq_timeout 
-instead of wait_event_interruptible_timeout. The functions with "lock_irq" 
-automatically drop and re-acquire the spinlock, so that the condition is 
-tested while the lock is held - so that there are no asynchronous accesses 
-to !list_empty(&cache->flush_queue).
+Right - but you can't detect O_DIRECT at the dm layer. IOWs, you're
+relying on the user tweaking the corect knobs for their workload.
 
+e.g. what happens if a user has a mixed workload - one where
+performance benefits are only seen by delaying FUA, and another that
+is seriously slowed down by delaying FUA requests?  This is where
+knobs are problematic....
 
-> > Don't do this. You can do polling in a piece of code that is executed 
-> > infrequently, such as driver unload, but general functionality must not 
-> > depend on polling.
-> 100ms is the time the user must wait in termination as your claim.
->
-> However, I think this is a good time to
-> explain why I didn't choose to use workqueue.
-> 
-> Keeping it a polling thread that consumes what in queue
-> instead of replacing it with workqueue
-> has these reasons:
-> 
-> 1. CPU overhead is lower
->    queue_work overhead everytime flush job is to queue
->    is crucial for writeboost. queue_work is too CPU-consuming
->    as far as I looked at the code.
->    I have measured the theoretical maximum 4KB randwrite throughput  
->    of writeboost using fio benchmark. It was 1.5GB/sec
->    with fast enough cache device.
->    I don't think this extraordinary score can not be achieved with
->    other caching softwares.
->    In this benchmark, the flush daemon didn't sleep at all
->    because the writes are ceaseless.
->    Using workqueue will not only lose throughput
->    but also wastes CPU cycles both regularly is the fact I dislike.
-> 2. Ease of Error Handling
->    Keeping it a single thread looping and self-managing the queue
->    makes it easy to handle error.
->    If we choose to use workqueue, we need a mechanism to
->    * notify the occurrence of a error to other work items
->    * play-back the work items in the same order since waiting until the
->      system recovers for long time is prohibited with workqueue
->      as we discussed in the previous posts.
->      Segments must be flushed and then migrated in sequential
->      order along its id.
->    Leaving the control of the queue which should be in desired order
->    to the workqueue subsystem is dangerous in this case.
+Cheers,
 
-You don't have to use workqueues if you don't like them. You can use 
-kernel threads and wait_event/wake_up instead. Workqueues are simpler to 
-use in some circumstances (for example, you can submit the same work item 
-multiple times) but it's up to you if you want that simplicity or not.
-
-But you shouldn't do looping and waiting for events in migrate_proc.
-
-> For migrate_proc,
-> I see no reason this daemon polling is bad
-> although it actually sleeps in leisure time.
-> In using writeboost, we can obviously assume that
-> the sequential write throughput of cache device is much higher
-> than the random write throughput of the backing store
-> so migrate daemon is unlikely to sleep
-> since there are many dirty segments to migrate
-> is the ordinary situation.
-
-The problem is that if you fill up the whole cache device in less time 
-than 1 second. Then, you are waiting for 1 second until the migration 
-process notices that it has some work to do. That waiting is pointless and 
-degrades performance - the new write requests received by your driver sit 
-in queue_current_buffer, waiting for data to be migrated. And the 
-migration process sits in 
-schedule_timeout_interruptible(msecs_to_jiffies(1000)), waiting for the 
-end of the timeout. Your driver does absolutely nothing in this moment.
-
-For this reason, you should wake the migration process as soon as 
-it is needed.
-
-> Furthermore, since migration daemon is more one block
-> off from the user (upper layer) than flush daemon
-> the one second sleeping problem gets weaker or diluted.
-> If you still dislike the delay of this daemon
-> I think of forcefully waking up the daemon if it is sleeping
-> like flush daemon.
-> 
-> One last thing.
-> The power consumption in idle time is the only shortcoming
-> of polling.
-
-The other shortcoming is performance degradation. If you decrease polling 
-time, you improve performance, but increase power consumption. If you 
-increase polling time, you avoid performance degradation, but you increase 
-power consumption.
-
-Either decreasing or increasing the polling time is wrong.
-
-> But who cares the power consumption of 
-> waking up once a second and checking a queue is empty?
-> 
-> Akira
-
-Mikulas
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
