@@ -1,87 +1,183 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 16/22] dm: Refactor for new bio cloning/splitting
-Date: Sun, 6 Oct 2013 20:14:10 -0400
-Message-ID: <20131007001410.GA14264@redhat.com>
-References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
- <1375912471-5106-17-git-send-email-kmo@daterainc.com>
- <20130928045909.GA19745@redhat.com>
- <20131003031738.GA27418@kmo-pixel>
- <20131003032320.GA15322@redhat.com>
- <20131003214525.GA12183@kmo-pixel>
- <20131003225009.GA24173@redhat.com>
- <20131004170732.GA30728@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: A review of dm-writeboost
+Date: Mon, 7 Oct 2013 14:03:22 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1310071327390.19115@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1310031719340.24440@file01.intranet.prod.int.rdu2.redhat.com>
+ <52515BD6.5000701@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20131004170732.GA30728@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <52515BD6.5000701@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 04 2013 at  1:07pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
- 
-> With your latest fix I was able to create a thin device and format with
-> XFS.  Unfortunately, when I tried to run the thinp-test-suite the very
-> first BasicTests test (test_dd_benchmark) fails -- need to look closer
-> but it would seem to me the thinp saved bio_endio path isn't happy.  We
-> likely need an appropriately placed atomic_inc(&bio->bi_remaining); like
-> you did in dm-cache-target.c
+
+
+On Sun, 6 Oct 2013, Akira Hayakawa wrote:
+
+> Mikulas,
 > 
-> ------------[ cut here ]------------
-> kernel BUG at fs/bio.c:1722!
-...
-> Call Trace:
->  [<ffffffffa05f2ef9>] process_prepared_mapping+0x79/0x150 [dm_thin_pool]
->  [<ffffffffa05f2ba7>] process_prepared+0x87/0xa0 [dm_thin_pool]
->  [<ffffffffa05f58f3>] do_worker+0x33/0x60 [dm_thin_pool]
->  [<ffffffff81067862>] process_one_work+0x182/0x3b0
->  [<ffffffff81068c80>] worker_thread+0x120/0x3a0
->  [<ffffffff81068b60>] ? manage_workers+0x160/0x160
->  [<ffffffff8106eace>] kthread+0xce/0xe0
->  [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
->  [<ffffffff8152b1ac>] ret_from_fork+0x7c/0xb0
->  [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
-> Code: 1f 84 00 00 00 00 00 48 8b 57 10 83 e2 01 0f 44 f1 eb cd 0f 1f 40 00 48 8b 7f 50 48 85 ff 74 dd 8b 57 44 48 8d 47 44 85 d2 7f ac <0f> 0b eb fe 0f 1f 84 00 00 00 00 00 55 48 89 e5 66 66 66 66 90 
-> RIP  [<ffffffff811b1464>] bio_endio+0x74/0x80
->  RSP <ffff88032c5e7d48>
-> ---[ end trace acb5a7d638591b7b ]---
+> Thank you for your reviewing.
+> 
+> I will reply to polling issue first.
+> For the rest, I will reply later.
+> 
+> > Polling for state
+> > -----------------
+> > 
+> > Some of the kernel threads that you spawn poll for data in one-second 
+> > interval - see migrate_proc, modulator_proc, recorder_proc, sync_proc.
+> > 
+> > flush_proc correctly contains wait_event, but there is still some 100ms 
+> > polling timeout in flush_proc that shouldn't be there.
+> > 
+> > If you set the polling interval too low, it wastes CPU cycle and it wastes 
+> > energy due to CPU wake-ups. If you set the polling interval too high, it 
+> > causes artifical delays. For example, current middle-class SSDs can do 
+> > writes at a rate 500MB/s. Now, think that the user uses 400MB partition 
+> > for the cache - the partition is filled up in 0.8s and the kernel waits 
+> > for additional 0.2s doing absolutely nothing, until your polling code 
+> > wakes up and notices that it should start flusing the cache.
+> > 
+> > So - the polling code introduces artifical delays that can cause 
+> > performance degradation. You may think about lowering the polling interval 
+> > to lessen the performance impact, but if you lower the polling interval, 
+> > it increases CPU and power consumption when the driver is idle. Either 
+> > way, it is wrong. Just don't use polling.
+> 
+> You dislike the fact that looping thread sleeping
+> can delay to the newly coming jobs.
+> 
+> I am afraid your understanding
+> on the sleeping of flush daemon is wrong.
+> Please see queue_flushing() it wakes up the daemon
+> if the queue is empty.
+> 
+> spin_lock_irqsave(&cache->flush_queue_lock, flags);
+> empty = list_empty(&cache->flush_queue);        
+> list_add_tail(&job->flush_queue, &cache->flush_queue);
+> spin_unlock_irqrestore(&cache->flush_queue_lock, flags);
+> if (empty)
+>         wake_up_interruptible(&cache->flush_wait_queue);
+> 
+> Even if this waking up lines are removed
+> the flush daemon wakes up by its self
+> 100ms at worst after the first 1MB written.
 
-Please fold this fix into your for-jens branch, thanks.  (Could be that
-by the time Jens takes your immutable biovec changes we'll need to
-rebase but at least it won't slip through the cracks).
+flush_proc is woken up correctly. But the other threads aren't. 
+migrate_proc, modulator_proc, recorder_proc, sync_proc all do polling.
 
----
- drivers/md/dm-thin.c |    8 ++++++--
- 1 files changed, 6 insertions(+), 2 deletions(-)
+Waking up every 100ms in flush_proc is not good because it wastes CPU time 
+and energy if the driver is idle.
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index a654024..1abb4a2 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -611,8 +611,10 @@ static void cell_defer_no_holder(struct thin_c *tc, struct dm_bio_prison_cell *c
- 
- static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
- {
--	if (m->bio)
-+	if (m->bio) {
- 		m->bio->bi_end_io = m->saved_bi_end_io;
-+		atomic_inc(&m->bio->bi_remaining);
-+	}
- 	cell_error(m->tc->pool, m->cell);
- 	list_del(&m->list);
- 	mempool_free(m, m->tc->pool->mapping_pool);
-@@ -626,8 +628,10 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- 	int r;
- 
- 	bio = m->bio;
--	if (bio)
-+	if (bio) {
- 		bio->bi_end_io = m->saved_bi_end_io;
-+		atomic_inc(&bio->bi_remaining);
-+	}
- 
- 	if (m->err) {
- 		cell_error(pool, m->cell);
+
+BTW. You should use wait_event_interruptible_lock_irq instead of 
+wait_event_interruptible and wait_event_interruptible_lock_irq_timeout 
+instead of wait_event_interruptible_timeout. The functions with "lock_irq" 
+automatically drop and re-acquire the spinlock, so that the condition is 
+tested while the lock is held - so that there are no asynchronous accesses 
+to !list_empty(&cache->flush_queue).
+
+
+> > Don't do this. You can do polling in a piece of code that is executed 
+> > infrequently, such as driver unload, but general functionality must not 
+> > depend on polling.
+> 100ms is the time the user must wait in termination as your claim.
+>
+> However, I think this is a good time to
+> explain why I didn't choose to use workqueue.
+> 
+> Keeping it a polling thread that consumes what in queue
+> instead of replacing it with workqueue
+> has these reasons:
+> 
+> 1. CPU overhead is lower
+>    queue_work overhead everytime flush job is to queue
+>    is crucial for writeboost. queue_work is too CPU-consuming
+>    as far as I looked at the code.
+>    I have measured the theoretical maximum 4KB randwrite throughput  
+>    of writeboost using fio benchmark. It was 1.5GB/sec
+>    with fast enough cache device.
+>    I don't think this extraordinary score can not be achieved with
+>    other caching softwares.
+>    In this benchmark, the flush daemon didn't sleep at all
+>    because the writes are ceaseless.
+>    Using workqueue will not only lose throughput
+>    but also wastes CPU cycles both regularly is the fact I dislike.
+> 2. Ease of Error Handling
+>    Keeping it a single thread looping and self-managing the queue
+>    makes it easy to handle error.
+>    If we choose to use workqueue, we need a mechanism to
+>    * notify the occurrence of a error to other work items
+>    * play-back the work items in the same order since waiting until the
+>      system recovers for long time is prohibited with workqueue
+>      as we discussed in the previous posts.
+>      Segments must be flushed and then migrated in sequential
+>      order along its id.
+>    Leaving the control of the queue which should be in desired order
+>    to the workqueue subsystem is dangerous in this case.
+
+You don't have to use workqueues if you don't like them. You can use 
+kernel threads and wait_event/wake_up instead. Workqueues are simpler to 
+use in some circumstances (for example, you can submit the same work item 
+multiple times) but it's up to you if you want that simplicity or not.
+
+But you shouldn't do looping and waiting for events in migrate_proc.
+
+> For migrate_proc,
+> I see no reason this daemon polling is bad
+> although it actually sleeps in leisure time.
+> In using writeboost, we can obviously assume that
+> the sequential write throughput of cache device is much higher
+> than the random write throughput of the backing store
+> so migrate daemon is unlikely to sleep
+> since there are many dirty segments to migrate
+> is the ordinary situation.
+
+The problem is that if you fill up the whole cache device in less time 
+than 1 second. Then, you are waiting for 1 second until the migration 
+process notices that it has some work to do. That waiting is pointless and 
+degrades performance - the new write requests received by your driver sit 
+in queue_current_buffer, waiting for data to be migrated. And the 
+migration process sits in 
+schedule_timeout_interruptible(msecs_to_jiffies(1000)), waiting for the 
+end of the timeout. Your driver does absolutely nothing in this moment.
+
+For this reason, you should wake the migration process as soon as 
+it is needed.
+
+> Furthermore, since migration daemon is more one block
+> off from the user (upper layer) than flush daemon
+> the one second sleeping problem gets weaker or diluted.
+> If you still dislike the delay of this daemon
+> I think of forcefully waking up the daemon if it is sleeping
+> like flush daemon.
+> 
+> One last thing.
+> The power consumption in idle time is the only shortcoming
+> of polling.
+
+The other shortcoming is performance degradation. If you decrease polling 
+time, you improve performance, but increase power consumption. If you 
+increase polling time, you avoid performance degradation, but you increase 
+power consumption.
+
+Either decreasing or increasing the polling time is wrong.
+
+> But who cares the power consumption of 
+> waking up once a second and checking a queue is empty?
+> 
+> Akira
+
+Mikulas
