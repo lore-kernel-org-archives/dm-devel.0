@@ -1,20 +1,19 @@
-From: Christoph Hellwig <hch@infradead.org>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
 Subject: Re: [dm-devel] Reworking dm-writeboost [was: Re: staging: Add
  dm-writeboost]
-Date: Tue, 8 Oct 2013 02:41:44 -0700
-Message-ID: <20131008094144.GA10261@infradead.org>
+Date: Tue, 08 Oct 2013 19:37:32 +0900
+Message-ID: <5253E06C.6040101@gmail.com>
 References: <52384E66.6050101@gmail.com> <20130917205936.GB12001@redhat.com>
  <523E3522.2060607@gmail.com> <524183A2.9050301@gmail.com>
  <20130926034325.GO26872@dastard> <20131001082654.GA10326@debian>
  <alpine.LRH.2.02.1310021956130.22612@file01.intranet.prod.int.rdu2.redhat.com>
  <20131004020417.GF4446@dastard> <524FC4F4.6050401@gmail.com>
- <20131007234307.GP4446@dastard>
+ <20131007234307.GP4446@dastard> <20131008094144.GA10261@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-Content-Disposition: inline
-In-Reply-To: <20131007234307.GP4446@dastard>
+In-Reply-To: <20131008094144.GA10261@infradead.org>
 List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
 List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
@@ -24,30 +23,49 @@ List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driver
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
 Errors-To: driverdev-devel-bounces@linuxdriverproject.org
 Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, Akira Hayakawa <ruby.wktk@gmail.com>, ejt@redhat.com, mpatocka@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, dan.carpenter@oracle.com, m.chehab@samsung.com
+To: hch@infradead.org
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, ruby.wktk@gmail.com, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Tue, Oct 08, 2013 at 10:43:07AM +1100, Dave Chinner wrote:
-> > Maybe, writeboost should disable deferring barriers
-> > if barrier_deadline_ms parameter is especially 0.
-> > Linux kernel's layered architecture is obviously not always perfect
-> > so there are similar cases in other boundaries
-> > such as O_DIRECT to bypass the page cache.
+Christoph,
+
+> You can detect O_DIRECT writes by second guession a special combination
+> of REQ_ flags only used there, as cfg tries to treat it special:
 > 
-> Right - but you can't detect O_DIRECT at the dm layer. IOWs, you're
-> relying on the user tweaking the corect knobs for their workload.
+> #define WRITE_SYNC              (WRITE | REQ_SYNC | REQ_NOIDLE)
+> #define WRITE_ODIRECT           (WRITE | REQ_SYNC)
+> 
+> the lack of REQ_NOIDLE when REQ_SYNC is set gives it away.  Not related
+> to the FLUSH or FUA flags in any way, though.
+Thanks.
+But, our problem is to detect the bio may or may not be deferred.
+The flag REQ_NOIDLE is the one?
 
-You can detect O_DIRECT writes by second guession a special combination
-of REQ_ flags only used there, as cfg tries to treat it special:
+> Akira, can you explain the workloads where your delay of FLUSH or FUA
+> requests helps you in any way?  I very much agree with Dave's reasoning,
+> but if you found workloads where your hack helps we should make sure we
+> fix them at the place where they are issued.
+One of the examples is a fileserver accessed by multiple users.
+A barrier is submitted when a user closes a file for example.
 
-#define WRITE_SYNC              (WRITE | REQ_SYNC | REQ_NOIDLE)
-#define WRITE_ODIRECT           (WRITE | REQ_SYNC)
+As I said in my previous post
+https://lkml.org/lkml/2013/10/4/186
+writeboost has RAM buffer and we want one to be
+fulfilled with writes and then flushed to the cache device
+that takes all the barriers away with the completion.
+In that case we pay the minimum penalty for the barriers.
+Interestingly, writeboost is happy with a lot of writes.
 
-the lack of REQ_NOIDLE when REQ_SYNC is set gives it away.  Not related
-to the FLUSH or FUA flags in any way, though.
+By deferring these barriers (FLUSH and FUA)
+multiple barriers are likely to be merged on a RAM buffer
+and then processed by replacing with only one FLUSH.
 
-Akira, can you explain the workloads where your delay of FLUSH or FUA
-requests helps you in any way?  I very much agree with Dave's reasoning,
-but if you found workloads where your hack helps we should make sure we
-fix them at the place where they are issued.
+Merging the barriers and replacing it with a single FLUSH
+by accepting a lot of writes
+is the reason for deferring barriers in writeboost.
+If you want to know further I recommend you to
+look at the source code to see
+how queue_barrier_io() is used and
+how the barriers are kidnapped in queue_flushing().
+
+Akira
