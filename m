@@ -1,63 +1,60 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH 0/2] patches to improve cluster raid1
-	performance [V2]
-Date: Thu, 10 Oct 2013 11:29:08 -0500
-Message-ID: <66B8343F-84A1-4F8C-B41D-3204EF16651A@redhat.com>
-References: <cover.1380191501.git.dmzhang@suse.com>
-	<7396AC8F-6B91-44AE-96C1-99C9000F8B4E@redhat.com>
-	<52545E0E0200007B0003F696@soto.provo.novell.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52545E0E0200007B0003F696@soto.provo.novell.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dong Mao Zhang <dmzhang@suse.com>
-Cc: dm-devel@redhat.com
+From: Kent Overstreet <kmo@daterainc.com>
+Subject: Re: [PATCH 16/22] dm: Refactor for new bio cloning/splitting
+Date: Thu, 10 Oct 2013 21:13:14 -0700
+Message-ID: <20131011041314.GB28572@kmo>
+References: <1375912471-5106-1-git-send-email-kmo@daterainc.com>
+ <1375912471-5106-17-git-send-email-kmo@daterainc.com>
+ <20130928045909.GA19745@redhat.com>
+ <20131003031738.GA27418@kmo-pixel>
+ <20131003032320.GA15322@redhat.com>
+ <20131003214525.GA12183@kmo-pixel>
+ <20131003225009.GA24173@redhat.com>
+ <20131004170732.GA30728@redhat.com>
+ <20131007001410.GA14264@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20131007001410.GA14264@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-
-On Oct 8, 2013, at 3:33 AM, Dong Mao Zhang wrote:
-
->>>> 
->>>> Brassow Jonathan  09/30/13 10:28 PM >>>
-> Hi,
+On Sun, Oct 06, 2013 at 08:14:10PM -0400, Mike Snitzer wrote:
+> On Fri, Oct 04 2013 at  1:07pm -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+>  
+> > With your latest fix I was able to create a thin device and format with
+> > XFS.  Unfortunately, when I tried to run the thinp-test-suite the very
+> > first BasicTests test (test_dd_benchmark) fails -- need to look closer
+> > but it would seem to me the thinp saved bio_endio path isn't happy.  We
+> > likely need an appropriately placed atomic_inc(&bio->bi_remaining); like
+> > you did in dm-cache-target.c
+> > 
+> > ------------[ cut here ]------------
+> > kernel BUG at fs/bio.c:1722!
+> ...
+> > Call Trace:
+> >  [<ffffffffa05f2ef9>] process_prepared_mapping+0x79/0x150 [dm_thin_pool]
+> >  [<ffffffffa05f2ba7>] process_prepared+0x87/0xa0 [dm_thin_pool]
+> >  [<ffffffffa05f58f3>] do_worker+0x33/0x60 [dm_thin_pool]
+> >  [<ffffffff81067862>] process_one_work+0x182/0x3b0
+> >  [<ffffffff81068c80>] worker_thread+0x120/0x3a0
+> >  [<ffffffff81068b60>] ? manage_workers+0x160/0x160
+> >  [<ffffffff8106eace>] kthread+0xce/0xe0
+> >  [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
+> >  [<ffffffff8152b1ac>] ret_from_fork+0x7c/0xb0
+> >  [<ffffffff8106ea00>] ? kthread_freezable_should_stop+0x70/0x70
+> > Code: 1f 84 00 00 00 00 00 48 8b 57 10 83 e2 01 0f 44 f1 eb cd 0f 1f 40 00 48 8b 7f 50 48 85 ff 74 dd 8b 57 44 48 8d 47 44 85 d2 7f ac <0f> 0b eb fe 0f 1f 84 00 00 00 00 00 55 48 89 e5 66 66 66 66 90 
+> > RIP  [<ffffffff811b1464>] bio_endio+0x74/0x80
+> >  RSP <ffff88032c5e7d48>
+> > ---[ end trace acb5a7d638591b7b ]---
 > 
-> Couple quick questions/comments:
->>> 1) Can you tell me more about how you are testing and comparing results?
-> 
-> I just setup a cluster raid1, and compare the performance before and after this patch by 'dd' command.(the block size in dd command is 
-> 4k, 8k).
-> And it was tested on two kvm nodes. I guess I will test it on the real nodes in the next two week.
-> Do you have other suggestions on the test scenario?
+> Please fold this fix into your for-jens branch, thanks.  (Could be that
+> by the time Jens takes your immutable biovec changes we'll need to
+> rebase but at least it won't slip through the cracks).
 
-Serial I/O is a good start, but won't show how things would perform in the real world.  If you are using cluster mirrors, then you are almost certainly using a clustered file system (e.g. GFS2).  What is the difference in performance when running file system tests on GFS when it is sitting on a linear LV vs a mirror LV vs a mirror LV with your changes?  What happens when you run these benchmarks in parallel from different machines on the same file system?
-
-In the past, I have performed a test that involved untarring 'X' number of linux kernels - each into their own directory which were themselves in a directory that was named after the machine.  Once untarred, the directory and files are removed.  This can be performed for a number of iterations.  Performing a test in a directory named after the machine allows you to run the test in parallel on different machines while reducing file system clustered lock contention - meaning more of the focus is on the I/O performance of the lower layers.  This is just one example of a test that would create many files and directories.  Couple this test with your serial I/O test and you begin to get an idea of what performance would be like for different workloads.  If you want to go further, there are other
-  benchmarks our there.
-
-This type of testing satisfies a curiosity about quantifying the improvement, but understanding the patches you sent has already made it obvious that there will be at least some improvement.
-
-> 
-> 
->>> There are some comments and other minor things to clean-up after that.  For example, I don't know if I like the name 'DM_SUPPORT_DELAY_FLUSH'...  I might >>rather prefer something that indicates that the 'mark' request is also responsible for 'flush'.  What is happening must be clear to anyone who might write a new >>log daemon in the future.  They must realize that the key change for them is that the 'mark' must handle the 'flush' - everything else is the same from their >>perspective.  It amounts to an API change.
-> Yes, I agree to the patch combines.
-> And how about the name 'DM_FLUSH_WITH_MARK'? any other ideas?
-> 
-
-Sounds fine.  Although it can be confusing whether it should be DM_FLUSH_WITH_MARK (i.e. "flush when mark is performed") or DM_MARK_WITH_FLUSH (i.e. "mark has flush capability").  Perhaps DM_MARK_AND_FLUSH or DM_MARK_PERFORMS_FLUSH or DM_INTEGRATED_MARK_AND_FLUSH...
-
-Thinking more about it...  From the kernel's perspective, it is the /flush/ function that sends the 'mark' requests (but doesn't then send the flush request - it is implicit).  From the userspace perspective, it is the /mark/ function that performs the 'flush' action.  It works and I get it, but it does seem like it could be a source of confusion.  It also makes it tough to come up with a descriptive name, since the kernel and userspace are doing opposite things.
-
-Perhaps a better thing to do is to integrate the marks (and possibly clears) into the flush - DM_INTEGRATED_FLUSH.  The payload for the DM_ULOG_FLUSH flush communication is empty.  It seems to me now that it would make more sense to make use of that empty space and fill it with mark/clear requests.  What do you think?
-
- brassow
+Thanks! I knew that bio chaining patch was going to cause a few issues
+like this, but it seems to useful to pass up. Anything else come up/any
+comments?
