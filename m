@@ -1,8 +1,8 @@
-From: Zheng Huai Cheng <zhenghch@linux.vnet.ibm.com>
-Subject: [PATCH][RESEND]multipath: Allow whitespace before or
- after exit and quit command in multipathd
-Date: Mon, 14 Oct 2013 16:34:43 +0800
-Message-ID: <1381739683.12659.1.camel@stefan.desktop>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 0/4] Fix error paths on device initialization in
+ the block layer
+Date: Mon, 14 Oct 2013 12:10:16 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1310141138500.24159@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,69 +17,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Nick Piggin <npiggin@suse.de>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Kay Sievers <kay.sievers@vrfy.org>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Ken Chen <kenchen@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Zdenek Kabelac <zkabelac@redhat.com>, Tejun Heo <tj@kernel.org>, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-This problem is reported by IBM internal test team. 
+Hi
 
-In multipathd interactive mode, commands allow preceding and appending
-whitespace while quit and exit do not. If we have whitespace before or
-after quit|exit command, multipathd won't recognize exit and quit
-command and exit the interactive mode. 
+This series of patches fixes some crashes in the block layer in device 
+initialization when memory allocation fails.
 
-This patch provide support whitespace in the quit and exit command.
+The crashes were discovered during stress testing - we tried to create as 
+many logical volumes as possible.
 
-Signed-off-by: Zheng Huai Cheng <zhenghch@linux.vnet.ibm.com>
----
- multipathd/uxclnt.c |   28 +++++++++++++++++++++++++---
- 1 file changed, 25 insertions(+), 3 deletions(-)
+Note that there are still some places in the kernel where error handling 
+is inadequate, for example add_disk or blk_register_region.
 
-diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
-index 4e3ed26..b0567bd 100644
---- a/multipathd/uxclnt.c
-+++ b/multipathd/uxclnt.c
-@@ -37,6 +37,29 @@ static void print_reply(char *s)
-                putchar(*s++);
-        }   
- }
-+
-+static int need_quit(char *str, size_t len)
-+{
-+       char *ptr, *start;
-+       size_t trimed_len = len;
-+
-+       for (ptr = str; trimed_len && isspace(*ptr);
-+               trimed_len--, ptr++)
-+               ;
-+
-+       start = ptr;
-+
-+       for (ptr = str + len - 1; trimed_len && isspace(*ptr);
-+               trimed_len--, ptr--)
-+               ;
-+
-+       if ((trimed_len == 4 && !strncmp(start, "exit", 4)) ||
-+            (trimed_len == 4 && !strncmp(start, "quit", 4)))
-+               return 1;
-+
-+       return 0;
-+}
-+
- /*
-  * process the client
-  */  
-@@ -56,9 +79,8 @@ static void process(int fd)
-                        free(line);
-                        continue;
-                }   
--               if (!strncmp(line, "exit", 4) && llen == 4)
--                       break;
--               if (!strncmp(line, "quit", 4) && llen == 4)
-+
-+               if (need_quit(line, llen))
-                        break;
-
-                if (send_packet(fd, line, llen + 1) != 0) break;
--- 
-1.7.9.5
+Mikulas
