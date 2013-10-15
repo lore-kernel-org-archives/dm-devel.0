@@ -1,17 +1,17 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 1/4] blk-core: Fix memory corruption if
- blkcg_init_queue fails
-Date: Tue, 15 Oct 2013 09:42:51 -0400
-Message-ID: <20131015134251.GG3141@htj.dyndns.org>
+Subject: Re: [PATCH 2/4] loop: fix crash if blk_alloc_queue fails
+Date: Tue, 15 Oct 2013 09:43:59 -0400
+Message-ID: <20131015134359.GH3141@htj.dyndns.org>
 References: <alpine.LRH.2.02.1310141138500.24159@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1310141210280.24159@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1310141211410.24159@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1310141210280.24159@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1310141211410.24159@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,52 +25,16 @@ To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Jens Axboe <axboe@kernel.dk>, Nick Piggin <npiggin@suse.de>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Kay Sievers <kay.sievers@vrfy.org>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Ken Chen <kenchen@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Zdenek Kabelac <zkabelac@redhat.com>, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 14, 2013 at 12:11:36PM -0400, Mikulas Patocka wrote:
-> If blkcg_init_queue fails, blk_alloc_queue_node doesn't call bdi_destroy
-> to clean up structures allocated by the backing dev.
+On Mon, Oct 14, 2013 at 12:12:24PM -0400, Mikulas Patocka wrote:
+> loop: fix crash if blk_alloc_queue fails
 > 
-> ------------[ cut here ]------------
-> WARNING: at lib/debugobjects.c:260 debug_print_object+0x85/0xa0()
-> ODEBUG: free active (active state 0) object type: percpu_counter hint:           (null)
-> Modules linked in: dm_loop dm_mod ip6table_filter ip6_tables uvesafb cfbcopyarea cfbimgblt cfbfillrect fbcon font bitblit fbcon_rotate fbcon_cw fbcon_ud fbcon_ccw softcursor fb fbdev ipt_MASQUERADE iptable_nat nf_nat_ipv4 msr nf_conntrack_ipv4 nf_defrag_ipv4 xt_state ipt_REJECT xt_tcpudp iptable_filter ip_tables x_tables bridge stp llc tun ipv6 cpufreq_userspace cpufreq_stats cpufreq_powersave cpufreq_ondemand cpufreq_conservative spadfs fuse hid_generic usbhid hid raid0 md_mod dmi_sysfs nf_nat_ftp nf_nat nf_conntrack_ftp nf_conntrack lm85 hwmon_vid snd_usb_audio snd_pcm_oss snd_mixer_oss snd_pcm snd_timer snd_page_alloc snd_hwdep snd_usbmidi_lib snd_rawmidi snd soundcore acpi_cpufreq freq_table mperf sata_svw serverworks kvm_amd ide_core ehci_pci ohci_hcd libata ehci_hcd kvm usbcore tg3
-  usb_common libphy k10temp pcspkr ptp i2c_piix4 i2c_core evdev microcode hwmon rtc_cmos pps_core e100 skge floppy mii processor button unix
-> CPU: 0 PID: 2739 Comm: lvchange Tainted: G        W
-> 3.10.15-devel #14
-> Hardware name: empty empty/S3992-E, BIOS 'V1.06   ' 06/09/2009
->  0000000000000009 ffff88023c3c1ae8 ffffffff813c8fd4 ffff88023c3c1b20
->  ffffffff810399eb ffff88043d35cd58 ffffffff81651940 ffff88023c3c1bf8
->  ffffffff82479d90 0000000000000005 ffff88023c3c1b80 ffffffff81039a67
-> Call Trace:
->  [<ffffffff813c8fd4>] dump_stack+0x19/0x1b
->  [<ffffffff810399eb>] warn_slowpath_common+0x6b/0xa0
->  [<ffffffff81039a67>] warn_slowpath_fmt+0x47/0x50
->  [<ffffffff8122aaaf>] ? debug_check_no_obj_freed+0xcf/0x250
->  [<ffffffff81229a15>] debug_print_object+0x85/0xa0
->  [<ffffffff8122abe3>] debug_check_no_obj_freed+0x203/0x250
->  [<ffffffff8113c4ac>] kmem_cache_free+0x20c/0x3a0
->  [<ffffffff811f6709>] blk_alloc_queue_node+0x2a9/0x2c0
->  [<ffffffff811f672e>] blk_alloc_queue+0xe/0x10
->  [<ffffffffa04c0093>] dm_create+0x1a3/0x530 [dm_mod]
->  [<ffffffffa04c6bb0>] ? list_version_get_info+0xe0/0xe0 [dm_mod]
->  [<ffffffffa04c6c07>] dev_create+0x57/0x2b0 [dm_mod]
->  [<ffffffffa04c6bb0>] ? list_version_get_info+0xe0/0xe0 [dm_mod]
->  [<ffffffffa04c6bb0>] ? list_version_get_info+0xe0/0xe0 [dm_mod]
->  [<ffffffffa04c6528>] ctl_ioctl+0x268/0x500 [dm_mod]
->  [<ffffffff81097662>] ? get_lock_stats+0x22/0x70
->  [<ffffffffa04c67ce>] dm_ctl_ioctl+0xe/0x20 [dm_mod]
->  [<ffffffff81161aad>] do_vfs_ioctl+0x2ed/0x520
->  [<ffffffff8116cfc7>] ? fget_light+0x377/0x4e0
->  [<ffffffff81161d2b>] SyS_ioctl+0x4b/0x90
->  [<ffffffff813cff16>] system_call_fastpath+0x1a/0x1f
-> ---[ end trace 4b5ff0d55673d986 ]---
-> ------------[ cut here ]------------
-> 
-> This fix should be backported to stable kernels starting with 2.6.37. Note
-> that in the kernels prior to 3.5 the affected code is different, but the
-> bug is still there - bdi_init is called and bdi_destroy isn't.
-> 
+> If blk_alloc_queue fails, loop_add cleans up, but it doesn't clean up the
+> identifier allocated with idr_alloc. That causes crash on module unload in
+> idr_for_each(&loop_index_idr, &loop_exit_cb, NULL); where we attempt to
+> remove non-existed device with that id.
+...
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@kernel.org	# 2.6.37+
+> Cc: stable@kernel.org	# 3.1+
 
 Acked-by: Tejun Heo <tj@kernel.org>
 
