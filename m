@@ -1,187 +1,133 @@
-From: Kent Overstreet <kmo@daterainc.com>
-Subject: [GIT PULL] Immutable biovecs
-Date: Tue, 15 Oct 2013 13:20:09 -0700
-Message-ID: <20131015202009.GN28572@kmo>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: A review of dm-writeboost
+Date: Tue, 15 Oct 2013 20:01:45 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1310151950530.4664@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1310031719340.24440@file01.intranet.prod.int.rdu2.redhat.com>
+ <52550841.5030001@gmail.com> <525BAB32.5050901@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Neil Brown <neilb@suse.de>, Christoph Hellwig <hch@infradead.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <525BAB32.5050901@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-Jens - here's the immutable biovec patch series, it should all be ready
-to go. Mike Snitzer's tested the dm stuff, I've tested it with bio
-integrity, the aoe driver, bcache and md.
 
-This paves the way for the dio rewrite, multipage bvecs, killing
-merge_bvec_fn, and more:
 
-The following changes since commit 342799dee522b11ec205dba7a5c7fe64f2a0fec0:
+On Mon, 14 Oct 2013, Akira Hayakawa wrote:
 
-  bcache: Fix flushes in writeback mode (2013-10-10 21:13:20 -0700)
+> Hi, DM Guys
+> 
+> I suppose I have finished the tasks to
+> answer Mikulas's pointing outs.
+> So, let me update the progress report.
+> 
+> The code is updated now on my Github repo.
+> Checkout the develop branch to avail
+> the latest source code.
+> 
+> Compilation Status
+> ------------------
+> First, compilation status.
+> Mikulas's advised me to compile the module in
+> 32 bit environment. and Yes, I did.
+> With all these kernels listed below
+> writeboost can compile without any error nor warning.
+> 
+> For 64 bit
+> 3.2.36, 3.4.25, 3.5.7, 3.6.9, 3.7.5, 3.8.5, 3.9.8, 3.10.5, 3.11.4 and 3.12-rc1
+> 
+> For 32 bit
+> 3.2.0-4-686-pae (Debian 7.1.0-i386)
+> 
+> 
+> Block up on error
+> -----------------
+> The most annoying thing in this update
+> is how to handle the I/O error.
+> For memory allocation error,
+> writeboost now makes use of mempool to avoid
+> the problem Mikulas's said in his last comments
+> but handling I/O error gracefully
+> when the system is running is very difficult.
+> 
+> My answer is 
+> all the daemon stop when I/O error (-EIO returned) happens
+> in any part of this module.
+> They waits on wait_queue (blockup_wait_queue)
+> and reactivates when sysadmin turns `blockup` variable to 0
+> through message interface.
+> When `blockup` is 1, all the incoming I/O
+> are returned as -EIO to the upper layer.
+> RETRY macro is introduced
+> which wraps doing I/O and
+> retries I/O submission if the error is -ENOMEN but
 
-are available in the git repository at:
+I/Os shouldn't be returned with -ENOMEM. If they are, you can treat it as 
+a hard error.
 
-  git://evilpiepirate.org/~kent/linux-bcache.git for-jens
+> turns blockup to 1 and sleeps if the error is -EIO.
+> -EIO is more serious than -ENOMEM because
+> it may destroy the storage for some accidental problem
+> that we have no control in device-mapper layer
+> (e.g. the storage controller went crazy).
+> Blocking up the whole I/O is to minimize the
+> probable damage.
+> 
+> But, XFS stalls ...
+> -------------------
+> For testing,
+> I manually turns `blockup` to 1
+> when compiling Ruby is in progress
+> on XFS on a writeboost device.
+> As soon as I do it,
+> XFS starts to dump error message 
+> like "metadata I/O error: ... ("xlog_iodone") error ..."
+> and after few seconds it then starts to dump
+> like "BUG: soft lockup -CPU#3 stuck for 22s!".
+> The system stalls and doesn't accept the keyboard.
+> 
+> I think this behavior is caused by
+> the device always returning -EIO after turning 
+> the variable to 1.
+> But why XFS goes stalling on I/O error?
 
-for you to fetch changes up to e5cb0350156d84c2c976bbc2435e66b2bbbf1edb:
+Because it is bloated and buggy. We have bug 924301 for XFS crash on I/O 
+error...
 
-  block: Don't save/copy bvec array anymore, share when cloning (2013-10-11 15:45:50 -0700)
+> It should just suspend and starts returning
+> error to the upper layer as writeboost now does.
+> As Mikulas said the I/O error is often
+> due to connection failure that is usually recoverable.
+> Stalling the kernel will need reboot 
+> after recovering nevertheless writeboost
+> can recover just by again turning `blockup` to 0.
+> Any reason for this design or
+> existing of a option to not stall XFS on I/O error?
+> 
+> Thanks,
+> Akira
 
-----------------------------------------------------------------
-Kent Overstreet (23):
-      block: Use rw_copy_check_uvector()
-      block: Consolidate duplicated bio_trim() implementations
-      bcache: Kill unaligned bvec hack
-      block: Abstract out bvec iterator
-      dm: Use bvec_iter for dm_bio_record()
-      block: Convert bio_iovec() to bvec_iter
-      block: Convert bio_for_each_segment() to bvec_iter
-      block: Immutable bio vecs
-      block: Convert bio_copy_data() to bvec_iter
-      bio-integrity: Convert to bvec_iter
-      block: Kill bio_segments()/bi_vcnt usage
-      block: Convert drivers to immutable biovecs
-      aoe: Convert to immutable biovecs
-      ceph: Convert to immutable biovecs
-      block: Kill bio_iovec_idx(), __bio_iovec()
-      rbd: Refactor bio cloning, don't clone biovecs
-      dm: Refactor for new bio cloning/splitting
-      block: Remove bi_idx hacks
-      block: Generic bio chaining
-      block: Rename bio_split() -> bio_pair_split()
-      block: Introduce new bio_split()
-      block: Kill bio_pair_split()
-      block: Don't save/copy bvec array anymore, share when cloning
+Blocking I/O until the admin turns a specific variable isn't too 
+reliable.
 
- Documentation/block/biodoc.txt              |   7 +-
- arch/m68k/emu/nfblock.c                     |  13 +-
- arch/powerpc/sysdev/axonram.c               |  21 +-
- block/blk-core.c                            |  36 +--
- block/blk-flush.c                           |   2 +-
- block/blk-integrity.c                       |  40 +--
- block/blk-lib.c                             |  12 +-
- block/blk-map.c                             |   6 +-
- block/blk-merge.c                           |  66 +++--
- block/blk-throttle.c                        |  14 +-
- block/elevator.c                            |   2 +-
- block/scsi_ioctl.c                          |  39 +--
- drivers/block/aoe/aoe.h                     |  10 +-
- drivers/block/aoe/aoecmd.c                  | 153 ++++------
- drivers/block/brd.c                         |  16 +-
- drivers/block/drbd/drbd_actlog.c            |   2 +-
- drivers/block/drbd/drbd_bitmap.c            |   2 +-
- drivers/block/drbd/drbd_main.c              |  27 +-
- drivers/block/drbd/drbd_receiver.c          |  19 +-
- drivers/block/drbd/drbd_req.c               |   6 +-
- drivers/block/drbd/drbd_req.h               |   2 +-
- drivers/block/drbd/drbd_worker.c            |   8 +-
- drivers/block/floppy.c                      |  16 +-
- drivers/block/loop.c                        |  27 +-
- drivers/block/mtip32xx/mtip32xx.c           |  20 +-
- drivers/block/nbd.c                         |  14 +-
- drivers/block/nvme-core.c                   | 142 ++-------
- drivers/block/pktcdvd.c                     | 182 ++++++------
- drivers/block/ps3disk.c                     |   7 +-
- drivers/block/ps3vram.c                     |  10 +-
- drivers/block/rbd.c                         |  89 +-----
- drivers/block/rsxx/dev.c                    |   6 +-
- drivers/block/rsxx/dma.c                    |  15 +-
- drivers/block/umem.c                        |  53 ++--
- drivers/block/virtio_blk.c                  |   4 +-
- drivers/block/xen-blkback/blkback.c         |   2 +-
- drivers/block/xen-blkfront.c                |  55 +---
- drivers/md/bcache/alloc.c                   |   4 +-
- drivers/md/bcache/bcache.h                  |   2 -
- drivers/md/bcache/btree.c                   |  23 +-
- drivers/md/bcache/debug.c                   |  29 +-
- drivers/md/bcache/io.c                      | 196 ++-----------
- drivers/md/bcache/journal.c                 |  12 +-
- drivers/md/bcache/movinggc.c                |   4 +-
- drivers/md/bcache/request.c                 | 110 +++----
- drivers/md/bcache/request.h                 |   1 -
- drivers/md/bcache/super.c                   |  20 +-
- drivers/md/bcache/util.c                    |   4 +-
- drivers/md/bcache/writeback.c               |   6 +-
- drivers/md/bcache/writeback.h               |   2 +-
- drivers/md/dm-bio-record.h                  |  37 +--
- drivers/md/dm-bufio.c                       |   2 +-
- drivers/md/dm-cache-policy-mq.c             |   4 +-
- drivers/md/dm-cache-target.c                |  26 +-
- drivers/md/dm-crypt.c                       |  64 ++--
- drivers/md/dm-delay.c                       |   7 +-
- drivers/md/dm-flakey.c                      |   7 +-
- drivers/md/dm-io.c                          |  37 +--
- drivers/md/dm-linear.c                      |   3 +-
- drivers/md/dm-raid1.c                       |  20 +-
- drivers/md/dm-region-hash.c                 |   3 +-
- drivers/md/dm-snap.c                        |  18 +-
- drivers/md/dm-stripe.c                      |  13 +-
- drivers/md/dm-switch.c                      |   4 +-
- drivers/md/dm-thin.c                        |  30 +-
- drivers/md/dm-verity.c                      |  60 ++--
- drivers/md/dm.c                             | 185 ++----------
- drivers/md/faulty.c                         |  19 +-
- drivers/md/linear.c                         |  96 +++---
- drivers/md/md.c                             |  50 +---
- drivers/md/md.h                             |   1 -
- drivers/md/multipath.c                      |  13 +-
- drivers/md/raid0.c                          |  79 ++---
- drivers/md/raid1.c                          |  67 +++--
- drivers/md/raid10.c                         | 202 ++++++-------
- drivers/md/raid5.c                          |  84 +++---
- drivers/message/fusion/mptsas.c             |   8 +-
- drivers/s390/block/dcssblk.c                |  19 +-
- drivers/s390/block/xpram.c                  |  19 +-
- drivers/scsi/libsas/sas_expander.c          |   8 +-
- drivers/scsi/mpt2sas/mpt2sas_transport.c    |  41 +--
- drivers/scsi/mpt3sas/mpt3sas_transport.c    |  39 +--
- drivers/scsi/osd/osd_initiator.c            |   2 +-
- drivers/scsi/sd.c                           |   2 +-
- drivers/scsi/sd_dif.c                       |  30 +-
- drivers/staging/lustre/lustre/llite/lloop.c |  26 +-
- drivers/staging/zram/zram_drv.c             |  33 ++-
- drivers/target/target_core_iblock.c         |   2 +-
- fs/bio-integrity.c                          | 191 +++---------
- fs/bio.c                                    | 434 +++++++++++++---------------
- fs/btrfs/check-integrity.c                  |   8 +-
- fs/btrfs/compression.c                      |  17 +-
- fs/btrfs/extent_io.c                        |  16 +-
- fs/btrfs/file-item.c                        |  19 +-
- fs/btrfs/inode.c                            |  22 +-
- fs/btrfs/raid56.c                           |  22 +-
- fs/btrfs/scrub.c                            |  12 +-
- fs/btrfs/volumes.c                          |  12 +-
- fs/buffer.c                                 |  12 +-
- fs/direct-io.c                              |   4 +-
- fs/ext4/page-io.c                           |   4 +-
- fs/f2fs/data.c                              |   2 +-
- fs/f2fs/segment.c                           |   2 +-
- fs/gfs2/lops.c                              |   2 +-
- fs/gfs2/ops_fstype.c                        |   2 +-
- fs/hfsplus/wrapper.c                        |   2 +-
- fs/jfs/jfs_logmgr.c                         |  12 +-
- fs/jfs/jfs_metapage.c                       |   9 +-
- fs/logfs/dev_bdev.c                         |  20 +-
- fs/mpage.c                                  |   2 +-
- fs/nfs/blocklayout/blocklayout.c            |   9 +-
- fs/nilfs2/segbuf.c                          |   3 +-
- fs/ocfs2/cluster/heartbeat.c                |   2 +-
- fs/xfs/xfs_aops.c                           |   2 +-
- fs/xfs/xfs_buf.c                            |   4 +-
- include/linux/bio.h                         | 280 +++++++++++-------
- include/linux/blk_types.h                   |  23 +-
- include/linux/blkdev.h                      |   9 +-
- include/linux/ceph/messenger.h              |   4 +-
- include/linux/dm-io.h                       |   4 +-
- include/trace/events/bcache.h               |  26 +-
- include/trace/events/block.h                |  26 +-
- include/trace/events/f2fs.h                 |   4 +-
- kernel/power/block_io.c                     |   2 +-
- kernel/trace/blktrace.c                     |  15 +-
- mm/bounce.c                                 |  45 ++-
- mm/page_io.c                                |  10 +-
- net/ceph/messenger.c                        |  43 ++-
- 128 files changed, 1791 insertions(+), 2464 deletions(-)
+Think of this case - your driver detects I/O error and blocks all I/Os. 
+The admin tries to log in. The login process needs memory. To fulfill this 
+memory need, the login process writes out some dirty pages. Those writes 
+are blocked by your driver - in the result, the admin is not able to log 
+in and flip the switch to unblock I/Os.
+
+Blocking I/O indefinitely isn't good because any system activity 
+(including typing commands into shell) may wait on this I/O.
+
+Mikulas
