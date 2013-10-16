@@ -1,7 +1,7 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
+From: Dave Chinner <david@fromorbit.com>
 Subject: Re: A review of dm-writeboost
-Date: Wed, 16 Oct 2013 09:53:41 +0900
-Message-ID: <525DE395.7040408@gmail.com>
+Date: Wed, 16 Oct 2013 17:07:50 +1100
+Message-ID: <20131016060750.GE4446@dastard>
 References: <alpine.LRH.2.02.1310031719340.24440@file01.intranet.prod.int.rdu2.redhat.com>
  <52550841.5030001@gmail.com> <525BAB32.5050901@gmail.com>
  <alpine.LRH.2.02.1310151950530.4664@file01.intranet.prod.int.rdu2.redhat.com>
@@ -9,6 +9,7 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Content-Disposition: inline
 In-Reply-To: <alpine.LRH.2.02.1310151950530.4664@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
@@ -19,60 +20,77 @@ List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driver
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
 Errors-To: driverdev-devel-bounces@linuxdriverproject.org
 Sender: driverdev-devel-bounces@linuxdriverproject.org
-To: mpatocka@redhat.com
-Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, david@fromorbit.com, linux-kernel@vger.kernel.org, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, Akira Hayakawa <ruby.wktk@gmail.com>, tj@kernel.org, dm-devel@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, xfs@oss.sgi.com, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-Mikulas,
+[cc xfs@oss.sgi.com]
 
-> I/Os shouldn't be returned with -ENOMEM. If they are, you can treat it as 
-> a hard error.
-It seems to be blkdev_issue_discard returns -ENOMEM
-when bio_alloc fails, for example.
-Waiting for a second and we can alloc the memory is my idea
-for handling -ENOMEM returned.
-
-> Blocking I/O until the admin turns a specific variable isn't too 
-> reliable.
+On Tue, Oct 15, 2013 at 08:01:45PM -0400, Mikulas Patocka wrote:
+> On Mon, 14 Oct 2013, Akira Hayakawa wrote:
+> > But, XFS stalls ...
+> > -------------------
+> > For testing,
+> > I manually turns `blockup` to 1
+> > when compiling Ruby is in progress
+> > on XFS on a writeboost device.
+> > As soon as I do it,
+> > XFS starts to dump error message 
+> > like "metadata I/O error: ... ("xlog_iodone") error ..."
+> > and after few seconds it then starts to dump
+> > like "BUG: soft lockup -CPU#3 stuck for 22s!".
+> > The system stalls and doesn't accept the keyboard.
+> > 
+> > I think this behavior is caused by
+> > the device always returning -EIO after turning 
+> > the variable to 1.
+> > But why XFS goes stalling on I/O error?
 > 
-> Think of this case - your driver detects I/O error and blocks all I/Os. 
-> The admin tries to log in. The login process needs memory. To fulfill this 
-> memory need, the login process writes out some dirty pages. Those writes 
-> are blocked by your driver - in the result, the admin is not able to log 
-> in and flip the switch to unblock I/Os.
-> 
-> Blocking I/O indefinitely isn't good because any system activity 
-> (including typing commands into shell) may wait on this I/O.
-I understand the problem. But, what should I do then?
-Since writeboost is a cache software,
-it loses consistency if we ignore the cache at all
-in its returning I/O error.
-Go panic in that case is also inappropriate (But, inaccessibility to
-the storage will eventually halt the whole system. If so, go panic might
-be an acceptable solution).
+> Because it is bloated and buggy.
 
-I am afraid my idea is based on your past comment
-> If you can't handle a specific I/O request failure gracefully, you should 
-> mark the driver as dead, don't do any more I/Os to the disk or cache 
-> device and return -EIO on all incoming requests.
-> 
-> Always think that I/O failures can happen because of connection problems, 
-> not data corruption problems - for example, a disk cable can go loose, a 
-> network may lose connectivity, etc. In these cases, it is best to stop 
-> doing any I/O at all and let the user resolve the situation.
-1) In failure, mark the driver dead - set `blockup` to 1 in my case -
-   and returning -EIO on all incoming requests. Yes.
-2) And wait for the user resolve the situation - returning -EIO until
-   admin turns `blockup` to 0 after checkup in my case - . Yes.
+How did I know you'd take that cheap shot, Mikulas? You are so
+predictable...
 
-Did you mean we should not provide any way to recover the system
-because admin may not be able to reach the switch?
-writeboost module autonomously checking the device in problem
-recovered should be implemented?
-Retry submitting I/O to the device and find the device is recovered
-on I/O success is a solution and I have implemented it.
-I/O retry doesn't destroy any consistency in writeboost;
-sooner or later it can not be able to accept writes any more because of
-lack of RAM buffer which can be reused after I/O success to cache device.
+> We have bug 924301 for XFS crash on I/O 
+> error...
 
-Akira
+Which is a problem with memory corruption after filling a dm
+snapshot volume to 100% and shortly after XFS has shut down the
+kernel panics from memory corruption. Can't be reproduced without
+filling the dm-snapshot volume to 100%, can't be reproduced with any
+other filesystem. Crashes are also occurring randomly in printk and
+the worker thread infrastructure. Memory and list poisoning clearly
+indicates worker thread lists have freed objects on them. There are
+lockdep messages from the DM snapshot code, etc.
+
+There's actually very little to point at XFS problems other than the
+first hang that was reported where XFS was stuck in a tight loop due
+to memory corruption.  It reminds me of a very similar bug report
+and triage we went through last week:
+
+http://oss.sgi.com/pipermail/xfs/2013-October/030681.html
+
+Further analysis and bisects pointed to the zram driver being buggy,
+not XFS:
+
+http://oss.sgi.com/pipermail/xfs/2013-October/030707.html
+
+XFS has historically exposing bugs in block device drivers that no
+other filesystem exposes, and so when a new block device driver gets
+tested with XFS and we start seeing memory corruption symptoms, it's
+a fair bet that it's not XFS that is causing it....
+
+Just sayin'.
+
+---
+
+Akira, can you please post the entire set of messages you are
+getting when XFS showing problems? That way I can try to confirm
+whether it's a regression in XFS or something else.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
