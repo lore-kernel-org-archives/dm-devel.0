@@ -1,22 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: RFC for multipath queue_if_no_path timeout.
-Date: Thu, 17 Oct 2013 15:15:12 -0400
-Message-ID: <20131017191511.GA30452@redhat.com>
-References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
-	<20130926172422.GA31328@agk-dp.fab.redhat.com>
-	<1380216716.25252.39.camel@bobble.lax.corp.google.com>
-	<20130926173814.GB31328@agk-dp.fab.redhat.com>
-	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
-	<20130926232241.GC31328@agk-dp.fab.redhat.com>
-	<20130926234957.GA3658@redhat.com>
-	<1382036590.1980.32.camel@bobble.lax.corp.google.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH]dm-mpath: fix for race condition between
+ multipath_dtr and pg_init_done.
+Date: Thu, 17 Oct 2013 23:47:51 +0200
+Message-ID: <52605B07.5070007@suse.de>
+References: <FB8A412F33166C4A930D37BD63236C902AD2A073@SACEXCMBX02-PRD.hq.netapp.com>
+	<20131017185306.GA29909@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1382036590.1980.32.camel@bobble.lax.corp.google.com>
+In-Reply-To: <20131017185306.GA29909@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,53 +20,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Frank Mayhar <fmayhar@google.com>
-Cc: dm-devel <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Oct 17 2013 at  3:03pm -0400,
-Frank Mayhar <fmayhar@google.com> wrote:
+On 10/17/2013 08:53 PM, Mike Snitzer wrote:
+> Thanks for reporting this.  Much appreciated.  More comments below.
+>
+> On Thu, Oct 17 2013 at  1:31pm -0400,
+> Merla, ShivaKrishna <ShivaKrishna.Merla@netapp.com> wrote:
+>
+>> Whenever multipath_dtr is happening, we should prevent queueing any furt=
+her path
+>> activation work. There was a kernel panic where after pg_init_done() dec=
+rements
+>> pg_init_in_progress to 0, wait_for_pg_init_completion call assumes there=
+ are no
+>> more pending path management commands. But if pg_init_required is set by
+>> pg_init_done call due to retriable mode_select errors , then process_que=
+ued_ios()
+>> will again queue the path activation work. If free_multipath call has be=
+en
+>> completed by the time activate_path work is called, kernel panic was see=
+n on
+>> accessing multipath members.
+>
+> Your locking looks suspect to me, see comment inlined below multipath_dtr
+>
+> But shouldn't we just train multipath_wait_for_pg_init_completion() to
+> look at m->pg_init_required?  Have it wait for both pg_init_required and
+> pg_init_in_progress to be zero?  We'd also have to audit that
+> pg_init_required cannot be set while pg_init_in_progress.
+>
+Hmm.
 
-> Dragging this back up into the light...
-> 
-> On Thu, 2013-09-26 at 19:49 -0400, Mike Snitzer wrote:
-> > Frank, I had a look at your patch.  It leaves a lot to be desired, I was
-> > starting to clean it up but ultimately found myself agreeing with
-> > Alasdair's original point: that this policy should be implemented in the
-> > userspace daemon.
-> 
-> I've found and fixed a couple of bugs but I would still like to know
-> what issues you had with the patch.  As I said before, I would be more
-> than happy to clean it up.
+We _could_ try to resolve it by pushing I/O back onto the request queue
+(cf my earlier post 'requeue I/O during pg_init').
 
-I don't recall, will let you know if/when I do have time to look again.
- 
-> In the time since we had this discussion, by the way, we ran into a
-> problem that a userspace daemon can't solve:  That of shutdown.  We ran
-> into a number of failures in which systems were hung for hours.  It
-> turned out that they were caused by a regular system shutdown.  Our
-> backing store is network-based and networking was getting killed before
-> applications (as is usually the case), leaving I/O outstanding on the
-> device.  Since queue_if_no_path was set, the I/O wasn't dumped and our
-> daemon was killed by shutdown very shortly thereafter so it couldn't
-> recover (otherwise it would have cleaned things up).
-> 
-> With those I/Os sitting queued in multipath, with no network and no
-> daemon to turn off queue_if_no_path, the systems just sat.  When we
-> finally diagnosed this, we realized that the timeout would work
-> perfectly to solve the problem, automatically turning queue_if_no_path
-> off shortly after the network went away without depending on the
-> intervention of the no-longer-running daemon.
-> 
-> So how do you guys deal with this failure scenario?
+I was hoping to excite some comments with that, but seems to be my fate =
 
-Shouldn't you wait for the application to shutdown before ripping the
-network out?  Seems odd to just throw away queued IO.
+nowadays to send out patches with no reply.
 
-A proper shutdown sequence really should avoid this problem in general,
-the multipath daemon would only be shutdown once all mpath devices are
-deactivated.
+Anyway, maybe this will be giving it some more attention.
+It definitely would avoid this problem, by virtue of not having to queue =
 
-Then, if you still want to gracefully handle the case where there is no
-network (and hence no paths) on shutdown the multipathd would still be
-around to transition to a table that doesn't have queue_if_no_path.
+I/O internally during pg_init, so we could easily tear down the queue.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
