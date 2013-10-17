@@ -1,16 +1,20 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH]dm-mpath: fix for race condition between
- multipath_dtr and pg_init_done.
-Date: Thu, 17 Oct 2013 14:53:06 -0400
-Message-ID: <20131017185306.GA29909@redhat.com>
-References: <FB8A412F33166C4A930D37BD63236C902AD2A073@SACEXCMBX02-PRD.hq.netapp.com>
+From: Frank Mayhar <fmayhar@google.com>
+Subject: Re: RFC for multipath queue_if_no_path timeout.
+Date: Thu, 17 Oct 2013 12:03:10 -0700
+Message-ID: <1382036590.1980.32.camel@bobble.lax.corp.google.com>
+References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
+	<20130926172422.GA31328@agk-dp.fab.redhat.com>
+	<1380216716.25252.39.camel@bobble.lax.corp.google.com>
+	<20130926173814.GB31328@agk-dp.fab.redhat.com>
+	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
+	<20130926232241.GC31328@agk-dp.fab.redhat.com>
+	<20130926234957.GA3658@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <FB8A412F33166C4A930D37BD63236C902AD2A073@SACEXCMBX02-PRD.hq.netapp.com>
+In-Reply-To: <20130926234957.GA3658@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,90 +24,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "agk@redhat.com" <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks for reporting this.  Much appreciated.  More comments below.
+Dragging this back up into the light...
 
-On Thu, Oct 17 2013 at  1:31pm -0400,
-Merla, ShivaKrishna <ShivaKrishna.Merla@netapp.com> wrote:
+On Thu, 2013-09-26 at 19:49 -0400, Mike Snitzer wrote:
+> Frank, I had a look at your patch.  It leaves a lot to be desired, I was
+> starting to clean it up but ultimately found myself agreeing with
+> Alasdair's original point: that this policy should be implemented in the
+> userspace daemon.
 
-> Whenever multipath_dtr is happening, we should prevent queueing any further path
-> activation work. There was a kernel panic where after pg_init_done() decrements
-> pg_init_in_progress to 0, wait_for_pg_init_completion call assumes there are no
-> more pending path management commands. But if pg_init_required is set by
-> pg_init_done call due to retriable mode_select errors , then process_queued_ios()
-> will again queue the path activation work. If free_multipath call has been
-> completed by the time activate_path work is called, kernel panic was seen on
-> accessing multipath members.
+I've found and fixed a couple of bugs but I would still like to know
+what issues you had with the patch.  As I said before, I would be more
+than happy to clean it up.
 
-Your locking looks suspect to me, see comment inlined below multipath_dtr
+In the time since we had this discussion, by the way, we ran into a
+problem that a userspace daemon can't solve:  That of shutdown.  We ran
+into a number of failures in which systems were hung for hours.  It
+turned out that they were caused by a regular system shutdown.  Our
+backing store is network-based and networking was getting killed before
+applications (as is usually the case), leaving I/O outstanding on the
+device.  Since queue_if_no_path was set, the I/O wasn't dumped and our
+daemon was killed by shutdown very shortly thereafter so it couldn't
+recover (otherwise it would have cleaned things up).
 
-But shouldn't we just train multipath_wait_for_pg_init_completion() to
-look at m->pg_init_required?  Have it wait for both pg_init_required and
-pg_init_in_progress to be zero?  We'd also have to audit that
-pg_init_required cannot be set while pg_init_in_progress.
+With those I/Os sitting queued in multipath, with no network and no
+daemon to turn off queue_if_no_path, the systems just sat.  When we
+finally diagnosed this, we realized that the timeout would work
+perfectly to solve the problem, automatically turning queue_if_no_path
+off shortly after the network went away without depending on the
+intervention of the no-longer-running daemon.
 
-> BUG: unable to handle kernel NULL pointer dereference at 0000000000000090
-> RIP: 0010:[<ffffffffa003db1b>]  [<ffffffffa003db1b>] activate_path+0x1b/0x30 [dm_multipath]
-> [<ffffffff81090ac0>] worker_thread+0x170/0x2a0
-> [<ffffffff81096c80>] ? autoremove_wake_function+0x0/0x40
-> 
-> This patch will fix the issue by preventing any further path activations when
-> multipath structures are being freed during table suspend/reload.
-> 
-> Signed-off-by: Shiva Krishna Merla<shivakrishna.merla@netapp.com>
-> Reviewed-by: Krishnasamy Somasundaram<somasundaram.krishnasamy@netapp.com>
-> Tested-by: Speagle Andy<Andy.Speagle@netapp.com>
->
-> ---
-> --- a/drivers/md/dm-mpath.c	2013-01-29 10:12:10.000000000 -0600
-> +++ b/drivers/md/dm-mpath.c	2013-10-17 09:23:21.896062928 -0500
-> @@ -73,6 +73,7 @@ struct multipath {
->  
->  	wait_queue_head_t pg_init_wait;	/* Wait for pg_init completion */
->  
-> +	unsigned dtr_in_progress;	/* multipath destroy in progress */
->  	unsigned pg_init_required;	/* pg_init needs calling? */
->  	unsigned pg_init_in_progress;	/* Only one pg_init allowed at once */
->  	unsigned pg_init_delay_retry;	/* Delay pg_init retry? */
-> @@ -498,7 +499,8 @@ static void process_queued_ios(struct wo
->  	    (!pgpath && !m->queue_if_no_path))
->  		must_queue = 0;
->  
-> -	if (m->pg_init_required && !m->pg_init_in_progress && pgpath)
-> +	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
-> +	    !m->dtr_in_progress)
->  		__pg_init_all_paths(m);
->  
->  	spin_unlock_irqrestore(&m->lock, flags);
-> @@ -952,6 +954,7 @@ static void multipath_dtr(struct dm_targ
->  {
->  	struct multipath *m = ti->private;
->  
-> +	m->dtr_in_progress = 1;
->  	flush_multipath_work(m);
->  	free_multipath(m);
->  }
-
-Don't we need synchronization in multipath_dtr?  Otherwise isn't there
-still potential for a narrow race when checking m->dtr_in_progress from
-process_queued_ios() or pg_init_limit_reached()?
-
-Anyway, my concerns should be moot if multipath_wait_for_pg_init_completion()
-is updated to look at pg_init_required.  But I could be missing
-something.
-
-Mikulas (or Hannes or NEC guys), would welcome your take on this.
-
-> @@ -1164,7 +1167,7 @@ static int pg_init_limit_reached(struct 
->  
->  	spin_lock_irqsave(&m->lock, flags);
->  
-> -	if (m->pg_init_count <= m->pg_init_retries)
-> +	if (m->pg_init_count <= m->pg_init_retries && !m->dtr_in_progress)
->  		m->pg_init_required = 1;
->  	else
->  		limit_reached = 1;
-> --
+So how do you guys deal with this failure scenario?
+-- 
+Frank Mayhar
+310-460-4042
