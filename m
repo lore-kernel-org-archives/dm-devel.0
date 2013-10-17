@@ -1,13 +1,18 @@
-From: Xinghai Yu <yuxinghai@cn.fujitsu.com>
-Subject: [PATCH] move the 'update_multipath_strings()' function
-	up so that mpp->mpe can be assigned in some situation
-Date: Mon, 21 Oct 2013 15:20:25 +0800
-Message-ID: <1382340025-2019-1-git-send-email-yuxinghai@cn.fujitsu.com>
+From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
+Subject: Re: [PATCH]dm-mpath: fix for race condition between
+ multipath_dtr and pg_init_done.
+Date: Thu, 17 Oct 2013 22:03:47 +0000
+Message-ID: <FB8A412F33166C4A930D37BD63236C902AD2A12B@SACEXCMBX02-PRD.hq.netapp.com>
+References: <FB8A412F33166C4A930D37BD63236C902AD2A073@SACEXCMBX02-PRD.hq.netapp.com>
+	<20131017185306.GA29909@redhat.com> <52605B07.5070007@suse.de>
+	<20131017211014.GA30993@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20131017211014.GA30993@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,93 +22,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Xinghai Yu <yuxinghai@cn.fujitsu.com>, christophe.varoqui@gmail.com
+To: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch is correcting a bug about multipath's no_path_retry attribute.
-When the multipath was just created by user cmd 'multipath', the DM driver 
-doesn't know the wwid of this dm device, so the 'set_multipath_wwid()'
-function can't get the wwid for mpp at this time, then the mpp->mpe can't befind and assigned by wwid also. In that case, the following function 
-'set_no_path_retry()' can't able to use the value provided by mpp->mpe 
-which values were getted from file '/etc/multipath.conf'. But the fuction 
-'update_multipath_strings()' can assign the wwid to mpp from its path, so
-move this function up to solve this problem.
+> From: Mike Snitzer [mailto:snitzer@redhat.com]
+> Sent: Thursday, October 17, 2013 4:10 PM
+> To: Hannes Reinecke
+> Cc: Merla, ShivaKrishna; dm-devel@redhat.com; agk@redhat.com; Mikulas
+> Patocka
+> Subject: Re: [PATCH]dm-mpath: fix for race condition between
+> multipath_dtr and pg_init_done.
+> 
+> On Thu, Oct 17 2013 at  5:47pm -0400,
+> Hannes Reinecke <hare@suse.de> wrote:
+> 
+> > On 10/17/2013 08:53 PM, Mike Snitzer wrote:
+> > >Thanks for reporting this.  Much appreciated.  More comments below.
+> > >
+> > >On Thu, Oct 17 2013 at  1:31pm -0400,
+> > >Merla, ShivaKrishna <ShivaKrishna.Merla@netapp.com> wrote:
+> > >
+> > >>Whenever multipath_dtr is happening, we should prevent queueing any
+> further path
+> > >>activation work. There was a kernel panic where after pg_init_done()
+> decrements
+> > >>pg_init_in_progress to 0, wait_for_pg_init_completion call assumes
+> there are no
+> > >>more pending path management commands. But if pg_init_required is
+> set by
+> > >>pg_init_done call due to retriable mode_select errors , then
+> process_queued_ios()
+> > >>will again queue the path activation work. If free_multipath call has been
+> > >>completed by the time activate_path work is called, kernel panic was
+> seen on
+> > >>accessing multipath members.
+> > >
+> > >Your locking looks suspect to me, see comment inlined below
+> multipath_dtr
+> > >
+> > >But shouldn't we just train multipath_wait_for_pg_init_completion() to
+> > >look at m->pg_init_required?  Have it wait for both pg_init_required and
+> > >pg_init_in_progress to be zero?  We'd also have to audit that
+> > >pg_init_required cannot be set while pg_init_in_progress.
+> > >
+> > Hmm.
+> >
+> > We _could_ try to resolve it by pushing I/O back onto the request queue
+> > (cf my earlier post 'requeue I/O during pg_init').
+> >
+> > I was hoping to excite some comments with that, but seems to be my
+> > fate nowadays to send out patches with no reply.
+> 
+> patchwork caught it:
+> https://patchwork.kernel.org/patch/2969111/
+> 
+> I've just been distracted with other stuff the past week; but I'll be
+> looking closer at this issue (and your earlier patch) shortly and we'll
+> get a fix queued for 3.13.
+> 
+> > Anyway, maybe this will be giving it some more attention.
+> > It definitely would avoid this problem, by virtue of not having to
+> > queue I/O internally during pg_init, so we could easily tear down
+> > the queue.
+> 
+> Sounds good.
 
-Bug reproduce steps:
-1.First, by setting 'no_path_retry fail', we have features='0'.
-[root@localhost multipath-tools]# cat /etc/multipath.conf
-...
-	multipath {
-		wwid 36000b5d0006a0000006a14e7000b0000
-		alias                   yellow
-		path_grouping_policy    failover
-		no_path_retry		fail
-	}
-...
-[root@localhost multipath-tools]# multipath -ll
-yellow (36000b5d0006a0000006a14e7000b0000) dm-0    
-size=50G features='0' hwhandler='0' wp=rw
-|-+- policy='service-time 0' prio=130 status=active
-| `- 0:0:0:0 sda 8:0    active ready running
-`-+- policy='service-time 0' prio=130 status=enabled
-  `- 1:0:0:0 sdc 8:32   active ready running
-[root@localhost multipath-tools]# 
-
-2.Second, we flush all multipath device maps.
-[root@localhost multipath-tools]# multipath -F
-[root@localhost multipath-tools]# 
-
-3.Third, create all multipath device maps.
-[root@localhost multipath-tools]# multipath 
-create: yellow (36000b5d0006a0000006a14e7000b0000) undef    
-size=50G features='0' hwhandler='0' wp=undef
-|-+- policy='service-time 0' prio=130 status=undef
-| `- 0:0:0:0 sda 8:0    undef ready running
-`-+- policy='service-time 0' prio=130 status=undef
-  `- 1:0:0:0 sdc 8:32   undef ready running
-[root@localhost multipath-tools]# 
-
-4.The end, we found "features='1 queue_if_no_path'" and this is not what we 
-expect, it's a bug. After applying this patch, it can be corrected.
-[root@localhost multipath-tools]# multipath -ll
-yellow (36000b5d0006a0000006a14e7000b0000) dm-0    
-size=50G features='1 queue_if_no_path' hwhandler='0' wp=rw
-|-+- policy='service-time 0' prio=130 status=active
-| `- 0:0:0:0 sda 8:0    active ready running
-`-+- policy='service-time 0' prio=130 status=enabled
-  `- 1:0:0:0 sdc 8:32   active ready running
-[root@localhost multipath-tools]# 
-
-
-Signed-off-by: Xinghai Yu <yuxinghai@cn.fujitsu.com>
----
- libmultipath/structs_vec.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 7073915..bb2c71a 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -344,15 +344,15 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
- 		goto out;
- 	}
- 
--	set_multipath_wwid(mpp);
--	mpp->mpe = find_mpe(mpp->wwid);
--	condlog(3, "%s: discover", mpp->alias);
--
- 	if (update_multipath_strings(mpp, vecs->pathvec)) {
- 		condlog(0, "%s: failed to setup multipath", mpp->alias);
- 		goto out;
- 	}
- 
-+	set_multipath_wwid(mpp);
-+	mpp->mpe = find_mpe(mpp->wwid);
-+	condlog(3, "%s: discover", mpp->alias);
-+
- 	if (!mpp->hwe)
- 		mpp->hwe = extract_hwe_from_path(mpp);
- 	if (!mpp->hwe) {
--- 
-1.7.1
+Thanks for your comments.  I agree we should lock while setting dtr_in_progress, I think I overlooked it as its handled in process_queued_ios as well.
+We looked into handling this in wait_for_pg_init_completion() but checking for pg_init_required here will not help as well ( until we prevent setting pg_init_required while pg_init_in_progress is set ).
+Here due to SCSI_DH_RETRY on mode_select, pg_init_done will set the pg_init_required as activation needs to be retried under normal 
+circumstances. But it completely differs when multipath target  is being destroyed.  Apparently I didn't see any pending_ios in our test
+while this is happening. Just path activations are held up since controller was returning 5/91/36 CC's. With this condition either one of pg_init_required or pg_init_in_progress flags are set all the time.
+Hannes patch will take care of preventing queueing of IO's when pg_init_in_progress is set, but currently running activation commands will not return until controller returns SUCCESS on mode_select.
