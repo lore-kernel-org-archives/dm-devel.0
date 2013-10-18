@@ -1,56 +1,46 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: dm-writeboost: unusual refcount on Raspberry Pi
-Date: Fri, 18 Oct 2013 22:30:24 +0900
-Message-ID: <526137F0.2060307@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] block: properly stack underlying max_segment_size to DM device
+Date: Fri, 18 Oct 2013 10:23:26 -0400
+Message-ID: <1382106206-4459-1-git-send-email-snitzer@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, l.flis@cyfronet.pl
 List-Id: dm-devel.ids
 
-Hi, all
+Without this patch all DM devices will default to BLK_MAX_SEGMENT_SIZE
+(65536) even if the underlying device(s) have a larger value -- this is
+due to blk_stack_limits() using min_not_zero() when stacking the
+max_segment_size limit.
 
-I am trying to run writeboost on a tiny ARM machine, Raspberry Pi.
-writeboost can compile without any error nor warning but
-it doesn't even start ctr.
+# cat /sys/block/sda/queue/max_segment_size
+1073741824
 
-What I do before running `dmsetup create` is
-# modprobe dm-mod
-# insmod dm-writeboost.ko
+# cat /sys/block/dm-0/queue/max_segment_size
+before patch:
+65536
 
-After these two commands, lsmod looks insane.
-I suppose dm_writeboost module's refcount should be 0, not -1 (2147483647).
-Nonetheless, dmesg doesn't indicate anything at all.
-If I try to make a writeboost device after this,
-it hangs up the whole system.
+after patch:
+1073741824
 
-I have no idea what is happening in my system.
-If you know something about this, please help me.
+Reported-by: Lukasz Flis <l.flis@cyfronet.pl>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org # v3.3+
+---
+ block/blk-settings.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-root@raspberrypi:~/dm-writeboost# lsmod
-Module                  Size  Used by
-dm_writeboost          34473  2147483647
-dm_mod                 72892  1 dm_writeboost
-snd_bcm2835            16432  0
-snd_pcm                77728  1 snd_bcm2835
-snd_page_alloc          5169  1 snd_pcm
-snd_seq                53482  0
-snd_seq_device          6462  1 snd_seq
-snd_timer              20110  2 snd_pcm,snd_seq
-snd                    58744  5 snd_bcm2835,snd_timer,snd_pcm,snd_seq,snd_seq_device
-arc4                    1684  2
-rt2800usb              14948  0
-rt2800lib              55431  1 rt2800usb
-rt2x00usb              11240  1 rt2800usb
-rt2x00lib              42342  3 rt2x00usb,rt2800lib,rt2800usb
-mac80211              273979  3 rt2x00lib,rt2x00usb,rt2800lib
-cfg80211              184390  2 mac80211,rt2x00lib
-rfkill                 18298  2 cfg80211
-crc_ccitt               1530  1 rt2800lib
-leds_gpio               2243  0
-led_class               3570  2 leds_gpio,rt2x00lib
-
-Akira
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index c50ecf0..29f28bb 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -143,6 +143,7 @@ void blk_set_stacking_limits(struct queue_limits *lim)
+ 	/* Inherit limits from component devices */
+ 	lim->discard_zeroes_data = 1;
+ 	lim->max_segments = USHRT_MAX;
++	lim->max_segment_size = UINT_MAX;
+ 	lim->max_hw_sectors = UINT_MAX;
+ 	lim->max_sectors = UINT_MAX;
+ 	lim->max_write_same_sectors = UINT_MAX;
+-- 
+1.7.4.4
