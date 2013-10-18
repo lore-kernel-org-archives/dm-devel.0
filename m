@@ -1,56 +1,52 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH] block: properly stack underlying max_segment_size to DM
- device
-Date: Fri, 18 Oct 2013 09:46:10 -0600
-Message-ID: <20131018154610.GA9304@kernel.dk>
-References: <1382106206-4459-1-git-send-email-snitzer@redhat.com>
+From: Frank Mayhar <fmayhar@google.com>
+Subject: Re: RFC for multipath queue_if_no_path timeout.
+Date: Fri, 18 Oct 2013 13:51:55 -0700
+Message-ID: <1382129515.1980.46.camel@bobble.lax.corp.google.com>
+References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
+	<20130926172422.GA31328@agk-dp.fab.redhat.com>
+	<1380216716.25252.39.camel@bobble.lax.corp.google.com>
+	<20130926173814.GB31328@agk-dp.fab.redhat.com>
+	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
+	<20130926232241.GC31328@agk-dp.fab.redhat.com>
+	<20130926234957.GA3658@redhat.com>
+	<1382036590.1980.32.camel@bobble.lax.corp.google.com>
+	<20131017191511.GA30452@redhat.com>
+	<1382042759.1980.40.camel@bobble.lax.corp.google.com>
+	<20131017211338.GB30993@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1382106206-4459-1-git-send-email-snitzer@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20131017211338.GB30993@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, l.flis@cyfronet.pl
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 18 2013, Mike Snitzer wrote:
-> Without this patch all DM devices will default to BLK_MAX_SEGMENT_SIZE
-> (65536) even if the underlying device(s) have a larger value -- this is
-> due to blk_stack_limits() using min_not_zero() when stacking the
-> max_segment_size limit.
+On Thu, 2013-10-17 at 17:13 -0400, Mike Snitzer wrote:
+> Cannot say that argument wins me over but I will say that if you intend
+> to take the approach to have the kernel have a timeout; please pursue
+> the approach Hannes offered:
 > 
-> # cat /sys/block/sda/queue/max_segment_size
-> 1073741824
+> https://patchwork.kernel.org/patch/2953231/
 > 
-> # cat /sys/block/dm-0/queue/max_segment_size
-> before patch:
-> 65536
-> 
-> after patch:
-> 1073741824
-> 
-> Reported-by: Lukasz Flis <l.flis@cyfronet.pl>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> Cc: stable@vger.kernel.org # v3.3+
-> ---
->  block/blk-settings.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
-> 
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index c50ecf0..29f28bb 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -143,6 +143,7 @@ void blk_set_stacking_limits(struct queue_limits *lim)
->  	/* Inherit limits from component devices */
->  	lim->discard_zeroes_data = 1;
->  	lim->max_segments = USHRT_MAX;
-> +	lim->max_segment_size = UINT_MAX;
->  	lim->max_hw_sectors = UINT_MAX;
->  	lim->max_sectors = UINT_MAX;
->  	lim->max_write_same_sectors = UINT_MAX;
+> It is much cleaner and if it works for your needs we can see about
+> getting a tested version upstream.
 
-Thanks, applied for 3.13.
+Unfortunately his patch doesn't work as-is; it turns out that it tries
+to set the timeout only if the target is request-based but at the time
+he tries to set it the table type hasn't yet been set.
 
+I'm looking into fixing it.
 -- 
-Jens Axboe
+Frank Mayhar
+310-460-4042
