@@ -1,294 +1,239 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [RFC PATCH v2] dm mpath: add a queue_if_no_path timeout
-Date: Fri, 18 Oct 2013 18:53:51 -0400
-Message-ID: <20131018225350.GB7553@redhat.com>
-References: <1380216716.25252.39.camel@bobble.lax.corp.google.com>
-	<20130926173814.GB31328@agk-dp.fab.redhat.com>
-	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
-	<20130926232241.GC31328@agk-dp.fab.redhat.com>
-	<20130926234957.GA3658@redhat.com>
-	<1382036590.1980.32.camel@bobble.lax.corp.google.com>
-	<20131017191511.GA30452@redhat.com>
-	<1382042759.1980.40.camel@bobble.lax.corp.google.com>
-	<20131017211338.GB30993@redhat.com>
-	<1382129515.1980.46.camel@bobble.lax.corp.google.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: A review of dm-writeboost
+Date: Sat, 19 Oct 2013 19:59:55 +0900
+Message-ID: <5262662B.9010807@gmail.com>
+References: <alpine.LRH.2.02.1310031719340.24440@file01.intranet.prod.int.rdu2.redhat.com>
+ <52550841.5030001@gmail.com> <525BAB32.5050901@gmail.com>
+ <alpine.LRH.2.02.1310151950530.4664@file01.intranet.prod.int.rdu2.redhat.com>
+ <20131016060750.GE4446@dastard> <525E6BBE.40004@gmail.com>
+ <20131016110146.GH4446@dastard> <525E83E4.9090803@gmail.com>
+ <20131016214200.GI4446@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1382129515.1980.46.camel@bobble.lax.corp.google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Frank Mayhar <fmayhar@google.com>
-Cc: dm-devel <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <20131016214200.GI4446@dastard>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: driverdev-devel-bounces@linuxdriverproject.org
+To: david@fromorbit.com
+Cc: devel@driverdev.osuosl.org, thornber@redhat.com, snitzer@redhat.com, cesarb@cesarb.net, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, tj@kernel.org, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com, joe@perches.com, akpm@linux-foundation.org, ejt@redhat.com, dan.carpenter@oracle.com, m.chehab@samsung.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 18 2013 at  4:51pm -0400,
-Frank Mayhar <fmayhar@google.com> wrote:
+Dave,
 
-> On Thu, 2013-10-17 at 17:13 -0400, Mike Snitzer wrote:
-> > Cannot say that argument wins me over but I will say that if you intend
-> > to take the approach to have the kernel have a timeout; please pursue
-> > the approach Hannes offered:
-> > 
-> > https://patchwork.kernel.org/patch/2953231/
-> > 
-> > It is much cleaner and if it works for your needs we can see about
-> > getting a tested version upstream.
+# -EIO retuned corrupts XFS
+I turned up
+lockdep, frame pointer, xfs debug
+and also changed to 3.12.0-rc5 from rc1.
+
+What's changed is that
+the problem we discussed in previous mails
+*never* reproduce.
+
+However, if I turn off the lockdep only
+it hangs up by setting blockup to 1 and then to 0 after that.
+The underlying device once became dead revives
+may confuse the filesystem but
+this looks not related to locking things.
+This problem may be producible using dm-flakey.
+
+This behavior is not reproducible with ext4.
+
+--------------------------------------------
+root@Lyle:/home/akira# virsh console Hercules
+Connected to domain Hercules
+Escape character is ^]
+[  143.042980] device-mapper: writeboost: info@modulator_proc() reactivated after blockup
+[  143.042999] device-mapper: writeboost: info@dm_safe_io_internal() reactivated after blockup
+[  143.043006] device-mapper: writeboost: info@migrate_proc() reactivated after blockup
+[  143.045328] XFS: metadata I/O error: block 0x300d0f ("xlog_iodone") error 5 numblks 64
+[  143.045333] XFS: xfs_do_force_shutdown(0x2) called from line 1161 of file fs/xfs/xfs_log.c.  Return address = 0xffffffffa0430f9c
+[  143.045335] XFS: Log I/O Error Detected.  Shutting down filesystem
+[  143.045335] XFS: Please umount the filesystem and rectify the problem(s)
+[  143.045338] XFS: Assertion failed: atomic_read(&iclog->ic_refcnt) == 0, file: fs/xfs/xfs_log.c, line: 2751
+[  143.045392] ------------[ cut here ]------------
+[  143.045393] kernel BUG at fs/xfs/xfs_message.c:108!
+[  143.045396] invalid opcode: 0000 [#1] SMP 
+[  143.045429] Modules linked in: xfs crc32c libcrc32c dm_writeboost(O) fuse nfsd auth_rpcgss oid_registry nfs_acl nfs lockd fscache sunrpc loop snd_hda_intel snd_hda_codec snd_hwdep snd_pcm joydev hid_generic usbhid processor snd_page_alloc i2c_piix4 i2c_core snd_timer snd soundcore psmouse serio_raw evdev virtio_balloon pcspkr hid thermal_sys microcode button ext4 crc16 jbd2 mbcache dm_mod sg sr_mod cdrom ata_generic virtio_blk virtio_net floppy uhci_hcd ehci_hcd ata_piix usbcore libata usb_common scsi_mod virtio_pci virtio_ring virtio
+[  143.045433] CPU: 2 PID: 216 Comm: kworker/2:1H Tainted: G           O 3.12.0-rc5 #11
+[  143.045434] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2007
+[  143.045465] Workqueue: xfslogd xfs_buf_iodone_work [xfs]
+[  143.045466] task: ffff88002fe7e0c0 ti: ffff88002ff66000 task.ti: ffff88002ff66000
+[  143.045493] RIP: 0010:[<ffffffffa03e72f3>]  [<ffffffffa03e72f3>] assfail+0x1d/0x1f [xfs]
+[  143.045494] RSP: 0000:ffff88002ff67d98  EFLAGS: 00010292
+[  143.045495] RAX: 000000000000005e RBX: ffff88020de3c280 RCX: 0000000000000c8a
+[  143.045496] RDX: 0000000000000000 RSI: ffffffff819c3f2c RDI: ffffffff818356e0
+[  143.045497] RBP: ffff88002ff67d98 R08: 0000000000000000 R09: ffffffff819c3ecc
+[  143.045498] R10: 0000000000000000 R11: 0000000000000000 R12: ffff8801fa583d28
+[  143.045499] R13: ffff8801fa583c00 R14: 0000000000000002 R15: 0000000000000000
+[  143.045501] FS:  0000000000000000(0000) GS:ffff88021fc80000(0000) knlGS:0000000000000000
+[  143.045502] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[  143.045505] CR2: 00007f6e7680db67 CR3: 000000000180b000 CR4: 00000000000006e0
+[  143.045511] Stack:
+[  143.045514]  ffff88002ff67dc8 ffffffffa0430ed1 ffff8801fb124e40 0000000000000002
+[  143.045517]  ffff88020de3c280 ffffe8ffffc80500 ffff88002ff67df8 ffffffffa0431018
+[  143.045519]  ffff8801fb124ee0 ffff8801fb124ee0 ffff8801fb124e40 ffff88021fc92a00
+[  143.045520] Call Trace:
+[  143.045558]  [<ffffffffa0430ed1>] xlog_state_done_syncing+0x6d/0xe4 [xfs]
+[  143.045590]  [<ffffffffa0431018>] xlog_iodone+0xd0/0xd9 [xfs]
+[  143.045609]  [<ffffffffa03d834f>] xfs_buf_iodone_work+0x57/0xa2 [xfs]
+[  143.045627]  [<ffffffff8104f21a>] process_one_work+0x18b/0x297
+[  143.045631]  [<ffffffff8104f6e6>] worker_thread+0x12e/0x1fb
+[  143.045634]  [<ffffffff8104f5b8>] ? rescuer_thread+0x268/0x268
+[  143.045638]  [<ffffffff81054507>] kthread+0x88/0x90
+[  143.045641]  [<ffffffff8105447f>] ? __kthread_parkme+0x60/0x60
+[  143.045646]  [<ffffffff813a707c>] ret_from_fork+0x7c/0xb0
+[  143.045649]  [<ffffffff8105447f>] ? __kthread_parkme+0x60/0x60
+[  143.045670] Code: 48 c7 c7 6b 26 45 a0 e8 a4 2a c5 e0 5d c3 55 48 89 f1 41 89 d0 48 c7 c6 80 26 45 a0 48 89 fa 31 c0 48 89 e5 31 ff e8 aa fc ff ff <0f> 0b 55 48 63 f6 49 89 f9 41 b8 01 00 00 00 b9 10 00 00 00 ba 
+[  143.045694] RIP  [<ffffffffa03e72f3>] assfail+0x1d/0x1f [xfs]
+[  143.045695]  RSP <ffff88002ff67d98>
+[  143.045697] ---[ end trace e4f1a3c306353178 ]---
+[  143.045741] BUG: unable to handle kernel paging request at ffffffffffffffd8
+[  143.045745] IP: [<ffffffff810548fd>] kthread_data+0xb/0x11
+[  143.045747] PGD 180c067 PUD 180e067 PMD 0 
+[  143.045749] Oops: 0000 [#2] SMP 
+[  143.045774] Modules linked in: xfs crc32c libcrc32c dm_writeboost(O) fuse nfsd auth_rpcgss oid_registry nfs_acl nfs lockd fscache sunrpc loop snd_hda_intel snd_hda_codec snd_hwdep snd_pcm joydev hid_generic usbhid processor snd_page_alloc i2c_piix4 i2c_core snd_timer snd soundcore psmouse serio_raw evdev virtio_balloon pcspkr hid thermal_sys microcode button ext4 crc16 jbd2 mbcache dm_mod sg sr_mod cdrom ata_generic virtio_blk virtio_net floppy uhci_hcd ehci_hcd ata_piix usbcore libata usb_common scsi_mod virtio_pci virtio_ring virtio
+[  143.045777] CPU: 2 PID: 216 Comm: kworker/2:1H Tainted: G      D    O 3.12.0-rc5 #11
+[  143.045778] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2007
+[  143.045795] task: ffff88002fe7e0c0 ti: ffff88002ff66000 task.ti: ffff88002ff66000
+[  143.045798] RIP: 0010:[<ffffffff810548fd>]  [<ffffffff810548fd>] kthread_data+0xb/0x11
+[  143.045802] RSP: 0000:ffff88002ff67a38  EFLAGS: 00010002
+[  143.045804] RAX: 0000000000000000 RBX: ffff88021fc92e80 RCX: ffff88021fc92ef0
+[  143.045805] RDX: 0000000000000001 RSI: 0000000000000002 RDI: ffff88002fe7e0c0
+[  143.045805] RBP: ffff88002ff67a38 R08: ffffffff819b6640 R09: 000000000000bfcf
+[  143.045806] R10: dead000000200200 R11: 0000000000000000 R12: 0000000000000002
+[  143.045807] R13: 0000000000000001 R14: 0000000000000002 R15: ffff88002fe7e0b0
+[  143.045809] FS:  0000000000000000(0000) GS:ffff88021fc80000(0000) knlGS:0000000000000000
+[  143.045810] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[  143.045813] CR2: 0000000000000028 CR3: 000000000180b000 CR4: 00000000000006e0
+[  143.045818] Stack:
+[  143.045821]  ffff88002ff67a58 ffffffff8104faa5 ffff88021fc92e80 ffff88002fe7e408
+[  143.045824]  ffff88002ff67ad8 ffffffff813a0860 0000000000000000 ffff88002f53b6e0
+[  143.045826]  ffff88002f53b6f0 ffff88002fe7e0c0 ffff88002ff67fd8 ffff88002ff67fd8
+[  143.045827] Call Trace:
+[  143.045831]  [<ffffffff8104faa5>] wq_worker_sleeping+0xf/0x87
+[  143.045836]  [<ffffffff813a0860>] __schedule+0x142/0x548
+[  143.045839]  [<ffffffff813a0f4d>] schedule+0x60/0x62
+[  143.045842]  [<ffffffff8103c014>] do_exit+0x8f8/0x90f
+[  143.045846]  [<ffffffff8139b740>] ? printk+0x48/0x4a
+[  143.045848]  [<ffffffff813a2b8d>] oops_end+0xa9/0xb1
+[  143.045854]  [<ffffffff81004e5c>] die+0x55/0x61
+[  143.045858]  [<ffffffff813a25e0>] do_trap+0x69/0x135
+[  143.045861]  [<ffffffff813a4ec8>] ? __atomic_notifier_call_chain+0xd/0xf
+[  143.045865]  [<ffffffff81002ae1>] do_invalid_op+0x93/0x9c
+[  143.045889]  [<ffffffffa03e72f3>] ? assfail+0x1d/0x1f [xfs]
+[  143.045893]  [<ffffffff8139b740>] ? printk+0x48/0x4a
+[  143.045896]  [<ffffffff813a8608>] invalid_op+0x18/0x20
+[  143.045919]  [<ffffffffa03e72f3>] ? assfail+0x1d/0x1f [xfs]
+[  143.045940]  [<ffffffffa03e72f3>] ? assfail+0x1d/0x1f [xfs]
+[  143.045973]  [<ffffffffa0430ed1>] xlog_state_done_syncing+0x6d/0xe4 [xfs]
+[  143.046003]  [<ffffffffa0431018>] xlog_iodone+0xd0/0xd9 [xfs]
+[  143.046023]  [<ffffffffa03d834f>] xfs_buf_iodone_work+0x57/0xa2 [xfs]
+[  143.046027]  [<ffffffff8104f21a>] process_one_work+0x18b/0x297
+[  143.046030]  [<ffffffff8104f6e6>] worker_thread+0x12e/0x1fb
+[  143.046033]  [<ffffffff8104f5b8>] ? rescuer_thread+0x268/0x268
+[  143.046036]  [<ffffffff81054507>] kthread+0x88/0x90
+[  143.046039]  [<ffffffff8105447f>] ? __kthread_parkme+0x60/0x60
+[  143.046042]  [<ffffffff813a707c>] ret_from_fork+0x7c/0xb0
+[  143.046045]  [<ffffffff8105447f>] ? __kthread_parkme+0x60/0x60
+[  143.046066] Code: 65 48 8b 04 25 80 b9 00 00 48 8b 80 f0 02 00 00 48 89 e5 5d 48 8b 40 c8 48 c1 e8 02 83 e0 01 c3 48 8b 87 f0 02 00 00 55 48 89 e5 <48> 8b 40 d8 5d c3 55 ba 08 00 00 00 48 89 e5 48 83 ec 10 48 8b 
+[  143.046069] RIP  [<ffffffff810548fd>] kthread_data+0xb/0x11
+[  143.046069]  RSP <ffff88002ff67a38>
+[  143.046070] CR2: ffffffffffffffd8
+[  143.046071] ---[ end trace e4f1a3c306353179 ]---
+[  143.046072] Fixing recursive fault but reboot is needed!
+--------------------------------------------
+
+
+
+# Design in failure
+> Yes. EIO means an IO error has occurred. That causes failure paths
+> to be triggered in the upper layers.
 > 
-> Unfortunately his patch doesn't work as-is; it turns out that it tries
-> to set the timeout only if the target is request-based but at the time
-> he tries to set it the table type hasn't yet been set.
+> I really don't understand what you are trying to achieve with this
+> "blockup" thing. If something goes wrong with the device, then you
+> *cannot recover* by sending EIO to any new IOs and then continuing
+> on at a later time as though nothing has happened. The moment a
+> filesystem gets EIO from a metadata write, it is likely to be
+> corrupted and if you continue onwards after that you simply
+> propagate the corruption.
 > 
-> I'm looking into fixing it.
+>> As Mikulas said, connection failure often be the cause of
+>> I/O error from the underlying devices.
+> 
+> Connection failure is *rarely* the cause of IO errors, except in
+> environments where SANs are in use. Even then multipathing makes
+> fatal connection failure a rare occurrence. Broken hardware is a
+> much more common cause of problems at the storage layers.
+Yes. Connection error happens in SAN due to loose cabling
+and multi-pathing may resolve the problem and
+hardware problem can also be resolve by RAID.
 
-Ouch, yeah, can't access the DM device's queue from .ctr()
-There were other issues with Hannes RFC patch, wouldn't compile.
+My Idea:
+- If something problematic happens in underlying devices
+  writeboost device returns -EIO on any requests and
+  stop all the daemons
 
-Anyway, looks like we need a new target_type hook (e.g. .init_queue)
-that is called from dm_init_request_based_queue().
+- I will not remove `blockup`.
+  Yes. If the problem is in hardware it is very difficult
+  to recover.
+  However, leaving a chance for recovering the device is
+  at least better than just shutdown the device
+  if it doesn't pollute the code so much.
+  So, I will leave this option.
 
-Request-based DM only allows a single DM target per device so we don't
-need the usual multi DM-target iterators.
+- As Mikulas pointed out, the current design asking the admin
+  to turn off the `blockup` variable when the system is checked up
+  is not reliable
+  since the admin may not be able to log in the system due
+  to memory starvation.
+  More sophisticated way to recover the device is
+  something like autonomously checking the underlying
+  devices came back. But, I think this is
+  too much for the reasons listed below:
+  - redundancy technique is really sophisticated and -EIO returned
+    means something really serious that definitely *can not* recover.
+  - The example admin can't log in the system goes extreme.
+    At the beginning, admin should be logged in beforehand.
 
-But, unfortunately, at the time we call dm_init_request_based_queue()
-the mapped_device isn't yet connected to the inactive table that is
-being loaded (but the table is connected to the mapped_device).
+BTW, what do you mean by the word "fatal"?
+> Simple rule: Don't complete IOs with EIO if you haven't had a fatal
+> IO error.
 
-In dm-ioctl.c:table_load(), the inactive table could be passed directly
-into dm_setup_md_queue().
+There are two choices for writeboost in I/O failure.
+1) Returns -EIO
+2) Just blocks all the in-coming processes.
+writeboost doesn't corrupt in either of these two
+ways of handling error. Maybe, this is because of the
+nature of log-structured caching.
+My question is "which is better behavior of
+underlying device for the upper layer software?".
+Pros for 2) is that upper layer may go on its operation
+without restarting from shutdown.
+Cons for 2) is that blocking the in-coming processes means all the
+write barrier requests sent are not returned for a long time
+and the upper layer can't tell whether the device is dead or not.
+I guess you like to simply propagate the error to the parent.
+But, I want to find the better way for the upper layer
+, particularly for the filesystems.
 
-Please give the following revised patch a try, if it works we can clean
-it up further (think multipath_status needs updating, we also may want
-to constrain .init_queue to only being called if the target is a
-singleton, which dm-mpath should be, but isn't flagged as such yet).
+# Misc
+> Ugh. You should be using workqueue with timed work for this.
+How is it? I don't see the implementation.
+All I want to do is repeating in every interval
+and as far as I know current code is the simplest.
 
-It compiles, but I haven't tested it...
+> BTW, you're missing the handling needed by these kernel threads
+> for suspend-to-disk/ram....
+I didn't implement suspend/resume yet.
+Maybe, I should stop all the daemons and need no
+further codes for the kernel threads.
 
----
- drivers/md/dm-ioctl.c         |    2 +-
- drivers/md/dm-mpath.c         |   77 +++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm.c               |   12 +++++--
- drivers/md/dm.h               |    2 +-
- include/linux/device-mapper.h |    4 ++
- 5 files changed, 92 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index afe0814..74d1ab4 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1289,7 +1289,7 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
- 	}
- 
- 	/* setup md->queue to reflect md's type (may block) */
--	r = dm_setup_md_queue(md);
-+	r = dm_setup_md_queue(md, t);
- 	if (r) {
- 		DMWARN("unable to set up device queue for new table.");
- 		goto err_unlock_md_type;
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index de570a5..2c3e427 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -105,6 +105,8 @@ struct multipath {
- 	mempool_t *mpio_pool;
- 
- 	struct mutex work_mutex;
-+
-+	unsigned no_path_timeout;
- };
- 
- /*
-@@ -444,6 +446,61 @@ static int queue_if_no_path(struct multipath *m, unsigned queue_if_no_path,
- 	return 0;
- }
- 
-+/*
-+ * Block timeout callback, called from the block layer
-+ *
-+ * request_queue lock is held on entry.
-+ *
-+ * Return values:
-+ * BLK_EH_RESET_TIMER if the request should be left running
-+ * BLK_EH_NOT_HANDLED if the request is handled or terminated
-+ *                    by the driver.
-+ */
-+enum blk_eh_timer_return abort_if_no_path(struct request *rq)
-+{
-+	union map_info *info;
-+	struct dm_mpath_io *mpio;
-+	struct multipath *m;
-+	unsigned long flags;
-+	int rc = BLK_EH_RESET_TIMER;
-+	int flush_ios = 0;
-+
-+	info = dm_get_rq_mapinfo(rq);
-+	if (!info || !info->ptr)
-+		return BLK_EH_NOT_HANDLED;
-+
-+	mpio = info->ptr;
-+	m = mpio->pgpath->pg->m;
-+	/*
-+	 * Only abort request if:
-+	 * - queued_ios is not empty
-+	 *   (protect against races with process_queued_ios)
-+	 * - queue_io is not set
-+	 * - no valid paths are found
-+	 */
-+	spin_lock_irqsave(&m->lock, flags);
-+	if (!list_empty(&m->queued_ios) &&
-+	    !m->queue_io &&
-+	    !m->nr_valid_paths) {
-+		list_del_init(&rq->queuelist);
-+		m->queue_size--;
-+		m->queue_if_no_path = 0;
-+		if (m->queue_size)
-+			flush_ios = 1;
-+		rc = BLK_EH_NOT_HANDLED;
-+	}
-+	spin_unlock_irqrestore(&m->lock, flags);
-+
-+	if (rc == BLK_EH_NOT_HANDLED) {
-+		mempool_free(mpio, m->mpio_pool);
-+		dm_kill_unmapped_request(rq, -ETIMEDOUT);
-+	}
-+	if (flush_ios)
-+		queue_work(kmultipathd, &m->process_queued_ios);
-+
-+	return rc;
-+}
-+
- /*-----------------------------------------------------------------
-  * The multipath daemon is responsible for resubmitting queued ios.
-  *---------------------------------------------------------------*/
-@@ -790,6 +847,7 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
- 		{0, 6, "invalid number of feature args"},
- 		{1, 50, "pg_init_retries must be between 1 and 50"},
- 		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
-+		{0, 65535, "no_path_timeout must be between 0 and 65535"},
- 	};
- 
- 	r = dm_read_arg_group(_args, as, &argc, &ti->error);
-@@ -827,6 +885,13 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
- 			continue;
- 		}
- 
-+		if (!strcasecmp(arg_name, "no_path_timeout") &&
-+		    (argc >= 1)) {
-+			r = dm_read_arg(_args + 3, as, &m->no_path_timeout, &ti->error);
-+			argc--;
-+			continue;
-+		}
-+
- 		ti->error = "Unrecognised multipath feature request";
- 		r = -EINVAL;
- 	} while (argc && !r);
-@@ -1709,6 +1774,17 @@ out:
- 	return busy;
- }
- 
-+static void multipath_init_queue(struct dm_target *ti,
-+				 struct request_queue *q)
-+{
-+	struct multipath *m = ti->private;
-+
-+	if (m->no_path_timeout) {
-+		blk_queue_rq_timed_out(q, abort_if_no_path);
-+		blk_queue_rq_timeout(q, m->no_path_timeout * HZ);
-+	}
-+}
-+
- /*-----------------------------------------------------------------
-  * Module setup
-  *---------------------------------------------------------------*/
-@@ -1728,6 +1804,7 @@ static struct target_type multipath_target = {
- 	.ioctl  = multipath_ioctl,
- 	.iterate_devices = multipath_iterate_devices,
- 	.busy = multipath_busy,
-+	.init_queue = multipath_init_queue,
- };
- 
- static int __init dm_multipath_init(void)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index b3e26c7..ce87b8a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2336,8 +2336,10 @@ EXPORT_SYMBOL_GPL(dm_get_queue_limits);
- /*
-  * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
-  */
--static int dm_init_request_based_queue(struct mapped_device *md)
-+static int dm_init_request_based_queue(struct mapped_device *md,
-+				       struct dm_table *table)
- {
-+	struct dm_target *ti = NULL;
- 	struct request_queue *q = NULL;
- 
- 	if (md->queue->elevator)
-@@ -2356,16 +2358,20 @@ static int dm_init_request_based_queue(struct mapped_device *md)
- 
- 	elv_register_queue(md->queue);
- 
-+	ti = dm_table_get_target(table, 0);
-+	if (ti->type->init_queue)
-+		ti->type->init_queue(ti, md->queue);
-+
- 	return 1;
- }
- 
- /*
-  * Setup the DM device's queue based on md's type
-  */
--int dm_setup_md_queue(struct mapped_device *md)
-+int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
- {
- 	if ((dm_get_md_type(md) == DM_TYPE_REQUEST_BASED) &&
--	    !dm_init_request_based_queue(md)) {
-+	    !dm_init_request_based_queue(md, t)) {
- 		DMWARN("Cannot initialize queue for request-based mapped device");
- 		return -EINVAL;
- 	}
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 1d1ad7b..55cb207 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -83,7 +83,7 @@ void dm_set_md_type(struct mapped_device *md, unsigned type);
- unsigned dm_get_md_type(struct mapped_device *md);
- struct target_type *dm_get_immutable_target_type(struct mapped_device *md);
- 
--int dm_setup_md_queue(struct mapped_device *md);
-+int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
- 
- /*
-  * To check the return value from dm_table_find_target().
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index ed419c6..650c575 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -107,6 +107,9 @@ typedef int (*dm_iterate_devices_fn) (struct dm_target *ti,
- typedef void (*dm_io_hints_fn) (struct dm_target *ti,
- 				struct queue_limits *limits);
- 
-+typedef void (*dm_init_queue_fn) (struct dm_target *ti,
-+				  struct request_queue *q);
-+
- /*
-  * Returns:
-  *    0: The target can handle the next I/O immediately.
-@@ -162,6 +165,7 @@ struct target_type {
- 	dm_busy_fn busy;
- 	dm_iterate_devices_fn iterate_devices;
- 	dm_io_hints_fn io_hints;
-+	dm_init_queue_fn init_queue;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
+Akira
