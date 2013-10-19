@@ -1,14 +1,13 @@
-From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
-Subject: [PATCH]dm-mpath: fix for race condition between
- multipath_dtr and pg_init_done.
-Date: Thu, 17 Oct 2013 17:31:16 +0000
-Message-ID: <FB8A412F33166C4A930D37BD63236C902AD2A073@SACEXCMBX02-PRD.hq.netapp.com>
+From: Andreas Klauer <Andreas.Klauer@metamorpher.de>
+Subject: kpartx ignores read-only?
+Date: Sat, 19 Oct 2013 23:19:13 +0200
+Message-ID: <20131019211913.GA5479@EIS>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,67 +17,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "agk@redhat.com" <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Whenever multipath_dtr is happening, we should prevent queueing any further path
-activation work. There was a kernel panic where after pg_init_done() decrements
-pg_init_in_progress to 0, wait_for_pg_init_completion call assumes there are no
-more pending path management commands. But if pg_init_required is set by
-pg_init_done call due to retriable mode_select errors , then process_queued_ios()
-will again queue the path activation work. If free_multipath call has been
-completed by the time activate_path work is called, kernel panic was seen on
-accessing multipath members.
-
-BUG: unable to handle kernel NULL pointer dereference at 0000000000000090
-RIP: 0010:[<ffffffffa003db1b>]  [<ffffffffa003db1b>] activate_path+0x1b/0x30 [dm_multipath]
-[<ffffffff81090ac0>] worker_thread+0x170/0x2a0
-[<ffffffff81096c80>] ? autoremove_wake_function+0x0/0x40
-
-This patch will fix the issue by preventing any further path activations when
-multipath structures are being freed during table suspend/reload.
-
-Signed-off-by: Shiva Krishna Merla<shivakrishna.merla@netapp.com>
-Reviewed-by: Krishnasamy Somasundaram<somasundaram.krishnasamy@netapp.com>
-Tested-by: Speagle Andy<Andy.Speagle@netapp.com>
-
----
---- a/drivers/md/dm-mpath.c	2013-01-29 10:12:10.000000000 -0600
-+++ b/drivers/md/dm-mpath.c	2013-10-17 09:23:21.896062928 -0500
-@@ -73,6 +73,7 @@ struct multipath {
- 
- 	wait_queue_head_t pg_init_wait;	/* Wait for pg_init completion */
- 
-+	unsigned dtr_in_progress;	/* multipath destroy in progress */
- 	unsigned pg_init_required;	/* pg_init needs calling? */
- 	unsigned pg_init_in_progress;	/* Only one pg_init allowed at once */
- 	unsigned pg_init_delay_retry;	/* Delay pg_init retry? */
-@@ -498,7 +499,8 @@ static void process_queued_ios(struct wo
- 	    (!pgpath && !m->queue_if_no_path))
- 		must_queue = 0;
- 
--	if (m->pg_init_required && !m->pg_init_in_progress && pgpath)
-+	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
-+	    !m->dtr_in_progress)
- 		__pg_init_all_paths(m);
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
-@@ -952,6 +954,7 @@ static void multipath_dtr(struct dm_targ
- {
- 	struct multipath *m = ti->private;
- 
-+	m->dtr_in_progress = 1;
- 	flush_multipath_work(m);
- 	free_multipath(m);
- }
-@@ -1164,7 +1167,7 @@ static int pg_init_limit_reached(struct 
- 
- 	spin_lock_irqsave(&m->lock, flags);
- 
--	if (m->pg_init_count <= m->pg_init_retries)
-+	if (m->pg_init_count <= m->pg_init_retries && !m->dtr_in_progress)
- 		m->pg_init_required = 1;
- 	else
- 		limit_reached = 1;
---
+SGksCgpvbiBteSBzeXN0ZW0gSSBoYXZlIHNvbWUgcmVhZC1vbmx5IGRldmljZSBtYXBwZXIgdGFy
+Z2V0cy4gVGhleSBhcmUgCm9sZCBMVk0gaW5zdGFuY2VzIHdoaWNoIEkgbWFkZSByZWFkLW9ubHkg
+dXNpbmcgKGx2Y2hhbmdlIC1wIHIgTFYpIAppbiBvcmRlciB0byBwcmVzZXJ2ZSB0aGVpciBjb250
+ZW50cy4KCk9uZSBvZiB0aGVtIGNvbnRhaW5zIGEgcGFydGl0aW9uZWQgaGFyZCBkaXNrIGltYWdl
+LgoKIyBkbXNldHVwIGluZm8gL2Rldi9kbS0yOQo+IE5hbWU6ICAgICAgICAgICAgICBIREQtT0xE
+LS1yb3N0LS1pbWFnZQo+IFN0YXRlOiAgICAgICAgICAgICBBQ1RJVkUgKFJFQUQtT05MWSkKPiBS
+ZWFkIEFoZWFkOiAgICAgICAgMTIyODgKPiBUYWJsZXMgcHJlc2VudDogICAgTElWRQo+IE9wZW4g
+Y291bnQ6ICAgICAgICAxCj4gRXZlbnQgbnVtYmVyOiAgICAgIDAKPiBNYWpvciwgbWlub3I6ICAg
+ICAgMjUzLCAyOQo+IE51bWJlciBvZiB0YXJnZXRzOiAxCj4gVVVJRDogTFZNLVBHVElQM0lqRkNF
+NFVITTlmRkd4dVZoS1I0Rm1DWE8wZ3d2WDhIVzZKQnMyZGZ4ajZsWXlLT21ETHl4c0RmMEIKCklu
+IG9yZGVyIHRvIG1vdW50IGEgZmV3IHBhcnRpdGlvbnMgb2YgaXQsIEkgdXNlZCBrcGFydHggdG8g
+bWFwIHRoZSBwYXJ0aXRpb25zLgoKIyBrcGFydHggLWEgL2Rldi9kbS0yOQoKVGhpcyB3b3JrcyBm
+aW5lLCBleGNlcHQgdGhlIFJFQUQtT05MWSBkb2VzIG5vdCBzZWVtIHRvIHN0aWNrLgoKIyBkbXNl
+dHVwIGxzIC0tdHJlZQo+IFsuLi5dCj4gSERELU9MRC0tcm9zdC0taW1hZ2VwMSAoMjUzOjMwKQo+
+ICDilJTilIBIREQtT0xELS1yb3N0LS1pbWFnZSAoMjUzOjI5KQo+IFsuLi5dCgojIGRtc2V0dXAg
+aW5mbyAvZGV2L21hcHBlci9IREQtT0xELS1yb3N0LS1pbWFnZXAxCj4gTmFtZTogICAgICAgICAg
+ICAgIEhERC1PTEQtLXJvc3QtLWltYWdlcDEKPiBTdGF0ZTogICAgICAgICAgICAgQUNUSVZFCj4g
+UmVhZCBBaGVhZDogICAgICAgIDI1Ngo+IFRhYmxlcyBwcmVzZW50OiAgICBMSVZFCj4gT3BlbiBj
+b3VudDogICAgICAgIDAKPiBFdmVudCBudW1iZXI6ICAgICAgMAo+IE1ham9yLCBtaW5vcjogICAg
+ICAyNTMsIDMwCj4gTnVtYmVyIG9mIHRhcmdldHM6IDEKPiBVVUlEOiBwYXJ0MS1MVk0tUEdUSVAz
+SWpGQ0U0VUhNOWZGR3h1VmhLUjRGbUNYTzBnd3ZYOEhXNkpCczJkZnhqNmxZeUtPbURMeXhzRGYw
+QgoKQW5kIGl0J3MgY29tcGxldGVseSB3cml0YWJsZS4KCkkgdHJpZWQgdG8gdXNlIGxvc2V0dXAg
+LS1wYXJ0c2NhbiBhcyBhbiBhbHRlcm5hdGl2ZSB0byBrcGFydHgsIHdoaWNoIGtpbmQgCm9mIHdv
+cmtzLCBleGNlcHQgdGhlIGtlcm5lbCBiZWxpZXZlcyB0aGUgbG9vcCBkZXZpY2UgdG8gYmUgd3Jp
+dGFibGUgYW5kIApnaXZlcyBhIGxvdCBvZiBJL08gZXJyb3IgbWVzc2FnZXMgYW5kIHRoZSBmaWxl
+c3lzdGVtIGJlaGF2ZXMgb2RkbHkuCgo+IFsgMzEzNi40NTU0NTFdIEJ1ZmZlciBJL08gZXJyb3Ig
+b24gZGV2aWNlIGxvb3AwcDEsIGxvZ2ljYWwgYmxvY2sgMTU2OAo+IFsgMzEzNi40NTU0NTRdIGxv
+c3QgcGFnZSB3cml0ZSBkdWUgdG8gSS9PIGVycm9yIG9uIGxvb3AwcDEKPiBbIDMxMzYuNDU1NDY2
+XSBsb29wOiBXcml0ZSBlcnJvciBhdCBieXRlIG9mZnNldCAzNjAwMzg0MCwgbGVuZ3RoIDQwOTYu
+Cj4gWyAzMTM2LjQ1NTQ2OV0gQnVmZmVyIEkvTyBlcnJvciBvbiBkZXZpY2UgbG9vcDBwMSwgbG9n
+aWNhbCBibG9jayA4NTM0Cj4gWyAzMTM2LjQ1NTQ3Ml0gbG9zdCBwYWdlIHdyaXRlIGR1ZSB0byBJ
+L08gZXJyb3Igb24gbG9vcDBwMQo+IFsgMzEzNi40NTU0NzhdIGxvb3A6IFdyaXRlIGVycm9yIGF0
+IGJ5dGUgb2Zmc2V0IDUwOTQ0NDkxNTIsIGxlbmd0aCA0MDk2Lgo+IFsuLi5dCgpUaGlzIGRvZXNu
+J3QgaGFwcGVuIGZvciBvdGhlciByZWFkLW9ubHkgZGV2aWNlcyAoc3VjaCBhcyAvZGV2L2Nkcm9t
+KS4KCkkgY2FuIHdvcmsgYXJvdW5kIGl0IHVzaW5nIGxvc2V0dXAgLS1yZWFkLW9ubHksIGp1c3Qg
+d29uZGVyaW5nIGlmIHRoaXMgaXMgCmV4cGVjdGVkIGJlaGF2aW91ciBhdCBhbGwgb3Igbm90PyBJ
+IG5ldmVyIHVzZWQgcmVhZC1vbmx5IGRtL0xWIGJlZm9yZSwgCmJ1dCBteSBleHBlY3RhdGlvbiB3
+YXMgdGhhdCB0aGUgcmVhZC1vbmx5IHByb3BlcnR5IGluIG9uZSBwbGFjZSB3b3VsZCAKYWxzbyBh
+ZmZlY3QgYWxsIGRldmljZXMgdGhhdCBkZXJpdmUgZnJvbSBpdC4uLgoKSSdtIHVzaW5nIGtlcm5l
+bCAzLjExLjQgaWYgaXQgbWFrZXMgYW55IGRpZmZlcmVuY2UuCgpSZWdhcmRzCkFuZHJlYXMgS2xh
+dWVyCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
