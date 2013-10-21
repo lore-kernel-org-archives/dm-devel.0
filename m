@@ -1,13 +1,22 @@
-From: Andreas Klauer <Andreas.Klauer@metamorpher.de>
-Subject: kpartx ignores read-only?
-Date: Sat, 19 Oct 2013 23:19:13 +0200
-Message-ID: <20131019211913.GA5479@EIS>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: RFC for multipath queue_if_no_path timeout.
+Date: Mon, 21 Oct 2013 11:05:39 -0500
+Message-ID: <20131021160539.GY1661@dhcp80-209.msp.redhat.com>
+References: <1380215696.25252.36.camel@bobble.lax.corp.google.com>
+	<20130926172422.GA31328@agk-dp.fab.redhat.com>
+	<1380216716.25252.39.camel@bobble.lax.corp.google.com>
+	<20130926173814.GB31328@agk-dp.fab.redhat.com>
+	<1380217633.25252.46.camel@bobble.lax.corp.google.com>
+	<20130926232241.GC31328@agk-dp.fab.redhat.com>
+	<20130926234957.GA3658@redhat.com>
+	<1382036590.1980.32.camel@bobble.lax.corp.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <1382036590.1980.32.camel@bobble.lax.corp.google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,48 +26,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Frank Mayhar <fmayhar@google.com>
 List-Id: dm-devel.ids
 
-SGksCgpvbiBteSBzeXN0ZW0gSSBoYXZlIHNvbWUgcmVhZC1vbmx5IGRldmljZSBtYXBwZXIgdGFy
-Z2V0cy4gVGhleSBhcmUgCm9sZCBMVk0gaW5zdGFuY2VzIHdoaWNoIEkgbWFkZSByZWFkLW9ubHkg
-dXNpbmcgKGx2Y2hhbmdlIC1wIHIgTFYpIAppbiBvcmRlciB0byBwcmVzZXJ2ZSB0aGVpciBjb250
-ZW50cy4KCk9uZSBvZiB0aGVtIGNvbnRhaW5zIGEgcGFydGl0aW9uZWQgaGFyZCBkaXNrIGltYWdl
-LgoKIyBkbXNldHVwIGluZm8gL2Rldi9kbS0yOQo+IE5hbWU6ICAgICAgICAgICAgICBIREQtT0xE
-LS1yb3N0LS1pbWFnZQo+IFN0YXRlOiAgICAgICAgICAgICBBQ1RJVkUgKFJFQUQtT05MWSkKPiBS
-ZWFkIEFoZWFkOiAgICAgICAgMTIyODgKPiBUYWJsZXMgcHJlc2VudDogICAgTElWRQo+IE9wZW4g
-Y291bnQ6ICAgICAgICAxCj4gRXZlbnQgbnVtYmVyOiAgICAgIDAKPiBNYWpvciwgbWlub3I6ICAg
-ICAgMjUzLCAyOQo+IE51bWJlciBvZiB0YXJnZXRzOiAxCj4gVVVJRDogTFZNLVBHVElQM0lqRkNF
-NFVITTlmRkd4dVZoS1I0Rm1DWE8wZ3d2WDhIVzZKQnMyZGZ4ajZsWXlLT21ETHl4c0RmMEIKCklu
-IG9yZGVyIHRvIG1vdW50IGEgZmV3IHBhcnRpdGlvbnMgb2YgaXQsIEkgdXNlZCBrcGFydHggdG8g
-bWFwIHRoZSBwYXJ0aXRpb25zLgoKIyBrcGFydHggLWEgL2Rldi9kbS0yOQoKVGhpcyB3b3JrcyBm
-aW5lLCBleGNlcHQgdGhlIFJFQUQtT05MWSBkb2VzIG5vdCBzZWVtIHRvIHN0aWNrLgoKIyBkbXNl
-dHVwIGxzIC0tdHJlZQo+IFsuLi5dCj4gSERELU9MRC0tcm9zdC0taW1hZ2VwMSAoMjUzOjMwKQo+
-ICDilJTilIBIREQtT0xELS1yb3N0LS1pbWFnZSAoMjUzOjI5KQo+IFsuLi5dCgojIGRtc2V0dXAg
-aW5mbyAvZGV2L21hcHBlci9IREQtT0xELS1yb3N0LS1pbWFnZXAxCj4gTmFtZTogICAgICAgICAg
-ICAgIEhERC1PTEQtLXJvc3QtLWltYWdlcDEKPiBTdGF0ZTogICAgICAgICAgICAgQUNUSVZFCj4g
-UmVhZCBBaGVhZDogICAgICAgIDI1Ngo+IFRhYmxlcyBwcmVzZW50OiAgICBMSVZFCj4gT3BlbiBj
-b3VudDogICAgICAgIDAKPiBFdmVudCBudW1iZXI6ICAgICAgMAo+IE1ham9yLCBtaW5vcjogICAg
-ICAyNTMsIDMwCj4gTnVtYmVyIG9mIHRhcmdldHM6IDEKPiBVVUlEOiBwYXJ0MS1MVk0tUEdUSVAz
-SWpGQ0U0VUhNOWZGR3h1VmhLUjRGbUNYTzBnd3ZYOEhXNkpCczJkZnhqNmxZeUtPbURMeXhzRGYw
-QgoKQW5kIGl0J3MgY29tcGxldGVseSB3cml0YWJsZS4KCkkgdHJpZWQgdG8gdXNlIGxvc2V0dXAg
-LS1wYXJ0c2NhbiBhcyBhbiBhbHRlcm5hdGl2ZSB0byBrcGFydHgsIHdoaWNoIGtpbmQgCm9mIHdv
-cmtzLCBleGNlcHQgdGhlIGtlcm5lbCBiZWxpZXZlcyB0aGUgbG9vcCBkZXZpY2UgdG8gYmUgd3Jp
-dGFibGUgYW5kIApnaXZlcyBhIGxvdCBvZiBJL08gZXJyb3IgbWVzc2FnZXMgYW5kIHRoZSBmaWxl
-c3lzdGVtIGJlaGF2ZXMgb2RkbHkuCgo+IFsgMzEzNi40NTU0NTFdIEJ1ZmZlciBJL08gZXJyb3Ig
-b24gZGV2aWNlIGxvb3AwcDEsIGxvZ2ljYWwgYmxvY2sgMTU2OAo+IFsgMzEzNi40NTU0NTRdIGxv
-c3QgcGFnZSB3cml0ZSBkdWUgdG8gSS9PIGVycm9yIG9uIGxvb3AwcDEKPiBbIDMxMzYuNDU1NDY2
-XSBsb29wOiBXcml0ZSBlcnJvciBhdCBieXRlIG9mZnNldCAzNjAwMzg0MCwgbGVuZ3RoIDQwOTYu
-Cj4gWyAzMTM2LjQ1NTQ2OV0gQnVmZmVyIEkvTyBlcnJvciBvbiBkZXZpY2UgbG9vcDBwMSwgbG9n
-aWNhbCBibG9jayA4NTM0Cj4gWyAzMTM2LjQ1NTQ3Ml0gbG9zdCBwYWdlIHdyaXRlIGR1ZSB0byBJ
-L08gZXJyb3Igb24gbG9vcDBwMQo+IFsgMzEzNi40NTU0NzhdIGxvb3A6IFdyaXRlIGVycm9yIGF0
-IGJ5dGUgb2Zmc2V0IDUwOTQ0NDkxNTIsIGxlbmd0aCA0MDk2Lgo+IFsuLi5dCgpUaGlzIGRvZXNu
-J3QgaGFwcGVuIGZvciBvdGhlciByZWFkLW9ubHkgZGV2aWNlcyAoc3VjaCBhcyAvZGV2L2Nkcm9t
-KS4KCkkgY2FuIHdvcmsgYXJvdW5kIGl0IHVzaW5nIGxvc2V0dXAgLS1yZWFkLW9ubHksIGp1c3Qg
-d29uZGVyaW5nIGlmIHRoaXMgaXMgCmV4cGVjdGVkIGJlaGF2aW91ciBhdCBhbGwgb3Igbm90PyBJ
-IG5ldmVyIHVzZWQgcmVhZC1vbmx5IGRtL0xWIGJlZm9yZSwgCmJ1dCBteSBleHBlY3RhdGlvbiB3
-YXMgdGhhdCB0aGUgcmVhZC1vbmx5IHByb3BlcnR5IGluIG9uZSBwbGFjZSB3b3VsZCAKYWxzbyBh
-ZmZlY3QgYWxsIGRldmljZXMgdGhhdCBkZXJpdmUgZnJvbSBpdC4uLgoKSSdtIHVzaW5nIGtlcm5l
-bCAzLjExLjQgaWYgaXQgbWFrZXMgYW55IGRpZmZlcmVuY2UuCgpSZWdhcmRzCkFuZHJlYXMgS2xh
-dWVyCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Thu, Oct 17, 2013 at 12:03:10PM -0700, Frank Mayhar wrote:
+> Dragging this back up into the light...
+> 
+> On Thu, 2013-09-26 at 19:49 -0400, Mike Snitzer wrote:
+> > Frank, I had a look at your patch.  It leaves a lot to be desired, I was
+> > starting to clean it up but ultimately found myself agreeing with
+> > Alasdair's original point: that this policy should be implemented in the
+> > userspace daemon.
+> 
+> I've found and fixed a couple of bugs but I would still like to know
+> what issues you had with the patch.  As I said before, I would be more
+> than happy to clean it up.
+> 
+> In the time since we had this discussion, by the way, we ran into a
+> problem that a userspace daemon can't solve:  That of shutdown.  We ran
+> into a number of failures in which systems were hung for hours.  It
+> turned out that they were caused by a regular system shutdown.  Our
+> backing store is network-based and networking was getting killed before
+> applications (as is usually the case), leaving I/O outstanding on the
+> device.  Since queue_if_no_path was set, the I/O wasn't dumped and our
+> daemon was killed by shutdown very shortly thereafter so it couldn't
+> recover (otherwise it would have cleaned things up).
+> 
+
+Was multipathd force killed? What was the default configuration
+parameter "queue_without_daemon" set to?
+
+If "queue_without_daemon" is set to "no", multipathd should disable
+queueing when it is stopped. This was added specifically to avoid this
+issue.
+
+-Ben
+
+> With those I/Os sitting queued in multipath, with no network and no
+> daemon to turn off queue_if_no_path, the systems just sat.  When we
+> finally diagnosed this, we realized that the timeout would work
+> perfectly to solve the problem, automatically turning queue_if_no_path
+> off shortly after the network went away without depending on the
+> intervention of the no-longer-running daemon.
+> 
+> So how do you guys deal with this failure scenario?
+> -- 
+> Frank Mayhar
+> 310-460-4042
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
