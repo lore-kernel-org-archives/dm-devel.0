@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 01/24] dm: nest targets used for testing under
-	DM_TEST_TARGETS
-Date: Thu, 24 Oct 2013 14:30:14 -0400
-Message-ID: <1382639437-27007-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 03/24] dm cache policy: remove return from void
+	policy_remove_mapping
+Date: Thu, 24 Oct 2013 14:30:16 -0400
+Message-ID: <1382639437-27007-4-git-send-email-snitzer@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,72 +25,26 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Both the flakey and delay targets are generally used for testing.  Other
-test targets (and cache policies) will be introduced in the future.
+No need to return from a void function.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/Kconfig | 36 +++++++++++++++++++++---------------
- 1 file changed, 21 insertions(+), 15 deletions(-)
+ drivers/md/dm-cache-policy-internal.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 30b426e..816e023 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -371,27 +371,12 @@ config DM_MULTIPATH_ST
+diff --git a/drivers/md/dm-cache-policy-internal.h b/drivers/md/dm-cache-policy-internal.h
+index 0928abd..a75f7e7 100644
+--- a/drivers/md/dm-cache-policy-internal.h
++++ b/drivers/md/dm-cache-policy-internal.h
+@@ -61,7 +61,7 @@ static inline int policy_writeback_work(struct dm_cache_policy *p,
  
- 	  If unsure, say N.
+ static inline void policy_remove_mapping(struct dm_cache_policy *p, dm_oblock_t oblock)
+ {
+-	return p->remove_mapping(p, oblock);
++	p->remove_mapping(p, oblock);
+ }
  
--config DM_DELAY
--	tristate "I/O delaying target"
--	depends on BLK_DEV_DM
--	---help---
--	A target that delays reads and/or writes and can send
--	them to different devices.  Useful for testing.
--
--	If unsure, say N.
--
- config DM_UEVENT
- 	bool "DM uevents"
- 	depends on BLK_DEV_DM
- 	---help---
- 	Generate udev events for DM events.
- 
--config DM_FLAKEY
--       tristate "Flakey target"
--       depends on BLK_DEV_DM
--       ---help---
--         A target that intermittently fails I/O for debugging purposes.
--
- config DM_VERITY
- 	tristate "Verity target support"
- 	depends on BLK_DEV_DM
-@@ -426,4 +411,25 @@ config DM_SWITCH
- 
- 	  If unsure, say N.
- 
-+config DM_TEST_TARGETS
-+       bool "DM test targets"
-+       depends on BLK_DEV_DM
-+       ---help---
-+         Targets that are only useful for testing.
-+
-+config DM_FLAKEY
-+       tristate "Flakey target (EXPERIMENTAL)"
-+       depends on DM_TEST_TARGETS
-+       ---help---
-+         A target that intermittently fails I/O for debugging purposes.
-+
-+config DM_DELAY
-+	tristate "I/O delaying target (EXPERIMENTAL)"
-+	depends on DM_TEST_TARGETS
-+	---help---
-+	A target that delays reads and/or writes and can send
-+	them to different devices.  Useful for testing.
-+
-+	If unsure, say N.
-+
- endif # MD
+ static inline void policy_force_mapping(struct dm_cache_policy *p,
 -- 
 1.8.1.4
