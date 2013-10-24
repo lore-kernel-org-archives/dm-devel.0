@@ -1,8 +1,8 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH 01/24] dm: nest targets used for
 	testing	under DM_TEST_TARGETS
-Date: Fri, 25 Oct 2013 00:17:22 +0100
-Message-ID: <20131024231722.GD17070@agk-dp.fab.redhat.com>
+Date: Fri, 25 Oct 2013 00:51:50 +0100
+Message-ID: <20131024235150.GE17070@agk-dp.fab.redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 	<1382639437-27007-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -25,20 +25,21 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
+On Thu, Oct 24, 2013 at 02:30:14PM -0400, Mike Snitzer wrote:
+> Both the flakey and delay targets are generally used for testing.  
+                                        ^^^^^^^^^
+Indeed - not exclusively.
+
 > --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -371,27 +371,12 @@ config DM_MULTIPATH_ST
-  	  
-> -config DM_DELAY
-> -	tristate "I/O delaying target"
 
-> +config DM_DELAY
-> +	tristate "I/O delaying target (EXPERIMENTAL)"
+> +config DM_TEST_TARGETS
 
-Why has EXPERIMENTAL reappeared???
-See d57916a00fd749ccd354a7f754c2aba98f86d064
+> +         Targets that are only useful for testing.
 
-Please regenerate these patches against an up-to-date upstream base!
+Could we delete the word 'only'?  Or replace it with something like
+'primarily'?
 
-Thanks,
+(I don't like this classification for DM_DELAY: I think it can have uses in
+non-testing scenarios.)
+
 Alasdair
