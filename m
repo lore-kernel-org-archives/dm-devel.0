@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 13/24] dm cache policy: have
-	policy_writeback_work return -ENODATA by default
-Date: Thu, 24 Oct 2013 14:30:26 -0400
-Message-ID: <1382639437-27007-14-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 15/24] dm cache: use cell_defer() boolean
+	argument consistently
+Date: Thu, 24 Oct 2013 14:30:28 -0400
+Message-ID: <1382639437-27007-16-git-send-email-snitzer@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,28 +25,43 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Caller of policy_writeback_work doesn't care, so doesn't actually fix
-anything but increases consistency of returns used (which helps
-debugging).
+Fix a few cell_defer() calls that weren't passing a bool.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-cache-policy-internal.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-cache-target.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-cache-policy-internal.h b/drivers/md/dm-cache-policy-internal.h
-index 0f749e8..9b1473b 100644
---- a/drivers/md/dm-cache-policy-internal.h
-+++ b/drivers/md/dm-cache-policy-internal.h
-@@ -56,7 +56,7 @@ static inline int policy_writeback_work(struct dm_cache_policy *p,
- 					dm_oblock_t *oblock,
- 					dm_cblock_t *cblock)
- {
--	return p->writeback_work ? p->writeback_work(p, oblock, cblock) : -ENOENT;
-+	return p->writeback_work ? p->writeback_work(p, oblock, cblock) : -ENODATA;
- }
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 5fb4d64..db27dfa 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -808,13 +808,13 @@ static void migration_failure(struct dm_cache_migration *mg)
+ 		DMWARN_LIMIT("demotion failed; couldn't copy block");
+ 		policy_force_mapping(cache->policy, mg->new_oblock, mg->old_oblock);
  
- static inline void policy_remove_mapping(struct dm_cache_policy *p, dm_oblock_t oblock)
+-		cell_defer(cache, mg->old_ocell, mg->promote ? 0 : 1);
++		cell_defer(cache, mg->old_ocell, mg->promote ? false : true);
+ 		if (mg->promote)
+-			cell_defer(cache, mg->new_ocell, 1);
++			cell_defer(cache, mg->new_ocell, true);
+ 	} else {
+ 		DMWARN_LIMIT("promotion failed; couldn't copy block");
+ 		policy_remove_mapping(cache->policy, mg->new_oblock);
+-		cell_defer(cache, mg->new_ocell, 1);
++		cell_defer(cache, mg->new_ocell, true);
+ 	}
+ 
+ 	cleanup_migration(mg);
+@@ -866,7 +866,7 @@ static void migration_success_post_commit(struct dm_cache_migration *mg)
+ 		return;
+ 
+ 	} else if (mg->demote) {
+-		cell_defer(cache, mg->old_ocell, mg->promote ? 0 : 1);
++		cell_defer(cache, mg->old_ocell, mg->promote ? false : true);
+ 
+ 		if (mg->promote) {
+ 			mg->demote = false;
 -- 
 1.8.1.4
