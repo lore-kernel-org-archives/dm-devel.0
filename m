@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 18/24] dm cache: optimize commit_if_needed
-Date: Thu, 24 Oct 2013 14:30:31 -0400
-Message-ID: <1382639437-27007-19-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 11/24] dm table: print error on preresume failure
+Date: Thu, 24 Oct 2013 14:30:24 -0400
+Message-ID: <1382639437-27007-12-git-send-email-snitzer@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,31 +22,35 @@ To: dm-devel@redhat.com
 Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+If preresume fails it is worth logging an error given that a device is
+left suspended due to the failure.
 
-Check commit_requested flag _before_ calling
-dm_cache_changed_this_transaction() superfluously.
+This change was motivated by local preresume error logging that was
+added to the cache target.  Elevating this error logging to DM core
+makes sense.
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 ---
- drivers/md/dm-cache-target.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-table.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index f999ddd..502ae64 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -1324,8 +1324,8 @@ static int need_commit_due_to_time(struct cache *cache)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 8f87835..9bd75dc 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1548,8 +1548,11 @@ int dm_table_resume_targets(struct dm_table *t)
+ 			continue;
  
- static int commit_if_needed(struct cache *cache)
- {
--	if (dm_cache_changed_this_transaction(cache->cmd) &&
--	    (cache->commit_requested || need_commit_due_to_time(cache))) {
-+	if ((cache->commit_requested || need_commit_due_to_time(cache)) &&
-+	    dm_cache_changed_this_transaction(cache->cmd)) {
- 		atomic_inc(&cache->stats.commit_count);
- 		cache->last_commit_jiffies = jiffies;
- 		cache->commit_requested = false;
+ 		r = ti->type->preresume(ti);
+-		if (r)
++		if (r) {
++			DMERR("%s: %s: preresume failed, error = %d",
++			      dm_device_name(t->md), ti->type->name, r);
+ 			return r;
++		}
+ 	}
+ 
+ 	for (i = 0; i < t->num_targets; i++) {
 -- 
 1.8.1.4
