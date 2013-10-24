@@ -1,14 +1,14 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
+From: David Rosenstrauch <darose@darose.net>
 Subject: Re: Volume group / volumes not activated at boot
-Date: Thu, 24 Oct 2013 11:32:48 +0200
-Message-ID: <5268E940.2000006@redhat.com>
-References: <5267E5C4.3070707@darose.net>
+Date: Thu, 24 Oct 2013 10:51:27 -0400
+Message-ID: <526933EF.8030301@darose.net>
+References: <5267E5C4.3070707@darose.net> <5268E940.2000006@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5267E5C4.3070707@darose.net>
+In-Reply-To: <5268E940.2000006@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,30 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dne 23.10.2013 17:05, David Rosenstrauch napsal(a):
-> For several months now, my server has be been failing to activate all volume
-> groups / volumes at boot.  My server has 3 PV's, 3 VG's, and 4 LV's.  But for
-> some reason only 3 of the 4 LV's are activated after boot.
+On 10/24/2013 05:32 AM, Zdenek Kabelac wrote:
+> IMHO in normal case distro should ensure that only devices needed for the
+> system are activated on the boot.
 >
-> I can subsequently activate the VG manually (vgchange -ay vg2) and then mount
-> the LV.  But the fact that the LV never activates automatically at boot time
-> means that I can't add it in the fstab to so that it mounts at boot.
+> So if you need all your volumes from a VG active - just add somewhere in
+> your
+> boot sequence    'vgchange -ay' if you need all LVs active.
 >
-> The start of the problem seems to coincide with when my distro (Arch Linux)
-> moved to using lvmetad for device discovery.  But the distro's LVM package
-> maintainer has reviewed my logs and can't see any reason why the volume group
-> is not getting activated.
+> There is also recently a support for 'autoactivated' LVs - but this
+> needs lvmetad daemon running in your system.
+>
+> Zdenek
 
-IMHO in normal case distro should ensure that only devices needed for the
-system are activated on the boot.
+Thanks for the response.
 
-So if you need all your volumes from a VG active - just add somewhere in your
-boot sequence    'vgchange -ay' if you need all LVs active.
+Actually after some additional research last night, I was able to figure 
+out what the problem is:
 
-There is also recently a support for 'autoactivated' LVs - but this needs 
-lvmetad daemon running in your system.
+The single PV in vg2 is a full disk device (/dev/sdc), not a partition. 
+However, when I first was initializing the drive to add in to LVM, I 
+accidentally partitioned the drive first.  Realizing the mistake, I then 
+deleted the partitions.  However the result was a drive with an empty 
+partition table, instead of a drive with no partition table. So what 
+must be happening is that when LVM scans the drive, it sees that it's 
+partitioned, but sees no partitions, and then moves on, leaving the VG 
+inactive.  When I later manually tell LVM to activate the group 
+explicitly it works; it just can't do it automatically.
 
-Zdenek
+Wiping out the partition table (i.e., MBR) on the drive seems to fix the 
+issue, and LVM can now see the VG at boot.
+
+Thanks,
+
+DR
