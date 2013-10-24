@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 21/24] dm cache: add trc policy shim
-Date: Thu, 24 Oct 2013 14:30:34 -0400
-Message-ID: <1382639437-27007-22-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 12/24] dm cache: add passthrough mode
+Date: Thu, 24 Oct 2013 14:30:25 -0400
+Message-ID: <1382639437-27007-13-git-send-email-snitzer@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,326 +19,446 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Morgan Mears <Morgan.Mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Morgan Mears <morgan.mears@netapp.com>
+From: Joe Thornber <ejt@redhat.com>
 
-This commit includes a non-terminal policy (aka "shim") called trc that
-may be stacked ontop of a terminal policy (e.g. mq).
+"Passthrough" is a dm-cache operating mode (like writethrough or
+writeback) which is intended to be used when the cache contents are not
+known to be coherent with the origin device.  It behaves as follows:
 
-The second shim, trc, adds function-call-level tracing to the policy
-stack.  By default, an INFO-level log message including function name
-and parameter(s) will be generated whenever most of the cache policy
-interface functions are called.  An interface to increase or decrease
-the verbosity of the trace output is also provided.
+* All reads are served from the origin device (all reads miss the cache)
+* All writes are forwarded to the origin device; additionally, write
+  hits cause cache block invalidates
 
-Signed-off-by: Morgan Mears <morgan.mears@netapp.com>
+This mode decouples cache coherency checks from cache device creation,
+largely to avoid having to perform coherency checks while booting.  Boot
+scripts can create cache devices in passthrough mode and put them into
+service (mount cached filesystems, for example) without having to worry
+about coherency.  Coherency that exists is maintained, although the
+cache will gradually cool as writes take place.
+
+Later, applications can perform coherency checks, the nature of which
+will depend on the type of the underlying storage.  If coherency can be
+verified, the cache device can be transitioned to writethrough or
+writeback mode while still warm; otherwise, the cache contents can be
+discarded prior to transitioning to the desired operating mode.
+
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+Signed-off-by: Morgan Mears <Morgan.Mears@netapp.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/Kconfig               |   8 ++
- drivers/md/Makefile              |   2 +
- drivers/md/dm-cache-policy-trc.c | 255 +++++++++++++++++++++++++++++++++++++++
- 3 files changed, 265 insertions(+)
- create mode 100644 drivers/md/dm-cache-policy-trc.c
+ drivers/md/dm-cache-metadata.c |  52 +++++++++++
+ drivers/md/dm-cache-metadata.h |   5 +
+ drivers/md/dm-cache-target.c   | 208 +++++++++++++++++++++++++++++++++++------
+ 3 files changed, 234 insertions(+), 31 deletions(-)
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index ad32101..d63539c 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -449,4 +449,12 @@ config DM_DELAY
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index 822972c..136fbe9 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -748,6 +748,53 @@ void dm_cache_metadata_close(struct dm_cache_metadata *cmd)
+ 	kfree(cmd);
+ }
  
- 	If unsure, say N.
- 
-+config DM_CACHE_TRC
-+       tristate "Tracing Cache Policy shim (EXPERIMENTAL)"
-+       depends on DM_CACHE
-+       depends on DM_TEST_TARGETS
-+       ---help---
-+         A cache policy shim that adds debug tracing for all cache policy
-+	 interface function calls, along with a configurable trace level.
-+
- endif # MD
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index 0ae00bd..d68fdf7 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -16,6 +16,7 @@ dm-cache-y	+= dm-cache-target.o dm-cache-metadata.o dm-cache-policy.o \
- dm-cache-mq-y   += dm-cache-policy-mq.o
- dm-cache-cleaner-y += dm-cache-policy-cleaner.o
- dm-cache-era-y	+= dm-cache-policy-era.o
-+dm-cache-trc-y	+= dm-cache-policy-trc.o
- md-mod-y	+= md.o bitmap.o
- raid456-y	+= raid5.o
- 
-@@ -55,6 +56,7 @@ obj-$(CONFIG_DM_CACHE)		+= dm-cache.o
- obj-$(CONFIG_DM_CACHE_MQ)	+= dm-cache-mq.o
- obj-$(CONFIG_DM_CACHE_CLEANER)	+= dm-cache-cleaner.o
- obj-$(CONFIG_DM_CACHE_ERA)	+= dm-cache-era.o
-+obj-$(CONFIG_DM_CACHE_TRC)	+= dm-cache-trc.o
- 
- ifeq ($(CONFIG_DM_UEVENT),y)
- dm-mod-objs			+= dm-uevent.o
-diff --git a/drivers/md/dm-cache-policy-trc.c b/drivers/md/dm-cache-policy-trc.c
-new file mode 100644
-index 0000000..8b16061
---- /dev/null
-+++ b/drivers/md/dm-cache-policy-trc.c
-@@ -0,0 +1,255 @@
 +/*
-+ * Copyright 2013 NetApp, Inc. All Rights Reserved, contribution by
-+ * Morgan Mears.
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU Gentrcl Public License as published by the
-+ * Free Software Foundation; either version 2 of the License, or (at your
-+ * option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Gentrcl Public License
-+ * for more details
-+ *
++ * Checks that the given cache block is either unmapped, or clean.
 + */
-+
-+/* FIXME: use from_[oc]block() */
-+
-+#include "dm-cache-policy.h"
-+#include "dm-cache-policy-internal.h"
-+#include "dm-cache-shim-utils.h"
-+#include "dm.h"
-+
-+#include <linux/module.h>
-+
-+#define DM_MSG_PREFIX "cache-policy-trc"
-+#define DM_TRC_OUT(lev, p, f, arg...) \
-+	do { \
-+		if (to_trc_policy(p)->trace_level >= lev) \
-+			DMINFO("%s: " f, __func__, ## arg); \
-+	} while (0)
-+
-+enum dm_trace_lev_e {
-+	DM_TRC_LEV_OFF		= 0,
-+	DM_TRC_LEV_NORMAL	= 1,
-+	DM_TRC_LEV_VERBOSE	= 2
-+};
-+
-+struct trc_policy {
-+	struct dm_cache_policy policy;
-+	int trace_level;
-+};
-+
-+/*----------------------------------------------------------------*/
-+
-+static struct trc_policy *to_trc_policy(struct dm_cache_policy *p)
++static int block_unmapped_or_clean(struct dm_cache_metadata *cmd, dm_cblock_t b,
++				   bool *result)
 +{
-+	return container_of(p, struct trc_policy, policy);
-+}
++	int r;
++	__le64 value;
++	dm_oblock_t ob;
++	unsigned flags;
 +
-+static int set_trace_level(struct dm_cache_policy *p, const char *str)
-+{
-+	uint32_t val;
++	r = dm_array_get_value(&cmd->info, cmd->root, from_cblock(b), &value);
++	if (r) {
++		DMERR("block_unmapped_or_clean failed");
++		return r;
++	}
 +
-+	if (kstrtou32(str, 10, &val))
-+		return -EINVAL;
-+	to_trc_policy(p)->trace_level = val;
++	unpack_value(value, &ob, &flags);
++	*result = !((flags & M_VALID) && (flags & M_DIRTY));
++
 +	return 0;
 +}
 +
-+/*
-+ * Public interface, via the policy struct.  See dm-cache-policy.h for a
-+ * description of these.
-+ */
-+
-+static void trc_destroy(struct dm_cache_policy *p)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p", p);
-+	kfree(p);
-+}
-+
-+static int trc_map(struct dm_cache_policy *p, dm_oblock_t oblock,
-+		   bool can_block, bool can_migrate, bool discarded_oblock,
-+		   struct bio *bio, struct policy_result *result)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %llu %u %u %u %p %p", p,
-+		   oblock, can_block, can_migrate, discarded_oblock,
-+		   bio, result);
-+	return policy_map(p->child, oblock, can_block, can_migrate,
-+			  discarded_oblock, bio, result);
-+}
-+
-+static int trc_lookup(struct dm_cache_policy *p, dm_oblock_t oblock,
-+		      dm_cblock_t *cblock)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %llu %p", p, oblock, cblock);
-+	return policy_lookup(p->child, oblock, cblock);
-+}
-+
-+static void trc_set_dirty(struct dm_cache_policy *p, dm_oblock_t oblock)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %llu", p, oblock);
-+	policy_set_dirty(p->child, oblock);
-+}
-+
-+static void trc_clear_dirty(struct dm_cache_policy *p, dm_oblock_t oblock)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %llu", p, oblock);
-+	policy_clear_dirty(p->child, oblock);
-+}
-+
-+static int trc_load_mapping(struct dm_cache_policy *p,
-+			    dm_oblock_t oblock, dm_cblock_t cblock,
-+			    void *hint, bool hint_valid)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %llu %u %p %u", p, oblock,
-+		   cblock, hint, hint_valid);
-+	return policy_load_mapping(p->child, oblock, cblock, hint, hint_valid);
-+}
-+
-+static int trc_walk_mappings(struct dm_cache_policy *p, policy_walk_fn fn,
-+			     void *context)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %p %p", p, fn, context);
-+	return dm_cache_shim_utils_walk_map(p, fn, context, NULL);
-+}
-+
-+static void trc_remove_mapping(struct dm_cache_policy *p, dm_oblock_t oblock)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %llu", p, oblock);
-+	policy_remove_mapping(p->child, oblock);
-+}
-+
-+static int trc_writeback_work(struct dm_cache_policy *p, dm_oblock_t *oblock,
-+			      dm_cblock_t *cblock)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_VERBOSE, p, "%p %p %p", p, oblock, cblock);
-+	return policy_writeback_work(p->child, oblock, cblock);
-+}
-+
-+static void trc_force_mapping(struct dm_cache_policy *p,
-+			       dm_oblock_t old_oblock,
-+			       dm_oblock_t new_oblock)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %llu %llu",
-+		   p, old_oblock, new_oblock);
-+	policy_force_mapping(p->child, old_oblock, new_oblock);
-+}
-+
-+static dm_cblock_t trc_residency(struct dm_cache_policy *p)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p", p);
-+	return policy_residency(p->child);
-+}
-+
-+static void trc_tick(struct dm_cache_policy *p)
-+{
-+	DM_TRC_OUT(DM_TRC_LEV_VERBOSE, p, "%p", p);
-+	policy_tick(p->child);
-+}
-+
-+static int trc_set_config_value(struct dm_cache_policy *p,
-+				const char *key,
-+				const char *value)
++static int blocks_are_unmapped_or_clean(struct dm_cache_metadata *cmd,
++					dm_cblock_t begin,
++					dm_cblock_t end,
++					bool *result)
 +{
 +	int r;
 +
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %s %s", p, key, value);
++	while (begin != end) {
++		r = block_unmapped_or_clean(cmd, begin, result);
++		if (r)
++			return r;
 +
-+	if (!strcasecmp(key, "set_trace_level"))
-+		r = set_trace_level(p, value);
-+	else
-+		r = policy_set_config_value(p->child, key, value);
++		if (!*result) {
++			DMERR("cache block %llu is dirty",
++			      (unsigned long long) from_cblock(begin));
++			return 0;
++		}
 +
-+	return r;
-+}
-+
-+static int trc_emit_config_values(struct dm_cache_policy *p, char *result,
-+				  unsigned maxlen)
-+{
-+	struct trc_policy *trc = to_trc_policy(p);
-+	ssize_t sz = 0;
-+
-+	DM_TRC_OUT(DM_TRC_LEV_NORMAL, p, "%p %p %u", p, result, maxlen);
-+
-+	DMEMIT("trace_level %u ", trc->trace_level);
-+	return policy_emit_config_values(p->child, result + sz, maxlen - sz);
-+}
-+
-+/* Init the policy plugin interface function pointers. */
-+static void init_policy_functions(struct trc_policy *trc)
-+{
-+	dm_cache_shim_utils_init_shim_policy(&trc->policy);
-+	trc->policy.destroy = trc_destroy;
-+	trc->policy.map = trc_map;
-+	trc->policy.lookup = trc_lookup;
-+	trc->policy.set_dirty = trc_set_dirty;
-+	trc->policy.clear_dirty = trc_clear_dirty;
-+	trc->policy.load_mapping = trc_load_mapping;
-+	trc->policy.walk_mappings = trc_walk_mappings;
-+	trc->policy.remove_mapping = trc_remove_mapping;
-+	trc->policy.writeback_work = trc_writeback_work;
-+	trc->policy.force_mapping = trc_force_mapping;
-+	trc->policy.residency = trc_residency;
-+	trc->policy.tick = trc_tick;
-+	trc->policy.emit_config_values = trc_emit_config_values;
-+	trc->policy.set_config_value = trc_set_config_value;
-+}
-+
-+static struct dm_cache_policy *trc_create(dm_cblock_t cache_size,
-+					  sector_t origin_size,
-+					  sector_t cache_block_size)
-+{
-+	struct trc_policy *trc = kzalloc(sizeof(*trc), GFP_KERNEL);
-+
-+	if (!trc)
-+		return NULL;
-+
-+	init_policy_functions(trc);
-+	trc->trace_level = DM_TRC_LEV_NORMAL;
-+
-+	return &trc->policy;
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+static struct dm_cache_policy_type trc_policy_type = {
-+	.name = "trc",
-+	.version = {1, 0, 0},
-+	.hint_size = 0,
-+	.owner = THIS_MODULE,
-+	.create = trc_create,
-+	.features = DM_CACHE_POLICY_SHIM
-+};
-+
-+static int __init trc_init(void)
-+{
-+	int r;
-+
-+	r = dm_cache_policy_register(&trc_policy_type);
-+	if (!r) {
-+		DMINFO("version %u.%u.%u loaded",
-+		       trc_policy_type.version[0],
-+		       trc_policy_type.version[1],
-+		       trc_policy_type.version[2]);
-+		return 0;
++		begin = to_cblock(from_cblock(begin) + 1);
 +	}
 +
-+	DMERR("register failed %d", r);
-+
-+	dm_cache_policy_unregister(&trc_policy_type);
-+	return -ENOMEM;
++	return 0;
 +}
 +
-+static void __exit trc_exit(void)
+ int dm_cache_resize(struct dm_cache_metadata *cmd, dm_cblock_t new_cache_size)
+ {
+ 	int r;
+@@ -1263,3 +1310,8 @@ int dm_cache_save_hint(struct dm_cache_metadata *cmd, dm_cblock_t cblock, void *
+ 
+ 	return r;
+ }
++
++int dm_cache_metadata_all_clean(struct dm_cache_metadata *cmd, bool *result)
 +{
-+	dm_cache_policy_unregister(&trc_policy_type);
++	return blocks_are_unmapped_or_clean(cmd, 0, cmd->cache_blocks, result);
++}
+diff --git a/drivers/md/dm-cache-metadata.h b/drivers/md/dm-cache-metadata.h
+index 44fd4bf..4e5f435 100644
+--- a/drivers/md/dm-cache-metadata.h
++++ b/drivers/md/dm-cache-metadata.h
+@@ -146,6 +146,11 @@ int dm_cache_save_hint(struct dm_cache_metadata *cmd,
+ 		       dm_cblock_t cblock, void *hint)
+ 	__dm_written_to_disk(hint);
+ 
++/*
++ * Query method.  Are all the blocks in the cache clean?
++ */
++int dm_cache_metadata_all_clean(struct dm_cache_metadata *cmd, bool *result);
++
+ /*----------------------------------------------------------------*/
+ 
+ #endif /* DM_CACHE_METADATA_H */
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 6fa45a8..3bf8cc7 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -76,14 +76,37 @@ static void free_bitset(unsigned long *bits)
+ /*
+  * FIXME: the cache is read/write for the time being.
+  */
+-enum cache_mode {
++enum cache_metadata_mode {
+ 	CM_WRITE,		/* metadata may be changed */
+ 	CM_READ_ONLY,		/* metadata may not be changed */
+ };
+ 
++enum cache_io_mode {
++	/*
++	 * Data is written to cached blocks only.  These blocks are marked
++	 * dirty.  If you lose the cache device you will lose data.
++	 * Potential performance increase for both reads and writes.
++	 */
++	CM_IO_WRITEBACK,
++
++	/*
++	 * Data is written to both cache and origin.  Blocks are never
++	 * dirty.  Potential performance benfit for reads only.
++	 */
++	CM_IO_WRITETHROUGH,
++
++	/*
++	 * A degraded mode useful for various cache coherency situations
++	 * (eg, rolling back snapshots).  Reads and writes always go to the
++	 * origin.  If a write goes to a cached oblock, then the cache
++	 * block is invalidated.
++	 */
++	CM_IO_PASSTHROUGH
++};
++
+ struct cache_features {
+-	enum cache_mode mode;
+-	bool write_through:1;
++	enum cache_metadata_mode mode;
++	enum cache_io_mode io_mode;
+ };
+ 
+ struct cache_stats {
+@@ -533,9 +556,24 @@ static void save_stats(struct cache *cache)
+ #define PB_DATA_SIZE_WB (offsetof(struct per_bio_data, cache))
+ #define PB_DATA_SIZE_WT (sizeof(struct per_bio_data))
+ 
++static bool writethrough_mode(struct cache_features *f)
++{
++	return f->io_mode == CM_IO_WRITETHROUGH;
 +}
 +
-+module_init(trc_init);
-+module_exit(trc_exit);
++static bool writeback_mode(struct cache_features *f)
++{
++	return f->io_mode == CM_IO_WRITEBACK;
++}
 +
-+MODULE_AUTHOR("Morgan Mears <dm-devel@redhat.com>");
-+MODULE_LICENSE("GPL");
-+MODULE_DESCRIPTION("trc cache policy shim");
++static bool passthrough_mode(struct cache_features *f)
++{
++	return f->io_mode == CM_IO_PASSTHROUGH;
++}
++
+ static size_t get_per_bio_data_size(struct cache *cache)
+ {
+-	return cache->features.write_through ? PB_DATA_SIZE_WT : PB_DATA_SIZE_WB;
++	return writethrough_mode(&cache->features) ? PB_DATA_SIZE_WT : PB_DATA_SIZE_WB;
+ }
+ 
+ static struct per_bio_data *get_per_bio_data(struct bio *bio, size_t data_size)
+@@ -1047,6 +1085,31 @@ static void demote_then_promote(struct cache *cache, struct prealloc *structs,
+ 	quiesce_migration(mg);
+ }
+ 
++/*
++ * Invalidate a cache entry.  No writeback occurs; any changes in the cache
++ * block are thrown away.
++ */
++static void invalidate(struct cache *cache, struct prealloc *structs,
++		       dm_oblock_t oblock, dm_cblock_t cblock,
++		       struct dm_bio_prison_cell *cell)
++{
++	struct dm_cache_migration *mg = prealloc_get_migration(structs);
++
++	mg->err = false;
++	mg->writeback = false;
++	mg->demote = true;
++	mg->promote = false;
++	mg->cache = cache;
++	mg->old_oblock = oblock;
++	mg->cblock = cblock;
++	mg->old_ocell = cell;
++	mg->new_ocell = NULL;
++	mg->start_jiffies = jiffies;
++
++	inc_nr_migrations(cache);
++	quiesce_migration(mg);
++}
++
+ /*----------------------------------------------------------------
+  * bio processing
+  *--------------------------------------------------------------*/
+@@ -1109,11 +1172,9 @@ static bool spare_migration_bandwidth(struct cache *cache)
+ 	return current_volume < cache->migration_threshold;
+ }
+ 
+-static bool is_writethrough_io(struct cache *cache, struct bio *bio,
+-			       dm_cblock_t cblock)
++static bool is_write_io(struct bio *bio)
+ {
+-	return bio_data_dir(bio) == WRITE &&
+-		cache->features.write_through && !is_dirty(cache, cblock);
++	return bio_data_dir(bio) == WRITE;
+ }
+ 
+ static void inc_hit_counter(struct cache *cache, struct bio *bio)
+@@ -1128,6 +1189,15 @@ static void inc_miss_counter(struct cache *cache, struct bio *bio)
+ 		   &cache->stats.read_miss : &cache->stats.write_miss);
+ }
+ 
++static void issue_cache_bio(struct cache *cache, struct bio *bio,
++			    struct per_bio_data *pb,
++			    dm_oblock_t oblock, dm_cblock_t cblock)
++{
++	pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
++	remap_to_cache_dirty(cache, bio, oblock, cblock);
++	issue(cache, bio);
++}
++
+ static void process_bio(struct cache *cache, struct prealloc *structs,
+ 			struct bio *bio)
+ {
+@@ -1139,7 +1209,8 @@ static void process_bio(struct cache *cache, struct prealloc *structs,
+ 	size_t pb_data_size = get_per_bio_data_size(cache);
+ 	struct per_bio_data *pb = get_per_bio_data(bio, pb_data_size);
+ 	bool discarded_block = is_discarded_oblock(cache, block);
+-	bool can_migrate = discarded_block || spare_migration_bandwidth(cache);
++	bool passthrough = passthrough_mode(&cache->features);
++	bool can_migrate = !passthrough && (discarded_block || spare_migration_bandwidth(cache));
+ 
+ 	/*
+ 	 * Check to see if that block is currently migrating.
+@@ -1160,15 +1231,39 @@ static void process_bio(struct cache *cache, struct prealloc *structs,
+ 
+ 	switch (lookup_result.op) {
+ 	case POLICY_HIT:
+-		inc_hit_counter(cache, bio);
+-		pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
++		if (passthrough) {
++			inc_miss_counter(cache, bio);
+ 
+-		if (is_writethrough_io(cache, bio, lookup_result.cblock))
+-			remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
+-		else
+-			remap_to_cache_dirty(cache, bio, block, lookup_result.cblock);
++			/*
++			 * Passthrough always maps to the origin,
++			 * invalidating any cache blocks that are written
++			 * to.
++			 */
++
++			if (is_write_io(bio)) {
++				atomic_inc(&cache->stats.demotion);
++				invalidate(cache, structs, block, lookup_result.cblock, new_ocell);
++				release_cell = false;
++
++			} else {
++				// FIXME: factor out issue_origin()
++				pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
++				remap_to_origin_clear_discard(cache, bio, block);
++				issue(cache, bio);
++			}
++		} else {
++			inc_hit_counter(cache, bio);
++
++			if (is_write_io(bio) &&
++			    writethrough_mode(&cache->features) &&
++			    !is_dirty(cache, lookup_result.cblock)) {
++				pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
++				remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
++				issue(cache, bio);
++			} else
++				issue_cache_bio(cache, bio, pb, block, lookup_result.cblock);
++		}
+ 
+-		issue(cache, bio);
+ 		break;
+ 
+ 	case POLICY_MISS:
+@@ -1715,7 +1810,7 @@ static int parse_block_size(struct cache_args *ca, struct dm_arg_set *as,
+ static void init_features(struct cache_features *cf)
+ {
+ 	cf->mode = CM_WRITE;
+-	cf->write_through = false;
++	cf->io_mode = CM_IO_WRITEBACK;
+ }
+ 
+ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
+@@ -1740,10 +1835,13 @@ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
+ 		arg = dm_shift_arg(as);
+ 
+ 		if (!strcasecmp(arg, "writeback"))
+-			cf->write_through = false;
++			cf->io_mode = CM_IO_WRITEBACK;
+ 
+ 		else if (!strcasecmp(arg, "writethrough"))
+-			cf->write_through = true;
++			cf->io_mode = CM_IO_WRITETHROUGH;
++
++		else if (!strcasecmp(arg, "passthrough"))
++			cf->io_mode = CM_IO_PASSTHROUGH;
+ 
+ 		else {
+ 			*error = "Unrecognised cache feature requested";
+@@ -1995,6 +2093,22 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 	}
+ 	cache->cmd = cmd;
+ 
++	if (passthrough_mode(&cache->features)) {
++		bool all_clean;
++
++		r = dm_cache_metadata_all_clean(cache->cmd, &all_clean);
++		if (r) {
++			*error = "dm_cache_metadata_all_clean() failed";
++			goto bad;
++		}
++
++		if (!all_clean) {
++			*error = "Cannot enter passthrough mode unless all blocks are clean";
++			r = -EINVAL;
++			goto bad;
++		}
++	}
++
+ 	spin_lock_init(&cache->lock);
+ 	bio_list_init(&cache->deferred_bios);
+ 	bio_list_init(&cache->deferred_flush_bios);
+@@ -2207,17 +2321,40 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
+ 
++	r = DM_MAPIO_REMAPPED;
+ 	switch (lookup_result.op) {
+ 	case POLICY_HIT:
+-		inc_hit_counter(cache, bio);
+-		pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
++		if (passthrough_mode(&cache->features)) {
++			if (is_write_io(bio)) {
++				/*
++				 * We need to invalidate this block, so
++				 * defer for the worker thread.
++				 */
++				cell_defer(cache, cell, true);
++				r = DM_MAPIO_SUBMITTED;
++
++			} else {
++				pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
++				inc_miss_counter(cache, bio);
++				remap_to_origin_clear_discard(cache, bio, block);
++
++				cell_defer(cache, cell, false);
++			}
+ 
+-		if (is_writethrough_io(cache, bio, lookup_result.cblock))
+-			remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
+-		else
+-			remap_to_cache_dirty(cache, bio, block, lookup_result.cblock);
++		} else {
++			inc_hit_counter(cache, bio);
+ 
+-		cell_defer(cache, cell, false);
++			if (is_write_io(bio) &&
++			    writethrough_mode(&cache->features) &&
++			    !is_dirty(cache, lookup_result.cblock))
++				remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
++
++			else
++				remap_to_cache_dirty(cache, bio, block, lookup_result.cblock);
++
++			cell_defer(cache, cell, false);
++
++		}
+ 		break;
+ 
+ 	case POLICY_MISS:
+@@ -2242,10 +2379,10 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
+ 		DMERR_LIMIT("%s: erroring bio: unknown policy op: %u", __func__,
+ 			    (unsigned) lookup_result.op);
+ 		bio_io_error(bio);
+-		return DM_MAPIO_SUBMITTED;
++		r = DM_MAPIO_SUBMITTED;
+ 	}
+ 
+-	return DM_MAPIO_REMAPPED;
++	return r;
+ }
+ 
+ static int cache_end_io(struct dm_target *ti, struct bio *bio, int error)
+@@ -2520,10 +2657,19 @@ static void cache_status(struct dm_target *ti, status_type_t type,
+ 		       (unsigned long long) from_cblock(residency),
+ 		       cache->nr_dirty);
+ 
+-		if (cache->features.write_through)
++		if (writethrough_mode(&cache->features))
+ 			DMEMIT("1 writethrough ");
+-		else
+-			DMEMIT("0 ");
++
++		else if (passthrough_mode(&cache->features))
++			DMEMIT("1 passthrough ");
++
++		else if (writeback_mode(&cache->features))
++			DMEMIT("1 writeback ");
++
++		else {
++			DMERR("internal error: unknown io mode: %d", (int) cache->features.io_mode);
++			goto err;
++		}
+ 
+ 		DMEMIT("2 migration_threshold %llu ", (unsigned long long) cache->migration_threshold);
+ 		if (sz < maxlen) {
 -- 
 1.8.1.4
