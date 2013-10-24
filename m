@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 17/24] dm cache: use a boolean when setting
-	cache->quiescing
-Date: Thu, 24 Oct 2013 14:30:30 -0400
-Message-ID: <1382639437-27007-18-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 18/24] dm cache: optimize commit_if_needed
+Date: Thu, 24 Oct 2013 14:30:31 -0400
+Message-ID: <1382639437-27007-19-git-send-email-snitzer@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,6 +24,9 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
+Check commit_requested flag _before_ calling
+dm_cache_changed_this_transaction() superfluously.
+
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
@@ -32,26 +34,19 @@ Signed-off-by: Mike Snitzer <snitzer@redhat.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index afeda1b..f999ddd 100644
+index f999ddd..502ae64 100644
 --- a/drivers/md/dm-cache-target.c
 +++ b/drivers/md/dm-cache-target.c
-@@ -1448,7 +1448,7 @@ static void start_quiescing(struct cache *cache)
- 	unsigned long flags;
+@@ -1324,8 +1324,8 @@ static int need_commit_due_to_time(struct cache *cache)
  
- 	spin_lock_irqsave(&cache->lock, flags);
--	cache->quiescing = 1;
-+	cache->quiescing = true;
- 	spin_unlock_irqrestore(&cache->lock, flags);
- }
- 
-@@ -1457,7 +1457,7 @@ static void stop_quiescing(struct cache *cache)
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&cache->lock, flags);
--	cache->quiescing = 0;
-+	cache->quiescing = false;
- 	spin_unlock_irqrestore(&cache->lock, flags);
- }
- 
+ static int commit_if_needed(struct cache *cache)
+ {
+-	if (dm_cache_changed_this_transaction(cache->cmd) &&
+-	    (cache->commit_requested || need_commit_due_to_time(cache))) {
++	if ((cache->commit_requested || need_commit_due_to_time(cache)) &&
++	    dm_cache_changed_this_transaction(cache->cmd)) {
+ 		atomic_inc(&cache->stats.commit_count);
+ 		cache->last_commit_jiffies = jiffies;
+ 		cache->commit_requested = false;
 -- 
 1.8.1.4
