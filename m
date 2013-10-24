@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 03/24] dm cache policy: remove return from void
-	policy_remove_mapping
-Date: Thu, 24 Oct 2013 14:30:16 -0400
-Message-ID: <1382639437-27007-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 06/24] dm cache policy mq: return NULL if
+	mq->free list is empty in alloc_entry
+Date: Thu, 24 Oct 2013 14:30:19 -0400
+Message-ID: <1382639437-27007-7-git-send-email-snitzer@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,28 +23,46 @@ To: dm-devel@redhat.com
 Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-No need to return from a void function.
+Addresses callers' (insert_in*cache()) requirement that alloc_entry()
+return NULL when an entry isn't able to be allocated.
 
-Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-cache-policy-internal.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-cache-policy-mq.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-cache-policy-internal.h b/drivers/md/dm-cache-policy-internal.h
-index 0928abd..a75f7e7 100644
---- a/drivers/md/dm-cache-policy-internal.h
-+++ b/drivers/md/dm-cache-policy-internal.h
-@@ -61,7 +61,7 @@ static inline int policy_writeback_work(struct dm_cache_policy *p,
- 
- static inline void policy_remove_mapping(struct dm_cache_policy *p, dm_oblock_t oblock)
+diff --git a/drivers/md/dm-cache-policy-mq.c b/drivers/md/dm-cache-policy-mq.c
+index 108380d..35e6798 100644
+--- a/drivers/md/dm-cache-policy-mq.c
++++ b/drivers/md/dm-cache-policy-mq.c
+@@ -399,18 +399,20 @@ static void hash_remove(struct entry *e)
+  */
+ static struct entry *alloc_entry(struct mq_policy *mq)
  {
--	return p->remove_mapping(p, oblock);
-+	p->remove_mapping(p, oblock);
+-	struct entry *e;
++	struct entry *e = NULL;
+ 
+ 	if (mq->nr_entries_allocated >= mq->nr_entries) {
+ 		BUG_ON(!list_empty(&mq->free));
+ 		return NULL;
+ 	}
+ 
+-	e = list_entry(list_pop(&mq->free), struct entry, list);
+-	INIT_LIST_HEAD(&e->list);
+-	INIT_HLIST_NODE(&e->hlist);
++	if (!list_empty(&mq->free)) {
++		e = list_entry(list_pop(&mq->free), struct entry, list);
++		INIT_LIST_HEAD(&e->list);
++		INIT_HLIST_NODE(&e->hlist);
++		mq->nr_entries_allocated++;
++	}
+ 
+-	mq->nr_entries_allocated++;
+ 	return e;
  }
  
- static inline void policy_force_mapping(struct dm_cache_policy *p,
 -- 
 1.8.1.4
