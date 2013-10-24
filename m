@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 04/24] dm cache policy mq: a few small fixes
-Date: Thu, 24 Oct 2013 14:30:17 -0400
-Message-ID: <1382639437-27007-5-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 14/24] dm cache: use is_write_io() in more places
+Date: Thu, 24 Oct 2013 14:30:27 -0400
+Message-ID: <1382639437-27007-15-git-send-email-snitzer@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,76 +22,73 @@ To: dm-devel@redhat.com
 Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Rename takeout_queue to concat_queue.
+Use is_write_io() consistently where it is makes sense.
 
-Fix a harmless bug in mq policies pop() function.  Currently pop()
-always succeeds, with up coming changes this wont be the case.
-
-Fix typo in comment above pre_cache_to_cache prototype.
-
-Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-cache-policy-mq.c | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
+ drivers/md/dm-cache-target.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/md/dm-cache-policy-mq.c b/drivers/md/dm-cache-policy-mq.c
-index 4296155..0410a08 100644
---- a/drivers/md/dm-cache-policy-mq.c
-+++ b/drivers/md/dm-cache-policy-mq.c
-@@ -311,7 +311,7 @@ struct mq_policy {
- 
- /*----------------------------------------------------------------*/
- /* Free/alloc mq cache entry structures. */
--static void takeout_queue(struct list_head *lh, struct queue *q)
-+static void concat_queue(struct list_head *lh, struct queue *q)
- {
- 	unsigned level;
- 
-@@ -323,8 +323,8 @@ static void free_entries(struct mq_policy *mq)
- {
- 	struct entry *e, *tmp;
- 
--	takeout_queue(&mq->free, &mq->pre_cache);
--	takeout_queue(&mq->free, &mq->cache);
-+	concat_queue(&mq->free, &mq->pre_cache);
-+	concat_queue(&mq->free, &mq->cache);
- 
- 	list_for_each_entry_safe(e, tmp, &mq->free, list)
- 		kmem_cache_free(mq_entry_cache, e);
-@@ -531,14 +531,16 @@ static void del(struct mq_policy *mq, struct entry *e)
-  */
- static struct entry *pop(struct mq_policy *mq, struct queue *q)
- {
--	struct entry *e = container_of(queue_pop(q), struct entry, list);
-+	struct entry *e;
-+	struct list_head *h = queue_pop(q);
- 
--	if (e) {
--		hash_remove(e);
-+	if (!h)
-+		return NULL;
- 
--		if (e->in_cache)
--			free_cblock(mq, e->cblock);
--	}
-+	e = container_of(h, struct entry, list);
-+	hash_remove(e);
-+	if (e->in_cache)
-+		free_cblock(mq, e->cblock);
- 
- 	return e;
- }
-@@ -697,7 +699,7 @@ static int cache_entry_found(struct mq_policy *mq,
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 3bf8cc7..5fb4d64 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -631,12 +631,17 @@ static void check_if_tick_bio_needed(struct cache *cache, struct bio *bio)
+ 	spin_unlock_irqrestore(&cache->lock, flags);
  }
  
- /*
-- * Moves and entry from the pre_cache to the cache.  The main work is
-+ * Moves an entry from the pre_cache to the cache.  The main work is
-  * finding which cache block to use.
-  */
- static int pre_cache_to_cache(struct mq_policy *mq, struct entry *e,
++static bool is_write_io(struct bio *bio)
++{
++	return bio_data_dir(bio) == WRITE;
++}
++
+ static void remap_to_origin_clear_discard(struct cache *cache, struct bio *bio,
+ 				  dm_oblock_t oblock)
+ {
+ 	check_if_tick_bio_needed(cache, bio);
+ 	remap_to_origin(cache, bio);
+-	if (bio_data_dir(bio) == WRITE)
++	if (is_write_io(bio))
+ 		clear_discard(cache, oblock_to_dblock(cache, oblock));
+ }
+ 
+@@ -644,7 +649,7 @@ static void remap_to_cache_dirty(struct cache *cache, struct bio *bio,
+ 				 dm_oblock_t oblock, dm_cblock_t cblock)
+ {
+ 	remap_to_cache(cache, bio, cblock);
+-	if (bio_data_dir(bio) == WRITE) {
++	if (is_write_io(bio)) {
+ 		set_dirty(cache, oblock, cblock);
+ 		clear_discard(cache, oblock_to_dblock(cache, oblock));
+ 	}
+@@ -1172,21 +1177,16 @@ static bool spare_migration_bandwidth(struct cache *cache)
+ 	return current_volume < cache->migration_threshold;
+ }
+ 
+-static bool is_write_io(struct bio *bio)
+-{
+-	return bio_data_dir(bio) == WRITE;
+-}
+-
+ static void inc_hit_counter(struct cache *cache, struct bio *bio)
+ {
+-	atomic_inc(bio_data_dir(bio) == READ ?
+-		   &cache->stats.read_hit : &cache->stats.write_hit);
++	atomic_inc(is_write_io(bio) ?
++		   &cache->stats.write_hit : &cache->stats.read_hit);
+ }
+ 
+ static void inc_miss_counter(struct cache *cache, struct bio *bio)
+ {
+-	atomic_inc(bio_data_dir(bio) == READ ?
+-		   &cache->stats.read_miss : &cache->stats.write_miss);
++	atomic_inc(is_write_io(bio) ?
++		   &cache->stats.write_miss : &cache->stats.read_miss);
+ }
+ 
+ static void issue_cache_bio(struct cache *cache, struct bio *bio,
 -- 
 1.8.1.4
