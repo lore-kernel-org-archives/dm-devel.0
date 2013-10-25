@@ -1,17 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 11/24] dm table: print error on
-	preresume	failure
-Date: Fri, 25 Oct 2013 20:22:16 +0100
-Message-ID: <20131025192216.GJ17070@agk-dp.fab.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 01/24] dm: nest targets used for testing
+ under DM_TEST_TARGETS
+Date: Fri, 25 Oct 2013 15:25:56 -0400
+Message-ID: <20131025192556.GB4804@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
-	<1382639437-27007-12-git-send-email-snitzer@redhat.com>
+	<1382639437-27007-2-git-send-email-snitzer@redhat.com>
+	<20131024231722.GD17070@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1382639437-27007-12-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20131024231722.GD17070@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,45 +22,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
+To: dm-devel@redhat.com, Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Oct 24, 2013 at 02:30:24PM -0400, Mike Snitzer wrote:
-> If preresume fails it is worth logging an error given that a device is
-> left suspended due to the failure.
- 
-Indeed.
+On Thu, Oct 24 2013 at  7:17pm -0400,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-> This change was motivated by local preresume error logging that was
-> added to the cache target.  Elevating this error logging to DM core
-> makes sense.
- 
-But here I disagree: I think it makes more sense not to elevate this
-logging, but to leave the responsibility for it with the targets
-themselves.
+> > --- a/drivers/md/Kconfig
+> > +++ b/drivers/md/Kconfig
+> > @@ -371,27 +371,12 @@ config DM_MULTIPATH_ST
+>   	  
+> > -config DM_DELAY
+> > -	tristate "I/O delaying target"
+> 
+> > +config DM_DELAY
+> > +	tristate "I/O delaying target (EXPERIMENTAL)"
+> 
+> Why has EXPERIMENTAL reappeared???
+> See d57916a00fd749ccd354a7f754c2aba98f86d064
+> 
+> Please regenerate these patches against an up-to-date upstream base!
 
-> +			DMERR("%s: %s: preresume failed, error = %d",
-> +			      dm_device_name(t->md), ti->type->name, r);
+The base for these patches is v3.12-rc5, certainly recent enough.
 
-Elevated, you're only getting a single number displayed.
+What you took issue with here has nothing to do with an older base being
+used for the patches.  It has everything to do with Joe having made this
+change in his thin-dev branch quite a while ago -- when I rebased I
+didn't change the text the patch moved.  Will remove the EXPERIMENTALs.
 
-If the targets retain the responsibility, then you should get a
-more-detailed error message such as:
-
-                DMERR("aborting resume - crypt key is not set.");
-
-                        DMERR("Unable to resume snapshot source until "
-                              "handover completes.");
-
-                        DMERR("Unable to perform snapshot handover until "
-                              "source is suspended.");
-
-                        DMERR("could not resize cache metadata");
-                        DMERR("could not load cache mappings");
-                        DMERR("could not load origin discards");
-
-I think we should retain the requirement that each target must log
-a meaningful message whenever preresume fails.
-
-Alasdair
+As for delay being useful for non-test use-cases, that may be but
+classifying it as a target that is used for testing is fair (hence
+"Useful for testing." in the DM_DELAY help text).  That said, if you'd
+really prefer DM_DELAY not be nested under DM_TEST_TARGETS I can revert
+it.
