@@ -1,16 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 21/24] dm cache: add trc policy shim
-Date: Fri, 25 Oct 2013 21:13:56 +0100
-Message-ID: <20131025201356.GM17070@agk-dp.fab.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 14/24] dm cache: use is_write_io() in more
+	places
+Date: Fri, 25 Oct 2013 16:11:59 -0400
+Message-ID: <20131025201158.GE4804@redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
-	<1382639437-27007-22-git-send-email-snitzer@redhat.com>
+	<1382639437-27007-15-git-send-email-snitzer@redhat.com>
+	<20131025195300.GL17070@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1382639437-27007-22-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20131025195300.GL17070@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +22,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
+To: dm-devel@redhat.com, Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On Thu, Oct 24, 2013 at 02:30:34PM -0400, Mike Snitzer wrote:
-> From: Morgan Mears <morgan.mears@netapp.com>
- 
-> This commit includes a non-terminal policy (aka "shim") called trc that
-> may be stacked ontop of a terminal policy (e.g. mq).
-> The second shim, trc, adds function-call-level tracing to the policy
-> stack.  By default, an INFO-level log message including function name
-> and parameter(s) will be generated whenever most of the cache policy
-> interface functions are called.  An interface to increase or decrease
-> the verbosity of the trace output is also provided.
- 
-Firstly, why not call it 'trace' in full, rather than abbreviating it to 3
-consonants?
+On Fri, Oct 25 2013 at  3:53pm -0400,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-> +++ b/drivers/md/dm-cache-policy-trc.c
+> On Thu, Oct 24, 2013 at 02:30:27PM -0400, Mike Snitzer wrote:
+> > From: Heinz Mauelshagen <heinzm@redhat.com>
+>  
+> > Use is_write_io() consistently where it is makes sense.
+>  
+> > +++ b/drivers/md/dm-cache-target.c
+> 
+> > +static bool is_write_io(struct bio *bio)
+> > +{
+> > +	return bio_data_dir(bio) == WRITE;
+> > +}
+> 
+> I'm not really convinced about this one, though I can see some superficial
+> attractiveness.  I think introducing it in a single file (rather than
+> kernel-wide) is obfuscating the code rather than making it more readable.
+> 
+> If a change like this were to happen, wouldn't fs.h be a better place?
 
-> +#define DM_TRC_OUT(lev, p, f, arg...) \
-> +	do { \
-> +		if (to_trc_policy(p)->trace_level >= lev) \
-> +			DMINFO("%s: " f, __func__, ## arg); \
-> +	} while (0)
+is_write_io() was already in dm-cache-target.c, this patch just makes
+use of it in more applicable places.
 
-OK for private debugging, but I can't pretend to be very keen on this
-one going upstream in this form.   Might this not need to support high
-volumes of messages sometimes?  Were other upstream mechanisms
-considered?  (E.g. see Documentation/trace).
-
-Alasdair
+But I'm fine with completely eliminating is_write_io()... whatever
+others would prefer.
