@@ -1,18 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 05/24] dm cache policy mq: implement
- writeback_work() and mq_{set, clear}_dirty()
-Date: Fri, 25 Oct 2013 15:18:05 -0400
-Message-ID: <20131025191804.GA4804@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 11/24] dm table: print error on
+	preresume	failure
+Date: Fri, 25 Oct 2013 20:22:16 +0100
+Message-ID: <20131025192216.GJ17070@agk-dp.fab.redhat.com>
 References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
-	<1382639437-27007-6-git-send-email-snitzer@redhat.com>
-	<20131025160612.GG17070@agk-dp.fab.redhat.com>
+	<1382639437-27007-12-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20131025160612.GG17070@agk-dp.fab.redhat.com>
+In-Reply-To: <1382639437-27007-12-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,45 +21,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 25 2013 at 12:06pm -0400,
-Alasdair G Kergon <agk@redhat.com> wrote:
+On Thu, Oct 24, 2013 at 02:30:24PM -0400, Mike Snitzer wrote:
+> If preresume fails it is worth logging an error given that a device is
+> left suspended due to the failure.
+ 
+Indeed.
 
-> On Thu, Oct 24, 2013 at 02:30:18PM -0400, Mike Snitzer wrote:
-> > From: Joe Thornber <ejt@redhat.com>
->  
-> > --- a/drivers/md/dm-cache-policy-mq.c
-> 
-> > -	 * We maintain two queues of entries.  The cache proper contains
-> 
-> > +	 * We maintain three queues of entries.  The cache proper,
-> 
-> Does the Documentation file need updating too?
+> This change was motivated by local preresume error logging that was
+> added to the cache target.  Elevating this error logging to DM core
+> makes sense.
+ 
+But here I disagree: I think it makes more sense not to elevate this
+logging, but to leave the responsibility for it with the targets
+themselves.
 
-will fix.
+> +			DMERR("%s: %s: preresume failed, error = %d",
+> +			      dm_device_name(t->md), ti->type->name, r);
 
-> : The multiqueue policy has two sets of 16 queues: one set for entries
-> : waiting for the cache and another one for those in the cache.
-> 
-> > @@ -580,7 +585,16 @@ static void check_generation(struct mq_policy *mq)
-> 
-> Is the comment about this function no longer accurate?
-> 
-> : * At the moment the threshold is taken by averaging the hit counts of some
-> : * of the entries in the cache (the first 20 entries of the first level).
-> 
-> - It looks at clean before dirty?
+Elevated, you're only getting a single number displayed.
 
-yes, that is new.  will fix.
+If the targets retain the responsibility, then you should get a
+more-detailed error message such as:
 
-> - It looks at more than just the first level if it needs to?
+                DMERR("aborting resume - crypt key is not set.");
 
-was always the case, so docs were already stale.  will fix.
+                        DMERR("Unable to resume snapshot source until "
+                              "handover completes.");
 
-> > +// FIXME: can __mq_set_clear_dirty block?
-> 
-> Still to check this before inclusion upstream?
+                        DMERR("Unable to perform snapshot handover until "
+                              "source is suspended.");
 
-yeah, Joe said he'd have a look.
+                        DMERR("could not resize cache metadata");
+                        DMERR("could not load cache mappings");
+                        DMERR("could not load origin discards");
+
+I think we should retain the requirement that each target must log
+a meaningful message whenever preresume fails.
+
+Alasdair
