@@ -1,68 +1,86 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 21/24] dm cache: add trc policy shim
-Date: Fri, 25 Oct 2013 18:44:55 -0400
-Message-ID: <20131025224453.GG4804@redhat.com>
-References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
-	<1382639437-27007-22-git-send-email-snitzer@redhat.com>
-	<20131025201356.GM17070@agk-dp.fab.redhat.com>
-	<20131025210820.GA7589@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [BUG 3.12.rc4] Oops: unable to handle kernel paging request
+ during shutdown
+Date: Sun, 27 Oct 2013 20:20:47 +0000
+Message-ID: <CA+55aFyb72qoZ1Tjpb+=q-6+GmwoOXjfntY_zZnf300gg3d1Hg@mail.gmail.com>
+References: <525BD08C.2080101@t-online.de>
+	<CA+55aFwN++wO=rTFaH7m6YYQX+Fv3qDt6Hxs7UnPUJpFsrwSkA@mail.gmail.com>
+	<CA+55aFy7TpvkVuPEOJ7Qqirwap1gXoD1_MrYLhgPAYuVpN8u=w@mail.gmail.com>
+	<alpine.DEB.2.02.1310251221310.5266@ionos.tec.linutronix.de>
+	<CA+55aFxw1Hm4QVeEigkByP5RppSL30oHnLoR16C=henf-a=uFQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20131025210820.GA7589@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CA+55aFxw1Hm4QVeEigkByP5RppSL30oHnLoR16C=henf-a=uFQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>
+Cc: Knut Petersen <Knut_Petersen@t-online.de>, Ingo Molnar <mingo@kernel.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, =?UTF-8?B?RnLDqWTDqXJpYyBXZWlzYmVja2Vy?= <fweisbec@gmail.com>, Greg KH <greg@kroah.com>, linux-kernel <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 25 2013 at  5:08pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Fri, Oct 25, 2013 at 11:48 AM, Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
+>
+> Yes, but nobody has actually been able to trigger it with those. It's
+> pretty rare, and the debug options are so expensive that they aren't
+> reasonable to enable generally...
+>
+> So we need to try to figure out how to trigger it, or narrow things
+> down some way..
 
-> On Fri, Oct 25 2013 at  4:13pm -0400,
-> Alasdair G Kergon <agk@redhat.com> wrote:
-> 
-> > On Thu, Oct 24, 2013 at 02:30:34PM -0400, Mike Snitzer wrote:
-> > > From: Morgan Mears <morgan.mears@netapp.com>
-> >  
-> > > This commit includes a non-terminal policy (aka "shim") called trc that
-> > > may be stacked ontop of a terminal policy (e.g. mq).
-> > > The second shim, trc, adds function-call-level tracing to the policy
-> > > stack.  By default, an INFO-level log message including function name
-> > > and parameter(s) will be generated whenever most of the cache policy
-> > > interface functions are called.  An interface to increase or decrease
-> > > the verbosity of the trace output is also provided.
-> >  
-> > Firstly, why not call it 'trace' in full, rather than abbreviating it to 3
-> > consonants?
-> 
-> We can easily rename.
->  
-> > > +++ b/drivers/md/dm-cache-policy-trc.c
-> > 
-> > > +#define DM_TRC_OUT(lev, p, f, arg...) \
-> > > +	do { \
-> > > +		if (to_trc_policy(p)->trace_level >= lev) \
-> > > +			DMINFO("%s: " f, __func__, ## arg); \
-> > > +	} while (0)
-> > 
-> > OK for private debugging, but I can't pretend to be very keen on this
-> > one going upstream in this form.   Might this not need to support high
-> > volumes of messages sometimes?  Were other upstream mechanisms
-> > considered?  (E.g. see Documentation/trace).
-> 
-> Think this would take care of it (not full-blown tracepoints like
-> blktrace but certainly more performant than standard printk):
+Ok, still trying to figure this out, and I do have another bug as a
+result. I don't think this one is really the fundamental one either
+that caused my crash during "yum upgrade", nor necessarily Knut's
+problem during shutdown, but I'll keep looking.
 
-I folded this trace_printk change in and renamed from trc to trace, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=f6f5db50495b16ff23a0febf38f9ee9d964b12dd
+And who knows.. Maybe this *does* explain Knut's issue.
+
+Appended is a warning I get with DEBUG_TIMER_OBJECTS. Seems to be a
+device-mapper issue. Alasdair, Neil, comments? It looks like
+dm_destroy() is freeing an delayed_work entry that is still active...
+
+I don't know exactly which field in the 'struct mapped_device' has
+that delayed-work thing, but I assume it's the kobject.. Somebody who
+knows this code better, please take a look!
+
+                   Linus
+
+---
+[    8.258139] ------------[ cut here ]------------
+[    8.258145] WARNING: CPU: 1 PID: 257 at lib/debugobjects.c:260
+debug_print_object+0x83/0xa0()
+[    8.258150] ODEBUG: free active (active state 0) object type:
+timer_list hint: delayed_work_timer_fn+0x0/0x20
+[    8.258153] Modules linked in: dm_crypt crc32_pclmul crc32c_intel
+i915 i2c_algo_bit drm_kms_helper ghash_clmulni_intel drm i2c_core
+video
+[    8.258164] CPU: 1 PID: 257 Comm: systemd-cryptse Not tainted
+3.12.0-rc6-00331-ga2ff82065b5b #2
+[    8.258166] Hardware name: Sony Corporation SVP11213CXB/VAIO, BIOS
+R0270V7 05/17/2013
+[    8.258168]  0000000000000009 ffff8800d65f3b28 ffffffff8160d4a2
+ffff8800d65f3b70
+[    8.258172]  ffff8800d65f3b60 ffffffff810514e8 ffff8800372cb078
+ffffffff81c365e0
+[    8.258176]  ffffffff819f9133 ffffffff81f3d3f0 0000000000000003
+ffff8800d65f3bc0
+[    8.258180] Call Trace:
+[    8.258186]  [<ffffffff8160d4a2>] dump_stack+0x45/0x56
+[    8.258191]  [<ffffffff810514e8>] warn_slowpath_common+0x78/0xa0
+[    8.258195]  [<ffffffff81051557>] warn_slowpath_fmt+0x47/0x50
+[    8.258198]  [<ffffffff812f8883>] debug_print_object+0x83/0xa0
+[    8.258202]  [<ffffffff8106aa90>] ? execute_in_process_context+0x90/0x90
+[    8.258205]  [<ffffffff812f99fb>] debug_check_no_obj_freed+0x20b/0x250
+[    8.258210]  [<ffffffff814b564c>] ? __dm_destroy+0x1ec/0x250
+[    8.258214]  [<ffffffff8115db59>] kfree+0x89/0x160
+[    8.258217]  [<ffffffff814b564c>] __dm_destroy+0x1ec/0x250
+[    8.258221]  [<ffffffff814b626e>] dm_destroy+0xe/0x10
+[    8.258224]  [<ffffffff814bba6a>] dev_remove+0x9a/0x130
+[    8.258226]  [<ffffffff814bb9d0>] ? __hash_remove+0xd0/0xd0
+[    8.258229]  [<ffffffff814bbed0>] ctl_ioctl+0x250/0x500
+[    8.258234]  [<ffffffff81184201>] ? do_last+0x511/0x1220
+[    8.258238]  [<ffffffff814bc18e>] dm_ctl_ioctl+0xe/0x20
+[    8.258242]  [<ffffffff811879ad>] do_vfs_ioctl+0x2cd/0x4a0
+[    8.258246]  [<ffffffff81177419>] ? ____fput+0x9/0x10
+[    8.258249]  [<ffffffff81187c01>] SyS_ioctl+0x81/0xa0
+[    8.258254]  [<ffffffff8161b9a2>] system_call_fastpath+0x16/0x1b
+[    8.258256] ---[ end trace 25f53c192da70824 ]---
