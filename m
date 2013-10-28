@@ -1,17 +1,11 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH 2/2] dm-crypt: Add TCW IV mode for old CBC
-	TCRYPT containers.
-Date: Mon, 28 Oct 2013 17:58:35 +0100
-Message-ID: <526E97BB.2080604@gmail.com>
-References: <1382275000-10660-1-git-send-email-gmazyland@gmail.com>
-	<1382275000-10660-2-git-send-email-gmazyland@gmail.com>
-	<20131028160849.GB25212@redhat.com>
+From: siju george <siju.george@gmail.com>
+Subject: generic_make_request() sleep
+Date: Mon, 28 Oct 2013 11:46:20 -0700
+Message-ID: <CAFkbBycdTn0CUoXWZooRjvPzCppksNsb3LgVTE+_QPw-o2QVqw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5587664713871803315=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20131028160849.GB25212@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +15,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 28.10.2013 17:08, Mike Snitzer wrote:
-> What does TCW mean?  How does it relate to CBC?
-> - Is TCW mode: "CBC mode with some additional tweaks"?
+--===============5587664713871803315==
+Content-Type: multipart/alternative; boundary=bcaec520ea79225a1204e9d1848b
 
-Yes, as said in previous mail, it is just shortcut.
+--bcaec520ea79225a1204e9d1848b
+Content-Type: text/plain; charset=ISO-8859-1
 
->
->> While TCRYPT CBC mode is legacy and is known to be vulnerable
->> to some watermarking attacks (e.g. revealing of hidden disk
->> existence) it can be still useful to mount old containers
->> without using 3rd party software or for independent forensic
->> analysis of such containers.
->
-> Now you're switching back to referring to "TCRYPT CBC mode".  What
-> happened to "TCW mode"?
+Hello,
 
-I am talking about implementation in general, not dmcrypt specific one.
-It is still the same mode of course.
+I am new to device-mapper and block layer. In my device mapper driver I use
+generic_make_request() function to pass the bio to lower layer. But I see
+this function wait for IO for most of the time that cause my driver
+throughput be very low. The IOs my driver pass down is all 4K size.
 
->> There is also second key used for "whitening" of sectors.
->> Whitening key is xored with sector number and mixed using
->> CRC32 and resulting value is applied to whole sector.
->> (Detailed calculation is in Truecrypt documentation for version < 4.1
->> and will be also described on dmcrypt site.)
->
-> Can you add a pointer to the Truecrypt documentation for < 4.1?
+Could someone please help me or point me to some documentation to
+understand this issue? Shouldn't this function be returning immediately as
+I am passing the completion function along with the bio ?
 
-I am afraid they removed all old documentation from site.
-(but search google e.g. for truecrypt-3.1a-user-guide.pdf or
-some similar version which use CBC mode, whitening and IV
-generator is described there as well)
+Thanks in advance,
+-Siju
 
->  Or a pointer to the dmcrypt site documentation?
+--bcaec520ea79225a1204e9d1848b
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Description is not yet there (once it is in kernel I will add it)
-but link is referenced even from kernel Documentation
-http://code.google.com/p/cryptsetup/wiki/DMCrypt
+<div dir=3D"ltr">Hello,<div><br></div><div>I am new to device-mapper and bl=
+ock layer. In my device mapper driver I use generic_make_request() function=
+ to pass the bio to lower layer. But I see this function wait for IO for mo=
+st of the time that cause my driver throughput be very low. The IOs my driv=
+er pass down is all 4K size.=A0</div>
+<div><br></div><div>Could someone please help me or point me to some docume=
+ntation to understand this issue? Shouldn&#39;t this function be returning =
+immediately as I am passing the completion function along with the bio ?</d=
+iv>
+<div><br></div><div>Thanks in advance,</div><div>-Siju=A0</div></div>
 
-(and yes, seems that IV generators need better description there)
+--bcaec520ea79225a1204e9d1848b--
 
-Thanks,
-Milan
+
+--===============5587664713871803315==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5587664713871803315==--
