@@ -1,37 +1,45 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] New userspace statistics patch
-Date: Sun, 27 Oct 2013 20:54:16 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1310272051430.16136@file01.intranet.prod.int.rdu2.redhat.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: dongmao zhang <dmzhang@suse.com>
+Subject: [PATCH 0/1] patches to improve cluster raid1 performance
+	[V3]
+Date: Mon, 28 Oct 2013 18:07:02 +0800
+Message-ID: <cover.1382949020.git.dmzhang@suse.com>
+References: <yes>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: dm-devel@redhat.com, lvm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <yes>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+use DM_INTEGRATED_FLUSH to indicate the new option of flush request.
+when using DM_INTEGRATED_FLUSH, the payload of flush request is the 
+same as mark region request.
 
-I announce a new version of userspace statistics patch. I put it here: 
-http://people.redhat.com/~mpatocka/patches/userspace/statistics/lvstats.patch
+'X' means we have this kind of request, while '0' means none.
 
-A difference from the previous version: you can create statistics with 
-arbitrary starting and ending sector. In the previous version you could 
-only subdivide existing range.
+mark request :     X               X               0
 
-Mikulas
+clear request:     X               0               X
 
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+flush method:    payload_flush   payload_flush   delayed flush
+
+dongmao zhang (1):
+  improve the performance of dm-log-userspace
+
+ drivers/md/dm-log-userspace-base.c    |  133 +++++++++++++++++++++++++++++----
+ include/uapi/linux/dm-log-userspace.h |    6 +-
+ 2 files changed, 121 insertions(+), 18 deletions(-)
+
+-- 
+1.7.3.4
