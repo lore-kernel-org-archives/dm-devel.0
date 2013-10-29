@@ -1,75 +1,68 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 06/24 v2] dm cache policy mq: return NULL from
- alloc_entry if cache is full
-Date: Tue, 29 Oct 2013 10:49:44 -0400
-Message-ID: <20131029144943.GA15641@redhat.com>
-References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
-	<1382639437-27007-7-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1382639437-27007-7-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>
+From: Kent Overstreet <kmo@daterainc.com>
+Subject: [PATCH 05/23] dm: Use bvec_iter for dm_bio_record()
+Date: Tue, 29 Oct 2013 13:17:58 -0700
+Message-ID: <1383077896-4132-6-git-send-email-kmo@daterainc.com>
+References: <1383077896-4132-1-git-send-email-kmo@daterainc.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1383077896-4132-1-git-send-email-kmo@daterainc.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@kernel.dk
+Cc: linux-kernel@vger.kernel.org, hch@infradead.org, tj@kernel.org, nab@linux-iscsi.org, Kent Overstreet <kmo@daterainc.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+This patch doesn't itself have any functional changes, but immutable
+biovecs are going to add a bi_bvec_done member to bi_iter, which will
+need to be saved too here.
 
-alloc_entry() must return NULL if the cache is full (mq->free list is
-empty).  To be clear, it is not a bug if the alloc_entry() logic tries
-to alloc from the free list before it falls back to pop from pre cache.
-The free list is simply a resource priority list that alloc_entry()
-tries to claim a block from but sometimes cannot (e.g. cache is full).
-
-This fix addresses callers' (insert_in*cache()) requirement that
-alloc_entry() return NULL when an entry isn't able to be allocated.
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org # v3.9+
+Signed-off-by: Kent Overstreet <kmo@daterainc.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 ---
- drivers/md/dm-cache-policy-mq.c |   12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
+ drivers/md/dm-bio-record.h | 12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
 
-Index: linux/drivers/md/dm-cache-policy-mq.c
-===================================================================
---- linux.orig/drivers/md/dm-cache-policy-mq.c
-+++ linux/drivers/md/dm-cache-policy-mq.c
-@@ -415,18 +415,20 @@ static void hash_remove(struct entry *e)
-  */
- static struct entry *alloc_entry(struct mq_policy *mq)
+diff --git a/drivers/md/dm-bio-record.h b/drivers/md/dm-bio-record.h
+index 5ace48e..4f46e8e 100644
+--- a/drivers/md/dm-bio-record.h
++++ b/drivers/md/dm-bio-record.h
+@@ -28,11 +28,9 @@ struct dm_bio_vec_details {
+ };
+ 
+ struct dm_bio_details {
+-	sector_t bi_sector;
+ 	struct block_device *bi_bdev;
+-	unsigned int bi_size;
+-	unsigned short bi_idx;
+ 	unsigned long bi_flags;
++	struct bvec_iter bi_iter;
+ 	struct dm_bio_vec_details bi_io_vec[BIO_MAX_PAGES];
+ };
+ 
+@@ -40,11 +38,9 @@ static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
  {
--	struct entry *e;
-+	struct entry *e = NULL;
+ 	unsigned i;
  
- 	if (mq->nr_entries_allocated >= mq->nr_entries) {
- 		BUG_ON(!list_empty(&mq->free));
- 		return NULL;
- 	}
+-	bd->bi_sector = bio->bi_iter.bi_sector;
+ 	bd->bi_bdev = bio->bi_bdev;
+-	bd->bi_size = bio->bi_iter.bi_size;
+-	bd->bi_idx = bio->bi_iter.bi_idx;
+ 	bd->bi_flags = bio->bi_flags;
++	bd->bi_iter = bio->bi_iter;
  
--	e = list_entry(list_pop(&mq->free), struct entry, list);
--	INIT_LIST_HEAD(&e->list);
--	INIT_HLIST_NODE(&e->hlist);
-+	if (!list_empty(&mq->free)) {
-+		e = list_entry(list_pop(&mq->free), struct entry, list);
-+		INIT_LIST_HEAD(&e->list);
-+		INIT_HLIST_NODE(&e->hlist);
-+		mq->nr_entries_allocated++;
-+	}
+ 	for (i = 0; i < bio->bi_vcnt; i++) {
+ 		bd->bi_io_vec[i].bv_len = bio->bi_io_vec[i].bv_len;
+@@ -56,11 +52,9 @@ static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
+ {
+ 	unsigned i;
  
--	mq->nr_entries_allocated++;
- 	return e;
- }
+-	bio->bi_iter.bi_sector = bd->bi_sector;
+ 	bio->bi_bdev = bd->bi_bdev;
+-	bio->bi_iter.bi_size = bd->bi_size;
+-	bio->bi_iter.bi_idx = bd->bi_idx;
+ 	bio->bi_flags = bd->bi_flags;
++	bio->bi_iter = bd->bi_iter;
  
+ 	for (i = 0; i < bio->bi_vcnt; i++) {
+ 		bio->bi_io_vec[i].bv_len = bd->bi_io_vec[i].bv_len;
+-- 
+1.8.4.rc3
