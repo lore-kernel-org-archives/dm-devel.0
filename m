@@ -1,43 +1,55 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/2] dm-crypt: Properly handle extra
-	key	string in initialization
-Date: Wed, 30 Oct 2013 03:23:46 +0000
-Message-ID: <20131030032346.GA18263@agk-dp.fab.redhat.com>
-References: <1382275000-10660-1-git-send-email-gmazyland@gmail.com>
-	<1382998864-10380-1-git-send-email-gmazyland@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chen Gang <gang.chen@asianux.com>
+Subject: [PATCH] drivers: md: include "linux/vmalloc.h" in "dm-cache-policy-hints.c"
+Date: Wed, 30 Oct 2013 14:17:09 +0800
+Message-ID: <5270A465.2040200@asianux.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1382998864-10380-1-git-send-email-gmazyland@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, neilb@suse.de
+Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Oct 28, 2013 at 11:21:03PM +0100, Milan Broz wrote:
-> Example where key string contains main key K, whitening key
-> Kw and IV seed Kiv:
-> 
-> |     K       |   Kiv   |       Kw       |
-> |--------------- key_size ---------------|
-> |             |-----key_extra_size-------|
-> |  [1 key]    | [1 key] |     [1 key]    | => key_parts = 3
- 
-Ah, part of the confusion is because this patch does not actually support 
-this case yet, does it?  That's for the next patch!
+Need include related header file, or can not pass compiling, the
+related error (for powerpc with allmodconfig):
 
-Can we update this patch header accordingly?
-Maybe even move those ASCII diagrams into the code as comments.
+    CC [M]  drivers/md/dm-cache-policy-hints.o
+  drivers/md/dm-cache-policy-hints.c: In function =91alloc_hash=92:
+  drivers/md/dm-cache-policy-hints.c:94:2: error: implicit declaration =
+of function =91vzalloc=92 [-Werror=3Dimplicit-function-declaration]
+  drivers/md/dm-cache-policy-hints.c:94:14: warning: assignment makes p=
+ointer from integer without a cast [enabled by default]
+  drivers/md/dm-cache-policy-hints.c: In function =91free_hash=92:
+  drivers/md/dm-cache-policy-hints.c:101:2: error: implicit declaration=
+ of function =91vfree=92 [-Werror=3Dimplicit-function-declaration]
+  drivers/md/dm-cache-policy-hints.c: In function =91alloc_bitset=92:
+  drivers/md/dm-cache-policy-hints.c:184:2: warning: return makes point=
+er from integer without a cast [enabled by default]
 
-Alasdair
+
+Signed-off-by: Chen Gang <gang.chen@asianux.com>
+---
+ drivers/md/dm-cache-policy-hints.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/md/dm-cache-policy-hints.c b/drivers/md/dm-cache-p=
+olicy-hints.c
+index 312cfb7..a8c1930 100644
+--- a/drivers/md/dm-cache-policy-hints.c
++++ b/drivers/md/dm-cache-policy-hints.c
+@@ -15,6 +15,7 @@
+ #include <linux/hash.h>
+ #include <linux/list.h>
+ #include <linux/module.h>
++#include <linux/vmalloc.h>
+=20
+ #define DM_MSG_PREFIX "cache-policy-hints"
+=20
+--=20
+1.7.7.6
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
