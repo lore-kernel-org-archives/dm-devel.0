@@ -1,8 +1,8 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH 1/2] dm-crypt: Properly handle extra
 	key	string in initialization
-Date: Wed, 30 Oct 2013 02:48:14 +0000
-Message-ID: <20131030024814.GA17405@agk-dp.fab.redhat.com>
+Date: Wed, 30 Oct 2013 03:23:46 +0000
+Message-ID: <20131030032346.GA18263@agk-dp.fab.redhat.com>
 References: <1382275000-10660-1-git-send-email-gmazyland@gmail.com>
 	<1382998864-10380-1-git-send-email-gmazyland@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -26,18 +26,18 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On Mon, Oct 28, 2013 at 11:21:03PM +0100, Milan Broz wrote:
-> +			cc->key_extra_size = cc->key_size / cc->key_parts;
+> Example where key string contains main key K, whitening key
+> Kw and IV seed Kiv:
+> 
+> |     K       |   Kiv   |       Kw       |
+> |--------------- key_size ---------------|
+> |             |-----key_extra_size-------|
+> |  [1 key]    | [1 key] |     [1 key]    | => key_parts = 3
+ 
+Ah, part of the confusion is because this patch does not actually support 
+this case yet, does it?  That's for the next patch!
 
-I don't understand the logic that leads to this assignment.
-
-Are there some implicit constraints on the input?
-
-Do all invalid inputs produce an appropriate error?
-
-Is there a clearer way to set out the calculation and can it be annotated?
-
-Can we rename key_extra_size to extrakey_size (like subkey_size)?
-
-Is extrakey_size always less than subkey_size?
+Can we update this patch header accordingly?
+Maybe even move those ASCII diagrams into the code as comments.
 
 Alasdair
