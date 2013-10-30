@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 17/23] dm: Refactor for new bio cloning/splitting
-Date: Tue, 29 Oct 2013 19:04:30 -0400
-Message-ID: <20131029230430.GA2989@redhat.com>
+Date: Tue, 29 Oct 2013 20:09:08 -0400
+Message-ID: <20131030000908.GB2989@redhat.com>
 References: <1383077896-4132-1-git-send-email-kmo@daterainc.com>
  <1383077896-4132-18-git-send-email-kmo@daterainc.com>
 Mime-Version: 1.0
@@ -28,11 +28,43 @@ Kent Overstreet <kmo@daterainc.com> wrote:
 > Cc: Jens Axboe <axboe@kernel.dk>
 > Cc: Alasdair Kergon <agk@redhat.com>
 > Cc: dm-devel@redhat.com
+> ---
+>  drivers/md/dm-thin.c |   8 ++-
+>  drivers/md/dm.c      | 170 ++++++---------------------------------------------
+>  fs/bio.c             |  38 ------------
+>  include/linux/bio.h  |   1 -
+>  4 files changed, 24 insertions(+), 193 deletions(-)
+> 
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index a654024..1abb4a2 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -611,8 +611,10 @@ static void cell_defer_no_holder(struct thin_c *tc, struct dm_bio_prison_cell *c
+>  
+>  static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
+>  {
+> -	if (m->bio)
+> +	if (m->bio) {
+>  		m->bio->bi_end_io = m->saved_bi_end_io;
+> +		atomic_inc(&m->bio->bi_remaining);
+> +	}
+>  	cell_error(m->tc->pool, m->cell);
+>  	list_del(&m->list);
+>  	mempool_free(m, m->tc->pool->mapping_pool);
+> @@ -626,8 +628,10 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+>  	int r;
+>  
+>  	bio = m->bio;
+> -	if (bio)
+> +	if (bio) {
+>  		bio->bi_end_io = m->saved_bi_end_io;
+> +		atomic_inc(&bio->bi_remaining);
+> +	}
+>  
+>  	if (m->err) {
+>  		cell_error(pool, m->cell);
 
-I reviewed this patch some weeks ago (along with the rest of the DM
-changes), I provided the dm-thin.c changes in this patch:
-http://www.redhat.com/archives/dm-devel/2013-October/msg00027.html
+But now that I look closer, the above dm-thin.c hunks belong in:
+[PATCH 19/23] block: Generic bio chaining
 
-Please add:
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Seems these changes were mistakenly folded into this 17/23 patch?
