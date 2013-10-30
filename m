@@ -1,18 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 17/23] dm: Refactor for new bio
-	cloning/splitting
-Date: Tue, 29 Oct 2013 20:29:36 -0400
-Message-ID: <20131030002935.GA3449@redhat.com>
-References: <1383077896-4132-1-git-send-email-kmo@daterainc.com>
-	<1383077896-4132-18-git-send-email-kmo@daterainc.com>
-	<20131030000908.GB2989@redhat.com> <20131030001959.GB27129@kmo>
+Subject: Re: [PATCH 1/2] dm-crypt: Properly handle extra key
+ string in initialization
+Date: Tue, 29 Oct 2013 20:49:09 -0400
+Message-ID: <20131030004909.GA3537@redhat.com>
+References: <1382275000-10660-1-git-send-email-gmazyland@gmail.com>
+	<1382998864-10380-1-git-send-email-gmazyland@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20131030001959.GB27129@kmo>
+In-Reply-To: <1382998864-10380-1-git-send-email-gmazyland@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,27 +21,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, hch@infradead.org, dm-devel@redhat.com, tj@kernel.org, Alasdair Kergon <agk@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Oct 29 2013 at  8:19pm -0400,
-Kent Overstreet <kmo@daterainc.com> wrote:
+On Mon, Oct 28 2013 at  6:21pm -0400,
+Milan Broz <gmazyland@gmail.com> wrote:
 
-> On Tue, Oct 29, 2013 at 08:09:08PM -0400, Mike Snitzer wrote:
-> > 
-> > But now that I look closer, the above dm-thin.c hunks belong in:
-> > [PATCH 19/23] block: Generic bio chaining
-> > 
-> > Seems these changes were mistakenly folded into this 17/23 patch?
+> Some encryption modes use extra keys (e.g. loopAES has IV seed)
+> which are not used in block cipher initialization but are part
+> of key string in table constructor.
 > 
-> ...Whoops, fixed. Here's the new versions if you want to take a look:
+> Patch adds additional field which described lenght of this extra
+> keys and substracts it before real key encryption setting.
 > 
-> http://evilpiepirate.org/git/linux-bcache.git/log/?h=for-jens
-> http://evilpiepirate.org/git/linux-bcache.git/commit/?h=for-jens&id=74f0f2084f88bb38403ca80bb98976f8219f9262
+> So the key_size always includes the size of provided key
+> in mapping table in bytes.
+> 
+> The key_parts descibes how many parts (usually keys) contains
+> the whole key buffer and key_extra_size contains size in bytes
+> of additional keys part (this number of bytes must be cut off
+> because is processed by IV generator).
+> 
+> | K1 | K2 | .... | K64 |      Kiv       |
+> |----------- key_size ----------------- |
+> |                      |-key_extra_size-|
+> |     [64 keys]           [1 key]       | => key_parts = 65
+> 
+> Example where key string contains main key K, whitening key
+> Kw and IV seed Kiv:
+> 
+> |     K       |   Kiv   |       Kw       |
+> |--------------- key_size ---------------|
+> |             |-----key_extra_size-------|
+> |  [1 key]    | [1 key] |     [1 key]    | => key_parts = 3
+> 
+> Because extra keys are calculated during IV mode setting,
+> key initialization is moved after this step.
+> 
+> For now, this change has no effect to supported modes
+> (thanks to ilog2 rounding) but is required by following patch.
+> 
+> Signed-off-by: Milan Broz <gmazyland@gmail.com>
 
-Yeap, looks good (aside from the dm patches not having my Reviewed-by).
+I pushed this to linux-next (for v3.13), see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=60039e2b0474f4e6b66746b9e179ca384d3e5c96
 
-Not sure if Jens can add it?..  that said, I don't mind the commits not
-having my Reviewed-by but it does lose some context for your changes
-having had some other eyeballs on them.
+I tweaked the header a little and some whitespace.
