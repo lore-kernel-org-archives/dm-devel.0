@@ -1,17 +1,18 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/2] dm-crypt: Properly handle extra key
- string in initialization
-Date: Tue, 29 Oct 2013 20:49:09 -0400
-Message-ID: <20131030004909.GA3537@redhat.com>
+Subject: Re: [PATCH 2/2] dm-crypt: Add TCW IV mode for old CBC
+ TCRYPT containers.
+Date: Tue, 29 Oct 2013 20:50:38 -0400
+Message-ID: <20131030005037.GB3537@redhat.com>
 References: <1382275000-10660-1-git-send-email-gmazyland@gmail.com>
 	<1382998864-10380-1-git-send-email-gmazyland@gmail.com>
+	<1382998864-10380-2-git-send-email-gmazyland@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1382998864-10380-1-git-send-email-gmazyland@gmail.com>
+In-Reply-To: <1382998864-10380-2-git-send-email-gmazyland@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,43 +29,57 @@ List-Id: dm-devel.ids
 On Mon, Oct 28 2013 at  6:21pm -0400,
 Milan Broz <gmazyland@gmail.com> wrote:
 
-> Some encryption modes use extra keys (e.g. loopAES has IV seed)
-> which are not used in block cipher initialization but are part
-> of key string in table constructor.
+> The dmcrypt already can activate TCRYPT (TrueCrypt compatible)
+> containers in LRW or XTS block encryption mode.
 > 
-> Patch adds additional field which described lenght of this extra
-> keys and substracts it before real key encryption setting.
+> TCRYPT containers prior to version 4.1 used CBC mode with some
+> additional tweaks.
 > 
-> So the key_size always includes the size of provided key
-> in mapping table in bytes.
+> This patch adds support for these containers.
 > 
-> The key_parts descibes how many parts (usually keys) contains
-> the whole key buffer and key_extra_size contains size in bytes
-> of additional keys part (this number of bytes must be cut off
-> because is processed by IV generator).
+> The mode is implemented using special IV generator named TCW
+> (TrueCrypt IV with whitening).
 > 
-> | K1 | K2 | .... | K64 |      Kiv       |
-> |----------- key_size ----------------- |
-> |                      |-key_extra_size-|
-> |     [64 keys]           [1 key]       | => key_parts = 65
+> TCW IV supports only containers encrypted with one cipher
+> (Tested with AES, Twofish, Serpent, CAST5 and TripleDES).
 > 
-> Example where key string contains main key K, whitening key
-> Kw and IV seed Kiv:
+> While this mode is legacy and is known to be vulnerable
+> to some watermarking attacks (e.g. revealing of hidden disk
+> existence) it can be still useful to mount old containers
+> without using 3rd party software or for independent forensic
+> analysis of such containers.
 > 
-> |     K       |   Kiv   |       Kw       |
-> |--------------- key_size ---------------|
-> |             |-----key_extra_size-------|
-> |  [1 key]    | [1 key] |     [1 key]    | => key_parts = 3
+> (Both userspace and kernel code is independent implementation
+> based on format documentation and completely avoids use of original
+> source code.)
 > 
-> Because extra keys are calculated during IV mode setting,
-> key initialization is moved after this step.
+> The TCW IV generator uses two additional keys, Kw (whitening
+> seed, size is always 16 bytes - TCW_WHITENING_SIZE) and
+> Kiv (IV seed, size is always of the IV size of selected cipher).
+> These keys are concatenated to main encryption key in mapping table.
 > 
-> For now, this change has no effect to supported modes
-> (thanks to ilog2 rounding) but is required by following patch.
+> While whitening is completely independent from IV, it is
+> implemented inside IV generator for simplification.
+> 
+> Whitening value is always 16 bytes long and is calculated
+> per sector from provided Kw as initial seed, xored with
+> sector number and mixed with CRC32 algorithm.
+> Resulting value is xored with ciphertext sector content.
+> 
+> IV is calculated from provided Kiv as initial seed and
+> xored with sector number.
+> 
+> Detailed calculation is in Truecrypt documentation for version < 4.1
+> and will be also described on dmcrypt site
+> http://code.google.com/p/cryptsetup/wiki/DMCrypt
+> 
+> The experimental support for activation of these containers
+> is already present in git devel brach of cryptsetup.
 > 
 > Signed-off-by: Milan Broz <gmazyland@gmail.com>
 
 I pushed this to linux-next (for v3.13), see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=60039e2b0474f4e6b66746b9e179ca384d3e5c96
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=8a478f032b40a28a66559a91095d0e0733194389
 
-I tweaked the header a little and some whitespace.
+Tweaked the header and text in dm-crypt.txt and maybe a few other
+comments.
