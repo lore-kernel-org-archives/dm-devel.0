@@ -1,18 +1,19 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/2] dm-crypt: Add TCW IV mode for old CBC
- TCRYPT containers.
-Date: Tue, 29 Oct 2013 20:50:38 -0400
-Message-ID: <20131030005037.GB3537@redhat.com>
-References: <1382275000-10660-1-git-send-email-gmazyland@gmail.com>
-	<1382998864-10380-1-git-send-email-gmazyland@gmail.com>
-	<1382998864-10380-2-git-send-email-gmazyland@gmail.com>
+Subject: Re: [PATCH]dm-mpath: fix for race condition between
+ multipath_dtr and pg_init_done.
+Date: Tue, 29 Oct 2013 20:57:05 -0400
+Message-ID: <20131030005705.GA3569@redhat.com>
+References: <FB8A412F33166C4A930D37BD63236C902AD2A073@SACEXCMBX02-PRD.hq.netapp.com>
+	<20131017185306.GA29909@redhat.com> <52605B07.5070007@suse.de>
+	<20131017211014.GA30993@redhat.com>
+	<FB8A412F33166C4A930D37BD63236C902AD2A12B@SACEXCMBX02-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1382998864-10380-2-git-send-email-gmazyland@gmail.com>
+In-Reply-To: <FB8A412F33166C4A930D37BD63236C902AD2A12B@SACEXCMBX02-PRD.hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,64 +23,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: dm-devel@redhat.com
+To: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 28 2013 at  6:21pm -0400,
-Milan Broz <gmazyland@gmail.com> wrote:
+On Thu, Oct 17 2013 at  6:03pm -0400,
+Merla, ShivaKrishna <ShivaKrishna.Merla@netapp.com> wrote:
 
-> The dmcrypt already can activate TCRYPT (TrueCrypt compatible)
-> containers in LRW or XTS block encryption mode.
+> > From: Mike Snitzer [mailto:snitzer@redhat.com]
+> > Sent: Thursday, October 17, 2013 4:10 PM
+> > To: Hannes Reinecke
+> > Cc: Merla, ShivaKrishna; dm-devel@redhat.com; agk@redhat.com; Mikulas
+> > Patocka
+> > Subject: Re: [PATCH]dm-mpath: fix for race condition between
+> > multipath_dtr and pg_init_done.
+> > 
+> > On Thu, Oct 17 2013 at  5:47pm -0400,
+> > Hannes Reinecke <hare@suse.de> wrote:
+> > 
+> > > On 10/17/2013 08:53 PM, Mike Snitzer wrote:
+> > > >Thanks for reporting this.  Much appreciated.  More comments below.
+> > > >
+> > > >On Thu, Oct 17 2013 at  1:31pm -0400,
+> > > >Merla, ShivaKrishna <ShivaKrishna.Merla@netapp.com> wrote:
+> > > >
+> > > >>Whenever multipath_dtr is happening, we should prevent queueing any
+> > further path
+> > > >>activation work. There was a kernel panic where after pg_init_done()
+> > decrements
+> > > >>pg_init_in_progress to 0, wait_for_pg_init_completion call assumes
+> > there are no
+> > > >>more pending path management commands. But if pg_init_required is
+> > set by
+> > > >>pg_init_done call due to retriable mode_select errors , then
+> > process_queued_ios()
+> > > >>will again queue the path activation work. If free_multipath call has been
+> > > >>completed by the time activate_path work is called, kernel panic was
+> > seen on
+> > > >>accessing multipath members.
+> > > >
+> > > >Your locking looks suspect to me, see comment inlined below
+> > multipath_dtr
+> > > >
+> > > >But shouldn't we just train multipath_wait_for_pg_init_completion() to
+> > > >look at m->pg_init_required?  Have it wait for both pg_init_required and
+> > > >pg_init_in_progress to be zero?  We'd also have to audit that
+> > > >pg_init_required cannot be set while pg_init_in_progress.
+> > > >
+> > > Hmm.
+> > >
+> > > We _could_ try to resolve it by pushing I/O back onto the request queue
+> > > (cf my earlier post 'requeue I/O during pg_init').
+> > >
+> > > I was hoping to excite some comments with that, but seems to be my
+> > > fate nowadays to send out patches with no reply.
+> > 
+> > patchwork caught it:
+> > https://patchwork.kernel.org/patch/2969111/
+> > 
+> > I've just been distracted with other stuff the past week; but I'll be
+> > looking closer at this issue (and your earlier patch) shortly and we'll
+> > get a fix queued for 3.13.
+> > 
+> > > Anyway, maybe this will be giving it some more attention.
+> > > It definitely would avoid this problem, by virtue of not having to
+> > > queue I/O internally during pg_init, so we could easily tear down
+> > > the queue.
+> > 
+> > Sounds good.
 > 
-> TCRYPT containers prior to version 4.1 used CBC mode with some
-> additional tweaks.
-> 
-> This patch adds support for these containers.
-> 
-> The mode is implemented using special IV generator named TCW
-> (TrueCrypt IV with whitening).
-> 
-> TCW IV supports only containers encrypted with one cipher
-> (Tested with AES, Twofish, Serpent, CAST5 and TripleDES).
-> 
-> While this mode is legacy and is known to be vulnerable
-> to some watermarking attacks (e.g. revealing of hidden disk
-> existence) it can be still useful to mount old containers
-> without using 3rd party software or for independent forensic
-> analysis of such containers.
-> 
-> (Both userspace and kernel code is independent implementation
-> based on format documentation and completely avoids use of original
-> source code.)
-> 
-> The TCW IV generator uses two additional keys, Kw (whitening
-> seed, size is always 16 bytes - TCW_WHITENING_SIZE) and
-> Kiv (IV seed, size is always of the IV size of selected cipher).
-> These keys are concatenated to main encryption key in mapping table.
-> 
-> While whitening is completely independent from IV, it is
-> implemented inside IV generator for simplification.
-> 
-> Whitening value is always 16 bytes long and is calculated
-> per sector from provided Kw as initial seed, xored with
-> sector number and mixed with CRC32 algorithm.
-> Resulting value is xored with ciphertext sector content.
-> 
-> IV is calculated from provided Kiv as initial seed and
-> xored with sector number.
-> 
-> Detailed calculation is in Truecrypt documentation for version < 4.1
-> and will be also described on dmcrypt site
-> http://code.google.com/p/cryptsetup/wiki/DMCrypt
-> 
-> The experimental support for activation of these containers
-> is already present in git devel brach of cryptsetup.
-> 
-> Signed-off-by: Milan Broz <gmazyland@gmail.com>
+> Thanks for your comments.  I agree we should lock while setting dtr_in_progress, I think I overlooked it as its handled in process_queued_ios as well.
+> We looked into handling this in wait_for_pg_init_completion() but checking for pg_init_required here will not help as well ( until we prevent setting pg_init_required while pg_init_in_progress is set ).
+> Here due to SCSI_DH_RETRY on mode_select, pg_init_done will set the pg_init_required as activation needs to be retried under normal 
+> circumstances. But it completely differs when multipath target  is being destroyed.  Apparently I didn't see any pending_ios in our test
+> while this is happening. Just path activations are held up since controller was returning 5/91/36 CC's. With this condition either one of pg_init_required or pg_init_in_progress flags are set all the time.
+> Hannes patch will take care of preventing queueing of IO's when pg_init_in_progress is set, but currently running activation commands will not return until controller returns SUCCESS on mode_select.
 
-I pushed this to linux-next (for v3.13), see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=8a478f032b40a28a66559a91095d0e0733194389
+So... do you have an updated patch with proper locking that takes
+Hannes' patch into consideration?
 
-Tweaked the header and text in dm-crypt.txt and maybe a few other
-comments.
+I'll be reviewing hannes patch closer (for v3.13) tomorrow so if you'd
+like your issue resolved in the near-term I'd appreciate us getting some
+closer on proposed solutions.
+
+Thanks,
+Mike
