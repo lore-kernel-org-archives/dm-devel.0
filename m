@@ -1,44 +1,59 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: FW: Re: [dm-devel] [BUG 3.12.rc4] Oops: unable to handle kernel
- paging request during shutdown
-Date: Wed, 30 Oct 2013 20:08:41 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1310301944310.22093@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20131028140015.GA14612@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1310301133180.4090@file01.intranet.prod.int.rdu2.redhat.com> <20131030171844.GA16462@kroah.com>
+From: Chen Gang <gang.chen@asianux.com>
+Subject: Re: drivers: md: include "linux/vmalloc.h" in "dm-cache-policy-hints.c"
+Date: Thu, 31 Oct 2013 08:48:00 +0800
+Message-ID: <5271A8C0.7000906@asianux.com>
+References: <5270A465.2040200@asianux.com> <20131030143825.GA8125@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131030171844.GA16462@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <greg@kroah.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, =?ISO-8859-1?Q?Fr=EF=BF=BDd=EF=BF=BDric_Weisbecker?= <fweisbec@gmail.com>, Knut Petersen <Knut_Petersen@t-online.de>, linux-kernel <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Paul McKenney <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>
+Content-Type: text/plain; charset=GB2312
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20131030143825.GA8125@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: agk@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On 10/30/2013 10:38 PM, Mike Snitzer wrote:
+> On Wed, Oct 30 2013 at  2:17am -0400,
+> Chen Gang <gang.chen@asianux.com> wrote:
+>=20
+>> Need include related header file, or can not pass compiling, the
+>> related error (for powerpc with allmodconfig):
+>>
+>>     CC [M]  drivers/md/dm-cache-policy-hints.o
+>>   drivers/md/dm-cache-policy-hints.c: In function =A1=AEalloc_hash=A1=
+=AF:
+>>   drivers/md/dm-cache-policy-hints.c:94:2: error: implicit declarati=
+on of function =A1=AEvzalloc=A1=AF [-Werror=3Dimplicit-function-declara=
+tion]
+>>   drivers/md/dm-cache-policy-hints.c:94:14: warning: assignment make=
+s pointer from integer without a cast [enabled by default]
+>>   drivers/md/dm-cache-policy-hints.c: In function =A1=AEfree_hash=A1=
+=AF:
+>>   drivers/md/dm-cache-policy-hints.c:101:2: error: implicit declarat=
+ion of function =A1=AEvfree=A1=AF [-Werror=3Dimplicit-function-declarat=
+ion]
+>>   drivers/md/dm-cache-policy-hints.c: In function =A1=AEalloc_bitset=
+=A1=AF:
+>>   drivers/md/dm-cache-policy-hints.c:184:2: warning: return makes po=
+inter from integer without a cast [enabled by default]
+>>
+>>
+>> Signed-off-by: Chen Gang <gang.chen@asianux.com>
+>=20
+> This was already fixed a couple days ago in the linux-dm.git 'for-nex=
+t'
+> branch.
+>=20
+> But thanks.
+>=20
+>=20
 
-
-On Wed, 30 Oct 2013, Greg KH wrote:
-
-> > I suggest that you implement a function kobject_put_free, that decrements 
-> > the kobject reference count and waits until others stop using the kobject 
-> > and the reference count drops to zero. Then, you change drivers to use 
-> > kobject_put_free instead of kobject_put in their unload routine - that 
-> > will fix this sort of module unload races.
-> 
-> The "module unload" issue is rare, thankfully, but yes, this type of
-> function will be showing up in 3.13-rc1 through the btrfs tree as it
-> needs that functionality, so feel free to use it to resolve this issue
-> if you need it.
-> 
-> thanks,
-> 
-> greg k-h
-
-With CONFIG_DEBUG_KOBJECT_RELEASE this issue is not rare - 
-CONFIG_DEBUG_KOBJECT_RELEASE deliberately provokes it.
-
-Nice to hear that it will be fixed. You should patch other drivers to use 
-this new function in the unload routine as well.
-
-What is the name of the function? I didn't find it in linux-btrfs.git or 
-btrfs-next.git.
-
-Mikulas
+Thank you too.
+--=20
+Chen Gang
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
