@@ -1,20 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 21/24] dm cache: add trc policy shim
-Date: Fri, 1 Nov 2013 19:38:17 -0400
-Message-ID: <20131101233817.GA26314@redhat.com>
-References: <1382639437-27007-1-git-send-email-snitzer@redhat.com>
-	<1382639437-27007-22-git-send-email-snitzer@redhat.com>
-	<20131025201356.GM17070@agk-dp.fab.redhat.com>
-	<20131025210820.GA7589@redhat.com>
-	<20131025224453.GG4804@redhat.com>
-	<1383341958.9311.19.camel@fedora>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH 4/4] dm-crypt: Fix sparse (different base types)
+	warnings
+Date: Sat,  2 Nov 2013 22:24:04 +0100
+Message-ID: <1383427444-19174-2-git-send-email-gmazyland@gmail.com>
+References: <20131030181241.GA24325@agk-dp.fab.redhat.com>
+	<1383427444-19174-1-git-send-email-gmazyland@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1383341958.9311.19.camel@fedora>
+In-Reply-To: <1383427444-19174-1-git-send-email-gmazyland@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,49 +20,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Steven Rostedt <srostedt@redhat.com>
-Cc: Morgan Mears <morgan.mears@netapp.com>, Heinz Mauelshagen <heinzm@redhat.com>, Thornber <ejt@redhat.com>, device-mapper development <dm-devel@redhat.com>, Joe@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 01 2013 at  5:39pm -0400,
-Steven Rostedt <srostedt@redhat.com> wrote:
+drivers/md/dm-crypt.c:575:16: warning: incorrect type in assignment (different base types)
+drivers/md/dm-crypt.c:575:16:    expected unsigned int [unsigned] <noident>
+drivers/md/dm-crypt.c:575:16:    got restricted __le32 [usertype] <noident>
+...
 
-> > > 
-> > > Think this would take care of it (not full-blown tracepoints like
-> > > blktrace but certainly more performant than standard printk):
-> 
-> What's wrong with full blown tracepoints?
+Explicitly define endianess to silence these annoying warnings.
 
-Nothing.  Just wasn't as quick to switch to while keeping the intent of
-the original implementation.
+N.B. there is still warning about variable length array,
+but this code is common use of hash structure on stack on
+many parts of the kernel.
 
-> > I folded this trace_printk change in and renamed from trc to trace, see:
-> > https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=f6f5db50495b16ff23a0febf38f9ee9d964b12dd
-> > 
-> 
-> Please please please DO NOT USE TRACE_PRINTK!
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/dm-crypt.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-Sure, I'll have a look at using proper tracepoints.  Worst case, in the
-near-term, we drop this type of patch for v3.13 considering how close we
-are to merge.
-
-> It's a debugging tool, and should never be used in the kernel proper. It
-> was meant for users to use it for debugging and then strip it out.
-> 
-> Now what you could do is to set up tracepoints to record the information
-> you want, either in the function itself, or add the wrapper function too
-> as a separate policy. Not sure if that would be any help or not.
-> 
-> But unless this is something that is considered "debug use only" and
-> never put into a production kernel, do not use trace_printk().
-
-It really is debug only, but I cannot promise nobody will ever add a
-trace layer in production -- especially if it is as easy as using
-"trace+mq" vs "mq" when specifying the policy name.
-
-> Note, tracepoints will also give you the ability to pick and choose the
-> traces instead of doing it by trace_level.
-
-Yeap, I'm aware.
-
-Thanks for your feedback Steve.
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 2d6ee75f..b71583e 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -550,7 +550,7 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
+ 		char ctx[crypto_shash_descsize(lmk->hash_tfm)];
+ 	} sdesc;
+ 	struct md5_state md5state;
+-	u32 buf[4];
++	__le32 buf[4];
+ 	int i, r;
+ 
+ 	sdesc.desc.tfm = lmk->hash_tfm;
+@@ -696,7 +696,7 @@ static int crypt_iv_tcw_whitening(struct crypt_config *cc,
+ 				  u8 *data)
+ {
+ 	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+-	u64 sector = cpu_to_le64((u64)dmreq->iv_sector);
++	__le64 sector = cpu_to_le64((u64)dmreq->iv_sector);
+ 	u8 buf[TCW_WHITENING_SIZE];
+ 	struct {
+ 		struct shash_desc desc;
+@@ -738,7 +738,7 @@ static int crypt_iv_tcw_gen(struct crypt_config *cc, u8 *iv,
+ 			    struct dm_crypt_request *dmreq)
+ {
+ 	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+-	u64 sector = cpu_to_le64((u64)dmreq->iv_sector);
++	__le64 sector = cpu_to_le64((u64)dmreq->iv_sector);
+ 	u8 *src;
+ 	int r = 0;
+ 
+-- 
+1.8.4.2
