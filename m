@@ -1,123 +1,61 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH for-next] dm: fix missing bi_remaining accounting
-Date: Mon, 4 Nov 2013 10:06:00 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1311041003400.4548@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20131101135931.GA22903@redhat.com> <5273C2B8.5030608@kernel.dk>
+Date: Mon, 4 Nov 2013 10:20:02 -0500
+Message-ID: <20131104152001.GA12398@redhat.com>
+References: <20131101135931.GA22903@redhat.com>
+ <5273C2B8.5030608@kernel.dk>
+ <alpine.LRH.2.02.1311041003400.4548@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5273C2B8.5030608@kernel.dk>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1311041003400.4548@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, Kent Overstreet <kmo@daterainc.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Mon, Nov 04 2013 at 10:06am -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-
-On Fri, 1 Nov 2013, Jens Axboe wrote:
-
-> On 11/01/2013 07:59 AM, Mike Snitzer wrote:
-> > Add the missing bi_remaining increment, required by the block layer's
-> > new bio-chaining code, to both the verity and old snapshot DM targets.
+> 
+> 
+> On Fri, 1 Nov 2013, Jens Axboe wrote:
+> 
+> > On 11/01/2013 07:59 AM, Mike Snitzer wrote:
+> > > Add the missing bi_remaining increment, required by the block layer's
+> > > new bio-chaining code, to both the verity and old snapshot DM targets.
+> > > 
+> > > Otherwise users will hit the bi_remaining <= 0 BUG_ON in bio_endio().
 > > 
-> > Otherwise users will hit the bi_remaining <= 0 BUG_ON in bio_endio().
+> > Thanks Mike, added to the mix.
+> > 
+> > -- 
+> > Jens Axboe
 > 
-> Thanks Mike, added to the mix.
+> Hi
 > 
-> -- 
-> Jens Axboe
+> This improves a little bit on the previous patch, by replacing costly 
+> atomic_inc with cheap atomic_set.
+> 
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> dm: change atomic_inc to atomic_set(1)
+> 
+> There are places in dm where we save bi_endio and bi_private, set them to
+> target's routine, submit the bio, from the target's bi_endio routine we
+> restore bi_endio and bi_private and end the bio with bi_endio.
+> 
+> This causes underflow of bi_remaining, so we must restore bi_remaining
+> before ending the bio from the target bi_endio routine.
+> 
+> The code uses atomic_inc for restoration of bi_remaining. This patch
+> changes it to atomic_set(1) to avoid an interlocked instruction. In the
+> target's bi_endio routine we are sure that bi_remaining is zero
+> (otherwise, the bi_endio routine wouldn't be called) and there are no
+> concurrent users of the bio, so we can replace atomic_inc with
+> atomic_set(1).
 
-Hi
-
-This improves a little bit on the previous patch, by replacing costly 
-atomic_inc with cheap atomic_set.
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-dm: change atomic_inc to atomic_set(1)
-
-There are places in dm where we save bi_endio and bi_private, set them to
-target's routine, submit the bio, from the target's bi_endio routine we
-restore bi_endio and bi_private and end the bio with bi_endio.
-
-This causes underflow of bi_remaining, so we must restore bi_remaining
-before ending the bio from the target bi_endio routine.
-
-The code uses atomic_inc for restoration of bi_remaining. This patch
-changes it to atomic_set(1) to avoid an interlocked instruction. In the
-target's bi_endio routine we are sure that bi_remaining is zero
-(otherwise, the bi_endio routine wouldn't be called) and there are no
-concurrent users of the bio, so we can replace atomic_inc with
-atomic_set(1).
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-cache-target.c |    2 +-
- drivers/md/dm-snap.c         |    2 +-
- drivers/md/dm-thin.c         |    4 ++--
- drivers/md/dm-verity.c       |    2 +-
- 4 files changed, 5 insertions(+), 5 deletions(-)
-
-Index: linux-block/drivers/md/dm-cache-target.c
-===================================================================
---- linux-block.orig/drivers/md/dm-cache-target.c	2013-11-01 17:21:11.000000000 +0100
-+++ linux-block/drivers/md/dm-cache-target.c	2013-11-04 13:59:13.000000000 +0100
-@@ -670,7 +670,7 @@ static void writethrough_endio(struct bi
- 	 * Must bump bi_remaining to allow bio to complete with
- 	 * restored bi_end_io.
- 	 */
--	atomic_inc(&bio->bi_remaining);
-+	atomic_set(&bio->bi_remaining, 1);
- 
- 	if (err) {
- 		bio_endio(bio, err);
-Index: linux-block/drivers/md/dm-snap.c
-===================================================================
---- linux-block.orig/drivers/md/dm-snap.c	2013-11-01 17:21:11.000000000 +0100
-+++ linux-block/drivers/md/dm-snap.c	2013-11-04 13:59:56.000000000 +0100
-@@ -1415,7 +1415,7 @@ out:
- 	if (full_bio) {
- 		full_bio->bi_end_io = pe->full_bio_end_io;
- 		full_bio->bi_private = pe->full_bio_private;
--		atomic_inc(&full_bio->bi_remaining);
-+		atomic_set(&full_bio->bi_remaining, 1);
- 	}
- 	free_pending_exception(pe);
- 
-Index: linux-block/drivers/md/dm-thin.c
-===================================================================
---- linux-block.orig/drivers/md/dm-thin.c	2013-11-01 17:21:11.000000000 +0100
-+++ linux-block/drivers/md/dm-thin.c	2013-11-04 14:00:19.000000000 +0100
-@@ -613,7 +613,7 @@ static void process_prepared_mapping_fai
- {
- 	if (m->bio) {
- 		m->bio->bi_end_io = m->saved_bi_end_io;
--		atomic_inc(&m->bio->bi_remaining);
-+		atomic_set(&m->bio->bi_remaining, 1);
- 	}
- 	cell_error(m->tc->pool, m->cell);
- 	list_del(&m->list);
-@@ -630,7 +630,7 @@ static void process_prepared_mapping(str
- 	bio = m->bio;
- 	if (bio) {
- 		bio->bi_end_io = m->saved_bi_end_io;
--		atomic_inc(&bio->bi_remaining);
-+		atomic_set(&bio->bi_remaining, 1);
- 	}
- 
- 	if (m->err) {
-Index: linux-block/drivers/md/dm-verity.c
-===================================================================
---- linux-block.orig/drivers/md/dm-verity.c	2013-11-01 17:21:11.000000000 +0100
-+++ linux-block/drivers/md/dm-verity.c	2013-11-04 13:59:28.000000000 +0100
-@@ -384,7 +384,7 @@ static void verity_finish_io(struct dm_v
- 
- 	bio->bi_end_io = io->orig_bi_end_io;
- 	bio->bi_private = io->orig_bi_private;
--	atomic_inc(&bio->bi_remaining);
-+	atomic_set(&bio->bi_remaining, 1);
- 
- 	bio_endio(bio, error);
- }
+This isn't DM-specific.  Shouldn't the other places in the tree that use
+atomic_inc on bi_remaining should really be converted at the same time?
