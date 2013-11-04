@@ -1,201 +1,123 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: dm-writeboost: Progress Report
-Date: Mon, 04 Nov 2013 14:17:50 +0900
-Message-ID: <52772DFE.90402@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH for-next] dm: fix missing bi_remaining accounting
+Date: Mon, 4 Nov 2013 10:06:00 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1311041003400.4548@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20131101135931.GA22903@redhat.com> <5273C2B8.5030608@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5273C2B8.5030608@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, david@fromorbit.com, mpatocka@redhat.com, snitzer@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Mike Snitzer <snitzer@redhat.com>, Kent Overstreet <kmo@daterainc.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi, DM Guys
-
-Let me share a new progress report.
-I am sorry I have been off for weeks.
-
-Writeboost is getting better I believe.
-
-Many progress, please git pull
-https://github.com/akiradeveloper/dm-writeboost.git
-
-1. Removing version switch macros
-Previously the code included 10 or more version switches
-and thus is not appropriate for upstream code of course.
-Now I removed them all and Writeboost is not available for
-older version of kernel.
-
-2. .postsuspend and .resume implemented
-dmsetup suspend and resume works now.
-
-I implemented .postsuspend and .resume for this purpose.
-.postsuspend is called after all I/O is submitted to
-the device. In .postsuspend I make all the transient data
-persistent.
-
-static void writeboost_postsuspend(struct dm_target *ti)
-{
-	int r;
-
-	struct wb_device *wb = ti->private;
-	struct wb_cache *cache = wb->cache;
-
-	flush_current_buffer(cache);
-	IO(blkdev_issue_flush(cache->device->bdev, GFP_NOIO, NULL));
-}
-
-.postsuspend is also called before .dtr is called.
-I removed the same code from .dtr therefore.
-
-.resume does nothing at all. 
-
-3. Blocking up the device thoroughly implemented 
-How to block up the device has been my annoyance for weeks.
-Now, Writeboost can block up the device in I/O error correctly
-and elegantly.
-
-What a dead device should satisfy are
-1) Returns error on all incoming requests
-2) ACK to all the requests accepted
-3) To clean up data structures on memory
-   `dmsetup remove` must be accepted even after marked dead
-4) Blocking up must be processed regardless of any timing issues.
-
-The principle behind how Writeboost blocks up a device
-is really simple.
-
-1) All I/O to underlying devices are wrapped by IO macro (shown below)
-   which set flag WB_DEAD (using set_bit) on -EIO returned.
-2) If WB_DEAD is set, all I/O to the underlying devices are ignored.
-   This is equivalent to having /dev/null devices underlying.
-   Processings on the memory data structures are still
-   continuing completely agnostic to the fact that
-   the underlying devices ignore their requests.
-   This ensures the logic on the data structures never corrupt
-   and data on the underlying devices never change after marked dead.
-3) Some codes are wrapped by LIVE, DEAD or LIVE_DEAD
-   macro which switches its behavior in accordance with
-   WB_DEAD bit.
-
-I tested the mechanism by wrapping the underlying devices (like below)
-by dm-flakey. For both cases (cache fails or backing fails) 
-it seems to be working.
-
-sz=`blockdev --getsize ${CACHE}`
-dmsetup create cache-flakey --table "0 ${sz} flakey ${CACHE} 0 5 1"
-CACHE=/dev/mapper/cache-flakey
-
-sz=`blockdev --getsize ${BACKING}`
-dmsetup create backing-flakey --table "0 ${sz} flakey ${BACKING} 0 20 0"
-BACKING=/dev/mapper/backing-flakey
-
-3.1 WARN_ONCE introduced
-IO macro branches the behavior with the return code from it wrapping procedure.
-It only treat -EIO as a trigger to block up the device and others are not.
-The problem remains is that I don't know what error
-code can return within possibility. 
-If the error code is not expected, it WARN_ONCE
-to ask user to report the error.
-
-/*
- * Only -EIO returned is regarded as a signal
- * to block up the whole system.
- *
- * -EOPNOTSUPP could be returned if the target device is
- * a virtual device and we request discard.
- *
- * -ENOMEM could be returned from blkdev_issue_discard (3.12-rc5)
- * for example. Waiting for a while can make room for allocation.
- *
- * For other unknown error codes we ignore them and
- * ask the human users to report us.
- */
-#define IO(proc) \
-	do { \
-		r = 0; \
-		LIVE(r = proc); \
-		if (r == -EOPNOTSUPP) { \
-			r = 0; \
-		} else if (r == -EIO) { \
-			set_bit(WB_DEAD, &wb->flags); \
-			wake_up_all(&wb->dead_wait_queue); \
-			WBERR("marked as dead"); \
-		} else if (r == -ENOMEM) { \
-			schedule_timeout_interruptible(msecs_to_jiffies(1000));\
-		} else if (r) { \
-			r = 0;\
-			WARN_ONCE(1, "PLEASE REPORT!!! I/O FAILED FOR UNKNOWN REASON %d", r); \
-		} \
-	} while (r)
-
-3.2 dead state never recover
-As Dave's advice, I regard the error as fatal and provide no way to restart.
-Removed blockup from message.
-
-3.3 XFS corruption never reproduce
-I think the previously discussed error is due to the 
-misbehavior of Writeboost in blocking up.
-For example, some bios are not returned 
-which may corrupt the XFS AIL lock?
-
-4. On-disk metadata layout changed and
-   max segment size is reduced to 512KB from 1MB
-struct metablock_device was 13 bytes before.
-This means that the metadata may straddle two sectors
-which causes partial write.
-To avoid this, I added padding to make it 16 bytes.
-As a result, maximum log size shrinks to 512KB.
-
-5. `flush_supported = true` added 
-I added `flush_supported = true` to .ctr
-dm-cache and dm-thin also do this.
-There is no meaning for Writeboost to ignore flush requests.
-
-Below is my wonderings to note and I request for comments
-1. Daemon should stop in suspend?
-Which level below should a suspended device satisfy?
-1) No transient data remains (currently OK)
-2) + No any I/O to the underlying devices?
-   (although it logically irrelevant to the upper layer)
-3) + No any process execution is admitted to
-   reduce power consumption for example?
-
-2. .merge, .hints and .iterate_devices correct?
-What is the correct behavior of these methods?
-
-static void writeboost_io_hints(struct dm_target *ti,
-				struct queue_limits *limits)
-{
-	blk_limits_io_min(limits, 512);
-	blk_limits_io_opt(limits, 4096);
-}
-
-static int writeboost_iterate_devices(struct dm_target *ti,
-				      iterate_devices_callout_fn fn, void *data)
-{
-	struct wb_device *wb = ti->private;
-	struct dm_dev *orig = wb->device;
-	sector_t start = 0;
-	sector_t len = dm_devsize(orig);
-	return fn(ti, orig, start, len, data);
-}
-
-static int writeboost_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-			    struct bio_vec *biovec, int max_size)
-{
-	struct wb_device *wb = ti->private;
-	struct dm_dev *device = wb->device;
-	struct request_queue *q = bdev_get_queue(device->bdev);
-
-	if (!q->merge_bvec_fn)
-		return max_size;
-
-	bvm->bi_bdev = device->bdev;
-	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
-}
 
 
-Thanks,
-Akira
+On Fri, 1 Nov 2013, Jens Axboe wrote:
+
+> On 11/01/2013 07:59 AM, Mike Snitzer wrote:
+> > Add the missing bi_remaining increment, required by the block layer's
+> > new bio-chaining code, to both the verity and old snapshot DM targets.
+> > 
+> > Otherwise users will hit the bi_remaining <= 0 BUG_ON in bio_endio().
+> 
+> Thanks Mike, added to the mix.
+> 
+> -- 
+> Jens Axboe
+
+Hi
+
+This improves a little bit on the previous patch, by replacing costly 
+atomic_inc with cheap atomic_set.
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+dm: change atomic_inc to atomic_set(1)
+
+There are places in dm where we save bi_endio and bi_private, set them to
+target's routine, submit the bio, from the target's bi_endio routine we
+restore bi_endio and bi_private and end the bio with bi_endio.
+
+This causes underflow of bi_remaining, so we must restore bi_remaining
+before ending the bio from the target bi_endio routine.
+
+The code uses atomic_inc for restoration of bi_remaining. This patch
+changes it to atomic_set(1) to avoid an interlocked instruction. In the
+target's bi_endio routine we are sure that bi_remaining is zero
+(otherwise, the bi_endio routine wouldn't be called) and there are no
+concurrent users of the bio, so we can replace atomic_inc with
+atomic_set(1).
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-cache-target.c |    2 +-
+ drivers/md/dm-snap.c         |    2 +-
+ drivers/md/dm-thin.c         |    4 ++--
+ drivers/md/dm-verity.c       |    2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+Index: linux-block/drivers/md/dm-cache-target.c
+===================================================================
+--- linux-block.orig/drivers/md/dm-cache-target.c	2013-11-01 17:21:11.000000000 +0100
++++ linux-block/drivers/md/dm-cache-target.c	2013-11-04 13:59:13.000000000 +0100
+@@ -670,7 +670,7 @@ static void writethrough_endio(struct bi
+ 	 * Must bump bi_remaining to allow bio to complete with
+ 	 * restored bi_end_io.
+ 	 */
+-	atomic_inc(&bio->bi_remaining);
++	atomic_set(&bio->bi_remaining, 1);
+ 
+ 	if (err) {
+ 		bio_endio(bio, err);
+Index: linux-block/drivers/md/dm-snap.c
+===================================================================
+--- linux-block.orig/drivers/md/dm-snap.c	2013-11-01 17:21:11.000000000 +0100
++++ linux-block/drivers/md/dm-snap.c	2013-11-04 13:59:56.000000000 +0100
+@@ -1415,7 +1415,7 @@ out:
+ 	if (full_bio) {
+ 		full_bio->bi_end_io = pe->full_bio_end_io;
+ 		full_bio->bi_private = pe->full_bio_private;
+-		atomic_inc(&full_bio->bi_remaining);
++		atomic_set(&full_bio->bi_remaining, 1);
+ 	}
+ 	free_pending_exception(pe);
+ 
+Index: linux-block/drivers/md/dm-thin.c
+===================================================================
+--- linux-block.orig/drivers/md/dm-thin.c	2013-11-01 17:21:11.000000000 +0100
++++ linux-block/drivers/md/dm-thin.c	2013-11-04 14:00:19.000000000 +0100
+@@ -613,7 +613,7 @@ static void process_prepared_mapping_fai
+ {
+ 	if (m->bio) {
+ 		m->bio->bi_end_io = m->saved_bi_end_io;
+-		atomic_inc(&m->bio->bi_remaining);
++		atomic_set(&m->bio->bi_remaining, 1);
+ 	}
+ 	cell_error(m->tc->pool, m->cell);
+ 	list_del(&m->list);
+@@ -630,7 +630,7 @@ static void process_prepared_mapping(str
+ 	bio = m->bio;
+ 	if (bio) {
+ 		bio->bi_end_io = m->saved_bi_end_io;
+-		atomic_inc(&bio->bi_remaining);
++		atomic_set(&bio->bi_remaining, 1);
+ 	}
+ 
+ 	if (m->err) {
+Index: linux-block/drivers/md/dm-verity.c
+===================================================================
+--- linux-block.orig/drivers/md/dm-verity.c	2013-11-01 17:21:11.000000000 +0100
++++ linux-block/drivers/md/dm-verity.c	2013-11-04 13:59:28.000000000 +0100
+@@ -384,7 +384,7 @@ static void verity_finish_io(struct dm_v
+ 
+ 	bio->bi_end_io = io->orig_bi_end_io;
+ 	bio->bi_private = io->orig_bi_private;
+-	atomic_inc(&bio->bi_remaining);
++	atomic_set(&bio->bi_remaining, 1);
+ 
+ 	bio_endio(bio, error);
+ }
