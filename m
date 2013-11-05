@@ -1,17 +1,29 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm-mpath: requeue I/O during pg_init
-Date: Tue, 05 Nov 2013 14:45:34 +0100
-Message-ID: <5278F67E.2040402@suse.de>
-References: <1380620996-110162-1-git-send-email-hare@suse.de>
-	<20131105130221.GC27505@agk-dp.fab.redhat.com>
-	<5278EE5F.9070208@suse.de>
-	<20131105133158.GD27505@agk-dp.fab.redhat.com>
+From: Frank Mayhar <fmayhar@google.com>
+Subject: Re: [RFC PATCH v2] dm mpath: add a queue_if_no_path
+ timeout
+Date: Tue, 05 Nov 2013 07:18:28 -0800
+Message-ID: <1383664708.4504.4.camel@bobble.lax.corp.google.com>
+References: <20130926232241.GC31328@agk-dp.fab.redhat.com>
+	<20130926234957.GA3658@redhat.com>
+	<1382036590.1980.32.camel@bobble.lax.corp.google.com>
+	<20131017191511.GA30452@redhat.com>
+	<1382042759.1980.40.camel@bobble.lax.corp.google.com>
+	<20131017211338.GB30993@redhat.com>
+	<1382129515.1980.46.camel@bobble.lax.corp.google.com>
+	<20131018225350.GB7553@redhat.com> <20131030010246.GA3611@redhat.com>
+	<1383145687.6677.49.camel@bobble.lax.corp.google.com>
+	<20131030154259.GA8206@redhat.com>
+	<1383156565.17572.8.camel@bobble.lax.corp.google.com>
+	<11AF7C027C4C02408624617A49860784EDC2C1@BPXM12GP.gisp.nec.co.jp>
+	<1383229011.17572.12.camel@bobble.lax.corp.google.com>
+	<11AF7C027C4C02408624617A49860784EE0B3F@BPXM12GP.gisp.nec.co.jp>
+	<11AF7C027C4C02408624617A49860784EE0F5E@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20131105133158.GD27505@agk-dp.fab.redhat.com>
+In-Reply-To: <11AF7C027C4C02408624617A49860784EE0F5E@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,39 +33,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Junichi Nomura <j-nomura@ce.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/05/2013 02:31 PM, Alasdair G Kergon wrote:
-> On Tue, Nov 05, 2013 at 02:10:55PM +0100, Hannes Reinecke wrote:
->> If this is just a left-over from the original port to request-based
->> (for bio-based we _have_ to queue internally as there's no request
->> queue to be had), fine, we should be removing it.
-> =
+On Fri, 2013-11-01 at 04:17 +0000, Junichi Nomura wrote:
+> I slightly modified the patch:
+>   - fixed the timeout handler to correctly find
+>     clone request and "struct multipath"
+>   - the timeout handler just disables "queue_if_no_path"
+>     instead of killing the request directly
+>   - "dmsetup status" to show the parameter
+>   - changed an interface between dm core and target
+>   - added some debugging printk (you can remove them)
+> and checked the timeout occurs, at least.
+> 
+> I'm not sure if this feature is good or not though.
+> (The timer behavior is not intuitive, I think)
+> 
+> ---
+> Jun'ichi Nomura, NEC Corporation
+> 
+[patch trimmed]
 
-> I think that is the case.
-> =
-
->> But there _might_ be some corner cases which require us to do internal
->> queueing.
->  =
-
-> We *only* add I/O to the internal queue in map_io() - which can always
-> be replaced with REQUEUE,  As long as we still 'wake up' the queue
-> immediately when we are ready to receive the I/O, I can't think of any
-> other reason.  And it would let us remove quite a bit of tricky code!
-> =
-
-Precisely what I was thinking.
-
-I'll be cobbling together a patch.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Thanks!  I integrated your new patch and tested it.  Sure enough, it
+seems to work.  I've made a few tweaks (added a module tunable and
+support for setting the timer in multipath_message(), removed your debug
+printks) and will submit the modified patch for discussion shortly.
+-- 
+Frank Mayhar
+310-460-4042
