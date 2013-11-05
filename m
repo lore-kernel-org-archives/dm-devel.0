@@ -1,17 +1,18 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm-mpath: requeue I/O during pg_init
-Date: Tue, 5 Nov 2013 13:31:58 +0000
-Message-ID: <20131105133158.GD27505@agk-dp.fab.redhat.com>
-References: <1380620996-110162-1-git-send-email-hare@suse.de>
-	<20131105130221.GC27505@agk-dp.fab.redhat.com>
-	<5278EE5F.9070208@suse.de>
+Subject: Re: [PATCH 4/4] dm-crypt: Fix sparse (different
+	base	types) warnings
+Date: Tue, 5 Nov 2013 13:41:51 +0000
+Message-ID: <20131105134151.GE27505@agk-dp.fab.redhat.com>
+References: <20131030181241.GA24325@agk-dp.fab.redhat.com>
+	<1383427444-19174-1-git-send-email-gmazyland@gmail.com>
+	<1383427444-19174-2-git-send-email-gmazyland@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <5278EE5F.9070208@suse.de>
+In-Reply-To: <1383427444-19174-2-git-send-email-gmazyland@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,25 +22,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Nov 05, 2013 at 02:10:55PM +0100, Hannes Reinecke wrote:
-> If this is just a left-over from the original port to request-based
-> (for bio-based we _have_ to queue internally as there's no request
-> queue to be had), fine, we should be removing it.
-
-I think that is the case.
-
-> But there _might_ be some corner cases which require us to do internal
-> queueing.
+On Sat, Nov 02, 2013 at 10:24:04PM +0100, Milan Broz wrote:
+> N.B. there is still warning about variable length array,
+> but this code is common use of hash structure on stack on
+> many parts of the kernel.
  
-We *only* add I/O to the internal queue in map_io() - which can always
-be replaced with REQUEUE,  As long as we still 'wake up' the queue
-immediately when we are ready to receive the I/O, I can't think of any
-other reason.  And it would let us remove quite a bit of tricky code!
+Indeed, I never discovered a satisfactory way to avoid those ones.
 
-> Junichi, could you share some light here?
- 
 Alasdair
