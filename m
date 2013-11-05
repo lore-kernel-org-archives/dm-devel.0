@@ -1,25 +1,19 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH v3] dm mpath: add a queue_if_no_path
-	timeout
-Date: Tue, 5 Nov 2013 11:53:26 -0500
-Message-ID: <20131105165326.GB25528@redhat.com>
-References: <20131030010246.GA3611@redhat.com>
-	<1383145687.6677.49.camel@bobble.lax.corp.google.com>
-	<20131030154259.GA8206@redhat.com>
-	<1383156565.17572.8.camel@bobble.lax.corp.google.com>
-	<11AF7C027C4C02408624617A49860784EDC2C1@BPXM12GP.gisp.nec.co.jp>
-	<1383229011.17572.12.camel@bobble.lax.corp.google.com>
-	<11AF7C027C4C02408624617A49860784EE0B3F@BPXM12GP.gisp.nec.co.jp>
-	<11AF7C027C4C02408624617A49860784EE0F5E@BPXM12GP.gisp.nec.co.jp>
-	<1383664708.4504.4.camel@bobble.lax.corp.google.com>
-	<1383667332.4504.8.camel@bobble.lax.corp.google.com>
+Subject: Re: [PATCH v2] dm mpath: fix race condition
+ between	multipath_dtr and pg_init_done
+Date: Tue, 5 Nov 2013 12:12:54 -0500
+Message-ID: <20131105171253.GD25528@redhat.com>
+References: <FB8A412F33166C4A930D37BD63236C902AD3247A@SACEXCMBX02-PRD.hq.netapp.com>
+	<11AF7C027C4C02408624617A49860784EDC174@BPXM12GP.gisp.nec.co.jp>
+	<20131031144811.GA15712@redhat.com>
+	<20131105155624.GB30366@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1383667332.4504.8.camel@bobble.lax.corp.google.com>
+In-Reply-To: <20131105155624.GB30366@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,45 +23,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Frank Mayhar <fmayhar@google.com>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>, Shiva Krishna Merla <shivakrishna.merla@netapp.com>, device-mapper development <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 05 2013 at 11:02am -0500,
-Frank Mayhar <fmayhar@google.com> wrote:
+On Tue, Nov 05 2013 at 10:56am -0500,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-> This is the patch submitted by Jun'ichi Nomura, originally based on
-> Mike's patch with some small changes by me.  Jun'ichi's description
-> follows, along with my changes:
+> On Thu, Oct 31, 2013 at 10:48:13AM -0400, Mike Snitzer wrote:
+> > --- linux.orig/drivers/md/dm-mpath.c
+> > +++ linux/drivers/md/dm-mpath.c
 > 
-> On Tue, 2013-11-05 at 07:18 -0800, Frank Mayhar wrote:
-> > On Fri, 2013-11-01 at 04:17 +0000, Junichi Nomura wrote:
-> > > I slightly modified the patch:
-> > >   - fixed the timeout handler to correctly find
-> > >     clone request and "struct multipath"
-> > >   - the timeout handler just disables "queue_if_no_path"
-> > >     instead of killing the request directly
-> > >   - "dmsetup status" to show the parameter
-> > >   - changed an interface between dm core and target
-> > >   - added some debugging printk (you can remove them)
-> > > and checked the timeout occurs, at least.
-> > > 
-> > > I'm not sure if this feature is good or not though.
-> > > (The timer behavior is not intuitive, I think)
-> > Thanks!  I integrated your new patch and tested it.  Sure enough, it
-> > seems to work.  I've made a few tweaks (added a module tunable and
-> > support for setting the timer in multipath_message(), removed your debug
-> > printks) and will submit the modified patch for discussion shortly.
+> > +	unsigned pg_init_disabled:1;	/* pginit is currently not allowed */
 > 
-> Comments?
+> > +	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
+> > +	    !m->pg_init_disabled)
+> 
+> So we're accepting that pg_init might be both "disabled" and "required"
+> simultaneously (otherwise we wouldn't need this test)?
 
-My primary concern is that this patch is always establishing a timed_out
-method via blk_queue_rq_timed_out() regardless of whether the mpath
-device needs it.  I'm also not a fan of adding such a specialized
-rq-based only hook (dm_rq_timed_out_fn timed_out).
+Yes, needs to be independent of pg_init_required.
 
-Could be we'll need to do other things to the queue (be it bio-based or
-rq-based) in the future.
+> > @@ -942,10 +944,20 @@ static void multipath_wait_for_pg_init_c
+> >  static void flush_multipath_work(struct multipath *m)
+> >  {
+> > +	unsigned long flags;
+> > +
+> > +	spin_lock_irqsave(&m->lock, flags);
+> > +	m->pg_init_disabled = 1;
+> > +	spin_unlock_irqrestore(&m->lock, flags);
+> > +
+> >  	flush_workqueue(kmpath_handlerd);
+> >  	multipath_wait_for_pg_init_completion(m);
+> 
+> So this implies pg_init could even still be running while it is disabled?
 
-So I prefer the approach I took to arming the queue (via new .init_queue
-hook) in this patch: https://patchwork.kernel.org/patch/3070391/
+pg_init_disabled doesn't allow pg_init to be initiated once set (even if
+pg_init_required is).  Hence pg_init is disabled.
+
+> If the logic is correct, then I find the new variable name quite confusing and
+> think it should be changed, or as a minimum have inline comments explaining
+> the apparent contradictions!
+
+I'm not seeing a contradiction.
