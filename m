@@ -1,19 +1,20 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm mpath: fix race condition
- between	multipath_dtr and pg_init_done
-Date: Tue, 5 Nov 2013 12:12:54 -0500
-Message-ID: <20131105171253.GD25528@redhat.com>
-References: <FB8A412F33166C4A930D37BD63236C902AD3247A@SACEXCMBX02-PRD.hq.netapp.com>
-	<11AF7C027C4C02408624617A49860784EDC174@BPXM12GP.gisp.nec.co.jp>
-	<20131031144811.GA15712@redhat.com>
-	<20131105155624.GB30366@agk-dp.fab.redhat.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH] dm-mpath: requeue I/O during pg_init
+Date: Wed, 6 Nov 2013 01:28:40 +0000
+Message-ID: <11AF7C027C4C02408624617A49860784EF1B71@BPXM12GP.gisp.nec.co.jp>
+References: <1380620996-110162-1-git-send-email-hare@suse.de>
+	<20131105130221.GC27505@agk-dp.fab.redhat.com>
+	<5278EE5F.9070208@suse.de>
+	<20131105133158.GD27505@agk-dp.fab.redhat.com>
+	<5278F67E.2040402@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20131105155624.GB30366@agk-dp.fab.redhat.com>
+In-Reply-To: <5278F67E.2040402@suse.de>
+Content-Language: ja-JP
+Content-ID: <1DE831597160CC4B9B057797C9FA4D26@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,45 +24,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>, Shiva Krishna Merla <shivakrishna.merla@netapp.com>, device-mapper development <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 05 2013 at 10:56am -0500,
-Alasdair G Kergon <agk@redhat.com> wrote:
+On 11/05/13 22:45, Hannes Reinecke wrote:
+> On 11/05/2013 02:31 PM, Alasdair G Kergon wrote:
+>> On Tue, Nov 05, 2013 at 02:10:55PM +0100, Hannes Reinecke wrote:
+>>> If this is just a left-over from the original port to request-based
+>>> (for bio-based we _have_ to queue internally as there's no request
+>>> queue to be had), fine, we should be removing it.
+>>
+>> I think that is the case.
 
-> On Thu, Oct 31, 2013 at 10:48:13AM -0400, Mike Snitzer wrote:
-> > --- linux.orig/drivers/md/dm-mpath.c
-> > +++ linux/drivers/md/dm-mpath.c
+Yes. That's the case.
+Kiyoshi and I was removing it but couldn't take time to audit the isolation
+of pg_init state machine from the process_queued_ios.
+
+>>> But there _might_ be some corner cases which require us to do internal
+>>> queueing.
+>>  
+>> We *only* add I/O to the internal queue in map_io() - which can always
+>> be replaced with REQUEUE,  As long as we still 'wake up' the queue
+>> immediately when we are ready to receive the I/O, I can't think of any
+>> other reason.  And it would let us remove quite a bit of tricky code!
+>>
+> Precisely what I was thinking.
 > 
-> > +	unsigned pg_init_disabled:1;	/* pginit is currently not allowed */
-> 
-> > +	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
-> > +	    !m->pg_init_disabled)
-> 
-> So we're accepting that pg_init might be both "disabled" and "required"
-> simultaneously (otherwise we wouldn't need this test)?
+> I'll be cobbling together a patch.
 
-Yes, needs to be independent of pg_init_required.
-
-> > @@ -942,10 +944,20 @@ static void multipath_wait_for_pg_init_c
-> >  static void flush_multipath_work(struct multipath *m)
-> >  {
-> > +	unsigned long flags;
-> > +
-> > +	spin_lock_irqsave(&m->lock, flags);
-> > +	m->pg_init_disabled = 1;
-> > +	spin_unlock_irqrestore(&m->lock, flags);
-> > +
-> >  	flush_workqueue(kmpath_handlerd);
-> >  	multipath_wait_for_pg_init_completion(m);
-> 
-> So this implies pg_init could even still be running while it is disabled?
-
-pg_init_disabled doesn't allow pg_init to be initiated once set (even if
-pg_init_required is).  Hence pg_init is disabled.
-
-> If the logic is correct, then I find the new variable name quite confusing and
-> think it should be changed, or as a minimum have inline comments explaining
-> the apparent contradictions!
-
-I'm not seeing a contradiction.
+-- 
+Jun'ichi Nomura, NEC Corporation
