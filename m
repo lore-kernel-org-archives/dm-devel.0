@@ -1,18 +1,22 @@
-From: Mike Snitzer <snitzer@gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH 1/6] dm cache: cache shrinking support
-Date: Mon, 11 Nov 2013 18:08:40 -0500
-Message-ID: <CAMM=eLfiBSvgcfy1dK8=gy2+C-2ofJsH3KdPLFeVmJmMv7+sOA@mail.gmail.com>
+Date: Mon, 11 Nov 2013 23:17:33 +0000
+Message-ID: <20131111231733.GG24324@agk-dp.fab.redhat.com>
 References: <1384190448-3861-1-git-send-email-snitzer@redhat.com>
 	<1384190448-3861-2-git-send-email-snitzer@redhat.com>
 	<20131111211934.GB24324@agk-dp.fab.redhat.com>
 	<20131111213232.GA5099@redhat.com>
-	<20131111230349.GF24324@agk-dp.fab.redhat.com>
+	<20131111215009.GA17903@redhat.com>
+	<20131111220920.GD24324@agk-dp.fab.redhat.com>
+	<20131111221527.GE24324@agk-dp.fab.redhat.com>
+	<CAMM=eLdsE7_MsKoZUZkRa0S83NkcN6esYL8AEF+PpV17tvMqbw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20131111230349.GF24324@agk-dp.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAMM=eLdsE7_MsKoZUZkRa0S83NkcN6esYL8AEF+PpV17tvMqbw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,20 +29,17 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 11, 2013 at 6:03 PM, Alasdair G Kergon <agk@redhat.com> wrote:
->> DMERR("unable to shrink cache due to dirty blocks");
->
-> Also, what is the process to recover from this error, given that you have
-> already lost the end of the device and you cannot now resume the device
-> without a preresume failure?
->
-> Do the tools support retrieval of the dirty blocks from the portion of the
-> device that you do still have?
+On Mon, Nov 11, 2013 at 06:06:26PM -0500, Mike Snitzer wrote:
+> This really isn't even an "interface".  
 
-Whatever the user used to resize the fast device would need to be
-reversed.  The metadata hasn't changed, and provided the user can
-actually get the original data back (possible with linear volume
-anyway) then they can easily recover.  More sophisticated volumes may
-not make this possible....
+It is an extension to the existing userspace-kernel interface: a size
+reduction of an underlying device is detected on reload and triggers the
+removal of metadata relating to the removed portion of the device.
 
-It hurts when one shoots one's self in the foot.
+Another interface might for example require a message to be sent to set
+a threshold above which the device is 'cleaned' until there is no
+metadata pointing beyond that point.  A subsequent reload using the
+smaller underlying device would not then need to trigger any metadata
+removal: it would already have been removed.
+
+Alasdair
