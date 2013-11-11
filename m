@@ -1,19 +1,16 @@
-From: "Mears, Morgan" <Morgan.Mears@netapp.com>
-Subject: Re: [PATCH] Add a set_era_counter config key to the
- dm-cache era policy shim
-Date: Fri, 8 Nov 2013 15:00:23 +0000
-Message-ID: <33A0129EBFD46748804DE81B354CA1B21C02BD8A@SACEXCMBX06-PRD.hq.netapp.com>
-References: <33A0129EBFD46748804DE81B354CA1B21C028E44@SACEXCMBX06-PRD.hq.netapp.com>
-	<20131107155123.GA520@debian>
-	<33A0129EBFD46748804DE81B354CA1B21C02AFF2@SACEXCMBX06-PRD.hq.netapp.com>
-	<20131108113845.GA1894@debian>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Fwd: Re: [PATCH] dm-mpath: push back requests
+ instead of queueing
+Date: Mon, 11 Nov 2013 12:44:06 +0100
+Message-ID: <5280C306.7080805@suse.de>
+References: <527CE4A1.90707@linux.vnet.ibm.com>
+	<5280BEBC.4040500@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20131108113845.GA1894@debian>
-Content-Language: en-US
+In-Reply-To: <5280BEBC.4040500@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,33 +20,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Steffen Maier <maier@linux.vnet.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Peschke <mpeschke@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 08, 2013 at 06:39:22AM -0500, Joe Thornber wrote:
-> On Thu, Nov 07, 2013 at 09:24:44PM +0000, Mears, Morgan wrote:
-> > On Thurs, Nov 07, 2013 at 03:51PM +0000, Joe Thornber wrote:
-> > > On Wed, Nov 06, 2013 at 08:59:38PM +0000, Mears, Morgan wrote:
-> > > > Add the ability to set the era counter maintained by the dm-cache
-> > > > era policy shim to an arbitrary 32-bit value, to allow era
-> > > > rollback after the underlying device is restored from a snapshot.
-> > >
-> > > I wonder if we should pass in the old value, and have the call fail
-> > > if the old value is incorrect.  This would allow applications to
-> > > spot if they were competing to set the era.  Some thing like:
-> > >
-> > >      set_era_counter <old value>:<new value>
-> >
-> > Yes, I like this.  My inclination is to make the <old value>: portion optional
-> so that the counter value can be forced if desired (for example, to set it to a
-> saved value during a create); objections?
-> 
-> In this case userspace should make a status request to get the current era,
-> then send the message in the <old value>:<new value> format.  If it fails then
-> clearly another process is interfering and you have big issues.
+On 11/11/2013 12:25 PM, Steffen Maier wrote:
+> =
 
-The use case I was concerned about is setting the initial era counter value
-during cache creation.  In this case no status request is possible.   However
-after more thought, this is not an issue (since the set_era_counter is
-processed before the era counter value is recovered from the metadata), so
-agreed, the old value should be required.
+> Regarding the general approach: Yes, please!
+> =
+
+> I was pondering on the very problematic memory pressure issues during tim=
+es when there is no
+> working path in any of the prio groups and I came to exactly the
+same conclusion: dm-mpath
+> should not pretend to be an arbitrarily fast block device and
+consume requests from its block
+> queue despite knowing that it cannot serve those requests any time
+soon.
+> =
+
+Precisely.
+
+> Requeuing sounds good and I hope this helps us getting the back pressure =
+/ congestion such
+> that blocking on the request queue mempool [1,2] will kick in to
+prevent memory pressure on
+> queue_if_no_path (for which "queue" has a slightly different
+meaning with the change but I don't mind).
+> =
+
+Well, first of all we won't be accepting any more requests if the
+first one is being requeued; blktrace shows a nice requeue game
+going on (even with dd and O_DIRECT set) with just a single request
+being requeued over and over again, until the 'queue_if_no_path'
+scenario is gone.
+
+> One thing I'm still wondering: Would there be any benefit of actually sto=
+pping the request
+> queue until at least one path becomes available again?
+[blk_{start|stop}_queue()] I.e. stop
+> in map_io() after we're sure there is no path in any prio group,
+and restart in reinstate_path().
+> =
+
+Hehe. Thought about that, too.
+
+Problem with that approach is the way multipath currently works.
+Currently multipath does _not_ have a flag for 'all paths down and
+queue_if_no_path is active, please requeue'.
+It rather evaluates all possible paths during map_io, and only
+if it determines that no paths are present and queue_if_no_path
+is set it'll requeue the I/O.
+
+So if we were to use start/stop queue here the block layer would
+never trigger 'map_io', and multipath would never check the path
+states and no I/O will be sent, ever.
+
+blk_start/stop_queue works best if you have _alternative_ means
+of setting those, besides the normal I/O path.
+(It's original idea was to be used from LLDDs, after all).
+When one of these functions is being used in the normal I/O path
+things are becoming iffy really fast.
+
+That said, it _would_ make sense to use blk_start/stop_queue for
+pg_init; we cannot send I/O during pg_init anyway, so there's
+no point in retrying I/O here.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
