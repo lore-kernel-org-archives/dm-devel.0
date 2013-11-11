@@ -1,16 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Fwd: Re: [PATCH] dm-mpath: push back requests
- instead of queueing
-Date: Mon, 11 Nov 2013 12:44:06 +0100
-Message-ID: <5280C306.7080805@suse.de>
-References: <527CE4A1.90707@linux.vnet.ibm.com>
-	<5280BEBC.4040500@linux.vnet.ibm.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH for-3.13 0/6] dm cache: simple cache block
+	invalidation interface
+Date: Mon, 11 Nov 2013 12:20:42 -0500
+Message-ID: <1384190448-3861-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5280BEBC.4040500@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,79 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Steffen Maier <maier@linux.vnet.ibm.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Peschke <mpeschke@linux.vnet.ibm.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/11/2013 12:25 PM, Steffen Maier wrote:
-> =
+This patches reflect dm-cache changes that have been staged in
+linux-next for the v3.13 merge.  I'm posting these to give a heads up
+that we've chosen to resort to "plan-b" on the approach taken for
+supporting cache block invalidation (while simpler in approach,
+eliminates use of the shim/stack policy interface and the era shim
+stacked ontop of the mq policy, it will require near-term follow-on
+work to have a separate "era" target that sits between the SSD and
+cache target -- this work will land in v3.14).
 
-> Regarding the general approach: Yes, please!
-> =
+Joe will elaborate on the overall direction and approach associated
+with "plan-b" shortly.  For now, the first step is a more minimalist
+implementation for cache block invalidation for v3.13.
 
-> I was pondering on the very problematic memory pressure issues during tim=
-es when there is no
-> working path in any of the prio groups and I came to exactly the
-same conclusion: dm-mpath
-> should not pretend to be an arbitrarily fast block device and
-consume requests from its block
-> queue despite knowing that it cannot serve those requests any time
-soon.
-> =
+All patches for v3.13 can be found in the 'for-next' branch of the
+linux-dm.git repo, see:
+http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
 
-Precisely.
+Joe Thornber (6):
+  dm cache: cache shrinking support
+  dm cache: add passthrough mode
+  dm cache metadata: check the metadata version when reading the superblock
+  dm cache policy mq: reduce memory requirements
+  dm cache: add remove_cblock method to policy interface
+  dm cache: add cache block invalidation support
 
-> Requeuing sounds good and I hope this helps us getting the back pressure =
-/ congestion such
-> that blocking on the request queue mempool [1,2] will kick in to
-prevent memory pressure on
-> queue_if_no_path (for which "queue" has a slightly different
-meaning with the change but I don't mind).
-> =
+ Documentation/device-mapper/cache.txt |   31 ++-
+ drivers/md/dm-cache-metadata.c        |   95 ++++++-
+ drivers/md/dm-cache-metadata.h        |    5 +
+ drivers/md/dm-cache-policy-internal.h |    5 +
+ drivers/md/dm-cache-policy-mq.c       |  572 +++++++++++++++------------------
+ drivers/md/dm-cache-policy.h          |   21 +-
+ drivers/md/dm-cache-target.c          |  497 ++++++++++++++++++++++++++---
+ 7 files changed, 859 insertions(+), 367 deletions(-)
 
-Well, first of all we won't be accepting any more requests if the
-first one is being requeued; blktrace shows a nice requeue game
-going on (even with dd and O_DIRECT set) with just a single request
-being requeued over and over again, until the 'queue_if_no_path'
-scenario is gone.
-
-> One thing I'm still wondering: Would there be any benefit of actually sto=
-pping the request
-> queue until at least one path becomes available again?
-[blk_{start|stop}_queue()] I.e. stop
-> in map_io() after we're sure there is no path in any prio group,
-and restart in reinstate_path().
-> =
-
-Hehe. Thought about that, too.
-
-Problem with that approach is the way multipath currently works.
-Currently multipath does _not_ have a flag for 'all paths down and
-queue_if_no_path is active, please requeue'.
-It rather evaluates all possible paths during map_io, and only
-if it determines that no paths are present and queue_if_no_path
-is set it'll requeue the I/O.
-
-So if we were to use start/stop queue here the block layer would
-never trigger 'map_io', and multipath would never check the path
-states and no I/O will be sent, ever.
-
-blk_start/stop_queue works best if you have _alternative_ means
-of setting those, besides the normal I/O path.
-(It's original idea was to be used from LLDDs, after all).
-When one of these functions is being used in the normal I/O path
-things are becoming iffy really fast.
-
-That said, it _would_ make sense to use blk_start/stop_queue for
-pg_init; we cannot send I/O during pg_init anyway, so there's
-no point in retrying I/O here.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+-- 
+1.7.4.4
