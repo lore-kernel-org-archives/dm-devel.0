@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/6] dm cache: add passthrough mode
-Date: Mon, 11 Nov 2013 12:20:44 -0500
-Message-ID: <1384190448-3861-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 6/6] dm cache: add cache block invalidation
+	support
+Date: Mon, 11 Nov 2013 12:20:48 -0500
+Message-ID: <1384190448-3861-7-git-send-email-snitzer@redhat.com>
 References: <1384190448-3861-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,433 +24,391 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-"Passthrough" is a dm-cache operating mode (like writethrough or
-writeback) which is intended to be used when the cache contents are not
-known to be coherent with the origin device.  It behaves as follows:
+Cache block invalidation is removing an entry from the cache without
+writing it back.  Cache blocks can be invalidated via the
+'invalidate_cblocks' message, which takes an arbitrary number of cblock
+ranges:
+   invalidate_cblocks [<cblock>|<cblock begin>-<cblock end>]*
 
-* All reads are served from the origin device (all reads miss the cache)
-* All writes are forwarded to the origin device; additionally, write
-  hits cause cache block invalidates
-
-This mode decouples cache coherency checks from cache device creation,
-largely to avoid having to perform coherency checks while booting.  Boot
-scripts can create cache devices in passthrough mode and put them into
-service (mount cached filesystems, for example) without having to worry
-about coherency.  Coherency that exists is maintained, although the
-cache will gradually cool as writes take place.
-
-Later, applications can perform coherency checks, the nature of which
-will depend on the type of the underlying storage.  If coherency can be
-verified, the cache device can be transitioned to writethrough or
-writeback mode while still warm; otherwise, the cache contents can be
-discarded prior to transitioning to the desired operating mode.
+E.g.
+   dmsetup message my_cache 0 invalidate_cblocks 2345 3456-4567 5678-6789
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Signed-off-by: Morgan Mears <Morgan.Mears@netapp.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- Documentation/device-mapper/cache.txt |   19 +++-
- drivers/md/dm-cache-metadata.c        |    5 +
- drivers/md/dm-cache-metadata.h        |    5 +
- drivers/md/dm-cache-target.c          |  209 +++++++++++++++++++++++++++------
- 4 files changed, 200 insertions(+), 38 deletions(-)
+ Documentation/device-mapper/cache.txt |   12 ++-
+ drivers/md/dm-cache-target.c          |  225 ++++++++++++++++++++++++++++++++-
+ 2 files changed, 233 insertions(+), 4 deletions(-)
 
 diff --git a/Documentation/device-mapper/cache.txt b/Documentation/device-mapper/cache.txt
-index 33d45ee..ff6639f 100644
+index ff6639f..fc9d2df 100644
 --- a/Documentation/device-mapper/cache.txt
 +++ b/Documentation/device-mapper/cache.txt
-@@ -68,10 +68,11 @@ So large block sizes are bad because they waste cache space.  And small
- block sizes are bad because they increase the amount of metadata (both
- in core and on disk).
+@@ -244,12 +244,22 @@ The message format is:
+ E.g.
+    dmsetup message my_cache 0 sequential_threshold 1024
  
--Writeback/writethrough
------------------------
-+Cache operating modes
-+---------------------
- 
--The cache has two modes, writeback and writethrough.
-+The cache has three operating modes: writeback, writethrough and
-+passthrough.
- 
- If writeback, the default, is selected then a write to a block that is
- cached will go only to the cache and the block will be marked dirty in
-@@ -81,6 +82,18 @@ If writethrough is selected then a write to a cached block will not
- complete until it has hit both the origin and cache devices.  Clean
- blocks should remain clean.
- 
-+If passthrough is selected, useful when the cache contents are not known
-+to be coherent with the origin device, then all reads are served from
-+the origin device (all reads miss the cache) and all writes are
-+forwarded to the origin device; additionally, write hits cause cache
-+block invalidates.  Passthrough mode allows a cache device to be
-+activated without having to worry about coherency.  Coherency that
-+exists is maintained, although the cache will gradually cool as writes
-+take place.  If the coherency of the cache can later be verified, or
-+established, the cache device can can be transitioned to writethrough or
-+writeback mode while still warm.  Otherwise, the cache contents can be
-+discarded prior to transitioning to the desired operating mode.
 +
- A simple cleaner policy is provided, which will clean (write back) all
- dirty blocks in a cache.  Useful for decommissioning a cache.
- 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index 062b83e..8601425 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -1249,3 +1249,8 @@ int dm_cache_save_hint(struct dm_cache_metadata *cmd, dm_cblock_t cblock,
- 
- 	return r;
- }
++Invalidation is removing an entry from the cache without writing it
++back.  Cache blocks can be invalidated via the invalidate_cblocks
++message, which takes an arbitrary number of cblock ranges.
 +
-+int dm_cache_metadata_all_clean(struct dm_cache_metadata *cmd, bool *result)
-+{
-+	return blocks_are_unmapped_or_clean(cmd, 0, cmd->cache_blocks, result);
-+}
-diff --git a/drivers/md/dm-cache-metadata.h b/drivers/md/dm-cache-metadata.h
-index f45cef2..cd906f1 100644
---- a/drivers/md/dm-cache-metadata.h
-+++ b/drivers/md/dm-cache-metadata.h
-@@ -137,6 +137,11 @@ int dm_cache_begin_hints(struct dm_cache_metadata *cmd, struct dm_cache_policy *
- int dm_cache_save_hint(struct dm_cache_metadata *cmd,
- 		       dm_cblock_t cblock, uint32_t hint);
- 
-+/*
-+ * Query method.  Are all the blocks in the cache clean?
-+ */
-+int dm_cache_metadata_all_clean(struct dm_cache_metadata *cmd, bool *result);
++   invalidate_cblocks [<cblock>|<cblock begin>-<cblock end>]*
 +
- /*----------------------------------------------------------------*/
++E.g.
++   dmsetup message my_cache 0 invalidate_cblocks 2345 3456-4567 5678-6789
++
+ Examples
+ ========
  
- #endif /* DM_CACHE_METADATA_H */
+ The test suite can be found here:
+ 
+-https://github.com/jthornber/thinp-test-suite
++https://github.com/jthornber/device-mapper-test-suite
+ 
+ dmsetup create my_cache --table '0 41943040 cache /dev/mapper/metadata \
+ 	/dev/mapper/ssd /dev/mapper/origin 512 1 writeback default 0'
 diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 183dfc9..8c02177 100644
+index 8c02177..41e664b 100644
 --- a/drivers/md/dm-cache-target.c
 +++ b/drivers/md/dm-cache-target.c
-@@ -104,14 +104,37 @@ static void dm_unhook_bio(struct dm_hook_info *h, struct bio *bio)
- /*
-  * FIXME: the cache is read/write for the time being.
-  */
--enum cache_mode {
-+enum cache_metadata_mode {
- 	CM_WRITE,		/* metadata may be changed */
- 	CM_READ_ONLY,		/* metadata may not be changed */
+@@ -150,6 +150,25 @@ struct cache_stats {
+ 	atomic_t discard_count;
  };
- 
-+enum cache_io_mode {
-+	/*
-+	 * Data is written to cached blocks only.  These blocks are marked
-+	 * dirty.  If you lose the cache device you will lose data.
-+	 * Potential performance increase for both reads and writes.
-+	 */
-+	CM_IO_WRITEBACK,
-+
-+	/*
-+	 * Data is written to both cache and origin.  Blocks are never
-+	 * dirty.  Potential performance benfit for reads only.
-+	 */
-+	CM_IO_WRITETHROUGH,
-+
-+	/*
-+	 * A degraded mode useful for various cache coherency situations
-+	 * (eg, rolling back snapshots).  Reads and writes always go to the
-+	 * origin.  If a write goes to a cached oblock, then the cache
-+	 * block is invalidated.
-+	 */
-+	CM_IO_PASSTHROUGH
-+};
-+
- struct cache_features {
--	enum cache_mode mode;
--	bool write_through:1;
-+	enum cache_metadata_mode mode;
-+	enum cache_io_mode io_mode;
- };
- 
- struct cache_stats {
-@@ -565,9 +588,24 @@ static void save_stats(struct cache *cache)
- #define PB_DATA_SIZE_WB (offsetof(struct per_bio_data, cache))
- #define PB_DATA_SIZE_WT (sizeof(struct per_bio_data))
- 
-+static bool writethrough_mode(struct cache_features *f)
-+{
-+	return f->io_mode == CM_IO_WRITETHROUGH;
-+}
-+
-+static bool writeback_mode(struct cache_features *f)
-+{
-+	return f->io_mode == CM_IO_WRITEBACK;
-+}
-+
-+static bool passthrough_mode(struct cache_features *f)
-+{
-+	return f->io_mode == CM_IO_PASSTHROUGH;
-+}
-+
- static size_t get_per_bio_data_size(struct cache *cache)
- {
--	return cache->features.write_through ? PB_DATA_SIZE_WT : PB_DATA_SIZE_WB;
-+	return writethrough_mode(&cache->features) ? PB_DATA_SIZE_WT : PB_DATA_SIZE_WB;
- }
- 
- static struct per_bio_data *get_per_bio_data(struct bio *bio, size_t data_size)
-@@ -1135,6 +1173,32 @@ static void demote_then_promote(struct cache *cache, struct prealloc *structs,
- 	quiesce_migration(mg);
- }
  
 +/*
-+ * Invalidate a cache entry.  No writeback occurs; any changes in the cache
-+ * block are thrown away.
++ * Defines a range of cblocks, begin to (end - 1) are in the range.  end is
++ * the one-past-the-end value.
 + */
-+static void invalidate(struct cache *cache, struct prealloc *structs,
-+		       dm_oblock_t oblock, dm_cblock_t cblock,
-+		       struct dm_bio_prison_cell *cell)
-+{
-+	struct dm_cache_migration *mg = prealloc_get_migration(structs);
++struct cblock_range {
++	dm_cblock_t begin;
++	dm_cblock_t end;
++};
 +
-+	mg->err = false;
-+	mg->writeback = false;
-+	mg->demote = true;
-+	mg->promote = false;
-+	mg->requeue_holder = true;
-+	mg->cache = cache;
-+	mg->old_oblock = oblock;
-+	mg->cblock = cblock;
-+	mg->old_ocell = cell;
-+	mg->new_ocell = NULL;
-+	mg->start_jiffies = jiffies;
++struct invalidation_request {
++	struct list_head list;
++	struct cblock_range *cblocks;
 +
-+	inc_nr_migrations(cache);
-+	quiesce_migration(mg);
-+}
++	atomic_t complete;
++	int err;
 +
- /*----------------------------------------------------------------
-  * bio processing
-  *--------------------------------------------------------------*/
-@@ -1197,13 +1261,6 @@ static bool spare_migration_bandwidth(struct cache *cache)
- 	return current_volume < cache->migration_threshold;
- }
++	wait_queue_head_t result_wait;
++};
++
+ struct cache {
+ 	struct dm_target *ti;
+ 	struct dm_target_callbacks callbacks;
+@@ -241,6 +260,7 @@ struct cache {
  
--static bool is_writethrough_io(struct cache *cache, struct bio *bio,
--			       dm_cblock_t cblock)
--{
--	return bio_data_dir(bio) == WRITE &&
--		cache->features.write_through && !is_dirty(cache, cblock);
--}
--
- static void inc_hit_counter(struct cache *cache, struct bio *bio)
- {
- 	atomic_inc(bio_data_dir(bio) == READ ?
-@@ -1216,6 +1273,15 @@ static void inc_miss_counter(struct cache *cache, struct bio *bio)
- 		   &cache->stats.read_miss : &cache->stats.write_miss);
- }
+ 	bool need_tick_bio:1;
+ 	bool sized:1;
++	bool invalidate:1;
+ 	bool commit_requested:1;
+ 	bool loaded_mappings:1;
+ 	bool loaded_discards:1;
+@@ -251,6 +271,12 @@ struct cache {
+ 	struct cache_features features;
  
-+static void issue_cache_bio(struct cache *cache, struct bio *bio,
-+			    struct per_bio_data *pb,
-+			    dm_oblock_t oblock, dm_cblock_t cblock)
-+{
-+	pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
-+	remap_to_cache_dirty(cache, bio, oblock, cblock);
-+	issue(cache, bio);
-+}
+ 	struct cache_stats stats;
 +
- static void process_bio(struct cache *cache, struct prealloc *structs,
- 			struct bio *bio)
- {
-@@ -1227,7 +1293,8 @@ static void process_bio(struct cache *cache, struct prealloc *structs,
- 	size_t pb_data_size = get_per_bio_data_size(cache);
- 	struct per_bio_data *pb = get_per_bio_data(bio, pb_data_size);
- 	bool discarded_block = is_discarded_oblock(cache, block);
--	bool can_migrate = discarded_block || spare_migration_bandwidth(cache);
-+	bool passthrough = passthrough_mode(&cache->features);
-+	bool can_migrate = !passthrough && (discarded_block || spare_migration_bandwidth(cache));
++	/*
++	 * Invalidation fields.
++	 */
++	spinlock_t invalidation_lock;
++	struct list_head invalidation_requests;
+ };
  
- 	/*
- 	 * Check to see if that block is currently migrating.
-@@ -1248,15 +1315,39 @@ static void process_bio(struct cache *cache, struct prealloc *structs,
+ struct per_bio_data {
+@@ -283,6 +309,7 @@ struct dm_cache_migration {
+ 	bool demote:1;
+ 	bool promote:1;
+ 	bool requeue_holder:1;
++	bool invalidate:1;
  
- 	switch (lookup_result.op) {
- 	case POLICY_HIT:
--		inc_hit_counter(cache, bio);
--		pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
-+		if (passthrough) {
-+			inc_miss_counter(cache, bio);
+ 	struct dm_bio_prison_cell *old_ocell;
+ 	struct dm_bio_prison_cell *new_ocell;
+@@ -904,8 +931,11 @@ static void migration_success_post_commit(struct dm_cache_migration *mg)
+ 			list_add_tail(&mg->list, &cache->quiesced_migrations);
+ 			spin_unlock_irqrestore(&cache->lock, flags);
  
--		if (is_writethrough_io(cache, bio, lookup_result.cblock))
--			remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
--		else
--			remap_to_cache_dirty(cache, bio, block, lookup_result.cblock);
-+			/*
-+			 * Passthrough always maps to the origin,
-+			 * invalidating any cache blocks that are written
-+			 * to.
-+			 */
-+
-+			if (bio_data_dir(bio) == WRITE) {
-+				atomic_inc(&cache->stats.demotion);
-+				invalidate(cache, structs, block, lookup_result.cblock, new_ocell);
-+				release_cell = false;
-+
-+			} else {
-+				/* FIXME: factor out issue_origin() */
-+				pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
-+				remap_to_origin_clear_discard(cache, bio, block);
-+				issue(cache, bio);
-+			}
+-		} else
 +		} else {
-+			inc_hit_counter(cache, bio);
-+
-+			if (bio_data_dir(bio) == WRITE &&
-+			    writethrough_mode(&cache->features) &&
-+			    !is_dirty(cache, lookup_result.cblock)) {
-+				pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
-+				remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
-+				issue(cache, bio);
-+			} else
-+				issue_cache_bio(cache, bio, pb, block, lookup_result.cblock);
++			if (mg->invalidate)
++				policy_remove_mapping(cache->policy, mg->old_oblock);
+ 			cleanup_migration(mg);
 +		}
  
--		issue(cache, bio);
- 		break;
- 
- 	case POLICY_MISS:
-@@ -1807,7 +1898,7 @@ static int parse_block_size(struct cache_args *ca, struct dm_arg_set *as,
- static void init_features(struct cache_features *cf)
- {
- 	cf->mode = CM_WRITE;
--	cf->write_through = false;
-+	cf->io_mode = CM_IO_WRITEBACK;
+ 	} else {
+ 		if (mg->requeue_holder)
+@@ -1115,6 +1145,7 @@ static void promote(struct cache *cache, struct prealloc *structs,
+ 	mg->demote = false;
+ 	mg->promote = true;
+ 	mg->requeue_holder = true;
++	mg->invalidate = false;
+ 	mg->cache = cache;
+ 	mg->new_oblock = oblock;
+ 	mg->cblock = cblock;
+@@ -1137,6 +1168,7 @@ static void writeback(struct cache *cache, struct prealloc *structs,
+ 	mg->demote = false;
+ 	mg->promote = false;
+ 	mg->requeue_holder = true;
++	mg->invalidate = false;
+ 	mg->cache = cache;
+ 	mg->old_oblock = oblock;
+ 	mg->cblock = cblock;
+@@ -1161,6 +1193,7 @@ static void demote_then_promote(struct cache *cache, struct prealloc *structs,
+ 	mg->demote = true;
+ 	mg->promote = true;
+ 	mg->requeue_holder = true;
++	mg->invalidate = false;
+ 	mg->cache = cache;
+ 	mg->old_oblock = old_oblock;
+ 	mg->new_oblock = new_oblock;
+@@ -1188,6 +1221,7 @@ static void invalidate(struct cache *cache, struct prealloc *structs,
+ 	mg->demote = true;
+ 	mg->promote = false;
+ 	mg->requeue_holder = true;
++	mg->invalidate = true;
+ 	mg->cache = cache;
+ 	mg->old_oblock = oblock;
+ 	mg->cblock = cblock;
+@@ -1525,6 +1559,58 @@ static void writeback_some_dirty_blocks(struct cache *cache)
  }
  
- static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
-@@ -1832,10 +1923,13 @@ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
- 		arg = dm_shift_arg(as);
- 
- 		if (!strcasecmp(arg, "writeback"))
--			cf->write_through = false;
-+			cf->io_mode = CM_IO_WRITEBACK;
- 
- 		else if (!strcasecmp(arg, "writethrough"))
--			cf->write_through = true;
-+			cf->io_mode = CM_IO_WRITETHROUGH;
+ /*----------------------------------------------------------------
++ * Invalidations.
++ * Dropping something from the cache *without* writing back.
++ *--------------------------------------------------------------*/
 +
-+		else if (!strcasecmp(arg, "passthrough"))
-+			cf->io_mode = CM_IO_PASSTHROUGH;
- 
- 		else {
- 			*error = "Unrecognised cache feature requested";
-@@ -2088,6 +2182,22 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 	}
- 	cache->cmd = cmd;
- 
-+	if (passthrough_mode(&cache->features)) {
-+		bool all_clean;
++static void process_invalidation_request(struct cache *cache, struct invalidation_request *req)
++{
++	int r = 0;
++	uint64_t begin = from_cblock(req->cblocks->begin);
++	uint64_t end = from_cblock(req->cblocks->end);
 +
-+		r = dm_cache_metadata_all_clean(cache->cmd, &all_clean);
-+		if (r) {
-+			*error = "dm_cache_metadata_all_clean() failed";
-+			goto bad;
++	while (begin != end) {
++		r = policy_remove_cblock(cache->policy, to_cblock(begin));
++		if (!r) {
++			r = dm_cache_remove_mapping(cache->cmd, to_cblock(begin));
++			if (r)
++				break;
++
++		} else if (r == -ENODATA) {
++			/* harmless, already unmapped */
++			r = 0;
++
++		} else {
++			DMERR("policy_remove_cblock failed");
++			break;
 +		}
 +
-+		if (!all_clean) {
-+			*error = "Cannot enter passthrough mode unless all blocks are clean";
-+			r = -EINVAL;
-+			goto bad;
-+		}
++		begin++;
++        }
++
++	cache->commit_requested = true;
++
++	req->err = r;
++	atomic_set(&req->complete, 1);
++
++	wake_up(&req->result_wait);
++}
++
++static void process_invalidation_requests(struct cache *cache)
++{
++	struct list_head list;
++	struct invalidation_request *req, *tmp;
++
++	INIT_LIST_HEAD(&list);
++	spin_lock(&cache->invalidation_lock);
++	list_splice_init(&cache->invalidation_requests, &list);
++	spin_unlock(&cache->invalidation_lock);
++
++	list_for_each_entry_safe (req, tmp, &list, list)
++		process_invalidation_request(cache, req);
++}
++
++/*----------------------------------------------------------------
+  * Main worker loop
+  *--------------------------------------------------------------*/
+ static bool is_quiescing(struct cache *cache)
+@@ -1593,7 +1679,8 @@ static int more_work(struct cache *cache)
+ 			!bio_list_empty(&cache->deferred_writethrough_bios) ||
+ 			!list_empty(&cache->quiesced_migrations) ||
+ 			!list_empty(&cache->completed_migrations) ||
+-			!list_empty(&cache->need_commit_migrations);
++			!list_empty(&cache->need_commit_migrations) ||
++			cache->invalidate;
+ }
+ 
+ static void do_worker(struct work_struct *ws)
+@@ -1605,6 +1692,7 @@ static void do_worker(struct work_struct *ws)
+ 			writeback_some_dirty_blocks(cache);
+ 			process_deferred_writethrough_bios(cache);
+ 			process_deferred_bios(cache);
++			process_invalidation_requests(cache);
+ 		}
+ 
+ 		process_migrations(cache, &cache->quiesced_migrations, issue_copy);
+@@ -2271,6 +2359,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 
+ 	cache->need_tick_bio = true;
+ 	cache->sized = false;
++	cache->invalidate = false;
+ 	cache->commit_requested = false;
+ 	cache->loaded_mappings = false;
+ 	cache->loaded_discards = false;
+@@ -2284,6 +2373,9 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 	atomic_set(&cache->stats.commit_count, 0);
+ 	atomic_set(&cache->stats.discard_count, 0);
+ 
++	spin_lock_init(&cache->invalidation_lock);
++	INIT_LIST_HEAD(&cache->invalidation_requests);
++
+ 	*result = cache;
+ 	return 0;
+ 
+@@ -2833,7 +2925,128 @@ err:
+ }
+ 
+ /*
+- * Supports <key> <value>.
++ * A cache block range can take two forms:
++ *
++ * i) A single cblock, eg. '3456'
++ * ii) A begin and end cblock with dots between, eg. 123-234
++ */
++static int parse_cblock_range(struct cache *cache, const char *str,
++			      struct cblock_range *result)
++{
++	char dummy;
++	uint64_t b, e;
++	int r;
++
++	/*
++	 * Try and parse form (ii) first.
++	 */
++	r = sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
++	if (r < 0)
++		return r;
++
++	if (r == 2) {
++		result->begin = to_cblock(b);
++		result->end = to_cblock(e);
++		return 0;
 +	}
 +
- 	spin_lock_init(&cache->lock);
- 	bio_list_init(&cache->deferred_bios);
- 	bio_list_init(&cache->deferred_flush_bios);
-@@ -2303,17 +2413,37 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
- 		return DM_MAPIO_SUBMITTED;
- 	}
- 
-+	r = DM_MAPIO_REMAPPED;
- 	switch (lookup_result.op) {
- 	case POLICY_HIT:
--		inc_hit_counter(cache, bio);
--		pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
-+		if (passthrough_mode(&cache->features)) {
-+			if (bio_data_dir(bio) == WRITE) {
-+				/*
-+				 * We need to invalidate this block, so
-+				 * defer for the worker thread.
-+				 */
-+				cell_defer(cache, cell, true);
-+				r = DM_MAPIO_SUBMITTED;
++	/*
++	 * That didn't work, try form (i).
++	 */
++	r = sscanf(str, "%llu%c", &b, &dummy);
++	if (r < 0)
++		return r;
 +
-+			} else {
-+				pb->all_io_entry = dm_deferred_entry_inc(cache->all_io_ds);
-+				inc_miss_counter(cache, bio);
-+				remap_to_origin_clear_discard(cache, bio, block);
++	if (r == 1) {
++		result->begin = to_cblock(b);
++		result->end = to_cblock(from_cblock(result->begin) + 1u);
++		return 0;
++	}
 +
-+				cell_defer(cache, cell, false);
-+			}
- 
--		if (is_writethrough_io(cache, bio, lookup_result.cblock))
--			remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
--		else
--			remap_to_cache_dirty(cache, bio, block, lookup_result.cblock);
-+		} else {
-+			inc_hit_counter(cache, bio);
++	DMERR("invalid cblock range '%s'", str);
++	return -EINVAL;
++}
 +
-+			if (bio_data_dir(bio) == WRITE && writethrough_mode(&cache->features) &&
-+			    !is_dirty(cache, lookup_result.cblock))
-+				remap_to_origin_then_cache(cache, bio, block, lookup_result.cblock);
-+			else
-+				remap_to_cache_dirty(cache, bio, block, lookup_result.cblock);
- 
--		cell_defer(cache, cell, false);
-+			cell_defer(cache, cell, false);
-+		}
- 		break;
- 
- 	case POLICY_MISS:
-@@ -2338,10 +2468,10 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
- 		DMERR_LIMIT("%s: erroring bio: unknown policy op: %u", __func__,
- 			    (unsigned) lookup_result.op);
- 		bio_io_error(bio);
--		return DM_MAPIO_SUBMITTED;
-+		r = DM_MAPIO_SUBMITTED;
- 	}
- 
--	return DM_MAPIO_REMAPPED;
++static int validate_cblock_range(struct cache *cache, struct cblock_range *range)
++{
++	uint64_t b = from_cblock(range->begin);
++	uint64_t e = from_cblock(range->end);
++	uint64_t n = from_cblock(cache->cache_size);
++
++	if (b >= n) {
++		DMERR("begin cblock out of range: %llu >= %llu", b, n);
++		return -EINVAL;
++	}
++
++	if (e > n) {
++		DMERR("end cblock out of range: %llu > %llu", e, n);
++		return -EINVAL;
++	}
++
++	if (b >= e) {
++		DMERR("invalid cblock range: %llu >= %llu", b, e);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static int request_invalidation(struct cache *cache, struct cblock_range *range)
++{
++	struct invalidation_request req;
++
++	INIT_LIST_HEAD(&req.list);
++	req.cblocks = range;
++	atomic_set(&req.complete, 0);
++	req.err = 0;
++	init_waitqueue_head(&req.result_wait);
++
++	spin_lock(&cache->invalidation_lock);
++	list_add(&req.list, &cache->invalidation_requests);
++	spin_unlock(&cache->invalidation_lock);
++	wake_worker(cache);
++
++	wait_event(req.result_wait, atomic_read(&req.complete));
++	return req.err;
++}
++
++static int process_invalidate_cblocks_message(struct cache *cache, unsigned count,
++					      const char **cblock_ranges)
++{
++	int r = 0;
++	unsigned i;
++	struct cblock_range range;
++
++	if (!passthrough_mode(&cache->features)) {
++		DMERR("cache has to be in passthrough mode for invalidation");
++		return -EPERM;
++	}
++
++	for (i = 0; i < count; i++) {
++		r = parse_cblock_range(cache, cblock_ranges[i], &range);
++		if (r)
++			break;
++
++		r = validate_cblock_range(cache, &range);
++		if (r)
++			break;
++
++		/*
++		 * Pass begin and end origin blocks to the worker and wake it.
++		 */
++		r = request_invalidation(cache, &range);
++		if (r)
++			break;
++	}
++
 +	return r;
- }
- 
- static int cache_end_io(struct dm_target *ti, struct bio *bio, int error)
-@@ -2659,10 +2789,19 @@ static void cache_status(struct dm_target *ti, status_type_t type,
- 		       (unsigned long long) from_cblock(residency),
- 		       cache->nr_dirty);
- 
--		if (cache->features.write_through)
-+		if (writethrough_mode(&cache->features))
- 			DMEMIT("1 writethrough ");
--		else
--			DMEMIT("0 ");
++}
 +
-+		else if (passthrough_mode(&cache->features))
-+			DMEMIT("1 passthrough ");
-+
-+		else if (writeback_mode(&cache->features))
-+			DMEMIT("1 writeback ");
-+
-+		else {
-+			DMERR("internal error: unknown io mode: %d", (int) cache->features.io_mode);
-+			goto err;
-+		}
++/*
++ * Supports
++ *	"<key> <value>"
++ * and
++ *     "invalidate_cblocks [(<begin>)|(<begin>-<end>)]*
+  *
+  * The key migration_threshold is supported by the cache target core.
+  */
+@@ -2841,6 +3054,12 @@ static int cache_message(struct dm_target *ti, unsigned argc, char **argv)
+ {
+ 	struct cache *cache = ti->private;
  
- 		DMEMIT("2 migration_threshold %llu ", (unsigned long long) cache->migration_threshold);
- 		if (sz < maxlen) {
-@@ -2771,7 +2910,7 @@ static void cache_io_hints(struct dm_target *ti, struct queue_limits *limits)
++	if (!argc)
++		return -EINVAL;
++
++	if (!strcmp(argv[0], "invalidate_cblocks"))
++		return process_invalidate_cblocks_message(cache, argc - 1, (const char **) argv + 1);
++
+ 	if (argc != 2)
+ 		return -EINVAL;
  
- static struct target_type cache_target = {
- 	.name = "cache",
--	.version = {1, 1, 1},
-+	.version = {1, 2, 0},
- 	.module = THIS_MODULE,
- 	.ctr = cache_ctr,
- 	.dtr = cache_dtr,
 -- 
 1.7.4.4
