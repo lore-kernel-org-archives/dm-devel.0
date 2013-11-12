@@ -1,17 +1,17 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 5/6] dm cache: add remove_cblock method
-	to	policy interface
-Date: Tue, 12 Nov 2013 00:18:52 +0000
-Message-ID: <20131112001851.GI24324@agk-dp.fab.redhat.com>
+Subject: Re: [PATCH 6/6] dm cache: add cache block
+	invalidation	support
+Date: Tue, 12 Nov 2013 00:46:33 +0000
+Message-ID: <20131112004633.GJ24324@agk-dp.fab.redhat.com>
 References: <1384190448-3861-1-git-send-email-snitzer@redhat.com>
-	<1384190448-3861-6-git-send-email-snitzer@redhat.com>
+	<1384190448-3861-7-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1384190448-3861-6-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1384190448-3861-7-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,37 +24,46 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 11, 2013 at 12:20:47PM -0500, Mike Snitzer wrote:
+On Mon, Nov 11, 2013 at 12:20:48PM -0500, Mike Snitzer wrote:
 > From: Joe Thornber <ejt@redhat.com>
  
-> +static struct entry *epool_find(struct entry_pool *ep, dm_cblock_t cblock)
-> +{
-> +	struct entry *e = ep->entries + from_cblock(cblock);
-> +	return e->hlist.pprev ? e : NULL;
+> Cache block invalidation is removing an entry from the cache without
+> writing it back.  Cache blocks can be invalidated via the
+> 'invalidate_cblocks' message, which takes an arbitrary number of cblock
+> ranges:
+>    invalidate_cblocks [<cblock>|<cblock begin>-<cblock end>]*
+ 
+If we're expecting to need to invalidate a large number of ranges, should we
+switch this over to hexadecimal like we did for dm-switch?
 
-Please use hlist_unhashed() rather than accessing pprev explicitly where possible.
+Should we consider changing this to <cblock>+<length> as the dm
+interfaces tend to work with a start offset and a length?
 
-static inline int hlist_unhashed(const struct hlist_node *h)
-{
-        return !h->pprev;
-}
+Or will it be that the userspace interface will not be the bottleneck in
+this code so it really doesn't matter about attempting to optimise that
+part?
 
-> +++ b/drivers/md/dm-cache-policy.h
-> @@ -135,9 +135,6 @@ struct dm_cache_policy {
->  	 */
->  	int (*lookup)(struct dm_cache_policy *p, dm_oblock_t oblock, dm_cblock_t *cblock);
->  
-> -	/*
-> -	 * oblock must be a mapped block.  Must not block.
-> -	 */
->  	void (*set_dirty)(struct dm_cache_policy *p, dm_oblock_t oblock);
->  	void (*clear_dirty)(struct dm_cache_policy *p, dm_oblock_t oblock);
-  
-So a policy can no longer assume oblock is a mapped block, and these functions
-may block?
+> +++ b/Documentation/device-mapper/cache.txt
 
-Is this consistent with 
-          BUG_ON(!e || !in_cache(mq, e));
-in __mq_set_clear_dirty?
+>  The test suite can be found here:
+> -https://github.com/jthornber/thinp-test-suite
+> +https://github.com/jthornber/device-mapper-test-suite
+
+It's really not good if URLs in existing documentation become invalid
+like this: Could an obvious pointer be placed at the old location to
+direct people to the new location?
+
+Can we document whether or not all the ranges will have been invalidated
+before the message returns?
+
+> +	if (!passthrough_mode(&cache->features)) {
+> +		DMERR("cache has to be in passthrough mode for invalidation");
+
+Can we document this too?
+
+> @@ -2841,6 +3054,12 @@ static int cache_message(struct dm_target *ti, unsigned argc, char **argv)
+> +	if (!strcmp(argv[0], "invalidate_cblocks"))
+
+strcasecmp please!
 
 Alasdair
