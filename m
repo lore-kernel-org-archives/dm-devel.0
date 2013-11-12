@@ -1,18 +1,19 @@
 From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: Fwd: Re: [PATCH] dm-mpath: push back requests
- instead of queueing
-Date: Tue, 12 Nov 2013 08:23:42 +0000
-Message-ID: <11AF7C027C4C02408624617A49860784F0A8A4@BPXM12GP.gisp.nec.co.jp>
-References: <527CE4A1.90707@linux.vnet.ibm.com>
-	<5280BEBC.4040500@linux.vnet.ibm.com> <5280C306.7080805@suse.de>
+Subject: Re: [PATCH] dm-mpath: push back requests instead of
+ queueing
+Date: Tue, 12 Nov 2013 08:43:29 +0000
+Message-ID: <11AF7C027C4C02408624617A49860784F0A9D8@BPXM12GP.gisp.nec.co.jp>
+References: <1383901339-81536-1-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
+	<5281E403.5020005@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5280C306.7080805@suse.de>
+In-Reply-To: <5281E403.5020005@suse.de>
 Content-Language: ja-JP
-Content-ID: <3F2DDF44C1B92D4FB3349B0C4BA067AC@gisp.nec.co.jp>
+Content-ID: <446B1C4496DD0D459D632533CB5C7140@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,54 +24,125 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Martin Peschke <mpeschke@linux.vnet.ibm.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/11/13 20:44, Hannes Reinecke wrote:
-> On 11/11/2013 12:25 PM, Steffen Maier wrote:
->> One thing I'm still wondering: Would there be any benefit of actually stopping the request
->> queue until at least one path becomes available again?
-> [blk_{start|stop}_queue()] I.e. stop
->> in map_io() after we're sure there is no path in any prio group,
-> and restart in reinstate_path().
+On 11/12/13 17:17, Hannes Reinecke wrote:
+> On 11/12/2013 08:48 AM, Junichi Nomura wrote:
+>> On 11/08/13 18:02, Hannes Reinecke wrote:
+>>> In doing so we can also remove the ->busy check as a requeue is identical
+>>> to ->busy returning 'true' from the callers perspective. This simplifies
+>>> the code by quite a lot.
 >>
-> Hehe. Thought about that, too.
+>> They are not identical.
+>> ->busy returns true when underlying path cannot dispatch a request
+>> immediately. In that case it's better to keep the request in queue
+>> to allow merges.  (It used to have real impact on buffered sequential
+>> write + fsync workload, though the performance impact might become
+>> smaller in recent kernels due to plugging change.)
+>> Also ->busy can be used by upper layer (dm_table_any_busy_target).
+>> So you can't just remove it.
+>>
+> But they are identical from the callers perspective:
+> drivers/md/dm.c:dm_request_fn()
 > 
-> Problem with that approach is the way multipath currently works.
-> Currently multipath does _not_ have a flag for 'all paths down and
-> queue_if_no_path is active, please requeue'.
-> It rather evaluates all possible paths during map_io, and only
-> if it determines that no paths are present and queue_if_no_path
-> is set it'll requeue the I/O.
+> 		if (ti->type->busy && ti->type->busy(ti))
+> 			goto delay_and_out;
 > 
-> So if we were to use start/stop queue here the block layer would
-> never trigger 'map_io', and multipath would never check the path
-> states and no I/O will be sent, ever.
-
-I might misunderstand but if you stop the queue here:
-
-        if ((pgpath && m->queue_io) ||
-            (!pgpath && m->queue_if_no_path)) {
-                /* Queue for the daemon to resubmit */
-
-you can start the queue on completion of pg_init
-for "pgpath && m->queue_io" case,
-and can start on reinstate_path() message
-for "!pgpath && m->queue_if_no_path" case.
-
-> blk_start/stop_queue works best if you have _alternative_ means
-> of setting those, besides the normal I/O path.
-> (It's original idea was to be used from LLDDs, after all).
-> When one of these functions is being used in the normal I/O path
-> things are becoming iffy really fast.
+> 		clone = dm_start_request(md, rq);
 > 
-> That said, it _would_ make sense to use blk_start/stop_queue for
-> pg_init; we cannot send I/O during pg_init anyway, so there's
-> no point in retrying I/O here.
+> 		spin_unlock(q->queue_lock);
+> 		if (map_request(ti, clone, md))
+> 			goto requeued;
+> 
+> 		BUG_ON(!irqs_disabled());
+> 		spin_lock(q->queue_lock);
+> 	}
+> 
+> 	goto out;
+> 
+> requeued:
+> 	BUG_ON(!irqs_disabled());
+> 	spin_lock(q->queue_lock);
+> 
+> delay_and_out:
+> 	blk_delay_queue(q, HZ / 10);
+> 
+> So the only difference between ->busy and return 'DM_MAPIO_REQUEUE'
+> is that 'busy' runs under the queue_lock.
 
-blk_stop/start_queue is used to implement dm suspend/resume.
-So if you use them from target, care has to be taken not to
-interfere with dm core.
+A difference is whether the request is once dequeued or not.
+I think requeued request does not accept any merge.
+
+But the point is not there; if you remove ->busy, nobody checks whether
+underlying device is busy and DM_MAPIO_REQUEUE won't be returned.
+So the other option might be moving ->busy check in request_fn to
+inside of map function and let it return DM_MAPIO_REQUEUE.
+
+> And yes, in theory ->busy might be used from any upper layer; but
+> so far the only caller I've found _is_ in dm_request_fn().
+> So removing doesn't do any harm.
+> 
+> Unless I've misread something ...
+
+<snip>
+
+>>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+>>> index b3e26c7..20a19bd 100644
+>>> --- a/drivers/md/dm.c
+>>> +++ b/drivers/md/dm.c
+>>> @@ -1876,6 +1876,19 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
+>>>  	return r;
+>>>  }
+>>>  
+>>> +void dm_table_run_queue(struct dm_table *t)
+>>> +{
+>>> +	struct mapped_device *md = dm_table_get_md(t);
+>>> +	unsigned long flags;
+>>> +
+>>> +	if (md->queue) {
+>>> +		spin_lock_irqsave(md->queue->queue_lock, flags);
+>>> +		blk_run_queue_async(md->queue);
+>>> +		spin_unlock_irqrestore(md->queue->queue_lock, flags);
+>>> +	}
+>>> +}
+>>> +EXPORT_SYMBOL_GPL(dm_table_run_queue);
+>>
+>> Shouldn't this be in dm-table.c?
+>>
+> It would be logical.
+> But as 'struct mapped_device' is internal to dm.c you
+> would then end-up with something like:
+> 
+> void dm_run_queue(struct mapped_device *md)
+> 
+> and I would need to call it like
+> 
+> dm_run_queue(dm_table_get_md())
+> 
+> which I felt was a bit pointless, as this would
+> be the _only_ valid calling sequence. Hence
+> I moved the call to dm_table_get_md() into the
+> function, even though it meant a possible
+> layering violation.
+> 
+> Oh, the joys of device-mapper ...
+
+Yeah, I know that feeling and don't insist on this.
+But maybe a code like this work?
+
+void dm_table_run_queue(struct dm_table *t)
+{
+	struct mapped_device *md = dm_table_get_md(t);
+	struct request_queue *q = dm_disk(md)->queue;
+	unsigned long flags;
+
+	if (q) {
+		spin_lock_irqsave(q->queue_lock, flags);
+		blk_run_queue_async(q);
+		spin_unlock_irqrestore(q->queue_lock, flags);
+	}
+}
 
 -- 
 Jun'ichi Nomura, NEC Corporation
