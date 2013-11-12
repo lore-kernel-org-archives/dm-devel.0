@@ -1,20 +1,23 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Subject: Re: [PATCH] dm-mpath: push back requests instead of
-	queueing
-Date: Tue, 12 Nov 2013 11:17:43 +0100
-Message-ID: <52820047.9090103@suse.de>
+ queueing
+Date: Tue, 12 Nov 2013 10:25:06 +0000
+Message-ID: <11AF7C027C4C02408624617A49860784F0B09D@BPXM12GP.gisp.nec.co.jp>
 References: <1383901339-81536-1-git-send-email-hare@suse.de>
 	<11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
 	<5281E403.5020005@suse.de>
 	<11AF7C027C4C02408624617A49860784F0A9D8@BPXM12GP.gisp.nec.co.jp>
 	<5281EF56.8030808@suse.de>
 	<11AF7C027C4C02408624617A49860784F0AE9C@BPXM12GP.gisp.nec.co.jp>
+	<52820047.9090103@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A49860784F0AE9C@BPXM12GP.gisp.nec.co.jp>
+In-Reply-To: <52820047.9090103@suse.de>
+Content-Language: ja-JP
+Content-ID: <6F47255AC8861D4887A7E54E4FACCB9B@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,30 +27,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMTEvMTIvMjAxMyAxMTowMCBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMTEvMTIv
-MTMgMTg6MDUsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKWyAuLiBdCj4+IFdlIF9jb3VsZF8gb3B0
-aW1pemUgdGhpcyBpbiBfX3N3aXRjaF9wZygpLCB0byBjYWxsIHBncGF0aF9idXN5KCkKPj4gd2hl
-biBzZWxlY3RpbmcgdGhlIHBhdGhzLiBCdXQgdGhhdCBzaG91bGQgYmUgZG9uZSBieSB0aGUgcGF0
-aCBzZWxlY3Rvci4KPj4gU28gZm9yIHRoYXQgd2Ugd291bGQgbmVlZCB0byBzZXBhcmF0ZSB0aGUg
-ZnVuY3Rpb25hbGl0eSBvZiB0aGUKPj4gcGF0aCBzZWxlY3RvciBhbmQgX19zd2l0Y2hfcGc7IGN1
-cnJlbnRseSBpdCdzIHVuY2xlYXIgd2hldGhlcgo+PiB3ZSBuZWVkIHRvIGNhbGwgcGdwYXRoX2J1
-c3koKSBpbiBfX3N3aXRjaF9wZyBvciBub3QuCj4gCj4gVGhlcmUgaXMgbm8gbmVlZCB0byBjYWxs
-IHBncGF0aF9idXN5IGluIF9fc3dpdGNoX3BnLgo+IAo+IElmIHdlIGNhbGwgX19wZ3BhdGhfYnVz
-eSgpIGluIG1hcCBmdW5jdGlvbiwgSSB0aGluayBpdCdzIGhlcmU6Cj4gCj4gCWlmIChwZ3BhdGgp
-IHsKPiArIAkJaWYgKF9fcGdwYXRoX2J1c3kocGdwYXRoKSkKPiArIAkJCXIgPSBETV9NQVBJT19S
-RVFVRVVFOwo+IAkJZWxzZSBpZiAocGdfcmVhZHkobSkpIHsKPiAJCQkuLi4gLy8gcmVtYXAKPiAJ
-CQlyID0gRE1fTUFQSU9fUkVNQVBQRUQ7Cj4gCQl9IGVsc2Ugewo+IAkJCV9fcGdfaW5pdF9hbGxf
-cGF0aHMobSk7Cj4gCQkJciA9IERNX01BUElPX1JFUVVFVUU7Cj4gCQl9Cj4gCS4uLgo+IApXaGlj
-aCBpcyB3aGF0IEkgaGFkIGluIG1pbmQuCgo+IG9yIGluIGEgcGF0aCBzZWxlY3Rvci4KPiAKSG1t
-LiBUaGUgcGF0aCBzZWxlY3RvciBtaWdodCBoYXZlIGEgcmVhc29uIGZvciBzZWxlY3RpbmcgdGhp
-cwpwYXJ0aWN1bGFyIHBhdGguIFNvIEknZCBwcmVmZXIgbm90IHRvIGhhdmUgaXQgaW4gdGhlcmUu
-CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMg
-JiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElO
-VVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBI
-YXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 11/12/13 19:17, Hannes Reinecke wrote:
+> On 11/12/2013 11:00 AM, Junichi Nomura wrote:
+>> On 11/12/13 18:05, Hannes Reinecke wrote:
+> [ .. ]
+>>> We _could_ optimize this in __switch_pg(), to call pgpath_busy()
+>>> when selecting the paths. But that should be done by the path selector.
+>>> So for that we would need to separate the functionality of the
+>>> path selector and __switch_pg; currently it's unclear whether
+>>> we need to call pgpath_busy() in __switch_pg or not.
+>>
+>> There is no need to call pgpath_busy in __switch_pg.
+>>
+>> If we call __pgpath_busy() in map function, I think it's here:
+>>
+>> 	if (pgpath) {
+>> + 		if (__pgpath_busy(pgpath))
+>> + 			r = DM_MAPIO_REQUEUE;
+>> 		else if (pg_ready(m)) {
+>> 			... // remap
+>> 			r = DM_MAPIO_REMAPPED;
+>> 		} else {
+>> 			__pg_init_all_paths(m);
+>> 			r = DM_MAPIO_REQUEUE;
+>> 		}
+>> 	...
+>>
+> Which is what I had in mind.
+
+Great.
+
+>> or in a path selector.
+>>
+> Hmm. The path selector might have a reason for selecting this
+> particular path. So I'd prefer not to have it in there.
+
+Yeah, that's my concern, too.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
