@@ -1,19 +1,20 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH] dm-mpath: push back requests instead of
- queueing
-Date: Tue, 12 Nov 2013 10:09:21 +0000
-Message-ID: <11AF7C027C4C02408624617A49860784F0AF4D@BPXM12GP.gisp.nec.co.jp>
+	queueing
+Date: Tue, 12 Nov 2013 11:17:43 +0100
+Message-ID: <52820047.9090103@suse.de>
 References: <1383901339-81536-1-git-send-email-hare@suse.de>
 	<11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
-	<5281E403.5020005@suse.de> <5281EB8C.9010800@suse.de>
+	<5281E403.5020005@suse.de>
+	<11AF7C027C4C02408624617A49860784F0A9D8@BPXM12GP.gisp.nec.co.jp>
+	<5281EF56.8030808@suse.de>
+	<11AF7C027C4C02408624617A49860784F0AE9C@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5281EB8C.9010800@suse.de>
-Content-Language: ja-JP
-Content-ID: <AAC1ED2C1D99B440B58983B67F9A4CA2@gisp.nec.co.jp>
+In-Reply-To: <11AF7C027C4C02408624617A49860784F0AE9C@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,72 +24,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/12/13 17:49, Hannes Reinecke wrote:
-> On 11/12/2013 09:17 AM, Hannes Reinecke wrote:
->> On 11/12/2013 08:48 AM, Junichi Nomura wrote:
->>> On 11/08/13 18:02, Hannes Reinecke wrote:
->>>> @@ -1241,7 +1168,8 @@ static void pg_init_done(void *data, int errors)
->>>>  		m->queue_io = 0;
->>>>  
->>>>  	m->pg_init_delay_retry = delay_retry;
->>>> -	queue_work(kmultipathd, &m->process_queued_ios);
->>>> +	if (!m->queue_io)
->>>> +		dm_table_run_queue(m->ti->table);
->>>>  
->>>>  	/*
->>>>  	 * Wake up any thread waiting to suspend.
->>>
->>> process_queued_ios was responsible for retrying pg_init.
->>> And when retrying, m->queue_io is still 0.
->>> So don't we have to run queue unconditionally here
->>> or call __pg_init_all_paths() directly?
-
-Sorry, I was going to write:
-    And when retrying, m->queue_io is still *1*.
-    So don't we have to run queue unconditionally here
-    or call __pg_init_all_paths() directly?
-
-# Though as far as a request has been requeued, blk_delay_queue
-# repeatedly runs it anyway, as the queue isn't stopped..
-
->> In my rework I've _tried_ to separate both functions from
->> process_queued_ios().
->> But yes, you are right; I haven't considered pg_init_retry.
->> Will be updating the patch.
->>
-> Actually, I have. I just had a closer look at the patch,
-> and pg_init retry is handled, albeit differently than in
-> the original.
-> 
-> It now works like this:
-> 
-> ->map_io() is called
->   -> calls '__switch_pg', which sets 'queue_io'
->   -> calls __pg_init_all_paths, which pushes activate_path
->      onto a workqueue
->   -> returns 'MAPIO_REQUEUE'
-> 
-> -> pg_init_done()
->   -> Checks pg_init_required
->      -> if non-zero some other I/O already
->         kicked off an 'activate_path',
->         so nothing to be done from our side
->      -> if zero we're calling kicking the queue
->         via blk_run_queue
-> 
-> And blk_run_queue() will be calling into ->request_fn,
-> which will pull requests off the queue.
-> So on the next request we're calling 'map_io', so the
-> entire game starts anew, retrying pg_init.
-> 
-> The only thing we're not handling properly is the
-> 'pg_init_delay_retry', as for that we should've
-> started the queue with a certain delay, which
-> we currently don't. But that's easily fixable.
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMTEvMTIvMjAxMyAxMTowMCBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMTEvMTIv
+MTMgMTg6MDUsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKWyAuLiBdCj4+IFdlIF9jb3VsZF8gb3B0
+aW1pemUgdGhpcyBpbiBfX3N3aXRjaF9wZygpLCB0byBjYWxsIHBncGF0aF9idXN5KCkKPj4gd2hl
+biBzZWxlY3RpbmcgdGhlIHBhdGhzLiBCdXQgdGhhdCBzaG91bGQgYmUgZG9uZSBieSB0aGUgcGF0
+aCBzZWxlY3Rvci4KPj4gU28gZm9yIHRoYXQgd2Ugd291bGQgbmVlZCB0byBzZXBhcmF0ZSB0aGUg
+ZnVuY3Rpb25hbGl0eSBvZiB0aGUKPj4gcGF0aCBzZWxlY3RvciBhbmQgX19zd2l0Y2hfcGc7IGN1
+cnJlbnRseSBpdCdzIHVuY2xlYXIgd2hldGhlcgo+PiB3ZSBuZWVkIHRvIGNhbGwgcGdwYXRoX2J1
+c3koKSBpbiBfX3N3aXRjaF9wZyBvciBub3QuCj4gCj4gVGhlcmUgaXMgbm8gbmVlZCB0byBjYWxs
+IHBncGF0aF9idXN5IGluIF9fc3dpdGNoX3BnLgo+IAo+IElmIHdlIGNhbGwgX19wZ3BhdGhfYnVz
+eSgpIGluIG1hcCBmdW5jdGlvbiwgSSB0aGluayBpdCdzIGhlcmU6Cj4gCj4gCWlmIChwZ3BhdGgp
+IHsKPiArIAkJaWYgKF9fcGdwYXRoX2J1c3kocGdwYXRoKSkKPiArIAkJCXIgPSBETV9NQVBJT19S
+RVFVRVVFOwo+IAkJZWxzZSBpZiAocGdfcmVhZHkobSkpIHsKPiAJCQkuLi4gLy8gcmVtYXAKPiAJ
+CQlyID0gRE1fTUFQSU9fUkVNQVBQRUQ7Cj4gCQl9IGVsc2Ugewo+IAkJCV9fcGdfaW5pdF9hbGxf
+cGF0aHMobSk7Cj4gCQkJciA9IERNX01BUElPX1JFUVVFVUU7Cj4gCQl9Cj4gCS4uLgo+IApXaGlj
+aCBpcyB3aGF0IEkgaGFkIGluIG1pbmQuCgo+IG9yIGluIGEgcGF0aCBzZWxlY3Rvci4KPiAKSG1t
+LiBUaGUgcGF0aCBzZWxlY3RvciBtaWdodCBoYXZlIGEgcmVhc29uIGZvciBzZWxlY3RpbmcgdGhp
+cwpwYXJ0aWN1bGFyIHBhdGguIFNvIEknZCBwcmVmZXIgbm90IHRvIGhhdmUgaXQgaW4gdGhlcmUu
+CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMg
+JiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElO
+VVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBI
+YXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykK
+Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
