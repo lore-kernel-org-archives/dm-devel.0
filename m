@@ -1,19 +1,17 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH] dm-mpath: push back requests instead of
- queueing
-Date: Tue, 12 Nov 2013 08:43:29 +0000
-Message-ID: <11AF7C027C4C02408624617A49860784F0A9D8@BPXM12GP.gisp.nec.co.jp>
+	queueing
+Date: Tue, 12 Nov 2013 09:49:16 +0100
+Message-ID: <5281EB8C.9010800@suse.de>
 References: <1383901339-81536-1-git-send-email-hare@suse.de>
 	<11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
 	<5281E403.5020005@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <5281E403.5020005@suse.de>
-Content-Language: ja-JP
-Content-ID: <446B1C4496DD0D459D632533CB5C7140@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,126 +21,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, Steffen Maier <maier@linux.vnet.ibm.com>, Frank Mayhar <fmayhar@google.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/12/13 17:17, Hannes Reinecke wrote:
-> On 11/12/2013 08:48 AM, Junichi Nomura wrote:
->> On 11/08/13 18:02, Hannes Reinecke wrote:
->>> In doing so we can also remove the ->busy check as a requeue is identical
->>> to ->busy returning 'true' from the callers perspective. This simplifies
->>> the code by quite a lot.
->>
->> They are not identical.
->> ->busy returns true when underlying path cannot dispatch a request
->> immediately. In that case it's better to keep the request in queue
->> to allow merges.  (It used to have real impact on buffered sequential
->> write + fsync workload, though the performance impact might become
->> smaller in recent kernels due to plugging change.)
->> Also ->busy can be used by upper layer (dm_table_any_busy_target).
->> So you can't just remove it.
->>
-> But they are identical from the callers perspective:
-> drivers/md/dm.c:dm_request_fn()
-> 
-> 		if (ti->type->busy && ti->type->busy(ti))
-> 			goto delay_and_out;
-> 
-> 		clone = dm_start_request(md, rq);
-> 
-> 		spin_unlock(q->queue_lock);
-> 		if (map_request(ti, clone, md))
-> 			goto requeued;
-> 
-> 		BUG_ON(!irqs_disabled());
-> 		spin_lock(q->queue_lock);
-> 	}
-> 
-> 	goto out;
-> 
-> requeued:
-> 	BUG_ON(!irqs_disabled());
-> 	spin_lock(q->queue_lock);
-> 
-> delay_and_out:
-> 	blk_delay_queue(q, HZ / 10);
-> 
-> So the only difference between ->busy and return 'DM_MAPIO_REQUEUE'
-> is that 'busy' runs under the queue_lock.
-
-A difference is whether the request is once dequeued or not.
-I think requeued request does not accept any merge.
-
-But the point is not there; if you remove ->busy, nobody checks whether
-underlying device is busy and DM_MAPIO_REQUEUE won't be returned.
-So the other option might be moving ->busy check in request_fn to
-inside of map function and let it return DM_MAPIO_REQUEUE.
-
-> And yes, in theory ->busy might be used from any upper layer; but
-> so far the only caller I've found _is_ in dm_request_fn().
-> So removing doesn't do any harm.
-> 
-> Unless I've misread something ...
-
-<snip>
-
->>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->>> index b3e26c7..20a19bd 100644
->>> --- a/drivers/md/dm.c
->>> +++ b/drivers/md/dm.c
->>> @@ -1876,6 +1876,19 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
->>>  	return r;
->>>  }
->>>  
->>> +void dm_table_run_queue(struct dm_table *t)
->>> +{
->>> +	struct mapped_device *md = dm_table_get_md(t);
->>> +	unsigned long flags;
->>> +
->>> +	if (md->queue) {
->>> +		spin_lock_irqsave(md->queue->queue_lock, flags);
->>> +		blk_run_queue_async(md->queue);
->>> +		spin_unlock_irqrestore(md->queue->queue_lock, flags);
->>> +	}
->>> +}
->>> +EXPORT_SYMBOL_GPL(dm_table_run_queue);
->>
->> Shouldn't this be in dm-table.c?
->>
-> It would be logical.
-> But as 'struct mapped_device' is internal to dm.c you
-> would then end-up with something like:
-> 
-> void dm_run_queue(struct mapped_device *md)
-> 
-> and I would need to call it like
-> 
-> dm_run_queue(dm_table_get_md())
-> 
-> which I felt was a bit pointless, as this would
-> be the _only_ valid calling sequence. Hence
-> I moved the call to dm_table_get_md() into the
-> function, even though it meant a possible
-> layering violation.
-> 
-> Oh, the joys of device-mapper ...
-
-Yeah, I know that feeling and don't insist on this.
-But maybe a code like this work?
-
-void dm_table_run_queue(struct dm_table *t)
-{
-	struct mapped_device *md = dm_table_get_md(t);
-	struct request_queue *q = dm_disk(md)->queue;
-	unsigned long flags;
-
-	if (q) {
-		spin_lock_irqsave(q->queue_lock, flags);
-		blk_run_queue_async(q);
-		spin_unlock_irqrestore(q->queue_lock, flags);
-	}
-}
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMTEvMTIvMjAxMyAwOToxNyBBTSwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+IE9uIDExLzEy
+LzIwMTMgMDg6NDggQU0sIEp1bmljaGkgTm9tdXJhIHdyb3RlOgo+PiBPbiAxMS8wOC8xMyAxODow
+MiwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+Pj4gVGhlcmUgaXMgbm8gcmVhc29uIHdoeSBtdWx0
+aXBhdGggbmVlZHMgdG8gcXVldWUgcmVxdWVzdHMKPj4+IGludGVybmFsbHkgZm9yIHF1ZXVlX2lm
+X25vX3BhdGggb3IgcGdfaW5pdDsgd2Ugc2hvdWxkCj4+PiByYXRoZXIgcHVzaCB0aGVtIGJhY2sg
+b250byB0aGUgcmVxdWVzdCBxdWV1ZS4KPj4+Cj4+Pgo+Pj4gVGhpcyBwYXRjaCByZW1vdmVzIHRo
+ZSBpbnRlcm5hbCBxdWV1ZWluZyBtZWNoYW5pc20gZnJvbSBkbS1tdWx0aXBhdGguCj4+Cj4+IEhp
+IEhhbm5lcywKPj4gdGhhbmtzIGZvciB3b3JraW5nIG9uIHRoaXMuCj4+Cj4+PiBJbiBkb2luZyBz
+byB3ZSBjYW4gYWxzbyByZW1vdmUgdGhlIC0+YnVzeSBjaGVjayBhcyBhIHJlcXVldWUgaXMgaWRl
+bnRpY2FsCj4+PiB0byAtPmJ1c3kgcmV0dXJuaW5nICd0cnVlJyBmcm9tIHRoZSBjYWxsZXJzIHBl
+cnNwZWN0aXZlLiBUaGlzIHNpbXBsaWZpZXMKPj4+IHRoZSBjb2RlIGJ5IHF1aXRlIGEgbG90Lgo+
+Pgo+PiBUaGV5IGFyZSBub3QgaWRlbnRpY2FsLgo+PiAtPmJ1c3kgcmV0dXJucyB0cnVlIHdoZW4g
+dW5kZXJseWluZyBwYXRoIGNhbm5vdCBkaXNwYXRjaCBhIHJlcXVlc3QKPj4gaW1tZWRpYXRlbHku
+IEluIHRoYXQgY2FzZSBpdCdzIGJldHRlciB0byBrZWVwIHRoZSByZXF1ZXN0IGluIHF1ZXVlCj4+
+IHRvIGFsbG93IG1lcmdlcy4gIChJdCB1c2VkIHRvIGhhdmUgcmVhbCBpbXBhY3Qgb24gYnVmZmVy
+ZWQgc2VxdWVudGlhbAo+PiB3cml0ZSArIGZzeW5jIHdvcmtsb2FkLCB0aG91Z2ggdGhlIHBlcmZv
+cm1hbmNlIGltcGFjdCBtaWdodCBiZWNvbWUKPj4gc21hbGxlciBpbiByZWNlbnQga2VybmVscyBk
+dWUgdG8gcGx1Z2dpbmcgY2hhbmdlLikKPj4gQWxzbyAtPmJ1c3kgY2FuIGJlIHVzZWQgYnkgdXBw
+ZXIgbGF5ZXIgKGRtX3RhYmxlX2FueV9idXN5X3RhcmdldCkuCj4+IFNvIHlvdSBjYW4ndCBqdXN0
+IHJlbW92ZSBpdC4KPj4KPiBCdXQgdGhleSBhcmUgaWRlbnRpY2FsIGZyb20gdGhlIGNhbGxlcnMg
+cGVyc3BlY3RpdmU6Cj4gZHJpdmVycy9tZC9kbS5jOmRtX3JlcXVlc3RfZm4oKQo+IAo+IAkJaWYg
+KHRpLT50eXBlLT5idXN5ICYmIHRpLT50eXBlLT5idXN5KHRpKSkKPiAJCQlnb3RvIGRlbGF5X2Fu
+ZF9vdXQ7Cj4gCj4gCQljbG9uZSA9IGRtX3N0YXJ0X3JlcXVlc3QobWQsIHJxKTsKPiAKPiAJCXNw
+aW5fdW5sb2NrKHEtPnF1ZXVlX2xvY2spOwo+IAkJaWYgKG1hcF9yZXF1ZXN0KHRpLCBjbG9uZSwg
+bWQpKQo+IAkJCWdvdG8gcmVxdWV1ZWQ7Cj4gCj4gCQlCVUdfT04oIWlycXNfZGlzYWJsZWQoKSk7
+Cj4gCQlzcGluX2xvY2socS0+cXVldWVfbG9jayk7Cj4gCX0KPiAKPiAJZ290byBvdXQ7Cj4gCj4g
+cmVxdWV1ZWQ6Cj4gCUJVR19PTighaXJxc19kaXNhYmxlZCgpKTsKPiAJc3Bpbl9sb2NrKHEtPnF1
+ZXVlX2xvY2spOwo+IAo+IGRlbGF5X2FuZF9vdXQ6Cj4gCWJsa19kZWxheV9xdWV1ZShxLCBIWiAv
+IDEwKTsKPiAKPiBTbyB0aGUgb25seSBkaWZmZXJlbmNlIGJldHdlZW4gLT5idXN5IGFuZCByZXR1
+cm4gJ0RNX01BUElPX1JFUVVFVUUnCj4gaXMgdGhhdCAnYnVzeScgcnVucyB1bmRlciB0aGUgcXVl
+dWVfbG9jay4KPiAKPiBBbmQgeWVzLCBpbiB0aGVvcnkgLT5idXN5IG1pZ2h0IGJlIHVzZWQgZnJv
+bSBhbnkgdXBwZXIgbGF5ZXI7IGJ1dAo+IHNvIGZhciB0aGUgb25seSBjYWxsZXIgSSd2ZSBmb3Vu
+ZCBfaXNfIGluIGRtX3JlcXVlc3RfZm4oKS4KPiBTbyByZW1vdmluZyBkb2Vzbid0IGRvIGFueSBo
+YXJtLgo+IAo+IFVubGVzcyBJJ3ZlIG1pc3JlYWQgc29tZXRoaW5nIC4uLgo+IAo+Pj4gQEAgLTM4
+NSwyMSArMzc4LDE1IEBAIHN0YXRpYyBpbnQgbWFwX2lvKHN0cnVjdCBtdWx0aXBhdGggKm0sIHN0
+cnVjdCByZXF1ZXN0ICpjbG9uZSwKPj4+ICAJICAgICghbS0+cXVldWVfaW8gJiYgKG0tPnJlcGVh
+dF9jb3VudCAmJiAtLW0tPnJlcGVhdF9jb3VudCA9PSAwKSkpCj4+PiAgCQlfX2Nob29zZV9wZ3Bh
+dGgobSwgbnJfYnl0ZXMpOwo+Pj4gIAo+Pj4gLQlwZ3BhdGggPSBtLT5jdXJyZW50X3BncGF0aDsK
+Pj4+IC0KPj4+IC0JaWYgKHdhc19xdWV1ZWQpCj4+PiAtCQltLT5xdWV1ZV9zaXplLS07Cj4+PiAr
+CWlmIChtLT5jdXJyZW50X3BncGF0aCAmJgo+Pj4gKwkgICAgbS0+cGdfaW5pdF9yZXF1aXJlZCAm
+JiAhbS0+cGdfaW5pdF9pbl9wcm9ncmVzcykKPj4+ICsJCV9fcGdfaW5pdF9hbGxfcGF0aHMobSk7
+Cj4+PiAgCj4+PiArCXBncGF0aCA9IG0tPmN1cnJlbnRfcGdwYXRoOwo+Pj4gIAlpZiAoKHBncGF0
+aCAmJiBtLT5xdWV1ZV9pbykgfHwKPj4+ICAJICAgICghcGdwYXRoICYmIG0tPnF1ZXVlX2lmX25v
+X3BhdGgpKSB7Cj4+PiAtCQkvKiBRdWV1ZSBmb3IgdGhlIGRhZW1vbiB0byByZXN1Ym1pdCAqLwo+
+Pj4gLQkJbGlzdF9hZGRfdGFpbCgmY2xvbmUtPnF1ZXVlbGlzdCwgJm0tPnF1ZXVlZF9pb3MpOwo+
+Pj4gLQkJbS0+cXVldWVfc2l6ZSsrOwo+Pj4gLQkJaWYgKChtLT5wZ19pbml0X3JlcXVpcmVkICYm
+ICFtLT5wZ19pbml0X2luX3Byb2dyZXNzKSB8fAo+Pj4gLQkJICAgICFtLT5xdWV1ZV9pbykKPj4+
+IC0JCQlxdWV1ZV93b3JrKGttdWx0aXBhdGhkLCAmbS0+cHJvY2Vzc19xdWV1ZWRfaW9zKTsKPj4+
+ICAJCXBncGF0aCA9IE5VTEw7Cj4+PiAtCQlyID0gRE1fTUFQSU9fU1VCTUlUVEVEOwo+Pj4gKwkJ
+ciA9IERNX01BUElPX1JFUVVFVUU7Cj4+Cj4+IGlmL2Vsc2Ugc2VxdWVuY2UgaW4gbWFwX2lvKCkg
+bWlnaHQgYmUgZWFzaWVyIHRvIHJlYWQgaWYgd2UgZG86Cj4+Cj4+IAlpZiAocGdwYXRoKSB7Cj4+
+IAkJaWYgKHBnX3JlYWR5KG0pKSB7Cj4+IAkJCS4uLiAvLyByZW1hcAo+PiAJCQlyID0gRE1fTUFQ
+SU9fUkVNQVBQRUQ7Cj4+IAkJfSBlbHNlIHsKPj4gCQkJX19wZ19pbml0X2FsbF9wYXRocyhtKTsK
+Pj4gCQkJciA9IERNX01BUElPX1JFUVVFVUU7Cj4+IAkJfQo+PiAJfSBlbHNlIHsgLyogbm8gcGF0
+aCAqLwo+PiAJCWlmIChuZWVkX3JlcXVldWUobSkpCj4+IAkJCXIgPSBETV9NQVBJT19SRVFVRVVF
+Owo+PiAJCWVsc2UKPj4gCQkJciA9IC1FSU87Cj4+IAl9Cj4+Cj4+IHdoZXJlOgo+PiAgICNkZWZp
+bmUgcGdfcmVhZHkobSkgKCFtLT5xdWV1ZV9pbykgLyogb3IgcmVuYW1lICdxdWV1ZV9pbycgKi8K
+Pj4gICAjZGVmaW5lIG5lZWRfcmVxdWV1ZShtKSAobS0+cXVldWVfaWZfbm9fcGF0aCB8fCBfX211
+c3RfcHVzaF9iYWNrKG0pKQo+Pgo+PiBhbmQgbW92ZSBwZ19pbml0X3JlcXVpcmVkLCBldGMuIGNo
+ZWNrcyB0byBfX3BnX2luaXRfYWxsX3BhdGhzKCkuCj4+Cj4gVHJ1ZS4gV2lsbCBiZSBkb2luZyB0
+aGF0Lgo+IAo+Pj4gQEAgLTEyNDEsNyArMTE2OCw4IEBAIHN0YXRpYyB2b2lkIHBnX2luaXRfZG9u
+ZSh2b2lkICpkYXRhLCBpbnQgZXJyb3JzKQo+Pj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+Pj4gIAo+
+Pj4gIAltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVsYXlfcmV0cnk7Cj4+PiAtCXF1ZXVlX3dv
+cmsoa211bHRpcGF0aGQsICZtLT5wcm9jZXNzX3F1ZXVlZF9pb3MpOwo+Pj4gKwlpZiAoIW0tPnF1
+ZXVlX2lvKQo+Pj4gKwkJZG1fdGFibGVfcnVuX3F1ZXVlKG0tPnRpLT50YWJsZSk7Cj4+PiAgCj4+
+PiAgCS8qCj4+PiAgCSAqIFdha2UgdXAgYW55IHRocmVhZCB3YWl0aW5nIHRvIHN1c3BlbmQuCj4+
+Cj4+IHByb2Nlc3NfcXVldWVkX2lvcyB3YXMgcmVzcG9uc2libGUgZm9yIHJldHJ5aW5nIHBnX2lu
+aXQuCj4+IEFuZCB3aGVuIHJldHJ5aW5nLCBtLT5xdWV1ZV9pbyBpcyBzdGlsbCAwLgo+PiBTbyBk
+b24ndCB3ZSBoYXZlIHRvIHJ1biBxdWV1ZSB1bmNvbmRpdGlvbmFsbHkgaGVyZQo+PiBvciBjYWxs
+IF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBkaXJlY3RseT8KPj4KPiBJbiBteSByZXdvcmsgSSd2ZSBf
+dHJpZWRfIHRvIHNlcGFyYXRlIGJvdGggZnVuY3Rpb25zIGZyb20KPiBwcm9jZXNzX3F1ZXVlZF9p
+b3MoKS4KPiBCdXQgeWVzLCB5b3UgYXJlIHJpZ2h0OyBJIGhhdmVuJ3QgY29uc2lkZXJlZCBwZ19p
+bml0X3JldHJ5Lgo+IFdpbGwgYmUgdXBkYXRpbmcgdGhlIHBhdGNoLgo+IApBY3R1YWxseSwgSSBo
+YXZlLiBJIGp1c3QgaGFkIGEgY2xvc2VyIGxvb2sgYXQgdGhlIHBhdGNoLAphbmQgcGdfaW5pdCBy
+ZXRyeSBpcyBoYW5kbGVkLCBhbGJlaXQgZGlmZmVyZW50bHkgdGhhbiBpbgp0aGUgb3JpZ2luYWwu
+CgpJdCBub3cgd29ya3MgbGlrZSB0aGlzOgoKLT5tYXBfaW8oKSBpcyBjYWxsZWQKICAtPiBjYWxs
+cyAnX19zd2l0Y2hfcGcnLCB3aGljaCBzZXRzICdxdWV1ZV9pbycKICAtPiBjYWxscyBfX3BnX2lu
+aXRfYWxsX3BhdGhzLCB3aGljaCBwdXNoZXMgYWN0aXZhdGVfcGF0aAogICAgIG9udG8gYSB3b3Jr
+cXVldWUKICAtPiByZXR1cm5zICdNQVBJT19SRVFVRVVFJwoKLT4gcGdfaW5pdF9kb25lKCkKICAt
+PiBDaGVja3MgcGdfaW5pdF9yZXF1aXJlZAogICAgIC0+IGlmIG5vbi16ZXJvIHNvbWUgb3RoZXIg
+SS9PIGFscmVhZHkKICAgICAgICBraWNrZWQgb2ZmIGFuICdhY3RpdmF0ZV9wYXRoJywKICAgICAg
+ICBzbyBub3RoaW5nIHRvIGJlIGRvbmUgZnJvbSBvdXIgc2lkZQogICAgIC0+IGlmIHplcm8gd2Un
+cmUgY2FsbGluZyBraWNraW5nIHRoZSBxdWV1ZQogICAgICAgIHZpYSBibGtfcnVuX3F1ZXVlCgpB
+bmQgYmxrX3J1bl9xdWV1ZSgpIHdpbGwgYmUgY2FsbGluZyBpbnRvIC0+cmVxdWVzdF9mbiwKd2hp
+Y2ggd2lsbCBwdWxsIHJlcXVlc3RzIG9mZiB0aGUgcXVldWUuClNvIG9uIHRoZSBuZXh0IHJlcXVl
+c3Qgd2UncmUgY2FsbGluZyAnbWFwX2lvJywgc28gdGhlCmVudGlyZSBnYW1lIHN0YXJ0cyBhbmV3
+LCByZXRyeWluZyBwZ19pbml0LgoKVGhlIG9ubHkgdGhpbmcgd2UncmUgbm90IGhhbmRsaW5nIHBy
+b3Blcmx5IGlzIHRoZQoncGdfaW5pdF9kZWxheV9yZXRyeScsIGFzIGZvciB0aGF0IHdlIHNob3Vs
+ZCd2ZQpzdGFydGVkIHRoZSBxdWV1ZSB3aXRoIGEgY2VydGFpbiBkZWxheSwgd2hpY2gKd2UgY3Vy
+cmVudGx5IGRvbid0LiBCdXQgdGhhdCdzIGVhc2lseSBmaXhhYmxlLgoKQ2hlZXJzLAoKSGFubmVz
+Ci0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVzICYgU3RvcmFnZQpoYXJlQHN1
+c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIFByb2R1Y3RzIEdtYkgs
+IE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4gSGF3biwgSi4gR3VpbGQsIEYu
+IEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
