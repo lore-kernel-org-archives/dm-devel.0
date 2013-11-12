@@ -1,18 +1,21 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Subject: Re: [PATCH] dm-mpath: push back requests instead of
-	queueing
-Date: Tue, 12 Nov 2013 10:05:26 +0100
-Message-ID: <5281EF56.8030808@suse.de>
+ queueing
+Date: Tue, 12 Nov 2013 10:00:52 +0000
+Message-ID: <11AF7C027C4C02408624617A49860784F0AE9C@BPXM12GP.gisp.nec.co.jp>
 References: <1383901339-81536-1-git-send-email-hare@suse.de>
 	<11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
 	<5281E403.5020005@suse.de>
 	<11AF7C027C4C02408624617A49860784F0A9D8@BPXM12GP.gisp.nec.co.jp>
+	<5281EF56.8030808@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A49860784F0A9D8@BPXM12GP.gisp.nec.co.jp>
+In-Reply-To: <5281EF56.8030808@suse.de>
+Content-Language: ja-JP
+Content-ID: <9A8877D3FB1A774ABBC530E7E472AB51@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,68 +25,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMTEvMTIvMjAxMyAwOTo0MyBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMTEvMTIv
-MTMgMTc6MTcsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gT24gMTEvMTIvMjAxMyAwODo0OCBB
-TSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4+PiBPbiAxMS8wOC8xMyAxODowMiwgSGFubmVzIFJl
-aW5lY2tlIHdyb3RlOgo+Pj4+IEluIGRvaW5nIHNvIHdlIGNhbiBhbHNvIHJlbW92ZSB0aGUgLT5i
-dXN5IGNoZWNrIGFzIGEgcmVxdWV1ZSBpcyBpZGVudGljYWwKPj4+PiB0byAtPmJ1c3kgcmV0dXJu
-aW5nICd0cnVlJyBmcm9tIHRoZSBjYWxsZXJzIHBlcnNwZWN0aXZlLiBUaGlzIHNpbXBsaWZpZXMK
-Pj4+PiB0aGUgY29kZSBieSBxdWl0ZSBhIGxvdC4KPj4+Cj4+PiBUaGV5IGFyZSBub3QgaWRlbnRp
-Y2FsLgo+Pj4gLT5idXN5IHJldHVybnMgdHJ1ZSB3aGVuIHVuZGVybHlpbmcgcGF0aCBjYW5ub3Qg
-ZGlzcGF0Y2ggYSByZXF1ZXN0Cj4+PiBpbW1lZGlhdGVseS4gSW4gdGhhdCBjYXNlIGl0J3MgYmV0
-dGVyIHRvIGtlZXAgdGhlIHJlcXVlc3QgaW4gcXVldWUKPj4+IHRvIGFsbG93IG1lcmdlcy4gIChJ
-dCB1c2VkIHRvIGhhdmUgcmVhbCBpbXBhY3Qgb24gYnVmZmVyZWQgc2VxdWVudGlhbAo+Pj4gd3Jp
-dGUgKyBmc3luYyB3b3JrbG9hZCwgdGhvdWdoIHRoZSBwZXJmb3JtYW5jZSBpbXBhY3QgbWlnaHQg
-YmVjb21lCj4+PiBzbWFsbGVyIGluIHJlY2VudCBrZXJuZWxzIGR1ZSB0byBwbHVnZ2luZyBjaGFu
-Z2UuKQo+Pj4gQWxzbyAtPmJ1c3kgY2FuIGJlIHVzZWQgYnkgdXBwZXIgbGF5ZXIgKGRtX3RhYmxl
-X2FueV9idXN5X3RhcmdldCkuCj4+PiBTbyB5b3UgY2FuJ3QganVzdCByZW1vdmUgaXQuCj4+Pgo+
-PiBCdXQgdGhleSBhcmUgaWRlbnRpY2FsIGZyb20gdGhlIGNhbGxlcnMgcGVyc3BlY3RpdmU6Cj4+
-IGRyaXZlcnMvbWQvZG0uYzpkbV9yZXF1ZXN0X2ZuKCkKPj4KPj4gCQlpZiAodGktPnR5cGUtPmJ1
-c3kgJiYgdGktPnR5cGUtPmJ1c3kodGkpKQo+PiAJCQlnb3RvIGRlbGF5X2FuZF9vdXQ7Cj4+Cj4+
-IAkJY2xvbmUgPSBkbV9zdGFydF9yZXF1ZXN0KG1kLCBycSk7Cj4+Cj4+IAkJc3Bpbl91bmxvY2so
-cS0+cXVldWVfbG9jayk7Cj4+IAkJaWYgKG1hcF9yZXF1ZXN0KHRpLCBjbG9uZSwgbWQpKQo+PiAJ
-CQlnb3RvIHJlcXVldWVkOwo+Pgo+PiAJCUJVR19PTighaXJxc19kaXNhYmxlZCgpKTsKPj4gCQlz
-cGluX2xvY2socS0+cXVldWVfbG9jayk7Cj4+IAl9Cj4+Cj4+IAlnb3RvIG91dDsKPj4KPj4gcmVx
-dWV1ZWQ6Cj4+IAlCVUdfT04oIWlycXNfZGlzYWJsZWQoKSk7Cj4+IAlzcGluX2xvY2socS0+cXVl
-dWVfbG9jayk7Cj4+Cj4+IGRlbGF5X2FuZF9vdXQ6Cj4+IAlibGtfZGVsYXlfcXVldWUocSwgSFog
-LyAxMCk7Cj4+Cj4+IFNvIHRoZSBvbmx5IGRpZmZlcmVuY2UgYmV0d2VlbiAtPmJ1c3kgYW5kIHJl
-dHVybiAnRE1fTUFQSU9fUkVRVUVVRScKPj4gaXMgdGhhdCAnYnVzeScgcnVucyB1bmRlciB0aGUg
-cXVldWVfbG9jay4KPiAKPiBBIGRpZmZlcmVuY2UgaXMgd2hldGhlciB0aGUgcmVxdWVzdCBpcyBv
-bmNlIGRlcXVldWVkIG9yIG5vdC4KPiBJIHRoaW5rIHJlcXVldWVkIHJlcXVlc3QgZG9lcyBub3Qg
-YWNjZXB0IGFueSBtZXJnZS4KPiAKSG1tLiBOb3cgX3RoYXRfIGlzIGEgdmFsaWQgcG9pbnQuCkJ1
-dCBJIHdvdWxkJ3ZlIHRob3VnaHQgYWxsIHBvc3NpYmxlIG1lcmdlcyBhcmUgYWxyZWFkeSBkb25l
-IGJ5CnRoZSB0aW1lIHJlcXVlc3RfZm4oKSBpcyBjYWxsZWQuCklmIG5vdCBtdWx0aXBhdGhpbmcg
-d291bGQgYmUgd29ya2luZyBzdWJvcHRpbWFsIGFueXdheSwgYXMgYQpwb3RlbnRpYWwgbWVyZ2Ug
-aGFzIGJlZW4gbWlzc2VkIGV2ZW4gZHVyaW5nIG5vcm1hbCBJL08uCgo+IEJ1dCB0aGUgcG9pbnQg
-aXMgbm90IHRoZXJlOyBpZiB5b3UgcmVtb3ZlIC0+YnVzeSwgbm9ib2R5IGNoZWNrcyB3aGV0aGVy
-Cj4gdW5kZXJseWluZyBkZXZpY2UgaXMgYnVzeSBhbmQgRE1fTUFQSU9fUkVRVUVVRSB3b24ndCBi
-ZSByZXR1cm5lZC4KPiBTbyB0aGUgb3RoZXIgb3B0aW9uIG1pZ2h0IGJlIG1vdmluZyAtPmJ1c3kg
-Y2hlY2sgaW4gcmVxdWVzdF9mbiB0bwo+IGluc2lkZSBvZiBtYXAgZnVuY3Rpb24gYW5kIGxldCBp
-dCByZXR1cm4gRE1fTUFQSU9fUkVRVUVVRS4KPiAKPz8/CgpCdXQgdGhhdCdzIHByZWNpc2VseSB3
-aGF0IHRoZSBwYXRjaCBpcyBkb2luZywgbm8/ClRoZSBvbmx5IHRoaW5nIHdlJ3JlIG5vdCBkb2lu
-ZyBpbiBtYXBfaW8oKSBpcyB0byBjaGVjayBmb3IKcGdwYXRoX2J1c3koKSwgYnV0IHRoYXQgd291
-bGQgYmUgcG9pbnRsZXNzIGFzIGEgYnVzeSBwZ3BhdGgKd291bGQgcmV0dXJuIERNX01BUElPX1JF
-UVVFVUUgYW55d2F5LgoKV2UgX2NvdWxkXyBvcHRpbWl6ZSB0aGlzIGluIF9fc3dpdGNoX3BnKCks
-IHRvIGNhbGwgcGdwYXRoX2J1c3koKQp3aGVuIHNlbGVjdGluZyB0aGUgcGF0aHMuIEJ1dCB0aGF0
-IHNob3VsZCBiZSBkb25lIGJ5IHRoZSBwYXRoIHNlbGVjdG9yLgpTbyBmb3IgdGhhdCB3ZSB3b3Vs
-ZCBuZWVkIHRvIHNlcGFyYXRlIHRoZSBmdW5jdGlvbmFsaXR5IG9mIHRoZQpwYXRoIHNlbGVjdG9y
-IGFuZCBfX3N3aXRjaF9wZzsgY3VycmVudGx5IGl0J3MgdW5jbGVhciB3aGV0aGVyCndlIG5lZWQg
-dG8gY2FsbCBwZ3BhdGhfYnVzeSgpIGluIF9fc3dpdGNoX3BnIG9yIG5vdC4KClRoZSBtYWluIHJl
-YXNvbiBmb3IgcmVtb3ZpbmcgJ2J1c3knIGlzIHRoYXQgaXQncyByZWFsbHkgaGFyZAp0byBkbyBy
-aWdodCBmb3IgdGhlIHF1ZXVlX2lmX25vX3BhdGggY2FzZS4KV2UgY2FuIGVhc2lseSBkbyBhIC0+
-YnVzeSBjaGVjayBkdXJpbmcgcGdfaW5pdCAoYnkganVzdCBjaGVja2luZwotPnF1ZXVlX2lvKSwg
-YnV0IHRoZSBxdWV1ZV9pZl9ub19wYXRoIF9jb25kaXRpb25fIGlzIG9ubHkKZXN0YWJsaXNoZWQg
-YWZ0ZXIgd2UndmUgY2FsbGVkIF9fc3dpdGNoX3BnKCkuIFdoaWNoIGlzIHByZWNpc2VseQp3aGF0
-IHdlIGRvIF9ub3RfIHdhbnQgaGVyZS4KTWF5YmUgd2Ugc2hvdWxkIGFkZCBhIGZsYWcgaGVyZTsg
-J2FsbF9wYXRoc19kb3duJyBvciBzb21ldGhpbmcuClRoYXQgY291bGQgYmUgZWFzaWx5IGNoZWNr
-ZWQgZnJvbSAtPmJ1c3kuIFBsdXMgaXQgY2FuIG9ubHkgYmUKdW5zZXQgb24gJ3JlaW5zdGF0ZV9w
-YXRoJy4gSG1tLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAg
-ICB6U2VyaWVzICYgU3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4
-OApTVVNFIExJTlVYIFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVy
-ZwpHRjogSi4gSGF3biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBO
-w7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpo
-dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 11/12/13 18:05, Hannes Reinecke wrote:
+> On 11/12/2013 09:43 AM, Junichi Nomura wrote:
+>> On 11/12/13 17:17, Hannes Reinecke wrote:
+>>> On 11/12/2013 08:48 AM, Junichi Nomura wrote:
+>>>> On 11/08/13 18:02, Hannes Reinecke wrote:
+>>>>> In doing so we can also remove the ->busy check as a requeue is identical
+>>>>> to ->busy returning 'true' from the callers perspective. This simplifies
+>>>>> the code by quite a lot.
+>>>>
+>>>> They are not identical.
+>>>> ->busy returns true when underlying path cannot dispatch a request
+>>>> immediately. In that case it's better to keep the request in queue
+>>>> to allow merges.  (It used to have real impact on buffered sequential
+>>>> write + fsync workload, though the performance impact might become
+>>>> smaller in recent kernels due to plugging change.)
+>>>> Also ->busy can be used by upper layer (dm_table_any_busy_target).
+>>>> So you can't just remove it.
+>>>>
+>>> But they are identical from the callers perspective:
+>>> drivers/md/dm.c:dm_request_fn()
+>>>
+>>> 		if (ti->type->busy && ti->type->busy(ti))
+>>> 			goto delay_and_out;
+>>>
+>>> 		clone = dm_start_request(md, rq);
+>>>
+>>> 		spin_unlock(q->queue_lock);
+>>> 		if (map_request(ti, clone, md))
+>>> 			goto requeued;
+>>>
+>>> 		BUG_ON(!irqs_disabled());
+>>> 		spin_lock(q->queue_lock);
+>>> 	}
+>>>
+>>> 	goto out;
+>>>
+>>> requeued:
+>>> 	BUG_ON(!irqs_disabled());
+>>> 	spin_lock(q->queue_lock);
+>>>
+>>> delay_and_out:
+>>> 	blk_delay_queue(q, HZ / 10);
+>>>
+>>> So the only difference between ->busy and return 'DM_MAPIO_REQUEUE'
+>>> is that 'busy' runs under the queue_lock.
+>>
+>> A difference is whether the request is once dequeued or not.
+>> I think requeued request does not accept any merge.
+>>
+> Hmm. Now _that_ is a valid point.
+> But I would've thought all possible merges are already done by
+> the time request_fn() is called.
+> If not multipathing would be working suboptimal anyway, as a
+> potential merge has been missed even during normal I/O.
+> 
+>> But the point is not there; if you remove ->busy, nobody checks whether
+>> underlying device is busy and DM_MAPIO_REQUEUE won't be returned.
+>> So the other option might be moving ->busy check in request_fn to
+>> inside of map function and let it return DM_MAPIO_REQUEUE.
+>>
+> ???
+> 
+> But that's precisely what the patch is doing, no?
+> The only thing we're not doing in map_io() is to check for
+> pgpath_busy(), but that would be pointless as a busy pgpath
+> would return DM_MAPIO_REQUEUE anyway.
+
+No.  As you've removed __pgpath_busy(), nobody calls
+dm_underlying_device_busy(), which calls scsi_lld_busy().
+
+> We _could_ optimize this in __switch_pg(), to call pgpath_busy()
+> when selecting the paths. But that should be done by the path selector.
+> So for that we would need to separate the functionality of the
+> path selector and __switch_pg; currently it's unclear whether
+> we need to call pgpath_busy() in __switch_pg or not.
+
+There is no need to call pgpath_busy in __switch_pg.
+
+If we call __pgpath_busy() in map function, I think it's here:
+
+	if (pgpath) {
++ 		if (__pgpath_busy(pgpath))
++ 			r = DM_MAPIO_REQUEUE;
+		else if (pg_ready(m)) {
+			... // remap
+			r = DM_MAPIO_REMAPPED;
+		} else {
+			__pg_init_all_paths(m);
+			r = DM_MAPIO_REQUEUE;
+		}
+	...
+
+or in a path selector.
+
+> The main reason for removing 'busy' is that it's really hard
+> to do right for the queue_if_no_path case.
+> We can easily do a ->busy check during pg_init (by just checking
+> ->queue_io), but the queue_if_no_path _condition_ is only
+> established after we've called __switch_pg(). Which is precisely
+> what we do _not_ want here.
+> Maybe we should add a flag here; 'all_paths_down' or something.
+> That could be easily checked from ->busy. Plus it can only be
+> unset on 'reinstate_path'. Hmm.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
