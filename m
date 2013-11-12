@@ -1,16 +1,18 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm-mpath: push back requests instead of
-	queueing
-Date: Tue, 12 Nov 2013 09:17:07 +0100
-Message-ID: <5281E403.5020005@suse.de>
-References: <1383901339-81536-1-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: Fwd: Re: [PATCH] dm-mpath: push back requests
+ instead of queueing
+Date: Tue, 12 Nov 2013 08:23:42 +0000
+Message-ID: <11AF7C027C4C02408624617A49860784F0A8A4@BPXM12GP.gisp.nec.co.jp>
+References: <527CE4A1.90707@linux.vnet.ibm.com>
+	<5280BEBC.4040500@linux.vnet.ibm.com> <5280C306.7080805@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
+In-Reply-To: <5280C306.7080805@suse.de>
+Content-Language: ja-JP
+Content-ID: <3F2DDF44C1B92D4FB3349B0C4BA067AC@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,102 +22,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Martin Peschke <mpeschke@linux.vnet.ibm.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMTEvMTIvMjAxMyAwODo0OCBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMTEvMDgv
-MTMgMTg6MDIsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gVGhlcmUgaXMgbm8gcmVhc29uIHdo
-eSBtdWx0aXBhdGggbmVlZHMgdG8gcXVldWUgcmVxdWVzdHMKPj4gaW50ZXJuYWxseSBmb3IgcXVl
-dWVfaWZfbm9fcGF0aCBvciBwZ19pbml0OyB3ZSBzaG91bGQKPj4gcmF0aGVyIHB1c2ggdGhlbSBi
-YWNrIG9udG8gdGhlIHJlcXVlc3QgcXVldWUuCj4+Cj4+Cj4+IFRoaXMgcGF0Y2ggcmVtb3ZlcyB0
-aGUgaW50ZXJuYWwgcXVldWVpbmcgbWVjaGFuaXNtIGZyb20gZG0tbXVsdGlwYXRoLgo+IAo+IEhp
-IEhhbm5lcywKPiB0aGFua3MgZm9yIHdvcmtpbmcgb24gdGhpcy4KPiAKPj4gSW4gZG9pbmcgc28g
-d2UgY2FuIGFsc28gcmVtb3ZlIHRoZSAtPmJ1c3kgY2hlY2sgYXMgYSByZXF1ZXVlIGlzIGlkZW50
-aWNhbAo+PiB0byAtPmJ1c3kgcmV0dXJuaW5nICd0cnVlJyBmcm9tIHRoZSBjYWxsZXJzIHBlcnNw
-ZWN0aXZlLiBUaGlzIHNpbXBsaWZpZXMKPj4gdGhlIGNvZGUgYnkgcXVpdGUgYSBsb3QuCj4gCj4g
-VGhleSBhcmUgbm90IGlkZW50aWNhbC4KPiAtPmJ1c3kgcmV0dXJucyB0cnVlIHdoZW4gdW5kZXJs
-eWluZyBwYXRoIGNhbm5vdCBkaXNwYXRjaCBhIHJlcXVlc3QKPiBpbW1lZGlhdGVseS4gSW4gdGhh
-dCBjYXNlIGl0J3MgYmV0dGVyIHRvIGtlZXAgdGhlIHJlcXVlc3QgaW4gcXVldWUKPiB0byBhbGxv
-dyBtZXJnZXMuICAoSXQgdXNlZCB0byBoYXZlIHJlYWwgaW1wYWN0IG9uIGJ1ZmZlcmVkIHNlcXVl
-bnRpYWwKPiB3cml0ZSArIGZzeW5jIHdvcmtsb2FkLCB0aG91Z2ggdGhlIHBlcmZvcm1hbmNlIGlt
-cGFjdCBtaWdodCBiZWNvbWUKPiBzbWFsbGVyIGluIHJlY2VudCBrZXJuZWxzIGR1ZSB0byBwbHVn
-Z2luZyBjaGFuZ2UuKQo+IEFsc28gLT5idXN5IGNhbiBiZSB1c2VkIGJ5IHVwcGVyIGxheWVyIChk
-bV90YWJsZV9hbnlfYnVzeV90YXJnZXQpLgo+IFNvIHlvdSBjYW4ndCBqdXN0IHJlbW92ZSBpdC4K
-PiAKQnV0IHRoZXkgYXJlIGlkZW50aWNhbCBmcm9tIHRoZSBjYWxsZXJzIHBlcnNwZWN0aXZlOgpk
-cml2ZXJzL21kL2RtLmM6ZG1fcmVxdWVzdF9mbigpCgoJCWlmICh0aS0+dHlwZS0+YnVzeSAmJiB0
-aS0+dHlwZS0+YnVzeSh0aSkpCgkJCWdvdG8gZGVsYXlfYW5kX291dDsKCgkJY2xvbmUgPSBkbV9z
-dGFydF9yZXF1ZXN0KG1kLCBycSk7CgoJCXNwaW5fdW5sb2NrKHEtPnF1ZXVlX2xvY2spOwoJCWlm
-IChtYXBfcmVxdWVzdCh0aSwgY2xvbmUsIG1kKSkKCQkJZ290byByZXF1ZXVlZDsKCgkJQlVHX09O
-KCFpcnFzX2Rpc2FibGVkKCkpOwoJCXNwaW5fbG9jayhxLT5xdWV1ZV9sb2NrKTsKCX0KCglnb3Rv
-IG91dDsKCnJlcXVldWVkOgoJQlVHX09OKCFpcnFzX2Rpc2FibGVkKCkpOwoJc3Bpbl9sb2NrKHEt
-PnF1ZXVlX2xvY2spOwoKZGVsYXlfYW5kX291dDoKCWJsa19kZWxheV9xdWV1ZShxLCBIWiAvIDEw
-KTsKClNvIHRoZSBvbmx5IGRpZmZlcmVuY2UgYmV0d2VlbiAtPmJ1c3kgYW5kIHJldHVybiAnRE1f
-TUFQSU9fUkVRVUVVRScKaXMgdGhhdCAnYnVzeScgcnVucyB1bmRlciB0aGUgcXVldWVfbG9jay4K
-CkFuZCB5ZXMsIGluIHRoZW9yeSAtPmJ1c3kgbWlnaHQgYmUgdXNlZCBmcm9tIGFueSB1cHBlciBs
-YXllcjsgYnV0CnNvIGZhciB0aGUgb25seSBjYWxsZXIgSSd2ZSBmb3VuZCBfaXNfIGluIGRtX3Jl
-cXVlc3RfZm4oKS4KU28gcmVtb3ZpbmcgZG9lc24ndCBkbyBhbnkgaGFybS4KClVubGVzcyBJJ3Zl
-IG1pc3JlYWQgc29tZXRoaW5nIC4uLgoKPj4gQEAgLTM4NSwyMSArMzc4LDE1IEBAIHN0YXRpYyBp
-bnQgbWFwX2lvKHN0cnVjdCBtdWx0aXBhdGggKm0sIHN0cnVjdCByZXF1ZXN0ICpjbG9uZSwKPj4g
-IAkgICAgKCFtLT5xdWV1ZV9pbyAmJiAobS0+cmVwZWF0X2NvdW50ICYmIC0tbS0+cmVwZWF0X2Nv
-dW50ID09IDApKSkKPj4gIAkJX19jaG9vc2VfcGdwYXRoKG0sIG5yX2J5dGVzKTsKPj4gIAo+PiAt
-CXBncGF0aCA9IG0tPmN1cnJlbnRfcGdwYXRoOwo+PiAtCj4+IC0JaWYgKHdhc19xdWV1ZWQpCj4+
-IC0JCW0tPnF1ZXVlX3NpemUtLTsKPj4gKwlpZiAobS0+Y3VycmVudF9wZ3BhdGggJiYKPj4gKwkg
-ICAgbS0+cGdfaW5pdF9yZXF1aXJlZCAmJiAhbS0+cGdfaW5pdF9pbl9wcm9ncmVzcykKPj4gKwkJ
-X19wZ19pbml0X2FsbF9wYXRocyhtKTsKPj4gIAo+PiArCXBncGF0aCA9IG0tPmN1cnJlbnRfcGdw
-YXRoOwo+PiAgCWlmICgocGdwYXRoICYmIG0tPnF1ZXVlX2lvKSB8fAo+PiAgCSAgICAoIXBncGF0
-aCAmJiBtLT5xdWV1ZV9pZl9ub19wYXRoKSkgewo+PiAtCQkvKiBRdWV1ZSBmb3IgdGhlIGRhZW1v
-biB0byByZXN1Ym1pdCAqLwo+PiAtCQlsaXN0X2FkZF90YWlsKCZjbG9uZS0+cXVldWVsaXN0LCAm
-bS0+cXVldWVkX2lvcyk7Cj4+IC0JCW0tPnF1ZXVlX3NpemUrKzsKPj4gLQkJaWYgKChtLT5wZ19p
-bml0X3JlcXVpcmVkICYmICFtLT5wZ19pbml0X2luX3Byb2dyZXNzKSB8fAo+PiAtCQkgICAgIW0t
-PnF1ZXVlX2lvKQo+PiAtCQkJcXVldWVfd29yayhrbXVsdGlwYXRoZCwgJm0tPnByb2Nlc3NfcXVl
-dWVkX2lvcyk7Cj4+ICAJCXBncGF0aCA9IE5VTEw7Cj4+IC0JCXIgPSBETV9NQVBJT19TVUJNSVRU
-RUQ7Cj4+ICsJCXIgPSBETV9NQVBJT19SRVFVRVVFOwo+IAo+IGlmL2Vsc2Ugc2VxdWVuY2UgaW4g
-bWFwX2lvKCkgbWlnaHQgYmUgZWFzaWVyIHRvIHJlYWQgaWYgd2UgZG86Cj4gCj4gCWlmIChwZ3Bh
-dGgpIHsKPiAJCWlmIChwZ19yZWFkeShtKSkgewo+IAkJCS4uLiAvLyByZW1hcAo+IAkJCXIgPSBE
-TV9NQVBJT19SRU1BUFBFRDsKPiAJCX0gZWxzZSB7Cj4gCQkJX19wZ19pbml0X2FsbF9wYXRocyht
-KTsKPiAJCQlyID0gRE1fTUFQSU9fUkVRVUVVRTsKPiAJCX0KPiAJfSBlbHNlIHsgLyogbm8gcGF0
-aCAqLwo+IAkJaWYgKG5lZWRfcmVxdWV1ZShtKSkKPiAJCQlyID0gRE1fTUFQSU9fUkVRVUVVRTsK
-PiAJCWVsc2UKPiAJCQlyID0gLUVJTzsKPiAJfQo+IAo+IHdoZXJlOgo+ICAgI2RlZmluZSBwZ19y
-ZWFkeShtKSAoIW0tPnF1ZXVlX2lvKSAvKiBvciByZW5hbWUgJ3F1ZXVlX2lvJyAqLwo+ICAgI2Rl
-ZmluZSBuZWVkX3JlcXVldWUobSkgKG0tPnF1ZXVlX2lmX25vX3BhdGggfHwgX19tdXN0X3B1c2hf
-YmFjayhtKSkKPiAKPiBhbmQgbW92ZSBwZ19pbml0X3JlcXVpcmVkLCBldGMuIGNoZWNrcyB0byBf
-X3BnX2luaXRfYWxsX3BhdGhzKCkuCj4gClRydWUuIFdpbGwgYmUgZG9pbmcgdGhhdC4KCj4+IEBA
-IC0xMjQxLDcgKzExNjgsOCBAQCBzdGF0aWMgdm9pZCBwZ19pbml0X2RvbmUodm9pZCAqZGF0YSwg
-aW50IGVycm9ycykKPj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+PiAgCj4+ICAJbS0+cGdfaW5pdF9k
-ZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+PiAtCXF1ZXVlX3dvcmsoa211bHRpcGF0aGQsICZt
-LT5wcm9jZXNzX3F1ZXVlZF9pb3MpOwo+PiArCWlmICghbS0+cXVldWVfaW8pCj4+ICsJCWRtX3Rh
-YmxlX3J1bl9xdWV1ZShtLT50aS0+dGFibGUpOwo+PiAgCj4+ICAJLyoKPj4gIAkgKiBXYWtlIHVw
-IGFueSB0aHJlYWQgd2FpdGluZyB0byBzdXNwZW5kLgo+IAo+IHByb2Nlc3NfcXVldWVkX2lvcyB3
-YXMgcmVzcG9uc2libGUgZm9yIHJldHJ5aW5nIHBnX2luaXQuCj4gQW5kIHdoZW4gcmV0cnlpbmcs
-IG0tPnF1ZXVlX2lvIGlzIHN0aWxsIDAuCj4gU28gZG9uJ3Qgd2UgaGF2ZSB0byBydW4gcXVldWUg
-dW5jb25kaXRpb25hbGx5IGhlcmUKPiBvciBjYWxsIF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBkaXJl
-Y3RseT8KPiAKSW4gbXkgcmV3b3JrIEkndmUgX3RyaWVkXyB0byBzZXBhcmF0ZSBib3RoIGZ1bmN0
-aW9ucyBmcm9tCnByb2Nlc3NfcXVldWVkX2lvcygpLgpCdXQgeWVzLCB5b3UgYXJlIHJpZ2h0OyBJ
-IGhhdmVuJ3QgY29uc2lkZXJlZCBwZ19pbml0X3JldHJ5LgpXaWxsIGJlIHVwZGF0aW5nIHRoZSBw
-YXRjaC4KCj4gCj4+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLmMgYi9kcml2ZXJzL21kL2Rt
-LmMKPj4gaW5kZXggYjNlMjZjNy4uMjBhMTliZCAxMDA2NDQKPj4gLS0tIGEvZHJpdmVycy9tZC9k
-bS5jCj4+ICsrKyBiL2RyaXZlcnMvbWQvZG0uYwo+PiBAQCAtMTg3Niw2ICsxODc2LDE5IEBAIHN0
-YXRpYyBpbnQgZG1fYW55X2Nvbmdlc3RlZCh2b2lkICpjb25nZXN0ZWRfZGF0YSwgaW50IGJkaV9i
-aXRzKQo+PiAgCXJldHVybiByOwo+PiAgfQo+PiAgCj4+ICt2b2lkIGRtX3RhYmxlX3J1bl9xdWV1
-ZShzdHJ1Y3QgZG1fdGFibGUgKnQpCj4+ICt7Cj4+ICsJc3RydWN0IG1hcHBlZF9kZXZpY2UgKm1k
-ID0gZG1fdGFibGVfZ2V0X21kKHQpOwo+PiArCXVuc2lnbmVkIGxvbmcgZmxhZ3M7Cj4+ICsKPj4g
-KwlpZiAobWQtPnF1ZXVlKSB7Cj4+ICsJCXNwaW5fbG9ja19pcnFzYXZlKG1kLT5xdWV1ZS0+cXVl
-dWVfbG9jaywgZmxhZ3MpOwo+PiArCQlibGtfcnVuX3F1ZXVlX2FzeW5jKG1kLT5xdWV1ZSk7Cj4+
-ICsJCXNwaW5fdW5sb2NrX2lycXJlc3RvcmUobWQtPnF1ZXVlLT5xdWV1ZV9sb2NrLCBmbGFncyk7
-Cj4+ICsJfQo+PiArfQo+PiArRVhQT1JUX1NZTUJPTF9HUEwoZG1fdGFibGVfcnVuX3F1ZXVlKTsK
-PiAKPiBTaG91bGRuJ3QgdGhpcyBiZSBpbiBkbS10YWJsZS5jPwo+IApJdCB3b3VsZCBiZSBsb2dp
-Y2FsLgpCdXQgYXMgJ3N0cnVjdCBtYXBwZWRfZGV2aWNlJyBpcyBpbnRlcm5hbCB0byBkbS5jIHlv
-dQp3b3VsZCB0aGVuIGVuZC11cCB3aXRoIHNvbWV0aGluZyBsaWtlOgoKdm9pZCBkbV9ydW5fcXVl
-dWUoc3RydWN0IG1hcHBlZF9kZXZpY2UgKm1kKQoKYW5kIEkgd291bGQgbmVlZCB0byBjYWxsIGl0
-IGxpa2UKCmRtX3J1bl9xdWV1ZShkbV90YWJsZV9nZXRfbWQoKSkKCndoaWNoIEkgZmVsdCB3YXMg
-YSBiaXQgcG9pbnRsZXNzLCBhcyB0aGlzIHdvdWxkCmJlIHRoZSBfb25seV8gdmFsaWQgY2FsbGlu
-ZyBzZXF1ZW5jZS4gSGVuY2UKSSBtb3ZlZCB0aGUgY2FsbCB0byBkbV90YWJsZV9nZXRfbWQoKSBp
-bnRvIHRoZQpmdW5jdGlvbiwgZXZlbiB0aG91Z2ggaXQgbWVhbnQgYSBwb3NzaWJsZQpsYXllcmlu
-ZyB2aW9sYXRpb24uCgpPaCwgdGhlIGpveXMgb2YgZGV2aWNlLW1hcHBlciAuLi4KCkNoZWVycywK
-Ckhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgelNlcmllcyAmIFN0b3JhZ2UK
-aGFyZUBzdXNlLmRlCQkJICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0
-cyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEouIEhhd24sIEouIEd1
-aWxkLCBGLiBJbWVuZMO2cmZmZXIsIEhSQiAxNjc0NiAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 11/11/13 20:44, Hannes Reinecke wrote:
+> On 11/11/2013 12:25 PM, Steffen Maier wrote:
+>> One thing I'm still wondering: Would there be any benefit of actually stopping the request
+>> queue until at least one path becomes available again?
+> [blk_{start|stop}_queue()] I.e. stop
+>> in map_io() after we're sure there is no path in any prio group,
+> and restart in reinstate_path().
+>>
+> Hehe. Thought about that, too.
+> 
+> Problem with that approach is the way multipath currently works.
+> Currently multipath does _not_ have a flag for 'all paths down and
+> queue_if_no_path is active, please requeue'.
+> It rather evaluates all possible paths during map_io, and only
+> if it determines that no paths are present and queue_if_no_path
+> is set it'll requeue the I/O.
+> 
+> So if we were to use start/stop queue here the block layer would
+> never trigger 'map_io', and multipath would never check the path
+> states and no I/O will be sent, ever.
+
+I might misunderstand but if you stop the queue here:
+
+        if ((pgpath && m->queue_io) ||
+            (!pgpath && m->queue_if_no_path)) {
+                /* Queue for the daemon to resubmit */
+
+you can start the queue on completion of pg_init
+for "pgpath && m->queue_io" case,
+and can start on reinstate_path() message
+for "!pgpath && m->queue_if_no_path" case.
+
+> blk_start/stop_queue works best if you have _alternative_ means
+> of setting those, besides the normal I/O path.
+> (It's original idea was to be used from LLDDs, after all).
+> When one of these functions is being used in the normal I/O path
+> things are becoming iffy really fast.
+> 
+> That said, it _would_ make sense to use blk_start/stop_queue for
+> pg_init; we cannot send I/O during pg_init anyway, so there's
+> no point in retrying I/O here.
+
+blk_stop/start_queue is used to implement dm suspend/resume.
+So if you use them from target, care has to be taken not to
+interfere with dm core.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
