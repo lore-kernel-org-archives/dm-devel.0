@@ -1,23 +1,18 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH] dm-mpath: push back requests instead of
- queueing
-Date: Tue, 12 Nov 2013 10:25:06 +0000
-Message-ID: <11AF7C027C4C02408624617A49860784F0B09D@BPXM12GP.gisp.nec.co.jp>
-References: <1383901339-81536-1-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A49860784F0A5F4@BPXM12GP.gisp.nec.co.jp>
-	<5281E403.5020005@suse.de>
-	<11AF7C027C4C02408624617A49860784F0A9D8@BPXM12GP.gisp.nec.co.jp>
-	<5281EF56.8030808@suse.de>
-	<11AF7C027C4C02408624617A49860784F0AE9C@BPXM12GP.gisp.nec.co.jp>
-	<52820047.9090103@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 6/6] dm cache: add cache block invalidation
+	support
+Date: Tue, 12 Nov 2013 12:35:57 -0500
+Message-ID: <20131112173557.GA10829@redhat.com>
+References: <1384190448-3861-1-git-send-email-snitzer@redhat.com>
+	<1384190448-3861-7-git-send-email-snitzer@redhat.com>
+	<20131112004633.GJ24324@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52820047.9090103@suse.de>
-Content-Language: ja-JP
-Content-ID: <6F47255AC8861D4887A7E54E4FACCB9B@gisp.nec.co.jp>
+Content-Disposition: inline
+In-Reply-To: <20131112004633.GJ24324@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,46 +22,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Frank Mayhar <fmayhar@google.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/12/13 19:17, Hannes Reinecke wrote:
-> On 11/12/2013 11:00 AM, Junichi Nomura wrote:
->> On 11/12/13 18:05, Hannes Reinecke wrote:
-> [ .. ]
->>> We _could_ optimize this in __switch_pg(), to call pgpath_busy()
->>> when selecting the paths. But that should be done by the path selector.
->>> So for that we would need to separate the functionality of the
->>> path selector and __switch_pg; currently it's unclear whether
->>> we need to call pgpath_busy() in __switch_pg or not.
->>
->> There is no need to call pgpath_busy in __switch_pg.
->>
->> If we call __pgpath_busy() in map function, I think it's here:
->>
->> 	if (pgpath) {
->> + 		if (__pgpath_busy(pgpath))
->> + 			r = DM_MAPIO_REQUEUE;
->> 		else if (pg_ready(m)) {
->> 			... // remap
->> 			r = DM_MAPIO_REMAPPED;
->> 		} else {
->> 			__pg_init_all_paths(m);
->> 			r = DM_MAPIO_REQUEUE;
->> 		}
->> 	...
->>
-> Which is what I had in mind.
+On Mon, Nov 11 2013 at  7:46pm -0500,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-Great.
+> On Mon, Nov 11, 2013 at 12:20:48PM -0500, Mike Snitzer wrote:
+> > From: Joe Thornber <ejt@redhat.com>
+>  
+> > Cache block invalidation is removing an entry from the cache without
+> > writing it back.  Cache blocks can be invalidated via the
+> > 'invalidate_cblocks' message, which takes an arbitrary number of cblock
+> > ranges:
+> >    invalidate_cblocks [<cblock>|<cblock begin>-<cblock end>]*
+>  
+> If we're expecting to need to invalidate a large number of ranges, should we
+> switch this over to hexadecimal like we did for dm-switch?
+> 
+> Should we consider changing this to <cblock>+<length> as the dm
+> interfaces tend to work with a start offset and a length?
+> 
+> Or will it be that the userspace interface will not be the bottleneck in
+> this code so it really doesn't matter about attempting to optimise that
+> part?
 
->> or in a path selector.
->>
-> Hmm. The path selector might have a reason for selecting this
-> particular path. So I'd prefer not to have it in there.
+TBD.  Plan is to introduce "invalidate_cblocks_hex" variant if needed.
 
-Yeah, that's my concern, too.
+> > +++ b/Documentation/device-mapper/cache.txt
+> 
+> >  The test suite can be found here:
+> > -https://github.com/jthornber/thinp-test-suite
+> > +https://github.com/jthornber/device-mapper-test-suite
+> 
+> It's really not good if URLs in existing documentation become invalid
+> like this: Could an obvious pointer be placed at the old location to
+> direct people to the new location?
+> 
+> Can we document whether or not all the ranges will have been invalidated
+> before the message returns?
+> 
+> > +	if (!passthrough_mode(&cache->features)) {
+> > +		DMERR("cache has to be in passthrough mode for invalidation");
+> 
+> Can we document this too?
+> 
+> > @@ -2841,6 +3054,12 @@ static int cache_message(struct dm_target *ti, unsigned argc, char **argv)
+> > +	if (!strcmp(argv[0], "invalidate_cblocks"))
+> 
+> strcasecmp please!
 
--- 
-Jun'ichi Nomura, NEC Corporation
+Pushed the following commit to address your comments in this patchset,
+can rebase this commit if you have any further suggestions:
+http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=e67df7acf867b654c6eca7d08ee0452e9c5e4534
