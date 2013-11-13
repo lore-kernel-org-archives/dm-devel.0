@@ -1,16 +1,17 @@
-From: "Mears, Morgan" <Morgan.Mears@netapp.com>
-Subject: Re: dm-cache mq policy warmup issue
-Date: Wed, 13 Nov 2013 16:13:43 +0000
-Message-ID: <33A0129EBFD46748804DE81B354CA1B21C031CD6@SACEXCMBX06-PRD.hq.netapp.com>
-References: <9BDA3ECEC2A5454BB4294114677019E131B6C2F9@SACEXCMBX02-PRD.hq.netapp.com>
-	<33A0129EBFD46748804DE81B354CA1B21C031288@SACEXCMBX06-PRD.hq.netapp.com>
+From: Vladimir Smolensky <arizal@gmail.com>
+Subject: Re: dm-cache fs corruption
+Date: Wed, 13 Nov 2013 18:29:02 +0200
+Message-ID: <CALwk7=xi2NBOE+bGcoygtsqFYzSE8a7DsC7p7MCRd06QU6jihQ@mail.gmail.com>
+References: <CALwk7=z+Xc8Xrcw5jo8DtKwT9KS2gQMumtaHTws0w4+VDs2NwQ@mail.gmail.com>
+	<20131113131022.GA13882@debian>
+	<CALwk7=xhJBoxyvM4yw0DwFGQoOmhAxp1p9C0oid_Wh4tzxSf5w@mail.gmail.com>
+	<20131113144112.GF13882@debian>
+	<CALwk7=zWxL1QD3_pujA-QpWOCLLbJKT31p5HqTrzJwYPETh26g@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============4017771097388113771=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <33A0129EBFD46748804DE81B354CA1B21C031288@SACEXCMBX06-PRD.hq.netapp.com>
-Content-Language: en-US
+In-Reply-To: <CALwk7=zWxL1QD3_pujA-QpWOCLLbJKT31p5HqTrzJwYPETh26g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,127 +21,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 04, 2013 at 12:22:26PM -0500, Krishnasamy, Somasundaram wrote:
-> Mike,
-> =
+--===============4017771097388113771==
+Content-Type: multipart/alternative; boundary=f46d0444ed398b3ef304eb1176c2
 
-> I was doing some testing with latest dm-cache code (from 'for-next' branc=
-h). I
-> am having difficulty in making the cache to warm-up. I used the below scr=
-ipt
-> to read range of blocks repeatedly to get them promoted. I assume after
-> reading a block for mq->promote_threshold + 4 times, a block will be
-> promoted. But it is not happening. I also tested the same with the
-> sequential_threshold set to very high value.
-> =
+--f46d0444ed398b3ef304eb1176c2
+Content-Type: text/plain; charset=ISO-8859-1
 
-> Cache warming-up was relatively easier in the previous dm-cache code. Is =
-this
-> something you have seen in your testing?. Is there anything different sho=
-uld I
-> do?
+Hello,
+I'm compiling the for-linus branch, it shows 3.12.0-rc5, that's ok right?
 
-I'm also testing with the for-next branch of linux-dm.git and seeing the
-same thing as Somu.  It's easy to reproduce; reading the same block on the
-cached device over and over with dd does not result in that block being
-promoted.
+Where can I get cache_restore, cache_dump, etc. and info how to use them.
 
-I did notice that the "read miss" counter for the cached device increments
-each time I execute dd, which I believe means this isn't a buffer cache
-issue (I also used dd iflag=3Ddirect).  The migration_threshold value
-shouldn't be an issue for this test, but I set it to a very high value
-anyway; didn't make any difference.
+--f46d0444ed398b3ef304eb1176c2
+Content-Type: text/html; charset=ISO-8859-1
 
-Are there any tests in device-mapper-test-suite that you would recommend
-for testing whether promotions are occurring as expected?
+<div dir="ltr"><div><div></div>Hello, <br>I&#39;m compiling the for-linus branch, it shows 3.12.0-rc5, that&#39;s ok right?<br><br>Where can I get cache_restore, cache_dump, etc. and info how to use them.<br><br></div><div>
+<br></div></div>
 
---Morgan
+--f46d0444ed398b3ef304eb1176c2--
 
-> Note: /dev/mapper/mydev is the dm-cache target device. I ran the below
-> script with "64k 100 100 0" as argument.
-> -----------
-> #!/bin/bash
-> =
 
-> if [[ $# -lt 4 ]]
-> then
-> =A0=A0=A0=A0=A0=A0=A0 echo "Usage: $0 <cache_block_size> <nblocks to prom=
-ote> <nread of a
-> block> <start_block>"
-> =A0=A0=A0=A0=A0=A0=A0 exit 1
-> fi
-> =
+--===============4017771097388113771==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> BSSIZE=3D$1
-> ((TOTAL=3D$2+$4))
-> HITCNT=3D$3
-> =
 
-> # Read even numbered blocks
-> blkcnt=3D$4
-> while [[ blkcnt -lt $TOTAL ]]
-> do
-> =A0=A0=A0=A0=A0=A0=A0 i=3D0
-> =A0=A0=A0=A0=A0=A0=A0 echo "Reading block $blkcnt $HITCNT times"
-> =A0=A0=A0=A0=A0=A0=A0 while [[ $i -lt $HITCNT ]]
-> =A0=A0=A0=A0=A0=A0=A0 do
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 dd if=3D/dev/mapper/mydev o=
-f=3D/dev/null bs=3D$BSSIZE skip=3D$blkcnt
-> count=3D1 conv=3Dnotrunc iflag=3Ddirect 2> /dev/null
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if [[ $? -ne 0 ]]
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0then
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ech=
-o "I/O failure. exiting."
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 exi=
-t 1
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 fi
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ((i=3Di+1))
-> =A0=A0=A0=A0=A0=A0=A0 done
-> =
-
-> =A0=A0=A0=A0=A0=A0=A0 ((blkcnt=3Dblkcnt+2))
-> =
-
-> =A0=A0=A0=A0=A0=A0=A0 PROMOTED=3D$(dmsetup status mydev | awk '{print $11=
-}')
-> =A0=A0 =A0=A0=A0=A0=A0echo "Promoted blocks so far: $PROMOTED"
-> done
-> =
-
-> # Read odd numbered blocks
-> ((blkcnt=3D$4+1))
-> while [[ blkcnt -lt $TOTAL ]]
-> do
-> =A0=A0=A0=A0=A0=A0=A0 i=3D0
-> =A0=A0=A0=A0=A0=A0=A0 echo "Reading block $blkcnt $HITCNT times"
-> =A0=A0=A0=A0=A0=A0=A0 while [[ $i -lt $HITCNT ]]
-> =A0=A0=A0=A0=A0=A0=A0 do
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 dd if=3D/dev/mapper/mydev o=
-f=3D/dev/null bs=3D$BSSIZE skip=3D$blkcnt
-> count=3D1 conv=3Dnotrunc iflag=3Ddirect 2> /dev/null
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if [[ $? -ne 0 ]]
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 then
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ech=
-o "I/O failure. exiting."
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 exi=
-t 1
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 fi
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ((i=3Di+1))
-> =A0=A0=A0=A0=A0=A0=A0 done
-> =
-
-> =A0=A0=A0=A0=A0=A0=A0 ((blkcnt=3Dblkcnt+2))
-> =
-
-> =A0=A0=A0=A0=A0=A0=A0 PROMOTED=3D$(dmsetup status mydev | awk '{print $11=
-}')
-> =A0=A0=A0=A0=A0=A0=A0 echo "Promoted blocks so far: $PROMOTED"
-> done
-> ------------
-> =
-
-> Regards,
-> Somu.
+--===============4017771097388113771==--
