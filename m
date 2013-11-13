@@ -1,17 +1,20 @@
-From: Vladimir Smolensky <arizal@gmail.com>
+From: "Mears, Morgan" <Morgan.Mears@netapp.com>
 Subject: Re: dm-cache fs corruption
-Date: Wed, 13 Nov 2013 18:29:02 +0200
-Message-ID: <CALwk7=xi2NBOE+bGcoygtsqFYzSE8a7DsC7p7MCRd06QU6jihQ@mail.gmail.com>
+Date: Wed, 13 Nov 2013 18:39:37 +0000
+Message-ID: <33A0129EBFD46748804DE81B354CA1B21C031F48@SACEXCMBX06-PRD.hq.netapp.com>
 References: <CALwk7=z+Xc8Xrcw5jo8DtKwT9KS2gQMumtaHTws0w4+VDs2NwQ@mail.gmail.com>
 	<20131113131022.GA13882@debian>
 	<CALwk7=xhJBoxyvM4yw0DwFGQoOmhAxp1p9C0oid_Wh4tzxSf5w@mail.gmail.com>
 	<20131113144112.GF13882@debian>
 	<CALwk7=zWxL1QD3_pujA-QpWOCLLbJKT31p5HqTrzJwYPETh26g@mail.gmail.com>
+	<CALwk7=xi2NBOE+bGcoygtsqFYzSE8a7DsC7p7MCRd06QU6jihQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4017771097388113771=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CALwk7=zWxL1QD3_pujA-QpWOCLLbJKT31p5HqTrzJwYPETh26g@mail.gmail.com>
+In-Reply-To: <CALwk7=xi2NBOE+bGcoygtsqFYzSE8a7DsC7p7MCRd06QU6jihQ@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,31 +27,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4017771097388113771==
-Content-Type: multipart/alternative; boundary=f46d0444ed398b3ef304eb1176c2
+On Wed, Nov 13, 2013 at 11:29:26AM -0005, Vladimir Smolensky wrote:
+> Hello, 
+> I'm compiling the for-linus branch, it shows 3.12.0-rc5, that's ok right?
+> 
+> Where can I get cache_restore, cache_dump, etc. and info how to use them.
 
---f46d0444ed398b3ef304eb1176c2
-Content-Type: text/plain; charset=ISO-8859-1
+Hi Vladimir,
 
-Hello,
-I'm compiling the for-linus branch, it shows 3.12.0-rc5, that's ok right?
+git clone https://github.com/jthornber/thin-provisioning-tools.git
+cd thin-provisioning-tools
+autoreconf
+./configure --enable-testing
+make
+sudo cp cache_check cache_dump cache_restore cache_repair /usr/sbin
+cache_check --version
 
-Where can I get cache_restore, cache_dump, etc. and info how to use them.
+This is mostly distilled from README.md in the repo; there are some
+additional dependencies in there that you might have to address.
 
---f46d0444ed398b3ef304eb1176c2
-Content-Type: text/html; charset=ISO-8859-1
+All the tools have a --help option; not sure about other documentation.
 
-<div dir="ltr"><div><div></div>Hello, <br>I&#39;m compiling the for-linus branch, it shows 3.12.0-rc5, that&#39;s ok right?<br><br>Where can I get cache_restore, cache_dump, etc. and info how to use them.<br><br></div><div>
-<br></div></div>
-
---f46d0444ed398b3ef304eb1176c2--
-
-
---===============4017771097388113771==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4017771097388113771==--
+--Morgan
