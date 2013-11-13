@@ -1,117 +1,89 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 3.13
-Date: Tue, 12 Nov 2013 21:47:51 -0500
-Message-ID: <20131113024751.GB1540@redhat.com>
+From: Vladimir Smolensky <arizal@gmail.com>
+Subject: dm-cache fs corruption
+Date: Wed, 13 Nov 2013 12:24:03 +0200
+Message-ID: <CALwk7=z+Xc8Xrcw5jo8DtKwT9KS2gQMumtaHTws0w4+VDs2NwQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Andy Speagle <Andy.Speagle@netapp.com>, Hannes Reinecke <hare@suse.de>, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Junichi Nomura <j-nomura@ce.jp.nec.com>, Krishnasamy Somasundaram <somasundaram.krishnasamy@netapp.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Morgan Mears <Morgan.Mears@netapp.com>, Shiva Krishna Merla <shivakrishna.merla@netapp.com>
+Content-Type: multipart/mixed; boundary="===============8565477756850957772=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The following changes since commit 61e6cfa80de5760bbe406f4e815b7739205754d2:
+--===============8565477756850957772==
+Content-Type: multipart/alternative; boundary=001a11c3657e3b54c104eb0c5d2e
 
-  Linux 3.12-rc5 (2013-10-13 15:41:28 -0700)
+--001a11c3657e3b54c104eb0c5d2e
+Content-Type: text/plain; charset=ISO-8859-1
 
-are available in the git repository at:
+Hello,
+I've been testing dm-cache for use with static web content.
+It appears that, when using big cache ~3TB(+20TB origin dev) dm-cache
+device corrupts the filesystem after block eviction starts to happen.
+If I set smaller cache size - single 480GB ssd(again with 20TB origin dev),
+the dm-cache dev works just fine.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.13-changes
 
-for you to fetch changes up to 7b6b2bc98c0303b7f043ad5b35906f833e56308d:
+dmesg error:
 
-  dm cache: resolve small nits and improve Documentation (2013-11-12 13:11:09 -0500)
+XFS (dm-0): Corruption detected. Unmount and run xfs_repair
+XFS (dm-0): metadata I/O error: block 0x3d4f534e0
+("xfs_trans_read_buf_map") error 117 numblks 16
+XFS (dm-0): xfs_imap_to_bp: xfs_trans_read_buf() returned error 117.
+XFS (dm-0): Corruption detected. Unmount and run xfs_repair
+XFS (dm-0): Corruption detected. Unmount and run xfs_repair
 
-Please pull, thanks.
-Mike
 
-----------------------------------------------------------------
-A set of device-mapper changes for 3.13.
+ext4 also got broken.
 
-Improve reliability of buffer allocations for dm messages with a small
-number of arguments, a couple path group initialization fixes for dm
-multipath, a fix for resizing a dm array, various fixes and
-optimizations for dm cache, a fix for device mapper's Kconfig menu
-indentation.
 
-Features added include:
-- dm crypt support for activating legacy CBC TrueCrypt containers
-  (useful for forensics of these old TCRYPT containers)
-- reduced dm-cache memory requirements for each block in the cache
-- basic support for shrinking a dm-cache's cache (fast) device
-- most notably, dm-cache support for managing cache coherency when
-  deploying dm-cache with sophisticated origin volumes (that support
-  hardware snapshots and/or clustering): these changes come in the form
-  of a new passthrough operation mode and a cache block invalidation
-  interface.
+Tested with 3.10.11-gentoo, fedora 19- kernel 3.11.something, xfs, ext4,
+writeback and writethrough modes.
 
-----------------------------------------------------------------
-Hannes Reinecke (1):
-      dm mpath: requeue I/O during pg_init
 
-Heinz Mauelshagen (3):
-      dm cache: use cell_defer() boolean argument consistently
-      dm cache: log error message if dm_kcopyd_copy() fails
-      dm cache: optimize commit_if_needed
 
-Joe Thornber (18):
-      dm array: fix bug in growing array
-      dm cache policy mq: protect residency method with existing mutex
-      dm cache: io destined for the cache device can now serve as tick bios
-      dm cache: fix a race condition between queuing new migrations and quiescing for a shutdown
-      dm cache: improve efficiency of quiescing flag management
-      dm cache policy: remove return from void policy_remove_mapping
-      dm cache policy mq: a few small fixes
-      dm cache metadata: return bool from __superblock_all_zeroes
-      dm space map disk: optimise sm_disk_dec_block
-      dm cache policy mq: implement writeback_work() and mq_{set,clear}_dirty()
-      dm cache: be much more aggressive about promoting writes to discarded blocks
-      dm cache: promotion optimisation for writes
-      dm cache: cache shrinking support
-      dm cache: add passthrough mode
-      dm cache metadata: check the metadata version when reading the superblock
-      dm cache policy mq: reduce memory requirements
-      dm cache: add remove_cblock method to policy interface
-      dm cache: add cache block invalidation support
+regards,
+Vladimir Smolensky
 
-Mike Snitzer (3):
-      dm table: print error on preresume failure
-      MAINTAINERS: add reference to device-mapper's linux-dm.git tree
-      dm cache: resolve small nits and improve Documentation
+--001a11c3657e3b54c104eb0c5d2e
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Mikulas Patocka (4):
-      dm: allocate buffer for messages with small number of arguments using GFP_NOIO
-      dm cache: return -EINVAL if the user specifies unknown cache policy
-      dm: allow remove to be deferred
-      dm: fix Kconfig menu indentation
+<div dir=3D"ltr"><div><div><div><div>Hello,<br></div>I&#39;ve been testing =
+dm-cache for use with static web content.<br></div>It appears that, when us=
+ing big cache ~3TB(+20TB origin dev) dm-cache device corrupts the filesyste=
+m after block eviction starts to happen.<br>
+</div>If I set smaller cache size - single 480GB ssd(again with 20TB origin=
+ dev), the dm-cache dev works just fine.<br><br><br></div>dmesg error:<br><=
+br>XFS (dm-0): Corruption detected. Unmount and run xfs_repair<br>XFS (dm-0=
+): metadata I/O error: block 0x3d4f534e0 (&quot;xfs_trans_read_buf_map&quot=
+;) error 117 numblks 16<br>
 
-Milan Broz (2):
-      dm crypt: properly handle extra key string in initialization
-      dm crypt: add TCW IV mode for old CBC TCRYPT containers
+XFS (dm-0): xfs_imap_to_bp: xfs_trans_read_buf() returned error 117.<br>XFS=
+ (dm-0): Corruption detected. Unmount and run xfs_repair<br>XFS (dm-0): Cor=
+ruption detected. Unmount and run xfs_repair<br><div><br><br></div><div>
+ext4 also got broken.<br></div><div><br><br></div><div>Tested with 3.10.11-=
+gentoo, fedora 19- kernel 3.11.something, xfs, ext4, writeback and writethr=
+ough modes.<br><br><br></div><div><br>regards,<br></div><div>Vladimir Smole=
+nsky<br>
+</div></div>
 
-Shiva Krishna Merla (1):
-      dm mpath: fix race condition between multipath_dtr and pg_init_done
+--001a11c3657e3b54c104eb0c5d2e--
 
- Documentation/device-mapper/cache-policies.txt |   6 +-
- Documentation/device-mapper/cache.txt          |  57 +-
- Documentation/device-mapper/dm-crypt.txt       |  11 +-
- MAINTAINERS                                    |   1 +
- drivers/md/Kconfig                             |  22 +-
- drivers/md/dm-cache-metadata.c                 | 104 +++-
- drivers/md/dm-cache-metadata.h                 |   5 +
- drivers/md/dm-cache-policy-internal.h          |   7 +-
- drivers/md/dm-cache-policy-mq.c                | 681 ++++++++++++++----------
- drivers/md/dm-cache-policy.c                   |   4 +-
- drivers/md/dm-cache-policy.h                   |  21 +-
- drivers/md/dm-cache-target.c                   | 687 +++++++++++++++++++++----
- drivers/md/dm-crypt.c                          | 214 +++++++-
- drivers/md/dm-ioctl.c                          |  36 +-
- drivers/md/dm-mpath.c                          |  34 +-
- drivers/md/dm-table.c                          |  23 +-
- drivers/md/dm.c                                |  47 +-
- drivers/md/dm.h                                |  13 +-
- drivers/md/persistent-data/dm-array.c          |   5 +-
- drivers/md/persistent-data/dm-space-map-disk.c |  18 +-
- include/uapi/linux/dm-ioctl.h                  |  15 +-
- 21 files changed, 1544 insertions(+), 467 deletions(-)
+
+--===============8565477756850957772==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8565477756850957772==--
