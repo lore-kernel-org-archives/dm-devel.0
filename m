@@ -1,21 +1,14 @@
-From: Vladimir Smolensky <arizal@gmail.com>
-Subject: Re: dm-cache fs corruption
-Date: Thu, 14 Nov 2013 22:22:58 +0200
-Message-ID: <CALwk7=xGynqqH2CN8Eop7qioSR9FGVt7AmGRLkwWXC87KVO8WA@mail.gmail.com>
-References: <CALwk7=z+Xc8Xrcw5jo8DtKwT9KS2gQMumtaHTws0w4+VDs2NwQ@mail.gmail.com>
-	<20131113131022.GA13882@debian>
-	<CALwk7=xhJBoxyvM4yw0DwFGQoOmhAxp1p9C0oid_Wh4tzxSf5w@mail.gmail.com>
-	<20131113144112.GF13882@debian>
-	<CALwk7=zWxL1QD3_pujA-QpWOCLLbJKT31p5HqTrzJwYPETh26g@mail.gmail.com>
-	<CALwk7=xi2NBOE+bGcoygtsqFYzSE8a7DsC7p7MCRd06QU6jihQ@mail.gmail.com>
-	<33A0129EBFD46748804DE81B354CA1B21C031F48@SACEXCMBX06-PRD.hq.netapp.com>
-	<20131114143832.GC17651@debian>
-	<CALwk7=xBTqtOQqXx6WnGyLAAXz4+wrQ9W3MOjs66mWBRhmqxBw@mail.gmail.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] libmultipath/checkers/rdac.c: Use RTPG data
+	in RDAC checker
+Date: Thu, 14 Nov 2013 22:09:43 +0100
+Message-ID: <CABr-Gnej_ZnfE8pxm_vrHPX2eqZiL5QU58wviOQcFjdgnyfRVQ@mail.gmail.com>
+References: <1384387769-32710-1-git-send-email-sean.stewart@netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7135250737473956515=="
+Content-Type: multipart/mixed; boundary="===============2444867267608928007=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CALwk7=xBTqtOQqXx6WnGyLAAXz4+wrQ9W3MOjs66mWBRhmqxBw@mail.gmail.com>
+In-Reply-To: <1384387769-32710-1-git-send-email-sean.stewart@netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,120 +18,381 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Sean Stewart <sean.stewart@netapp.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7135250737473956515==
-Content-Type: multipart/alternative; boundary=047d7bdc8e86fc774804eb28d814
+--===============2444867267608928007==
+Content-Type: multipart/alternative; boundary=047d7b2e760435a3d804eb298089
 
---047d7bdc8e86fc774804eb28d814
+--047d7b2e760435a3d804eb298089
 Content-Type: text/plain; charset=ISO-8859-1
 
-Okay, a little correction here. The problematic setup was with 2.3TB cache,
-not 3TB. The mistake comes from the fact that at the time of the writing I
-was dealing with another server which has 8x480GB ssd's in raid5, which is
-little over 3TB. Obviously the number was floating in my head.
+Applied.
+Thanks.
+
+Christophe Varoqui
+www.opensvc.com
 
 
-On Thu, Nov 14, 2013 at 5:21 PM, Vladimir Smolensky <arizal@gmail.com>wrote:
+On Thu, Nov 14, 2013 at 1:09 AM, Sean Stewart <sean.stewart@netapp.com>wrote:
 
-> ./cache_restore -V
-> 0.2.8
+> Make the RDAC checker utilize the RTPG data given in the 0xC9 inquiry
+> page to make intelligent decisions about path status, and print more
+> descriptive path down messages.
 >
+> Signed-off-by: Sean Stewart <sean.stewart@netapp.com>
+> ---
+>  libmultipath/checkers/rdac.c | 92
+> ++++++++++++++++++++++++++++++++++++++------
+>  1 file changed, 81 insertions(+), 11 deletions(-)
 >
-> On Thu, Nov 14, 2013 at 4:38 PM, Joe Thornber <thornber@redhat.com> wrote:
+> diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+> index 2e64dd3..e0b2ea4 100644
+> --- a/libmultipath/checkers/rdac.c
+> +++ b/libmultipath/checkers/rdac.c
+> @@ -34,6 +34,18 @@
+>  #define MSG_RDAC_UP    "rdac checker reports path is up"
+>  #define MSG_RDAC_DOWN  "rdac checker reports path is down"
+>  #define MSG_RDAC_GHOST "rdac checker reports path is ghost"
+> +#define MSG_RDAC_DOWN_TYPE(STR) MSG_RDAC_DOWN": "STR
+> +
+> +#define RTPG_UNAVAILABLE       0x3
+> +#define RTPG_OFFLINE           0xE
+> +#define RTPG_TRANSITIONING     0xF
+> +
+> +#define RTPG_UNAVAIL_NON_RESPONSIVE    0x2
+> +#define RTPG_UNAVAIL_IN_RESET          0x3
+> +#define RTPG_UNAVAIL_CFW_DL1           0x4
+> +#define RTPG_UNAVAIL_CFW_DL2           0x5
+> +#define RTPG_UNAVAIL_QUIESCED          0x6
+> +#define RTPG_UNAVAIL_SERVICE_MODE      0x7
 >
->> On Wed, Nov 13, 2013 at 06:39:37PM +0000, Mears, Morgan wrote:
->> > On Wed, Nov 13, 2013 at 11:29:26AM -0005, Vladimir Smolensky wrote:
->> > > Hello,
->> > > I'm compiling the for-linus branch, it shows 3.12.0-rc5, that's ok
->> right?
->> > >
->> > > Where can I get cache_restore, cache_dump, etc. and info how to use
->> them.
->> >
->> > Hi Vladimir,
->> >
->> > git clone https://github.com/jthornber/thin-provisioning-tools.git
->> > cd thin-provisioning-tools
->> > autoreconf
->> > ./configure --enable-testing
->> > make
->> > sudo cp cache_check cache_dump cache_restore cache_repair /usr/sbin
->> > cache_check --version
->> >
->> > This is mostly distilled from README.md in the repo; there are some
->> > additional dependencies in there that you might have to address.
->> >
->> > All the tools have a --help option; not sure about other documentation.
->> >
->> > --Morgan
->>
->> 'make install' should work, and I believe there are some man pages.
->>
->> - Joe
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>
+>  struct control_mode_page {
+>         unsigned char header[8];
+> @@ -199,22 +211,64 @@ struct volume_access_inq
+>         char PQ_PDT;
+>         char dontcare0[7];
+>         char avtcvp;
+> -       char dontcare1;
+> -       char asym_access_state_cur;
+> +       char vol_ppp;
+> +       char aas_cur;
+>         char vendor_specific_cur;
+> -       char dontcare2[36];
+> +       char aas_alt;
+> +       char vendor_specific_alt;
+> +       char dontcare1[34];
+>  };
+>
+> +const char
+> +*checker_msg_string(struct volume_access_inq *inq)
+> +{
+> +       /* lun not connected */
+> +       if (((inq->PQ_PDT & 0xE0) == 0x20) || (inq->PQ_PDT & 0x7f))
+> +               return MSG_RDAC_DOWN_TYPE("lun not connected");
+> +
+> +       /* if no tpg data is available, give the generic path down message
+> */
+> +       if (!(inq->avtcvp & 0x10))
+> +               return MSG_RDAC_DOWN;
+> +
+> +       /* controller is booting up */
+> +       if (((inq->aas_cur & 0x0F) == RTPG_TRANSITIONING) &&
+> +               (inq->aas_alt & 0x0F) != RTPG_TRANSITIONING)
+> +               return MSG_RDAC_DOWN_TYPE("ctlr is in startup sequence");
+> +
+> +       /* if not unavailable, give generic message */
+> +       if ((inq->aas_cur & 0x0F) != RTPG_UNAVAILABLE)
+> +               return MSG_RDAC_DOWN;
+> +
+> +       /* target port group unavailable */
+> +       switch (inq->vendor_specific_cur) {
+> +       case RTPG_UNAVAIL_NON_RESPONSIVE:
+> +               return MSG_RDAC_DOWN_TYPE("non-responsive to queries");
+> +       case RTPG_UNAVAIL_IN_RESET:
+> +               return MSG_RDAC_DOWN_TYPE("ctlr held in reset");
+> +       case RTPG_UNAVAIL_CFW_DL1:
+> +       case RTPG_UNAVAIL_CFW_DL2:
+> +               return MSG_RDAC_DOWN_TYPE("ctlr firmware downloading");
+> +       case RTPG_UNAVAIL_QUIESCED:
+> +               return MSG_RDAC_DOWN_TYPE("ctlr quiesced by admin
+> request");
+> +       case RTPG_UNAVAIL_SERVICE_MODE:
+> +               return MSG_RDAC_DOWN_TYPE("ctlr is in service mode");
+> +       default:
+> +               return MSG_RDAC_DOWN_TYPE("ctlr is unavailable");
+> +       }
+> +}
+> +
+>  extern int
+>  libcheck_check (struct checker * c)
+>  {
+>         struct volume_access_inq inq;
+> -       int ret;
+> +       int ret, inqfail;
+>
+> +       inqfail = 0;
+>         memset(&inq, 0, sizeof(struct volume_access_inq));
+>         if (0 != do_inq(c->fd, 0xC9, &inq, sizeof(struct
+> volume_access_inq),
+>                         c->timeout)) {
+>                 ret = PATH_DOWN;
+> +               inqfail = 1;
+>                 goto done;
+>         } else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
+>                 /* LUN not connected*/
+> @@ -222,12 +276,27 @@ libcheck_check (struct checker * c)
+>                 goto done;
+>         }
+>
+> -       /* check if controller is in service mode */
+> -       if ((inq.avtcvp & 0x10) &&
+> -           ((inq.asym_access_state_cur & 0x0F) == 0x3) &&
+> -           (inq.vendor_specific_cur == 0x7)) {
+> -               ret = PATH_DOWN;
+> -               goto done;
+> +       /* If TPGDE bit set, evaluate TPG information */
+> +       if ((inq.avtcvp & 0x10)) {
+> +               switch (inq.aas_cur & 0x0F) {
+> +               /* Never use the path if it reports unavailable */
+> +               case RTPG_UNAVAILABLE:
+> +                       ret = PATH_DOWN;
+> +                       goto done;
+> +               /*
+> +                * If both controllers report transitioning, it
+> +                * means mode select or STPG is being processed.
+> +                *
+> +                * If this controller alone is transitioning, it's
+> +                * booting and we shouldn't use it yet.
+> +                */
+> +               case RTPG_TRANSITIONING:
+> +                       if ((inq.aas_alt & 0xF) != RTPG_TRANSITIONING) {
+> +                               ret = PATH_DOWN;
+> +                               goto done;
+> +                       }
+> +                       break;
+> +               }
+>         }
+>
+>         /* If owner set or ioship mode is enabled return PATH_UP always */
+> @@ -239,7 +308,8 @@ libcheck_check (struct checker * c)
+>  done:
+>         switch (ret) {
+>         case PATH_DOWN:
+> -               MSG(c, MSG_RDAC_DOWN);
+> +               MSG(c, (inqfail) ? MSG_RDAC_DOWN_TYPE("inquiry failed") :
+> +                       checker_msg_string(&inq));
+>                 break;
+>         case PATH_UP:
+>                 MSG(c, MSG_RDAC_UP);
+> --
+> 1.8.3.1
 >
 >
 
---047d7bdc8e86fc774804eb28d814
+--047d7b2e760435a3d804eb298089
 Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-<div dir="ltr">Okay, a little correction here. The problematic setup was with 2.3TB 
-cache, not 3TB. The mistake comes from the fact that at the time of the 
-writing I was dealing with another server which has 8x480GB ssd&#39;s in 
-raid5, which is little over 3TB. Obviously the number was floating in my
- head.<br></div><div class="gmail_extra"><br><br><div class="gmail_quote">On Thu, Nov 14, 2013 at 5:21 PM, Vladimir Smolensky <span dir="ltr">&lt;<a href="mailto:arizal@gmail.com" target="_blank">arizal@gmail.com</a>&gt;</span> wrote:<br>
-<blockquote class="gmail_quote" style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir="ltr">./cache_restore -V<br>0.2.8<br></div><div class="HOEnZb"><div class="h5"><div class="gmail_extra"><br><br>
-<div class="gmail_quote">On Thu, Nov 14, 2013 at 4:38 PM, Joe Thornber <span dir="ltr">&lt;<a href="mailto:thornber@redhat.com" target="_blank">thornber@redhat.com</a>&gt;</span> wrote:<br>
-<blockquote class="gmail_quote" style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div>On Wed, Nov 13, 2013 at 06:39:37PM +0000, Mears, Morgan wrote:<br>
-&gt; On Wed, Nov 13, 2013 at 11:29:26AM -0005, Vladimir Smolensky wrote:<br>
-&gt; &gt; Hello,<br>
-&gt; &gt; I&#39;m compiling the for-linus branch, it shows 3.12.0-rc5, that&#39;s ok right?<br>
-&gt; &gt;<br>
-&gt; &gt; Where can I get cache_restore, cache_dump, etc. and info how to use them.<br>
-&gt;<br>
-&gt; Hi Vladimir,<br>
-&gt;<br>
-&gt; git clone <a href="https://github.com/jthornber/thin-provisioning-tools.git" target="_blank">https://github.com/jthornber/thin-provisioning-tools.git</a><br>
-&gt; cd thin-provisioning-tools<br>
-&gt; autoreconf<br>
-&gt; ./configure --enable-testing<br>
-&gt; make<br>
-&gt; sudo cp cache_check cache_dump cache_restore cache_repair /usr/sbin<br>
-&gt; cache_check --version<br>
-&gt;<br>
-&gt; This is mostly distilled from README.md in the repo; there are some<br>
-&gt; additional dependencies in there that you might have to address.<br>
-&gt;<br>
-&gt; All the tools have a --help option; not sure about other documentation.<br>
-&gt;<br>
-&gt; --Morgan<br>
+<div dir=3D"ltr">Applied.<div>Thanks.</div><div><br></div><div>Christophe V=
+aroqui</div><div><a href=3D"http://www.opensvc.com">www.opensvc.com</a></di=
+v></div><div class=3D"gmail_extra"><br><br><div class=3D"gmail_quote">On Th=
+u, Nov 14, 2013 at 1:09 AM, Sean Stewart <span dir=3D"ltr">&lt;<a href=3D"m=
+ailto:sean.stewart@netapp.com" target=3D"_blank">sean.stewart@netapp.com</a=
+>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">Make the RDAC checker utilize the RTPG data =
+given in the 0xC9 inquiry<br>
+page to make intelligent decisions about path status, and print more<br>
+descriptive path down messages.<br>
 <br>
-</div>&#39;make install&#39; should work, and I believe there are some man pages.<br>
-<span><font color="#888888"><br>
-- Joe<br>
-</font></span><div><div><br>
---<br>
-dm-devel mailing list<br>
-<a href="mailto:dm-devel@redhat.com" target="_blank">dm-devel@redhat.com</a><br>
-<a href="https://www.redhat.com/mailman/listinfo/dm-devel" target="_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
-</div></div></blockquote></div><br></div>
-</div></div></blockquote></div><br></div>
+Signed-off-by: Sean Stewart &lt;<a href=3D"mailto:sean.stewart@netapp.com">=
+sean.stewart@netapp.com</a>&gt;<br>
+---<br>
+=A0libmultipath/checkers/rdac.c | 92 ++++++++++++++++++++++++++++++++++++++=
+------<br>
+=A01 file changed, 81 insertions(+), 11 deletions(-)<br>
+<br>
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c<br=
+>
+index 2e64dd3..e0b2ea4 100644<br>
+--- a/libmultipath/checkers/rdac.c<br>
++++ b/libmultipath/checkers/rdac.c<br>
+@@ -34,6 +34,18 @@<br>
+=A0#define MSG_RDAC_UP =A0 =A0&quot;rdac checker reports path is up&quot;<b=
+r>
+=A0#define MSG_RDAC_DOWN =A0&quot;rdac checker reports path is down&quot;<b=
+r>
+=A0#define MSG_RDAC_GHOST &quot;rdac checker reports path is ghost&quot;<br=
+>
++#define MSG_RDAC_DOWN_TYPE(STR) MSG_RDAC_DOWN&quot;: &quot;STR<br>
++<br>
++#define RTPG_UNAVAILABLE =A0 =A0 =A0 0x3<br>
++#define RTPG_OFFLINE =A0 =A0 =A0 =A0 =A0 0xE<br>
++#define RTPG_TRANSITIONING =A0 =A0 0xF<br>
++<br>
++#define RTPG_UNAVAIL_NON_RESPONSIVE =A0 =A00x2<br>
++#define RTPG_UNAVAIL_IN_RESET =A0 =A0 =A0 =A0 =A00x3<br>
++#define RTPG_UNAVAIL_CFW_DL1 =A0 =A0 =A0 =A0 =A0 0x4<br>
++#define RTPG_UNAVAIL_CFW_DL2 =A0 =A0 =A0 =A0 =A0 0x5<br>
++#define RTPG_UNAVAIL_QUIESCED =A0 =A0 =A0 =A0 =A00x6<br>
++#define RTPG_UNAVAIL_SERVICE_MODE =A0 =A0 =A00x7<br>
+<br>
+=A0struct control_mode_page {<br>
+=A0 =A0 =A0 =A0 unsigned char header[8];<br>
+@@ -199,22 +211,64 @@ struct volume_access_inq<br>
+=A0 =A0 =A0 =A0 char PQ_PDT;<br>
+=A0 =A0 =A0 =A0 char dontcare0[7];<br>
+=A0 =A0 =A0 =A0 char avtcvp;<br>
+- =A0 =A0 =A0 char dontcare1;<br>
+- =A0 =A0 =A0 char asym_access_state_cur;<br>
++ =A0 =A0 =A0 char vol_ppp;<br>
++ =A0 =A0 =A0 char aas_cur;<br>
+=A0 =A0 =A0 =A0 char vendor_specific_cur;<br>
+- =A0 =A0 =A0 char dontcare2[36];<br>
++ =A0 =A0 =A0 char aas_alt;<br>
++ =A0 =A0 =A0 char vendor_specific_alt;<br>
++ =A0 =A0 =A0 char dontcare1[34];<br>
+=A0};<br>
+<br>
++const char<br>
++*checker_msg_string(struct volume_access_inq *inq)<br>
++{<br>
++ =A0 =A0 =A0 /* lun not connected */<br>
++ =A0 =A0 =A0 if (((inq-&gt;PQ_PDT &amp; 0xE0) =3D=3D 0x20) || (inq-&gt;PQ_=
+PDT &amp; 0x7f))<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;lun not conne=
+cted&quot;);<br>
++<br>
++ =A0 =A0 =A0 /* if no tpg data is available, give the generic path down me=
+ssage */<br>
++ =A0 =A0 =A0 if (!(inq-&gt;avtcvp &amp; 0x10))<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN;<br>
++<br>
++ =A0 =A0 =A0 /* controller is booting up */<br>
++ =A0 =A0 =A0 if (((inq-&gt;aas_cur &amp; 0x0F) =3D=3D RTPG_TRANSITIONING) =
+&amp;&amp;<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 (inq-&gt;aas_alt &amp; 0x0F) !=3D RTPG_TRANSI=
+TIONING)<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;ctlr is in st=
+artup sequence&quot;);<br>
++<br>
++ =A0 =A0 =A0 /* if not unavailable, give generic message */<br>
++ =A0 =A0 =A0 if ((inq-&gt;aas_cur &amp; 0x0F) !=3D RTPG_UNAVAILABLE)<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN;<br>
++<br>
++ =A0 =A0 =A0 /* target port group unavailable */<br>
++ =A0 =A0 =A0 switch (inq-&gt;vendor_specific_cur) {<br>
++ =A0 =A0 =A0 case RTPG_UNAVAIL_NON_RESPONSIVE:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;non-responsiv=
+e to queries&quot;);<br>
++ =A0 =A0 =A0 case RTPG_UNAVAIL_IN_RESET:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;ctlr held in =
+reset&quot;);<br>
++ =A0 =A0 =A0 case RTPG_UNAVAIL_CFW_DL1:<br>
++ =A0 =A0 =A0 case RTPG_UNAVAIL_CFW_DL2:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;ctlr firmware=
+ downloading&quot;);<br>
++ =A0 =A0 =A0 case RTPG_UNAVAIL_QUIESCED:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;ctlr quiesced=
+ by admin request&quot;);<br>
++ =A0 =A0 =A0 case RTPG_UNAVAIL_SERVICE_MODE:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;ctlr is in se=
+rvice mode&quot;);<br>
++ =A0 =A0 =A0 default:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 return MSG_RDAC_DOWN_TYPE(&quot;ctlr is unava=
+ilable&quot;);<br>
++ =A0 =A0 =A0 }<br>
++}<br>
++<br>
+=A0extern int<br>
+=A0libcheck_check (struct checker * c)<br>
+=A0{<br>
+=A0 =A0 =A0 =A0 struct volume_access_inq inq;<br>
+- =A0 =A0 =A0 int ret;<br>
++ =A0 =A0 =A0 int ret, inqfail;<br>
+<br>
++ =A0 =A0 =A0 inqfail =3D 0;<br>
+=A0 =A0 =A0 =A0 memset(&amp;inq, 0, sizeof(struct volume_access_inq));<br>
+=A0 =A0 =A0 =A0 if (0 !=3D do_inq(c-&gt;fd, 0xC9, &amp;inq, sizeof(struct v=
+olume_access_inq),<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 c-&gt;timeout)) {<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 ret =3D PATH_DOWN;<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 inqfail =3D 1;<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto done;<br>
+=A0 =A0 =A0 =A0 } else if (((inq.PQ_PDT &amp; 0xE0) =3D=3D 0x20) || (inq.PQ=
+_PDT &amp; 0x7f)) {<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 /* LUN not connected*/<br>
+@@ -222,12 +276,27 @@ libcheck_check (struct checker * c)<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto done;<br>
+=A0 =A0 =A0 =A0 }<br>
+<br>
+- =A0 =A0 =A0 /* check if controller is in service mode */<br>
+- =A0 =A0 =A0 if ((inq.avtcvp &amp; 0x10) &amp;&amp;<br>
+- =A0 =A0 =A0 =A0 =A0 ((inq.asym_access_state_cur &amp; 0x0F) =3D=3D 0x3) &=
+amp;&amp;<br>
+- =A0 =A0 =A0 =A0 =A0 (inq.vendor_specific_cur =3D=3D 0x7)) {<br>
+- =A0 =A0 =A0 =A0 =A0 =A0 =A0 ret =3D PATH_DOWN;<br>
+- =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto done;<br>
++ =A0 =A0 =A0 /* If TPGDE bit set, evaluate TPG information */<br>
++ =A0 =A0 =A0 if ((inq.avtcvp &amp; 0x10)) {<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 switch (inq.aas_cur &amp; 0x0F) {<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 /* Never use the path if it reports unavailab=
+le */<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 case RTPG_UNAVAILABLE:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 ret =3D PATH_DOWN;<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto done;<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 /*<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* If both controllers report transitioning=
+, it<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* means mode select or STPG is being proce=
+ssed.<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0*<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* If this controller alone is transitionin=
+g, it&#39;s<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* booting and we shouldn&#39;t use it yet.=
+<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0*/<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 case RTPG_TRANSITIONING:<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 if ((inq.aas_alt &amp; 0xF) !=
+=3D RTPG_TRANSITIONING) {<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 ret =3D PATH_=
+DOWN;<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto done;<br=
+>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 }<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 break;<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 }<br>
+=A0 =A0 =A0 =A0 }<br>
+<br>
+=A0 =A0 =A0 =A0 /* If owner set or ioship mode is enabled return PATH_UP al=
+ways */<br>
+@@ -239,7 +308,8 @@ libcheck_check (struct checker * c)<br>
+=A0done:<br>
+=A0 =A0 =A0 =A0 switch (ret) {<br>
+=A0 =A0 =A0 =A0 case PATH_DOWN:<br>
+- =A0 =A0 =A0 =A0 =A0 =A0 =A0 MSG(c, MSG_RDAC_DOWN);<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 MSG(c, (inqfail) ? MSG_RDAC_DOWN_TYPE(&quot;i=
+nquiry failed&quot;) :<br>
++ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 checker_msg_string(&amp;inq))=
+;<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 break;<br>
+=A0 =A0 =A0 =A0 case PATH_UP:<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 MSG(c, MSG_RDAC_UP);<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+1.8.3.1<br>
+<br>
+</font></span></blockquote></div><br></div>
 
---047d7bdc8e86fc774804eb28d814--
+--047d7b2e760435a3d804eb298089--
 
 
---===============7135250737473956515==
+--===============2444867267608928007==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============7135250737473956515==--
+--===============2444867267608928007==--
