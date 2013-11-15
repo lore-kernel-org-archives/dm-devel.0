@@ -1,37 +1,67 @@
-From: Wei Yongjun <weiyj.lk@gmail.com>
-Subject: [PATCH -next] dm cache policy mq:: use list_del_init instead of list_del/INIT_LIST_HEAD
-Date: Fri, 15 Nov 2013 17:47:12 +0800
-Message-ID: <CAPgLHd_iO2aHnn-uBp=1OYafVonrSfXnEcW7Mz=vp3btkkygPA@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 11/13] multipathd: Read environment variables
+	from systemd
+Date: Fri, 15 Nov 2013 11:29:42 +0100
+Message-ID: <1384511384-27642-12-git-send-email-hare@suse.de>
+References: <1384511384-27642-1-git-send-email-hare@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, neilb@suse.de
-Cc: yongjun_wei@trendmicro.com.cn, dm-devel@redhat.com, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1384511384-27642-1-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
+When systemd adjusts 'OOMScoreAdjust' and 'LimitNOFILE'
+we should take those settings and not try to adjust them
+again on our side.
 
-Using list_del_init() instead of list_del() + INIT_LIST_HEAD().
-
-Signed-off-by: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-cache-policy-mq.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ multipathd/main.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-cache-policy-mq.c b/drivers/md/dm-cache-policy-mq.c
-index 7209fab..ac7d3b3 100644
---- a/drivers/md/dm-cache-policy-mq.c
-+++ b/drivers/md/dm-cache-policy-mq.c
-@@ -287,9 +287,8 @@ static struct entry *alloc_entry(struct entry_pool *ep)
- static struct entry *alloc_particular_entry(struct entry_pool *ep, dm_cblock_t cblock)
- {
- 	struct entry *e = ep->entries + from_cblock(cblock);
--	list_del(&e->list);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index abeebc2..e5b061b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1551,7 +1551,13 @@ set_oom_adj (void)
+ #endif
+ 	FILE *fp;
+ 	struct stat st;
++	char *envp;
  
--	INIT_LIST_HEAD(&e->list);
-+	list_del_init(&e->list);
- 	INIT_HLIST_NODE(&e->hlist);
- 	ep->nr_allocated++;
++	envp = getenv("OOMScoreAdjust");
++	if (envp) {
++		condlog(3, "Using systemd provided OOMScoreAdjust");
++		return;
++	}
+ 	do {
+ 		if (stat(file, &st) == 0){
+ 			fp = fopen(file, "w");
+@@ -1625,7 +1631,11 @@ child (void * param)
  
-
+ 	setlogmask(LOG_UPTO(conf->verbosity + 3));
+ 
+-	if (conf->max_fds) {
++	envp = getenv("LimitNOFILE");
++
++	if (envp) {
++		condlog(2,"Using systemd provided open fds limit of %s", envp);
++	} else if (conf->max_fds) {
+ 		struct rlimit fd_limit;
+ 
+ 		if (getrlimit(RLIMIT_NOFILE, &fd_limit) < 0) {
+-- 
+1.8.1.4
