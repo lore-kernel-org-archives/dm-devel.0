@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 13/13] multipathd: no_map_shutdown option
-Date: Fri, 15 Nov 2013 11:29:44 +0100
-Message-ID: <1384511384-27642-14-git-send-email-hare@suse.de>
+Subject: [PATCH 06/13] multipathd: switch to socket activation
+	for systemd
+Date: Fri, 15 Nov 2013 11:29:37 +0100
+Message-ID: <1384511384-27642-7-git-send-email-hare@suse.de>
 References: <1384511384-27642-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,236 +23,198 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patchs implements the 'no_map_shutdown' configuration option.
-Idea is that the daemon will exit if no maps are found, as then
-there's nothing to be done for the daemon anyway.
-The daemon will be restarted via socket activation for any CLI
-command.
-This this option the multipathd.socket unit can be activated always
-and won't add to the overall system load.
+multipathd already has a netlink socket for CLI commands, which
+can be used for socket activation.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/config.h         |  1 +
- libmultipath/dict.c           | 32 ++++++++++++++++++++++++++++++++
- multipath.conf.annotated      |  9 +++++++++
- multipath/multipath.conf.5    |  7 +++++++
- multipathd/main.c             | 20 +++++++++++++++-----
- multipathd/multipathd.8       |  4 ++++
- multipathd/multipathd.service |  2 +-
- 7 files changed, 69 insertions(+), 6 deletions(-)
+ libmultipath/Makefile         |  2 +-
+ libmultipath/uxsock.c         | 24 +++++++++++++++++++++---
+ multipathd/Makefile           |  4 +++-
+ multipathd/multipathd.service |  7 +++----
+ multipathd/multipathd.socket  |  5 +++++
+ multipathd/uxclnt.c           |  4 +---
+ multipathd/uxlsnr.c           |  4 +---
+ 7 files changed, 35 insertions(+), 15 deletions(-)
+ create mode 100644 multipathd/multipathd.socket
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 9c467e8..590fb32 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -103,6 +103,7 @@ struct config {
- 	int fast_io_fail;
- 	unsigned int dev_loss;
- 	int log_checker_err;
-+	int no_map_shutdown;
- 	int allow_queueing;
- 	uid_t uid;
- 	gid_t gid;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 0bf9587..da706f7 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -545,6 +545,25 @@ def_log_checker_err_handler(vector strvec)
- }
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index ae1d8a3..c28413c 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -7,7 +7,7 @@ include ../Makefile.inc
+ SONAME=0
+ DEVLIB = libmultipath.so
+ LIBS = $(DEVLIB).$(SONAME)
+-LIBDEPS = -lpthread -ldl -ldevmapper -ludev
++LIBDEPS = -lpthread -ldl -ldevmapper -lsystemd-daemon -ludev
  
- static int
-+def_no_map_shutdown_handler(vector strvec)
-+{
-+	char * buff;
-+
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
-+	if (!strncmp(buff, "on", 2) || !strncmp(buff, "yes", 3) ||
-+		 !strncmp(buff, "1", 1))
-+		conf->no_map_shutdown = 1;
-+	else
-+		conf->no_map_shutdown = 0;
-+
-+	free(buff);
-+	return 0;
-+}
-+
-+static int
- def_reservation_key_handler(vector strvec)
+ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+        hwtable.o blacklist.o util.o dmparser.o config.o \
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index fcad56e..58f0bca 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -16,9 +16,11 @@
+ #include <sys/poll.h>
+ #include <signal.h>
+ #include <errno.h>
++#include <systemd/sd-daemon.h>
+ 
+ #include "memory.h"
+ #include "uxsock.h"
++#include "debug.h"
+ 
+ /*
+  * connect to a unix domain socket
+@@ -36,10 +38,12 @@ int ux_socket_connect(const char *name)
+ 
+ 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+ 	if (fd == -1) {
++		condlog(3, "Couldn't create ux_socket, error %d", errno);
+ 		return -1;
+ 	}
+ 
+ 	if (connect(fd, (struct sockaddr *)&addr, len) == -1) {
++		condlog(3, "Couldn't connect to ux_socket, error %d", errno);
+ 		close(fd);
+ 		return -1;
+ 	}
+@@ -53,11 +57,24 @@ int ux_socket_connect(const char *name)
+  */
+ int ux_socket_listen(const char *name)
  {
- 	char *buff;
-@@ -2714,6 +2733,18 @@ snprint_def_log_checker_err (char * buff, int len, void * data)
- }
+-	int fd, len;
++	int fd, len, num;
+ 	struct sockaddr_un addr;
  
- static int
-+snprint_def_no_map_shutdown (char * buff, int len, void * data)
-+{
-+	switch (conf->no_map_shutdown) {
-+	case 0:
-+		return snprintf(buff, len, "\"no\"");
-+	case 1:
-+		return snprintf(buff, len, "\"yes\"");
++	num = sd_listen_fds(0);
++	if (num > 1) {
++		condlog(3, "sd_listen_fds returned %d fds", num);
++		return -1;
++	} else if (num == 1) {
++		fd = SD_LISTEN_FDS_START + 0;
++		condlog(3, "using fd %d from sd_listen_fds", fd);
++		return fd;
 +	}
-+	return 0;
-+}
 +
-+static int
- snprint_def_user_friendly_names (char * buff, int len, void * data)
- {
- 	if (conf->user_friendly_names  == USER_FRIENDLY_NAMES_ON)
-@@ -2850,6 +2881,7 @@ init_keywords(void)
- 	install_keyword("reservation_key", &def_reservation_key_handler, &snprint_def_reservation_key);
- 	install_keyword("retain_attached_hw_handler", &def_retain_hwhandler_handler, &snprint_def_retain_hwhandler_handler);
- 	install_keyword("detect_prio", &def_detect_prio_handler, &snprint_def_detect_prio);
-+	install_keyword("no_map_shutdown", &def_no_map_shutdown_handler, &snprint_def_no_map_shutdown);
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
- 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
- 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
-diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-index a20302c..4b56bc8 100644
---- a/multipath.conf.annotated
-+++ b/multipath.conf.annotated
-@@ -215,6 +215,15 @@
- #	user_friendly_names no
+ 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+-	if (fd == -1) return -1;
++	if (fd == -1) {
++		condlog(3, "Couldn't create ux_socket, error %d", errno);
++		return -1;
++	}
+ 
+ 	memset(&addr, 0, sizeof(addr));
+ 	addr.sun_family = AF_LOCAL;
+@@ -66,15 +83,16 @@ int ux_socket_listen(const char *name)
+ 	strncpy(&addr.sun_path[1], name, len);
+ 
+ 	if (bind(fd, (struct sockaddr *)&addr, len) == -1) {
++		condlog(3, "Couldn't bind to ux_socket, error %d", errno);
+ 		close(fd);
+ 		return -1;
+ 	}
+ 
+ 	if (listen(fd, 10) == -1) {
++		condlog(3, "Couldn't listen to ux_socket, error %d", errno);
+ 		close(fd);
+ 		return -1;
+ 	}
+-
+ 	return fd;
+ }
+ 
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index b490c1d..f9801b0 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -6,7 +6,7 @@ include ../Makefile.inc
+ # basic flags setting
  #
- #	#
-+#	# name    : no_map_shutdown
-+#	# scope   : multipathd
-+#	# desc    : If set to "yes" the multipath daemon will terminate
-+#	#           if no multipath devices have been found.
-+#	# values  : yes|no
-+#	# default : no
-+#	no_map_shutdown no
-+#
-+#	#
- #	# name    : mode
- #	# scope   : multipath & multipathd
- #	# desc    : The mode to use for the multipath device nodes, in octal.
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index cf5bec0..dba0027 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -409,6 +409,13 @@ will automatically use the
- .I alua
- prioritizer. If not, the prioritizer will be selected as usual. Default is
- .I no
-+.TP
-+.B no_map_shutdown
-+If set to
-+.I yes
-+, the multipath daemon will terminate if no multipath devices are found.
-+Default is
-+.I no
- .
- .SH "blacklist section"
- The
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d386e0a..d4a5809 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1026,11 +1026,11 @@ followover_should_failback(struct path * pp)
- 	return 1;
- }
+ CFLAGS += -I$(multipathdir) -I$(mpathpersistdir)
+-LDFLAGS += -lpthread -ldevmapper -lreadline -ludev -ldl \
++LDFLAGS += -lpthread -ldevmapper -lreadline -lsystemd-daemon -ludev -ldl \
+ 	   -L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist
  
--static void
-+static int
- defered_failback_tick (vector mpvec)
- {
- 	struct multipath * mpp;
--	unsigned int i;
-+	unsigned int i, mpp_count = 0;
+ #
+@@ -37,6 +37,7 @@ install:
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(rcdir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(unitdir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).service $(DESTDIR)$(unitdir)
++	$(INSTALL_PROGRAM) -m 644 $(EXEC).socket $(DESTDIR)$(unitdir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
  
- 	vector_foreach_slot (mpvec, mpp, i) {
- 		/*
-@@ -1042,7 +1042,9 @@ defered_failback_tick (vector mpvec)
- 			if (!mpp->failback_tick && need_switch_pathgroup(mpp, 1))
- 				switch_pathgroup(mpp);
- 		}
-+		mpp_count++;
- 	}
-+	return mpp_count;
- }
+@@ -45,6 +46,7 @@ uninstall:
+ 	rm -f $(DESTDIR)$(rcdir)/$(EXEC)
+ 	rm -f $(DESTDIR)$(mandir)/$(EXEC).8.gz
+ 	rm -f $(DESTDIR)$(unitdir)/$(EXEC).service
++	rm -f $(DESTDIR)$(unitdir)/$(EXEC).socket
  
- static void
-@@ -1284,7 +1286,7 @@ checkerloop (void *ap)
- 
- 	while (1) {
- 		struct timeval diff_time, start_time, end_time;
--		int num_paths = 0;
-+		int num_paths = 0, num_maps = 0;
- 
- 		if (gettimeofday(&start_time, NULL) != 0)
- 			start_time.tv_sec = 0;
-@@ -1300,7 +1302,7 @@ checkerloop (void *ap)
- 			}
- 		}
- 		if (vecs->mpvec) {
--			defered_failback_tick(vecs->mpvec);
-+			num_maps = defered_failback_tick(vecs->mpvec);
- 			retry_count_tick(vecs->mpvec);
- 		}
- 		if (count)
-@@ -1320,6 +1322,11 @@ checkerloop (void *ap)
- 				num_paths, num_paths > 1 ? "s" : "",
- 				diff_time.tv_sec, diff_time.tv_usec);
- 		}
-+		if (!num_maps && conf->no_map_shutdown) {
-+			condlog(3, "terminating, no multipath devices");
-+			exit_daemon();
-+			break;
-+		}
- 		sleep(1);
- 	}
- 	return NULL;
-@@ -1891,7 +1898,7 @@ main (int argc, char *argv[])
- 	if (!conf)
- 		exit(1);
- 
--	while ((arg = getopt(argc, argv, ":dsv:k::")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":dnsv:k::")) != EOF ) {
- 	switch(arg) {
- 		case 'd':
- 			logsink = 0;
-@@ -1904,6 +1911,9 @@ main (int argc, char *argv[])
- 
- 			conf->verbosity = atoi(optarg);
- 			break;
-+		case 'n':
-+			conf->no_map_shutdown = 1;
-+			break;
- 		case 's':
- 			logsink = -1;
- 			break;
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index 2aea150..eb39c9c 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -22,6 +22,10 @@ devmap reconfiguration, so that it can refresh its failed path list.
- .B \-d
- Foreground Mode. Don't daemonize, and print all messages to stdout and stderr.
- .TP
-+.B \-n
-+Oneshot Mode; daemon will terminate if no multipath devices are found.
-+Equivalent to set 'no_map_shutdown' to '1' in the configuration file.
-+.TP
- .B \-s
- Suppress timestamps. Do not prefix logging messages with a timestamp.
- .TP
+ clean:
+ 	rm -f core *.o $(EXEC) *.gz
 diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index 6472dd5..b34667d 100644
+index d6da067..bc62bc5 100644
 --- a/multipathd/multipathd.service
 +++ b/multipathd/multipathd.service
-@@ -8,7 +8,7 @@ Conflicts=shutdown.target
+@@ -6,11 +6,10 @@ DefaultDependencies=no
+ Conflicts=shutdown.target
+ 
  [Service]
- Type=notify
- NotifyAccess=main
--ExecStart=/sbin/multipathd -d -s
-+ExecStart=/sbin/multipathd -d -s -n
+-Type=forking
+-PIDFile=/var/run/multipathd.pid
+-ExecStart=/sbin/multipathd
++ExecStart=/sbin/multipathd -d
  ExecReload=/sbin/multipathd reconfigure
- WatchdogSec=5s
- LimitCORE=infinity
+-#ExecStop=/path/to/scrip delete-me if not necessary
++ExecStop=/sbin/multipathd shutdown
+ 
+ [Install]
+ WantedBy=sysinit.target
++Also=multipathd.socket
+diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
+new file mode 100644
+index 0000000..3d4b6da
+--- /dev/null
++++ b/multipathd/multipathd.socket
+@@ -0,0 +1,5 @@
++[Socket]
++ListenStream=@/org/kernel/linux/storage/multipathd
++
++[Install]
++WantedBy=sockets.target
+diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
+index 3e4e381..e86be21 100644
+--- a/multipathd/uxclnt.c
++++ b/multipathd/uxclnt.c
+@@ -121,10 +121,8 @@ int uxclnt(char * inbuf)
+ 	int fd;
+ 
+ 	fd = ux_socket_connect(DEFAULT_SOCKET);
+-	if (fd == -1) {
+-		perror("ux_socket_connect");
++	if (fd == -1)
+ 		exit(1);
+-	}
+ 
+ 	if (inbuf)
+ 		process_req(fd, inbuf);
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index c0ddd8d..ed8e012 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -112,10 +112,8 @@ void * uxsock_listen(int (*uxsock_trigger)(char *, char **, int *, void *),
+ 
+ 	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
+ 
+-	if (ux_sock == -1) {
+-		condlog(0, "ux_socket_listen error");
++	if (ux_sock == -1)
+ 		exit(1);
+-	}
+ 
+ 	pthread_cleanup_push(uxsock_cleanup, NULL);
+ 
 -- 
 1.8.1.4
