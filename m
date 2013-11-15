@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 08/13] multipathd: Add option '-s' to suppress
-	timestamps
-Date: Fri, 15 Nov 2013 11:29:39 +0100
-Message-ID: <1384511384-27642-9-git-send-email-hare@suse.de>
+Subject: [PATCH 12/13] multipathd: measure path check time
+Date: Fri, 15 Nov 2013 11:29:43 +0100
+Message-ID: <1384511384-27642-13-git-send-email-hare@suse.de>
 References: <1384511384-27642-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,157 +22,109 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-systemd prefixes any messages to stdout with a timestamp, so it's
-quite pointless to do it ourself.
+Instrument code to measure path check time.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/debug.c          | 17 ++++++++++-------
- libmultipath/devmapper.c      | 16 +++++++++-------
- multipathd/main.c             | 11 +++++++----
- multipathd/multipathd.8       |  7 +++++--
- multipathd/multipathd.service |  2 +-
- 5 files changed, 32 insertions(+), 21 deletions(-)
+ multipathd/main.c | 28 +++++++++++++++++++++-------
+ 1 file changed, 21 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-index d30517d..bad78a8 100644
---- a/libmultipath/debug.c
-+++ b/libmultipath/debug.c
-@@ -21,15 +21,18 @@ void dlog (int sink, int prio, const char * fmt, ...)
- 	thres = (conf) ? conf->verbosity : 0;
- 
- 	if (prio <= thres) {
--		if (!sink) {
--			time_t t = time(NULL);
--			struct tm *tb = localtime(&t);
--			char buff[16];
-+		if (sink < 1) {
-+			if (sink == 0) {
-+				time_t t = time(NULL);
-+				struct tm *tb = localtime(&t);
-+				char buff[16];
- 
--			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
--			buff[sizeof(buff)-1] = '\0';
-+				strftime(buff, sizeof(buff),
-+					 "%b %d %H:%M:%S", tb);
-+				buff[sizeof(buff)-1] = '\0';
- 
--			fprintf(stdout, "%s | ", buff);
-+				fprintf(stdout, "%s | ", buff);
-+			}
- 			vfprintf(stdout, fmt, ap);
- 		}
- 		else
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 4c8b923..71281e6 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -71,15 +71,17 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
- 		return;
- 
- 	va_start(ap, f);
--	if (!logsink) {
--		time_t t = time(NULL);
--		struct tm *tb = localtime(&t);
--		char buff[16];
-+	if (logsink < 1) {
-+		if (logsink == 0) {
-+			time_t t = time(NULL);
-+			struct tm *tb = localtime(&t);
-+			char buff[16];
- 
--		strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
--		buff[sizeof(buff)-1] = '\0';
-+			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
-+			buff[sizeof(buff)-1] = '\0';
- 
--		fprintf(stdout, "%s | ", buff);
-+			fprintf(stdout, "%s | ", buff);
-+		}
- 		fprintf(stdout, "libdevmapper: %s(%i): ", file, line);
- 		vfprintf(stdout, f, ap);
- 		fprintf(stdout, "\n");
 diff --git a/multipathd/main.c b/multipathd/main.c
-index b4146fd..72b3740 100644
+index e5b061b..d386e0a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1598,7 +1598,7 @@ child (void * param)
- 	setup_thread_attr(&uevent_attr, 128 * 1024, 1);
- 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
+@@ -1102,7 +1102,7 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ 	return 0;
+ }
  
--	if (logsink) {
-+	if (logsink == 1) {
- 		setup_thread_attr(&log_attr, 64 * 1024, 0);
- 		log_thread_start(&log_attr);
- 		pthread_attr_destroy(&log_attr);
-@@ -1754,7 +1754,7 @@ child (void * param)
+-void
++int
+ check_path (struct vectors * vecs, struct path * pp)
+ {
+ 	int newstate;
+@@ -1111,10 +1111,10 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	int oldchkrstate = pp->chkrstate;
  
- 	condlog(2, "--------shut down-------");
+ 	if (!pp->mpp)
+-		return;
++		return 0;
  
--	if (logsink)
-+	if (logsink == 1)
- 		log_thread_stop();
+ 	if (pp->tick && --pp->tick)
+-		return; /* don't check this path yet */
++		return 0; /* don't check this path yet */
  
  	/*
-@@ -1854,7 +1854,7 @@ main (int argc, char *argv[])
- 	if (!conf)
- 		exit(1);
+ 	 * provision a next check soonest,
+@@ -1129,7 +1129,7 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+ 		condlog(2, "%s: unusable path", pp->dev);
+ 		pathinfo(pp, conf->hwtable, 0);
+-		return;
++		return 1;
+ 	}
+ 	/*
+ 	 * Async IO in flight. Keep the previous path state
+@@ -1137,7 +1137,7 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	 */
+ 	if (newstate == PATH_PENDING) {
+ 		pp->tick = 1;
+-		return;
++		return 0;
+ 	}
+ 	/*
+ 	 * Synchronize with kernel state
+@@ -1175,7 +1175,7 @@ check_path (struct vectors * vecs, struct path * pp)
+ 			pp->mpp->failback_tick = 0;
  
--	while ((arg = getopt(argc, argv, ":dv:k::")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":dsv:k::")) != EOF ) {
- 	switch(arg) {
- 		case 'd':
- 			logsink = 0;
-@@ -1867,6 +1867,9 @@ main (int argc, char *argv[])
+ 			pp->mpp->stat_path_failures++;
+-			return;
++			return 1;
+ 		}
  
- 			conf->verbosity = atoi(optarg);
- 			break;
-+		case 's':
-+			logsink = -1;
-+			break;
- 		case 'k':
- 			uxclnt(optarg);
- 			exit(0);
-@@ -1891,7 +1894,7 @@ main (int argc, char *argv[])
- 		exit(0);
+ 		if(newstate == PATH_UP || newstate == PATH_GHOST){
+@@ -1260,6 +1260,7 @@ check_path (struct vectors * vecs, struct path * pp)
+ 			 (chkr_new_path_up && followover_should_failback(pp)))
+ 			switch_pathgroup(pp->mpp);
+ 	}
++	return 1;
+ }
+ 
+ static void *
+@@ -1282,6 +1283,11 @@ checkerloop (void *ap)
  	}
  
--	if (!logsink)
-+	if (logsink < 1)
- 		err = 0;
- 	else
- 		err = daemonize();
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index ccc5f54..2aea150 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -20,8 +20,11 @@ devmap reconfiguration, so that it can refresh its failed path list.
- .SH OPTIONS
- .TP
- .B \-d
--Forground Mode. Don't daemonize, and print all messages to stdout and stderr.
--.TP 
-+Foreground Mode. Don't daemonize, and print all messages to stdout and stderr.
-+.TP
-+.B \-s
-+Suppress timestamps. Do not prefix logging messages with a timestamp.
-+.TP
- .B -v "level"
- Verbosity level. Print additional information while running multipathd. A  level of 0 means only print errors. A level of 3 or greater prints debugging information as well. 
- .TP
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index 03b4270..fb84025 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -8,7 +8,7 @@ Conflicts=shutdown.target
- [Service]
- Type=notify
- NotifyAccess=main
--ExecStart=/sbin/multipathd -d
-+ExecStart=/sbin/multipathd -d -s
- ExecReload=/sbin/multipathd reconfigure
+ 	while (1) {
++		struct timeval diff_time, start_time, end_time;
++		int num_paths = 0;
++
++		if (gettimeofday(&start_time, NULL) != 0)
++			start_time.tv_sec = 0;
+ 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 		lock(vecs->lock);
+ 		pthread_testcancel();
+@@ -1290,7 +1296,7 @@ checkerloop (void *ap)
  
- [Install]
+ 		if (vecs->pathvec) {
+ 			vector_foreach_slot (vecs->pathvec, pp, i) {
+-				check_path(vecs, pp);
++				num_paths += check_path(vecs, pp);
+ 			}
+ 		}
+ 		if (vecs->mpvec) {
+@@ -1306,6 +1312,14 @@ checkerloop (void *ap)
+ 		}
+ 
+ 		lock_cleanup_pop(vecs->lock);
++		if (start_time.tv_sec &&
++		    gettimeofday(&end_time, NULL) == 0 &&
++		    num_paths) {
++			timersub(&end_time, &start_time, &diff_time);
++			condlog(3, "checked %d path%s in %lu.%06lu secs",
++				num_paths, num_paths > 1 ? "s" : "",
++				diff_time.tv_sec, diff_time.tv_usec);
++		}
+ 		sleep(1);
+ 	}
+ 	return NULL;
 -- 
 1.8.1.4
