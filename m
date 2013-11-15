@@ -1,130 +1,48 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 12/13] multipathd: measure path check time
-Date: Fri, 15 Nov 2013 11:29:43 +0100
-Message-ID: <1384511384-27642-13-git-send-email-hare@suse.de>
-References: <1384511384-27642-1-git-send-email-hare@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [dm-devel] [PATCH -next] dm cache policy mq:: use list_del_init
+ instead of list_del/INIT_LIST_HEAD
+Date: Fri, 15 Nov 2013 10:58:23 +0000
+Message-ID: <20131115105822.GA18770@debian>
+References: <CAPgLHd_iO2aHnn-uBp=1OYafVonrSfXnEcW7Mz=vp3btkkygPA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1384511384-27642-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPgLHd_iO2aHnn-uBp=1OYafVonrSfXnEcW7Mz=vp3btkkygPA@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com, snitzer@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, yongjun_wei@trendmicro.com.cn
 List-Id: dm-devel.ids
 
-Instrument code to measure path check time.
+ACK
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- multipathd/main.c | 28 +++++++++++++++++++++-------
- 1 file changed, 21 insertions(+), 7 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index e5b061b..d386e0a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1102,7 +1102,7 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
- 	return 0;
- }
- 
--void
-+int
- check_path (struct vectors * vecs, struct path * pp)
- {
- 	int newstate;
-@@ -1111,10 +1111,10 @@ check_path (struct vectors * vecs, struct path * pp)
- 	int oldchkrstate = pp->chkrstate;
- 
- 	if (!pp->mpp)
--		return;
-+		return 0;
- 
- 	if (pp->tick && --pp->tick)
--		return; /* don't check this path yet */
-+		return 0; /* don't check this path yet */
- 
- 	/*
- 	 * provision a next check soonest,
-@@ -1129,7 +1129,7 @@ check_path (struct vectors * vecs, struct path * pp)
- 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
- 		condlog(2, "%s: unusable path", pp->dev);
- 		pathinfo(pp, conf->hwtable, 0);
--		return;
-+		return 1;
- 	}
- 	/*
- 	 * Async IO in flight. Keep the previous path state
-@@ -1137,7 +1137,7 @@ check_path (struct vectors * vecs, struct path * pp)
- 	 */
- 	if (newstate == PATH_PENDING) {
- 		pp->tick = 1;
--		return;
-+		return 0;
- 	}
- 	/*
- 	 * Synchronize with kernel state
-@@ -1175,7 +1175,7 @@ check_path (struct vectors * vecs, struct path * pp)
- 			pp->mpp->failback_tick = 0;
- 
- 			pp->mpp->stat_path_failures++;
--			return;
-+			return 1;
- 		}
- 
- 		if(newstate == PATH_UP || newstate == PATH_GHOST){
-@@ -1260,6 +1260,7 @@ check_path (struct vectors * vecs, struct path * pp)
- 			 (chkr_new_path_up && followover_should_failback(pp)))
- 			switch_pathgroup(pp->mpp);
- 	}
-+	return 1;
- }
- 
- static void *
-@@ -1282,6 +1283,11 @@ checkerloop (void *ap)
- 	}
- 
- 	while (1) {
-+		struct timeval diff_time, start_time, end_time;
-+		int num_paths = 0;
-+
-+		if (gettimeofday(&start_time, NULL) != 0)
-+			start_time.tv_sec = 0;
- 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 		lock(vecs->lock);
- 		pthread_testcancel();
-@@ -1290,7 +1296,7 @@ checkerloop (void *ap)
- 
- 		if (vecs->pathvec) {
- 			vector_foreach_slot (vecs->pathvec, pp, i) {
--				check_path(vecs, pp);
-+				num_paths += check_path(vecs, pp);
- 			}
- 		}
- 		if (vecs->mpvec) {
-@@ -1306,6 +1312,14 @@ checkerloop (void *ap)
- 		}
- 
- 		lock_cleanup_pop(vecs->lock);
-+		if (start_time.tv_sec &&
-+		    gettimeofday(&end_time, NULL) == 0 &&
-+		    num_paths) {
-+			timersub(&end_time, &start_time, &diff_time);
-+			condlog(3, "checked %d path%s in %lu.%06lu secs",
-+				num_paths, num_paths > 1 ? "s" : "",
-+				diff_time.tv_sec, diff_time.tv_usec);
-+		}
- 		sleep(1);
- 	}
- 	return NULL;
--- 
-1.8.1.4
+On Fri, Nov 15, 2013 at 05:47:12PM +0800, Wei Yongjun wrote:
+> From: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
+> 
+> Using list_del_init() instead of list_del() + INIT_LIST_HEAD().
+> 
+> Signed-off-by: Wei Yongjun <yongjun_wei@trendmicro.com.cn>
+> ---
+>  drivers/md/dm-cache-policy-mq.c | 3 +--
+>  1 file changed, 1 insertion(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-cache-policy-mq.c b/drivers/md/dm-cache-policy-mq.c
+> index 7209fab..ac7d3b3 100644
+> --- a/drivers/md/dm-cache-policy-mq.c
+> +++ b/drivers/md/dm-cache-policy-mq.c
+> @@ -287,9 +287,8 @@ static struct entry *alloc_entry(struct entry_pool *ep)
+>  static struct entry *alloc_particular_entry(struct entry_pool *ep, dm_cblock_t cblock)
+>  {
+>  	struct entry *e = ep->entries + from_cblock(cblock);
+> -	list_del(&e->list);
+>  
+> -	INIT_LIST_HEAD(&e->list);
+> +	list_del_init(&e->list);
+>  	INIT_HLIST_NODE(&e->hlist);
+>  	ep->nr_allocated++;
+>  
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
