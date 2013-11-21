@@ -1,17 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-cache mq policy warmup issue
-Date: Tue, 19 Nov 2013 13:50:33 -0500
-Message-ID: <20131119185032.GB1833@redhat.com>
-References: <9BDA3ECEC2A5454BB4294114677019E131B6C2F9@SACEXCMBX02-PRD.hq.netapp.com>
-	<33A0129EBFD46748804DE81B354CA1B21C031288@SACEXCMBX06-PRD.hq.netapp.com>
-	<33A0129EBFD46748804DE81B354CA1B21C031CD6@SACEXCMBX06-PRD.hq.netapp.com>
+From: dongmao zhang <dmzhang@suse.com>
+Subject: [PATCH 1/1] improve the performance of dm-log-userspace
+Date: Thu, 21 Nov 2013 16:19:21 +0800
+Message-ID: <d1a7ba26f5e515d635eb3f1d65315c4050bda7ae.1385021669.git.dmzhang@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <33A0129EBFD46748804DE81B354CA1B21C031CD6@SACEXCMBX06-PRD.hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,48 +16,260 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Mears, Morgan" <Morgan.Mears@netapp.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Nov 13 2013 at 11:13am -0500,
-Mears, Morgan <Morgan.Mears@netapp.com> wrote:
 
-> On Mon, Nov 04, 2013 at 12:22:26PM -0500, Krishnasamy, Somasundaram wrote:
-> > Mike,
-> > 
-> > I was doing some testing with latest dm-cache code (from 'for-next' branch). I
-> > am having difficulty in making the cache to warm-up. I used the below script
-> > to read range of blocks repeatedly to get them promoted. I assume after
-> > reading a block for mq->promote_threshold + 4 times, a block will be
-> > promoted. But it is not happening. I also tested the same with the
-> > sequential_threshold set to very high value.
-> > 
-> > Cache warming-up was relatively easier in the previous dm-cache code. Is this
-> > something you have seen in your testing?. Is there anything different should I
-> > do?
-> 
-> I'm also testing with the for-next branch of linux-dm.git and seeing the
-> same thing as Somu.  It's easy to reproduce; reading the same block on the
-> cached device over and over with dd does not result in that block being
-> promoted.
-> 
-> I did notice that the "read miss" counter for the cached device increments
-> each time I execute dd, which I believe means this isn't a buffer cache
-> issue (I also used dd iflag=direct).  The migration_threshold value
-> shouldn't be an issue for this test, but I set it to a very high value
-> anyway; didn't make any difference.
+hi, Brassow,
+	I changed some indent and use "strstr" to detect the integrated_flush.
+So, please review :)
 
-The fix for this is now staged in linux-next, see:
-http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=38863832030359bfa8153bee6d7045e372780deb
 
-> Are there any tests in device-mapper-test-suite that you would recommend
-> for testing whether promotions are occurring as expected?
 
-Joe included more tests in device-mapper-test-suite, try:
+Signed-off-by: dongmao zhang <dmzhang@suse.com>
+---
+ drivers/md/dm-log-userspace-base.c    |  118 ++++++++++++++++++++++++++++-----
+ include/uapi/linux/dm-log-userspace.h |   10 ++-
+ 2 files changed, 106 insertions(+), 22 deletions(-)
 
-dmtest run --suite cache -t /SingleBlockPromotionTests/
-
-(the few tests that fail are due to extra IO that occurs due readahead
-because buffered IO is used to read an entire block, the test needs
-improving to use direct IO)
+diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
+index 9429159..b47b56d 100644
+--- a/drivers/md/dm-log-userspace-base.c
++++ b/drivers/md/dm-log-userspace-base.c
+@@ -11,9 +11,10 @@
+ #include <linux/dm-log-userspace.h>
+ #include <linux/module.h>
+ 
++#include <linux/workqueue.h>
+ #include "dm-log-userspace-transfer.h"
+ 
+-#define DM_LOG_USERSPACE_VSN "1.1.0"
++#define DM_LOG_USERSPACE_VSN "1.2.0"
+ 
+ struct flush_entry {
+ 	int type;
+@@ -58,6 +59,12 @@ struct log_c {
+ 	spinlock_t flush_lock;
+ 	struct list_head mark_list;
+ 	struct list_head clear_list;
++
++	/*work queue for flush clear region*/
++	struct workqueue_struct *dmlog_wq;
++	struct delayed_work flush_log_work;
++	atomic_t sched_flush;
++	uint32_t integrated_flush;
+ };
+ 
+ static mempool_t *flush_entry_pool;
+@@ -141,6 +148,17 @@ static int build_constructor_string(struct dm_target *ti,
+ 	return str_size;
+ }
+ 
++static void do_flush(struct delayed_work *work)
++{
++	int r;
++	struct log_c *lc = container_of(work, struct log_c, flush_log_work);
++	r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
++				 NULL, 0, NULL, NULL);
++	atomic_set(&lc->sched_flush, 0);
++	if (r)
++		dm_table_event(lc->ti->table);
++}
++
+ /*
+  * userspace_ctr
+  *
+@@ -199,6 +217,10 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+ 		return str_size;
+ 	}
+ 
++	lc->integrated_flush = 0;
++	if (strstr(ctr_str, "integrated_flush"))
++		lc->integrated_flush = 1;
++
+ 	devices_rdata = kzalloc(devices_rdata_size, GFP_KERNEL);
+ 	if (!devices_rdata) {
+ 		DMERR("Failed to allocate memory for device information");
+@@ -246,6 +268,20 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+ 			DMERR("Failed to register %s with device-mapper",
+ 			      devices_rdata);
+ 	}
++
++
++	if (lc->integrated_flush) {
++		lc->dmlog_wq = alloc_workqueue("dmlogd", WQ_NON_REENTRANT | WQ_MEM_RECLAIM, 0);
++		if (!lc->dmlog_wq) {
++			DMERR("couldn't start dmlogd");
++			r = -ENOMEM;
++			goto out;
++		}
++
++		INIT_DELAYED_WORK(&lc->flush_log_work, do_flush);
++		atomic_set(&lc->sched_flush, 0);
++	}
++
+ out:
+ 	kfree(devices_rdata);
+ 	if (r) {
+@@ -264,6 +300,15 @@ static void userspace_dtr(struct dm_dirty_log *log)
+ {
+ 	struct log_c *lc = log->context;
+ 
++	if (lc->integrated_flush) {
++		/* flush workqueue */
++		if (atomic_read(&lc->sched_flush))
++			flush_delayed_work(&lc->flush_log_work);
++
++		flush_workqueue(lc->dmlog_wq);
++		destroy_workqueue(lc->dmlog_wq);
++	}
++
+ 	(void) dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_DTR,
+ 				 NULL, 0,
+ 				 NULL, NULL);
+@@ -294,6 +339,10 @@ static int userspace_postsuspend(struct dm_dirty_log *log)
+ 	int r;
+ 	struct log_c *lc = log->context;
+ 
++	/* run planed flush earlier */
++	if (lc->integrated_flush && atomic_read(&lc->sched_flush))
++		flush_delayed_work(&lc->flush_log_work);
++
+ 	r = dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_POSTSUSPEND,
+ 				 NULL, 0,
+ 				 NULL, NULL);
+@@ -405,7 +454,8 @@ static int flush_one_by_one(struct log_c *lc, struct list_head *flush_list)
+ 	return r;
+ }
+ 
+-static int flush_by_group(struct log_c *lc, struct list_head *flush_list)
++static int flush_by_group(struct log_c *lc, struct list_head *flush_list,
++			  int flush_with_payload)
+ {
+ 	int r = 0;
+ 	int count;
+@@ -431,15 +481,25 @@ static int flush_by_group(struct log_c *lc, struct list_head *flush_list)
+ 				break;
+ 		}
+ 
+-		r = userspace_do_request(lc, lc->uuid, type,
+-					 (char *)(group),
+-					 count * sizeof(uint64_t),
+-					 NULL, NULL);
+-		if (r) {
+-			/* Group send failed.  Attempt one-by-one. */
+-			list_splice_init(&tmp_list, flush_list);
+-			r = flush_one_by_one(lc, flush_list);
+-			break;
++		if (flush_with_payload) {
++			r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
++						 (char *)(group),
++						 count * sizeof(uint64_t),
++						 NULL, NULL);
++			/* integrated flush failed */
++			if (r)
++				return r;
++		} else {
++			r = userspace_do_request(lc, lc->uuid, type,
++						 (char *)(group),
++						 count * sizeof(uint64_t),
++						 NULL, NULL);
++			if (r) {
++				/* Group send failed.  Attempt one-by-one. */
++				list_splice_init(&tmp_list, flush_list);
++				r = flush_one_by_one(lc, flush_list);
++				break;
++			}
+ 		}
+ 	}
+ 
+@@ -474,6 +534,8 @@ static int userspace_flush(struct dm_dirty_log *log)
+ 	int r = 0;
+ 	unsigned long flags;
+ 	struct log_c *lc = log->context;
++	int is_mark_list_empty;
++	int is_clear_list_empty;
+ 	LIST_HEAD(mark_list);
+ 	LIST_HEAD(clear_list);
+ 	struct flush_entry *fe, *tmp_fe;
+@@ -483,19 +545,39 @@ static int userspace_flush(struct dm_dirty_log *log)
+ 	list_splice_init(&lc->clear_list, &clear_list);
+ 	spin_unlock_irqrestore(&lc->flush_lock, flags);
+ 
+-	if (list_empty(&mark_list) && list_empty(&clear_list))
++	is_mark_list_empty = list_empty(&mark_list);
++	is_clear_list_empty = list_empty(&clear_list);
++
++	if (is_mark_list_empty && is_clear_list_empty)
+ 		return 0;
+ 
+-	r = flush_by_group(lc, &mark_list);
+-	if (r)
+-		goto fail;
++	r = flush_by_group(lc, &clear_list, 0);
+ 
+-	r = flush_by_group(lc, &clear_list);
+ 	if (r)
+ 		goto fail;
+ 
+-	r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
+-				 NULL, 0, NULL, NULL);
++	if (lc->integrated_flush) {
++		/* send flush request with mark_list as payload*/
++		r = flush_by_group(lc, &mark_list, 1);
++		if (r)
++			goto fail;
++		/* when only has clear region,we plan a flush in the furture */
++		if (!is_clear_list_empty && is_mark_list_empty &&
++		    !atomic_read(&lc->sched_flush)) {
++			queue_delayed_work(lc->dmlog_wq, &lc->flush_log_work, 3 * HZ);
++			atomic_set(&lc->sched_flush, 1);
++			/* cancel pending flush because we have already flushed in mark_region*/
++		} else {
++			cancel_delayed_work(&lc->flush_log_work);
++			atomic_set(&lc->sched_flush, 0);
++		}
++	} else {
++		r = flush_by_group(lc, &mark_list, 0);
++		if (r)
++			goto fail;
++		r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
++					 NULL, 0, NULL, NULL);
++	}
+ 
+ fail:
+ 	/*
+diff --git a/include/uapi/linux/dm-log-userspace.h b/include/uapi/linux/dm-log-userspace.h
+index 0678c2a..d1352ae 100644
+--- a/include/uapi/linux/dm-log-userspace.h
++++ b/include/uapi/linux/dm-log-userspace.h
+@@ -201,12 +201,12 @@
+  * int (*flush)(struct dm_dirty_log *log);
+  *
+  * Payload-to-userspace:
+- *	None.
++ *	if DM_INTEGRATED_FLUSH is set, payload is as same as DM_ULOG_MARK_REGION
++ *	uint64_t [] - region(s) to mark
++ *	else None
+  * Payload-to-kernel:
+  *	None.
+  *
+- * No incoming or outgoing payload.  Simply flush log state to disk.
+- *
+  * When the request has been processed, user-space must return the
+  * dm_ulog_request to the kernel - setting the 'error' field and clearing
+  * 'data_size' appropriately.
+@@ -385,8 +385,10 @@
+  *	version 2:  DM_ULOG_CTR allowed to return a string containing a
+  *	            device name that is to be registered with DM via
+  *	            'dm_get_device'.
++ *	version 3:  DM_ULOG_FLUSH is capable to carry payload for marking
++ *	            regions.
+  */
+-#define DM_ULOG_REQUEST_VERSION 2
++#define DM_ULOG_REQUEST_VERSION 3
+ 
+ struct dm_ulog_request {
+ 	/*
+-- 
+1.7.3.4
