@@ -1,127 +1,191 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 13/13] multipathd: no_map_shutdown option
-Date: Fri, 22 Nov 2013 11:11:22 +0100
-Message-ID: <CABr-GndEn2D0OMpOKAP0_WNxHDZCxD+RRw4N87yKKWX_YvENsg@mail.gmail.com>
-References: <1384511384-27642-1-git-send-email-hare@suse.de>
-	<1384511384-27642-14-git-send-email-hare@suse.de>
-	<20131121231710.GL1661@dhcp80-209.msp.redhat.com>
-	<528F2004.2050101@suse.de>
-	<CABr-GncbrpsL5VLvHh+V0e714KguJrJEuRGfihrcq+1Wbs568w@mail.gmail.com>
-	<528F2C21.1000005@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] Revert "raid5: make release_stripe lockless" because it
+ causes test regression
+Date: Fri, 22 Nov 2013 15:07:08 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1311221502360.28281@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4283990358636945914=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <528F2C21.1000005@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, Shaohua Li <shli@kernel.org>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============4283990358636945914==
-Content-Type: multipart/alternative; boundary=047d7bf182d27ca92d04ebc13c7a
+Revert 773ca82fa1ee58dd1bf88b6a5ca385ec83a2cac6 and
+d265d9dc1d25a69affc21ae9fe5004b9d09c10ef.
 
---047d7bf182d27ca92d04ebc13c7a
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+The lvm testsuite (from 
+ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.104.tgz) fails with unkillable 
+lvm and dmsetup processes on kernel 3.12. The testsuite passes on 3.11. 
+Bisect shows that the failure is caused by patch 
+773ca82fa1ee58dd1bf88b6a5ca385ec83a2cac6. When I revert this patch on 3.12 
+kernel, the testsuite finishes and there are no unkillable processes.
 
-Excellent,
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@kernel.org	# 3.12
 
-I'll push the 01-05 patchset to the master git repo this evening (GMT+1)
+---
+ drivers/md/raid5.c |   70 +++--------------------------------------------------
+ drivers/md/raid5.h |    3 --
+ 2 files changed, 5 insertions(+), 68 deletions(-)
 
-
-
-On Fri, Nov 22, 2013 at 11:04 AM, Hannes Reinecke <hare@suse.de> wrote:
-
-> On 11/22/2013 10:30 AM, Christophe Varoqui wrote:
-> > Hi,
-> >
-> > To my knowledge, systemd has not been integrated in all distributions.
-> > It would be nice not to break the build of multipath-tools on those
-> > environments.
-> >
-> > The current patchset breaks the build on non-systemd systems as soon
-> > as patch 06/13.
-> > I can apply the patchset from 01/13 to 05/13 included, and let you
-> > refactor the systemd integration proper in a new series.
-> >
-> > Is that ok with you ?
-> >
-> Yes, of course.
->
-> I'll be reworking the remaining patches to make systemd optional.
->
-> Cheers,
->
-> Hannes
-> --
-> Dr. Hannes Reinecke                   zSeries & Storage
-> hare@suse.de                          +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
->
-
---047d7bf182d27ca92d04ebc13c7a
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Excellent,<div><br></div><div>I&#39;ll push the 01-05 patc=
-hset to the master git repo this evening (GMT+1)</div><div><br></div></div>=
-<div class=3D"gmail_extra"><br><br><div class=3D"gmail_quote">On Fri, Nov 2=
-2, 2013 at 11:04 AM, Hannes Reinecke <span dir=3D"ltr">&lt;<a href=3D"mailt=
-o:hare@suse.de" target=3D"_blank">hare@suse.de</a>&gt;</span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex"><div class=3D"im">On 11/22/2013 10:30 AM, Ch=
-ristophe Varoqui wrote:<br>
-&gt; Hi,<br>
-&gt;<br>
-&gt; To my knowledge, systemd has not been integrated in all distributions.=
-<br>
-&gt; It would be nice not to break the build of multipath-tools on those<br=
->
-&gt; environments.<br>
-&gt;<br>
-&gt; The current patchset breaks the build on non-systemd systems as soon<b=
-r>
-&gt; as patch 06/13.<br>
-&gt; I can apply the patchset from 01/13 to 05/13 included, and let you<br>
-&gt; refactor the systemd integration proper in a new series.<br>
-&gt;<br>
-&gt; Is that ok with you ?<br>
-&gt;<br>
-</div>Yes, of course.<br>
-<br>
-I&#39;ll be reworking the remaining patches to make systemd optional.<br>
-<div class=3D"HOEnZb"><div class=3D"h5"><br>
-Cheers,<br>
-<br>
-Hannes<br>
---<br>
-Dr. Hannes Reinecke =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 zSeries &amp; Stora=
-ge<br>
-<a href=3D"mailto:hare@suse.de">hare@suse.de</a> =A0 =A0 =A0 =A0 =A0 =A0 =
-=A0 =A0 =A0 =A0 =A0 =A0 =A0<a href=3D"tel:%2B49%20911%2074053%20688" value=
-=3D"+4991174053688">+49 911 74053 688</a><br>
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg<br>
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)<br>
-</div></div></blockquote></div><br></div>
-
---047d7bf182d27ca92d04ebc13c7a--
-
-
---===============4283990358636945914==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4283990358636945914==--
+Index: linux-3.12-fast/drivers/md/raid5.c
+===================================================================
+--- linux-3.12-fast.orig/drivers/md/raid5.c	2013-11-21 22:45:20.000000000 +0100
++++ linux-3.12-fast/drivers/md/raid5.c	2013-11-21 23:39:01.000000000 +0100
+@@ -293,62 +293,12 @@ static void __release_stripe(struct r5co
+ 		do_release_stripe(conf, sh);
+ }
+ 
+-static struct llist_node *llist_reverse_order(struct llist_node *head)
+-{
+-	struct llist_node *new_head = NULL;
+-
+-	while (head) {
+-		struct llist_node *tmp = head;
+-		head = head->next;
+-		tmp->next = new_head;
+-		new_head = tmp;
+-	}
+-
+-	return new_head;
+-}
+-
+-/* should hold conf->device_lock already */
+-static int release_stripe_list(struct r5conf *conf)
+-{
+-	struct stripe_head *sh;
+-	int count = 0;
+-	struct llist_node *head;
+-
+-	head = llist_del_all(&conf->released_stripes);
+-	head = llist_reverse_order(head);
+-	while (head) {
+-		sh = llist_entry(head, struct stripe_head, release_list);
+-		head = llist_next(head);
+-		/* sh could be readded after STRIPE_ON_RELEASE_LIST is cleard */
+-		smp_mb();
+-		clear_bit(STRIPE_ON_RELEASE_LIST, &sh->state);
+-		/*
+-		 * Don't worry the bit is set here, because if the bit is set
+-		 * again, the count is always > 1. This is true for
+-		 * STRIPE_ON_UNPLUG_LIST bit too.
+-		 */
+-		__release_stripe(conf, sh);
+-		count++;
+-	}
+-
+-	return count;
+-}
+-
+ static void release_stripe(struct stripe_head *sh)
+ {
+ 	struct r5conf *conf = sh->raid_conf;
+ 	unsigned long flags;
+-	bool wakeup;
+ 
+-	if (test_and_set_bit(STRIPE_ON_RELEASE_LIST, &sh->state))
+-		goto slow_path;
+-	wakeup = llist_add(&sh->release_list, &conf->released_stripes);
+-	if (wakeup)
+-		md_wakeup_thread(conf->mddev->thread);
+-	return;
+-slow_path:
+ 	local_irq_save(flags);
+-	/* we are ok here if STRIPE_ON_RELEASE_LIST is set or not */
+ 	if (atomic_dec_and_lock(&sh->count, &conf->device_lock)) {
+ 		do_release_stripe(conf, sh);
+ 		spin_unlock(&conf->device_lock);
+@@ -596,8 +546,7 @@ get_active_stripe(struct r5conf *conf, s
+ 			if (atomic_read(&sh->count)) {
+ 				BUG_ON(!list_empty(&sh->lru)
+ 				    && !test_bit(STRIPE_EXPANDING, &sh->state)
+-				    && !test_bit(STRIPE_ON_UNPLUG_LIST, &sh->state)
+-				    && !test_bit(STRIPE_ON_RELEASE_LIST, &sh->state));
++				    && !test_bit(STRIPE_ON_UNPLUG_LIST, &sh->state));
+ 			} else {
+ 				if (!test_bit(STRIPE_HANDLE, &sh->state))
+ 					atomic_inc(&conf->active_stripes);
+@@ -4293,10 +4242,6 @@ static void raid5_unplug(struct blk_plug
+ 			 */
+ 			smp_mb__before_clear_bit();
+ 			clear_bit(STRIPE_ON_UNPLUG_LIST, &sh->state);
+-			/*
+-			 * STRIPE_ON_RELEASE_LIST could be set here. In that
+-			 * case, the count is always > 1 here
+-			 */
+ 			__release_stripe(conf, sh);
+ 			cnt++;
+ 		}
+@@ -5007,13 +4952,11 @@ static void raid5_do_work(struct work_st
+ 	handled = 0;
+ 	spin_lock_irq(&conf->device_lock);
+ 	while (1) {
+-		int batch_size, released;
+-
+-		released = release_stripe_list(conf);
++		int batch_size;
+ 
+ 		batch_size = handle_active_stripes(conf, group_id, worker);
+ 		worker->working = false;
+-		if (!batch_size && !released)
++		if (!batch_size)
+ 			break;
+ 		handled += batch_size;
+ 	}
+@@ -5048,9 +4991,7 @@ static void raid5d(struct md_thread *thr
+ 	spin_lock_irq(&conf->device_lock);
+ 	while (1) {
+ 		struct bio *bio;
+-		int batch_size, released;
+-
+-		released = release_stripe_list(conf);
++		int batch_size;
+ 
+ 		if (
+ 		    !list_empty(&conf->bitmap_list)) {
+@@ -5075,7 +5016,7 @@ static void raid5d(struct md_thread *thr
+ 		}
+ 
+ 		batch_size = handle_active_stripes(conf, ANY_GROUP, NULL);
+-		if (!batch_size && !released)
++		if (!batch_size)
+ 			break;
+ 		handled += batch_size;
+ 
+@@ -5503,7 +5444,6 @@ static struct r5conf *setup_conf(struct 
+ 	INIT_LIST_HEAD(&conf->delayed_list);
+ 	INIT_LIST_HEAD(&conf->bitmap_list);
+ 	INIT_LIST_HEAD(&conf->inactive_list);
+-	init_llist_head(&conf->released_stripes);
+ 	atomic_set(&conf->active_stripes, 0);
+ 	atomic_set(&conf->preread_active_stripes, 0);
+ 	atomic_set(&conf->active_aligned_reads, 0);
+Index: linux-3.12-fast/drivers/md/raid5.h
+===================================================================
+--- linux-3.12-fast.orig/drivers/md/raid5.h	2013-11-21 23:29:32.000000000 +0100
++++ linux-3.12-fast/drivers/md/raid5.h	2013-11-21 23:29:35.000000000 +0100
+@@ -197,7 +197,6 @@ enum reconstruct_states {
+ struct stripe_head {
+ 	struct hlist_node	hash;
+ 	struct list_head	lru;	      /* inactive_list or handle_list */
+-	struct llist_node	release_list;
+ 	struct r5conf		*raid_conf;
+ 	short			generation;	/* increments with every
+ 						 * reshape */
+@@ -324,7 +323,6 @@ enum {
+ 	STRIPE_OPS_REQ_PENDING,
+ 	STRIPE_ON_UNPLUG_LIST,
+ 	STRIPE_DISCARD,
+-	STRIPE_ON_RELEASE_LIST,
+ };
+ 
+ /*
+@@ -463,7 +461,6 @@ struct r5conf {
+ 	 */
+ 	atomic_t		active_stripes;
+ 	struct list_head	inactive_list;
+-	struct llist_head	released_stripes;
+ 	wait_queue_head_t	wait_for_stripe;
+ 	wait_queue_head_t	wait_for_overlap;
+ 	int			inactive_blocked;	/* release of inactive stripes blocked,
