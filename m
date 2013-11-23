@@ -1,17 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 09/13] multipathd: Implement systemd watchdog
- integration
-Date: Fri, 22 Nov 2013 16:17:59 -0600
-Message-ID: <20131122221759.GM1661@dhcp80-209.msp.redhat.com>
-References: <1384511384-27642-1-git-send-email-hare@suse.de>
-	<1384511384-27642-10-git-send-email-hare@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] dm-table: remove unused buggy code that
+ extends the targets array
+Date: Fri, 22 Nov 2013 19:51:39 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1311221951070.31923@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1384511384-27642-10-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,104 +17,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCBOb3YgMTUsIDIwMTMgYXQgMTE6Mjk6NDBBTSArMDEwMCwgSGFubmVzIFJlaW5lY2tl
-IHdyb3RlOgo+IEluIHRoZSBwYXN0IHRoZXJlIGhhdmUgYmVlbiBzZXZlcmFsIGluc3RhbmNlcyB3
-aGVyZSBtdWx0aXBhdGhkCj4gd291bGQgaGFuZyB3aXRoIHRoZSBjaGVja2VybG9vcCBhcyBzb21l
-IHBhdGggY2hlY2tlciBtaWdodCBub3QKPiBiZSBhYmxlIHRvIHJldHVybiBpbiB0aW1lLgo+IFRo
-aXMgcGF0Y2ggbm93IGFjdGl2YXRlcyB0aGUgd2F0Y2hkb2cgZmVhdHVyZSBmcm9tIHN5c3RlbWQK
-PiB0byBzaHV0ZG93biAoYW5kIHBvc3NpYmx5IHJlc3RhcnQpIG11bHRpcGF0aGQgaW4gdGhlc2UK
-PiBzaXR1YXRpb25zLgoKVGhpcyBtaWdodCBuZWVkIG1vcmUgb2YgYSBzeXN0ZW1kIGZpeCB0aGF0
-IGEgbXVsdGlwYXRoZCBvbmUsIGJ1dCBvbmNlCm11bHRpcGF0aGQgdGltZXMgb3V0IHRoZSB3YXRj
-aGRvZyB0aW1lciwgZXZlbiBpZiBpdCBzdGFydHMgc2VuZGluZwpub3RpZmljYXRpb25zIGF0IGFu
-IGFjY2VwdGFibGUgcmF0ZSBhZ2FpbiwgdGhlIHNlcnZpY2UgaXMgc3RpbGwgbGlzdGVkCmFzIGZh
-aWxlZC4KCiMgc2VydmljZSBtdWx0aXBhdGhkIHN0YXR1cwpSZWRpcmVjdGluZyB0byAjIC9iaW4v
-c3lzdGVtY3RsIHN0YXR1cyBtdWx0aXBhdGhkLnNlcnZpY2UKbXVsdGlwYXRoZC5zZXJ2aWNlIC0g
-RGV2aWNlLU1hcHBlciBNdWx0aXBhdGggRGV2aWNlIENvbnRyb2xsZXIKICAgTG9hZGVkOiBsb2Fk
-ZWQgKC91c3IvbGliL3N5c3RlbWQvc3lzdGVtL211bHRpcGF0aGQuc2VydmljZTsgZW5hYmxlZCkK
-ICAgQWN0aXZlOiBmYWlsZWQgKFJlc3VsdDogd2F0Y2hkb2cpIHNpbmNlIEZyaSAyMDEzLTExLTIy
-IDA5OjQzOjAxIENTVDsgOW1pbiBhZ28KIE1haW4gUElEOiA2MzIxCiAgIFN0YXR1czogInJ1bm5p
-bmciCiAgIENHcm91cDogbmFtZT1zeXN0ZW1kOi9zeXN0ZW0vbXVsdGlwYXRoZC5zZXJ2aWNlCiAg
-ICAgICAgICAg4pSU4pSANjMyMSAvc2Jpbi9tdWx0aXBhdGhkIC1kIC1zCgpNb3JlIGFubm95aW5n
-LCB0aGUgbG9ncyBmaWxscyB1cCB3aXRoIG1lc3NhZ2VzIGxpa2UKCk5vdiAyMiAwOTo0NjoyOCBh
-c2stMDggc3lzdGVtZFsxXTogbXVsdGlwYXRoZC5zZXJ2aWNlOiBHb3Qgbm90aWZpY2F0aW9uCm1l
-c3NhZ2UgZnJvbSBQSUQgNjMyMSwgYnV0IHJlY2VwdGlvbiBvbmx5IHBlcm1pdHRlZCBmb3IgUElE
-IDAKTm92IDIyIDA5OjQ2OjI5IGFzay0wOCBzeXN0ZW1kWzFdOiBtdWx0aXBhdGhkLnNlcnZpY2U6
-IEdvdCBub3RpZmljYXRpb24KbWVzc2FnZSBmcm9tIFBJRCA2MzIxLCBidXQgcmVjZXB0aW9uIG9u
-bHkgcGVybWl0dGVkIGZvciBQSUQgMApOb3YgMjIgMDk6NDY6MzAgYXNrLTA4IHN5c3RlbWRbMV06
-IG11bHRpcGF0aGQuc2VydmljZTogR290IG5vdGlmaWNhdGlvbgptZXNzYWdlIGZyb20gUElEIDYz
-MjEsIGJ1dCByZWNlcHRpb24gb25seSBwZXJtaXR0ZWQgZm9yIFBJRCAwCk5vdiAyMiAwOTo0Njoz
-MSBhc2stMDggc3lzdGVtZFsxXTogbXVsdGlwYXRoZC5zZXJ2aWNlOiBHb3Qgbm90aWZpY2F0aW9u
-Cm1lc3NhZ2UgZnJvbSBQSUQgNjMyMSwgYnV0IHJlY2VwdGlvbiBvbmx5IHBlcm1pdHRlZCBmb3Ig
-UElEIDAKCkFsc28KCiMgc2VydmljZSBtdWx0aXBhdGhkIHN0b3AKCndvbid0IGtpbGwgaXQuIEV2
-ZW4gd29yc2UKCiMgc2VydmljZSBtdWx0aXBhdGhkIHN0YXJ0CgpXSUxMIGtpbGwgaXQgd2l0aG91
-dCBzdWNjZXNzZnVsbHkgcmVzdGFydGluZyBhbm90aGVyIHZlcnNpb24uIEEgc2Vjb25kCgojIHNl
-cnZpY2UgbXVsdGlwYXRoZCBzdGFydAoKaXMgbmVjZXNzYXJ5IHRvIGdldCB0aGluZ3MgYmFjayB0
-byBhIGZ1bmN0aW9uYWwgc3RhdGUgYWdhaW4uCgpJJ20gbm90IGFza2luZyBmb3Igc3lzdGVtZCB0
-byBhY3R1YWxseSBzaHV0IGRvd24gbXVsdGlwYXRoZC4gIEluIGEKcHJvZHVjdGlvbiBzZXR1cCwg
-a2lsbGluZyBtdWx0aXBhdGhkIGJlY2F1c2UgaXQgaGFkIGEgdGVtcG9yYXJ5IHN0YWxsCnNlZW1z
-IGxpa2UgYmFkIGRlZmF1bHQgYmVoYXZpb3IuICBJIGhhdmVuJ3QgbG9va2VkIGF0IHRoZSBzeXN0
-ZW1kCndhdGNoZG9nIGNvZGUgdG8ga25vdyBpZiB0aGlzIGlzIHBvc3NpYmxlLCBidXQgaWRlYWxs
-eSwgbXVsdGlwYXRoZCB3b3VsZApiZSBhYmxlIHRvIGp1c3Qgc3RhcnQgc2VuZGluZyB3YXRjaGRv
-ZyBub3RpZmljYXRpb25zIGFnYWluLCBhbmQgYmUgYWJsZQp0byBjb250aW51ZSBvbiB3aXRoIGp1
-c3QgYSBtZXNzYWdlIGluIHRoZSBsb2dzIHJlY29yZGluZyB0aGUgdGltZW91dC4KCkkgcmVhbGl6
-ZSB0aGF0IHRoZXJlIGlzIGEgYmVuZWZpdCB0byBsZXR0aW5nIHBlb3BsZSBrbm93IHRoYXQgdGhl
-cmUgd2FzCmEgcHJvYmxlbSwgYnV0IHRoZSB3YXkgaXQncyBhcHBlYXJpbmcgbm93LCBpdCB3aWxs
-IGJlIHByZXR0eSBjb25mdXNpbmcgdG8KdGhlIHN5c2FkbWluIHdobyBzZWVzIHRoYXQsIGFuZCBm
-aWxsaW5nIHVwIHRoZSBsb2dzIHdpdGggbm90aWZpY2F0aW9uCnJlamVjdGlvbnMgaXMgcHJldHR5
-IGFubm95aW5nLgoKQW5kIGFzIGxvbmcgYXMgSSdtIGFza2luZyBmb3Igc3lzdGVtZCB0aGluZ3Ms
-IHRoZSBhYmlsaXR5IHRvIGFkZCBhIHJ1bGUKdG8gdGhlIHVuaXQgZmlsZSB0aGF0IGtpbGxzIHRo
-ZSBzZXJ2aWNlIGFuZCBmb3JjZXMgYSBjb3JlIGR1bXAgd2hlbgp3YXRjaGRvZyB0aW1lciB3YXMg
-dHJpcHBlZCB3b3VsZCBoZWxwIHRyYWNraW5nIGRvd24gd2hhdCdzIHN0YWxsaW5nIHRoZQpjaGVj
-a2VyIGxvb3AuICBMaWtlIEkgc2FpZCBiZWZvcmUsIEkgZG9uJ3QgdGhpbmsgdGhpcyBzaG91bGQg
-YmUKaGFwcGVuaW5nIGJ5IGRlZmF1bHQsIGJ1dCBwdXR0aW5nIGl0IGluIHRoZXJlIGNvbW1lbnRl
-ZCBvdXQgbWlnaHQgbm90IGJlCmEgYmFkIGlkZWEuCgotQmVuCgo+IAo+IFNpZ25lZC1vZmYtYnk6
-IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+IC0tLQo+ICBtdWx0aXBhdGgvbXVsdGlw
-YXRoLmNvbmYuNSAgICB8ICA3ICsrKysrLS0KPiAgbXVsdGlwYXRoZC9tYWluLmMgICAgICAgICAg
-ICAgfCAxNSArKysrKysrKysrKysrKy0KPiAgbXVsdGlwYXRoZC9tdWx0aXBhdGhkLnNlcnZpY2Ug
-fCAgMSArCj4gIDMgZmlsZXMgY2hhbmdlZCwgMjAgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMo
-LSkKPiAKPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUgYi9tdWx0aXBh
-dGgvbXVsdGlwYXRoLmNvbmYuNQo+IGluZGV4IDBmZDMwMzUuLmNmNWJlYzAgMTAwNjQ0Cj4gLS0t
-IGEvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUKPiArKysgYi9tdWx0aXBhdGgvbXVsdGlwYXRo
-LmNvbmYuNQo+IEBAIC03MSw4ICs3MSwxMSBAQCBzZWN0aW9uIHJlY29nbml6ZXMgdGhlIGZvbGxv
-d2luZyBrZXl3b3JkczoKPiAgLkIgcG9sbGluZ19pbnRlcnZhbAo+ICBpbnRlcnZhbCBiZXR3ZWVu
-IHR3byBwYXRoIGNoZWNrcyBpbiBzZWNvbmRzLiBGb3IgcHJvcGVybHkgZnVuY3Rpb25pbmcgcGF0
-aHMsCj4gIHRoZSBpbnRlcnZhbCBiZXR3ZWVuIGNoZWNrcyB3aWxsIGdyYWR1YWxseSBpbmNyZWFz
-ZSB0bwo+IC0uQiBtYXhfcG9sbGluZ19pbnRlcnZhbDsKPiAtZGVmYXVsdCBpcwo+ICsuQiBtYXhf
-cG9sbGluZ19pbnRlcnZhbC4KPiArVGhpcyB2YWx1ZSB3aWxsIGJlIG92ZXJyaWRkZW4gYnkgdGhl
-Cj4gKy5CIFdhdGNoZG9nU2VjCj4gK3NldHRpbmcgaW4gdGhlIG11bHRpcGF0aGQuc2VydmljZSBk
-ZWZpbml0aW9uIGlmIHN5c3RlbWQgaXMgdXNlZC4KPiArRGVmYXVsdCBpcwo+ICAuSSA1Cj4gIC5U
-UAo+ICAuQiBtYXhfcG9sbGluZ19pbnRlcnZhbAo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21h
-aW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCj4gaW5kZXggNzJiMzc0MC4uYWJlZWJjMiAxMDA2NDQK
-PiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gQEAg
-LTEyODYsNiArMTI4Niw3IEBAIGNoZWNrZXJsb29wICh2b2lkICphcCkKPiAgCQlsb2NrKHZlY3Mt
-PmxvY2spOwo+ICAJCXB0aHJlYWRfdGVzdGNhbmNlbCgpOwo+ICAJCWNvbmRsb2coNCwgInRpY2si
-KTsKPiArCQlzZF9ub3RpZnkoMCwgIldBVENIRE9HPTEiKTsKPiAgCj4gIAkJaWYgKHZlY3MtPnBh
-dGh2ZWMpIHsKPiAgCQkJdmVjdG9yX2ZvcmVhY2hfc2xvdCAodmVjcy0+cGF0aHZlYywgcHAsIGkp
-IHsKPiBAQCAtMTU4NSw3ICsxNTg2LDggQEAgY2hpbGQgKHZvaWQgKiBwYXJhbSkKPiAgCXB0aHJl
-YWRfYXR0cl90IGxvZ19hdHRyLCBtaXNjX2F0dHIsIHVldmVudF9hdHRyOwo+ICAJc3RydWN0IHZl
-Y3RvcnMgKiB2ZWNzOwo+ICAJc3RydWN0IG11bHRpcGF0aCAqIG1wcDsKPiAtCWludCBpOwo+ICsJ
-Y2hhciAqZW52cDsKPiArCWludCBpLCBjaGVja2ludDsKPiAgCWludCByYywgcGlkX3JjOwo+ICAK
-PiAgCW1sb2NrYWxsKE1DTF9DVVJSRU5UIHwgTUNMX0ZVVFVSRSk7Cj4gQEAgLTE2NTgsNiArMTY2
-MCwxNyBAQCBjaGlsZCAodm9pZCAqIHBhcmFtKQo+ICAKPiAgCWNvbmYtPmRhZW1vbiA9IDE7Cj4g
-IAl1ZGV2X3NldF9zeW5jX3N1cHBvcnQoMCk7Cj4gKwllbnZwID0gZ2V0ZW52KCJXQVRDSERPR19V
-U0VDIik7Cj4gKwlpZiAoZW52cCAmJiBzc2NhbmYoZW52cCwgIiVkIiwgJmNoZWNraW50KSA9PSAx
-KSB7Cj4gKwkJLyogVmFsdWUgaXMgaW4gbWljcm9zZWNvbmRzICovCj4gKwkJY2hlY2tpbnQgPSBj
-aGVja2ludCAvIDEwMDAwMDA7Cj4gKwkJaWYgKGNoZWNraW50ID4gY29uZi0+bWF4X2NoZWNraW50
-KQo+ICsJCQljb25mLT5tYXhfY2hlY2tpbnQgPSBjaGVja2ludDsKPiArCQljb25mLT5jaGVja2lu
-dCA9IGNoZWNraW50Owo+ICsJCWNvbmRsb2coMywgInNldCBjaGVja2ludCB0byAlZCBtYXggJWQi
-LAo+ICsJCQljb25mLT5jaGVja2ludCwgY29uZi0+bWF4X2NoZWNraW50KTsKPiArCX0KPiArCj4g
-IAkvKgo+ICAJICogU3RhcnQgdWV2ZW50IGxpc3RlbmVyIGVhcmx5IHRvIGNhdGNoIGV2ZW50cwo+
-ICAJICovCj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlIGIvbXVs
-dGlwYXRoZC9tdWx0aXBhdGhkLnNlcnZpY2UKPiBpbmRleCBmYjg0MDI1Li44NDhhMjMxIDEwMDY0
-NAo+IC0tLSBhL211bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4gKysrIGIvbXVsdGlwYXRo
-ZC9tdWx0aXBhdGhkLnNlcnZpY2UKPiBAQCAtMTAsNiArMTAsNyBAQCBUeXBlPW5vdGlmeQo+ICBO
-b3RpZnlBY2Nlc3M9bWFpbgo+ICBFeGVjU3RhcnQ9L3NiaW4vbXVsdGlwYXRoZCAtZCAtcwo+ICBF
-eGVjUmVsb2FkPS9zYmluL211bHRpcGF0aGQgcmVjb25maWd1cmUKPiArV2F0Y2hkb2dTZWM9NXMK
-PiAgCj4gIFtJbnN0YWxsXQo+ICBXYW50ZWRCeT1zeXNpbml0LnRhcmdldAo+IC0tIAo+IDEuOC4x
-LjQKPiAKPiAtLQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20K
-PiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRt
-LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Device mapper table is allocated in the following way:
+* The function dm_table_create is called, it gets the number of targets as
+  an argument.
+* For each target, we call dm_table_add_target
+
+If we add more targets than was specified in dm_table_create, the function
+dm_table_add_target reallocates the targets array. However, this
+reallocation code is wrong - it moves the targets array to a new location,
+while some target constructors hold pointers to the array in the old
+location.
+
+The following target drivers save the pointer to the target structure, so
+they corrupt memory if the target array is moved: multipath, raid, mirror,
+snapshot, stripe, switch, thin, verity.
+
+Under normal circumstances, the reallocation function is not called
+(because dm_table_create is called with the correct number of targets), so
+the buggy reallocation code is not used.
+
+The reallocation code could only be used in case the user specifies too
+high value in target_count, such as 0xffffffff. In this case, the
+expression "num_targets = dm_round_up(num_targets, KEYS_PER_NODE);"
+overflows and zero targets is allocated. This overflow is fixed in the
+next patch.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-table.c |   22 ++--------------------
+ 1 file changed, 2 insertions(+), 20 deletions(-)
+
+Index: linux-3.12-fast/drivers/md/dm-table.c
+===================================================================
+--- linux-3.12-fast.orig/drivers/md/dm-table.c	2013-11-22 21:23:11.000000000 +0100
++++ linux-3.12-fast/drivers/md/dm-table.c	2013-11-22 21:24:52.000000000 +0100
+@@ -155,7 +155,6 @@ static int alloc_targets(struct dm_table
+ {
+ 	sector_t *n_highs;
+ 	struct dm_target *n_targets;
+-	int n = t->num_targets;
+ 
+ 	/*
+ 	 * Allocate both the target array and offset array at once.
+@@ -169,12 +168,7 @@ static int alloc_targets(struct dm_table
+ 
+ 	n_targets = (struct dm_target *) (n_highs + num);
+ 
+-	if (n) {
+-		memcpy(n_highs, t->highs, sizeof(*n_highs) * n);
+-		memcpy(n_targets, t->targets, sizeof(*n_targets) * n);
+-	}
+-
+-	memset(n_highs + n, -1, sizeof(*n_highs) * (num - n));
++	memset(n_highs, -1, sizeof(*n_highs) * num);
+ 	vfree(t->highs);
+ 
+ 	t->num_allocated = num;
+@@ -256,17 +250,6 @@ void dm_table_destroy(struct dm_table *t
+ }
+ 
+ /*
+- * Checks to see if we need to extend highs or targets.
+- */
+-static inline int check_space(struct dm_table *t)
+-{
+-	if (t->num_targets >= t->num_allocated)
+-		return alloc_targets(t, t->num_allocated * 2);
+-
+-	return 0;
+-}
+-
+-/*
+  * See if we've already got a device in the list.
+  */
+ static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev)
+@@ -726,8 +709,7 @@ int dm_table_add_target(struct dm_table 
+ 		return -EINVAL;
+ 	}
+ 
+-	if ((r = check_space(t)))
+-		return r;
++	BUG_ON(t->num_targets >= t->num_allocated);
+ 
+ 	tgt = t->targets + t->num_targets;
+ 	memset(tgt, 0, sizeof(*tgt));
