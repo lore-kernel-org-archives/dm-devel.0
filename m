@@ -1,12 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] dm-table: fail on overflow in dm_round_up
-Date: Fri, 22 Nov 2013 19:52:06 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1311221951400.31923@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Mears, Morgan" <Morgan.Mears@netapp.com>
+Subject: dm-cache invalidate_cblocks range parsing
+Date: Sun, 24 Nov 2013 02:25:33 +0000
+Message-ID: <33A0129EBFD46748804DE81B354CA1B21C0532E5@SACEXCMBX06-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,35 +17,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The dm_round_up function may overflow to zero. In this case, we need to
-fail, rather than allocate empty array.
+If one specifies a cblock range in the dm-cache invalidate_cblocks message
+(commit 65790ff919e2e07ccb4457415c11075b245d643b), the final cblock in the 
+range does not get invalidated.  For example, after:
 
-This fixes a possible memory corruption that could be caused by passing
-too big number in "param->target_count".
+	dmsetup message cache 0 invalidate_cblocks 10-11
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@kernel.org
+cblock 11 will still be in the cache.  The reason is the (begin != end)
+check in process_invalidation_request() (dm-cache-target.c); were it to
+change to (begin <= end), the final block would be treated like the rest.
 
----
- drivers/md/dm-table.c |    5 +++++
- 1 file changed, 5 insertions(+)
+However, parse_cblock_range() relies on the current behavior for the single
+block case; if the change above were applied, an extra block would be
+invalidated for each single-block invalidation request.
 
-Index: linux-3.12-fast/drivers/md/dm-table.c
-===================================================================
---- linux-3.12-fast.orig/drivers/md/dm-table.c	2013-11-22 21:24:52.000000000 +0100
-+++ linux-3.12-fast/drivers/md/dm-table.c	2013-11-22 21:25:59.000000000 +0100
-@@ -194,6 +194,11 @@ int dm_table_create(struct dm_table **re
- 
- 	num_targets = dm_round_up(num_targets, KEYS_PER_NODE);
- 
-+	if (!num_targets) {
-+		kfree(t);
-+		return -ENOMEM;
-+	}
-+
- 	if (alloc_targets(t, num_targets)) {
- 		kfree(t);
- 		return -ENOMEM;
+So: is the current behavior intentional?
+
+--Morgan
