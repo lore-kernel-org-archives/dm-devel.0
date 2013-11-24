@@ -1,39 +1,30 @@
-From: "Mears, Morgan" <Morgan.Mears@netapp.com>
-Subject: dm-cache invalidate_cblocks range parsing
-Date: Sun, 24 Nov 2013 02:25:33 +0000
-Message-ID: <33A0129EBFD46748804DE81B354CA1B21C0532E5@SACEXCMBX06-PRD.hq.netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 0/1] Recent breakage of DM RAID
+Date: Sun, 24 Nov 2013 17:30:42 -0600
+Message-ID: <1385335843-14021-1-git-send-email-jbrassow@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: jbrassow@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If one specifies a cblock range in the dm-cache invalidate_cblocks message
-(commit 65790ff919e2e07ccb4457415c11075b245d643b), the final cblock in the 
-range does not get invalidated.  For example, after:
+There have been two commits that have broken DM RAID:
+1) 773ca82 (v3.12-rc1) raid5: make release_stripe lockless
+2) 566c09c raid5: relieve lock contention in get_active_stripe()
 
-	dmsetup message cache 0 invalidate_cblocks 10-11
+I've provided a patch for the first, but I don't have a patch ready for
+the second yet.  Since 3.12 is alreay out, I figured I better send the
+patch for the first problem now.
 
-cblock 11 will still be in the cache.  The reason is the (begin != end)
-check in process_invalidation_request() (dm-cache-target.c); were it to
-change to (begin <= end), the final block would be treated like the rest.
+Simply creating a RAID 4/5/6 device via device-mapper (or LVM) is sufficent
+to cause the hang to manifest.
 
-However, parse_cblock_range() relies on the current behavior for the single
-block case; if the change above were applied, an extra block would be
-invalidated for each single-block invalidation request.
+Jonathan Brassow (1):
+  MD/DM RAID: Fix hang due to recent RAID5 locking changes
 
-So: is the current behavior intentional?
+ drivers/md/dm-raid.c |    1 -
+ drivers/md/md.c      |    5 ++++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
---Morgan
+-- 
+1.7.7.6
+
