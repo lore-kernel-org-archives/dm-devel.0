@@ -1,12 +1,15 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: [Question] dm-cache table
-Date: Mon, 25 Nov 2013 19:54:39 +0900
-Message-ID: <52932C6F.5000306@gmail.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [Question] dm-cache table
+Date: Mon, 25 Nov 2013 12:05:12 +0000
+Message-ID: <20131125120512.GC10831@debian>
+References: <52932C6F.5000306@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <52932C6F.5000306@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,33 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, Nov 25, 2013 at 07:54:39PM +0900, Akira Hayakawa wrote:
+> If it accepted migrate_threshold in .ctr and the parameter
+> changed later. The actual value and what is seen in table
+> become inconsistent right? Is this intentionally designed?
 
-dm-cache saves the ctr args in .ctr (copy_ctr_copy)
-and uses it to make table. 
+No, this is a bug.
 
-        case STATUSTYPE_TABLE:
-                format_dev_t(buf, cache->metadata_dev->bdev->bd_dev);
-                DMEMIT("%s ", buf);
-                format_dev_t(buf, cache->cache_dev->bdev->bd_dev);
-                DMEMIT("%s ", buf);
-                format_dev_t(buf, cache->origin_dev->bdev->bd_dev);
-                DMEMIT("%s", buf);
+> If table is just the copy of the ctr args,
+> why don't we implement it in dm framework?
 
-                for (i = 0; i < cache->nr_ctr_args - 1; i++)
-                        DMEMIT(" %s", cache->ctr_args[i]);
-                if (cache->nr_ctr_args)
-                        DMEMIT(" %s", cache->ctr_args[cache->nr_ctr_args - 1]);
-        }
+It has been discussed.  Originally the target were so simple it was
+easy to generate a new table line.  Creating copies of the table
+params only happened recently with the more complicated targets.  We
+could have some infrastructure provided by the dm core for this, but
+we can't use it blindly as your bug above demonstrates.
 
-If it accepted migrate_threshold in .ctr and the parameter
-changed later. The actual value and what is seen in table
-become inconsistent right? Is this intentionally designed?
-
-If table is just the copy of the ctr args,
-why don't we implement it in dm framework?
-
-Akira
+- Joe
