@@ -1,55 +1,72 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH 1/1] MD/DM RAID: Fix hang due to recent RAID5 locking changes
-Date: Mon, 25 Nov 2013 08:20:33 -0600
-Message-ID: <D89A7889-9B7B-40F1-AD7D-08937D168C7E@redhat.com>
-References: <1385335843-14021-1-git-send-email-jbrassow@redhat.com> <1385335843-14021-2-git-send-email-jbrassow@redhat.com> <20131125110315.262223cf@notabene.brown>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20131125110315.262223cf@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: "linux-raid@vger.kernel.org Raid" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 09/13] multipathd: Implement systemd watchdog
+ integration
+Date: Mon, 25 Nov 2013 17:21:15 +0100
+Message-ID: <529378FB.4040803@suse.de>
+References: <1384511384-27642-1-git-send-email-hare@suse.de>	<1384511384-27642-10-git-send-email-hare@suse.de>	<20131122221759.GM1661@dhcp80-209.msp.redhat.com>
+	<5293013B.4010008@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5293013B.4010008@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On 11/25/2013 08:50 AM, Hannes Reinecke wrote:
+> On 11/22/2013 11:17 PM, Benjamin Marzinski wrote:
+[ .. ]
+>> I'm not asking for systemd to actually shut down multipathd.  In a
+>> production setup, killing multipathd because it had a temporary stall
+>> seems like bad default behavior.  I haven't looked at the systemd
+>> watchdog code to know if this is possible, but ideally, multipathd would
+>> be able to just start sending watchdog notifications again, and be able
+>> to continue on with just a message in the logs recording the timeout.
+>>
+> Not stopping. Restarting.
+> The whole point of the watchdog code is to take some action if the
+> watchdog messages fail.
+> We should aim for
+> a) make the watchdog interval the longest interval we're prepared to
+>     checkerloop to complete (hence the patch to measure the elapsed
+>     time per loop iteration)
+> b) have systemd restart multipathd whenever the watchdog triggers,
+>     as then we're sure we can't recover from this.
+>
+> That should cover your sentiment, right?
+>
+>> I realize that there is a benefit to letting people know that there was
+>> a problem, but the way it's appearing now, it will be pretty confusing to
+>> the sysadmin who sees that, and filling up the logs with notification
+>> rejections is pretty annoying.
+>>
+> Yeah, correct. We should be using the 'restart' flag in the service
+> file. I did not do this as the patch went into systemd only
+> recently, and one would need to figure out how to treat
+> installations where an older systemd version is running.
+>
+And it also looks as if we'd be tripping over RH bug#982379, where
+the watchdog fails to shutdown a process properly.
+Which apparently is fixed in 206.
+So we'd need a recent systemd for that to work properly.
 
-On Nov 24, 2013, at 6:03 PM, NeilBrown wrote:
+I'm _quite_ sure there are errors in earlier versions, where the
+watchdog feature just causes a new process to be started, without
+terminating the old one. _Very_ annoying.
 
-> On Sun, 24 Nov 2013 17:30:43 -0600 Jonathan Brassow <jbrassow@redhat.com>
-> wrote:
-> 
->> When commit 773ca82 was made in v3.12-rc1, it caused RAID4/5/6 devices
->> that were created via device-mapper (dm-raid.c) to hang on creation.
->> This is not necessarily the fault of that commit, but perhaps the way
->> dm-raid.c was setting-up and activating devices.
->> 
->> Device-mapper allows I/O and memory allocations in the constructor
->> (i.e. raid_ctr()), but nominal and recovery I/O should not be allowed
->> until a 'resume' is issued (i.e. raid_resume()).  It has been problematic
->> (at least in the past) to call mddev_resume before mddev_suspend was
->> called, but this is how DM behaves - CTR then resume.  To solve the
->> problem, raid_ctr() was setting up the structures, calling md_run(), and
->> then also calling mddev_suspend().  The stage was then set for raid_resume()
->> to call mddev_resume().
->> 
->> Commit 773ca82 caused a change in behavior during raid5.c:run().
->> 'setup_conf->grow_stripes->grow_one_stripe' is called which creates the
->> stripe cache and increments 'active_stripes'.
->> 'grow_one_stripe->release_stripe' doesn't actually decrement 'active_stripes'
->> anymore.  The side effect of this is that when raid_ctr calls mddev_suspend,
->> it waits for 'active_stripes' to reduce to 0 - which never happens.
-> 
-> Hi Jon,
-> this sounds like the same bug that is fixed by 
-> 
-> commit ad4068de49862b083ac2a15bc50689bb30ce3e44
-> Author: majianpeng <majianpeng@gmail.com>
-> Date:   Thu Nov 14 15:16:15 2013 +1100
-> 
->    raid5: Use slow_path to release stripe when mddev->thread is null
-> 
-> which is already en-route to 3.12.x.  Could you check if it fixes the bug for
-> you?
+I'll retest with latest systemd. And make the watchdog feature
+selective on the systemd version.
 
-Sure, I'll check.  Just reading the subject of the patch, I have high hopes.  The slow path decrements 'active_stripes', which was causing the above problem...  I'll make sure though.
+Cheers,
+
+Hannes
