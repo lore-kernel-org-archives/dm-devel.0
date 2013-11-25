@@ -1,16 +1,12 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-cache invalidate_cblocks range parsing
-Date: Mon, 25 Nov 2013 10:00:02 +0000
-Message-ID: <20131125100002.GB10831@debian>
-References: <33A0129EBFD46748804DE81B354CA1B21C0532E5@SACEXCMBX06-PRD.hq.netapp.com>
-	<20131125095018.GA10831@debian>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: [Question] dm-cache table
+Date: Mon, 25 Nov 2013 19:54:39 +0900
+Message-ID: <52932C6F.5000306@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20131125095018.GA10831@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,38 +16,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Nov 25, 2013 at 09:50:19AM +0000, Joe Thornber wrote:
-> On Sun, Nov 24, 2013 at 02:25:33AM +0000, Mears, Morgan wrote:
-> > If one specifies a cblock range in the dm-cache invalidate_cblocks message
-> > (commit 65790ff919e2e07ccb4457415c11075b245d643b), the final cblock in the 
-> > range does not get invalidated.  For example, after:
-> > 
-> > 	dmsetup message cache 0 invalidate_cblocks 10-11
-> > 
-> > cblock 11 will still be in the cache.  The reason is the (begin != end)
-> > check in process_invalidation_request() (dm-cache-target.c); were it to
-> > change to (begin <= end), the final block would be treated like the rest.
-> > 
-> > However, parse_cblock_range() relies on the current behavior for the single
-> > block case; if the change above were applied, an extra block would be
-> > invalidated for each single-block invalidation request.
-> > 
-> > So: is the current behavior intentional?
-> 
-> Yes.
+Hi,
 
-Documented in code, but I think Documentation/device-mapper/cache.txt should also say this.
+dm-cache saves the ctr args in .ctr (copy_ctr_copy)
+and uses it to make table. 
 
-/*                                                                                                                               
- * Defines a range of cblocks, begin to (end - 1) are in the range.  end is                                                      
- * the one-past-the-end value.                                                                                                   
- */
+        case STATUSTYPE_TABLE:
+                format_dev_t(buf, cache->metadata_dev->bdev->bd_dev);
+                DMEMIT("%s ", buf);
+                format_dev_t(buf, cache->cache_dev->bdev->bd_dev);
+                DMEMIT("%s ", buf);
+                format_dev_t(buf, cache->origin_dev->bdev->bd_dev);
+                DMEMIT("%s", buf);
 
-See 
+                for (i = 0; i < cache->nr_ctr_args - 1; i++)
+                        DMEMIT(" %s", cache->ctr_args[i]);
+                if (cache->nr_ctr_args)
+                        DMEMIT(" %s", cache->ctr_args[cache->nr_ctr_args - 1]);
+        }
 
-https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/tests/cache/invalidate_cblocks_tests.rb
+If it accepted migrate_threshold in .ctr and the parameter
+changed later. The actual value and what is seen in table
+become inconsistent right? Is this intentionally designed?
 
-for example uses.
+If table is just the copy of the ctr args,
+why don't we implement it in dm framework?
+
+Akira
