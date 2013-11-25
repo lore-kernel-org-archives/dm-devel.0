@@ -1,244 +1,109 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [PATCH] Revert "raid5: make release_stripe lockless" because it
- causes test regression
-Date: Mon, 25 Nov 2013 11:05:28 +1100
-Message-ID: <20131125110528.046b861e@notabene.brown>
-References: <alpine.LRH.2.02.1311221502360.28281@file01.intranet.prod.int.rdu2.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 09/13] multipathd: Implement systemd watchdog
+ integration
+Date: Mon, 25 Nov 2013 08:50:19 +0100
+Message-ID: <5293013B.4010008@suse.de>
+References: <1384511384-27642-1-git-send-email-hare@suse.de>	<1384511384-27642-10-git-send-email-hare@suse.de>
+	<20131122221759.GM1661@dhcp80-209.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/fVz4Xo9pPEYRR6GCbp4pzC4"; protocol="application/pgp-signature"
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1311221502360.28281@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-raid@vger.kernel.org, Shaohua Li <shli@kernel.org>, Zdenek Kabelac <zkabelac@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20131122221759.GM1661@dhcp80-209.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---Sig_/fVz4Xo9pPEYRR6GCbp4pzC4
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-
-On Fri, 22 Nov 2013 15:07:08 -0500 (EST) Mikulas Patocka
-<mpatocka@redhat.com> wrote:
-
-> Revert 773ca82fa1ee58dd1bf88b6a5ca385ec83a2cac6 and
-> d265d9dc1d25a69affc21ae9fe5004b9d09c10ef.
->=20
-> The lvm testsuite (from=20
-> ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.104.tgz) fails with unkillabl=
-e=20
-> lvm and dmsetup processes on kernel 3.12. The testsuite passes on 3.11.=20
-> Bisect shows that the failure is caused by patch=20
-> 773ca82fa1ee58dd1bf88b6a5ca385ec83a2cac6. When I revert this patch on 3.1=
-2=20
-> kernel, the testsuite finishes and there are no unkillable processes.
->=20
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@kernel.org	# 3.12
-
-I certainly don't plan to revert these patches unless we fail to understand
-and fix the problem.
-
-Does commit ad4068de49862b083ac2a15bc50689bb30ce3e44 fix the problem?
-
-Thanks,
-NeilBrown
-
->=20
-> ---
->  drivers/md/raid5.c |   70 +++-------------------------------------------=
--------
->  drivers/md/raid5.h |    3 --
->  2 files changed, 5 insertions(+), 68 deletions(-)
->=20
-> Index: linux-3.12-fast/drivers/md/raid5.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-3.12-fast.orig/drivers/md/raid5.c	2013-11-21 22:45:20.000000000=
- +0100
-> +++ linux-3.12-fast/drivers/md/raid5.c	2013-11-21 23:39:01.000000000 +0100
-> @@ -293,62 +293,12 @@ static void __release_stripe(struct r5co
->  		do_release_stripe(conf, sh);
->  }
-> =20
-> -static struct llist_node *llist_reverse_order(struct llist_node *head)
-> -{
-> -	struct llist_node *new_head =3D NULL;
-> -
-> -	while (head) {
-> -		struct llist_node *tmp =3D head;
-> -		head =3D head->next;
-> -		tmp->next =3D new_head;
-> -		new_head =3D tmp;
-> -	}
-> -
-> -	return new_head;
-> -}
-> -
-> -/* should hold conf->device_lock already */
-> -static int release_stripe_list(struct r5conf *conf)
-> -{
-> -	struct stripe_head *sh;
-> -	int count =3D 0;
-> -	struct llist_node *head;
-> -
-> -	head =3D llist_del_all(&conf->released_stripes);
-> -	head =3D llist_reverse_order(head);
-> -	while (head) {
-> -		sh =3D llist_entry(head, struct stripe_head, release_list);
-> -		head =3D llist_next(head);
-> -		/* sh could be readded after STRIPE_ON_RELEASE_LIST is cleard */
-> -		smp_mb();
-> -		clear_bit(STRIPE_ON_RELEASE_LIST, &sh->state);
-> -		/*
-> -		 * Don't worry the bit is set here, because if the bit is set
-> -		 * again, the count is always > 1. This is true for
-> -		 * STRIPE_ON_UNPLUG_LIST bit too.
-> -		 */
-> -		__release_stripe(conf, sh);
-> -		count++;
-> -	}
-> -
-> -	return count;
-> -}
-> -
->  static void release_stripe(struct stripe_head *sh)
->  {
->  	struct r5conf *conf =3D sh->raid_conf;
->  	unsigned long flags;
-> -	bool wakeup;
-> =20
-> -	if (test_and_set_bit(STRIPE_ON_RELEASE_LIST, &sh->state))
-> -		goto slow_path;
-> -	wakeup =3D llist_add(&sh->release_list, &conf->released_stripes);
-> -	if (wakeup)
-> -		md_wakeup_thread(conf->mddev->thread);
-> -	return;
-> -slow_path:
->  	local_irq_save(flags);
-> -	/* we are ok here if STRIPE_ON_RELEASE_LIST is set or not */
->  	if (atomic_dec_and_lock(&sh->count, &conf->device_lock)) {
->  		do_release_stripe(conf, sh);
->  		spin_unlock(&conf->device_lock);
-> @@ -596,8 +546,7 @@ get_active_stripe(struct r5conf *conf, s
->  			if (atomic_read(&sh->count)) {
->  				BUG_ON(!list_empty(&sh->lru)
->  				    && !test_bit(STRIPE_EXPANDING, &sh->state)
-> -				    && !test_bit(STRIPE_ON_UNPLUG_LIST, &sh->state)
-> -				    && !test_bit(STRIPE_ON_RELEASE_LIST, &sh->state));
-> +				    && !test_bit(STRIPE_ON_UNPLUG_LIST, &sh->state));
->  			} else {
->  				if (!test_bit(STRIPE_HANDLE, &sh->state))
->  					atomic_inc(&conf->active_stripes);
-> @@ -4293,10 +4242,6 @@ static void raid5_unplug(struct blk_plug
->  			 */
->  			smp_mb__before_clear_bit();
->  			clear_bit(STRIPE_ON_UNPLUG_LIST, &sh->state);
-> -			/*
-> -			 * STRIPE_ON_RELEASE_LIST could be set here. In that
-> -			 * case, the count is always > 1 here
-> -			 */
->  			__release_stripe(conf, sh);
->  			cnt++;
->  		}
-> @@ -5007,13 +4952,11 @@ static void raid5_do_work(struct work_st
->  	handled =3D 0;
->  	spin_lock_irq(&conf->device_lock);
->  	while (1) {
-> -		int batch_size, released;
-> -
-> -		released =3D release_stripe_list(conf);
-> +		int batch_size;
-> =20
->  		batch_size =3D handle_active_stripes(conf, group_id, worker);
->  		worker->working =3D false;
-> -		if (!batch_size && !released)
-> +		if (!batch_size)
->  			break;
->  		handled +=3D batch_size;
->  	}
-> @@ -5048,9 +4991,7 @@ static void raid5d(struct md_thread *thr
->  	spin_lock_irq(&conf->device_lock);
->  	while (1) {
->  		struct bio *bio;
-> -		int batch_size, released;
-> -
-> -		released =3D release_stripe_list(conf);
-> +		int batch_size;
-> =20
->  		if (
->  		    !list_empty(&conf->bitmap_list)) {
-> @@ -5075,7 +5016,7 @@ static void raid5d(struct md_thread *thr
->  		}
-> =20
->  		batch_size =3D handle_active_stripes(conf, ANY_GROUP, NULL);
-> -		if (!batch_size && !released)
-> +		if (!batch_size)
->  			break;
->  		handled +=3D batch_size;
-> =20
-> @@ -5503,7 +5444,6 @@ static struct r5conf *setup_conf(struct=20
->  	INIT_LIST_HEAD(&conf->delayed_list);
->  	INIT_LIST_HEAD(&conf->bitmap_list);
->  	INIT_LIST_HEAD(&conf->inactive_list);
-> -	init_llist_head(&conf->released_stripes);
->  	atomic_set(&conf->active_stripes, 0);
->  	atomic_set(&conf->preread_active_stripes, 0);
->  	atomic_set(&conf->active_aligned_reads, 0);
-> Index: linux-3.12-fast/drivers/md/raid5.h
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-3.12-fast.orig/drivers/md/raid5.h	2013-11-21 23:29:32.000000000=
- +0100
-> +++ linux-3.12-fast/drivers/md/raid5.h	2013-11-21 23:29:35.000000000 +0100
-> @@ -197,7 +197,6 @@ enum reconstruct_states {
->  struct stripe_head {
->  	struct hlist_node	hash;
->  	struct list_head	lru;	      /* inactive_list or handle_list */
-> -	struct llist_node	release_list;
->  	struct r5conf		*raid_conf;
->  	short			generation;	/* increments with every
->  						 * reshape */
-> @@ -324,7 +323,6 @@ enum {
->  	STRIPE_OPS_REQ_PENDING,
->  	STRIPE_ON_UNPLUG_LIST,
->  	STRIPE_DISCARD,
-> -	STRIPE_ON_RELEASE_LIST,
->  };
-> =20
->  /*
-> @@ -463,7 +461,6 @@ struct r5conf {
->  	 */
->  	atomic_t		active_stripes;
->  	struct list_head	inactive_list;
-> -	struct llist_head	released_stripes;
->  	wait_queue_head_t	wait_for_stripe;
->  	wait_queue_head_t	wait_for_overlap;
->  	int			inactive_blocked;	/* release of inactive stripes blocked,
-
-
---Sig_/fVz4Xo9pPEYRR6GCbp4pzC4
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iQIVAwUBUpKUSDnsnt1WYoG5AQKahQ//VXeJLIDTNzK2IFxd3/niQtJAfrtMArUn
-0r4NKRRwhgnX897FoiKHwk5LIvEeUXUBR6qnJIEU1uUu7cgF9oFNgvbgYFdcg2IL
-6uWt2AmtZQ3MM8/FM3JttrGwiKvKOToKa/Y9hkKflAoK5n1FVAdK8B3GfZGF5frm
-FPofC/FjFYn0vkBT2pabzpFTyYxy0Dzfwkh3Oi5vinU0CnoDp8bngvxij4wYnXSl
-+atgzPjgChU508Uiqn0xv2IP1mjxhwZbGWPyYnpR5V2xyLXYfYKTwB0jF53VInci
-2WZBj2Z9slbIMtsmxTJmhIPhGp4U9cp3Sop0rppaUywYyIu9j8n3x2UqLPOg2Lmu
-apucWUCKm/8P7TbMMZHBR3B2iE57OtA+3GCapA3FuoCALX0ORZ3OTxi/R7XZf8CA
-0McOUAGNOeIVif99H1O9+WrACUcXmPH9StudYG7+pvtqwaljpDB7Ppm9nTWZpbyv
-li661bVVISDW4fzABWcWU2YVEBe8BPItliQbusle2KFDRDnBgTJNtLWdANSGvbvx
-VlNpbh7dFqMSjQ5GGhsH5sJm3DRrU6hW8z00pjJ1tmlqeUgEBLdcjCPQsMve5vw0
-eC6pBBYGT4XDOwXCvAEGd0UxP0TLFIsh3xxjZRguK/a0a7IKOrPiiQFQXguwYr9F
-3tIOR2ttClA=
-=AayS
------END PGP SIGNATURE-----
-
---Sig_/fVz4Xo9pPEYRR6GCbp4pzC4--
+T24gMTEvMjIvMjAxMyAxMToxNyBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+IE9uIEZy
+aSwgTm92IDE1LCAyMDEzIGF0IDExOjI5OjQwQU0gKzAxMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90
+ZToKPj4gSW4gdGhlIHBhc3QgdGhlcmUgaGF2ZSBiZWVuIHNldmVyYWwgaW5zdGFuY2VzIHdoZXJl
+IG11bHRpcGF0aGQKPj4gd291bGQgaGFuZyB3aXRoIHRoZSBjaGVja2VybG9vcCBhcyBzb21lIHBh
+dGggY2hlY2tlciBtaWdodCBub3QKPj4gYmUgYWJsZSB0byByZXR1cm4gaW4gdGltZS4KPj4gVGhp
+cyBwYXRjaCBub3cgYWN0aXZhdGVzIHRoZSB3YXRjaGRvZyBmZWF0dXJlIGZyb20gc3lzdGVtZAo+
+PiB0byBzaHV0ZG93biAoYW5kIHBvc3NpYmx5IHJlc3RhcnQpIG11bHRpcGF0aGQgaW4gdGhlc2UK
+Pj4gc2l0dWF0aW9ucy4KPiAKPiBUaGlzIG1pZ2h0IG5lZWQgbW9yZSBvZiBhIHN5c3RlbWQgZml4
+IHRoYXQgYSBtdWx0aXBhdGhkIG9uZSwgYnV0IG9uY2UKPiBtdWx0aXBhdGhkIHRpbWVzIG91dCB0
+aGUgd2F0Y2hkb2cgdGltZXIsIGV2ZW4gaWYgaXQgc3RhcnRzIHNlbmRpbmcKPiBub3RpZmljYXRp
+b25zIGF0IGFuIGFjY2VwdGFibGUgcmF0ZSBhZ2FpbiwgdGhlIHNlcnZpY2UgaXMgc3RpbGwgbGlz
+dGVkCj4gYXMgZmFpbGVkLgo+IAo+ICMgc2VydmljZSBtdWx0aXBhdGhkIHN0YXR1cwo+IFJlZGly
+ZWN0aW5nIHRvICMgL2Jpbi9zeXN0ZW1jdGwgc3RhdHVzIG11bHRpcGF0aGQuc2VydmljZQo+IG11
+bHRpcGF0aGQuc2VydmljZSAtIERldmljZS1NYXBwZXIgTXVsdGlwYXRoIERldmljZSBDb250cm9s
+bGVyCj4gICAgTG9hZGVkOiBsb2FkZWQgKC91c3IvbGliL3N5c3RlbWQvc3lzdGVtL211bHRpcGF0
+aGQuc2VydmljZTsgZW5hYmxlZCkKPiAgICBBY3RpdmU6IGZhaWxlZCAoUmVzdWx0OiB3YXRjaGRv
+Zykgc2luY2UgRnJpIDIwMTMtMTEtMjIgMDk6NDM6MDEgQ1NUOyA5bWluIGFnbwo+ICBNYWluIFBJ
+RDogNjMyMQo+ICAgIFN0YXR1czogInJ1bm5pbmciCj4gICAgQ0dyb3VwOiBuYW1lPXN5c3RlbWQ6
+L3N5c3RlbS9tdWx0aXBhdGhkLnNlcnZpY2UKPiAgICAgICAgICAgIOKUlOKUgDYzMjEgL3NiaW4v
+bXVsdGlwYXRoZCAtZCAtcwo+IAo+IE1vcmUgYW5ub3lpbmcsIHRoZSBsb2dzIGZpbGxzIHVwIHdp
+dGggbWVzc2FnZXMgbGlrZQo+IAo+IE5vdiAyMiAwOTo0NjoyOCBhc2stMDggc3lzdGVtZFsxXTog
+bXVsdGlwYXRoZC5zZXJ2aWNlOiBHb3Qgbm90aWZpY2F0aW9uCj4gbWVzc2FnZSBmcm9tIFBJRCA2
+MzIxLCBidXQgcmVjZXB0aW9uIG9ubHkgcGVybWl0dGVkIGZvciBQSUQgMAo+IE5vdiAyMiAwOTo0
+NjoyOSBhc2stMDggc3lzdGVtZFsxXTogbXVsdGlwYXRoZC5zZXJ2aWNlOiBHb3Qgbm90aWZpY2F0
+aW9uCj4gbWVzc2FnZSBmcm9tIFBJRCA2MzIxLCBidXQgcmVjZXB0aW9uIG9ubHkgcGVybWl0dGVk
+IGZvciBQSUQgMAo+IE5vdiAyMiAwOTo0NjozMCBhc2stMDggc3lzdGVtZFsxXTogbXVsdGlwYXRo
+ZC5zZXJ2aWNlOiBHb3Qgbm90aWZpY2F0aW9uCj4gbWVzc2FnZSBmcm9tIFBJRCA2MzIxLCBidXQg
+cmVjZXB0aW9uIG9ubHkgcGVybWl0dGVkIGZvciBQSUQgMAo+IE5vdiAyMiAwOTo0NjozMSBhc2st
+MDggc3lzdGVtZFsxXTogbXVsdGlwYXRoZC5zZXJ2aWNlOiBHb3Qgbm90aWZpY2F0aW9uCj4gbWVz
+c2FnZSBmcm9tIFBJRCA2MzIxLCBidXQgcmVjZXB0aW9uIG9ubHkgcGVybWl0dGVkIGZvciBQSUQg
+MAo+IAo+IEFsc28KPiAKPiAjIHNlcnZpY2UgbXVsdGlwYXRoZCBzdG9wCj4gCj4gd29uJ3Qga2ls
+bCBpdC4gRXZlbiB3b3JzZQo+IAo+ICMgc2VydmljZSBtdWx0aXBhdGhkIHN0YXJ0Cj4gCj4gV0lM
+TCBraWxsIGl0IHdpdGhvdXQgc3VjY2Vzc2Z1bGx5IHJlc3RhcnRpbmcgYW5vdGhlciB2ZXJzaW9u
+LiBBIHNlY29uZAo+IAo+ICMgc2VydmljZSBtdWx0aXBhdGhkIHN0YXJ0Cj4gCj4gaXMgbmVjZXNz
+YXJ5IHRvIGdldCB0aGluZ3MgYmFjayB0byBhIGZ1bmN0aW9uYWwgc3RhdGUgYWdhaW4uCj4gCkFj
+dHVhbGx5LCB1cHN0cmVhbSBzeXN0ZW1kICg+PSB2MjA3KSBub3cgaGFzIGEgbmV3IGZsYWcKCnJl
+c3RhcnQ9b24td2F0Y2hkb2cKCldpdGggdGhhdCBzeXN0ZW1kIHNob3VsZCBiZSByZXN0YXJ0aW5n
+IG11bHRpcGF0aGQgYWZ0ZXIgYSB3YXRjaGRvZwp0aW1lb3V0LiBUaGF0IHNob3VsZCBzb2x2ZSB5
+b3UgaW1tZWRpYXRlIHByb2JsZW0gaGVyZS4KCj4gSSdtIG5vdCBhc2tpbmcgZm9yIHN5c3RlbWQg
+dG8gYWN0dWFsbHkgc2h1dCBkb3duIG11bHRpcGF0aGQuICBJbiBhCj4gcHJvZHVjdGlvbiBzZXR1
+cCwga2lsbGluZyBtdWx0aXBhdGhkIGJlY2F1c2UgaXQgaGFkIGEgdGVtcG9yYXJ5IHN0YWxsCj4g
+c2VlbXMgbGlrZSBiYWQgZGVmYXVsdCBiZWhhdmlvci4gIEkgaGF2ZW4ndCBsb29rZWQgYXQgdGhl
+IHN5c3RlbWQKPiB3YXRjaGRvZyBjb2RlIHRvIGtub3cgaWYgdGhpcyBpcyBwb3NzaWJsZSwgYnV0
+IGlkZWFsbHksIG11bHRpcGF0aGQgd291bGQKPiBiZSBhYmxlIHRvIGp1c3Qgc3RhcnQgc2VuZGlu
+ZyB3YXRjaGRvZyBub3RpZmljYXRpb25zIGFnYWluLCBhbmQgYmUgYWJsZQo+IHRvIGNvbnRpbnVl
+IG9uIHdpdGgganVzdCBhIG1lc3NhZ2UgaW4gdGhlIGxvZ3MgcmVjb3JkaW5nIHRoZSB0aW1lb3V0
+Lgo+IApOb3Qgc3RvcHBpbmcuIFJlc3RhcnRpbmcuClRoZSB3aG9sZSBwb2ludCBvZiB0aGUgd2F0
+Y2hkb2cgY29kZSBpcyB0byB0YWtlIHNvbWUgYWN0aW9uIGlmIHRoZQp3YXRjaGRvZyBtZXNzYWdl
+cyBmYWlsLgpXZSBzaG91bGQgYWltIGZvcgphKSBtYWtlIHRoZSB3YXRjaGRvZyBpbnRlcnZhbCB0
+aGUgbG9uZ2VzdCBpbnRlcnZhbCB3ZSdyZSBwcmVwYXJlZCB0bwogICBjaGVja2VybG9vcCB0byBj
+b21wbGV0ZSAoaGVuY2UgdGhlIHBhdGNoIHRvIG1lYXN1cmUgdGhlIGVsYXBzZWQKICAgdGltZSBw
+ZXIgbG9vcCBpdGVyYXRpb24pCmIpIGhhdmUgc3lzdGVtZCByZXN0YXJ0IG11bHRpcGF0aGQgd2hl
+bmV2ZXIgdGhlIHdhdGNoZG9nIHRyaWdnZXJzLAogICBhcyB0aGVuIHdlJ3JlIHN1cmUgd2UgY2Fu
+J3QgcmVjb3ZlciBmcm9tIHRoaXMuCgpUaGF0IHNob3VsZCBjb3ZlciB5b3VyIHNlbnRpbWVudCwg
+cmlnaHQ/Cgo+IEkgcmVhbGl6ZSB0aGF0IHRoZXJlIGlzIGEgYmVuZWZpdCB0byBsZXR0aW5nIHBl
+b3BsZSBrbm93IHRoYXQgdGhlcmUgd2FzCj4gYSBwcm9ibGVtLCBidXQgdGhlIHdheSBpdCdzIGFw
+cGVhcmluZyBub3csIGl0IHdpbGwgYmUgcHJldHR5IGNvbmZ1c2luZyB0bwo+IHRoZSBzeXNhZG1p
+biB3aG8gc2VlcyB0aGF0LCBhbmQgZmlsbGluZyB1cCB0aGUgbG9ncyB3aXRoIG5vdGlmaWNhdGlv
+bgo+IHJlamVjdGlvbnMgaXMgcHJldHR5IGFubm95aW5nLgo+IApZZWFoLCBjb3JyZWN0LiBXZSBz
+aG91bGQgYmUgdXNpbmcgdGhlICdyZXN0YXJ0JyBmbGFnIGluIHRoZSBzZXJ2aWNlCmZpbGUuIEkg
+ZGlkIG5vdCBkbyB0aGlzIGFzIHRoZSBwYXRjaCB3ZW50IGludG8gc3lzdGVtZCBvbmx5CnJlY2Vu
+dGx5LCBhbmQgb25lIHdvdWxkIG5lZWQgdG8gZmlndXJlIG91dCBob3cgdG8gdHJlYXQKaW5zdGFs
+bGF0aW9ucyB3aGVyZSBhbiBvbGRlciBzeXN0ZW1kIHZlcnNpb24gaXMgcnVubmluZy4KCj4gQW5k
+IGFzIGxvbmcgYXMgSSdtIGFza2luZyBmb3Igc3lzdGVtZCB0aGluZ3MsIHRoZSBhYmlsaXR5IHRv
+IGFkZCBhIHJ1bGUKPiB0byB0aGUgdW5pdCBmaWxlIHRoYXQga2lsbHMgdGhlIHNlcnZpY2UgYW5k
+IGZvcmNlcyBhIGNvcmUgZHVtcCB3aGVuCj4gd2F0Y2hkb2cgdGltZXIgd2FzIHRyaXBwZWQgd291
+bGQgaGVscCB0cmFja2luZyBkb3duIHdoYXQncyBzdGFsbGluZyB0aGUKPiBjaGVja2VyIGxvb3Au
+ICBMaWtlIEkgc2FpZCBiZWZvcmUsIEkgZG9uJ3QgdGhpbmsgdGhpcyBzaG91bGQgYmUKPiBoYXBw
+ZW5pbmcgYnkgZGVmYXVsdCwgYnV0IHB1dHRpbmcgaXQgaW4gdGhlcmUgY29tbWVudGVkIG91dCBt
+aWdodCBub3QgYmUKPiBhIGJhZCBpZGVhLgo+IApZZWFoLCB0aGF0IHdvdWxkIGJlIHByZWZlcmFi
+bGUuIFNhZGx5IHRoZXJlIGlzIG5vICdmb3JjZSBjb3JlZHVtcCcKb3B0aW9uLiBXaGF0IEkgd291
+bGQgbGlrZSB0byBoYXZlIGlzIGEKJ29uLXdhdGNoZG9nJwpvcHRpb24gaW4gc3lzdGVtZCwgd2hl
+cmUgb25lIGNhbiBjb25maWd1cmUgdGhlIGFjdGlvbiB3aGljaCBuZWVkcyB0bwpiZSB0YWtlbiB3
+aGVuIHRoZSB3YXRjaGRvZyB0cmlnZ2Vycy4KT25seSBhZGRpbmcgYSBuZXcgb3B0aW9uIGlzIHRv
+dWNoaW5nIHN5c3RlbWQgaW4gdG9ucyBvZiB2YXJpb3VzCnBsYWNlcywgc28gbXkgaW5pdGlhbCBh
+dHRlbXB0IGhlcmUgZmFpbGVkLgpTbyBJIHdlbnQgZm9yIHRoZSBlYXNpZXIgb3B0aW9uIHRvIGp1
+c3QgYWRkIGEgbmV3IGZsYWcgdG8gYW4KZXhpc3Rpbmcgc2V0dGluZy4KCkNoZWVycywKCkhhbm5l
+cwpQLlMuOiBCdXQgaGV5LCBhdCBsZWFzdCBzb21lb25lIGlzIGFjdHVhbGx5IHRlc3RpbmcgdGhp
+cyBzdHVmZi4KQ29vbC4KLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBT
+dG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVgg
+UHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXdu
+LCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
