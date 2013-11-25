@@ -1,72 +1,116 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 09/13] multipathd: Implement systemd watchdog
- integration
-Date: Mon, 25 Nov 2013 17:21:15 +0100
-Message-ID: <529378FB.4040803@suse.de>
-References: <1384511384-27642-1-git-send-email-hare@suse.de>	<1384511384-27642-10-git-send-email-hare@suse.de>	<20131122221759.GM1661@dhcp80-209.msp.redhat.com>
-	<5293013B.4010008@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: A bug in snapshot space calculation
+Date: Mon, 25 Nov 2013 12:33:34 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1311251159540.5534@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5293013B.4010008@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/25/2013 08:50 AM, Hannes Reinecke wrote:
-> On 11/22/2013 11:17 PM, Benjamin Marzinski wrote:
-[ .. ]
->> I'm not asking for systemd to actually shut down multipathd.  In a
->> production setup, killing multipathd because it had a temporary stall
->> seems like bad default behavior.  I haven't looked at the systemd
->> watchdog code to know if this is possible, but ideally, multipathd would
->> be able to just start sending watchdog notifications again, and be able
->> to continue on with just a message in the logs recording the timeout.
->>
-> Not stopping. Restarting.
-> The whole point of the watchdog code is to take some action if the
-> watchdog messages fail.
-> We should aim for
-> a) make the watchdog interval the longest interval we're prepared to
->     checkerloop to complete (hence the patch to measure the elapsed
->     time per loop iteration)
-> b) have systemd restart multipathd whenever the watchdog triggers,
->     as then we're sure we can't recover from this.
->
-> That should cover your sentiment, right?
->
->> I realize that there is a benefit to letting people know that there was
->> a problem, but the way it's appearing now, it will be pretty confusing to
->> the sysadmin who sees that, and filling up the logs with notification
->> rejections is pretty annoying.
->>
-> Yeah, correct. We should be using the 'restart' flag in the service
-> file. I did not do this as the patch went into systemd only
-> recently, and one would need to figure out how to treat
-> installations where an older systemd version is running.
->
-And it also looks as if we'd be tripping over RH bug#982379, where
-the watchdog fails to shutdown a process properly.
-Which apparently is fixed in 206.
-So we'd need a recent systemd for that to work properly.
+Hi
 
-I'm _quite_ sure there are errors in earlier versions, where the
-watchdog feature just causes a new process to be started, without
-terminating the old one. _Very_ annoying.
+I looked at bug 916746 and patch 
+https://www.redhat.com/archives/lvm-devel/2013-May/msg00135.html - it 
+limits the snapshot size 
 
-I'll retest with latest systemd. And make the watchdog feature
-selective on the systemd version.
+There are problems:
 
-Cheers,
 
-Hannes
+1) when a metadata chunk is filled completely, you need one more chunk for 
+next metadata area
+
+For example, suppose that you have 4k chunk size and 256 data chunks (so 
+that all data chunks fill one metadata area). Metadata then looks like 
+this:
+
+SUPERBLOCK
+METADATA (containing records DATA 0 ... 255)
+DATA 0
+DATA 1
+DATA 2
+...
+DATA 255
+METADATA (containing all zeros)
+
+This extra metadata area if metadata fills up the previous area is not 
+accounted for in the code.
+
+The code should be changed to look like this:
+uint64_t origin_chunks = (origin_size + chunk_size - 1) / chunk_size;
+uint64_t chunks_per_metadata_area = (uint64_t)chunk_size << (SECTOR_SHIFT - 4);
+/* note that there is no "- 1" in the next line, so we allocate one more 
+   metadata area if the last area is filled up completely */
+uint64_t metadata_chunks = (origin_chunks + chunks_per_metadata_area) / chunks_per_metadata_area;
+return (1 + origin_chunks + metadata_chunks) * chunk_size;
+
+
+
+2) in case of crash, snapshots may leak space. Consequently, we should to 
+reserve a few more chunks to account for this possible leaking.
+
+The reason for space leaking is that chunks in the snapshot device are 
+allocated sequentially, but they are finished (and stored in the metadata) 
+out of order, depending on the order in which copying finished.
+
+For example, supposed that the metadata contains the following records
+SUEPRBLOCK
+METADATA (blocks 0 ... 250)
+DATA 0
+DATA 1
+DATA 2
+...
+DATA 250
+
+Now suppose that you allocate 10 new data blocks 251-260. Suppose, that 
+copying of these blocks finish out of order (with the block 260 finished 
+first and the block 251 finished last). Now, the snapshot device looks 
+like this:
+SUPERBLOCK
+METADATA (blocks 0 ... 250, 260, 259, 258, 257, 256)
+DATA 0
+DATA 1
+DATA 2
+...
+DATA 250
+DATA 251
+DATA 252
+DATA 253
+DATA 254
+DATA 255
+METADATA (blocks 255, 254, 253, 252, 251)
+DATA 256
+DATA 257
+DATA 258
+DATA 259
+DATA 260
+
+Now, if the machine crashes after writing the first metadata block and 
+before writing the second metadata block, the space for areas DATA 250-255 
+is leaked, it contains no valid data and it will never be used in the 
+future.
+
+Maybe this could be fixed in the kernel by storing completed exceptions in 
+another list and forcing in-order completion.
+
+But until this is fixed, the userspace code should reserve some extra 
+space in the snapshot for the possibility of space leaking.
+
+Mikulas
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
