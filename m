@@ -1,255 +1,99 @@
-From: "Akash Bhatnagar" <akash.bhatnagar@broadcom.com>
-Subject: Unknown crypt device type VERITY over Ubuntu 12.04
-Date: Tue, 26 Nov 2013 12:22:38 +0000
-Message-ID: <E9CDC8D7E4A711429544A9E2B5E944734B062D@SJEXCHMB15.corp.ad.broadcom.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1336231900761886476=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH 1/1] MD/DM RAID: Fix hang due to recent RAID5 locking changes
+Date: Tue, 26 Nov 2013 08:32:36 -0600
+Message-ID: <3526D887-4D5D-4B09-9CAE-F771EFE45E6A@redhat.com>
+References: <1385335843-14021-1-git-send-email-jbrassow@redhat.com> <1385335843-14021-2-git-send-email-jbrassow@redhat.com> <20131125110315.262223cf@notabene.brown> <D89A7889-9B7B-40F1-AD7D-08937D168C7E@redhat.com> <30A220BB-6E93-44C9-A487-F23DBF546ED6@redhat.com> <20131126162746.4d42ef1d@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20131126162746.4d42ef1d@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: "linux-raid@vger.kernel.org Raid" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Shaohua Li <shli@kernel.org>
 List-Id: dm-devel.ids
 
 
---===============1336231900761886476==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary=_000_E9CDC8D7E4A711429544A9E2B5E944734B062DSJEXCHMB15corpadb_
+On Nov 25, 2013, at 11:27 PM, NeilBrown wrote:
 
+> On Mon, 25 Nov 2013 13:08:56 -0600 Brassow Jonathan <jbrassow@redhat.com>
+> wrote:
+> 
+>> 
+>> On Nov 25, 2013, at 8:20 AM, Brassow Jonathan wrote:
+>> 
+>>> 
+>>> On Nov 24, 2013, at 6:03 PM, NeilBrown wrote:
+>>> 
+>>>> On Sun, 24 Nov 2013 17:30:43 -0600 Jonathan Brassow <jbrassow@redhat.com>
+>>>> wrote:
+>>>> 
+>>>>> When commit 773ca82 was made in v3.12-rc1, it caused RAID4/5/6 devices
+>>>>> that were created via device-mapper (dm-raid.c) to hang on creation.
+>>>>> This is not necessarily the fault of that commit, but perhaps the way
+>>>>> dm-raid.c was setting-up and activating devices.
+>>>>> 
+>>>>> Device-mapper allows I/O and memory allocations in the constructor
+>>>>> (i.e. raid_ctr()), but nominal and recovery I/O should not be allowed
+>>>>> until a 'resume' is issued (i.e. raid_resume()).  It has been problematic
+>>>>> (at least in the past) to call mddev_resume before mddev_suspend was
+>>>>> called, but this is how DM behaves - CTR then resume.  To solve the
+>>>>> problem, raid_ctr() was setting up the structures, calling md_run(), and
+>>>>> then also calling mddev_suspend().  The stage was then set for raid_resume()
+>>>>> to call mddev_resume().
+>>>>> 
+>>>>> Commit 773ca82 caused a change in behavior during raid5.c:run().
+>>>>> 'setup_conf->grow_stripes->grow_one_stripe' is called which creates the
+>>>>> stripe cache and increments 'active_stripes'.
+>>>>> 'grow_one_stripe->release_stripe' doesn't actually decrement 'active_stripes'
+>>>>> anymore.  The side effect of this is that when raid_ctr calls mddev_suspend,
+>>>>> it waits for 'active_stripes' to reduce to 0 - which never happens.
+>>>> 
+>>>> Hi Jon,
+>>>> this sounds like the same bug that is fixed by 
+>>>> 
+>>>> commit ad4068de49862b083ac2a15bc50689bb30ce3e44
+>>>> Author: majianpeng <majianpeng@gmail.com>
+>>>> Date:   Thu Nov 14 15:16:15 2013 +1100
+>>>> 
+>>>>  raid5: Use slow_path to release stripe when mddev->thread is null
+>>>> 
+>>>> which is already en-route to 3.12.x.  Could you check if it fixes the bug for
+>>>> you?
+>>> 
+>>> Sure, I'll check.  Just reading the subject of the patch, I have high hopes.  The slow path decrements 'active_stripes', which was causing the above problem...  I'll make sure though.
+>> 
+>> Yes, this patch fixes the issue in 3.12-rc1+.
+>> 
+>> However, there is still a problem I'm searching for that was introduced in commit 566c09c (at least that's what I get when bisecting).
+>> 
+>> The problem only shows up when I have taken a snapshot of a RAID5 device and only if I have cycled the device before adding the snapshot:
+>> 1> lvcreate --type raid5 -i 3 -L 20M -n lv vg
+>> 2> lvchange -an vg/lv
+>> 3> lvchange -ay vg/lv
+>> 4> lvcreate -s vg/lv -L 50M -n snap
+>> 5> lvchange -an vg/lv
+>> 6> lvchange -ay vg/lv -- BUG: line 292 of raid5.c
+>> 
+>> The current bug triggers on the 'BUG_ON(atomic_read(&conf->active_stripes)==0)' in do_release_stripe().  I'm not sure why yet.
+>> 
+>> brassow
+> 
+> I've had a look and I must say I'm not sure either.
+> I keep wondering if something is wrong with the locking in get_active_stripe.
+> The region covered by device_lock is not much smaller with the whole now
+> covered by hash_locks[hash].  I cannot see a problem with the locking but I
+> might be missing something.  A missing atomic_inc of active_stripes in there
+> could cause your problem.
+> 
+> As you can easily reproduce, could you try expanding the range covered by
+> device_lock to be the whole branch where sh is not NULL.  If that makes a
+> difference it would be quite instructive.  I don't hold high hopes though.
 
---_000_E9CDC8D7E4A711429544A9E2B5E944734B062DSJEXCHMB15corpadb_
-Content-Type: text/plain;
- charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
+Sure, I'll try that.
 
-HI,
+I've also found that I hit the BUG() on line 693 of raid5.c:get_active_stripe().
 
-I have build cryptsetup over Ubuntu 12.04 using standard way with almost al=
-l the dependent packages compiled manually. Below is the list of all the pa=
-ckages which generated dependency errors:-
+thanks,
+ brassow
 
-1) util-linux-ng-2.18.tar.bz2 -->{./configure && make && make install}
-2) libgpg-error-1.9.tar.gz --> {./configure && make && make install}
-3) libgcrypt-1.5.3.tar.gz --> {./configure && make && make install}
-4) LVM2.2.02.99.tgz --> {./configure && make && make install}
-5) cryptsetup-1.6.2.tar.bz2 --> {./configure && make && make install}
-
-After that I have changed the running kernel 3.8.x with the debian packages=
- of Linux kernel 3.11.x which already have dm-verity.ko module.
-
-6) Then I have insert dm-verity module (modprobe dm-verity)
-
-In order to test verity framework, I have created two sample block devices;=
-one for data device and other for hash device:-
-
-7) losetup system.img.raw /dev/loop2
-   echo "0 $(blockdev --getsize /dev/loop2) linear /dev/loop2 0" |\
-   dmsetup  create my_dm
-
-8) dd if=3D/dev/zero of=3D/tmp/store1 bs=3D1024 seek=3D2047 count=3D1
-   losetup /tmp/store1 /dev/loop0
-   echo "0 $(blockdev --getsize /dev/loop0) linear /dev/loop0 0" |\
-   dmsetup  create my_hash_dm
-
-And finally during test; the veritysetup shows following error instead of R=
-oot Hash
-
-veritysetup format /dev/mapper/my_dm /dev/mapper/my_hash_dm
-
-Unknown crypt device type VERITY requested.
-
-I am unable to locate the issue and tried alot. Please indicate if any of t=
-he step is incorrect and should not be done. Also specify any alternatives.
-
-Thanks
-Akash
-
-
---_000_E9CDC8D7E4A711429544A9E2B5E944734B062DSJEXCHMB15corpadb_
-Content-Type: text/html;
- charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:x=3D"urn:schemas-microsoft-com:office:excel" xmlns:m=3D"http://schema=
-s.microsoft.com/office/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-html=
-40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 14 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri","sans-serif";}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:purple;
-	text-decoration:underline;}
-pre
-	{mso-style-priority:99;
-	mso-style-link:"HTML Preformatted Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Courier New";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri","sans-serif";
-	color:windowtext;}
-span.HTMLPreformattedChar
-	{mso-style-name:"HTML Preformatted Char";
-	mso-style-priority:99;
-	mso-style-link:"HTML Preformatted";
-	font-family:"Courier New";}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri","sans-serif";}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"blue" vlink=3D"purple">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">HI,<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">I have build cryptsetup over Ubuntu 12.04 using standard w=
-ay with almost all the dependent packages compiled manually. Below is the l=
-ist of all the packages which generated dependency
- errors:-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">1) util-linux-ng-2.18.tar.bz2 --&gt;{./configure &amp;&amp=
-; make &amp;&amp; make install}<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">2) libgpg-error-1.9.tar.gz --&gt; {./configure &amp;&amp; =
-make &amp;&amp; make install}<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">3) libgcrypt-1.5.3.tar.gz --&gt; {./configure &amp;&amp; m=
-ake &amp;&amp; make install}<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">4) LVM2.2.02.99.tgz --&gt; {./configure &amp;&amp; make &a=
-mp;&amp; make install}<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">5) cryptsetup-1.6.2.tar.bz2 --&gt; {./configure &amp;&amp;=
- make &amp;&amp; make install}<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">After that I have changed the running kernel 3.8.x with th=
-e debian packages of Linux kernel 3.11.x which already have dm-verity.ko mo=
-dule.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">6) Then I have insert dm-verity module (modprobe dm-verity=
-)<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">In order to test verity framework, I have created two samp=
-le block devices;one for data device and other for hash device:-<o:p></o:p>=
-</span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">7) losetup system.img.raw /dev/loop2<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">&nbsp;&nbsp; echo &quot;0 $(blockdev --getsize /dev/loop2)=
- linear /dev/loop2 0&quot; |\
-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">&nbsp;&nbsp;&nbsp;dmsetup&nbsp; create my_dm<o:p></o:p></s=
-pan></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">8) dd if=3D/dev/zero of=3D/tmp/store1 bs=3D1024 seek=3D204=
-7 count=3D1<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">&nbsp;&nbsp; losetup /tmp/store1 /dev/loop0<o:p></o:p></sp=
-an></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">&nbsp;&nbsp; echo &quot;0 $(blockdev --getsize /dev/loop0)=
- linear /dev/loop0 0&quot; |\
-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">&nbsp;&nbsp;&nbsp;dmsetup&nbsp; create my_hash_dm<o:p></o:=
-p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">And finally during test; the veritysetup shows following e=
-rror instead of Root Hash<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">veritysetup format /dev/mapper/my_dm /dev/mapper/my_hash_d=
-m
-<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">Unknown crypt device type VERITY requested.<o:p></o:p></sp=
-an></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">I am unable to locate the issue and tried alot. Please ind=
-icate if any of the step is incorrect and should not be done. Also specify =
-any alternatives.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">Thanks<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:10.0pt;font-family:&quot;Co=
-urier New&quot;">Akash<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
-
---_000_E9CDC8D7E4A711429544A9E2B5E944734B062DSJEXCHMB15corpadb_--
-
-
---===============1336231900761886476==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1336231900761886476==--
