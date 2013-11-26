@@ -1,12 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 0/9] multipath systemd integration
-Date: Tue, 26 Nov 2013 12:41:21 +0100
-Message-ID: <1385466090-24290-1-git-send-email-hare@suse.de>
+Subject: [PATCH 3/9] multipathd: Add option '-s' to suppress
+	timestamps
+Date: Tue, 26 Nov 2013 12:41:24 +0100
+Message-ID: <1385466090-24290-4-git-send-email-hare@suse.de>
+References: <1385466090-24290-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1385466090-24290-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,50 +23,143 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Christophe,
+systemd prefixes any messages to stdout with a timestamp, so it's
+quite pointless to do it ourself.
 
-here is now the patchset for systemd integration. As requested
-I've implemented a conditional compilation. Whenever systemd
-is installed on the system the systemd hooks are compiled in,
-or left out if not. I've also pulled the patch for the 'one-shot'
-mechanism as Ben Marzinski rightly pointed out issues with
-that one. The watchdog implementation has been clarified and
-tested; turned out to be a systemd issue where watchdog is only
-working properly on later versions of systemd.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ libmultipath/debug.c     | 17 ++++++++++-------
+ libmultipath/devmapper.c | 16 +++++++++-------
+ multipathd/main.c        | 11 +++++++----
+ multipathd/multipathd.8  |  7 +++++--
+ 4 files changed, 31 insertions(+), 20 deletions(-)
 
-Hannes Reinecke (9):
-  Clarify uxsock logging
-  Use system-provided regex implementation
-  multipathd: Add option '-s' to suppress timestamps
-  multipathd: switch to socket activation for systemd
-  multipathd: use sd_notify() to inform systemd
-  multipathd: Implement systemd watchdog integration
-  multipathd: enable core dumps for systemd
-  multipathd: Read environment variables from systemd
-  multipathd: measure path check time
-
- Makefile.inc                     |    6 +
- libmultipath/Makefile            |    8 +-
- libmultipath/debug.c             |   17 +-
- libmultipath/devmapper.c         |   16 +-
- libmultipath/regex.c             | 4032 --------------------------------------
- libmultipath/regex.h             |  252 ---
- libmultipath/uxsock.c            |   28 +-
- multipath/multipath.conf.5       |    7 +-
- multipathd/Makefile              |   26 +-
- multipathd/main.c                |  109 +-
- multipathd/multipathd.8          |   34 +-
- multipathd/multipathd.service    |   16 -
- multipathd/multipathd.service.in |   18 +
- multipathd/multipathd.socket     |    5 +
- multipathd/uxclnt.c              |    4 +-
- multipathd/uxlsnr.c              |    4 +-
- 16 files changed, 228 insertions(+), 4354 deletions(-)
- delete mode 100644 libmultipath/regex.c
- delete mode 100644 libmultipath/regex.h
- delete mode 100644 multipathd/multipathd.service
- create mode 100644 multipathd/multipathd.service.in
- create mode 100644 multipathd/multipathd.socket
-
+diff --git a/libmultipath/debug.c b/libmultipath/debug.c
+index d30517d..bad78a8 100644
+--- a/libmultipath/debug.c
++++ b/libmultipath/debug.c
+@@ -21,15 +21,18 @@ void dlog (int sink, int prio, const char * fmt, ...)
+ 	thres = (conf) ? conf->verbosity : 0;
+ 
+ 	if (prio <= thres) {
+-		if (!sink) {
+-			time_t t = time(NULL);
+-			struct tm *tb = localtime(&t);
+-			char buff[16];
++		if (sink < 1) {
++			if (sink == 0) {
++				time_t t = time(NULL);
++				struct tm *tb = localtime(&t);
++				char buff[16];
+ 
+-			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
+-			buff[sizeof(buff)-1] = '\0';
++				strftime(buff, sizeof(buff),
++					 "%b %d %H:%M:%S", tb);
++				buff[sizeof(buff)-1] = '\0';
+ 
+-			fprintf(stdout, "%s | ", buff);
++				fprintf(stdout, "%s | ", buff);
++			}
+ 			vfprintf(stdout, fmt, ap);
+ 		}
+ 		else
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 4c8b923..71281e6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -71,15 +71,17 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
+ 		return;
+ 
+ 	va_start(ap, f);
+-	if (!logsink) {
+-		time_t t = time(NULL);
+-		struct tm *tb = localtime(&t);
+-		char buff[16];
++	if (logsink < 1) {
++		if (logsink == 0) {
++			time_t t = time(NULL);
++			struct tm *tb = localtime(&t);
++			char buff[16];
+ 
+-		strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
+-		buff[sizeof(buff)-1] = '\0';
++			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
++			buff[sizeof(buff)-1] = '\0';
+ 
+-		fprintf(stdout, "%s | ", buff);
++			fprintf(stdout, "%s | ", buff);
++		}
+ 		fprintf(stdout, "libdevmapper: %s(%i): ", file, line);
+ 		vfprintf(stdout, f, ap);
+ 		fprintf(stdout, "\n");
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 91d7bfc..78d9265 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1597,7 +1597,7 @@ child (void * param)
+ 	setup_thread_attr(&uevent_attr, 128 * 1024, 1);
+ 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
+ 
+-	if (logsink) {
++	if (logsink == 1) {
+ 		setup_thread_attr(&log_attr, 64 * 1024, 0);
+ 		log_thread_start(&log_attr);
+ 		pthread_attr_destroy(&log_attr);
+@@ -1749,7 +1749,7 @@ child (void * param)
+ 
+ 	condlog(2, "--------shut down-------");
+ 
+-	if (logsink)
++	if (logsink == 1)
+ 		log_thread_stop();
+ 
+ 	/*
+@@ -1849,7 +1849,7 @@ main (int argc, char *argv[])
+ 	if (!conf)
+ 		exit(1);
+ 
+-	while ((arg = getopt(argc, argv, ":dv:k::")) != EOF ) {
++	while ((arg = getopt(argc, argv, ":dsv:k::")) != EOF ) {
+ 	switch(arg) {
+ 		case 'd':
+ 			logsink = 0;
+@@ -1862,6 +1862,9 @@ main (int argc, char *argv[])
+ 
+ 			conf->verbosity = atoi(optarg);
+ 			break;
++		case 's':
++			logsink = -1;
++			break;
+ 		case 'k':
+ 			uxclnt(optarg);
+ 			exit(0);
+@@ -1886,7 +1889,7 @@ main (int argc, char *argv[])
+ 		exit(0);
+ 	}
+ 
+-	if (!logsink)
++	if (logsink < 1)
+ 		err = 0;
+ 	else
+ 		err = daemonize();
+diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
+index ccc5f54..2aea150 100644
+--- a/multipathd/multipathd.8
++++ b/multipathd/multipathd.8
+@@ -20,8 +20,11 @@ devmap reconfiguration, so that it can refresh its failed path list.
+ .SH OPTIONS
+ .TP
+ .B \-d
+-Forground Mode. Don't daemonize, and print all messages to stdout and stderr.
+-.TP 
++Foreground Mode. Don't daemonize, and print all messages to stdout and stderr.
++.TP
++.B \-s
++Suppress timestamps. Do not prefix logging messages with a timestamp.
++.TP
+ .B -v "level"
+ Verbosity level. Print additional information while running multipathd. A  level of 0 means only print errors. A level of 3 or greater prints debugging information as well. 
+ .TP
 -- 
 1.8.1.4
