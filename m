@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 3/9] multipathd: Add option '-s' to suppress
-	timestamps
-Date: Tue, 26 Nov 2013 12:41:24 +0100
-Message-ID: <1385466090-24290-4-git-send-email-hare@suse.de>
+Subject: [PATCH 4/9] multipathd: switch to socket activation for
+	systemd
+Date: Tue, 26 Nov 2013 12:41:25 +0100
+Message-ID: <1385466090-24290-5-git-send-email-hare@suse.de>
 References: <1385466090-24290-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,143 +23,167 @@ To: Christophe Varoqui <christophe.varoqui@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-systemd prefixes any messages to stdout with a timestamp, so it's
-quite pointless to do it ourself.
+multipathd already has a netlink socket for CLI commands, which
+can be used for socket activation.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/debug.c     | 17 ++++++++++-------
- libmultipath/devmapper.c | 16 +++++++++-------
- multipathd/main.c        | 11 +++++++----
- multipathd/multipathd.8  |  7 +++++--
- 4 files changed, 31 insertions(+), 20 deletions(-)
+ Makefile.inc                  |  6 ++++++
+ libmultipath/Makefile         |  6 ++++++
+ libmultipath/uxsock.c         | 17 +++++++++++++++++
+ multipathd/Makefile           | 12 ++++++++++--
+ multipathd/multipathd.service |  8 ++++----
+ multipathd/multipathd.socket  |  5 +++++
+ 6 files changed, 48 insertions(+), 6 deletions(-)
+ create mode 100644 multipathd/multipathd.socket
 
-diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-index d30517d..bad78a8 100644
---- a/libmultipath/debug.c
-+++ b/libmultipath/debug.c
-@@ -21,15 +21,18 @@ void dlog (int sink, int prio, const char * fmt, ...)
- 	thres = (conf) ? conf->verbosity : 0;
+diff --git a/Makefile.inc b/Makefile.inc
+index 92d2289..7186484 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -21,6 +21,12 @@ ifndef LIB
+ 	endif
+ endif
  
- 	if (prio <= thres) {
--		if (!sink) {
--			time_t t = time(NULL);
--			struct tm *tb = localtime(&t);
--			char buff[16];
-+		if (sink < 1) {
-+			if (sink == 0) {
-+				time_t t = time(NULL);
-+				struct tm *tb = localtime(&t);
-+				char buff[16];
++ifndef SYSTEMD
++	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
++		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
++	endif
++endif
++
+ prefix      = 
+ exec_prefix = $(prefix)
+ bindir      = $(exec_prefix)/sbin
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index f760f24..6364364 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -8,6 +8,9 @@ SONAME=0
+ DEVLIB = libmultipath.so
+ LIBS = $(DEVLIB).$(SONAME)
+ LIBDEPS = -lpthread -ldl -ldevmapper -ludev
++ifdef SYSTEMD
++	LIBDEPS += -lsystemd-daemon
++endif
  
--			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
--			buff[sizeof(buff)-1] = '\0';
-+				strftime(buff, sizeof(buff),
-+					 "%b %d %H:%M:%S", tb);
-+				buff[sizeof(buff)-1] = '\0';
+ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+        hwtable.o blacklist.o util.o dmparser.o config.o \
+@@ -35,6 +38,9 @@ ifneq ($(strip $(LIBUDEV_API_RECVBUF)),0)
+ 	CFLAGS += -DLIBUDEV_API_RECVBUF
+ endif
  
--			fprintf(stdout, "%s | ", buff);
-+				fprintf(stdout, "%s | ", buff);
-+			}
- 			vfprintf(stdout, fmt, ap);
- 		}
- 		else
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 4c8b923..71281e6 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -71,15 +71,17 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
- 		return;
++ifdef SYSTEMD
++	CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
++endif
  
- 	va_start(ap, f);
--	if (!logsink) {
--		time_t t = time(NULL);
--		struct tm *tb = localtime(&t);
--		char buff[16];
-+	if (logsink < 1) {
-+		if (logsink == 0) {
-+			time_t t = time(NULL);
-+			struct tm *tb = localtime(&t);
-+			char buff[16];
+ all: $(LIBS)
  
--		strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
--		buff[sizeof(buff)-1] = '\0';
-+			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
-+			buff[sizeof(buff)-1] = '\0';
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index e93edff..aff7a62 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -16,6 +16,9 @@
+ #include <sys/poll.h>
+ #include <signal.h>
+ #include <errno.h>
++#ifdef USE_SYSTEMD
++#include <systemd/sd-daemon.h>
++#endif
  
--		fprintf(stdout, "%s | ", buff);
-+			fprintf(stdout, "%s | ", buff);
-+		}
- 		fprintf(stdout, "libdevmapper: %s(%i): ", file, line);
- 		vfprintf(stdout, f, ap);
- 		fprintf(stdout, "\n");
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 91d7bfc..78d9265 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1597,7 +1597,7 @@ child (void * param)
- 	setup_thread_attr(&uevent_attr, 128 * 1024, 1);
- 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
+ #include "memory.h"
+ #include "uxsock.h"
+@@ -57,8 +60,22 @@ int ux_socket_connect(const char *name)
+ int ux_socket_listen(const char *name)
+ {
+ 	int fd, len;
++#ifdef USE_SYSTEMD
++	int num;
++#endif
+ 	struct sockaddr_un addr;
  
--	if (logsink) {
-+	if (logsink == 1) {
- 		setup_thread_attr(&log_attr, 64 * 1024, 0);
- 		log_thread_start(&log_attr);
- 		pthread_attr_destroy(&log_attr);
-@@ -1749,7 +1749,7 @@ child (void * param)
++#ifdef USE_SYSTEMD
++	num = sd_listen_fds(0);
++	if (num > 1) {
++		condlog(3, "sd_listen_fds returned %d fds", num);
++		return -1;
++	} else if (num == 1) {
++		fd = SD_LISTEN_FDS_START + 0;
++		condlog(3, "using fd %d from sd_listen_fds", fd);
++		return fd;
++	}
++#endif
+ 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+ 	if (fd == -1) {
+ 		condlog(3, "Couldn't create ux_socket, error %d", errno);
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index b490c1d..3b9f2cf 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -6,8 +6,12 @@ include ../Makefile.inc
+ # basic flags setting
+ #
+ CFLAGS += -I$(multipathdir) -I$(mpathpersistdir)
+-LDFLAGS += -lpthread -ldevmapper -lreadline -ludev -ldl \
+-	   -L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist
++LDFLAGS += -lpthread -ldevmapper -lreadline
++ifdef SYSTEMD
++	LDFLAGS += -lsystemd-daemon
++endif
++LDFLAGS += -ludev -ldl \
++	-L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist
  
- 	condlog(2, "--------shut down-------");
+ #
+ # debuging stuff
+@@ -35,8 +39,11 @@ install:
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+ 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(rcdir)
++ifdef SYSTEMD
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(unitdir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).service $(DESTDIR)$(unitdir)
++	$(INSTALL_PROGRAM) -m 644 $(EXEC).socket $(DESTDIR)$(unitdir)
++endif
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
  
--	if (logsink)
-+	if (logsink == 1)
- 		log_thread_stop();
+@@ -45,6 +52,7 @@ uninstall:
+ 	rm -f $(DESTDIR)$(rcdir)/$(EXEC)
+ 	rm -f $(DESTDIR)$(mandir)/$(EXEC).8.gz
+ 	rm -f $(DESTDIR)$(unitdir)/$(EXEC).service
++	rm -f $(DESTDIR)$(unitdir)/$(EXEC).socket
  
- 	/*
-@@ -1849,7 +1849,7 @@ main (int argc, char *argv[])
- 	if (!conf)
- 		exit(1);
+ clean:
+ 	rm -f core *.o $(EXEC) *.gz
+diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
+index d6da067..ec38ef1 100644
+--- a/multipathd/multipathd.service
++++ b/multipathd/multipathd.service
+@@ -6,11 +6,11 @@ DefaultDependencies=no
+ Conflicts=shutdown.target
  
--	while ((arg = getopt(argc, argv, ":dv:k::")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":dsv:k::")) != EOF ) {
- 	switch(arg) {
- 		case 'd':
- 			logsink = 0;
-@@ -1862,6 +1862,9 @@ main (int argc, char *argv[])
+ [Service]
+-Type=forking
+-PIDFile=/var/run/multipathd.pid
+-ExecStart=/sbin/multipathd
++ExecStartPre=/sbin/modprobe dm-multipath
++ExecStart=/sbin/multipathd -d -s
+ ExecReload=/sbin/multipathd reconfigure
+-#ExecStop=/path/to/scrip delete-me if not necessary
++ExecStop=/sbin/multipathd shutdown
  
- 			conf->verbosity = atoi(optarg);
- 			break;
-+		case 's':
-+			logsink = -1;
-+			break;
- 		case 'k':
- 			uxclnt(optarg);
- 			exit(0);
-@@ -1886,7 +1889,7 @@ main (int argc, char *argv[])
- 		exit(0);
- 	}
- 
--	if (!logsink)
-+	if (logsink < 1)
- 		err = 0;
- 	else
- 		err = daemonize();
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index ccc5f54..2aea150 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -20,8 +20,11 @@ devmap reconfiguration, so that it can refresh its failed path list.
- .SH OPTIONS
- .TP
- .B \-d
--Forground Mode. Don't daemonize, and print all messages to stdout and stderr.
--.TP 
-+Foreground Mode. Don't daemonize, and print all messages to stdout and stderr.
-+.TP
-+.B \-s
-+Suppress timestamps. Do not prefix logging messages with a timestamp.
-+.TP
- .B -v "level"
- Verbosity level. Print additional information while running multipathd. A  level of 0 means only print errors. A level of 3 or greater prints debugging information as well. 
- .TP
+ [Install]
+ WantedBy=sysinit.target
++Also=multipathd.socket
+diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
+new file mode 100644
+index 0000000..3d4b6da
+--- /dev/null
++++ b/multipathd/multipathd.socket
+@@ -0,0 +1,5 @@
++[Socket]
++ListenStream=@/org/kernel/linux/storage/multipathd
++
++[Install]
++WantedBy=sockets.target
 -- 
 1.8.1.4
