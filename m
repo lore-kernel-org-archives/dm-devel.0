@@ -1,14 +1,14 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: dm-cache invalidate_cblocks range parsing
-Date: Tue, 26 Nov 2013 16:39:47 +0000
-Message-ID: <20131126163947.GK27771@agk-dp.fab.redhat.com>
+Date: Tue, 26 Nov 2013 16:54:31 +0000
+Message-ID: <20131126165430.GL27771@agk-dp.fab.redhat.com>
 References: <33A0129EBFD46748804DE81B354CA1B21C0532E5@SACEXCMBX06-PRD.hq.netapp.com>
 	<20131125224618.GG27771@agk-dp.fab.redhat.com>
 	<20131126162046.GA27431@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 In-Reply-To: <20131126162046.GA27431@redhat.com>
@@ -24,14 +24,24 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-None of which answers the point that some of the people seeing such a
-range might well interpret it incorrectly and find the correct
-interpretation surprising.  I am strongly of the view that interfaces
-like these should be designed to minimise the risk of ambiguity or
-misinterpretation by people who didn't read all the documentation and I
-still think this interface should be changed.  The advantage of the "+"
-approach is that it is unusual and more likely therefore to force people
-to check the documentation rather than unknowingly making an incorrect
-assumption about what "-" means.
-
-Alasdair
+T24gVHVlLCBOb3YgMjYsIDIwMTMgYXQgMTE6MjA6NDdBTSAtMDUwMCwgTWlrZSBTbml0emVyIHdy
+b3RlOgo+IGh0dHA6Ly9nY2MuZ251Lm9yZy9vbmxpbmVkb2NzL2xpYnN0ZGMrKy9tYW51YWwvYmsw
+MXB0MDhjaDE5czAyLmh0bWwKIApBbmQgYSBjb3VudGVyLXBvc2l0aW9uOgoKICBodHRwOi8vZW4u
+d2lraXBlZGlhLm9yZy93aWtpL0ludGVydmFsXyUyOG1hdGhlbWF0aWNzJTI5CgogIEludGVnZXIg
+aW50ZXJ2YWxzCgogICAgVGhlIG5vdGF0aW9uIFthIC4uIGJdIHdoZW4gYSBhbmQgYiBhcmUgaW50
+ZWdlcnMsIG9yIHthIC4uIGJ94oCJLCBvciBqdXN0IGEgLi4KICAgIGIgaXMgc29tZXRpbWVzIHVz
+ZWQgdG8gaW5kaWNhdGUgdGhlIGludGVydmFsIG9mIGFsbCBpbnRlZ2VycyBiZXR3ZWVuIGEgYW5k
+IGIsCiAgICBpbmNsdWRpbmcgYm90aC4KCiAgICBBbiBpbnRlZ2VyIGludGVydmFsIHRoYXQgaGFz
+IGEgZmluaXRlIGxvd2VyIG9yIHVwcGVyIGVuZHBvaW50IGFsd2F5cyBpbmNsdWRlcyB0aGF0IGVu
+ZHBvaW50LgogICAgVGhlcmVmb3JlLCB0aGUgZXhjbHVzaW9uIG9mIGVuZHBvaW50cyBjYW4gYmUg
+ZXhwbGljaXRseSBkZW5vdGVkIGJ5CiAgICB3cml0aW5nIGEgLi4gYuKAieKIkuKAiTHigIksIGHi
+gIkr4oCJMSAuLiBi4oCJLCBvciBh4oCJK+KAiTEgLi4gYuKAieKIkuKAiTEuIEFsdGVybmF0ZS1i
+cmFja2V0CiAgICBub3RhdGlvbnMgbGlrZSBbYSAuLiBiKSBvciBbYSAuLiBiWyBhcmUgcmFyZWx5
+IHVzZWQgZm9yIGludGVnZXIKICAgIGludGVydmFscy4KCkkgcmVjYWxsIHRoaXMgZGlzY3Vzc2lv
+biBiZWdhbiB1c2luZyAiLi4iIChzbyBzaG91bGQgY29udmVudGlvbmFsbHkKaGF2ZSBpbmNsdWRl
+ZCBib3RoIGVuZHBvaW50cykgYnV0IHdhcyBzd2l0Y2hlZCB0byAiLSIgdG8gc2F2ZSBhCmNoYXJh
+Y3Rlci4KCkl0J3Mgb25seSB0aGUgZXhwb3NlZCBtZXNzYWdlIGludGVyZmFjZSBJJ20gdGFsa2lu
+ZyBhYm91dCBoZXJlOiBJJ3ZlCm5vIG9iamVjdGlvbiB0byB0aGUgdXNlIG9mIGJvdW5kYXJ5LXN0
+eWxlIHJhbmdlcyB3aXRoaW4gdGhlIGNvZGUuCgpBbGFzZGFpcgoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVs
