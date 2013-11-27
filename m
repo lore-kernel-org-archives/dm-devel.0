@@ -1,14 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: How to reissue stuck inflight i/o
-Date: Tue, 26 Nov 2013 20:23:56 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1311262016350.11695@file01.intranet.prod.int.rdu2.redhat.com>
-References: <5294E046.409@shiftmail.org>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [Question] dm-cache table
+Date: Wed, 27 Nov 2013 10:54:04 +0900
+Message-ID: <529550BC.2040009@gmail.com>
+References: <52932C6F.5000306@gmail.com> <20131125120512.GC10831@debian>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5294E046.409@shiftmail.org>
+In-Reply-To: <20131125120512.GC10831@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,47 +18,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Spelic <spelic@shiftmail.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Joe,
 
-
-On Tue, 26 Nov 2013, Spelic wrote:
-
-> Hello all,
-> we just had a case in which some I/Os were apparently stuck inflight in an LV
-> aka DM (visible in iostat as nonzero avgqu-sz for an dm-X device) for a long
-> time, such as at least 20 minutes, but all layers below it had zero inflight
-> I/O (MD RAID and then the disks), so DM and the above layers were waiting
-> endlessly.
-> This was with an old kernel 2.6.24-something .
-> I wasn't able to debug further. After 30 minutes or so it resolved by itself
-> without leaving anything in dmesg or anywhere else.
+> On Mon, Nov 25, 2013 at 07:54:39PM +0900, Akira Hayakawa wrote:
+>> If it accepted migrate_threshold in .ctr and the parameter
+>> changed later. The actual value and what is seen in table
+>> become inconsistent right? Is this intentionally designed?
 > 
-> Is there a way to reissue inflight I/O to lower layers (such as what happens
-> transparently with the 5 SCSI retries after SCSI timeout) for DM, or at least
-> kill such I/O so that above layers receive an I/O error and move on?
-> I was thinking at some dmsetup command but was not clear to me which.
-> What about a dmsetup suspend and then resume? I didn't think about trying
-> this, at that time.
-> 
-> Thanks
-> S.
+> No, this is a bug.
 
-Hi
+So, the table design should be fully consistent with the actual values?
 
-There is no way to reissue or cancel stuck I/O. The kernel architecture 
-doesn't support this sort of operation.
+The only essential property of the table output is that it can
+recreate the same device?
+Your device-mapper-test-suite seems to use this property to make
+a thoroughly new device to test.
 
-Timeout is only happening in the low level physical device driver.
+I am wondering the table design in writeboost.
+writeboost takes 'optional args' in .ctr each defined default value.
+Let the values name k1 and k2, and the default values v1 and v2.
+Assume only k1 v1' (!= v1) is passed to the .ctr in building the device
+and the internal values are {k1:v1', k2:v2} of course then
+what should the table look like? k2 v2 should included?
 
-The higher level drivers (dm and md) have no timeout and it is generally 
-assumed that if the lowest level i/o finishes in finite time, dm or md 
-should finish the high-level i/o in finite time too (some dm targets, such 
-as dm-mirror or dm-multipath, need userspace helper daemons - if the 
-daemon is not running, ios could be stuck indefinitely in the dm driver).
+Also, writeboost takes 'tunable args' following the optional args.
+They can be changed while running.
+Should the table be consistent with the updated values is my wondering
+that makes me ask you the question in the previous mail.
+There could be an another way of thinking about the tunable things
+that it doesn't have to be included in table because it can tuned
+after all.
 
-Anyway, if you are seeing stuck ios and they are not caused by missing 
-userspace daemons, you should try to reproduce it and report it as a bug.
 
-Mikulas
+Just for information, this is the current sample lines
+to initialize writeboost device.
+dmsetup create writeboost-vol --table "0 ${sz} 0 writeboost ${BACKING} {CACHE}"
+dmsetup create writeboost-vol --table "0 ${sz} 0 writeboost ${BACKING} {CACHE} \
+                                       4 rambuf_pool_amount 8192 segment_size_order 8 \
+                                       2 allow_migrate 1"
+dmsetup create writeboost-vol --table "0 ${sz} 0 writeboost ${BACKING} {CACHE} \
+                                       0 \
+                                       2 allow_migrate 1"
+
+
+Thanks,
+Akira
