@@ -1,61 +1,86 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [Question] dm-cache table
-Date: Wed, 27 Nov 2013 12:29:17 +0000
-Message-ID: <20131127122916.GB18478@debian>
-References: <52932C6F.5000306@gmail.com> <20131125120512.GC10831@debian>
-	<529550BC.2040009@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <529550BC.2040009@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH 1/1] MD/DM RAID: Fix hang due to recent RAID5 locking changes
+Date: Wed, 27 Nov 2013 10:00:59 -0600
+Message-ID: <716327D0-E0C7-48B1-B7DB-1A72D7E02784@redhat.com>
+References: <1385335843-14021-1-git-send-email-jbrassow@redhat.com> <1385335843-14021-2-git-send-email-jbrassow@redhat.com> <20131125110315.262223cf@notabene.brown> <D89A7889-9B7B-40F1-AD7D-08937D168C7E@redhat.com> <30A220BB-6E93-44C9-A487-F23DBF546ED6@redhat.com> <20131126162746.4d42ef1d@notabene.brown> <3526D887-4D5D-4B09-9CAE-F771EFE45E6A@redhat.com> <E92B633B-F0C9-4D97-B97A-4B5536BE907D@redhat.com> <20131127141208.06109ed6@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20131127141208.06109ed6@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: "linux-raid@vger.kernel.org Raid" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Nov 27, 2013 at 10:54:04AM +0900, Akira Hayakawa wrote:
-> Joe,
+
+On Nov 26, 2013, at 9:12 PM, NeilBrown wrote:
+
 > 
-> > On Mon, Nov 25, 2013 at 07:54:39PM +0900, Akira Hayakawa wrote:
-> >> If it accepted migrate_threshold in .ctr and the parameter
-> >> changed later. The actual value and what is seen in table
-> >> become inconsistent right? Is this intentionally designed?
-> > 
-> > No, this is a bug.
+> If a stripe is on the released_stripes list (and has STRIPE_ON_RELEASE_LIST)
+> set, it means that a call to __release_stripe is pending, so the ->count must
+> be at least 1.
+> So we would need some other actor to be holding device_lock, incrementing
+> ->count, and  then placing the stripe on the released_stripes list.  I don't
+> think that is possible.
 > 
-> So, the table design should be fully consistent with the actual values?
+> I think I see the race now though (don't know why I couldn't see it
+> yesterday .. but knowing it must be there from your testing must have
+> helped).
+> 
+> I think the race is with __get_priority_stripe().  That is the  only place
+> other than get_active_stripe() where we can increment ->count from zero.
+> So:
+>  1-1: get_active_stripe() sees ->count is zero
+>  1-2: tried to get device_lock and blocks
+>  2-1: meanwhile handle_active_stripes is holding ->device_lock and
+>       chooses this stripe from handle list.  It deletes it from the
+>       ->lru and increments the count - then releases ->device_lock
+>  1-3: get_active_stripe() sees that ->lru is empty, and complains.
+> 
+> You other BUG is triggered by a difference race caused by the same locking
+> problem.
+> 
+> ->active_stripes counts the number of stripes which have a non-zero ->count,
+> or have STRIPE_HANDLE set.  STRIPE_HANDLE can only be set when ->count is
+> non-zero, so we just need to update this whenever count reaches zero or
+> leaves zero while STRIPE_HANDLE is set.
+> This would previously always happen under device_lock.  However
+> get_active_stripe() now increments ->count from zero under ->hash_locks.
+> This could  race with __release_stripe() which only needs device_lock
+> So 
+>  1-1: get_active_stripe notices that ->count is not zero and skips locking
+>       with device_lock
+>  2-1: __release_stripe() decrements ->count to zero and calls
+>      do_release_stripe which, as STRIPE_HANDLE is not set, decrements
+>      ->active_stripes
+>  1-1: get_active_stripe proceeds to increment ->count from zero without a
+>       matching increment for ->active_stripes
+> 
+> so now ->active_stripes is 1 too small and your BUG is not far away.
+> 
+> 
+> So I think we do need to extend the lock region exactly as in the patch you
+> tried.
+> Sad thing is that Shaohua originally had the code like that but I talked him
+> out of it. :-(
+> http://www.spinics.net/lists/raid/msg44290.html
+> 
+> It seems a shame to be taking device_lock here rather than just hash_locks.
+> It might be possible to relax that a bit, but first we would need to measure
+> if it was worth it.
+> 
+> This is the patch I'm thinking of for now.  It also fixes up the two BUGs as
+> both of them are wrong.
+> STRIPE_ON_RELEASE_LIST has no effect on the value of ->lru, so it shouldn't
+> be included.  And while STRIPE_EXPANDING justifies an active stripe_head
+> being on an lru, it is never ever set for an inactive stripe_head (which is
+> always on an lru) so it shouldn't be there either.
+> 
+> Does that all sound convincing?
 
-I guess the status should show what's running, and the table line
-should show what was originally loaded.  The problem we have here is
-that original table can go out of date and mislead any volume managers
-that are relying on it; I really would like to keep the following
-sequence a logical noop for all targets:
+Yes.  The proof is in the testing for me though, and things look good there.
 
-  - load table
-  - run for a bit
-  - read table via STATUS ioctl call
-  - load table just read
-  - switch to newly loaded table
+ brassow
 
-Putting those tunables on the target line and then having messages to
-change them obviously breaks this (though not in a data loss way).
 
-The other option would be to store the tunables in the metadata, and
-have them only changed via messages (not on the target line).  The
-draw back with this approach is it puts extra work on the userland
-volume management software; either they end up duplicating these
-settings in their own metadata, or have to be able to query them from
-the metadata (remember the volume may not be active).  I suggest you
-go with this approach for now.
-
-- Joe
