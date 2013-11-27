@@ -1,14 +1,16 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [Question] dm-cache table
-Date: Wed, 27 Nov 2013 10:54:04 +0900
-Message-ID: <529550BC.2040009@gmail.com>
+Date: Wed, 27 Nov 2013 02:58:05 +0000
+Message-ID: <20131127025804.GM27771@agk-dp.fab.redhat.com>
 References: <52932C6F.5000306@gmail.com> <20131125120512.GC10831@debian>
+	<529550BC.2040009@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20131125120512.GC10831@debian>
+Content-Disposition: inline
+In-Reply-To: <529550BC.2040009@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,51 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Joe,
+On Wed, Nov 27, 2013 at 10:54:04AM +0900, Akira Hayakawa wrote:
+> The only essential property of the table output is that it can
+> recreate the same device?
 
-> On Mon, Nov 25, 2013 at 07:54:39PM +0900, Akira Hayakawa wrote:
->> If it accepted migrate_threshold in .ctr and the parameter
->> changed later. The actual value and what is seen in table
->> become inconsistent right? Is this intentionally designed?
-> 
-> No, this is a bug.
+There is a further constraint.
 
-So, the table design should be fully consistent with the actual values?
+Userspace often uses the optimisation of comparing the table line output
+from the existing device with a proposed new table line to determine
+whether or not the table has changed and needs to be reloaded.  For
+simplicity, this can be a string comparison.
 
-The only essential property of the table output is that it can
-recreate the same device?
-Your device-mapper-test-suite seems to use this property to make
-a thoroughly new device to test.
+As such, the output table line that corresponds to any particular
+internal table state should always be defined uniquely, particularly if
+there is more than input table line that leads to that same table state.
+Typically this means one of two things: EITHER arbitrary choices (e.g.
+the order of supplied arguments in an unordered list; device references)
+are preserved between the input and output table lines OR (normally
+the better option) the output is always presented in the same standard
+format regardless of the input (e.g. unordered parameter lists are
+output in a defined order).  This means that userspace code that is
+aware of the table output definition can choose to provide input in an
+exactly matching form, but the casual user is not inhibited by such 
+arbitrary restrictions.
 
-I am wondering the table design in writeboost.
-writeboost takes 'optional args' in .ctr each defined default value.
-Let the values name k1 and k2, and the default values v1 and v2.
-Assume only k1 v1' (!= v1) is passed to the .ctr in building the device
-and the internal values are {k1:v1', k2:v2} of course then
-what should the table look like? k2 v2 should included?
-
-Also, writeboost takes 'tunable args' following the optional args.
-They can be changed while running.
-Should the table be consistent with the updated values is my wondering
-that makes me ask you the question in the previous mail.
-There could be an another way of thinking about the tunable things
-that it doesn't have to be included in table because it can tuned
-after all.
-
-
-Just for information, this is the current sample lines
-to initialize writeboost device.
-dmsetup create writeboost-vol --table "0 ${sz} 0 writeboost ${BACKING} {CACHE}"
-dmsetup create writeboost-vol --table "0 ${sz} 0 writeboost ${BACKING} {CACHE} \
-                                       4 rambuf_pool_amount 8192 segment_size_order 8 \
-                                       2 allow_migrate 1"
-dmsetup create writeboost-vol --table "0 ${sz} 0 writeboost ${BACKING} {CACHE} \
-                                       0 \
-                                       2 allow_migrate 1"
-
-
-Thanks,
-Akira
+Alasdair
