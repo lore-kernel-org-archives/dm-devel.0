@@ -1,86 +1,109 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [PATCH 1/1] MD/DM RAID: Fix hang due to recent RAID5 locking changes
-Date: Wed, 27 Nov 2013 10:00:59 -0600
-Message-ID: <716327D0-E0C7-48B1-B7DB-1A72D7E02784@redhat.com>
-References: <1385335843-14021-1-git-send-email-jbrassow@redhat.com> <1385335843-14021-2-git-send-email-jbrassow@redhat.com> <20131125110315.262223cf@notabene.brown> <D89A7889-9B7B-40F1-AD7D-08937D168C7E@redhat.com> <30A220BB-6E93-44C9-A487-F23DBF546ED6@redhat.com> <20131126162746.4d42ef1d@notabene.brown> <3526D887-4D5D-4B09-9CAE-F771EFE45E6A@redhat.com> <E92B633B-F0C9-4D97-B97A-4B5536BE907D@redhat.com> <20131127141208.06109ed6@notabene.brown>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20131127141208.06109ed6@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: "linux-raid@vger.kernel.org Raid" <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>
+From: Xinghai Yu <yuxinghai@cn.fujitsu.com>
+Subject: [PATCH] move the 'update_multipath_strings()' function
+	up so that mpp->mpe can be assigned in some situation
+Date: Thu, 28 Nov 2013 10:12:24 +0800
+Message-ID: <1385604744-16823-1-git-send-email-yuxinghai@cn.fujitsu.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Xinghai Yu <yuxinghai@cn.fujitsu.com>, christophe.varoqui@gmail.com
 List-Id: dm-devel.ids
 
+This patch is correcting a bug about multipath's no_path_retry attribute.
+When the multipath was just created by user cmd 'multipath', the DM driver 
+doesn't know the wwid of this dm device, so the 'set_multipath_wwid()'
+function can't get the wwid for mpp at this time, then the mpp->mpe can't befind and assigned by wwid also. In that case, the following function 
+'set_no_path_retry()' can't able to use the value provided by mpp->mpe 
+which values were getted from file '/etc/multipath.conf'. But the fuction 
+'update_multipath_strings()' can assign the wwid to mpp from its path, so
+move this function up to solve this problem.
 
-On Nov 26, 2013, at 9:12 PM, NeilBrown wrote:
+Bug reproduce steps:
+1.First, by setting 'no_path_retry fail', we have features='0'.
+[root@localhost multipath-tools]# cat /etc/multipath.conf
+...
+	multipath {
+		wwid 36000b5d0006a0000006a14e7000b0000
+		alias                   yellow
+		path_grouping_policy    failover
+		no_path_retry		fail
+	}
+...
+[root@localhost multipath-tools]# multipath -ll
+yellow (36000b5d0006a0000006a14e7000b0000) dm-0    
+size=50G features='0' hwhandler='0' wp=rw
+|-+- policy='service-time 0' prio=130 status=active
+| `- 0:0:0:0 sda 8:0    active ready running
+`-+- policy='service-time 0' prio=130 status=enabled
+  `- 1:0:0:0 sdc 8:32   active ready running
+[root@localhost multipath-tools]# 
 
-> 
-> If a stripe is on the released_stripes list (and has STRIPE_ON_RELEASE_LIST)
-> set, it means that a call to __release_stripe is pending, so the ->count must
-> be at least 1.
-> So we would need some other actor to be holding device_lock, incrementing
-> ->count, and  then placing the stripe on the released_stripes list.  I don't
-> think that is possible.
-> 
-> I think I see the race now though (don't know why I couldn't see it
-> yesterday .. but knowing it must be there from your testing must have
-> helped).
-> 
-> I think the race is with __get_priority_stripe().  That is the  only place
-> other than get_active_stripe() where we can increment ->count from zero.
-> So:
->  1-1: get_active_stripe() sees ->count is zero
->  1-2: tried to get device_lock and blocks
->  2-1: meanwhile handle_active_stripes is holding ->device_lock and
->       chooses this stripe from handle list.  It deletes it from the
->       ->lru and increments the count - then releases ->device_lock
->  1-3: get_active_stripe() sees that ->lru is empty, and complains.
-> 
-> You other BUG is triggered by a difference race caused by the same locking
-> problem.
-> 
-> ->active_stripes counts the number of stripes which have a non-zero ->count,
-> or have STRIPE_HANDLE set.  STRIPE_HANDLE can only be set when ->count is
-> non-zero, so we just need to update this whenever count reaches zero or
-> leaves zero while STRIPE_HANDLE is set.
-> This would previously always happen under device_lock.  However
-> get_active_stripe() now increments ->count from zero under ->hash_locks.
-> This could  race with __release_stripe() which only needs device_lock
-> So 
->  1-1: get_active_stripe notices that ->count is not zero and skips locking
->       with device_lock
->  2-1: __release_stripe() decrements ->count to zero and calls
->      do_release_stripe which, as STRIPE_HANDLE is not set, decrements
->      ->active_stripes
->  1-1: get_active_stripe proceeds to increment ->count from zero without a
->       matching increment for ->active_stripes
-> 
-> so now ->active_stripes is 1 too small and your BUG is not far away.
-> 
-> 
-> So I think we do need to extend the lock region exactly as in the patch you
-> tried.
-> Sad thing is that Shaohua originally had the code like that but I talked him
-> out of it. :-(
-> http://www.spinics.net/lists/raid/msg44290.html
-> 
-> It seems a shame to be taking device_lock here rather than just hash_locks.
-> It might be possible to relax that a bit, but first we would need to measure
-> if it was worth it.
-> 
-> This is the patch I'm thinking of for now.  It also fixes up the two BUGs as
-> both of them are wrong.
-> STRIPE_ON_RELEASE_LIST has no effect on the value of ->lru, so it shouldn't
-> be included.  And while STRIPE_EXPANDING justifies an active stripe_head
-> being on an lru, it is never ever set for an inactive stripe_head (which is
-> always on an lru) so it shouldn't be there either.
-> 
-> Does that all sound convincing?
+2.Second, we flush all multipath device maps.
+[root@localhost multipath-tools]# multipath -F
+[root@localhost multipath-tools]# 
 
-Yes.  The proof is in the testing for me though, and things look good there.
+3.Third, create all multipath device maps.
+[root@localhost multipath-tools]# multipath 
+create: yellow (36000b5d0006a0000006a14e7000b0000) undef    
+size=50G features='0' hwhandler='0' wp=undef
+|-+- policy='service-time 0' prio=130 status=undef
+| `- 0:0:0:0 sda 8:0    undef ready running
+`-+- policy='service-time 0' prio=130 status=undef
+  `- 1:0:0:0 sdc 8:32   undef ready running
+[root@localhost multipath-tools]# 
 
- brassow
+4.The end, we found "features='1 queue_if_no_path'" and this is not what we 
+expect, it's a bug. After applying this patch, it can be corrected.
+[root@localhost multipath-tools]# multipath -ll
+yellow (36000b5d0006a0000006a14e7000b0000) dm-0    
+size=50G features='1 queue_if_no_path' hwhandler='0' wp=rw
+|-+- policy='service-time 0' prio=130 status=active
+| `- 0:0:0:0 sda 8:0    active ready running
+`-+- policy='service-time 0' prio=130 status=enabled
+  `- 1:0:0:0 sdc 8:32   active ready running
+[root@localhost multipath-tools]# 
 
 
+Signed-off-by: Xinghai Yu <yuxinghai@cn.fujitsu.com>
+---
+ libmultipath/structs_vec.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 7073915..bb2c71a 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -344,15 +344,15 @@ __setup_multipath (struct vectors * vecs, struct multipath * mpp, int reset)
+ 		goto out;
+ 	}
+ 
+-	set_multipath_wwid(mpp);
+-	mpp->mpe = find_mpe(mpp->wwid);
+-	condlog(3, "%s: discover", mpp->alias);
+-
+ 	if (update_multipath_strings(mpp, vecs->pathvec)) {
+ 		condlog(0, "%s: failed to setup multipath", mpp->alias);
+ 		goto out;
+ 	}
+ 
++	set_multipath_wwid(mpp);
++	mpp->mpe = find_mpe(mpp->wwid);
++	condlog(3, "%s: discover", mpp->alias);
++
+ 	if (!mpp->hwe)
+ 		mpp->hwe = extract_hwe_from_path(mpp);
+ 	if (!mpp->hwe) {
+-- 
+1.7.1
