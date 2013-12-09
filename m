@@ -1,17 +1,17 @@
-From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
-Subject: Re: Kernel oops with dm-cache
-Date: Mon, 9 Dec 2013 10:28:07 +0100
-Message-ID: <20131209092807.GA4323@samfundet.no>
-References: <20131208105930.GA3763@sesse.net>
-	<20131208120152.GA4096@samfundet.no>
-	<CAMM=eLcZdULJZaAfwct1Bnj4KjNxOBrBumeb_vM+PtdjErQ5fA@mail.gmail.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-cache refusing to come up again after a crash
+Date: Mon, 9 Dec 2013 10:28:11 +0000
+Message-ID: <20131209102811.GB26971@debian>
+References: <20131206154914.GE25206@samfundet.no>
+	<20131206175712.GD23496@debian>
+	<20131206191605.GA9700@samfundet.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAMM=eLcZdULJZaAfwct1Bnj4KjNxOBrBumeb_vM+PtdjErQ5fA@mail.gmail.com>
+In-Reply-To: <20131206191605.GA9700@samfundet.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,19 +24,32 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Dec 08, 2013 at 10:13:05PM -0500, Mike Snitzer wrote:
-> This was fixed with this commit:
-> http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=47821767d26af4073fcfdfb3b96704f24a23416f
+On Fri, Dec 06, 2013 at 08:16:05PM +0100, Steinar H. Gunderson wrote:
+> On Fri, Dec 06, 2013 at 05:57:13PM +0000, Joe Thornber wrote:
+> > Yep, grab:
+> > 
+> > https://github.com/jthornber/thin-provisioning-tools
+> > 
+> > build, and then try cache_check on it (which should tell you what's
+> > wrong).  Other programs to play with are cache_dump, cache_restore and
+> > cache_repair.
 > 
-> I'll be sending it to Linus at some point this coming week (along with
-> other DM fixes that are staged in the 'for-next' branch of
-> linux-dm.git).
+> Well, first of all, it doesn't compile, since you use typename outside of
+> templates :-) Fixing that is easy, though. But afterwards:
 
-OK. Will applying this actually make my machine boot again, too? check_cache
-says there's nothing wrong with it, just like last time; dump-cache says
-everything's clean, just like last time. But I'm not nuking it once more,
-the backup restore process was too painful last time :-)
+Grr, I thought that was fixed, what version of g++ are you using?
 
-/* Steinar */
--- 
-Homepage: http://www.sesse.net/
+> 
+> root@ubuntu:~/thin-provisioning-tools# ./cache_check /dev/md1
+> examining superblock
+>   superblock is corrupt
+>     bad checksum in superblock
+> 
+> So where do I want to go from there? cache_dump doesn't want to play with the
+> superblock because the checksum is bad... do I want cache_repair, then? Do I
+> want to take a backup of anything first?
+
+Ouch.  Could you go through what happened please?  Did dm-cache crash,
+or did the machine die for some other reason?
+
+- Joe
