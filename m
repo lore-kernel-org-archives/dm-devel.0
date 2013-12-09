@@ -1,18 +1,18 @@
-From: Joe Thornber <thornber@redhat.com>
+From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
 Subject: Re: dm-cache refusing to come up again after a crash
-Date: Mon, 9 Dec 2013 10:31:04 +0000
-Message-ID: <20131209103103.GC26971@debian>
+Date: Mon, 9 Dec 2013 11:34:15 +0100
+Message-ID: <20131209103415.GA15782@samfundet.no>
 References: <20131206154914.GE25206@samfundet.no>
 	<20131206175712.GD23496@debian>
 	<20131206191605.GA9700@samfundet.no>
-	<20131206193541.GC9700@samfundet.no>
+	<20131209102811.GB26971@debian>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20131206193541.GC9700@samfundet.no>
+In-Reply-To: <20131209102811.GB26971@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,33 +25,37 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Dec 06, 2013 at 08:35:41PM +0100, Steinar H. Gunderson wrote:
-> On Fri, Dec 06, 2013 at 08:16:05PM +0100, Steinar H. Gunderson wrote:
-> > Well, first of all, it doesn't compile, since you use typename outside of
-> > templates :-) Fixing that is easy, though. But afterwards:
-> > 
-> > root@ubuntu:~/thin-provisioning-tools# ./cache_check /dev/md1
-> > examining superblock
-> >   superblock is corrupt
-> >     bad checksum in superblock
-> 
-> Sorry, wrong device:
-> 
-> root@ubuntu:~/thin-provisioning-tools# ./cache_check /dev/cache/metadata 
-> examining superblock
-> examining mapping array
-> no hint array present
-> examining discard bitset
-> root@ubuntu:~/thin-provisioning-tools# echo $?
-> 0
-> 
-> Does that mean it ought to have worked better? :-)
-
-Yes, this is good news.  The damage is probably in the space maps
-which get completely regenerated during a restore/repair.
-
-I see from a later mail that you're having another issue with the
-tools.  I wonder if you could email me off list, and we'll work out
-how I can get a copy of your metadata.
-
-- Joe
+T24gTW9uLCBEZWMgMDksIDIwMTMgYXQgMTA6Mjg6MTFBTSArMDAwMCwgSm9lIFRob3JuYmVyIHdy
+b3RlOgo+PiBXZWxsLCBmaXJzdCBvZiBhbGwsIGl0IGRvZXNuJ3QgY29tcGlsZSwgc2luY2UgeW91
+IHVzZSB0eXBlbmFtZSBvdXRzaWRlIG9mCj4+IHRlbXBsYXRlcyA6LSkgRml4aW5nIHRoYXQgaXMg
+ZWFzeSwgdGhvdWdoLiBCdXQgYWZ0ZXJ3YXJkczoKPiBHcnIsIEkgdGhvdWdodCB0aGF0IHdhcyBm
+aXhlZCwgd2hhdCB2ZXJzaW9uIG9mIGcrKyBhcmUgeW91IHVzaW5nPwoKVGhpcyBpcyBhbiBVYnVu
+dHUgMTAuMDQgbGl2ZSBDRCwgd2hpY2ggd2FzIHdoYXQgSSB3YXMgaGF2aW5nIGhhbmR5LgpJdCB3
+b3JrcyBmaW5lIGluIGEgRGViaWFuIHdoZWV6eSBsaXZlIENEICh3aGljaCBJIHN3aXRjaGVkIHRv
+IGxhdGVyKS4KCj4+IFNvIHdoZXJlIGRvIEkgd2FudCB0byBnbyBmcm9tIHRoZXJlPyBjYWNoZV9k
+dW1wIGRvZXNuJ3Qgd2FudCB0byBwbGF5IHdpdGggdGhlCj4+IHN1cGVyYmxvY2sgYmVjYXVzZSB0
+aGUgY2hlY2tzdW0gaXMgYmFkLi4uIGRvIEkgd2FudCBjYWNoZV9yZXBhaXIsIHRoZW4/IERvIEkK
+Pj4gd2FudCB0byB0YWtlIGEgYmFja3VwIG9mIGFueXRoaW5nIGZpcnN0Pwo+IE91Y2guICBDb3Vs
+ZCB5b3UgZ28gdGhyb3VnaCB3aGF0IGhhcHBlbmVkIHBsZWFzZT8gIERpZCBkbS1jYWNoZSBjcmFz
+aCwKPiBvciBkaWQgdGhlIG1hY2hpbmUgZGllIGZvciBzb21lIG90aGVyIHJlYXNvbj8KClRoZSBt
+YWNoaW5lIGh1bmcuIEkgZG9uJ3Qga25vdyBlbnRpcmVseSB3aHkgKEkgZG9uJ3QgaGF2ZSB0aGUg
+bG9ncykuCkkgcmVib290ZWQsIGFuZCBpdCByZWZ1c2VkIHRvIHRha2UgdXAgdGhlIHZvbHVtZSAo
+dGhpcyBpcyB3aGF0IHRoZSBvcmlnaW5hbApwb3N0IGluIHRoaXMgbWVzc2FnZSBpcyBhYm91dCku
+IEFmdGVyIGJvb3RpbmcgdG8gYSBsaXZlIENEIGFuZCBydW5uaW5nCmNhY2hlX2NoZWNrIGFuZCBj
+YWNoZV9kdW1wLCBJIHdhcyBjb252aW5jZWQgdGhlcmUgd2VyZSBubyBkaXJ0eSBibG9ja3MsCnNv
+IEkgbnVrZWQgdGhlIGVudGlyZSBtZXRhZGF0YSB2b2x1bWUgKHVzaW5nIGRkIGZyb20gL2Rldi96
+ZXJvKS4KClRoaXMgbWFkZSB0aGUgbWFjaGluZSBib290IGFnYWluLCBidXQgd2l0aCB0b25zIG9m
+IGZpbGVzeXN0ZW0gZXJyb3JzIG9uCmFueXRoaW5nIEknZCB3cml0dGVuIHRvIGluIHRoZSBsYXN0
+IGZldyBtb250aHMsIHNvIEkgcmVzdG9yZWQgZnJvbSBiYWNrdXAKKHRoYW5rZnVsbHkgSSBkbyBo
+YXZlIHdvcmtpbmcgYmFja3VwcyEpLiBJIGFsc28gdXBncmFkZWQgdG8gMy4xMy1yYzMgaW4gdGhl
+CmhvcGVzIG9mIGZpeGluZyB3aGF0ZXZlciBpc3N1ZSBpbiAzLjEyIG9yaWdpbmFsbHkgY2F1c2Vk
+IHRoaXM7IGhvd2V2ZXIsIGFzCnJlcG9ydGVkIGluIHRoZSBvdGhlciB0aHJlYWQsIHRoaXMgd2Fz
+IG5vdG9yaW91c2x5IHVuc3RhYmxlLCBhbmQgYWZ0ZXIgdGhlCnRoaXJkIGNyYXNoLCBJIHdhcyBi
+YWNrIGludG8gdGhlIOKAnHdvbid0IGJvb3QsIGJ1dCBjYWNoZV9jaGVjayBzYXlzIGV2ZXJ5dGhp
+bmcKaXMgZmluZeKAnSBtb2RlLgoKVGhhdCdzIHRoZSBjdXJyZW50IHN0YXR1czsgaXQncyBub3cg
+c3RhbmRpbmcgaW4gYSBsaXZlIENEIGFuZCBub3QgZG9pbmcgbXVjaAp1c2VmdWwuIEkgbWlzcyBt
+eSBtYWNoaW5lIDotKSAoQW5kIEkgaG9wZSBJIGhhdmVuJ3QgbG9zdCBkYXRhIGFnYWluLikgV2ls
+bCBpdApoZWxwIGlmIEkgdXBsb2FkIGEgZHVtcCBvZiB0aGUgNTEyTUIgbWV0YWRhdGEgdm9sdW1l
+IHNvbWV3aGVyZT8KCi8qIFN0ZWluYXIgKi8KLS0gCkhvbWVwYWdlOiBodHRwOi8vd3d3LnNlc3Nl
+Lm5ldC8KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBz
+Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
