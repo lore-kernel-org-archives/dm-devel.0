@@ -1,18 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Kernel oops with dm-cache
-Date: Mon, 9 Dec 2013 14:44:30 -0500
-Message-ID: <20131209194430.GA15196@redhat.com>
-References: <20131208105930.GA3763@sesse.net>
-	<20131208120152.GA4096@samfundet.no>
-	<CAMM=eLcZdULJZaAfwct1Bnj4KjNxOBrBumeb_vM+PtdjErQ5fA@mail.gmail.com>
-	<20131209092807.GA4323@samfundet.no>
+From: =?ISO-8859-2?Q?Mateusz_P=F3=B3rola?= <mateusz.polrola@gmail.com>
+Subject: [PATCH] multipathd: Added missing variable declaration
+Date: Mon, 9 Dec 2013 21:37:49 +0100
+Message-ID: <CAACFEQBRAk=W4ymRuvCYGxuF4K_wZdBw9HH0VgnhU3ThOAa-3A@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1378496336816224510=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20131209092807.GA4323@samfundet.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,24 +15,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Dec 09 2013 at  4:28am -0500,
-Steinar H. Gunderson <sgunderson@bigfoot.com> wrote:
+--===============1378496336816224510==
+Content-Type: multipart/alternative; boundary=001a1133458e25878b04ed1ff85b
 
-> On Sun, Dec 08, 2013 at 10:13:05PM -0500, Mike Snitzer wrote:
-> > This was fixed with this commit:
-> > http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=47821767d26af4073fcfdfb3b96704f24a23416f
-> > 
-> > I'll be sending it to Linus at some point this coming week (along with
-> > other DM fixes that are staged in the 'for-next' branch of
-> > linux-dm.git).
-> 
-> OK. Will applying this actually make my machine boot again, too?
+--001a1133458e25878b04ed1ff85b
+Content-Type: text/plain; charset=ISO-8859-1
 
-No, it'll just fix the kernel so it doesn't crash when the metadata
-operation fails.  We need to understand why your metadata operations are
-failing.  Hopefully Joe can sort it out with the metdata you've provided
-to him off-list.
+Declaration of envp variable in child function is missing
+
+---
+ multipathd/main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7c0e313..2d6aac8 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1609,6 +1609,7 @@ child (void * param)
+  struct multipath * mpp;
+  int i;
+  int rc, pid_rc;
++ char *envp;
+
+  mlockall(MCL_CURRENT | MCL_FUTURE);
+  sem_init(&exit_sem, 0, 0);
+-- 
+1.8.4.2
+
+--001a1133458e25878b04ed1ff85b
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><div><div>Declaration of envp variable in child funct=
+ion is missing</div><div><br></div><div>---</div><div>=A0multipathd/main.c =
+| 1 +</div><div>=A01 file changed, 1 insertion(+)</div><div><br></div><div>=
+diff --git a/multipathd/main.c b/multipathd/main.c</div>
+<div>index 7c0e313..2d6aac8 100644</div><div>--- a/multipathd/main.c</div><=
+div>+++ b/multipathd/main.c</div><div>@@ -1609,6 +1609,7 @@ child (void * p=
+aram)</div><div>=A0<span class=3D"" style=3D"white-space:pre">	</span>struc=
+t multipath * mpp;</div>
+<div>=A0<span class=3D"" style=3D"white-space:pre">	</span>int i;</div><div=
+>=A0<span class=3D"" style=3D"white-space:pre">	</span>int rc, pid_rc;</div=
+><div>+<span class=3D"" style=3D"white-space:pre">	</span>char *envp;</div>=
+<div>=A0</div>
+<div>=A0<span class=3D"" style=3D"white-space:pre">	</span>mlockall(MCL_CUR=
+RENT | MCL_FUTURE);</div><div>=A0<span class=3D"" style=3D"white-space:pre"=
+>	</span>sem_init(&amp;exit_sem, 0, 0);</div><div>--=A0</div><div>1.8.4.2</=
+div></div>
+</div><div><br></div></div>
+
+--001a1133458e25878b04ed1ff85b--
+
+
+--===============1378496336816224510==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1378496336816224510==--
