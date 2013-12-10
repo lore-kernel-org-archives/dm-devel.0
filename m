@@ -1,10 +1,12 @@
-From: =?ISO-8859-2?Q?Mateusz_P=F3=B3rola?= <mateusz.polrola@gmail.com>
-Subject: [PATCH] multipathd: Added missing variable declaration
-Date: Mon, 9 Dec 2013 21:37:49 +0100
-Message-ID: <CAACFEQBRAk=W4ymRuvCYGxuF4K_wZdBw9HH0VgnhU3ThOAa-3A@mail.gmail.com>
+From: =?UTF-8?B?T25kxZllaiBTdm9ib2Rh?= <ondrej@svobodasoft.cz>
+Subject: [PATCH] multipathd: Fix for 'Read environment variables
+	from systemd'
+Date: Tue, 10 Dec 2013 02:41:59 +0100
+Message-ID: <52A67167.2060802@svobodasoft.cz>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1378496336816224510=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,63 +20,18 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1378496336816224510==
-Content-Type: multipart/alternative; boundary=001a1133458e25878b04ed1ff85b
-
---001a1133458e25878b04ed1ff85b
-Content-Type: text/plain; charset=ISO-8859-1
-
-Declaration of envp variable in child function is missing
-
----
- multipathd/main.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 7c0e313..2d6aac8 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1609,6 +1609,7 @@ child (void * param)
-  struct multipath * mpp;
-  int i;
-  int rc, pid_rc;
-+ char *envp;
-
-  mlockall(MCL_CURRENT | MCL_FUTURE);
-  sem_init(&exit_sem, 0, 0);
--- 
-1.8.4.2
-
---001a1133458e25878b04ed1ff85b
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div><div><div>Declaration of envp variable in child funct=
-ion is missing</div><div><br></div><div>---</div><div>=A0multipathd/main.c =
-| 1 +</div><div>=A01 file changed, 1 insertion(+)</div><div><br></div><div>=
-diff --git a/multipathd/main.c b/multipathd/main.c</div>
-<div>index 7c0e313..2d6aac8 100644</div><div>--- a/multipathd/main.c</div><=
-div>+++ b/multipathd/main.c</div><div>@@ -1609,6 +1609,7 @@ child (void * p=
-aram)</div><div>=A0<span class=3D"" style=3D"white-space:pre">	</span>struc=
-t multipath * mpp;</div>
-<div>=A0<span class=3D"" style=3D"white-space:pre">	</span>int i;</div><div=
->=A0<span class=3D"" style=3D"white-space:pre">	</span>int rc, pid_rc;</div=
-><div>+<span class=3D"" style=3D"white-space:pre">	</span>char *envp;</div>=
-<div>=A0</div>
-<div>=A0<span class=3D"" style=3D"white-space:pre">	</span>mlockall(MCL_CUR=
-RENT | MCL_FUTURE);</div><div>=A0<span class=3D"" style=3D"white-space:pre"=
->	</span>sem_init(&amp;exit_sem, 0, 0);</div><div>--=A0</div><div>1.8.4.2</=
-div></div>
-</div><div><br></div></div>
-
---001a1133458e25878b04ed1ff85b--
-
-
---===============1378496336816224510==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1378496336816224510==--
+VGhlIHJldmlzaW9uICdtdWx0aXBhdGhkOiBSZWFkIGVudmlyb25tZW50IHZhcmlhYmxlcyBmcm9t
+IHN5c3RlbWQnIGludHJvZHVjZWQgYSBjb21waWxhdGlvbiBlcnJvciBpbiBtdWx0aXBhdGhkL21h
+aW4uYzoKCm1haW4uYzogSW4gZnVuY3Rpb24g4oCYY2hpbGTigJk6Cm1haW4uYzoxNjUxOjI6IGVy
+cm9yOiDigJhlbnZw4oCZIHVuZGVjbGFyZWQgKGZpcnN0IHVzZSBpbiB0aGlzIGZ1bmN0aW9uKQog
+ICBlbnZwID0gZ2V0ZW52KCJMaW1pdE5PRklMRSIpOwogICBeCgpUaGlzIHBhdGNoIGZpeGVzIGl0
+IGJ5IGRlY2xhcmluZyBjaGFyICplbnZwIGZvciB0aGlzIChzZWNvbmQpIGNhc2UuCgpTaWduZWQt
+b2ZmLWJ5OiBPbmTFmWVqIFN2b2JvZGEgPG9uZHJlaiBzdm9ib2Rhc29mdCBjej4KCmRpZmYgLS1n
+aXQgYS9tdWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCmluZGV4IDdjMGUzMTMu
+LjJkNmFhYzggMTAwNjQ0Ci0tLSBhL211bHRpcGF0aGQvbWFpbi5jCisrKyBiL211bHRpcGF0aGQv
+bWFpbi5jCkBAIC0xNjA5LDYgKzE2MDksNyBAQCBjaGlsZCAodm9pZCAqIHBhcmFtKQogICAgICBz
+dHJ1Y3QgbXVsdGlwYXRoICogbXBwOwogICAgICBpbnQgaTsKICAgICAgaW50IHJjLCBwaWRfcmM7
+CisgICAgY2hhciAqZW52cDsKICAKCiAgICAgIG1sb2NrYWxsKE1DTF9DVVJSRU5UIHwgTUNMX0ZV
+VFVSRSk7CiAgICAgIHNlbV9pbml0KCZleGl0X3NlbSwgMCwgMCk7CgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
