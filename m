@@ -1,15 +1,12 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 12/16] multipathd: Don't touch the multipath
-	device after setup_multipath fails
-Date: Wed, 11 Dec 2013 00:43:06 -0600
-Message-ID: <1386744190-1295-13-git-send-email-bmarzins@redhat.com>
-References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 00/16] miscellaneous dm-multipath patches
+Date: Wed, 11 Dec 2013 00:42:54 -0600
+Message-ID: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,64 +20,48 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-If setup_multipath fails, it removes the device. multipath always needs
-to check its return value and not touch the device if setup_multipath
-failed.
+Here are a number of bugfixes and minor features. The first 8 are a resubmit of the patches I sent on Jun 28th.  I didn't see any objection to any of them, so
+I just rebased them.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/cli_handlers.c |  3 ++-
- multipathd/main.c         | 12 ++++++------
- 2 files changed, 8 insertions(+), 7 deletions(-)
+Benjamin Marzinski (16):
+  Add multipath path format wildcard
+  Fix multipath rename from user_friendly_name to wwid
+  Turn off user_friendly_names for netapp devices
+  Don't detect prioritizers that don't work
+  Only load a multipath device RO if RW load fails with EROFS
+  signal waiter thread to stop waiting on dm events
+  fix mutipath -W on empty wwids file
+  multipathd: Add envp variable
+  libmultipath: try to deal with bindings file hand editting
+  kpartx: Make kpartx able to create read-only loop devices
+  libmultipath: show default configurations
+  multipathd: Don't touch the multipath device after setup_multipath
+    fails
+  kpartx: fix strict aliasing warning
+  libmultipath: blacklist blktap devices
+  multipathd: allow /dev/<devnode> to be used for multipathd commands
+  kpartx: autoload loop module on loop partition creation
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 58a5643..baa43c4 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -634,7 +634,8 @@ cli_resize(void *v, char **reply, int *len, void *data)
- 		return 1;
- 
- 	dm_lib_release();
--	setup_multipath(vecs, mpp);
-+	if (setup_multipath(vecs, mpp) != 0)
-+		return 1;
- 	sync_map_state(mpp);
- 
- 	return 0;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 204fbb1..49e74a6 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -139,7 +139,6 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
- 	struct multipath * ompp;
- 	vector ompv = vecs->mpvec;
- 	unsigned int i;
--	int j;
- 
- 	vector_foreach_slot (ompv, ompp, i) {
- 		condlog(3, "%s: coalesce map", ompp->alias);
-@@ -154,16 +153,17 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
- 				/*
- 				 * may be just because the device is open
- 				 */
-+				if (setup_multipath(vecs, ompp) != 0) {
-+					i--;
-+					continue;
-+				}
- 				if (!vector_alloc_slot(nmpv))
- 					return 1;
- 
- 				vector_set_slot(nmpv, ompp);
--				setup_multipath(vecs, ompp);
- 
--				if ((j = find_slot(ompv, (void *)ompp)) != -1)
--					vector_del_slot(ompv, j);
--
--				continue;
-+				vector_del_slot(ompv, i);
-+				i--;
- 			}
- 			else {
- 				dm_lib_release();
+ kpartx/dasd.c             |  4 +-
+ kpartx/kpartx.c           |  3 +-
+ kpartx/lopart.c           | 19 +++++++--
+ libmultipath/alias.c      | 39 ++++++++++++++-----
+ libmultipath/blacklist.c  |  2 +-
+ libmultipath/configure.c  |  7 ----
+ libmultipath/devmapper.c  | 98 ++++++++++++-----------------------------------
+ libmultipath/devmapper.h  |  3 --
+ libmultipath/dict.c       |  4 --
+ libmultipath/hwtable.c    |  1 +
+ libmultipath/print.c      | 11 ++++++
+ libmultipath/propsel.c    | 13 +++++--
+ libmultipath/util.c       | 22 +++++++++++
+ libmultipath/util.h       |  1 +
+ libmultipath/waiter.c     |  9 +++++
+ libmultipath/wwids.c      |  6 +++
+ multipath/main.c          | 23 +----------
+ multipathd/cli_handlers.c | 21 +++++++++-
+ multipathd/main.c         | 21 +++++++---
+ 19 files changed, 171 insertions(+), 136 deletions(-)
+
 -- 
 1.8.4.2
