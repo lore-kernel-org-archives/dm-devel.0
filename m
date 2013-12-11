@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 16/16] kpartx: autoload loop module on loop
-	partition creation
-Date: Wed, 11 Dec 2013 00:43:10 -0600
-Message-ID: <1386744190-1295-17-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 02/16] Fix multipath rename from
+	user_friendly_name to wwid
+Date: Wed, 11 Dec 2013 00:42:56 -0600
+Message-ID: <1386744190-1295-3-git-send-email-bmarzins@redhat.com>
 References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,57 +23,102 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Currently kpartx doesn't do anything to force the loop module to
-autoload, so creating partitions over files fails if the loop module
-isn't already loaded.  This patch makes kpartx try to find the next
-available loop device by ioctling /dev/loop-control, which will
-autoload kpartx.
+When multipath was selecting an alias for a device on reload, if it
+didn't have an explicit alias, and user_friendly_names wasn't set,
+multipath would use the existing alias, if one existed.  This made it
+impossible to turn off user_friendly_names, and then reconfigure to
+change the device names back to wwids.
+
+Instead, multipath should just use the wwid as an alias, if that's
+what it's configured to do, regardless of the existing name.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/lopart.c | 17 +++++++++++++++--
- 1 file changed, 15 insertions(+), 2 deletions(-)
+ libmultipath/devmapper.c | 45 ---------------------------------------------
+ libmultipath/devmapper.h |  1 -
+ libmultipath/propsel.c   |  2 --
+ 3 files changed, 48 deletions(-)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 9082ca8..6f83048 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -32,6 +32,10 @@
- #include "lopart.h"
- #include "xstrncpy.h"
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 71281e6..3da109c 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -922,51 +922,6 @@ out:
+ 	return r;
+ }
  
-+#ifndef LOOP_CTL_GET_FREE
-+#define LOOP_CTL_GET_FREE       0x4C82
-+#endif
-+
- #if !defined (__alpha__) && !defined (__ia64__) && !defined (__x86_64__) \
-         && !defined (__s390x__)
- #define int2ptr(x)	((void *) ((int) x))
-@@ -140,14 +144,23 @@ find_unused_loop_device (void)
+-extern char *
+-dm_get_name(char *uuid)
+-{
+-	struct dm_task *dmt;
+-	struct dm_info info;
+-	char *prefixed_uuid, *name = NULL;
+-	const char *nametmp;
+-
+-	dmt = dm_task_create(DM_DEVICE_INFO);
+-	if (!dmt)
+-		return NULL;
+-
+-	prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(uuid) + 1);
+-	if (!prefixed_uuid) {
+-		condlog(0, "cannot create prefixed uuid : %s",
+-			strerror(errno));
+-		goto freeout;
+-	}
+-	sprintf(prefixed_uuid, UUID_PREFIX "%s", uuid);
+-	if (!dm_task_set_uuid(dmt, prefixed_uuid))
+-		goto freeout;
+-
+-	if (!dm_task_run(dmt))
+-		goto freeout;
+-
+-	if (!dm_task_get_info(dmt, &info) || !info.exists)
+-		goto freeout;
+-
+-	nametmp = dm_task_get_name(dmt);
+-	if (nametmp && strlen(nametmp)) {
+-		name = MALLOC(strlen(nametmp) + 1);
+-		if (name)
+-			strcpy(name, nametmp);
+-	} else {
+-		condlog(2, "%s: no device-mapper name found", uuid);
+-	}
+-
+-freeout:
+-	if (prefixed_uuid)
+-		FREE(prefixed_uuid);
+-	dm_task_destroy(dmt);
+-
+-	return name;
+-}
+-
+ int
+ dm_geteventnr (char *name)
+ {
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index b27db56..a144bfb 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -39,7 +39,6 @@ int dm_remove_partmaps (const char * mapname, int need_sync);
+ int dm_get_uuid(char *name, char *uuid);
+ int dm_get_info (char * mapname, struct dm_info ** dmi);
+ int dm_rename (char * old, char * new);
+-char * dm_get_name(char * uuid);
+ int dm_reassign(const char * mapname);
+ int dm_reassign_table(const char *name, char *old, char *new);
+ int dm_setgeometry(struct multipath *mpp);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index f092227..211ebcd 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -263,8 +263,6 @@ select_alias (struct multipath * mp)
+ 					conf->bindings_file, mp->alias_prefix, conf->bindings_read_only);
+ 		}
+ 		if (mp->alias == NULL)
+-			mp->alias = dm_get_name(mp->wwid);
+-		if (mp->alias == NULL)
+ 			mp->alias = STRDUP(mp->wwid);
+ 	}
  
- 	char dev[20];
- 	char *loop_formats[] = { "/dev/loop%d", "/dev/loop/%d" };
--	int i, j, fd, somedev = 0, someloop = 0, loop_known = 0;
-+	int i, j, fd, first = 0, somedev = 0, someloop = 0, loop_known = 0;
- 	struct stat statbuf;
- 	struct loop_info loopinfo;
- 	FILE *procdev;
- 
-+	if (stat("/dev/loop-control", &statbuf) == 0 &&
-+	    S_ISCHR(statbuf.st_mode)) {
-+		fd = open("/dev/loop-control", O_RDWR);
-+		if (fd >= 0)
-+			first = ioctl(fd, LOOP_CTL_GET_FREE);
-+		close(fd);
-+		if (first < 0)
-+			first = 0;
-+	}
- 	for (j = 0; j < SIZE(loop_formats); j++) {
- 
--	    for(i = 0; i < 256; i++) {
-+	    for(i = first; i < 256; i++) {
- 		sprintf(dev, loop_formats[j], i);
- 
- 		if (stat (dev, &statbuf) == 0 && S_ISBLK(statbuf.st_mode)) {
 -- 
 1.8.4.2
