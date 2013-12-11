@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 06/16] signal waiter thread to stop waiting on dm
-	events
-Date: Wed, 11 Dec 2013 00:43:00 -0600
-Message-ID: <1386744190-1295-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 04/16] Don't detect prioritizers that don't work
+Date: Wed, 11 Dec 2013 00:42:58 -0600
+Message-ID: <1386744190-1295-5-git-send-email-bmarzins@redhat.com>
 References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,85 +22,40 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The ioctl syscall is not a pthread cancellation point. So, when
-device-mapper is waiting on events, pthread_cancel won't cancel
-the waiter thread.  This patch makes the waiter threads handle
-SIGUSR2, and has stop_waiter_thread() signal it to break out of
-waiting on dm events. Unfortunately, there is still a possibility
-of the signal arriving before the ioctl, and the waiter thread
-still hanging until the devices are reloaded.
+The current method used by detect_prio was selecting the ALUA
+prioritizer for devices that didn't have ALUA enabled.  This patch
+makes detect_prio go through all the steps to get a priority with the
+ALUA prioritizer.  If it is able to successfully get a priority, then
+it selects the ALUA proritizer for the device.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/waiter.c | 9 +++++++++
- multipathd/main.c     | 8 ++++++++
- 2 files changed, 17 insertions(+)
+ libmultipath/propsel.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/waiter.c b/libmultipath/waiter.c
-index 5094290..7cedd4b 100644
---- a/libmultipath/waiter.c
-+++ b/libmultipath/waiter.c
-@@ -57,6 +57,7 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
- 	thread = mpp->waiter;
- 	mpp->waiter = (pthread_t)0;
- 	pthread_cancel(thread);
-+	pthread_kill(thread, SIGUSR2);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 211ebcd..df09603 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -396,10 +396,17 @@ select_getuid (struct path * pp)
+ void
+ detect_prio(struct path * pp)
+ {
++	int ret;
+ 	struct prio *p = &pp->prio;
+ 
+-	if (get_target_port_group_support(pp->fd) > 0)
+-		prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
++	if (get_target_port_group_support(pp->fd) <= 0)
++		return;
++	ret = get_target_port_group(pp->fd);
++	if (ret < 0)
++		return;
++	if (get_asymmetric_access_state(pp->fd, ret) < 0)
++		return;
++	prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
  }
  
- /*
-@@ -65,6 +66,7 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
-  */
- int waiteventloop (struct event_thread *waiter)
- {
-+	sigset_t set, oldset;
- 	int event_nr;
- 	int r;
- 
-@@ -97,8 +99,15 @@ int waiteventloop (struct event_thread *waiter)
- 	dm_task_no_open_count(waiter->dmt);
- 
- 	/* wait */
-+	sigemptyset(&set);
-+	sigaddset(&set, SIGUSR2);
-+	pthread_sigmask(SIG_UNBLOCK, &set, &oldset);
-+
-+	pthread_testcancel();
- 	r = dm_task_run(waiter->dmt);
-+	pthread_testcancel();
- 
-+	pthread_sigmask(SIG_SETMASK, &oldset, NULL);
- 	dm_task_destroy(waiter->dmt);
- 	waiter->dmt = NULL;
- 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 7c0e313..c388e42 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1521,6 +1521,12 @@ sigusr1 (int sig)
- }
- 
- static void
-+sigusr2 (int sig)
-+{
-+	condlog(3, "SIGUSR2 received");
-+}
-+
-+static void
- signal_init(void)
- {
- 	sigset_t set;
-@@ -1528,10 +1534,12 @@ signal_init(void)
- 	sigemptyset(&set);
- 	sigaddset(&set, SIGHUP);
- 	sigaddset(&set, SIGUSR1);
-+	sigaddset(&set, SIGUSR2);
- 	pthread_sigmask(SIG_BLOCK, &set, NULL);
- 
- 	signal_set(SIGHUP, sighup);
- 	signal_set(SIGUSR1, sigusr1);
-+	signal_set(SIGUSR2, sigusr2);
- 	signal_set(SIGINT, sigend);
- 	signal_set(SIGTERM, sigend);
- 	signal(SIGPIPE, SIG_IGN);
+ extern int
 -- 
 1.8.4.2
