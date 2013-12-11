@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 13/16] kpartx: fix strict aliasing warning
-Date: Wed, 11 Dec 2013 00:43:07 -0600
-Message-ID: <1386744190-1295-14-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 12/16] multipathd: Don't touch the multipath
+	device after setup_multipath fails
+Date: Wed, 11 Dec 2013 00:43:06 -0600
+Message-ID: <1386744190-1295-13-git-send-email-bmarzins@redhat.com>
 References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,36 +23,64 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Compiling with strict aliasing throws warnings about aliasing
-volume_label_t to an array of unsigned ints. Adding __may_alias__
-lets it know that we meant to do this.
+If setup_multipath fails, it removes the device. multipath always needs
+to check its return value and not touch the device if setup_multipath
+failed.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/dasd.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ multipathd/cli_handlers.c |  3 ++-
+ multipathd/main.c         | 12 ++++++------
+ 2 files changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index dcdf678..1fcf778 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -46,6 +46,8 @@ unsigned long long sectors512(unsigned long long sectors, int blocksize)
- 	return sectors * (blocksize >> 9);
- }
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 58a5643..baa43c4 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -634,7 +634,8 @@ cli_resize(void *v, char **reply, int *len, void *data)
+ 		return 1;
  
-+typedef unsigned int __attribute__((__may_alias__)) label_ints_t;
-+
- /*
-  */
- int 
-@@ -169,7 +171,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 		/*
- 		 * VM style CMS1 labeled disk
- 		 */
--		unsigned int *label = (unsigned int *) &vlabel;
-+		label_ints_t *label = (label_ints_t *) &vlabel;
+ 	dm_lib_release();
+-	setup_multipath(vecs, mpp);
++	if (setup_multipath(vecs, mpp) != 0)
++		return 1;
+ 	sync_map_state(mpp);
  
- 		blocksize = label[4];
- 		if (label[14] != 0) {
+ 	return 0;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 204fbb1..49e74a6 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -139,7 +139,6 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
+ 	struct multipath * ompp;
+ 	vector ompv = vecs->mpvec;
+ 	unsigned int i;
+-	int j;
+ 
+ 	vector_foreach_slot (ompv, ompp, i) {
+ 		condlog(3, "%s: coalesce map", ompp->alias);
+@@ -154,16 +153,17 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
+ 				/*
+ 				 * may be just because the device is open
+ 				 */
++				if (setup_multipath(vecs, ompp) != 0) {
++					i--;
++					continue;
++				}
+ 				if (!vector_alloc_slot(nmpv))
+ 					return 1;
+ 
+ 				vector_set_slot(nmpv, ompp);
+-				setup_multipath(vecs, ompp);
+ 
+-				if ((j = find_slot(ompv, (void *)ompp)) != -1)
+-					vector_del_slot(ompv, j);
+-
+-				continue;
++				vector_del_slot(ompv, i);
++				i--;
+ 			}
+ 			else {
+ 				dm_lib_release();
 -- 
 1.8.4.2
