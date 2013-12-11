@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 14/16] libmultipath: blacklist blktap devices
-Date: Wed, 11 Dec 2013 00:43:08 -0600
-Message-ID: <1386744190-1295-15-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 06/16] signal waiter thread to stop waiting on dm
+	events
+Date: Wed, 11 Dec 2013 00:43:00 -0600
+Message-ID: <1386744190-1295-7-git-send-email-bmarzins@redhat.com>
 References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,25 +23,85 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Multipath can't run on top of blktap devices, so it should just ignore them.
+The ioctl syscall is not a pthread cancellation point. So, when
+device-mapper is waiting on events, pthread_cancel won't cancel
+the waiter thread.  This patch makes the waiter threads handle
+SIGUSR2, and has stop_waiter_thread() signal it to break out of
+waiting on dm events. Unfortunately, there is still a possibility
+of the signal arriving before the ioctl, and the waiter thread
+still hanging until the devices are reloaded.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/blacklist.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/waiter.c | 9 +++++++++
+ multipathd/main.c     | 8 ++++++++
+ 2 files changed, 17 insertions(+)
 
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index d597350..79ddcde 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -164,7 +164,7 @@ setup_default_blist (struct config * conf)
- 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
- 		return 1;
+diff --git a/libmultipath/waiter.c b/libmultipath/waiter.c
+index 5094290..7cedd4b 100644
+--- a/libmultipath/waiter.c
++++ b/libmultipath/waiter.c
+@@ -57,6 +57,7 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+ 	thread = mpp->waiter;
+ 	mpp->waiter = (pthread_t)0;
+ 	pthread_cancel(thread);
++	pthread_kill(thread, SIGUSR2);
+ }
  
--	str = STRDUP("^hd[a-z]");
-+	str = STRDUP("^(td|hd)[a-z]");
- 	if (!str)
- 		return 1;
- 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+ /*
+@@ -65,6 +66,7 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+  */
+ int waiteventloop (struct event_thread *waiter)
+ {
++	sigset_t set, oldset;
+ 	int event_nr;
+ 	int r;
+ 
+@@ -97,8 +99,15 @@ int waiteventloop (struct event_thread *waiter)
+ 	dm_task_no_open_count(waiter->dmt);
+ 
+ 	/* wait */
++	sigemptyset(&set);
++	sigaddset(&set, SIGUSR2);
++	pthread_sigmask(SIG_UNBLOCK, &set, &oldset);
++
++	pthread_testcancel();
+ 	r = dm_task_run(waiter->dmt);
++	pthread_testcancel();
+ 
++	pthread_sigmask(SIG_SETMASK, &oldset, NULL);
+ 	dm_task_destroy(waiter->dmt);
+ 	waiter->dmt = NULL;
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7c0e313..c388e42 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1521,6 +1521,12 @@ sigusr1 (int sig)
+ }
+ 
+ static void
++sigusr2 (int sig)
++{
++	condlog(3, "SIGUSR2 received");
++}
++
++static void
+ signal_init(void)
+ {
+ 	sigset_t set;
+@@ -1528,10 +1534,12 @@ signal_init(void)
+ 	sigemptyset(&set);
+ 	sigaddset(&set, SIGHUP);
+ 	sigaddset(&set, SIGUSR1);
++	sigaddset(&set, SIGUSR2);
+ 	pthread_sigmask(SIG_BLOCK, &set, NULL);
+ 
+ 	signal_set(SIGHUP, sighup);
+ 	signal_set(SIGUSR1, sigusr1);
++	signal_set(SIGUSR2, sigusr2);
+ 	signal_set(SIGINT, sigend);
+ 	signal_set(SIGTERM, sigend);
+ 	signal(SIGPIPE, SIG_IGN);
 -- 
 1.8.4.2
