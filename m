@@ -1,11 +1,17 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Request for kpartx patch
-Date: Tue, 10 Dec 2013 22:25:00 +0100
-Message-ID: <CABr-GnemnkW69V4PWyLkwjqSytZH=Tom+o02Nn4EbrrEWab7-w@mail.gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: dm-cache questions
+Date: Wed, 11 Dec 2013 01:03:38 +0000
+Message-ID: <20131211010337.GB4894@agk-dp.fab.redhat.com>
+References: <093f01cef54a$fdf044d0$f9d0ce70$@acm.org>
+	<20131210095019.GB32555@debian>
+	<0a9401cef5eb$7e32a110$7a97e330$@acm.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7139956432485449302=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <0a9401cef5eb$7e32a110$7a97e330$@acm.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,43 +21,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: "Paul B. Henson" <henson@acm.org>
+Cc: 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============7139956432485449302==
-Content-Type: multipart/alternative; boundary=001a1134bbf2b803e704ed34bea9
+On Tue, Dec 10, 2013 at 01:04:58PM -0800, Paul B. Henson wrote:
+> Ouch. Life on the bleeding edge ;). Do fixes like this get backported to
+> 3.10LTS, or just to the latest mainline/stable kernel? 
 
---001a1134bbf2b803e704ed34bea9
-Content-Type: text/plain; charset=ISO-8859-1
+We send them to mainline and stable then it is up to the distributions
+concerned to choose to apply them.  Sometimes it helps to give the
+distribution(s) concerned a gentle prod and ask if they've noticed the
+patch(es) and if/when they'll be taking them.
 
-Ben,
+> Any idea when dm-cache support is going to show up in lvm2? 
 
-can you submit 0047-RHBZ-980777-kpartx-read-only-loop-devs.patch for
-inclusion, so the commit is properly credited ?
+Various aspects of the design are being debated.  Expect to see progress 
+to start to appear on lvm-devel over the next few weeks.  We're
+hopeful we'll have something that's beginning to be useful in January.
 
-Best regards,
-Christophe Varoqui
-
---001a1134bbf2b803e704ed34bea9
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Ben,<div><br></div><div>can you submit=A0<span style=3D"fo=
-nt-family:Calibri,sans-serif;font-size:14px">0047-RHBZ-980777-kpartx-</span=
-><span style=3D"font-family:Calibri,sans-serif;font-size:14px">read-only-lo=
-op-devs.patch</span>=A0for inclusion, so the commit is properly credited ?<=
-/div>
-<div><br></div><div>Best regards,</div><div>Christophe Varoqui</div></div>
-
---001a1134bbf2b803e704ed34bea9--
-
-
---===============7139956432485449302==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7139956432485449302==--
+Alasdair
