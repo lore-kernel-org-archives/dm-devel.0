@@ -1,16 +1,13 @@
-From: Dongmao Zhang <dmzhang@suse.com>
-Subject: Re: [PATCH 1/1] improve the performance
-	of	dm-log-userspace
-Date: Wed, 11 Dec 2013 16:01:50 +0800
-Message-ID: <52A81BEE.2030600@suse.com>
-References: <d16b09a5f29e29d77122c29f01ecaf7928dc4397.1386135157.git.dmzhang@suse.com>
-	<CFEF63AA-BBCD-4D61-A43C-9D785E45182C@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: dm-thin performance ramblings
+Date: Wed, 11 Dec 2013 13:01:52 +0000
+Message-ID: <20131211130151.GB1848@debian>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CFEF63AA-BBCD-4D61-A43C-9D785E45182C@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +17,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-aGksIGJyYXNzb3cKCiAgIFllcywgSSBoYWQgc3VibWl0ZWQgYSBwYXRjaCBsdm0tZGV2ZWwuCgpo
-dHRwOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMvbHZtLWRldmVsLzIwMTMtTm92ZW1iZXIvbXNn
-MDAwOTMuaHRtbC4KCnBsZWFzZSByZXZpZXcuCgpJIHNob3VsZCBoYXZlIGFkZCBhIHBhdGNoIHZl
-cnNpb24gaW5kaWNhdG9yLgoKCgoKCgoK5LqOIDIwMTPlubQxMuaciDEx5pelIDA5OjE3LCBCcmFz
-c293IEpvbmF0aGFuIOWGmemBkzoKPiBMb29rcyBnb29kLiAgRGlkIHlvdSBoYXBwZW4gdG8gcG9z
-dCB0aGUgYWNjb21wYW55aW5nIHVzZXJzcGFjZSBwYXRjaGVzPyAgSWYgeW91IHBhc3MgdGhvc2Ug
-YWxvbmcsIEkgd2lsbCByZXZpZXcgdGhhdCBhbHNvIGFuZCB0ZXN0IHRoZW0gdG9nZXRoZXIuICBP
-bmNlIHRoYXQncyBkb25lLCBJIHdpbGwgQUNLLgo+Cj4gICBicmFzc293Cj4KPiBPbiBEZWMgMywg
-MjAxMywgYXQgMTE6MzUgUE0sIGRvbmdtYW8gemhhbmcgd3JvdGU6Cj4KPj4gbW9kaWZpZWQgd29y
-a3F1ZXVlIGNhbGxzIG9uICBIYXlha2F3YSdzIGNvbW1lbnRzCj4+Cj4+IEluIHRoZSBjbHVzdGVy
-IGV2aXJvbm1lbnQsIGNsdXN0ZXIgd3JpdGUgaGFzIHBvb3IgcGVyZm9ybWFuY2UuCj4KPiA8L3Nu
-aXA+Cj4KPj4gCXNwaW5sb2NrX3QgZmx1c2hfbG9jazsKPj4gCXN0cnVjdCBsaXN0X2hlYWQgbWFy
-a19saXN0Owo+PiAJc3RydWN0IGxpc3RfaGVhZCBjbGVhcl9saXN0Owo+PiArCj4+ICsJLyp3b3Jr
-IHF1ZXVlIGZvciBmbHVzaCBjbGVhciByZWdpb24qLwo+Cj4gVXNlIHNwYWNlcyBhZnRlciAvKiBh
-bmQgYmVmb3JlICovCj4KPj4gKwlzdHJ1Y3Qgd29ya3F1ZXVlX3N0cnVjdCAqZG1sb2dfd3E7Cj4+
-ICsJc3RydWN0IGRlbGF5ZWRfd29yayBmbHVzaF9sb2dfd29yazsKPj4gKwlhdG9taWNfdCBzY2hl
-ZF9mbHVzaDsKPj4gKwl1aW50MzJfdCBpbnRlZ3JhdGVkX2ZsdXNoOwo+PiB9Owo+Cj4gPC9zbmlw
-Pgo+Cj4+IAlkZXZpY2VzX3JkYXRhID0ga3phbGxvYyhkZXZpY2VzX3JkYXRhX3NpemUsIEdGUF9L
-RVJORUwpOwo+PiAJaWYgKCFkZXZpY2VzX3JkYXRhKSB7Cj4+IAkJRE1FUlIoIkZhaWxlZCB0byBh
-bGxvY2F0ZSBtZW1vcnkgZm9yIGRldmljZSBpbmZvcm1hdGlvbiIpOwo+PiBAQCAtMjQ2LDYgKzI2
-OCwyMCBAQCBzdGF0aWMgaW50IHVzZXJzcGFjZV9jdHIoc3RydWN0IGRtX2RpcnR5X2xvZyAqbG9n
-LCBzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwKPj4gCQkJRE1FUlIoIkZhaWxlZCB0byByZWdpc3RlciAl
-cyB3aXRoIGRldmljZS1tYXBwZXIiLAo+PiAJCQkgICAgICBkZXZpY2VzX3JkYXRhKTsKPj4gCX0K
-Pj4gKwo+PiArCj4KPiBFeHRyYSBuZXdsaW5lLi4uCj4KPiBUaGUgcmVzdCBsb29rcyBnb29kLiAg
-KENvc21ldGljIGlzc3VlcyBsaWtlIHRoaXMgd291bGRuJ3QgcHJldmVudCBteSBBQ0sgdGhvdWdo
-LikKPgo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+
-IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+CgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+There have been a few questions posted about thinp performance.  So I
+put some info up here:
+
+http://device-mapper.org/blog/2013/12/10/some-dm-thin-throughput-benchmarks/
+
+- Joe
