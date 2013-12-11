@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 04/16] Don't detect prioritizers that don't work
-Date: Wed, 11 Dec 2013 00:42:58 -0600
-Message-ID: <1386744190-1295-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 09/16] libmultipath: try to deal with bindings
+	file hand editting
+Date: Wed, 11 Dec 2013 00:43:03 -0600
+Message-ID: <1386744190-1295-10-git-send-email-bmarzins@redhat.com>
 References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,40 +23,119 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The current method used by detect_prio was selecting the ALUA
-prioritizer for devices that didn't have ALUA enabled.  This patch
-makes detect_prio go through all the steps to get a priority with the
-ALUA prioritizer.  If it is able to successfully get a priority, then
-it selects the ALUA proritizer for the device.
+Unfortunately, instead of adding aliases to /etc/multipath.conf like they
+should, some users add aliases to the bindings file. If they add aliases
+that look like user_friendly_names, like mpathfoo, they interfere with
+the code to find the next available user_friendly_name (giving you
+mpathfop as the next user_friendly_name in this case).  This patch
+will fix this by giving the next name available name after an unbroken
+string of names starting with the smallest possible name. It order to keep
+the choice quick, it won't handle situation where the list of names
+starting at the smallest possible is not in order.  There are a number
+of ways to do a better job finding the smallest possible name, but this
+will fix most of the cases I've seen, without slowing things down at all.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/propsel.c | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
+ libmultipath/alias.c | 39 ++++++++++++++++++++++++++++++---------
+ 1 file changed, 30 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 211ebcd..df09603 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -396,10 +396,17 @@ select_getuid (struct path * pp)
- void
- detect_prio(struct path * pp)
- {
-+	int ret;
- 	struct prio *p = &pp->prio;
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index d913294..ab15185 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -46,11 +46,11 @@ format_devname(char *name, int id, int len, char *prefix)
+ 	memset(name,0, len);
+ 	strcpy(name, prefix);
+ 	for (pos = len - 1; pos >= prefix_len; pos--) {
++		id--;
+ 		name[pos] = 'a' + id % 26;
+ 		if (id < 26)
+ 			break;
+ 		id /= 26;
+-		id--;
+ 	}
+ 	memmove(name + prefix_len, name + pos, len - pos);
+ 	name[prefix_len + len - pos] = '\0';
+@@ -66,13 +66,22 @@ scan_devname(char *alias, char *prefix)
+ 	if (!prefix || strncmp(alias, prefix, strlen(prefix)))
+ 		return -1;
  
--	if (get_target_port_group_support(pp->fd) > 0)
--		prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
-+	if (get_target_port_group_support(pp->fd) <= 0)
-+		return;
-+	ret = get_target_port_group(pp->fd);
-+	if (ret < 0)
-+		return;
-+	if (get_asymmetric_access_state(pp->fd, ret) < 0)
-+		return;
-+	prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
++	if (strlen(alias) == strlen(prefix))
++		return -1;	
++
++	if (strlen(alias) > strlen(prefix) + 7)
++		/* id of 'aaaaaaaa' overflows int */
++		return -1;
++
+ 	c = alias + strlen(prefix);
+ 	while (*c != '\0' && *c != ' ' && *c != '\t') {
++		if (*c < 'a' || *c > 'z')
++			return -1;
+ 		i = *c - 'a';
+ 		n = ( n * 26 ) + i;
++		if (n < 0)
++			return -1;
+ 		c++;
+-		if (*c < 'a' || *c > 'z')
+-			break;
+ 		n++;
+ 	}
+ 
+@@ -84,7 +93,9 @@ lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
+ {
+ 	char buf[LINE_MAX];
+ 	unsigned int line_nr = 0;
+-	int id = 0;
++	int id = 1;
++	int biggest_id = 1;
++	int smallest_bigger_id = INT_MAX;
+ 
+ 	*map_alias = NULL;
+ 
+@@ -100,8 +111,12 @@ lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
+ 		if (!alias) /* blank line */
+ 			continue;
+ 		curr_id = scan_devname(alias, prefix);
+-		if (curr_id >= id)
+-			id = curr_id + 1;
++		if (curr_id == id)
++			id++;
++		if (curr_id > biggest_id)
++			biggest_id = curr_id;
++		if (curr_id > id && curr_id < smallest_bigger_id)
++			smallest_bigger_id = curr_id;
+ 		wwid = strtok(NULL, " \t");
+ 		if (!wwid){
+ 			condlog(3,
+@@ -116,11 +131,17 @@ lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
+ 			if (*map_alias == NULL)
+ 				condlog(0, "Cannot copy alias from bindings "
+ 					"file : %s", strerror(errno));
+-			return id;
++			return 0;
+ 		}
+ 	}
+ 	condlog(3, "No matching wwid [%s] in bindings file.", map_wwid);
+-	return id;
++	if (id < 0) {
++		condlog(0, "no more available user_friendly_names");
++		return 0;
++	}
++	if (id < smallest_bigger_id)
++		return id;
++	return biggest_id + 1;
  }
  
- extern int
+ static int
+@@ -254,7 +275,7 @@ get_user_friendly_alias(char *wwid, char *file, char *prefix,
+ 		return NULL;
+ 	}
+ 
+-	if (!alias && can_write && !bindings_read_only)
++	if (!alias && can_write && !bindings_read_only && id)
+ 		alias = allocate_binding(fd, wwid, id, prefix);
+ 
+ 	fclose(f);
 -- 
 1.8.4.2
