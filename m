@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 11/16] libmultipath: show default configurations
-Date: Wed, 11 Dec 2013 00:43:05 -0600
-Message-ID: <1386744190-1295-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 07/16] fix mutipath -W on empty wwids file
+Date: Wed, 11 Dec 2013 00:43:01 -0600
+Message-ID: <1386744190-1295-8-git-send-email-bmarzins@redhat.com>
 References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,36 +22,42 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-"multipathd show config" should show the current configuration, even if
-the current values match the default values.  Omitting the values when
-they match the compiled in defaults just makes it harder for users to
-see how multipath configured.
+When multipath tries to open the wwids file and finds it empty or
+missing, it writes the header to the file.  When it tried to wipe
+the wwids from an empty or missing file, it didn't seek back to the
+start of the file after truncating it.  This caused the the wwids
+file to have a patch of zeroed bytes at the start. This patch fixes
+this by always seeking back to the start of the file before rewriting
+the header.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c | 4 ----
- 1 file changed, 4 deletions(-)
+ libmultipath/wwids.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 0bf9587..9db4725 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -2459,16 +2459,12 @@ snprint_def_verbosity (char * buff, int len, void * data)
- static int
- snprint_def_max_polling_interval (char * buff, int len, void * data)
- {
--	if (conf->max_checkint == MAX_CHECKINT(conf->checkint))
--		return 0;
- 	return snprintf(buff, len, "%i", conf->max_checkint);
- }
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index 91b07a7..eca1799 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -4,6 +4,7 @@
+ #include <string.h>
+ #include <limits.h>
+ #include <stdio.h>
++#include <sys/types.h>
  
- static int
- snprint_reassign_maps (char * buff, int len, void * data)
- {
--	if (conf->reassign_maps == DEFAULT_REASSIGN_MAPS)
--		return 0;
- 	return snprintf(buff, len, "\"%s\"",
- 			conf->reassign_maps?"yes":"no");
- }
+ #include "checkers.h"
+ #include "vector.h"
+@@ -100,6 +101,11 @@ replace_wwids(vector mp)
+ 		condlog(0, "cannot truncate wwids file : %s", strerror(errno));
+ 		goto out_file;
+ 	}
++	if (lseek(fd, 0, SEEK_SET) < 0) {
++		condlog(0, "cannot seek to the start of the file : %s",
++			strerror(errno));
++		goto out_file;
++	}
+ 	len = strlen(WWIDS_FILE_HEADER);
+ 	if (write_all(fd, WWIDS_FILE_HEADER, len) != len) {
+ 		condlog(0, "Can't write wwid file header : %s",
 -- 
 1.8.4.2
