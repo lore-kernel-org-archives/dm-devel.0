@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 07/16] fix mutipath -W on empty wwids file
-Date: Wed, 11 Dec 2013 00:43:01 -0600
-Message-ID: <1386744190-1295-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 08/16] multipathd: Add envp variable
+Date: Wed, 11 Dec 2013 00:43:02 -0600
+Message-ID: <1386744190-1295-9-git-send-email-bmarzins@redhat.com>
 References: <1386744190-1295-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,42 +22,24 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-When multipath tries to open the wwids file and finds it empty or
-missing, it writes the header to the file.  When it tried to wipe
-the wwids from an empty or missing file, it didn't seek back to the
-start of the file after truncating it.  This caused the the wwids
-file to have a patch of zeroed bytes at the start. This patch fixes
-this by always seeking back to the start of the file before rewriting
-the header.
+A missing variable declaration was keeping multipathd from compiling.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/wwids.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ multipathd/main.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index 91b07a7..eca1799 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -4,6 +4,7 @@
- #include <string.h>
- #include <limits.h>
- #include <stdio.h>
-+#include <sys/types.h>
+diff --git a/multipathd/main.c b/multipathd/main.c
+index c388e42..204fbb1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1617,6 +1617,7 @@ child (void * param)
+ 	struct multipath * mpp;
+ 	int i;
+ 	int rc, pid_rc;
++	char *envp;
  
- #include "checkers.h"
- #include "vector.h"
-@@ -100,6 +101,11 @@ replace_wwids(vector mp)
- 		condlog(0, "cannot truncate wwids file : %s", strerror(errno));
- 		goto out_file;
- 	}
-+	if (lseek(fd, 0, SEEK_SET) < 0) {
-+		condlog(0, "cannot seek to the start of the file : %s",
-+			strerror(errno));
-+		goto out_file;
-+	}
- 	len = strlen(WWIDS_FILE_HEADER);
- 	if (write_all(fd, WWIDS_FILE_HEADER, len) != len) {
- 		condlog(0, "Can't write wwid file header : %s",
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	sem_init(&exit_sem, 0, 0);
 -- 
 1.8.4.2
