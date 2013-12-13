@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 01/11] Remove trailing spaces from sysfs
-	attributes
-Date: Fri, 13 Dec 2013 13:14:04 +0100
-Message-ID: <1386936854-8399-2-git-send-email-hare@suse.de>
+Subject: [PATCH 02/11] Document 'wwids_file' and 'reservation_key'
+Date: Fri, 13 Dec 2013 13:14:05 +0100
+Message-ID: <1386936854-8399-3-git-send-email-hare@suse.de>
 References: <1386936854-8399-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,61 +21,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Some sysfs attributes may contain trailing spaces, which only
-serve to confuse matters. So strip them before continuing.
+Add documentation for 'wwids_file' and 'reservation_key' to
+multipath.conf.annotated.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 2 +-
- libmultipath/util.c      | 3 ++-
- libmultipath/util.h      | 2 +-
- 3 files changed, 4 insertions(+), 3 deletions(-)
+ multipath.conf.annotated | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index d5557d9..d519c02 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -164,7 +164,7 @@ sysfs_get_##fname (struct udev_device * udev, char * buff, size_t len)	\
- 		return -EINVAL;						\
- 	}								\
- 	ret = strlcpy(buff, attr, len);					\
--	return ret;							\
-+	return strchop(buff);						\
- }
- 
- declare_sysfs_get_str(devtype);
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index a9f5939..e6fd11d 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -10,13 +10,14 @@
- #include "vector.h"
- #include "structs.h"
- 
--void
-+size_t
- strchop(char *str)
- {
- 	int i;
- 
- 	for (i=strlen(str)-1; i >=0 && isspace(str[i]); --i) ;
- 	str[++i] = '\0';
-+	return strlen(str);
- }
- 
- int
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 44184a1..7b67dff 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -1,7 +1,7 @@
- #ifndef _UTIL_H
- #define _UTIL_H
- 
--void strchop(char *);
-+size_t strchop(char *);
- int basenamecpy (const char * src, char * dst, int);
- int filepresent (char * run);
- int get_word (char * sentence, char ** word);
+diff --git a/multipath.conf.annotated b/multipath.conf.annotated
+index a20302c..235e130 100644
+--- a/multipath.conf.annotated
++++ b/multipath.conf.annotated
+@@ -275,7 +275,22 @@
+ #	#           the user_friendly_names option.
+ #	# values  : <full_pathname>
+ #	# default : "/var/lib/multipath/bindings"
+-#	bindings_file "/etc/multipath_bindings"
++#	bindings_file "/etc/multipath/bindings"
++#
++#	# name    : wwids_file
++#	# scope   : multipath
++#	# desc    : The location of the wwids file multipath uses to
++#       #           keep track of the created multipath devices.
++#	# values  : <full_pathname>
++#	# default : "/var/lib/multipath/wwids"
++#	wwids_file "/etc/multipath/wwids"
++#
++#	# name    : reservation_key
++#	# scope   : multipath
++#	# desc    : Service action reservation key used by mpathpersist.
++#	# values  : <key>
++#	# default : (null)
++#	reservation_key "mpathkey"
+ #
+ #}
+ #	
 -- 
 1.8.1.4
