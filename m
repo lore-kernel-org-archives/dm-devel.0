@@ -1,23 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-cache questions
-Date: Fri, 13 Dec 2013 16:21:56 -0500
-Message-ID: <20131213212156.GB11452@redhat.com>
-References: <093f01cef54a$fdf044d0$f9d0ce70$@acm.org>
-	<20131210095019.GB32555@debian>
-	<0a9401cef5eb$7e32a110$7a97e330$@acm.org>
-	<20131211010337.GB4894@agk-dp.fab.redhat.com>
-	<0aea01cef615$d688f8d0$839aea70$@acm.org>
-	<20131211150644.GA28188@redhat.com>
-	<0c4901cef6df$e557cec0$b0076c40$@acm.org>
-	<20131213142002.GA9302@redhat.com>
-	<0e4a01cef83b$c9afe5b0$5d0fb110$@acm.org>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 0/3] Next try: systemd watchdog integration
+Date: Fri, 13 Dec 2013 15:34:07 -0600
+Message-ID: <20131213213407.GE632@dhcp80-209.msp.redhat.com>
+References: <1386925879-31225-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <0e4a01cef83b$c9afe5b0$5d0fb110$@acm.org>
+In-Reply-To: <1386925879-31225-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,31 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Paul B. Henson" <henson@acm.org>
-Cc: 'device-mapper development' <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Dec 13 2013 at  2:44pm -0500,
-Paul B. Henson <henson@acm.org> wrote:
-
-> > From: Mike Snitzer
-> > Sent: Friday, December 13, 2013 6:20 AM
-> > 
-> > But in general it is the task of other distro vendors to backport stable
-> > fixes to their products.
+On Fri, Dec 13, 2013 at 10:11:16AM +0100, Hannes Reinecke wrote:
+> Hi Christophe,
 > 
-> Got it, thanks. I see the recent beta announcement officially confirmed that
-> RHEL 7 will be based on 3.10, so I'm guessing somebody in your organization
-> is going to be back porting to that stable release at least :). Although I
-> suppose that could be in your internal wad-o-patches rather than official
-> upstream commits.
+> here is now a clean version of the systemd watchdog integration.
+> It's now completely optional, and will only be enabled if the
+> user / admin manually modifies the service file.
+> So that should cover all objections Ben had.
 
-All the latest dm-cache changes will be included in RHEL7.  I'm the
-lucky guy who brings these changes back.
+Great
 
-FYI, the most recent dm-cache fixes should hopefully be available in
-linus's tree shortly.  Joe fixed the dm cache metadata leak that he
-advised you to wait for before using dm-cache in a more serious way.
+Thanks!
 
-See:
-http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-linus
+-Ben
+
+> 
+> Hannes Reinecke (3):
+>   multipathd: enable core dumps for systemd
+>   Use correct systemd unit directory
+>   multipathd: Implement systemd watchdog integration
+> 
+>  Makefile.inc                  |  2 +-
+>  libmultipath/config.h         |  3 +++
+>  multipath/multipath.conf.5    |  7 +++++--
+>  multipathd/main.c             | 23 +++++++++++++++++++++-
+>  multipathd/multipathd.8       | 45 ++++++++++++++++++++++++++++++++++++++++++-
+>  multipathd/multipathd.service |  1 +
+>  6 files changed, 76 insertions(+), 5 deletions(-)
+> 
+> -- 
+> 1.8.1.4
