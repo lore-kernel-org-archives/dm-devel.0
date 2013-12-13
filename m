@@ -1,15 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 08/11] Reset timezone information on
-	reconfigure
-Date: Fri, 13 Dec 2013 23:22:24 +0100
-Message-ID: <CABr-GncpPvTPJW0-HzSDkSxfh70WwwDGeoDTN_w5vUz+X15FFQ@mail.gmail.com>
+Subject: Re: [PATCH 01/11] Remove trailing spaces from sysfs
+	attributes
+Date: Fri, 13 Dec 2013 23:24:16 +0100
+Message-ID: <CABr-GnfWgvX-oxS1F4N6ktOkRR91j-zKbaSt7JSRe5WwO-eXbg@mail.gmail.com>
 References: <1386936854-8399-1-git-send-email-hare@suse.de>
-	<1386936854-8399-9-git-send-email-hare@suse.de>
+	<1386936854-8399-2-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6695346919807515822=="
+Content-Type: multipart/mixed; boundary="===============5305218371354715876=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1386936854-8399-9-git-send-email-hare@suse.de>
+In-Reply-To: <1386936854-8399-2-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,47 +22,48 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============6695346919807515822==
-Content-Type: multipart/alternative; boundary=20cf30363fa182711104ed71e500
+--===============5305218371354715876==
+Content-Type: multipart/alternative; boundary=20cf303dd358361c9d04ed71ec9a
 
---20cf30363fa182711104ed71e500
+--20cf303dd358361c9d04ed71ec9a
 Content-Type: text/plain; charset=ISO-8859-1
 
 Hannes,
 
-FYI, related to your latest patchset,
+FYI, related to this patch,
 
-commit dd205886ed2d41bb8e2602cb9771be403a99cd27
+commit 3e7763345a31e81318b70d7af68902984312f624
 Author: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date:   Fri Dec 13 23:20:40 2013 +0100
+Date:   Fri Dec 13 23:10:27 2013 +0100
 
-    Add missing includes to support tzget() usage
+    [libmultipath] Fix a compilation warning
 
-diff --git a/libmultipath/log.c b/libmultipath/log.c
-index 74702d8..ab92e2a 100644
---- a/libmultipath/log.c
-+++ b/libmultipath/log.c
-@@ -8,6 +8,7 @@
- #include <stdarg.h>
- #include <string.h>
- #include <syslog.h>
-+#include <time.h>
+    Now that we chop the sysfs attribute strings, the size returned
+    by strlcpy is not used anymore. Remove the variable to tame
+    the compiler warning.
 
- #include "memory.h"
- #include "log.h"
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 37a9bc2..fd70b70 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -22,6 +22,7 @@
- #endif
- #include <semaphore.h>
- #include <mpath_persist.h>
-+#include <time.h>
-
- /*
-  * libcheckers
-
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index ccd3b62..b7470f8 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -143,7 +143,6 @@ path_discovery (vector pathvec, struct config * conf,
+int flag)
+ extern ssize_t                                                         \
+ sysfs_get_##fname (struct udev_device * udev, char * buff, size_t len) \
+ {                                                                      \
+-       ssize_t ret;                                                    \
+        const char * attr;                                              \
+        const char * devname;                                           \
+                                                                        \
+@@ -163,7 +162,7 @@ sysfs_get_##fname (struct udev_device * udev, char *
+buff, size_t len)      \
+                        devname, #fname);                               \
+                return -EINVAL;                                         \
+        }                                                               \
+-       ret = strlcpy(buff, attr, len);                                 \
++       strlcpy(buff, attr, len);                                       \
+        return strchop(buff);                                           \
+ }
 
 Best regards,
 Christophe Varoqui
@@ -70,44 +71,63 @@ Christophe Varoqui
 
 On Fri, Dec 13, 2013 at 1:14 PM, Hannes Reinecke <hare@suse.de> wrote:
 
-> Whenever 'reconfigure' is called we need to re-initialize the
-> timezone information as it might have been changed in the
-> meantime.
->
-> References: bnc#830511
+> Some sysfs attributes may contain trailing spaces, which only
+> serve to confuse matters. So strip them before continuing.
 >
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  libmultipath/log.c | 1 +
->  multipathd/main.c  | 3 +++
->  2 files changed, 4 insertions(+)
+>  libmultipath/discovery.c | 2 +-
+>  libmultipath/util.c      | 3 ++-
+>  libmultipath/util.h      | 2 +-
+>  3 files changed, 4 insertions(+), 3 deletions(-)
 >
-> diff --git a/libmultipath/log.c b/libmultipath/log.c
-> index 37c7cd7..74702d8 100644
-> --- a/libmultipath/log.c
-> +++ b/libmultipath/log.c
-> @@ -99,6 +99,7 @@ void log_close (void)
->  void log_reset (char *program_name)
->  {
->         closelog();
-> +       tzset();
->         openlog(program_name, 0, LOG_DAEMON);
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index d5557d9..d519c02 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -164,7 +164,7 @@ sysfs_get_##fname (struct udev_device * udev, char *
+> buff, size_t len)      \
+>                 return -EINVAL;                                         \
+>         }                                                               \
+>         ret = strlcpy(buff, attr, len);                                 \
+> -       return ret;                                                     \
+> +       return strchop(buff);                                           \
 >  }
 >
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 96564f8..1a1aa2d 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1416,6 +1416,9 @@ reconfigure (struct vectors * vecs)
->         vecs->pathvec = NULL;
->         conf = NULL;
+>  declare_sysfs_get_str(devtype);
+> diff --git a/libmultipath/util.c b/libmultipath/util.c
+> index a9f5939..e6fd11d 100644
+> --- a/libmultipath/util.c
+> +++ b/libmultipath/util.c
+> @@ -10,13 +10,14 @@
+>  #include "vector.h"
+>  #include "structs.h"
 >
-> +       /* Re-read any timezone changes */
-> +       tzset();
-> +
->         if (!load_config(DEFAULT_CONFIGFILE, udev)) {
->                 conf->verbosity = old->verbosity;
->                 conf->daemon = 1;
+> -void
+> +size_t
+>  strchop(char *str)
+>  {
+>         int i;
+>
+>         for (i=strlen(str)-1; i >=0 && isspace(str[i]); --i) ;
+>         str[++i] = '\0';
+> +       return strlen(str);
+>  }
+>
+>  int
+> diff --git a/libmultipath/util.h b/libmultipath/util.h
+> index 44184a1..7b67dff 100644
+> --- a/libmultipath/util.h
+> +++ b/libmultipath/util.h
+> @@ -1,7 +1,7 @@
+>  #ifndef _UTIL_H
+>  #define _UTIL_H
+>
+> -void strchop(char *);
+> +size_t strchop(char *);
+>  int basenamecpy (const char * src, char * dst, int);
+>  int filepresent (char * run);
+>  int get_word (char * sentence, char ** word);
 > --
 > 1.8.1.4
 >
@@ -117,77 +137,123 @@ On Fri, Dec 13, 2013 at 1:14 PM, Hannes Reinecke <hare@suse.de> wrote:
 > https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---20cf30363fa182711104ed71e500
+--20cf303dd358361c9d04ed71ec9a
 Content-Type: text/html; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr"><div>Hannes,</div><div><br></div>FYI, related to your late=
-st patchset,<div><br></div><div><div>commit dd205886ed2d41bb8e2602cb9771be4=
-03a99cd27</div><div>Author: Christophe Varoqui &lt;<a href=3D"mailto:christ=
-ophe.varoqui@opensvc.com">christophe.varoqui@opensvc.com</a>&gt;</div>
-<div>Date: =A0 Fri Dec 13 23:20:40 2013 +0100</div><div><br></div><div>=A0 =
-=A0 Add missing includes to support tzget() usage</div><div><br></div><div>=
-diff --git a/libmultipath/log.c b/libmultipath/log.c</div><div>index 74702d=
-8..ab92e2a 100644</div>
-<div>--- a/libmultipath/log.c</div><div>+++ b/libmultipath/log.c</div><div>=
-@@ -8,6 +8,7 @@</div><div>=A0#include &lt;stdarg.h&gt;</div><div>=A0#includ=
-e &lt;string.h&gt;</div><div>=A0#include &lt;syslog.h&gt;</div><div>+#inclu=
-de &lt;time.h&gt;</div>
-<div>=A0</div><div>=A0#include &quot;memory.h&quot;</div><div>=A0#include &=
-quot;log.h&quot;</div><div>diff --git a/multipathd/main.c b/multipathd/main=
-.c</div><div>index 37a9bc2..fd70b70 100644</div><div>--- a/multipathd/main.=
-c</div>
-<div>+++ b/multipathd/main.c</div><div>@@ -22,6 +22,7 @@</div><div>=A0#endi=
-f</div><div>=A0#include &lt;semaphore.h&gt;</div><div>=A0#include &lt;mpath=
-_persist.h&gt;</div><div>+#include &lt;time.h&gt;</div><div>=A0</div><div>=
-=A0/*</div>
-<div>=A0 * libcheckers</div></div><div><br></div><div><br></div><div>Best r=
-egards,</div><div>Christophe Varoqui</div></div><div class=3D"gmail_extra">=
-<br><br><div class=3D"gmail_quote">On Fri, Dec 13, 2013 at 1:14 PM, Hannes =
-Reinecke <span dir=3D"ltr">&lt;<a href=3D"mailto:hare@suse.de" target=3D"_b=
-lank">hare@suse.de</a>&gt;</span> wrote:<br>
+<div dir=3D"ltr">Hannes,<div><br></div><div>FYI, related to this patch,</di=
+v><div><br></div><div><div>commit 3e7763345a31e81318b70d7af68902984312f624<=
+/div><div>Author: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoq=
+ui@opensvc.com">christophe.varoqui@opensvc.com</a>&gt;</div>
+<div>Date: =A0 Fri Dec 13 23:10:27 2013 +0100</div><div><br></div><div>=A0 =
+=A0 [libmultipath] Fix a compilation warning</div><div>=A0 =A0=A0</div><div=
+>=A0 =A0 Now that we chop the sysfs attribute strings, the size returned</d=
+iv><div>=A0 =A0 by strlcpy is not used anymore. Remove the variable to tame=
+</div>
+<div>=A0 =A0 the compiler warning.</div><div><br></div><div>diff --git a/li=
+bmultipath/discovery.c b/libmultipath/discovery.c</div><div>index ccd3b62..=
+b7470f8 100644</div><div>--- a/libmultipath/discovery.c</div><div>+++ b/lib=
+multipath/discovery.c</div>
+<div>@@ -143,7 +143,6 @@ path_discovery (vector pathvec, struct config * co=
+nf, int flag)</div><div>=A0extern ssize_t =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0 \</div><div>=A0sysfs_get_##fname (struct udev_device * udev, char * bu=
+ff, size_t len) \</div>
+<div>=A0{ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+\</div><div>- =A0 =A0 =A0 ssize_t ret; =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0\</div><=
+div>=A0 =A0 =A0 =A0 const char * attr; =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0\</div>
+<div>=A0 =A0 =A0 =A0 const char * devname; =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \</div><div>=A0 =A0 =A0=
+ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \</div><div>@@ =
+-163,7 +162,7 @@ sysfs_get_##fname (struct udev_device * udev, char * buff,=
+ size_t len) =A0 =A0 =A0\</div>
+<div>=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 devname, #fname); =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \</div><div>=A0 =A0=
+ =A0 =A0 =A0 =A0 =A0 =A0 return -EINVAL; =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \</div><div>=A0 =A0 =A0 =A0=
+ } =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \</div>
+<div>- =A0 =A0 =A0 ret =3D strlcpy(buff, attr, len); =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \</div><div>+ =A0 =A0 =A0 strlc=
+py(buff, attr, len); =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 \</div><div>=A0 =A0 =A0 =A0 return strchop(buff); =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0 =A0 \</div>
+<div>=A0}</div></div><div><br></div><div>Best regards,</div><div>Christophe=
+ Varoqui</div></div><div class=3D"gmail_extra"><br><br><div class=3D"gmail_=
+quote">On Fri, Dec 13, 2013 at 1:14 PM, Hannes Reinecke <span dir=3D"ltr">&=
+lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</a>&gt;</=
+span> wrote:<br>
 <blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex"><div class=3D"HOEnZb"><div class=3D"h5">When=
-ever &#39;reconfigure&#39; is called we need to re-initialize the<br>
-timezone information as it might have been changed in the<br>
-meantime.<br>
-<br>
-References: bnc#830511<br>
+x #ccc solid;padding-left:1ex"><div class=3D"HOEnZb"><div class=3D"h5">Some=
+ sysfs attributes may contain trailing spaces, which only<br>
+serve to confuse matters. So strip them before continuing.<br>
 <br>
 Signed-off-by: Hannes Reinecke &lt;<a href=3D"mailto:hare@suse.de">hare@sus=
 e.de</a>&gt;<br>
 ---<br>
-=A0libmultipath/log.c | 1 +<br>
-=A0multipathd/main.c =A0| 3 +++<br>
-=A02 files changed, 4 insertions(+)<br>
+=A0libmultipath/discovery.c | 2 +-<br>
+=A0libmultipath/util.c =A0 =A0 =A0| 3 ++-<br>
+=A0libmultipath/util.h =A0 =A0 =A0| 2 +-<br>
+=A03 files changed, 4 insertions(+), 3 deletions(-)<br>
 <br>
-diff --git a/libmultipath/log.c b/libmultipath/log.c<br>
-index 37c7cd7..74702d8 100644<br>
---- a/libmultipath/log.c<br>
-+++ b/libmultipath/log.c<br>
-@@ -99,6 +99,7 @@ void log_close (void)<br>
-=A0void log_reset (char *program_name)<br>
-=A0{<br>
-=A0 =A0 =A0 =A0 closelog();<br>
-+ =A0 =A0 =A0 tzset();<br>
-=A0 =A0 =A0 =A0 openlog(program_name, 0, LOG_DAEMON);<br>
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c<br>
+index d5557d9..d519c02 100644<br>
+--- a/libmultipath/discovery.c<br>
++++ b/libmultipath/discovery.c<br>
+@@ -164,7 +164,7 @@ sysfs_get_##fname (struct udev_device * udev, char * bu=
+ff, size_t len) =A0 =A0 =A0\<br>
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 return -EINVAL; =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \<br>
+=A0 =A0 =A0 =A0 } =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \<br>
+=A0 =A0 =A0 =A0 ret =3D strlcpy(buff, attr, len); =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \<br>
+- =A0 =A0 =A0 return ret; =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \<br>
++ =A0 =A0 =A0 return strchop(buff); =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 \<br>
 =A0}<br>
 <br>
-diff --git a/multipathd/main.c b/multipathd/main.c<br>
-index 96564f8..1a1aa2d 100644<br>
---- a/multipathd/main.c<br>
-+++ b/multipathd/main.c<br>
-@@ -1416,6 +1416,9 @@ reconfigure (struct vectors * vecs)<br>
-=A0 =A0 =A0 =A0 vecs-&gt;pathvec =3D NULL;<br>
-=A0 =A0 =A0 =A0 conf =3D NULL;<br>
+=A0declare_sysfs_get_str(devtype);<br>
+diff --git a/libmultipath/util.c b/libmultipath/util.c<br>
+index a9f5939..e6fd11d 100644<br>
+--- a/libmultipath/util.c<br>
++++ b/libmultipath/util.c<br>
+@@ -10,13 +10,14 @@<br>
+=A0#include &quot;vector.h&quot;<br>
+=A0#include &quot;structs.h&quot;<br>
 <br>
-+ =A0 =A0 =A0 /* Re-read any timezone changes */<br>
-+ =A0 =A0 =A0 tzset();<br>
-+<br>
-=A0 =A0 =A0 =A0 if (!load_config(DEFAULT_CONFIGFILE, udev)) {<br>
-=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 conf-&gt;verbosity =3D old-&gt;verbosity;<b=
-r>
-=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 conf-&gt;daemon =3D 1;<br>
+-void<br>
++size_t<br>
+=A0strchop(char *str)<br>
+=A0{<br>
+=A0 =A0 =A0 =A0 int i;<br>
+<br>
+=A0 =A0 =A0 =A0 for (i=3Dstrlen(str)-1; i &gt;=3D0 &amp;&amp; isspace(str[i=
+]); --i) ;<br>
+=A0 =A0 =A0 =A0 str[++i] =3D &#39;\0&#39;;<br>
++ =A0 =A0 =A0 return strlen(str);<br>
+=A0}<br>
+<br>
+=A0int<br>
+diff --git a/libmultipath/util.h b/libmultipath/util.h<br>
+index 44184a1..7b67dff 100644<br>
+--- a/libmultipath/util.h<br>
++++ b/libmultipath/util.h<br>
+@@ -1,7 +1,7 @@<br>
+=A0#ifndef _UTIL_H<br>
+=A0#define _UTIL_H<br>
+<br>
+-void strchop(char *);<br>
++size_t strchop(char *);<br>
+=A0int basenamecpy (const char * src, char * dst, int);<br>
+=A0int filepresent (char * run);<br>
+=A0int get_word (char * sentence, char ** word);<br>
 --<br>
 1.8.1.4<br>
 <br>
@@ -198,14 +264,14 @@ dm-devel mailing list<br>
 nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
 </blockquote></div><br></div>
 
---20cf30363fa182711104ed71e500--
+--20cf303dd358361c9d04ed71ec9a--
 
 
---===============6695346919807515822==
+--===============5305218371354715876==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6695346919807515822==--
+--===============5305218371354715876==--
