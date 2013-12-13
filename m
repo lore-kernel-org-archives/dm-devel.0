@@ -1,88 +1,57 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 3.13
-Date: Fri, 13 Dec 2013 15:25:54 -0500
-Message-ID: <20131213202554.GA1736@redhat.com>
+Subject: Re: dm-cache questions
+Date: Fri, 13 Dec 2013 16:21:56 -0500
+Message-ID: <20131213212156.GB11452@redhat.com>
+References: <093f01cef54a$fdf044d0$f9d0ce70$@acm.org>
+	<20131210095019.GB32555@debian>
+	<0a9401cef5eb$7e32a110$7a97e330$@acm.org>
+	<20131211010337.GB4894@agk-dp.fab.redhat.com>
+	<0aea01cef615$d688f8d0$839aea70$@acm.org>
+	<20131211150644.GA28188@redhat.com>
+	<0c4901cef6df$e557cec0$b0076c40$@acm.org>
+	<20131213142002.GA9302@redhat.com>
+	<0e4a01cef83b$c9afe5b0$5d0fb110$@acm.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Vincent Pelletier <plr.vincent@gmail.com>
+In-Reply-To: <0e4a01cef83b$c9afe5b0$5d0fb110$@acm.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Paul B. Henson" <henson@acm.org>
+Cc: 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The following changes since commit 7b6b2bc98c0303b7f043ad5b35906f833e56308d:
+On Fri, Dec 13 2013 at  2:44pm -0500,
+Paul B. Henson <henson@acm.org> wrote:
 
-  dm cache: resolve small nits and improve Documentation (2013-11-12 13:11:09 -0500)
+> > From: Mike Snitzer
+> > Sent: Friday, December 13, 2013 6:20 AM
+> > 
+> > But in general it is the task of other distro vendors to backport stable
+> > fixes to their products.
+> 
+> Got it, thanks. I see the recent beta announcement officially confirmed that
+> RHEL 7 will be based on 3.10, so I'm guessing somebody in your organization
+> is going to be back porting to that stable release at least :). Although I
+> suppose that could be in your internal wad-o-patches rather than official
+> upstream commits.
 
-are available in the git repository at:
+All the latest dm-cache changes will be included in RHEL7.  I'm the
+lucky guy who brings these changes back.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.13-fixes
+FYI, the most recent dm-cache fixes should hopefully be available in
+linus's tree shortly.  Joe fixed the dm cache metadata leak that he
+advised you to wait for before using dm-cache in a more serious way.
 
-for you to fetch changes up to ed9571f0cf1fe09d3506302610f3ccdfa1d22c4a:
-
-  dm array: fix a reference counting bug in shadow_ablock (2013-12-13 14:22:10 -0500)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-A set of device-mapper fixes for 3.13.
-
-A fix for possible memory corruption during DM table load, fix a
-possible leak of snapshot space in case of a crash, fix a possible
-deadlock due to a shared workqueue in the delay target, fix to
-initialize read-only module parameters that are used to export metrics
-for dm stats and dm bufio.
-
-Quite a few stable fixes were identified for both the thin-provisioning
-and caching targets as a result of increased regression testing using
-the device-mapper-test-suite (dmts).  The most notable of these are the
-reference counting fixes for the space map btree that is used by the
-dm-array interface -- without these the dm-cache metadata will leak,
-resulting in dm-cache devices running out of metadata blocks.  Also,
-some important fixes related to the thin-provisioning target's
-transition to read-only mode on error.
-
-----------------------------------------------------------------
-Joe Thornber (7):
-      dm thin: switch to read only mode if a mapping insert fails
-      dm thin: always fallback the pool mode if commit fails
-      dm thin: re-establish read-only state when switching to fail mode
-      dm thin: allow pool in read-only mode to transition to read-write mode
-      dm cache policy mq: fix promotions to occur as expected
-      dm space map: disallow decrementing a reference count below zero
-      dm array: fix a reference counting bug in shadow_ablock
-
-Mike Snitzer (3):
-      dm space map metadata: return on failure in sm_metadata_new_block
-      dm thin: switch to read-only mode if metadata space is exhausted
-      dm cache: update Documentation for invalidate_cblocks's range syntax
-
-Mikulas Patocka (5):
-      dm delay: fix a possible deadlock due to shared workqueue
-      dm snapshot: avoid snapshot space leak on crash
-      dm table: fail dm_table_create on dm_round_up overflow
-      dm bufio: initialize read-only module parameters
-      dm stats: initialize read-only module parameter
-
-Vincent Pelletier (1):
-      dm cache: actually resize cache
-
- Documentation/device-mapper/cache.txt              | 10 +--
- drivers/md/dm-bufio.c                              |  5 ++
- drivers/md/dm-cache-policy-mq.c                    | 13 ++--
- drivers/md/dm-cache-target.c                       |  2 +-
- drivers/md/dm-delay.c                              | 23 ++++---
- drivers/md/dm-snap.c                               | 71 +++++++++++++++++++---
- drivers/md/dm-stats.c                              |  1 +
- drivers/md/dm-table.c                              |  5 ++
- drivers/md/dm-thin-metadata.c                      |  8 +++
- drivers/md/dm-thin-metadata.h                      |  1 +
- drivers/md/dm-thin.c                               | 66 ++++++++++++--------
- drivers/md/persistent-data/dm-array.c              | 10 ++-
- drivers/md/persistent-data/dm-block-manager.c      |  6 ++
- drivers/md/persistent-data/dm-block-manager.h      |  7 ++-
- drivers/md/persistent-data/dm-space-map-common.c   | 32 +++++++---
- drivers/md/persistent-data/dm-space-map-metadata.c |  8 ++-
- 16 files changed, 197 insertions(+), 71 deletions(-)
+See:
+http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-linus
