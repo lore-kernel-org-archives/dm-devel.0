@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 06/11] multipath: do not call tur in sync mode if
-	pthread_cancel fails
-Date: Fri, 13 Dec 2013 13:14:09 +0100
-Message-ID: <1386936854-8399-7-git-send-email-hare@suse.de>
+Subject: [PATCH 04/11] multipath: do not print 'path is up' for
+	removed paths
+Date: Fri, 13 Dec 2013 13:14:07 +0100
+Message-ID: <1386936854-8399-5-git-send-email-hare@suse.de>
 References: <1386936854-8399-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,41 +22,50 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When pthread_cancel fails the thread is stuck, most likely
-during I/O submission. So it would be pointless to call the
-tur checker in sync mode here, as this would be stuck, too.
-Hence we should rather return 'PATH_TIMEOUT' and hope the
-situation resolves itself over time.
+When a path is removed the previous checker message is still
+kept in the checker context, and will be printed upon each
+check. This causes multipath to print out
+'path is up'
+even though it already has been removed from sysfs.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/checkers/tur.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ multipathd/main.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index b76dcec..bd7372d 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -298,7 +298,6 @@ libcheck_check (struct checker * c)
- 				ct->running = 0;
- 				MSG(c, MSG_TUR_TIMEOUT);
- 				tur_status = PATH_TIMEOUT;
--				ct->state = PATH_UNCHECKED;
- 			} else {
- 				condlog(3, "%d:%d: tur checker not finished",
- 					TUR_DEVT(ct));
-@@ -317,9 +316,9 @@ libcheck_check (struct checker * c)
- 		if (ct->thread) {
- 			/* pthread cancel failed. continue in sync mode */
- 			pthread_mutex_unlock(&ct->lock);
--			condlog(3, "%d:%d: tur thread not responding, "
--				"using sync mode", TUR_DEVT(ct));
--			return tur_check(c->fd, c->timeout, c->message);
-+			condlog(3, "%d:%d: tur thread not responding",
-+				TUR_DEVT(ct));
-+			return PATH_TIMEOUT;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 91d7bfc..2633da9 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1124,6 +1124,8 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	newstate = path_offline(pp);
+ 	if (newstate == PATH_UP)
+ 		newstate = get_state(pp, 1);
++	else
++		checker_clear_message(&pp->checker);
+ 
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+ 		condlog(2, "%s: unusable path", pp->dev);
+@@ -1150,7 +1152,9 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	if (newstate != pp->state) {
+ 		int oldstate = pp->state;
+ 		pp->state = newstate;
+-		LOG_MSG(1, checker_message(&pp->checker));
++
++		if (strlen(checker_message(&pp->checker)))
++			LOG_MSG(1, checker_message(&pp->checker));
+ 
+ 		/*
+ 		 * upon state change, reset the checkint
+@@ -1232,7 +1236,8 @@ check_path (struct vectors * vecs, struct path * pp)
+ 			pp->tick = pp->checkint;
  		}
- 		/* Start new TUR checker */
- 		ct->state = PATH_UNCHECKED;
+ 	}
+-	else if (newstate == PATH_DOWN) {
++	else if (newstate == PATH_DOWN &&
++		 strlen(checker_message(&pp->checker))) {
+ 		if (conf->log_checker_err == LOG_CHKR_ERR_ONCE)
+ 			LOG_MSG(3, checker_message(&pp->checker));
+ 		else
 -- 
 1.8.1.4
