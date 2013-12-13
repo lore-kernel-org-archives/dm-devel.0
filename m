@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 08/11] Reset timezone information on reconfigure
-Date: Fri, 13 Dec 2013 13:14:11 +0100
-Message-ID: <1386936854-8399-9-git-send-email-hare@suse.de>
+Subject: [PATCH 10/11] multipathd: add path when transitioned
+	from 'blocked' state
+Date: Fri, 13 Dec 2013 13:14:13 +0100
+Message-ID: <1386936854-8399-11-git-send-email-hare@suse.de>
 References: <1386936854-8399-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,43 +22,48 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Whenever 'reconfigure' is called we need to re-initialize the
-timezone information as it might have been changed in the
-meantime.
-
-References: bnc#830511
+When a path is discovered in 'blocked' state it won't be added
+to the path list as we cannot get the path uuid.
+And any further check will fail here as the uuid won't be
+recovered. So add a check in checkerloop() to re-add the
+path if it gets out of a 'blocked' state.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/log.c | 1 +
- multipathd/main.c  | 3 +++
- 2 files changed, 4 insertions(+)
+ multipathd/main.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/log.c b/libmultipath/log.c
-index 37c7cd7..74702d8 100644
---- a/libmultipath/log.c
-+++ b/libmultipath/log.c
-@@ -99,6 +99,7 @@ void log_close (void)
- void log_reset (char *program_name)
- {
- 	closelog();
-+	tzset();
- 	openlog(program_name, 0, LOG_DAEMON);
- }
- 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 96564f8..1a1aa2d 100644
+index 7058147..cc5cf67 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1416,6 +1416,9 @@ reconfigure (struct vectors * vecs)
- 	vecs->pathvec = NULL;
- 	conf = NULL;
+@@ -1111,9 +1111,6 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	int chkr_new_path_up = 0;
+ 	int oldchkrstate = pp->chkrstate;
  
-+	/* Re-read any timezone changes */
-+	tzset();
-+
- 	if (!load_config(DEFAULT_CONFIGFILE, udev)) {
- 		conf->verbosity = old->verbosity;
- 		conf->daemon = 1;
+-	if (!pp->mpp)
+-		return;
+-
+ 	if (pp->tick && --pp->tick)
+ 		return; /* don't check this path yet */
+ 
+@@ -1139,6 +1136,17 @@ check_path (struct vectors * vecs, struct path * pp)
+ 		pathinfo(pp, conf->hwtable, 0);
+ 		return;
+ 	}
++	if (!pp->mpp) {
++		if (!strlen(pp->wwid) &&
++		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
++			condlog(2, "%s: add missing path", pp->dev);
++			if (pathinfo(pp, conf->hwtable, DI_ALL) == 0) {
++				ev_add_path(pp, vecs);
++				pp->tick = 1;
++			}
++		}
++		return;
++	}
+ 	/*
+ 	 * Async IO in flight. Keep the previous path state
+ 	 * and reschedule as soon as possible
 -- 
 1.8.1.4
