@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 02/11] Document 'wwids_file' and 'reservation_key'
-Date: Fri, 13 Dec 2013 13:14:05 +0100
-Message-ID: <1386936854-8399-3-git-send-email-hare@suse.de>
+Subject: [PATCH 06/11] multipath: do not call tur in sync mode if
+	pthread_cancel fails
+Date: Fri, 13 Dec 2013 13:14:09 +0100
+Message-ID: <1386936854-8399-7-git-send-email-hare@suse.de>
 References: <1386936854-8399-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,41 +22,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add documentation for 'wwids_file' and 'reservation_key' to
-multipath.conf.annotated.
+When pthread_cancel fails the thread is stuck, most likely
+during I/O submission. So it would be pointless to call the
+tur checker in sync mode here, as this would be stuck, too.
+Hence we should rather return 'PATH_TIMEOUT' and hope the
+situation resolves itself over time.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath.conf.annotated | 17 ++++++++++++++++-
- 1 file changed, 16 insertions(+), 1 deletion(-)
+ libmultipath/checkers/tur.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-index a20302c..235e130 100644
---- a/multipath.conf.annotated
-+++ b/multipath.conf.annotated
-@@ -275,7 +275,22 @@
- #	#           the user_friendly_names option.
- #	# values  : <full_pathname>
- #	# default : "/var/lib/multipath/bindings"
--#	bindings_file "/etc/multipath_bindings"
-+#	bindings_file "/etc/multipath/bindings"
-+#
-+#	# name    : wwids_file
-+#	# scope   : multipath
-+#	# desc    : The location of the wwids file multipath uses to
-+#       #           keep track of the created multipath devices.
-+#	# values  : <full_pathname>
-+#	# default : "/var/lib/multipath/wwids"
-+#	wwids_file "/etc/multipath/wwids"
-+#
-+#	# name    : reservation_key
-+#	# scope   : multipath
-+#	# desc    : Service action reservation key used by mpathpersist.
-+#	# values  : <key>
-+#	# default : (null)
-+#	reservation_key "mpathkey"
- #
- #}
- #	
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index b76dcec..bd7372d 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -298,7 +298,6 @@ libcheck_check (struct checker * c)
+ 				ct->running = 0;
+ 				MSG(c, MSG_TUR_TIMEOUT);
+ 				tur_status = PATH_TIMEOUT;
+-				ct->state = PATH_UNCHECKED;
+ 			} else {
+ 				condlog(3, "%d:%d: tur checker not finished",
+ 					TUR_DEVT(ct));
+@@ -317,9 +316,9 @@ libcheck_check (struct checker * c)
+ 		if (ct->thread) {
+ 			/* pthread cancel failed. continue in sync mode */
+ 			pthread_mutex_unlock(&ct->lock);
+-			condlog(3, "%d:%d: tur thread not responding, "
+-				"using sync mode", TUR_DEVT(ct));
+-			return tur_check(c->fd, c->timeout, c->message);
++			condlog(3, "%d:%d: tur thread not responding",
++				TUR_DEVT(ct));
++			return PATH_TIMEOUT;
+ 		}
+ 		/* Start new TUR checker */
+ 		ct->state = PATH_UNCHECKED;
 -- 
 1.8.1.4
