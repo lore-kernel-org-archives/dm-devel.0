@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 10/11] multipathd: add path when transitioned
-	from 'blocked' state
-Date: Fri, 13 Dec 2013 13:14:13 +0100
-Message-ID: <1386936854-8399-11-git-send-email-hare@suse.de>
+Subject: [PATCH 11/11] Make 'multipath -t' able to run as normal
+	user
+Date: Fri, 13 Dec 2013 13:14:14 +0100
+Message-ID: <1386936854-8399-12-git-send-email-hare@suse.de>
 References: <1386936854-8399-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,48 +22,103 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When a path is discovered in 'blocked' state it won't be added
-to the path list as we cannot get the path uuid.
-And any further check will fail here as the uuid won't be
-recovered. So add a check in checkerloop() to re-add the
-path if it gets out of a 'blocked' state.
+'multipath -t' should be run as normal user, as we might be
+needing it to update the default configuration.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipathd/main.c | 14 +++++++++++---
- 1 file changed, 11 insertions(+), 3 deletions(-)
+ libmultipath/config.c |  1 -
+ multipath/main.c      | 22 +++++++++++++---------
+ multipathd/main.c     |  2 ++
+ 3 files changed, 15 insertions(+), 10 deletions(-)
 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 9b7adda..e13c307 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -543,7 +543,6 @@ load_config (char * file, struct udev *udev)
+ 		conf->verbosity = DEFAULT_VERBOSITY;
+ 
+ 	conf->udev = udev;
+-	dm_drv_version(conf->version, TGT_MPATH);
+ 	conf->dev_type = DEV_NONE;
+ 	conf->minio = DEFAULT_MINIO;
+ 	conf->minio_rq = DEFAULT_MINIO_RQ;
+diff --git a/multipath/main.c b/multipath/main.c
+index 842a787..c351507 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -447,16 +447,8 @@ main (int argc, char *argv[])
+ 	extern int optind;
+ 	int r = 1;
+ 
+-	if (getuid() != 0) {
+-		fprintf(stderr, "need to be root\n");
+-		exit(1);
+-	}
+-
+ 	udev = udev_new();
+ 
+-	if (dm_prereq())
+-		exit(1);
+-
+ 	if (load_config(DEFAULT_CONFIGFILE, udev))
+ 		exit(1);
+ 
+@@ -521,7 +513,7 @@ main (int argc, char *argv[])
+ 			break;
+ 		case 't':
+ 			r = dump_config();
+-			goto out;
++			goto out_free_config;
+ 		case 'h':
+ 			usage(argv[0]);
+ 			exit(0);
+@@ -544,6 +536,16 @@ main (int argc, char *argv[])
+ 			exit(1);
+ 		}
+ 	}
++
++	if (getuid() != 0) {
++		fprintf(stderr, "need to be root\n");
++		exit(1);
++	}
++
++	if (dm_prereq())
++		exit(1);
++	dm_drv_version(conf->version, TGT_MPATH);
++
+ 	if (optind < argc) {
+ 		conf->dev = MALLOC(FILE_NAME_SIZE);
+ 
+@@ -630,6 +632,8 @@ out:
+ 
+ 	cleanup_prio();
+ 	cleanup_checkers();
++
++out_free_config:
+ 	/*
+ 	 * Freeing config must be done after dm_lib_exit(), because
+ 	 * the logging function (dm_write_log()), which is called there,
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 7058147..cc5cf67 100644
+index cc5cf67..7f59c6d 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1111,9 +1111,6 @@ check_path (struct vectors * vecs, struct path * pp)
- 	int chkr_new_path_up = 0;
- 	int oldchkrstate = pp->chkrstate;
+@@ -1430,6 +1430,7 @@ reconfigure (struct vectors * vecs)
+ 	tzset();
  
--	if (!pp->mpp)
--		return;
--
- 	if (pp->tick && --pp->tick)
- 		return; /* don't check this path yet */
+ 	if (!load_config(DEFAULT_CONFIGFILE, udev)) {
++		dm_drv_version(conf->version, TGT_MPATH);
+ 		conf->verbosity = old->verbosity;
+ 		conf->daemon = 1;
+ 		configure(vecs, 1);
+@@ -1634,6 +1635,7 @@ child (void * param)
+ 	if (load_config(DEFAULT_CONFIGFILE, udev))
+ 		exit(1);
  
-@@ -1139,6 +1136,17 @@ check_path (struct vectors * vecs, struct path * pp)
- 		pathinfo(pp, conf->hwtable, 0);
- 		return;
- 	}
-+	if (!pp->mpp) {
-+		if (!strlen(pp->wwid) &&
-+		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
-+			condlog(2, "%s: add missing path", pp->dev);
-+			if (pathinfo(pp, conf->hwtable, DI_ALL) == 0) {
-+				ev_add_path(pp, vecs);
-+				pp->tick = 1;
-+			}
-+		}
-+		return;
-+	}
- 	/*
- 	 * Async IO in flight. Keep the previous path state
- 	 * and reschedule as soon as possible
++	dm_drv_version(conf->version, TGT_MPATH);
+ 	if (init_checkers()) {
+ 		condlog(0, "failed to initialize checkers");
+ 		exit(1);
 -- 
 1.8.1.4
