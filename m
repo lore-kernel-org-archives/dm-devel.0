@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 4/5] libmultipath: simplify basenamecpy()
-Date: Tue, 17 Dec 2013 08:04:07 +0100
-Message-ID: <1387263848-73945-5-git-send-email-hare@suse.de>
+Subject: [PATCH 3/5] libmultipath: remove 'remove_trailing_chars'
+Date: Tue, 17 Dec 2013 08:04:06 +0100
+Message-ID: <1387263848-73945-4-git-send-email-hare@suse.de>
 References: <1387263848-73945-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,27 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-strlcpy() already does a strlen() at the end, so no need
-to call it explicitly.
+Unused; superseded by strchop().
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/util.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ libmultipath/util.c | 9 ---------
+ libmultipath/util.h | 1 -
+ 2 files changed, 10 deletions(-)
 
 diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 93ab08b..06a6311 100644
+index 2b41e7a..93ab08b 100644
 --- a/libmultipath/util.c
 +++ b/libmultipath/util.c
-@@ -44,8 +44,7 @@ basenamecpy (const char * str1, char * str2, int str2len)
- 
- 	strncpy(str2, p, str2len);
- 	str2[str2len - 1] = '\0';
--	strchop(str2);
--	return strlen(str2);
-+	return strchop(str2);
+@@ -142,15 +142,6 @@ size_t strlcat(char *dst, const char *src, size_t size)
+ 	return bytes;
  }
  
- int
+-void remove_trailing_chars(char *path, char c)
+-{
+-	size_t len;
+-
+-	len = strlen(path);
+-	while (len > 0 && path[len-1] == c)
+-		path[--len] = '\0';
+-}
+-
+ extern int
+ devt2devname (char *devname, int devname_len, char *devt)
+ {
+diff --git a/libmultipath/util.h b/libmultipath/util.h
+index 4eafe6e..257912c 100644
+--- a/libmultipath/util.h
++++ b/libmultipath/util.h
+@@ -7,7 +7,6 @@ int filepresent (char * run);
+ int get_word (char * sentence, char ** word);
+ size_t strlcpy(char *dst, const char *src, size_t size);
+ size_t strlcat(char *dst, const char *src, size_t size);
+-void remove_trailing_chars(char *path, char c);
+ int devt2devname (char *, int, char *);
+ dev_t parse_devt(const char *dev_t);
+ char *convert_dev(char *dev, int is_path_device);
 -- 
 1.7.12.4
