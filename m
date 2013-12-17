@@ -1,12 +1,10 @@
-From: doug wandell <pankakekid@yahoo.com>
-Subject: Multipath device gone
-Date: Tue, 17 Dec 2013 12:36:18 -0800 (PST)
-Message-ID: <1387312578.20189.YahooMailNeo@web124706.mail.ne1.yahoo.com>
-Reply-To: doug wandell <pankakekid@yahoo.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: multipath-tools 0.5.0 release
+Date: Tue, 17 Dec 2013 23:48:15 +0100
+Message-ID: <CABr-GndXSLfbpTZNVCEY9FEdd8kFSsTN1QonhORFqfVPXfL2Uw@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0090643322634144883=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,138 +15,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
-I have a RHEL5.10 Server (x86_64) system connected to a storage array via i=
-scsi.=A0 After configuring iscsi and multipathd and installing the database=
-, all seemed well.=A0 One reboot, the 8 iscsi sessions were established and=
- appear to be correct:
+--===============0090643322634144883==
+Content-Type: multipart/alternative; boundary=001a11c2fafe5b369604edc2b98c
 
-root@oracle-flash ~>iscsiadm -m session
-tcp: [1] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
-tcp: [2] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
-tcp: [3] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
-tcp: [4] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
-tcp: [5] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
-tcp: [6] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
-tcp: [7] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
-tcp: [8] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
-897606807
+--001a11c2fafe5b369604edc2b98c
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+List,
+
+multipath-tools 0.5.0 is released.
+
+The tarball can be fetched at
+http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.5.0.tar=
+.bz2
+
+I won't try to list 3 years of commits since the last release. Anyway, most
+changes are old news since distributors provide recent master snapshots.
+
+Major features include:
+
+- scsi3 persistent reservations on multipaths
+- systemd integration
+- better udev integration (get device events and ids from udev)
+- kpartx support for non-512b blocksize disks
+- multipathd maintenance of important kernel tunable like oom_score_adj,
+dev_loss_tmo and fast_io_fail
+- followover failback mode
+- handle offline paths and quiesced rports
+- more synthetic and informative logs
+- better threading and performance
+- tons of bugfixes and stability improvements
+
+Thanks to the numerous contributors of this release :
+
+1 Anton Blanchard
+1 Arkadiusz Miskiewicz
+1 Bart Van Assche
+1 Cedric Buissart
+1 Chaskiel Grundman
+1 Craig
+1 Eli Qiao
+1 Gerhard Wichert
+1 glevand
+1 Guangyu Sun
+1 Guido G=C3=BCnther
+1 Heath Kehoe
+1 Jerome Levy
+1 Kacper Kowalik
+1 Konrad Rzeszutek
+1 Leonardo Chiquitto
+1 Martin George
+1 Mateusz P=C3=B3=C5=82rola
+1 Mike Snitzer
+1 Olivier Lambert
+1 Peter Gervai
+1 Phileas Fogg
+1 Sven Joachim
+1 Tim Harder
+1 Vijay Chauhan
+1 Wang Sheng-Hui
+1 Xinghai Yu
+1 Xose Vazquez Perez
+1 Zheng Huai Cheng
+2 Ankit Jain
+2 Aruna Balakrishnaiah
+2 Christof Schmitt
+2 hegdevasant
+2 Mike Christie
+2 Oren Held
+2 Stewart, Sean
+3 Malahal Naineni
+3 Phillip Susi
+3 Sean Stewart
+4 bmarzins@sourceware.org
+4 Chauhan, Vijay
+4 Petr Uzel
+4 Ritesh Raj Sarraf
+5 Jun'ichi Nomura
+5 Michael Witten
+11 Moger, Babu
+33 Christophe Varoqui
+111 Benjamin Marzinski
+282 Hannes Reinecke
+
+Christophe Varoqui
+www.opensvc.com
+
+--001a11c2fafe5b369604edc2b98c
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">List,<div><br></div><div>multipath-tools 0.5.0 is released=
+.</div><div><br></div><div>The tarball can be fetched at=C2=A0<a href=3D"ht=
+tp://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.5.0.tar.b=
+z2">http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.5.0=
+.tar.bz2</a></div>
+<div><br></div><div>I won&#39;t try to list 3 years of commits since the la=
+st release. Anyway, most changes are old news since distributors provide re=
+cent master snapshots.</div><div><br></div><div>Major features include:</di=
+v>
+<div><br></div><div>- scsi3 persistent reservations on multipaths</div><div=
+>- systemd integration</div><div>- better udev integration (get device even=
+ts and ids from udev)</div><div>- kpartx support for non-512b blocksize dis=
+ks</div>
+<div>- multipathd maintenance of important kernel tunable like=C2=A0oom_sco=
+re_adj, dev_loss_tmo and=C2=A0fast_io_fail</div><div>- followover failback =
+mode</div><div>- handle offline paths and quiesced rports</div><div>- more =
+synthetic and informative logs</div>
+<div>- better threading and performance</div><div>- tons of bugfixes and st=
+ability improvements</div><div><br></div><div>Thanks to the numerous contri=
+butors of this release :</div><div><br></div><div><div>1 Anton Blanchard</d=
+iv>
+<div>1 Arkadiusz Miskiewicz</div><div>1 Bart Van Assche</div><div>1 Cedric =
+Buissart</div><div>1 Chaskiel Grundman</div><div>1 Craig</div><div>1 Eli Qi=
+ao</div><div>1 Gerhard Wichert</div><div>1 glevand</div><div>1 Guangyu Sun<=
+/div>
+<div>1 Guido G=C3=BCnther</div><div>1 Heath Kehoe</div><div>1 Jerome Levy</=
+div><div>1 Kacper Kowalik</div><div>1 Konrad Rzeszutek</div><div>1 Leonardo=
+ Chiquitto</div><div>1 Martin George</div><div>1 Mateusz P=C3=B3=C5=82rola<=
+/div><div>1 Mike Snitzer</div>
+<div>1 Olivier Lambert</div><div>1 Peter Gervai</div><div>1 Phileas Fogg</d=
+iv><div>1 Sven Joachim</div><div>1 Tim Harder</div><div>1 Vijay Chauhan</di=
+v><div>1 Wang Sheng-Hui</div><div>1 Xinghai Yu</div><div>1 Xose Vazquez Per=
+ez</div>
+<div>1 Zheng Huai Cheng</div><div>2 Ankit Jain</div><div>2 Aruna Balakrishn=
+aiah</div><div>2 Christof Schmitt</div><div>2 hegdevasant</div><div>2 Mike =
+Christie</div><div>2 Oren Held</div><div>2 Stewart, Sean</div><div>3 Malaha=
+l Naineni</div>
+<div>3 Phillip Susi</div><div>3 Sean Stewart</div><div>4 <a href=3D"mailto:=
+bmarzins@sourceware.org">bmarzins@sourceware.org</a></div><div>4 Chauhan, V=
+ijay</div><div>4 Petr Uzel</div><div>4 Ritesh Raj Sarraf</div><div>5 Jun&#3=
+9;ichi Nomura</div>
+<div>5 Michael Witten</div><div>11 Moger, Babu</div><div>33 Christophe Varo=
+qui</div><div>111 Benjamin Marzinski</div><div>282 Hannes Reinecke</div></d=
+iv><div><br></div><div>Christophe Varoqui</div><div><a href=3D"http://www.o=
+pensvc.com">www.opensvc.com</a></div>
+<div><br></div></div>
+
+--001a11c2fafe5b369604edc2b98c--
 
 
-No multipath device (mpath1) however:
+--===============0090643322634144883==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-root@oracle-flash ~>multipath -d
-failed to find rport_id for target8:0:0
-create: mpath1 (3624a9370266083988b6c502f00010002)=A0 PURE,FlashArray
-[size=3D3.0T][features=3D0][hwhandler=3D0][n/a]
-\_=A0 [prio=3D1][undef]
-=A0\_ 8:0:0:10=A0 sdb 8:16=A0 [undef][ready]
-=A0\_ 7:0:0:10=A0 sdc 8:32=A0 [undef][ready]
-=A0\_ 13:0:0:10 sdd 8:48=A0 [undef][ready]
-=A0\_ 14:0:0:10 sde 8:64=A0 [undef][ready]
-=A0\_ 10:0:0:10 sdf 8:80=A0 [undef][ready]
-=A0\_ 12:0:0:10 sdg 8:96=A0 [undef][ready]
-=A0\_ 11:0:0:10 sdh 8:112 [undef][ready]
-=A0\_ 9:0:0:10=A0 sdi 8:128 [undef][ready]
-root@oracle-flash ~>multipath -ll
-root@oracle-flash ~>multipath -F
-root@oracle-flash ~>multipath -r
-failed to find rport_id for target8:0:0
-failed to find rport_id for target8:0:0
-failed to find rport_id for target8:0:0
-failed to find rport_id for target8:0:0
-failed to find rport_id for target8:0:0
-failed to find rport_id for target8:0:0
-failed to find rport_id for target8:0:0
-failed to find rport_id for target8:0:0
-root@oracle-flash ~>ls -l /dev/disk/by-id/
-total 0
-lrwxrwxrwx 1 root root=A0 9 Dec 16 15:57 ata-TSSTcorp_DVD-ROM_SN-108BB_R8TB=
-6GMCC00333 -> ../../hda
-lrwxrwxrwx 1 root root=A0 9 Dec 16 15:57 scsi-3600508e000000000ca1771980431=
-ca00 -> ../../sda
-lrwxrwxrwx 1 root root 10 Dec 16 15:57 scsi-3600508e000000000ca1771980431ca=
-00-part1 -> ../../sda1
-lrwxrwxrwx 1 root root 10 Dec 16 15:57 scsi-3600508e000000000ca1771980431ca=
-00-part2 -> ../../sda2
-lrwxrwxrwx 1 root root=A0 9 Dec 16 15:58 scsi-3624a9370266083988b6c502f0001=
-0002 -> ../../sdg
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part1 -> ../../sdi1
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part2 -> ../../sdg2
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part3 -> ../../sdg3
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part4 -> ../../sde4
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part5 -> ../../sdg5
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part6 -> ../../sdg6
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part7 -> ../../sdg7
-lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
-02-part8 -> ../../sdg8
-root@oracle-flash ~>cat /var/lib/multipath/bindings
-# Multipath bindings, Version : 1.0
-# NOTE: this file is automatically maintained by the multipath program.
-# You should not need to edit this file in normal circumstances.
-#
-# Format:
-# alias wwid
-#
-mpath0 3600508e000000000ca1771980431ca00
-mpath1 3624a9370266083988b6c502f00010002
-root@oracle-flash ~>grep -v ^# /etc/multipath.conf
-
-devices {
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 device {
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 vendor "PURE"
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 path_selector "round-robin 0.
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 path_grouping_policy multi bus
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 rr_min_io 1
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 path_checker tur
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 fast_io_fail_tmo 10
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 dev_loss_tmo 30
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 }
-}
-
-defaults {
-=A0=A0=A0=A0=A0=A0=A0 udev_dir=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
- /dev
-=A0=A0=A0=A0=A0=A0=A0 user_friendly_names=A0=A0=A0=A0 yes
-=A0=A0=A0=A0=A0=A0=A0 polling_interval=A0=A0=A0=A0=A0=A0=A0 10
-=A0=A0=A0=A0=A0=A0=A0 selector=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
- "round-robin 0"
-=A0=A0=A0=A0=A0=A0=A0 path_grouping_policy=A0=A0=A0 multibus
-=A0=A0=A0=A0=A0=A0=A0 path_checker=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 tur
-=A0=A0=A0=A0=A0=A0=A0 rr_min_io=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 1
-=A0=A0=A0=A0=A0=A0=A0 no_path_retry=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 0
-=A0=A0=A0=A0=A0=A0=A0 fast_io_fail_tmo=A0=A0=A0=A0=A0=A0=A0 3
-}
-blacklist {
-=A0=A0=A0=A0=A0=A0=A0 devnode "^sda"
-}
-multipaths {
-=A0=A0=A0=A0=A0=A0=A0 multipath {
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 wwid=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 3624a9370266083988b6c502f00010002
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 alias=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 mpath1
-=A0=A0=A0=A0=A0=A0=A0 }
-}
-
-I've looked around a bit but I don't see this problem addressed.=A0 Any ide=
-as where I can take this next?=A0 Thanks,
-DW
+--===============0090643322634144883==--
