@@ -1,12 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 0/5] Small fixes and cleanup
-Date: Tue, 17 Dec 2013 08:04:03 +0100
-Message-ID: <1387263848-73945-1-git-send-email-hare@suse.de>
+Subject: [PATCH 4/5] libmultipath: simplify basenamecpy()
+Date: Tue, 17 Dec 2013 08:04:07 +0100
+Message-ID: <1387263848-73945-5-git-send-email-hare@suse.de>
+References: <1387263848-73945-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1387263848-73945-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,27 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Christophe,
+strlcpy() already does a strlen() at the end, so no need
+to call it explicitly.
 
-as requested here are the missing bits and some fixes I found on
-the way.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ libmultipath/util.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-Please apply.
-
-Hannes Reinecke (5):
-  multipathd: document return values for check_path()
-  Make 'multipath -t' able to run as normal user
-  libmultipath: remove 'remove_trailing_chars'
-  libmultipath: simplify basenamecpy()
-  libmultipath: Fix overflow in sysfs_get_str()
-
- libmultipath/config.c    |  1 -
- libmultipath/discovery.c |  5 ++---
- libmultipath/util.c      | 12 +-----------
- libmultipath/util.h      |  1 -
- multipath/main.c         | 22 +++++++++++++---------
- multipathd/main.c        |  9 +++++++--
- 6 files changed, 23 insertions(+), 27 deletions(-)
-
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 93ab08b..06a6311 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -44,8 +44,7 @@ basenamecpy (const char * str1, char * str2, int str2len)
+ 
+ 	strncpy(str2, p, str2len);
+ 	str2[str2len - 1] = '\0';
+-	strchop(str2);
+-	return strlen(str2);
++	return strchop(str2);
+ }
+ 
+ int
 -- 
 1.7.12.4
