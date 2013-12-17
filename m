@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 5/5] libmultipath: Fix overflow in sysfs_get_str()
-Date: Tue, 17 Dec 2013 08:04:08 +0100
-Message-ID: <1387263848-73945-6-git-send-email-hare@suse.de>
+Subject: [PATCH 1/5] multipathd: document return values for
+	check_path()
+Date: Tue, 17 Dec 2013 08:04:04 +0100
+Message-ID: <1387263848-73945-2-git-send-email-hare@suse.de>
 References: <1387263848-73945-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,35 +23,46 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-sysfs_get_str() should first do a strchop() before comparing the
-returned string length with the provided buffer. Otherwise we might
-incur a false positive as the overflowing bits might be occupied
-by spaces, which will be removed later on.
+check_path() should return '1' if the path has been checked,
+and '0' otherwise. So fixup missing return values and document
+it properly.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/discovery.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ multipathd/main.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b7470f8..228ffd3 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -157,13 +157,12 @@ sysfs_get_##fname (struct udev_device * udev, char * buff, size_t len)	\
- 			devname, #fname);				\
- 		return -ENXIO;						\
- 	}								\
--	if (strlen(attr) > len) {					\
-+	if (strchop(attr) > len) {					\
- 		condlog(3, "%s: overflow in attribute %s",		\
- 			devname, #fname);				\
- 		return -EINVAL;						\
- 	}								\
--	strlcpy(buff, attr, len);					\
--	return strchop(buff);						\
-+	return strlcpy(buff, attr, len);				\
+diff --git a/multipathd/main.c b/multipathd/main.c
+index fd70b70..bf34a76 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1107,6 +1107,9 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ 	return 0;
  }
  
- declare_sysfs_get_str(devtype);
++/*
++ * Returns '1' if the path has been checked, '0' otherwise
++ */
+ int
+ check_path (struct vectors * vecs, struct path * pp)
+ {
+@@ -1131,7 +1134,7 @@ check_path (struct vectors * vecs, struct path * pp)
+ 	if (newstate == PATH_REMOVED) {
+ 		condlog(2, "%s: remove path (checker)", pp->dev);
+ 		ev_remove_path(pp, vecs);
+-		return;
++		return 0;
+ 	}
+ 	if (newstate == PATH_UP)
+ 		newstate = get_state(pp, 1);
+@@ -1152,7 +1155,7 @@ check_path (struct vectors * vecs, struct path * pp)
+ 				pp->tick = 1;
+ 			}
+ 		}
+-		return;
++		return 0;
+ 	}
+ 	/*
+ 	 * Async IO in flight. Keep the previous path state
 -- 
 1.7.12.4
