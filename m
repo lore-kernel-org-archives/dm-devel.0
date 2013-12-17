@@ -1,15 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/5] multipathd: document return values for
-	check_path()
-Date: Tue, 17 Dec 2013 08:04:04 +0100
-Message-ID: <1387263848-73945-2-git-send-email-hare@suse.de>
-References: <1387263848-73945-1-git-send-email-hare@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: doug wandell <pankakekid@yahoo.com>
+Subject: Multipath device gone
+Date: Tue, 17 Dec 2013 12:36:18 -0800 (PST)
+Message-ID: <1387312578.20189.YahooMailNeo@web124706.mail.ne1.yahoo.com>
+Reply-To: doug wandell <pankakekid@yahoo.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1387263848-73945-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +17,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-check_path() should return '1' if the path has been checked,
-and '0' otherwise. So fixup missing return values and document
-it properly.
+Hello,
+I have a RHEL5.10 Server (x86_64) system connected to a storage array via i=
+scsi.=A0 After configuring iscsi and multipathd and installing the database=
+, all seemed well.=A0 One reboot, the 8 iscsi sessions were established and=
+ appear to be correct:
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- multipathd/main.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+root@oracle-flash ~>iscsiadm -m session
+tcp: [1] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
+tcp: [2] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
+tcp: [3] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
+tcp: [4] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
+tcp: [5] 192.168.41.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
+tcp: [6] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
+tcp: [7] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
+tcp: [8] 192.168.42.1:3260,1 iqn.2010-06.com.purestorage:flasharray.1d8d233=
+897606807
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index fd70b70..bf34a76 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1107,6 +1107,9 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
- 	return 0;
- }
- 
-+/*
-+ * Returns '1' if the path has been checked, '0' otherwise
-+ */
- int
- check_path (struct vectors * vecs, struct path * pp)
- {
-@@ -1131,7 +1134,7 @@ check_path (struct vectors * vecs, struct path * pp)
- 	if (newstate == PATH_REMOVED) {
- 		condlog(2, "%s: remove path (checker)", pp->dev);
- 		ev_remove_path(pp, vecs);
--		return;
-+		return 0;
- 	}
- 	if (newstate == PATH_UP)
- 		newstate = get_state(pp, 1);
-@@ -1152,7 +1155,7 @@ check_path (struct vectors * vecs, struct path * pp)
- 				pp->tick = 1;
- 			}
- 		}
--		return;
-+		return 0;
- 	}
- 	/*
- 	 * Async IO in flight. Keep the previous path state
--- 
-1.7.12.4
+
+No multipath device (mpath1) however:
+
+
+root@oracle-flash ~>multipath -d
+failed to find rport_id for target8:0:0
+create: mpath1 (3624a9370266083988b6c502f00010002)=A0 PURE,FlashArray
+[size=3D3.0T][features=3D0][hwhandler=3D0][n/a]
+\_=A0 [prio=3D1][undef]
+=A0\_ 8:0:0:10=A0 sdb 8:16=A0 [undef][ready]
+=A0\_ 7:0:0:10=A0 sdc 8:32=A0 [undef][ready]
+=A0\_ 13:0:0:10 sdd 8:48=A0 [undef][ready]
+=A0\_ 14:0:0:10 sde 8:64=A0 [undef][ready]
+=A0\_ 10:0:0:10 sdf 8:80=A0 [undef][ready]
+=A0\_ 12:0:0:10 sdg 8:96=A0 [undef][ready]
+=A0\_ 11:0:0:10 sdh 8:112 [undef][ready]
+=A0\_ 9:0:0:10=A0 sdi 8:128 [undef][ready]
+root@oracle-flash ~>multipath -ll
+root@oracle-flash ~>multipath -F
+root@oracle-flash ~>multipath -r
+failed to find rport_id for target8:0:0
+failed to find rport_id for target8:0:0
+failed to find rport_id for target8:0:0
+failed to find rport_id for target8:0:0
+failed to find rport_id for target8:0:0
+failed to find rport_id for target8:0:0
+failed to find rport_id for target8:0:0
+failed to find rport_id for target8:0:0
+root@oracle-flash ~>ls -l /dev/disk/by-id/
+total 0
+lrwxrwxrwx 1 root root=A0 9 Dec 16 15:57 ata-TSSTcorp_DVD-ROM_SN-108BB_R8TB=
+6GMCC00333 -> ../../hda
+lrwxrwxrwx 1 root root=A0 9 Dec 16 15:57 scsi-3600508e000000000ca1771980431=
+ca00 -> ../../sda
+lrwxrwxrwx 1 root root 10 Dec 16 15:57 scsi-3600508e000000000ca1771980431ca=
+00-part1 -> ../../sda1
+lrwxrwxrwx 1 root root 10 Dec 16 15:57 scsi-3600508e000000000ca1771980431ca=
+00-part2 -> ../../sda2
+lrwxrwxrwx 1 root root=A0 9 Dec 16 15:58 scsi-3624a9370266083988b6c502f0001=
+0002 -> ../../sdg
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part1 -> ../../sdi1
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part2 -> ../../sdg2
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part3 -> ../../sdg3
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part4 -> ../../sde4
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part5 -> ../../sdg5
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part6 -> ../../sdg6
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part7 -> ../../sdg7
+lrwxrwxrwx 1 root root 10 Dec 16 15:58 scsi-3624a9370266083988b6c502f000100=
+02-part8 -> ../../sdg8
+root@oracle-flash ~>cat /var/lib/multipath/bindings
+# Multipath bindings, Version : 1.0
+# NOTE: this file is automatically maintained by the multipath program.
+# You should not need to edit this file in normal circumstances.
+#
+# Format:
+# alias wwid
+#
+mpath0 3600508e000000000ca1771980431ca00
+mpath1 3624a9370266083988b6c502f00010002
+root@oracle-flash ~>grep -v ^# /etc/multipath.conf
+
+devices {
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 device {
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 vendor "PURE"
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 path_selector "round-robin 0.
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 path_grouping_policy multi bus
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 rr_min_io 1
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 path_checker tur
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 fast_io_fail_tmo 10
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 dev_loss_tmo 30
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 }
+}
+
+defaults {
+=A0=A0=A0=A0=A0=A0=A0 udev_dir=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+ /dev
+=A0=A0=A0=A0=A0=A0=A0 user_friendly_names=A0=A0=A0=A0 yes
+=A0=A0=A0=A0=A0=A0=A0 polling_interval=A0=A0=A0=A0=A0=A0=A0 10
+=A0=A0=A0=A0=A0=A0=A0 selector=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+ "round-robin 0"
+=A0=A0=A0=A0=A0=A0=A0 path_grouping_policy=A0=A0=A0 multibus
+=A0=A0=A0=A0=A0=A0=A0 path_checker=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 tur
+=A0=A0=A0=A0=A0=A0=A0 rr_min_io=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 1
+=A0=A0=A0=A0=A0=A0=A0 no_path_retry=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 0
+=A0=A0=A0=A0=A0=A0=A0 fast_io_fail_tmo=A0=A0=A0=A0=A0=A0=A0 3
+}
+blacklist {
+=A0=A0=A0=A0=A0=A0=A0 devnode "^sda"
+}
+multipaths {
+=A0=A0=A0=A0=A0=A0=A0 multipath {
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 wwid=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 3624a9370266083988b6c502f00010002
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 alias=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 mpath1
+=A0=A0=A0=A0=A0=A0=A0 }
+}
+
+I've looked around a bit but I don't see this problem addressed.=A0 Any ide=
+as where I can take this next?=A0 Thanks,
+DW
