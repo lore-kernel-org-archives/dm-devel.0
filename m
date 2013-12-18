@@ -1,12 +1,14 @@
-From: Thomas Knauth <thomas.knauth@gmx.de>
-Subject: change tracking with block-level granularity using md
-Date: Wed, 18 Dec 2013 09:04:17 +0100
-Message-ID: <CABhLV00aksW6BzyNswVeytfUQ+q_7PWag1njYs-E=acqqbXoVA@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: change tracking with block-level granularity using md
+Date: Wed, 18 Dec 2013 09:35:45 +0100
+Message-ID: <52B15E61.4090807@suse.de>
+References: <CABhLV00aksW6BzyNswVeytfUQ+q_7PWag1njYs-E=acqqbXoVA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABhLV00aksW6BzyNswVeytfUQ+q_7PWag1njYs-E=acqqbXoVA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,42 +18,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Thomas Knauth <thomas.knauth@gmx.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello list,
+On 12/18/2013 09:04 AM, Thomas Knauth wrote:
+> Hello list,
+> =
 
-I am the author of the following paper
+> I am the author of the following paper
+> =
 
-https://www.usenix.org/conference/lisa13/technical-sessions/papers/knauth
+> https://www.usenix.org/conference/lisa13/technical-sessions/papers/knauth
+> =
 
-just presented at LISA 2013. Folks at the conference expressed
-interested in seeing this merged into the official Linux kernel. I
-would like to gauge your opinion of whether this has a chance to
-actually be accepted.
+> just presented at LISA 2013. Folks at the conference expressed
+> interested in seeing this merged into the official Linux kernel. I
+> would like to gauge your opinion of whether this has a chance to
+> actually be accepted.
+> =
 
-The basic idea is to provide a mechanism to track changes at the block
-device layer. I've based my prototype on dm-linear.c. The following
-things were added:
+Well, you just implemented an asynchronous mirror with discrete
+tools. Congratulations.
+Using bitmaps for tracking modified blocks has been a standard
+technique in RAID1 for ages.
 
-(1) a bit vector (one bit per 4 KiB block) is used to track the changes.
-(2) a pseudo-file in /proc, one per tracked device, exports the
-changed block numbers
+(look for mdadm --write-behind and drivers/md/bitmap.c. It's not
+actually _new_ ...)
 
-There are also two small user-space tools for convenient extraction
-and merging of the modified blocks.
+Sorry for being sarcastic.
 
-I'd be happy to hear your thoughts/concerns and answer questions. If I
-get positive feedback, I'd prepare a patch (as outlined in
-the kernel docs) and send it to the list for further dissection.
+But nevertheless, your tool might actually be useful; tracking block
+changes could have some benefit on other areas.
 
-There also exists a bitbucket repository (
-https://bitbucket.org/tknauth/devicemapper/ ) with all the data
-related to the above paper. It also includes the code [1], albeit in
-all its unpolished research hack glory.
+What you should be doing:
+- Rename the thing (dm-linear is taken; maybe dm-bitmap ?)
+- Use debugfs instead of /proc
+- Proper formatting
 
-Kind regards,
-Thomas.
+And then send the code for review.
 
-[1] patch file against old 3.2 kernel:
-https://bitbucket.org/tknauth/devicemapper/src/ffe167007fb4c57f7b00d60ce32aa59ff4b66d61/code/dsync.diff?at=master
+Or go for the full monty and break up dm-mirror to include your
+bitmap code. But then you would need to come up with a way of
+storing your bitmap on disk.
+Which is where the _real_ fun starts.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
