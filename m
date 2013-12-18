@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: change tracking with block-level granularity using md
-Date: Wed, 18 Dec 2013 09:35:45 +0100
-Message-ID: <52B15E61.4090807@suse.de>
-References: <CABhLV00aksW6BzyNswVeytfUQ+q_7PWag1njYs-E=acqqbXoVA@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-multipath: Accept failed paths for multipath maps
+Date: Wed, 18 Dec 2013 09:08:58 -0500
+Message-ID: <20131218140858.GC17730@redhat.com>
+References: <1387353155-7271-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABhLV00aksW6BzyNswVeytfUQ+q_7PWag1njYs-E=acqqbXoVA@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1387353155-7271-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,57 +19,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Thomas Knauth <thomas.knauth@gmx.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Sean Stewart <sean.stewart@netapp.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/18/2013 09:04 AM, Thomas Knauth wrote:
-> Hello list,
-> =
+On Wed, Dec 18 2013 at  2:52am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
 
-> I am the author of the following paper
-> =
+> The multipath kernel module is rejecting any map with an invalid
+> device. However, as the multipathd is processing the events serially
+> it will try to push a map with invalid devices if more than one
+> device failed at the same time.
+> So we can as well accept those maps and make sure to mark the
+> paths as down.
 
-> https://www.usenix.org/conference/lisa13/technical-sessions/papers/knauth
-> =
+Why is it so desirable to do this?  Reduced latency to restore at least
+one valid path when a bunch of paths go down?
 
-> just presented at LISA 2013. Folks at the conference expressed
-> interested in seeing this merged into the official Linux kernel. I
-> would like to gauge your opinion of whether this has a chance to
-> actually be accepted.
-> =
+Why can't we just rely on userspace eventually figuring out which paths
+are failed and pushing a valid map down?
 
-Well, you just implemented an asynchronous mirror with discrete
-tools. Congratulations.
-Using bitmaps for tracking modified blocks has been a standard
-technique in RAID1 for ages.
+Are there favorable reports that this new behavior actually helps?
+Please quantify how.
 
-(look for mdadm --write-behind and drivers/md/bitmap.c. It's not
-actually _new_ ...)
-
-Sorry for being sarcastic.
-
-But nevertheless, your tool might actually be useful; tracking block
-changes could have some benefit on other areas.
-
-What you should be doing:
-- Rename the thing (dm-linear is taken; maybe dm-bitmap ?)
-- Use debugfs instead of /proc
-- Proper formatting
-
-And then send the code for review.
-
-Or go for the full monty and break up dm-mirror to include your
-bitmap code. But then you would need to come up with a way of
-storing your bitmap on disk.
-Which is where the _real_ fun starts.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+(As an aside, really not a fan of parse_path doing what you've
+suggested.. will look closer once I have more justification to do so)
