@@ -1,11 +1,10 @@
-From: Redwood Hyd <redwoodhyd@gmail.com>
-Subject: raid5 + dm-crypt WRITE perf.,
-	higher rrqm/s - kernel 3.10.16
-Date: Thu, 19 Dec 2013 18:43:25 +0530
-Message-ID: <CADOhdunBCvSqaN1zJ1JFTfGyuNt3gFFW2o6xnnPvVDySUG7_dA@mail.gmail.com>
+From: Daniel Wheeler <dwheeler@ewheeler.net>
+Subject: Trying to use dmcache with zram block devices
+Date: Thu, 19 Dec 2013 10:18:26 -0800 (PST)
+Message-ID: <alpine.DEB.2.00.1312191016530.15126@ware.dreamhost.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -20,48 +19,49 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi All,
-I am trying to match the WRITE throughput for  512K chunk size to
-WRITE throughput I am getting with 32K chunk size. I am using dm-crypt module.
+Hello all,
+
+I am trying to use zram for the dmcache meta and dmcache caching device
+to cache a local logical volume.
+
+It works just fine if I use logical volumes from a disk as the caching
+device, but using a zram block device as the cache sets up properly but
+fails to boot a virtual machine on the resulting volume. Interestingly,
+I can use zram as a meta cache device without error, but using zram as
+the cache itself is when this fails.
+
+This is how I'm setting up my device map:
+
+0 20758528 cache /dev/zram0 /dev/zram1 /dev/c0v0/vdb 64 1 writethrough mq 6 sequential_threshold 5120 random_threshold 2 migration_threshold 819200
+
+zram0 and zram1 are both 1GB in size so plenty of space here.
+I am booting linux 3.11.4 with that version of dmcache.
+
+When I try and boot a VM off of the resulting cache, the VM fails to
+write to it's disk (I think), and displays the following error when
+booting CentOS 6 in the VM:
+
+mount: wrong fs type, bad option, bad superblock on /dev/mapper/VM_NAME,
+ 	missing codepage or helper program, or other error
+ 	In some cases useful info is found in syslog - try
+ 	dmesg | tail or so
 
 
-My setup is :  iozone (4k rec) -> ext4 -> dm-crypt dev mapper + raid5 (4 disks).
-
-In my past experience 512K  chunk size was not very off from 32K chunk
-size on kernel 2.6.32 for above situation.
-
-From iostats it seems  that 512K  is slow because of  higher rrqm/s on
-the physical disks behind raid5 device (last 4 columns are from iostat
--x on physical disks behind raid5)
-
-Chunk-size  iozon MB/s   Avgrq-sz   r/s      rMB/s    rrqm/s
-512K          25 MBps         976       ~60     ~7.00   ~1800
-32K            39 MBps         63         ~20      ~0.55   ~100
-
-Question: Is it that partial stripe  happening and causing more reads here ?
-
-Question:  Can someone suggest some code hacks or config changes such
-that even with 512K iozone writes to ext4/dm-crypt/raid5 device is
-close to 39 MBps?
-Or otherwise more pointers into code to understand and conclude will be helpful
-
-Question: Are the changes in dm-crypt or block layer (since 2.6.32)
-causing  higher  r/s rMB/s rrqm/s etc. ?  How to tune it now?
-
-Question:MY hardware-crypto-offload modules receives nbytes=512bytes
-in aes_crypt_cbc (could not find ways to bump these nbytes more than
-512). Are their ways to bump this number ?
+Kernel Panic - not syncing: Attempting to kill init!
+Pid: 1, comm: init Not tainted 2.6.32-279.e16.x86_64 #1
+Call Trace:
+  [<ffffffff814fd11a>] ? panic+0xa0/0x168
+  [<ffffffff81070bd2>] ? do_exit+0x862/0x870
+  [<ffffffff8117ca75>] ? fput+0x25/0x30
+  [<ffffffff81070c38>] ? do_group_exit+0x58/0xd0
+  [<ffffffff81070cc7>] ? sys_exit_group+0x17/0x20
+  [<ffffffff8100b0f2>] ? system_call_fastpath+0x16/0x1b
 
 
-To compare here are same numbers (lower rrqm/s) if I remove dm-crypt :
+Can you think of any reason that zram cannot be a cache for dmcache devices?
 
-Chunk-size  iozon MB/s  Avgrq-sz      r/s        rMB/s      rrqm/s
-512K           81 MBps          976        ~12     ~0.41        ~100
-32K             89 MBps          63          ~01     ~0.04         ~4
+If this is a bug, does it reside in dmcache or in zram?
 
-Quesiton: Why  dm-crypt causing higher r/s rMB/s rrqm/s ( higher these
-lower write MB/s) ?
+How can I test this further?
 
-
-regards
-rh
+-Daniel
