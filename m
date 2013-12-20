@@ -1,87 +1,140 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH maybe-for-3.13 01/20] dm thin: initialize dm_thin_new_mapping returned by get_next_mapping
-Date: Fri, 20 Dec 2013 18:37:14 -0500
-Message-ID: <1387582653-13647-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH maybe-for-3.13 02/20] dm thin: fix discard support to a previously shared block
+Date: Fri, 20 Dec 2013 18:37:15 -0500
+Message-ID: <1387582653-13647-3-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Return-path: <stable-owner@vger.kernel.org>
 In-Reply-To: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Sender: stable-owner@vger.kernel.org
 To: dm-devel@redhat.com
-Cc: stable@vger.kernel.org
+Cc: Joe Thornber <ejt@redhat.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-As additional members are added to the dm_thin_new_mapping structure
-care should be taken to make sure they get initialized before use.
+From: Joe Thornber <ejt@redhat.com>
 
+If a snapshot is created and later deleted the origin dm_thin_device's
+snapshotted_time will have been updated to reflect the snapshot's
+creation time.  The 'shared' flag in the dm_thin_lookup_result struct
+returned from dm_thin_find_block() is an approximation based on
+snapshotted_time -- this is done to avoid 0(n), or worse, time
+complexity.  In this case, the shared flag would be true.
+
+But because the 'shared' flag reflects an approximation a block can be
+incorrectly assumed to be shared (e.g. false positive for 'shared'
+because the snapshot no longer exists).  This could result in discards
+issued to a thin device not being passed down to the pool's underlying
+data device.
+
+To fix this we double check that a thin block is really still in-use
+after a mapping is removed using dm_pool_block_is_used().  If the
+reference count for a block is now zero the discard is allowed to be
+passed down.
+
+Also add a 'definitely_not_shared' member to the dm_thin_new_mapping
+structure -- reflects that the 'shared' flag in the response from
+dm_thin_find_block() can only be held as definitive if false is
+returned.
+
+Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1043527
+
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-thin.c | 17 ++++++-----------
- 1 file changed, 6 insertions(+), 11 deletions(-)
+ drivers/md/dm-thin-metadata.c | 20 ++++++++++++++++++++
+ drivers/md/dm-thin-metadata.h |  2 ++
+ drivers/md/dm-thin.c          | 14 ++++++++++++--
+ 3 files changed, 34 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index ee29037..da65feb 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -751,13 +751,17 @@ static int ensure_next_mapping(struct pool *pool)
- 
- static struct dm_thin_new_mapping *get_next_mapping(struct pool *pool)
- {
--	struct dm_thin_new_mapping *r = pool->next_mapping;
-+	struct dm_thin_new_mapping *m = pool->next_mapping;
- 
- 	BUG_ON(!pool->next_mapping);
- 
-+	memset(m, 0, sizeof(struct dm_thin_new_mapping));
-+	INIT_LIST_HEAD(&m->list);
-+	m->bio = NULL;
-+
- 	pool->next_mapping = NULL;
- 
--	return r;
-+	return m;
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index 8a30ad5..7da3476 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -1349,6 +1349,12 @@ dm_thin_id dm_thin_dev_id(struct dm_thin_device *td)
+ 	return td->id;
  }
  
- static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
-@@ -769,15 +773,10 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	struct pool *pool = tc->pool;
- 	struct dm_thin_new_mapping *m = get_next_mapping(pool);
++/*
++ * Check whether @time (of block creation) is older than @td's last snapshot.
++ * If so then the associated block is shared with the last snapshot device.
++ * Any block on a device created *after* the device last got snapshotted is
++ * necessarily not shared.
++ */
+ static bool __snapshotted_since(struct dm_thin_device *td, uint32_t time)
+ {
+ 	return td->snapshotted_time > time;
+@@ -1458,6 +1464,20 @@ int dm_thin_remove_block(struct dm_thin_device *td, dm_block_t block)
+ 	return r;
+ }
  
--	INIT_LIST_HEAD(&m->list);
--	m->quiesced = 0;
--	m->prepared = 0;
- 	m->tc = tc;
- 	m->virt_block = virt_block;
- 	m->data_block = data_dest;
- 	m->cell = cell;
--	m->err = 0;
--	m->bio = NULL;
++int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *result)
++{
++	int r;
++	uint32_t ref_count;
++
++	down_read(&pmd->root_lock);
++	r = dm_sm_get_count(pmd->data_sm, b, &ref_count);
++	if (!r)
++		*result = (ref_count != 0);
++	up_read(&pmd->root_lock);
++
++	return r;
++}
++
+ bool dm_thin_changed_this_transaction(struct dm_thin_device *td)
+ {
+ 	int r;
+diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+index 7bcc0e1..2edf5db 100644
+--- a/drivers/md/dm-thin-metadata.h
++++ b/drivers/md/dm-thin-metadata.h
+@@ -181,6 +181,8 @@ int dm_pool_get_data_block_size(struct dm_pool_metadata *pmd, sector_t *result);
  
- 	if (!dm_deferred_set_add_work(pool->shared_read_ds, &m->list))
- 		m->quiesced = 1;
-@@ -840,15 +839,12 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 	struct pool *pool = tc->pool;
- 	struct dm_thin_new_mapping *m = get_next_mapping(pool);
+ int dm_pool_get_data_dev_size(struct dm_pool_metadata *pmd, dm_block_t *result);
  
--	INIT_LIST_HEAD(&m->list);
- 	m->quiesced = 1;
- 	m->prepared = 0;
- 	m->tc = tc;
- 	m->virt_block = virt_block;
- 	m->data_block = data_block;
- 	m->cell = cell;
--	m->err = 0;
--	m->bio = NULL;
++int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *result);
++
+ /*
+  * Returns -ENOSPC if the new size is too small and already allocated
+  * blocks would be lost.
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index da65feb..51e656a 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -512,6 +512,7 @@ struct dm_thin_new_mapping {
+ 	unsigned quiesced:1;
+ 	unsigned prepared:1;
+ 	unsigned pass_discard:1;
++	unsigned definitely_not_shared:1;
  
- 	/*
- 	 * If the whole block of data is being overwritten or we are not
-@@ -1045,7 +1041,6 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
+ 	struct thin_c *tc;
+ 	dm_block_t virt_block;
+@@ -683,7 +684,15 @@ static void process_prepared_discard_passdown(struct dm_thin_new_mapping *m)
+ 	cell_defer_no_holder(tc, m->cell2);
+ 
+ 	if (m->pass_discard)
+-		remap_and_issue(tc, m->bio, m->data_block);
++		if (m->definitely_not_shared)
++			remap_and_issue(tc, m->bio, m->data_block);
++		else {
++			bool used = false;
++			if (dm_pool_block_is_used(tc->pool->pmd, m->data_block, &used) || used)
++				bio_endio(m->bio, 0);
++			else
++				remap_and_issue(tc, m->bio, m->data_block);
++		}
+ 	else
+ 		bio_endio(m->bio, 0);
+ 
+@@ -1036,7 +1045,8 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
+ 			 */
+ 			m = get_next_mapping(pool);
+ 			m->tc = tc;
+-			m->pass_discard = (!lookup_result.shared) && pool->pf.discard_passdown;
++			m->pass_discard = pool->pf.discard_passdown;
++			m->definitely_not_shared = !lookup_result.shared;
+ 			m->virt_block = block;
  			m->data_block = lookup_result.block;
  			m->cell = cell;
- 			m->cell2 = cell2;
--			m->err = 0;
- 			m->bio = bio;
- 
- 			if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list)) {
 -- 
 1.8.1.4
