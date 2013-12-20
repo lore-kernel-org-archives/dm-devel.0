@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 03/20] dm table: remove unused buggy
-	code that extends the targets array
-Date: Fri, 20 Dec 2013 18:37:16 -0500
-Message-ID: <1387582653-13647-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 16/20] dm thin: eliminate the
+	no_free_space flag
+Date: Fri, 20 Dec 2013 18:37:29 -0500
+Message-ID: <1387582653-13647-17-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,93 +20,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+The pool's error_if_no_space flag can easily serve the same purpose that
+no_free_space did, namely: control whether handle_unserviceable_bio()
+will error a bio or requeue it.
 
-A device mapper table is allocated in the following way:
-* The function dm_table_create is called, it gets the number of targets
-  as an argument -- it allocates a targets array accordingly.
-* For each target, we call dm_table_add_target.
+This is cleaner since error_if_no_space is established when the pool's
+features are processed during table load.  So it avoids managing the
+no_free_space flag by taking the pool's spinlock.
 
-If we add more targets than were specified in dm_table_create, the
-function dm_table_add_target reallocates the targets array.  However,
-this reallocation code is wrong - it moves the targets array to a new
-location, while some target constructors hold pointers to the array in
-the old location.
-
-The following DM target drivers save the pointer to the target
-structure, so they corrupt memory if the target array is moved:
-multipath, raid, mirror, snapshot, stripe, switch, thin, verity.
-
-Under normal circumstances, the reallocation function is not called
-(because dm_table_create is called with the correct number of targets),
-so the buggy reallocation code is not used.
-
-Prior to the fix "dm table: fail dm_table_create on dm_round_up
-overflow", the reallocation code could only be used in case the user
-specifies too large a value in param->target_count, such as 0xffffffff.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-table.c | 22 ++--------------------
- 1 file changed, 2 insertions(+), 20 deletions(-)
+ drivers/md/dm-thin.c | 26 ++++----------------------
+ 1 file changed, 4 insertions(+), 22 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 3ba6a38..6a7f2b8 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -155,7 +155,6 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
- {
- 	sector_t *n_highs;
- 	struct dm_target *n_targets;
--	int n = t->num_targets;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index f16c3e4..bfae790 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -165,7 +165,6 @@ struct pool {
  
- 	/*
- 	 * Allocate both the target array and offset array at once.
-@@ -169,12 +168,7 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
+ 	struct pool_features pf;
+ 	bool low_water_triggered:1;	/* A dm event has been sent */
+-	bool no_free_space:1;		/* bios will be requeued if set */
  
- 	n_targets = (struct dm_target *) (n_highs + num);
+ 	struct dm_bio_prison *prison;
+ 	struct dm_kcopyd_client *copier;
+@@ -995,10 +994,10 @@ static void handle_unserviceable_bio(struct pool *pool, struct bio *bio)
+ 	 */
+ 	WARN_ON_ONCE(get_pool_mode(pool) != PM_READ_ONLY);
  
--	if (n) {
--		memcpy(n_highs, t->highs, sizeof(*n_highs) * n);
--		memcpy(n_targets, t->targets, sizeof(*n_targets) * n);
--	}
--
--	memset(n_highs + n, -1, sizeof(*n_highs) * (num - n));
-+	memset(n_highs, -1, sizeof(*n_highs) * num);
- 	vfree(t->highs);
- 
- 	t->num_allocated = num;
-@@ -261,17 +255,6 @@ void dm_table_destroy(struct dm_table *t)
+-	if (pool->no_free_space)
+-		retry_on_resume(bio);
+-	else
++	if (pool->pf.error_if_no_space)
+ 		bio_io_error(bio);
++	else
++		retry_on_resume(bio);
  }
  
- /*
-- * Checks to see if we need to extend highs or targets.
-- */
--static inline int check_space(struct dm_table *t)
+ static void retry_bios_on_resume(struct pool *pool, struct dm_bio_prison_cell *cell)
+@@ -1441,18 +1440,6 @@ static void set_pool_mode(struct pool *pool, enum pool_mode mode)
+ 	}
+ }
+ 
+-static void set_no_free_space(struct pool *pool)
 -{
--	if (t->num_targets >= t->num_allocated)
--		return alloc_targets(t, t->num_allocated * 2);
+-	unsigned long flags;
 -
--	return 0;
+-	if (pool->pf.error_if_no_space)
+-		return;
+-
+-	spin_lock_irqsave(&pool->lock, flags);
+-	pool->no_free_space = true;
+-	spin_unlock_irqrestore(&pool->lock, flags);
 -}
 -
--/*
-  * See if we've already got a device in the list.
-  */
- static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev)
-@@ -731,8 +714,7 @@ int dm_table_add_target(struct dm_table *t, const char *type,
- 		return -EINVAL;
- 	}
+ /*
+  * Rather than calling set_pool_mode directly, use these which describe the
+  * reason for mode degradation.
+@@ -1461,7 +1448,6 @@ static void out_of_data_space(struct pool *pool)
+ {
+ 	DMERR_LIMIT("%s: no free data space available.",
+ 		    dm_device_name(pool->pool_md));
+-	set_no_free_space(pool);
+ 	set_pool_mode(pool, PM_READ_ONLY);
+ }
  
--	if ((r = check_space(t)))
--		return r;
-+	BUG_ON(t->num_targets >= t->num_allocated);
+@@ -1474,11 +1460,9 @@ static void metadata_operation_failed(struct pool *pool, const char *op, int r)
  
- 	tgt = t->targets + t->num_targets;
- 	memset(tgt, 0, sizeof(*tgt));
+ 	if (r == -ENOSPC &&
+ 	    !dm_pool_get_free_metadata_block_count(pool->pmd, &free_blocks) &&
+-	    !free_blocks) {
++	    !free_blocks)
+ 		DMERR_LIMIT("%s: no free metadata space available.",
+ 			    dm_device_name(pool->pool_md));
+-		set_no_free_space(pool);
+-	}
+ 
+ 	set_pool_mode(pool, PM_READ_ONLY);
+ }
+@@ -1823,7 +1807,6 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 	INIT_LIST_HEAD(&pool->prepared_mappings);
+ 	INIT_LIST_HEAD(&pool->prepared_discards);
+ 	pool->low_water_triggered = false;
+-	pool->no_free_space = false;
+ 	bio_list_init(&pool->retry_on_resume_list);
+ 
+ 	pool->shared_read_ds = dm_deferred_set_create();
+@@ -2350,7 +2333,6 @@ static void pool_resume(struct dm_target *ti)
+ 
+ 	spin_lock_irqsave(&pool->lock, flags);
+ 	pool->low_water_triggered = false;
+-	pool->no_free_space = false;
+ 	__requeue_bios(pool);
+ 	spin_unlock_irqrestore(&pool->lock, flags);
+ 
 -- 
 1.8.1.4
