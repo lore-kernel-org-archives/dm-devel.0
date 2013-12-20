@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 04/20] dm delay: use per-bio data
-	instead of a mempool and slab cache
-Date: Fri, 20 Dec 2013 18:37:17 -0500
-Message-ID: <1387582653-13647-5-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 13/20] dm thin: cleanup and improve no
+	space handling
+Date: Fri, 20 Dec 2013 18:37:26 -0500
+Message-ID: <1387582653-13647-14-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,146 +20,159 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Factor out_of_data_space() out of alloc_data_block().  Eliminate the use
+of 'no_free_space' as a latch in alloc_data_block() -- this is no longer
+needed now that we switch to read-only mode when we run out of data or
+metadata space.  In a later patch, the 'no_free_space' flag will be
+eliminated entirely (in favor of checking metadata rather than relying
+on a transient flag).
 
-Starting with commit c0820cf5ad095 ("dm: introduce per_bio_data"),
-device mapper has the capability to pre-allocate a target-specific
-structure with the bio.
+Move no metdata space handling into metdata_operation_failed().  Set
+no_free_space when metadata space is exhausted too.  This is useful,
+because it offers consistency, for the following patch that will requeue
+data IOs if no_free_space.
 
-This patch changes dm-delay to use this facility instead of a slab cache
-and mempool.
+Also, rename no_space() to retry_bios_on_resume().
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Acked-by: Joe Thornber <ejt@redhat.com>
 ---
- drivers/md/dm-delay.c | 35 +++++++----------------------------
- 1 file changed, 7 insertions(+), 28 deletions(-)
+ drivers/md/dm-thin.c | 61 +++++++++++++++++++++++++++-------------------------
+ 1 file changed, 32 insertions(+), 29 deletions(-)
 
-diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-index 2f91d6d..a8a511c 100644
---- a/drivers/md/dm-delay.c
-+++ b/drivers/md/dm-delay.c
-@@ -24,7 +24,6 @@ struct delay_c {
- 	struct work_struct flush_expired_bios;
- 	struct list_head delayed_bios;
- 	atomic_t may_delay;
--	mempool_t *delayed_pool;
- 
- 	struct dm_dev *dev_read;
- 	sector_t start_read;
-@@ -40,14 +39,11 @@ struct delay_c {
- struct dm_delay_info {
- 	struct delay_c *context;
- 	struct list_head list;
--	struct bio *bio;
- 	unsigned long expires;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 3a80c00..f19b9e3 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -198,6 +198,7 @@ struct pool {
  };
  
- static DEFINE_MUTEX(delayed_bios_lock);
+ static enum pool_mode get_pool_mode(struct pool *pool);
++static void out_of_data_space(struct pool *pool);
+ static void metadata_operation_failed(struct pool *pool, const char *op, int r);
  
--static struct kmem_cache *delayed_cache;
--
- static void handle_delayed_timer(unsigned long data)
+ /*
+@@ -926,16 +927,8 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
  {
- 	struct delay_c *dc = (struct delay_c *)data;
-@@ -87,13 +83,14 @@ static struct bio *flush_delayed_bios(struct delay_c *dc, int flush_all)
- 	mutex_lock(&delayed_bios_lock);
- 	list_for_each_entry_safe(delayed, next, &dc->delayed_bios, list) {
- 		if (flush_all || time_after_eq(jiffies, delayed->expires)) {
-+			struct bio *bio = dm_bio_from_per_bio_data(delayed,
-+						sizeof(struct dm_delay_info));
- 			list_del(&delayed->list);
--			bio_list_add(&flush_bios, delayed->bio);
--			if ((bio_data_dir(delayed->bio) == WRITE))
-+			bio_list_add(&flush_bios, bio);
-+			if ((bio_data_dir(bio) == WRITE))
- 				delayed->context->writes--;
- 			else
- 				delayed->context->reads--;
--			mempool_free(delayed, dc->delayed_pool);
- 			continue;
+ 	int r;
+ 	dm_block_t free_blocks;
+-	unsigned long flags;
+ 	struct pool *pool = tc->pool;
+ 
+-	/*
+-	 * Once no_free_space is set we must not allow allocation to succeed.
+-	 * Otherwise it is difficult to explain, debug, test and support.
+-	 */
+-	if (pool->no_free_space)
+-		return -ENOSPC;
+-
+ 	if (get_pool_mode(pool) != PM_WRITE)
+ 		return -EINVAL;
+ 
+@@ -962,31 +955,14 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
+ 			return r;
  		}
  
-@@ -185,12 +182,6 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+-		/*
+-		 * If we still have no space we set a flag to avoid
+-		 * doing all this checking and return -ENOSPC.  This
+-		 * flag serves as a latch that disallows allocations from
+-		 * this pool until the admin takes action (e.g. resize or
+-		 * table reload).
+-		 */
+ 		if (!free_blocks) {
+-			DMWARN("%s: no free data space available.",
+-			       dm_device_name(pool->pool_md));
+-			spin_lock_irqsave(&pool->lock, flags);
+-			pool->no_free_space = true;
+-			spin_unlock_irqrestore(&pool->lock, flags);
++			out_of_data_space(pool);
+ 			return -ENOSPC;
+ 		}
  	}
  
- out:
--	dc->delayed_pool = mempool_create_slab_pool(128, delayed_cache);
--	if (!dc->delayed_pool) {
--		DMERR("Couldn't create delayed bio pool.");
--		goto bad_dev_write;
--	}
+ 	r = dm_pool_alloc_data_block(pool->pmd, result);
+ 	if (r) {
+-		if (r == -ENOSPC &&
+-		    !dm_pool_get_free_metadata_block_count(pool->pmd, &free_blocks) &&
+-		    !free_blocks)
+-			DMWARN("%s: no free metadata space available.",
+-			       dm_device_name(pool->pool_md));
 -
- 	dc->kdelayd_wq = alloc_workqueue("kdelayd", WQ_MEM_RECLAIM, 0);
- 	if (!dc->kdelayd_wq) {
- 		DMERR("Couldn't start kdelayd");
-@@ -206,12 +197,11 @@ out:
- 
- 	ti->num_flush_bios = 1;
- 	ti->num_discard_bios = 1;
-+	ti->per_bio_data_size = sizeof(struct dm_delay_info);
- 	ti->private = dc;
- 	return 0;
- 
- bad_queue:
--	mempool_destroy(dc->delayed_pool);
--bad_dev_write:
- 	if (dc->dev_write)
- 		dm_put_device(ti, dc->dev_write);
- bad_dev_read:
-@@ -232,7 +222,6 @@ static void delay_dtr(struct dm_target *ti)
- 	if (dc->dev_write)
- 		dm_put_device(ti, dc->dev_write);
- 
--	mempool_destroy(dc->delayed_pool);
- 	kfree(dc);
+ 		metadata_operation_failed(pool, "dm_pool_alloc_data_block", r);
+ 		return r;
+ 	}
+@@ -1010,7 +986,7 @@ static void retry_on_resume(struct bio *bio)
+ 	spin_unlock_irqrestore(&pool->lock, flags);
  }
  
-@@ -244,10 +233,9 @@ static int delay_bio(struct delay_c *dc, int delay, struct bio *bio)
- 	if (!delay || !atomic_read(&dc->may_delay))
- 		return 1;
- 
--	delayed = mempool_alloc(dc->delayed_pool, GFP_NOIO);
-+	delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
- 
- 	delayed->context = dc;
--	delayed->bio = bio;
- 	delayed->expires = expires = jiffies + (delay * HZ / 1000);
- 
- 	mutex_lock(&delayed_bios_lock);
-@@ -356,13 +344,7 @@ static struct target_type delay_target = {
- 
- static int __init dm_delay_init(void)
+-static void no_space(struct pool *pool, struct dm_bio_prison_cell *cell)
++static void retry_bios_on_resume(struct pool *pool, struct dm_bio_prison_cell *cell)
  {
--	int r = -ENOMEM;
--
--	delayed_cache = KMEM_CACHE(dm_delay_info, 0);
--	if (!delayed_cache) {
--		DMERR("Couldn't create delayed bio cache.");
--		goto bad_memcache;
--	}
-+	int r;
+ 	struct bio *bio;
+ 	struct bio_list bios;
+@@ -1123,7 +1099,7 @@ static void break_sharing(struct thin_c *tc, struct bio *bio, dm_block_t block,
+ 		break;
  
- 	r = dm_register_target(&delay_target);
- 	if (r < 0) {
-@@ -373,15 +355,12 @@ static int __init dm_delay_init(void)
- 	return 0;
+ 	case -ENOSPC:
+-		no_space(pool, cell);
++		retry_bios_on_resume(pool, cell);
+ 		break;
  
- bad_register:
--	kmem_cache_destroy(delayed_cache);
--bad_memcache:
- 	return r;
+ 	default:
+@@ -1201,7 +1177,7 @@ static void provision_block(struct thin_c *tc, struct bio *bio, dm_block_t block
+ 		break;
+ 
+ 	case -ENOSPC:
+-		no_space(pool, cell);
++		retry_bios_on_resume(pool, cell);
+ 		break;
+ 
+ 	default:
+@@ -1450,15 +1426,42 @@ static void set_pool_mode(struct pool *pool, enum pool_mode mode)
+ 	}
  }
  
- static void __exit dm_delay_exit(void)
++static void set_no_free_space(struct pool *pool)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&pool->lock, flags);
++	pool->no_free_space = true;
++	spin_unlock_irqrestore(&pool->lock, flags);
++}
++
+ /*
+  * Rather than calling set_pool_mode directly, use these which describe the
+  * reason for mode degradation.
+  */
++static void out_of_data_space(struct pool *pool)
++{
++	DMERR_LIMIT("%s: no free data space available.",
++		    dm_device_name(pool->pool_md));
++	set_no_free_space(pool);
++	set_pool_mode(pool, PM_READ_ONLY);
++}
++
+ static void metadata_operation_failed(struct pool *pool, const char *op, int r)
  {
- 	dm_unregister_target(&delay_target);
--	kmem_cache_destroy(delayed_cache);
++	dm_block_t free_blocks;
++
+ 	DMERR_LIMIT("%s: metadata operation '%s' failed: error = %d",
+ 		    dm_device_name(pool->pool_md), op, r);
+ 
++	if (r == -ENOSPC &&
++	    !dm_pool_get_free_metadata_block_count(pool->pmd, &free_blocks) &&
++	    !free_blocks) {
++		DMERR_LIMIT("%s: no free metadata space available.",
++			    dm_device_name(pool->pool_md));
++		set_no_free_space(pool);
++	}
++
+ 	set_pool_mode(pool, PM_READ_ONLY);
  }
  
- /* Module hooks */
 -- 
 1.8.1.4
