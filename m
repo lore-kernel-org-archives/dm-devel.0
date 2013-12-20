@@ -1,30 +1,87 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Is it possible to live resize a  dmcache volume?
-Date: Fri, 20 Dec 2013 16:46:50 +0000
-Message-ID: <20131220164649.GC15982@debian>
-References: <1387507035.5506.1.camel@daniel.ewheeler.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1387507035.5506.1.camel@daniel.ewheeler.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH maybe-for-3.13 01/20] dm thin: initialize dm_thin_new_mapping returned by get_next_mapping
+Date: Fri, 20 Dec 2013 18:37:14 -0500
+Message-ID: <1387582653-13647-2-git-send-email-snitzer@redhat.com>
+References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
+Sender: stable-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Dec 19, 2013 at 06:37:15PM -0800, Daniel Wheeler wrote:
-> Does dmcache support live resize?
+As additional members are added to the dm_thin_new_mapping structure
+care should be taken to make sure they get initialized before use.
 
-Yes, see these tests:
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
+---
+ drivers/md/dm-thin.c | 17 ++++++-----------
+ 1 file changed, 6 insertions(+), 11 deletions(-)
 
-https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/tests/cache/resize_tests.rb
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index ee29037..da65feb 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -751,13 +751,17 @@ static int ensure_next_mapping(struct pool *pool)
+ 
+ static struct dm_thin_new_mapping *get_next_mapping(struct pool *pool)
+ {
+-	struct dm_thin_new_mapping *r = pool->next_mapping;
++	struct dm_thin_new_mapping *m = pool->next_mapping;
+ 
+ 	BUG_ON(!pool->next_mapping);
+ 
++	memset(m, 0, sizeof(struct dm_thin_new_mapping));
++	INIT_LIST_HEAD(&m->list);
++	m->bio = NULL;
++
+ 	pool->next_mapping = NULL;
+ 
+-	return r;
++	return m;
+ }
+ 
+ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+@@ -769,15 +773,10 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+ 	struct pool *pool = tc->pool;
+ 	struct dm_thin_new_mapping *m = get_next_mapping(pool);
+ 
+-	INIT_LIST_HEAD(&m->list);
+-	m->quiesced = 0;
+-	m->prepared = 0;
+ 	m->tc = tc;
+ 	m->virt_block = virt_block;
+ 	m->data_block = data_dest;
+ 	m->cell = cell;
+-	m->err = 0;
+-	m->bio = NULL;
+ 
+ 	if (!dm_deferred_set_add_work(pool->shared_read_ds, &m->list))
+ 		m->quiesced = 1;
+@@ -840,15 +839,12 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+ 	struct pool *pool = tc->pool;
+ 	struct dm_thin_new_mapping *m = get_next_mapping(pool);
+ 
+-	INIT_LIST_HEAD(&m->list);
+ 	m->quiesced = 1;
+ 	m->prepared = 0;
+ 	m->tc = tc;
+ 	m->virt_block = virt_block;
+ 	m->data_block = data_block;
+ 	m->cell = cell;
+-	m->err = 0;
+-	m->bio = NULL;
+ 
+ 	/*
+ 	 * If the whole block of data is being overwritten or we are not
+@@ -1045,7 +1041,6 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
+ 			m->data_block = lookup_result.block;
+ 			m->cell = cell;
+ 			m->cell2 = cell2;
+-			m->err = 0;
+ 			m->bio = bio;
+ 
+ 			if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list)) {
+-- 
+1.8.1.4
