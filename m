@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 18/20] dm thin: fix pool_preresume
-	resize with heavy IO races
-Date: Fri, 20 Dec 2013 18:37:31 -0500
-Message-ID: <1387582653-13647-19-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 20/20] dm cache policy mq: introduce
+	three promotion threshold tunables
+Date: Fri, 20 Dec 2013 18:37:33 -0500
+Message-ID: <1387582653-13647-21-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,288 +20,216 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-Before, when a pool is being resized, on resume the pool's mode was
-being immediately set to PM_WRITE and the process_* methods would be set
-to the normal writeable operations.  This was occuring before
-pool_resume() was able to actually resize either the metadata or data
-device and resulted in the resize failing.
+From: Joe Thornber <ejt@redhat.com>
 
-Now, the pool is forced to stay in read-only mode if it was already in
-read-only mode.  This prevents bouncing the pool's mode and associated
-process_* methods and consistently keeps read-only processing in place
-until the resize(s) complete.  To achieve this the pool can now be in a
-PM_READ_ONLY state but the metadata's is !read_only -- so as to allow
-the commit() the follows the resize to take place.  Differentiate
-between commit_metadata_superblock() and commit() since different
-negative checks apply (but factor out a common __commit that each
-calls).
+Internally the mq policy maintains a promotion threshold variable.  If
+the hit count of a block not in the cache goes above this threshold it
+gets promoted to the cache.
 
-With this patch the resize_io test passes (on fast storage):
- dmtest run --suite thin-provisioning -n /resize_io/
+This patch introduces three new tunables that allow you to tweak the
+promotion threshold by adding a small value.  These adjustments depend
+on the io type:
 
-Otherwise, problems like the following 2 examples were seen (again when
-testing on really fast PCIe SSD storage):
+   read_promote_adjustment:    READ io, default 4
+   write_promote_adjustment:   WRITE io, default 8
+   discard_promote_adjustment: READ/WRITE io to a discarded block, default 1
 
-1)
-kernel: device-mapper: thin: 253:2: growing the data device from 2048 to 4096 blocks
-kernel: device-mapper: thin: 253:2: reached low water mark for data device: sending event.
-kernel: device-mapper: thin: 253:2: no free data space available.
-kernel: device-mapper: thin: 253:2: switching pool to read-only mode
-kernel: device-mapper: thin: 253:2: switching pool to write mode (from PM_WRITE)
-kernel: device-mapper: thin: 253:2: growing the data device from 4096 to 6144 blocks
-kernel: device-mapper: thin: 253:2: reached low water mark for data device: sending event.
-kernel: device-mapper: thin: 253:2: no free data space available.
-kernel: device-mapper: thin: 253:2: switching pool to read-only mode
-kernel: device-mapper: thin: 253:2: switching pool to write mode (from PM_WRITE)
-kernel: device-mapper: thin: 253:2: metadata operation 'dm_pool_commit_metadata' failed: error = -1
-kernel: device-mapper: thin: 253:2: switching pool to read-only mode
-kernel: device-mapper: thin: 253:2: growing the data device from 6144 to 8192 blocks
-kernel: ------------[ cut here ]------------
-kernel: WARNING: CPU: 1 PID: 22083 at drivers/md/dm-thin.c:934 alloc_data_block+0x171/0x1a0 [dm_thin_pool]()
+If you're trying to quickly warm a new cache device you may wish to
+reduce these to encourage promotion.  Remember to switch them back to
+their defaults after the cache fills though.
 
-dm-thin.c:934 was a WARN_ON() I added if alloc_data_block() was
-called when pool mode != PM_WRITE.
-
-The above clearly illustrated that alloc_data_block was still getting
-called like crazy even though the pool went read-only waiting for a
-resize.  This, and the following example, occurred due to the thin
-device calling wake_worker() which kicked do_worker() during
-pool_preresume() -- which caused calls to prcess_* methods to occur
-during the resize.
-
-2)
-And this failure offers a clear indicator we weren't properly resizing,
-but we were operating like we did:
-
-kernel: device-mapper: thin: 253:2: switching pool to write mode
-kernel: device-mapper: thin: 253:2: growing the data device from 6144 to 8192 blocks
-kernel: device-mapper: thin: 253:2: no free data space available.
-kernel: device-mapper: thin: 253:2: switching pool to read-only mode
-kernel: device-mapper: thin: 253:2: switching pool to write mode
-kernel: device-mapper: thin: 253:2: growing the data device from 6144 to 10240 blocks
-kernel: attempt to access beyond end of device
-kernel: dm-2: rw=17, want=1310848, limit=1310720
-kernel: attempt to access beyond end of device
-kernel: dm-2: rw=17, want=1310976, limit=1310720
-
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin-metadata.c | 35 +++++++++++++++++++
- drivers/md/dm-thin-metadata.h |  3 ++
- drivers/md/dm-thin.c          | 78 +++++++++++++++++++++++++++++++++++--------
- 3 files changed, 103 insertions(+), 13 deletions(-)
+ Documentation/device-mapper/cache-policies.txt | 16 ++++++-
+ drivers/md/dm-cache-policy-mq.c                | 64 +++++++++++++++++---------
+ 2 files changed, 57 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 7da3476..974e2cf 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1586,6 +1586,30 @@ int dm_pool_get_free_metadata_block_count(struct dm_pool_metadata *pmd,
- 	return r;
- }
+diff --git a/Documentation/device-mapper/cache-policies.txt b/Documentation/device-mapper/cache-policies.txt
+index df52a84..66c2774 100644
+--- a/Documentation/device-mapper/cache-policies.txt
++++ b/Documentation/device-mapper/cache-policies.txt
+@@ -40,8 +40,11 @@ on hit count on entry. The policy aims to take different cache miss
+ costs into account and to adjust to varying load patterns automatically.
  
-+int dm_pool_is_out_of_space(struct dm_pool_metadata *pmd, bool *result)
-+{
-+	int r;
-+	dm_block_t free_blocks;
-+
-+	*result = false;
-+
-+	r = dm_pool_get_free_block_count(pmd, &free_blocks);
-+	if (r)
-+		return r;
-+	if (!free_blocks) {
-+		*result = true;
-+		return 0;
-+	}
-+
-+	r = dm_pool_get_free_metadata_block_count(pmd, &free_blocks);
-+	if (r)
-+		return r;
-+	if (!free_blocks)
-+		*result = true;
-+
-+	return 0;
-+}
-+
- int dm_pool_get_metadata_dev_size(struct dm_pool_metadata *pmd,
- 				  dm_block_t *result)
- {
-@@ -1709,6 +1733,17 @@ int dm_pool_resize_metadata_dev(struct dm_pool_metadata *pmd, dm_block_t new_cou
- 	return r;
- }
+ Message and constructor argument pairs are:
+-	'sequential_threshold <#nr_sequential_ios>' and
+-	'random_threshold <#nr_random_ios>'.
++	'sequential_threshold <#nr_sequential_ios>'
++	'random_threshold <#nr_random_ios>'
++	'read_promote_adjustment <value>'
++	'write_promote_adjustment <value>'
++	'discard_promote_adjustment <value>'
  
-+bool dm_pool_metadata_is_read_only(struct dm_pool_metadata *pmd)
-+{
-+	bool r;
-+
-+	down_read(&pmd->root_lock);
-+	r = pmd->read_only;
-+	up_read(&pmd->root_lock);
-+
-+	return r;
-+}
-+
- void dm_pool_metadata_read_only(struct dm_pool_metadata *pmd)
- {
- 	down_write(&pmd->root_lock);
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index 9a36856..dcbd08c 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -177,6 +177,8 @@ int dm_pool_get_free_metadata_block_count(struct dm_pool_metadata *pmd,
- int dm_pool_get_metadata_dev_size(struct dm_pool_metadata *pmd,
- 				  dm_block_t *result);
+ The sequential threshold indicates the number of contiguous I/Os
+ required before a stream is treated as sequential.  The random threshold
+@@ -55,6 +58,15 @@ since spindles tend to have good bandwidth. The io_tracker counts
+ contiguous I/Os to try to spot when the io is in one of these sequential
+ modes.
  
-+int dm_pool_is_out_of_space(struct dm_pool_metadata *pmd, bool *result);
++Internally the mq policy maintains a promotion threshold variable.  If
++the hit count of a block not in the cache goes above this threshold it
++gets promoted to the cache.  The read, write and discard promote adjustment
++tunables allow you to tweak the promotion threshold by adding a small
++value based on the io type.  They default to 4, 8 and 1 respectively.
++If you're trying to quickly warm a new cache device you may wish to
++reduce these to encourage promotion.  Remember to switch them back to
++their defaults after the cache fills though.
 +
- int dm_pool_get_data_block_size(struct dm_pool_metadata *pmd, sector_t *result);
+ cleaner
+ -------
  
- int dm_pool_get_data_dev_size(struct dm_pool_metadata *pmd, dm_block_t *result);
-@@ -194,6 +196,7 @@ int dm_pool_resize_metadata_dev(struct dm_pool_metadata *pmd, dm_block_t new_siz
-  * Flicks the underlying block manager into read only mode, so you know
-  * that nothing is changing.
-  */
-+bool dm_pool_metadata_is_read_only(struct dm_pool_metadata *pmd);
- void dm_pool_metadata_read_only(struct dm_pool_metadata *pmd);
- void dm_pool_metadata_read_write(struct dm_pool_metadata *pmd);
+diff --git a/drivers/md/dm-cache-policy-mq.c b/drivers/md/dm-cache-policy-mq.c
+index 7f1aaa3..e63e36c 100644
+--- a/drivers/md/dm-cache-policy-mq.c
++++ b/drivers/md/dm-cache-policy-mq.c
+@@ -390,6 +390,10 @@ struct mq_policy {
+ 	 */
+ 	unsigned promote_threshold;
  
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 4a2432a..53dcdfb 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -891,22 +891,43 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 	}
- }
++	unsigned discard_promote_adjustment;
++	unsigned read_promote_adjustment;
++	unsigned write_promote_adjustment;
++
+ 	/*
+ 	 * The hash table allows us to quickly find an entry by origin
+ 	 * block.  Both pre_cache and cache entries are in here.
+@@ -399,6 +403,10 @@ struct mq_policy {
+ 	struct hlist_head *table;
+ };
  
-+static int __commit(struct pool *pool)
-+{
-+	int r = dm_pool_commit_metadata(pool->pmd);
-+	if (r)
-+		metadata_operation_failed(pool, "dm_pool_commit_metadata", r);
++#define DEFAULT_DISCARD_PROMOTE_ADJUSTMENT 1
++#define DEFAULT_READ_PROMOTE_ADJUSTMENT 4
++#define DEFAULT_WRITE_PROMOTE_ADJUSTMENT 8
 +
-+	return r;
-+}
-+
-+/*
-+ * Commit that is confined to the metadata superblock due to pool
-+ * being in PM_READ_ONLY mode (read-only process_* functions).
-+ * A non-zero return indicates metadata is not writable.
-+ */
-+static int commit_metadata_superblock(struct pool *pool)
-+{
-+	WARN_ON_ONCE(get_pool_mode(pool) != PM_READ_ONLY);
-+
-+	if (dm_pool_metadata_is_read_only(pool->pmd)) {
-+		DMERR_LIMIT("%s: commit failed: pool metadata is not writable",
-+			    dm_device_name(pool->pool_md));
-+		return -EINVAL;
-+	}
-+
-+	return __commit(pool);
-+}
-+
+ /*----------------------------------------------------------------*/
+ 
  /*
-  * A non-zero return indicates read_only or fail_io mode.
-  * Many callers don't care about the return value.
+@@ -641,25 +649,21 @@ static int demote_cblock(struct mq_policy *mq, dm_oblock_t *oblock)
+  * We bias towards reads, since they can be demoted at no cost if they
+  * haven't been dirtied.
   */
- static int commit(struct pool *pool)
- {
--	int r;
+-#define DISCARDED_PROMOTE_THRESHOLD 1
+-#define READ_PROMOTE_THRESHOLD 4
+-#define WRITE_PROMOTE_THRESHOLD 8
 -
- 	if (get_pool_mode(pool) != PM_WRITE)
+ static unsigned adjusted_promote_threshold(struct mq_policy *mq,
+ 					   bool discarded_oblock, int data_dir)
+ {
+ 	if (data_dir == READ)
+-		return mq->promote_threshold + READ_PROMOTE_THRESHOLD;
++		return mq->promote_threshold + mq->read_promote_adjustment;
+ 
+ 	if (discarded_oblock && (any_free_cblocks(mq) || any_clean_cblocks(mq))) {
+ 		/*
+ 		 * We don't need to do any copying at all, so give this a
+ 		 * very low threshold.
+ 		 */
+-		return DISCARDED_PROMOTE_THRESHOLD;
++		return mq->discard_promote_adjustment;
+ 	}
+ 
+-	return mq->promote_threshold + WRITE_PROMOTE_THRESHOLD;
++	return mq->promote_threshold + mq->write_promote_adjustment;
+ }
+ 
+ static bool should_promote(struct mq_policy *mq, struct entry *e,
+@@ -808,7 +812,7 @@ static int no_entry_found(struct mq_policy *mq, dm_oblock_t oblock,
+ 			  bool can_migrate, bool discarded_oblock,
+ 			  int data_dir, struct policy_result *result)
+ {
+-	if (adjusted_promote_threshold(mq, discarded_oblock, data_dir) == 1) {
++	if (adjusted_promote_threshold(mq, discarded_oblock, data_dir) <= 1) {
+ 		if (can_migrate)
+ 			insert_in_cache(mq, oblock, result);
+ 		else
+@@ -1134,20 +1138,28 @@ static int mq_set_config_value(struct dm_cache_policy *p,
+ 			       const char *key, const char *value)
+ {
+ 	struct mq_policy *mq = to_mq_policy(p);
+-	enum io_pattern pattern;
+ 	unsigned long tmp;
+ 
+-	if (!strcasecmp(key, "random_threshold"))
+-		pattern = PATTERN_RANDOM;
+-	else if (!strcasecmp(key, "sequential_threshold"))
+-		pattern = PATTERN_SEQUENTIAL;
+-	else
+-		return -EINVAL;
+-
+ 	if (kstrtoul(value, 10, &tmp))
  		return -EINVAL;
  
--	r = dm_pool_commit_metadata(pool->pmd);
--	if (r)
--		metadata_operation_failed(pool, "dm_pool_commit_metadata", r);
--
--	return r;
-+	return __commit(pool);
- }
- 
- static void check_low_water_mark(struct pool *pool, dm_block_t free_blocks)
-@@ -1424,7 +1445,11 @@ static void set_pool_mode(struct pool *pool, enum pool_mode new_mode)
- 			new_mode = PM_FAIL;
- 			set_pool_mode(pool, new_mode);
- 		} else {
--			dm_pool_metadata_read_only(pool->pmd);
-+			bool out_of_space;
-+			if (!dm_pool_is_out_of_space(pool->pmd, &out_of_space) && out_of_space)
-+				dm_pool_metadata_read_write(pool->pmd);
-+			else
-+				dm_pool_metadata_read_only(pool->pmd);
- 			pool->process_bio = process_bio_read_only;
- 			pool->process_discard = process_discard;
- 			pool->process_prepared_mapping = process_prepared_mapping_fail;
-@@ -1701,12 +1726,17 @@ static int bind_control_target(struct pool *pool, struct dm_target *ti)
- 	/*
- 	 * If we were in PM_FAIL mode, rollback of metadata failed.  We're
- 	 * not going to recover without a thin_repair.  So we never let the
--	 * pool move out of the old mode.  On the other hand a PM_READ_ONLY
--	 * may have been due to a lack of metadata or data space, and may
--	 * now work (ie. if the underlying devices have been resized).
-+	 * pool move out of the old mode.  Similarly, if in PM_READ_ONLY mode
-+	 * and the pool doesn't have free space we must not switch modes here;
-+	 * pool_preresume() will transition to PM_WRITE mode if a resize succeeds.
- 	 */
- 	if (old_mode == PM_FAIL)
- 		new_mode = old_mode;
-+	else if (old_mode == PM_READ_ONLY) {
-+		bool out_of_space;
-+		if (!dm_pool_is_out_of_space(pool->pmd, &out_of_space) && out_of_space)
-+			new_mode = old_mode;
-+	}
- 
- 	set_pool_mode(pool, new_mode);
- 
-@@ -2317,6 +2347,7 @@ static int pool_preresume(struct dm_target *ti)
- 	bool need_commit1, need_commit2;
- 	struct pool_c *pt = ti->private;
- 	struct pool *pool = pt->pool;
-+	bool out_of_space = false;
- 
- 	/*
- 	 * Take control of the pool object.
-@@ -2325,6 +2356,12 @@ static int pool_preresume(struct dm_target *ti)
- 	if (r)
- 		return r;
- 
-+	if (get_pool_mode(pool) == PM_READ_ONLY) {
-+		r = dm_pool_is_out_of_space(pool->pmd, &out_of_space);
-+		if (r)
-+			metadata_operation_failed(pool, "dm_pool_is_out_of_space", r);
-+	}
+-	mq->tracker.thresholds[pattern] = tmp;
++	if (!strcasecmp(key, "random_threshold")) {
++		mq->tracker.thresholds[PATTERN_RANDOM] = tmp;
 +
- 	r = maybe_resize_data_dev(ti, &need_commit1);
- 	if (r)
- 		return r;
-@@ -2333,8 +2370,23 @@ static int pool_preresume(struct dm_target *ti)
- 	if (r)
- 		return r;
- 
--	if (need_commit1 || need_commit2)
--		(void) commit(pool);
-+	if (need_commit1 || need_commit2) {
-+		if (out_of_space) {
-+			/*
-+			 * Must update metadata's superblock despite read-only mode.
-+			 */
-+			r = commit_metadata_superblock(pool);
-+			if (r || pt->requested_pf.mode == PM_READ_ONLY)
-+				dm_pool_metadata_read_only(pool->pmd);
-+			else {
-+				/*
-+				 * If resize succeeded transition the pool to write mode.
-+				 */
-+				set_pool_mode(pool, PM_WRITE);
-+			}
-+		} else
-+			(void) commit(pool);
-+	}
++	} else if (!strcasecmp(key, "sequential_threshold")) {
++		mq->tracker.thresholds[PATTERN_SEQUENTIAL] = tmp;
++
++	} else if (!strcasecmp(key, "discard_promote_adjustment"))
++		mq->discard_promote_adjustment = tmp;
++
++	else if (!strcasecmp(key, "read_promote_adjustment"))
++		mq->read_promote_adjustment = tmp;
++
++	else if (!strcasecmp(key, "write_promote_adjustment"))
++		mq->write_promote_adjustment = tmp;
++
++	else
++		return -EINVAL;
  
  	return 0;
  }
+@@ -1157,9 +1169,16 @@ static int mq_emit_config_values(struct dm_cache_policy *p, char *result, unsign
+ 	ssize_t sz = 0;
+ 	struct mq_policy *mq = to_mq_policy(p);
+ 
+-	DMEMIT("4 random_threshold %u sequential_threshold %u",
++	DMEMIT("10 random_threshold %u "
++	       "sequential_threshold %u "
++	       "discard_promote_adjustment %u "
++	       "read_promote_adjustment %u "
++	       "write_promote_adjustment %u",
+ 	       mq->tracker.thresholds[PATTERN_RANDOM],
+-	       mq->tracker.thresholds[PATTERN_SEQUENTIAL]);
++	       mq->tracker.thresholds[PATTERN_SEQUENTIAL],
++	       mq->discard_promote_adjustment,
++	       mq->read_promote_adjustment,
++	       mq->write_promote_adjustment);
+ 
+ 	return 0;
+ }
+@@ -1212,6 +1231,9 @@ static struct dm_cache_policy *mq_create(dm_cblock_t cache_size,
+ 	mq->hit_count = 0;
+ 	mq->generation = 0;
+ 	mq->promote_threshold = 0;
++	mq->discard_promote_adjustment = DEFAULT_DISCARD_PROMOTE_ADJUSTMENT;
++	mq->read_promote_adjustment = DEFAULT_READ_PROMOTE_ADJUSTMENT;
++	mq->write_promote_adjustment = DEFAULT_WRITE_PROMOTE_ADJUSTMENT;
+ 	mutex_init(&mq->lock);
+ 	spin_lock_init(&mq->tick_lock);
+ 
+@@ -1243,7 +1265,7 @@ bad_pre_cache_init:
+ 
+ static struct dm_cache_policy_type mq_policy_type = {
+ 	.name = "mq",
+-	.version = {1, 1, 0},
++	.version = {1, 2, 0},
+ 	.hint_size = 4,
+ 	.owner = THIS_MODULE,
+ 	.create = mq_create
+@@ -1251,7 +1273,7 @@ static struct dm_cache_policy_type mq_policy_type = {
+ 
+ static struct dm_cache_policy_type default_policy_type = {
+ 	.name = "default",
+-	.version = {1, 1, 0},
++	.version = {1, 2, 0},
+ 	.hint_size = 4,
+ 	.owner = THIS_MODULE,
+ 	.create = mq_create
 -- 
 1.8.1.4
