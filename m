@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 07/20] dm thin: use bool rather than
-	unsigned for flags in structures
-Date: Fri, 20 Dec 2013 18:37:20 -0500
-Message-ID: <1387582653-13647-8-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 10/20] dm thin: factor out
+	check_low_water_mark and use bools
+Date: Fri, 20 Dec 2013 18:37:23 -0500
+Message-ID: <1387582653-13647-11-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,113 +20,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-Also, move 'err' member in dm_thin_new_mapping structure to eliminate 4
-byte hole (reduces size from 88 bytes to 80).
+From: Joe Thornber <ejt@redhat.com>
 
+Factor check_low_water_mark() out of alloc_data_block().
+Change a couple unsigned flags in the pool structure to bool.
+
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin-metadata.h |  2 +-
- drivers/md/dm-thin.c          | 26 +++++++++++++++-----------
- 2 files changed, 16 insertions(+), 12 deletions(-)
+ drivers/md/dm-thin.c | 37 ++++++++++++++++++++++---------------
+ 1 file changed, 22 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index 2edf5db..9a36856 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -131,7 +131,7 @@ dm_thin_id dm_thin_dev_id(struct dm_thin_device *td);
- 
- struct dm_thin_lookup_result {
- 	dm_block_t block;
--	unsigned shared:1;
-+	bool shared:1;
- };
- 
- /*
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 51e656a..70b02fd 100644
+index 850e7cd..3420ebe5 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -509,16 +509,16 @@ static void remap_and_issue(struct thin_c *tc, struct bio *bio,
- struct dm_thin_new_mapping {
- 	struct list_head list;
+@@ -163,8 +163,8 @@ struct pool {
+ 	int sectors_per_block_shift;
  
--	unsigned quiesced:1;
--	unsigned prepared:1;
--	unsigned pass_discard:1;
--	unsigned definitely_not_shared:1;
-+	bool quiesced:1;
-+	bool prepared:1;
-+	bool pass_discard:1;
-+	bool definitely_not_shared:1;
+ 	struct pool_features pf;
+-	unsigned low_water_triggered:1;	/* A dm event has been sent */
+-	unsigned no_free_space:1;	/* A -ENOSPC warning has been issued */
++	bool low_water_triggered:1;	/* A dm event has been sent */
++	bool no_free_space:1;		/* A -ENOSPC warning has been issued */
  
-+	int err;
- 	struct thin_c *tc;
- 	dm_block_t virt_block;
- 	dm_block_t data_block;
- 	struct dm_bio_prison_cell *cell, *cell2;
--	int err;
- 
- 	/*
- 	 * If the bio covers the whole area of a block then we can avoid
-@@ -549,7 +549,7 @@ static void copy_complete(int read_err, unsigned long write_err, void *context)
- 	m->err = read_err || write_err ? -EIO : 0;
- 
- 	spin_lock_irqsave(&pool->lock, flags);
--	m->prepared = 1;
-+	m->prepared = true;
- 	__maybe_add_mapping(m);
- 	spin_unlock_irqrestore(&pool->lock, flags);
+ 	struct dm_bio_prison *prison;
+ 	struct dm_kcopyd_client *copier;
+@@ -913,6 +913,20 @@ static int commit(struct pool *pool)
+ 	return r;
  }
-@@ -564,7 +564,7 @@ static void overwrite_endio(struct bio *bio, int err)
- 	m->err = err;
  
- 	spin_lock_irqsave(&pool->lock, flags);
--	m->prepared = 1;
-+	m->prepared = true;
- 	__maybe_add_mapping(m);
- 	spin_unlock_irqrestore(&pool->lock, flags);
- }
-@@ -766,6 +766,10 @@ static struct dm_thin_new_mapping *get_next_mapping(struct pool *pool)
++static void check_low_water_mark(struct pool *pool, dm_block_t free_blocks)
++{
++	unsigned long flags;
++
++	if (free_blocks <= pool->low_water_blocks && !pool->low_water_triggered) {
++		DMWARN("%s: reached low water mark for data device: sending event.",
++		       dm_device_name(pool->pool_md));
++		spin_lock_irqsave(&pool->lock, flags);
++		pool->low_water_triggered = true;
++		spin_unlock_irqrestore(&pool->lock, flags);
++		dm_table_event(pool->ti->table);
++	}
++}
++
+ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
+ {
+ 	int r;
+@@ -934,14 +948,7 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
+ 	if (r)
+ 		return r;
  
- 	memset(m, 0, sizeof(struct dm_thin_new_mapping));
- 	INIT_LIST_HEAD(&m->list);
-+	m->quiesced = false;
-+	m->prepared = false;
-+	m->pass_discard = false;
-+	m->definitely_not_shared = false;
- 	m->bio = NULL;
+-	if (free_blocks <= pool->low_water_blocks && !pool->low_water_triggered) {
+-		DMWARN("%s: reached low water mark for data device: sending event.",
+-		       dm_device_name(pool->pool_md));
+-		spin_lock_irqsave(&pool->lock, flags);
+-		pool->low_water_triggered = 1;
+-		spin_unlock_irqrestore(&pool->lock, flags);
+-		dm_table_event(pool->ti->table);
+-	}
++	check_low_water_mark(pool, free_blocks);
  
- 	pool->next_mapping = NULL;
-@@ -788,7 +792,7 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	m->cell = cell;
- 
- 	if (!dm_deferred_set_add_work(pool->shared_read_ds, &m->list))
--		m->quiesced = 1;
-+		m->quiesced = true;
- 
- 	/*
- 	 * IO to pool_dev remaps to the pool target's data_dev.
-@@ -848,8 +852,8 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 	struct pool *pool = tc->pool;
- 	struct dm_thin_new_mapping *m = get_next_mapping(pool);
- 
--	m->quiesced = 1;
--	m->prepared = 0;
-+	m->quiesced = true;
-+	m->prepared = false;
- 	m->tc = tc;
- 	m->virt_block = virt_block;
- 	m->data_block = data_block;
-@@ -2904,7 +2908,7 @@ static int thin_endio(struct dm_target *ti, struct bio *bio, int err)
- 		spin_lock_irqsave(&pool->lock, flags);
- 		list_for_each_entry_safe(m, tmp, &work, list) {
- 			list_del(&m->list);
--			m->quiesced = 1;
-+			m->quiesced = true;
- 			__maybe_add_mapping(m);
+ 	if (!free_blocks) {
+ 		/*
+@@ -967,7 +974,7 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
+ 			DMWARN("%s: no free data space available.",
+ 			       dm_device_name(pool->pool_md));
+ 			spin_lock_irqsave(&pool->lock, flags);
+-			pool->no_free_space = 1;
++			pool->no_free_space = true;
+ 			spin_unlock_irqrestore(&pool->lock, flags);
+ 			return -ENOSPC;
  		}
- 		spin_unlock_irqrestore(&pool->lock, flags);
+@@ -1784,8 +1791,8 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 	bio_list_init(&pool->deferred_flush_bios);
+ 	INIT_LIST_HEAD(&pool->prepared_mappings);
+ 	INIT_LIST_HEAD(&pool->prepared_discards);
+-	pool->low_water_triggered = 0;
+-	pool->no_free_space = 0;
++	pool->low_water_triggered = false;
++	pool->no_free_space = false;
+ 	bio_list_init(&pool->retry_on_resume_list);
+ 
+ 	pool->shared_read_ds = dm_deferred_set_create();
+@@ -2302,8 +2309,8 @@ static void pool_resume(struct dm_target *ti)
+ 	unsigned long flags;
+ 
+ 	spin_lock_irqsave(&pool->lock, flags);
+-	pool->low_water_triggered = 0;
+-	pool->no_free_space = 0;
++	pool->low_water_triggered = false;
++	pool->no_free_space = false;
+ 	__requeue_bios(pool);
+ 	spin_unlock_irqrestore(&pool->lock, flags);
+ 
 -- 
 1.8.1.4
