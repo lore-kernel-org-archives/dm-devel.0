@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 11/20] dm thin: handle metadata failures
-	more consistently
-Date: Fri, 20 Dec 2013 18:37:24 -0500
-Message-ID: <1387582653-13647-12-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 09/20] dm thin: add mappings to end of
+	prepared_* lists
+Date: Fri, 20 Dec 2013 18:37:22 -0500
+Message-ID: <1387582653-13647-10-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,157 +20,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+Mappings could be processed in descending logical block order,
+particularly if buffered IO is used.  This could adversely affect the
+latency of IO processing.  Fix this by adding mappings to the end of the
+'prepared_mappings' and 'prepared_discards' lists.
 
-Introduce metadata_operation_failed() wrappers, around set_pool_mode(),
-to assist with improving the consistency of how metadata failures are
-handled.  Logging is improved and metadata operation failures trigger
-read-only mode immediately.
-
-Also, eliminate redundant set_pool_mode() calls in the two
-alloc_data_block() caller's error paths.
-
-Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Acked-by: Joe Thornber <ejt@redhat.com>
 ---
- drivers/md/dm-thin.c | 48 +++++++++++++++++++++++++++---------------------
- 1 file changed, 27 insertions(+), 21 deletions(-)
+ drivers/md/dm-thin.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 3420ebe5..ccd917f 100644
+index b721d7a..850e7cd 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -198,7 +198,7 @@ struct pool {
- };
+@@ -535,7 +535,7 @@ static void __maybe_add_mapping(struct dm_thin_new_mapping *m)
+ 	struct pool *pool = m->tc->pool;
  
- static enum pool_mode get_pool_mode(struct pool *pool);
--static void set_pool_mode(struct pool *pool, enum pool_mode mode);
-+static void metadata_operation_failed(struct pool *pool, const char *op, int r);
- 
- /*
-  * Target context for a pool.
-@@ -641,9 +641,7 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- 	 */
- 	r = dm_thin_insert_block(tc->td, m->virt_block, m->data_block);
- 	if (r) {
--		DMERR_LIMIT("%s: dm_thin_insert_block() failed: error = %d",
--			    dm_device_name(pool->pool_md), r);
--		set_pool_mode(pool, PM_READ_ONLY);
-+		metadata_operation_failed(pool, "dm_thin_insert_block", r);
- 		cell_error(pool, m->cell);
- 		goto out;
- 	}
-@@ -904,11 +902,8 @@ static int commit(struct pool *pool)
- 		return -EINVAL;
- 
- 	r = dm_pool_commit_metadata(pool->pmd);
--	if (r) {
--		DMERR_LIMIT("%s: dm_pool_commit_metadata failed: error = %d",
--			    dm_device_name(pool->pool_md), r);
--		set_pool_mode(pool, PM_READ_ONLY);
--	}
-+	if (r)
-+		metadata_operation_failed(pool, "dm_pool_commit_metadata", r);
- 
- 	return r;
- }
-@@ -945,8 +940,10 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
- 		return -EINVAL;
- 
- 	r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
--	if (r)
-+	if (r) {
-+		metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
- 		return r;
-+	}
- 
- 	check_low_water_mark(pool, free_blocks);
- 
-@@ -960,8 +957,10 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
- 			return r;
- 
- 		r = dm_pool_get_free_block_count(pool->pmd, &free_blocks);
--		if (r)
-+		if (r) {
-+			metadata_operation_failed(pool, "dm_pool_get_free_block_count", r);
- 			return r;
-+		}
- 
- 		/*
- 		 * If we still have no space we set a flag to avoid
-@@ -984,11 +983,11 @@ static int alloc_data_block(struct thin_c *tc, dm_block_t *result)
- 	if (r) {
- 		if (r == -ENOSPC &&
- 		    !dm_pool_get_free_metadata_block_count(pool->pmd, &free_blocks) &&
--		    !free_blocks) {
-+		    !free_blocks)
- 			DMWARN("%s: no free metadata space available.",
- 			       dm_device_name(pool->pool_md));
--			set_pool_mode(pool, PM_READ_ONLY);
--		}
-+
-+		metadata_operation_failed(pool, "dm_pool_alloc_data_block", r);
- 		return r;
- 	}
- 
-@@ -1130,7 +1129,6 @@ static void break_sharing(struct thin_c *tc, struct bio *bio, dm_block_t block,
- 	default:
- 		DMERR_LIMIT("%s: alloc_data_block() failed: error = %d",
- 			    __func__, r);
--		set_pool_mode(pool, PM_READ_ONLY);
- 		cell_error(pool, cell);
- 		break;
- 	}
-@@ -1209,7 +1207,6 @@ static void provision_block(struct thin_c *tc, struct bio *bio, dm_block_t block
- 	default:
- 		DMERR_LIMIT("%s: alloc_data_block() failed: error = %d",
- 			    __func__, r);
--		set_pool_mode(pool, PM_READ_ONLY);
- 		cell_error(pool, cell);
- 		break;
- 	}
-@@ -1453,6 +1450,18 @@ static void set_pool_mode(struct pool *pool, enum pool_mode mode)
+ 	if (m->quiesced && m->prepared) {
+-		list_add(&m->list, &pool->prepared_mappings);
++		list_add_tail(&m->list, &pool->prepared_mappings);
+ 		wake_worker(pool);
  	}
  }
+@@ -1062,7 +1062,7 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
  
-+/*
-+ * Rather than calling set_pool_mode directly, use these which describe the
-+ * reason for mode degradation.
-+ */
-+static void metadata_operation_failed(struct pool *pool, const char *op, int r)
-+{
-+	DMERR_LIMIT("%s: metadata operation '%s' failed: error = %d",
-+		    dm_device_name(pool->pool_md), op, r);
-+
-+	set_pool_mode(pool, PM_READ_ONLY);
-+}
-+
- /*----------------------------------------------------------------*/
- 
- /*
-@@ -2213,9 +2222,7 @@ static int maybe_resize_data_dev(struct dm_target *ti, bool *need_commit)
- 	} else if (data_size > sb_data_size) {
- 		r = dm_pool_resize_data_dev(pool->pmd, data_size);
- 		if (r) {
--			DMERR("%s: failed to resize data device",
--			      dm_device_name(pool->pool_md));
--			set_pool_mode(pool, PM_READ_ONLY);
-+			metadata_operation_failed(pool, "dm_pool_resize_data_dev", r);
- 			return r;
+ 			if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list)) {
+ 				spin_lock_irqsave(&pool->lock, flags);
+-				list_add(&m->list, &pool->prepared_discards);
++				list_add_tail(&m->list, &pool->prepared_discards);
+ 				spin_unlock_irqrestore(&pool->lock, flags);
+ 				wake_worker(pool);
+ 			}
+@@ -2923,7 +2923,7 @@ static int thin_endio(struct dm_target *ti, struct bio *bio, int err)
+ 		if (!list_empty(&work)) {
+ 			spin_lock_irqsave(&pool->lock, flags);
+ 			list_for_each_entry_safe(m, tmp, &work, list)
+-				list_add(&m->list, &pool->prepared_discards);
++				list_add_tail(&m->list, &pool->prepared_discards);
+ 			spin_unlock_irqrestore(&pool->lock, flags);
+ 			wake_worker(pool);
  		}
- 
-@@ -2252,8 +2259,7 @@ static int maybe_resize_metadata_dev(struct dm_target *ti, bool *need_commit)
- 	} else if (metadata_dev_size > sb_metadata_dev_size) {
- 		r = dm_pool_resize_metadata_dev(pool->pmd, metadata_dev_size);
- 		if (r) {
--			DMERR("%s: failed to resize metadata device",
--			      dm_device_name(pool->pool_md));
-+			metadata_operation_failed(pool, "dm_pool_resize_metadata_dev", r);
- 			return r;
- 		}
- 
 -- 
 1.8.1.4
