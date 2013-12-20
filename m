@@ -1,140 +1,160 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH maybe-for-3.13 02/20] dm thin: fix discard support to a previously shared block
-Date: Fri, 20 Dec 2013 18:37:15 -0500
-Message-ID: <1387582653-13647-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 17/20] dm thin: fix set_pool_mode exposed pool operation races
+Date: Fri, 20 Dec 2013 18:37:30 -0500
+Message-ID: <1387582653-13647-18-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Return-path: <stable-owner@vger.kernel.org>
 In-Reply-To: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Sender: stable-owner@vger.kernel.org
 To: dm-devel@redhat.com
-Cc: Joe Thornber <ejt@redhat.com>, stable@vger.kernel.org
+Cc: stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+The pool mode must not be switched until after the corresponding pool
+process_* methods have been established.  Otherwise, because
+set_pool_mode() isn't interlocked with the IO path for performance
+reasons, the IO path can end up executing process_* operations that
+don't match the mode.  This patch eliminates problems like the following
+(as seen on really fast PCIe SSD storage when transitioning the pool's
+mode from PM_READ_ONLY to PM_WRITE):
 
-If a snapshot is created and later deleted the origin dm_thin_device's
-snapshotted_time will have been updated to reflect the snapshot's
-creation time.  The 'shared' flag in the dm_thin_lookup_result struct
-returned from dm_thin_find_block() is an approximation based on
-snapshotted_time -- this is done to avoid 0(n), or worse, time
-complexity.  In this case, the shared flag would be true.
+kernel: device-mapper: thin: 253:2: reached low water mark for data device: sending event.
+kernel: device-mapper: thin: 253:2: no free data space available.
+kernel: device-mapper: thin: 253:2: switching pool to read-only mode
+kernel: device-mapper: thin: 253:2: switching pool to write mode
+kernel: ------------[ cut here ]------------
+kernel: WARNING: CPU: 11 PID: 7564 at drivers/md/dm-thin.c:995 handle_unserviceable_bio+0x146/0x160 [dm_thin_pool]()
+...
+kernel: Workqueue: dm-thin do_worker [dm_thin_pool]
+kernel: 00000000000003e3 ffff880308831cc8 ffffffff8152ebcb 00000000000003e3
+kernel: 0000000000000000 ffff880308831d08 ffffffff8104c46c ffff88032502a800
+kernel: ffff880036409000 ffff88030ec7ce00 0000000000000001 00000000ffffffc3
+kernel: Call Trace:
+kernel: [<ffffffff8152ebcb>] dump_stack+0x49/0x5e
+kernel: [<ffffffff8104c46c>] warn_slowpath_common+0x8c/0xc0
+kernel: [<ffffffff8104c4ba>] warn_slowpath_null+0x1a/0x20
+kernel: [<ffffffffa001e2c6>] handle_unserviceable_bio+0x146/0x160 [dm_thin_pool]
+kernel: [<ffffffffa001f276>] process_bio_read_only+0x136/0x180 [dm_thin_pool]
+kernel: [<ffffffffa0020b75>] process_deferred_bios+0xc5/0x230 [dm_thin_pool]
+kernel: [<ffffffffa0020d31>] do_worker+0x51/0x60 [dm_thin_pool]
+kernel: [<ffffffff81067823>] process_one_work+0x183/0x490
+kernel: [<ffffffff81068c70>] worker_thread+0x120/0x3a0
+kernel: [<ffffffff81068b50>] ? manage_workers+0x160/0x160
+kernel: [<ffffffff8106e86e>] kthread+0xce/0xf0
+kernel: [<ffffffff8106e7a0>] ? kthread_freezable_should_stop+0x70/0x70
+kernel: [<ffffffff8153b3ec>] ret_from_fork+0x7c/0xb0
+kernel: [<ffffffff8106e7a0>] ? kthread_freezable_should_stop+0x70/0x70
+kernel: ---[ end trace 3f00528e08ffa55c ]---
+kernel: device-mapper: thin: pool mode is PM_WRITE not PM_READ_ONLY like expected!?
 
-But because the 'shared' flag reflects an approximation a block can be
-incorrectly assumed to be shared (e.g. false positive for 'shared'
-because the snapshot no longer exists).  This could result in discards
-issued to a thin device not being passed down to the pool's underlying
-data device.
+dm-thin.c:995 was the WARN_ON_ONCE(get_pool_mode(pool) != PM_READ_ONLY);
+at the top of handle_unserviceable_bio().  And as the additional
+debugging I had conveys: the pool mode was _not_ PM_READ_ONLY like
+expected, it was already PM_WRITE, yet pool->process_bio was still set
+to process_bio_read_only().
 
-To fix this we double check that a thin block is really still in-use
-after a mapping is removed using dm_pool_block_is_used().  If the
-reference count for a block is now zero the discard is allowed to be
-passed down.
+Also, while fixing this up, reduce logging of redundant pool mode
+transitions by checking new_mode is different from old_mode.
 
-Also add a 'definitely_not_shared' member to the dm_thin_new_mapping
-structure -- reflects that the 'shared' flag in the response from
-dm_thin_find_block() can only be held as definitive if false is
-returned.
-
-Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1043527
-
-Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-thin-metadata.c | 20 ++++++++++++++++++++
- drivers/md/dm-thin-metadata.h |  2 ++
- drivers/md/dm-thin.c          | 14 ++++++++++++--
- 3 files changed, 34 insertions(+), 2 deletions(-)
+ drivers/md/dm-thin.c | 40 +++++++++++++++++++++++++++-------------
+ 1 file changed, 27 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 8a30ad5..7da3476 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1349,6 +1349,12 @@ dm_thin_id dm_thin_dev_id(struct dm_thin_device *td)
- 	return td->id;
- }
- 
-+/*
-+ * Check whether @time (of block creation) is older than @td's last snapshot.
-+ * If so then the associated block is shared with the last snapshot device.
-+ * Any block on a device created *after* the device last got snapshotted is
-+ * necessarily not shared.
-+ */
- static bool __snapshotted_since(struct dm_thin_device *td, uint32_t time)
- {
- 	return td->snapshotted_time > time;
-@@ -1458,6 +1464,20 @@ int dm_thin_remove_block(struct dm_thin_device *td, dm_block_t block)
- 	return r;
- }
- 
-+int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *result)
-+{
-+	int r;
-+	uint32_t ref_count;
-+
-+	down_read(&pmd->root_lock);
-+	r = dm_sm_get_count(pmd->data_sm, b, &ref_count);
-+	if (!r)
-+		*result = (ref_count != 0);
-+	up_read(&pmd->root_lock);
-+
-+	return r;
-+}
-+
- bool dm_thin_changed_this_transaction(struct dm_thin_device *td)
- {
- 	int r;
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index 7bcc0e1..2edf5db 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -181,6 +181,8 @@ int dm_pool_get_data_block_size(struct dm_pool_metadata *pmd, sector_t *result);
- 
- int dm_pool_get_data_dev_size(struct dm_pool_metadata *pmd, dm_block_t *result);
- 
-+int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *result);
-+
- /*
-  * Returns -ENOSPC if the new size is too small and already allocated
-  * blocks would be lost.
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index da65feb..51e656a 100644
+index bfae790..4a2432a 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -512,6 +512,7 @@ struct dm_thin_new_mapping {
- 	unsigned quiesced:1;
- 	unsigned prepared:1;
- 	unsigned pass_discard:1;
-+	unsigned definitely_not_shared:1;
+@@ -1396,16 +1396,16 @@ static enum pool_mode get_pool_mode(struct pool *pool)
+ 	return pool->pf.mode;
+ }
  
- 	struct thin_c *tc;
- 	dm_block_t virt_block;
-@@ -683,7 +684,15 @@ static void process_prepared_discard_passdown(struct dm_thin_new_mapping *m)
- 	cell_defer_no_holder(tc, m->cell2);
+-static void set_pool_mode(struct pool *pool, enum pool_mode mode)
++static void set_pool_mode(struct pool *pool, enum pool_mode new_mode)
+ {
+ 	int r;
++	enum pool_mode old_mode = pool->pf.mode;
  
- 	if (m->pass_discard)
--		remap_and_issue(tc, m->bio, m->data_block);
-+		if (m->definitely_not_shared)
-+			remap_and_issue(tc, m->bio, m->data_block);
-+		else {
-+			bool used = false;
-+			if (dm_pool_block_is_used(tc->pool->pmd, m->data_block, &used) || used)
-+				bio_endio(m->bio, 0);
-+			else
-+				remap_and_issue(tc, m->bio, m->data_block);
-+		}
- 	else
- 		bio_endio(m->bio, 0);
+-	pool->pf.mode = mode;
+-
+-	switch (mode) {
++	switch (new_mode) {
+ 	case PM_FAIL:
+-		DMERR("%s: switching pool to failure mode",
+-		      dm_device_name(pool->pool_md));
++		if (old_mode != new_mode)
++			DMERR("%s: switching pool to failure mode",
++			      dm_device_name(pool->pool_md));
+ 		dm_pool_metadata_read_only(pool->pmd);
+ 		pool->process_bio = process_bio_fail;
+ 		pool->process_discard = process_bio_fail;
+@@ -1414,13 +1414,15 @@ static void set_pool_mode(struct pool *pool, enum pool_mode mode)
+ 		break;
  
-@@ -1036,7 +1045,8 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
- 			 */
- 			m = get_next_mapping(pool);
- 			m->tc = tc;
--			m->pass_discard = (!lookup_result.shared) && pool->pf.discard_passdown;
-+			m->pass_discard = pool->pf.discard_passdown;
-+			m->definitely_not_shared = !lookup_result.shared;
- 			m->virt_block = block;
- 			m->data_block = lookup_result.block;
- 			m->cell = cell;
+ 	case PM_READ_ONLY:
+-		DMERR("%s: switching pool to read-only mode",
+-		      dm_device_name(pool->pool_md));
++		if (old_mode != new_mode)
++			DMERR("%s: switching pool to read-only mode",
++			      dm_device_name(pool->pool_md));
+ 		r = dm_pool_abort_metadata(pool->pmd);
+ 		if (r) {
+ 			DMERR("%s: aborting transaction failed",
+ 			      dm_device_name(pool->pool_md));
+-			set_pool_mode(pool, PM_FAIL);
++			new_mode = PM_FAIL;
++			set_pool_mode(pool, new_mode);
+ 		} else {
+ 			dm_pool_metadata_read_only(pool->pmd);
+ 			pool->process_bio = process_bio_read_only;
+@@ -1431,6 +1433,9 @@ static void set_pool_mode(struct pool *pool, enum pool_mode mode)
+ 		break;
+ 
+ 	case PM_WRITE:
++		if (old_mode != new_mode)
++			DMINFO("%s: switching pool to write mode",
++			       dm_device_name(pool->pool_md));
+ 		dm_pool_metadata_read_write(pool->pmd);
+ 		pool->process_bio = process_bio;
+ 		pool->process_discard = process_discard;
+@@ -1438,6 +1443,8 @@ static void set_pool_mode(struct pool *pool, enum pool_mode mode)
+ 		pool->process_prepared_discard = process_prepared_discard;
+ 		break;
+ 	}
++
++	pool->pf.mode = new_mode;
+ }
+ 
+ /*
+@@ -1681,6 +1688,17 @@ static int bind_control_target(struct pool *pool, struct dm_target *ti)
+ 	enum pool_mode new_mode = pt->adjusted_pf.mode;
+ 
+ 	/*
++	 * Don't change the pool's mode until set_pool_mode() below.
++	 * Otherwise the pool's process_* function pointers may
++	 * not match the desired pool mode.
++	 */
++	pt->adjusted_pf.mode = old_mode;
++
++	pool->ti = ti;
++	pool->pf = pt->adjusted_pf;
++	pool->low_water_blocks = pt->low_water_blocks;
++
++	/*
+ 	 * If we were in PM_FAIL mode, rollback of metadata failed.  We're
+ 	 * not going to recover without a thin_repair.  So we never let the
+ 	 * pool move out of the old mode.  On the other hand a PM_READ_ONLY
+@@ -1690,10 +1708,6 @@ static int bind_control_target(struct pool *pool, struct dm_target *ti)
+ 	if (old_mode == PM_FAIL)
+ 		new_mode = old_mode;
+ 
+-	pool->ti = ti;
+-	pool->low_water_blocks = pt->low_water_blocks;
+-	pool->pf = pt->adjusted_pf;
+-
+ 	set_pool_mode(pool, new_mode);
+ 
+ 	return 0;
 -- 
 1.8.1.4
