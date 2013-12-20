@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 05/20] dm space map metadata: limit
-	errors in sm_metadata_new_block
-Date: Fri, 20 Dec 2013 18:37:18 -0500
-Message-ID: <1387582653-13647-6-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 06/20] dm persistent data: cleanup
+	dm-thin specific references in text
+Date: Fri, 20 Dec 2013 18:37:19 -0500
+Message-ID: <1387582653-13647-7-git-send-email-snitzer@redhat.com>
 References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,33 +22,49 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The "unable to allocate new metadata block" error can be a particularly
-verbose error if there is a systemic issue with the metadata device.
+DM's persistent-data library is now used my multiple targets so
+exclusive references to "pool" or "thin provisioning" need to be
+cleaned up.  Adjust Kconfig's DM_DEBUG_BLOCK_STACK_TRACING text
+and remove "pool" from a block manager error message.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/persistent-data/dm-space-map-metadata.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/Kconfig                            | 6 +++---
+ drivers/md/persistent-data/dm-block-manager.c | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-index 58fc1ee..e930844 100644
---- a/drivers/md/persistent-data/dm-space-map-metadata.c
-+++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-@@ -385,13 +385,13 @@ static int sm_metadata_new_block(struct dm_space_map *sm, dm_block_t *b)
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index f2ccbc3..7441344 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -250,12 +250,12 @@ config DM_THIN_PROVISIONING
+          Provides thin provisioning and snapshots that share a data store.
  
- 	int r = sm_metadata_new_block_(sm, b);
- 	if (r) {
--		DMERR("unable to allocate new metadata block");
-+		DMERR_LIMIT("unable to allocate new metadata block");
- 		return r;
- 	}
+ config DM_DEBUG_BLOCK_STACK_TRACING
+-	boolean "Keep stack trace of thin provisioning block lock holders"
+-	depends on STACKTRACE_SUPPORT && DM_THIN_PROVISIONING
++	boolean "Keep stack trace of persistent data block lock holders"
++	depends on STACKTRACE_SUPPORT && DM_PERSISTENT_DATA
+ 	select STACKTRACE
+ 	---help---
+ 	  Enable this for messages that may help debug problems with the
+-	  block manager locking used by thin provisioning.
++	  block manager locking used by thin provisioning and caching.
  
- 	r = sm_metadata_get_nr_free(sm, &count);
- 	if (r) {
--		DMERR("couldn't get free block count");
-+		DMERR_LIMIT("couldn't get free block count");
- 		return r;
- 	}
+ 	  If unsure, say N.
  
+diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
+index 064a3c2..455f792 100644
+--- a/drivers/md/persistent-data/dm-block-manager.c
++++ b/drivers/md/persistent-data/dm-block-manager.c
+@@ -104,7 +104,7 @@ static int __check_holder(struct block_lock *lock)
+ 
+ 	for (i = 0; i < MAX_HOLDERS; i++) {
+ 		if (lock->holders[i] == current) {
+-			DMERR("recursive lock detected in pool metadata");
++			DMERR("recursive lock detected in metadata");
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ 			DMERR("previously held here:");
+ 			print_stack_trace(lock->traces + i, 4);
 -- 
 1.8.1.4
