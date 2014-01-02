@@ -1,76 +1,58 @@
-From: Shaohua Li <shli@kernel.org>
-Subject: Re: [dm-devel] [PATCG]DM: dm-compression: a compressed DM target for
- SSD
-Date: Tue, 31 Dec 2013 17:58:27 +0800
-Message-ID: <20131231095827.GA27868@kernel.org>
-References: <20131227062421.GA21053@kernel.org>
- <20131228125725.GA16613@agk-dp.fab.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20131228125725.GA16613@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com
+From: Laura Abbott <lauraa@codeaurora.org>
+Subject: [RFC PATCHv3 04/11] dm: Use VMALLOC_TOTAL instead of VMALLCO_END - VMALLOC_START
+Date: Thu,  2 Jan 2014 13:53:22 -0800
+Message-ID: <1388699609-18214-5-git-send-email-lauraa@codeaurora.org>
+References: <1388699609-18214-1-git-send-email-lauraa@codeaurora.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1388699609-18214-1-git-send-email-lauraa@codeaurora.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>, Kyungmin Park <kmpark@infradead.org>, Dave Hansen <dave@sr71.net>, linux-mm@kvack.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org, Laura Abbott <lauraa@codeaurora.org>, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Dec 28, 2013 at 12:57:25PM +0000, Alasdair G Kergon wrote:
-> I've not looked at this in any depth, but here are some first
-> impressions:
-> 
-> On Fri, Dec 27, 2013 at 02:24:21PM +0800, Shaohua Li wrote:
-> > This is a simple DM target supporting compression for SSD only.
-> 
-> Presumably there'll be other disk layouts and other types of compression
-> in future, so if you want to grab the generic name "compression" then
-> please make sure the interface to the code supports such extensions.
-> Use of the term "SSD" may also be too narrow as there could be other
-> technologies that are not labelled "SSD" that could benefit from the
-> target.  At best, we say "for example, ssd" leaving things open for
-> other uses.
-> 
-> IOW EITHER you should make it modular and supply a name to the ctr that
-> tells it to use this specific combination OR if you don't think there'll
-> need to be shared code with other compression types/disk layouts, rename
-> this particular one to something more specific.
-> 
-> For this naming, focus on the key feature of the code, which seems to me
-> to be the "in-place" or "in situ" nature of the so-called compression.
-> - If you don't have some form of thin provisioning underneath, why would
-> you use this?  
->   => dm-compress-inplace / insitu
->   => dm-compinsitu
->   => dm-compress-thin  (sub-module loaded from dm-compress)
->   => dm-compressthin   (standalone target)
->      -lzo ?
+vmalloc already provides a macro to calculat the total vmalloc size,
+VMALLOC_TOTAL. Use it.
 
-Thanks for your time! I'll rename it.
+Signed-off-by: Laura Abbott <lauraa@codeaurora.org>
+---
+ drivers/md/dm-bufio.c |    4 ++--
+ drivers/md/dm-stats.c |    2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 54bdd923..cd677f2 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1736,8 +1736,8 @@ static int __init dm_bufio_init(void)
+ 	 * Get the size of vmalloc space the same way as VMALLOC_TOTAL
+ 	 * in fs/proc/internal.h
+ 	 */
+-	if (mem > (VMALLOC_END - VMALLOC_START) * DM_BUFIO_VMALLOC_PERCENT / 100)
+-		mem = (VMALLOC_END - VMALLOC_START) * DM_BUFIO_VMALLOC_PERCENT / 100;
++	if (mem > VMALLOC_TOTAL * DM_BUFIO_VMALLOC_PERCENT / 100)
++		mem = VMALLOC_TOTAL * DM_BUFIO_VMALLOC_PERCENT / 100;
+ #endif
  
-> To use this compression target above dm-thin (likely to prefer larger
-> block sizes), for example, could the block sizes be adapatable /
-> configurable?
+ 	dm_bufio_default_cache_size = mem;
+diff --git a/drivers/md/dm-stats.c b/drivers/md/dm-stats.c
+index 28a9012..378ffb6 100644
+--- a/drivers/md/dm-stats.c
++++ b/drivers/md/dm-stats.c
+@@ -80,7 +80,7 @@ static bool __check_shared_memory(size_t alloc_size)
+ 	if (a >> PAGE_SHIFT > totalram_pages / DM_STATS_MEMORY_FACTOR)
+ 		return false;
+ #ifdef CONFIG_MMU
+-	if (a > (VMALLOC_END - VMALLOC_START) / DM_STATS_VMALLOC_FACTOR)
++	if (a > VMALLOC_TOTAL / DM_STATS_VMALLOC_FACTOR)
+ 		return false;
+ #endif
+ 	return true;
+-- 
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+hosted by The Linux Foundation
 
-block size (larger block size) is configurable, but currently I didn't
-implement yet.
-
-> Please use dm_ / DM_ prefixes - with underscore - and choose one prefix
-> to use consistently.  I see "cp" (makes me think "copy") as well as
-> "comp".
-> 
-> We don't label the fields in the STATUSTYPE_INFO output.
-> 
-> Do write Documentation/device-mapper/<target_name_without_leading_dm>.txt.
-> E.g. what you wrote in the patch header should be moved into that file
-> instead.  (Use a recent documentation file as a model for the format of
-> the file, such as verity or thin-provisioning.)
-
-ok
-
-> And don't be afraid to include more comments in the code for the benefit
-> of people who are unfamiliar with the nuances of device-mapper
-> targets:)
-
-Sure, I'll add more in next post.
-
-Thanks,
-Shaohua
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
