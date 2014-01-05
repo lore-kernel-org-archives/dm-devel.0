@@ -1,64 +1,68 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] kobject: provide kobject_put_wait to fix module unload
  race
-Date: Sun, 5 Jan 2014 10:27:12 -0800
-Message-ID: <20140105182711.GB2522@kroah.com>
-References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
- <20140104181620.GA2087@kroah.com>
- <alpine.LRH.2.02.1401041456070.21108@file01.intranet.prod.int.rdu2.redhat.com>
- <20140105034228.GC22595@kroah.com>
- <20140105060531.GD18213@core.coreip.homeip.net>
+Date: Sun, 5 Jan 2014 17:04:31 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1401051655430.18406@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com> <20140104181620.GA2087@kroah.com> <alpine.LRH.2.02.1401041456070.21108@file01.intranet.prod.int.rdu2.redhat.com> <20140105034228.GC22595@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140105060531.GD18213@core.coreip.homeip.net>
+In-Reply-To: <20140105034228.GC22595@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Jan 04, 2014 at 10:05:31PM -0800, Dmitry Torokhov wrote:
-> On Sat, Jan 04, 2014 at 07:42:28PM -0800, Greg Kroah-Hartman wrote:
-> > On Sat, Jan 04, 2014 at 03:35:39PM -0500, Mikulas Patocka wrote:
-> > > 
-> > > 
-> > > On Sat, 4 Jan 2014, Greg Kroah-Hartman wrote:
-> > > 
-> > > > On Sat, Jan 04, 2014 at 01:06:01PM -0500, Mikulas Patocka wrote:
-> > > > > Hi
-> > > > > 
-> > > > > I noticed that Jeff Mahoney added a new structure kobj_completion, defined 
-> > > > > in include/linux/kobj_completion.h to the kernel 3.13-rc1 in the patch 
-> > > > > eee031649707db3c9920d9498f8d03819b74fc23. In the current upstream kernel, 
-> > > > > this interface is still unused.
-> > > > 
-> > > > There are pending btrfs patches to use this interface.
-> > > > 
-> > > > > However, converting the drivers to use kobj_completion is not trivial 
-> > > > > (note that all users of the original kobject interface are buggy - so all 
-> > > > > of them need to be converted).
-> > > > 
-> > > > Wait, what?  How are "all users" buggy?  Please explain this in detail.
-> > > 
-> > > 1) some code takes a reference to a kobject
-> > > 2) the user unloads the device
-> > > 3) the device driver unload routine calls kobject_put (but there is still 
-> > >    reference, so the kobject is not destroyed)
+
+
+On Sat, 4 Jan 2014, Greg Kroah-Hartman wrote:
+
+> On Sat, Jan 04, 2014 at 03:35:39PM -0500, Mikulas Patocka wrote:
 > > 
-> > A driver should never be messing around with "raw" kobjects, they should
-> > be using a 'struct device' which is created/managed by the subsystem
-> > they belong to.  See Dmitry's example of input and serio as ways to do
-> > this, also USB and PCI do this properly.
+> > 
+> > On Sat, 4 Jan 2014, Greg Kroah-Hartman wrote:
+> > 
+> > > On Sat, Jan 04, 2014 at 01:06:01PM -0500, Mikulas Patocka wrote:
+> > > > Hi
+> > > > 
+> > > > I noticed that Jeff Mahoney added a new structure kobj_completion, defined 
+> > > > in include/linux/kobj_completion.h to the kernel 3.13-rc1 in the patch 
+> > > > eee031649707db3c9920d9498f8d03819b74fc23. In the current upstream kernel, 
+> > > > this interface is still unused.
+> > > 
+> > > There are pending btrfs patches to use this interface.
+> > > 
+> > > > However, converting the drivers to use kobj_completion is not trivial 
+> > > > (note that all users of the original kobject interface are buggy - so all 
+> > > > of them need to be converted).
+> > > 
+> > > Wait, what?  How are "all users" buggy?  Please explain this in detail.
+> > 
+> > 1) some code takes a reference to a kobject
+> > 2) the user unloads the device
+> > 3) the device driver unload routine calls kobject_put (but there is still 
+> >    reference, so the kobject is not destroyed)
 > 
-> Well, Mikulas is correct in the sense that there is still a race between
-> release function invoking the final module_put() and getting preempted
-> and module getting unloaded by another thread. Hitting this race is
-> pretty hard though.
+> A driver should never be messing around with "raw" kobjects, they should
+> be using a 'struct device' which is created/managed by the subsystem
+> they belong to.  See Dmitry's example of input and serio as ways to do
+> this, also USB and PCI do this properly.
+> 
+> Perhaps your sybsystem isn't doing this properly?  What code do you have
+> that creates raw kobjects and has this problem?
+> 
+> thanks,
+> 
+> greg k-h
 
-Yes, that is true, especially as no one auto-unloads modules for reasons
-like this :)
+So, are you saying that a module shouldn't ever be able to create a 
+kobject type?
 
-thanks,
+Do "grep -rw kobj_type drivers/ fs/* net/bridge/" to see how much code 
+uses kobjects. There are 77 line. Majority of them may be compiled as 
+modules.
 
-greg k-h
+What do you want to do with all those kobject users? Hide them behind 
+another interface that doesn't exists yet?
+
+Mikulas
