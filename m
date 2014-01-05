@@ -1,46 +1,58 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
 Subject: Re: [PATCH] kobject: provide kobject_put_wait to fix module unload
  race
-Date: Sat, 4 Jan 2014 19:48:23 -0800
-Message-ID: <20140105034823.GE22595@kroah.com>
+Date: Sat, 4 Jan 2014 22:05:31 -0800
+Message-ID: <20140105060531.GD18213@core.coreip.homeip.net>
 References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
- <52C84F76.6010505@suse.com>
+ <20140104181620.GA2087@kroah.com>
+ <alpine.LRH.2.02.1401041456070.21108@file01.intranet.prod.int.rdu2.redhat.com>
+ <20140105034228.GC22595@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <52C84F76.6010505@suse.com>
+In-Reply-To: <20140105034228.GC22595@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Mahoney <jeffm@suse.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Jan 04, 2014 at 01:14:14PM -0500, Jeff Mahoney wrote:
-> On 1/4/14, 1:06 PM, Mikulas Patocka wrote:
-> > Hi
+On Sat, Jan 04, 2014 at 07:42:28PM -0800, Greg Kroah-Hartman wrote:
+> On Sat, Jan 04, 2014 at 03:35:39PM -0500, Mikulas Patocka wrote:
 > > 
-> > I noticed that Jeff Mahoney added a new structure kobj_completion, defined 
-> > in include/linux/kobj_completion.h to the kernel 3.13-rc1 in the patch 
-> > eee031649707db3c9920d9498f8d03819b74fc23. In the current upstream kernel, 
-> > this interface is still unused.
 > > 
-> > However, converting the drivers to use kobj_completion is not trivial 
-> > (note that all users of the original kobject interface are buggy - so all 
-> > of them need to be converted).
+> > On Sat, 4 Jan 2014, Greg Kroah-Hartman wrote:
 > > 
-> > I came up with a simpler patch to achieve the same purpose - this patch 
-> > makes fixing the drivers easy - the driver is fixed just by replacing 
-> > "kobject_put" with "kobject_put_wait" in the unload routine.
+> > > On Sat, Jan 04, 2014 at 01:06:01PM -0500, Mikulas Patocka wrote:
+> > > > Hi
+> > > > 
+> > > > I noticed that Jeff Mahoney added a new structure kobj_completion, defined 
+> > > > in include/linux/kobj_completion.h to the kernel 3.13-rc1 in the patch 
+> > > > eee031649707db3c9920d9498f8d03819b74fc23. In the current upstream kernel, 
+> > > > this interface is still unused.
+> > > 
+> > > There are pending btrfs patches to use this interface.
+> > > 
+> > > > However, converting the drivers to use kobj_completion is not trivial 
+> > > > (note that all users of the original kobject interface are buggy - so all 
+> > > > of them need to be converted).
+> > > 
+> > > Wait, what?  How are "all users" buggy?  Please explain this in detail.
 > > 
-> > I'd like to ask if you could revert 
-> > eee031649707db3c9920d9498f8d03819b74fc23 (no code uses it) and replace it 
-> > with this patch.
+> > 1) some code takes a reference to a kobject
+> > 2) the user unloads the device
+> > 3) the device driver unload routine calls kobject_put (but there is still 
+> >    reference, so the kobject is not destroyed)
 > 
-> I have no objections to reverting it. There were concerns from Al Viro
-> that it'd be tough to get right by callers and I had assumed it got
-> dropped after that. I had planned on using it in my btrfs sysfs exports
-> patchset but came up with a better way.
+> A driver should never be messing around with "raw" kobjects, they should
+> be using a 'struct device' which is created/managed by the subsystem
+> they belong to.  See Dmitry's example of input and serio as ways to do
+> this, also USB and PCI do this properly.
 
-Ok, thanks, I'll revert it for 3.14.
+Well, Mikulas is correct in the sense that there is still a race between
+release function invoking the final module_put() and getting preempted
+and module getting unloaded by another thread. Hitting this race is
+pretty hard though.
 
-greg k-h
+-- 
+Dmitry
