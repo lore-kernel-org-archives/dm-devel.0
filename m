@@ -1,85 +1,90 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
 Subject: Re: [PATCH] kobject: provide kobject_put_wait to fix module unload
  race
-Date: Sun, 5 Jan 2014 14:23:56 -0800
-Message-ID: <20140105222356.GA22084@kroah.com>
+Date: Sun, 5 Jan 2014 14:39:26 -0800
+Message-ID: <20140105223926.GA31541@core.coreip.homeip.net>
 References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
  <20140104181620.GA2087@kroah.com>
- <alpine.LRH.2.02.1401041456070.21108@file01.intranet.prod.int.rdu2.redhat.com>
- <20140105034228.GC22595@kroah.com>
- <alpine.LRH.2.02.1401051655430.18406@file01.intranet.prod.int.rdu2.redhat.com>
+ <20140104183403.GG10323@ZenIV.linux.org.uk>
+ <20140104224206.GC18213@core.coreip.homeip.net>
+ <alpine.LRH.2.02.1401051706040.18406@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1401051655430.18406@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1401051706040.18406@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
 List-Id: dm-devel.ids
 
-On Sun, Jan 05, 2014 at 05:04:31PM -0500, Mikulas Patocka wrote:
+On Sun, Jan 05, 2014 at 05:11:23PM -0500, Mikulas Patocka wrote:
 > 
 > 
-> On Sat, 4 Jan 2014, Greg Kroah-Hartman wrote:
+> On Sat, 4 Jan 2014, Dmitry Torokhov wrote:
 > 
-> > On Sat, Jan 04, 2014 at 03:35:39PM -0500, Mikulas Patocka wrote:
+> > On Sat, Jan 04, 2014 at 06:34:03PM +0000, Al Viro wrote:
+> > > On Sat, Jan 04, 2014 at 10:16:20AM -0800, Greg Kroah-Hartman wrote:
 > > > 
-> > > 
-> > > On Sat, 4 Jan 2014, Greg Kroah-Hartman wrote:
-> > > 
-> > > > On Sat, Jan 04, 2014 at 01:06:01PM -0500, Mikulas Patocka wrote:
-> > > > > Hi
-> > > > > 
-> > > > > I noticed that Jeff Mahoney added a new structure kobj_completion, defined 
-> > > > > in include/linux/kobj_completion.h to the kernel 3.13-rc1 in the patch 
-> > > > > eee031649707db3c9920d9498f8d03819b74fc23. In the current upstream kernel, 
-> > > > > this interface is still unused.
+> > > > > I came up with a simpler patch to achieve the same purpose - this patch 
+> > > > > makes fixing the drivers easy - the driver is fixed just by replacing 
+> > > > > "kobject_put" with "kobject_put_wait" in the unload routine.
 > > > > 
-> > > > There are pending btrfs patches to use this interface.
-> > > > 
-> > > > > However, converting the drivers to use kobj_completion is not trivial 
-> > > > > (note that all users of the original kobject interface are buggy - so all 
-> > > > > of them need to be converted).
-> > > > 
-> > > > Wait, what?  How are "all users" buggy?  Please explain this in detail.
+> > > > No, that's not ok at all.
 > > > 
-> > > 1) some code takes a reference to a kobject
-> > > 2) the user unloads the device
-> > > 3) the device driver unload routine calls kobject_put (but there is still 
-> > >    reference, so the kobject is not destroyed)
+> > > Agreed - all it takes is one cargo-culter who religoiusly does such
+> > > conversion and drops a ref to parent before that to child.
+> > > 
+> > > > > However, this pattern is buggy with respect to modules. The release method
+> > > > > is placed in the driver's module. When the driver exits, the module
+> > > > > reference count is zero, thus the module may be freed. However, there may
+> > > > > still be references to the kobject. If the module is unloaded and then the
+> > > > > release method is called, a crash happens.
+> > > > 
+> > > > Yes, module unloading while a kobject is still "active" is not a good
+> > > > thing, what modules do you have that cause this problem?  Why not just
+> > > > grab the module reference in your kobject if you need this type of
+> > > > protection?  It's not the kobject's code fault that this issue is there,
+> > > > or that we now have a "delayed release" function to expose this type of
+> > > > thing, it's the user of the kobject.
+> > > > 
+> > > > Please fix the broken users of the kobject first.
+> > > 
+> > > <snide> Are you saying that there is another kind? </snide>
+> > > 
+> > > When would you grab that reference to module?  More to the point, when
+> > > would you *drop* it?  Doing so from module_exit is not going to work,
+> > > obviously...
 > > 
-> > A driver should never be messing around with "raw" kobjects, they should
-> > be using a 'struct device' which is created/managed by the subsystem
-> > they belong to.  See Dmitry's example of input and serio as ways to do
-> > this, also USB and PCI do this properly.
+> > You normally have subsystem core module that does handle release of its
+> > objects and users of said objects so it is usually OK for objects to
+> > outlive the users, you just need to make sure the core stays around.
 > > 
-> > Perhaps your sybsystem isn't doing this properly?  What code do you have
-> > that creates raw kobjects and has this problem?
+> > In input we grab module reference to input core when we allocate input
+> > device and drop it when input device is freed. This way we can be sure
+> > that input core stays around until all input devices are gone. The same
+> > for serio.
 > > 
-> > thanks,
+> > Thanks. 
 > > 
-> > greg k-h
+> > -- 
+> > Dmitry
 > 
-> So, are you saying that a module shouldn't ever be able to create a 
-> kobject type?
-> 
-> Do "grep -rw kobj_type drivers/ fs/* net/bridge/" to see how much code 
-> uses kobjects. There are 77 line. Majority of them may be compiled as 
-> modules.
-> 
-> What do you want to do with all those kobject users? Hide them behind 
-> another interface that doesn't exists yet?
+> But sometimes, the driver itself needs to create nodes in the sysfs 
+> filesystem (for example drivers/md/dm-sysfs.c). I don't quite see how 
+> would you push all driver-specific sysfs nodes into the generic non-module 
+> code.
 
-Most of them should be using the driver/device interface to sysfs (the
-drivers/* files, with the exception of the driver core code).  I'll look
-at the others later.
+Then you need to make sure your driver does not allow unloading while
+its objects are active. I.e. require that all your devices are gone
+(by increasing module count when you create a DM object and decreasing
+it when you release DM object) before you allow unloading the driver.
 
-And note, as module unloading can only happen by the root user, and
-never happens "automatically", this is an issue, but a very minor one,
-and can usually be solved by having a central "place" that handles the
-kobject lifetimes.
+Basically we should avoid kobject_put() in exit paths of the module.
+Then we are left with that tiny race with release being preempted and
+module getting unloaded.
 
-thanks,
+Thanks.
 
-greg k-h
+-- 
+Dmitry
