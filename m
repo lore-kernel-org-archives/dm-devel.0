@@ -1,58 +1,32 @@
-From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH] kobject: provide kobject_put_wait to fix module unload
- race
-Date: Sat, 4 Jan 2014 22:05:31 -0800
-Message-ID: <20140105060531.GD18213@core.coreip.homeip.net>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [dm-devel] [PATCH] kobject: provide kobject_put_wait to fix module
+ unload race
+Date: Sun, 05 Jan 2014 17:43:56 +0100
+Message-ID: <52C98BCC.9040900@acm.org>
 References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
- <20140104181620.GA2087@kroah.com>
- <alpine.LRH.2.02.1401041456070.21108@file01.intranet.prod.int.rdu2.redhat.com>
- <20140105034228.GC22595@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140105034228.GC22595@kroah.com>
+In-Reply-To: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>, Jeff Mahoney <jeffm@suse.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, torvalds@linux-foundation.org, device-mapper development <dm-devel@redhat.com>
+Cc: paulmck@linux.vnet.ibm.com, tglx@linutronix.de, linux-kernel@vger.kernel.org, mingo@kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Jan 04, 2014 at 07:42:28PM -0800, Greg Kroah-Hartman wrote:
-> On Sat, Jan 04, 2014 at 03:35:39PM -0500, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Sat, 4 Jan 2014, Greg Kroah-Hartman wrote:
-> > 
-> > > On Sat, Jan 04, 2014 at 01:06:01PM -0500, Mikulas Patocka wrote:
-> > > > Hi
-> > > > 
-> > > > I noticed that Jeff Mahoney added a new structure kobj_completion, defined 
-> > > > in include/linux/kobj_completion.h to the kernel 3.13-rc1 in the patch 
-> > > > eee031649707db3c9920d9498f8d03819b74fc23. In the current upstream kernel, 
-> > > > this interface is still unused.
-> > > 
-> > > There are pending btrfs patches to use this interface.
-> > > 
-> > > > However, converting the drivers to use kobj_completion is not trivial 
-> > > > (note that all users of the original kobject interface are buggy - so all 
-> > > > of them need to be converted).
-> > > 
-> > > Wait, what?  How are "all users" buggy?  Please explain this in detail.
-> > 
-> > 1) some code takes a reference to a kobject
-> > 2) the user unloads the device
-> > 3) the device driver unload routine calls kobject_put (but there is still 
-> >    reference, so the kobject is not destroyed)
-> 
-> A driver should never be messing around with "raw" kobjects, they should
-> be using a 'struct device' which is created/managed by the subsystem
-> they belong to.  See Dmitry's example of input and serio as ways to do
-> this, also USB and PCI do this properly.
+On 01/04/14 19:06, Mikulas Patocka wrote:
+> -	if (t && !t->release)
+> -		pr_debug("kobject: '%s' (%p): does not have a release() "
+> -			 "function, it is broken and must be fixed.\n",
+> -			 kobject_name(kobj), kobj);
+> -
 
-Well, Mikulas is correct in the sense that there is still a race between
-release function invoking the final module_put() and getting preempted
-and module getting unloaded by another thread. Hitting this race is
-pretty hard though.
+Has it been considered to issue a warning if no release function has
+been defined and free_completion == NULL instead of removing the above
+debug message entirely ? I think even with this patch applied it is
+still wrong to invoke kobject_put() on an object without defining a
+release function.
 
--- 
-Dmitry
+Thanks,
+
+Bart.
