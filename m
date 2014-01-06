@@ -1,90 +1,61 @@
-From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH] kobject: provide kobject_put_wait to fix module unload
- race
-Date: Sun, 5 Jan 2014 14:39:26 -0800
-Message-ID: <20140105223926.GA31541@core.coreip.homeip.net>
-References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
- <20140104181620.GA2087@kroah.com>
- <20140104183403.GG10323@ZenIV.linux.org.uk>
- <20140104224206.GC18213@core.coreip.homeip.net>
- <alpine.LRH.2.02.1401051706040.18406@file01.intranet.prod.int.rdu2.redhat.com>
+From: Dongmao Zhang <dmzhang@suse.com>
+Subject: Re: [PATCH 1/1] improve the
+	performance	of	dm-log-userspace
+Date: Mon, 06 Jan 2014 13:06:18 +0800
+Message-ID: <52CA39CA.20504@suse.com>
+References: <d16b09a5f29e29d77122c29f01ecaf7928dc4397.1386135157.git.dmzhang@suse.com>	<CFEF63AA-BBCD-4D61-A43C-9D785E45182C@redhat.com>
+	<52A81BEE.2030600@suse.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1401051706040.18406@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <52A81BEE.2030600@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Brassow Jonathan <jbrassow@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Jan 05, 2014 at 05:11:23PM -0500, Mikulas Patocka wrote:
-> 
-> 
-> On Sat, 4 Jan 2014, Dmitry Torokhov wrote:
-> 
-> > On Sat, Jan 04, 2014 at 06:34:03PM +0000, Al Viro wrote:
-> > > On Sat, Jan 04, 2014 at 10:16:20AM -0800, Greg Kroah-Hartman wrote:
-> > > 
-> > > > > I came up with a simpler patch to achieve the same purpose - this patch 
-> > > > > makes fixing the drivers easy - the driver is fixed just by replacing 
-> > > > > "kobject_put" with "kobject_put_wait" in the unload routine.
-> > > > 
-> > > > No, that's not ok at all.
-> > > 
-> > > Agreed - all it takes is one cargo-culter who religoiusly does such
-> > > conversion and drops a ref to parent before that to child.
-> > > 
-> > > > > However, this pattern is buggy with respect to modules. The release method
-> > > > > is placed in the driver's module. When the driver exits, the module
-> > > > > reference count is zero, thus the module may be freed. However, there may
-> > > > > still be references to the kobject. If the module is unloaded and then the
-> > > > > release method is called, a crash happens.
-> > > > 
-> > > > Yes, module unloading while a kobject is still "active" is not a good
-> > > > thing, what modules do you have that cause this problem?  Why not just
-> > > > grab the module reference in your kobject if you need this type of
-> > > > protection?  It's not the kobject's code fault that this issue is there,
-> > > > or that we now have a "delayed release" function to expose this type of
-> > > > thing, it's the user of the kobject.
-> > > > 
-> > > > Please fix the broken users of the kobject first.
-> > > 
-> > > <snide> Are you saying that there is another kind? </snide>
-> > > 
-> > > When would you grab that reference to module?  More to the point, when
-> > > would you *drop* it?  Doing so from module_exit is not going to work,
-> > > obviously...
-> > 
-> > You normally have subsystem core module that does handle release of its
-> > objects and users of said objects so it is usually OK for objects to
-> > outlive the users, you just need to make sure the core stays around.
-> > 
-> > In input we grab module reference to input core when we allocate input
-> > device and drop it when input device is freed. This way we can be sure
-> > that input core stays around until all input devices are gone. The same
-> > for serio.
-> > 
-> > Thanks. 
-> > 
-> > -- 
-> > Dmitry
-> 
-> But sometimes, the driver itself needs to create nodes in the sysfs 
-> filesystem (for example drivers/md/dm-sysfs.c). I don't quite see how 
-> would you push all driver-specific sysfs nodes into the generic non-module 
-> code.
-
-Then you need to make sure your driver does not allow unloading while
-its objects are active. I.e. require that all your devices are gone
-(by increasing module count when you create a DM object and decreasing
-it when you release DM object) before you allow unloading the driver.
-
-Basically we should avoid kobject_put() in exit paths of the module.
-Then we are left with that tiny race with release being preempted and
-module getting unloaded.
-
-Thanks.
-
--- 
-Dmitry
+aGksYnJhc3NvdywKICAgSG93IGlzIGdvaW5nIGFib3V0IHRoZSB1c2Vyc3BhY2UgY21pcnJvcmQn
+cyBwYXRjaCB0ZXN0aW5nPyBJcyB0aGVyZSAKYW55dGhpbmcgSSBjb3VsZCBoZWxwPwoKRG9uZ21h
+byBaaGFuZy4KCgrkuo4gMjAxM+W5tDEy5pyIMTHml6UgMTY6MDEsIERvbmdtYW8gWmhhbmcg5YaZ
+6YGTOgo+IGhpLCBicmFzc293Cj4KPiBZZXMsIEkgaGFkIHN1Ym1pdGVkIGEgcGF0Y2ggbHZtLWRl
+dmVsLgo+Cj4gaHR0cDovL3d3dy5yZWRoYXQuY29tL2FyY2hpdmVzL2x2bS1kZXZlbC8yMDEzLU5v
+dmVtYmVyL21zZzAwMDkzLmh0bWwuCj4KPiBwbGVhc2UgcmV2aWV3Lgo+Cj4gSSBzaG91bGQgaGF2
+ZSBhZGQgYSBwYXRjaCB2ZXJzaW9uIGluZGljYXRvci4KPgo+Cj4KPgo+Cj4KPgo+IOS6jiAyMDEz
+5bm0MTLmnIgxMeaXpSAwOToxNywgQnJhc3NvdyBKb25hdGhhbiDlhpnpgZM6Cj4+IExvb2tzIGdv
+b2QuIERpZCB5b3UgaGFwcGVuIHRvIHBvc3QgdGhlIGFjY29tcGFueWluZyB1c2Vyc3BhY2UgcGF0
+Y2hlcz8KPj4gSWYgeW91IHBhc3MgdGhvc2UgYWxvbmcsIEkgd2lsbCByZXZpZXcgdGhhdCBhbHNv
+IGFuZCB0ZXN0IHRoZW0KPj4gdG9nZXRoZXIuIE9uY2UgdGhhdCdzIGRvbmUsIEkgd2lsbCBBQ0su
+Cj4+Cj4+IGJyYXNzb3cKPj4KPj4gT24gRGVjIDMsIDIwMTMsIGF0IDExOjM1IFBNLCBkb25nbWFv
+IHpoYW5nIHdyb3RlOgo+Pgo+Pj4gbW9kaWZpZWQgd29ya3F1ZXVlIGNhbGxzIG9uIEhheWFrYXdh
+J3MgY29tbWVudHMKPj4+Cj4+PiBJbiB0aGUgY2x1c3RlciBldmlyb25tZW50LCBjbHVzdGVyIHdy
+aXRlIGhhcyBwb29yIHBlcmZvcm1hbmNlLgo+Pgo+PiA8L3NuaXA+Cj4+Cj4+PiBzcGlubG9ja190
+IGZsdXNoX2xvY2s7Cj4+PiBzdHJ1Y3QgbGlzdF9oZWFkIG1hcmtfbGlzdDsKPj4+IHN0cnVjdCBs
+aXN0X2hlYWQgY2xlYXJfbGlzdDsKPj4+ICsKPj4+ICsgLyp3b3JrIHF1ZXVlIGZvciBmbHVzaCBj
+bGVhciByZWdpb24qLwo+Pgo+PiBVc2Ugc3BhY2VzIGFmdGVyIC8qIGFuZCBiZWZvcmUgKi8KPj4K
+Pj4+ICsgc3RydWN0IHdvcmtxdWV1ZV9zdHJ1Y3QgKmRtbG9nX3dxOwo+Pj4gKyBzdHJ1Y3QgZGVs
+YXllZF93b3JrIGZsdXNoX2xvZ193b3JrOwo+Pj4gKyBhdG9taWNfdCBzY2hlZF9mbHVzaDsKPj4+
+ICsgdWludDMyX3QgaW50ZWdyYXRlZF9mbHVzaDsKPj4+IH07Cj4+Cj4+IDwvc25pcD4KPj4KPj4+
+IGRldmljZXNfcmRhdGEgPSBremFsbG9jKGRldmljZXNfcmRhdGFfc2l6ZSwgR0ZQX0tFUk5FTCk7
+Cj4+PiBpZiAoIWRldmljZXNfcmRhdGEpIHsKPj4+IERNRVJSKCJGYWlsZWQgdG8gYWxsb2NhdGUg
+bWVtb3J5IGZvciBkZXZpY2UgaW5mb3JtYXRpb24iKTsKPj4+IEBAIC0yNDYsNiArMjY4LDIwIEBA
+IHN0YXRpYyBpbnQgdXNlcnNwYWNlX2N0cihzdHJ1Y3QgZG1fZGlydHlfbG9nCj4+PiAqbG9nLCBz
+dHJ1Y3QgZG1fdGFyZ2V0ICp0aSwKPj4+IERNRVJSKCJGYWlsZWQgdG8gcmVnaXN0ZXIgJXMgd2l0
+aCBkZXZpY2UtbWFwcGVyIiwKPj4+IGRldmljZXNfcmRhdGEpOwo+Pj4gfQo+Pj4gKwo+Pj4gKwo+
+Pgo+PiBFeHRyYSBuZXdsaW5lLi4uCj4+Cj4+IFRoZSByZXN0IGxvb2tzIGdvb2QuIChDb3NtZXRp
+YyBpc3N1ZXMgbGlrZSB0aGlzIHdvdWxkbid0IHByZXZlbnQgbXkKPj4gQUNLIHRob3VnaC4pCj4+
+Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1kZXZlbEByZWRoYXQuY29tCj4+
+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+Pgo+Cj4g
+LS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
+aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
