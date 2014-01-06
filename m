@@ -1,31 +1,78 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH for-3.14 14/20] dm thin: requeue bios to DM
- core if no_free_space and in read-only mode
-Date: Mon, 6 Jan 2014 14:38:45 +0000
-Message-ID: <20140106143844.GH6766@debian>
-References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
-	<1387582653-13647-15-git-send-email-snitzer@redhat.com>
-	<20140106143524.GG6766@debian>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] kobject: provide kobject_put_wait to fix module unload
+ race
+Date: Mon, 6 Jan 2014 13:43:07 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1401061303300.6190@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com> <20140104181620.GA2087@kroah.com> <20140104183403.GG10323@ZenIV.linux.org.uk> <20140104224206.GC18213@core.coreip.homeip.net> <alpine.LRH.2.02.1401051706040.18406@file01.intranet.prod.int.rdu2.redhat.com>
+ <20140105223926.GA31541@core.coreip.homeip.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20140106143524.GG6766@debian>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140105223926.GA31541@core.coreip.homeip.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jeff Mahoney <jeffm@suse.com>, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, mingo@kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jan 06, 2014 at 02:35:24PM +0000, Joe Thornber wrote:
-> Could we rename no_free_space please? (requeue_unserviceable_bios?)
 
-Never mind, a later patch removes it completely.
+
+On Sun, 5 Jan 2014, Dmitry Torokhov wrote:
+
+> > But sometimes, the driver itself needs to create nodes in the sysfs 
+> > filesystem (for example drivers/md/dm-sysfs.c). I don't quite see how 
+> > would you push all driver-specific sysfs nodes into the generic non-module 
+> > code.
+> 
+> Then you need to make sure your driver does not allow unloading while
+> its objects are active. I.e. require that all your devices are gone
+> (by increasing module count when you create a DM object and decreasing
+> it when you release DM object) before you allow unloading the driver.
+
+For drivers that register to various subsystems (for example with 
+pci_register_driver and pci_unregister_driver) this can't be done 
+correctly - pci_unregister_driver is called from the module unload path, 
+it destroys all instances of the device and their appropriate sysfs nodes.
+
+The sysfs nodes exist even if the driver is unused and has zero module 
+count.
+
+> Basically we should avoid kobject_put() in exit paths of the module.
+
+
+
+> Then we are left with that tiny race with release being preempted and
+> module getting unloaded.
+
+Majority of kobject users aren't managing module refcount in the 
+release routine. They do not have a tiny race - they have a big race that 
+is hapenning with CONFIG_DEBUG_KOBJECT_RELEASE.
+
+
+
+These use completion to wait for the released object (thus, they are 
+correct):
+cpufreq_sysfs_release, cpuidle_sysfs_release, cpuidle_state_sysfs_release, 
+cpuidle_driver_sysfs_release, ext4_sb_release, ext4_feat_release, 
+f2fs_sb_release
+
+These have no protection against module unload at all:
+pkt_kobj_release, map_release, portio_release, ib_port_release, 
+cm_release_port_obj, mlx4_port_release, ttm_bo_global_kobj_release, 
+ttm_pool_kobj_release, ttm_mem_zone_kobj_release, 
+ttm_mem_global_kobj_release, rdev_free, md_free, efivar_release, 
+dmi_entry_free, dmi_sysfs_entry_release, edd_release, 
+iscsi_boot_kobj_release, lockspace_kobj_release, gfs2_sbd_release, 
+release_nbp
+
+These have empty or non-existent release routine (thus having no 
+protection): dm-sysfs.c, qib_port_release
+
+These use module refcount: edac_device_ctrl_master_release, 
+edac_device_ctrl_instance_release, edac_device_ctrl_block_release
+
+> Thanks.
+> 
+> -- 
+> Dmitry
+
+Mikulas
