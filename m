@@ -1,16 +1,17 @@
-From: Dongmao Zhang <dmzhang@suse.com>
-Subject: Re: [PATCH 1/1] improve the
-	performance	of	dm-log-userspace
-Date: Mon, 06 Jan 2014 13:06:18 +0800
-Message-ID: <52CA39CA.20504@suse.com>
-References: <d16b09a5f29e29d77122c29f01ecaf7928dc4397.1386135157.git.dmzhang@suse.com>	<CFEF63AA-BBCD-4D61-A43C-9D785E45182C@redhat.com>
-	<52A81BEE.2030600@suse.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH maybe-for-3.13 01/20] dm thin: initialize
+ dm_thin_new_mapping returned by get_next_mapping
+Date: Mon, 6 Jan 2014 14:21:45 +0000
+Message-ID: <20140106142145.GC6766@debian>
+References: <1387582653-13647-1-git-send-email-snitzer@redhat.com>
+	<1387582653-13647-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52A81BEE.2030600@suse.com>
+Content-Disposition: inline
+In-Reply-To: <1387582653-13647-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +21,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Brassow Jonathan <jbrassow@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-aGksYnJhc3NvdywKICAgSG93IGlzIGdvaW5nIGFib3V0IHRoZSB1c2Vyc3BhY2UgY21pcnJvcmQn
-cyBwYXRjaCB0ZXN0aW5nPyBJcyB0aGVyZSAKYW55dGhpbmcgSSBjb3VsZCBoZWxwPwoKRG9uZ21h
-byBaaGFuZy4KCgrkuo4gMjAxM+W5tDEy5pyIMTHml6UgMTY6MDEsIERvbmdtYW8gWmhhbmcg5YaZ
-6YGTOgo+IGhpLCBicmFzc293Cj4KPiBZZXMsIEkgaGFkIHN1Ym1pdGVkIGEgcGF0Y2ggbHZtLWRl
-dmVsLgo+Cj4gaHR0cDovL3d3dy5yZWRoYXQuY29tL2FyY2hpdmVzL2x2bS1kZXZlbC8yMDEzLU5v
-dmVtYmVyL21zZzAwMDkzLmh0bWwuCj4KPiBwbGVhc2UgcmV2aWV3Lgo+Cj4gSSBzaG91bGQgaGF2
-ZSBhZGQgYSBwYXRjaCB2ZXJzaW9uIGluZGljYXRvci4KPgo+Cj4KPgo+Cj4KPgo+IOS6jiAyMDEz
-5bm0MTLmnIgxMeaXpSAwOToxNywgQnJhc3NvdyBKb25hdGhhbiDlhpnpgZM6Cj4+IExvb2tzIGdv
-b2QuIERpZCB5b3UgaGFwcGVuIHRvIHBvc3QgdGhlIGFjY29tcGFueWluZyB1c2Vyc3BhY2UgcGF0
-Y2hlcz8KPj4gSWYgeW91IHBhc3MgdGhvc2UgYWxvbmcsIEkgd2lsbCByZXZpZXcgdGhhdCBhbHNv
-IGFuZCB0ZXN0IHRoZW0KPj4gdG9nZXRoZXIuIE9uY2UgdGhhdCdzIGRvbmUsIEkgd2lsbCBBQ0su
-Cj4+Cj4+IGJyYXNzb3cKPj4KPj4gT24gRGVjIDMsIDIwMTMsIGF0IDExOjM1IFBNLCBkb25nbWFv
-IHpoYW5nIHdyb3RlOgo+Pgo+Pj4gbW9kaWZpZWQgd29ya3F1ZXVlIGNhbGxzIG9uIEhheWFrYXdh
-J3MgY29tbWVudHMKPj4+Cj4+PiBJbiB0aGUgY2x1c3RlciBldmlyb25tZW50LCBjbHVzdGVyIHdy
-aXRlIGhhcyBwb29yIHBlcmZvcm1hbmNlLgo+Pgo+PiA8L3NuaXA+Cj4+Cj4+PiBzcGlubG9ja190
-IGZsdXNoX2xvY2s7Cj4+PiBzdHJ1Y3QgbGlzdF9oZWFkIG1hcmtfbGlzdDsKPj4+IHN0cnVjdCBs
-aXN0X2hlYWQgY2xlYXJfbGlzdDsKPj4+ICsKPj4+ICsgLyp3b3JrIHF1ZXVlIGZvciBmbHVzaCBj
-bGVhciByZWdpb24qLwo+Pgo+PiBVc2Ugc3BhY2VzIGFmdGVyIC8qIGFuZCBiZWZvcmUgKi8KPj4K
-Pj4+ICsgc3RydWN0IHdvcmtxdWV1ZV9zdHJ1Y3QgKmRtbG9nX3dxOwo+Pj4gKyBzdHJ1Y3QgZGVs
-YXllZF93b3JrIGZsdXNoX2xvZ193b3JrOwo+Pj4gKyBhdG9taWNfdCBzY2hlZF9mbHVzaDsKPj4+
-ICsgdWludDMyX3QgaW50ZWdyYXRlZF9mbHVzaDsKPj4+IH07Cj4+Cj4+IDwvc25pcD4KPj4KPj4+
-IGRldmljZXNfcmRhdGEgPSBremFsbG9jKGRldmljZXNfcmRhdGFfc2l6ZSwgR0ZQX0tFUk5FTCk7
-Cj4+PiBpZiAoIWRldmljZXNfcmRhdGEpIHsKPj4+IERNRVJSKCJGYWlsZWQgdG8gYWxsb2NhdGUg
-bWVtb3J5IGZvciBkZXZpY2UgaW5mb3JtYXRpb24iKTsKPj4+IEBAIC0yNDYsNiArMjY4LDIwIEBA
-IHN0YXRpYyBpbnQgdXNlcnNwYWNlX2N0cihzdHJ1Y3QgZG1fZGlydHlfbG9nCj4+PiAqbG9nLCBz
-dHJ1Y3QgZG1fdGFyZ2V0ICp0aSwKPj4+IERNRVJSKCJGYWlsZWQgdG8gcmVnaXN0ZXIgJXMgd2l0
-aCBkZXZpY2UtbWFwcGVyIiwKPj4+IGRldmljZXNfcmRhdGEpOwo+Pj4gfQo+Pj4gKwo+Pj4gKwo+
-Pgo+PiBFeHRyYSBuZXdsaW5lLi4uCj4+Cj4+IFRoZSByZXN0IGxvb2tzIGdvb2QuIChDb3NtZXRp
-YyBpc3N1ZXMgbGlrZSB0aGlzIHdvdWxkbid0IHByZXZlbnQgbXkKPj4gQUNLIHRob3VnaC4pCj4+
-Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1kZXZlbEByZWRoYXQuY29tCj4+
-IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+Pgo+Cj4g
-LS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Fri, Dec 20, 2013 at 06:37:14PM -0500, Mike Snitzer wrote:
+> As additional members are added to the dm_thin_new_mapping structure
+> care should be taken to make sure they get initialized before use.
+
+ACK.
+
+> +	memset(m, 0, sizeof(struct dm_thin_new_mapping));
+> +	INIT_LIST_HEAD(&m->list);
+> +	m->bio = NULL;
+
+Remove redundant m->bio assignment?
