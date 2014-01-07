@@ -1,64 +1,44 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: kobject: provide kobject_put_wait to fix module unload race
-Date: Mon, 6 Jan 2014 16:31:11 -0500
-Message-ID: <20140106213111.GA2536@redhat.com>
-References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
- <52C98BCC.9040900@acm.org>
- <20140105182640.GA2522@kroah.com>
- <alpine.LRH.2.02.1401061347120.15626@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: remove pointless comparison
+Date: Mon, 6 Jan 2014 22:53:28 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1401062249200.17811@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1401061347120.15626@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Bart Van Assche <bvanassche@acm.org>, Jeff Mahoney <jeffm@suse.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, torvalds@linux-foundation.org, mingo@kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jan 06 2014 at  1:55pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Remove pointless comparison in dm_get_from_kobject. The comparison is
+always true and the compiler optimizes it out anyway.
 
-> 
-> 
-> On Sun, 5 Jan 2014, Greg Kroah-Hartman wrote:
-> 
-> > On Sun, Jan 05, 2014 at 05:43:56PM +0100, Bart Van Assche wrote:
-> > > On 01/04/14 19:06, Mikulas Patocka wrote:
-> > > > -	if (t && !t->release)
-> > > > -		pr_debug("kobject: '%s' (%p): does not have a release() "
-> > > > -			 "function, it is broken and must be fixed.\n",
-> > > > -			 kobject_name(kobj), kobj);
-> > > > -
-> > > 
-> > > Has it been considered to issue a warning if no release function has
-> > > been defined and free_completion == NULL instead of removing the above
-> > > debug message entirely ? I think even with this patch applied it is
-> > > still wrong to invoke kobject_put() on an object without defining a
-> > > release function.
-> > 
-> > This patch isn't going to be applied, and I've reverted the original
-> > commit, so there shouldn't be any issues anymore with this code.
-> 
-> Why? This patch does the same thing as 
-> eee031649707db3c9920d9498f8d03819b74fc23, but it's smaller. So why did you 
-> accept eee031649707db3c9920d9498f8d03819b74fc23 and not this?
-> 
-> The code to wait for kobject destruction using completion already exists 
-> in cpufreq_sysfs_release, cpuidle_sysfs_release, 
-> cpuidle_state_sysfs_release, cpuidle_driver_sysfs_release, 
-> ext4_sb_release, ext4_feat_release, f2fs_sb_release (these are the only 
-> kobject users that are correct w.r.t. module unloading), so if you accept 
-> this patch, you can simplify them to use kobject_put_wait.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Hi Mikulas,
+---
+ drivers/md/dm.c |    2 --
+ 1 file changed, 2 deletions(-)
 
-Please just submit a DM-only patch that follows the same racey pattern
-of firing a completion from the kobj_type .release method in dm_mod.
-I'll get it queued up for 3.14.
-
-If/when we gets reports of a crash due to dm_mod unload racing with
-kobject_put we can revisit this.
-
-Thanks,
-Mike
+Index: linux-3.13-rc7/drivers/md/dm.c
+===================================================================
+--- linux-3.13-rc7.orig/drivers/md/dm.c	2014-01-07 01:28:27.000000000 +0100
++++ linux-3.13-rc7/drivers/md/dm.c	2014-01-07 01:28:39.000000000 +0100
+@@ -2922,8 +2922,6 @@ struct mapped_device *dm_get_from_kobjec
+ 	struct mapped_device *md;
+ 
+ 	md = container_of(kobj, struct mapped_device, kobj);
+-	if (&md->kobj != kobj)
+-		return NULL;
+ 
+ 	if (test_bit(DMF_FREEING, &md->flags) ||
+ 	    dm_deleting_md(md))
