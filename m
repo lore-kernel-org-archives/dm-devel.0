@@ -1,55 +1,75 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: kobject: provide kobject_put_wait to fix module unload race
-Date: Tue, 7 Jan 2014 13:16:05 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1401071306160.8158@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com> <52C98BCC.9040900@acm.org> <20140105182640.GA2522@kroah.com> <alpine.LRH.2.02.1401061347120.15626@file01.intranet.prod.int.rdu2.redhat.com> <20140106213111.GA2536@redhat.com>
- <alpine.LRH.2.02.1401062249020.17811@file01.intranet.prod.int.rdu2.redhat.com> <20140107141622.GA32290@kroah.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: remove pointless comparison
+Date: Tue, 7 Jan 2014 13:17:09 -0500
+Message-ID: <20140107181708.GA8715@redhat.com>
+References: <alpine.LRH.2.02.1401062249200.17811@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140107103930.GA11734@debian> <20140107155252.GB7983@redhat.com>
+	<52CC392F.1070804@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140107141622.GA32290@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Jeff Mahoney <jeffm@suse.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, tglx@linutronix.de, paulmck@linux.vnet.ibm.com, torvalds@linux-foundation.org, mingo@kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <52CC392F.1070804@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, ejt@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Tue, Jan 07 2014 at 12:28pm -0500,
+Milan Broz <gmazyland@gmail.com> wrote:
 
-
-On Tue, 7 Jan 2014, Greg Kroah-Hartman wrote:
-
-> > Index: linux-3.13-rc7/drivers/md/dm-sysfs.c
-> > ===================================================================
-> > --- linux-3.13-rc7.orig/drivers/md/dm-sysfs.c	2014-01-07 02:06:08.000000000 +0100
-> > +++ linux-3.13-rc7/drivers/md/dm-sysfs.c	2014-01-07 02:07:09.000000000 +0100
-> > @@ -79,6 +79,11 @@ static const struct sysfs_ops dm_sysfs_o
-> >  	.show	= dm_attr_show,
-> >  };
-> >  
-> > +static void dm_kobject_release(struct kobject *kobj)
-> > +{
-> > +	complete(dm_get_completion_from_kobject(kobj));
-> > +}
+> On 01/07/2014 04:52 PM, Mike Snitzer wrote:
+> > On Tue, Jan 07 2014 at  5:39am -0500,
+> > Joe Thornber <thornber@redhat.com> wrote:
+> > 
+> >> On Mon, Jan 06, 2014 at 10:53:28PM -0500, Mikulas Patocka wrote:
+> >>> Remove pointless comparison in dm_get_from_kobject. The comparison is
+> >>> always true and the compiler optimizes it out anyway.
+> >>>gmane.linux.kernel.device-mapper.devel
+> >>> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> >>>
+> >>> ---
+> >>>  drivers/md/dm.c |    2 --
+> >>>  1 file changed, 2 deletions(-)
+> >>>
+> >>> Index: linux-3.13-rc7/drivers/md/dm.c
+> >>> ===================================================================
+> >>> --- linux-3.13-rc7.orig/drivers/md/dm.c	2014-01-07 01:28:27.000000000 +0100
+> >>> +++ linux-3.13-rc7/drivers/md/dm.c	2014-01-07 01:28:39.000000000 +0100
+> >>> @@ -2922,8 +2922,6 @@ struct mapped_device *dm_get_from_kobjec
+> >>>  	struct mapped_device *md;
+> >>>  
+> >>>  	md = container_of(kobj, struct mapped_device, kobj);
+> >>> -	if (&md->kobj != kobj)
+> >>> -		return NULL;
+> >>
+> >> What were they trying to check?  The compiler?
+> >>
+> > 
+> > Milan's commit 784aae735d, and the current dm.c code, offers this
+> > comment above dm_get_from_kobject:
+> > 
+> > /*
+> >  * struct mapped_device should not be exported outside of dm.c
+> >  * so use this check to verify that kobj is part of md structure
+> >  */
+> > 
+> > I'm lacking the vision to _know_ why the kobject would suddenly be
+> > outside of the mapped_device without us knowing via code change..
+> > 
+> > The check does seem overly cautious/useless (if we remove it the above
+> > comment should be removed too).
 > 
-> Please read the kobject documentation in the kernel tree for why this
-> isn't ok.  The fact that you didn't have a release function at all means
-> this code has always been broken, why have you been ignoring the kernel
-> complaining about this for so long before?
+> Yes, please remove both :) The check doesn't make sense.
 
-I read that file and I say that the usage pattern presented in that file 
-is broken w.r.t. module unload.
-
-I don't want to fix one race condition and introduce another one (albeit 
-smaller).
-
-> You need to free the memory in the release function, not just sit around
-> and wait for potentially forever.
-
-How could that code wait forever? Even if userspace keeps the appropriate 
-files in sysfs open, the dm device can be unloaded, it doesn't wait 
-forever.
-
-> thanks,
-> 
-> greg k-h
-
-Mikulas
+Ok, I'll take that as your Acked-by, thanks.
