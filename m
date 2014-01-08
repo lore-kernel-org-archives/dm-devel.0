@@ -1,24 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: kobject: provide kobject_put_wait to fix module
-	unload race
-Date: Tue, 7 Jan 2014 17:32:20 -0500
-Message-ID: <20140107223220.GA20588@redhat.com>
-References: <alpine.LRH.2.02.1401021733250.27775@file01.intranet.prod.int.rdu2.redhat.com>
-	<52C98BCC.9040900@acm.org> <20140105182640.GA2522@kroah.com>
-	<alpine.LRH.2.02.1401061347120.15626@file01.intranet.prod.int.rdu2.redhat.com>
-	<20140106213111.GA2536@redhat.com>
-	<alpine.LRH.2.02.1401062249020.17811@file01.intranet.prod.int.rdu2.redhat.com>
-	<CA+55aFw+kS-jJencvQgQcn0yTw_a4=2RDynopL7Gu0PNemkUvA@mail.gmail.com>
-	<alpine.LRH.2.02.1401071253510.8158@file01.intranet.prod.int.rdu2.redhat.com>
-	<20140107191910.GA8884@redhat.com>
-	<alpine.LRH.2.02.1401071506420.26598@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH for-3.14 1/2] dm space map common: make sure new
+	space is used during extend
+Date: Wed,  8 Jan 2014 14:20:59 -0500
+Message-ID: <1389208860-18068-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1401071506420.26598@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,43 +17,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Bart Van Assche <bvanassche@acm.org>, Jeff Mahoney <jeffm@suse.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Paul McKenney <paulmck@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, Ingo Molnar <mingo@kernel.org>
+To: dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jan 07 2014 at  3:16pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+From: Joe Thornber <ejt@redhat.com>
 
-> On Tue, 7 Jan 2014, Mike Snitzer wrote:
-> 
-> > I've staged your patch in linux-next for 3.14, see:
-> > http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=af7b1e5c767fc895788c971c8f4686402ac8344f
-> 
-> Looking at this patch, I realize that it is buggy too. If module unload 
-> happens at this point (after the completion is signaled, but before the 
-> release function returns), it crashes.
-> 
-> static void dm_kobject_release(struct kobject *kobj)
-> {
-> 	complete(dm_get_completion_from_kobject(kobj));
-> 	>========== module unload here ===============<
-> }
+When extending a low level space map we should update nr_blocks at
+the start so the new space is used for the index entries.
 
-That race isn't a surprise, thought you pointed it out earlier in this
-thread?  Anyway, I'm inclined to keep the racey patch staged in
-linux-dm.git until the stalemate with gregkh is resolved.  DM is no
-worse than other code that follows this same wait for completion
-pattern.
+Otherwise extend can fail, e.g.: sm_metadata_extend call sequence
+that fails:
+ -> sm_ll_extend
+    -> dm_tm_new_block -> dm_sm_new_block -> sm_bootstrap_new_block
+    => returns -ENOSPC because smm->begin == smm->ll.nr_blocks
 
-> The patch that I sent initially in this thread doesn't have this bug 
-> because the completion is signaled in non-module code.
-> 
-> That goes back to my initial claim - it is impossible to use the kobject 
-> interface correctly! But if Greg doesn't want a patch that fixes the 
-> kobject interface, I don't really know what to do about it.
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
+---
+ drivers/md/persistent-data/dm-space-map-common.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-Right, I'm missing what is wrong with your proposed kobject_put_wait
-interface.
-
-Greg, can you please establish that you understand the problem, and
-existing kobject patterns, before you dismiss a fix?
+diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
+index 466a60b..aacbe70 100644
+--- a/drivers/md/persistent-data/dm-space-map-common.c
++++ b/drivers/md/persistent-data/dm-space-map-common.c
+@@ -245,6 +245,10 @@ int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks)
+ 		return -EINVAL;
+ 	}
+ 
++	/*
++	 * We need to set this before the dm_tm_new_block() call below.
++	 */
++	ll->nr_blocks = nr_blocks;
+ 	for (i = old_blocks; i < blocks; i++) {
+ 		struct dm_block *b;
+ 		struct disk_index_entry idx;
+@@ -252,6 +256,7 @@ int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks)
+ 		r = dm_tm_new_block(ll->tm, &dm_sm_bitmap_validator, &b);
+ 		if (r < 0)
+ 			return r;
++
+ 		idx.blocknr = cpu_to_le64(dm_block_location(b));
+ 
+ 		r = dm_tm_unlock(ll->tm, b);
+@@ -266,7 +271,6 @@ int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks)
+ 			return r;
+ 	}
+ 
+-	ll->nr_blocks = nr_blocks;
+ 	return 0;
+ }
+ 
+-- 
+1.8.1.4
