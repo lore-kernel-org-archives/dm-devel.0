@@ -1,13 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 1/2] dm space map common: make sure new
-	space is used during extend
-Date: Wed,  8 Jan 2014 14:20:59 -0500
-Message-ID: <1389208860-18068-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-3.14 2/2] dm space map metadata: fix
+	extending the space map
+Date: Wed,  8 Jan 2014 14:21:00 -0500
+Message-ID: <1389208860-18068-2-git-send-email-snitzer@redhat.com>
+References: <1389208860-18068-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1389208860-18068-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,51 +25,61 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-When extending a low level space map we should update nr_blocks at
-the start so the new space is used for the index entries.
+When extending a metadata space map we should do the first commit whilst
+still in bootstrap mode -- a mode where all blocks get allocated in the
+new area.
 
-Otherwise extend can fail, e.g.: sm_metadata_extend call sequence
-that fails:
- -> sm_ll_extend
-    -> dm_tm_new_block -> dm_sm_new_block -> sm_bootstrap_new_block
-    => returns -ENOSPC because smm->begin == smm->ll.nr_blocks
+That way the commit overhead is allocated from the newly added space.
+Otherwise we risk running out of space.
+
+With this fix, and the previous commit "dm space map common: make sure
+new space is used during extend", the following device mapper testsuite
+test passes:
+ dmtest run --suite thin-provisioning -n /resize_metadata_no_io/
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Cc: stable@vger.kernel.org
 ---
- drivers/md/persistent-data/dm-space-map-common.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/persistent-data/dm-space-map-metadata.c | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
-index 466a60b..aacbe70 100644
---- a/drivers/md/persistent-data/dm-space-map-common.c
-+++ b/drivers/md/persistent-data/dm-space-map-common.c
-@@ -245,6 +245,10 @@ int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks)
- 		return -EINVAL;
- 	}
+diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
+index e930844..bfbfe03 100644
+--- a/drivers/md/persistent-data/dm-space-map-metadata.c
++++ b/drivers/md/persistent-data/dm-space-map-metadata.c
+@@ -608,20 +608,28 @@ static int sm_metadata_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
+ 	 * Flick into a mode where all blocks get allocated in the new area.
+ 	 */
+ 	smm->begin = old_len;
+-	memcpy(&smm->sm, &bootstrap_ops, sizeof(smm->sm));
++	memcpy(sm, &bootstrap_ops, sizeof(*sm));
  
-+	/*
-+	 * We need to set this before the dm_tm_new_block() call below.
-+	 */
-+	ll->nr_blocks = nr_blocks;
- 	for (i = old_blocks; i < blocks; i++) {
- 		struct dm_block *b;
- 		struct disk_index_entry idx;
-@@ -252,6 +256,7 @@ int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks)
- 		r = dm_tm_new_block(ll->tm, &dm_sm_bitmap_validator, &b);
- 		if (r < 0)
- 			return r;
+ 	/*
+ 	 * Extend.
+ 	 */
+ 	r = sm_ll_extend(&smm->ll, extra_blocks);
++	if (r)
++		goto out;
 +
- 		idx.blocknr = cpu_to_le64(dm_block_location(b));
++	for (i = old_len; !r && i < smm->begin; i++) {
++		r = sm_ll_inc(&smm->ll, i, &ev);
++		if (r)
++			goto out;
++	}
  
- 		r = dm_tm_unlock(ll->tm, b);
-@@ -266,7 +271,6 @@ int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks)
- 			return r;
- 	}
- 
--	ll->nr_blocks = nr_blocks;
- 	return 0;
++	r = sm_metadata_commit(sm);
++
++out:
+ 	/*
+ 	 * Switch back to normal behaviour.
+ 	 */
+-	memcpy(&smm->sm, &ops, sizeof(smm->sm));
+-	for (i = old_len; !r && i < smm->begin; i++)
+-		r = sm_ll_inc(&smm->ll, i, &ev);
+-
++	memcpy(sm, &ops, sizeof(*sm));
+ 	return r;
  }
  
 -- 
