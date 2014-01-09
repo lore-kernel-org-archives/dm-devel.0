@@ -1,12 +1,14 @@
-From: Mindaugas Riauba <ml@kilimas.com>
-Subject: Problem with multipath
-Date: Thu, 9 Jan 2014 08:39:42 +0200
-Message-ID: <CADpTdPQmGB9-PvLciGHdLeBa6D4CACMT=UxmyLWQLa4xMXe6OA@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH for-3.14] dm cache: add total cache blocks to
+	status output
+Date: Thu, 9 Jan 2014 16:04:12 -0500
+Message-ID: <20140109210412.GA5288@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,45 +19,121 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-  Hello,
+Improve cache_status to emit <#used cache blocks>/<#total cache blocks>
+This provides useful context for the how much of the cache is used.
 
-  I have a strange problem with multipath on several OEL 6.x servers.
-One multipath map is not being setup. What is strange - after reboot
-problematic map changes. Previously problem went away after reboot or
-two but now I did like 10+ reboots and nothing changed.
-  Symptoms are the following:
+While updating the status documentation in cache.txt spaces were
+tabify'd.
 
-# echo "show paths" | multipathd -k | fgrep orphan
-1:0:5:142 sdbh 67:176 10  undef  ready  running orphan
-1:0:2:142 sdad 65:208 130 undef  ready  running orphan
-1:0:1:142 sdr  65:16  10  undef  ready  running orphan
-2:0:0:142 sdbt 68:112 130 undef  ready  running orphan
-2:0:2:142 sdco 69:192 130 undef  ready  running orphan
-2:0:5:142 sdds 71:160 10  undef  ready  running orphan
+Requested-by: Jonathan Brassow <jbrassow@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ Documentation/device-mapper/cache.txt |   46 +++++++++++++++++---------------
+ drivers/md/dm-cache-target.c          |   10 ++++---
+ 2 files changed, 30 insertions(+), 26 deletions(-)
 
-# multipath -v2
-Jan 09 08:01:38 | mpatht: ignoring map
-Jan 09 08:01:38 | mpatht: ignoring map
-Jan 09 08:01:38 | mpatht: ignoring map
-Jan 09 08:01:38 | mpatht: ignoring map
-Jan 09 08:01:38 | mpatht: ignoring map
-Jan 09 08:01:38 | mpatht: ignoring map
-
-  Each LUN has 6 paths so those are 6 paths for one LUN.
-
-  "multipath -v3" output: http://pastebin.com/10WRGvNj
-  /etc/multipath.conf: http://pastebin.com/DcremRUh
-
-  Currently kernel is 2.6.39-400.212.1.el6uek.x86_64 but problem
-exists also with non-UEK kernels (2.6.32-431.3.1.el6.x86_64). dmesg or
-messages do not show any core dumps or similar stuff. Also I tried
-with "user_friendly_names no" with the same problem.
-
-  Server has 18 LUNs in total from two storages - 2x EMC Clariion
-CX4-480. Problematic LUN may happen from either of them. All LUNs do
-not have partitions.
-
-  Regards,
-  Mindaugas
+diff --git a/Documentation/device-mapper/cache.txt b/Documentation/device-mapper/cache.txt
+index 0f41ccf..b52ac21 100644
+--- a/Documentation/device-mapper/cache.txt
++++ b/Documentation/device-mapper/cache.txt
+@@ -216,36 +216,38 @@ the characteristics of a specific policy, always request it by name.
+ Status
+ ------
+ 
+-<#used metadata blocks>/<#total metadata blocks> <#read hits> <#read misses>
+-<#write hits> <#write misses> <#demotions> <#promotions> <#blocks in cache>
+-<#dirty> <#features> <features>* <#core args> <core args>* <#policy args>
+-<policy args>*
+-
+-#used metadata blocks    : Number of metadata blocks used
+-#total metadata blocks   : Total number of metadata blocks
+-#read hits               : Number of times a READ bio has been mapped
++<#used metadata blocks>/<#total metadata blocks>
++<#used cache blocks>/<#total cache blocks>
++<#read hits> <#read misses> <#write hits> <#write misses>
++<#demotions> <#promotions> <#dirty> <#features> <features>*
++<#core args> <core args>* <#policy args> <policy args>*
++
++#used metadata blocks	 : Number of metadata blocks used
++#total metadata blocks	 : Total number of metadata blocks
++#used cache blocks	 : Number of blocks resident in the cache
++#total cache blocks	 : Total number of cache blocks
++#read hits		 : Number of times a READ bio has been mapped
+ 			     to the cache
+-#read misses             : Number of times a READ bio has been mapped
++#read misses		 : Number of times a READ bio has been mapped
+ 			     to the origin
+-#write hits              : Number of times a WRITE bio has been mapped
++#write hits		 : Number of times a WRITE bio has been mapped
+ 			     to the cache
+-#write misses            : Number of times a WRITE bio has been
++#write misses		 : Number of times a WRITE bio has been
+ 			     mapped to the origin
+-#demotions               : Number of times a block has been removed
++#demotions		 : Number of times a block has been removed
+ 			     from the cache
+-#promotions              : Number of times a block has been moved to
++#promotions		 : Number of times a block has been moved to
+ 			     the cache
+-#blocks in cache         : Number of blocks resident in the cache
+-#dirty                   : Number of blocks in the cache that differ
++#dirty			 : Number of blocks in the cache that differ
+ 			     from the origin
+-#feature args            : Number of feature args to follow
+-feature args             : 'writethrough' (optional)
+-#core args               : Number of core arguments (must be even)
+-core args                : Key/value pairs for tuning the core
++#feature args		 : Number of feature args to follow
++feature args		 : 'writethrough' (optional)
++#core args		 : Number of core arguments (must be even)
++core args		 : Key/value pairs for tuning the core
+ 			     e.g. migration_threshold
+-#policy args             : Number of policy arguments to follow (must be even)
+-policy args              : Key/value pairs
+-			     e.g. 'sequential_threshold 1024
++#policy args		 : Number of policy arguments to follow (must be even)
++policy args		 : Key/value pairs
++			     e.g. sequential_threshold
+ 
+ Messages
+ --------
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 167024b..4dee97c 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2832,8 +2832,9 @@ static void cache_resume(struct dm_target *ti)
+  * Status format:
+  *
+  * <#used metadata blocks>/<#total metadata blocks>
++ * <#used cache blocks>/<#total cache blocks>
+  * <#read hits> <#read misses> <#write hits> <#write misses>
+- * <#demotions> <#promotions> <#blocks in cache> <#dirty>
++ * <#demotions> <#promotions> <#dirty>
+  * <#features> <features>*
+  * <#core args> <core args>
+  * <#policy args> <policy args>*
+@@ -2874,17 +2875,18 @@ static void cache_status(struct dm_target *ti, status_type_t type,
+ 
+ 		residency = policy_residency(cache->policy);
+ 
+-		DMEMIT("%llu/%llu %u %u %u %u %u %u %llu %u ",
++		DMEMIT("%llu/%llu %llu/%llu %u %u %u %u %u %u %llu ",
+ 		       (unsigned long long)(nr_blocks_metadata - nr_free_blocks_metadata),
+ 		       (unsigned long long)nr_blocks_metadata,
++		       (unsigned long long) from_cblock(residency),
++		       (unsigned long long) from_cblock(cache->cache_size),
+ 		       (unsigned) atomic_read(&cache->stats.read_hit),
+ 		       (unsigned) atomic_read(&cache->stats.read_miss),
+ 		       (unsigned) atomic_read(&cache->stats.write_hit),
+ 		       (unsigned) atomic_read(&cache->stats.write_miss),
+ 		       (unsigned) atomic_read(&cache->stats.demotion),
+ 		       (unsigned) atomic_read(&cache->stats.promotion),
+-		       (unsigned long long) from_cblock(residency),
+-		       cache->nr_dirty);
++		       (unsigned long long) from_cblock(cache->nr_dirty));
+ 
+ 		if (writethrough_mode(&cache->features))
+ 			DMEMIT("1 writethrough ");
