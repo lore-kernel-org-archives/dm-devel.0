@@ -1,15 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-3.14 2/2] dm space map metadata: fix
-	extending the space map
-Date: Wed,  8 Jan 2014 14:21:00 -0500
-Message-ID: <1389208860-18068-2-git-send-email-snitzer@redhat.com>
-References: <1389208860-18068-1-git-send-email-snitzer@redhat.com>
+From: Mindaugas Riauba <ml@kilimas.com>
+Subject: Problem with multipath
+Date: Thu, 9 Jan 2014 08:39:42 +0200
+Message-ID: <CADpTdPQmGB9-PvLciGHdLeBa6D4CACMT=UxmyLWQLa4xMXe6OA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1389208860-18068-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,67 +17,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+  Hello,
 
-When extending a metadata space map we should do the first commit whilst
-still in bootstrap mode -- a mode where all blocks get allocated in the
-new area.
+  I have a strange problem with multipath on several OEL 6.x servers.
+One multipath map is not being setup. What is strange - after reboot
+problematic map changes. Previously problem went away after reboot or
+two but now I did like 10+ reboots and nothing changed.
+  Symptoms are the following:
 
-That way the commit overhead is allocated from the newly added space.
-Otherwise we risk running out of space.
+# echo "show paths" | multipathd -k | fgrep orphan
+1:0:5:142 sdbh 67:176 10  undef  ready  running orphan
+1:0:2:142 sdad 65:208 130 undef  ready  running orphan
+1:0:1:142 sdr  65:16  10  undef  ready  running orphan
+2:0:0:142 sdbt 68:112 130 undef  ready  running orphan
+2:0:2:142 sdco 69:192 130 undef  ready  running orphan
+2:0:5:142 sdds 71:160 10  undef  ready  running orphan
 
-With this fix, and the previous commit "dm space map common: make sure
-new space is used during extend", the following device mapper testsuite
-test passes:
- dmtest run --suite thin-provisioning -n /resize_metadata_no_io/
+# multipath -v2
+Jan 09 08:01:38 | mpatht: ignoring map
+Jan 09 08:01:38 | mpatht: ignoring map
+Jan 09 08:01:38 | mpatht: ignoring map
+Jan 09 08:01:38 | mpatht: ignoring map
+Jan 09 08:01:38 | mpatht: ignoring map
+Jan 09 08:01:38 | mpatht: ignoring map
 
-Signed-off-by: Joe Thornber <ejt@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org
----
- drivers/md/persistent-data/dm-space-map-metadata.c | 18 +++++++++++++-----
- 1 file changed, 13 insertions(+), 5 deletions(-)
+  Each LUN has 6 paths so those are 6 paths for one LUN.
 
-diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-index e930844..bfbfe03 100644
---- a/drivers/md/persistent-data/dm-space-map-metadata.c
-+++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-@@ -608,20 +608,28 @@ static int sm_metadata_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
- 	 * Flick into a mode where all blocks get allocated in the new area.
- 	 */
- 	smm->begin = old_len;
--	memcpy(&smm->sm, &bootstrap_ops, sizeof(smm->sm));
-+	memcpy(sm, &bootstrap_ops, sizeof(*sm));
- 
- 	/*
- 	 * Extend.
- 	 */
- 	r = sm_ll_extend(&smm->ll, extra_blocks);
-+	if (r)
-+		goto out;
-+
-+	for (i = old_len; !r && i < smm->begin; i++) {
-+		r = sm_ll_inc(&smm->ll, i, &ev);
-+		if (r)
-+			goto out;
-+	}
- 
-+	r = sm_metadata_commit(sm);
-+
-+out:
- 	/*
- 	 * Switch back to normal behaviour.
- 	 */
--	memcpy(&smm->sm, &ops, sizeof(smm->sm));
--	for (i = old_len; !r && i < smm->begin; i++)
--		r = sm_ll_inc(&smm->ll, i, &ev);
--
-+	memcpy(sm, &ops, sizeof(*sm));
- 	return r;
- }
- 
--- 
-1.8.1.4
+  "multipath -v3" output: http://pastebin.com/10WRGvNj
+  /etc/multipath.conf: http://pastebin.com/DcremRUh
+
+  Currently kernel is 2.6.39-400.212.1.el6uek.x86_64 but problem
+exists also with non-UEK kernels (2.6.32-431.3.1.el6.x86_64). dmesg or
+messages do not show any core dumps or similar stuff. Also I tried
+with "user_friendly_names no" with the same problem.
+
+  Server has 18 LUNs in total from two storages - 2x EMC Clariion
+CX4-480. Problematic LUN may happen from either of them. All LUNs do
+not have partitions.
+
+  Regards,
+  Mindaugas
