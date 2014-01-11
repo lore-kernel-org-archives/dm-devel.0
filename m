@@ -1,18 +1,20 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 5/7] dm-snapshot: make ps->area explicit
-Date: Sat, 11 Jan 2014 12:30:55 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1401111230330.4018@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 7/7] dm-snapshot: use bufio prefetch
+Date: Sat, 11 Jan 2014 12:32:43 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1401111231420.4018@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1401111222400.4018@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1401111228220.4018@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1401111229150.4018@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1401111229390.4018@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1401111230080.4018@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401111230330.4018@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401111231000.4018@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1401111230080.4018@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1401111231000.4018@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,108 +28,70 @@ To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch changes the functions get_exception, read_exception and
-insert_exceptions so that the pointer ps->area is given as an argument.
+This patch modifies dm-snapshot so that it prefetches the buffers when
+loading the exceptions.
 
-This patch doesn't change any functionality, but it refactors the code for
-the next patch.
+The number of buffers read ahead is specified in the DM_PREFETCH_CHUNKS
+macro.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-snap-persistent.c |   26 ++++++++++++++------------
- 1 file changed, 14 insertions(+), 12 deletions(-)
+ drivers/md/dm-snap-persistent.c |   23 ++++++++++++++++++++++-
+ 1 file changed, 22 insertions(+), 1 deletion(-)
 
 Index: linux-3.13-rc7/drivers/md/dm-snap-persistent.c
 ===================================================================
---- linux-3.13-rc7.orig/drivers/md/dm-snap-persistent.c	2014-01-09 23:37:59.000000000 +0100
-+++ linux-3.13-rc7/drivers/md/dm-snap-persistent.c	2014-01-09 23:40:22.000000000 +0100
-@@ -401,17 +401,18 @@ static int write_header(struct pstore *p
- /*
-  * Access functions for the disk exceptions, these do the endian conversions.
-  */
--static struct disk_exception *get_exception(struct pstore *ps, uint32_t index)
-+static struct disk_exception *get_exception(struct pstore *ps, void *ps_area,
-+					    uint32_t index)
+--- linux-3.13-rc7.orig/drivers/md/dm-snap-persistent.c	2014-01-11 18:10:34.000000000 +0100
++++ linux-3.13-rc7/drivers/md/dm-snap-persistent.c	2014-01-11 18:12:53.000000000 +0100
+@@ -18,6 +18,8 @@
+ #define DM_MSG_PREFIX "persistent snapshot"
+ #define DM_CHUNK_SIZE_DEFAULT_SECTORS 32	/* 16KB */
+ 
++#define DM_PREFETCH_CHUNKS		12
++
+ /*-----------------------------------------------------------------
+  * Persistent snapshots, by persistent we mean that the snapshot
+  * will survive a reboot.
+@@ -496,6 +498,7 @@ static int read_exceptions(struct pstore
  {
- 	BUG_ON(index >= ps->exceptions_per_area);
+ 	int r, full = 1;
+ 	struct dm_bufio_client *client;
++	chunk_t prefetch_area = 0;
  
--	return ((struct disk_exception *) ps->area) + index;
-+	return ((struct disk_exception *) ps_area) + index;
- }
+ 	client = dm_bufio_client_create(dm_snap_cow(ps->store->snap)->bdev,
+ 					ps->store->chunk_size << SECTOR_SHIFT,
+@@ -504,6 +507,8 @@ static int read_exceptions(struct pstore
+ 	if (IS_ERR(client))
+ 		return PTR_ERR(client);
  
--static void read_exception(struct pstore *ps,
-+static void read_exception(struct pstore *ps, void *ps_area,
- 			   uint32_t index, struct core_exception *result)
- {
--	struct disk_exception *de = get_exception(ps, index);
-+	struct disk_exception *de = get_exception(ps, ps_area, index);
++	dm_bufio_set_minimum_buffers(client, DM_PREFETCH_CHUNKS + 1);
++
+ 	/*
+ 	 * Keeping reading chunks and inserting exceptions until
+ 	 * we find a partially full area.
+@@ -511,7 +516,23 @@ static int read_exceptions(struct pstore
+ 	for (ps->current_area = 0; full; ps->current_area++) {
+ 		struct dm_buffer *bp;
+ 		void *area;
+-		chunk_t chunk = area_location(ps, ps->current_area);
++		chunk_t chunk;
++
++		if (unlikely(prefetch_area < ps->current_area))
++			prefetch_area = ps->current_area;
++
++		if (DM_PREFETCH_CHUNKS) do {
++			chunk_t pf_chunk = area_location(ps, prefetch_area);
++			if (unlikely(pf_chunk >= dm_bufio_get_device_size(client)))
++				break;
++			if (unlikely(!dm_bufio_prefetch(client, pf_chunk, 1)))
++				break;
++			prefetch_area++;
++			if (unlikely(!prefetch_area))
++				break;
++		} while (prefetch_area <= ps->current_area + DM_PREFETCH_CHUNKS);
++
++		chunk = area_location(ps, ps->current_area);
  
- 	/* copy it */
- 	result->old_chunk = le64_to_cpu(de->old_chunk);
-@@ -421,7 +422,7 @@ static void read_exception(struct pstore
- static void write_exception(struct pstore *ps,
- 			    uint32_t index, struct core_exception *e)
- {
--	struct disk_exception *de = get_exception(ps, index);
-+	struct disk_exception *de = get_exception(ps, ps->area, index);
- 
- 	/* copy it */
- 	de->old_chunk = cpu_to_le64(e->old_chunk);
-@@ -430,7 +431,7 @@ static void write_exception(struct pstor
- 
- static void clear_exception(struct pstore *ps, uint32_t index)
- {
--	struct disk_exception *de = get_exception(ps, index);
-+	struct disk_exception *de = get_exception(ps, ps->area, index);
- 
- 	/* clear it */
- 	de->old_chunk = 0;
-@@ -442,7 +443,7 @@ static void clear_exception(struct pstor
-  * 'full' is filled in to indicate if the area has been
-  * filled.
-  */
--static int insert_exceptions(struct pstore *ps,
-+static int insert_exceptions(struct pstore *ps, void *ps_area,
- 			     int (*callback)(void *callback_context,
- 					     chunk_t old, chunk_t new),
- 			     void *callback_context,
-@@ -456,7 +457,7 @@ static int insert_exceptions(struct psto
- 	*full = 1;
- 
- 	for (i = 0; i < ps->exceptions_per_area; i++) {
--		read_exception(ps, i, &e);
-+		read_exception(ps, ps_area, i, &e);
- 
- 		/*
- 		 * If the new_chunk is pointing at the start of
-@@ -503,7 +504,8 @@ static int read_exceptions(struct pstore
- 		if (r)
- 			return r;
- 
--		r = insert_exceptions(ps, callback, callback_context, &full);
-+		r = insert_exceptions(ps, ps->area, callback, callback_context,
-+				      &full);
- 		if (r)
- 			return r;
- 	}
-@@ -733,7 +735,7 @@ static int persistent_prepare_merge(stru
- 		ps->current_committed = ps->exceptions_per_area;
- 	}
- 
--	read_exception(ps, ps->current_committed - 1, &ce);
-+	read_exception(ps, ps->area, ps->current_committed - 1, &ce);
- 	*last_old_chunk = ce.old_chunk;
- 	*last_new_chunk = ce.new_chunk;
- 
-@@ -743,8 +745,8 @@ static int persistent_prepare_merge(stru
- 	 */
- 	for (nr_consecutive = 1; nr_consecutive < ps->current_committed;
- 	     nr_consecutive++) {
--		read_exception(ps, ps->current_committed - 1 - nr_consecutive,
--			       &ce);
-+		read_exception(ps, ps->area,
-+			       ps->current_committed - 1 - nr_consecutive, &ce);
- 		if (ce.old_chunk != *last_old_chunk - nr_consecutive ||
- 		    ce.new_chunk != *last_new_chunk - nr_consecutive)
- 			break;
+ 		area = dm_bufio_read(client, chunk, &bp);
+ 		if (unlikely(IS_ERR(area))) {
