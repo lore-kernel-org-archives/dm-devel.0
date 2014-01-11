@@ -1,15 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: wait until kobject is destroyed
-Date: Fri, 10 Jan 2014 16:03:15 -0500
-Message-ID: <20140110210314.GA12660@redhat.com>
-References: <alpine.LRH.2.02.1401092050190.31354@file01.intranet.prod.int.rdu2.redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: dm-writeboost: Progress Report
+Date: Sat, 11 Jan 2014 16:27:25 +0900
+Message-ID: <52D0F25D.6030904@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1401092050190.31354@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,80 +16,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jan 09 2014 at  8:53pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Hi, DM Guys, 
 
-> Hi
-> 
-> Here I'm sending the updated kobject patch.
-> 
-> Changes:
-> 	The file was renamed to dm-builtin.c
-> 	A comment with explanation of the race condition added.
-> 
-> Mikulas
-> 
-> 
-> 
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> There may be other parts of the kernel taking reference to the dm kobject.
-> We must wait until they drop the references before deallocating the md
-> structure.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org
+This is the latest progress report of dm-writeboost.
+I will send you the patch in the following post. Please merge it for 3.14.
 
-This header could use some work considering the previous patch is
-already staged in linux-dm.git's 'for-next' -- so this patch will build
-on that.  Would be nice to see some commentary about introducing a
-dm-builtin to avoid concerns about dm_kobject_release crash after dm-mod
-is unloaded.  Also, touch on the role/need of struct dm_kobject_holder?
+To get broad interests to Writeboost I presented in two workshops in Japan.
+Writeboost has now potential users waiting for it to merge in the main tree.
+I heard some companies discuss about Writeboost in their R&D team.
 
-> Index: linux-3.13-rc7/drivers/md/dm-sysfs.c
-> ===================================================================
-> --- linux-3.13-rc7.orig/drivers/md/dm-sysfs.c	2014-01-09 20:50:18.000000000 +0100
-> +++ linux-3.13-rc7/drivers/md/dm-sysfs.c	2014-01-09 20:50:38.000000000 +0100
-> @@ -86,6 +86,7 @@ static const struct sysfs_ops dm_sysfs_o
->  static struct kobj_type dm_ktype = {
->  	.sysfs_ops	= &dm_sysfs_ops,
->  	.default_attrs	= dm_attrs,
-> +	.release	= dm_kobject_release,
->  };
->  
->  /*
-> @@ -104,5 +105,7 @@ int dm_sysfs_init(struct mapped_device *
->   */
->  void dm_sysfs_exit(struct mapped_device *md)
->  {
-> -	kobject_put(dm_kobject(md));
-> +	struct kobject *kobj = dm_kobject(md);
-> +	kobject_put(kobj);
-> +	wait_for_completion(dm_get_completion_from_kobject(kobj));
->  }
-> Index: linux-3.13-rc7/drivers/md/dm.c
-> ===================================================================
-> --- linux-3.13-rc7.orig/drivers/md/dm.c	2014-01-09 20:50:18.000000000 +0100
-> +++ linux-3.13-rc7/drivers/md/dm.c	2014-01-09 20:50:38.000000000 +0100
-> @@ -200,8 +200,8 @@ struct mapped_device {
->  	/* forced geometry settings */
->  	struct hd_geometry geometry;
->  
-> -	/* sysfs handle */
-> -	struct kobject kobj;
-> +	/* kobject and completion */
-> +	struct dm_kobject_holder h;
->  
->  	/* zero-length flush that will be cloned and submitted to targets */
->  	struct bio flush_bio;
+Writeboost is now involving other third party developers now.
 
-Could you rename 'h' to 'kobj_holder'?
+A Ph.D candidate in Seoul university has a great interest in the log-structured nature
+and we discussed privately. He forked Writeboost and is working on his branch.
+Writeboost has a potential to gain interest even from the academic researchers.
 
-Also, this patch needs to be rebased ontop of linux-dm.git's 'for-next'
-branch.
+I also discussed with the developer of WalB (http://lkml.org/lkml/2013/6/3/115).
+WalB also has the log-structured nature but the difference from Writeboost is that
+it focuses on incremental backup. I don't know what will be the consequence of
+our on-going discussion but there is a possibility that the functionality of WalB
+will be merged into Writeboost. However, without this, Writeboost is worthy as a
+pure caching module like dm-cache.
 
-Mike
+The code is improved much better.
+Please merge my code for 3.14 after reviewing the patch.
+
+The major code-level changes are described below
+
+1. Improved the log replay algorithm to gain robustness
+-------------------------------------------------------
+The paper "Understanding the Robustness of SSDs under Power Fault (FAST13)"
+made me re-think the log replay algorithm and I improved it.
+Now, the algorithm is even robust for failure due to power fault
+such as partial write of the log.
+Each log now has the checksum of the log except the first 1 sector
+and exploits it to check the validity of the log.
+See struct segment_header_device changed.
+
+2. Enabled flushing the logs execute in parallel
+------------------------------------------------
+Since we have multiple RAM buffers in Writeboost we can writes them to
+the cache device in parallel to exploits the maximum parallelism in the
+SSD.
+Changing the log replay algorithm enabled this.
+Now Writeboost uses workqueue instead of single kthread for the parallel
+execution. The workqueue exhibits the sysfs to control the parallelism.
+Thanks to Tejun (https://lkml.org/lkml/2013/3/1/629). Changing the
+max_active parameter can change the number of executors.
+
+3. Fully refactored (please read the code)
+------------------------------------------
+The code is much refactored and split into piece of small well-named
+functions. I believe the code itself is production-ready. please check it.
+
+4. Add some codes to Joe's device-mapper-test-suite
+---------------------------------------------------
+Joe maintains a testing framework in his Github repo.
+I merged some test codes for Writeboost but I don't work on this project
+recently. I will add more code later.
+
+5. Add regression tests under testing/ of my Github tree
+--------------------------------------------------------
+Joe's test-suite is really well-designed but it has too many things before stand-by.
+Instead, I prepare simple regression tests (written in shell) in Github repo.
+https://github.com/akiradeveloper/dm-writeboost/tree/develop/testing
+I want contributors to pass this tests before submitting their patch.
+
+Thank you for reading,
+
+Akira
