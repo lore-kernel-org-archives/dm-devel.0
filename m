@@ -1,10 +1,10 @@
-From: Rolf Fokkens <rolf@rolffokkens.nl>
-Subject: dm-cache for Fedora 21?
-Date: Sat, 11 Jan 2014 15:56:19 +0100
-Message-ID: <52D15B93.8000500@rolffokkens.nl>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 0/7] dm-snapshot prefetch patches
+Date: Sat, 11 Jan 2014 12:28:15 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1401111222400.4018@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -16,26 +16,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+Hi
 
-For Fedora 20 I packaged bcache-tools so Fedora users are able to use 
-bcache. It's not integrated in Anaconda, but users who feel confident on 
-the command line will able to use bcache. The next step would be to 
-include bcache support in Anaconda, which may happen in Fedora 21.
+Here I'm sending the dm-snapshot prefetch patches.
 
-Fedora 20 seemed  to be too early to include dm-cache support, but I've 
-seen a lot of activity on dm-cache on the mail list recently. So maybe 
-dm-cache will be "ready" for Fedora 21? AFAIK userland support for 
-dm-cache will be included in LVM2, but I don't know what the status is. 
-Full integration of dm-cache in Fedora 21 would imply integration in 
-Anaconda as well.
+Please find the system where prefetch is relevant (the system where it is 
+most annoying to have long snapshot load times) and find the best number 
+of read-ahead buffers for that system.
 
-And maybe including bot bcache and dm-cache support in Anaconda is a 
-little much.
+For my system (dm-loop on filesystem on 15k Seagate SCSI disk), it is best 
+to prefetch 12 buffers. The patch series improves snapshot load time from 
+2.8s to 1.7s.
 
-What are your views on the status of dm-cache?
-
-Rolf
+Mikulas
