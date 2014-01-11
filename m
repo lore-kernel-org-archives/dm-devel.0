@@ -1,15 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/7] dm-bufio: return success or failure on
-	prefetch
-Date: Sat, 11 Jan 2014 12:29:12 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1401111228220.4018@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 2/7] dm-bufio: introduce dm_bufio_forget
+Date: Sat, 11 Jan 2014 12:29:36 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1401111229150.4018@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1401111222400.4018@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401111228220.4018@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1401111222400.4018@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1401111228220.4018@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,63 +23,63 @@ To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch makes dm_bufio_prefetch return 1 on success and 0 on failure.
-A prefetch failure may happen in case of temporary memory shortage.
+Introduce a new function dm_bufio_forget. It frees the given buffer.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-bufio.c |    8 ++++++--
- drivers/md/dm-bufio.h |    4 ++--
- 2 files changed, 8 insertions(+), 4 deletions(-)
+ drivers/md/dm-bufio.c |   22 ++++++++++++++++++++++
+ drivers/md/dm-bufio.h |    7 +++++++
+ 2 files changed, 29 insertions(+)
 
 Index: linux-3.13-rc7/drivers/md/dm-bufio.c
 ===================================================================
---- linux-3.13-rc7.orig/drivers/md/dm-bufio.c	2014-01-09 16:11:31.000000000 +0100
-+++ linux-3.13-rc7/drivers/md/dm-bufio.c	2014-01-09 16:16:43.000000000 +0100
-@@ -1068,10 +1068,11 @@ void *dm_bufio_new(struct dm_bufio_clien
+--- linux-3.13-rc7.orig/drivers/md/dm-bufio.c	2014-01-10 00:04:40.000000000 +0100
++++ linux-3.13-rc7/drivers/md/dm-bufio.c	2014-01-10 00:15:33.000000000 +0100
+@@ -1354,6 +1354,28 @@ retry:
  }
- EXPORT_SYMBOL_GPL(dm_bufio_new);
+ EXPORT_SYMBOL_GPL(dm_bufio_release_move);
  
--void dm_bufio_prefetch(struct dm_bufio_client *c,
-+int dm_bufio_prefetch(struct dm_bufio_client *c,
- 		       sector_t block, unsigned n_blocks)
- {
- 	struct blk_plug plug;
-+	int success = 1;
- 
- 	LIST_HEAD(write_list);
- 
-@@ -1104,13 +1105,16 @@ void dm_bufio_prefetch(struct dm_bufio_c
- 			if (!n_blocks)
- 				goto flush_plug;
- 			dm_bufio_lock(c);
--		}
-+		} else
-+			success = 0;
- 	}
- 
- 	dm_bufio_unlock(c);
- 
- flush_plug:
- 	blk_finish_plug(&plug);
++/*
++ * Free the given buffer.
++ *
++ * This is just a hint, if the buffer is in use or dirty, this function
++ * does nothing.
++ */
++void dm_bufio_forget(struct dm_bufio_client *c, sector_t block)
++{
++	struct dm_buffer *b;
 +
-+	return success;
- }
- EXPORT_SYMBOL_GPL(dm_bufio_prefetch);
- 
++	dm_bufio_lock(c);
++
++	b = __find(c, block);
++	if (b && likely(!b->hold_count) && likely(!b->state)) {
++		__unlink_buffer(b);
++		__free_buffer_wake(b);
++	}
++
++	dm_bufio_unlock(c);
++}
++EXPORT_SYMBOL(dm_bufio_forget);
++
+ unsigned dm_bufio_get_block_size(struct dm_bufio_client *c)
+ {
+ 	return c->block_size;
 Index: linux-3.13-rc7/drivers/md/dm-bufio.h
 ===================================================================
---- linux-3.13-rc7.orig/drivers/md/dm-bufio.h	2014-01-09 16:15:47.000000000 +0100
-+++ linux-3.13-rc7/drivers/md/dm-bufio.h	2014-01-09 16:15:55.000000000 +0100
-@@ -67,8 +67,8 @@ void *dm_bufio_new(struct dm_bufio_clien
-  * The function starts to read the blocks and returns without waiting for
-  * I/O to finish.
+--- linux-3.13-rc7.orig/drivers/md/dm-bufio.h	2014-01-10 00:11:58.000000000 +0100
++++ linux-3.13-rc7/drivers/md/dm-bufio.h	2014-01-10 00:13:27.000000000 +0100
+@@ -108,6 +108,13 @@ int dm_bufio_issue_flush(struct dm_bufio
   */
--void dm_bufio_prefetch(struct dm_bufio_client *c,
--		       sector_t block, unsigned n_blocks);
-+int dm_bufio_prefetch(struct dm_bufio_client *c,
-+		      sector_t block, unsigned n_blocks);
+ void dm_bufio_release_move(struct dm_buffer *b, sector_t new_block);
  
- /*
-  * Release a reference obtained with dm_bufio_{read,get,new}. The data
++/*
++ * Free the given buffer.
++ * This is just a hint, if the buffer is in use or dirty, this function
++ * does nothing.
++ */
++void dm_bufio_forget(struct dm_bufio_client *c, sector_t block);
++
+ unsigned dm_bufio_get_block_size(struct dm_bufio_client *c);
+ sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
+ sector_t dm_bufio_get_block_number(struct dm_buffer *b);
