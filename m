@@ -1,14 +1,15 @@
 From: "Paul B. Henson" <henson@acm.org>
-Subject: Re: dm-cache for Fedora 21?
-Date: Mon, 13 Jan 2014 13:01:58 -0800
-Message-ID: <061301cf10a2$b58b37e0$20a1a7a0$@acm.org>
-References: <52D15B93.8000500@rolffokkens.nl> <20140113101800.GC4984@debian>
+Subject: Re: dm-writeboost: Progress Report
+Date: Mon, 13 Jan 2014 13:03:11 -0800
+Message-ID: <061401cf10a2$e059ed90$a10dc8b0$@acm.org>
+References: <52D0F25D.6030904@gmail.com> <20140113100903.GA4984@debian>
+	<52D3D21B.8030408@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140113101800.GC4984@debian>
+In-Reply-To: <52D3D21B.8030408@gmail.com>
 Content-Language: en-us
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,10 +23,13 @@ Errors-To: dm-devel-bounces@redhat.com
 To: 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> Joe Thornber
-> Sent: Monday, January 13, 2014 2:18 AM
+> Akira Hayakawa
+> Sent: Monday, January 13, 2014 3:47 AM
 >
-> SSD, huge origin etc.).  So my confidence in dm-cache is improving.
+> This is because Writeboost makes a log on the RAM and writes it out to the
+> cache device in sequential manner. I don't think other cache softwares can
+> achieve this high level of throughput.
 
-Just out of curiosity, when do you think you will remove the experimental
-tag? 3.14? 3.15? Or too soon yet to tell :)?
+Would I be incorrect in assuming that this increased write performance comes
+with the trade-off of a greater risk of losing data in the case of power
+failure or crash?
