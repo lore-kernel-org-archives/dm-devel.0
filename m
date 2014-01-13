@@ -1,15 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: dm-cache for Fedora 21?
-Date: Sun, 12 Jan 2014 02:55:25 +0000
-Message-ID: <20140112025525.GB7251@agk-dp.fab.redhat.com>
-References: <52D15B93.8000500@rolffokkens.nl>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH 1/1] improve the
+	performance	of	dm-log-userspace
+Date: Sun, 12 Jan 2014 19:18:23 -0600
+Message-ID: <98075C0F-AB3D-4BE9-9E51-6B67F0C98BA3@redhat.com>
+References: <d16b09a5f29e29d77122c29f01ecaf7928dc4397.1386135157.git.dmzhang@suse.com>	<CFEF63AA-BBCD-4D61-A43C-9D785E45182C@redhat.com>
+	<52A81BEE.2030600@suse.com> <52CA39CA.20504@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <52D15B93.8000500@rolffokkens.nl>
+In-Reply-To: <52CA39CA.20504@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,13 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Rolf Fokkens <rolf@rolffokkens.nl>
-Cc: dm-devel@redhat.com
+To: Dongmao Zhang <dmzhang@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-We're aiming to have the first drop of lvm code using dm-cache by the
-end of this month, and then to gradually fill out and complete the
-features from there: expect patches to start to appear on lvm-devel
-shortly.
-
-Alasdair
+SSd2ZSBjbGVhbmVkIHVwIHRoZSB1c2Vyc3BhY2UgYW5kIGtlcm5lbCBjb2RlIGEgYml0LiAgSSds
+bCB0ZXN0IHRoZW0gdG9tb3Jyb3cuICBXaGVuIHRoaW5ncyB3b3JrIG91dCwgSSdsbCBjaGVjay1p
+biB0aGUgdXNlcnNwYWNlIGNvZGUgYW5kIHJlc3VibWl0IHRoZSBrZXJuZWwgY29kZSBoZXJlLgoK
+IGJyYXNzb3cKCk9uIEphbiA1LCAyMDE0LCBhdCAxMTowNiBQTSwgRG9uZ21hbyBaaGFuZyB3cm90
+ZToKCj4gaGksYnJhc3NvdywKPiAgSG93IGlzIGdvaW5nIGFib3V0IHRoZSB1c2Vyc3BhY2UgY21p
+cnJvcmQncyBwYXRjaCB0ZXN0aW5nPyBJcyB0aGVyZSBhbnl0aGluZyBJIGNvdWxkIGhlbHA/Cj4g
+Cj4gRG9uZ21hbyBaaGFuZy4KPiAKPiAKPiDkuo4gMjAxM+W5tDEy5pyIMTHml6UgMTY6MDEsIERv
+bmdtYW8gWmhhbmcg5YaZ6YGTOgo+PiBoaSwgYnJhc3Nvdwo+PiAKPj4gWWVzLCBJIGhhZCBzdWJt
+aXRlZCBhIHBhdGNoIGx2bS1kZXZlbC4KPj4gCj4+IGh0dHA6Ly93d3cucmVkaGF0LmNvbS9hcmNo
+aXZlcy9sdm0tZGV2ZWwvMjAxMy1Ob3ZlbWJlci9tc2cwMDA5My5odG1sLgo+PiAKPj4gcGxlYXNl
+IHJldmlldy4KPj4gCj4+IEkgc2hvdWxkIGhhdmUgYWRkIGEgcGF0Y2ggdmVyc2lvbiBpbmRpY2F0
+b3IuCj4+IAo+PiAKPj4gCj4+IAo+PiAKPj4gCj4+IAo+PiDkuo4gMjAxM+W5tDEy5pyIMTHml6Ug
+MDk6MTcsIEJyYXNzb3cgSm9uYXRoYW4g5YaZ6YGTOgo+Pj4gTG9va3MgZ29vZC4gRGlkIHlvdSBo
+YXBwZW4gdG8gcG9zdCB0aGUgYWNjb21wYW55aW5nIHVzZXJzcGFjZSBwYXRjaGVzPwo+Pj4gSWYg
+eW91IHBhc3MgdGhvc2UgYWxvbmcsIEkgd2lsbCByZXZpZXcgdGhhdCBhbHNvIGFuZCB0ZXN0IHRo
+ZW0KPj4+IHRvZ2V0aGVyLiBPbmNlIHRoYXQncyBkb25lLCBJIHdpbGwgQUNLLgo+Pj4gCj4+PiBi
+cmFzc293Cj4+PiAKPj4+IE9uIERlYyAzLCAyMDEzLCBhdCAxMTozNSBQTSwgZG9uZ21hbyB6aGFu
+ZyB3cm90ZToKPj4+IAo+Pj4+IG1vZGlmaWVkIHdvcmtxdWV1ZSBjYWxscyBvbiBIYXlha2F3YSdz
+IGNvbW1lbnRzCj4+Pj4gCj4+Pj4gSW4gdGhlIGNsdXN0ZXIgZXZpcm9ubWVudCwgY2x1c3RlciB3
+cml0ZSBoYXMgcG9vciBwZXJmb3JtYW5jZS4KPj4+IAo+Pj4gPC9zbmlwPgo+Pj4gCj4+Pj4gc3Bp
+bmxvY2tfdCBmbHVzaF9sb2NrOwo+Pj4+IHN0cnVjdCBsaXN0X2hlYWQgbWFya19saXN0Owo+Pj4+
+IHN0cnVjdCBsaXN0X2hlYWQgY2xlYXJfbGlzdDsKPj4+PiArCj4+Pj4gKyAvKndvcmsgcXVldWUg
+Zm9yIGZsdXNoIGNsZWFyIHJlZ2lvbiovCj4+PiAKPj4+IFVzZSBzcGFjZXMgYWZ0ZXIgLyogYW5k
+IGJlZm9yZSAqLwo+Pj4gCj4+Pj4gKyBzdHJ1Y3Qgd29ya3F1ZXVlX3N0cnVjdCAqZG1sb2dfd3E7
+Cj4+Pj4gKyBzdHJ1Y3QgZGVsYXllZF93b3JrIGZsdXNoX2xvZ193b3JrOwo+Pj4+ICsgYXRvbWlj
+X3Qgc2NoZWRfZmx1c2g7Cj4+Pj4gKyB1aW50MzJfdCBpbnRlZ3JhdGVkX2ZsdXNoOwo+Pj4+IH07
+Cj4+PiAKPj4+IDwvc25pcD4KPj4+IAo+Pj4+IGRldmljZXNfcmRhdGEgPSBremFsbG9jKGRldmlj
+ZXNfcmRhdGFfc2l6ZSwgR0ZQX0tFUk5FTCk7Cj4+Pj4gaWYgKCFkZXZpY2VzX3JkYXRhKSB7Cj4+
+Pj4gRE1FUlIoIkZhaWxlZCB0byBhbGxvY2F0ZSBtZW1vcnkgZm9yIGRldmljZSBpbmZvcm1hdGlv
+biIpOwo+Pj4+IEBAIC0yNDYsNiArMjY4LDIwIEBAIHN0YXRpYyBpbnQgdXNlcnNwYWNlX2N0cihz
+dHJ1Y3QgZG1fZGlydHlfbG9nCj4+Pj4gKmxvZywgc3RydWN0IGRtX3RhcmdldCAqdGksCj4+Pj4g
+RE1FUlIoIkZhaWxlZCB0byByZWdpc3RlciAlcyB3aXRoIGRldmljZS1tYXBwZXIiLAo+Pj4+IGRl
+dmljZXNfcmRhdGEpOwo+Pj4+IH0KPj4+PiArCj4+Pj4gKwo+Pj4gCj4+PiBFeHRyYSBuZXdsaW5l
+Li4uCj4+PiAKPj4+IFRoZSByZXN0IGxvb2tzIGdvb2QuIChDb3NtZXRpYyBpc3N1ZXMgbGlrZSB0
+aGlzIHdvdWxkbid0IHByZXZlbnQgbXkKPj4+IEFDSyB0aG91Z2guKQo+Pj4gCj4+PiAtLQo+Pj4g
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4+PiBkbS1kZXZlbEByZWRoYXQuY29tCj4+PiBodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKPj4+IAo+PiAKPj4gLS0K
+Pj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4+IGRtLWRldmVsQHJlZGhhdC5jb20KPj4gaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCj4gCgoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
