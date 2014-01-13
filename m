@@ -1,15 +1,15 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-writeboost: Progress Report
-Date: Mon, 13 Jan 2014 10:09:03 +0000
-Message-ID: <20140113100903.GA4984@debian>
-References: <52D0F25D.6030904@gmail.com>
+Subject: Re: dm-cache for Fedora 21?
+Date: Mon, 13 Jan 2014 10:18:01 +0000
+Message-ID: <20140113101800.GC4984@debian>
+References: <52D15B93.8000500@rolffokkens.nl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <52D0F25D.6030904@gmail.com>
+In-Reply-To: <52D15B93.8000500@rolffokkens.nl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,27 +22,16 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jan 11, 2014 at 04:27:25PM +0900, Akira Hayakawa wrote:
-> Hi, DM Guys, 
-> 
-> This is the latest progress report of dm-writeboost.
+On Sat, Jan 11, 2014 at 03:56:19PM +0100, Rolf Fokkens wrote:
+> What are your views on the status of dm-cache?
 
-Do you have any benchmarks yet?  Which situations does it out perform
-bcache and dm-cache?
+I know of people outside our development team who've been testing
+dm-cache quite thoroughly (eg, soak test runs that go for weeks, 4T
+SSD, huge origin etc.).  So my confidence in dm-cache is improving.
 
-> 4. Add some codes to Joe's device-mapper-test-suite
-> ---------------------------------------------------
-> Joe maintains a testing framework in his Github repo.
-> I merged some test codes for Writeboost but I don't work on this project
-> recently. I will add more code later.
-
-Thanks for adding to dmtest, you also did a couple of little tidy ups
-that were useful to me.
-
-> 5. Add regression tests under testing/ of my Github tree
-> --------------------------------------------------------
-> Joe's test-suite is really well-designed but it has too many things before stand-by.
-
-I'm not sure what you mean here?
+There are still some significant things I need to do over the next few
+weeks.  Probably the most important being reducing the memory
+footprint, and making the cache spot when a working set has changed
+and migrate the chunks more quickly.
 
 - Joe
