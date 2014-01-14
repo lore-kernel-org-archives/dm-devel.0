@@ -1,22 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 6/6] dm-snapshot: use bufio prefetch
-Date: Tue, 14 Jan 2014 16:50:40 -0500
-Message-ID: <20140114215040.GA12463@redhat.com>
-References: <alpine.LRH.2.02.1401131911570.30362@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1401131912480.30362@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1401131913090.30362@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1401131913420.30362@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1401131914080.30362@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1401131914270.30362@file01.intranet.prod.int.rdu2.redhat.com>
-	<20140114165840.GA10687@redhat.com>
-	<alpine.LRH.2.02.1401141540280.19206@file01.intranet.prod.int.rdu2.redhat.com>
+From: Rolf Fokkens <rolf@rolffokkens.nl>
+Subject: Re: dm-cache for Fedora 21?
+Date: Wed, 15 Jan 2014 00:24:41 +0100
+Message-ID: <52D5C739.1070504@rolffokkens.nl>
+References: <52D15B93.8000500@rolffokkens.nl>
+	<20140113101800.GC4984@debian>	<061301cf10a2$b58b37e0$20a1a7a0$@acm.org>
+	<20140114102148.GC6450@debian>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1401141540280.19206@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20140114102148.GC6450@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,43 +20,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jan 14 2014 at  3:43pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On 01/14/2014 11:21 AM, Joe Thornber wrote:
+> On Mon, Jan 13, 2014 at 01:01:58PM -0800, Paul B. Henson wrote:
+>> Just out of curiosity, when do you think you will remove the experimental
+>> tag? 3.14? 3.15? Or too soon yet to tell :)?
+> Once I finish the dm-era work (which makes dm-cache play nicely with
+> snapshots on external devices).  potentially 3.14.
+This is all very promising for F21. AFAIK dm-cache can be integrated 
+with / applied to existing volumes / device mapper targets which would 
+imply that (as opposed to bcache) no migration of existing LVM volumes 
+to dm-cache is need. An this would also mean that there's no need to 
+integrate it explicitly in Anaconda, since is dm-cache can be applied 
+after installation. Is my understanding correct?
 
-> 
-> 
-> On Tue, 14 Jan 2014, Mike Snitzer wrote:
-> 
-> > On Mon, Jan 13 2014 at  7:14pm -0500,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > +	dm_bufio_set_minimum_buffers(client, DM_PREFETCH_CHUNKS + 1);
-> > > +
-> > 
-> > Why the +1?  I'd prefer that be managed in dm-bufio rather than relying
-> > on all callers to know to add +1.
-> > 
-> > Can you supply a followup patch that cleans this up in bufio and remove
-> > the +1 in the above dm_bufio_set_minimum_buffers call?
-> 
-> If DM_PREFETCH_CHUNKS is 12, we need 13 buffers in dm-bufio (one for the 
-> current buffer that is being read and 12 read ahead buffers).
-> 
-> It is correct to have +1 in snapshot code, not in dm-bufio code.
-
-OK, thanks for clarifying.
-
-I've folded the dm bufio changes needed for the respective dm snapshot
-changes -- so there are now 4 patches instead of your otiginal 6.
-I added a comment for "1 + DM_PREFETCH_CHUNKS" above the
-dm_bufio_set_minimum_buffers call and tweaked the headers a little.
-
-I also staged your non-modular kobject release patch (tweaked the header
-on that a little bit too).
-
-Please see the 5 topmost commits here:
-http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
+Rolf
