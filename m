@@ -1,16 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-log-userspace: Allow mark requests to piggyback
- on flush requests
-Date: Mon, 13 Jan 2014 21:59:37 -0500
-Message-ID: <20140114025937.GA5816@redhat.com>
-References: <1389666600.12232.2.camel@f16>
+Subject: Re: [PATCH v2] Re: dm: wait until kobject is destroyed
+Date: Mon, 13 Jan 2014 22:02:02 -0500
+Message-ID: <20140114030202.GB5816@redhat.com>
+References: <alpine.LRH.2.02.1401092050190.31354@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140110210314.GA12660@redhat.com>
+	<alpine.LRH.2.02.1401131932130.30362@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1389666600.12232.2.camel@f16>
+In-Reply-To: <alpine.LRH.2.02.1401131932130.30362@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +21,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com, dmzhang@suse.de
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 13 2014 at  9:30pm -0500,
-Jonathan Brassow <jbrassow@redhat.com> wrote:
-
-> dm-log-userspace: Allow mark requests to piggyback on flush requests
+On Mon, Jan 13 2014 at  7:37pm -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+ 
+> Here I'm sending the updated patch. (it reverts the patch that is already 
+> in git and applies the new patch). The patch is untested, because I don't 
+> use that git branch, but the same code was tested on Linus' 3.13-rc7.
 > 
-> In the cluster evironment, cluster write has poor performance.
-> Because userspace_flush has to contact userspace program(cmirrord)
-> in clear/mark/flush request. But both mark and flush requests
-> require cmirrord to circle message to all the cluster nodes in each
-> flush call.  This behave is realy slow. So the idea is merging
-> mark and flush request together to reduce the kernel-userspace-kernel
-> time.  Allow a new directive, "integrated_flush" that can be used to
-> instruct the kernel log code to combine flush and mark requests when
-> directed by userspace.  Additionlly, flush requests are performed
-> lazily when only clear requests exist.
+> Mikulas
 > 
-> Signed-off-by: dongmao zhang <dmzhang@suse.com>
-> Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+> 
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> dm-sysfs: fix a module unload race
+> 
+> The code that calls the completion must be placed in non-module file,
+> otherwise there is a module unload race (if the process is preempted and
+> module unloaded after the completion is triggered, but before the function
+> returns).
+> 
+> To fix this race, this patch moves the completion code to dm-builtin.c
+> that is always compiled directly to the kernel.
+> 
+> The patch introduces a new structure struct dm_kobject_holder, its purpose
+> is to keep the completion and the kobject at one place, so that it can be
+> accessed from non-module code without the need to export the layout of
+> struct mapped_device to that code.
 
-Hey Jon,
-
-Thanks for following through with this.  Should it be attributed to
-dongmao as the author?
+Thanks for this v2 patch and updated header, I'll get it queued up.
