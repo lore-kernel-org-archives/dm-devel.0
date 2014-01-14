@@ -1,15 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH v2] Re: dm: wait until kobject is destroyed
-Date: Mon, 13 Jan 2014 19:37:54 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1401131932130.30362@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1401092050190.31354@file01.intranet.prod.int.rdu2.redhat.com>
-	<20140110210314.GA12660@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] dm-log-userspace: Allow mark requests to
+ piggyback on flush requests
+Date: Mon, 13 Jan 2014 20:30:00 -0600
+Message-ID: <1389666600.12232.2.camel@f16>
+Reply-To: jbrassow@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140110210314.GA12660@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,277 +17,267 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: msnitzer@redhat.com, dmzhang@suse.de
 List-Id: dm-devel.ids
 
+dm-log-userspace: Allow mark requests to piggyback on flush requests
 
+In the cluster evironment, cluster write has poor performance.
+Because userspace_flush has to contact userspace program(cmirrord)
+in clear/mark/flush request. But both mark and flush requests
+require cmirrord to circle message to all the cluster nodes in each
+flush call.  This behave is realy slow. So the idea is merging
+mark and flush request together to reduce the kernel-userspace-kernel
+time.  Allow a new directive, "integrated_flush" that can be used to
+instruct the kernel log code to combine flush and mark requests when
+directed by userspace.  Additionlly, flush requests are performed
+lazily when only clear requests exist.
 
-On Fri, 10 Jan 2014, Mike Snitzer wrote:
+Signed-off-by: dongmao zhang <dmzhang@suse.com>
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-> On Thu, Jan 09 2014 at  8:53pm -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > Hi
-> > 
-> > Here I'm sending the updated kobject patch.
-> > 
-> > Changes:
-> > 	The file was renamed to dm-builtin.c
-> > 	A comment with explanation of the race condition added.
-> > 
-> > Mikulas
-> > 
-> > 
-> > 
-> > From: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > There may be other parts of the kernel taking reference to the dm kobject.
-> > We must wait until they drop the references before deallocating the md
-> > structure.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
-> 
-> This header could use some work considering the previous patch is
-> already staged in linux-dm.git's 'for-next' -- so this patch will build
-> on that.  Would be nice to see some commentary about introducing a
-> dm-builtin to avoid concerns about dm_kobject_release crash after dm-mod
-> is unloaded.  Also, touch on the role/need of struct dm_kobject_holder?
-> 
-> Could you rename 'h' to 'kobj_holder'?
-> 
-> Also, this patch needs to be rebased ontop of linux-dm.git's 'for-next'
-> branch.
-> 
-> Mike
-
-Here I'm sending the updated patch. (it reverts the patch that is already 
-in git and applies the new patch). The patch is untested, because I don't 
-use that git branch, but the same code was tested on Linus' 3.13-rc7.
-
-Mikulas
-
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-dm-sysfs: fix a module unload race
-
-The code that calls the completion must be placed in non-module file,
-otherwise there is a module unload race (if the process is preempted and
-module unloaded after the completion is triggered, but before the function
-returns).
-
-To fix this race, this patch moves the completion code to dm-builtin.c
-that is always compiled directly to the kernel.
-
-The patch introduces a new structure struct dm_kobject_holder, its purpose
-is to keep the completion and the kobject at one place, so that it can be
-accessed from non-module code without the need to export the layout of
-struct mapped_device to that code.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/Kconfig      |    4 ++++
- drivers/md/Makefile     |    1 +
- drivers/md/dm-builtin.c |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-sysfs.c   |    5 -----
- drivers/md/dm.c         |   20 +++++---------------
- drivers/md/dm.h         |   15 ++++++++++++++-
- 6 files changed, 72 insertions(+), 21 deletions(-)
-
-Index: linux-dm/drivers/md/dm-sysfs.c
+Index: linux-upstream/drivers/md/dm-log-userspace-base.c
 ===================================================================
---- linux-dm.orig/drivers/md/dm-sysfs.c	2014-01-14 01:24:49.000000000 +0100
-+++ linux-dm/drivers/md/dm-sysfs.c	2014-01-14 01:25:13.000000000 +0100
-@@ -79,11 +79,6 @@ static const struct sysfs_ops dm_sysfs_o
- 	.show	= dm_attr_show,
+--- linux-upstream.orig/drivers/md/dm-log-userspace-base.c
++++ linux-upstream/drivers/md/dm-log-userspace-base.c
+@@ -11,9 +11,10 @@
+ #include <linux/dm-log-userspace.h>
+ #include <linux/module.h>
+ 
++#include <linux/workqueue.h>
+ #include "dm-log-userspace-transfer.h"
+ 
+-#define DM_LOG_USERSPACE_VSN "1.1.0"
++#define DM_LOG_USERSPACE_VSN "1.2.0"
+ 
+ struct flush_entry {
+ 	int type;
+@@ -58,6 +59,12 @@ struct log_c {
+ 	spinlock_t flush_lock;
+ 	struct list_head mark_list;
+ 	struct list_head clear_list;
++
++	/* work queue for flush clear region */
++	struct workqueue_struct *dmlog_wq;
++	struct delayed_work flush_log_work;
++	atomic_t sched_flush;
++	uint32_t integrated_flush;
  };
  
--static void dm_kobject_release(struct kobject *kobj)
--{
--	complete(dm_get_completion_from_kobject(kobj));
--}
--
- /*
-  * dm kobject is embedded in mapped_device structure
-  * no need to define release function here
-Index: linux-dm/drivers/md/dm.c
-===================================================================
---- linux-dm.orig/drivers/md/dm.c	2014-01-14 01:24:49.000000000 +0100
-+++ linux-dm/drivers/md/dm.c	2014-01-14 01:25:13.000000000 +0100
-@@ -200,11 +200,8 @@ struct mapped_device {
- 	/* forced geometry settings */
- 	struct hd_geometry geometry;
- 
--	/* sysfs handle */
--	struct kobject kobj;
--
--	/* wait until the kobject is released */
--	struct completion kobj_completion;
-+	/* kobject and completion */
-+	struct dm_kobject_holder kobj_holder;
- 
- 	/* zero-length flush that will be cloned and submitted to targets */
- 	struct bio flush_bio;
-@@ -2044,7 +2041,7 @@ static struct mapped_device *alloc_dev(i
- 	init_waitqueue_head(&md->wait);
- 	INIT_WORK(&md->work, dm_wq_work);
- 	init_waitqueue_head(&md->eventq);
--	init_completion(&md->kobj_completion);
-+	init_completion(&md->kobj_holder.completion);
- 
- 	md->disk->major = _major;
- 	md->disk->first_minor = minor;
-@@ -2906,14 +2903,14 @@ struct gendisk *dm_disk(struct mapped_de
- 
- struct kobject *dm_kobject(struct mapped_device *md)
- {
--	return &md->kobj;
-+	return &md->kobj_holder.kobj;
+ static mempool_t *flush_entry_pool;
+@@ -141,6 +148,17 @@ static int build_constructor_string(stru
+ 	return str_size;
  }
  
- struct mapped_device *dm_get_from_kobject(struct kobject *kobj)
++static void do_flush(struct work_struct *work)
++{
++	int r;
++	struct log_c *lc = container_of(work, struct log_c, flush_log_work.work);
++	r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
++				 NULL, 0, NULL, NULL);
++	atomic_set(&lc->sched_flush, 0);
++	if (r)
++		dm_table_event(lc->ti->table);
++}
++
+ /*
+  * userspace_ctr
+  *
+@@ -199,6 +217,10 @@ static int userspace_ctr(struct dm_dirty
+ 		return str_size;
+ 	}
+ 
++	lc->integrated_flush = 0;
++	if (strstr(ctr_str, "integrated_flush"))
++		lc->integrated_flush = 1;
++
+ 	devices_rdata = kzalloc(devices_rdata_size, GFP_KERNEL);
+ 	if (!devices_rdata) {
+ 		DMERR("Failed to allocate memory for device information");
+@@ -246,6 +268,19 @@ static int userspace_ctr(struct dm_dirty
+ 			DMERR("Failed to register %s with device-mapper",
+ 			      devices_rdata);
+ 	}
++
++	if (lc->integrated_flush) {
++		lc->dmlog_wq = alloc_workqueue("dmlogd", WQ_MEM_RECLAIM, 0);
++		if (!lc->dmlog_wq) {
++			DMERR("couldn't start dmlogd");
++			r = -ENOMEM;
++			goto out;
++		}
++
++		INIT_DELAYED_WORK(&lc->flush_log_work, do_flush);
++		atomic_set(&lc->sched_flush, 0);
++	}
++
+ out:
+ 	kfree(devices_rdata);
+ 	if (r) {
+@@ -264,6 +299,14 @@ static void userspace_dtr(struct dm_dirt
  {
- 	struct mapped_device *md;
+ 	struct log_c *lc = log->context;
  
--	md = container_of(kobj, struct mapped_device, kobj);
-+	md = container_of(kobj, struct mapped_device, kobj_holder.kobj);
++	if (lc->integrated_flush) {
++		/* flush workqueue */
++		if (atomic_read(&lc->sched_flush))
++			flush_delayed_work(&lc->flush_log_work);
++
++		destroy_workqueue(lc->dmlog_wq);
++	}
++
+ 	(void) dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_DTR,
+ 				 NULL, 0,
+ 				 NULL, NULL);
+@@ -294,6 +337,10 @@ static int userspace_postsuspend(struct
+ 	int r;
+ 	struct log_c *lc = log->context;
  
- 	if (test_bit(DMF_FREEING, &md->flags) ||
- 	    dm_deleting_md(md))
-@@ -2923,13 +2920,6 @@ struct mapped_device *dm_get_from_kobjec
- 	return md;
++	/* run planned flush earlier */
++	if (lc->integrated_flush && atomic_read(&lc->sched_flush))
++		flush_delayed_work(&lc->flush_log_work);
++
+ 	r = dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_POSTSUSPEND,
+ 				 NULL, 0,
+ 				 NULL, NULL);
+@@ -405,7 +452,8 @@ static int flush_one_by_one(struct log_c
+ 	return r;
  }
  
--struct completion *dm_get_completion_from_kobject(struct kobject *kobj)
--{
--	struct mapped_device *md = container_of(kobj, struct mapped_device, kobj);
--
--	return &md->kobj_completion;
--}
--
- int dm_suspended_md(struct mapped_device *md)
+-static int flush_by_group(struct log_c *lc, struct list_head *flush_list)
++static int flush_by_group(struct log_c *lc, struct list_head *flush_list,
++			  int flush_with_payload)
  {
- 	return test_bit(DMF_SUSPENDED, &md->flags);
-Index: linux-dm/drivers/md/dm.h
+ 	int r = 0;
+ 	int count;
+@@ -431,15 +479,25 @@ static int flush_by_group(struct log_c *
+ 				break;
+ 		}
+ 
+-		r = userspace_do_request(lc, lc->uuid, type,
+-					 (char *)(group),
+-					 count * sizeof(uint64_t),
+-					 NULL, NULL);
+-		if (r) {
+-			/* Group send failed.  Attempt one-by-one. */
+-			list_splice_init(&tmp_list, flush_list);
+-			r = flush_one_by_one(lc, flush_list);
+-			break;
++		if (flush_with_payload) {
++			r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
++						 (char *)(group),
++						 count * sizeof(uint64_t),
++						 NULL, NULL);
++			/* integrated flush failed */
++			if (r)
++				break;
++		} else {
++			r = userspace_do_request(lc, lc->uuid, type,
++						 (char *)(group),
++						 count * sizeof(uint64_t),
++						 NULL, NULL);
++			if (r) {
++				/* Group send failed.  Attempt one-by-one. */
++				list_splice_init(&tmp_list, flush_list);
++				r = flush_one_by_one(lc, flush_list);
++				break;
++			}
+ 		}
+ 	}
+ 
+@@ -474,6 +532,8 @@ static int userspace_flush(struct dm_dir
+ 	int r = 0;
+ 	unsigned long flags;
+ 	struct log_c *lc = log->context;
++	int is_mark_list_empty;
++	int is_clear_list_empty;
+ 	LIST_HEAD(mark_list);
+ 	LIST_HEAD(clear_list);
+ 	struct flush_entry *fe, *tmp_fe;
+@@ -483,19 +543,46 @@ static int userspace_flush(struct dm_dir
+ 	list_splice_init(&lc->clear_list, &clear_list);
+ 	spin_unlock_irqrestore(&lc->flush_lock, flags);
+ 
+-	if (list_empty(&mark_list) && list_empty(&clear_list))
++	is_mark_list_empty = list_empty(&mark_list);
++	is_clear_list_empty = list_empty(&clear_list);
++
++	if (is_mark_list_empty && is_clear_list_empty)
+ 		return 0;
+ 
+-	r = flush_by_group(lc, &mark_list);
+-	if (r)
+-		goto fail;
++	r = flush_by_group(lc, &clear_list, 0);
+ 
+-	r = flush_by_group(lc, &clear_list);
+ 	if (r)
+ 		goto fail;
+ 
+-	r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
+-				 NULL, 0, NULL, NULL);
++	if (lc->integrated_flush) {
++		/* send flush request with mark_list as payload*/
++		r = flush_by_group(lc, &mark_list, 1);
++		if (r)
++			goto fail;
++
++		/*
++		 * When there is only clear region requests,
++		 * we plan a flush in the furture.
++		 */
++		if (is_mark_list_empty && !atomic_read(&lc->sched_flush)) {
++			queue_delayed_work(lc->dmlog_wq,
++					   &lc->flush_log_work, 3 * HZ);
++			atomic_set(&lc->sched_flush, 1);
++		} else {
++			/*
++			 * Cancel pending flush because we
++			 * have already flushed in mark_region
++			 */
++			cancel_delayed_work(&lc->flush_log_work);
++			atomic_set(&lc->sched_flush, 0);
++		}
++	} else {
++		r = flush_by_group(lc, &mark_list, 0);
++		if (r)
++			goto fail;
++		r = userspace_do_request(lc, lc->uuid, DM_ULOG_FLUSH,
++					 NULL, 0, NULL, NULL);
++	}
+ 
+ fail:
+ 	/*
+Index: linux-upstream/include/uapi/linux/dm-log-userspace.h
 ===================================================================
---- linux-dm.orig/drivers/md/dm.h	2014-01-14 01:24:49.000000000 +0100
-+++ linux-dm/drivers/md/dm.h	2014-01-14 01:25:13.000000000 +0100
-@@ -16,6 +16,7 @@
- #include <linux/blkdev.h>
- #include <linux/hdreg.h>
- #include <linux/completion.h>
-+#include <linux/kobject.h>
- 
- #include "dm-stats.h"
- 
-@@ -149,11 +150,23 @@ void dm_interface_exit(void);
- /*
-  * sysfs interface
+--- linux-upstream.orig/include/uapi/linux/dm-log-userspace.h
++++ linux-upstream/include/uapi/linux/dm-log-userspace.h
+@@ -201,12 +201,12 @@
+  * int (*flush)(struct dm_dirty_log *log);
+  *
+  * Payload-to-userspace:
+- *	None.
++ *	if DM_INTEGRATED_FLUSH is set, payload is as same as DM_ULOG_MARK_REGION
++ *	uint64_t [] - region(s) to mark
++ *	else None
+  * Payload-to-kernel:
+  *	None.
+  *
+- * No incoming or outgoing payload.  Simply flush log state to disk.
+- *
+  * When the request has been processed, user-space must return the
+  * dm_ulog_request to the kernel - setting the 'error' field and clearing
+  * 'data_size' appropriately.
+@@ -385,8 +385,10 @@
+  *	version 2:  DM_ULOG_CTR allowed to return a string containing a
+  *	            device name that is to be registered with DM via
+  *	            'dm_get_device'.
++ *	version 3:  DM_ULOG_FLUSH is capable to carry payload for marking
++ *	            regions.
   */
-+struct dm_kobject_holder {
-+	struct kobject kobj;
-+	struct completion completion;
-+};
-+static inline struct completion *dm_get_completion_from_kobject(struct kobject *kobj)
-+{
-+	return &container_of(kobj, struct dm_kobject_holder, kobj)->completion;
-+}
- int dm_sysfs_init(struct mapped_device *md);
- void dm_sysfs_exit(struct mapped_device *md);
- struct kobject *dm_kobject(struct mapped_device *md);
- struct mapped_device *dm_get_from_kobject(struct kobject *kobj);
--struct completion *dm_get_completion_from_kobject(struct kobject *kobj);
-+
-+/*
-+ * The kobject helper
-+ */
-+void dm_kobject_release(struct kobject *kobj);
+-#define DM_ULOG_REQUEST_VERSION 2
++#define DM_ULOG_REQUEST_VERSION 3
  
- /*
-  * Targets for linear and striped mappings
-Index: linux-dm/drivers/md/Kconfig
-===================================================================
---- linux-dm.orig/drivers/md/Kconfig	2014-01-14 01:24:48.000000000 +0100
-+++ linux-dm/drivers/md/Kconfig	2014-01-14 01:25:13.000000000 +0100
-@@ -176,8 +176,12 @@ config MD_FAULTY
- 
- source "drivers/md/bcache/Kconfig"
- 
-+config BLK_DEV_DM_BUILTIN
-+	boolean
-+
- config BLK_DEV_DM
- 	tristate "Device mapper support"
-+	select BLK_DEV_DM_BUILTIN
- 	---help---
- 	  Device-mapper is a low level volume manager.  It works by allowing
- 	  people to specify mappings for ranges of logical sectors.  Various
-Index: linux-dm/drivers/md/Makefile
-===================================================================
---- linux-dm.orig/drivers/md/Makefile	2014-01-14 01:24:48.000000000 +0100
-+++ linux-dm/drivers/md/Makefile	2014-01-14 01:25:13.000000000 +0100
-@@ -32,6 +32,7 @@ obj-$(CONFIG_MD_FAULTY)		+= faulty.o
- obj-$(CONFIG_BCACHE)		+= bcache/
- obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
- obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
-+obj-$(CONFIG_BLK_DEV_DM_BUILTIN) += dm-builtin.o
- obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
- obj-$(CONFIG_DM_BIO_PRISON)	+= dm-bio-prison.o
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
-Index: linux-dm/drivers/md/dm-builtin.c
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-dm/drivers/md/dm-builtin.c	2014-01-14 01:25:13.000000000 +0100
-@@ -0,0 +1,48 @@
-+#include "dm.h"
-+
-+/*
-+ * The kobject release method must not be placed in the module itself,
-+ * otherwise we are subject to module unload races.
-+ *
-+ * The release method is called when the last reference to the kobject is
-+ * dropped. It may be called by any other kernel code that drops the last
-+ * reference.
-+ *
-+ * The release method suffers from module unload race. We may prevent the
-+ * module from being unloaded at the start of the release method (using
-+ * increased module reference count or synchronizing against the release
-+ * method), however there is no way to prevent the module from being
-+ * unloaded at the end of the release method.
-+ *
-+ * If this code were placed in the dm module, the following race may
-+ * happen:
-+ *  1. Some other process takes a reference to dm kobject
-+ *  2. The user issues ioctl function to unload the dm device
-+ *  3. dm_sysfs_exit calls kobject_put, however the object is not released
-+ *     because of the other reference taken at step 1
-+ *  4. dm_sysfs_exit waits on the completion
-+ *  5. The other process that took the reference in step 1 drops it,
-+ *     dm_kobject_release is called from this process
-+ *  6. dm_kobject_release calls complete()
-+ *  7. a reschedule happens before dm_kobject_release returns
-+ *  8. dm_sysfs_exit continues, the dm device is unloaded, module reference
-+ *     count is decremented
-+ *  9. The user unloads the dm module
-+ * 10. The other process that was rescheduled in step 7 continues to run,
-+ *     it is now executing code in unloaded module, so it crashes
-+ *
-+ * Note that if the process that takes the foreign reference to dm kobject
-+ * has a low priority and the system is sufficiently loaded with
-+ * higher-priority processes that prevent the low-priority process from
-+ * being scheduled long enough, this bug may really happen.
-+ *
-+ * In order to fix this module unload race, we place the release method
-+ * into a helper code that is compiled directly into the kernel.
-+ */
-+
-+void dm_kobject_release(struct kobject *kobj)
-+{
-+	complete(dm_get_completion_from_kobject(kobj));
-+}
-+
-+EXPORT_SYMBOL(dm_kobject_release);
+ struct dm_ulog_request {
+ 	/*
