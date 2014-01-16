@@ -1,18 +1,20 @@
-From: "Paul B. Henson" <henson@acm.org>
-Subject: Re: dm-cache for Fedora 21?
-Date: Wed, 15 Jan 2014 17:46:30 -0800
-Message-ID: <084501cf125c$c8fdc840$5af958c0$@acm.org>
-References: <52D15B93.8000500@rolffokkens.nl>
-	<20140113101800.GC4984@debian>	<061301cf10a2$b58b37e0$20a1a7a0$@acm.org>	<20140114102148.GC6450@debian>
-	<52D5C739.1070504@rolffokkens.nl>	<20140115103446.GA7943@debian>
-	<20140115132133.GA31790@agk-dp.fab.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 for-3.14] dm cache: add block sizes and
+ total cache blocks to status output
+Date: Wed, 15 Jan 2014 23:34:56 -0500
+Message-ID: <20140116043456.GA22229@redhat.com>
+References: <20140109210412.GA5288@redhat.com>
+	<684DDE51-1D4E-44AB-8E85-CDD6F38B5D07@redhat.com>
+	<20140109221323.GA5555@redhat.com>
+	<20140109235506.GA6154@redhat.com>
+	<4DBC7936-62EF-475A-AAFF-B8B6977DD4E8@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140115132133.GA31790@agk-dp.fab.redhat.com>
-Content-Language: en-us
+Content-Disposition: inline
+In-Reply-To: <4DBC7936-62EF-475A-AAFF-B8B6977DD4E8@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,22 +24,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'device-mapper development' <dm-devel@redhat.com>
+To: Brassow Jonathan <jbrassow@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ejt@redhat.com
 List-Id: dm-devel.ids
 
-> Alasdair G Kergon
-> Sent: Wednesday, January 15, 2014 5:22 AM
-> 
-> On Wed, Jan 15, 2014 at 10:34:46AM +0000, Joe Thornber wrote:
-> > I'm not sure what the LVM interface to caching will look like.  But
-> > I'd expect you to be able to point to any existing volume and say
-> > 'speed that up with XG of cache'.
-> 
-> To be clear, I'd qualify that as:
->   any existing *Logical Volume*
+On Wed, Jan 15 2014 at  8:16pm -0500,
+Brassow Jonathan <jbrassow@redhat.com> wrote:
 
-From a use case perspective, I'd like to be able to point to a pv (or
-perhaps a vg), and say 'speed up that pv/vg with XG of cache',  so hopefully
-that will be supported by lvm. My tentative layering for testing dm-cache
-prior to lvm support was going to be <raw disk><dm-cache><pv>, ie, the pv
-was going to be created on the cached device...
+> I know I'm pushing my luck...
+> 
+> Is it too late to ask for just one more thing?  Would you also consider printing the policy name in the status (INFO)?
+>   <policy_name> <#policy args> <policy args>
+> 
+> This is especially useful when you pass in "default" in the CTR, because you cannot get this value from anywhere... right?
+
+For the benefit of others, I pushed the change here:
+http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=2f20afc4c3f69030204ce55f24bc68971b500b8a
