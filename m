@@ -1,22 +1,22 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 for-3.14] dm cache: add block sizes and
- total cache blocks to status output
-Date: Thu, 16 Jan 2014 14:35:33 -0500
-Message-ID: <20140116193533.GA30851@redhat.com>
-References: <20140109210412.GA5288@redhat.com>
-	<684DDE51-1D4E-44AB-8E85-CDD6F38B5D07@redhat.com>
-	<20140109221323.GA5555@redhat.com>
-	<20140109235506.GA6154@redhat.com>
-	<4DBC7936-62EF-475A-AAFF-B8B6977DD4E8@redhat.com>
-	<20140116043456.GA22229@redhat.com>
-	<FDEC03AD-6294-403B-8AC9-0A1DF4230E9D@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 6/6] dm-snapshot: use bufio prefetch
+Date: Thu, 16 Jan 2014 15:53:01 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1401161552500.8620@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1401131911570.30362@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401131912480.30362@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401131913090.30362@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401131913420.30362@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401131914080.30362@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1401131914270.30362@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140114165840.GA10687@redhat.com>
+	<alpine.LRH.2.02.1401141540280.19206@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140114215040.GA12463@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <FDEC03AD-6294-403B-8AC9-0A1DF4230E9D@redhat.com>
+In-Reply-To: <20140114215040.GA12463@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,36 +26,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Brassow Jonathan <jbrassow@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, ejt@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 16 2014 at 12:18pm -0500,
-Brassow Jonathan <jbrassow@redhat.com> wrote:
 
+
+On Tue, 14 Jan 2014, Mike Snitzer wrote:
+
+> On Tue, Jan 14 2014 at  3:43pm -0500,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> On Jan 15, 2014, at 10:34 PM, Mike Snitzer wrote:
-> 
-> > On Wed, Jan 15 2014 at  8:16pm -0500,
-> > Brassow Jonathan <jbrassow@redhat.com> wrote:
 > > 
-> >> I know I'm pushing my luck...
-> >> 
-> >> Is it too late to ask for just one more thing?  Would you also consider printing the policy name in the status (INFO)?
-> >>  <policy_name> <#policy args> <policy args>
-> >> 
-> >> This is especially useful when you pass in "default" in the CTR, because you cannot get this value from anywhere... right?
 > > 
-> > For the benefit of others, I pushed the change here:
-> > http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=2f20afc4c3f69030204ce55f24bc68971b500b8a
+> > On Tue, 14 Jan 2014, Mike Snitzer wrote:
+> > 
+> > > On Mon, Jan 13 2014 at  7:14pm -0500,
+> > > Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > > 
+> > > > +	dm_bufio_set_minimum_buffers(client, DM_PREFETCH_CHUNKS + 1);
+> > > > +
+> > > 
+> > > Why the +1?  I'd prefer that be managed in dm-bufio rather than relying
+> > > on all callers to know to add +1.
+> > > 
+> > > Can you supply a followup patch that cleans this up in bufio and remove
+> > > the +1 in the above dm_bufio_set_minimum_buffers call?
+> > 
+> > If DM_PREFETCH_CHUNKS is 12, we need 13 buffers in dm-bufio (one for the 
+> > current buffer that is being read and 12 read ahead buffers).
+> > 
+> > It is correct to have +1 in snapshot code, not in dm-bufio code.
 > 
-> This doesn't quite produce the info we want.  If I specify "default"
-> in the CTR table, I want the status to show me what the result was
-> (i.e. "mq").  It currently seems to be printing "default" back at
-> me... which isn't helpful.  :)
+> OK, thanks for clarifying.
+> 
+> I've folded the dm bufio changes needed for the respective dm snapshot
+> changes -- so there are now 4 patches instead of your otiginal 6.
+> I added a comment for "1 + DM_PREFETCH_CHUNKS" above the
+> dm_bufio_set_minimum_buffers call and tweaked the headers a little.
+> 
+> I also staged your non-modular kobject release patch (tweaked the header
+> on that a little bit too).
+> 
+> Please see the 5 topmost commits here:
+> http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
 
-I updated the commit, see:
-http://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=2e68c4e6caad9fdadc1cef8b6cb9569192e8a42b
+OK. The patches look good.
 
-I've also verified it works (by updating my local
-device-mapper-test-suite code, will get these changes to joe soon)
+Mikulas
