@@ -1,14 +1,15 @@
-From: Brian Bunker <brian@purestorage.com>
+From: Nicolas Michel <be.nicolas.michel@gmail.com>
 Subject: Re: About WWID
-Date: Fri, 17 Jan 2014 10:07:44 -0800
-Message-ID: <3922A2F5-A049-4D48-96BB-50B2D55E33D7@purestorage.com>
+Date: Fri, 17 Jan 2014 20:21:32 +0100
+Message-ID: <CAO5znatU5XV4opnyWZT6EP7YK+ooTji85dXu9qzQP1PX9-45gQ@mail.gmail.com>
 References: <CAO5znavrjYwyY2=bmZ0F++ePJP3+geDhUd4DVvLL8aW25xgtGg@mail.gmail.com>
+	<3922A2F5-A049-4D48-96BB-50B2D55E33D7@purestorage.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 7.1 \(1827\))
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAO5znavrjYwyY2=bmZ0F++ePJP3+geDhUd4DVvLL8aW25xgtGg@mail.gmail.com>
+In-Reply-To: <3922A2F5-A049-4D48-96BB-50B2D55E33D7@purestorage.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,70 +22,46 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Nicolas,
-
-The details of this are spelled out in the SPC-4 SCSI document available fr=
-om t10.org. The =913=92 in the value you are asking about tells what format=
- that the value in question is using. =913=92 being =91NAA=92. The =916=92 =
-too is also again a format designation as well. The rest of the number cont=
-ains a company id and then the part that is unique to a particular volume o=
-n your array:
-
-So it is:
-
-=913=92 - NAA
-=916=92 - NAA
-=91000144=92 - =91EMC corporation=92
-=910000000102058055965f660d8=92 - Some unique id (some part will likely be =
-a serial number you can see on the array side)
-
-Multipathing software uses this number to determine if a device is a new de=
-vice or a path to an existing one. The answer to your question is that a ww=
-id is not defined in the SPC-4 spec so what is right is not really relevant=
-, it is more just how they choose to display uniqueness. multipath is displ=
-aying the entire designator while EMC is stripping the =913=92 from the fro=
-nt. Either way it is in the VPD page 0x83 of an inquiry to your device. You=
- can do =91sg_inq -p 0x83 device=92 where device is /dev/*** to see what I =
-mean.
-
-Thanks,
-Brian
-
-On Jan 17, 2014, at 4:19 AM, Nicolas Michel <be.nicolas.michel@gmail.com> w=
-rote:
-
-> Hello guys,
-> =
-
-> I noticed a difference with the WWID of a multipath device as reported
-> by the device mapper native multipath, and by the EMC propriatary tool
-> powermt. In the latter case it misses a leading 3 (which seems to be
-> an invariant prefix with the device mapper).
-> =
-
-> Exemple :
-> =
-
-> Reported by multipath -ll : 360001440000000102058055965f660d8
-> Reported by powermt :       60001440000000102058055965F660D8
-> =
-
-> My questions are : what means the leading 3 given by the device-mapper
-> and which one is the right WWID?
-> =
-
-> Thank you a lot ;)
-> =
-
-> -- =
-
-> Nicolas MICHEL
-> =
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-Brian Bunker
-brian@purestorage.com
+QnJpYW4sCgpUaGFuayB5b3UgdmVyeSBtdWNoIGZvciB0aGVzZSBpbmZvcm1hdGlvbnMuIEknbSBn
+b2luZyB0byByZWFkIHRoZQpzcGVjcyA7KSBBbmQgSSBhbHJlYWR5IHRyaWVkIHRoZSBzZ19pbnEg
+dGhhdCBJIGRpZG4ndCBrbm93IGFib3V0IQoKQmVzdCByZWdhcmRzLApOaWNvbGFzCgoyMDE0LzEv
+MTcgQnJpYW4gQnVua2VyIDxicmlhbkBwdXJlc3RvcmFnZS5jb20+Ogo+IE5pY29sYXMsCj4KPiBU
+aGUgZGV0YWlscyBvZiB0aGlzIGFyZSBzcGVsbGVkIG91dCBpbiB0aGUgU1BDLTQgU0NTSSBkb2N1
+bWVudCBhdmFpbGFibGUgZnJvbSB0MTAub3JnLiBUaGUg4oCYM+KAmSBpbiB0aGUgdmFsdWUgeW91
+IGFyZSBhc2tpbmcgYWJvdXQgdGVsbHMgd2hhdCBmb3JtYXQgdGhhdCB0aGUgdmFsdWUgaW4gcXVl
+c3Rpb24gaXMgdXNpbmcuIOKAmDPigJkgYmVpbmcg4oCYTkFB4oCZLiBUaGUg4oCYNuKAmSB0b28g
+aXMgYWxzbyBhZ2FpbiBhIGZvcm1hdCBkZXNpZ25hdGlvbiBhcyB3ZWxsLiBUaGUgcmVzdCBvZiB0
+aGUgbnVtYmVyIGNvbnRhaW5zIGEgY29tcGFueSBpZCBhbmQgdGhlbiB0aGUgcGFydCB0aGF0IGlz
+IHVuaXF1ZSB0byBhIHBhcnRpY3VsYXIgdm9sdW1lIG9uIHlvdXIgYXJyYXk6Cj4KPiBTbyBpdCBp
+czoKPgo+IOKAmDPigJkgLSBOQUEKPiDigJg24oCZIC0gTkFBCj4g4oCYMDAwMTQ04oCZIC0g4oCY
+RU1DIGNvcnBvcmF0aW9u4oCZCj4g4oCYMDAwMDAwMDEwMjA1ODA1NTk2NWY2NjBkOOKAmSAtIFNv
+bWUgdW5pcXVlIGlkIChzb21lIHBhcnQgd2lsbCBsaWtlbHkgYmUgYSBzZXJpYWwgbnVtYmVyIHlv
+dSBjYW4gc2VlIG9uIHRoZSBhcnJheSBzaWRlKQo+Cj4gTXVsdGlwYXRoaW5nIHNvZnR3YXJlIHVz
+ZXMgdGhpcyBudW1iZXIgdG8gZGV0ZXJtaW5lIGlmIGEgZGV2aWNlIGlzIGEgbmV3IGRldmljZSBv
+ciBhIHBhdGggdG8gYW4gZXhpc3Rpbmcgb25lLiBUaGUgYW5zd2VyIHRvIHlvdXIgcXVlc3Rpb24g
+aXMgdGhhdCBhIHd3aWQgaXMgbm90IGRlZmluZWQgaW4gdGhlIFNQQy00IHNwZWMgc28gd2hhdCBp
+cyByaWdodCBpcyBub3QgcmVhbGx5IHJlbGV2YW50LCBpdCBpcyBtb3JlIGp1c3QgaG93IHRoZXkg
+Y2hvb3NlIHRvIGRpc3BsYXkgdW5pcXVlbmVzcy4gbXVsdGlwYXRoIGlzIGRpc3BsYXlpbmcgdGhl
+IGVudGlyZSBkZXNpZ25hdG9yIHdoaWxlIEVNQyBpcyBzdHJpcHBpbmcgdGhlIOKAmDPigJkgZnJv
+bSB0aGUgZnJvbnQuIEVpdGhlciB3YXkgaXQgaXMgaW4gdGhlIFZQRCBwYWdlIDB4ODMgb2YgYW4g
+aW5xdWlyeSB0byB5b3VyIGRldmljZS4gWW91IGNhbiBkbyDigJhzZ19pbnEgLXAgMHg4MyBkZXZp
+Y2XigJkgd2hlcmUgZGV2aWNlIGlzIC9kZXYvKioqIHRvIHNlZSB3aGF0IEkgbWVhbi4KPgo+IFRo
+YW5rcywKPiBCcmlhbgo+Cj4gT24gSmFuIDE3LCAyMDE0LCBhdCA0OjE5IEFNLCBOaWNvbGFzIE1p
+Y2hlbCA8YmUubmljb2xhcy5taWNoZWxAZ21haWwuY29tPiB3cm90ZToKPgo+PiBIZWxsbyBndXlz
+LAo+Pgo+PiBJIG5vdGljZWQgYSBkaWZmZXJlbmNlIHdpdGggdGhlIFdXSUQgb2YgYSBtdWx0aXBh
+dGggZGV2aWNlIGFzIHJlcG9ydGVkCj4+IGJ5IHRoZSBkZXZpY2UgbWFwcGVyIG5hdGl2ZSBtdWx0
+aXBhdGgsIGFuZCBieSB0aGUgRU1DIHByb3ByaWF0YXJ5IHRvb2wKPj4gcG93ZXJtdC4gSW4gdGhl
+IGxhdHRlciBjYXNlIGl0IG1pc3NlcyBhIGxlYWRpbmcgMyAod2hpY2ggc2VlbXMgdG8gYmUKPj4g
+YW4gaW52YXJpYW50IHByZWZpeCB3aXRoIHRoZSBkZXZpY2UgbWFwcGVyKS4KPj4KPj4gRXhlbXBs
+ZSA6Cj4+Cj4+IFJlcG9ydGVkIGJ5IG11bHRpcGF0aCAtbGwgOiAzNjAwMDE0NDAwMDAwMDAxMDIw
+NTgwNTU5NjVmNjYwZDgKPj4gUmVwb3J0ZWQgYnkgcG93ZXJtdCA6ICAgICAgIDYwMDAxNDQwMDAw
+MDAwMTAyMDU4MDU1OTY1RjY2MEQ4Cj4+Cj4+IE15IHF1ZXN0aW9ucyBhcmUgOiB3aGF0IG1lYW5z
+IHRoZSBsZWFkaW5nIDMgZ2l2ZW4gYnkgdGhlIGRldmljZS1tYXBwZXIKPj4gYW5kIHdoaWNoIG9u
+ZSBpcyB0aGUgcmlnaHQgV1dJRD8KPj4KPj4gVGhhbmsgeW91IGEgbG90IDspCj4+Cj4+IC0tCj4+
+IE5pY29sYXMgTUlDSEVMCj4+Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1k
+ZXZlbEByZWRoYXQuY29tCj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbAo+Cj4gQnJpYW4gQnVua2VyCj4gYnJpYW5AcHVyZXN0b3JhZ2UuY29tCj4KPgo+
+Cj4KPiAtLQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBo
+dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCgoKLS0gCk5p
+Y29sYXMgTUlDSEVMCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
+bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
