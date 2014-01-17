@@ -1,16 +1,15 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH 04/25] block: Abstract out bvec iterator
-Date: Fri, 17 Jan 2014 09:00:13 +0100
-Message-ID: <CAMuHMdUmTqZSAiwYc0Uc=u1YrCZUJeFAuR7PeZqBvWqnqUwmLQ@mail.gmail.com>
-References: <20131127004422.GB21305@kmo>
-	<1385513128-5035-1-git-send-email-kmo@daterainc.com>
-	<1385513128-5035-4-git-send-email-kmo@daterainc.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 2/2] dm-multipath: reduce memory pressure during
+	requeuing
+Date: Fri, 17 Jan 2014 11:42:08 +0100
+Message-ID: <1389955328-107148-3-git-send-email-hare@suse.de>
+References: <1389955328-107148-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1385513128-5035-4-git-send-email-kmo@daterainc.com>
+In-Reply-To: <1389955328-107148-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +19,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: Dave Kleikamp <shaggy@kernel.org>, Jeremy Fitzhardinge <jeremy@goop.org>, Herton Ronaldo Krzesinski <herton.krzesinski@canonical.com>, Jan Beulich <jbeulich@suse.com>, "Ed L. Cashin" <ecashin@coraid.com>, "Michael S. Tsirkin" <mst@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Selvan Mani <smani@micron.com>, Namjae Jeon <namjae.jeon@samsung.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Chris Mason <chris.mason@fusionio.com>, dm-devel@redhat.com, Paul Mackerras <paulus@samba.org>, Pavel Machek <pavel@ucw.cz>, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, Ian Campbell <Ian.Campbell@citrix.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Alasdair Kergon <agk@redhat.com>, Sage Weil <sage@inktank.com>, =?UTF-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 27, 2013 at 1:45 AM, Kent Overstreet <kmo@daterainc.com> wrote:
-> Immutable biovecs are going to require an explicit iterator. To
-> implement immutable bvecs, a later patch is going to add a bi_bvec_done
-> member to this struct; for now, this patch effectively just renames
-> things.
+When multipath needs to requeue I/O in the block layer
+the per-request context shouldn't be allocated, as it will
+be freed immediately afterwards anyway.
+Avoiding this memory allocation will reduce memory
+pressure during requeuing.
 
-You missed xtensa simdisk:
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-mpath.c | 40 ++++++++++++++++------------------------
+ 1 file changed, 16 insertions(+), 24 deletions(-)
 
-arch/xtensa/platforms/iss/simdisk.c:108:23: error: 'struct bio' has no
-member named 'bi_sector'
-
-http://kisskb.ellerman.id.au/kisskb/buildresult/10477507/
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 71c6f2c..46f8a04 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -372,12 +372,12 @@ static int __must_push_back(struct multipath *m)
+ static int map_io(struct multipath *m, struct request *clone,
+ 		  union map_info *map_context)
+ {
+-	int r = DM_MAPIO_REMAPPED;
++	int r = DM_MAPIO_REQUEUE;
+ 	size_t nr_bytes = blk_rq_bytes(clone);
+ 	unsigned long flags;
+ 	struct pgpath *pgpath;
+ 	struct block_device *bdev;
+-	struct dm_mpath_io *mpio = map_context->ptr;
++	struct dm_mpath_io *mpio;
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+@@ -390,29 +390,31 @@ static int map_io(struct multipath *m, struct request *clone,
+ 
+ 	if (pgpath) {
+ 		if (__pgpath_busy(pgpath))
+-			r = DM_MAPIO_REQUEUE;
+-		else if (pg_ready(m)) {
++			goto out_unlock;
++
++		if (pg_ready(m)) {
++			if (set_mapinfo(m, map_context) < 0)
++				goto out_unlock;
++
+ 			bdev = pgpath->path.dev->bdev;
+ 			clone->q = bdev_get_queue(bdev);
+ 			clone->rq_disk = bdev->bd_disk;
++			clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
++			mpio = map_context->ptr;
+ 			mpio->pgpath = pgpath;
+ 			mpio->nr_bytes = nr_bytes;
+ 			if (pgpath->pg->ps.type->start_io)
+ 				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
+ 							      &pgpath->path,
+ 							      nr_bytes);
+-		} else {
+-			__pg_init_all_paths(m);
+-			r = DM_MAPIO_REQUEUE;
++			r = DM_MAPIO_REMAPPED;
++			goto out_unlock;
+ 		}
+-	} else {
+-		/* No path */
+-		if (__must_push_back(m))
+-			r = DM_MAPIO_REQUEUE;
+-		else
++		__pg_init_all_paths(m);
++	} else if (!__must_push_back(m))
+ 			r = -EIO;	/* Failed */
+-	}
+ 
++out_unlock:
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
+ 	return r;
+@@ -908,19 +910,9 @@ static void multipath_dtr(struct dm_target *ti)
+ static int multipath_map(struct dm_target *ti, struct request *clone,
+ 			 union map_info *map_context)
+ {
+-	int r;
+ 	struct multipath *m = (struct multipath *) ti->private;
+ 
+-	if (set_mapinfo(m, map_context) < 0)
+-		/* ENOMEM, requeue */
+-		return DM_MAPIO_REQUEUE;
+-
+-	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+-	r = map_io(m, clone, map_context);
+-	if (r < 0 || r == DM_MAPIO_REQUEUE)
+-		clear_mapinfo(m, map_context);
+-
+-	return r;
++	return map_io(m, clone, map_context);
+ }
+ 
+ /*
+-- 
+1.7.12.4
