@@ -1,15 +1,16 @@
-From: Nicolas Michel <be.nicolas.michel@gmail.com>
-Subject: Re: About WWID
-Date: Fri, 17 Jan 2014 20:21:32 +0100
-Message-ID: <CAO5znatU5XV4opnyWZT6EP7YK+ooTji85dXu9qzQP1PX9-45gQ@mail.gmail.com>
-References: <CAO5znavrjYwyY2=bmZ0F++ePJP3+geDhUd4DVvLL8aW25xgtGg@mail.gmail.com>
-	<3922A2F5-A049-4D48-96BB-50B2D55E33D7@purestorage.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCHv2 0/2] dm-multipath: push back requests
+ instead of queueing
+Date: Sat, 18 Jan 2014 10:41:54 -0500
+Message-ID: <20140118154154.GA18825@redhat.com>
+References: <1389955328-107148-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3922A2F5-A049-4D48-96BB-50B2D55E33D7@purestorage.com>
+Content-Disposition: inline
+In-Reply-To: <1389955328-107148-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +20,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-QnJpYW4sCgpUaGFuayB5b3UgdmVyeSBtdWNoIGZvciB0aGVzZSBpbmZvcm1hdGlvbnMuIEknbSBn
-b2luZyB0byByZWFkIHRoZQpzcGVjcyA7KSBBbmQgSSBhbHJlYWR5IHRyaWVkIHRoZSBzZ19pbnEg
-dGhhdCBJIGRpZG4ndCBrbm93IGFib3V0IQoKQmVzdCByZWdhcmRzLApOaWNvbGFzCgoyMDE0LzEv
-MTcgQnJpYW4gQnVua2VyIDxicmlhbkBwdXJlc3RvcmFnZS5jb20+Ogo+IE5pY29sYXMsCj4KPiBU
-aGUgZGV0YWlscyBvZiB0aGlzIGFyZSBzcGVsbGVkIG91dCBpbiB0aGUgU1BDLTQgU0NTSSBkb2N1
-bWVudCBhdmFpbGFibGUgZnJvbSB0MTAub3JnLiBUaGUg4oCYM+KAmSBpbiB0aGUgdmFsdWUgeW91
-IGFyZSBhc2tpbmcgYWJvdXQgdGVsbHMgd2hhdCBmb3JtYXQgdGhhdCB0aGUgdmFsdWUgaW4gcXVl
-c3Rpb24gaXMgdXNpbmcuIOKAmDPigJkgYmVpbmcg4oCYTkFB4oCZLiBUaGUg4oCYNuKAmSB0b28g
-aXMgYWxzbyBhZ2FpbiBhIGZvcm1hdCBkZXNpZ25hdGlvbiBhcyB3ZWxsLiBUaGUgcmVzdCBvZiB0
-aGUgbnVtYmVyIGNvbnRhaW5zIGEgY29tcGFueSBpZCBhbmQgdGhlbiB0aGUgcGFydCB0aGF0IGlz
-IHVuaXF1ZSB0byBhIHBhcnRpY3VsYXIgdm9sdW1lIG9uIHlvdXIgYXJyYXk6Cj4KPiBTbyBpdCBp
-czoKPgo+IOKAmDPigJkgLSBOQUEKPiDigJg24oCZIC0gTkFBCj4g4oCYMDAwMTQ04oCZIC0g4oCY
-RU1DIGNvcnBvcmF0aW9u4oCZCj4g4oCYMDAwMDAwMDEwMjA1ODA1NTk2NWY2NjBkOOKAmSAtIFNv
-bWUgdW5pcXVlIGlkIChzb21lIHBhcnQgd2lsbCBsaWtlbHkgYmUgYSBzZXJpYWwgbnVtYmVyIHlv
-dSBjYW4gc2VlIG9uIHRoZSBhcnJheSBzaWRlKQo+Cj4gTXVsdGlwYXRoaW5nIHNvZnR3YXJlIHVz
-ZXMgdGhpcyBudW1iZXIgdG8gZGV0ZXJtaW5lIGlmIGEgZGV2aWNlIGlzIGEgbmV3IGRldmljZSBv
-ciBhIHBhdGggdG8gYW4gZXhpc3Rpbmcgb25lLiBUaGUgYW5zd2VyIHRvIHlvdXIgcXVlc3Rpb24g
-aXMgdGhhdCBhIHd3aWQgaXMgbm90IGRlZmluZWQgaW4gdGhlIFNQQy00IHNwZWMgc28gd2hhdCBp
-cyByaWdodCBpcyBub3QgcmVhbGx5IHJlbGV2YW50LCBpdCBpcyBtb3JlIGp1c3QgaG93IHRoZXkg
-Y2hvb3NlIHRvIGRpc3BsYXkgdW5pcXVlbmVzcy4gbXVsdGlwYXRoIGlzIGRpc3BsYXlpbmcgdGhl
-IGVudGlyZSBkZXNpZ25hdG9yIHdoaWxlIEVNQyBpcyBzdHJpcHBpbmcgdGhlIOKAmDPigJkgZnJv
-bSB0aGUgZnJvbnQuIEVpdGhlciB3YXkgaXQgaXMgaW4gdGhlIFZQRCBwYWdlIDB4ODMgb2YgYW4g
-aW5xdWlyeSB0byB5b3VyIGRldmljZS4gWW91IGNhbiBkbyDigJhzZ19pbnEgLXAgMHg4MyBkZXZp
-Y2XigJkgd2hlcmUgZGV2aWNlIGlzIC9kZXYvKioqIHRvIHNlZSB3aGF0IEkgbWVhbi4KPgo+IFRo
-YW5rcywKPiBCcmlhbgo+Cj4gT24gSmFuIDE3LCAyMDE0LCBhdCA0OjE5IEFNLCBOaWNvbGFzIE1p
-Y2hlbCA8YmUubmljb2xhcy5taWNoZWxAZ21haWwuY29tPiB3cm90ZToKPgo+PiBIZWxsbyBndXlz
-LAo+Pgo+PiBJIG5vdGljZWQgYSBkaWZmZXJlbmNlIHdpdGggdGhlIFdXSUQgb2YgYSBtdWx0aXBh
-dGggZGV2aWNlIGFzIHJlcG9ydGVkCj4+IGJ5IHRoZSBkZXZpY2UgbWFwcGVyIG5hdGl2ZSBtdWx0
-aXBhdGgsIGFuZCBieSB0aGUgRU1DIHByb3ByaWF0YXJ5IHRvb2wKPj4gcG93ZXJtdC4gSW4gdGhl
-IGxhdHRlciBjYXNlIGl0IG1pc3NlcyBhIGxlYWRpbmcgMyAod2hpY2ggc2VlbXMgdG8gYmUKPj4g
-YW4gaW52YXJpYW50IHByZWZpeCB3aXRoIHRoZSBkZXZpY2UgbWFwcGVyKS4KPj4KPj4gRXhlbXBs
-ZSA6Cj4+Cj4+IFJlcG9ydGVkIGJ5IG11bHRpcGF0aCAtbGwgOiAzNjAwMDE0NDAwMDAwMDAxMDIw
-NTgwNTU5NjVmNjYwZDgKPj4gUmVwb3J0ZWQgYnkgcG93ZXJtdCA6ICAgICAgIDYwMDAxNDQwMDAw
-MDAwMTAyMDU4MDU1OTY1RjY2MEQ4Cj4+Cj4+IE15IHF1ZXN0aW9ucyBhcmUgOiB3aGF0IG1lYW5z
-IHRoZSBsZWFkaW5nIDMgZ2l2ZW4gYnkgdGhlIGRldmljZS1tYXBwZXIKPj4gYW5kIHdoaWNoIG9u
-ZSBpcyB0aGUgcmlnaHQgV1dJRD8KPj4KPj4gVGhhbmsgeW91IGEgbG90IDspCj4+Cj4+IC0tCj4+
-IE5pY29sYXMgTUlDSEVMCj4+Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1k
-ZXZlbEByZWRoYXQuY29tCj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbAo+Cj4gQnJpYW4gQnVua2VyCj4gYnJpYW5AcHVyZXN0b3JhZ2UuY29tCj4KPgo+
-Cj4KPiAtLQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBo
-dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCgoKLS0gCk5p
-Y29sYXMgTUlDSEVMCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Fri, Jan 17 2014 at  5:42am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> Hi all,
+> 
+> dm-multipath still carries around it's own queueing framework for
+> implementing 'queue_if_no_path'.
+> However, there is no real reason for this; we could as well
+> push back the requests onto the request_queue.
+> In doing so we can also reduce the memory pressure during
+> fail_if_no_path scenarios, as we don't have to allocate a
+> context for each request when it need to be requeued.
+> 
+> This patchset is the reworked version from the original, including
+> the review by Jun'ichi.
+
+Much appreciated.  But unfortunately it is too late for 3.14.
+
+These will be my immediate priority once I transition to 3.15
+development (likely by end of next week).
+
+Once I get these staged I'll look much closer at your "accept failed
+paths" patch: https://patchwork.kernel.org/patch/3368381/
