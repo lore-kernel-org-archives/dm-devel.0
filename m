@@ -1,16 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCHv2 0/2] dm-multipath: push back requests
- instead of queueing
-Date: Sat, 18 Jan 2014 10:41:54 -0500
-Message-ID: <20140118154154.GA18825@redhat.com>
-References: <1389955328-107148-1-git-send-email-hare@suse.de>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: dm-writeboost: Progress Report
+Date: Sun, 19 Jan 2014 10:16:56 +0900
+Message-ID: <52DB2788.40802@gmail.com>
+References: <52D0F25D.6030904@gmail.com>
+	<20140113100903.GA4984@debian>	<52D3D21B.8030408@gmail.com>
+	<061401cf10a2$e059ed90$a10dc8b0$@acm.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1389955328-107148-1-git-send-email-hare@suse.de>
+In-Reply-To: <061401cf10a2$e059ed90$a10dc8b0$@acm.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +20,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+To: henson@acm.org
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 17 2014 at  5:42am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
+Hi, Paul,
 
-> Hi all,
-> 
-> dm-multipath still carries around it's own queueing framework for
-> implementing 'queue_if_no_path'.
-> However, there is no real reason for this; we could as well
-> push back the requests onto the request_queue.
-> In doing so we can also reduce the memory pressure during
-> fail_if_no_path scenarios, as we don't have to allocate a
-> context for each request when it need to be requeued.
-> 
-> This patchset is the reworked version from the original, including
-> the review by Jun'ichi.
+> Would I be incorrect in assuming that this increased write performance comes
+> with the trade-off of a greater risk of losing data in the case of power
+> failure or crash?
+Incorrect. Performance and Robustness are irrelevant if it's designed correctly.
+Writeboost's log contains both data blocks (4KB * N) and corresponding metablock (16B for each).
+After crash, it can replay the log on the cache device and it guarantees no data lost.
+Like the usual block device, those data acked to write barrier (REQ_FUA or REQ_FLUSH) are
+guaranteed not to be lost.
 
-Much appreciated.  But unfortunately it is too late for 3.14.
+FYI,
+The worst thing in using writeboost or even other cache softwares is that the cache device
+gone out of order (which means it can neither read nor write anymore).
+The filesystem doesn't go inconsistent (need not fsck) in that worst situation is writeboost's another characteristic.
+Writeboost writes back the dirty data on the cache device in the same order they were written.
+Therefore, if the cache device is gone we can at least obtain the filesystem of the moment the last
+write-back was done.
+Read this article for SSD failure (http://lkcl.net/reports/ssd_analysis.html)
+SSDs are very likely to go insane. Use trustworthy SSD is my advice.
 
-These will be my immediate priority once I transition to 3.15
-development (likely by end of next week).
+Considering these characteristics,
+Maybe, we can call dm-writeboost "log-structured write buffer" rather than "log-structured caching".
 
-Once I get these staged I'll look much closer at your "accept failed
-paths" patch: https://patchwork.kernel.org/patch/3368381/
+Thanks for your interest,
+Akira
