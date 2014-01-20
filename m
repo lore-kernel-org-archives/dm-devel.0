@@ -1,18 +1,18 @@
 From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 2/2] dm-multipath: reduce memory pressure
- during requeuing
-Date: Mon, 20 Jan 2014 11:59:28 +0000
-Message-ID: <11AF7C027C4C02408624617A4986078401024EEB@BPXM12GP.gisp.nec.co.jp>
+Subject: Re: [PATCH 1/2] dm-multipath: push back requests instead
+ of queueing
+Date: Mon, 20 Jan 2014 11:57:17 +0000
+Message-ID: <11AF7C027C4C02408624617A4986078401024EB7@BPXM12GP.gisp.nec.co.jp>
 References: <1389955328-107148-1-git-send-email-hare@suse.de>
-	<1389955328-107148-3-git-send-email-hare@suse.de>
+	<1389955328-107148-2-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1389955328-107148-3-git-send-email-hare@suse.de>
+In-Reply-To: <1389955328-107148-2-git-send-email-hare@suse.de>
 Content-Language: ja-JP
-Content-ID: <7127D23117FC0645ACBB8D3F37AB79C9@gisp.nec.co.jp>
+Content-ID: <8787ACB685F5CB47AA33891895999AE6@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,30 +27,61 @@ Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 On 01/17/14 19:42, Hannes Reinecke wrote:
-> @@ -908,19 +910,9 @@ static void multipath_dtr(struct dm_target *ti)
->  static int multipath_map(struct dm_target *ti, struct request *clone,
->  			 union map_info *map_context)
->  {
-> -	int r;
->  	struct multipath *m = (struct multipath *) ti->private;
+> @@ -1256,7 +1188,8 @@ static void pg_init_done(void *data, int errors)
+>  		m->queue_io = 0;
 >  
-> -	if (set_mapinfo(m, map_context) < 0)
-> -		/* ENOMEM, requeue */
-> -		return DM_MAPIO_REQUEUE;
-> -
-> -	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
-> -	r = map_io(m, clone, map_context);
-> -	if (r < 0 || r == DM_MAPIO_REQUEUE)
-> -		clear_mapinfo(m, map_context);
-> -
-> -	return r;
-> +	return map_io(m, clone, map_context);
->  }
+>  	m->pg_init_delay_retry = delay_retry;
+> -	queue_work(kmultipathd, &m->process_queued_ios);
+> +	if (!m->queue_io)
+> +		dm_table_run_queue(m->ti->table);
+>  
+>  	/*
+>  	 * Wake up any thread waiting to suspend.
 
-Now multipath_map() is the only caller of map_io() and
-most part of multipath_map() is moved to map_io(),
-there is no reason to separate those functions.
-You could fold map_io() into multipath_map().
+Does pg_init retry still work with this change?
+
+I suspect it doesn't. When a retry is requested in pg_init_done(),
+m->queue_io is still 0 and somebody has to kick pg_init.
+
+Instead of replacing "process_queued_ios" work completely,
+how about keeping it around and just replacing dispatch_queued_ios() by
+dm_table_run_queue()?
+
+> @@ -1606,7 +1540,7 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+>  
+>  	spin_lock_irqsave(&m->lock, flags);
+>  
+> -	if (!m->current_pgpath)
+> +	if (!m->current_pgpath || !m->queue_io)
+>  		__choose_pgpath(m, 0);
+>  
+>  	pgpath = m->current_pgpath;
+
+Why is !m->queue_io check added here?
+
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 0704c52..291491b 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1912,6 +1912,19 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
+>  	return r;
+>  }
+>  
+> +void dm_table_run_queue(struct dm_table *t)
+> +{
+> +	struct mapped_device *md = dm_table_get_md(t);
+> +	unsigned long flags;
+> +
+> +	if (md->queue) {
+> +		spin_lock_irqsave(md->queue->queue_lock, flags);
+> +		blk_run_queue_async(md->queue);
+> +		spin_unlock_irqrestore(md->queue->queue_lock, flags);
+> +	}
+> +}
+> +EXPORT_SYMBOL_GPL(dm_table_run_queue);
+> +
+
+I think this funcion fits better in dm-table.c.
 
 -- 
 Jun'ichi Nomura, NEC Corporation
