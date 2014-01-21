@@ -1,17 +1,20 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Subject: Re: [PATCH 1/2] dm-multipath: push back requests instead
  of queueing
-Date: Mon, 20 Jan 2014 16:49:39 +0100
-Message-ID: <52DD4593.7090106@suse.de>
+Date: Tue, 21 Jan 2014 09:07:52 +0000
+Message-ID: <11AF7C027C4C02408624617A4986078401028BC8@BPXM12GP.gisp.nec.co.jp>
 References: <1389955328-107148-1-git-send-email-hare@suse.de>
 	<1389955328-107148-2-git-send-email-hare@suse.de>
 	<11AF7C027C4C02408624617A4986078401024EB7@BPXM12GP.gisp.nec.co.jp>
+	<52DD4593.7090106@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A4986078401024EB7@BPXM12GP.gisp.nec.co.jp>
+In-Reply-To: <52DD4593.7090106@suse.de>
+Content-Language: ja-JP
+Content-ID: <9A737F1B09CDD046B0DF4603D02A1F7F@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,53 +24,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, device-mapper development <dm-devel@redhat.com>
 Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDEvMjAvMjAxNCAxMjo1NyBQTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDEvMTcv
-MTQgMTk6NDIsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQEAgLTEyNTYsNyArMTE4OCw4IEBA
-IHN0YXRpYyB2b2lkIHBnX2luaXRfZG9uZSh2b2lkICpkYXRhLCBpbnQgZXJyb3JzKQo+PiAgCQlt
-LT5xdWV1ZV9pbyA9IDA7Cj4+ICAKPj4gIAltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVsYXlf
-cmV0cnk7Cj4+IC0JcXVldWVfd29yayhrbXVsdGlwYXRoZCwgJm0tPnByb2Nlc3NfcXVldWVkX2lv
-cyk7Cj4+ICsJaWYgKCFtLT5xdWV1ZV9pbykKPj4gKwkJZG1fdGFibGVfcnVuX3F1ZXVlKG0tPnRp
-LT50YWJsZSk7Cj4+ICAKPj4gIAkvKgo+PiAgCSAqIFdha2UgdXAgYW55IHRocmVhZCB3YWl0aW5n
-IHRvIHN1c3BlbmQuCj4gCj4gRG9lcyBwZ19pbml0IHJldHJ5IHN0aWxsIHdvcmsgd2l0aCB0aGlz
-IGNoYW5nZT8KPiAKPiBJIHN1c3BlY3QgaXQgZG9lc24ndC4gV2hlbiBhIHJldHJ5IGlzIHJlcXVl
-c3RlZCBpbiBwZ19pbml0X2RvbmUoKSwKPiBtLT5xdWV1ZV9pbyBpcyBzdGlsbCAwIGFuZCBzb21l
-Ym9keSBoYXMgdG8ga2ljayBwZ19pbml0Lgo+IAo+IEluc3RlYWQgb2YgcmVwbGFjaW5nICJwcm9j
-ZXNzX3F1ZXVlZF9pb3MiIHdvcmsgY29tcGxldGVseSwKPiBob3cgYWJvdXQga2VlcGluZyBpdCBh
-cm91bmQgYW5kIGp1c3QgcmVwbGFjaW5nIGRpc3BhdGNoX3F1ZXVlZF9pb3MoKSBieQo+IGRtX3Rh
-YmxlX3J1bl9xdWV1ZSgpPwo+IApJJ2QgcmF0aGVyIHByZWZlciB0byBzY2hlZHVsZSB0aGUgYWN0
-aXZhdGVfcGF0aCgpIHdvcmtxdWV1ZSBpdGVtCmRpcmVjdGx5OyBubyBuZWVkIHRvIGludm9sdmUg
-eWV0IGFub3RoZXIgd29ya3F1ZXVlIGhlcmUuCkFuZCB3ZSBhbHJlYWR5IGtub3cgd2hpY2ggcGF0
-aCB0byBhY3RpdmF0ZS4KCkJ1dCB5ZWFoLCBpdCBsb29rcyBhcyBpZiB3ZSBuZWVkIHRvIHJlc2No
-ZWR1bGUgYWN0aXZhdGVfcGF0aCgpIGhlcmUuCgo+PiBAQCAtMTYwNiw3ICsxNTQwLDcgQEAgc3Rh
-dGljIGludCBtdWx0aXBhdGhfaW9jdGwoc3RydWN0IGRtX3RhcmdldCAqdGksIHVuc2lnbmVkIGlu
-dCBjbWQsCj4+ICAKPj4gIAlzcGluX2xvY2tfaXJxc2F2ZSgmbS0+bG9jaywgZmxhZ3MpOwo+PiAg
-Cj4+IC0JaWYgKCFtLT5jdXJyZW50X3BncGF0aCkKPj4gKwlpZiAoIW0tPmN1cnJlbnRfcGdwYXRo
-IHx8ICFtLT5xdWV1ZV9pbykKPj4gIAkJX19jaG9vc2VfcGdwYXRoKG0sIDApOwo+PiAgCj4+ICAJ
-cGdwYXRoID0gbS0+Y3VycmVudF9wZ3BhdGg7Cj4gCj4gV2h5IGlzICFtLT5xdWV1ZV9pbyBjaGVj
-ayBhZGRlZCBoZXJlPwo+IApZb3UgYXJlIHJpZ2h0LCB0aGlzIGlzIGEgZGlmZmVyZW50IHBhdGNo
-LgpJJ2xsIGJlIHNwbGl0dGluZyBpdCB1cC4KCj4+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2Rt
-LmMgYi9kcml2ZXJzL21kL2RtLmMKPj4gaW5kZXggMDcwNGM1Mi4uMjkxNDkxYiAxMDA2NDQKPj4g
-LS0tIGEvZHJpdmVycy9tZC9kbS5jCj4+ICsrKyBiL2RyaXZlcnMvbWQvZG0uYwo+PiBAQCAtMTkx
-Miw2ICsxOTEyLDE5IEBAIHN0YXRpYyBpbnQgZG1fYW55X2Nvbmdlc3RlZCh2b2lkICpjb25nZXN0
-ZWRfZGF0YSwgaW50IGJkaV9iaXRzKQo+PiAgCXJldHVybiByOwo+PiAgfQo+PiAgCj4+ICt2b2lk
-IGRtX3RhYmxlX3J1bl9xdWV1ZShzdHJ1Y3QgZG1fdGFibGUgKnQpCj4+ICt7Cj4+ICsJc3RydWN0
-IG1hcHBlZF9kZXZpY2UgKm1kID0gZG1fdGFibGVfZ2V0X21kKHQpOwo+PiArCXVuc2lnbmVkIGxv
-bmcgZmxhZ3M7Cj4+ICsKPj4gKwlpZiAobWQtPnF1ZXVlKSB7Cj4+ICsJCXNwaW5fbG9ja19pcnFz
-YXZlKG1kLT5xdWV1ZS0+cXVldWVfbG9jaywgZmxhZ3MpOwo+PiArCQlibGtfcnVuX3F1ZXVlX2Fz
-eW5jKG1kLT5xdWV1ZSk7Cj4+ICsJCXNwaW5fdW5sb2NrX2lycXJlc3RvcmUobWQtPnF1ZXVlLT5x
-dWV1ZV9sb2NrLCBmbGFncyk7Cj4+ICsJfQo+PiArfQo+PiArRVhQT1JUX1NZTUJPTF9HUEwoZG1f
-dGFibGVfcnVuX3F1ZXVlKTsKPj4gKwo+IAo+IEkgdGhpbmsgdGhpcyBmdW5jaW9uIGZpdHMgYmV0
-dGVyIGluIGRtLXRhYmxlLmMuCj4gClNvIEkndmUgdGhvdWdodCwgYnV0IHN0cnVjdCBtYXBwZWRf
-ZGV2aWNlIGlzIGludGVybmFsIHRvIGRtLmMKQW5kIGhhdmluZyB5ZXQgYW5vdGhlciB3cmFwcGVy
-IGp1c3QgdG8gY2lyY3VtdmVudCB0aGUgbGF5ZXJpbmcKc2VlbWVkIGEgYml0IGV4Y2Vzc2l2ZS4K
-CkJ1dCBJIGRvIHdoYXRldmVyIGRlZW1lZCBuZWNlc3NhcnkgYnkgdGhlIHBvd2VycyB0aGF0IGJl
-IC4uCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJp
-ZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0Ug
-TElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBK
-LiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVy
-ZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 01/21/14 00:49, Hannes Reinecke wrote:
+> On 01/20/2014 12:57 PM, Junichi Nomura wrote:
+>> On 01/17/14 19:42, Hannes Reinecke wrote:
+>>> @@ -1256,7 +1188,8 @@ static void pg_init_done(void *data, int errors)
+>>>  		m->queue_io = 0;
+>>>  
+>>>  	m->pg_init_delay_retry = delay_retry;
+>>> -	queue_work(kmultipathd, &m->process_queued_ios);
+>>> +	if (!m->queue_io)
+>>> +		dm_table_run_queue(m->ti->table);
+>>>  
+>>>  	/*
+>>>  	 * Wake up any thread waiting to suspend.
+>>
+>> Does pg_init retry still work with this change?
+>>
+>> I suspect it doesn't. When a retry is requested in pg_init_done(),
+>> m->queue_io is still 0 and somebody has to kick pg_init.
+>>
+>> Instead of replacing "process_queued_ios" work completely,
+>> how about keeping it around and just replacing dispatch_queued_ios() by
+>> dm_table_run_queue()?
+>>
+> I'd rather prefer to schedule the activate_path() workqueue item
+> directly; no need to involve yet another workqueue here.
+
+I would prefer it, too.
+I thought it would make review easier if you could split this patch in 2;
+one for removing the internal queue, the other for optimizing
+process_queued_ios work.
+
+> And we already know which path to activate.
+>
+> But yeah, it looks as if we need to reschedule activate_path() here.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
