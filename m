@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [LVM PATCH 3/4] cache:  New 'cache' segment type
-Date: Thu, 23 Jan 2014 09:05:47 -0600
-Message-ID: <1390489548-18076-4-git-send-email-jbrassow@redhat.com>
+Subject: [LVM PATCH 2/4] cache:  New 'cachepool' segment type
+Date: Thu, 23 Jan 2014 09:05:46 -0600
+Message-ID: <1390489548-18076-3-git-send-email-jbrassow@redhat.com>
 References: <1390489548-18076-1-git-send-email-jbrassow@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,271 +22,318 @@ To: dm-devel@redhat.com
 Cc: agk@redhat.com, zkabelac@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds the cache segment type - the second of two necessary
-to create cache logical volumes.  This segment type references the
-cachepool (the small fast device) and the origin (the large slow device);
-linking them to create the cache device.  The cache device is the
-hierarchical device-mapper device that the user ulitmately makes use
-of.
+This patch adds the new cachepool segment type - the first of two
+necessary to eventually create 'cache' logical volumes.  In addition
+to the new segment type, updates to makefiles, configure files, the
+lv_segment struct, and some necessary libdevmapper flags.
 
-The cache segment sources the information necessary to construct the
-device-mapper cache target from the origin and cachepool segments to
-which it links.
+The cachepool is the LV and corresponding segment type that will hold
+all information pertinent to the cache itself - it's size, cachemode,
+cache policy, core arguments (like migration_threshold), etc.
 ---
- libdm/libdevmapper.h  |   22 ++++++++
- libdm/libdm-deptree.c |  137 ++++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 153 insertions(+), 6 deletions(-)
+ configure                        |   32 +++++++++++++++++++++++++++++++-
+ configure.in                     |   22 ++++++++++++++++++++++
+ lib/Makefile.in                  |   11 ++++++++++-
+ lib/commands/toolcontext.c       |    9 +++++++--
+ lib/metadata/metadata-exported.h |    7 +++++++
+ lib/metadata/segtype.h           |   10 ++++++++++
+ lib/misc/configure.h.in          |    3 +++
+ libdm/libdevmapper.h             |    4 ++++
+ 8 files changed, 94 insertions(+), 4 deletions(-)
 
+diff --git a/configure b/configure
+index a156460..20d99dd 100755
+--- a/configure
++++ b/configure
+@@ -606,6 +606,7 @@ kernelvsn
+ missingkernel
+ kerneldir
+ interface
++CACHE
+ CMIRRORD_PIDFILE
+ CLVMD_PIDFILE
+ LVMETAD_PIDFILE
+@@ -839,6 +840,7 @@ with_thin
+ with_thin_check
+ with_thin_dump
+ with_thin_repair
++with_cache
+ enable_readline
+ enable_realtime
+ enable_ocf
+@@ -1615,6 +1617,7 @@ Optional Packages:
+   --with-mirrors=TYPE     mirror support: internal/shared/none
+                           [[TYPE=internal]]
+   --with-raid=TYPE        raid support: internal/shared/none [[TYPE=internal]]
++  --with-cache=TYPE       cache support: internal/shared/none [[TYPE=internal]]
+   --with-replicators=TYPE replicator support: internal/shared/none
+                           [[TYPE=none]]
+   --with-thin=TYPE        thin provisioning support: internal/shared/none
+@@ -7117,6 +7120,31 @@ $as_echo "#define RAID_INTERNAL 1" >>confdefs.h
+ fi
+ 
+ ################################################################################
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to include cache" >&5
++$as_echo_n "checking whether to include cache... " >&6; }
++
++# Check whether --with-cache was given.
++if test "${with_cache+set}" = set; then :
++  withval=$with_cache; CACHE=$withval
++else
++  CACHE=internal
++fi
++
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CACHE" >&5
++$as_echo "$CACHE" >&6; }
++
++if [ "x$CACHE" != xnone -a "x$CACHE" != xinternal -a "x$CACHE" != xshared ];
++ then  as_fn_error $? "--with-cache parameter invalid
++" "$LINENO" 5
++fi;
++
++if test x$CACHE = xinternal; then
++
++$as_echo "#define CACHE_INTERNAL 1" >>confdefs.h
++
++fi
++
++################################################################################
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to include replicators" >&5
+ $as_echo_n "checking whether to include replicators... " >&6; }
+ 
+@@ -10150,6 +10178,7 @@ fi
+ if [ \( "x$LVM1" = xshared -o "x$POOL" = xshared -o "x$CLUSTER" = xshared \
+       -o "x$SNAPSHOTS" = xshared -o "x$MIRRORS" = xshared \
+       -o "x$RAID" = xshared \
++      -o "x$CACHE" = xshared \
+       \) -a "x$STATIC_LINK" = xyes ];
+  then  as_fn_error $? "Features cannot be 'shared' when building statically
+ " "$LINENO" 5
+@@ -11424,7 +11453,7 @@ LVM_LIBAPI=`echo "$VER" | $AWK -F '[()]' '{print $2}'`
+ 
+ 
+ ################################################################################
+-ac_config_files="$ac_config_files Makefile make.tmpl daemons/Makefile daemons/clvmd/Makefile daemons/cmirrord/Makefile daemons/dmeventd/Makefile daemons/dmeventd/libdevmapper-event.pc daemons/dmeventd/plugins/Makefile daemons/dmeventd/plugins/lvm2/Makefile daemons/dmeventd/plugins/raid/Makefile daemons/dmeventd/plugins/mirror/Makefile daemons/dmeventd/plugins/snapshot/Makefile daemons/dmeventd/plugins/thin/Makefile daemons/lvmetad/Makefile conf/Makefile conf/example.conf conf/default.profile include/.symlinks include/Makefile lib/Makefile lib/format1/Makefile lib/format_pool/Makefile lib/locking/Makefile lib/mirror/Makefile lib/replicator/Makefile lib/misc/lvm-version.h lib/raid/Makefile lib/snapshot/Makefile lib/thin/Makefile libdaemon/Makefile libdaemon/client/Makefile libdaemon/server/
+ Makefile libdm/Makefile libdm/libdevmapper.pc liblvm/Makefile liblvm/liblvm2app.pc man/Makefile po/Makefile python/Makefile python/setup.py scripts/blkdeactivate.sh scripts/blk_availability!
+ _init_red_hat scripts/blk_availability_systemd_red_hat.service scripts/clvmd_init_red_hat scripts/cmirrord_init_red_hat scripts/lvm2_lvmetad_init_red_hat scripts/lvm2_lvmetad_systemd_red_hat.socket scripts/lvm2_lvmetad_systemd_red_hat.service scripts/lvm2_pvscan_systemd_red_hat@.service scripts/lvm2_monitoring_init_red_hat scripts/dm_event_systemd_red_hat.socket scripts/dm_event_systemd_red_hat.service scripts/lvm2_monitoring_systemd_red_hat.service scripts/lvm2_tmpfiles_red_hat.conf scripts/Makefile test/Makefile test/api/Makefile test/unit/Makefile tools/Makefile udev/Makefile unit-tests/datastruct/Makefile unit-tests/regex/Makefile unit-tests/mm/Makefile"
++ac_config_files="$ac_config_files Makefile make.tmpl daemons/Makefile daemons/clvmd/Makefile daemons/cmirrord/Makefile daemons/dmeventd/Makefile daemons/dmeventd/libdevmapper-event.pc daemons/dmeventd/plugins/Makefile daemons/dmeventd/plugins/lvm2/Makefile daemons/dmeventd/plugins/raid/Makefile daemons/dmeventd/plugins/mirror/Makefile daemons/dmeventd/plugins/snapshot/Makefile daemons/dmeventd/plugins/thin/Makefile daemons/lvmetad/Makefile conf/Makefile conf/example.conf conf/default.profile include/.symlinks include/Makefile lib/Makefile lib/format1/Makefile lib/format_pool/Makefile lib/locking/Makefile lib/mirror/Makefile lib/replicator/Makefile lib/misc/lvm-version.h lib/raid/Makefile lib/cache_segtype/Makefile lib/snapshot/Makefile lib/thin/Makefile libdaemon/Makefile libdaemon/client
+ /Makefile libdaemon/server/Makefile libdm/Makefile libdm/libdevmapper.pc liblvm/Makefile liblvm/liblvm2app.pc man/Makefile po/Makefile python/Makefile python/setup.py scripts/blkdeactivate.!
+ sh scripts/blk_availability_init_red_hat scripts/blk_availability_systemd_red_hat.service scripts/clvmd_init_red_hat scripts/cmirrord_init_red_hat scripts/lvm2_lvmetad_init_red_hat scripts/lvm2_lvmetad_systemd_red_hat.socket scripts/lvm2_lvmetad_systemd_red_hat.service scripts/lvm2_pvscan_systemd_red_hat@.service scripts/lvm2_monitoring_init_red_hat scripts/dm_event_systemd_red_hat.socket scripts/dm_event_systemd_red_hat.service scripts/lvm2_monitoring_systemd_red_hat.service scripts/lvm2_tmpfiles_red_hat.conf scripts/Makefile test/Makefile test/api/Makefile test/unit/Makefile tools/Makefile udev/Makefile unit-tests/datastruct/Makefile unit-tests/regex/Makefile unit-tests/mm/Makefile"
+ 
+ cat >confcache <<\_ACEOF
+ # This file is a shell script that caches the results of configure
+@@ -12140,6 +12169,7 @@ do
+     "lib/replicator/Makefile") CONFIG_FILES="$CONFIG_FILES lib/replicator/Makefile" ;;
+     "lib/misc/lvm-version.h") CONFIG_FILES="$CONFIG_FILES lib/misc/lvm-version.h" ;;
+     "lib/raid/Makefile") CONFIG_FILES="$CONFIG_FILES lib/raid/Makefile" ;;
++    "lib/cache_segtype/Makefile") CONFIG_FILES="$CONFIG_FILES lib/cache_segtype/Makefile" ;;
+     "lib/snapshot/Makefile") CONFIG_FILES="$CONFIG_FILES lib/snapshot/Makefile" ;;
+     "lib/thin/Makefile") CONFIG_FILES="$CONFIG_FILES lib/thin/Makefile" ;;
+     "libdaemon/Makefile") CONFIG_FILES="$CONFIG_FILES libdaemon/Makefile" ;;
+diff --git a/configure.in b/configure.in
+index 3e0e508..7b56b13 100644
+--- a/configure.in
++++ b/configure.in
+@@ -476,6 +476,25 @@ AC_DEFINE_UNQUOTED([THIN_DUMP_CMD], ["$THIN_DUMP_CMD"],
+ AC_DEFINE_UNQUOTED([THIN_REPAIR_CMD], ["$THIN_REPAIR_CMD"],
+ 		   [The path to 'thin_repair', if available.])
+ 
++################################################################################
++dnl -- cache inclusion type
++AC_MSG_CHECKING(whether to include cache)
++AC_ARG_WITH(cache,
++	    AC_HELP_STRING([--with-cache=TYPE],
++			   [cache support: internal/shared/none
++			    [[TYPE=internal]]]),
++	    CACHE=$withval, CACHE=internal)
++AC_MSG_RESULT($CACHE)
++
++if [[ "x$CACHE" != xnone -a "x$CACHE" != xinternal -a "x$CACHE" != xshared ]];
++ then  AC_MSG_ERROR(
++--with-cache parameter invalid
++)
++fi;
++
++if test x$CACHE = xinternal; then
++	AC_DEFINE([CACHE_INTERNAL], 1, [Define to 1 to include built-in support for cache.])
++fi
+ 
+ ################################################################################
+ dnl -- Disable readline
+@@ -1241,6 +1260,7 @@ dnl -- Check for shared/static conflicts
+ if [[ \( "x$LVM1" = xshared -o "x$POOL" = xshared -o "x$CLUSTER" = xshared \
+       -o "x$SNAPSHOTS" = xshared -o "x$MIRRORS" = xshared \
+       -o "x$RAID" = xshared \
++      -o "x$CACHE" = xshared \
+       \) -a "x$STATIC_LINK" = xyes ]];
+  then  AC_MSG_ERROR(
+ Features cannot be 'shared' when building statically
+@@ -1596,6 +1616,7 @@ AC_SUBST(BLKID_WIPING)
+ AC_SUBST(BUILD_CMIRRORD)
+ AC_SUBST(BUILD_DMEVENTD)
+ AC_SUBST(BUILD_LVMETAD)
++AC_SUBST(CACHE)
+ AC_SUBST(CFLAGS)
+ AC_SUBST(CFLOW_CMD)
+ AC_SUBST(CLDFLAGS)
+@@ -1752,6 +1773,7 @@ lib/misc/lvm-version.h
+ lib/raid/Makefile
+ lib/snapshot/Makefile
+ lib/thin/Makefile
++lib/cache_segtype/Makefile
+ libdaemon/Makefile
+ libdaemon/client/Makefile
+ libdaemon/server/Makefile
+diff --git a/lib/Makefile.in b/lib/Makefile.in
+index c3ace5f..3808269 100644
+--- a/lib/Makefile.in
++++ b/lib/Makefile.in
+@@ -1,6 +1,6 @@
+ #
+ # Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
+-# Copyright (C) 2004-2013 Red Hat, Inc. All rights reserved.
++# Copyright (C) 2004-2014 Red Hat, Inc. All rights reserved.
+ #
+ # This file is part of LVM2.
+ #
+@@ -44,6 +44,10 @@ ifeq ("@THIN@", "shared")
+   SUBDIRS += thin
+ endif
+ 
++ifeq ("@CACHE@", "shared")
++  SUBDIRS += cache_segtype
++endif
++
+ SOURCES =\
+ 	activate/activate.c \
+ 	cache/lvmcache.c \
+@@ -165,6 +169,10 @@ ifeq ("@THIN@", "internal")
+   SOURCES += thin/thin.c
+ endif
+ 
++ifeq ("@CACHE@", "internal")
++  SOURCES += cache_segtype/cache.c
++endif
++
+ ifeq ("@DEVMAPPER@", "yes")
+   SOURCES +=\
+ 	activate/dev_manager.c \
+@@ -199,6 +207,7 @@ ifeq ($(MAKECMDGOALS),distclean)
+ 	raid \
+ 	replicator \
+ 	thin \
++	cache_segtype \
+ 	locking
+ endif
+ 
+diff --git a/lib/commands/toolcontext.c b/lib/commands/toolcontext.c
+index 9d6ef5e..a709284 100644
+--- a/lib/commands/toolcontext.c
++++ b/lib/commands/toolcontext.c
+@@ -1,6 +1,6 @@
+-		/*
++/*
+  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
+- * Copyright (C) 2004-2012 Red Hat, Inc. All rights reserved.
++ * Copyright (C) 2004-2014 Red Hat, Inc. All rights reserved.
+  *
+  * This file is part of LVM2.
+  *
+@@ -1181,6 +1181,11 @@ static int _init_segtypes(struct cmd_context *cmd)
+ 		return 0;
+ #endif
+ 
++#ifdef CACHE_INTERNAL
++	if (!init_cache_segtypes(cmd, &seglib))
++		return 0;
++#endif
++
+ #ifdef HAVE_LIBDL
+ 	/* Load any formats in shared libs unless static */
+ 	if (!is_static() &&
+diff --git a/lib/metadata/metadata-exported.h b/lib/metadata/metadata-exported.h
+index 6e7987d..f2a08c6 100644
+--- a/lib/metadata/metadata-exported.h
++++ b/lib/metadata/metadata-exported.h
+@@ -384,6 +384,13 @@ struct lv_segment {
+ 	struct logical_volume *pool_lv;		/* For thin */
+ 	uint32_t device_id;			/* For thin, 24bit */
+ 
++	uint32_t feature_flags;			/* For cache */
++	int core_argc;				/* For cache */
++	char **core_argv;			/* For cache */
++	char *policy_name;			/* For cache */
++	int policy_argc;			/* For cache */
++	char **policy_argv;			/* For cache */
++
+ 	struct logical_volume *replicator;/* For replicator-devs - link to replicator LV */
+ 	struct logical_volume *rlog_lv;	/* For replicators */
+ 	const char *rlog_type;		/* For replicators */
+diff --git a/lib/metadata/segtype.h b/lib/metadata/segtype.h
+index 2c02d1b..b5ce503 100644
+--- a/lib/metadata/segtype.h
++++ b/lib/metadata/segtype.h
+@@ -41,8 +41,12 @@ struct dev_manager;
+ #define SEG_RAID		0x00000400U
+ #define SEG_THIN_POOL		0x00000800U
+ #define SEG_THIN_VOLUME		0x00001000U
++#define SEG_CACHE		0x00002000U
++#define SEG_CACHEPOOL		0x00004000U
+ #define SEG_UNKNOWN		0x80000000U
+ 
++#define segtype_is_cache(segtype)	((segtype)->flags & SEG_CACHE ? 1 : 0)
++#define segtype_is_cachepool(segtype)	((segtype)->flags & SEG_CACHEPOOL ? 1 : 0)
+ #define segtype_is_mirrored(segtype)	((segtype)->flags & SEG_AREAS_MIRRORED ? 1 : 0)
+ #define segtype_is_raid(segtype)	((segtype)->flags & SEG_RAID ? 1 : 0)
+ #define segtype_is_striped(segtype)	((segtype)->flags & SEG_AREAS_STRIPED ? 1 : 0)
+@@ -51,6 +55,8 @@ struct dev_manager;
+ #define segtype_is_thin_volume(segtype)	((segtype)->flags & SEG_THIN_VOLUME ? 1 : 0)
+ #define segtype_is_virtual(segtype)	((segtype)->flags & SEG_VIRTUAL ? 1 : 0)
+ 
++#define seg_is_cache(seg)	segtype_is_cache((seg)->segtype)
++#define seg_is_cachepool(seg)	segtype_is_cachepool((seg)->segtype)
+ #define seg_is_linear(seg)	(seg_is_striped(seg) && ((seg)->area_count == 1))
+ #define seg_is_mirrored(seg)	segtype_is_mirrored((seg)->segtype)
+ #define seg_is_raid(seg)	segtype_is_raid((seg)->segtype)
+@@ -147,6 +153,10 @@ int init_replicator_segtype(struct cmd_context *cmd, struct segtype_library *seg
+ int init_thin_segtypes(struct cmd_context *cmd, struct segtype_library *seglib);
+ #endif
+ 
++#ifdef CACHE_INTERNAL
++int init_cache_segtypes(struct cmd_context *cmd, struct segtype_library *seglib);
++#endif
++
+ #ifdef SNAPSHOT_INTERNAL
+ struct segment_type *init_snapshot_segtype(struct cmd_context *cmd);
+ #endif
+diff --git a/lib/misc/configure.h.in b/lib/misc/configure.h.in
+index 4e9ffd1..0acb9b7 100644
+--- a/lib/misc/configure.h.in
++++ b/lib/misc/configure.h.in
+@@ -558,6 +558,9 @@
+ /* The path to 'thin_repair', if available. */
+ #undef THIN_REPAIR_CMD
+ 
++/* Define to 1 to include built-in support for cache[pool] segment types. */
++#undef CACHE_INTERNAL
++
+ /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+ #undef TIME_WITH_SYS_TIME
+ 
 diff --git a/libdm/libdevmapper.h b/libdm/libdevmapper.h
-index 3074500..ae9a91a 100644
+index 3bf8bd6..3074500 100644
 --- a/libdm/libdevmapper.h
 +++ b/libdm/libdevmapper.h
-@@ -715,6 +715,28 @@ int dm_tree_node_add_raid_target_with_params(struct dm_tree_node *node,
- /* Cache feature_flags */
- #define DM_CACHE_FEATURE_WRITEBACK    0x00000001
- #define DM_CACHE_FEATURE_WRITETHROUGH 0x00000002
-+struct dm_tree_node_cache_params {
-+	uint32_t version;
-+
-+	uint32_t chunk_size;
-+	uint32_t feature_flags; /* DM_CACHE_FEATURE_* */
-+
-+	int core_argc;
-+	char **core_argv;
-+
-+	char *policy_name;
-+	int   policy_argc;
-+	char **policy_argv;
-+
-+	const char *data_uuid;
-+	const char *metadata_uuid;
-+	const char *origin_uuid;
-+	/* 'version == 0' end */
-+};
-+
-+int dm_tree_node_add_cache_target(struct dm_tree_node *node,
-+				  uint64_t size,
-+				  struct dm_tree_node_cache_params *p);
+@@ -712,6 +712,10 @@ int dm_tree_node_add_raid_target_with_params(struct dm_tree_node *node,
+ 					     uint64_t size,
+ 					     struct dm_tree_node_raid_params *p);
  
++/* Cache feature_flags */
++#define DM_CACHE_FEATURE_WRITEBACK    0x00000001
++#define DM_CACHE_FEATURE_WRITETHROUGH 0x00000002
++
  /*
   * Replicator operation mode
-diff --git a/libdm/libdm-deptree.c b/libdm/libdm-deptree.c
-index 42bb9e7..d3f6640 100644
---- a/libdm/libdm-deptree.c
-+++ b/libdm/libdm-deptree.c
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (C) 2005-2013 Red Hat, Inc. All rights reserved.
-+ * Copyright (C) 2005-2014 Red Hat, Inc. All rights reserved.
-  *
-  * This file is part of the device-mapper userspace tools.
-  *
-@@ -27,6 +27,7 @@
- 
- /* Supported segment types */
- enum {
-+	SEG_CACHE,
- 	SEG_CRYPT,
- 	SEG_ERROR,
- 	SEG_LINEAR,
-@@ -59,6 +60,7 @@ struct {
- 	unsigned type;
- 	const char *target;
- } dm_segtypes[] = {
-+	{ SEG_CACHE, "cache" },
- 	{ SEG_CRYPT, "crypt" },
- 	{ SEG_ERROR, "error" },
- 	{ SEG_LINEAR, "linear" },
-@@ -158,18 +160,24 @@ struct load_segment {
- 	uint32_t stripe_size;		/* Striped + raid */
- 
- 	int persistent;			/* Snapshot */
--	uint32_t chunk_size;		/* Snapshot */
-+	uint32_t chunk_size;		/* Snapshot + cache */
- 	struct dm_tree_node *cow;	/* Snapshot */
--	struct dm_tree_node *origin;	/* Snapshot + Snapshot origin */
-+	struct dm_tree_node *origin;	/* Snapshot + Snapshot origin + Cache */
- 	struct dm_tree_node *merge;	/* Snapshot */
- 
- 	struct dm_tree_node *log;	/* Mirror + Replicator */
- 	uint32_t region_size;		/* Mirror + raid */
- 	unsigned clustered;		/* Mirror */
- 	unsigned mirror_area_count;	/* Mirror */
--	uint32_t flags;			/* Mirror log */
-+	uint32_t flags;			/* Mirror + raid + Cache */
- 	char *uuid;			/* Clustered mirror log */
- 
-+	int   core_argc;		/* Cache */
-+	char **core_argv;		/* Cache */
-+	char *policy_name;		/* Cache */
-+	int   policy_argc;		/* Cache */
-+	char **policy_argv;		/* Cache */
-+
- 	const char *cipher;		/* Crypt */
- 	const char *chainmode;		/* Crypt */
- 	const char *iv;			/* Crypt */
-@@ -189,7 +197,7 @@ struct load_segment {
- 	uint32_t max_recovery_rate;	/* raid kB/sec/disk */
- 	uint32_t min_recovery_rate;	/* raid kB/sec/disk */
- 
--	struct dm_tree_node *metadata;	/* Thin_pool */
-+	struct dm_tree_node *metadata;	/* Thin_pool + Cache */
- 	struct dm_tree_node *pool;	/* Thin_pool, Thin */
- 	struct dm_tree_node *external;	/* Thin */
- 	struct dm_list thin_messages;	/* Thin_pool */
-@@ -2262,6 +2270,70 @@ static int _raid_emit_segment_line(struct dm_task *dmt, uint32_t major,
- 	return 1;
- }
- 
-+static int _cache_emit_segment_line(struct dm_task *dmt,
-+				    struct load_segment *seg,
-+				    char *params, size_t paramsize)
-+{
-+	int i, pos = 0;
-+	unsigned feature_count;
-+	struct seg_area *area;
-+	char data[DM_FORMAT_DEV_BUFSIZE];
-+	char metadata[DM_FORMAT_DEV_BUFSIZE];
-+	char origin[DM_FORMAT_DEV_BUFSIZE];
-+
-+	/* Metadata Dev */
-+	if (!_build_dev_string(metadata, sizeof(metadata), seg->metadata))
-+		return_0;
-+	EMIT_PARAMS(pos, " %s", metadata);
-+
-+	/* Cache Dev */
-+	if (!_build_dev_string(data, sizeof(origin), seg->pool))
-+		return_0;
-+	EMIT_PARAMS(pos, " %s", data);
-+
-+	/* Origin Dev */
-+	dm_list_iterate_items(area, &seg->areas)
-+		break; /* There is only ever 1 area */
-+	if (!_build_dev_string(origin, sizeof(data), area->dev_node))
-+		return_0;
-+	EMIT_PARAMS(pos, " %s", origin);
-+
-+	/* Chunk size */
-+	EMIT_PARAMS(pos, " %u", seg->chunk_size);
-+
-+	/* Features */
-+	feature_count = hweight32(seg->flags);
-+	EMIT_PARAMS(pos, " %d", feature_count);
-+	if (seg->flags & DM_CACHE_FEATURE_WRITETHROUGH)
-+		EMIT_PARAMS(pos, " writethrough");
-+	else if (seg->flags & DM_CACHE_FEATURE_WRITEBACK)
-+		EMIT_PARAMS(pos, " writeback");
-+
-+	/* Core Arguments (like 'migration_threshold') */
-+	if (seg->core_argc) {
-+		EMIT_PARAMS(pos, " %d", seg->core_argc);
-+		for (i = 0; i < seg->core_argc; i++)
-+			EMIT_PARAMS(pos, " %s", seg->core_argv[i]);
-+	}
-+
-+	/* Cache Policy */
-+	if (!seg->policy_name)
-+		EMIT_PARAMS(pos, " default 0");
-+	else {
-+		EMIT_PARAMS(pos, " %s %d", seg->policy_name, seg->policy_argc);
-+		if (seg->policy_argc % 2) {
-+			log_error(INTERNAL_ERROR
-+				  "Cache policy arguments must be in "
-+				  "<key> <value> pairs");
-+			return 0;
-+		}
-+		for (i = 0; i < seg->policy_argc; i++)
-+			EMIT_PARAMS(pos, " %s", seg->policy_argv[i]);
-+	}
-+
-+	return 1;
-+}
-+
- static int _thin_pool_emit_segment_line(struct dm_task *dmt,
- 					struct load_segment *seg,
- 					char *params, size_t paramsize)
-@@ -2398,6 +2470,10 @@ static int _emit_segment_line(struct dm_task *dmt, uint32_t major,
- 		if (!_thin_emit_segment_line(dmt, seg, params, paramsize))
- 			return_0;
- 		break;
-+	case SEG_CACHE:
-+		if (!_cache_emit_segment_line(dmt, seg, params, paramsize))
-+			return_0;
-+		break;
- 	}
- 
- 	switch(seg->type) {
-@@ -2409,6 +2485,7 @@ static int _emit_segment_line(struct dm_task *dmt, uint32_t major,
- 	case SEG_ZERO:
- 	case SEG_THIN_POOL:
- 	case SEG_THIN:
-+	case SEG_CACHE:
- 		break;
- 	case SEG_CRYPT:
- 	case SEG_LINEAR:
-@@ -3045,7 +3122,6 @@ int dm_tree_node_add_raid_target(struct dm_tree_node *node,
- 	return dm_tree_node_add_raid_target_with_params(node, size, &params);
- }
- 
--
- /*
-  * Various RAID status versions include:
-  * Versions < 1.5.0 (4 fields):
-@@ -3124,6 +3200,55 @@ bad:
- 	return 0;
- }
- 
-+int dm_tree_node_add_cache_target(struct dm_tree_node *node,
-+				  uint64_t size,
-+				  struct dm_tree_node_cache_params *p)
-+{
-+	int i;
-+	struct load_segment *seg = NULL;
-+
-+	for (i = 0; dm_segtypes[i].target && !seg; i++) {
-+		if (strcmp("cache", dm_segtypes[i].target))
-+			continue;
-+		if (!(seg = _add_segment(node, dm_segtypes[i].type, size)))
-+			return_0;
-+	}
-+
-+	if (!seg)
-+		return_0;
-+
-+	if (!(seg->pool = dm_tree_find_node_by_uuid(node->dtree,
-+						    p->data_uuid))) {
-+		log_error("Missing cache's data uuid, %s",
-+			  p->data_uuid);
-+		return 0;
-+	}
-+	if (!_link_tree_nodes(node, seg->pool))
-+		return_0;
-+
-+	if (!(seg->metadata = dm_tree_find_node_by_uuid(node->dtree,
-+							p->metadata_uuid))) {
-+		log_error("Missing cache's metadata uuid, %s",
-+			  p->metadata_uuid);
-+		return 0;
-+	}
-+	if (!_link_tree_nodes(node, seg->metadata))
-+		return_0;
-+
-+	seg->chunk_size = p->chunk_size;
-+
-+	seg->flags = p->feature_flags;
-+
-+	seg->core_argc = p->core_argc;
-+	seg->core_argv = p->core_argv;
-+
-+	seg->policy_name = p->policy_name;
-+	seg->policy_argc = p->policy_argc;
-+	seg->policy_argv = p->policy_argv;
-+
-+	return 1;
-+}
-+
- int dm_tree_node_add_replicator_target(struct dm_tree_node *node,
- 				       uint64_t size,
- 				       const char *rlog_uuid,
+  * Note: API for Replicator is not yet stable
 -- 
 1.7.7.6
