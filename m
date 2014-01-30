@@ -1,13 +1,17 @@
-From: Jose Castillo <jcastillo@redhat.com>
-Subject: [RFC PATCH] dm-multipath: Print more explicit warnings
-	when dealing with multipath messages
-Date: Wed, 29 Jan 2014 17:52:45 +0100
-Message-ID: <1391014365-4180-1-git-send-email-jcastillo@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCHv2 0/2] dm-multipath: push back requests
+ instead of queueing
+Date: Wed, 29 Jan 2014 20:38:58 -0500
+Message-ID: <20140130013858.GA22108@redhat.com>
+References: <1389955328-107148-1-git-send-email-hare@suse.de>
+	<20140118154154.GA18825@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20140118154154.GA18825@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,41 +21,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-The following warning message "Unrecognised multipath message received" is displayed
-in two different situations inside the function multipath_message: when
-the number of arguments passed is invalid and when the string passed in argv[0]
-is not recognized. With this patch, both warnings are more specific to each case
-and is easier to identify where the problem is.
+On Sat, Jan 18 2014 at 10:41am -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Signed-off-by: Jose Castillo <jcastillo@redhat.com>
----
- drivers/md/dm-mpath.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+> On Fri, Jan 17 2014 at  5:42am -0500,
+> Hannes Reinecke <hare@suse.de> wrote:
+> 
+> > Hi all,
+> > 
+> > dm-multipath still carries around it's own queueing framework for
+> > implementing 'queue_if_no_path'.
+> > However, there is no real reason for this; we could as well
+> > push back the requests onto the request_queue.
+> > In doing so we can also reduce the memory pressure during
+> > fail_if_no_path scenarios, as we don't have to allocate a
+> > context for each request when it need to be requeued.
+> > 
+> > This patchset is the reworked version from the original, including
+> > the review by Jun'ichi.
+> 
+> Much appreciated.  But unfortunately it is too late for 3.14.
+> 
+> These will be my immediate priority once I transition to 3.15
+> development (likely by end of next week).
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 6eb9dc9..95c4044 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1552,7 +1552,7 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv)
- 	}
- 
- 	if (argc != 2) {
--		DMWARN("Unrecognised multipath message received.");
-+		DMWARN("Invalid multipath message arguments. Expected 2 arguments, got %d.", argc);
- 		goto out;
- 	}
- 
-@@ -1570,7 +1570,7 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv)
- 	else if (!strcasecmp(argv[0], "fail_path"))
- 		action = fail_path;
- 	else {
--		DMWARN("Unrecognised multipath message received.");
-+		DMWARN("Unrecognised multipath message received: %s", argv[0]);
- 		goto out;
- 	}
- 
--- 
-1.8.4.2
+Hi Hannes,
+
+Do you have a new patchset for this work based on the review Junichi
+provided?  I'd like to review/stage your latest once you have it.
+
+Let me know, thanks.
+Mike
