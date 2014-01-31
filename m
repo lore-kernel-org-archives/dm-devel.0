@@ -1,41 +1,50 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] block devices: validate block device capacity
-Date: Fri, 31 Jan 2014 03:20:17 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1401310316560.21451@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1401301531040.29912@file01.intranet.prod.int.rdu2.redhat.com>    <1391122163.2181.103.camel@dabdike.int.hansenpartnership.com>    <alpine.LRH.2.02.1401301805590.19506@file01.intranet.prod.int.rdu2.redhat.com>  
- <1391125027.2181.114.camel@dabdike.int.hansenpartnership.com>   <alpine.LRH.2.02.1401301905520.25766@file01.intranet.prod.int.rdu2.redhat.com>  <1391132609.2181.131.camel@dabdike.int.hansenpartnership.com>  <alpine.LRH.2.02.1401302116180.9767@file01.intranet.prod.int.rdu2.redhat.com>
- <1391147127.2181.159.camel@dabdike.int.hansenpartnership.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCHv3 0/5] dm-multipath: push back requests instead
+	of queueing
+Date: Fri, 31 Jan 2014 10:10:39 +0100
+Message-ID: <1391159444-17987-1-git-send-email-hare@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1391147127.2181.159.camel@dabdike.int.hansenpartnership.com>
-Sender: owner-linux-mm@kvack.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, linux-ide@vger.kernel.org, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
+Hi all,
 
+dm-multipath still carries around it's own queueing framework for
+implementing 'queue_if_no_path'.
+However, there is no real reason for this; we could as well
+push back the requests onto the request_queue.
+In doing so we can also reduce the memory pressure during
+fail_if_no_path scenarios, as we don't have to allocate a
+context for each request when it need to be requeued.
 
-On Thu, 30 Jan 2014, James Bottomley wrote:
+This patchset is the third version, including
+the review by Jun'ichi Nomura and suggestions from Mike Snitzer.
 
-> > So, if you want 64-bit page offsets, you need to increase pgoff_t size, 
-> > and that will increase the limit for both files and block devices.
-> 
-> No.  The point is the page cache mapping of the device uses a
-> manufactured inode saved in the backing device. It looks fixable in the
-> buffer code before the page cache gets involved.
+Hannes Reinecke (5):
+  dm-multipath: Do not call pg_init twice
+  dm-multipath: push back requests instead of queueing
+  dm-multipath: remove process_queued_ios()
+  dm-multipath: reduce memory pressure during requeuing
+  dm-multipath: remove map_io()
 
-So if you think you can support 16TiB devices and leave pgoff_t 32-bit, 
-send a patch that does it.
+ drivers/md/dm-mpath.c         | 214 +++++++++++++++---------------------------
+ drivers/md/dm.c               |  13 +++
+ include/linux/device-mapper.h |   1 +
+ 3 files changed, 88 insertions(+), 140 deletions(-)
 
-Until you make it, you should apply the patch that I sent, that prevents 
-kernel lockups or data corruption when the user uses 16TiB device on 
-32-bit kernel.
-
-Mikulas
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+1.7.12.4
