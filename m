@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/5] dm-multipath: Do not call pg_init twice
-Date: Fri, 31 Jan 2014 10:10:40 +0100
-Message-ID: <1391159444-17987-2-git-send-email-hare@suse.de>
+Subject: [PATCH 5/5] dm-multipath: remove map_io()
+Date: Fri, 31 Jan 2014 10:10:44 +0100
+Message-ID: <1391159444-17987-6-git-send-email-hare@suse.de>
 References: <1391159444-17987-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,28 +22,51 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-When pg_init is running we shouldn't be calling the same
-routine twice; we need to wait for the first pg_init to
-complete.
+multipath_map() is now just a wrapper around map_io(), so we
+can fold both into multipath_map().
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-mpath.c | 3 +++
- 1 file changed, 3 insertions(+)
+ drivers/md/dm-mpath.c | 19 ++++++-------------
+ 1 file changed, 6 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 6eb9dc9..d45290a 100644
+index 7146f7b..4974aac 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
- 	struct pgpath *pgpath;
- 	unsigned long pg_init_delay = 0;
+@@ -369,9 +369,13 @@ static int __must_push_back(struct multipath *m)
  
-+	if (m->pg_init_in_progress || m->pg_init_disabled)
-+		return;
-+
- 	m->pg_init_count++;
- 	m->pg_init_required = 0;
- 	if (m->pg_init_delay_retry)
+ #define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required)
+ 
+-static int map_io(struct multipath *m, struct request *clone,
+-		  union map_info *map_context)
++/*
++ * Map cloned requests
++ */
++static int multipath_map(struct dm_target *ti, struct request *clone,
++			 union map_info *map_context)
+ {
++	struct multipath *m = (struct multipath *) ti->private;
+ 	int r = DM_MAPIO_REQUEUE;
+ 	size_t nr_bytes = blk_rq_bytes(clone);
+ 	unsigned long flags;
+@@ -905,17 +909,6 @@ static void multipath_dtr(struct dm_target *ti)
+ }
+ 
+ /*
+- * Map cloned requests
+- */
+-static int multipath_map(struct dm_target *ti, struct request *clone,
+-			 union map_info *map_context)
+-{
+-	struct multipath *m = (struct multipath *) ti->private;
+-
+-	return map_io(m, clone, map_context);
+-}
+-
+-/*
+  * Take a path out of use.
+  */
+ static int fail_path(struct pgpath *pgpath)
 -- 
 1.7.12.4
