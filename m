@@ -1,78 +1,67 @@
-From: Marc C <marc.ceeeee@gmail.com>
-Subject: Re: [LSF/MM TOPIC][ATTEND] Plumbing I/O Cache / Tiered Storage Hints
-Date: Fri, 31 Jan 2014 10:32:47 -0800
-Message-ID: <52EBEC4F.3010709@gmail.com>
-References: <CAA9_cmcCAOwFE7j8-80zMmgvgP02XVmLjepFJPpEn_ZANHn1zA@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 2/2] dm cache: do not add migration to completed
+	list before unhooking bio
+Date: Fri, 31 Jan 2014 17:34:30 -0500
+Message-ID: <1391207670-28361-2-git-send-email-snitzer@redhat.com>
+References: <1391207670-28361-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <CAA9_cmcCAOwFE7j8-80zMmgvgP02XVmLjepFJPpEn_ZANHn1zA@mail.gmail.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>, lsf-pc@lists.linux-foundation.org
-Cc: IDE/ATA development list <linux-ide@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, linux-scsi <linux-scsi@vger.kernel.org>, Jason B Akers <jason.b.akers@intel.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1391207670-28361-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+When completing an overwrite bio ,in overwrite_endio(), the associated
+migration should not be added to the 'completed_migrations' until the
+bio's fields are restored with dm_unhook_bio().
 
->> [2] T13 Hybrid Information Feature
->
-> Correction, the hinting scheme is defined by SATA-IO in SATA 3.2
+Otherwise, do_worker() can race to process 'completed_migrations' before
+dm_unhook_bio() -- so the bio's bi_end_io is incorrect.  This is
+unlikely to cause any problems given the current code but should be
+fixed on the basis of correctness.
 
-I, too, would also like to know of the direction for supporting hybrid
-hinting, since we already have support for SEND/RECV FPDMA queued in the
-kernel. The new commands were used initially for queued TRIMs, but would
-also be very useful on SSHD devices, especially since the commands
-allows initiators to provide "hints" on whether data is considered "hot"
-or "cold", without requiring I/O.
+Also, the cache's spinlock only needs to be held when manipulating the
+'completed_migrations' list -- other changes don't need protection.
 
--Marc
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Acked-by: Joe Thornber <ejt@redhat.com>
+---
+ drivers/md/dm-cache-target.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-On 01/31/2014 10:18 AM, Dan Williams wrote:
-> On Tue, Jan 28, 2014 at 2:57 PM, Dan Williams <dan.j.williams@intel.com> wrote:
->> In addition to disk drives with internally tiered-storage (solid-state
->> + magnetic media) the kernel has also grown native I/O-caching /
->> tiered-storage implementations in bcache and dm-cache.
->>
->> Currently, all these solutions depend on heuristics to determine what
->> tier the data referenced in an I/O belongs.  However, the presence of
->> hinting proposals from SCSI [1], ATA [2], and bcache [3] indicate that
->> these devices (hardware or virtual) want to consume explicit hints
->> indicating the value of caching data in a higher performing tier.
->>
->> At LSF I want to discuss options and opportunities for plumbing cache
->> hints from userspace, through the I/O stack to devices.  My colleague,
->> Jason Akers, is also interested in this discussion as he is
->> investigating how to exploit these hints from userspace.  I
->> participated in the LSF 2012 discussion of this topic, see that it was
->> raised again at LSF 2013, and note that we have not settled on an
->> enabling path.  What's new for this year is an effort to set aside,
->> for now, the deeper complexities of the device specification proposals
->> and focus on a minimal set of hints that can be specified per-process
->> (ionice) and maybe per-file (fadvise).
->>
->> My suspicion is that AIO attributes is useful for applications that
->> want access to the full range of access hints exposed by a device.
->> However, for the general buffered-I/O / tiered-storage case, a small
->> set of hints achieves the bulk of the value.
->>
->> I am also interested in:
->> Volatile ranges
->> SMR Enabling
->> Integrity passthrough
->>
->> --
->> Dan
->>
->> [1] T10 LBA Access Hints
->> [2] T13 Hybrid Information Feature
-> 
-> Correction, the hinting scheme is defined by SATA-IO in SATA 3.2
-> 
->> [3] AIO Attributes: http://marc.info/?l=linux-aio&m=136580574523674&w=2
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ide" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index cd24a05..ed4cffe 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -1002,13 +1002,15 @@ static void overwrite_endio(struct bio *bio, int err)
+ 	struct per_bio_data *pb = get_per_bio_data(bio, pb_data_size);
+ 	unsigned long flags;
+ 
++	dm_unhook_bio(&pb->hook_info, bio);
++
+ 	if (err)
+ 		mg->err = true;
+ 
++	mg->requeue_holder = false;
++
+ 	spin_lock_irqsave(&cache->lock, flags);
+ 	list_add_tail(&mg->list, &cache->completed_migrations);
+-	dm_unhook_bio(&pb->hook_info, bio);
+-	mg->requeue_holder = false;
+ 	spin_unlock_irqrestore(&cache->lock, flags);
+ 
+ 	wake_worker(cache);
+-- 
+1.8.1.4
