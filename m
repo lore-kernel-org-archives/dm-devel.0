@@ -1,16 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 3/5] dm-multipath: remove process_queued_ios()
-Date: Fri, 31 Jan 2014 15:55:20 +0100
-Message-ID: <52EBB958.5090803@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/5] dm-multipath: push back requests instead
+	of queueing
+Date: Fri, 31 Jan 2014 10:40:42 -0500
+Message-ID: <20140131154042.GA17221@redhat.com>
 References: <1391159444-17987-1-git-send-email-hare@suse.de>
-	<1391159444-17987-4-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A49860784010535C4@BPXM12GP.gisp.nec.co.jp>
+	<1391159444-17987-3-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A49860784010535C4@BPXM12GP.gisp.nec.co.jp>
+Content-Disposition: inline
+In-Reply-To: <1391159444-17987-3-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +21,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDEvMzEvMjAxNCAxMDo0MyBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDEvMzEv
-MTQgMTg6MTAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQEAgLTEyMTcsOSArMTE4NSwyMSBA
-QCBzdGF0aWMgdm9pZCBwZ19pbml0X2RvbmUodm9pZCAqZGF0YSwgaW50IGVycm9ycykKPj4gIAo+
-PiAgCWlmICghbS0+cGdfaW5pdF9yZXF1aXJlZCkKPj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+PiAt
-Cj4+IC0JbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+PiAtCXF1ZXVlX3dv
-cmsoa211bHRpcGF0aGQsICZtLT5wcm9jZXNzX3F1ZXVlZF9pb3MpOwo+PiArCWVsc2Ugewo+PiAr
-CQlpZiAoIXBnX2luaXRfZGVsYXkpIHsKPj4gKwkJCW0tPnBnX2luaXRfZGVsYXlfcmV0cnkgPSAw
-Owo+PiArCQkJLyoKPj4gKwkJCSAqIEFkZCBhIHNtYWxsIGRlbGF5IHRvIG1vdmUgdGhlCj4+ICsJ
-CQkgKiBhY3RpdmF0aW9uIHRvIGEgd29ya3F1ZXVlCj4+ICsJCQkgKi8KPj4gKwkJCXBnX2luaXRf
-ZGVsYXkgPSBIWiAvIDUwOwo+PiArCQl9IGVsc2UKPj4gKwkJCW0tPnBnX2luaXRfZGVsYXlfcmV0
-cnkgPSAxOwo+PiArCQlpZiAocXVldWVfZGVsYXllZF93b3JrKGttcGF0aF9oYW5kbGVyZCwgJnBn
-cGF0aC0+YWN0aXZhdGVfcGF0aCwKPj4gKwkJCQkgICAgICAgcGdfaW5pdF9kZWxheSkpCj4+ICsJ
-CQltLT5wZ19pbml0X2luX3Byb2dyZXNzKys7Cj4+ICsJCWdvdG8gb3V0Owo+PiArCX0KPiAKPiBU
-aGlzIGNvZGUgaXMgY2FsbGVkIHdoZW4gcGdfaW5pdF9wcm9ncmVzcyBiZWNvbWVzIDAsCj4gdGhh
-dCBtZWFucyBpdCBpcyBwb3NzaWJsZSB0aGF0IG11bHRpcGxlIHBncGF0aHMgaGF2ZSByZXF1ZXN0
-ZWQgcmV0cmllcy4KPiBTbyB5b3UgaGF2ZSB0byBhY3RpdmF0ZV9wYXRoIGZvciBhbGwgbm9uLWFj
-dGl2ZSBwZ3BhdGggaW4gdGhpcyBwZywKPiBsaWtlIF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBkb2Vz
-IGluIHRoZSBjdXJyZW50IGNvZGUuCj4gCk5vdCBuZWNlc3NhcmlseS4gU0NTSV9ESF9SRVRSWSAo
-aW5pdGlhbGx5KSBpcyBwZXItcGF0aCwgc28gaXQncyB3ZWxsCmZlYXNpYmxlIHRoYXQgcGdfaW5p
-dCBvbiB0aGUgZmlyc3QgcGF0aCByZXR1cm5zIFNDU0lfREhfT0ssIGFuZApwZ19pbml0IG9uIHRo
-ZSBvdGhlciBwYXRoIHJldHVybnMgU0NTSV9ESF9SRVRSWS4KCj4gQWxzbywgeW91IGFyZW4ndCBj
-bGVhcmluZyBwZ19pbml0X3JlcXVpcmVkIGhlcmUuCj4gSSB0aGluayBpdCBjYXVzZXMgZXh0cmEg
-cGdfaW5pdCB1bm5lY2Vzc2FyaWx5Lgo+IApJbmRlZWQuIEknbGwgbmVlZCB0byBmaXggdGhpcyB1
-cC4KCj4gV2hhdCBkbyB5b3UgdGhpbmsgaWYgd2UganVzdCBjYWxsIF9fcGdfaW5pdF9hbGxfcGF0
-aHMoKSBoZXJlCj4gaW5zdGVhZCBvZiBvcGVuIGNvZGluZyBpdD8KPiAKVGhhdCBkZXBlbmRzIG9u
-IHRoZSBpbnRlbmRlZCBwb2xpY3kuCgpQcm9ibGVtIGhlcmUgaXMgdGhhdCBwZ19pbml0X2RvbmUo
-KSBpcyBwZXIgcGF0aCwgc28gYXQgZmFjZSB2YWx1ZQpTQ1NJX0RIX1JFVFJZIGlzIHBlciBwYXRo
-LCB0b28uClNvIGZyb20gdGhhdCB3ZSBzaG91bGQgYmUgcmV0cnlpbmcgdGhpcyBwYXRoIChhbmQg
-dGhpcyBwYXRoIG9ubHkpLgpIZW5jZSBpdCB3b3VsZCBiZSBjb3JyZWN0IHRvIGNhbGwgcXVldWVf
-ZGVsYXllZF93b3JrIGRpcmVjdGx5LgoKSG93ZXZlciwgdHlwaWNhbGx5IGFueSBwZ19pbml0IGFm
-ZmVjdHMgX2V2ZXJ5XyBwYXRoIGluIHRoZSBtdWx0aXBhdGgKZGV2aWNlIChhY3RpdmUgcGF0aHMg
-YmVjb21lIHBhc3NpdmUgYW5kIHZpY2UgdmVyc2EpLgpXaGljaCBzZWVtcyB0byBiZSB0aGUgaW50
-ZW5kZWQgdXNhZ2UsIGFzIHdlJ3JlIGNoZWNraW5nIGZvcgpwZ19pbml0X2luX3Byb2dyZXNzIHBy
-aW9yIHRvIGludm9raW5nIHF1ZXVlX2RlbGF5ZWRfd29yaygpLgoKQnV0IF9pZl8gd2UgYXNzdW1l
-IHRoYXQsIHRoZW4gd2Ugb25seSBuZWVkIHRvIHNlbmQgYSBfc2luZ2xlXwpwZ19pbml0LCBhcyB0
-aGlzIHdpbGwgc3dpdGNoIGFsbCBwYXRocy4gU28gYWdhaW4sIGEgY2FsbCB0bwpfX3BnX2luaXRf
-YWxsX3BhdGhzIHdpbGwgbm90IGRvIHRoZSBjb3JyZWN0IHRoaW5nIGFzIGl0J2xsCnNlbmQgYWN0
-aXZhdGlvbnMgdG8gX2V2ZXJ5XyBhY3RpdmUgcGF0aC4KCihBbmQsIGluIGZhY3QsIHdlJ3JlIHRy
-eWluZyByZWFsbHkgaGFyZCBpbiBzY3NpX2RoX3JkYWMKYW5kIHNjc2lfZGhfYWx1YSB0byBidW5j
-aCB0b2dldGhlciBhbGwgdGhlIHZhcmlvdXMgcGdfaW5pdApyZXF1ZXN0cyBwcmVjaXNlbHkgZm9y
-IHRoZSBjaXRlZCByZWFzb24pLgoKU28gbXkgaW5jbGluYXRpb24gaGVyZSB3b3VsZCBiZSB0byB0
-cmVhdCBTQ1NJX0RIX1JFVFJZCmFzIF9wZXIgcGF0aF8sIGFuZCByZXRyeSBvbmx5IHRoaXMgc3Bl
-Y2lmaWMgcGF0aC4KSUUgcmVtb3ZpbmcgdGhlIGNoZWNrIHRvIHBnX2luaXRfaW5fcHJvZ3Jlc3Mg
-YW5kIGNhbGwKcXVldWVfZGVsYXllZF93b3JrKCkgZGlyZWN0bHkuCgpJTUhPIHRoaXMgd291bGQg
-aW1wb3NlIHRoZSBsZWFzdCByZXN0cmljdGlvbiBvbgp0aGUgaW50ZXJuYWwgd29ya2luZ3Mgb2Yg
-dGhlIHZhcmlvdXMgZGV2aWNlIGhhbmRsZXJzLgoKV2hhdCBkbyB5b3UgdGhpbms/CgpDaGVlcnMs
-CgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdl
-CmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVj
-dHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBH
-dWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Fri, Jan 31 2014 at  4:10am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> There is no reason why multipath needs to queue requests
+> internally for queue_if_no_path or pg_init; we should
+> rather push them back onto the request queue.
+> 
+> And while we're at it we can simplify the conditional
+> statement in map_io() to make it easier to read.
+> 
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  drivers/md/dm-mpath.c         | 115 ++++++++++++++----------------------------
+>  drivers/md/dm.c               |  13 +++++
+>  include/linux/device-mapper.h |   1 +
+>  3 files changed, 52 insertions(+), 77 deletions(-)
+
+...
+
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 0704c52..291491b 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1912,6 +1912,19 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
+>  	return r;
+>  }
+>  
+> +void dm_table_run_queue(struct dm_table *t)
+> +{
+> +	struct mapped_device *md = dm_table_get_md(t);
+> +	unsigned long flags;
+> +
+> +	if (md->queue) {
+> +		spin_lock_irqsave(md->queue->queue_lock, flags);
+> +		blk_run_queue_async(md->queue);
+> +		spin_unlock_irqrestore(md->queue->queue_lock, flags);
+> +	}
+> +}
+> +EXPORT_SYMBOL_GPL(dm_table_run_queue);
+> +
+
+I think I agree with Junichi's previous point that this should live in
+dm-table.c.  You don't need the mapped_device, only the associated
+request_queue, so... I know I implemented something like
+dm_get_md_queue() before, but obviously it never went in for whatever
+reason.
+
+Anyway, I think something like this would be ideal (I renamed to
+dm_table_run_md_queue_async).  Please feel free to fold this in and
+repost with v4 of your patchset (assuming you'll be fixing up patch 3
+after you get Jun'ichi's feedback):
+
+ drivers/md/dm-table.c |   14 ++++++++++++++
+ drivers/md/dm.c       |    5 +++++
+ drivers/md/dm.h       |    1 +
+ 3 files changed, 20 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 6a7f2b8..72362ce 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1618,6 +1618,20 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
+ }
+ EXPORT_SYMBOL(dm_table_get_md);
+ 
++void dm_table_run_md_queue_async(struct dm_table *t)
++{
++	struct mapped_device *md = dm_table_get_md(t);
++	struct request_queue *queue = dm_get_md_queue(md);
++	unsigned long flags;
++
++	if (queue) {
++		spin_lock_irqsave(queue->queue_lock, flags);
++		blk_run_queue_async(queue);
++		spin_unlock_irqrestore(queue->queue_lock, flags);
++	}
++}
++EXPORT_SYMBOL(dm_table_run_md_queue_async);
++
+ static int device_discard_capable(struct dm_target *ti, struct dm_dev *dev,
+ 				  sector_t start, sector_t len, void *data)
+ {
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index b49c762..10cae7f 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -475,6 +475,11 @@ sector_t dm_get_size(struct mapped_device *md)
+ 	return get_capacity(md->disk);
+ }
+ 
++struct request_queue *dm_get_md_queue(struct mapped_device *md)
++{
++	return md->queue;
++}
++
+ struct dm_stats *dm_get_stats(struct mapped_device *md)
+ {
+ 	return &md->stats;
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index c4569f0..1b2ca8a 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -189,6 +189,7 @@ int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only
+ int dm_cancel_deferred_remove(struct mapped_device *md);
+ int dm_request_based(struct mapped_device *md);
+ sector_t dm_get_size(struct mapped_device *md);
++struct request_queue *dm_get_md_queue(struct mapped_device *md);
+ struct dm_stats *dm_get_stats(struct mapped_device *md);
+ 
+ int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
