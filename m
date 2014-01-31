@@ -1,17 +1,16 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 3/5] dm-multipath: remove process_queued_ios()
-Date: Fri, 31 Jan 2014 09:43:00 +0000
-Message-ID: <11AF7C027C4C02408624617A49860784010535C4@BPXM12GP.gisp.nec.co.jp>
+Date: Fri, 31 Jan 2014 15:55:20 +0100
+Message-ID: <52EBB958.5090803@suse.de>
 References: <1391159444-17987-1-git-send-email-hare@suse.de>
 	<1391159444-17987-4-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A49860784010535C4@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391159444-17987-4-git-send-email-hare@suse.de>
-Content-Language: ja-JP
-Content-ID: <A83D56AF2E993747BEAF4E988641B2C6@gisp.nec.co.jp>
+In-Reply-To: <11AF7C027C4C02408624617A49860784010535C4@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,44 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/31/14 18:10, Hannes Reinecke wrote:
-> @@ -1217,9 +1185,21 @@ static void pg_init_done(void *data, int errors)
->  
->  	if (!m->pg_init_required)
->  		m->queue_io = 0;
-> -
-> -	m->pg_init_delay_retry = delay_retry;
-> -	queue_work(kmultipathd, &m->process_queued_ios);
-> +	else {
-> +		if (!pg_init_delay) {
-> +			m->pg_init_delay_retry = 0;
-> +			/*
-> +			 * Add a small delay to move the
-> +			 * activation to a workqueue
-> +			 */
-> +			pg_init_delay = HZ / 50;
-> +		} else
-> +			m->pg_init_delay_retry = 1;
-> +		if (queue_delayed_work(kmpath_handlerd, &pgpath->activate_path,
-> +				       pg_init_delay))
-> +			m->pg_init_in_progress++;
-> +		goto out;
-> +	}
-
-This code is called when pg_init_progress becomes 0,
-that means it is possible that multiple pgpaths have requested retries.
-So you have to activate_path for all non-active pgpath in this pg,
-like __pg_init_all_paths() does in the current code.
-
-Also, you aren't clearing pg_init_required here.
-I think it causes extra pg_init unnecessarily.
-
-What do you think if we just call __pg_init_all_paths() here
-instead of open coding it?
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMDEvMzEvMjAxNCAxMDo0MyBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDEvMzEv
+MTQgMTg6MTAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQEAgLTEyMTcsOSArMTE4NSwyMSBA
+QCBzdGF0aWMgdm9pZCBwZ19pbml0X2RvbmUodm9pZCAqZGF0YSwgaW50IGVycm9ycykKPj4gIAo+
+PiAgCWlmICghbS0+cGdfaW5pdF9yZXF1aXJlZCkKPj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+PiAt
+Cj4+IC0JbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+PiAtCXF1ZXVlX3dv
+cmsoa211bHRpcGF0aGQsICZtLT5wcm9jZXNzX3F1ZXVlZF9pb3MpOwo+PiArCWVsc2Ugewo+PiAr
+CQlpZiAoIXBnX2luaXRfZGVsYXkpIHsKPj4gKwkJCW0tPnBnX2luaXRfZGVsYXlfcmV0cnkgPSAw
+Owo+PiArCQkJLyoKPj4gKwkJCSAqIEFkZCBhIHNtYWxsIGRlbGF5IHRvIG1vdmUgdGhlCj4+ICsJ
+CQkgKiBhY3RpdmF0aW9uIHRvIGEgd29ya3F1ZXVlCj4+ICsJCQkgKi8KPj4gKwkJCXBnX2luaXRf
+ZGVsYXkgPSBIWiAvIDUwOwo+PiArCQl9IGVsc2UKPj4gKwkJCW0tPnBnX2luaXRfZGVsYXlfcmV0
+cnkgPSAxOwo+PiArCQlpZiAocXVldWVfZGVsYXllZF93b3JrKGttcGF0aF9oYW5kbGVyZCwgJnBn
+cGF0aC0+YWN0aXZhdGVfcGF0aCwKPj4gKwkJCQkgICAgICAgcGdfaW5pdF9kZWxheSkpCj4+ICsJ
+CQltLT5wZ19pbml0X2luX3Byb2dyZXNzKys7Cj4+ICsJCWdvdG8gb3V0Owo+PiArCX0KPiAKPiBU
+aGlzIGNvZGUgaXMgY2FsbGVkIHdoZW4gcGdfaW5pdF9wcm9ncmVzcyBiZWNvbWVzIDAsCj4gdGhh
+dCBtZWFucyBpdCBpcyBwb3NzaWJsZSB0aGF0IG11bHRpcGxlIHBncGF0aHMgaGF2ZSByZXF1ZXN0
+ZWQgcmV0cmllcy4KPiBTbyB5b3UgaGF2ZSB0byBhY3RpdmF0ZV9wYXRoIGZvciBhbGwgbm9uLWFj
+dGl2ZSBwZ3BhdGggaW4gdGhpcyBwZywKPiBsaWtlIF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBkb2Vz
+IGluIHRoZSBjdXJyZW50IGNvZGUuCj4gCk5vdCBuZWNlc3NhcmlseS4gU0NTSV9ESF9SRVRSWSAo
+aW5pdGlhbGx5KSBpcyBwZXItcGF0aCwgc28gaXQncyB3ZWxsCmZlYXNpYmxlIHRoYXQgcGdfaW5p
+dCBvbiB0aGUgZmlyc3QgcGF0aCByZXR1cm5zIFNDU0lfREhfT0ssIGFuZApwZ19pbml0IG9uIHRo
+ZSBvdGhlciBwYXRoIHJldHVybnMgU0NTSV9ESF9SRVRSWS4KCj4gQWxzbywgeW91IGFyZW4ndCBj
+bGVhcmluZyBwZ19pbml0X3JlcXVpcmVkIGhlcmUuCj4gSSB0aGluayBpdCBjYXVzZXMgZXh0cmEg
+cGdfaW5pdCB1bm5lY2Vzc2FyaWx5Lgo+IApJbmRlZWQuIEknbGwgbmVlZCB0byBmaXggdGhpcyB1
+cC4KCj4gV2hhdCBkbyB5b3UgdGhpbmsgaWYgd2UganVzdCBjYWxsIF9fcGdfaW5pdF9hbGxfcGF0
+aHMoKSBoZXJlCj4gaW5zdGVhZCBvZiBvcGVuIGNvZGluZyBpdD8KPiAKVGhhdCBkZXBlbmRzIG9u
+IHRoZSBpbnRlbmRlZCBwb2xpY3kuCgpQcm9ibGVtIGhlcmUgaXMgdGhhdCBwZ19pbml0X2RvbmUo
+KSBpcyBwZXIgcGF0aCwgc28gYXQgZmFjZSB2YWx1ZQpTQ1NJX0RIX1JFVFJZIGlzIHBlciBwYXRo
+LCB0b28uClNvIGZyb20gdGhhdCB3ZSBzaG91bGQgYmUgcmV0cnlpbmcgdGhpcyBwYXRoIChhbmQg
+dGhpcyBwYXRoIG9ubHkpLgpIZW5jZSBpdCB3b3VsZCBiZSBjb3JyZWN0IHRvIGNhbGwgcXVldWVf
+ZGVsYXllZF93b3JrIGRpcmVjdGx5LgoKSG93ZXZlciwgdHlwaWNhbGx5IGFueSBwZ19pbml0IGFm
+ZmVjdHMgX2V2ZXJ5XyBwYXRoIGluIHRoZSBtdWx0aXBhdGgKZGV2aWNlIChhY3RpdmUgcGF0aHMg
+YmVjb21lIHBhc3NpdmUgYW5kIHZpY2UgdmVyc2EpLgpXaGljaCBzZWVtcyB0byBiZSB0aGUgaW50
+ZW5kZWQgdXNhZ2UsIGFzIHdlJ3JlIGNoZWNraW5nIGZvcgpwZ19pbml0X2luX3Byb2dyZXNzIHBy
+aW9yIHRvIGludm9raW5nIHF1ZXVlX2RlbGF5ZWRfd29yaygpLgoKQnV0IF9pZl8gd2UgYXNzdW1l
+IHRoYXQsIHRoZW4gd2Ugb25seSBuZWVkIHRvIHNlbmQgYSBfc2luZ2xlXwpwZ19pbml0LCBhcyB0
+aGlzIHdpbGwgc3dpdGNoIGFsbCBwYXRocy4gU28gYWdhaW4sIGEgY2FsbCB0bwpfX3BnX2luaXRf
+YWxsX3BhdGhzIHdpbGwgbm90IGRvIHRoZSBjb3JyZWN0IHRoaW5nIGFzIGl0J2xsCnNlbmQgYWN0
+aXZhdGlvbnMgdG8gX2V2ZXJ5XyBhY3RpdmUgcGF0aC4KCihBbmQsIGluIGZhY3QsIHdlJ3JlIHRy
+eWluZyByZWFsbHkgaGFyZCBpbiBzY3NpX2RoX3JkYWMKYW5kIHNjc2lfZGhfYWx1YSB0byBidW5j
+aCB0b2dldGhlciBhbGwgdGhlIHZhcmlvdXMgcGdfaW5pdApyZXF1ZXN0cyBwcmVjaXNlbHkgZm9y
+IHRoZSBjaXRlZCByZWFzb24pLgoKU28gbXkgaW5jbGluYXRpb24gaGVyZSB3b3VsZCBiZSB0byB0
+cmVhdCBTQ1NJX0RIX1JFVFJZCmFzIF9wZXIgcGF0aF8sIGFuZCByZXRyeSBvbmx5IHRoaXMgc3Bl
+Y2lmaWMgcGF0aC4KSUUgcmVtb3ZpbmcgdGhlIGNoZWNrIHRvIHBnX2luaXRfaW5fcHJvZ3Jlc3Mg
+YW5kIGNhbGwKcXVldWVfZGVsYXllZF93b3JrKCkgZGlyZWN0bHkuCgpJTUhPIHRoaXMgd291bGQg
+aW1wb3NlIHRoZSBsZWFzdCByZXN0cmljdGlvbiBvbgp0aGUgaW50ZXJuYWwgd29ya2luZ3Mgb2Yg
+dGhlIHZhcmlvdXMgZGV2aWNlIGhhbmRsZXJzLgoKV2hhdCBkbyB5b3UgdGhpbms/CgpDaGVlcnMs
+CgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdl
+CmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVj
+dHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBH
+dWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRl
+dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
+b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
