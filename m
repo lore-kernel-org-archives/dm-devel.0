@@ -1,99 +1,65 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/5] dm-multipath: push back requests instead
-	of queueing
-Date: Sat, 01 Feb 2014 14:51:36 +0100
-Message-ID: <52ECFBE8.9090003@suse.de>
-References: <1391159444-17987-1-git-send-email-hare@suse.de>
-	<1391159444-17987-3-git-send-email-hare@suse.de>
-	<20140131154042.GA17221@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: dm-crypt unpleasantness during heavy write loads and memory pressure?
+Date: Sat, 1 Feb 2014 22:29:34 -0800
+Message-ID: <CALCETrVpoMXJ59R6=wa8rPi_ELc5dnkpGFXC72OApa0ooZc1fg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140131154042.GA17221@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 01/31/2014 04:40 PM, Mike Snitzer wrote:
-> On Fri, Jan 31 2014 at  4:10am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
->
->> There is no reason why multipath needs to queue requests
->> internally for queue_if_no_path or pg_init; we should
->> rather push them back onto the request queue.
->>
->> And while we're at it we can simplify the conditional
->> statement in map_io() to make it easier to read.
->>
->> Cc: Mike Snitzer <snitzer@redhat.com>
->> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
->> Signed-off-by: Hannes Reinecke <hare@suse.de>
->> ---
->>   drivers/md/dm-mpath.c         | 115 ++++++++++++++--------------------=
---------
->>   drivers/md/dm.c               |  13 +++++
->>   include/linux/device-mapper.h |   1 +
->>   3 files changed, 52 insertions(+), 77 deletions(-)
->
-> ...
->
->> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->> index 0704c52..291491b 100644
->> --- a/drivers/md/dm.c
->> +++ b/drivers/md/dm.c
->> @@ -1912,6 +1912,19 @@ static int dm_any_congested(void *congested_data,=
- int bdi_bits)
->>   	return r;
->>   }
->>
->> +void dm_table_run_queue(struct dm_table *t)
->> +{
->> +	struct mapped_device *md =3D dm_table_get_md(t);
->> +	unsigned long flags;
->> +
->> +	if (md->queue) {
->> +		spin_lock_irqsave(md->queue->queue_lock, flags);
->> +		blk_run_queue_async(md->queue);
->> +		spin_unlock_irqrestore(md->queue->queue_lock, flags);
->> +	}
->> +}
->> +EXPORT_SYMBOL_GPL(dm_table_run_queue);
->> +
->
-> I think I agree with Junichi's previous point that this should live in
-> dm-table.c.  You don't need the mapped_device, only the associated
-> request_queue, so... I know I implemented something like
-> dm_get_md_queue() before, but obviously it never went in for whatever
-> reason.
->
-> Anyway, I think something like this would be ideal (I renamed to
-> dm_table_run_md_queue_async).  Please feel free to fold this in and
-> repost with v4 of your patchset (assuming you'll be fixing up patch 3
-> after you get Jun'ichi's feedback):
->
-As mentioned, I don't mind.
-The layering conventions in the device-mapper code still confuses
-me occasionally.
+I've seen a number of anomalies across a few machines.  All of them
+have dm-crypt in common.
 
-I'll be folding it in.
+The most recent example was on Linux 3.8.  I have dm-crypt on top of
+hpsa hardware RAID.  (I don't have a whole lot of confidence in hpsa's
+performance, but I've seen similar issues on other machines, so this
+may not be hpsa's fault.)  I did a big MySQL update.  The update took
+a shockingly long time (it took longer than an identical query on a
+replica on a much slower machine) and, while it was running, the
+machine was basically unusable.
 
-Cheers,
+Here's a hypothesis:
 
-Hannes
--- =
+dm-crypt appears to take incoming write bios, clone them, allocate
+pages for a copy of the data, encrypt the data, and then submit to the
+lower layer.  The lower layer (e.g. hpsa's queue) then sorts, merges,
+and does real I/O.
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Let's suppose that the actual crypto is nice and fast (on this box,
+I'm using XTS with AES-NI on seven logical cores at 3.5 GHz), but that
+the disks are not quite so impressive (3x 7200rpm SATA drives on
+RAID5).  The machine has 16 GB of RAM.  MySQL is I/O-bound.
+
+So... what happens?  If MySQL is willing to queue up a very large
+number of writes (which is probably is -- this was one giant
+transaction, so MySQL wouldn't need to flush until it filled up all
+available buffers), there are only three places that those bios can
+wait.  They can wait in dm-crypt's queue (which is unlikely -- AES-NI
+is fast), they can block in dm-crypt waiting for free memory, or they
+can block on the lower layer's queue.
+
+None of these options are good.  Requests on the lower layer's queue
+can be sorted, but they're keeping an entire extra copy of the data
+pinned in kernel memory.  (I have no idea how well the writeback
+algorithms can handle very large amounts of memory being in use by the
+kernel.)  Requests on dm-crypt's queue cannot be intelligently sorted,
+causing throughput to drop (which is only going to make the problem
+worse).
+
+So... is this a real problem?  Should I blame dm-crypt for stalls
+under heavy write load?
+
+
+I suppose that the situation could be improved if there was a way for
+dm-crypt to remap the sector range immediately but defer encryption
+until the lower device's queue is nearly ready to submit the IO.
+
+--Andy
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
