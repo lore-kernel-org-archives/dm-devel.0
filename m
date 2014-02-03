@@ -1,17 +1,16 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 4/6] dm-multipath: remove process_queued_ios()
-Date: Mon, 3 Feb 2014 12:08:16 +0000
-Message-ID: <11AF7C027C4C02408624617A4986078401058DDD@BPXM12GP.gisp.nec.co.jp>
+Date: Mon, 03 Feb 2014 13:18:07 +0100
+Message-ID: <52EF88FF.8010609@suse.de>
 References: <1391415493-102943-1-git-send-email-hare@suse.de>
 	<1391415493-102943-5-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A4986078401058DDD@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391415493-102943-5-git-send-email-hare@suse.de>
-Content-Language: ja-JP
-Content-ID: <8F423C5D45320A4484FD93FBEB80C556@gisp.nec.co.jp>
+In-Reply-To: <11AF7C027C4C02408624617A4986078401058DDD@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,34 +20,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/03/14 17:18, Hannes Reinecke wrote:
-> We only need to take care to add a small delay when calling
-> __pg_init_all_paths() to move processing off to a workqueue;
-> pg_init_done() is run from an interrupt context and needs to
-> complete as fast as possible.
-...
-> @@ -1217,9 +1185,11 @@ static void pg_init_done(void *data, int errors)
->  
->  	if (!m->pg_init_required)
->  		m->queue_io = 0;
-> -
-> -	m->pg_init_delay_retry = delay_retry;
-> -	queue_work(kmultipathd, &m->process_queued_ios);
-> +	else {
-> +		m->pg_init_delay_retry = delay_retry;
-> +		__pg_init_all_paths(m, 50/HZ);
-> +		goto out;
-> +	}
->  
-
-I forgot to comment on this.
-Adding delay to queue_work() doesn't make it fast.
-So I couldn't see why this "50/HZ" delay has to be added
-and where this value comes.
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMDIvMDMvMjAxNCAwMTowOCBQTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDMv
+MTQgMTc6MTgsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gV2Ugb25seSBuZWVkIHRvIHRha2Ug
+Y2FyZSB0byBhZGQgYSBzbWFsbCBkZWxheSB3aGVuIGNhbGxpbmcKPj4gX19wZ19pbml0X2FsbF9w
+YXRocygpIHRvIG1vdmUgcHJvY2Vzc2luZyBvZmYgdG8gYSB3b3JrcXVldWU7Cj4+IHBnX2luaXRf
+ZG9uZSgpIGlzIHJ1biBmcm9tIGFuIGludGVycnVwdCBjb250ZXh0IGFuZCBuZWVkcyB0bwo+PiBj
+b21wbGV0ZSBhcyBmYXN0IGFzIHBvc3NpYmxlLgo+IC4uLgo+PiBAQCAtMTIxNyw5ICsxMTg1LDEx
+IEBAIHN0YXRpYyB2b2lkIHBnX2luaXRfZG9uZSh2b2lkICpkYXRhLCBpbnQgZXJyb3JzKQo+PiAg
+Cj4+ICAJaWYgKCFtLT5wZ19pbml0X3JlcXVpcmVkKQo+PiAgCQltLT5xdWV1ZV9pbyA9IDA7Cj4+
+IC0KPj4gLQltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVsYXlfcmV0cnk7Cj4+IC0JcXVldWVf
+d29yayhrbXVsdGlwYXRoZCwgJm0tPnByb2Nlc3NfcXVldWVkX2lvcyk7Cj4+ICsJZWxzZSB7Cj4+
+ICsJCW0tPnBnX2luaXRfZGVsYXlfcmV0cnkgPSBkZWxheV9yZXRyeTsKPj4gKwkJX19wZ19pbml0
+X2FsbF9wYXRocyhtLCA1MC9IWik7Cj4+ICsJCWdvdG8gb3V0Owo+PiArCX0KPj4gIAo+IAo+IEkg
+Zm9yZ290IHRvIGNvbW1lbnQgb24gdGhpcy4KPiBBZGRpbmcgZGVsYXkgdG8gcXVldWVfd29yaygp
+IGRvZXNuJ3QgbWFrZSBpdCBmYXN0Lgo+IFNvIEkgY291bGRuJ3Qgc2VlIHdoeSB0aGlzICI1MC9I
+WiIgZGVsYXkgaGFzIHRvIGJlIGFkZGVkCj4gYW5kIHdoZXJlIHRoaXMgdmFsdWUgY29tZXMuCj4g
+CldlbGwsIGl0IHdhc24ndCBwcm9iYWJseSB0aGUgYmVzdCBjaG9pY2Ugb2Ygd29yZHMuCgpUaGlu
+ZyBpcywgd2l0aG91dCBhIGRlbGF5IHRoZSB3b3JrcXVldWUgaXRlbSB3aWxsIGJlIGV4ZWN1dGVk
+CmRpcmVjdGx5IChjZiBfX3F1ZXVlX2RlbGF5ZWRfd29yaygpKS4KQnV0IHBnX2luaXRfZG9uZSgp
+IGlzIHJ1biBmcm9tIGFuIGludGVycnVwdCBjb250ZXh0LCBhbmQgYXMgc3VjaCBhbnkKbWVtb3J5
+IGFsbG9jYXRpb25zIGhhdmUgdG8gYmUgYXRvbWljLgpTbyBpZiB3ZSB3ZXJlIHRvIGNhbGwgcXVl
+dWVfZGVsYXllZF93b3JrKCkgd2l0aG91dCBhbnkgZGVsYXkKd2Ugd2lsbCBlbmQgdXAgY2FsbGlu
+ZyBzY3NpX2RoX2FjdGl2YXRlIGZyb20gYW4gaW50ZXJydXB0IGNvbnRleHQsCnRvbywgYnV0IHRo
+ZXJlIHdlIG1vc3QgZGVmaW5pdGVseSBkbyBfbm90XyBoYXZlIG9ubHkgYXRvbWljIGFsbG9jYXRp
+b25zLgpIZW5jZSB0aGUgZGVsYXkuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVp
+bmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5
+MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0
+MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIg
+MTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
