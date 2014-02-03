@@ -1,18 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 3/5] dm-multipath: remove process_queued_ios()
-Date: Mon, 03 Feb 2014 11:31:24 +0100
-Message-ID: <52EF6FFC.4040906@suse.de>
-References: <1391159444-17987-1-git-send-email-hare@suse.de>
-	<1391159444-17987-4-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A49860784010535C4@BPXM12GP.gisp.nec.co.jp>
-	<52EBB958.5090803@suse.de>
-	<11AF7C027C4C02408624617A4986078401058925@BPXM12GP.gisp.nec.co.jp>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH 4/6] dm-multipath: remove process_queued_ios()
+Date: Mon, 3 Feb 2014 11:30:41 +0000
+Message-ID: <11AF7C027C4C02408624617A4986078401058C7E@BPXM12GP.gisp.nec.co.jp>
+References: <1391415493-102943-1-git-send-email-hare@suse.de>
+	<1391415493-102943-5-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A4986078401058925@BPXM12GP.gisp.nec.co.jp>
+In-Reply-To: <1391415493-102943-5-git-send-email-hare@suse.de>
+Content-Language: ja-JP
+Content-ID: <19F4F36E3A2C474695EA1031112ADC81@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,51 +21,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDIvMDMvMjAxNCAxMToyNiBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDEvMzEv
-MTQgMjM6NTUsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gUHJvYmxlbSBoZXJlIGlzIHRoYXQg
-cGdfaW5pdF9kb25lKCkgaXMgcGVyIHBhdGgsIHNvIGF0IGZhY2UgdmFsdWUKPj4gU0NTSV9ESF9S
-RVRSWSBpcyBwZXIgcGF0aCwgdG9vLgo+PiBTbyBmcm9tIHRoYXQgd2Ugc2hvdWxkIGJlIHJldHJ5
-aW5nIHRoaXMgcGF0aCAoYW5kIHRoaXMgcGF0aCBvbmx5KS4KPj4gSGVuY2UgaXQgd291bGQgYmUg
-Y29ycmVjdCB0byBjYWxsIHF1ZXVlX2RlbGF5ZWRfd29yayBkaXJlY3RseS4KPj4KPj4gSG93ZXZl
-ciwgdHlwaWNhbGx5IGFueSBwZ19pbml0IGFmZmVjdHMgX2V2ZXJ5XyBwYXRoIGluIHRoZSBtdWx0
-aXBhdGgKPj4gZGV2aWNlIChhY3RpdmUgcGF0aHMgYmVjb21lIHBhc3NpdmUgYW5kIHZpY2UgdmVy
-c2EpLgo+PiBXaGljaCBzZWVtcyB0byBiZSB0aGUgaW50ZW5kZWQgdXNhZ2UsIGFzIHdlJ3JlIGNo
-ZWNraW5nIGZvcgo+PiBwZ19pbml0X2luX3Byb2dyZXNzIHByaW9yIHRvIGludm9raW5nIHF1ZXVl
-X2RlbGF5ZWRfd29yaygpLgo+Pgo+PiBCdXQgX2lmXyB3ZSBhc3N1bWUgdGhhdCwgdGhlbiB3ZSBv
-bmx5IG5lZWQgdG8gc2VuZCBhIF9zaW5nbGVfCj4+IHBnX2luaXQsIGFzIHRoaXMgd2lsbCBzd2l0
-Y2ggYWxsIHBhdGhzLiBTbyBhZ2FpbiwgYSBjYWxsIHRvCj4+IF9fcGdfaW5pdF9hbGxfcGF0aHMg
-d2lsbCBub3QgZG8gdGhlIGNvcnJlY3QgdGhpbmcgYXMgaXQnbGwKPj4gc2VuZCBhY3RpdmF0aW9u
-cyB0byBfZXZlcnlfIGFjdGl2ZSBwYXRoLgo+IAo+IFNlbmRpbmcgYWN0aXZhdGlvbiBmb3IgZXZl
-cnkgcGF0aHMgd2FzIGludHJvZHVjZWQgYnkgdGhpczoKPiAgIGNvbW1pdCBlNTRmNzdkZGRhNzI3
-ODFlYzFjMTY5NmIyMWFhYmQ2YTMwY2JiN2M2Cj4gICBBdXRob3I6IENoYW5kcmEgU2VldGhhcmFt
-YW4gPHNla2hhcmFuQHVzLmlibS5jb20+Cj4gICBEYXRlOiAgIE1vbiBKdW4gMjIgMTA6MTI6MTIg
-MjAwOSArMDEwMAo+IFNvIGlmIHlvdSBtYWtlIGNoYW5nZSBpbiB0aGUgbG9naWMsIHlvdSBoYXZl
-IHRvIGNoZWNrIHdoZXRoZXIgdGhlCj4gY2hhbmdlIGRvZXMgbm90IGJyZWFrIHdoYXQgdGhlIGFi
-b3ZlIHNvbHZlZC4KPiAKPj4gKEFuZCwgaW4gZmFjdCwgd2UncmUgdHJ5aW5nIHJlYWxseSBoYXJk
-IGluIHNjc2lfZGhfcmRhYwo+PiBhbmQgc2NzaV9kaF9hbHVhIHRvIGJ1bmNoIHRvZ2V0aGVyIGFs
-bCB0aGUgdmFyaW91cyBwZ19pbml0Cj4+IHJlcXVlc3RzIHByZWNpc2VseSBmb3IgdGhlIGNpdGVk
-IHJlYXNvbikuCj4+Cj4+IFNvIG15IGluY2xpbmF0aW9uIGhlcmUgd291bGQgYmUgdG8gdHJlYXQg
-U0NTSV9ESF9SRVRSWQo+PiBhcyBfcGVyIHBhdGhfLCBhbmQgcmV0cnkgb25seSB0aGlzIHNwZWNp
-ZmljIHBhdGguCj4+IElFIHJlbW92aW5nIHRoZSBjaGVjayB0byBwZ19pbml0X2luX3Byb2dyZXNz
-IGFuZCBjYWxsCj4+IHF1ZXVlX2RlbGF5ZWRfd29yaygpIGRpcmVjdGx5Lgo+Pgo+PiBJTUhPIHRo
-aXMgd291bGQgaW1wb3NlIHRoZSBsZWFzdCByZXN0cmljdGlvbiBvbgo+PiB0aGUgaW50ZXJuYWwg
-d29ya2luZ3Mgb2YgdGhlIHZhcmlvdXMgZGV2aWNlIGhhbmRsZXJzLgo+Pgo+PiBXaGF0IGRvIHlv
-dSB0aGluaz8KPiAKPiBJIGRvbid0IGhhdmUgc3Ryb25nIG9waW5pb24gZWl0aGVyIHdheS4gQnV0
-IGlmIHdlIGRvIHRoYXQsIG1vcmUgY29kZQo+IGhhcyB0byBiZSBjaGFuZ2VkLCBlLmcuIHRoZSBt
-YW5hZ2VtZW50IG9mIHJldHJ5IGNvdW50Lgo+IAo+IFJlbW92aW5nIHRoZSB1bm5lY2Vzc2FyeSB3
-b3JrcXVldWUgaGFzIGFscmVhZHkgYSBiZW5lZml0Lgo+IEl0IHdvdWxkIGJlIG5pY2UgdG8gZm9j
-dXMgb24gdGhhdCBpbnN0ZWFkIG9mIGZvbGRpbmcgaW4gbW9yZSBjaGFuZ2VzLgo+IApZZXMsIHRo
-YXQncyB3aGF0IEkndmUgZmlndXJlZCwgdG9vLgpTbyBJJ3ZlIGp1c3QgaW5jbHVkZWQgdGhlIGNo
-YW5nZXMgeW91IHN1Z2dlc3RlZCB3aXRob3V0IG1vZGlmeWluZwp0aGUgY3VycmVudCBsb2dpYy4K
-CkkndmUgYWxyZWFkeSBzZW50IGEgbmV3IHBhdGNoc2V0LCBwbGVhc2UgY2hlY2sgaWYgdGhlIGNo
-YW5nZXMgdGhlcmUKYXJlIGNvcnJlY3QuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMg
-UmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0
-OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwg
-OTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBI
-UkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+On 02/03/14 17:18, Hannes Reinecke wrote:
+> Doesn't serve any real purpose anymore; dm_table_run_queue()
+> will already move things to a workqueue, so we don't need
+> to do it ourselves.
+> We only need to take care to add a small delay when calling
+> __pg_init_all_paths() to move processing off to a workqueue;
+> pg_init_done() is run from an interrupt context and needs to
+> complete as fast as possible.
+
+I think more explanation is needed for the patch description.
+As far as I understand, the change is based on the following reasoning:
+
+  process_queued_ios() has served 3 functions:
+    1) select pg and pgpath if none is selected
+    2) start pg_init if requested
+    3) dispatch queued IOs when pg is ready
+
+  Basically, a call to queue_work(process_queued_ios) can be replaced by
+  dm_table_run_queue(), which runs request queue and ends up calling
+  map_io(), which does 1), 2) and 3).
+
+  Exception is when !pg_ready() (= either pg_init is running or requested),
+  multipath_busy() prevents map_io() being called from request_fn.
+
+  If pg_init is running, it should be ok as far as pg_init_done() does
+  the right thing when pg_init is completed. I.e. restart pg_init if
+  !pg_ready() or call dm_table_run_queue() to kick map_io().
+
+  If pg_init is requested, we have to make sure the request is detected
+  and pg_init will be started.
+  pg_init is requested in 3 places:
+    a) __choose_pgpath() in map_io()
+    b) __choose_pgpath() in multipath_ioctl()
+    c) pg_init retry in pg_init_done()
+  a) is ok because map_io() calls __pg_init_all_paths(), which does 2).
+  b) needs a call to __pg_init_all_paths(), which does 2).
+  c) needs a call to __pg_init_all_paths(), which does 2).
+
+
+By writing the above, I found possible bugs related to 1):
+
+> @@ -1217,9 +1185,11 @@ static void pg_init_done(void *data, int errors)
+>  
+>  	if (!m->pg_init_required)
+>  		m->queue_io = 0;
+> -
+> -	m->pg_init_delay_retry = delay_retry;
+> -	queue_work(kmultipathd, &m->process_queued_ios);
+> +	else {
+> +		m->pg_init_delay_retry = delay_retry;
+> +		__pg_init_all_paths(m, 50/HZ);
+> +		goto out;
+> +	}
+>  
+>  	/*
+>  	 * Wake up any thread waiting to suspend.
+
+It is possible that m->current_pg is NULL.
+(E.g. pg_init failed for current_pgpath, bypass_pg() was called, etc.)
+__pg_init_all_paths() will cause oops in such a case.
+
+So how about doing this in pg_init_done():
+
+	if (m->pg_init_required) {
+		m->pg_init_delay_retry = delay_retry;
+		if (__pg_init_all_paths(m))
+			goto out;
+	}
+
+	/* pg_init successfully completed */
+	m->queue_io = 0;
+
+and in __pg_init_all_paths(), do something like:
+
+	m->pg_init_required = 0;
+	...
+	if (!m->current_pg)
+		return 0;
+	...
+	return m->pg_init_in_progress;
+
+
+> @@ -1593,8 +1563,13 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+>  	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
+>  		r = scsi_verify_blk_ioctl(NULL, cmd);
+>  
+> -	if (r == -ENOTCONN && !fatal_signal_pending(current))
+> -		queue_work(kmultipathd, &m->process_queued_ios);
+> +	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
+> +		spin_lock_irqsave(&m->lock, flags);
+> +		if (m->current_pgpath && m->pg_init_required)
+> +			__pg_init_all_paths(m, 0);
+> +		spin_unlock_irqrestore(&m->lock, flags);
+> +		dm_table_run_md_queue_async(m->ti->table);
+> +	}
+>  
+>  	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+>  }
+
+Similarly, m->current_pgpath can be NULL here while pg_init_required.
+Then pg_init_required is left uncleared and all IOs in the queue will
+stall until somebody calls multipath_ioctl() to redo pg selection.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
