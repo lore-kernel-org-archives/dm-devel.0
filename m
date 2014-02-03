@@ -1,64 +1,52 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 4/6] dm-multipath: remove process_queued_ios()
-Date: Mon, 03 Feb 2014 13:57:54 +0100
-Message-ID: <52EF9252.9060605@suse.de>
-References: <1391415493-102943-1-git-send-email-hare@suse.de>
-	<1391415493-102943-5-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A4986078401058DDD@BPXM12GP.gisp.nec.co.jp>
-	<52EF88FF.8010609@suse.de>
-	<11AF7C027C4C02408624617A4986078401059F9C@BPXM12GP.gisp.nec.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] block devices: validate block device capacity
+Date: Mon, 3 Feb 2014 15:22:01 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1402031513070.18926@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1401301531040.29912@file01.intranet.prod.int.rdu2.redhat.com> <1391122163.2181.103.camel@dabdike.int.hansenpartnership.com> <alpine.LRH.2.02.1401301805590.19506@file01.intranet.prod.int.rdu2.redhat.com>
+ <1391125027.2181.114.camel@dabdike.int.hansenpartnership.com> <alpine.LRH.2.02.1401301905520.25766@file01.intranet.prod.int.rdu2.redhat.com> <1391132609.2181.131.camel@dabdike.int.hansenpartnership.com> <alpine.LRH.2.02.1401302116180.9767@file01.intranet.prod.int.rdu2.redhat.com>
+ <1391147127.2181.159.camel@dabdike.int.hansenpartnership.com> <alpine.LRH.2.02.1401310316560.21451@file01.intranet.prod.int.rdu2.redhat.com> <20140203081506.GA10961@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A4986078401059F9C@BPXM12GP.gisp.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20140203081506.GA10961@infradead.org>
+Sender: owner-linux-mm@kvack.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, linux-ide@vger.kernel.org, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-T24gMDIvMDMvMjAxNCAwMTozOSBQTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDMv
-MTQgMjE6MTgsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gT24gMDIvMDMvMjAxNCAwMTowOCBQ
-TSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4+PiBPbiAwMi8wMy8xNCAxNzoxOCwgSGFubmVzIFJl
-aW5lY2tlIHdyb3RlOgo+Pj4+IFdlIG9ubHkgbmVlZCB0byB0YWtlIGNhcmUgdG8gYWRkIGEgc21h
-bGwgZGVsYXkgd2hlbiBjYWxsaW5nCj4+Pj4gX19wZ19pbml0X2FsbF9wYXRocygpIHRvIG1vdmUg
-cHJvY2Vzc2luZyBvZmYgdG8gYSB3b3JrcXVldWU7Cj4+Pj4gcGdfaW5pdF9kb25lKCkgaXMgcnVu
-IGZyb20gYW4gaW50ZXJydXB0IGNvbnRleHQgYW5kIG5lZWRzIHRvCj4+Pj4gY29tcGxldGUgYXMg
-ZmFzdCBhcyBwb3NzaWJsZS4KPj4+IC4uLgo+Pj4+IEBAIC0xMjE3LDkgKzExODUsMTEgQEAgc3Rh
-dGljIHZvaWQgcGdfaW5pdF9kb25lKHZvaWQgKmRhdGEsIGludCBlcnJvcnMpCj4+Pj4gIAo+Pj4+
-ICAJaWYgKCFtLT5wZ19pbml0X3JlcXVpcmVkKQo+Pj4+ICAJCW0tPnF1ZXVlX2lvID0gMDsKPj4+
-PiAtCj4+Pj4gLQltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVsYXlfcmV0cnk7Cj4+Pj4gLQlx
-dWV1ZV93b3JrKGttdWx0aXBhdGhkLCAmbS0+cHJvY2Vzc19xdWV1ZWRfaW9zKTsKPj4+PiArCWVs
-c2Ugewo+Pj4+ICsJCW0tPnBnX2luaXRfZGVsYXlfcmV0cnkgPSBkZWxheV9yZXRyeTsKPj4+PiAr
-CQlfX3BnX2luaXRfYWxsX3BhdGhzKG0sIDUwL0haKTsKPj4+PiArCQlnb3RvIG91dDsKPj4+PiAr
-CX0KPj4+PiAgCj4+Pgo+Pj4gSSBmb3Jnb3QgdG8gY29tbWVudCBvbiB0aGlzLgo+Pj4gQWRkaW5n
-IGRlbGF5IHRvIHF1ZXVlX3dvcmsoKSBkb2Vzbid0IG1ha2UgaXQgZmFzdC4KPj4+IFNvIEkgY291
-bGRuJ3Qgc2VlIHdoeSB0aGlzICI1MC9IWiIgZGVsYXkgaGFzIHRvIGJlIGFkZGVkCj4+PiBhbmQg
-d2hlcmUgdGhpcyB2YWx1ZSBjb21lcy4KPj4+Cj4+IFdlbGwsIGl0IHdhc24ndCBwcm9iYWJseSB0
-aGUgYmVzdCBjaG9pY2Ugb2Ygd29yZHMuCj4+Cj4+IFRoaW5nIGlzLCB3aXRob3V0IGEgZGVsYXkg
-dGhlIHdvcmtxdWV1ZSBpdGVtIHdpbGwgYmUgZXhlY3V0ZWQKPj4gZGlyZWN0bHkgKGNmIF9fcXVl
-dWVfZGVsYXllZF93b3JrKCkpLgo+PiBCdXQgcGdfaW5pdF9kb25lKCkgaXMgcnVuIGZyb20gYW4g
-aW50ZXJydXB0IGNvbnRleHQsIGFuZCBhcyBzdWNoIGFueQo+PiBtZW1vcnkgYWxsb2NhdGlvbnMg
-aGF2ZSB0byBiZSBhdG9taWMuCj4+IFNvIGlmIHdlIHdlcmUgdG8gY2FsbCBxdWV1ZV9kZWxheWVk
-X3dvcmsoKSB3aXRob3V0IGFueSBkZWxheQo+PiB3ZSB3aWxsIGVuZCB1cCBjYWxsaW5nIHNjc2lf
-ZGhfYWN0aXZhdGUgZnJvbSBhbiBpbnRlcnJ1cHQgY29udGV4dCwKPj4gdG9vLCBidXQgdGhlcmUg
-d2UgbW9zdCBkZWZpbml0ZWx5IGRvIF9ub3RfIGhhdmUgb25seSBhdG9taWMgYWxsb2NhdGlvbnMu
-Cj4+IEhlbmNlIHRoZSBkZWxheS4KPiAKPiBXb3JrIGlzIGV4ZWN1dGVkIGluIHRoZSB3b3JrZXIg
-Y29udGV4dCAoaW4gdGhpcyBjYXNlIGJ5IGttcGF0aF9oYW5kbGVyZCkuCj4gSXNuJ3QgaXQ/Cj4g
-ClllcywgYnV0IHdpdGhvdXQgdGhlIGRlbGF5IHdlJ2QgYmUgc2NoZWR1bGluZyBkdXJpbmcgcGdf
-aW5pdF9kb25lKCksCmllIHdpdGhpbiBhbiBpbnRlcnJ1cHQgY29udGV4dC4KCkNoZWVycywKCkhh
-bm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFy
-ZUBzdXNlLmRlCQkJICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0cyBH
-bWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEouIEhhd24sIEouIEd1aWxk
-LCBGLiBJbWVuZMO2cmZmZXIsIEhSQiAxNjc0NiAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+
+On Mon, 3 Feb 2014, Christoph Hellwig wrote:
+
+> On Fri, Jan 31, 2014 at 03:20:17AM -0500, Mikulas Patocka wrote:
+> > So if you think you can support 16TiB devices and leave pgoff_t 32-bit, 
+> > send a patch that does it.
+> > 
+> > Until you make it, you should apply the patch that I sent, that prevents 
+> > kernel lockups or data corruption when the user uses 16TiB device on 
+> > 32-bit kernel.
+> 
+> Exactly.  I had actually looked into support for > 16TiB devices for
+> a NAS use case a while ago, but when explaining the effort involves
+> the idea was dropped quickly.  The Linux block device is too deeply
+> tied to the pagecache to make it easily feasible.
+
+The memory management routines use pgoff_t, so we could define pgoff_t to 
+be 64-bit type. But there is lib/radix_tree.c that uses unsigned long as 
+an index into the radix tree - and pgoff_t is cast to unsigned long when 
+calling the radix_tree routines - so we'd need to change lib/radix_tree to 
+use pgoff_t.
+
+Then, there may be other places where pgoff_t is cast to unsigned long and 
+they are not trivial to find (one could enable some extra compiler 
+warnings about truncating values when casting them, but I suppose, this 
+would trigger a lot of false positives). This needs some deep review by 
+people who designed the memory management code.
+
+Mikulas
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
