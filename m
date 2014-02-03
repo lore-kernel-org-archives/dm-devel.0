@@ -1,16 +1,13 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 4/6] dm-multipath: remove process_queued_ios()
-Date: Mon, 03 Feb 2014 13:18:07 +0100
-Message-ID: <52EF88FF.8010609@suse.de>
-References: <1391415493-102943-1-git-send-email-hare@suse.de>
-	<1391415493-102943-5-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A4986078401058DDD@BPXM12GP.gisp.nec.co.jp>
+Subject: [PATCHv5 0/6] dm-multipath: push back requests instead
+	of queueing
+Date: Mon,  3 Feb 2014 13:34:51 +0100
+Message-ID: <1391430897-102094-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A4986078401058DDD@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +17,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDIvMDMvMjAxNCAwMTowOCBQTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDMv
-MTQgMTc6MTgsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gV2Ugb25seSBuZWVkIHRvIHRha2Ug
-Y2FyZSB0byBhZGQgYSBzbWFsbCBkZWxheSB3aGVuIGNhbGxpbmcKPj4gX19wZ19pbml0X2FsbF9w
-YXRocygpIHRvIG1vdmUgcHJvY2Vzc2luZyBvZmYgdG8gYSB3b3JrcXVldWU7Cj4+IHBnX2luaXRf
-ZG9uZSgpIGlzIHJ1biBmcm9tIGFuIGludGVycnVwdCBjb250ZXh0IGFuZCBuZWVkcyB0bwo+PiBj
-b21wbGV0ZSBhcyBmYXN0IGFzIHBvc3NpYmxlLgo+IC4uLgo+PiBAQCAtMTIxNyw5ICsxMTg1LDEx
-IEBAIHN0YXRpYyB2b2lkIHBnX2luaXRfZG9uZSh2b2lkICpkYXRhLCBpbnQgZXJyb3JzKQo+PiAg
-Cj4+ICAJaWYgKCFtLT5wZ19pbml0X3JlcXVpcmVkKQo+PiAgCQltLT5xdWV1ZV9pbyA9IDA7Cj4+
-IC0KPj4gLQltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVsYXlfcmV0cnk7Cj4+IC0JcXVldWVf
-d29yayhrbXVsdGlwYXRoZCwgJm0tPnByb2Nlc3NfcXVldWVkX2lvcyk7Cj4+ICsJZWxzZSB7Cj4+
-ICsJCW0tPnBnX2luaXRfZGVsYXlfcmV0cnkgPSBkZWxheV9yZXRyeTsKPj4gKwkJX19wZ19pbml0
-X2FsbF9wYXRocyhtLCA1MC9IWik7Cj4+ICsJCWdvdG8gb3V0Owo+PiArCX0KPj4gIAo+IAo+IEkg
-Zm9yZ290IHRvIGNvbW1lbnQgb24gdGhpcy4KPiBBZGRpbmcgZGVsYXkgdG8gcXVldWVfd29yaygp
-IGRvZXNuJ3QgbWFrZSBpdCBmYXN0Lgo+IFNvIEkgY291bGRuJ3Qgc2VlIHdoeSB0aGlzICI1MC9I
-WiIgZGVsYXkgaGFzIHRvIGJlIGFkZGVkCj4gYW5kIHdoZXJlIHRoaXMgdmFsdWUgY29tZXMuCj4g
-CldlbGwsIGl0IHdhc24ndCBwcm9iYWJseSB0aGUgYmVzdCBjaG9pY2Ugb2Ygd29yZHMuCgpUaGlu
-ZyBpcywgd2l0aG91dCBhIGRlbGF5IHRoZSB3b3JrcXVldWUgaXRlbSB3aWxsIGJlIGV4ZWN1dGVk
-CmRpcmVjdGx5IChjZiBfX3F1ZXVlX2RlbGF5ZWRfd29yaygpKS4KQnV0IHBnX2luaXRfZG9uZSgp
-IGlzIHJ1biBmcm9tIGFuIGludGVycnVwdCBjb250ZXh0LCBhbmQgYXMgc3VjaCBhbnkKbWVtb3J5
-IGFsbG9jYXRpb25zIGhhdmUgdG8gYmUgYXRvbWljLgpTbyBpZiB3ZSB3ZXJlIHRvIGNhbGwgcXVl
-dWVfZGVsYXllZF93b3JrKCkgd2l0aG91dCBhbnkgZGVsYXkKd2Ugd2lsbCBlbmQgdXAgY2FsbGlu
-ZyBzY3NpX2RoX2FjdGl2YXRlIGZyb20gYW4gaW50ZXJydXB0IGNvbnRleHQsCnRvbywgYnV0IHRo
-ZXJlIHdlIG1vc3QgZGVmaW5pdGVseSBkbyBfbm90XyBoYXZlIG9ubHkgYXRvbWljIGFsbG9jYXRp
-b25zLgpIZW5jZSB0aGUgZGVsYXkuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVp
-bmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5
-MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0
-MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIg
-MTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+Hi all,
+
+dm-multipath still carries around it's own queueing framework for
+implementing 'queue_if_no_path'.
+However, there is no real reason for this; we could as well
+push back the requests onto the request_queue.
+In doing so we can also reduce the memory pressure during
+fail_if_no_path scenarios, as we don't have to allocate a
+context for each request when it need to be requeued.
+
+Changes since v3:
+- Include dm_md_get_queue(), as suggested from Mike Snitzer
+- Call __pg_init_all_paths() in pg_init_done() to handle
+  pg_init_required correctly, as suggested by Jun'ichi Nomura
+
+Changes since v4:
+- Fixup calls to __pg_init_all_paths() as found by
+  Jun'ichi Nomura
+- Update description for 'remove process_queue_ios' patch
+
+Hannes Reinecke (5):
+  dm-multipath: Do not call pg_init twice
+  dm-multipath: push back requests instead of queueing
+  dm-multipath: remove process_queued_ios()
+  dm-multipath: reduce memory pressure during requeuing
+  dm-multipath: remove map_io()
+
+Mike Snitzer (1):
+  dm: implement dm_md_get_queue()
+
+ drivers/md/dm-mpath.c         | 208 ++++++++++++++----------------------------
+ drivers/md/dm-table.c         |  14 +++
+ drivers/md/dm.c               |   5 +
+ drivers/md/dm.h               |   1 +
+ include/linux/device-mapper.h |   5 +
+ 5 files changed, 93 insertions(+), 140 deletions(-)
+
+-- 
+1.7.12.4
