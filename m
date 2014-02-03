@@ -1,17 +1,16 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 4/6] dm-multipath: remove process_queued_ios()
-Date: Mon, 3 Feb 2014 11:30:41 +0000
-Message-ID: <11AF7C027C4C02408624617A4986078401058C7E@BPXM12GP.gisp.nec.co.jp>
+Date: Mon, 03 Feb 2014 12:39:55 +0100
+Message-ID: <52EF800B.2020101@suse.de>
 References: <1391415493-102943-1-git-send-email-hare@suse.de>
 	<1391415493-102943-5-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A4986078401058C7E@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391415493-102943-5-git-send-email-hare@suse.de>
-Content-Language: ja-JP
-Content-ID: <19F4F36E3A2C474695EA1031112ADC81@gisp.nec.co.jp>
+In-Reply-To: <11AF7C027C4C02408624617A4986078401058C7E@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,112 +20,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/03/14 17:18, Hannes Reinecke wrote:
-> Doesn't serve any real purpose anymore; dm_table_run_queue()
-> will already move things to a workqueue, so we don't need
-> to do it ourselves.
-> We only need to take care to add a small delay when calling
-> __pg_init_all_paths() to move processing off to a workqueue;
-> pg_init_done() is run from an interrupt context and needs to
-> complete as fast as possible.
-
-I think more explanation is needed for the patch description.
-As far as I understand, the change is based on the following reasoning:
-
-  process_queued_ios() has served 3 functions:
-    1) select pg and pgpath if none is selected
-    2) start pg_init if requested
-    3) dispatch queued IOs when pg is ready
-
-  Basically, a call to queue_work(process_queued_ios) can be replaced by
-  dm_table_run_queue(), which runs request queue and ends up calling
-  map_io(), which does 1), 2) and 3).
-
-  Exception is when !pg_ready() (= either pg_init is running or requested),
-  multipath_busy() prevents map_io() being called from request_fn.
-
-  If pg_init is running, it should be ok as far as pg_init_done() does
-  the right thing when pg_init is completed. I.e. restart pg_init if
-  !pg_ready() or call dm_table_run_queue() to kick map_io().
-
-  If pg_init is requested, we have to make sure the request is detected
-  and pg_init will be started.
-  pg_init is requested in 3 places:
-    a) __choose_pgpath() in map_io()
-    b) __choose_pgpath() in multipath_ioctl()
-    c) pg_init retry in pg_init_done()
-  a) is ok because map_io() calls __pg_init_all_paths(), which does 2).
-  b) needs a call to __pg_init_all_paths(), which does 2).
-  c) needs a call to __pg_init_all_paths(), which does 2).
-
-
-By writing the above, I found possible bugs related to 1):
-
-> @@ -1217,9 +1185,11 @@ static void pg_init_done(void *data, int errors)
->  
->  	if (!m->pg_init_required)
->  		m->queue_io = 0;
-> -
-> -	m->pg_init_delay_retry = delay_retry;
-> -	queue_work(kmultipathd, &m->process_queued_ios);
-> +	else {
-> +		m->pg_init_delay_retry = delay_retry;
-> +		__pg_init_all_paths(m, 50/HZ);
-> +		goto out;
-> +	}
->  
->  	/*
->  	 * Wake up any thread waiting to suspend.
-
-It is possible that m->current_pg is NULL.
-(E.g. pg_init failed for current_pgpath, bypass_pg() was called, etc.)
-__pg_init_all_paths() will cause oops in such a case.
-
-So how about doing this in pg_init_done():
-
-	if (m->pg_init_required) {
-		m->pg_init_delay_retry = delay_retry;
-		if (__pg_init_all_paths(m))
-			goto out;
-	}
-
-	/* pg_init successfully completed */
-	m->queue_io = 0;
-
-and in __pg_init_all_paths(), do something like:
-
-	m->pg_init_required = 0;
-	...
-	if (!m->current_pg)
-		return 0;
-	...
-	return m->pg_init_in_progress;
-
-
-> @@ -1593,8 +1563,13 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
->  	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
->  		r = scsi_verify_blk_ioctl(NULL, cmd);
->  
-> -	if (r == -ENOTCONN && !fatal_signal_pending(current))
-> -		queue_work(kmultipathd, &m->process_queued_ios);
-> +	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
-> +		spin_lock_irqsave(&m->lock, flags);
-> +		if (m->current_pgpath && m->pg_init_required)
-> +			__pg_init_all_paths(m, 0);
-> +		spin_unlock_irqrestore(&m->lock, flags);
-> +		dm_table_run_md_queue_async(m->ti->table);
-> +	}
->  
->  	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
->  }
-
-Similarly, m->current_pgpath can be NULL here while pg_init_required.
-Then pg_init_required is left uncleared and all IOs in the queue will
-stall until somebody calls multipath_ioctl() to redo pg selection.
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMDIvMDMvMjAxNCAxMjozMCBQTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDMv
+MTQgMTc6MTgsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gRG9lc24ndCBzZXJ2ZSBhbnkgcmVh
+bCBwdXJwb3NlIGFueW1vcmU7IGRtX3RhYmxlX3J1bl9xdWV1ZSgpCj4+IHdpbGwgYWxyZWFkeSBt
+b3ZlIHRoaW5ncyB0byBhIHdvcmtxdWV1ZSwgc28gd2UgZG9uJ3QgbmVlZAo+PiB0byBkbyBpdCBv
+dXJzZWx2ZXMuCj4+IFdlIG9ubHkgbmVlZCB0byB0YWtlIGNhcmUgdG8gYWRkIGEgc21hbGwgZGVs
+YXkgd2hlbiBjYWxsaW5nCj4+IF9fcGdfaW5pdF9hbGxfcGF0aHMoKSB0byBtb3ZlIHByb2Nlc3Np
+bmcgb2ZmIHRvIGEgd29ya3F1ZXVlOwo+PiBwZ19pbml0X2RvbmUoKSBpcyBydW4gZnJvbSBhbiBp
+bnRlcnJ1cHQgY29udGV4dCBhbmQgbmVlZHMgdG8KPj4gY29tcGxldGUgYXMgZmFzdCBhcyBwb3Nz
+aWJsZS4KPiAKPiBJIHRoaW5rIG1vcmUgZXhwbGFuYXRpb24gaXMgbmVlZGVkIGZvciB0aGUgcGF0
+Y2ggZGVzY3JpcHRpb24uCj4gQXMgZmFyIGFzIEkgdW5kZXJzdGFuZCwgdGhlIGNoYW5nZSBpcyBi
+YXNlZCBvbiB0aGUgZm9sbG93aW5nIHJlYXNvbmluZzoKPiAKPiAgIHByb2Nlc3NfcXVldWVkX2lv
+cygpIGhhcyBzZXJ2ZWQgMyBmdW5jdGlvbnM6Cj4gICAgIDEpIHNlbGVjdCBwZyBhbmQgcGdwYXRo
+IGlmIG5vbmUgaXMgc2VsZWN0ZWQKPiAgICAgMikgc3RhcnQgcGdfaW5pdCBpZiByZXF1ZXN0ZWQK
+PiAgICAgMykgZGlzcGF0Y2ggcXVldWVkIElPcyB3aGVuIHBnIGlzIHJlYWR5Cj4gCj4gICBCYXNp
+Y2FsbHksIGEgY2FsbCB0byBxdWV1ZV93b3JrKHByb2Nlc3NfcXVldWVkX2lvcykgY2FuIGJlIHJl
+cGxhY2VkIGJ5Cj4gICBkbV90YWJsZV9ydW5fcXVldWUoKSwgd2hpY2ggcnVucyByZXF1ZXN0IHF1
+ZXVlIGFuZCBlbmRzIHVwIGNhbGxpbmcKPiAgIG1hcF9pbygpLCB3aGljaCBkb2VzIDEpLCAyKSBh
+bmQgMykuCj4gClllcy4KCj4gICBFeGNlcHRpb24gaXMgd2hlbiAhcGdfcmVhZHkoKSAoPSBlaXRo
+ZXIgcGdfaW5pdCBpcyBydW5uaW5nIG9yIHJlcXVlc3RlZCksCj4gICBtdWx0aXBhdGhfYnVzeSgp
+IHByZXZlbnRzIG1hcF9pbygpIGJlaW5nIGNhbGxlZCBmcm9tIHJlcXVlc3RfZm4uCj4gCj4gICBJ
+ZiBwZ19pbml0IGlzIHJ1bm5pbmcsIGl0IHNob3VsZCBiZSBvayBhcyBmYXIgYXMgcGdfaW5pdF9k
+b25lKCkgZG9lcwo+ICAgdGhlIHJpZ2h0IHRoaW5nIHdoZW4gcGdfaW5pdCBpcyBjb21wbGV0ZWQu
+IEkuZS4gcmVzdGFydCBwZ19pbml0IGlmCj4gICAhcGdfcmVhZHkoKSBvciBjYWxsIGRtX3RhYmxl
+X3J1bl9xdWV1ZSgpIHRvIGtpY2sgbWFwX2lvKCkuCj4gCj4gICBJZiBwZ19pbml0IGlzIHJlcXVl
+c3RlZCwgd2UgaGF2ZSB0byBtYWtlIHN1cmUgdGhlIHJlcXVlc3QgaXMgZGV0ZWN0ZWQKPiAgIGFu
+ZCBwZ19pbml0IHdpbGwgYmUgc3RhcnRlZC4KPiAgIHBnX2luaXQgaXMgcmVxdWVzdGVkIGluIDMg
+cGxhY2VzOgo+ICAgICBhKSBfX2Nob29zZV9wZ3BhdGgoKSBpbiBtYXBfaW8oKQo+ICAgICBiKSBf
+X2Nob29zZV9wZ3BhdGgoKSBpbiBtdWx0aXBhdGhfaW9jdGwoKQo+ICAgICBjKSBwZ19pbml0IHJl
+dHJ5IGluIHBnX2luaXRfZG9uZSgpCj4gICBhKSBpcyBvayBiZWNhdXNlIG1hcF9pbygpIGNhbGxz
+IF9fcGdfaW5pdF9hbGxfcGF0aHMoKSwgd2hpY2ggZG9lcyAyKS4KPiAgIGIpIG5lZWRzIGEgY2Fs
+bCB0byBfX3BnX2luaXRfYWxsX3BhdGhzKCksIHdoaWNoIGRvZXMgMikuCj4gICBjKSBuZWVkcyBh
+IGNhbGwgdG8gX19wZ19pbml0X2FsbF9wYXRocygpLCB3aGljaCBkb2VzIDIpLgo+IAo+IAo+IEJ5
+IHdyaXRpbmcgdGhlIGFib3ZlLCBJIGZvdW5kIHBvc3NpYmxlIGJ1Z3MgcmVsYXRlZCB0byAxKToK
+PiAKPj4gQEAgLTEyMTcsOSArMTE4NSwxMSBAQCBzdGF0aWMgdm9pZCBwZ19pbml0X2RvbmUodm9p
+ZCAqZGF0YSwgaW50IGVycm9ycykKPj4gIAo+PiAgCWlmICghbS0+cGdfaW5pdF9yZXF1aXJlZCkK
+Pj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+PiAtCj4+IC0JbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9
+IGRlbGF5X3JldHJ5Owo+PiAtCXF1ZXVlX3dvcmsoa211bHRpcGF0aGQsICZtLT5wcm9jZXNzX3F1
+ZXVlZF9pb3MpOwo+PiArCWVsc2Ugewo+PiArCQltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVs
+YXlfcmV0cnk7Cj4+ICsJCV9fcGdfaW5pdF9hbGxfcGF0aHMobSwgNTAvSFopOwo+PiArCQlnb3Rv
+IG91dDsKPj4gKwl9Cj4+ICAKPj4gIAkvKgo+PiAgCSAqIFdha2UgdXAgYW55IHRocmVhZCB3YWl0
+aW5nIHRvIHN1c3BlbmQuCj4gCj4gSXQgaXMgcG9zc2libGUgdGhhdCBtLT5jdXJyZW50X3BnIGlz
+IE5VTEwuCj4gKEUuZy4gcGdfaW5pdCBmYWlsZWQgZm9yIGN1cnJlbnRfcGdwYXRoLCBieXBhc3Nf
+cGcoKSB3YXMgY2FsbGVkLCBldGMuKQo+IF9fcGdfaW5pdF9hbGxfcGF0aHMoKSB3aWxsIGNhdXNl
+IG9vcHMgaW4gc3VjaCBhIGNhc2UuCj4gCkFoLiBSaWdodC4KCj4gU28gaG93IGFib3V0IGRvaW5n
+IHRoaXMgaW4gcGdfaW5pdF9kb25lKCk6Cj4gCj4gCWlmIChtLT5wZ19pbml0X3JlcXVpcmVkKSB7
+Cj4gCQltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVsYXlfcmV0cnk7Cj4gCQlpZiAoX19wZ19p
+bml0X2FsbF9wYXRocyhtKSkKPiAJCQlnb3RvIG91dDsKPiAJfQo+IAo+IAkvKiBwZ19pbml0IHN1
+Y2Nlc3NmdWxseSBjb21wbGV0ZWQgKi8KPiAJbS0+cXVldWVfaW8gPSAwOwo+IAo+IGFuZCBpbiBf
+X3BnX2luaXRfYWxsX3BhdGhzKCksIGRvIHNvbWV0aGluZyBsaWtlOgo+IAo+IAltLT5wZ19pbml0
+X3JlcXVpcmVkID0gMDsKPiAJLi4uCj4gCWlmICghbS0+Y3VycmVudF9wZykKPiAJCXJldHVybiAw
+Owo+IAkuLi4KPiAJcmV0dXJuIG0tPnBnX2luaXRfaW5fcHJvZ3Jlc3M7Cj4gCj4gCkhtbS4gVGhh
+dCBzdGlsbCB3b3VsZG4ndCBiZSBkb2luZyB0aGUgcmlnaHQgdGhpbmcuCidmYWlsX3BhdGgnIGlu
+IHBnX2luaXRfZG9uZSgpIG1pZ2h0IGJlIHNldHRpbmcgY3VycmVudF9wZyB0byBOVUxMLApidXQg
+dGhpcyBkb2Vzbid0IG1lYW4gdGhhdCB0aGUgZW50aXJlIHBhdGggZ3JvdXAgaXMgaW52YWxpZC4K
+SSBqdXN0IG1lYW5zIHRoYXQgdGhpcyBwYXJ0aWN1bGFyIHBhdGggaXMgaW52YWxpZCwgYW5kIHdl
+IHN0aWxsCm1pZ2h0IG5lZWQgdG8gcmV0cnkgcGdfaW5pdCBmb3IgdGhlIG90aGVyIHBhdGhzLgoK
+Pj4gQEAgLTE1OTMsOCArMTU2MywxMyBAQCBzdGF0aWMgaW50IG11bHRpcGF0aF9pb2N0bChzdHJ1
+Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGNtZCwKPj4gIAlpZiAoIXIgJiYgdGktPmxl
+biAhPSBpX3NpemVfcmVhZChiZGV2LT5iZF9pbm9kZSkgPj4gU0VDVE9SX1NISUZUKQo+PiAgCQly
+ID0gc2NzaV92ZXJpZnlfYmxrX2lvY3RsKE5VTEwsIGNtZCk7Cj4+ICAKPj4gLQlpZiAociA9PSAt
+RU5PVENPTk4gJiYgIWZhdGFsX3NpZ25hbF9wZW5kaW5nKGN1cnJlbnQpKQo+PiAtCQlxdWV1ZV93
+b3JrKGttdWx0aXBhdGhkLCAmbS0+cHJvY2Vzc19xdWV1ZWRfaW9zKTsKPj4gKwlpZiAociA9PSAt
+RU5PVENPTk4gJiYgIWZhdGFsX3NpZ25hbF9wZW5kaW5nKGN1cnJlbnQpKSB7Cj4+ICsJCXNwaW5f
+bG9ja19pcnFzYXZlKCZtLT5sb2NrLCBmbGFncyk7Cj4+ICsJCWlmIChtLT5jdXJyZW50X3BncGF0
+aCAmJiBtLT5wZ19pbml0X3JlcXVpcmVkKQo+PiArCQkJX19wZ19pbml0X2FsbF9wYXRocyhtLCAw
+KTsKPj4gKwkJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmbS0+bG9jaywgZmxhZ3MpOwo+PiArCQlk
+bV90YWJsZV9ydW5fbWRfcXVldWVfYXN5bmMobS0+dGktPnRhYmxlKTsKPj4gKwl9Cj4+ICAKPj4g
+IAlyZXR1cm4gciA/IDogX19ibGtkZXZfZHJpdmVyX2lvY3RsKGJkZXYsIG1vZGUsIGNtZCwgYXJn
+KTsKPj4gIH0KPiAKPiBTaW1pbGFybHksIG0tPmN1cnJlbnRfcGdwYXRoIGNhbiBiZSBOVUxMIGhl
+cmUgd2hpbGUgcGdfaW5pdF9yZXF1aXJlZC4KPiBUaGVuIHBnX2luaXRfcmVxdWlyZWQgaXMgbGVm
+dCB1bmNsZWFyZWQgYW5kIGFsbCBJT3MgaW4gdGhlIHF1ZXVlIHdpbGwKPiBzdGFsbCB1bnRpbCBz
+b21lYm9keSBjYWxscyBtdWx0aXBhdGhfaW9jdGwoKSB0byByZWRvIHBnIHNlbGVjdGlvbi4KPiAK
+T2ssIGNvcnJlY3QuIFdpbGwgYmUgZml4aW5nIGl0IHVwLgoKVGhhbmtzIGZvciB0aGUgcmV2aWV3
+LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVz
+ICYgU3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJ
+TlVYIFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4g
+SGF3biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcp
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
