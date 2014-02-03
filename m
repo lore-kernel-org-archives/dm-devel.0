@@ -1,13 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v6 0/7] dm-multipath: push back requests instead
-	of queueing
-Date: Mon,  3 Feb 2014 15:28:39 -0500
-Message-ID: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 2/7] dm table: add dm_table_run_md_queue_async
+Date: Mon,  3 Feb 2014 15:28:41 -0500
+Message-ID: <1391459326-21569-3-git-send-email-snitzer@redhat.com>
+References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,47 +22,94 @@ To: Hannes Reinecke <hare@suse.de>
 Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Hannes,
+Introduce dm_table_run_md_queue_async() to run the request_queue of the
+mapped_device associated with a request-based DM table.
 
-I went over all of your patches and made a few tweaks, comments, and
-improvements along the way.  Patch headers were modified very
-slightly.
+Also add dm_md_get_queue() wrapper to extract the request_queue from a
+mapped_device.
 
-I wasn't seeing the need for (m->queue_io << 1) + m->queue_if_no_path
-in v5's "[PATCH 3/6] dm-multipath: push back requests instead of
-queueing" so I simplified that and documented the change in the
-header.  If there is a reason for what you had please explain.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-table.c         | 19 +++++++++++++++++++
+ drivers/md/dm.c               |  5 +++++
+ drivers/md/dm.h               |  1 +
+ include/linux/device-mapper.h |  5 +++++
+ 4 files changed, 30 insertions(+)
 
-Patch 7 offers and incremental cleanup that builds on your v5
-patchset.
-
-I can rebase/modify any aspect of these patches so please just let me
-know if there is something that needs changing.
-
-Jun'ichi, I didn't add any tag for your contributions to this patchset
-(either Acked-by or Reviewed-by) but I'd like you to reply to this
-v6 patchset with those if you're OK with these changes.
-
-Thanks,
-Mike
-
-Hannes Reinecke (5):
-  dm mpath: do not call pg_init when it is already running
-  dm mpath: push back requests instead of queueing
-  dm mpath: remove process_queued_ios()
-  dm mpath: reduce memory pressure when requeuing
-  dm mpath: remove map_io()
-
-Mike Snitzer (2):
-  dm table: add dm_table_run_md_queue_async
-  dm mpath: remove extra nesting in map function when path exists
-
- drivers/md/dm-mpath.c         | 208 ++++++++++++++----------------------------
- drivers/md/dm-table.c         |  19 ++++
- drivers/md/dm.c               |   5 +
- drivers/md/dm.h               |   1 +
- include/linux/device-mapper.h |   5 +
- 5 files changed, 100 insertions(+), 138 deletions(-)
-
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 6a7f2b8..8df63ed 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1618,6 +1618,25 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
+ }
+ EXPORT_SYMBOL(dm_table_get_md);
+ 
++void dm_table_run_md_queue_async(struct dm_table *t)
++{
++	struct mapped_device *md;
++	struct request_queue *queue;
++	unsigned long flags;
++
++	if (!dm_table_request_based(t))
++		return;
++
++	md = dm_table_get_md(t);
++	queue = dm_get_md_queue(md);
++	if (queue) {
++		spin_lock_irqsave(queue->queue_lock, flags);
++		blk_run_queue_async(queue);
++		spin_unlock_irqrestore(queue->queue_lock, flags);
++	}
++}
++EXPORT_SYMBOL(dm_table_run_md_queue_async);
++
+ static int device_discard_capable(struct dm_target *ti, struct dm_dev *dev,
+ 				  sector_t start, sector_t len, void *data)
+ {
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8c53b09..341991f 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -475,6 +475,11 @@ sector_t dm_get_size(struct mapped_device *md)
+ 	return get_capacity(md->disk);
+ }
+ 
++struct request_queue *dm_get_md_queue(struct mapped_device *md)
++{
++	return md->queue;
++}
++
+ struct dm_stats *dm_get_stats(struct mapped_device *md)
+ {
+ 	return &md->stats;
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index c4569f0..1b2ca8a 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -189,6 +189,7 @@ int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only
+ int dm_cancel_deferred_remove(struct mapped_device *md);
+ int dm_request_based(struct mapped_device *md);
+ sector_t dm_get_size(struct mapped_device *md);
++struct request_queue *dm_get_md_queue(struct mapped_device *md);
+ struct dm_stats *dm_get_stats(struct mapped_device *md);
+ 
+ int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index ed419c6..250225b 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -466,6 +466,11 @@ struct mapped_device *dm_table_get_md(struct dm_table *t);
+ void dm_table_event(struct dm_table *t);
+ 
+ /*
++ * Run the queue for request-based targets.
++ */
++void dm_table_run_md_queue_async(struct dm_table *t);
++
++/*
+  * The device must be suspended before calling this method.
+  * Returns the previous table, which the caller must destroy.
+  */
 -- 
 1.8.1.4
