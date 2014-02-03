@@ -1,14 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 6/7] dm mpath: remove map_io()
-Date: Mon,  3 Feb 2014 15:28:45 -0500
-Message-ID: <1391459326-21569-7-git-send-email-snitzer@redhat.com>
-References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v6 0/7] dm-multipath: push back requests instead
+	of queueing
+Date: Mon,  3 Feb 2014 15:28:39 -0500
+Message-ID: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,54 +21,47 @@ To: Hannes Reinecke <hare@suse.de>
 Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Hannes Reinecke <hare@suse.de>
+Hi Hannes,
 
-multipath_map() is now just a wrapper around map_io(), so we
-can rename map_io() to multipath_map().
+I went over all of your patches and made a few tweaks, comments, and
+improvements along the way.  Patch headers were modified very
+slightly.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-mpath.c | 19 ++++++-------------
- 1 file changed, 6 insertions(+), 13 deletions(-)
+I wasn't seeing the need for (m->queue_io << 1) + m->queue_if_no_path
+in v5's "[PATCH 3/6] dm-multipath: push back requests instead of
+queueing" so I simplified that and documented the change in the
+header.  If there is a reason for what you had please explain.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 07a00a2..971fbec 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -369,9 +369,13 @@ static int __must_push_back(struct multipath *m)
- 
- #define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required)
- 
--static int map_io(struct multipath *m, struct request *clone,
--		  union map_info *map_context)
-+/*
-+ * Map cloned requests
-+ */
-+static int multipath_map(struct dm_target *ti, struct request *clone,
-+			 union map_info *map_context)
- {
-+	struct multipath *m = (struct multipath *) ti->private;
- 	int r = DM_MAPIO_REQUEUE;
- 	size_t nr_bytes = blk_rq_bytes(clone);
- 	unsigned long flags;
-@@ -906,17 +910,6 @@ static void multipath_dtr(struct dm_target *ti)
- }
- 
- /*
-- * Map cloned requests
-- */
--static int multipath_map(struct dm_target *ti, struct request *clone,
--			 union map_info *map_context)
--{
--	struct multipath *m = (struct multipath *) ti->private;
--
--	return map_io(m, clone, map_context);
--}
--
--/*
-  * Take a path out of use.
-  */
- static int fail_path(struct pgpath *pgpath)
+Patch 7 offers and incremental cleanup that builds on your v5
+patchset.
+
+I can rebase/modify any aspect of these patches so please just let me
+know if there is something that needs changing.
+
+Jun'ichi, I didn't add any tag for your contributions to this patchset
+(either Acked-by or Reviewed-by) but I'd like you to reply to this
+v6 patchset with those if you're OK with these changes.
+
+Thanks,
+Mike
+
+Hannes Reinecke (5):
+  dm mpath: do not call pg_init when it is already running
+  dm mpath: push back requests instead of queueing
+  dm mpath: remove process_queued_ios()
+  dm mpath: reduce memory pressure when requeuing
+  dm mpath: remove map_io()
+
+Mike Snitzer (2):
+  dm table: add dm_table_run_md_queue_async
+  dm mpath: remove extra nesting in map function when path exists
+
+ drivers/md/dm-mpath.c         | 208 ++++++++++++++----------------------------
+ drivers/md/dm-table.c         |  19 ++++
+ drivers/md/dm.c               |   5 +
+ drivers/md/dm.h               |   1 +
+ include/linux/device-mapper.h |   5 +
+ 5 files changed, 100 insertions(+), 138 deletions(-)
+
 -- 
 1.8.1.4
