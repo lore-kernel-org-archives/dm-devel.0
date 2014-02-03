@@ -1,41 +1,57 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] block devices: validate block device capacity
-Date: Mon, 3 Feb 2014 00:15:06 -0800
-Message-ID: <20140203081506.GA10961@infradead.org>
-References: <alpine.LRH.2.02.1401301531040.29912@file01.intranet.prod.int.rdu2.redhat.com>
- <1391122163.2181.103.camel@dabdike.int.hansenpartnership.com>
- <alpine.LRH.2.02.1401301805590.19506@file01.intranet.prod.int.rdu2.redhat.com>
- <1391125027.2181.114.camel@dabdike.int.hansenpartnership.com>
- <alpine.LRH.2.02.1401301905520.25766@file01.intranet.prod.int.rdu2.redhat.com>
- <1391132609.2181.131.camel@dabdike.int.hansenpartnership.com>
- <alpine.LRH.2.02.1401302116180.9767@file01.intranet.prod.int.rdu2.redhat.com>
- <1391147127.2181.159.camel@dabdike.int.hansenpartnership.com>
- <alpine.LRH.2.02.1401310316560.21451@file01.intranet.prod.int.rdu2.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCHv4 0/6] dm-multipath: push back requests instead
+	of queueing
+Date: Mon,  3 Feb 2014 09:18:07 +0100
+Message-ID: <1391415493-102943-1-git-send-email-hare@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1401310316560.21451@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, linux-ide@vger.kernel.org, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 31, 2014 at 03:20:17AM -0500, Mikulas Patocka wrote:
-> So if you think you can support 16TiB devices and leave pgoff_t 32-bit, 
-> send a patch that does it.
-> 
-> Until you make it, you should apply the patch that I sent, that prevents 
-> kernel lockups or data corruption when the user uses 16TiB device on 
-> 32-bit kernel.
+Hi all,
 
-Exactly.  I had actually looked into support for > 16TiB devices for
-a NAS use case a while ago, but when explaining the effort involves
-the idea was dropped quickly.  The Linux block device is too deeply
-tied to the pagecache to make it easily feasible.
+dm-multipath still carries around it's own queueing framework for
+implementing 'queue_if_no_path'.
+However, there is no real reason for this; we could as well
+push back the requests onto the request_queue.
+In doing so we can also reduce the memory pressure during
+fail_if_no_path scenarios, as we don't have to allocate a
+context for each request when it need to be requeued.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Changes since v3:
+- Include dm_md_get_queue(), as suggested from Mike Snitzer
+- Call __pg_init_all_paths() in pg_init_done() to handle
+  pg_init_required correctly, as suggested by Jun'ichi Nomura
+
+Hannes Reinecke (5):
+  dm-multipath: Do not call pg_init twice
+  dm-multipath: push back requests instead of queueing
+  dm-multipath: remove process_queued_ios()
+  dm-multipath: reduce memory pressure during requeuing
+  dm-multipath: remove map_io()
+
+Mike Snitzer (1):
+  dm: implement dm_md_get_queue()
+
+ drivers/md/dm-mpath.c         | 204 +++++++++++++-----------------------------
+ drivers/md/dm-table.c         |  14 +++
+ drivers/md/dm.c               |   5 ++
+ drivers/md/dm.h               |   1 +
+ include/linux/device-mapper.h |   5 ++
+ 5 files changed, 89 insertions(+), 140 deletions(-)
+
+-- 
+1.7.12.4
