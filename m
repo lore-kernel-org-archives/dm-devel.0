@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/7] dm table: add dm_table_run_md_queue_async
-Date: Mon,  3 Feb 2014 15:28:41 -0500
-Message-ID: <1391459326-21569-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/7] dm mpath: push back requests instead of
+	queueing
+Date: Mon,  3 Feb 2014 15:28:42 -0500
+Message-ID: <1391459326-21569-4-git-send-email-snitzer@redhat.com>
 References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,94 +23,240 @@ To: Hannes Reinecke <hare@suse.de>
 Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Introduce dm_table_run_md_queue_async() to run the request_queue of the
-mapped_device associated with a request-based DM table.
+From: Hannes Reinecke <hare@suse.de>
 
-Also add dm_md_get_queue() wrapper to extract the request_queue from a
-mapped_device.
+There is no reason why multipath needs to queue requests internally for
+queue_if_no_path or pg_init; we should rather push them back onto the
+request queue.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+And while we're at it we can simplify the conditional statement in
+map_io() to make it easier to read.
+
+Since mpath no longer does internal queuing of I/O the table info no
+longer emits the internal queue_size.  Instead it displays 1 if queuing
+is being used or 0 if it is not.
+
 Signed-off-by: Hannes Reinecke <hare@suse.de>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-table.c         | 19 +++++++++++++++++++
- drivers/md/dm.c               |  5 +++++
- drivers/md/dm.h               |  1 +
- include/linux/device-mapper.h |  5 +++++
- 4 files changed, 30 insertions(+)
+ drivers/md/dm-mpath.c | 116 +++++++++++++++++---------------------------------
+ 1 file changed, 38 insertions(+), 78 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 6a7f2b8..8df63ed 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1618,6 +1618,25 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
- }
- EXPORT_SYMBOL(dm_table_get_md);
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 304ee5c..89c0997 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -93,9 +93,7 @@ struct multipath {
+ 	unsigned pg_init_count;		/* Number of times pg_init called */
+ 	unsigned pg_init_delay_msecs;	/* Number of msecs before pg_init retry */
  
-+void dm_table_run_md_queue_async(struct dm_table *t)
-+{
-+	struct mapped_device *md;
-+	struct request_queue *queue;
-+	unsigned long flags;
+-	unsigned queue_size;
+ 	struct work_struct process_queued_ios;
+-	struct list_head queued_ios;
+ 
+ 	struct work_struct trigger_event;
+ 
+@@ -124,6 +122,7 @@ static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
+ static void process_queued_ios(struct work_struct *work);
+ static void trigger_event(struct work_struct *work);
+ static void activate_path(struct work_struct *work);
++static int __pgpath_busy(struct pgpath *pgpath);
+ 
+ 
+ /*-----------------------------------------------
+@@ -195,7 +194,6 @@ static struct multipath *alloc_multipath(struct dm_target *ti)
+ 	m = kzalloc(sizeof(*m), GFP_KERNEL);
+ 	if (m) {
+ 		INIT_LIST_HEAD(&m->priority_groups);
+-		INIT_LIST_HEAD(&m->queued_ios);
+ 		spin_lock_init(&m->lock);
+ 		m->queue_io = 1;
+ 		m->pg_init_delay_msecs = DM_PG_INIT_DELAY_DEFAULT;
+@@ -368,12 +366,15 @@ failed:
+  */
+ static int __must_push_back(struct multipath *m)
+ {
+-	return (m->queue_if_no_path != m->saved_queue_if_no_path &&
+-		dm_noflush_suspending(m->ti));
++	return (m->queue_if_no_path ||
++		(m->queue_if_no_path != m->saved_queue_if_no_path &&
++		 dm_noflush_suspending(m->ti)));
+ }
+ 
++#define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required)
 +
-+	if (!dm_table_request_based(t))
-+		return;
-+
-+	md = dm_table_get_md(t);
-+	queue = dm_get_md_queue(md);
-+	if (queue) {
-+		spin_lock_irqsave(queue->queue_lock, flags);
-+		blk_run_queue_async(queue);
-+		spin_unlock_irqrestore(queue->queue_lock, flags);
+ static int map_io(struct multipath *m, struct request *clone,
+-		  union map_info *map_context, unsigned was_queued)
++		  union map_info *map_context)
+ {
+ 	int r = DM_MAPIO_REMAPPED;
+ 	size_t nr_bytes = blk_rq_bytes(clone);
+@@ -391,37 +392,30 @@ static int map_io(struct multipath *m, struct request *clone,
+ 
+ 	pgpath = m->current_pgpath;
+ 
+-	if (was_queued)
+-		m->queue_size--;
+-
+-	if (m->pg_init_required) {
+-		if (!m->pg_init_in_progress)
+-			queue_work(kmultipathd, &m->process_queued_ios);
+-		r = DM_MAPIO_REQUEUE;
+-	} else if ((pgpath && m->queue_io) ||
+-		   (!pgpath && m->queue_if_no_path)) {
+-		/* Queue for the daemon to resubmit */
+-		list_add_tail(&clone->queuelist, &m->queued_ios);
+-		m->queue_size++;
+-		if (!m->queue_io)
+-			queue_work(kmultipathd, &m->process_queued_ios);
+-		pgpath = NULL;
+-		r = DM_MAPIO_SUBMITTED;
+-	} else if (pgpath) {
+-		bdev = pgpath->path.dev->bdev;
+-		clone->q = bdev_get_queue(bdev);
+-		clone->rq_disk = bdev->bd_disk;
+-	} else if (__must_push_back(m))
+-		r = DM_MAPIO_REQUEUE;
+-	else
+-		r = -EIO;	/* Failed */
+-
+-	mpio->pgpath = pgpath;
+-	mpio->nr_bytes = nr_bytes;
+-
+-	if (r == DM_MAPIO_REMAPPED && pgpath->pg->ps.type->start_io)
+-		pgpath->pg->ps.type->start_io(&pgpath->pg->ps, &pgpath->path,
+-					      nr_bytes);
++	if (pgpath) {
++		if (__pgpath_busy(pgpath))
++			r = DM_MAPIO_REQUEUE;
++		else if (pg_ready(m)) {
++			bdev = pgpath->path.dev->bdev;
++			clone->q = bdev_get_queue(bdev);
++			clone->rq_disk = bdev->bd_disk;
++			mpio->pgpath = pgpath;
++			mpio->nr_bytes = nr_bytes;
++			if (pgpath->pg->ps.type->start_io)
++				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
++							      &pgpath->path,
++							      nr_bytes);
++		} else {
++			__pg_init_all_paths(m);
++			r = DM_MAPIO_REQUEUE;
++		}
++	} else {
++		/* No path */
++		if (__must_push_back(m))
++			r = DM_MAPIO_REQUEUE;
++		else
++			r = -EIO;	/* Failed */
 +	}
-+}
-+EXPORT_SYMBOL(dm_table_run_md_queue_async);
-+
- static int device_discard_capable(struct dm_target *ti, struct dm_dev *dev,
- 				  sector_t start, sector_t len, void *data)
- {
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8c53b09..341991f 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -475,6 +475,11 @@ sector_t dm_get_size(struct mapped_device *md)
- 	return get_capacity(md->disk);
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
+@@ -443,7 +437,7 @@ static int queue_if_no_path(struct multipath *m, unsigned queue_if_no_path,
+ 	else
+ 		m->saved_queue_if_no_path = queue_if_no_path;
+ 	m->queue_if_no_path = queue_if_no_path;
+-	if (!m->queue_if_no_path && m->queue_size)
++	if (!m->queue_if_no_path)
+ 		queue_work(kmultipathd, &m->process_queued_ios);
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+@@ -451,40 +445,6 @@ static int queue_if_no_path(struct multipath *m, unsigned queue_if_no_path,
+ 	return 0;
  }
  
-+struct request_queue *dm_get_md_queue(struct mapped_device *md)
-+{
-+	return md->queue;
-+}
-+
- struct dm_stats *dm_get_stats(struct mapped_device *md)
+-/*-----------------------------------------------------------------
+- * The multipath daemon is responsible for resubmitting queued ios.
+- *---------------------------------------------------------------*/
+-
+-static void dispatch_queued_ios(struct multipath *m)
+-{
+-	int r;
+-	unsigned long flags;
+-	union map_info *info;
+-	struct request *clone, *n;
+-	LIST_HEAD(cl);
+-
+-	spin_lock_irqsave(&m->lock, flags);
+-	list_splice_init(&m->queued_ios, &cl);
+-	spin_unlock_irqrestore(&m->lock, flags);
+-
+-	list_for_each_entry_safe(clone, n, &cl, queuelist) {
+-		list_del_init(&clone->queuelist);
+-
+-		info = dm_get_rq_mapinfo(clone);
+-
+-		r = map_io(m, clone, info, 1);
+-		if (r < 0) {
+-			clear_mapinfo(m, info);
+-			dm_kill_unmapped_request(clone, r);
+-		} else if (r == DM_MAPIO_REMAPPED)
+-			dm_dispatch_request(clone);
+-		else if (r == DM_MAPIO_REQUEUE) {
+-			clear_mapinfo(m, info);
+-			dm_requeue_unmapped_request(clone);
+-		}
+-	}
+-}
+-
+ static void process_queued_ios(struct work_struct *work)
  {
- 	return &md->stats;
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index c4569f0..1b2ca8a 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -189,6 +189,7 @@ int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only
- int dm_cancel_deferred_remove(struct mapped_device *md);
- int dm_request_based(struct mapped_device *md);
- sector_t dm_get_size(struct mapped_device *md);
-+struct request_queue *dm_get_md_queue(struct mapped_device *md);
- struct dm_stats *dm_get_stats(struct mapped_device *md);
+ 	struct multipath *m =
+@@ -509,7 +469,7 @@ static void process_queued_ios(struct work_struct *work)
  
- int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index ed419c6..250225b 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -466,6 +466,11 @@ struct mapped_device *dm_table_get_md(struct dm_table *t);
- void dm_table_event(struct dm_table *t);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 	if (!must_queue)
+-		dispatch_queued_ios(m);
++		dm_table_run_md_queue_async(m->ti->table);
+ }
  
  /*
-+ * Run the queue for request-based targets.
-+ */
-+void dm_table_run_md_queue_async(struct dm_table *t);
-+
-+/*
-  * The device must be suspended before calling this method.
-  * Returns the previous table, which the caller must destroy.
-  */
+@@ -987,7 +947,7 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
+ 		return DM_MAPIO_REQUEUE;
+ 
+ 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+-	r = map_io(m, clone, map_context, 0);
++	r = map_io(m, clone, map_context);
+ 	if (r < 0 || r == DM_MAPIO_REQUEUE)
+ 		clear_mapinfo(m, map_context);
+ 
+@@ -1056,7 +1016,7 @@ static int reinstate_path(struct pgpath *pgpath)
+ 
+ 	pgpath->is_active = 1;
+ 
+-	if (!m->nr_valid_paths++ && m->queue_size) {
++	if (!m->nr_valid_paths++) {
+ 		m->current_pgpath = NULL;
+ 		queue_work(kmultipathd, &m->process_queued_ios);
+ 	} else if (m->hw_handler_name && (m->current_pg == pgpath->pg)) {
+@@ -1435,7 +1395,7 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
+ 
+ 	/* Features */
+ 	if (type == STATUSTYPE_INFO)
+-		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
++		DMEMIT("2 %u %u ", m->queue_io, m->pg_init_count);
+ 	else {
+ 		DMEMIT("%u ", m->queue_if_no_path +
+ 			      (m->pg_init_retries > 0) * 2 +
+@@ -1683,7 +1643,7 @@ static int multipath_busy(struct dm_target *ti)
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+ 	/* pg_init in progress, requeue until done */
+-	if (m->pg_init_in_progress) {
++	if (!pg_ready(m)) {
+ 		busy = 1;
+ 		goto out;
+ 	}
+@@ -1736,7 +1696,7 @@ out:
+  *---------------------------------------------------------------*/
+ static struct target_type multipath_target = {
+ 	.name = "multipath",
+-	.version = {1, 6, 0},
++	.version = {1, 7, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr = multipath_ctr,
+ 	.dtr = multipath_dtr,
 -- 
 1.8.1.4
