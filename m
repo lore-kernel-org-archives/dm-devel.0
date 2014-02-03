@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 5/6] dm-multipath: reduce memory pressure during
-	requeuing
-Date: Mon,  3 Feb 2014 09:18:12 +0100
-Message-ID: <1391415493-102943-6-git-send-email-hare@suse.de>
+Subject: [PATCH 1/6] dm-multipath: Do not call pg_init twice
+Date: Mon,  3 Feb 2014 09:18:08 +0100
+Message-ID: <1391415493-102943-2-git-send-email-hare@suse.de>
 References: <1391415493-102943-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,101 +22,28 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-When multipath needs to requeue I/O in the block layer
-the per-request context shouldn't be allocated, as it will
-be freed immediately afterwards anyway.
-Avoiding this memory allocation will reduce memory
-pressure during requeuing.
+When pg_init is running we shouldn't be calling the same
+routine twice; we need to wait for the first pg_init to
+complete.
 
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-mpath.c | 40 ++++++++++++++++------------------------
- 1 file changed, 16 insertions(+), 24 deletions(-)
+ drivers/md/dm-mpath.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index b11e3b3..daca739 100644
+index 6eb9dc9..d45290a 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -372,12 +372,12 @@ static int __must_push_back(struct multipath *m)
- static int map_io(struct multipath *m, struct request *clone,
- 		  union map_info *map_context)
- {
--	int r = DM_MAPIO_REMAPPED;
-+	int r = DM_MAPIO_REQUEUE;
- 	size_t nr_bytes = blk_rq_bytes(clone);
- 	unsigned long flags;
+@@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
  	struct pgpath *pgpath;
- 	struct block_device *bdev;
--	struct dm_mpath_io *mpio = map_context->ptr;
-+	struct dm_mpath_io *mpio;
+ 	unsigned long pg_init_delay = 0;
  
- 	spin_lock_irqsave(&m->lock, flags);
- 
-@@ -390,29 +390,31 @@ static int map_io(struct multipath *m, struct request *clone,
- 
- 	if (pgpath) {
- 		if (__pgpath_busy(pgpath))
--			r = DM_MAPIO_REQUEUE;
--		else if (pg_ready(m)) {
-+			goto out_unlock;
++	if (m->pg_init_in_progress || m->pg_init_disabled)
++		return;
 +
-+		if (pg_ready(m)) {
-+			if (set_mapinfo(m, map_context) < 0)
-+				goto out_unlock;
-+
- 			bdev = pgpath->path.dev->bdev;
- 			clone->q = bdev_get_queue(bdev);
- 			clone->rq_disk = bdev->bd_disk;
-+			clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
-+			mpio = map_context->ptr;
- 			mpio->pgpath = pgpath;
- 			mpio->nr_bytes = nr_bytes;
- 			if (pgpath->pg->ps.type->start_io)
- 				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
- 							      &pgpath->path,
- 							      nr_bytes);
--		} else {
--			__pg_init_all_paths(m, 0);
--			r = DM_MAPIO_REQUEUE;
-+			r = DM_MAPIO_REMAPPED;
-+			goto out_unlock;
- 		}
--	} else {
--		/* No path */
--		if (__must_push_back(m))
--			r = DM_MAPIO_REQUEUE;
--		else
-+		__pg_init_all_paths(m, 0);
-+	} else if (!__must_push_back(m))
- 			r = -EIO;	/* Failed */
--	}
- 
-+out_unlock:
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
- 	return r;
-@@ -908,19 +910,9 @@ static void multipath_dtr(struct dm_target *ti)
- static int multipath_map(struct dm_target *ti, struct request *clone,
- 			 union map_info *map_context)
- {
--	int r;
- 	struct multipath *m = (struct multipath *) ti->private;
- 
--	if (set_mapinfo(m, map_context) < 0)
--		/* ENOMEM, requeue */
--		return DM_MAPIO_REQUEUE;
--
--	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
--	r = map_io(m, clone, map_context);
--	if (r < 0 || r == DM_MAPIO_REQUEUE)
--		clear_mapinfo(m, map_context);
--
--	return r;
-+	return map_io(m, clone, map_context);
- }
- 
- /*
+ 	m->pg_init_count++;
+ 	m->pg_init_required = 0;
+ 	if (m->pg_init_delay_retry)
 -- 
 1.7.12.4
