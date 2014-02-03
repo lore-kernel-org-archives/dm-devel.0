@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 2/6] dm: implement dm_md_get_queue()
-Date: Mon,  3 Feb 2014 13:34:53 +0100
-Message-ID: <1391430897-102094-3-git-send-email-hare@suse.de>
+Subject: [PATCH 1/6] dm-multipath: Do not call pg_init twice
+Date: Mon,  3 Feb 2014 13:34:52 +0100
+Message-ID: <1391430897-102094-2-git-send-email-hare@suse.de>
 References: <1391430897-102094-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,45 +22,28 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mike Snitzer <snitzer@redhat.com>
+When pg_init is running we shouldn't be calling the same
+routine twice; we need to wait for the first pg_init to
+complete.
 
-Add wrapper to extract the request_queue from a
-mapped device.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm.c | 5 +++++
- drivers/md/dm.h | 1 +
- 2 files changed, 6 insertions(+)
+ drivers/md/dm-mpath.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8c53b09..341991f 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -475,6 +475,11 @@ sector_t dm_get_size(struct mapped_device *md)
- 	return get_capacity(md->disk);
- }
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 6eb9dc9..d45290a 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
+ 	struct pgpath *pgpath;
+ 	unsigned long pg_init_delay = 0;
  
-+struct request_queue *dm_get_md_queue(struct mapped_device *md)
-+{
-+	return md->queue;
-+}
++	if (m->pg_init_in_progress || m->pg_init_disabled)
++		return;
 +
- struct dm_stats *dm_get_stats(struct mapped_device *md)
- {
- 	return &md->stats;
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index c4569f0..1b2ca8a 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -189,6 +189,7 @@ int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only
- int dm_cancel_deferred_remove(struct mapped_device *md);
- int dm_request_based(struct mapped_device *md);
- sector_t dm_get_size(struct mapped_device *md);
-+struct request_queue *dm_get_md_queue(struct mapped_device *md);
- struct dm_stats *dm_get_stats(struct mapped_device *md);
- 
- int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
+ 	m->pg_init_count++;
+ 	m->pg_init_required = 0;
+ 	if (m->pg_init_delay_retry)
 -- 
 1.7.12.4
