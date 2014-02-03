@@ -1,13 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCHv4 0/6] dm-multipath: push back requests instead
-	of queueing
-Date: Mon,  3 Feb 2014 09:18:07 +0100
-Message-ID: <1391415493-102943-1-git-send-email-hare@suse.de>
+Subject: [PATCH 2/6] dm: implement dm_md_get_queue()
+Date: Mon,  3 Feb 2014 09:18:09 +0100
+Message-ID: <1391415493-102943-3-git-send-email-hare@suse.de>
+References: <1391415493-102943-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1391415493-102943-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,37 +22,45 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi all,
+From: Mike Snitzer <snitzer@redhat.com>
 
-dm-multipath still carries around it's own queueing framework for
-implementing 'queue_if_no_path'.
-However, there is no real reason for this; we could as well
-push back the requests onto the request_queue.
-In doing so we can also reduce the memory pressure during
-fail_if_no_path scenarios, as we don't have to allocate a
-context for each request when it need to be requeued.
+Add wrapper to extract the request_queue from a
+mapped device.
 
-Changes since v3:
-- Include dm_md_get_queue(), as suggested from Mike Snitzer
-- Call __pg_init_all_paths() in pg_init_done() to handle
-  pg_init_required correctly, as suggested by Jun'ichi Nomura
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm.c | 5 +++++
+ drivers/md/dm.h | 1 +
+ 2 files changed, 6 insertions(+)
 
-Hannes Reinecke (5):
-  dm-multipath: Do not call pg_init twice
-  dm-multipath: push back requests instead of queueing
-  dm-multipath: remove process_queued_ios()
-  dm-multipath: reduce memory pressure during requeuing
-  dm-multipath: remove map_io()
-
-Mike Snitzer (1):
-  dm: implement dm_md_get_queue()
-
- drivers/md/dm-mpath.c         | 204 +++++++++++++-----------------------------
- drivers/md/dm-table.c         |  14 +++
- drivers/md/dm.c               |   5 ++
- drivers/md/dm.h               |   1 +
- include/linux/device-mapper.h |   5 ++
- 5 files changed, 89 insertions(+), 140 deletions(-)
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 0704c52..933b8cb 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -475,6 +475,11 @@ sector_t dm_get_size(struct mapped_device *md)
+ 	return get_capacity(md->disk);
+ }
+ 
++struct request_queue *dm_get_md_queue(struct mapped_device *md)
++{
++	return md->queue;
++}
++
+ struct dm_stats *dm_get_stats(struct mapped_device *md)
+ {
+ 	return &md->stats;
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index c57ba55..0eef13a 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -172,6 +172,7 @@ int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only
+ int dm_cancel_deferred_remove(struct mapped_device *md);
+ int dm_request_based(struct mapped_device *md);
+ sector_t dm_get_size(struct mapped_device *md);
++struct request_queue *dm_get_md_queue(struct mapped_device *md);
+ struct dm_stats *dm_get_stats(struct mapped_device *md);
+ 
+ int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
 -- 
 1.7.12.4
