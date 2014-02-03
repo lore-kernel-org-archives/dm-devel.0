@@ -1,62 +1,38 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: dm-crypt unpleasantness during heavy write loads and memory pressure?
-Date: Sat, 1 Feb 2014 22:29:34 -0800
-Message-ID: <CALCETrVpoMXJ59R6=wa8rPi_ELc5dnkpGFXC72OApa0ooZc1fg@mail.gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH] block devices: validate block device capacity
+Date: Mon, 3 Feb 2014 00:15:06 -0800
+Message-ID: <20140203081506.GA10961@infradead.org>
+References: <alpine.LRH.2.02.1401301531040.29912@file01.intranet.prod.int.rdu2.redhat.com>
+ <1391122163.2181.103.camel@dabdike.int.hansenpartnership.com>
+ <alpine.LRH.2.02.1401301805590.19506@file01.intranet.prod.int.rdu2.redhat.com>
+ <1391125027.2181.114.camel@dabdike.int.hansenpartnership.com>
+ <alpine.LRH.2.02.1401301905520.25766@file01.intranet.prod.int.rdu2.redhat.com>
+ <1391132609.2181.131.camel@dabdike.int.hansenpartnership.com>
+ <alpine.LRH.2.02.1401302116180.9767@file01.intranet.prod.int.rdu2.redhat.com>
+ <1391147127.2181.159.camel@dabdike.int.hansenpartnership.com>
+ <alpine.LRH.2.02.1401310316560.21451@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1401310316560.21451@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Jens Axboe <axboe@kernel.dk>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, linux-ide@vger.kernel.org, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-I've seen a number of anomalies across a few machines.  All of them
-have dm-crypt in common.
+On Fri, Jan 31, 2014 at 03:20:17AM -0500, Mikulas Patocka wrote:
+> So if you think you can support 16TiB devices and leave pgoff_t 32-bit, 
+> send a patch that does it.
+> 
+> Until you make it, you should apply the patch that I sent, that prevents 
+> kernel lockups or data corruption when the user uses 16TiB device on 
+> 32-bit kernel.
 
-The most recent example was on Linux 3.8.  I have dm-crypt on top of
-hpsa hardware RAID.  (I don't have a whole lot of confidence in hpsa's
-performance, but I've seen similar issues on other machines, so this
-may not be hpsa's fault.)  I did a big MySQL update.  The update took
-a shockingly long time (it took longer than an identical query on a
-replica on a much slower machine) and, while it was running, the
-machine was basically unusable.
-
-Here's a hypothesis:
-
-dm-crypt appears to take incoming write bios, clone them, allocate
-pages for a copy of the data, encrypt the data, and then submit to the
-lower layer.  The lower layer (e.g. hpsa's queue) then sorts, merges,
-and does real I/O.
-
-Let's suppose that the actual crypto is nice and fast (on this box,
-I'm using XTS with AES-NI on seven logical cores at 3.5 GHz), but that
-the disks are not quite so impressive (3x 7200rpm SATA drives on
-RAID5).  The machine has 16 GB of RAM.  MySQL is I/O-bound.
-
-So... what happens?  If MySQL is willing to queue up a very large
-number of writes (which is probably is -- this was one giant
-transaction, so MySQL wouldn't need to flush until it filled up all
-available buffers), there are only three places that those bios can
-wait.  They can wait in dm-crypt's queue (which is unlikely -- AES-NI
-is fast), they can block in dm-crypt waiting for free memory, or they
-can block on the lower layer's queue.
-
-None of these options are good.  Requests on the lower layer's queue
-can be sorted, but they're keeping an entire extra copy of the data
-pinned in kernel memory.  (I have no idea how well the writeback
-algorithms can handle very large amounts of memory being in use by the
-kernel.)  Requests on dm-crypt's queue cannot be intelligently sorted,
-causing throughput to drop (which is only going to make the problem
-worse).
-
-So... is this a real problem?  Should I blame dm-crypt for stalls
-under heavy write load?
-
-
-I suppose that the situation could be improved if there was a way for
-dm-crypt to remap the sector range immediately but defer encryption
-until the lower device's queue is nearly ready to submit the IO.
-
---Andy
+Exactly.  I had actually looked into support for > 16TiB devices for
+a NAS use case a while ago, but when explaining the effort involves
+the idea was dropped quickly.  The Linux block device is too deeply
+tied to the pagecache to make it easily feasible.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
