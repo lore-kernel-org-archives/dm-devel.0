@@ -1,15 +1,19 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 3/6] dm-multipath: push back requests instead of
-	queueing
-Date: Mon,  3 Feb 2014 09:18:10 +0100
-Message-ID: <1391415493-102943-4-git-send-email-hare@suse.de>
-References: <1391415493-102943-1-git-send-email-hare@suse.de>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH 3/5] dm-multipath: remove process_queued_ios()
+Date: Mon, 3 Feb 2014 10:26:13 +0000
+Message-ID: <11AF7C027C4C02408624617A4986078401058925@BPXM12GP.gisp.nec.co.jp>
+References: <1391159444-17987-1-git-send-email-hare@suse.de>
+	<1391159444-17987-4-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A49860784010535C4@BPXM12GP.gisp.nec.co.jp>
+	<52EBB958.5090803@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391415493-102943-1-git-send-email-hare@suse.de>
+In-Reply-To: <52EBB958.5090803@suse.de>
+Content-Language: ja-JP
+Content-ID: <0B8A512D072F94408721279D58B18BD9@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,273 +23,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-There is no reason why multipath needs to queue requests
-internally for queue_if_no_path or pg_init; we should
-rather push them back onto the request queue.
+On 01/31/14 23:55, Hannes Reinecke wrote:
+> Problem here is that pg_init_done() is per path, so at face value
+> SCSI_DH_RETRY is per path, too.
+> So from that we should be retrying this path (and this path only).
+> Hence it would be correct to call queue_delayed_work directly.
+> 
+> However, typically any pg_init affects _every_ path in the multipath
+> device (active paths become passive and vice versa).
+> Which seems to be the intended usage, as we're checking for
+> pg_init_in_progress prior to invoking queue_delayed_work().
+> 
+> But _if_ we assume that, then we only need to send a _single_
+> pg_init, as this will switch all paths. So again, a call to
+> __pg_init_all_paths will not do the correct thing as it'll
+> send activations to _every_ active path.
 
-And while we're at it we can simplify the conditional
-statement in map_io() to make it easier to read.
+Sending activation for every paths was introduced by this:
+  commit e54f77ddda72781ec1c1696b21aabd6a30cbb7c6
+  Author: Chandra Seetharaman <sekharan@us.ibm.com>
+  Date:   Mon Jun 22 10:12:12 2009 +0100
+So if you make change in the logic, you have to check whether the
+change does not break what the above solved.
 
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c         | 115 ++++++++++++++----------------------------
- drivers/md/dm-table.c         |  14 +++++
- include/linux/device-mapper.h |   5 ++
- 3 files changed, 57 insertions(+), 77 deletions(-)
+> (And, in fact, we're trying really hard in scsi_dh_rdac
+> and scsi_dh_alua to bunch together all the various pg_init
+> requests precisely for the cited reason).
+> 
+> So my inclination here would be to treat SCSI_DH_RETRY
+> as _per path_, and retry only this specific path.
+> IE removing the check to pg_init_in_progress and call
+> queue_delayed_work() directly.
+> 
+> IMHO this would impose the least restriction on
+> the internal workings of the various device handlers.
+> 
+> What do you think?
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index d45290a..5373ca9 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -93,9 +93,7 @@ struct multipath {
- 	unsigned pg_init_count;		/* Number of times pg_init called */
- 	unsigned pg_init_delay_msecs;	/* Number of msecs before pg_init retry */
- 
--	unsigned queue_size;
- 	struct work_struct process_queued_ios;
--	struct list_head queued_ios;
- 
- 	struct work_struct trigger_event;
- 
-@@ -124,6 +122,7 @@ static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
- static void process_queued_ios(struct work_struct *work);
- static void trigger_event(struct work_struct *work);
- static void activate_path(struct work_struct *work);
-+static int __pgpath_busy(struct pgpath *pgpath);
- 
- 
- /*-----------------------------------------------
-@@ -195,7 +194,6 @@ static struct multipath *alloc_multipath(struct dm_target *ti)
- 	m = kzalloc(sizeof(*m), GFP_KERNEL);
- 	if (m) {
- 		INIT_LIST_HEAD(&m->priority_groups);
--		INIT_LIST_HEAD(&m->queued_ios);
- 		spin_lock_init(&m->lock);
- 		m->queue_io = 1;
- 		m->pg_init_delay_msecs = DM_PG_INIT_DELAY_DEFAULT;
-@@ -368,12 +366,15 @@ failed:
-  */
- static int __must_push_back(struct multipath *m)
- {
--	return (m->queue_if_no_path != m->saved_queue_if_no_path &&
--		dm_noflush_suspending(m->ti));
-+	return (m->queue_if_no_path ||
-+		(m->queue_if_no_path != m->saved_queue_if_no_path &&
-+		 dm_noflush_suspending(m->ti)));
- }
- 
-+#define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required)
-+
- static int map_io(struct multipath *m, struct request *clone,
--		  union map_info *map_context, unsigned was_queued)
-+		  union map_info *map_context)
- {
- 	int r = DM_MAPIO_REMAPPED;
- 	size_t nr_bytes = blk_rq_bytes(clone);
-@@ -391,37 +392,30 @@ static int map_io(struct multipath *m, struct request *clone,
- 
- 	pgpath = m->current_pgpath;
- 
--	if (was_queued)
--		m->queue_size--;
--
--	if (m->pg_init_required) {
--		if (!m->pg_init_in_progress)
--			queue_work(kmultipathd, &m->process_queued_ios);
--		r = DM_MAPIO_REQUEUE;
--	} else if ((pgpath && m->queue_io) ||
--		   (!pgpath && m->queue_if_no_path)) {
--		/* Queue for the daemon to resubmit */
--		list_add_tail(&clone->queuelist, &m->queued_ios);
--		m->queue_size++;
--		if (!m->queue_io)
--			queue_work(kmultipathd, &m->process_queued_ios);
--		pgpath = NULL;
--		r = DM_MAPIO_SUBMITTED;
--	} else if (pgpath) {
--		bdev = pgpath->path.dev->bdev;
--		clone->q = bdev_get_queue(bdev);
--		clone->rq_disk = bdev->bd_disk;
--	} else if (__must_push_back(m))
--		r = DM_MAPIO_REQUEUE;
--	else
--		r = -EIO;	/* Failed */
--
--	mpio->pgpath = pgpath;
--	mpio->nr_bytes = nr_bytes;
--
--	if (r == DM_MAPIO_REMAPPED && pgpath->pg->ps.type->start_io)
--		pgpath->pg->ps.type->start_io(&pgpath->pg->ps, &pgpath->path,
--					      nr_bytes);
-+	if (pgpath) {
-+		if (__pgpath_busy(pgpath))
-+			r = DM_MAPIO_REQUEUE;
-+		else if (pg_ready(m)) {
-+			bdev = pgpath->path.dev->bdev;
-+			clone->q = bdev_get_queue(bdev);
-+			clone->rq_disk = bdev->bd_disk;
-+			mpio->pgpath = pgpath;
-+			mpio->nr_bytes = nr_bytes;
-+			if (pgpath->pg->ps.type->start_io)
-+				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
-+							      &pgpath->path,
-+							      nr_bytes);
-+		} else {
-+			__pg_init_all_paths(m);
-+			r = DM_MAPIO_REQUEUE;
-+		}
-+	} else {
-+		/* No path */
-+		if (__must_push_back(m))
-+			r = DM_MAPIO_REQUEUE;
-+		else
-+			r = -EIO;	/* Failed */
-+	}
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
-@@ -443,7 +437,7 @@ static int queue_if_no_path(struct multipath *m, unsigned queue_if_no_path,
- 	else
- 		m->saved_queue_if_no_path = queue_if_no_path;
- 	m->queue_if_no_path = queue_if_no_path;
--	if (!m->queue_if_no_path && m->queue_size)
-+	if (!m->queue_if_no_path)
- 		queue_work(kmultipathd, &m->process_queued_ios);
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
-@@ -451,40 +445,6 @@ static int queue_if_no_path(struct multipath *m, unsigned queue_if_no_path,
- 	return 0;
- }
- 
--/*-----------------------------------------------------------------
-- * The multipath daemon is responsible for resubmitting queued ios.
-- *---------------------------------------------------------------*/
--
--static void dispatch_queued_ios(struct multipath *m)
--{
--	int r;
--	unsigned long flags;
--	union map_info *info;
--	struct request *clone, *n;
--	LIST_HEAD(cl);
--
--	spin_lock_irqsave(&m->lock, flags);
--	list_splice_init(&m->queued_ios, &cl);
--	spin_unlock_irqrestore(&m->lock, flags);
--
--	list_for_each_entry_safe(clone, n, &cl, queuelist) {
--		list_del_init(&clone->queuelist);
--
--		info = dm_get_rq_mapinfo(clone);
--
--		r = map_io(m, clone, info, 1);
--		if (r < 0) {
--			clear_mapinfo(m, info);
--			dm_kill_unmapped_request(clone, r);
--		} else if (r == DM_MAPIO_REMAPPED)
--			dm_dispatch_request(clone);
--		else if (r == DM_MAPIO_REQUEUE) {
--			clear_mapinfo(m, info);
--			dm_requeue_unmapped_request(clone);
--		}
--	}
--}
--
- static void process_queued_ios(struct work_struct *work)
- {
- 	struct multipath *m =
-@@ -510,7 +470,7 @@ static void process_queued_ios(struct work_struct *work)
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
- 	if (!must_queue)
--		dispatch_queued_ios(m);
-+		dm_table_run_md_queue_async(m->ti->table);
- }
- 
- /*
-@@ -988,7 +948,7 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
- 		return DM_MAPIO_REQUEUE;
- 
- 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
--	r = map_io(m, clone, map_context, 0);
-+	r = map_io(m, clone, map_context);
- 	if (r < 0 || r == DM_MAPIO_REQUEUE)
- 		clear_mapinfo(m, map_context);
- 
-@@ -1057,7 +1017,7 @@ static int reinstate_path(struct pgpath *pgpath)
- 
- 	pgpath->is_active = 1;
- 
--	if (!m->nr_valid_paths++ && m->queue_size) {
-+	if (!m->nr_valid_paths++) {
- 		m->current_pgpath = NULL;
- 		queue_work(kmultipathd, &m->process_queued_ios);
- 	} else if (m->hw_handler_name && (m->current_pg == pgpath->pg)) {
-@@ -1436,7 +1396,8 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
- 
- 	/* Features */
- 	if (type == STATUSTYPE_INFO)
--		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
-+		DMEMIT("2 %u %u ", (m->queue_io << 1) + m->queue_if_no_path,
-+		       m->pg_init_count);
- 	else {
- 		DMEMIT("%u ", m->queue_if_no_path +
- 			      (m->pg_init_retries > 0) * 2 +
-@@ -1684,7 +1645,7 @@ static int multipath_busy(struct dm_target *ti)
- 	spin_lock_irqsave(&m->lock, flags);
- 
- 	/* pg_init in progress, requeue until done */
--	if (m->pg_init_in_progress) {
-+	if (!pg_ready(m)) {
- 		busy = 1;
- 		goto out;
- 	}
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 3ba6a38..c060f7f 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1636,6 +1636,20 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
- }
- EXPORT_SYMBOL(dm_table_get_md);
- 
-+void dm_table_run_md_queue_async(struct dm_table *t)
-+{
-+	struct mapped_device *md = dm_table_get_md(t);
-+	struct request_queue *queue = dm_get_md_queue(md);
-+	unsigned long flags;
-+
-+	if (queue) {
-+		spin_lock_irqsave(queue->queue_lock, flags);
-+		blk_run_queue_async(queue);
-+		spin_unlock_irqrestore(queue->queue_lock, flags);
-+	}
-+}
-+EXPORT_SYMBOL(dm_table_run_md_queue_async);
-+
- static int device_discard_capable(struct dm_target *ti, struct dm_dev *dev,
- 				  sector_t start, sector_t len, void *data)
- {
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index ed419c6..139e647 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -466,6 +466,11 @@ struct mapped_device *dm_table_get_md(struct dm_table *t);
- void dm_table_event(struct dm_table *t);
- 
- /*
-+ * Run the queue for request-based targets
-+ */
-+void dm_table_run_md_queue_async(struct dm_table *t);
-+
-+/*
-  * The device must be suspended before calling this method.
-  * Returns the previous table, which the caller must destroy.
-  */
+I don't have strong opinion either way. But if we do that, more code
+has to be changed, e.g. the management of retry count.
+
+Removing the unnecessary workqueue has already a benefit.
+It would be nice to focus on that instead of folding in more changes.
+
 -- 
-1.7.12.4
+Jun'ichi Nomura, NEC Corporation
