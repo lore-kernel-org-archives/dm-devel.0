@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 5/7] dm mpath: reduce memory pressure when
-	requeuing
-Date: Tue,  4 Feb 2014 11:54:38 +0100
-Message-ID: <1391511280-29325-6-git-send-email-hare@suse.de>
+Subject: [PATCH 6/7] dm mpath: remove map_io()
+Date: Tue,  4 Feb 2014 11:54:39 +0100
+Message-ID: <1391511280-29325-7-git-send-email-hare@suse.de>
 References: <1391511280-29325-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,97 +22,53 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-When multipath needs to requeue I/O in the block layer the per-request
-context shouldn't be allocated, as it will be freed immediately
-afterwards anyway.  Avoiding this memory allocation will reduce memory
-pressure during requeuing.
+multipath_map() is now just a wrapper around map_io(), so we
+can rename map_io() to multipath_map().
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 ---
- drivers/md/dm-mpath.c | 38 +++++++++++++++-----------------------
- 1 file changed, 15 insertions(+), 23 deletions(-)
+ drivers/md/dm-mpath.c | 19 ++++++-------------
+ 1 file changed, 6 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 0355adc..4f14445 100644
+index 4f14445..233c6d9 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -378,12 +378,12 @@ static int __must_push_back(struct multipath *m)
- static int map_io(struct multipath *m, struct request *clone,
- 		  union map_info *map_context)
+@@ -375,9 +375,13 @@ static int __must_push_back(struct multipath *m)
+ 
+ #define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required)
+ 
+-static int map_io(struct multipath *m, struct request *clone,
+-		  union map_info *map_context)
++/*
++ * Map cloned requests
++ */
++static int multipath_map(struct dm_target *ti, struct request *clone,
++			 union map_info *map_context)
  {
--	int r = DM_MAPIO_REMAPPED;
-+	int r = DM_MAPIO_REQUEUE;
++	struct multipath *m = (struct multipath *) ti->private;
+ 	int r = DM_MAPIO_REQUEUE;
  	size_t nr_bytes = blk_rq_bytes(clone);
  	unsigned long flags;
- 	struct pgpath *pgpath;
- 	struct block_device *bdev;
--	struct dm_mpath_io *mpio = map_context->ptr;
-+	struct dm_mpath_io *mpio;
- 
- 	spin_lock_irqsave(&m->lock, flags);
- 
-@@ -396,27 +396,29 @@ static int map_io(struct multipath *m, struct request *clone,
- 
- 	if (pgpath) {
- 		if (pg_ready(m)) {
-+			if (set_mapinfo(m, map_context) < 0)
-+				/* ENOMEM, requeue */
-+				goto out_unlock;
-+
- 			bdev = pgpath->path.dev->bdev;
- 			clone->q = bdev_get_queue(bdev);
- 			clone->rq_disk = bdev->bd_disk;
-+			clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
-+			mpio = map_context->ptr;
- 			mpio->pgpath = pgpath;
- 			mpio->nr_bytes = nr_bytes;
- 			if (pgpath->pg->ps.type->start_io)
- 				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
- 							      &pgpath->path,
- 							      nr_bytes);
--		} else {
--			__pg_init_all_paths(m, 0);
--			r = DM_MAPIO_REQUEUE;
-+			r = DM_MAPIO_REMAPPED;
-+			goto out_unlock;
- 		}
--	} else {
--		/* No path */
--		if (__must_push_back(m))
--			r = DM_MAPIO_REQUEUE;
--		else
--			r = -EIO;	/* Failed */
--	}
-+		__pg_init_all_paths(m, 0);
-+	} else if (!__must_push_back(m))
-+		r = -EIO;	/* Failed */
- 
-+out_unlock:
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
- 	return r;
-@@ -912,19 +914,9 @@ static void multipath_dtr(struct dm_target *ti)
- static int multipath_map(struct dm_target *ti, struct request *clone,
- 			 union map_info *map_context)
- {
--	int r;
- 	struct multipath *m = (struct multipath *) ti->private;
- 
--	if (set_mapinfo(m, map_context) < 0)
--		/* ENOMEM, requeue */
--		return DM_MAPIO_REQUEUE;
--
--	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
--	r = map_io(m, clone, map_context);
--	if (r < 0 || r == DM_MAPIO_REQUEUE)
--		clear_mapinfo(m, map_context);
--
--	return r;
-+	return map_io(m, clone, map_context);
+@@ -909,17 +913,6 @@ static void multipath_dtr(struct dm_target *ti)
  }
  
  /*
+- * Map cloned requests
+- */
+-static int multipath_map(struct dm_target *ti, struct request *clone,
+-			 union map_info *map_context)
+-{
+-	struct multipath *m = (struct multipath *) ti->private;
+-
+-	return map_io(m, clone, map_context);
+-}
+-
+-/*
+  * Take a path out of use.
+  */
+ static int fail_path(struct pgpath *pgpath)
 -- 
 1.7.12.4
