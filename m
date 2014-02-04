@@ -1,15 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v6 0/7] dm-multipath: push back requests
-	instead of queueing
-Date: Tue, 04 Feb 2014 08:23:15 +0100
-Message-ID: <52F09563.5050407@suse.de>
+Subject: Re: [PATCH 4/7] dm mpath: remove process_queued_ios()
+Date: Tue, 04 Feb 2014 09:18:23 +0100
+Message-ID: <52F0A24F.6050408@suse.de>
 References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
+	<1391459326-21569-5-git-send-email-snitzer@redhat.com>
+	<11AF7C027C4C02408624617A498607840105D5F0@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <11AF7C027C4C02408624617A498607840105D5F0@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,40 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
-
-On 02/03/2014 09:28 PM, Mike Snitzer wrote:
-> Hi Hannes,
-> =
-
-> I went over all of your patches and made a few tweaks, comments, and
-> improvements along the way.  Patch headers were modified very
-> slightly.
-> =
-
-> I wasn't seeing the need for (m->queue_io << 1) + m->queue_if_no_path
-> in v5's "[PATCH 3/6] dm-multipath: push back requests instead of
-> queueing" so I simplified that and documented the change in the
-> header.  If there is a reason for what you had please explain.
-> =
-
-'queue_io' is just used as a marker that I/O should be queued as
-pg_init is running. The intention of the stacked status was so that
-one could figure out by 'dmsetup status' whether I/O will be blocked
-or not. And for that you'd need both, 'queue_io' and 'queue_if_no_path'.
-
-But thanks for the rework.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+T24gMDIvMDQvMjAxNCAwNDoyNCBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDQv
+MTQgMDU6MjgsIE1pa2UgU25pdHplciB3cm90ZToKPj4gQEAgLTEyMTYsOSArMTE4NSwxMiBAQCBz
+dGF0aWMgdm9pZCBwZ19pbml0X2RvbmUodm9pZCAqZGF0YSwgaW50IGVycm9ycykKPj4gIAo+PiAg
+CWlmICghbS0+cGdfaW5pdF9yZXF1aXJlZCkKPj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+PiAtCj4+
+IC0JbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+PiAtCXF1ZXVlX3dvcmso
+a211bHRpcGF0aGQsICZtLT5wcm9jZXNzX3F1ZXVlZF9pb3MpOwo+PiArCWVsc2UgaWYgKG0tPmN1
+cnJlbnRfcGcpIHsKPj4gKwkJbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+
+PiArCQkvKiBVc2UgYSBzbWFsbCBkZWxheSB0byBmb3JjZSB0aGUgdXNlIG9mIHdvcmtxdWV1ZSBj
+b250ZXh0ICovCj4+ICsJCV9fcGdfaW5pdF9hbGxfcGF0aHMobSwgNTAvSFopOwo+PiArCQlnb3Rv
+IG91dDsKPj4gKwl9Cj4gCj4gSSB0aGluayB0aGUgcGF0Y2ggaXMgc3RpbGwgYnJva2VuLgo+IAo+
+IFdoZW4gIm0tPnBnX2luaXRfcmVxdWlyZWQgJiYgIW0tPmN1cnJlbnRfcGciLAo+IGl0IGVuZHMg
+dXAgd2l0aCAhcGdfcmVhZHkoKSBhbmQgbm8gcGdfaW5pdCBydW5uaW5nLgo+IFNvIG1hcF9pbygp
+IHdpbGwgbm90IGJlIGNhbGxlZCBhbmQgSU8gd2lsbCBzdGFsbC4KPiAKPiBXaGF0IGRvIHlvdSB0
+aGluayBhYm91dCBteSBzdWdnZXN0aW9uIGhlcmU6Cj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9h
+cmNoaXZlcy9kbS1kZXZlbC8yMDE0LUZlYnJ1YXJ5L21zZzAwMDEzLmh0bWwKPiAKU2lnaC4gcGdf
+aW5pdF9yZXF1aXJlZCBhZ2Fpbi4uLgoKPiBBbHNvIGl0J3Mgbm90IHlldCBjbGVhciB3aHkgdGhl
+IHNlY29uZCBwYXJhbWV0ZXIgb2YgX19wZ19pbml0X2FsbF9wYXRocygpCj4gaXMgbmVlZGVkLiAo
+QXQgbGVhc3QsICI1MC9IWiIgaXMgdHlwbyBvciBzb21ldGhpbmcuKQo+IAo+PiBAQCAtMTU5MSw4
+ICsxNTYzLDE3IEBAIHN0YXRpYyBpbnQgbXVsdGlwYXRoX2lvY3RsKHN0cnVjdCBkbV90YXJnZXQg
+KnRpLCB1bnNpZ25lZCBpbnQgY21kLAo+IC4uLgo+PiArCQlpZiAobS0+Y3VycmVudF9wZyAmJiBt
+LT5wZ19pbml0X3JlcXVpcmVkKQo+PiArCQkJX19wZ19pbml0X2FsbF9wYXRocyhtLCAwKTsKPj4g
+KwkJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmbS0+bG9jaywgZmxhZ3MpOwo+PiArCQlkbV90YWJs
+ZV9ydW5fbWRfcXVldWVfYXN5bmMobS0+dGktPnRhYmxlKTsKPj4gKwl9Cj4gCj4gV2hhdCBoYXBw
+ZW5zIGlmICIhbS0+Y3VycmVudF9wZyAmJiBtLT5wZ19pbml0X3JlcXVpcmVkIj8KPiAKPkZyb20g
+dGhlIGN1cnJlbnQgbG9naWMgaXQgbWVhbnMgdGhhdCBubyB2YWxpZCBwZyB3YXMgZm91bmQsIHNv
+CmNhbGxpbmcgcGdfaW5pdCB3b3VsZCBiZSBwb2ludGxlc3MuCldlJ3JlIGNhbGxpbmcgX19jaG9v
+c2VfcGdwYXRoKCkgYmVmb3JlIHRoYXQsIHNvIGlmIHRoYXQgcmV0dXJucwp3aXRoIGN1cnJlbnRf
+cGcgPT0gTlVMTCBhbGwgcGF0aHMgYXJlIGRvd24sIGFuZCBjYWxsaW5nCnBnX2luaXQgd291bGQg
+YmUgcG9pbnRsZXNzLgoKQnV0IEkgdGhpbmsgSSBzZWUgdG8gaGF2ZSBwZ19pbml0X3JlcXVpcmVk
+IGhhbmRsaW5nIGNsZWFyZWQgdXA7CkknbGwgYmUgZG9pbmcgYSBwYXRjaCB0byB1bnNldCBpdCBh
+dCB0aGUgc3RhcnQgb2YgX19jaG9vc2VfcGdwYXRoKCksCnRoaXMgd2Ugd2UgY2FuIGJlIHN1cmUg
+dGhhdCBpdCdsbCBiZSBzZXQgY29ycmVjdGx5LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFu
+bmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVzICYgU3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAg
+ICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIu
+IDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4gSGF3biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZl
+ciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
+ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
+ZG0tZGV2ZWw=
