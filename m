@@ -1,18 +1,17 @@
 From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 3/7] dm mpath: push back requests instead of
- queueing
-Date: Tue, 4 Feb 2014 03:25:16 +0000
-Message-ID: <11AF7C027C4C02408624617A498607840105D600@BPXM12GP.gisp.nec.co.jp>
+Subject: Re: [PATCH 4/7] dm mpath: remove process_queued_ios()
+Date: Tue, 4 Feb 2014 03:24:37 +0000
+Message-ID: <11AF7C027C4C02408624617A498607840105D5F0@BPXM12GP.gisp.nec.co.jp>
 References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
-	<1391459326-21569-4-git-send-email-snitzer@redhat.com>
+	<1391459326-21569-5-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391459326-21569-4-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1391459326-21569-5-git-send-email-snitzer@redhat.com>
 Content-Language: ja-JP
-Content-ID: <5A5C5E9BFEE8824582841D871B3A8D27@gisp.nec.co.jp>
+Content-ID: <528FEAED68D1B249A800387278003944@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,99 +26,41 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On 02/04/14 05:28, Mike Snitzer wrote:
-> From: Hannes Reinecke <hare@suse.de>
-> 
-> There is no reason why multipath needs to queue requests internally for
-> queue_if_no_path or pg_init; we should rather push them back onto the
-> request queue.
-> 
-> And while we're at it we can simplify the conditional statement in
-> map_io() to make it easier to read.
-> 
-> Since mpath no longer does internal queuing of I/O the table info no
-> longer emits the internal queue_size.  Instead it displays 1 if queuing
-> is being used or 0 if it is not.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-
-> @@ -391,37 +392,30 @@ static int map_io(struct multipath *m, struct request *clone,
+> @@ -1216,9 +1185,12 @@ static void pg_init_done(void *data, int errors)
 >  
->  	pgpath = m->current_pgpath;
->  
-> -	if (was_queued)
-> -		m->queue_size--;
+>  	if (!m->pg_init_required)
+>  		m->queue_io = 0;
 > -
-> -	if (m->pg_init_required) {
-> -		if (!m->pg_init_in_progress)
-> -			queue_work(kmultipathd, &m->process_queued_ios);
-> -		r = DM_MAPIO_REQUEUE;
-> -	} else if ((pgpath && m->queue_io) ||
-> -		   (!pgpath && m->queue_if_no_path)) {
-> -		/* Queue for the daemon to resubmit */
-> -		list_add_tail(&clone->queuelist, &m->queued_ios);
-> -		m->queue_size++;
-> -		if (!m->queue_io)
-> -			queue_work(kmultipathd, &m->process_queued_ios);
-> -		pgpath = NULL;
-> -		r = DM_MAPIO_SUBMITTED;
-> -	} else if (pgpath) {
-> -		bdev = pgpath->path.dev->bdev;
-> -		clone->q = bdev_get_queue(bdev);
-> -		clone->rq_disk = bdev->bd_disk;
-> -	} else if (__must_push_back(m))
-> -		r = DM_MAPIO_REQUEUE;
-> -	else
-> -		r = -EIO;	/* Failed */
-> -
-> -	mpio->pgpath = pgpath;
-> -	mpio->nr_bytes = nr_bytes;
-> -
-> -	if (r == DM_MAPIO_REMAPPED && pgpath->pg->ps.type->start_io)
-> -		pgpath->pg->ps.type->start_io(&pgpath->pg->ps, &pgpath->path,
-> -					      nr_bytes);
-> +	if (pgpath) {
-
-> +		if (__pgpath_busy(pgpath))
-> +			r = DM_MAPIO_REQUEUE;
-
-Sorry I forgot to comment on this.
-The above 2 lines should be removed from this patch.
-I suggested to add them because the early version of this patch was
-going to remove multipath_busy(). It's no longer true.
-
-Removing them will make this patch easier to understand.
-
-Other than that:
-
-Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-
-
-> +		else if (pg_ready(m)) {
-> +			bdev = pgpath->path.dev->bdev;
-> +			clone->q = bdev_get_queue(bdev);
-> +			clone->rq_disk = bdev->bd_disk;
-> +			mpio->pgpath = pgpath;
-> +			mpio->nr_bytes = nr_bytes;
-> +			if (pgpath->pg->ps.type->start_io)
-> +				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
-> +							      &pgpath->path,
-> +							      nr_bytes);
-> +		} else {
-> +			__pg_init_all_paths(m);
-> +			r = DM_MAPIO_REQUEUE;
-> +		}
-> +	} else {
-> +		/* No path */
-> +		if (__must_push_back(m))
-> +			r = DM_MAPIO_REQUEUE;
-> +		else
-> +			r = -EIO;	/* Failed */
+> -	m->pg_init_delay_retry = delay_retry;
+> -	queue_work(kmultipathd, &m->process_queued_ios);
+> +	else if (m->current_pg) {
+> +		m->pg_init_delay_retry = delay_retry;
+> +		/* Use a small delay to force the use of workqueue context */
+> +		__pg_init_all_paths(m, 50/HZ);
+> +		goto out;
 > +	}
->  
->  	spin_unlock_irqrestore(&m->lock, flags);
->  
+
+I think the patch is still broken.
+
+When "m->pg_init_required && !m->current_pg",
+it ends up with !pg_ready() and no pg_init running.
+So map_io() will not be called and IO will stall.
+
+What do you think about my suggestion here:
+https://www.redhat.com/archives/dm-devel/2014-February/msg00013.html
+
+Also it's not yet clear why the second parameter of __pg_init_all_paths()
+is needed. (At least, "50/HZ" is typo or something.)
+
+> @@ -1591,8 +1563,17 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+...
+> +		if (m->current_pg && m->pg_init_required)
+> +			__pg_init_all_paths(m, 0);
+> +		spin_unlock_irqrestore(&m->lock, flags);
+> +		dm_table_run_md_queue_async(m->ti->table);
+> +	}
+
+What happens if "!m->current_pg && m->pg_init_required"?
 
 -- 
 Jun'ichi Nomura, NEC Corporation
