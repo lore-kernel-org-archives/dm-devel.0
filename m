@@ -1,21 +1,18 @@
 From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 4/6] dm-multipath: remove process_queued_ios()
-Date: Tue, 4 Feb 2014 03:21:02 +0000
-Message-ID: <11AF7C027C4C02408624617A498607840105D5C9@BPXM12GP.gisp.nec.co.jp>
-References: <1391415493-102943-1-git-send-email-hare@suse.de>
-	<1391415493-102943-5-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A4986078401058DDD@BPXM12GP.gisp.nec.co.jp>
-	<52EF88FF.8010609@suse.de>
-	<11AF7C027C4C02408624617A4986078401059F9C@BPXM12GP.gisp.nec.co.jp>
-	<52EF9252.9060605@suse.de>
+Subject: Re: [PATCH 3/7] dm mpath: push back requests instead of
+ queueing
+Date: Tue, 4 Feb 2014 03:25:16 +0000
+Message-ID: <11AF7C027C4C02408624617A498607840105D600@BPXM12GP.gisp.nec.co.jp>
+References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
+	<1391459326-21569-4-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52EF9252.9060605@suse.de>
+In-Reply-To: <1391459326-21569-4-git-send-email-snitzer@redhat.com>
 Content-Language: ja-JP
-Content-ID: <B09C06198B15B14D967E25B2C6723819@gisp.nec.co.jp>
+Content-ID: <5A5C5E9BFEE8824582841D871B3A8D27@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,63 +22,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/03/14 21:57, Hannes Reinecke wrote:
-> On 02/03/2014 01:39 PM, Junichi Nomura wrote:
->> On 02/03/14 21:18, Hannes Reinecke wrote:
->>> On 02/03/2014 01:08 PM, Junichi Nomura wrote:
->>>> On 02/03/14 17:18, Hannes Reinecke wrote:
->>>>> We only need to take care to add a small delay when calling
->>>>> __pg_init_all_paths() to move processing off to a workqueue;
->>>>> pg_init_done() is run from an interrupt context and needs to
->>>>> complete as fast as possible.
->>>> ...
->>>>> @@ -1217,9 +1185,11 @@ static void pg_init_done(void *data, int errors)
->>>>>  
->>>>>  	if (!m->pg_init_required)
->>>>>  		m->queue_io = 0;
->>>>> -
->>>>> -	m->pg_init_delay_retry = delay_retry;
->>>>> -	queue_work(kmultipathd, &m->process_queued_ios);
->>>>> +	else {
->>>>> +		m->pg_init_delay_retry = delay_retry;
->>>>> +		__pg_init_all_paths(m, 50/HZ);
->>>>> +		goto out;
->>>>> +	}
->>>>>  
->>>>
->>>> I forgot to comment on this.
->>>> Adding delay to queue_work() doesn't make it fast.
->>>> So I couldn't see why this "50/HZ" delay has to be added
->>>> and where this value comes.
->>>>
->>> Well, it wasn't probably the best choice of words.
->>>
->>> Thing is, without a delay the workqueue item will be executed
->>> directly (cf __queue_delayed_work()).
->>> But pg_init_done() is run from an interrupt context, and as such any
->>> memory allocations have to be atomic.
->>> So if we were to call queue_delayed_work() without any delay
->>> we will end up calling scsi_dh_activate from an interrupt context,
->>> too, but there we most definitely do _not_ have only atomic allocations.
->>> Hence the delay.
->>
->> Work is executed in the worker context (in this case by kmpath_handlerd).
->> Isn't it?
->>
-> Yes, but without the delay we'd be scheduling during pg_init_done(),
-> ie within an interrupt context.
+On 02/04/14 05:28, Mike Snitzer wrote:
+> From: Hannes Reinecke <hare@suse.de>
+> 
+> There is no reason why multipath needs to queue requests internally for
+> queue_if_no_path or pg_init; we should rather push them back onto the
+> request queue.
+> 
+> And while we're at it we can simplify the conditional statement in
+> map_io() to make it easier to read.
+> 
+> Since mpath no longer does internal queuing of I/O the table info no
+> longer emits the internal queue_size.  Instead it displays 1 if queuing
+> is being used or 0 if it is not.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 
-Could you elaborate on the problem you are going to solve?
-If scheduling happens in interrupt context, it's a bug.
-And if such a bug exists, it should be there even without this series
-of your patch.
+> @@ -391,37 +392,30 @@ static int map_io(struct multipath *m, struct request *clone,
+>  
+>  	pgpath = m->current_pgpath;
+>  
+> -	if (was_queued)
+> -		m->queue_size--;
+> -
+> -	if (m->pg_init_required) {
+> -		if (!m->pg_init_in_progress)
+> -			queue_work(kmultipathd, &m->process_queued_ios);
+> -		r = DM_MAPIO_REQUEUE;
+> -	} else if ((pgpath && m->queue_io) ||
+> -		   (!pgpath && m->queue_if_no_path)) {
+> -		/* Queue for the daemon to resubmit */
+> -		list_add_tail(&clone->queuelist, &m->queued_ios);
+> -		m->queue_size++;
+> -		if (!m->queue_io)
+> -			queue_work(kmultipathd, &m->process_queued_ios);
+> -		pgpath = NULL;
+> -		r = DM_MAPIO_SUBMITTED;
+> -	} else if (pgpath) {
+> -		bdev = pgpath->path.dev->bdev;
+> -		clone->q = bdev_get_queue(bdev);
+> -		clone->rq_disk = bdev->bd_disk;
+> -	} else if (__must_push_back(m))
+> -		r = DM_MAPIO_REQUEUE;
+> -	else
+> -		r = -EIO;	/* Failed */
+> -
+> -	mpio->pgpath = pgpath;
+> -	mpio->nr_bytes = nr_bytes;
+> -
+> -	if (r == DM_MAPIO_REMAPPED && pgpath->pg->ps.type->start_io)
+> -		pgpath->pg->ps.type->start_io(&pgpath->pg->ps, &pgpath->path,
+> -					      nr_bytes);
+> +	if (pgpath) {
 
-Besides, 50/HZ is 0 unless your HZ is extremely low.
-So the code won't work as you intended anyway...
+> +		if (__pgpath_busy(pgpath))
+> +			r = DM_MAPIO_REQUEUE;
+
+Sorry I forgot to comment on this.
+The above 2 lines should be removed from this patch.
+I suggested to add them because the early version of this patch was
+going to remove multipath_busy(). It's no longer true.
+
+Removing them will make this patch easier to understand.
+
+Other than that:
+
+Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+
+
+> +		else if (pg_ready(m)) {
+> +			bdev = pgpath->path.dev->bdev;
+> +			clone->q = bdev_get_queue(bdev);
+> +			clone->rq_disk = bdev->bd_disk;
+> +			mpio->pgpath = pgpath;
+> +			mpio->nr_bytes = nr_bytes;
+> +			if (pgpath->pg->ps.type->start_io)
+> +				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
+> +							      &pgpath->path,
+> +							      nr_bytes);
+> +		} else {
+> +			__pg_init_all_paths(m);
+> +			r = DM_MAPIO_REQUEUE;
+> +		}
+> +	} else {
+> +		/* No path */
+> +		if (__must_push_back(m))
+> +			r = DM_MAPIO_REQUEUE;
+> +		else
+> +			r = -EIO;	/* Failed */
+> +	}
+>  
+>  	spin_unlock_irqrestore(&m->lock, flags);
+>  
 
 -- 
 Jun'ichi Nomura, NEC Corporation
