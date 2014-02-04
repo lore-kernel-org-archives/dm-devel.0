@@ -1,18 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 4/7] dm mpath: remove process_queued_ios()
-Date: Tue, 04 Feb 2014 10:45:14 +0100
-Message-ID: <52F0B6AA.1040304@suse.de>
-References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>	<1391459326-21569-5-git-send-email-snitzer@redhat.com>	<11AF7C027C4C02408624617A498607840105D5F0@BPXM12GP.gisp.nec.co.jp>
-	<52F0A24F.6050408@suse.de>
-	<11AF7C027C4C02408624617A498607840105ED37@BPXM12GP.gisp.nec.co.jp>
-	<52F0AE28.1070702@suse.de>
-	<11AF7C027C4C02408624617A498607840105EF58@BPXM12GP.gisp.nec.co.jp>
+Subject: [PATCH 1/7] dm mpath: do not call pg_init when it is
+	already running
+Date: Tue,  4 Feb 2014 11:54:34 +0100
+Message-ID: <1391511280-29325-2-git-send-email-hare@suse.de>
+References: <1391511280-29325-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A498607840105EF58@BPXM12GP.gisp.nec.co.jp>
+In-Reply-To: <1391511280-29325-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,67 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDIvMDQvMjAxNCAxMDoyNyBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDQv
-MTQgMTg6MDgsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gT24gMDIvMDQvMjAxNCAwOTo1NSBB
-TSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4+PiBPbiAwMi8wNC8xNCAxNzoxOCwgSGFubmVzIFJl
-aW5lY2tlIHdyb3RlOgo+Pj4+Pj4gQEAgLTE1OTEsOCArMTU2MywxNyBAQCBzdGF0aWMgaW50IG11
-bHRpcGF0aF9pb2N0bChzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGNtZCwKPj4+
-Pj4gLi4uCj4+Pj4+PiArCQlpZiAobS0+Y3VycmVudF9wZyAmJiBtLT5wZ19pbml0X3JlcXVpcmVk
-KQo+Pj4+Pj4gKwkJCV9fcGdfaW5pdF9hbGxfcGF0aHMobSwgMCk7Cj4+Pj4+PiArCQlzcGluX3Vu
-bG9ja19pcnFyZXN0b3JlKCZtLT5sb2NrLCBmbGFncyk7Cj4+Pj4+PiArCQlkbV90YWJsZV9ydW5f
-bWRfcXVldWVfYXN5bmMobS0+dGktPnRhYmxlKTsKPj4+Pj4+ICsJfQo+Pj4+Pgo+Pj4+PiBXaGF0
-IGhhcHBlbnMgaWYgIiFtLT5jdXJyZW50X3BnICYmIG0tPnBnX2luaXRfcmVxdWlyZWQiPwo+Pj4+
-Pgo+Pj4+ID5Gcm9tIHRoZSBjdXJyZW50IGxvZ2ljIGl0IG1lYW5zIHRoYXQgbm8gdmFsaWQgcGcg
-d2FzIGZvdW5kLCBzbwo+Pj4+IGNhbGxpbmcgcGdfaW5pdCB3b3VsZCBiZSBwb2ludGxlc3MuCj4+
-Pj4gV2UncmUgY2FsbGluZyBfX2Nob29zZV9wZ3BhdGgoKSBiZWZvcmUgdGhhdCwgc28gaWYgdGhh
-dCByZXR1cm5zCj4+Pj4gd2l0aCBjdXJyZW50X3BnID09IE5VTEwgYWxsIHBhdGhzIGFyZSBkb3du
-LCBhbmQgY2FsbGluZwo+Pj4+IHBnX2luaXQgd291bGQgYmUgcG9pbnRsZXNzLgo+Pj4+Cj4+Pj4g
-QnV0IEkgdGhpbmsgSSBzZWUgdG8gaGF2ZSBwZ19pbml0X3JlcXVpcmVkIGhhbmRsaW5nIGNsZWFy
-ZWQgdXA7Cj4+Pj4gSSdsbCBiZSBkb2luZyBhIHBhdGNoIHRvIHVuc2V0IGl0IGF0IHRoZSBzdGFy
-dCBvZiBfX2Nob29zZV9wZ3BhdGgoKSwKPj4+PiB0aGlzIHdlIHdlIGNhbiBiZSBzdXJlIHRoYXQg
-aXQnbGwgYmUgc2V0IGNvcnJlY3RseS4KPj4+Cj4+PiBJIHRoaW5rIGl0IGlzIHBvc3NpYmxlIHRo
-YXQgX19jaG9vc2VfcGdwYXRoKCkgYmVpbmcgY2FsbGVkIHR3aWNlCj4+PiBiZWZvcmUgcGdfaW5p
-dF9yZXF1aXJlZCBpcyBjaGVja2VkLgo+Pj4KPj4+IEZvciBleGFtcGxlLAo+Pj4KPj4+ICAgbXVs
-dGlwYXRoX2lvY3RsKCkKPj4+ICAgICBfX2Nob29zZV9wZ3BhdGgoKQo+Pj4gICAgICAgY2xlYXIg
-cGdfaW5pdF9yZXF1aXJlZAo+Pj4gICAgICAgc2VsZWN0IGEgbmV3IHBnCj4+PiAgICAgICBfX3N3
-aXRjaF9wZygpCj4+PiAgICAgICAgIHNldCBwZ19pbml0X3JlcXVpcmVkCj4+Pgo+Pj4gICBtYXBf
-aW8oKQo+Pj4gICAgIF9fY2hvb3NlX3BncGF0aCgpCj4+PiAgICAgICBjbGVhciBwZ19pbml0X3Jl
-cXVpcmVkCj4+PiAgICAgICBzZWxlY3QgdGhlIHNhbWUgcGcKPj4+ICAgICAgIChwZ19pbml0X3Jl
-cXVpcmVkIGlzIG5vdCBzZXQpCj4+PiAgICAgICAuLi4KPj4+Cj4+IEJ1dCB3aHkgc2hvdWxkICdt
-YXBfaW8nIGNhbGxpbmcgX19jaG9vc2VfcGdwYXRoKCk/Cj4+Cj4+IEVpdGhlciBfX2Nob29zZV9w
-YXRoKCkgZnJvbSBpb2N0bCB3YXMgYWJsZSB0byBzZXQgLT5jdXJyZW50X3BnCj4+IChpbiB3aGlj
-aCBjYXNlIF9fY2hvb3NlX3BncGF0aCgpIHdvdWxkbid0IGJlIGNhbGxlZCBpbiBtYXBfaW8pCj4+
-IG9yIGl0IHdhcyBub3QsIGluIHdoaWNoIGNhc2UgcGdfaW5pdF9yZXF1aXJlZCB3b3VsZCBuZWVk
-IHRvIGJlIHJlc2V0Cj4+IGR1cmluZyBfX2Nob29zZV9wZ3BhdGgoKSB3aGVuIGNhbGxlZCBmcm9t
-IG1hcF9pbygpLgo+IAo+IF9fY2hvb3NlX3BncGF0aCgpIGlzIGEgZnVuY3Rpb24gdG8gc2VsZWN0
-ICJwYXRoIi4KPiBFdmVuIGlmIGN1cnJlbnRfcGcgaXMgc2V0LCBtYXBfaW8oKSBtYXkgY2FsbCB0
-aGUgZnVuY3Rpb24KPiB0byBzZWxlY3QgYSBwYXRoLiAoUGxlYXNlIGxvb2sgYXQgdGhlIHJlcGVh
-dF9jb3VudCBjaGVjaykKPiAKLi4uIEJ1dCBvbmx5IGlmICdxdWV1ZV9pbycgaXMgbm90IHNldCwg
-aWUgbm8gcGdfaW5pdCBpcyBydW5uaW5nLgpBdCB3aGljaCBwb2ludCAncGdfaW5pdF9yZXF1aXJl
-ZCcgc2hvdWxkIGJlIHNldCB0byAnMCcgYW55d2F5LgoKV2hhdCBJJ20gYXJndWluZyBoZXJlIGlz
-IGFuIGluY29uc2lzdGVuY3kgaW4gX19jaG9vc2VfcGcoKToKX19jaG9vc2VfcGcoKSBtaWdodCBv
-ciBtaWdodCBub3Qgc2V0ICdjdXJyZW50X3BnJywgYnV0IGlmCidjdXJyZW50X3BnJyBpcyBub3Qg
-c2V0IHRoZSBzdGF0dXMgb2YgJ3BnX2luaXRfcmVxdWlyZWQnCmlzIHVuZGVmaW5lZCB1cG9uIHJl
-dHVybi4KClRoaXMgbWFrZXMgaXQgKGluIG15IHZpZXcpIHVubmVjZXNzYXJpbHkgY29tcGxpY2F0
-ZWQgdG8KY2hlY2sgaWYgd2UgbmVlZCB0byBpbml0aWFsaXplIHRoZSBwYXRocywgYXMgd2UgaGF2
-ZSB0bwpjaGVjayBmb3IgYm90aCwgY3VycmVudF9wZyBfYW5kXyBwZ19pbml0X3JlcXVpcmVkLgpJ
-ZiBpdCB3ZXJlIF90aGF0XyBlYXN5IHdlIHdvdWxkbid0IGhhdmUgdGhpcyBkaXNjdXNzaW9uIDot
-KQoKPiBTbywgSSBzdWdnZXN0ZWQgdGhlIGZvbGxvd2luZ3M6Cj4gICBDYWxsIF9fcGdfaW5pdF9h
-bGxfcGF0aHMoKSByZWdhcmRsZXNzIG9mIGN1cnJlbnRfcGcuCj4gICBfX3BnX2luaXRfYWxsX3Bh
-dGhzKCkgcmV0dXJucyB3aGV0aGVyIHBnX2luaXQgaGFzIHN0YXJ0ZWQuCj4gICBJZiAhY3VycmVu
-dF9wZywgaXQgcmV0dXJucyAwLgo+ICAgKGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMv
-ZG0tZGV2ZWwvMjAxNC1GZWJydWFyeS9tc2cwMDAxMy5odG1sKQo+IAo+IFRoZSBzZW1hbnRpY3Mg
-aXMgY2xlYXI6Cj4gICAtIGlmIHBnX2luaXRfcmVxdWlyZWQsIGNhbGwgX19wZ19pbml0X2FsbF9w
-YXRocygpCj4gICAtIF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBtaWdodCBmYWlsIHRvIHN0YXJ0IHBn
-X2luaXQgKD0gcmV0dXJucyAwKS4KPiAgICAgVGhlbiBjYWxsZXIgc2hvdWxkIHRha2Ugc29tZSBh
-Y3Rpb24gb3IgZ2l2ZSB1cC4KPiAKQWxsIHJpZ2h0LCB3aWxsIGJlIG1vZGlmeWluZyB0aGUgcGF0
-Y2guCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJp
-ZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0Ug
-TElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBK
-LiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVy
-ZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+This patch moves condition checks as a preparation of following
+patches and has no effect on behaviour.
+process_queued_ios() is the only caller of __pg_init_all_paths()
+and 2 condition checks are moved from outside to inside without
+side effects.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+---
+ drivers/md/dm-mpath.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 6eb9dc9..304ee5c 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
+ 	struct pgpath *pgpath;
+ 	unsigned long pg_init_delay = 0;
+ 
++	if (m->pg_init_in_progress || m->pg_init_disabled)
++		return;
++
+ 	m->pg_init_count++;
+ 	m->pg_init_required = 0;
+ 	if (m->pg_init_delay_retry)
+@@ -501,8 +504,7 @@ static void process_queued_ios(struct work_struct *work)
+ 	    (!pgpath && !m->queue_if_no_path))
+ 		must_queue = 0;
+ 
+-	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
+-	    !m->pg_init_disabled)
++	if (pgpath && m->pg_init_required)
+ 		__pg_init_all_paths(m);
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+-- 
+1.7.12.4
