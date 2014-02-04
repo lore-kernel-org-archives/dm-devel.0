@@ -1,18 +1,15 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 1/7] dm mpath: do not call pg_init when it is
- already running
-Date: Tue, 4 Feb 2014 03:25:42 +0000
-Message-ID: <11AF7C027C4C02408624617A498607840105D624@BPXM12GP.gisp.nec.co.jp>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v6 0/7] dm-multipath: push back requests
+	instead of queueing
+Date: Tue, 04 Feb 2014 08:23:15 +0100
+Message-ID: <52F09563.5050407@suse.de>
 References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
-	<1391459326-21569-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1391459326-21569-2-git-send-email-snitzer@redhat.com>
-Content-Language: ja-JP
-Content-ID: <9AFA07EADF4B3145A112FA6BD11B864A@gisp.nec.co.jp>
+In-Reply-To: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,59 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 02/04/14 05:28, Mike Snitzer wrote:
-> From: Hannes Reinecke <hare@suse.de>
-> 
-> When pg_init is running we shouldn't be calling the same
-> routine twice; we need to wait for the first pg_init to
-> complete.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm-mpath.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 6eb9dc9..304ee5c 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
->  	struct pgpath *pgpath;
->  	unsigned long pg_init_delay = 0;
->  
-> +	if (m->pg_init_in_progress || m->pg_init_disabled)
-> +		return;
-> +
->  	m->pg_init_count++;
->  	m->pg_init_required = 0;
->  	if (m->pg_init_delay_retry)
-> @@ -501,8 +504,7 @@ static void process_queued_ios(struct work_struct *work)
->  	    (!pgpath && !m->queue_if_no_path))
->  		must_queue = 0;
->  
-> -	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
-> -	    !m->pg_init_disabled)
-> +	if (pgpath && m->pg_init_required)
->  		__pg_init_all_paths(m);
->  
->  	spin_unlock_irqrestore(&m->lock, flags);
-> 
+Hi Mike,
 
-I think the patch is ok but the description seems not
-matching what it does.
+On 02/03/2014 09:28 PM, Mike Snitzer wrote:
+> Hi Hannes,
+> =
 
-This patch moves condition checks as a preparation of following
-patches and has no effect on behaviour.
-process_queued_ios() is the only caller of __pg_init_all_paths()
-and 2 condition checks are moved from outside to inside without
-side effects.
+> I went over all of your patches and made a few tweaks, comments, and
+> improvements along the way.  Patch headers were modified very
+> slightly.
+> =
 
-Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> I wasn't seeing the need for (m->queue_io << 1) + m->queue_if_no_path
+> in v5's "[PATCH 3/6] dm-multipath: push back requests instead of
+> queueing" so I simplified that and documented the change in the
+> header.  If there is a reason for what you had please explain.
+> =
 
--- 
-Jun'ichi Nomura, NEC Corporation
+'queue_io' is just used as a marker that I/O should be queued as
+pg_init is running. The intention of the stacked status was so that
+one could figure out by 'dmsetup status' whether I/O will be blocked
+or not. And for that you'd need both, 'queue_io' and 'queue_if_no_path'.
+
+But thanks for the rework.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
