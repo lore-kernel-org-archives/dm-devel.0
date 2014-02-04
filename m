@@ -1,11 +1,16 @@
-From: Bgs <bgs@bgs.hu>
-Subject: Patch for readline undefined references
-Date: Mon, 03 Feb 2014 10:23:42 +0100
-Message-ID: <52EF601E.3070508@bgs.hu>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 4/7] dm mpath: remove process_queued_ios()
+Date: Tue, 04 Feb 2014 10:08:56 +0100
+Message-ID: <52F0AE28.1070702@suse.de>
+References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>	<1391459326-21569-5-git-send-email-snitzer@redhat.com>	<11AF7C027C4C02408624617A498607840105D5F0@BPXM12GP.gisp.nec.co.jp>
+	<52F0A24F.6050408@suse.de>
+	<11AF7C027C4C02408624617A498607840105ED37@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------070403000202080802040509"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <11AF7C027C4C02408624617A498607840105ED37@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,105 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------070403000202080802040509
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-
-
-  Hello Christophe,
-
-On some systems with libtermcap, readline produces undefined references 
-for some functions.
-
-For example on my Slackware laptop:
-
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `tputs'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `tgoto'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `tgetflag'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `UP'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `tgetent'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `tgetnum'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `PC'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `tgetstr'
-/usr/lib64/gcc/x86_64-slackware-linux/4.8.1/../../../../lib64/libreadline.so: 
-undefined reference to `BC'
-
-This is not a common problem, but it does show up on some systems.
-
-The attached patch is a very simple solution. Addig libtermcap to the ld 
-flags solves the issue.
-
-I'm not sure how it should be included (or not), but even if it's not, 
-it would be worth putting the info and patch on the web page.
-
-Best regards
-Zoltan Posfai
-
-
---------------070403000202080802040509
-Content-Type: text/x-patch;
- name="multipath-tools-termcap-Bgs.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="multipath-tools-termcap-Bgs.patch"
-
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index 4ba38ba..c95037f 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -12,7 +12,7 @@ ifneq ($(strip $(LIBDM_API_COOKIE)),0)
- 	CFLAGS += -DLIBDM_API_COOKIE
- endif
- 
--LDFLAGS = -ldevmapper
-+LDFLAGS = -ldevmapper -ltermcap
- OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o sun.o \
-        gpt.o mac.o ps3.o crc32.o lopart.o xstrncpy.o devmapper.o
- EXEC = kpartx
-diff --git a/multipath/Makefile b/multipath/Makefile
-index 5e5958d..22d847a 100644
---- a/multipath/Makefile
-+++ b/multipath/Makefile
-@@ -7,7 +7,7 @@ include ../Makefile.inc
- OBJS = main.o
- 
- CFLAGS += -I$(multipathdir)
--LDFLAGS += -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath -ludev
-+LDFLAGS += -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath -ludev -ltermcap
- 
- EXEC = multipath
- 
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 781122a..ba892da 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -9,7 +9,7 @@ CFLAGS += -I$(multipathdir) -I$(mpathpersistdir)
- ifdef SYSTEMD
- 	CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
- endif
--LDFLAGS += -lpthread -ldevmapper -lreadline
-+LDFLAGS += -lpthread -ldevmapper -lreadline -ltermcap
- ifdef SYSTEMD
- 	LDFLAGS += -lsystemd-daemon
- endif
-
---------------070403000202080802040509
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------070403000202080802040509--
+T24gMDIvMDQvMjAxNCAwOTo1NSBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDQv
+MTQgMTc6MTgsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4+PiBAQCAtMTU5MSw4ICsxNTYzLDE3
+IEBAIHN0YXRpYyBpbnQgbXVsdGlwYXRoX2lvY3RsKHN0cnVjdCBkbV90YXJnZXQgKnRpLCB1bnNp
+Z25lZCBpbnQgY21kLAo+Pj4gLi4uCj4+Pj4gKwkJaWYgKG0tPmN1cnJlbnRfcGcgJiYgbS0+cGdf
+aW5pdF9yZXF1aXJlZCkKPj4+PiArCQkJX19wZ19pbml0X2FsbF9wYXRocyhtLCAwKTsKPj4+PiAr
+CQlzcGluX3VubG9ja19pcnFyZXN0b3JlKCZtLT5sb2NrLCBmbGFncyk7Cj4+Pj4gKwkJZG1fdGFi
+bGVfcnVuX21kX3F1ZXVlX2FzeW5jKG0tPnRpLT50YWJsZSk7Cj4+Pj4gKwl9Cj4+Pgo+Pj4gV2hh
+dCBoYXBwZW5zIGlmICIhbS0+Y3VycmVudF9wZyAmJiBtLT5wZ19pbml0X3JlcXVpcmVkIj8KPj4+
+Cj4+ID5Gcm9tIHRoZSBjdXJyZW50IGxvZ2ljIGl0IG1lYW5zIHRoYXQgbm8gdmFsaWQgcGcgd2Fz
+IGZvdW5kLCBzbwo+PiBjYWxsaW5nIHBnX2luaXQgd291bGQgYmUgcG9pbnRsZXNzLgo+PiBXZSdy
+ZSBjYWxsaW5nIF9fY2hvb3NlX3BncGF0aCgpIGJlZm9yZSB0aGF0LCBzbyBpZiB0aGF0IHJldHVy
+bnMKPj4gd2l0aCBjdXJyZW50X3BnID09IE5VTEwgYWxsIHBhdGhzIGFyZSBkb3duLCBhbmQgY2Fs
+bGluZwo+PiBwZ19pbml0IHdvdWxkIGJlIHBvaW50bGVzcy4KPj4KPj4gQnV0IEkgdGhpbmsgSSBz
+ZWUgdG8gaGF2ZSBwZ19pbml0X3JlcXVpcmVkIGhhbmRsaW5nIGNsZWFyZWQgdXA7Cj4+IEknbGwg
+YmUgZG9pbmcgYSBwYXRjaCB0byB1bnNldCBpdCBhdCB0aGUgc3RhcnQgb2YgX19jaG9vc2VfcGdw
+YXRoKCksCj4+IHRoaXMgd2Ugd2UgY2FuIGJlIHN1cmUgdGhhdCBpdCdsbCBiZSBzZXQgY29ycmVj
+dGx5Lgo+IAo+IEkgdGhpbmsgaXQgaXMgcG9zc2libGUgdGhhdCBfX2Nob29zZV9wZ3BhdGgoKSBi
+ZWluZyBjYWxsZWQgdHdpY2UKPiBiZWZvcmUgcGdfaW5pdF9yZXF1aXJlZCBpcyBjaGVja2VkLgo+
+IAo+IEZvciBleGFtcGxlLAo+IAo+ICAgbXVsdGlwYXRoX2lvY3RsKCkKPiAgICAgX19jaG9vc2Vf
+cGdwYXRoKCkKPiAgICAgICBjbGVhciBwZ19pbml0X3JlcXVpcmVkCj4gICAgICAgc2VsZWN0IGEg
+bmV3IHBnCj4gICAgICAgX19zd2l0Y2hfcGcoKQo+ICAgICAgICAgc2V0IHBnX2luaXRfcmVxdWly
+ZWQKPiAKPiAgIG1hcF9pbygpCj4gICAgIF9fY2hvb3NlX3BncGF0aCgpCj4gICAgICAgY2xlYXIg
+cGdfaW5pdF9yZXF1aXJlZAo+ICAgICAgIHNlbGVjdCB0aGUgc2FtZSBwZwo+ICAgICAgIChwZ19p
+bml0X3JlcXVpcmVkIGlzIG5vdCBzZXQpCj4gICAgICAgLi4uCj4gCkJ1dCB3aHkgc2hvdWxkICdt
+YXBfaW8nIGNhbGxpbmcgX19jaG9vc2VfcGdwYXRoKCk/CgpFaXRoZXIgX19jaG9vc2VfcGF0aCgp
+IGZyb20gaW9jdGwgd2FzIGFibGUgdG8gc2V0IC0+Y3VycmVudF9wZwooaW4gd2hpY2ggY2FzZSBf
+X2Nob29zZV9wZ3BhdGgoKSB3b3VsZG4ndCBiZSBjYWxsZWQgaW4gbWFwX2lvKQpvciBpdCB3YXMg
+bm90LCBpbiB3aGljaCBjYXNlIHBnX2luaXRfcmVxdWlyZWQgd291bGQgbmVlZCB0byBiZSByZXNl
+dApkdXJpbmcgX19jaG9vc2VfcGdwYXRoKCkgd2hlbiBjYWxsZWQgZnJvbSBtYXBfaW8oKS4KCkFt
+IEkgbWlzc2luZyBzb21ldGhpbmc/CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVp
+bmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5
+MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0
+MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIg
+MTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
