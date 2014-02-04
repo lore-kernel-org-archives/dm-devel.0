@@ -1,21 +1,18 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 4/7] dm mpath: remove process_queued_ios()
-Date: Tue, 4 Feb 2014 09:27:37 +0000
-Message-ID: <11AF7C027C4C02408624617A498607840105EF58@BPXM12GP.gisp.nec.co.jp>
-References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>
-	<1391459326-21569-5-git-send-email-snitzer@redhat.com>
-	<11AF7C027C4C02408624617A498607840105D5F0@BPXM12GP.gisp.nec.co.jp>
+Date: Tue, 04 Feb 2014 10:45:14 +0100
+Message-ID: <52F0B6AA.1040304@suse.de>
+References: <1391459326-21569-1-git-send-email-snitzer@redhat.com>	<1391459326-21569-5-git-send-email-snitzer@redhat.com>	<11AF7C027C4C02408624617A498607840105D5F0@BPXM12GP.gisp.nec.co.jp>
 	<52F0A24F.6050408@suse.de>
 	<11AF7C027C4C02408624617A498607840105ED37@BPXM12GP.gisp.nec.co.jp>
 	<52F0AE28.1070702@suse.de>
+	<11AF7C027C4C02408624617A498607840105EF58@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52F0AE28.1070702@suse.de>
-Content-Language: ja-JP
-Content-ID: <7565223ADCD7BF49BCEAF31CDBB33A6A@gisp.nec.co.jp>
+In-Reply-To: <11AF7C027C4C02408624617A498607840105EF58@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,73 +22,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/04/14 18:08, Hannes Reinecke wrote:
-> On 02/04/2014 09:55 AM, Junichi Nomura wrote:
->> On 02/04/14 17:18, Hannes Reinecke wrote:
->>>>> @@ -1591,8 +1563,17 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
->>>> ...
->>>>> +		if (m->current_pg && m->pg_init_required)
->>>>> +			__pg_init_all_paths(m, 0);
->>>>> +		spin_unlock_irqrestore(&m->lock, flags);
->>>>> +		dm_table_run_md_queue_async(m->ti->table);
->>>>> +	}
->>>>
->>>> What happens if "!m->current_pg && m->pg_init_required"?
->>>>
->>> >From the current logic it means that no valid pg was found, so
->>> calling pg_init would be pointless.
->>> We're calling __choose_pgpath() before that, so if that returns
->>> with current_pg == NULL all paths are down, and calling
->>> pg_init would be pointless.
->>>
->>> But I think I see to have pg_init_required handling cleared up;
->>> I'll be doing a patch to unset it at the start of __choose_pgpath(),
->>> this we we can be sure that it'll be set correctly.
->>
->> I think it is possible that __choose_pgpath() being called twice
->> before pg_init_required is checked.
->>
->> For example,
->>
->>   multipath_ioctl()
->>     __choose_pgpath()
->>       clear pg_init_required
->>       select a new pg
->>       __switch_pg()
->>         set pg_init_required
->>
->>   map_io()
->>     __choose_pgpath()
->>       clear pg_init_required
->>       select the same pg
->>       (pg_init_required is not set)
->>       ...
->>
-> But why should 'map_io' calling __choose_pgpath()?
-> 
-> Either __choose_path() from ioctl was able to set ->current_pg
-> (in which case __choose_pgpath() wouldn't be called in map_io)
-> or it was not, in which case pg_init_required would need to be reset
-> during __choose_pgpath() when called from map_io().
-
-__choose_pgpath() is a function to select "path".
-Even if current_pg is set, map_io() may call the function
-to select a path. (Please look at the repeat_count check)
-
-So, I suggested the followings:
-  Call __pg_init_all_paths() regardless of current_pg.
-  __pg_init_all_paths() returns whether pg_init has started.
-  If !current_pg, it returns 0.
-  (https://www.redhat.com/archives/dm-devel/2014-February/msg00013.html)
-
-The semantics is clear:
-  - if pg_init_required, call __pg_init_all_paths()
-  - __pg_init_all_paths() might fail to start pg_init (= returns 0).
-    Then caller should take some action or give up.
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMDIvMDQvMjAxNCAxMDoyNyBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMDQv
+MTQgMTg6MDgsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gT24gMDIvMDQvMjAxNCAwOTo1NSBB
+TSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4+PiBPbiAwMi8wNC8xNCAxNzoxOCwgSGFubmVzIFJl
+aW5lY2tlIHdyb3RlOgo+Pj4+Pj4gQEAgLTE1OTEsOCArMTU2MywxNyBAQCBzdGF0aWMgaW50IG11
+bHRpcGF0aF9pb2N0bChzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGNtZCwKPj4+
+Pj4gLi4uCj4+Pj4+PiArCQlpZiAobS0+Y3VycmVudF9wZyAmJiBtLT5wZ19pbml0X3JlcXVpcmVk
+KQo+Pj4+Pj4gKwkJCV9fcGdfaW5pdF9hbGxfcGF0aHMobSwgMCk7Cj4+Pj4+PiArCQlzcGluX3Vu
+bG9ja19pcnFyZXN0b3JlKCZtLT5sb2NrLCBmbGFncyk7Cj4+Pj4+PiArCQlkbV90YWJsZV9ydW5f
+bWRfcXVldWVfYXN5bmMobS0+dGktPnRhYmxlKTsKPj4+Pj4+ICsJfQo+Pj4+Pgo+Pj4+PiBXaGF0
+IGhhcHBlbnMgaWYgIiFtLT5jdXJyZW50X3BnICYmIG0tPnBnX2luaXRfcmVxdWlyZWQiPwo+Pj4+
+Pgo+Pj4+ID5Gcm9tIHRoZSBjdXJyZW50IGxvZ2ljIGl0IG1lYW5zIHRoYXQgbm8gdmFsaWQgcGcg
+d2FzIGZvdW5kLCBzbwo+Pj4+IGNhbGxpbmcgcGdfaW5pdCB3b3VsZCBiZSBwb2ludGxlc3MuCj4+
+Pj4gV2UncmUgY2FsbGluZyBfX2Nob29zZV9wZ3BhdGgoKSBiZWZvcmUgdGhhdCwgc28gaWYgdGhh
+dCByZXR1cm5zCj4+Pj4gd2l0aCBjdXJyZW50X3BnID09IE5VTEwgYWxsIHBhdGhzIGFyZSBkb3du
+LCBhbmQgY2FsbGluZwo+Pj4+IHBnX2luaXQgd291bGQgYmUgcG9pbnRsZXNzLgo+Pj4+Cj4+Pj4g
+QnV0IEkgdGhpbmsgSSBzZWUgdG8gaGF2ZSBwZ19pbml0X3JlcXVpcmVkIGhhbmRsaW5nIGNsZWFy
+ZWQgdXA7Cj4+Pj4gSSdsbCBiZSBkb2luZyBhIHBhdGNoIHRvIHVuc2V0IGl0IGF0IHRoZSBzdGFy
+dCBvZiBfX2Nob29zZV9wZ3BhdGgoKSwKPj4+PiB0aGlzIHdlIHdlIGNhbiBiZSBzdXJlIHRoYXQg
+aXQnbGwgYmUgc2V0IGNvcnJlY3RseS4KPj4+Cj4+PiBJIHRoaW5rIGl0IGlzIHBvc3NpYmxlIHRo
+YXQgX19jaG9vc2VfcGdwYXRoKCkgYmVpbmcgY2FsbGVkIHR3aWNlCj4+PiBiZWZvcmUgcGdfaW5p
+dF9yZXF1aXJlZCBpcyBjaGVja2VkLgo+Pj4KPj4+IEZvciBleGFtcGxlLAo+Pj4KPj4+ICAgbXVs
+dGlwYXRoX2lvY3RsKCkKPj4+ICAgICBfX2Nob29zZV9wZ3BhdGgoKQo+Pj4gICAgICAgY2xlYXIg
+cGdfaW5pdF9yZXF1aXJlZAo+Pj4gICAgICAgc2VsZWN0IGEgbmV3IHBnCj4+PiAgICAgICBfX3N3
+aXRjaF9wZygpCj4+PiAgICAgICAgIHNldCBwZ19pbml0X3JlcXVpcmVkCj4+Pgo+Pj4gICBtYXBf
+aW8oKQo+Pj4gICAgIF9fY2hvb3NlX3BncGF0aCgpCj4+PiAgICAgICBjbGVhciBwZ19pbml0X3Jl
+cXVpcmVkCj4+PiAgICAgICBzZWxlY3QgdGhlIHNhbWUgcGcKPj4+ICAgICAgIChwZ19pbml0X3Jl
+cXVpcmVkIGlzIG5vdCBzZXQpCj4+PiAgICAgICAuLi4KPj4+Cj4+IEJ1dCB3aHkgc2hvdWxkICdt
+YXBfaW8nIGNhbGxpbmcgX19jaG9vc2VfcGdwYXRoKCk/Cj4+Cj4+IEVpdGhlciBfX2Nob29zZV9w
+YXRoKCkgZnJvbSBpb2N0bCB3YXMgYWJsZSB0byBzZXQgLT5jdXJyZW50X3BnCj4+IChpbiB3aGlj
+aCBjYXNlIF9fY2hvb3NlX3BncGF0aCgpIHdvdWxkbid0IGJlIGNhbGxlZCBpbiBtYXBfaW8pCj4+
+IG9yIGl0IHdhcyBub3QsIGluIHdoaWNoIGNhc2UgcGdfaW5pdF9yZXF1aXJlZCB3b3VsZCBuZWVk
+IHRvIGJlIHJlc2V0Cj4+IGR1cmluZyBfX2Nob29zZV9wZ3BhdGgoKSB3aGVuIGNhbGxlZCBmcm9t
+IG1hcF9pbygpLgo+IAo+IF9fY2hvb3NlX3BncGF0aCgpIGlzIGEgZnVuY3Rpb24gdG8gc2VsZWN0
+ICJwYXRoIi4KPiBFdmVuIGlmIGN1cnJlbnRfcGcgaXMgc2V0LCBtYXBfaW8oKSBtYXkgY2FsbCB0
+aGUgZnVuY3Rpb24KPiB0byBzZWxlY3QgYSBwYXRoLiAoUGxlYXNlIGxvb2sgYXQgdGhlIHJlcGVh
+dF9jb3VudCBjaGVjaykKPiAKLi4uIEJ1dCBvbmx5IGlmICdxdWV1ZV9pbycgaXMgbm90IHNldCwg
+aWUgbm8gcGdfaW5pdCBpcyBydW5uaW5nLgpBdCB3aGljaCBwb2ludCAncGdfaW5pdF9yZXF1aXJl
+ZCcgc2hvdWxkIGJlIHNldCB0byAnMCcgYW55d2F5LgoKV2hhdCBJJ20gYXJndWluZyBoZXJlIGlz
+IGFuIGluY29uc2lzdGVuY3kgaW4gX19jaG9vc2VfcGcoKToKX19jaG9vc2VfcGcoKSBtaWdodCBv
+ciBtaWdodCBub3Qgc2V0ICdjdXJyZW50X3BnJywgYnV0IGlmCidjdXJyZW50X3BnJyBpcyBub3Qg
+c2V0IHRoZSBzdGF0dXMgb2YgJ3BnX2luaXRfcmVxdWlyZWQnCmlzIHVuZGVmaW5lZCB1cG9uIHJl
+dHVybi4KClRoaXMgbWFrZXMgaXQgKGluIG15IHZpZXcpIHVubmVjZXNzYXJpbHkgY29tcGxpY2F0
+ZWQgdG8KY2hlY2sgaWYgd2UgbmVlZCB0byBpbml0aWFsaXplIHRoZSBwYXRocywgYXMgd2UgaGF2
+ZSB0bwpjaGVjayBmb3IgYm90aCwgY3VycmVudF9wZyBfYW5kXyBwZ19pbml0X3JlcXVpcmVkLgpJ
+ZiBpdCB3ZXJlIF90aGF0XyBlYXN5IHdlIHdvdWxkbid0IGhhdmUgdGhpcyBkaXNjdXNzaW9uIDot
+KQoKPiBTbywgSSBzdWdnZXN0ZWQgdGhlIGZvbGxvd2luZ3M6Cj4gICBDYWxsIF9fcGdfaW5pdF9h
+bGxfcGF0aHMoKSByZWdhcmRsZXNzIG9mIGN1cnJlbnRfcGcuCj4gICBfX3BnX2luaXRfYWxsX3Bh
+dGhzKCkgcmV0dXJucyB3aGV0aGVyIHBnX2luaXQgaGFzIHN0YXJ0ZWQuCj4gICBJZiAhY3VycmVu
+dF9wZywgaXQgcmV0dXJucyAwLgo+ICAgKGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMv
+ZG0tZGV2ZWwvMjAxNC1GZWJydWFyeS9tc2cwMDAxMy5odG1sKQo+IAo+IFRoZSBzZW1hbnRpY3Mg
+aXMgY2xlYXI6Cj4gICAtIGlmIHBnX2luaXRfcmVxdWlyZWQsIGNhbGwgX19wZ19pbml0X2FsbF9w
+YXRocygpCj4gICAtIF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBtaWdodCBmYWlsIHRvIHN0YXJ0IHBn
+X2luaXQgKD0gcmV0dXJucyAwKS4KPiAgICAgVGhlbiBjYWxsZXIgc2hvdWxkIHRha2Ugc29tZSBh
+Y3Rpb24gb3IgZ2l2ZSB1cC4KPiAKQWxsIHJpZ2h0LCB3aWxsIGJlIG1vZGlmeWluZyB0aGUgcGF0
+Y2guCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJp
+ZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0Ug
+TElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBK
+LiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVy
+ZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
