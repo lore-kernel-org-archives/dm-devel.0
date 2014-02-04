@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/7] dm mpath: do not call pg_init when it is
-	already running
-Date: Tue,  4 Feb 2014 11:54:34 +0100
-Message-ID: <1391511280-29325-2-git-send-email-hare@suse.de>
+Subject: [PATCH 7/7] dm mpath: remove extra nesting in map
+	function
+Date: Tue,  4 Feb 2014 11:54:40 +0100
+Message-ID: <1391511280-29325-8-git-send-email-hare@suse.de>
 References: <1391511280-29325-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,42 +23,75 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-This patch moves condition checks as a preparation of following
-patches and has no effect on behaviour.
-process_queued_ios() is the only caller of __pg_init_all_paths()
-and 2 condition checks are moved from outside to inside without
-side effects.
+From: Mike Snitzer <snitzer@redhat.com>
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Return early for case when no path exists, and when the
+pathgroup isn't ready. This eliminates the need for
+extra nesting for the the common case.
+
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-mpath.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ drivers/md/dm-mpath.c | 46 ++++++++++++++++++++++++----------------------
+ 1 file changed, 24 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 6eb9dc9..304ee5c 100644
+index 233c6d9..0f47038 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
- 	struct pgpath *pgpath;
- 	unsigned long pg_init_delay = 0;
+@@ -398,29 +398,31 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
  
-+	if (m->pg_init_in_progress || m->pg_init_disabled)
-+		return;
+ 	pgpath = m->current_pgpath;
+ 
+-	if (pgpath) {
+-		if (pg_ready(m)) {
+-			if (set_mapinfo(m, map_context) < 0)
+-				/* ENOMEM, requeue */
+-				goto out_unlock;
+-
+-			bdev = pgpath->path.dev->bdev;
+-			clone->q = bdev_get_queue(bdev);
+-			clone->rq_disk = bdev->bd_disk;
+-			clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+-			mpio = map_context->ptr;
+-			mpio->pgpath = pgpath;
+-			mpio->nr_bytes = nr_bytes;
+-			if (pgpath->pg->ps.type->start_io)
+-				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
+-							      &pgpath->path,
+-							      nr_bytes);
+-			r = DM_MAPIO_REMAPPED;
+-			goto out_unlock;
+-		}
++	if (!pgpath) {
++		if (!__must_push_back(m))
++			r = -EIO;	/* Failed */
++		goto out_unlock;
++	}
++	if (!pg_ready(m)) {
+ 		__pg_init_all_paths(m, 0);
+-	} else if (!__must_push_back(m))
+-		r = -EIO;	/* Failed */
++		goto out_unlock;
++	}
++	if (set_mapinfo(m, map_context) < 0)
++		/* ENOMEM, requeue */
++		goto out_unlock;
 +
- 	m->pg_init_count++;
- 	m->pg_init_required = 0;
- 	if (m->pg_init_delay_retry)
-@@ -501,8 +504,7 @@ static void process_queued_ios(struct work_struct *work)
- 	    (!pgpath && !m->queue_if_no_path))
- 		must_queue = 0;
++	bdev = pgpath->path.dev->bdev;
++	clone->q = bdev_get_queue(bdev);
++	clone->rq_disk = bdev->bd_disk;
++	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
++	mpio = map_context->ptr;
++	mpio->pgpath = pgpath;
++	mpio->nr_bytes = nr_bytes;
++	if (pgpath->pg->ps.type->start_io)
++		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
++					      &pgpath->path,
++					      nr_bytes);
++	r = DM_MAPIO_REMAPPED;
  
--	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
--	    !m->pg_init_disabled)
-+	if (pgpath && m->pg_init_required)
- 		__pg_init_all_paths(m);
- 
+ out_unlock:
  	spin_unlock_irqrestore(&m->lock, flags);
 -- 
 1.7.12.4
