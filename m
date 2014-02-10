@@ -1,82 +1,68 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [v2.6.34-stable 012/213] dm: do not forward ioctls from logical volumes to the underlying device
-Date: Wed, 5 Feb 2014 14:59:27 -0500
-Message-ID: <1391630568-49251-13-git-send-email-paul.gortmaker@windriver.com>
-References: <1391630568-49251-1-git-send-email-paul.gortmaker@windriver.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 4/7] dm mpath: remove process_queued_ios()
+Date: Mon, 10 Feb 2014 08:30:47 -0500
+Message-ID: <20140210133046.GA19209@redhat.com>
+References: <1391511280-29325-1-git-send-email-hare@suse.de>
+	<1391511280-29325-5-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A498607840105F76A@BPXM12GP.gisp.nec.co.jp>
+	<52F0CF91.60302@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1391630568-49251-1-git-send-email-paul.gortmaker@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: stable@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Paolo Bonzini <pbonzini@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <52F0CF91.60302@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Paolo Bonzini <pbonzini@redhat.com>
+On Tue, Feb 04 2014 at  6:31am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
 
-                   -------------------
-    This is a commit scheduled for the next v2.6.34 longterm release.
-    http://git.kernel.org/?p=linux/kernel/git/paulg/longterm-queue-2.6.34.git
-    If you see a problem with using this for longterm, please comment.
-                   -------------------
+> On 02/04/2014 12:26 PM, Junichi Nomura wrote:
+> > On 02/04/14 19:54, Hannes Reinecke wrote:
+> >> We only need to take care to add a small delay when calling
+> >> __pg_init_all_paths() to move processing off to a workqueue; otherwise
+> >> pg_init_done() might end up calling scsi_dh_activate() directly, which
+> >> might use non-atomic memory allocations or issue I/O.
+> > 
+> > Hi Hannes,
+> > 
+> > could you tell me how "might end up calling scsi_dh_active()" happens?
+> > 
+> >   queue_delayed_work()
+> >     queue_delayed_work_on()
+> >       __queue_delayed_work()
+> >         if (!delay)
+> >           __queue_work()
+> >             get_work_pool()
+> >             insert_work()
+> >               set_work_pwq()
+> >               get_pwq()
+> >               if (__need_more_worker())
+> >                 wake_up_worker()
+> > 
+> > queue_work() doesn't execute the work itself.
+> > 
+> > What am I missing?
+> > 
+> As mentioned, I stumbled across the same issue when developing the
+> asynchronous SCSI aborts. I'll see to have it recreated with this
+> patchset.
 
-commit ec8013beddd717d1740cfefb1a9b900deef85462 upstream.
+Just to verify, this seems to be the only outstanding question for this
+patchset?
 
-A logical volume can map to just part of underlying physical volume.
-In this case, it must be treated like a partition.
-
-Based on a patch from Alasdair G Kergon.
-
-Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
-Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-[PG: drop drivers/md/dm-flakey.c chunk; file not present in 2.6.34]
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
----
- drivers/md/dm-linear.c | 12 +++++++++++-
- drivers/md/dm-mpath.c  |  6 ++++++
- 2 files changed, 17 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 9200dbf2391a..bf404845aa9d 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -115,7 +115,17 @@ static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
- 			unsigned long arg)
- {
- 	struct linear_c *lc = (struct linear_c *) ti->private;
--	return __blkdev_driver_ioctl(lc->dev->bdev, lc->dev->mode, cmd, arg);
-+	struct dm_dev *dev = lc->dev;
-+	int r = 0;
-+
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (lc->start ||
-+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
-+	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
- }
- 
- static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 78090ebaba6c..3c06fdb13868 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1541,6 +1541,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
-+	/*
-+	 * Only pass ioctls through if the device sizes match exactly.
-+	 */
-+	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
-+		r = scsi_verify_blk_ioctl(NULL, cmd);
-+
- 	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
- }
- 
--- 
-1.8.5.2
+What value are you using for HZ?  If this portion of the change does
+turn out to be meaningul: Rather than tieing to HZ should we just use an
+explicitly non-zero value for __pg_init_all_paths()'s @min_delay?
