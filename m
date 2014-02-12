@@ -1,20 +1,19 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Subject: Re: [PATCH 4/7] dm mpath: remove process_queued_ios()
-Date: Tue, 11 Feb 2014 11:29:18 -0500
-Message-ID: <20140211162918.GC27812@redhat.com>
+Date: Wed, 12 Feb 2014 02:37:42 +0000
+Message-ID: <11AF7C027C4C02408624617A4986078401084A5C@BPXM12GP.gisp.nec.co.jp>
 References: <1391511280-29325-1-git-send-email-hare@suse.de>
 	<1391511280-29325-5-git-send-email-hare@suse.de>
 	<11AF7C027C4C02408624617A498607840105F76A@BPXM12GP.gisp.nec.co.jp>
 	<52F0CF91.60302@suse.de> <20140210133046.GA19209@redhat.com>
-	<52F9F18A.9000309@suse.de> <20140211155552.GB27812@redhat.com>
-	<52FA65E1.7070602@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <52FA65E1.7070602@suse.de>
+In-Reply-To: <20140210133046.GA19209@redhat.com>
+Content-Language: ja-JP
+Content-ID: <3C4B618F273BF043A2450E5EE1C945B1@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,53 +23,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Feb 11 2014 at  1:03pm -0500,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> On 02/11/2014 04:55 PM, Mike Snitzer wrote:
-> >On Tue, Feb 11 2014 at  4:46am -0500,
-> >Hannes Reinecke <hare@suse.de> wrote:
-> >
-> >>On 02/10/2014 02:30 PM, Mike Snitzer wrote:
-> >>>
-> >>>Just to verify, this seems to be the only outstanding question for this
-> >>>patchset?
-> >>>
-> >>>What value are you using for HZ?  If this portion of the change does
-> >>>turn out to be meaningul: Rather than tieing to HZ should we just use an
-> >>>explicitly non-zero value for __pg_init_all_paths()'s @min_delay?
-> >>>
-> >>The actual amount here is irrelevant, as long as it's non-zero.
-> >>It's just there to force execution of the work item off the current
-> >>thread.
-> >
-> >I'm aware we just need a non-zero value.  My concern, as originally
-> >raised by Junichi in an earlier reply when you had it as HZ/50, is that
-> >the value could be 0 if HZ is really small.  While unlikely I see no
-> >point allowing the variable nature of HZ compromise passing a non-zero
-> >value here.  Best to just be explicit by passing 1 or something.
-> >
-> >All said, the question of why this is actually needed remains.  I trust
-> >you're working on answering that via reproducer (by not forcing the use
-> >of workqueue context)?
-> >
-> Precisely.
+On 02/10/14 22:30, Mike Snitzer wrote:
+> On Tue, Feb 04 2014 at  6:31am -0500,
+> Hannes Reinecke <hare@suse.de> wrote:
 > 
-> But as this is a bit hard to trigger it might take some time.
-> (you'll only be hitting this issue if you have to retry
-> scsi_dh_activate, so you'll need to trigger this somehow).
+>> On 02/04/2014 12:26 PM, Junichi Nomura wrote:
+>>> On 02/04/14 19:54, Hannes Reinecke wrote:
+>>>> We only need to take care to add a small delay when calling
+>>>> __pg_init_all_paths() to move processing off to a workqueue; otherwise
+>>>> pg_init_done() might end up calling scsi_dh_activate() directly, which
+>>>> might use non-atomic memory allocations or issue I/O.
+>>>
+>>> Hi Hannes,
+>>>
+>>> could you tell me how "might end up calling scsi_dh_active()" happens?
+>>>
+>>>   queue_delayed_work()
+>>>     queue_delayed_work_on()
+>>>       __queue_delayed_work()
+>>>         if (!delay)
+>>>           __queue_work()
+>>>             get_work_pool()
+>>>             insert_work()
+>>>               set_work_pwq()
+>>>               get_pwq()
+>>>               if (__need_more_worker())
+>>>                 wake_up_worker()
+>>>
+>>> queue_work() doesn't execute the work itself.
+>>>
+>>> What am I missing?
+>>>
+>> As mentioned, I stumbled across the same issue when developing the
+>> asynchronous SCSI aborts. I'll see to have it recreated with this
+>> patchset.
+> 
+> Just to verify, this seems to be the only outstanding question for this
+> patchset?
 
-OK.
+Hi Mike, Hannes,
 
-> I hope to get it done this week.
-> Is there any deadline which I might miss with that?
+Yes, this is the only remaining question from me.
+For other parts of this patch and patchset, issues I pointed were solved.
 
-No, that'll be great.  We have some time until the 3.15 merge window
-opens.
-
-Thanks,
-Mike
+-- 
+Jun'ichi Nomura, NEC Corporation
