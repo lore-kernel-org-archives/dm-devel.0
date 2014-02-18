@@ -1,15 +1,19 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Performance issue when building thin-pool on top of
- RAID6 device
-Date: Tue, 18 Feb 2014 11:48:33 +0100
-Message-ID: <53033A81.1080005@redhat.com>
-References: <CAKTMprPTkN+9Ubq5+rYh5jYO-Eh5aOgqXVagyy_c85r1euok0A@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Latest 3.14 and corelog in mirror target
+Date: Tue, 18 Feb 2014 08:45:42 -0500
+Message-ID: <20140218134542.GB14522@redhat.com>
+References: <52FEA238.7040003@redhat.com> <20140215002119.GA22044@redhat.com>
+	<52FF3F22.3080405@redhat.com> <52FFB26A.7050802@redhat.com>
+	<alpine.LRH.2.02.1402171213320.8698@file01.intranet.prod.int.rdu2.redhat.com>
+	<5302706D.4020304@redhat.com>
+	<alpine.LRH.2.02.1402172104140.19080@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKTMprPTkN+9Ubq5+rYh5jYO-Eh5aOgqXVagyy_c85r1euok0A@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1402172104140.19080@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,111 +23,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Teng-Feng Yang <shinrairis@gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 18.2.2014 11:36, Teng-Feng Yang napsal(a):
-> Hi,
->
-> Sorry, I forget to provide more information on my system configuration.
-> I use Ubuntu 13.10 and update linux kernel to 3.13.3.
->
-> The dmsetup table output should be similar in all experiments as follow:
-> thin: 0 80000000 thin 252:0 0
-> pool: 0 117433344 thin-pool 8:145 9:0 2048 0 1 skip_block_zeroing
->
+On Mon, Feb 17 2014 at  9:08pm -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Ok - now - have you tried other block size except for 1MB ?
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> Subject: [PATCH] dm-mirror: Fix BUG when retrying read bio.
+> 
+> Increase bi_remaining when retrying the bio to avoid BUG at fs/bio.c:1753
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-I'd suggest to fit the  block size into raid6 multiple chunk size.
-So something like reduce chunk_size in raid6 to 128KiB (or maybe even 64KiB) 
-per disk and use  640KiB as a block size for thin pool ?
+I thought I got all the places where bi_remianing needed incrementing
+(most recent bi_remaining fixup was commit 8d30726912).
 
-Several variants are probably worth to check here.
+I'll get this staged for dm-3.14-fixes.
 
-Thanks
-
-Zdenek
-
-
-
-
-> Thanks,
-> Dennis
->
-> 2014-02-18 17:34 GMT+08:00 Zdenek Kabelac <zkabelac@redhat.com>:
->> Dne 18.2.2014 10:13, Teng-Feng Yang napsal(a):
->>
->>> Dear all,
->>>
->>> I have been working on tuning the dm-thin performance on my storage
->>> server.
->>> I surprisingly find out that the write performance of newly created
->>> thin volume formatted as EXT4 has degraded significantly, when
->>> building thin-pool on top of RAID6 device.
->>> Thin pools in all experiment use 1MB block size, and I format all
->>> target volumes as EXT4 and mount them on /mnt.
->>> The following is the performance statistics I gather under different
->>> circumstances.
->>>
->>> Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
->>> as metadata device
->>> and a RAID6 block device composed by 7 disks (chunk size = 512KB) as a
->>> data device
->>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
->>> 25000+0 records in
->>> 25000+0 records out
->>> 26214400000 bytes (26 GB) copied, 245.808 s, 107 MB/s
->>>
->>> Directly make filesystem on RAID6 block device composed by 7 disks
->>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
->>> 25000+0 records in
->>> 25000+0 records out
->>> 26214400000 bytes (26 GB) copied, 129.543 s, 202 MB/s
->>>
->>> Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
->>> as metadata device
->>> and a RAID0 block device composed by 7 disks as a data device
->>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
->>> 25000+0 records in
->>> 25000+0 records out
->>> 26214400000 bytes (26 GB) copied, 46.1227 s, 568 MB/s
->>>
->>> Directly make filesystem on RAID6 block device composed by 7 disks
->>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
->>> 25000+0 records in
->>> 25000+0 records out
->>> 26214400000 bytes (26 GB) copied, 48.1104 s, 545 MB/s
->>>
->>> It is clear that the write performance has degraded significantly when
->>> we use RAID6 as thin-pool,
->>> but there is no similar behavior when using RAID0 as thin-pool instead.
->>> I dig a little deeper on this issue and find that if we can perfectly
->>> fit a pool block into a RAID6 stripe,
->>> there would be only 20~30% performance loss comparing to RAW RAID6.
->>> However, this poses a restriction on the disks number we can use to
->>> build a RAID6 for pool, and limit the maximum pool size as well.
->>> Is there any other way I can do to improve the write performance when
->>> using RAID6 as pool?
->>
->>
->>
->> Since you have not provided any  'dmsetup table' output - it's hard to guess
->> how your thin-pool target is created, but my guess is - you are using
->> 'zeroing' for provisioned blocks.
->>
->> i.e. here is some sample for thin-pool target line with disabled zeroing:
->>
->> vg-pool-tpool: 0 40960 thin-pool 253:1 253:2 128 0 1 skip_block_zeroing
->>
->>
->> (and example of lvm2 command line:  'lvcreate -T -L100G -Zn -c1M vg/pool'
->>
->> Zdenek
->>
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+BTW, in the future, please send a discrete mail for a patch,
+e.g. Subject with "[PATCH] ..." etc.  A patch buried in a thread can
+lead to patchwork not picking it up (as happened for this patch).
