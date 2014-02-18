@@ -1,15 +1,13 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
+From: Teng-Feng Yang <shinrairis@gmail.com>
 Subject: Re: Performance issue when building thin-pool on top of
  RAID6 device
-Date: Tue, 18 Feb 2014 10:34:05 +0100
-Message-ID: <5303290D.6050700@redhat.com>
-References: <CAKTMprP3KeSQ+VbBO2q6gQa5UWawcKqKisbC-4EGrPfuk1bViQ@mail.gmail.com>
+Date: Tue, 18 Feb 2014 18:36:53 +0800
+Message-ID: <CAKTMprPTkN+9Ubq5+rYh5jYO-Eh5aOgqXVagyy_c85r1euok0A@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKTMprP3KeSQ+VbBO2q6gQa5UWawcKqKisbC-4EGrPfuk1bViQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,71 +17,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Teng-Feng Yang <shinrairis@gmail.com>
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dne 18.2.2014 10:13, Teng-Feng Yang napsal(a):
-> Dear all,
+Hi,
+
+Sorry, I forget to provide more information on my system configuration.
+I use Ubuntu 13.10 and update linux kernel to 3.13.3.
+
+The dmsetup table output should be similar in all experiments as follow:
+thin: 0 80000000 thin 252:0 0
+pool: 0 117433344 thin-pool 8:145 9:0 2048 0 1 skip_block_zeroing
+
+Thanks,
+Dennis
+
+2014-02-18 17:34 GMT+08:00 Zdenek Kabelac <zkabelac@redhat.com>:
+> Dne 18.2.2014 10:13, Teng-Feng Yang napsal(a):
 >
-> I have been working on tuning the dm-thin performance on my storage server.
-> I surprisingly find out that the write performance of newly created
-> thin volume formatted as EXT4 has degraded significantly, when
-> building thin-pool on top of RAID6 device.
-> Thin pools in all experiment use 1MB block size, and I format all
-> target volumes as EXT4 and mount them on /mnt.
-> The following is the performance statistics I gather under different
-> circumstances.
+>> Dear all,
+>>
+>> I have been working on tuning the dm-thin performance on my storage
+>> server.
+>> I surprisingly find out that the write performance of newly created
+>> thin volume formatted as EXT4 has degraded significantly, when
+>> building thin-pool on top of RAID6 device.
+>> Thin pools in all experiment use 1MB block size, and I format all
+>> target volumes as EXT4 and mount them on /mnt.
+>> The following is the performance statistics I gather under different
+>> circumstances.
+>>
+>> Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
+>> as metadata device
+>> and a RAID6 block device composed by 7 disks (chunk size = 512KB) as a
+>> data device
+>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+>> 25000+0 records in
+>> 25000+0 records out
+>> 26214400000 bytes (26 GB) copied, 245.808 s, 107 MB/s
+>>
+>> Directly make filesystem on RAID6 block device composed by 7 disks
+>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+>> 25000+0 records in
+>> 25000+0 records out
+>> 26214400000 bytes (26 GB) copied, 129.543 s, 202 MB/s
+>>
+>> Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
+>> as metadata device
+>> and a RAID0 block device composed by 7 disks as a data device
+>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+>> 25000+0 records in
+>> 25000+0 records out
+>> 26214400000 bytes (26 GB) copied, 46.1227 s, 568 MB/s
+>>
+>> Directly make filesystem on RAID6 block device composed by 7 disks
+>> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+>> 25000+0 records in
+>> 25000+0 records out
+>> 26214400000 bytes (26 GB) copied, 48.1104 s, 545 MB/s
+>>
+>> It is clear that the write performance has degraded significantly when
+>> we use RAID6 as thin-pool,
+>> but there is no similar behavior when using RAID0 as thin-pool instead.
+>> I dig a little deeper on this issue and find that if we can perfectly
+>> fit a pool block into a RAID6 stripe,
+>> there would be only 20~30% performance loss comparing to RAW RAID6.
+>> However, this poses a restriction on the disks number we can use to
+>> build a RAID6 for pool, and limit the maximum pool size as well.
+>> Is there any other way I can do to improve the write performance when
+>> using RAID6 as pool?
 >
-> Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
-> as metadata device
-> and a RAID6 block device composed by 7 disks (chunk size = 512KB) as a
-> data device
-> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
-> 25000+0 records in
-> 25000+0 records out
-> 26214400000 bytes (26 GB) copied, 245.808 s, 107 MB/s
 >
-> Directly make filesystem on RAID6 block device composed by 7 disks
-> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
-> 25000+0 records in
-> 25000+0 records out
-> 26214400000 bytes (26 GB) copied, 129.543 s, 202 MB/s
 >
-> Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
-> as metadata device
-> and a RAID0 block device composed by 7 disks as a data device
-> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
-> 25000+0 records in
-> 25000+0 records out
-> 26214400000 bytes (26 GB) copied, 46.1227 s, 568 MB/s
+> Since you have not provided any  'dmsetup table' output - it's hard to guess
+> how your thin-pool target is created, but my guess is - you are using
+> 'zeroing' for provisioned blocks.
 >
-> Directly make filesystem on RAID6 block device composed by 7 disks
-> dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
-> 25000+0 records in
-> 25000+0 records out
-> 26214400000 bytes (26 GB) copied, 48.1104 s, 545 MB/s
+> i.e. here is some sample for thin-pool target line with disabled zeroing:
 >
-> It is clear that the write performance has degraded significantly when
-> we use RAID6 as thin-pool,
-> but there is no similar behavior when using RAID0 as thin-pool instead.
-> I dig a little deeper on this issue and find that if we can perfectly
-> fit a pool block into a RAID6 stripe,
-> there would be only 20~30% performance loss comparing to RAW RAID6.
-> However, this poses a restriction on the disks number we can use to
-> build a RAID6 for pool, and limit the maximum pool size as well.
-> Is there any other way I can do to improve the write performance when
-> using RAID6 as pool?
-
-
-Since you have not provided any  'dmsetup table' output - it's hard to guess 
-how your thin-pool target is created, but my guess is - you are using
-'zeroing' for provisioned blocks.
-
-i.e. here is some sample for thin-pool target line with disabled zeroing:
-
-vg-pool-tpool: 0 40960 thin-pool 253:1 253:2 128 0 1 skip_block_zeroing
-
-
-(and example of lvm2 command line:  'lvcreate -T -L100G -Zn -c1M vg/pool'
-
-Zdenek
+> vg-pool-tpool: 0 40960 thin-pool 253:1 253:2 128 0 1 skip_block_zeroing
+>
+>
+> (and example of lvm2 command line:  'lvcreate -T -L100G -Zn -c1M vg/pool'
+>
+> Zdenek
+>
