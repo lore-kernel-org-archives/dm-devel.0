@@ -1,39 +1,37 @@
-From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
-Subject: Re: Another metadata corruption issue in dm-cache
-Date: Tue, 18 Feb 2014 15:25:56 +0100
-Message-ID: <20140218142556.GA22119@sesse.net>
-References: <20140216165113.GA7518@sesse.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] bio: don't write "bio: create slab" messages to syslog
+Date: Tue, 18 Feb 2014 13:09:34 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1402181307200.30436@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20140216165113.GA7518@sesse.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sun, Feb 16, 2014 at 05:51:13PM +0100, Steinar H. Gunderson wrote:
->   [233728.674456] device-mapper: space map common: unable to decrement a reference count below 0
+When using device mapper, there are many "bio: create slab" messages in
+the log. Device mapper targets have different front_pad, so each time when
+we load a target that wasn't loaded before, we allocate a slab with the
+appropriate front_pad and there is associated "bio: create slab" message.
 
-Actually a similar issue to this seems to have manifested itself in 3.13 even
-after I nuked all the metadata; the dmsetup status line now reads:
+This patch removes these messages, there is no need for them.
 
-cache: 0 35161337856 cache 1728/131072 2772587 12086450 2085299 1111070 0 260440 265439 4294967295 1 writeback 2 migration_threshold 2048 4 random_threshold 8 sequential_threshold 512
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Occasionally, the 4294967295 dips up to 0 or 1, and then goes straight back
-down again. So there seems to be an off-by-one somewhere in the counting of
-blocks.
+---
+ fs/bio.c |    1 -
+ 1 file changed, 1 deletion(-)
 
-/* Steinar */
--- 
-Homepage: http://www.sesse.net/
+Index: linux-3.14-rc3/fs/bio.c
+===================================================================
+--- linux-3.14-rc3.orig/fs/bio.c	2014-02-18 18:53:30.000000000 +0100
++++ linux-3.14-rc3/fs/bio.c	2014-02-18 18:53:38.000000000 +0100
+@@ -116,7 +116,6 @@ static struct kmem_cache *bio_find_or_cr
+ 	if (!slab)
+ 		goto out_unlock;
+ 
+-	printk(KERN_INFO "bio: create slab <%s> at %d\n", bslab->name, entry);
+ 	bslab->slab = slab;
+ 	bslab->slab_ref = 1;
+ 	bslab->slab_size = sz;
