@@ -1,13 +1,13 @@
-From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
-Subject: Another metadata corruption issue in dm-cache
-Date: Sun, 16 Feb 2014 17:51:14 +0100
-Message-ID: <20140216165113.GA7518@sesse.net>
+From: Teng-Feng Yang <shinrairis@gmail.com>
+Subject: Performance issue when building thin-pool on top of
+	RAID6 device
+Date: Tue, 18 Feb 2014 17:13:26 +0800
+Message-ID: <CAKTMprP3KeSQ+VbBO2q6gQa5UWawcKqKisbC-4EGrPfuk1bViQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +20,58 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+Dear all,
 
-I recently upgraded to 3.13.2, and the number of dirty blocks suddenly
-started to plummet (I guess somebody fixed writeback :-) ). However,
-later I inserted two new disks into my RAID, reshaped it, and then
-reloaded the cache device (directly on top of the md, below LVM) to
-increase its size.
+I have been working on tuning the dm-thin performance on my storage server.
+I surprisingly find out that the write performance of newly created
+thin volume formatted as EXT4 has degraded significantly, when
+building thin-pool on top of RAID6 device.
+Thin pools in all experiment use 1MB block size, and I format all
+target volumes as EXT4 and mount them on /mnt.
+The following is the performance statistics I gather under different
+circumstances.
 
-This worked fine; however, all blocks were now considered dirty, and
-a new writeback started (I always get this issue whenever I do load/resume
-on dm-cache). At the very end, however, the kernel log spit out:
+Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
+as metadata device
+and a RAID6 block device composed by 7 disks (chunk size = 512KB) as a
+data device
+dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+25000+0 records in
+25000+0 records out
+26214400000 bytes (26 GB) copied, 245.808 s, 107 MB/s
 
-  [233728.653343] device-mapper: space map common: index_check failed: blocknr 34359738543 != wanted 1726
-  [233728.662920] device-mapper: block manager: index validator check failed for block 1726
-  [233728.674456] device-mapper: space map common: unable to decrement a reference count below 0
-  [233728.683282] device-mapper: cache: could not commit metadata for accurate status
+Directly make filesystem on RAID6 block device composed by 7 disks
+dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+25000+0 records in
+25000+0 records out
+26214400000 bytes (26 GB) copied, 129.543 s, 202 MB/s
 
-nd then the reference count and commit messages several times, and all
-my filesystems started getting into problems.
+Thin volume on top of a thin pool created by a Plextor M5P 128GB SSD
+as metadata device
+and a RAID0 block device composed by 7 disks as a data device
+dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+25000+0 records in
+25000+0 records out
+26214400000 bytes (26 GB) copied, 46.1227 s, 568 MB/s
 
-Rebooting didn't help; it complained about the same index_check issue,
-refusing to set up the device.
+Directly make filesystem on RAID6 block device composed by 7 disks
+dennis@desktop:~$ sudo dd if=/dev/zero of=/mnt/zero.img bs=1M count=25000
+25000+0 records in
+25000+0 records out
+26214400000 bytes (26 GB) copied, 48.1104 s, 545 MB/s
 
-I didn't take a snapshot of the metadata device (it's not so easy to rescue
-things out from the initramfs); I zeroed it, since all the filesystems
-appeared to be in reasonably good shape anyway (not so strange with
-everything written back), and some fsck rounds later, everything was back
-into shape.
+It is clear that the write performance has degraded significantly when
+we use RAID6 as thin-pool,
+but there is no similar behavior when using RAID0 as thin-pool instead.
+I dig a little deeper on this issue and find that if we can perfectly
+fit a pool block into a RAID6 stripe,
+there would be only 20~30% performance loss comparing to RAW RAID6.
+However, this poses a restriction on the disks number we can use to
+build a RAID6 for pool, and limit the maximum pool size as well.
+Is there any other way I can do to improve the write performance when
+using RAID6 as pool?
 
-So, seemingly there are still issues...
+Any help would be grateful.
+Thanks
 
-/* Steinar */
--- 
-Homepage: http://www.sesse.net/
+Dennis
