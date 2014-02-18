@@ -1,19 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Latest 3.14 and corelog in mirror target
-Date: Tue, 18 Feb 2014 08:45:42 -0500
-Message-ID: <20140218134542.GB14522@redhat.com>
-References: <52FEA238.7040003@redhat.com> <20140215002119.GA22044@redhat.com>
-	<52FF3F22.3080405@redhat.com> <52FFB26A.7050802@redhat.com>
-	<alpine.LRH.2.02.1402171213320.8698@file01.intranet.prod.int.rdu2.redhat.com>
-	<5302706D.4020304@redhat.com>
-	<alpine.LRH.2.02.1402172104140.19080@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
+Subject: Re: Another metadata corruption issue in dm-cache
+Date: Tue, 18 Feb 2014 15:25:56 +0100
+Message-ID: <20140218142556.GA22119@sesse.net>
+References: <20140216165113.GA7518@sesse.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1402172104140.19080@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20140216165113.GA7518@sesse.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,25 +19,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 17 2014 at  9:08pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Sun, Feb 16, 2014 at 05:51:13PM +0100, Steinar H. Gunderson wrote:
+>   [233728.674456] device-mapper: space map common: unable to decrement a reference count below 0
 
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> Subject: [PATCH] dm-mirror: Fix BUG when retrying read bio.
-> 
-> Increase bi_remaining when retrying the bio to avoid BUG at fs/bio.c:1753
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Actually a similar issue to this seems to have manifested itself in 3.13 even
+after I nuked all the metadata; the dmsetup status line now reads:
 
-I thought I got all the places where bi_remianing needed incrementing
-(most recent bi_remaining fixup was commit 8d30726912).
+cache: 0 35161337856 cache 1728/131072 2772587 12086450 2085299 1111070 0 260440 265439 4294967295 1 writeback 2 migration_threshold 2048 4 random_threshold 8 sequential_threshold 512
 
-I'll get this staged for dm-3.14-fixes.
+Occasionally, the 4294967295 dips up to 0 or 1, and then goes straight back
+down again. So there seems to be an off-by-one somewhere in the counting of
+blocks.
 
-BTW, in the future, please send a discrete mail for a patch,
-e.g. Subject with "[PATCH] ..." etc.  A patch buried in a thread can
-lead to patchwork not picking it up (as happened for this patch).
+/* Steinar */
+-- 
+Homepage: http://www.sesse.net/
