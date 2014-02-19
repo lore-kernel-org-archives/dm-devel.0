@@ -1,55 +1,83 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-multipath: Accept failed paths for multipath maps
-Date: Tue, 18 Feb 2014 20:14:02 -0500
-Message-ID: <20140219011401.GA17796@redhat.com>
-References: <1387353155-7271-1-git-send-email-hare@suse.de>
-	<20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de>
-	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-	<52B2AC96.8010909@acm.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: work item migration bug when a CPU is disabled
+Date: Tue, 18 Feb 2014 20:57:11 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1402182040100.28214@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <52B2AC96.8010909@acm.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: device-mapper development <dm-devel@redhat.com>, "Stewart,
-	Sean" <Sean.Stewart@netapp.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Lisa Du <chunlingdu1@gmail.com>, Mandeep Singh Baines <msb@chromium.org>
 List-Id: dm-devel.ids
 
-On Thu, Dec 19 2013 at  3:21am -0500,
-Bart Van Assche <bvanassche@acm.org> wrote:
+Hi Tejun
 
-> On 12/18/13 16:28, Stewart, Sean wrote:
-> > The most severe case is with
-> > InfiniBand, where the LLD may place a device offline, then every single
-> > reload that is trying to add a good path in will fail.  I will qualify
-> > this by saying that I realize it is a problem that the device gets
-> > placed offline in the first place, but this patch would allow it a
-> > chance to continue on. The user still has to take manual steps to fix
-> > the problem in this case, but it seems less disruptive to applications.
-> 
-> Are you perhaps referring to the SRP initiator ? The above is correct
-> for old versions of the SRP initiator (< Linux kernel 3.12) but no
-> longer for upstream kernel versions >= 3.12. An effort is ongoing to
-> backport the latest SRP initiator changes into RHEL and SLES.
+Two years ago, I reported a bug in workqueues - a work item that is 
+supposed to be bound to a specific CPU can be migrated to a different CPU 
+when the origianl CPU is disabled by writing zero to 
+/sys/devices/system/cpu/cpu*/online
 
-Hi Bart,
+This causes crashes in dm-crypt, because it assumes that a work item stays 
+on the same CPU.
 
-It has been a while.  Where do things stand for the RHEL backport of
-these SRP initiator changes?  Are we talking RHEL6 and RHEL7?  Who at
-Red Hat is your contact for this work?
+There was some discussion (see here 
+http://www.redhat.com/archives/dm-devel/2012-March/msg00034.html ), but 
+the bug is still unfixed and I've just got another bug report about 
+dm-crypt crashing because of it.
 
-Regardless of whether some version of Hannes's patch is applied to
-upstream dm-mpath: I'd really like to see this offlining problem that
-forced the need for this dm-mpath change addressed.
+I'd like to ask - are you going to fix the workqueue code so that work 
+item migrations can't happen? - or are you going to specify that work item 
+migration can happen and do you require that all code that relies on the 
+fact that a work item executes on a single CPU be fixed?
+
+Here I'm sending a simple kernel module that shows the bug.
+
+Mikulas
+
+
+
+/*
+ * A proof of concept that a work item executed on a workqueue may change CPU
+ * when CPU hot-unplugging is used.
+ * Compile this as a module and run:
+ * insmod test.ko; sleep 1; echo 0 >/sys/devices/system/cpu/cpu1/online
+ * You see that the work item starts executing on CPU 1 and ends up executing
+ * on different CPU, usually 0.
+ */
+
+#include <linux/module.h>
+#include <linux/delay.h>
+
+static struct workqueue_struct *wq;
+static struct work_struct work;
+
+static void do_work(struct work_struct *w)
+{
+        printk("starting work on cpu %d\n", smp_processor_id());
+        msleep(10000);
+        printk("finishing work on cpu %d\n", smp_processor_id());
+}
+
+static int __init test_init(void)
+{
+        printk("module init\n");
+        wq = alloc_workqueue("testd", WQ_MEM_RECLAIM | WQ_CPU_INTENSIVE, 
+1);
+        if (!wq) {
+                printk("alloc_workqueue failed\n");
+                return -ENOMEM;
+        }
+        INIT_WORK(&work, do_work);
+        queue_work_on(1, wq, &work);
+        return 0;
+}
+
+static void __exit test_exit(void)
+{
+        destroy_workqueue(wq);
+        printk("module exit\n");
+}
+
+module_init(test_init)
+module_exit(test_exit)
+MODULE_LICENSE("GPL");
