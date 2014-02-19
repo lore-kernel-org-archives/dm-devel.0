@@ -1,83 +1,147 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: work item migration bug when a CPU is disabled
-Date: Tue, 18 Feb 2014 20:57:11 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1402182040100.28214@file01.intranet.prod.int.rdu2.redhat.com>
+From: alex chen <alex.chen@huawei.com>
+Subject: [PATCH] dm linear: disable WRITE SAME if it fails
+Date: Wed, 19 Feb 2014 12:14:09 +0800
+Message-ID: <53042F91.4050201@huawei.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Lisa Du <chunlingdu1@gmail.com>, Mandeep Singh Baines <msb@chromium.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Tejun
+The original commit f84cb8a46a771f36a04a02c61ea635c968ed5f6a("dm mpath:
+disable WRITE SAME if it fails") disables WRITE SAME in the DM multipath
+device if it fails, but when the DM linear device stacks ontop of the
+multipath device it doesn't help.
 
-Two years ago, I reported a bug in workqueues - a work item that is 
-supposed to be bound to a specific CPU can be migrated to a different CPU 
-when the origianl CPU is disabled by writing zero to 
-/sys/devices/system/cpu/cpu*/online
+this patch adds DM linear end_io method to catch WRITE SAME errors and
+disables WRITE SAME in the DM linear device's queue_limits if an
+underlying device disables it.
 
-This causes crashes in dm-crypt, because it assumes that a work item stays 
-on the same CPU.
+Before this patch:
 
-There was some discussion (see here 
-http://www.redhat.com/archives/dm-devel/2012-March/msg00034.html ), but 
-the bug is still unfixed and I've just got another bug report about 
-dm-crypt crashing because of it.
+dm linear device(dm-20): ocfs2-fs;
+multipath device(dm-6);
+scsi device(sdt,sdu);
 
-I'd like to ask - are you going to fix the workqueue code so that work 
-item migrations can't happen? - or are you going to specify that work item 
-migration can happen and do you require that all code that relies on the 
-fact that a work item executes on a single CPU be fixed?
+After a WRITE SAME bio fails, the DM linear device does not disable the
+WRITE SAME, although the underlying device(DM multipath device) has
+disabled WRITE SAME.
 
-Here I'm sending a simple kernel module that shows the bug.
+cat /sys/block/dm-20/queue/write_same_max_bytes
+33553920
+cat /sys/block/dm-6/queue/write_same_max_bytes
+0
+cat /sys/block/sdt/queue/write_same_max_bytes
+0
+cat /sys/block/sdu/queue/write_same_max_bytes
+0
 
-Mikulas
+After this patch:
 
+dm linear device(dm-20): ocfs2-fs;
+multipath device(dm-6);
+scsi device(sdt,sdu);
 
+After a WRITE SAME bio fails, the underlying device(DM multipath
+device) disables WRITE SAME and then the DM linear device also disables
+WRITE SAME.
 
-/*
- * A proof of concept that a work item executed on a workqueue may change CPU
- * when CPU hot-unplugging is used.
- * Compile this as a module and run:
- * insmod test.ko; sleep 1; echo 0 >/sys/devices/system/cpu/cpu1/online
- * You see that the work item starts executing on CPU 1 and ends up executing
- * on different CPU, usually 0.
- */
+cat /sys/block/dm-20/queue/write_same_max_bytes
+0
+cat /sys/block/dm-6/queue/write_same_max_bytes
+0
+cat /sys/block/sdt/queue/write_same_max_bytes
+0
+cat /sys/block/sdu/queue/write_same_max_bytes
+0
 
-#include <linux/module.h>
-#include <linux/delay.h>
+Signed-off-by: alex.chen <alex.chen@huawei.com>
+---
+ drivers/md/dm-linear.c | 26 +++++++++++++++++++++++++-
+ drivers/md/dm.c        |  2 +-
+ 2 files changed, 26 insertions(+), 2 deletions(-)
 
-static struct workqueue_struct *wq;
-static struct work_struct work;
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 53e848c..eaf86a5 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -96,6 +96,29 @@ static int linear_map(struct dm_target *ti, struct
+bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
 
-static void do_work(struct work_struct *w)
-{
-        printk("starting work on cpu %d\n", smp_processor_id());
-        msleep(10000);
-        printk("finishing work on cpu %d\n", smp_processor_id());
-}
++static int linear_end_io(struct dm_target *ti, struct bio *bio, int error)
++{
++	struct linear_c *lc = ti->private;
++	struct block_device *bdev;
++	struct queue_limits *limits;
++	struct queue_limits *bdev_limits;
++
++	if (!error)
++		return error;
++
++	if (unlikely(bio->bi_rw & REQ_WRITE_SAME)) {
++		bdev = lc->dev->bdev;
++		bdev_limits = &bdev->bd_disk->queue->limits;
++
++		limits = dm_get_queue_limits(dm_table_get_md(ti->table));
++
++		if ((!bdev_limits->max_write_same_sectors) &&
++				limits->max_write_same_sectors)
++			limits->max_write_same_sectors = 0;
++	}
++
++	return error;
++}
+ static void linear_status(struct dm_target *ti, status_type_t type,
+ 			  unsigned status_flags, char *result, unsigned maxlen)
+ {
+@@ -155,11 +178,12 @@ static int linear_iterate_devices(struct dm_target
+*ti,
 
-static int __init test_init(void)
-{
-        printk("module init\n");
-        wq = alloc_workqueue("testd", WQ_MEM_RECLAIM | WQ_CPU_INTENSIVE, 
-1);
-        if (!wq) {
-                printk("alloc_workqueue failed\n");
-                return -ENOMEM;
-        }
-        INIT_WORK(&work, do_work);
-        queue_work_on(1, wq, &work);
-        return 0;
-}
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+-	.version = {1, 2, 1},
++	.version = {1, 2, 2},
+ 	.module = THIS_MODULE,
+ 	.ctr    = linear_ctr,
+ 	.dtr    = linear_dtr,
+ 	.map    = linear_map,
++	.end_io = linear_end_io,
+ 	.status = linear_status,
+ 	.ioctl  = linear_ioctl,
+ 	.merge  = linear_merge,
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8c53b09..4337025 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -770,7 +770,7 @@ static void clone_endio(struct bio *bio, int error)
 
-static void __exit test_exit(void)
-{
-        destroy_workqueue(wq);
-        printk("module exit\n");
-}
+ 	if (endio) {
+ 		r = endio(tio->ti, bio, error);
+-		if (r < 0 || r == DM_ENDIO_REQUEUE)
++		if (r <= 0 || r == DM_ENDIO_REQUEUE)
+ 			/*
+ 			 * error and requeue request are handled
+ 			 * in dec_pending().
+-- 
+1.8.4.3
 
-module_init(test_init)
-module_exit(test_exit)
-MODULE_LICENSE("GPL");
+_______________________________________________
+vims.openeuler mailing list
+vims.openeuler@huawei.com
+http://rnd-openeuler.huawei.com/mailman/listinfo/vims.openeuler
+
+.
