@@ -1,13 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH for-dm-3.14-fixes 0/8] dm thin: address a few
-	fundamental problems
-Date: Thu, 20 Feb 2014 21:55:57 -0500
-Message-ID: <1392951365-9829-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH for-dm-3.14-fixes 5/8] dm thin: fix the error
+	path for the thin device constructor
+Date: Thu, 20 Feb 2014 21:56:02 -0500
+Message-ID: <1392951365-9829-6-git-send-email-snitzer@redhat.com>
+References: <1392951365-9829-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1392951365-9829-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +22,52 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patchset fixes various thinp issues.  Aside from fixing some bugs
-in earlier 3.14-rc1 code (as noted with commit references): the most
-significant issue addressed is that until now we didn't have the
-awareness or ability to force the user to perform consistency checks
-on the thin pool's metadata and data if warranted.
+dm_pool_close_thin_device() must be called if dm_set_target_max_io_len()
+fails in thin_ctr().  Otherwise __pool_destroy() will fail because the
+pool will still have an open thin device:
 
-While there is a fair amount of change here I feel pretty strongly
-that these fixes should get upstream ASAP.  Posting for review with
-the hope that I'll get timely feedback/acks so that I can send to
-Linus early next week.
+ device-mapper: thin metadata: attempt to close pmd when 1 device(s) are still open
+ device-mapper: thin: __pool_destroy: dm_pool_metadata_close() failed.
 
-(Alasdair, I went with "needs check" for the flag used in patch 7 even
-though you initially disagreed with the name.. it is short and to the
-point, and really: it is internal to the thin implementation.
-Userspace can spin it however you'd like).
+Also, must establish error code if failing thin_ctr() because the pool
+is in fail_io mode.
 
-Mike Snitzer (8):
-  dm thin: synchronize the pool mode during suspend
-  dm thin: set flag when over the metadata low watermark threshold
-  dm thin: set flag if metadata is out of space
-  dm thin: error out I/O if inappropriate for it to be retried
-  dm thin: fix the error path for the thin device constructor
-  dm thin: fix pool_preresume resize with heavy IO races
-  dm thin: ensure user takes action to validate data and metadata consistency
-  dm thin: allow metadata space larger than supported to go unused
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Acked-by: Joe Thornber <ejt@redhat.com>
+Cc: stable@vger.kernel.org
+---
+ drivers/md/dm-thin.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
- Documentation/device-mapper/cache.txt              |  11 +-
- Documentation/device-mapper/thin-provisioning.txt  |  28 +++
- drivers/md/dm-cache-metadata.c                     |   2 +-
- drivers/md/dm-thin-metadata.c                      | 118 ++++++++++-
- drivers/md/dm-thin-metadata.h                      |  23 ++-
- drivers/md/dm-thin.c                               | 225 ++++++++++++++++-----
- drivers/md/persistent-data/dm-space-map-metadata.c |  19 +-
- .../md/persistent-data/dm-transaction-manager.c    |  13 +-
- .../md/persistent-data/dm-transaction-manager.h    |   2 +-
- 9 files changed, 350 insertions(+), 91 deletions(-)
-
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index bc52b3b..7db53d7 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -2920,6 +2920,7 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ 	if (get_pool_mode(tc->pool) == PM_FAIL) {
+ 		ti->error = "Couldn't open thin device, Pool is in fail mode";
++		r = -EINVAL;
+ 		goto bad_thin_open;
+ 	}
+ 
+@@ -2931,7 +2932,7 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ 	r = dm_set_target_max_io_len(ti, tc->pool->sectors_per_block);
+ 	if (r)
+-		goto bad_thin_open;
++		goto bad_target_max_io_len;
+ 
+ 	ti->num_flush_bios = 1;
+ 	ti->flush_supported = true;
+@@ -2952,6 +2953,8 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ 	return 0;
+ 
++bad_target_max_io_len:
++	dm_pool_close_thin_device(tc->td);
+ bad_thin_open:
+ 	__pool_dec(tc->pool);
+ bad_pool_lookup:
 -- 
 1.8.3.1
