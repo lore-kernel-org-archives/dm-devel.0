@@ -1,17 +1,17 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH for-dm-3.14-fixes 2/8] dm thin: set flag when
- over the metadata low watermark threshold
-Date: Fri, 21 Feb 2014 13:56:53 +0000
-Message-ID: <20140221135652.GA13298@debian>
+Subject: Re: [PATCH for-dm-3.14-fixes 1/8] dm thin: synchronize
+ the pool mode during suspend
+Date: Fri, 21 Feb 2014 13:58:12 +0000
+Message-ID: <20140221135811.GB13298@debian>
 References: <1392951365-9829-1-git-send-email-snitzer@redhat.com>
-	<1392951365-9829-3-git-send-email-snitzer@redhat.com>
+	<1392951365-9829-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1392951365-9829-3-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1392951365-9829-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,148 +25,44 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-NACK
+ACK
 
-On Thu, Feb 20, 2014 at 09:55:59PM -0500, Mike Snitzer wrote:
-> The threshold boundary code in persistent-data/dm-space-map-metadata.c
-> was too racey and resulted in a flood of warnings and events.
-
-This code never runs concurrently, so I don't see how it can be racey.
-Scanning the code it seems to work as advertised; it is an edge
-triggered threshold, activating every time the free space crosses the
-threshold from high to low.
-
-- You haven't explained what your changes within
-  dm-space-map-metadata.c do.  Is the threshold no longer edge
-  triggered?
-
-- With your changes, how is the threshold reset?  For instance:
-
-  i) we cross the lwm and issue an event
-
-  ii) the admin deletes a ton of old snapshots to free up some
-      metadata space, taking us well above the lwm.
-
-  iii) 3 months later we cross the lwm again.  Will the admin be notified?
-
-I suspect the real issue is when the free space is near the threshold
-it 'bobbles', crossing back and forth and triggering often (not a
-race).  I suggest the correct way to fix this is to change the
-threshold code to introduce some hysteresis.  For example by saying it
-can't trigger unless free space has crossed another higher threshold
-first (lwm + FUDGE_FACTOR).  Fixes for this should remain within
-dm-space-map-metadata.c.
-
-- Joe
-
-
-
-
-
+On Thu, Feb 20, 2014 at 09:55:58PM -0500, Mike Snitzer wrote:
+> Commit b5330655 ("dm thin: handle metadata failures more consistently")
+> increased potential for the pool's mode to be changed in response to
+> metadata operation failures.
 > 
-> Check the 'metadata_low_water_triggered' flag in metadata_low_callback()
-> before logging a warning and sending an event.
+> When the pool mode is changed it isn't synchronized with the mode in
+> pool_features stored in the target's context (ti->private) that is used
+> as the basis for (re)establishing the pool mode during resume via
+> bind_control_target.
+> 
+> It is important that we synchronize the pool mode when suspending
+> otherwise the pool may experience and unexpected mode transition on the
+> next resume (especially if there was no new table load).
 > 
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 > ---
->  drivers/md/dm-thin.c                               | 11 ++++++++++-
->  drivers/md/persistent-data/dm-space-map-metadata.c | 19 +------------------
->  2 files changed, 11 insertions(+), 19 deletions(-)
+>  drivers/md/dm-thin.c | 6 ++++++
+>  1 file changed, 6 insertions(+)
 > 
 > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 9facc6f..42d08eb 100644
+> index d501e43..9facc6f 100644
 > --- a/drivers/md/dm-thin.c
 > +++ b/drivers/md/dm-thin.c
-> @@ -165,6 +165,7 @@ struct pool {
->  
->  	struct pool_features pf;
->  	bool low_water_triggered:1;	/* A dm event has been sent */
-> +	bool metadata_low_water_triggered:1;
->  
->  	struct dm_bio_prison *prison;
->  	struct dm_kcopyd_client *copier;
-> @@ -1824,6 +1825,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
->  	INIT_LIST_HEAD(&pool->prepared_mappings);
->  	INIT_LIST_HEAD(&pool->prepared_discards);
->  	pool->low_water_triggered = false;
-> +	pool->metadata_low_water_triggered = false;
->  	bio_list_init(&pool->retry_on_resume_list);
->  
->  	pool->shared_read_ds = dm_deferred_set_create();
-> @@ -1993,10 +1995,16 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
->  static void metadata_low_callback(void *context)
->  {
->  	struct pool *pool = context;
-> +	unsigned long flags;
+> @@ -2364,6 +2364,12 @@ static void pool_postsuspend(struct dm_target *ti)
+>  	cancel_delayed_work(&pool->waker);
+>  	flush_workqueue(pool->wq);
+>  	(void) commit(pool);
 > +
-> +	if (pool->metadata_low_water_triggered)
-> +		return;
->  
->  	DMWARN("%s: reached low water mark for metadata device: sending event.",
->  	       dm_device_name(pool->pool_md));
-> -
-> +	spin_lock_irqsave(&pool->lock, flags);
-> +	pool->metadata_low_water_triggered = true;
-> +	spin_unlock_irqrestore(&pool->lock, flags);
->  	dm_table_event(pool->ti->table);
+> +	/*
+> +	 * The pool mode may have changed, sync it so bind_control_target()
+> +	 * doesn't cause an unexpected mode transition on resume.
+> +	 */
+> +	pt->adjusted_pf.mode = get_pool_mode(pool);
 >  }
 >  
-> @@ -2350,6 +2358,7 @@ static void pool_resume(struct dm_target *ti)
->  
->  	spin_lock_irqsave(&pool->lock, flags);
->  	pool->low_water_triggered = false;
-> +	pool->metadata_low_water_triggered = false;
->  	__requeue_bios(pool);
->  	spin_unlock_irqrestore(&pool->lock, flags);
->  
-> diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-> index 536782e..a0231d3 100644
-> --- a/drivers/md/persistent-data/dm-space-map-metadata.c
-> +++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-> @@ -21,9 +21,7 @@
->   */
->  struct threshold {
->  	bool threshold_set;
-> -	bool value_set;
->  	dm_block_t threshold;
-> -	dm_block_t current_value;
->  	dm_sm_threshold_fn fn;
->  	void *context;
->  };
-> @@ -31,7 +29,6 @@ struct threshold {
->  static void threshold_init(struct threshold *t)
->  {
->  	t->threshold_set = false;
-> -	t->value_set = false;
->  }
->  
->  static void set_threshold(struct threshold *t, dm_block_t value,
-> @@ -43,24 +40,10 @@ static void set_threshold(struct threshold *t, dm_block_t value,
->  	t->context = context;
->  }
->  
-> -static bool below_threshold(struct threshold *t, dm_block_t value)
-> -{
-> -	return t->threshold_set && value <= t->threshold;
-> -}
-> -
-> -static bool threshold_already_triggered(struct threshold *t)
-> -{
-> -	return t->value_set && below_threshold(t, t->current_value);
-> -}
-> -
->  static void check_threshold(struct threshold *t, dm_block_t value)
->  {
-> -	if (below_threshold(t, value) &&
-> -	    !threshold_already_triggered(t))
-> +	if (t->threshold_set && value <= t->threshold)
->  		t->fn(t->context);
-> -
-> -	t->value_set = true;
-> -	t->current_value = value;
->  }
->  
->  /*----------------------------------------------------------------*/
+>  static int check_arg_count(unsigned argc, unsigned args_required)
 > -- 
 > 1.8.3.1
 > 
