@@ -1,17 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt: remove per-cpu structure
-Date: Thu, 20 Feb 2014 21:32:40 -0500
-Message-ID: <20140221023240.GA338@redhat.com>
-References: <alpine.LRH.2.02.1402201758190.28312@file01.intranet.prod.int.rdu2.redhat.com>
-	<20140220235935.GA32743@redhat.com>
-	<alpine.LRH.2.02.1402201907120.29698@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH for-dm-3.14-fixes 0/8] dm thin: address a few
+	fundamental problems
+Date: Thu, 20 Feb 2014 21:55:57 -0500
+Message-ID: <1392951365-9829-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1402201907120.29698@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +17,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Tejun Heo <tj@kernel.org>, dm-devel@redhat.com, Lisa Du <chunlingdu1@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 20 2014 at  7:10pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+This patchset fixes various thinp issues.  Aside from fixing some bugs
+in earlier 3.14-rc1 code (as noted with commit references): the most
+significant issue addressed is that until now we didn't have the
+awareness or ability to force the user to perform consistency checks
+on the thin pool's metadata and data if warranted.
 
-> 
-> 
-> On Thu, 20 Feb 2014, Mike Snitzer wrote:
-> 
-> > On Thu, Feb 20 2014 at  6:01pm -0500,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > Dm-crypt used per-cpu structures to hold pointers to ablkcipher_request.
-> > > The code assumed that the work item keeps executing on a single CPU, so it
-> > > used no synchronization when accessing this structure.
-> > > 
-> > > When we disable a CPU by writing zero to
-> > > /sys/devices/system/cpu/cpu*/online, the work item could be moved to
-> > > another CPU. This causes crashes in dm-crypt because the code starts using
-> > > a wrong ablkcipher_request.
-> > > 
-> > > This patch fixes this bug by removing the percpu definition. The structure
-> > > ablkcipher_request is accessed via a pointer from convert_context.
-> > > Consequently, if the work item is rescheduled to a different CPU, the
-> > > thread still uses the same ablkcipher_request.
-> > 
-> > Hi Mikulas,
-> > 
-> > Obviously avoiding crashes is more important than performance.
-> > 
-> > But are we losing performance by switching away from using percpu?  Do
-> > we care?  I'd like to see the header to speak to the potential for
-> > slowdown (if there is any).
-> 
-> There is one more allocation per request than before. I don't know how 
-> much does it cost.
+While there is a fair amount of change here I feel pretty strongly
+that these fixes should get upstream ASAP.  Posting for review with
+the hope that I'll get timely feedback/acks so that I can send to
+Linus early next week.
 
-OK, any reason you didn't fix this up by using cpu hotplug hooks like
-Tejun suggested?  Too complicated?
- 
-> We could also modify the code to use per_bio_data to save one allocation.
+(Alasdair, I went with "needs check" for the flag used in patch 7 even
+though you initially disagreed with the name.. it is short and to the
+point, and really: it is internal to the thin implementation.
+Userspace can spin it however you'd like).
 
-OK, sounds like a good win.  Can you write a separate followup patch
-that makes use of per_bio_data?
+Mike Snitzer (8):
+  dm thin: synchronize the pool mode during suspend
+  dm thin: set flag when over the metadata low watermark threshold
+  dm thin: set flag if metadata is out of space
+  dm thin: error out I/O if inappropriate for it to be retried
+  dm thin: fix the error path for the thin device constructor
+  dm thin: fix pool_preresume resize with heavy IO races
+  dm thin: ensure user takes action to validate data and metadata consistency
+  dm thin: allow metadata space larger than supported to go unused
+
+ Documentation/device-mapper/cache.txt              |  11 +-
+ Documentation/device-mapper/thin-provisioning.txt  |  28 +++
+ drivers/md/dm-cache-metadata.c                     |   2 +-
+ drivers/md/dm-thin-metadata.c                      | 118 ++++++++++-
+ drivers/md/dm-thin-metadata.h                      |  23 ++-
+ drivers/md/dm-thin.c                               | 225 ++++++++++++++++-----
+ drivers/md/persistent-data/dm-space-map-metadata.c |  19 +-
+ .../md/persistent-data/dm-transaction-manager.c    |  13 +-
+ .../md/persistent-data/dm-transaction-manager.h    |   2 +-
+ 9 files changed, 350 insertions(+), 91 deletions(-)
+
+-- 
+1.8.3.1
