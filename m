@@ -1,12 +1,14 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/2] bio: use kmalloc alignment for bio slab
-Date: Sun, 23 Feb 2014 18:46:51 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1402231843260.15413@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 2/2] dm-crypt: use per-bio data
+Date: Sun, 23 Feb 2014 18:48:35 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1402231846570.15413@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1402231843260.15413@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1402231843260.15413@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,48 +22,139 @@ To: Mike Snitzer <msnitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, "Alasdair 
 Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Hi
+This patch changes dm-crypt so that it uses auxiliary data allocated with
+the bio.
 
-Here I'm sending the patches to avoid mempool allocations from dm-crypt.
+Dm-crypt requires two allocations per request - struct dm_crypt_io and
+struct ablkcipher_request (with other data appended to it). It used
+mempool for the allocation.
 
-It needs a small patch to fs/bio.c that makes bio slab cache aligned, so 
-I'm posting this to Jens.
+Some requests may require more dm_crypt_ios and ablkcipher_requests,
+however most requests need just one of each of these two structures to
+complete.
 
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-Various subsystems can ask the bio subsystem to create a bio slab cache
-with some free space before the bio. This free space can be used for any
-purpose. Device mapper uses this feature to place some target-specific and
-device-mapper specific data before the bio, so that the target-specific
-data doesn't have to be allocated separatedly.
-
-This mechanism is used in place of kmalloc, so we need that the allocated
-slab have the same memory alignment as memory allocated with kmalloc.
-
-This patch changes the function bio_find_or_create_slab so that it uses
-ARCH_KMALLOC_MINALIGN alignment when creating the slab cache. This patch
-is needed so that dm-crypt can use per-bio data for encryption - the
-crypto subsystem assumes that these data have the same alignment as
-kmallocated memory.
+This patch changes it so that the first dm_crypt_io and ablkcipher_request
+and allocated with the bio (using target per_bio_data_size option). If the
+request needs additional values, they are allocated from the mempool.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- fs/bio.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/md/dm-crypt.c |   40 ++++++++++++++++++++++++++--------------
+ 1 file changed, 26 insertions(+), 14 deletions(-)
 
-Index: linux-3.14-rc3/fs/bio.c
+Index: linux-3.14-rc3/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.14-rc3.orig/fs/bio.c	2014-02-23 23:53:50.000000000 +0100
-+++ linux-3.14-rc3/fs/bio.c	2014-02-23 23:55:00.000000000 +0100
-@@ -112,7 +112,8 @@ static struct kmem_cache *bio_find_or_cr
- 	bslab = &bio_slabs[entry];
+--- linux-3.14-rc3.orig/drivers/md/dm-crypt.c	2014-02-23 23:54:52.000000000 +0100
++++ linux-3.14-rc3/drivers/md/dm-crypt.c	2014-02-24 00:47:43.000000000 +0100
+@@ -59,7 +59,7 @@ struct dm_crypt_io {
+ 	int error;
+ 	sector_t sector;
+ 	struct dm_crypt_io *base_io;
+-};
++} CRYPTO_MINALIGN_ATTR;
  
- 	snprintf(bslab->name, sizeof(bslab->name), "bio-%d", entry);
--	slab = kmem_cache_create(bslab->name, sz, 0, SLAB_HWCACHE_ALIGN, NULL);
-+	slab = kmem_cache_create(bslab->name, sz, ARCH_KMALLOC_MINALIGN,
-+				 SLAB_HWCACHE_ALIGN, NULL);
- 	if (!slab)
- 		goto out_unlock;
+ struct dm_crypt_request {
+ 	struct convert_context *ctx;
+@@ -162,6 +162,8 @@ struct crypt_config {
+ 	 */
+ 	unsigned int dmreq_start;
  
++	unsigned int per_bio_data_size;
++
+ 	unsigned long flags;
+ 	unsigned int key_size;
+ 	unsigned int key_parts;      /* independent parts in key buffer */
+@@ -895,6 +897,14 @@ static void crypt_alloc_req(struct crypt
+ 	    kcryptd_async_done, dmreq_of_req(cc, ctx->req));
+ }
+ 
++static void crypt_free_req(struct crypt_config *cc,
++			   struct ablkcipher_request *req, struct bio *base_bio)
++{
++	struct dm_crypt_io *io = dm_per_bio_data(base_bio, cc->per_bio_data_size);
++	if ((struct ablkcipher_request *)(io + 1) != req)
++		mempool_free(req, cc->req_pool);
++}
++
+ /*
+  * Encrypt / decrypt data from one bio to another one (can be the same one)
+  */
+@@ -1008,12 +1018,9 @@ static void crypt_free_buffer_pages(stru
+ 	}
+ }
+ 
+-static struct dm_crypt_io *crypt_io_alloc(struct crypt_config *cc,
+-					  struct bio *bio, sector_t sector)
++static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
++			  struct bio *bio, sector_t sector)
+ {
+-	struct dm_crypt_io *io;
+-
+-	io = mempool_alloc(cc->io_pool, GFP_NOIO);
+ 	io->cc = cc;
+ 	io->base_bio = bio;
+ 	io->sector = sector;
+@@ -1021,8 +1028,6 @@ static struct dm_crypt_io *crypt_io_allo
+ 	io->base_io = NULL;
+ 	io->ctx.req = NULL;
+ 	atomic_set(&io->io_pending, 0);
+-
+-	return io;
+ }
+ 
+ static void crypt_inc_pending(struct dm_crypt_io *io)
+@@ -1046,8 +1051,9 @@ static void crypt_dec_pending(struct dm_
+ 		return;
+ 
+ 	if (io->ctx.req)
+-		mempool_free(io->ctx.req, cc->req_pool);
+-	mempool_free(io, cc->io_pool);
++		crypt_free_req(cc, io->ctx.req, base_bio);
++	if (io != dm_per_bio_data(base_bio, cc->per_bio_data_size))
++		mempool_free(io, cc->io_pool);
+ 
+ 	if (likely(!base_io))
+ 		bio_endio(base_bio, error);
+@@ -1255,8 +1261,8 @@ static void kcryptd_crypt_write_convert(
+ 		 * between fragments, so switch to a new dm_crypt_io structure.
+ 		 */
+ 		if (unlikely(!crypt_finished && remaining)) {
+-			new_io = crypt_io_alloc(io->cc, io->base_bio,
+-						sector);
++			new_io = mempool_alloc(cc->io_pool, GFP_NOIO);
++			crypt_io_init(new_io, io->cc, io->base_bio, sector);
+ 			crypt_inc_pending(new_io);
+ 			crypt_convert_init(cc, &new_io->ctx, NULL,
+ 					   io->base_bio, sector);
+@@ -1325,7 +1331,7 @@ static void kcryptd_async_done(struct cr
+ 	if (error < 0)
+ 		io->error = -EIO;
+ 
+-	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
++	crypt_free_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
+ 
+ 	if (!atomic_dec_and_test(&ctx->cc_pending))
+ 		return;
+@@ -1728,6 +1734,10 @@ static int crypt_ctr(struct dm_target *t
+ 		goto bad;
+ 	}
+ 
++	cc->per_bio_data_size = ti->per_bio_data_size =
++				sizeof(struct dm_crypt_io) + cc->dmreq_start +
++				sizeof(struct dm_crypt_request) + cc->iv_size;
++
+ 	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
+ 	if (!cc->page_pool) {
+ 		ti->error = "Cannot allocate page mempool";
+@@ -1824,7 +1834,9 @@ static int crypt_map(struct dm_target *t
+ 		return DM_MAPIO_REMAPPED;
+ 	}
+ 
+-	io = crypt_io_alloc(cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
++	io = dm_per_bio_data(bio, cc->per_bio_data_size);
++	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
++	io->ctx.req = (struct ablkcipher_request *)(io + 1);
+ 
+ 	if (bio_data_dir(io->base_bio) == READ) {
+ 		if (kcryptd_io_read(io, GFP_NOWAIT))
