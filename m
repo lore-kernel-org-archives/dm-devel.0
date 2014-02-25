@@ -1,123 +1,51 @@
-From: johnstra10 <johnstra10@gmail.com>
-Subject: Re: creating a dm-linear.ko in a current kernel.
-Date: Tue, 25 Feb 2014 14:48:38 -0700
-Message-ID: <oa492f3m1qx84ic85p0y0qxd.1393364656021@email.android.com>
-Reply-To: johnstra10 <johnstra10@gmail.com>,
-        device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5393500034394193655=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH] dm-raid: check events in super_validate
+Date: Tue, 25 Feb 2014 16:13:04 -0600
+Message-ID: <DB09A2EA-5D6C-449F-A61A-EFF556F269B8@redhat.com>
+References: <52ED0628.4030203@stratus.com> <20140225163020.6f299f15@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20140225163020.6f299f15@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Nate Dailey <nate.dailey@stratus.com>, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============5393500034394193655==
-Content-Type: multipart/alternative;
-	boundary="--_com.android.email_360533836517120"
 
-----_com.android.email_360533836517120
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: base64
+On Feb 24, 2014, at 11:30 PM, NeilBrown wrote:
 
-SGV5IEpvaG4uLi4gaXQncyBKaWhuIFN0cmFuZ2UuLi4gZnVubnkgbWVldGluZyB5b3UgaGVyZSBv
-biBkbS1kZXZlbC4gU28geW91ciBwbGF5aW5nIGFyb3VuZCB3aXRoIGRtLCBodWg/IMKgSSBkaWQg
-YSBmZXcgbW9udGhzIGFnby4gSSBsaWtlIHRoZSBhcmNoaXRlY3R1cmUsIGFzIHlvdSdyZSBzZWVp
-bmcsIHRoZSBpbXBsZW1lbnRhdGlvbiBsYWNrcyBkaWNpcGxpbmUuIMKgSG9wZSB0aGluZ3MgYXJl
-IGdvaW5nIHdlbGwgZm9yIHlvdSBndXlzIGF0IFJTQy4KLWpvaG4KCgoKClNlbnQgZnJvbSBTYW1z
-dW5nIHRhYmxldAoKLS0tLS0tLS0gT3JpZ2luYWwgbWVzc2FnZSAtLS0tLS0tLQpGcm9tOiBKb2hu
-IFV0eiA8Sm9obi5VdHpAd2RjLmNvbT4gCkRhdGU6IDAyLzI0LzIwMTQgIDM6NDQgUE0gIChHTVQt
-MDc6MDApIApUbzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxAcmVkaGF0LmNv
-bT4gClN1YmplY3Q6IFJlOiBbZG0tZGV2ZWxdIGNyZWF0aW5nIGEgZG0tbGluZWFyLmtvIGluIGEg
-Y3VycmVudCBrZXJuZWwuIAogClNvbHZlZCBteSBvd24gaXNzdWUgbWV0aGlua3MsIHRoZSBuYW1l
-IG9mIHRoZSBtb2R1bGUgdGhhdCBpIGFtIGZpbmRpbmcgaW4gZHJpdmVycy9tZC8gaXMgbGluZWFy
-LmtvLCBub3QgZG0tbGluZWFyLmtvLiB0aGF0IHdhcyB1bmV4cGVjdGVkLiBpIG5vdGUgZnVydGhl
-ciB0aGF0IHRoZXJlIGFyZSBvdGhlciBub24gJ2RtLSBkZWNvcmF0ZWQnIGxrbXMgaW4gbWQgYXMg
-d2VsbCwgc3VjaCBhcyBtdWx0aXBhdGgsIGZhdWx0eSwgcmFpZDAsIGV0Yy4KCmlzIHRoZXJlIGFu
-IGltcGxpY2F0aW9uIGFzc29jaWF0ZWQgd2l0aCB0aGluZ3MgZGVjb3JhdGVkIHdpdGggZG0tIHZz
-IHRoaW5ncyBub3QgZGVjb3JhdGVkIHdpdGggZG0tIGluIHRoZSBtZCBkaXJlY3Rvcnk/Cgp0bngh
-Cgpqb2hudQpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkZyb206IGRt
-LWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbSBbZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tXSBv
-biBiZWhhbGYgb2YgSm9obiBVdHogW0pvaG4uVXR6QHdkYy5jb21dClNlbnQ6IE1vbmRheSwgRmVi
-cnVhcnkgMjQsIDIwMTQgMjowMSBQTQpUbzogZG0tZGV2ZWxAcmVkaGF0LmNvbQpTdWJqZWN0OiBb
-ZG0tZGV2ZWxdIGNyZWF0aW5nIGEgZG0tbGluZWFyLmtvIGluIGEgY3VycmVudCBrZXJuZWwuCgpI
-ZWxsbzsKCkkgaGF2ZSBhIGxpbmVhciBkZXZpY2UgdGhhdCBpIGFtIGF0dGVtcHRpbmcgdG8gaGFy
-bmVzcyB0byBkZXZpY2UgbWFwcGVyLgoKTXkgZXhwZWN0YXRpb24gdGhhdCBpIGRldmVsb3BlZCBi
-YXNlZCBvbiBteSByZWFkaW5nIHdhcyB0aGF0IEkgY291bGQgc3RhcnQgZnJvbSBhIGRtLWxpbmVh
-ci5jID0+IGRtLWxpbmVhci5rbyBhbmQgZ28gZnJvbSB0aGVyZS4KCkJ1dCBkbS1saW5lYXIuYyBn
-ZXRzIGxpbmtlZCBpbnRvIGRtLW1vZC5rbywgbm90IGRtLWxpbmVhci5rby4KCkhhcyBkbS1saW5l
-YXIgYWx3YXlzIGJlZW4gcGFydCBvZiBkbS1tb2Q/IGkgc2VlIHNvbWUgc3R1ZmYgb24gdGhlIG5l
-dCB0aGF0IGltcGxpZXMgdGhlIGV4aXN0ZW5jZSBvZiBkbS1saW5lYXIua28sIGJ1dCBpIGhhdmUg
-cG9rZWQgYXJvdW5kIGluIG1lbnVjb25maWcgYW5kIGkgY2FuIGZpbmQgbm8gc3BlY2lmaWMgZW50
-cnkgdG8gY3JlYXRlIGl0LgoKQW55IHN1Z2dlc3Rpb25zIGFzIHRvIGhvdyB0byBwcm9jZWVkIHdv
-dWxkIGJlIGdyZWF0bHkgYXBwcmVjaWF0ZWQuCgp0bnghCgpqb2hudQoKLS0KZG0tZGV2ZWwgbWFp
-bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
-bWFuL2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWwK
+> On Sat, 1 Feb 2014 09:35:20 -0500 Nate Dailey <nate.dailey@stratus.com> wrote:
+> 
+>> If an LVM raid1 recovery is interrupted by deactivating the LV, when the 
+>> LV is reactivated it comes up with both members in sync--the recovery 
+>> never completes.
+>> 
+>> I've been trying to figure out how to fix this. Does this approach look 
+>> okay? I'm not sure what else to use to determine that a member disk is 
+>> out of sync. It looks like if disk_recovery_offset in the superblock 
+>> were updated during the recovery, that would also cause it to resume 
+>> after interruption--but MD skips the recovery target disk when writing 
+>> superblocks, so this doesn't work.
+>> 
+>> Comments?
+> 
+> I know it is confusing, but this should really have gone to dm-devel rather
+> than linux-raid, to make sure Jon Brassow see it (hi Jon!).
+> 
+> Setting recovery_offset to 0 certainly looks wrong, it should be set to
+>  sb->disk_recovery_offset
+> like the code just above your change.
+> Why does the code there not meet your need.
+> 
+> Jon: can you help?
 
-----_com.android.email_360533836517120
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: base64
+Sure, thanks for forwarding.
 
-PGh0bWw+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0
-L2h0bWw7IGNoYXJzZXQ9VVRGLTgiPjwvaGVhZD48Ym9keSA+PGRpdj5IZXkgSm9obi4uLiBpdCdz
-IEppaG4gU3RyYW5nZS4uLiBmdW5ueSBtZWV0aW5nIHlvdSBoZXJlIG9uIGRtLWRldmVsLiBTbyB5
-b3VyIHBsYXlpbmcgYXJvdW5kIHdpdGggZG0sIGh1aD8gJm5ic3A7SSBkaWQgYSBmZXcgbW9udGhz
-IGFnby4gSSBsaWtlIHRoZSBhcmNoaXRlY3R1cmUsIGFzIHlvdSdyZSBzZWVpbmcsIHRoZSBpbXBs
-ZW1lbnRhdGlvbiBsYWNrcyBkaWNpcGxpbmUuICZuYnNwO0hvcGUgdGhpbmdzIGFyZSBnb2luZyB3
-ZWxsIGZvciB5b3UgZ3V5cyBhdCBSU0MuPC9kaXY+PGRpdj4tam9objwvZGl2PjxkaXY+PGJyPjwv
-ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGRp
-diBzdHlsZT0iZm9udC1zaXplOjEwMCUiPlNlbnQgZnJvbSBTYW1zdW5nIHRhYmxldDwvZGl2Pjwv
-ZGl2Pjxicj48YnI+PGJyPi0tLS0tLS0tIE9yaWdpbmFsIG1lc3NhZ2UgLS0tLS0tLS08YnI+RnJv
-bTogSm9obiBVdHogJmx0O0pvaG4uVXR6QHdkYy5jb20mZ3Q7IDxicj5EYXRlOiAwMi8yNC8yMDE0
-ICAzOjQ0IFBNICAoR01ULTA3OjAwKSA8YnI+VG86IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQg
-Jmx0O2RtLWRldmVsQHJlZGhhdC5jb20mZ3Q7IDxicj5TdWJqZWN0OiBSZTogW2RtLWRldmVsXSBj
-cmVhdGluZyBhIGRtLWxpbmVhci5rbyBpbiBhIGN1cnJlbnQga2VybmVsLiA8YnI+IDxicj48YnI+
-U29sdmVkIG15IG93biBpc3N1ZSBtZXRoaW5rcywgdGhlIG5hbWUgb2YgdGhlIG1vZHVsZSB0aGF0
-IGkgYW0gZmluZGluZyBpbiBkcml2ZXJzL21kLyBpcyBsaW5lYXIua28sIG5vdCBkbS1saW5lYXIu
-a28uIHRoYXQgd2FzIHVuZXhwZWN0ZWQuIGkgbm90ZSBmdXJ0aGVyIHRoYXQgdGhlcmUgYXJlIG90
-aGVyIG5vbiAnZG0tIGRlY29yYXRlZCcgbGttcyBpbiBtZCBhcyB3ZWxsLCBzdWNoIGFzIG11bHRp
-cGF0aCwgZmF1bHR5LCByYWlkMCwgZXRjLjxicj48YnI+aXMgdGhlcmUgYW4gaW1wbGljYXRpb24g
-YXNzb2NpYXRlZCB3aXRoIHRoaW5ncyBkZWNvcmF0ZWQgd2l0aCBkbS0gdnMgdGhpbmdzIG5vdCBk
-ZWNvcmF0ZWQgd2l0aCBkbS0gaW4gdGhlIG1kIGRpcmVjdG9yeT88YnI+PGJyPnRueCE8YnI+PGJy
-PmpvaG51PGJyPl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX188YnI+RnJv
-bTogZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tIFtkbS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5j
-b21dIG9uIGJlaGFsZiBvZiBKb2huIFV0eiBbSm9obi5VdHpAd2RjLmNvbV08YnI+U2VudDogTW9u
-ZGF5LCBGZWJydWFyeSAyNCwgMjAxNCAyOjAxIFBNPGJyPlRvOiBkbS1kZXZlbEByZWRoYXQuY29t
-PGJyPlN1YmplY3Q6IFtkbS1kZXZlbF0gY3JlYXRpbmcgYSBkbS1saW5lYXIua28gaW4gYSBjdXJy
-ZW50IGtlcm5lbC48YnI+PGJyPkhlbGxvOzxicj48YnI+SSBoYXZlIGEgbGluZWFyIGRldmljZSB0
-aGF0IGkgYW0gYXR0ZW1wdGluZyB0byBoYXJuZXNzIHRvIGRldmljZSBtYXBwZXIuPGJyPjxicj5N
-eSBleHBlY3RhdGlvbiB0aGF0IGkgZGV2ZWxvcGVkIGJhc2VkIG9uIG15IHJlYWRpbmcgd2FzIHRo
-YXQgSSBjb3VsZCBzdGFydCBmcm9tIGEgZG0tbGluZWFyLmMgPSZndDsgZG0tbGluZWFyLmtvIGFu
-ZCBnbyBmcm9tIHRoZXJlLjxicj48YnI+QnV0IGRtLWxpbmVhci5jIGdldHMgbGlua2VkIGludG8g
-ZG0tbW9kLmtvLCBub3QgZG0tbGluZWFyLmtvLjxicj48YnI+SGFzIGRtLWxpbmVhciBhbHdheXMg
-YmVlbiBwYXJ0IG9mIGRtLW1vZD8gaSBzZWUgc29tZSBzdHVmZiBvbiB0aGUgbmV0IHRoYXQgaW1w
-bGllcyB0aGUgZXhpc3RlbmNlIG9mIGRtLWxpbmVhci5rbywgYnV0IGkgaGF2ZSBwb2tlZCBhcm91
-bmQgaW4gbWVudWNvbmZpZyBhbmQgaSBjYW4gZmluZCBubyBzcGVjaWZpYyBlbnRyeSB0byBjcmVh
-dGUgaXQuPGJyPjxicj5Bbnkgc3VnZ2VzdGlvbnMgYXMgdG8gaG93IHRvIHByb2NlZWQgd291bGQg
-YmUgZ3JlYXRseSBhcHByZWNpYXRlZC48YnI+PGJyPnRueCE8YnI+PGJyPmpvaG51PGJyPjxicj4t
-LTxicj5kbS1kZXZlbCBtYWlsaW5nIGxpc3Q8YnI+ZG0tZGV2ZWxAcmVkaGF0LmNvbTxicj5odHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw8YnI+PGJyPi0tPGJy
-PmRtLWRldmVsIG1haWxpbmcgbGlzdDxicj5kbS1kZXZlbEByZWRoYXQuY29tPGJyPmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbDxicj48L2JvZHk+
+Could you describe first how you are creating the problem?
 
-----_com.android.email_360533836517120--
+When I create a RAID1 LV, deactivate it, and reactivate it; I don't see it skip the sync.  Also, if I replace a single drive and cycle the LV, I don't see it skip the sync.  What steps am I missing?
 
+ brassow
 
-
---===============5393500034394193655==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5393500034394193655==--
