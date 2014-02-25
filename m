@@ -1,17 +1,12 @@
-From: John Utz <John.Utz@wdc.com>
+From: johnstra10 <johnstra10@gmail.com>
 Subject: Re: creating a dm-linear.ko in a current kernel.
-Date: Tue, 25 Feb 2014 16:23:20 +0000
-Message-ID: <8A51900D08212F40B3DE22453052F6980B97D1EF@wdscexmb02>
-References: <8A51900D08212F40B3DE22453052F6980B97CF4E@wdscexmb02>
-	<8A51900D08212F40B3DE22453052F6980B97CFA3@wdscexmb02>,
-	<530C761C.5010809@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Tue, 25 Feb 2014 14:48:38 -0700
+Message-ID: <oa492f3m1qx84ic85p0y0qxd.1393364656021@email.android.com>
+Reply-To: johnstra10 <johnstra10@gmail.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5393500034394193655=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <530C761C.5010809@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,44 +16,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Bryn M. Reeves" <bmr@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Good Morning Bryn;
+--===============5393500034394193655==
+Content-Type: multipart/alternative;
+	boundary="--_com.android.email_360533836517120"
 
-Thankyou!
-________________________________________
-From: Bryn M. Reeves [bmr@redhat.com]
-Sent: Tuesday, February 25, 2014 2:53 AM
-To: device-mapper development
-Cc: John Utz
-Subject: Re: [dm-devel] creating a dm-linear.ko in a current kernel.
+----_com.android.email_360533836517120
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
 
-On 02/24/2014 10:44 PM, John Utz wrote:
-> Solved my own issue methinks, the name of the module that i am
-> finding in drivers/md/ is linear.ko, not dm-linear.ko. that was
+SGV5IEpvaG4uLi4gaXQncyBKaWhuIFN0cmFuZ2UuLi4gZnVubnkgbWVldGluZyB5b3UgaGVyZSBv
+biBkbS1kZXZlbC4gU28geW91ciBwbGF5aW5nIGFyb3VuZCB3aXRoIGRtLCBodWg/IMKgSSBkaWQg
+YSBmZXcgbW9udGhzIGFnby4gSSBsaWtlIHRoZSBhcmNoaXRlY3R1cmUsIGFzIHlvdSdyZSBzZWVp
+bmcsIHRoZSBpbXBsZW1lbnRhdGlvbiBsYWNrcyBkaWNpcGxpbmUuIMKgSG9wZSB0aGluZ3MgYXJl
+IGdvaW5nIHdlbGwgZm9yIHlvdSBndXlzIGF0IFJTQy4KLWpvaG4KCgoKClNlbnQgZnJvbSBTYW1z
+dW5nIHRhYmxldAoKLS0tLS0tLS0gT3JpZ2luYWwgbWVzc2FnZSAtLS0tLS0tLQpGcm9tOiBKb2hu
+IFV0eiA8Sm9obi5VdHpAd2RjLmNvbT4gCkRhdGU6IDAyLzI0LzIwMTQgIDM6NDQgUE0gIChHTVQt
+MDc6MDApIApUbzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxAcmVkaGF0LmNv
+bT4gClN1YmplY3Q6IFJlOiBbZG0tZGV2ZWxdIGNyZWF0aW5nIGEgZG0tbGluZWFyLmtvIGluIGEg
+Y3VycmVudCBrZXJuZWwuIAogClNvbHZlZCBteSBvd24gaXNzdWUgbWV0aGlua3MsIHRoZSBuYW1l
+IG9mIHRoZSBtb2R1bGUgdGhhdCBpIGFtIGZpbmRpbmcgaW4gZHJpdmVycy9tZC8gaXMgbGluZWFy
+LmtvLCBub3QgZG0tbGluZWFyLmtvLiB0aGF0IHdhcyB1bmV4cGVjdGVkLiBpIG5vdGUgZnVydGhl
+ciB0aGF0IHRoZXJlIGFyZSBvdGhlciBub24gJ2RtLSBkZWNvcmF0ZWQnIGxrbXMgaW4gbWQgYXMg
+d2VsbCwgc3VjaCBhcyBtdWx0aXBhdGgsIGZhdWx0eSwgcmFpZDAsIGV0Yy4KCmlzIHRoZXJlIGFu
+IGltcGxpY2F0aW9uIGFzc29jaWF0ZWQgd2l0aCB0aGluZ3MgZGVjb3JhdGVkIHdpdGggZG0tIHZz
+IHRoaW5ncyBub3QgZGVjb3JhdGVkIHdpdGggZG0tIGluIHRoZSBtZCBkaXJlY3Rvcnk/Cgp0bngh
+Cgpqb2hudQpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkZyb206IGRt
+LWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbSBbZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tXSBv
+biBiZWhhbGYgb2YgSm9obiBVdHogW0pvaG4uVXR6QHdkYy5jb21dClNlbnQ6IE1vbmRheSwgRmVi
+cnVhcnkgMjQsIDIwMTQgMjowMSBQTQpUbzogZG0tZGV2ZWxAcmVkaGF0LmNvbQpTdWJqZWN0OiBb
+ZG0tZGV2ZWxdIGNyZWF0aW5nIGEgZG0tbGluZWFyLmtvIGluIGEgY3VycmVudCBrZXJuZWwuCgpI
+ZWxsbzsKCkkgaGF2ZSBhIGxpbmVhciBkZXZpY2UgdGhhdCBpIGFtIGF0dGVtcHRpbmcgdG8gaGFy
+bmVzcyB0byBkZXZpY2UgbWFwcGVyLgoKTXkgZXhwZWN0YXRpb24gdGhhdCBpIGRldmVsb3BlZCBi
+YXNlZCBvbiBteSByZWFkaW5nIHdhcyB0aGF0IEkgY291bGQgc3RhcnQgZnJvbSBhIGRtLWxpbmVh
+ci5jID0+IGRtLWxpbmVhci5rbyBhbmQgZ28gZnJvbSB0aGVyZS4KCkJ1dCBkbS1saW5lYXIuYyBn
+ZXRzIGxpbmtlZCBpbnRvIGRtLW1vZC5rbywgbm90IGRtLWxpbmVhci5rby4KCkhhcyBkbS1saW5l
+YXIgYWx3YXlzIGJlZW4gcGFydCBvZiBkbS1tb2Q/IGkgc2VlIHNvbWUgc3R1ZmYgb24gdGhlIG5l
+dCB0aGF0IGltcGxpZXMgdGhlIGV4aXN0ZW5jZSBvZiBkbS1saW5lYXIua28sIGJ1dCBpIGhhdmUg
+cG9rZWQgYXJvdW5kIGluIG1lbnVjb25maWcgYW5kIGkgY2FuIGZpbmQgbm8gc3BlY2lmaWMgZW50
+cnkgdG8gY3JlYXRlIGl0LgoKQW55IHN1Z2dlc3Rpb25zIGFzIHRvIGhvdyB0byBwcm9jZWVkIHdv
+dWxkIGJlIGdyZWF0bHkgYXBwcmVjaWF0ZWQuCgp0bnghCgpqb2hudQoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWwK
 
-That's the MD linear personality not the device-mapper linear target. It
-allows you to build JBOD (concatentation) arrays using the MD RAID
-subsystem.
+----_com.android.email_360533836517120
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: base64
 
-Could you briefly explain the concept of 'personality' in this context? I see it referred to but i have yet to find an explanation thereof. perhaps i have been looking in the wrong place.
+PGh0bWw+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0
+L2h0bWw7IGNoYXJzZXQ9VVRGLTgiPjwvaGVhZD48Ym9keSA+PGRpdj5IZXkgSm9obi4uLiBpdCdz
+IEppaG4gU3RyYW5nZS4uLiBmdW5ueSBtZWV0aW5nIHlvdSBoZXJlIG9uIGRtLWRldmVsLiBTbyB5
+b3VyIHBsYXlpbmcgYXJvdW5kIHdpdGggZG0sIGh1aD8gJm5ic3A7SSBkaWQgYSBmZXcgbW9udGhz
+IGFnby4gSSBsaWtlIHRoZSBhcmNoaXRlY3R1cmUsIGFzIHlvdSdyZSBzZWVpbmcsIHRoZSBpbXBs
+ZW1lbnRhdGlvbiBsYWNrcyBkaWNpcGxpbmUuICZuYnNwO0hvcGUgdGhpbmdzIGFyZSBnb2luZyB3
+ZWxsIGZvciB5b3UgZ3V5cyBhdCBSU0MuPC9kaXY+PGRpdj4tam9objwvZGl2PjxkaXY+PGJyPjwv
+ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGRp
+diBzdHlsZT0iZm9udC1zaXplOjEwMCUiPlNlbnQgZnJvbSBTYW1zdW5nIHRhYmxldDwvZGl2Pjwv
+ZGl2Pjxicj48YnI+PGJyPi0tLS0tLS0tIE9yaWdpbmFsIG1lc3NhZ2UgLS0tLS0tLS08YnI+RnJv
+bTogSm9obiBVdHogJmx0O0pvaG4uVXR6QHdkYy5jb20mZ3Q7IDxicj5EYXRlOiAwMi8yNC8yMDE0
+ICAzOjQ0IFBNICAoR01ULTA3OjAwKSA8YnI+VG86IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQg
+Jmx0O2RtLWRldmVsQHJlZGhhdC5jb20mZ3Q7IDxicj5TdWJqZWN0OiBSZTogW2RtLWRldmVsXSBj
+cmVhdGluZyBhIGRtLWxpbmVhci5rbyBpbiBhIGN1cnJlbnQga2VybmVsLiA8YnI+IDxicj48YnI+
+U29sdmVkIG15IG93biBpc3N1ZSBtZXRoaW5rcywgdGhlIG5hbWUgb2YgdGhlIG1vZHVsZSB0aGF0
+IGkgYW0gZmluZGluZyBpbiBkcml2ZXJzL21kLyBpcyBsaW5lYXIua28sIG5vdCBkbS1saW5lYXIu
+a28uIHRoYXQgd2FzIHVuZXhwZWN0ZWQuIGkgbm90ZSBmdXJ0aGVyIHRoYXQgdGhlcmUgYXJlIG90
+aGVyIG5vbiAnZG0tIGRlY29yYXRlZCcgbGttcyBpbiBtZCBhcyB3ZWxsLCBzdWNoIGFzIG11bHRp
+cGF0aCwgZmF1bHR5LCByYWlkMCwgZXRjLjxicj48YnI+aXMgdGhlcmUgYW4gaW1wbGljYXRpb24g
+YXNzb2NpYXRlZCB3aXRoIHRoaW5ncyBkZWNvcmF0ZWQgd2l0aCBkbS0gdnMgdGhpbmdzIG5vdCBk
+ZWNvcmF0ZWQgd2l0aCBkbS0gaW4gdGhlIG1kIGRpcmVjdG9yeT88YnI+PGJyPnRueCE8YnI+PGJy
+PmpvaG51PGJyPl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX188YnI+RnJv
+bTogZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tIFtkbS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5j
+b21dIG9uIGJlaGFsZiBvZiBKb2huIFV0eiBbSm9obi5VdHpAd2RjLmNvbV08YnI+U2VudDogTW9u
+ZGF5LCBGZWJydWFyeSAyNCwgMjAxNCAyOjAxIFBNPGJyPlRvOiBkbS1kZXZlbEByZWRoYXQuY29t
+PGJyPlN1YmplY3Q6IFtkbS1kZXZlbF0gY3JlYXRpbmcgYSBkbS1saW5lYXIua28gaW4gYSBjdXJy
+ZW50IGtlcm5lbC48YnI+PGJyPkhlbGxvOzxicj48YnI+SSBoYXZlIGEgbGluZWFyIGRldmljZSB0
+aGF0IGkgYW0gYXR0ZW1wdGluZyB0byBoYXJuZXNzIHRvIGRldmljZSBtYXBwZXIuPGJyPjxicj5N
+eSBleHBlY3RhdGlvbiB0aGF0IGkgZGV2ZWxvcGVkIGJhc2VkIG9uIG15IHJlYWRpbmcgd2FzIHRo
+YXQgSSBjb3VsZCBzdGFydCBmcm9tIGEgZG0tbGluZWFyLmMgPSZndDsgZG0tbGluZWFyLmtvIGFu
+ZCBnbyBmcm9tIHRoZXJlLjxicj48YnI+QnV0IGRtLWxpbmVhci5jIGdldHMgbGlua2VkIGludG8g
+ZG0tbW9kLmtvLCBub3QgZG0tbGluZWFyLmtvLjxicj48YnI+SGFzIGRtLWxpbmVhciBhbHdheXMg
+YmVlbiBwYXJ0IG9mIGRtLW1vZD8gaSBzZWUgc29tZSBzdHVmZiBvbiB0aGUgbmV0IHRoYXQgaW1w
+bGllcyB0aGUgZXhpc3RlbmNlIG9mIGRtLWxpbmVhci5rbywgYnV0IGkgaGF2ZSBwb2tlZCBhcm91
+bmQgaW4gbWVudWNvbmZpZyBhbmQgaSBjYW4gZmluZCBubyBzcGVjaWZpYyBlbnRyeSB0byBjcmVh
+dGUgaXQuPGJyPjxicj5Bbnkgc3VnZ2VzdGlvbnMgYXMgdG8gaG93IHRvIHByb2NlZWQgd291bGQg
+YmUgZ3JlYXRseSBhcHByZWNpYXRlZC48YnI+PGJyPnRueCE8YnI+PGJyPmpvaG51PGJyPjxicj4t
+LTxicj5kbS1kZXZlbCBtYWlsaW5nIGxpc3Q8YnI+ZG0tZGV2ZWxAcmVkaGF0LmNvbTxicj5odHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw8YnI+PGJyPi0tPGJy
+PmRtLWRldmVsIG1haWxpbmcgbGlzdDxicj5kbS1kZXZlbEByZWRoYXQuY29tPGJyPmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbDxicj48L2JvZHk+
 
-I am also motivated by your response to see if i am barking up the wrong tree. :-)
+----_com.android.email_360533836517120--
 
-I have a need to harness a hard drive like thing that can only be written to in linear fashion using device mapper.
 
-I had assumed that i needed to start from the existing linear implementation that is in dm-linear.
 
-Am I wrong and everything i need is already coded and i just need to create an appropriate configuration file of some kind?
+--===============5393500034394193655==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Please advise when you get a chance.
 
-Thankyou in advance.
-
-johnu
-
-<SNIP>
-
-Regards,
-Bryn.
+--===============5393500034394193655==--
