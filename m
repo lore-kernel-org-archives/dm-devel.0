@@ -1,67 +1,79 @@
-From: Nate Dailey <nate.dailey@stratus.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
 Subject: Re: [PATCH] dm-raid: check events in super_validate
-Date: Tue, 25 Feb 2014 17:22:55 -0500
-Message-ID: <530D17BF.7090008@stratus.com>
-References: <52ED0628.4030203@stratus.com> <20140225163020.6f299f15@notabene.brown> <DB09A2EA-5D6C-449F-A61A-EFF556F269B8@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
-Content-Transfer-Encoding: 7bit
+Date: Tue, 25 Feb 2014 16:59:18 -0600
+Message-ID: <3E58643B-64BF-4A4B-9D44-3D075148FE80@redhat.com>
+References: <52ED0628.4030203@stratus.com> <20140225163020.6f299f15@notabene.brown> <DB09A2EA-5D6C-449F-A61A-EFF556F269B8@redhat.com> <530D17BF.7090008@stratus.com>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <DB09A2EA-5D6C-449F-A61A-EFF556F269B8@redhat.com>
+In-Reply-To: <530D17BF.7090008@stratus.com>
 Sender: linux-raid-owner@vger.kernel.org
-To: Brassow Jonathan <jbrassow@redhat.com>, NeilBrown <neilb@suse.de>
-Cc: linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+To: Nate Dailey <nate.dailey@stratus.com>
+Cc: NeilBrown <neilb@suse.de>, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Here's what I've done to reproduce this:
 
-- remove a disk containing one leg of an LVM raid1 mirror
-- do enough IO that a lengthy recovery will be required
-- insert the removed disk
-- let recovery begin, but deactivate the LV before it completes
-- activate the LV
+On Feb 25, 2014, at 4:22 PM, Nate Dailey wrote:
 
-This is the point where the recovery should start back up, but it 
-doesn't. I haven't tried this in a few weeks, but am happy to try it 
-again if it would help.
+> Here's what I've done to reproduce this:
+> 
+> - remove a disk containing one leg of an LVM raid1 mirror
+> - do enough IO that a lengthy recovery will be required
+> - insert the removed disk
+> - let recovery begin, but deactivate the LV before it completes
+> - activate the LV
+> 
+> This is the point where the recovery should start back up, but it doesn't. I haven't tried this in a few weeks, but am happy to try it again if it would help.
 
-Nate
+Confirmed (test output below).  I'll get started on this.  This code can be a bit tricky and I've been away from it for a while.  It will take me a bit to re-familiarize myself with it and review your patch.
+
+thanks,
+ brassow
 
 
-
-
-On 02/25/2014 05:13 PM, Brassow Jonathan wrote:
-> On Feb 24, 2014, at 11:30 PM, NeilBrown wrote:
->
->> On Sat, 1 Feb 2014 09:35:20 -0500 Nate Dailey <nate.dailey@stratus.com> wrote:
->>
->>> If an LVM raid1 recovery is interrupted by deactivating the LV, when the
->>> LV is reactivated it comes up with both members in sync--the recovery
->>> never completes.
->>>
->>> I've been trying to figure out how to fix this. Does this approach look
->>> okay? I'm not sure what else to use to determine that a member disk is
->>> out of sync. It looks like if disk_recovery_offset in the superblock
->>> were updated during the recovery, that would also cause it to resume
->>> after interruption--but MD skips the recovery target disk when writing
->>> superblocks, so this doesn't work.
->>>
->>> Comments?
->> I know it is confusing, but this should really have gone to dm-devel rather
->> than linux-raid, to make sure Jon Brassow see it (hi Jon!).
->>
->> Setting recovery_offset to 0 certainly looks wrong, it should be set to
->>   sb->disk_recovery_offset
->> like the code just above your change.
->> Why does the code there not meet your need.
->>
->> Jon: can you help?
-> Sure, thanks for forwarding.
->
-> Could you describe first how you are creating the problem?
->
-> When I create a RAID1 LV, deactivate it, and reactivate it; I don't see it skip the sync.  Also, if I replace a single drive and cycle the LV, I don't see it skip the sync.  What steps am I missing?
->
->   brassow
->
-
+[root@bp-02 ~]# lvs -a -o name,attr,size,sync_percent vg
+  LV               Attr       LSize   Cpy%Sync
+  raid1            Rwi-a-r--- 300.00g   100.00
+  [raid1_rimage_0] iwi-aor--- 300.00g         
+  [raid1_rimage_1] iwi-aor--- 300.00g         
+  [raid1_rmeta_0]  ewi-aor---   4.00m         
+  [raid1_rmeta_1]  ewi-aor---   4.00m         
+[root@bp-02 ~]# off.sh sda
+Turning off sda
+[root@bp-02 ~]# dd if=/dev/zero of=/dev/vg/raid1 bs=4M count=10000
+10000+0 records in
+10000+0 records out
+41943040000 bytes (42 GB) copied, 147.139 s, 285 MB/s
+[root@bp-02 ~]# on.sh sda
+Turning on sda
+[root@bp-02 ~]# lvs -a -o name,attr,size,sync_percent vg
+  LV               Attr       LSize   Cpy%Sync
+  raid1            Rwi-a-r-r- 300.00g   100.00
+  [raid1_rimage_0] iwi-aor-r- 300.00g         
+  [raid1_rimage_1] iwi-aor--- 300.00g         
+  [raid1_rmeta_0]  ewi-aor-r-   4.00m         
+  [raid1_rmeta_1]  ewi-aor---   4.00m         
+[root@bp-02 ~]# lvchange --refresh vg/raid1
+[root@bp-02 ~]# lvs -a -o name,attr,size,sync_percent vg
+  LV               Attr       LSize   Cpy%Sync
+  raid1            Rwi-a-r--- 300.00g     0.00
+  [raid1_rimage_0] Iwi-aor--- 300.00g         
+  [raid1_rimage_1] iwi-aor--- 300.00g         
+  [raid1_rmeta_0]  ewi-aor---   4.00m         
+  [raid1_rmeta_1]  ewi-aor---   4.00m         
+[root@bp-02 ~]# lvs -a -o name,attr,size,sync_percent vg
+  LV               Attr       LSize   Cpy%Sync
+  raid1            Rwi-a-r--- 300.00g     0.29
+  [raid1_rimage_0] Iwi-aor--- 300.00g         
+  [raid1_rimage_1] iwi-aor--- 300.00g         
+  [raid1_rmeta_0]  ewi-aor---   4.00m         
+  [raid1_rmeta_1]  ewi-aor---   4.00m         
+[root@bp-02 ~]# lvchange -an vg
+[root@bp-02 ~]# lvchange -ay vg; lvs -a -o name,attr,size,sync_percent vg
+  LV               Attr       LSize   Cpy%Sync
+  raid1            Rwi-a-r--- 300.00g   100.00
+  [raid1_rimage_0] iwi-aor--- 300.00g         
+  [raid1_rimage_1] iwi-aor--- 300.00g         
+  [raid1_rmeta_0]  ewi-aor---   4.00m         
+  [raid1_rmeta_1]  ewi-aor---   4.00m         
