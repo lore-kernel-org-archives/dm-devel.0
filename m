@@ -1,51 +1,25 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: creating a dm-linear.ko in a current kernel.
-Date: Tue, 25 Feb 2014 10:53:16 +0000
-Message-ID: <530C761C.5010809@redhat.com>
-References: <8A51900D08212F40B3DE22453052F6980B97CF4E@wdscexmb02>
-	<8A51900D08212F40B3DE22453052F6980B97CFA3@wdscexmb02>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm thin: inverted down_trylock() test
+Date: Tue, 25 Feb 2014 07:49:22 -0500
+Message-ID: <20140225124922.GA639@redhat.com>
+References: <20140225083509.GB5023@elgon.mountain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8A51900D08212F40B3DE22453052F6980B97CFA3@wdscexmb02>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: John Utz <John.Utz@wdc.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kernel-janitors-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140225083509.GB5023@elgon.mountain>
+Sender: kernel-janitors-owner@vger.kernel.org
+To: Dan Carpenter <dan.carpenter@oracle.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, kernel-janitors@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 02/24/2014 10:44 PM, John Utz wrote:
-> Solved my own issue methinks, the name of the module that i am
-> finding in drivers/md/ is linear.ko, not dm-linear.ko. that was
+On Tue, Feb 25 2014 at  3:35am -0500,
+Dan Carpenter <dan.carpenter@oracle.com> wrote:
 
-That's the MD linear personality not the device-mapper linear target. It
-allows you to build JBOD (concatentation) arrays using the MD RAID
-subsystem.
+> down_trylock() is the opposite of mutex_trylock().  It returns zero on
+> success and one on failure.
+> 
+> Fixes: f4ef95631ebf ('dm thin: do not run the worker thread if pool is suspended')
+> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
 
-> unexpected. i note further that there are other non 'dm- decorated'
-> lkms in md as well, such as multipath, faulty, raid0, etc.
-
-These are also MD personalities.
-
-> is there an implication associated with things decorated with dm- vs
-> things not decorated with dm- in the md directory?
-
-The device-mapper targets all have a dm-* prefix (there are other files
-in drivers/md with names beginning with 'dm', e.g. dm.c, dm-table.c but
-those are part of the device-mapper core).
-
-The dm-linear target is always built into the core dm-mod - see the
-Makefile rules in drivers/md/Makefile for details. The device-mapper
-bits are right at the top.
-
-Regards,
-Bryn.
+Thanks for the fix, but that commit has since been dropped.
