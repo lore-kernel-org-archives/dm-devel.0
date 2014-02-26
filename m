@@ -1,71 +1,37 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-multipath: Do not stall on invalid ioctls
-Date: Wed, 26 Feb 2014 09:56:27 -0500
-Message-ID: <20140226145624.GA32095@redhat.com>
-References: <1393405624-46796-1-git-send-email-hare@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1393405624-46796-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Mike Christie <michaelc@cs.wisc.edu>, Alasdair Kergon <agk@redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm-raid: check events in super_validate
+Date: Wed, 26 Feb 2014 16:21:17 -0600
+Message-ID: <4A643D2E-04C2-462A-8CF8-9BB2A4DC38AE@redhat.com>
+References: <52ED0628.4030203@stratus.com> <20140225163020.6f299f15@notabene.brown> <DB09A2EA-5D6C-449F-A61A-EFF556F269B8@redhat.com> <530D17BF.7090008@stratus.com> <3E58643B-64BF-4A4B-9D44-3D075148FE80@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <3E58643B-64BF-4A4B-9D44-3D075148FE80@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Nate Dailey <nate.dailey@stratus.com>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Feb 26 2014 at  4:07am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
 
-> An invalid ioctl is an invalid ioctl, irrespective on whether
-> multipath has active paths or not. And for invalid ioctls
-> we do not have to wait for multipath to activate any paths,
-> but can rather return the error code immediately.
-> This resolves numerous instances of
-> 
-> udevd[]: worker [] unexpectedly returned with status 0x0100
-> 
-> we have seen during testing.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  drivers/md/dm-mpath.c | 9 +++++++--
->  1 file changed, 7 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 6eb9dc9..e8431fb 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -1626,8 +1626,13 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
->  	/*
->  	 * Only pass ioctls through if the device sizes match exactly.
->  	 */
-> -	if (!r && ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
-> -		r = scsi_verify_blk_ioctl(NULL, cmd);
-> +	if (!bdev || ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT) {
-> +		int err;
-> +
-> +		err = scsi_verify_blk_ioctl(NULL, cmd);
-> +		if (err)
-> +			r = err;
-> +	}
->  
->  	if (r == -ENOTCONN && !fatal_signal_pending(current))
->  		queue_work(kmultipathd, &m->process_queued_ios);
+On Feb 25, 2014, at 4:59 PM, Brassow Jonathan wrote:
 
-I've tweaked the header and code slightly, marked it for stable and
-staged it here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=a1989b330093578ea5470bea0a00f940c444c466
+> 
+> On Feb 25, 2014, at 4:22 PM, Nate Dailey wrote:
+> 
+>> Here's what I've done to reproduce this:
+>> 
+>> - remove a disk containing one leg of an LVM raid1 mirror
+>> - do enough IO that a lengthy recovery will be required
+>> - insert the removed disk
+>> - let recovery begin, but deactivate the LV before it completes
+>> - activate the LV
+>> 
+>> This is the point where the recovery should start back up, but it doesn't. I haven't tried this in a few weeks, but am happy to try it again if it would help.
+> 
+> Confirmed (test output below).  I'll get started on this.  This code can be a bit tricky and I've been away from it for a while.  It will take me a bit to re-familiarize myself with it and review your patch.
 
-Should be on its way upstream on Friday.
+I've tested this again with the latest code from upstream (kernel 3.14.0-rc4) and I cannot reproduce the problem there.  I'll see if I can find the last non-working version...
 
-Thanks.
+ brassow
+
