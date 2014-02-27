@@ -1,15 +1,16 @@
-From: Rolf Fokkens <rolf@rolffokkens.nl>
+From: "Paul B. Henson" <henson@acm.org>
 Subject: Re: dm-cache for Fedora 21?
-Date: Thu, 27 Feb 2014 22:49:18 +0100
-Message-ID: <530FB2DE.3090208@rolffokkens.nl>
-References: <52D15B93.8000500@rolffokkens.nl>	<20140113101800.GC4984@debian>	<061301cf10a2$b58b37e0$20a1a7a0$@acm.org>	<20140114102148.GC6450@debian>	<52D5C739.1070504@rolffokkens.nl>	<20140115103446.GA7943@debian>	<20140115132133.GA31790@agk-dp.fab.redhat.com>
-	<084501cf125c$c8fdc840$5af958c0$@acm.org>
+Date: Thu, 27 Feb 2014 14:10:23 -0800
+Message-ID: <027401cf3408$b88b66c0$29a23440$@acm.org>
+References: <52D15B93.8000500@rolffokkens.nl>	<20140113101800.GC4984@debian>	<061301cf10a2$b58b37e0$20a1a7a0$@acm.org>	<20140114102148.GC6450@debian>	<52D5C739.1070504@rolffokkens.nl>	<20140115103446.GA7943@debian>	<20140115132133.GA31790@agk-dp.fab.redhat.com>	<084501cf125c$c8fdc840$5af958c0$@acm.org>
+	<530FB2DE.3090208@rolffokkens.nl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <084501cf125c$c8fdc840$5af958c0$@acm.org>
+In-Reply-To: <530FB2DE.3090208@rolffokkens.nl>
+Content-Language: en-us
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,25 +20,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/16/2014 02:46 AM, Paul B. Henson wrote:
-> From a use case perspective, I'd like to be able to point to a pv (or 
-> perhaps a vg), and say 'speed up that pv/vg with XG of cache', so 
-> hopefully that will be supported by lvm. My tentative layering for 
-> testing dm-cache prior to lvm support was going to be <raw 
-> disk><dm-cache><pv>, ie, the pv was going to be created on the cached 
-> device... -- dm-devel mailing list dm-devel@redhat.com 
-> https://www.redhat.com/mailman/listinfo/dm-devel 
-Related to my bcache experience I appreciate this way of layering block 
-devices. Thought on the other hand I can also appreciate the ability to 
-decide per LV to apply caching or not, people did this with bcache as 
-well (<raw-disk><pv><vg><lv><bcache>).
+> From: Rolf Fokkens
+> Sent: Thursday, February 27, 2014 1:49 PM
+>
+> For the moment I assume dm-cache is a per LV caching system (since
+> nobody confirmed Paul's idea).
 
-For the moment I assume dm-cache is a per LV caching system (since 
-nobody confirmed Paul's idea). This leaves me wondering if the cache 
-(device) can be shared by multiple LV's. I would really like this, is 
-this the case?
+Oh, just to clarify, dm-cache itself can be used to cache a pv, sitting
+between the raw device and lvm; it's just that lvm will not support setting
+that up, you would have to do that directly with dmsetup... I posted an
+inquiry on that topic back in December:
 
-Rolf
+https://www.redhat.com/archives/dm-devel/2013-December/msg00038.html
+
+It was pretty much confirmed that it would work, it would just be a rather
+manual process.
