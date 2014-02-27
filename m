@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/8] dm mpath: do not call pg_init when it is
-	already running
-Date: Thu, 27 Feb 2014 08:30:22 +0100
-Message-ID: <1393486229-72034-2-git-send-email-hare@suse.de>
+Subject: [PATCH 8/8] dm-mpath: do not activate failed paths
+Date: Thu, 27 Feb 2014 08:30:29 +0100
+Message-ID: <1393486229-72034-9-git-send-email-hare@suse.de>
 References: <1393486229-72034-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,42 +22,31 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-This patch moves condition checks as a preparation of following
-patches and has no effect on behaviour.
-process_queued_ios() is the only caller of __pg_init_all_paths()
-and 2 condition checks are moved from outside to inside without
-side effects.
+activate_path() is run without a lock, so the path might be
+set to failed before activate_path() had a chance to run.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 ---
- drivers/md/dm-mpath.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ drivers/md/dm-mpath.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index e8431fb..bb2f6b2 100644
+index 0a40fa9..22e7365 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
- 	struct pgpath *pgpath;
- 	unsigned long pg_init_delay = 0;
+@@ -1196,8 +1196,11 @@ static void activate_path(struct work_struct *work)
+ 	struct pgpath *pgpath =
+ 		container_of(work, struct pgpath, activate_path.work);
  
-+	if (m->pg_init_in_progress || m->pg_init_disabled)
-+		return;
-+
- 	m->pg_init_count++;
- 	m->pg_init_required = 0;
- 	if (m->pg_init_delay_retry)
-@@ -501,8 +504,7 @@ static void process_queued_ios(struct work_struct *work)
- 	    (!pgpath && !m->queue_if_no_path))
- 		must_queue = 0;
+-	scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
+-				pg_init_done, pgpath);
++	if (pgpath->is_active)
++		scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
++				 pg_init_done, pgpath);
++	else
++		pg_init_done(pgpath, SCSI_DH_DEV_OFFLINED);
+ }
  
--	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
--	    !m->pg_init_disabled)
-+	if (pgpath && m->pg_init_required)
- 		__pg_init_all_paths(m);
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
+ static int noretry_error(int error)
 -- 
 1.7.12.4
