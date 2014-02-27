@@ -1,14 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 6/8] dm mpath: remove map_io()
-Date: Thu, 27 Feb 2014 08:30:27 +0100
-Message-ID: <1393486229-72034-7-git-send-email-hare@suse.de>
-References: <1393486229-72034-1-git-send-email-hare@suse.de>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] dm-multipath: blacklist NVMe devices
+Date: Thu, 27 Feb 2014 09:13:40 +0100
+Message-ID: <CABr-GncP7ftWa2e7ujJUWQWdQ7jF777zZQJt44XmKt5Eou+W-w@mail.gmail.com>
+References: <1393470859-9271-1-git-send-email-vaughan.cao@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1393486229-72034-1-git-send-email-hare@suse.de>
+In-Reply-To: <1393470859-9271-1-git-send-email-vaughan.cao@oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,57 +18,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Vaughan Cao <vaughan.cao@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-multipath_map() is now just a wrapper around map_io(), so we
-can rename map_io() to multipath_map().
+Applied.
 
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-mpath.c | 19 ++++++-------------
- 1 file changed, 6 insertions(+), 13 deletions(-)
+Thanks.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index b4c7e7a..35bf4d7 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -375,9 +375,13 @@ static int __must_push_back(struct multipath *m)
- 
- #define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required)
- 
--static int map_io(struct multipath *m, struct request *clone,
--		  union map_info *map_context)
-+/*
-+ * Map cloned requests
-+ */
-+static int multipath_map(struct dm_target *ti, struct request *clone,
-+			 union map_info *map_context)
- {
-+	struct multipath *m = (struct multipath *) ti->private;
- 	int r = DM_MAPIO_REQUEUE;
- 	size_t nr_bytes = blk_rq_bytes(clone);
- 	unsigned long flags;
-@@ -909,17 +913,6 @@ static void multipath_dtr(struct dm_target *ti)
- }
- 
- /*
-- * Map cloned requests
-- */
--static int multipath_map(struct dm_target *ti, struct request *clone,
--			 union map_info *map_context)
--{
--	struct multipath *m = (struct multipath *) ti->private;
--
--	return map_io(m, clone, map_context);
--}
--
--/*
-  * Take a path out of use.
-  */
- static int fail_path(struct pgpath *pgpath)
--- 
-1.7.12.4
+On Thu, Feb 27, 2014 at 4:14 AM, Vaughan Cao <vaughan.cao@oracle.com> wrote:
+> Multipath works at the request level and NVMe bypasses the request layer. So
+> multipath is not going to be supported for NVMe devices. Add NVMe to default
+> blacklist.
+>
+> Signed-off-by: Vaughan Cao <vaughan.cao@oracle.com>
+> ---
+>  libmultipath/blacklist.c | 6 ++++++
+>  multipath.conf.defaults  | 1 +
+>  2 files changed, 7 insertions(+)
+>
+> diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+> index 79ddcde..651bd7e 100644
+> --- a/libmultipath/blacklist.c
+> +++ b/libmultipath/blacklist.c
+> @@ -176,6 +176,12 @@ setup_default_blist (struct config * conf)
+>         if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+>                 return 1;
+>
+> +       str = STRDUP("^nvme.*");
+> +       if (!str)
+> +               return 1;
+> +       if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+> +               return 1;
+> +
+>         str = STRDUP("(ID_SCSI_VPD|ID_WWN)");
+>         if (!str)
+>                 return 1;
+> diff --git a/multipath.conf.defaults b/multipath.conf.defaults
+> index e761902..12fb3f0 100644
+> --- a/multipath.conf.defaults
+> +++ b/multipath.conf.defaults
+> @@ -31,6 +31,7 @@
+>  #      devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+>  #      devnode "^hd[a-z]"
+>  #      devnode "^dcssblk[0-9]*"
+> +#      devnode "^nvme.*"
+>  #      device {
+>  #              vendor "DGC"
+>  #              product "LUNZ"
+> --
+> 1.8.3.1
+>
