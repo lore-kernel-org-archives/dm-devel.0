@@ -1,15 +1,13 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 7/8] dm mpath: remove extra nesting in map
-	function
-Date: Thu, 27 Feb 2014 08:30:28 +0100
-Message-ID: <1393486229-72034-8-git-send-email-hare@suse.de>
-References: <1393486229-72034-1-git-send-email-hare@suse.de>
+Subject: [PATCHv8 0/8] dm-multipath: push back requests instead
+	of queueing
+Date: Thu, 27 Feb 2014 08:30:21 +0100
+Message-ID: <1393486229-72034-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1393486229-72034-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,75 +21,31 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mike Snitzer <snitzer@redhat.com>
+Hi Mike,
 
-Return early for case when no path exists, and when the
-pathgroup isn't ready. This eliminates the need for
-extra nesting for the the common case.
+here's now version 8 of the patchset; after testing I found that
+the contentious delay when queueing items to a workqueue is in
+fact not required. So with that I seem to have addressed all
+outstanding issues.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c | 46 ++++++++++++++++++++++++----------------------
- 1 file changed, 24 insertions(+), 22 deletions(-)
+Hannes Reinecke (6):
+  dm mpath: do not call pg_init when it is already running
+  dm mpath: push back requests instead of queueing
+  dm mpath: remove process_queued_ios()
+  dm mpath: reduce memory pressure when requeuing
+  dm mpath: remove map_io()
+  dm-mpath: do not activate failed paths
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 35bf4d7..0a40fa9 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -398,29 +398,31 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
- 
- 	pgpath = m->current_pgpath;
- 
--	if (pgpath) {
--		if (pg_ready(m)) {
--			if (set_mapinfo(m, map_context) < 0)
--				/* ENOMEM, requeue */
--				goto out_unlock;
--
--			bdev = pgpath->path.dev->bdev;
--			clone->q = bdev_get_queue(bdev);
--			clone->rq_disk = bdev->bd_disk;
--			clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
--			mpio = map_context->ptr;
--			mpio->pgpath = pgpath;
--			mpio->nr_bytes = nr_bytes;
--			if (pgpath->pg->ps.type->start_io)
--				pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
--							      &pgpath->path,
--							      nr_bytes);
--			r = DM_MAPIO_REMAPPED;
--			goto out_unlock;
--		}
-+	if (!pgpath) {
-+		if (!__must_push_back(m))
-+			r = -EIO;	/* Failed */
-+		goto out_unlock;
-+	}
-+	if (!pg_ready(m)) {
- 		__pg_init_all_paths(m);
--	} else if (!__must_push_back(m))
--		r = -EIO;	/* Failed */
-+		goto out_unlock;
-+	}
-+	if (set_mapinfo(m, map_context) < 0)
-+		/* ENOMEM, requeue */
-+		goto out_unlock;
-+
-+	bdev = pgpath->path.dev->bdev;
-+	clone->q = bdev_get_queue(bdev);
-+	clone->rq_disk = bdev->bd_disk;
-+	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
-+	mpio = map_context->ptr;
-+	mpio->pgpath = pgpath;
-+	mpio->nr_bytes = nr_bytes;
-+	if (pgpath->pg->ps.type->start_io)
-+		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
-+					      &pgpath->path,
-+					      nr_bytes);
-+	r = DM_MAPIO_REMAPPED;
- 
- out_unlock:
- 	spin_unlock_irqrestore(&m->lock, flags);
+Mike Snitzer (2):
+  dm table: add dm_table_run_md_queue_async
+  dm mpath: remove extra nesting in map function
+
+ drivers/md/dm-mpath.c         | 212 +++++++++++++++---------------------------
+ drivers/md/dm-table.c         |  19 ++++
+ drivers/md/dm.c               |   5 +
+ drivers/md/dm.h               |   1 +
+ include/linux/device-mapper.h |   5 +
+ 5 files changed, 104 insertions(+), 138 deletions(-)
+
 -- 
 1.7.12.4
