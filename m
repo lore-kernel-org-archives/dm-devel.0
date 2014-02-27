@@ -1,7 +1,7 @@
 From: "Paul B. Henson" <henson@acm.org>
 Subject: Re: dm-cache for Fedora 21?
-Date: Thu, 27 Feb 2014 14:10:23 -0800
-Message-ID: <027401cf3408$b88b66c0$29a23440$@acm.org>
+Date: Thu, 27 Feb 2014 14:06:07 -0800
+Message-ID: <027301cf3408$1f916a00$5eb43e00$@acm.org>
 References: <52D15B93.8000500@rolffokkens.nl>	<20140113101800.GC4984@debian>	<061301cf10a2$b58b37e0$20a1a7a0$@acm.org>	<20140114102148.GC6450@debian>	<52D5C739.1070504@rolffokkens.nl>	<20140115103446.GA7943@debian>	<20140115132133.GA31790@agk-dp.fab.redhat.com>	<084501cf125c$c8fdc840$5af958c0$@acm.org>
 	<530FB2DE.3090208@rolffokkens.nl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -27,14 +27,33 @@ List-Id: dm-devel.ids
 > Sent: Thursday, February 27, 2014 1:49 PM
 >
 > For the moment I assume dm-cache is a per LV caching system (since
-> nobody confirmed Paul's idea).
+> nobody confirmed Paul's idea). This leaves me wondering if the cache
+> (device) can be shared by multiple LV's. I would really like this, is
+> this the case?
 
-Oh, just to clarify, dm-cache itself can be used to cache a pv, sitting
-between the raw device and lvm; it's just that lvm will not support setting
-that up, you would have to do that directly with dmsetup... I posted an
-inquiry on that topic back in December:
+I followed up on this question on the lvm development list; they pretty much
+confirmed that based on the layering and api of lvm, they did not plan to
+support using a dm-cache for a pv or vg, only for an lv.
 
-https://www.redhat.com/archives/dm-devel/2013-December/msg00038.html
+However, one of the developers did give an interesting suggestion combining
+the use of dm-cache and thin provisioning, effectively allowing you to use a
+single cache for a number of lv's, as long as they are all allocated out of
+the same thin pool:
 
-It was pretty much confirmed that it would work, it would just be a rather
-manual process.
+	
+https://www.redhat.com/archives/lvm-devel/2014-February/msg00067.html
+
+This looks interesting, while it's not exactly what I was originally
+considering, I think it potentially will achieve the same effective goal. I
+could create a single thin pool lv the size of the entire backing pv, and
+then create thin lv's out of it for my actual production needs, all of which
+would be cached by the single ssd pv.
+
+I'm not very familiar with thin provisioning at this time though, so I
+really need to do quite a bit of homework on that to make sure there aren't
+going to be any issues problematic for my deployment. And, of course, lvm
+support for cache devices is still only available in git head and changing
+on an almost daily basis :).
+
+I would be interested in any feedback or thoughts anyone might have on this
+proposal and its viability and performance, thanks.
