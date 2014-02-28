@@ -1,21 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 8/8] dm-mpath: do not activate failed paths
-Date: Fri, 28 Feb 2014 10:02:43 -0500
-Message-ID: <20140228150243.GB1140@redhat.com>
-References: <1393486229-72034-1-git-send-email-hare@suse.de>
-	<1393486229-72034-9-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A49860784010D7C45@BPXM12GP.gisp.nec.co.jp>
-	<531057A7.4020208@suse.de>
-	<11AF7C027C4C02408624617A49860784010D7F79@BPXM12GP.gisp.nec.co.jp>
-	<53105C4D.50305@suse.de> <20140228142230.GA1140@redhat.com>
-	<5310A0C7.6000601@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCHv3] dm-multipath: Accept failed paths for
+	multipath maps
+Date: Fri, 28 Feb 2014 16:03:16 +0100
+Message-ID: <1393599796-76663-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5310A0C7.6000601@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,51 +17,249 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 28 2014 at  9:44am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
+The multipath kernel module is rejecting any map with an invalid
+device. However, as the multipathd is processing the events serially
+it will try to push a map with invalid devices if more than one
+device failed at the same time.
+So we can as well accept those maps and make sure to mark the
+paths as down.
 
-> On 02/28/2014 03:22 PM, Mike Snitzer wrote:
-> [ .. ]
-> > 
-> > FYI, I still intend to review/take your "accept failed paths" patch.
-> > Would be helpful if any rebase is needed for that patch that you do so
-> > and re-post.
-> > 
-> > One thing I noticed is you're only converting MAJ:MIN paths to devices.
-> > I think we should factor a helper out of DM core that does the full path
-> > lookup check from dm_get_device() -- rather than you open coding an
-> > older version of the MAJ:MIN device path processing.
-> > 
-> > But is there a reason for not using lookup_bdev()?  Because the device
-> > is failed it cannot be found using lookup_bdev()?
-> > 
-> Yes, that's precisely it.
-> When setting dev_loss_tmo very aggressively (to, say, 10 or even 5
-> seconds) it might well be that multipathd won't be able to keep up
-> with the events in time.
-> So by the time multipathd tries to push a new table into the kernel
-> (which contains major:minor numbers only) those devices are already
-> gone. So lookup_bdev() won't be able to find them, either.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-mpath.c | 73 +++++++++++++++++++++++++++++++++++++++++----------
+ drivers/md/dm-mpath.h |  1 +
+ drivers/md/dm-table.c |  7 +++--
+ 3 files changed, 65 insertions(+), 16 deletions(-)
 
-Been talking this over with Alasdair.  Need some things clarified.
-
-Are you needing to handle non-existent devices during initial mpath
-table load?
-
-Or is the failed path in question already part of the active mpath table
--- so active table currently holds a reference to the device?
-
-Or do you need to support both cases?  Sounds like you want to support
-both cases..
-
-> Not sure if factoring things out from dm_get_device() would help
-> here ...
-> 
-> But I'll be sending an updated patch, which'll apply on top of the
-> 'push back' patchset.
-
-Thanks.
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index e750095..d96f2ee 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -162,7 +162,7 @@ static void free_pgpaths(struct list_head *pgpaths, struct dm_target *ti)
+ 
+ 	list_for_each_entry_safe(pgpath, tmp, pgpaths, list) {
+ 		list_del(&pgpath->list);
+-		if (m->hw_handler_name)
++		if (m->hw_handler_name && pgpath->path.dev)
+ 			scsi_dh_detach(bdev_get_queue(pgpath->path.dev->bdev));
+ 		dm_put_device(ti, pgpath->path.dev);
+ 		free_pgpath(pgpath);
+@@ -306,6 +306,11 @@ static int __choose_path_in_pg(struct multipath *m, struct priority_group *pg,
+ 
+ 	m->current_pgpath = path_to_pgpath(path);
+ 
++	if (!m->current_pgpath->path.dev) {
++		m->current_pgpath = NULL;
++		return -ENODEV;
++	}
++
+ 	if (m->current_pg != pg)
+ 		__switch_pg(m, m->current_pgpath);
+ 
+@@ -516,6 +521,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ {
+ 	int r;
+ 	struct pgpath *p;
++	const char *path;
+ 	struct multipath *m = ti->private;
+ 	struct request_queue *q = NULL;
+ 	const char *attached_handler_name;
+@@ -530,17 +536,40 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 	if (!p)
+ 		return ERR_PTR(-ENOMEM);
+ 
+-	r = dm_get_device(ti, dm_shift_arg(as), dm_table_get_mode(ti->table),
++	path = dm_shift_arg(as);
++	r = dm_get_device(ti, path, dm_table_get_mode(ti->table),
+ 			  &p->path.dev);
+ 	if (r) {
+-		ti->error = "error getting device";
+-		goto bad;
++		unsigned major, minor;
++
++		/* Try to add a failed device */
++		if (r == -ENXIO && sscanf(path, "%u:%u", &major, &minor) == 2) {
++			dev_t dev;
++
++			/* Extract the major/minor numbers */
++			dev = MKDEV(major, minor);
++			if (MAJOR(dev) != major || MINOR(dev) != minor) {
++				/* Nice try, didn't work */
++				DMWARN("Invalid device path %s", path);
++				ti->error = "error converting devnum";
++				goto bad;
++			}
++			DMWARN("adding disabled device %d:%d", major, minor);
++			p->path.dev = NULL;
++			format_dev_t(p->path.pdev, dev);
++			p->is_active = 0;
++		} else {
++			ti->error = "error getting device";
++			goto bad;
++		}
++	} else {
++		memcpy(p->path.pdev, p->path.dev->name, 16);
+ 	}
+ 
+-	if (m->retain_attached_hw_handler || m->hw_handler_name)
++	if (p->path.dev)
+ 		q = bdev_get_queue(p->path.dev->bdev);
+ 
+-	if (m->retain_attached_hw_handler) {
++	if (q && (m->retain_attached_hw_handler || m->hw_handler_name)) {
+ 		attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
+ 		if (attached_handler_name) {
+ 			/*
+@@ -559,7 +588,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 		}
+ 	}
+ 
+-	if (m->hw_handler_name) {
++	if (q && m->hw_handler_name) {
+ 		/*
+ 		 * Increments scsi_dh reference, even when using an
+ 		 * already-attached handler.
+@@ -598,6 +627,11 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 		goto bad;
+ 	}
+ 
++	if (!p->is_active) {
++		ps->type->fail_path(ps, &p->path);
++		p->fail_count++;
++		m->nr_valid_paths--;
++	}
+ 	return p;
+ 
+  bad:
+@@ -927,7 +961,7 @@ static int fail_path(struct pgpath *pgpath)
+ 	if (!pgpath->is_active)
+ 		goto out;
+ 
+-	DMWARN("Failing path %s.", pgpath->path.dev->name);
++	DMWARN("Failing path %s.", pgpath->path.pdev);
+ 
+ 	pgpath->pg->ps.type->fail_path(&pgpath->pg->ps, &pgpath->path);
+ 	pgpath->is_active = 0;
+@@ -939,7 +973,7 @@ static int fail_path(struct pgpath *pgpath)
+ 		m->current_pgpath = NULL;
+ 
+ 	dm_path_uevent(DM_UEVENT_PATH_FAILED, m->ti,
+-		      pgpath->path.dev->name, m->nr_valid_paths);
++		       pgpath->path.pdev, m->nr_valid_paths);
+ 
+ 	schedule_work(&m->trigger_event);
+ 
+@@ -963,6 +997,12 @@ static int reinstate_path(struct pgpath *pgpath)
+ 	if (pgpath->is_active)
+ 		goto out;
+ 
++	if (!pgpath->path.dev) {
++		DMWARN("Cannot reinstate disabled path %s", pgpath->path.pdev);
++		r = -ENODEV;
++		goto out;
++	}
++
+ 	if (!pgpath->pg->ps.type->reinstate_path) {
+ 		DMWARN("Reinstate path not supported by path selector %s",
+ 		       pgpath->pg->ps.type->name);
+@@ -985,7 +1025,7 @@ static int reinstate_path(struct pgpath *pgpath)
+ 	}
+ 
+ 	dm_path_uevent(DM_UEVENT_PATH_REINSTATED, m->ti,
+-		      pgpath->path.dev->name, m->nr_valid_paths);
++		       pgpath->path.pdev, m->nr_valid_paths);
+ 
+ 	schedule_work(&m->trigger_event);
+ 
+@@ -1005,6 +1045,9 @@ static int action_dev(struct multipath *m, struct dm_dev *dev,
+ 	struct pgpath *pgpath;
+ 	struct priority_group *pg;
+ 
++	if (!dev)
++		return 0;
++
+ 	list_for_each_entry(pg, &m->priority_groups, list) {
+ 		list_for_each_entry(pgpath, &pg->pgpaths, list) {
+ 			if (pgpath->path.dev == dev)
+@@ -1197,7 +1240,7 @@ static void activate_path(struct work_struct *work)
+ 	struct pgpath *pgpath =
+ 		container_of(work, struct pgpath, activate_path.work);
+ 
+-	if (pgpath->is_active)
++	if (pgpath->path.dev && pgpath->is_active)
+ 		scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
+ 				 pg_init_done, pgpath);
+ 	else
+@@ -1416,7 +1459,7 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
+ 			       pg->ps.type->info_args);
+ 
+ 			list_for_each_entry(p, &pg->pgpaths, list) {
+-				DMEMIT("%s %s %u ", p->path.dev->name,
++				DMEMIT("%s %s %u ", p->path.pdev,
+ 				       p->is_active ? "A" : "F",
+ 				       p->fail_count);
+ 				if (pg->ps.type->status)
+@@ -1442,7 +1485,7 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
+ 			       pg->ps.type->table_args);
+ 
+ 			list_for_each_entry(p, &pg->pgpaths, list) {
+-				DMEMIT("%s ", p->path.dev->name);
++				DMEMIT("%s ", p->path.pdev);
+ 				if (pg->ps.type->status)
+ 					sz += pg->ps.type->status(&pg->ps,
+ 					      &p->path, type, result + sz,
+@@ -1539,7 +1582,7 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+ 
+ 	pgpath = m->current_pgpath;
+ 
+-	if (pgpath) {
++	if (pgpath && pgpath->path.dev) {
+ 		bdev = pgpath->path.dev->bdev;
+ 		mode = pgpath->path.dev->mode;
+ 	}
+@@ -1587,6 +1630,8 @@ static int multipath_iterate_devices(struct dm_target *ti,
+ 
+ 	list_for_each_entry(pg, &m->priority_groups, list) {
+ 		list_for_each_entry(p, &pg->pgpaths, list) {
++			if (!p->path.dev)
++				continue;
+ 			ret = fn(ti, p->path.dev, ti->begin, ti->len, data);
+ 			if (ret)
+ 				goto out;
+diff --git a/drivers/md/dm-mpath.h b/drivers/md/dm-mpath.h
+index e230f71..f97388d 100644
+--- a/drivers/md/dm-mpath.h
++++ b/drivers/md/dm-mpath.h
+@@ -12,6 +12,7 @@
+ struct dm_dev;
+ 
+ struct dm_path {
++	char pdev[16];		/* Requested physical device */
+ 	struct dm_dev *dev;	/* Read-only */
+ 	void *pscontext;	/* For path-selector use */
+ };
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 8df63ed..9a57085 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -506,9 +506,12 @@ EXPORT_SYMBOL_GPL(dm_set_device_limits);
+  */
+ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
+ {
+-	struct dm_dev_internal *dd = container_of(d, struct dm_dev_internal,
+-						  dm_dev);
++	struct dm_dev_internal *dd;
++
++	if (!d)
++		return;
+ 
++	dd = container_of(d, struct dm_dev_internal, dm_dev);
+ 	if (atomic_dec_and_test(&dd->count)) {
+ 		close_dev(dd, ti->table->md);
+ 		list_del(&dd->list);
+-- 
+1.7.12.4
