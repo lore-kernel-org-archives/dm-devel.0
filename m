@@ -1,15 +1,19 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/8] dm mpath: do not call pg_init when it is
-	already running
-Date: Fri, 28 Feb 2014 15:33:42 +0100
-Message-ID: <1393598029-67995-2-git-send-email-hare@suse.de>
-References: <1393598029-67995-1-git-send-email-hare@suse.de>
+Subject: Re: [PATCH 8/8] dm-mpath: do not activate failed paths
+Date: Fri, 28 Feb 2014 15:44:23 +0100
+Message-ID: <5310A0C7.6000601@suse.de>
+References: <1393486229-72034-1-git-send-email-hare@suse.de>
+	<1393486229-72034-9-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A49860784010D7C45@BPXM12GP.gisp.nec.co.jp>
+	<531057A7.4020208@suse.de>
+	<11AF7C027C4C02408624617A49860784010D7F79@BPXM12GP.gisp.nec.co.jp>
+	<53105C4D.50305@suse.de> <20140228142230.GA1140@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1393598029-67995-1-git-send-email-hare@suse.de>
+In-Reply-To: <20140228142230.GA1140@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +23,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch moves condition checks as a preparation of following
-patches and has no effect on behaviour.
-process_queued_ios() is the only caller of __pg_init_all_paths()
-and 2 condition checks are moved from outside to inside without
-side effects.
+On 02/28/2014 03:22 PM, Mike Snitzer wrote:
+[ .. ]
+> =
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
----
- drivers/md/dm-mpath.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+> FYI, I still intend to review/take your "accept failed paths" patch.
+> Would be helpful if any rebase is needed for that patch that you do so
+> and re-post.
+> =
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index e8431fb..bb2f6b2 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -261,6 +261,9 @@ static void __pg_init_all_paths(struct multipath *m)
- 	struct pgpath *pgpath;
- 	unsigned long pg_init_delay = 0;
- 
-+	if (m->pg_init_in_progress || m->pg_init_disabled)
-+		return;
-+
- 	m->pg_init_count++;
- 	m->pg_init_required = 0;
- 	if (m->pg_init_delay_retry)
-@@ -501,8 +504,7 @@ static void process_queued_ios(struct work_struct *work)
- 	    (!pgpath && !m->queue_if_no_path))
- 		must_queue = 0;
- 
--	if (m->pg_init_required && !m->pg_init_in_progress && pgpath &&
--	    !m->pg_init_disabled)
-+	if (pgpath && m->pg_init_required)
- 		__pg_init_all_paths(m);
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
--- 
-1.7.12.4
+> One thing I noticed is you're only converting MAJ:MIN paths to devices.
+> I think we should factor a helper out of DM core that does the full path
+> lookup check from dm_get_device() -- rather than you open coding an
+> older version of the MAJ:MIN device path processing.
+> =
+
+> But is there a reason for not using lookup_bdev()?  Because the device
+> is failed it cannot be found using lookup_bdev()?
+> =
+
+Yes, that's precisely it.
+When setting dev_loss_tmo very aggressively (to, say, 10 or even 5
+seconds) it might well be that multipathd won't be able to keep up
+with the events in time.
+So by the time multipathd tries to push a new table into the kernel
+(which contains major:minor numbers only) those devices are already
+gone. So lookup_bdev() won't be able to find them, either.
+
+Not sure if factoring things out from dm_get_device() would help
+here ...
+
+But I'll be sending an updated patch, which'll apply on top of the
+'push back' patchset.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
