@@ -1,68 +1,203 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes to include in 3.14-rc5
-Date: Fri, 28 Feb 2014 13:03:37 -0500
-Message-ID: <20140228180335.GA27146@redhat.com>
+From: Jerome Glisse <j.glisse@gmail.com>
+Subject: Re: [RFC] dm-writeboost: Persistent memory support
+Date: Fri, 28 Feb 2014 14:46:08 -0500
+Message-ID: <20140228194603.GA16021@gmail.com>
+References: <524EC491.30701@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <524EC491.30701@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Hannes Reinecke <hare@suse.de>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Akira Hayakawa <ruby.wktk@gmail.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-The following changes since commit 6d0abeca3242a88cab8232e4acd7e2bf088f3bc2:
+On Fri, Oct 04, 2013 at 10:37:21PM +0900, Akira Hayakawa wrote:
+> Hi, all
+>=20
+> Let me introduce my future plan
+> of applying persistent memory to dm-writeboost.
+> dm-writeboost can potentially
+> gain many benefits by the persistent memory.
+>=20
+> (1) Problem
+> The basic mechanism of dm-writeboost is
+> (i) first stores the write data to RAM buffer
+>     whose size is 1MB at maximum and
+>     can include 255 * 4KB data.
+> (ii) when the RAM buffer is fulfilled
+>      it packs the data and its metadata=20
+>      which indicates where to write back,
+>      into a structure called "log" and
+>      queues it.
+> (iii) the log is flushed to the cache device
+>       in background.
+> (iv) and later migrated or written back
+>      to the backing store in background.
+>=20
+> The problem is in handling barrier writes
+> flagged with REA_FUA or REQ_FLUSH.
+> Upper layer waits for these kind of bios complete
+> so waiting for log to be fulfilled and then queued
+> may stall the upper layer.
+> One of the methods in receiving these bios is that
+> dm-writeboost makes a "partial" log and queues it
+> which causes potentially random writes to the=20
+> cache device(SSD) which not only loses its performance
+> but also fails to maximize the lifetime of the SSD device.
+> Moreover, it consumes CPU cycles to make a partial log
+> again and again. It is not free.
+>=20
+> So, dm-writeboost provides a tunable parameter called
+> barrier_deadline_ms that indicates the
+> worst time guaranteed that these unusually flagged bios queued.
+> Making a partial log is deferred and
+> it means that the log can be fulfilled before the deadline
+> if there are many processes submitting writes.
+>=20
+> In summary,
+> due to the REQ_FUA and REQ_FLUSH flag
+> dm-writeboost can not guarantee the log always fulfilled.
+> Imagine there is only one process above the dm-writeboost device
+> and rediculously submits REQ_FUAed bio and waits for the completion r=
+epeatly.
+> This is the worst case for dm-writeboost
+> the log is always partial and the process always waits for=20
+> the deadline.
+>=20
+> If the RAM buffer is smaller than 1MB
+> the log is likely to be fulfilled.
+> The size of the RAM buffer is tunable in constructor.
+> However, this is not the ultimate solution.
+>=20
+> So, let's find the ultimate solution next.
+>=20
+> (2) What if RAM buffer is non-volatile
+> If we use persistent memory for the RAM buffer instead of
+> DRAM which is volatile
+> we don't need to partially flush the log
+> to complete these flagged bios quickly
+> but can do away with only writing the data
+> to the persistent RAM buffer and then returning ACK.
+>=20
+> This means
+> the 1MB log will be always fulfilled
+> and the upper layer will never be annoyed with
+> how to handle the REQ_FUA or REQ_FLUSH flagged bios.
+> This will always maximize the write thoughput to the SSD device
+> and maximize its lifetime.
+>=20
+> Futhermore,
+> upper layer can eliminate the
+> optimization for these bios.
+> For example, XFS also does the same technique
+> of gathering the barriers as explained by Dave Chinner in
+> https://lkml.org/lkml/2013/10/3/804
+>=20
+> Using dm-writeboost with persistent memory
+> the upper layer will be alliviated
+> from doing difficult things.
+> Applying persistent memory to dm-writeboost is promising.
+>=20
+> Any comment?
+>=20
+> (3) Design Change
+> I have read this thread in LKML
+> "RFC Block Layer Extensions to Support NV-DIMMs"
+> https://lkml.org/lkml/2013/9/4/555
+> =20
+> The interface design is still in discussion but
+> I hope to see an interface design that deals with
+> persistent memory as the new type of memory
+> not the block device.
+>=20
+> Even if the RAM buffer is switch to=20
+> volatile to non-volatile
+> the basic I/O path of dm-writeboost will not change.
+> I think most of the code can be shared between
+> volatile mode and non-volatile mode of dm-writeboost.
+> So, switching the mode in constructor parameter
+> will be my design choice.
+>=20
+> Maybe the constructor will be like this
+> writeboost <mode> ...
+> writeboost 0 <backing store> <cache device> ....
+> writeboost 1 <backing store> <cache device> <persistent memory> ...
+>=20
+> If the mode is 0 it builds a writeboost device with volatile RAM buff=
+er
+> and the mode is 1 it builds with non-volatile RAM buffer.
+>=20
+> The current design doesn't have mode parameter
+> so adding the parameter right now could be our design choice
+> but even if we don't add it right now
+> the backward-compatibility can be guaranteed
+> by implicitly setting the mode to 0 if the first parameter is not a n=
+umber.
+> I prefer adding it right now for future design consistency.
+>=20
+> Should or Shouldn't I add the paramter before
+> making a patch to device-mapper tree?
+>=20
+> (4) Prototype
+> I think I can start prototyping
+> by defining a pseudo persistent memory backed by a block device.
+>=20
+> The temporary interface will be defined like:
+> struct pmem *pmem_alloc(struct block_device *, size_t start, size_t l=
+en);
+> void pmem_write(struct pmem *, size_t start, size_t len, void *data);
+> void pmem_read(struct pmem *, size_t start, size_t len, void *dest);
+> void pmem_free(struct pmem *);
+>=20
+> Byte-addressableness is implemented by Read-Modify-Write.
+>=20
+> The difficulty in using the persistent memory instead
+> is in recovering the data both on the RAM buffer and the cache device
+> in rebooting.
+> The implementation will be complicated but
+> can mostly be limited under recover_cache() routine
+> and the outside of it will not be badly tainted.
+>=20
+> Should I prototype before making patch to device-mapper tree?
+>=20
+> Akira
 
-  Linux 3.14-rc3 (2014-02-16 13:30:25 -0800)
+Just jumping in. I am working on new API to allow mirroring process add=
+ress
+on a device. The devices we are targeting sit behind IOMMU and i fear t=
+hat
+in some case the persistent memory will not be accessible from behind t=
+he
+IOMMU.
 
-are available in the git repository at:
+In such case it is important to be able to enforce for some range of me=
+mory
+to go through the normal page cache volatile memory.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.14-fixes-1
+Even when the persistent memory is accessible from behind the IOMMU we =
+will
+want to mirror memory in local device memory for more or long period of=
+ time
+and thus will need way again to make range of persistent to behave like=
+ if
+things were going through volatile memory.
 
-for you to fetch changes up to e0d849fad746cb36a6822e4595d8ba9bf0adf7fa:
+I hope to send a patchset for comment in April and at that time it will=
+ be
+easier for everyone to see the internal of how things are done but in a
+nutshell device memory is consired swap and page cache entry can be swa=
+p
+to the device memory.
 
-  dm cache: fix truncation bug when mapping I/O to >2TB fast device (2014-02-28 09:23:02 -0500)
+Cheers,
+J=E9r=F4me
 
-There will likely be additional dm-thin metadata and data resize fixes
-to include in 3.14-rc6 next week.  But please pull for the following
-fixes.
-
-Thanks,
-Mike
-
-p.s.
-Note to stable-minded folks: Immutable biovecs were introduced in 3.14,
-so the related fixups for dm mirror are not needed in stable@ kernels.
-
-----------------------------------------------------------------
-A few dm-cache fixes, an invalid ioctl handling fix for dm multipath, a
-couple immutable biovec fixups for dm mirror, and a few dm-thin fixes.
-
-----------------------------------------------------------------
-Hannes Reinecke (1):
-      dm mpath: fix stalls when handling invalid ioctls
-
-Heinz Mauelshagen (1):
-      dm cache: fix truncation bug when mapping I/O to >2TB fast device
-
-Mike Snitzer (5):
-      dm cache: move hook_info into common portion of per_bio_data structure
-      dm cache: do not add migration to completed list before unhooking bio
-      dm thin: avoid metadata commit if a pool's thin devices haven't changed
-      dm thin: fix the error path for the thin device constructor
-      dm thin: allow metadata space larger than supported to go unused
-
-Mikulas Patocka (2):
-      dm io: fix I/O to multiple destinations
-      dm raid1: fix immutable biovec related BUG when retrying read bio
-
- drivers/md/dm-cache-target.c                       | 13 +++++---
- drivers/md/dm-io.c                                 | 23 ++++++-------
- drivers/md/dm-mpath.c                              |  7 ++--
- drivers/md/dm-raid1.c                              |  3 ++
- drivers/md/dm-thin-metadata.c                      | 21 ++++++++++--
- drivers/md/dm-thin-metadata.h                      | 10 +++---
- drivers/md/dm-thin.c                               | 39 ++++++++++++++--------
- drivers/md/persistent-data/dm-space-map-metadata.c |  2 ++
- drivers/md/persistent-data/dm-space-map-metadata.h | 11 ++++++
- 9 files changed, 89 insertions(+), 40 deletions(-)
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
