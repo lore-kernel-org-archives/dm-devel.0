@@ -1,16 +1,19 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 4/8] dm mpath: remove process_queued_ios()
-Date: Fri, 28 Feb 2014 10:37:05 +0100
-Message-ID: <531058C1.30402@suse.de>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH 8/8] dm-mpath: do not activate failed paths
+Date: Fri, 28 Feb 2014 09:37:50 +0000
+Message-ID: <11AF7C027C4C02408624617A49860784010D7F79@BPXM12GP.gisp.nec.co.jp>
 References: <1393486229-72034-1-git-send-email-hare@suse.de>
-	<1393486229-72034-5-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A49860784010D7D51@BPXM12GP.gisp.nec.co.jp>
+	<1393486229-72034-9-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A49860784010D7C45@BPXM12GP.gisp.nec.co.jp>
+	<531057A7.4020208@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <11AF7C027C4C02408624617A49860784010D7D51@BPXM12GP.gisp.nec.co.jp>
+In-Reply-To: <531057A7.4020208@suse.de>
+Content-Language: ja-JP
+Content-ID: <76820E146F4674489F8FC8ABE5804EED@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +23,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDIvMjgvMjAxNCAxMDowNSBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMjcv
-MTQgMTY6MzAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQEAgLTEyMTQsOSArMTE4OSwxMSBA
-QCBzdGF0aWMgdm9pZCBwZ19pbml0X2RvbmUodm9pZCAqZGF0YSwgaW50IGVycm9ycykKPj4gIAo+
-PiAgCWlmICghbS0+cGdfaW5pdF9yZXF1aXJlZCkKPj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+PiAt
-Cj4+IC0JbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+PiAtCXF1ZXVlX3dv
-cmsoa211bHRpcGF0aGQsICZtLT5wcm9jZXNzX3F1ZXVlZF9pb3MpOwo+PiArCWVsc2UgaWYgKG0t
-PmN1cnJlbnRfcGcpIHsKPj4gKwkJbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5
-Owo+PiArCQlpZiAoX19wZ19pbml0X2FsbF9wYXRocyhtKSkKPj4gKwkJCWdvdG8gb3V0Owo+PiAr
-CX0KPiAKPiBBcyBJIGNvbW1lbnRlZCBiZWZvcmU6Cj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9h
-cmNoaXZlcy9kbS1kZXZlbC8yMDE0LUZlYnJ1YXJ5L21zZzAwMDEzLmh0bWwKPiAKPiBJIHRoaW5r
-IHRoZSBjb2RlIGhlcmUgc2hvdWxkIGNsZWFyIHF1ZXVlX2lvIGxpa2UgdGhpcwo+IHdoZW4gcmV0
-cnkgd2FzIHJlcXVlc3RlZCBidXQgd2Fzbid0IGRvbmU6Cj4gCj4gCWlmIChtLT5wZ19pbml0X3Jl
-cXVpcmVkKSB7Cj4gCQltLT5wZ19pbml0X2RlbGF5X3JldHJ5ID0gZGVsYXlfcmV0cnk7Cj4gCQlp
-ZiAoX19wZ19pbml0X2FsbF9wYXRocyhtKSkKPiAJCQlnb3RvIG91dDsKPiAJfQo+IAltLT5xdWV1
-ZV9pbyA9IDA7Cj4gCj4gT3RoZXJ3aXNlLCBpZiBfX3BnX2luaXRfYWxsX3BhdGhzKCkgcmV0dXJu
-cyAwLCBtLT5xdWV1ZV9pbyB3aWxsIHJlbWFpbgo+IGFzICIxIiBhbmQgbm9ib2R5IHdpbGwgY2xl
-YXIgaXQuCj4gCllvdSBhcmUgcmlnaHQuIFdpbGwgYmUgZml4aW5nIGl0IHVwLgoKVGhhbmtzIGZv
-ciB0aGUgcmV2aWV3LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkg
-ICAgICB6U2VyaWVzICYgU3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUz
-IDY4OApTVVNFIExJTlVYIFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJu
-YmVyZwpHRjogSi4gSGF3biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChB
-RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 02/28/14 18:32, Hannes Reinecke wrote:
+> On 02/28/2014 09:49 AM, Junichi Nomura wrote:
+>> On 02/27/14 16:30, Hannes Reinecke wrote:
+>>> activate_path() is run without a lock, so the path might be
+>>> set to failed before activate_path() had a chance to run.
+>>>
+>>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+>>> ---
+>>>  drivers/md/dm-mpath.c | 7 +++++--
+>>>  1 file changed, 5 insertions(+), 2 deletions(-)
+>>>
+>>> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+>>> index 0a40fa9..22e7365 100644
+>>> --- a/drivers/md/dm-mpath.c
+>>> +++ b/drivers/md/dm-mpath.c
+>>> @@ -1196,8 +1196,11 @@ static void activate_path(struct work_struct *work)
+>>>  	struct pgpath *pgpath =
+>>>  		container_of(work, struct pgpath, activate_path.work);
+>>>  
+>>> -	scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
+>>> -				pg_init_done, pgpath);
+>>> +	if (pgpath->is_active)
+>>> +		scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
+>>> +				 pg_init_done, pgpath);
+>>> +	else
+>>> +		pg_init_done(pgpath, SCSI_DH_DEV_OFFLINED);
+>>
+>> Hi Hannes,
+>>
+>> What problem are you going to fix with this?
+>> It is still possible that the path is set to failed just after
+>> "if (pgpath->is_active)" and before "scsi_dh_activate".
+>>
+> activate_path() is run from a workqueue, so there is a race window
+> between the check ->is_active in __pg_init_all_paths() and the time
+> the scsi_dh_activate() is executed. And as activate_path)() is run
+> without any locks we don't have any synchronization with fail_path().
+> So it's well possible that a path gets failed in between
+> __pg_init_all_paths() and activate_paths().
+
+What I pointed is that your patch makes the window very small
+but doesn't close it.
+If the race is a problem, this patch doesn't fix the problem.
+
+-- 
+Jun'ichi Nomura, NEC Corporation
