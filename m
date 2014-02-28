@@ -1,203 +1,106 @@
-From: Jerome Glisse <j.glisse@gmail.com>
-Subject: Re: [RFC] dm-writeboost: Persistent memory support
-Date: Fri, 28 Feb 2014 14:46:08 -0500
-Message-ID: <20140228194603.GA16021@gmail.com>
-References: <524EC491.30701@gmail.com>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: Re: [PATCH] scsi_dh_alua: Requeue another not ready check condition
+ at ML
+Date: Fri, 28 Feb 2014 20:20:28 +0000
+Message-ID: <1393618828.13153.11.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+References: <8255ED565A0EAA4A960625E27D49DBF24AC8B21D@SACEXCMBX04-PRD.hq.netapp.com>
+	 <530FED5B.60803@cs.wisc.edu> <5310A7EF.7060902@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <524EC491.30701@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Akira Hayakawa <ruby.wktk@gmail.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <5310A7EF.7060902@suse.de>
+Content-Language: en-US
+Content-ID: <754D48FDA100764E965C4DDF38564A20@hq.netapp.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: Mike Christie <michaelc@cs.wisc.edu>, "Stewart, Sean" <Sean.Stewart@netapp.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 04, 2013 at 10:37:21PM +0900, Akira Hayakawa wrote:
-> Hi, all
->=20
-> Let me introduce my future plan
-> of applying persistent memory to dm-writeboost.
-> dm-writeboost can potentially
-> gain many benefits by the persistent memory.
->=20
-> (1) Problem
-> The basic mechanism of dm-writeboost is
-> (i) first stores the write data to RAM buffer
->     whose size is 1MB at maximum and
->     can include 255 * 4KB data.
-> (ii) when the RAM buffer is fulfilled
->      it packs the data and its metadata=20
->      which indicates where to write back,
->      into a structure called "log" and
->      queues it.
-> (iii) the log is flushed to the cache device
->       in background.
-> (iv) and later migrated or written back
->      to the backing store in background.
->=20
-> The problem is in handling barrier writes
-> flagged with REA_FUA or REQ_FLUSH.
-> Upper layer waits for these kind of bios complete
-> so waiting for log to be fulfilled and then queued
-> may stall the upper layer.
-> One of the methods in receiving these bios is that
-> dm-writeboost makes a "partial" log and queues it
-> which causes potentially random writes to the=20
-> cache device(SSD) which not only loses its performance
-> but also fails to maximize the lifetime of the SSD device.
-> Moreover, it consumes CPU cycles to make a partial log
-> again and again. It is not free.
->=20
-> So, dm-writeboost provides a tunable parameter called
-> barrier_deadline_ms that indicates the
-> worst time guaranteed that these unusually flagged bios queued.
-> Making a partial log is deferred and
-> it means that the log can be fulfilled before the deadline
-> if there are many processes submitting writes.
->=20
-> In summary,
-> due to the REQ_FUA and REQ_FLUSH flag
-> dm-writeboost can not guarantee the log always fulfilled.
-> Imagine there is only one process above the dm-writeboost device
-> and rediculously submits REQ_FUAed bio and waits for the completion r=
-epeatly.
-> This is the worst case for dm-writeboost
-> the log is always partial and the process always waits for=20
-> the deadline.
->=20
-> If the RAM buffer is smaller than 1MB
-> the log is likely to be fulfilled.
-> The size of the RAM buffer is tunable in constructor.
-> However, this is not the ultimate solution.
->=20
-> So, let's find the ultimate solution next.
->=20
-> (2) What if RAM buffer is non-volatile
-> If we use persistent memory for the RAM buffer instead of
-> DRAM which is volatile
-> we don't need to partially flush the log
-> to complete these flagged bios quickly
-> but can do away with only writing the data
-> to the persistent RAM buffer and then returning ACK.
->=20
-> This means
-> the 1MB log will be always fulfilled
-> and the upper layer will never be annoyed with
-> how to handle the REQ_FUA or REQ_FLUSH flagged bios.
-> This will always maximize the write thoughput to the SSD device
-> and maximize its lifetime.
->=20
-> Futhermore,
-> upper layer can eliminate the
-> optimization for these bios.
-> For example, XFS also does the same technique
-> of gathering the barriers as explained by Dave Chinner in
-> https://lkml.org/lkml/2013/10/3/804
->=20
-> Using dm-writeboost with persistent memory
-> the upper layer will be alliviated
-> from doing difficult things.
-> Applying persistent memory to dm-writeboost is promising.
->=20
-> Any comment?
->=20
-> (3) Design Change
-> I have read this thread in LKML
-> "RFC Block Layer Extensions to Support NV-DIMMs"
-> https://lkml.org/lkml/2013/9/4/555
-> =20
-> The interface design is still in discussion but
-> I hope to see an interface design that deals with
-> persistent memory as the new type of memory
-> not the block device.
->=20
-> Even if the RAM buffer is switch to=20
-> volatile to non-volatile
-> the basic I/O path of dm-writeboost will not change.
-> I think most of the code can be shared between
-> volatile mode and non-volatile mode of dm-writeboost.
-> So, switching the mode in constructor parameter
-> will be my design choice.
->=20
-> Maybe the constructor will be like this
-> writeboost <mode> ...
-> writeboost 0 <backing store> <cache device> ....
-> writeboost 1 <backing store> <cache device> <persistent memory> ...
->=20
-> If the mode is 0 it builds a writeboost device with volatile RAM buff=
-er
-> and the mode is 1 it builds with non-volatile RAM buffer.
->=20
-> The current design doesn't have mode parameter
-> so adding the parameter right now could be our design choice
-> but even if we don't add it right now
-> the backward-compatibility can be guaranteed
-> by implicitly setting the mode to 0 if the first parameter is not a n=
-umber.
-> I prefer adding it right now for future design consistency.
->=20
-> Should or Shouldn't I add the paramter before
-> making a patch to device-mapper tree?
->=20
-> (4) Prototype
-> I think I can start prototyping
-> by defining a pseudo persistent memory backed by a block device.
->=20
-> The temporary interface will be defined like:
-> struct pmem *pmem_alloc(struct block_device *, size_t start, size_t l=
-en);
-> void pmem_write(struct pmem *, size_t start, size_t len, void *data);
-> void pmem_read(struct pmem *, size_t start, size_t len, void *dest);
-> void pmem_free(struct pmem *);
->=20
-> Byte-addressableness is implemented by Read-Modify-Write.
->=20
-> The difficulty in using the persistent memory instead
-> is in recovering the data both on the RAM buffer and the cache device
-> in rebooting.
-> The implementation will be complicated but
-> can mostly be limited under recover_cache() routine
-> and the outside of it will not be badly tainted.
->=20
-> Should I prototype before making patch to device-mapper tree?
->=20
-> Akira
+On Fri, 2014-02-28 at 16:14 +0100, Hannes Reinecke wrote:
+> On 02/28/2014 02:58 AM, Mike Christie wrote:
+> > On 02/27/2014 06:14 PM, Stewart, Sean wrote:
+> >> This allows the sd driver to retry commands like read capacity until a
+> >> LUN is ready, rather than giving up after three retries.
+> >>
+> >> In NetApp E-Series, a controller can return not ready like this when it
+> >> quiesces I/O on the controller that just came on the network, during a
+> >> firmware upgrade procedure, and retrying the command at the midlayer
+> >> will allow the discovery to complete, successfully.
+> >>
+> >> Signed-off-by: Sean Stewart <sean.stewart@netapp.com>
+> >> ---
+> >>  drivers/scsi/device_handler/scsi_dh_alua.c | 5 +++++
+> >>  1 file changed, 5 insertions(+)
+> >>
+> >> diff --git a/drivers/scsi/device_handler/scsi_dh_alua.c b/drivers/scsi/device_handler/scsi_dh_alua.c
+> >> index 5248c88..95d87fe 100644
+> >> --- a/drivers/scsi/device_handler/scsi_dh_alua.c
+> >> +++ b/drivers/scsi/device_handler/scsi_dh_alua.c
+> >> @@ -454,6 +454,11 @@ static int alua_check_sense(struct scsi_device *sdev,
+> >>  {
+> >>  	switch (sense_hdr->sense_key) {
+> >>  	case NOT_READY:
+> >> +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
+> >> +			/*
+> >> +			 * LUN Not Ready -- In process of becoming ready
+> >> +			 */
+> >> +			return ADD_TO_MLQUEUE;
+> > 
+> > It seems like the check_sense callout is being used to work around
+> > scsi-ml in a lot of the additions that are not alua specific. If this is
+> > meant for a specific target then it should not be here. If this is
+> > non-alua specific behavior then it should also not be here either.
+This sounds reasonable to me.  Originally, our target would return a
+vendor-specific check condition, and I knew we wouldn't be able to get
+the alua handler to retry that.  I also saw if we could get this
+condition to return 02/04/0A so we'd be covered, but it wouldn't
+accurately describe what's going on, so we set the target to return
+02/04/01.
 
-Just jumping in. I am working on new API to allow mirroring process add=
-ress
-on a device. The devices we are targeting sit behind IOMMU and i fear t=
-hat
-in some case the persistent memory will not be accessible from behind t=
-he
-IOMMU.
+In any case, without having the device handler do ADD_TO_MLQUEUE, I see
+the command come back with the check condition, return SUCCESS, then the
+read_capacity_10 function burns through it's three retries:
+        int retries = 3, reset_retries = READ_CAPACITY_RETRIES_ON_RESET;
 
-In such case it is important to be able to enforce for some range of me=
-mory
-to go through the normal page cache volatile memory.
+I captured this with scsi midlayer debugging to show what's going on.
+Feb 28 13:51:44 wica-fo-stone kernel: sd 2:0:2:0: Send:
+0xffff880420259cc0
+Feb 28 13:51:44 wica-fo-stone kernel: sd 2:0:2:0: CDB: Read
+Capacity(10): 25 00 00 00 00 00 00 00 00 00
+Feb 28 13:51:45 wica-fo-stone kernel: sd 2:0:2:0: Done:
+0xffff880420259cc0 SUCCESS
 
-Even when the persistent memory is accessible from behind the IOMMU we =
-will
-want to mirror memory in local device memory for more or long period of=
- time
-and thus will need way again to make range of persistent to behave like=
- if
-things were going through volatile memory.
+The same scsi_cmnd comes back with SUCCESS twice more, then:
+Feb 28 13:51:46 wica-fo-stone kernel: sd 2:0:2:0: [sdd] READ CAPACITY
+failed
 
-I hope to send a patchset for comment in April and at that time it will=
- be
-easier for everyone to see the internal of how things are done but in a
-nutshell device memory is consired swap and page cache entry can be swa=
-p
-to the device memory.
+> > 
+> > If the IO was not a REQ_TYPE_BLOCK_PC request, then it would retried by
+> > scsi_io_completion. Same with the other ones like inquiry data changed,
+> > report luns data changed, etc.
+> > 
+> > Are we sure we don't want to fix the REQ_TYPE_BLOCK_PC/scsi_execute*
+> > users to retry, or to add some new flag that those users can use that
+> > tells scsi-ml to retry like it normally would so callers do not have to
+> > check for all these errors, or just add these to scsi_decide_disposition?
+> > 
+> Yes, that's definitely a better idea. I've stumbled across this
+> issue several times now.
+Same..  This actually seems to have come up a lot.  We had basically the
+same problem when we have a new VID/PID, but a customer uses an OS
+without the VID/PID in the RDAC handler.  It can cause a lot of
+headaches.
 
-Cheers,
-J=E9r=F4me
+I think it should be possible for us to approach this in such a way that
+a transient state on the target won't render the SCSI disk unusable (as
+is done here).  So, by a flag, do you mean we could add something to the
+request flags field?  We could use this to signify a command that should
+keep retrying in the way that I'm looking for here (commands related to
+initial discovery, like read capacities, are what I'm thinking of).
 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
-l" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+
+Thanks,
+Sean
+
+
