@@ -1,19 +1,18 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 8/8] dm-mpath: do not activate failed paths
-Date: Fri, 28 Feb 2014 09:37:50 +0000
-Message-ID: <11AF7C027C4C02408624617A49860784010D7F79@BPXM12GP.gisp.nec.co.jp>
+Date: Fri, 28 Feb 2014 10:52:13 +0100
+Message-ID: <53105C4D.50305@suse.de>
 References: <1393486229-72034-1-git-send-email-hare@suse.de>
 	<1393486229-72034-9-git-send-email-hare@suse.de>
 	<11AF7C027C4C02408624617A49860784010D7C45@BPXM12GP.gisp.nec.co.jp>
 	<531057A7.4020208@suse.de>
+	<11AF7C027C4C02408624617A49860784010D7F79@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <531057A7.4020208@suse.de>
-Content-Language: ja-JP
-Content-ID: <76820E146F4674489F8FC8ABE5804EED@gisp.nec.co.jp>
+In-Reply-To: <11AF7C027C4C02408624617A49860784010D7F79@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,53 +22,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/28/14 18:32, Hannes Reinecke wrote:
-> On 02/28/2014 09:49 AM, Junichi Nomura wrote:
->> On 02/27/14 16:30, Hannes Reinecke wrote:
->>> activate_path() is run without a lock, so the path might be
->>> set to failed before activate_path() had a chance to run.
->>>
->>> Signed-off-by: Hannes Reinecke <hare@suse.de>
->>> ---
->>>  drivers/md/dm-mpath.c | 7 +++++--
->>>  1 file changed, 5 insertions(+), 2 deletions(-)
->>>
->>> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
->>> index 0a40fa9..22e7365 100644
->>> --- a/drivers/md/dm-mpath.c
->>> +++ b/drivers/md/dm-mpath.c
->>> @@ -1196,8 +1196,11 @@ static void activate_path(struct work_struct *work)
->>>  	struct pgpath *pgpath =
->>>  		container_of(work, struct pgpath, activate_path.work);
->>>  
->>> -	scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
->>> -				pg_init_done, pgpath);
->>> +	if (pgpath->is_active)
->>> +		scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
->>> +				 pg_init_done, pgpath);
->>> +	else
->>> +		pg_init_done(pgpath, SCSI_DH_DEV_OFFLINED);
->>
->> Hi Hannes,
->>
->> What problem are you going to fix with this?
->> It is still possible that the path is set to failed just after
->> "if (pgpath->is_active)" and before "scsi_dh_activate".
->>
-> activate_path() is run from a workqueue, so there is a race window
-> between the check ->is_active in __pg_init_all_paths() and the time
-> the scsi_dh_activate() is executed. And as activate_path)() is run
-> without any locks we don't have any synchronization with fail_path().
-> So it's well possible that a path gets failed in between
-> __pg_init_all_paths() and activate_paths().
-
-What I pointed is that your patch makes the window very small
-but doesn't close it.
-If the race is a problem, this patch doesn't fix the problem.
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMDIvMjgvMjAxNCAxMDozNyBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMjgv
+MTQgMTg6MzIsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gT24gMDIvMjgvMjAxNCAwOTo0OSBB
+TSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4+PiBPbiAwMi8yNy8xNCAxNjozMCwgSGFubmVzIFJl
+aW5lY2tlIHdyb3RlOgo+Pj4+IGFjdGl2YXRlX3BhdGgoKSBpcyBydW4gd2l0aG91dCBhIGxvY2ss
+IHNvIHRoZSBwYXRoIG1pZ2h0IGJlCj4+Pj4gc2V0IHRvIGZhaWxlZCBiZWZvcmUgYWN0aXZhdGVf
+cGF0aCgpIGhhZCBhIGNoYW5jZSB0byBydW4uCj4+Pj4KPj4+PiBTaWduZWQtb2ZmLWJ5OiBIYW5u
+ZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4KPj4+PiAtLS0KPj4+PiAgZHJpdmVycy9tZC9kbS1t
+cGF0aC5jIHwgNyArKysrKy0tCj4+Pj4gIDEgZmlsZSBjaGFuZ2VkLCA1IGluc2VydGlvbnMoKyks
+IDIgZGVsZXRpb25zKC0pCj4+Pj4KPj4+PiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1tcGF0
+aC5jIGIvZHJpdmVycy9tZC9kbS1tcGF0aC5jCj4+Pj4gaW5kZXggMGE0MGZhOS4uMjJlNzM2NSAx
+MDA2NDQKPj4+PiAtLS0gYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPj4+PiArKysgYi9kcml2ZXJz
+L21kL2RtLW1wYXRoLmMKPj4+PiBAQCAtMTE5Niw4ICsxMTk2LDExIEBAIHN0YXRpYyB2b2lkIGFj
+dGl2YXRlX3BhdGgoc3RydWN0IHdvcmtfc3RydWN0ICp3b3JrKQo+Pj4+ICAJc3RydWN0IHBncGF0
+aCAqcGdwYXRoID0KPj4+PiAgCQljb250YWluZXJfb2Yod29yaywgc3RydWN0IHBncGF0aCwgYWN0
+aXZhdGVfcGF0aC53b3JrKTsKPj4+PiAgCj4+Pj4gLQlzY3NpX2RoX2FjdGl2YXRlKGJkZXZfZ2V0
+X3F1ZXVlKHBncGF0aC0+cGF0aC5kZXYtPmJkZXYpLAo+Pj4+IC0JCQkJcGdfaW5pdF9kb25lLCBw
+Z3BhdGgpOwo+Pj4+ICsJaWYgKHBncGF0aC0+aXNfYWN0aXZlKQo+Pj4+ICsJCXNjc2lfZGhfYWN0
+aXZhdGUoYmRldl9nZXRfcXVldWUocGdwYXRoLT5wYXRoLmRldi0+YmRldiksCj4+Pj4gKwkJCQkg
+cGdfaW5pdF9kb25lLCBwZ3BhdGgpOwo+Pj4+ICsJZWxzZQo+Pj4+ICsJCXBnX2luaXRfZG9uZShw
+Z3BhdGgsIFNDU0lfREhfREVWX09GRkxJTkVEKTsKPj4+Cj4+PiBIaSBIYW5uZXMsCj4+Pgo+Pj4g
+V2hhdCBwcm9ibGVtIGFyZSB5b3UgZ29pbmcgdG8gZml4IHdpdGggdGhpcz8KPj4+IEl0IGlzIHN0
+aWxsIHBvc3NpYmxlIHRoYXQgdGhlIHBhdGggaXMgc2V0IHRvIGZhaWxlZCBqdXN0IGFmdGVyCj4+
+PiAiaWYgKHBncGF0aC0+aXNfYWN0aXZlKSIgYW5kIGJlZm9yZSAic2NzaV9kaF9hY3RpdmF0ZSIu
+Cj4+Pgo+PiBhY3RpdmF0ZV9wYXRoKCkgaXMgcnVuIGZyb20gYSB3b3JrcXVldWUsIHNvIHRoZXJl
+IGlzIGEgcmFjZSB3aW5kb3cKPj4gYmV0d2VlbiB0aGUgY2hlY2sgLT5pc19hY3RpdmUgaW4gX19w
+Z19pbml0X2FsbF9wYXRocygpIGFuZCB0aGUgdGltZQo+PiB0aGUgc2NzaV9kaF9hY3RpdmF0ZSgp
+IGlzIGV4ZWN1dGVkLiBBbmQgYXMgYWN0aXZhdGVfcGF0aCkoKSBpcyBydW4KPj4gd2l0aG91dCBh
+bnkgbG9ja3Mgd2UgZG9uJ3QgaGF2ZSBhbnkgc3luY2hyb25pemF0aW9uIHdpdGggZmFpbF9wYXRo
+KCkuCj4+IFNvIGl0J3Mgd2VsbCBwb3NzaWJsZSB0aGF0IGEgcGF0aCBnZXRzIGZhaWxlZCBpbiBi
+ZXR3ZWVuCj4+IF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBhbmQgYWN0aXZhdGVfcGF0aHMoKS4KPiAK
+PiBXaGF0IEkgcG9pbnRlZCBpcyB0aGF0IHlvdXIgcGF0Y2ggbWFrZXMgdGhlIHdpbmRvdyB2ZXJ5
+IHNtYWxsCj4gYnV0IGRvZXNuJ3QgY2xvc2UgaXQuCj4gSWYgdGhlIHJhY2UgaXMgYSBwcm9ibGVt
+LCB0aGlzIHBhdGNoIGRvZXNuJ3QgZml4IHRoZSBwcm9ibGVtLgo+IApUcnVlLiBBcyBzYWlkIEkg
+anVzdCB3YW50IHRvIGF2b2lkIHVubmVjZXNzYXJ5IG92ZXJoZWFkIGJ5IGNhbGxpbmcKZnVuY3Rp
+b25zIHdoaWNoIGFyZSBrbm93biB0byBiZSBmYWlsaW5nLgpUaGlzIHBhdGNoIGFjdHVhbGx5IG1h
+a2VzIG1vcmUgc2Vuc2UgaW4gY29tYmluYXRpb24gd2l0aCB0aGUgJ2FjY2VwdApmYWlsZWQgcGF0
+aHMnIHBhdGNoLCB3aGVyZSBpdCdzIG11Y2ggbW9yZSBsaWtlbHkgdG8gdHJpZ2dlci4KU28gaWYg
+eW91IGluc2lzdCBJIGNvdWxkIG1vdmUgaXQgb3ZlciB0byB0aGVyZS4KCkNoZWVycywKCkhhbm5l
+cwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBz
+dXNlLmRlCQkJICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJI
+LCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEouIEhhd24sIEouIEd1aWxkLCBG
+LiBJbWVuZMO2cmZmZXIsIEhSQiAxNjc0NiAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
