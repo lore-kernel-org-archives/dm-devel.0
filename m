@@ -1,95 +1,85 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 8/8] dm-mpath: do not activate failed paths
-Date: Fri, 28 Feb 2014 16:08:43 +0100
-Message-ID: <5310A67B.2070606@suse.de>
-References: <1393486229-72034-1-git-send-email-hare@suse.de>
-	<1393486229-72034-9-git-send-email-hare@suse.de>
-	<11AF7C027C4C02408624617A49860784010D7C45@BPXM12GP.gisp.nec.co.jp>
-	<531057A7.4020208@suse.de>
-	<11AF7C027C4C02408624617A49860784010D7F79@BPXM12GP.gisp.nec.co.jp>
-	<53105C4D.50305@suse.de> <20140228142230.GA1140@redhat.com>
-	<5310A0C7.6000601@suse.de> <20140228150243.GB1140@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH] scsi_dh_alua: Requeue another not ready check condition
+ at ML
+Date: Fri, 28 Feb 2014 16:14:55 +0100
+Message-ID: <5310A7EF.7060902@suse.de>
+References: <8255ED565A0EAA4A960625E27D49DBF24AC8B21D@SACEXCMBX04-PRD.hq.netapp.com> <530FED5B.60803@cs.wisc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140228150243.GB1140@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <530FED5B.60803@cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Christie <michaelc@cs.wisc.edu>, "Stewart, Sean" <Sean.Stewart@netapp.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>
 List-Id: dm-devel.ids
 
-On 02/28/2014 04:02 PM, Mike Snitzer wrote:
-> On Fri, Feb 28 2014 at  9:44am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
-> =
-
->> On 02/28/2014 03:22 PM, Mike Snitzer wrote:
->> [ .. ]
->>>
->>> FYI, I still intend to review/take your "accept failed paths" patch.
->>> Would be helpful if any rebase is needed for that patch that you do so
->>> and re-post.
->>>
->>> One thing I noticed is you're only converting MAJ:MIN paths to devices.
->>> I think we should factor a helper out of DM core that does the full path
->>> lookup check from dm_get_device() -- rather than you open coding an
->>> older version of the MAJ:MIN device path processing.
->>>
->>> But is there a reason for not using lookup_bdev()?  Because the device
->>> is failed it cannot be found using lookup_bdev()?
->>>
->> Yes, that's precisely it.
->> When setting dev_loss_tmo very aggressively (to, say, 10 or even 5
->> seconds) it might well be that multipathd won't be able to keep up
->> with the events in time.
->> So by the time multipathd tries to push a new table into the kernel
->> (which contains major:minor numbers only) those devices are already
->> gone. So lookup_bdev() won't be able to find them, either.
-> =
-
-> Been talking this over with Alasdair.  Need some things clarified.
-> =
-
-> Are you needing to handle non-existent devices during initial mpath
-> table load?
-> =
-
-> Or is the failed path in question already part of the active mpath table
-> -- so active table currently holds a reference to the device?
-> =
-
-> Or do you need to support both cases?  Sounds like you want to support
-> both cases..
-> =
-
-Hmm. I wouldn't think I'd need it during initial mpath table load;
-but then you never now, devices might fail faster than you'd think ...
-
-So yeah, I'd need to support both cases.
-
-The main reason why I've sent this patch is to get rid of these
-_really_ annoying messages 'error getting device' during failover.
-We really should and can do better than that.
-
-That this patch allows to drop references to failed devices earlier
-is a nice side effect :-)
+On 02/28/2014 02:58 AM, Mike Christie wrote:
+> On 02/27/2014 06:14 PM, Stewart, Sean wrote:
+>> This allows the sd driver to retry commands like read capacity until=
+ a
+>> LUN is ready, rather than giving up after three retries.
+>>
+>> In NetApp E-Series, a controller can return not ready like this when=
+ it
+>> quiesces I/O on the controller that just came on the network, during=
+ a
+>> firmware upgrade procedure, and retrying the command at the midlayer
+>> will allow the discovery to complete, successfully.
+>>
+>> Signed-off-by: Sean Stewart <sean.stewart@netapp.com>
+>> ---
+>>  drivers/scsi/device_handler/scsi_dh_alua.c | 5 +++++
+>>  1 file changed, 5 insertions(+)
+>>
+>> diff --git a/drivers/scsi/device_handler/scsi_dh_alua.c b/drivers/sc=
+si/device_handler/scsi_dh_alua.c
+>> index 5248c88..95d87fe 100644
+>> --- a/drivers/scsi/device_handler/scsi_dh_alua.c
+>> +++ b/drivers/scsi/device_handler/scsi_dh_alua.c
+>> @@ -454,6 +454,11 @@ static int alua_check_sense(struct scsi_device =
+*sdev,
+>>  {
+>>  	switch (sense_hdr->sense_key) {
+>>  	case NOT_READY:
+>> +		if (sense_hdr->asc =3D=3D 0x04 && sense_hdr->ascq =3D=3D 0x01)
+>> +			/*
+>> +			 * LUN Not Ready -- In process of becoming ready
+>> +			 */
+>> +			return ADD_TO_MLQUEUE;
+>=20
+> It seems like the check_sense callout is being used to work around
+> scsi-ml in a lot of the additions that are not alua specific. If this=
+ is
+> meant for a specific target then it should not be here. If this is
+> non-alua specific behavior then it should also not be here either.
+>=20
+> If the IO was not a REQ_TYPE_BLOCK_PC request, then it would retried =
+by
+> scsi_io_completion. Same with the other ones like inquiry data change=
+d,
+> report luns data changed, etc.
+>=20
+> Are we sure we don't want to fix the REQ_TYPE_BLOCK_PC/scsi_execute*
+> users to retry, or to add some new flag that those users can use that
+> tells scsi-ml to retry like it normally would so callers do not have =
+to
+> check for all these errors, or just add these to scsi_decide_disposit=
+ion?
+>=20
+Yes, that's definitely a better idea. I've stumbled across this
+issue several times now.
 
 Cheers,
 
 Hannes
--- =
-
+--=20
 Dr. Hannes Reinecke		      zSeries & Storage
 hare@suse.de			      +49 911 74053 688
 SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
 GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
