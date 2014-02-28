@@ -1,17 +1,16 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 6/8] dm mpath: remove map_io()
-Date: Fri, 28 Feb 2014 09:06:24 +0000
-Message-ID: <11AF7C027C4C02408624617A49860784010D7D65@BPXM12GP.gisp.nec.co.jp>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 8/8] dm-mpath: do not activate failed paths
+Date: Fri, 28 Feb 2014 10:32:23 +0100
+Message-ID: <531057A7.4020208@suse.de>
 References: <1393486229-72034-1-git-send-email-hare@suse.de>
-	<1393486229-72034-7-git-send-email-hare@suse.de>
+	<1393486229-72034-9-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A49860784010D7C45@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1393486229-72034-7-git-send-email-hare@suse.de>
-Content-Language: ja-JP
-Content-ID: <1893AC5B12B22B4981F4472AC356035D@gisp.nec.co.jp>
+In-Reply-To: <11AF7C027C4C02408624617A49860784010D7C45@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,20 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/27/14 16:30, Hannes Reinecke wrote:
-> multipath_map() is now just a wrapper around map_io(), so we
-> can rename map_io() to multipath_map().
-
-Reviewed-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-
-> 
-> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gMDIvMjgvMjAxNCAwOTo0OSBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMjcv
+MTQgMTY6MzAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gYWN0aXZhdGVfcGF0aCgpIGlzIHJ1
+biB3aXRob3V0IGEgbG9jaywgc28gdGhlIHBhdGggbWlnaHQgYmUKPj4gc2V0IHRvIGZhaWxlZCBi
+ZWZvcmUgYWN0aXZhdGVfcGF0aCgpIGhhZCBhIGNoYW5jZSB0byBydW4uCj4+Cj4+IFNpZ25lZC1v
+ZmYtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+PiAtLS0KPj4gIGRyaXZlcnMv
+bWQvZG0tbXBhdGguYyB8IDcgKysrKystLQo+PiAgMSBmaWxlIGNoYW5nZWQsIDUgaW5zZXJ0aW9u
+cygrKSwgMiBkZWxldGlvbnMoLSkKPj4KPj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tbXBh
+dGguYyBiL2RyaXZlcnMvbWQvZG0tbXBhdGguYwo+PiBpbmRleCAwYTQwZmE5Li4yMmU3MzY1IDEw
+MDY0NAo+PiAtLS0gYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPj4gKysrIGIvZHJpdmVycy9tZC9k
+bS1tcGF0aC5jCj4+IEBAIC0xMTk2LDggKzExOTYsMTEgQEAgc3RhdGljIHZvaWQgYWN0aXZhdGVf
+cGF0aChzdHJ1Y3Qgd29ya19zdHJ1Y3QgKndvcmspCj4+ICAJc3RydWN0IHBncGF0aCAqcGdwYXRo
+ID0KPj4gIAkJY29udGFpbmVyX29mKHdvcmssIHN0cnVjdCBwZ3BhdGgsIGFjdGl2YXRlX3BhdGgu
+d29yayk7Cj4+ICAKPj4gLQlzY3NpX2RoX2FjdGl2YXRlKGJkZXZfZ2V0X3F1ZXVlKHBncGF0aC0+
+cGF0aC5kZXYtPmJkZXYpLAo+PiAtCQkJCXBnX2luaXRfZG9uZSwgcGdwYXRoKTsKPj4gKwlpZiAo
+cGdwYXRoLT5pc19hY3RpdmUpCj4+ICsJCXNjc2lfZGhfYWN0aXZhdGUoYmRldl9nZXRfcXVldWUo
+cGdwYXRoLT5wYXRoLmRldi0+YmRldiksCj4+ICsJCQkJIHBnX2luaXRfZG9uZSwgcGdwYXRoKTsK
+Pj4gKwllbHNlCj4+ICsJCXBnX2luaXRfZG9uZShwZ3BhdGgsIFNDU0lfREhfREVWX09GRkxJTkVE
+KTsKPiAKPiBIaSBIYW5uZXMsCj4gCj4gV2hhdCBwcm9ibGVtIGFyZSB5b3UgZ29pbmcgdG8gZml4
+IHdpdGggdGhpcz8KPiBJdCBpcyBzdGlsbCBwb3NzaWJsZSB0aGF0IHRoZSBwYXRoIGlzIHNldCB0
+byBmYWlsZWQganVzdCBhZnRlcgo+ICJpZiAocGdwYXRoLT5pc19hY3RpdmUpIiBhbmQgYmVmb3Jl
+ICJzY3NpX2RoX2FjdGl2YXRlIi4KPiAKYWN0aXZhdGVfcGF0aCgpIGlzIHJ1biBmcm9tIGEgd29y
+a3F1ZXVlLCBzbyB0aGVyZSBpcyBhIHJhY2Ugd2luZG93CmJldHdlZW4gdGhlIGNoZWNrIC0+aXNf
+YWN0aXZlIGluIF9fcGdfaW5pdF9hbGxfcGF0aHMoKSBhbmQgdGhlIHRpbWUKdGhlIHNjc2lfZGhf
+YWN0aXZhdGUoKSBpcyBleGVjdXRlZC4gQW5kIGFzIGFjdGl2YXRlX3BhdGgpKCkgaXMgcnVuCndp
+dGhvdXQgYW55IGxvY2tzIHdlIGRvbid0IGhhdmUgYW55IHN5bmNocm9uaXphdGlvbiB3aXRoIGZh
+aWxfcGF0aCgpLgpTbyBpdCdzIHdlbGwgcG9zc2libGUgdGhhdCBhIHBhdGggZ2V0cyBmYWlsZWQg
+aW4gYmV0d2VlbgpfX3BnX2luaXRfYWxsX3BhdGhzKCkgYW5kIGFjdGl2YXRlX3BhdGhzKCkuCkdy
+YW50ZWQsIHdlIGNvdWxkIHJlbW92ZSB0aGUgY2hlY2sgZm9yIC0+aXNfYWN0aXZlIGluCl9fcGdf
+aW5pdF9hbGxfcGF0aHMoKSwgYnV0IEkgd2FudGVkIHRvIGF2b2lkIHNjaGVkdWxpbmcgYSB3b3Jr
+cXVldWUKaXRlbSB3aGljaCBpcyBrbm93biB0byBiZSBmYWlsaW5nLgoKQ2hlZXJzLAoKSGFubmVz
+Ci0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVzICYgU3RvcmFnZQpoYXJlQHN1
+c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIFByb2R1Y3RzIEdtYkgs
+IE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4gSGF3biwgSi4gR3VpbGQsIEYu
+IEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
