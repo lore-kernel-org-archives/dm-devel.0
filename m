@@ -1,31 +1,91 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm-raid: check events in super_validate
-Date: Sat, 1 Mar 2014 07:54:13 -0600
-Message-ID: <989868B6-C039-401E-96AA-F64B441A6E10@redhat.com>
-References: <52ED0628.4030203@stratus.com> <20140225163020.6f299f15@notabene.brown> <DB09A2EA-5D6C-449F-A61A-EFF556F269B8@redhat.com> <530D17BF.7090008@stratus.com> <3E58643B-64BF-4A4B-9D44-3D075148FE80@redhat.com> <4A643D2E-04C2-462A-8CF8-9BB2A4DC38AE@redhat.com> <530E8418.50707@stratus.com> <7D5F856A-768B-458C-9ED2-812D49A635F3@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <7D5F856A-768B-458C-9ED2-812D49A635F3@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Nate Dailey <nate.dailey@stratus.com>, "linux-raid@vger.kernel.org Raid" <linux-raid@vger.kernel.org>, Jonathan Brassow <jbrassow@redhat.com>, NeilBrown <neilb@suse.de>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: [PATCH 1/9] block: Make generic_make_request handle arbitrary
+ sized bios
+Date: Sat, 1 Mar 2014 10:52:15 -0700 (MST)
+Message-ID: <alpine.LRH.2.03.1403011038240.2885@AMR>
+References: <1393457997-17618-1-git-send-email-kmo@daterainc.com> <1393457997-17618-2-git-send-email-kmo@daterainc.com> <20140227172254.GI5744@linux.intel.com> <20140228233039.GA2739@moria.home.lan>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20140228233039.GA2739@moria.home.lan>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Kent Overstreet <kmo@daterainc.com>
+Cc: Matthew Wilcox <willy@linux.intel.com>, axboe@kernel.dk, Martin Schwidefsky <schwidefsky@de.ibm.com>, Minchan Kim <minchan@kernel.org>, Neil Brown <neilb@suse.de>, Asai Thambi S P <asamymuthupa@micron.com>, Peng Tao <bergwolf@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, Philip Kelleher <pjk1939@linux.vnet.ibm.com>, Geoff Levand <geoff@infradead.org>, dm-devel@redhat.com, drbd-user@lists.linbit.com, Jiri Kosina <jkosina@suse.cz>, linux-fsdevel@vger.kernel.org, Jim Paris <jim@jtan.com>, Nitin Gupta <ngupta@vflare.org>, Sam Bradshaw <sbradshaw@micron.com>, Joshua Morris <josh.h.morris@us.ibm.com>, Alasdair Kergon <agk@redhat.com>, Lars Ellenberg <drbd-dev@lists.linbit.com>
 List-Id: dm-devel.ids
 
+On Fri, 28 Feb 2014, Kent Overstreet wrote:
+> On Thu, Feb 27, 2014 at 12:22:54PM -0500, Matthew Wilcox wrote:
+>> On Wed, Feb 26, 2014 at 03:39:49PM -0800, Kent Overstreet wrote:
+>>> We do this by adding calls to blk_queue_split() to the various
+>>> make_request functions that need it - a few can already handle arbitrary
+>>> size bios. Note that we add the call _after_ any call to blk_queue_bounce();
+>>> this means that blk_queue_split() and blk_recalc_rq_segments() don't need to
+>>> be concerned with bouncing affecting segment merging.
+>>
+>>> diff --git a/drivers/block/nvme-core.c b/drivers/block/nvme-core.c
+>>> index 51824d1f23..e4376b9613 100644
+>>> --- a/drivers/block/nvme-core.c
+>>> +++ b/drivers/block/nvme-core.c
+>>> @@ -737,6 +737,8 @@ static void nvme_make_request(struct request_queue *q, struct bio *bio)
+>>>  	struct nvme_queue *nvmeq = get_nvmeq(ns->dev);
+>>>  	int result = -EBUSY;
+>>>
+>>> +	blk_queue_split(q, &bio, q->bio_split);
+>>> +
+>>>  	if (!nvmeq) {
+>>>  		put_nvmeq(NULL);
+>>>  		bio_endio(bio, -EIO);
+>>
+>> I'd suggest that we do:
+>>
+>> -	struct nvme_queue *nvmeq = get_nvmeq(ns->dev);
+>> +	struct nvme_queue *nvmeq;
+>>  	int result = -EBUSY;
+>>
+>> +	blk_queue_split(q, &bio, q->bio_split);
+>> +
+>> +	nvmeq = get_nvmeq(ns->dev);
+>>  	if (!nvmeq) {
+>>
+>> so that we're running the blk_queue_split() code outside the get_cpu()
+>> call.
+>>
+>> Now, the NVMe driver has its own rules about when BIOs have to be split.
+>> Right now, that's way down inside the nvme_map_bio() call when we're
+>> walking the bio to compose the scatterlist.  Should we instead have an
+>> nvme_bio_split() routine that is called instead of blk_queue_split(),
+>> and we can simplify nvme_map_bio() since it'll know that it's working
+>> with bios that don't have to be split.
+>>
+>> In fact, I think it would have little NVMe-specific in it at that point,
+>> so we could name __blk_bios_map_sg() better, export it to drivers and
+>> call it from nvme_map_bio(), which I think would make everybody happier.
+>
+> Actually, reading nvme_map_bio() (it's different since last I looked at
+> it) it looks like nvme should already be able to handle arbitrary size
+> bios?
+>
+> I do intend to rework the blk_bio_map_sg() (or add a new one?) to
+> incrementally map as much of a bio as will fit in the provided
+> scatterlist, but it looks like nvme has some odd restrictions where it's
+> using BIOVEC_PHYS_MERGABLE()/BIOVEC_NOT_VIRT_MERGABLE() so I dunno if
+> it's worth bothering to try and have it use generic code.
 
-On Feb 28, 2014, at 2:40 PM, Brassow Jonathan wrote:
+Is nvme the only driver that has these kinds of restrictions on segment
+address offsets? If so, I guess there's no reason to make it generic.
 
-> The commit that fixed the problem was:
-> f466722ca614edcd14f3337373f33132117c7612
-> f466722 md: Change handling of save_raid_disk and metadata update during recover
-> 
-> I don't know if this is safe to independently apply to previous kernels or not yet.  Neil, do you know?
-> 
-> I have applied it directly to the 3.13 kernel and it solves the problem.  However, applying it to the 3.12 kernel does not solve the problem.  There is obviously something else I'm missing or the fuzziness of the patch on 3.12 is causing things to not behave as expected.
+> However we don't need an explicit split here: if the sg fills up (i.e.
+> the places nvme_split_and_submit() is called), we can just mark the bio
+> as partially completed (set bio->bi_iter = iter, i.e. use the iterator
+> you passed to bio_for_each_segment), then increment bi_remaining (which
+> just counts completions, i.e. bio_endio() calls before the bio is really
+> completed) and resubmit the original bio. No need to allocate a split
+> bio, or loop over the bio again in bio_split().
 
-I was wrong.  After retesting, this commit /does/ fix the problem.  I've tested it all the way back to 3.10 and it fixes the problem.
-
-Neil, would you be willing to have this patch go to stable?
-
- brassow
+We used to manipulate the original bio to track partial completions,
+but I changed that for reasons that haven't quite yet materialized. If we
+move the bio's bi_iter, it will make it difficult to retry the original
+request on intermittent failures, and it will break the integrity verify
+if the device format supports protection information. It's also more
+performant to submit all parts at once rather than wait for the previous
+part to complete before sending the next.
