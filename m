@@ -1,14 +1,14 @@
-From: alex chen <alex.chen@huawei.com>
-Subject: Re: [PATCH] dm linear: disable WRITE SAME if it fails
-Date: Wed, 5 Mar 2014 15:30:29 +0800
-Message-ID: <5316D295.8030205@huawei.com>
-References: <53042F91.4050201@huawei.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: IO Ordering on Path Failover
+Date: Wed, 05 Mar 2014 08:54:45 +0100
+Message-ID: <5316D845.7030402@suse.de>
+References: <CAPB7CupKZqW_tLZHcYsMS2eyqkFnmb0gDE2JrDoTqRpn43fsgg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <53042F91.4050201@huawei.com>
+In-Reply-To: <CAPB7CupKZqW_tLZHcYsMS2eyqkFnmb0gDE2JrDoTqRpn43fsgg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,126 +18,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com, agk@redhat.com, joseph.qi@huawei.com, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Who can help me review my patch? ths.
+On 02/28/2014 11:42 PM, Bob Bawn wrote:
+> I am trying to understand how IO ordering safety is enforced with on
+> path failover. This is new territory for me so forgive me if this is
+> obvious. Consider the sequence:
+> =
 
-On 2014/2/19 12:14, alex chen wrote:
-> The original commit f84cb8a46a771f36a04a02c61ea635c968ed5f6a("dm mpath:
-> disable WRITE SAME if it fails") disables WRITE SAME in the DM multipath
-> device if it fails, but when the DM linear device stacks ontop of the
-> multipath device it doesn't help.
-> 
-> this patch adds DM linear end_io method to catch WRITE SAME errors and
-> disables WRITE SAME in the DM linear device's queue_limits if an
-> underlying device disables it.
-> 
-> Before this patch:
-> 
-> dm linear device(dm-20): ocfs2-fs;
-> multipath device(dm-6);
-> scsi device(sdt,sdu);
-> 
-> After a WRITE SAME bio fails, the DM linear device does not disable the
-> WRITE SAME, although the underlying device(DM multipath device) has
-> disabled WRITE SAME.
-> 
-> cat /sys/block/dm-20/queue/write_same_max_bytes
-> 33553920
-> cat /sys/block/dm-6/queue/write_same_max_bytes
-> 0
-> cat /sys/block/sdt/queue/write_same_max_bytes
-> 0
-> cat /sys/block/sdu/queue/write_same_max_bytes
-> 0
-> 
-> After this patch:
-> 
-> dm linear device(dm-20): ocfs2-fs;
-> multipath device(dm-6);
-> scsi device(sdt,sdu);
-> 
-> After a WRITE SAME bio fails, the underlying device(DM multipath
-> device) disables WRITE SAME and then the DM linear device also disables
-> WRITE SAME.
-> 
-> cat /sys/block/dm-20/queue/write_same_max_bytes
-> 0
-> cat /sys/block/dm-6/queue/write_same_max_bytes
-> 0
-> cat /sys/block/sdt/queue/write_same_max_bytes
-> 0
-> cat /sys/block/sdu/queue/write_same_max_bytes
-> 0
-> 
-> Signed-off-by: alex.chen <alex.chen@huawei.com>
-> ---
->  drivers/md/dm-linear.c | 26 +++++++++++++++++++++++++-
->  drivers/md/dm.c        |  2 +-
->  2 files changed, 26 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-> index 53e848c..eaf86a5 100644
-> --- a/drivers/md/dm-linear.c
-> +++ b/drivers/md/dm-linear.c
-> @@ -96,6 +96,29 @@ static int linear_map(struct dm_target *ti, struct
-> bio *bio)
->  	return DM_MAPIO_REMAPPED;
->  }
-> 
-> +static int linear_end_io(struct dm_target *ti, struct bio *bio, int error)
-> +{
-> +	struct linear_c *lc = ti->private;
-> +	struct block_device *bdev;
-> +	struct queue_limits *limits;
-> +	struct queue_limits *bdev_limits;
-> +
-> +	if (!error)
-> +		return error;
-> +
-> +	if (unlikely(bio->bi_rw & REQ_WRITE_SAME)) {
-> +		bdev = lc->dev->bdev;
-> +		bdev_limits = &bdev->bd_disk->queue->limits;
-> +
-> +		limits = dm_get_queue_limits(dm_table_get_md(ti->table));
-> +
-> +		if ((!bdev_limits->max_write_same_sectors) &&
-> +				limits->max_write_same_sectors)
-> +			limits->max_write_same_sectors = 0;
-> +	}
-> +
-> +	return error;
-> +}
->  static void linear_status(struct dm_target *ti, status_type_t type,
->  			  unsigned status_flags, char *result, unsigned maxlen)
->  {
-> @@ -155,11 +178,12 @@ static int linear_iterate_devices(struct dm_target
-> *ti,
-> 
->  static struct target_type linear_target = {
->  	.name   = "linear",
-> -	.version = {1, 2, 1},
-> +	.version = {1, 2, 2},
->  	.module = THIS_MODULE,
->  	.ctr    = linear_ctr,
->  	.dtr    = linear_dtr,
->  	.map    = linear_map,
-> +	.end_io = linear_end_io,
->  	.status = linear_status,
->  	.ioctl  = linear_ioctl,
->  	.merge  = linear_merge,
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 8c53b09..4337025 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -770,7 +770,7 @@ static void clone_endio(struct bio *bio, int error)
-> 
->  	if (endio) {
->  		r = endio(tio->ti, bio, error);
-> -		if (r < 0 || r == DM_ENDIO_REQUEUE)
-> +		if (r <= 0 || r == DM_ENDIO_REQUEUE)
->  			/*
->  			 * error and requeue request are handled
->  			 * in dec_pending().
-> 
+> 1. client writes(lba=3D0,val=3Dx) on path A.
+> 2. multipath declares path A dead and retries write on path B
+> 3. retried write on path B completes successfully and client get ack'd
+> 4. client writes(lba=3D0,val=3Dy) on path B. It also completes
+> successfully and is ack'd to client
+> 5. write from (1) completes and corrupts data
+> =
+
+> It seems like multipath needs a guarantee at step 2 that the original
+> write won't complete after path A has been declared down. I thought it
+> would issue something like a LUN RESET on path B and that the response
+> to that reset would indicate that it is safe to proceed. This page
+> sort of supports that speculation:
+> http://scst.sourceforge.net/mc_s.html
+> =
+
+No, that assumption is wrong.
+
+Strict ordering is only guaranteed for commands submitted from the
+HBA to the wire. Once it's in-flight there are _no_ guarantees about
+ordering. Eg in a FC Fabric there might be several paths to the same
+target, each of which might have a different latency.
+So I/O on one path might actually be faster than the other one.
+And with CNA's it's virtually impossible to guarantee any I/O
+ordering due to several hardware queues involved etc.
+
+Same goes for the linux block layer; the only _enforced_ ordering of
+sorts is done by I/O being sent from the page-cache, as each page
+can submit only one I/O at a time.
+But as soon as you're using O_DIRECT you don't have any ordering
+guarantees, either, and it's up to the application to ensure any
+ordering requirements.
+
+Which is also what all filesystems do; for any critical section they
+wait for the I/O result before continuing.
+
+So for failover any retries will be covered by the multipath layer,
+and only the final I/O result will be returned to the upper layers,
+rendering any multipath failover invisible.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
