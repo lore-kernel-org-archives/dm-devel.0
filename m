@@ -1,14 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: IO Ordering on Path Failover
-Date: Wed, 05 Mar 2014 08:54:45 +0100
-Message-ID: <5316D845.7030402@suse.de>
-References: <CAPB7CupKZqW_tLZHcYsMS2eyqkFnmb0gDE2JrDoTqRpn43fsgg@mail.gmail.com>
+Subject: Re: [PATCH 4/8] dm mpath: remove process_queued_ios()
+Date: Wed, 05 Mar 2014 09:59:32 +0100
+Message-ID: <5316E774.8060600@suse.de>
+References: <1393598029-67995-1-git-send-email-hare@suse.de>
+	<1393598029-67995-5-git-send-email-hare@suse.de>
+	<11AF7C027C4C02408624617A49860784010DC73B@BPXM12GP.gisp.nec.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPB7CupKZqW_tLZHcYsMS2eyqkFnmb0gDE2JrDoTqRpn43fsgg@mail.gmail.com>
+In-Reply-To: <11AF7C027C4C02408624617A49860784010DC73B@BPXM12GP.gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,61 +20,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/28/2014 11:42 PM, Bob Bawn wrote:
-> I am trying to understand how IO ordering safety is enforced with on
-> path failover. This is new territory for me so forgive me if this is
-> obvious. Consider the sequence:
-> =
-
-> 1. client writes(lba=3D0,val=3Dx) on path A.
-> 2. multipath declares path A dead and retries write on path B
-> 3. retried write on path B completes successfully and client get ack'd
-> 4. client writes(lba=3D0,val=3Dy) on path B. It also completes
-> successfully and is ack'd to client
-> 5. write from (1) completes and corrupts data
-> =
-
-> It seems like multipath needs a guarantee at step 2 that the original
-> write won't complete after path A has been declared down. I thought it
-> would issue something like a LUN RESET on path B and that the response
-> to that reset would indicate that it is safe to proceed. This page
-> sort of supports that speculation:
-> http://scst.sourceforge.net/mc_s.html
-> =
-
-No, that assumption is wrong.
-
-Strict ordering is only guaranteed for commands submitted from the
-HBA to the wire. Once it's in-flight there are _no_ guarantees about
-ordering. Eg in a FC Fabric there might be several paths to the same
-target, each of which might have a different latency.
-So I/O on one path might actually be faster than the other one.
-And with CNA's it's virtually impossible to guarantee any I/O
-ordering due to several hardware queues involved etc.
-
-Same goes for the linux block layer; the only _enforced_ ordering of
-sorts is done by I/O being sent from the page-cache, as each page
-can submit only one I/O at a time.
-But as soon as you're using O_DIRECT you don't have any ordering
-guarantees, either, and it's up to the application to ensure any
-ordering requirements.
-
-Which is also what all filesystems do; for any critical section they
-wait for the I/O result before continuing.
-
-So for failover any retries will be covered by the multipath layer,
-and only the final I/O result will be returned to the upper layers,
-rendering any multipath failover invisible.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+T24gMDMvMDMvMjAxNCAxMjoxMiBBTSwgSnVuaWNoaSBOb211cmEgd3JvdGU6Cj4gT24gMDIvMjgv
+MTQgMjM6MzMsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQEAgLTEyMTQsOSArMTE4OSwxMiBA
+QCBzdGF0aWMgdm9pZCBwZ19pbml0X2RvbmUodm9pZCAqZGF0YSwgaW50IGVycm9ycykKPj4gIAo+
+PiAgCWlmICghbS0+cGdfaW5pdF9yZXF1aXJlZCkKPj4gIAkJbS0+cXVldWVfaW8gPSAwOwo+PiAt
+Cj4+IC0JbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+PiAtCXF1ZXVlX3dv
+cmsoa211bHRpcGF0aGQsICZtLT5wcm9jZXNzX3F1ZXVlZF9pb3MpOwo+PiArCWVsc2UgaWYgKG0t
+PmN1cnJlbnRfcGcpIHsKPj4gKwkJbS0+cGdfaW5pdF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5
+Owo+PiArCQlpZiAoX19wZ19pbml0X2FsbF9wYXRocyhtKSkKPj4gKwkJCWdvdG8gb3V0Owo+PiAr
+CQltLT5xdWV1ZV9pbyA9IDA7Cj4+ICsJfQo+IAo+IEhpIEhhbm5lcywKPiAKPiBJZiBtLT5wZ19p
+bml0X3JlcXVpcmVkICYmICFtLT5jdXJyZW50X3BnLAo+IGRvZXNuJ3QgbS0+cXVldWVfaW8gcmVt
+YWluIDEgd2hpbGUgbm9ib2R5IGtpY2tzIHBnX2luaXQ/Cj4gCj4gVGhhdCdzIHdoeSBJIHN1Z2dl
+c3RlZCB0aGlzOgo+IAo+IAlpZiAobS0+cGdfaW5pdF9yZXF1aXJlZCkgewo+IAkJbS0+cGdfaW5p
+dF9kZWxheV9yZXRyeSA9IGRlbGF5X3JldHJ5Owo+IAkJaWYgKF9fcGdfaW5pdF9hbGxfcGF0aHMo
+bSkpCj4gCQkJZ290byBvdXQ7Cj4gCX0KPiAJbS0+cXVldWVfaW8gPSAwOwo+IApZZWFoLCBzb3Jy
+eS4gWW91IGFyZSByaWdodC4KCk1pa2UsIGNhbiB5b3UgZml4IGl0IHVwIG9yIGRvIHlvdSBuZWVk
+IGFuIGFkZGl0aW9uYWwgcm91bmQgb2YgcGF0Y2hlcz8KCkNoZWVycywKCkhhbm5lcwoKLS0gCkRy
+LiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJ
+CSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVs
+ZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTD
+tnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
+dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
+aW5mby9kbS1kZXZlbA==
