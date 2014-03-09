@@ -1,13 +1,14 @@
 From: Ritesh Raj Sarraf <rrs@debian.org>
-Subject: [PATCH 1/3] Fix build failure with fomat-security.
-	Specify the format type.
-Date: Sun,  9 Mar 2014 17:26:33 +0530
-Message-ID: <1394366195-3053-1-git-send-email-rrs@debian.org>
+Subject: [PATCH 3/3] Library with an exit()
+Date: Sun,  9 Mar 2014 17:26:35 +0530
+Message-ID: <1394366195-3053-3-git-send-email-rrs@debian.org>
+References: <1394366195-3053-1-git-send-email-rrs@debian.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1394366195-3053-1-git-send-email-rrs@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,38 +22,31 @@ To: christophe.varoqui@opensvc.com
 Cc: Ritesh Raj Sarraf <rrs@debian.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-cc -g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat
--Werror=format-security -D_FORTIFY_SOURCE=2 -O2 -g -pipe -Wall
--Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
---param=ssp-buffer-size=4 -Wunused -Wstrict-prototypes -fPIC
--DLIB_STRING=\"lib\" -I.. -c -o rdac.o rdac.c
-rdac.c: In function 'libcheck_check':
-rdac.c:311:3: error: format not a string literal and no format arguments
-[-Werror=format-security]
-   MSG(c, (inqfail) ? MSG_RDAC_DOWN_TYPE("inquiry failed") :
-   ^
-rdac.c:311:3: error: format not a string literal and no format arguments
-[-Werror=format-security]
-cc1: some warnings being treated as errors
-make[2]: *** [rdac.o] Error 1
-
 Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
 ---
- libmultipath/checkers/rdac.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmpathpersist/mpath_persist.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index e0b2ea4..00e3c44 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -308,7 +308,7 @@ libcheck_check (struct checker * c)
- done:
- 	switch (ret) {
- 	case PATH_DOWN:
--		MSG(c, (inqfail) ? MSG_RDAC_DOWN_TYPE("inquiry failed") :
-+		MSG(c, "%s", (inqfail) ? MSG_RDAC_DOWN_TYPE("inquiry failed") :
- 			checker_msg_string(&inq));
- 		break;
- 	case PATH_UP:
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index bd30125..6b6901e 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -585,11 +585,12 @@ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
+ 	rc = pthread_create(&thread, &attr, mpath_prout_pthread_fn, (void *)(&param));
+ 	if (rc){
+ 		condlog (3, "%s: failed to create thread %d", dev, rc);
+-		exit(-1);
+ 	}
+-	/* Free attribute and wait for the other threads */
+-	pthread_attr_destroy(&attr);
+-	rc = pthread_join(thread, NULL);
++	else {
++		/* Free attribute and wait for the other threads */
++		pthread_attr_destroy(&attr);
++		rc = pthread_join(thread, NULL);
++	}
+ 
+ 	return (param.status);
+ }
 -- 
 1.9.0
