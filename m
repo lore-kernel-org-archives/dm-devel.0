@@ -1,16 +1,13 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH for-3.15 1/3] dm: add era target
-Date: Tue, 11 Mar 2014 14:56:16 +0000
-Message-ID: <20140311145616.GK16115@debian>
-References: <1394153248-32217-1-git-send-email-snitzer@redhat.com>
-	<alpine.LRH.2.02.1403101739270.28738@file01.intranet.prod.int.rdu2.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH 0/2] multipath: Stop extra scans on stacked
+ devices
+Date: Tue, 11 Mar 2014 17:34:06 +0100
+Message-ID: <531F3AFE.4070008@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1403101739270.28738@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,108 +17,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Morgan.Mears@netapp.com, device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-Hi Mikulas,
+On 02/12/2014 Benjamin Marzinski wrote:
 
-Thanks for taking the time to look through this.  I think you're right
-on all counts.
+> Whenever there is a DM_DEVICE_RESUME ioctl, a uevent is generated. Right now,
+> when multipath is reloading existing devices do to paths going or coming,
+> lvmetad will rescan those devices. This is unnecessary, and can cause a lot
+> of overhead. Also, multipath devices with no working paths will get scanned.
+> These patches make multipath set a new flag, DM_SUBSYSTEM_UDEV_FLAG0, when it
+> is reloading devices due to path changes, and lvmetad can safely ignore it.
+> They also add a new udev rules file, 11-dm-mpath.rules, to disable scanning
+> when it would not be useful.
+> 
+> Benjamin Marzinski (2):
+>   New udev rules to deal with stacked devices
+>   Mark reloads with udev flag
+> 
+>  Makefile.inc                |  1 +
+>  kpartx/devmapper.c          |  4 ++--
+>  kpartx/devmapper.h          |  8 +++++++-
+>  kpartx/kpartx.c             |  8 ++++----
+>  libmultipath/configure.c    |  4 ++--
+>  libmultipath/devmapper.c    | 26 ++++++++++++++------------
+>  libmultipath/devmapper.h    | 10 ++++++++--
+>  multipath/11-dm-mpath.rules | 34 ++++++++++++++++++++++++++++++++++
+>  multipath/Makefile          |  3 +++
+>  multipathd/cli_handlers.c   |  4 ++--
+>  10 files changed, 77 insertions(+), 25 deletions(-)
+>  create mode 100644 multipath/11-dm-mpath.rules
 
-- Joe
-
-
-On Mon, Mar 10, 2014 at 08:08:14PM -0400, Mikulas Patocka wrote:
-> Hi
-> 
-> I reviewed dm-era, here is a possible list of bugs:
-> 
-> There is no tracking of in-progress writes. Suppose that this happens:
-> 1) a write is received, era_map sees that metadata_current_marked(era->md, 
->    block) is true, so it lets the write through
-> 2) the user sends the checkpoint message
-> 3) the write received in step 1) hits the disk and modifies it
-> 4) the user sends metadata_take_snap message, the write is not in the 
->    snapshot, although it modified the disk between steps 2) and 4)
-> You can use the functions dm_internal_suspend and dm_internal_resume to 
-> clear in-progress bios - this is lightweight suspend/resume callable only 
-> from the kernel.
-> 
-> era_destroy calls metadata_close(era->md); without checking that era->md 
-> is not NULL. This can cause crash if era_destroy is called early in the 
-> constructor.
-> 
-> era->sectors_per_block should be validated that it is not zero.
-> 
-> There is no write memory barrier between the setting of rpc->result and 
-> rpc->complete:
->                 if (r)
->                         list_for_each_entry_safe(rpc, tmp, &calls, list)
->                                 rpc->result = r;
->         }
-> 
->         list_for_each_entry_safe(rpc, tmp, &calls, list) {
->                 atomic_set(&rpc->complete, 1);
-> And there is no read memory barrier between the reading of rpc->complete 
-> and rpc->result:
->         wait_event(rpc->wait, atomic_read(&rpc->complete));
-> 
->         return rpc->result;
-> You should use completion (include/linux/completion.h) instead of 
-> rpc->complete and rpc->wait, it simplifies the code and takes care of 
-> memory barriers.
-> 
-> metadata_space_map_root is not aligned on 64-bit boundary, but it is 
-> accessed as 64-bit numbers in sm_ll_open_metadata.
-> 
-> Mixing 32-bit and 64-bit current_era (I'm not sure it this is a bug or 
-> not).
-> 
-> Missing read and write memory barriers around accesses to 
-> archived_writesets (I'm not sure if this is a bug, but it looks strange).
-> 
-> create_fresh_metadata doesn't free md->tm and md->sm on errors.
-> 
-> format_metadata doesn't undo the effect of create_fresh_metadata if 
-> write_superblock fails.
-> 
-> superblock_all_zeroes checks the full block for zeroes, although lvm 
-> zeroes only zeroes 4k at the beginning of a new logical volume.
-> 
-> test_bit and test_and_set_bit take signed integer as a parameter (on some 
-> architectures the argument is long, on some int), so you must restrict the 
-> maximum number of blocks to 2^31-1. Or, alternatively, do not use test_bit 
-> and test_and_set_bit and implement these functions on your own - this will 
-> allow you to have 64-bit block numbers.
-> 
-> The argument to bitset_size may overflow, it is not checked. If you allow 
-> 64-bit argument to bitset_size, you must also check that the conversion to 
-> size_t does not overflow.
-> 
-> era_status: /* FIXME: do we need to protect this? */ dm_sm_get_nr_free - 
-> on 32-bit architectures you need to lock it because 64-bit accesses are 
-> nonatomic. You can see the implementation of i_size_read and i_size_write 
-> and do something similar.
-> 
-> era_map doesn't distinguish REQ_FLUSH bios, it should just pass them 
-> through without accessing bio->bi_iter.bi_sector.
-> 
-> 
-> Possible improvements:
-> 
-> atomic64_inc(&md->current_era); - there is no concurrent access to 
-> current_era, so you can use this to avoid the interlocked instruction:
-> atomic64_set(&md->current_era, atomic64_read(&md->current_era) + 1)
-> 
-> process_deferred_bios: deferred_lock is never taken from interrupt, so you 
-> can replace spin_lock_irqsave/spin_unlock_irqrestore with 
-> spin_lock/spin_unlock.
-> 
-> writeset_test_and_set: test_and_set_bit is interlocked instruction - here, 
-> no concurrent access happens, so use __test_and_set_bit, which is not 
-> interlocked. Alternatively - reimplement it if you want 2^31 or more 
-> blocks - see above.
-> 
-> 
-> Mikulas
+This set is missing in git.
