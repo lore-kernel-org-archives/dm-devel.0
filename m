@@ -1,67 +1,39 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH] Don't exit() from library
-Date: Tue, 11 Mar 2014 09:45:14 +0100
-Message-ID: <531ECD1A.8050807@acm.org>
-References: <1394518211-8245-1-git-send-email-rrs@debian.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: era: use do_div for 64-bit division
+Date: Tue, 11 Mar 2014 08:59:54 -0400
+Message-ID: <20140311125954.GA9752@redhat.com>
+References: <3014967.i7OXqBNQ5E@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1394518211-8245-1-git-send-email-rrs@debian.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
-Cc: Ritesh Raj Sarraf <rrs@debian.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <3014967.i7OXqBNQ5E@wuerfel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 03/11/14 07:10, Ritesh Raj Sarraf wrote:
-> Also call pthread_attr_destroy() on thread creation failure
+On Tue, Mar 11 2014 at  4:31am -0400,
+Arnd Bergmann <arnd@arndb.de> wrote:
+
+> Commit 983043be0c1de "dm era: support non power-of-2 blocksize"
+> introduced the use of sector_div to divide a variable of type
+> dm_block_t by an integer. This fails on 32-bit machines when
+> CONFIG_LBDAF is not set, because that assumes that the first
+> argument is a 32-bit number.
 > 
-> Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
-> ---
->  libmpathpersist/mpath_persist.c | 11 +++++++----
->  1 file changed, 7 insertions(+), 4 deletions(-)
-> 
-> diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-> index bd30125..b74ce4e 100644
-> --- a/libmpathpersist/mpath_persist.c
-> +++ b/libmpathpersist/mpath_persist.c
-> @@ -585,11 +585,14 @@ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
->  	rc = pthread_create(&thread, &attr, mpath_prout_pthread_fn, (void *)(&param));
->  	if (rc){
->  		condlog (3, "%s: failed to create thread %d", dev, rc);
-> -		exit(-1);
-> +		/* Destroy the thread attribute since we failed to create */
-> +		pthread_attr_destroy(&attr);
-> +	}
-> +	else {
-> +		/* Free attribute and wait for the other threads */
-> +		pthread_attr_destroy(&attr);
-> +		rc = pthread_join(thread, NULL);
->  	}
-> -	/* Free attribute and wait for the other threads */
-> -	pthread_attr_destroy(&attr);
-> -	rc = pthread_join(thread, NULL);
->  
->  	return (param.status);
->  }
+> To allow building this driver in all configurations, we either
+> have to cast the dm_block_t to sector_t or use do_div(), which
+> always takes a 64-bit argument. This patch uses the second
+> approach in order to cope with theoretical configurations where
+> dm_block_t contains a number that does not fit into sector_t.
 
-Hello Ritesh,
+Thanks for taking the time to look into this.
 
-Maybe there is something I'm not aware of, but is there any reason why
-the pthread_attr_destroy() call occurs twice in this patch instead of
-invoking it before the "if (rc) {" statement ? From the
-pthread_attr_destroy() man page: "Destroying a thread  attributes object
-has no effect on threads that were created using that object".
+But the first approach was used on Friday (and is adequate considering
+we're starting with the bio's bi_sector).  The new commit id is
+1c5a63b138638d08f4dc65ed48d3d5d3bad1b08b.
 
-Thanks,
-
-Bart.
+The moral of the story is: don't make a mistake on Thursday because that
+last linux-next of the week will plague you for the next 5 days.  I was
+hoping for relief with Monday's linux-next build but alas... ;)
