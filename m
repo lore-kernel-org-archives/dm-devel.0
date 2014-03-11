@@ -1,39 +1,86 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: era: use do_div for 64-bit division
-Date: Tue, 11 Mar 2014 08:59:54 -0400
-Message-ID: <20140311125954.GA9752@redhat.com>
-References: <3014967.i7OXqBNQ5E@wuerfel>
+From: Ritesh Raj Sarraf <rrs@debian.org>
+Subject: Re: [PATCH] Don't exit() from library
+Date: Tue, 11 Mar 2014 20:22:28 +0530
+Message-ID: <531F232C.1010405@debian.org>
+References: <1394518211-8245-1-git-send-email-rrs@debian.org>
+	<531ECD1A.8050807@acm.org>
+Reply-To: rrs@debian.org, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <3014967.i7OXqBNQ5E@wuerfel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============0793979781165599500=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <531ECD1A.8050807@acm.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bvanassche@acm.org>, device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-On Tue, Mar 11 2014 at  4:31am -0400,
-Arnd Bergmann <arnd@arndb.de> wrote:
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--===============0793979781165599500==
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature";
+	boundary="fREhIsS34MDfpPT5Dg2HHgc7cHQNMIek0"
 
-> Commit 983043be0c1de "dm era: support non power-of-2 blocksize"
-> introduced the use of sector_div to divide a variable of type
-> dm_block_t by an integer. This fails on 32-bit machines when
-> CONFIG_LBDAF is not set, because that assumes that the first
-> argument is a 32-bit number.
-> 
-> To allow building this driver in all configurations, we either
-> have to cast the dm_block_t to sector_t or use do_div(), which
-> always takes a 64-bit argument. This patch uses the second
-> approach in order to cope with theoretical configurations where
-> dm_block_t contains a number that does not fit into sector_t.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--fREhIsS34MDfpPT5Dg2HHgc7cHQNMIek0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Thanks for taking the time to look into this.
+On 03/11/2014 02:15 PM, Bart Van Assche wrote:
+> Hello Ritesh,
+>
+> Maybe there is something I'm not aware of, but is there any reason why
+> the pthread_attr_destroy() call occurs twice in this patch instead of
+> invoking it before the "if (rc) {" statement ? From the
+> pthread_attr_destroy() man page: "Destroying a thread  attributes objec=
+t
+> has no effect on threads that were created using that object".
+Yup!! You're right. I won't have access to the dev box today. Can you
+please follow it up ?
 
-But the first approach was used on Friday (and is adequate considering
-we're starting with the bio's bi_sector).  The new commit id is
-1c5a63b138638d08f4dc65ed48d3d5d3bad1b08b.
+--=20
+Ritesh Raj Sarraf | http://people.debian.org/~rrs
+Debian - The Universal Operating System
 
-The moral of the story is: don't make a mistake on Thursday because that
-last linux-next of the week will plague you for the next 5 days.  I was
-hoping for relief with Monday's linux-next build but alas... ;)
+
+
+--fREhIsS34MDfpPT5Dg2HHgc7cHQNMIek0
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBCgAGBQJTHyMsAAoJEKY6WKPy4XVpmcwP/j//0B2/XOzQpUJ6vwUPog6T
+emRJKqCqSpHGhe/DuOGQlMShNlCbtKLgWGDr0lO0dXW+IPd/PotZp+YEk0MAKfr8
+DsEqaX/6OyANJV/OrLqYO77EK7zge3/SBGdLsnxPrugS1fMMhnClr8nfIFYEe0VP
+zG3xuouY6VtZQSJUfF186HIpTaedcX5/oHrVKbg3uZmpj+094n3uOXAP6g0+4V5c
+n/07eIcMnVvqq8FWYjrX+wpvkCFnB90m+SpwGldkIBcc6DnC47t/7hxvF5m6tShk
+6fe7DNPcQ/d9XyPcoL7jcfX607HL5ef1NGQPm3rr3nj8b2gfdq19ElQNM3X2rDN4
+nxMTJWnhTrY92bIEdO87MNeHU3vANMhbj2N9EtZE4sO5Z1TDA6qsSl6+uNLDhoo+
+kRsPc2UqUUR3H/789NSvlPJlKbylEpMtEDJncON/UzDBO58JQAhzgZodlATCnux0
+jyEiggH1bv1uX2k5lbuXoBdrD7gXDQShNpqHJeQA1dwnBydy4tTnkvCDweD2mezy
+bVuw8o0HQm6+80oK2nfMxrKONUngg9AW2Sob1WEdw5pqjDDDDKN+EnjjOXNV6Wpk
+2r/QZoaY8pv1zhGhC0U2nLza6ysOGkJe0SaPMCKwCcNCKvrPSEpMEUtQ6p5kn3yr
+tJHWn8g1/hKKCFrKSoUA
+=JF1H
+-----END PGP SIGNATURE-----
+
+--fREhIsS34MDfpPT5Dg2HHgc7cHQNMIek0--
+
+
+--===============0793979781165599500==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0793979781165599500==--
