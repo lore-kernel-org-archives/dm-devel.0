@@ -1,46 +1,67 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH] dm: era: use do_div for 64-bit division
-Date: Tue, 11 Mar 2014 09:31:33 +0100
-Message-ID: <3014967.i7OXqBNQ5E@wuerfel>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH] Don't exit() from library
+Date: Tue, 11 Mar 2014 09:45:14 +0100
+Message-ID: <531ECD1A.8050807@acm.org>
+References: <1394518211-8245-1-git-send-email-rrs@debian.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, linux-kernel@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1394518211-8245-1-git-send-email-rrs@debian.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
+Cc: Ritesh Raj Sarraf <rrs@debian.org>
 List-Id: dm-devel.ids
 
-Commit 983043be0c1de "dm era: support non power-of-2 blocksize"
-introduced the use of sector_div to divide a variable of type
-dm_block_t by an integer. This fails on 32-bit machines when
-CONFIG_LBDAF is not set, because that assumes that the first
-argument is a 32-bit number.
+On 03/11/14 07:10, Ritesh Raj Sarraf wrote:
+> Also call pthread_attr_destroy() on thread creation failure
+> 
+> Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
+> ---
+>  libmpathpersist/mpath_persist.c | 11 +++++++----
+>  1 file changed, 7 insertions(+), 4 deletions(-)
+> 
+> diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+> index bd30125..b74ce4e 100644
+> --- a/libmpathpersist/mpath_persist.c
+> +++ b/libmpathpersist/mpath_persist.c
+> @@ -585,11 +585,14 @@ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
+>  	rc = pthread_create(&thread, &attr, mpath_prout_pthread_fn, (void *)(&param));
+>  	if (rc){
+>  		condlog (3, "%s: failed to create thread %d", dev, rc);
+> -		exit(-1);
+> +		/* Destroy the thread attribute since we failed to create */
+> +		pthread_attr_destroy(&attr);
+> +	}
+> +	else {
+> +		/* Free attribute and wait for the other threads */
+> +		pthread_attr_destroy(&attr);
+> +		rc = pthread_join(thread, NULL);
+>  	}
+> -	/* Free attribute and wait for the other threads */
+> -	pthread_attr_destroy(&attr);
+> -	rc = pthread_join(thread, NULL);
+>  
+>  	return (param.status);
+>  }
 
-To allow building this driver in all configurations, we either
-have to cast the dm_block_t to sector_t or use do_div(), which
-always takes a 64-bit argument. This patch uses the second
-approach in order to cope with theoretical configurations where
-dm_block_t contains a number that does not fit into sector_t.
+Hello Ritesh,
 
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Joe Thornber <ejt@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
-This currently only occurs in linux-next. Please apply.
+Maybe there is something I'm not aware of, but is there any reason why
+the pthread_attr_destroy() call occurs twice in this patch instead of
+invoking it before the "if (rc) {" statement ? From the
+pthread_attr_destroy() man page: "Destroying a thread  attributes object
+has no effect on threads that were created using that object".
 
-diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-index d7bd7b3..3383423 100644
---- a/drivers/md/dm-era-target.c
-+++ b/drivers/md/dm-era-target.c
-@@ -1123,7 +1123,7 @@ static dm_block_t get_block(struct era *era, struct bio *bio)
- 	dm_block_t block_nr = bio->bi_iter.bi_sector;
- 
- 	if (!block_size_is_power_of_two(era))
--		(void) sector_div(block_nr, era->sectors_per_block);
-+		(void) do_div(block_nr, era->sectors_per_block);
- 	else
- 		block_nr >>= era->sectors_per_block_shift;
- 
+Thanks,
+
+Bart.
