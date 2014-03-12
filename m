@@ -1,15 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/2] multipath: Stop extra scans on stacked
-	devices
-Date: Wed, 12 Mar 2014 22:47:56 +0100
-Message-ID: <CABr-Gnf4RayE3c3CG2OaEQO82R1HDZ83pihc-zDArAgrUuos1g@mail.gmail.com>
-References: <531F3AFE.4070008@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RFC PATCH] dm-multipath: Print more explicit
+ warnings when dealing with multipath messages
+Date: Wed, 12 Mar 2014 18:08:32 -0400
+Message-ID: <20140312220831.GA1282@redhat.com>
+References: <1391014365-4180-1-git-send-email-jcastillo@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <531F3AFE.4070008@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1391014365-4180-1-git-send-email-jcastillo@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +20,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Jose Castillo <jcastillo@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks for the reminder.
+On Wed, Jan 29 2014 at 11:52am -0500,
+Jose Castillo <jcastillo@redhat.com> wrote:
 
-This set is applied.
+> The following warning message "Unrecognised multipath message received" is displayed
+> in two different situations inside the function multipath_message: when
+> the number of arguments passed is invalid and when the string passed in argv[0]
+> is not recognized. With this patch, both warnings are more specific to each case
+> and is easier to identify where the problem is.
+> 
+> Signed-off-by: Jose Castillo <jcastillo@redhat.com>
 
+Hi Jose,
 
-On Tue, Mar 11, 2014 at 5:34 PM, Xose Vazquez Perez
-<xose.vazquez@gmail.com> wrote:
-> On 02/12/2014 Benjamin Marzinski wrote:
->
->> Whenever there is a DM_DEVICE_RESUME ioctl, a uevent is generated. Right now,
->> when multipath is reloading existing devices do to paths going or coming,
->> lvmetad will rescan those devices. This is unnecessary, and can cause a lot
->> of overhead. Also, multipath devices with no working paths will get scanned.
->> These patches make multipath set a new flag, DM_SUBSYSTEM_UDEV_FLAG0, when it
->> is reloading devices due to path changes, and lvmetad can safely ignore it.
->> They also add a new udev rules file, 11-dm-mpath.rules, to disable scanning
->> when it would not be useful.
->>
->> Benjamin Marzinski (2):
->>   New udev rules to deal with stacked devices
->>   Mark reloads with udev flag
->>
->>  Makefile.inc                |  1 +
->>  kpartx/devmapper.c          |  4 ++--
->>  kpartx/devmapper.h          |  8 +++++++-
->>  kpartx/kpartx.c             |  8 ++++----
->>  libmultipath/configure.c    |  4 ++--
->>  libmultipath/devmapper.c    | 26 ++++++++++++++------------
->>  libmultipath/devmapper.h    | 10 ++++++++--
->>  multipath/11-dm-mpath.rules | 34 ++++++++++++++++++++++++++++++++++
->>  multipath/Makefile          |  3 +++
->>  multipathd/cli_handlers.c   |  4 ++--
->>  10 files changed, 77 insertions(+), 25 deletions(-)
->>  create mode 100644 multipath/11-dm-mpath.rules
->
-> This set is missing in git.
+I've picked this patch up for 3.15.  It is staged in the 'for-next'
+branch of linux-dm.git, see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=4a5f0cfea2ba2d765f29f3951e3b993fc76206b2
+
+Thanks,
+Mike
