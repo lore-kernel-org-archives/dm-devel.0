@@ -1,12 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] Disable partitions scan for multipathed devices
-Date: Wed, 12 Mar 2014 12:48:56 +0100
-Message-ID: <1394624936-118530-1-git-send-email-hare@suse.de>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] multipath devices are not getting created
+	for readonly	devices
+Date: Wed, 12 Mar 2014 12:18:39 +0000
+Message-ID: <20140312121838.GA14017@agk-dp.fab.redhat.com>
+References: <1394624094-118695-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1394624094-118695-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,62 +20,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-When multipath devices are being used as disks for VM Guests
-any partition scanning / setup should be done within the VM Guest,
-not from host. So we need to switch off partitions scanning via
-kpartx there.
-For this I've implemented a new feature 'no_partitions' which
-just serves as a notifier to kpartx to _not_ create partitions
-on these devices.
+On Wed, Mar 12, 2014 at 12:34:54PM +0100, Hannes Reinecke wrote:
+> Currently we cannot create device-mapper tables for multipath devices
+> whenever the underlying devices are read-only.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+Userspace can specify a read-only table when creating it.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 422a9fd..93154ec 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -88,6 +88,7 @@ struct multipath {
- 	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
- 	unsigned retain_attached_hw_handler:1; /* If there's already a hw_handler present, don't change it. */
- 	unsigned pg_init_disabled:1;	/* pg_init is not currently allowed */
-+	unsigned no_partitions:1;	/* Disable partition scan for kpartx */
+> This patch modifies the device-mapper to set the 'READ-ONLY' flag
+> automatically whenever a read-only device is added to the table.
  
- 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
- 	unsigned pg_init_count;		/* Number of times pg_init called */
-@@ -818,6 +819,11 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
- 			continue;
- 		}
- 
-+		if (!strcasecmp(arg_name, "no_partitions")) {
-+			m->no_partitions = 1;
-+			continue;
-+		}
-+
- 		if (!strcasecmp(arg_name, "pg_init_retries") &&
- 		    (argc >= 1)) {
- 			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
-@@ -1438,11 +1444,14 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
- 		DMEMIT("%u ", m->queue_if_no_path +
- 			      (m->pg_init_retries > 0) * 2 +
- 			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
--			      m->retain_attached_hw_handler);
-+			      m->retain_attached_hw_handler +
-+			      m->no_partitions);
- 		if (m->queue_if_no_path)
- 			DMEMIT("queue_if_no_path ");
- 		if (m->pg_init_retries)
- 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
-+		if (m->no_partitions)
-+			DMEMIT("no_partitions ");
- 		if (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT)
- 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
- 		if (m->retain_attached_hw_handler)
--- 
-1.7.12.4
+I don't know if it's working properly at the moment, but some targets
+(like dm-delay) are meant to work with a combination of read-only and
+read-write devices. 
+
+I don't think the table mode should get changed quite like this: I
+think this problem needs wider review, perhaps overlapping with the
+problem of checking on the I/O path not just at device open time.
+
+Alasdair
