@@ -1,16 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCHv9 0/8] dm-multipath: push back requests
-	instead of queueing
-Date: Thu, 13 Mar 2014 07:46:36 +0100
-Message-ID: <5321544C.4050209@suse.de>
-References: <1393598029-67995-1-git-send-email-hare@suse.de>
-	<20140312214614.GA1080@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: stop using bi_private
+Date: Wed, 12 Mar 2014 16:56:18 -0400
+Message-ID: <20140312205618.GA4784@redhat.com>
+References: <alpine.LRH.2.02.1403041721520.29476@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140312214614.GA1080@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1403041721520.29476@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +19,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/12/2014 10:46 PM, Mike Snitzer wrote:
-> On Fri, Feb 28 2014 at  9:33am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
-> =
+On Tue, Mar 04 2014 at  6:24pm -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
->> Hi Mike,
->>
->> here's version 9 of the patchset which might just be the
->> final one. I've included the remaining issue Jun'ichi pointed
->> out, and added the respective 'reviewed-by' tags where missing.
-> =
+> Device mapper uses the bi_private field as a pointer to dm_target_io or 
+> dm_rq_clone_bio_info. With current kernel, the bio structure is embedded 
+> in the structures dm_target_io and dm_rq_clone_bio_info, so the pointer to 
+> the structure that contains the bio can be found with the macro 
+> container_of.
+> 
+> This patch removes the use of bi_private and uses container_of instead.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>  drivers/md/dm.c |    7 +++----
+>  1 file changed, 3 insertions(+), 4 deletions(-)
+> 
+> Index: linux-3.14-rc4/drivers/md/dm.c
+> ===================================================================
+> --- linux-3.14-rc4.orig/drivers/md/dm.c	2014-03-01 17:19:05.000000000 +0100
+> +++ linux-3.14-rc4/drivers/md/dm.c	2014-03-01 17:23:31.000000000 +0100
+> @@ -753,7 +753,7 @@ static void dec_pending(struct dm_io *io
+>  static void clone_endio(struct bio *bio, int error)
+>  {
+>  	int r = 0;
+> -	struct dm_target_io *tio = bio->bi_private;
+> +	struct dm_target_io *tio = dm_per_bio_data(bio, 0);
+>  	struct dm_io *io = tio->io;
+>  	struct mapped_device *md = tio->io->md;
+>  	dm_endio_fn endio = tio->ti->type->end_io;
 
-> I've picked these patches up.  They are now queued for 3.15 and in
-> linux-dm.git's 'for-next' branch.
-> =
+FYI, I've picked this up for 3.15.
 
-> I'll likely rebase linux-dm.git to 3.14 once it is released but aside
-> from commit id churn there won't be any other changes to this series
-> (unless linux-next turns something up).
-> =
+But I decided to use this instead:
+  struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
 
-> Thanks for sorting this area of mpath out and sticking with this
-> patchset for so many review iterations.
-> =
+While I understand dm_per_bio_data() with 0 accomplishes the same I
+think it clearer to use container_of().
 
-Yes! Finally!
-
-Thanks for including it.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Mike
