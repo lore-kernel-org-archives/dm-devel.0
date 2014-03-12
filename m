@@ -1,16 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: udevsettle command takes long time to settle in RHEL
-	5.9 & 5.10
-Date: Wed, 12 Mar 2014 16:24:49 -0500
-Message-ID: <20140312212449.GW13879@dhcp80-209.msp.redhat.com>
-References: <CAH2zp-jiktuuN-xkF+uo1X92XHLNZuiCceOLmD8wciAwTWNpng@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCHv9 0/8] dm-multipath: push back requests
+ instead of queueing
+Date: Wed, 12 Mar 2014 17:46:14 -0400
+Message-ID: <20140312214614.GA1080@redhat.com>
+References: <1393598029-67995-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAH2zp-jiktuuN-xkF+uo1X92XHLNZuiCceOLmD8wciAwTWNpng@mail.gmail.com>
+In-Reply-To: <1393598029-67995-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,96 +20,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Adarsh <adarshanto@gmail.com>
-Cc: dm-devel@redhat.com, multipath@lists.linux.ibm.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBNYXIgMTIsIDIwMTQgYXQgMDQ6NTY6MTFBTSArMDUzMCwgQWRhcnNoIHdyb3RlOgo+
-ICAgIEhpIEFsbCwKPiAgICBDYW4geW91IHBsZWFzZSBoZWxwIG1lIHdpdGggYW4gaXNzdWUgd2hp
-Y2ggSSBhbSBmYWNpbmcgaW4gUkhFTCA1LjkgJiA1LjEwCj4gICAgc2V0dXBzLgo+ICAgIHVkZXZz
-ZXR0bGUgY29tbWFuZCB0YWtlcyBxdWl0ZSBsb25nIHRpbWUgKDYwLTE1MCBzZWNvbmRzKSB0byBy
-ZXR1cm4KPiAgICBzb21ldGltZXMuCj4gICAgVGhpcyBpcyBtb3N0bHkgYWZ0ZXIgY3JlYXRpbmcg
-YSBMVU4gJiBpc3N1aW5nIGEgInJlc2Nhbi1zY3NpLWJ1cy5zaCIKPiAgICBQbGVhc2Ugbm90ZSB0
-aGF0IG9ubHkgYXJvdW5kIDEwLTIwIExVTnMgYXJlIHByZXNlbnQgd2hpbGUgdGhpcyBpc3N1ZSBp
-cwo+ICAgIGhpdC4KPiAgICBMb29rZWQgaW50byB0aGUgdWRldiBsb2dzICYgbG9va3MgbGlrZSB0
-aGUgY3VscHJpdCBpcyB0aGUgZm9sbG93aW5nIGxpbmUKPiAgICBpbiAiL2V0Yy91ZGV2L3J1bGVz
-LmQvNDAtbXVsdGlwYXRoLnJ1bGVzIjoKPiAgICDvv70g77+9IO+/vVJVTis9Ii9iaW4vYmFzaCAt
-YyAnL3NiaW4vbXBhdGhfd2FpdCAvZGV2L21hcHBlci8lYzsgL3NiaW4va3BhcnR4IC1hCj4gICAg
-LXAgcCAvZGV2L21hcHBlci8lYyciCj4gCj4gICAgVGhlIHJ1bGUgaXMgZ2V0dGluZyBjYWxsZWQg
-bXVsdGlwbGUgdGltZXMgZm9yIHRoZSBzYW1lIGRldmljZSAmIGhlbmNlCj4gICAgdWRldnNldHRs
-ZSBrZWVwcyB3YWl0aW5nIGZvciBhbGwgdGhlc2UgdG8gZmluaXNoCj4gCj4gICAgTWFyIDEwIDEz
-OjQ3OjAwIHgzMzYtMjA3LTU1IHVkZXZkLWV2ZW50WzgwMTNdOiBydW5fcHJvZ3JhbTogJy9iaW4v
-YmFzaCAtYwo+ICAgICcvc2Jpbi9tcGF0aF93YWl0IC9kZXYvbWFwcGVyLzM2MGE5ODAwMDMxNmI2
-MTM5NmEyYjM5NDY0MjRiNmYyZDsKPiAgICAvc2Jpbi9rcGFydHggLWEgLXAgcCAvZGV2L21hcHBl
-ci8zNjBhOTgwMDAzMTZiNjEzOTZhMmIzOTQ2NDI0YjZmMmQnCj4gCj4gICAgTWFyIDEwIDEzOjQ3
-OjA0IHgzMzYtMjA3LTU1IHVkZXZkLWV2ZW50WzgwMzNdOiBydW5fcHJvZ3JhbTogJy9iaW4vYmFz
-aCAtYwo+ICAgICcvc2Jpbi9tcGF0aF93YWl0IC9kZXYvbWFwcGVyLzM2MGE5ODAwMDMxNmI2MTM5
-NmEyYjM5NDY0MjRiNmYyZDsKPiAgICAvc2Jpbi9rcGFydHggLWEgLXAgcCAvZGV2L21hcHBlci8z
-NjBhOTgwMDAzMTZiNjEzOTZhMmIzOTQ2NDI0YjZmMmQnCj4gCj4gICAgTWFyIDEwIDEzOjQ3OjA0
-IHgzMzYtMjA3LTU1IHVkZXZkLWV2ZW50WzgxMDddOiBydW5fcHJvZ3JhbTogJy9iaW4vYmFzaCAt
-Ywo+ICAgICcvc2Jpbi9tcGF0aF93YWl0IC9kZXYvbWFwcGVyLzM2MGE5ODAwMDMxNmI2MTM5NmEy
-YjM5NDY0MjRiNmYyZDsKPiAgICAvc2Jpbi9rcGFydHggLWEgLXAgcCAvZGV2L21hcHBlci8zNjBh
-OTgwMDAzMTZiNjEzOTZhMmIzOTQ2NDI0YjZmMmQnCj4gCj4gICAgTWFyIDEwIDEzOjQ3OjEwIHgz
-MzYtMjA3LTU1IHVkZXZkLWV2ZW50WzgyMTJdOiBydW5fcHJvZ3JhbTogJy9iaW4vYmFzaCAtYwo+
-ICAgICcvc2Jpbi9tcGF0aF93YWl0IC9kZXYvbWFwcGVyLzM2MGE5ODAwMDMxNmI2MTM5NmEyYjM5
-NDY0MjRiNmYyZDsKPiAgICAvc2Jpbi9rcGFydHggLWEgLXAgcCAvZGV2L21hcHBlci8zNjBhOTgw
-MDAzMTZiNjEzOTZhMmIzOTQ2NDI0YjZmMmQnCj4gCj4gICAgSGVuY2UsIEkgY29tbWVudGVkIG91
-dCB0aGUgbGluZSBmcm9tICJtdWx0aXBhdGgucnVsZXMiICYgaXQgc3RhcnRlZAo+ICAgIHdvcmtp
-bmcgZmluZToKPiAgICDvv70g77+977+9UlVOKz0iL2Jpbi9iYXNoIC1jICcvc2Jpbi9tcGF0aF93
-YWl0IC9kZXYvbWFwcGVyLyVjOyAvc2Jpbi9rcGFydHggLWEKPiAgICAtcCBwIC9kZXYvbWFwcGVy
-LyVjJyIKPiAgICBDb3VwbGUgb2YgcXVlcmllczoKPiAgICAxLiBQbGVhc2UgbGV0IG1lIGtub3cg
-aWYgdGhlcmUgYXJlIGFueSBzaWRlIGVmZmVjdHMgZm9yIGNvbW1lbnRpbmcgb3V0IHRoZQo+ICAg
-IGFib3ZlIG1lbnRpb25lZCBsaW5lLgoKVGhpcyBpcyBhIFJIRUw1IG9ubHkgaXNzdWUuICBJbiBS
-SEVMNSwgdWRldiBkb2Vzbid0IGhhbmRsZSBkZXZpY2UKY3JlYXRpb24sIHNvIHRoZXJlIGlzIG5v
-IGd1YXJhbnRlZSB0aGF0IHlvdSB3aWxsIGJlIGFibGUgdG8gb3BlcmF0ZSBvbgp0aGUgZGV2aWNl
-IHdoZW4geW91IGdldCB0aGUgdWV2ZW50LiAgbXBhdGhfd2FpdCB3YWl0cyB1bnRpbCB0aGUgZGV2
-aWNlCmlzIGFjdHVhbGx5IGF2YWlsYWJsZSBiZWZvcmUgY29udGludWluZyB3aXRoIHRoZSBtdWx0
-aXBhdGgucnVsZXMuClJlbW92aW5nIHRoaXMgbWF5IGNhdXNlIGRldmljZXMgdG8gbm90IGJlIGNv
-cnJlY3RseSBzeW1saW5rZWQgb3IgaGF2ZQptaXNzaW5nIHBhcnRpdGlvbiBkZXZpY2VzLgoKPiAg
-ICDvv70g77+9IEJlbiBtZW50aW9ucyB0aGF0IGJsb2NrIGRldmljZSBhZGRpdGlvbiBpcyBub3cg
-dGFrZW4gY2FyZSBvZiBieQo+ICAgIE5FVExJTksgZXZlbnRzIGFzIGxvbmcgYXMgbXVsdGlwYXRo
-IGlzIHJ1bm5pbmcgJiBubyBuZWVkIGZvciB1ZGV2IHRvIGZpcmUKPiAgICBvZmYgbXVsdGlwYXRo
-Ou+/vVsxXWh0dHBzOi8vYnVnemlsbGEucmVkaGF0LmNvbS9zaG93X2J1Zy5jZ2k/aWQ9NDYwMzAx
-Cj4gCj4gIDIuIFBsZWFzZSBsZXQgbWUga25vdyBpZiB0aGlzIGlzIGEga25vd24gaXNzdWUuIEkg
-b2JzZXJ2ZSBpdCBvbmx5IGluIFJIRUwgNS45IGFuZCA1LjEwIHNldHVwcy4KClJIRUw2IHJlbGll
-cyBvbiB1ZGV2IHRvIGRvIHRoZSBkZXZpY2UgY3JlYXRpb24sIGFuZCBzbyBkb2Vzbid0IGhhdmUg
-dGhpcwppc3N1ZSBhdCBhbGwuCgo+ICBBbnkgcG9pbnRlcnMgaXMgaGlnaGx5IGFwcHJlY2lhdGVk
-Lgo+IAo+ICAgIFNldHVwOgo+ICAgID09PT09PQo+ICAgIFJlZCBIYXQgRW50ZXJwcmlzZSBMaW51
-eCBTZXJ2ZXIgcmVsZWFzZSA1LjEwIChUaWthbmdhKQo+ICAgIEtlcm5lbCBcciBvbiBhbiBcbQo+
-ICAgIE11bHRpcGF0aC5jb25mOgo+ICAgID09PT09PT09PT09Cj4gICAgZGVmYXVsdHMgewo+ICAg
-IO+/vSDvv70g77+9IO+/vSB1c2VyX2ZyaWVuZGx5X25hbWVzIO+/vSDvv70g77+9IO+/vSDvv70g
-77+9IG5vCj4gICAg77+9IO+/vSDvv70g77+9IHF1ZXVlX3dpdGhvdXRfZGFlbW9uIO+/vSDvv70g
-77+9IO+/vSDvv70g77+9bm8KPiAgICDvv70g77+9IO+/vSDvv70gZmx1c2hfb25fbGFzdF9kZWwg
-77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IHllcwo+ICAgIO+/vSDvv70g77+9IO+/vSBtYXhf
-ZmRzIO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IG1heAo+
-ICAgIO+/vSDvv70g77+9IO+/vSBwZ19wcmlvX2NhbGMg77+9IO+/vSDvv70g77+9IO+/vSDvv70g
-77+9IO+/vSDvv70g77+9YXZnCj4gICAgfQo+ICAgIGJsYWNrbGlzdCB7Cj4gICAg77+9IO+/vSDv
-v70g77+9IHd3aWQg77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDv
-v70g77+9IO+/vVNJQk0tRVNYU01BVzMwNzNOQ19GREFSOVA2NDAyTkUwCj4gICAg77+9IO+/vSDv
-v70g77+9IHd3aWQg77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDv
-v70g77+9IO+/vVNJQk0tRVNYU01BVzMwNzNOQ19GREFSOVA2NDAyUFAyCj4gICAg77+9IO+/vSDv
-v70g77+9IGRldm5vZGUg77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/
-vSDvv70gIl5jY2lzcy4qIgo+ICAgIH0KPiAgICBkZXZpY2VzIHsKPiAgICDvv70g77+9IO+/vSDv
-v70gZGV2aWNlIHsKPiAgICDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IHZlbmRvciDv
-v70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70iTkVUQVBQIgo+ICAgIO+/vSDv
-v70g77+9IO+/vSDvv70g77+9IO+/vSDvv70gcHJvZHVjdCDvv70g77+9IO+/vSDvv70g77+9IO+/
-vSDvv70g77+9IO+/vSAiTFVOIgo+ICAgIO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g
-ZmVhdHVyZXMg77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70iMyBxdWV1ZV9pZl9u
-b19wYXRoCj4gICAgcGdfaW5pdF9yZXRyaWVzIDUwIgo+ICAgIO+/vSDvv70g77+9IO+/vSDvv70g
-77+9IO+/vSDvv70gcGF0aF9ncm91cGluZ19wb2xpY3kg77+9IO+/vWdyb3VwX2J5X3ByaW8KPiAg
-ICDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IHByaW9fY2FsbG91dCDvv70g77+9IO+/
-vSDvv70g77+9IO+/vSAiL3NiaW4vbXBhdGhfcHJpb19hbHVhIC9kZXYvJW4iCj4gICAg77+9IO+/
-vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSBwYXRoX2NoZWNrZXIg77+9IO+/vSDvv70g77+9IO+/
-vSDvv710dXIKPiAgICDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IGZhaWxiYWNrIO+/
-vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv71pbW1lZGlhdGUKPiAgICDv
-v70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IGhhcmR3YXJlX2hhbmRsZXIg77+9IO+/vSAi
-MSBhbHVhIgo+ICAgIO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70gcnJfd2VpZ2h0IO+/
-vSDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9IO+/vXVuaWZvcm0KPiAgICDvv70g77+9
-IO+/vSDvv70g77+9IO+/vSDvv70g77+9IHJyX21pbl9pbyDvv70g77+9IO+/vSDvv70g77+9IO+/
-vSDvv70g77+9IO+/vSDvv70xMjgKPiAgICDvv70g77+9IO+/vSDvv70g77+9IO+/vSDvv70g77+9
-IGdldHVpZF9jYWxsb3V0IO+/vSDvv70g77+9IO+/vSDvv70iL3NiaW4vc2NzaV9pZCAtZyAtdSAt
-cyAvYmxvY2svJW4iCj4gICAg77+9IO+/vSDvv70g77+9fQo+ICAgIH0KPiAgICByZWdhcmRzLAo+
-ICAgIEFkYXJzaC4KPiAKPiBSZWZlcmVuY2VzCj4gCj4gICAgVmlzaWJsZSBsaW5rcwo+ICAgIDEu
-IGh0dHBzOi8vYnVnemlsbGEucmVkaGF0LmNvbS9zaG93X2J1Zy5jZ2k/aWQ9NDYwMzAxCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Fri, Feb 28 2014 at  9:33am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> Hi Mike,
+> 
+> here's version 9 of the patchset which might just be the
+> final one. I've included the remaining issue Jun'ichi pointed
+> out, and added the respective 'reviewed-by' tags where missing.
+
+I've picked these patches up.  They are now queued for 3.15 and in
+linux-dm.git's 'for-next' branch.
+
+I'll likely rebase linux-dm.git to 3.14 once it is released but aside
+from commit id churn there won't be any other changes to this series
+(unless linux-next turns something up).
+
+Thanks for sorting this area of mpath out and sticking with this
+patchset for so many review iterations.
+
+Mike
