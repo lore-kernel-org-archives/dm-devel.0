@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipath devices are not getting created for
-	readonly devices
-Date: Wed, 12 Mar 2014 12:34:54 +0100
-Message-ID: <1394624094-118695-1-git-send-email-hare@suse.de>
+Subject: [PATCH] Disable partitions scan for multipathed devices
+Date: Wed, 12 Mar 2014 12:48:56 +0100
+Message-ID: <1394624936-118530-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,93 +20,58 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Currently we cannot create device-mapper tables for multipath devices
-whenever the underlying devices are read-only.
-This patch modifies the device-mapper to set the 'READ-ONLY' flag
-automatically whenever a read-only device is added to the table.
+When multipath devices are being used as disks for VM Guests
+any partition scanning / setup should be done within the VM Guest,
+not from host. So we need to switch off partitions scanning via
+kpartx there.
+For this I've implemented a new feature 'no_partitions' which
+just serves as a notifier to kpartx to _not_ create partitions
+on these devices.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-table.c | 11 ++++++++++-
- drivers/md/dm.c       | 17 +++++++++++++++--
- 2 files changed, 25 insertions(+), 3 deletions(-)
+ drivers/md/dm-mpath.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 6a7f2b8..44ea2b3 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -443,11 +443,20 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 		dd->dm_dev.mode = mode;
- 		dd->dm_dev.bdev = NULL;
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 422a9fd..93154ec 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -88,6 +88,7 @@ struct multipath {
+ 	unsigned saved_queue_if_no_path:1; /* Saved state during suspension */
+ 	unsigned retain_attached_hw_handler:1; /* If there's already a hw_handler present, don't change it. */
+ 	unsigned pg_init_disabled:1;	/* pg_init is not currently allowed */
++	unsigned no_partitions:1;	/* Disable partition scan for kpartx */
  
--		if ((r = open_dev(dd, dev, t->md))) {
-+		r = open_dev(dd, dev, t->md);
-+		if (r == -EROFS) {
-+			dd->dm_dev.mode &= ~FMODE_WRITE;
-+			r = open_dev(dd, dev, t->md);
-+		}
-+		if (r) {
- 			kfree(dd);
- 			return r;
+ 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
+ 	unsigned pg_init_count;		/* Number of times pg_init called */
+@@ -818,6 +819,11 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
+ 			continue;
  		}
  
-+		/* Modify the table mode, too */
-+		if (dd->dm_dev.mode != mode)
-+			t->mode = dd->dm_dev.mode;
++		if (!strcasecmp(arg_name, "no_partitions")) {
++			m->no_partitions = 1;
++			continue;
++		}
 +
- 		format_dev_t(dd->dm_dev.name, dev);
- 
- 		atomic_set(&dd->count, 0);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8c53b09..0f7b441 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -384,16 +384,25 @@ int dm_deleting_md(struct mapped_device *md)
- static int dm_blk_open(struct block_device *bdev, fmode_t mode)
- {
- 	struct mapped_device *md;
-+	int retval = 0;
- 
- 	spin_lock(&_minor_lock);
- 
- 	md = bdev->bd_disk->private_data;
--	if (!md)
-+	if (!md) {
-+		retval = -ENXIO;
- 		goto out;
-+	}
- 
- 	if (test_bit(DMF_FREEING, &md->flags) ||
- 	    dm_deleting_md(md)) {
- 		md = NULL;
-+		retval = -ENXIO;
-+		goto out;
-+	}
-+	if (get_disk_ro(md->disk) && (mode & FMODE_WRITE)) {
-+		md = NULL;
-+		retval = -EROFS;
- 		goto out;
- 	}
- 
-@@ -403,7 +412,7 @@ static int dm_blk_open(struct block_device *bdev, fmode_t mode)
- out:
- 	spin_unlock(&_minor_lock);
- 
--	return md ? 0 : -ENXIO;
-+	return retval;
- }
- 
- static void dm_blk_close(struct gendisk *disk, fmode_t mode)
-@@ -2156,6 +2165,10 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 		set_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
- 	else
- 		clear_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
-+	if (!(dm_table_get_mode(t) & FMODE_WRITE))
-+		set_disk_ro(md->disk, 1);
-+	else
-+		set_disk_ro(md->disk, 0);
- 	dm_sync_table(md);
- 
- 	return old_map;
+ 		if (!strcasecmp(arg_name, "pg_init_retries") &&
+ 		    (argc >= 1)) {
+ 			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
+@@ -1438,11 +1444,14 @@ static void multipath_status(struct dm_target *ti, status_type_t type,
+ 		DMEMIT("%u ", m->queue_if_no_path +
+ 			      (m->pg_init_retries > 0) * 2 +
+ 			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
+-			      m->retain_attached_hw_handler);
++			      m->retain_attached_hw_handler +
++			      m->no_partitions);
+ 		if (m->queue_if_no_path)
+ 			DMEMIT("queue_if_no_path ");
+ 		if (m->pg_init_retries)
+ 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
++		if (m->no_partitions)
++			DMEMIT("no_partitions ");
+ 		if (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT)
+ 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
+ 		if (m->retain_attached_hw_handler)
 -- 
 1.7.12.4
