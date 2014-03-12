@@ -1,16 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCHv9 0/8] dm-multipath: push back requests
- instead of queueing
-Date: Wed, 12 Mar 2014 17:46:14 -0400
-Message-ID: <20140312214614.GA1080@redhat.com>
-References: <1393598029-67995-1-git-send-email-hare@suse.de>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH 0/2] multipath: Stop extra scans on stacked
+	devices
+Date: Wed, 12 Mar 2014 22:47:56 +0100
+Message-ID: <CABr-Gnf4RayE3c3CG2OaEQO82R1HDZ83pihc-zDArAgrUuos1g@mail.gmail.com>
+References: <531F3AFE.4070008@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1393598029-67995-1-git-send-email-hare@suse.de>
+In-Reply-To: <531F3AFE.4070008@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,27 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 28 2014 at  9:33am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
+Thanks for the reminder.
 
-> Hi Mike,
-> 
-> here's version 9 of the patchset which might just be the
-> final one. I've included the remaining issue Jun'ichi pointed
-> out, and added the respective 'reviewed-by' tags where missing.
+This set is applied.
 
-I've picked these patches up.  They are now queued for 3.15 and in
-linux-dm.git's 'for-next' branch.
 
-I'll likely rebase linux-dm.git to 3.14 once it is released but aside
-from commit id churn there won't be any other changes to this series
-(unless linux-next turns something up).
-
-Thanks for sorting this area of mpath out and sticking with this
-patchset for so many review iterations.
-
-Mike
+On Tue, Mar 11, 2014 at 5:34 PM, Xose Vazquez Perez
+<xose.vazquez@gmail.com> wrote:
+> On 02/12/2014 Benjamin Marzinski wrote:
+>
+>> Whenever there is a DM_DEVICE_RESUME ioctl, a uevent is generated. Right now,
+>> when multipath is reloading existing devices do to paths going or coming,
+>> lvmetad will rescan those devices. This is unnecessary, and can cause a lot
+>> of overhead. Also, multipath devices with no working paths will get scanned.
+>> These patches make multipath set a new flag, DM_SUBSYSTEM_UDEV_FLAG0, when it
+>> is reloading devices due to path changes, and lvmetad can safely ignore it.
+>> They also add a new udev rules file, 11-dm-mpath.rules, to disable scanning
+>> when it would not be useful.
+>>
+>> Benjamin Marzinski (2):
+>>   New udev rules to deal with stacked devices
+>>   Mark reloads with udev flag
+>>
+>>  Makefile.inc                |  1 +
+>>  kpartx/devmapper.c          |  4 ++--
+>>  kpartx/devmapper.h          |  8 +++++++-
+>>  kpartx/kpartx.c             |  8 ++++----
+>>  libmultipath/configure.c    |  4 ++--
+>>  libmultipath/devmapper.c    | 26 ++++++++++++++------------
+>>  libmultipath/devmapper.h    | 10 ++++++++--
+>>  multipath/11-dm-mpath.rules | 34 ++++++++++++++++++++++++++++++++++
+>>  multipath/Makefile          |  3 +++
+>>  multipathd/cli_handlers.c   |  4 ++--
+>>  10 files changed, 77 insertions(+), 25 deletions(-)
+>>  create mode 100644 multipath/11-dm-mpath.rules
+>
+> This set is missing in git.
