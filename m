@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: link against libsystemd, not libsystemd-daemon
-Date: Thu, 13 Mar 2014 12:50:11 +0100
-Message-ID: <1394711411-28933-1-git-send-email-hare@suse.de>
+Subject: [PATCH] Update FSF address
+Date: Thu, 13 Mar 2014 12:50:52 +0100
+Message-ID: <1394711452-28993-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,48 +20,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-With systemd version 210 libsystemd-daemon has been merged
-into libsystemd.
+FSF moved to a different address, and our buildsystem complained.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/Makefile | 6 +++++-
- multipathd/Makefile   | 6 +++++-
- 2 files changed, 10 insertions(+), 2 deletions(-)
+ COPYING | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index 6364364..4b4f707 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -9,7 +9,11 @@ DEVLIB = libmultipath.so
- LIBS = $(DEVLIB).$(SONAME)
- LIBDEPS = -lpthread -ldl -ldevmapper -ludev
- ifdef SYSTEMD
--	LIBDEPS += -lsystemd-daemon
-+	ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
-+		LIBDEPS += -lsystemd
-+	else
-+		LIBDEPS += -lsystemd-daemon
-+	endif
- endif
+diff --git a/COPYING b/COPYING
+index 9e31bbf..0ade0e9 100644
+--- a/COPYING
++++ b/COPYING
+@@ -3,7 +3,7 @@
+ 		       Version 2, June 1991
  
- OBJS = memory.o parser.o vector.o devmapper.o callout.o \
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 781122a..901d1e4 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -11,7 +11,11 @@ ifdef SYSTEMD
- endif
- LDFLAGS += -lpthread -ldevmapper -lreadline
- ifdef SYSTEMD
--	LDFLAGS += -lsystemd-daemon
-+	ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
-+		LDFLAGS += -lsystemd
-+	else
-+		LDFLAGS += -lsystemd-daemon
-+	endif
- endif
- LDFLAGS += -ludev -ldl \
- 	-L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist
+  Copyright (C) 1991 Free Software Foundation, Inc.
+- 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
++ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+  Everyone is permitted to copy and distribute verbatim copies
+  of this license document, but changing it is not allowed.
+ 
 -- 
 1.8.1.4
