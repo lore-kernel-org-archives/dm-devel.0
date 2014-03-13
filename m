@@ -1,15 +1,14 @@
-From: Ross Anderson <rosander@dsotm.net>
-Subject: Re: kpartx fails 4k block partition *changed**
-Date: Thu, 13 Mar 2014 10:00:45 -0500
-Message-ID: <5321C81D.8040005@dsotm.net>
-References: <531F3AFE.4070008@gmail.com> <5320DDA1.3060309@dsotm.net>
-	<5321900C.3030008@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: link against libsystemd, not libsystemd-daemon
+Date: Thu, 13 Mar 2014 22:34:44 +0100
+Message-ID: <CABr-GndWpmHkhEf9ia377AN6-5ENdVUMyrsp8i-P4EX2q2QHrA@mail.gmail.com>
+References: <1394711411-28933-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5321900C.3030008@redhat.com>
+In-Reply-To: <1394711411-28933-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,59 +18,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Greetings,
-
-I apologize I've riposted a updated pastebin. The dm seemed to have 
-become confused with multiple luns being attached and detached before 
-this post. A soft reboot of the system re-mapped and produced much 
-different results. Now upon start up the 4k devices are not listed under 
-lsblk as DM but only as their raw paths. Multipath has created the 
-device without partition. I can manually execute kpartx and the dm parts 
-are added. So now I'm not sure if this is a multipath problem or udev 
-rules.
-
-http://pastebin.com/Nnd4Ym4W
-
+Applied,
 Thanks
-Ross
 
-
-On 3/13/2014 6:01 AM, Bryn M. Reeves wrote:
-> On 03/12/2014 10:20 PM, Ross Anderson wrote:
->> Under 0.50 multipath tools release, partitions are not being created for
->> devices that are 4k Native.  This is under kernel 3.13.6, udev-208.
->>
->> http://pastebin.com/Nnd4Ym4W
-> The devices below don't appear in your lsblk output so it's hard to say
-> whether the partitions kpartx prints for the devices are valid or not:
+On Thu, Mar 13, 2014 at 12:50 PM, Hannes Reinecke <hare@suse.de> wrote:
+> With systemd version 210 libsystemd-daemon has been merged
+> into libsystemd.
 >
->>      ##kpartx sfx4k
->>      sfx4k1 : 0 2056 sfx4k 2048
->>      sfx4k2 : 0 165068760 sfx4k 8192
->>      ##kpartx samplelib
->>      samplelib1 : 0 2056 samplelib 2048
->>      samplelib2 : 0 1171863512 samplelib 8192
-> That said the tables above look perfectly plausible. It would help to
-> verify that if you could post the partition tables the devices contain
-> (preferably in sector units).
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  libmultipath/Makefile | 6 +++++-
+>  multipathd/Makefile   | 6 +++++-
+>  2 files changed, 10 insertions(+), 2 deletions(-)
 >
->> kpartx -a 2 /dev/dm-2
->> failed to stat() 2
-> What's that '2' doing there? The only thing kpartx expects following the
-> '-a' is the whole disk device:
+> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+> index 6364364..4b4f707 100644
+> --- a/libmultipath/Makefile
+> +++ b/libmultipath/Makefile
+> @@ -9,7 +9,11 @@ DEVLIB = libmultipath.so
+>  LIBS = $(DEVLIB).$(SONAME)
+>  LIBDEPS = -lpthread -ldl -ldevmapper -ludev
+>  ifdef SYSTEMD
+> -       LIBDEPS += -lsystemd-daemon
+> +       ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
+> +               LIBDEPS += -lsystemd
+> +       else
+> +               LIBDEPS += -lsystemd-daemon
+> +       endif
+>  endif
 >
->      SYNOPSIS
->         kpartx [-a | -d | -l] [-v] wholedisk
->
-> What happens when you run 'kpartx -a /dev/mapper/sfx4k? (or samplelib).
->
-> Regards,
-> Bryn.
->
+>  OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+> diff --git a/multipathd/Makefile b/multipathd/Makefile
+> index 781122a..901d1e4 100644
+> --- a/multipathd/Makefile
+> +++ b/multipathd/Makefile
+> @@ -11,7 +11,11 @@ ifdef SYSTEMD
+>  endif
+>  LDFLAGS += -lpthread -ldevmapper -lreadline
+>  ifdef SYSTEMD
+> -       LDFLAGS += -lsystemd-daemon
+> +       ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
+> +               LDFLAGS += -lsystemd
+> +       else
+> +               LDFLAGS += -lsystemd-daemon
+> +       endif
+>  endif
+>  LDFLAGS += -ludev -ldl \
+>         -L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> 1.8.1.4
+>
