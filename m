@@ -1,15 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: stop using bi_private
-Date: Wed, 12 Mar 2014 16:56:18 -0400
-Message-ID: <20140312205618.GA4784@redhat.com>
-References: <alpine.LRH.2.02.1403041721520.29476@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: kpartx fails 4k block partition
+Date: Thu, 13 Mar 2014 11:01:32 +0000
+Message-ID: <5321900C.3030008@redhat.com>
+References: <531F3AFE.4070008@gmail.com> <5320DDA1.3060309@dsotm.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1403041721520.29476@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <5320DDA1.3060309@dsotm.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Ross Anderson <rosander@dsotm.net>
 List-Id: dm-devel.ids
 
-On Tue, Mar 04 2014 at  6:24pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
-
-> Device mapper uses the bi_private field as a pointer to dm_target_io or 
-> dm_rq_clone_bio_info. With current kernel, the bio structure is embedded 
-> in the structures dm_target_io and dm_rq_clone_bio_info, so the pointer to 
-> the structure that contains the bio can be found with the macro 
-> container_of.
+On 03/12/2014 10:20 PM, Ross Anderson wrote:
+> Under 0.50 multipath tools release, partitions are not being created for
+> devices that are 4k Native.  This is under kernel 3.13.6, udev-208.
 > 
-> This patch removes the use of bi_private and uses container_of instead.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  drivers/md/dm.c |    7 +++----
->  1 file changed, 3 insertions(+), 4 deletions(-)
-> 
-> Index: linux-3.14-rc4/drivers/md/dm.c
-> ===================================================================
-> --- linux-3.14-rc4.orig/drivers/md/dm.c	2014-03-01 17:19:05.000000000 +0100
-> +++ linux-3.14-rc4/drivers/md/dm.c	2014-03-01 17:23:31.000000000 +0100
-> @@ -753,7 +753,7 @@ static void dec_pending(struct dm_io *io
->  static void clone_endio(struct bio *bio, int error)
->  {
->  	int r = 0;
-> -	struct dm_target_io *tio = bio->bi_private;
-> +	struct dm_target_io *tio = dm_per_bio_data(bio, 0);
->  	struct dm_io *io = tio->io;
->  	struct mapped_device *md = tio->io->md;
->  	dm_endio_fn endio = tio->ti->type->end_io;
+> http://pastebin.com/Nnd4Ym4W
 
-FYI, I've picked this up for 3.15.
+The devices below don't appear in your lsblk output so it's hard to say
+whether the partitions kpartx prints for the devices are valid or not:
 
-But I decided to use this instead:
-  struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
+>     ##kpartx sfx4k
+>     sfx4k1 : 0 2056 sfx4k 2048
+>     sfx4k2 : 0 165068760 sfx4k 8192
+>     ##kpartx samplelib
+>     samplelib1 : 0 2056 samplelib 2048
+>     samplelib2 : 0 1171863512 samplelib 8192
 
-While I understand dm_per_bio_data() with 0 accomplishes the same I
-think it clearer to use container_of().
+That said the tables above look perfectly plausible. It would help to
+verify that if you could post the partition tables the devices contain
+(preferably in sector units).
 
-Mike
+> kpartx -a 2 /dev/dm-2
+> failed to stat() 2
+
+What's that '2' doing there? The only thing kpartx expects following the
+'-a' is the whole disk device:
+
+    SYNOPSIS
+       kpartx [-a | -d | -l] [-v] wholedisk
+
+What happens when you run 'kpartx -a /dev/mapper/sfx4k? (or samplelib).
+
+Regards,
+Bryn.
