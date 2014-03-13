@@ -1,12 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] Update FSF address
-Date: Thu, 13 Mar 2014 12:50:52 +0100
-Message-ID: <1394711452-28993-1-git-send-email-hare@suse.de>
+From: Ross Anderson <rosander@dsotm.net>
+Subject: Re: kpartx fails 4k block partition *changed**
+Date: Thu, 13 Mar 2014 10:00:45 -0500
+Message-ID: <5321C81D.8040005@dsotm.net>
+References: <531F3AFE.4070008@gmail.com> <5320DDA1.3060309@dsotm.net>
+	<5321900C.3030008@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5321900C.3030008@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,29 +19,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-FSF moved to a different address, and our buildsystem complained.
+Greetings,
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- COPYING | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+I apologize I've riposted a updated pastebin. The dm seemed to have 
+become confused with multiple luns being attached and detached before 
+this post. A soft reboot of the system re-mapped and produced much 
+different results. Now upon start up the 4k devices are not listed under 
+lsblk as DM but only as their raw paths. Multipath has created the 
+device without partition. I can manually execute kpartx and the dm parts 
+are added. So now I'm not sure if this is a multipath problem or udev 
+rules.
 
-diff --git a/COPYING b/COPYING
-index 9e31bbf..0ade0e9 100644
---- a/COPYING
-+++ b/COPYING
-@@ -3,7 +3,7 @@
- 		       Version 2, June 1991
- 
-  Copyright (C) 1991 Free Software Foundation, Inc.
-- 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
-+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-  Everyone is permitted to copy and distribute verbatim copies
-  of this license document, but changing it is not allowed.
- 
--- 
-1.8.1.4
+http://pastebin.com/Nnd4Ym4W
+
+Thanks
+Ross
+
+
+On 3/13/2014 6:01 AM, Bryn M. Reeves wrote:
+> On 03/12/2014 10:20 PM, Ross Anderson wrote:
+>> Under 0.50 multipath tools release, partitions are not being created for
+>> devices that are 4k Native.  This is under kernel 3.13.6, udev-208.
+>>
+>> http://pastebin.com/Nnd4Ym4W
+> The devices below don't appear in your lsblk output so it's hard to say
+> whether the partitions kpartx prints for the devices are valid or not:
+>
+>>      ##kpartx sfx4k
+>>      sfx4k1 : 0 2056 sfx4k 2048
+>>      sfx4k2 : 0 165068760 sfx4k 8192
+>>      ##kpartx samplelib
+>>      samplelib1 : 0 2056 samplelib 2048
+>>      samplelib2 : 0 1171863512 samplelib 8192
+> That said the tables above look perfectly plausible. It would help to
+> verify that if you could post the partition tables the devices contain
+> (preferably in sector units).
+>
+>> kpartx -a 2 /dev/dm-2
+>> failed to stat() 2
+> What's that '2' doing there? The only thing kpartx expects following the
+> '-a' is the whole disk device:
+>
+>      SYNOPSIS
+>         kpartx [-a | -d | -l] [-v] wholedisk
+>
+> What happens when you run 'kpartx -a /dev/mapper/sfx4k? (or samplelib).
+>
+> Regards,
+> Bryn.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
