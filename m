@@ -1,40 +1,55 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes to include in 3.14
-Date: Fri, 14 Mar 2014 11:46:36 -0400
-Message-ID: <20140314154635.GA23793@redhat.com>
+Subject: Re: Kernel bug triggered in multipath
+Date: Fri, 14 Mar 2014 12:21:11 -0400
+Message-ID: <20140314162111.GB14188@redhat.com>
+References: <1394795632-86434-1-git-send-email-hare@suse.de>
+ <20140314111520.GA17288@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+In-Reply-To: <20140314111520.GA17288@infradead.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Hannes Reinecke <hare@suse.de>, James Bottomley <jbottomley@parallels.com>, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The following changes since commit cebc2de44d3bce53e46476e774126c298ca2c8a9:
+On Fri, Mar 14 2014 at  7:15am -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-  dm space map metadata: fix refcount decrement below 0 which caused corruption (2014-03-07 12:02:47 -0500)
+> On Fri, Mar 14, 2014 at 12:13:52PM +0100, Hannes Reinecke wrote:
+> > Starting multipath on a cciss device will cause a kernel
+> > warning to be triggered. Problem is that we're using the
+> > ->queuedata field of the request_queue to derefence the
+> > scsi device; however, for other (non-SCSI) devices this
+> > points to a totally different structure.
+> > So we should rather be using accessors here which make
+> > sure we're only returning valid SCSI device structures.
+> > 
+> > Signed-off-by: Hannes Reinecke <hare@suse.de>
+> 
+> Looks reasonable to me as a short term fix.  Long ter mwe should stop
+> calling into scsi-specific code directly from the DM code.
 
-are available in the git repository at:
+DM multipath has a role in insuring the desired scsi_dh is attached and
+that it holds a reference on the attached scsi_dh.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.14-fixes-4
+I'm open to ideas of how dm-multipath could avoid having _any_ role here
+but it isn't so simple to avoid, dm-multipath does 3 things in this
+area (ranging from lightest to heaviest relative to scsi_dh interface use):
+1) get reference on scsi_dh that is already attached -- most widely used
+   now that the scsi_dh matching code has been improved to get correct
+   scsi_dh attached during scsi device scan)
+2) no scsi_dh was attached, but one should be -- really shouldn't happen
+   anymore
+3) switch from the scsi_dh that was auto-attached by scsi_dh matching to
+   some user-specified override -- shouldn't be needed now but a user may
+   have a custom scsi_dh they've developed.
 
-for you to fetch changes up to e893fba90c09f9b57fb97daae204ea9cc2c52fa5:
+I have no problem with this patch, added safety-net and all, but
+bottomline: if scsi_dh interfaces were being called against a DM
+multipath request_queue that is a bug.  In practice that never happens
+in supported configurations.  AFAICT, Hannes just stumbled upon it cause
+he was trying to get cciss working with dm-multipath.
 
-  dm cache: fix access beyond end of origin device (2014-03-12 13:52:00 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-Two small fixes for the DM cache target:
-- fix corruption with >2TB fast device due to truncation bug
-- fix access beyond end of origin device due to a partial block
-
-----------------------------------------------------------------
-Heinz Mauelshagen (2):
-      dm cache: fix truncation bug when copying a block to/from >2TB fast device
-      dm cache: fix access beyond end of origin device
-
- drivers/md/dm-cache-target.c | 11 +++++------
- 1 file changed, 5 insertions(+), 6 deletions(-)
+Acked-by: Mike Snitzer <snitzer@redhat.com>
