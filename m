@@ -1,14 +1,11 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: link against libsystemd, not libsystemd-daemon
-Date: Thu, 13 Mar 2014 22:34:44 +0100
-Message-ID: <CABr-GndWpmHkhEf9ia377AN6-5ENdVUMyrsp8i-P4EX2q2QHrA@mail.gmail.com>
-References: <1394711411-28933-1-git-send-email-hare@suse.de>
+From: Nicolas Michel <be.nicolas.michel@gmail.com>
+Subject: How dm multipath handle IO
+Date: Fri, 14 Mar 2014 09:44:03 +0100
+Message-ID: <CAO5znatnsF_x=-EOKHpezw0M4QNZ5KXiawEGKQ7hkXMCwfQy2Q@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0318240075799050210=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1394711411-28933-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,57 +15,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Applied,
-Thanks
+--===============0318240075799050210==
+Content-Type: multipart/alternative; boundary=001a1134a7e468572504f48d1267
 
-On Thu, Mar 13, 2014 at 12:50 PM, Hannes Reinecke <hare@suse.de> wrote:
-> With systemd version 210 libsystemd-daemon has been merged
-> into libsystemd.
->
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  libmultipath/Makefile | 6 +++++-
->  multipathd/Makefile   | 6 +++++-
->  2 files changed, 10 insertions(+), 2 deletions(-)
->
-> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-> index 6364364..4b4f707 100644
-> --- a/libmultipath/Makefile
-> +++ b/libmultipath/Makefile
-> @@ -9,7 +9,11 @@ DEVLIB = libmultipath.so
->  LIBS = $(DEVLIB).$(SONAME)
->  LIBDEPS = -lpthread -ldl -ldevmapper -ludev
->  ifdef SYSTEMD
-> -       LIBDEPS += -lsystemd-daemon
-> +       ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
-> +               LIBDEPS += -lsystemd
-> +       else
-> +               LIBDEPS += -lsystemd-daemon
-> +       endif
->  endif
->
->  OBJS = memory.o parser.o vector.o devmapper.o callout.o \
-> diff --git a/multipathd/Makefile b/multipathd/Makefile
-> index 781122a..901d1e4 100644
-> --- a/multipathd/Makefile
-> +++ b/multipathd/Makefile
-> @@ -11,7 +11,11 @@ ifdef SYSTEMD
->  endif
->  LDFLAGS += -lpthread -ldevmapper -lreadline
->  ifdef SYSTEMD
-> -       LDFLAGS += -lsystemd-daemon
-> +       ifeq ($(shell test $(SYSTEMD) -gt 209 && echo 1), 1)
-> +               LDFLAGS += -lsystemd
-> +       else
-> +               LDFLAGS += -lsystemd-daemon
-> +       endif
->  endif
->  LDFLAGS += -ludev -ldl \
->         -L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist
-> --
-> 1.8.1.4
->
+--001a1134a7e468572504f48d1267
+Content-Type: text/plain; charset=UTF-8
+
+Hello Guys,
+
+It's a general question about how dm and particularly multipathd handle IO?
+I mean, is it a transaction? Is each IO initiated from the OS get back an
+acknowledgement? If it is, is there a retry mechanism?
+Or are the IO sent blindingly to the block device?
+
+If someone have some good article on it, I would be very interested in
+understanding more deeply how IO are handled.
+
+Thanks a lot,
+
+-- 
+Nicolas MICHEL
+
+--001a1134a7e468572504f48d1267
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello Guys,<div><br></div><div>It&#39;s a general question=
+ about how dm and particularly multipathd handle IO? I mean, is it a transa=
+ction? Is each IO initiated from the OS get back an acknowledgement? If it =
+is, is there a retry mechanism?</div>
+<div>Or are the IO sent blindingly to the block device?</div><div><br></div=
+><div>If someone have some good article on it, I would be very interested i=
+n understanding more deeply how IO are handled.</div><div><br></div><div>
+Thanks a lot,<br clear=3D"all"><div><br></div>-- <br>Nicolas MICHEL
+</div></div>
+
+--001a1134a7e468572504f48d1267--
+
+
+--===============0318240075799050210==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0318240075799050210==--
