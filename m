@@ -1,204 +1,60 @@
-From: Shaohua Li <shli@kernel.org>
-Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target for SSD
-Date: Fri, 14 Mar 2014 17:40:08 +0800
-Message-ID: <20140314094008.GA2386@kernel.org>
-References: <20140218101304.GA24889@kernel.org>
- <20140307075733.GB21790@kernel.org>
- <20140310135256.GA28665@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/1] block: rework flush sequencing for blk-mq
+Date: Fri, 14 Mar 2014 09:00:21 -0400
+Message-ID: <20140314130021.GA12589@redhat.com>
+References: <20140130132620.GA6031@infradead.org>
+ <20140130132630.GB6031@infradead.org>
+ <x49iorp3fhm.fsf@segfault.boston.devel.redhat.com>
+ <20140308155240.GA32297@infradead.org>
+ <CAMM=eLewbtK7LiNZCXo=hm-sjVU2+MN+xTFuxb89mDA1iS3r0w@mail.gmail.com>
+ <531B74B6.4070004@suse.de>
+ <20140312102849.GA26509@infradead.org>
+ <20140313161347.GA6598@redhat.com>
+ <20140314092519.GA10139@infradead.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="Nq2Wo0NMKNjxTN9z"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140310135256.GA28665@redhat.com>
+In-Reply-To: <20140314092519.GA10139@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, agk@redhat.com
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Hannes Reinecke <hare@suse.de>, Jeff Moyer <jmoyer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Shaohua Li <shli@fusionio.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Fri, Mar 14 2014 at  5:25am -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
---Nq2Wo0NMKNjxTN9z
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+> On Thu, Mar 13, 2014 at 12:13:47PM -0400, Mike Snitzer wrote:
+> > Pretty ironic that in the same email that you ask someone to "Let's make
+> > this a little less personal." you start by asserting upstream
+> > dm-multipath sees very little testing -- and use your commit that
+> > recently broke dm-multipath as the basis.  Anyway, please exapnd on what
+> > you feel is broken with upstream dm-multipath.
+> 
+> Getting a little upset, eh?  I didn't say it's broken, I said it gets
+> very little testing.  The regression from me was found like so many
+> before only after it was backported o some enterprise kernel.
 
-On Mon, Mar 10, 2014 at 09:52:56AM -0400, Mike Snitzer wrote:
-> On Fri, Mar 07 2014 at  2:57am -0500,
-> Shaohua Li <shli@kernel.org> wrote:
+Even _really_ basic dm-multipath testing would've uncovered this bug.
+ 
+> I think the problem here is two-fold:
+>  a) the hardware you use with dm-multipath isn't widely available.
+>  b) it uses a very special code path in the block layer no one else uses
 > 
-> > ping!
-> 
-> Hi,
-> 
-> I intend to get dm-insitu-comp reviewed for 3.15.  Sorry I haven't
-> gotten back with you before now, been busy tending to 3.14-rc issues.
-> 
-> I took a quick first pass over your code a couple weeks ago.  Looks to
-> be in great shape relative to coding conventions and the more DM
-> specific conventions.  Clearly demonstrates you have a good command of
-> DM concepts and quirks.
-> 
-> But one thing that would really help get dm-insitu-comp into 3.15 is to
-> show that the code is working as you'd expect.  To that end, it'd be
-> great if you'd be willing to add dm-insitu-comp support to the
-> device-mapper-test-suite, see:
-> https://github.com/jthornber/device-mapper-test-suite
-> 
-> I recently added barebones/simple dm-crypt support, see:
-> https://github.com/jthornber/device-mapper-test-suite/commit/c865bcd4e48228e18626d94327fb2485cf9ec9a1
-> 
-> But It may be that activation/test code for the other targets (e.g. thin
-> or cache) are more useful examples to follow for implemnting
-> dm-insitu-comp stack activation, see:
-> https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/pool-stack.rb
-> https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/cache_stack.rb
-> 
-> All said, implementing dm-insitu-comp support for dmts (including some
-> tests that establish it is working as intended) isn't a hard requirement
-> for getting the target upstream but it would _really_ help.
+> a) might be fixable by having some RDAC or similar emulation in qemu if
+> someone wants to spend the effort.
 
-Ok, I added some simple tests in the test suites.
+The regression from the commit in question was easily reproduced/tested
+using scsi_debug.  Just start the multipathd service and any scsi_debug
+device in the system will get multipath'd.
 
-Thanks,
-Shaohua
+> b) is a bit harder, but we should think hard about it when rewriting the
+> multipath code to support blk-mq.  Talking about which I think trying to
+> use dm-multipath on any blk-mq device will go horribly crash and boom at
+> the moment.
 
---Nq2Wo0NMKNjxTN9z
-Content-Type: text/x-diff; charset=us-ascii
-Content-Disposition: attachment; filename="comp.patch"
-
----
- lib/dmtest/suites/insitu-comp.rb                  |    1 
- lib/dmtest/tests/insitu-comp/insitu-comp_tests.rb |  120 ++++++++++++++++++++++
- 2 files changed, 121 insertions(+)
-
-Index: device-mapper-test-suite/lib/dmtest/suites/insitu-comp.rb
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ device-mapper-test-suite/lib/dmtest/suites/insitu-comp.rb	2014-03-14 17:16:14.043519177 +0800
-@@ -0,0 +1 @@
-+require 'dmtest/tests/insitu-comp/insitu-comp_tests'
-Index: device-mapper-test-suite/lib/dmtest/tests/insitu-comp/insitu-comp_tests.rb
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ device-mapper-test-suite/lib/dmtest/tests/insitu-comp/insitu-comp_tests.rb	2014-03-14 17:16:14.043519177 +0800
-@@ -0,0 +1,120 @@
-+require 'dmtest/config'
-+require 'dmtest/git'
-+require 'dmtest/log'
-+require 'dmtest/utils'
-+require 'dmtest/fs'
-+require 'dmtest/tags'
-+require 'dmtest/thinp-test'
-+require 'dmtest/cache-status'
-+require 'dmtest/disk-units'
-+require 'dmtest/test-utils'
-+require 'dmtest/tests/cache/fio_subvolume_scenario'
-+
-+require 'pp'
-+
-+#------------------------------------------------------------
-+
-+class InsitucompStack
-+  include DM
-+  include DM::LexicalOperators
-+  include Utils
-+
-+  def initialize(dm, dev, opts)
-+    @dm = dm
-+    @dev = dev
-+    @opts = opts
-+  end
-+
-+  def activate(&block)
-+   with_dev(table) do |comp|
-+     @comp = comp
-+     block.call(comp)
-+   end
-+  end
-+
-+  def table
-+    total_blocks = dev_size(@dev) >> 3
-+    data_blocks = total_blocks - 1
-+    rem = data_blocks % (4096 * 8 + 5)
-+    data_blocks /= 4096 * 8 + 5
-+    meta_blocks = data_blocks * 5
-+    data_blocks *= 4096 * 8
-+
-+    cnt = rem
-+    rem /= (4096 * 8 / 5 + 1)
-+    data_blocks += rem * (4096 * 8 / 5)
-+    meta_blocks += rem
-+
-+    cnt %= (4096 * 8 / 5 + 1)
-+    meta_blocks += 1
-+    data_blocks += cnt - 1
-+
-+    sector_count = data_blocks << 3
-+
-+    writethrough = @opts.fetch(:writethrough, true)
-+    if writethrough
-+      t = Table.new(Target.new('insitu_comp', sector_count, @dev, 'writethrough'))
-+    else
-+      wb_interval = @opts.fetch(:writeback_interval, 5)
-+      t = Table.new(Target.new('insitu_comp', sector_count, @dev, 'writeback', wb_interval))
-+    end
-+    t
-+  end
-+
-+  private
-+  def dm_interface
-+    @dm
-+  end
-+end
-+
-+#------------------------------------------------------------
-+
-+class InsitucompTests < ThinpTestCase
-+  include Utils
-+  include DiskUnits
-+  include FioSubVolumeScenario
-+
-+  def test_basic_setup_writethrough
-+    test_basic_setup()
-+  end
-+
-+  def test_basic_setup_writeback
-+    test_basic_setup(false, 5)
-+  end
-+
-+  def test_fio_writethrough
-+    test_fio()
-+  end
-+
-+  def test_fio_writeback
-+    test_fio(false, 5)
-+  end
-+
-+  private
-+  def alloc_stack(writethrough, wbinterval)
-+    if writethrough
-+      stack = InsitucompStack.new(@dm, @data_dev, :writethrough => true)
-+    else
-+      stack = InsitucompStack.new(@dm, @data_dev, :writethrough => false, :writeback_interval => wbinterval)
-+    end
-+    stack
-+  end
-+
-+  private
-+  def test_basic_setup(writethrough = true, wbinterval = 5)
-+    stack = alloc_stack(writethrough, wbinterval)
-+    stack.activate do |comp|
-+      wipe_device(comp)
-+    end
-+  end
-+
-+  private
-+  def test_fio(writethrough = true, wbinterval = 5)
-+    stack = alloc_stack(writethrough, wbinterval)
-+    stack.activate do |comp|
-+      do_fio(comp, :ext4,
-+             :outfile => AP("fio_dm_insitu-comp" + (writethrough ? "-wt.out" : "-wb.out")),
-+             :cfgfile => LP("tests/cache/database-funtime.fio"))
-+    end
-+  end
-+end
-
---Nq2Wo0NMKNjxTN9z--
+If/when blk-mq/scsi-mq is used as the primary mechanism for multipathing
+it must (initially anyway) but implemented in terms of a dm-multipath
+fork (call it "dm-multiqueue"?).  We cannot take 6+ months of breaking
+and then fixing dm-multipath.  When dm-multiqueue is more proven we can
+look at the best way forward.
