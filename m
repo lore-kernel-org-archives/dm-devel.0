@@ -1,51 +1,204 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: How dm multipath handle IO
-Date: Fri, 14 Mar 2014 18:12:05 +0900
-Message-ID: <5322C7E5.8020000@gmail.com>
-References: <CAO5znatnsF_x=-EOKHpezw0M4QNZ5KXiawEGKQ7hkXMCwfQy2Q@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Shaohua Li <shli@kernel.org>
+Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target for SSD
+Date: Fri, 14 Mar 2014 17:40:08 +0800
+Message-ID: <20140314094008.GA2386@kernel.org>
+References: <20140218101304.GA24889@kernel.org>
+ <20140307075733.GB21790@kernel.org>
+ <20140310135256.GA28665@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAO5znatnsF_x=-EOKHpezw0M4QNZ5KXiawEGKQ7hkXMCwfQy2Q@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="Nq2Wo0NMKNjxTN9z"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140310135256.GA28665@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
 
-Let's google it.
-Is this the article you are looking for?
-https://www.kernel.org/doc/ols/2007/ols2007v2-pages-235-244.pdf
+--Nq2Wo0NMKNjxTN9z
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
---
-Akira
+On Mon, Mar 10, 2014 at 09:52:56AM -0400, Mike Snitzer wrote:
+> On Fri, Mar 07 2014 at  2:57am -0500,
+> Shaohua Li <shli@kernel.org> wrote:
+> 
+> > ping!
+> 
+> Hi,
+> 
+> I intend to get dm-insitu-comp reviewed for 3.15.  Sorry I haven't
+> gotten back with you before now, been busy tending to 3.14-rc issues.
+> 
+> I took a quick first pass over your code a couple weeks ago.  Looks to
+> be in great shape relative to coding conventions and the more DM
+> specific conventions.  Clearly demonstrates you have a good command of
+> DM concepts and quirks.
+> 
+> But one thing that would really help get dm-insitu-comp into 3.15 is to
+> show that the code is working as you'd expect.  To that end, it'd be
+> great if you'd be willing to add dm-insitu-comp support to the
+> device-mapper-test-suite, see:
+> https://github.com/jthornber/device-mapper-test-suite
+> 
+> I recently added barebones/simple dm-crypt support, see:
+> https://github.com/jthornber/device-mapper-test-suite/commit/c865bcd4e48228e18626d94327fb2485cf9ec9a1
+> 
+> But It may be that activation/test code for the other targets (e.g. thin
+> or cache) are more useful examples to follow for implemnting
+> dm-insitu-comp stack activation, see:
+> https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/pool-stack.rb
+> https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/cache_stack.rb
+> 
+> All said, implementing dm-insitu-comp support for dmts (including some
+> tests that establish it is working as intended) isn't a hard requirement
+> for getting the target upstream but it would _really_ help.
 
-On 3/14/14 5:44 PM, Nicolas Michel wrote:
-> Hello Guys,
-> 
-> It's a general question about how dm and particularly multipathd handle IO? I mean, is it a transaction? Is each IO initiated from the OS get back an acknowledgement? If it is, is there a retry mechanism?
-> Or are the IO sent blindingly to the block device?
-> 
-> If someone have some good article on it, I would be very interested in understanding more deeply how IO are handled.
-> 
-> Thanks a lot,
-> 
-> -- 
-> Nicolas MICHEL
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+Ok, I added some simple tests in the test suites.
+
+Thanks,
+Shaohua
+
+--Nq2Wo0NMKNjxTN9z
+Content-Type: text/x-diff; charset=us-ascii
+Content-Disposition: attachment; filename="comp.patch"
+
+---
+ lib/dmtest/suites/insitu-comp.rb                  |    1 
+ lib/dmtest/tests/insitu-comp/insitu-comp_tests.rb |  120 ++++++++++++++++++++++
+ 2 files changed, 121 insertions(+)
+
+Index: device-mapper-test-suite/lib/dmtest/suites/insitu-comp.rb
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ device-mapper-test-suite/lib/dmtest/suites/insitu-comp.rb	2014-03-14 17:16:14.043519177 +0800
+@@ -0,0 +1 @@
++require 'dmtest/tests/insitu-comp/insitu-comp_tests'
+Index: device-mapper-test-suite/lib/dmtest/tests/insitu-comp/insitu-comp_tests.rb
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ device-mapper-test-suite/lib/dmtest/tests/insitu-comp/insitu-comp_tests.rb	2014-03-14 17:16:14.043519177 +0800
+@@ -0,0 +1,120 @@
++require 'dmtest/config'
++require 'dmtest/git'
++require 'dmtest/log'
++require 'dmtest/utils'
++require 'dmtest/fs'
++require 'dmtest/tags'
++require 'dmtest/thinp-test'
++require 'dmtest/cache-status'
++require 'dmtest/disk-units'
++require 'dmtest/test-utils'
++require 'dmtest/tests/cache/fio_subvolume_scenario'
++
++require 'pp'
++
++#------------------------------------------------------------
++
++class InsitucompStack
++  include DM
++  include DM::LexicalOperators
++  include Utils
++
++  def initialize(dm, dev, opts)
++    @dm = dm
++    @dev = dev
++    @opts = opts
++  end
++
++  def activate(&block)
++   with_dev(table) do |comp|
++     @comp = comp
++     block.call(comp)
++   end
++  end
++
++  def table
++    total_blocks = dev_size(@dev) >> 3
++    data_blocks = total_blocks - 1
++    rem = data_blocks % (4096 * 8 + 5)
++    data_blocks /= 4096 * 8 + 5
++    meta_blocks = data_blocks * 5
++    data_blocks *= 4096 * 8
++
++    cnt = rem
++    rem /= (4096 * 8 / 5 + 1)
++    data_blocks += rem * (4096 * 8 / 5)
++    meta_blocks += rem
++
++    cnt %= (4096 * 8 / 5 + 1)
++    meta_blocks += 1
++    data_blocks += cnt - 1
++
++    sector_count = data_blocks << 3
++
++    writethrough = @opts.fetch(:writethrough, true)
++    if writethrough
++      t = Table.new(Target.new('insitu_comp', sector_count, @dev, 'writethrough'))
++    else
++      wb_interval = @opts.fetch(:writeback_interval, 5)
++      t = Table.new(Target.new('insitu_comp', sector_count, @dev, 'writeback', wb_interval))
++    end
++    t
++  end
++
++  private
++  def dm_interface
++    @dm
++  end
++end
++
++#------------------------------------------------------------
++
++class InsitucompTests < ThinpTestCase
++  include Utils
++  include DiskUnits
++  include FioSubVolumeScenario
++
++  def test_basic_setup_writethrough
++    test_basic_setup()
++  end
++
++  def test_basic_setup_writeback
++    test_basic_setup(false, 5)
++  end
++
++  def test_fio_writethrough
++    test_fio()
++  end
++
++  def test_fio_writeback
++    test_fio(false, 5)
++  end
++
++  private
++  def alloc_stack(writethrough, wbinterval)
++    if writethrough
++      stack = InsitucompStack.new(@dm, @data_dev, :writethrough => true)
++    else
++      stack = InsitucompStack.new(@dm, @data_dev, :writethrough => false, :writeback_interval => wbinterval)
++    end
++    stack
++  end
++
++  private
++  def test_basic_setup(writethrough = true, wbinterval = 5)
++    stack = alloc_stack(writethrough, wbinterval)
++    stack.activate do |comp|
++      wipe_device(comp)
++    end
++  end
++
++  private
++  def test_fio(writethrough = true, wbinterval = 5)
++    stack = alloc_stack(writethrough, wbinterval)
++    stack.activate do |comp|
++      do_fio(comp, :ext4,
++             :outfile => AP("fio_dm_insitu-comp" + (writethrough ? "-wt.out" : "-wb.out")),
++             :cfgfile => LP("tests/cache/database-funtime.fio"))
++    end
++  end
++end
+
+--Nq2Wo0NMKNjxTN9z--
