@@ -1,84 +1,95 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target for SSD
-Date: Fri, 14 Mar 2014 18:44:45 -0400
-Message-ID: <20140314224444.GA18027@redhat.com>
-References: <20140218101304.GA24889@kernel.org>
- <20140307075733.GB21790@kernel.org>
- <20140310135256.GA28665@redhat.com>
- <20140314094008.GA2386@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 5/6] dm: remove num_write_bios
+Date: Fri, 14 Mar 2014 18:43:47 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1403141843120.31047@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1403141837520.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1403141841290.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1403141842170.31047@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140314094008.GA2386@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shaohua Li <shli@kernel.org>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1403141842170.31047@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Edward Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Mar 14 2014 at  5:40am -0400,
-Shaohua Li <shli@kernel.org> wrote:
+The target can set the function num_write_bios - dm will issue this
+callback to ask the target how many bios does it want to receive.
 
-> On Mon, Mar 10, 2014 at 09:52:56AM -0400, Mike Snitzer wrote:
-> > On Fri, Mar 07 2014 at  2:57am -0500,
-> > Shaohua Li <shli@kernel.org> wrote:
-> > 
-> > > ping!
-> > 
-> > Hi,
-> > 
-> > I intend to get dm-insitu-comp reviewed for 3.15.  Sorry I haven't
-> > gotten back with you before now, been busy tending to 3.14-rc issues.
-> > 
-> > I took a quick first pass over your code a couple weeks ago.  Looks to
-> > be in great shape relative to coding conventions and the more DM
-> > specific conventions.  Clearly demonstrates you have a good command of
-> > DM concepts and quirks.
+This was intended for the dm-cache target, but it is not useable due to a
+race condition (see the description of
+e2e74d617eadc15f601983270c4f4a6935c5a943). num_write_bios is unused, so we
+remove it.
 
-Think I need to eat my words from above at least partially.  Given you
-haven't implemented any of the target suspend or resume hooks this
-target will _not_ work properly across suspend + resume cycles that all
-DM targets must support.
+Note that we deliberately leave the for loop in __clone_and_map_data_bio -
+it will be used in the next patch.
 
-But we can obviously work through it with urgency for 3.15.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-I've pulled your v3 patch into git and have overlayed edits from my
-first pass.  Lots of funky wrapping to conform to 80 columns.  But
-whitespace aside, I've added FIXME:s in the relevant files.  If you work
-on any of these FIXMEs please send follow-up patches so that we don't
-step on each others' toes.
+---
+ drivers/md/dm.c               |    6 ------
+ include/linux/device-mapper.h |   15 ---------------
+ 2 files changed, 21 deletions(-)
 
-Please see the 'for-3.15-insitu-comp' branch of this git repo:
-git://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git
-
-https://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=for-3.15-insitu-comp
-
-> > But one thing that would really help get dm-insitu-comp into 3.15 is to
-> > show that the code is working as you'd expect.  To that end, it'd be
-> > great if you'd be willing to add dm-insitu-comp support to the
-> > device-mapper-test-suite, see:
-> > https://github.com/jthornber/device-mapper-test-suite
-> > 
-> > I recently added barebones/simple dm-crypt support, see:
-> > https://github.com/jthornber/device-mapper-test-suite/commit/c865bcd4e48228e18626d94327fb2485cf9ec9a1
-> > 
-> > But It may be that activation/test code for the other targets (e.g. thin
-> > or cache) are more useful examples to follow for implemnting
-> > dm-insitu-comp stack activation, see:
-> > https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/pool-stack.rb
-> > https://github.com/jthornber/device-mapper-test-suite/blob/master/lib/dmtest/cache_stack.rb
-> > 
-> > All said, implementing dm-insitu-comp support for dmts (including some
-> > tests that establish it is working as intended) isn't a hard requirement
-> > for getting the target upstream but it would _really_ help.
-> 
-> Ok, I added some simple tests in the test suites.
-
-OK, I missed this before because it was an attachment.  I was confused
-as to whether you already added or will add support.  Now that I've
-replied to this mail mutt pulled in the attachment ;)
-
-I'll take for a spin on Monday (or over the weekend if I'm bored).
-
-Thanks,
-Mike
+Index: linux-3.14-rc6/drivers/md/dm.c
+===================================================================
+--- linux-3.14-rc6.orig/drivers/md/dm.c	2014-03-14 22:02:31.000000000 +0100
++++ linux-3.14-rc6/drivers/md/dm.c	2014-03-14 22:04:39.000000000 +0100
+@@ -1282,12 +1282,6 @@ static void __clone_and_map_data_bio(str
+ 	unsigned target_bio_nr;
+ 	unsigned num_target_bios = 1;
+ 
+-	/*
+-	 * Does the target want to receive duplicate copies of the bio?
+-	 */
+-	if (bio_data_dir(bio) == WRITE && ti->num_write_bios)
+-		num_target_bios = ti->num_write_bios(ti, bio);
+-
+ 	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
+ 		tio = alloc_tio(ci, ti, 0, target_bio_nr);
+ 		tio->len_ptr = len;
+Index: linux-3.14-rc6/include/linux/device-mapper.h
+===================================================================
+--- linux-3.14-rc6.orig/include/linux/device-mapper.h	2014-03-14 22:02:05.000000000 +0100
++++ linux-3.14-rc6/include/linux/device-mapper.h	2014-03-14 22:02:21.000000000 +0100
+@@ -190,14 +190,6 @@ struct target_type {
+ #define DM_TARGET_IMMUTABLE		0x00000004
+ #define dm_target_is_immutable(type)	((type)->features & DM_TARGET_IMMUTABLE)
+ 
+-/*
+- * Some targets need to be sent the same WRITE bio severals times so
+- * that they can send copies of it to different devices.  This function
+- * examines any supplied bio and returns the number of copies of it the
+- * target requires.
+- */
+-typedef unsigned (*dm_num_write_bios_fn) (struct dm_target *ti, struct bio *bio);
+-
+ struct dm_target {
+ 	struct dm_table *table;
+ 	struct target_type *type;
+@@ -237,13 +229,6 @@ struct dm_target {
+ 	 */
+ 	unsigned per_bio_data_size;
+ 
+-	/*
+-	 * If defined, this function is called to find out how many
+-	 * duplicate bios should be sent to the target when writing
+-	 * data.
+-	 */
+-	dm_num_write_bios_fn num_write_bios;
+-
+ 	/* target specific data */
+ 	void *private;
+ 
