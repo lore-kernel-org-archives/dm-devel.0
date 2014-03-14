@@ -1,14 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/6] dm: introduce dm_accept_partial_bio
-Date: Fri, 14 Mar 2014 18:41:24 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 3/6] dm-snapshot: make the origin target allocate
+ per-target structure
+Date: Fri, 14 Mar 2014 18:42:12 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1403141841290.31047@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1403141837520.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1403141837520.31047@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,160 +24,148 @@ To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, E
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The function dm_accept_partial_bio allows the target to specify how many
-sectors does it want to process. If the target wants to accept only a part
-of the bio, it calls dm_accept_partial_bio and the dm core sends the rest
-of the data in next bio.
+Allocate a per-target structure dm_origin. This is needed for the next
+patch, that adds new entry to the structure.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm.c               |   58 ++++++++++++++++++++++++++++++++++++------
- include/linux/device-mapper.h |    2 +
- 2 files changed, 52 insertions(+), 8 deletions(-)
+ drivers/md/dm-snap.c |   53 +++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 35 insertions(+), 18 deletions(-)
 
-Index: linux-3.14-rc5/drivers/md/dm.c
+Index: linux-3.14-rc5/drivers/md/dm-snap.c
 ===================================================================
---- linux-3.14-rc5.orig/drivers/md/dm.c	2014-03-14 04:31:41.000000000 +0100
-+++ linux-3.14-rc5/drivers/md/dm.c	2014-03-14 04:32:08.000000000 +0100
-@@ -1105,6 +1105,45 @@ int dm_set_target_max_io_len(struct dm_t
- }
- EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
+--- linux-3.14-rc5.orig/drivers/md/dm-snap.c	2014-03-14 03:20:43.000000000 +0100
++++ linux-3.14-rc5/drivers/md/dm-snap.c	2014-03-14 04:29:02.000000000 +0100
+@@ -2141,6 +2141,10 @@ static int origin_write_extent(struct dm
+  * Origin: maps a linear range of a device, with hooks for snapshotting.
+  */
  
-+/*
-+ * A target may call dm_accept_partial_bio only from the map routine. It is
-+ * allowed for all bio types except REQ_FLUSH.
-+ *
-+ * dm_accept_partial_bio informs the dm that the target only wants to process
-+ * additional n_sectors sectors of the bio and the rest of the data should be
-+ * sent in a next bio.
-+ *
-+ * A diagram that explains the arithmetics:
-+ * +--------------------+---------------+-------+
-+ * |         1          |       2       |   3   |
-+ * +--------------------+---------------+-------+
-+ *
-+ * <-------------- *tio->len_ptr --------------->
-+ *                      <------- bi_size ------->
-+ *                      <-- n_sectors -->
-+ *
-+ * Region 1 was already iterated over with bio_advance or similar function.
-+ *	(it may be empty if the target doesn't use bio_advance)
-+ * Region 2 is the remaining bio size that the target wants to process.
-+ *	(it may be empty if region 1 is non-empty, although there is no reason
-+ *	 to make it empty)
-+ * The target requires that region 3 is to be sent in the next bio.
-+ *
-+ * If the target wants to receive multiple copies of the bio with num_write_bios
-+ * or num_write_same_bios, the partially processed part (the sum of regions 1+2)
-+ * must be the same for all copies of the bio.
-+ */
-+void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
-+{
-+	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-+	unsigned bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
-+	BUG_ON(bi_size > *tio->len_ptr);
-+	BUG_ON(n_sectors > bi_size);
-+	*tio->len_ptr -= bi_size - n_sectors;
-+	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
-+}
-+EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
++struct dm_origin {
++	struct dm_dev *dev;
++};
 +
- static void __map_bio(struct dm_target_io *tio)
+ /*
+  * Construct an origin mapping: <dev_path>
+  * The context for an origin is merely a 'struct dm_dev *'
+@@ -2149,41 +2153,54 @@ static int origin_write_extent(struct dm
+ static int origin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  {
  	int r;
-@@ -1195,11 +1234,13 @@ static struct dm_target_io *alloc_tio(st
+-	struct dm_dev *dev;
++	struct dm_origin *o;
  
- static void __clone_and_map_simple_bio(struct clone_info *ci,
- 				       struct dm_target *ti,
--				       unsigned target_bio_nr, unsigned len)
-+				       unsigned target_bio_nr, unsigned *len)
- {
- 	struct dm_target_io *tio = alloc_tio(ci, ti, ci->bio->bi_max_vecs, target_bio_nr);
- 	struct bio *clone = &tio->clone;
+ 	if (argc != 1) {
+ 		ti->error = "origin: incorrect number of arguments";
+ 		return -EINVAL;
+ 	}
  
-+	tio->len_ptr = len;
+-	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dev);
++	o = kmalloc(sizeof(struct dm_origin), GFP_KERNEL);
++	if (!o) {
++		ti->error = "Cannot allocate private origin structure";
++		r = -ENOMEM;
++		goto bad_alloc;
++	}
 +
- 	/*
- 	 * Discard requests require the bio's inline iovecs be initialized.
- 	 * ci->bio->bi_max_vecs is BIO_INLINE_VECS anyway, for both flush
-@@ -1207,13 +1248,13 @@ static void __clone_and_map_simple_bio(s
- 	 */
- 	 __bio_clone_fast(clone, ci->bio);
- 	if (len)
--		bio_setup_sector(clone, ci->sector, len);
-+		bio_setup_sector(clone, ci->sector, *len);
++	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &o->dev);
+ 	if (r) {
+ 		ti->error = "Cannot get target device";
+-		return r;
++		goto bad_open;
+ 	}
  
- 	__map_bio(tio);
- }
- 
- static void __send_duplicate_bios(struct clone_info *ci, struct dm_target *ti,
--				  unsigned num_bios, unsigned len)
-+				  unsigned num_bios, unsigned *len)
- {
- 	unsigned target_bio_nr;
- 
-@@ -1228,13 +1269,13 @@ static int __send_empty_flush(struct clo
- 
- 	BUG_ON(bio_has_data(ci->bio));
- 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
--		__send_duplicate_bios(ci, ti, ti->num_flush_bios, 0);
-+		__send_duplicate_bios(ci, ti, ti->num_flush_bios, NULL);
+-	ti->private = dev;
++	ti->private = o;
+ 	ti->num_flush_bios = 1;
  
  	return 0;
++
++bad_open:
++	kfree(o);
++bad_alloc:
++	return r;
  }
  
- static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
--				     sector_t sector, unsigned len)
-+				     sector_t sector, unsigned *len)
+ static void origin_dtr(struct dm_target *ti)
  {
- 	struct bio *bio = ci->bio;
- 	struct dm_target_io *tio;
-@@ -1249,7 +1290,8 @@ static void __clone_and_map_data_bio(str
+-	struct dm_dev *dev = ti->private;
+-	dm_put_device(ti, dev);
++	struct dm_origin *o = ti->private;
++	dm_put_device(ti, o->dev);
++	kfree(o);
+ }
  
- 	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
- 		tio = alloc_tio(ci, ti, 0, target_bio_nr);
--		clone_bio(tio, bio, sector, len);
-+		tio->len_ptr = len;
-+		clone_bio(tio, bio, sector, *len);
- 		__map_bio(tio);
+ static int origin_map(struct dm_target *ti, struct bio *bio)
+ {
+-	struct dm_dev *dev = ti->private;
+-	bio->bi_bdev = dev->bdev;
++	struct dm_origin *o = ti->private;
++	bio->bi_bdev = o->dev->bdev;
+ 
+ 	if (bio->bi_rw & REQ_FLUSH)
+ 		return DM_MAPIO_REMAPPED;
+ 
+ 	/* Only tell snapshots if this is a write */
+-	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
++	return (bio_rw(bio) == WRITE) ? do_origin(o->dev, bio) : DM_MAPIO_REMAPPED;
+ }
+ 
+ /*
+@@ -2192,15 +2209,15 @@ static int origin_map(struct dm_target *
+  */
+ static void origin_resume(struct dm_target *ti)
+ {
+-	struct dm_dev *dev = ti->private;
++	struct dm_origin *o = ti->private;
+ 
+-	ti->max_io_len = get_origin_minimum_chunksize(dev->bdev);
++	ti->max_io_len = get_origin_minimum_chunksize(o->dev->bdev);
+ }
+ 
+ static void origin_status(struct dm_target *ti, status_type_t type,
+ 			  unsigned status_flags, char *result, unsigned maxlen)
+ {
+-	struct dm_dev *dev = ti->private;
++	struct dm_origin *o = ti->private;
+ 
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+@@ -2208,7 +2225,7 @@ static void origin_status(struct dm_targ
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-		snprintf(result, maxlen, "%s", dev->name);
++		snprintf(result, maxlen, "%s", o->dev->name);
+ 		break;
  	}
  }
-@@ -1301,7 +1343,7 @@ static int __send_changing_extent_only(s
- 		else
- 			len = min((sector_t)ci->sector_count, max_io_len(ci->sector, ti));
+@@ -2216,13 +2233,13 @@ static void origin_status(struct dm_targ
+ static int origin_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+ 			struct bio_vec *biovec, int max_size)
+ {
+-	struct dm_dev *dev = ti->private;
+-	struct request_queue *q = bdev_get_queue(dev->bdev);
++	struct dm_origin *o = ti->private;
++	struct request_queue *q = bdev_get_queue(o->dev->bdev);
  
--		__send_duplicate_bios(ci, ti, num_bios, len);
-+		__send_duplicate_bios(ci, ti, num_bios, &len);
+ 	if (!q->merge_bvec_fn)
+ 		return max_size;
  
- 		ci->sector += len;
- 	} while (ci->sector_count -= len);
-@@ -1340,7 +1382,7 @@ static int __split_and_process_non_flush
+-	bvm->bi_bdev = dev->bdev;
++	bvm->bi_bdev = o->dev->bdev;
  
- 	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
+ 	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
+ }
+@@ -2230,9 +2247,9 @@ static int origin_merge(struct dm_target
+ static int origin_iterate_devices(struct dm_target *ti,
+ 				  iterate_devices_callout_fn fn, void *data)
+ {
+-	struct dm_dev *dev = ti->private;
++	struct dm_origin *o = ti->private;
  
--	__clone_and_map_data_bio(ci, ti, ci->sector, len);
-+	__clone_and_map_data_bio(ci, ti, ci->sector, &len);
+-	return fn(ti, dev, 0, ti->len, data);
++	return fn(ti, o->dev, 0, ti->len, data);
+ }
  
- 	ci->sector += len;
- 	ci->sector_count -= len;
-Index: linux-3.14-rc5/include/linux/device-mapper.h
-===================================================================
---- linux-3.14-rc5.orig/include/linux/device-mapper.h	2014-03-14 04:30:51.000000000 +0100
-+++ linux-3.14-rc5/include/linux/device-mapper.h	2014-03-14 04:32:08.000000000 +0100
-@@ -291,6 +291,7 @@ struct dm_target_io {
- 	struct dm_io *io;
- 	struct dm_target *ti;
- 	unsigned target_bio_nr;
-+	unsigned *len_ptr;
- 	struct bio clone;
- };
- 
-@@ -401,6 +402,7 @@ int dm_copy_name_and_uuid(struct mapped_
- struct gendisk *dm_disk(struct mapped_device *md);
- int dm_suspended(struct dm_target *ti);
- int dm_noflush_suspending(struct dm_target *ti);
-+void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
- union map_info *dm_get_rq_mapinfo(struct request *rq);
- 
- struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
+ static struct target_type origin_target = {
