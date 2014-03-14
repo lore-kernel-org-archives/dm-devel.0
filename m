@@ -1,17 +1,18 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 5/6] dm: remove num_write_bios
-Date: Fri, 14 Mar 2014 18:43:47 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1403141843120.31047@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 6/6] dm: introduce dm_ask_for_duplicate_bios
+Date: Fri, 14 Mar 2014 18:44:25 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1403141843520.31047@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1403141837520.31047@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1403141841290.31047@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1403141842170.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1403141843120.31047@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1403141842170.31047@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1403141843120.31047@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,71 +26,101 @@ To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, E
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The target can set the function num_write_bios - dm will issue this
-callback to ask the target how many bios does it want to receive.
-
-This was intended for the dm-cache target, but it is not useable due to a
-race condition (see the description of
-e2e74d617eadc15f601983270c4f4a6935c5a943). num_write_bios is unused, so we
-remove it.
-
-Note that we deliberately leave the for loop in __clone_and_map_data_bio -
-it will be used in the next patch.
+This function can be used if the target needs to receive another duplicate
+of the current bio.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm.c               |    6 ------
- include/linux/device-mapper.h |   15 ---------------
- 2 files changed, 21 deletions(-)
+ drivers/md/dm.c               |   24 +++++++++++++++++++-----
+ include/linux/device-mapper.h |    2 ++
+ 2 files changed, 21 insertions(+), 5 deletions(-)
 
 Index: linux-3.14-rc6/drivers/md/dm.c
 ===================================================================
---- linux-3.14-rc6.orig/drivers/md/dm.c	2014-03-14 22:02:31.000000000 +0100
-+++ linux-3.14-rc6/drivers/md/dm.c	2014-03-14 22:04:39.000000000 +0100
-@@ -1282,12 +1282,6 @@ static void __clone_and_map_data_bio(str
- 	unsigned target_bio_nr;
- 	unsigned num_target_bios = 1;
+--- linux-3.14-rc6.orig/drivers/md/dm.c	2014-03-14 23:25:27.000000000 +0100
++++ linux-3.14-rc6/drivers/md/dm.c	2014-03-14 23:33:09.000000000 +0100
+@@ -1129,9 +1129,9 @@ EXPORT_SYMBOL_GPL(dm_set_target_max_io_l
+  *	 to make it empty)
+  * The target requires that region 3 is to be sent in the next bio.
+  *
+- * If the target wants to receive multiple copies of the bio with num_write_bios
+- * or num_write_same_bios, the partially processed part (the sum of regions 1+2)
+- * must be the same for all copies of the bio.
++ * If the target wants to receive multiple copies of the bio with num_*_bios or
++ * dm_ask_for_duplicate_bio, the partially processed part (the sum of regions
++ * 1+2) must be the same for all copies of the bio.
+  */
+ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
+ {
+@@ -1144,6 +1144,17 @@ void dm_accept_partial_bio(struct bio *b
+ }
+ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
  
--	/*
--	 * Does the target want to receive duplicate copies of the bio?
--	 */
--	if (bio_data_dir(bio) == WRITE && ti->num_write_bios)
--		num_target_bios = ti->num_write_bios(ti, bio);
--
++/*
++ * The target driver can call this function only from the map routine. The
++ * target driver requests that the dm sends more duplicates of the current bio.
++ */
++void dm_ask_for_duplicate_bios(struct bio *bio, unsigned n_duplicates)
++{
++	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
++	(*tio->num_bios) += n_duplicates;
++}
++EXPORT_SYMBOL_GPL(dm_ask_for_duplicate_bios);
++
+ static void __map_bio(struct dm_target_io *tio)
+ {
+ 	int r;
+@@ -1234,12 +1245,14 @@ static struct dm_target_io *alloc_tio(st
+ 
+ static void __clone_and_map_simple_bio(struct clone_info *ci,
+ 				       struct dm_target *ti,
+-				       unsigned target_bio_nr, unsigned *len)
++				       unsigned target_bio_nr, unsigned *len,
++				       unsigned *num_bios)
+ {
+ 	struct dm_target_io *tio = alloc_tio(ci, ti, ci->bio->bi_max_vecs, target_bio_nr);
+ 	struct bio *clone = &tio->clone;
+ 
+ 	tio->len_ptr = len;
++	tio->num_bios = num_bios;
+ 
+ 	/*
+ 	 * Discard requests require the bio's inline iovecs be initialized.
+@@ -1259,7 +1272,7 @@ static void __send_duplicate_bios(struct
+ 	unsigned target_bio_nr;
+ 
+ 	for (target_bio_nr = 0; target_bio_nr < num_bios; target_bio_nr++)
+-		__clone_and_map_simple_bio(ci, ti, target_bio_nr, len);
++		__clone_and_map_simple_bio(ci, ti, target_bio_nr, len, &num_bios);
+ }
+ 
+ static int __send_empty_flush(struct clone_info *ci)
+@@ -1285,6 +1298,7 @@ static void __clone_and_map_data_bio(str
  	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
  		tio = alloc_tio(ci, ti, 0, target_bio_nr);
  		tio->len_ptr = len;
++		tio->num_bios = &num_target_bios;
+ 		clone_bio(tio, bio, sector, *len);
+ 		__map_bio(tio);
+ 	}
 Index: linux-3.14-rc6/include/linux/device-mapper.h
 ===================================================================
---- linux-3.14-rc6.orig/include/linux/device-mapper.h	2014-03-14 22:02:05.000000000 +0100
-+++ linux-3.14-rc6/include/linux/device-mapper.h	2014-03-14 22:02:21.000000000 +0100
-@@ -190,14 +190,6 @@ struct target_type {
- #define DM_TARGET_IMMUTABLE		0x00000004
- #define dm_target_is_immutable(type)	((type)->features & DM_TARGET_IMMUTABLE)
+--- linux-3.14-rc6.orig/include/linux/device-mapper.h	2014-03-14 23:25:27.000000000 +0100
++++ linux-3.14-rc6/include/linux/device-mapper.h	2014-03-14 23:25:27.000000000 +0100
+@@ -277,6 +277,7 @@ struct dm_target_io {
+ 	struct dm_target *ti;
+ 	unsigned target_bio_nr;
+ 	unsigned *len_ptr;
++	unsigned *num_bios;
+ 	struct bio clone;
+ };
  
--/*
-- * Some targets need to be sent the same WRITE bio severals times so
-- * that they can send copies of it to different devices.  This function
-- * examines any supplied bio and returns the number of copies of it the
-- * target requires.
-- */
--typedef unsigned (*dm_num_write_bios_fn) (struct dm_target *ti, struct bio *bio);
--
- struct dm_target {
- 	struct dm_table *table;
- 	struct target_type *type;
-@@ -237,13 +229,6 @@ struct dm_target {
- 	 */
- 	unsigned per_bio_data_size;
+@@ -388,6 +389,7 @@ struct gendisk *dm_disk(struct mapped_de
+ int dm_suspended(struct dm_target *ti);
+ int dm_noflush_suspending(struct dm_target *ti);
+ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
++void dm_ask_for_duplicate_bios(struct bio *bio, unsigned n_duplicates);
+ union map_info *dm_get_rq_mapinfo(struct request *rq);
  
--	/*
--	 * If defined, this function is called to find out how many
--	 * duplicate bios should be sent to the target when writing
--	 * data.
--	 */
--	dm_num_write_bios_fn num_write_bios;
--
- 	/* target specific data */
- 	void *private;
- 
+ struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
