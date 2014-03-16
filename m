@@ -1,51 +1,162 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: scsi_debug and mutipath, was Re: [PATCH 1/1] block: rework flush
- sequencing for blk-mq
-Date: Sat, 15 Mar 2014 06:28:26 -0700
-Message-ID: <20140315132826.GA17752@infradead.org>
-References: <x49iorp3fhm.fsf@segfault.boston.devel.redhat.com>
- <20140308155240.GA32297@infradead.org>
- <CAMM=eLewbtK7LiNZCXo=hm-sjVU2+MN+xTFuxb89mDA1iS3r0w@mail.gmail.com>
- <531B74B6.4070004@suse.de>
- <20140312102849.GA26509@infradead.org>
- <20140313161347.GA6598@redhat.com>
- <20140314092519.GA10139@infradead.org>
- <20140314130021.GA12589@redhat.com>
- <20140314132323.GA14606@infradead.org>
- <20140314141301.GA13112@redhat.com>
+From: Akira Hayakawa <hayakawa@valinux.co.jp>
+Subject: Re: A target to just process bios background?
+Date: Mon, 17 Mar 2014 08:46:50 +0900
+Message-ID: <20140317084650.1da0daed6c47c8f36c6118ff@valinux.co.jp>
+References: <20140304103037.a42991f149d749448846caab@valinux.co.jp>
+	<alpine.LRH.2.02.1403061745500.928@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140310171807.c477bd43cf0dfb4cd5ff880d@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140314141301.GA13112@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Benjamin Marzinski <bmarzins@redhat.com>, Doug Gilbert <dgilbert@interlog.com>, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140310171807.c477bd43cf0dfb4cd5ff880d@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 14, 2014 at 10:13:01AM -0400, Mike Snitzer wrote:
-> I was more reacting to the assertion you made like multipath regresses
-> all the time.  I'm not faulting you at all for not having tested
-> multipath.  Hell, I even forget to test multipath more than I should.
-> /me says with shame
+Hi,
 
-And I didn't assert that, I just asserted that it gets little testing.
+> If I understand correctly, any sync I/O causes deadlock if it's called under .map hook.
+> And blkdev_issue_flush() seems to be sync (submitting and wait for the completion after that) but
+> never cause deadlock in my environment.
+Sorry. I was really confused. That causes deadlock definitely.
 
-> Yeah, not sure why single path scsi_debug "just works", maybe it is a
-> "feature" of the older multipathd I have kicking around?, but for basic
-> data path testing scsi_debug is a quick means to an end.  I can look
-> closer at _why_ it gets multipathd in a bit.  But maybe Ben or Hannes
-> will have quicker insight?
+> Is it not allowed to call blkdev_issue_flush() directly under .map?
+> No target uses the function in device-mapper.
+blkdev_issue_flush() is not used in device-mapper at present but instead
+some targets uses dm_io with WRITE_FLUSH such as
+
+- flush_header() in dm-log.c
+- mirror_flush() in dm-raid1.c
+
+these codes
+- set the sector and count of dm_io_region to zero
+- set the write buffer is NULL
+- and then submits with WRITE_FLUSH flag using dm_io() routine.
+
+the dm-insitu-compression target newly proposed by Shaohua
+only uses blkdev_issue_flush() in its insitu_comp_flush_dirty_meta()
+but it's called on background and thus, sane.
+
+--
+Akira
+
+On Mon, 10 Mar 2014 17:18:07 +0900
+Akira Hayakawa <hayakawa@valinux.co.jp> wrote:
+
+> Hi, Mikulas,
 > 
-> For me, if multipathd is running, if I issue the following a multipath
-> device gets layered ontop of the associated scsi_debug created sd
-> device: modprobe scsi_debug dev_size_mb=1024
+> > Such target doesn't exist and I wouldn't recommend to make it. If you 
+> > add the bio to a queue and return immediatelly from the map routine, the 
+> > caller sends another bio. So, in the end, you end up with extreme amount 
+> > of bios on the queue and very bad responsiveness.
+> I see. It was just a question. Don't worry, dm-writeboost doesn't contain such a code.
 > 
-> I think it useful to have scsi_debug work with multipath.  I know people
-> in Red Hat's QE organization have even simulated multiple paths with
-> it.. but I don't recall if they had to hack scsi_debug to do that.  I'll
-> try to find out.
-
-Looks like it really shouldn't attach as-is.  But scsi_debug should be
-easily extendable to export two LUNs for the same backing store to help
-multipath testing.
+> By the way, I want to ask you a question related to this topic.
+> 
+> calling dm_io() in sync mode under .map hook causes deadlock.
+> To avoid that, for example, dm-snap-persistent.c executes it in a different thread.
+> 
+>         /*
+>          * Issue the synchronous I/O from a different thread
+>          * to avoid generic_make_request recursion.
+>          */
+>         INIT_WORK_ONSTACK(&req.work, do_metadata);
+>         queue_work(ps->metadata_wq, &req.work);
+>         flush_workqueue(ps->metadata_wq);
+>         destroy_work_on_stack(&req.work);
+> 
+> If we always queue the bio and executes it in a different thread
+> we never be suffered from this problem and that's why I call this topic is "related".
+> 
+> The cause of the deadlock is that the context has only one bio_list,
+> the bio submitted under sync dm_io() never be executed the caller bio completes.
+> Thus, deadlock.
+> 
+> If I understand correctly, any sync I/O causes deadlock if it's called under .map hook.
+> And blkdev_issue_flush() seems to be sync (submitting and wait for the completion after that) but
+> never cause deadlock in my environment.
+> 
+> Is it not allowed to call blkdev_issue_flush() directly under .map?
+> No target uses the function in device-mapper.
+> 
+> --
+> Akira
+> 
+> On Thu, 6 Mar 2014 17:57:21 -0500 (EST)
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > 
+> > 
+> > On Tue, 4 Mar 2014, Akira Hayakawa wrote:
+> > 
+> > > Hi,
+> > > 
+> > > Is it meaningless to submit the split and cloned bios in background
+> > > using workqueue?
+> > > 
+> > > device-mapper doesn't go to next split before the .map hook returns
+> > > (and generic_make_request() returns only in case of DM_MAPIO_REMAPPED).
+> > > So, quitting from .map hook and going into next split fast sounds to me
+> > > effective at least in terms of CPU usage (in multicore system).
+> > > 
+> > > is this discussed before?
+> > > 
+> > > A target as tiny as linear or flakey can be thought:
+> > > - it has work_struct in per_bio_data
+> > > - .map hook queue_work the work into private wq.
+> > > - and then return DM_MAPIO_SUBMITTED
+> > > 
+> > > is this implemented before?
+> > > 
+> > > I think this target will make people happy if they
+> > > want to see what if the bio submission is done background
+> > > without changing their code but only stacking a dm target.
+> > > 
+> > > I am sorry if I am confused.
+> > 
+> > Hi
+> > 
+> > Such target doesn't exist and I wouldn't recommend to make it. If you 
+> > add the bio to a queue and return immediatelly from the map routine, the 
+> > caller sends another bio. So, in the end, you end up with extreme amount 
+> > of bios on the queue and very bad responsiveness.
+> > 
+> > Suppose, for example, that you have a system with 16GB memory. 20% can be 
+> > marked dirty (that's the default value for /proc/sys/vm/dirty_ratio), and 
+> > if you use 4k bios, you may have 838860 bios on the queue. Any process 
+> > that tries to write anything to disk freezes until all of them are 
+> > written.
+> > 
+> > In fact, dm-crypt behaves this way - and we have a bug report that it 
+> > causes out-of-memory crashes when massive amounts of bios are added to the 
+> > queue.
+> > 
+> > dm-mirror also behaves this way, but only for write bios - you can load a 
+> > mirror target with both legs pointing to the same device if you want to 
+> > see how does it behave.
+> > 
+> > Mikulas
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+> -- 
+> Akira Hayakawa <hayakawa@valinux.co.jp>
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
