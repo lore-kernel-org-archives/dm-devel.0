@@ -1,162 +1,327 @@
-From: Akira Hayakawa <hayakawa@valinux.co.jp>
-Subject: Re: A target to just process bios background?
-Date: Mon, 17 Mar 2014 08:46:50 +0900
-Message-ID: <20140317084650.1da0daed6c47c8f36c6118ff@valinux.co.jp>
-References: <20140304103037.a42991f149d749448846caab@valinux.co.jp>
-	<alpine.LRH.2.02.1403061745500.928@file01.intranet.prod.int.rdu2.redhat.com>
-	<20140310171807.c477bd43cf0dfb4cd5ff880d@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Shaohua Li <shli@kernel.org>
+Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target for SSD
+Date: Mon, 17 Mar 2014 17:56:53 +0800
+Message-ID: <20140317095653.GA1014@kernel.org>
+References: <20140218101304.GA24889@kernel.org>
+ <20140307075733.GB21790@kernel.org>
+ <20140310135256.GA28665@redhat.com>
+ <20140314094008.GA2386@kernel.org>
+ <20140314224444.GA18027@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140310171807.c477bd43cf0dfb4cd5ff880d@valinux.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140314224444.GA18027@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
-
-> If I understand correctly, any sync I/O causes deadlock if it's called under .map hook.
-> And blkdev_issue_flush() seems to be sync (submitting and wait for the completion after that) but
-> never cause deadlock in my environment.
-Sorry. I was really confused. That causes deadlock definitely.
-
-> Is it not allowed to call blkdev_issue_flush() directly under .map?
-> No target uses the function in device-mapper.
-blkdev_issue_flush() is not used in device-mapper at present but instead
-some targets uses dm_io with WRITE_FLUSH such as
-
-- flush_header() in dm-log.c
-- mirror_flush() in dm-raid1.c
-
-these codes
-- set the sector and count of dm_io_region to zero
-- set the write buffer is NULL
-- and then submits with WRITE_FLUSH flag using dm_io() routine.
-
-the dm-insitu-compression target newly proposed by Shaohua
-only uses blkdev_issue_flush() in its insitu_comp_flush_dirty_meta()
-but it's called on background and thus, sane.
-
---
-Akira
-
-On Mon, 10 Mar 2014 17:18:07 +0900
-Akira Hayakawa <hayakawa@valinux.co.jp> wrote:
-
-> Hi, Mikulas,
+On Fri, Mar 14, 2014 at 06:44:45PM -0400, Mike Snitzer wrote:
+> On Fri, Mar 14 2014 at  5:40am -0400,
+> Shaohua Li <shli@kernel.org> wrote:
 > 
-> > Such target doesn't exist and I wouldn't recommend to make it. If you 
-> > add the bio to a queue and return immediatelly from the map routine, the 
-> > caller sends another bio. So, in the end, you end up with extreme amount 
-> > of bios on the queue and very bad responsiveness.
-> I see. It was just a question. Don't worry, dm-writeboost doesn't contain such a code.
-> 
-> By the way, I want to ask you a question related to this topic.
-> 
-> calling dm_io() in sync mode under .map hook causes deadlock.
-> To avoid that, for example, dm-snap-persistent.c executes it in a different thread.
-> 
->         /*
->          * Issue the synchronous I/O from a different thread
->          * to avoid generic_make_request recursion.
->          */
->         INIT_WORK_ONSTACK(&req.work, do_metadata);
->         queue_work(ps->metadata_wq, &req.work);
->         flush_workqueue(ps->metadata_wq);
->         destroy_work_on_stack(&req.work);
-> 
-> If we always queue the bio and executes it in a different thread
-> we never be suffered from this problem and that's why I call this topic is "related".
-> 
-> The cause of the deadlock is that the context has only one bio_list,
-> the bio submitted under sync dm_io() never be executed the caller bio completes.
-> Thus, deadlock.
-> 
-> If I understand correctly, any sync I/O causes deadlock if it's called under .map hook.
-> And blkdev_issue_flush() seems to be sync (submitting and wait for the completion after that) but
-> never cause deadlock in my environment.
-> 
-> Is it not allowed to call blkdev_issue_flush() directly under .map?
-> No target uses the function in device-mapper.
-> 
-> --
-> Akira
-> 
-> On Thu, 6 Mar 2014 17:57:21 -0500 (EST)
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > 
-> > 
-> > On Tue, 4 Mar 2014, Akira Hayakawa wrote:
-> > 
+> > On Mon, Mar 10, 2014 at 09:52:56AM -0400, Mike Snitzer wrote:
+> > > On Fri, Mar 07 2014 at  2:57am -0500,
+> > > Shaohua Li <shli@kernel.org> wrote:
+> > > 
+> > > > ping!
+> > > 
 > > > Hi,
 > > > 
-> > > Is it meaningless to submit the split and cloned bios in background
-> > > using workqueue?
+> > > I intend to get dm-insitu-comp reviewed for 3.15.  Sorry I haven't
+> > > gotten back with you before now, been busy tending to 3.14-rc issues.
 > > > 
-> > > device-mapper doesn't go to next split before the .map hook returns
-> > > (and generic_make_request() returns only in case of DM_MAPIO_REMAPPED).
-> > > So, quitting from .map hook and going into next split fast sounds to me
-> > > effective at least in terms of CPU usage (in multicore system).
-> > > 
-> > > is this discussed before?
-> > > 
-> > > A target as tiny as linear or flakey can be thought:
-> > > - it has work_struct in per_bio_data
-> > > - .map hook queue_work the work into private wq.
-> > > - and then return DM_MAPIO_SUBMITTED
-> > > 
-> > > is this implemented before?
-> > > 
-> > > I think this target will make people happy if they
-> > > want to see what if the bio submission is done background
-> > > without changing their code but only stacking a dm target.
-> > > 
-> > > I am sorry if I am confused.
-> > 
-> > Hi
-> > 
-> > Such target doesn't exist and I wouldn't recommend to make it. If you 
-> > add the bio to a queue and return immediatelly from the map routine, the 
-> > caller sends another bio. So, in the end, you end up with extreme amount 
-> > of bios on the queue and very bad responsiveness.
-> > 
-> > Suppose, for example, that you have a system with 16GB memory. 20% can be 
-> > marked dirty (that's the default value for /proc/sys/vm/dirty_ratio), and 
-> > if you use 4k bios, you may have 838860 bios on the queue. Any process 
-> > that tries to write anything to disk freezes until all of them are 
-> > written.
-> > 
-> > In fact, dm-crypt behaves this way - and we have a bug report that it 
-> > causes out-of-memory crashes when massive amounts of bios are added to the 
-> > queue.
-> > 
-> > dm-mirror also behaves this way, but only for write bios - you can load a 
-> > mirror target with both legs pointing to the same device if you want to 
-> > see how does it behave.
-> > 
-> > Mikulas
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
+> > > I took a quick first pass over your code a couple weeks ago.  Looks to
+> > > be in great shape relative to coding conventions and the more DM
+> > > specific conventions.  Clearly demonstrates you have a good command of
+> > > DM concepts and quirks.
 > 
+> Think I need to eat my words from above at least partially.  Given you
+> haven't implemented any of the target suspend or resume hooks this
+> target will _not_ work properly across suspend + resume cycles that all
+> DM targets must support.
 > 
-> -- 
-> Akira Hayakawa <hayakawa@valinux.co.jp>
+> But we can obviously work through it with urgency for 3.15.
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> I've pulled your v3 patch into git and have overlayed edits from my
+> first pass.  Lots of funky wrapping to conform to 80 columns.  But
+> whitespace aside, I've added FIXME:s in the relevant files.  If you work
+> on any of these FIXMEs please send follow-up patches so that we don't
+> step on each others' toes.
+> 
+> Please see the 'for-3.15-insitu-comp' branch of this git repo:
+> git://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git
+
+Thanks for your to look at it. I fixed them against your tree. Please check below patch.
+
+
+Subject: dm-insitu-comp: fix different issues
+
+Fix different issues pointed out by Mike and add suspend/resume support.
+
+Signed-off-by: Shaohua Li <shli@fusionio.com>
+---
+ drivers/md/dm-insitu-comp.c |  108 ++++++++++++++++++++++++++++++--------------
+ drivers/md/dm-insitu-comp.h |    8 +++
+ 2 files changed, 84 insertions(+), 32 deletions(-)
+
+Index: linux/drivers/md/dm-insitu-comp.c
+===================================================================
+--- linux.orig/drivers/md/dm-insitu-comp.c	2014-03-17 12:37:37.850751341 +0800
++++ linux/drivers/md/dm-insitu-comp.c	2014-03-17 17:40:01.106660303 +0800
+@@ -17,6 +17,7 @@
+ #include "dm-insitu-comp.h"
+ 
+ #define DM_MSG_PREFIX "insitu-comp"
++#define DEFAULT_WRITEBACK_DELAY 5
+ 
+ static inline int lzo_comp_len(int comp_len)
+ {
+@@ -40,6 +41,10 @@ static struct kmem_cache *insitu_comp_me
+ static struct insitu_comp_io_worker insitu_comp_io_workers[NR_CPUS];
+ static struct workqueue_struct *insitu_comp_wq;
+ 
++#define BYTE_BITS 8
++#define BYTE_BITS_SHIFT 3
++#define BYTE_BITS_MASK (BYTE_BITS - 1)
++
+ /* each block has 5 bits of metadata */
+ static u8 insitu_comp_get_meta(struct insitu_comp_info *info, u64 block_index)
+ {
+@@ -47,15 +52,14 @@ static u8 insitu_comp_get_meta(struct in
+ 	int bits, offset;
+ 	u8 data, ret = 0;
+ 
+-	// FIXME: "magic" numbers in this function (7, 3)
+-	offset = first_bit & 7;
+-	bits = min_t(u8, INSITU_COMP_META_BITS, 8 - offset);
++	offset = first_bit & BYTE_BITS_MASK;
++	bits = min_t(u8, INSITU_COMP_META_BITS, BYTE_BITS - offset);
+ 
+-	data = info->meta_bitmap[first_bit >> 3];
++	data = info->meta_bitmap[first_bit >> BYTE_BITS_SHIFT];
+ 	ret = (data >> offset) & ((1 << bits) - 1);
+ 
+ 	if (bits < INSITU_COMP_META_BITS) {
+-		data = info->meta_bitmap[(first_bit >> 3) + 1];
++		data = info->meta_bitmap[(first_bit >> BYTE_BITS_SHIFT) + 1];
+ 		bits = INSITU_COMP_META_BITS - bits;
+ 		ret |= (data & ((1 << bits) - 1)) <<
+ 			(INSITU_COMP_META_BITS - bits);
+@@ -71,14 +75,13 @@ static void insitu_comp_set_meta(struct
+ 	u8 data;
+ 	struct page *page;
+ 
+-	// FIXME: "magic" numbers in this function (7, 3)
+-	offset = first_bit & 7;
+-	bits = min_t(u8, INSITU_COMP_META_BITS, 8 - offset);
++	offset = first_bit & BYTE_BITS_MASK;
++	bits = min_t(u8, INSITU_COMP_META_BITS, BYTE_BITS - offset);
+ 
+-	data = info->meta_bitmap[first_bit >> 3];
++	data = info->meta_bitmap[first_bit >> BYTE_BITS_SHIFT];
+ 	data &= ~(((1 << bits) - 1) << offset);
+ 	data |= (meta & ((1 << bits) - 1)) << offset;
+-	info->meta_bitmap[first_bit >> 3] = data;
++	info->meta_bitmap[first_bit >> BYTE_BITS_SHIFT] = data;
+ 
+ 	/*
+ 	 * For writethrough, we write metadata directly.  For writeback, if
+@@ -301,9 +304,24 @@ static int insitu_comp_meta_writeback_th
+ 	init_completion(&wb.complete);
+ 
+ 	while (!kthread_should_stop()) {
+-		// FIXME: writeback_delay should be in secs
+-		schedule_timeout_interruptible(msecs_to_jiffies(info->writeback_delay * 1000));
++		schedule_timeout_interruptible(
++		    msecs_to_jiffies(info->writeback_delay * MSEC_PER_SEC));
+ 		insitu_comp_flush_dirty_meta(info, &wb);
++
++		if (info->wb_thread_suspend_status != WB_THREAD_RESUMED) {
++			writeback_flush_io_done(&wb, 0);
++			wait_for_completion(&wb.complete);
++
++			info->wb_thread_suspend_status = WB_THREAD_SUSPENDED;
++			wake_up_interruptible(&info->wb_thread_suspend_wq);
++
++			wait_event_interruptible(info->wb_thread_suspend_wq,
++			  info->wb_thread_suspend_status == WB_THREAD_RESUMED ||
++			  kthread_should_stop());
++
++			atomic_set(&wb.cnt, 1);
++			init_completion(&wb.complete);
++		}
+ 	}
+ 
+ 	insitu_comp_flush_dirty_meta(info, &wb);
+@@ -357,6 +375,8 @@ static int insitu_comp_init_meta(struct
+ 			info->ti->error = "Create writeback thread error";
+ 			return -EINVAL;
+ 		}
++		info->wb_thread_suspend_status = WB_THREAD_RESUMED;
++		init_waitqueue_head(&info->wb_thread_suspend_wq);
+ 	}
+ 
+ 	return 0;
+@@ -410,7 +430,6 @@ static int insitu_comp_read_or_create_su
+ 
+ 	total_blocks = i_size_read(info->dev->bdev->bd_inode) >> INSITU_COMP_BLOCK_SHIFT;
+ 	data_blocks = total_blocks - 1;
+-	// FIXME: 64bit divide on 32bit?  must compile/work on 32bit
+ 	rem = do_div(data_blocks, INSITU_COMP_BLOCK_SIZE * 8 + INSITU_COMP_META_BITS);
+ 	meta_blocks = data_blocks * INSITU_COMP_META_BITS;
+ 	data_blocks *= INSITU_COMP_BLOCK_SIZE * 8;
+@@ -507,13 +526,11 @@ out:
+  */
+ static int insitu_comp_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+-	// FIXME: add proper feature arg processing.
+-	// FIXME: pick default metadata write mode.
+ 	struct insitu_comp_info *info;
+ 	char write_mode[15];
+ 	int ret, i;
+ 
+-	if (argc < 2) {
++	if (argc < 1) {
+ 		ti->error = "Invalid argument count";
+ 		return -EINVAL;
+ 	}
+@@ -525,19 +542,18 @@ static int insitu_comp_ctr(struct dm_tar
+ 	}
+ 	info->ti = ti;
+ 
++	info->write_mode = INSITU_COMP_WRITE_BACK;
++	info->writeback_delay = DEFAULT_WRITEBACK_DELAY;
++	if (argc == 1)
++		goto skip_optargs;
++
+ 	if (sscanf(argv[1], "%s", write_mode) != 1) {
+ 		ti->error = "Invalid argument";
+ 		ret = -EINVAL;
+ 		goto err_para;
+ 	}
+ 
+-	if (strcmp(write_mode, "writeback") == 0) {
+-		if (argc != 3) {
+-			ti->error = "Invalid argument";
+-			ret = -EINVAL;
+-			goto err_para;
+-		}
+-		info->write_mode = INSITU_COMP_WRITE_BACK;
++	if (strcmp(write_mode, "writeback") == 0 && argc == 3) {
+ 		if (sscanf(argv[2], "%u", &info->writeback_delay) != 1) {
+ 			ti->error = "Invalid argument";
+ 			ret = -EINVAL;
+@@ -551,6 +567,7 @@ static int insitu_comp_ctr(struct dm_tar
+ 		goto err_para;
+ 	}
+ 
++skip_optargs:
+ 	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
+ 							&info->dev)) {
+ 		ti->error = "Can't get device";
+@@ -1348,6 +1365,28 @@ static int insitu_comp_map(struct dm_tar
+ 	return DM_MAPIO_SUBMITTED;
+ }
+ 
++static void insitu_comp_postsuspend(struct dm_target *ti)
++{
++	struct insitu_comp_info *info = ti->private;
++	/* all requests are finished already */
++	if (info->write_mode != INSITU_COMP_WRITE_BACK)
++		return;
++	info->wb_thread_suspend_status = WB_THREAD_SUSPENDING;
++	wake_up_process(info->writeback_tsk);
++
++	wait_event_interruptible(info->wb_thread_suspend_wq,
++		info->wb_thread_suspend_status == WB_THREAD_SUSPENDED);
++}
++
++static void insitu_comp_resume(struct dm_target *ti)
++{
++	struct insitu_comp_info *info = ti->private;
++	if (info->write_mode != INSITU_COMP_WRITE_BACK)
++		return;
++	info->wb_thread_suspend_status = WB_THREAD_RESUMED;
++	wake_up_interruptible(&info->wb_thread_suspend_wq);
++}
++
+ /*
+  * INFO: uncompressed_data_size compressed_data_size metadata_size
+  * TABLE: writethrough/writeback commit_delay
+@@ -1360,10 +1399,10 @@ static void insitu_comp_status(struct dm
+ 
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+-		DMEMIT("%lu %lu %lu",
+-		       atomic64_read(&info->uncompressed_write_size),
+-		       atomic64_read(&info->compressed_write_size),
+-		       atomic64_read(&info->meta_write_size));
++		DMEMIT("%llu %llu %llu",
++		    (long long)atomic64_read(&info->uncompressed_write_size),
++		    (long long)atomic64_read(&info->compressed_write_size),
++		    (long long)atomic64_read(&info->meta_write_size));
+ 		break;
+ 	case STATUSTYPE_TABLE:
+ 		if (info->write_mode == INSITU_COMP_WRITE_BACK)
+@@ -1407,8 +1446,8 @@ static struct target_type insitu_comp_ta
+ 	.ctr    = insitu_comp_ctr,
+ 	.dtr    = insitu_comp_dtr,
+ 	.map    = insitu_comp_map,
+-	// FIXME: no .postsuspend or .preresume or .resume!?
+-	// need to flush workqueue at a minimum.  what about commit?  see pool_target or cache_target
++	.postsuspend = insitu_comp_postsuspend,
++	.resume = insitu_comp_resume,
+ 	.status = insitu_comp_status,
+ 	.iterate_devices = insitu_comp_iterate_devices,
+ 	.io_hints = insitu_comp_io_hints,
+@@ -1430,14 +1469,19 @@ static int __init insitu_comp_init(void)
+ 	default_compressor = r;
+ 
+ 	r = -ENOMEM;
+-	// FIXME: add dm_ prefix to at least these 2 structs so slabs are attributed to dm
+-	insitu_comp_io_range_cachep = KMEM_CACHE(insitu_comp_io_range, 0);
++	insitu_comp_io_range_cachep = kmem_cache_create("dm_insitu_comp_io_range",
++		sizeof(struct insitu_comp_io_range),
++		__alignof__(struct insitu_comp_io_range),
++		0, NULL);
+ 	if (!insitu_comp_io_range_cachep) {
+ 		DMWARN("Can't create io_range cache");
+ 		goto err;
+ 	}
+ 
+-	insitu_comp_meta_io_cachep = KMEM_CACHE(insitu_comp_meta_io, 0);
++	insitu_comp_meta_io_cachep = kmem_cache_create("dm_insitu_comp_meta_io",
++		sizeof(struct insitu_comp_meta_io),
++		__alignof__(struct insitu_comp_meta_io),
++		0, NULL);
+ 	if (!insitu_comp_meta_io_cachep) {
+ 		DMWARN("Can't create meta_io cache");
+ 		goto err;
+Index: linux/drivers/md/dm-insitu-comp.h
+===================================================================
+--- linux.orig/drivers/md/dm-insitu-comp.h	2014-03-17 12:37:37.850751341 +0800
++++ linux/drivers/md/dm-insitu-comp.h	2014-03-17 16:22:24.553201921 +0800
+@@ -92,6 +92,8 @@ struct insitu_comp_info {
+ 	enum INSITU_COMP_WRITE_MODE write_mode;
+ 	unsigned int writeback_delay; /* second unit */
+ 	struct task_struct *writeback_tsk;
++	int wb_thread_suspend_status;
++	wait_queue_head_t wb_thread_suspend_wq;
+ 	struct dm_io_client *io_client;
+ 
+ 	atomic64_t compressed_write_size;
+@@ -99,6 +101,12 @@ struct insitu_comp_info {
+ 	atomic64_t meta_write_size;
+ };
+ 
++enum {
++	WB_THREAD_RESUMED = 0,
++	WB_THREAD_SUSPENDING = 1,
++	WB_THREAD_SUSPENDED = 2,
++};
++
+ struct insitu_comp_meta_io {
+ 	struct dm_io_request io_req;
+ 	struct dm_io_region io_region;
