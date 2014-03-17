@@ -1,79 +1,54 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target for SSD
-Date: Mon, 17 Mar 2014 16:00:40 -0400
-Message-ID: <20140317200039.GC3269@redhat.com>
-References: <20140218101304.GA24889@kernel.org>
- <20140307075733.GB21790@kernel.org>
- <20140310135256.GA28665@redhat.com>
- <20140314094008.GA2386@kernel.org>
- <20140314224444.GA18027@redhat.com>
- <20140317095653.GA1014@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 2/6] dm: introduce dm_accept_partial_bio
+Date: Mon, 17 Mar 2014 18:45:06 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1403171838380.12877@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1403141837520.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140317132740.GA7184@redhat.com>
+	<alpine.LRH.2.02.1403171251510.24934@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140317174324.GA2285@redhat.com> <20140317190907.GA3269@redhat.com>
+	<alpine.LRH.2.02.1403171511360.9770@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140317194701.GB3269@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140317095653.GA1014@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shaohua Li <shli@kernel.org>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140317194701.GB3269@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 17 2014 at  5:56am -0400,
-Shaohua Li <shli@kernel.org> wrote:
 
-> On Fri, Mar 14, 2014 at 06:44:45PM -0400, Mike Snitzer wrote:
-> > On Fri, Mar 14 2014 at  5:40am -0400,
-> > Shaohua Li <shli@kernel.org> wrote:
+
+On Mon, 17 Mar 2014, Mike Snitzer wrote:
+
+> > > I do however want you to add yet another BUG_ON for any bio that isn't
+> > > meant to be sent to this interface (only one so far is REQ_FLUSH AFAIK).
 > > 
-> > > On Mon, Mar 10, 2014 at 09:52:56AM -0400, Mike Snitzer wrote:
-> > > > On Fri, Mar 07 2014 at  2:57am -0500,
-> > > > Shaohua Li <shli@kernel.org> wrote:
-> > > > 
-> > > > > ping!
-> > > > 
-> > > > Hi,
-> > > > 
-> > > > I intend to get dm-insitu-comp reviewed for 3.15.  Sorry I haven't
-> > > > gotten back with you before now, been busy tending to 3.14-rc issues.
-> > > > 
-> > > > I took a quick first pass over your code a couple weeks ago.  Looks to
-> > > > be in great shape relative to coding conventions and the more DM
-> > > > specific conventions.  Clearly demonstrates you have a good command of
-> > > > DM concepts and quirks.
-> > 
-> > Think I need to eat my words from above at least partially.  Given you
-> > haven't implemented any of the target suspend or resume hooks this
-> > target will _not_ work properly across suspend + resume cycles that all
-> > DM targets must support.
-> > 
-> > But we can obviously work through it with urgency for 3.15.
-> > 
-> > I've pulled your v3 patch into git and have overlayed edits from my
-> > first pass.  Lots of funky wrapping to conform to 80 columns.  But
-> > whitespace aside, I've added FIXME:s in the relevant files.  If you work
-> > on any of these FIXMEs please send follow-up patches so that we don't
-> > step on each others' toes.
-> > 
-> > Please see the 'for-3.15-insitu-comp' branch of this git repo:
-> > git://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git
+> > Then, it triggers NULL pointer dereference. You don't have to add BUG_ON 
+> > for it, it crashes anyway.
 > 
-> Thanks for your to look at it. I fixed them against your tree. Please check below patch.
+> I understand it'll NULL pointer, but that is _always_ confusing for
+> someone who wasn't the original developer.  Please add the explicit
+> BUG_ON() for REQ_FLUSH.
 
-I folded your changes in, and then committed a patch ontop that cleans
-some code up.  But added 2 FIXMEs that still speak to pretty fundamental
-problems with the architecture of the dm-insitu-comp target, see:
-https://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=for-3.15-insitu-comp&id=8565ab6b04837591d03c94851c2f9f9162ce12f4
+The user will not hit a BUG with REQ_FLUSH. Regarding the developer - it 
+is expected that the kernel developer is able to decode the oops message, 
+compare it with disassembled code and find out which variable was NULL. 
+The function is small, so it's an easy task.
 
-Unfortunately the single insitu_comp_wq workqueue that all insitu-comp
-targets are to share isn't a workable solution.  Each target needs to
-have resource isolation from other targets (imagine insitu-comp used for
-multiple SSDs).  This is important for suspend too because you'll need
-to flush/stop the workqueue.
+We don't really need
+BUG_ON(!pointer);
+variable = *pointer;
 
-You introduced a state machine for tracking suspending, suspended,
-resumed.  This really isn't necessary.  During suspend you need to
-flush_workqueue().  On resume you shouldn't need to do anything special.
-
-As I noted in the commit, the thin and cache targets can serve as
-references for how you can manage the workqueue across suspend/resume
-and the lifetime of these workqueues relative to .ctr and .dtr.
+Mikulas
