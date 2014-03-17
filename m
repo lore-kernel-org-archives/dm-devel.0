@@ -1,18 +1,19 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 2/6] dm: introduce dm_accept_partial_bio
-Date: Mon, 17 Mar 2014 13:43:24 -0400
-Message-ID: <20140317174324.GA2285@redhat.com>
+Date: Mon, 17 Mar 2014 15:09:07 -0400
+Message-ID: <20140317190907.GA3269@redhat.com>
 References: <alpine.LRH.2.02.1403141837520.31047@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
 	<20140317132740.GA7184@redhat.com>
 	<alpine.LRH.2.02.1403171251510.24934@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140317174324.GA2285@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1403171251510.24934@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20140317174324.GA2285@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,56 +27,19 @@ To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 17 2014 at  1:08pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Mon, Mar 17 2014 at  1:43pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
+> On Mon, Mar 17 2014 at  1:08pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> 
-> On Mon, 17 Mar 2014, Mike Snitzer wrote:
-> 
-> > > +void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
-> > > +{
-> > > +	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-> > > +	unsigned bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
-> > > +	BUG_ON(bi_size > *tio->len_ptr);
-> > > +	BUG_ON(n_sectors > bi_size);
-> > > +	*tio->len_ptr -= bi_size - n_sectors;
-> > > +	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
-> > > +}
-> > > +EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
-> > > +
 > > 
-> > The dm_accept_partial_bio interface should return an error (e.g. if bio
-> > has REQ_FLUSH set, or the above BUG_ON conditions are met).  The method
-> > should probably also be designated with __must_check.  And it should
-> > _not_ BUG_ON.  BUG_ON is a crutch that I do not appreciate seeing in new
-> > code.  If you'd like to keep them, and get stacktraces, I'd prefer
-> > seeing them converted to WARN_ON that is followed with an error return.
-> 
-> You need to return error for externally triggered events (like disk 
-> errors, memory allocation failures, etc.), not for bugs in the code.
-> 
-> Here, if someone passes invalid n_sectors, it is not externally triggered 
-> event (the code that passed the invalid argument is just buggy) - so 
-> crashing on BUG_ON is OK.
-> 
-> 
-> Another problem is that warnings can be easily missed, BUG won't be 
-> missed. For example, the lvm testsuite generates large number of messages 
-> to the syslog. Consequently, when I run the testsuite, I don't read 
-> syslog. Consequently, if you convert BUG_ON to WARN_ON and the testsuite 
-> triggers it, I will miss it.
-> 
-> 
-> Regarding REQ_FLUSH - it would already crash on NULL pointer dereference 
-> when accessing *tio->len_ptr.
+> > Regarding REQ_FLUSH - it would already crash on NULL pointer dereference 
+> > when accessing *tio->len_ptr.
 
-None of what you responded with here is acceptable.  Your preferred
-conventions don't accomodate people implementing a new target, or
-adapting an existing target, to use this new interface you've proposed.
-In this instance, BUG() is a hostile response to what is likely a minor
-oversight.
+I realize if any of these BUG_ON checks hits the calling target code has
+a bug.  I just think it a fairly harsh response to BUG the system.  But
+I can let this issue go.
 
-Returning an error will not allow the caller to do what they thought
-would happen.  So even you should catch that (despite you apparently not
-looking at the kernel log messages).
+I do however want you to add yet another BUG_ON for any bio that isn't
+meant to be sent to this interface (only one so far is REQ_FLUSH AFAIK).
