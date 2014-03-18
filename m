@@ -1,15 +1,23 @@
-From: Ross Anderson <rosander@dsotm.net>
-Subject: multipath prio issues
-Date: Mon, 17 Mar 2014 18:51:45 -0500
-Message-ID: <53278A91.4010902@dsotm.net>
-References: <CAPi_w4w8+A=ZPANQRJDzcQWCaxj-aOJbbOePWVjsx8r7pxeWrg@mail.gmail.com>	<20140317140117.GA7539@redhat.com>
-	<CAPi_w4y=xGjupEsz7UgHOOH3qFSbcrh+W80Y0QpxvEZR-Uyrzg@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/6] dm: introduce dm_accept_partial_bio
+Date: Mon, 17 Mar 2014 20:49:52 -0400
+Message-ID: <20140318004951.GD4037@redhat.com>
+References: <alpine.LRH.2.02.1403141837520.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1403141840500.31047@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140317132740.GA7184@redhat.com>
+	<alpine.LRH.2.02.1403171251510.24934@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140317174324.GA2285@redhat.com>
+	<20140317190907.GA3269@redhat.com>
+	<alpine.LRH.2.02.1403171511360.9770@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140317194701.GB3269@redhat.com>
+	<alpine.LRH.2.02.1403171838380.12877@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPi_w4y=xGjupEsz7UgHOOH3qFSbcrh+W80Y0QpxvEZR-Uyrzg@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1403171838380.12877@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,23 +27,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Greetings,
+On Mon, Mar 17 2014 at  6:45pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-I would appreciate support correcting another issues. We have two scst 
-storage arrays configured  with drbd replication and alua settings via 
-targets. When we run sg_inq and sg_rtpg we see the preferred port. 
-Multipath however doesn't seem to respect the priority path. We then 
-tried setting active and nonoptimized on the two storage arrays without 
-success. If I'm reading this correctly the devices are reporting their 
-state to the multipath system however it's not respecting the values. 
-I'd appreciate any assistance on the matter. Pastebin all the 
-appropriate .conf and command outs.
+> 
+> 
+> On Mon, 17 Mar 2014, Mike Snitzer wrote:
+> 
+> > > > I do however want you to add yet another BUG_ON for any bio that isn't
+> > > > meant to be sent to this interface (only one so far is REQ_FLUSH AFAIK).
+> > > 
+> > > Then, it triggers NULL pointer dereference. You don't have to add BUG_ON 
+> > > for it, it crashes anyway.
+> > 
+> > I understand it'll NULL pointer, but that is _always_ confusing for
+> > someone who wasn't the original developer.  Please add the explicit
+> > BUG_ON() for REQ_FLUSH.
+> 
+> The user will not hit a BUG with REQ_FLUSH. Regarding the developer - it 
+> is expected that the kernel developer is able to decode the oops message, 
+> compare it with disassembled code and find out which variable was NULL. 
+> The function is small, so it's an easy task.
 
-Thanks
+By that logic then no BUG_ON() should ever be needed.  You need to know
+to quit while you're ahead ;)
 
-Ross Anderson
+> We don't really need
+> BUG_ON(!pointer);
+> variable = *pointer;
 
-http://pastebin.com/pp72YBXw
+Right, we don't.. but it helps resolve issues quicker if thoughtful
+BUG_ON()s hit before more obscure crashes do.  Whereby obviating the
+need to reverse engineer _why_ the NULL pointer occurred.
