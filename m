@@ -1,93 +1,51 @@
-From: Shaohua Li <shli@kernel.org>
-Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target for SSD
-Date: Tue, 18 Mar 2014 15:41:45 +0800
-Message-ID: <20140318074145.GA14397@kernel.org>
-References: <20140218101304.GA24889@kernel.org>
- <20140307075733.GB21790@kernel.org>
- <20140310135256.GA28665@redhat.com>
- <20140314094008.GA2386@kernel.org>
- <20140314224444.GA18027@redhat.com>
- <20140317095653.GA1014@kernel.org>
- <20140317200039.GC3269@redhat.com>
+From: Ross Anderson <rosander@dsotm.net>
+Subject: Re: multipath prio issues
+Date: Tue, 18 Mar 2014 11:13:58 -0500
+Message-ID: <532870C6.20309@dsotm.net>
+References: <CAPi_w4w8+A=ZPANQRJDzcQWCaxj-aOJbbOePWVjsx8r7pxeWrg@mail.gmail.com>	<20140317140117.GA7539@redhat.com>	<CAPi_w4y=xGjupEsz7UgHOOH3qFSbcrh+W80Y0QpxvEZR-Uyrzg@mail.gmail.com>
+	<53278A91.4010902@dsotm.net> <5327EDC9.5090705@acm.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140317200039.GC3269@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5327EDC9.5090705@acm.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bvanassche@acm.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 17, 2014 at 04:00:40PM -0400, Mike Snitzer wrote:
-> On Mon, Mar 17 2014 at  5:56am -0400,
-> Shaohua Li <shli@kernel.org> wrote:
-> 
-> > On Fri, Mar 14, 2014 at 06:44:45PM -0400, Mike Snitzer wrote:
-> > > On Fri, Mar 14 2014 at  5:40am -0400,
-> > > Shaohua Li <shli@kernel.org> wrote:
-> > > 
-> > > > On Mon, Mar 10, 2014 at 09:52:56AM -0400, Mike Snitzer wrote:
-> > > > > On Fri, Mar 07 2014 at  2:57am -0500,
-> > > > > Shaohua Li <shli@kernel.org> wrote:
-> > > > > 
-> > > > > > ping!
-> > > > > 
-> > > > > Hi,
-> > > > > 
-> > > > > I intend to get dm-insitu-comp reviewed for 3.15.  Sorry I haven't
-> > > > > gotten back with you before now, been busy tending to 3.14-rc issues.
-> > > > > 
-> > > > > I took a quick first pass over your code a couple weeks ago.  Looks to
-> > > > > be in great shape relative to coding conventions and the more DM
-> > > > > specific conventions.  Clearly demonstrates you have a good command of
-> > > > > DM concepts and quirks.
-> > > 
-> > > Think I need to eat my words from above at least partially.  Given you
-> > > haven't implemented any of the target suspend or resume hooks this
-> > > target will _not_ work properly across suspend + resume cycles that all
-> > > DM targets must support.
-> > > 
-> > > But we can obviously work through it with urgency for 3.15.
-> > > 
-> > > I've pulled your v3 patch into git and have overlayed edits from my
-> > > first pass.  Lots of funky wrapping to conform to 80 columns.  But
-> > > whitespace aside, I've added FIXME:s in the relevant files.  If you work
-> > > on any of these FIXMEs please send follow-up patches so that we don't
-> > > step on each others' toes.
-> > > 
-> > > Please see the 'for-3.15-insitu-comp' branch of this git repo:
-> > > git://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git
-> > 
-> > Thanks for your to look at it. I fixed them against your tree. Please check below patch.
-> 
-> I folded your changes in, and then committed a patch ontop that cleans
-> some code up.  But added 2 FIXMEs that still speak to pretty fundamental
-> problems with the architecture of the dm-insitu-comp target, see:
-> https://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=for-3.15-insitu-comp&id=8565ab6b04837591d03c94851c2f9f9162ce12f4
-> 
-> Unfortunately the single insitu_comp_wq workqueue that all insitu-comp
-> targets are to share isn't a workable solution.  Each target needs to
-> have resource isolation from other targets (imagine insitu-comp used for
-> multiple SSDs).  This is important for suspend too because you'll need
-> to flush/stop the workqueue.
+On 3/18/2014 1:55 AM, Bart Van Assche wrote:
+> On 03/18/14 00:51, Ross Anderson wrote:
+>> I would appreciate support correcting another issues. We have two scst
+>> storage arrays configured  with drbd replication and alua settings via
+>> targets. When we run sg_inq and sg_rtpg we see the preferred port.
+>> Multipath however doesn't seem to respect the priority path. We then
+>> tried setting active and nonoptimized on the two storage arrays without
+>> success. If I'm reading this correctly the devices are reporting their
+>> state to the multipath system however it's not respecting the values.
+>> I'd appreciate any assistance on the matter. Pastebin all the
+>> appropriate .conf and command outs.
+> Hello Ross,
+>
+> Have you already tried to change "prio group_by_prio" into "prio alua" ?
+>
+> Bart.
+>
+Greetings,
 
-Is this just because of suspend? I didn't see fundamental reason why the
-workqueue can't be shared even for several targets.
- 
-> You introduced a state machine for tracking suspending, suspended,
-> resumed.  This really isn't necessary.  During suspend you need to
-> flush_workqueue().  On resume you shouldn't need to do anything special.
-> 
-> As I noted in the commit, the thin and cache targets can serve as
-> references for how you can manage the workqueue across suspend/resume
-> and the lifetime of these workqueues relative to .ctr and .dtr.
-
-As far as I checking the code, .postsuspend is called after all requests are
-finished. This already guarantees no pending requests running in insitu-comp
-workqueue. Doing a workqueue flush isn't required. The writeback thread is
-running in background and waiting for requests completion can't guarantee the
-thread isn't running, so we must make sure it is safely parked.
+Yes, the config file had multiple devices listed. The one I focused on 
+was the general however they all attached to the same set of storage 
+heads. In Alua mode it gives them all prio 50 and the output of 
+multipath show them not accepting the preferred value. I threw the 
+complete config with different options to show no real different.
 
 Thanks,
-Shaohua
+Ross
