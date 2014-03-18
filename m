@@ -1,15 +1,23 @@
-From: Ross Anderson <rosander@dsotm.net>
-Subject: Re: multipath prio issues
-Date: Tue, 18 Mar 2014 11:13:58 -0500
-Message-ID: <532870C6.20309@dsotm.net>
-References: <CAPi_w4w8+A=ZPANQRJDzcQWCaxj-aOJbbOePWVjsx8r7pxeWrg@mail.gmail.com>	<20140317140117.GA7539@redhat.com>	<CAPi_w4y=xGjupEsz7UgHOOH3qFSbcrh+W80Y0QpxvEZR-Uyrzg@mail.gmail.com>
-	<53278A91.4010902@dsotm.net> <5327EDC9.5090705@acm.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target
+	for SSD
+Date: Tue, 18 Mar 2014 17:28:43 -0400
+Message-ID: <20140318212842.GA10850@redhat.com>
+References: <20140218101304.GA24889@kernel.org>
+	<20140307075733.GB21790@kernel.org>
+	<20140310135256.GA28665@redhat.com>
+	<20140314094008.GA2386@kernel.org>
+	<20140314224444.GA18027@redhat.com>
+	<20140317095653.GA1014@kernel.org>
+	<20140317200039.GC3269@redhat.com>
+	<20140318074145.GA14397@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5327EDC9.5090705@acm.org>
+Content-Disposition: inline
+In-Reply-To: <20140318074145.GA14397@kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,33 +27,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bvanassche@acm.org>, device-mapper development <dm-devel@redhat.com>
+To: Shaohua Li <shli@kernel.org>
+Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 3/18/2014 1:55 AM, Bart Van Assche wrote:
-> On 03/18/14 00:51, Ross Anderson wrote:
->> I would appreciate support correcting another issues. We have two scst
->> storage arrays configured  with drbd replication and alua settings via
->> targets. When we run sg_inq and sg_rtpg we see the preferred port.
->> Multipath however doesn't seem to respect the priority path. We then
->> tried setting active and nonoptimized on the two storage arrays without
->> success. If I'm reading this correctly the devices are reporting their
->> state to the multipath system however it's not respecting the values.
->> I'd appreciate any assistance on the matter. Pastebin all the
->> appropriate .conf and command outs.
-> Hello Ross,
->
-> Have you already tried to change "prio group_by_prio" into "prio alua" ?
->
-> Bart.
->
-Greetings,
+On Tue, Mar 18 2014 at  3:41am -0400,
+Shaohua Li <shli@kernel.org> wrote:
 
-Yes, the config file had multiple devices listed. The one I focused on 
-was the general however they all attached to the same set of storage 
-heads. In Alua mode it gives them all prio 50 and the output of 
-multipath show them not accepting the preferred value. I threw the 
-complete config with different options to show no real different.
+> On Mon, Mar 17, 2014 at 04:00:40PM -0400, Mike Snitzer wrote:
+> > 
+> > I folded your changes in, and then committed a patch ontop that cleans
+> > some code up.  But added 2 FIXMEs that still speak to pretty fundamental
+> > problems with the architecture of the dm-insitu-comp target, see:
+> > https://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=for-3.15-insitu-comp&id=8565ab6b04837591d03c94851c2f9f9162ce12f4
+> > 
+> > Unfortunately the single insitu_comp_wq workqueue that all insitu-comp
+> > targets are to share isn't a workable solution.  Each target needs to
+> > have resource isolation from other targets (imagine insitu-comp used for
+> > multiple SSDs).  This is important for suspend too because you'll need
+> > to flush/stop the workqueue.
+> 
+> Is this just because of suspend? I didn't see fundamental reason why the
+> workqueue can't be shared even for several targets.
 
-Thanks,
-Ross
+I'm not seeing how you are guaranteeing that all queued work is
+completed during suspend.  insitu_comp_queue_req() just calls
+queue_work_on().
+
+BTW, queue_work_on()'s comment above its implementation says:
+"We queue the work to a specific CPU, the caller must ensure it can't go
+away." -- you're not able to insure a cpu isn't hotplugged so... but I
+also see you've used it in your raid5 perf improvement changes so you
+obviously have experience with using this interface.
+
+> > You introduced a state machine for tracking suspending, suspended,
+> > resumed.  This really isn't necessary.  During suspend you need to
+> > flush_workqueue().  On resume you shouldn't need to do anything special.
+> > 
+> > As I noted in the commit, the thin and cache targets can serve as
+> > references for how you can manage the workqueue across suspend/resume
+> > and the lifetime of these workqueues relative to .ctr and .dtr.
+> 
+> As far as I checking the code, .postsuspend is called after all requests are
+> finished. This already guarantees no pending requests running in insitu-comp
+> workqueue.
+
+I could easily be missing something obvious, but I don't see where that
+guarantee is implemented.
+
+> Doing a workqueue flush isn't required. The writeback thread is
+> running in background and waiting for requests completion can't guarantee the
+> thread isn't running, so we must make sure it is safely parked.
+
+Sure, but you don't need a state machine to do that.  The DM core takes
+care of calling these hooks, so you just need to stop the writeback
+thread during suspend and (re)start/kick it on resume (preresume).
