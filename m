@@ -1,118 +1,142 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [patch v3]DM: dm-insitu-comp: a compressed DM target for SSD
-Date: Wed, 19 Mar 2014 12:16:42 -0400
-Message-ID: <20140319161641.GA16421@redhat.com>
-References: <20140218101304.GA24889@kernel.org>
- <20140307075733.GB21790@kernel.org>
- <20140310135256.GA28665@redhat.com>
- <20140314094008.GA2386@kernel.org>
- <20140314224444.GA18027@redhat.com>
- <20140317095653.GA1014@kernel.org>
- <20140317200039.GC3269@redhat.com>
- <20140318074145.GA14397@kernel.org>
- <20140318212842.GA10850@redhat.com>
- <20140319014557.GA1631@kernel.org>
+From: Nicolas Michel <be.nicolas.michel@gmail.com>
+Subject: Re: How dm multipath handle IO
+Date: Thu, 20 Mar 2014 07:26:55 +0100
+Message-ID: <CAO5znauRwv2mH4W+7VLR-PEO-nHvLmoMP-fpih9Ri_E0Dkqt8A@mail.gmail.com>
+References: <CAO5znatnsF_x=-EOKHpezw0M4QNZ5KXiawEGKQ7hkXMCwfQy2Q@mail.gmail.com>
+	<5322C7E5.8020000@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140319014557.GA1631@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shaohua Li <shli@kernel.org>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: multipart/mixed; boundary="===============7315812778052607619=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5322C7E5.8020000@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Mar 18 2014 at  9:45pm -0400,
-Shaohua Li <shli@kernel.org> wrote:
+--===============7315812778052607619==
+Content-Type: multipart/alternative; boundary=089e0118254408612104f503dbc9
 
-> On Tue, Mar 18, 2014 at 05:28:43PM -0400, Mike Snitzer wrote:
-> > On Tue, Mar 18 2014 at  3:41am -0400,
-> > Shaohua Li <shli@kernel.org> wrote:
-> > 
-> > > On Mon, Mar 17, 2014 at 04:00:40PM -0400, Mike Snitzer wrote:
-> > > > 
-> > > > I folded your changes in, and then committed a patch ontop that cleans
-> > > > some code up.  But added 2 FIXMEs that still speak to pretty fundamental
-> > > > problems with the architecture of the dm-insitu-comp target, see:
-> > > > https://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=for-3.15-insitu-comp&id=8565ab6b04837591d03c94851c2f9f9162ce12f4
-> > > > 
-> > > > Unfortunately the single insitu_comp_wq workqueue that all insitu-comp
-> > > > targets are to share isn't a workable solution.  Each target needs to
-> > > > have resource isolation from other targets (imagine insitu-comp used for
-> > > > multiple SSDs).  This is important for suspend too because you'll need
-> > > > to flush/stop the workqueue.
-> > > 
-> > > Is this just because of suspend? I didn't see fundamental reason why the
-> > > workqueue can't be shared even for several targets.
-> > 
-> > I'm not seeing how you are guaranteeing that all queued work is
-> > completed during suspend.  insitu_comp_queue_req() just calls
-> > queue_work_on().
-> > 
-> > BTW, queue_work_on()'s comment above its implementation says:
-> > "We queue the work to a specific CPU, the caller must ensure it can't go
-> > away." -- you're not able to insure a cpu isn't hotplugged so... but I
-> > also see you've used it in your raid5 perf improvement changes so you
-> > obviously have experience with using this interface.
-> 
-> Good point, I did miss this. the raid5 case hold a lock, while this case
-> doesn't. A fix is attached below.
+--089e0118254408612104f503dbc9
+Content-Type: text/plain; charset=UTF-8
 
-I've pushed it to the branch.
- 
-> > > > You introduced a state machine for tracking suspending, suspended,
-> > > > resumed.  This really isn't necessary.  During suspend you need to
-> > > > flush_workqueue().  On resume you shouldn't need to do anything special.
-> > > > 
-> > > > As I noted in the commit, the thin and cache targets can serve as
-> > > > references for how you can manage the workqueue across suspend/resume
-> > > > and the lifetime of these workqueues relative to .ctr and .dtr.
-> > > 
-> > > As far as I checking the code, .postsuspend is called after all requests are
-> > > finished. This already guarantees no pending requests running in insitu-comp
-> > > workqueue.
-> > 
-> > I could easily be missing something obvious, but I don't see where that
-> > guarantee is implemented.
-> 
-> Alright, so this is the divergence. dm_suspend() calls dm_wait_for_completion()
-> and then dm_table_postsuspend_targets(). As far as I understand,
-> dm_wait_for_completion() will wait all pending requests to finish. The comments
-> declaim this too. Am I missing anything?
-> 
-> Basically the two kinds of IO. IO requests from upper layer, which
-> dm_wait_for_completion() will guarantee they are finished. Metadata IO
-> requests, which .postsuspend should make sure they are finished.
+Wonderfull. Thank you. I did google it but never found that doc ;)
 
-OK, I see.  You don't have the notion of a transaction, that I can see,
-so this this begs the question: what kind of crash consistency/recovery
-are you providing?  Seems that the metadata writeback support is
-allowing for more potential for lost data on a crash.
 
-Also, it isn't clear how you're coping with the potential for a crash
-while updating a extent (when metadata bits are borrowed from the tail,
-etc).  Without transaction a block (or extent of blocks) could be
-partially updated, how are you guaranteeing the corresponding data is
-either entirely old or new?  The compressed nature of this data makes a
-requirement for atomic updates to occur here.  Are you somehow
-leveraging Fusion-io SSD to provide such guarantee?
+2014-03-14 10:12 GMT+01:00 Akira Hayakawa <ruby.wktk@gmail.com>:
 
-So effectively there are concerns about data integrity of this target
-that need answering.  Unfortunately I'm running low on time I can
-dedicate to continued review of this target and need to transition to
-other priorities.
+> Hi,
+>
+> Let's google it.
+> Is this the article you are looking for?
+> https://www.kernel.org/doc/ols/2007/ols2007v2-pages-235-244.pdf
+>
+> --
+> Akira
+>
+> On 3/14/14 5:44 PM, Nicolas Michel wrote:
+> > Hello Guys,
+> >
+> > It's a general question about how dm and particularly multipathd handle
+> IO? I mean, is it a transaction? Is each IO initiated from the OS get back
+> an acknowledgement? If it is, is there a retry mechanism?
+> > Or are the IO sent blindingly to the block device?
+> >
+> > If someone have some good article on it, I would be very interested in
+> understanding more deeply how IO are handled.
+> >
+> > Thanks a lot,
+> >
+> > --
+> > Nicolas MICHEL
+> >
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> >
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
 
-> > > Doing a workqueue flush isn't required. The writeback thread is
-> > > running in background and waiting for requests completion can't guarantee the
-> > > thread isn't running, so we must make sure it is safely parked.
-> > 
-> > Sure, but you don't need a state machine to do that.  The DM core takes
-> > care of calling these hooks, so you just need to stop the writeback
-> > thread during suspend and (re)start/kick it on resume (preresume).
-> 
-> Yep, I need wait the writeback thread finish all pending metadata IO, the state
-> machine works well here.
 
-I see what you've done, I get that you're using the state machine to
-wait but I still contend it isn't needed.  Like I said before, just
-stop writeback in suspend and restart on resume.  No state is needed.
+
+-- 
+Nicolas MICHEL
+
+--089e0118254408612104f503dbc9
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Wonderfull. Thank you. I did google it but never found tha=
+t doc ;)</div><div class=3D"gmail_extra"><br><br><div class=3D"gmail_quote"=
+>2014-03-14 10:12 GMT+01:00 Akira Hayakawa <span dir=3D"ltr">&lt;<a href=3D=
+"mailto:ruby.wktk@gmail.com" target=3D"_blank">ruby.wktk@gmail.com</a>&gt;<=
+/span>:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">Hi,<br>
+<br>
+Let&#39;s google it.<br>
+Is this the article you are looking for?<br>
+<a href=3D"https://www.kernel.org/doc/ols/2007/ols2007v2-pages-235-244.pdf"=
+ target=3D"_blank">https://www.kernel.org/doc/ols/2007/ols2007v2-pages-235-=
+244.pdf</a><br>
+<br>
+--<br>
+Akira<br>
+<div><div class=3D"h5"><br>
+On 3/14/14 5:44 PM, Nicolas Michel wrote:<br>
+&gt; Hello Guys,<br>
+&gt;<br>
+&gt; It&#39;s a general question about how dm and particularly multipathd h=
+andle IO? I mean, is it a transaction? Is each IO initiated from the OS get=
+ back an acknowledgement? If it is, is there a retry mechanism?<br>
+&gt; Or are the IO sent blindingly to the block device?<br>
+&gt;<br>
+&gt; If someone have some good article on it, I would be very interested in=
+ understanding more deeply how IO are handled.<br>
+&gt;<br>
+&gt; Thanks a lot,<br>
+&gt;<br>
+&gt; --<br>
+&gt; Nicolas MICHEL<br>
+&gt;<br>
+&gt;<br>
+</div></div>&gt; --<br>
+&gt; dm-devel mailing list<br>
+&gt; <a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+&gt; <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D=
+"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
+&gt;<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
+nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
+</blockquote></div><br><br clear=3D"all"><div><br></div>-- <br>Nicolas MICH=
+EL
+</div>
+
+--089e0118254408612104f503dbc9--
+
+
+--===============7315812778052607619==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7315812778052607619==--
