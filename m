@@ -1,124 +1,78 @@
-From: Matias Bjorling <m@bjorling.me>
-Subject: Re: [PATCH RFC v1 01/01] dm-lightnvm: An open FTL for open firmware
- SSDs
-Date: Fri, 21 Mar 2014 08:26:51 -0700
-Message-ID: <532C5A3B.9020005@bjorling.me>
-References: <1395383538-18019-1-git-send-email-m@bjorling.me> <1395383538-18019-2-git-send-email-m@bjorling.me> <20140321150942.GA29731@redhat.com>
+From: Richard Weinberger <richard.weinberger@gmail.com>
+Subject: Re: [PATCH RFC v1 00/01] dm-lightnvm introduction
+Date: Fri, 21 Mar 2014 16:32:40 +0100
+Message-ID: <CAFLxGvxVYZtXS+PAD4gzGHb6U8HbPOajqT_sF692S-kM5bNJ9A@mail.gmail.com>
+References: <1395383538-18019-1-git-send-email-m@bjorling.me>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20140321150942.GA29731@redhat.com>
+In-Reply-To: <1395383538-18019-1-git-send-email-m@bjorling.me>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: agk@redhat.com, dm-devel@redhat.com, neilb@suse.de, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: =?ISO-8859-1?Q?Matias_Bj=F8rling?= <m@bjorling.me>
+Cc: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, NeilBrown <neilb@suse.de>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 03/21/2014 08:09 AM, Mike Snitzer wrote:
-> On Fri, Mar 21 2014 at  2:32am -0400,
-> Matias Bj=F8rling <m@bjorling.me> wrote:
->=20
->> LightNVM implements the internal logic of an SSD within the host sys=
-tem.
->> This includes logic such as translation tables for logical to physic=
-al
->> address translation, garbage collection and wear-leveling.
->>
->> It is designed to be used either standalone or with a LightNVM
->> compatible firmware. If used standalone, NVM memory can be simulated
->> by passing timings to the dm target table. If used with a LightNVM
->> compatible device, the device will be queued upon initialized for th=
-e
->> relevant values.
->>
->> The last part is still in progress and a fully working prototype wil=
-l be
->> presented in upcoming patches.
->>
->> Contributions to make this possible by the following people:
->>
->> Aviad Zuck <aviadzuc@tau.ac.il>
->> Jesper Madsen <jmad@itu.dk>
->>
->> Signed-off-by: Matias Bjorling <m@bjorling.me>
-> ...
->> diff --git a/drivers/md/lightnvm/core.c b/drivers/md/lightnvm/core.c
->> new file mode 100644
->> index 0000000..113fde9
->> --- /dev/null
->> +++ b/drivers/md/lightnvm/core.c
->> @@ -0,0 +1,705 @@
->> +#include "lightnvm.h"
->> +
->> +/* alloc pbd, but also decorate it with bio */
->> +static struct per_bio_data *alloc_init_pbd(struct nvmd *nvmd, struc=
-t bio *bio)
->> +{
->> +	struct per_bio_data *pb =3D mempool_alloc(nvmd->per_bio_pool, GFP_=
-NOIO);
->> +
->> +	if (!pb) {
->> +		DMERR("Couldn't allocate per_bio_data");
->> +		return NULL;
->> +	}
->> +
->> +	pb->bi_end_io =3D bio->bi_end_io;
->> +	pb->bi_private =3D bio->bi_private;
->> +
->> +	bio->bi_private =3D pb;
->> +
->> +	return pb;
->> +}
->> +
->> +static void free_pbd(struct nvmd *nvmd, struct per_bio_data *pb)
->> +{
->> +	mempool_free(pb, nvmd->per_bio_pool);
->> +}
->> +
->> +/* bio to be stripped from the pbd structure */
->> +static void exit_pbd(struct per_bio_data *pb, struct bio *bio)
->> +{
->> +	bio->bi_private =3D pb->bi_private;
->> +	bio->bi_end_io =3D pb->bi_end_io;
->> +}
->> +
->=20
-> Hi Matias,
->=20
-> This looks like it'll be very interesting!  But I won't have time to =
-do
-> a proper review of this code for ~1.5 weeks (traveling early next wee=
-k
-> and then need to finish some high priority work on dm-thin once I'm
-> back).
+On Fri, Mar 21, 2014 at 7:32 AM, Matias Bj=F8rling <m@bjorling.me> wrot=
+e:
+> Hi,
+>
+> Users that have custom firmware SSDs, may choose to expose their flas=
+h directly.
+> This allows the host to control logical to physical address mappings,=
+ garbage
+> collection strategy, wear-leveling, and so on.
+>
+> This is beneficial when you either want to strip the cost of a costly=
+ controller
+> or want detailed control over an SSD. Such as implementing key-value =
+stores,
+> object-stored, atomic I/Os, etc.
+>
+> LightNVM implements the host-side core. It supports two modes. Users =
+that
+> doesn't have hardware available and want to emulate an SSD, and users=
+ with a
+> physical SSD, that has a LightNVM compatible firmware.
+>
+> The behavior of the core can be exposed through the various component=
+s that make
+> up an FTL. Thus, it is not single implementation, but instead possibl=
+e to
+> mix the best algorithms for the user-space application workloads.
+>
+> Currently, LightNVM implements a page-based FTL, cost-based GC and si=
+mple
+> wear-leveling. Additionally, it allows simulation of flash timings wh=
+en hardware
+> isn't available. There's work on getting it to the OpenSSD platform w=
+ith a
+> custom firmware and getting it stable for broad use.
+>
+> There is still much work to do. I'm looking for feedback on the appro=
+ach, dm
+> integration, and more. Any feedback is greatly appreciated.
+>
+> A presentation was given at the recent Non-Volatile Memory Workshop (=
+NVMW)
+> workshop. Slides are available at: http://bjorling.me/NVMW2014-LightN=
+VM.pdf
+>
+> Major todo's:
+>  * Patch has TODO and FIXME in places that needs to be cleaned.
+>  * LightNVM compatible firmware for the OpenSSD platform and integrat=
+ion.
+>  * Performance regressions during GC.
+>  * Durability during power failure.
 
-That's great.
+This sounds very interesting!
 
->=20
-> But a couple quick things I noticed:
->=20
-> 1) you don't need to roll your own per-bio-data allocation code any
-> more.  The core block layer provides per_bio_data now.
->=20
-> And the DM targets have been converted to make use of it.  See caller=
-s
-> of dm_per_bio_data() and how the associated targets set
-> ti->per_bio_data_size
->=20
-> 2) Also, if you're chaining bi_end_io (like it appears you're doing)
-> you'll definitely need to call atomic_inc(&bio->bi_remaining); after =
-you
-> restore bio->bi_end_io.  This is a new requirement of the 3.14 kernel
-> (due to the block core's immutable biovec changes).
->=20
-> Please sort these issues out, re-test on 3.14, and post v2, thanks!
-> Mike
->=20
+Is there also a way to expose the flash directly as MTD device?
+I'm thinking of UBI. Maybe both projects can benefit from each others.
 
-Thanks. I'll get it fixed and rebasedk/tested on 3.14.
-
-Matias
-
+--=20
+Thanks,
+//richard
 --
 To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
 " in
