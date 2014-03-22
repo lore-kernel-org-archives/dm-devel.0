@@ -1,35 +1,86 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [dm-devel] [PATCH RFC v1 01/01] dm-lightnvm: An open FTL for
- open firmware SSDs
-Date: Mon, 24 Mar 2014 07:13:15 +0100
-Message-ID: <532FCCFB.7010007@acm.org>
-References: <1395383538-18019-1-git-send-email-m@bjorling.me>	<1395383538-18019-2-git-send-email-m@bjorling.me> <20140321153749.GA17155@infradead.org>
+From: Eric <iggiggitoo@gmail.com>
+Subject: Multipath not using multiple NICs at once
+Date: Sat, 22 Mar 2014 03:03:13 -0400
+Message-ID: <532D35B1.6070003@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140321153749.GA17155@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Matias Bj??rling <m@bjorling.me>
-Cc: snitzer@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, Takashi HOSHINO <hoshino@labs.cybozu.co.jp>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/21/14 16:37, Christoph Hellwig wrote:
-> Just curious:  why do you think implementing this as a block remapper
-> inside device mapper is a better idea than as a blk-mq driver?
-> 
-> At the request layer you already get a lot of infrastructure for all the
-> queueing infrastructure for free, as well as all kinds of other helpers.
-> And the driver never remaps bios anyway but always submits new ones as
-> far as I can tell.
-> 
-> Does it even make sense to expose the underlying devices as block
-> devices?  It surely would help to send this together with a driver
-> that you plan to use it on top of.
+Hello,
 
-There might be some overlap between the functionality available in the
-lightnvm driver and the WalB driver announced last year. That last
-driver might have a wider user base and hence may have received more
-testing. See also http://thread.gmane.org/gmane.linux.file-systems/75124.
+I'm fairly new to multipath and I am having an issue with it not using 
+all of my NICs. Currently, my node has 4 gigE NICs to my storage network 
+and the SAN has 8 gigE NICs to the same network and I am attempting to 
+setup multipath with ISCSI in order to utilize more than 1 gigabit 
+connection. However, when I use nload to check the network usage, you 
+can see the traffic hop around the NICs. For example, data would send 
+for 2-3 seconds on eth1, then stops and starts on eth2, then stops and 
+starts back up on eth3. All perfectly distributed, but in this setup, 
+unable to reach beyond the capacity of a 1 gigabit connection.
 
-Bart.
+I have each NIC on a different network (e.g. 10.1.1.0/24 for eth1, 
+10.1.2.0/24 for eth2, etc.). Netstat shows that the connections are 
+being made each to different IPs:
+
+tcp        0      0 10.1.3.8:35493          10.1.5.241:3260 ESTABLISHED
+tcp        0      0 10.1.3.8:53972          10.1.3.241:3260 ESTABLISHED
+tcp        0      0 10.1.6.8:41090          10.1.4.241:3260 ESTABLISHED
+tcp        0      0 10.1.1.8:50754          10.1.1.241:3260 ESTABLISHED
+tcp        0      0 10.1.6.8:49780          10.1.5.241:3260 ESTABLISHED
+tcp        0      0 10.1.1.8:36938          10.1.6.241:3260 ESTABLISHED
+tcp        0      0 10.1.6.8:52009          10.1.6.241:3260 ESTABLISHED
+tcp        0      0 10.1.5.8:51630          10.1.1.241:3260 ESTABLISHED
+tcp        0      0 10.1.5.8:54481          10.1.4.241:3260 ESTABLISHED
+tcp        0      0 10.1.1.8:54504          10.1.5.241:3260 ESTABLISHED
+tcp        0      0 10.1.5.8:58229          10.1.3.241:3260 ESTABLISHED
+tcp        0      0 10.1.3.8:49031          10.1.1.241:3260 ESTABLISHED
+tcp        0      0 10.1.5.8:40551          10.1.6.241:3260 ESTABLISHED
+tcp        0      0 10.1.4.8:45016          10.1.5.241:3260 ESTABLISHED
+tcp        0      0 10.1.4.8:55665          10.1.4.241:3260 ESTABLISHED
+tcp        0      0 10.1.6.8:57472          10.1.3.241:3260 ESTABLISHED
+tcp        0      0 10.1.6.8:39278          10.1.1.241:3260 ESTABLISHED
+tcp        0      0 10.1.4.8:41329          10.1.6.241:3260 ESTABLISHED
+tcp        0      0 10.1.5.8:33553          10.1.5.241:3260 ESTABLISHED
+tcp        0      0 10.1.3.8:48950          10.1.6.241:3260 ESTABLISHED
+tcp        0      0 10.1.4.8:54752          10.1.1.241:3260 ESTABLISHED
+tcp        0      0 10.1.1.8:40911          10.1.4.241:3260 ESTABLISHED
+tcp        0      0 10.1.4.8:41135          10.1.3.241:3260 ESTABLISHED
+tcp        0      0 10.1.3.8:44606          10.1.4.241:3260 ESTABLISHED
+tcp        0      0 10.1.1.8:54677          10.1.3.241:3260 ESTABLISHED
+
+(10.1.*.8 is the node and 10.1.*.241 is the SAN)
+
+Here is my /etc/multipath.conf:
+
+defaults {
+         path_grouping_policy    multibus
+         path_selector           readsector0
+         polling_interval        3
+         path_selector           "round-robin 0"
+         failback                immediate
+         features                "0"
+         no_path_retry           1
+         rr_weight               uniform
+         rr_min_io               100
+#       user_friendly_names     yes
+}
+
+Both servers are running Ubuntu 12.04LTS.
+
+Any ideas?
+
+Thanks,
+Eric
