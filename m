@@ -1,12 +1,12 @@
-From: urgrue <urgrue@bulbous.org>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: Multipath not using multiple NICs at once
-Date: Sun, 23 Mar 2014 14:52:57 +0100
-Message-ID: <532EE739.6090105@bulbous.org>
+Date: Sun, 23 Mar 2014 15:26:09 +0100
+Message-ID: <532EEF01.3070400@suse.de>
 References: <532E5E55.2090209@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <532E5E55.2090209@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,26 +21,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
- >        path_selector "round-robin 0"
-
-Have you tried changing this to queue-length or service-time?
-
-On 23/3/14 05:08, Eric wrote:
+On 03/23/2014 05:08 AM, Eric wrote:
 > Hello,
 >
-> I'm fairly new to multipath and I am having an issue with it not using 
-> all of my NICs. Currently, my node has 4 gigE NICs to my storage 
-> network and the SAN has 8 gigE NICs to the same network and I am 
-> attempting to setup multipath with ISCSI in order to utilize more than 
-> 1 gigabit connection. However, when I use nload to check the network 
-> usage, you can see the traffic hop around the NICs. For example, data 
-> would send for 2-3 seconds on eth1, then stops and starts on eth2, 
-> then stops and starts back up on eth3. All perfectly distributed, but 
-> in this setup, unable to reach beyond the capacity of a 1 gigabit 
-> connection.
+> I'm fairly new to multipath and I am having an issue with it not using
+> all of my NICs. Currently, my node has 4 gigE NICs to my storage network
+> and the SAN has 8 gigE NICs to the same network and I am attempting to
+> setup multipath with ISCSI in order to utilize more than 1 gigabit
+> connection. However, when I use nload to check the network usage, you
+> can see the traffic hop around the NICs. For example, data would send
+> for 2-3 seconds on eth1, then stops and starts on eth2, then stops and
+> starts back up on eth3. All perfectly distributed, but in this setup,
+> unable to reach beyond the capacity of a 1 gigabit connection.
 >
-> I have each NIC on a different network (e.g. 10.1.1.0/24 for eth1, 
-> 10.1.2.0/24 for eth2, etc.). Netstat shows that the connections are 
+> I have each NIC on a different network (e.g. 10.1.1.0/24 for eth1,
+> 10.1.2.0/24 for eth2, etc.). Netstat shows that the connections are
 > being made each to different IPs:
 >
 > tcp        0      0 10.1.3.8:35493          10.1.5.241:3260 ESTABLISHED
@@ -74,15 +69,15 @@ On 23/3/14 05:08, Eric wrote:
 > Here is my /etc/multipath.conf:
 >
 > defaults {
->         path_grouping_policy    multibus
->         path_selector           readsector0
->         polling_interval        3
->         path_selector           "round-robin 0"
->         failback                immediate
->         features                "0"
->         no_path_retry           1
->         rr_weight               uniform
->         rr_min_io               100
+>          path_grouping_policy    multibus
+>          path_selector           readsector0
+>          polling_interval        3
+>          path_selector           "round-robin 0"
+>          failback                immediate
+>          features                "0"
+>          no_path_retry           1
+>          rr_weight               uniform
+>          rr_min_io               100
 > #       user_friendly_names     yes
 > }
 >
@@ -90,10 +85,14 @@ On 23/3/14 05:08, Eric wrote:
 >
 > Any ideas?
 >
-> Thanks,
-> Eric
->
-> -- 
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Probably a routing issue. What is the routing table?
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
