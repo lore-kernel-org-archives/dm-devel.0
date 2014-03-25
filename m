@@ -1,126 +1,119 @@
-From: Eric <iggiggitoo@gmail.com>
-Subject: Re: Multipath not using multiple NICs at once
-Date: Tue, 25 Mar 2014 09:59:44 -0400
-Message-ID: <53318BD0.7090602@gmail.com>
-References: <532E5E55.2090209@gmail.com> <532EE739.6090105@bulbous.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: slab_common: fix the check for duplicate slab names
+Date: Tue, 25 Mar 2014 13:03:25 -0400
+Message-ID: <20140325170324.GC580@redhat.com>
+References: <alpine.LRH.2.02.1403041711300.29476@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <532EE739.6090105@bulbous.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1403041711300.29476@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Christoph Lameter <cl@linux.com>
+Cc: Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-I tried "service-time 0", but it didn't seem to change. I ran "multipath 
--ll" and it still shows policy="round-robin 0". I restarted the 
-multipath service, but no luck.
+[Sorry for top-post but...]
 
-Here's my current config after some suggested changes from the 
-#device-mapper channel on freenode:
+This patch still isn't upstream.  Who should be shepherding it to Linus?
 
-defaults {
-         path_grouping_policy    multibus
-         path_selector           readsector0
-         polling_interval        3
-         path_selector           "service-time 0"
-         failback                immediate
-         features                "0"
-         no_path_retry           1
-         rr_weight               uniform
-         rr_min_io_rq            1
-#       user_friendly_names     yes
-}
+Without it we're seeing crashes on Fedora when running regression tests
+that use dm-raid (dm target that wraps MD raid), e.g.:
 
+6,484484,682379136295,-;md: mdX: recovery done.
+6,484485,682379145308,-;bio: create slab <bio-0> at 0
+6,484486,682379147581,-;md/raid:mdX: device dm-17 operational as raid disk 4
+6,484487,682379149216,-;md/raid:mdX: device dm-11 operational as raid disk 2
+6,484488,682379150829,-;md/raid:mdX: device dm-20 operational as raid disk 1
+6,484489,682379152369,-;md/raid:mdX: device dm-9 operational as raid disk 0
+3,484490,682379153954,-;kmem_cache_sanity_check (raid6-ffff880014e8b010): Cache name already exists.
+4,484491,682379155824,-;CPU: 0 PID: 11228 Comm: lvm Not tainted 3.14.0-0.rc6.git0.1.fc21.x86_64 #1
+4,484492,682379157704,-;Hardware name: Red Hat KVM, BIOS 0.5.1 01/01/2007
+4,484493,682379159298,-; 0000000000000000 00000000a0bb80c5 ffff88003428d9d8 ffffffff816edd6b
+4,484494,682379161238,-; ffff880076b51700 ffff88003428da50 ffffffff811982c3 0000000000000000
+4,484495,682379163199,-; 0000000000000000 0000000000000790 0000000000000000 0000000000000000
+4,484496,682379165206,-;Call Trace:
+4,484497,682379166523,-; [<ffffffff816edd6b>] dump_stack+0x45/0x56
+4,484498,682379168098,-; [<ffffffff811982c3>] kmem_cache_create_memcg+0x143/0x3e0
+4,484499,682379169854,-; [<ffffffff8119858b>] kmem_cache_create+0x2b/0x30
+4,484500,682379171541,-; [<ffffffffa020fc6c>] setup_conf+0x5cc/0x810 [raid456]
+4,484501,682379173264,-; [<ffffffff811771ad>] ? mempool_create_node+0xdd/0x140
+4,484502,682379174988,-; [<ffffffff81176dd0>] ? mempool_alloc_slab+0x20/0x20
+4,484503,682379176728,-; [<ffffffffa0210a38>] run+0x868/0xa60 [raid456]
+4,484504,682379178380,-; [<ffffffff81220a3e>] ? bioset_create+0x21e/0x2e0
+4,484505,682379180038,-; [<ffffffff81563d3a>] md_run+0x3fa/0x980
+4,484506,682379181631,-; [<ffffffff81221778>] ? bio_put+0x78/0x90
+4,484507,682379183339,-; [<ffffffff8155badd>] ? sync_page_io+0x8d/0x110
+4,484508,682379185000,-; [<ffffffffa0227570>] raid_ctr+0xf30/0x1389 [dm_raid]
+4,484509,682379186771,-; [<ffffffff8156f857>] dm_table_add_target+0x177/0x460
+4,484510,682379188538,-; [<ffffffff81572d57>] table_load+0x157/0x380
+4,484511,682379190198,-; [<ffffffff81572c00>] ? retrieve_status+0x1c0/0x1c0
+4,484512,682379191925,-; [<ffffffff815739c5>] ctl_ioctl+0x255/0x500
+4,484513,682379193589,-; [<ffffffff811e8b00>] ? do_sync_write+0x50/0xa0
+4,484514,682379195256,-; [<ffffffff81573c83>] dm_ctl_ioctl+0x13/0x20
+4,484515,682379196900,-; [<ffffffff811fc790>] do_vfs_ioctl+0x2e0/0x4a0
+4,484516,682379198600,-; [<ffffffff811eb931>] ? __sb_end_write+0x31/0x60
+4,484517,682379200286,-; [<ffffffff811e9392>] ? vfs_write+0x172/0x1e0
+4,484518,682379201957,-; [<ffffffff811fc9f1>] SyS_ioctl+0xa1/0xc0
+4,484519,682379203651,-; [<ffffffff816fe129>] system_call_fastpath+0x16/0x1b
+3,484520,682379205496,-;md/raid:mdX: couldn't allocate 0kB for buffers
 
-On 3/23/2014 9:52 AM, urgrue wrote:
-> > path_selector "round-robin 0"
->
-> Have you tried changing this to queue-length or service-time?
->
-> On 23/3/14 05:08, Eric wrote:
->> Hello,
->>
->> I'm fairly new to multipath and I am having an issue with it not 
->> using all of my NICs. Currently, my node has 4 gigE NICs to my 
->> storage network and the SAN has 8 gigE NICs to the same network and I 
->> am attempting to setup multipath with ISCSI in order to utilize more 
->> than 1 gigabit connection. However, when I use nload to check the 
->> network usage, you can see the traffic hop around the NICs. For 
->> example, data would send for 2-3 seconds on eth1, then stops and 
->> starts on eth2, then stops and starts back up on eth3. All perfectly 
->> distributed, but in this setup, unable to reach beyond the capacity 
->> of a 1 gigabit connection.
->>
->> I have each NIC on a different network (e.g. 10.1.1.0/24 for eth1, 
->> 10.1.2.0/24 for eth2, etc.). Netstat shows that the connections are 
->> being made each to different IPs:
->>
->> tcp        0      0 10.1.3.8:35493          10.1.5.241:3260 ESTABLISHED
->> tcp        0      0 10.1.3.8:53972          10.1.3.241:3260 ESTABLISHED
->> tcp        0      0 10.1.6.8:41090          10.1.4.241:3260 ESTABLISHED
->> tcp        0      0 10.1.1.8:50754          10.1.1.241:3260 ESTABLISHED
->> tcp        0      0 10.1.6.8:49780          10.1.5.241:3260 ESTABLISHED
->> tcp        0      0 10.1.1.8:36938          10.1.6.241:3260 ESTABLISHED
->> tcp        0      0 10.1.6.8:52009          10.1.6.241:3260 ESTABLISHED
->> tcp        0      0 10.1.5.8:51630          10.1.1.241:3260 ESTABLISHED
->> tcp        0      0 10.1.5.8:54481          10.1.4.241:3260 ESTABLISHED
->> tcp        0      0 10.1.1.8:54504          10.1.5.241:3260 ESTABLISHED
->> tcp        0      0 10.1.5.8:58229          10.1.3.241:3260 ESTABLISHED
->> tcp        0      0 10.1.3.8:49031          10.1.1.241:3260 ESTABLISHED
->> tcp        0      0 10.1.5.8:40551          10.1.6.241:3260 ESTABLISHED
->> tcp        0      0 10.1.4.8:45016          10.1.5.241:3260 ESTABLISHED
->> tcp        0      0 10.1.4.8:55665          10.1.4.241:3260 ESTABLISHED
->> tcp        0      0 10.1.6.8:57472          10.1.3.241:3260 ESTABLISHED
->> tcp        0      0 10.1.6.8:39278          10.1.1.241:3260 ESTABLISHED
->> tcp        0      0 10.1.4.8:41329          10.1.6.241:3260 ESTABLISHED
->> tcp        0      0 10.1.5.8:33553          10.1.5.241:3260 ESTABLISHED
->> tcp        0      0 10.1.3.8:48950          10.1.6.241:3260 ESTABLISHED
->> tcp        0      0 10.1.4.8:54752          10.1.1.241:3260 ESTABLISHED
->> tcp        0      0 10.1.1.8:40911          10.1.4.241:3260 ESTABLISHED
->> tcp        0      0 10.1.4.8:41135          10.1.3.241:3260 ESTABLISHED
->> tcp        0      0 10.1.3.8:44606          10.1.4.241:3260 ESTABLISHED
->> tcp        0      0 10.1.1.8:54677          10.1.3.241:3260 ESTABLISHED
->>
->> (10.1.*.8 is the node and 10.1.*.241 is the SAN)
->>
->> Here is my /etc/multipath.conf:
->>
->> defaults {
->>         path_grouping_policy    multibus
->>         path_selector           readsector0
->>         polling_interval        3
->>         path_selector           "round-robin 0"
->>         failback                immediate
->>         features                "0"
->>         no_path_retry           1
->>         rr_weight               uniform
->>         rr_min_io               100
->> #       user_friendly_names     yes
->> }
->>
->> Both servers are running Ubuntu 12.04LTS.
->>
->> Any ideas?
->>
->> Thanks,
->> Eric
->>
->> -- 
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->
-> -- 
+On Tue, Mar 04 2014 at  5:13pm -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+
+> The patch 3e374919b314f20e2a04f641ebc1093d758f66a4 is supposed to fix the
+> problem where kmem_cache_create incorrectly reports duplicate cache name
+> and fails. The problem is described in the header of that patch.
+> 
+> However, the patch doesn't really fix the problem because of these
+> reasons:
+> 
+> * the logic to test for debugging is reversed. It was intended to perform
+>   the check only if slub debugging is enabled (which implies that caches
+>   with the same parameters are not merged). Therefore, there should be
+>   #if !defined(CONFIG_SLUB) || defined(CONFIG_SLUB_DEBUG_ON)
+>   The current code has the condition reversed and performs the test if
+>   debugging is disabled.
+> 
+> * slub debugging may be enabled or disabled based on kernel command line,
+>   CONFIG_SLUB_DEBUG_ON is just the default settings. Therefore the test
+>   based on definition of CONFIG_SLUB_DEBUG_ON is unreliable.
+> 
+> This patch fixes the problem by removing the test
+> "!defined(CONFIG_SLUB_DEBUG_ON)". Therefore, duplicate names are never
+> checked if the SLUB allocator is used.
+> 
+> Note to stable kernel maintainers: when backporint this patch, please
+> backport also the patch 3e374919b314f20e2a04f641ebc1093d758f66a4.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org	# 3.6+
+> 
+> ---
+>  mm/slab_common.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> Index: linux-3.14-rc5/mm/slab_common.c
+> ===================================================================
+> --- linux-3.14-rc5.orig/mm/slab_common.c	2014-03-04 22:47:02.000000000 +0100
+> +++ linux-3.14-rc5/mm/slab_common.c	2014-03-04 22:47:08.000000000 +0100
+> @@ -56,7 +56,7 @@ static int kmem_cache_sanity_check(struc
+>  			continue;
+>  		}
+>  
+> -#if !defined(CONFIG_SLUB) || !defined(CONFIG_SLUB_DEBUG_ON)
+> +#if !defined(CONFIG_SLUB)
+>  		/*
+>  		 * For simplicity, we won't check this in the list of memcg
+>  		 * caches. We have control over memcg naming, and if there
+> 
+> --
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
