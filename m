@@ -1,44 +1,51 @@
 From: Matias Bjorling <m@bjorling.me>
 Subject: Re: [dm-devel] [PATCH RFC v1 01/01] dm-lightnvm: An open FTL for
  open firmware SSDs
-Date: Mon, 24 Mar 2014 20:30:20 -0700
-Message-ID: <5330F84C.8090803@bjorling.me>
-References: <1395383538-18019-1-git-send-email-m@bjorling.me>	<1395383538-18019-2-git-send-email-m@bjorling.me> <20140321153749.GA17155@infradead.org> <532FCCFB.7010007@acm.org>
+Date: Mon, 24 Mar 2014 20:45:25 -0700
+Message-ID: <5330FBD5.5000103@bjorling.me>
+References: <1395383538-18019-1-git-send-email-m@bjorling.me>	<1395383538-18019-2-git-send-email-m@bjorling.me>	<20140321153749.GA17155@infradead.org>	<532C67D0.4020501@bjorling.me> <20140325112217.a3d34601d745ace3fbc07c0f@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <532FCCFB.7010007@acm.org>
+In-Reply-To: <20140325112217.a3d34601d745ace3fbc07c0f@valinux.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Bart Van Assche <bvanassche@acm.org>, device-mapper development <dm-devel@redhat.com>
-Cc: snitzer@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, Takashi HOSHINO <hoshino@labs.cybozu.co.jp>
+To: Akira Hayakawa <hayakawa@valinux.co.jp>, device-mapper development <dm-devel@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, snitzer@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 03/23/2014 11:13 PM, Bart Van Assche wrote:
-> On 03/21/14 16:37, Christoph Hellwig wrote:
->> Just curious:  why do you think implementing this as a block remapper
->> inside device mapper is a better idea than as a blk-mq driver?
->>
->> At the request layer you already get a lot of infrastructure for all the
->> queueing infrastructure for free, as well as all kinds of other helpers.
->> And the driver never remaps bios anyway but always submits new ones as
->> far as I can tell.
->>
->> Does it even make sense to expose the underlying devices as block
->> devices?  It surely would help to send this together with a driver
->> that you plan to use it on top of.
+On 03/24/2014 07:22 PM, Akira Hayakawa wrote:
+> Hi, Matias,
 > 
-> There might be some overlap between the functionality available in the
-> lightnvm driver and the WalB driver announced last year. That last
-> driver might have a wider user base and hence may have received more
-> testing. See also http://thread.gmane.org/gmane.linux.file-systems/75124.
->
+> Sorry for jumping in. I am interested in this new feature, too.
+> 
+>>> Does it even make sense to expose the underlying devices as block
+>>> devices?  It surely would help to send this together with a driver
+>>> that you plan to use it on top of.
+>>>
+>>
+>> Agree, an underlying driver is missing. My first plan is to get a draft
+>> firmware for the OpenSSD to be stable and expose its primitives
+>> (read/write/erase) up through the ATA/SCSI stack. Communicating using
+>> vendor specific codes.
+> 
 
-Hi Bart,
+Hi Akira,
 
-Thanks! There seems to be a little bit that can be reused. It does seem
-from the github page that there haven't been any development since its
-been posted. Maybe the development is moved elsewhere?
+Indeed. Most of Mohit's work can be applied with this layer. In the same
+breath we could also look into nameless writes. It would up open for a
+new design for co-operating file systems.
 
-> Bart.
+> Exposing FTL to the host layer has potential to share mapping in cache software (or driver) and the device.
+> The "Unified Address Space" in the slides below addresses the problem of two levels of indirection.
+> http://www1.unine.ch/eurosys2012/posters/saxena.pdf
+> 
+> Developing API to share mapping between driver and the device sounds interesting, too.
+> 
+> --
+> Akira
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 > 
