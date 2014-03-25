@@ -1,30 +1,26 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: best way to detect a dm device is dm-multipath from
-	userspace?
-Date: Tue, 25 Mar 2014 10:20:22 -0700
-Message-ID: <20140325172022.GA32702@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: slab_common: fix the check for duplicate slab names
+Date: Tue, 25 Mar 2014 13:07:02 -0500 (CDT)
+Message-ID: <alpine.DEB.2.10.1403251306260.26471@nuc>
+References: <alpine.LRH.2.02.1403041711300.29476@file01.intranet.prod.int.rdu2.redhat.com> <20140325170324.GC580@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20140325170324.GC580@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-For a little project I'm working on I'd like to find out if a given
-device node is a dm-multipath device from C code.  dm_is_dm_major tells
-me if it's any DM node, but from there on it seems like I'd have to
-grab the table name from dmsetup table output for which I'd need a name
-for the device or similar.
+On Tue, 25 Mar 2014, Mike Snitzer wrote:
 
-Is there a good shortcut or library function for this check?
+> This patch still isn't upstream.  Who should be shepherding it to Linus?
+
+Pekka usually does that.
+
+Acked-by: Christoph Lameter <cl@linux.com>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
