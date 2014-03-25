@@ -1,41 +1,40 @@
-From: Akira Hayakawa <hayakawa@valinux.co.jp>
-Subject: Re: [dm-devel] [PATCH RFC v1 01/01] dm-lightnvm: An open FTL for
- open firmware SSDs
-Date: Tue, 25 Mar 2014 11:22:17 +0900
-Message-ID: <20140325112217.a3d34601d745ace3fbc07c0f@valinux.co.jp>
-References: <1395383538-18019-1-git-send-email-m@bjorling.me>
-	<1395383538-18019-2-git-send-email-m@bjorling.me>
-	<20140321153749.GA17155@infradead.org>
-	<532C67D0.4020501@bjorling.me>
+From: David Lang <david@lang.hm>
+Subject: Re: [dm-devel] [PATCH RFC v1 00/01] dm-lightnvm introduction
+Date: Mon, 24 Mar 2014 20:08:02 -0700 (PDT)
+Message-ID: <alpine.DEB.2.02.1403242004580.527@nftneq.ynat.uz>
+References: <1395383538-18019-1-git-send-email-m@bjorling.me> <20140321090630.GA30044@debian> <532C5930.7040107@bjorling.me>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <532C67D0.4020501@bjorling.me>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Matias Bjorling <m@bjorling.me>, Christoph Hellwig <hch@infradead.org>, snitzer@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <532C5930.7040107@bjorling.me>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matias Bjorling <m@bjorling.me>
+Cc: device-mapper development <dm-devel@redhat.com>, snitzer@redhat.com, agk@redhat.com, neilb@suse.de, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi, Matias,
+On Fri, 21 Mar 2014, Matias Bjorling wrote:
 
-Sorry for jumping in. I am interested in this new feature, too.
+> On 03/21/2014 02:06 AM, Joe Thornber wrote:
+>> Hi Matias,
+>>
+>> This looks really interesting and I'd love to get involved.  Do you
+>> have any recommendations for what hardware I should pick up?
+>
+> Hi Joe,
+>
+> The most easily available platform is OpenSSD
+> (http://www.openssd-project.org). It's a little old, but still very
+> functional. When there's a good firmware implementation, I think it will
+> be easier for the custom SSD vendor's to jump on board with their own
+> firmware.
 
-> > Does it even make sense to expose the underlying devices as block
-> > devices?  It surely would help to send this together with a driver
-> > that you plan to use it on top of.
-> > 
-> 
-> Agree, an underlying driver is missing. My first plan is to get a draft
-> firmware for the OpenSSD to be stable and expose its primitives
-> (read/write/erase) up through the ATA/SCSI stack. Communicating using
-> vendor specific codes.
+Is this something that would make sense to use for accessing the NAND flash 
+that's being used on routers nowdays? Talking with the OpenWRT folks, they are 
+having trouble supporting those devices because the flash may contain defects 
+and squashfs doesn't work in such an environment. This appears to be the one 
+remaining problem preventing a lot of new routers from working.
 
-Exposing FTL to the host layer has potential to share mapping in cache software (or driver) and the device.
-The "Unified Address Space" in the slides below addresses the problem of two levels of indirection.
-http://www1.unine.ch/eurosys2012/posters/saxena.pdf
+If this can work as a shim layer between the hardware and the filesystem for 
+OpenWRT, you would gain a very large userbase rather quickly.
 
-Developing API to share mapping between driver and the device sounds interesting, too.
-
---
-Akira
+David Lang
