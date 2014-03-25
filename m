@@ -1,40 +1,44 @@
-From: David Lang <david@lang.hm>
-Subject: Re: [dm-devel] [PATCH RFC v1 00/01] dm-lightnvm introduction
-Date: Mon, 24 Mar 2014 20:08:02 -0700 (PDT)
-Message-ID: <alpine.DEB.2.02.1403242004580.527@nftneq.ynat.uz>
-References: <1395383538-18019-1-git-send-email-m@bjorling.me> <20140321090630.GA30044@debian> <532C5930.7040107@bjorling.me>
+From: Matias Bjorling <m@bjorling.me>
+Subject: Re: [dm-devel] [PATCH RFC v1 01/01] dm-lightnvm: An open FTL for
+ open firmware SSDs
+Date: Mon, 24 Mar 2014 20:30:20 -0700
+Message-ID: <5330F84C.8090803@bjorling.me>
+References: <1395383538-18019-1-git-send-email-m@bjorling.me>	<1395383538-18019-2-git-send-email-m@bjorling.me> <20140321153749.GA17155@infradead.org> <532FCCFB.7010007@acm.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <532C5930.7040107@bjorling.me>
+In-Reply-To: <532FCCFB.7010007@acm.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matias Bjorling <m@bjorling.me>
-Cc: device-mapper development <dm-devel@redhat.com>, snitzer@redhat.com, agk@redhat.com, neilb@suse.de, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Bart Van Assche <bvanassche@acm.org>, device-mapper development <dm-devel@redhat.com>
+Cc: snitzer@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, Takashi HOSHINO <hoshino@labs.cybozu.co.jp>
 List-Id: dm-devel.ids
 
-On Fri, 21 Mar 2014, Matias Bjorling wrote:
-
-> On 03/21/2014 02:06 AM, Joe Thornber wrote:
->> Hi Matias,
+On 03/23/2014 11:13 PM, Bart Van Assche wrote:
+> On 03/21/14 16:37, Christoph Hellwig wrote:
+>> Just curious:  why do you think implementing this as a block remapper
+>> inside device mapper is a better idea than as a blk-mq driver?
 >>
->> This looks really interesting and I'd love to get involved.  Do you
->> have any recommendations for what hardware I should pick up?
+>> At the request layer you already get a lot of infrastructure for all the
+>> queueing infrastructure for free, as well as all kinds of other helpers.
+>> And the driver never remaps bios anyway but always submits new ones as
+>> far as I can tell.
+>>
+>> Does it even make sense to expose the underlying devices as block
+>> devices?  It surely would help to send this together with a driver
+>> that you plan to use it on top of.
+> 
+> There might be some overlap between the functionality available in the
+> lightnvm driver and the WalB driver announced last year. That last
+> driver might have a wider user base and hence may have received more
+> testing. See also http://thread.gmane.org/gmane.linux.file-systems/75124.
 >
-> Hi Joe,
->
-> The most easily available platform is OpenSSD
-> (http://www.openssd-project.org). It's a little old, but still very
-> functional. When there's a good firmware implementation, I think it will
-> be easier for the custom SSD vendor's to jump on board with their own
-> firmware.
 
-Is this something that would make sense to use for accessing the NAND flash 
-that's being used on routers nowdays? Talking with the OpenWRT folks, they are 
-having trouble supporting those devices because the flash may contain defects 
-and squashfs doesn't work in such an environment. This appears to be the one 
-remaining problem preventing a lot of new routers from working.
+Hi Bart,
 
-If this can work as a shim layer between the hardware and the filesystem for 
-OpenWRT, you would gain a very large userbase rather quickly.
+Thanks! There seems to be a little bit that can be reused. It does seem
+from the github page that there haven't been any development since its
+been posted. Maybe the development is moved elsewhere?
 
-David Lang
+> Bart.
+> 
