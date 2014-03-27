@@ -1,8 +1,8 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 2/4] [persistent-data] change the semantics of
-	dm_tm_commit().
-Date: Thu, 27 Mar 2014 14:13:21 +0000
-Message-ID: <1395929603-14604-3-git-send-email-ejt@redhat.com>
+Subject: [PATCH 1/4] [perstent-data] Simplify
+	dm_bm_flush_and_unlock() -> dm_bm_flush()
+Date: Thu, 27 Mar 2014 14:13:20 +0000
+Message-ID: <1395929603-14604-2-git-send-email-ejt@redhat.com>
 References: <1395929603-14604-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,67 +23,57 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-Now it assumes all data has been flushed apart from the single
-superblock passed in.
+Now you have to do the unlock yourself.
 ---
- drivers/md/persistent-data/dm-transaction-manager.c |    5 +++--
- drivers/md/persistent-data/dm-transaction-manager.h |   17 ++++++++---------
- 2 files changed, 11 insertions(+), 11 deletions(-)
+ drivers/md/persistent-data/dm-block-manager.c |   15 ++-------------
+ drivers/md/persistent-data/dm-block-manager.h |    3 +--
+ 2 files changed, 3 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-index 81da1a2..3bc30a0 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.c
-+++ b/drivers/md/persistent-data/dm-transaction-manager.c
-@@ -154,7 +154,7 @@ int dm_tm_pre_commit(struct dm_transaction_manager *tm)
- 	if (r < 0)
- 		return r;
- 
--	return 0;
-+	return dm_bm_flush(tm->bm);
+diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
+index 5c80855..9618a65 100644
+--- a/drivers/md/persistent-data/dm-block-manager.c
++++ b/drivers/md/persistent-data/dm-block-manager.c
+@@ -609,25 +609,14 @@ int dm_bm_unlock(struct dm_block *b)
  }
- EXPORT_SYMBOL_GPL(dm_tm_pre_commit);
+ EXPORT_SYMBOL_GPL(dm_bm_unlock);
  
-@@ -164,8 +164,9 @@ int dm_tm_commit(struct dm_transaction_manager *tm, struct dm_block *root)
- 		return -EWOULDBLOCK;
+-int dm_bm_flush_and_unlock(struct dm_block_manager *bm,
+-			   struct dm_block *superblock)
++int dm_bm_flush(struct dm_block_manager *bm)
+ {
+-	int r;
+-
+ 	if (bm->read_only)
+ 		return -EPERM;
  
- 	wipe_shadow_table(tm);
-+	dm_bm_unlock(root);
- 
--	return dm_bm_flush_and_unlock(tm->bm, root);
-+	return dm_bm_flush(tm->bm);
+-	r = dm_bufio_write_dirty_buffers(bm->bufio);
+-	if (unlikely(r)) {
+-		dm_bm_unlock(superblock);
+-		return r;
+-	}
+-
+-	dm_bm_unlock(superblock);
+-
+ 	return dm_bufio_write_dirty_buffers(bm->bufio);
  }
- EXPORT_SYMBOL_GPL(dm_tm_commit);
+-EXPORT_SYMBOL_GPL(dm_bm_flush_and_unlock);
++EXPORT_SYMBOL_GPL(dm_bm_flush);
  
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.h b/drivers/md/persistent-data/dm-transaction-manager.h
-index b5b1390..2772ed2 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.h
-+++ b/drivers/md/persistent-data/dm-transaction-manager.h
-@@ -38,18 +38,17 @@ struct dm_transaction_manager *dm_tm_create_non_blocking_clone(struct dm_transac
- /*
-  * We use a 2-phase commit here.
+ void dm_bm_prefetch(struct dm_block_manager *bm, dm_block_t b)
+ {
+diff --git a/drivers/md/persistent-data/dm-block-manager.h b/drivers/md/persistent-data/dm-block-manager.h
+index 13cd58e..1b95dfc 100644
+--- a/drivers/md/persistent-data/dm-block-manager.h
++++ b/drivers/md/persistent-data/dm-block-manager.h
+@@ -105,8 +105,7 @@ int dm_bm_unlock(struct dm_block *b);
   *
-- * i) In the first phase the block manager is told to start flushing, and
-- * the changes to the space map are written to disk.  You should interrogate
-- * your particular space map to get detail of its root node etc. to be
-- * included in your superblock.
-+ * i) Make all changes for the transaction *except* for the superblock.
-+ * Then call dm_tm_pre_commit() to flush them to disk.
-  *
-- * ii) @root will be committed last.  You shouldn't use more than the
-- * first 512 bytes of @root if you wish the transaction to survive a power
-- * failure.  You *must* have a write lock held on @root for both stage (i)
-- * and (ii).  The commit will drop the write lock.
-+ * ii) Lock your superblock.  Update.  Then call dm_tm_commit() which will
-+ * unlock the superblock and flush it.  No other blocks should be updated
-+ * during this period.  Care should be taken to never unlock a partially
-+ * updated superblock; perform any operations that could fail *before* you
-+ * take the superblock lock.
+  * This method always blocks.
   */
- int dm_tm_pre_commit(struct dm_transaction_manager *tm);
--int dm_tm_commit(struct dm_transaction_manager *tm, struct dm_block *root);
-+int dm_tm_commit(struct dm_transaction_manager *tm, struct dm_block *superblock);
+-int dm_bm_flush_and_unlock(struct dm_block_manager *bm,
+-			   struct dm_block *superblock);
++int dm_bm_flush(struct dm_block_manager *bm);
  
  /*
-  * These methods are the only way to get hold of a writeable block.
+  * Request data is prefetched into the cache.
 -- 
 1.7.10.4
