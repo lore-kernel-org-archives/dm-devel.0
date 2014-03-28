@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 9/9] dm crypt: sort writes
-Date: Fri, 28 Mar 2014 16:11:16 -0400
-Message-ID: <1396037476-26595-10-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 4/9] dm crypt: use unbound workqueue for request
+	processing
+Date: Fri, 28 Mar 2014 16:11:11 -0400
+Message-ID: <1396037476-26595-5-git-send-email-snitzer@redhat.com>
 References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,140 +24,27 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-Write requests are sorted in a red-black tree structure and are submitted
-in the sorted order.
-
-In theory the sorting should be performed by the underlying disk scheduler,
-however, in practice the disk scheduler accepts and sorts only 128 requests.
-In order to sort more requests, we need to implement our own sorting.
+Use unbound workqueue so that work is automatically ballanced between
+available CPUs.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-crypt.c | 50 +++++++++++++++++++++++++++++++++++---------------
- 1 file changed, 35 insertions(+), 15 deletions(-)
+ drivers/md/dm-crypt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 8bbe3d5..3f55b25 100644
+index 2221d12..a57b02a 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -22,6 +22,7 @@
- #include <linux/backing-dev.h>
- #include <linux/atomic.h>
- #include <linux/scatterlist.h>
-+#include <linux/rbtree.h>
- #include <asm/page.h>
- #include <asm/unaligned.h>
- #include <crypto/hash.h>
-@@ -60,7 +61,7 @@ struct dm_crypt_io {
- 	int error;
- 	sector_t sector;
- 
--	struct list_head list;
-+	struct rb_node rb_node;
- } CRYPTO_MINALIGN_ATTR;
- 
- struct dm_crypt_request {
-@@ -133,7 +134,7 @@ struct crypt_config {
- 
- 	struct task_struct *write_thread;
- 	wait_queue_head_t write_thread_wait;
--	struct list_head write_thread_list;
-+	struct rb_root write_tree;
- 
- 	char *cipher;
- 	char *cipher_string;
-@@ -1176,7 +1177,7 @@ static int dmcrypt_write(void *data)
- {
- 	struct crypt_config *cc = data;
- 	while (1) {
--		struct list_head local_list;
-+		struct rb_root write_tree;
- 		struct blk_plug plug;
- 
- 		DECLARE_WAITQUEUE(wait, current);
-@@ -1184,7 +1185,7 @@ static int dmcrypt_write(void *data)
- 		spin_lock_irq(&cc->write_thread_wait.lock);
- continue_locked:
- 
--		if (!list_empty(&cc->write_thread_list))
-+		if (!RB_EMPTY_ROOT(&cc->write_tree))
- 			goto pop_from_list;
- 
- 		__set_current_state(TASK_INTERRUPTIBLE);
-@@ -1206,20 +1207,23 @@ continue_locked:
- 		goto continue_locked;
- 
- pop_from_list:
--		local_list = cc->write_thread_list;
--		local_list.next->prev = &local_list;
--		local_list.prev->next = &local_list;
--		INIT_LIST_HEAD(&cc->write_thread_list);
--
-+		write_tree = cc->write_tree;
-+		cc->write_tree = RB_ROOT;
- 		spin_unlock_irq(&cc->write_thread_wait.lock);
- 
-+		BUG_ON(rb_parent(write_tree.rb_node));
-+
-+		/*
-+		 * Note: we cannot walk the tree here with rb_next because
-+		 * the structures may be freed when kcryptd_io_write is called.
-+		 */
- 		blk_start_plug(&plug);
- 		do {
--			struct dm_crypt_io *io = container_of(local_list.next,
--						struct dm_crypt_io, list);
--			list_del(&io->list);
-+			struct dm_crypt_io *io = rb_entry(rb_first(&write_tree),
-+						struct dm_crypt_io, rb_node);
-+			rb_erase(&io->rb_node, &write_tree);
- 			kcryptd_io_write(io);
--		} while (!list_empty(&local_list));
-+		} while (!RB_EMPTY_ROOT(&write_tree));
- 		blk_finish_plug(&plug);
- 	}
- 	return 0;
-@@ -1230,6 +1234,8 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io)
- 	struct bio *clone = io->ctx.bio_out;
- 	struct crypt_config *cc = io->cc;
- 	unsigned long flags;
-+	sector_t sector;
-+	struct rb_node **p, *parent;
- 
- 	if (unlikely(io->error < 0)) {
- 		crypt_free_buffer_pages(cc, clone);
-@@ -1244,7 +1250,21 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io)
- 	clone->bi_iter.bi_sector = cc->start + io->sector;
- 
- 	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
--	list_add_tail(&io->list, &cc->write_thread_list);
-+	p = &cc->write_tree.rb_node;
-+	parent = NULL;
-+	sector = io->sector;
-+	while (*p) {
-+		parent = *p;
-+#define io_node rb_entry(parent, struct dm_crypt_io, rb_node)
-+		if (sector < io_node->sector)
-+			p = &io_node->rb_node.rb_left;
-+		else
-+			p = &io_node->rb_node.rb_right;
-+#undef io_node
-+	}
-+	rb_link_node(&io->rb_node, parent, p);
-+	rb_insert_color(&io->rb_node, &cc->write_tree);
-+
- 	wake_up_locked(&cc->write_thread_wait);
- 	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
- }
-@@ -1807,7 +1827,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+@@ -1800,7 +1800,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  	}
  
- 	init_waitqueue_head(&cc->write_thread_wait);
--	INIT_LIST_HEAD(&cc->write_thread_list);
-+	cc->write_tree = RB_ROOT;
- 
- 	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
- 	if (IS_ERR(cc->write_thread)) {
+ 	cc->crypt_queue = alloc_workqueue("kcryptd",
+-					  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM, 1);
++					  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND, num_online_cpus());
+ 	if (!cc->crypt_queue) {
+ 		ti->error = "Couldn't create kcryptd queue";
+ 		goto bad;
 -- 
 1.8.1.4
