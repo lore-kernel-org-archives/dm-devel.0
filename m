@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 5/9] dm crypt: don't allocate pages for a partial
-	request
-Date: Fri, 28 Mar 2014 16:11:12 -0400
-Message-ID: <1396037476-26595-6-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 1/9] dm crypt: fix cpu hotplug crash by removing
+	per-cpu structure
+Date: Fri, 28 Mar 2014 16:11:08 -0400
+Message-ID: <1396037476-26595-2-git-send-email-snitzer@redhat.com>
 References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,256 +24,221 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-Change crypt_alloc_buffer so that it only ever allocates pages for a
-full request.
+The DM crypt target used per-cpu structures to hold pointers to a
+ablkcipher_request structure.  The code assumed that the work item keeps
+executing on a single CPU, so it didn't use synchronization when
+accessing this structure.
 
-This change enables further simplification and removing of one refcounts
-in the next patches.
+If a CPU is disabled by writing 0 to /sys/devices/system/cpu/cpu*/online,
+the work item could be moved to another CPU.  This causes dm-crypt
+crashes, like the following, because the code starts using an incorrect
+ablkcipher_request:
 
-Note: the next commit ("dm-crypt: avoid deadlock in mempools") is needed
-to fix a theoretical deadlock.
+ smpboot: CPU 7 is now offline
+ BUG: unable to handle kernel NULL pointer dereference at 0000000000000130
+ IP: [<ffffffffa1862b3d>] crypt_convert+0x12d/0x3c0 [dm_crypt]
+ ...
+ Call Trace:
+  [<ffffffffa1864415>] ? kcryptd_crypt+0x305/0x470 [dm_crypt]
+  [<ffffffff81062060>] ? finish_task_switch+0x40/0xc0
+  [<ffffffff81052a28>] ? process_one_work+0x168/0x470
+  [<ffffffff8105366b>] ? worker_thread+0x10b/0x390
+  [<ffffffff81053560>] ? manage_workers.isra.26+0x290/0x290
+  [<ffffffff81058d9f>] ? kthread+0xaf/0xc0
+  [<ffffffff81058cf0>] ? kthread_create_on_node+0x120/0x120
+  [<ffffffff813464ac>] ? ret_from_fork+0x7c/0xb0
+  [<ffffffff81058cf0>] ? kthread_create_on_node+0x120/0x120
+
+Fix this bug by removing the per-cpu definition.  The structure
+ablkcipher_request is accessed via a pointer from convert_context.
+Consequently, if the work item is rescheduled to a different CPU, the
+thread still uses the same ablkcipher_request.
+
+This change may undermine performance improvements intended by commit
+c0297721 ("dm crypt: scale to multiple cpus") on select hardware.  In
+practice no performance difference was observed on recent hardware.  But
+regardless, correctness is more important than performance.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-crypt.c | 133 ++++++++++----------------------------------------
- 1 file changed, 27 insertions(+), 106 deletions(-)
+ drivers/md/dm-crypt.c | 61 ++++++++++-----------------------------------------
+ 1 file changed, 12 insertions(+), 49 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index a57b02a..fe92764 100644
+index 784695d..53b2132 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -58,7 +58,6 @@ struct dm_crypt_io {
- 	atomic_t io_pending;
- 	int error;
- 	sector_t sector;
--	struct dm_crypt_io *base_io;
- } CRYPTO_MINALIGN_ATTR;
- 
- struct dm_crypt_request {
-@@ -172,7 +171,6 @@ struct crypt_config {
+@@ -19,7 +19,6 @@
+ #include <linux/crypto.h>
+ #include <linux/workqueue.h>
+ #include <linux/backing-dev.h>
+-#include <linux/percpu.h>
+ #include <linux/atomic.h>
+ #include <linux/scatterlist.h>
+ #include <asm/page.h>
+@@ -43,6 +42,7 @@ struct convert_context {
+ 	struct bvec_iter iter_out;
+ 	sector_t cc_sector;
+ 	atomic_t cc_pending;
++	struct ablkcipher_request *req;
  };
  
- #define MIN_IOS        16
--#define MIN_POOL_PAGES 32
- 
- static struct kmem_cache *_crypt_io_pool;
- 
-@@ -951,14 +949,13 @@ static int crypt_convert(struct crypt_config *cc,
- 	return 0;
- }
- 
-+static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone);
-+
  /*
-  * Generate a new unfragmented bio with the given size
-  * This should never violate the device limitations
-- * May return a smaller bio when running out of pages, indicated by
-- * *out_of_pages set to 1.
-  */
--static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size,
--				      unsigned *out_of_pages)
-+static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
- {
- 	struct crypt_config *cc = io->cc;
- 	struct bio *clone;
-@@ -972,37 +969,23 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size,
- 		return NULL;
+@@ -111,15 +111,7 @@ struct iv_tcw_private {
+ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID };
  
- 	clone_init(io, clone);
--	*out_of_pages = 0;
- 
- 	for (i = 0; i < nr_iovecs; i++) {
- 		page = mempool_alloc(cc->page_pool, gfp_mask);
--		if (!page) {
--			*out_of_pages = 1;
--			break;
--		}
+ /*
+- * Duplicated per-CPU state for cipher.
+- */
+-struct crypt_cpu {
+-	struct ablkcipher_request *req;
+-};
 -
--		/*
--		 * If additional pages cannot be allocated without waiting,
--		 * return a partially-allocated bio.  The caller will then try
--		 * to allocate more bios while submitting this partial bio.
--		 */
--		gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
- 
- 		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
- 
- 		if (!bio_add_page(clone, page, len, 0)) {
-+			DMERR("bio_add_page failed for page %d: the underlying device has stricter limits than dm-crypt target", i);
- 			mempool_free(page, cc->page_pool);
--			break;
-+			crypt_free_buffer_pages(cc, clone);
-+			bio_put(clone);
-+			return NULL;
- 		}
- 
- 		size -= len;
- 	}
- 
--	if (!clone->bi_iter.bi_size) {
--		bio_put(clone);
--		return NULL;
--	}
--
- 	return clone;
- }
- 
-@@ -1025,7 +1008,6 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
- 	io->base_bio = bio;
- 	io->sector = sector;
- 	io->error = 0;
--	io->base_io = NULL;
- 	io->ctx.req = NULL;
- 	atomic_set(&io->io_pending, 0);
- }
-@@ -1038,13 +1020,11 @@ static void crypt_inc_pending(struct dm_crypt_io *io)
- /*
-  * One of the bios was finished. Check for completion of
-  * the whole request and correctly clean up the buffer.
-- * If base_io is set, wait for the last fragment to complete.
+-/*
+- * The fields in here must be read only after initialization,
+- * changing state should be in crypt_cpu.
++ * The fields in here must be read only after initialization.
   */
- static void crypt_dec_pending(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->cc;
- 	struct bio *base_bio = io->base_bio;
--	struct dm_crypt_io *base_io = io->base_io;
- 	int error = io->error;
- 
- 	if (!atomic_dec_and_test(&io->io_pending))
-@@ -1055,13 +1035,7 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
- 	if (io != dm_per_bio_data(base_bio, cc->per_bio_data_size))
- 		mempool_free(io, cc->io_pool);
- 
--	if (likely(!base_io))
--		bio_endio(base_bio, error);
--	else {
--		if (error && !base_io->error)
--			base_io->error = error;
--		crypt_dec_pending(base_io);
--	}
-+	bio_endio(base_bio, error);
- }
- 
- /*
-@@ -1197,10 +1171,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->cc;
- 	struct bio *clone;
--	struct dm_crypt_io *new_io;
- 	int crypt_finished;
--	unsigned out_of_pages = 0;
--	unsigned remaining = io->base_bio->bi_iter.bi_size;
- 	sector_t sector = io->sector;
- 	int r;
- 
-@@ -1210,80 +1181,30 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
- 	crypt_inc_pending(io);
- 	crypt_convert_init(cc, &io->ctx, NULL, io->base_bio, sector);
+ struct crypt_config {
+ 	struct dm_dev *dev;
+@@ -150,12 +142,6 @@ struct crypt_config {
+ 	sector_t iv_offset;
+ 	unsigned int iv_size;
  
 -	/*
--	 * The allocated buffers can be smaller than the whole bio,
--	 * so repeat the whole process until all the data can be handled.
+-	 * Duplicated per cpu state. Access through
+-	 * per_cpu_ptr() only.
 -	 */
--	while (remaining) {
--		clone = crypt_alloc_buffer(io, remaining, &out_of_pages);
--		if (unlikely(!clone)) {
--			io->error = -ENOMEM;
--			break;
--		}
+-	struct crypt_cpu __percpu *cpu;
 -
--		io->ctx.bio_out = clone;
--		io->ctx.iter_out = clone->bi_iter;
--
--		remaining -= clone->bi_iter.bi_size;
--		sector += bio_sectors(clone);
--
--		crypt_inc_pending(io);
--
--		r = crypt_convert(cc, &io->ctx);
--		if (r < 0)
--			io->error = -EIO;
--
--		crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
--
--		/* Encryption was already finished, submit io now */
--		if (crypt_finished) {
--			kcryptd_crypt_write_io_submit(io, 0);
--
--			/*
--			 * If there was an error, do not try next fragments.
--			 * For async, error is processed in async handler.
--			 */
--			if (unlikely(r < 0))
--				break;
-+	clone = crypt_alloc_buffer(io, io->base_bio->bi_iter.bi_size);
-+	if (unlikely(!clone)) {
-+		io->error = -EIO;
-+		goto dec;
-+	}
+ 	/* ESSIV: struct crypto_cipher *essiv_tfm */
+ 	void *iv_private;
+ 	struct crypto_ablkcipher **tfms;
+@@ -192,11 +178,6 @@ static void clone_init(struct dm_crypt_io *, struct bio *);
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
+ static u8 *iv_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq);
  
--			io->sector = sector;
--		}
-+	io->ctx.bio_out = clone;
-+	io->ctx.iter_out = clone->bi_iter;
- 
--		/*
--		 * Out of memory -> run queues
--		 * But don't wait if split was due to the io size restriction
--		 */
--		if (unlikely(out_of_pages))
--			congestion_wait(BLK_RW_ASYNC, HZ/100);
-+	sector += bio_sectors(clone);
- 
--		/*
--		 * With async crypto it is unsafe to share the crypto context
--		 * between fragments, so switch to a new dm_crypt_io structure.
--		 */
--		if (unlikely(!crypt_finished && remaining)) {
--			new_io = mempool_alloc(cc->io_pool, GFP_NOIO);
--			crypt_io_init(new_io, io->cc, io->base_bio, sector);
--			crypt_inc_pending(new_io);
--			crypt_convert_init(cc, &new_io->ctx, NULL,
--					   io->base_bio, sector);
--			new_io->ctx.iter_in = io->ctx.iter_in;
+-static struct crypt_cpu *this_crypt_config(struct crypt_config *cc)
+-{
+-	return this_cpu_ptr(cc->cpu);
+-}
 -
--			/*
--			 * Fragments after the first use the base_io
--			 * pending count.
--			 */
--			if (!io->base_io)
--				new_io->base_io = io;
--			else {
--				new_io->base_io = io->base_io;
--				crypt_inc_pending(io->base_io);
--				crypt_dec_pending(io);
--			}
-+	crypt_inc_pending(io);
-+	r = crypt_convert(cc, &io->ctx);
-+	if (r)
-+		io->error = -EIO;
-+	crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
+ /*
+  * Use this to access cipher attributes that are the same for each CPU.
+  */
+@@ -903,16 +884,15 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ static void crypt_alloc_req(struct crypt_config *cc,
+ 			    struct convert_context *ctx)
+ {
+-	struct crypt_cpu *this_cc = this_crypt_config(cc);
+ 	unsigned key_index = ctx->cc_sector & (cc->tfms_count - 1);
  
--			io = new_io;
--		}
-+	/* Encryption was already finished, submit io now */
-+	if (crypt_finished) {
-+		kcryptd_crypt_write_io_submit(io, 0);
-+		io->sector = sector;
- 	}
+-	if (!this_cc->req)
+-		this_cc->req = mempool_alloc(cc->req_pool, GFP_NOIO);
++	if (!ctx->req)
++		ctx->req = mempool_alloc(cc->req_pool, GFP_NOIO);
  
-+dec:
- 	crypt_dec_pending(io);
+-	ablkcipher_request_set_tfm(this_cc->req, cc->tfms[key_index]);
+-	ablkcipher_request_set_callback(this_cc->req,
++	ablkcipher_request_set_tfm(ctx->req, cc->tfms[key_index]);
++	ablkcipher_request_set_callback(ctx->req,
+ 	    CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
+-	    kcryptd_async_done, dmreq_of_req(cc, this_cc->req));
++	    kcryptd_async_done, dmreq_of_req(cc, ctx->req));
  }
  
-@@ -1738,7 +1659,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 				sizeof(struct dm_crypt_io) + cc->dmreq_start +
- 				sizeof(struct dm_crypt_request) + cc->iv_size;
+ /*
+@@ -921,7 +901,6 @@ static void crypt_alloc_req(struct crypt_config *cc,
+ static int crypt_convert(struct crypt_config *cc,
+ 			 struct convert_context *ctx)
+ {
+-	struct crypt_cpu *this_cc = this_crypt_config(cc);
+ 	int r;
  
--	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
-+	cc->page_pool = mempool_create_page_pool(BIO_MAX_PAGES, 0);
- 	if (!cc->page_pool) {
- 		ti->error = "Cannot allocate page mempool";
- 		goto bad;
+ 	atomic_set(&ctx->cc_pending, 1);
+@@ -932,7 +911,7 @@ static int crypt_convert(struct crypt_config *cc,
+ 
+ 		atomic_inc(&ctx->cc_pending);
+ 
+-		r = crypt_convert_block(cc, ctx, this_cc->req);
++		r = crypt_convert_block(cc, ctx, ctx->req);
+ 
+ 		switch (r) {
+ 		/* async */
+@@ -941,7 +920,7 @@ static int crypt_convert(struct crypt_config *cc,
+ 			reinit_completion(&ctx->restart);
+ 			/* fall through*/
+ 		case -EINPROGRESS:
+-			this_cc->req = NULL;
++			ctx->req = NULL;
+ 			ctx->cc_sector++;
+ 			continue;
+ 
+@@ -1040,6 +1019,7 @@ static struct dm_crypt_io *crypt_io_alloc(struct crypt_config *cc,
+ 	io->sector = sector;
+ 	io->error = 0;
+ 	io->base_io = NULL;
++	io->ctx.req = NULL;
+ 	atomic_set(&io->io_pending, 0);
+ 
+ 	return io;
+@@ -1065,6 +1045,8 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+ 	if (!atomic_dec_and_test(&io->io_pending))
+ 		return;
+ 
++	if (io->ctx.req)
++		mempool_free(io->ctx.req, cc->req_pool);
+ 	mempool_free(io, cc->io_pool);
+ 
+ 	if (likely(!base_io))
+@@ -1492,8 +1474,6 @@ static int crypt_wipe_key(struct crypt_config *cc)
+ static void crypt_dtr(struct dm_target *ti)
+ {
+ 	struct crypt_config *cc = ti->private;
+-	struct crypt_cpu *cpu_cc;
+-	int cpu;
+ 
+ 	ti->private = NULL;
+ 
+@@ -1505,13 +1485,6 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->crypt_queue)
+ 		destroy_workqueue(cc->crypt_queue);
+ 
+-	if (cc->cpu)
+-		for_each_possible_cpu(cpu) {
+-			cpu_cc = per_cpu_ptr(cc->cpu, cpu);
+-			if (cpu_cc->req)
+-				mempool_free(cpu_cc->req, cc->req_pool);
+-		}
+-
+ 	crypt_free_tfms(cc);
+ 
+ 	if (cc->bs)
+@@ -1530,9 +1503,6 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->dev)
+ 		dm_put_device(ti, cc->dev);
+ 
+-	if (cc->cpu)
+-		free_percpu(cc->cpu);
+-
+ 	kzfree(cc->cipher);
+ 	kzfree(cc->cipher_string);
+ 
+@@ -1588,13 +1558,6 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 	if (tmp)
+ 		DMWARN("Ignoring unexpected additional cipher options");
+ 
+-	cc->cpu = __alloc_percpu(sizeof(*(cc->cpu)),
+-				 __alignof__(struct crypt_cpu));
+-	if (!cc->cpu) {
+-		ti->error = "Cannot allocate per cpu state";
+-		goto bad_mem;
+-	}
+-
+ 	/*
+ 	 * For compatibility with the original dm-crypt mapping format, if
+ 	 * only the cipher name is supplied, use cbc-plain.
 -- 
 1.8.1.4
