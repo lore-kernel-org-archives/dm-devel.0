@@ -1,14 +1,12 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/9] block: use kmalloc alignment for bio slab
-Date: Fri, 28 Mar 2014 16:11:09 -0400
-Message-ID: <1396037476-26595-3-git-send-email-snitzer@redhat.com>
-References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 0/9] dm crypt: improve cpu scalability
+Date: Fri, 28 Mar 2014 16:11:07 -0400
+Message-ID: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,42 +19,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+With these changes we hope to improve dm-crypt performance for a
+wide-range of dm-crypt use-cases and configurations.  Extensive
+testing is planned to identify the performance difference(s) as
+compared to stock v3.14-rc8.  We'll up this thread as results become
+available.
 
-Various subsystems can ask the bio subsystem to create a bio slab cache
-with some free space before the bio.  This free space can be used for any
-purpose.  Device mapper uses this per-bio-data feature to place some
-target-specific and device-mapper specific data before the bio, so that
-the target-specific data doesn't have to be allocated separately.
+These changes are staged in linux-dm.git 'for-next' -- that is
+primarily for linux-next test coverage purposes.  We'll make a call on
+whether any of these patches are included in 3.15 when we have the
+benefit of performance comparison results.
 
-This per-bio-data mechanism is used in place of kmalloc, so we need the
-allocated slab to have the same memory alignment as memory allocated
-with kmalloc.
+Mikulas Patocka (9):
+  dm crypt: fix cpu hotplug crash by removing per-cpu structure
+  block: use kmalloc alignment for bio slab
+  dm crypt: use per-bio data
+  dm crypt: use unbound workqueue for request processing
+  dm crypt: don't allocate pages for a partial request
+  dm crypt: avoid deadlock in mempools
+  dm crypt: remove io_pool
+  dm crypt: offload writes to thread
+  dm crypt: sort writes
 
-Change bio_find_or_create_slab() so that it uses ARCH_KMALLOC_MINALIGN
-alignment when creating the slab cache.  This is needed so that dm-crypt
-can use per-bio-data for encryption - the crypto subsystem assumes this
-data will have the same alignment as kmalloc'ed memory.
+ drivers/md/dm-crypt.c | 413 +++++++++++++++++++++++++-------------------------
+ fs/bio.c              |   3 +-
+ 2 files changed, 209 insertions(+), 207 deletions(-)
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- fs/bio.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
-diff --git a/fs/bio.c b/fs/bio.c
-index 8754e7b..371b646 100644
---- a/fs/bio.c
-+++ b/fs/bio.c
-@@ -112,7 +112,8 @@ static struct kmem_cache *bio_find_or_create_slab(unsigned int extra_size)
- 	bslab = &bio_slabs[entry];
- 
- 	snprintf(bslab->name, sizeof(bslab->name), "bio-%d", entry);
--	slab = kmem_cache_create(bslab->name, sz, 0, SLAB_HWCACHE_ALIGN, NULL);
-+	slab = kmem_cache_create(bslab->name, sz, ARCH_KMALLOC_MINALIGN,
-+				 SLAB_HWCACHE_ALIGN, NULL);
- 	if (!slab)
- 		goto out_unlock;
- 
 -- 
 1.8.1.4
