@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 8/9] dm crypt: offload writes to thread
-Date: Fri, 28 Mar 2014 16:11:15 -0400
-Message-ID: <1396037476-26595-9-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 6/9] dm crypt: avoid deadlock in mempools
+Date: Fri, 28 Mar 2014 16:11:13 -0400
+Message-ID: <1396037476-26595-7-git-send-email-snitzer@redhat.com>
 References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,234 +23,116 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-Submitting write bios directly in the encryption thread caused serious
-performance degradation.  On a multiprocessor machine, encryption requests
-finish in a different order than they were submitted.  Consequently, write
-requests would be submitted in a different order and it could cause severe
-performance degradation.
+Fix a theoretical deadlock introduced in the previous commit ("dm crypt:
+don't allocate pages for a partial request").
 
-Move the submission of write requests to a separate thread so that the
-requests can be sorted before submitting.  Sorting is implemented in the
-next commit ("dm crypt: sort writes").
+The function crypt_alloc_buffer may be called concurrently.  If we allocate
+from the mempool concurrently, there is a possibility of deadlock.  For
+example, if we have mempool of 256 pages, two processes, each wanting
+256, pages allocate from the mempool concurrently, it may deadlock in a
+situation where both processes have allocated 128 pages and the mempool
+is exhausted.
 
-Note: it is required that a previous commit ("dm crypt: don't allocate
-pages for a partial request") be applied before applying this patch.
-Otherwise, this commit could introduce a crash.
+In order to avoid such a scenario, we allocate the pages under a mutex.
+
+In order to not degrade performance with excessive locking, we try
+non-blocking allocations without a mutex first and if it fails, we
+fallback to a blocking allocation with a mutex.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-crypt.c | 120 ++++++++++++++++++++++++++++++++++++++++----------
- 1 file changed, 97 insertions(+), 23 deletions(-)
+ drivers/md/dm-crypt.c | 36 +++++++++++++++++++++++++++++++++---
+ 1 file changed, 33 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 8f91531..8bbe3d5 100644
+index fe92764..d7d7023 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -18,6 +18,7 @@
- #include <linux/slab.h>
- #include <linux/crypto.h>
- #include <linux/workqueue.h>
-+#include <linux/kthread.h>
- #include <linux/backing-dev.h>
- #include <linux/atomic.h>
- #include <linux/scatterlist.h>
-@@ -58,6 +59,8 @@ struct dm_crypt_io {
- 	atomic_t io_pending;
- 	int error;
- 	sector_t sector;
-+
-+	struct list_head list;
- } CRYPTO_MINALIGN_ATTR;
+@@ -124,6 +124,7 @@ struct crypt_config {
+ 	mempool_t *req_pool;
+ 	mempool_t *page_pool;
+ 	struct bio_set *bs;
++	struct mutex bio_alloc_lock;
  
- struct dm_crypt_request {
-@@ -128,6 +131,10 @@ struct crypt_config {
  	struct workqueue_struct *io_queue;
  	struct workqueue_struct *crypt_queue;
- 
-+	struct task_struct *write_thread;
-+	wait_queue_head_t write_thread_wait;
-+	struct list_head write_thread_list;
-+
- 	char *cipher;
- 	char *cipher_string;
- 
-@@ -1140,37 +1147,89 @@ static int kcryptd_io_read(struct dm_crypt_io *io, gfp_t gfp)
- 	return 0;
- }
- 
-+static void kcryptd_io_read_work(struct work_struct *work)
-+{
-+	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
-+
-+	crypt_inc_pending(io);
-+	if (kcryptd_io_read(io, GFP_NOIO))
-+		io->error = -ENOMEM;
-+	crypt_dec_pending(io);
-+}
-+
-+static void kcryptd_queue_read(struct dm_crypt_io *io)
-+{
-+	struct crypt_config *cc = io->cc;
-+
-+	INIT_WORK(&io->work, kcryptd_io_read_work);
-+	queue_work(cc->io_queue, &io->work);
-+}
-+
- static void kcryptd_io_write(struct dm_crypt_io *io)
+@@ -954,24 +955,46 @@ static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone);
+ /*
+  * Generate a new unfragmented bio with the given size
+  * This should never violate the device limitations
++ *
++ * This function may be called concurrently. If we allocate from the mempool
++ * concurrently, there is a possibility of deadlock. For example, if we have
++ * mempool of 256 pages, two processes, each wanting 256, pages allocate from
++ * the mempool concurrently, it may deadlock in a situation where both processes
++ * have allocated 128 pages and the mempool is exhausted.
++ *
++ * In order to avoid this scenarios, we allocate the pages under a mutex.
++ *
++ * In order to not degrade performance with excessive locking, we try
++ * non-blocking allocations without a mutex first and if it fails, we fallback
++ * to a blocking allocation with a mutex.
+  */
+ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
  {
- 	struct bio *clone = io->ctx.bio_out;
-+
- 	generic_make_request(clone);
- }
- 
--static void kcryptd_io(struct work_struct *work)
-+static int dmcrypt_write(void *data)
- {
--	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
-+	struct crypt_config *cc = data;
-+	while (1) {
-+		struct list_head local_list;
-+		struct blk_plug plug;
- 
--	if (bio_data_dir(io->base_bio) == READ) {
--		crypt_inc_pending(io);
--		if (kcryptd_io_read(io, GFP_NOIO))
--			io->error = -ENOMEM;
--		crypt_dec_pending(io);
--	} else
--		kcryptd_io_write(io);
--}
-+		DECLARE_WAITQUEUE(wait, current);
- 
--static void kcryptd_queue_io(struct dm_crypt_io *io)
--{
--	struct crypt_config *cc = io->cc;
-+		spin_lock_irq(&cc->write_thread_wait.lock);
-+continue_locked:
- 
--	INIT_WORK(&io->work, kcryptd_io);
--	queue_work(cc->io_queue, &io->work);
-+		if (!list_empty(&cc->write_thread_list))
-+			goto pop_from_list;
-+
-+		__set_current_state(TASK_INTERRUPTIBLE);
-+		__add_wait_queue(&cc->write_thread_wait, &wait);
-+
-+		spin_unlock_irq(&cc->write_thread_wait.lock);
-+
-+		if (unlikely(kthread_should_stop())) {
-+			set_task_state(current, TASK_RUNNING);
-+			remove_wait_queue(&cc->write_thread_wait, &wait);
-+			break;
-+		}
-+
-+		schedule();
-+
-+		set_task_state(current, TASK_RUNNING);
-+		spin_lock_irq(&cc->write_thread_wait.lock);
-+		__remove_wait_queue(&cc->write_thread_wait, &wait);
-+		goto continue_locked;
-+
-+pop_from_list:
-+		local_list = cc->write_thread_list;
-+		local_list.next->prev = &local_list;
-+		local_list.prev->next = &local_list;
-+		INIT_LIST_HEAD(&cc->write_thread_list);
-+
-+		spin_unlock_irq(&cc->write_thread_wait.lock);
-+
-+		blk_start_plug(&plug);
-+		do {
-+			struct dm_crypt_io *io = container_of(local_list.next,
-+						struct dm_crypt_io, list);
-+			list_del(&io->list);
-+			kcryptd_io_write(io);
-+		} while (!list_empty(&local_list));
-+		blk_finish_plug(&plug);
-+	}
-+	return 0;
- }
- 
--static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
-+static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io)
- {
- 	struct bio *clone = io->ctx.bio_out;
  	struct crypt_config *cc = io->cc;
-+	unsigned long flags;
+ 	struct bio *clone;
+ 	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+-	gfp_t gfp_mask = GFP_NOIO | __GFP_HIGHMEM;
++	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
+ 	unsigned i, len;
+ 	struct page *page;
  
- 	if (unlikely(io->error < 0)) {
- 		crypt_free_buffer_pages(cc, clone);
-@@ -1184,10 +1243,10 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
++retry:
++	if (unlikely(gfp_mask & __GFP_WAIT))
++		mutex_lock(&cc->bio_alloc_lock);
++
+ 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
+ 	if (!clone)
+-		return NULL;
++		goto return_clone;
  
- 	clone->bi_iter.bi_sector = cc->start + io->sector;
+ 	clone_init(io, clone);
  
--	if (async)
--		kcryptd_queue_io(io);
--	else
--		generic_make_request(clone);
-+	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
-+	list_add_tail(&io->list, &cc->write_thread_list);
-+	wake_up_locked(&cc->write_thread_wait);
-+	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
- }
+ 	for (i = 0; i < nr_iovecs; i++) {
+ 		page = mempool_alloc(cc->page_pool, gfp_mask);
++		if (!page) {
++			crypt_free_buffer_pages(cc, clone);
++			bio_put(clone);
++			gfp_mask |= __GFP_WAIT;
++			goto retry;
++		}
  
- static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
-@@ -1223,7 +1282,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
  
- 	/* Encryption was already finished, submit io now */
- 	if (crypt_finished) {
--		kcryptd_crypt_write_io_submit(io, 0);
-+		kcryptd_crypt_write_io_submit(io);
- 		io->sector = sector;
+@@ -980,12 +1003,17 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
+ 			mempool_free(page, cc->page_pool);
+ 			crypt_free_buffer_pages(cc, clone);
+ 			bio_put(clone);
+-			return NULL;
++			clone = NULL;
++			goto return_clone;
+ 		}
+ 
+ 		size -= len;
  	}
  
-@@ -1283,7 +1342,7 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
- 	if (bio_data_dir(io->base_bio) == READ)
- 		kcryptd_crypt_read_done(io);
- 	else
--		kcryptd_crypt_write_io_submit(io, 1);
-+		kcryptd_crypt_write_io_submit(io);
++return_clone:
++	if (unlikely(gfp_mask & __GFP_WAIT))
++		mutex_unlock(&cc->bio_alloc_lock);
++
+ 	return clone;
  }
  
- static void kcryptd_crypt(struct work_struct *work)
-@@ -1430,6 +1489,9 @@ static void crypt_dtr(struct dm_target *ti)
- 	if (!cc)
- 		return;
- 
-+	if (cc->write_thread)
-+		kthread_stop(cc->write_thread);
-+
- 	if (cc->io_queue)
- 		destroy_workqueue(cc->io_queue);
- 	if (cc->crypt_queue)
-@@ -1744,6 +1806,18 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+@@ -1671,6 +1699,8 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  		goto bad;
  	}
  
-+	init_waitqueue_head(&cc->write_thread_wait);
-+	INIT_LIST_HEAD(&cc->write_thread_list);
++	mutex_init(&cc->bio_alloc_lock);
 +
-+	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
-+	if (IS_ERR(cc->write_thread)) {
-+		ret = PTR_ERR(cc->write_thread);
-+		cc->write_thread = NULL;
-+		ti->error = "Couldn't spawn write thread";
-+		goto bad;
-+	}
-+	wake_up_process(cc->write_thread);
-+
- 	ti->num_flush_bios = 1;
- 	ti->discard_zeroes_data_unsupported = true;
- 
-@@ -1778,7 +1852,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
- 
- 	if (bio_data_dir(io->base_bio) == READ) {
- 		if (kcryptd_io_read(io, GFP_NOWAIT))
--			kcryptd_queue_io(io);
-+			kcryptd_queue_read(io);
- 	} else
- 		kcryptd_queue_crypt(io);
- 
+ 	ret = -EINVAL;
+ 	if (sscanf(argv[2], "%llu%c", &tmpll, &dummy) != 1) {
+ 		ti->error = "Invalid iv_offset sector";
 -- 
 1.8.1.4
