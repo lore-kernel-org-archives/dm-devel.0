@@ -1,17 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 8/9] dm crypt: offload writes to thread
-Date: Tue, 1 Apr 2014 12:32:47 -0400
-Message-ID: <20140401163247.GF13050@redhat.com>
-References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
-	<1396037476-26595-9-git-send-email-snitzer@redhat.com>
-	<533AE8DC.5080004@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH 9/9] dm crypt: sort writes
+Date: Tue, 01 Apr 2014 19:35:28 +0200
+Message-ID: <533AF8E0.2040907@gmail.com>
+References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>	<1396037476-26595-10-git-send-email-snitzer@redhat.com>	<53368043.5000808@gmail.com>
+	<20140331123940.GB25683@redhat.com>	<20140401083755.55afa738d5a98b6bc07aca71@valinux.co.jp>
+	<20140401010129.GB9214@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <533AE8DC.5080004@redhat.com>
+In-Reply-To: <20140401010129.GB9214@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,45 +20,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ondrej Kozina <okozina@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Apr 01 2014 at 12:27pm -0400,
-Ondrej Kozina <okozina@redhat.com> wrote:
+On 04/01/2014 03:01 AM, Mike Snitzer wrote:
+> OK.  FYI, I cleaned the code up a little today based on Milan's dislike
+> for the #define within the function, see:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=039e943277604c3f4f6b4ee803b8793627d53d36
 
-> On 03/28/2014 09:11 PM, Mike Snitzer wrote:
-> >From: Mikulas Patocka <mpatocka@redhat.com>
-> >
-> >Submitting write bios directly in the encryption thread caused serious
-> >performance degradation.  On a multiprocessor machine, encryption requests
-> >finish in a different order than they were submitted.  Consequently, write
-> >requests would be submitted in a different order and it could cause severe
-> >performance degradation.
-> > (...)
-> 
-> Hi,
-> 
-> originally I planed to post result of performance testing but
-> unfortunately I crashed the test machine several times with
-> <in_subject> patch applied and onward:
-> 
-> The test set up looks following:
-> 
-> the base is kernel-3.14-rc8 with applied "[PATCH 2/9] block: use
-> kmalloc alignment for bio slab"
-> 
-> On top of base I compiled various dm-crypt modules:
-> 
-> <no_patch>		= raw 3.14-rc8 dm-crypt module
-> <no_percpu>		= "[PATCH 1/9]"
-> <per_bio_data>		= <no_percpu> + "[PATCH 3/9]"
-> <unbound>		= <per_bio_data> + "[PATCH 4/9]"
-> <dont_allocate_wfix>	= <unbound> + "[PATCH 5/9]" + "[PATCH 6/9]"
-> <remove_io_pool>	= <dont_allocate_wfix> + "[PATCH 7/9]"
-> <offload>		= <remove_io_pool> + "[PATCH 8/9]"
-> <sort>			= <offload> + "[PATCH 9/9]"
+Thanks.
 
-Wonder if it worthwhile to rebase to final v3.14... could this
-bio_add_page/mm crash be a function of something since fixed late in the
-rc cycle?
+Btw if you don't like sysfs option for disabling this, it can be optional table parameter,
+there is already discard support implemented this way.
+
+(I could add this myself later... just need to find at least few hours
+of free time:)
+
+Milan
