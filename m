@@ -1,15 +1,19 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH 8/9] dm crypt: offload writes to thread
-Date: Tue, 01 Apr 2014 21:08:56 +0200
-Message-ID: <533B0EC8.3090004@gmail.com>
-References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>	<1396037476-26595-9-git-send-email-snitzer@redhat.com>	<533AE8DC.5080004@redhat.com>
-	<alpine.LRH.2.02.1404011355500.12362@file01.intranet.prod.int.rdu2.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 9/9] dm crypt: sort writes
+Date: Tue, 1 Apr 2014 21:15:45 +0100
+Message-ID: <20140401201545.GA24739@agk-dp.fab.redhat.com>
+References: <1396037476-26595-1-git-send-email-snitzer@redhat.com>
+	<1396037476-26595-10-git-send-email-snitzer@redhat.com>
+	<53368043.5000808@gmail.com> <20140331123940.GB25683@redhat.com>
+	<20140401083755.55afa738d5a98b6bc07aca71@valinux.co.jp>
+	<20140401010129.GB9214@redhat.com> <533AF8E0.2040907@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1404011355500.12362@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <533AF8E0.2040907@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +23,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Ondrej Kozina <okozina@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 04/01/2014 08:01 PM, Mikulas Patocka wrote:
->> 1) mdadm -C -l 5 -n 3 -c 64 --assume-clean /dev/md0 /dev/sd[xyz]
->> 2) run 2/dmcrypt-all-verify.sh
-> 
-> I tried to run "./dmcrypt-all-verify.sh --dev /dev/md0 --testdir 
-> /mnt/test" and the result was this.
-> 
-> That script is somehow buggy because it attempts to copy files that I have 
-> in /usr/src to the test filesystem. It fills up the test filesystem and 
-> fails. I don't know why is it trying to copy files not related to the test.
+On Tue, Apr 01, 2014 at 07:35:28PM +0200, Milan Broz wrote:
+> Btw if you don't like sysfs option for disabling this, it can be optional table parameter,
+> there is already discard support implemented this way.
+> (I could add this myself later... just need to find at least few hours
+> of free time:)
+ 
+But apart from using that option for benchmarking purposes, is there any reason
+anyone would need to turn this off?
 
-Hi Mikulas,
+Do we know of any circumstances where the sorting causes a non-neglible
+performance hit?
 
-if it is the test I wrote years ago, it was in principle a hack,
-I need some filesystem with a lot files of different sizes.
-
-So I simply packed /usr and checked hash of all files before
-and after unpacking to test dmcrypt device.
-
-IMHO there should be some prepared archive which is just unpacked,
-not that it uses live /usr.
-(Obviously it need large enough device :-)
-
-But anyway, despite it is quite stupid test, it already proved
-to be very useful (I remember it discovered bugs in various patches
-several times).
-
-A IIRC it used several fs types and several encryption types
-(including null encryption which removes crypto layer influence,
-testing pure dmcrypt bio handling).
-
-Milan
+Alasdair
