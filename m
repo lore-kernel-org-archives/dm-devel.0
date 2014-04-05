@@ -1,123 +1,86 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 3.15
-Date: Fri, 4 Apr 2014 15:10:54 -0400
-Message-ID: <20140404191053.GA14111@redhat.com>
+From: Sebastian Herbszt <herbszt@gmx.de>
+Subject: multipath-tools: mismatch between CDB allocation length
+ and SG_IO dxfer_len
+Date: Sat, 5 Apr 2014 13:13:23 +0200
+Message-ID: <20140405131323.00000d4b@localhost>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Jose Castillo <jcastillo@redhat.com>, Hannes Reinecke <hare@suse.de>, Heinz Mauelshagen <heinzm@redhat.com>, Monam Agarwal <monamagarwal123@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-The following changes since commit b098d6726bbfb94c06d6e1097466187afddae61f:
+Hello,
 
-  Linux 3.14-rc8 (2014-03-24 19:31:17 -0700)
+while playing with multipath-tools and scst I got the following warning:
 
-are available in the git repository at:
+[ 6382.467569] [3806]: scst: scst_parse_cmd:826:Warning: expected
+transfer length 256 for opcode 0x12 (handler vdisk_blockio, target
+scst_local) doesn't match decoded value 128
+[ 6382.467574] [3806]: scst_parse_cmd:828:Suspicious CDB:
+[ 6382.467579]  (h)___0__1__2__3__4__5__6__7__8__9__A__B__C__D__E__F
+[ 6382.467581]    0: 12 01 c0 00 80 00   ......
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.15-changes
+This happened when my scst target pretended to be a CLARiiON.
+I noticed a mismatch in emc_clariion_prio (libmultipath/prioritizers/emc.c)
+between the allocation length and dxfer_len:
 
-for you to fetch changes up to 0596661f0a16d9d69bf1033320e70b6ff52b5e81:
+int emc_clariion_prio(const char *dev, int fd)
+{
+        unsigned char sense_buffer[256];
+        unsigned char sb[128];
+        unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
+                                                sizeof(sb), 0};
 
-  dm cache: fix a lock-inversion (2014-04-04 14:53:05 -0400)
+...
 
-Please pull, thanks.
-Mike
+        memset(&sense_buffer, 0, 256);
+        io_hdr.interface_id = 'S';
+        io_hdr.cmd_len = sizeof (inqCmdBlk);
+        io_hdr.mx_sb_len = sizeof (sb);
+        io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
+        io_hdr.dxfer_len = sizeof (sense_buffer);
+        io_hdr.dxferp = sense_buffer;
+        io_hdr.cmdp = inqCmdBlk;
+        io_hdr.sbp = sb;
+        io_hdr.timeout = 60000;
+        io_hdr.pack_id = 0;
 
-----------------------------------------------------------------
-. Fix dm-cache corruption caused by discard_block_size >
-  cache_block_size
+The following change shrinks the size of sense_buffer to 128.
 
-. Fix a lock-inversion detected by LOCKDEP in dm-cache
+Sebastian
 
-. Fix a dangling bio bug in the dm-thinp target's process_deferred_bios
-  error path
-
-. Fix corruption due to non-atomic transaction commit which allowed a
-  metadata superblock to be written before all other metadata was
-  successfully written -- this is common to all targets that use the
-  persistent-data library's transaction manager (dm-thinp, dm-cache and
-  dm-era).
-
-. Various small cleanups in the DM core
-
-. Add the dm-era target which is useful for keeping track of which
-  blocks were written within a user defined period of time called an
-  'era'.  Use cases include tracking changed blocks for backup software,
-  and partially invalidating the contents of a cache to restore cache
-  coherency after rolling back a vendor snapshot.
-
-. Improve the on-disk layout of multithreaded writes to the dm-thin-pool
-  by splitting the pool's deferred bio list to be a per-thin device list
-  and then sorting that list using an rb_tree.  The subsequent read
-  throughput of the data written via multiple threads improved by ~70%.
-
-. Simplify the multipath target's handling of queuing IO by pushing
-  requests back to the request queue rather than queueing the IO
-  internally.
-
-----------------------------------------------------------------
-Hannes Reinecke (6):
-      dm mpath: do not call pg_init when it is already running
-      dm mpath: push back requests instead of queueing
-      dm mpath: remove process_queued_ios()
-      dm mpath: reduce memory pressure when requeuing
-      dm mpath: remove map_io()
-      dm-mpath: do not activate failed paths
-
-Heinz Mauelshagen (1):
-      dm cache: remove remainder of distinct discard block size
-
-Joe Thornber (5):
-      dm: add era target
-      dm bitset: only flush the current word if it has been dirtied
-      dm transaction manager: fix corruption due to non-atomic transaction commit
-      dm: take care to copy the space map roots before locking the superblock
-      dm cache: fix a lock-inversion
-
-Jose Castillo (1):
-      dm mpath: print more useful warnings in multipath_message()
-
-Mike Snitzer (7):
-      dm cache: prevent corruption caused by discard_block_size > cache_block_size
-      dm table: add dm_table_run_md_queue_async
-      dm mpath: remove extra nesting in map function
-      dm thin: fix dangling bio in process_deferred_bios error path
-      dm thin: simplify pool_is_congested
-      dm thin: use per thin device deferred bio lists
-      dm thin: sort the per thin deferred bios using an rb_tree
-
-Mikulas Patocka (3):
-      dm: make dm_table_alloc_md_mempools static
-      dm: remove dm_get_mapinfo
-      dm: stop using bi_private
-
-Monam Agarwal (1):
-      dm: use RCU_INIT_POINTER instead of rcu_assign_pointer in __unbind
-
- Documentation/device-mapper/era.txt                |  108 ++
- drivers/md/Kconfig                                 |   11 +
- drivers/md/Makefile                                |    2 +
- drivers/md/dm-cache-block-types.h                  |   11 -
- drivers/md/dm-cache-metadata.c                     |  132 +-
- drivers/md/dm-cache-metadata.h                     |   15 +-
- drivers/md/dm-cache-target.c                       |  131 +-
- drivers/md/dm-era-target.c                         | 1746 ++++++++++++++++++++
- drivers/md/dm-mpath.c                              |  219 +--
- drivers/md/dm-table.c                              |   21 +-
- drivers/md/dm-thin-metadata.c                      |   80 +-
- drivers/md/dm-thin.c                               |  263 ++-
- drivers/md/dm.c                                    |   24 +-
- drivers/md/dm.h                                    |    2 +-
- drivers/md/persistent-data/dm-bitset.c             |   10 +-
- drivers/md/persistent-data/dm-bitset.h             |    1 +
- drivers/md/persistent-data/dm-block-manager.c      |   15 +-
- drivers/md/persistent-data/dm-block-manager.h      |    3 +-
- .../md/persistent-data/dm-transaction-manager.c    |    5 +-
- .../md/persistent-data/dm-transaction-manager.h    |   17 +-
- include/linux/device-mapper.h                      |    8 +-
- 21 files changed, 2346 insertions(+), 478 deletions(-)
- create mode 100644 Documentation/device-mapper/era.txt
- create mode 100644 drivers/md/dm-era-target.c
+diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/emc.c
+index 87e9a8d..91b3d90 100644
+--- a/libmultipath/prioritizers/emc.c
++++ b/libmultipath/prioritizers/emc.c
+@@ -14,15 +14,15 @@
+ 
+ int emc_clariion_prio(const char *dev, int fd)
+ {
+-	unsigned char sense_buffer[256];
++	unsigned char sense_buffer[128];
+ 	unsigned char sb[128];
+ 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
+-						sizeof(sb), 0};
++						sizeof(sense_buffer), 0};
+ 	struct sg_io_hdr io_hdr;
+ 	int ret = PRIO_UNDEF;
+ 
+ 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+-	memset(&sense_buffer, 0, 256);
++	memset(&sense_buffer, 0, 128);
+ 	io_hdr.interface_id = 'S';
+ 	io_hdr.cmd_len = sizeof (inqCmdBlk);
+ 	io_hdr.mx_sb_len = sizeof (sb);
