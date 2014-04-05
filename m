@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 7/9] dm-crypt: remove io_pool
-Date: Sat, 5 Apr 2014 14:08:13 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1404051407560.8509@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 8/9] dm-crypt: offload writes to thread
+Date: Sat, 5 Apr 2014 14:08:42 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1404051408200.8509@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1404051359500.8509@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1404051404260.8509@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1404051405010.8509@file01.intranet.prod.int.rdu2.redhat.com>
@@ -9,12 +9,13 @@ References: <alpine.LRH.2.02.1404051359500.8509@file01.intranet.prod.int.rdu2.re
 	<alpine.LRH.2.02.1404051405420.8509@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1404051406090.8509@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.1404051407060.8509@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1404051407560.8509@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1404051407060.8509@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1404051407560.8509@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,94 +29,233 @@ To: Mike Snitzer <msnitzer@redhat.com>, Ondrej Kozina <okozina@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Remove io_pool and _crypt_io_pool because they are unused.
+Submitting write bios directly in the encryption thread caused serious
+performance degradation. On multiprocessor machine encryption requests
+finish in a different order than they were submitted in. Consequently, write
+requests would be submitted in a different order and it could cause severe
+performance degradation.
+
+This patch moves submitting write requests to a separate thread so that
+the requests can be sorted before submitting.
+
+Sorting is implemented in the next patch.
+
+Note: it is required that a previous patch "dm-crypt: don't allocate pages
+for a partial request." is applied before applying this patch. Without
+that, this patch could introduce a crash.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-crypt.c |   21 +--------------------
- 1 file changed, 1 insertion(+), 20 deletions(-)
+ drivers/md/dm-crypt.c |  120 ++++++++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 97 insertions(+), 23 deletions(-)
 
 Index: linux-3.14/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.14.orig/drivers/md/dm-crypt.c	2014-04-04 21:04:40.000000000 +0200
-+++ linux-3.14/drivers/md/dm-crypt.c	2014-04-04 21:05:40.000000000 +0200
-@@ -120,7 +120,6 @@ struct crypt_config {
- 	 * pool for per bio private data, crypto requests and
- 	 * encryption requeusts/buffer pages
- 	 */
--	mempool_t *io_pool;
- 	mempool_t *req_pool;
- 	mempool_t *page_pool;
- 	struct bio_set *bs;
-@@ -173,8 +172,6 @@ struct crypt_config {
+--- linux-3.14.orig/drivers/md/dm-crypt.c	2014-04-04 21:05:40.000000000 +0200
++++ linux-3.14/drivers/md/dm-crypt.c	2014-04-04 21:06:22.000000000 +0200
+@@ -18,6 +18,7 @@
+ #include <linux/slab.h>
+ #include <linux/crypto.h>
+ #include <linux/workqueue.h>
++#include <linux/kthread.h>
+ #include <linux/backing-dev.h>
+ #include <linux/atomic.h>
+ #include <linux/scatterlist.h>
+@@ -58,6 +59,8 @@ struct dm_crypt_io {
+ 	atomic_t io_pending;
+ 	int error;
+ 	sector_t sector;
++
++	struct list_head list;
+ } CRYPTO_MINALIGN_ATTR;
  
- #define MIN_IOS        16
+ struct dm_crypt_request {
+@@ -128,6 +131,10 @@ struct crypt_config {
+ 	struct workqueue_struct *io_queue;
+ 	struct workqueue_struct *crypt_queue;
  
--static struct kmem_cache *_crypt_io_pool;
--
- static void clone_init(struct dm_crypt_io *, struct bio *);
- static void kcryptd_queue_crypt(struct dm_crypt_io *io);
- static u8 *iv_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq);
-@@ -1061,8 +1058,6 @@ static void crypt_dec_pending(struct dm_
++	struct task_struct *write_thread;
++	wait_queue_head_t write_thread_wait;
++	struct list_head write_thread_list;
++
+ 	char *cipher;
+ 	char *cipher_string;
  
- 	if (io->ctx.req)
- 		crypt_free_req(cc, io->ctx.req, base_bio);
--	if (io != dm_per_bio_data(base_bio, cc->per_bio_data_size))
--		mempool_free(io, cc->io_pool);
- 
- 	bio_endio(base_bio, error);
+@@ -1141,37 +1148,89 @@ static int kcryptd_io_read(struct dm_cry
+ 	return 0;
  }
-@@ -1450,8 +1445,6 @@ static void crypt_dtr(struct dm_target *
- 		mempool_destroy(cc->page_pool);
- 	if (cc->req_pool)
- 		mempool_destroy(cc->req_pool);
--	if (cc->io_pool)
--		mempool_destroy(cc->io_pool);
  
- 	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
- 		cc->iv_gen_ops->dtr(cc);
-@@ -1664,19 +1657,13 @@ static int crypt_ctr(struct dm_target *t
- 	if (ret < 0)
- 		goto bad;
- 
--	ret = -ENOMEM;
--	cc->io_pool = mempool_create_slab_pool(MIN_IOS, _crypt_io_pool);
--	if (!cc->io_pool) {
--		ti->error = "Cannot allocate crypt io mempool";
--		goto bad;
--	}
--
- 	cc->dmreq_start = sizeof(struct ablkcipher_request);
- 	cc->dmreq_start += crypto_ablkcipher_reqsize(any_tfm(cc));
- 	cc->dmreq_start = ALIGN(cc->dmreq_start, crypto_tfm_ctx_alignment());
- 	cc->dmreq_start += crypto_ablkcipher_alignmask(any_tfm(cc)) &
- 			   ~(crypto_tfm_ctx_alignment() - 1);
- 
-+	ret = -ENOMEM;
- 	cc->req_pool = mempool_create_kmalloc_pool(MIN_IOS, cc->dmreq_start +
- 			sizeof(struct dm_crypt_request) + cc->iv_size);
- 	if (!cc->req_pool) {
-@@ -1938,14 +1925,9 @@ static int __init dm_crypt_init(void)
++static void kcryptd_io_read_work(struct work_struct *work)
++{
++	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
++
++	crypt_inc_pending(io);
++	if (kcryptd_io_read(io, GFP_NOIO))
++		io->error = -ENOMEM;
++	crypt_dec_pending(io);
++}
++
++static void kcryptd_queue_read(struct dm_crypt_io *io)
++{
++	struct crypt_config *cc = io->cc;
++
++	INIT_WORK(&io->work, kcryptd_io_read_work);
++	queue_work(cc->io_queue, &io->work);
++}
++
+ static void kcryptd_io_write(struct dm_crypt_io *io)
  {
- 	int r;
+ 	struct bio *clone = io->ctx.bio_out;
++
+ 	generic_make_request(clone);
+ }
  
--	_crypt_io_pool = KMEM_CACHE(dm_crypt_io, 0);
--	if (!_crypt_io_pool)
--		return -ENOMEM;
--
- 	r = dm_register_target(&crypt_target);
- 	if (r < 0) {
- 		DMERR("register failed %d", r);
--		kmem_cache_destroy(_crypt_io_pool);
+-static void kcryptd_io(struct work_struct *work)
++static int dmcrypt_write(void *data)
+ {
+-	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
++	struct crypt_config *cc = data;
++	while (1) {
++		struct list_head local_list;
++		struct blk_plug plug;
+ 
+-	if (bio_data_dir(io->base_bio) == READ) {
+-		crypt_inc_pending(io);
+-		if (kcryptd_io_read(io, GFP_NOIO))
+-			io->error = -ENOMEM;
+-		crypt_dec_pending(io);
+-	} else
+-		kcryptd_io_write(io);
+-}
++		DECLARE_WAITQUEUE(wait, current);
+ 
+-static void kcryptd_queue_io(struct dm_crypt_io *io)
+-{
+-	struct crypt_config *cc = io->cc;
++		spin_lock_irq(&cc->write_thread_wait.lock);
++continue_locked:
+ 
+-	INIT_WORK(&io->work, kcryptd_io);
+-	queue_work(cc->io_queue, &io->work);
++		if (!list_empty(&cc->write_thread_list))
++			goto pop_from_list;
++
++		__set_current_state(TASK_INTERRUPTIBLE);
++		__add_wait_queue(&cc->write_thread_wait, &wait);
++
++		spin_unlock_irq(&cc->write_thread_wait.lock);
++
++		if (unlikely(kthread_should_stop())) {
++			set_task_state(current, TASK_RUNNING);
++			remove_wait_queue(&cc->write_thread_wait, &wait);
++			break;
++		}
++
++		schedule();
++
++		set_task_state(current, TASK_RUNNING);
++		spin_lock_irq(&cc->write_thread_wait.lock);
++		__remove_wait_queue(&cc->write_thread_wait, &wait);
++		goto continue_locked;
++
++pop_from_list:
++		local_list = cc->write_thread_list;
++		local_list.next->prev = &local_list;
++		local_list.prev->next = &local_list;
++		INIT_LIST_HEAD(&cc->write_thread_list);
++
++		spin_unlock_irq(&cc->write_thread_wait.lock);
++
++		blk_start_plug(&plug);
++		do {
++			struct dm_crypt_io *io = container_of(local_list.next,
++						struct dm_crypt_io, list);
++			list_del(&io->list);
++			kcryptd_io_write(io);
++		} while (!list_empty(&local_list));
++		blk_finish_plug(&plug);
++	}
++	return 0;
+ }
+ 
+-static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
++static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io)
+ {
+ 	struct bio *clone = io->ctx.bio_out;
+ 	struct crypt_config *cc = io->cc;
++	unsigned long flags;
+ 
+ 	if (unlikely(io->error < 0)) {
+ 		crypt_free_buffer_pages(cc, clone);
+@@ -1185,10 +1244,10 @@ static void kcryptd_crypt_write_io_submi
+ 
+ 	clone->bi_iter.bi_sector = cc->start + io->sector;
+ 
+-	if (async)
+-		kcryptd_queue_io(io);
+-	else
+-		generic_make_request(clone);
++	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
++	list_add_tail(&io->list, &cc->write_thread_list);
++	wake_up_locked(&cc->write_thread_wait);
++	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
+ }
+ 
+ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+@@ -1224,7 +1283,7 @@ static void kcryptd_crypt_write_convert(
+ 
+ 	/* Encryption was already finished, submit io now */
+ 	if (crypt_finished) {
+-		kcryptd_crypt_write_io_submit(io, 0);
++		kcryptd_crypt_write_io_submit(io);
+ 		io->sector = sector;
  	}
  
- 	return r;
-@@ -1954,7 +1936,6 @@ static int __init dm_crypt_init(void)
- static void __exit dm_crypt_exit(void)
- {
- 	dm_unregister_target(&crypt_target);
--	kmem_cache_destroy(_crypt_io_pool);
+@@ -1284,7 +1343,7 @@ static void kcryptd_async_done(struct cr
+ 	if (bio_data_dir(io->base_bio) == READ)
+ 		kcryptd_crypt_read_done(io);
+ 	else
+-		kcryptd_crypt_write_io_submit(io, 1);
++		kcryptd_crypt_write_io_submit(io);
  }
  
- module_init(dm_crypt_init);
+ static void kcryptd_crypt(struct work_struct *work)
+@@ -1431,6 +1490,9 @@ static void crypt_dtr(struct dm_target *
+ 	if (!cc)
+ 		return;
+ 
++	if (cc->write_thread)
++		kthread_stop(cc->write_thread);
++
+ 	if (cc->io_queue)
+ 		destroy_workqueue(cc->io_queue);
+ 	if (cc->crypt_queue)
+@@ -1745,6 +1807,18 @@ static int crypt_ctr(struct dm_target *t
+ 		goto bad;
+ 	}
+ 
++	init_waitqueue_head(&cc->write_thread_wait);
++	INIT_LIST_HEAD(&cc->write_thread_list);
++
++	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
++	if (IS_ERR(cc->write_thread)) {
++		ret = PTR_ERR(cc->write_thread);
++		cc->write_thread = NULL;
++		ti->error = "Couldn't spawn write thread";
++		goto bad;
++	}
++	wake_up_process(cc->write_thread);
++
+ 	ti->num_flush_bios = 1;
+ 	ti->discard_zeroes_data_unsupported = true;
+ 
+@@ -1779,7 +1853,7 @@ static int crypt_map(struct dm_target *t
+ 
+ 	if (bio_data_dir(io->base_bio) == READ) {
+ 		if (kcryptd_io_read(io, GFP_NOWAIT))
+-			kcryptd_queue_io(io);
++			kcryptd_queue_read(io);
+ 	} else
+ 		kcryptd_queue_crypt(io);
+ 
