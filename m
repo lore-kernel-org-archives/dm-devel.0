@@ -1,15 +1,15 @@
-From: Marian Csontos <mcsontos@redhat.com>
+From: Ondrej Kozina <okozina@redhat.com>
 Subject: Re: [PATCH 0/9] dm-crypt patches
-Date: Tue, 08 Apr 2014 23:29:39 +0200
-Message-ID: <53446A43.8040300@redhat.com>
-References: <alpine.LRH.2.02.1404051359500.8509@file01.intranet.prod.int.rdu2.redhat.com>
-	<534414DD.1040500@redhat.com>
+Date: Wed, 09 Apr 2014 10:46:51 +0200
+Message-ID: <534508FB.3030609@redhat.com>
+References: <alpine.LRH.2.02.1404051359500.8509@file01.intranet.prod.int.rdu2.redhat.com>	<534414DD.1040500@redhat.com>
+	<20140408154416.GB4723@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <534414DD.1040500@redhat.com>
+In-Reply-To: <20140408154416.GB4723@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,210 +19,146 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On 04/08/2014 05:25 PM, Ondrej Kozina wrote:
-> Hi,
+On 04/08/2014 05:44 PM, Mike Snitzer wrote:
+> How is it that you've extracted these results from the test run?  I'd be
+> open to rerunning the same on my testbed (1 Intel Xeon E5649 Westmere-EP
+> with 12 logical cores, AES, and 6 SAS devices for RAID, 1 STEC PCIe SSD)
 >
-> I ran all tests again and with new version and everything passed even on
-> raid5 back end, so it's right time to paste here some performance results:
+> I could also yield this testbed to you if that'd be easier than you
+> telling me how to extract the test results.
 
-I have found few strange numbers there I have difficulties to understand 
-and wonder what maybe the cause of these discrepancies. Could you have a 
-look?
+Thanks Mike!
 
->
->
-> Requirements:
-> ------------
-> http://okozina.fedorapeople.org/dmcrypt-tests.tar.xz
-> compiled fio package
->
-> Performance tests are based on script in subdirectory 1/ in
-> http://okozina.fedorapeople.org/dmcrypt-tests.tar.xz
->
-> The result tables were aggregated from output of following fio command:
->
-> fio --output=log --latency-log=log --bandwidth-log=log \
-> --name=global --rw=$3 --size=1G --bsrange=1k-128k \
-> --filename=$1 \
-> --name=job1 --name=job2 --name=job3 --name=job4 \
-> --end_fsync=1
->
-> $1 - test device
-> $3 - read/write mode see explanation of TEST NAME column below
->
-> HW:
-> ---
-> 2-socket machine Intel(R) Xeon(TM) CPU 3.40GHz (4 logical CPUs, without
-> HW acceleration for AES!)
-> 4GB RAM
-> 4x SEAGATE ST336753LC (rotational drive)
->
-> One disk was used for system data, the rest for testing
->
-> Explanation for tables below:
-> -----------------------------
-> In column TEST NAME:
->
-> - "disk_nocrypt" stands for pure device w/o any encryption in effect
-> (it's single device or raid5 device using md)
-> - "zero" stands for encryption over dm-zero target. Basically this test
-> is trying to measure the performance of dm-crypt core alone.
-> - "disk" is real device (same as in "disk_nocrypt") with encryption set
-> up over it.
->
-> following suffixes after dash in TABLE NAME column:
-> (all correspond to permissible values for fio --rw option)
->
-> - read = sequential reads
-> - write = sequential writes
-> - randread = random reads
-> - randwrite = random writes
-> - rw = sequential mixed reads and writes
-> - randrw = random mixed reads and writes
->
-> Any mixed option above has separate line for aggregated READs and WRITEs
-> operations.
->
-> For encryption I used aes-xts-plain64 cipher, but please note that the
-> machine doesn't provide HW acceleration for AES algorithm.
->
-> The column AGGRB_A stands for results with vanilla 3.14
-> The column AGGRB_B stands for results with all Mikulas's patches applied.
->
-> The interesting results are prefixed with "zero-" and "disk-". The
-> "disk_nocrypt-" results are just for reference to see real limits of HW.
->
-> The "zero-" prefixed lines doesn't require to be published multiple
-> times but it can serve to demonstrate scatter of results even on idling
-> machine (except for running tests).
->
-> The single device tests:
->
-> TEST NAME                 OPERATION AGGRB_A KB/s AGGRB_B KB/s DIFF A->B
-> ------------------------- --------- ------------ ------------ ---------
-> disk_nocrypt-read         READ      260289       259339       -0.36 %
-> disk_nocrypt-write        WRITE     242950       242922       -0.01 %
-> disk_nocrypt-randread     READ       53095        52195       -1.70 %
-> disk_nocrypt-randwrite    WRITE     193665       194482        0.42 %
-> disk_nocrypt-rw           READ       64050        64037       -0.02 %
-> disk_nocrypt-rw           WRITE      64581        64567       -0.02 %
-> disk_nocrypt-randrw       READ       16792        17235        2.64 %
-> disk_nocrypt-randrw       WRITE      16796        17239        2.64 %
-> zero-read                 READ      187614       309748       65.10 %
-> zero-write                WRITE     240871       332301       37.96 %
-> zero-randread             READ      299024       325476        8.85 %
+Pasting new results for loaned machine and things are getting more 
+interesting (with respect to Marian's reply):
 
-                                       ^ Wow! Randread so much faster 
-than sequential that I wonder if it is correct...
+single (rotational) device:
 
-> zero-randwrite            WRITE     108506       123805       14.10 %
-> zero-rw                   READ       81694       106583       30.47 %
-> zero-rw                   WRITE      82370       107465       30.47 %
-> zero-randrw               READ       60794        85574       40.76 %
-> zero-randrw               WRITE      60810        85597       40.76 %
-> disk-read                 READ      232603       238258        2.43 %
-> disk-write                WRITE     119649       218601       82.70 %
-> disk-randread             READ       52578        52249       -0.63 %
-> disk-randwrite            WRITE     153878       173487       12.74 %
+TEST NAME                 OPERATION AGGRB_A KB/s AGGRB_B KB/s DIFF A->B
+------------------------- --------- ------------ ------------ ---------
+disk_nocrypt-read         READ      479129       478528        -0.13 %
+disk_nocrypt-write        WRITE     225040       225718         0.30 %
+disk_nocrypt-randread     READ       30150        30193         0.14 %
+disk_nocrypt-randwrite    WRITE      39059        39546         1.25 %
+disk_nocrypt-rw           READ       92477        94021         1.67 %
+disk_nocrypt-rw           WRITE      93242        94800         1.67 %
+disk_nocrypt-randrw       READ       14426        14902         3.30 %
+disk_nocrypt-randrw       WRITE      14388        14862         3.29 %
+zero-read                 READ      272889       354069        29.75 %
+zero-write                WRITE     145721       306175       110.11 %
+zero-randread             READ      482888       599366        24.12 %
+zero-randwrite            WRITE     151175       346728       129.36 %
+zero-rw                   READ       91280       131950        44.56 %
+zero-rw                   WRITE      92036       133042        44.55 %
+zero-randrw               READ       72625       142476        96.18 %
+zero-randrw               WRITE      72433       142099        96.18 %
+disk-read                 READ      193161       210156         8.80 %
+disk-write                WRITE      33845       182790       440.08 %
+disk-randread             READ       29746        29640        -0.36 %
+disk-randwrite            WRITE       7783        31689       307.16 %
+disk-rw                   READ       23954        69686       190.92 %
+disk-rw                   WRITE      24152        70263       190.92 %
+disk-randrw               READ        6770        12523        84.98 %
+disk-randrw               WRITE       6753        12490        84.95 %
 
-                                       ^ And disk randwrite faster than 
-sequential. And three times faster than randread suggesting it may be 
-writing to cache.
+single PCIe SSD device:
 
-> disk-rw                   READ       61341        64629        5.36 %
-> disk-rw                   WRITE      61849        65164        5.36 %
-> disk-randrw               READ       16251        15229       -6.29 %
-> disk-randrw               WRITE      16255        15233       -6.29 %
->
->
-> md raid5 with 64KiB chunk size as basking device:
->
-> TEST NAME                 OPERATION AGGRB_A KB/s AGGRB_B KB/s DIFF A->B
-> ------------------------- --------- ------------ ------------ ---------
-> disk_nocrypt-read         READ      391405       390276        -0.29 %
-> disk_nocrypt-write        WRITE     209736       210272         0.26 %
-> disk_nocrypt-randread     READ       84644        84319        -0.38 %
-> disk_nocrypt-randwrite    WRITE      30651        29174        -4.82 %
-> disk_nocrypt-rw           READ       64533        64472        -0.09 %
-> disk_nocrypt-rw           WRITE      65068        65005        -0.10 %
-> disk_nocrypt-randrw       READ       18586        18827         1.30 %
-> disk_nocrypt-randrw       WRITE      18591        18832         1.30 %
-> zero-read                 READ      190641       308042        61.58 %
-> zero-write                WRITE     343936       306533       -10.87 %
+(Staring to immense difference between sequential reads and random 
+reads. Can it be there some sort of raid inside SSD card?)
 
-                                       ^ Here the write is much much 
-faster than reads and the -10% looks more like an error than performance 
-regression
+TEST NAME                 OPERATION AGGRB_A KB/s AGGRB_B KB/s DIFF A->B
+------------------------- --------- ------------ ------------ ---------
+disk_nocrypt-read         READ      1072537      1145446        6.80 %
+disk_nocrypt-write        WRITE      843924       828586       -1.82 %
+disk_nocrypt-randread     READ      2091110      2108825        0.85 %
+disk_nocrypt-randwrite    WRITE     1149542      1137971       -1.01 %
+disk_nocrypt-rw           READ       425704       426661        0.22 %
+disk_nocrypt-rw           WRITE      429228       430193        0.22 %
+disk_nocrypt-randrw       READ       534206       532311       -0.35 %
+disk_nocrypt-randrw       WRITE      532791       530900       -0.35 %
+zero-read                 READ       271388       351871       29.66 %
+zero-write                WRITE      143748       300000      108.70 %
+zero-randread             READ       487264       600310       23.20 %
+zero-randwrite            WRITE      148958       344308      131.14 %
+zero-rw                   READ        90927       131659       44.80 %
+zero-rw                   WRITE       91679       132748       44.80 %
+zero-randrw               READ        71325       137468       92.73 %
+zero-randrw               WRITE       71136       137104       92.74 %
+disk-read                 READ       243854       269678       10.59 %
+disk-write                WRITE      179773       300408       67.10 %
+disk-randread             READ       518848       647679       24.83 %
+disk-randwrite            WRITE      195314       348398       78.38 %
+disk-rw                   READ       103381       131270       26.98 %
+disk-rw                   WRITE      104237       132356       26.98 %
+disk-randrw               READ        93681       145719       55.55 %
+disk-randrw               WRITE       93433       145333       55.55 %
 
-> zero-randread             READ      298322       326007         9.28 %
+4 rotational devices forming md raid5, 64KiB chunk size:
 
-                                       ^ Again randread much faster than 
-sequential
+TEST NAME                 OPERATION AGGRB_A KB/s AGGRB_B KB/s DIFF A->B
+------------------------- --------- ------------ ------------ ---------
+disk_nocrypt-read         READ      560436       547773        -2.26 %
+disk_nocrypt-write        WRITE     360552       359039        -0.42 %
+disk_nocrypt-randread     READ       62256        62118        -0.22 %
+disk_nocrypt-randwrite    WRITE      51591        52289         1.35 %
+disk_nocrypt-rw           READ       59680        58955        -1.21 %
+disk_nocrypt-rw           WRITE      60174        59443        -1.21 %
+disk_nocrypt-randrw       READ       18328        18219        -0.59 %
+disk_nocrypt-randrw       WRITE      18280        18171        -0.60 %
+zero-read                 READ      274712       353651        28.74 %
+zero-write                WRITE     146469       300904       105.44 %
+zero-randread             READ      498736       603246        20.95 %
+zero-randwrite            WRITE     150131       355003       136.46 %
+zero-rw                   READ       92481       132359        43.12 %
+zero-rw                   WRITE      93246       133455        43.12 %
+zero-randrw               READ       72278       141164        95.31 %
+zero-randrw               WRITE      72086       140790        95.31 %
+disk-read                 READ      177154       203054        14.62 %
+disk-write                WRITE      71057       241913       240.45 %
+disk-randread             READ       58757        58988         0.39 %
+disk-randwrite            WRITE      14453        28966       100.42 %
+disk-rw                   READ       59772        67560        13.03 %
+disk-rw                   WRITE      60267        68120        13.03 %
+disk-randrw               READ        9634        12815        33.02 %
+disk-randrw               WRITE       9608        12781        33.02 %
 
-> zero-randwrite            WRITE     115462       122193         5.83 %
-> zero-rw                   READ       82092       114980        40.06 %
-> zero-rw                   WRITE      82771       115932        40.06 %
-> zero-randrw               READ       69730        90008        29.08 %
-> zero-randrw               WRITE      69748        90032        29.08 %
-> disk-read                 READ      283207       264641        -6.56 %
+4 rotational devices forming md raid5, 512KiB chunk size:
 
-                                       ^ Disk read being so faster than 
-dm-zero looks odd...
+(I'll repeat this one since there's strange increase in random read 
+performance on raw raid5 device, see line "disk_nocrypt-randread"):
 
-> disk-write                WRITE     152088       176431        16.01 %
-> disk-randread             READ       82021        81720        -0.37 %
-> disk-randwrite            WRITE      20553        23880        16.19 %
-> disk-rw                   READ       56833        59059         3.92 %
-> disk-rw                   WRITE      57303        59548         3.92 %
-> disk-randrw               READ       15819        16726         5.73 %
-> disk-randrw               WRITE      15823        16730         5.73 %
->
-> md raid5 with 512KiB chunk size as basking device:
->
-> TEST NAME                 OPERATION AGGRB_A KB/s AGGRB_B KB/s DIFF A->B
-> ------------------------- --------- ------------ ------------ ---------
-> disk_nocrypt-read         READ      463151       447822       -3.31 %
-> disk_nocrypt-write        WRITE     149476       149866        0.26 %
-> disk_nocrypt-randread     READ       99205        98393       -0.82 %
-> disk_nocrypt-randwrite    WRITE      34422        34535        0.33 %
-> disk_nocrypt-rw           READ       75898        77132        1.63 %
-> disk_nocrypt-rw           WRITE      76527        77770        1.62 %
-> disk_nocrypt-randrw       READ       21886        21928        0.19 %
-> disk_nocrypt-randrw       WRITE      21892        21934        0.19 %
-> zero-read                 READ      189735       305173       60.84 %
-> zero-write                WRITE     289402       289082       -0.11 %
-> zero-randread             READ      300373       317061        5.56 %
-> zero-randwrite            WRITE     128128       123838       -3.35 %
-> zero-rw                   READ       81956       114558       39.78 %
-> zero-rw                   WRITE      82635       115506       39.78 %
-> zero-randrw               READ       74406        86589       16.37 %
-> zero-randrw               WRITE      74426        86612       16.37 %
-> disk-read                 READ      333251       399153       19.78 %
+TEST NAME                 OPERATION AGGRB_A KB/s AGGRB_B KB/s DIFF A->B
+------------------------- --------- ------------ ------------ ---------
+disk_nocrypt-read         READ      734811       730206        -0.63 %
+disk_nocrypt-write        WRITE     264474       259773        -1.78 %
+disk_nocrypt-randread     READ       64387        83218        29.25 %
+disk_nocrypt-randwrite    WRITE      52671        51898        -1.47 %
+disk_nocrypt-rw           READ       75785        73469        -3.06 %
+disk_nocrypt-rw           WRITE      76413        74077        -3.06 %
+disk_nocrypt-randrw       READ       17664        17690         0.15 %
+disk_nocrypt-randrw       WRITE      17617        17643         0.15 %
+zero-read                 READ      270967       354099        30.68 %
+zero-write                WRITE     145277       307230       111.48 %
+zero-randread             READ      478481       585805        22.43 %
+zero-randwrite            WRITE     149734       349997       133.75 %
+zero-rw                   READ       91742       127760        39.26 %
+zero-rw                   WRITE      92501       128818        39.26 %
+zero-randrw               READ       78925       145437        84.27 %
+zero-randrw               WRITE      78716       145051        84.27 %
+disk-read                 READ      203705       237220        16.45 %
+disk-write                WRITE      64068       230051       259.07 %
+disk-randread             READ       60698        77793        28.16 %
+disk-randwrite            WRITE      18535        32227        73.87 %
+disk-rw                   READ       49023        65775        34.17 %
+disk-rw                   WRITE      49429        66320        34.17 %
+disk-randrw               READ       10740        13084        21.82 %
+disk-randrw               WRITE      10712        13049        21.82 %
 
-                                       ^ It looks odd - this is so much 
-faster than dm-zero and I wonder whether dm-zero is not fast enough or 
-the disk tests are hitting cache instead of disk and whether all the 
-zero-* tests are meaningful
+Now I would like to work on simulating different workloads (these tests 
+were simulating 4 jobs in fio on otherwise idling machine)
 
-> disk-write                WRITE     139703       158574       13.51 %
-
-                                                    ^ Here dm-crypt is 
-faster than raw disk
-
-> disk-randread             READ       93669        92408       -1.35 %
-> disk-randwrite            WRITE      22994        26520       15.33 %
-> disk-rw                   READ       63573        73389       15.44 %
-> disk-rw                   WRITE      64099        73996       15.44 %
-> disk-randrw               READ       19045        19617        3.00 %
-> disk-randrw               WRITE      19050        19622        3.00 %
->
-> Ondrej
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Ondrej
