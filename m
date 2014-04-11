@@ -1,12 +1,14 @@
-From: Brian Bunker <brian@purestorage.com>
-Subject: path coalescing in multipath
-Date: Fri, 11 Apr 2014 10:18:04 -0700
-Message-ID: <4091EA33-EEDB-4F1B-8A09-C18E2D618AAA@purestorage.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: path coalescing in multipath
+Date: Fri, 11 Apr 2014 19:36:19 +0200
+Message-ID: <20140411173619.5906579.46972.8326@opensvc.com>
+References: <4091EA33-EEDB-4F1B-8A09-C18E2D618AAA@purestorage.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 7.2 \(1874\))
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4091EA33-EEDB-4F1B-8A09-C18E2D618AAA@purestorage.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,101 +18,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.comdevice-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I have a question about mulitpath and the device mapper that we have not been able to figure out here. We run into problems where a dm device is coalescing paths from LUNs which do not have the same number, or the same underlying serial number using either inquiry page 0x80 or inquiry page 0x83. We see output like this:
-
-[root@r12init20 ~]# multipath -l
-3624a9370cd8a605eb05916bd00010004 dm-11 PURE,FlashArray
-size=500G features='0' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=0 status=active
-  |- 1:0:0:12 sdm  8:192  active undef running
-  |- 1:0:1:12 sdy  65:128 active undef running
-  |- 0:0:0:12 sdak 66:64  active undef running
-  |- 0:0:1:12 sdaw 67:0   active undef running
-  |- 1:0:1:10 sdw  65:96  active undef running
-  |- 0:0:0:10 sdai 66:32  active undef running
-  |- 1:0:0:10 sdk  8:160  active undef running
-  |- 0:0:1:10 sdau 66:224 active undef running
-  |- 0:0:2:10 sdbs 68:96  active undef running
-  |- 1:0:2:10 sdbn 68:16  active undef running
-  |- 1:0:3:10 sdce 69:32  active undef running
-  `- 0:0:3:10 sdcq 69:224 active undef running
-
-There are 8 real paths to the device which seem to be all correct. They are the the LUN 10 paths. Why are the LUN 12 paths ending up under this dm device? 
-
-Here is a sample path of LUN 10:
-[root@r12init20 ~]# sg_inq /dev/sdw
-standard INQUIRY:
-  PQual=0  Device_type=0  RMB=0  version=0x06  [SPC-4]
-  [AERC=0]  [TrmTsk=0]  NormACA=1  HiSUP=0  Resp_data_format=2
-  SCCS=1  ACC=0  TPGS=1  3PC=1  Protect=0  BQue=0
-  EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
-  [RelAdr=0]  WBus16=0  Sync=0  Linked=0  [TranDis=0]  CmdQue=1
-  [SPI: Clocking=0x0  QAS=0  IUS=0]
-    length=96 (0x60)   Peripheral device type: disk
- Vendor identification: PURE    
- Product identification: FlashArray      
- Product revision level: 9999
- Unit serial number: CD8A605EB05916BD0001000B
-
-Here is a sample path of LUN 12:
-[root@r12init20 ~]# sg_inq /dev/sdm
-standard INQUIRY:
-  PQual=0  Device_type=0  RMB=0  version=0x06  [SPC-4]
-  [AERC=0]  [TrmTsk=0]  NormACA=1  HiSUP=0  Resp_data_format=2
-  SCCS=1  ACC=0  TPGS=1  3PC=1  Protect=0  BQue=0
-  EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
-  [RelAdr=0]  WBus16=0  Sync=0  Linked=0  [TranDis=0]  CmdQue=1
-  [SPI: Clocking=0x0  QAS=0  IUS=0]
-    length=96 (0x60)   Peripheral device type: disk
- Vendor identification: PURE    
- Product identification: FlashArray      
- Product revision level: 9999
- Unit serial number: CD8A605EB05916BD00010004
-
-You can see that the LUN serial numbers do not match, the page 0x83 data for these devices are:
-
-[root@r12init20 ~]# sg_inq /dev/sdw -p0x83
-VPD INQUIRY: Device Identification page
-  Designation descriptor number 1, descriptor length: 20
-    designator_type: NAA,  code_set: Binary
-    associated with the addressed logical unit
-      NAA 6, IEEE Company_id: 0x24a937
-      Vendor Specific Identifier: 0xcd8a605e
-      Vendor Specific Identifier Extension: 0xb05916bd0001000b
-      [0x624a9370cd8a605eb05916bd0001000b]
-
-[root@r12init20 ~]# sg_inq /dev/sdm -p0x83
-VPD INQUIRY: Device Identification page
-  Designation descriptor number 1, descriptor length: 20
-    designator_type: NAA,  code_set: Binary
-    associated with the addressed logical unit
-      NAA 6, IEEE Company_id: 0x24a937
-      Vendor Specific Identifier: 0xcd8a605e
-      Vendor Specific Identifier Extension: 0xb05916bd00010004
-      [0x624a9370cd8a605eb05916bd00010004]
-
-Under what logic could multipath be coalescing the paths? I initially suspected friendly names since that involved a file lookup that I thought might be causing the problem, but this happens with friendly names off as well, as this example shows.
-
-Is there any debugging level that I could turn on to see where multipath is getting confused? It seems that the target is doing exactly the right thing.
-
-[root@r12init20 ~]# modinfo dm_multipath
-filename:       /lib/modules/2.6.32-431.el6.x86_64/kernel/drivers/md/dm-multipath.ko
-license:        GPL
-author:         Sistina Software <dm-devel@redhat.com>
-description:    device-mapper multipath target
-srcversion:     9A8CF697599A7D9C9CF4BF7
-depends:        dm-mod
-vermagic:       2.6.32-431.el6.x86_64 SMP mod_unload modversions 
-
-device-mapper-multipath.x86_64   0.4.9-72.el6
-
-This will certainly lead to data corruption in this state. I see that there are problems that could happen on boot, but in this case the initiator has not rebooted and gotten itself into this state. 
-
-Thanks,
-Brian
-
-Brian Bunker
-brian@purestorage.com
+SGkswqAKCkNvdWxkIHlvdSBwbGVhc2Ugc2VuZCB0aGUgJ211bHRpcGF0aCAtdjMnIG91dHB1dCA/
+CuKAjlRoZSBjb2FsZXNjaW5nIHRlbmRzIHRvIGxvZyDDoCBsb3Qgb2YgdXNlZnVsIGluZm9ybWF0
+aW9uIHRoZXJlLgoKQ2hyaXN0b3BoZSBWYXJvcXVpCnd3dy5vcGVuc3ZjLmNvbQrCoCBNZXNzYWdl
+IGQnb3JpZ2luZSDCoApEZTogQnJpYW4gQnVua2VyCkVudm95w6k6IHZlbmRyZWRpIDExIGF2cmls
+IDIwMTQgMTk6MjUKw4A6IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQKUsOpcG9uZHJlIMOgOiBk
+ZXZpY2UtbWFwcGVyIGRldmVsb3BtZW50Ck9iamV0OiBbZG0tZGV2ZWxdIHBhdGggY29hbGVzY2lu
+ZyBpbiBtdWx0aXBhdGgKCkkgaGF2ZSBhIHF1ZXN0aW9uIGFib3V0IG11bGl0cGF0aCBhbmQgdGhl
+IGRldmljZSBtYXBwZXIgdGhhdCB3ZSBoYXZlIG5vdCBiZWVuIGFibGUgdG8gZmlndXJlIG91dCBo
+ZXJlLiBXZSBydW4gaW50byBwcm9ibGVtcyB3aGVyZSBhIGRtIGRldmljZSBpcyBjb2FsZXNjaW5n
+IHBhdGhzIGZyb20gTFVOcyB3aGljaCBkbyBub3QgaGF2ZSB0aGUgc2FtZSBudW1iZXIsIG9yIHRo
+ZSBzYW1lIHVuZGVybHlpbmcgc2VyaWFsIG51bWJlciB1c2luZyBlaXRoZXIgaW5xdWlyeSBwYWdl
+IDB4ODAgb3IgaW5xdWlyeSBwYWdlIDB4ODMuIFdlIHNlZSBvdXRwdXQgbGlrZSB0aGlzOgoKW3Jv
+b3RAcjEyaW5pdDIwIH5dIyBtdWx0aXBhdGggLWwKMzYyNGE5MzcwY2Q4YTYwNWViMDU5MTZiZDAw
+MDEwMDA0IGRtLTExIFBVUkUsRmxhc2hBcnJheQpzaXplPTUwMEcgZmVhdHVyZXM9JzAnIGh3aGFu
+ZGxlcj0nMCcgd3A9cncKYC0rLSBwb2xpY3k9J3JvdW5kLXJvYmluIDAnIHByaW89MCBzdGF0dXM9
+YWN0aXZlCnwtIDE6MDowOjEyIHNkbSA4OjE5MiBhY3RpdmUgdW5kZWYgcnVubmluZwp8LSAxOjA6
+MToxMiBzZHkgNjU6MTI4IGFjdGl2ZSB1bmRlZiBydW5uaW5nCnwtIDA6MDowOjEyIHNkYWsgNjY6
+NjQgYWN0aXZlIHVuZGVmIHJ1bm5pbmcKfC0gMDowOjE6MTIgc2RhdyA2NzowIGFjdGl2ZSB1bmRl
+ZiBydW5uaW5nCnwtIDE6MDoxOjEwIHNkdyA2NTo5NiBhY3RpdmUgdW5kZWYgcnVubmluZwp8LSAw
+OjA6MDoxMCBzZGFpIDY2OjMyIGFjdGl2ZSB1bmRlZiBydW5uaW5nCnwtIDE6MDowOjEwIHNkayA4
+OjE2MCBhY3RpdmUgdW5kZWYgcnVubmluZwp8LSAwOjA6MToxMCBzZGF1IDY2OjIyNCBhY3RpdmUg
+dW5kZWYgcnVubmluZwp8LSAwOjA6MjoxMCBzZGJzIDY4Ojk2IGFjdGl2ZSB1bmRlZiBydW5uaW5n
+CnwtIDE6MDoyOjEwIHNkYm4gNjg6MTYgYWN0aXZlIHVuZGVmIHJ1bm5pbmcKfC0gMTowOjM6MTAg
+c2RjZSA2OTozMiBhY3RpdmUgdW5kZWYgcnVubmluZwpgLSAwOjA6MzoxMCBzZGNxIDY5OjIyNCBh
+Y3RpdmUgdW5kZWYgcnVubmluZwoKVGhlcmUgYXJlIDggcmVhbCBwYXRocyB0byB0aGUgZGV2aWNl
+IHdoaWNoIHNlZW0gdG8gYmUgYWxsIGNvcnJlY3QuIFRoZXkgYXJlIHRoZSB0aGUgTFVOIDEwIHBh
+dGhzLiBXaHkgYXJlIHRoZSBMVU4gMTIgcGF0aHMgZW5kaW5nIHVwIHVuZGVyIHRoaXMgZG0gZGV2
+aWNlPyAKCkhlcmUgaXMgYSBzYW1wbGUgcGF0aCBvZiBMVU4gMTA6Cltyb290QHIxMmluaXQyMCB+
+XSMgc2dfaW5xIC9kZXYvc2R3CnN0YW5kYXJkIElOUVVJUlk6ClBRdWFsPTAgRGV2aWNlX3R5cGU9
+MCBSTUI9MCB2ZXJzaW9uPTB4MDYgW1NQQy00XQpbQUVSQz0wXSBbVHJtVHNrPTBdIE5vcm1BQ0E9
+MSBIaVNVUD0wIFJlc3BfZGF0YV9mb3JtYXQ9MgpTQ0NTPTEgQUNDPTAgVFBHUz0xIDNQQz0xIFBy
+b3RlY3Q9MCBCUXVlPTAKRW5jU2Vydj0wIE11bHRpUD0xIChWUz0wKSBbTUNobmdyPTBdIFtBQ0tS
+RVFRPTBdIEFkZHIxNj0wCltSZWxBZHI9MF0gV0J1czE2PTAgU3luYz0wIExpbmtlZD0wIFtUcmFu
+RGlzPTBdIENtZFF1ZT0xCltTUEk6IENsb2NraW5nPTB4MCBRQVM9MCBJVVM9MF0KbGVuZ3RoPTk2
+ICgweDYwKSBQZXJpcGhlcmFsIGRldmljZSB0eXBlOiBkaXNrClZlbmRvciBpZGVudGlmaWNhdGlv
+bjogUFVSRSAKUHJvZHVjdCBpZGVudGlmaWNhdGlvbjogRmxhc2hBcnJheSAKUHJvZHVjdCByZXZp
+c2lvbiBsZXZlbDogOTk5OQpVbml0IHNlcmlhbCBudW1iZXI6IENEOEE2MDVFQjA1OTE2QkQwMDAx
+MDAwQgoKSGVyZSBpcyBhIHNhbXBsZSBwYXRoIG9mIExVTiAxMjoKW3Jvb3RAcjEyaW5pdDIwIH5d
+IyBzZ19pbnEgL2Rldi9zZG0Kc3RhbmRhcmQgSU5RVUlSWToKUFF1YWw9MCBEZXZpY2VfdHlwZT0w
+IFJNQj0wIHZlcnNpb249MHgwNiBbU1BDLTRdCltBRVJDPTBdIFtUcm1Uc2s9MF0gTm9ybUFDQT0x
+IEhpU1VQPTAgUmVzcF9kYXRhX2Zvcm1hdD0yClNDQ1M9MSBBQ0M9MCBUUEdTPTEgM1BDPTEgUHJv
+dGVjdD0wIEJRdWU9MApFbmNTZXJ2PTAgTXVsdGlQPTEgKFZTPTApIFtNQ2huZ3I9MF0gW0FDS1JF
+UVE9MF0gQWRkcjE2PTAKW1JlbEFkcj0wXSBXQnVzMTY9MCBTeW5jPTAgTGlua2VkPTAgW1RyYW5E
+aXM9MF0gQ21kUXVlPTEKW1NQSTogQ2xvY2tpbmc9MHgwIFFBUz0wIElVUz0wXQpsZW5ndGg9OTYg
+KDB4NjApIFBlcmlwaGVyYWwgZGV2aWNlIHR5cGU6IGRpc2sKVmVuZG9yIGlkZW50aWZpY2F0aW9u
+OiBQVVJFIApQcm9kdWN0IGlkZW50aWZpY2F0aW9uOiBGbGFzaEFycmF5IApQcm9kdWN0IHJldmlz
+aW9uIGxldmVsOiA5OTk5ClVuaXQgc2VyaWFsIG51bWJlcjogQ0Q4QTYwNUVCMDU5MTZCRDAwMDEw
+MDA0CgpZb3UgY2FuIHNlZSB0aGF0IHRoZSBMVU4gc2VyaWFsIG51bWJlcnMgZG8gbm90IG1hdGNo
+LCB0aGUgcGFnZSAweDgzIGRhdGEgZm9yIHRoZXNlIGRldmljZXMgYXJlOgoKW3Jvb3RAcjEyaW5p
+dDIwIH5dIyBzZ19pbnEgL2Rldi9zZHcgLXAweDgzClZQRCBJTlFVSVJZOiBEZXZpY2UgSWRlbnRp
+ZmljYXRpb24gcGFnZQpEZXNpZ25hdGlvbiBkZXNjcmlwdG9yIG51bWJlciAxLCBkZXNjcmlwdG9y
+IGxlbmd0aDogMjAKZGVzaWduYXRvcl90eXBlOiBOQUEsIGNvZGVfc2V0OiBCaW5hcnkKYXNzb2Np
+YXRlZCB3aXRoIHRoZSBhZGRyZXNzZWQgbG9naWNhbCB1bml0Ck5BQSA2LCBJRUVFIENvbXBhbnlf
+aWQ6IDB4MjRhOTM3ClZlbmRvciBTcGVjaWZpYyBJZGVudGlmaWVyOiAweGNkOGE2MDVlClZlbmRv
+ciBTcGVjaWZpYyBJZGVudGlmaWVyIEV4dGVuc2lvbjogMHhiMDU5MTZiZDAwMDEwMDBiClsweDYy
+NGE5MzcwY2Q4YTYwNWViMDU5MTZiZDAwMDEwMDBiXQoKW3Jvb3RAcjEyaW5pdDIwIH5dIyBzZ19p
+bnEgL2Rldi9zZG0gLXAweDgzClZQRCBJTlFVSVJZOiBEZXZpY2UgSWRlbnRpZmljYXRpb24gcGFn
+ZQpEZXNpZ25hdGlvbiBkZXNjcmlwdG9yIG51bWJlciAxLCBkZXNjcmlwdG9yIGxlbmd0aDogMjAK
+ZGVzaWduYXRvcl90eXBlOiBOQUEsIGNvZGVfc2V0OiBCaW5hcnkKYXNzb2NpYXRlZCB3aXRoIHRo
+ZSBhZGRyZXNzZWQgbG9naWNhbCB1bml0Ck5BQSA2LCBJRUVFIENvbXBhbnlfaWQ6IDB4MjRhOTM3
+ClZlbmRvciBTcGVjaWZpYyBJZGVudGlmaWVyOiAweGNkOGE2MDVlClZlbmRvciBTcGVjaWZpYyBJ
+ZGVudGlmaWVyIEV4dGVuc2lvbjogMHhiMDU5MTZiZDAwMDEwMDA0ClsweDYyNGE5MzcwY2Q4YTYw
+NWViMDU5MTZiZDAwMDEwMDA0XQoKVW5kZXIgd2hhdCBsb2dpYyBjb3VsZCBtdWx0aXBhdGggYmUg
+Y29hbGVzY2luZyB0aGUgcGF0aHM/IEkgaW5pdGlhbGx5IHN1c3BlY3RlZCBmcmllbmRseSBuYW1l
+cyBzaW5jZSB0aGF0IGludm9sdmVkIGEgZmlsZSBsb29rdXAgdGhhdCBJIHRob3VnaHQgbWlnaHQg
+YmUgY2F1c2luZyB0aGUgcHJvYmxlbSwgYnV0IHRoaXMgaGFwcGVucyB3aXRoIGZyaWVuZGx5IG5h
+bWVzIG9mZiBhcyB3ZWxsLCBhcyB0aGlzIGV4YW1wbGUgc2hvd3MuCgpJcyB0aGVyZSBhbnkgZGVi
+dWdnaW5nIGxldmVsIHRoYXQgSSBjb3VsZCB0dXJuIG9uIHRvIHNlZSB3aGVyZSBtdWx0aXBhdGgg
+aXMgZ2V0dGluZyBjb25mdXNlZD8gSXQgc2VlbXMgdGhhdCB0aGUgdGFyZ2V0IGlzIGRvaW5nIGV4
+YWN0bHkgdGhlIHJpZ2h0IHRoaW5nLgoKW3Jvb3RAcjEyaW5pdDIwIH5dIyBtb2RpbmZvIGRtX211
+bHRpcGF0aApmaWxlbmFtZTogL2xpYi9tb2R1bGVzLzIuNi4zMi00MzEuZWw2Lng4Nl82NC9rZXJu
+ZWwvZHJpdmVycy9tZC9kbS1tdWx0aXBhdGgua28KbGljZW5zZTogR1BMCmF1dGhvcjogU2lzdGlu
+YSBTb2Z0d2FyZSA8ZG0tZGV2ZWxAcmVkaGF0LmNvbT4KZGVzY3JpcHRpb246IGRldmljZS1tYXBw
+ZXIgbXVsdGlwYXRoIHRhcmdldApzcmN2ZXJzaW9uOiA5QThDRjY5NzU5OUE3RDlDOUNGNEJGNwpk
+ZXBlbmRzOiBkbS1tb2QKdmVybWFnaWM6IDIuNi4zMi00MzEuZWw2Lng4Nl82NCBTTVAgbW9kX3Vu
+bG9hZCBtb2R2ZXJzaW9ucyAKCmRldmljZS1tYXBwZXItbXVsdGlwYXRoLng4Nl82NCAwLjQuOS03
+Mi5lbDYKClRoaXMgd2lsbCBjZXJ0YWlubHkgbGVhZCB0byBkYXRhIGNvcnJ1cHRpb24gaW4gdGhp
+cyBzdGF0ZS4gSSBzZWUgdGhhdCB0aGVyZSBhcmUgcHJvYmxlbXMgdGhhdCBjb3VsZCBoYXBwZW4g
+b24gYm9vdCwgYnV0IGluIHRoaXMgY2FzZSB0aGUgaW5pdGlhdG9yIGhhcyBub3QgcmVib290ZWQg
+YW5kIGdvdHRlbiBpdHNlbGYgaW50byB0aGlzIHN0YXRlLiAKClRoYW5rcywKQnJpYW4KCkJyaWFu
+IEJ1bmtlcgpicmlhbkBwdXJlc3RvcmFnZS5jb20KCgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
+dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
+aW5mby9kbS1kZXZlbAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
