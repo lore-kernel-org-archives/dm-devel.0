@@ -1,18 +1,12 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
-Subject: Re: [PATCH] libmultipath: Use existing user friendly
- name if possible
-Date: Fri, 11 Apr 2014 17:01:47 +0000
-Message-ID: <1397235706.29991.8.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-References: <8255ED565A0EAA4A960625E27D49DBF24AC9EB61@SACEXCMBX04-PRD.hq.netapp.com>
-	<20140411160338.GA17578@localhost.localdomain>
+From: Brian Bunker <brian@purestorage.com>
+Subject: path coalescing in multipath
+Date: Fri, 11 Apr 2014 10:18:04 -0700
+Message-ID: <4091EA33-EEDB-4F1B-8A09-C18E2D618AAA@purestorage.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
+Mime-Version: 1.0 (Mac OS X Mail 7.2 \(1874\))
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140411160338.GA17578@localhost.localdomain>
-Content-Language: en-US
-Content-ID: <18C0D3CE4EA8274996C47F9EBDFB22D0@hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,117 +19,98 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2014-04-11 at 17:03 +0100, Bryn M. Reeves wrote:
-> On Fri, Mar 28, 2014 at 09:01:14PM +0000, Stewart, Sean wrote:
-> > When a system is booted to the SAN, a condition can occur where one
-> > user friendly name is given to a disk during boot, but multipathd tries
-> > to allocate a different one after boot. If the second alias is already
-> > used by another device, multipathd can't rename it. Multipathd then has
-> > incorrect information about the alias/wwid relationships, which can
-> > result in paths being added to the wrong map.
-> 
-> This should only happen if the initramfs and root file system have
-> inconsistent multipath configurations (either multipath.conf or bindings
-> / wwids file mismatched). That's not really a valid configuration for
-> the system to be in and leads to the type of problems you describe.
+I have a question about mulitpath and the device mapper that we have not been able to figure out here. We run into problems where a dm device is coalescing paths from LUNs which do not have the same number, or the same underlying serial number using either inquiry page 0x80 or inquiry page 0x83. We see output like this:
 
-That is true that it only happens if they are out of sync.  We tried
-remaking the initramfs to fix the problem, but it didn't help.
-> 
-> > This patch works around this problem by first trying to use the alias
-> > already bound to a device during boot.  If the bindings file has that
-> > alias bound to a different device, it'll auto generate a new alias to
-> > rename it to.
-> 
-> To be honest I'd prefer to see this cause an error. These types of
-> configurations currently run the risk of silent data corruption - I'd
-> much rather deal with a system that refuses to boot due to an out of
-> date initramfs image than one that quietly remaps paths in unexpected
-> ways.
+[root@r12init20 ~]# multipath -l
+3624a9370cd8a605eb05916bd00010004 dm-11 PURE,FlashArray
+size=500G features='0' hwhandler='0' wp=rw
+`-+- policy='round-robin 0' prio=0 status=active
+  |- 1:0:0:12 sdm  8:192  active undef running
+  |- 1:0:1:12 sdy  65:128 active undef running
+  |- 0:0:0:12 sdak 66:64  active undef running
+  |- 0:0:1:12 sdaw 67:0   active undef running
+  |- 1:0:1:10 sdw  65:96  active undef running
+  |- 0:0:0:10 sdai 66:32  active undef running
+  |- 1:0:0:10 sdk  8:160  active undef running
+  |- 0:0:1:10 sdau 66:224 active undef running
+  |- 0:0:2:10 sdbs 68:96  active undef running
+  |- 1:0:2:10 sdbn 68:16  active undef running
+  |- 1:0:3:10 sdce 69:32  active undef running
+  `- 0:0:3:10 sdcq 69:224 active undef running
 
-The issue, though, is that the system does not refuse to boot.  In the
-case we saw, it booted anyway, our QA engineer ran a test, and it ended
-with a data corruption.  A user could perform a fresh installation, map
-new luns, reboot, and without any way of realizing it have essentially a
-ticking time bomb on their hands, ready to go off as soon as there's a
-blip in the SAN.
+There are 8 real paths to the device which seem to be all correct. They are the the LUN 10 paths. Why are the LUN 12 paths ending up under this dm device? 
 
-Here's some sample output from when I recreated the problem on my local
-system:
+Here is a sample path of LUN 10:
+[root@r12init20 ~]# sg_inq /dev/sdw
+standard INQUIRY:
+  PQual=0  Device_type=0  RMB=0  version=0x06  [SPC-4]
+  [AERC=0]  [TrmTsk=0]  NormACA=1  HiSUP=0  Resp_data_format=2
+  SCCS=1  ACC=0  TPGS=1  3PC=1  Protect=0  BQue=0
+  EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
+  [RelAdr=0]  WBus16=0  Sync=0  Linked=0  [TranDis=0]  CmdQue=1
+  [SPI: Clocking=0x0  QAS=0  IUS=0]
+    length=96 (0x60)   Peripheral device type: disk
+ Vendor identification: PURE    
+ Product identification: FlashArray      
+ Product revision level: 9999
+ Unit serial number: CD8A605EB05916BD0001000B
 
-I started with a fresh sanboot installation to verify I see the problem:
-Bindings file:
-mpatha 360080e50001b08100000184e5320d0f3
-mpathb 360080e50001b0810000018705320f03d
-mpathc 360080e50001b0810000004a051ef5f71
-mpathd 360080e50001b076d0000cd8251ef5fe5
-mpathe 360080e50001b076d0000cd8651ef5ff0
-mpathf 360080e50001b076d0000cd8851ef5ff6
-Multipath -ll
-[root@localhost ~]# multipath -ll | grep mpath
-mpathe (360080e50001b076d0000cd8251ef5fe5) dm-3 LSI     ,INF-01-00
-mpathd (360080e50001b076d0000cd8651ef5ff0) dm-2 LSI     ,INF-01-00
-mpathc (360080e50001b076d0000cd8851ef5ff6) dm-1 LSI     ,INF-01-00
-mpathb (360080e50001b0810000004a051ef5f71) dm-0 LSI     ,INF-01-00
-mpathf (360080e50001b0810000018705320f03d) dm-4 LSI     ,INF-01-00
+Here is a sample path of LUN 12:
+[root@r12init20 ~]# sg_inq /dev/sdm
+standard INQUIRY:
+  PQual=0  Device_type=0  RMB=0  version=0x06  [SPC-4]
+  [AERC=0]  [TrmTsk=0]  NormACA=1  HiSUP=0  Resp_data_format=2
+  SCCS=1  ACC=0  TPGS=1  3PC=1  Protect=0  BQue=0
+  EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
+  [RelAdr=0]  WBus16=0  Sync=0  Linked=0  [TranDis=0]  CmdQue=1
+  [SPI: Clocking=0x0  QAS=0  IUS=0]
+    length=96 (0x60)   Peripheral device type: disk
+ Vendor identification: PURE    
+ Product identification: FlashArray      
+ Product revision level: 9999
+ Unit serial number: CD8A605EB05916BD00010004
 
-During bootup, it assigned 360080e50001b076d0000cd8251ef5fe5 to be
-mpathe.  After the system came up, it tried to assign it to be mpathd.
-When it tried to rename it, it failed because there's already an
-mpathd.  
-Here's an example of how that can show up in the logs:
-Mar 18 15:52:15 localhost multipathd: 360080e50001b0810000004a051ef5f71:
-unable to rename mpathe to mpathb (mpathb is used by
-360080e50001b076d0000cd8251ef5fe5)
-Mar 18 15:52:15 localhost multipathd: 360080e50001b076d0000cd8251ef5fe5:
-unable to rename mpathb to mpathc (mpathc is used by
-360080e50001b076d0000cd8651ef5ff0)
-Mar 18 15:52:15 localhost multipathd: 360080e50001b076d0000cd8651ef5ff0:
-unable to rename mpathc to mpathd (mpathd is used by
-360080e50001b076d0000cd8851ef5ff6)
-Mar 18 15:52:15 localhost multipathd: 360080e50001b076d0000cd8851ef5ff6:
-unable to rename mpathd to mpathe (mpathe is used by
-360080e50001b0810000004a051ef5f71)
+You can see that the LUN serial numbers do not match, the page 0x83 data for these devices are:
 
-So, if I delete a path from mpathe, then scan it again, it ends up
-incorrectly with mpathd (because that's the alias multipathd thinks is
-assigned to that WWID).  The maps end up looking like this:
-mpathe (360080e50001b076d0000cd8251ef5fe5) dm-3 LSI     ,INF-01-00
-size=2.0G features='4 queue_if_no_path pg_init_retries 50
-retain_attached_hw_handle' hwhandler='1 rdac' wp=rw
-|-+- policy='service-time 0' prio=14 status=active
-| |- 1:0:1:2 sdc 8:32  active ready running
-| `- 4:0:1:2 sdm 8:192 active ready running
-`-+- policy='service-time 0' prio=9 status=enabled
-  |- #:#:#:# -   #:#   active faulty running
-  `- 4:0:2:2 sdr 65:16 active ready running
-mpathd (360080e50001b076d0000cd8651ef5ff0) dm-2 LSI     ,INF-01-00
-size=2.0G features='4 queue_if_no_path pg_init_retries 50
-retain_attached_hw_handle' hwhandler='1 rdac' wp=rw
-|-+- policy='service-time 0' prio=14 status=active
-| |- 1:0:1:3 sdd 8:48  active ready running
-| |- 4:0:1:3 sdn 8:208 active ready running
-| |- 1:0:1:2 sdc 8:32  active ready running
-| `- 4:0:1:2 sdm 8:192 active ready running
-`-+- policy='service-time 0' prio=9 status=enabled
-  |- 1:0:2:3 sdi 8:128 active ready running
-  |- 4:0:2:3 sds 65:32 active ready running
-  |- 4:0:2:2 sdr 65:16 active ready running
-  `- 1:0:2:2 sdu 65:64 active ready running
+[root@r12init20 ~]# sg_inq /dev/sdw -p0x83
+VPD INQUIRY: Device Identification page
+  Designation descriptor number 1, descriptor length: 20
+    designator_type: NAA,  code_set: Binary
+    associated with the addressed logical unit
+      NAA 6, IEEE Company_id: 0x24a937
+      Vendor Specific Identifier: 0xcd8a605e
+      Vendor Specific Identifier Extension: 0xb05916bd0001000b
+      [0x624a9370cd8a605eb05916bd0001000b]
 
-If a user wants a specific alias, they should still configure it through
-multipath.conf.  It just prevents a potentially really bad condition
-that could occur, if the setting is enabled, and something as simple as
-adding new luns is done.
+[root@r12init20 ~]# sg_inq /dev/sdm -p0x83
+VPD INQUIRY: Device Identification page
+  Designation descriptor number 1, descriptor length: 20
+    designator_type: NAA,  code_set: Binary
+    associated with the addressed logical unit
+      NAA 6, IEEE Company_id: 0x24a937
+      Vendor Specific Identifier: 0xcd8a605e
+      Vendor Specific Identifier Extension: 0xb05916bd00010004
+      [0x624a9370cd8a605eb05916bd00010004]
+
+Under what logic could multipath be coalescing the paths? I initially suspected friendly names since that involved a file lookup that I thought might be causing the problem, but this happens with friendly names off as well, as this example shows.
+
+Is there any debugging level that I could turn on to see where multipath is getting confused? It seems that the target is doing exactly the right thing.
+
+[root@r12init20 ~]# modinfo dm_multipath
+filename:       /lib/modules/2.6.32-431.el6.x86_64/kernel/drivers/md/dm-multipath.ko
+license:        GPL
+author:         Sistina Software <dm-devel@redhat.com>
+description:    device-mapper multipath target
+srcversion:     9A8CF697599A7D9C9CF4BF7
+depends:        dm-mod
+vermagic:       2.6.32-431.el6.x86_64 SMP mod_unload modversions 
+
+device-mapper-multipath.x86_64   0.4.9-72.el6
+
+This will certainly lead to data corruption in this state. I see that there are problems that could happen on boot, but in this case the initiator has not rebooted and gotten itself into this state. 
 
 Thanks,
-Sean
+Brian
 
-> 
-> Regards,
-> Bryn.
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Brian Bunker
+brian@purestorage.com
