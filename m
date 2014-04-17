@@ -1,8 +1,7 @@
 From: Vasily Tarasov <tarasov@vasily.name>
-Subject: [PATCH RFC 04/10] dm-dedup: implementation of the
-	read-on-write procedure
-Date: Thu, 17 Apr 2014 16:12:08 -0400
-Message-ID: <535ed0d8.036c8c0a.44e3.ffffc577@mx.google.com>
+Subject: [PATCH RFC 07/10] dm-dedup: Makefile changes
+Date: Thu, 17 Apr 2014 16:32:45 -0400
+Message-ID: <535ed0dc.d171e00a.7699.3b85@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,295 +20,32 @@ To: dm-devel@redhat.com
 Cc: Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-If a request from the upper layer is smaller than the block size, then
-we have to perform a read-on-write to properly compute the hash value.
+Changes to the Makefile.
 
 Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
 ---
- drivers/md/dm-dedup-rw.c |  248 ++++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-dedup-rw.h |   19 ++++
- 2 files changed, 267 insertions(+), 0 deletions(-)
- create mode 100644 drivers/md/dm-dedup-rw.c
- create mode 100644 drivers/md/dm-dedup-rw.h
+ drivers/md/Makefile |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-dedup-rw.c b/drivers/md/dm-dedup-rw.c
-new file mode 100644
-index 0000000..383ec39
---- /dev/null
-+++ b/drivers/md/dm-dedup-rw.c
-@@ -0,0 +1,248 @@
-+/*
-+ * Copyright (C) 2012-2014 Vasily Tarasov
-+ * Copyright (C) 2012-2014 Geoff Kuenning
-+ * Copyright (C) 2012-2014 Sonam Mandal
-+ * Copyright (C) 2012-2014 Karthikeyani Palanisami
-+ * Copyright (C) 2012-2014 Philip Shilane
-+ * Copyright (C) 2012-2014 Sagar Trehan
-+ * Copyright (C) 2012-2014 Erez Zadok
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#include "dm-dedup-target.h"
-+#include "dm-dedup-rw.h"
-+#include "dm-dedup-kvstore.h"
-+
-+#define DMD_IO_SIZE	4096
-+
-+static uint64_t compute_sector(struct bio *bio,
-+			       struct dedup_config *dc)
-+{
-+	uint64_t to_be_lbn;
-+
-+	to_be_lbn = bio->bi_iter.bi_sector;
-+	to_be_lbn /= dc->sectors_per_block;
-+	to_be_lbn *= dc->sectors_per_block;
-+
-+	return to_be_lbn;
-+}
-+
-+static int fetch_whole_block(struct dedup_config *dc,
-+			uint64_t pbn, struct page_list *pl)
-+{
-+	struct dm_io_request iorq;
-+	struct dm_io_region where;
-+	unsigned long error_bits;
-+
-+	where.bdev = dc->data_dev->bdev;
-+	where.sector = pbn;
-+	where.count = dc->sectors_per_block;
-+
-+	iorq.bi_rw = READ;
-+	iorq.mem.type = DM_IO_PAGE_LIST;
-+	iorq.mem.ptr.pl = pl;
-+	iorq.mem.offset = 0;
-+	iorq.notify.fn = NULL;
-+	iorq.client = dc->io_client;
-+
-+	return dm_io(&iorq, 1, &where, &error_bits);
-+}
-+
-+static int merge_data(struct dedup_config *dc, struct page *page,
-+				struct bio *bio)
-+{
-+	void *src_page_vaddr, *dest_page_vaddr;
-+	int position, err = 0;
-+
-+	/* Relative offset in terms of sector size */
-+	position = (bio->bi_iter.bi_sector % dc->sectors_per_block);
-+
-+	if (!page || !bio->bi_io_vec->bv_page) {
-+		err = -EINVAL;
-+		goto out;
-+	}
-+
-+	src_page_vaddr = page_address(bio->bi_io_vec->bv_page);
-+	dest_page_vaddr = page_address(page);
-+
-+	src_page_vaddr = src_page_vaddr + bio->bi_io_vec->bv_offset;
-+	/* Locating the right sector to merge */
-+	dest_page_vaddr = dest_page_vaddr + (to_bytes(position));
-+
-+	/* Merging Data */
-+	memmove(dest_page_vaddr, src_page_vaddr, bio->bi_io_vec->bv_len);
-+out:
-+	return err;
-+}
-+
-+static void copy_pages(struct page *src, struct bio *clone)
-+{
-+	void *src_page_vaddr, *dest_page_vaddr;
-+
-+	src_page_vaddr = page_address(src);
-+	dest_page_vaddr = page_address(clone->bi_io_vec->bv_page);
-+
-+	memmove(dest_page_vaddr, src_page_vaddr, DMD_IO_SIZE);
-+}
-+
-+static void my_endio(struct bio *clone, int error)
-+{
-+	unsigned rw = bio_data_dir(clone);
-+	struct bio *orig;
-+	struct bio_vec bv;
-+
-+	if (!error && !bio_flagged(clone, BIO_UPTODATE))
-+		error = -EIO;
-+
-+	/* free the processed pages */
-+	if (rw == WRITE || rw == READ) {
-+		bv = bio_iovec(clone);
-+		if (bv.bv_page) {
-+			free_pages((unsigned long)page_address(bv.bv_page), 0);
-+			bv.bv_page = NULL;
-+		}
-+	}
-+
-+	orig = clone->bi_private;
-+	bio_endio(orig, 0);
-+
-+	bio_put(clone);
-+}
-+
-+/*
-+ * XXX: there  is existing zero_fill_bio() in the kernel,
-+ * should we use it?
-+ */
-+static void my_zero_fill_bio(struct bio *bio)
-+{
-+	void *data;
-+	unsigned int length;
-+
-+	data = bio_data(bio);
-+	length = bio_cur_bytes(bio);
-+	memset(data, 0, length);
-+}
-+
-+static struct bio *create_bio(struct dedup_config *dc,
-+			      struct bio *bio)
-+{
-+	struct bio *clone;
-+	struct page *page;
-+
-+	clone = bio_kmalloc(GFP_NOIO, 1);
-+	if (!clone)
-+		goto out;
-+
-+	clone->bi_bdev = bio->bi_bdev;
-+	clone->bi_rw = bio->bi_rw;
-+	clone->bi_iter.bi_sector = compute_sector(bio, dc);
-+	clone->bi_private = bio;  /* for later completion */
-+	clone->bi_end_io = my_endio;
-+
-+	page = alloc_pages(GFP_NOIO, 0);
-+	if (!page)
-+		goto bad_putbio;
-+
-+	if (!bio_add_page(clone, page, DMD_IO_SIZE, 0))
-+		goto bad_freepage;
-+
-+	goto out;
-+
-+bad_freepage:
-+	free_pages((unsigned long) page_address(page), 0);
-+bad_putbio:
-+	bio_put(clone);
-+	clone = NULL;
-+out:
-+	return clone;
-+}
-+
-+static struct bio *prepare_bio_with_pbn(struct dedup_config *dc,
-+					struct bio *bio, uint64_t pbn)
-+{
-+	int r = 0;
-+	struct page_list *pl;
-+	struct bio *clone = NULL;
-+
-+	pl = kmalloc(sizeof(pl), GFP_NOIO);
-+	if (!pl)
-+		goto out;
-+
-+	/*
-+	 * Since target I/O size is 4KB currently, we need only one page to
-+	 * store the data. However, if the target I/O size increases, we need
-+	 * to allocate more pages and set this linked list correctly.
-+	 */
-+	pl->page = alloc_pages(GFP_NOIO, 0);
-+	if (!pl->page)
-+		goto out_allocfail;
-+
-+	pl->next = NULL;
-+
-+	r = fetch_whole_block(dc, pbn, pl);
-+	if (r < 0)
-+		goto out_fail;
-+
-+	r = merge_data(dc, pl->page, bio);
-+	if (r < 0)
-+		goto out_fail;
-+
-+	clone = create_bio(dc, bio);
-+	if (!clone)
-+		goto out_fail;
-+
-+	copy_pages(pl->page, clone);
-+
-+out_fail:
-+	free_pages((unsigned long) page_address(pl->page), 0);
-+out_allocfail:
-+	kfree(pl);
-+out:
-+	return clone;
-+}
-+
-+static struct bio *prepare_bio_without_pbn(struct dedup_config *dc,
-+					   struct bio *bio)
-+{
-+	int r = 0;
-+	struct bio *clone = NULL;
-+
-+	clone = create_bio(dc, bio);
-+	if (!clone)
-+		goto out;
-+
-+	my_zero_fill_bio(clone);
-+
-+	r = merge_data(dc, clone->bi_io_vec->bv_page, bio);
-+	if (r < 0)
-+		BUG();
-+out:
-+	return clone;
-+}
-+
-+struct bio *prepare_bio_on_write(struct dedup_config *dc, struct bio *bio)
-+{
-+	int r;
-+	uint64_t lbn_sector;
-+	uint64_t lbn;
-+	uint32_t vsize;
-+	struct lbn_pbn_value lbnpbn_value;
-+	struct bio *clone;
-+
-+	lbn_sector = compute_sector(bio, dc);
-+	lbn = lbn_sector / dc->sectors_per_block;
-+
-+	/* check for old or new lbn and fetch the appropriate pbn */
-+	r = dc->kvs_lbn_pbn->kvs_lookup(dc->kvs_lbn_pbn, (void *)&lbn,
-+			sizeof(lbn), (void *)&lbnpbn_value, &vsize);
-+	if (r == 0)
-+		clone = prepare_bio_without_pbn(dc, bio);
-+	else if (r == 1)
-+		clone = prepare_bio_with_pbn(dc, bio, lbnpbn_value.pbn
-+						* dc->sectors_per_block);
-+	else
-+		BUG();
-+
-+	return clone;
-+}
-diff --git a/drivers/md/dm-dedup-rw.h b/drivers/md/dm-dedup-rw.h
-new file mode 100644
-index 0000000..ad12a27
---- /dev/null
-+++ b/drivers/md/dm-dedup-rw.h
-@@ -0,0 +1,19 @@
-+/*
-+ * Copyright (C) 2012-2014 Vasily Tarasov
-+ * Copyright (C) 2012-2014 Geoff Kuenning
-+ * Copyright (C) 2012-2014 Sonam Mandal
-+ * Copyright (C) 2012-2014 Karthikeyani Palanisami
-+ * Copyright (C) 2012-2014 Philip Shilane
-+ * Copyright (C) 2012-2014 Sagar Trehan
-+ * Copyright (C) 2012-2014 Erez Zadok
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef DM_DEDUP_RW_H
-+#define DM_DEDUP_RW_H
-+
-+extern struct bio *prepare_bio_on_write(struct dedup_config *dc,
-+							struct bio *bio);
-+
-+#endif /* DM_DEDUP_RW_H */
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index f26d832..1af205d 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -14,6 +14,7 @@ dm-thin-pool-y	+= dm-thin.o dm-thin-metadata.o
+ dm-cache-y	+= dm-cache-target.o dm-cache-metadata.o dm-cache-policy.o
+ dm-cache-mq-y   += dm-cache-policy-mq.o
+ dm-cache-cleaner-y += dm-cache-policy-cleaner.o
++dm-dedup-y	+= dm-dedup-target.o dm-dedup-hash.o dm-dedup-rw.o dm-dedup-cbt.o dm-dedup-ram.o
+ md-mod-y	+= md.o bitmap.o
+ raid456-y	+= raid5.o
+ 
+@@ -53,6 +54,7 @@ obj-$(CONFIG_DM_VERITY)		+= dm-verity.o
+ obj-$(CONFIG_DM_CACHE)		+= dm-cache.o
+ obj-$(CONFIG_DM_CACHE_MQ)	+= dm-cache-mq.o
+ obj-$(CONFIG_DM_CACHE_CLEANER)	+= dm-cache-cleaner.o
++obj-$(CONFIG_DM_DEDUP)		+= dm-dedup.o
+ 
+ ifeq ($(CONFIG_DM_UEVENT),y)
+ dm-mod-objs			+= dm-uevent.o
 -- 
 1.7.1
