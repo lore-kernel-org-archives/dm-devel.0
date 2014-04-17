@@ -1,7 +1,8 @@
 From: Vasily Tarasov <tarasov@vasily.name>
-Subject: [PATCH RFC 05/10] dm-dedup: COW B-tree backend
-Date: Thu, 17 Apr 2014 16:20:20 -0400
-Message-ID: <535ed0da.036c8c0a.44e3.ffffc578@mx.google.com>
+Subject: [PATCH RFC 04/10] dm-dedup: implementation of the
+	read-on-write procedure
+Date: Thu, 17 Apr 2014 16:12:08 -0400
+Message-ID: <535ed0d8.036c8c0a.44e3.ffffc577@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,26 +21,23 @@ To: dm-devel@redhat.com
 Cc: Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-The Copy-on-Write B-tree backend uses device-mapper's presistend-data
-library to store Dmdedup's metadata. Currently, a B-tree is used for
-both linear and sparse mappings. As the key size is limited to 64 bits
-in the persistent-data library, we use linear probing if a collision
-occurs.
+If a request from the upper layer is smaller than the block size, then
+we have to perform a read-on-write to properly compute the hash value.
 
 Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
 ---
- drivers/md/dm-dedup-cbt.c |  724 +++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-dedup-cbt.h |   44 +++
- 2 files changed, 768 insertions(+), 0 deletions(-)
- create mode 100644 drivers/md/dm-dedup-cbt.c
- create mode 100644 drivers/md/dm-dedup-cbt.h
+ drivers/md/dm-dedup-rw.c |  248 ++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-dedup-rw.h |   19 ++++
+ 2 files changed, 267 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/dm-dedup-rw.c
+ create mode 100644 drivers/md/dm-dedup-rw.h
 
-diff --git a/drivers/md/dm-dedup-cbt.c b/drivers/md/dm-dedup-cbt.c
+diff --git a/drivers/md/dm-dedup-rw.c b/drivers/md/dm-dedup-rw.c
 new file mode 100644
-index 0000000..5e8ae30
+index 0000000..383ec39
 --- /dev/null
-+++ b/drivers/md/dm-dedup-cbt.c
-@@ -0,0 +1,724 @@
++++ b/drivers/md/dm-dedup-rw.c
+@@ -0,0 +1,248 @@
 +/*
 + * Copyright (C) 2012-2014 Vasily Tarasov
 + * Copyright (C) 2012-2014 Geoff Kuenning
@@ -51,768 +49,267 @@ index 0000000..5e8ae30
 + *
 + * This file is released under the GPL.
 + */
-+
-+#include <linux/errno.h>
-+#include "persistent-data/dm-btree.h"
-+#include "persistent-data/dm-space-map.h"
-+#include "persistent-data/dm-space-map-disk.h"
-+#include "persistent-data/dm-block-manager.h"
-+#include "persistent-data/dm-transaction-manager.h"
-+
-+#include "dm-dedup-cbt.h"
-+#include "dm-dedup-backend.h"
-+#include "dm-dedup-kvstore.h"
-+
-+#define EMPTY_ENTRY -5
-+#define DELETED_ENTRY -6
-+
-+#define UINT32_MAX	(4294967295U)
-+
-+#define METADATA_BSIZE 4096
-+#define METADATA_CACHESIZE 64  /* currently block manager ignores this value */
-+#define METADATA_MAXLOCKS 5
-+#define METADATA_SUPERBLOCK_LOCATION 0
-+
-+struct metadata {
-+	struct dm_block_manager *meta_bm;
-+	struct dm_transaction_manager *tm;
-+	struct dm_space_map *data_sm;
-+	struct dm_space_map *meta_sm;
-+
-+	/*
-+	 * XXX: Currently we support only one linear and one sparse KVS.
-+	 */
-+	struct kvstore_cbt *kvs_linear;
-+	struct kvstore_cbt *kvs_sparse;
-+};
-+
-+struct kvstore_cbt {
-+	struct kvstore ckvs;
-+	uint32_t entry_size;	/* for sparse only */
-+
-+	struct dm_btree_info info;
-+	uint64_t root;
-+};
-+
-+#define SPACE_MAP_ROOT_SIZE 128
-+
-+struct metadata_superblock {
-+	__le32 csum; /* Checksum of superblock except for this field. */
-+	__le32 flags; /* General purpose flags. Not used. */
-+	__le64 blocknr;	/* This block number, dm_block_t. */
-+	__u8 uuid[16]; /* UUID of device (Not used) */
-+	__le64 magic; /* Magic number to check against */
-+	__le32 version;	/* Metadata root version */
-+	__u8 metadata_space_map_root[SPACE_MAP_ROOT_SIZE];/* Metadata space
-+							     map */
-+	__u8 data_space_map_root[SPACE_MAP_ROOT_SIZE]; /* Data space map */
-+	__le64 lbn_pbn_root; /* lbn pbn btree root. */
-+	__le64 hash_pbn_root; /* hash pbn btree root. */
-+	__le32 data_block_size;	/* In bytes */
-+	__le32 metadata_block_size; /* In bytes */
-+	__le64 metadata_nr_blocks;/* Number of metadata blocks used. */
-+} __packed;
-+
-+static int __begin_transaction(struct metadata *md)
-+{
-+	int r;
-+	struct metadata_superblock *disk_super;
-+	struct dm_block *sblock;
-+
-+	r = dm_bm_read_lock(md->meta_bm, METADATA_SUPERBLOCK_LOCATION,
-+					NULL, &sblock);
-+	if (r)
-+		return r;
-+
-+	disk_super = dm_block_data(sblock);
-+
-+	if (md->kvs_linear)
-+		md->kvs_linear->root = le64_to_cpu(disk_super->lbn_pbn_root);
-+
-+	if (md->kvs_sparse)
-+		md->kvs_sparse->root = le64_to_cpu(disk_super->hash_pbn_root);
-+
-+	dm_bm_unlock(sblock);
-+
-+	return r;
-+}
-+
-+static int __commit_transaction(struct metadata *md)
-+{
-+	int r = 0;
-+	size_t metadata_len, data_len;
-+	struct metadata_superblock *disk_super;
-+	struct dm_block *sblock;
-+
-+	BUILD_BUG_ON(sizeof(struct metadata_superblock) > 512);
-+
-+	r = dm_sm_commit(md->data_sm);
-+	if (r < 0)
-+		goto out;
-+
-+	r = dm_tm_pre_commit(md->tm);
-+	if (r < 0)
-+		goto out;
-+
-+	r = dm_sm_root_size(md->meta_sm, &metadata_len);
-+	if (r < 0)
-+		goto out;
-+
-+	r = dm_sm_root_size(md->data_sm, &data_len);
-+	if (r < 0)
-+		goto out;
-+
-+	r = dm_bm_write_lock(md->meta_bm, METADATA_SUPERBLOCK_LOCATION,
-+				NULL, &sblock);
-+	if (r)
-+		goto out;
-+
-+	disk_super = dm_block_data(sblock);
-+
-+	if (md->kvs_linear)
-+		disk_super->lbn_pbn_root = cpu_to_le64(md->kvs_linear->root);
-+
-+	if (md->kvs_sparse)
-+		disk_super->hash_pbn_root = cpu_to_le64(md->kvs_sparse->root);
-+
-+	r = dm_sm_copy_root(md->meta_sm,
-+			    &disk_super->metadata_space_map_root, metadata_len);
-+	if (r < 0)
-+		goto out_locked;
-+
-+	r = dm_sm_copy_root(md->data_sm, &disk_super->data_space_map_root,
-+			    data_len);
-+	if (r < 0)
-+		goto out_locked;
-+
-+	r = dm_tm_commit(md->tm, sblock);
-+
-+out:
-+	return r;
-+
-+out_locked:
-+	dm_bm_unlock(sblock);
-+	return r;
-+}
-+
-+static int write_initial_superblock(struct metadata *md)
-+{
-+	int r;
-+	size_t meta_len, data_len;
-+	struct dm_block *sblock;
-+	struct metadata_superblock *disk_super;
-+
-+	r = dm_sm_root_size(md->meta_sm, &meta_len);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_sm_root_size(md->data_sm, &data_len);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_sm_commit(md->data_sm);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_tm_pre_commit(md->tm);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_bm_write_lock_zero(md->meta_bm, METADATA_SUPERBLOCK_LOCATION,
-+							NULL, &sblock);
-+	if (r < 0)
-+		return r;
-+
-+	disk_super = dm_block_data(sblock);
-+
-+	r = dm_sm_copy_root(md->meta_sm, &disk_super->metadata_space_map_root,
-+							meta_len);
-+	if (r < 0)
-+		goto bad_locked;
-+
-+	r = dm_sm_copy_root(md->data_sm, &disk_super->data_space_map_root,
-+							data_len);
-+	if (r < 0)
-+		goto bad_locked;
-+
-+	return dm_tm_commit(md->tm, sblock);
-+
-+bad_locked:
-+	dm_bm_unlock(sblock);
-+	return r;
-+}
-+
-+static struct metadata *init_meta_cowbtree(void *input_param, bool reconstruct)
-+{
-+	int ret;
-+	struct metadata *md;
-+	struct dm_block_manager *meta_bm;
-+	struct dm_space_map *meta_sm;
-+	struct dm_space_map *data_sm = NULL;
-+	struct dm_transaction_manager *tm;
-+	struct init_param_cowbtree *p =
-+				(struct init_param_cowbtree *)input_param;
-+
-+	DMINFO("Initializing COWBTREE backend");
-+
-+	md = kzalloc(sizeof(*md), GFP_NOIO);
-+	if (!md)
-+		return ERR_PTR(-ENOMEM);
-+
-+	meta_bm = dm_block_manager_create(p->metadata_bdev, METADATA_BSIZE,
-+				METADATA_CACHESIZE, METADATA_MAXLOCKS);
-+	if (IS_ERR(meta_bm)) {
-+		md = (struct metadata *)meta_bm;
-+		goto badbm;
-+	}
-+
-+	if (reconstruct) {
-+		struct dm_block *sblock;
-+		struct metadata_superblock *disk_super;
-+
-+		md->meta_bm = meta_bm;
-+
-+		ret = dm_bm_read_lock(meta_bm, METADATA_SUPERBLOCK_LOCATION,
-+					NULL, &sblock);
-+		if (ret < 0) {
-+			DMERR("could not read_lock superblock");
-+			/* XXX: handle error */
-+		}
-+
-+		disk_super = dm_block_data(sblock);
-+
-+		ret = dm_tm_open_with_sm(meta_bm, METADATA_SUPERBLOCK_LOCATION,
-+				disk_super->metadata_space_map_root,
-+				sizeof(disk_super->metadata_space_map_root),
-+				&md->tm, &md->meta_sm);
-+		if (ret < 0) {
-+			DMERR("could not open_with_sm superblock");
-+			/* XXX: handle error */
-+		}
-+
-+
-+		md->data_sm = dm_sm_disk_open(md->tm,
-+				disk_super->data_space_map_root,
-+				sizeof(disk_super->data_space_map_root));
-+		if (IS_ERR(md->data_sm)) {
-+			DMERR("dm_disk_open failed");
-+			/*XXX: handle error */
-+		}
-+
-+		dm_bm_unlock(sblock);
-+
-+		goto begin_trans;
-+	}
-+
-+	ret = dm_tm_create_with_sm(meta_bm, METADATA_SUPERBLOCK_LOCATION,
-+						&tm, &meta_sm);
-+	if (ret < 0) {
-+		md = ERR_PTR(ret);
-+		goto badtm;
-+	}
-+
-+	data_sm = dm_sm_disk_create(tm, p->blocks);
-+	if (IS_ERR(data_sm)) {
-+		md = (struct metadata *)data_sm;
-+		goto badsm;
-+	}
-+
-+	md->meta_bm = meta_bm;
-+	md->tm = tm;
-+	md->meta_sm = meta_sm;
-+	md->data_sm = data_sm;
-+
-+	ret = write_initial_superblock(md);
-+	if (ret < 0) {
-+		md = ERR_PTR(ret);
-+		goto badwritesuper;
-+	}
-+
-+begin_trans:
-+	ret = __begin_transaction(md);
-+	if (ret < 0) {
-+		md = ERR_PTR(ret);
-+		goto badwritesuper;
-+	}
-+
-+	md->kvs_linear = NULL;
-+	md->kvs_sparse = NULL;
-+
-+	return md;
-+
-+badwritesuper:
-+	dm_sm_destroy(data_sm);
-+badsm:
-+	dm_tm_destroy(tm);
-+	dm_sm_destroy(meta_sm);
-+badtm:
-+	dm_block_manager_destroy(meta_bm);
-+badbm:
-+	kfree(md);
-+	return md;
-+}
-+
-+static void exit_meta_cowbtree(struct metadata *md)
-+{
-+	int ret;
-+
-+	ret = __commit_transaction(md);
-+	if (ret < 0)
-+		DMWARN("%s: __commit_transaction() failed, error = %d.",
-+			__func__, ret);
-+
-+	dm_sm_destroy(md->data_sm);
-+	dm_tm_destroy(md->tm);
-+	dm_sm_destroy(md->meta_sm);
-+	dm_block_manager_destroy(md->meta_bm);
-+
-+	kfree(md->kvs_linear);
-+	kfree(md->kvs_sparse);
-+
-+	kfree(md);
-+
-+	return;
-+}
-+
-+static int flush_meta_cowbtree(struct metadata *md)
-+{
-+	int r;
-+
-+	r = __commit_transaction(md);
-+	if (r < 0)
-+		return r;
-+
-+	r = __begin_transaction(md);
-+
-+	return r;
-+}
-+
-+/********************************************************
-+ *		Space Management Functions		*
-+ ********************************************************/
-+
-+static int alloc_data_block_cowbtree(struct metadata *md, uint64_t *blockn)
-+{
-+
-+	return dm_sm_new_block(md->data_sm, blockn);
-+}
-+
-+static int inc_refcount_cowbtree(struct metadata *md, uint64_t blockn)
-+{
-+	return dm_sm_inc_block(md->data_sm, blockn);
-+}
-+
-+static int dec_refcount_cowbtree(struct metadata *md, uint64_t blockn)
-+{
-+	return dm_sm_dec_block(md->data_sm, blockn);
-+}
-+
-+static int get_refcount_cowbtree(struct metadata *md, uint64_t blockn)
-+{
-+	uint32_t refcount;
-+	int r;
-+
-+	r = dm_sm_get_count(md->data_sm, blockn, &refcount);
-+	if (r < 0)
-+		return r;
-+
-+	return (int)refcount;
-+}
-+
-+/*********************************************************
-+ *		Linear KVS Functions			 *
-+ *********************************************************/
-+
-+static int kvs_delete_linear_cowbtree(struct kvstore *kvs,
-+					void *key, int32_t ksize)
-+{
-+	int r;
-+	struct kvstore_cbt *kvcbt = NULL;
-+
-+	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
-+
-+	if (ksize != kvs->ksize)
-+		return -EINVAL;
-+
-+	r = dm_btree_remove(&(kvcbt->info), kvcbt->root, key, &(kvcbt->root));
-+
-+	if (r == -ENODATA)
-+		return -ENODEV;
-+	else if (r >= 0)
-+		return 0;
-+
-+	return r;
-+}
-+
-+/*
-+ * 0 - not found
-+ * 1 - found
-+ * < 0 - error on lookup
-+ */
-+static int kvs_lookup_linear_cowbtree(struct kvstore *kvs, void *key,
-+			int32_t ksize, void *value, int32_t *vsize)
-+{
-+	int r;
-+	struct kvstore_cbt *kvcbt = NULL;
-+
-+	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
-+
-+	if (ksize != kvs->ksize)
-+		return -EINVAL;
-+
-+	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, key, value);
-+
-+	if (r == -ENODATA)
-+		return 0;
-+	else if (r >= 0)
-+		return 1;
-+	else
-+		return r;
-+}
-+
-+static int kvs_insert_linear_cowbtree(struct kvstore *kvs, void *key,
-+				int32_t ksize, void *value,
-+				int32_t vsize)
-+{
-+	int inserted;
-+	struct kvstore_cbt *kvcbt = NULL;
-+
-+	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
-+
-+	if (ksize != kvs->ksize)
-+		return -EINVAL;
-+
-+	if (vsize != kvs->vsize)
-+		return -EINVAL;
-+
-+	return dm_btree_insert_notify(&(kvcbt->info), kvcbt->root, key,
-+					value, &(kvcbt->root), &inserted);
-+
-+}
-+
-+static struct kvstore *kvs_create_linear_cowbtree(struct metadata *md,
-+			uint32_t ksize, uint32_t vsize, uint32_t kmax,
-+			bool reconstruct)
-+{
-+	struct kvstore_cbt *kvs;
-+	int r;
-+
-+	if (!vsize || !ksize)
-+		return ERR_PTR(-ENOTSUPP);
-+
-+	/* Currently only 64bit keys are supported */
-+	if (ksize != 8)
-+		return ERR_PTR(-ENOTSUPP);
-+
-+	/* We do not support two or more KVSs at the moment */
-+	if (md->kvs_linear)
-+		return ERR_PTR(-EBUSY);
-+
-+	kvs = kmalloc(sizeof(*kvs), GFP_NOIO);
-+	if (!kvs)
-+		return ERR_PTR(-ENOMEM);
-+
-+	kvs->ckvs.ksize = ksize;
-+	kvs->ckvs.vsize = vsize;
-+
-+	kvs->info.tm = md->tm;
-+	kvs->info.levels = 1;
-+	kvs->info.value_type.context = NULL;
-+	kvs->info.value_type.size = vsize;
-+	kvs->info.value_type.inc = NULL;
-+	kvs->info.value_type.dec = NULL;
-+	kvs->info.value_type.equal = NULL;
-+
-+	if (reconstruct) {
-+		kvs->ckvs.kvs_insert = kvs_insert_linear_cowbtree;
-+		kvs->ckvs.kvs_lookup = kvs_lookup_linear_cowbtree;
-+		kvs->ckvs.kvs_delete = kvs_delete_linear_cowbtree;
-+		kvs->ckvs.kvs_iterate = NULL;
-+
-+		md->kvs_linear = kvs;
-+		__begin_transaction(md);
-+	} else {
-+		r = dm_btree_empty(&(kvs->info), &(kvs->root));
-+		if (r < 0) {
-+			kvs = ERR_PTR(r);
-+			goto badtree;
-+		}
-+
-+		/* I think this should be moved below the 4 lines below */
-+		flush_meta_cowbtree(md);
-+
-+		kvs->ckvs.kvs_insert = kvs_insert_linear_cowbtree;
-+		kvs->ckvs.kvs_lookup = kvs_lookup_linear_cowbtree;
-+		kvs->ckvs.kvs_delete = kvs_delete_linear_cowbtree;
-+		kvs->ckvs.kvs_iterate = NULL;
-+
-+		md->kvs_linear = kvs;
-+	}
-+
-+	return &(kvs->ckvs);
-+
-+badtree:
-+	kfree(kvs);
-+	return (struct kvstore *) kvs;
-+}
-+
-+/********************************************************
-+ *		Sparse KVS Functions			*
-+ ********************************************************/
-+
-+static int kvs_delete_sparse_cowbtree(struct kvstore *kvs,
-+					void *key, int32_t ksize)
-+{
-+	char *entry;
-+	uint64_t key_val;
-+	int r;
-+	struct kvstore_cbt *kvcbt = NULL;
-+
-+	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
-+
-+	if (ksize != kvs->ksize)
-+		return -EINVAL;
-+
-+	entry = kmalloc(kvcbt->entry_size, GFP_NOIO);
-+	if (!entry)
-+		return -ENOMEM;
-+
-+	key_val = (*(uint64_t *)key);
-+
-+repeat:
-+
-+	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, &key_val, entry);
-+	if (r == -ENODATA)
-+		return -ENODEV;
-+	else if (r >= 0) {
-+		if (!memcmp(entry, key, ksize)) {
-+			r = dm_btree_remove(&(kvcbt->info),
-+				kvcbt->root, &key_val, &(kvcbt->root));
-+			kfree(entry);
-+			return r;
-+		}
-+		key_val++;
-+		goto repeat;
-+	} else {
-+		kfree(entry);
-+		return r;
-+	}
-+}
-+
-+/*
-+ * 0 - not found
-+ * 1 - found
-+ * < 0 - error on lookup
-+ */
-+static int kvs_lookup_sparse_cowbtree(struct kvstore *kvs, void *key,
-+			int32_t ksize, void *value, int32_t *vsize)
-+{
-+	char *entry;
-+	uint64_t key_val;
-+	int r;
-+	struct kvstore_cbt *kvcbt = NULL;
-+
-+	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
-+
-+	if (ksize != kvs->ksize)
-+		return -EINVAL;
-+
-+	entry = kmalloc(kvcbt->entry_size, GFP_NOIO);
-+	if (!entry)
-+		return -ENOMEM;
-+
-+	key_val = (*(uint64_t *)key);
-+
-+repeat:
-+
-+	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, &key_val, entry);
-+	if (r == -ENODATA) {
-+		kfree(entry);
-+		return 0;
-+	} else if (r >= 0) {
-+		if (!memcmp(entry, key, ksize)) {
-+			memcpy(value, entry + ksize, kvs->vsize);
-+			kfree(entry);
-+			return 1;
-+		}
-+		key_val++;
-+		goto repeat;
-+	} else {
-+		kfree(entry);
-+		return r;
-+	}
-+}
-+
-+static int kvs_insert_sparse_cowbtree(struct kvstore *kvs, void *key,
-+				int32_t ksize, void *value,
-+				int32_t vsize)
-+{
-+	char *entry;
-+	uint64_t key_val;
-+	int r;
-+	struct kvstore_cbt *kvcbt = NULL;
-+
-+	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
-+
-+	if (ksize != kvs->ksize)
-+		return -EINVAL;
-+
-+	if (vsize != kvs->vsize)
-+		return -EINVAL;
-+
-+	entry = kmalloc(kvcbt->entry_size, GFP_NOIO);
-+	if (!entry)
-+		return -ENOMEM;
-+
-+	key_val = (*(uint64_t *)key);
-+
-+
-+repeat:
-+
-+	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, &key_val, entry);
-+	if (r == -ENODATA) {
-+		memcpy(entry, key, ksize);
-+		memcpy(entry + ksize, value, vsize);
-+		r = dm_btree_insert(&(kvcbt->info), kvcbt->root, &key_val,
-+					entry, &(kvcbt->root));
-+		kfree(entry);
-+		return r;
-+	} else if (r >= 0) {
-+		key_val++;
-+		goto repeat;
-+	} else {
-+		kfree(entry);
-+		return r;
-+	}
-+}
-+
-+static struct kvstore *kvs_create_sparse_cowbtree(struct metadata *md,
-+			uint32_t ksize, uint32_t vsize, uint32_t knummax,
-+			bool reconstruct)
-+{
-+	struct kvstore_cbt *kvs;
-+	int r;
-+
-+	if (!vsize || !ksize)
-+		return ERR_PTR(-ENOTSUPP);
-+
-+	/* We do not support two or more KVSs at the moment */
-+	if (md->kvs_sparse)
-+		return ERR_PTR(-EBUSY);
-+
-+	kvs = kmalloc(sizeof(*kvs), GFP_NOIO);
-+	if (!kvs)
-+		return ERR_PTR(-ENOMEM);
-+
-+	kvs->ckvs.vsize = vsize;
-+	kvs->ckvs.ksize = ksize;
-+	kvs->entry_size = vsize + ksize;
-+
-+	kvs->info.tm = md->tm;
-+	kvs->info.levels = 1;
-+	kvs->info.value_type.context = NULL;
-+	kvs->info.value_type.size = kvs->entry_size;
-+	kvs->info.value_type.inc = NULL;
-+	kvs->info.value_type.dec = NULL;
-+	kvs->info.value_type.equal = NULL;
-+
-+	if (reconstruct) {
-+		kvs->ckvs.kvs_insert = kvs_insert_sparse_cowbtree;
-+		kvs->ckvs.kvs_lookup = kvs_lookup_sparse_cowbtree;
-+		kvs->ckvs.kvs_delete = kvs_delete_sparse_cowbtree;
-+		kvs->ckvs.kvs_iterate = NULL;
-+
-+		md->kvs_sparse = kvs;
-+		__begin_transaction(md);
-+	} else {
-+		r = dm_btree_empty(&(kvs->info), &(kvs->root));
-+		if (r < 0) {
-+			kvs = ERR_PTR(r);
-+			goto badtree;
-+		}
-+
-+		/* I think this should be moved below the 4 lines below */
-+		flush_meta_cowbtree(md);
-+
-+		kvs->ckvs.kvs_insert = kvs_insert_sparse_cowbtree;
-+		kvs->ckvs.kvs_lookup = kvs_lookup_sparse_cowbtree;
-+		kvs->ckvs.kvs_delete = kvs_delete_sparse_cowbtree;
-+		kvs->ckvs.kvs_iterate = NULL;
-+
-+		md->kvs_sparse = kvs;
-+	}
-+
-+	return &(kvs->ckvs);
-+
-+badtree:
-+	kfree(kvs);
-+	return (struct kvstore *) kvs;
-+}
-+
-+struct metadata_ops metadata_ops_cowbtree = {
-+	.init_meta = init_meta_cowbtree,
-+	.exit_meta = exit_meta_cowbtree,
-+	.kvs_create_linear = kvs_create_linear_cowbtree,
-+	.kvs_create_sparse = kvs_create_sparse_cowbtree,
-+
-+	.alloc_data_block = alloc_data_block_cowbtree,
-+	.inc_refcount = inc_refcount_cowbtree,
-+	.dec_refcount = dec_refcount_cowbtree,
-+	.get_refcount = get_refcount_cowbtree,
-+
-+	.flush_meta = flush_meta_cowbtree,
-+
-+	.flush_bufio_cache = NULL,
-+};
-diff --git a/drivers/md/dm-dedup-cbt.h b/drivers/md/dm-dedup-cbt.h
-new file mode 100644
-index 0000000..8b0c629
---- /dev/null
-+++ b/drivers/md/dm-dedup-cbt.h
-@@ -0,0 +1,44 @@
-+/*
-+ * Copyright (C) 2012-2014 Vasily Tarasov
-+ * Copyright (C) 2012-2014 Geoff Kuenning
-+ * Copyright (C) 2012-2014 Sonam Mandal
-+ * Copyright (C) 2012-2014 Karthikeyani Palanisami
-+ * Copyright (C) 2012-2014 Philip Shilane
-+ * Copyright (C) 2012-2014 Sagar Trehan
-+ * Copyright (C) 2012-2014 Erez Zadok
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef COWBTREE_BACKEND_H
-+#define COWBTREE_BACKEND_H
-+
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/kernel.h>
-+#include <linux/device-mapper.h>
-+#include <linux/dm-io.h>
-+#include <linux/dm-kcopyd.h>
-+#include <linux/list.h>
-+#include <linux/err.h>
-+#include <asm/current.h>
-+#include <linux/string.h>
-+#include <linux/gfp.h>
-+
-+#include <linux/scatterlist.h>
-+#include <asm/page.h>
-+#include <asm/unaligned.h>
-+#include <crypto/hash.h>
-+#include <crypto/md5.h>
-+#include <crypto/algapi.h>
 +
 +#include "dm-dedup-target.h"
++#include "dm-dedup-rw.h"
++#include "dm-dedup-kvstore.h"
 +
-+extern struct metadata_ops metadata_ops_cowbtree;
++#define DMD_IO_SIZE	4096
 +
-+struct init_param_cowbtree {
-+	struct block_device *metadata_bdev;
-+	uint64_t blocks;
-+};
++static uint64_t compute_sector(struct bio *bio,
++			       struct dedup_config *dc)
++{
++	uint64_t to_be_lbn;
 +
-+#endif /* COWBTREE_BACKEND_H */
++	to_be_lbn = bio->bi_iter.bi_sector;
++	to_be_lbn /= dc->sectors_per_block;
++	to_be_lbn *= dc->sectors_per_block;
++
++	return to_be_lbn;
++}
++
++static int fetch_whole_block(struct dedup_config *dc,
++			uint64_t pbn, struct page_list *pl)
++{
++	struct dm_io_request iorq;
++	struct dm_io_region where;
++	unsigned long error_bits;
++
++	where.bdev = dc->data_dev->bdev;
++	where.sector = pbn;
++	where.count = dc->sectors_per_block;
++
++	iorq.bi_rw = READ;
++	iorq.mem.type = DM_IO_PAGE_LIST;
++	iorq.mem.ptr.pl = pl;
++	iorq.mem.offset = 0;
++	iorq.notify.fn = NULL;
++	iorq.client = dc->io_client;
++
++	return dm_io(&iorq, 1, &where, &error_bits);
++}
++
++static int merge_data(struct dedup_config *dc, struct page *page,
++				struct bio *bio)
++{
++	void *src_page_vaddr, *dest_page_vaddr;
++	int position, err = 0;
++
++	/* Relative offset in terms of sector size */
++	position = (bio->bi_iter.bi_sector % dc->sectors_per_block);
++
++	if (!page || !bio->bi_io_vec->bv_page) {
++		err = -EINVAL;
++		goto out;
++	}
++
++	src_page_vaddr = page_address(bio->bi_io_vec->bv_page);
++	dest_page_vaddr = page_address(page);
++
++	src_page_vaddr = src_page_vaddr + bio->bi_io_vec->bv_offset;
++	/* Locating the right sector to merge */
++	dest_page_vaddr = dest_page_vaddr + (to_bytes(position));
++
++	/* Merging Data */
++	memmove(dest_page_vaddr, src_page_vaddr, bio->bi_io_vec->bv_len);
++out:
++	return err;
++}
++
++static void copy_pages(struct page *src, struct bio *clone)
++{
++	void *src_page_vaddr, *dest_page_vaddr;
++
++	src_page_vaddr = page_address(src);
++	dest_page_vaddr = page_address(clone->bi_io_vec->bv_page);
++
++	memmove(dest_page_vaddr, src_page_vaddr, DMD_IO_SIZE);
++}
++
++static void my_endio(struct bio *clone, int error)
++{
++	unsigned rw = bio_data_dir(clone);
++	struct bio *orig;
++	struct bio_vec bv;
++
++	if (!error && !bio_flagged(clone, BIO_UPTODATE))
++		error = -EIO;
++
++	/* free the processed pages */
++	if (rw == WRITE || rw == READ) {
++		bv = bio_iovec(clone);
++		if (bv.bv_page) {
++			free_pages((unsigned long)page_address(bv.bv_page), 0);
++			bv.bv_page = NULL;
++		}
++	}
++
++	orig = clone->bi_private;
++	bio_endio(orig, 0);
++
++	bio_put(clone);
++}
++
++/*
++ * XXX: there  is existing zero_fill_bio() in the kernel,
++ * should we use it?
++ */
++static void my_zero_fill_bio(struct bio *bio)
++{
++	void *data;
++	unsigned int length;
++
++	data = bio_data(bio);
++	length = bio_cur_bytes(bio);
++	memset(data, 0, length);
++}
++
++static struct bio *create_bio(struct dedup_config *dc,
++			      struct bio *bio)
++{
++	struct bio *clone;
++	struct page *page;
++
++	clone = bio_kmalloc(GFP_NOIO, 1);
++	if (!clone)
++		goto out;
++
++	clone->bi_bdev = bio->bi_bdev;
++	clone->bi_rw = bio->bi_rw;
++	clone->bi_iter.bi_sector = compute_sector(bio, dc);
++	clone->bi_private = bio;  /* for later completion */
++	clone->bi_end_io = my_endio;
++
++	page = alloc_pages(GFP_NOIO, 0);
++	if (!page)
++		goto bad_putbio;
++
++	if (!bio_add_page(clone, page, DMD_IO_SIZE, 0))
++		goto bad_freepage;
++
++	goto out;
++
++bad_freepage:
++	free_pages((unsigned long) page_address(page), 0);
++bad_putbio:
++	bio_put(clone);
++	clone = NULL;
++out:
++	return clone;
++}
++
++static struct bio *prepare_bio_with_pbn(struct dedup_config *dc,
++					struct bio *bio, uint64_t pbn)
++{
++	int r = 0;
++	struct page_list *pl;
++	struct bio *clone = NULL;
++
++	pl = kmalloc(sizeof(pl), GFP_NOIO);
++	if (!pl)
++		goto out;
++
++	/*
++	 * Since target I/O size is 4KB currently, we need only one page to
++	 * store the data. However, if the target I/O size increases, we need
++	 * to allocate more pages and set this linked list correctly.
++	 */
++	pl->page = alloc_pages(GFP_NOIO, 0);
++	if (!pl->page)
++		goto out_allocfail;
++
++	pl->next = NULL;
++
++	r = fetch_whole_block(dc, pbn, pl);
++	if (r < 0)
++		goto out_fail;
++
++	r = merge_data(dc, pl->page, bio);
++	if (r < 0)
++		goto out_fail;
++
++	clone = create_bio(dc, bio);
++	if (!clone)
++		goto out_fail;
++
++	copy_pages(pl->page, clone);
++
++out_fail:
++	free_pages((unsigned long) page_address(pl->page), 0);
++out_allocfail:
++	kfree(pl);
++out:
++	return clone;
++}
++
++static struct bio *prepare_bio_without_pbn(struct dedup_config *dc,
++					   struct bio *bio)
++{
++	int r = 0;
++	struct bio *clone = NULL;
++
++	clone = create_bio(dc, bio);
++	if (!clone)
++		goto out;
++
++	my_zero_fill_bio(clone);
++
++	r = merge_data(dc, clone->bi_io_vec->bv_page, bio);
++	if (r < 0)
++		BUG();
++out:
++	return clone;
++}
++
++struct bio *prepare_bio_on_write(struct dedup_config *dc, struct bio *bio)
++{
++	int r;
++	uint64_t lbn_sector;
++	uint64_t lbn;
++	uint32_t vsize;
++	struct lbn_pbn_value lbnpbn_value;
++	struct bio *clone;
++
++	lbn_sector = compute_sector(bio, dc);
++	lbn = lbn_sector / dc->sectors_per_block;
++
++	/* check for old or new lbn and fetch the appropriate pbn */
++	r = dc->kvs_lbn_pbn->kvs_lookup(dc->kvs_lbn_pbn, (void *)&lbn,
++			sizeof(lbn), (void *)&lbnpbn_value, &vsize);
++	if (r == 0)
++		clone = prepare_bio_without_pbn(dc, bio);
++	else if (r == 1)
++		clone = prepare_bio_with_pbn(dc, bio, lbnpbn_value.pbn
++						* dc->sectors_per_block);
++	else
++		BUG();
++
++	return clone;
++}
+diff --git a/drivers/md/dm-dedup-rw.h b/drivers/md/dm-dedup-rw.h
+new file mode 100644
+index 0000000..ad12a27
+--- /dev/null
++++ b/drivers/md/dm-dedup-rw.h
+@@ -0,0 +1,19 @@
++/*
++ * Copyright (C) 2012-2014 Vasily Tarasov
++ * Copyright (C) 2012-2014 Geoff Kuenning
++ * Copyright (C) 2012-2014 Sonam Mandal
++ * Copyright (C) 2012-2014 Karthikeyani Palanisami
++ * Copyright (C) 2012-2014 Philip Shilane
++ * Copyright (C) 2012-2014 Sagar Trehan
++ * Copyright (C) 2012-2014 Erez Zadok
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_DEDUP_RW_H
++#define DM_DEDUP_RW_H
++
++extern struct bio *prepare_bio_on_write(struct dedup_config *dc,
++							struct bio *bio);
++
++#endif /* DM_DEDUP_RW_H */
 -- 
 1.7.1
