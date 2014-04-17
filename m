@@ -1,7 +1,7 @@
 From: Vasily Tarasov <tarasov@vasily.name>
-Subject: [PATCH RFC 07/10] dm-dedup: Makefile changes
-Date: Thu, 17 Apr 2014 16:32:45 -0400
-Message-ID: <535ed0dc.d171e00a.7699.3b85@mx.google.com>
+Subject: [PATCH RFC 03/10] dm-dedup: hash computation
+Date: Thu, 17 Apr 2014 16:06:20 -0400
+Message-ID: <535ed0d7.e3508c0a.0da6.ffffc9ca@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,32 +20,206 @@ To: dm-devel@redhat.com
 Cc: Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-Changes to the Makefile.
+Hash-computation functions.  We preallocate a table of hash descriptors
+in advance to improve performance.
 
 Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
 ---
- drivers/md/Makefile |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ drivers/md/dm-dedup-hash.c |  148 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-dedup-hash.h |   30 +++++++++
+ 2 files changed, 178 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/dm-dedup-hash.c
+ create mode 100644 drivers/md/dm-dedup-hash.h
 
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index f26d832..1af205d 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -14,6 +14,7 @@ dm-thin-pool-y	+= dm-thin.o dm-thin-metadata.o
- dm-cache-y	+= dm-cache-target.o dm-cache-metadata.o dm-cache-policy.o
- dm-cache-mq-y   += dm-cache-policy-mq.o
- dm-cache-cleaner-y += dm-cache-policy-cleaner.o
-+dm-dedup-y	+= dm-dedup-target.o dm-dedup-hash.o dm-dedup-rw.o dm-dedup-cbt.o dm-dedup-ram.o
- md-mod-y	+= md.o bitmap.o
- raid456-y	+= raid5.o
- 
-@@ -53,6 +54,7 @@ obj-$(CONFIG_DM_VERITY)		+= dm-verity.o
- obj-$(CONFIG_DM_CACHE)		+= dm-cache.o
- obj-$(CONFIG_DM_CACHE_MQ)	+= dm-cache-mq.o
- obj-$(CONFIG_DM_CACHE_CLEANER)	+= dm-cache-cleaner.o
-+obj-$(CONFIG_DM_DEDUP)		+= dm-dedup.o
- 
- ifeq ($(CONFIG_DM_UEVENT),y)
- dm-mod-objs			+= dm-uevent.o
+diff --git a/drivers/md/dm-dedup-hash.c b/drivers/md/dm-dedup-hash.c
+new file mode 100644
+index 0000000..0c8362c
+--- /dev/null
++++ b/drivers/md/dm-dedup-hash.c
+@@ -0,0 +1,148 @@
++/*
++ * Copyright (C) 2012-2014 Vasily Tarasov
++ * Copyright (C) 2012-2014 Geoff Kuenning
++ * Copyright (C) 2012-2014 Sonam Mandal
++ * Copyright (C) 2012-2014 Karthikeyani Palanisami
++ * Copyright (C) 2012-2014 Philip Shilane
++ * Copyright (C) 2012-2014 Sagar Trehan
++ * Copyright (C) 2012-2014 Erez Zadok
++ *
++ * This file is released under the GPL.
++ */
++
++#include "dm-dedup-target.h"
++#include "dm-dedup-hash.h"
++#include <linux/atomic.h>
++#include <linux/blk_types.h>
++
++/*
++ * We are declaring and initalizaing global hash_desc, because
++ * we need to do hash computation in endio function, and this
++ * function is called in softirq context. Hence we are not
++ * allowed to perform any operation on that path which can sleep.
++ * And tfm allocation in hash_desc, at one point, tries to take
++ * semaphore and hence tries to sleep. And because of this we get
++ * BUG, which complains "Scheduling while atomic". Hence to avoid
++ * this scenario, we moved the declaration and initialization out
++ * of critical path.
++ */
++static struct hash_desc *slot_to_desc(struct hash_desc_table *desc_table,
++							unsigned long slot)
++{
++	BUG_ON(slot >= DEDUP_HASH_DESC_COUNT);
++	return &(desc_table->desc[slot]);
++}
++
++struct hash_desc_table *desc_table_init(char *hash_alg)
++{
++	int i = 0;
++	struct hash_desc *desc;
++	struct hash_desc_table *desc_table;
++
++	desc_table = kmalloc(sizeof(struct hash_desc_table), GFP_NOIO);
++	if (!desc_table)
++		return ERR_PTR(-ENOMEM);
++
++	for (i = 0; i < DEDUP_HASH_DESC_COUNT; i++) {
++		desc_table->free_bitmap[i] = true;
++		desc = desc_table->desc + i;
++		desc->flags = 0;
++		desc->tfm = crypto_alloc_hash(hash_alg, 0, CRYPTO_ALG_ASYNC);
++		if (IS_ERR(desc->tfm))
++			return (struct hash_desc_table *)desc->tfm;
++	}
++
++	atomic_long_set(&(desc_table->slot_counter), 0);
++
++	return desc_table;
++}
++
++void desc_table_deinit(struct hash_desc_table *desc_table)
++{
++	int i = 0;
++	struct hash_desc *desc;
++
++	for (i = 0; i < DEDUP_HASH_DESC_COUNT; i++) {
++		desc = desc_table->desc + i;
++		crypto_free_hash(desc->tfm);
++	}
++
++	kfree(desc_table);
++	desc_table = NULL;
++
++	return;
++}
++
++static int get_next_slot(struct hash_desc_table *desc_table)
++{
++	unsigned long num = 0;
++	int count = 0;
++
++	do {
++		if (count == DEDUP_HASH_DESC_COUNT)
++			BUG();
++
++		count++;
++		num = atomic_long_inc_return(&(desc_table->slot_counter));
++		num = num % DEDUP_HASH_DESC_COUNT;
++
++	} while (!desc_table->free_bitmap[num]);
++
++	/* XXX: Possibility of race condition here. As checking of bitmap
++	 *	and its setting is not happening in same step. But it will
++	 *	work for now, as we declare atleast twice more hash_desc
++	 *	then number of threads.
++	 */
++	desc_table->free_bitmap[num] = false;
++
++	return num;
++}
++
++static void put_slot(struct hash_desc_table *desc_table, unsigned long slot)
++{
++	BUG_ON(slot >= DEDUP_HASH_DESC_COUNT);
++	BUG_ON(desc_table->free_bitmap[slot]);
++	desc_table->free_bitmap[slot] = true;
++	return;
++}
++
++unsigned int get_hash_digestsize(struct hash_desc_table *desc_table)
++{
++	unsigned long slot;
++	struct hash_desc *desc;
++
++	slot = get_next_slot(desc_table);
++	desc = slot_to_desc(desc_table, slot);
++
++	return crypto_hash_digestsize(desc->tfm);
++}
++
++int compute_hash_bio(struct hash_desc_table *desc_table,
++				struct bio *bio, char *hash)
++{
++	struct scatterlist sg;
++	int ret = 0;
++	unsigned long slot;
++	struct bio_vec bvec;
++	struct bvec_iter iter;
++	struct hash_desc *desc;
++
++	slot = get_next_slot(desc_table);
++	desc = slot_to_desc(desc_table, slot);
++
++	ret = crypto_hash_init(desc);
++	if (ret)
++		goto out;
++
++	sg_init_table(&sg, 1);
++	__bio_for_each_segment(bvec, bio, iter, bio->bi_iter) {
++		sg_set_page(&sg, bvec.bv_page, bvec.bv_len,
++			    bvec.bv_offset);
++		crypto_hash_update(desc, &sg, sg.length);
++	}
++
++	crypto_hash_final(desc, hash);
++out:
++	put_slot(desc_table, slot);
++	return ret;
++}
+diff --git a/drivers/md/dm-dedup-hash.h b/drivers/md/dm-dedup-hash.h
+new file mode 100644
+index 0000000..9eb791d
+--- /dev/null
++++ b/drivers/md/dm-dedup-hash.h
+@@ -0,0 +1,30 @@
++/*
++ * Copyright (C) 2012-2014 Vasily Tarasov
++ * Copyright (C) 2012-2014 Geoff Kuenning
++ * Copyright (C) 2012-2014 Sonam Mandal
++ * Copyright (C) 2012-2014 Karthikeyani Palanisami
++ * Copyright (C) 2012-2014 Philip Shilane
++ * Copyright (C) 2012-2014 Sagar Trehan
++ * Copyright (C) 2012-2014 Erez Zadok
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_DEDUP_HASH_H
++#define DM_DEDUP_HASH_H
++
++#define DEDUP_HASH_DESC_COUNT 128
++
++struct hash_desc_table {
++	struct hash_desc desc[DEDUP_HASH_DESC_COUNT];
++	bool free_bitmap[DEDUP_HASH_DESC_COUNT];
++	atomic_long_t slot_counter;
++} /*desc_table*/;
++
++extern void desc_table_deinit(struct hash_desc_table *desc_table);
++extern struct hash_desc_table *desc_table_init(char *crypt_alg);
++extern int compute_hash_bio(struct hash_desc_table *desc_table,
++				struct bio *bio, char *hash);
++extern unsigned int get_hash_digestsize(struct hash_desc_table *desc_table);
++
++#endif /* DM_DEDUP_HASH_H */
 -- 
 1.7.1
