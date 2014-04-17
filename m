@@ -1,7 +1,7 @@
 From: Vasily Tarasov <tarasov@vasily.name>
-Subject: [PATCH RFC 06/10] dm-dedup: inram backend
-Date: Thu, 17 Apr 2014 16:23:07 -0400
-Message-ID: <535ed0db.2a178c0a.65c9.ffffcc19@mx.google.com>
+Subject: [PATCH RFC 05/10] dm-dedup: COW B-tree backend
+Date: Thu, 17 Apr 2014 16:20:20 -0400
+Message-ID: <535ed0da.036c8c0a.44e3.ffffc578@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,24 +20,26 @@ To: dm-devel@redhat.com
 Cc: Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-The inram backend uses a simple in-memory hash table for storing
-LBN-to-PBN and HASH-to-PBN mappings.  We use linear probing to
-resolve collisions.
+The Copy-on-Write B-tree backend uses device-mapper's presistend-data
+library to store Dmdedup's metadata. Currently, a B-tree is used for
+both linear and sparse mappings. As the key size is limited to 64 bits
+in the persistent-data library, we use linear probing if a collision
+occurs.
 
 Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
 ---
- drivers/md/dm-dedup-ram.c |  585 +++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-dedup-ram.h |   43 ++++
- 2 files changed, 628 insertions(+), 0 deletions(-)
- create mode 100644 drivers/md/dm-dedup-ram.c
- create mode 100644 drivers/md/dm-dedup-ram.h
+ drivers/md/dm-dedup-cbt.c |  724 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-dedup-cbt.h |   44 +++
+ 2 files changed, 768 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/dm-dedup-cbt.c
+ create mode 100644 drivers/md/dm-dedup-cbt.h
 
-diff --git a/drivers/md/dm-dedup-ram.c b/drivers/md/dm-dedup-ram.c
+diff --git a/drivers/md/dm-dedup-cbt.c b/drivers/md/dm-dedup-cbt.c
 new file mode 100644
-index 0000000..36945ae
+index 0000000..5e8ae30
 --- /dev/null
-+++ b/drivers/md/dm-dedup-ram.c
-@@ -0,0 +1,585 @@
++++ b/drivers/md/dm-dedup-cbt.c
+@@ -0,0 +1,724 @@
 +/*
 + * Copyright (C) 2012-2014 Vasily Tarasov
 + * Copyright (C) 2012-2014 Geoff Kuenning
@@ -51,216 +53,395 @@ index 0000000..36945ae
 + */
 +
 +#include <linux/errno.h>
++#include "persistent-data/dm-btree.h"
++#include "persistent-data/dm-space-map.h"
++#include "persistent-data/dm-space-map-disk.h"
++#include "persistent-data/dm-block-manager.h"
++#include "persistent-data/dm-transaction-manager.h"
 +
-+#include "dm-dedup-kvstore.h"
-+#include "dm-dedup-ram.h"
++#include "dm-dedup-cbt.h"
 +#include "dm-dedup-backend.h"
++#include "dm-dedup-kvstore.h"
 +
 +#define EMPTY_ENTRY -5
 +#define DELETED_ENTRY -6
 +
 +#define UINT32_MAX	(4294967295U)
-+#define HASHTABLE_OVERPROV	(10)
++
++#define METADATA_BSIZE 4096
++#define METADATA_CACHESIZE 64  /* currently block manager ignores this value */
++#define METADATA_MAXLOCKS 5
++#define METADATA_SUPERBLOCK_LOCATION 0
 +
 +struct metadata {
-+	/* Space Map */
-+	uint32_t *smap;
-+	uint64_t smax;
-+	uint64_t allocptr;
++	struct dm_block_manager *meta_bm;
++	struct dm_transaction_manager *tm;
++	struct dm_space_map *data_sm;
++	struct dm_space_map *meta_sm;
 +
 +	/*
 +	 * XXX: Currently we support only one linear and one sparse KVS.
 +	 */
-+	struct kvstore_inram *kvs_linear;
-+	struct kvstore_inram *kvs_sparse;
++	struct kvstore_cbt *kvs_linear;
++	struct kvstore_cbt *kvs_sparse;
 +};
 +
-+struct kvstore_inram {
++struct kvstore_cbt {
 +	struct kvstore ckvs;
-+	uint32_t kmax;
-+	char *store;
++	uint32_t entry_size;	/* for sparse only */
++
++	struct dm_btree_info info;
++	uint64_t root;
 +};
 +
-+static struct metadata *init_meta_inram(void *init_param, bool reconstruct)
++#define SPACE_MAP_ROOT_SIZE 128
++
++struct metadata_superblock {
++	__le32 csum; /* Checksum of superblock except for this field. */
++	__le32 flags; /* General purpose flags. Not used. */
++	__le64 blocknr;	/* This block number, dm_block_t. */
++	__u8 uuid[16]; /* UUID of device (Not used) */
++	__le64 magic; /* Magic number to check against */
++	__le32 version;	/* Metadata root version */
++	__u8 metadata_space_map_root[SPACE_MAP_ROOT_SIZE];/* Metadata space
++							     map */
++	__u8 data_space_map_root[SPACE_MAP_ROOT_SIZE]; /* Data space map */
++	__le64 lbn_pbn_root; /* lbn pbn btree root. */
++	__le64 hash_pbn_root; /* hash pbn btree root. */
++	__le32 data_block_size;	/* In bytes */
++	__le32 metadata_block_size; /* In bytes */
++	__le64 metadata_nr_blocks;/* Number of metadata blocks used. */
++} __packed;
++
++static int __begin_transaction(struct metadata *md)
 +{
-+	uint64_t smap_size;
++	int r;
++	struct metadata_superblock *disk_super;
++	struct dm_block *sblock;
++
++	r = dm_bm_read_lock(md->meta_bm, METADATA_SUPERBLOCK_LOCATION,
++					NULL, &sblock);
++	if (r)
++		return r;
++
++	disk_super = dm_block_data(sblock);
++
++	if (md->kvs_linear)
++		md->kvs_linear->root = le64_to_cpu(disk_super->lbn_pbn_root);
++
++	if (md->kvs_sparse)
++		md->kvs_sparse->root = le64_to_cpu(disk_super->hash_pbn_root);
++
++	dm_bm_unlock(sblock);
++
++	return r;
++}
++
++static int __commit_transaction(struct metadata *md)
++{
++	int r = 0;
++	size_t metadata_len, data_len;
++	struct metadata_superblock *disk_super;
++	struct dm_block *sblock;
++
++	BUILD_BUG_ON(sizeof(struct metadata_superblock) > 512);
++
++	r = dm_sm_commit(md->data_sm);
++	if (r < 0)
++		goto out;
++
++	r = dm_tm_pre_commit(md->tm);
++	if (r < 0)
++		goto out;
++
++	r = dm_sm_root_size(md->meta_sm, &metadata_len);
++	if (r < 0)
++		goto out;
++
++	r = dm_sm_root_size(md->data_sm, &data_len);
++	if (r < 0)
++		goto out;
++
++	r = dm_bm_write_lock(md->meta_bm, METADATA_SUPERBLOCK_LOCATION,
++				NULL, &sblock);
++	if (r)
++		goto out;
++
++	disk_super = dm_block_data(sblock);
++
++	if (md->kvs_linear)
++		disk_super->lbn_pbn_root = cpu_to_le64(md->kvs_linear->root);
++
++	if (md->kvs_sparse)
++		disk_super->hash_pbn_root = cpu_to_le64(md->kvs_sparse->root);
++
++	r = dm_sm_copy_root(md->meta_sm,
++			    &disk_super->metadata_space_map_root, metadata_len);
++	if (r < 0)
++		goto out_locked;
++
++	r = dm_sm_copy_root(md->data_sm, &disk_super->data_space_map_root,
++			    data_len);
++	if (r < 0)
++		goto out_locked;
++
++	r = dm_tm_commit(md->tm, sblock);
++
++out:
++	return r;
++
++out_locked:
++	dm_bm_unlock(sblock);
++	return r;
++}
++
++static int write_initial_superblock(struct metadata *md)
++{
++	int r;
++	size_t meta_len, data_len;
++	struct dm_block *sblock;
++	struct metadata_superblock *disk_super;
++
++	r = dm_sm_root_size(md->meta_sm, &meta_len);
++	if (r < 0)
++		return r;
++
++	r = dm_sm_root_size(md->data_sm, &data_len);
++	if (r < 0)
++		return r;
++
++	r = dm_sm_commit(md->data_sm);
++	if (r < 0)
++		return r;
++
++	r = dm_tm_pre_commit(md->tm);
++	if (r < 0)
++		return r;
++
++	r = dm_bm_write_lock_zero(md->meta_bm, METADATA_SUPERBLOCK_LOCATION,
++							NULL, &sblock);
++	if (r < 0)
++		return r;
++
++	disk_super = dm_block_data(sblock);
++
++	r = dm_sm_copy_root(md->meta_sm, &disk_super->metadata_space_map_root,
++							meta_len);
++	if (r < 0)
++		goto bad_locked;
++
++	r = dm_sm_copy_root(md->data_sm, &disk_super->data_space_map_root,
++							data_len);
++	if (r < 0)
++		goto bad_locked;
++
++	return dm_tm_commit(md->tm, sblock);
++
++bad_locked:
++	dm_bm_unlock(sblock);
++	return r;
++}
++
++static struct metadata *init_meta_cowbtree(void *input_param, bool reconstruct)
++{
++	int ret;
 +	struct metadata *md;
-+	struct init_param_inram *p = (struct init_param_inram *)init_param;
++	struct dm_block_manager *meta_bm;
++	struct dm_space_map *meta_sm;
++	struct dm_space_map *data_sm = NULL;
++	struct dm_transaction_manager *tm;
++	struct init_param_cowbtree *p =
++				(struct init_param_cowbtree *)input_param;
 +
-+	DMINFO("Initializing INRAM backend");
++	DMINFO("Initializing COWBTREE backend");
 +
-+	if (reconstruct) {
-+		DMERR("INRAM backend does not support reconstruction!");
-+		return ERR_PTR(-ENOTSUPP);
-+	}
-+
-+	md = kmalloc(sizeof(*md), GFP_NOIO);
++	md = kzalloc(sizeof(*md), GFP_NOIO);
 +	if (!md)
 +		return ERR_PTR(-ENOMEM);
 +
-+	smap_size = p->blocks * sizeof(uint32_t);
-+
-+	md->smap = vmalloc(smap_size);
-+	if (!md->smap) {
-+		kfree(md);
-+		return ERR_PTR(-ENOMEM);
++	meta_bm = dm_block_manager_create(p->metadata_bdev, METADATA_BSIZE,
++				METADATA_CACHESIZE, METADATA_MAXLOCKS);
++	if (IS_ERR(meta_bm)) {
++		md = (struct metadata *)meta_bm;
++		goto badbm;
 +	}
 +
-+	DMINFO("Space allocated for pbn reference count map: %llu.%06llu MB\n",
-+			smap_size / (1024 * 1024),
-+			smap_size - ((smap_size /
-+			(1024 * 1024)) * (1024 * 1024)));
++	if (reconstruct) {
++		struct dm_block *sblock;
++		struct metadata_superblock *disk_super;
 +
-+	memset(md->smap, 0, smap_size);
++		md->meta_bm = meta_bm;
 +
-+	md->smax = p->blocks;
-+	md->allocptr = 0;
++		ret = dm_bm_read_lock(meta_bm, METADATA_SUPERBLOCK_LOCATION,
++					NULL, &sblock);
++		if (ret < 0) {
++			DMERR("could not read_lock superblock");
++			/* XXX: handle error */
++		}
++
++		disk_super = dm_block_data(sblock);
++
++		ret = dm_tm_open_with_sm(meta_bm, METADATA_SUPERBLOCK_LOCATION,
++				disk_super->metadata_space_map_root,
++				sizeof(disk_super->metadata_space_map_root),
++				&md->tm, &md->meta_sm);
++		if (ret < 0) {
++			DMERR("could not open_with_sm superblock");
++			/* XXX: handle error */
++		}
++
++
++		md->data_sm = dm_sm_disk_open(md->tm,
++				disk_super->data_space_map_root,
++				sizeof(disk_super->data_space_map_root));
++		if (IS_ERR(md->data_sm)) {
++			DMERR("dm_disk_open failed");
++			/*XXX: handle error */
++		}
++
++		dm_bm_unlock(sblock);
++
++		goto begin_trans;
++	}
++
++	ret = dm_tm_create_with_sm(meta_bm, METADATA_SUPERBLOCK_LOCATION,
++						&tm, &meta_sm);
++	if (ret < 0) {
++		md = ERR_PTR(ret);
++		goto badtm;
++	}
++
++	data_sm = dm_sm_disk_create(tm, p->blocks);
++	if (IS_ERR(data_sm)) {
++		md = (struct metadata *)data_sm;
++		goto badsm;
++	}
++
++	md->meta_bm = meta_bm;
++	md->tm = tm;
++	md->meta_sm = meta_sm;
++	md->data_sm = data_sm;
++
++	ret = write_initial_superblock(md);
++	if (ret < 0) {
++		md = ERR_PTR(ret);
++		goto badwritesuper;
++	}
++
++begin_trans:
++	ret = __begin_transaction(md);
++	if (ret < 0) {
++		md = ERR_PTR(ret);
++		goto badwritesuper;
++	}
++
 +	md->kvs_linear = NULL;
 +	md->kvs_sparse = NULL;
 +
 +	return md;
++
++badwritesuper:
++	dm_sm_destroy(data_sm);
++badsm:
++	dm_tm_destroy(tm);
++	dm_sm_destroy(meta_sm);
++badtm:
++	dm_block_manager_destroy(meta_bm);
++badbm:
++	kfree(md);
++	return md;
 +}
 +
-+static void exit_meta_inram(struct metadata *md)
++static void exit_meta_cowbtree(struct metadata *md)
 +{
-+	if (md->smap)
-+		vfree(md->smap);
++	int ret;
 +
-+	if (md->kvs_linear) {
-+		if (md->kvs_linear->store)
-+			vfree(md->kvs_linear->store);
-+		kfree(md->kvs_linear);
-+	}
++	ret = __commit_transaction(md);
++	if (ret < 0)
++		DMWARN("%s: __commit_transaction() failed, error = %d.",
++			__func__, ret);
 +
-+	if (md->kvs_sparse) {
-+		if (md->kvs_sparse->store)
-+			vfree(md->kvs_sparse->store);
-+		kfree(md->kvs_sparse);
-+	}
++	dm_sm_destroy(md->data_sm);
++	dm_tm_destroy(md->tm);
++	dm_sm_destroy(md->meta_sm);
++	dm_block_manager_destroy(md->meta_bm);
++
++	kfree(md->kvs_linear);
++	kfree(md->kvs_sparse);
 +
 +	kfree(md);
 +
 +	return;
 +}
 +
-+
-+static int flush_meta_inram(struct metadata *md)
++static int flush_meta_cowbtree(struct metadata *md)
 +{
-+	return 0;
++	int r;
++
++	r = __commit_transaction(md);
++	if (r < 0)
++		return r;
++
++	r = __begin_transaction(md);
++
++	return r;
 +}
 +
 +/********************************************************
 + *		Space Management Functions		*
 + ********************************************************/
 +
-+static int alloc_data_block_inram(struct metadata *md, uint64_t *blockn)
++static int alloc_data_block_cowbtree(struct metadata *md, uint64_t *blockn)
 +{
-+	uint64_t head, tail;
 +
-+	head = tail = md->allocptr;
-+
-+	do {
-+		if (!md->smap[head]) {
-+			md->smap[head] = 1;
-+			*blockn = head;
-+			md->allocptr = (head + 1) % md->smax;
-+			return 0;
-+		}
-+
-+		head = (head + 1) % md->smax;
-+
-+	} while (head != tail);
-+
-+	return -ENOSPC;
++	return dm_sm_new_block(md->data_sm, blockn);
 +}
 +
-+static int inc_refcount_inram(struct metadata *md, uint64_t blockn)
++static int inc_refcount_cowbtree(struct metadata *md, uint64_t blockn)
 +{
-+	if (blockn >= md->smax)
-+		return -ERANGE;
-+
-+	if (md->smap[blockn] != UINT32_MAX)
-+		md->smap[blockn]++;
-+	else
-+		return -E2BIG;
-+
-+	return 0;
++	return dm_sm_inc_block(md->data_sm, blockn);
 +}
 +
-+static int dec_refcount_inram(struct metadata *md, uint64_t blockn)
++static int dec_refcount_cowbtree(struct metadata *md, uint64_t blockn)
 +{
-+	if (blockn >= md->smax)
-+		return -ERANGE;
-+
-+	if (md->smap[blockn])
-+		md->smap[blockn]--;
-+	else
-+		return -EFAULT;
-+
-+	return 0;
++	return dm_sm_dec_block(md->data_sm, blockn);
 +}
 +
-+static int get_refcount_inram(struct metadata *md, uint64_t blockn)
++static int get_refcount_cowbtree(struct metadata *md, uint64_t blockn)
 +{
-+	if (blockn >= md->smax)
-+		return -ERANGE;
++	uint32_t refcount;
++	int r;
 +
-+	return md->smap[blockn];
-+}
++	r = dm_sm_get_count(md->data_sm, blockn, &refcount);
++	if (r < 0)
++		return r;
 +
-+/********************************************************
-+ *		General KVS Functions			*
-+ ********************************************************/
-+
-+static int is_empty(char *ptr, int length)
-+{
-+	int i = 0;
-+
-+	while ((i < length) && (ptr[i] == EMPTY_ENTRY))
-+		i++;
-+
-+	return i == length;
-+}
-+
-+static int is_deleted(char *ptr, int length)
-+{
-+	int i = 0;
-+
-+	while ((i < length) && (ptr[i] == DELETED_ENTRY))
-+		i++;
-+
-+	return i == length;
++	return (int)refcount;
 +}
 +
 +/*********************************************************
 + *		Linear KVS Functions			 *
 + *********************************************************/
 +
-+static int kvs_delete_linear_inram(struct kvstore *kvs,
++static int kvs_delete_linear_cowbtree(struct kvstore *kvs,
 +					void *key, int32_t ksize)
 +{
-+	uint64_t idx;
-+	char *ptr;
-+	struct kvstore_inram *kvinram = NULL;
++	int r;
++	struct kvstore_cbt *kvcbt = NULL;
 +
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
++	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
 +
 +	if (ksize != kvs->ksize)
 +		return -EINVAL;
 +
-+	idx = *((uint64_t *)key);
++	r = dm_btree_remove(&(kvcbt->info), kvcbt->root, key, &(kvcbt->root));
 +
-+	if (idx > kvinram->kmax)
-+		return -ERANGE;
-+
-+	ptr = kvinram->store + kvs->vsize * idx;
-+
-+	if (is_empty(ptr, kvs->vsize))
++	if (r == -ENODATA)
 +		return -ENODEV;
++	else if (r >= 0)
++		return 0;
 +
-+	memset(ptr, EMPTY_ENTRY, kvs->vsize);
-+
-+	return 0;
++	return r;
 +}
 +
 +/*
@@ -268,43 +449,35 @@ index 0000000..36945ae
 + * 1 - found
 + * < 0 - error on lookup
 + */
-+static int kvs_lookup_linear_inram(struct kvstore *kvs, void *key,
++static int kvs_lookup_linear_cowbtree(struct kvstore *kvs, void *key,
 +			int32_t ksize, void *value, int32_t *vsize)
 +{
-+	uint64_t idx;
-+	char *ptr;
-+	struct kvstore_inram *kvinram = NULL;
++	int r;
++	struct kvstore_cbt *kvcbt = NULL;
 +
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
++	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
 +
 +	if (ksize != kvs->ksize)
 +		return -EINVAL;
 +
-+	idx = *((uint64_t *)key);
++	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, key, value);
 +
-+	if (idx > kvinram->kmax)
-+		return -ERANGE;
-+
-+	ptr = kvinram->store + kvs->vsize * idx;
-+
-+	if (is_empty(ptr, kvs->vsize))
++	if (r == -ENODATA)
 +		return 0;
-+
-+	memcpy(value, ptr, kvs->vsize);
-+	*vsize = kvs->vsize;
-+
-+	return 1;
++	else if (r >= 0)
++		return 1;
++	else
++		return r;
 +}
 +
-+static int kvs_insert_linear_inram(struct kvstore *kvs, void *key,
++static int kvs_insert_linear_cowbtree(struct kvstore *kvs, void *key,
 +				int32_t ksize, void *value,
 +				int32_t vsize)
 +{
-+	uint64_t idx;
-+	char *ptr;
-+	struct kvstore_inram *kvinram = NULL;
++	int inserted;
++	struct kvstore_cbt *kvcbt = NULL;
 +
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
++	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
 +
 +	if (ksize != kvs->ksize)
 +		return -EINVAL;
@@ -312,59 +485,19 @@ index 0000000..36945ae
 +	if (vsize != kvs->vsize)
 +		return -EINVAL;
 +
-+	idx = *((uint64_t *)key);
++	return dm_btree_insert_notify(&(kvcbt->info), kvcbt->root, key,
++					value, &(kvcbt->root), &inserted);
 +
-+	if (idx > kvinram->kmax)
-+		return -ERANGE;
-+
-+	ptr = kvinram->store + kvs->vsize * idx;
-+
-+	memcpy(ptr, value, kvs->vsize);
-+
-+	return 0;
 +}
 +
-+/*
-+ * NOTE: if iteration_action() is a deletion/cleanup function,
-+ *	Make sure that the store is implemented such that
-+ *	deletion in-place is safe while iterating.
-+ */
-+static int kvs_iterate_linear_inram(struct kvstore *kvs,
-+		int (*iteration_action)(void *key, int32_t ksize,
-+		void *value, int32_t vsize, void *data), void *data)
-+{
-+	int ret = 0;
-+	uint64_t i = 0;
-+	char *ptr = NULL;
-+	struct kvstore_inram *kvinram = NULL;
-+
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
-+
-+	for (i = 0; i < kvinram->kmax; i++) {
-+		ptr = kvinram->store + (i * kvs->vsize);
-+
-+		ret = is_empty(ptr, kvs->vsize);
-+
-+		if (!ret) {
-+			ret = iteration_action((void *)&i, kvs->ksize,
-+					(void *)ptr, kvs->vsize, data);
-+			if (ret < 0)
-+				goto out;
-+		}
-+	}
-+
-+out:
-+	return ret;
-+}
-+
-+static struct kvstore *kvs_create_linear_inram(struct metadata *md,
++static struct kvstore *kvs_create_linear_cowbtree(struct metadata *md,
 +			uint32_t ksize, uint32_t vsize, uint32_t kmax,
 +			bool reconstruct)
 +{
-+	struct kvstore_inram *kvs;
-+	uint64_t kvstore_size;
++	struct kvstore_cbt *kvs;
++	int r;
 +
-+	if (!vsize || !ksize || !kmax)
++	if (!vsize || !ksize)
 +		return ERR_PTR(-ENOTSUPP);
 +
 +	/* Currently only 64bit keys are supported */
@@ -379,70 +512,91 @@ index 0000000..36945ae
 +	if (!kvs)
 +		return ERR_PTR(-ENOMEM);
 +
-+	kvstore_size = (kmax + 1) * vsize;
-+	kvs->store = vmalloc(kvstore_size);
-+	if (!kvs->store) {
-+		kfree(kvs);
-+		return ERR_PTR(-ENOMEM);
++	kvs->ckvs.ksize = ksize;
++	kvs->ckvs.vsize = vsize;
++
++	kvs->info.tm = md->tm;
++	kvs->info.levels = 1;
++	kvs->info.value_type.context = NULL;
++	kvs->info.value_type.size = vsize;
++	kvs->info.value_type.inc = NULL;
++	kvs->info.value_type.dec = NULL;
++	kvs->info.value_type.equal = NULL;
++
++	if (reconstruct) {
++		kvs->ckvs.kvs_insert = kvs_insert_linear_cowbtree;
++		kvs->ckvs.kvs_lookup = kvs_lookup_linear_cowbtree;
++		kvs->ckvs.kvs_delete = kvs_delete_linear_cowbtree;
++		kvs->ckvs.kvs_iterate = NULL;
++
++		md->kvs_linear = kvs;
++		__begin_transaction(md);
++	} else {
++		r = dm_btree_empty(&(kvs->info), &(kvs->root));
++		if (r < 0) {
++			kvs = ERR_PTR(r);
++			goto badtree;
++		}
++
++		/* I think this should be moved below the 4 lines below */
++		flush_meta_cowbtree(md);
++
++		kvs->ckvs.kvs_insert = kvs_insert_linear_cowbtree;
++		kvs->ckvs.kvs_lookup = kvs_lookup_linear_cowbtree;
++		kvs->ckvs.kvs_delete = kvs_delete_linear_cowbtree;
++		kvs->ckvs.kvs_iterate = NULL;
++
++		md->kvs_linear = kvs;
 +	}
 +
-+	DMINFO("Space allocated for linear key value store: %llu.%06llu MB\n",
-+			kvstore_size / (1024 * 1024),
-+			kvstore_size - ((kvstore_size / (1024 * 1024))
-+			* (1024 * 1024)));
-+
-+	memset(kvs->store, EMPTY_ENTRY, kvstore_size);
-+
-+	kvs->ckvs.vsize = vsize;
-+	kvs->ckvs.ksize = ksize;
-+	kvs->kmax = kmax;
-+
-+	kvs->ckvs.kvs_insert = kvs_insert_linear_inram;
-+	kvs->ckvs.kvs_lookup = kvs_lookup_linear_inram;
-+	kvs->ckvs.kvs_delete = kvs_delete_linear_inram;
-+	kvs->ckvs.kvs_iterate = kvs_iterate_linear_inram;
-+	md->kvs_linear = kvs;
-+
 +	return &(kvs->ckvs);
++
++badtree:
++	kfree(kvs);
++	return (struct kvstore *) kvs;
 +}
 +
 +/********************************************************
 + *		Sparse KVS Functions			*
 + ********************************************************/
 +
-+static int kvs_delete_sparse_inram(struct kvstore *kvs,
-+				void *key, int32_t ksize)
++static int kvs_delete_sparse_cowbtree(struct kvstore *kvs,
++					void *key, int32_t ksize)
 +{
-+	uint64_t idxhead = *((uint64_t *)key);
-+	uint32_t entry_size, head, tail;
-+	char *ptr;
-+	struct kvstore_inram *kvinram = NULL;
++	char *entry;
++	uint64_t key_val;
++	int r;
++	struct kvstore_cbt *kvcbt = NULL;
++
++	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
 +
 +	if (ksize != kvs->ksize)
 +		return -EINVAL;
 +
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
++	entry = kmalloc(kvcbt->entry_size, GFP_NOIO);
++	if (!entry)
++		return -ENOMEM;
 +
-+	entry_size = kvs->vsize + kvs->ksize;
-+	head = idxhead % kvinram->kmax;
-+	tail = head;
++	key_val = (*(uint64_t *)key);
 +
-+	do {
-+		ptr = kvinram->store + entry_size * head;
++repeat:
 +
-+		if (is_empty(ptr, entry_size))
-+			goto doesnotexist;
-+
-+		if (memcmp(ptr, key, kvs->ksize))
-+			head = (head + 1) % kvinram->kmax;
-+		else {
-+			memset(ptr, DELETED_ENTRY, entry_size);
-+			return 0;
++	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, &key_val, entry);
++	if (r == -ENODATA)
++		return -ENODEV;
++	else if (r >= 0) {
++		if (!memcmp(entry, key, ksize)) {
++			r = dm_btree_remove(&(kvcbt->info),
++				kvcbt->root, &key_val, &(kvcbt->root));
++			kfree(entry);
++			return r;
 +		}
-+	} while (head != tail);
-+
-+doesnotexist:
-+	return -ENODEV;
++		key_val++;
++		goto repeat;
++	} else {
++		kfree(entry);
++		return r;
++	}
 +}
 +
 +/*
@@ -450,123 +604,96 @@ index 0000000..36945ae
 + * 1 - found
 + * < 0 - error on lookup
 + */
-+static int kvs_lookup_sparse_inram(struct kvstore *kvs, void *key,
++static int kvs_lookup_sparse_cowbtree(struct kvstore *kvs, void *key,
 +			int32_t ksize, void *value, int32_t *vsize)
 +{
-+	uint64_t idxhead = *((uint64_t *)key);
-+	uint32_t entry_size, head, tail;
-+	char *ptr;
-+	struct kvstore_inram *kvinram = NULL;
++	char *entry;
++	uint64_t key_val;
++	int r;
++	struct kvstore_cbt *kvcbt = NULL;
++
++	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
 +
 +	if (ksize != kvs->ksize)
 +		return -EINVAL;
 +
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
++	entry = kmalloc(kvcbt->entry_size, GFP_NOIO);
++	if (!entry)
++		return -ENOMEM;
 +
-+	entry_size = kvs->vsize + kvs->ksize;
-+	head = idxhead % kvinram->kmax;
-+	tail = head;
++	key_val = (*(uint64_t *)key);
 +
-+	do {
-+		ptr = kvinram->store + entry_size * head;
++repeat:
 +
-+		if (is_empty(ptr, entry_size))
-+			return 0;
-+
-+		if (memcmp(ptr, key, kvs->ksize))
-+			head = (head + 1) % kvinram->kmax;
-+		else {
-+			memcpy(value, ptr + kvs->ksize, kvs->vsize);
++	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, &key_val, entry);
++	if (r == -ENODATA) {
++		kfree(entry);
++		return 0;
++	} else if (r >= 0) {
++		if (!memcmp(entry, key, ksize)) {
++			memcpy(value, entry + ksize, kvs->vsize);
++			kfree(entry);
 +			return 1;
++		}
++		key_val++;
++		goto repeat;
++	} else {
++		kfree(entry);
++		return r;
 +	}
-+
-+	} while (head != tail);
-+
-+	return 0;
 +}
 +
-+static int kvs_insert_sparse_inram(struct kvstore *kvs, void *key,
-+			int32_t ksize, void *value, int32_t vsize)
++static int kvs_insert_sparse_cowbtree(struct kvstore *kvs, void *key,
++				int32_t ksize, void *value,
++				int32_t vsize)
 +{
-+	uint64_t idxhead = *((uint64_t *)key);
-+	uint32_t entry_size, head, tail;
-+	char *ptr;
-+	struct kvstore_inram *kvinram = NULL;
++	char *entry;
++	uint64_t key_val;
++	int r;
++	struct kvstore_cbt *kvcbt = NULL;
 +
-+	BUG_ON(!kvs);
-+	BUG_ON(ksize > kvs->ksize);
++	kvcbt = container_of(kvs, struct kvstore_cbt, ckvs);
 +
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
++	if (ksize != kvs->ksize)
++		return -EINVAL;
 +
-+	entry_size = kvs->vsize + kvs->ksize;
-+	head = idxhead % kvinram->kmax;
-+	tail = head;
++	if (vsize != kvs->vsize)
++		return -EINVAL;
 +
-+	do {
-+		ptr = kvinram->store + entry_size * head;
++	entry = kmalloc(kvcbt->entry_size, GFP_NOIO);
++	if (!entry)
++		return -ENOMEM;
 +
-+		if (is_empty(ptr, entry_size) || is_deleted(ptr, entry_size)) {
-+			memcpy(ptr, key, kvs->ksize);
-+			memcpy(ptr + kvs->ksize, value, kvs->vsize);
-+			return 0;
-+		}
++	key_val = (*(uint64_t *)key);
 +
-+		head = (head + 1) % kvinram->kmax;
 +
-+	} while (head != tail);
++repeat:
 +
-+	return -ENOSPC;
++	r = dm_btree_lookup(&(kvcbt->info), kvcbt->root, &key_val, entry);
++	if (r == -ENODATA) {
++		memcpy(entry, key, ksize);
++		memcpy(entry + ksize, value, vsize);
++		r = dm_btree_insert(&(kvcbt->info), kvcbt->root, &key_val,
++					entry, &(kvcbt->root));
++		kfree(entry);
++		return r;
++	} else if (r >= 0) {
++		key_val++;
++		goto repeat;
++	} else {
++		kfree(entry);
++		return r;
++	}
 +}
 +
-+/*
-+ *
-+ * NOTE: if iteration_action() is a deletion/cleanup function,
-+ *	 Make sure that the store is implemented such that
-+ *	 deletion in-place is safe while iterating.
-+ */
-+static int kvs_iterate_sparse_inram(struct kvstore *kvs,
-+		int (*iteration_action)(void *key, int32_t ksize,
-+		void *value, int32_t vsize, void *data), void *data)
-+{
-+	int err = 0;
-+	uint32_t kvalue_size, head = 0;
-+	char *ptr = NULL;
-+	struct kvstore_inram *kvinram = NULL;
-+
-+	BUG_ON(!kvs);
-+
-+	kvinram = container_of(kvs, struct kvstore_inram, ckvs);
-+
-+	kvalue_size = kvs->vsize + kvs->ksize;
-+
-+	do {
-+		ptr = kvinram->store + (head * kvalue_size);
-+
-+		if (!is_empty(ptr, kvalue_size) &&
-+			!is_deleted(ptr, kvalue_size)) {
-+			err = iteration_action((void *)ptr, kvs->ksize,
-+					(void *)(ptr + kvs->ksize),
-+					kvs->vsize, data);
-+
-+			if (err < 0)
-+				goto out;
-+		}
-+
-+		head = (head + 1) % kvinram->kmax;
-+	} while (head);
-+
-+out:
-+	return err;
-+}
-+
-+static struct kvstore *kvs_create_sparse_inram(struct metadata *md,
++static struct kvstore *kvs_create_sparse_cowbtree(struct metadata *md,
 +			uint32_t ksize, uint32_t vsize, uint32_t knummax,
 +			bool reconstruct)
 +{
-+	struct kvstore_inram *kvs;
-+	uint64_t kvstore_size;
++	struct kvstore_cbt *kvs;
++	int r;
 +
-+	if (!vsize || !ksize || !knummax)
++	if (!vsize || !ksize)
 +		return ERR_PTR(-ENOTSUPP);
 +
 +	/* We do not support two or more KVSs at the moment */
@@ -577,58 +704,72 @@ index 0000000..36945ae
 +	if (!kvs)
 +		return ERR_PTR(-ENOMEM);
 +
-+	knummax += knummax * HASHTABLE_OVERPROV / 100;
-+
-+	kvstore_size = (knummax * (vsize + ksize));
-+
-+	kvs->store = vmalloc(kvstore_size);
-+	if (!kvs->store) {
-+		kfree(kvs);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	DMINFO("Space allocated for sparse key value store: %llu.%06llu MB\n",
-+			kvstore_size / (1024 * 1024),
-+			kvstore_size - ((kvstore_size / (1024 * 1024))
-+			* (1024 * 1024)));
-+
-+	memset(kvs->store, EMPTY_ENTRY, kvstore_size);
-+
 +	kvs->ckvs.vsize = vsize;
 +	kvs->ckvs.ksize = ksize;
-+	kvs->kmax = knummax;
++	kvs->entry_size = vsize + ksize;
 +
-+	kvs->ckvs.kvs_insert = kvs_insert_sparse_inram;
-+	kvs->ckvs.kvs_lookup = kvs_lookup_sparse_inram;
-+	kvs->ckvs.kvs_delete = kvs_delete_sparse_inram;
-+	kvs->ckvs.kvs_iterate = kvs_iterate_sparse_inram;
++	kvs->info.tm = md->tm;
++	kvs->info.levels = 1;
++	kvs->info.value_type.context = NULL;
++	kvs->info.value_type.size = kvs->entry_size;
++	kvs->info.value_type.inc = NULL;
++	kvs->info.value_type.dec = NULL;
++	kvs->info.value_type.equal = NULL;
 +
-+	md->kvs_sparse = kvs;
++	if (reconstruct) {
++		kvs->ckvs.kvs_insert = kvs_insert_sparse_cowbtree;
++		kvs->ckvs.kvs_lookup = kvs_lookup_sparse_cowbtree;
++		kvs->ckvs.kvs_delete = kvs_delete_sparse_cowbtree;
++		kvs->ckvs.kvs_iterate = NULL;
++
++		md->kvs_sparse = kvs;
++		__begin_transaction(md);
++	} else {
++		r = dm_btree_empty(&(kvs->info), &(kvs->root));
++		if (r < 0) {
++			kvs = ERR_PTR(r);
++			goto badtree;
++		}
++
++		/* I think this should be moved below the 4 lines below */
++		flush_meta_cowbtree(md);
++
++		kvs->ckvs.kvs_insert = kvs_insert_sparse_cowbtree;
++		kvs->ckvs.kvs_lookup = kvs_lookup_sparse_cowbtree;
++		kvs->ckvs.kvs_delete = kvs_delete_sparse_cowbtree;
++		kvs->ckvs.kvs_iterate = NULL;
++
++		md->kvs_sparse = kvs;
++	}
 +
 +	return &(kvs->ckvs);
++
++badtree:
++	kfree(kvs);
++	return (struct kvstore *) kvs;
 +}
 +
-+struct metadata_ops metadata_ops_inram = {
-+	.init_meta = init_meta_inram,
-+	.exit_meta = exit_meta_inram,
-+	.kvs_create_linear = kvs_create_linear_inram,
-+	.kvs_create_sparse = kvs_create_sparse_inram,
++struct metadata_ops metadata_ops_cowbtree = {
++	.init_meta = init_meta_cowbtree,
++	.exit_meta = exit_meta_cowbtree,
++	.kvs_create_linear = kvs_create_linear_cowbtree,
++	.kvs_create_sparse = kvs_create_sparse_cowbtree,
 +
-+	.alloc_data_block = alloc_data_block_inram,
-+	.inc_refcount = inc_refcount_inram,
-+	.dec_refcount = dec_refcount_inram,
-+	.get_refcount = get_refcount_inram,
++	.alloc_data_block = alloc_data_block_cowbtree,
++	.inc_refcount = inc_refcount_cowbtree,
++	.dec_refcount = dec_refcount_cowbtree,
++	.get_refcount = get_refcount_cowbtree,
 +
-+	.flush_meta = flush_meta_inram,
++	.flush_meta = flush_meta_cowbtree,
 +
 +	.flush_bufio_cache = NULL,
 +};
-diff --git a/drivers/md/dm-dedup-ram.h b/drivers/md/dm-dedup-ram.h
+diff --git a/drivers/md/dm-dedup-cbt.h b/drivers/md/dm-dedup-cbt.h
 new file mode 100644
-index 0000000..851b92f
+index 0000000..8b0c629
 --- /dev/null
-+++ b/drivers/md/dm-dedup-ram.h
-@@ -0,0 +1,43 @@
++++ b/drivers/md/dm-dedup-cbt.h
+@@ -0,0 +1,44 @@
 +/*
 + * Copyright (C) 2012-2014 Vasily Tarasov
 + * Copyright (C) 2012-2014 Geoff Kuenning
@@ -641,8 +782,8 @@ index 0000000..851b92f
 + * This file is released under the GPL.
 + */
 +
-+#ifndef INRAM_BACKEND_H
-+#define INRAM_BACKEND_H
++#ifndef COWBTREE_BACKEND_H
++#define COWBTREE_BACKEND_H
 +
 +#include <linux/module.h>
 +#include <linux/init.h>
@@ -665,12 +806,13 @@ index 0000000..851b92f
 +
 +#include "dm-dedup-target.h"
 +
-+extern struct metadata_ops metadata_ops_inram;
++extern struct metadata_ops metadata_ops_cowbtree;
 +
-+struct init_param_inram {
++struct init_param_cowbtree {
++	struct block_device *metadata_bdev;
 +	uint64_t blocks;
 +};
 +
-+#endif /* INRAM_BACKEND_H */
++#endif /* COWBTREE_BACKEND_H */
 -- 
 1.7.1
