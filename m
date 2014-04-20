@@ -1,16 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-verity: Fix biovecs hash calculation regression
-Date: Mon, 14 Apr 2014 17:11:20 -0400
-Message-ID: <20140414211119.GA24873@redhat.com>
-References: <1397505750-18783-1-git-send-email-gmazyland@gmail.com>
-	<alpine.LRH.2.02.1404141629040.22418@file01.intranet.prod.int.rdu2.redhat.com>
+From: Ric Wheeler <rwheeler@redhat.com>
+Subject: Re: [Gluster-devel] Puppet-Gluster+ThinP
+Date: Sun, 20 Apr 2014 16:59:30 -0700
+Message-ID: <53545F62.8060001@redhat.com>
+References: <1397056420.4190.93.camel@freed>
+	<1420171478.1325442.1397081884591.JavaMail.zimbra@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1404141629040.22418@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <1420171478.1325442.1397081884591.JavaMail.zimbra@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, kmo@daterainc.com, Milan Broz <gmazyland@gmail.com>
+To: Paul Cuzner <pcuzner@redhat.com>, James <purpleidea@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Gluster Devel <gluster-devel@nongnu.org>
 List-Id: dm-devel.ids
 
-On Mon, Apr 14 2014 at  4:29pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On 04/09/2014 03:18 PM, Paul Cuzner wrote:
+>
+> I'm really interested in the thinp best practices too. gluster-deploy has had 
+> thinp support for a while now - and I asked the question about best practices 
+> a while back - but nothing came back..
+>
+> Hopefully - you're timing is better than mine!
+>
+> cc'ing Rajesh since the thinp is all about snapshot enablement.
 
-> 
-> 
-> On Mon, 14 Apr 2014, Milan Broz wrote:
-> 
-> > The commit
-> >   003b5c5719f159f4f4bf97511c4702a0638313dd
-> >   block: Convert drivers to immutable biovecs
-> > 
-> > incorrectly converted biovec iteration in dm-verity to always
-> > calculate hash from full biovec, while the function need
-> > to calculate hash only from part of it (up to "todo"
-> > calculated value).
-> > 
-> > This patch fixes the issue by limiting hash input to only
-> > really requested data size.
-> > 
-> > The problem is easily reproducible using cryptsetup
-> > regression test for veritysetup (verity-compat-test).
-> > 
-> > (Patch should be applied also to 3.14 stable.)
-> > 
-> > Signed-off-by: Milan Broz <gmazyland@gmail.com>
-> 
-> Acked-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org	# 3.14
+The amount of space you set aside is very much workload dependent (rate of 
+change, rate of deletion, rate of notifying the storage about the freed space).
 
-I'll pick this up to include in 3.15 fixes that I'll be sending to Linus.
+Keep in mind with snapshots (and thinly provisioned storage, whether using a 
+software target or thinly provisioned array) we need to issue the "discard" 
+commands down the IO stack in order to let the storage target reclaim space.
+
+That typically means running the fstrim command on the local file system (XFS, 
+ext4, btrfs, etc) every so often. Less typically, you can mount your local file 
+system with "-o discard" to do it inband (but that comes at a performance 
+penalty usually).
+
+There is also a event mechanism to help us get notified when we hit a target 
+configurable watermark ("help, we are running short on real disk, add more or 
+clean up!").
+
+Definitely worth following up with the LVM/device mapper people on how to do 
+this best,
+
+Ric
+
+>
+> --------------------------------------------------------------------------------
+>
+>     *From: *"James" <purpleidea@gmail.com>
+>     *To: *"Gluster Devel" <gluster-devel@nongnu.org>
+>     *Sent: *Thursday, 10 April, 2014 3:13:40 AM
+>     *Subject: *[Gluster-devel] Puppet-Gluster+ThinP
+>
+>     Okay,
+>
+>     Here's a first draft of puppet-gluster w/ thin-p. This patch includes
+>     documentation updates too! (w00t!)
+>
+>     https://github.com/purpleidea/puppet-gluster/tree/feat/thinp
+>
+>     FYI: I'll probably rebase this branch.
+>     FYI: Somewhat untested. Read the commit message.
+>
+>     Comments welcome :)
+>
+>     I'm most interested to hear about if everyone is pleased with the way I
+>     run the thin-p lv command. I think this makes the most sense, but let me
+>     know if anyone has improvements. Also I'd love to hear about what the
+>     default values for the parameters should be, but that's a one line
+>     patch, so no rush for me.
+>
+>     Cheers,
+>     James
+>
