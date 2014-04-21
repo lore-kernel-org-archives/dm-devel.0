@@ -1,85 +1,67 @@
-From: Ric Wheeler <rwheeler@redhat.com>
-Subject: Re: [Gluster-devel] Puppet-Gluster+ThinP
-Date: Sun, 20 Apr 2014 16:59:30 -0700
-Message-ID: <53545F62.8060001@redhat.com>
+From: James <purpleidea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Puppet-Gluster+ThinP
+Date: Sun, 20 Apr 2014 20:11:08 -0400
+Message-ID: <CADCaTgogBwyr9iYPV_oAAXFD=JKNqvm=PeJAwmqLJ_ksUn1Psw@mail.gmail.com>
 References: <1397056420.4190.93.camel@freed>
 	<1420171478.1325442.1397081884591.JavaMail.zimbra@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<53545F62.8060001@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1420171478.1325442.1397081884591.JavaMail.zimbra@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Paul Cuzner <pcuzner@redhat.com>, James <purpleidea@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Gluster Devel <gluster-devel@nongnu.org>
+Return-path: <gluster-devel-bounces+gcfgd-gluster-devel=m.gmane.org-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <53545F62.8060001-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.nongnu.org/mailman/options/gluster-devel>,
+	<mailto:gluster-devel-request-qX2TKyscuCcdnm+yROfE0A@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.nongnu.org/archive/html/gluster-devel>
+List-Post: <mailto:gluster-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
+List-Help: <mailto:gluster-devel-request-qX2TKyscuCcdnm+yROfE0A@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/gluster-devel>,
+	<mailto:gluster-devel-request-qX2TKyscuCcdnm+yROfE0A@public.gmane.org?subject=subscribe>
+Errors-To: gluster-devel-bounces+gcfgd-gluster-devel=m.gmane.org-qX2TKyscuCcdnm+yROfE0A@public.gmane.org
+Sender: gluster-devel-bounces+gcfgd-gluster-devel=m.gmane.org-qX2TKyscuCcdnm+yROfE0A@public.gmane.org
+To: Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Gluster Devel <gluster-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 04/09/2014 03:18 PM, Paul Cuzner wrote:
->
-> I'm really interested in the thinp best practices too. gluster-deploy has had 
-> thinp support for a while now - and I asked the question about best practices 
-> a while back - but nothing came back..
->
-> Hopefully - you're timing is better than mine!
->
-> cc'ing Rajesh since the thinp is all about snapshot enablement.
+On Sun, Apr 20, 2014 at 7:59 PM, Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> The amount of space you set aside is very much workload dependent (rate of
+> change, rate of deletion, rate of notifying the storage about the freed
+> space).
 
-The amount of space you set aside is very much workload dependent (rate of 
-change, rate of deletion, rate of notifying the storage about the freed space).
-
-Keep in mind with snapshots (and thinly provisioned storage, whether using a 
-software target or thinly provisioned array) we need to issue the "discard" 
-commands down the IO stack in order to let the storage target reclaim space.
-
-That typically means running the fstrim command on the local file system (XFS, 
-ext4, btrfs, etc) every so often. Less typically, you can mount your local file 
-system with "-o discard" to do it inband (but that comes at a performance 
-penalty usually).
-
-There is also a event mechanism to help us get notified when we hit a target 
-configurable watermark ("help, we are running short on real disk, add more or 
-clean up!").
-
-Definitely worth following up with the LVM/device mapper people on how to do 
-this best,
-
-Ric
+From the Puppet-Gluster perspective, this will be configurable. I
+would like to set a vaguely sensible default though, which I don't
+have at the moment.
 
 >
-> --------------------------------------------------------------------------------
+> Keep in mind with snapshots (and thinly provisioned storage, whether using a
+> software target or thinly provisioned array) we need to issue the "discard"
+> commands down the IO stack in order to let the storage target reclaim space.
 >
->     *From: *"James" <purpleidea@gmail.com>
->     *To: *"Gluster Devel" <gluster-devel@nongnu.org>
->     *Sent: *Thursday, 10 April, 2014 3:13:40 AM
->     *Subject: *[Gluster-devel] Puppet-Gluster+ThinP
+> That typically means running the fstrim command on the local file system
+> (XFS, ext4, btrfs, etc) every so often. Less typically, you can mount your
+> local file system with "-o discard" to do it inband (but that comes at a
+> performance penalty usually).
+
+Do you think it would make sense to have Puppet-Gluster add a cron job
+to do this operation?
+Exactly what command should run, and how often? (Again for having
+sensible defaults.)
+
 >
->     Okay,
+> There is also a event mechanism to help us get notified when we hit a target
+> configurable watermark ("help, we are running short on real disk, add more
+> or clean up!").
+Can you point me to some docs about this feature?
+
 >
->     Here's a first draft of puppet-gluster w/ thin-p. This patch includes
->     documentation updates too! (w00t!)
+> Definitely worth following up with the LVM/device mapper people on how to do
+> this best,
 >
->     https://github.com/purpleidea/puppet-gluster/tree/feat/thinp
->
->     FYI: I'll probably rebase this branch.
->     FYI: Somewhat untested. Read the commit message.
->
->     Comments welcome :)
->
->     I'm most interested to hear about if everyone is pleased with the way I
->     run the thin-p lv command. I think this makes the most sense, but let me
->     know if anyone has improvements. Also I'd love to hear about what the
->     default values for the parameters should be, but that's a one line
->     patch, so no rush for me.
->
->     Cheers,
->     James
->
+> Ric
+
+Thanks for the comments. From everyone I've talked to, it seems some
+of the answers are still in progress. The good news is, that I'm ahead
+of the curve for being ready for when this becomes more mainstream. I
+think Paul is in the same position too.
+
+James
