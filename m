@@ -1,17 +1,11 @@
-From: Ric Wheeler <rwheeler@redhat.com>
-Subject: Re: [Gluster-devel] Puppet-Gluster+ThinP
-Date: Sun, 20 Apr 2014 17:44:41 -0700
-Message-ID: <535469F9.7050605@redhat.com>
-References: <1397056420.4190.93.camel@freed>
-	<1420171478.1325442.1397081884591.JavaMail.zimbra@redhat.com>
-	<53545F62.8060001@redhat.com>
-	<CADCaTgogBwyr9iYPV_oAAXFD=JKNqvm=PeJAwmqLJ_ksUn1Psw@mail.gmail.com>
+From: lihuiba <magazine.lihuiba@163.com>
+Subject: a problem about dm_kcopyd_copy()
+Date: Mon, 21 Apr 2014 20:45:34 +0800 (CST)
+Message-ID: <1eeae94c.10539.1458451f2cd.Coremail.magazine.lihuiba@163.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5114077967917631493=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CADCaTgogBwyr9iYPV_oAAXFD=JKNqvm=PeJAwmqLJ_ksUn1Psw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,84 +15,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: James <purpleidea@gmail.com>
-Cc: Lukas Czerner <lczerner@redhat.com>, device-mapper development <dm-devel@redhat.com>, Paul Cuzner <pcuzner@redhat.com>, Gluster Devel <gluster-devel@nongnu.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 04/20/2014 05:11 PM, James wrote:
-> On Sun, Apr 20, 2014 at 7:59 PM, Ric Wheeler <rwheeler@redhat.com> wrote:
->> The amount of space you set aside is very much workload dependent (rate of
->> change, rate of deletion, rate of notifying the storage about the freed
->> space).
->  From the Puppet-Gluster perspective, this will be configurable. I
-> would like to set a vaguely sensible default though, which I don't
-> have at the moment.
+--===============5114077967917631493==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_243217_1740791437.1398084334284"
 
-This will require a bit of thinking as you have noticed, but let's start with 
-some definitions.
+------=_Part_243217_1740791437.1398084334284
+Content-Type: text/plain; charset=GBK
+Content-Transfer-Encoding: base64
 
-The basic use case is one file system backed by an exclusive dm-thinp target (no 
-other file system writing to that dm-thinp pool or contending for allocation).
+SGVsbG8sCgoKSSdtIG5ldyB0byBrZXJuZWwgcHJvZ3JhbW1pbmcsIGFuZCBJJ20gd3JpdGluZyBh
+IERNIHRhcmdldCB0aGF0IGltcGxlbWVudHMgYSBDb3B5LW9uLVJlYWQKY2FjaGUuIFRoZSBjb2Rl
+IGlzIGNsb3NlIHRvIGNvbXBsZXRlIChJIHRoaW5rKSwgYnV0IEkgY29tZSBhY3Jvc3MgYSBwcm9i
+bGVtIHRoYXQgSSBjYW4ndCBmaWd1cmUKb3V0LgoKCldoZW4gdGhlIGNhY2hlIGJsb2NrIHNpemUg
+KENCUykgaXMgMzJLQiwgNjRLQiBvciAxMjhLQiwgZmlvIHN0cmVzcyB0ZXN0IGlzIGhpZ2hseSBs
+aWtlbHkgdG8KY2F1c2UgZG1fa2NvcHlkX2NvcHkoKSB0byBkZWFkIGxvY2suIFRoZXJlIHdvdWxk
+IGJlIGh1bmRyZWRzIG9mIGRtX2tjb3B5ZF9jb3B5KCkgCmpvYiBpc3N1ZWQsIGJ1dCBub25lIG9m
+IHRoZW0gd2lsbCBldmVyIGNvbXBsZXRlLiBDUFUgdXNhZ2Ugd2lsbCBnbyBkb3duIHRvIDAlIGFm
+dGVyIHRoZQpwcm9ibGVtIG9jY3Vycy4gVGhlIHByb2JsZW0gbmV2ZXIgb2NjdXJzIHdoZW4gQ0JT
+IGlzIDI1NktCIG9yIGxhcmdlci4gQ0JTIGlzIGFsc28gdGhlCnNpemUgb2YgZXZlcnkgZG1fa2Nv
+cHlkX2NvcHkoKSBqb2IuIFRoZSBmaW8gdGVzdHMgdXNlIGxpYmFpbyBhcyBJL08gZW5naW5lIHRv
+IHRlc3QgcmFuZG9tIHJlYWQsIApJL08gYmxvY2sgc2l6ZSByYW5ncyBmcm9tIDUxMkIsIDFLQiwg
+MktCLCA0S0IsIDE2S0IgdG8gNE1CLiBmaW8gc3Bhd25zIHRocmVhZHMgYXMgbWFueSBhcyBDUFUg
+aGFyZHdhcmUgdGhyZWFkcywgZWFjaCB3aXRoIEkvTyBkZXB0aD0xMjguCgoKUGxlYXNlIGdpdmUg
+bWUgc29tZSBzdWdnZXN0aW9ucyBhYm91dCB3aGVyZSB0aGUgcHJvYmxlbSBtaWdodCBiZSwgb3Ig
+YW55IG90aGVyIGNvbW1lbnRzCnRoYXQgbWF5IGhlbHAuIE15IGNvZGUgY2FuIGJlIGZvdW5kIGF0
+OiBodHRwczovL2dpdGh1Yi5jb20vbGlodWliYS9kbS1mb29sY2FjaGUKCgpUaGFuayB5b3UsIHZl
+cnkgbXVjaCEKCgoK
+------=_Part_243217_1740791437.1398084334284
+Content-Type: text/html; charset=GBK
+Content-Transfer-Encoding: base64
 
-The goal is to get an alert in time to intervene before things get ugly, so we 
-are hoping to get a sense of rate of change in the file system and how long any 
-snapshot will be retained for.
+PGRpdiBzdHlsZT0ibGluZS1oZWlnaHQ6MS43O2NvbG9yOiMwMDAwMDA7Zm9udC1zaXplOjE0cHg7
+Zm9udC1mYW1pbHk6YXJpYWwiPkhlbGxvLDxkaXY+PGJyPjwvZGl2PjxkaXY+SSdtIG5ldyB0byBr
+ZXJuZWwgcHJvZ3JhbW1pbmcsIGFuZCBJJ20gd3JpdGluZyBhIERNIHRhcmdldCB0aGF0IGltcGxl
+bWVudHMgYSBDb3B5LW9uLVJlYWQ8L2Rpdj48ZGl2PmNhY2hlLiBUaGUgY29kZSBpcyBjbG9zZSB0
+byBjb21wbGV0ZSAoSSB0aGluayksIGJ1dCBJIGNvbWUgYWNyb3NzIGEgcHJvYmxlbSB0aGF0IEkg
+Y2FuJ3QgZmlndXJlPC9kaXY+PGRpdj5vdXQuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5XaGVu
+IHRoZSBjYWNoZSBibG9jayBzaXplIChDQlMpIGlzIDMyS0IsIDY0S0Igb3IgMTI4S0IsIGZpbyBz
+dHJlc3MgdGVzdCBpcyBoaWdobHkgbGlrZWx5IHRvPC9kaXY+PGRpdj5jYXVzZSBkbV9rY29weWRf
+Y29weSgpIHRvIGRlYWQgbG9jay4gVGhlcmUgd291bGQgYmUgaHVuZHJlZHMgb2YgZG1fa2NvcHlk
+X2NvcHkoKSZuYnNwOzwvZGl2PjxkaXY+am9iIGlzc3VlZCwgYnV0IG5vbmUgb2YgdGhlbSB3aWxs
+IGV2ZXIgY29tcGxldGUuIENQVSB1c2FnZSB3aWxsIGdvIGRvd24gdG8gMCUgYWZ0ZXIgdGhlPC9k
+aXY+PGRpdj5wcm9ibGVtIG9jY3Vycy4gVGhlIHByb2JsZW0gbmV2ZXIgb2NjdXJzIHdoZW4gQ0JT
+IGlzIDI1NktCIG9yIGxhcmdlci4gQ0JTIGlzIGFsc28gdGhlPC9kaXY+PGRpdj5zaXplIG9mIGV2
+ZXJ5IGRtX2tjb3B5ZF9jb3B5KCkgam9iLiBUaGUgZmlvIHRlc3RzIHVzZSBsaWJhaW8gYXMgSS9P
+IGVuZ2luZSB0byB0ZXN0IHJhbmRvbSByZWFkLCZuYnNwOzwvZGl2PjxkaXY+SS9PIGJsb2NrIHNp
+emUgcmFuZ3MgZnJvbSA1MTJCLCAxS0IsIDJLQiwgNEtCLCAxNktCIHRvIDRNQi4gZmlvIHNwYXdu
+cyB0aHJlYWRzJm5ic3A7PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTogMTRweDsgbGluZS1oZWlnaHQ6
+IDEuNzsiPmFzIG1hbnkgYXMgQ1BVIGhhcmR3YXJlIHRocmVhZHMsIGVhY2ggd2l0aCBJL08gZGVw
+dGg9MTI4Ljwvc3Bhbj48L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJmb250LXNpemU6IDE0cHg7IGxp
+bmUtaGVpZ2h0OiAxLjc7Ij48YnI+PC9zcGFuPjwvZGl2PjxkaXY+UGxlYXNlIGdpdmUgbWUgc29t
+ZSBzdWdnZXN0aW9ucyBhYm91dCB3aGVyZSB0aGUgcHJvYmxlbSBtaWdodCBiZSwgb3IgYW55IG90
+aGVyIGNvbW1lbnRzPC9kaXY+PGRpdj50aGF0IG1heSBoZWxwLiBNeSBjb2RlIGNhbiBiZSBmb3Vu
+ZCBhdDombmJzcDs8YSBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vbGlodWliYS9kbS1mb29sY2Fj
+aGUiIHRhcmdldD0iX2JsYW5rIiBzdHlsZT0iZm9udC1zaXplOiAxNHB4OyBsaW5lLWhlaWdodDog
+MS43OyI+aHR0cHM6Ly9naXRodWIuY29tL2xpaHVpYmEvZG0tZm9vbGNhY2hlPC9hPjwvZGl2Pjxk
+aXY+PGJyPjwvZGl2PjxkaXY+VGhhbmsgeW91LCB2ZXJ5IG11Y2ghPC9kaXY+PGRpdj48YnI+PC9k
+aXY+PGRpdj48YnI+PC9kaXY+PC9kaXY+
+------=_Part_243217_1740791437.1398084334284--
 
-For example, if we have a 10TB file system (presented as such to the user) and 
-we write say 500GB of new data/day, daily snapshots will need that space for as 
-long as we retain them.  If you write much less (5GB/day), it will clearly take 
-a lot less.
 
-The above makes this all an effort to predict the future, but that is where the 
-watermark alert kicks in to help us recover from a bad prediction.
+--===============5114077967917631493==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Maybe we use a default of setting aside 20% of raw capacity for snapshots and 
-set that watermark at 90% full?  For a lot of use people, I suspect a fairly low 
-rate of change and that means pretty skinny snapshots.
 
-We will clearly need to have a lot of effort here in helping explain this to 
-users so they can make the trade off for their particular use case.
-
->
->> Keep in mind with snapshots (and thinly provisioned storage, whether using a
->> software target or thinly provisioned array) we need to issue the "discard"
->> commands down the IO stack in order to let the storage target reclaim space.
->>
->> That typically means running the fstrim command on the local file system
->> (XFS, ext4, btrfs, etc) every so often. Less typically, you can mount your
->> local file system with "-o discard" to do it inband (but that comes at a
->> performance penalty usually).
-> Do you think it would make sense to have Puppet-Gluster add a cron job
-> to do this operation?
-> Exactly what command should run, and how often? (Again for having
-> sensible defaults.)
-
-I think that we should probably run fstrim once a day or so (hopefully late at 
-night or off peak)?  Adding in Lukas who lead a lot of the discard work.
-
->
->> There is also a event mechanism to help us get notified when we hit a target
->> configurable watermark ("help, we are running short on real disk, add more
->> or clean up!").
-> Can you point me to some docs about this feature?
-
-My quick google search only shows my own very shallow talk slides, so let me dig 
-around for something better :)
-
->
->> Definitely worth following up with the LVM/device mapper people on how to do
->> this best,
->>
->> Ric
-> Thanks for the comments. From everyone I've talked to, it seems some
-> of the answers are still in progress. The good news is, that I'm ahead
-> of the curve for being ready for when this becomes more mainstream. I
-> think Paul is in the same position too.
->
-> James
-
-This is all new stuff - even not with gluster on top of it - so this will mean 
-hitting a few bumps I fear.  Definitely worth putting thought into this now and 
-working on the documentation,
-
-Ric
+--===============5114077967917631493==--
