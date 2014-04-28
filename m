@@ -1,7 +1,8 @@
 From: Vasily Tarasov <tarasov@vasily.name>
-Subject: [PATCH RFC 01/10] dm-dedup: main data structures
-Date: Thu, 17 Apr 2014 15:10:47 -0400
-Message-ID: <535ed0d4.832fe00a.526a.3a14@mx.google.com>
+Subject: [PATCH RFC 00/10] dm-dedup: device-mapper deduplication
+	target
+Date: Mon, 28 Apr 2014 18:03:06 -0400
+Message-ID: <535ed0d2.0729e00a.4489.0c48@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,305 +21,78 @@ To: dm-devel@redhat.com
 Cc: Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-We maintain one dedup_config structure for every dm-dedup target instance.
-Every target instance has a metadata backend associated with it.  Metadata
-backends should implement operations defined in the metadata_ops structure.
-Every backend should support two key-value stores: (1) sparse store, where the
-hash-to-pbn mapping (the hash index) is stored; and (2) linear store, where the
-lbn-to-pbn mapping is stored.
+This is a request for comments for Dmdedup.
 
-Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
----
- drivers/md/dm-dedup-backend.h |  114 +++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-dedup-kvstore.h |   51 ++++++++++++++++++
- drivers/md/dm-dedup-target.h  |  100 ++++++++++++++++++++++++++++++++++++
- 3 files changed, 265 insertions(+), 0 deletions(-)
+Dmdedup is a device-mapper deduplication target.  Every write coming to the
+Dmdedup instance is deduplicated against previously written data.  For
+datasets that contain many duplicates scattered across the disk (e.g.,
+collections of virtual machine disk images and backups) deduplication provides
+a significant amount of space savings.
+
+To quickly identify duplicates, Dmdedup maintains an index of hashes for all
+written blocks.  A block is a user-configurable unit of deduplication with a
+default block size of 4KB.  Dmdedup's index, along with other deduplication
+metadata, resides on a separate block device, which we refer to as a
+metadata device.  Although the metadata device can be on any block device,
+e.g., an HDD or its own partition, for higher performance we recommend to
+use SSD devices to store metadata.
+
+Dmdedup is designed to support pluggable metadata backends.  A metadata
+backend is responsible for storing metadata: LBN-to-PBN and HASH-to-PBN
+mappings, allocation maps, and reference counters.  (LBN: Logical Block
+Number, PBN: Physical Block Number).  Currently we implemented "cowbtree"
+and "inram" backends.  The cowbtree uses device-mapper persistent API to
+store metadata.  The inram backend stores all metadata in RAM as a hash
+table.
+
+Our preliminary experiments on real traces (FIU traces from
+http://iotta.snia.org/tracetypes/3) demonstrate that Dmdedup can even exceed
+the performance of a disk drive running ext4.  The reasons are that (1)
+deduplication reduces I/O traffic to the data device, and (2) Dmdedup
+effectively sequentializes random writes to the data device.
+
+Dmdedup is developed by a joint group of researchers from Stony Brook
+University, Harvey Mudd College, and EMC.  See the documentation patch for
+more details.
+
+Vasily Tarasov (10):
+  dm-dedup: main data structures
+  dm-dedup: core deduplication logic
+  dm-dedup: hash computation
+  dm-dedup: implementation of the read-on-write procedure
+  dm-dedup: COW B-tree backend
+  dm-dedup: inram backend
+  dm-dedup: Makefile changes
+  dm-dedup: Kconfig changes
+  dm-dedup: status function
+  dm-dedup: documentation
+
+ Documentation/device-mapper/dm-dedup.txt |   51 ++
+ drivers/md/Kconfig                       |    8 +
+ drivers/md/Makefile                      |    2 +
+ drivers/md/dm-dedup-backend.h            |  114 +++++
+ drivers/md/dm-dedup-cbt.c                |  724 ++++++++++++++++++++++++++++
+ drivers/md/dm-dedup-cbt.h                |   44 ++
+ drivers/md/dm-dedup-hash.c               |  148 ++++++
+ drivers/md/dm-dedup-hash.h               |   30 ++
+ drivers/md/dm-dedup-kvstore.h            |   51 ++
+ drivers/md/dm-dedup-ram.c                |  585 +++++++++++++++++++++++
+ drivers/md/dm-dedup-ram.h                |   43 ++
+ drivers/md/dm-dedup-rw.c                 |  248 ++++++++++
+ drivers/md/dm-dedup-rw.h                 |   19 +
+ drivers/md/dm-dedup-target.c             |  760 ++++++++++++++++++++++++++++++
+ drivers/md/dm-dedup-target.h             |  100 ++++
+ 15 files changed, 2927 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/device-mapper/dm-dedup.txt
  create mode 100644 drivers/md/dm-dedup-backend.h
+ create mode 100644 drivers/md/dm-dedup-cbt.c
+ create mode 100644 drivers/md/dm-dedup-cbt.h
+ create mode 100644 drivers/md/dm-dedup-hash.c
+ create mode 100644 drivers/md/dm-dedup-hash.h
  create mode 100644 drivers/md/dm-dedup-kvstore.h
+ create mode 100644 drivers/md/dm-dedup-ram.c
+ create mode 100644 drivers/md/dm-dedup-ram.h
+ create mode 100644 drivers/md/dm-dedup-rw.c
+ create mode 100644 drivers/md/dm-dedup-rw.h
+ create mode 100644 drivers/md/dm-dedup-target.c
  create mode 100644 drivers/md/dm-dedup-target.h
-
-diff --git a/drivers/md/dm-dedup-backend.h b/drivers/md/dm-dedup-backend.h
-new file mode 100644
-index 0000000..9fa572b
---- /dev/null
-+++ b/drivers/md/dm-dedup-backend.h
-@@ -0,0 +1,114 @@
-+/*
-+ * Copyright (C) 2012-2014 Vasily Tarasov
-+ * Copyright (C) 2012-2014 Geoff Kuenning
-+ * Copyright (C) 2012-2014 Sonam Mandal
-+ * Copyright (C) 2012-2014 Karthikeyani Palanisami
-+ * Copyright (C) 2012-2014 Philip Shilane
-+ * Copyright (C) 2012-2014 Sagar Trehan
-+ * Copyright (C) 2012-2014 Erez Zadok
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef BACKEND_H
-+#define BACKEND_H
-+
-+struct metadata;		/* metadata store identifier */
-+struct kvstore;			/* key-value store identifier */
-+
-+#define BF_NEGATIVE -1
-+#define BF_POSITIVE 0
-+
-+struct metadata_ops {
-+	/*
-+	 * Returns ERR_PTR(*) on error.
-+	 * Valid pointer on success.
-+	 */
-+	struct metadata * (*init_meta)(void *init_param, bool reconstruct);
-+
-+	void (*exit_meta)(struct metadata *md);
-+
-+	/*
-+	 * Creates linear key-value store. Ksize and vsize in bytes.
-+	 * If ksize or vsize are equal to zero, it means that keys
-+	 * and values will be of a variable size. kmax is the
-+	 * maximum _value_ of the key. If kmax is equal to zero,
-+	 * then maximum is not known by the caller.
-+	 *
-+	 * Returns -ERR_PTR(*) on error.
-+	 * Valid pointer on success.
-+	 */
-+	struct kvstore * (*kvs_create_linear)(struct metadata *md,
-+			uint32_t ksize, uint32_t vsize, uint32_t kmax,
-+			bool reconstruct);
-+	/*
-+	 * Creates sparse key-value store. Ksize and vsize in bytes.
-+	 * If ksize or vsize are equal to zero, it means that keys
-+	 * and values will be of a variable size. knummax is the
-+	 * maximum _number_ of the keys. If keymax is equal to zero,
-+	 * then maximum is not known by the caller.
-+	 *
-+	 * Returns -ERR_PTR(*) on error.
-+	 * Valid pointer on success.
-+	 */
-+	struct kvstore * (*kvs_create_sparse)(struct metadata *md,
-+			uint32_t ksize, uint32_t vsize, uint32_t knummax,
-+			bool reconstruct);
-+
-+	/*
-+	 * Returns -ERR* on error.
-+	 * Returns 0 on success. In this case, "blockn" contains a newly
-+	 * allocated block number.
-+	 */
-+	int (*alloc_data_block)(struct metadata *md, uint64_t *blockn);
-+
-+	/*
-+	 * Returns -ERR* on error.
-+	 * Returns 0 on success.
-+	 */
-+	int (*inc_refcount)(struct metadata *md, uint64_t blockn);
-+
-+	/*
-+	 * Returns -ERR* on error.
-+	 * Returns 0 on success.
-+	 */
-+	int (*dec_refcount)(struct metadata *md, uint64_t blockn);
-+
-+	/*
-+	 * Returns -ERR* on error.
-+	 * Returns 0 on success.
-+	 */
-+	int (*get_refcount)(struct metadata *md, uint64_t blockn);
-+
-+	/*
-+	 * Returns -ERR on error.
-+	 * Return 0 on success.
-+	 */
-+	int (*flush_meta)(struct metadata *md);
-+
-+	/*
-+	 * Returns the private data stored in the metadata.
-+	 *
-+	 * Returns -ERR* on error.
-+	 * Returns 0 on success.
-+	 */
-+	int (*get_private_data)(struct metadata *md, void **data,
-+			uint32_t size);
-+
-+	/*
-+	 * Fills in private data stored in the metadata.
-+	 *
-+	 * Returns -ERR* on error.
-+	 * Returns 0 on success.
-+	 */
-+	int (*set_private_data)(struct metadata *md, void *data, uint32_t size);
-+
-+	/*
-+	 * This is a hack to drop cache. In future we want to implement
-+	 * proper message passing interface, to accomplish this and other
-+	 * tasks.
-+	 */
-+	void (*flush_bufio_cache)(struct metadata *md);
-+};
-+
-+#endif /* BACKEND_H */
-diff --git a/drivers/md/dm-dedup-kvstore.h b/drivers/md/dm-dedup-kvstore.h
-new file mode 100644
-index 0000000..365a7f6
---- /dev/null
-+++ b/drivers/md/dm-dedup-kvstore.h
-@@ -0,0 +1,51 @@
-+/*
-+ * Copyright (C) 2012-2014 Vasily Tarasov
-+ * Copyright (C) 2012-2014 Geoff Kuenning
-+ * Copyright (C) 2012-2014 Sonam Mandal
-+ * Copyright (C) 2012-2014 Karthikeyani Palanisami
-+ * Copyright (C) 2012-2014 Philip Shilane
-+ * Copyright (C) 2012-2014 Sagar Trehan
-+ * Copyright (C) 2012-2014 Erez Zadok
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef KVSTORE_H
-+#define KVSTORE_H
-+
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/kernel.h>
-+#include <linux/device-mapper.h>
-+#include <linux/dm-io.h>
-+#include <linux/dm-kcopyd.h>
-+#include <linux/list.h>
-+#include <linux/err.h>
-+#include <asm/current.h>
-+#include <linux/string.h>
-+#include <linux/gfp.h>
-+
-+#include <linux/scatterlist.h>
-+#include <asm/page.h>
-+#include <asm/unaligned.h>
-+#include <crypto/hash.h>
-+#include <crypto/md5.h>
-+#include <crypto/algapi.h>
-+
-+#include "dm-dedup-target.h"
-+
-+struct kvstore {
-+	uint32_t vsize;
-+	uint32_t ksize;
-+
-+	int (*kvs_delete)(struct kvstore *kvs, void *key, int32_t ksize);
-+	int (*kvs_lookup)(struct kvstore *kvs, void *key, int32_t ksize,
-+				void *value, int32_t *vsize);
-+	int (*kvs_insert)(struct kvstore *kvs, void *key, int32_t ksize,
-+				void *value, int32_t vsize);
-+	int (*kvs_iterate)(struct kvstore *kvs, int (*itr_action)
-+				(void *key, int32_t ksize, void *value,
-+				 int32_t vsize, void *data), void *data);
-+};
-+
-+#endif /* KVSTORE_H */
-diff --git a/drivers/md/dm-dedup-target.h b/drivers/md/dm-dedup-target.h
-new file mode 100644
-index 0000000..703ad04
---- /dev/null
-+++ b/drivers/md/dm-dedup-target.h
-@@ -0,0 +1,100 @@
-+/*
-+ * Copyright (C) 2012-2014 Vasily Tarasov
-+ * Copyright (C) 2012-2014 Geoff Kuenning
-+ * Copyright (C) 2012-2014 Sonam Mandal
-+ * Copyright (C) 2012-2014 Karthikeyani Palanisami
-+ * Copyright (C) 2012-2014 Philip Shilane
-+ * Copyright (C) 2012-2014 Sagar Trehan
-+ * Copyright (C) 2012-2014 Erez Zadok
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef DM_DEDUP_H
-+#define DM_DEDUP_H
-+
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/kernel.h>
-+#include <linux/device-mapper.h>
-+#include <linux/dm-io.h>
-+#include <linux/dm-kcopyd.h>
-+#include <linux/list.h>
-+#include <linux/err.h>
-+#include <asm/current.h>
-+#include <linux/string.h>
-+#include <linux/gfp.h>
-+#include <linux/delay.h>
-+#include <linux/time.h>
-+#include <linux/parser.h>
-+#include <linux/blk_types.h>
-+#include <linux/mempool.h>
-+
-+#include <linux/scatterlist.h>
-+#include <asm/page.h>
-+#include <asm/unaligned.h>
-+#include <crypto/hash.h>
-+#include <crypto/md5.h>
-+#include <crypto/sha.h>
-+#include <crypto/algapi.h>
-+
-+#define DM_MSG_PREFIX "dedup-mod"
-+
-+#define CRYPTO_ALG_NAME_LEN     16
-+#define MAX_DIGEST_SIZE	SHA256_DIGEST_SIZE
-+
-+#define MIN_DEDUP_WORK_IO	16
-+
-+/* Per target instance structure */
-+struct dedup_config {
-+	struct dm_dev *data_dev;
-+	struct dm_dev *metadata_dev;
-+
-+	uint32_t block_size;	/* in bytes */
-+	uint32_t sectors_per_block;
-+
-+	uint32_t pblocks;	/* physical blocks */
-+	uint32_t lblocks;	/* logical blocks */
-+
-+	struct workqueue_struct *workqueue;
-+
-+	struct hash_desc_table *desc_table;
-+
-+	uint64_t logical_block_counter;	/* Total number of used LBNs */
-+	uint64_t physical_block_counter;/* Total number of allocated PBNs */
-+
-+	uint64_t	writes;		/* total number of writes */
-+	uint64_t	dupwrites;
-+	uint64_t	uniqwrites;
-+	uint64_t	reads_on_writes;
-+	uint64_t	overwrites;	/* writes to a prev. written offset */
-+	uint64_t	newwrites;	/* writes to never written offsets */
-+
-+	struct dm_io_client *io_client;		/* used for read-on-write
-+						   of misaligned requests */
-+
-+	struct metadata_ops *mdops;
-+	struct metadata *bmd;
-+	struct kvstore *kvs_hash_pbn;
-+	struct kvstore *kvs_lbn_pbn;
-+
-+	char crypto_alg[CRYPTO_ALG_NAME_LEN];
-+	int crypto_key_size;
-+
-+	uint32_t flushrq;		/* after how many writes call flush */
-+	uint64_t writes_after_flush;	/* # of writes after the last flush */
-+
-+	mempool_t *dedup_work_pool;	/* Dedup work pool */
-+};
-+
-+/* Value of the HASH-PBN key-value store */
-+struct hash_pbn_value {
-+	uint64_t pbn;	/* in blocks */
-+};
-+
-+/* Value of the LBN-PBN key-value store */
-+struct lbn_pbn_value {
-+	uint64_t pbn;	/* in blocks */
-+};
-+
-+#endif /* DM_DEDUP_H */
--- 
-1.7.1
