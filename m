@@ -1,52 +1,51 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH] SCHED: remove proliferation of wait_on_bit action
- functions.
-Date: Thu, 1 May 2014 11:31:40 +0200
-Message-ID: <20140501093140.GN11096@twins.programming.kicks-ass.net>
-References: <20140501123738.3e64b2d2@notabene.brown>
- <20140501074257.GK11096@twins.programming.kicks-ass.net>
- <20140501192605.6b5383f8@notabene.brown>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 3.15-rc4
+Date: Fri, 2 May 2014 15:24:18 -0400
+Message-ID: <20140502192417.GA23866@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140501192605.6b5383f8@notabene.brown>
-Sender: owner-linux-mm@kvack.org
-To: NeilBrown <neilb@suse.de>
-Cc: Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Steven Whitehouse <swhiteho@redhat.com>, dm-devel@redhat.com, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Steve French <sfrench@samba.org>, Theodore Ts'o <tytso@mit.edu>, Trond Myklebust <trond.myklebust@primarydata.com>, Ingo Molnar <mingo@redhat.com>, Roland McGrath <roland@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-nfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, May 01, 2014 at 07:26:05PM +1000, NeilBrown wrote:
-> On Thu, 1 May 2014 09:42:57 +0200 Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > On Thu, May 01, 2014 at 12:37:38PM +1000, NeilBrown wrote:
-> > > +static inline int
-> > > +wait_on_bit(void *word, int bit, unsigned mode)
-> > > +{
-> > > +	if (!test_bit(bit, word))
-> > > +		return 0;
-> > > +	return out_of_line_wait_on_bit(word, bit,
-> > > +				       bit_wait,
-> > > +				       mode & 65535);
-> > > +}
-> > 
-> > Still puzzled by the 16 bit mask there ;-)
-> 
-> I clearly remember removing that!
-> And I've just done it again.
-> I hope it doesn't re-reappear!
-> :-)
-> NeilBrown
+The following changes since commit 0596661f0a16d9d69bf1033320e70b6ff52b5e81:
 
-Seems dead now, I'll hold out for a little while so that dhowells can
-explain this fscache thing.
+  dm cache: fix a lock-inversion (2014-04-04 14:53:05 -0400)
 
-Then I'll queue it. Ingo is currently enjoying a long weekend and is
-fighting (well I am now) a stability issue in -tip kernels, so it might
-be a little while before it actually shows up in the git tree.
+are available in the git repository at:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.15-fixes
+
+for you to fetch changes up to 131cd131a9ff63d4b84f3fe15073a2984ac30066:
+
+  dm cache: fix writethrough mode quiescing in cache_map (2014-05-01 16:14:24 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+A few dm-thinp fixes for changes merged in 3.15-rc1.
+
+A dm-verity fix for an immutable biovec regression that affects 3.14+.
+
+A dm-cache fix to properly quiesce when using writethrough mode (3.14+).
+
+----------------------------------------------------------------
+Joe Thornber (2):
+      dm thin: irqsave must always be used with the pool->lock spinlock
+      dm thin: fix rcu_read_lock being held in code that can sleep
+
+Mike Snitzer (2):
+      dm thin: use INIT_WORK_ONSTACK in noflush_work to avoid ODEBUG warning
+      dm cache: fix writethrough mode quiescing in cache_map
+
+Milan Broz (1):
+      dm verity: fix biovecs hash calculation regression
+
+ drivers/md/dm-cache-target.c |  1 +
+ drivers/md/dm-thin.c         | 77 ++++++++++++++++++++++++++++++++++++++++----
+ drivers/md/dm-verity.c       | 15 +++++----
+ 3 files changed, 81 insertions(+), 12 deletions(-)
