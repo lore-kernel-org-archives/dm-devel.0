@@ -1,13 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Subject: Re: sg_persist triggers block kernel event ???
-Date: Sat, 3 May 2014 22:38:38 +0200
-Message-ID: <CABr-Gne=kRCJ4qNz9Vuz-u-gmj1g9Htm3oqUBdoOvFCv9=5bNQ@mail.gmail.com>
+Date: Sat, 3 May 2014 23:47:40 +0200
+Message-ID: <CABr-GnfUjpEU38Sm-sEMf-3wfBtgmHyEEt3jTq2jcfOhh4nmyA@mail.gmail.com>
 References: <CABr-GnczryXtOkip_0L+0ztU2RcJ5izbucgs0GHo3DX7OFAMtg@mail.gmail.com>
+	<CABr-Gne=kRCJ4qNz9Vuz-u-gmj1g9Htm3oqUBdoOvFCv9=5bNQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6325875164327752783=="
+Content-Type: multipart/mixed; boundary="===============0573724086253201793=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GnczryXtOkip_0L+0ztU2RcJ5izbucgs0GHo3DX7OFAMtg@mail.gmail.com>
+In-Reply-To: <CABr-Gne=kRCJ4qNz9Vuz-u-gmj1g9Htm3oqUBdoOvFCv9=5bNQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,121 +21,212 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============6325875164327752783==
-Content-Type: multipart/alternative; boundary=90e6ba613c3a0bae4104f884e266
+--===============0573724086253201793==
+Content-Type: multipart/alternative; boundary=047d7bd75860eb3de004f885d8a9
 
---90e6ba613c3a0bae4104f884e266
+--047d7bd75860eb3de004f885d8a9
 Content-Type: text/plain; charset=UTF-8
 
-Reproduced on a fairly recent kernel :
+Adding more information to this case,
 
-cvaroqui@clementine:~$ sudo sg_persist -k /dev/sda
-  ATA       SAMSUNG MZMTD512  DXT4
-  Peripheral device type: disk
-PR in: command not supported
+also reproduced on a sles11 and with mpathpersist in place of sg_persist
+(sde and sdf are paths of dm-4) :
 
-KERNEL[227056.238465] change
-/devices/pci0000:00/0000:00:1f.2/ata2/host1/target1:0:0/1:0:0:0/block/sda
-(block)
+# mpathpersist -i -k /dev/mapper/igrM2h-U2Ci-O3jL
+KERNEL[1399153645.728611] change
+/devices/platform/host2/session1/target2:0:0/2:0:0:2/block/sdf (block)
+UDEV_LOG=3
 ACTION=change
-DEVNAME=/dev/sda
-DEVPATH=/devices/pci0000:00/0000:00:1f.2/ata2/host1/target1:0:0/1:0:0:0/block/sda
-DEVTYPE=disk
-MAJOR=8
-MINOR=0
-SEQNUM=2603
+DEVPATH=/devices/platform/host2/session1/target2:0:0/2:0:0:2/block/sdf
 SUBSYSTEM=block
+DEVNAME=sdf
+DEVTYPE=disk
+SEQNUM=1811
+MAJOR=8
+MINOR=80
 
-cvaroqui@clementine:~$ cat /etc/lsb-release
-DISTRIB_ID=Ubuntu
-DISTRIB_RELEASE=14.04
-DISTRIB_CODENAME=trusty
-DISTRIB_DESCRIPTION="Ubuntu Trusty Tahr (development branch)"
+KERNEL[1399153645.729377] change
+/devices/platform/host3/session2/target3:0:0/3:0:0:2/block/sde (block)
+UDEV_LOG=3
+ACTION=change
+DEVPATH=/devices/platform/host3/session2/target3:0:0/3:0:0:2/block/sde
+SUBSYSTEM=block
+DEVNAME=sde
+DEVTYPE=disk
+SEQNUM=1812
+MAJOR=8
+MINOR=64
 
-cvaroqui@clementine:~$ uname -a
-Linux clementine 3.13.0-23-generic #45-Ubuntu SMP Fri Apr 4 06:58:38 UTC
-2014 x86_64 x86_64 x86_64 GNU/Linux
+Persistent Reserve IN command failed
+
+KERNEL[1399153645.730116] change   /devices/virtual/block/dm-4 (block)
+UDEV_LOG=3
+ACTION=change
+DEVPATH=/devices/virtual/block/dm-4
+SUBSYSTEM=block
+DEVNAME=dm-4
+DEVTYPE=disk
+SEQNUM=1813
+MAJOR=252
+MINOR=4
 
 Regards,
 Christophe Varoqui
 www.opensvc.com
 
 
-On Sat, May 3, 2014 at 10:12 PM, Christophe Varoqui <
+On Sat, May 3, 2014 at 10:38 PM, Christophe Varoqui <
 christophe.varoqui@opensvc.com> wrote:
 
-> Hi list,
+> Reproduced on a fairly recent kernel :
 >
-> I observe this on a debian 7.5 server with a udevadm monitor running in
-> the background :
+> cvaroqui@clementine:~$ sudo sg_persist -k /dev/sda
+>   ATA       SAMSUNG MZMTD512  DXT4
+>   Peripheral device type: disk
+> PR in: command not supported
 >
-> # sg_persist -n -k /dev/sdbh
->   PR generation=0x0, there are NO registered reservation keys
->
-> KERNEL[448809.342461] change
-> /devices/pci0000:20/0000:20:02.2/0000:24:00.0/host0/rport-0:0-3/target0:0:1/0:0:1:12/block/sdbh
+> KERNEL[227056.238465] change
+> /devices/pci0000:00/0000:00:1f.2/ata2/host1/target1:0:0/1:0:0:0/block/sda
 > (block)
 > ACTION=change
-> DEVNAME=/dev/sdbh
+> DEVNAME=/dev/sda
 >
-> DEVPATH=/devices/pci0000:20/0000:20:02.2/0000:24:00.0/host0/rport-0:0-3/target0:0:1/0:0:1:12/block/sdbh
+> DEVPATH=/devices/pci0000:00/0000:00:1f.2/ata2/host1/target1:0:0/1:0:0:0/block/sda
 > DEVTYPE=disk
-> MAJOR=67
-> MINOR=176
-> SEQNUM=261605
+> MAJOR=8
+> MINOR=0
+> SEQNUM=2603
 > SUBSYSTEM=block
 >
-> Every sg_persist command, with any options, trigger events.
+> cvaroqui@clementine:~$ cat /etc/lsb-release
+> DISTRIB_ID=Ubuntu
+> DISTRIB_RELEASE=14.04
+> DISTRIB_CODENAME=trusty
+> DISTRIB_DESCRIPTION="Ubuntu Trusty Tahr (development branch)"
 >
-> On this server with more than 200 scsi devices, each receiving one
-> read-key and one read-reservation every 10 minutes, this triggers quite a
-> eavy load caused by 2 udev triggers :
+> cvaroqui@clementine:~$ uname -a
+> Linux clementine 3.13.0-23-generic #45-Ubuntu SMP Fri Apr 4 06:58:38 UTC
+> 2014 x86_64 x86_64 x86_64 GNU/Linux
 >
-> 1/ multipath -v0 $devpath
-> 2/ udisks-lvm-pv-export $pv_uuid
->
->
-> Question is, is it normal for a "--in" sg_persist command to trigger a
-> change event on the scsi device ? If not, what we can do about it ?
->
-> Best regards,
+> Regards,
 > Christophe Varoqui
 > www.opensvc.com
 >
 >
+> On Sat, May 3, 2014 at 10:12 PM, Christophe Varoqui <
+> christophe.varoqui@opensvc.com> wrote:
+>
+>> Hi list,
+>>
+>> I observe this on a debian 7.5 server with a udevadm monitor running in
+>> the background :
+>>
+>> # sg_persist -n -k /dev/sdbh
+>>   PR generation=0x0, there are NO registered reservation keys
+>>
+>> KERNEL[448809.342461] change
+>> /devices/pci0000:20/0000:20:02.2/0000:24:00.0/host0/rport-0:0-3/target0:0:1/0:0:1:12/block/sdbh
+>> (block)
+>> ACTION=change
+>> DEVNAME=/dev/sdbh
+>>
+>> DEVPATH=/devices/pci0000:20/0000:20:02.2/0000:24:00.0/host0/rport-0:0-3/target0:0:1/0:0:1:12/block/sdbh
+>> DEVTYPE=disk
+>> MAJOR=67
+>> MINOR=176
+>> SEQNUM=261605
+>> SUBSYSTEM=block
+>>
+>> Every sg_persist command, with any options, trigger events.
+>>
+>> On this server with more than 200 scsi devices, each receiving one
+>> read-key and one read-reservation every 10 minutes, this triggers quite a
+>> eavy load caused by 2 udev triggers :
+>>
+>> 1/ multipath -v0 $devpath
+>> 2/ udisks-lvm-pv-export $pv_uuid
+>>
+>>
+>> Question is, is it normal for a "--in" sg_persist command to trigger a
+>> change event on the scsi device ? If not, what we can do about it ?
+>>
+>> Best regards,
+>> Christophe Varoqui
+>> www.opensvc.com
+>>
+>>
+>
 
---90e6ba613c3a0bae4104f884e266
+--047d7bd75860eb3de004f885d8a9
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Reproduced on a fairly recent kernel :<div><br></div><div>=
-<div>cvaroqui@clementine:~$ sudo sg_persist -k /dev/sda</div><div>=C2=A0 AT=
-A =C2=A0 =C2=A0 =C2=A0 SAMSUNG MZMTD512 =C2=A0DXT4</div><div>=C2=A0 Periphe=
-ral device type: disk</div><div>
+<div dir=3D"ltr">Adding more information to this case,<div><br></div><div>a=
+lso reproduced on a sles11 and with mpathpersist in place of sg_persist (sd=
+e and sdf are paths of dm-4) :</div><div><br></div><div><div># mpathpersist=
+ -i -k /dev/mapper/igrM2h-U2Ci-O3jL=C2=A0</div>
+<div>KERNEL[1399153645.728611] change =C2=A0 /devices/platform/host2/sessio=
+n1/target2:0:0/2:0:0:2/block/sdf (block)</div><div>UDEV_LOG=3D3</div><div>A=
+CTION=3Dchange</div><div>DEVPATH=3D/devices/platform/host2/session1/target2=
+:0:0/2:0:0:2/block/sdf</div>
+<div>SUBSYSTEM=3Dblock</div><div>DEVNAME=3Dsdf</div><div>DEVTYPE=3Ddisk</di=
+v><div>SEQNUM=3D1811</div><div>MAJOR=3D8</div><div>MINOR=3D80</div><div><br=
+></div><div>KERNEL[1399153645.729377] change =C2=A0 /devices/platform/host3=
+/session2/target3:0:0/3:0:0:2/block/sde (block)</div>
+<div>UDEV_LOG=3D3</div><div>ACTION=3Dchange</div><div>DEVPATH=3D/devices/pl=
+atform/host3/session2/target3:0:0/3:0:0:2/block/sde</div><div>SUBSYSTEM=3Db=
+lock</div><div>DEVNAME=3Dsde</div><div>DEVTYPE=3Ddisk</div><div>SEQNUM=3D18=
+12</div><div>
+MAJOR=3D8</div><div>MINOR=3D64</div><div><br></div><div>Persistent Reserve =
+IN command failed</div><div><br></div><div>KERNEL[1399153645.730116] change=
+ =C2=A0 /devices/virtual/block/dm-4 (block)</div><div>UDEV_LOG=3D3</div><di=
+v>ACTION=3Dchange</div>
+<div>DEVPATH=3D/devices/virtual/block/dm-4</div><div>SUBSYSTEM=3Dblock</div=
+><div>DEVNAME=3Ddm-4</div><div>DEVTYPE=3Ddisk</div><div>SEQNUM=3D1813</div>=
+<div>MAJOR=3D252</div><div>MINOR=3D4</div></div><div><br></div><div>Regards=
+,</div><div>
+Christophe Varoqui</div><div><a href=3D"http://www.opensvc.com">www.opensvc=
+.com</a></div></div><div class=3D"gmail_extra"><br><br><div class=3D"gmail_=
+quote">On Sat, May 3, 2014 at 10:38 PM, Christophe Varoqui <span dir=3D"ltr=
+">&lt;<a href=3D"mailto:christophe.varoqui@opensvc.com" target=3D"_blank">c=
+hristophe.varoqui@opensvc.com</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex"><div dir=3D"ltr">Reproduced on a fairly rece=
+nt kernel :<div><br></div><div><div>cvaroqui@clementine:~$ sudo sg_persist =
+-k /dev/sda</div>
+<div>=C2=A0 ATA =C2=A0 =C2=A0 =C2=A0 SAMSUNG MZMTD512 =C2=A0DXT4</div><div>=
+=C2=A0 Peripheral device type: disk</div><div>
 PR in: command not supported</div><div><br></div><div>KERNEL[227056.238465]=
  change =C2=A0 /devices/pci0000:00/0000:00:1f.2/ata2/host1/target1:0:0/1:0:=
 0:0/block/sda (block)</div><div>ACTION=3Dchange</div><div>DEVNAME=3D/dev/sd=
 a</div>
+
 <div>DEVPATH=3D/devices/pci0000:00/0000:00:1f.2/ata2/host1/target1:0:0/1:0:=
 0:0/block/sda</div><div>DEVTYPE=3Ddisk</div><div>MAJOR=3D8</div><div>MINOR=
 =3D0</div><div>SEQNUM=3D2603</div><div>SUBSYSTEM=3Dblock</div><div><br></di=
 v><div>cvaroqui@clementine:~$ cat /etc/lsb-release=C2=A0<br>
+
 </div><div>DISTRIB_ID=3DUbuntu</div><div>DISTRIB_RELEASE=3D14.04</div><div>=
 DISTRIB_CODENAME=3Dtrusty</div><div>DISTRIB_DESCRIPTION=3D&quot;Ubuntu Trus=
 ty Tahr (development branch)&quot;</div><div><br></div><div>cvaroqui@clemen=
 tine:~$ uname -a</div>
+
 <div>Linux clementine 3.13.0-23-generic #45-Ubuntu SMP Fri Apr 4 06:58:38 U=
 TC 2014 x86_64 x86_64 x86_64 GNU/Linux</div></div><div><br></div><div>Regar=
 ds,</div><div>Christophe Varoqui</div><div><a href=3D"http://www.opensvc.co=
-m">www.opensvc.com</a></div>
-</div><div class=3D"gmail_extra"><br><br><div class=3D"gmail_quote">On Sat,=
- May 3, 2014 at 10:12 PM, Christophe Varoqui <span dir=3D"ltr">&lt;<a href=
-=3D"mailto:christophe.varoqui@opensvc.com" target=3D"_blank">christophe.var=
-oqui@opensvc.com</a>&gt;</span> wrote:<br>
+m" target=3D"_blank">www.opensvc.com</a></div>
+
+</div><div class=3D"HOEnZb"><div class=3D"h5"><div class=3D"gmail_extra"><b=
+r><br><div class=3D"gmail_quote">On Sat, May 3, 2014 at 10:12 PM, Christoph=
+e Varoqui <span dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@opensv=
+c.com" target=3D"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> wrot=
+e:<br>
+
 <blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
 x #ccc solid;padding-left:1ex"><div dir=3D"ltr">Hi list,<div><br></div><div=
 >I observe this on a debian 7.5 server with a udevadm monitor running in th=
 e background :</div>
+
 <div><br></div><div><div># sg_persist -n -k /dev/sdbh</div><div>=C2=A0 PR g=
 eneration=3D0x0, there are NO registered reservation keys</div>
 <div><br></div><div>KERNEL[448809.342461] change =C2=A0 /devices/pci0000:20=
@@ -143,34 +235,39 @@ h (block)</div><div>ACTION=3Dchange</div><div>DEVNAME=3D/dev/sdbh</div><div=
 >DEVPATH=3D/devices/pci0000:20/0000:20:02.2/0000:24:00.0/host0/rport-0:0-3/=
 target0:0:1/0:0:1:12/block/sdbh</div>
 
+
 <div>DEVTYPE=3Ddisk</div><div>MAJOR=3D67</div><div>MINOR=3D176</div><div>SE=
 QNUM=3D261605</div><div>SUBSYSTEM=3Dblock</div></div><div><br></div><div>Ev=
 ery sg_persist command, with any options, trigger events.</div><div><br></d=
 iv><div>
+
 
 On this server with more than 200 scsi devices, each receiving one read-key=
  and one read-reservation every 10 minutes, this triggers quite a eavy load=
  caused by 2 udev triggers :</div><div><br></div><div>1/ multipath -v0 $dev=
 path</div>
 
+
 <div>2/=C2=A0udisks-lvm-pv-export $pv_uuid</div><div><br></div><div><br></d=
 iv><div>Question is, is it normal for a &quot;--in&quot; sg_persist command=
  to trigger a change event on the scsi device ? If not, what we can do abou=
 t it ?</div>
 
+
 <div><br></div><div>Best regards,</div><div>Christophe Varoqui</div><div><a=
  href=3D"http://www.opensvc.com" target=3D"_blank">www.opensvc.com</a></div=
 ><div><br></div></div>
 </blockquote></div><br></div>
+</div></div></blockquote></div><br></div>
 
---90e6ba613c3a0bae4104f884e266--
+--047d7bd75860eb3de004f885d8a9--
 
 
---===============6325875164327752783==
+--===============0573724086253201793==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6325875164327752783==--
+--===============0573724086253201793==--
