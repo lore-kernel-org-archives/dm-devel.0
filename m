@@ -1,51 +1,48 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 3.15-rc4
-Date: Fri, 2 May 2014 15:24:18 -0400
-Message-ID: <20140502192417.GA23866@redhat.com>
+From: John Utz <John.Utz@wdc.com>
+Subject: are there usage examples for
+	dm_sm_metadata_{create|open}?
+Date: Sat, 3 May 2014 02:24:48 +0000
+Message-ID: <8A51900D08212F40B3DE22453052F6981D0EEE96@wdscexmb02>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The following changes since commit 0596661f0a16d9d69bf1033320e70b6ff52b5e81:
+Hi;
 
-  dm cache: fix a lock-inversion (2014-04-04 14:53:05 -0400)
+I am developing a simulator for ZBC/ZAC devices using the linear target source code as the starting point. I talked briefly with Ric Wheeler about this project at Napa so he may be in a position to provide you with more context than i am putting into this email.
 
-are available in the git repository at:
+Since this simulator is expected to be highly configurable i dont have the luxury of hardcoding anything important, so i am on the hunt for A Cunning Plan.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.15-fixes
+Specifically, I need to be able to configure the number and size of a series of equally sized subdivisions the linear space into discrete equally sized chunks and then *save* this information off somewhere for future use so that we know how to interpret the data that has been saved to the underlying device.
 
-for you to fetch changes up to 131cd131a9ff63d4b84f3fe15073a2984ac30066:
+The needs for the simulator metadata are pretty simple; number of subdivisions, size of subdivisions, etc. They just need to persist beyond the lifetime of the module.
 
-  dm cache: fix writethrough mode quiescing in cache_map (2014-05-01 16:14:24 -0400)
+So, the stuff in persistent-data sure seems like a good candidate for getting the job done. :-)
 
-Please pull, thanks.
-Mike
+It seems like the first basic action one would want to perform would be to create a metadata 'blob' and then at some point in the future one would regularly want to open said metadata blob. The dm_sm_metadata_create and open functions seem perfect for the job.
 
-----------------------------------------------------------------
-A few dm-thinp fixes for changes merged in 3.15-rc1.
+But for some reason, I am unable to find a place in the md directory where this is getting used.
 
-A dm-verity fix for an immutable biovec regression that affects 3.14+.
+I would have thought that dm-cache-metadata.c would be using it, but it doesnt seem to be thinking about this in the same way. It uses dm_block_manager_create() and __create_persistent_data_objects().
 
-A dm-cache fix to properly quiesce when using writethrough mode (3.14+).
+I have perused dm-cache-metadata.c and dm-thin-metadata.c and they seem significantly more ambitious than anything the simulator needs to do.
 
-----------------------------------------------------------------
-Joe Thornber (2):
-      dm thin: irqsave must always be used with the pool->lock spinlock
-      dm thin: fix rcu_read_lock being held in code that can sleep
+Can any of you folks provide me with some guidance or sample code to look at to get me bootstrapped toward getting this done?
 
-Mike Snitzer (2):
-      dm thin: use INIT_WORK_ONSTACK in noflush_work to avoid ODEBUG warning
-      dm cache: fix writethrough mode quiescing in cache_map
+tnx!
 
-Milan Broz (1):
-      dm verity: fix biovecs hash calculation regression
-
- drivers/md/dm-cache-target.c |  1 +
- drivers/md/dm-thin.c         | 77 ++++++++++++++++++++++++++++++++++++++++----
- drivers/md/dm-verity.c       | 15 +++++----
- 3 files changed, 81 insertions(+), 12 deletions(-)
+johnu
