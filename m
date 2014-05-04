@@ -1,15 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Subject: Re: sg_persist triggers block kernel event ???
-Date: Sun, 4 May 2014 20:01:31 +0200
-Message-ID: <CABr-Gneq4MabcPWYNCU9Mz_fRnLPoetc93RRp7qi=xuw8H1LgQ@mail.gmail.com>
+Date: Sun, 4 May 2014 20:42:29 +0200
+Message-ID: <CABr-GnfaRx6uqvH_iWCv5VSV=_SC-3_x1J+nfW57qP=TZbOB_Q@mail.gmail.com>
 References: <CABr-GnczryXtOkip_0L+0ztU2RcJ5izbucgs0GHo3DX7OFAMtg@mail.gmail.com>
 	<CABr-GneD2JwJ5YHx9n5C42zeiivF5gg0hcg_mab1EuwucfOp0Q@mail.gmail.com>
 	<536670DF.2040605@suse.de> <5366778D.90109@redhat.com>
+	<CABr-Gneq4MabcPWYNCU9Mz_fRnLPoetc93RRp7qi=xuw8H1LgQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7689330110922928109=="
+Content-Type: multipart/mixed; boundary="===============4484207884597902025=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5366778D.90109@redhat.com>
+In-Reply-To: <CABr-Gneq4MabcPWYNCU9Mz_fRnLPoetc93RRp7qi=xuw8H1LgQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +20,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, dgilbert@interlog.com
+To: dgilbert@interlog.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============7689330110922928109==
-Content-Type: multipart/alternative; boundary=20cf303bfebefeabed04f896cdd6
+--===============4484207884597902025==
+Content-Type: multipart/alternative; boundary=047d7b10d0e385e7ae04f8976031
 
---20cf303bfebefeabed04f896cdd6
+--047d7b10d0e385e7ae04f8976031
 Content-Type: text/plain; charset=UTF-8
 
-Indeed, I'd rather let udev do its work on legitimate device changes.
-Problem is, this change event caused by sg_persist prin commands in not
-legitimate : no device change can be caused by interrogating the disk pr
-status.
+Doug,
 
-Doug informed me newer kernels accept prin commands inside a open-ro=>close
-sequence, which I now verified by testing with the patch I sent ... but
-older kernels do not. My patch is thus not backward compatible as-is.
+would this patch address the Linux kernel backward-compatibility concern
+you raised ?
 
-Any advice on how to treat this backward-compatibility issue ?
-
-For information, here's a more recent version of the patch I sent to Doug
-earlier to address not-Linux platform behaviour stability :
+Note, you would have to substitute the 3000 version by the appropriate
+version that introduced support for prin commands submitted on a open-ro
+device ...
 
 --- sg_persist.c.orig 2014-05-04 01:10:01.987981956 +0200
-+++ sg_persist.c 2014-05-04 08:41:29.482017943 +0200
-@@ -1029,6 +1029,8 @@
++++ sg_persist.c 2014-05-04 20:44:34.665292548 +0200
+@@ -16,6 +16,7 @@
+ #include <string.h>
+ #include <ctype.h>
+ #include <getopt.h>
++#include <sys/ioctl.h>
+ #define __STDC_FORMAT_MACROS 1
+
+ #include <inttypes.h>
+@@ -26,6 +27,7 @@
+ #include "sg_lib.h"
+ #include "sg_cmds_basic.h"
+ #include "sg_cmds_extra.h"
++#include "sg_io_linux.h"
+
+ static const char * version_str = "0.44 20140202";
+
+@@ -1029,6 +1031,8 @@
      struct sg_simple_inquiry_resp inq_resp;
      const char * cp;
      struct opts_t opts;
@@ -53,15 +66,30 @@ earlier to address not-Linux platform behaviour stability :
 
      memset(&opts, 0, sizeof(opts));
      opts.prin = 1;
-@@ -1292,10 +1294,17 @@
+@@ -1292,10 +1296,31 @@
          sg_cmds_close_device(sg_fd);
      }
 
 -    if ((sg_fd = sg_cmds_open_device(device_name, 0 /* rw */,
 +#ifdef SG_LIB_LINUX
++    /*
++     * PRIN commands do not provoke device changes, so we should avoid to
++     * open the device read-write so that the Linux kernel does not
+generate
++     * a change event.
++     * Older kernel do not support PRIN commands submission on a read-only
++     * opened device, so don't try in this case.
++     */
++    int v;
 +    if (opts.prin) {
-+        omode = 1;
-+        omode_desc = "ro";
++        sg_fd = sg_cmds_open_device(device_name, 1, opts.verbose);
++        if (sg_fd >= 0) {
++            if (ioctl(sg_fd, SG_GET_VERSION_NUM, &v) >= 0 && v >= 30000) {
++                omode = 1;
++                omode_desc = "ro";
++            }
++            sg_cmds_close_device(sg_fd);
++        }
 +    }
 +#endif
 +
@@ -76,92 +104,161 @@ omode_desc,
          return SG_LIB_FILE_ERROR;
      }
 
-Regards,
+
+
+
+Best regards,
 Christophe Varoqui
 www.opensvc.com
 
 
+On Sun, May 4, 2014 at 8:01 PM, Christophe Varoqui <
+christophe.varoqui@opensvc.com> wrote:
 
-On Sun, May 4, 2014 at 7:23 PM, Zdenek Kabelac <zkabelac@redhat.com> wrote:
-
-> Dne 4.5.2014 18:54, Hannes Reinecke napsal(a):
+> Indeed, I'd rather let udev do its work on legitimate device changes.
+> Problem is, this change event caused by sg_persist prin commands in not
+> legitimate : no device change can be caused by interrogating the disk pr
+> status.
 >
->  On 05/04/2014 01:34 AM, Christophe Varoqui wrote:
+> Doug informed me newer kernels accept prin commands inside a
+> open-ro=>close sequence, which I now verified by testing with the patch I
+> sent ... but older kernels do not. My patch is thus not backward compatible
+> as-is.
+>
+> Any advice on how to treat this backward-compatibility issue ?
+>
+> For information, here's a more recent version of the patch I sent to Doug
+> earlier to address not-Linux platform behaviour stability :
+>
+> --- sg_persist.c.orig 2014-05-04 01:10:01.987981956 +0200
+> +++ sg_persist.c 2014-05-04 08:41:29.482017943 +0200
+> @@ -1029,6 +1029,8 @@
+>      struct sg_simple_inquiry_resp inq_resp;
+>      const char * cp;
+>      struct opts_t opts;
+> +    int omode = 0;
+> +    const char *omode_desc = "rw";
+>
+>      memset(&opts, 0, sizeof(opts));
+>      opts.prin = 1;
+> @@ -1292,10 +1294,17 @@
+>          sg_cmds_close_device(sg_fd);
+>      }
+>
+> -    if ((sg_fd = sg_cmds_open_device(device_name, 0 /* rw */,
+> +#ifdef SG_LIB_LINUX
+> +    if (opts.prin) {
+> +        omode = 1;
+> +        omode_desc = "ro";
+> +    }
+> +#endif
+> +
+> +    if ((sg_fd = sg_cmds_open_device(device_name, omode,
+>                                       opts.verbose)) < 0) {
+> -        pr2serr("sg_persist: error opening file (rw): %s: %s\n",
+> device_name,
+> -                safe_strerror(-sg_fd));
+> +        pr2serr("sg_persist: error opening file (%s): %s: %s\n",
+> omode_desc,
+> +                device_name, safe_strerror(-sg_fd));
+>          return SG_LIB_FILE_ERROR;
+>      }
+>
+> Regards,
+> Christophe Varoqui
+> www.opensvc.com
+>
+>
+>
+> On Sun, May 4, 2014 at 7:23 PM, Zdenek Kabelac <zkabelac@redhat.com>wrote:
+>
+>> Dne 4.5.2014 18:54, Hannes Reinecke napsal(a):
 >>
->>> It seems sg_persist is doing an "open rw => close" for --in commands,
->>> causing a kernel change-event.
+>>  On 05/04/2014 01:34 AM, Christophe Varoqui wrote:
 >>>
->> Yep.
+>>>> It seems sg_persist is doing an "open rw => close" for --in commands,
+>>>> causing a kernel change-event.
+>>>>
+>>> Yep.
+>>>
+>>> Look for 'watch' in the udev rules, that's precisely what it's doing.
+>>>
+>>> (Bloody annoying if you ask me. Generally I recommend to remove that
+>>> thing
+>>> from the rules).
+>>>
 >>
->> Look for 'watch' in the udev rules, that's precisely what it's doing.
+>> When watch rule is disabled/removed in  udev rules - your udev db becomes
+>> invalid when i.e. you run  command like  'mkfs' - since the udev db will
+>> not be updated to list information about newly formatted filesystem.
 >>
->> (Bloody annoying if you ask me. Generally I recommend to remove that thing
->> from the rules).
+>> Of course there are many cases where disabling  watch rule makes sense
+>> (i.e. you export lots of disks to virtual guests) - but unless you are
+>> familiar with udev and you know what you are doing - think twice before
+>> disabling.
+>>
+>> Zdenek
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
 >>
 >
-> When watch rule is disabled/removed in  udev rules - your udev db becomes
-> invalid when i.e. you run  command like  'mkfs' - since the udev db will
-> not be updated to list information about newly formatted filesystem.
->
-> Of course there are many cases where disabling  watch rule makes sense
-> (i.e. you export lots of disks to virtual guests) - but unless you are
-> familiar with udev and you know what you are doing - think twice before
-> disabling.
->
-> Zdenek
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---20cf303bfebefeabed04f896cdd6
+--047d7b10d0e385e7ae04f8976031
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Indeed, I&#39;d rather let udev do its work on legitimate =
-device changes. Problem is, this change event caused by sg_persist prin com=
-mands in not legitimate : no device change can be caused by interrogating t=
-he disk pr status.<div>
-<br></div><div>Doug informed me newer kernels accept prin commands inside a=
- open-ro=3D&gt;close sequence, which I now verified by testing with the pat=
-ch I sent ... but older kernels do not. My patch is thus not backward compa=
-tible as-is.</div>
-<div><br></div><div>Any advice on how to treat this backward-compatibility =
-issue ?</div><div><br></div><div>For information, here&#39;s a more recent =
-version of the patch I sent to Doug earlier to address not-Linux platform b=
-ehaviour stability :</div>
-<div><br></div><div><div style=3D"font-family:arial,sans-serif;font-size:19=
-.428571701049805px">--- sg_persist.c.orig<span style=3D"white-space:pre-wra=
-p">	</span>2014-05-04 01:10:01.987981956 +0200</div><div style=3D"font-fami=
-ly:arial,sans-serif;font-size:19.428571701049805px">
-+++ sg_persist.c<span style=3D"white-space:pre-wrap">	</span>2014-05-04 08:=
-41:29.482017943 +0200</div><div class=3D"im" style=3D"font-family:arial,san=
-s-serif;font-size:19.428571701049805px"><div>@@ -1029,6 +1029,8 @@</div><di=
-v>
+<div dir=3D"ltr">Doug,<div><br></div><div>would this patch address the Linu=
+x kernel backward-compatibility concern you raised ?</div><div><br></div><d=
+iv>Note, you would have to substitute the 3000 version by the appropriate v=
+ersion that introduced support for prin commands submitted on a open-ro dev=
+ice ...</div>
+<div><br></div><div><div><div>--- sg_persist.c.orig<span class=3D"" style=
+=3D"white-space:pre">	</span>2014-05-04 01:10:01.987981956 +0200</div><div>=
++++ sg_persist.c<span class=3D"" style=3D"white-space:pre">	</span>2014-05-=
+04 20:44:34.665292548 +0200</div>
+<div>@@ -16,6 +16,7 @@</div><div>=C2=A0#include &lt;string.h&gt;</div><div>=
+=C2=A0#include &lt;ctype.h&gt;</div><div>=C2=A0#include &lt;getopt.h&gt;</d=
+iv><div>+#include &lt;sys/ioctl.h&gt;</div><div>=C2=A0#define __STDC_FORMAT=
+_MACROS 1</div><div>
+=C2=A0</div><div>=C2=A0#include &lt;inttypes.h&gt;</div><div>@@ -26,6 +27,7=
+ @@</div><div>=C2=A0#include &quot;sg_lib.h&quot;</div><div>=C2=A0#include =
+&quot;sg_cmds_basic.h&quot;</div><div>=C2=A0#include &quot;sg_cmds_extra.h&=
+quot;</div><div>+#include &quot;sg_io_linux.h&quot;</div>
+<div>=C2=A0</div><div>=C2=A0static const char * version_str =3D &quot;0.44 =
+20140202&quot;;</div><div>=C2=A0</div><div>@@ -1029,6 +1031,8 @@</div><div>=
 =C2=A0 =C2=A0 =C2=A0struct sg_simple_inquiry_resp inq_resp;</div><div>=C2=
 =A0 =C2=A0 =C2=A0const char * cp;</div><div>=C2=A0 =C2=A0 =C2=A0struct opts=
-_t opts;</div><div>+ =C2=A0 =C2=A0int omode =3D 0;</div></div><div style=3D=
-"font-family:arial,sans-serif;font-size:19.428571701049805px">
-+ =C2=A0 =C2=A0const char *omode_desc =3D &quot;rw&quot;;</div><div class=
-=3D"im" style=3D"font-family:arial,sans-serif;font-size:19.428571701049805p=
-x"><div>=C2=A0</div><div>=C2=A0 =C2=A0 =C2=A0memset(&amp;opts, 0, sizeof(op=
-ts));</div><div>=C2=A0 =C2=A0 =C2=A0opts.prin =3D 1;</div>
-</div><div style=3D"font-family:arial,sans-serif;font-size:19.4285717010498=
-05px">@@ -1292,10 +1294,17 @@</div><div class=3D"im" style=3D"font-family:a=
-rial,sans-serif;font-size:19.428571701049805px"><div>=C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0sg_cmds_close_device(sg_fd);</div>
+_t opts;</div>
+<div>+ =C2=A0 =C2=A0int omode =3D 0;</div><div>+ =C2=A0 =C2=A0const char *o=
+mode_desc =3D &quot;rw&quot;;</div><div>=C2=A0</div><div>=C2=A0 =C2=A0 =C2=
+=A0memset(&amp;opts, 0, sizeof(opts));</div><div>=C2=A0 =C2=A0 =C2=A0opts.p=
+rin =3D 1;</div><div>@@ -1292,10 +1296,31 @@</div><div>=C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0sg_cmds_close_device(sg_fd);</div>
 <div>=C2=A0 =C2=A0 =C2=A0}</div><div>=C2=A0</div><div>- =C2=A0 =C2=A0if ((s=
-g_fd =3D sg_cmds_open_device(device_name, 0 /* rw */,</div></div><div style=
-=3D"font-family:arial,sans-serif;font-size:19.428571701049805px">+#ifdef SG=
-_LIB_LINUX</div><div class=3D"im" style=3D"font-family:arial,sans-serif;fon=
-t-size:19.428571701049805px">
-<div>+ =C2=A0 =C2=A0if (opts.prin) {</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0omode =3D 1;</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0omode_desc =3D &quot=
-;ro&quot;;</div><div>+ =C2=A0 =C2=A0}</div></div><div style=3D"font-family:=
-arial,sans-serif;font-size:19.428571701049805px">+#endif</div><div class=3D=
-"im" style=3D"font-family:arial,sans-serif;font-size:19.428571701049805px">
+g_fd =3D sg_cmds_open_device(device_name, 0 /* rw */,</div><div>+#ifdef SG_=
+LIB_LINUX</div><div>+ =C2=A0 =C2=A0/*</div><div>+ =C2=A0 =C2=A0 * PRIN comm=
+ands do not provoke device changes, so we should avoid to</div>
+<div>+ =C2=A0 =C2=A0 * open the device read-write so that the Linux kernel =
+does not generate</div><div>+ =C2=A0 =C2=A0 * a change event.</div><div>+ =
+=C2=A0 =C2=A0 * Older kernel do not support PRIN commands submission on a r=
+ead-only</div><div>+ =C2=A0 =C2=A0 * opened device, so don&#39;t try in thi=
+s case.</div>
+<div>+ =C2=A0 =C2=A0 */</div><div>+ =C2=A0 =C2=A0int v;</div><div>+ =C2=A0 =
+=C2=A0if (opts.prin) {</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0sg_fd =3D sg_=
+cmds_open_device(device_name, 1, opts.verbose);</div><div>+ =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0if (sg_fd &gt;=3D 0) {</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0if (ioctl(sg_fd, SG_GET_VERSION_NUM, &amp;v) &gt;=3D 0 &amp;&=
+amp; v &gt;=3D 30000) {</div>
+<div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0omode =3D 1;<=
+/div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0omode_de=
+sc =3D &quot;ro&quot;;</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0}</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0sg_cmds_close_dev=
+ice(sg_fd);</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0}</div><div>+ =C2=A0 =C2=
+=A0}</div><div>+#endif</div>
 <div>+</div><div>+ =C2=A0 =C2=A0if ((sg_fd =3D sg_cmds_open_device(device_n=
 ame, omode,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
 =A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
@@ -174,15 +271,91 @@ err(&quot;sg_persist: error opening file (rw): %s: %s\n&quot;, device_name,=
 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0device_name, safe_strerror(=
 -sg_fd));</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return SG_LIB_FILE_ER=
 ROR;</div>
-<div>=C2=A0 =C2=A0 =C2=A0}</div></div></div><div><br></div><div>Regards,</d=
-iv><div>Christophe Varoqui</div><div><a href=3D"http://www.opensvc.com">www=
-.opensvc.com</a></div><div><br></div></div><div class=3D"gmail_extra"><br><=
-br><div class=3D"gmail_quote">
+<div>=C2=A0 =C2=A0 =C2=A0}</div><div>=C2=A0</div></div><div><br></div><div>=
+=C2=A0</div></div><div><br></div><div>Best regards,</div><div>Christophe Va=
+roqui</div><div><a href=3D"http://www.opensvc.com">www.opensvc.com</a></div=
+></div><div class=3D"gmail_extra">
+<br><br><div class=3D"gmail_quote">On Sun, May 4, 2014 at 8:01 PM, Christop=
+he Varoqui <span dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@opens=
+vc.com" target=3D"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> wro=
+te:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex"><div dir=3D"ltr">Indeed, I&#39;d rather let =
+udev do its work on legitimate device changes. Problem is, this change even=
+t caused by sg_persist prin commands in not legitimate : no device change c=
+an be caused by interrogating the disk pr status.<div>
+
+<br></div><div>Doug informed me newer kernels accept prin commands inside a=
+ open-ro=3D&gt;close sequence, which I now verified by testing with the pat=
+ch I sent ... but older kernels do not. My patch is thus not backward compa=
+tible as-is.</div>
+
+<div><br></div><div>Any advice on how to treat this backward-compatibility =
+issue ?</div><div><br></div><div>For information, here&#39;s a more recent =
+version of the patch I sent to Doug earlier to address not-Linux platform b=
+ehaviour stability :</div>
+
+<div><br></div><div><div class=3D""><div style=3D"font-family:arial,sans-se=
+rif;font-size:19.428571701049805px">--- sg_persist.c.orig<span style=3D"whi=
+te-space:pre-wrap">	</span>2014-05-04 01:10:01.987981956 +0200</div></div><=
+div style=3D"font-family:arial,sans-serif;font-size:19.428571701049805px">
+
++++ sg_persist.c<span style=3D"white-space:pre-wrap">	</span>2014-05-04 08:=
+41:29.482017943 +0200</div><div class=3D""><div style=3D"font-family:arial,=
+sans-serif;font-size:19.428571701049805px"><div>@@ -1029,6 +1029,8 @@</div>=
+<div>
+
+=C2=A0 =C2=A0 =C2=A0struct sg_simple_inquiry_resp inq_resp;</div><div>=C2=
+=A0 =C2=A0 =C2=A0const char * cp;</div><div>=C2=A0 =C2=A0 =C2=A0struct opts=
+_t opts;</div><div>+ =C2=A0 =C2=A0int omode =3D 0;</div></div></div><div st=
+yle=3D"font-family:arial,sans-serif;font-size:19.428571701049805px">
+
++ =C2=A0 =C2=A0const char *omode_desc =3D &quot;rw&quot;;</div><div class=
+=3D""><div style=3D"font-family:arial,sans-serif;font-size:19.4285717010498=
+05px"><div>=C2=A0</div><div>=C2=A0 =C2=A0 =C2=A0memset(&amp;opts, 0, sizeof=
+(opts));</div><div>=C2=A0 =C2=A0 =C2=A0opts.prin =3D 1;</div>
+
+</div></div><div style=3D"font-family:arial,sans-serif;font-size:19.4285717=
+01049805px">@@ -1292,10 +1294,17 @@</div><div class=3D""><div style=3D"font=
+-family:arial,sans-serif;font-size:19.428571701049805px"><div>=C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0sg_cmds_close_device(sg_fd);</div>
+
+<div>=C2=A0 =C2=A0 =C2=A0}</div><div>=C2=A0</div><div>- =C2=A0 =C2=A0if ((s=
+g_fd =3D sg_cmds_open_device(device_name, 0 /* rw */,</div></div></div><div=
+ style=3D"font-family:arial,sans-serif;font-size:19.428571701049805px">+#if=
+def SG_LIB_LINUX</div><div class=3D"">
+<div style=3D"font-family:arial,sans-serif;font-size:19.428571701049805px">
+<div>+ =C2=A0 =C2=A0if (opts.prin) {</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0omode =3D 1;</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0omode_desc =3D &quot=
+;ro&quot;;</div><div>+ =C2=A0 =C2=A0}</div></div></div><div style=3D"font-f=
+amily:arial,sans-serif;font-size:19.428571701049805px">+#endif</div>
+<div class=3D""><div style=3D"font-family:arial,sans-serif;font-size:19.428=
+571701049805px">
+<div>+</div><div>+ =C2=A0 =C2=A0if ((sg_fd =3D sg_cmds_open_device(device_n=
+ame, omode,</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 opts.verbose)) &lt; 0) {</div><div>- =C2=A0 =C2=A0 =C2=A0 =C2=A0pr2s=
+err(&quot;sg_persist: error opening file (rw): %s: %s\n&quot;, device_name,=
+</div>
+
+<div>- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0safe_strerror=
+(-sg_fd));</div><div>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0pr2serr(&quot;sg_persist:=
+ error opening file (%s): %s: %s\n&quot;, omode_desc,</div><div>+ =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0device_name, safe_strerror(=
+-sg_fd));</div><div>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return SG_LIB_FILE_ER=
+ROR;</div>
+
+<div>=C2=A0 =C2=A0 =C2=A0}</div></div></div></div><div><br></div><div>Regar=
+ds,</div><div>Christophe Varoqui</div><div><a href=3D"http://www.opensvc.co=
+m" target=3D"_blank">www.opensvc.com</a></div><div><br></div></div><div cla=
+ss=3D"HOEnZb"><div class=3D"h5">
+<div class=3D"gmail_extra"><br><br><div class=3D"gmail_quote">
 On Sun, May 4, 2014 at 7:23 PM, Zdenek Kabelac <span dir=3D"ltr">&lt;<a hre=
 f=3D"mailto:zkabelac@redhat.com" target=3D"_blank">zkabelac@redhat.com</a>&=
 gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 =
 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">
-Dne 4.5.2014 18:54, Hannes Reinecke napsal(a):<div class=3D""><br>
+
+Dne 4.5.2014 18:54, Hannes Reinecke napsal(a):<div><br>
 <blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
 x #ccc solid;padding-left:1ex">
 On 05/04/2014 01:34 AM, Christophe Varoqui wrote:<br>
@@ -207,6 +380,7 @@ mes invalid when i.e. you run =C2=A0command like =C2=A0&#39;mkfs&#39; - sin=
 ce the udev db will not be updated to list information about newly formatte=
 d filesystem.<br>
 
+
 <br>
 Of course there are many cases where disabling =C2=A0watch rule makes sense=
 <br>
@@ -223,15 +397,16 @@ m</a><br>
 <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
 nk">https://www.redhat.com/<u></u>mailman/listinfo/dm-devel</a><br>
 </blockquote></div><br></div>
+</div></div></blockquote></div><br></div>
 
---20cf303bfebefeabed04f896cdd6--
+--047d7b10d0e385e7ae04f8976031--
 
 
---===============7689330110922928109==
+--===============4484207884597902025==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============7689330110922928109==--
+--===============4484207884597902025==--
