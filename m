@@ -1,17 +1,16 @@
-From: John Utz <John.Utz@wdc.com>
+From: Joe Thornber <thornber@redhat.com>
 Subject: Re: are there usage examples for
  dm_sm_metadata_{create|open}?
-Date: Tue, 6 May 2014 15:59:30 +0000
-Message-ID: <8A51900D08212F40B3DE22453052F6981D0EFFD3@wdscexmb02>
-References: <8A51900D08212F40B3DE22453052F6981D0EEE96@wdscexmb02>,
-	<20140506131717.GA11355@debian>
+Date: Tue, 6 May 2014 14:17:18 +0100
+Message-ID: <20140506131717.GA11355@debian>
+References: <8A51900D08212F40B3DE22453052F6981D0EEE96@wdscexmb02>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140506131717.GA11355@debian>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <8A51900D08212F40B3DE22453052F6981D0EEE96@wdscexmb02>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,17 +22,6 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
-
-Sweet! I am gonna jump right on studying dm-era today and will get back to you guys with any Q.
-
-tnx so much for you help Joe!
-
-johnu
-________________________________________
-From: dm-devel-bounces@redhat.com [dm-devel-bounces@redhat.com] on behalf of Joe Thornber [thornber@redhat.com]
-Sent: Tuesday, May 06, 2014 6:17 AM
-To: device-mapper development
-Subject: Re: [dm-devel] are there usage examples for dm_sm_metadata_{create|open}?
 
 HI John,
 
@@ -61,8 +49,3 @@ the end of drivers/md/persistent-data/dm-transaction-manager.h
 It does, indirectly.
 
 - Joe
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
