@@ -1,18 +1,13 @@
-From: John Utz <John.Utz@wdc.com>
-Subject: Re: if i create a new dm target type,
- do i need to add its init to the _inits[] and its exit to the
- _exits[]?
-Date: Wed, 7 May 2014 16:00:54 +0000
-Message-ID: <8A51900D08212F40B3DE22453052F6981D0F0387@wdscexmb02>
-References: <8A51900D08212F40B3DE22453052F6981D0F0297@wdscexmb02>,
-	<20140507130946.GA29851@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm thin: allow metadata commit if pool is in
+	PM_OUT_OF_DATA_SPACE mode
+Date: Wed,  7 May 2014 15:59:57 -0400
+Message-ID: <1399492797-1801-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140507130946.GA29851@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,54 +17,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ah. Makes sense.
-tnx!
-johnu
-________________________________________
-From: Mike Snitzer [snitzer@redhat.com]
-Sent: Wednesday, May 07, 2014 6:09 AM
-To: John Utz
-Cc: dm-devel@redhat.com
-Subject: Re: if i create a new dm target type, do i need to add its init to the _inits[] and its exit to the _exits[]?
+From: Joe Thornber <ejt@redhat.com>
 
-On Wed, May 07 2014 at 12:45am -0400,
-John Utz <John.Utz@wdc.com> wrote:
+Commit 3e1a0699 ("dm thin: fix out of data space handling") introduced
+a regression in the metadata commit() method by returning an error if
+the pool is in PM_OUT_OF_DATA_SPACE mode.  This oversight caused a thin
+device to return errors even if the default queue_if_no_space ENOSPC
+handling mode is used.
 
-> Hello;
->
-> While looking thru dm.c trying to figure out how to add new target
-> specific errors and sense codes I came across the following arrays:
->
-> static int (*_inits[])(void) __initdata = {
->         local_init,
->         dm_target_init,
->         dm_linear_init,
->         dm_stripe_init,
->         dm_io_init,
->         dm_kcopyd_init,
->         dm_interface_init,
->         dm_statistics_init,
-> };
->
-> static void (*_exits[])(void) = {
->         local_exit,
->         dm_target_exit,
->         dm_linear_exit,
->         dm_stripe_exit,
->         dm_io_exit,
->         dm_kcopyd_exit,
->         dm_interface_exit,
->         dm_statistics_exit,
-> };
->
->
-> What are the rules for what goes in to these? I don't see every dm-*
-> target listed in these and i am curious as to what are the differences
-> between what goes into these arrays and what does not.
+Fix commit() to only fail if pool is in PM_READ_ONLY or PM_FAIL mode.
 
-These are only for the targets and services provided by the DM core
-(dm-mod.ko went built as a module).
+Reported-by: qindehua@163.com
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org # 3.14+
+---
+ drivers/md/dm-thin.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 13abade..15f748b 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -935,7 +935,7 @@ static int commit(struct pool *pool)
+ {
+ 	int r;
+ 
+-	if (get_pool_mode(pool) != PM_WRITE)
++	if (get_pool_mode(pool) >= PM_READ_ONLY)
+ 		return -EINVAL;
+ 
+ 	r = dm_pool_commit_metadata(pool->pmd);
+-- 
+1.7.1
