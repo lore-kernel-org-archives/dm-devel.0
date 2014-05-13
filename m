@@ -1,44 +1,29 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Performance question when blocks in thin-pool are
- assume zeroed
-Date: Tue, 13 May 2014 14:59:59 +0100
-Message-ID: <20140513135959.GB21162@debian>
-References: <CAGj=0YKhOOP7O2okP5MAhev5+FAnRt3i7HgMOLipaLhYUeJO2w@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAGj=0YKhOOP7O2okP5MAhev5+FAnRt3i7HgMOLipaLhYUeJO2w@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH] SCHED: remove proliferation of wait_on_bit action functions.
+Date: Tue, 13 May 2014 17:06:10 +0100
+Message-ID: <30769.1399997170@warthog.procyon.org.uk>
+References: <20140501123738.3e64b2d2@notabene.brown>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20140501123738.3e64b2d2@notabene.brown>
+Sender: owner-linux-mm@kvack.org
+To: NeilBrown <neilb@suse.de>
+Cc: dhowells@redhat.com, Peter Zijlstra <peterz@infradead.org>, Oleg Nesterov <oleg@redhat.com>, Steven Whitehouse <swhiteho@redhat.com>, dm-devel@redhat.com, Chris Mason <clm@fb.com>, Josef Bacik <jbacik@fb.com>, Steve French <sfrench@samba.org>, Theodore Ts'o <tytso@mit.edu>, Trond Myklebust <trond.myklebust@primarydata.com>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-nfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-Hi Wayne,
+NeilBrown <neilb@suse.de> wrote:
 
-I see you're using a 3.6 kernel.  Could I trouble you to try with 3.14
-please?  Mike Snitzer wrote a very nice patch recently that implements
-a separate deferred list for each thin device, and then sorts
-individual bios using a btree.
+> The wait_on_bit() call in __fscache_wait_on_invalidate() was ambiguous
+> as it specified TASK_UNINTERRUPTIBLE but used
+> fscache_wait_bit_interruptible as an action function.
+> As any error return is never checked I assumed that 'uninterruptible'
+> was correct.
 
-https://github.com/jthornber/linux-2.6/commit/67324ea18812bc952ef96892fbd5817b9050413f
+Bug.  It should be uninterruptible in both places.
 
-- Joe
+David
 
-On Mon, May 12, 2014 at 05:03:39PM +0800, Wayne Chou wrote:
-> Hello,
-> 
-> I am using 4 drives to construct a RAID5 and build a thin
-> volume on it. To get better performance, I use '-Zn' option
-> in 'lvcreate' to make the thin pool assume all blocks are
-> already zeroed.  The chunk size in RAID5 and thin-pool are
-> both 512KB and the stripe_cache_size=4096 on RAID5.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
