@@ -1,16 +1,15 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+From: Brian Bunker <brian@purestorage.com>
 Subject: Re: path coalescing once more
-Date: Thu, 15 May 2014 16:48:13 +0000
-Message-ID: <1400172493.19394.7.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+Date: Thu, 15 May 2014 09:59:18 -0700
+Message-ID: <4E2D4DFE-F486-4515-898E-693BBC6A8589@purestorage.com>
 References: <ED745309-08E8-4C83-86BD-F9D7246CA8F6@purestorage.com>
+	<1400172493.19394.7.camel@ict-vth-stewarts01.ict.englab.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Mime-Version: 1.0 (Mac OS X Mail 7.2 \(1874\))
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ED745309-08E8-4C83-86BD-F9D7246CA8F6@purestorage.com>
-Content-Language: en-US
-Content-ID: <CF684BDD321A7A4FA3EB946B0CE8B1B3@hq.netapp.com>
+In-Reply-To: <1400172493.19394.7.camel@ict-vth-stewarts01.ict.englab.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,54 +22,103 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgQnJpYW4sCgpPbiBUdWUsIDIwMTQtMDUtMTMgYXQgMTY6NTUgLTA3MDAsIEJyaWFuIEJ1bmtl
-ciB3cm90ZToKPiBXZSBjb250aW51ZSB0byBydW4gaW50byBwcm9ibGVtcyB3aXRoIHRoZSBkZXZp
-Y2UtbWFwcGVyIHByZXN1bWFibHkKPiBwdXR0aW5nIExVTnMgd2hpY2ggZG8gbm90IGJlbG9uZyB3
-aXRoIHRoZSBkbSB1bmRlciBpdHMgY29udHJvbC4gSGVyZQo+IGlzIHRoZSBsYXRlc3QgKEkgYW0g
-cGlja2luZyBvdXQganVzdCBkbS0yIGJ1dCB0aGVyZSBhcmUgb3RoZXJzIGluIHRoaXMKPiBzYW1l
-IHN0YXRlKToKCj4gCj4gSSBzZWUgdGhlIGZvbGxvd2luZyBrZXJuZWwgbWVzc2FnZXMgaW4gdGhl
-IHN5c2xvZyB3aGVuIHRoZSBkZXZpY2Ugc2Rhago+IGFycml2ZXMgdG8gd2hlbiBpdCBpcyBwdXQg
-aW4gdGhlIHdyb25nIHBsYWNlOgo+IE1heSAxMyAxMToyODoyNyByYjlpbml0NCBrZXJuZWw6IHNj
-c2kgMTowOjA6MTogRGlyZWN0LUFjY2VzcyAgICAgUFVSRSAgICAgRmxhc2hBcnJheSAgICAgICA0
-MDBCIFBROiAwIEFOU0k6IDYKPiBNYXkgMTMgMTE6Mjg6MjcgcmI5aW5pdDQga2VybmVsOiBzZCAx
-OjA6MDoxOiBbc2Rhal0gMTA0ODU3NjAwMCA1MTItYnl0ZSBsb2dpY2FsIGJsb2NrczogKDUzNiBH
-Qi81MDAgR2lCKQo+IE1heSAxMyAxMToyODoyNyByYjlpbml0NCBrZXJuZWw6IHNkIDE6MDowOjE6
-IEF0dGFjaGVkIHNjc2kgZ2VuZXJpYyBzZzEgdHlwZSAwCj4gTWF5IDEzIDExOjI4OjI3IHJiOWlu
-aXQ0IGtlcm5lbDogc2QgMTowOjA6MTogW3NkYWpdIFdyaXRlIFByb3RlY3QgaXMgb2ZmCj4gTWF5
-IDEzIDExOjI4OjI3IHJiOWluaXQ0IGtlcm5lbDogc2QgMTowOjA6MTogW3NkYWpdIFdyaXRlIGNh
-Y2hlOiBkaXNhYmxlZCwgcmVhZCBjYWNoZTogZW5hYmxlZCwgZG9lc24ndCBzdXBwb3J0IERQTyBv
-ciBGVUEKPiBNYXkgMTMgMTE6Mjg6MjcgcmI5aW5pdDQga2VybmVsOiBzZGFqOgo+IE1heSAxMyAx
-MToyODoyNyByYjlpbml0NCBrZXJuZWw6IHVua25vd24gcGFydGl0aW9uIHRhYmxlCj4gTWF5IDEz
-IDExOjI4OjI3IHJiOWluaXQ0IGtlcm5lbDogc2QgMTowOjA6MTogW3NkYWpdIEF0dGFjaGVkIFND
-U0kgZGlzawo+IE1heSAxMyAxMToyODoyOCByYjlpbml0NCBtdWx0aXBhdGhkOiBzZGFqOiBhZGQg
-cGF0aCAodWV2ZW50KQo+IE1heSAxMyAxMToyODoyOCByYjlpbml0NCBtdWx0aXBhdGhkOiBzZGFq
-IHBhdGggYWRkZWQgdG8gZGV2bWFwIDM2MjRhOTM3MGM5MGQwZDYzMWVmODc4M2UwMDAxMDAwNAo+
-IApJIHJhbiB0aHJvdWdoIHRoZSBjb2RlIGEgbGl0dGxlIGJpdCB0aGUgb3RoZXIgZGF5LCBhbmQg
-SSBkb24ndCBzZWUgaG93Cml0IGNvdWxkIGJlIG1ha2luZyBhIG1pc3Rha2UgaGVyZS4gIEl0IHJ1
-bnMgc2NzaV9pZCwgdGhlIHJlc3VsdCBpcwpwbGFjZWQgaW4gYSAxMjggY2hhcmFjdGVyIGJ1ZmZl
-ciwgdGhlbiBpdCBpcyBzdHJuY21wJ2Qgd2l0aCB0aGUgd3dpZCBvZgp0aGUgbXBhdGggZGV2aWNl
-cy4KPiAKPiBJIGRvbuKAmXQgdW5kZXJzdGFuZCB3aGVyZSBpdCBnZXRzIDM2MjRhOTM3MGM5MGQw
-ZDYzMWVmODc4M2UwMDAxMDAwNC4KPiBXaGVuIEkgcnVuIHRoZSDigJhtdWx0aXBhdGggLXY2IC1k
-4oCZIHNvIHRoYXQgaXQgcHJpbnRzIG91dCB3aGF0IGl0IHdhbnRzCj4gdG8gZG8gYnV0IGRvZXNu
-4oCZdCBkbyBpdCwgSSBzZWU6Cgo+IE1heSAxMyAxNjo0NToxNSB8IHNkYWo6IGdldHVpZCA9IC9s
-aWIvdWRldi9zY3NpX2lkIC0td2hpdGVsaXN0ZWQKPiAtLWRldmljZT0vZGV2LyVuIChjb25maWcg
-ZmlsZSBkZWZhdWx0KQo+IE1heSAxMyAxNjo0NToxNSB8IHNkYWo6IHVpZCA9IDM2MjRhOTM3MGM5
-MGQwZDYzMWVmODc4M2UwMDAxMDAwMgo+IChjYWxsb3V0KQo+IE1heSAxMyAxNjo0NToxNSB8IHNk
-YWo6IHN0YXRlID0gcnVubmluZwo+IE1heSAxMyAxNjo0NToxNSB8IHNkYWo6IGRldGVjdF9wcmlv
-ID0gMSAoY29uZmlnIGZpbGUgZGVmYXVsdCkKPiBNYXkgMTMgMTY6NDU6MTUgfCBzZGFqOiBwcmlv
-ID0gY29uc3QgKGNvbmZpZyBmaWxlIGRlZmF1bHQpCj4gTWF5IDEzIDE2OjQ1OjE1IHwgc2Rhajog
-Y29uc3QgcHJpbyA9IDEKPiAKUnVubmluZyB0aGlzIGNvbW1hbmQgbGF0ZXIgd2lsbCBtYWtlIGl0
-IGRvIHRoZSBzYW1lIHRoaW5nLCBydW4gc2NzaV9pZAp3aGljaCBydW5zIGFuIGlucXVpcnkgdGhh
-dCBnZXRzIHRoZSB3d2lkLi4gIEkgd291bGQgdGhpbmsgdGhlIG9ubHkKcmVhc29uIHRoZXNlIHNo
-b3VsZCBiZSBkaWZmZXJlbnQgaXMgdGhhdCB0aGUgaW5xdWlyaWVzIHJldHVybmVkCmRpZmZlcmVu
-dCB2YWx1ZXMgd2hlbiBtdWx0aXBhdGhkIGRpZCBpdCBhdCAxMToyOCwgYW5kIHdoZW4geW91IGRp
-ZCBpdAp0aHJvdWdoIG11bHRpcGF0aCBhdCAxNjo0NS4gIAoKSW4gb3JkZXIgdG8gc2VlIHRoYXQs
-IHdlJ2QgcHJvYmFibHkgbmVlZCB0byBzZXQgdmVyYm9zaXR5IDMgaW4gdGhlCmRlZmF1bHRzIHNl
-Y3Rpb24gb2YgbXVsdGlwYXRoLmNvbmYsIHJlc3RhcnQgdGhlIGRhZW1vbiwgYW5kIGRvIGl0CmFn
-YWluLi4gIERvZXMgYW55b25lIGVsc2UgaGF2ZSBhbnkgdGhvdWdodHMgb24gdGhpcz8KPiAKPiBT
-byBpdCBzZWVtcyB0byBrbm93IHRoYXRzIGl0cyBzZXJpYWwgZW5kcyBpbiDigJwwMuKAnSBhbmQg
-bm90IOKAnDA04oCdIGxpa2UKPiB3aGVyZSBpdCBwdXQgdGhlIGRldmljZS4gSSBkb27igJl0IHVu
-ZGVyc3RhbmQgaG93IHRvIGRlYnVnIHRoaXMgZnVydGhlciwKPiBzbyBhbnkgaGVscCB3b3VsZCBi
-ZSBhcHByZWNpYXRlZC4KCgpUaGFua3MsClNlYW4gU3Rld2FydAoKCgotLQpkbS1kZXZlbCBtYWls
-aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
-YW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Thanks Sean. Did you see my latest post where I printed the pp->serial afte=
+r the problem happens. It looks like the pp->wwid and the pp->serial are po=
+inting to the same thing. I am looking into how pp->wwid gets formed for a =
+path, but the correct serial for that path is there. Since the dm is looked=
+ up by the wwid and not the serial though, it gets into this problem. =
+
+
+Thanks,
+Brian
+
+On May 15, 2014, at 9:48 AM, Stewart, Sean <Sean.Stewart@netapp.com> wrote:
+
+> Hi Brian,
+> =
+
+> On Tue, 2014-05-13 at 16:55 -0700, Brian Bunker wrote:
+>> We continue to run into problems with the device-mapper presumably
+>> putting LUNs which do not belong with the dm under its control. Here
+>> is the latest (I am picking out just dm-2 but there are others in this
+>> same state):
+> =
+
+>> =
+
+>> I see the following kernel messages in the syslog when the device sdaj
+>> arrives to when it is put in the wrong place:
+>> May 13 11:28:27 rb9init4 kernel: scsi 1:0:0:1: Direct-Access     PURE   =
+  FlashArray       400B PQ: 0 ANSI: 6
+>> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] 1048576000 512-byte =
+logical blocks: (536 GB/500 GiB)
+>> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: Attached scsi generic sg1 t=
+ype 0
+>> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] Write Protect is off
+>> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] Write cache: disable=
+d, read cache: enabled, doesn't support DPO or FUA
+>> May 13 11:28:27 rb9init4 kernel: sdaj:
+>> May 13 11:28:27 rb9init4 kernel: unknown partition table
+>> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] Attached SCSI disk
+>> May 13 11:28:28 rb9init4 multipathd: sdaj: add path (uevent)
+>> May 13 11:28:28 rb9init4 multipathd: sdaj path added to devmap 3624a9370=
+c90d0d631ef8783e00010004
+>> =
+
+> I ran through the code a little bit the other day, and I don't see how
+> it could be making a mistake here.  It runs scsi_id, the result is
+> placed in a 128 character buffer, then it is strncmp'd with the wwid of
+> the mpath devices.
+>> =
+
+>> I don=92t understand where it gets 3624a9370c90d0d631ef8783e00010004.
+>> When I run the =91multipath -v6 -d=92 so that it prints out what it wants
+>> to do but doesn=92t do it, I see:
+> =
+
+>> May 13 16:45:15 | sdaj: getuid =3D /lib/udev/scsi_id --whitelisted
+>> --device=3D/dev/%n (config file default)
+>> May 13 16:45:15 | sdaj: uid =3D 3624a9370c90d0d631ef8783e00010002
+>> (callout)
+>> May 13 16:45:15 | sdaj: state =3D running
+>> May 13 16:45:15 | sdaj: detect_prio =3D 1 (config file default)
+>> May 13 16:45:15 | sdaj: prio =3D const (config file default)
+>> May 13 16:45:15 | sdaj: const prio =3D 1
+>> =
+
+> Running this command later will make it do the same thing, run scsi_id
+> which runs an inquiry that gets the wwid..  I would think the only
+> reason these should be different is that the inquiries returned
+> different values when multipathd did it at 11:28, and when you did it
+> through multipath at 16:45.  =
+
+> =
+
+> In order to see that, we'd probably need to set verbosity 3 in the
+> defaults section of multipath.conf, restart the daemon, and do it
+> again..  Does anyone else have any thoughts on this?
+>> =
+
+>> So it seems to know thats its serial ends in =9302=94 and not =9304=94 l=
+ike
+>> where it put the device. I don=92t understand how to debug this further,
+>> so any help would be appreciated.
+> =
+
+> =
+
+> Thanks,
+> Sean Stewart
+> =
+
+> =
+
+> =
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+Brian Bunker
+brian@purestorage.com
