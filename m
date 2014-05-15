@@ -1,12 +1,16 @@
-From: Brian Bunker <brian@purestorage.com>
-Subject: an interesting note on LUN coalescing
-Date: Thu, 15 May 2014 09:35:53 -0700
-Message-ID: <9E356404-6E9E-4271-A8DC-8A95DD66AC81@purestorage.com>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: Re: path coalescing once more
+Date: Thu, 15 May 2014 16:48:13 +0000
+Message-ID: <1400172493.19394.7.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+References: <ED745309-08E8-4C83-86BD-F9D7246CA8F6@purestorage.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 7.2 \(1874\))
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <ED745309-08E8-4C83-86BD-F9D7246CA8F6@purestorage.com>
+Content-Language: en-US
+Content-ID: <CF684BDD321A7A4FA3EB946B0CE8B1B3@hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,44 +23,54 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I have added a line to multipathd/main.c to see if I could get some more in=
-formation when the dm device gets the wrong LUN=92s underneath. So I have a=
- dm device:
-
-3624a9370c90d0d631ef8783e00010004 dm-2 PURE,FlashArray
-size=3D500G features=3D'0' hwhandler=3D'0' wp=3Drw
-`-+- policy=3D'round-robin 0' prio=3D0 status=3Dactive
-  |- 3:0:0:3 sdav 66:240 active undef running
-  |- 0:0:0:3 sdbc 67:96  active undef running
-  |- 6:0:0:3 sdbt 68:112 active undef running
-  |- 5:0:0:3 sdbu 68:128 active undef running
-  |- 7:0:0:1 sdal 66:80  active undef running
-  |- 2:0:0:1 sdb  8:16   active undef running
-  `- 4:0:0:1 sdk  8:160  active undef running
-
-I can see that when sdk is added to the dm, it is added to a dm ending in 0=
-04, but the serial number of sdk clearly ends in 002:
-
-May 15 05:09:55 rb9init4 multipathd: sdk: add path (uevent)
-May 15 05:09:55 rb9init4 multipathd: 3624a9370c90d0d631ef8783e00010004: loa=
-d table [0 1048576000 multipath 0 0 1 1 round-robin 0 7 1 66:240 1 67:96 1 =
-68:112 1 68:128 1 66:80 1 8:16 1 8:160 1]
-May 15 05:09:55 rb9init4 multipathd: sdk path added to devmap 3624a9370c90d=
-0d631ef8783e00010004
-May 15 05:09:55 rb9init4 multipathd: sdk [8:160]: path has a serial C90D0D6=
-31EF8783E00010002
-
-I am printing out pp->serial to get the serial number of sdk. =
-
-
-Any idea why the lookup of wwid for a path gets clearly the wrong one? At s=
-ome level the data structure has the right serial number. Is there a check =
-missing that belongs there? Is there a bug in the lookup itself? I will kee=
-p adding more debug lines to get to the bottom of the problem if there are =
-no ideas. This definitely leads to a corruption when it happens.
-
-Thanks,
-Brian
-
-Brian Bunker
-brian@purestorage.com
+SGkgQnJpYW4sCgpPbiBUdWUsIDIwMTQtMDUtMTMgYXQgMTY6NTUgLTA3MDAsIEJyaWFuIEJ1bmtl
+ciB3cm90ZToKPiBXZSBjb250aW51ZSB0byBydW4gaW50byBwcm9ibGVtcyB3aXRoIHRoZSBkZXZp
+Y2UtbWFwcGVyIHByZXN1bWFibHkKPiBwdXR0aW5nIExVTnMgd2hpY2ggZG8gbm90IGJlbG9uZyB3
+aXRoIHRoZSBkbSB1bmRlciBpdHMgY29udHJvbC4gSGVyZQo+IGlzIHRoZSBsYXRlc3QgKEkgYW0g
+cGlja2luZyBvdXQganVzdCBkbS0yIGJ1dCB0aGVyZSBhcmUgb3RoZXJzIGluIHRoaXMKPiBzYW1l
+IHN0YXRlKToKCj4gCj4gSSBzZWUgdGhlIGZvbGxvd2luZyBrZXJuZWwgbWVzc2FnZXMgaW4gdGhl
+IHN5c2xvZyB3aGVuIHRoZSBkZXZpY2Ugc2Rhago+IGFycml2ZXMgdG8gd2hlbiBpdCBpcyBwdXQg
+aW4gdGhlIHdyb25nIHBsYWNlOgo+IE1heSAxMyAxMToyODoyNyByYjlpbml0NCBrZXJuZWw6IHNj
+c2kgMTowOjA6MTogRGlyZWN0LUFjY2VzcyAgICAgUFVSRSAgICAgRmxhc2hBcnJheSAgICAgICA0
+MDBCIFBROiAwIEFOU0k6IDYKPiBNYXkgMTMgMTE6Mjg6MjcgcmI5aW5pdDQga2VybmVsOiBzZCAx
+OjA6MDoxOiBbc2Rhal0gMTA0ODU3NjAwMCA1MTItYnl0ZSBsb2dpY2FsIGJsb2NrczogKDUzNiBH
+Qi81MDAgR2lCKQo+IE1heSAxMyAxMToyODoyNyByYjlpbml0NCBrZXJuZWw6IHNkIDE6MDowOjE6
+IEF0dGFjaGVkIHNjc2kgZ2VuZXJpYyBzZzEgdHlwZSAwCj4gTWF5IDEzIDExOjI4OjI3IHJiOWlu
+aXQ0IGtlcm5lbDogc2QgMTowOjA6MTogW3NkYWpdIFdyaXRlIFByb3RlY3QgaXMgb2ZmCj4gTWF5
+IDEzIDExOjI4OjI3IHJiOWluaXQ0IGtlcm5lbDogc2QgMTowOjA6MTogW3NkYWpdIFdyaXRlIGNh
+Y2hlOiBkaXNhYmxlZCwgcmVhZCBjYWNoZTogZW5hYmxlZCwgZG9lc24ndCBzdXBwb3J0IERQTyBv
+ciBGVUEKPiBNYXkgMTMgMTE6Mjg6MjcgcmI5aW5pdDQga2VybmVsOiBzZGFqOgo+IE1heSAxMyAx
+MToyODoyNyByYjlpbml0NCBrZXJuZWw6IHVua25vd24gcGFydGl0aW9uIHRhYmxlCj4gTWF5IDEz
+IDExOjI4OjI3IHJiOWluaXQ0IGtlcm5lbDogc2QgMTowOjA6MTogW3NkYWpdIEF0dGFjaGVkIFND
+U0kgZGlzawo+IE1heSAxMyAxMToyODoyOCByYjlpbml0NCBtdWx0aXBhdGhkOiBzZGFqOiBhZGQg
+cGF0aCAodWV2ZW50KQo+IE1heSAxMyAxMToyODoyOCByYjlpbml0NCBtdWx0aXBhdGhkOiBzZGFq
+IHBhdGggYWRkZWQgdG8gZGV2bWFwIDM2MjRhOTM3MGM5MGQwZDYzMWVmODc4M2UwMDAxMDAwNAo+
+IApJIHJhbiB0aHJvdWdoIHRoZSBjb2RlIGEgbGl0dGxlIGJpdCB0aGUgb3RoZXIgZGF5LCBhbmQg
+SSBkb24ndCBzZWUgaG93Cml0IGNvdWxkIGJlIG1ha2luZyBhIG1pc3Rha2UgaGVyZS4gIEl0IHJ1
+bnMgc2NzaV9pZCwgdGhlIHJlc3VsdCBpcwpwbGFjZWQgaW4gYSAxMjggY2hhcmFjdGVyIGJ1ZmZl
+ciwgdGhlbiBpdCBpcyBzdHJuY21wJ2Qgd2l0aCB0aGUgd3dpZCBvZgp0aGUgbXBhdGggZGV2aWNl
+cy4KPiAKPiBJIGRvbuKAmXQgdW5kZXJzdGFuZCB3aGVyZSBpdCBnZXRzIDM2MjRhOTM3MGM5MGQw
+ZDYzMWVmODc4M2UwMDAxMDAwNC4KPiBXaGVuIEkgcnVuIHRoZSDigJhtdWx0aXBhdGggLXY2IC1k
+4oCZIHNvIHRoYXQgaXQgcHJpbnRzIG91dCB3aGF0IGl0IHdhbnRzCj4gdG8gZG8gYnV0IGRvZXNu
+4oCZdCBkbyBpdCwgSSBzZWU6Cgo+IE1heSAxMyAxNjo0NToxNSB8IHNkYWo6IGdldHVpZCA9IC9s
+aWIvdWRldi9zY3NpX2lkIC0td2hpdGVsaXN0ZWQKPiAtLWRldmljZT0vZGV2LyVuIChjb25maWcg
+ZmlsZSBkZWZhdWx0KQo+IE1heSAxMyAxNjo0NToxNSB8IHNkYWo6IHVpZCA9IDM2MjRhOTM3MGM5
+MGQwZDYzMWVmODc4M2UwMDAxMDAwMgo+IChjYWxsb3V0KQo+IE1heSAxMyAxNjo0NToxNSB8IHNk
+YWo6IHN0YXRlID0gcnVubmluZwo+IE1heSAxMyAxNjo0NToxNSB8IHNkYWo6IGRldGVjdF9wcmlv
+ID0gMSAoY29uZmlnIGZpbGUgZGVmYXVsdCkKPiBNYXkgMTMgMTY6NDU6MTUgfCBzZGFqOiBwcmlv
+ID0gY29uc3QgKGNvbmZpZyBmaWxlIGRlZmF1bHQpCj4gTWF5IDEzIDE2OjQ1OjE1IHwgc2Rhajog
+Y29uc3QgcHJpbyA9IDEKPiAKUnVubmluZyB0aGlzIGNvbW1hbmQgbGF0ZXIgd2lsbCBtYWtlIGl0
+IGRvIHRoZSBzYW1lIHRoaW5nLCBydW4gc2NzaV9pZAp3aGljaCBydW5zIGFuIGlucXVpcnkgdGhh
+dCBnZXRzIHRoZSB3d2lkLi4gIEkgd291bGQgdGhpbmsgdGhlIG9ubHkKcmVhc29uIHRoZXNlIHNo
+b3VsZCBiZSBkaWZmZXJlbnQgaXMgdGhhdCB0aGUgaW5xdWlyaWVzIHJldHVybmVkCmRpZmZlcmVu
+dCB2YWx1ZXMgd2hlbiBtdWx0aXBhdGhkIGRpZCBpdCBhdCAxMToyOCwgYW5kIHdoZW4geW91IGRp
+ZCBpdAp0aHJvdWdoIG11bHRpcGF0aCBhdCAxNjo0NS4gIAoKSW4gb3JkZXIgdG8gc2VlIHRoYXQs
+IHdlJ2QgcHJvYmFibHkgbmVlZCB0byBzZXQgdmVyYm9zaXR5IDMgaW4gdGhlCmRlZmF1bHRzIHNl
+Y3Rpb24gb2YgbXVsdGlwYXRoLmNvbmYsIHJlc3RhcnQgdGhlIGRhZW1vbiwgYW5kIGRvIGl0CmFn
+YWluLi4gIERvZXMgYW55b25lIGVsc2UgaGF2ZSBhbnkgdGhvdWdodHMgb24gdGhpcz8KPiAKPiBT
+byBpdCBzZWVtcyB0byBrbm93IHRoYXRzIGl0cyBzZXJpYWwgZW5kcyBpbiDigJwwMuKAnSBhbmQg
+bm90IOKAnDA04oCdIGxpa2UKPiB3aGVyZSBpdCBwdXQgdGhlIGRldmljZS4gSSBkb27igJl0IHVu
+ZGVyc3RhbmQgaG93IHRvIGRlYnVnIHRoaXMgZnVydGhlciwKPiBzbyBhbnkgaGVscCB3b3VsZCBi
+ZSBhcHByZWNpYXRlZC4KCgpUaGFua3MsClNlYW4gU3Rld2FydAoKCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
