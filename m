@@ -1,15 +1,16 @@
-From: Brian Bunker <brian@purestorage.com>
-Subject: Re: path coalescing once more
-Date: Thu, 15 May 2014 09:59:18 -0700
-Message-ID: <4E2D4DFE-F486-4515-898E-693BBC6A8589@purestorage.com>
-References: <ED745309-08E8-4C83-86BD-F9D7246CA8F6@purestorage.com>
-	<1400172493.19394.7.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: Re: an interesting note on LUN coalescing
+Date: Thu, 15 May 2014 17:07:56 +0000
+Message-ID: <1400173675.19394.13.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+References: <9E356404-6E9E-4271-A8DC-8A95DD66AC81@purestorage.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 7.2 \(1874\))
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1400172493.19394.7.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+In-Reply-To: <9E356404-6E9E-4271-A8DC-8A95DD66AC81@purestorage.com>
+Content-Language: en-US
+Content-ID: <A3A4300CC8B58D47953AAE169B809845@hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,103 +23,43 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks Sean. Did you see my latest post where I printed the pp->serial afte=
-r the problem happens. It looks like the pp->wwid and the pp->serial are po=
-inting to the same thing. I am looking into how pp->wwid gets formed for a =
-path, but the correct serial for that path is there. Since the dm is looked=
- up by the wwid and not the serial though, it gets into this problem. =
-
-
-Thanks,
-Brian
-
-On May 15, 2014, at 9:48 AM, Stewart, Sean <Sean.Stewart@netapp.com> wrote:
-
-> Hi Brian,
-> =
-
-> On Tue, 2014-05-13 at 16:55 -0700, Brian Bunker wrote:
->> We continue to run into problems with the device-mapper presumably
->> putting LUNs which do not belong with the dm under its control. Here
->> is the latest (I am picking out just dm-2 but there are others in this
->> same state):
-> =
-
->> =
-
->> I see the following kernel messages in the syslog when the device sdaj
->> arrives to when it is put in the wrong place:
->> May 13 11:28:27 rb9init4 kernel: scsi 1:0:0:1: Direct-Access     PURE   =
-  FlashArray       400B PQ: 0 ANSI: 6
->> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] 1048576000 512-byte =
-logical blocks: (536 GB/500 GiB)
->> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: Attached scsi generic sg1 t=
-ype 0
->> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] Write Protect is off
->> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] Write cache: disable=
-d, read cache: enabled, doesn't support DPO or FUA
->> May 13 11:28:27 rb9init4 kernel: sdaj:
->> May 13 11:28:27 rb9init4 kernel: unknown partition table
->> May 13 11:28:27 rb9init4 kernel: sd 1:0:0:1: [sdaj] Attached SCSI disk
->> May 13 11:28:28 rb9init4 multipathd: sdaj: add path (uevent)
->> May 13 11:28:28 rb9init4 multipathd: sdaj path added to devmap 3624a9370=
-c90d0d631ef8783e00010004
->> =
-
-> I ran through the code a little bit the other day, and I don't see how
-> it could be making a mistake here.  It runs scsi_id, the result is
-> placed in a 128 character buffer, then it is strncmp'd with the wwid of
-> the mpath devices.
->> =
-
->> I don=92t understand where it gets 3624a9370c90d0d631ef8783e00010004.
->> When I run the =91multipath -v6 -d=92 so that it prints out what it wants
->> to do but doesn=92t do it, I see:
-> =
-
->> May 13 16:45:15 | sdaj: getuid =3D /lib/udev/scsi_id --whitelisted
->> --device=3D/dev/%n (config file default)
->> May 13 16:45:15 | sdaj: uid =3D 3624a9370c90d0d631ef8783e00010002
->> (callout)
->> May 13 16:45:15 | sdaj: state =3D running
->> May 13 16:45:15 | sdaj: detect_prio =3D 1 (config file default)
->> May 13 16:45:15 | sdaj: prio =3D const (config file default)
->> May 13 16:45:15 | sdaj: const prio =3D 1
->> =
-
-> Running this command later will make it do the same thing, run scsi_id
-> which runs an inquiry that gets the wwid..  I would think the only
-> reason these should be different is that the inquiries returned
-> different values when multipathd did it at 11:28, and when you did it
-> through multipath at 16:45.  =
-
-> =
-
-> In order to see that, we'd probably need to set verbosity 3 in the
-> defaults section of multipath.conf, restart the daemon, and do it
-> again..  Does anyone else have any thoughts on this?
->> =
-
->> So it seems to know thats its serial ends in =9302=94 and not =9304=94 l=
-ike
->> where it put the device. I don=92t understand how to debug this further,
->> so any help would be appreciated.
-> =
-
-> =
-
-> Thanks,
-> Sean Stewart
-> =
-
-> =
-
-> =
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-Brian Bunker
-brian@purestorage.com
+SGkgQnJpYW4sCgpJIHJlc3BvbmRlZCB0byB5b3VyIG90aGVyIGVtYWlsIGJlZm9yZSBJIHNhdyB0
+aGlzIG9uZSwgYnV0IEkgd2FudGVkIHRvCnNlZSBpZiBJIGNvdWxkIGhlbHAsIGhlcmUsIHRvby4g
+CgpPbiBUaHUsIDIwMTQtMDUtMTUgYXQgMDk6MzUgLTA3MDAsIEJyaWFuIEJ1bmtlciB3cm90ZToK
+PiBJIGhhdmUgYWRkZWQgYSBsaW5lIHRvIG11bHRpcGF0aGQvbWFpbi5jIHRvIHNlZSBpZiBJIGNv
+dWxkIGdldCBzb21lIG1vcmUgaW5mb3JtYXRpb24gd2hlbiB0aGUgZG0gZGV2aWNlIGdldHMgdGhl
+IHdyb25nIExVTuKAmXMgdW5kZXJuZWF0aC4gU28gSSBoYXZlIGEgZG0gZGV2aWNlOgo+IAo+IDM2
+MjRhOTM3MGM5MGQwZDYzMWVmODc4M2UwMDAxMDAwNCBkbS0yIFBVUkUsRmxhc2hBcnJheQo+IHNp
+emU9NTAwRyBmZWF0dXJlcz0nMCcgaHdoYW5kbGVyPScwJyB3cD1ydwo+IGAtKy0gcG9saWN5PSdy
+b3VuZC1yb2JpbiAwJyBwcmlvPTAgc3RhdHVzPWFjdGl2ZQo+ICAgfC0gMzowOjA6MyBzZGF2IDY2
+OjI0MCBhY3RpdmUgdW5kZWYgcnVubmluZwo+ICAgfC0gMDowOjA6MyBzZGJjIDY3Ojk2ICBhY3Rp
+dmUgdW5kZWYgcnVubmluZwo+ICAgfC0gNjowOjA6MyBzZGJ0IDY4OjExMiBhY3RpdmUgdW5kZWYg
+cnVubmluZwo+ICAgfC0gNTowOjA6MyBzZGJ1IDY4OjEyOCBhY3RpdmUgdW5kZWYgcnVubmluZwo+
+ICAgfC0gNzowOjA6MSBzZGFsIDY2OjgwICBhY3RpdmUgdW5kZWYgcnVubmluZwo+ICAgfC0gMjow
+OjA6MSBzZGIgIDg6MTYgICBhY3RpdmUgdW5kZWYgcnVubmluZwo+ICAgYC0gNDowOjA6MSBzZGsg
+IDg6MTYwICBhY3RpdmUgdW5kZWYgcnVubmluZwo+IAo+IEkgY2FuIHNlZSB0aGF0IHdoZW4gc2Rr
+IGlzIGFkZGVkIHRvIHRoZSBkbSwgaXQgaXMgYWRkZWQgdG8gYSBkbSBlbmRpbmcgaW4gMDA0LCBi
+dXQgdGhlIHNlcmlhbCBudW1iZXIgb2Ygc2RrIGNsZWFybHkgZW5kcyBpbiAwMDI6Cj4gCj4gTWF5
+IDE1IDA1OjA5OjU1IHJiOWluaXQ0IG11bHRpcGF0aGQ6IHNkazogYWRkIHBhdGggKHVldmVudCkK
+PiBNYXkgMTUgMDU6MDk6NTUgcmI5aW5pdDQgbXVsdGlwYXRoZDogMzYyNGE5MzcwYzkwZDBkNjMx
+ZWY4NzgzZTAwMDEwMDA0OiBsb2FkIHRhYmxlIFswIDEwNDg1NzYwMDAgbXVsdGlwYXRoIDAgMCAx
+IDEgcm91bmQtcm9iaW4gMCA3IDEgNjY6MjQwIDEgNjc6OTYgMSA2ODoxMTIgMSA2ODoxMjggMSA2
+Njo4MCAxIDg6MTYgMSA4OjE2MCAxXQo+IE1heSAxNSAwNTowOTo1NSByYjlpbml0NCBtdWx0aXBh
+dGhkOiBzZGsgcGF0aCBhZGRlZCB0byBkZXZtYXAgMzYyNGE5MzcwYzkwZDBkNjMxZWY4NzgzZTAw
+MDEwMDA0Cj4gTWF5IDE1IDA1OjA5OjU1IHJiOWluaXQ0IG11bHRpcGF0aGQ6IHNkayBbODoxNjBd
+OiBwYXRoIGhhcyBhIHNlcmlhbCBDOTBEMEQ2MzFFRjg3ODNFMDAwMTAwMDIKPiAKPiBJIGFtIHBy
+aW50aW5nIG91dCBwcC0+c2VyaWFsIHRvIGdldCB0aGUgc2VyaWFsIG51bWJlciBvZiBzZGsuIAoK
+cHAtPnNlcmlhbCBhY3R1YWxseSBwbGF5cyBubyBwYXJ0IGluIGRldGVybWluaW5nIHRoZSBtdWx0
+aXBhdGggZGV2aWNlLgpJdCBpcyBxdWVyaWVkIGZyb20gVlBEIHBhZ2UgMHg4MCwgdmlhIHRoZSBm
+dW5jdGlvbiBnZXRfc2VyaWFsLCB3aGVyZWFzCnRoZSB3d2lkIGlzIG9idGFpbmVkIGZyb20gVlBE
+IHBhZ2UgMHg4MywgdGhyb3VnaCB0aGUgZnVuY3Rpb24gZ2V0X3VpZCgpLgpUaGUgcHAtPnd3aWQg
+YXR0cmlidXRlIHVsdGltYXRlbHkgaXMgd2hhdCBpdCBjb21wYXJlcyB0byBkZXRlcm1pbmUgdGhl
+Cm11bHRpcGF0aCBkZXZpY2UuCgpQZXJoYXBzIHdoZW4geW91IGRvIHRoaXMsIHdlIHNob3VsZCBj
+aGVjayB3aGF0IHRoZSBkZXZpY2UgcmVwb3J0cyBhcyB0aGUKd3dpZCBpbiBpbnF1aXJ5IHBhZ2Ug
+MHg4Mz8gIElmIHlvdSBoYXZlIHNnM191dGlscyBvbiB5b3VyIHN5c3RlbSwgeW91CmNhbiBkbyB0
+aGF0IHRocm91Z2ggc2dfdnBkIC1wIDB4ODMgPGRldmljZT4uICBJJ2QgYmUgaW50ZXJlc3RlZCBp
+bgprbm93aW5nIGlmIHRoZSBwYWdlIDB4ODMgYW5kIHRoZSBzZXJpYWwgaW4gMHg4MCBhcmUgZGlz
+YWdyZWVpbmcgYXQgdGhlCnRpbWUgaXQncyBiZWluZyBxdWVyaWVkIGJ5IG11bHRpcGF0aGQuLgoK
+ClRoYW5rcywKU2VhbiBTdGV3YXJ0CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
+QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVs
