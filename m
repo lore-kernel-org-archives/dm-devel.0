@@ -1,16 +1,15 @@
-From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+From: Brian Bunker <brian@purestorage.com>
 Subject: Re: an interesting note on LUN coalescing
-Date: Thu, 15 May 2014 17:07:56 +0000
-Message-ID: <1400173675.19394.13.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+Date: Thu, 15 May 2014 10:23:06 -0700
+Message-ID: <CDE8FB77-CD2E-4FF6-8485-C08FA3A7AE74@purestorage.com>
 References: <9E356404-6E9E-4271-A8DC-8A95DD66AC81@purestorage.com>
+	<1400173675.19394.13.camel@ict-vth-stewarts01.ict.englab.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Mime-Version: 1.0 (Mac OS X Mail 7.2 \(1874\))
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9E356404-6E9E-4271-A8DC-8A95DD66AC81@purestorage.com>
-Content-Language: en-US
-Content-ID: <A3A4300CC8B58D47953AAE169B809845@hq.netapp.com>
+In-Reply-To: <1400173675.19394.13.camel@ict-vth-stewarts01.ict.englab.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,43 +22,102 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgQnJpYW4sCgpJIHJlc3BvbmRlZCB0byB5b3VyIG90aGVyIGVtYWlsIGJlZm9yZSBJIHNhdyB0
-aGlzIG9uZSwgYnV0IEkgd2FudGVkIHRvCnNlZSBpZiBJIGNvdWxkIGhlbHAsIGhlcmUsIHRvby4g
-CgpPbiBUaHUsIDIwMTQtMDUtMTUgYXQgMDk6MzUgLTA3MDAsIEJyaWFuIEJ1bmtlciB3cm90ZToK
-PiBJIGhhdmUgYWRkZWQgYSBsaW5lIHRvIG11bHRpcGF0aGQvbWFpbi5jIHRvIHNlZSBpZiBJIGNv
-dWxkIGdldCBzb21lIG1vcmUgaW5mb3JtYXRpb24gd2hlbiB0aGUgZG0gZGV2aWNlIGdldHMgdGhl
-IHdyb25nIExVTuKAmXMgdW5kZXJuZWF0aC4gU28gSSBoYXZlIGEgZG0gZGV2aWNlOgo+IAo+IDM2
-MjRhOTM3MGM5MGQwZDYzMWVmODc4M2UwMDAxMDAwNCBkbS0yIFBVUkUsRmxhc2hBcnJheQo+IHNp
-emU9NTAwRyBmZWF0dXJlcz0nMCcgaHdoYW5kbGVyPScwJyB3cD1ydwo+IGAtKy0gcG9saWN5PSdy
-b3VuZC1yb2JpbiAwJyBwcmlvPTAgc3RhdHVzPWFjdGl2ZQo+ICAgfC0gMzowOjA6MyBzZGF2IDY2
-OjI0MCBhY3RpdmUgdW5kZWYgcnVubmluZwo+ICAgfC0gMDowOjA6MyBzZGJjIDY3Ojk2ICBhY3Rp
-dmUgdW5kZWYgcnVubmluZwo+ICAgfC0gNjowOjA6MyBzZGJ0IDY4OjExMiBhY3RpdmUgdW5kZWYg
-cnVubmluZwo+ICAgfC0gNTowOjA6MyBzZGJ1IDY4OjEyOCBhY3RpdmUgdW5kZWYgcnVubmluZwo+
-ICAgfC0gNzowOjA6MSBzZGFsIDY2OjgwICBhY3RpdmUgdW5kZWYgcnVubmluZwo+ICAgfC0gMjow
-OjA6MSBzZGIgIDg6MTYgICBhY3RpdmUgdW5kZWYgcnVubmluZwo+ICAgYC0gNDowOjA6MSBzZGsg
-IDg6MTYwICBhY3RpdmUgdW5kZWYgcnVubmluZwo+IAo+IEkgY2FuIHNlZSB0aGF0IHdoZW4gc2Rr
-IGlzIGFkZGVkIHRvIHRoZSBkbSwgaXQgaXMgYWRkZWQgdG8gYSBkbSBlbmRpbmcgaW4gMDA0LCBi
-dXQgdGhlIHNlcmlhbCBudW1iZXIgb2Ygc2RrIGNsZWFybHkgZW5kcyBpbiAwMDI6Cj4gCj4gTWF5
-IDE1IDA1OjA5OjU1IHJiOWluaXQ0IG11bHRpcGF0aGQ6IHNkazogYWRkIHBhdGggKHVldmVudCkK
-PiBNYXkgMTUgMDU6MDk6NTUgcmI5aW5pdDQgbXVsdGlwYXRoZDogMzYyNGE5MzcwYzkwZDBkNjMx
-ZWY4NzgzZTAwMDEwMDA0OiBsb2FkIHRhYmxlIFswIDEwNDg1NzYwMDAgbXVsdGlwYXRoIDAgMCAx
-IDEgcm91bmQtcm9iaW4gMCA3IDEgNjY6MjQwIDEgNjc6OTYgMSA2ODoxMTIgMSA2ODoxMjggMSA2
-Njo4MCAxIDg6MTYgMSA4OjE2MCAxXQo+IE1heSAxNSAwNTowOTo1NSByYjlpbml0NCBtdWx0aXBh
-dGhkOiBzZGsgcGF0aCBhZGRlZCB0byBkZXZtYXAgMzYyNGE5MzcwYzkwZDBkNjMxZWY4NzgzZTAw
-MDEwMDA0Cj4gTWF5IDE1IDA1OjA5OjU1IHJiOWluaXQ0IG11bHRpcGF0aGQ6IHNkayBbODoxNjBd
-OiBwYXRoIGhhcyBhIHNlcmlhbCBDOTBEMEQ2MzFFRjg3ODNFMDAwMTAwMDIKPiAKPiBJIGFtIHBy
-aW50aW5nIG91dCBwcC0+c2VyaWFsIHRvIGdldCB0aGUgc2VyaWFsIG51bWJlciBvZiBzZGsuIAoK
-cHAtPnNlcmlhbCBhY3R1YWxseSBwbGF5cyBubyBwYXJ0IGluIGRldGVybWluaW5nIHRoZSBtdWx0
-aXBhdGggZGV2aWNlLgpJdCBpcyBxdWVyaWVkIGZyb20gVlBEIHBhZ2UgMHg4MCwgdmlhIHRoZSBm
-dW5jdGlvbiBnZXRfc2VyaWFsLCB3aGVyZWFzCnRoZSB3d2lkIGlzIG9idGFpbmVkIGZyb20gVlBE
-IHBhZ2UgMHg4MywgdGhyb3VnaCB0aGUgZnVuY3Rpb24gZ2V0X3VpZCgpLgpUaGUgcHAtPnd3aWQg
-YXR0cmlidXRlIHVsdGltYXRlbHkgaXMgd2hhdCBpdCBjb21wYXJlcyB0byBkZXRlcm1pbmUgdGhl
-Cm11bHRpcGF0aCBkZXZpY2UuCgpQZXJoYXBzIHdoZW4geW91IGRvIHRoaXMsIHdlIHNob3VsZCBj
-aGVjayB3aGF0IHRoZSBkZXZpY2UgcmVwb3J0cyBhcyB0aGUKd3dpZCBpbiBpbnF1aXJ5IHBhZ2Ug
-MHg4Mz8gIElmIHlvdSBoYXZlIHNnM191dGlscyBvbiB5b3VyIHN5c3RlbSwgeW91CmNhbiBkbyB0
-aGF0IHRocm91Z2ggc2dfdnBkIC1wIDB4ODMgPGRldmljZT4uICBJJ2QgYmUgaW50ZXJlc3RlZCBp
-bgprbm93aW5nIGlmIHRoZSBwYWdlIDB4ODMgYW5kIHRoZSBzZXJpYWwgaW4gMHg4MCBhcmUgZGlz
-YWdyZWVpbmcgYXQgdGhlCnRpbWUgaXQncyBiZWluZyBxdWVyaWVkIGJ5IG11bHRpcGF0aGQuLgoK
-ClRoYW5rcywKU2VhbiBTdGV3YXJ0CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
-QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
-dmVs
+I will get both the page 0x83 and page 0x80 data of the path when the probl=
+em happens. In our case the page 0x83 and page 0x80 data are the same alway=
+s. The page 0x83 data has the additional encoding and OUI information but t=
+he bytes after that 3624a9370 are exactly the same. I am wondering about ho=
+w the path gets its wwid when it comes back. =
+
+
+In our case we have a controller coming back online after doing something. =
+All the LUNs are re-discovered by the initiator and an sd device gets creat=
+ed for each LUN path which came back. The serial of the sd device at that t=
+ime I believe is known to the initiator. The multipathd gets that sd device=
+ and comes up with a wwid. I would expect that wwid would be just the seria=
+l number plus some bytes in the beginning but that is not what we see in th=
+e fail case. The path wwid and path serial are pointing to different volume=
+s on the array. I expect that the sd device will show the same data for pag=
+e 0x83 and page 0x80 pointing to the same volume on the array but I will ve=
+rify that with more logging.
+
+You can see from my previous posts on this issue. (They go back for some ti=
+me). That the page 0x83 and page 0x80 from sg3_utils show that they point t=
+o same LUN but different from the dm device that they are coalesced under.
+
+Thanks,
+Brian
+On May 15, 2014, at 10:07 AM, Stewart, Sean <Sean.Stewart@netapp.com> wrote:
+
+> Hi Brian,
+> =
+
+> I responded to your other email before I saw this one, but I wanted to
+> see if I could help, here, too. =
+
+> =
+
+> On Thu, 2014-05-15 at 09:35 -0700, Brian Bunker wrote:
+>> I have added a line to multipathd/main.c to see if I could get some more=
+ information when the dm device gets the wrong LUN=92s underneath. So I hav=
+e a dm device:
+>> =
+
+>> 3624a9370c90d0d631ef8783e00010004 dm-2 PURE,FlashArray
+>> size=3D500G features=3D'0' hwhandler=3D'0' wp=3Drw
+>> `-+- policy=3D'round-robin 0' prio=3D0 status=3Dactive
+>>  |- 3:0:0:3 sdav 66:240 active undef running
+>>  |- 0:0:0:3 sdbc 67:96  active undef running
+>>  |- 6:0:0:3 sdbt 68:112 active undef running
+>>  |- 5:0:0:3 sdbu 68:128 active undef running
+>>  |- 7:0:0:1 sdal 66:80  active undef running
+>>  |- 2:0:0:1 sdb  8:16   active undef running
+>>  `- 4:0:0:1 sdk  8:160  active undef running
+>> =
+
+>> I can see that when sdk is added to the dm, it is added to a dm ending i=
+n 004, but the serial number of sdk clearly ends in 002:
+>> =
+
+>> May 15 05:09:55 rb9init4 multipathd: sdk: add path (uevent)
+>> May 15 05:09:55 rb9init4 multipathd: 3624a9370c90d0d631ef8783e00010004: =
+load table [0 1048576000 multipath 0 0 1 1 round-robin 0 7 1 66:240 1 67:96=
+ 1 68:112 1 68:128 1 66:80 1 8:16 1 8:160 1]
+>> May 15 05:09:55 rb9init4 multipathd: sdk path added to devmap 3624a9370c=
+90d0d631ef8783e00010004
+>> May 15 05:09:55 rb9init4 multipathd: sdk [8:160]: path has a serial C90D=
+0D631EF8783E00010002
+>> =
+
+>> I am printing out pp->serial to get the serial number of sdk. =
+
+> =
+
+> pp->serial actually plays no part in determining the multipath device.
+> It is queried from VPD page 0x80, via the function get_serial, whereas
+> the wwid is obtained from VPD page 0x83, through the function get_uid().
+> The pp->wwid attribute ultimately is what it compares to determine the
+> multipath device.
+> =
+
+> Perhaps when you do this, we should check what the device reports as the
+> wwid in inquiry page 0x83?  If you have sg3_utils on your system, you
+> can do that through sg_vpd -p 0x83 <device>.  I'd be interested in
+> knowing if the page 0x83 and the serial in 0x80 are disagreeing at the
+> time it's being queried by multipathd..
+> =
+
+> =
+
+> Thanks,
+> Sean Stewart
+> =
+
+> =
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+Brian Bunker
+brian@purestorage.com
