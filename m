@@ -1,10 +1,11 @@
-From: "M.H. Tsai" <mingnus@gmail.com>
-Subject: thin_repair doesn't do size checking on the output device
-Date: Mon, 19 May 2014 15:13:24 +0800
-Message-ID: <CAAYit8QKG_gAmwvew7AAZMJeSh5MzGtuMrRrk9Gi-BS2UcyAUQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: =?ISO-8859-1?Q?Patrik_Horn=EDk?= <patrik@dsl.sk>
+Subject: Status of Linux LVM thin provisioning
+Date: Mon, 19 May 2014 00:46:49 +0200
+Message-ID: <CAAOsTSk_wy5snVhQM_8k4fyk5KpnYMYn317+OzkgX6CSoA0K7A@mail.gmail.com>
+Reply-To: patrik@dsl.sk, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0995373099525730369=="
+Content-Type: text/plain; charset="iso-8859-2"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,69 +19,28 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0995373099525730369==
-Content-Type: multipart/alternative; boundary=14dae93d8d08c8a32104f9bb7fdc
+Hello there,
 
---14dae93d8d08c8a32104f9bb7fdc
-Content-Type: text/plain; charset=UTF-8
+I am editor in chief of leading Slovak IT news server DSL.sk and I am
+preparing material for our future article about Linux LVM. We are
+creating production data storage system and will report experience
+with that.
 
-Hi All,
+What I am trying to find out right now is what is exact status of LVM
+thin provisioning. There is warning in
+https://www.kernel.org/doc/Documentation/device-mapper/thin-provisioning.txt
+that it is very much still in experimental state and not recommended
+for production, but the text seems little outdated. So what is exact
+status and what versions of kernel / tools are needed? (We are
+currenly using Debian stable but with kernel, LVM and thin
+provisioning tools from Debian testing, so kernel 3.13.10-1, lvm2
+2.02.104(2) (2013-11-13) and thin-provisioning-tools 0.2.8-1.)
 
-I'm using LVM2.2.02.106 and thin-provisioning-tools 0.3.2 on Ubuntu 13.10.
-I found that thin_repair doesn't do size checking on the output device,
-thus it will crash if the output device is larger than the space map's
-limitation (i.e., 255*16320*4096 bytes). The bitmap_count calculated by
-sm_disk::extend() might exceeded 255.
+Thanks.
 
-The direct influence is that it cannot collaborate with the LVM2 "lvconvert
---repair" command while the thinpool's metadata is exactly 16GiB. The
-reason is that the size of the pool metadata spare's DM target activated by
-_lvconvert_thinpool_repair() is 16384MiB, not 16192MiB. LVM2 only adjust
-the DM target's size to DM_THIN_MAX_METADATA_SIZE(16192MiB) while the
-metadata or the spare volume are activated within a thinpool.
+Best regards,
 
-If this is a bug, I thought that it might be better to add size checking to
-thin_repair, since that users might use devices larger than 16GiB as the
-output device. Is that a feasible approach?
-
-
-Many Thanks,
-Ming-Hung Tsai
-
---14dae93d8d08c8a32104f9bb7fdc
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div><div>Hi All,</div><div><br></div><div>I&#39;m using L=
-VM2.2.02.106 and thin-provisioning-tools 0.3.2 on Ubuntu 13.10. I found tha=
-t thin_repair doesn&#39;t do size checking on the output device, thus it wi=
-ll crash if the output device is larger than the space map&#39;s limitation=
- (i.e., 255*16320*4096 bytes). The bitmap_count calculated by sm_disk::exte=
-nd() might exceeded 255.</div>
-
-<div><br></div><div>The direct influence is that it cannot collaborate with=
- the LVM2 &quot;lvconvert --repair&quot; command while the thinpool&#39;s m=
-etadata is exactly 16GiB. The reason is that the size of the pool metadata =
-spare&#39;s DM target activated by _lvconvert_thinpool_repair() is 16384MiB=
-, not 16192MiB. LVM2 only adjust the DM target&#39;s size to DM_THIN_MAX_ME=
-TADATA_SIZE(16192MiB) while the metadata or the spare volume are activated =
-within a thinpool.</div>
-
-<div><br></div><div>If this is a bug, I thought that it might be better to =
-add size checking to thin_repair, since that users might use devices larger=
- than 16GiB as the output device. Is that a feasible approach?</div><div>
-
-<br></div><div><br></div><div>Many Thanks,</div><div>Ming-Hung Tsai</div></=
-div><div><br></div></div>
-
---14dae93d8d08c8a32104f9bb7fdc--
-
-
---===============0995373099525730369==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0995373099525730369==--
+Patrik Horn=EDk
+=B9=E9fredaktor www.DSL.sk
+Tel.: +421 905 385 666
+Email: patrik@dsl.sk
