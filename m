@@ -1,16 +1,16 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: multipath-tools: mismatch between CDB allocation
- length and SG_IO dxfer_len
-Date: Thu, 22 May 2014 00:46:30 +0200
-Message-ID: <20140522004630.00003f9a@localhost>
-References: <20140405131323.00000d4b@localhost>
-	<20140521131429.00005192@localhost>
+From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
+Subject: Re: [PATCH] multipath: Fix some minor issues in path
+	reordering code
+Date: Wed, 21 May 2014 19:39:14 +0000
+Message-ID: <dd82e03eb62941518f9ca19d6b9ffdf7@hioexcmbx08-prd.hq.netapp.com>
+References: <20140521190247.GM1716@dhcp80-209.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140521131429.00005192@localhost>
+In-Reply-To: <20140521190247.GM1716@dhcp80-209.msp.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Sebastian Herbszt <herbszt@gmx.de>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-> Hi,
+> -----Original Message-----
+> From: Benjamin Marzinski [mailto:bmarzins@redhat.com]
+> Sent: Wednesday, May 21, 2014 2:03 PM
+> To: device-mapper development
+> Cc: Christophe Varoqui; Merla, ShivaKrishna
+> Subject: [PATCH] multipath: Fix some minor issues in path reordering code
 > 
-> have you verified this part is not enough to fix the problem, without
-> shrinking the response size to 128 ?
+> There were a couple of small issues with the path reordering code.
 > 
->         unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
-> -                                               sizeof(sb), 0};
-> +                                               sizeof(sense_buffer), 0};
-
-sizeof(sense_buffer) is 256 and it gets truncated to 0:
-
-ioctl(4, SG_IO, {'S', SG_DXFER_FROM_DEV, cmd[6]=[12, 01, c0, 00, 00, 00], ...
-
-[ 3730.100199] [5674]: scst: scst_parse_cmd:828:Warning: expected transfer length 256 for opcode INQUIRY (handler vdisk_blockio, target scst_local) doesn't match decoded value 0
-[ 3730.100203] [5674]: scst_parse_cmd:830:Suspicious CDB:
-[ 3730.100204]  (h)___0__1__2__3__4__5__6__7__8__9__A__B__C__D__E__F
-[ 3730.100206]    0: 12 01 c0 00 00 00   ......
-
-This works
-
-@@ -16,8 +16,9 @@ int emc_clariion_prio(const char *dev, int fd)
- {
-        unsigned char sense_buffer[256];
-        unsigned char sb[128];
--       unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
--                                               sizeof(sb), 0};
-+       unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0,
-+                                       (sizeof(sense_buffer) >> 8) & 0xff,
-+                                       sizeof(sense_buffer) & 0xff,  0};
-        struct sg_io_hdr io_hdr;
-        int ret = PRIO_UNDEF;
-
-but I am not sure a buffer of 256 is required, because the checker just uses
-128 bytes for the same page.
-
-> Is it me or the variable name is just plain misleading ?
-
-Should be "resp" or something like that.
-
-> Best regards,
-> Christophe Varoqui
-> www.opensvc.com
-
-Please keep me CC'ed in replies.
-
-Sebastian
+> Since you may fail to get the adapter name at any time while looping
+> through the paths, you need to clean up when this fails, instead of
+> just exitting group_by_host_adapter().
+> 
+> I've looked at a couple kernels, and I don't see any sysfs file named:
+> /sys/class/iscsi_host/host<n>/ip_address
+> It's always:
+> /sys/class/iscsi_host/host<n>/ipaddress
+> 
+> Also /sys/class/iscsi_host/host<n>/ipaddress could be an IPv6 address,
+> in which case we need 40 bytes to hold is, so SLOT_NAME_SIZE needs to
+> be 40 bytes large.
+> 
+Ben, thanks for identifying and fixing these. I think I overlooked the ipaddress
+part as we were majorly testing on FC/SAS.
