@@ -1,16 +1,13 @@
-From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
-Subject: Re: [PATCH] multipath: Fix some minor issues in path
-	reordering code
-Date: Wed, 21 May 2014 19:39:14 +0000
-Message-ID: <dd82e03eb62941518f9ca19d6b9ffdf7@hioexcmbx08-prd.hq.netapp.com>
-References: <20140521190247.GM1716@dhcp80-209.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Enoch Root <enokhroot@yahoo.com>
+Subject: Re-using bio
+Date: Thu, 22 May 2014 00:49:50 -0700 (PDT)
+Message-ID: <1400744990.4773.YahooMailNeo@web160603.mail.bf1.yahoo.com>
+Reply-To: Enoch Root <enokhroot@yahoo.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140521190247.GM1716@dhcp80-209.msp.redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +17,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Benjamin Marzinski [mailto:bmarzins@redhat.com]
-> Sent: Wednesday, May 21, 2014 2:03 PM
-> To: device-mapper development
-> Cc: Christophe Varoqui; Merla, ShivaKrishna
-> Subject: [PATCH] multipath: Fix some minor issues in path reordering code
-> 
-> There were a couple of small issues with the path reordering code.
-> 
-> Since you may fail to get the adapter name at any time while looping
-> through the paths, you need to clean up when this fails, instead of
-> just exitting group_by_host_adapter().
-> 
-> I've looked at a couple kernels, and I don't see any sysfs file named:
-> /sys/class/iscsi_host/host<n>/ip_address
-> It's always:
-> /sys/class/iscsi_host/host<n>/ipaddress
-> 
-> Also /sys/class/iscsi_host/host<n>/ipaddress could be an IPv6 address,
-> in which case we need 40 bytes to hold is, so SLOT_NAME_SIZE needs to
-> be 40 bytes large.
-> 
-Ben, thanks for identifying and fixing these. I think I overlooked the ipaddress
-part as we were majorly testing on FC/SAS.
+Hi,
+
+Is it legal to re-use a bio that has been through a call to generic_make_re=
+quest?
+
+Assuming I want to perform read-modify-write, where modify part also comes =
+from some other part of the disk, would it be legal to
+
+1) alloc bio, add e.g. 4 pages to it, set the starting sector
+2) call generic_make_request to read data
+3) assuming I want to change page 3, clone the bio, change idx, to point to=
+ page 3, set the starting sector and the size
+4) call generic_make_request to modify page 3 by reading data into it
+5) change the direction of the original bio from read to write
+6) call generic_make_request to write it back to disk
+
+I have already attempted doing this, but I hit BUG_ON(bio->bi_next) in gene=
+ric_make_request. =A0Am am doing something wrong or this is not how it shou=
+ld be done? =A0If so, please let me know how to do it properly.=A0
+
+Thanks!
