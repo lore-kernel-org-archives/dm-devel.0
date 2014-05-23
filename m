@@ -1,92 +1,27 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm thin: return ENOSPC instead of EIO when
- error_if_no_space enabled
-Date: Fri, 23 May 2014 09:50:29 +0100
-Message-ID: <20140523085028.GA3283@debian>
-References: <1400782364-6537-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: dm-writeboost: Progress Report
+Date: Fri, 23 May 2014 22:14:42 +0900
+Message-ID: <537F49C2.3000304@gmail.com>
+References: <537775B0.2060907@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1400782364-6537-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: sandeen@redhat.com, dm-devel@redhat.com, ejt@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <537775B0.2060907@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org, masami.hiramatsu@gmail.com, devel@etsukata.com
 List-Id: dm-devel.ids
 
-ack
+Hi Guys,
 
-On Thu, May 22, 2014 at 02:12:44PM -0400, Mike Snitzer wrote:
-> Update the DM thin provisioning target's allocation failure error to be
-> consistent with commit a9d6ceb8 ("[SCSI] return ENOSPC on thin
-> provisioning failure").
-> 
-> The DM thin target now returns -ENOSPC rather than -EIO when
-> block allocation fails due to the pool being out of data space (and
-> the 'error_if_no_space' thin-pool feature is enabled).
-> 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm-thin.c |   16 +++++++++-------
->  1 files changed, 9 insertions(+), 7 deletions(-)
-> 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index c31f5f1..b77e919 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -1021,7 +1021,7 @@ static void retry_on_resume(struct bio *bio)
->  	spin_unlock_irqrestore(&tc->lock, flags);
->  }
->  
-> -static bool should_error_unserviceable_bio(struct pool *pool)
-> +static int should_error_unserviceable_bio(struct pool *pool)
->  {
->  	enum pool_mode m = get_pool_mode(pool);
->  
-> @@ -1029,25 +1029,27 @@ static bool should_error_unserviceable_bio(struct pool *pool)
->  	case PM_WRITE:
->  		/* Shouldn't get here */
->  		DMERR_LIMIT("bio unserviceable, yet pool is in PM_WRITE mode");
-> -		return true;
-> +		return -EIO;
->  
->  	case PM_OUT_OF_DATA_SPACE:
-> -		return pool->pf.error_if_no_space;
-> +		return pool->pf.error_if_no_space ? -ENOSPC : 0;
->  
->  	case PM_READ_ONLY:
->  	case PM_FAIL:
-> -		return true;
-> +		return -EIO;
->  	default:
->  		/* Shouldn't get here */
->  		DMERR_LIMIT("bio unserviceable, yet pool has an unknown mode");
-> -		return true;
-> +		return -EIO;
->  	}
->  }
->  
->  static void handle_unserviceable_bio(struct pool *pool, struct bio *bio)
->  {
-> -	if (should_error_unserviceable_bio(pool))
-> -		bio_io_error(bio);
-> +	int error = should_error_unserviceable_bio(pool);
-> +
-> +	if (error)
-> +		bio_endio(bio, error);
->  	else
->  		retry_on_resume(bio);
->  }
-> -- 
-> 1.7.4.4
-> 
+This progress report includes very important benchmarking results, which shows
+i) Write will always improve - It boosts writes (396% in the best case) even with really small cache (say, 64MB) because of the sophisticated writeback optimization.
+ii) Read won't be bad - It doesn't so much deteriorate the read (less than 1% for SSD+HDD case) because of the insignificant overhead.
+iii) Good in application workloads - 22% improvement with read-intensive workload and 234-299% improvement with fileserver workload (using dbench)
+
+Yeah, merging Writeboost into the mainline is my goal now and I really need your feedbacks.
+For more details, please read the previous post.
+
+Cheers,
+- Akira
