@@ -1,51 +1,41 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm thin: return ENOSPC instead of EIO
- when error_if_no_space enabled
-Date: Fri, 23 May 2014 16:52:38 -0400
-Message-ID: <20140523205237.GA16191@redhat.com>
-References: <1400782364-6537-1-git-send-email-snitzer@redhat.com>
-	<20140522183250.GA7799@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Pekka Enberg <penberg@iki.fi>
+Subject: Re: slab_common: fix the check for duplicate slab names
+Date: Sat, 24 May 2014 00:28:15 +0300
+Message-ID: <537FBD6F.1070009@iki.fi>
+References: <alpine.LRH.2.02.1403041711300.29476@file01.intranet.prod.int.rdu2.redhat.com> <20140325170324.GC580@redhat.com> <alpine.DEB.2.10.1403251306260.26471@nuc> <20140523201632.GA16013@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20140522183250.GA7799@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: sandeen@redhat.com, ejt@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140523201632.GA16013@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Christoph Lameter <cl@linux.com>
+Cc: Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, May 22 2014 at  2:32pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On 05/23/2014 11:16 PM, Mike Snitzer wrote:
+> On Tue, Mar 25 2014 at  2:07pm -0400,
+> Christoph Lameter <cl@linux.com> wrote:
+>
+>> On Tue, 25 Mar 2014, Mike Snitzer wrote:
+>>
+>>> This patch still isn't upstream.  Who should be shepherding it to Linus?
+>> Pekka usually does that.
+>>
+>> Acked-by: Christoph Lameter <cl@linux.com>
+> This still hasn't gotten upstream.
+>
+> Pekka, any chance you can pick it up?  Here it is in dm-devel's
+> kernel.org patchwork: https://patchwork.kernel.org/patch/3768901/
+>
+> (Though it looks like it needs to be rebased due to the recent commit
+> 794b1248, should Mikulas rebase and re-send?)
 
-> Update the DM thin provisioning target's allocation failure error to be
-> consistent with commit a9d6ceb8 ("[SCSI] return ENOSPC on thin
-> provisioning failure").
-> 
-> The DM thin target now returns -ENOSPC rather than -EIO when
-> block allocation fails due to the pool being out of data space (and
-> the 'error_if_no_space' thin-pool feature is enabled).
-> 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm-bio-prison.c |    4 ++--
->  drivers/md/dm-bio-prison.h |    2 +-
->  drivers/md/dm-thin.c       |   35 +++++++++++++++++++++++------------
->  3 files changed, 26 insertions(+), 15 deletions(-)
-> 
-> v2: update other should_error_unserviceable_bio() callers and dm_cell_error()
+I applied it and fixed the conflict by hand.
 
-Noticed a leak introduced with my v2, but I've now staged what could be
-considered v3 in linux-next via linux-dm.git 'for-next' branch, see:
+Please double-check commit 694617474e33b8603fc76e090ed7d09376514b1a in 
+my tree:
 
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=5d7d20909130de87ae4bccee0c9e92105eb7c886
+https://git.kernel.org/cgit/linux/kernel/git/penberg/linux.git/
+
+- Pekka
