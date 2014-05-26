@@ -1,19 +1,12 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: 3.15-rc4: circular locking dependency triggered by
- dm-multipath
-Date: Mon, 26 May 2014 16:54:43 +0200
-Message-ID: <538355B3.9060100@acm.org>
-References: <5368ABE8.9050909@acm.org>
-	<536B1CC1.6080709@suse.de>	<53832919.8080500@acm.org>
-	<53832F2B.9060808@suse.de>	<53833183.7080106@acm.org>
-	<538333AC.60103@suse.de> <53833730.50509@suse.de>
-	<538338D5.4080804@suse.de>
+From: =?UTF-8?B?0KDQuNGI0LDRgiDQotC10YDQtdCz0YPQu9C+0LI=?=
+	<rtereguloff@gmail.com>
+Subject: Problem with overlay free space
+Date: Mon, 26 May 2014 17:41:24 +0600
+Message-ID: <CAOamaRSTTx=rcLxJZMKBqmDDt6oiceT8zXAkZHp_xwickBz7uA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0760950283149299900=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <538338D5.4080804@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,21 +16,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 05/26/14 14:51, Hannes Reinecke wrote:
-> Or, better still, try the attached patch.
-> There's one more instance where lockdep might complain.
+--===============0760950283149299900==
+Content-Type: multipart/alternative; boundary=089e013d11a24c414504fa4c1042
 
-Does anyone know whether it's safe to revert commit 4cdd2ad780 ? Anyway,
-I ran a test with v3.15-rc7 + your patch + 4cdd2ad780 reverted and that
-test ran fine. I didn't encounter any lockups nor any lockdep
-complaints. The test I ran was to run a fio I/O verification test on top
-of a dm-multipath device. That multipath device was created on top of
-several SCSI device nodes created by the ib_srp driver. About once every
-30 seconds a cable removal / reinsertion was simulated via the
-ibportstate command.
+--089e013d11a24c414504fa4c1042
+Content-Type: text/plain; charset=UTF-8
 
-Bart.
+Hello to everyone.
+I have configured flash disk with linux, with ext3fs.img and configured
+device-mapper overlay file system. I have a problem: when I write some
+files on it, and even if I then delete this files, system still do not free
+blocks, (df -h show everything ok, but dmsetup status shows another
+situation) and space on snapshot is ending, because of it system is going
+down with errors (device-mapper: snapshots: Invalidating snapshot: Unable
+to allocate exceptin, buffer i/o error on device dm-0 overlay and ext3-fs
+error (device dm-0)). Can you help me with that?
+
+--089e013d11a24c414504fa4c1042
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><font><font>Hello to everyone.</font></font><div><font><fo=
+nt>I have configured flash disk with linux, with ext3fs.img and configured =
+device-mapper overlay file system. I have a problem: when I write some file=
+s on it, and even if I then delete this files, system still do not free blo=
+cks, (df -h show everything ok, but dmsetup status shows another situation)=
+ and space on snapshot is ending, because of it system is going down with e=
+rrors (device-mapper: snapshots: Invalidating snapshot: Unable to allocate =
+exceptin,=C2=A0</font></font>buffer i/o error on device dm-0 overlay and=C2=
+=A0ext3-fs error (device dm-0)). Can you help me with that?</div>
+
+</div>
+
+--089e013d11a24c414504fa4c1042--
+
+
+--===============0760950283149299900==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0760950283149299900==--
