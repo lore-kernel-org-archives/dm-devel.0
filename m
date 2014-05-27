@@ -1,56 +1,32 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: 3.15-rc4: circular locking dependency triggered by
-	dm-multipath
-Date: Tue, 27 May 2014 18:09:37 +0200
-Message-ID: <5384B8C1.7020106@acm.org>
-References: <5368ABE8.9050909@acm.org> <536B1CC1.6080709@suse.de>
-	<53832919.8080500@acm.org> <53832F2B.9060808@suse.de>
-	<53833183.7080106@acm.org> <538333AC.60103@suse.de>
-	<53833730.50509@suse.de> <538338D5.4080804@suse.de>
-	<538355B3.9060100@acm.org> <20140527132228.GA10955@redhat.com>
-	<20140527144929.GA11410@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] block: flush queued bios when the process blocks
+Date: Tue, 27 May 2014 12:26:12 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1405271059190.27492@file01.intranet.prod.int.rdu2.redhat.com> <5384AA79.4010206@kernel.dk> <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com> <5384B26D.1000703@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140527144929.GA11410@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5384B26D.1000703@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Kent Overstreet <kmo@daterainc.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/27/14 16:49, Mike Snitzer wrote:
-> On Tue, May 27 2014 at  9:22am -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->> On Mon, May 26 2014 at 10:54am -0400,
->> Bart Van Assche <bvanassche@acm.org> wrote:
->>> Anyway,
->>> I ran a test with v3.15-rc7 + your patch + 4cdd2ad780 reverted and that
->>> test ran fine. I didn't encounter any lockups nor any lockdep
->>> complaints. The test I ran was to run a fio I/O verification test on top
->>> of a dm-multipath device. That multipath device was created on top of
->>> several SCSI device nodes created by the ib_srp driver. About once every
->>> 30 seconds a cable removal / reinsertion was simulated via the
->>> ibportstate command.
->>
->> Great, thanks.  I'll try to get this queued for Linus this week.
+On Tue, 27 May 2014, Jens Axboe wrote:
+
+> On 2014-05-27 09:23, Mikulas Patocka wrote:
 > 
-> Done, please see:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-linus&id=63d832c30142cdceb478b1cac7d943d83b95b2dc
+> > The patch adds bio list flushing to the scheduler just besides plug
+> > flushsing.
+> 
+> ... which is exactly why I'm commenting. It'd be great to avoid yet one more
+> scheduler hook for this sort of thing.
+> 
+> -- 
+> Jens Axboe
 
-Hello Mike,
+One could create something like schedule notifier chain, but I'm not sure 
+if it is worth the complexity because of just two users. If more users 
+come in the future, it could be generalized.
 
-My test passes with that tree.
-
-Thanks,
-
-Bart.
+Mikulas
