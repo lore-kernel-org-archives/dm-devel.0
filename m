@@ -1,39 +1,22 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Kent Overstreet <kmo@daterainc.com>
 Subject: Re: [PATCH] block: flush queued bios when the process blocks
-Date: Tue, 27 May 2014 11:42:26 -0600
-Message-ID: <5384CE82.90601@kernel.dk>
-References: <alpine.LRH.2.02.1405271059190.27492@file01.intranet.prod.int.rdu2.redhat.com> <5384AA79.4010206@kernel.dk> <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com> <5384B26D.1000703@kernel.dk> <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Tue, 27 May 2014 10:59:19 -0700
+Message-ID: <CALJ65znW7YK2moi6w6n-cm725c7Czci44EFzHDNv4y=sNcF66g@mail.gmail.com>
+References: <alpine.LRH.2.02.1405271059190.27492@file01.intranet.prod.int.rdu2.redhat.com>
+	<5384AA79.4010206@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <5384AA79.4010206@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Kent Overstreet <kmo@daterainc.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 2014-05-27 10:26, Mikulas Patocka wrote:
-> On Tue, 27 May 2014, Jens Axboe wrote:
->
->> On 2014-05-27 09:23, Mikulas Patocka wrote:
->>
->>> The patch adds bio list flushing to the scheduler just besides plug
->>> flushsing.
->>
->> ... which is exactly why I'm commenting. It'd be great to avoid yet one more
->> scheduler hook for this sort of thing.
->>
->> --
->> Jens Axboe
->
-> One could create something like schedule notifier chain, but I'm not sure
-> if it is worth the complexity because of just two users. If more users
-> come in the future, it could be generalized.
+On Tue, May 27, 2014 at 8:08 AM, Jens Axboe <axboe@kernel.dk> wrote:
+> This really begs the question of why we just don't use the per-process plugs
+> for this. We already have scheduler hooks in place to flush those at the
+> appropriate time. Why are we reinventing something for essentially the same
+> thing?
 
-Except such a thing already exists, there are unplug callback chains. 
-All I'm asking is that you look into how feasible it would be to use 
-something like that, instead of reinventing the wheel.
-
--- 
-Jens Axboe
+Yes! Unifying the two plugging mechanisms has been on my todo/wishlist for ages.
