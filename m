@@ -1,50 +1,56 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH] block: flush queued bios when the process blocks
-Date: Tue, 27 May 2014 09:42:37 -0600
-Message-ID: <5384B26D.1000703@kernel.dk>
-References: <alpine.LRH.2.02.1405271059190.27492@file01.intranet.prod.int.rdu2.redhat.com> <5384AA79.4010206@kernel.dk> <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: 3.15-rc4: circular locking dependency triggered by
+	dm-multipath
+Date: Tue, 27 May 2014 18:09:37 +0200
+Message-ID: <5384B8C1.7020106@acm.org>
+References: <5368ABE8.9050909@acm.org> <536B1CC1.6080709@suse.de>
+	<53832919.8080500@acm.org> <53832F2B.9060808@suse.de>
+	<53833183.7080106@acm.org> <538333AC.60103@suse.de>
+	<53833730.50509@suse.de> <538338D5.4080804@suse.de>
+	<538355B3.9060100@acm.org> <20140527132228.GA10955@redhat.com>
+	<20140527144929.GA11410@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Kent Overstreet <kmo@daterainc.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140527144929.GA11410@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2014-05-27 09:23, Mikulas Patocka wrote:
->
->
-> On Tue, 27 May 2014, Jens Axboe wrote:
->
->> On 2014-05-27 09:03, Mikulas Patocka wrote:
->>> The block layer uses per-process bio list to avoid recursion in
->>> generic_make_request. When generic_make_request is called recursively, the
->>> bio is added to current->bio_list and the function returns immediatelly.
->>> The top-level instance of generic_make_requests takes bios from
->>> current->bio_list and processes them.
+On 05/27/14 16:49, Mike Snitzer wrote:
+> On Tue, May 27 2014 at  9:22am -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+>> On Mon, May 26 2014 at 10:54am -0400,
+>> Bart Van Assche <bvanassche@acm.org> wrote:
+>>> Anyway,
+>>> I ran a test with v3.15-rc7 + your patch + 4cdd2ad780 reverted and that
+>>> test ran fine. I didn't encounter any lockups nor any lockdep
+>>> complaints. The test I ran was to run a fio I/O verification test on top
+>>> of a dm-multipath device. That multipath device was created on top of
+>>> several SCSI device nodes created by the ib_srp driver. About once every
+>>> 30 seconds a cable removal / reinsertion was simulated via the
+>>> ibportstate command.
 >>
->> This really begs the question of why we just don't use the per-process plugs
->> for this. We already have scheduler hooks in place to flush those at the
->> appropriate time. Why are we reinventing something for essentially the same
->> thing?
->>
->> --
->> Jens Axboe
->
-> Plugs work with requests, this patch works with bios. They are different
-> structures, so you can't use one infrastructure to process them.
+>> Great, thanks.  I'll try to get this queued for Linus this week.
+> 
+> Done, please see:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-linus&id=63d832c30142cdceb478b1cac7d943d83b95b2dc
 
-Yes... I realize the list and plugs are for requests. But there's 
-nothing preventing a non-rq hook, we have uses like that too. And it 
-could easily be extended to handle bio lists, too.
+Hello Mike,
 
-> The patch adds bio list flushing to the scheduler just besides plug
-> flushsing.
+My test passes with that tree.
 
-... which is exactly why I'm commenting. It'd be great to avoid yet one 
-more scheduler hook for this sort of thing.
+Thanks,
 
--- 
-Jens Axboe
+Bart.
