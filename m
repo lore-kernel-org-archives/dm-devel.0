@@ -1,22 +1,31 @@
-From: Kent Overstreet <kmo@daterainc.com>
-Subject: Re: [PATCH] block: flush queued bios when the process blocks
-Date: Tue, 27 May 2014 10:59:19 -0700
-Message-ID: <CALJ65znW7YK2moi6w6n-cm725c7Czci44EFzHDNv4y=sNcF66g@mail.gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [dm-devel] [PATCH] block: flush queued bios when the process
+ blocks
+Date: Tue, 27 May 2014 11:14:15 -0700
+Message-ID: <20140527181415.GA8739@infradead.org>
 References: <alpine.LRH.2.02.1405271059190.27492@file01.intranet.prod.int.rdu2.redhat.com>
-	<5384AA79.4010206@kernel.dk>
+ <5384AA79.4010206@kernel.dk>
+ <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com>
+ <5384B26D.1000703@kernel.dk>
+ <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
+ <5384CE82.90601@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5384AA79.4010206@kernel.dk>
+Content-Disposition: inline
+In-Reply-To: <5384CE82.90601@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Kent Overstreet <kmo@daterainc.com>, "Alasdair G. Kergon" <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, May 27, 2014 at 8:08 AM, Jens Axboe <axboe@kernel.dk> wrote:
-> This really begs the question of why we just don't use the per-process plugs
-> for this. We already have scheduler hooks in place to flush those at the
-> appropriate time. Why are we reinventing something for essentially the same
-> thing?
+On Tue, May 27, 2014 at 11:42:26AM -0600, Jens Axboe wrote:
+> Except such a thing already exists, there are unplug callback
+> chains. All I'm asking is that you look into how feasible it would
+> be to use something like that, instead of reinventing the wheel.
 
-Yes! Unifying the two plugging mechanisms has been on my todo/wishlist for ages.
+I suspect the code from MD could be lifted quite easily.
+
+It would be nicer to move it up to the block layer entirely, but when I
+tried that a while ago I ran into issues that I unfortunately don't
+remember.
