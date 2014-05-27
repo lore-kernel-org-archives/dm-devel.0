@@ -1,20 +1,20 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: 3.15-rc4: circular locking dependency triggered by
 	dm-multipath
-Date: Tue, 27 May 2014 09:22:28 -0400
-Message-ID: <20140527132228.GA10955@redhat.com>
+Date: Tue, 27 May 2014 10:49:29 -0400
+Message-ID: <20140527144929.GA11410@redhat.com>
 References: <5368ABE8.9050909@acm.org> <536B1CC1.6080709@suse.de>
 	<53832919.8080500@acm.org> <53832F2B.9060808@suse.de>
 	<53833183.7080106@acm.org> <538333AC.60103@suse.de>
 	<53833730.50509@suse.de> <538338D5.4080804@suse.de>
-	<538355B3.9060100@acm.org>
+	<538355B3.9060100@acm.org> <20140527132228.GA10955@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <538355B3.9060100@acm.org>
+In-Reply-To: <20140527132228.GA10955@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,27 +28,22 @@ To: Bart Van Assche <bvanassche@acm.org>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, May 26 2014 at 10:54am -0400,
-Bart Van Assche <bvanassche@acm.org> wrote:
+On Tue, May 27 2014 at  9:22am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> On 05/26/14 14:51, Hannes Reinecke wrote:
-> > Or, better still, try the attached patch.
-> > There's one more instance where lockdep might complain.
+> On Mon, May 26 2014 at 10:54am -0400,
+> Bart Van Assche <bvanassche@acm.org> wrote:
 > 
-> Does anyone know whether it's safe to revert commit 4cdd2ad780 ?
+> > Anyway,
+> > I ran a test with v3.15-rc7 + your patch + 4cdd2ad780 reverted and that
+> > test ran fine. I didn't encounter any lockups nor any lockdep
+> > complaints. The test I ran was to run a fio I/O verification test on top
+> > of a dm-multipath device. That multipath device was created on top of
+> > several SCSI device nodes created by the ib_srp driver. About once every
+> > 30 seconds a cable removal / reinsertion was simulated via the
+> > ibportstate command.
+> 
+> Great, thanks.  I'll try to get this queued for Linus this week.
 
-Yes, it should be reverted, otherwise multipath_ioctl is using
-inconsistent lock order.  I should've waited for test confirmation
-before sending the previous "fix" upstream.  It made the lock order
-consistent (but consistently wrong).
-
-> Anyway,
-> I ran a test with v3.15-rc7 + your patch + 4cdd2ad780 reverted and that
-> test ran fine. I didn't encounter any lockups nor any lockdep
-> complaints. The test I ran was to run a fio I/O verification test on top
-> of a dm-multipath device. That multipath device was created on top of
-> several SCSI device nodes created by the ib_srp driver. About once every
-> 30 seconds a cable removal / reinsertion was simulated via the
-> ibportstate command.
-
-Great, thanks.  I'll try to get this queued for Linus this week.
+Done, please see:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-linus&id=63d832c30142cdceb478b1cac7d943d83b95b2dc
