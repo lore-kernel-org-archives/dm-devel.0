@@ -1,66 +1,72 @@
-From: Kent Overstreet <kmo@daterainc.com>
-Subject: Re: [PATCH] block: flush queued bios when the process blocks
-Date: Tue, 27 May 2014 13:06:00 -0700
-Message-ID: <20140527200600.GG2276@kmo>
-References: <alpine.LRH.2.02.1405271059190.27492@file01.intranet.prod.int.rdu2.redhat.com>
- <5384AA79.4010206@kernel.dk>
- <alpine.LRH.2.02.1405271120390.31404@file01.intranet.prod.int.rdu2.redhat.com>
- <5384B26D.1000703@kernel.dk>
- <alpine.LRH.2.02.1405271222150.8745@file01.intranet.prod.int.rdu2.redhat.com>
- <5384CE82.90601@kernel.dk>
- <alpine.LRH.2.02.1405271526570.3223@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: "Li, Zhen-Hua" <zhen-hual@hp.com>
+Subject: [PATCH 1/1] driver/md/block: Alloc space for member flush_rq
+Date: Wed, 28 May 2014 14:22:52 +0800
+Message-ID: <1401258172-17381-1-git-send-email-zhen-hual@hp.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1405271526570.3223@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+To: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org
+Cc: "Li, Zhen-Hua" <zhen-hual@hp.com>
 List-Id: dm-devel.ids
 
-On Tue, May 27, 2014 at 03:56:00PM -0400, Mikulas Patocka wrote:
-> 
-> 
-> On Tue, 27 May 2014, Jens Axboe wrote:
-> 
-> > On 2014-05-27 10:26, Mikulas Patocka wrote:
-> > > On Tue, 27 May 2014, Jens Axboe wrote:
-> > > 
-> > > > On 2014-05-27 09:23, Mikulas Patocka wrote:
-> > > > 
-> > > > > The patch adds bio list flushing to the scheduler just besides plug
-> > > > > flushsing.
-> > > > 
-> > > > ... which is exactly why I'm commenting. It'd be great to avoid yet one
-> > > > more
-> > > > scheduler hook for this sort of thing.
-> > > > 
-> > > > --
-> > > > Jens Axboe
-> > > 
-> > > One could create something like schedule notifier chain, but I'm not sure
-> > > if it is worth the complexity because of just two users. If more users
-> > > come in the future, it could be generalized.
-> > 
-> > Except such a thing already exists, there are unplug callback chains. All I'm
-> > asking is that you look into how feasible it would be to use something like
-> > that, instead of reinventing the wheel.
-> > 
-> > -- 
-> > Jens Axboe
-> 
-> Do you mean moving current->bio_list to struct blk_plug and calling 
-> blk_start_plug/blk_finish_plug around generic_make_request?
-> 
-> It would be possible on a condition that we can redirect all bios to a 
-> workqueue (i.e. eliminate bio_kmalloc and always use bio_alloc_bioset).
-> 
-> What are performance implications of this - does it make sense to have 
-> blk_start_plug/blk_finish_plug around every call to generic_make_request? 
-> - that means that all i/o requests will be added to a plug and then 
-> unplugged.
+This patch is trying to fix a kernel crash bug.
 
-We've already got blk_start_plug() calls around IO submission at higher points
-in the stack. (I actually have seen it show up in profiles though, it probably
-would be worth inlining and slimming down a bit).
+When kernel boots on a HP large system, it crashes.
+The reason is when blk_rq_init is called, the second parameter rq , which
+is a member as q->flush_rq, is NULL. Kernel does not allocate space for it.
+
+This fix adds an alloc for flush_rq member when request_queue is created in
+struct mapped_device *alloc_dev(int minor);
+
+Bug Details:
+Error message:
+
+[   62.931942] BUG: unable to handle kernel NULL pointer dereference at (null)
+[   62.931949] IP: [<ffffffff812b3f30>] blk_rq_init+0x40/0x160^M
+[   62.931949] PGD 0 ^M
+[   62.931951] Oops: 0002 [#1] SMP
+
+[   62.932019] Call Trace:
+[   62.932025]  [<ffffffff812bc5b8>] blk_flush_complete_seq+0x2d8/0x300
+[   62.932027]  [<ffffffff812bca55>] blk_insert_flush+0x1e5/0x250
+[   62.932029]  [<ffffffff812b3038>] __elv_add_request+0x1d8/0x2d0
+[   62.932031]  [<ffffffff812ba630>] blk_flush_plug_list+0x140/0x230
+[   62.932033]  [<ffffffff812baab4>] blk_finish_plug+0x14/0x40
+[   62.932041]  [<ffffffffa0311e0c>] _xfs_buf_ioapply+0x2fc/0x3d0 [xfs]
+[   62.932053]  [<ffffffffa036e63f>] ? xlog_bdstrat+0x1f/0x50 [xfs]
+[   62.932061]  [<ffffffffa0313716>] xfs_buf_iorequest+0x46/0x90 [xfs]
+[   62.932071]  [<ffffffffa036e63f>] xlog_bdstrat+0x1f/0x50 [xfs]
+[   62.932080]  [<ffffffffa0370385>] xlog_sync+0x265/0x450 [xfs]
+[   62.932090]  [<ffffffffa0370602>] xlog_state_release_iclog+0x92/0xb0 [xfs]
+[   62.932099]  [<ffffffffa03713ba>] _xfs_log_force+0x15a/0x290 [xfs]
+[   62.932108]  [<ffffffffa0371516>] xfs_log_force+0x26/0x80 [xfs]
+[   62.932117]  [<ffffffffa0371594>] xfs_log_worker+0x24/0x50 [xfs]
+[   62.932122]  [<ffffffff8108ce8b>] process_one_work+0x17b/0x460
+[   62.932125]  [<ffffffff8108dc5b>] worker_thread+0x11b/0x400
+[   62.932126]  [<ffffffff8108db40>] ? rescuer_thread+0x400/0x400
+[   62.932130]  [<ffffffff81094ca1>] kthread+0xe1/0x100
+[   62.932133]  [<ffffffff81094bc0>] ? kthread_create_on_node+0x1a0/0x1a0
+[   62.932140]  [<ffffffff8162ae3c>] ret_from_fork+0x7c/0xb0
+[   62.932141]  [<ffffffff81094bc0>] ? kthread_create_on_node+0x1a0/0x1a0
+
+Signed-off-by: Li, Zhen-Hua <zhen-hual@hp.com>
+---
+ drivers/md/dm.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 455e649..9ff6df6 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1893,6 +1893,10 @@ static struct mapped_device *alloc_dev(int minor)
+ 	if (!md->queue)
+ 		goto bad_queue;
+ 
++	md->queue->flush_rq = kzalloc(sizeof(struct request), GFP_KERNEL);
++	if (!md->queue->flush_rq)
++		goto bad_disk;
++
+ 	dm_init_md_queue(md);
+ 
+ 	md->disk = alloc_disk(1);
+-- 
+2.0.0-rc0
