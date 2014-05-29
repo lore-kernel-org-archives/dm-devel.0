@@ -1,17 +1,32 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/1] driver/md/block: Alloc space for member flush_rq
-Date: Wed, 28 May 2014 11:03:14 -0400
-Message-ID: <20140528150314.GB25249@redhat.com>
+From: "Li, Zhen-Hua" <zhen-hual@hp.com>
+Subject: RE: [PATCH 1/1] driver/md/block: Alloc space for member flush_rq
+Date: Thu, 29 May 2014 01:58:02 +0000
+Message-ID: <1267BB84A242B24E81E0C0C8955CFFC061A18542@G9W0343.americas.hpqcorp.net>
 References: <1401258172-17381-1-git-send-email-zhen-hual@hp.com>
+ <20140528150314.GB25249@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1401258172-17381-1-git-send-email-zhen-hual@hp.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Li, Zhen-Hua" <zhen-hual@hp.com>
-Cc: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20140528150314.GB25249@redhat.com>
+Content-Language: en-US
+Sender: linux-raid-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Neil Brown <neilb@suse.de>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
+
+I tested it on 3.14-rc5.
+I will checkout the latest kernel and test it on my system for this bug.
+
+Thanks
+Zhenhua
+
+-----Original Message-----
+From: Mike Snitzer [mailto:snitzer@redhat.com] 
+Sent: Wednesday, May 28, 2014 11:03 PM
+To: Li, Zhen-Hua
+Cc: linux-kernel@vger.kernel.org; Alasdair Kergon; dm-devel@redhat.com; Neil Brown; linux-raid@vger.kernel.org
+Subject: Re: [PATCH 1/1] driver/md/block: Alloc space for member flush_rq
 
 On Wed, May 28 2014 at  2:22am -0400,
 Li, Zhen-Hua <zhen-hual@hp.com> wrote:
