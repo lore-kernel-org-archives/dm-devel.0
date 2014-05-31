@@ -1,56 +1,142 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 3.15 final
-Date: Thu, 29 May 2014 20:57:15 -0400
-Message-ID: <20140530005715.GA9179@redhat.com>
+From: alex chen <alex.chen@huawei.com>
+Subject: [PATCH] dm linear: disable WRITE SAME if it fails
+Date: Sat, 31 May 2014 16:51:30 +0800
+Message-ID: <53899812.50403@huawei.com>
+References: <53042F91.4050201@huawei.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Hannes Reinecke <hare@suse.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <53042F91.4050201@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Milan Broz <asi@seznam.cz>, Mike Anderson <andmike@linux.vnet.ibm.com>, Joseph Qi <joseph.qi@huawei.com>, christophe varoqui <christophe.varoqui@free.fr>, dm-devel@redhat.com, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+The original commit f84cb8a46a771f36a04a02c61ea635c968ed5f6a("dm mpath:
+disable WRITE SAME if it fails") disables WRITE SAME in the DM multipath
+device if it fails, but when the DM linear device stacks ontop of the
+multipath device it doesn't help.
 
-The following changes since commit 4cdd2ad78098244c1bc9ec4374ea1c225fd1cd6f:
+this patch adds DM linear end_io method to catch WRITE SAME errors and
+disables WRITE SAME in the DM linear device's queue_limits if an
+underlying device disables it.
 
-  dm mpath: fix lock order inconsistency in multipath_ioctl (2014-05-14 16:12:17 -0400)
+Before this patch:
 
-are available in the git repository at:
+dm linear device(dm-20): ocfs2-fs;
+multipath device(dm-6);
+scsi device(sdt,sdu);
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.15-fixes-3
+After a WRITE SAME bio fails, the DM linear device does not disable the
+WRITE SAME, although the underlying device(DM multipath device) has
+disabled WRITE SAME.
 
-for you to fetch changes up to 63d832c30142cdceb478b1cac7d943d83b95b2dc:
+cat /sys/block/dm-20/queue/write_same_max_bytes
+33553920
+cat /sys/block/dm-6/queue/write_same_max_bytes
+0
+cat /sys/block/sdt/queue/write_same_max_bytes
+0
+cat /sys/block/sdu/queue/write_same_max_bytes
+0
 
-  dm mpath: really fix lockdep warning (2014-05-27 10:46:01 -0400)
+After this patch:
 
-Please pull, thanks.
-Mike
+dm linear device(dm-20): ocfs2-fs;
+multipath device(dm-6);
+scsi device(sdt,sdu);
 
-----------------------------------------------------------------
-A dm-cache stable fix to split discards on cache block boundaries
-because dm-cache cannot yet handle discards that span cache blocks.
+After a WRITE SAME bio fails, the underlying device(DM multipath
+device) disables WRITE SAME and then the DM linear device also disables
+WRITE SAME.
 
-Really fix a dm-mpath LOCKDEP warning that was introduced in -rc1.
+cat /sys/block/dm-20/queue/write_same_max_bytes
+0
+cat /sys/block/dm-6/queue/write_same_max_bytes
+0
+cat /sys/block/sdt/queue/write_same_max_bytes
+0
+cat /sys/block/sdu/queue/write_same_max_bytes
+0
 
-Add a 'no_space_timeout' control to dm-thinp to restore the ability to
-queue IO indefinitely when no data space is available.  This fixes a
-change in behavior that was introduced in -rc6 where the timeout
-couldn't be disabled.
+Signed-off-by: alex.chen <alex.chen@huawei.com>
+---
+ drivers/md/dm-linear.c | 26 +++++++++++++++++++++++++-
+ drivers/md/dm.c        |  2 +-
+ 2 files changed, 26 insertions(+), 2 deletions(-)
 
-----------------------------------------------------------------
-Hannes Reinecke (1):
-      dm mpath: really fix lockdep warning
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 53e848c..eaf86a5 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -96,6 +96,29 @@ static int linear_map(struct dm_target *ti, struct
+bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
 
-Heinz Mauelshagen (1):
-      dm cache: always split discards on cache block boundaries
++static int linear_end_io(struct dm_target *ti, struct bio *bio, int error)
++{
++	struct linear_c *lc = ti->private;
++	struct block_device *bdev;
++	struct queue_limits *limits;
++	struct queue_limits *bdev_limits;
++
++	if (!error)
++		return error;
++
++	if (unlikely(bio->bi_rw & REQ_WRITE_SAME)) {
++		bdev = lc->dev->bdev;
++		bdev_limits = &bdev->bd_disk->queue->limits;
++
++		limits = dm_get_queue_limits(dm_table_get_md(ti->table));
++
++		if ((!bdev_limits->max_write_same_sectors) &&
++				limits->max_write_same_sectors)
++			limits->max_write_same_sectors = 0;
++	}
++
++	return error;
++}
+ static void linear_status(struct dm_target *ti, status_type_t type,
+ 			  unsigned status_flags, char *result, unsigned maxlen)
+ {
+@@ -155,11 +178,12 @@ static int linear_iterate_devices(struct dm_target
+*ti,
 
-Mike Snitzer (1):
-      dm thin: add 'no_space_timeout' dm-thin-pool module param
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+-	.version = {1, 2, 1},
++	.version = {1, 2, 2},
+ 	.module = THIS_MODULE,
+ 	.ctr    = linear_ctr,
+ 	.dtr    = linear_dtr,
+ 	.map    = linear_map,
++	.end_io = linear_end_io,
+ 	.status = linear_status,
+ 	.ioctl  = linear_ioctl,
+ 	.merge  = linear_merge,
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8c53b09..4337025 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -770,7 +770,7 @@ static void clone_endio(struct bio *bio, int error)
 
- Documentation/device-mapper/thin-provisioning.txt |  5 ++++-
- drivers/md/dm-cache-target.c                      |  2 ++
- drivers/md/dm-mpath.c                             | 14 ++++++++------
- drivers/md/dm-thin.c                              | 12 +++++++++---
- 4 files changed, 23 insertions(+), 10 deletions(-)
+ 	if (endio) {
+ 		r = endio(tio->ti, bio, error);
+-		if (r < 0 || r == DM_ENDIO_REQUEUE)
++		if (r <= 0 || r == DM_ENDIO_REQUEUE)
+ 			/*
+ 			 * error and requeue request are handled
+ 			 * in dec_pending().
+-- 
+1.8.4.3
