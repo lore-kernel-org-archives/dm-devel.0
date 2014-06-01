@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm linear: disable WRITE SAME if it fails
-Date: Sat, 31 May 2014 16:05:17 +0100
-Message-ID: <20140531150517.GJ29705@agk-dp.fab.redhat.com>
-References: <53042F91.4050201@huawei.com> <53899812.50403@huawei.com>
+From: Sebastian Herbszt <herbszt@gmx.de>
+Subject: Status of SCSI referrals support in dm-multipath
+Date: Sun, 1 Jun 2014 22:46:50 +0200
+Message-ID: <20140601224650.000043de@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <53899812.50403@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,22 +16,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: alex chen <alex.chen@huawei.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Milan Broz <asi@seznam.cz>, Mike Snitzer <snitzer@redhat.com>, Mike Anderson <andmike@linux.vnet.ibm.com>, christophe varoqui <christophe.varoqui@free.fr>, dm-devel@redhat.com, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Joseph Qi <joseph.qi@huawei.com>, Alasdair Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-On Sat, May 31, 2014 at 04:51:30PM +0800, alex chen wrote:
-> The original commit f84cb8a46a771f36a04a02c61ea635c968ed5f6a("dm mpath:
-> disable WRITE SAME if it fails") disables WRITE SAME in the DM multipath
-> device if it fails, but when the DM linear device stacks ontop of the
-> multipath device it doesn't help.
-> this patch adds DM linear end_io method to catch WRITE SAME errors and
-> disables WRITE SAME in the DM linear device's queue_limits if an
-> underlying device disables it.
+Hello,
 
-How does your patch address striped targets?
- 
-Shouldn't this code be taken out of mpath and moved to dm.c and applied to all
-targets (both bio and rq-based, at least where WRITE SAME is supported)?
+I am trying to find out the status of SCSI referrals support in dm-multipath.
+SCSI referrals support was a topic at LSF [1] but I wasn't able to find any
+information. Back in 2010 Hannes suggested the use of multiple entries in a
+multipath table [2] but this doesn't seem to work (anymore):
 
-Alasdair
+[ 7750.354190] device-mapper: table: Request-based dm doesn't support multiple targets yet
+
+Is there any SCSI referrals support yet?
+
+[1] http://marc.info/?l=linux-scsi&m=129553880112460&w=2
+[2] http://www.redhat.com/archives/dm-devel/2010-June/msg00155.html
+
+Sebastian
