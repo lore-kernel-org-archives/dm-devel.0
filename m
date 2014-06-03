@@ -1,54 +1,93 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: disable WRITE SAME if it fails
-Date: Tue, 3 Jun 2014 12:58:59 -0400
-Message-ID: <20140603165859.GA8091@redhat.com>
-References: <53042F91.4050201@huawei.com> <53899812.50403@huawei.com>
-	<20140531150517.GJ29705@agk-dp.fab.redhat.com>
-	<20140602183635.GA1396@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: 3.13-1 dm cache possible race condition
+Date: Tue, 3 Jun 2014 14:50:15 -0400
+Message-ID: <20140603185014.GA8627@redhat.com>
+References: <CACiqTEObccUuhyCcr8HZ0qZunxwdtkPLNYsp9xJRG6H6hxGo7Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140602183635.GA1396@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: alex chen <alex.chen@huawei.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Milan Broz <asi@seznam.cz>, Mike Anderson <andmike@linux.vnet.ibm.com>, christophe varoqui <christophe.varoqui@free.fr>, dm-devel@redhat.com, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Joseph Qi <joseph.qi@huawei.com>, Alasdair Kergon <agk@redhat.com>
+In-Reply-To: <CACiqTEObccUuhyCcr8HZ0qZunxwdtkPLNYsp9xJRG6H6hxGo7Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: roma1390 <roma1390@gmail.com>
+Cc: linux-kernel@vger.kernel.org, Morgan Mears <Morgan.Mears@netapp.com>, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jun 02 2014 at  2:36pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+[please cc dm-devel rather than, or in addition to, LKML in the future]
 
-> On Sat, May 31 2014 at 11:05am -0400,
-> Alasdair G Kergon <agk@redhat.com> wrote:
-> 
-> > On Sat, May 31, 2014 at 04:51:30PM +0800, alex chen wrote:
-> > > The original commit f84cb8a46a771f36a04a02c61ea635c968ed5f6a("dm mpath:
-> > > disable WRITE SAME if it fails") disables WRITE SAME in the DM multipath
-> > > device if it fails, but when the DM linear device stacks ontop of the
-> > > multipath device it doesn't help.
-> > > this patch adds DM linear end_io method to catch WRITE SAME errors and
-> > > disables WRITE SAME in the DM linear device's queue_limits if an
-> > > underlying device disables it.
-> > 
-> > How does your patch address striped targets?
-> >  
-> > Shouldn't this code be taken out of mpath and moved to dm.c and applied to all
-> > targets (both bio and rq-based, at least where WRITE SAME is supported)?
-> 
-> Alex,
-> 
-> I've implemented what Alasdair and I have been suggesting.
-> Can you please test this untested patch?
+On Sun, May 18 2014 at 11:35am -0400,
+roma1390 <roma1390@gmail.com> wrote:
 
-FYI, I pushed a revised version of this patch to linux-next, please see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=f314e7fff61dad0e9ed1c602bfd62cf722d476f7
+> I think that somehow is got broken cache->nr_dirty
+> 
+> # dmsetup status foo0
+> 0 32768 cache 7/4096 1728240 256 1675650 0 0 64 64 4294967295 1
+> writeback 2 migration_threshold 2048 4 random_threshold 4
+> sequential_threshold 512
+> 
+> 
+> See: 4294967295 this is -1 as is not OK.
+> 
+> 
+> Kernel: Debian stock 3.13-1-amd64
+> 
+> Actions taken:
+> 
+>  modprobe brd
+>  BLOCKS=$[`blockdev --getsize64 /dev/ram0`/512]
+>  METADATA_DEV=/dev/ram0
+>  CACHE_DEV=/dev/ram1
+>  DATA_DEV=/dev/ram2
+>  dmsetup create foo0 --table "0 $BLOCKS cache $METADATA_DEV $CACHE_DEV
+> $DATA_DEV 512 1 writeback default 0"
+
+Why are you limiting the dm-cache's DM table to $BLOCKS of the metadata
+device (/dev/ram0)?  You should be using the DATA_DEV for the size of
+the cache table.
+
+Anyway, based on the below dmsetup status output I can infer that your
+metadata device is only 16MB.  But given that you're limiting the origin
+size to that 16MB and you're using a cache blocksize of 512 sectors
+(256K) there really only needs to be 64 cache blocks to cover the entire
+origin device with cache.
+
+(BTW, easier to just use blockdev --getsize since DM expects units of
+512b sectors)
+
+> Test:
+> one terminal window:
+>   while true; do dd if=/dev/zero of=/dev/mapper/foo0 bs=512; done
+> second window:
+>   while sleep .1; do dmsetup status foo0; done
+> 
+> 
+> after some time from 0 i get to 4294967295, which is think is not
+> expected value.
+> 
+> 
+> More info:
+> device just created:
+> 0 32768 cache 10/4096 1728259 256 1675650 0 0 0 64 0 1 writeback 2
+> migration_threshold 2048 4 random_threshold 4 sequential_threshold 512
+
+...
+
+> 0 32768 cache 10/4096 2737453 256 2679623 0 0 0 64 4294967295 1
+> writeback 2 migration_threshold 2048 4 random_threshold 4
+> sequential_threshold 512
+
+You clearly are experiencing some bug, there is no way you have that
+many cache blocks.  nr_dirty should always be bound by the number of
+cache blocks in the cache.  So in your case it should be limited to 64
+(if I did my math above properly).
+
+The newer DM cache versions (in 3,14 and above) provide more useful
+status.  But unfortunately, with the older status output, I cannot infer
+from the provided status output how large the cache really is.
+
+Anyway, I suspect something odd is happening due to user error.  Doesn't
+mean there isn't a bug.. just helps explain why we haven't seen this.
+
+Will try to reproduce.  But in the meantime if you could retry with
+>= 3.14 and clearly show the "dmsetup table" (not the shell that creates
+it) that'd be helpful.
