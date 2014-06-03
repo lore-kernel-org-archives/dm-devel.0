@@ -1,93 +1,41 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: 3.13-1 dm cache possible race condition
-Date: Tue, 3 Jun 2014 14:50:15 -0400
-Message-ID: <20140603185014.GA8627@redhat.com>
-References: <CACiqTEObccUuhyCcr8HZ0qZunxwdtkPLNYsp9xJRG6H6hxGo7Q@mail.gmail.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: dm: disable WRITE SAME if it fails
+Date: Tue, 03 Jun 2014 18:59:32 -0400
+Message-ID: <yq1fvjl38h7.fsf@sermon.lab.mkp.net>
+References: <53042F91.4050201@huawei.com> <53899812.50403@huawei.com>
+	<20140531150517.GJ29705@agk-dp.fab.redhat.com>
+	<20140602183635.GA1396@redhat.com> <20140603165859.GA8091@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACiqTEObccUuhyCcr8HZ0qZunxwdtkPLNYsp9xJRG6H6hxGo7Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: roma1390 <roma1390@gmail.com>
-Cc: linux-kernel@vger.kernel.org, Morgan Mears <Morgan.Mears@netapp.com>, Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <ejt@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140603165859.GA8091@redhat.com> (Mike Snitzer's message of
+	"Tue, 3 Jun 2014 12:58:59 -0400")
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Anderson <andmike@linux.vnet.ibm.com>, Milan Broz <asi@seznam.cz>, christophe varoqui <christophe.varoqui@free.fr>, alex chen <alex.chen@huawei.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Joseph Qi <joseph.qi@huawei.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-[please cc dm-devel rather than, or in addition to, LKML in the future]
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-On Sun, May 18 2014 at 11:35am -0400,
-roma1390 <roma1390@gmail.com> wrote:
+>> > Shouldn't this code be taken out of mpath and moved to dm.c and
+>> > applied to all targets (both bio and rq-based, at least where WRITE
+>> > SAME is supported)?
 
-> I think that somehow is got broken cache->nr_dirty
-> 
-> # dmsetup status foo0
-> 0 32768 cache 7/4096 1728240 256 1675650 0 0 64 64 4294967295 1
-> writeback 2 migration_threshold 2048 4 random_threshold 4
-> sequential_threshold 512
-> 
-> 
-> See: 4294967295 this is -1 as is not OK.
-> 
-> 
-> Kernel: Debian stock 3.13-1-amd64
-> 
-> Actions taken:
-> 
->  modprobe brd
->  BLOCKS=$[`blockdev --getsize64 /dev/ram0`/512]
->  METADATA_DEV=/dev/ram0
->  CACHE_DEV=/dev/ram1
->  DATA_DEV=/dev/ram2
->  dmsetup create foo0 --table "0 $BLOCKS cache $METADATA_DEV $CACHE_DEV
-> $DATA_DEV 512 1 writeback default 0"
+Mike> FYI, I pushed a revised version of this patch to linux-next,
 
-Why are you limiting the dm-cache's DM table to $BLOCKS of the metadata
-device (/dev/ram0)?  You should be using the DATA_DEV for the size of
-the cache table.
+I haven't tested the patch but I definitely agree with this approach.
 
-Anyway, based on the below dmsetup status output I can infer that your
-metadata device is only 16MB.  But given that you're limiting the origin
-size to that 16MB and you're using a cache blocksize of 512 sectors
-(256K) there really only needs to be 64 cache blocks to cover the entire
-origin device with cache.
+Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
 
-(BTW, easier to just use blockdev --getsize since DM expects units of
-512b sectors)
-
-> Test:
-> one terminal window:
->   while true; do dd if=/dev/zero of=/dev/mapper/foo0 bs=512; done
-> second window:
->   while sleep .1; do dmsetup status foo0; done
-> 
-> 
-> after some time from 0 i get to 4294967295, which is think is not
-> expected value.
-> 
-> 
-> More info:
-> device just created:
-> 0 32768 cache 10/4096 1728259 256 1675650 0 0 0 64 0 1 writeback 2
-> migration_threshold 2048 4 random_threshold 4 sequential_threshold 512
-
-...
-
-> 0 32768 cache 10/4096 2737453 256 2679623 0 0 0 64 4294967295 1
-> writeback 2 migration_threshold 2048 4 random_threshold 4
-> sequential_threshold 512
-
-You clearly are experiencing some bug, there is no way you have that
-many cache blocks.  nr_dirty should always be bound by the number of
-cache blocks in the cache.  So in your case it should be limited to 64
-(if I did my math above properly).
-
-The newer DM cache versions (in 3,14 and above) provide more useful
-status.  But unfortunately, with the older status output, I cannot infer
-from the provided status output how large the cache really is.
-
-Anyway, I suspect something odd is happening due to user error.  Doesn't
-mean there isn't a bug.. just helps explain why we haven't seen this.
-
-Will try to reproduce.  But in the meantime if you could retry with
->= 3.14 and clearly show the "dmsetup table" (not the shell that creates
-it) that'd be helpful.
+-- 
+Martin K. Petersen	Oracle Linux Engineering
