@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 4/7] dm: open-code dm_kill_unmapped_request()
-Date: Thu,  5 Jun 2014 15:11:04 +0200
-Message-ID: <1401973867-121561-5-git-send-email-hare@suse.de>
+Subject: [PATCH 3/7] dm: move rq_completed() out of enclosing
+	functions
+Date: Thu,  5 Jun 2014 15:11:03 +0200
+Message-ID: <1401973867-121561-4-git-send-email-hare@suse.de>
 References: <1401973867-121561-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,73 +25,108 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm.c               | 24 +++++-------------------
- include/linux/device-mapper.h |  1 -
- 2 files changed, 5 insertions(+), 20 deletions(-)
+ drivers/md/dm.c | 31 +++++++++++++++----------------
+ 1 file changed, 15 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f55ca0c..5109c76 100644
+index 0fa0884..f55ca0c 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1015,22 +1015,6 @@ static void dm_complete_request(struct request *clone, int error)
+@@ -880,9 +880,7 @@ static void free_rq_clone(struct request *clone)
+  */
+ static void dm_end_request(struct request *clone, int error)
+ {
+-	int rw = rq_data_dir(clone);
+ 	struct dm_rq_target_io *tio = clone->end_io_data;
+-	struct mapped_device *md = tio->md;
+ 	struct request *rq = tio->orig;
+ 
+ 	if (rq->cmd_type == REQ_TYPE_BLOCK_PC) {
+@@ -900,7 +898,6 @@ static void dm_end_request(struct request *clone, int error)
+ 
+ 	free_rq_clone(clone);
+ 	blk_end_request_all(rq, error);
+-	rq_completed(md, rw, true);
  }
  
+ static void dm_unprep_request(struct request *rq)
+@@ -916,12 +913,8 @@ static void dm_unprep_request(struct request *rq)
  /*
-- * Complete the not-mapped clone and the original request with the error status
-- * through softirq context.
-- * Target's rq_end_io() function isn't called.
-- * This may be used when the target's map_rq() function fails.
-- */
--void dm_kill_unmapped_request(struct request *clone, int error)
--{
--	struct dm_rq_target_io *tio = clone->end_io_data;
--	struct request *rq = tio->orig;
--
--	rq->cmd_flags |= REQ_FAILED;
--	dm_complete_request(clone, error);
--}
--EXPORT_SYMBOL_GPL(dm_kill_unmapped_request);
--
--/*
-  * Called with the queue lock held
+  * Requeue the original request of a clone.
   */
- static void end_clone_request(struct request *clone, int error)
-@@ -1631,7 +1615,8 @@ static int map_request(struct dm_target *ti, struct request *clone,
- 		}
+-void dm_requeue_unmapped_request(struct request *clone)
++void dm_requeue_unmapped_request(struct request *rq)
+ {
+-	int rw = rq_data_dir(clone);
+-	struct dm_rq_target_io *tio = clone->end_io_data;
+-	struct mapped_device *md = tio->md;
+-	struct request *rq = tio->orig;
+ 	struct request_queue *q = rq->q;
+ 	unsigned long flags;
  
- 		/* The target wants to complete the I/O */
--		dm_kill_unmapped_request(clone, r);
-+		rq->cmd_flags |= REQ_FAILED;
-+		dm_complete_request(clone, r);
- 		break;
+@@ -930,8 +923,6 @@ void dm_requeue_unmapped_request(struct request *clone)
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 	blk_requeue_request(q, rq);
+ 	spin_unlock_irqrestore(q->queue_lock, flags);
+-
+-	rq_completed(md, rw, 0);
+ }
+ EXPORT_SYMBOL_GPL(dm_requeue_unmapped_request);
+ 
+@@ -969,6 +960,9 @@ static void dm_done(struct request *clone, struct dm_rq_target_io *tio,
+ {
+ 	int r = tio->error;
+ 	dm_request_endio_fn rq_end_io = NULL;
++	struct mapped_device *md = tio->md;
++	struct request *rq = tio->orig;
++	int rw = rq_data_dir(clone);
+ 
+ 	if (tio->ti) {
+ 		rq_end_io = tio->ti->type->rq_end_io;
+@@ -977,13 +971,15 @@ static void dm_done(struct request *clone, struct dm_rq_target_io *tio,
+ 			r = rq_end_io(tio->ti, clone, tio->error, &tio->info);
  	}
  
-@@ -1691,11 +1676,12 @@ static void dm_request_fn(struct request_queue *q)
- 		if (!dm_target_is_valid(ti)) {
- 			/*
- 			 * Must perform setup, that dm_done() requires,
--			 * before calling dm_kill_unmapped_request
-+			 * before calling dm_complete_request
- 			 */
- 			DMERR_LIMIT("request attempted access beyond the end of device");
- 			clone = dm_start_request(md, rq);
--			dm_kill_unmapped_request(clone, -EIO);
-+			rq->cmd_flags |= REQ_FAILED;
-+			dm_complete_request(clone, -EIO);
- 			continue;
- 		}
+-	if (r <= 0)
++	if (r <= 0) {
+ 		/* The target wants to complete the I/O */
+ 		dm_end_request(clone, r);
+-	else if (r == DM_ENDIO_REQUEUE)
++		rq_completed(md, rw, true);
++	} else if (r == DM_ENDIO_REQUEUE) {
+ 		/* The target wants to requeue the I/O */
+-		dm_requeue_unmapped_request(clone);
+-	else {
++		dm_requeue_unmapped_request(rq);
++		rq_completed(md, rw, false);
++	} else {
+ 		DMWARN("unimplemented target endio return value: %d", r);
+ 		BUG();
+ 	}
+@@ -1607,6 +1603,8 @@ static int map_request(struct dm_target *ti, struct request *clone,
+ {
+ 	int r, requeued = 0;
+ 	struct dm_rq_target_io *tio = clone->end_io_data;
++	struct request *rq = tio->orig;
++	int rw = rq_data_dir(clone);
  
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 63da56e..3ad5db8 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -604,7 +604,6 @@ static inline unsigned long to_bytes(sector_t n)
-  *---------------------------------------------------------------*/
- void dm_dispatch_request(struct request *rq);
- void dm_requeue_unmapped_request(struct request *rq);
--void dm_kill_unmapped_request(struct request *rq, int error);
- int dm_underlying_device_busy(struct request_queue *q);
- 
- #endif	/* _LINUX_DEVICE_MAPPER_H */
+ 	tio->ti = ti;
+ 	r = ti->type->map_rq(ti, clone, &tio->info);
+@@ -1617,12 +1615,13 @@ static int map_request(struct dm_target *ti, struct request *clone,
+ 	case DM_MAPIO_REMAPPED:
+ 		/* The target has remapped the I/O so dispatch it */
+ 		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
+-				     blk_rq_pos(tio->orig));
++				     blk_rq_pos(rq));
+ 		dm_dispatch_request(clone);
+ 		break;
+ 	case DM_MAPIO_REQUEUE:
+ 		/* The target wants to requeue the I/O */
+-		dm_requeue_unmapped_request(clone);
++		dm_requeue_unmapped_request(rq);
++		rq_completed(md, rw, false);
+ 		requeued = 1;
+ 		break;
+ 	default:
 -- 
 1.7.12.4
