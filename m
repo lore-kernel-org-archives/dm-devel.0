@@ -1,17 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: alex chen <alex.chen@huawei.com>
 Subject: Re: dm: disable WRITE SAME if it fails
-Date: Wed, 4 Jun 2014 09:52:14 -0400
-Message-ID: <20140604135214.GB14235@redhat.com>
-References: <53042F91.4050201@huawei.com> <53899812.50403@huawei.com>
-	<20140531150517.GJ29705@agk-dp.fab.redhat.com>
-	<20140602183635.GA1396@redhat.com> <538E9AAC.3020104@huawei.com>
+Date: Thu, 5 Jun 2014 09:52:37 +0800
+Message-ID: <538FCD65.8080201@huawei.com>
+References: <53042F91.4050201@huawei.com>
+	<53899812.50403@huawei.com>	<20140531150517.GJ29705@agk-dp.fab.redhat.com>	<20140602183635.GA1396@redhat.com>
+	<538E9AAC.3020104@huawei.com> <20140604135214.GB14235@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <538E9AAC.3020104@huawei.com>
+In-Reply-To: <20140604135214.GB14235@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,62 +20,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: alex chen <alex.chen@huawei.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Milan Broz <asi@seznam.cz>, Mike Anderson <andmike@linux.vnet.ibm.com>, christophe varoqui <christophe.varoqui@free.fr>, dm-devel@redhat.com, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Joseph Qi <joseph.qi@huawei.com>, Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Milan Broz <asi@seznam.cz>, Mike Anderson <andmike@linux.vnet.ibm.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Joseph Qi <joseph.qi@huawei.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 04 2014 at 12:03am -0400,
-alex chen <alex.chen@huawei.com> wrote:
-
-> On 2014/6/3 2:36, Mike Snitzer wrote:
-> > On Sat, May 31 2014 at 11:05am -0400,
-> > Alasdair G Kergon <agk@redhat.com> wrote:
-> > 
-> >> On Sat, May 31, 2014 at 04:51:30PM +0800, alex chen wrote:
-> >>> The original commit f84cb8a46a771f36a04a02c61ea635c968ed5f6a("dm mpath:
-> >>> disable WRITE SAME if it fails") disables WRITE SAME in the DM multipath
-> >>> device if it fails, but when the DM linear device stacks ontop of the
-> >>> multipath device it doesn't help.
-> >>> this patch adds DM linear end_io method to catch WRITE SAME errors and
-> >>> disables WRITE SAME in the DM linear device's queue_limits if an
-> >>> underlying device disables it.
-> >>
-> >> How does your patch address striped targets?
-> >>  
-> >> Shouldn't this code be taken out of mpath and moved to dm.c and applied to all
-> >> targets (both bio and rq-based, at least where WRITE SAME is supported)?
-> > 
-> > Alex,
-> > 
-> > I've implemented what Alasdair and I have been suggesting.
-> > Can you please test this untested patch?
-> > 
-> > Thanks,
-> > Mike
-> > 
-> 
-> I tested this patch, it is OK.
-> Test cases is as follow:
-> CASE 1:
-> dm linear device(dm-23): ocfs2-fs;
-> multipath device(dm-9);
-> scsi device(sdr,sdv);
-> 
-> After WRITE SAME IO fails:
-> linux-MOLybD:~ # cat /sys/block/dm-23/queue/write_same_max_bytes
-> 0
-> linux-MOLybD:~ # cat /sys/block/dm-9/queue/write_same_max_bytes
-> 0
-> linux-MOLybD:~ # cat /sys/block/sdr/queue/write_same_max_bytes
-> 0
-> linux-MOLybD:~ # cat /sys/block/sdv/queue/write_same_max_bytes
-> 0
-> 
-> Result: pass
-> 
-> Tested-by: Alex Chen <alex.chen@huawei.com>
-
-OK, thanks.. FYI, as I sahred before: I updated it slightly to check for
-the specific -EREMOTEIO error code that SCSI returns for this case, see:
-
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=7eee4ae2dbb2be0a15a4406718806e48b18ba831
+T24gMjAxNC82LzQgMjE6NTIsIE1pa2UgU25pdHplciB3cm90ZToKPiBPbiBXZWQsIEp1biAwNCAy
+MDE0IGF0IDEyOjAzYW0gLTA0MDAsCj4gYWxleCBjaGVuIDxhbGV4LmNoZW5AaHVhd2VpLmNvbT4g
+d3JvdGU6Cj4gCj4+IE9uIDIwMTQvNi8zIDI6MzYsIE1pa2UgU25pdHplciB3cm90ZToKPj4+IE9u
+IFNhdCwgTWF5IDMxIDIwMTQgYXQgMTE6MDVhbSAtMDQwMCwKPj4+IEFsYXNkYWlyIEcgS2VyZ29u
+IDxhZ2tAcmVkaGF0LmNvbT4gd3JvdGU6Cj4+Pgo+Pj4+IE9uIFNhdCwgTWF5IDMxLCAyMDE0IGF0
+IDA0OjUxOjMwUE0gKzA4MDAsIGFsZXggY2hlbiB3cm90ZToKPj4+Pj4gVGhlIG9yaWdpbmFsIGNv
+bW1pdCBmODRjYjhhNDZhNzcxZjM2YTA0YTAyYzYxZWE2MzVjOTY4ZWQ1ZjZhKCJkbSBtcGF0aDoK
+Pj4+Pj4gZGlzYWJsZSBXUklURSBTQU1FIGlmIGl0IGZhaWxzIikgZGlzYWJsZXMgV1JJVEUgU0FN
+RSBpbiB0aGUgRE0gbXVsdGlwYXRoCj4+Pj4+IGRldmljZSBpZiBpdCBmYWlscywgYnV0IHdoZW4g
+dGhlIERNIGxpbmVhciBkZXZpY2Ugc3RhY2tzIG9udG9wIG9mIHRoZQo+Pj4+PiBtdWx0aXBhdGgg
+ZGV2aWNlIGl0IGRvZXNuJ3QgaGVscC4KPj4+Pj4gdGhpcyBwYXRjaCBhZGRzIERNIGxpbmVhciBl
+bmRfaW8gbWV0aG9kIHRvIGNhdGNoIFdSSVRFIFNBTUUgZXJyb3JzIGFuZAo+Pj4+PiBkaXNhYmxl
+cyBXUklURSBTQU1FIGluIHRoZSBETSBsaW5lYXIgZGV2aWNlJ3MgcXVldWVfbGltaXRzIGlmIGFu
+Cj4+Pj4+IHVuZGVybHlpbmcgZGV2aWNlIGRpc2FibGVzIGl0Lgo+Pj4+Cj4+Pj4gSG93IGRvZXMg
+eW91ciBwYXRjaCBhZGRyZXNzIHN0cmlwZWQgdGFyZ2V0cz8KPj4+PiAgCj4+Pj4gU2hvdWxkbid0
+IHRoaXMgY29kZSBiZSB0YWtlbiBvdXQgb2YgbXBhdGggYW5kIG1vdmVkIHRvIGRtLmMgYW5kIGFw
+cGxpZWQgdG8gYWxsCj4+Pj4gdGFyZ2V0cyAoYm90aCBiaW8gYW5kIHJxLWJhc2VkLCBhdCBsZWFz
+dCB3aGVyZSBXUklURSBTQU1FIGlzIHN1cHBvcnRlZCk/Cj4+Pgo+Pj4gQWxleCwKPj4+Cj4+PiBJ
+J3ZlIGltcGxlbWVudGVkIHdoYXQgQWxhc2RhaXIgYW5kIEkgaGF2ZSBiZWVuIHN1Z2dlc3Rpbmcu
+Cj4+PiBDYW4geW91IHBsZWFzZSB0ZXN0IHRoaXMgdW50ZXN0ZWQgcGF0Y2g/Cj4+Pgo+Pj4gVGhh
+bmtzLAo+Pj4gTWlrZQo+Pj4KPj4KPj4gSSB0ZXN0ZWQgdGhpcyBwYXRjaCwgaXQgaXMgT0suCj4+
+IFRlc3QgY2FzZXMgaXMgYXMgZm9sbG93Ogo+PiBDQVNFIDE6Cj4+IGRtIGxpbmVhciBkZXZpY2Uo
+ZG0tMjMpOiBvY2ZzMi1mczsKPj4gbXVsdGlwYXRoIGRldmljZShkbS05KTsKPj4gc2NzaSBkZXZp
+Y2Uoc2RyLHNkdik7Cj4+Cj4+IEFmdGVyIFdSSVRFIFNBTUUgSU8gZmFpbHM6Cj4+IGxpbnV4LU1P
+THliRDp+ICMgY2F0IC9zeXMvYmxvY2svZG0tMjMvcXVldWUvd3JpdGVfc2FtZV9tYXhfYnl0ZXMK
+Pj4gMAo+PiBsaW51eC1NT0x5YkQ6fiAjIGNhdCAvc3lzL2Jsb2NrL2RtLTkvcXVldWUvd3JpdGVf
+c2FtZV9tYXhfYnl0ZXMKPj4gMAo+PiBsaW51eC1NT0x5YkQ6fiAjIGNhdCAvc3lzL2Jsb2NrL3Nk
+ci9xdWV1ZS93cml0ZV9zYW1lX21heF9ieXRlcwo+PiAwCj4+IGxpbnV4LU1PTHliRDp+ICMgY2F0
+IC9zeXMvYmxvY2svc2R2L3F1ZXVlL3dyaXRlX3NhbWVfbWF4X2J5dGVzCj4+IDAKPj4KPj4gUmVz
+dWx0OiBwYXNzCj4+Cj4+IFRlc3RlZC1ieTogQWxleCBDaGVuIDxhbGV4LmNoZW5AaHVhd2VpLmNv
+bT4KPiAKPiBPSywgdGhhbmtzLi4gRllJLCBhcyBJIHNhaHJlZCBiZWZvcmU6IEkgdXBkYXRlZCBp
+dCBzbGlnaHRseSB0byBjaGVjayBmb3IKPiB0aGUgc3BlY2lmaWMgLUVSRU1PVEVJTyBlcnJvciBj
+b2RlIHRoYXQgU0NTSSByZXR1cm5zIGZvciB0aGlzIGNhc2UsIHNlZToKPiAKPiBodHRwczovL2dp
+dC5rZXJuZWwub3JnL2NnaXQvbGludXgva2VybmVsL2dpdC9kZXZpY2UtbWFwcGVyL2xpbnV4LWRt
+LmdpdC9jb21taXQvP2g9Zm9yLW5leHQmaWQ9N2VlZTRhZTJkYmIyYmUwYTE1YTQ0MDY3MTg4MDZl
+NDhiMThiYTgzMQo+IAoKT0vvvIxJJ3ZlIHRlc3RlZCB0aGUgbmV3IHBhdGNoLCB0aGUgcmVzdWx0
+IHdhcyBhbHNvIHBhc3MuCgo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxA
+cmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbAo+IAo+IC4KPiAKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
+Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
