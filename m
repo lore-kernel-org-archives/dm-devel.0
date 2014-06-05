@@ -1,16 +1,16 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [RFC PATCH 0/7] dm-mpath: Do not clone requests
-Date: Thu, 5 Jun 2014 07:44:32 -0700
-Message-ID: <20140605144432.GD4590@infradead.org>
-References: <1401973867-121561-1-git-send-email-hare@suse.de>
-	<20140605133626.GA7149@infradead.org> <539076D1.9000704@suse.de>
+Subject: Re: good dm-mpath test setup?
+Date: Thu, 5 Jun 2014 07:49:28 -0700
+Message-ID: <20140605144928.GA23363@infradead.org>
+References: <20140605115011.GA816@infradead.org>
+ <53905F19.2070401@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <539076D1.9000704@suse.de>
+In-Reply-To: <53905F19.2070401@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +21,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jun 05, 2014 at 03:55:29PM +0200, Hannes Reinecke wrote:
-> The primary reason for cloning the bios would from my POV would be
-> so that we can handle partial completion properly. When eliminating
-> it we would be always return an error here.
+On Thu, Jun 05, 2014 at 02:14:17PM +0200, Hannes Reinecke wrote:
+> Hmm. This shouldn't happen.
+> 
+> But be aware, that multipath doesn't play well together with systemd
+> currently.
+> I've done plenty of fixes to get it up and running for SLES12; once
+> they've stabilized I'll be sending them mainline.
+> 
+> But for a stable testbed I would recommend against systemd currently.
 
-I don't see how partial completions matter - we never finish a partial
-request in the low level driver and let DM retry.  All partial
-completion handling stays in the low level driver.
+I'm not going anywhere near that stinking pile if I can avoid it.
+This is a Debian Wheezy setup.
 
-If we'd didn't clone bios the workflow would look something like this:
+> >Does anyone have a good default iet or maybe lio config for dm-mpath
+> >testing?
+> >
+> The easiest bit would be set set up lio in loopback mode, and map
+> two luns pointing to the same device.
+> 
+> I've attached a small script I'm using for a quick test here.
 
- - allocate new clone request in dm-mpath
- - point clone->bio and clone->biotail to the original bio, zero
-   them out in the original request
- - the low level driver does one or more calls to blk_update_request
-   until clone->bio is NULL, and then calls blk_finish_request (or
-   __blk_mq_end_io) once the request has been completed,
- - This hands control back to dm-mpath, which can now call
-   __blk_mq_end_io without blk_update_request as the low level driver
-   took care of the bio completions.
+Thanks!
