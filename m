@@ -1,16 +1,13 @@
-From: alex chen <alex.chen@huawei.com>
-Subject: Re: dm: disable WRITE SAME if it fails
-Date: Thu, 5 Jun 2014 09:52:37 +0800
-Message-ID: <538FCD65.8080201@huawei.com>
-References: <53042F91.4050201@huawei.com>
-	<53899812.50403@huawei.com>	<20140531150517.GJ29705@agk-dp.fab.redhat.com>	<20140602183635.GA1396@redhat.com>
-	<538E9AAC.3020104@huawei.com> <20140604135214.GB14235@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: good dm-mpath test setup?
+Date: Thu, 5 Jun 2014 04:50:11 -0700
+Message-ID: <20140605115011.GA816@infradead.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140604135214.GB14235@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +17,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Milan Broz <asi@seznam.cz>, Mike Anderson <andmike@linux.vnet.ibm.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Joseph Qi <joseph.qi@huawei.com>, Alasdair Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMjAxNC82LzQgMjE6NTIsIE1pa2UgU25pdHplciB3cm90ZToKPiBPbiBXZWQsIEp1biAwNCAy
-MDE0IGF0IDEyOjAzYW0gLTA0MDAsCj4gYWxleCBjaGVuIDxhbGV4LmNoZW5AaHVhd2VpLmNvbT4g
-d3JvdGU6Cj4gCj4+IE9uIDIwMTQvNi8zIDI6MzYsIE1pa2UgU25pdHplciB3cm90ZToKPj4+IE9u
-IFNhdCwgTWF5IDMxIDIwMTQgYXQgMTE6MDVhbSAtMDQwMCwKPj4+IEFsYXNkYWlyIEcgS2VyZ29u
-IDxhZ2tAcmVkaGF0LmNvbT4gd3JvdGU6Cj4+Pgo+Pj4+IE9uIFNhdCwgTWF5IDMxLCAyMDE0IGF0
-IDA0OjUxOjMwUE0gKzA4MDAsIGFsZXggY2hlbiB3cm90ZToKPj4+Pj4gVGhlIG9yaWdpbmFsIGNv
-bW1pdCBmODRjYjhhNDZhNzcxZjM2YTA0YTAyYzYxZWE2MzVjOTY4ZWQ1ZjZhKCJkbSBtcGF0aDoK
-Pj4+Pj4gZGlzYWJsZSBXUklURSBTQU1FIGlmIGl0IGZhaWxzIikgZGlzYWJsZXMgV1JJVEUgU0FN
-RSBpbiB0aGUgRE0gbXVsdGlwYXRoCj4+Pj4+IGRldmljZSBpZiBpdCBmYWlscywgYnV0IHdoZW4g
-dGhlIERNIGxpbmVhciBkZXZpY2Ugc3RhY2tzIG9udG9wIG9mIHRoZQo+Pj4+PiBtdWx0aXBhdGgg
-ZGV2aWNlIGl0IGRvZXNuJ3QgaGVscC4KPj4+Pj4gdGhpcyBwYXRjaCBhZGRzIERNIGxpbmVhciBl
-bmRfaW8gbWV0aG9kIHRvIGNhdGNoIFdSSVRFIFNBTUUgZXJyb3JzIGFuZAo+Pj4+PiBkaXNhYmxl
-cyBXUklURSBTQU1FIGluIHRoZSBETSBsaW5lYXIgZGV2aWNlJ3MgcXVldWVfbGltaXRzIGlmIGFu
-Cj4+Pj4+IHVuZGVybHlpbmcgZGV2aWNlIGRpc2FibGVzIGl0Lgo+Pj4+Cj4+Pj4gSG93IGRvZXMg
-eW91ciBwYXRjaCBhZGRyZXNzIHN0cmlwZWQgdGFyZ2V0cz8KPj4+PiAgCj4+Pj4gU2hvdWxkbid0
-IHRoaXMgY29kZSBiZSB0YWtlbiBvdXQgb2YgbXBhdGggYW5kIG1vdmVkIHRvIGRtLmMgYW5kIGFw
-cGxpZWQgdG8gYWxsCj4+Pj4gdGFyZ2V0cyAoYm90aCBiaW8gYW5kIHJxLWJhc2VkLCBhdCBsZWFz
-dCB3aGVyZSBXUklURSBTQU1FIGlzIHN1cHBvcnRlZCk/Cj4+Pgo+Pj4gQWxleCwKPj4+Cj4+PiBJ
-J3ZlIGltcGxlbWVudGVkIHdoYXQgQWxhc2RhaXIgYW5kIEkgaGF2ZSBiZWVuIHN1Z2dlc3Rpbmcu
-Cj4+PiBDYW4geW91IHBsZWFzZSB0ZXN0IHRoaXMgdW50ZXN0ZWQgcGF0Y2g/Cj4+Pgo+Pj4gVGhh
-bmtzLAo+Pj4gTWlrZQo+Pj4KPj4KPj4gSSB0ZXN0ZWQgdGhpcyBwYXRjaCwgaXQgaXMgT0suCj4+
-IFRlc3QgY2FzZXMgaXMgYXMgZm9sbG93Ogo+PiBDQVNFIDE6Cj4+IGRtIGxpbmVhciBkZXZpY2Uo
-ZG0tMjMpOiBvY2ZzMi1mczsKPj4gbXVsdGlwYXRoIGRldmljZShkbS05KTsKPj4gc2NzaSBkZXZp
-Y2Uoc2RyLHNkdik7Cj4+Cj4+IEFmdGVyIFdSSVRFIFNBTUUgSU8gZmFpbHM6Cj4+IGxpbnV4LU1P
-THliRDp+ICMgY2F0IC9zeXMvYmxvY2svZG0tMjMvcXVldWUvd3JpdGVfc2FtZV9tYXhfYnl0ZXMK
-Pj4gMAo+PiBsaW51eC1NT0x5YkQ6fiAjIGNhdCAvc3lzL2Jsb2NrL2RtLTkvcXVldWUvd3JpdGVf
-c2FtZV9tYXhfYnl0ZXMKPj4gMAo+PiBsaW51eC1NT0x5YkQ6fiAjIGNhdCAvc3lzL2Jsb2NrL3Nk
-ci9xdWV1ZS93cml0ZV9zYW1lX21heF9ieXRlcwo+PiAwCj4+IGxpbnV4LU1PTHliRDp+ICMgY2F0
-IC9zeXMvYmxvY2svc2R2L3F1ZXVlL3dyaXRlX3NhbWVfbWF4X2J5dGVzCj4+IDAKPj4KPj4gUmVz
-dWx0OiBwYXNzCj4+Cj4+IFRlc3RlZC1ieTogQWxleCBDaGVuIDxhbGV4LmNoZW5AaHVhd2VpLmNv
-bT4KPiAKPiBPSywgdGhhbmtzLi4gRllJLCBhcyBJIHNhaHJlZCBiZWZvcmU6IEkgdXBkYXRlZCBp
-dCBzbGlnaHRseSB0byBjaGVjayBmb3IKPiB0aGUgc3BlY2lmaWMgLUVSRU1PVEVJTyBlcnJvciBj
-b2RlIHRoYXQgU0NTSSByZXR1cm5zIGZvciB0aGlzIGNhc2UsIHNlZToKPiAKPiBodHRwczovL2dp
-dC5rZXJuZWwub3JnL2NnaXQvbGludXgva2VybmVsL2dpdC9kZXZpY2UtbWFwcGVyL2xpbnV4LWRt
-LmdpdC9jb21taXQvP2g9Zm9yLW5leHQmaWQ9N2VlZTRhZTJkYmIyYmUwYTE1YTQ0MDY3MTg4MDZl
-NDhiMThiYTgzMQo+IAoKT0vvvIxJJ3ZlIHRlc3RlZCB0aGUgbmV3IHBhdGNoLCB0aGUgcmVzdWx0
-IHdhcyBhbHNvIHBhc3MuCgo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxA
-cmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbAo+IAo+IC4KPiAKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
-Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+I've been looking into support blk-mq/scsi-mq in dm-mpath, but I'm
+already running into issues with mainline.  I created a couple luns
+(without second path) using iet, and then using the iscsi initiator
+to access them.  But it seems like no I/O is possible through dm-mpath
+for this simple setup as the kpartx processes spawned by udev already
+hang.  Is dm-mpath (default config, no multipath.conf) support to work
+for a single path setup, or is this expected behavior?
+
+Does anyone have a good default iet or maybe lio config for dm-mpath
+testing?
