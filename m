@@ -1,12 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [RFC PATCH 0/7] dm-mpath: Do not clone requests
-Date: Thu,  5 Jun 2014 15:11:00 +0200
-Message-ID: <1401973867-121561-1-git-send-email-hare@suse.de>
+Subject: [PATCH 6/7] dm: open-code free_rq_clone()
+Date: Thu,  5 Jun 2014 15:11:06 +0200
+Message-ID: <1401973867-121561-7-git-send-email-hare@suse.de>
+References: <1401973867-121561-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1401973867-121561-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,36 +22,77 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi all,
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm.c | 24 ++++++++----------------
+ 1 file changed, 8 insertions(+), 16 deletions(-)
 
-this is a patchset I made some time ago to remove the
-'insane request cloning' from dm-multipath.
-
-Currently, multipath clones each request + attached bios before sending
-them down to the underlying path. This not only increases the memory
-requirements, but also leads to quite some interesting interactions
-with the block layer.
-
-This RFC pursues an alternative approach, leaving the request as-is
-and just modify the rq_end_io handler to call the correct end_io function.
-As the rq_end_io is called _before_ any bio_endio handler there is no
-need to clone the bios nor the bio_endio handler.
-
-In theory. This is just a test balloon to get some response.
-I never got around to actually _test_ it. You have been warned.
-
-Hannes Reinecke (7):
-  dm: use dm_rq_target_io as argument for dm_done()
-  dm: remove handling of DM_ENDIO_INCOMPLETE
-  dm: move rq_completed() out of enclosing functions
-  dm: open-code dm_kill_unmapped_request()
-  dm: move free_rq_clone() out of dm_unprep_request()
-  dm: open-code free_rq_clone()
-  dm: do not clone requests
-
- drivers/md/dm.c               | 337 +++++++++---------------------------------
- include/linux/device-mapper.h |   1 -
- 2 files changed, 73 insertions(+), 265 deletions(-)
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index b2240f7..4da9941 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -866,23 +866,13 @@ static void rq_completed(struct mapped_device *md, int rw, int run_queue)
+ 	dm_put(md);
+ }
+ 
+-static void free_rq_clone(struct request *clone)
+-{
+-	struct dm_rq_target_io *tio = clone->end_io_data;
+-
+-	blk_rq_unprep_clone(clone);
+-	free_rq_tio(tio);
+-}
+-
+ /*
+  * Complete the clone and the original request.
+  * Must be called without queue lock.
+  */
+-static void dm_end_request(struct request *clone, int error)
++static void dm_end_request(struct request *clone, struct request *rq,
++			   int error)
+ {
+-	struct dm_rq_target_io *tio = clone->end_io_data;
+-	struct request *rq = tio->orig;
+-
+ 	if (rq->cmd_type == REQ_TYPE_BLOCK_PC) {
+ 		rq->errors = clone->errors;
+ 		rq->resid_len = clone->resid_len;
+@@ -896,7 +886,6 @@ static void dm_end_request(struct request *clone, int error)
+ 			rq->sense_len = clone->sense_len;
+ 	}
+ 
+-	free_rq_clone(clone);
+ 	blk_end_request_all(rq, error);
+ }
+ 
+@@ -967,14 +956,16 @@ static void dm_done(struct request *clone, struct dm_rq_target_io *tio,
+ 			r = rq_end_io(tio->ti, clone, tio->error, &tio->info);
+ 	}
+ 
++	free_rq_tio(tio);
+ 	if (r <= 0) {
+ 		/* The target wants to complete the I/O */
+-		dm_end_request(clone, r);
++		dm_end_request(clone, rq, r);
++		blk_rq_unprep_clone(clone);
+ 		rq_completed(md, rw, true);
+ 	} else if (r == DM_ENDIO_REQUEUE) {
+ 		/* The target wants to requeue the I/O */
+-		free_rq_clone(clone);
+ 		dm_requeue_unmapped_request(rq);
++		blk_rq_unprep_clone(clone);
+ 		rq_completed(md, rw, false);
+ 	} else {
+ 		DMWARN("unimplemented target endio return value: %d", r);
+@@ -1601,7 +1592,8 @@ static int map_request(struct dm_target *ti, struct request *clone,
+ 		break;
+ 	case DM_MAPIO_REQUEUE:
+ 		/* The target wants to requeue the I/O */
+-		free_rq_clone(clone);
++		free_rq_tio(tio);
++		blk_rq_unprep_clone(clone);
+ 		dm_requeue_unmapped_request(rq);
+ 		rq_completed(md, rw, false);
+ 		requeued = 1;
 -- 
 1.7.12.4
