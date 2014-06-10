@@ -1,20 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] libmultipath: Use existing user friendly
- name if possible
-Date: Mon, 9 Jun 2014 15:22:16 -0500
-Message-ID: <20140609202216.GA4802@dhcp80-209.msp.redhat.com>
-References: <8255ED565A0EAA4A960625E27D49DBF24AC9EB61@SACEXCMBX04-PRD.hq.netapp.com>
-	<20140411160338.GA17578@localhost.localdomain>
-	<1397235706.29991.8.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-	<1400181663.19394.17.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-	<CABr-GnfhTK=cG_sGyok3FZtw71EZEqAaLbEnzuN3=4DwXPQk3w@mail.gmail.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: multipath-tools: mismatch between CDB allocation
+ length and SG_IO dxfer_len
+Date: Tue, 10 Jun 2014 07:58:27 +0200
+Message-ID: <CABr-GndDvBnKT99t-1_5vTeTUzrXNjKt9xea=d4FhtMyEh52HQ@mail.gmail.com>
+References: <20140405131323.00000d4b@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============2448720764209828647=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CABr-GnfhTK=cG_sGyok3FZtw71EZEqAaLbEnzuN3=4DwXPQk3w@mail.gmail.com>
+In-Reply-To: <20140405131323.00000d4b@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,108 +18,205 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Stewart,
-	Sean" <Sean.Stewart@netapp.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-On Thu, May 15, 2014 at 11:45:40PM +0200, Christophe Varoqui wrote:
->    Ben,
->    I'd need your ack on this one.
->    Best regards,
->    Christophe Varoqui
+--===============2448720764209828647==
+Content-Type: multipart/alternative; boundary=001a11c2ddee3488b504fb7504b6
 
-Sorry I dropped the ball on this one.
+--001a11c2ddee3488b504fb7504b6
+Content-Type: text/plain; charset=UTF-8
 
-I'm o.k. with this patch.  The biggest issue I have with it has nothing
-to do with its correctness, but with rlookup_wwid()'s use of scan_device.
-Previously, the only scan_device call always failed.  Now scan every
-device name, but we don't ever get anything out of it. First off, if we
-find a match, we will never use the id. Second, if we don't find a match we
-return the id that of the alias we were looking for, but if we do find a
-match we return the next id after the one we were looking for (which is
-completely pointless).
+Applied.
 
-It seems like we could just make rlookup_wwid() return success or failure,
-and then call scan_device() from use_existing_alias() if we need to, and
-take out a bunch of pointless work that rlookup_wwid() is doing.
+I received the same patch for the rdac prioritizer
+ from netapp. Democratically, you're right.
 
--Ben
+Regards,
+Christophe Varoqui
+www.opensvc.com
 
-> =
 
->    On Thu, May 15, 2014 at 9:21 PM, Stewart, Sean
->    <[1]Sean.Stewart@netapp.com> wrote:
-> =
+On Sat, Apr 5, 2014 at 1:13 PM, Sebastian Herbszt <herbszt@gmx.de> wrote:
 
->      Ping... =A0Any additional comments or suggestions for this patch?
->      Bumping in case it got lost in the backlog. :)
->      On Fri, 2014-04-11 at 17:01 +0000, Stewart, Sean wrote:
->      > On Fri, 2014-04-11 at 17:03 +0100, Bryn M. Reeves wrote:
->      > > On Fri, Mar 28, 2014 at 09:01:14PM +0000, Stewart, Sean wrote:
->      > > > When a system is booted to the SAN, a condition can occur where
->      one
->      > > > user friendly name is given to a disk during boot, but multipa=
-thd
->      tries
->      > > > to allocate a different one after boot. If the second alias is
->      already
->      > > > used by another device, multipathd can't rename it. Multipathd
->      then has
->      > > > incorrect information about the alias/wwid relationships, which
->      can
->      > > > result in paths being added to the wrong map.
->      > >
->      > > This should only happen if the initramfs and root file system ha=
-ve
->      > > inconsistent multipath configurations (either multipath.conf or
->      bindings
->      > > / wwids file mismatched). That's not really a valid configuration
->      for
->      > > the system to be in and leads to the type of problems you descri=
-be.
->      >
->      > That is true that it only happens if they are out of sync. =A0We t=
-ried
->      > remaking the initramfs to fix the problem, but it didn't help.
->      > >
->      > > > This patch works around this problem by first trying to use the
->      alias
->      > > > already bound to a device during boot. =A0If the bindings file=
- has
->      that
->      > > > alias bound to a different device, it'll auto generate a new a=
-lias
->      to
->      > > > rename it to.
->      > >
->      > > To be honest I'd prefer to see this cause an error. These types =
-of
->      > > configurations currently run the risk of silent data corruption -
->      I'd
->      > > much rather deal with a system that refuses to boot due to an ou=
-t of
->      > > date initramfs image than one that quietly remaps paths in
->      unexpected
->      > > ways.
->      >
->      > The issue, though, is that the system does not refuse to boot. =A0=
-In the
->      > case we saw, it booted anyway, our QA engineer ran a test, and it
->      ended
->      > with a data corruption. =A0A user could perform a fresh installati=
-on,
->      > map
->      > new luns, reboot, and without any way of realizing it have essenti=
-ally
->      a
->      > ticking time bomb on their hands, ready to go off as soon as there=
-'s a
->      > blip in the SAN.
-> =
+> Hello,
+>
+> while playing with multipath-tools and scst I got the following warning:
+>
+> [ 6382.467569] [3806]: scst: scst_parse_cmd:826:Warning: expected
+> transfer length 256 for opcode 0x12 (handler vdisk_blockio, target
+> scst_local) doesn't match decoded value 128
+> [ 6382.467574] [3806]: scst_parse_cmd:828:Suspicious CDB:
+> [ 6382.467579]  (h)___0__1__2__3__4__5__6__7__8__9__A__B__C__D__E__F
+> [ 6382.467581]    0: 12 01 c0 00 80 00   ......
+>
+> This happened when my scst target pretended to be a CLARiiON.
+> I noticed a mismatch in emc_clariion_prio (libmultipath/prioritizers/emc.c)
+> between the allocation length and dxfer_len:
+>
+> int emc_clariion_prio(const char *dev, int fd)
+> {
+>         unsigned char sense_buffer[256];
+>         unsigned char sb[128];
+>         unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
+>                                                 sizeof(sb), 0};
+>
+> ...
+>
+>         memset(&sense_buffer, 0, 256);
+>         io_hdr.interface_id = 'S';
+>         io_hdr.cmd_len = sizeof (inqCmdBlk);
+>         io_hdr.mx_sb_len = sizeof (sb);
+>         io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
+>         io_hdr.dxfer_len = sizeof (sense_buffer);
+>         io_hdr.dxferp = sense_buffer;
+>         io_hdr.cmdp = inqCmdBlk;
+>         io_hdr.sbp = sb;
+>         io_hdr.timeout = 60000;
+>         io_hdr.pack_id = 0;
+>
+> The following change shrinks the size of sense_buffer to 128.
+>
+> Sebastian
+>
+> diff --git a/libmultipath/prioritizers/emc.c
+> b/libmultipath/prioritizers/emc.c
+> index 87e9a8d..91b3d90 100644
+> --- a/libmultipath/prioritizers/emc.c
+> +++ b/libmultipath/prioritizers/emc.c
+> @@ -14,15 +14,15 @@
+>
+>  int emc_clariion_prio(const char *dev, int fd)
+>  {
+> -       unsigned char sense_buffer[256];
+> +       unsigned char sense_buffer[128];
+>         unsigned char sb[128];
+>         unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
+> -                                               sizeof(sb), 0};
+> +                                               sizeof(sense_buffer), 0};
+>         struct sg_io_hdr io_hdr;
+>         int ret = PRIO_UNDEF;
+>
+>         memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+> -       memset(&sense_buffer, 0, 256);
+> +       memset(&sense_buffer, 0, 128);
+>         io_hdr.interface_id = 'S';
+>         io_hdr.cmd_len = sizeof (inqCmdBlk);
+>         io_hdr.mx_sb_len = sizeof (sb);
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
 
-> References
-> =
+--001a11c2ddee3488b504fb7504b6
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
->    Visible links
->    1. mailto:Sean.Stewart@netapp.com
+<div dir=3D"ltr"><div><div><div><div><div>Applied.<br><br></div>I received =
+the same patch for the rdac prioritizer<br></div>=C2=A0from netapp. Democra=
+tically, you&#39;re right.<br><br></div>Regards,<br></div>Christophe Varoqu=
+i<br>
+</div><a href=3D"http://www.opensvc.com">www.opensvc.com</a><br></div><div =
+class=3D"gmail_extra"><br><br><div class=3D"gmail_quote">On Sat, Apr 5, 201=
+4 at 1:13 PM, Sebastian Herbszt <span dir=3D"ltr">&lt;<a href=3D"mailto:her=
+bszt@gmx.de" target=3D"_blank">herbszt@gmx.de</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">Hello,<br>
+<br>
+while playing with multipath-tools and scst I got the following warning:<br=
+>
+<br>
+[ 6382.467569] [3806]: scst: scst_parse_cmd:826:Warning: expected<br>
+transfer length 256 for opcode 0x12 (handler vdisk_blockio, target<br>
+scst_local) doesn&#39;t match decoded value 128<br>
+[ 6382.467574] [3806]: scst_parse_cmd:828:Suspicious CDB:<br>
+[ 6382.467579] =C2=A0(h)___0__1__2__3__4__5__6__7__8__9__A__B__C__D__E__F<b=
+r>
+[ 6382.467581] =C2=A0 =C2=A00: 12 01 c0 00 80 00 =C2=A0 ......<br>
+<br>
+This happened when my scst target pretended to be a CLARiiON.<br>
+I noticed a mismatch in emc_clariion_prio (libmultipath/prioritizers/emc.c)=
+<br>
+between the allocation length and dxfer_len:<br>
+<br>
+int emc_clariion_prio(const char *dev, int fd)<br>
+{<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned char sense_buffer[256];<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned char sb[128];<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned char inqCmdBlk[INQUIRY_CMDLEN] =3D {IN=
+QUIRY_CMD, 1, 0xC0, 0,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 sizeof(sb), 0};<br>
+<br>
+...<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 memset(&amp;sense_buffer, 0, 256);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.interface_id =3D &#39;S&#39;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmd_len =3D sizeof (inqCmdBlk);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.mx_sb_len =3D sizeof (sb);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxfer_direction =3D SG_DXFER_FROM_DEV;<b=
+r>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxfer_len =3D sizeof (sense_buffer);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D sense_buffer;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D inqCmdBlk;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 60000;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
+<br>
+The following change shrinks the size of sense_buffer to 128.<br>
+<br>
+Sebastian<br>
+<br>
+diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/em=
+c.c<br>
+index 87e9a8d..91b3d90 100644<br>
+--- a/libmultipath/prioritizers/emc.c<br>
++++ b/libmultipath/prioritizers/emc.c<br>
+@@ -14,15 +14,15 @@<br>
+<br>
+=C2=A0int emc_clariion_prio(const char *dev, int fd)<br>
+=C2=A0{<br>
+- =C2=A0 =C2=A0 =C2=A0 unsigned char sense_buffer[256];<br>
++ =C2=A0 =C2=A0 =C2=A0 unsigned char sense_buffer[128];<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned char sb[128];<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned char inqCmdBlk[INQUIRY_CMDLEN] =3D {IN=
+QUIRY_CMD, 1, 0xC0, 0,<br>
+- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 sizeof(sb), 0};<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 sizeof(sense_buffer), 0};<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 struct sg_io_hdr io_hdr;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 int ret =3D PRIO_UNDEF;<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 memset(&amp;io_hdr, 0, sizeof (struct sg_io_hdr=
+));<br>
+- =C2=A0 =C2=A0 =C2=A0 memset(&amp;sense_buffer, 0, 256);<br>
++ =C2=A0 =C2=A0 =C2=A0 memset(&amp;sense_buffer, 0, 128);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.interface_id =3D &#39;S&#39;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmd_len =3D sizeof (inqCmdBlk);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.mx_sb_len =3D sizeof (sb);<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
+nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
+</blockquote></div><br></div>
+
+--001a11c2ddee3488b504fb7504b6--
+
+
+--===============2448720764209828647==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2448720764209828647==--
