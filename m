@@ -1,75 +1,82 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-thin: Export proper discard_granularity
-Date: Thu, 12 Jun 2014 09:54:55 +0100
-Message-ID: <20140612085454.GA905@debian>
-References: <1402489929-16466-1-git-send-email-lczerner@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 3.16
+Date: Thu, 12 Jun 2014 10:13:37 -0400
+Message-ID: <20140612141337.GB27768@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1402489929-16466-1-git-send-email-lczerner@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Lukas Czerner <lczerner@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Lukas Czerner <lczerner@redhat.com>
 List-Id: dm-devel.ids
 
-ack
+Hi Linus,
 
-On Wed, Jun 11, 2014 at 02:32:09PM +0200, Lukas Czerner wrote:
-> Currently if the underlying device is discard capable and the
-> discard_passdown is enabled, the discard_granularity will be inherited
-> from that device.
-> 
-> This will pose a problem in the case that the device discard_granularity
-> is smaller than thin volume chunk size, because in that case discard
-> requests will not be chunk size aligned so it will be ignored by
-> dm-thin.
-> 
-> Fix this by setting thin volume discard granularity to the bigger of the
-> two max(device discard_granularity, thin volume chunk size). Strictly
-> speaking it is not necessary to get the bigger of the two, because
-> the thin volume chunk size will always be >= device discard_granularity.
-> However I believe that the reason for this is only because dm-thin can
-> not handle discard requests bigger than chunk size which is hopefully
-> going to change soon. This way it is future proof.
-> 
-> RHBZ: 1106856
-> 
-> Reported-by: Zdenek Kabelac <zkabelac@fedoraproject.org>
-> Signed-off-by: Lukas Czerner <lczerner@redhat.com>
-> ---
->  drivers/md/dm-thin.c | 4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 242ac2e..fdd7089 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -3068,7 +3068,9 @@ static void set_discard_limits(struct pool_c *pt, struct queue_limits *limits)
->  	 */
->  	if (pt->adjusted_pf.discard_passdown) {
->  		data_limits = &bdev_get_queue(pt->data_dev->bdev)->limits;
-> -		limits->discard_granularity = data_limits->discard_granularity;
-> +		limits->discard_granularity =
-> +				max(data_limits->discard_granularity,
-> +				    pool->sectors_per_block << SECTOR_SHIFT);
->  	} else
->  		limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
->  }
-> -- 
-> 1.8.3.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+This pull request is later than I'd have liked because I was waiting for
+some performance data to help finally justify sending the long-standing
+dm-crypt cpu scalability improvements upstream.  Unfortunately we came
+up short, so those dm-crypt changes will continue to wait, but it seems
+we're not far off.
+
+The following changes since commit fad01e866afdbe01a1f3ec06a39c3a8b9e197014:
+
+  Linux 3.15-rc8 (2014-06-01 19:12:24 -0700)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.16-changes
+
+for you to fetch changes up to 09869de57ed2728ae3c619803932a86cb0e2c4f8:
+
+  dm thin: update discard_granularity to reflect the thin-pool blocksize (2014-06-11 16:56:12 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+. Add dm_accept_partial_bio interface to DM core to allow DM targets
+  to only process a portion of a bio, the remainder being sent in the
+  next bio.  This enables the old dm snapshot-origin target to only
+  split write bios on chunk boundaries, read bios are now sent to the
+  origin device unchanged.
+
+. Add DM core support for disabling WRITE SAME if the underlying SCSI
+  layer disables it due to command failure.
+
+. Reduce lock contention in DM's bio-prison.
+
+. A few small cleanups and fixes to dm-thin and dm-era.
+
+----------------------------------------------------------------
+Heinz Mauelshagen (1):
+      dm bio prison: implement per bucket locking in the dm_bio_prison hash table
+
+Joe Thornber (2):
+      dm thin: cleanup noflush_work to use a proper completion
+      dm era: check for a non-NULL metadata object before closing it
+
+Lukas Czerner (1):
+      dm thin: update discard_granularity to reflect the thin-pool blocksize
+
+Mike Snitzer (3):
+      dm thin: return ENOSPC instead of EIO when error_if_no_space enabled
+      dm: disable WRITE SAME if it fails
+      dm: remove symbol export for dm_set_device_limits
+
+Mikulas Patocka (4):
+      dm: change sector_count member in clone_info from sector_t to unsigned
+      dm: introduce dm_accept_partial_bio
+      dm snapshot: allocate a per-target structure for snapshot-origin target
+      dm snapshot: do not split read bios sent to snapshot-origin target
+
+ drivers/md/dm-bio-prison.c    | 70 ++++++++++++++++++--------------
+ drivers/md/dm-bio-prison.h    |  2 +-
+ drivers/md/dm-era-target.c    |  3 +-
+ drivers/md/dm-mpath.c         | 11 +----
+ drivers/md/dm-snap.c          | 67 ++++++++++++++++++++++---------
+ drivers/md/dm-table.c         |  5 +--
+ drivers/md/dm-thin.c          | 93 ++++++++++++++++++++++++++++---------------
+ drivers/md/dm.c               | 86 ++++++++++++++++++++++++++++++++-------
+ include/linux/device-mapper.h | 10 ++---
+ 9 files changed, 230 insertions(+), 117 deletions(-)
