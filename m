@@ -1,7 +1,7 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-thin: Export proper discard_granularity
-Date: Wed, 11 Jun 2014 17:31:35 -0400
-Message-ID: <20140611213134.GA22986@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH] dm-thin: Export proper discard_granularity
+Date: Thu, 12 Jun 2014 09:54:55 +0100
+Message-ID: <20140612085454.GA905@debian>
 References: <1402489929-16466-1-git-send-email-lczerner@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,13 +19,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Lukas Czerner <lczerner@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Lukas Czerner <lczerner@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 11 2014 at  8:32am -0400,
-Lukas Czerner <lczerner@redhat.com> wrote:
+ack
 
+On Wed, Jun 11, 2014 at 02:32:09PM +0200, Lukas Czerner wrote:
 > Currently if the underlying device is discard capable and the
 > discard_passdown is enabled, the discard_granularity will be inherited
 > from that device.
@@ -47,10 +47,29 @@ Lukas Czerner <lczerner@redhat.com> wrote:
 > 
 > Reported-by: Zdenek Kabelac <zkabelac@fedoraproject.org>
 > Signed-off-by: Lukas Czerner <lczerner@redhat.com>
-
-Hi Lukas,
-
-I missed this submission on dm-devel until now.  But I had already
-picked this patch up earlier from the BZ, see the patch I staged in
-linux-next here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=09869de57ed2728ae3c619803932a86cb0e2c4f8
+> ---
+>  drivers/md/dm-thin.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index 242ac2e..fdd7089 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -3068,7 +3068,9 @@ static void set_discard_limits(struct pool_c *pt, struct queue_limits *limits)
+>  	 */
+>  	if (pt->adjusted_pf.discard_passdown) {
+>  		data_limits = &bdev_get_queue(pt->data_dev->bdev)->limits;
+> -		limits->discard_granularity = data_limits->discard_granularity;
+> +		limits->discard_granularity =
+> +				max(data_limits->discard_granularity,
+> +				    pool->sectors_per_block << SECTOR_SHIFT);
+>  	} else
+>  		limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
+>  }
+> -- 
+> 1.8.3.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
