@@ -1,82 +1,104 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 3.16
-Date: Thu, 12 Jun 2014 10:13:37 -0400
-Message-ID: <20140612141337.GB27768@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: allocate a special workqueue for deferred
+	remove
+Date: Sat, 14 Jun 2014 13:44:31 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1406141344050.25628@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Lukas Czerner <lczerner@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Linus,
+The commit 2c140a246dc0bc085b98eddde978060fcec1080c introduced a deferred
+removal feature for the device mapper. When this feature is used (by
+passing a flag DM_DEFERRED_REMOVE to DM_DEV_REMOVE_CMD ioctl) and the user
+tries to remove a device that is currently in use, the device will be
+removed automatically in the future when the last user closes it.
 
-This pull request is later than I'd have liked because I was waiting for
-some performance data to help finally justify sending the long-standing
-dm-crypt cpu scalability improvements upstream.  Unfortunately we came
-up short, so those dm-crypt changes will continue to wait, but it seems
-we're not far off.
+Device mapper used the system workqueue to perform deferred removals.
+However, some targets (dm-raid1, dm-mpath, dm-stripe) flush work items
+scheduled for the system workqueue from their destructor. If the
+destructor itself is called from the system workqueue during deferred
+removal, it introduces a possible deadlock - the workqueue tries to flush
+itself.
 
-The following changes since commit fad01e866afdbe01a1f3ec06a39c3a8b9e197014:
+This patch fixes the possible deadlock by introducing a new workqueue for
+deferred removals.
 
-  Linux 3.15-rc8 (2014-06-01 19:12:24 -0700)
+We allocate just one workqueue for all dm targets. The ability of dm
+targets to process IOs isn't dependent on deferred removal of unused
+targets, so a deadlock due to shared workqueue isn't possible.
 
-are available in the git repository at:
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# 3.13+
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.16-changes
+---
+ drivers/md/dm.c |   13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
 
-for you to fetch changes up to 09869de57ed2728ae3c619803932a86cb0e2c4f8:
-
-  dm thin: update discard_granularity to reflect the thin-pool blocksize (2014-06-11 16:56:12 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-. Add dm_accept_partial_bio interface to DM core to allow DM targets
-  to only process a portion of a bio, the remainder being sent in the
-  next bio.  This enables the old dm snapshot-origin target to only
-  split write bios on chunk boundaries, read bios are now sent to the
-  origin device unchanged.
-
-. Add DM core support for disabling WRITE SAME if the underlying SCSI
-  layer disables it due to command failure.
-
-. Reduce lock contention in DM's bio-prison.
-
-. A few small cleanups and fixes to dm-thin and dm-era.
-
-----------------------------------------------------------------
-Heinz Mauelshagen (1):
-      dm bio prison: implement per bucket locking in the dm_bio_prison hash table
-
-Joe Thornber (2):
-      dm thin: cleanup noflush_work to use a proper completion
-      dm era: check for a non-NULL metadata object before closing it
-
-Lukas Czerner (1):
-      dm thin: update discard_granularity to reflect the thin-pool blocksize
-
-Mike Snitzer (3):
-      dm thin: return ENOSPC instead of EIO when error_if_no_space enabled
-      dm: disable WRITE SAME if it fails
-      dm: remove symbol export for dm_set_device_limits
-
-Mikulas Patocka (4):
-      dm: change sector_count member in clone_info from sector_t to unsigned
-      dm: introduce dm_accept_partial_bio
-      dm snapshot: allocate a per-target structure for snapshot-origin target
-      dm snapshot: do not split read bios sent to snapshot-origin target
-
- drivers/md/dm-bio-prison.c    | 70 ++++++++++++++++++--------------
- drivers/md/dm-bio-prison.h    |  2 +-
- drivers/md/dm-era-target.c    |  3 +-
- drivers/md/dm-mpath.c         | 11 +----
- drivers/md/dm-snap.c          | 67 ++++++++++++++++++++++---------
- drivers/md/dm-table.c         |  5 +--
- drivers/md/dm-thin.c          | 93 ++++++++++++++++++++++++++++---------------
- drivers/md/dm.c               | 86 ++++++++++++++++++++++++++++++++-------
- include/linux/device-mapper.h | 10 ++---
- 9 files changed, 230 insertions(+), 117 deletions(-)
+Index: linux-3.15/drivers/md/dm.c
+===================================================================
+--- linux-3.15.orig/drivers/md/dm.c	2014-06-14 17:04:05.000000000 +0200
++++ linux-3.15/drivers/md/dm.c	2014-06-14 17:12:38.000000000 +0200
+@@ -54,6 +54,8 @@ static void do_deferred_remove(struct wo
+ 
+ static DECLARE_WORK(deferred_remove_work, do_deferred_remove);
+ 
++static struct workqueue_struct *deferred_remove_workqueue;
++
+ /*
+  * For bio-based dm.
+  * One of these is allocated per bio.
+@@ -276,16 +278,22 @@ static int __init local_init(void)
+ 	if (r)
+ 		goto out_free_rq_tio_cache;
+ 
++	deferred_remove_workqueue = alloc_workqueue("kdmremove", WQ_UNBOUND, 1);
++	if (!deferred_remove_workqueue)
++		goto out_uevent_exit;
++
+ 	_major = major;
+ 	r = register_blkdev(_major, _name);
+ 	if (r < 0)
+-		goto out_uevent_exit;
++		goto out_free_workqueue;
+ 
+ 	if (!_major)
+ 		_major = r;
+ 
+ 	return 0;
+ 
++out_free_workqueue:
++	destroy_workqueue(deferred_remove_workqueue);
+ out_uevent_exit:
+ 	dm_uevent_exit();
+ out_free_rq_tio_cache:
+@@ -299,6 +307,7 @@ out_free_io_cache:
+ static void local_exit(void)
+ {
+ 	flush_scheduled_work();
++	destroy_workqueue(deferred_remove_workqueue);
+ 
+ 	kmem_cache_destroy(_rq_tio_cache);
+ 	kmem_cache_destroy(_io_cache);
+@@ -407,7 +416,7 @@ static void dm_blk_close(struct gendisk 
+ 
+ 	if (atomic_dec_and_test(&md->open_count) &&
+ 	    (test_bit(DMF_DEFERRED_REMOVE, &md->flags)))
+-		schedule_work(&deferred_remove_work);
++		queue_work(deferred_remove_workqueue, &deferred_remove_work);
+ 
+ 	dm_put(md);
+ 
