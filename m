@@ -1,13 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: allocate a special workqueue for deferred
-	remove
-Date: Sat, 14 Jun 2014 13:44:31 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1406141344050.25628@file01.intranet.prod.int.rdu2.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH ] multipath: Fall back to getuid_callout if
+ ID_SERIAL attribute is missing.
+Date: Wed, 18 Jun 2014 08:18:00 +0200
+Message-ID: <53A12F18.60300@suse.de>
+References: <229730203dc540ef9cae7b665577519c@hioexcmbx01-prd.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <229730203dc540ef9cae7b665577519c@hioexcmbx01-prd.hq.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,88 +19,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The commit 2c140a246dc0bc085b98eddde978060fcec1080c introduced a deferred
-removal feature for the device mapper. When this feature is used (by
-passing a flag DM_DEFERRED_REMOVE to DM_DEV_REMOVE_CMD ioctl) and the user
-tries to remove a device that is currently in use, the device will be
-removed automatically in the future when the last user closes it.
+On 06/18/2014 02:17 AM, Merla, ShivaKrishna wrote:
+>   Sometimes whenever a path is added, scsi_id call during udev rule proce=
+ssing
+>   can fail and ID_SERIAL attribute will not be set. This causes multipath=
+d to add
+>   the path as orphan. We have seen several instances of this happening du=
+ring
+>   testing.
+>
+>        Jun 17 10:14:43 ictm-vader multipathd[474]: sda: uid_attribute =3D=
+ ID_SERIAL (config file default)
+>        Jun 17 10:14:43 ictm-vader multipathd[474]: sda: no ID_SERIAL attr=
+ibute
+>        Jun 17 10:14:43 ictm-vader multipathd[474]: sda: uid =3D <empty> (=
+udev)
+>        Jun 17 10:14:43 ictm-vader multipathd[474]: sda: no ID_SERIAL attr=
+ibute
+>        Jun 17 10:14:43 ictm-vader multipathd[474]: sda: uid =3D <empty> (=
+udev)
+>        Jun 17 10:14:43 ictm-vader multipathd[474]: sda: failed to get pat=
+h uid
+>        Jun 17 10:14:43 ictm-vader multipathd[474]: sda: orphan path, fail=
+ed to add path
+>
+>   This patch handles this case by allowing to fall back to explict getuid=
+_callout
+>   incase if ID_SERIAL attribute is not set. This way support for deprecat=
+ed
+>   getuid_callout is not lost for older versions where ID_SERIAL attribute=
+ is not
+>   present but also serves good purpose in the scenario mentioned above.
+>
+> Signed-off-by: Shiva Krishna Merla<shivakrishna.merla@netapp.com>
 
-Device mapper used the system workqueue to perform deferred removals.
-However, some targets (dm-raid1, dm-mpath, dm-stripe) flush work items
-scheduled for the system workqueue from their destructor. If the
-destructor itself is called from the system workqueue during deferred
-removal, it introduces a possible deadlock - the workqueue tries to flush
-itself.
+Hmm. I have a similar patch in my tree. Will be checking.
 
-This patch fixes the possible deadlock by introducing a new workqueue for
-deferred removals.
+Cheers,
 
-We allocate just one workqueue for all dm targets. The ability of dm
-targets to process IOs isn't dependent on deferred removal of unused
-targets, so a deadlock due to shared workqueue isn't possible.
+Hannes
+-- =
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	# 3.13+
-
----
- drivers/md/dm.c |   13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
-
-Index: linux-3.15/drivers/md/dm.c
-===================================================================
---- linux-3.15.orig/drivers/md/dm.c	2014-06-14 17:04:05.000000000 +0200
-+++ linux-3.15/drivers/md/dm.c	2014-06-14 17:12:38.000000000 +0200
-@@ -54,6 +54,8 @@ static void do_deferred_remove(struct wo
- 
- static DECLARE_WORK(deferred_remove_work, do_deferred_remove);
- 
-+static struct workqueue_struct *deferred_remove_workqueue;
-+
- /*
-  * For bio-based dm.
-  * One of these is allocated per bio.
-@@ -276,16 +278,22 @@ static int __init local_init(void)
- 	if (r)
- 		goto out_free_rq_tio_cache;
- 
-+	deferred_remove_workqueue = alloc_workqueue("kdmremove", WQ_UNBOUND, 1);
-+	if (!deferred_remove_workqueue)
-+		goto out_uevent_exit;
-+
- 	_major = major;
- 	r = register_blkdev(_major, _name);
- 	if (r < 0)
--		goto out_uevent_exit;
-+		goto out_free_workqueue;
- 
- 	if (!_major)
- 		_major = r;
- 
- 	return 0;
- 
-+out_free_workqueue:
-+	destroy_workqueue(deferred_remove_workqueue);
- out_uevent_exit:
- 	dm_uevent_exit();
- out_free_rq_tio_cache:
-@@ -299,6 +307,7 @@ out_free_io_cache:
- static void local_exit(void)
- {
- 	flush_scheduled_work();
-+	destroy_workqueue(deferred_remove_workqueue);
- 
- 	kmem_cache_destroy(_rq_tio_cache);
- 	kmem_cache_destroy(_io_cache);
-@@ -407,7 +416,7 @@ static void dm_blk_close(struct gendisk 
- 
- 	if (atomic_dec_and_test(&md->open_count) &&
- 	    (test_bit(DMF_DEFERRED_REMOVE, &md->flags)))
--		schedule_work(&deferred_remove_work);
-+		queue_work(deferred_remove_workqueue, &deferred_remove_work);
- 
- 	dm_put(md);
- 
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
