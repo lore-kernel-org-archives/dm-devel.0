@@ -1,15 +1,13 @@
-From: Vasily Tarasov <tarasov@vasily.name>
-Subject: Re: dmdedup target mkfs.ext3 failed
-Date: Wed, 25 Jun 2014 11:44:17 -0700
-Message-ID: <CAFTzLMPLGvb7H2gyyni5B4Sg7=0j6K1P8Hn7ummh-qdVnKerWw@mail.gmail.com>
-References: <BAY182-W11AC11F417AD568551DD7CD51E0@phx.gbl>
-	<BAY182-W133FFDD90BFFAA99DE9704D5190@phx.gbl>
+From: Vaughan Cao <vaughan.cao@oracle.com>
+Subject: [PATCH] Don't forget to reload table when both reload
+	and rename is required
+Date: Wed, 25 Jun 2014 16:57:33 +0800
+Message-ID: <1403686653-14879-1-git-send-email-vaughan.cao@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BAY182-W133FFDD90BFFAA99DE9704D5190@phx.gbl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,58 +17,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: lvshuo <testfile82@hotmail.com>
-Cc: Geoff Kuenning <geoff@cs.hmc.edu>, "hch@infradead.org" <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "philip.shilane@emc.com" <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, "ezk@fsl.cs.sunysb.edu" <ezk@fsl.cs.sunysb.edu>
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com, vaughan.cao@oracle.com
 List-Id: dm-devel.ids
 
-In this command:
+We encounter the following case:
 
-echo "0 8 dedup data_dev=/dev/sdb metadata_dev=/dev/sdd
-mdbackend=cowbtree reconstruct=no" | dmsetup create mydedup
+@ After adding a multipaths section into /etc/multipath.conf to specify 'alias'
+@ and other attributes for a particular multipath device and
+@ reloading/restarting the multipathd service, only renaming of the multipath
+@ device is done, other attribute changes are ignored.
+@
+@ It is more evident if you directly run 'multipath -r' to reload devmap after
+@ adding the 'multipaths' section with alias into /etc/multipath.conf.
+@
+@ When reload/restart multipathd service or 'multipath -r' again, new settings
+@ can be applied right.
 
-you set the size of the mydedup logical device to 8 sectors only.
-That's why mkfs fails - it just runs out of space.
+It's because that in select_action() when force_reload is set, if we also need
+rename the mpp device, reload action won't be taken any more.
 
-Vasily
+I did this patch by introducing a new action ACT_RENAME2 to group these two
+action. Test passed. However, it seems to be a rough patch and I am not
+certain if this bind is fine refering to dm_reassign. Please comment, Thanks.
 
-On Tue, Jun 24, 2014 at 5:59 PM, lvshuo <testfile82@hotmail.com> wrote:
->
-> when I user dedup target,
->
-> echo "0 8 dedup data_dev=/dev/sdb metadata_dev=/dev/sdd mdbackend=cowbtree reconstruct=no" | dmsetup create mydedup
->
->  [root@localhost md]# mkfs.ext3  /dev/mapper/mydedup
->  mke2fs 1.41.12 (17-May-2010)
->  /dev/mapper/mydedup: Not enough space to build proposed filesystem while setting up superblock
->  [root@localhost md]#
->
->  why the create filesystem failed?  dedup have any problem?
->
->
->  [root@localhost md]# fdisk -l
->
->  Disk /dev/sdb: 2147 MB, 2147483648 bytes
->  255 heads, 63 sectors/track, 261 cylinders
->  Units = cylinders of 16065 * 512 = 8225280 bytes
->  Sector size (logical/physical): 512 bytes / 512 bytes
->  I/O size (minimum/optimal): 512 bytes / 512 bytes
->  Disk identifier: 0x00000000
->
->
->  Disk /dev/sdc: 1073 MB, 1073741824 bytes
->  255 heads, 63 sectors/track, 130 cylinders
->  Units = cylinders of 16065 * 512 = 8225280 bytes
->  Sector size (logical/physical): 512 bytes / 512 bytes
->  I/O size (minimum/optimal): 512 bytes / 512 bytes
->  Disk identifier: 0x00000000
->
->
->  Disk /dev/sdd: 8589 MB, 8589934592 bytes
->  255 heads, 63 sectors/track, 1044 cylinders
->   Units = cylinders of 16065 * 512 = 8225280 bytes
->  Sector size (logical/physical): 512 bytes / 512 bytes
->  I/O size (minimum/optimal): 512 bytes / 512 bytes
->  Disk identifier: 0x00000000
->
->
->
+Signed-off-by: Vaughan Cao <vaughan.cao@oracle.com>
+---
+ libmultipath/configure.c | 11 +++++++++++
+ libmultipath/configure.h |  1 +
+ 2 files changed, 12 insertions(+)
+
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 3ed6b55..7331f90 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -385,6 +385,8 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+ 				cmpp->alias, mpp->alias);
+ 			strncpy(mpp->alias_old, cmpp->alias, WWID_SIZE);
+ 			mpp->action = ACT_RENAME;
++			if (force_reload)
++				mpp->action = ACT_RENAME2;
+ 			return;
+ 		}
+ 		mpp->action = ACT_CREATE;
+@@ -623,6 +625,15 @@ domap (struct multipath * mpp, char * params)
+ 		r = dm_rename(mpp->alias_old, mpp->alias);
+ 		break;
+ 
++	case ACT_RENAME2:
++		r = dm_rename(mpp->alias_old, mpp->alias);
++		if (r) {
++			r = dm_addmap_reload(mpp, params);
++			if (r)
++				r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias, MPATH_UDEV_RELOAD_FLAG);
++		}
++		break;
++
+ 	default:
+ 		break;
+ 	}
+diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+index b3a6bb8..c014b55 100644
+--- a/libmultipath/configure.h
++++ b/libmultipath/configure.h
+@@ -18,6 +18,7 @@ enum actions {
+ 	ACT_RENAME,
+ 	ACT_CREATE,
+ 	ACT_RESIZE,
++	ACT_RENAME2,
+ };
+ 
+ #define FLUSH_ONE 1
+-- 
+1.9.0
