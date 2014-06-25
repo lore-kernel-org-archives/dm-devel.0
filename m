@@ -1,13 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: LVM2 release 2.02.107: New argument --select
-Date: Wed, 25 Jun 2014 00:53:15 +0100
-Message-ID: <20140624235315.GA28564@agk-dp.fab.redhat.com>
+From: lvshuo <testfile82@hotmail.com>
+Subject: dmdedup target mkfs.ext3 failed
+Date: Wed, 25 Jun 2014 00:59:00 +0000
+Message-ID: <BAY182-W133FFDD90BFFAA99DE9704D5190@phx.gbl>
+References: <BAY182-W11AC11F417AD568551DD7CD51E0@phx.gbl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <BAY182-W11AC11F417AD568551DD7CD51E0@phx.gbl>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,55 +18,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: lvm-devel@redhat.com, linux-lvm@redhat.com, dm-devel@redhat.com
+To: "tarasov@vasily.name" <tarasov@vasily.name>, "philip.shilane@emc.com" <philip.shilane@emc.com>, "hch@infradead.org" <hch@infradead.org>, "ezk@fsl.cs.sunysb.edu" <ezk@fsl.cs.sunysb.edu>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Release 2.02.107 is available.
 
-   ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.107.tgz
-   ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.107.tgz.asc
-   ftp://sources.redhat.com/pub/lvm2/WHATS_NEW
-   ftp://sources.redhat.com/pub/lvm2/WHATS_NEW_DM
+when I user dedup target,
 
-The most important new feature is a new command line argument:
-  --select (or -S)
+echo "0 8 dedup data_dev=3D/dev/sdb metadata_dev=3D/dev/sdd mdbackend=3Dcow=
+btree reconstruct=3Dno" | dmsetup create mydedup
 
-This lets you apply selection criteria to the output of reporting
-commands.  We'll add it to commands that change things in a future
-release.
+=A0[root@localhost md]# mkfs.ext3  /dev/mapper/mydedup
+=A0mke2fs 1.41.12 (17-May-2010)
+=A0/dev/mapper/mydedup: Not enough space to build proposed filesystem while=
+ setting up superblock
+=A0[root@localhost md]#
 
-A simple example:
-  pvs -S 'free > 100M, name =~ sd' 
-shows only PVs with more than 100M of free space and with the string
-'sd' in their name.
+=A0why the create filesystem failed?  dedup have any problem?
 
-Use '-S help' for a brief summary of the fields and operators or
-look at the man pages for a little more detail.
 
-Recall that -o lets you choose the fields to display, -O controls
-the sort order and --noheadings, --separator, --rows, --nameprefixes,
---units and --nosuffix offer some alternative forms of output to help
-you to write different types of scripts.
+=A0[root@localhost md]# fdisk -l
 
-For debugging, or in scripts, use -o+selected to see all the output
-as before but with a new column that indicates whether or not each
-row meets your selection criteria.
+=A0Disk /dev/sdb: 2147 MB, 2147483648 bytes
+=A0255 heads, 63 sectors/track, 261 cylinders
+=A0Units =3D cylinders of 16065 * 512 =3D 8225280 bytes
+=A0Sector size (logical/physical): 512 bytes / 512 bytes
+=A0I/O size (minimum/optimal): 512 bytes / 512 bytes
+=A0Disk identifier: 0x00000000
 
-We also plan to split out new fields from the various 'attribute' fields
-to simplify access to the information they contain.
 
-'dmsetup info -c' also accepts -S.
+=A0Disk /dev/sdc: 1073 MB, 1073741824 bytes
+=A0255 heads, 63 sectors/track, 130 cylinders
+=A0Units =3D cylinders of 16065 * 512 =3D 8225280 bytes
+=A0Sector size (logical/physical): 512 bytes / 512 bytes
+=A0I/O size (minimum/optimal): 512 bytes / 512 bytes
+=A0Disk identifier: 0x00000000
 
-                         -------------
 
-The LVM SSD caching support in this release remains experimental and can
-be enabled using:
+=A0Disk /dev/sdd: 8589 MB, 8589934592 bytes
+=A0255 heads, 63 sectors/track, 1044 cylinders
+=A0 Units =3D cylinders of 16065 * 512 =3D 8225280 bytes
+=A0Sector size (logical/physical): 512 bytes / 512 bytes
+=A0I/O size (minimum/optimal): 512 bytes / 512 bytes
+=A0Disk identifier: 0x00000000
 
-  configure --with-cache=internal
- 
-
-I'd also like to mention that there have been several extensions to
-dumpconfig and profiles recently to help you to manage LVM
-configuration.   (See the man pages.)
-
-Alasdair
+ 		 	   		  =
