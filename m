@@ -1,185 +1,128 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm-io: Prevent the danging point of the sync
- io callback function
-Date: Fri, 27 Jun 2014 16:47:51 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1406271639300.9941@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1403841690-4401-1-git-send-email-huangminfei@ucloud.cn> <alpine.LRH.2.02.1406271424310.18515@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: dm-io: Prevent the danging point of the sync io callback
+ function
+Date: Fri, 27 Jun 2014 16:56:54 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1406271654360.9941@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1403841690-4401-1-git-send-email-huangminfei@ucloud.cn> <20140627151105.GA30592@debian> <alpine.LRH.2.02.1406271432430.18515@file01.intranet.prod.int.rdu2.redhat.com> <20140627192904.GA21254@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1406271424310.18515@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: agk@redhat.com, snitzer@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Minfei Huang <huangminfei@ucloud.cn>, Edward Thornber <thornber@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20140627192904.GA21254@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Joe Thornber <thornber@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Minfei Huang <huangminfei@ucloud.cn>, linux-raid@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
 
 
-On Fri, 27 Jun 2014, Mikulas Patocka wrote:
+On Fri, 27 Jun 2014, Mike Snitzer wrote:
 
+> On Fri, Jun 27 2014 at  2:44pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
+> > 
+> > 
+> > On Fri, 27 Jun 2014, Joe Thornber wrote:
+> > 
+> > > On Fri, Jun 27, 2014 at 12:01:30PM +0800, Minfei Huang wrote:
+> > > > The io address in callback function will become the danging point,
+> > > > cause by the thread of sync io wakes up by other threads
+> > > > and return to relieve the io address,
+> > > 
+> > > Yes, well found.  I prefer the following fix however.
+> > > 
+> > > - Joe
+> > 
+> > It seems ok.
+> > 
+> > The patch is too big, I think the only change that needs to be done to fix 
+> > the bug is to replace "struct task_struct *sleeper;" with "struct 
+> > completion *completion;", replace "if (io->sleeper) 
+> > wake_up_process(io->sleeper);" with "if (io->completion) 
+> > complete(io->completion);" and declare the completion in sync_io() and 
+> > wait on it instead of "while (1)" loop there.
 > 
-> On Fri, 27 Jun 2014, Minfei Huang wrote:
-> 
-> > BUG: unable to handle kernel NULL pointer dereference at 0000000000000046
-> > IP: [<ffffffffa0009cef>] dec_count+0x5f/0x80 [dm_mod]
-> > PGD 0
-> > Oops: 0000 [#1] SMP
-> > last sysfs file: /sys/devices/pci0000:00/0000:00:02.2/0000:02:00.0/host0/scsi_host/host0/proc_name
-> > 
-> > Pid: 2708, comm: kcopyd Tainted: G        W  --------------- H  2.6.32-279.19.5.el6.ucloud.x86_64 #1 Dell Inc. PowerEdge R720xd/0DCWD1
-> > RIP: 0010:[<ffffffffa0009cef>]  [<ffffffffa0009cef>] dec_count+0x5f/0x80 [dm_mod]
-> > RSP: 0018:ffff880100603c30  EFLAGS: 00010246
-> > RAX: 0000000000000046 RBX: ffff8817968a5c30 RCX: 0000000000000000
-> > RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff8817968a5c00
-> > RBP: ffff880100603c50 R08: 0000000000000000 R09: 0000000000000000
-> > R10: ffff880caa594cc0 R11: 0000000000000000 R12: ffff8817968a5c80
-> > R13: ffffffff81013963 R14: 0000000000001000 R15: 0000000000000000
-> > FS:  0000000000000000(0000) GS:ffff880100600000(0000) knlGS:0000000000000000
-> > CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
-> > CR2: 0000000000000046 CR3: 000000020c309000 CR4: 00000000001426e0
-> > DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> > DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-> > Process kcopyd (pid: 2708, threadinfo ffff88180cd26000, task ffff881841c9aa80)
-> > Stack:
-> >  ffff880100603c40 ffff880aa8b32300 0000000000000000 ffff8817968a5c00
-> > <d> ffff880100603c80 ffffffffa000a12a 0000000000000000 ffff880aa8b32300
-> > <d> 0000000000000000 ffff880caa594cc0 ffff880100603c90 ffffffff811bcf6d
-> > Call Trace:
-> >  <IRQ>
-> >  [<ffffffffa000a12a>] endio+0x4a/0x70 [dm_mod]
-> >  [<ffffffff811bcf6d>] bio_endio+0x1d/0x40
-> >  [<ffffffff81260beb>] req_bio_endio+0x9b/0xe0
-> >  [<ffffffff81263114>] blk_update_request+0x104/0x500
-> >  [<ffffffff81263331>] ? blk_update_request+0x321/0x500
-> >  [<ffffffff81263537>] blk_update_bidi_request+0x27/0xa0
-> >  [<ffffffff8126419f>] blk_end_bidi_request+0x2f/0x80
-> >  [<ffffffff81264240>] blk_end_request+0x10/0x20
-> >  [<ffffffff81375c6f>] scsi_io_completion+0xaf/0x6c0
-> >  [<ffffffff8136cb92>] scsi_finish_command+0xc2/0x130
-> >  [<ffffffff813763e5>] scsi_softirq_done+0x145/0x170
-> >  [<ffffffff812698ed>] blk_done_softirq+0x8d/0xa0
-> >  [<ffffffff81074c5f>] __do_softirq+0xdf/0x210
-> >  [<ffffffff8100c2cc>] call_softirq+0x1c/0x30
-> >  [<ffffffff8100df9d>] do_softirq+0xad/0xe0
-> >  [<ffffffff81074995>] irq_exit+0x95/0xa0
-> >  [<ffffffff81510515>] do_IRQ+0x75/0xf0
-> >  [<ffffffff8100ba53>] ret_from_intr+0x0/0x16
-> > 
-> > The value of rdi register(0xffff8817968a5c00) is the io pointer,
-> > If the sync io, the address of io point must be alloc from stack.
-> > SO
-> > crash> struct thread_info ffff8817968a4000
-> > struct thread_info {
-> >   task = 0xffff88180cd9a580,
-> >   exec_domain = 0xffffffff81a98ac0,
-> >  ...
-> > }
-> > 
-> > crash> struct task_struct 0xffff88180cd9a580
-> > struct task_struct {
-> >   state = 2,
-> >   stack = 0xffff8817968a4000,
-> >  ...
-> > }
-> > 
-> > It shows value exactly when use the value of io address.
-> > 
-> > The io address in callback function will become the danging point,
-> > cause by the thread of sync io wakes up by other threads
-> > and return to relieve the io address,
-> > 
-> > Signed-off-by: Minfei Huang <huangminfei@ucloud.cn>
-> > ---
-> >  drivers/md/dm-io.c |   19 +++++++++++++++----
-> >  1 files changed, 15 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-> > index 3842ac7..f992913 100644
-> > --- a/drivers/md/dm-io.c
-> > +++ b/drivers/md/dm-io.c
-> > @@ -38,6 +38,7 @@ struct io {
-> >  	void *context;
-> >  	void *vma_invalidate_address;
-> >  	unsigned long vma_invalidate_size;
-> > +	atomic_t wakeup;
-> >  } __attribute__((aligned(DM_IO_MAX_REGIONS)));
-> >  
-> >  static struct kmem_cache *_dm_io_cache;
-> > @@ -121,10 +122,16 @@ static void dec_count(struct io *io, unsigned int region, int error)
-> >  			invalidate_kernel_vmap_range(io->vma_invalidate_address,
-> >  						     io->vma_invalidate_size);
-> >  
-> > -		if (io->sleeper)
-> > -			wake_up_process(io->sleeper);
-> > +		if (io->sleeper) {
-> > +			struct task_struct *sleeper = io->sleeper;
-> >  
-> > -		else {
-> > +			atomic_set(&io->wakeup, 1);
-> 
-> The problem here is that the processor may reorder the read of io->sleeper 
-> with atomic_set(&io->wakeup, 1); (performing atomic_set first and "sleeper 
-> = io->sleeper" afterwards) exposing the same race condition.
-> 
-> You need to use memory barriers to avoid reordering, but I think the 
-> solution with the completion is better (the completion takes care of 
-> barriers automatically).
-> 
-> Mikulas
+> Here is the minimalist fix you suggested (I agree that splitting out a
+> minimalist fix is useful):
 
-Also - there is another race - after atomic_set(&io->wakeup, 1), the 
-target process may terminate, so wake_up_process(sleeper) operates on 
-non-existing process. You need to declare a special wait queue or use 
-wait_on_atomic_t+wake_up_atomic_t (that uses uses pre-initialized hash of 
-wait queues) to avoid that race.
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
 
-But as I said - the completion approach is better. It doesn't suffer from 
-these problems.
-
-Mikulas
-
-> > +/*
-> > + * The thread may be waked up by other threads,
-> > + * if then the sync io point will become the dangling pointer
-> > + */
-> > +			wake_up_process(sleeper);
-> > +		} else {
-> >  			unsigned long r = io->error_bits;
-> >  			io_notify_fn fn = io->callback;
-> >  			void *context = io->context;
-> > @@ -401,12 +408,14 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
-> >  	io->vma_invalidate_address = dp->vma_invalidate_address;
-> >  	io->vma_invalidate_size = dp->vma_invalidate_size;
-> >  
-> > +	atomic_set(&io->wakeup, 0);
-> > +
-> >  	dispatch_io(rw, num_regions, where, dp, io, 1);
-> >  
-> >  	while (1) {
-> >  		set_current_state(TASK_UNINTERRUPTIBLE);
-> >  
-> > -		if (!atomic_read(&io->count))
-> > +		if (atomic_read(&io->wakeup))
-> >  			break;
-> >  
-> >  		io_schedule();
-> > @@ -442,6 +451,8 @@ static int async_io(struct dm_io_client *client, unsigned int num_regions,
-> >  	io->vma_invalidate_address = dp->vma_invalidate_address;
-> >  	io->vma_invalidate_size = dp->vma_invalidate_size;
-> >  
-> > +	atomic_set(&io->wakeup, 0);
-> > +
-> >  	dispatch_io(rw, num_regions, where, dp, io, 0);
-> >  	return 0;
-> >  }
-> > -- 
-> > 1.7.1
-> > 
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
+>  drivers/md/dm-io.c | 22 ++++++++--------------
+>  1 file changed, 8 insertions(+), 14 deletions(-)
+> 
+> diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+> index 2a20986..e60c2ea 100644
+> --- a/drivers/md/dm-io.c
+> +++ b/drivers/md/dm-io.c
+> @@ -10,6 +10,7 @@
+>  #include <linux/device-mapper.h>
+>  
+>  #include <linux/bio.h>
+> +#include <linux/completion.h>
+>  #include <linux/mempool.h>
+>  #include <linux/module.h>
+>  #include <linux/sched.h>
+> @@ -32,7 +33,7 @@ struct dm_io_client {
+>  struct io {
+>  	unsigned long error_bits;
+>  	atomic_t count;
+> -	struct task_struct *sleeper;
+> +	struct completion *wait;
+>  	struct dm_io_client *client;
+>  	io_notify_fn callback;
+>  	void *context;
+> @@ -121,8 +122,8 @@ static void dec_count(struct io *io, unsigned int region, int error)
+>  			invalidate_kernel_vmap_range(io->vma_invalidate_address,
+>  						     io->vma_invalidate_size);
+>  
+> -		if (io->sleeper)
+> -			wake_up_process(io->sleeper);
+> +		if (io->wait)
+> +			complete(io->wait);
+>  
+>  		else {
+>  			unsigned long r = io->error_bits;
+> @@ -385,6 +386,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+>  	 */
+>  	volatile char io_[sizeof(struct io) + __alignof__(struct io) - 1];
+>  	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
+> +	DECLARE_COMPLETION_ONSTACK(wait);
+>  
+>  	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
+>  		WARN_ON(1);
+> @@ -393,7 +395,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+>  
+>  	io->error_bits = 0;
+>  	atomic_set(&io->count, 1); /* see dispatch_io() */
+> -	io->sleeper = current;
+> +	io->wait = &wait;
+>  	io->client = client;
+>  
+>  	io->vma_invalidate_address = dp->vma_invalidate_address;
+> @@ -401,15 +403,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+>  
+>  	dispatch_io(rw, num_regions, where, dp, io, 1);
+>  
+> -	while (1) {
+> -		set_current_state(TASK_UNINTERRUPTIBLE);
+> -
+> -		if (!atomic_read(&io->count))
+> -			break;
+> -
+> -		io_schedule();
+> -	}
+> -	set_current_state(TASK_RUNNING);
+> +	wait_for_completion_io(&wait);
+>  
+>  	if (error_bits)
+>  		*error_bits = io->error_bits;
+> @@ -432,7 +426,7 @@ static int async_io(struct dm_io_client *client, unsigned int num_regions,
+>  	io = mempool_alloc(client->pool, GFP_NOIO);
+>  	io->error_bits = 0;
+>  	atomic_set(&io->count, 1); /* see dispatch_io() */
+> -	io->sleeper = NULL;
+> +	io->wait = NULL;
+>  	io->client = client;
+>  	io->callback = fn;
+>  	io->context = context;
 > 
