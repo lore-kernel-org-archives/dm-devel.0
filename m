@@ -1,282 +1,142 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] block: flush queued bios when the process blocks
-Date: Thu, 26 Jun 2014 19:46:57 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1406261927280.4570@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+From: Minfei Huang <huangminfei@ucloud.cn>
+Subject: [PATCH] dm-io: Prevent the danging point of the sync io callback function
+Date: Fri, 27 Jun 2014 12:01:30 +0800
+Message-ID: <1403841690-4401-1-git-send-email-huangminfei@ucloud.cn>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, neilb@suse.de
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Minfei Huang <huangminfei@ucloud.cn>
 List-Id: dm-devel.ids
 
-Hi Jens
+BUG: unable to handle kernel NULL pointer dereference at 0000000000000046
+IP: [<ffffffffa0009cef>] dec_count+0x5f/0x80 [dm_mod]
+PGD 0
+Oops: 0000 [#1] SMP
+last sysfs file: /sys/devices/pci0000:00/0000:00:02.2/0000:02:00.0/host0/scsi_host/host0/proc_name
 
-Would you please consider applying this patch?
+Pid: 2708, comm: kcopyd Tainted: G        W  --------------- H  2.6.32-279.19.5.el6.ucloud.x86_64 #1 Dell Inc. PowerEdge R720xd/0DCWD1
+RIP: 0010:[<ffffffffa0009cef>]  [<ffffffffa0009cef>] dec_count+0x5f/0x80 [dm_mod]
+RSP: 0018:ffff880100603c30  EFLAGS: 00010246
+RAX: 0000000000000046 RBX: ffff8817968a5c30 RCX: 0000000000000000
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff8817968a5c00
+RBP: ffff880100603c50 R08: 0000000000000000 R09: 0000000000000000
+R10: ffff880caa594cc0 R11: 0000000000000000 R12: ffff8817968a5c80
+R13: ffffffff81013963 R14: 0000000000001000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff880100600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 0000000000000046 CR3: 000000020c309000 CR4: 00000000001426e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process kcopyd (pid: 2708, threadinfo ffff88180cd26000, task ffff881841c9aa80)
+Stack:
+ ffff880100603c40 ffff880aa8b32300 0000000000000000 ffff8817968a5c00
+<d> ffff880100603c80 ffffffffa000a12a 0000000000000000 ffff880aa8b32300
+<d> 0000000000000000 ffff880caa594cc0 ffff880100603c90 ffffffff811bcf6d
+Call Trace:
+ <IRQ>
+ [<ffffffffa000a12a>] endio+0x4a/0x70 [dm_mod]
+ [<ffffffff811bcf6d>] bio_endio+0x1d/0x40
+ [<ffffffff81260beb>] req_bio_endio+0x9b/0xe0
+ [<ffffffff81263114>] blk_update_request+0x104/0x500
+ [<ffffffff81263331>] ? blk_update_request+0x321/0x500
+ [<ffffffff81263537>] blk_update_bidi_request+0x27/0xa0
+ [<ffffffff8126419f>] blk_end_bidi_request+0x2f/0x80
+ [<ffffffff81264240>] blk_end_request+0x10/0x20
+ [<ffffffff81375c6f>] scsi_io_completion+0xaf/0x6c0
+ [<ffffffff8136cb92>] scsi_finish_command+0xc2/0x130
+ [<ffffffff813763e5>] scsi_softirq_done+0x145/0x170
+ [<ffffffff812698ed>] blk_done_softirq+0x8d/0xa0
+ [<ffffffff81074c5f>] __do_softirq+0xdf/0x210
+ [<ffffffff8100c2cc>] call_softirq+0x1c/0x30
+ [<ffffffff8100df9d>] do_softirq+0xad/0xe0
+ [<ffffffff81074995>] irq_exit+0x95/0xa0
+ [<ffffffff81510515>] do_IRQ+0x75/0xf0
+ [<ffffffff8100ba53>] ret_from_intr+0x0/0x16
 
-Regarding your idea about merging bio and request plugging - I think this 
-could be done later when it is properly designed by Kent Overstreet or 
-someone else.
+The value of rdi register(0xffff8817968a5c00) is the io pointer,
+If the sync io, the address of io point must be alloc from stack.
+SO
+crash> struct thread_info ffff8817968a4000
+struct thread_info {
+  task = 0xffff88180cd9a580,
+  exec_domain = 0xffffffff81a98ac0,
+ ...
+}
 
-We need this patch to fix the deadlock in dm snapshot.
+crash> struct task_struct 0xffff88180cd9a580
+struct task_struct {
+  state = 2,
+  stack = 0xffff8817968a4000,
+ ...
+}
 
-Mikulas
+It shows value exactly when use the value of io address.
 
+The io address in callback function will become the danging point,
+cause by the thread of sync io wakes up by other threads
+and return to relieve the io address,
 
----------- Forwarded message ----------
-Date: Tue, 27 May 2014 11:03:36 -0400 (EDT)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com,
-    Alasdair G. Kergon <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Subject: [PATCH] block: flush queued bios when the process blocks
-
-The block layer uses per-process bio list to avoid recursion in
-generic_make_request. When generic_make_request is called recursively, the
-bio is added to current->bio_list and the function returns immediatelly.
-The top-level instance of generic_make_requests takes bios from
-current->bio_list and processes them.
-
-This bio queuing can result in deadlocks. The following deadlock was
-observed:
-
-1) Process A sends one-page read bio to the dm-snapshot target. The bio
-spans snapshot chunk boundary and so it is split to two bios by device
-mapper.
-
-2) Device mapper creates the first sub-bio and sends it to the snapshot
-driver.
-
-3) The function snapshot_map calls track_chunk (that allocates a structure
-dm_snap_tracked_chunk and adds it to tracked_chunk_hash) and then it
-remaps the bio to the underlying linear target and exits with
-DM_MAPIO_REMAPPED.
-
-4) The remapped bio is submitted with generic_make_request, but it isn't
-processed - it is added to current->bio_list instead.
-
-5) Meanwhile, process B executes pending_complete for the affected chunk,
-it takes down_write(&s->lock) and then loops in
-__check_for_conflicting_io, waiting for dm_snap_tracked_chunk created in
-step 3) to be released.
-
-6) Process A continues, it creates a new bio for the rest of the original
-bio.
-
-7) snapshot_map is called for this new bio, it waits on
-down_write(&s->lock) that is held in step 5).
-
-The resulting deadlock:
-* bio added to current->bio_list at step 4) waits until the function in
-  step 7) finishes
-* the function in step 7) waits until s->lock held in step 5) is released
-* the process in step 5) waits until the bio queued in step 4) finishes
-
-The general problem is that queuing bios on current->bio_list introduces
-additional lock dependencies. If a device mapper target sends a bio to
-some block device, it assumes that the bio only takes locks of the target
-block device or devices that are below the target device. However, if the
-bio is added to queue on current->bio_list, it creates artifical locking
-dependency on locks taken by other bios that are on current->bio_list. In
-the above scenario, this artifical locking dependency results in
-deadlock.
-
-Kent Overstreet already created a workqueue for every bio set and there is
-a code that tries to resolve some low-memory deadlocks by redirecting bios
-queued on current->bio_list to the workqueue if the system is low on
-memory. However, other deadlocks (as described above) may happen without
-any low memory condition.
-
-This patch generalizes Kent's concept, it redirects bios on
-current->bio_list to the bio_set's workqueue on every schedule call.
-Consequently, when the process blocks on a mutex, the bios queued on
-current->bio_list are dispatched to independent workqueus and they can
-complete without waiting for the mutex to be available.
-
-Bios allocated with bio_kmalloc do not have bio_set, so they are not
-redirected, however bio_kmalloc shouldn't be used by stacking drivers (it
-is currently used by raid1.c and raid10.c, we need to change it to
-bio_set).
-
-
-Note to stable kernel maintainers: before backporting this patch, you also
-need to backport df2cb6daa4cbc34406bc4b1ac9b9335df1083a72.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
+Signed-off-by: Minfei Huang <huangminfei@ucloud.cn>
 ---
- fs/bio.c               |   84 ++++++++++++++-----------------------------------
- include/linux/blkdev.h |    7 +++-
- kernel/sched/core.c    |    7 ++++
- 3 files changed, 37 insertions(+), 61 deletions(-)
+ drivers/md/dm-io.c |   19 +++++++++++++++----
+ 1 files changed, 15 insertions(+), 4 deletions(-)
 
-Index: linux-3.15-rc5/fs/bio.c
-===================================================================
---- linux-3.15-rc5.orig/fs/bio.c	2014-05-26 19:02:47.000000000 +0200
-+++ linux-3.15-rc5/fs/bio.c	2014-05-27 00:00:13.000000000 +0200
-@@ -342,35 +342,34 @@ static void bio_alloc_rescue(struct work
- 	}
- }
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 3842ac7..f992913 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -38,6 +38,7 @@ struct io {
+ 	void *context;
+ 	void *vma_invalidate_address;
+ 	unsigned long vma_invalidate_size;
++	atomic_t wakeup;
+ } __attribute__((aligned(DM_IO_MAX_REGIONS)));
  
--static void punt_bios_to_rescuer(struct bio_set *bs)
-+/**
-+ * blk_flush_bio_list
-+ *
-+ * Pop bios queued on current->bio_list and submit each of them to
-+ * their rescue workqueue.
-+ *
-+ * If the bio doesn't have a bio_set, we leave it on current->bio_list.
-+ * However, stacking drivers should use bio_set, so this shouldn't be
-+ * an issue.
+ static struct kmem_cache *_dm_io_cache;
+@@ -121,10 +122,16 @@ static void dec_count(struct io *io, unsigned int region, int error)
+ 			invalidate_kernel_vmap_range(io->vma_invalidate_address,
+ 						     io->vma_invalidate_size);
+ 
+-		if (io->sleeper)
+-			wake_up_process(io->sleeper);
++		if (io->sleeper) {
++			struct task_struct *sleeper = io->sleeper;
+ 
+-		else {
++			atomic_set(&io->wakeup, 1);
++/*
++ * The thread may be waked up by other threads,
++ * if then the sync io point will become the dangling pointer
 + */
-+void blk_flush_bio_list(void)
- {
--	struct bio_list punt, nopunt;
- 	struct bio *bio;
-+	struct bio_list list = *current->bio_list;
-+	bio_list_init(current->bio_list);
- 
--	/*
--	 * In order to guarantee forward progress we must punt only bios that
--	 * were allocated from this bio_set; otherwise, if there was a bio on
--	 * there for a stacking driver higher up in the stack, processing it
--	 * could require allocating bios from this bio_set, and doing that from
--	 * our own rescuer would be bad.
--	 *
--	 * Since bio lists are singly linked, pop them all instead of trying to
--	 * remove from the middle of the list:
--	 */
--
--	bio_list_init(&punt);
--	bio_list_init(&nopunt);
--
--	while ((bio = bio_list_pop(current->bio_list)))
--		bio_list_add(bio->bi_pool == bs ? &punt : &nopunt, bio);
--
--	*current->bio_list = nopunt;
--
--	spin_lock(&bs->rescue_lock);
--	bio_list_merge(&bs->rescue_list, &punt);
--	spin_unlock(&bs->rescue_lock);
-+	while ((bio = bio_list_pop(&list))) {
-+		struct bio_set *bs = bio->bi_pool;
-+		if (unlikely(!bs)) {
-+			bio_list_add(current->bio_list, bio);
++			wake_up_process(sleeper);
 +		} else {
-+			spin_lock(&bs->rescue_lock);
-+			bio_list_add(&bs->rescue_list, bio);
-+			spin_unlock(&bs->rescue_lock);
+ 			unsigned long r = io->error_bits;
+ 			io_notify_fn fn = io->callback;
+ 			void *context = io->context;
+@@ -401,12 +408,14 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
  
--	queue_work(bs->rescue_workqueue, &bs->rescue_work);
-+			queue_work(bs->rescue_workqueue, &bs->rescue_work);
-+		}
-+	}
- }
- 
- /**
-@@ -410,7 +409,6 @@ static void punt_bios_to_rescuer(struct 
-  */
- struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- {
--	gfp_t saved_gfp = gfp_mask;
- 	unsigned front_pad;
- 	unsigned inline_vecs;
- 	unsigned long idx = BIO_POOL_NONE;
-@@ -428,36 +426,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_m
- 		front_pad = 0;
- 		inline_vecs = nr_iovecs;
- 	} else {
--		/*
--		 * generic_make_request() converts recursion to iteration; this
--		 * means if we're running beneath it, any bios we allocate and
--		 * submit will not be submitted (and thus freed) until after we
--		 * return.
--		 *
--		 * This exposes us to a potential deadlock if we allocate
--		 * multiple bios from the same bio_set() while running
--		 * underneath generic_make_request(). If we were to allocate
--		 * multiple bios (say a stacking block driver that was splitting
--		 * bios), we would deadlock if we exhausted the mempool's
--		 * reserve.
--		 *
--		 * We solve this, and guarantee forward progress, with a rescuer
--		 * workqueue per bio_set. If we go to allocate and there are
--		 * bios on current->bio_list, we first try the allocation
--		 * without __GFP_WAIT; if that fails, we punt those bios we
--		 * would be blocking to the rescuer workqueue before we retry
--		 * with the original gfp_flags.
--		 */
--
--		if (current->bio_list && !bio_list_empty(current->bio_list))
--			gfp_mask &= ~__GFP_WAIT;
--
- 		p = mempool_alloc(bs->bio_pool, gfp_mask);
--		if (!p && gfp_mask != saved_gfp) {
--			punt_bios_to_rescuer(bs);
--			gfp_mask = saved_gfp;
--			p = mempool_alloc(bs->bio_pool, gfp_mask);
--		}
- 
- 		front_pad = bs->front_pad;
- 		inline_vecs = BIO_INLINE_VECS;
-@@ -471,11 +440,6 @@ struct bio *bio_alloc_bioset(gfp_t gfp_m
- 
- 	if (nr_iovecs > inline_vecs) {
- 		bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, bs->bvec_pool);
--		if (!bvl && gfp_mask != saved_gfp) {
--			punt_bios_to_rescuer(bs);
--			gfp_mask = saved_gfp;
--			bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, bs->bvec_pool);
--		}
- 
- 		if (unlikely(!bvl))
- 			goto err_free;
-Index: linux-3.15-rc5/kernel/sched/core.c
-===================================================================
---- linux-3.15-rc5.orig/kernel/sched/core.c	2014-05-26 19:30:51.000000000 +0200
-+++ linux-3.15-rc5/kernel/sched/core.c	2014-05-27 00:23:00.000000000 +0200
-@@ -2734,6 +2734,13 @@ static inline void sched_submit_work(str
- 	if (!tsk->state || tsk_is_pi_blocked(tsk))
- 		return;
- 	/*
-+	 * If there are bios on the bio list, flush them to the appropriate
-+	 * rescue threads.
-+	 */
-+	if (unlikely(current->bio_list != NULL) &&
-+	    !bio_list_empty(current->bio_list))
-+		blk_flush_bio_list();
-+	/*
- 	 * If we are going to sleep and we have plugged IO queued,
- 	 * make sure to submit it to avoid deadlocks.
- 	 */
-Index: linux-3.15-rc5/include/linux/blkdev.h
-===================================================================
---- linux-3.15-rc5.orig/include/linux/blkdev.h	2014-05-26 23:54:48.000000000 +0200
-+++ linux-3.15-rc5/include/linux/blkdev.h	2014-05-26 23:56:41.000000000 +0200
-@@ -1103,6 +1103,8 @@ static inline bool blk_needs_flush_plug(
- 		 !list_empty(&plug->cb_list));
- }
- 
-+extern void blk_flush_bio_list(void);
++	atomic_set(&io->wakeup, 0);
 +
- /*
-  * tag stuff
-  */
-@@ -1634,12 +1636,15 @@ static inline void blk_schedule_flush_pl
- {
- }
+ 	dispatch_io(rw, num_regions, where, dp, io, 1);
  
--
- static inline bool blk_needs_flush_plug(struct task_struct *tsk)
- {
- 	return false;
- }
+ 	while (1) {
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
  
-+static inline void blk_flush_bio_list(void)
-+{
-+}
+-		if (!atomic_read(&io->count))
++		if (atomic_read(&io->wakeup))
+ 			break;
+ 
+ 		io_schedule();
+@@ -442,6 +451,8 @@ static int async_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
++	atomic_set(&io->wakeup, 0);
 +
- #endif /* CONFIG_BLOCK */
- 
- #endif
+ 	dispatch_io(rw, num_regions, where, dp, io, 0);
+ 	return 0;
+ }
+-- 
+1.7.1
