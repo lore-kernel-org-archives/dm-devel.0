@@ -1,15 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 06/12] Make multipath add wwids from kernel
-	cmdline mpath.wwids with -A
-Date: Mon, 30 Jun 2014 00:13:57 -0500
-Message-ID: <1404105243-5071-7-git-send-email-bmarzins@redhat.com>
-References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
+From: Marc Lehmann <schmorp@schmorp.de>
+Subject: all cache blocks marked as dirty in writethrough mode,
+ "Data loss may occur", constant write activity
+Date: Sun, 29 Jun 2014 00:54:53 +0200
+Message-ID: <20140628225452.GA570@schmorp.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,166 +18,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds another option to multipath, "-A", which reads
-/proc/cmdline for mpath.wwid=<WWID> options, and adds any wwids it finds to
-/etc/multipath/wwids.  While this isn't usually important during normal
-operation, since these wwids should already be added, it can be helpful
-during installation, to make sure that multipath can claim devices as its
-own, before LVM or something else makes use of them.  The patch also execs
-"/sbin/multipath -A" before running multipathd in multipathd.service
+[I am not subscribed to the list, CC: appreciated]
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/wwids.c          | 44 +++++++++++++++++++++++++++++++++++++++++++
- libmultipath/wwids.h          |  1 +
- multipath/main.c              | 10 ++++++++--
- multipath/multipath.8         |  5 ++++-
- multipathd/multipathd.service |  1 +
- 5 files changed, 58 insertions(+), 3 deletions(-)
+Hi!
 
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index eca1799..1dc00bb 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -274,3 +274,47 @@ remember_wwid(char *wwid)
- 		condlog(4, "wwid %s already in wwids file", wwid);
- 	return 0;
- }
-+
-+int remember_cmdline_wwid(void)
-+{
-+	FILE *f = NULL;
-+	char buf[LINE_MAX], *next, *ptr;
-+	int ret = 0;
-+
-+	f = fopen("/proc/cmdline", "re");
-+	if (!f) {
-+		condlog(0, "can't open /proc/cmdline : %s", strerror(errno));
-+		return -1;
-+	}
-+
-+	if (!fgets(buf, sizeof(buf), f)) {
-+		if (ferror(f))
-+			condlog(0, "read of /proc/cmdline failed : %s",
-+				strerror(errno));
-+		else
-+			condlog(0, "couldn't read /proc/cmdline");
-+		fclose(f);
-+		return -1;
-+	}
-+	fclose(f);
-+	next = buf;
-+	while((ptr = strstr(next, "mpath.wwid="))) {
-+		ptr += 11;
-+		next = strpbrk(ptr, " \t\n");
-+		if (next) {
-+			*next = '\0';
-+			next++;
-+		}
-+		if (strlen(ptr)) {
-+			if (remember_wwid(ptr) != 0)
-+				ret = -1;
-+		}
-+		else {
-+			condlog(0, "empty mpath.wwid kernel command line option");
-+			ret = -1;
-+		}
-+		if (!next)
-+			break;
-+	}
-+	return ret;
-+}
-diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
-index f3b21fa..2fbd419 100644
---- a/libmultipath/wwids.h
-+++ b/libmultipath/wwids.h
-@@ -16,5 +16,6 @@ int remember_wwid(char *wwid);
- int check_wwids_file(char *wwid, int write_wwid);
- int remove_wwid(char *wwid);
- int replace_wwids(vector mp);
-+int remember_cmdline_wwid(void);
- 
- #endif /* _WWIDS_H */
-diff --git a/multipath/main.c b/multipath/main.c
-index 157475e..ed93f66 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -84,7 +84,7 @@ usage (char * progname)
- {
- 	fprintf (stderr, VERSION_STRING);
- 	fprintf (stderr, "Usage:\n");
--	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
-+	fprintf (stderr, "  %s [-a|-A|-c|-w|-W] [-d] [-r] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
- 	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [dev]\n", progname);
- 	fprintf (stderr, "  %s -F [-v lvl]\n", progname);
- 	fprintf (stderr, "  %s -t\n", progname);
-@@ -98,6 +98,8 @@ usage (char * progname)
- 		"  -f      flush a multipath device map\n" \
- 		"  -F      flush all multipath device maps\n" \
- 		"  -a      add a device wwid to the wwids file\n" \
-+		"  -A      add devices from kernel command line mpath.wwids\n"
-+		"          parameters to wwids file\n" \
- 		"  -c      check if a device should be a path in a multipath device\n" \
- 		"  -q      allow queue_if_no_path when multipathd is not running\n"\
- 		"  -d      dry run, do not create or update devmaps\n" \
-@@ -445,7 +447,7 @@ main (int argc, char *argv[])
- 	if (load_config(DEFAULT_CONFIGFILE, udev))
- 		exit(1);
- 
--	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BrtqwW")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":aAdchl::FfM:v:p:b:BrtqwW")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
- 			break;
-@@ -518,6 +520,10 @@ main (int argc, char *argv[])
- 		case 'a':
- 			conf->cmd = CMD_ADD_WWID;
- 			break;
-+		case 'A':
-+			if (remember_cmdline_wwid() != 0)
-+				exit(1);
-+			exit(0);
- 		case ':':
- 			fprintf(stderr, "Missing option argument\n");
- 			usage(argv[0]);
-diff --git a/multipath/multipath.8 b/multipath/multipath.8
-index b6479b1..f6b30c7 100644
---- a/multipath/multipath.8
-+++ b/multipath/multipath.8
-@@ -8,7 +8,7 @@ multipath \- Device mapper target autoconfig
- .RB [\| \-b\ \c
- .IR bindings_file \|]
- .RB [\| \-d \|]
--.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r | \-a | \-w | \-W \|]
-+.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r | \-a | \-A | \-w | \-W \|]
- .RB [\| \-p\ \c
- .BR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
- .RB [\| device \|]
-@@ -71,6 +71,9 @@ allow device tables with queue_if_no_path when multipathd is not running
- .B \-a
- add the wwid for the specified device to the wwids file
- .TP
-+.B \-A
-+add wwids from any kernel command line mpath.wwid parameters to the wwids file
-+.TP
- .B \-w
- remove the wwid for the specified device from the wwids file
- .TP
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index be3ba3f..8bb48b5 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -10,6 +10,7 @@ Type=notify
- NotifyAccess=main
- LimitCORE=infinity
- ExecStartPre=/sbin/modprobe dm-multipath
-+ExecStartPre=-/sbin/multipath -A
- ExecStart=/sbin/multipathd -d -s
- ExecReload=/sbin/multipathd reconfigure
- 
+I tried to look for contact info for dm-cache bug reports, and decided to
+write to this list. If this is the wrong way to report errors, pointers on
+the correct way are appreciated. Also, if this report is bogus, I apologise
+in advance :)
+
+Anyway, I tried out dm-cache on debian kernel 3.14-0.bpo.1-amd64
+(3.14.7-1~bpo70+1) and 3.14-1-amd64 (3.14.7-1), both had essentially the
+same behaviour. I previously tried on a 3.12 kernel, which showed none of
+these issues.
+
+Namely, after creating a writethrough dm-cache mapping, removing it,
+and setting it up again, the whole cache is marked as dirty and written
+back to the origin device, which obviously shouldn't happen when using
+writethrough. I noticed this because my box was very sluggish for a while
+after each reboot (due to the hige write load).
+
+On further inspection, I get kernel error messages on "dmsetup remove" of the
+dm-cache device:
+
+   [ 3137.734148] device-mapper: space map metadata: unable to allocate new metadata block
+   [ 3137.734152] device-mapper: cache: could not resize on-disk discard bitset
+   [ 3137.734153] device-mapper: cache: could not write discard bitset
+   [ 3137.734155] device-mapper: space map metadata: unable to allocate new metadata block
+   [ 3137.734155] device-mapper: cache metadata: begin_hints failed
+   [ 3137.734156] device-mapper: cache: could not write hints
+   [ 3137.734159] device-mapper: space map metadata: unable to allocate new metadata block
+   [ 3137.734160] device-mapper: cache: could not write cache metadata.  Data loss may occur.
+
+I used the formula "4MB + 16 * nr_blocks" to create the metadata device,
+so it shouldn't be too small (the cache device is 10G, blocksize is 64kb,
+and the calculated metadata partition has about 6MB).
+
+I still get the above messages after increasing the metadata partition to
+40MB. Only after increasing it to 70MB did the error go away, which also
+stopped all cache blocks to be marked as dirty.
+
+Even with the 70MB metadata partition, behaviour is strange: dmsetup
+remove takes 18 seconds, with one cpu having 100% sys time with no I/O,
+and while the partitions are mounted, there is a constant 4kb write
+activity to each cache partition, with no activity on the origin partition
+(which causes ~1GB/day unnecessary wear).
+
+Obviously dm-cache should not ever mark blocks as dirty in writethrough
+mode, and obviously, the metadata requirements are much higher than
+documented. Also, I think dm-cache should not constantly write to the
+cache partition when the system is idle.
+
+Details:
+
+All devices are lvm volumes.
+
+I tried with both a 9TB and 19TB volume, both showed the same behaviour:
+
+   RO    RA   SSZ   BSZ   StartSec            Size   Device
+   rw   256   512  4096          0   9499955953664   /dev/dm-7
+   rw   256   512  4096          0  20450918793216   /dev/dm-5
+
+The cache devices are both 10G:
+
+   RO    RA   SSZ   BSZ   StartSec            Size   Device
+   rw   256   512  4096          0     10737418240   /dev/dm-11
+   rw   256   512  4096          0     10737418240   /dev/dm-12
+
+I use a script which divides the cache device into a 128kb header
+"partition", a metadata partition and a cache block partition. The working
+configuration is (the first line of each block is the cache partition
+mapping by lvm, followed by header/metadata/block mappings, followed by
+the cache mapping):
+
+   vg_cerebro-cache_bp: 0 20971520 linear 8:17 209715584
+   cache-bp-header: 0 256 linear 253:12 0
+   cache-bp-meta: 0 144384 linear 253:12 256
+   cache-bp-cache: 0 20826880 linear 253:12 144640
+   cache-bp: 0 18554601472 cache 253:22 253:23 253:7 128 1 writethrough mq 2 sequential_threshold 32
+
+   vg_cerebro-cache_wd: 0 20971520 linear 8:17 188744064
+   cache-wd-header: 0 256 linear 253:11 0
+   cache-wd-meta: 0 144384 linear 253:11 256
+   cache-wd-cache: 0 20826880 linear 253:11 144640
+   cache-wd: 0 39943200768 cache 253:16 253:17 253:5 128 1 writethrough mq 2 sequential_threshold 32
+
+The configuration where the kernel complains about a too small metadata
+partition is:
+
+   vg_cerebro-cache_bp: 0 20971520 linear 8:17 209715584
+   cache-bp-header: 0 256 linear 253:12 0
+   cache-bp-meta: 0 78848 linear 253:12 256
+   cache-bp-cache: 0 20892416 linear 253:12 79104
+   cache-bp: 0 18554601472 cache 253:22 253:23 253:7 128 1 writethrough mq 2 sequential_threshold 32
+
+   vg_cerebro-cache_wd: 0 20971520 linear 8:17 188744064
+   cache-wd-header: 0 256 linear 253:11 0
+   cache-wd-meta: 0 78848 linear 253:11 256
+   cache-wd-cache: 0 20892416 linear 253:11 79104
+   cache-wd: 0 39943200768 cache 253:16 253:17 253:5 128 1 writethrough mq 2 sequential_threshold 32
+
+If more details are needed, drop me a note.
+
+Greetings,
+Marc Lehmann
+
 -- 
-1.8.3.1
+                The choice of a       Deliantra, the free code+content MORPG
+      -----==-     _GNU_              http://www.deliantra.net
+      ----==-- _       generation
+      ---==---(_)__  __ ____  __      Marc Lehmann
+      --==---/ / _ \/ // /\ \/ /      schmorp@schmorp.de
+      -=====/_/_//_/\_,_/ /_/\_\
