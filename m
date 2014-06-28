@@ -1,14 +1,14 @@
-From: Marc Lehmann <schmorp@schmorp.de>
-Subject: all cache blocks marked as dirty in writethrough mode,
- "Data loss may occur", constant write activity
-Date: Sun, 29 Jun 2014 00:54:53 +0200
-Message-ID: <20140628225452.GA570@schmorp.de>
+From: huangminfei <huangminfei@ucloud.cn>
+Subject: Re: [PATCH] dm-io: Fix a race condition in the wake up
+ code for sync_io
+Date: Sat, 28 Jun 2014 09:26:08 +0800 (CST)
+Message-ID: <370509b3.4d53.146e01459a6.Coremail.huangminfei@ucloud.cn>
+References: <1403914906-577-1-git-send-email-huangminfei@ucloud.cn>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7751663058842163498=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <1403914906-577-1-git-send-email-huangminfei@ucloud.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,118 +18,191 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Minfei Huang <huangminfei@ucloud.cn>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, agk <agk@redhat.com>
 List-Id: dm-devel.ids
 
-[I am not subscribed to the list, CC: appreciated]
+--===============7751663058842163498==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_49094_539240027.1403918768550"
 
-Hi!
+------=_Part_49094_539240027.1403918768550
+Content-Type: text/plain; charset=GBK
+Content-Transfer-Encoding: base64
 
-I tried to look for contact info for dm-cache bug reports, and decided to
-write to this list. If this is the wrong way to report errors, pointers on
-the correct way are appreciated. Also, if this report is bogus, I apologise
-in advance :)
+CgpTb3JyeSwgSSBoYXZlIGEgbWlzdGFrZS4KdGhlIGZ1bmN0aW9uIGNvbXBsZXRlIHdpbGwgcmVj
+b3JkIHRoZSBmbGFnIHRvIGluZGljYXRlIGl0IGhhdmUgYmVlbiBleGVjdXRlZC4KCgpTbyB0aGUg
+d2Fsa2luZyBwYXRoIG9mIHN5bmMgaW8gaXMgY29ycmVudCB0byB1c2UgZnVuY3Rpb24gd2FpdF9m
+b3JfY29tcGxldGlvbl9pby4KQXRocm91Z2ggc3luYyBpbyBtYXkgYmUgZmluaXNoZWQsICB0aGUg
+dGhyZWFkIGRvIG5vdCBiZSBoYW5nZWQuCgoKQXBvbG9naXplIGZvciBteSBtaXN0YWtlLgoKCgpU
+aGVyZSdzIGEgcmFjZSBjb25kaXRpb24gYmV0d2VlbiB0aGUgYXRvbWljX2RlY19hbmRfdGVzdCgm
+aW8tPmNvdW50KQppbiBkZWNfY291bnQoKSBhbmQgdGhlIHdha2luZyBvZiB0aGUgc3luY19pbygp
+IHRocmVhZC4gIElmIHRoZSB0aHJlYWQKaXMgc3B1cmlvdXNseSB3b2tlbiBpbW1lZGlhdGVseSBh
+ZnRlciB0aGUgZGVjcmVtZW50IGl0IG1heSBleGl0LAptYWtpbmcgdGhlIG9uIHRoZSBzdGFjayBp
+byBzdHJ1Y3QgaW52YWxpZCwgeWV0IHRoZSBkZWNfY291bnQgY291bGQKc3RpbGwgYmUgdXNpbmcg
+aXQuCgpUaGVyZSBhcmUgc21hbGxlciBmaXhlcyB0aGFuIHRoZSBvbmUgaGVyZSAoZWcsIGp1c3Qg
+dGFrZSB0aGUgaW8gb2JqZWN0Cm9mZiB0aGUgc3RhY2spLiAgQnV0IEkgZmVlbCB0aGlzIGNvZGUg
+Y291bGQgdXNlIGEgY2xlYW4gdXAuCgotIHNpbXBsaWZ5IGRlY19jb3VudCgpLgoKIC0gSXQgYWx3
+YXlzIGNhbGxzIGEgY2FsbGJhY2sgZm4gbm93LgogLSBJdCBhbHdheXMgZnJlZXMgdGhlIGlvIG9i
+amVjdCBiYWNrIHRvIHRoZSBwb29sLgoKLSBzeW5jX2lvKCkKCiAtIFRha2UgdGhlIGlvIG9iamVj
+dCBvZmYgdGhlIHN0YWNrIGFuZCBhbGxvY2F0ZSBpdCBmcm9tIHRoZSBwb29sIHRoZQogICBzYW1l
+IGFzIGFzeW5jX2lvLgogLSBVc2UgYSBjb21wbGV0aW9uIG9iamVjdCByYXRoZXIgdGhhbiBhbiBl
+eHBsaWNpdCBpb19zY2hlZHVsZSgpCiAgIGxvb3AuICBUaGUgY2FsbGJhY2sgdHJpZ2dlcnMgdGhl
+IGNvbXBsZXRpb24uCgpTaWduZWQtb2ZmLWJ5OiBNaW5mZWkgSHVhbmcgPGh1YW5nbWluZmVpQHVj
+bG91ZC5jbj4KLS0tCmRyaXZlcnMvbWQvZG0taW8uYyB8ICAgMjIgKysrKysrKysrLS0tLS0tLS0t
+LS0tLQoxIGZpbGVzIGNoYW5nZWQsIDkgaW5zZXJ0aW9ucygrKSwgMTMgZGVsZXRpb25zKC0pCgpk
+aWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1pby5jIGIvZHJpdmVycy9tZC9kbS1pby5jCmluZGV4
+IDM4NDJhYzcuLjA1NTgzZGEgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbWQvZG0taW8uYworKysgYi9k
+cml2ZXJzL21kL2RtLWlvLmMKQEAgLTEwLDYgKzEwLDcgQEAKI2luY2x1ZGUgPGxpbnV4L2Rldmlj
+ZS1tYXBwZXIuaD4KCiNpbmNsdWRlIDxsaW51eC9iaW8uaD4KKyNpbmNsdWRlIDxsaW51eC9jb21w
+bGV0aW9uLmg+CiNpbmNsdWRlIDxsaW51eC9tZW1wb29sLmg+CiNpbmNsdWRlIDxsaW51eC9tb2R1
+bGUuaD4KI2luY2x1ZGUgPGxpbnV4L3NjaGVkLmg+CkBAIC0zMiw3ICszMyw3IEBAIHN0cnVjdCBk
+bV9pb19jbGllbnQgewpzdHJ1Y3QgaW8gewogICAgdW5zaWduZWQgbG9uZyBlcnJvcl9iaXRzOwog
+ICAgYXRvbWljX3QgY291bnQ7Ci0gICAgc3RydWN0IHRhc2tfc3RydWN0ICpzbGVlcGVyOworICAg
+IHN0cnVjdCBjb21wbGV0aW9uICp3YWl0OwogICAgc3RydWN0IGRtX2lvX2NsaWVudCAqY2xpZW50
+OwogICAgaW9fbm90aWZ5X2ZuIGNhbGxiYWNrOwogICAgdm9pZCAqY29udGV4dDsKQEAgLTEyMSw4
+ICsxMjIsOCBAQCBzdGF0aWMgdm9pZCBkZWNfY291bnQoc3RydWN0IGlvICppbywgdW5zaWduZWQg
+aW50IHJlZ2lvbiwgaW50IGVycm9yKQogICAgICAgICAgICBpbnZhbGlkYXRlX2tlcm5lbF92bWFw
+X3JhbmdlKGlvLT52bWFfaW52YWxpZGF0ZV9hZGRyZXNzLAogICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgIGlvLT52bWFfaW52YWxpZGF0ZV9zaXplKTsKCi0gICAgICAgIGlmIChpby0+c2xlZXBl
+cikKLSAgICAgICAgICAgIHdha2VfdXBfcHJvY2Vzcyhpby0+c2xlZXBlcik7CisgICAgICAgIGlm
+IChpby0+d2FpdCkKKyAgICAgICAgICAgIGNvbXBsZXRlKGlvLT53YWl0KTsKCiAgICAgICAgZWxz
+ZSB7CiAgICAgICAgICAgIHVuc2lnbmVkIGxvbmcgciA9IGlvLT5lcnJvcl9iaXRzOwpAQCAtMzg3
+LDYgKzM4OCw3IEBAIHN0YXRpYyBpbnQgc3luY19pbyhzdHJ1Y3QgZG1faW9fY2xpZW50ICpjbGll
+bnQsIHVuc2lnbmVkIGludCBudW1fcmVnaW9ucywKICAgICAqLwogICAgdm9sYXRpbGUgY2hhciBp
+b19bc2l6ZW9mKHN0cnVjdCBpbykgKyBfX2FsaWdub2ZfXyhzdHJ1Y3QgaW8pIC0gMV07CiAgICBz
+dHJ1Y3QgaW8gKmlvID0gKHN0cnVjdCBpbyAqKVBUUl9BTElHTigmaW9fLCBfX2FsaWdub2ZfXyhz
+dHJ1Y3QgaW8pKTsKKyAgICBERUNMQVJFX0NPTVBMRVRJT05fT05TVEFDSyh3YWl0KTsKCiAgICBp
+ZiAobnVtX3JlZ2lvbnMgPiAxICYmIChydyAmIFJXX01BU0spICE9IFdSSVRFKSB7CiAgICAgICAg
+V0FSTl9PTigxKTsKQEAgLTM5NSw3ICszOTcsNyBAQCBzdGF0aWMgaW50IHN5bmNfaW8oc3RydWN0
+IGRtX2lvX2NsaWVudCAqY2xpZW50LCB1bnNpZ25lZCBpbnQgbnVtX3JlZ2lvbnMsCgogICAgaW8t
+PmVycm9yX2JpdHMgPSAwOwogICAgYXRvbWljX3NldCgmaW8tPmNvdW50LCAxKTsgLyogc2VlIGRp
+c3BhdGNoX2lvKCkgKi8KLSAgICBpby0+c2xlZXBlciA9IGN1cnJlbnQ7CisgICAgaW8tPndhaXQg
+PSAmd2FpdDsKICAgIGlvLT5jbGllbnQgPSBjbGllbnQ7CgogICAgaW8tPnZtYV9pbnZhbGlkYXRl
+X2FkZHJlc3MgPSBkcC0+dm1hX2ludmFsaWRhdGVfYWRkcmVzczsKQEAgLTQwMywxNSArNDA1LDkg
+QEAgc3RhdGljIGludCBzeW5jX2lvKHN0cnVjdCBkbV9pb19jbGllbnQgKmNsaWVudCwgdW5zaWdu
+ZWQgaW50IG51bV9yZWdpb25zLAoKICAgIGRpc3BhdGNoX2lvKHJ3LCBudW1fcmVnaW9ucywgd2hl
+cmUsIGRwLCBpbywgMSk7CgotICAgIHdoaWxlICgxKSB7Ci0gICAgICAgIHNldF9jdXJyZW50X3N0
+YXRlKFRBU0tfVU5JTlRFUlJVUFRJQkxFKTsKLQotICAgICAgICBpZiAoIWF0b21pY19yZWFkKCZp
+by0+Y291bnQpKQotICAgICAgICAgICAgYnJlYWs7Ci0KLSAgICAgICAgaW9fc2NoZWR1bGUoKTsK
+KyAgICB3aGlsZSAoYXRvbWljX3JlYWQoJmlvLT5jb3VudCkgIT0gMCkgeworICAgICAgICB3YWl0
+X2Zvcl9jb21wbGV0aW9uX2lvX3RpbWVvdXQoJndhaXQsIDUpOwogICAgfQotICAgIHNldF9jdXJy
+ZW50X3N0YXRlKFRBU0tfUlVOTklORyk7CgogICAgaWYgKGVycm9yX2JpdHMpCiAgICAgICAgKmVy
+cm9yX2JpdHMgPSBpby0+ZXJyb3JfYml0czsKQEAgLTQzNCw3ICs0MzAsNyBAQCBzdGF0aWMgaW50
+IGFzeW5jX2lvKHN0cnVjdCBkbV9pb19jbGllbnQgKmNsaWVudCwgdW5zaWduZWQgaW50IG51bV9y
+ZWdpb25zLAogICAgaW8gPSBtZW1wb29sX2FsbG9jKGNsaWVudC0+cG9vbCwgR0ZQX05PSU8pOwog
+ICAgaW8tPmVycm9yX2JpdHMgPSAwOwogICAgYXRvbWljX3NldCgmaW8tPmNvdW50LCAxKTsgLyog
+c2VlIGRpc3BhdGNoX2lvKCkgKi8KLSAgICBpby0+c2xlZXBlciA9IE5VTEw7CisgICAgaW8tPndh
+aXQgPSBOVUxMOwogICAgaW8tPmNsaWVudCA9IGNsaWVudDsKICAgIGlvLT5jYWxsYmFjayA9IGZu
+OwogICAgaW8tPmNvbnRleHQgPSBjb250ZXh0OwotLQoxLjcuMQoK
+------=_Part_49094_539240027.1403918768550
+Content-Type: text/html; charset=GBK
+Content-Transfer-Encoding: base64
 
-Anyway, I tried out dm-cache on debian kernel 3.14-0.bpo.1-amd64
-(3.14.7-1~bpo70+1) and 3.14-1-amd64 (3.14.7-1), both had essentially the
-same behaviour. I previously tried on a 3.12 kernel, which showed none of
-these issues.
+PGRpdj48L2Rpdj48ZGl2IHN0eWxlPSJjb2xvcjojMDAwOyBmb250LXNpemU6IDE0cHg7Zm9udC1m
+YW1pbHk6IGFyaWFsOyI+PGRpdj48YnI+PC9kaXY+PGRpdj5Tb3JyeSwgSSBoYXZlIGEgbWlzdGFr
+ZS48L2Rpdj48ZGl2PnRoZSBmdW5jdGlvbiBjb21wbGV0ZSB3aWxsIHJlY29yZCB0aGUgZmxhZyB0
+byBpbmRpY2F0ZSBpdCBoYXZlIGJlZW4gZXhlY3V0ZWQuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRp
+dj5TbyB0aGUgd2Fsa2luZyBwYXRoIG9mIHN5bmMgaW8gaXMgY29ycmVudCB0byB1c2UgZnVuY3Rp
+b24mbmJzcDs8c3BhbiBzdHlsZT0ibGluZS1oZWlnaHQ6IDEuNzsiPndhaXRfZm9yX2NvbXBsZXRp
+b25faW8uPC9zcGFuPjwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0OiAxLjc7Ij5B
+dGhyb3VnaCBzeW5jIGlvIG1heSBiZSBmaW5pc2hlZCwgJm5ic3A7dGhlIHRocmVhZCBkbyBub3Qg
+YmUgaGFuZ2VkLjwvc3Bhbj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkFwb2xvZ2l6ZSBmb3Ig
+bXkgbWlzdGFrZS48L2Rpdj48ZGl2Pjxicj48L2Rpdj48L2Rpdj48YmxvY2txdW90ZSBpZD0iaXNS
+ZXBseUNvbnRlbnQiIHN0eWxlPSJwYWRkaW5nLWxlZnQ6MWV4OyBtYXJnaW46IDBweCAwcHggMHB4
+IDAuOGV4OyBCT1JERVItTEVGVDogI2NjYyAxcHggc29saWQiPjxicj4gVGhlcmUncyBhIHJhY2Ug
+Y29uZGl0aW9uIGJldHdlZW4gdGhlIGF0b21pY19kZWNfYW5kX3Rlc3QoJmFtcDtpby0mZ3Q7Y291
+bnQpPGJyPmluIGRlY19jb3VudCgpIGFuZCB0aGUgd2FraW5nIG9mIHRoZSBzeW5jX2lvKCkgdGhy
+ZWFkLiAmbmJzcDtJZiB0aGUgdGhyZWFkPGJyPmlzIHNwdXJpb3VzbHkgd29rZW4gaW1tZWRpYXRl
+bHkgYWZ0ZXIgdGhlIGRlY3JlbWVudCBpdCBtYXkgZXhpdCw8YnI+bWFraW5nIHRoZSBvbiB0aGUg
+c3RhY2sgaW8gc3RydWN0IGludmFsaWQsIHlldCB0aGUgZGVjX2NvdW50IGNvdWxkPGJyPnN0aWxs
+IGJlIHVzaW5nIGl0Ljxicj48YnI+VGhlcmUgYXJlIHNtYWxsZXIgZml4ZXMgdGhhbiB0aGUgb25l
+IGhlcmUgKGVnLCBqdXN0IHRha2UgdGhlIGlvIG9iamVjdDxicj5vZmYgdGhlIHN0YWNrKS4gJm5i
+c3A7QnV0IEkgZmVlbCB0aGlzIGNvZGUgY291bGQgdXNlIGEgY2xlYW4gdXAuPGJyPjxicj4tIHNp
+bXBsaWZ5IGRlY19jb3VudCgpLjxicj48YnI+ICZuYnNwOy0gSXQgYWx3YXlzIGNhbGxzIGEgY2Fs
+bGJhY2sgZm4gbm93Ljxicj4gJm5ic3A7LSBJdCBhbHdheXMgZnJlZXMgdGhlIGlvIG9iamVjdCBi
+YWNrIHRvIHRoZSBwb29sLjxicj48YnI+LSBzeW5jX2lvKCk8YnI+PGJyPiAmbmJzcDstIFRha2Ug
+dGhlIGlvIG9iamVjdCBvZmYgdGhlIHN0YWNrIGFuZCBhbGxvY2F0ZSBpdCBmcm9tIHRoZSBwb29s
+IHRoZTxicj4gJm5ic3A7ICZuYnNwO3NhbWUgYXMgYXN5bmNfaW8uPGJyPiAmbmJzcDstIFVzZSBh
+IGNvbXBsZXRpb24gb2JqZWN0IHJhdGhlciB0aGFuIGFuIGV4cGxpY2l0IGlvX3NjaGVkdWxlKCk8
+YnI+ICZuYnNwOyAmbmJzcDtsb29wLiAmbmJzcDtUaGUgY2FsbGJhY2sgdHJpZ2dlcnMgdGhlIGNv
+bXBsZXRpb24uPGJyPjxicj5TaWduZWQtb2ZmLWJ5OiBNaW5mZWkgSHVhbmcgJmx0OzxhIGhyZWY9
+Im1haWx0bzpodWFuZ21pbmZlaUB1Y2xvdWQuY24iPmh1YW5nbWluZmVpQHVjbG91ZC5jbjwvYT4m
+Z3Q7PGJyPi0tLTxicj4gZHJpdmVycy9tZC9kbS1pby5jIHwgJm5ic3A7IDIyICsrKysrKysrKy0t
+LS0tLS0tLS0tLS08YnI+IDEgZmlsZXMgY2hhbmdlZCwgOSBpbnNlcnRpb25zKCspLCAxMyBkZWxl
+dGlvbnMoLSk8YnI+PGJyPmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLWlvLmMgYi9kcml2ZXJz
+L21kL2RtLWlvLmM8YnI+aW5kZXggMzg0MmFjNy4uMDU1ODNkYSAxMDA2NDQ8YnI+LS0tIGEvZHJp
+dmVycy9tZC9kbS1pby5jPGJyPisrKyBiL2RyaXZlcnMvbWQvZG0taW8uYzxicj5AQCAtMTAsNiAr
+MTAsNyBAQDxicj4gI2luY2x1ZGUgJmx0O2xpbnV4L2RldmljZS1tYXBwZXIuaCZndDs8YnI+IDxi
+cj4gI2luY2x1ZGUgJmx0O2xpbnV4L2Jpby5oJmd0Ozxicj4rI2luY2x1ZGUgJmx0O2xpbnV4L2Nv
+bXBsZXRpb24uaCZndDs8YnI+ICNpbmNsdWRlICZsdDtsaW51eC9tZW1wb29sLmgmZ3Q7PGJyPiAj
+aW5jbHVkZSAmbHQ7bGludXgvbW9kdWxlLmgmZ3Q7PGJyPiAjaW5jbHVkZSAmbHQ7bGludXgvc2No
+ZWQuaCZndDs8YnI+QEAgLTMyLDcgKzMzLDcgQEAgc3RydWN0IGRtX2lvX2NsaWVudCB7PGJyPiBz
+dHJ1Y3QgaW8gezxicj4gJm5ic3A7ICZuYnNwOyB1bnNpZ25lZCBsb25nIGVycm9yX2JpdHM7PGJy
+PiAmbmJzcDsgJm5ic3A7IGF0b21pY190IGNvdW50Ozxicj4tJm5ic3A7ICZuYnNwOyBzdHJ1Y3Qg
+dGFza19zdHJ1Y3QgKnNsZWVwZXI7PGJyPismbmJzcDsgJm5ic3A7IHN0cnVjdCBjb21wbGV0aW9u
+ICp3YWl0Ozxicj4gJm5ic3A7ICZuYnNwOyBzdHJ1Y3QgZG1faW9fY2xpZW50ICpjbGllbnQ7PGJy
+PiAmbmJzcDsgJm5ic3A7IGlvX25vdGlmeV9mbiBjYWxsYmFjazs8YnI+ICZuYnNwOyAmbmJzcDsg
+dm9pZCAqY29udGV4dDs8YnI+QEAgLTEyMSw4ICsxMjIsOCBAQCBzdGF0aWMgdm9pZCBkZWNfY291
+bnQoc3RydWN0IGlvICppbywgdW5zaWduZWQgaW50IHJlZ2lvbiwgaW50IGVycm9yKTxicj4gJm5i
+c3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgaW52YWxpZGF0ZV9rZXJuZWxf
+dm1hcF9yYW5nZShpby0mZ3Q7dm1hX2ludmFsaWRhdGVfYWRkcmVzcyw8YnI+ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7aW8tJmd0O3ZtYV9pbnZhbGlkYXRl
+X3NpemUpOzxicj4gPGJyPi0mbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgaWYgKGlvLSZndDtz
+bGVlcGVyKTxicj4tJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgd2Fr
+ZV91cF9wcm9jZXNzKGlvLSZndDtzbGVlcGVyKTs8YnI+KyZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwOyBpZiAoaW8tJmd0O3dhaXQpPGJyPismbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyBjb21wbGV0ZShpby0mZ3Q7d2FpdCk7PGJyPiA8YnI+ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7ICZuYnNwOyBlbHNlIHs8YnI+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7IHVuc2lnbmVkIGxvbmcgciA9IGlvLSZndDtlcnJvcl9iaXRzOzxicj5AQCAtMzg3
+LDYgKzM4OCw3IEBAIHN0YXRpYyBpbnQgc3luY19pbyhzdHJ1Y3QgZG1faW9fY2xpZW50ICpjbGll
+bnQsIHVuc2lnbmVkIGludCBudW1fcmVnaW9ucyw8YnI+ICZuYnNwOyAmbmJzcDsgJm5ic3A7Ki88
+YnI+ICZuYnNwOyAmbmJzcDsgdm9sYXRpbGUgY2hhciBpb19bc2l6ZW9mKHN0cnVjdCBpbykgKyBf
+X2FsaWdub2ZfXyhzdHJ1Y3QgaW8pIC0gMV07PGJyPiAmbmJzcDsgJm5ic3A7IHN0cnVjdCBpbyAq
+aW8gPSAoc3RydWN0IGlvICopUFRSX0FMSUdOKCZhbXA7aW9fLCBfX2FsaWdub2ZfXyhzdHJ1Y3Qg
+aW8pKTs8YnI+KyZuYnNwOyAmbmJzcDsgREVDTEFSRV9DT01QTEVUSU9OX09OU1RBQ0sod2FpdCk7
+PGJyPiA8YnI+ICZuYnNwOyAmbmJzcDsgaWYgKG51bV9yZWdpb25zICZndDsgMSAmYW1wOyZhbXA7
+IChydyAmYW1wOyBSV19NQVNLKSAhPSBXUklURSkgezxicj4gJm5ic3A7ICZuYnNwOyAmbmJzcDsg
+Jm5ic3A7IFdBUk5fT04oMSk7PGJyPkBAIC0zOTUsNyArMzk3LDcgQEAgc3RhdGljIGludCBzeW5j
+X2lvKHN0cnVjdCBkbV9pb19jbGllbnQgKmNsaWVudCwgdW5zaWduZWQgaW50IG51bV9yZWdpb25z
+LDxicj4gPGJyPiAmbmJzcDsgJm5ic3A7IGlvLSZndDtlcnJvcl9iaXRzID0gMDs8YnI+ICZuYnNw
+OyAmbmJzcDsgYXRvbWljX3NldCgmYW1wO2lvLSZndDtjb3VudCwgMSk7IC8qIHNlZSBkaXNwYXRj
+aF9pbygpICovPGJyPi0mbmJzcDsgJm5ic3A7IGlvLSZndDtzbGVlcGVyID0gY3VycmVudDs8YnI+
+KyZuYnNwOyAmbmJzcDsgaW8tJmd0O3dhaXQgPSAmYW1wO3dhaXQ7PGJyPiAmbmJzcDsgJm5ic3A7
+IGlvLSZndDtjbGllbnQgPSBjbGllbnQ7PGJyPiA8YnI+ICZuYnNwOyAmbmJzcDsgaW8tJmd0O3Zt
+YV9pbnZhbGlkYXRlX2FkZHJlc3MgPSBkcC0mZ3Q7dm1hX2ludmFsaWRhdGVfYWRkcmVzczs8YnI+
+QEAgLTQwMywxNSArNDA1LDkgQEAgc3RhdGljIGludCBzeW5jX2lvKHN0cnVjdCBkbV9pb19jbGll
+bnQgKmNsaWVudCwgdW5zaWduZWQgaW50IG51bV9yZWdpb25zLDxicj4gPGJyPiAmbmJzcDsgJm5i
+c3A7IGRpc3BhdGNoX2lvKHJ3LCBudW1fcmVnaW9ucywgd2hlcmUsIGRwLCBpbywgMSk7PGJyPiA8
+YnI+LSZuYnNwOyAmbmJzcDsgd2hpbGUgKDEpIHs8YnI+LSZuYnNwOyAmbmJzcDsgJm5ic3A7ICZu
+YnNwOyBzZXRfY3VycmVudF9zdGF0ZShUQVNLX1VOSU5URVJSVVBUSUJMRSk7PGJyPi08YnI+LSZu
+YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyBpZiAoIWF0b21pY19yZWFkKCZhbXA7aW8tJmd0O2Nv
+dW50KSk8YnI+LSZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7IGJyZWFr
+Ozxicj4tPGJyPi0mbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgaW9fc2NoZWR1bGUoKTs8YnI+
+KyZuYnNwOyAmbmJzcDsgd2hpbGUgKGF0b21pY19yZWFkKCZhbXA7aW8tJmd0O2NvdW50KSAhPSAw
+KSB7PGJyPismbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgd2FpdF9mb3JfY29tcGxldGlvbl9p
+b190aW1lb3V0KCZhbXA7d2FpdCwgNSk7PGJyPiAmbmJzcDsgJm5ic3A7IH08YnI+LSZuYnNwOyAm
+bmJzcDsgc2V0X2N1cnJlbnRfc3RhdGUoVEFTS19SVU5OSU5HKTs8YnI+IDxicj4gJm5ic3A7ICZu
+YnNwOyBpZiAoZXJyb3JfYml0cyk8YnI+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAqZXJy
+b3JfYml0cyA9IGlvLSZndDtlcnJvcl9iaXRzOzxicj5AQCAtNDM0LDcgKzQzMCw3IEBAIHN0YXRp
+YyBpbnQgYXN5bmNfaW8oc3RydWN0IGRtX2lvX2NsaWVudCAqY2xpZW50LCB1bnNpZ25lZCBpbnQg
+bnVtX3JlZ2lvbnMsPGJyPiAmbmJzcDsgJm5ic3A7IGlvID0gbWVtcG9vbF9hbGxvYyhjbGllbnQt
+Jmd0O3Bvb2wsIEdGUF9OT0lPKTs8YnI+ICZuYnNwOyAmbmJzcDsgaW8tJmd0O2Vycm9yX2JpdHMg
+PSAwOzxicj4gJm5ic3A7ICZuYnNwOyBhdG9taWNfc2V0KCZhbXA7aW8tJmd0O2NvdW50LCAxKTsg
+Lyogc2VlIGRpc3BhdGNoX2lvKCkgKi88YnI+LSZuYnNwOyAmbmJzcDsgaW8tJmd0O3NsZWVwZXIg
+PSBOVUxMOzxicj4rJm5ic3A7ICZuYnNwOyBpby0mZ3Q7d2FpdCA9IE5VTEw7PGJyPiAmbmJzcDsg
+Jm5ic3A7IGlvLSZndDtjbGllbnQgPSBjbGllbnQ7PGJyPiAmbmJzcDsgJm5ic3A7IGlvLSZndDtj
+YWxsYmFjayA9IGZuOzxicj4gJm5ic3A7ICZuYnNwOyBpby0mZ3Q7Y29udGV4dCA9IGNvbnRleHQ7
+PGJyPi0tIDxicj4xLjcuMTxicj48YnI+PC9ibG9ja3F1b3RlPg==
+------=_Part_49094_539240027.1403918768550--
 
-Namely, after creating a writethrough dm-cache mapping, removing it,
-and setting it up again, the whole cache is marked as dirty and written
-back to the origin device, which obviously shouldn't happen when using
-writethrough. I noticed this because my box was very sluggish for a while
-after each reboot (due to the hige write load).
 
-On further inspection, I get kernel error messages on "dmsetup remove" of the
-dm-cache device:
+--===============7751663058842163498==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-   [ 3137.734148] device-mapper: space map metadata: unable to allocate new metadata block
-   [ 3137.734152] device-mapper: cache: could not resize on-disk discard bitset
-   [ 3137.734153] device-mapper: cache: could not write discard bitset
-   [ 3137.734155] device-mapper: space map metadata: unable to allocate new metadata block
-   [ 3137.734155] device-mapper: cache metadata: begin_hints failed
-   [ 3137.734156] device-mapper: cache: could not write hints
-   [ 3137.734159] device-mapper: space map metadata: unable to allocate new metadata block
-   [ 3137.734160] device-mapper: cache: could not write cache metadata.  Data loss may occur.
 
-I used the formula "4MB + 16 * nr_blocks" to create the metadata device,
-so it shouldn't be too small (the cache device is 10G, blocksize is 64kb,
-and the calculated metadata partition has about 6MB).
-
-I still get the above messages after increasing the metadata partition to
-40MB. Only after increasing it to 70MB did the error go away, which also
-stopped all cache blocks to be marked as dirty.
-
-Even with the 70MB metadata partition, behaviour is strange: dmsetup
-remove takes 18 seconds, with one cpu having 100% sys time with no I/O,
-and while the partitions are mounted, there is a constant 4kb write
-activity to each cache partition, with no activity on the origin partition
-(which causes ~1GB/day unnecessary wear).
-
-Obviously dm-cache should not ever mark blocks as dirty in writethrough
-mode, and obviously, the metadata requirements are much higher than
-documented. Also, I think dm-cache should not constantly write to the
-cache partition when the system is idle.
-
-Details:
-
-All devices are lvm volumes.
-
-I tried with both a 9TB and 19TB volume, both showed the same behaviour:
-
-   RO    RA   SSZ   BSZ   StartSec            Size   Device
-   rw   256   512  4096          0   9499955953664   /dev/dm-7
-   rw   256   512  4096          0  20450918793216   /dev/dm-5
-
-The cache devices are both 10G:
-
-   RO    RA   SSZ   BSZ   StartSec            Size   Device
-   rw   256   512  4096          0     10737418240   /dev/dm-11
-   rw   256   512  4096          0     10737418240   /dev/dm-12
-
-I use a script which divides the cache device into a 128kb header
-"partition", a metadata partition and a cache block partition. The working
-configuration is (the first line of each block is the cache partition
-mapping by lvm, followed by header/metadata/block mappings, followed by
-the cache mapping):
-
-   vg_cerebro-cache_bp: 0 20971520 linear 8:17 209715584
-   cache-bp-header: 0 256 linear 253:12 0
-   cache-bp-meta: 0 144384 linear 253:12 256
-   cache-bp-cache: 0 20826880 linear 253:12 144640
-   cache-bp: 0 18554601472 cache 253:22 253:23 253:7 128 1 writethrough mq 2 sequential_threshold 32
-
-   vg_cerebro-cache_wd: 0 20971520 linear 8:17 188744064
-   cache-wd-header: 0 256 linear 253:11 0
-   cache-wd-meta: 0 144384 linear 253:11 256
-   cache-wd-cache: 0 20826880 linear 253:11 144640
-   cache-wd: 0 39943200768 cache 253:16 253:17 253:5 128 1 writethrough mq 2 sequential_threshold 32
-
-The configuration where the kernel complains about a too small metadata
-partition is:
-
-   vg_cerebro-cache_bp: 0 20971520 linear 8:17 209715584
-   cache-bp-header: 0 256 linear 253:12 0
-   cache-bp-meta: 0 78848 linear 253:12 256
-   cache-bp-cache: 0 20892416 linear 253:12 79104
-   cache-bp: 0 18554601472 cache 253:22 253:23 253:7 128 1 writethrough mq 2 sequential_threshold 32
-
-   vg_cerebro-cache_wd: 0 20971520 linear 8:17 188744064
-   cache-wd-header: 0 256 linear 253:11 0
-   cache-wd-meta: 0 78848 linear 253:11 256
-   cache-wd-cache: 0 20892416 linear 253:11 79104
-   cache-wd: 0 39943200768 cache 253:16 253:17 253:5 128 1 writethrough mq 2 sequential_threshold 32
-
-If more details are needed, drop me a note.
-
-Greetings,
-Marc Lehmann
-
--- 
-                The choice of a       Deliantra, the free code+content MORPG
-      -----==-     _GNU_              http://www.deliantra.net
-      ----==-- _       generation
-      ---==---(_)__  __ ____  __      Marc Lehmann
-      --==---/ / _ \/ // /\ \/ /      schmorp@schmorp.de
-      -=====/_/_//_/\_,_/ /_/\_\
+--===============7751663058842163498==--
