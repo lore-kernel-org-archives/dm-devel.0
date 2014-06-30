@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 08/12] Add missing interactive commands to
-	multipathd man page
-Date: Mon, 30 Jun 2014 00:13:59 -0500
-Message-ID: <1404105243-5071-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 01/12] Fix memory issues in path reordering
+	failure code paths
+Date: Mon, 30 Jun 2014 00:13:52 -0500
+Message-ID: <1404105243-5071-2-git-send-email-bmarzins@redhat.com>
 References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,87 +23,45 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-This patch adds the missing options from the multipathd.8 man page.  It
-also fixes a typo in a log message from the alua prioritizer.
+There were some possible NULL pointer dereferences and multiple frees
+in the failure code paths of the path reordering code.  This patch
+cleans them up.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/prioritizers/alua.c |  4 ++--
- multipathd/multipathd.8          | 29 +++++++++++++++++++++++++++++
- 2 files changed, 31 insertions(+), 2 deletions(-)
+ libmultipath/configure.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
-index 4165ec6..b967ec7 100644
---- a/libmultipath/prioritizers/alua.c
-+++ b/libmultipath/prioritizers/alua.c
-@@ -119,10 +119,10 @@ int getprio (struct path * pp, char * args)
- 				condlog(0, "%s: couldn't get target port group", pp->dev);
- 				break;
- 			case ALUA_PRIO_GETAAS_FAILED:
--				condlog(0, "%s: couln't get asymmetric access state", pp->dev);
-+				condlog(0, "%s: couldn't get asymmetric access state", pp->dev);
- 				break;
- 			case ALUA_PRIO_TPGS_FAILED:
--				condlog(3, "%s: couln't get supported alua states", pp->dev);
-+				condlog(3, "%s: couldn't get supported alua states", pp->dev);
- 				break;
- 		}
- 	}
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index 6da9d2b..358141d 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -80,6 +80,9 @@ Show all available block devices by name including the information if they are b
- .B list|show status
- Show the number of path checkers in each possible state, the number of monitored paths, and whether multipathd is currently handling a uevent.
- .TP
-+.B list|show daemon
-+Show the current state of the multipathd daemon
-+.TP
- .B add path $path
- Add a path to the list of monitored paths. $path is as listed in /sys/block (e.g. sda).
- .TP 
-@@ -107,6 +110,13 @@ Sets map $map into suspend state.
- .B resume map|multipath $map
- Resumes map $map from suspend state.
- .TP
-+.B reset map|multipath $map
-+Reassign existing device-mapper table(s) use use the multipath device, instead
-+of its path devices.
-+.TP
-+.B reload map|multipath $map
-+Reload a multipath device.
-+.TP
- .B fail path $path
- Sets path $path into failed state.
- .TP
-@@ -125,8 +135,27 @@ Disable queuing on multipathed map $map
- .B restorequeueing map|multipath $map
- Restore queuing on multipahted map $map
- .TP
-+.B forcequeueing daemon
-+Forces multipathd into queue_without_daemon mode, so that no_path_retry queueing
-+will not be disabled when the daemon stops
-+.TP
-+.B restorequeueing daemon
-+Restores configured queue_without_daemon mode
-+.TP
-+.B map|multipath $map setprstatus
-+Enable persistent reservation management on $map
-+.TP
-+.B map|multipath $map unsetprstatus
-+Disable persistent reservation management on $map
-+.TP
-+.B map|multipath $map getprstatus
-+Get the current persistent reservation management status of $map
-+.TP
- .B quit|exit
- End interactive session.
-+.TP
-+.B shutdown
-+Stop multipathd.
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 3ed6b55..6ad7a80 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -160,8 +160,16 @@ int order_paths_in_pg_by_alt_adapters(struct pathgroup *pgp, vector adapters,
  
- .SH "SYSTEMD INTEGRATION"
- When compiled with systemd support two systemd service files are
+ 	while (total_paths > 0) {
+ 		agp = VECTOR_SLOT(adapters, next_adapter_index);
++		if (!agp) {
++			condlog(0, "can't get adapter group %d", next_adapter_index);
++			return 1;
++		}
+ 
+ 		hgp = VECTOR_SLOT(agp->host_groups, agp->next_host_index);
++		if (!hgp) {
++			condlog(0, "can't get host group %d of adapter group %d", next_adapter_index, agp->next_host_index);
++			return 1;
++		}
+ 
+ 		if (!hgp->num_paths) {
+ 			agp->next_host_index++;
+@@ -223,8 +231,8 @@ int rr_optimize_path_order(struct pathgroup *pgp)
+ 	/* group paths in path group by host adapters
+ 	 */
+ 	if (group_by_host_adapter(pgp, adapters)) {
++		/* already freed adapters */
+ 		condlog(3, "Failed to group paths by adapters");
+-		free_adaptergroup(adapters);
+ 		return 0;
+ 	}
+ 
 -- 
 1.8.3.1
