@@ -1,70 +1,58 @@
-From: Paul Mackerras <paulus@samba.org>
-Subject: Re: Regression in 3.15 on POWER8 with multipath SCSI
-Date: Tue, 1 Jul 2014 07:30:08 +1000
-Message-ID: <20140630213008.GC20819@iris.ozlabs.ibm.com>
-References: <20140630103058.GA17747@iris.ozlabs.ibm.com>
- <53B1416D.8020305@suse.de>
+From: Sebastian Herbszt <herbszt@gmx.de>
+Subject: [PATCH] Update ETERNUS DX entry
+Date: Mon, 30 Jun 2014 23:38:58 +0200
+Message-ID: <20140630233858.00001ed0@localhost>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-Content-Disposition: inline
-In-Reply-To: <53B1416D.8020305@suse.de>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Hannes Reinecke <hare@suse.de>
-Cc: Vladimir Davydov <vdavydov@parallels.com>, Kay Sievers <kay.sievers@vrfy.org>, linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Martin Wilck <martin.wilck@ts.fujitsu.com>, Gerhard Wichert <Gerhard.Wichert@ts.fujitsu.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBKdW4gMzAsIDIwMTQgYXQgMTI6NTI6MjlQTSArMDIwMCwgSGFubmVzIFJlaW5lY2tl
-IHdyb3RlOgo+IE9uIDA2LzMwLzIwMTQgMTI6MzAgUE0sIFBhdWwgTWFja2VycmFzIHdyb3RlOgo+
-ID5JIGhhdmUgYSBtYWNoaW5lIG9uIHdoaWNoIDMuMTUgdXN1YWxseSBmYWlscyB0byBib290LCBh
-bmQgMy4xNCBib290cwo+ID5ldmVyeSB0aW1lLiAgVGhlIG1hY2hpbmUgaXMgYSBQT1dFUjggMi1z
-b2NrZXQgc2VydmVyIHdpdGggMjAgY29yZXMKPiA+KHRodXMgMTYwIENQVXMpLCAxMjhHQiBvZiBS
-QU0sIGFuZCA3IFNDU0kgZGlza3MgY29ubmVjdGVkIHZpYSBhCj4gPmhhcmR3YXJlLVJBSUQtY2Fw
-YWJsZSBhZGFwdGVyIHdoaWNoIGFwcGVhcnMgYXMgdHdvIElQUiBjb250cm9sbGVycwo+ID53aGlj
-aCBhcmUgYm90aCBjb25uZWN0ZWQgdG8gZWFjaCBkaXNrLiAgSSBhbSBib290aW5nIGZyb20gYSBk
-aXNrIHRoYXQKPiA+aGFzIEZlZG9yYSAyMCBpbnN0YWxsZWQgb24gaXQuCj4gPgo+ID5BZnRlciBv
-dmVyIHR3byB3ZWVrcyBvZiBiaXNlY3Rpb25zLCBJIGNhbiBmaW5hbGx5IHBvaW50IHRvIHRoZSBj
-b21taXRzCj4gPnRoYXQgY2F1c2UgdGhlIHByb2JsZW1zLiAgVGhlIGN1bHByaXRzIGFyZToKPiA+
-Cj4gPjNlOWYxYmUxIGRtIG1wYXRoOiByZW1vdmUgcHJvY2Vzc19xdWV1ZWRfaW9zKCkKPiA+ZTgw
-OTkxNzcgZG0gbXBhdGg6IHB1c2ggYmFjayByZXF1ZXN0cyBpbnN0ZWFkIG9mIHF1ZXVlaW5nCj4g
-PmJjY2NmZjkzIGtvYmplY3Q6IGRvbid0IGJsb2NrIGZvciBlYWNoIGtvYmplY3RfdWV2ZW50Cj4g
-Pgo+ID5UaGUgaW50ZXJlc3RpbmcgdGhpbmcgaXMgdGhhdCBuZWl0aGVyIGU4MDk5MTc3IG5vciBi
-Y2NjZmY5MyBjYXVzZQo+ID5mYWlsdXJlcyBvbiB0aGVpciBvd24sIGJ1dCB3aXRoIGJvdGggY29t
-bWl0cyBpbiB0aGVyZSBhcmUgZmFpbHVyZXMKPiA+d2hlcmUgdGhlIHN5c3RlbSB3aWxsIGZhaWwg
-dG8gZmluZCAvaG9tZSBvbiBzb21lIG9jY2FzaW9ucy4KPiA+Cj4gPldpdGggM2U5ZjFiZTEgaW5j
-bHVkZWQsIHRoZSBzeXN0ZW0gYXBwZWFycyB0byBiZSBwcm9uZSB0byBhIGRlYWRsb2NrCj4gPmNv
-bmRpdGlvbiB3aGljaCB0eXBpY2FsbHkgY2F1c2VzIHRoZSBib290IHByb2Nlc3MgdG8gaGFuZyB3
-aXRoIHRoaXMKPiA+bWVzc2FnZSBzaG93aW5nOgo+ID4KPiA+QSBzdGFydCBqb2IgaXMgcnVubmlu
-ZyBmb3IgTW9uaXRvcmluZyBvZiBMVk0yIG1pcnJvci4uLnJvZ3Jlc3MgcG9sbGluZwo+ID4KPiA+
-KHdpdGggYSBbKioqICAgICBdIHRoaW5nIGJlZm9yZSBpdCB3aGVyZSB0aGUgYXN0ZXJpc2tzIG1v
-dmUgYmFjayBhbmQKPiA+Zm9ydGgpLgo+ID4KPiA+SWYgSSByZXZlcnQgNjNkODMyYzMgKCJkbSBt
-cGF0aDogcmVhbGx5IGZpeCBsb2NrZGVwIHdhcm5pbmciKSAsCj4gPjRjZGQyYWQ3ICgiZG0gbXBh
-dGg6IGZpeCBsb2NrIG9yZGVyIGluY29uc2lzdGVuY3kgaW4KPiA+bXVsdGlwYXRoX2lvY3RsIiks
-IDNlOWYxYmUxIGFuZCBiY2NjZmY5MywgaW4gdGhhdCBvcmRlciwgSSBnZXQgYQo+ID5rZXJuZWwg
-dGhhdCB3aWxsIGJvb3QgZXZlcnkgdGltZS4gIFRoZSBmaXJzdCB0d28gYXJlIGxhdGVyIGNvbW1p
-dHMKPiA+dGhhdCBmaXggc29tZSBwcm9ibGVtcyB3aXRoIDNlOWYxYmUxICh0aG91Z2ggbm90IHRo
-ZSBwcm9ibGVtcyBJIGFtCj4gPnNlZWluZykuCj4gPgo+ID5DYW4gYW55b25lIHNlZSBhbnkgcmVh
-c29uIHdoeSBlODA5OTE3NyBhbmQgYmNjY2ZmOTMgd291bGQgaW50ZXJmZXJlCj4gPndpdGggZWFj
-aCBvdGhlcj8KPiA+Cj4gSXQgbWlnaHQgYmUgcnVubmluZyBhZm91bCB3aXRoIHRoZSAnY29va2ll
-JyBtZWNoYW5pc20uCj4gRGV2aWNlLW1hcHBlciBpcyB1c2luZyBpbnNlcnRpbmcgYSAnY29va2ll
-JyB3aXRoIHRoZSBpb2N0bCwgYW5kIGxpc3RlbnMgdG8KPiBhbnkgZXZlbnQgY29udGFpbmluZyB0
-aGUgY29va2llIHRvIGVuc3VyZSB1ZGV2IGhhcyBmaW5pc2hlZCBwcm9jZXNzaW5nIHRoYXQKPiBk
-ZXZpY2UgYW5kIGhlbmNlIHRoZSBkZXZpY2Ugbm9kZSBpcyBhY2Nlc3NpYmxlLiBBZGRlZCB0byB0
-aGlzIGlzIHRoZSBwcm9ibGVtCj4gdGhhdCB3ZSBkb24ndCBoYXZlIGFueSBnb29kIG1lYW5zIG9m
-IGRldGVjdGluZyBhbnkgY2hhbmdlcyB0byBkZXZpY2UtbWFwcGVyCj4gZGV2aWNlcy4KCkhvdyBk
-b2VzIHRoYXQgcmVsYXRlIHRvIGU4MDk5MTc3PyAgRGlkIGU4MDk5MTc3IGludHJvZHVjZSB0aGlz
-IGNvb2tpZQptZWNoYW5pc20/ICBJZiBub3QsIHdoYXQgaXMgaXQgYWJvdXQgZTgwOTkxNzcgdGhh
-dCBtYWtlcyB0aGUgYXN5bmMKcHJvY2Vzc2luZyBwcm9ibGVtYXRpYz8KClBhdWwuCl9fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4cHBjLWRldiBtYWls
-aW5nIGxpc3QKTGludXhwcGMtZGV2QGxpc3RzLm96bGFicy5vcmcKaHR0cHM6Ly9saXN0cy5vemxh
-YnMub3JnL2xpc3RpbmZvL2xpbnV4cHBjLWRldg==
+Add DX500 S3/DX600 S3.
+
+Signed-off-by: Sebastian Herbszt <herbszt@gmx.de>
+---
+ libmultipath/hwtable.c  | 2 +-
+ multipath.conf.defaults | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index bb73a40..b774453 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -308,7 +308,7 @@ static struct hwentry default_hw[] = {
+ 	},
+ 	{
+ 		.vendor        = "FUJITSU",
+-		.product       = "ETERNUS_DX(L|400|8000)",
++		.product       = "ETERNUS_DX(L|M|400|8000)",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+diff --git a/multipath.conf.defaults b/multipath.conf.defaults
+index 12fb3f0..654be97 100644
+--- a/multipath.conf.defaults
++++ b/multipath.conf.defaults
+@@ -285,7 +285,7 @@
+ #	}
+ #	device {
+ #		vendor "FUJITSU"
+-#		product "ETERNUS_DX(L|400|8000)"
++#		product "ETERNUS_DX(L|M|400|8000)"
+ #		path_grouping_policy "group_by_prio"
+ #		path_checker "tur"
+ #		features "1 queue_if_no_path"
+-- 
+1.9.3
