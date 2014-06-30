@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 10/12] Improve multipath.conf syntax checking
-Date: Mon, 30 Jun 2014 00:14:01 -0500
-Message-ID: <1404105243-5071-11-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 12/12] Add multipath.conf force_sync option
+Date: Mon, 30 Jun 2014 00:14:03 -0500
+Message-ID: <1404105243-5071-13-git-send-email-bmarzins@redhat.com>
 References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,201 +22,187 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-multipath's parser for multipath.conf is neither very verbose or forgiving
-about errors.  This patch improves both.  multipath will now warn about
-obviously missing quotes and curly braces, but will still do the right thing.
-It will also give more verbose error messages including a line number when
-it can't parse a line.
+Normally multipathd runs the path checkers asynchronously. However if there
+are a lot of paths, this can cause large CPU spikes (for instance, in
+cases where they are all competing for the Big Kernel Lock). In these
+situations, overall machine performance is better if multipath doesn't have
+hundreds or even thousands of path checkers running at the same time. This
+patch lets users turn off the asynchronous mode of these checks if they
+see this problem.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/parser.c | 152 +++++++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 125 insertions(+), 27 deletions(-)
+ libmultipath/config.c      |  1 +
+ libmultipath/config.h      |  1 +
+ libmultipath/dict.c        | 33 +++++++++++++++++++++++++++++++++
+ libmultipath/discovery.c   |  8 ++++++--
+ multipath.conf.annotated   | 11 +++++++++++
+ multipath/multipath.conf.5 |  9 +++++++++
+ 6 files changed, 61 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index 0d4c870..accff62 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -395,36 +395,57 @@ set_value(vector strvec)
- 	char *alloc = NULL;
- 	char *tmp;
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index e13c307..39963b4 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -561,6 +561,7 @@ load_config (char * file, struct udev *udev)
+ 	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+ 	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+ 	conf->detect_prio = DEFAULT_DETECT_PRIO;
++	conf->force_sync = 0;
  
--	if (!str)
-+	if (!str) {
-+		condlog(0, "option '%s' missing value",
-+			(char *)VECTOR_SLOT(strvec, 0));
- 		return NULL;
--
-+	}
- 	size = strlen(str);
--	if (size == 0)
-+	if (size == 0) {
-+		condlog(0, "option '%s' has empty value",
-+			(char *)VECTOR_SLOT(strvec, 0));
- 		return NULL;
--
--	if (*str == '"') {
--		for (i = 2; i < VECTOR_SIZE(strvec); i++) {
--			str = VECTOR_SLOT(strvec, i);
--			len += strlen(str);
--			if (!alloc)
--				alloc =
--				    (char *) MALLOC(sizeof (char) *
--						    (len + 1));
--			else {
--				alloc =
--				    REALLOC(alloc, sizeof (char) * (len + 1));
--				tmp = VECTOR_SLOT(strvec, i-1);
--				if (alloc && *str != '"' && *tmp != '"')
--					strncat(alloc, " ", 1);
--			}
--
--			if (alloc && i != VECTOR_SIZE(strvec)-1)
--				strncat(alloc, str, strlen(str));
--		}
--	} else {
-+	}
-+	if (*str != '"') {
- 		alloc = MALLOC(sizeof (char) * (size + 1));
- 		if (alloc)
- 			memcpy(alloc, str, size);
-+		else
-+			condlog(0, "can't allocate memeory for option '%s'",
-+				(char *)VECTOR_SLOT(strvec, 0));
-+		return alloc;
-+	}
-+	/* Even empty quotes counts as a value (An empty string) */
-+	alloc = (char *) MALLOC(sizeof (char));
-+	if (!alloc) {
-+		condlog(0, "can't allocate memeory for option '%s'",
-+			(char *)VECTOR_SLOT(strvec, 0));
-+		return NULL;
-+	}
-+	for (i = 2; i < VECTOR_SIZE(strvec); i++) {
-+		str = VECTOR_SLOT(strvec, i);
-+		if (!str) {
-+			free(alloc);
-+			condlog(0, "parse error for option '%s'",
-+				(char *)VECTOR_SLOT(strvec, 0));
-+			return NULL;
-+		}
-+		if (*str == '"')
-+			break;
-+		tmp = alloc;
-+		/* The first +1 is for the NULL byte. The rest are for the
-+		 * spaces between words */
-+		len += strlen(str) + 1;
-+		alloc = REALLOC(alloc, sizeof (char) * len);
-+		if (!alloc) {
-+			FREE(tmp);
-+			condlog(0, "can't allocate memeory for option '%s'",
-+				(char *)VECTOR_SLOT(strvec, 0));
-+			return NULL;
-+		}
-+		if (*alloc != '\0')
-+			strncat(alloc, " ", 1);
-+		strncat(alloc, str, strlen(str));
- 	}
- 	return alloc;
- }
-@@ -465,6 +486,74 @@ void free_uniques(vector uniques)
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index ac7c58e..1a23e4b 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -124,6 +124,7 @@ struct config {
+ 	int reassign_maps;
+ 	int retain_hwhandler;
+ 	int detect_prio;
++	int force_sync;
+ 	unsigned int version[3];
+ 
+ 	char * dev;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 91d9b83..7de7a67 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -685,6 +685,29 @@ def_detect_prio_handler(vector strvec)
+ 	return 0;
  }
  
- int
-+is_sublevel_keyword(char *str)
++static int
++def_force_sync_handler(vector strvec)
 +{
-+	return (strcmp(str, "defaults") == 0 || strcmp(str, "blacklist") == 0 ||
-+		strcmp(str, "blacklist_exceptions") == 0 ||
-+		strcmp(str, "devices") == 0 || strcmp(str, "devices") == 0 ||
-+		strcmp(str, "device") == 0 || strcmp(str, "multipaths") == 0 ||
-+		strcmp(str, "multipath") == 0);
-+}
++	char * buff;
 +
-+int
-+validate_config_strvec(vector strvec)
-+{
-+	char *str;
-+	int i;
++	buff = set_value(strvec);
 +
-+	str = VECTOR_SLOT(strvec, 0);
-+	if (str == NULL) {
-+		condlog(0, "can't parse option on line %d of config file",
-+			line_nr);
-+	return -1;
-+	}
-+	if (*str == '}') {
-+		if (VECTOR_SIZE(strvec) > 1)
-+			condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 1), line_nr);
-+		return 0;
-+	}
-+	if (*str == '{') {
-+		condlog(0, "invalid keyword '%s' on line %d of config file", str, line_nr);
-+		return -1;
-+	}
-+	if (is_sublevel_keyword(str)) {
-+		str = VECTOR_SLOT(strvec, 1);
-+		if (str == NULL)
-+			condlog(0, "missing '{' on line %d of config file", line_nr);
-+		else if (*str != '{')
-+			condlog(0, "expecting '{' on line %d of config file. found '%s'", line_nr, str);
-+		else if (VECTOR_SIZE(strvec) > 2)
-+			condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 2), line_nr);
-+		return 0;
-+	}
-+	str = VECTOR_SLOT(strvec, 1);
-+	if (str == NULL) {
-+		condlog(0, "missing value for option '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 0), line_nr);
-+		return -1;
-+	}
-+	if (*str != '"') {
-+		if (VECTOR_SIZE(strvec) > 2)
-+			condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 2), line_nr);
-+		return 0;
-+	}
-+	for (i = 2; i < VECTOR_SIZE(strvec); i++) {
-+		str = VECTOR_SLOT(strvec, i);
-+		if (str == NULL) {
-+			condlog(0, "can't parse value on line %d of config file", line_nr);
-+			return -1;
-+		}
-+		if (*str == '"') {
-+			if (VECTOR_SIZE(strvec) > i + 1)
-+				condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, (i + 1)), line_nr);
-+			return 0;
-+		}
-+	}
-+	condlog(0, "missing closing quotes on line %d of config file",
-+		line_nr);
++	if (!buff)
++		return 1;
++
++	if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
++	    (strlen(buff) == 1 && !strcmp(buff, "0")))
++		conf->force_sync = 0;
++	else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
++		 (strlen(buff) == 1 && !strcmp(buff, "1")))
++		conf->force_sync = 1;
++	else
++		conf->force_sync = 0;
++
++	FREE(buff);
 +	return 0;
 +}
 +
-+int
- process_stream(vector keywords)
- {
- 	int i;
-@@ -494,11 +583,20 @@ process_stream(vector keywords)
- 		if (!strvec)
- 			continue;
+ /*
+  * blacklist block handlers
+  */
+@@ -2783,6 +2806,15 @@ snprint_def_detect_prio(char * buff, int len, void * data)
+ }
  
-+		if (validate_config_strvec(strvec) != 0) {
-+			free_strvec(strvec);
-+			continue;
-+		}
+ static int
++snprint_def_force_sync(char * buff, int len, void * data)
++{
++	if (conf->force_sync)
++		return snprintf(buff, len, "yes");
++	else
++		return snprintf(buff, len, "no");
++}
 +
- 		str = VECTOR_SLOT(strvec, 0);
- 
--		if (!strcmp(str, EOB) && kw_level > 0) {
--			free_strvec(strvec);
--			break;
-+		if (!strcmp(str, EOB)) {
-+			if (kw_level > 0) {
-+				free_strvec(strvec);
-+				break;
-+			}
-+			condlog(0, "unmatched '%s' at line %d of config file",
-+				EOB, line_nr);
++static int
+ snprint_ble_simple (char * buff, int len, void * data)
+ {
+ 	struct blentry * ble = (struct blentry *)data;
+@@ -2849,6 +2881,7 @@ init_keywords(void)
+ 	install_keyword("reservation_key", &def_reservation_key_handler, &snprint_def_reservation_key);
+ 	install_keyword("retain_attached_hw_handler", &def_retain_hwhandler_handler, &snprint_def_retain_hwhandler_handler);
+ 	install_keyword("detect_prio", &def_detect_prio_handler, &snprint_def_detect_prio);
++	install_keyword("force_sync", &def_force_sync_handler, &snprint_def_force_sync);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index b62a59c..a5f5a20 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1053,8 +1053,12 @@ get_state (struct path * pp, int daemon)
  		}
- 
- 		for (i = 0; i < VECTOR_SIZE(keywords); i++) {
+ 	}
+ 	checker_clear_message(c);
+-	if (daemon)
+-		checker_set_async(c);
++	if (daemon) {
++		if (conf->force_sync == 0)
++			checker_set_async(c);
++		else
++			checker_set_sync(c);
++	}
+ 	if (!conf->checker_timeout &&
+ 	    sysfs_get_timeout(pp, &(c->timeout)) <= 0)
+ 		c->timeout = DEF_TIMEOUT;
+diff --git a/multipath.conf.annotated b/multipath.conf.annotated
+index f158746..0af1d4c 100644
+--- a/multipath.conf.annotated
++++ b/multipath.conf.annotated
+@@ -270,6 +270,7 @@
+ #	# default : determined by the OS
+ #	dev_loss_tmo 600
+ #
++#	#
+ #	# name    : bindings_file
+ #	# scope   : multipath
+ #	# desc    : The location of the bindings file that is used with
+@@ -278,6 +279,7 @@
+ #	# default : "/var/lib/multipath/bindings"
+ #	bindings_file "/etc/multipath/bindings"
+ #
++#	#
+ #	# name    : wwids_file
+ #	# scope   : multipath
+ #	# desc    : The location of the wwids file multipath uses to
+@@ -286,6 +288,7 @@
+ #	# default : "/var/lib/multipath/wwids"
+ #	wwids_file "/etc/multipath/wwids"
+ #
++#	#
+ #	# name    : reservation_key
+ #	# scope   : multipath
+ #	# desc    : Service action reservation key used by mpathpersist.
+@@ -293,6 +296,14 @@
+ #	# default : (null)
+ #	reservation_key "mpathkey"
+ #
++#	#
++#	# name    : force_sync
++#	# scope   : multipathd
++#	# desc    : If set to yes, multipath will run all of the checkers in
++#	#           sync mode, even if the checker has an async mode.
++#	# values  : yes|no
++#	# default : no
++#	force_sync yes
+ #}
+ #	
+ ##
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 195e663..cadb34d 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -409,6 +409,15 @@ will automatically use the
+ .I alua
+ prioritizer. If not, the prioritizer will be selected as usual. Default is
+ .I no
++.TP
++.B force_sync
++If set to
++.I yes
++, multipathd will call the path checkers in sync mode only.  This means that
++only one checker will run at a time.  This is useful in the case where many
++multipathd checkers running in parallel causes significant CPU pressure. The
++Default is
++.I no
+ .
+ .SH "blacklist section"
+ The
 -- 
 1.8.3.1
