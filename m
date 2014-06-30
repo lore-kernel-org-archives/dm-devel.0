@@ -1,81 +1,107 @@
-From: Paul Mackerras <paulus@samba.org>
-Subject: Regression in 3.15 on POWER8 with multipath SCSI
-Date: Mon, 30 Jun 2014 20:30:59 +1000
-Message-ID: <20140630103058.GA17747@iris.ozlabs.ibm.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Regression in 3.15 on POWER8 with multipath SCSI
+Date: Mon, 30 Jun 2014 12:52:29 +0200
+Message-ID: <53B1416D.8020305@suse.de>
+References: <20140630103058.GA17747@iris.ozlabs.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-Content-Disposition: inline
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org
-Cc: Vladimir Davydov <vdavydov@parallels.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Hannes Reinecke <hare@suse.de>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140630103058.GA17747@iris.ozlabs.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org
+Cc: Vladimir Davydov <vdavydov@parallels.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Kay Sievers <kay.sievers@vrfy.org>
 List-Id: dm-devel.ids
 
-SSBoYXZlIGEgbWFjaGluZSBvbiB3aGljaCAzLjE1IHVzdWFsbHkgZmFpbHMgdG8gYm9vdCwgYW5k
-IDMuMTQgYm9vdHMKZXZlcnkgdGltZS4gIFRoZSBtYWNoaW5lIGlzIGEgUE9XRVI4IDItc29ja2V0
-IHNlcnZlciB3aXRoIDIwIGNvcmVzCih0aHVzIDE2MCBDUFVzKSwgMTI4R0Igb2YgUkFNLCBhbmQg
-NyBTQ1NJIGRpc2tzIGNvbm5lY3RlZCB2aWEgYQpoYXJkd2FyZS1SQUlELWNhcGFibGUgYWRhcHRl
-ciB3aGljaCBhcHBlYXJzIGFzIHR3byBJUFIgY29udHJvbGxlcnMKd2hpY2ggYXJlIGJvdGggY29u
-bmVjdGVkIHRvIGVhY2ggZGlzay4gIEkgYW0gYm9vdGluZyBmcm9tIGEgZGlzayB0aGF0CmhhcyBG
-ZWRvcmEgMjAgaW5zdGFsbGVkIG9uIGl0LgoKQWZ0ZXIgb3ZlciB0d28gd2Vla3Mgb2YgYmlzZWN0
-aW9ucywgSSBjYW4gZmluYWxseSBwb2ludCB0byB0aGUgY29tbWl0cwp0aGF0IGNhdXNlIHRoZSBw
-cm9ibGVtcy4gIFRoZSBjdWxwcml0cyBhcmU6CgozZTlmMWJlMSBkbSBtcGF0aDogcmVtb3ZlIHBy
-b2Nlc3NfcXVldWVkX2lvcygpCmU4MDk5MTc3IGRtIG1wYXRoOiBwdXNoIGJhY2sgcmVxdWVzdHMg
-aW5zdGVhZCBvZiBxdWV1ZWluZwpiY2NjZmY5MyBrb2JqZWN0OiBkb24ndCBibG9jayBmb3IgZWFj
-aCBrb2JqZWN0X3VldmVudAoKVGhlIGludGVyZXN0aW5nIHRoaW5nIGlzIHRoYXQgbmVpdGhlciBl
-ODA5OTE3NyBub3IgYmNjY2ZmOTMgY2F1c2UKZmFpbHVyZXMgb24gdGhlaXIgb3duLCBidXQgd2l0
-aCBib3RoIGNvbW1pdHMgaW4gdGhlcmUgYXJlIGZhaWx1cmVzCndoZXJlIHRoZSBzeXN0ZW0gd2ls
-bCBmYWlsIHRvIGZpbmQgL2hvbWUgb24gc29tZSBvY2Nhc2lvbnMuCgpXaXRoIDNlOWYxYmUxIGlu
-Y2x1ZGVkLCB0aGUgc3lzdGVtIGFwcGVhcnMgdG8gYmUgcHJvbmUgdG8gYSBkZWFkbG9jawpjb25k
-aXRpb24gd2hpY2ggdHlwaWNhbGx5IGNhdXNlcyB0aGUgYm9vdCBwcm9jZXNzIHRvIGhhbmcgd2l0
-aCB0aGlzCm1lc3NhZ2Ugc2hvd2luZzoKCkEgc3RhcnQgam9iIGlzIHJ1bm5pbmcgZm9yIE1vbml0
-b3Jpbmcgb2YgTFZNMiBtaXJyb3IuLi5yb2dyZXNzIHBvbGxpbmcKCih3aXRoIGEgWyoqKiAgICAg
-XSB0aGluZyBiZWZvcmUgaXQgd2hlcmUgdGhlIGFzdGVyaXNrcyBtb3ZlIGJhY2sgYW5kCmZvcnRo
-KS4KCklmIEkgcmV2ZXJ0IDYzZDgzMmMzICgiZG0gbXBhdGg6IHJlYWxseSBmaXggbG9ja2RlcCB3
-YXJuaW5nIikgLAo0Y2RkMmFkNyAoImRtIG1wYXRoOiBmaXggbG9jayBvcmRlciBpbmNvbnNpc3Rl
-bmN5IGluCm11bHRpcGF0aF9pb2N0bCIpLCAzZTlmMWJlMSBhbmQgYmNjY2ZmOTMsIGluIHRoYXQg
-b3JkZXIsIEkgZ2V0IGEKa2VybmVsIHRoYXQgd2lsbCBib290IGV2ZXJ5IHRpbWUuICBUaGUgZmly
-c3QgdHdvIGFyZSBsYXRlciBjb21taXRzCnRoYXQgZml4IHNvbWUgcHJvYmxlbXMgd2l0aCAzZTlm
-MWJlMSAodGhvdWdoIG5vdCB0aGUgcHJvYmxlbXMgSSBhbQpzZWVpbmcpLgoKQ2FuIGFueW9uZSBz
-ZWUgYW55IHJlYXNvbiB3aHkgZTgwOTkxNzcgYW5kIGJjY2NmZjkzIHdvdWxkIGludGVyZmVyZQp3
-aXRoIGVhY2ggb3RoZXI/CgotLS0tLQoKVGhlIHJlc3Qgb2YgdGhpcyBlbWFpbCBvdXRsaW5lcyB0
-aGUgc3RlcHMgSSB0b29rIHRvIGlkZW50aWZ5IHRoZXNlCmNvbW1pdHMuICBJIGZpcnN0IGlkZW50
-aWZpZWQgdGhhdCAzLjE1LXJjMSB3b3VsZCBzb21ldGltZXMgZmFpbCB0bwpib290LCBhbmQgZGlk
-IGEgYmlzZWN0aW9uIGJldHdlZW4gMy4xNSBhbmQgMy4xNS1yYzEgdGhhdCBpZGVudGlmaWVkCjNl
-OWYxYmUxIGFzIHRoZSBiYWQgY29tbWl0LiAgSSB0aGVuIHRvb2sgMy4xNS1yYzggYW5kIHJldmVy
-dGVkCjYzZDgzMmMzLCA0Y2RkMmFkNyBhbmQgM2U5ZjFiZTEsIGFuZCB0ZXN0ZWQgdGhhdC4gIFRo
-YXQgZGlkbid0IGZhaWwKd2l0aCB0aGUgZGVhZGxvY2ssIGJ1dCB3YXMgc3RpbGwgcHJvbmUgdG8g
-ZmFpbCB0byBmaW5kIHJvb3Qgb3IgL2hvbWUKYW5kIHRodXMgZmFpbCB0byBib290LgoKVG8gZGVi
-dWcgdGhpcyBzZWNvbmQgcHJvYmxlbSwgSSB0ZXN0ZWQgdGhlIGNvbW1pdCBiZWZvcmUgTGludXMg
-bWVyZ2VkCmluIHRoZSBkbSBtb2RpZmljYXRpb25zOiAzZjU4M2JjMiAoIk1lcmdlIHRhZyAnaW9t
-bXUtdXBkYXRlcy12My4xNScgb2YKZ2l0Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9r
-ZXJuZWwvZ2l0L2pvcm8vaW9tbXUiKS4gIEl0IHdhcwpmaW5lLiAgSSB0aGVuIHRvb2sgMDU5NjY2
-MWYgKCJkbSBjYWNoZTogZml4IGEgbG9jay1pbnZlcnNpb24iKSwgd2hpY2gKaXMgd2hhdCBMaW51
-cyBtZXJnZWQgaW4gZHVyaW5nIHRoZSAzLjE1IG1lcmdlIHdpbmRvdywgcmV2ZXJ0ZWQKM2U5ZjFi
-ZTEgb24gdG9wIG9mIHRoYXQsIGFuZCB0ZXN0ZWQgdGhhdCwgYW5kIGl0IGFsc28gd2FzIGZpbmUu
-ClRoZSBJRCBvZiB0aGF0IHJldmVydCBjb21taXQgd2FzIDljZmQzZmU4ICh0aGF0IElEIGRvZXNu
-J3QgYXBwZWFyIGluCmFueSBwdWJsaWMgdHJlZSwgb2YgY291cnNlKS4KCkludGVyZXN0aW5nbHks
-IHRoZSBtZXJnZSBvZiAzZjU4M2JjMiB3aXRoIDljZmQzZmU4IHdhcyBiYWQuICBUbyB0cmFjawp0
-aGlzIGRvd24sIEkgZmlyc3QgcmViYXNlZCB0aGUgY29tbWl0cyBmcm9tIHRoZSBkbS0zLjE1LWNo
-YW5nZXMgYnJhbmNoCmV4Y2VwdCBmb3IgM2U5ZjFiZTEgb24gdG9wIG9mIDNmNTgzYmMyLCBhbmQg
-YmlzZWN0ZWQgYmV0d2VlbiAzZjU4M2JjMgphbmQgdGhlIHRpcCBvZiB0aGF0IGJyYW5jaC4gIFRo
-YXQgYmlzZWN0aW9uIHBvaW50ZWQgdG8gZTgwOTkxNzcuICBJCnRyaWVkIHJldmVydGluZyB0aGF0
-IGZyb20gMy4xNS1yYzgsIGJ1dCBpdCBkb2Vzbid0IHJldmVydCBjbGVhbmx5LCBhbmQKd2FzIHRv
-byBjb21wbGV4IGZvciBtZSB0byB3b3JrIG91dCBob3cgdG8gbWFudWFsbHkgcmV2ZXJ0IGl0LgoK
-TmV4dCBJIGRpZCBhIGdpdCBiaXNlY3Rpb24gYmV0d2VlbiAzLjE0IGFuZCAzZjU4M2JjMiwgbWVy
-Z2luZyBpbgo5Y2ZkM2ZlOCBhdCBlYWNoIHBvaW50IGJlZm9yZSB0ZXN0aW5nLiAgVGhhdCBpZGVu
-dGlmaWVkIGJjY2NmZjkzIGFzCnRoZSBmaXJzdCBiYWQgY29tbWl0LCBhbmQgaW5kZWVkIDMuMTUg
-d2l0aCBiY2NjZmY5MyByZXZlcnRlZCB3YXMgbm90CnByb25lIHRvIGZhaWxpbmcgdG8gZmluZCBy
-b290IG9yIC9ob21lLgoKUGF1bC4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX18KTGludXhwcGMtZGV2IG1haWxpbmcgbGlzdApMaW51eHBwYy1kZXZAbGlzdHMu
-b3psYWJzLm9yZwpodHRwczovL2xpc3RzLm96bGFicy5vcmcvbGlzdGluZm8vbGludXhwcGMtZGV2
+On 06/30/2014 12:30 PM, Paul Mackerras wrote:
+> I have a machine on which 3.15 usually fails to boot, and 3.14 boots
+> every time.  The machine is a POWER8 2-socket server with 20 cores
+> (thus 160 CPUs), 128GB of RAM, and 7 SCSI disks connected via a
+> hardware-RAID-capable adapter which appears as two IPR controllers
+> which are both connected to each disk.  I am booting from a disk that
+> has Fedora 20 installed on it.
+>
+> After over two weeks of bisections, I can finally point to the commit=
+s
+> that cause the problems.  The culprits are:
+>
+> 3e9f1be1 dm mpath: remove process_queued_ios()
+> e8099177 dm mpath: push back requests instead of queueing
+> bcccff93 kobject: don't block for each kobject_uevent
+>
+> The interesting thing is that neither e8099177 nor bcccff93 cause
+> failures on their own, but with both commits in there are failures
+> where the system will fail to find /home on some occasions.
+>
+> With 3e9f1be1 included, the system appears to be prone to a deadlock
+> condition which typically causes the boot process to hang with this
+> message showing:
+>
+> A start job is running for Monitoring of LVM2 mirror...rogress pollin=
+g
+>
+> (with a [***     ] thing before it where the asterisks move back and
+> forth).
+>
+> If I revert 63d832c3 ("dm mpath: really fix lockdep warning") ,
+> 4cdd2ad7 ("dm mpath: fix lock order inconsistency in
+> multipath_ioctl"), 3e9f1be1 and bcccff93, in that order, I get a
+> kernel that will boot every time.  The first two are later commits
+> that fix some problems with 3e9f1be1 (though not the problems I am
+> seeing).
+>
+> Can anyone see any reason why e8099177 and bcccff93 would interfere
+> with each other?
+>
+It might be running afoul with the 'cookie' mechanism.
+Device-mapper is using inserting a 'cookie' with the ioctl, and=20
+listens to any event containing the cookie to ensure udev has=20
+finished processing that device and hence the device node is=20
+accessible. Added to this is the problem that we don't have any good=20
+means of detecting any changes to device-mapper devices.
+
+EG look at this sequence of events:
+
+add dm-1
+remove dm-1
+add dm-1
+
+Originally udev would pick up the event, read the details from=20
+sysfs, and return control to the kernel.
+With bcccff93 udev will _not_have a chance to read the details
+from sysfs for 'dm-1', as anything read from sysfs relating to=20
+'dm-1' might infact refer to the _second_ 'add' event, which might=20
+be a totally different device.
+As far as I know udev doesn't have any mechanism to drop events,
+so it'll always process all events. Assuming that the sysfs=20
+attributes it reads _do_ relate to that event. If they don't things=20
+become interesting ...
+
+(Actually, this issue was always present, especially with=20
+multipathing. multipath occasionally can become sluggish when=20
+processing events, so the same might happen with it. We've tried to=20
+work around this, but never found a fool-proof way of doing so).
+
+Adding Kay as he might have some more insight here.
+
+Another thing:
+Do you run LVM on top of multipathing?
+If so, could you setup your system with _not_ using LVM and=20
+disabling the LVM service?
+
+Reasoning here is that multipath should not be that susceptible to=20
+changes here than LVM2 is (don't nail me on this, I not _that_ into=20
+LVM2 details).
+
+And as the system is stuck while waiting for LVM it might indeed be=20
+an side-effect when running LVM on top of multipathing.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
