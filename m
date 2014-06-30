@@ -1,114 +1,222 @@
-From: Minfei Huang <huangminfei@ucloud.cn>
-Subject: [PATCH] dm-io: Fix a race condition in the wake up code for sync_io
-Date: Sat, 28 Jun 2014 08:21:46 +0800
-Message-ID: <1403914906-577-1-git-send-email-huangminfei@ucloud.cn>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, neilb@suse.de
-Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Minfei Huang <huangminfei@ucloud.cn>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH 10/12] Improve multipath.conf syntax checking
+Date: Mon, 30 Jun 2014 00:14:01 -0500
+Message-ID: <1404105243-5071-11-git-send-email-bmarzins@redhat.com>
+References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-There's a race condition between the atomic_dec_and_test(&io->count)
-in dec_count() and the waking of the sync_io() thread.  If the thread
-is spuriously woken immediately after the decrement it may exit,
-making the on the stack io struct invalid, yet the dec_count could
-still be using it.
+multipath's parser for multipath.conf is neither very verbose or forgiving
+about errors.  This patch improves both.  multipath will now warn about
+obviously missing quotes and curly braces, but will still do the right thing.
+It will also give more verbose error messages including a line number when
+it can't parse a line.
 
-There are smaller fixes than the one here (eg, just take the io object
-off the stack).  But I feel this code could use a clean up.
-
-- simplify dec_count().
-
-  - It always calls a callback fn now.
-  - It always frees the io object back to the pool.
-
-- sync_io()
-
-  - Take the io object off the stack and allocate it from the pool the
-    same as async_io.
-  - Use a completion object rather than an explicit io_schedule()
-    loop.  The callback triggers the completion.
-
-Signed-off-by: Minfei Huang <huangminfei@ucloud.cn>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- drivers/md/dm-io.c |   22 +++++++++-------------
- 1 files changed, 9 insertions(+), 13 deletions(-)
+ libmultipath/parser.c | 152 +++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 125 insertions(+), 27 deletions(-)
 
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index 3842ac7..05583da 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -10,6 +10,7 @@
- #include <linux/device-mapper.h>
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index 0d4c870..accff62 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -395,36 +395,57 @@ set_value(vector strvec)
+ 	char *alloc = NULL;
+ 	char *tmp;
  
- #include <linux/bio.h>
-+#include <linux/completion.h>
- #include <linux/mempool.h>
- #include <linux/module.h>
- #include <linux/sched.h>
-@@ -32,7 +33,7 @@ struct dm_io_client {
- struct io {
- 	unsigned long error_bits;
- 	atomic_t count;
--	struct task_struct *sleeper;
-+	struct completion *wait;
- 	struct dm_io_client *client;
- 	io_notify_fn callback;
- 	void *context;
-@@ -121,8 +122,8 @@ static void dec_count(struct io *io, unsigned int region, int error)
- 			invalidate_kernel_vmap_range(io->vma_invalidate_address,
- 						     io->vma_invalidate_size);
- 
--		if (io->sleeper)
--			wake_up_process(io->sleeper);
-+		if (io->wait)
-+			complete(io->wait);
- 
- 		else {
- 			unsigned long r = io->error_bits;
-@@ -387,6 +388,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 	 */
- 	volatile char io_[sizeof(struct io) + __alignof__(struct io) - 1];
- 	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
-+	DECLARE_COMPLETION_ONSTACK(wait);
- 
- 	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
- 		WARN_ON(1);
-@@ -395,7 +397,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 
- 	io->error_bits = 0;
- 	atomic_set(&io->count, 1); /* see dispatch_io() */
--	io->sleeper = current;
-+	io->wait = &wait;
- 	io->client = client;
- 
- 	io->vma_invalidate_address = dp->vma_invalidate_address;
-@@ -403,15 +405,9 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 
- 	dispatch_io(rw, num_regions, where, dp, io, 1);
- 
--	while (1) {
--		set_current_state(TASK_UNINTERRUPTIBLE);
+-	if (!str)
++	if (!str) {
++		condlog(0, "option '%s' missing value",
++			(char *)VECTOR_SLOT(strvec, 0));
+ 		return NULL;
 -
--		if (!atomic_read(&io->count))
--			break;
++	}
+ 	size = strlen(str);
+-	if (size == 0)
++	if (size == 0) {
++		condlog(0, "option '%s' has empty value",
++			(char *)VECTOR_SLOT(strvec, 0));
+ 		return NULL;
 -
--		io_schedule();
-+	while (atomic_read(&io->count) != 0) {
-+		wait_for_completion_io_timeout(&wait, 5);
+-	if (*str == '"') {
+-		for (i = 2; i < VECTOR_SIZE(strvec); i++) {
+-			str = VECTOR_SLOT(strvec, i);
+-			len += strlen(str);
+-			if (!alloc)
+-				alloc =
+-				    (char *) MALLOC(sizeof (char) *
+-						    (len + 1));
+-			else {
+-				alloc =
+-				    REALLOC(alloc, sizeof (char) * (len + 1));
+-				tmp = VECTOR_SLOT(strvec, i-1);
+-				if (alloc && *str != '"' && *tmp != '"')
+-					strncat(alloc, " ", 1);
+-			}
+-
+-			if (alloc && i != VECTOR_SIZE(strvec)-1)
+-				strncat(alloc, str, strlen(str));
+-		}
+-	} else {
++	}
++	if (*str != '"') {
+ 		alloc = MALLOC(sizeof (char) * (size + 1));
+ 		if (alloc)
+ 			memcpy(alloc, str, size);
++		else
++			condlog(0, "can't allocate memeory for option '%s'",
++				(char *)VECTOR_SLOT(strvec, 0));
++		return alloc;
++	}
++	/* Even empty quotes counts as a value (An empty string) */
++	alloc = (char *) MALLOC(sizeof (char));
++	if (!alloc) {
++		condlog(0, "can't allocate memeory for option '%s'",
++			(char *)VECTOR_SLOT(strvec, 0));
++		return NULL;
++	}
++	for (i = 2; i < VECTOR_SIZE(strvec); i++) {
++		str = VECTOR_SLOT(strvec, i);
++		if (!str) {
++			free(alloc);
++			condlog(0, "parse error for option '%s'",
++				(char *)VECTOR_SLOT(strvec, 0));
++			return NULL;
++		}
++		if (*str == '"')
++			break;
++		tmp = alloc;
++		/* The first +1 is for the NULL byte. The rest are for the
++		 * spaces between words */
++		len += strlen(str) + 1;
++		alloc = REALLOC(alloc, sizeof (char) * len);
++		if (!alloc) {
++			FREE(tmp);
++			condlog(0, "can't allocate memeory for option '%s'",
++				(char *)VECTOR_SLOT(strvec, 0));
++			return NULL;
++		}
++		if (*alloc != '\0')
++			strncat(alloc, " ", 1);
++		strncat(alloc, str, strlen(str));
  	}
--	set_current_state(TASK_RUNNING);
+ 	return alloc;
+ }
+@@ -465,6 +486,74 @@ void free_uniques(vector uniques)
+ }
  
- 	if (error_bits)
- 		*error_bits = io->error_bits;
-@@ -434,7 +430,7 @@ static int async_io(struct dm_io_client *client, unsigned int num_regions,
- 	io = mempool_alloc(client->pool, GFP_NOIO);
- 	io->error_bits = 0;
- 	atomic_set(&io->count, 1); /* see dispatch_io() */
--	io->sleeper = NULL;
-+	io->wait = NULL;
- 	io->client = client;
- 	io->callback = fn;
- 	io->context = context;
+ int
++is_sublevel_keyword(char *str)
++{
++	return (strcmp(str, "defaults") == 0 || strcmp(str, "blacklist") == 0 ||
++		strcmp(str, "blacklist_exceptions") == 0 ||
++		strcmp(str, "devices") == 0 || strcmp(str, "devices") == 0 ||
++		strcmp(str, "device") == 0 || strcmp(str, "multipaths") == 0 ||
++		strcmp(str, "multipath") == 0);
++}
++
++int
++validate_config_strvec(vector strvec)
++{
++	char *str;
++	int i;
++
++	str = VECTOR_SLOT(strvec, 0);
++	if (str == NULL) {
++		condlog(0, "can't parse option on line %d of config file",
++			line_nr);
++	return -1;
++	}
++	if (*str == '}') {
++		if (VECTOR_SIZE(strvec) > 1)
++			condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 1), line_nr);
++		return 0;
++	}
++	if (*str == '{') {
++		condlog(0, "invalid keyword '%s' on line %d of config file", str, line_nr);
++		return -1;
++	}
++	if (is_sublevel_keyword(str)) {
++		str = VECTOR_SLOT(strvec, 1);
++		if (str == NULL)
++			condlog(0, "missing '{' on line %d of config file", line_nr);
++		else if (*str != '{')
++			condlog(0, "expecting '{' on line %d of config file. found '%s'", line_nr, str);
++		else if (VECTOR_SIZE(strvec) > 2)
++			condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 2), line_nr);
++		return 0;
++	}
++	str = VECTOR_SLOT(strvec, 1);
++	if (str == NULL) {
++		condlog(0, "missing value for option '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 0), line_nr);
++		return -1;
++	}
++	if (*str != '"') {
++		if (VECTOR_SIZE(strvec) > 2)
++			condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, 2), line_nr);
++		return 0;
++	}
++	for (i = 2; i < VECTOR_SIZE(strvec); i++) {
++		str = VECTOR_SLOT(strvec, i);
++		if (str == NULL) {
++			condlog(0, "can't parse value on line %d of config file", line_nr);
++			return -1;
++		}
++		if (*str == '"') {
++			if (VECTOR_SIZE(strvec) > i + 1)
++				condlog(0, "ignoring extra data starting with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, (i + 1)), line_nr);
++			return 0;
++		}
++	}
++	condlog(0, "missing closing quotes on line %d of config file",
++		line_nr);
++	return 0;
++}
++
++int
+ process_stream(vector keywords)
+ {
+ 	int i;
+@@ -494,11 +583,20 @@ process_stream(vector keywords)
+ 		if (!strvec)
+ 			continue;
+ 
++		if (validate_config_strvec(strvec) != 0) {
++			free_strvec(strvec);
++			continue;
++		}
++
+ 		str = VECTOR_SLOT(strvec, 0);
+ 
+-		if (!strcmp(str, EOB) && kw_level > 0) {
+-			free_strvec(strvec);
+-			break;
++		if (!strcmp(str, EOB)) {
++			if (kw_level > 0) {
++				free_strvec(strvec);
++				break;
++			}
++			condlog(0, "unmatched '%s' at line %d of config file",
++				EOB, line_nr);
+ 		}
+ 
+ 		for (i = 0; i < VECTOR_SIZE(keywords); i++) {
 -- 
-1.7.1
+1.8.3.1
