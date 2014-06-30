@@ -1,113 +1,70 @@
 From: Paul Mackerras <paulus@samba.org>
 Subject: Re: Regression in 3.15 on POWER8 with multipath SCSI
-Date: Tue, 1 Jul 2014 07:28:01 +1000
-Message-ID: <20140630212801.GB20819@iris.ozlabs.ibm.com>
+Date: Tue, 1 Jul 2014 07:30:08 +1000
+Message-ID: <20140630213008.GC20819@iris.ozlabs.ibm.com>
 References: <20140630103058.GA17747@iris.ozlabs.ibm.com>
  <53B1416D.8020305@suse.de>
- <20140630110202.GB17747@iris.ozlabs.ibm.com>
- <53B14B78.4010500@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 Content-Disposition: inline
-In-Reply-To: <53B14B78.4010500@suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <53B1416D.8020305@suse.de>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org, Vladimir Davydov <vdavydov@parallels.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Kay Sievers <kay.sievers@vrfy.org>
+Cc: Vladimir Davydov <vdavydov@parallels.com>, Kay Sievers <kay.sievers@vrfy.org>, linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Mon, Jun 30, 2014 at 01:35:20PM +0200, Hannes Reinecke wrote:
-> On 06/30/2014 01:02 PM, Paul Mackerras wrote:
-> >On Mon, Jun 30, 2014 at 12:52:29PM +0200, Hannes Reinecke wrote:
-> >>On 06/30/2014 12:30 PM, Paul Mackerras wrote:
-> >>>I have a machine on which 3.15 usually fails to boot, and 3.14 boots
-> >>>every time.  The machine is a POWER8 2-socket server with 20 cores
-> >>>(thus 160 CPUs), 128GB of RAM, and 7 SCSI disks connected via a
-> >>>hardware-RAID-capable adapter which appears as two IPR controllers
-> >>>which are both connected to each disk.  I am booting from a disk that
-> >>>has Fedora 20 installed on it.
-> >>>
-> >>>After over two weeks of bisections, I can finally point to the commits
-> >>>that cause the problems.  The culprits are:
-> >>>
-> >>>3e9f1be1 dm mpath: remove process_queued_ios()
-> >>>e8099177 dm mpath: push back requests instead of queueing
-> >>>bcccff93 kobject: don't block for each kobject_uevent
-> >>>
-> >>>The interesting thing is that neither e8099177 nor bcccff93 cause
-> >>>failures on their own, but with both commits in there are failures
-> >>>where the system will fail to find /home on some occasions.
-> >>>
-> >>>With 3e9f1be1 included, the system appears to be prone to a deadlock
-> >>>condition which typically causes the boot process to hang with this
-> >>>message showing:
-> >>>
-> >>>A start job is running for Monitoring of LVM2 mirror...rogress polling
-> >>>
-> >>>(with a [***     ] thing before it where the asterisks move back and
-> >>>forth).
-> >>>
-> >>>If I revert 63d832c3 ("dm mpath: really fix lockdep warning") ,
-> >>>4cdd2ad7 ("dm mpath: fix lock order inconsistency in
-> >>>multipath_ioctl"), 3e9f1be1 and bcccff93, in that order, I get a
-> >>>kernel that will boot every time.  The first two are later commits
-> >>>that fix some problems with 3e9f1be1 (though not the problems I am
-> >>>seeing).
-> >>>
-> >>>Can anyone see any reason why e8099177 and bcccff93 would interfere
-> >>>with each other?
-> >>>
-> >>It might be running afoul with the 'cookie' mechanism.
-> >>Device-mapper is using inserting a 'cookie' with the ioctl, and listens to
-> >>any event containing the cookie to ensure udev has finished processing that
-> >>device and hence the device node is accessible. Added to this is the problem
-> >>that we don't have any good means of detecting any changes to device-mapper
-> >>devices.
-> >>
-> >>EG look at this sequence of events:
-> >>
-> >>add dm-1
-> >>remove dm-1
-> >>add dm-1
-> >>
-> >>Originally udev would pick up the event, read the details from sysfs, and
-> >>return control to the kernel.
-> >>With bcccff93 udev will _not_have a chance to read the details
-> >>from sysfs for 'dm-1', as anything read from sysfs relating to 'dm-1' might
-> >>infact refer to the _second_ 'add' event, which might be a totally different
-> >>device.
-> >>As far as I know udev doesn't have any mechanism to drop events,
-> >>so it'll always process all events. Assuming that the sysfs attributes it
-> >>reads _do_ relate to that event. If they don't things become interesting ...
-> >>
-> >>(Actually, this issue was always present, especially with multipathing.
-> >>multipath occasionally can become sluggish when processing events, so the
-> >>same might happen with it. We've tried to work around this, but never found
-> >>a fool-proof way of doing so).
-> >>
-> >>Adding Kay as he might have some more insight here.
-> >>
-> >>Another thing:
-> >>Do you run LVM on top of multipathing?
-> >>If so, could you setup your system with _not_ using LVM and disabling the
-> >>LVM service?
-> >
-> >No, I'm not using LVM, and in fact I deleted all the physical volumes
-> >that were on any of the disks (they were installations of other
-> >distros), so there are no physical or logical volumes anywhere on any
-> >disk.  I haven't tried disabling the LVM service completely, though.
-> >What would it mean if disabling the LVM service made a difference?
-> >
-> Yes. LVM integration with systemd is a science unto itself.
-> I'm reasonably confident with multipath, but not LVM.
-> Plus the fact the the LVM service apparently is waiting for something sort
-> of points into that direction.
-> 
-> So please do disable the lvm service.
-
-I disabled the LVM service, and it's still bad.  Unmodified 3.15
-booted successfully in only 18 out of 50 attempts with LVM disabled.
-
-So it's not LVM.  In any case LVM was fine with a 3.14 kernel.
-
-Paul.
+T24gTW9uLCBKdW4gMzAsIDIwMTQgYXQgMTI6NTI6MjlQTSArMDIwMCwgSGFubmVzIFJlaW5lY2tl
+IHdyb3RlOgo+IE9uIDA2LzMwLzIwMTQgMTI6MzAgUE0sIFBhdWwgTWFja2VycmFzIHdyb3RlOgo+
+ID5JIGhhdmUgYSBtYWNoaW5lIG9uIHdoaWNoIDMuMTUgdXN1YWxseSBmYWlscyB0byBib290LCBh
+bmQgMy4xNCBib290cwo+ID5ldmVyeSB0aW1lLiAgVGhlIG1hY2hpbmUgaXMgYSBQT1dFUjggMi1z
+b2NrZXQgc2VydmVyIHdpdGggMjAgY29yZXMKPiA+KHRodXMgMTYwIENQVXMpLCAxMjhHQiBvZiBS
+QU0sIGFuZCA3IFNDU0kgZGlza3MgY29ubmVjdGVkIHZpYSBhCj4gPmhhcmR3YXJlLVJBSUQtY2Fw
+YWJsZSBhZGFwdGVyIHdoaWNoIGFwcGVhcnMgYXMgdHdvIElQUiBjb250cm9sbGVycwo+ID53aGlj
+aCBhcmUgYm90aCBjb25uZWN0ZWQgdG8gZWFjaCBkaXNrLiAgSSBhbSBib290aW5nIGZyb20gYSBk
+aXNrIHRoYXQKPiA+aGFzIEZlZG9yYSAyMCBpbnN0YWxsZWQgb24gaXQuCj4gPgo+ID5BZnRlciBv
+dmVyIHR3byB3ZWVrcyBvZiBiaXNlY3Rpb25zLCBJIGNhbiBmaW5hbGx5IHBvaW50IHRvIHRoZSBj
+b21taXRzCj4gPnRoYXQgY2F1c2UgdGhlIHByb2JsZW1zLiAgVGhlIGN1bHByaXRzIGFyZToKPiA+
+Cj4gPjNlOWYxYmUxIGRtIG1wYXRoOiByZW1vdmUgcHJvY2Vzc19xdWV1ZWRfaW9zKCkKPiA+ZTgw
+OTkxNzcgZG0gbXBhdGg6IHB1c2ggYmFjayByZXF1ZXN0cyBpbnN0ZWFkIG9mIHF1ZXVlaW5nCj4g
+PmJjY2NmZjkzIGtvYmplY3Q6IGRvbid0IGJsb2NrIGZvciBlYWNoIGtvYmplY3RfdWV2ZW50Cj4g
+Pgo+ID5UaGUgaW50ZXJlc3RpbmcgdGhpbmcgaXMgdGhhdCBuZWl0aGVyIGU4MDk5MTc3IG5vciBi
+Y2NjZmY5MyBjYXVzZQo+ID5mYWlsdXJlcyBvbiB0aGVpciBvd24sIGJ1dCB3aXRoIGJvdGggY29t
+bWl0cyBpbiB0aGVyZSBhcmUgZmFpbHVyZXMKPiA+d2hlcmUgdGhlIHN5c3RlbSB3aWxsIGZhaWwg
+dG8gZmluZCAvaG9tZSBvbiBzb21lIG9jY2FzaW9ucy4KPiA+Cj4gPldpdGggM2U5ZjFiZTEgaW5j
+bHVkZWQsIHRoZSBzeXN0ZW0gYXBwZWFycyB0byBiZSBwcm9uZSB0byBhIGRlYWRsb2NrCj4gPmNv
+bmRpdGlvbiB3aGljaCB0eXBpY2FsbHkgY2F1c2VzIHRoZSBib290IHByb2Nlc3MgdG8gaGFuZyB3
+aXRoIHRoaXMKPiA+bWVzc2FnZSBzaG93aW5nOgo+ID4KPiA+QSBzdGFydCBqb2IgaXMgcnVubmlu
+ZyBmb3IgTW9uaXRvcmluZyBvZiBMVk0yIG1pcnJvci4uLnJvZ3Jlc3MgcG9sbGluZwo+ID4KPiA+
+KHdpdGggYSBbKioqICAgICBdIHRoaW5nIGJlZm9yZSBpdCB3aGVyZSB0aGUgYXN0ZXJpc2tzIG1v
+dmUgYmFjayBhbmQKPiA+Zm9ydGgpLgo+ID4KPiA+SWYgSSByZXZlcnQgNjNkODMyYzMgKCJkbSBt
+cGF0aDogcmVhbGx5IGZpeCBsb2NrZGVwIHdhcm5pbmciKSAsCj4gPjRjZGQyYWQ3ICgiZG0gbXBh
+dGg6IGZpeCBsb2NrIG9yZGVyIGluY29uc2lzdGVuY3kgaW4KPiA+bXVsdGlwYXRoX2lvY3RsIiks
+IDNlOWYxYmUxIGFuZCBiY2NjZmY5MywgaW4gdGhhdCBvcmRlciwgSSBnZXQgYQo+ID5rZXJuZWwg
+dGhhdCB3aWxsIGJvb3QgZXZlcnkgdGltZS4gIFRoZSBmaXJzdCB0d28gYXJlIGxhdGVyIGNvbW1p
+dHMKPiA+dGhhdCBmaXggc29tZSBwcm9ibGVtcyB3aXRoIDNlOWYxYmUxICh0aG91Z2ggbm90IHRo
+ZSBwcm9ibGVtcyBJIGFtCj4gPnNlZWluZykuCj4gPgo+ID5DYW4gYW55b25lIHNlZSBhbnkgcmVh
+c29uIHdoeSBlODA5OTE3NyBhbmQgYmNjY2ZmOTMgd291bGQgaW50ZXJmZXJlCj4gPndpdGggZWFj
+aCBvdGhlcj8KPiA+Cj4gSXQgbWlnaHQgYmUgcnVubmluZyBhZm91bCB3aXRoIHRoZSAnY29va2ll
+JyBtZWNoYW5pc20uCj4gRGV2aWNlLW1hcHBlciBpcyB1c2luZyBpbnNlcnRpbmcgYSAnY29va2ll
+JyB3aXRoIHRoZSBpb2N0bCwgYW5kIGxpc3RlbnMgdG8KPiBhbnkgZXZlbnQgY29udGFpbmluZyB0
+aGUgY29va2llIHRvIGVuc3VyZSB1ZGV2IGhhcyBmaW5pc2hlZCBwcm9jZXNzaW5nIHRoYXQKPiBk
+ZXZpY2UgYW5kIGhlbmNlIHRoZSBkZXZpY2Ugbm9kZSBpcyBhY2Nlc3NpYmxlLiBBZGRlZCB0byB0
+aGlzIGlzIHRoZSBwcm9ibGVtCj4gdGhhdCB3ZSBkb24ndCBoYXZlIGFueSBnb29kIG1lYW5zIG9m
+IGRldGVjdGluZyBhbnkgY2hhbmdlcyB0byBkZXZpY2UtbWFwcGVyCj4gZGV2aWNlcy4KCkhvdyBk
+b2VzIHRoYXQgcmVsYXRlIHRvIGU4MDk5MTc3PyAgRGlkIGU4MDk5MTc3IGludHJvZHVjZSB0aGlz
+IGNvb2tpZQptZWNoYW5pc20/ICBJZiBub3QsIHdoYXQgaXMgaXQgYWJvdXQgZTgwOTkxNzcgdGhh
+dCBtYWtlcyB0aGUgYXN5bmMKcHJvY2Vzc2luZyBwcm9ibGVtYXRpYz8KClBhdWwuCl9fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4cHBjLWRldiBtYWls
+aW5nIGxpc3QKTGludXhwcGMtZGV2QGxpc3RzLm96bGFicy5vcmcKaHR0cHM6Ly9saXN0cy5vemxh
+YnMub3JnL2xpc3RpbmZvL2xpbnV4cHBjLWRldg==
