@@ -1,58 +1,55 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: [PATCH] Update ETERNUS DX entry
-Date: Mon, 30 Jun 2014 23:38:58 +0200
-Message-ID: <20140630233858.00001ed0@localhost>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Regression in 3.15 on POWER8 with multipath SCSI
+Date: Tue, 01 Jul 2014 07:57:55 +0200
+Message-ID: <53B24DE3.9050108@suse.de>
+References: <20140630103058.GA17747@iris.ozlabs.ibm.com> <53B1416D.8020305@suse.de> <20140630110202.GB17747@iris.ozlabs.ibm.com> <53B14B78.4010500@suse.de> <20140630212801.GB20819@iris.ozlabs.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Martin Wilck <martin.wilck@ts.fujitsu.com>, Gerhard Wichert <Gerhard.Wichert@ts.fujitsu.com>, Sebastian Herbszt <herbszt@gmx.de>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140630212801.GB20819@iris.ozlabs.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org, Vladimir Davydov <vdavydov@parallels.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Kay Sievers <kay.sievers@vrfy.org>
 List-Id: dm-devel.ids
 
-Add DX500 S3/DX600 S3.
+On 06/30/2014 11:28 PM, Paul Mackerras wrote:
+> On Mon, Jun 30, 2014 at 01:35:20PM +0200, Hannes Reinecke wrote:
+>> On 06/30/2014 01:02 PM, Paul Mackerras wrote:
+[ .. ]
+>>>
+>>> No, I'm not using LVM, and in fact I deleted all the physical volum=
+es
+>>> that were on any of the disks (they were installations of other
+>>> distros), so there are no physical or logical volumes anywhere on a=
+ny
+>>> disk.  I haven't tried disabling the LVM service completely, though=
+=2E
+>>> What would it mean if disabling the LVM service made a difference?
+>>>
+>> Yes. LVM integration with systemd is a science unto itself.
+>> I'm reasonably confident with multipath, but not LVM.
+>> Plus the fact the the LVM service apparently is waiting for somethin=
+g sort
+>> of points into that direction.
+>>
+>> So please do disable the lvm service.
+>
+> I disabled the LVM service, and it's still bad.  Unmodified 3.15
+> booted successfully in only 18 out of 50 attempts with LVM disabled.
+>
+> So it's not LVM.  In any case LVM was fine with a 3.14 kernel.
+>
+Right, that was just a cross-check to eliminate any variables.
 
-Signed-off-by: Sebastian Herbszt <herbszt@gmx.de>
----
- libmultipath/hwtable.c  | 2 +-
- multipath.conf.defaults | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+I'll be checking here at my end.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index bb73a40..b774453 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -308,7 +308,7 @@ static struct hwentry default_hw[] = {
- 	},
- 	{
- 		.vendor        = "FUJITSU",
--		.product       = "ETERNUS_DX(L|400|8000)",
-+		.product       = "ETERNUS_DX(L|M|400|8000)",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.pgpolicy      = GROUP_BY_PRIO,
-diff --git a/multipath.conf.defaults b/multipath.conf.defaults
-index 12fb3f0..654be97 100644
---- a/multipath.conf.defaults
-+++ b/multipath.conf.defaults
-@@ -285,7 +285,7 @@
- #	}
- #	device {
- #		vendor "FUJITSU"
--#		product "ETERNUS_DX(L|400|8000)"
-+#		product "ETERNUS_DX(L|M|400|8000)"
- #		path_grouping_policy "group_by_prio"
- #		path_checker "tur"
- #		features "1 queue_if_no_path"
--- 
-1.9.3
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
