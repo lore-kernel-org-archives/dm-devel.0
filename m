@@ -1,14 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] Don't forget to reload table when both
- reload and rename is required
-Date: Tue, 1 Jul 2014 20:46:24 +0200
-Message-ID: <CABr-Gnfc2=v6__Gn0gGh5u+=SdxtWX3vUo5XZvGoXWVTmyxRTQ@mail.gmail.com>
-References: <1403686653-14879-1-git-send-email-vaughan.cao@oracle.com>
+Subject: Re: [PATCH 02/12] Return the correct size buffer in
+	set_value()
+Date: Tue, 1 Jul 2014 20:47:36 +0200
+Message-ID: <CABr-GneYGTVazbxYZTQSZ==fUeJTiXYQYqk=MraetTFuTVeG6g@mail.gmail.com>
+References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
+	<1404105243-5071-3-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4689150060836020056=="
+Content-Type: multipart/mixed; boundary="===============3146610262231723801=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1403686653-14879-1-git-send-email-vaughan.cao@oracle.com>
+In-Reply-To: <1404105243-5071-3-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,215 +19,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vaughan Cao <vaughan.cao@oracle.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4689150060836020056==
-Content-Type: multipart/alternative; boundary=089e0129534e4bda7204fd2631cc
+--===============3146610262231723801==
+Content-Type: multipart/alternative; boundary=001a11c1f61e9ec1d704fd26357c
 
---089e0129534e4bda7204fd2631cc
+--001a11c1f61e9ec1d704fd26357c
 Content-Type: text/plain; charset=UTF-8
 
 Applied.
 Thanks.
 
 
-On Wed, Jun 25, 2014 at 10:57 AM, Vaughan Cao <vaughan.cao@oracle.com>
+On Mon, Jun 30, 2014 at 7:13 AM, Benjamin Marzinski <bmarzins@redhat.com>
 wrote:
 
-> We encounter the following case:
+> When multipath was mallocing the buffer in set_value, it was using
+> sizeof(char *), instead of sizeof(char), so it was allocating a buffer
+> big enough for an array of pointers instead of characters.
 >
-> @ After adding a multipaths section into /etc/multipath.conf to specify
-> 'alias'
-> @ and other attributes for a particular multipath device and
-> @ reloading/restarting the multipathd service, only renaming of the
-> multipath
-> @ device is done, other attribute changes are ignored.
-> @
-> @ It is more evident if you directly run 'multipath -r' to reload devmap
-> after
-> @ adding the 'multipaths' section with alias into /etc/multipath.conf.
-> @
-> @ When reload/restart multipathd service or 'multipath -r' again, new
-> settings
-> @ can be applied right.
->
-> It's because that in select_action() when force_reload is set, if we also
-> need
-> rename the mpp device, reload action won't be taken any more.
->
-> I did this patch by introducing a new action ACT_RENAME2 to group these two
-> action. Test passed. However, it seems to be a rough patch and I am not
-> certain if this bind is fine refering to dm_reassign. Please comment,
-> Thanks.
->
-> Signed-off-by: Vaughan Cao <vaughan.cao@oracle.com>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/configure.c | 11 +++++++++++
->  libmultipath/configure.h |  1 +
->  2 files changed, 12 insertions(+)
+>  libmultipath/parser.c | 6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
 >
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 3ed6b55..7331f90 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -385,6 +385,8 @@ select_action (struct multipath * mpp, vector curmp,
-> int force_reload)
->                                 cmpp->alias, mpp->alias);
->                         strncpy(mpp->alias_old, cmpp->alias, WWID_SIZE);
->                         mpp->action = ACT_RENAME;
-> +                       if (force_reload)
-> +                               mpp->action = ACT_RENAME2;
->                         return;
+> diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+> index 526c45b..0d4c870 100644
+> --- a/libmultipath/parser.c
+> +++ b/libmultipath/parser.c
+> @@ -408,11 +408,11 @@ set_value(vector strvec)
+>                         len += strlen(str);
+>                         if (!alloc)
+>                                 alloc =
+> -                                   (char *) MALLOC(sizeof (char *) *
+> +                                   (char *) MALLOC(sizeof (char) *
+>                                                     (len + 1));
+>                         else {
+>                                 alloc =
+> -                                   REALLOC(alloc, sizeof (char *) * (len
+> + 1));
+> +                                   REALLOC(alloc, sizeof (char) * (len +
+> 1));
+>                                 tmp = VECTOR_SLOT(strvec, i-1);
+>                                 if (alloc && *str != '"' && *tmp != '"')
+>                                         strncat(alloc, " ", 1);
+> @@ -422,7 +422,7 @@ set_value(vector strvec)
+>                                 strncat(alloc, str, strlen(str));
 >                 }
->                 mpp->action = ACT_CREATE;
-> @@ -623,6 +625,15 @@ domap (struct multipath * mpp, char * params)
->                 r = dm_rename(mpp->alias_old, mpp->alias);
->                 break;
->
-> +       case ACT_RENAME2:
-> +               r = dm_rename(mpp->alias_old, mpp->alias);
-> +               if (r) {
-> +                       r = dm_addmap_reload(mpp, params);
-> +                       if (r)
-> +                               r = dm_simplecmd_noflush(DM_DEVICE_RESUME,
-> mpp->alias, MPATH_UDEV_RELOAD_FLAG);
-> +               }
-> +               break;
-> +
->         default:
->                 break;
+>         } else {
+> -               alloc = MALLOC(sizeof (char *) * (size + 1));
+> +               alloc = MALLOC(sizeof (char) * (size + 1));
+>                 if (alloc)
+>                         memcpy(alloc, str, size);
 >         }
-> diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-> index b3a6bb8..c014b55 100644
-> --- a/libmultipath/configure.h
-> +++ b/libmultipath/configure.h
-> @@ -18,6 +18,7 @@ enum actions {
->         ACT_RENAME,
->         ACT_CREATE,
->         ACT_RESIZE,
-> +       ACT_RENAME2,
->  };
->
->  #define FLUSH_ONE 1
 > --
-> 1.9.0
+> 1.8.3.1
 >
 >
 
---089e0129534e4bda7204fd2631cc
+--001a11c1f61e9ec1d704fd26357c
 Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: base64
 
-<div dir=3D"ltr"><div>Applied.<br></div>Thanks.<br></div><div class=3D"gmai=
-l_extra"><br><br><div class=3D"gmail_quote">On Wed, Jun 25, 2014 at 10:57 A=
-M, Vaughan Cao <span dir=3D"ltr">&lt;<a href=3D"mailto:vaughan.cao@oracle.c=
-om" target=3D"_blank">vaughan.cao@oracle.com</a>&gt;</span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">We encounter the following case:<br>
-<br>
-@ After adding a multipaths section into /etc/multipath.conf to specify &#3=
-9;alias&#39;<br>
-@ and other attributes for a particular multipath device and<br>
-@ reloading/restarting the multipathd service, only renaming of the multipa=
-th<br>
-@ device is done, other attribute changes are ignored.<br>
-@<br>
-@ It is more evident if you directly run &#39;multipath -r&#39; to reload d=
-evmap after<br>
-@ adding the &#39;multipaths&#39; section with alias into /etc/multipath.co=
-nf.<br>
-@<br>
-@ When reload/restart multipathd service or &#39;multipath -r&#39; again, n=
-ew settings<br>
-@ can be applied right.<br>
-<br>
-It&#39;s because that in select_action() when force_reload is set, if we al=
-so need<br>
-rename the mpp device, reload action won&#39;t be taken any more.<br>
-<br>
-I did this patch by introducing a new action ACT_RENAME2 to group these two=
-<br>
-action. Test passed. However, it seems to be a rough patch and I am not<br>
-certain if this bind is fine refering to dm_reassign. Please comment, Thank=
-s.<br>
-<br>
-Signed-off-by: Vaughan Cao &lt;<a href=3D"mailto:vaughan.cao@oracle.com">va=
-ughan.cao@oracle.com</a>&gt;<br>
----<br>
-=C2=A0libmultipath/configure.c | 11 +++++++++++<br>
-=C2=A0libmultipath/configure.h | =C2=A01 +<br>
-=C2=A02 files changed, 12 insertions(+)<br>
-<br>
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c<br>
-index 3ed6b55..7331f90 100644<br>
---- a/libmultipath/configure.c<br>
-+++ b/libmultipath/configure.c<br>
-@@ -385,6 +385,8 @@ select_action (struct multipath * mpp, vector curmp, in=
-t force_reload)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 cmpp-&gt;alias, mpp-&gt;alias);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 strncpy(mpp-&gt;alias_old, cmpp-&gt;alias, WWID_SIZE);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 mpp-&gt;action =3D ACT_RENAME;<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 if (force_reload)<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mpp-&gt;action =3D ACT_RENAME2;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 return;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mpp-&gt;action =3D =
-ACT_CREATE;<br>
-@@ -623,6 +625,15 @@ domap (struct multipath * mpp, char * params)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 r =3D dm_rename(mpp=
--&gt;alias_old, mpp-&gt;alias);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;<br>
-<br>
-+ =C2=A0 =C2=A0 =C2=A0 case ACT_RENAME2:<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 r =3D dm_rename(mpp-&gt;=
-alias_old, mpp-&gt;alias);<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (r) {<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 r =3D dm_addmap_reload(mpp, params);<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 if (r)<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 r =3D dm_simplecmd_noflush(DM_DEVICE_RESUME=
-, mpp-&gt;alias, MPATH_UDEV_RELOAD_FLAG);<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;<br>
-+<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 default:<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h<br>
-index b3a6bb8..c014b55 100644<br>
---- a/libmultipath/configure.h<br>
-+++ b/libmultipath/configure.h<br>
-@@ -18,6 +18,7 @@ enum actions {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 ACT_RENAME,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 ACT_CREATE,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 ACT_RESIZE,<br>
-+ =C2=A0 =C2=A0 =C2=A0 ACT_RENAME2,<br>
-=C2=A0};<br>
-<br>
-=C2=A0#define FLUSH_ONE 1<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-1.9.0<br>
-<br>
-</font></span></blockquote></div><br></div>
-
---089e0129534e4bda7204fd2631cc--
+PGRpdiBkaXI9Imx0ciI+PGRpdj5BcHBsaWVkLjxicj48L2Rpdj5UaGFua3MuPGJyPjwvZGl2Pjxk
+aXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj5P
+biBNb24sIEp1biAzMCwgMjAxNCBhdCA3OjEzIEFNLCBCZW5qYW1pbiBNYXJ6aW5za2kgPHNwYW4g
+ZGlyPSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86Ym1hcnppbnNAcmVkaGF0LmNvbSIgdGFyZ2V0
+PSJfYmxhbmsiPmJtYXJ6aW5zQHJlZGhhdC5jb208L2E+Jmd0Ozwvc3Bhbj4gd3JvdGU6PGJyPg0K
+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7
+Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+V2hlbiBtdWx0aXBh
+dGggd2FzIG1hbGxvY2luZyB0aGUgYnVmZmVyIGluIHNldF92YWx1ZSwgaXQgd2FzIHVzaW5nPGJy
+Pg0Kc2l6ZW9mKGNoYXIgKiksIGluc3RlYWQgb2Ygc2l6ZW9mKGNoYXIpLCBzbyBpdCB3YXMgYWxs
+b2NhdGluZyBhIGJ1ZmZlcjxicj4NCmJpZyBlbm91Z2ggZm9yIGFuIGFycmF5IG9mIHBvaW50ZXJz
+IGluc3RlYWQgb2YgY2hhcmFjdGVycy48YnI+DQo8YnI+DQpTaWduZWQtb2ZmLWJ5OiBCZW5qYW1p
+biBNYXJ6aW5za2kgJmx0OzxhIGhyZWY9Im1haWx0bzpibWFyemluc0ByZWRoYXQuY29tIj5ibWFy
+emluc0ByZWRoYXQuY29tPC9hPiZndDs8YnI+DQotLS08YnI+DQrCoGxpYm11bHRpcGF0aC9wYXJz
+ZXIuYyB8IDYgKysrLS0tPGJyPg0KwqAxIGZpbGUgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspLCAz
+IGRlbGV0aW9ucygtKTxicj4NCjxicj4NCmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvcGFyc2Vy
+LmMgYi9saWJtdWx0aXBhdGgvcGFyc2VyLmM8YnI+DQppbmRleCA1MjZjNDViLi4wZDRjODcwIDEw
+MDY0NDxicj4NCi0tLSBhL2xpYm11bHRpcGF0aC9wYXJzZXIuYzxicj4NCisrKyBiL2xpYm11bHRp
+cGF0aC9wYXJzZXIuYzxicj4NCkBAIC00MDgsMTEgKzQwOCwxMSBAQCBzZXRfdmFsdWUodmVjdG9y
+IHN0cnZlYyk8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBsZW4gKz0g
+c3RybGVuKHN0cik7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgaWYg
+KCFhbGxvYyk8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCBhbGxvYyA9PGJyPg0KLSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCAoY2hhciAqKSBNQUxMT0Moc2l6ZW9mIChjaGFyICopICo8YnI+DQorIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIChjaGFyICop
+IE1BTExPQyhzaXplb2YgKGNoYXIpICo8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAobGVuICsg
+MSkpOzxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGVsc2Ugezxicj4N
+CsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGFsbG9jID08
+YnI+DQotIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IFJFQUxMT0MoYWxsb2MsIHNpemVvZiAoY2hhciAqKSAqIChsZW4gKyAxKSk7PGJyPg0KKyDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBSRUFMTE9DKGFs
+bG9jLCBzaXplb2YgKGNoYXIpICogKGxlbiArIDEpKTs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCB0bXAgPSBWRUNUT1JfU0xPVChzdHJ2ZWMsIGkt
+MSk7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+aWYgKGFsbG9jICZhbXA7JmFtcDsgKnN0ciAhPSAmIzM5OyZxdW90OyYjMzk7ICZhbXA7JmFtcDsg
+KnRtcCAhPSAmIzM5OyZxdW90OyYjMzk7KTxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHN0cm5jYXQoYWxsb2MsICZxdW90OyAm
+cXVvdDssIDEpOzxicj4NCkBAIC00MjIsNyArNDIyLDcgQEAgc2V0X3ZhbHVlKHZlY3RvciBzdHJ2
+ZWMpPGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
+c3RybmNhdChhbGxvYywgc3RyLCBzdHJsZW4oc3RyKSk7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAg
+wqAgwqAgfTxicj4NCsKgIMKgIMKgIMKgIH0gZWxzZSB7PGJyPg0KLSDCoCDCoCDCoCDCoCDCoCDC
+oCDCoCBhbGxvYyA9IE1BTExPQyhzaXplb2YgKGNoYXIgKikgKiAoc2l6ZSArIDEpKTs8YnI+DQor
+IMKgIMKgIMKgIMKgIMKgIMKgIMKgIGFsbG9jID0gTUFMTE9DKHNpemVvZiAoY2hhcikgKiAoc2l6
+ZSArIDEpKTs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoYWxsb2MpPGJyPg0KwqAg
+wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgbWVtY3B5KGFsbG9jLCBzdHIsIHNpemUp
+Ozxicj4NCsKgIMKgIMKgIMKgIH08YnI+DQo8c3BhbiBjbGFzcz0iSE9FblpiIj48Zm9udCBjb2xv
+cj0iIzg4ODg4OCI+LS08YnI+DQoxLjguMy4xPGJyPg0KPGJyPg0KPC9mb250Pjwvc3Bhbj48L2Js
+b2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2Pg0K
+--001a11c1f61e9ec1d704fd26357c--
 
 
---===============4689150060836020056==
+--===============3146610262231723801==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4689150060836020056==--
+--===============3146610262231723801==--
