@@ -1,18 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
 Subject: Re: v3.15 dm-mpath regression: cable pull test causes
 	I/O hang
-Date: Thu, 3 Jul 2014 10:18:45 -0400
-Message-ID: <20140703141844.GC28104@redhat.com>
+Date: Thu, 03 Jul 2014 16:34:09 +0200
+Message-ID: <53B569E1.1010405@acm.org>
 References: <53AD6B62.2020407@acm.org> <20140627133345.GA6150@redhat.com>
 	<20140702220223.GA23894@redhat.com> <53B56120.8040802@acm.org>
-	<20140703140516.GB28104@redhat.com> <53B56594.1060104@suse.de>
+	<20140703140516.GB28104@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <53B56594.1060104@suse.de>
+In-Reply-To: <20140703140516.GB28104@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,27 +21,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bvanassche@acm.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 03 2014 at 10:15am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+On 07/03/14 16:05, Mike Snitzer wrote:
+> How easy would it be to replicate your testbed?  Is it uniquely FIO hw
+> dependent?  How are you simulating the cable pull tests?
+> 
+> I'd love to setup a testbed that would enable me to chase this more
+> interactively rather than punting to you for testing.
 
-> On 07/03/2014 04:05 PM, Mike Snitzer wrote:
-> >
-> >Hannes, do you have a testbed for heavy cable pull testing?  Are you
-> >able to replicate these hangs?
-> >
-> Yes, I do. But sadly I've been tied up with polishing up SLES12
-> (release deadline is looming nearer) and for some inexplicable
-> reason management seems to find releasing a product more important
-> than working on mainline issue ...
+Hello Mike,
 
-OK, so long as you didn't include these dm-mpath changes.. but if you
-did then you could kill 2 birds with one stone ;)
+The only nonstandard hardware that is required to run my test is a pair
+of InfiniBand HCA's and an IB cable to connect these back-to-back. The
+test I ran is as follows:
+* Let an SRP initiator log in to an SRP target system.
+* Start multipathd and srpd.
+* Start a fio data integrity test on the initiator system on top of
+  /dev/dm-0.
+* From the target system simulate a cable pull by disabling IB traffic
+  via the ibportstate command.
+* After a random delay, unload and reload SCST and the IB stack. This
+  makes the IB ports operational again.
+* After a random delay, repeat the previous two steps.
 
-> But I hope to find some time soonish (ie start of next week) to work
-> on this; it's the very next thing on my to-do list.
+If you want I can send you the scripts I use to run this test and also
+the instructions that are necessary to build and install the SCST SRP
+target driver.
 
-OK, I really appreciate it, thanks.
+Bart.
