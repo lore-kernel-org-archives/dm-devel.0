@@ -1,66 +1,119 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: v3.15 dm-mpath regression: cable pull test causes
-	I/O hang
-Date: Thu, 3 Jul 2014 11:00:55 -0400
-Message-ID: <20140703150055.GA28518@redhat.com>
-References: <53AD6B62.2020407@acm.org> <20140627133345.GA6150@redhat.com>
-	<20140702220223.GA23894@redhat.com> <53B56120.8040802@acm.org>
-	<20140703140516.GB28104@redhat.com> <53B569E1.1010405@acm.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] blk-lib: fix error reporting
+Date: Thu, 3 Jul 2014 15:16:20 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1407031514320.3347@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <53B569E1.1010405@acm.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Jul 03 2014 at 10:34am -0400,
-Bart Van Assche <bvanassche@acm.org> wrote:
+The function bio_batch_end_io ignores -EOPNOTSUPP. It doesn't matter for
+discard (the device isn't required to discard anything, so missing the
+error code and reporting success shouldn't cause any trouble). However,
+for WRITE SAME command, missing the error code is obviously wrong. It may
+fool the user into thinking that the data were written while in fact they
+weren't.
 
-> On 07/03/14 16:05, Mike Snitzer wrote:
-> > How easy would it be to replicate your testbed?  Is it uniquely FIO hw
-> > dependent?  How are you simulating the cable pull tests?
-> > 
-> > I'd love to setup a testbed that would enable me to chase this more
-> > interactively rather than punting to you for testing.
-> 
-> Hello Mike,
-> 
-> The only nonstandard hardware that is required to run my test is a pair
-> of InfiniBand HCA's and an IB cable to connect these back-to-back. The
-> test I ran is as follows:
-> * Let an SRP initiator log in to an SRP target system.
-> * Start multipathd and srpd.
-> * Start a fio data integrity test on the initiator system on top of
->   /dev/dm-0.
-> * From the target system simulate a cable pull by disabling IB traffic
->   via the ibportstate command.
-> * After a random delay, unload and reload SCST and the IB stack. This
->   makes the IB ports operational again.
-> * After a random delay, repeat the previous two steps.
+Note that in device mapper, devices may be dynamically reconfigured, so a
+device that supports WRITE SAME may stop supporting it at any time and
+return -EOPNOTSUPP. Ignoring -EOPNOTSUPP is wrong.
 
-I'll work on getting some IB cards.  But I _should_ be able to achieve
-the same using iSCSI right?
+This patch changes bio_batch->flags to an error field and stores the last
+error there - so that the error is reported accurately and it isn't
+ignored.
 
-> If you want I can send you the scripts I use to run this test and also
-> the instructions that are necessary to build and install the SCST SRP
-> target driver.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-Please do, thanks!
+---
+ block/blk-lib.c |   25 ++++++++++++-------------
+ 1 file changed, 12 insertions(+), 13 deletions(-)
 
-Also, Red Hat has a rather extensive battery of dm-mpath FC cable pull
-tests for RHEL but these dm-mpath changes haven't been included in any
-RHEL yet.. I _could_ port these upstream changes to a test RHEL7 kernel
-just to leverage the RHEL-based testing.
+Index: linux-3.16-rc3/block/blk-lib.c
+===================================================================
+--- linux-3.16-rc3.orig/block/blk-lib.c	2014-07-03 18:17:21.000000000 +0200
++++ linux-3.16-rc3/block/blk-lib.c	2014-07-03 18:36:52.000000000 +0200
+@@ -11,7 +11,7 @@
+ 
+ struct bio_batch {
+ 	atomic_t		done;
+-	unsigned long		flags;
++	int			error;
+ 	struct completion	*wait;
+ };
+ 
+@@ -19,8 +19,8 @@ static void bio_batch_end_io(struct bio 
+ {
+ 	struct bio_batch *bb = bio->bi_private;
+ 
+-	if (err && (err != -EOPNOTSUPP))
+-		clear_bit(BIO_UPTODATE, &bb->flags);
++	if (unlikely(err))
++		ACCESS_ONCE(bb->error) = err;
+ 	if (atomic_dec_and_test(&bb->done))
+ 		complete(bb->wait);
+ 	bio_put(bio);
+@@ -78,7 +78,7 @@ int blkdev_issue_discard(struct block_de
+ 	}
+ 
+ 	atomic_set(&bb.done, 1);
+-	bb.flags = 1 << BIO_UPTODATE;
++	bb.error = 0;
+ 	bb.wait = &wait;
+ 
+ 	blk_start_plug(&plug);
+@@ -134,8 +134,8 @@ int blkdev_issue_discard(struct block_de
+ 	if (!atomic_dec_and_test(&bb.done))
+ 		wait_for_completion_io(&wait);
+ 
+-	if (!test_bit(BIO_UPTODATE, &bb.flags))
+-		ret = -EIO;
++	if (likely(!ret))
++		ret = bb.error;
+ 
+ 	return ret;
+ }
+@@ -172,7 +172,7 @@ int blkdev_issue_write_same(struct block
+ 		return -EOPNOTSUPP;
+ 
+ 	atomic_set(&bb.done, 1);
+-	bb.flags = 1 << BIO_UPTODATE;
++	bb.error = 0;
+ 	bb.wait = &wait;
+ 
+ 	while (nr_sects) {
+@@ -208,8 +208,8 @@ int blkdev_issue_write_same(struct block
+ 	if (!atomic_dec_and_test(&bb.done))
+ 		wait_for_completion_io(&wait);
+ 
+-	if (!test_bit(BIO_UPTODATE, &bb.flags))
+-		ret = -ENOTSUPP;
++	if (likely(!ret))
++		ret = bb.error;
+ 
+ 	return ret;
+ }
+@@ -236,7 +236,7 @@ static int __blkdev_issue_zeroout(struct
+ 	DECLARE_COMPLETION_ONSTACK(wait);
+ 
+ 	atomic_set(&bb.done, 1);
+-	bb.flags = 1 << BIO_UPTODATE;
++	bb.error = 0;
+ 	bb.wait = &wait;
+ 
+ 	ret = 0;
+@@ -270,9 +270,8 @@ static int __blkdev_issue_zeroout(struct
+ 	if (!atomic_dec_and_test(&bb.done))
+ 		wait_for_completion_io(&wait);
+ 
+-	if (!test_bit(BIO_UPTODATE, &bb.flags))
+-		/* One of bios in the batch was completed with error.*/
+-		ret = -EIO;
++	if (likely(!ret))
++		ret = bb.error;
+ 
+ 	return ret;
+ }
