@@ -1,16 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: v3.15 dm-mpath regression: cable pull test causes
-	I/O hang
-Date: Thu, 03 Jul 2014 07:43:34 +0200
-Message-ID: <53B4ED86.7050801@suse.de>
-References: <53AD6B62.2020407@acm.org> <20140627133345.GA6150@redhat.com>
-	<20140702220223.GA23894@redhat.com>
+Subject: Re: [PATCH 06/12] Make multipath add wwids from kernel
+ cmdline mpath.wwids with -A
+Date: Thu, 03 Jul 2014 13:05:37 +0200
+Message-ID: <53B53901.3050606@suse.de>
+References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>	<1404105243-5071-7-git-send-email-bmarzins@redhat.com>	<CABr-GnedX62W_U988FjXs4eV+GisRjt_AhPe4J6XhBPzF+_uCw@mail.gmail.com>	<53B3A0BA.9040502@suse.de>
+	<20140702194816.GF10438@dhcp80-209.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140702220223.GA23894@redhat.com>
+In-Reply-To: <20140702194816.GF10438@dhcp80-209.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +20,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Bart Van Assche <bvanassche@acm.org>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 07/03/2014 12:02 AM, Mike Snitzer wrote:
-> On Fri, Jun 27 2014 at  9:33am -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->
->> On Fri, Jun 27 2014 at  9:02am -0400,
->> Bart Van Assche <bvanassche@acm.org> wrote:
->>
->>> Hello,
+On 07/02/2014 09:48 PM, Benjamin Marzinski wrote:
+> On Wed, Jul 02, 2014 at 08:03:38AM +0200, Hannes Reinecke wrote:
+>> On 07/01/2014 09:22 PM, Christophe Varoqui wrote:
+>>> Hannes,
 >>>
->>> While running a cable pull simulation test with dm_multipath on top of
->>> the SRP initiator driver I noticed that after a few iterations I/O locks
->>> up instead of dm_multipath processing the path failure properly (see al=
-so
->>> below for a call trace). At least kernel versions 3.15 and 3.16-rc2 are
->>> vulnerable. This issue does not occur with kernel 3.14. I have tried to
->>> bisect this but gave up when I noticed that I/O locked up completely wi=
-th
->>> a kernel built from git commit ID e809917735ebf1b9a56c24e877ce0d320baee=
-2ec
->>> (dm mpath: push back requests instead of queueing). But with the bisect=
- I
->>> have been able to narrow down this issue to one of the patches in "Merge
->>> tag 'dm-3.15-changes' of git://git.kernel.org/pub/scm/linux/kernel/git/
->>> device-mapper/linux-dm". Does anyone have a suggestion how to analyze t=
-his
->>> further or how to fix this ?
+>>> would you Ack this one, or do you have some other idea for this in
+>>> your tree ?
+>>>
+>> Sigh. The whole multipath / systemd / dracut integration
+>> is _a mess_.
+>> The main problem is that RH and SUSE treat multipath handling differentl=
+y.
+>> (From what I can see. I've still a hard time to understand how
+>>   multipath booting works with RH. So there might be errors.)
+>>
+>> RH is taking a restrictive approach, ie it'll allow only configured
+>> multipath devices during boot. IE it'll accept only devices present
+>> in '/etc/multipath/wwids' for booting. So when coming across a new
+>> wwid multipath won't be setup there, so of course they'll need an
+>> additional parameter for that.
 >
-> I still don't have a _known_ fix for your issue but I reviewed commit
-> e809917735ebf1b9a56c24e877ce0d320baee2ec closer and identified what
-> looks to be a regression in logic for multipath_busy, it now calls
-> !pg_ready() instead of directly checking pg_init_in_progress.  I think
-> this is needed (Hannes, what do you think?):
+> That's not strictly true.  multipathd will happily create a multipath
+> device on top of any valid scsi devices it finds, but unless those
+> devices are in /etc/multipath/wwids, other components, like lvm won't
+> know to leave them alone.  This actually isn't an issue during the
+> initramfs boot stages because lvm doesn't do autoactivation there.
 >
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 3f6fd9d..561ead6 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -373,7 +373,7 @@ static int __must_push_back(struct multipath *m)
->   		 dm_noflush_suspending(m->ti)));
->   }
+> So, if the device appears in the initramfs portion of boot, we're great.
 >
-> -#define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required)
-> +#define pg_ready(m) (!(m)->queue_io && !(m)->pg_init_required && !(m)->p=
-g_init_in_progress)
+> The specific issue that prompted this goes like this:
 >
->   /*
->    * Map cloned requests
+> - The iscsi initiator is not setup to run in the initramfs on install
+> - Storage is added to the system that makes up a working LV
+> - Once the machine boots up, and is past the initramfs, the iscsi
+> initiator starts up and discovers the devices.
+> - Multipath races with lvmetad and loses
+> - Now you have a LV built on top of a single path device, instead of
+>    being multipathed (The LV is on top of a partition of the path
+>    device, so reassign_maps doesn't work on it)
 >
-D'oh. You're correct. Can you try with this patch?
+> If you tell the redhat installer that you want to use multipath, this
+> causes problems, since it can't disassemble the an arbitrary stack of
+> virtual devices.  Eventually, we'll fix that issue, and this won't
+> matter anymore, because it will just be able to disassemble the virtual
+> device stack, and rerun multipath, to make everything autoassemble in
+> the correct order.
+>
+Hmm. Similar to what I've seen here when booting with multipath =
+
+enabled and an empty '/etc/multipath/wwids' file.
+
+We're having an udev rule calling 'multipath -u' to check if the =
+
+device is eligible for multipathing. If so it'll set the various =
+
+udev properties to keep LVM and others from working with that device.
+
+But as 'multipath -u' is be checking /etc/multipath/wwids it will =
+
+always report 'not a multipath device'.
+So I would be perfectly happy with 'multipath -u' _not_ checking =
+
+/etc/multipath/wwids (or have a switch for doing so).
+
+Anyway. There is actually a slight inconsistency with the above =
+
+approach:
+Multipath is _not_ setup for autoconfiguration; from my =
+
+understanding this was exactly why /etc/multipath/wwids was =
+
+introduced in the first place.
+LVM, on the other hand, is trying to do autoconfiguration.
+
+Why? I would set either both to autoconfiguration or none.
+If I want something different I need to configure the system.
+
+Can you clarify what the intended usage for /etc/multipath/wwids is?
+I was under the impression that it's been introduced to keep
+multipath from accepting unconfigured devices ...
 
 Cheers,
 
