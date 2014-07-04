@@ -1,12 +1,16 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipath: add option '-i' to ignore wwids file
-Date: Fri,  4 Jul 2014 08:20:11 +0200
-Message-ID: <1404454811-21073-1-git-send-email-hare@suse.de>
+Subject: Re: [PATCH 06/12] Make multipath add wwids from kernel
+ cmdline mpath.wwids with -A
+Date: Fri, 04 Jul 2014 08:24:53 +0200
+Message-ID: <53B648B5.30209@suse.de>
+References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>	<1404105243-5071-7-git-send-email-bmarzins@redhat.com>	<CABr-GnedX62W_U988FjXs4eV+GisRjt_AhPe4J6XhBPzF+_uCw@mail.gmail.com>	<53B3A0BA.9040502@suse.de>	<20140702194816.GF10438@dhcp80-209.msp.redhat.com>	<53B53901.3050606@suse.de>
+	<20140703192555.GG10438@dhcp80-209.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140703192555.GG10438@dhcp80-209.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,116 +20,130 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When called from udev the multipath program is used to check
-if a device should be handled by multipath. Any new device,
-however, will not be present in /etc/multipath/wwids, and
-the check will always fail.
-This patch implements the option '-i' to multipath to skip
-checking the wwids file for these scenarios.
+On 07/03/2014 09:25 PM, Benjamin Marzinski wrote:
+> On Thu, Jul 03, 2014 at 01:05:37PM +0200, Hannes Reinecke wrote:
+>> On 07/02/2014 09:48 PM, Benjamin Marzinski wrote:
+>>> On Wed, Jul 02, 2014 at 08:03:38AM +0200, Hannes Reinecke wrote:
+>>>> On 07/01/2014 09:22 PM, Christophe Varoqui wrote:
+>>>>> Hannes,
+>>>>>
+>>>>> would you Ack this one, or do you have some other idea for this in
+>>>>> your tree ?
+>>>>>
+>>>> Sigh. The whole multipath / systemd / dracut integration
+>>>> is _a mess_.
+>>>> The main problem is that RH and SUSE treat multipath handling differen=
+tly.
+>>>> (From what I can see. I've still a hard time to understand how
+>>>>   multipath booting works with RH. So there might be errors.)
+>>>>
+>>>> RH is taking a restrictive approach, ie it'll allow only configured
+>>>> multipath devices during boot. IE it'll accept only devices present
+>>>> in '/etc/multipath/wwids' for booting. So when coming across a new
+>>>> wwid multipath won't be setup there, so of course they'll need an
+>>>> additional parameter for that.
+>>>
+>>> That's not strictly true.  multipathd will happily create a multipath
+>>> device on top of any valid scsi devices it finds, but unless those
+>>> devices are in /etc/multipath/wwids, other components, like lvm won't
+>>> know to leave them alone.  This actually isn't an issue during the
+>>> initramfs boot stages because lvm doesn't do autoactivation there.
+>>>
+>>> So, if the device appears in the initramfs portion of boot, we're great.
+>>>
+>>> The specific issue that prompted this goes like this:
+>>>
+>>> - The iscsi initiator is not setup to run in the initramfs on install
+>>> - Storage is added to the system that makes up a working LV
+>>> - Once the machine boots up, and is past the initramfs, the iscsi
+>>> initiator starts up and discovers the devices.
+>>> - Multipath races with lvmetad and loses
+>>> - Now you have a LV built on top of a single path device, instead of
+>>>    being multipathed (The LV is on top of a partition of the path
+>>>    device, so reassign_maps doesn't work on it)
+>>>
+>>> If you tell the redhat installer that you want to use multipath, this
+>>> causes problems, since it can't disassemble the an arbitrary stack of
+>>> virtual devices.  Eventually, we'll fix that issue, and this won't
+>>> matter anymore, because it will just be able to disassemble the virtual
+>>> device stack, and rerun multipath, to make everything autoassemble in
+>>> the correct order.
+>>>
+>> Hmm. Similar to what I've seen here when booting with multipath enabled =
+and
+>> an empty '/etc/multipath/wwids' file.
+>>
+>> We're having an udev rule calling 'multipath -u' to check if the device =
+is
+>> eligible for multipathing. If so it'll set the various udev properties to
+>> keep LVM and others from working with that device.
+>>
+>> But as 'multipath -u' is be checking /etc/multipath/wwids it will always
+>> report 'not a multipath device'.
+>> So I would be perfectly happy with 'multipath -u' _not_ checking
+>> /etc/multipath/wwids (or have a switch for doing so).
+>
+> 'multipath -u'? Do you mean 'multipath -c'?  I do worry that not
+> checking the wwids file could break things were some device appears
+> multipathable, but will never successfully get created for reasons
+> outside of multipath's knowledge.  The wwids file makes sure that this
+> device is multipathable, because it HAS been multipathed before.
+>
+> That being said, I have no objections to a switch to avoid the wwid file
+> check.
+>
+Okay, I've send a patch.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/config.h |  1 +
- multipath/main.c      | 18 +++++++++++-------
- multipath/multipath.8 |  5 ++++-
- 3 files changed, 16 insertions(+), 8 deletions(-)
+>> Anyway. There is actually a slight inconsistency with the above approach:
+>> Multipath is _not_ setup for autoconfiguration; from my understanding th=
+is
+>> was exactly why /etc/multipath/wwids was introduced in the first place.
+>> LVM, on the other hand, is trying to do autoconfiguration.
+>>
+>> Why? I would set either both to autoconfiguration or none.
+>> If I want something different I need to configure the system.
+>
+> Well, multipath is only not set up to do autoconfiguration because you
+> keep objecting to my find_multipaths patch, which makes multipath only
+> run on devices that have more than one path. With that, you can usually
+> leave the blacklists alone, and you will only get the devices that you
+> want.
+>
+Oh, I don't have any objections to that, provided it's configurable
+via the config file.
+Care to send a patch for that?
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index ac7c58e..ca17f39 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -106,6 +106,7 @@ struct config {
- 	int max_fds;
- 	int force_reload;
- 	int queue_without_daemon;
-+	int ignore_wwids;
- 	int checker_timeout;
- 	int daemon;
- #ifdef USE_SYSTEMD
-diff --git a/multipath/main.c b/multipath/main.c
-index 157475e..fd6262f 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -84,7 +84,7 @@ usage (char * progname)
- {
- 	fprintf (stderr, VERSION_STRING);
- 	fprintf (stderr, "Usage:\n");
--	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
-+	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-i] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
- 	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [dev]\n", progname);
- 	fprintf (stderr, "  %s -F [-v lvl]\n", progname);
- 	fprintf (stderr, "  %s -t\n", progname);
-@@ -103,6 +103,7 @@ usage (char * progname)
- 		"  -d      dry run, do not create or update devmaps\n" \
- 		"  -t      dump internal hardware table\n" \
- 		"  -r      force devmap reload\n" \
-+		"  -i      ignore wwids file\n" \
- 		"  -B      treat the bindings file as read only\n" \
- 		"  -p      policy failover|multibus|group_by_serial|group_by_prio\n" \
- 		"  -b fil  bindings file location\n" \
-@@ -307,12 +308,12 @@ configure (void)
- 		}
- 		condlog(3, "scope limited to %s", refwwid);
- 		if (conf->cmd == CMD_VALID_PATH) {
--			if (check_wwids_file(refwwid, 0) == 0){
--				printf("%s is a valid multipath device path\n", conf->dev);
-+			if (conf->ignore_wwids ||
-+			    check_wwids_file(refwwid, 0) == 0)
- 				r = 0;
--			}
--			else
--				printf("%s is not a valid multipath device path\n", conf->dev);
-+
-+			printf("%s %s a valid multipath device path\n",
-+			       conf->dev, r == 0 ? "is" : "is not");
- 			goto out;
- 		}
- 	}
-@@ -445,7 +446,7 @@ main (int argc, char *argv[])
- 	if (load_config(DEFAULT_CONFIGFILE, udev))
- 		exit(1);
- 
--	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BrtqwW")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BritqwW")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
- 			break;
-@@ -503,6 +504,9 @@ main (int argc, char *argv[])
- 		case 'r':
- 			conf->force_reload = 1;
- 			break;
-+		case 'i':
-+			conf->ignore_wwids = 1;
-+			break;
- 		case 't':
- 			r = dump_config();
- 			goto out_free_config;
-diff --git a/multipath/multipath.8 b/multipath/multipath.8
-index b6479b1..13e2e89 100644
---- a/multipath/multipath.8
-+++ b/multipath/multipath.8
-@@ -8,7 +8,7 @@ multipath \- Device mapper target autoconfig
- .RB [\| \-b\ \c
- .IR bindings_file \|]
- .RB [\| \-d \|]
--.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r | \-a | \-w | \-W \|]
-+.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r | \|-i | \-a | \-w | \-W \|]
- .RB [\| \-p\ \c
- .BR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
- .RB [\| device \|]
-@@ -55,6 +55,9 @@ print internal hardware table to stdout
- .B \-r
- force devmap reload
- .TP
-+.B \-i
-+ignore wwids file when processing devices
-+.TP
- .B \-B
- treat the bindings file as read only
- .TP
--- 
-1.8.4.5
+>
+>> Can you clarify what the intended usage for /etc/multipath/wwids is?
+>> I was under the impression that it's been introduced to keep
+>> multipath from accepting unconfigured devices ...
+>
+> Like I mentioned above, it was added to avoid the situations where
+> multipath isn't blacklisted on a device, but is unable to set up on it.
+> We use this to so that 'multipath -c' doesn't claim a device and keep
+> lvm or md from using it when it shouldn't.
+>
+Ah, I've been luckier than you, then.
+I keep telling folks that multipath will grab all devices, and the =
+
+only way to modify this is blacklisting devices via /etc/multipath.conf.
+So any system where the above happens is per definition =
+
+misconfigured :-)
+
+Christophe, what happened to the patches you've said to have =
+
+applied? I haven't seen them showing up in the git repository ...
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
