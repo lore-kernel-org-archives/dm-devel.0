@@ -1,114 +1,67 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: v3.15 dm-mpath regression: cable pull test causes
-	I/O hang
-Date: Tue, 8 Jul 2014 12:33:23 -0400
-Message-ID: <20140708163323.GB23439@redhat.com>
-References: <53AD6B62.2020407@acm.org> <20140627133345.GA6150@redhat.com>
-	<20140702220223.GA23894@redhat.com> <53B56120.8040802@acm.org>
-	<20140703140516.GB28104@redhat.com> <53B569E1.1010405@acm.org>
-	<11AF7C027C4C02408624617A4986078401311EA8@BPXM12GP.gisp.nec.co.jp>
-	<53BAA35B.30204@acm.org>
-	<11AF7C027C4C02408624617A498607840132038A@BPXM12GP.gisp.nec.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] md/dm-ioctl.c: optimize memory allocation in
+ copy_params
+Date: Tue, 8 Jul 2014 18:39:13 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1407081831510.27831@file01.intranet.prod.int.rdu2.redhat.com>
+References: <53B68068.2060102@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <11AF7C027C4C02408624617A498607840132038A@BPXM12GP.gisp.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Bart Van Assche <bvanassche@acm.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <53B68068.2060102@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "xinhui.pan" <xinhuix.pan@intel.com>
+Cc: linux-kernel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, "Liu, ShuoX" <shuox.liu@intel.com>, yanmin_zhang@linux.intel.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 07 2014 at  8:55pm -0400,
-Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+Hi
 
-> On 07/07/14 22:40, Bart Van Assche wrote:
-> > Thanks for looking into this issue. I have attached the requested
-> > information to this e-mail for a test run with kernel 3.16-rc4 at the
-> > initiator side.
-> 
-> Thank you, Bart. The information is helpful.
-> 
-> >From "dmsetup table" output, hardware handler is not used
-> in your setup. So pg_init is not involved.
-> 
-> > # cat /proc/diskstats
-> ..
-> >  253       1 dm-1 127 0 1016 1070 0 0 0 0 1 278360 278820
-> 
-> In-flight IO remains.
-> 
-> > # dmsetup info -c
-> > Name              Maj Min Stat Open Targ Event  UUID                            
-> ...
-> > 26466363537333266 253   1 L--w    1    1      0 mpath-26466363537333266 
-> 
-> Typical reason of remainig IO is device staying as suspended.
-> But the device state is ok here.
-> 
-> > # dmsetup status
-> ...
-> > 26466363537333266: 0 256000 multipath 2 1 0 0 1 1 E 0 2 2 8:48 A 0 0 1 8:160 A 0 0 1
-> 
-> Single path group with both paths being active on dm-1.
-> But the path group is not active.
-> 
-> I suspect what's happening here is nobody clears m->queue_io:
-> multipath_busy() returns busy when queue_io=1 while clearing queue_io
-> needs __choose_pgpath(), which won't be called if multipath_busy() is true.
-> 
-> I think if you run 'sg_inq /dev/dm-1' for example in this case,
-> the device will start working again.
-> Since ioctl is not affected by multipath_busy(), somehow the problem
-> was hidden in many cases by udev activities, for example.
-> 
-> Attached patch should fix the problem.
-> Could you give it a try?
-> 
-> -
-> Jun'ichi Nomura, NEC Corporation
-> 
-> 
-> pg_ready() checks the current state of the multipath and may return
-> false even if a new IO is needed to change the state.
-> 
-> OTOH, if multipath_busy() returns busy, a new IO will not be sent
-> to multipath target and the state change won't happen. That results
-> in lock up.
-> 
-> The intent of multipath_busy() is to avoid unnecessary cycles of
-> dequeue + request_fn + requeue if it is known that multipath device
-> will requeue.
-> 
-> Such situation would be:
->   - path group is being activated
->   - there is no path and the multipath is setup to requeue if no path
-> 
-> This patch should fix the problem introduced as a part of this commit:
->   commit e809917735ebf1b9a56c24e877ce0d320baee2ec
->   dm mpath: push back requests instead of queueing
+I don't really know what is the purpose of this patch. In existing device 
+mapper code, if kmalloc fails, the allocation is retried with __vmalloc. 
+So there is no need to avoid kmalloc aritifically.
+
+kmalloc doesn't cause memory fragmentation. If the memory is too 
+fragmented, kmalloc fails. If it isn't, it succeeds. But it doesn't cause 
+memory being fragmented.
+
+If you have some other driver that fails because of large kmalloc failure, 
+you should fix it to use scatter-gather DMA or (if the hardware can't do 
+it) preallocate the memory when the driver is loaded.
+
+Mikulas
 
 
-Thanks Jun'ichi!  I knew multipath_busy() wasn't quite right ;)
 
-I've merged your fix with a revised header, if you see anything wrong
-with the header please feel free to let me know!  See:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=75c76c45b76e53b7c2f025d30e7e308bfe331004
+On Fri, 4 Jul 2014, xinhui.pan wrote:
 
-This will likely go to Linus for 3.16-rc5 by this Friday.
-
-BTW, I also staged a related cleanup for 3.17, see:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=2122e57c913cd842e5061137a7093bd06e728677
-
-Thanks again,
-Mike
+> KMALLOC_MAX_SIZE is too big, it easily cause memory fragmented and low memory when param_kernel->data_size
+> is also big. That's not nice. So use vmalloc instead of kmalloc when size is larger than (PAGE_SIZE << 2).
+> There are other drivers using kmalloc to gain a big size memory. And that cause our devices to hit hang and
+> many worse issues. We don't benefit much when using kmalloc in such scenario.
+> 
+> Signed-off-by: xinhui.pan <xinhuiX.pan@intel.com>
+> Signed-off-by: yanmin.zhang <yanmin_zhang@linux.intel.com>
+> ---
+>  drivers/md/dm-ioctl.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> index 5152142..31c3af9 100644
+> --- a/drivers/md/dm-ioctl.c
+> +++ b/drivers/md/dm-ioctl.c
+> @@ -1709,7 +1709,7 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
+>          * Use kmalloc() rather than vmalloc() when we can.
+>          */
+>         dmi = NULL;
+> -       if (param_kernel->data_size <= KMALLOC_MAX_SIZE) {
+> +       if (param_kernel->data_size <= (PAGE_SIZE << 2)) {
+>                 dmi = kmalloc(param_kernel->data_size, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+>                 if (dmi)
+>                         *param_flags |= DM_PARAMS_KMALLOC;
+> -- 
+> 1.7.9.5
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
