@@ -1,16 +1,21 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipath: add option '-i' to ignore wwids
-	file
-Date: Mon, 7 Jul 2014 13:49:30 -0500
-Message-ID: <20140707184930.GH10438@dhcp80-209.msp.redhat.com>
-References: <1404454811-21073-1-git-send-email-hare@suse.de>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: v3.15 dm-mpath regression: cable pull test causes
+ I/O hang
+Date: Tue, 8 Jul 2014 00:55:14 +0000
+Message-ID: <11AF7C027C4C02408624617A498607840132038A@BPXM12GP.gisp.nec.co.jp>
+References: <53AD6B62.2020407@acm.org> <20140627133345.GA6150@redhat.com>
+	<20140702220223.GA23894@redhat.com> <53B56120.8040802@acm.org>
+	<20140703140516.GB28104@redhat.com> <53B569E1.1010405@acm.org>
+	<11AF7C027C4C02408624617A4986078401311EA8@BPXM12GP.gisp.nec.co.jp>
+	<53BAA35B.30204@acm.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1404454811-21073-1-git-send-email-hare@suse.de>
+In-Reply-To: <53BAA35B.30204@acm.org>
+Content-Language: ja-JP
+Content-ID: <3046E6AE287C724894244596136C49FB@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,124 +25,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+To: Bart Van Assche <bvanassche@acm.org>, device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 04, 2014 at 08:20:11AM +0200, Hannes Reinecke wrote:
+On 07/07/14 22:40, Bart Van Assche wrote:
+> Thanks for looking into this issue. I have attached the requested
+> information to this e-mail for a test run with kernel 3.16-rc4 at the
+> initiator side.
 
-Looks fine by me.
+Thank you, Bart. The information is helpful.
 
-ACK
+From "dmsetup table" output, hardware handler is not used
+in your setup. So pg_init is not involved.
 
--Ben
+> # cat /proc/diskstats
+..
+>  253       1 dm-1 127 0 1016 1070 0 0 0 0 1 278360 278820
 
-> When called from udev the multipath program is used to check
-> if a device should be handled by multipath. Any new device,
-> however, will not be present in /etc/multipath/wwids, and
-> the check will always fail.
-> This patch implements the option '-i' to multipath to skip
-> checking the wwids file for these scenarios.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  libmultipath/config.h |  1 +
->  multipath/main.c      | 18 +++++++++++-------
->  multipath/multipath.8 |  5 ++++-
->  3 files changed, 16 insertions(+), 8 deletions(-)
-> 
-> diff --git a/libmultipath/config.h b/libmultipath/config.h
-> index ac7c58e..ca17f39 100644
-> --- a/libmultipath/config.h
-> +++ b/libmultipath/config.h
-> @@ -106,6 +106,7 @@ struct config {
->  	int max_fds;
->  	int force_reload;
->  	int queue_without_daemon;
-> +	int ignore_wwids;
->  	int checker_timeout;
->  	int daemon;
->  #ifdef USE_SYSTEMD
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 157475e..fd6262f 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -84,7 +84,7 @@ usage (char * progname)
->  {
->  	fprintf (stderr, VERSION_STRING);
->  	fprintf (stderr, "Usage:\n");
-> -	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
-> +	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-i] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
->  	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [dev]\n", progname);
->  	fprintf (stderr, "  %s -F [-v lvl]\n", progname);
->  	fprintf (stderr, "  %s -t\n", progname);
-> @@ -103,6 +103,7 @@ usage (char * progname)
->  		"  -d      dry run, do not create or update devmaps\n" \
->  		"  -t      dump internal hardware table\n" \
->  		"  -r      force devmap reload\n" \
-> +		"  -i      ignore wwids file\n" \
->  		"  -B      treat the bindings file as read only\n" \
->  		"  -p      policy failover|multibus|group_by_serial|group_by_prio\n" \
->  		"  -b fil  bindings file location\n" \
-> @@ -307,12 +308,12 @@ configure (void)
->  		}
->  		condlog(3, "scope limited to %s", refwwid);
->  		if (conf->cmd == CMD_VALID_PATH) {
-> -			if (check_wwids_file(refwwid, 0) == 0){
-> -				printf("%s is a valid multipath device path\n", conf->dev);
-> +			if (conf->ignore_wwids ||
-> +			    check_wwids_file(refwwid, 0) == 0)
->  				r = 0;
-> -			}
-> -			else
-> -				printf("%s is not a valid multipath device path\n", conf->dev);
-> +
-> +			printf("%s %s a valid multipath device path\n",
-> +			       conf->dev, r == 0 ? "is" : "is not");
->  			goto out;
->  		}
->  	}
-> @@ -445,7 +446,7 @@ main (int argc, char *argv[])
->  	if (load_config(DEFAULT_CONFIGFILE, udev))
->  		exit(1);
->  
-> -	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BrtqwW")) != EOF ) {
-> +	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BritqwW")) != EOF ) {
->  		switch(arg) {
->  		case 1: printf("optarg : %s\n",optarg);
->  			break;
-> @@ -503,6 +504,9 @@ main (int argc, char *argv[])
->  		case 'r':
->  			conf->force_reload = 1;
->  			break;
-> +		case 'i':
-> +			conf->ignore_wwids = 1;
-> +			break;
->  		case 't':
->  			r = dump_config();
->  			goto out_free_config;
-> diff --git a/multipath/multipath.8 b/multipath/multipath.8
-> index b6479b1..13e2e89 100644
-> --- a/multipath/multipath.8
-> +++ b/multipath/multipath.8
-> @@ -8,7 +8,7 @@ multipath \- Device mapper target autoconfig
->  .RB [\| \-b\ \c
->  .IR bindings_file \|]
->  .RB [\| \-d \|]
-> -.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r | \-a | \-w | \-W \|]
-> +.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-q | \|-r | \|-i | \-a | \-w | \-W \|]
->  .RB [\| \-p\ \c
->  .BR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
->  .RB [\| device \|]
-> @@ -55,6 +55,9 @@ print internal hardware table to stdout
->  .B \-r
->  force devmap reload
->  .TP
-> +.B \-i
-> +ignore wwids file when processing devices
-> +.TP
->  .B \-B
->  treat the bindings file as read only
->  .TP
-> -- 
-> 1.8.4.5
+In-flight IO remains.
+
+> # dmsetup info -c
+> Name              Maj Min Stat Open Targ Event  UUID                            
+...
+> 26466363537333266 253   1 L--w    1    1      0 mpath-26466363537333266 
+
+Typical reason of remainig IO is device staying as suspended.
+But the device state is ok here.
+
+> # dmsetup status
+...
+> 26466363537333266: 0 256000 multipath 2 1 0 0 1 1 E 0 2 2 8:48 A 0 0 1 8:160 A 0 0 1
+
+Single path group with both paths being active on dm-1.
+But the path group is not active.
+
+I suspect what's happening here is nobody clears m->queue_io:
+multipath_busy() returns busy when queue_io=1 while clearing queue_io
+needs __choose_pgpath(), which won't be called if multipath_busy() is true.
+
+I think if you run 'sg_inq /dev/dm-1' for example in this case,
+the device will start working again.
+Since ioctl is not affected by multipath_busy(), somehow the problem
+was hidden in many cases by udev activities, for example.
+
+Attached patch should fix the problem.
+Could you give it a try?
+
+-
+Jun'ichi Nomura, NEC Corporation
+
+
+pg_ready() checks the current state of the multipath and may return
+false even if a new IO is needed to change the state.
+
+OTOH, if multipath_busy() returns busy, a new IO will not be sent
+to multipath target and the state change won't happen. That results
+in lock up.
+
+The intent of multipath_busy() is to avoid unnecessary cycles of
+dequeue + request_fn + requeue if it is known that multipath device
+will requeue.
+
+Such situation would be:
+  - path group is being activated
+  - there is no path and the multipath is setup to requeue if no path
+
+This patch should fix the problem introduced as a part of this commit:
+  commit e809917735ebf1b9a56c24e877ce0d320baee2ec
+  dm mpath: push back requests instead of queueing
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index ebfa411..d58343e 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1620,8 +1620,9 @@ static int multipath_busy(struct dm_target *ti)
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+-	/* pg_init in progress, requeue until done */
+-	if (!pg_ready(m)) {
++	/* pg_init in progress or no paths available */
++	if (m->pg_init_in_progress ||
++	    (!m->nr_valid_paths && m->queue_if_no_path)) {
+ 		busy = 1;
+ 		goto out;
+ 	}
