@@ -1,43 +1,99 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [dm-devel] Regression in 3.15 on POWER8 with multipath SCSI
-Date: Wed, 9 Jul 2014 12:13:12 +0000
-Message-ID: <11AF7C027C4C02408624617A498607840132A448@BPXM12GP.gisp.nec.co.jp>
-References: <20140630103058.GA17747@iris.ozlabs.ibm.com>
- <20140701193907.GA15306@redhat.com>
- <11AF7C027C4C02408624617A4986078401323542@BPXM12GP.gisp.nec.co.jp>
- <53BCBD2E.6010203@ozlabs.ru>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] md/dm-ioctl.c: optimize memory allocation in
+ copy_params
+Date: Wed, 9 Jul 2014 10:53:17 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1407091032400.4545@file01.intranet.prod.int.rdu2.redhat.com>
+References: <53B68068.2060102@intel.com> <alpine.LRH.2.02.1407081831510.27831@file01.intranet.prod.int.rdu2.redhat.com> <53BCA278.5050205@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <53BCBD2E.6010203@ozlabs.ru>
-Content-Language: ja-JP
-Content-ID: <E788EF8EB185CE4FB3CC1C4BFB636B71@gisp.nec.co.jp>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: "aik@ozlabs.ru" <aik@ozlabs.ru>
-Cc: Vladimir Davydov <vdavydov@parallels.com>, "bvanassche@acm.org" <bvanassche@acm.org>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linuxppc-dev@ozlabs.org" <linuxppc-dev@ozlabs.org>, device-mapper development <dm-devel@redhat.com>, Paul Mackerras <paulus@samba.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <53BCA278.5050205@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Zhang, Yanmin" <yanmin_zhang@linux.intel.com>
+Cc: "xinhui.pan" <xinhuix.pan@intel.com>, linux-kernel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, "Liu, ShuoX" <shuox.liu@intel.com>
 List-Id: dm-devel.ids
 
-T24gMDcvMDkvMTQgMTI6NTUsIEFsZXhleSBLYXJkYXNoZXZza2l5IHdyb3RlOgo+IE9uIDA3LzA4
-LzIwMTQgMDg6MjggUE0sIEp1bmljaGkgTm9tdXJhIHdyb3RlOgo+PiBJdCBzZWVtcyBCYXJ0J3Mg
-aXNzdWUgaGFzIGdvbmUgd2l0aCB0aGUgYXR0YWNoZWQgcGF0Y2g6Cj4+IGh0dHA6Ly93d3cucmVk
-aGF0LmNvbS9hcmNoaXZlcy9kbS1kZXZlbC8yMDE0LUp1bHkvbXNnMDAwMzUuaHRtbAo+PiBDb3Vs
-ZCB5b3UgdHJ5IGlmIGl0IG1ha2VzIGFueSBkaWZmZXJlbmNlIG9uIHlvdXIgaXNzdWU/Ci4uCj4g
-VGhpcyBwYXRjaCBmaXhlcyBJUFIgU0NTSSBmb3IgbXkgUE9XRVI4IGJveCwgZTgwOTkxNzcgd2Fz
-IHRoZSBwcm9ibGVtLgoKVGhhbmsgeW91IGZvciB0aGUgdGVzdGluZy4KCk1pa2UgU25pdHplciBo
-YXMgcGlja2VkIHVwIHRoaXMgcGF0Y2ggZm9yIGhpcyB0cmVlOgpodHRwczovL2dpdC5rZXJuZWwu
-b3JnL2NnaXQvbGludXgva2VybmVsL2dpdC9kZXZpY2UtbWFwcGVyL2xpbnV4LWRtLmdpdC9jb21t
-aXQvP2g9Zm9yLW5leHQmaWQ9NzVjNzZjNDViNzZlNTNiN2MyZjAyNWQzMGU3ZTMwOGJmZTMzMTAw
-NAoKLS0gCkp1bidpY2hpIE5vbXVyYSwgTkVDIENvcnBvcmF0aW9uCl9fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4cHBjLWRldiBtYWlsaW5nIGxpc3QK
-TGludXhwcGMtZGV2QGxpc3RzLm96bGFicy5vcmcKaHR0cHM6Ly9saXN0cy5vemxhYnMub3JnL2xp
-c3RpbmZvL2xpbnV4cHBjLWRldg==
+
+
+On Wed, 9 Jul 2014, Zhang, Yanmin wrote:
+
+> On 2014/7/9 6:39, Mikulas Patocka wrote:
+> 
+> > Hi
+> 
+> Mikulas,
+> 
+> Thanks for your kind comments.
+> 
+> > I don't really know what is the purpose of this patch. In existing device
+> > mapper code, if kmalloc fails, the allocation is retried with __vmalloc.
+> > So there is no need to avoid kmalloc aritifically.
+> > 
+> > kmalloc doesn't cause memory fragmentation. If the memory is too
+> > fragmented, kmalloc fails. If it isn't, it succeeds. But it doesn't cause
+> > memory being fragmented.
+> 
+> I agree with you. The patch's original description is not appropriate.
+> Basically, memory fragmentation is not caused by this kmalloc.
+> 
+> The right description is: When memory is fragmented and most memory is used
+> up,
+> kmalloc a big memory might cause lots of OutOFMemory and system might kill
+> lots of processes. Then, system might hang.
+
+The question is - does this particular kmalloc in device mapper cause out 
+of memory or killing of other tasks? It has flags __GFP_NORETRY, 
+__GFP_NOMEMALLOC, __GFP_NOWARN so it shouldn't cause any trouble. It 
+should just fail silently if memory is fragmented.
+
+Do you have some stacktrace that identifies this kmalloc as a problem?
+
+Do this test - prepare two kernels that are identical, except that one 
+kernel has that one-line change in dm-ioctl. Boot each kernel 10 times, do 
+exactly the same operation after boot. Does the kernel with the patch 
+always behave correctly and does the kernel without the patch always fail? 
+Report the result - how many failures did you get with or without that 
+one-line patch. Without such a test - I just don't believe that your patch 
+makes any difference.
+
+Another question - your patch only makes change if some device mapper 
+ioctl has more than 16kB arugments. Which ioctl with more than 16kB 
+arguments do you use? Do you load such a big table to device mapper? How 
+often do you call that ioctl with such big arguments?
+
+Mikulas
+
+
+> We are enabling Android on mobiles and tablets. We hit OOM often at 
+> Monkey and other stress testing. Sometimes, kernel prints big memory 
+> allocation warning.
+> 
+> Theoretically, it's a good idea to call kmalloc firstly. If it fails, 
+> use vmalloc. However, kernel assumes drivers do the right thing. When 
+> drivers call kmalloc to allocate a big memory, memory management would 
+> do the best to fulfill it. When memory is fragmented and most memory is 
+> used up, such allocation would cause big memory recollection. Some 
+> processes might be killed. The worse scenario is after a process is 
+> killed, it is restarted and allocates memory again. That causes system 
+> hang, or mobile users feel a big stall. We did fix a similar issue in 
+> one of our drivers.
+> 
+> Usually, kernel and drivers can allocate big continuous memory at 
+> booting or initialization stage. After that, they need allocate small 
+> order memory. The best is to just allocate order-0 memory.
+> 
+> 
+> > 
+> > If you have some other driver that fails because of large kmalloc failure,
+> > you should fix it to use scatter-gather DMA or (if the hardware can't do
+> > it) preallocate the memory when the driver is loaded.
+> 
+> I agree with you. Here the patch fixes the issue, where dm might allocate
+> big continuous memory after booting. Monkey testing triggers it by operating
+> menu Setting=>Security=>InstallfromSDcard.
+> 
+> We are catching all places in kernel where big memory allocation happens.
+> This patch is just to fix one case.
+> 
+> Thanks,
+> Yanmin
