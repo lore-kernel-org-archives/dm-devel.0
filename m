@@ -1,12 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-table: make dm_table_supports_discards static
-Date: Thu, 10 Jul 2014 12:23:07 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1407101220010.24163@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH v2] dm-table: make dm_table_supports_discards
+	static
+Date: Thu, 10 Jul 2014 13:20:33 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1407101318440.1208@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1407101220010.24163@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1407101220010.24163@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,22 +23,27 @@ To: Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-The function dm_table_supports_discards is called only from dm-table.c - 
-so make it static. The function is moved upward, just before 
-dm_table_set_restrictions that calls it.
+... version 2 of the patch. The previous patch had missing white line 
+between function.
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+The function dm_table_supports_discards is called only from dm-table.c, so
+make it static.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-table.c |   72 +++++++++++++++++++++++++-------------------------
+ drivers/md/dm-table.c |   74 +++++++++++++++++++++++++-------------------------
  drivers/md/dm.h       |    1 
- 2 files changed, 36 insertions(+), 37 deletions(-)
+ 2 files changed, 37 insertions(+), 38 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-table.c
+Index: linux-3.16-rc4/drivers/md/dm-table.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c	2014-07-10 18:13:50.000000000 +0200
-+++ linux-2.6/drivers/md/dm-table.c	2014-07-10 18:19:18.000000000 +0200
-@@ -1430,6 +1430,42 @@ static bool dm_table_supports_write_same
+--- linux-3.16-rc4.orig/drivers/md/dm-table.c	2014-07-10 18:21:23.000000000 +0200
++++ linux-3.16-rc4/drivers/md/dm-table.c	2014-07-10 19:18:00.000000000 +0200
+@@ -1442,6 +1442,43 @@ static bool dm_table_supports_write_same
  	return true;
  }
  
@@ -75,13 +83,15 @@ Index: linux-2.6/drivers/md/dm-table.c
 +
 +	return 0;
 +}
++
  void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
  			       struct queue_limits *limits)
  {
-@@ -1636,39 +1672,3 @@ void dm_table_run_md_queue_async(struct 
+@@ -1647,40 +1684,3 @@ void dm_table_run_md_queue_async(struct 
+ 	}
  }
  EXPORT_SYMBOL(dm_table_run_md_queue_async);
- 
+-
 -static int device_discard_capable(struct dm_target *ti, struct dm_dev *dev,
 -				  sector_t start, sector_t len, void *data)
 -{
@@ -118,10 +128,10 @@ Index: linux-2.6/drivers/md/dm-table.c
 -
 -	return 0;
 -}
-Index: linux-2.6/drivers/md/dm.h
+Index: linux-3.16-rc4/drivers/md/dm.h
 ===================================================================
---- linux-2.6.orig/drivers/md/dm.h	2014-07-10 18:13:50.000000000 +0200
-+++ linux-2.6/drivers/md/dm.h	2014-07-10 18:19:18.000000000 +0200
+--- linux-3.16-rc4.orig/drivers/md/dm.h	2014-07-10 18:21:23.000000000 +0200
++++ linux-3.16-rc4/drivers/md/dm.h	2014-07-10 18:21:25.000000000 +0200
 @@ -72,7 +72,6 @@ int dm_table_any_busy_target(struct dm_t
  unsigned dm_table_get_type(struct dm_table *t);
  struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
