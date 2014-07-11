@@ -1,65 +1,36 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 3.16-rc5
-Date: Fri, 11 Jul 2014 09:52:00 -0400
-Message-ID: <20140711135200.GA15970@redhat.com>
+From: John Utz <John.Utz@wdc.com>
+Subject: device mapper target vs personality,
+ how do you decide to pick one or the other?
+Date: Fri, 11 Jul 2014 21:28:51 +0000
+Message-ID: <8A51900D08212F40B3DE22453052F69839C45AE5@wdscexmb02>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Bart Van Assche <bvanassche@acm.org>, Jana Saout <jana@saout.de>, Minfei Huang <huangminfei@ucloud.cn>, Dan Carpenter <dan.carpenter@oracle.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+Hi;
 
-The following changes since commit 4c834452aad01531db949414f94f817a86348d59:
+having stared at the code associated with these 2 constructs for a while, i cant come up with a clear reason why one would choose one over the other.
 
-  Linux 3.16-rc3 (2014-06-29 14:11:36 -0700)
+having said that, it seems that the personality code is ancestral and is used for the personalities that can be compiled into device mapper and the target code is for newer stuff that is not expected to be compiled into device mapper.
 
-are available in the git repository at:
+so, based on this speculation, i *think* i should be using the target construct for the new device mapper module that i am currently coding.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.16-fixes
+am i correct?
 
-for you to fetch changes up to 7a7a3b45fed9a144dbf766ee842a4c5d0632b81d:
+tnx!
 
-  dm mpath: fix IO hang due to logic bug in multipath_busy (2014-07-10 16:44:15 -0400)
-
-All fixes are marked for stable.
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-. Fix DM multipath IO hang regression from 3.15 due to logic bug in
-  multipath_busy.  This impacted cable-pull testing and also the ability
-  to boot with IPR SCSI on a POWER8 box.
-
-. Fix possible deadlock with deferred device removal by using a new
-  dedicated workqueue rather than using the system workqueue.
-
-. Fix NULL pointer crash due to race condition in dm-io's wake up code
-  for sync_io by using a completion.
-
-. Update dm-crypt and dm-zero author name following legal name change;
-  this is important to Jana so I didn't see any reason to hold it back.
-
-----------------------------------------------------------------
-Jana Saout (1):
-      dm crypt, dm zero: update author name following legal name change
-
-Joe Thornber (1):
-      dm io: fix a race condition in the wake up code for sync_io
-
-Jun'ichi Nomura (1):
-      dm mpath: fix IO hang due to logic bug in multipath_busy
-
-Mikulas Patocka (1):
-      dm: allocate a special workqueue for deferred device removal
-
- drivers/md/dm-crypt.c |  4 ++--
- drivers/md/dm-io.c    | 22 ++++++++--------------
- drivers/md/dm-mpath.c |  5 +++--
- drivers/md/dm-zero.c  |  4 ++--
- drivers/md/dm.c       | 15 +++++++++++++--
- 5 files changed, 28 insertions(+), 22 deletions(-)
+johnu
