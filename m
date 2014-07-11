@@ -1,100 +1,65 @@
-From: Patrick Schleizer <patrick-mailinglists@whonix.org>
-Subject: kpartx bug when using very long paths?
-Date: Thu, 10 Jul 2014 23:18:36 +0000
-Message-ID: <53BF1F4C.5070306@whonix.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 3.16-rc5
+Date: Fri, 11 Jul 2014 09:52:00 -0400
+Message-ID: <20140711135200.GA15970@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Bart Van Assche <bvanassche@acm.org>, Jana Saout <jana@saout.de>, Minfei Huang <huangminfei@ucloud.cn>, Dan Carpenter <dan.carpenter@oracle.com>
 List-Id: dm-devel.ids
 
-Is it possible, that there is a bug in kpartx when using very long paths?
+Hi Linus,
 
-Test 1 (short paths, works):
-----------
+The following changes since commit 4c834452aad01531db949414f94f817a86348d59:
 
-#!/bin/bash
-set -x
-set -e
+  Linux 3.16-rc3 (2014-06-29 14:11:36 -0700)
 
-losetup --all
+are available in the git repository at:
 
-kpartx -a -s -v /home/tester/whonix_binary/Whonix-Gateway-8.6.1.6.raw
-losetup --all
-kpartx -d -s -v /home/tester/whonix_binary/Whonix-Gateway-8.6.1.6.raw
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.16-fixes
 
-losetup --all
+for you to fetch changes up to 7a7a3b45fed9a144dbf766ee842a4c5d0632b81d:
 
-Output 1:
-----------
+  dm mpath: fix IO hang due to logic bug in multipath_busy (2014-07-10 16:44:15 -0400)
 
-sudo ./testscript
-+ set -e
-+ losetup --all
-+ kpartx -a -s -v /home/tester/whonix_binary/Whonix-Gateway-8.6.1.6.raw
-add map loop0p1 (254:0): 0 209711104 linear /dev/loop0 4096
-+ losetup --all
-/dev/loop0: [0801]:5898359
-(/home/tester/whonix_binary/Whonix-Gateway-8.6.1.6.raw)
-+ kpartx -d -s -v /home/tester/whonix_binary/Whonix-Gateway-8.6.1.6.raw
-del devmap : loop0p1
-loop deleted : /dev/loop0
-+ losetup --all
+All fixes are marked for stable.
 
-Test 2 (long paths, fails):
-----------
+Please pull, thanks.
+Mike
 
-#!/bin/bash
-set -x
-set -e
+----------------------------------------------------------------
+. Fix DM multipath IO hang regression from 3.15 due to logic bug in
+  multipath_busy.  This impacted cable-pull testing and also the ability
+  to boot with IPR SCSI on a POWER8 box.
 
-losetup --all
+. Fix possible deadlock with deferred device removal by using a new
+  dedicated workqueue rather than using the system workqueue.
 
-kpartx -a -s -v
-/home/tester/whonix_binary/Whonix-Gateway-8.6.1.6_report_tempfolder/raw_folder/Whonix-Gateway-8.6.1.6.raw
-losetup --all
-kpartx -d -s -v
-/home/tester/whonix_binary/Whonix-Gateway-8.6.1.6_report_tempfolder/raw_folder/Whonix-Gateway-8.6.1.6.raw
+. Fix NULL pointer crash due to race condition in dm-io's wake up code
+  for sync_io by using a completion.
 
-losetup --all
+. Update dm-crypt and dm-zero author name following legal name change;
+  this is important to Jana so I didn't see any reason to hold it back.
 
-Output 2:
-----------
+----------------------------------------------------------------
+Jana Saout (1):
+      dm crypt, dm zero: update author name following legal name change
 
-sudo ./testscript
-+ set -e
-+ losetup --all
-+ kpartx -a -s -v
-/home/tester/whonix_binary/Whonix-Gateway-8.6.1.6_report_tempfolder/raw_folder/Whonix-Gateway-8.6.1.6.raw
-add map loop0p1 (254:0): 0 209711104 linear /dev/loop0 4096
-+ losetup --all
-/dev/loop0: [0801]:5898422
-(/home/tester/whonix_binary/Whonix-Gateway-8.6.1.6_report_tempfolder/raw_folder/Whonix-Gateway-8.6.1.6.raw)
-+ kpartx -d -s -v
-/home/tester/whonix_binary/Whonix-Gateway-8.6.1.6_report_tempfolder/raw_folder/Whonix-Gateway-8.6.1.6.raw
-+ losetup --all
-/dev/loop0: [0801]:5898422
-(/home/tester/whonix_binary/Whonix-Gateway-8.6.1.6_report_tempfolder/raw_folder/Whonix-Gateway-8.6.1.6.raw)
+Joe Thornber (1):
+      dm io: fix a race condition in the wake up code for sync_io
 
-----------
+Jun'ichi Nomura (1):
+      dm mpath: fix IO hang due to logic bug in multipath_busy
 
-(Same file, different path.)
+Mikulas Patocka (1):
+      dm: allocate a special workqueue for deferred device removal
 
-In second run, loop is not deleted for some reason. Perhaps a bug?
-
-kpartx version:
-0.4.9+git0.4dfdaf2b-7~deb7u2
-
-All the best,
-Patrick
+ drivers/md/dm-crypt.c |  4 ++--
+ drivers/md/dm-io.c    | 22 ++++++++--------------
+ drivers/md/dm-mpath.c |  5 +++--
+ drivers/md/dm-zero.c  |  4 ++--
+ drivers/md/dm.c       | 15 +++++++++++++--
+ 5 files changed, 28 insertions(+), 22 deletions(-)
