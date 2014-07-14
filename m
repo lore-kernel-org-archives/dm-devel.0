@@ -1,18 +1,19 @@
 From: John Utz <John.Utz@wdc.com>
 Subject: Re: device mapper target vs personality,
  how do you decide to pick one or the other?
-Date: Mon, 14 Jul 2014 17:15:48 +0000
-Message-ID: <8A51900D08212F40B3DE22453052F69839C45F44@wdscexmb02>
+Date: Mon, 14 Jul 2014 22:08:28 +0000
+Message-ID: <8A51900D08212F40B3DE22453052F69839C45FDE@wdscexmb02>
 References: <8A51900D08212F40B3DE22453052F69839C45AE5@wdscexmb02>
 	<20140711215120.GE9231@redhat.com>
 	<8A51900D08212F40B3DE22453052F69839C45AFA@wdscexmb02>,
-	<20140712003620.GA10126@redhat.com>
+	<20140712003620.GA10126@redhat.com>,
+	<8A51900D08212F40B3DE22453052F69839C45F44@wdscexmb02>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140712003620.GA10126@redhat.com>
+In-Reply-To: <8A51900D08212F40B3DE22453052F69839C45F44@wdscexmb02>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -23,11 +24,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Thankyou for the further clarification. 
+Bryn and Mike Thankyou very much for your help. I have a dm target that now loads when the appropriate arguments are passed to dmcreate.
+
+tnx!
+
+johnu
+________________________________________
+From: dm-devel-bounces@redhat.com [dm-devel-bounces@redhat.com] on behalf of John Utz [John.Utz@wdc.com]
+Sent: Monday, July 14, 2014 10:15 AM
+To: Mike Snitzer
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] device mapper target vs personality, how do you decide to pick one or the other?
+
+Thankyou for the further clarification.
 
 My apologies for not being clear about my end goal. Indeed, I do wish to do remapping because I am coding a ZAC simulator.
 ________________________________________
@@ -86,3 +98,8 @@ different MD raid personalities.
 The target construct is provided by DM.  You haven;t said what you're
 looking to do but if it is remapping IO and has nothing to do with raid
 then you'd probably want to develop a new DM target.
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
