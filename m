@@ -1,16 +1,17 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
+From: John Utz <John.Utz@wdc.com>
 Subject: Re: device mapper target vs personality,
  how do you decide to pick one or the other?
-Date: Mon, 14 Jul 2014 12:25:26 +0100
-Message-ID: <20140714112525.GD22615@localhost.localdomain>
-References: <8A51900D08212F40B3DE22453052F69839C45AE5@wdscexmb02>
+Date: Mon, 14 Jul 2014 17:00:32 +0000
+Message-ID: <8A51900D08212F40B3DE22453052F69839C45DF7@wdscexmb02>
+References: <8A51900D08212F40B3DE22453052F69839C45AE5@wdscexmb02>,
+	<20140714112525.GD22615@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <8A51900D08212F40B3DE22453052F69839C45AE5@wdscexmb02>
+In-Reply-To: <20140714112525.GD22615@localhost.localdomain>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,6 +23,18 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+Bryn;
+
+Thankyou so very much for this answer!
+
+I absolutely failed to understand that these where 2 different subsystems in the same directory, it makes vastly more sense now.
+
+________________________________________
+From: dm-devel-bounces@redhat.com [dm-devel-bounces@redhat.com] on behalf of Bryn M. Reeves [bmr@redhat.com]
+Sent: Monday, July 14, 2014 4:25 AM
+To: device-mapper development
+Subject: Re: [dm-devel] device mapper target vs personality, how do you decide to pick one or the other?
 
 On Fri, Jul 11, 2014 at 09:28:51PM +0000, John Utz wrote:
 > having said that, it seems that the personality code is ancestral and is used for the personalities that can be compiled into device mapper and the target code is for newer stuff that is not expected to be compiled into device mapper.
@@ -47,3 +60,8 @@ wanted to extend MD's available RAID levels or types.
 
 Regards,
 Bryn.
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
