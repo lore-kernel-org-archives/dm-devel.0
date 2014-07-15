@@ -1,105 +1,48 @@
-From: John Utz <John.Utz@wdc.com>
-Subject: Re: device mapper target vs personality,
- how do you decide to pick one or the other?
-Date: Mon, 14 Jul 2014 22:08:28 +0000
-Message-ID: <8A51900D08212F40B3DE22453052F69839C45FDE@wdscexmb02>
-References: <8A51900D08212F40B3DE22453052F69839C45AE5@wdscexmb02>
-	<20140711215120.GE9231@redhat.com>
-	<8A51900D08212F40B3DE22453052F69839C45AFA@wdscexmb02>,
-	<20140712003620.GA10126@redhat.com>,
-	<8A51900D08212F40B3DE22453052F69839C45F44@wdscexmb02>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: ANNOUNCE: SCSI XCOPY support for the kernel and device mapper
+Date: Tue, 15 Jul 2014 14:33:13 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1407151359430.5499@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8A51900D08212F40B3DE22453052F69839C45F44@wdscexmb02>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Edward Thornber <thornber@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Bryn and Mike Thankyou very much for your help. I have a dm target that now loads when the appropriate arguments are passed to dmcreate.
+Hi
 
-tnx!
+I annouce that I released the first version of a patch set that makes it 
+possible to use SCSI XCOPY offload for the block layer and device mapper.
 
-johnu
-________________________________________
-From: dm-devel-bounces@redhat.com [dm-devel-bounces@redhat.com] on behalf of John Utz [John.Utz@wdc.com]
-Sent: Monday, July 14, 2014 10:15 AM
-To: Mike Snitzer
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] device mapper target vs personality, how do you decide to pick one or the other?
+The patchset is at 
+http://people.redhat.com/~mpatocka/patches/kernel/xcopy/series.html It 
+requires kernel version at least 3.16-rc4. It was tested on target-core 
+iSCSI implementation.
 
-Thankyou for the further clarification.
+It is based on Martin Petersen's work 
+https://git.kernel.org/cgit/linux/kernel/git/mkp/linux.git/commit/?h=xcopy&id=0bdeed274e16b3038a851552188512071974eea8, 
+but it is changed significantly so that it is possible to propagate XCOPY 
+bios through the device mapper stack.
 
-My apologies for not being clear about my end goal. Indeed, I do wish to do remapping because I am coding a ZAC simulator.
-________________________________________
-From: Mike Snitzer [snitzer@redhat.com]
-Sent: Friday, July 11, 2014 5:36 PM
-To: John Utz
-Cc: dm-devel@redhat.com
-Subject: Re: device mapper target vs personality, how do you decide to pick one or the other?
+The basic architecture is this: in the function blkdev_issue_copy we 
+create two bios, one for read and one for write (with bi_rw READ|REQ_COPY 
+and WRITE|REQ_COPY). Both bios have a pointer to the same bio_copy 
+structure. These two bios travel independently through the device mapper 
+stack - each bio can go through different device mapper devices. When both 
+the bios reach the physical block device (in the function blk_queue_bio) 
+the bio pair is collected and a XCOPY request is allocated and sent to the 
+scsi disk driver.
 
-On Fri, Jul 11 2014 at  5:56pm -0400,
-John Utz <John.Utz@wdc.com> wrote:
+Note that because device mapper mapping can dynamically change, there no 
+guarantee that the XCOPY command succeeds. If it ends with an error, the 
+caller is supposed to perform the copying manually.
 
-> Hi Mike
->
-> tnx so much for the prompt response!
->
-> sorry i wasnt clear enuf, example of the 'personality code' that i was
-> writing about below.
-...
-> FOR EXAMPLE, here is a little bit of linear.c that contains it:
->
-> static struct md_personality linear_personality =
-> {
->       .name           = "linear",
->       .level          = LEVEL_LINEAR,
->       .owner          = THIS_MODULE,
->       .make_request   = linear_make_request,
->       .run            = linear_run,
->       .stop           = linear_stop,
->       .status         = linear_status,
->       .hot_add_disk   = linear_add,
->       .size           = linear_size,
-> };
->
-> static int __init linear_init (void)
-> {
->       return register_md_personality (&linear_personality);
-> }
->
-> static void linear_exit (void)
-> {
->       unregister_md_personality (&linear_personality);
-> }
+The dm-kcopyd subsystem is modified to use the XCOPY command, so device 
+mapper targets that use it (mirror, snapshot, thin, cache) take advantage 
+of copy offload automatically.
 
-The above is MD raid code.  So what you're talking about are the
-different MD raid personalities.
+There is a new ioctl BLKCOPY that makes it possible to use copy offload 
+from userspace.
 
-> > so, based on this speculation, i *think* i should be using the target
-> > construct for the new device mapper module that i am currently
-> > coding.
-> >
-> > am i correct?
->
-> Probably.
-
-The target construct is provided by DM.  You haven;t said what you're
-looking to do but if it is remapping IO and has nothing to do with raid
-then you'd probably want to develop a new DM target.
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Mikulas
