@@ -1,105 +1,75 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 15/15] dm kcopyd: call copy offload with asynchronous
- callback
-Date: Tue, 15 Jul 2014 15:44:10 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1407151543490.14632@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1407151531140.14632@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH] blk-lib: fix error reporting
+Date: Wed, 16 Jul 2014 06:22:29 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1407160614490.29250@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1407031514320.3347@file01.intranet.prod.int.rdu2.redhat.com>
+	<20140708095038.GA31180@infradead.org>
+	<alpine.LRH.2.02.1407080859370.27276@file01.intranet.prod.int.rdu2.redhat.com>
+	<1404828246.1967.8.camel@jarvis.lan>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1407151531140.14632@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Edward Thornber <thornber@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1404828246.1967.8.camel@jarvis.lan>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Change dm kcopyd so that it calls blkdev_issue_copy with an asynchronous
-callback. There can be large number of pending kcopyd requests and holding
-a process context for each of them may put too much load on the workqueue
-subsystem.
 
-This patch changes it so that blkdev_issue_copy returns after it submitted
-the requests and copy_offload_callback is called when the copy operation
-finishes.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+On Tue, 8 Jul 2014, James Bottomley wrote:
 
----
- drivers/md/dm-kcopyd.c |   33 ++++++++++++++-------------------
- 1 file changed, 14 insertions(+), 19 deletions(-)
+> On Tue, 2014-07-08 at 09:05 -0400, Mikulas Patocka wrote:
+> > 
+> > On Tue, 8 Jul 2014, Christoph Hellwig wrote:
+> > 
+> > > > +	if (unlikely(err))
+> > > > +		ACCESS_ONCE(bb->error) = err;
+> > > 
+> > > I can't see a reason for the ACCESS_ONCE here.
+> > 
+> > Multiple bios can be completed concurrently, so they write bb->error at 
+> > the same time. The compiler may do store tearing (see "store tearing" in 
+> > Documentation/memory-barriers.txt) - it may split one 4-byte write into 
+> > several smaller writes - and it could result in setting bb->error to 
+> > invalid value. We need ACCESS_ONCE to make sure that store tearing doesn't 
+> > happen.
+> 
+> That's not correct, because it's not applicable in this case.  Tearing
+> may occur on misalignment (which ACCESS_ONCE() cannot rectify because
+> it's architectural), short constant loads (again, usually architectural)
+> and structure copies, none of which applies here.
 
-Index: linux-3.16-rc5/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-3.16-rc5.orig/drivers/md/dm-kcopyd.c	2014-07-15 19:24:20.000000000 +0200
-+++ linux-3.16-rc5/drivers/md/dm-kcopyd.c	2014-07-15 19:24:54.000000000 +0200
-@@ -361,8 +361,6 @@ struct kcopyd_job {
- 	sector_t progress;
- 
- 	struct kcopyd_job *master_job;
--
--	struct work_struct copy_work;
- };
- 
- static struct kmem_cache *_job_cache;
-@@ -628,8 +626,9 @@ static void segment_complete(int read_er
- 	struct kcopyd_job *sub_job = (struct kcopyd_job *) context;
- 	struct kcopyd_job *job = sub_job->master_job;
- 	struct dm_kcopyd_client *kc = job->kc;
-+	unsigned long flags;
- 
--	spin_lock(&job->lock);
-+	spin_lock_irqsave(&job->lock, flags);
- 
- 	/* update the error */
- 	if (read_err)
-@@ -653,7 +652,7 @@ static void segment_complete(int read_er
- 			job->progress += count;
- 		}
- 	}
--	spin_unlock(&job->lock);
-+	spin_unlock_irqrestore(&job->lock, flags);
- 
- 	if (count) {
- 		int i;
-@@ -714,29 +713,25 @@ static void submit_job(struct kcopyd_job
- 	}
- }
- 
--static void copy_offload_work(struct work_struct *work)
-+static void copy_offload_callback(void *ptr, int error)
- {
--	struct kcopyd_job *job = container_of(work, struct kcopyd_job, copy_work);
--	sector_t copied;
-+	struct kcopyd_job *job = ptr;
- 
--	blkdev_issue_copy(job->source.bdev, job->source.sector,
--			  job->dests[0].bdev, job->dests[0].sector,
--			  job->source.count,
--			  GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN,
--			  NULL, NULL, &copied);
--
--	job->source.sector += copied;
--	job->source.count -= copied;
--	job->dests[0].sector += copied;
--	job->dests[0].count -= copied;
-+	job->source.sector += job->progress;
-+	job->source.count -= job->progress;
-+	job->dests[0].sector += job->progress;
-+	job->dests[0].count -= job->progress;
- 
- 	submit_job(job);
- }
- 
- static void try_copy_offload(struct kcopyd_job *job)
- {
--	INIT_WORK(&job->copy_work, copy_offload_work);
--	queue_work(job->kc->kcopyd_wq, &job->copy_work);
-+	blkdev_issue_copy(job->source.bdev, job->source.sector,
-+			  job->dests[0].bdev, job->dests[0].sector,
-+			  job->source.count,
-+			  GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN,
-+			  copy_offload_callback, job, &job->progress);
- }
- 
- int dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
+Suppose this scenario:
+CPU1 writes low byte of the first error code
+CPU2 writes low byte of the second error code
+CPU2 writes 3 high bytes of the second error code
+CPU1 writes 3 high bytes of the first error code
 
+- now, bb->error contains garbage - a mix of the first and second error 
+code. That's why we need ACCESS_ONCE.
+
+It may happen even if the variable is aligned. The compiler is allowed to 
+split larger memory access to several smaller accesses. The compiler 
+usually doesn't do this split (that's why omitting ACCESS_ONCE usually 
+doesn't result in any observable misbehavior), but it is still a bug to 
+omit it - you don't really know that for all 29 architectures gcc won't 
+split the memory write...
+
+> We can rely on a properly aligned 32 bit write being atomic.
+>
+> James
+
+... only if you use ACCESS_ONCE ...
+
+Mikulas
