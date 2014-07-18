@@ -1,20 +1,22 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: John Utz <John.Utz@wdc.com>
 Subject: Re: dm-multipath: Accept failed paths for multipath maps
-Date: Fri, 18 Jul 2014 12:15:50 -0400
-Message-ID: <20140718161550.GB5598@redhat.com>
+Date: Fri, 18 Jul 2014 16:51:47 +0000
+Message-ID: <8A51900D08212F40B3DE22453052F69839C46EA4@wdscexmb02>
 References: <1387353155-7271-1-git-send-email-hare@suse.de>
 	<20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de>
 	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>
 	<20140718000411.GB337@redhat.com>
-	<20140718002319.GA20071@redhat.com> <53C8B810.2060206@suse.de>
-	<20140718160449.GA5598@redhat.com>
+	<8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02>,
+	<20140718021806.GA1143@redhat.com>
+	<8A51900D08212F40B3DE22453052F69839C46B5B@wdscexmb02>,
+	<53C8B757.2000904@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20140718160449.GA5598@redhat.com>
+In-Reply-To: <53C8B757.2000904@suse.de>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,48 +27,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Bryn Reeves <breeves@redhat.com>, "Stewart,
-	Sean" <Sean.Stewart@netapp.com>, Alasdair Kergon <agk@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCBKdWwgMTggMjAxNCBhdCAxMjowNHBtIC0wNDAwLApNaWtlIFNuaXR6ZXIgPHNuaXR6
-ZXJAcmVkaGF0LmNvbT4gd3JvdGU6Cgo+IE9uIEZyaSwgSnVsIDE4IDIwMTQgYXQgIDI6MDBhbSAt
-MDQwMCwKPiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4gd3JvdGU6Cj4gCj4gPiBXaWxs
-IGJlIHNlbmRpbmcgc29tZSB1cGRhdGUgb25jZSB0aGUgdGVzdGluZyBpcyBkb25lLgo+IAo+IE9L
-LiAgVGhlIHN0cm9uZ2VyIGNhc2UgdGhhdCBjYW4gYmUgbWFkZSBmb3IgdGhlIHN0YWJpbGl0eSBv
-ZiB0aGlzIGNoYW5nZQo+IChubyBtaXNzaW5nIGNoZWNrcyBmb3IgZGV2LT5iZGV2LCBldGMpIHRo
-ZSBiZXR0ZXIuCj4gCj4gSSBkaWQganVzdCBkbyBzb21lIGJhc2ljIHRlc3RpbmcsIG9mIGJvdGgg
-ZG0tbXBhdGggYW5kIGRtLXRoaW5wLCBzZWVtcwo+IGZpbmUuICBUaGUgRE0gY29yZSBjaGFuZ2Vz
-IHJlYWxseSBhcmUgc2ltcGxlIChqdXN0IHNvbWUgZXh0cmEgbmVnYXRpdmUKPiBjaGVja3MgdGhh
-dCB3b24ndCBldmVyIGFwcGx5IGZvciB0aGUgbm9ybWFsIGNhc2UgLS0gd2hlcmUgIm5vcm1hbCBj
-YXNlIgo+IGlzIERNIHRhcmdldHMgdGhhdCB1c2UgZG1fZ2V0X2RldmljZSByYXRoZXIgdGhhbiBf
-X2RtX2dldF9kZXZpY2UsIGFuZAo+IGhhZCB0byBhZGQgYSBkZXZfdCB0byBzdHJ1Y3QgZG1fZGV2
-KS4KCkJUVywgSSBub3RpY2VkIG9uZSB0aGluZyB0aGF0IEkgZGlkbid0IHRoaW5rIG9mIGFzIGxv
-Z2ljYWwgZmFsbG91dCwgYnV0Cml0IG1ha2VzIHNlbnNlOiBpZiBjb25maWd1cmUgbXVsdGlwdGhk
-IHRvIG5vdCB1c2UgZmluZF9tdWx0aXBhdGhzIHRoZW4KbXVsdGlwYXRoZCB3aWxsIHN1Y2Nlc3Nm
-dWxseSBwdXNoIGRvd24gYW4gbXBhdGggdGFibGUgdGhhdCBjb3ZlcnMgdGhlCnN5c3RlbSBkaXNr
-IChzZGEpIC0tIGJ1dCBtcGF0aGEgaXNuJ3QgYWJsZSB0byBkbV9nZXRfZGV2aWNlOgoKIyBsc2Js
-ayAvZGV2L3NkYSAvZGV2L21hcHBlci9tcGF0aGEKTkFNRSAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICBNQUo6TUlOIFJNICAgU0laRSBSTyBUWVBFICBNT1VOVFBPSU5UCnNkYSAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICA4OjAgICAgMCA5MzAuNUcgIDAgZGlzayAgCuKUnOKUgHNkYTEg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgODoxICAgIDAgICA1MDBNICAwIHBhcnQgIC9ib290
-CuKUlOKUgHNkYTIgICAgICAgICAgICAgICAgICAgICAgICAgICAgODoyICAgIDAgICA5MzBHICAw
-IHBhcnQgIAogIOKUnOKUgHJoZWxfcmhlbC0tc3RvcmFnZS0tMDItc3dhcCAyNTM6MCAgICAwICAg
-ICA0RyAgMCBsdm0gICBbU1dBUF0KICDilJTilIByaGVsX3JoZWwtLXN0b3JhZ2UtLTAyLXJvb3Qg
-MjUzOjEgICAgMCAgIDM1MEcgIDAgbHZtICAgLwptcGF0aGEgICAgICAgICAgICAgICAgICAgICAg
-ICAgIDI1Mzo2ICAgIDAgOTMwLjVHICAwIG1wYXRoIAoKIyBtdWx0aXBhdGggLWxsIG1wYXRoYQpt
-cGF0aGEgKDM2MDAzMDA1NzAwZWMxODkwMTVkNDJiOTIyMzdhNzZkMSkgZG0tNiBMU0kgICAgICxS
-QUlEIDUvNiBTQVMgNkcgCnNpemU9OTMwRyBmZWF0dXJlcz0nMCcgaHdoYW5kbGVyPScwJyB3cD1y
-dwpgLSstIHBvbGljeT0nc2VydmljZS10aW1lIDAnIHByaW89MSBzdGF0dXM9ZW5hYmxlZAogIGAt
-IDA6MjowOjAgc2RhICA4OjAgICBmYWlsZWQgcmVhZHkgcnVubmluZwoKQW5kIG11bHRpcGF0aGQg
-a2VlcHMgZmFpbGluZyB0byByZWluc3RhdGVfcGF0aDoKLi4uClsgMTkwNi42NDczMjJdIGRldmlj
-ZS1tYXBwZXI6IG11bHRpcGF0aDogbWVzc2FnZTogZXJyb3IgZ2V0dGluZyBkZXZpY2UgODowClsg
-MTkxMi42NTI2NTJdIGRldmljZS1tYXBwZXI6IG11bHRpcGF0aDogbWVzc2FnZTogZXJyb3IgZ2V0
-dGluZyBkZXZpY2UgODowClsgMTkxOC42NTc5NDldIGRldmljZS1tYXBwZXI6IG11bHRpcGF0aDog
-bWVzc2FnZTogZXJyb3IgZ2V0dGluZyBkZXZpY2UgODowClsgMTkyNC42NjQxMThdIGRldmljZS1t
-YXBwZXI6IG11bHRpcGF0aDogbWVzc2FnZTogZXJyb3IgZ2V0dGluZyBkZXZpY2UgODowClsgMTkz
-MC42Njk2MzVdIGRldmljZS1tYXBwZXI6IG11bHRpcGF0aDogbWVzc2FnZTogZXJyb3IgZ2V0dGlu
-ZyBkZXZpY2UgODowCgpBZ2FpbiwgdGhpcyBhbGwgbWFrZXMgc2Vuc2UuLi4gYnV0IGNlcnRhaW5s
-eSBzaG93cyB0aGF0IGJsYWNrbGlzdGluZyB0aGUKcmVsZXZhbnQgZGV2aWNlcyBpcyBhIG11c3Qu
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Sorry Hannes;
+
+My apologies.
+
+I am guilty of hijacking the thread, tho i plead that it was inadvertent. :=
+-P
+
+indeed, ZAC/ZBC is orthagonal to multipath, no arguments there.
+
+My response was directed to Mike's discourse on the available testing tools=
+ for device mapper and contained my ruminations about how to leverage those=
+ tools for the project that I am lucky enuf to be working on.
+________________________________________
+From: Hannes Reinecke [hare@suse.de]
+Sent: Thursday, July 17, 2014 10:57 PM
+To: John Utz
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] dm-multipath: Accept failed paths for multipath maps
+
+On 07/18/2014 05:31 AM, John Utz wrote:
+> Thankyou very much for the exhaustive answer! I forwarded on to my
+ > project peers because i don't think any of us where aware of the
+ > existing infrastructure.
+>
+> Of course, said infrastructure would have to be taught about ZAC,
+ > but it seems like it would be a nice place to start testing from....
+>
+ZAC is a different beast altogether; I've posted an initial set of
+patches a while back on linux-scsi.
+But I don't think multipath needs to be changed for that.
+Other areas of device-mapper most certainly do.
+
+Cheers,
+
+Hannes
+--
+Dr. Hannes Reinecke                   zSeries & Storage
+hare@suse.de                          +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
