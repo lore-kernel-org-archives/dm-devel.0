@@ -1,8 +1,8 @@
 From: Bart Van Assche <bvanassche@acm.org>
-Subject: [PATCH 3/5] libmultipath: Zero-terminate
-	sysfs_attr_get_value() result
-Date: Fri, 18 Jul 2014 14:53:39 +0200
-Message-ID: <53C918D3.7060908@acm.org>
+Subject: [PATCH 4/5] libmultipath: Print line number for which
+	parsing failed
+Date: Fri, 18 Jul 2014 14:54:13 +0200
+Message-ID: <53C918F5.2050703@acm.org>
 References: <53C91871.9070402@acm.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,27 +23,42 @@ To: christophe.varoqui@opensvc.com
 Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-The callers of sysfs_attr_get_value() expect a '\0'-terminated string.
-Hence terminate the string returned by this function with '\0'. Detected
-by Valgrind.
+Make it easier to figure out which line contains a syntax error
+by printing the line number and the offending line itself.
 
 Signed-off-by: Bart Van Assche <bvanassche@acm.org>
 ---
- libmultipath/sysfs.c | 2 ++
- 1 file changed, 2 insertions(+)
+ libmultipath/parser.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index e5834f9..f42cda8 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -88,6 +88,8 @@ ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
- 	} else if (size == value_len) {
- 		condlog(4, "overflow while reading from %s", devpath);
- 		size = 0;
-+	} else {
-+		value[size] = '\0';
- 	}
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index b7bdfcc..d8673bc 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -460,7 +460,7 @@ int
+ process_stream(vector keywords)
+ {
+ 	int i;
+-	int r = 0;
++	int r = 0, t;
+ 	struct keyword *keyword;
+ 	char *str;
+ 	char *buf;
+@@ -501,8 +501,13 @@ process_stream(vector keywords)
+ 						free_strvec(strvec);
+ 						goto out;
+ 				}
+-				if (keyword->handler)
+-					r += (*keyword->handler) (strvec);
++				if (keyword->handler) {
++					t = (*keyword->handler) (strvec);
++					r += t;
++					if (t)
++						condlog(1, "multipath.conf +%d parsing failed: %s",
++							line_nr, buf);
++				}
  
- 	close(fd);
+ 				if (keyword->sub) {
+ 					kw_level++;
 -- 
 1.8.4.5
