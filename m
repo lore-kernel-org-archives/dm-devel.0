@@ -1,15 +1,19 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: [BUG] dm-writeboost: too big nr_rambuf_pool causes
- massive memory pressure or panic.
-Date: Fri, 18 Jul 2014 10:01:30 +0900
-Message-ID: <20140718100130.5bc9f9cc4e9ce674ab014423@gmail.com>
-References: <87egxr0wul.wl%satoru.takeuchi@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-multipath: Accept failed paths for multipath maps
+Date: Thu, 17 Jul 2014 22:18:06 -0400
+Message-ID: <20140718021806.GA1143@redhat.com>
+References: <1387353155-7271-1-git-send-email-hare@suse.de>
+	<20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de>
+	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+	<20140718000411.GB337@redhat.com>
+	<8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87egxr0wul.wl%satoru.takeuchi@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,113 +23,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Satoru Takeuchi <satoru.takeuchi@gmail.com>, ejt@redhat.com, ruby.wktk@gmail.com
+To: John Utz <John.Utz@wdc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Bryn Reeves <breeves@redhat.com>, "Stewart,
+	Sean" <Sean.Stewart@netapp.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi, Satoru,
+On Thu, Jul 17 2014 at  8:29pm -0400,
+John Utz <John.Utz@wdc.com> wrote:
 
-I totally agree with removing the BUG() at (2).
+> What are the release testing criteria for things like this? From a
+> hand wavy perspective i am sure that the meta-requirement is 'don't
+> break anything'. but how is a new release proven to not break
+> anything?
 
-However, I don't agree with setting the upper limit of nr_rambuf_pool.
-You are saying that any memory allocation failure on initialization should be avoided
-but that sounds going too far. Removing that possibility from all kernel codes is impossible in practice.
-Carefully terminating the initialization on allocation failure is sufficient.
+Red Hat and other vendors have their own testbeds and harnesses for
+testing dm-multipath.  But we really could benefit from more open
+exchange and collaboration of a multipath test harness.
 
-For your guidance,
-the amount of memory we need depends on how fast the SSD is.
-In practice, few MB for RAM buffer is sufficient for
-commodity SSD as caching device. However, it could be higher with much more faster SSD
-or one may want to set it up for higher value in experiments.
+Had I actually tested the patches I pointed to it'd have blown up
+pretty solidly, I realized something like this was needed:
+http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=throwaway-dm-mpath-placeholder-devs&id=77d1130e602a399ed1451edd7e91044fe9225fb6
 
-- Akira
+Anyway, I really don't like that 'place-holder device' approach.. way
+too hackish (both my code and Hannes').  It is an elaborate workaround
+rather than a proper solution.  I'm hopeful Bryn takes this multipath
+problem under his wing and fixes it for real ;)
 
-On Sat, 12 Jul 2014 18:06:58 +0900
-Satoru Takeuchi <satoru.takeuchi@gmail.com> wrote:
+> fer instance, does anybody create dm devices, format them with XFS and
+> then run xfstests against them?
 
-> Hi,
+We routinely use XFS and ext4 with git to generate load.  But not
+xfstests... that may be useful.
+
+> or some other formalized regimen?
 > 
-> Since the upper limit of nr_rambuf_pool argument, user can set too big value
-> to this argument.
-> 
-> drivers/md/dm-writeboost-target.c:
-> ===============================================================================
-> static int consume_optional_argv(struct wb_device *wb, struct dm_arg_set *as)
-> {
->         int r = 0;
->         struct dm_target *ti = wb->ti;
-> 
->         static struct dm_arg _args[] = {
->                 {0, 4, "Invalid optional argc"},
->                 {4, 10, "Invalid segment_size_order"},
->                 {1, UINT_MAX, "Invalid nr_rambuf_pool"},
->         };
-> ===============================================================================
-> 
-> It can cause the massive memory pressure to kernel by user's mistake
-> and results in
-> 
->  - ENOMEM at the (1) or somewhere, and
->  - panic at (2).
-> 
-> drivers/md/dm-writeboost-metadata.c:
-> ===============================================================================
-> ...
-> static int init_rambuf_pool(struct wb_device *wb)
-> {
->         int r = 0;
->         size_t i;
-> 
->         wb->rambuf_pool = kmalloc(sizeof(struct rambuffer) * wb->nr_rambuf_pool,
->                                   GFP_KERNEL);
->         if (!wb->rambuf_pool)
->                 return -ENOMEM; # ................. (1)
-> 
->         wb->rambuf_cachep = kmem_cache_create("dmwb_rambuf",
->                         1 << (wb->segment_size_order + SECTOR_SHIFT),
->                         1 << (wb->segment_size_order + SECTOR_SHIFT),
->                         SLAB_RED_ZONE, NULL);
->         if (!wb->rambuf_cachep) {
->                 r = -ENOMEM;
->                 goto bad_cachep;
->         }
-> 
->         for (i = 0; i < wb->nr_rambuf_pool; i++) {
->                 size_t j;
->                 struct rambuffer *rambuf = wb->rambuf_pool + i;
-> 
->                 rambuf->data = kmem_cache_alloc(wb->rambuf_cachep, GFP_KERNEL);
->                 if (!rambuf->data) {
->                         WBERR("Failed to allocate rambuf->data");
->                         for (j = 0; j < i; j++) {
->                                 rambuf = wb->rambuf_pool + j;
->                                 kmem_cache_free(wb->rambuf_cachep, rambuf->data);
->                         }
->                         r = -ENOMEM;
->                         goto bad_alloc_data;
->                 }
->                 check_buffer_alignment(rambuf->data);
->         }
-> 
->         return r;
-> 
-> bad_alloc_data:
->         kmem_cache_destroy(wb->rambuf_cachep);
-> bad_cachep:
->         kfree(wb->rambuf_pool);
->         BUG();                         # ........(2)
->         return r;
-> }
-> ...
-> ===============================================================================
-> 
-> Please decide the appropriate upper limit of nr_rambuf_pool (unfortunately
-> I don't know about it), and remove BUG() at (2) if it's unnecessary.
-> 
-> Thanks,
-> Satoru
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> or is it all kinda ad-hoc?
+
+We have the device-mapper-test-suite (dmts) for testing various DM
+targets (mainly dm-thinp and dm-cache), see:
+https://github.com/jthornber/device-mapper-test-suite
+
+I added basic support for dm-crypt to dmts; but it needs serious
+expanding for it to be useful.. luckily the cryptsetup userspace code
+has dm-crypt tests.
+
+Also, the lvm2 testsuite is another major resource that is used for
+testing the wide range of DM targets.
