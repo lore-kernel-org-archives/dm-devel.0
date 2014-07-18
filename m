@@ -1,22 +1,20 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-multipath: Accept failed paths for multipath maps
-Date: Fri, 18 Jul 2014 10:38:56 -0400
-Message-ID: <20140718143855.GA4762@redhat.com>
-References: <1387353155-7271-1-git-send-email-hare@suse.de>
-	<20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de>
-	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-	<20140718000411.GB337@redhat.com>
-	<8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02>
-	<20140718021806.GA1143@redhat.com>
-	<8A51900D08212F40B3DE22453052F69839C46B5B@wdscexmb02>
-	<53C8B757.2000904@suse.de>
+Subject: Re: [PATCH RFC 00/10] dm-dedup: device-mapper
+	deduplication target
+Date: Fri, 18 Jul 2014 10:44:23 -0400
+Message-ID: <20140718144423.GB4762@redhat.com>
+References: <535ed0d2.0729e00a.4489.0c48@mx.google.com>
+	<20140505182450.GA16456@redhat.com>
+	<20140506134357.GA27331@vass-desktop>
+	<20140718024336.GA1291@redhat.com>
+	<CAFTzLMNEuPHAp02CHwCfktyWcHdb-rYzSx4ekWHis8QQHvmxNw@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <53C8B757.2000904@suse.de>
+In-Reply-To: <CAFTzLMNEuPHAp02CHwCfktyWcHdb-rYzSx4ekWHis8QQHvmxNw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,24 +24,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, John Utz <john.utz@wdc.com>
+To: Vasily Tarasov <tarasov@vasily.name>
+Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@infradead.org>, ejt@redhat.com, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 18 2014 at  1:57am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+On Fri, Jul 18 2014 at  7:59am -0400,
+Vasily Tarasov <tarasov@vasily.name> wrote:
 
-> On 07/18/2014 05:31 AM, John Utz wrote:
-> >Thankyou very much for the exhaustive answer! I forwarded on to my
-> > project peers because i don't think any of us where aware of the
-> > existing infrastructure.
-> >
-> >Of course, said infrastructure would have to be taught about ZAC,
-> > but it seems like it would be a nice place to start testing from....
-> >
-> ZAC is a different beast altogether; I've posted an initial set of
-> patches a while back on linux-scsi.
-> But I don't think multipath needs to be changed for that.
-> Other areas of device-mapper most certainly do.
+> Hi Mike,
+> 
+> Thanks for your initial reviewing steps! Here is what we plan to do:
+> 
+> 1) Address your current comments
 
-Pretty sure John is working on a new ZAC-oriented DM target.
+Thanks, try to look at how the other DM targets have tables with
+arguments that have a fixed position (less flexible than name=value but
+tools like lvm2 benefit from the rigidity).
+ 
+> 2) Few people mentioned that our documentation need to be formatted
+> better and be more detailed. We'll address this.
+
+Yes, it could be more comprehensive.  And it would be nice if it were
+updated to have the same kind of sections/flow that other targets'
+Documentation/device-mapper/ files have (e.g. cache.txt and
+thin-provisioning.txt).
+
+But overall the plan sounds great.
