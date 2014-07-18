@@ -1,12 +1,14 @@
 From: Bart Van Assche <bvanassche@acm.org>
-Subject: [PATCH 0/5] Five small multipath-tools patches
-Date: Fri, 18 Jul 2014 14:52:01 +0200
-Message-ID: <53C91871.9070402@acm.org>
+Subject: [PATCH 2/5] libmultipath: Simplify read_line()
+Date: Fri, 18 Jul 2014 14:53:11 +0200
+Message-ID: <53C918B7.3010704@acm.org>
+References: <53C91871.9070402@acm.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <53C91871.9070402@acm.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,13 +22,67 @@ To: christophe.varoqui@opensvc.com
 Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-This series consists of the following patches:
+Let read_line() zero-terminate the buffer it returns such that its
+callers do not have to clear that buffer before calling read_line().
 
-0001-ALUA-prioritizer-Remove-an-unused-variable.patch
-0002-libmultipath-Simplify-read_line.patch
-0003-libmultipath-Zero-terminate-sysfs_attr_get_value-res.patch
-0004-libmultipath-Print-line-number-for-which-parsing-fai.patch
-0005-libmultipath-Accept-as-a-valid-regular-expression.patch
+Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+---
+ libmultipath/parser.c | 22 ++++++----------------
+ 1 file changed, 6 insertions(+), 16 deletions(-)
 
-Please note that I'm not a multipath-tools expert so a careful review of
-these patches would be appreciated.
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index 0d4c870..b7bdfcc 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -282,18 +282,12 @@ out:
+ int
+ read_line(char *buf, int size)
+ {
+-	int ch;
+-	int count = 0;
+-
+-	while ((ch = fgetc(stream)) != EOF && (int) ch != '\n'
+-	       && (int) ch != '\r') {
+-		if (count < size)
+-			buf[count] = (int) ch;
+-		else
+-			break;
+-		count++;
+-	}
+-	return (ch == EOF) ? 0 : 1;
++	char *p;
++
++	if (fgets(buf, size, stream) == NULL)
++		return 0;
++	strtok_r(buf, "\n\r", &p);
++	return 1;
+ }
+ 
+ vector
+@@ -341,7 +335,6 @@ read_value_block(void)
+ 			}
+ 			free_strvec(vec);
+ 		}
+-		memset(buf, 0, MAXBUF);
+ 	}
+ 	FREE(buf);
+ 	return elements;
+@@ -379,7 +372,6 @@ alloc_value_block(vector strvec, void (*alloc_func) (vector))
+ 
+ 			free_strvec(vec);
+ 		}
+-		memset(buf, 0, MAXBUF);
+ 	}
+ 	FREE(buf);
+ 	return 0;
+@@ -489,8 +481,6 @@ process_stream(vector keywords)
+ 	while (read_line(buf, MAXBUF)) {
+ 		line_nr++;
+ 		strvec = alloc_strvec(buf);
+-		memset(buf,0, MAXBUF);
+-
+ 		if (!strvec)
+ 			continue;
+ 
+-- 
+1.8.4.5
