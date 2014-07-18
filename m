@@ -1,7 +1,7 @@
 From: Bart Van Assche <bvanassche@acm.org>
-Subject: [PATCH 2/5] libmultipath: Simplify read_line()
-Date: Fri, 18 Jul 2014 14:53:11 +0200
-Message-ID: <53C918B7.3010704@acm.org>
+Subject: [PATCH 1/5] ALUA prioritizer: Remove an unused variable
+Date: Fri, 18 Jul 2014 14:52:42 +0200
+Message-ID: <53C9189A.3070204@acm.org>
 References: <53C91871.9070402@acm.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,67 +22,30 @@ To: christophe.varoqui@opensvc.com
 Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-Let read_line() zero-terminate the buffer it returns such that its
-callers do not have to clear that buffer before calling read_line().
-
 Signed-off-by: Bart Van Assche <bvanassche@acm.org>
 ---
- libmultipath/parser.c | 22 ++++++----------------
- 1 file changed, 6 insertions(+), 16 deletions(-)
+ libmultipath/prioritizers/alua.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index 0d4c870..b7bdfcc 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -282,18 +282,12 @@ out:
- int
- read_line(char *buf, int size)
+diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
+index b967ec7..39ed1c8 100644
+--- a/libmultipath/prioritizers/alua.c
++++ b/libmultipath/prioritizers/alua.c
+@@ -55,7 +55,6 @@ get_alua_info(int fd)
  {
--	int ch;
--	int count = 0;
--
--	while ((ch = fgetc(stream)) != EOF && (int) ch != '\n'
--	       && (int) ch != '\r') {
--		if (count < size)
--			buf[count] = (int) ch;
--		else
--			break;
--		count++;
--	}
--	return (ch == EOF) ? 0 : 1;
-+	char *p;
-+
-+	if (fgets(buf, size, stream) == NULL)
-+		return 0;
-+	strtok_r(buf, "\n\r", &p);
-+	return 1;
- }
+ 	int	rc;
+ 	int	tpg;
+-	int	aas;
  
- vector
-@@ -341,7 +335,6 @@ read_value_block(void)
- 			}
- 			free_strvec(vec);
- 		}
--		memset(buf, 0, MAXBUF);
- 	}
- 	FREE(buf);
- 	return elements;
-@@ -379,7 +372,6 @@ alloc_value_block(vector strvec, void (*alloc_func) (vector))
+ 	rc = get_target_port_group_support(fd);
+ 	if (rc < 0)
+@@ -72,7 +71,6 @@ get_alua_info(int fd)
+ 	rc = get_asymmetric_access_state(fd, tpg);
+ 	if (rc < 0)
+ 		return -ALUA_PRIO_GETAAS_FAILED;
+-	aas = (rc & 0x0f);
  
- 			free_strvec(vec);
- 		}
--		memset(buf, 0, MAXBUF);
- 	}
- 	FREE(buf);
- 	return 0;
-@@ -489,8 +481,6 @@ process_stream(vector keywords)
- 	while (read_line(buf, MAXBUF)) {
- 		line_nr++;
- 		strvec = alloc_strvec(buf);
--		memset(buf,0, MAXBUF);
--
- 		if (!strvec)
- 			continue;
- 
+ 	condlog(3, "aas = %02x [%s]%s", rc, aas_print_string(rc),
+ 		(rc & 0x80) ? " [preferred]" : "");
 -- 
 1.8.4.5
