@@ -1,17 +1,18 @@
 From: Hannes Reinecke <hare@suse.de>
 Subject: Re: dm-multipath: Accept failed paths for multipath maps
-Date: Fri, 18 Jul 2014 07:57:43 +0200
-Message-ID: <53C8B757.2000904@suse.de>
-References: <1387353155-7271-1-git-send-email-hare@suse.de>	<20131218140858.GC17730@redhat.com>
-	<52B1B046.3040301@suse.de>	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>	<20140718000411.GB337@redhat.com>	<8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02>,
-	<20140718021806.GA1143@redhat.com>
-	<8A51900D08212F40B3DE22453052F69839C46B5B@wdscexmb02>
+Date: Fri, 18 Jul 2014 08:00:48 +0200
+Message-ID: <53C8B810.2060206@suse.de>
+References: <1387353155-7271-1-git-send-email-hare@suse.de>
+	<20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de>
+	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+	<20140718000411.GB337@redhat.com>
+	<20140718002319.GA20071@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8A51900D08212F40B3DE22453052F69839C46B5B@wdscexmb02>
+In-Reply-To: <20140718002319.GA20071@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,23 +22,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Utz <john.utz@wdc.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, "Stewart, Sean" <Sean.Stewart@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Bryn Reeves <breeves@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/18/2014 05:31 AM, John Utz wrote:
-> Thankyou very much for the exhaustive answer! I forwarded on to my
- > project peers because i don't think any of us where aware of the
- > existing infrastructure.
+On 07/18/2014 02:23 AM, Mike Snitzer wrote:
+> On Thu, Jul 17 2014 at  8:04pm -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
 >
-> Of course, said infrastructure would have to be taught about ZAC,
- > but it seems like it would be a nice place to start testing from....
+>> Revisiting this can of worms...
+>>
+>> As part of full due-diligence on the approach that SUSE and NetApp have
+>> seemingly enjoyed "for years" I reviewed Hannes' v3 patch, fixed one
+>> issue and did some cleanup.  I then converted over to using a slightly
+>> different approach where-in the DM core becomes a more willing
+>> co-conspirator in this hack by introducing the ability to have
+>> place-holder devices (dm_dev without an opened bdev) referenced in a DM
+>> table.  The work is here:
+>> http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=3Dt=
+hrowaway-dm-mpath-placeholder-devs
 >
-ZAC is a different beast altogether; I've posted an initial set of =
+> Here is the rolled up patch (the individual commits in the above branch
+> are rather noisy given the sequencing):
+>
+>   drivers/md/dm-mpath.c | 51 +++++++++++++++++++++++++++++++++-----------=
+-----
+>   drivers/md/dm-table.c | 53 ++++++++++++++++++++++++++++++++++++++------=
+-------
+>   drivers/md/dm.c       |  5 ++---
+>   drivers/md/dm.h       | 12 ++++++++++++
+>   4 files changed, 89 insertions(+), 32 deletions(-)
+>
+These patches look quite okay; I'll be cross-checking with my =
 
-patches a while back on linux-scsi.
-But I don't think multipath needs to be changed for that.
-Other areas of device-mapper most certainly do.
+version and do some testing there.
+
+Will be sending some update once the testing is done.
 
 Cheers,
 
