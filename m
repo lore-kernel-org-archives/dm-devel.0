@@ -1,19 +1,18 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-multipath: Accept failed paths for multipath maps
-Date: Thu, 17 Jul 2014 22:18:06 -0400
-Message-ID: <20140718021806.GA1143@redhat.com>
-References: <1387353155-7271-1-git-send-email-hare@suse.de>
-	<20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de>
-	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-	<20140718000411.GB337@redhat.com>
-	<8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02>
+Subject: Re: [PATCH RFC 00/10] dm-dedup: device-mapper
+	deduplication target
+Date: Thu, 17 Jul 2014 22:43:36 -0400
+Message-ID: <20140718024336.GA1291@redhat.com>
+References: <535ed0d2.0729e00a.4489.0c48@mx.google.com>
+	<20140505182450.GA16456@redhat.com>
+	<20140506134357.GA27331@vass-desktop>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02>
+In-Reply-To: <20140506134357.GA27331@vass-desktop>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,49 +22,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Utz <John.Utz@wdc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Bryn Reeves <breeves@redhat.com>, "Stewart,
-	Sean" <Sean.Stewart@netapp.com>, Alasdair Kergon <agk@redhat.com>
+To: Vasily Tarasov <tarasov@vasily.name>
+Cc: ejt@redhat.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 17 2014 at  8:29pm -0400,
-John Utz <John.Utz@wdc.com> wrote:
+On Tue, May 06 2014 at  9:43am -0400,
+Vasily Tarasov <tarasov@vasily.name> wrote:
 
-> What are the release testing criteria for things like this? From a
-> hand wavy perspective i am sure that the meta-requirement is 'don't
-> break anything'. but how is a new release proven to not break
-> anything?
-
-Red Hat and other vendors have their own testbeds and harnesses for
-testing dm-multipath.  But we really could benefit from more open
-exchange and collaboration of a multipath test harness.
-
-Had I actually tested the patches I pointed to it'd have blown up
-pretty solidly, I realized something like this was needed:
-http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=throwaway-dm-mpath-placeholder-devs&id=77d1130e602a399ed1451edd7e91044fe9225fb6
-
-Anyway, I really don't like that 'place-holder device' approach.. way
-too hackish (both my code and Hannes').  It is an elaborate workaround
-rather than a proper solution.  I'm hopeful Bryn takes this multipath
-problem under his wing and fixes it for real ;)
-
-> fer instance, does anybody create dm devices, format them with XFS and
-> then run xfstests against them?
-
-We routinely use XFS and ext4 with git to generate load.  But not
-xfstests... that may be useful.
-
-> or some other formalized regimen?
+> Interestingly, I can see 4, 5, and 7 in dm-devel's archive:
 > 
-> or is it all kinda ad-hoc?
+> https://www.redhat.com/archives/dm-devel/2014-April/author.html
+> 
+> In any case, you can pull the patches from:
+> 
+> git://git.fsl.cs.sunysb.edu/linux-dmdedup.git
+> 
+> Branch: rfc-v1.1
+> 
+> Thanks for looking into this.
 
-We have the device-mapper-test-suite (dmts) for testing various DM
-targets (mainly dm-thinp and dm-cache), see:
-https://github.com/jthornber/device-mapper-test-suite
+Hi,
 
-I added basic support for dm-crypt to dmts; but it needs serious
-expanding for it to be useful.. luckily the cryptsetup userspace code
-has dm-crypt tests.
+I haven't been able to get to _really_ reviewing dm-dedup.  It isn't
+anything against you guys.. I've just been quite busy with other tasks.
 
-Also, the lvm2 testsuite is another major resource that is used for
-testing the wide range of DM targets.
+I did start in on dm-dedup a month or so ago by staging a baseline of
+your work in a branch here:
+http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/log/?h=dm-dedup
+
+I found a few things that didn't look right, but they are more
+DM-specific mechanics and not anything to do with your approach for
+accomplishing dedup, see the FIXMEs I added to the documentation file in
+this commit:
+http://git.kernel.org/cgit/linux/kernel/git/snitzer/linux.git/commit/?h=dm-dedup&id=fed855928fba624c7a494db7519c37dcc7c9492d
+
+The reconstruct= param isn't needed.  In both dm-thinp and dm-cache we
+use __superblock_all_zeroes to checks if the metadata device's
+superblock is all zeros.  Ideally dm-dedup would do something
+comparable.
+
+I'm going to be on paternity leave until Sept. 8.  It'd be great if Joe
+and/or Mikulas took some time to review dm-dedup but I'm not sure if
+they'll be able to.  I do hope to be around to respond to emails
+periodically but my availability is TBD at this point.
+
+When I get back from leave I'll definitely make dm-dedup a priority if
+others don't beat me to it.
