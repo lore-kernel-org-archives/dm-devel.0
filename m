@@ -1,17 +1,84 @@
-From: Nick Krause <xerofoify@gmail.com>
-Subject: dm-cache-policy-mq.c
-Date: Sun, 20 Jul 2014 17:54:07 -0400
-Message-ID: <CAPDOMViiqPtuUV5n5L0QAwFGVcGZRgKsPjKp8eYu-4U5ECdGYQ@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: dm-multipath: Accept failed paths for multipath maps
+Date: Mon, 21 Jul 2014 08:05:48 +0200
+Message-ID: <53CCADBC.50503@suse.de>
+References: <1387353155-7271-1-git-send-email-hare@suse.de>
+	<20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de>
+	<1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+	<20140718000411.GB337@redhat.com>
+	<20140718002319.GA20071@redhat.com> <53C8B810.2060206@suse.de>
+	<20140718160449.GA5598@redhat.com>
+	<20140718161550.GB5598@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com
-Cc: snitzer@redhat.com, dm-devel@redhat.com, neilb@suse.de, linux-raid@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140718161550.GB5598@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Bryn Reeves <breeves@redhat.com>, "Stewart,
+	Sean" <Sean.Stewart@netapp.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hey Alasdair,
-There seems to be a fix me in requeue_and_update_tick.
-I was wondering is the comment correct in terms of fixing
-it or do we need to do it a different way?
-Cheers Nick
+T24gMDcvMTgvMjAxNCAwNjoxNSBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIEZyaSwgSnVs
+IDE4IDIwMTQgYXQgMTI6MDRwbSAtMDQwMCwKPiBNaWtlIFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0
+LmNvbT4gd3JvdGU6Cj4KPj4gT24gRnJpLCBKdWwgMTggMjAxNCBhdCAgMjowMGFtIC0wNDAwLAo+
+PiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4gd3JvdGU6Cj4+Cj4+PiBXaWxsIGJlIHNl
+bmRpbmcgc29tZSB1cGRhdGUgb25jZSB0aGUgdGVzdGluZyBpcyBkb25lLgo+Pgo+PiBPSy4gIFRo
+ZSBzdHJvbmdlciBjYXNlIHRoYXQgY2FuIGJlIG1hZGUgZm9yIHRoZSBzdGFiaWxpdHkgb2YgdGhp
+cyBjaGFuZ2UKPj4gKG5vIG1pc3NpbmcgY2hlY2tzIGZvciBkZXYtPmJkZXYsIGV0YykgdGhlIGJl
+dHRlci4KPj4KPj4gSSBkaWQganVzdCBkbyBzb21lIGJhc2ljIHRlc3RpbmcsIG9mIGJvdGggZG0t
+bXBhdGggYW5kIGRtLXRoaW5wLCBzZWVtcwo+PiBmaW5lLiAgVGhlIERNIGNvcmUgY2hhbmdlcyBy
+ZWFsbHkgYXJlIHNpbXBsZSAoanVzdCBzb21lIGV4dHJhIG5lZ2F0aXZlCj4+IGNoZWNrcyB0aGF0
+IHdvbid0IGV2ZXIgYXBwbHkgZm9yIHRoZSBub3JtYWwgY2FzZSAtLSB3aGVyZSAibm9ybWFsIGNh
+c2UiCj4+IGlzIERNIHRhcmdldHMgdGhhdCB1c2UgZG1fZ2V0X2RldmljZSByYXRoZXIgdGhhbiBf
+X2RtX2dldF9kZXZpY2UsIGFuZAo+PiBoYWQgdG8gYWRkIGEgZGV2X3QgdG8gc3RydWN0IGRtX2Rl
+dikuCj4KPiBCVFcsIEkgbm90aWNlZCBvbmUgdGhpbmcgdGhhdCBJIGRpZG4ndCB0aGluayBvZiBh
+cyBsb2dpY2FsIGZhbGxvdXQsIGJ1dAo+IGl0IG1ha2VzIHNlbnNlOiBpZiBjb25maWd1cmUgbXVs
+dGlwdGhkIHRvIG5vdCB1c2UgZmluZF9tdWx0aXBhdGhzIHRoZW4KPiBtdWx0aXBhdGhkIHdpbGwg
+c3VjY2Vzc2Z1bGx5IHB1c2ggZG93biBhbiBtcGF0aCB0YWJsZSB0aGF0IGNvdmVycyB0aGUKPiBz
+eXN0ZW0gZGlzayAoc2RhKSAtLSBidXQgbXBhdGhhIGlzbid0IGFibGUgdG8gZG1fZ2V0X2Rldmlj
+ZToKPgo+ICMgbHNibGsgL2Rldi9zZGEgL2Rldi9tYXBwZXIvbXBhdGhhCj4gTkFNRSAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICBNQUo6TUlOIFJNICAgU0laRSBSTyBUWVBFICBNT1VOVFBPSU5U
+Cj4gc2RhICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDg6MCAgICAwIDkzMC41RyAgMCBk
+aXNrCj4g4pSc4pSAc2RhMSAgICAgICAgICAgICAgICAgICAgICAgICAgICA4OjEgICAgMCAgIDUw
+ME0gIDAgcGFydCAgL2Jvb3QKPiDilJTilIBzZGEyICAgICAgICAgICAgICAgICAgICAgICAgICAg
+IDg6MiAgICAwICAgOTMwRyAgMCBwYXJ0Cj4gICAg4pSc4pSAcmhlbF9yaGVsLS1zdG9yYWdlLS0w
+Mi1zd2FwIDI1MzowICAgIDAgICAgIDRHICAwIGx2bSAgIFtTV0FQXQo+ICAgIOKUlOKUgHJoZWxf
+cmhlbC0tc3RvcmFnZS0tMDItcm9vdCAyNTM6MSAgICAwICAgMzUwRyAgMCBsdm0gICAvCj4gbXBh
+dGhhICAgICAgICAgICAgICAgICAgICAgICAgICAyNTM6NiAgICAwIDkzMC41RyAgMCBtcGF0aAo+
+Cj4gIyBtdWx0aXBhdGggLWxsIG1wYXRoYQo+IG1wYXRoYSAoMzYwMDMwMDU3MDBlYzE4OTAxNWQ0
+MmI5MjIzN2E3NmQxKSBkbS02IExTSSAgICAgLFJBSUQgNS82IFNBUyA2Rwo+IHNpemU9OTMwRyBm
+ZWF0dXJlcz0nMCcgaHdoYW5kbGVyPScwJyB3cD1ydwo+IGAtKy0gcG9saWN5PSdzZXJ2aWNlLXRp
+bWUgMCcgcHJpbz0xIHN0YXR1cz1lbmFibGVkCj4gICAgYC0gMDoyOjA6MCBzZGEgIDg6MCAgIGZh
+aWxlZCByZWFkeSBydW5uaW5nCj4KPiBBbmQgbXVsdGlwYXRoZCBrZWVwcyBmYWlsaW5nIHRvIHJl
+aW5zdGF0ZV9wYXRoOgo+IC4uLgo+IFsgMTkwNi42NDczMjJdIGRldmljZS1tYXBwZXI6IG11bHRp
+cGF0aDogbWVzc2FnZTogZXJyb3IgZ2V0dGluZyBkZXZpY2UgODowCj4gWyAxOTEyLjY1MjY1Ml0g
+ZGV2aWNlLW1hcHBlcjogbXVsdGlwYXRoOiBtZXNzYWdlOiBlcnJvciBnZXR0aW5nIGRldmljZSA4
+OjAKPiBbIDE5MTguNjU3OTQ5XSBkZXZpY2UtbWFwcGVyOiBtdWx0aXBhdGg6IG1lc3NhZ2U6IGVy
+cm9yIGdldHRpbmcgZGV2aWNlIDg6MAo+IFsgMTkyNC42NjQxMThdIGRldmljZS1tYXBwZXI6IG11
+bHRpcGF0aDogbWVzc2FnZTogZXJyb3IgZ2V0dGluZyBkZXZpY2UgODowCj4gWyAxOTMwLjY2OTYz
+NV0gZGV2aWNlLW1hcHBlcjogbXVsdGlwYXRoOiBtZXNzYWdlOiBlcnJvciBnZXR0aW5nIGRldmlj
+ZSA4OjAKPgo+IEFnYWluLCB0aGlzIGFsbCBtYWtlcyBzZW5zZS4uLiBidXQgY2VydGFpbmx5IHNo
+b3dzIHRoYXQgYmxhY2tsaXN0aW5nIHRoZQo+IHJlbGV2YW50IGRldmljZXMgaXMgYSBtdXN0Lgo+
+ClByZWNpc2VseS4KV2UgaGF2ZSBiZWVuIHRha2luZyB0aGUgYXBwcm9hY2ggdGhhdCBzdGFydGlu
+ZyBtdWx0aXBhdGggd2lsbCAKYXR0ZW1wdCB0byB0YWtlIG92ZXIgX2FueV8gKGVsaWdpYmxlKSBk
+ZXZpY2UuClNvIHRoaXMgZXJyb3Igd291bGQgY29uc3RpdHV0ZSBhIG1pc2NvbmZpZ3VyYXRpb24g
+ZnJvbSBvdXIgUE9WLgpFaXRoZXIgdGhlIGRldmljZSBuZWVkcyB0byBiZSBibGFja2xpc3RlZCBv
+ciB0aGUgcHJvY2VzcyBhY2Nlc3NpbmcgCnRoZSBkZXZpY2UgbmVlZHMgdG8gYmUgcmVjb25maWd1
+cmVkIHRvIHVzZSBtdWx0aXBhdGhpbmcuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMg
+UmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0
+OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwg
+OTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBI
+UkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
+bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbA==
