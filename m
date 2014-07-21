@@ -1,16 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath-tools: -fstack-protector to
- fstack-protector-strong change
-Date: Mon, 21 Jul 2014 17:45:44 -0500
-Message-ID: <20140721224544.GK10438@dhcp80-209.msp.redhat.com>
-References: <20140721171732.00002396@localhost>
+Subject: [PATCH] multipath: revert fstack-protector-strong gcc
+	option
+Date: Mon, 21 Jul 2014 18:12:57 -0500
+Message-ID: <1405984377-26466-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20140721171732.00002396@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +17,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sebastian Herbszt <herbszt@gmx.de>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBKdWwgMjEsIDIwMTQgYXQgMDU6MTc6MzJQTSArMDIwMCwgU2ViYXN0aWFuIEhlcmJz
-enQgd3JvdGU6Cj4gSGVsbG8gQmVuamFtaW4sCj4gCj4geW91ciBwYXRjaCAiZW5hYmxlIGdjYyBm
-b3JtYXQtc2VjdXJpdHkgY2hlY2siICg5Yjc3NDFjKSBub3Qgb25seSBhZGRlZAo+IC1XZm9ybWF0
-LXNlY3VyaXR5LCBidXQgYWxzbyBjaGFuZ2VkIGZzdGFjay1wcm90ZWN0b3IgdG8gZnN0YWNrLXBy
-b3RlY3Rvci1zdHJvbmcuCj4gV2FzIHRoaXMgY2hhbmdlIGludGVudGlvbmFsPyBJdCBpcyBub3Qg
-bWVudGlvbmVkIGluIHRoZSBjb21taXQgbG9nIGFuZCBzZWVtcwo+IHRvIHJlcXVpcmUgYSByZWNl
-bnQgZ2NjOgo+IAo+IGNjOiBlcnJvcjogdW5yZWNvZ25pemVkIGNvbW1hbmQgbGluZSBvcHRpb24g
-4oCYLWZzdGFjay1wcm90ZWN0b3Itc3Ryb25n4oCZCj4gd2l0aAo+IGdjYyB2ZXJzaW9uIDQuOC4y
-IDIwMTQwMzI0IFtnY2MtNF84LWJyYW5jaCByZXZpc2lvbiAyMDg3ODldIChTVVNFIExpbnV4KQoK
-SSBkbyB0aGluayBzd2l0Y2hpbmcgZnJvbSBmc3RhY2stcHJvdGVjdG9yIHRvIGZzdGFjay1wcm90
-ZWN0b3Itc3Ryb25nIGlzCmEgZ29vZCBpZGVhLCBhbmQgSSB1c2UgaWYgZm9yIHRoZSByZWRoYXQg
-YnVpbGRzLCBidXQgSSBkaWRuJ3QgbWVhbiB0bwppbmNsdWRlIHRoYXQgY2hhbmdlIGluIG15IGNv
-bW1pdC4gSSBjYW4gc2VuZCBhIGNvbW1pdCB0byBiYWNrIGl0IG91dCBpZgppdCdzIGNhdXNpbmcg
-YW4gYW5ub3lhbmNlLiAgT25jZSBnY2MgNC45IGhhcyBiZWVuIGFyb3VuZCBmb3IgYSB3aGlsZQps
-b25nZXIsIEknbGwgcmVzZW5kIGEgY29tbWl0IHRvIGluY2x1ZGUgaXQuCgotQmVuCgo+IAo+IFNl
-YmFzdGlhbgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+In my "enable gcc format-security check" (9b7741c) commit, I changed
+fstack-protector to fstack-protector-strong. This new option only exists
+in gcc 4.9, which is relatively new.  This patch reverts to the
+fstack-protector option for now, until gcc 4.9 has been around for longer.
+
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index 1486721..20ae23e 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -46,7 +46,7 @@ GZIP        = gzip -9 -c
+ INSTALL_PROGRAM = install
+ 
+ ifndef RPM_OPT_FLAGS
+-	RPM_OPT_FLAGS = -O2 -g -pipe -Wformat-security -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4
++	RPM_OPT_FLAGS = -O2 -g -pipe -Wformat-security -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
+ endif
+ 
+ OPTFLAGS     = $(RPM_OPT_FLAGS) -Wunused -Wstrict-prototypes
+-- 
+1.8.3.1
