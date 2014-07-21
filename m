@@ -1,13 +1,15 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: multipath-tools: -fstack-protector to
- fstack-protector-strong change
-Date: Mon, 21 Jul 2014 17:17:32 +0200
-Message-ID: <20140721171732.00002396@localhost>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Does multipath require disabled write cache?
+Date: Mon, 21 Jul 2014 13:49:39 -0400
+Message-ID: <20140721174939.GA31622@redhat.com>
+References: <53CC3287.3010708@shiftmail.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <53CC3287.3010708@shiftmail.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,17 +19,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Sebastian Herbszt <herbszt@gmx.de>
+To: Spelic <spelic@shiftmail.org>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SGVsbG8gQmVuamFtaW4sCgp5b3VyIHBhdGNoICJlbmFibGUgZ2NjIGZvcm1hdC1zZWN1cml0eSBj
-aGVjayIgKDliNzc0MWMpIG5vdCBvbmx5IGFkZGVkCi1XZm9ybWF0LXNlY3VyaXR5LCBidXQgYWxz
-byBjaGFuZ2VkIGZzdGFjay1wcm90ZWN0b3IgdG8gZnN0YWNrLXByb3RlY3Rvci1zdHJvbmcuCldh
-cyB0aGlzIGNoYW5nZSBpbnRlbnRpb25hbD8gSXQgaXMgbm90IG1lbnRpb25lZCBpbiB0aGUgY29t
-bWl0IGxvZyBhbmQgc2VlbXMKdG8gcmVxdWlyZSBhIHJlY2VudCBnY2M6CgpjYzogZXJyb3I6IHVu
-cmVjb2duaXplZCBjb21tYW5kIGxpbmUgb3B0aW9uIOKAmC1mc3RhY2stcHJvdGVjdG9yLXN0cm9u
-Z+KAmQp3aXRoCmdjYyB2ZXJzaW9uIDQuOC4yIDIwMTQwMzI0IFtnY2MtNF84LWJyYW5jaCByZXZp
-c2lvbiAyMDg3ODldIChTVVNFIExpbnV4KQoKU2ViYXN0aWFuCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+On Sun, Jul 20 2014 at  5:20pm -0400,
+Spelic <spelic@shiftmail.org> wrote:
+
+> Hello all,
+> I am wondering if multipath requires a disabled write cache at the
+> remote disks.
+> We have some external SAS disks, for which the connection is flaky
+> and sometimes is lost and then they are detected again. Multipath
+> seems perfect for this situation.
+> However, when the disks are lost, I suppose resets are issued, which
+> might clear the write cache so that data located there might not be
+> committed (true? well at least on power loss this is true).
+
+You should disable both the controller cache and disk caches if they are
+volatile.  Filesystems will issue flushes (and DM will handle those
+flushes) but until those flushes return successfully the associated
+outstanding data is not considered on permanent storage.
+
+> It would be great if multipath would issue a flush every N  writes,
+> and then remember the last N  writes and resubmit them when the path
+> is reestablished, so that there is again chance to flush them to
+> stable storage. (similar to DRBD epochs) However I don't know if
+> this smart mechanism is implemented.
+
+It isn't implemented.
