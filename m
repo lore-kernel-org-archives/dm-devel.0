@@ -1,75 +1,75 @@
-From: Satoru Takeuchi <satoru.takeuchi@gmail.com>
-Subject: Re: [PATCH] dm-writeboost: Remove unsure BUG() from
-	init_rambuf_pool
-Date: Mon, 21 Jul 2014 22:52:47 +0900
-Message-ID: <CAMym5wuVey8shaFt0C+XWpdZ-KeukY3kQ5SHeCdNTpg9AGL87w@mail.gmail.com>
-References: <87egxr0wul.wl%satoru.takeuchi@gmail.com>
-	<20140718100130.5bc9f9cc4e9ce674ab014423@gmail.com>
-	<CAMym5wu+DUrxqOaenW1h4WgcJOGzMK1H1amMbYS7783qugQFNg@mail.gmail.com>
-	<87bnsl37az.wl%satoru.takeuchi@gmail.com>
-	<20140719181339.GB6822@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: ZAC target (Was: Re: dm-multipath: Accept failed paths for multipath
+ maps)
+Date: Mon, 21 Jul 2014 16:23:41 +0200
+Message-ID: <53CD226D.1070309@suse.de>
+References: <1387353155-7271-1-git-send-email-hare@suse.de> <20131218140858.GC17730@redhat.com> <52B1B046.3040301@suse.de> <1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com> <20140718000411.GB337@redhat.com> <8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02> <20140718021806.GA1143@redhat.com> <8A51900D08212F40B3DE22453052F69839C46B5B@wdscexmb02> <53C8B757.2000904@suse.de>,<20140718143855.GA4762@redhat.com> <8A51900D08212F40B3DE22453052F69839C46EC0@wdscexmb02>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140719181339.GB6822@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Satoru Takeuchi <satoru.takeuchi@gmail.com>, ejt@redhat.com, Akira Hayakawa <ruby.wktk@gmail.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <8A51900D08212F40B3DE22453052F69839C46EC0@wdscexmb02>
+Sender: linux-kernel-owner@vger.kernel.org
+To: John Utz <John.Utz@wdc.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>
 List-Id: dm-devel.ids
 
-Hi Alasdaia,
-
-2014-07-20 3:13 GMT+09:00 Alasdair G Kergon <agk@redhat.com>:
-> On Sat, Jul 19, 2014 at 08:40:52PM +0900, Satoru Takeuchi wrote:
->> In addition, I'd like to know your opinion about whether setting
->> the upper limit of nr_rambuf_pool argument is neccesary or not.
+On 07/18/2014 07:04 PM, John Utz wrote:
+>> On 07/18/2014 05:31 AM, John Utz wrote:
+>>> Thankyou very much for the exhaustive answer! I forwarded on to my
+>>> project peers because i don't think any of us where aware of the
+>>> existing infrastructure.
+>>>
+>>> Of course, said infrastructure would have to be taught about ZAC,
+>>> but it seems like it would be a nice place to start testing from...=
+=2E
+>>>
+>> ZAC is a different beast altogether; I've posted an initial set of
+>> patches a while back on linux-scsi.
+>> But I don't think multipath needs to be changed for that.
+>> Other areas of device-mapper most certainly do.
 >
-> 1) If it's a parameter passed from userspace under the control of the
-> sysadmin, then you should just trust the sysadmin to set a sensible
-> value, and only return an error if the value they ask for is unobtainable.
-
-Thank you for your comment.
-
-I don't say anything if this function returns an ENOMEM without any effect to
-whole system. In this case, it fails *after* evicting massive amount of memory.
-Since linux is used by very large amount of system, I consider someone will
-eventually make a mistake. So I consider setting upper limit is better way
-from the perspective of fool proof.
-
+> Pretty sure John is working on a new ZAC-oriented DM target.
 >
-> Example: dm-ioctl.c copy_params()
+> YUP.
 >
-> 2) If certain large values would be useless, leaving no memory for
-> anything else, then you could apply a sensible limit based on the amount
-> of memory available.
+> Per Ted T'so's suggestion several months ago, the goal is to create
+ > a new DM target that implements the ZAC/ZBC command set and the SMR
+ > write pointer architecture so that FSfolksen can try their hand at
+ > porting their stuff to it.
+>
+> It's in the very early stages so there is nothing to show yet, but
+ > development is ongoing. There are a few unknowns about how to surfac=
+e
+ > some specific behaviors (new verbs and errors, particularly errors
+ > with sense codes that return a write pointer) but i have not gotten
+ > far enuf along in development to be able to construct succint and
+ > specific questions on the topic so that will have to wait for a bit.
+>
+I was pondering the 'best' ZAC implementation, too, and found the
+'report zones' command _very_ cumbersome to use.
+Especially the fact that in theory each zone could have a different=20
+size _and_ plenty of zones could be present will be making zone=20
+lookup hellish.
 
-I agree with you.
+However: it seems to me that we might benefit from a generic
+'block boundaries' implementation.
+Reasoning here is that several subsystems (RAID, ZAC/ZBC, and things=20
+like referrals) impose I/O scheduling boundaries which must not be=20
+crossed when assembling requests.
 
-It's difficult to guess the appropriate upper limit from the perspective of
-dm-writeboost at this point since it's depend on system and requires
-a number of performance measurements. So, the second best way is limiting
-the rambuf size based on the available memory as you say. It can avoid
-the above-mentioned problem anyway and very easy to implement.
+Seeing that we already have some block limitations I was wondering=20
+if we couldn't have some set of 'I/O scheduling boundaries' as part
+of the request_queue structure.
 
-Thanks,
-Satoru
+Kent, Jens; comments here?
 
->
-> Example: dm_bufio.c
->
->  * Memory management policy:
->  *      Limit the number of buffers to DM_BUFIO_MEMORY_PERCENT of main memory
->  *      or DM_BUFIO_VMALLOC_PERCENT of vmalloc memory (whichever is lower).
->  *      Always allocate at least DM_BUFIO_MIN_BUFFERS buffers.
->
-> Alasdair
->
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
