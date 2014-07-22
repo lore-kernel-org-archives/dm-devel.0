@@ -1,71 +1,69 @@
-From: David Rientjes <rientjes@google.com>
-Subject: [patch] slab_common: fix the check for duplicate slab names
-Date: Tue, 22 Jul 2014 15:41:14 -0700 (PDT)
-Message-ID: <alpine.DEB.2.02.1407221539020.5814@chino.kir.corp.google.com>
-References: <alpine.LRH.2.02.1403041711300.29476@file01.intranet.prod.int.rdu2.redhat.com> <20140325170324.GC580@redhat.com> <alpine.DEB.2.10.1403251306260.26471@nuc> <20140523201632.GA16013@redhat.com> <537FBD6F.1070009@iki.fi>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] stable mm/slab_common.c fix for 3.16-rc7
+Date: Tue, 22 Jul 2014 18:58:41 -0400
+Message-ID: <20140722225841.GA5379@redhat.com>
+References: <alpine.LRH.2.02.1403041711300.29476@file01.intranet.prod.int.rdu2.redhat.com>
+ <20140325170324.GC580@redhat.com>
+ <alpine.DEB.2.10.1403251306260.26471@nuc>
+ <20140523201632.GA16013@redhat.com>
+ <537FBD6F.1070009@iki.fi>
  <20140722221421.GA11318@redhat.com>
+ <alpine.DEB.2.02.1407221539020.5814@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20140722221421.GA11318@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.02.1407221539020.5814@chino.kir.corp.google.com>
 Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: Pekka Enberg <penberg@iki.fi>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, David Rientjes <rientjes@google.com>, Pekka Enberg <penberg@iki.fi>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Hi Linus,
 
-The patch 3e374919b314f20e2a04f641ebc1093d758f66a4 is supposed to fix the
-problem where kmem_cache_create incorrectly reports duplicate cache name
-and fails. The problem is described in the header of that patch.
+Not sure you'll be OK with what I've done or not but I pulled in a
+1-liner "slab/urgent" fix that Pekka staged a couple months ago.  I've
+made it available through a signed tag in the linux-dm.git tree.  My
+reasoning on why this is OK is it regularly impacts DM and Pekka already
+Signed-off on it (as did other mm developers).  I'm pretty sure Pekka
+just forgot to follow through preparing a pull request for 3.15.
 
-However, the patch doesn't really fix the problem because of these
-reasons:
+If you'd rather take this direct from Pekka (or wait for Andrew to pick
+up the same patch which David just sent him) that is fine by me, I just
+want the issue fixed.
 
-* the logic to test for debugging is reversed. It was intended to perform
-  the check only if slub debugging is enabled (which implies that caches
-  with the same parameters are not merged). Therefore, there should be
-  #if !defined(CONFIG_SLUB) || defined(CONFIG_SLUB_DEBUG_ON)
-  The current code has the condition reversed and performs the test if
-  debugging is disabled.
+The following changes since commit 048e5a07f282c57815b3901d4a68a77fa131ce0a:
 
-* slub debugging may be enabled or disabled based on kernel command line,
-  CONFIG_SLUB_DEBUG_ON is just the default settings. Therefore the test
-  based on definition of CONFIG_SLUB_DEBUG_ON is unreliable.
+  dm cache metadata: do not allow the data block size to change (2014-07-15 14:07:50 -0400)
 
-This patch fixes the problem by removing the test
-"!defined(CONFIG_SLUB_DEBUG_ON)". Therefore, duplicate names are never
-checked if the SLUB allocator is used.
+are available in the git repository at:
 
-Note to stable kernel maintainers: when backporint this patch, please
-backport also the patch 3e374919b314f20e2a04f641ebc1093d758f66a4.
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/urgent-slab-fix
 
-Cc: stable@vger.kernel.org	# 3.6+
-Acked-by: Christoph Lameter <cl@linux.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Pekka Enberg <penberg@kernel.org>
-Signed-off-by: David Rientjes <rientjes@google.com>
----
- Andrew, this is in Pekka's tree but has not managed to be pushed for 
- 3.16, mind picking it up?
+for you to fetch changes up to 45ccaf4764278f6544db412d38a1bae056ee3acc:
 
- I'll check to see if there's anything else in Pekka's tree that you need.
+  Merge branch 'slab/urgent' of git://git.kernel.org/pub/scm/linux/kernel/git/penberg/linux into for-3.16-rcX (2014-07-22 18:38:27 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+
+This fixes the broken duplicate slab name check in
+kmem_cache_sanity_check() that has been repeatedly reported (as recently
+as today against Fedora rawhide).  Pekka seemed to have it staged for a
+late 3.15-rc in his 'slab/urgent' branch but never sent a pull request,
+see: https://lkml.org/lkml/2014/5/23/648
+
+----------------------------------------------------------------
+Mike Snitzer (1):
+      Merge branch 'slab/urgent' of git://git.kernel.org/.../penberg/linux into for-3.16-rcX
+
+Mikulas Patocka (1):
+      slab_common: fix the check for duplicate slab names
 
  mm/slab_common.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/mm/slab_common.c b/mm/slab_common.c
---- a/mm/slab_common.c
-+++ b/mm/slab_common.c
-@@ -55,7 +55,7 @@ static int kmem_cache_sanity_check(const char *name, size_t size)
- 			continue;
- 		}
- 
--#if !defined(CONFIG_SLUB) || !defined(CONFIG_SLUB_DEBUG_ON)
-+#if !defined(CONFIG_SLUB)
- 		if (!strcmp(s->name, name)) {
- 			pr_err("%s (%s): Cache name already exists.\n",
- 			       __func__, name);
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
