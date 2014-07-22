@@ -1,117 +1,165 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: ZAC target (Was: Re: dm-multipath: Accept failed paths for multipath
- maps)
-Date: Tue, 22 Jul 2014 07:46:56 +0200
-Message-ID: <53CDFAD0.6090208@suse.de>
-References: <52B1B046.3040301@suse.de> <1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com> <20140718000411.GB337@redhat.com> <8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02> <20140718021806.GA1143@redhat.com> <8A51900D08212F40B3DE22453052F69839C46B5B@wdscexmb02> <53C8B757.2000904@suse.de> <20140718143855.GA4762@redhat.com> <8A51900D08212F40B3DE22453052F69839C46EC0@wdscexmb02> <53CD226D.1070309@suse.de> <20140721192825.GA25962@kmo-pixel>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: [PATCH] dm-writeboost: Remove unsure BUG() from
+ init_rambuf_pool
+Date: Tue, 22 Jul 2014 16:14:36 +0900
+Message-ID: <20140722161436.90e7b2c56830872354cc636b@gmail.com>
+References: <87egxr0wul.wl%satoru.takeuchi@gmail.com>
+	<20140718100130.5bc9f9cc4e9ce674ab014423@gmail.com>
+	<CAMym5wu+DUrxqOaenW1h4WgcJOGzMK1H1amMbYS7783qugQFNg@mail.gmail.com>
+	<87bnsl37az.wl%satoru.takeuchi@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140721192825.GA25962@kmo-pixel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <kmo@daterainc.com>
-Cc: John Utz <John.Utz@wdc.com>, Mike Snitzer <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, tytso@mit.edu
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <87bnsl37az.wl%satoru.takeuchi@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Satoru Takeuchi <satoru.takeuchi@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ejt@redhat.com
 List-Id: dm-devel.ids
 
-On 07/21/2014 09:28 PM, Kent Overstreet wrote:
-> On Mon, Jul 21, 2014 at 04:23:41PM +0200, Hannes Reinecke wrote:
->> On 07/18/2014 07:04 PM, John Utz wrote:
->>>> On 07/18/2014 05:31 AM, John Utz wrote:
->>>>> Thankyou very much for the exhaustive answer! I forwarded on to m=
-y
->>>>> project peers because i don't think any of us where aware of the
->>>>> existing infrastructure.
->>>>>
->>>>> Of course, said infrastructure would have to be taught about ZAC,
->>>>> but it seems like it would be a nice place to start testing from.=
-=2E..
->>>>>
->>>> ZAC is a different beast altogether; I've posted an initial set of
->>>> patches a while back on linux-scsi.
->>>> But I don't think multipath needs to be changed for that.
->>>> Other areas of device-mapper most certainly do.
->>>
->>> Pretty sure John is working on a new ZAC-oriented DM target.
->>>
->>> YUP.
->>>
->>> Per Ted T'so's suggestion several months ago, the goal is to create
->>> a new DM target that implements the ZAC/ZBC command set and the SMR
->>> write pointer architecture so that FSfolksen can try their hand at
->>> porting their stuff to it.
->>>
->>> It's in the very early stages so there is nothing to show yet, but
->>> development is ongoing. There are a few unknowns about how to surfa=
-ce
->>> some specific behaviors (new verbs and errors, particularly errors
->>> with sense codes that return a write pointer) but i have not gotten
->>> far enuf along in development to be able to construct succint and
->>> specific questions on the topic so that will have to wait for a bit=
-=2E
->>>
->> I was pondering the 'best' ZAC implementation, too, and found the
->> 'report zones' command _very_ cumbersome to use.
->> Especially the fact that in theory each zone could have a different =
-size
->> _and_ plenty of zones could be present will be making zone lookup he=
-llish.
->>
->> However: it seems to me that we might benefit from a generic
->> 'block boundaries' implementation.
->> Reasoning here is that several subsystems (RAID, ZAC/ZBC, and things=
- like
->> referrals) impose I/O scheduling boundaries which must not be crosse=
-d when
->> assembling requests.
->
-> Wasn't Ted working on such a thing?
->
->> Seeing that we already have some block limitations I was wondering i=
-f we
->> couldn't have some set of 'I/O scheduling boundaries' as part
->> of the request_queue structure.
->
-> I'd prefer not to dump yet more crap in request_queue, but that's a f=
-airly minor
-> quibble :)
->
-> I also tend to think having different size zones is crazy and I would=
- avoid
-> making any effort to support that in practice, but OTOH there's good =
-reason for
-> wanting one or two "normal" zones and the rest append only so the int=
-erface is
-> going to have to accomadate some differences between zones.
->
-> Also, depending on the approach supporting different size zones might=
- not
-> actually be problematic. If you're starting with something that's pur=
-e COW and
-> you're just plugging in this "ZAC allocation" stuff (which I think is=
- what I'm
-> going to do in bcache) then it might not actually be an issue.
->
-No, what I was suggesting is to introduce 'I/O scheduling barriers'.
-Some devices like RAID or indeed ZAC have internal boundaries which=20
-cannot be crossed by any I/O. So either the I/O has to be split up=20
-or the I/O scheduler have to be made aware of these boundaries.
+Hi, Satoru,
 
-I have had this issue several times now (once with implementing=20
-Referrals, now with ZAC) so I was wondering whether we can have some=20
-sort of generic implementation in the block layer.
+As for removing BUG() at the line I will definitely ack but
+please also send a pull request to Joe's tree where we
+are raising up dm-writeboost. Sorry, I didn't tell you this.
 
-And as we're already having request queue limits this might fall=20
-quite naturally into it. Or so I thought.
+In my opinion, I like to see the patch in both pull request and dm-devel.
+This shares where dm-writeboost is going to with DM guys.
+If you have other works to dm-writeboost, please do as this time.
 
-Hmm. Guess I should start coding here.
+Note that where you send the pull request is
+thin-dev branch of jthornber/linux-2.6.
+It's where dm-writeboost is in.
 
-Cheers,
+Anyway, I think you start to involve dm-writeboost.
+It is really welcome.
+And bringing us discussion from user/sysadmin perspective
+is greatly welcome, too.
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+- Akira
+
+
+
+On Sat, 19 Jul 2014 20:40:52 +0900
+Satoru Takeuchi <satoru.takeuchi@gmail.com> wrote:
+
+> Hi Joe and Akira,
+> 
+> At Sat, 19 Jul 2014 11:13:13 +0900,
+> Satoru Takeuchi wrote:
+> > 
+> > Hi Akira,
+> > 
+> > 2014-07-18 10:01 GMT+09:00 Akira Hayakawa <ruby.wktk@gmail.com>:
+> > > Hi, Satoru,
+> > >
+> > > I totally agree with removing the BUG() at (2).
+> > >
+> > > However, I don't agree with setting the upper limit of nr_rambuf_pool.
+> > > You are saying that any memory allocation failure on initialization should be avoided
+> > > but that sounds going too far. Removing that possibility from all kernel codes is impossible in practice.
+> > > Carefully terminating the initialization on allocation failure is sufficient.
+> 
+> Both Akira and me seem to have completely different policy about the upper
+> limit of nr_rambuf_pool argument. However both of us agree with removing
+> unsure BUG() in int init_rambuf_pool(). So I wrote a patch to do so as a
+>  first step. Please apply this patch.
+> 
+> In addition, I'd like to know your opinion about whether setting
+> the upper limit of nr_rambuf_pool argument is neccesary or not.
+> 
+> 
+> 
+> =======
+> From: Satoru Takeuchi <satoru.takeuchi@gmail.com>
+> 
+> If users set a very large value to nr_rambuf_pool argument, kernel would hit
+> BUG() in the error route of init_rambuf_pool().
+> 
+> drivers/md/dm-writeboost-metadata.c:
+> ===============================================================================
+> ...
+> static int init_rambuf_pool(struct wb_device *wb)
+> {
+> 	int r = 0;
+> 	size_t i;
+> 
+> 	wb->rambuf_pool = kmalloc(sizeof(struct rambuffer) * wb->nr_rambuf_pool,
+> 				  GFP_KERNEL);
+> 	if (!wb->rambuf_pool)			# It is true here.
+> 		return -ENOMEM;
+> 
+> 	wb->rambuf_cachep = kmem_cache_create("dmwb_rambuf",
+> 			1 << (wb->segment_size_order + SECTOR_SHIFT),
+> 			1 << (wb->segment_size_order + SECTOR_SHIFT),
+> 			SLAB_RED_ZONE, NULL);
+> 	if (!wb->rambuf_cachep) {
+> 		r = -ENOMEM;			# Enter this route or ....
+> 		goto bad_cachep;
+> 	}
+> 
+> 	for (i = 0; i < wb->nr_rambuf_pool; i++) {
+> 		size_t j;
+> 		struct rambuffer *rambuf = wb->rambuf_pool + i;
+> 
+> 		rambuf->data = kmem_cache_alloc(wb->rambuf_cachep, GFP_KERNEL);
+> 		if (!rambuf->data) {
+> 			...			# ... enter this route.
+> 			goto bad_alloc_data;
+> 		}
+> 		check_buffer_alignment(rambuf->data);
+> 	}
+> 
+> 	return r;
+> 
+> bad_alloc_data:
+> 	kmem_cache_destroy(wb->rambuf_cachep);
+> bad_cachep:
+> 	kfree(wb->rambuf_pool);
+> 	BUG();					# Kernel panic happens here.
+> 	return r;
+> }
+> ...
+> ===============================================================================
+> 
+> Probably this BUG() was introduced erroneously and is safe to remove.
+> 
+> Signed-off-by: Satoru Takeuchi <satoru.takeuchi@gmail.com>
+> Cc: Joe Thornber <ejt@redhat.com>
+> Cc: Akira Hayakawa <ruby.wktk@gmail.com>
+> ---
+>  drivers/md/dm-writeboost-metadata.c | 1 -
+>  1 file changed, 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-writeboost-metadata.c b/drivers/md/dm-writeboost-metadata.c
+> index b7b3eb7..ce6ea056 100644
+> --- a/drivers/md/dm-writeboost-metadata.c
+> +++ b/drivers/md/dm-writeboost-metadata.c
+> @@ -702,7 +702,6 @@ bad_alloc_data:
+>  	kmem_cache_destroy(wb->rambuf_cachep);
+>  bad_cachep:
+>  	kfree(wb->rambuf_pool);
+> -	BUG();
+>  	return r;
+>  }
+>  
+> -- 
+> 2.0.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+-- 
+Akira Hayakawa <ruby.wktk@gmail.com>
