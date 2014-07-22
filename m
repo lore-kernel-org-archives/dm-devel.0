@@ -1,50 +1,117 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: multipath-tools: -fstack-protector to
- fstack-protector-strong change
-Date: Tue, 22 Jul 2014 06:59:39 +0200
-Message-ID: <53CDEFBB.2040107@acm.org>
-References: <20140721171732.00002396@localhost>
-	<20140721224544.GK10438@dhcp80-209.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: ZAC target (Was: Re: dm-multipath: Accept failed paths for multipath
+ maps)
+Date: Tue, 22 Jul 2014 07:46:56 +0200
+Message-ID: <53CDFAD0.6090208@suse.de>
+References: <52B1B046.3040301@suse.de> <1387380498.7608.6.camel@ict-vth-stewarts01.ict.englab.netapp.com> <20140718000411.GB337@redhat.com> <8A51900D08212F40B3DE22453052F69839C46AF4@wdscexmb02> <20140718021806.GA1143@redhat.com> <8A51900D08212F40B3DE22453052F69839C46B5B@wdscexmb02> <53C8B757.2000904@suse.de> <20140718143855.GA4762@redhat.com> <8A51900D08212F40B3DE22453052F69839C46EC0@wdscexmb02> <53CD226D.1070309@suse.de> <20140721192825.GA25962@kmo-pixel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140721224544.GK10438@dhcp80-209.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140721192825.GA25962@kmo-pixel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kent Overstreet <kmo@daterainc.com>
+Cc: John Utz <John.Utz@wdc.com>, Mike Snitzer <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, tytso@mit.edu
 List-Id: dm-devel.ids
 
-T24gMDcvMjIvMTQgMDA6NDUsIEJlbmphbWluIE1hcnppbnNraSB3cm90ZToKPiBPbiBNb24sIEp1
-bCAyMSwgMjAxNCBhdCAwNToxNzozMlBNICswMjAwLCBTZWJhc3RpYW4gSGVyYnN6dCB3cm90ZToK
-Pj4gSGVsbG8gQmVuamFtaW4sCj4+Cj4+IHlvdXIgcGF0Y2ggImVuYWJsZSBnY2MgZm9ybWF0LXNl
-Y3VyaXR5IGNoZWNrIiAoOWI3NzQxYykgbm90IG9ubHkgYWRkZWQKPj4gLVdmb3JtYXQtc2VjdXJp
-dHksIGJ1dCBhbHNvIGNoYW5nZWQgZnN0YWNrLXByb3RlY3RvciB0byBmc3RhY2stcHJvdGVjdG9y
-LXN0cm9uZy4KPj4gV2FzIHRoaXMgY2hhbmdlIGludGVudGlvbmFsPyBJdCBpcyBub3QgbWVudGlv
-bmVkIGluIHRoZSBjb21taXQgbG9nIGFuZCBzZWVtcwo+PiB0byByZXF1aXJlIGEgcmVjZW50IGdj
-YzoKPj4KPj4gY2M6IGVycm9yOiB1bnJlY29nbml6ZWQgY29tbWFuZCBsaW5lIG9wdGlvbiDigJgt
-ZnN0YWNrLXByb3RlY3Rvci1zdHJvbmfigJkKPj4gd2l0aAo+PiBnY2MgdmVyc2lvbiA0LjguMiAy
-MDE0MDMyNCBbZ2NjLTRfOC1icmFuY2ggcmV2aXNpb24gMjA4Nzg5XSAoU1VTRSBMaW51eCkKPiAK
-PiBJIGRvIHRoaW5rIHN3aXRjaGluZyBmcm9tIGZzdGFjay1wcm90ZWN0b3IgdG8gZnN0YWNrLXBy
-b3RlY3Rvci1zdHJvbmcgaXMKPiBhIGdvb2QgaWRlYSwgYW5kIEkgdXNlIGlmIGZvciB0aGUgcmVk
-aGF0IGJ1aWxkcywgYnV0IEkgZGlkbid0IG1lYW4gdG8KPiBpbmNsdWRlIHRoYXQgY2hhbmdlIGlu
-IG15IGNvbW1pdC4gSSBjYW4gc2VuZCBhIGNvbW1pdCB0byBiYWNrIGl0IG91dCBpZgo+IGl0J3Mg
-Y2F1c2luZyBhbiBhbm5veWFuY2UuICBPbmNlIGdjYyA0LjkgaGFzIGJlZW4gYXJvdW5kIGZvciBh
-IHdoaWxlCj4gbG9uZ2VyLCBJJ2xsIHJlc2VuZCBhIGNvbW1pdCB0byBpbmNsdWRlIGl0LgoKSG93
-IGFib3V0IG9ubHkgdXNpbmcgZnN0YWNrLXByb3RlY3Rvci1zdHJvbmcgaWYgaXQgaXMgc3VwcG9y
-dGVkID8gSXQKY291bGQgYmUgaW50ZXJlc3RpbmcgdG8gaGF2ZSBhIGxvb2sgYXQgdGhlIExpbnV4
-IGtlcm5lbCBidWlsZCBzeXN0ZW0uIEEKTWFrZWZpbGUgZnVuY3Rpb24gY2FsbGVkICJjYy1vcHRp
-b24iIGhhcyBiZWVuIGRlZmluZWQgaW4Kc2NyaXB0cy9LYnVpbGQuaW5jbHVkZSB0aGF0IGlzIHVz
-ZWQgdG8gdGVzdCB3aGV0aGVyIG9yIG5vdCB0aGUgY29tcGlsZXIKc3VwcG9ydHMgYSBjZXJ0YWlu
-IGNvbXBpbGVyIGZsYWcuCgpCYXJ0LgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
-QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
-dmVs
+On 07/21/2014 09:28 PM, Kent Overstreet wrote:
+> On Mon, Jul 21, 2014 at 04:23:41PM +0200, Hannes Reinecke wrote:
+>> On 07/18/2014 07:04 PM, John Utz wrote:
+>>>> On 07/18/2014 05:31 AM, John Utz wrote:
+>>>>> Thankyou very much for the exhaustive answer! I forwarded on to m=
+y
+>>>>> project peers because i don't think any of us where aware of the
+>>>>> existing infrastructure.
+>>>>>
+>>>>> Of course, said infrastructure would have to be taught about ZAC,
+>>>>> but it seems like it would be a nice place to start testing from.=
+=2E..
+>>>>>
+>>>> ZAC is a different beast altogether; I've posted an initial set of
+>>>> patches a while back on linux-scsi.
+>>>> But I don't think multipath needs to be changed for that.
+>>>> Other areas of device-mapper most certainly do.
+>>>
+>>> Pretty sure John is working on a new ZAC-oriented DM target.
+>>>
+>>> YUP.
+>>>
+>>> Per Ted T'so's suggestion several months ago, the goal is to create
+>>> a new DM target that implements the ZAC/ZBC command set and the SMR
+>>> write pointer architecture so that FSfolksen can try their hand at
+>>> porting their stuff to it.
+>>>
+>>> It's in the very early stages so there is nothing to show yet, but
+>>> development is ongoing. There are a few unknowns about how to surfa=
+ce
+>>> some specific behaviors (new verbs and errors, particularly errors
+>>> with sense codes that return a write pointer) but i have not gotten
+>>> far enuf along in development to be able to construct succint and
+>>> specific questions on the topic so that will have to wait for a bit=
+=2E
+>>>
+>> I was pondering the 'best' ZAC implementation, too, and found the
+>> 'report zones' command _very_ cumbersome to use.
+>> Especially the fact that in theory each zone could have a different =
+size
+>> _and_ plenty of zones could be present will be making zone lookup he=
+llish.
+>>
+>> However: it seems to me that we might benefit from a generic
+>> 'block boundaries' implementation.
+>> Reasoning here is that several subsystems (RAID, ZAC/ZBC, and things=
+ like
+>> referrals) impose I/O scheduling boundaries which must not be crosse=
+d when
+>> assembling requests.
+>
+> Wasn't Ted working on such a thing?
+>
+>> Seeing that we already have some block limitations I was wondering i=
+f we
+>> couldn't have some set of 'I/O scheduling boundaries' as part
+>> of the request_queue structure.
+>
+> I'd prefer not to dump yet more crap in request_queue, but that's a f=
+airly minor
+> quibble :)
+>
+> I also tend to think having different size zones is crazy and I would=
+ avoid
+> making any effort to support that in practice, but OTOH there's good =
+reason for
+> wanting one or two "normal" zones and the rest append only so the int=
+erface is
+> going to have to accomadate some differences between zones.
+>
+> Also, depending on the approach supporting different size zones might=
+ not
+> actually be problematic. If you're starting with something that's pur=
+e COW and
+> you're just plugging in this "ZAC allocation" stuff (which I think is=
+ what I'm
+> going to do in bcache) then it might not actually be an issue.
+>
+No, what I was suggesting is to introduce 'I/O scheduling barriers'.
+Some devices like RAID or indeed ZAC have internal boundaries which=20
+cannot be crossed by any I/O. So either the I/O has to be split up=20
+or the I/O scheduler have to be made aware of these boundaries.
+
+I have had this issue several times now (once with implementing=20
+Referrals, now with ZAC) so I was wondering whether we can have some=20
+sort of generic implementation in the block layer.
+
+And as we're already having request queue limits this might fall=20
+quite naturally into it. Or so I thought.
+
+Hmm. Guess I should start coding here.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
