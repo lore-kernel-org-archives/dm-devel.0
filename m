@@ -1,40 +1,50 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH] md/dm-ioctl.c: optimize memory allocation
-	in copy_params
-Date: Tue, 22 Jul 2014 03:04:58 +0100
-Message-ID: <20140722020458.GE6822@agk-dp.fab.redhat.com>
-References: <53B68068.2060102@intel.com> <alpine.LRH.2.02.1407081831510.27831@file01.intranet.prod.int.rdu2.redhat.com> <53BCA278.5050205@linux.intel.com> <alpine.LRH.2.02.1407091032400.4545@file01.intranet.prod.int.rdu2.redhat.com> <53CDB81B.90509@linux.intel.com> <20140722012352.GD6822@agk-dp.fab.redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: multipath-tools: -fstack-protector to
+ fstack-protector-strong change
+Date: Tue, 22 Jul 2014 06:59:39 +0200
+Message-ID: <53CDEFBB.2040107@acm.org>
+References: <20140721171732.00002396@localhost>
+	<20140721224544.GK10438@dhcp80-209.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140722012352.GD6822@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Zhang, Yanmin" <yanmin_zhang@linux.intel.com>, Mikulas Patocka <mpatocka@redhat.com>, "xinhui.pan" <xinhuix.pan@intel.com>, linux-kernel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, "Liu, ShuoX" <shuox.liu@intel.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140721224544.GK10438@dhcp80-209.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-On Tue, Jul 22, 2014 at 02:23:52AM +0100, Alasdair G Kergon wrote:
-> Unanswered.  Let's ask the same question in a different way:
- 
-A quick search for 'vold' returns:
-  https://android.googlesource.com/platform/system/vold/
-and the code there requests a fixed 64K allocation to hold the names of
-active volumes.
-
-So unlike libdevmapper-based applications where a smaller allocation is
-used at first and only extended if needed, Android just assumes that
-64KB is enough for everyone.
-
-So is your claim that:
-
-1. This 64KB allocation for the brief duration of the ioctl to store the
-names of active device-mapper volumes leads to memory problems?
-[Mustn't the system *already* be in a bad state if this pushes it over
-the limit?]
-
-and
-
-2. The systems on which this memory shortage occurs have so many volumes
-(with long names?) that a smaller allocation would not suffice?
-
-Alasdair
+T24gMDcvMjIvMTQgMDA6NDUsIEJlbmphbWluIE1hcnppbnNraSB3cm90ZToKPiBPbiBNb24sIEp1
+bCAyMSwgMjAxNCBhdCAwNToxNzozMlBNICswMjAwLCBTZWJhc3RpYW4gSGVyYnN6dCB3cm90ZToK
+Pj4gSGVsbG8gQmVuamFtaW4sCj4+Cj4+IHlvdXIgcGF0Y2ggImVuYWJsZSBnY2MgZm9ybWF0LXNl
+Y3VyaXR5IGNoZWNrIiAoOWI3NzQxYykgbm90IG9ubHkgYWRkZWQKPj4gLVdmb3JtYXQtc2VjdXJp
+dHksIGJ1dCBhbHNvIGNoYW5nZWQgZnN0YWNrLXByb3RlY3RvciB0byBmc3RhY2stcHJvdGVjdG9y
+LXN0cm9uZy4KPj4gV2FzIHRoaXMgY2hhbmdlIGludGVudGlvbmFsPyBJdCBpcyBub3QgbWVudGlv
+bmVkIGluIHRoZSBjb21taXQgbG9nIGFuZCBzZWVtcwo+PiB0byByZXF1aXJlIGEgcmVjZW50IGdj
+YzoKPj4KPj4gY2M6IGVycm9yOiB1bnJlY29nbml6ZWQgY29tbWFuZCBsaW5lIG9wdGlvbiDigJgt
+ZnN0YWNrLXByb3RlY3Rvci1zdHJvbmfigJkKPj4gd2l0aAo+PiBnY2MgdmVyc2lvbiA0LjguMiAy
+MDE0MDMyNCBbZ2NjLTRfOC1icmFuY2ggcmV2aXNpb24gMjA4Nzg5XSAoU1VTRSBMaW51eCkKPiAK
+PiBJIGRvIHRoaW5rIHN3aXRjaGluZyBmcm9tIGZzdGFjay1wcm90ZWN0b3IgdG8gZnN0YWNrLXBy
+b3RlY3Rvci1zdHJvbmcgaXMKPiBhIGdvb2QgaWRlYSwgYW5kIEkgdXNlIGlmIGZvciB0aGUgcmVk
+aGF0IGJ1aWxkcywgYnV0IEkgZGlkbid0IG1lYW4gdG8KPiBpbmNsdWRlIHRoYXQgY2hhbmdlIGlu
+IG15IGNvbW1pdC4gSSBjYW4gc2VuZCBhIGNvbW1pdCB0byBiYWNrIGl0IG91dCBpZgo+IGl0J3Mg
+Y2F1c2luZyBhbiBhbm5veWFuY2UuICBPbmNlIGdjYyA0LjkgaGFzIGJlZW4gYXJvdW5kIGZvciBh
+IHdoaWxlCj4gbG9uZ2VyLCBJJ2xsIHJlc2VuZCBhIGNvbW1pdCB0byBpbmNsdWRlIGl0LgoKSG93
+IGFib3V0IG9ubHkgdXNpbmcgZnN0YWNrLXByb3RlY3Rvci1zdHJvbmcgaWYgaXQgaXMgc3VwcG9y
+dGVkID8gSXQKY291bGQgYmUgaW50ZXJlc3RpbmcgdG8gaGF2ZSBhIGxvb2sgYXQgdGhlIExpbnV4
+IGtlcm5lbCBidWlsZCBzeXN0ZW0uIEEKTWFrZWZpbGUgZnVuY3Rpb24gY2FsbGVkICJjYy1vcHRp
+b24iIGhhcyBiZWVuIGRlZmluZWQgaW4Kc2NyaXB0cy9LYnVpbGQuaW5jbHVkZSB0aGF0IGlzIHVz
+ZWQgdG8gdGVzdCB3aGV0aGVyIG9yIG5vdCB0aGUgY29tcGlsZXIKc3VwcG9ydHMgYSBjZXJ0YWlu
+IGNvbXBpbGVyIGZsYWcuCgpCYXJ0LgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
+QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVs
