@@ -1,15 +1,14 @@
-From: Sebastian Herbszt <herbszt@gmx.de>
-Subject: Re: [PATCH] multipath: revert fstack-protector-strong
-	gcc option
-Date: Tue, 22 Jul 2014 11:58:05 +0200
-Message-ID: <20140722115805.00004b68@localhost>
-References: <1405984252-26424-1-git-send-email-bmarzins@redhat.com>
+From: John Utz <John.Utz@wdc.com>
+Subject: are the dm target ioctl handlers extensible to serving
+ arbitrary configuration ioctls?
+Date: Tue, 22 Jul 2014 21:35:38 +0000
+Message-ID: <8A51900D08212F40B3DE22453052F69839C477D3@wdscexmb02>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1405984252-26424-1-git-send-email-bmarzins@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,33 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Benjamin Marzinski wrote:
-> In my "enable gcc format-security check" (9b7741c) commit, I changed
-> fstack-protector to fstack-protector-strong. This new option only exists
-> in gcc 4.9, which is relatively new.  This patch reverts to the
-> fstack-protector option for now, until gcc 4.9 has been around for longer.
-> 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  Makefile.inc | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/Makefile.inc b/Makefile.inc
-> index 1486721..20ae23e 100644
-> --- a/Makefile.inc
-> +++ b/Makefile.inc
-> @@ -46,7 +46,7 @@ GZIP        = gzip -9 -c
->  INSTALL_PROGRAM = install
->  
->  ifndef RPM_OPT_FLAGS
-> -	RPM_OPT_FLAGS = -O2 -g -pipe -Wformat-security -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4
-> +	RPM_OPT_FLAGS = -O2 -g -pipe -Wformat-security -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4
->  endif
->  
->  OPTFLAGS     = $(RPM_OPT_FLAGS) -Wunused -Wstrict-prototypes
+And if so, how would I connect to them from userland? 
 
-Tested-by: Sebastian Herbszt <herbszt@gmx.de>
+What would be the device that i opened for reading and writing?
+
+Based on my review of the code, it seems that these particular ioctl servicing routines are designed to service DM or block device specific ioctls and not designed to support setting or getting configuration information about the particular dm target instance.
+
+Specifically, i wish to be able to use an ioctl to set and get the number of zones and other things in the dm-zacsim.ko that i am currently coding.
+
+Here is the ioctl handler implementation in dm-linear.c that is an example of the ioctl handler that i am asking about:
+
+
+static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
+117                         unsigned long arg)
+118 {
+119         struct linear_c *lc = (struct linear_c *) ti->private;
+120         struct dm_dev *dev = lc->dev;
+121         int r = 0;
+
+              // CAN I ADD MY OWN ARBITRARY STUFF IN HERE?
+
+122 
+123         /*
+124          * Only pass ioctls through if the device sizes match exactly.
+125          */
+126         if (lc->start ||
+127             ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
+128                 r = scsi_verify_blk_ioctl(NULL, cmd);
+129 
+130         return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
+131 }
+
+tnx!
+
+johnu
