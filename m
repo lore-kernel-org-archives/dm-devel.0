@@ -1,102 +1,60 @@
 From: "Zhang, Yanmin" <yanmin_zhang@linux.intel.com>
 Subject: Re: [dm-devel] [PATCH] md/dm-ioctl.c: optimize memory allocation
  in copy_params
-Date: Wed, 23 Jul 2014 11:06:26 +0800
-Message-ID: <53CF26B2.6060503@linux.intel.com>
-References: <53B68068.2060102@intel.com> <alpine.LRH.2.02.1407081831510.27831@file01.intranet.prod.int.rdu2.redhat.com> <53BCA278.5050205@linux.intel.com> <alpine.LRH.2.02.1407091032400.4545@file01.intranet.prod.int.rdu2.redhat.com> <53CDB81B.90509@linux.intel.com> <20140722012352.GD6822@agk-dp.fab.redhat.com>
+Date: Wed, 23 Jul 2014 11:15:09 +0800
+Message-ID: <53CF28BD.6050603@linux.intel.com>
+References: <53B68068.2060102@intel.com> <alpine.LRH.2.02.1407081831510.27831@file01.intranet.prod.int.rdu2.redhat.com> <53BCA278.5050205@linux.intel.com> <alpine.LRH.2.02.1407091032400.4545@file01.intranet.prod.int.rdu2.redhat.com> <53CDB81B.90509@linux.intel.com> <20140722012352.GD6822@agk-dp.fab.redhat.com> <20140722020458.GE6822@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140722012352.GD6822@agk-dp.fab.redhat.com>
+In-Reply-To: <20140722020458.GE6822@agk-dp.fab.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>, "xinhui.pan" <xinhuix.pan@intel.com>, linux-kernel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, "Liu, ShuoX" <shuox.liu@intel.com>
 List-Id: dm-devel.ids
 
-On 2014/7/22 9:23, Alasdair G Kergon wrote:
->>>> On 2014/7/9 6:39, Mikulas Patocka wrote:
->>> Which ioctl with more than 16kB
->>> arguments do you use?
-> Unanswered.  Let's ask the same question in a different way:
+On 2014/7/22 10:04, Alasdair G Kergon wrote:
+> On Tue, Jul 22, 2014 at 02:23:52AM +0100, Alasdair G Kergon wrote:
+>> Unanswered.  Let's ask the same question in a different way:
+>   
+> A quick search for 'vold' returns:
+>    https://android.googlesource.com/platform/system/vold/
+> and the code there requests a fixed 64K allocation to hold the names of
+> active volumes.
 >
-> Please supply the output of these three commands on the real-world system on
-> which you believe that that particular allocation is causing you a problem:
->    dmsetup info -c
->    dmsetup table
->    dmsetup status
+> So unlike libdevmapper-based applications where a smaller allocation is
+> used at first and only extended if needed, Android just assumes that
+> 64KB is enough for everyone.
+>
+> So is your claim that:
+>
+> 1. This 64KB allocation for the brief duration of the ioctl to store the
+> names of active device-mapper volumes leads to memory problems?
+> [Mustn't the system *already* be in a bad state if this pushes it over
+> the limit?]
 
-Android doesn't include the command. We compiled lvm2-2_02_107.tar.gz and copy
-dmsetup to the board. But command reports No devices.
+It's a good question.
+1) Usually, Android mobile runs for a long time. It's very command that
+users don't turn off the phones for months. Users might start lots of
+applications. memory is used up in the end. Kernel might recollect memory
+over and over again.
+2) We never blames this Out of memory issue fully to DM.
+3) We want to improve the OOM issue.
 
-# /data/bin/dmsetup info
-No devices found
+>
+> and
+>
+> 2. The systems on which this memory shortage occurs have so many volumes
+> (with long names?) that a smaller allocation would not suffice?
 
-# cat /proc/devices
-Character devices:
-   1 mem
-   4 /dev/vc/0
-   4 tty
-   4 ttyS
-   4 ttyMFD
-   5 /dev/tty
-   5 /dev/console
-   5 /dev/ptmx
-   7 vcs
-  10 misc
-  13 input
-  21 sg
-  29 fb
-  81 video4linux
-  89 i2c
-108 ppp
-116 alsa
-128 ptm
-136 pts
-153 spi
-166 ttyACM
-180 usb
-188 ttyUSB
-189 usb_device
-202 cpu/msr
-203 cpu/cpuid
-226 drm
-241 mdm_ctrl
-242 sep54
-243 roccat
-244 hidraw
-245 ttyGS
-246 usbmon
-247 ttyPTI
-248 gsmtty
-249 bsg
-250 iio
-251 ptp
-252 pps
-253 media
-254 rtc
+64K is small, comparing with 2GB, even 4GB total memory. However, this 64K
+by kmalloc has a strict criteria. It might be continuous physical memory
+and align with 64K. If memory is used up, freed memory is very fragmented.
+Such 64K criteria is a hard request.
+Usually, driver can allocate such memory at booting initialization. After
+that, it should allocate many sparse pages instead of continuous memory.
+Here 64K allocation is after booting.
 
-Block devices:
-   1 ramdisk
-259 blkext
-   7 loop
-   8 sd
-   9 md
-  11 sr
-  65 sd
-  66 sd
-  67 sd
-  68 sd
-  69 sd
-  70 sd
-  71 sd
-128 sd
-129 sd
-130 sd
-131 sd
-132 sd
-133 sd
-134 sd
-135 sd
-179 mmc
-253 device-mapper
-254 mdp
+Thanks for the kind comments.
+
+Yanmin
