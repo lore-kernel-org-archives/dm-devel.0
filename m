@@ -1,14 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 10/12] Improve multipath.conf syntax checking
-Date: Thu, 24 Jul 2014 10:47:52 +0200
-Message-ID: <CABr-Gnc=W7QooS-cLiQnau4JRu1TigT1TWCGM-3Fbm26kdySDA@mail.gmail.com>
+Subject: Re: [PATCH 11/12] make prioritizers use checker_timeout,
+	if set
+Date: Thu, 24 Jul 2014 10:49:24 +0200
+Message-ID: <CABr-GndHYRrapK8SUR+05C7RZzX+-nTfiOL9=mBwLzp4EFjp1w@mail.gmail.com>
 References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
-	<1404105243-5071-11-git-send-email-bmarzins@redhat.com>
+	<1404105243-5071-12-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0710441810390291796=="
+Content-Type: multipart/mixed; boundary="===============5041859603333503791=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1404105243-5071-11-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1404105243-5071-12-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,10 +23,10 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============0710441810390291796==
-Content-Type: multipart/alternative; boundary=089e0149d2c027bc3004feec83a1
+--===============5041859603333503791==
+Content-Type: multipart/alternative; boundary=089e013cc0869f811204feec8837
 
---089e0149d2c027bc3004feec83a1
+--089e013cc0869f811204feec8837
 Content-Type: text/plain; charset=UTF-8
 
 Applied,
@@ -35,433 +36,455 @@ Thanks.
 On Mon, Jun 30, 2014 at 7:14 AM, Benjamin Marzinski <bmarzins@redhat.com>
 wrote:
 
-> multipath's parser for multipath.conf is neither very verbose or forgiving
-> about errors.  This patch improves both.  multipath will now warn about
-> obviously missing quotes and curly braces, but will still do the right
-> thing.
-> It will also give more verbose error messages including a line number when
-> it can't parse a line.
+> The multipath prioritizers can get stuck issuing scsi commands that
+> don't return quickly, just like the checkers. So if checker_timeout
+> is set, the prioritizers should should it for their cmd timeouts as
+> well.
 >
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/parser.c | 152
-> +++++++++++++++++++++++++++++++++++++++++---------
->  1 file changed, 125 insertions(+), 27 deletions(-)
+>  libmultipath/prio.c                   | 7 +++++++
+>  libmultipath/prio.h                   | 1 +
+>  libmultipath/prioritizers/alua_rtpg.c | 5 +++--
+>  libmultipath/prioritizers/emc.c       | 2 +-
+>  libmultipath/prioritizers/hds.c       | 2 +-
+>  libmultipath/prioritizers/hp_sw.c     | 2 +-
+>  libmultipath/prioritizers/ontap.c     | 4 ++--
+>  libmultipath/prioritizers/rdac.c      | 2 +-
+>  multipath.conf.annotated              | 5 +++--
+>  multipath/multipath.conf.5            | 4 ++--
+>  10 files changed, 22 insertions(+), 12 deletions(-)
 >
-> diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-> index 0d4c870..accff62 100644
-> --- a/libmultipath/parser.c
-> +++ b/libmultipath/parser.c
-> @@ -395,36 +395,57 @@ set_value(vector strvec)
->         char *alloc = NULL;
->         char *tmp;
+> diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+> index 05a8cf1..6ee0b9c 100644
+> --- a/libmultipath/prio.c
+> +++ b/libmultipath/prio.c
+> @@ -10,6 +10,13 @@
 >
-> -       if (!str)
-> +       if (!str) {
-> +               condlog(0, "option '%s' missing value",
-> +                       (char *)VECTOR_SLOT(strvec, 0));
->                 return NULL;
-> -
-> +       }
->         size = strlen(str);
-> -       if (size == 0)
-> +       if (size == 0) {
-> +               condlog(0, "option '%s' has empty value",
-> +                       (char *)VECTOR_SLOT(strvec, 0));
->                 return NULL;
-> -
-> -       if (*str == '"') {
-> -               for (i = 2; i < VECTOR_SIZE(strvec); i++) {
-> -                       str = VECTOR_SLOT(strvec, i);
-> -                       len += strlen(str);
-> -                       if (!alloc)
-> -                               alloc =
-> -                                   (char *) MALLOC(sizeof (char) *
-> -                                                   (len + 1));
-> -                       else {
-> -                               alloc =
-> -                                   REALLOC(alloc, sizeof (char) * (len +
-> 1));
-> -                               tmp = VECTOR_SLOT(strvec, i-1);
-> -                               if (alloc && *str != '"' && *tmp != '"')
-> -                                       strncat(alloc, " ", 1);
-> -                       }
-> -
-> -                       if (alloc && i != VECTOR_SIZE(strvec)-1)
-> -                               strncat(alloc, str, strlen(str));
-> -               }
-> -       } else {
-> +       }
-> +       if (*str != '"') {
->                 alloc = MALLOC(sizeof (char) * (size + 1));
->                 if (alloc)
->                         memcpy(alloc, str, size);
-> +               else
-> +                       condlog(0, "can't allocate memeory for option
-> '%s'",
-> +                               (char *)VECTOR_SLOT(strvec, 0));
-> +               return alloc;
-> +       }
-> +       /* Even empty quotes counts as a value (An empty string) */
-> +       alloc = (char *) MALLOC(sizeof (char));
-> +       if (!alloc) {
-> +               condlog(0, "can't allocate memeory for option '%s'",
-> +                       (char *)VECTOR_SLOT(strvec, 0));
-> +               return NULL;
-> +       }
-> +       for (i = 2; i < VECTOR_SIZE(strvec); i++) {
-> +               str = VECTOR_SLOT(strvec, i);
-> +               if (!str) {
-> +                       free(alloc);
-> +                       condlog(0, "parse error for option '%s'",
-> +                               (char *)VECTOR_SLOT(strvec, 0));
-> +                       return NULL;
-> +               }
-> +               if (*str == '"')
-> +                       break;
-> +               tmp = alloc;
-> +               /* The first +1 is for the NULL byte. The rest are for the
-> +                * spaces between words */
-> +               len += strlen(str) + 1;
-> +               alloc = REALLOC(alloc, sizeof (char) * len);
-> +               if (!alloc) {
-> +                       FREE(tmp);
-> +                       condlog(0, "can't allocate memeory for option
-> '%s'",
-> +                               (char *)VECTOR_SLOT(strvec, 0));
-> +                       return NULL;
-> +               }
-> +               if (*alloc != '\0')
-> +                       strncat(alloc, " ", 1);
-> +               strncat(alloc, str, strlen(str));
->         }
->         return alloc;
->  }
-> @@ -465,6 +486,74 @@ void free_uniques(vector uniques)
->  }
+>  static LIST_HEAD(prioritizers);
 >
->  int
-> +is_sublevel_keyword(char *str)
+> +unsigned int get_prio_timeout(unsigned int default_timeout)
 > +{
-> +       return (strcmp(str, "defaults") == 0 || strcmp(str, "blacklist")
-> == 0 ||
-> +               strcmp(str, "blacklist_exceptions") == 0 ||
-> +               strcmp(str, "devices") == 0 || strcmp(str, "devices") == 0
-> ||
-> +               strcmp(str, "device") == 0 || strcmp(str, "multipaths") ==
-> 0 ||
-> +               strcmp(str, "multipath") == 0);
+> +       if (conf->checker_timeout)
+> +               return conf->checker_timeout * 1000;
+> +       return default_timeout;
 > +}
 > +
-> +int
-> +validate_config_strvec(vector strvec)
-> +{
-> +       char *str;
-> +       int i;
-> +
-> +       str = VECTOR_SLOT(strvec, 0);
-> +       if (str == NULL) {
-> +               condlog(0, "can't parse option on line %d of config file",
-> +                       line_nr);
-> +       return -1;
-> +       }
-> +       if (*str == '}') {
-> +               if (VECTOR_SIZE(strvec) > 1)
-> +                       condlog(0, "ignoring extra data starting with '%s'
-> on line %d of config file", (char *)VECTOR_SLOT(strvec, 1), line_nr);
-> +               return 0;
-> +       }
-> +       if (*str == '{') {
-> +               condlog(0, "invalid keyword '%s' on line %d of config
-> file", str, line_nr);
-> +               return -1;
-> +       }
-> +       if (is_sublevel_keyword(str)) {
-> +               str = VECTOR_SLOT(strvec, 1);
-> +               if (str == NULL)
-> +                       condlog(0, "missing '{' on line %d of config
-> file", line_nr);
-> +               else if (*str != '{')
-> +                       condlog(0, "expecting '{' on line %d of config
-> file. found '%s'", line_nr, str);
-> +               else if (VECTOR_SIZE(strvec) > 2)
-> +                       condlog(0, "ignoring extra data starting with '%s'
-> on line %d of config file", (char *)VECTOR_SLOT(strvec, 2), line_nr);
-> +               return 0;
-> +       }
-> +       str = VECTOR_SLOT(strvec, 1);
-> +       if (str == NULL) {
-> +               condlog(0, "missing value for option '%s' on line %d of
-> config file", (char *)VECTOR_SLOT(strvec, 0), line_nr);
-> +               return -1;
-> +       }
-> +       if (*str != '"') {
-> +               if (VECTOR_SIZE(strvec) > 2)
-> +                       condlog(0, "ignoring extra data starting with '%s'
-> on line %d of config file", (char *)VECTOR_SLOT(strvec, 2), line_nr);
-> +               return 0;
-> +       }
-> +       for (i = 2; i < VECTOR_SIZE(strvec); i++) {
-> +               str = VECTOR_SLOT(strvec, i);
-> +               if (str == NULL) {
-> +                       condlog(0, "can't parse value on line %d of config
-> file", line_nr);
-> +                       return -1;
-> +               }
-> +               if (*str == '"') {
-> +                       if (VECTOR_SIZE(strvec) > i + 1)
-> +                               condlog(0, "ignoring extra data starting
-> with '%s' on line %d of config file", (char *)VECTOR_SLOT(strvec, (i + 1)),
-> line_nr);
-> +                       return 0;
-> +               }
-> +       }
-> +       condlog(0, "missing closing quotes on line %d of config file",
-> +               line_nr);
-> +       return 0;
-> +}
-> +
-> +int
->  process_stream(vector keywords)
+>  int init_prio (void)
 >  {
->         int i;
-> @@ -494,11 +583,20 @@ process_stream(vector keywords)
->                 if (!strvec)
->                         continue;
+>         if (!add_prio(DEFAULT_PRIO))
+> diff --git a/libmultipath/prio.h b/libmultipath/prio.h
+> index 4eeb216..495688f 100644
+> --- a/libmultipath/prio.h
+> +++ b/libmultipath/prio.h
+> @@ -51,6 +51,7 @@ struct prio {
+>         int (*getprio)(struct path *, char *);
+>  };
 >
-> +               if (validate_config_strvec(strvec) != 0) {
-> +                       free_strvec(strvec);
-> +                       continue;
-> +               }
-> +
->                 str = VECTOR_SLOT(strvec, 0);
+> +unsigned int get_prio_timeout(unsigned int default_timeout);
+>  int init_prio (void);
+>  void cleanup_prio (void);
+>  struct prio * add_prio (char *);
+> diff --git a/libmultipath/prioritizers/alua_rtpg.c
+> b/libmultipath/prioritizers/alua_rtpg.c
+> index 981ba06..6d04fc1 100644
+> --- a/libmultipath/prioritizers/alua_rtpg.c
+> +++ b/libmultipath/prioritizers/alua_rtpg.c
+> @@ -21,6 +21,7 @@
+>  #define __user
+>  #include <scsi/sg.h>
 >
-> -               if (!strcmp(str, EOB) && kw_level > 0) {
-> -                       free_strvec(strvec);
-> -                       break;
-> +               if (!strcmp(str, EOB)) {
-> +                       if (kw_level > 0) {
-> +                               free_strvec(strvec);
-> +                               break;
-> +                       }
-> +                       condlog(0, "unmatched '%s' at line %d of config
-> file",
-> +                               EOB, line_nr);
->                 }
+> +#include "../prio.h"
+>  #include "alua_rtpg.h"
 >
->                 for (i = 0; i < VECTOR_SIZE(keywords); i++) {
+>  #define SENSE_BUFF_LEN  32
+> @@ -134,7 +135,7 @@ do_inquiry(int fd, int evpd, unsigned int codepage,
+> void *resp, int resplen)
+>         hdr.dxfer_len           = resplen;
+>         hdr.sbp                 = sense;
+>         hdr.mx_sb_len           = sizeof(sense);
+> -       hdr.timeout             = DEF_TIMEOUT;
+> +       hdr.timeout             = get_prio_timeout(DEF_TIMEOUT);
+>
+>         if (ioctl(fd, SG_IO, &hdr) < 0) {
+>                 PRINT_DEBUG("do_inquiry: IOCTL failed!\n");
+> @@ -253,7 +254,7 @@ do_rtpg(int fd, void* resp, long resplen)
+>         hdr.dxfer_len           = resplen;
+>         hdr.mx_sb_len           = sizeof(sense);
+>         hdr.sbp                 = sense;
+> -       hdr.timeout             = DEF_TIMEOUT;
+> +       hdr.timeout             = get_prio_timeout(DEF_TIMEOUT);
+>
+>         if (ioctl(fd, SG_IO, &hdr) < 0)
+>                 return -RTPG_RTPG_FAILED;
+> diff --git a/libmultipath/prioritizers/emc.c
+> b/libmultipath/prioritizers/emc.c
+> index 91b3d90..e49809c 100644
+> --- a/libmultipath/prioritizers/emc.c
+> +++ b/libmultipath/prioritizers/emc.c
+> @@ -31,7 +31,7 @@ int emc_clariion_prio(const char *dev, int fd)
+>         io_hdr.dxferp = sense_buffer;
+>         io_hdr.cmdp = inqCmdBlk;
+>         io_hdr.sbp = sb;
+> -       io_hdr.timeout = 60000;
+> +       io_hdr.timeout = get_prio_timeout(60000);
+>         io_hdr.pack_id = 0;
+>         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+>                 pp_emc_log(0, "sending query command failed");
+> diff --git a/libmultipath/prioritizers/hds.c
+> b/libmultipath/prioritizers/hds.c
+> index f748707..8043b5b 100644
+> --- a/libmultipath/prioritizers/hds.c
+> +++ b/libmultipath/prioritizers/hds.c
+> @@ -114,7 +114,7 @@ int hds_modular_prio (const char *dev, int fd)
+>         io_hdr.dxferp = inqBuff;
+>         io_hdr.cmdp = inqCmdBlk;
+>         io_hdr.sbp = sense_buffer;
+> -       io_hdr.timeout = 2000;  /* TimeOut = 2 seconds */
+> +       io_hdr.timeout = get_prio_timeout(2000); /* TimeOut = 2 seconds */
+>
+>         if (ioctl (fd, SG_IO, &io_hdr) < 0) {
+>                 pp_hds_log(0, "SG_IO error");
+> diff --git a/libmultipath/prioritizers/hp_sw.c
+> b/libmultipath/prioritizers/hp_sw.c
+> index c24baad..4950cf7 100644
+> --- a/libmultipath/prioritizers/hp_sw.c
+> +++ b/libmultipath/prioritizers/hp_sw.c
+> @@ -46,7 +46,7 @@ int hp_sw_prio(const char *dev, int fd)
+>         io_hdr.dxfer_direction = SG_DXFER_NONE;
+>         io_hdr.cmdp = turCmdBlk;
+>         io_hdr.sbp = sb;
+> -       io_hdr.timeout = 60000;
+> +       io_hdr.timeout = get_prio_timeout(60000);
+>         io_hdr.pack_id = 0;
+>   retry:
+>         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+> diff --git a/libmultipath/prioritizers/ontap.c
+> b/libmultipath/prioritizers/ontap.c
+> index 026d45d..5e82a17 100644
+> --- a/libmultipath/prioritizers/ontap.c
+> +++ b/libmultipath/prioritizers/ontap.c
+> @@ -89,7 +89,7 @@ static int send_gva(const char *dev, int fd, unsigned
+> char pg,
+>         io_hdr.dxferp = results;
+>         io_hdr.cmdp = cdb;
+>         io_hdr.sbp = sb;
+> -       io_hdr.timeout = SG_TIMEOUT;
+> +       io_hdr.timeout = get_prio_timeout(SG_TIMEOUT);
+>         io_hdr.pack_id = 0;
+>         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+>                 pp_ontap_log(0, "SG_IO ioctl failed, errno=%d", errno);
+> @@ -141,7 +141,7 @@ static int get_proxy(const char *dev, int fd)
+>         io_hdr.dxferp = results;
+>         io_hdr.cmdp = cdb;
+>         io_hdr.sbp = sb;
+> -       io_hdr.timeout = SG_TIMEOUT;
+> +       io_hdr.timeout = get_prio_timeout(SG_TIMEOUT);
+>         io_hdr.pack_id = 0;
+>         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+>                 pp_ontap_log(0, "ioctl sending inquiry command failed, "
+> diff --git a/libmultipath/prioritizers/rdac.c
+> b/libmultipath/prioritizers/rdac.c
+> index 2bf1443..a210055 100644
+> --- a/libmultipath/prioritizers/rdac.c
+> +++ b/libmultipath/prioritizers/rdac.c
+> @@ -31,7 +31,7 @@ int rdac_prio(const char *dev, int fd)
+>         io_hdr.dxferp = sense_buffer;
+>         io_hdr.cmdp = inqCmdBlk;
+>         io_hdr.sbp = sb;
+> -       io_hdr.timeout = 60000;
+> +       io_hdr.timeout = get_prio_timeout(60000);
+>         io_hdr.pack_id = 0;
+>         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+>                 pp_rdac_log(0, "sending inquiry command failed");
+> diff --git a/multipath.conf.annotated b/multipath.conf.annotated
+> index 235e130..f158746 100644
+> --- a/multipath.conf.annotated
+> +++ b/multipath.conf.annotated
+> @@ -243,8 +243,9 @@
+>  #      #
+>  #      # name    : checker_timeout
+>  #      # scope   : multipath & multipathd
+> -#      # desc    : The timeout to use for path checkers that issue scsi
+> -#      #           commands with an explicit timeout, in seconds.
+> +#      # desc    : The timeout to use for path checkers and prioritizers
+> +#      #           that issue scsi commands with an explicit timeout, in
+> +#      #           seconds.
+>  #      # values  : n > 0
+>  #      # default : taken from /sys/block/sd<x>/device/timeout
+>  #      checker_timeout 60
+> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> index 1a904e9..195e663 100644
+> --- a/multipath/multipath.conf.5
+> +++ b/multipath/multipath.conf.5
+> @@ -330,8 +330,8 @@ maximum number of open fds is taken from the calling
+> process. It is usually
+>  if that number is greated than 1024.
+>  .TP
+>  .B checker_timeout
+> -Specify the timeout to user for path checkers that issue scsi commands
+> with an
+> -explicit timeout, in seconds; default taken from
+> +Specify the timeout to use for path checkers and prioritizers that issue
+> scsi
+> +commands with an explicit timeout, in seconds; default taken from
+>  .I /sys/block/sd<x>/device/timeout
+>  .TP
+>  .B fast_io_fail_tmo
 > --
 > 1.8.3.1
 >
 >
 
---089e0149d2c027bc3004feec83a1
+--089e013cc0869f811204feec8837
 Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: quoted-printable
 
-PGRpdiBkaXI9Imx0ciI+QXBwbGllZCw8ZGl2PlRoYW5rcy48L2Rpdj48L2Rpdj48ZGl2IGNsYXNz
-PSJnbWFpbF9leHRyYSI+PGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+T24gTW9uLCBK
-dW4gMzAsIDIwMTQgYXQgNzoxNCBBTSwgQmVuamFtaW4gTWFyemluc2tpIDxzcGFuIGRpcj0ibHRy
-Ij4mbHQ7PGEgaHJlZj0ibWFpbHRvOmJtYXJ6aW5zQHJlZGhhdC5jb20iIHRhcmdldD0iX2JsYW5r
-Ij5ibWFyemluc0ByZWRoYXQuY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj4NCjxibG9ja3F1
-b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1s
-ZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPm11bHRpcGF0aCYjMzk7cyBwYXJz
-ZXIgZm9yIG11bHRpcGF0aC5jb25mIGlzIG5laXRoZXIgdmVyeSB2ZXJib3NlIG9yIGZvcmdpdmlu
-Zzxicj4NCmFib3V0IGVycm9ycy4gwqBUaGlzIHBhdGNoIGltcHJvdmVzIGJvdGguIMKgbXVsdGlw
-YXRoIHdpbGwgbm93IHdhcm4gYWJvdXQ8YnI+DQpvYnZpb3VzbHkgbWlzc2luZyBxdW90ZXMgYW5k
-IGN1cmx5IGJyYWNlcywgYnV0IHdpbGwgc3RpbGwgZG8gdGhlIHJpZ2h0IHRoaW5nLjxicj4NCkl0
-IHdpbGwgYWxzbyBnaXZlIG1vcmUgdmVyYm9zZSBlcnJvciBtZXNzYWdlcyBpbmNsdWRpbmcgYSBs
-aW5lIG51bWJlciB3aGVuPGJyPg0KaXQgY2FuJiMzOTt0IHBhcnNlIGEgbGluZS48YnI+DQo8YnI+
-DQpTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgJmx0OzxhIGhyZWY9Im1haWx0bzpi
-bWFyemluc0ByZWRoYXQuY29tIj5ibWFyemluc0ByZWRoYXQuY29tPC9hPiZndDs8YnI+DQotLS08
-YnI+DQrCoGxpYm11bHRpcGF0aC9wYXJzZXIuYyB8IDE1MiArKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLTxicj4NCsKgMSBmaWxlIGNoYW5nZWQsIDEyNSBp
-bnNlcnRpb25zKCspLCAyNyBkZWxldGlvbnMoLSk8YnI+DQo8YnI+DQpkaWZmIC0tZ2l0IGEvbGli
-bXVsdGlwYXRoL3BhcnNlci5jIGIvbGlibXVsdGlwYXRoL3BhcnNlci5jPGJyPg0KaW5kZXggMGQ0
-Yzg3MC4uYWNjZmY2MiAxMDA2NDQ8YnI+DQotLS0gYS9saWJtdWx0aXBhdGgvcGFyc2VyLmM8YnI+
-DQorKysgYi9saWJtdWx0aXBhdGgvcGFyc2VyLmM8YnI+DQpAQCAtMzk1LDM2ICszOTUsNTcgQEAg
-c2V0X3ZhbHVlKHZlY3RvciBzdHJ2ZWMpPGJyPg0KwqAgwqAgwqAgwqAgY2hhciAqYWxsb2MgPSBO
-VUxMOzxicj4NCsKgIMKgIMKgIMKgIGNoYXIgKnRtcDs8YnI+DQo8YnI+DQotIMKgIMKgIMKgIGlm
-ICghc3RyKTxicj4NCisgwqAgwqAgwqAgaWYgKCFzdHIpIHs8YnI+DQorIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIGNvbmRsb2coMCwgJnF1b3Q7b3B0aW9uICYjMzk7JXMmIzM5OyBtaXNzaW5nIHZhbHVl
-JnF1b3Q7LDxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKGNoYXIgKilW
-RUNUT1JfU0xPVChzdHJ2ZWMsIDApKTs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1
-cm4gTlVMTDs8YnI+DQotPGJyPg0KKyDCoCDCoCDCoCB9PGJyPg0KwqAgwqAgwqAgwqAgc2l6ZSA9
-IHN0cmxlbihzdHIpOzxicj4NCi0gwqAgwqAgwqAgaWYgKHNpemUgPT0gMCk8YnI+DQorIMKgIMKg
-IMKgIGlmIChzaXplID09IDApIHs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNvbmRsb2co
-MCwgJnF1b3Q7b3B0aW9uICYjMzk7JXMmIzM5OyBoYXMgZW1wdHkgdmFsdWUmcXVvdDssPGJyPg0K
-KyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAoY2hhciAqKVZFQ1RPUl9TTE9UKHN0
-cnZlYywgMCkpOzxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVybiBOVUxMOzxicj4N
-Ci08YnI+DQotIMKgIMKgIMKgIGlmICgqc3RyID09ICYjMzk7JnF1b3Q7JiMzOTspIHs8YnI+DQot
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIGZvciAoaSA9IDI7IGkgJmx0OyBWRUNUT1JfU0laRShzdHJ2
-ZWMpOyBpKyspIHs8YnI+DQotIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHN0ciA9
-IFZFQ1RPUl9TTE9UKHN0cnZlYywgaSk7PGJyPg0KLSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCBsZW4gKz0gc3RybGVuKHN0cik7PGJyPg0KLSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCBpZiAoIWFsbG9jKTxicj4NCi0gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgYWxsb2MgPTxicj4NCi0gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKGNoYXIgKikgTUFMTE9DKHNpemVvZiAoY2hhcikg
-Kjxicj4NCi0gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKGxlbiArIDEpKTs8YnI+DQotIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIGVsc2Ugezxicj4NCi0gwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgYWxsb2MgPTxicj4NCi0gwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgUkVBTExPQyhhbGxvYywgc2l6ZW9mIChj
-aGFyKSAqIChsZW4gKyAxKSk7PGJyPg0KLSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCB0bXAgPSBWRUNUT1JfU0xPVChzdHJ2ZWMsIGktMSk7PGJyPg0KLSDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoYWxsb2MgJmFtcDsm
-YW1wOyAqc3RyICE9ICYjMzk7JnF1b3Q7JiMzOTsgJmFtcDsmYW1wOyAqdG1wICE9ICYjMzk7JnF1
-b3Q7JiMzOTspPGJyPg0KLSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCBzdHJuY2F0KGFsbG9jLCAmcXVvdDsgJnF1b3Q7LCAxKTs8YnI+DQot
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIH08YnI+DQotPGJyPg0KLSDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoYWxsb2MgJmFtcDsmYW1wOyBpICE9IFZFQ1RP
-Ul9TSVpFKHN0cnZlYyktMSk8YnI+DQotIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIHN0cm5jYXQoYWxsb2MsIHN0ciwgc3RybGVuKHN0cikpOzxicj4NCi0gwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgfTxicj4NCi0gwqAgwqAgwqAgfSBlbHNlIHs8YnI+DQorIMKgIMKg
-IMKgIH08YnI+DQorIMKgIMKgIMKgIGlmICgqc3RyICE9ICYjMzk7JnF1b3Q7JiMzOTspIHs8YnI+
-DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBhbGxvYyA9IE1BTExPQyhzaXplb2YgKGNoYXIpICog
-KHNpemUgKyAxKSk7PGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgaWYgKGFsbG9jKTxicj4N
-CsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIG1lbWNweShhbGxvYywgc3RyLCBz
-aXplKTs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGVsc2U8YnI+DQorIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNvbmRsb2coMCwgJnF1b3Q7Y2FuJiMzOTt0IGFsbG9jYXRl
-IG1lbWVvcnkgZm9yIG9wdGlvbiAmIzM5OyVzJiMzOTsmcXVvdDssPGJyPg0KKyDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAoY2hhciAqKVZFQ1RPUl9TTE9UKHN0
-cnZlYywgMCkpOzxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgcmV0dXJuIGFsbG9jOzxicj4N
-CisgwqAgwqAgwqAgfTxicj4NCisgwqAgwqAgwqAgLyogRXZlbiBlbXB0eSBxdW90ZXMgY291bnRz
-IGFzIGEgdmFsdWUgKEFuIGVtcHR5IHN0cmluZykgKi88YnI+DQorIMKgIMKgIMKgIGFsbG9jID0g
-KGNoYXIgKikgTUFMTE9DKHNpemVvZiAoY2hhcikpOzxicj4NCisgwqAgwqAgwqAgaWYgKCFhbGxv
-Yykgezxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgY29uZGxvZygwLCAmcXVvdDtjYW4mIzM5
-O3QgYWxsb2NhdGUgbWVtZW9yeSBmb3Igb3B0aW9uICYjMzk7JXMmIzM5OyZxdW90Oyw8YnI+DQor
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIChjaGFyICopVkVDVE9SX1NMT1Qoc3Ry
-dmVjLCAwKSk7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm4gTlVMTDs8YnI+DQor
-IMKgIMKgIMKgIH08YnI+DQorIMKgIMKgIMKgIGZvciAoaSA9IDI7IGkgJmx0OyBWRUNUT1JfU0la
-RShzdHJ2ZWMpOyBpKyspIHs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHN0ciA9IFZFQ1RP
-Ul9TTE9UKHN0cnZlYywgaSk7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoIXN0cikg
-ezxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgZnJlZShhbGxvYyk7PGJy
-Pg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBjb25kbG9nKDAsICZxdW90O3Bh
-cnNlIGVycm9yIGZvciBvcHRpb24gJiMzOTslcyYjMzk7JnF1b3Q7LDxicj4NCisgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgKGNoYXIgKilWRUNUT1JfU0xPVChz
-dHJ2ZWMsIDApKTs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVy
-biBOVUxMOzxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgfTxicj4NCisgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgaWYgKCpzdHIgPT0gJiMzOTsmcXVvdDsmIzM5Oyk8YnI+DQorIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIGJyZWFrOzxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-dG1wID0gYWxsb2M7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCAvKiBUaGUgZmlyc3QgKzEg
-aXMgZm9yIHRoZSBOVUxMIGJ5dGUuIFRoZSByZXN0IGFyZSBmb3IgdGhlPGJyPg0KKyDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCogc3BhY2VzIGJldHdlZW4gd29yZHMgKi88YnI+DQorIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIGxlbiArPSBzdHJsZW4oc3RyKSArIDE7PGJyPg0KKyDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCBhbGxvYyA9IFJFQUxMT0MoYWxsb2MsIHNpemVvZiAoY2hhcikgKiBsZW4pOzxicj4N
-CisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgaWYgKCFhbGxvYykgezxicj4NCisgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgRlJFRSh0bXApOzxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgY29uZGxvZygwLCAmcXVvdDtjYW4mIzM5O3QgYWxsb2NhdGUgbWVtZW9y
-eSBmb3Igb3B0aW9uICYjMzk7JXMmIzM5OyZxdW90Oyw8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIChjaGFyICopVkVDVE9SX1NMT1Qoc3RydmVjLCAw
-KSk7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm4gTlVMTDs8
-YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIH08YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IGlmICgqYWxsb2MgIT0gJiMzOTtcMCYjMzk7KTxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgc3RybmNhdChhbGxvYywgJnF1b3Q7ICZxdW90OywgMSk7PGJyPg0KKyDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCBzdHJuY2F0KGFsbG9jLCBzdHIsIHN0cmxlbihzdHIpKTs8YnI+DQrC
-oCDCoCDCoCDCoCB9PGJyPg0KwqAgwqAgwqAgwqAgcmV0dXJuIGFsbG9jOzxicj4NCsKgfTxicj4N
-CkBAIC00NjUsNiArNDg2LDc0IEBAIHZvaWQgZnJlZV91bmlxdWVzKHZlY3RvciB1bmlxdWVzKTxi
-cj4NCsKgfTxicj4NCjxicj4NCsKgaW50PGJyPg0KK2lzX3N1YmxldmVsX2tleXdvcmQoY2hhciAq
-c3RyKTxicj4NCit7PGJyPg0KKyDCoCDCoCDCoCByZXR1cm4gKHN0cmNtcChzdHIsICZxdW90O2Rl
-ZmF1bHRzJnF1b3Q7KSA9PSAwIHx8IHN0cmNtcChzdHIsICZxdW90O2JsYWNrbGlzdCZxdW90Oykg
-PT0gMCB8fDxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgc3RyY21wKHN0ciwgJnF1b3Q7Ymxh
-Y2tsaXN0X2V4Y2VwdGlvbnMmcXVvdDspID09IDAgfHw8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIHN0cmNtcChzdHIsICZxdW90O2RldmljZXMmcXVvdDspID09IDAgfHwgc3RyY21wKHN0ciwg
-JnF1b3Q7ZGV2aWNlcyZxdW90OykgPT0gMCB8fDxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-c3RyY21wKHN0ciwgJnF1b3Q7ZGV2aWNlJnF1b3Q7KSA9PSAwIHx8IHN0cmNtcChzdHIsICZxdW90
-O211bHRpcGF0aHMmcXVvdDspID09IDAgfHw8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHN0
-cmNtcChzdHIsICZxdW90O211bHRpcGF0aCZxdW90OykgPT0gMCk7PGJyPg0KK308YnI+DQorPGJy
-Pg0KK2ludDxicj4NCit2YWxpZGF0ZV9jb25maWdfc3RydmVjKHZlY3RvciBzdHJ2ZWMpPGJyPg0K
-K3s8YnI+DQorIMKgIMKgIMKgIGNoYXIgKnN0cjs8YnI+DQorIMKgIMKgIMKgIGludCBpOzxicj4N
-Cis8YnI+DQorIMKgIMKgIMKgIHN0ciA9IFZFQ1RPUl9TTE9UKHN0cnZlYywgMCk7PGJyPg0KKyDC
-oCDCoCDCoCBpZiAoc3RyID09IE5VTEwpIHs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNv
-bmRsb2coMCwgJnF1b3Q7Y2FuJiMzOTt0IHBhcnNlIG9wdGlvbiBvbiBsaW5lICVkIG9mIGNvbmZp
-ZyBmaWxlJnF1b3Q7LDxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgbGlu
-ZV9ucik7PGJyPg0KKyDCoCDCoCDCoCByZXR1cm4gLTE7PGJyPg0KKyDCoCDCoCDCoCB9PGJyPg0K
-KyDCoCDCoCDCoCBpZiAoKnN0ciA9PSAmIzM5O30mIzM5Oykgezxicj4NCisgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgaWYgKFZFQ1RPUl9TSVpFKHN0cnZlYykgJmd0OyAxKTxicj4NCisgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgY29uZGxvZygwLCAmcXVvdDtpZ25vcmluZyBleHRyYSBk
-YXRhIHN0YXJ0aW5nIHdpdGggJiMzOTslcyYjMzk7IG9uIGxpbmUgJWQgb2YgY29uZmlnIGZpbGUm
-cXVvdDssIChjaGFyICopVkVDVE9SX1NMT1Qoc3RydmVjLCAxKSwgbGluZV9ucik7PGJyPg0KKyDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm4gMDs8YnI+DQorIMKgIMKgIMKgIH08YnI+DQorIMKg
-IMKgIMKgIGlmICgqc3RyID09ICYjMzk7eyYjMzk7KSB7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCBjb25kbG9nKDAsICZxdW90O2ludmFsaWQga2V5d29yZCAmIzM5OyVzJiMzOTsgb24gbGlu
-ZSAlZCBvZiBjb25maWcgZmlsZSZxdW90Oywgc3RyLCBsaW5lX25yKTs8YnI+DQorIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIHJldHVybiAtMTs8YnI+DQorIMKgIMKgIMKgIH08YnI+DQorIMKgIMKgIMKg
-IGlmIChpc19zdWJsZXZlbF9rZXl3b3JkKHN0cikpIHs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIHN0ciA9IFZFQ1RPUl9TTE9UKHN0cnZlYywgMSk7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCBpZiAoc3RyID09IE5VTEwpPGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCBjb25kbG9nKDAsICZxdW90O21pc3NpbmcgJiMzOTt7JiMzOTsgb24gbGluZSAlZCBvZiBj
-b25maWcgZmlsZSZxdW90OywgbGluZV9ucik7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCBl
-bHNlIGlmICgqc3RyICE9ICYjMzk7eyYjMzk7KTxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgY29uZGxvZygwLCAmcXVvdDtleHBlY3RpbmcgJiMzOTt7JiMzOTsgb24gbGlu
-ZSAlZCBvZiBjb25maWcgZmlsZS4gZm91bmQgJiMzOTslcyYjMzk7JnF1b3Q7LCBsaW5lX25yLCBz
-dHIpOzxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgZWxzZSBpZiAoVkVDVE9SX1NJWkUoc3Ry
-dmVjKSAmZ3Q7IDIpPGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBjb25k
-bG9nKDAsICZxdW90O2lnbm9yaW5nIGV4dHJhIGRhdGEgc3RhcnRpbmcgd2l0aCAmIzM5OyVzJiMz
-OTsgb24gbGluZSAlZCBvZiBjb25maWcgZmlsZSZxdW90OywgKGNoYXIgKilWRUNUT1JfU0xPVChz
-dHJ2ZWMsIDIpLCBsaW5lX25yKTs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVybiAw
-Ozxicj4NCisgwqAgwqAgwqAgfTxicj4NCisgwqAgwqAgwqAgc3RyID0gVkVDVE9SX1NMT1Qoc3Ry
-dmVjLCAxKTs8YnI+DQorIMKgIMKgIMKgIGlmIChzdHIgPT0gTlVMTCkgezxicj4NCisgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgY29uZGxvZygwLCAmcXVvdDttaXNzaW5nIHZhbHVlIGZvciBvcHRpb24g
-JiMzOTslcyYjMzk7IG9uIGxpbmUgJWQgb2YgY29uZmlnIGZpbGUmcXVvdDssIChjaGFyICopVkVD
-VE9SX1NMT1Qoc3RydmVjLCAwKSwgbGluZV9ucik7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCByZXR1cm4gLTE7PGJyPg0KKyDCoCDCoCDCoCB9PGJyPg0KKyDCoCDCoCDCoCBpZiAoKnN0ciAh
-PSAmIzM5OyZxdW90OyYjMzk7KSB7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoVkVD
-VE9SX1NJWkUoc3RydmVjKSAmZ3Q7IDIpPGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCBjb25kbG9nKDAsICZxdW90O2lnbm9yaW5nIGV4dHJhIGRhdGEgc3RhcnRpbmcgd2l0
-aCAmIzM5OyVzJiMzOTsgb24gbGluZSAlZCBvZiBjb25maWcgZmlsZSZxdW90OywgKGNoYXIgKilW
-RUNUT1JfU0xPVChzdHJ2ZWMsIDIpLCBsaW5lX25yKTs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIHJldHVybiAwOzxicj4NCisgwqAgwqAgwqAgfTxicj4NCisgwqAgwqAgwqAgZm9yIChpID0g
-MjsgaSAmbHQ7IFZFQ1RPUl9TSVpFKHN0cnZlYyk7IGkrKykgezxicj4NCisgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgc3RyID0gVkVDVE9SX1NMT1Qoc3RydmVjLCBpKTs8YnI+DQorIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIGlmIChzdHIgPT0gTlVMTCkgezxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgY29uZGxvZygwLCAmcXVvdDtjYW4mIzM5O3QgcGFyc2UgdmFsdWUgb24gbGlu
-ZSAlZCBvZiBjb25maWcgZmlsZSZxdW90OywgbGluZV9ucik7PGJyPg0KKyDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm4gLTE7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCB9PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoKnN0ciA9PSAmIzM5OyZxdW90OyYj
-Mzk7KSB7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoVkVDVE9S
-X1NJWkUoc3RydmVjKSAmZ3Q7IGkgKyAxKTxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgY29uZGxvZygwLCAmcXVvdDtpZ25vcmluZyBleHRyYSBkYXRh
-IHN0YXJ0aW5nIHdpdGggJiMzOTslcyYjMzk7IG9uIGxpbmUgJWQgb2YgY29uZmlnIGZpbGUmcXVv
-dDssIChjaGFyICopVkVDVE9SX1NMT1Qoc3RydmVjLCAoaSArIDEpKSwgbGluZV9ucik7PGJyPg0K
-KyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm4gMDs8YnI+DQorIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIH08YnI+DQorIMKgIMKgIMKgIH08YnI+DQorIMKgIMKgIMKgIGNvbmRs
-b2coMCwgJnF1b3Q7bWlzc2luZyBjbG9zaW5nIHF1b3RlcyBvbiBsaW5lICVkIG9mIGNvbmZpZyBm
-aWxlJnF1b3Q7LDxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgbGluZV9ucik7PGJyPg0KKyDC
-oCDCoCDCoCByZXR1cm4gMDs8YnI+DQorfTxicj4NCis8YnI+DQoraW50PGJyPg0KwqBwcm9jZXNz
-X3N0cmVhbSh2ZWN0b3Iga2V5d29yZHMpPGJyPg0KwqB7PGJyPg0KwqAgwqAgwqAgwqAgaW50IGk7
-PGJyPg0KQEAgLTQ5NCwxMSArNTgzLDIwIEBAIHByb2Nlc3Nfc3RyZWFtKHZlY3RvciBrZXl3b3Jk
-cyk8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoIXN0cnZlYyk8YnI+DQrCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBjb250aW51ZTs8YnI+DQo8YnI+DQorIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIGlmICh2YWxpZGF0ZV9jb25maWdfc3RydmVjKHN0cnZlYykgIT0gMCkg
-ezxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgZnJlZV9zdHJ2ZWMoc3Ry
-dmVjKTs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNvbnRpbnVlOzxi
-cj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgfTxicj4NCis8YnI+DQrCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCBzdHIgPSBWRUNUT1JfU0xPVChzdHJ2ZWMsIDApOzxicj4NCjxicj4NCi0gwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgaWYgKCFzdHJjbXAoc3RyLCBFT0IpICZhbXA7JmFtcDsga3dfbGV2ZWwg
-Jmd0OyAwKSB7PGJyPg0KLSDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBmcmVlX3N0
-cnZlYyhzdHJ2ZWMpOzxicj4NCi0gwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgYnJl
-YWs7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCBpZiAoIXN0cmNtcChzdHIsIEVPQikpIHs8
-YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGlmIChrd19sZXZlbCAmZ3Q7
-IDApIHs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IGZyZWVfc3RydmVjKHN0cnZlYyk7PGJyPg0KKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoCBicmVhazs8YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIH08YnI+DQorIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIGNvbmRsb2co
-MCwgJnF1b3Q7dW5tYXRjaGVkICYjMzk7JXMmIzM5OyBhdCBsaW5lICVkIG9mIGNvbmZpZyBmaWxl
-JnF1b3Q7LDxicj4NCisgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgRU9CLCBsaW5lX25yKTs8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCB9PGJyPg0KPGJy
-Pg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgZm9yIChpID0gMDsgaSAmbHQ7IFZFQ1RPUl9TSVpF
-KGtleXdvcmRzKTsgaSsrKSB7PGJyPg0KPHNwYW4gY2xhc3M9IkhPRW5aYiI+PGZvbnQgY29sb3I9
-IiM4ODg4ODgiPi0tPGJyPg0KMS44LjMuMTxicj4NCjxicj4NCjwvZm9udD48L3NwYW4+PC9ibG9j
-a3F1b3RlPjwvZGl2Pjxicj48L2Rpdj4NCg==
---089e0149d2c027bc3004feec83a1--
+<div dir=3D"ltr">Applied,<div>Thanks.</div></div><div class=3D"gmail_extra"=
+><br><br><div class=3D"gmail_quote">On Mon, Jun 30, 2014 at 7:14 AM, Benjam=
+in Marzinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" t=
+arget=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex">The multipath prioritizers can get stuck iss=
+uing scsi commands that<br>
+don&#39;t return quickly, just like the checkers. So if checker_timeout<br>
+is set, the prioritizers should should it for their cmd timeouts as<br>
+well.<br>
+<br>
+Signed-off-by: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com=
+">bmarzins@redhat.com</a>&gt;<br>
+---<br>
+=C2=A0libmultipath/prio.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 | 7 +++++++<br>
+=C2=A0libmultipath/prio.h =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 | 1 +<br>
+=C2=A0libmultipath/prioritizers/alua_rtpg.c | 5 +++--<br>
+=C2=A0libmultipath/prioritizers/emc.c =C2=A0 =C2=A0 =C2=A0 | 2 +-<br>
+=C2=A0libmultipath/prioritizers/hds.c =C2=A0 =C2=A0 =C2=A0 | 2 +-<br>
+=C2=A0libmultipath/prioritizers/hp_sw.c =C2=A0 =C2=A0 | 2 +-<br>
+=C2=A0libmultipath/prioritizers/ontap.c =C2=A0 =C2=A0 | 4 ++--<br>
+=C2=A0libmultipath/prioritizers/rdac.c =C2=A0 =C2=A0 =C2=A0| 2 +-<br>
+=C2=A0multipath.conf.annotated =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0| 5 +++--<br>
+=C2=A0multipath/multipath.conf.5 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=
+ 4 ++--<br>
+=C2=A010 files changed, 22 insertions(+), 12 deletions(-)<br>
+<br>
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c<br>
+index 05a8cf1..6ee0b9c 100644<br>
+--- a/libmultipath/prio.c<br>
++++ b/libmultipath/prio.c<br>
+@@ -10,6 +10,13 @@<br>
+<br>
+=C2=A0static LIST_HEAD(prioritizers);<br>
+<br>
++unsigned int get_prio_timeout(unsigned int default_timeout)<br>
++{<br>
++ =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;checker_timeout)<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return conf-&gt;checker_=
+timeout * 1000;<br>
++ =C2=A0 =C2=A0 =C2=A0 return default_timeout;<br>
++}<br>
++<br>
+=C2=A0int init_prio (void)<br>
+=C2=A0{<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!add_prio(DEFAULT_PRIO))<br>
+diff --git a/libmultipath/prio.h b/libmultipath/prio.h<br>
+index 4eeb216..495688f 100644<br>
+--- a/libmultipath/prio.h<br>
++++ b/libmultipath/prio.h<br>
+@@ -51,6 +51,7 @@ struct prio {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 int (*getprio)(struct path *, char *);<br>
+=C2=A0};<br>
+<br>
++unsigned int get_prio_timeout(unsigned int default_timeout);<br>
+=C2=A0int init_prio (void);<br>
+=C2=A0void cleanup_prio (void);<br>
+=C2=A0struct prio * add_prio (char *);<br>
+diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritiz=
+ers/alua_rtpg.c<br>
+index 981ba06..6d04fc1 100644<br>
+--- a/libmultipath/prioritizers/alua_rtpg.c<br>
++++ b/libmultipath/prioritizers/alua_rtpg.c<br>
+@@ -21,6 +21,7 @@<br>
+=C2=A0#define __user<br>
+=C2=A0#include &lt;scsi/sg.h&gt;<br>
+<br>
++#include &quot;../prio.h&quot;<br>
+=C2=A0#include &quot;alua_rtpg.h&quot;<br>
+<br>
+=C2=A0#define SENSE_BUFF_LEN =C2=A032<br>
+@@ -134,7 +135,7 @@ do_inquiry(int fd, int evpd, unsigned int codepage, voi=
+d *resp, int resplen)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.dxfer_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D resplen;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.sbp =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =3D sense;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.mx_sb_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D sizeof(sense);<br>
+- =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D DEF_TIMEOUT;<br>
++ =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D get_prio_timeout(DEF_TIMEOUT);<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;hdr) &lt; 0) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 PRINT_DEBUG(&quot;d=
+o_inquiry: IOCTL failed!\n&quot;);<br>
+@@ -253,7 +254,7 @@ do_rtpg(int fd, void* resp, long resplen)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.dxfer_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D resplen;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.mx_sb_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D sizeof(sense);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.sbp =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =3D sense;<br>
+- =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D DEF_TIMEOUT;<br>
++ =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =3D get_prio_timeout(DEF_TIMEOUT);<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;hdr) &lt; 0)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return -RTPG_RTPG_F=
+AILED;<br>
+diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/em=
+c.c<br>
+index 91b3d90..e49809c 100644<br>
+--- a/libmultipath/prioritizers/emc.c<br>
++++ b/libmultipath/prioritizers/emc.c<br>
+@@ -31,7 +31,7 @@ int emc_clariion_prio(const char *dev, int fd)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D sense_buffer;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D inqCmdBlk;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
+- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 60000;<br>
++ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(60000);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_emc_log(0, &quot=
+;sending query command failed&quot;);<br>
+diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hd=
+s.c<br>
+index f748707..8043b5b 100644<br>
+--- a/libmultipath/prioritizers/hds.c<br>
++++ b/libmultipath/prioritizers/hds.c<br>
+@@ -114,7 +114,7 @@ int hds_modular_prio (const char *dev, int fd)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D inqBuff;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D inqCmdBlk;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sense_buffer;<br>
+- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 2000; =C2=A0/* TimeOut =3D 2 seco=
+nds */<br>
++ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(2000); /* TimeOu=
+t =3D 2 seconds */<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl (fd, SG_IO, &amp;io_hdr) &lt; 0) {<br=
+>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_hds_log(0, &quot=
+;SG_IO error&quot;);<br>
+diff --git a/libmultipath/prioritizers/hp_sw.c b/libmultipath/prioritizers/=
+hp_sw.c<br>
+index c24baad..4950cf7 100644<br>
+--- a/libmultipath/prioritizers/hp_sw.c<br>
++++ b/libmultipath/prioritizers/hp_sw.c<br>
+@@ -46,7 +46,7 @@ int hp_sw_prio(const char *dev, int fd)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxfer_direction =3D SG_DXFER_NONE;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D turCmdBlk;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
+- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 60000;<br>
++ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(60000);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
+=C2=A0 retry:<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
+diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/=
+ontap.c<br>
+index 026d45d..5e82a17 100644<br>
+--- a/libmultipath/prioritizers/ontap.c<br>
++++ b/libmultipath/prioritizers/ontap.c<br>
+@@ -89,7 +89,7 @@ static int send_gva(const char *dev, int fd, unsigned cha=
+r pg,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D results;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D cdb;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
+- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D SG_TIMEOUT;<br>
++ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(SG_TIMEOUT);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_ontap_log(0, &qu=
+ot;SG_IO ioctl failed, errno=3D%d&quot;, errno);<br>
+@@ -141,7 +141,7 @@ static int get_proxy(const char *dev, int fd)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D results;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D cdb;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
+- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D SG_TIMEOUT;<br>
++ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(SG_TIMEOUT);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_ontap_log(0, &qu=
+ot;ioctl sending inquiry command failed, &quot;<br>
+diff --git a/libmultipath/prioritizers/rdac.c b/libmultipath/prioritizers/r=
+dac.c<br>
+index 2bf1443..a210055 100644<br>
+--- a/libmultipath/prioritizers/rdac.c<br>
++++ b/libmultipath/prioritizers/rdac.c<br>
+@@ -31,7 +31,7 @@ int rdac_prio(const char *dev, int fd)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D sense_buffer;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D inqCmdBlk;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
+- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 60000;<br>
++ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(60000);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_rdac_log(0, &quo=
+t;sending inquiry command failed&quot;);<br>
+diff --git a/multipath.conf.annotated b/multipath.conf.annotated<br>
+index 235e130..f158746 100644<br>
+--- a/multipath.conf.annotated<br>
++++ b/multipath.conf.annotated<br>
+@@ -243,8 +243,9 @@<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0#<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# name =C2=A0 =C2=A0: checker_timeout<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# scope =C2=A0 : multipath &amp; multipathd<br>
+-# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: The timeout to use for path ch=
+eckers that issue scsi<br>
+-# =C2=A0 =C2=A0 =C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 commands with a=
+n explicit timeout, in seconds.<br>
++# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: The timeout to use for path ch=
+eckers and prioritizers<br>
++# =C2=A0 =C2=A0 =C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 that issue scsi=
+ commands with an explicit timeout, in<br>
++# =C2=A0 =C2=A0 =C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 seconds.<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# values =C2=A0: n &gt; 0<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# default : taken from /sys/block/sd&lt;x&gt;/d=
+evice/timeout<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0checker_timeout 60<br>
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5<br>
+index 1a904e9..195e663 100644<br>
+--- a/multipath/multipath.conf.5<br>
++++ b/multipath/multipath.conf.5<br>
+@@ -330,8 +330,8 @@ maximum number of open fds is taken from the calling pr=
+ocess. It is usually<br>
+=C2=A0if that number is greated than 1024.<br>
+=C2=A0.TP<br>
+=C2=A0.B checker_timeout<br>
+-Specify the timeout to user for path checkers that issue scsi commands wit=
+h an<br>
+-explicit timeout, in seconds; default taken from<br>
++Specify the timeout to use for path checkers and prioritizers that issue s=
+csi<br>
++commands with an explicit timeout, in seconds; default taken from<br>
+=C2=A0.I /sys/block/sd&lt;x&gt;/device/timeout<br>
+=C2=A0.TP<br>
+=C2=A0.B fast_io_fail_tmo<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+1.8.3.1<br>
+<br>
+</font></span></blockquote></div><br></div>
+
+--089e013cc0869f811204feec8837--
 
 
---===============0710441810390291796==
+--===============5041859603333503791==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0710441810390291796==--
+--===============5041859603333503791==--
