@@ -1,15 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 11/12] make prioritizers use checker_timeout,
-	if set
-Date: Thu, 24 Jul 2014 10:49:24 +0200
-Message-ID: <CABr-GndHYRrapK8SUR+05C7RZzX+-nTfiOL9=mBwLzp4EFjp1w@mail.gmail.com>
+Subject: Re: [PATCH 12/12] Add multipath.conf force_sync option
+Date: Thu, 24 Jul 2014 10:51:22 +0200
+Message-ID: <CABr-Gne0Ksghou4q31oCJ572F9RhLSdd2zkbxhR2QSYOnTt79w@mail.gmail.com>
 References: <1404105243-5071-1-git-send-email-bmarzins@redhat.com>
-	<1404105243-5071-12-git-send-email-bmarzins@redhat.com>
+	<1404105243-5071-13-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5041859603333503791=="
+Content-Type: multipart/mixed; boundary="===============2696598894879086734=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1404105243-5071-12-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1404105243-5071-13-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,10 +22,10 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============5041859603333503791==
-Content-Type: multipart/alternative; boundary=089e013cc0869f811204feec8837
+--===============2696598894879086734==
+Content-Type: multipart/alternative; boundary=089e0149d2c0a9fb1c04feec8fc1
 
---089e013cc0869f811204feec8837
+--089e0149d2c0a9fb1c04feec8fc1
 Content-Type: text/plain; charset=UTF-8
 
 Applied,
@@ -36,207 +35,206 @@ Thanks.
 On Mon, Jun 30, 2014 at 7:14 AM, Benjamin Marzinski <bmarzins@redhat.com>
 wrote:
 
-> The multipath prioritizers can get stuck issuing scsi commands that
-> don't return quickly, just like the checkers. So if checker_timeout
-> is set, the prioritizers should should it for their cmd timeouts as
-> well.
+> Normally multipathd runs the path checkers asynchronously. However if there
+> are a lot of paths, this can cause large CPU spikes (for instance, in
+> cases where they are all competing for the Big Kernel Lock). In these
+> situations, overall machine performance is better if multipath doesn't have
+> hundreds or even thousands of path checkers running at the same time. This
+> patch lets users turn off the asynchronous mode of these checks if they
+> see this problem.
 >
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/prio.c                   | 7 +++++++
->  libmultipath/prio.h                   | 1 +
->  libmultipath/prioritizers/alua_rtpg.c | 5 +++--
->  libmultipath/prioritizers/emc.c       | 2 +-
->  libmultipath/prioritizers/hds.c       | 2 +-
->  libmultipath/prioritizers/hp_sw.c     | 2 +-
->  libmultipath/prioritizers/ontap.c     | 4 ++--
->  libmultipath/prioritizers/rdac.c      | 2 +-
->  multipath.conf.annotated              | 5 +++--
->  multipath/multipath.conf.5            | 4 ++--
->  10 files changed, 22 insertions(+), 12 deletions(-)
+>  libmultipath/config.c      |  1 +
+>  libmultipath/config.h      |  1 +
+>  libmultipath/dict.c        | 33 +++++++++++++++++++++++++++++++++
+>  libmultipath/discovery.c   |  8 ++++++--
+>  multipath.conf.annotated   | 11 +++++++++++
+>  multipath/multipath.conf.5 |  9 +++++++++
+>  6 files changed, 61 insertions(+), 2 deletions(-)
 >
-> diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-> index 05a8cf1..6ee0b9c 100644
-> --- a/libmultipath/prio.c
-> +++ b/libmultipath/prio.c
-> @@ -10,6 +10,13 @@
+> diff --git a/libmultipath/config.c b/libmultipath/config.c
+> index e13c307..39963b4 100644
+> --- a/libmultipath/config.c
+> +++ b/libmultipath/config.c
+> @@ -561,6 +561,7 @@ load_config (char * file, struct udev *udev)
+>         conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+>         conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+>         conf->detect_prio = DEFAULT_DETECT_PRIO;
+> +       conf->force_sync = 0;
 >
->  static LIST_HEAD(prioritizers);
+>         /*
+>          * preload default hwtable
+> diff --git a/libmultipath/config.h b/libmultipath/config.h
+> index ac7c58e..1a23e4b 100644
+> --- a/libmultipath/config.h
+> +++ b/libmultipath/config.h
+> @@ -124,6 +124,7 @@ struct config {
+>         int reassign_maps;
+>         int retain_hwhandler;
+>         int detect_prio;
+> +       int force_sync;
+>         unsigned int version[3];
 >
-> +unsigned int get_prio_timeout(unsigned int default_timeout)
+>         char * dev;
+> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+> index 91d9b83..7de7a67 100644
+> --- a/libmultipath/dict.c
+> +++ b/libmultipath/dict.c
+> @@ -685,6 +685,29 @@ def_detect_prio_handler(vector strvec)
+>         return 0;
+>  }
+>
+> +static int
+> +def_force_sync_handler(vector strvec)
 > +{
-> +       if (conf->checker_timeout)
-> +               return conf->checker_timeout * 1000;
-> +       return default_timeout;
+> +       char * buff;
+> +
+> +       buff = set_value(strvec);
+> +
+> +       if (!buff)
+> +               return 1;
+> +
+> +       if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
+> +           (strlen(buff) == 1 && !strcmp(buff, "0")))
+> +               conf->force_sync = 0;
+> +       else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
+> +                (strlen(buff) == 1 && !strcmp(buff, "1")))
+> +               conf->force_sync = 1;
+> +       else
+> +               conf->force_sync = 0;
+> +
+> +       FREE(buff);
+> +       return 0;
 > +}
 > +
->  int init_prio (void)
+>  /*
+>   * blacklist block handlers
+>   */
+> @@ -2783,6 +2806,15 @@ snprint_def_detect_prio(char * buff, int len, void
+> * data)
+>  }
+>
+>  static int
+> +snprint_def_force_sync(char * buff, int len, void * data)
+> +{
+> +       if (conf->force_sync)
+> +               return snprintf(buff, len, "yes");
+> +       else
+> +               return snprintf(buff, len, "no");
+> +}
+> +
+> +static int
+>  snprint_ble_simple (char * buff, int len, void * data)
 >  {
->         if (!add_prio(DEFAULT_PRIO))
-> diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-> index 4eeb216..495688f 100644
-> --- a/libmultipath/prio.h
-> +++ b/libmultipath/prio.h
-> @@ -51,6 +51,7 @@ struct prio {
->         int (*getprio)(struct path *, char *);
->  };
->
-> +unsigned int get_prio_timeout(unsigned int default_timeout);
->  int init_prio (void);
->  void cleanup_prio (void);
->  struct prio * add_prio (char *);
-> diff --git a/libmultipath/prioritizers/alua_rtpg.c
-> b/libmultipath/prioritizers/alua_rtpg.c
-> index 981ba06..6d04fc1 100644
-> --- a/libmultipath/prioritizers/alua_rtpg.c
-> +++ b/libmultipath/prioritizers/alua_rtpg.c
-> @@ -21,6 +21,7 @@
->  #define __user
->  #include <scsi/sg.h>
->
-> +#include "../prio.h"
->  #include "alua_rtpg.h"
->
->  #define SENSE_BUFF_LEN  32
-> @@ -134,7 +135,7 @@ do_inquiry(int fd, int evpd, unsigned int codepage,
-> void *resp, int resplen)
->         hdr.dxfer_len           = resplen;
->         hdr.sbp                 = sense;
->         hdr.mx_sb_len           = sizeof(sense);
-> -       hdr.timeout             = DEF_TIMEOUT;
-> +       hdr.timeout             = get_prio_timeout(DEF_TIMEOUT);
->
->         if (ioctl(fd, SG_IO, &hdr) < 0) {
->                 PRINT_DEBUG("do_inquiry: IOCTL failed!\n");
-> @@ -253,7 +254,7 @@ do_rtpg(int fd, void* resp, long resplen)
->         hdr.dxfer_len           = resplen;
->         hdr.mx_sb_len           = sizeof(sense);
->         hdr.sbp                 = sense;
-> -       hdr.timeout             = DEF_TIMEOUT;
-> +       hdr.timeout             = get_prio_timeout(DEF_TIMEOUT);
->
->         if (ioctl(fd, SG_IO, &hdr) < 0)
->                 return -RTPG_RTPG_FAILED;
-> diff --git a/libmultipath/prioritizers/emc.c
-> b/libmultipath/prioritizers/emc.c
-> index 91b3d90..e49809c 100644
-> --- a/libmultipath/prioritizers/emc.c
-> +++ b/libmultipath/prioritizers/emc.c
-> @@ -31,7 +31,7 @@ int emc_clariion_prio(const char *dev, int fd)
->         io_hdr.dxferp = sense_buffer;
->         io_hdr.cmdp = inqCmdBlk;
->         io_hdr.sbp = sb;
-> -       io_hdr.timeout = 60000;
-> +       io_hdr.timeout = get_prio_timeout(60000);
->         io_hdr.pack_id = 0;
->         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
->                 pp_emc_log(0, "sending query command failed");
-> diff --git a/libmultipath/prioritizers/hds.c
-> b/libmultipath/prioritizers/hds.c
-> index f748707..8043b5b 100644
-> --- a/libmultipath/prioritizers/hds.c
-> +++ b/libmultipath/prioritizers/hds.c
-> @@ -114,7 +114,7 @@ int hds_modular_prio (const char *dev, int fd)
->         io_hdr.dxferp = inqBuff;
->         io_hdr.cmdp = inqCmdBlk;
->         io_hdr.sbp = sense_buffer;
-> -       io_hdr.timeout = 2000;  /* TimeOut = 2 seconds */
-> +       io_hdr.timeout = get_prio_timeout(2000); /* TimeOut = 2 seconds */
->
->         if (ioctl (fd, SG_IO, &io_hdr) < 0) {
->                 pp_hds_log(0, "SG_IO error");
-> diff --git a/libmultipath/prioritizers/hp_sw.c
-> b/libmultipath/prioritizers/hp_sw.c
-> index c24baad..4950cf7 100644
-> --- a/libmultipath/prioritizers/hp_sw.c
-> +++ b/libmultipath/prioritizers/hp_sw.c
-> @@ -46,7 +46,7 @@ int hp_sw_prio(const char *dev, int fd)
->         io_hdr.dxfer_direction = SG_DXFER_NONE;
->         io_hdr.cmdp = turCmdBlk;
->         io_hdr.sbp = sb;
-> -       io_hdr.timeout = 60000;
-> +       io_hdr.timeout = get_prio_timeout(60000);
->         io_hdr.pack_id = 0;
->   retry:
->         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
-> diff --git a/libmultipath/prioritizers/ontap.c
-> b/libmultipath/prioritizers/ontap.c
-> index 026d45d..5e82a17 100644
-> --- a/libmultipath/prioritizers/ontap.c
-> +++ b/libmultipath/prioritizers/ontap.c
-> @@ -89,7 +89,7 @@ static int send_gva(const char *dev, int fd, unsigned
-> char pg,
->         io_hdr.dxferp = results;
->         io_hdr.cmdp = cdb;
->         io_hdr.sbp = sb;
-> -       io_hdr.timeout = SG_TIMEOUT;
-> +       io_hdr.timeout = get_prio_timeout(SG_TIMEOUT);
->         io_hdr.pack_id = 0;
->         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
->                 pp_ontap_log(0, "SG_IO ioctl failed, errno=%d", errno);
-> @@ -141,7 +141,7 @@ static int get_proxy(const char *dev, int fd)
->         io_hdr.dxferp = results;
->         io_hdr.cmdp = cdb;
->         io_hdr.sbp = sb;
-> -       io_hdr.timeout = SG_TIMEOUT;
-> +       io_hdr.timeout = get_prio_timeout(SG_TIMEOUT);
->         io_hdr.pack_id = 0;
->         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
->                 pp_ontap_log(0, "ioctl sending inquiry command failed, "
-> diff --git a/libmultipath/prioritizers/rdac.c
-> b/libmultipath/prioritizers/rdac.c
-> index 2bf1443..a210055 100644
-> --- a/libmultipath/prioritizers/rdac.c
-> +++ b/libmultipath/prioritizers/rdac.c
-> @@ -31,7 +31,7 @@ int rdac_prio(const char *dev, int fd)
->         io_hdr.dxferp = sense_buffer;
->         io_hdr.cmdp = inqCmdBlk;
->         io_hdr.sbp = sb;
-> -       io_hdr.timeout = 60000;
-> +       io_hdr.timeout = get_prio_timeout(60000);
->         io_hdr.pack_id = 0;
->         if (ioctl(fd, SG_IO, &io_hdr) < 0) {
->                 pp_rdac_log(0, "sending inquiry command failed");
+>         struct blentry * ble = (struct blentry *)data;
+> @@ -2849,6 +2881,7 @@ init_keywords(void)
+>         install_keyword("reservation_key", &def_reservation_key_handler,
+> &snprint_def_reservation_key);
+>         install_keyword("retain_attached_hw_handler",
+> &def_retain_hwhandler_handler, &snprint_def_retain_hwhandler_handler);
+>         install_keyword("detect_prio", &def_detect_prio_handler,
+> &snprint_def_detect_prio);
+> +       install_keyword("force_sync", &def_force_sync_handler,
+> &snprint_def_force_sync);
+>         __deprecated install_keyword("default_selector",
+> &def_selector_handler, NULL);
+>         __deprecated install_keyword("default_path_grouping_policy",
+> &def_pgpolicy_handler, NULL);
+>         __deprecated install_keyword("default_uid_attribute",
+> &def_uid_attribute_handler, NULL);
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index b62a59c..a5f5a20 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1053,8 +1053,12 @@ get_state (struct path * pp, int daemon)
+>                 }
+>         }
+>         checker_clear_message(c);
+> -       if (daemon)
+> -               checker_set_async(c);
+> +       if (daemon) {
+> +               if (conf->force_sync == 0)
+> +                       checker_set_async(c);
+> +               else
+> +                       checker_set_sync(c);
+> +       }
+>         if (!conf->checker_timeout &&
+>             sysfs_get_timeout(pp, &(c->timeout)) <= 0)
+>                 c->timeout = DEF_TIMEOUT;
 > diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-> index 235e130..f158746 100644
+> index f158746..0af1d4c 100644
 > --- a/multipath.conf.annotated
 > +++ b/multipath.conf.annotated
-> @@ -243,8 +243,9 @@
->  #      #
->  #      # name    : checker_timeout
->  #      # scope   : multipath & multipathd
-> -#      # desc    : The timeout to use for path checkers that issue scsi
-> -#      #           commands with an explicit timeout, in seconds.
-> +#      # desc    : The timeout to use for path checkers and prioritizers
-> +#      #           that issue scsi commands with an explicit timeout, in
-> +#      #           seconds.
->  #      # values  : n > 0
->  #      # default : taken from /sys/block/sd<x>/device/timeout
->  #      checker_timeout 60
+> @@ -270,6 +270,7 @@
+>  #      # default : determined by the OS
+>  #      dev_loss_tmo 600
+>  #
+> +#      #
+>  #      # name    : bindings_file
+>  #      # scope   : multipath
+>  #      # desc    : The location of the bindings file that is used with
+> @@ -278,6 +279,7 @@
+>  #      # default : "/var/lib/multipath/bindings"
+>  #      bindings_file "/etc/multipath/bindings"
+>  #
+> +#      #
+>  #      # name    : wwids_file
+>  #      # scope   : multipath
+>  #      # desc    : The location of the wwids file multipath uses to
+> @@ -286,6 +288,7 @@
+>  #      # default : "/var/lib/multipath/wwids"
+>  #      wwids_file "/etc/multipath/wwids"
+>  #
+> +#      #
+>  #      # name    : reservation_key
+>  #      # scope   : multipath
+>  #      # desc    : Service action reservation key used by mpathpersist.
+> @@ -293,6 +296,14 @@
+>  #      # default : (null)
+>  #      reservation_key "mpathkey"
+>  #
+> +#      #
+> +#      # name    : force_sync
+> +#      # scope   : multipathd
+> +#      # desc    : If set to yes, multipath will run all of the checkers
+> in
+> +#      #           sync mode, even if the checker has an async mode.
+> +#      # values  : yes|no
+> +#      # default : no
+> +#      force_sync yes
+>  #}
+>  #
+>  ##
 > diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 1a904e9..195e663 100644
+> index 195e663..cadb34d 100644
 > --- a/multipath/multipath.conf.5
 > +++ b/multipath/multipath.conf.5
-> @@ -330,8 +330,8 @@ maximum number of open fds is taken from the calling
-> process. It is usually
->  if that number is greated than 1024.
->  .TP
->  .B checker_timeout
-> -Specify the timeout to user for path checkers that issue scsi commands
-> with an
-> -explicit timeout, in seconds; default taken from
-> +Specify the timeout to use for path checkers and prioritizers that issue
-> scsi
-> +commands with an explicit timeout, in seconds; default taken from
->  .I /sys/block/sd<x>/device/timeout
->  .TP
->  .B fast_io_fail_tmo
+> @@ -409,6 +409,15 @@ will automatically use the
+>  .I alua
+>  prioritizer. If not, the prioritizer will be selected as usual. Default is
+>  .I no
+> +.TP
+> +.B force_sync
+> +If set to
+> +.I yes
+> +, multipathd will call the path checkers in sync mode only.  This means
+> that
+> +only one checker will run at a time.  This is useful in the case where
+> many
+> +multipathd checkers running in parallel causes significant CPU pressure.
+> The
+> +Default is
+> +.I no
+>  .
+>  .SH "blacklist section"
+>  The
 > --
 > 1.8.3.1
 >
 >
 
---089e013cc0869f811204feec8837
+--089e0149d2c0a9fb1c04feec8fc1
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
@@ -245,246 +243,246 @@ Content-Transfer-Encoding: quoted-printable
 in Marzinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" t=
 arget=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br>
 <blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">The multipath prioritizers can get stuck iss=
-uing scsi commands that<br>
-don&#39;t return quickly, just like the checkers. So if checker_timeout<br>
-is set, the prioritizers should should it for their cmd timeouts as<br>
-well.<br>
+x #ccc solid;padding-left:1ex">Normally multipathd runs the path checkers a=
+synchronously. However if there<br>
+are a lot of paths, this can cause large CPU spikes (for instance, in<br>
+cases where they are all competing for the Big Kernel Lock). In these<br>
+situations, overall machine performance is better if multipath doesn&#39;t =
+have<br>
+hundreds or even thousands of path checkers running at the same time. This<=
+br>
+patch lets users turn off the asynchronous mode of these checks if they<br>
+see this problem.<br>
 <br>
 Signed-off-by: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redhat.com=
 ">bmarzins@redhat.com</a>&gt;<br>
 ---<br>
-=C2=A0libmultipath/prio.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 | 7 +++++++<br>
-=C2=A0libmultipath/prio.h =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 | 1 +<br>
-=C2=A0libmultipath/prioritizers/alua_rtpg.c | 5 +++--<br>
-=C2=A0libmultipath/prioritizers/emc.c =C2=A0 =C2=A0 =C2=A0 | 2 +-<br>
-=C2=A0libmultipath/prioritizers/hds.c =C2=A0 =C2=A0 =C2=A0 | 2 +-<br>
-=C2=A0libmultipath/prioritizers/hp_sw.c =C2=A0 =C2=A0 | 2 +-<br>
-=C2=A0libmultipath/prioritizers/ontap.c =C2=A0 =C2=A0 | 4 ++--<br>
-=C2=A0libmultipath/prioritizers/rdac.c =C2=A0 =C2=A0 =C2=A0| 2 +-<br>
-=C2=A0multipath.conf.annotated =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0| 5 +++--<br>
-=C2=A0multipath/multipath.conf.5 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=
- 4 ++--<br>
-=C2=A010 files changed, 22 insertions(+), 12 deletions(-)<br>
+=C2=A0libmultipath/config.c =C2=A0 =C2=A0 =C2=A0| =C2=A01 +<br>
+=C2=A0libmultipath/config.h =C2=A0 =C2=A0 =C2=A0| =C2=A01 +<br>
+=C2=A0libmultipath/dict.c =C2=A0 =C2=A0 =C2=A0 =C2=A0| 33 +++++++++++++++++=
+++++++++++++++++<br>
+=C2=A0libmultipath/discovery.c =C2=A0 | =C2=A08 ++++++--<br>
+=C2=A0multipath.conf.annotated =C2=A0 | 11 +++++++++++<br>
+=C2=A0multipath/multipath.conf.5 | =C2=A09 +++++++++<br>
+=C2=A06 files changed, 61 insertions(+), 2 deletions(-)<br>
 <br>
-diff --git a/libmultipath/prio.c b/libmultipath/prio.c<br>
-index 05a8cf1..6ee0b9c 100644<br>
---- a/libmultipath/prio.c<br>
-+++ b/libmultipath/prio.c<br>
-@@ -10,6 +10,13 @@<br>
+diff --git a/libmultipath/config.c b/libmultipath/config.c<br>
+index e13c307..39963b4 100644<br>
+--- a/libmultipath/config.c<br>
++++ b/libmultipath/config.c<br>
+@@ -561,6 +561,7 @@ load_config (char * file, struct udev *udev)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;fast_io_fail =3D DEFAULT_FAST_IO_FAIL;=
 <br>
-=C2=A0static LIST_HEAD(prioritizers);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;retain_hwhandler =3D DEFAULT_RETAIN_HW=
+HANDLER;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;detect_prio =3D DEFAULT_DETECT_PRIO;<b=
+r>
++ =C2=A0 =C2=A0 =C2=A0 conf-&gt;force_sync =3D 0;<br>
 <br>
-+unsigned int get_prio_timeout(unsigned int default_timeout)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* preload default hwtable<br>
+diff --git a/libmultipath/config.h b/libmultipath/config.h<br>
+index ac7c58e..1a23e4b 100644<br>
+--- a/libmultipath/config.h<br>
++++ b/libmultipath/config.h<br>
+@@ -124,6 +124,7 @@ struct config {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 int reassign_maps;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 int retain_hwhandler;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 int detect_prio;<br>
++ =C2=A0 =C2=A0 =C2=A0 int force_sync;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned int version[3];<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 char * dev;<br>
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c<br>
+index 91d9b83..7de7a67 100644<br>
+--- a/libmultipath/dict.c<br>
++++ b/libmultipath/dict.c<br>
+@@ -685,6 +685,29 @@ def_detect_prio_handler(vector strvec)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 return 0;<br>
+=C2=A0}<br>
+<br>
++static int<br>
++def_force_sync_handler(vector strvec)<br>
 +{<br>
-+ =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;checker_timeout)<br>
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return conf-&gt;checker_=
-timeout * 1000;<br>
-+ =C2=A0 =C2=A0 =C2=A0 return default_timeout;<br>
++ =C2=A0 =C2=A0 =C2=A0 char * buff;<br>
++<br>
++ =C2=A0 =C2=A0 =C2=A0 buff =3D set_value(strvec);<br>
++<br>
++ =C2=A0 =C2=A0 =C2=A0 if (!buff)<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
++<br>
++ =C2=A0 =C2=A0 =C2=A0 if ((strlen(buff) =3D=3D 2 &amp;&amp; !strcmp(buff, =
+&quot;no&quot;)) ||<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 (strlen(buff) =3D=3D 1 &amp;&amp; !str=
+cmp(buff, &quot;0&quot;)))<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;force_sync =3D =
+0;<br>
++ =C2=A0 =C2=A0 =C2=A0 else if ((strlen(buff) =3D=3D 3 &amp;&amp; !strcmp(b=
+uff, &quot;yes&quot;)) ||<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0(strlen(buff) =3D=
+=3D 1 &amp;&amp; !strcmp(buff, &quot;1&quot;)))<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;force_sync =3D =
+1;<br>
++ =C2=A0 =C2=A0 =C2=A0 else<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;force_sync =3D =
+0;<br>
++<br>
++ =C2=A0 =C2=A0 =C2=A0 FREE(buff);<br>
++ =C2=A0 =C2=A0 =C2=A0 return 0;<br>
 +}<br>
 +<br>
-=C2=A0int init_prio (void)<br>
+=C2=A0/*<br>
+=C2=A0 * blacklist block handlers<br>
+=C2=A0 */<br>
+@@ -2783,6 +2806,15 @@ snprint_def_detect_prio(char * buff, int len, void *=
+ data)<br>
+=C2=A0}<br>
+<br>
+=C2=A0static int<br>
++snprint_def_force_sync(char * buff, int len, void * data)<br>
++{<br>
++ =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;force_sync)<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return snprintf(buff, le=
+n, &quot;yes&quot;);<br>
++ =C2=A0 =C2=A0 =C2=A0 else<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return snprintf(buff, le=
+n, &quot;no&quot;);<br>
++}<br>
++<br>
++static int<br>
+=C2=A0snprint_ble_simple (char * buff, int len, void * data)<br>
 =C2=A0{<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!add_prio(DEFAULT_PRIO))<br>
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h<br>
-index 4eeb216..495688f 100644<br>
---- a/libmultipath/prio.h<br>
-+++ b/libmultipath/prio.h<br>
-@@ -51,6 +51,7 @@ struct prio {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 int (*getprio)(struct path *, char *);<br>
-=C2=A0};<br>
-<br>
-+unsigned int get_prio_timeout(unsigned int default_timeout);<br>
-=C2=A0int init_prio (void);<br>
-=C2=A0void cleanup_prio (void);<br>
-=C2=A0struct prio * add_prio (char *);<br>
-diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritiz=
-ers/alua_rtpg.c<br>
-index 981ba06..6d04fc1 100644<br>
---- a/libmultipath/prioritizers/alua_rtpg.c<br>
-+++ b/libmultipath/prioritizers/alua_rtpg.c<br>
-@@ -21,6 +21,7 @@<br>
-=C2=A0#define __user<br>
-=C2=A0#include &lt;scsi/sg.h&gt;<br>
-<br>
-+#include &quot;../prio.h&quot;<br>
-=C2=A0#include &quot;alua_rtpg.h&quot;<br>
-<br>
-=C2=A0#define SENSE_BUFF_LEN =C2=A032<br>
-@@ -134,7 +135,7 @@ do_inquiry(int fd, int evpd, unsigned int codepage, voi=
-d *resp, int resplen)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.dxfer_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D resplen;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.sbp =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =3D sense;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.mx_sb_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D sizeof(sense);<br>
-- =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D DEF_TIMEOUT;<br>
-+ =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D get_prio_timeout(DEF_TIMEOUT);<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;hdr) &lt; 0) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 PRINT_DEBUG(&quot;d=
-o_inquiry: IOCTL failed!\n&quot;);<br>
-@@ -253,7 +254,7 @@ do_rtpg(int fd, void* resp, long resplen)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.dxfer_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D resplen;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.mx_sb_len =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D sizeof(sense);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 hdr.sbp =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =3D sense;<br>
-- =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D DEF_TIMEOUT;<br>
-+ =C2=A0 =C2=A0 =C2=A0 hdr.timeout =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =3D get_prio_timeout(DEF_TIMEOUT);<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;hdr) &lt; 0)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return -RTPG_RTPG_F=
-AILED;<br>
-diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/em=
-c.c<br>
-index 91b3d90..e49809c 100644<br>
---- a/libmultipath/prioritizers/emc.c<br>
-+++ b/libmultipath/prioritizers/emc.c<br>
-@@ -31,7 +31,7 @@ int emc_clariion_prio(const char *dev, int fd)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D sense_buffer;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D inqCmdBlk;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
-- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 60000;<br>
-+ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(60000);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_emc_log(0, &quot=
-;sending query command failed&quot;);<br>
-diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hd=
-s.c<br>
-index f748707..8043b5b 100644<br>
---- a/libmultipath/prioritizers/hds.c<br>
-+++ b/libmultipath/prioritizers/hds.c<br>
-@@ -114,7 +114,7 @@ int hds_modular_prio (const char *dev, int fd)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D inqBuff;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D inqCmdBlk;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sense_buffer;<br>
-- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 2000; =C2=A0/* TimeOut =3D 2 seco=
-nds */<br>
-+ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(2000); /* TimeOu=
-t =3D 2 seconds */<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl (fd, SG_IO, &amp;io_hdr) &lt; 0) {<br=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 struct blentry * ble =3D (struct blentry *)data=
+;<br>
+@@ -2849,6 +2881,7 @@ init_keywords(void)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 install_keyword(&quot;reservation_key&quot;, &a=
+mp;def_reservation_key_handler, &amp;snprint_def_reservation_key);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 install_keyword(&quot;retain_attached_hw_handle=
+r&quot;, &amp;def_retain_hwhandler_handler, &amp;snprint_def_retain_hwhandl=
+er_handler);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 install_keyword(&quot;detect_prio&quot;, &amp;d=
+ef_detect_prio_handler, &amp;snprint_def_detect_prio);<br>
++ =C2=A0 =C2=A0 =C2=A0 install_keyword(&quot;force_sync&quot;, &amp;def_for=
+ce_sync_handler, &amp;snprint_def_force_sync);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 __deprecated install_keyword(&quot;default_sele=
+ctor&quot;, &amp;def_selector_handler, NULL);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 __deprecated install_keyword(&quot;default_path=
+_grouping_policy&quot;, &amp;def_pgpolicy_handler, NULL);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 __deprecated install_keyword(&quot;default_uid_=
+attribute&quot;, &amp;def_uid_attribute_handler, NULL);<br>
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c<br>
+index b62a59c..a5f5a20 100644<br>
+--- a/libmultipath/discovery.c<br>
++++ b/libmultipath/discovery.c<br>
+@@ -1053,8 +1053,12 @@ get_state (struct path * pp, int daemon)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 checker_clear_message(c);<br>
+- =C2=A0 =C2=A0 =C2=A0 if (daemon)<br>
+- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 checker_set_async(c);<br=
 >
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_hds_log(0, &quot=
-;SG_IO error&quot;);<br>
-diff --git a/libmultipath/prioritizers/hp_sw.c b/libmultipath/prioritizers/=
-hp_sw.c<br>
-index c24baad..4950cf7 100644<br>
---- a/libmultipath/prioritizers/hp_sw.c<br>
-+++ b/libmultipath/prioritizers/hp_sw.c<br>
-@@ -46,7 +46,7 @@ int hp_sw_prio(const char *dev, int fd)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxfer_direction =3D SG_DXFER_NONE;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D turCmdBlk;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
-- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 60000;<br>
-+ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(60000);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
-=C2=A0 retry:<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
-diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/=
-ontap.c<br>
-index 026d45d..5e82a17 100644<br>
---- a/libmultipath/prioritizers/ontap.c<br>
-+++ b/libmultipath/prioritizers/ontap.c<br>
-@@ -89,7 +89,7 @@ static int send_gva(const char *dev, int fd, unsigned cha=
-r pg,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D results;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D cdb;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
-- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D SG_TIMEOUT;<br>
-+ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(SG_TIMEOUT);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_ontap_log(0, &qu=
-ot;SG_IO ioctl failed, errno=3D%d&quot;, errno);<br>
-@@ -141,7 +141,7 @@ static int get_proxy(const char *dev, int fd)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D results;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D cdb;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
-- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D SG_TIMEOUT;<br>
-+ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(SG_TIMEOUT);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_ontap_log(0, &qu=
-ot;ioctl sending inquiry command failed, &quot;<br>
-diff --git a/libmultipath/prioritizers/rdac.c b/libmultipath/prioritizers/r=
-dac.c<br>
-index 2bf1443..a210055 100644<br>
---- a/libmultipath/prioritizers/rdac.c<br>
-+++ b/libmultipath/prioritizers/rdac.c<br>
-@@ -31,7 +31,7 @@ int rdac_prio(const char *dev, int fd)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.dxferp =3D sense_buffer;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.cmdp =3D inqCmdBlk;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.sbp =3D sb;<br>
-- =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D 60000;<br>
-+ =C2=A0 =C2=A0 =C2=A0 io_hdr.timeout =3D get_prio_timeout(60000);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 io_hdr.pack_id =3D 0;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ioctl(fd, SG_IO, &amp;io_hdr) &lt; 0) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp_rdac_log(0, &quo=
-t;sending inquiry command failed&quot;);<br>
++ =C2=A0 =C2=A0 =C2=A0 if (daemon) {<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;force_sync =
+=3D=3D 0)<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 checker_set_async(c);<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else<br>
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 checker_set_sync(c);<br>
++ =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!conf-&gt;checker_timeout &amp;&amp;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sysfs_get_timeout(pp, &amp;(c-&gt=
+;timeout)) &lt;=3D 0)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 c-&gt;timeout =3D D=
+EF_TIMEOUT;<br>
 diff --git a/multipath.conf.annotated b/multipath.conf.annotated<br>
-index 235e130..f158746 100644<br>
+index f158746..0af1d4c 100644<br>
 --- a/multipath.conf.annotated<br>
 +++ b/multipath.conf.annotated<br>
-@@ -243,8 +243,9 @@<br>
-=C2=A0# =C2=A0 =C2=A0 =C2=A0#<br>
-=C2=A0# =C2=A0 =C2=A0 =C2=A0# name =C2=A0 =C2=A0: checker_timeout<br>
-=C2=A0# =C2=A0 =C2=A0 =C2=A0# scope =C2=A0 : multipath &amp; multipathd<br>
--# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: The timeout to use for path ch=
-eckers that issue scsi<br>
--# =C2=A0 =C2=A0 =C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 commands with a=
-n explicit timeout, in seconds.<br>
-+# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: The timeout to use for path ch=
-eckers and prioritizers<br>
-+# =C2=A0 =C2=A0 =C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 that issue scsi=
- commands with an explicit timeout, in<br>
-+# =C2=A0 =C2=A0 =C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 seconds.<br>
-=C2=A0# =C2=A0 =C2=A0 =C2=A0# values =C2=A0: n &gt; 0<br>
-=C2=A0# =C2=A0 =C2=A0 =C2=A0# default : taken from /sys/block/sd&lt;x&gt;/d=
-evice/timeout<br>
-=C2=A0# =C2=A0 =C2=A0 =C2=A0checker_timeout 60<br>
+@@ -270,6 +270,7 @@<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# default : determined by the OS<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0dev_loss_tmo 600<br>
+=C2=A0#<br>
++# =C2=A0 =C2=A0 =C2=A0#<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# name =C2=A0 =C2=A0: bindings_file<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# scope =C2=A0 : multipath<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: The location of the bindi=
+ngs file that is used with<br>
+@@ -278,6 +279,7 @@<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# default : &quot;/var/lib/multipath/bindings&q=
+uot;<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0bindings_file &quot;/etc/multipath/bindings&quo=
+t;<br>
+=C2=A0#<br>
++# =C2=A0 =C2=A0 =C2=A0#<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# name =C2=A0 =C2=A0: wwids_file<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# scope =C2=A0 : multipath<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: The location of the wwids=
+ file multipath uses to<br>
+@@ -286,6 +288,7 @@<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# default : &quot;/var/lib/multipath/wwids&quot=
+;<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0wwids_file &quot;/etc/multipath/wwids&quot;<br>
+=C2=A0#<br>
++# =C2=A0 =C2=A0 =C2=A0#<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# name =C2=A0 =C2=A0: reservation_key<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# scope =C2=A0 : multipath<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: Service action reservatio=
+n key used by mpathpersist.<br>
+@@ -293,6 +296,14 @@<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0# default : (null)<br>
+=C2=A0# =C2=A0 =C2=A0 =C2=A0reservation_key &quot;mpathkey&quot;<br>
+=C2=A0#<br>
++# =C2=A0 =C2=A0 =C2=A0#<br>
++# =C2=A0 =C2=A0 =C2=A0# name =C2=A0 =C2=A0: force_sync<br>
++# =C2=A0 =C2=A0 =C2=A0# scope =C2=A0 : multipathd<br>
++# =C2=A0 =C2=A0 =C2=A0# desc =C2=A0 =C2=A0: If set to yes, multipath will =
+run all of the checkers in<br>
++# =C2=A0 =C2=A0 =C2=A0# =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sync mode, even=
+ if the checker has an async mode.<br>
++# =C2=A0 =C2=A0 =C2=A0# values =C2=A0: yes|no<br>
++# =C2=A0 =C2=A0 =C2=A0# default : no<br>
++# =C2=A0 =C2=A0 =C2=A0force_sync yes<br>
+=C2=A0#}<br>
+=C2=A0#<br>
+=C2=A0##<br>
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5<br>
-index 1a904e9..195e663 100644<br>
+index 195e663..cadb34d 100644<br>
 --- a/multipath/multipath.conf.5<br>
 +++ b/multipath/multipath.conf.5<br>
-@@ -330,8 +330,8 @@ maximum number of open fds is taken from the calling pr=
-ocess. It is usually<br>
-=C2=A0if that number is greated than 1024.<br>
-=C2=A0.TP<br>
-=C2=A0.B checker_timeout<br>
--Specify the timeout to user for path checkers that issue scsi commands wit=
-h an<br>
--explicit timeout, in seconds; default taken from<br>
-+Specify the timeout to use for path checkers and prioritizers that issue s=
-csi<br>
-+commands with an explicit timeout, in seconds; default taken from<br>
-=C2=A0.I /sys/block/sd&lt;x&gt;/device/timeout<br>
-=C2=A0.TP<br>
-=C2=A0.B fast_io_fail_tmo<br>
+@@ -409,6 +409,15 @@ will automatically use the<br>
+=C2=A0.I alua<br>
+=C2=A0prioritizer. If not, the prioritizer will be selected as usual. Defau=
+lt is<br>
+=C2=A0.I no<br>
++.TP<br>
++.B force_sync<br>
++If set to<br>
++.I yes<br>
++, multipathd will call the path checkers in sync mode only. =C2=A0This mea=
+ns that<br>
++only one checker will run at a time. =C2=A0This is useful in the case wher=
+e many<br>
++multipathd checkers running in parallel causes significant CPU pressure. T=
+he<br>
++Default is<br>
++.I no<br>
+=C2=A0.<br>
+=C2=A0.SH &quot;blacklist section&quot;<br>
+=C2=A0The<br>
 <span class=3D"HOEnZb"><font color=3D"#888888">--<br>
 1.8.3.1<br>
 <br>
 </font></span></blockquote></div><br></div>
 
---089e013cc0869f811204feec8837--
+--089e0149d2c0a9fb1c04feec8fc1--
 
 
---===============5041859603333503791==
+--===============2696598894879086734==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============5041859603333503791==--
+--===============2696598894879086734==--
