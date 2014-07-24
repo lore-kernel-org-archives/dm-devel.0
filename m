@@ -1,65 +1,69 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH] md/dm-ioctl.c: optimize memory allocation in
- copy_params
-Date: Wed, 23 Jul 2014 13:14:16 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1407231307200.4177@file01.intranet.prod.int.rdu2.redhat.com>
-References: <53B68068.2060102@intel.com> <alpine.LRH.2.02.1407081831510.27831@file01.intranet.prod.int.rdu2.redhat.com> <53BCA278.5050205@linux.intel.com> <alpine.LRH.2.02.1407091032400.4545@file01.intranet.prod.int.rdu2.redhat.com> <53CDB81B.90509@linux.intel.com>
- <20140722012352.GD6822@agk-dp.fab.redhat.com> <53CF26B2.6060503@linux.intel.com> <alpine.LRH.2.02.1407230816000.29551@file01.intranet.prod.int.rdu2.redhat.com> <20140723125407.GG6822@agk-dp.fab.redhat.com>
+From: "Zhang, Yanmin" <yanmin_zhang@linux.intel.com>
+Subject: Re: [dm-devel] [PATCH] md/dm-ioctl.c: optimize memory allocation
+ in copy_params
+Date: Thu, 24 Jul 2014 13:53:58 +0800
+Message-ID: <53D09F76.80801@linux.intel.com>
+References: <53B68068.2060102@intel.com> <alpine.LRH.2.02.1407081831510.27831@file01.intranet.prod.int.rdu2.redhat.com> <53BCA278.5050205@linux.intel.com> <alpine.LRH.2.02.1407091032400.4545@file01.intranet.prod.int.rdu2.redhat.com> <53CDB81B.90509@linux.intel.com> <20140722012352.GD6822@agk-dp.fab.redhat.com> <53CF26B2.6060503@linux.intel.com> <alpine.LRH.2.02.1407230816000.29551@file01.intranet.prod.int.rdu2.redhat.com> <20140723125407.GG6822@agk-dp.fab.redhat.com> <alpine.LRH.2.02.1407231307200.4177@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140723125407.GG6822@agk-dp.fab.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1407231307200.4177@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: "Zhang, Yanmin" <yanmin_zhang@linux.intel.com>, "xinhui.pan" <xinhuix.pan@intel.com>, linux-kernel@vger.kernel.org, snitzer@redhat.com, dm-devel@redhat.com, "Liu, ShuoX" <shuox.liu@intel.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: "xinhui.pan" <xinhuix.pan@intel.com>, linux-kernel@vger.kernel.org, snitzer@redhat.com, dm-devel@redhat.com, "Liu, ShuoX" <shuox.liu@intel.com>
 List-Id: dm-devel.ids
 
+On 2014/7/24 1:14, Mikulas Patocka wrote:
+>
+> On Wed, 23 Jul 2014, Alasdair G Kergon wrote:
+>
+>> On Wed, Jul 23, 2014 at 08:16:58AM -0400, Mikulas Patocka wrote:
+>>> So, it means that you do not use device mapper at all. So, why are you
+>>> trying to change memory allocation in device mapper?
+>>   
+>> So the *test* they run is asking device-mapper to briefly reserve a 64KB
+>> buffer when there is no data to report:  The answer is not to run that
+>> pointless test:)
+>>
+>> And if a single 64KB allocation really is a big deal, then patch 'vold'
+>> in userspace so it doesn't ask for 64KB when it clearly doesn't need it!
+>>
+>> + int Devmapper::dumpState(SocketClient *c) {
+>> +    char *buffer = (char *) malloc(1024 * 64);
+>>
+>> The code has just
+>> #define DEVMAPPER_BUFFER_SIZE 4096
+>> for all the other dm ioctls it issues.
+>>
+>> Only use a larger value when it is needed i.e. if DM_BUFFER_FULL_FLAG gets set.
+>>
+>> Alasdair
+> Device mapper shouldn't depend on allocation on any contiguous memory - it
+> will fall back to vmalloc. I still can't believe that their suggested
+> patch makes any difference.
+>
+> This pattern is being repeated over and over in the kernel - for example:
+>
+>          if (PIDLIST_TOO_LARGE(count))
+>                  return vmalloc(count * sizeof(pid_t));
+>          else
+>                  return kmalloc(count * sizeof(pid_t), GFP_KERNEL);
+>
+>
+>          if (is_vmalloc_addr(p))
+>                  vfree(p);
+>          else
+>                  kfree(p);
+>
+> - I think we should make two functions that do this operation (for example
+> kvalloc and kvfree) and convert device mapper and other users to these
+> functions. Then, other kernel subsystems can start to use them to fix
+> memory fragmentation issues.
 
+Thank Mikulas and Alasdair. Before sending out the patch, we know the result. :)
+It's hard to balance between performance and stability.
 
-On Wed, 23 Jul 2014, Alasdair G Kergon wrote:
+Anyway, we would try to change seq_read.
 
-> On Wed, Jul 23, 2014 at 08:16:58AM -0400, Mikulas Patocka wrote:
-> > So, it means that you do not use device mapper at all. So, why are you 
-> > trying to change memory allocation in device mapper?
->  
-> So the *test* they run is asking device-mapper to briefly reserve a 64KB
-> buffer when there is no data to report:  The answer is not to run that
-> pointless test:)
-> 
-> And if a single 64KB allocation really is a big deal, then patch 'vold'
-> in userspace so it doesn't ask for 64KB when it clearly doesn't need it!
-> 
-> + int Devmapper::dumpState(SocketClient *c) {
-> +    char *buffer = (char *) malloc(1024 * 64);
-> 
-> The code has just
-> #define DEVMAPPER_BUFFER_SIZE 4096
-> for all the other dm ioctls it issues.
-> 
-> Only use a larger value when it is needed i.e. if DM_BUFFER_FULL_FLAG gets set.
-> 
-> Alasdair
-
-Device mapper shouldn't depend on allocation on any contiguous memory - it 
-will fall back to vmalloc. I still can't believe that their suggested 
-patch makes any difference.
-
-This pattern is being repeated over and over in the kernel - for example:
-
-        if (PIDLIST_TOO_LARGE(count))
-                return vmalloc(count * sizeof(pid_t));
-        else
-                return kmalloc(count * sizeof(pid_t), GFP_KERNEL);
-
-
-        if (is_vmalloc_addr(p))
-                vfree(p);
-        else
-                kfree(p);
-
-- I think we should make two functions that do this operation (for example 
-kvalloc and kvfree) and convert device mapper and other users to these 
-functions. Then, other kernel subsystems can start to use them to fix 
-memory fragmentation issues.
-
-Mikulas
+Yanmin
