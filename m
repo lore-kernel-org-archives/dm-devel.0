@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/2] arm64 aes: fix encryption of unaligned data
-Date: Fri, 25 Jul 2014 19:40:20 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1407251937110.11227@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 2/2] arm aes: fix encryption of unaligned data
+Date: Fri, 25 Jul 2014 19:42:30 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1407251940380.11227@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-crypto-owner@vger.kernel.org>
@@ -10,75 +10,58 @@ To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, Herbert Xu <herbert@gondor.apana
 Cc: Andy Polyakov <appro@openssl.org>, Nicolas Pitre <nico@linaro.org>, "Alasdair G. Kergon" <agk@redhat.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-cryptsetup fails on arm64 when using kernel encryption via AF_ALG socket.
-See https://bugzilla.redhat.com/show_bug.cgi?id=1122937
-
-The bug is caused by incorrect handling of unaligned data in
-arch/arm64/crypto/aes-glue.c. Cryptsetup creates a buffer that is aligned
-on 8 bytes, but not on 16 bytes. It opens AF_ALG socket and uses the
-socket to encrypt data in the buffer. The arm64 crypto accelerator causes
-data corruption or crashes in the scatterwalk_pagedone.
-
-This patch fixes the bug by passing the residue bytes that were not
-processed as the last parameter to blkcipher_walk_done.
+Fix the same alignment bug as in arm64 - we need to pass residue
+unprocessed bytes as the last argument to blkcipher_walk_done.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# 3.13+
 
-Index: linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm64/crypto/aes-glue.c
+Index: linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm/crypto/aesbs-glue.c
 ===================================================================
---- linux-3.16.0-0.rc6.git1.1.fc21.aarch64.orig/arch/arm64/crypto/aes-glue.c
-+++ linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm64/crypto/aes-glue.c
-@@ -106,7 +106,7 @@ static int ecb_encrypt(struct blkcipher_
- 	for (first = 1; (blocks = (walk.nbytes / AES_BLOCK_SIZE)); first = 0) {
- 		aes_ecb_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				(u8 *)ctx->key_enc, rounds, blocks, first);
+--- linux-3.16.0-0.rc6.git1.1.fc21.aarch64.orig/arch/arm/crypto/aesbs-glue.c
++++ linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm/crypto/aesbs-glue.c
+@@ -137,7 +137,7 @@ static int aesbs_cbc_encrypt(struct blkc
+ 				dst += AES_BLOCK_SIZE;
+ 			} while (--blocks);
+ 		}
 -		err = blkcipher_walk_done(desc, &walk, 0);
 +		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
  	}
- 	kernel_neon_end();
  	return err;
-@@ -128,7 +128,7 @@ static int ecb_decrypt(struct blkcipher_
- 	for (first = 1; (blocks = (walk.nbytes / AES_BLOCK_SIZE)); first = 0) {
- 		aes_ecb_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				(u8 *)ctx->key_dec, rounds, blocks, first);
+ }
+@@ -158,7 +158,7 @@ static int aesbs_cbc_decrypt(struct blkc
+ 		bsaes_cbc_encrypt(walk.src.virt.addr, walk.dst.virt.addr,
+ 				  walk.nbytes, &ctx->dec, walk.iv);
+ 		kernel_neon_end();
 -		err = blkcipher_walk_done(desc, &walk, 0);
 +		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
  	}
- 	kernel_neon_end();
+ 	while (walk.nbytes) {
+ 		u32 blocks = walk.nbytes / AES_BLOCK_SIZE;
+@@ -182,7 +182,7 @@ static int aesbs_cbc_decrypt(struct blkc
+ 			dst += AES_BLOCK_SIZE;
+ 			src += AES_BLOCK_SIZE;
+ 		} while (--blocks);
+-		err = blkcipher_walk_done(desc, &walk, 0);
++		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
+ 	}
  	return err;
-@@ -151,7 +151,7 @@ static int cbc_encrypt(struct blkcipher_
- 		aes_cbc_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				(u8 *)ctx->key_enc, rounds, blocks, walk.iv,
- 				first);
+ }
+@@ -268,7 +268,7 @@ static int aesbs_xts_encrypt(struct blkc
+ 		bsaes_xts_encrypt(walk.src.virt.addr, walk.dst.virt.addr,
+ 				  walk.nbytes, &ctx->enc, walk.iv);
+ 		kernel_neon_end();
 -		err = blkcipher_walk_done(desc, &walk, 0);
 +		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
  	}
- 	kernel_neon_end();
  	return err;
-@@ -174,7 +174,7 @@ static int cbc_decrypt(struct blkcipher_
- 		aes_cbc_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				(u8 *)ctx->key_dec, rounds, blocks, walk.iv,
- 				first);
+ }
+@@ -292,7 +292,7 @@ static int aesbs_xts_decrypt(struct blkc
+ 		bsaes_xts_decrypt(walk.src.virt.addr, walk.dst.virt.addr,
+ 				  walk.nbytes, &ctx->dec, walk.iv);
+ 		kernel_neon_end();
 -		err = blkcipher_walk_done(desc, &walk, 0);
 +		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
  	}
- 	kernel_neon_end();
  	return err;
-@@ -243,7 +243,7 @@ static int xts_encrypt(struct blkcipher_
- 		aes_xts_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				(u8 *)ctx->key1.key_enc, rounds, blocks,
- 				(u8 *)ctx->key2.key_enc, walk.iv, first);
--		err = blkcipher_walk_done(desc, &walk, 0);
-+		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
- 	}
- 	kernel_neon_end();
- 
-@@ -267,7 +267,7 @@ static int xts_decrypt(struct blkcipher_
- 		aes_xts_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				(u8 *)ctx->key1.key_dec, rounds, blocks,
- 				(u8 *)ctx->key2.key_enc, walk.iv, first);
--		err = blkcipher_walk_done(desc, &walk, 0);
-+		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
- 	}
- 	kernel_neon_end();
- 
+ }
