@@ -1,67 +1,56 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] arm aes: fix encryption of unaligned data
-Date: Fri, 25 Jul 2014 19:42:30 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1407251940380.11227@file01.intranet.prod.int.rdu2.redhat.com>
+From: Anssi Hannula <anssi.hannula@iki.fi>
+Subject: dm-cache race on nr_dirty in set_dirty/clear_dirty?
+Date: Sat, 26 Jul 2014 07:07:53 +0300
+Message-ID: <53D32999.6080206@iki.fi>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>
-Cc: Andy Polyakov <appro@openssl.org>, Nicolas Pitre <nico@linaro.org>, "Alasdair G. Kergon" <agk@redhat.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Fix the same alignment bug as in arm64 - we need to pass residue
-unprocessed bytes as the last argument to blkcipher_walk_done.
+Hi,
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	# 3.13+
+I'm seeing the following "dmsetup status" on one volume:
+> 0 5368709120 cache 8 3926/32768 128 335265/1978880 5589425 8052258 2254781 3910141 0 335265 4294967293 1 writeback 2 migration_threshold 2048 mq 10 random_threshold 4 sequential_threshold 512 discard_promote_adjustment 1 read_promote_adjustment 4 write_promote_adjustment 8
 
-Index: linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm/crypto/aesbs-glue.c
-===================================================================
---- linux-3.16.0-0.rc6.git1.1.fc21.aarch64.orig/arch/arm/crypto/aesbs-glue.c
-+++ linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm/crypto/aesbs-glue.c
-@@ -137,7 +137,7 @@ static int aesbs_cbc_encrypt(struct blkc
- 				dst += AES_BLOCK_SIZE;
- 			} while (--blocks);
- 		}
--		err = blkcipher_walk_done(desc, &walk, 0);
-+		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
- 	}
- 	return err;
- }
-@@ -158,7 +158,7 @@ static int aesbs_cbc_decrypt(struct blkc
- 		bsaes_cbc_encrypt(walk.src.virt.addr, walk.dst.virt.addr,
- 				  walk.nbytes, &ctx->dec, walk.iv);
- 		kernel_neon_end();
--		err = blkcipher_walk_done(desc, &walk, 0);
-+		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
- 	}
- 	while (walk.nbytes) {
- 		u32 blocks = walk.nbytes / AES_BLOCK_SIZE;
-@@ -182,7 +182,7 @@ static int aesbs_cbc_decrypt(struct blkc
- 			dst += AES_BLOCK_SIZE;
- 			src += AES_BLOCK_SIZE;
- 		} while (--blocks);
--		err = blkcipher_walk_done(desc, &walk, 0);
-+		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
- 	}
- 	return err;
- }
-@@ -268,7 +268,7 @@ static int aesbs_xts_encrypt(struct blkc
- 		bsaes_xts_encrypt(walk.src.virt.addr, walk.dst.virt.addr,
- 				  walk.nbytes, &ctx->enc, walk.iv);
- 		kernel_neon_end();
--		err = blkcipher_walk_done(desc, &walk, 0);
-+		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
- 	}
- 	return err;
- }
-@@ -292,7 +292,7 @@ static int aesbs_xts_decrypt(struct blkc
- 		bsaes_xts_decrypt(walk.src.virt.addr, walk.dst.virt.addr,
- 				  walk.nbytes, &ctx->dec, walk.iv);
- 		kernel_neon_end();
--		err = blkcipher_walk_done(desc, &walk, 0);
-+		err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
- 	}
- 	return err;
- }
+Note the clearly wrong 4294967293 in the nr_dirty field.
+
+Looking at the code, I see nr_dirty is set in the following functions in
+dm-cache-target.c:
+
+> static void set_dirty(struct cache *cache, dm_oblock_t oblock, dm_cblock_t cblock)
+> {
+>         if (!test_and_set_bit(from_cblock(cblock), cache->dirty_bitset)) {
+>                 cache->nr_dirty = to_cblock(from_cblock(cache->nr_dirty) + 1);
+>                 policy_set_dirty(cache->policy, oblock);
+>         }
+> }
+> 
+> static void clear_dirty(struct cache *cache, dm_oblock_t oblock, dm_cblock_t cblock)
+> {
+>         if (test_and_clear_bit(from_cblock(cblock), cache->dirty_bitset)) {
+>                 policy_clear_dirty(cache->policy, oblock);
+>                 cache->nr_dirty = to_cblock(from_cblock(cache->nr_dirty) - 1);
+>                 if (!from_cblock(cache->nr_dirty))
+>                         dm_table_event(cache->ti->table);
+>         }
+> }
+
+That looks like a race to me? As nothing is protecting cache->nr_dirty
+from multiple access (unlike cache->dirty_bitset).
+
+Unless I'm missing something, as I'm not familiar with this code...
+
+-- 
+Anssi Hannula
