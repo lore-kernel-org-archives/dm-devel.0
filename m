@@ -1,139 +1,197 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH 1/2] arm64 aes: fix encryption of unaligned data
-Date: Sat, 26 Jul 2014 18:57:15 +0200
-Message-ID: <CAKv+Gu9wNc0B3Df8xqJ0=ekynMfaRvKHq2fS=8v-zqrn6fsWaQ@mail.gmail.com>
-References: <alpine.LRH.2.02.1407251937110.11227@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAKv+Gu-mdv0E5oSLz3x87Qn6sEO1-=B3Uk-mnJee7YGUWY4cnQ@mail.gmail.com>
-	<CAKv+Gu9=0eH1-SLahzoEhedMcXrcDV3k9LnogBsqnD_6pfJ9WA@mail.gmail.com>
-	<alpine.LRH.2.02.1407261125470.25378@file01.intranet.prod.int.rdu2.redhat.com>
+From: Sebastian Herbszt <herbszt@gmx.de>
+Subject: Re: Status of SCSI referrals support in dm-multipath
+Date: Mon, 28 Jul 2014 00:18:23 +0200
+Message-ID: <20140728001823.000051be@localhost>
+References: <20140601224650.000043de@localhost>
+	<538C1B0A.6080808@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1407261125470.25378@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Catalin Marinas <catalin.marinas@arm.com>, Russell King - ARM Linux <linux@arm.linux.org.uk>, "David S. Miller" <davem@davemloft.net>, Nicolas Pitre <nico@linaro.org>, "Alasdair G. Kergon" <agk@redhat.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <538C1B0A.6080808@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Sebastian Herbszt <herbszt@gmx.de>
 List-Id: dm-devel.ids
 
-On 26 July 2014 17:31, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
-> On Sat, 26 Jul 2014, Ard Biesheuvel wrote:
->
->> On 26 July 2014 15:13, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->> > On 26 July 2014 01:40, Mikulas Patocka <mpatocka@redhat.com> wrote:
->> >> cryptsetup fails on arm64 when using kernel encryption via AF_ALG socket.
->> >> See https://bugzilla.redhat.com/show_bug.cgi?id=1122937
->> >>
->> >> The bug is caused by incorrect handling of unaligned data in
->> >> arch/arm64/crypto/aes-glue.c. Cryptsetup creates a buffer that is aligned
->> >> on 8 bytes, but not on 16 bytes. It opens AF_ALG socket and uses the
->> >> socket to encrypt data in the buffer. The arm64 crypto accelerator causes
->> >> data corruption or crashes in the scatterwalk_pagedone.
->> >>
->> >> This patch fixes the bug by passing the residue bytes that were not
->> >> processed as the last parameter to blkcipher_walk_done.
->> >>
->> >> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
->> >>
->> >
->> > Acked-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
->> >
->> > Thanks for the patch. This correctly fixes a thinko on my part
->> > regarding the guarantees offered by the blkcipher API. Unfortunately,
->> > this wasn't caught by the tcrypt test suite, so I will propose some
->> > patches later to address cases like this.
->> >
->> > BTW using kernel crypto with AF_ALG is fairly pointless when using
->> > crypto instructions instead of crypto accelerator peripherals, should
->> > we change anything on the kernel side so we don't expose these
->> > drivers?
->
-> The userspace library (gcrypt in this case) doesn't support ARM64, so it's
-> still better to call the kernel.
->
+Hannes Reinecke wrote:
+> On 06/01/2014 10:46 PM, Sebastian Herbszt wrote:
+> > Hello,
+> >
+> > I am trying to find out the status of SCSI referrals support in dm-multipath.
+> > SCSI referrals support was a topic at LSF [1] but I wasn't able to find any
+> > information. Back in 2010 Hannes suggested the use of multiple entries in a
+> > multipath table [2] but this doesn't seem to work (anymore):
+> >
+> > [ 7750.354190] device-mapper: table: Request-based dm doesn't support multiple targets yet
+> >
+> > Is there any SCSI referrals support yet?
+> >
+> > [1] http://marc.info/?l=linux-scsi&m=129553880112460&w=2
+> > [2] http://www.redhat.com/archives/dm-devel/2010-June/msg00155.html
+> >
+> Not as of now. I've managed to push referrals support into 
+> target_core, so you now can set up a backend which supports referrals.
 
-OK
+I gathered the following information from a storage with referral support.
 
->> > @Catalin: this is a bug fix for the code that was merged this cycle. I
->> > would recommend to merge this for 3.16, but if not, could you please
->> > add a cc stable? Or ack it and perhaps Herbert can take both? (There
->> > is a similar patch for ARM as well)
->> >
->>
->> ... only this patch fails to repair the ECB case.
->> @Mikulas: could you do a v2 and include ECB encryption/decryption?
->>
->> Cheers,
->> Ard.
->
-> The patch changes ecb_encrypt and ecb_decrypt just like cbc and xts
-> functions. What is the problem with ECB?
->
+> And for the multiple entries I've though to use a linear target on 
+> top of the multipath target.
+> The linear target would just split up the device in chunks, 
+> according to the referrals layout.
 
-You are right, I got the patches mixed up (this one and the ARM one)
-Both look fine, and complete.
+I created a new thin provisioned volume which reported
 
--- 
-Ard.
+Referrals VPD page (SBC):
+  User data segment size: 0
+  User data segment multiplier: 0
 
+and didn't return any user data segment referral descriptors.
+Since the chunk size is not known, splitting the device is not possible.
+The storage reported 4 equal target port groups (sd[b-e]). I guess the
+initial setup would consist of a linear target with just a single mapping.
 
->> >> Index: linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm64/crypto/aes-glue.c
->> >> ===================================================================
->> >> --- linux-3.16.0-0.rc6.git1.1.fc21.aarch64.orig/arch/arm64/crypto/aes-glue.c
->> >> +++ linux-3.16.0-0.rc6.git1.1.fc21.aarch64/arch/arm64/crypto/aes-glue.c
->> >> @@ -106,7 +106,7 @@ static int ecb_encrypt(struct blkcipher_
->> >>         for (first = 1; (blocks = (walk.nbytes / AES_BLOCK_SIZE)); first = 0) {
->> >>                 aes_ecb_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
->> >>                                 (u8 *)ctx->key_enc, rounds, blocks, first);
->> >> -               err = blkcipher_walk_done(desc, &walk, 0);
->> >> +               err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
->> >>         }
->> >>         kernel_neon_end();
->> >>         return err;
->> >> @@ -128,7 +128,7 @@ static int ecb_decrypt(struct blkcipher_
->> >>         for (first = 1; (blocks = (walk.nbytes / AES_BLOCK_SIZE)); first = 0) {
->> >>                 aes_ecb_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
->> >>                                 (u8 *)ctx->key_dec, rounds, blocks, first);
->> >> -               err = blkcipher_walk_done(desc, &walk, 0);
->> >> +               err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
->> >>         }
->> >>         kernel_neon_end();
->> >>         return err;
->> >> @@ -151,7 +151,7 @@ static int cbc_encrypt(struct blkcipher_
->> >>                 aes_cbc_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
->> >>                                 (u8 *)ctx->key_enc, rounds, blocks, walk.iv,
->> >>                                 first);
->> >> -               err = blkcipher_walk_done(desc, &walk, 0);
->> >> +               err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
->> >>         }
->> >>         kernel_neon_end();
->> >>         return err;
->> >> @@ -174,7 +174,7 @@ static int cbc_decrypt(struct blkcipher_
->> >>                 aes_cbc_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
->> >>                                 (u8 *)ctx->key_dec, rounds, blocks, walk.iv,
->> >>                                 first);
->> >> -               err = blkcipher_walk_done(desc, &walk, 0);
->> >> +               err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
->> >>         }
->> >>         kernel_neon_end();
->> >>         return err;
->> >> @@ -243,7 +243,7 @@ static int xts_encrypt(struct blkcipher_
->> >>                 aes_xts_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
->> >>                                 (u8 *)ctx->key1.key_enc, rounds, blocks,
->> >>                                 (u8 *)ctx->key2.key_enc, walk.iv, first);
->> >> -               err = blkcipher_walk_done(desc, &walk, 0);
->> >> +               err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
->> >>         }
->> >>         kernel_neon_end();
->> >>
->> >> @@ -267,7 +267,7 @@ static int xts_decrypt(struct blkcipher_
->> >>                 aes_xts_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
->> >>                                 (u8 *)ctx->key1.key_dec, rounds, blocks,
->> >>                                 (u8 *)ctx->key2.key_enc, walk.iv, first);
->> >> -               err = blkcipher_walk_done(desc, &walk, 0);
->> >> +               err = blkcipher_walk_done(desc, &walk, walk.nbytes % AES_BLOCK_SIZE);
->> >>         }
->> >>         kernel_neon_end();
->> >>
->>
+As soon as I started to fill the volume the storage returned the
+descriptors
+
+Report referrals:
+  descriptor 0:
+    target port descriptors: 4
+    user data segment: first lba 0, last lba 2752511
+      target port descriptor 0:
+        port group 8080 state (active/non optimized)
+      target port descriptor 1:
+        port group 8081 state (active/non optimized)
+      target port descriptor 2:
+        port group 8090 state (active/optimized)
+      target port descriptor 3:
+        port group 8091 state (active/optimized)
+  descriptor 1:
+    target port descriptors: 4
+    user data segment: first lba 2752512, last lba 8257535
+      target port descriptor 0:
+        port group 8080 state (active/optimized)
+      target port descriptor 1:
+        port group 8081 state (active/optimized)
+      target port descriptor 2:
+        port group 8090 state (active/non optimized)
+      target port descriptor 3:
+        port group 8091 state (active/non optimized)
+  descriptor 2:
+    target port descriptors: 4
+    user data segment: first lba 8257536, last lba 11010047
+      target port descriptor 0:
+        port group 8080 state (active/non optimized)
+      target port descriptor 1:
+        port group 8081 state (active/non optimized)
+      target port descriptor 2:
+        port group 8090 state (active/optimized)
+      target port descriptor 3:
+        port group 8091 state (active/optimized)
+...
+
+The first descriptor covers 1344 MB; the second twice as much.
+On a full volume the smallest size was 1344MB and few descriptors
+covered multiple of it.
+After running a rebalance operation on the storage the layout partially
+changed
+
+Report referrals:
+  descriptor 0:
+    target port descriptors: 4
+    user data segment: first lba 0, last lba 2752511
+      target port descriptor 0:
+        port group 8080 state (active/optimized)
+      target port descriptor 1:
+        port group 8081 state (active/optimized)
+      target port descriptor 2:
+        port group 8090 state (active/non optimized)
+      target port descriptor 3:
+        port group 8091 state (active/non optimized)
+  descriptor 1:
+    target port descriptors: 4
+    user data segment: first lba 2752512, last lba 5505023
+      target port descriptor 0:
+        port group 8080 state (active/non optimized)
+      target port descriptor 1:
+        port group 8081 state (active/non optimized)
+      target port descriptor 2:
+        port group 8090 state (active/optimized)
+      target port descriptor 3:
+        port group 8091 state (active/optimized)
+  descriptor 2:
+    target port descriptors: 4
+    user data segment: first lba 5505024, last lba 8257535
+      target port descriptor 0:
+        port group 8080 state (active/optimized)
+      target port descriptor 1:
+        port group 8081 state (active/optimized)
+      target port descriptor 2:
+        port group 8090 state (active/non optimized)
+      target port descriptor 3:
+        port group 8091 state (active/non optimized)
+  descriptor 3:
+    target port descriptors: 4
+    user data segment: first lba 8257536, last lba 11010047
+      target port descriptor 0:
+        port group 8080 state (active/non optimized)
+      target port descriptor 1:
+        port group 8081 state (active/non optimized)
+      target port descriptor 2:
+        port group 8090 state (active/optimized)
+      target port descriptor 3:
+        port group 8091 state (active/optimized)
+...
+
+Is there currently a way to get notified on such changes? If we start with
+a single mapping we need a way to trigger a (re-)discovery/modification. 
+
+> And then you would have several multipath devices (all referring to 
+> the same disk), one for each supported referrals ALUA configuration.
+> The linear target would then map each chunk to the correct multipath 
+> device.
+
+I assume the above configuration would require two multipath devices;
+one for
+
+      target port descriptor 0:
+        port group 8080 state (active/optimized)
+      target port descriptor 1:
+        port group 8081 state (active/optimized)
+      target port descriptor 2:
+        port group 8090 state (active/non optimized)
+      target port descriptor 3:
+        port group 8091 state (active/non optimized)
+
+and a second for
+
+      target port descriptor 0:
+        port group 8080 state (active/non optimized)
+      target port descriptor 1:
+        port group 8081 state (active/non optimized)
+      target port descriptor 2:
+        port group 8090 state (active/optimized)
+      target port descriptor 3:
+        port group 8091 state (active/optimized)
+
+> It'll be a beast for failover, but should be possible.
+> And maybe it's better to use dm-switch here; the number or referrals 
+> might overflow dm-linear ...
+
+Does dm-switch work with different chunk sizes? Is there a theoretical or
+practical limit for dm-linear? My 100 GB device consists of 62 descriptors.
+ 
+> Cheers,
+> 
+> Hannes
+
+Sebastian
