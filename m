@@ -1,63 +1,48 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm bufio: fully initialize shrinker
-Date: Thu, 31 Jul 2014 12:35:46 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1407311235130.1571@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1406822839-2423-1-git-send-email-gthelen@google.com>
+From: Mike Snitzer <msnitzer@redhat.com>
+Subject: Re: [PATCH 0/2] dm-switch: quickly load repetitive
+	pattern
+Date: Thu, 31 Jul 2014 12:40:09 -0400 (EDT)
+Message-ID: <vbmeh0opb3vuc7dwpq1qlfmb.1406824794117@email.android.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1406822839-2423-1-git-send-email-gthelen@google.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Vladimir Davydov <vdavydov@parallels.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Greg Thelen <gthelen@google.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: multipart/mixed; boundary="===============3446359725531783459=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Jay Wang <jwang@nimblestorage.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+--===============3446359725531783459==
+Content-Type: multipart/alternative;
+	boundary=--_com.android.email_1033892548212921_alt
 
-On Thu, 31 Jul 2014, Greg Thelen wrote:
+----_com.android.email_1033892548212921_alt
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
 
-> 1d3d4437eae1 ("vmscan: per-node deferred work") added a flags field to
-> struct shrinker assuming that all shrinkers were zero filled.  The dm
-> bufio shrinker is not zero filled, which leaves arbitrary kmalloc() data
-> in flags.  So far the only defined flags bit is SHRINKER_NUMA_AWARE.
-> But there are proposed patches which add other bits to shrinker.flags
-> (e.g. memcg awareness).
-> 
-> Rather than simply initializing the shrinker, this patch uses kzalloc()
-> when allocating the dm_bufio_client to ensure that the embedded shrinker
-> and any other similar structures are zeroed.
-> 
-> This fixes theoretical over aggressive shrinking of dm bufio objects.
-> If the uninitialized dm_bufio_client.shrinker.flags contains
-> SHRINKER_NUMA_AWARE then shrink_slab() would call the dm shrinker for
-> each numa node rather than just once.  This has been broken since 3.12.
-> 
-> Signed-off-by: Greg Thelen <gthelen@google.com>
+SSdsbCByZXZpZXcgYW5kIHN0YWdlIGluIGxpbnV4LW5leHQgaW4gdGhlIG5leHQgZmV3IGRheXM=
+----_com.android.email_1033892548212921_alt
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: base64
 
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	#v3.12
+PGRpdj48ZGl2PkkmIzM5O2xsIHJldmlldyBhbmQgc3RhZ2UgaW4gbGludXgtbmV4dCBpbiB0aGUg
+bmV4dCBmZXcgZGF5czwvZGl2PjwvZGl2Pg==
+----_com.android.email_1033892548212921_alt--
 
-> ---
->  drivers/md/dm-bufio.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> index 4e84095833db..d724459860d9 100644
-> --- a/drivers/md/dm-bufio.c
-> +++ b/drivers/md/dm-bufio.c
-> @@ -1541,7 +1541,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
->  	BUG_ON(block_size < 1 << SECTOR_SHIFT ||
->  	       (block_size & (block_size - 1)));
->  
-> -	c = kmalloc(sizeof(*c), GFP_KERNEL);
-> +	c = kzalloc(sizeof(*c), GFP_KERNEL);
->  	if (!c) {
->  		r = -ENOMEM;
->  		goto bad_client;
-> -- 
-> 2.0.0.526.g5318336
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+
+--===============3446359725531783459==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3446359725531783459==--
