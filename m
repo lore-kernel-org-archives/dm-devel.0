@@ -1,43 +1,52 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 3.16 final
-Date: Fri, 1 Aug 2014 12:45:41 -0400
-Message-ID: <20140801164541.GA21696@redhat.com>
+From: Anssi Hannula <anssi.hannula@iki.fi>
+Subject: Re: [PATCH] dm cache: fix race affecting dirty block
+	count
+Date: Sat, 02 Aug 2014 00:02:48 +0300
+Message-ID: <53DC0078.50308@iki.fi>
+References: <53D32999.6080206@iki.fi>
+	<1406831487-18750-1-git-send-email-anssi.hannula@iki.fi>
+	<20140801151729.GA27644@debian>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Greg Thelen <gthelen@google.com>, Anssi Hannula <anssi.hannula@iki.fi>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140801151729.GA27644@debian>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Joe Thornber <ejt@redhat.com>
+Cc: dm-devel@redhat.com, stable@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+01.08.2014, 18:17, Joe Thornber kirjoitti:
+> On Thu, Jul 31, 2014 at 09:31:27PM +0300, Anssi Hannula wrote:
+>> I did notice that after a reboot (after having incorrect nr_dirty) the
+>> entire cache was considered to be dirty and a full writeback occurred,
+>> but I don't know if that was related at all.
+> 
+> Did you take the cache down cleanly?  Normally this happens when you
+> shutdown without destroying the cache device first.
 
-The following changes since commit 64aa90f26c06e1cb2aacfb98a7d0eccfbd6c1a91:
+Apparently not. Looking at the logs systemd-cryptsetup failed to
+deactivate the dm-crypt volume on top of the LV, as it was still mounted
+as it seems systemd (v208) tried to unmount them way too early, while
+they were still in use. Or maybe it should have retried later but didn't
+for some reason... will have to debug further.
 
-  Linux 3.16-rc7 (2014-07-27 12:41:55 -0700)
+In any case, not a dm-cache issue it seems.
 
-are available in the git repository at:
+> Patch looks good.
+> 
+> - Joe
+> 
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.16-fixes-3
 
-for you to fetch changes up to 44fa816bb778edbab6b6ddaaf24908dd6295937e:
-
-  dm cache: fix race affecting dirty block count (2014-08-01 12:25:22 -0400)
-
-----------------------------------------------------------------
-Fix dm bufio shrinker to properly zero-fill all fields.
-
-Fix race in dm cache that caused improper reporting of the number of
-dirty blocks in the cache.
-
-----------------------------------------------------------------
-Anssi Hannula (1):
-      dm cache: fix race affecting dirty block count
-
-Greg Thelen (1):
-      dm bufio: fully initialize shrinker
-
- drivers/md/dm-bufio.c        |  2 +-
- drivers/md/dm-cache-target.c | 13 ++++++-------
- 2 files changed, 7 insertions(+), 8 deletions(-)
+-- 
+Anssi Hannula
