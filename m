@@ -1,52 +1,39 @@
-From: Anssi Hannula <anssi.hannula@iki.fi>
-Subject: Re: [PATCH] dm cache: fix race affecting dirty block
-	count
-Date: Sat, 02 Aug 2014 00:02:48 +0300
-Message-ID: <53DC0078.50308@iki.fi>
-References: <53D32999.6080206@iki.fi>
-	<1406831487-18750-1-git-send-email-anssi.hannula@iki.fi>
-	<20140801151729.GA27644@debian>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 1/15] block copy: initial XCOPY offload support
+Date: Mon, 4 Aug 2014 16:09:25 +0200
+Message-ID: <20140804140925.GA24261@amd.pavel.ucw.cz>
+References: <alpine.LRH.2.02.1407151531140.14632@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.1407151534180.14632@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140801151729.GA27644@debian>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <ejt@redhat.com>
-Cc: dm-devel@redhat.com, stable@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1407151534180.14632@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Edward Thornber <thornber@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-01.08.2014, 18:17, Joe Thornber kirjoitti:
-> On Thu, Jul 31, 2014 at 09:31:27PM +0300, Anssi Hannula wrote:
->> I did notice that after a reboot (after having incorrect nr_dirty) the
->> entire cache was considered to be dirty and a full writeback occurred,
->> but I don't know if that was related at all.
+On Tue 2014-07-15 15:34:47, Mikulas Patocka wrote:
+> This is Martin Petersen's xcopy patch
+> (https://git.kernel.org/cgit/linux/kernel/git/mkp/linux.git/commit/?h=xcopy&id=0bdeed274e16b3038a851552188512071974eea8)
+> with some bug fixes, ported to the current kernel.
 > 
-> Did you take the cache down cleanly?  Normally this happens when you
-> shutdown without destroying the cache device first.
-
-Apparently not. Looking at the logs systemd-cryptsetup failed to
-deactivate the dm-crypt volume on top of the LV, as it was still mounted
-as it seems systemd (v208) tried to unmount them way too early, while
-they were still in use. Or maybe it should have retried later but didn't
-for some reason... will have to debug further.
-
-In any case, not a dm-cache issue it seems.
-
-> Patch looks good.
+> This patch makes it possible to use the SCSI XCOPY command.
 > 
-> - Joe
+> We create a bio that has REQ_COPY flag in bi_rw and a bi_copy structure
+> that defines the source device. The target device is defined in the
+> bi_bdev and bi_iter.bi_sector.
 > 
+> There is a new BLKCOPY ioctl that makes it possible to use XCOPY from
+> userspace. The ioctl argument is a pointer to an array of four uint64_t
+> values.
 
+But it is there only for block devices, right?
 
+Is there plan to enable tools such as /bin/cp to use XCOPY?
+
+									Pavel
 -- 
-Anssi Hannula
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
