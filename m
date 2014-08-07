@@ -1,44 +1,87 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 1/15] block copy: initial XCOPY offload support
-Date: Tue, 5 Aug 2014 18:45:47 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1408051844070.23986@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1407151531140.14632@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1407151534180.14632@file01.intranet.prod.int.rdu2.redhat.com> <20140804140925.GA24261@amd.pavel.ucw.cz>
+From: "Stewart, Sean" <Sean.Stewart@netapp.com>
+Subject: multipath-tools: Potential issue in blacklist entry
+	handling
+Date: Thu, 7 Aug 2014 17:23:22 +0000
+Message-ID: <1407432215.1299.14.camel@ict-vth-stewarts01.ict.englab.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20140804140925.GA24261@amd.pavel.ucw.cz>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Edward Thornber <thornber@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+Content-ID: <F230011C70B97C4C918E145F0D51624C@hq.netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi all,
+
+In our test labs, we recently had an issue where a hardware entry with a
+product_blacklist attribute wasn't getting properly blacklisted. I
+figured out it was because there was an overlap in the vendor id regex
+between that entry, and an existing blacklist entry, so it threw the
+entire thing out.  I wanted to see if anyone on the list had an opinion
+about how this should be getting handled.
+
+Built-in blacklist entry:
+        device {
+                vendor "(LSI|ENGENIO)"
+                product "Universal Xport"
+        }
+
+Device entry:
+   device {
+      vendor                    "(NETAPP|LSI)"
+      product                   "INF-01-00"
+      product_blacklist         "Universal Xport"
+      path_grouping_policy      group_by_prio
+      path_checker              rdac
+      features                  "2 pg_init_retries 50"
+      hardware_handler          "1 rdac"
+      prio                      rdac
+      failback                  immediate
+      no_path_retry             30
+   }
+
+Now, I can see why the code does what it does.. The regex function
+matches the device entry with the blacklist entry because they both have
+LSI in them, but then it silently throws out the NETAPP portion, which
+is what I'd have a problem with.. It's basically ignoring the users
+wishes and overriding with a built in default.
+
+        vector_foreach_slot (blist, ble, i) {
+                if (!regexec(&ble->vendor_reg, vendor, 0, NULL, 0) &&
+                    !regexec(&ble->product_reg, product, 0, NULL, 0))
+                        return 1;
+        }
+
+So, would we say this is working correctly?  I'd imagine our choices
+would be something like (just brainstorming here):
+1.  Add another blacklist entry, maybe unless the VID and PID are
+exactly the same as an existing entry
+2.  Try to merge the vendor ids in the bl entry
+3.  Throw a warning
 
 
-On Mon, 4 Aug 2014, Pavel Machek wrote:
+Does anyone have any further thoughts on how this _should_ be handled?
 
-> On Tue 2014-07-15 15:34:47, Mikulas Patocka wrote:
-> > This is Martin Petersen's xcopy patch
-> > (https://git.kernel.org/cgit/linux/kernel/git/mkp/linux.git/commit/?h=xcopy&id=0bdeed274e16b3038a851552188512071974eea8)
-> > with some bug fixes, ported to the current kernel.
-> > 
-> > This patch makes it possible to use the SCSI XCOPY command.
-> > 
-> > We create a bio that has REQ_COPY flag in bi_rw and a bi_copy structure
-> > that defines the source device. The target device is defined in the
-> > bi_bdev and bi_iter.bi_sector.
-> > 
-> > There is a new BLKCOPY ioctl that makes it possible to use XCOPY from
-> > userspace. The ioctl argument is a pointer to an array of four uint64_t
-> > values.
-> 
-> But it is there only for block devices, right?
-> 
-> Is there plan to enable tools such as /bin/cp to use XCOPY?
-> 
-> 									Pavel
 
-It is interesting idea, but it would be far from simple. You could make 
-sendfile (or maybe splice) use XCOPY, but it needs to interact with page 
-cache.
+Thanks!
+-- 
+--
+Sean Stewart
+Software Engineer, E-Series Linux Failover
+sean.stewart@netapp.com
+316.636.8032
 
-Mikulas
+NetApp
+3718 N Rock Rd
+Wichita, KS 67226
