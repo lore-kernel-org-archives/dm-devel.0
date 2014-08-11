@@ -1,84 +1,111 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: propagate QUEUE_FLAG_NO_SG_MERGE
-Date: Sun, 10 Aug 2014 21:11:08 -0400
-Message-ID: <20140811011108.GA13946@redhat.com>
-References: <x49iom3hvle.fsf@segfault.boston.devel.redhat.com>
+Subject: Re: convert dm_ulog_request data to little endian
+Date: Sun, 10 Aug 2014 23:15:56 -0400
+Message-ID: <20140811031556.GA27789@redhat.com>
+References: <1407459365-697-1-git-send-email-dmzhang@suse.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <x49iom3hvle.fsf@segfault.boston.devel.redhat.com>
-Sender: stable-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@vger.kernel.org
+In-Reply-To: <1407459365-697-1-git-send-email-dmzhang@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Dongmao Zhang <dmzhang@suse.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Aug 08 2014 at 11:03am -0400,
-Jeff Moyer <jmoyer@redhat.com> wrote:
+On Thu, Aug 07 2014 at  8:56pm -0400,
+Dongmao Zhang <dmzhang@suse.com> wrote:
 
-> Hi,
+> the dm_ulog_request might be little endian or big endian depending on
+> the architecture. This is not right. This patch is to convert
+> dm_ulog_request to little endian.
 > 
-> Commit 05f1dd5 introduced a new queue flag: QUEUE_FLAG_NO_SG_MERGE.
-> This gets set by default in blk_mq_init_queue for mq-enabled devices.
-> The effect of the flag is to bypass the SG segment merging.  Instead,
-> the bio->bi_vcnt is used as the number of hardware segments.
+> I met a bug when running cmirrord on s390 linux
 > 
-> With a device mapper target on top of a device with
-> QUEUE_FLAG_NO_SG_MERGE set, we can end up sending down more segments
-> than a driver is prepared to handle.  I ran into this when backporting
-> the virtio_blk mq support.  It triggerred this BUG_ON, in
-> virtio_queue_rq:
+> Signed-off-by: Dongmao Zhang <dmzhang@suse.com>
+> ---
+>  drivers/md/dm-log-userspace-transfer.c | 31 ++++++++++++++++++++++++++++++-
+>  1 file changed, 30 insertions(+), 1 deletion(-)
 > 
->         BUG_ON(req->nr_phys_segments + 2 > vblk->sg_elems);
-> 
-> The queue's max is set here:
->         blk_queue_max_segments(q, vblk->sg_elems-2);
-> 
-> Basically, what happens is that a bio is built up for the dm device
-> (which does not have the QUEUE_FLAG_NO_SG_MERGE flag set) using
-> bio_add_page.  That path will call into __blk_recalc_rq_segments, so
-> what you end up with is bi_phys_segments being much smaller than bi_vcnt
-> (and bi_vcnt grows beyond the maximum sg elements).  Then, when the bio
-> is submitted, it gets cloned.  When the cloned bio is submitted, it will
-> end up in blk_recount_segments, here:
-> 
->         if (test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags))
->                 bio->bi_phys_segments = bio->bi_vcnt;
-> 
-> and now we've set bio->bi_phys_segments to a number that is beyond what
-> was registered as queue_max_segments by the driver.
-> 
-> The right way to fix this is to propagate the queue flag up the stack.
-> Attached is a patch that does this, tested and confirmed to fix the
-> problem in my environment.
-> 
-> The rules for propagating the flag are simple:
-> - if the flag is set for any underlying device, it must be set for the
->   upper device
-> - consequently, if the flag is not set for any underlying device, it
->   should not be set for the upper device.
+> diff --git a/drivers/md/dm-log-userspace-transfer.c b/drivers/md/dm-log-userspace-transfer.c
+> index b428c0a..cddef2f 100644
+> --- a/drivers/md/dm-log-userspace-transfer.c
+> +++ b/drivers/md/dm-log-userspace-transfer.c
+> @@ -53,6 +53,29 @@ struct receiving_pkg {
+>  static DEFINE_SPINLOCK(receiving_list_lock);
+>  static struct list_head receiving_list;
+>  
+> +static void cpu_to_network(struct dm_ulog_request *tfr)
+> +{
+> +	if (tfr == NULL)
+> +		return;
+> +	tfr->luid = cpu_to_le64(tfr->luid);
+> +	tfr->version =  cpu_to_le32(tfr->version);
+> +	tfr->seq = cpu_to_le32(tfr->seq);
+> +	tfr->request_type = cpu_to_le32(tfr->request_type);
+> +	tfr->data_size = cpu_to_le32(tfr->data_size);
+> +}
+> +
+> +static void network_to_cpu(struct dm_ulog_request *tfr)
+> +{
+> +	if (tfr == NULL)
+> +		return;
+> +	tfr->luid = le64_to_cpu(tfr->luid);
+> +	tfr->version =  le32_to_cpu(tfr->version);
+> +	tfr->seq = le32_to_cpu(tfr->seq);
+> +	tfr->request_type = le32_to_cpu(tfr->request_type);
+> +	tfr->data_size = le32_to_cpu(tfr->data_size);
+> +	tfr->error = le32_to_cpu(tfr->error);
+> +}
+> +
+>  static int dm_ulog_sendto_server(struct dm_ulog_request *tfr)
+>  {
+>  	int r;
+> @@ -66,6 +89,7 @@ static int dm_ulog_sendto_server(struct dm_ulog_request *tfr)
+>  	msg->seq = tfr->seq;
+>  	msg->len = sizeof(struct dm_ulog_request) + tfr->data_size;
+>  
+> +	cpu_to_network(tfr);
+>  	r = cn_netlink_send(msg, 0, 0, gfp_any());
+>  
+>  	return r;
+> @@ -81,8 +105,11 @@ static int dm_ulog_sendto_server(struct dm_ulog_request *tfr)
+>   */
+>  static int fill_pkg(struct cn_msg *msg, struct dm_ulog_request *tfr)
+>  {
+> -	uint32_t rtn_seq = (msg) ? msg->seq : (tfr) ? tfr->seq : 0;
+>  	struct receiving_pkg *pkg;
+> +	uint32_t rtn_seq;
+> +
+> +	network_to_cpu(tfr);
+> +	rtn_seq = (msg) ? msg->seq : (tfr) ? tfr->seq : 0;
+>  
+>  	/*
+>  	 * The 'receiving_pkg' entries in this list are statically
+> @@ -148,6 +175,8 @@ static void cn_ulog_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
+>  	spin_unlock(&receiving_list_lock);
+>  }
+>  
+> +
+> +
+>  /**
+>   * dm_consult_userspace
+>   * @uuid: log's universal unique identifier (must be DM_UUID_LEN in size)
 
-Hi Jeff,
+Other than this last hunk (extra whitespace) this patch looks fine to me.
 
-Thanks for the patch.  But I think you need the following tweak.
-Otherwise if the DM table is reloaded (and the devices in the table
-happen to change) the flag won't get cleared as needed.
+Jon/Mikulas/Alasdair: could you review this too?  If you guys agree I'll
+get it staged for 3.17 (and mark it for stable).
 
-I've folded this in and staged it in linux-next for 3.17 here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=200612ec33e555a356eebc717630b866ae2b694f
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index feedafd..f9c6cb8 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1509,7 +1509,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	if (!dm_table_supports_write_same(t))
- 		q->limits.max_write_same_sectors = 0;
- 
--	if (!dm_table_all_devices_attribute(t, queue_supports_sg_merge))
-+	if (dm_table_all_devices_attribute(t, queue_supports_sg_merge))
-+		queue_flag_clear_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
-+	else
- 		queue_flag_set_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
- 
- 	dm_table_set_integrity(t);
+Thanks,
+Mike
