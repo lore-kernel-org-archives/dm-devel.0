@@ -1,19 +1,21 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [patch] dm: propagate QUEUE_FLAG_NO_SG_MERGE
-Date: Fri, 8 Aug 2014 08:24:19 -0700
-Message-ID: <20140808152419.GC14066@kroah.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: propagate QUEUE_FLAG_NO_SG_MERGE
+Date: Sun, 10 Aug 2014 21:11:08 -0400
+Message-ID: <20140811011108.GA13946@redhat.com>
 References: <x49iom3hvle.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <stable-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <x49iom3hvle.fsf@segfault.boston.devel.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: stable-owner@vger.kernel.org
 To: Jeff Moyer <jmoyer@redhat.com>
 Cc: axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Aug 08, 2014 at 11:03:41AM -0400, Jeff Moyer wrote:
+On Fri, Aug 08 2014 at 11:03am -0400,
+Jeff Moyer <jmoyer@redhat.com> wrote:
+
 > Hi,
 > 
 > Commit 05f1dd5 introduced a new queue flag: QUEUE_FLAG_NO_SG_MERGE.
@@ -55,16 +57,28 @@ On Fri, Aug 08, 2014 at 11:03:41AM -0400, Jeff Moyer wrote:
 >   upper device
 > - consequently, if the flag is not set for any underlying device, it
 >   should not be set for the upper device.
-> 
-> stable notes: this patch should be applied to 3.16.
-> 
-> Signed-off-by: Jeff Moyer <jmoyer@redhat.com>
-> 
 
-<formletter>
+Hi Jeff,
 
-This is not the correct way to submit patches for inclusion in the
-stable kernel tree.  Please read Documentation/stable_kernel_rules.txt
-for how to do this properly.
+Thanks for the patch.  But I think you need the following tweak.
+Otherwise if the DM table is reloaded (and the devices in the table
+happen to change) the flag won't get cleared as needed.
 
-</formletter>
+I've folded this in and staged it in linux-next for 3.17 here:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=200612ec33e555a356eebc717630b866ae2b694f
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index feedafd..f9c6cb8 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1509,7 +1509,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	if (!dm_table_supports_write_same(t))
+ 		q->limits.max_write_same_sectors = 0;
+ 
+-	if (!dm_table_all_devices_attribute(t, queue_supports_sg_merge))
++	if (dm_table_all_devices_attribute(t, queue_supports_sg_merge))
++		queue_flag_clear_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
++	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_NO_SG_MERGE, q);
+ 
+ 	dm_table_set_integrity(t);
