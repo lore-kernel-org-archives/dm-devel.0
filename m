@@ -1,107 +1,86 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath-tools: Potential issue in blacklist entry
- handling
-Date: Wed, 13 Aug 2014 11:03:03 -0500
-Message-ID: <20140813160303.GC10438@dhcp80-209.msp.redhat.com>
-References: <1407432215.1299.14.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 3.17
+Date: Wed, 13 Aug 2014 12:07:37 -0400
+Message-ID: <20140813160737.GA11779@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1407432215.1299.14.camel@ict-vth-stewarts01.ict.englab.netapp.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Aug 07, 2014 at 05:23:22PM +0000, Stewart, Sean wrote:
-> Hi all,
-> 
-> In our test labs, we recently had an issue where a hardware entry with a
-> product_blacklist attribute wasn't getting properly blacklisted. I
-> figured out it was because there was an overlap in the vendor id regex
-> between that entry, and an existing blacklist entry, so it threw the
-> entire thing out.  I wanted to see if anyone on the list had an opinion
-> about how this should be getting handled.
-> 
-> Built-in blacklist entry:
->         device {
->                 vendor "(LSI|ENGENIO)"
->                 product "Universal Xport"
->         }
-> 
-> Device entry:
->    device {
->       vendor                    "(NETAPP|LSI)"
->       product                   "INF-01-00"
->       product_blacklist         "Universal Xport"
->       path_grouping_policy      group_by_prio
->       path_checker              rdac
->       features                  "2 pg_init_retries 50"
->       hardware_handler          "1 rdac"
->       prio                      rdac
->       failback                  immediate
->       no_path_retry             30
->    }
-> 
-> Now, I can see why the code does what it does.. The regex function
-> matches the device entry with the blacklist entry because they both have
-> LSI in them, but then it silently throws out the NETAPP portion, which
-> is what I'd have a problem with.. It's basically ignoring the users
-> wishes and overriding with a built in default.
-> 
->         vector_foreach_slot (blist, ble, i) {
->                 if (!regexec(&ble->vendor_reg, vendor, 0, NULL, 0) &&
->                     !regexec(&ble->product_reg, product, 0, NULL, 0))
->                         return 1;
->         }
-> 
-> So, would we say this is working correctly?  I'd imagine our choices
-> would be something like (just brainstorming here):
-> 1.  Add another blacklist entry, maybe unless the VID and PID are
-> exactly the same as an existing entry
-> 2.  Try to merge the vendor ids in the bl entry
-> 3.  Throw a warning
-> 
-> 
-> Does anyone have any further thoughts on how this _should_ be handled?
+Hi Linus,
 
-We do the regex matching of device configs as a convenience for users,
-so that they can override a builtin device configuration without having
-to figure out exactly what the vendor/product/revision strings were.
-But users aren't trying to modify existing blacklist entries.  Aside
-from the vendor/product identifiers, there is nothing to modify.  So we
-should probably not be doing regex matching here.  If the strings match
-exactly, then we use the builtin one.  If not, then we create a new
-blacklist entry.  I don't see any benefit to doing a regex match on
-these.
+The following changes since commit 44fa816bb778edbab6b6ddaaf24908dd6295937e:
 
--Ben
-> 
-> 
-> Thanks!
-> -- 
-> --
-> Sean Stewart
-> Software Engineer, E-Series Linux Failover
-> sean.stewart@netapp.com
-> 316.636.8032
-> 
-> NetApp
-> 3718 N Rock Rd
-> Wichita, KS 67226
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+  dm cache: fix race affecting dirty block count (2014-08-01 12:25:22 -0400)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.17-changes
+
+for you to fetch changes up to 200612ec33e555a356eebc717630b866ae2b694f:
+
+  dm table: propagate QUEUE_FLAG_NO_SG_MERGE (2014-08-10 20:54:49 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+. Allow the thin target to paired with any size external origin; also
+  allow thin snapshots to be larger than the external origin.
+
+. Add support for quickly loading a repetitive pattern into the
+  dm-switch target.
+
+. Use per-bio data in the dm-crypt target instead of always using a
+  mempool for each allocation.  Required switching to kmalloc alignment
+  for the bio slab.
+
+. Fix DM core to properly stack the QUEUE_FLAG_NO_SG_MERGE flag
+
+. Fix the dm-cache and dm-thin targets' export of the minimum_io_size to
+  match the data block size -- this fixes an issue where mkfs.xfs would
+  improperly infer raid striping was in place on the underlying storage.
+
+. Small cleanups in dm-io, dm-mpath and dm-cache
+
+----------------------------------------------------------------
+Jeff Moyer (1):
+      dm table: propagate QUEUE_FLAG_NO_SG_MERGE
+
+Joe Thornber (5):
+      dm io: simplify dec_count and sync_io
+      dm thin: switch to an atomic_t for tracking pending new block preparations
+      dm thin: relax external origin size constraints
+      dm cache: simplify deferred set reference count increments
+      dm cache: fail migrations in the do_worker error path
+
+Mike Snitzer (4):
+      dm mpath: eliminate pg_ready() wrapper
+      dm cache metadata: use dm-space-map-metadata.h defined size limits
+      dm thin: set minimum_io_size to pool's data block size
+      dm cache: set minimum_io_size to cache's data block size
+
+Mikulas Patocka (5):
+      dm table: make dm_table_supports_discards static
+      block: use kmalloc alignment for bio slab
+      dm crypt: use per-bio data
+      dm switch: factor out switch_region_table_read
+      dm switch: efficiently support repetitive patterns
+
+ Documentation/device-mapper/switch.txt |  12 +++
+ block/bio.c                            |   3 +-
+ drivers/md/dm-cache-metadata.c         |   4 +-
+ drivers/md/dm-cache-metadata.h         |   8 +-
+ drivers/md/dm-cache-target.c           | 128 ++++++++++++++---------
+ drivers/md/dm-crypt.c                  |  41 +++++---
+ drivers/md/dm-io.c                     |  77 +++++++-------
+ drivers/md/dm-mpath.c                  |   6 +-
+ drivers/md/dm-switch.c                 |  67 ++++++++++--
+ drivers/md/dm-table.c                  |  86 +++++++++-------
+ drivers/md/dm-thin.c                   | 181 +++++++++++++++++++++++----------
+ drivers/md/dm.h                        |   1 -
+ 12 files changed, 408 insertions(+), 206 deletions(-)
