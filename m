@@ -1,16 +1,12 @@
-From: Anssi Hannula <anssi.hannula@iki.fi>
-Subject: Re: [PATCH] dm cache: fix race affecting dirty block
-	count
-Date: Sun, 17 Aug 2014 23:24:32 +0300
-Message-ID: <53F10F80.6080204@iki.fi>
-References: <53D32999.6080206@iki.fi>	<1406831487-18750-1-git-send-email-anssi.hannula@iki.fi>
-	<20140801151729.GA27644@debian>
+From: Krzysztof Kolasa <kkolasa@winsoft.pl>
+Subject: commit 298a9fa dm crypt: use per-bio data hard crash
+ kernel ( the system freezes )
+Date: Sun, 17 Aug 2014 20:43:19 +0200
+Message-ID: <53F0F7C7.2010501@winsoft.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============4394572501240755979=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140801151729.GA27644@debian>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,65 +16,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <ejt@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com, mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-01.08.2014, 18:17, Joe Thornber kirjoitti:
-> On Thu, Jul 31, 2014 at 09:31:27PM +0300, Anssi Hannula wrote:
->> nr_dirty is updated without locking, causing it to drift so that it is
->> non-zero (either a small positive integer, or a very large one when an
->> underflow occurs) even when there are no actual dirty blocks.
->> 
->> Fix that by using an atomic type for nr_dirty.
-[...]
-> Patch looks good.
+This is a cryptographically signed message in MIME format.
 
-Unfortunately it seems there is some other potentially more serious bug
-still in there...
+--===============4394572501240755979==
+Content-Type: multipart/signed; protocol="application/pkcs7-signature";
+	micalg=sha1; boundary="------------ms030605040200010904060008"
 
-I'm again seeing spurious dirty counts on two volumes [1]. As expected
-with the previous fix, they are now both positive (as nr_dirty should
-now be perfectly in sync with dirty_bitset and the bitset can't have a
-negative count).
+This is a cryptographically signed message in MIME format.
 
+--------------ms030605040200010904060008
+Content-Type: text/plain; charset=iso-8859-2; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-My first suspect was this kind of scenario:
+On x86 after truecrypt mount device system freezes.
 
-Thread 1                      Thread 2
-enter clear_dirty(61)         .
-clear dirty bit               .
-.                             enter set_dirty(61)
-.                             set dirty bit
-.                             policy_set_dirty()
-.                             => mq adds to dirty queue
-policy_clear_dirty()          .
-=> mq drops from dirty queue  .
+console: truecrypt --mount, last argument (admin,user password) after=20
+Enter - create oops on console, system freezes
+gnome shell: when mount truecrypt drive - freezes system
+
+On x86_64 all working OK.
+
+revert commit [ 298a9fa dm crypt: use per-bio data ] restores the=20
+ability to use truecrypt on 3.17-rc1 x86 kernel
+
+Krzysztof
 
 
-So the block remains dirty on target side but clean on mq side, and it
-never gets written back since it is not on the mq dirty queue.
+--------------ms030605040200010904060008
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
 
-However, if the above is really what happens, i.e. concurrent calls to
-set_dirty()/clear_dirty() for the same block, is that something that is
-supposed to happen? and is the block then really dirty or not?
+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
+bDBaBggrBgEFBQcBAQROMEwwIQYIKwYBBQUHMAGGFWh0dHA6Ly9vY3NwLmNlcnR1bS5wbDAn
+BggrBgEFBQcwAoYbaHR0cDovL3d3dy5jZXJ0dW0ucGwvbDMuY2VyMB8GA1UdIwQYMBaAFATJ
+2prcSkl3rzADBGYux87y+Bd9MB0GA1UdDgQWBBSDc5sJYMsdTdjm9qQWXUehbDVLgzAOBgNV
+HQ8BAf8EBAMCBPAwggE9BgNVHSAEggE0MIIBMDCCASwGCiqEaAGG9ncCAgMwggEcMCUGCCsG
+AQUFBwIBFhlodHRwczovL3d3dy5jZXJ0dW0ucGwvQ1BTMIHyBggrBgEFBQcCAjCB5TAgFhlV
+bml6ZXRvIFRlY2hub2xvZ2llcyBTLkEuMAMCAQEagcBVc2FnZSBvZiB0aGlzIGNlcnRpZmlj
+YXRlIGlzIHN0cmljdGx5IHN1YmplY3RlZCB0byB0aGUgQ0VSVFVNIENlcnRpZmljYXRpb24g
+UHJhY3RpY2UgU3RhdGVtZW50IChDUFMpIGluY29ycG9yYXRlZCBieSByZWZlcmVuY2UgaGVy
+ZWluIGFuZCBpbiB0aGUgcmVwb3NpdG9yeSBhdCBodHRwczovL3d3dy5jZXJ0dW0ucGwvcmVw
+b3NpdG9yeS4wHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMEMBEGCWCGSAGG+EIBAQQE
+AwIFoDAdBgNVHREEFjAUgRJra29sYXNhQHdpbnNvZnQucGwwDQYJKoZIhvcNAQEFBQADggEB
+AAI98P3y5OBE/SLnwBNQNjmR+wcvZAUX5/xSZ6KHnVHzKPTZlGySNl1TrhAWnCRDthm92Kdu
+zPtSaGflQZhEfG5DutK1EgIAHMBYDRV4jEZztFHZVfkDxPXgnR0XRFmb3xquNODcCt3SIKDv
+J9JA5UHrzWJ9DsKUWbaZAV7NdK454aabllpHzjmagL76HqIRRuT0wwpn+pyGkU68gDFfOlZ0
+s9Htz5YMcmBwTmuLbYxAgM+aHYXhhqdf7w3m84YL9QviZRhW+TsvDdRy6g3GnUJXQ1r8i/FC
+Q3nukRRa0sz0Db1SyDiCFO171v8VpJO4L8r6DzMK36RBc8A5g9cOSXkxggPFMIIDwQIBATCB
+jDB4MQswCQYDVQQGEwJQTDEiMCAGA1UEChMZVW5pemV0byBUZWNobm9sb2dpZXMgUy5BLjEn
+MCUGA1UECxMeQ2VydHVtIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRwwGgYDVQQDExNDZXJ0
+dW0gTGV2ZWwgSUlJIENBAhABw4d6KSuqDFcuWaNhb8SaMAkGBSsOAwIaBQCgggINMBgGCSqG
+SIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE0MDgxNzE4NDMxOVowIwYJ
+KoZIhvcNAQkEMRYEFNwzfxyh0mQHZZGfotnkgxLXlyzUMGwGCSqGSIb3DQEJDzFfMF0wCwYJ
+YIZIAWUDBAEqMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAOBggqhkiG9w0DAgICAIAwDQYI
+KoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcNAwICASgwgZ0GCSsGAQQBgjcQBDGBjzCB
+jDB4MQswCQYDVQQGEwJQTDEiMCAGA1UEChMZVW5pemV0byBUZWNobm9sb2dpZXMgUy5BLjEn
+MCUGA1UECxMeQ2VydHVtIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRwwGgYDVQQDExNDZXJ0
+dW0gTGV2ZWwgSUlJIENBAhABw4d6KSuqDFcuWaNhb8SaMIGfBgsqhkiG9w0BCRACCzGBj6CB
+jDB4MQswCQYDVQQGEwJQTDEiMCAGA1UEChMZVW5pemV0byBUZWNobm9sb2dpZXMgUy5BLjEn
+MCUGA1UECxMeQ2VydHVtIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRwwGgYDVQQDExNDZXJ0
+dW0gTGV2ZWwgSUlJIENBAhABw4d6KSuqDFcuWaNhb8SaMA0GCSqGSIb3DQEBAQUABIIBAD7K
+4pRIfmhe+mqLX3S8yT4x9+oG9iJRAYX5n++l1pRn6iMnXVmeU2AaFl6PHXxfD3JzfQaO4GIK
+I400Tgtxtgc1CUt6+zhmP6PezR1fBx+NswDaZUNZuOudK/5z5lC7rEv6ZiyTjfcCbcykgGev
+kRucXf6WrJZ9f6UeriNKuWeb3WqplJ9ZSs+grOulJpLwQtycd/+OSb7DM5RM0re1SOe/I62x
+OsLyvSsY/QBxizbIhTC2Drk3SRq3vapDiRUSk9/eZkg57lIopijyV8PCtsJexWjxTBO2MyS8
+MC9tVydNWK5BrqGc5WnSxONHetT/Nhx4/m/X8oXEOVTXcxdmBGsAAAAAAAA=
+--------------ms030605040200010904060008--
 
-Or maybe something else is going on...?
 
-This is on 3.15.7 + previous patch.
+--===============4394572501240755979==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-[1]
 
-0 101876654080 cache 8 30512/32768 128 936412/1978944 8028417 56720875
-10942325 11368177 0 744175 13 1 writeback 2 migration_threshold 2048 mq
-10 random_threshold 4 sequential_threshold 512
-discard_promote_adjustment 1 read_promote_adjustment 4
-write_promote_adjustment 8
-
-0 5368709120 cache 8 7184/32768 128 366217/1978880 39346555 8471758
-13307043 4709237 0 7055 1 1 writeback 2 migration_threshold 2048 mq 10
-random_threshold 4 sequential_threshold 512 discard_promote_adjustment 1
-read_promote_adjustment 4 write_promote_adjustment 8
-
--- 
-Anssi Hannula
+--===============4394572501240755979==--
