@@ -1,15 +1,15 @@
-From: zhangdongmao <dmzhang@suse.com>
-Subject: Re: convert dm_ulog_request data to little endian
-Date: Thu, 21 Aug 2014 19:08:48 +0800
-Message-ID: <53F5D340.5000902@suse.com>
-References: <1407459365-697-1-git-send-email-dmzhang@suse.com>	<20140811031556.GA27789@redhat.com>
-	<E137CEE0-FDE6-4415-92B4-F9A21A8D4C1E@redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH 22/30] multipath: Implement 'property'
+	blacklist
+Date: Thu, 21 Aug 2014 16:37:22 +0000 (UTC)
+Message-ID: <loom.20140821T183107-637@post.gmane.org>
+References: <1373958801-103613-1-git-send-email-hare@suse.de>
+	<1373958801-103613-23-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E137CEE0-FDE6-4415-92B4-F9A21A8D4C1E@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,20 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-CuS6jiAyMDE05bm0MDjmnIgyMeaXpSAxNDowMCwgQnJhc3NvdyBKb25hdGhhbiDlhpnpgZM6Cj4g
-T24gQXVnIDEwLCAyMDE0LCBhdCAxMDoxNSBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+Cj4+IE90
-aGVyIHRoYW4gdGhpcyBsYXN0IGh1bmsgKGV4dHJhIHdoaXRlc3BhY2UpIHRoaXMgcGF0Y2ggbG9v
-a3MgZmluZSB0byBtZS4KPj4KPj4gSm9uL01pa3VsYXMvQWxhc2RhaXI6IGNvdWxkIHlvdSByZXZp
-ZXcgdGhpcyB0b28/ICBJZiB5b3UgZ3V5cyBhZ3JlZSBJJ2xsCj4+IGdldCBpdCBzdGFnZWQgZm9y
-IDMuMTcgKGFuZCBtYXJrIGl0IGZvciBzdGFibGUpLgo+IHBsZWFzZSBkbyBub3Qgc3RhZ2UuICBJ
-IHRoaW5rIHdlIHdpbGwgZml4IHRoaXMgaW4gdXNlcnNwYWNlLgo+Cj4gICBicmFzc293CgpZZXMs
-IEkgdGhpbmsgc28sIGFmdGVyIGNvbW1lbnRzIGZyb20gYnJhc3NvdywKdGhpcyBjb3VsZCBiZSBm
-aXhlZCBpbiB1c2Vyc3BhY2UuIEkgaGF2ZSBhIG5ldyBwYXRjaCBmb3IgY21pcnJvcmQuCk9ubHkg
-d2FpdCB0aW1lc2xvdCB0byB0ZXN0IGl0IG9uIFMzOTAgYW5kIG1peGVkIGFyY2guCgoKCj4gLS0K
-PiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCj4KCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hannes Reinecke <hare <at> suse.de> writes:
+> Multipath can only handle device properly which support the VPD
+> page 0x83. Originally this was ensured by 'scsi_id', which would
+> not present an ID_SERIAL value in these cases.
+> With the move to udev 'ID_SERIAL' is now always present, so
+> multipath would try to attach to _all_ SCSI devices.
+> This patch implements an 'property' blacklist, which allows to
+> blacklist a device based on the existence of udev properties.
+> Any device not providing the udev property from the whitelist
+> will be ignored.
+> The default whitelist is set to '(ID_WWN|ID_SCSI_VPD)'.
+> 
+> [ ... ]
+
+(replying to an e-mail of one year ago)
+
+Hello Hannes,
+
+I have a question about this patch. Which software component should set the
+ID_SCSI_VPD parameter ? Is it udev, now integrated in systemd ? I'm asking
+this because I haven't found any patch in the udev nor in the systemd
+repositories that sets the ID_SCSI_VPD parameter. Does this mean that
+another parameter should be used to restore support for SCSI devices that
+support the VPD page 0x83 but do not report a WWN in that page ? Or does
+this mean that systemd should be modified such that it sets the ID_SCSI_VPD
+parameter ?
+
+Thanks,
+
+Bart.
