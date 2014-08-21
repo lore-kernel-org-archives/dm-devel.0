@@ -1,16 +1,17 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
+From: zhangdongmao <dmzhang@suse.com>
 Subject: Re: [PATCH] convert dm_ulog_request data to little endian
-Date: Tue, 19 Aug 2014 23:20:22 -0500
-Message-ID: <9FC3B4B3-9310-41FF-8E89-709A8790549E@redhat.com>
+Date: Thu, 21 Aug 2014 13:07:11 +0800
+Message-ID: <53F57E7F.2090705@suse.com>
 References: <1407459365-697-1-git-send-email-dmzhang@suse.com>
 	<589E3349-24C0-4CBD-AA99-6F537BCDAAFB@redhat.com>
 	<53F413A6.2000409@suse.com>
+	<9FC3B4B3-9310-41FF-8E89-709A8790549E@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <53F413A6.2000409@suse.com>
+In-Reply-To: <9FC3B4B3-9310-41FF-8E89-709A8790549E@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +21,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: zhangdongmao <dmzhang@suse.com>
+To: Brassow Jonathan <jbrassow@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Ck9uIEF1ZyAxOSwgMjAxNCwgYXQgMTA6MTkgUE0sIHpoYW5nZG9uZ21hbyB3cm90ZToKCj4gCj4g
-5LqOIDIwMTTlubQwOOaciDIw5pelIDA4OjU4LCBCcmFzc293IEpvbmF0aGFuIOWGmemBkzoKPj4g
-VGhpcyBzZWVtcyBvZGQgdG8gbWUuICBJIGRvbid0IHVuZGVyc3RhbmQgd2h5IHlvdSB3b3VsZCBn
-ZXQgYSBidWcuICBEbyB5b3UgaGF2ZSBhIG1peGVkLWFyY2hpdGVjdHVyZSBjbHVzdGVyPyAgU29t
-ZSB4ODYtNjQgYW5kIHRoZSBzMzkwPyAgT3RoZXJ3aXNlLCBhbGwgb3BlcmF0aW9ucyBzaG91bGQg
-YmUgaW4gYSBmb3JtYXQgdGhhdCBpcyB1bmRlcnN0b29kICh1bmxlc3MgdGhlcmUgaXMgYSBidWcp
-Lgo+PiAKPj4gQWxzbywgeW91IGRvbid0IHJlYWxseSBuZWVkIHRvIHRyYW5zbGF0ZSB0aGUgc3Ry
-dWN0dXJlIGp1c3QgdG8gZ28gdG8gdXNlcnNwYWNlLiAgT25seSB0aGUgcHJvY2VzcyB0aGF0IGNv
-bW11bmljYXRlcyBiZXR3ZWVuIChwb3RlbnRpYWxseSBkaWZmZXJlbnQgYXJjaGl0ZWN0dXJlcyBv
-ZikgbWFjaGluZXMgbmVlZHMgdG8gZG8gdGhhdC4gIFRoYXQgcHJvY2VzcyBpcyBjbWlycm9yZCBh
-bmQgdGhlIGNvZGUgdGhhdCBzaG91bGQgdHJhbnNsYXRlIGZvciB0aGF0IGRhZW1vbiBpcyBpbiBs
-dm0yL2RhZW1vbnMvY21pcnJvcmQvY29tcGF0LmMuCj4+IAo+PiBUaGVyZSBjb3VsZCBiZSBhIGJ1
-ZywgYnV0IHVubGVzcyBJJ20gbm90IHVuZGVyc3RhbmRpbmcgcmlnaHQsIHdlIHNob3VsZG4ndCBu
-ZWVkIHRvIHN3aXRjaCBlbmRpYW4gaW4gdGhlIGtlcm5lbC4KPj4gCj4+ICBicmFzc293Cj4+IAo+
-IEkgdGhpbmsgdGhpcyBpcyBiZWNhdXNlIGNtaXJyb3JkIGFsd2F5cyBhc3N1bWUgdGhlIG5ldHdv
-cmsgcGFja2FnZSBpcyBsaXR0bGUtZW5kaWFuLihzZWUgY29tcGF0LmM6IHY1X2VuZGlhbl9mcm9t
-X25ldHdvcmspIC4KPiBTbyBpZiBjbWlycm9yZCBpcyBydW5uaW5nIG9uIFMzOTAsIGtlcm5lbCB3
-aWxsIHNlbmQgcGFja2FnZSBpbiBpdHMgbmF0aXZlIGVuZGlhbihiaWcgZW5kaWFuKSwgdGhpcyBp
-cyB3aHkgZGF0YSBpcyBicm9rZW4uCj4gVGhlcmUgbWlnaHQgaGF2ZSB0d28gc29sdXRpb25zOgo+
-IAo+IDEuIGNtaXJyb3JkIGFsd2F5cyB1c2UgbmF0aXZlIGVuZGlhbi4KPiAyLiBrZXJuZWwgYWx3
-YXlzIHNlbmQgbGl0dGxlIGVuZGlhbiBkYXRhLgoKdjVfZW5kaWFuX2Zyb21fbmV0d29yaygpIG9u
-bHkgZ2V0cyBjYWxsZWQgaWYgaXQgaXMgbmVlZGVkLiAgSSBzdXNwZWN0IHRoZXJlIGlzIGEgYnVn
-IGhlcmUsICdjbG9nX3JlcXVlc3RfdG9fbmV0d29yaycgc2hvdWxkIGRldGVjdCBpZiBiaWcgZW5k
-aWFuIGlzIGJlaW5nIHVzZWQgYW5kIHN3aXRjaCBpdCB0byBsaXR0bGUgZW5kaWFuLiAgSW4tY29t
-aW5nIGNvbW11bmljYXRpb24gbXVzdCBhbHdheXMgYmUgbGl0dGxlIGVuZGlhbi4gIEknbSBub3Qg
-c3VyZSB3aGljaCBlbmQgdGhlIHByb2JsZW0gaXMgb24gKEkgdGhpbmsgdGhlIHNlbmQgc2lkZSku
-ICBZb3UgY291bGQgYWRkIHNvbWUgcHJpbnRzIHRvIGRldGVjdCB0aGUgaXNzdWUuCgpsdm0yL2Rh
-ZW1vbnMvY21pcnJvcmQvY2x1c3Rlci5jOmNsdXN0ZXJfc2VuZCgpIHNldHMgdHdvIHZlcnNpb24g
-bnVtYmVycyAtIG9uZSBpcyBmb3JjZWQgdG8gYmUgbGl0dGxlIGVuZGlhbiB2aWEgeGxhdGU2NCgp
-LiAgJ2Nsb2dfcmVxdWVzdF90b19uZXR3b3JrKCknIGlzIHRoZW4gY2FsbGVkIGFuZCBjb21wYXJl
-cyB0aGUgdHdvIHZlcnNpb24gbnVtYmVycy4gIElmIHRoZXkgYXJlIGRpZmZlcmVudCwgdGhlIG1h
-Y2hpbmUgaXMgYmlnIGVuZGlhbiBhbmQgdGhlIGNvbnRlbnRzIG11c3QgYmUgY29udmVydGVkLiAg
-SWYgdGhpcyBpcyBub3QgaGFwcGVuaW5nLCBpdCBpcyBiYWQuICBUaGVuLCAqZnJvbV9uZXR3b3Jr
-KCkgcGVyZm9ybXMgYSBzaW1pbGFyIGFjdGlvbiBhbmQgdGVzdCBhbmQgdGhlbiBtdXN0IHhsYXRl
-IGJhY2sgdG8gYmlnIGVuZGlhbi4gIElmIHRoaXMgaXMgbm90IGhhcHBlbmluZywgaXQgaXMgYmFk
-LiAgU28sIGZvciBiaWcgZW5kaWFuIG1hY2hpbmVzLCBlbnN1cmUgdGhhdCB2NV9lbmRpYW5fKl9u
-ZXR3b3JrKCkgaXMgYmVpbmcgY2FsbGVkLiAgKEZvciBsaXR0bGUgZW5kaWFuLCBpdCBzaG91bGQg
-bm90IGJlLikKCiBicmFzc293CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+> v5_endian_from_network() only gets called if it is needed.  I suspect there is a bug here, 'clog_request_to_network' should detect if big endian is being used and switch it to little endian.  In-coming communication must always be little endian.  I'm not sure which end the problem is on (I think the send side).  You could add some prints to detect the issue.
+>
+> lvm2/daemons/cmirrord/cluster.c:cluster_send() sets two version numbers - one is forced to be little endian via xlate64().  'clog_request_to_network()' is then called and compares the two version numbers.  If they are different, the machine is big endian and the contents must be converted.  If this is not happening, it is bad.  Then, *from_network() performs a similar action and test and then must xlate back to big endian.  If this is not happening, it is bad.  So, for big endian machines, ensure that v5_endian_*_network() is being called.  (For little endian, it should not be.)
+>
+>   brassow
+hi,  brassow ,
+
+       There might be a bug in v5_endian_to_network when sending packet.
+       If the machine were big-endian,  v5_endian_to_network will 
+convert request_type to little endian.
+But in v5_data_endian_switch, it will check request_type again, and this 
+check will failed because request_type is already converted
+to little endian. So my solution to this is to delay xlate32 of 
+u_rq->request_type.
+
+      On the other hand, when receiving package in 
+clog_request_from_network. I think the vp[0] will always be little endian.
+we could use xlate64(vp[0]) == vp[0] to decide if the local node is 
+little endian or not. if local node is little endian, we do nothing,
+if the local node is big endian, we have to call v5_endian_from_network 
+to convert little endian to big endian.
+
+      But for now, I have not had a chance to test this patch on s390
+
+
+here's the patch:
+
+diff --git a/daemons/cmirrord/compat.c b/daemons/cmirrord/compat.c
+index 3f7a9b5..c9cb803 100644
+--- a/daemons/cmirrord/compat.c
++++ b/daemons/cmirrord/compat.c
+@@ -126,13 +126,14 @@ static int v5_endian_to_network(struct 
+clog_request *rq)
+
+         u_rq->error = xlate32(u_rq->error);
+         u_rq->seq = xlate32(u_rq->seq);
+-       u_rq->request_type = xlate32(u_rq->request_type);
+         u_rq->data_size = xlate64(u_rq->data_size);
+
+         rq->originator = xlate32(rq->originator);
+
+         v5_data_endian_switch(rq, 1);
+
++       rq->u_rq.request_type = xlate32(rq->u_rq.request_type);
++
+         return size;
+  }
+
+@@ -187,7 +188,7 @@ int clog_request_from_network(void *data, size_t 
+data_len)
+
+         switch (version) {
+         case 5: /* Upstream */
+-               if (version == unconverted_version)
++               if (version == vp[0])
+                         return 0;
+                 break;
+         case 4: /* RHEL 5.[45] */
+
+
+
+Dongmao Zhang
