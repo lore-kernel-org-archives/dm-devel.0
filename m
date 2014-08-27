@@ -1,12 +1,11 @@
-From: Ferenc =?utf-8?Q?W=C3=A1gner?= <wferi@niif.hu>
-Subject: [PATCH] libmultipath: Fix typo in log message of
-	execute_program()
-Date: Tue, 26 Aug 2014 18:17:00 +0200
-Message-ID: <87k35v9q4o.fsf@lant.ki.iif.hu>
+From: Liuhua Wang <lwang@suse.com>
+Subject: [PATCH] fix mirror device creation with lvcreate failed
+Date: Wed, 27 Aug 2014 16:18:25 +0800
+Message-ID: <1409127505-5246-1-git-send-email-lwang@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,20 +16,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com, wferi@niif.hu
+To: dm-devel@redhat.com
+Cc: nfbrown@suse.com
 List-Id: dm-devel.ids
 
-U2lnbmVkLW9mZi1ieTogRmVyZW5jIFfDoWduZXIgPHdmZXJpQG5paWYuaHU+Ci0tLQogbGlibXVs
-dGlwYXRoL2NhbGxvdXQuYyB8ICAgIDIgKy0KIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigr
-KSwgMSBkZWxldGlvbigtKQoKZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9jYWxsb3V0LmMgYi9s
-aWJtdWx0aXBhdGgvY2FsbG91dC5jCmluZGV4IGMzNWM3YzAuLjRjYmJkMDYgMTAwNjQ0Ci0tLSBh
-L2xpYm11bHRpcGF0aC9jYWxsb3V0LmMKKysrIGIvbGlibXVsdGlwYXRoL2NhbGxvdXQuYwpAQCAt
-MTI1LDcgKzEyNSw3IEBAIGludCBleGVjdXRlX3Byb2dyYW0oY2hhciAqcGF0aCwgY2hhciAqdmFs
-dWUsIGludCBsZW4pCiAJCQlpZiAoc3RhdHVzID09IDApCiAJCQkJcmV0dmFsID0gMDsKIAkJCWVs
-c2UKLQkJCQljb25kbG9nKDAsICIlcyBleGl0dGVkIHdpdGggJWQiLCBhcmd2WzBdLCBzdGF0dXMp
-OworCQkJCWNvbmRsb2coMCwgIiVzIGV4aXRlZCB3aXRoICVkIiwgYXJndlswXSwgc3RhdHVzKTsK
-IAkJfQogCQllbHNlIGlmIChXSUZTSUdOQUxFRChzdGF0dXMpKQogCQkJY29uZGxvZygwLCAiJXMg
-d2FzIHRlcm1pbmF0ZWQgYnkgc2lnbmFsICVkIiwgYXJndlswXSwgV1RFUk1TSUcoc3RhdHVzKSk7
-Ci0tIAoxLjcuMTAuNAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
-Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+ On some devices, when create mirror device with lvcreate, it fails.
+ device-mapper: reload ioctl on  failed: Invalid argument
+ Failed to activate new LV.
+
+ We can use read size 4096 since md always use 4096.
+
+Signed-off-by: Liuhua Wang <lwang@suse.com>
+---
+ drivers/md/dm-raid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 4880b69..621afbb 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -860,7 +860,7 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
+ 	rdev->sb_start = 0;
+ 	rdev->sb_size = sizeof(*sb);
+ 
+-	ret = read_disk_sb(rdev, rdev->sb_size);
++	ret = read_disk_sb(rdev, 4096);
+ 	if (ret)
+ 		return ret;
+ 
+-- 
+1.9.0
