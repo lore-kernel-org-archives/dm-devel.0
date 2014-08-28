@@ -1,53 +1,84 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/15] SCSI XCOPY support for the kernel and device mapper
-Date: Thu, 28 Aug 2014 17:37:19 -0400
-Message-ID: <20140828213719.GA3734@redhat.com>
-References: <alpine.LRH.2.02.1407151531140.14632@file01.intranet.prod.int.rdu2.redhat.com>
+From: Vasily Tarasov <tarasov@vasily.name>
+Subject: [PATCH RFCv2 09/10] dm-dedup: status function
+Date: Thu, 28 Aug 2014 18:15:36 -0400
+Message-ID: <53ffb65b.081e320a.723f.25a8@mx.google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1407151531140.14632@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: "Alasdair G. Kergon" <agk@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Edward Thornber <thornber@redhat.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-On Tue, Jul 15 2014 at  3:34pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+The status function prints various statistics about a deduplication
+target instance.
 
-> This patch series makes it possible to use SCSI XCOPY offload for the 
-> block layer and device mapper.
-> 
-> It is based on Martin Petersen's work
-> https://git.kernel.org/cgit/linux/kernel/git/mkp/linux.git/commit/?h=xcopy&id=0bdeed274e16b3038a851552188512071974eea8,
-> but it is changed significantly so that it is possible to propagate XCOPY
-> bios through the device mapper stack.
-> 
-> The basic architecture is this: in the function blkdev_issue_copy we
-> create two bios, one for read and one for write (with bi_rw READ|REQ_COPY
-> and WRITE|REQ_COPY). Both bios have a pointer to the same bio_copy
-> structure. These two bios travel independently through the device mapper
-> stack - each bio can go through different device mapper devices. When both
-> the bios reach the physical block device (in the function blk_queue_bio)
-> the bio pair is collected and a XCOPY request is allocated and sent to the
-> scsi disk driver.
-> 
-> Note that because device mapper mapping can dynamically change, there no
-> guarantee that the XCOPY command succeeds. If it ends with an error, the
-> caller is supposed to perform the copying manually.
-> 
-> The dm-kcopyd subsystem is modified to use the XCOPY command, so device
-> mapper targets that use it (mirror, snapshot, thin, cache) take advantage
-> of copy offload automatically.
-> 
-> There is a new ioctl BLKCOPY that makes it possible to use copy offload
-> from userspace.
+Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
+---
+ drivers/md/dm-dedup-target.c |   34 ++++++++++++++++++++++++++++++++++
+ 1 files changed, 34 insertions(+), 0 deletions(-)
 
-Hi Martin (and others on linux-scsi),
-
-It would be ideal for XCOPY support to make its way upstream for
-3.18.. but the window for staging this work in time is closing.
-
-Any chance you might have some time to review Mikulas' revised approach
-to your initial XCOPY support?
+diff --git a/drivers/md/dm-dedup-target.c b/drivers/md/dm-dedup-target.c
+index 0887543..699af96 100644
+--- a/drivers/md/dm-dedup-target.c
++++ b/drivers/md/dm-dedup-target.c
+@@ -744,6 +744,39 @@ static void dm_dedup_dtr_fn(struct dm_target *ti)
+ 	kfree(dc);
+ }
+ 
++static void dm_dedup_status_fn(struct dm_target *ti, status_type_t status_type,
++		unsigned status_flags, char *result, unsigned maxlen)
++{
++	struct dedup_config *dc = ti->private;
++	uint64_t data_total_block_count;
++	uint64_t data_used_block_count;
++	uint64_t data_free_block_count;
++	uint64_t data_actual_block_count;
++	int sz = 0;
++
++	switch (status_type) {
++	case STATUSTYPE_INFO:
++	case STATUSTYPE_TABLE:
++		data_used_block_count = dc->physical_block_counter;
++		data_actual_block_count = dc->logical_block_counter;
++		data_total_block_count = dc->pblocks;
++
++		data_free_block_count =
++			data_total_block_count - data_used_block_count;
++
++		DMEMIT("%llu %llu %llu %llu ",
++			data_total_block_count, data_free_block_count,
++			data_used_block_count, data_actual_block_count);
++
++		DMEMIT("%u %s %s ", dc->block_size,
++			dc->data_dev->name, dc->metadata_dev->name);
++
++		DMEMIT("%llu %llu %llu %llu %llu %llu",
++			dc->writes, dc->uniqwrites, dc->dupwrites,
++			dc->reads_on_writes, dc->overwrites, dc->newwrites);
++	}
++}
++
+ static int mark_lbn_pbn_bitmap(void *key, int32_t ksize,
+ 		void *value, int32_t vsize, void *data)
+ {
+@@ -885,6 +918,7 @@ static struct target_type dm_dedup_target = {
+ 	.map = dm_dedup_map_fn,
+ 	.end_io = dm_dedup_endio_fn,
+ 	.message = dm_dedup_message_fn,
++	.status = dm_dedup_status_fn,
+ };
+ 
+ static int __init dm_dedup_init(void)
+-- 
+1.7.1
