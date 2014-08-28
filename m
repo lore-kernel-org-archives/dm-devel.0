@@ -1,8 +1,8 @@
 From: Vasily Tarasov <tarasov@vasily.name>
-Subject: [PATCH RFCv2 00/10] dm-dedup: device-mapper
-	deduplication target
-Date: Thu, 28 Aug 2014 18:48:28 -0400
-Message-ID: <53ffb64b.257e320a.6ec4.2b61@mx.google.com>
+Subject: [PATCH RFCv2 04/10] dm-dedup: implementation of the
+	read-on-write procedure
+Date: Thu, 28 Aug 2014 18:05:55 -0400
+Message-ID: <53ffb652.a96f320a.25d9.1429@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,86 +21,295 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-This is a second request for comments for dm-dedup.
+If a request from the upper layer is smaller than the block size, then
+we have to perform a read-on-write to properly compute the hash value.
 
-Updates compared to the first submission:
-
-- code is updated to kernel 3.16
-- construction parameters are now positional (as in other targets)
-- documentation is extended and brought to the same format as in other targets
-
-Dm-dedup is a device-mapper deduplication target.  Every write coming to the
-dm-dedup instance is deduplicated against previously written data.  For
-datasets that contain many duplicates scattered across the disk (e.g.,
-collections of virtual machine disk images and backups) deduplication provides
-a significant amount of space savings.
-
-To quickly identify duplicates, dm-dedup maintains an index of hashes for all
-written blocks.  A block is a user-configurable unit of deduplication with a
-recommended block size of 4KB.  dm-dedup's index, along with other
-deduplication metadata, resides on a separate block device, which we refer to
-as a metadata device.  Although the metadata device can be on any block
-device, e.g., an HDD or its own partition, for higher performance we recommend
-to use SSD devices to store metadata.
-
-Dm-dedup is designed to support pluggable metadata backends.  A metadata
-backend is responsible for storing metadata: LBN-to-PBN and HASH-to-PBN
-mappings, allocation maps, and reference counters.  (LBN: Logical Block
-Number, PBN: Physical Block Number).  Currently we implemented "cowbtree" and
-"inram" backends.  The cowbtree uses device-mapper persistent API to store
-metadata.  The inram backend stores all metadata in RAM as a hash table.
-
-Detailed design is described here:
-
-http://www.fsl.cs.sunysb.edu/docs/ols-dmdedup/dmdedup-ols14.pdf
-
-Our preliminary experiments on real traces demonstrate that Dmdedup can even
-exceed the performance of a disk drive running ext4.  The reasons are that (1)
-deduplication reduces I/O traffic to the data device, and (2) Dmdedup
-effectively sequentializes random writes to the data device.
-
-Dmdedup is developed by a joint group of researchers from Stony Brook
-University, Harvey Mudd College, and EMC.  See the documentation patch for
-more details.
-
-Vasily Tarasov (10):
-  dm-dedup: main data structures
-  dm-dedup: core deduplication logic
-  dm-dedup: hash computation
-  dm-dedup: implementation of the read-on-write procedure
-  dm-dedup: COW B-tree backend
-  dm-dedup: inram backend
-  dm-dedup: Makefile changes
-  dm-dedup: Kconfig changes
-  dm-dedup: status function
-  dm-dedup: documentation
-
- Documentation/device-mapper/dedup.txt |  205 +++++++
- drivers/md/Kconfig                    |    8 +
- drivers/md/Makefile                   |    2 +
- drivers/md/dm-dedup-backend.h         |  114 ++++
- drivers/md/dm-dedup-cbt.c             |  755 ++++++++++++++++++++++++++
- drivers/md/dm-dedup-cbt.h             |   44 ++
- drivers/md/dm-dedup-hash.c            |  145 +++++
- drivers/md/dm-dedup-hash.h            |   30 +
- drivers/md/dm-dedup-kvstore.h         |   51 ++
- drivers/md/dm-dedup-ram.c             |  580 ++++++++++++++++++++
- drivers/md/dm-dedup-ram.h             |   43 ++
- drivers/md/dm-dedup-rw.c              |  248 +++++++++
- drivers/md/dm-dedup-rw.h              |   19 +
- drivers/md/dm-dedup-target.c          |  946 +++++++++++++++++++++++++++++++++
- drivers/md/dm-dedup-target.h          |  100 ++++
- 15 files changed, 3290 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/device-mapper/dedup.txt
- create mode 100644 drivers/md/dm-dedup-backend.h
- create mode 100644 drivers/md/dm-dedup-cbt.c
- create mode 100644 drivers/md/dm-dedup-cbt.h
- create mode 100644 drivers/md/dm-dedup-hash.c
- create mode 100644 drivers/md/dm-dedup-hash.h
- create mode 100644 drivers/md/dm-dedup-kvstore.h
- create mode 100644 drivers/md/dm-dedup-ram.c
- create mode 100644 drivers/md/dm-dedup-ram.h
+Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
+---
+ drivers/md/dm-dedup-rw.c |  248 ++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-dedup-rw.h |   19 ++++
+ 2 files changed, 267 insertions(+), 0 deletions(-)
  create mode 100644 drivers/md/dm-dedup-rw.c
  create mode 100644 drivers/md/dm-dedup-rw.h
- create mode 100644 drivers/md/dm-dedup-target.c
- create mode 100644 drivers/md/dm-dedup-target.h
+
+diff --git a/drivers/md/dm-dedup-rw.c b/drivers/md/dm-dedup-rw.c
+new file mode 100644
+index 0000000..383ec39
+--- /dev/null
++++ b/drivers/md/dm-dedup-rw.c
+@@ -0,0 +1,248 @@
++/*
++ * Copyright (C) 2012-2014 Vasily Tarasov
++ * Copyright (C) 2012-2014 Geoff Kuenning
++ * Copyright (C) 2012-2014 Sonam Mandal
++ * Copyright (C) 2012-2014 Karthikeyani Palanisami
++ * Copyright (C) 2012-2014 Philip Shilane
++ * Copyright (C) 2012-2014 Sagar Trehan
++ * Copyright (C) 2012-2014 Erez Zadok
++ *
++ * This file is released under the GPL.
++ */
++
++#include "dm-dedup-target.h"
++#include "dm-dedup-rw.h"
++#include "dm-dedup-kvstore.h"
++
++#define DMD_IO_SIZE	4096
++
++static uint64_t compute_sector(struct bio *bio,
++			       struct dedup_config *dc)
++{
++	uint64_t to_be_lbn;
++
++	to_be_lbn = bio->bi_iter.bi_sector;
++	to_be_lbn /= dc->sectors_per_block;
++	to_be_lbn *= dc->sectors_per_block;
++
++	return to_be_lbn;
++}
++
++static int fetch_whole_block(struct dedup_config *dc,
++			uint64_t pbn, struct page_list *pl)
++{
++	struct dm_io_request iorq;
++	struct dm_io_region where;
++	unsigned long error_bits;
++
++	where.bdev = dc->data_dev->bdev;
++	where.sector = pbn;
++	where.count = dc->sectors_per_block;
++
++	iorq.bi_rw = READ;
++	iorq.mem.type = DM_IO_PAGE_LIST;
++	iorq.mem.ptr.pl = pl;
++	iorq.mem.offset = 0;
++	iorq.notify.fn = NULL;
++	iorq.client = dc->io_client;
++
++	return dm_io(&iorq, 1, &where, &error_bits);
++}
++
++static int merge_data(struct dedup_config *dc, struct page *page,
++				struct bio *bio)
++{
++	void *src_page_vaddr, *dest_page_vaddr;
++	int position, err = 0;
++
++	/* Relative offset in terms of sector size */
++	position = (bio->bi_iter.bi_sector % dc->sectors_per_block);
++
++	if (!page || !bio->bi_io_vec->bv_page) {
++		err = -EINVAL;
++		goto out;
++	}
++
++	src_page_vaddr = page_address(bio->bi_io_vec->bv_page);
++	dest_page_vaddr = page_address(page);
++
++	src_page_vaddr = src_page_vaddr + bio->bi_io_vec->bv_offset;
++	/* Locating the right sector to merge */
++	dest_page_vaddr = dest_page_vaddr + (to_bytes(position));
++
++	/* Merging Data */
++	memmove(dest_page_vaddr, src_page_vaddr, bio->bi_io_vec->bv_len);
++out:
++	return err;
++}
++
++static void copy_pages(struct page *src, struct bio *clone)
++{
++	void *src_page_vaddr, *dest_page_vaddr;
++
++	src_page_vaddr = page_address(src);
++	dest_page_vaddr = page_address(clone->bi_io_vec->bv_page);
++
++	memmove(dest_page_vaddr, src_page_vaddr, DMD_IO_SIZE);
++}
++
++static void my_endio(struct bio *clone, int error)
++{
++	unsigned rw = bio_data_dir(clone);
++	struct bio *orig;
++	struct bio_vec bv;
++
++	if (!error && !bio_flagged(clone, BIO_UPTODATE))
++		error = -EIO;
++
++	/* free the processed pages */
++	if (rw == WRITE || rw == READ) {
++		bv = bio_iovec(clone);
++		if (bv.bv_page) {
++			free_pages((unsigned long)page_address(bv.bv_page), 0);
++			bv.bv_page = NULL;
++		}
++	}
++
++	orig = clone->bi_private;
++	bio_endio(orig, 0);
++
++	bio_put(clone);
++}
++
++/*
++ * XXX: there  is existing zero_fill_bio() in the kernel,
++ * should we use it?
++ */
++static void my_zero_fill_bio(struct bio *bio)
++{
++	void *data;
++	unsigned int length;
++
++	data = bio_data(bio);
++	length = bio_cur_bytes(bio);
++	memset(data, 0, length);
++}
++
++static struct bio *create_bio(struct dedup_config *dc,
++			      struct bio *bio)
++{
++	struct bio *clone;
++	struct page *page;
++
++	clone = bio_kmalloc(GFP_NOIO, 1);
++	if (!clone)
++		goto out;
++
++	clone->bi_bdev = bio->bi_bdev;
++	clone->bi_rw = bio->bi_rw;
++	clone->bi_iter.bi_sector = compute_sector(bio, dc);
++	clone->bi_private = bio;  /* for later completion */
++	clone->bi_end_io = my_endio;
++
++	page = alloc_pages(GFP_NOIO, 0);
++	if (!page)
++		goto bad_putbio;
++
++	if (!bio_add_page(clone, page, DMD_IO_SIZE, 0))
++		goto bad_freepage;
++
++	goto out;
++
++bad_freepage:
++	free_pages((unsigned long) page_address(page), 0);
++bad_putbio:
++	bio_put(clone);
++	clone = NULL;
++out:
++	return clone;
++}
++
++static struct bio *prepare_bio_with_pbn(struct dedup_config *dc,
++					struct bio *bio, uint64_t pbn)
++{
++	int r = 0;
++	struct page_list *pl;
++	struct bio *clone = NULL;
++
++	pl = kmalloc(sizeof(pl), GFP_NOIO);
++	if (!pl)
++		goto out;
++
++	/*
++	 * Since target I/O size is 4KB currently, we need only one page to
++	 * store the data. However, if the target I/O size increases, we need
++	 * to allocate more pages and set this linked list correctly.
++	 */
++	pl->page = alloc_pages(GFP_NOIO, 0);
++	if (!pl->page)
++		goto out_allocfail;
++
++	pl->next = NULL;
++
++	r = fetch_whole_block(dc, pbn, pl);
++	if (r < 0)
++		goto out_fail;
++
++	r = merge_data(dc, pl->page, bio);
++	if (r < 0)
++		goto out_fail;
++
++	clone = create_bio(dc, bio);
++	if (!clone)
++		goto out_fail;
++
++	copy_pages(pl->page, clone);
++
++out_fail:
++	free_pages((unsigned long) page_address(pl->page), 0);
++out_allocfail:
++	kfree(pl);
++out:
++	return clone;
++}
++
++static struct bio *prepare_bio_without_pbn(struct dedup_config *dc,
++					   struct bio *bio)
++{
++	int r = 0;
++	struct bio *clone = NULL;
++
++	clone = create_bio(dc, bio);
++	if (!clone)
++		goto out;
++
++	my_zero_fill_bio(clone);
++
++	r = merge_data(dc, clone->bi_io_vec->bv_page, bio);
++	if (r < 0)
++		BUG();
++out:
++	return clone;
++}
++
++struct bio *prepare_bio_on_write(struct dedup_config *dc, struct bio *bio)
++{
++	int r;
++	uint64_t lbn_sector;
++	uint64_t lbn;
++	uint32_t vsize;
++	struct lbn_pbn_value lbnpbn_value;
++	struct bio *clone;
++
++	lbn_sector = compute_sector(bio, dc);
++	lbn = lbn_sector / dc->sectors_per_block;
++
++	/* check for old or new lbn and fetch the appropriate pbn */
++	r = dc->kvs_lbn_pbn->kvs_lookup(dc->kvs_lbn_pbn, (void *)&lbn,
++			sizeof(lbn), (void *)&lbnpbn_value, &vsize);
++	if (r == 0)
++		clone = prepare_bio_without_pbn(dc, bio);
++	else if (r == 1)
++		clone = prepare_bio_with_pbn(dc, bio, lbnpbn_value.pbn
++						* dc->sectors_per_block);
++	else
++		BUG();
++
++	return clone;
++}
+diff --git a/drivers/md/dm-dedup-rw.h b/drivers/md/dm-dedup-rw.h
+new file mode 100644
+index 0000000..ad12a27
+--- /dev/null
++++ b/drivers/md/dm-dedup-rw.h
+@@ -0,0 +1,19 @@
++/*
++ * Copyright (C) 2012-2014 Vasily Tarasov
++ * Copyright (C) 2012-2014 Geoff Kuenning
++ * Copyright (C) 2012-2014 Sonam Mandal
++ * Copyright (C) 2012-2014 Karthikeyani Palanisami
++ * Copyright (C) 2012-2014 Philip Shilane
++ * Copyright (C) 2012-2014 Sagar Trehan
++ * Copyright (C) 2012-2014 Erez Zadok
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_DEDUP_RW_H
++#define DM_DEDUP_RW_H
++
++extern struct bio *prepare_bio_on_write(struct dedup_config *dc,
++							struct bio *bio);
++
++#endif /* DM_DEDUP_RW_H */
+-- 
+1.7.1
