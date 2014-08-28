@@ -1,7 +1,7 @@
 From: Vasily Tarasov <tarasov@vasily.name>
-Subject: [PATCH RFCv2 03/10] dm-dedup: hash computation
-Date: Thu, 28 Aug 2014 18:04:55 -0400
-Message-ID: <53ffb650.0878320a.243a.133d@mx.google.com>
+Subject: [PATCH RFCv2 01/10] dm-dedup: main data structures
+Date: Thu, 28 Aug 2014 17:56:35 -0400
+Message-ID: <53ffb64d.c58d320a.14c8.1413@mx.google.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,23 +20,29 @@ To: dm-devel@redhat.com
 Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
 List-Id: dm-devel.ids
 
-Hash-computation functions. We preallocate a table of hash descriptors
-in advance to improve performance.
+We maintain one dedup_config structure for every dm-dedup target
+instance. Every target instance has a metadata backend associated with
+it. Metadata backends should implement operations defined in the
+metadata_ops structure. Every backend should support two key-value
+stores: (1) sparse store, where the hash-to-pbn mapping (the hash index)
+is stored; and (2) linear store, where the lbn-to-pbn mapping is stored.
 
 Signed-off-by: Vasily Tarasov <tarasov@vasily.name>
 ---
- drivers/md/dm-dedup-hash.c |  145 ++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-dedup-hash.h |   30 +++++++++
- 2 files changed, 175 insertions(+), 0 deletions(-)
- create mode 100644 drivers/md/dm-dedup-hash.c
- create mode 100644 drivers/md/dm-dedup-hash.h
+ drivers/md/dm-dedup-backend.h |  114 +++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-dedup-kvstore.h |   51 ++++++++++++++++++
+ drivers/md/dm-dedup-target.h  |  100 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 265 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/dm-dedup-backend.h
+ create mode 100644 drivers/md/dm-dedup-kvstore.h
+ create mode 100644 drivers/md/dm-dedup-target.h
 
-diff --git a/drivers/md/dm-dedup-hash.c b/drivers/md/dm-dedup-hash.c
+diff --git a/drivers/md/dm-dedup-backend.h b/drivers/md/dm-dedup-backend.h
 new file mode 100644
-index 0000000..b350004
+index 0000000..63223a1
 --- /dev/null
-+++ b/drivers/md/dm-dedup-hash.c
-@@ -0,0 +1,145 @@
++++ b/drivers/md/dm-dedup-backend.h
+@@ -0,0 +1,114 @@
 +/*
 + * Copyright (C) 2012-2014 Vasily Tarasov
 + * Copyright (C) 2012-2014 Geoff Kuenning
@@ -48,146 +54,172 @@ index 0000000..b350004
 + *
 + * This file is released under the GPL.
 + */
++
++#ifndef BACKEND_H
++#define BACKEND_H
++
++struct metadata;		/* metadata store identifier */
++struct kvstore;			/* key-value store identifier */
++
++#define BF_NEGATIVE -1
++#define BF_POSITIVE 0
++
++struct metadata_ops {
++	/*
++	 * Returns ERR_PTR(*) on error.
++	 * Valid pointer on success.
++	 */
++	struct metadata * (*init_meta)(void *init_param, bool *unformatted);
++
++	void (*exit_meta)(struct metadata *md);
++
++	/*
++	 * Creates linear key-value store. Ksize and vsize in bytes.
++	 * If ksize or vsize are equal to zero, it means that keys
++	 * and values will be of a variable size. kmax is the
++	 * maximum _value_ of the key. If kmax is equal to zero,
++	 * then maximum is not known by the caller.
++	 *
++	 * Returns -ERR_PTR(*) on error.
++	 * Valid pointer on success.
++	 */
++	struct kvstore * (*kvs_create_linear)(struct metadata *md,
++			uint32_t ksize, uint32_t vsize, uint32_t kmax,
++			bool unformatted);
++	/*
++	 * Creates sparse key-value store. Ksize and vsize in bytes.
++	 * If ksize or vsize are equal to zero, it means that keys
++	 * and values will be of a variable size. knummax is the
++	 * maximum _number_ of the keys. If keymax is equal to zero,
++	 * then maximum is not known by the caller.
++	 *
++	 * Returns -ERR_PTR(*) on error.
++	 * Valid pointer on success.
++	 */
++	struct kvstore * (*kvs_create_sparse)(struct metadata *md,
++			uint32_t ksize, uint32_t vsize, uint32_t knummax,
++			bool unformatted);
++
++	/*
++	 * Returns -ERR* on error.
++	 * Returns 0 on success. In this case, "blockn" contains a newly
++	 * allocated block number.
++	 */
++	int (*alloc_data_block)(struct metadata *md, uint64_t *blockn);
++
++	/*
++	 * Returns -ERR* on error.
++	 * Returns 0 on success.
++	 */
++	int (*inc_refcount)(struct metadata *md, uint64_t blockn);
++
++	/*
++	 * Returns -ERR* on error.
++	 * Returns 0 on success.
++	 */
++	int (*dec_refcount)(struct metadata *md, uint64_t blockn);
++
++	/*
++	 * Returns -ERR* on error.
++	 * Returns 0 on success.
++	 */
++	int (*get_refcount)(struct metadata *md, uint64_t blockn);
++
++	/*
++	 * Returns -ERR on error.
++	 * Return 0 on success.
++	 */
++	int (*flush_meta)(struct metadata *md);
++
++	/*
++	 * Returns the private data stored in the metadata.
++	 *
++	 * Returns -ERR* on error.
++	 * Returns 0 on success.
++	 */
++	int (*get_private_data)(struct metadata *md, void **data,
++			uint32_t size);
++
++	/*
++	 * Fills in private data stored in the metadata.
++	 *
++	 * Returns -ERR* on error.
++	 * Returns 0 on success.
++	 */
++	int (*set_private_data)(struct metadata *md, void *data, uint32_t size);
++
++	/*
++	 * This is a hack to drop cache. In future we want to implement
++	 * proper message passing interface, to accomplish this and other
++	 * tasks.
++	 */
++	void (*flush_bufio_cache)(struct metadata *md);
++};
++
++#endif /* BACKEND_H */
+diff --git a/drivers/md/dm-dedup-kvstore.h b/drivers/md/dm-dedup-kvstore.h
+new file mode 100644
+index 0000000..365a7f6
+--- /dev/null
++++ b/drivers/md/dm-dedup-kvstore.h
+@@ -0,0 +1,51 @@
++/*
++ * Copyright (C) 2012-2014 Vasily Tarasov
++ * Copyright (C) 2012-2014 Geoff Kuenning
++ * Copyright (C) 2012-2014 Sonam Mandal
++ * Copyright (C) 2012-2014 Karthikeyani Palanisami
++ * Copyright (C) 2012-2014 Philip Shilane
++ * Copyright (C) 2012-2014 Sagar Trehan
++ * Copyright (C) 2012-2014 Erez Zadok
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef KVSTORE_H
++#define KVSTORE_H
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/kernel.h>
++#include <linux/device-mapper.h>
++#include <linux/dm-io.h>
++#include <linux/dm-kcopyd.h>
++#include <linux/list.h>
++#include <linux/err.h>
++#include <asm/current.h>
++#include <linux/string.h>
++#include <linux/gfp.h>
++
++#include <linux/scatterlist.h>
++#include <asm/page.h>
++#include <asm/unaligned.h>
++#include <crypto/hash.h>
++#include <crypto/md5.h>
++#include <crypto/algapi.h>
 +
 +#include "dm-dedup-target.h"
-+#include "dm-dedup-hash.h"
-+#include <linux/atomic.h>
-+#include <linux/blk_types.h>
 +
-+/*
-+ * We are declaring and initalizaing global hash_desc, because
-+ * we need to do hash computation in endio function, and this
-+ * function is called in softirq context. Hence we are not
-+ * allowed to perform any operation on that path which can sleep.
-+ * And tfm allocation in hash_desc, at one point, tries to take
-+ * semaphore and hence tries to sleep. And because of this we get
-+ * BUG, which complains "Scheduling while atomic". Hence to avoid
-+ * this scenario, we moved the declaration and initialization out
-+ * of critical path.
-+ */
-+static struct hash_desc *slot_to_desc(struct hash_desc_table *desc_table,
-+							unsigned long slot)
-+{
-+	BUG_ON(slot >= DEDUP_HASH_DESC_COUNT);
-+	return &(desc_table->desc[slot]);
-+}
++struct kvstore {
++	uint32_t vsize;
++	uint32_t ksize;
 +
-+struct hash_desc_table *desc_table_init(char *hash_alg)
-+{
-+	int i = 0;
-+	struct hash_desc *desc;
-+	struct hash_desc_table *desc_table;
++	int (*kvs_delete)(struct kvstore *kvs, void *key, int32_t ksize);
++	int (*kvs_lookup)(struct kvstore *kvs, void *key, int32_t ksize,
++				void *value, int32_t *vsize);
++	int (*kvs_insert)(struct kvstore *kvs, void *key, int32_t ksize,
++				void *value, int32_t vsize);
++	int (*kvs_iterate)(struct kvstore *kvs, int (*itr_action)
++				(void *key, int32_t ksize, void *value,
++				 int32_t vsize, void *data), void *data);
++};
 +
-+	desc_table = kmalloc(sizeof(struct hash_desc_table), GFP_NOIO);
-+	if (!desc_table)
-+		return ERR_PTR(-ENOMEM);
-+
-+	for (i = 0; i < DEDUP_HASH_DESC_COUNT; i++) {
-+		desc_table->free_bitmap[i] = true;
-+		desc = desc_table->desc + i;
-+		desc->flags = 0;
-+		desc->tfm = crypto_alloc_hash(hash_alg, 0, CRYPTO_ALG_ASYNC);
-+		if (IS_ERR(desc->tfm))
-+			return (struct hash_desc_table *)desc->tfm;
-+	}
-+
-+	atomic_long_set(&(desc_table->slot_counter), 0);
-+
-+	return desc_table;
-+}
-+
-+void desc_table_deinit(struct hash_desc_table *desc_table)
-+{
-+	int i = 0;
-+	struct hash_desc *desc;
-+
-+	for (i = 0; i < DEDUP_HASH_DESC_COUNT; i++) {
-+		desc = desc_table->desc + i;
-+		crypto_free_hash(desc->tfm);
-+	}
-+
-+	kfree(desc_table);
-+	desc_table = NULL;
-+}
-+
-+static int get_next_slot(struct hash_desc_table *desc_table)
-+{
-+	unsigned long num = 0;
-+	int count = 0;
-+
-+	do {
-+		if (count == DEDUP_HASH_DESC_COUNT)
-+			BUG();
-+
-+		count++;
-+		num = atomic_long_inc_return(&(desc_table->slot_counter));
-+		num = num % DEDUP_HASH_DESC_COUNT;
-+
-+	} while (!desc_table->free_bitmap[num]);
-+
-+	/* XXX: Possibility of race condition here. As checking of bitmap
-+	 *	and its setting is not happening in same step. But it will
-+	 *	work for now, as we declare atleast twice more hash_desc
-+	 *	then number of threads.
-+	 */
-+	desc_table->free_bitmap[num] = false;
-+
-+	return num;
-+}
-+
-+static void put_slot(struct hash_desc_table *desc_table, unsigned long slot)
-+{
-+	BUG_ON(slot >= DEDUP_HASH_DESC_COUNT);
-+	BUG_ON(desc_table->free_bitmap[slot]);
-+	desc_table->free_bitmap[slot] = true;
-+}
-+
-+unsigned int get_hash_digestsize(struct hash_desc_table *desc_table)
-+{
-+	unsigned long slot;
-+	struct hash_desc *desc;
-+
-+	slot = get_next_slot(desc_table);
-+	desc = slot_to_desc(desc_table, slot);
-+
-+	return crypto_hash_digestsize(desc->tfm);
-+}
-+
-+int compute_hash_bio(struct hash_desc_table *desc_table,
-+				struct bio *bio, char *hash)
-+{
-+	struct scatterlist sg;
-+	int ret = 0;
-+	unsigned long slot;
-+	struct bio_vec bvec;
-+	struct bvec_iter iter;
-+	struct hash_desc *desc;
-+
-+	slot = get_next_slot(desc_table);
-+	desc = slot_to_desc(desc_table, slot);
-+
-+	ret = crypto_hash_init(desc);
-+	if (ret)
-+		goto out;
-+
-+	sg_init_table(&sg, 1);
-+	__bio_for_each_segment(bvec, bio, iter, bio->bi_iter) {
-+		sg_set_page(&sg, bvec.bv_page, bvec.bv_len,
-+			    bvec.bv_offset);
-+		crypto_hash_update(desc, &sg, sg.length);
-+	}
-+
-+	crypto_hash_final(desc, hash);
-+out:
-+	put_slot(desc_table, slot);
-+	return ret;
-+}
-diff --git a/drivers/md/dm-dedup-hash.h b/drivers/md/dm-dedup-hash.h
++#endif /* KVSTORE_H */
+diff --git a/drivers/md/dm-dedup-target.h b/drivers/md/dm-dedup-target.h
 new file mode 100644
-index 0000000..9eb791d
+index 0000000..703ad04
 --- /dev/null
-+++ b/drivers/md/dm-dedup-hash.h
-@@ -0,0 +1,30 @@
++++ b/drivers/md/dm-dedup-target.h
+@@ -0,0 +1,100 @@
 +/*
 + * Copyright (C) 2012-2014 Vasily Tarasov
 + * Copyright (C) 2012-2014 Geoff Kuenning
@@ -200,23 +232,93 @@ index 0000000..9eb791d
 + * This file is released under the GPL.
 + */
 +
-+#ifndef DM_DEDUP_HASH_H
-+#define DM_DEDUP_HASH_H
++#ifndef DM_DEDUP_H
++#define DM_DEDUP_H
 +
-+#define DEDUP_HASH_DESC_COUNT 128
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/kernel.h>
++#include <linux/device-mapper.h>
++#include <linux/dm-io.h>
++#include <linux/dm-kcopyd.h>
++#include <linux/list.h>
++#include <linux/err.h>
++#include <asm/current.h>
++#include <linux/string.h>
++#include <linux/gfp.h>
++#include <linux/delay.h>
++#include <linux/time.h>
++#include <linux/parser.h>
++#include <linux/blk_types.h>
++#include <linux/mempool.h>
 +
-+struct hash_desc_table {
-+	struct hash_desc desc[DEDUP_HASH_DESC_COUNT];
-+	bool free_bitmap[DEDUP_HASH_DESC_COUNT];
-+	atomic_long_t slot_counter;
-+} /*desc_table*/;
++#include <linux/scatterlist.h>
++#include <asm/page.h>
++#include <asm/unaligned.h>
++#include <crypto/hash.h>
++#include <crypto/md5.h>
++#include <crypto/sha.h>
++#include <crypto/algapi.h>
 +
-+extern void desc_table_deinit(struct hash_desc_table *desc_table);
-+extern struct hash_desc_table *desc_table_init(char *crypt_alg);
-+extern int compute_hash_bio(struct hash_desc_table *desc_table,
-+				struct bio *bio, char *hash);
-+extern unsigned int get_hash_digestsize(struct hash_desc_table *desc_table);
++#define DM_MSG_PREFIX "dedup-mod"
 +
-+#endif /* DM_DEDUP_HASH_H */
++#define CRYPTO_ALG_NAME_LEN     16
++#define MAX_DIGEST_SIZE	SHA256_DIGEST_SIZE
++
++#define MIN_DEDUP_WORK_IO	16
++
++/* Per target instance structure */
++struct dedup_config {
++	struct dm_dev *data_dev;
++	struct dm_dev *metadata_dev;
++
++	uint32_t block_size;	/* in bytes */
++	uint32_t sectors_per_block;
++
++	uint32_t pblocks;	/* physical blocks */
++	uint32_t lblocks;	/* logical blocks */
++
++	struct workqueue_struct *workqueue;
++
++	struct hash_desc_table *desc_table;
++
++	uint64_t logical_block_counter;	/* Total number of used LBNs */
++	uint64_t physical_block_counter;/* Total number of allocated PBNs */
++
++	uint64_t	writes;		/* total number of writes */
++	uint64_t	dupwrites;
++	uint64_t	uniqwrites;
++	uint64_t	reads_on_writes;
++	uint64_t	overwrites;	/* writes to a prev. written offset */
++	uint64_t	newwrites;	/* writes to never written offsets */
++
++	struct dm_io_client *io_client;		/* used for read-on-write
++						   of misaligned requests */
++
++	struct metadata_ops *mdops;
++	struct metadata *bmd;
++	struct kvstore *kvs_hash_pbn;
++	struct kvstore *kvs_lbn_pbn;
++
++	char crypto_alg[CRYPTO_ALG_NAME_LEN];
++	int crypto_key_size;
++
++	uint32_t flushrq;		/* after how many writes call flush */
++	uint64_t writes_after_flush;	/* # of writes after the last flush */
++
++	mempool_t *dedup_work_pool;	/* Dedup work pool */
++};
++
++/* Value of the HASH-PBN key-value store */
++struct hash_pbn_value {
++	uint64_t pbn;	/* in blocks */
++};
++
++/* Value of the LBN-PBN key-value store */
++struct lbn_pbn_value {
++	uint64_t pbn;	/* in blocks */
++};
++
++#endif /* DM_DEDUP_H */
 -- 
 1.7.1
