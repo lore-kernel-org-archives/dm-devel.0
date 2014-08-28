@@ -1,14 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] Update ETERNUS DX entry
-Date: Thu, 28 Aug 2014 05:58:39 +0200
-Message-ID: <CABr-GncV-yq+bBOMBerk8pG+pS+o53WDoPX5FzvC8BxUYbTBBw@mail.gmail.com>
-References: <20140630233858.00001ed0@localhost>
-	<20140827233240.000073e1@localhost>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-crypt: Fix access beyond the end of allocated
+	space
+Date: Thu, 28 Aug 2014 11:09:31 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1408281108120.31317@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4733344729563361857=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140827233240.000073e1@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,137 +17,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sebastian Herbszt <herbszt@gmx.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, kkolasa@winsoft.pl
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============4733344729563361857==
-Content-Type: multipart/alternative; boundary=001a11346152436e080501a88d16
+dm-crypt has a bug that it accesses memory beyond allocated space.
 
---001a11346152436e080501a88d16
-Content-Type: text/plain; charset=UTF-8
+To minimize allocation overhead, dm-crypt puts several structures into one
+block allocated with kmalloc. The block holds struct ablkcipher_request,
+cipher-specific scratch pad (crypto_ablkcipher_reqsize(any_tfm(cc))),
+struct dm_crypt_request and initialization vector.
 
-Sorry, the patch was lost in the backlog.
-Applied,
-Thanks.
+The variable dmreq_start is set to offset of struct dm_crypt_request
+within this memory block. dm-crypt allocates block with this size:
+cc->dmreq_start + sizeof(struct dm_crypt_request) + cc->iv_size.
 
+When accessing the initialization vector, dm-crypt uses the function
+iv_of_dmreq, which performs this calculation: ALIGN((unsigned long)(dmreq
++ 1), crypto_ablkcipher_alignmask(any_tfm(cc)) + 1).
 
-On Wed, Aug 27, 2014 at 11:32 PM, Sebastian Herbszt <herbszt@gmx.de> wrote:
+dm-crypt allocated "cc->iv_size" bytes beyond the end of dm_crypt_request
+structure. However, when dm-crypt accesses the initialization vector, it
+takes a pointer to the end of dm_crypt_request, aligns it, and then uses
+it as the initialization vector.
 
-> I wrote:
-> > Add DX500 S3/DX600 S3.
-> >
-> > Signed-off-by: Sebastian Herbszt <herbszt@gmx.de>
-> > ---
-> >  libmultipath/hwtable.c  | 2 +-
-> >  multipath.conf.defaults | 2 +-
-> >  2 files changed, 2 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> > index bb73a40..b774453 100644
-> > --- a/libmultipath/hwtable.c
-> > +++ b/libmultipath/hwtable.c
-> > @@ -308,7 +308,7 @@ static struct hwentry default_hw[] = {
-> >       },
-> >       {
-> >               .vendor        = "FUJITSU",
-> > -             .product       = "ETERNUS_DX(L|400|8000)",
-> > +             .product       = "ETERNUS_DX(L|M|400|8000)",
-> >               .features      = "1 queue_if_no_path",
-> >               .hwhandler     = DEFAULT_HWHANDLER,
-> >               .pgpolicy      = GROUP_BY_PRIO,
-> > diff --git a/multipath.conf.defaults b/multipath.conf.defaults
-> > index 12fb3f0..654be97 100644
-> > --- a/multipath.conf.defaults
-> > +++ b/multipath.conf.defaults
-> > @@ -285,7 +285,7 @@
-> >  #    }
-> >  #    device {
-> >  #            vendor "FUJITSU"
-> > -#            product "ETERNUS_DX(L|400|8000)"
-> > +#            product "ETERNUS_DX(L|M|400|8000)"
-> >  #            path_grouping_policy "group_by_prio"
-> >  #            path_checker "tur"
-> >  #            features "1 queue_if_no_path"
->
-> Christophe, can you apply this?
->
-> Sebastian
->
+If the end of dm_crypt_request is not aligned on
+crypto_ablkcipher_alignmask(any_tfm(cc)), the alignment causes
+initialization vector to point beyond the allocated space. This bug is
+very old (it dates back to commit 3a7f6c990ad04e6f576a159876c602d14d6f7fef
+in 2.6.25). However, the bug was masked by the fact that kmalloc rounds up
+the size to the next power of two. Recent change in dm-crypt that puts
+this structure to per-bio data (298a9fa08a1577211d42a75e8fc073baef61e0d9)
+made this bug show up, because there is no longer any padding beyond the
+end of iv_size.
 
---001a11346152436e080501a88d16
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+This patch fixes the bug by calculating the variable iv_size_padding and
+adding it to the allocated size.
 
-<div dir=3D"ltr"><div>Sorry, the patch was lost in the backlog.</div>Applie=
-d,<div>Thanks.</div></div><div class=3D"gmail_extra"><br><br><div class=3D"=
-gmail_quote">On Wed, Aug 27, 2014 at 11:32 PM, Sebastian Herbszt <span dir=
-=3D"ltr">&lt;<a href=3D"mailto:herbszt@gmx.de" target=3D"_blank">herbszt@gm=
-x.de</a>&gt;</span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex"><div class=3D"HOEnZb"><div class=3D"h5">I wr=
-ote:<br>
-&gt; Add DX500 S3/DX600 S3.<br>
-&gt;<br>
-&gt; Signed-off-by: Sebastian Herbszt &lt;<a href=3D"mailto:herbszt@gmx.de"=
->herbszt@gmx.de</a>&gt;<br>
-&gt; ---<br>
-&gt;=C2=A0 libmultipath/hwtable.c=C2=A0 | 2 +-<br>
-&gt;=C2=A0 multipath.conf.defaults | 2 +-<br>
-&gt;=C2=A0 2 files changed, 2 insertions(+), 2 deletions(-)<br>
-&gt;<br>
-&gt; diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
-&gt; index bb73a40..b774453 100644<br>
-&gt; --- a/libmultipath/hwtable.c<br>
-&gt; +++ b/libmultipath/hwtable.c<br>
-&gt; @@ -308,7 +308,7 @@ static struct hwentry default_hw[] =3D {<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0},<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0{<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.vendor=C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =3D &quot;FUJITSU&quot;,<br>
-&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.product=C2=A0 =C2=A0=
- =C2=A0 =C2=A0=3D &quot;ETERNUS_DX(L|400|8000)&quot;,<br>
-&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.product=C2=A0 =C2=A0=
- =C2=A0 =C2=A0=3D &quot;ETERNUS_DX(L|M|400|8000)&quot;,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.features=C2=A0 =
-=C2=A0 =C2=A0 =3D &quot;1 queue_if_no_path&quot;,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.hwhandler=C2=A0=
- =C2=A0 =C2=A0=3D DEFAULT_HWHANDLER,<br>
-&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgpolicy=C2=A0 =
-=C2=A0 =C2=A0 =3D GROUP_BY_PRIO,<br>
-&gt; diff --git a/multipath.conf.defaults b/multipath.conf.defaults<br>
-&gt; index 12fb3f0..654be97 100644<br>
-&gt; --- a/multipath.conf.defaults<br>
-&gt; +++ b/multipath.conf.defaults<br>
-&gt; @@ -285,7 +285,7 @@<br>
-&gt;=C2=A0 #=C2=A0 =C2=A0 }<br>
-&gt;=C2=A0 #=C2=A0 =C2=A0 device {<br>
-&gt;=C2=A0 #=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 vendor &quot;FUJITSU&=
-quot;<br>
-&gt; -#=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 product &quot;ETERNUS_DX(L=
-|400|8000)&quot;<br>
-&gt; +#=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 product &quot;ETERNUS_DX(L=
-|M|400|8000)&quot;<br>
-&gt;=C2=A0 #=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 path_grouping_policy =
-&quot;group_by_prio&quot;<br>
-&gt;=C2=A0 #=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 path_checker &quot;tu=
-r&quot;<br>
-&gt;=C2=A0 #=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 features &quot;1 queu=
-e_if_no_path&quot;<br>
-<br>
-</div></div>Christophe, can you apply this?<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
-Sebastian<br>
-</font></span></blockquote></div><br></div>
+The patch also corrects alignment of dm_crypt_request. struct
+dm_crypt_request is specific to dm-crypt (it isn't used by the crypto
+subsystem at all), so it is aligned on __alignof__(struct
+dm_crypt_request).
 
---001a11346152436e080501a88d16--
+The patch also aligns per_bio_data_size on ARCH_KMALLOC_MINALIGN, so that
+it is aligned as if the block was allocated with kmalloc.
 
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
---===============4733344729563361857==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+---
+ drivers/md/dm-crypt.c |   29 ++++++++++++++++++++++-------
+ 1 file changed, 22 insertions(+), 7 deletions(-)
 
-
---===============4733344729563361857==--
+Index: linux-3.17-rc1/drivers/md/dm-crypt.c
+===================================================================
+--- linux-3.17-rc1.orig/drivers/md/dm-crypt.c	2014-08-27 18:38:55.622401228 +0200
++++ linux-3.17-rc1/drivers/md/dm-crypt.c	2014-08-28 01:12:15.971720819 +0200
+@@ -1688,6 +1688,7 @@ static int crypt_ctr(struct dm_target *t
+ 	unsigned int key_size, opt_params;
+ 	unsigned long long tmpll;
+ 	int ret;
++	size_t iv_size_padding;
+ 	struct dm_arg_set as;
+ 	const char *opt_string;
+ 	char dummy;
+@@ -1724,20 +1725,34 @@ static int crypt_ctr(struct dm_target *t
+ 
+ 	cc->dmreq_start = sizeof(struct ablkcipher_request);
+ 	cc->dmreq_start += crypto_ablkcipher_reqsize(any_tfm(cc));
+-	cc->dmreq_start = ALIGN(cc->dmreq_start, crypto_tfm_ctx_alignment());
+-	cc->dmreq_start += crypto_ablkcipher_alignmask(any_tfm(cc)) &
+-			   ~(crypto_tfm_ctx_alignment() - 1);
++	cc->dmreq_start = ALIGN(cc->dmreq_start, __alignof__(struct dm_crypt_request));
++
++	if (crypto_ablkcipher_alignmask(any_tfm(cc)) < CRYPTO_MINALIGN) {
++		/* Allocate the padding exactly */
++		iv_size_padding = -(cc->dmreq_start + sizeof(struct dm_crypt_request))
++				& crypto_ablkcipher_alignmask(any_tfm(cc));
++	} else {
++		/*
++		 * If the cipher requires greater alignment than kmalloc
++		 * alignment, we don't know the exact position of the
++		 * initialization vector. We must assume worst case.
++		 */
++		iv_size_padding = crypto_ablkcipher_alignmask(any_tfm(cc));
++	}
+ 
+ 	cc->req_pool = mempool_create_kmalloc_pool(MIN_IOS, cc->dmreq_start +
+-			sizeof(struct dm_crypt_request) + cc->iv_size);
++			sizeof(struct dm_crypt_request) +
++			iv_size_padding + cc->iv_size);
+ 	if (!cc->req_pool) {
+ 		ti->error = "Cannot allocate crypt request mempool";
+ 		goto bad;
+ 	}
+ 
+-	cc->per_bio_data_size = ti->per_bio_data_size =
+-				sizeof(struct dm_crypt_io) + cc->dmreq_start +
+-				sizeof(struct dm_crypt_request) + cc->iv_size;
++	cc->per_bio_data_size = ti->per_bio_data_size = ALIGN(
++			sizeof(struct dm_crypt_io) + cc->dmreq_start +
++			sizeof(struct dm_crypt_request) +
++			iv_size_padding + cc->iv_size,
++		ARCH_KMALLOC_MINALIGN);
+ 
+ 	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
+ 	if (!cc->page_pool) {
