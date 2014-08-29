@@ -1,28 +1,40 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH 0/15] SCSI XCOPY support for the kernel and device mapper
-Date: Fri, 29 Aug 2014 06:29:02 -0400
-Message-ID: <yq1egvzfv2p.fsf@sermon.lab.mkp.net>
-References: <alpine.LRH.2.02.1407151531140.14632@file01.intranet.prod.int.rdu2.redhat.com>
-	<20140828213719.GA3734@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fix for 3.17
+Date: Fri, 29 Aug 2014 08:41:28 -0400
+Message-ID: <20140829124128.GA28291@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140828213719.GA3734@redhat.com> (Mike Snitzer's message of
-	"Thu, 28 Aug 2014 17:37:19 -0400")
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Edward Thornber <thornber@redhat.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+Hi Linus,
 
-Mike> It would be ideal for XCOPY support to make its way upstream for
-Mike> 3.18.. but the window for staging this work in time is closing.
+The following changes since commit 52addcf9d6669fa439387610bc65c92fa0980cef:
 
-Mike> Any chance you might have some time to review Mikulas' revised
-Mike> approach to your initial XCOPY support? 
+  Linux 3.17-rc2 (2014-08-25 15:36:20 -0700)
 
-It is at the top of my list.
+are available in the git repository at:
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.17-fix
+
+for you to fetch changes up to d49ec52ff6ddcda178fc2476a109cf1bd1fa19ed:
+
+  dm crypt: fix access beyond the end of allocated space (2014-08-28 14:24:09 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+Fix 3.17-rc1 regression introduced by switching the DM crypt target to
+using per-bio data.
+
+----------------------------------------------------------------
+Mikulas Patocka (1):
+      dm crypt: fix access beyond the end of allocated space
+
+ drivers/md/dm-crypt.c | 25 +++++++++++++++++++------
+ 1 file changed, 19 insertions(+), 6 deletions(-)
