@@ -1,15 +1,13 @@
-From: =?ISO-8859-1?Q?Jan-Simon_M=F6ller?= <dl9pf@gmx.de>
-Subject: Re: [PATCH RFC 0/6] LLVMLinux: Patches to enable the
-	kernel to be compiled with clang/LLVM
-Date: Wed, 03 Sep 2014 01:04:15 +0200
-Message-ID: <4f99918c-77da-4a2b-9757-a397aaf7b0d4@email.android.com>
-References: <1409697153-7006-1-git-send-email-behanw@converseincode.com>
-	<05DCB0B8-AA7C-495F-B8E6-0803052DD273@holtmann.org>
+From: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+Subject: [PATCH] libmultipath: Typo in condlog in
+	select_flush_on_last_del
+Date: Tue,  2 Sep 2014 12:27:40 +0200
+Message-ID: <1409653660-21574-1-git-send-email-rep.dot.nop@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3412699199527121603=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <05DCB0B8-AA7C-495F-B8E6-0803052DD273@holtmann.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +17,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Marcel Holtmann <marcel@holtmann.org>, behanw@converseincode.com
-Cc: linux-raid@vger.kernel.org, john.johansen@canonical.com, Herbert Xu <herbert@gondor.apana.org.au>, snitzer@redhat.com, linux-security-module@vger.kernel.org, jbacik@fb.com, kernel list <linux-kernel@vger.kernel.org>, Fabian Frederick <fabf@skynet.be>, clm@fb.com, dm-devel@redhat.com, linux-btrfs@vger.kernel.org, james.l.morris@oracle.com, Andrew Morton <akpm@linux-foundation.org>, serge@hallyn.com, Linus Torvalds <torvalds@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, linux-crypto@vger.kernel.org
+To: christophe.varoqui@opensvc.com
+Cc: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============3412699199527121603==
-Content-Type: multipart/alternative;
-	boundary="----TP44NQV41JQWL2QJALAE6ICYA77HFH"
-Content-Transfer-Encoding: 7bit
+s/controler/controller/g
 
-------TP44NQV41JQWL2QJALAE6ICYA77HFH
-Content-Type: text/plain;
- charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+ libmultipath/propsel.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Same deal there, too!
-
-Best,
-JS
-------TP44NQV41JQWL2QJALAE6ICYA77HFH
-Content-Type: text/html;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-Same deal there, too!<br>
-<br>
-Best,<br>
-JS
-------TP44NQV41JQWL2QJALAE6ICYA77HFH--
-
-
---===============3412699199527121603==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3412699199527121603==--
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index ee6cea6..e23d65c 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -630,7 +630,7 @@ select_flush_on_last_del(struct multipath *mp)
+ 	}
+ 	if (mp->hwe && mp->hwe->flush_on_last_del != FLUSH_UNDEF) {
+ 		mp->flush_on_last_del = mp->hwe->flush_on_last_del;
+-		condlog(3, "%s: flush_on_last_del = %i (controler setting)",
++		condlog(3, "%s: flush_on_last_del = %i (controller setting)",
+ 			mp->alias, mp->flush_on_last_del);
+ 		return 0;
+ 	}
+-- 
+1.7.10.4
