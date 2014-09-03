@@ -1,57 +1,38 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: [ANNOUNCE] thin-provisioning-tools v0.4.0
-Date: Wed, 3 Sep 2014 13:32:33 +0100
-Message-ID: <20140903123232.GA25313@debian>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Husam Al Sayed <oscar55@post.sk>
+Subject: FROM: Husam Al Sayed.
+Date: Wed, 3 Sep 2014 20:28:29 +0200 (CEST)
+Message-ID: <827969437.347127.1409768909165.JavaMail.root__43381.0102557347$1409769303$gmane$org@mbox05>
+Reply-To: "alsayedhusa@hotmail.com" <alsayedhusa@hotmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-acpi-owner@vger.kernel.org>
+Sender: linux-acpi-owner@vger.kernel.org
+Cc: dm@chelsio.com, swise@chelsio.com, leedom@chelsio.com, peppe.cavallaro@st.com, fery@cypress.com, garloff@suse.de, aliakc@web.de, lenehan@twibble.org, dc395x@twibble.org, gerrit@erg.abdn.ac.uk, dccp@vger.kernel.org, linux-decnet-user@lists.sourceforge.net, Douglas_Warzecha@dell.com, mjg59@srcf.ucam.org, paulz@synopsys.com, device@lanana.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, lidza.louina@gmail.com, driverdev-devel@linuxdriverproject.org, aeb@cwi.nl, bernie@plugable.com, ccaulfie@redhat.com, teigland@redhat.com, sumit.semwal@linaro.org, linaro-mm-sig@lists.linaro.org, shaohua.li@intel.com, linux-acpi@vger.kernel.org, rob@landley.net
 List-Id: dm-devel.ids
 
-There's a new release of the increasingly inaccurately named
-thin-provisioning-tools:
+FROM: Husam Al Sayed.
 
-https://github.com/jthornber/thin-provisioning-tools/releases/tag/v0.4.0
+EMAIL:alsayedhusa@hotmail.com
+ 
+Hello,
+ 
+I decided to write you this proposal in good faith, believing that you will
+not betray me. I am Mr. Husam Al Sayed, a Bank officer here in U.A.E.
+ 
+One Mr. Peter Adams, a citizen of your country and Crude Oil dealer made a fixed deposit with my bank in 2005 for 108 calendar months, valued at US$30,000,000.00 (Thirty Million United State Dollars) the due date for this deposit contract was last 22nd of January 2014. Sadly Peter was among the death victims in the May 27 2006 Earthquake disaster in Java, Indonesia that killed over 5,000 people. He was in Indonesia on a business trip and that was how he met his untimely end. My bank management is yet to know about his death, I knew about it because he was my friend and I am his Account Officer. Peter did not mention any Next of Kin/ Heir when the account was opened, he was not married and no children. Last week my Bank Management requested that Peter should give instructions on what to do 
+ about his funds, if to renew the contract.
+ 
+I know this will happen and that is why I have been looking for a means to handle the situation, because if my Bank Directors happens to know that Peter is dead and do not have any Heir, they will take the funds for their personal use, so I don't want such to happen. That is why I am seeking your co-operation to present you as the Next of Kin/ Heir to the account, since you are a foreigner and my bank head quarters will release the account to you. There is no risk involved; the transaction will be executed under a legitimate arrangement that will protect us from any breach of law. It is better that we claim the money, than allowing the Bank Directors to take it, they are rich already. I am not a greedy person, so I am suggesting we share the funds in this ratio, 50/50%, equal sharing. Let 
+ me know your mind on this and please do treat this information highly confidential. We shall go over the details once I receive your urgent response. Please Urgently get back to me through this email address as soon as possible:
+ 
+ 
+ 
+Have a nice day and God bless. Anticipating your communication.
+ 
+Regards,
+FROM: Husam Al Sayed.
+EMAIL: alsayedhusa@hotmail.com
+_____________________________________________________________________
 
-This contains tools for manipulating the dm metadata for dm-thin,
-dm-cache and dm-era.
-
-There is also an updated thinp_xml Ruby gem which can generate, parse
-and emit the XML format of the above three metadata types.
-
-https://rubygems.org/gems/thinp_xml
-
-
-
-
-Changes
-=======
-
-- All tools switch to using libaio.  This gives a large performance
-  boost, especially to the write focused tools like thin_restore.
-
-- Added a progress monitor to thin_restore, cache_restore and era_restore
-
-- Added a --quiet/-q option to *_restore to turn off the progress bar
-
-- Removed variable hint size support from cache tools.  The kernel
-  still only supports a fixed 32bit width.  This will have a side
-  effect of reducing the executable sizes due to less template
-  instatiation.
-
-- Tools rolled into a single executable to save space.
-
-- Fixed some bugs when walking bitsets (possibly effecting cache_dump
-  and cache_check).
+Vsetko o autach, vsetko pre motoristov - http://www.autosme.sk
