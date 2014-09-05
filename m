@@ -1,118 +1,71 @@
-From: Anssi Hannula <anssi.hannula@iki.fi>
-Subject: [PATCH] dm cache: fix race causing dirty blocks to be marked as clean
-Date: Fri,  5 Sep 2014 03:11:28 +0300
-Message-ID: <1409875888-1255-1-git-send-email-anssi.hannula@iki.fi>
-References: <53F10F80.6080204@iki.fi>
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <53F10F80.6080204@iki.fi>
-Sender: stable-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@vger.kernel.org
+From: Bastien Durel <bastien+lvm@durel.org>
+Subject: lvmetad in initrd hangs, blocking further lvm calls
+Date: Fri, 05 Sep 2014 15:49:53 +0200
+Message-ID: <5409BF81.7060404@durel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-lvm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When a writeback or a promotion of a block is completed, the cell of
-that block is removed from the prison, the block is marked as clean, and
-the clear_dirty() callback of the cache policy is called.
+Hello,
 
-Unfortunately, performing those actions in this order allows an incoming
-new write bio for that block to come in before clearing the dirty status
-is completed and therefore possibly causing one of these two scenarios:
+I got a machine running archlinux that have a problem on boot. It hangs
+for 90s waiting for pvscan on block devices, and then give up.
+(actually, the pvscan process are still stuck, and any lvm command after
+that will hang too). Sometimes it works well (one in ten time maybe).
 
-Scenario A:
+After some digging, it looks like lvmetad(8) is responsible for this
+hang, as it hangs itself at start:
 
-Thread 1                      Thread 2
-cell_defer()                  .
-- cell removed from prison    .
-- detained bios queued        .
-.                             incoming write bio
-.                             remapped to cache
-.                             set_dirty() called,
-.                               but block already dirty
-.                               => it does nothing
-clear_dirty()                 .
-- block marked clean          .
-- policy clear_dirty() called .
+lvmetad[360]: Cannot lock lockfile [/run/lvmetad.pid], error was
+[Resource temporarily unavailable]
+If I kill it and start it again after boot, the hanging pvscan processes
+are unlocked, finish their works, and everything goes back to normal
+(lvm commands works again, etc.)
 
-Result: Block is marked clean even though it is actually dirty. No
-writeback will occur.
+You can see this in logs : http://pastebin.com/Tem7TMzE
+I also got some info on running processes: http://pastebin.com/nucQARFi
 
-Scenario B:
+I tried to lower verbosity of lvmetad, but I only get the error given.
 
-Thread 1                      Thread 2
-cell_defer()                  .
-- cell removed from prison    .
-- detained bios queued        .
-clear_dirty()                 .
-- block marked clean          .
-.                             incoming write bio
-.                             remapped to cache
-.                             set_dirty() called
-.                             - block marked dirty
-.                             - policy set_dirty() called
-- policy clear_dirty() called .
+sometimes the boot is a little longer than usual (waiting for root
+partition), and lvmetad starts well (I'm not sure it's really related,
+though)
 
-Result: Block is properly marked as dirty, but policy thinks it is clean
-and therefore never asks us to writeback it.
-This case is visible in "dmsetup status" dirty block count (which
-normally decreases to 0 on a quiet device).
+the "cannot log logfile" error appears when fcntl() fails with EAGAIN (a
+file to be locked is already shared-locked or exclusive-locked by
+another process)
+there is a lvmetad running on the system, with a very little pid (way
+littler than the failing process we see in logs)
+the lvmetad process spawned by lvm2-lvmetad.service is run with -f, so
+the running one is not this one
+the first one was started 3 seconds before the second (before systemd)
+the cleanup hook of lvm2 component for initrd should kill the early
+lvmetad, dont for a reason it does not work:
 
-Fix these issues by calling clear_dirty() before calling cell_defer().
-Incoming bios for that block will then be detained in the cell and
-released only after clear_dirty() has completed, so the race will not
-occur.
+run_cleanuphook() {
+    kill $(cat /run/lvmetad.pid)
+}
+killing the process after boot don't work neither
 
-Found by inspecting the code after noticing spurious dirty counts
-(scenario B).
+I took a debug trace (http://pastebin.com/4mpNBL8t), and it looks like
+the main thread is waiting for terminations of other threads, and there
+is a client_thread stuck on a read on fd 6 (/run/lvm/lvmetad.socket)
 
-Signed-off-by: Anssi Hannula <anssi.hannula@iki.fi>
-Cc: Joe Thornber <ejt@redhat.com>
-Cc: stable@vger.kernel.org
----
+I've posted (https://bugs.archlinux.org/task/41833) on Arch bugtracker,
+where someone said me to forward upstream.
 
-> Unfortunately it seems there is some other potentially more serious bug
-> still in there...
-
-After looking through the code that indeed seems to be the case, as
-explained above.
-
-Unless I'm missing something?
-
-I can't say with 100% certainty if this fixes the spurious counts I saw
-since those took quite a long time (1-2 weeks?) to appear and the load
-of that system is somewhat irregular.
-
-
- drivers/md/dm-cache-target.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 1af40ee209e2..7130505c2425 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -895,8 +895,8 @@ static void migration_success_pre_commit(struct dm_cache_migration *mg)
- 	struct cache *cache = mg->cache;
- 
- 	if (mg->writeback) {
--		cell_defer(cache, mg->old_ocell, false);
- 		clear_dirty(cache, mg->old_oblock, mg->cblock);
-+		cell_defer(cache, mg->old_ocell, false);
- 		cleanup_migration(mg);
- 		return;
- 
-@@ -951,13 +951,13 @@ static void migration_success_post_commit(struct dm_cache_migration *mg)
- 		}
- 
- 	} else {
-+		clear_dirty(cache, mg->new_oblock, mg->cblock);
- 		if (mg->requeue_holder)
- 			cell_defer(cache, mg->new_ocell, true);
- 		else {
- 			bio_endio(mg->new_ocell->holder, 0);
- 			cell_defer(cache, mg->new_ocell, false);
- 		}
--		clear_dirty(cache, mg->new_oblock, mg->cblock);
- 		cleanup_migration(mg);
- 	}
- }
 -- 
-1.8.4.5
+Bastien Durel
