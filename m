@@ -1,60 +1,34 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Christoph Lameter <cl@linux.com>
 Subject: Re: [PATCH] slab: implement kmalloc guard
-Date: Mon, 8 Sep 2014 10:46:03 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1409081041160.29432@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1409051833510.9790@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.11.1409080932490.20388@gentwo.org>
-Mime-Version: 1.0
+Date: Mon, 8 Sep 2014 11:10:22 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1409081108190.20388@gentwo.org>
+References: <alpine.LRH.2.02.1409051833510.9790@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.11.1409080932490.20388@gentwo.org> <alpine.LRH.2.02.1409081041160.29432@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.DEB.2.11.1409080932490.20388@gentwo.org>
+In-Reply-To: <alpine.LRH.2.02.1409081041160.29432@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Christoph Lameter <cl@linux.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, kkolasa@winsoft.pl, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Mon, 8 Sep 2014, Mikulas Patocka wrote:
 
+> I don't know what you mean. If someone allocates 10000 objects with sizes
+> from 1 to 10000, you can't have 10000 slab caches - you can't have a slab
+> cache for each used size. Also - you can't create a slab cache in
+> interrupt context.
 
-On Mon, 8 Sep 2014, Christoph Lameter wrote:
+Oh you can create them up front on bootup. And I think only the small
+sizes matter. Allocations >=8K are pushed to the page allocator anyways.
 
-> On Fri, 5 Sep 2014, Mikulas Patocka wrote:
-> 
-> > This patch adds a new option DEBUG_KMALLOC that makes it possible to
-> > detect writes beyond the end of space allocated with kmalloc. Normally,
-> > the kmalloc function rounds the size to the next power of two (there is
-> > exception to this rule - sizes 96 and 192). Slab debugging detects only
-> > writes beyond the end of the slab object, it is unable to detect writes
-> > beyond the end of kmallocated size that fit into the slab object.
-> >
-> > The motivation for this patch was this: There was 6 year old bug in
-> > dm-crypt (d49ec52ff6ddcda178fc2476a109cf1bd1fa19ed) where the driver would
-> > write beyond the end of kmallocated space, but the bug went undetected
-> > because the write would fit into the power-of-two-sized slab object. Only
-> > recent changes to dm-crypt made the bug show up. There is similar problem
-> > in the nx-crypto driver in the function nx_crypto_ctx_init - again,
-> > because kmalloc rounds the size up to the next power of two, this bug went
-> > undetected.
-> 
-> The problem with the kmalloc array for debugging is inded that it is
-> only for powers of two for efficiency purposes. In the debug
-> situation we may not have the need for that efficiency. Maybe simply
-> creating kmalloc arrays for each size will do the trick?
+> > We already have a redzone structure to check for writes over the end of
+> > the object. Lets use that.
+>
+> So, change all three slab subsystems to use that.
 
-I don't know what you mean. If someone allocates 10000 objects with sizes 
-from 1 to 10000, you can't have 10000 slab caches - you can't have a slab 
-cache for each used size. Also - you can't create a slab cache in 
-interrupt context.
-
-> > This patch works for slab, slub and slob subsystems. The end of slab block
-> > can be found out with ksize (this patch renames it to __ksize). At the end
-> > of the block, we put a structure kmalloc_guard. This structure contains a
-> > magic number and a real size of the block - the exact size given to
-> 
-> We already have a redzone structure to check for writes over the end of
-> the object. Lets use that.
-
-So, change all three slab subsystems to use that.
-
-Mikulas
+SLOB has no debugging features and I think that was intentional. We are
+trying to unify the debug checks etc. Some work on that would be
+appreciated. I think the kmalloc creation is already in slab_common.c
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
