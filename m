@@ -1,127 +1,34 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm cache: fix race causing dirty blocks to be marked as
- clean
-Date: Tue, 9 Sep 2014 10:54:59 +0100
-Message-ID: <20140909095457.GA2967@debian>
-References: <53F10F80.6080204@iki.fi>
- <1409875888-1255-1-git-send-email-anssi.hannula@iki.fi>
+Subject: Re: dm-cache caching network volume
+Date: Tue, 9 Sep 2014 16:47:25 +0100
+Message-ID: <20140909154723.GB2967@debian>
+References: <1371547972.6128.8.camel@expiron>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1409875888-1255-1-git-send-email-anssi.hannula@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Anssi Hannula <anssi.hannula@iki.fi>
-Cc: Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@vger.kernel.org
+In-Reply-To: <1371547972.6128.8.camel@expiron>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Ack.  Thanks.
+On Tue, Jun 18, 2013 at 11:32:52AM +0200, =C9tienne BERSAC wrote:
+> Is it possible to have dm-cache "bufferize" blocks for network
+> failures ?
 
-On Fri, Sep 05, 2014 at 03:11:28AM +0300, Anssi Hannula wrote:
-> When a writeback or a promotion of a block is completed, the cell of
-> that block is removed from the prison, the block is marked as clean, and
-> the clear_dirty() callback of the cache policy is called.
-> 
-> Unfortunately, performing those actions in this order allows an incoming
-> new write bio for that block to come in before clearing the dirty status
-> is completed and therefore possibly causing one of these two scenarios:
-> 
-> Scenario A:
-> 
-> Thread 1                      Thread 2
-> cell_defer()                  .
-> - cell removed from prison    .
-> - detained bios queued        .
-> .                             incoming write bio
-> .                             remapped to cache
-> .                             set_dirty() called,
-> .                               but block already dirty
-> .                               => it does nothing
-> clear_dirty()                 .
-> - block marked clean          .
-> - policy clear_dirty() called .
-> 
-> Result: Block is marked clean even though it is actually dirty. No
-> writeback will occur.
-> 
-> Scenario B:
-> 
-> Thread 1                      Thread 2
-> cell_defer()                  .
-> - cell removed from prison    .
-> - detained bios queued        .
-> clear_dirty()                 .
-> - block marked clean          .
-> .                             incoming write bio
-> .                             remapped to cache
-> .                             set_dirty() called
-> .                             - block marked dirty
-> .                             - policy set_dirty() called
-> - policy clear_dirty() called .
-> 
-> Result: Block is properly marked as dirty, but policy thinks it is clean
-> and therefore never asks us to writeback it.
-> This case is visible in "dmsetup status" dirty block count (which
-> normally decreases to 0 on a quiet device).
-> 
-> Fix these issues by calling clear_dirty() before calling cell_defer().
-> Incoming bios for that block will then be detained in the cell and
-> released only after clear_dirty() has completed, so the race will not
-> occur.
-> 
-> Found by inspecting the code after noticing spurious dirty counts
-> (scenario B).
-> 
-> Signed-off-by: Anssi Hannula <anssi.hannula@iki.fi>
-> Cc: Joe Thornber <ejt@redhat.com>
-> Cc: stable@vger.kernel.org
-> ---
-> 
-> > Unfortunately it seems there is some other potentially more serious bug
-> > still in there...
-> 
-> After looking through the code that indeed seems to be the case, as
-> explained above.
-> 
-> Unless I'm missing something?
-> 
-> I can't say with 100% certainty if this fixes the spurious counts I saw
-> since those took quite a long time (1-2 weeks?) to appear and the load
-> of that system is somewhat irregular.
-> 
-> 
->  drivers/md/dm-cache-target.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-> index 1af40ee209e2..7130505c2425 100644
-> --- a/drivers/md/dm-cache-target.c
-> +++ b/drivers/md/dm-cache-target.c
-> @@ -895,8 +895,8 @@ static void migration_success_pre_commit(struct dm_cache_migration *mg)
->  	struct cache *cache = mg->cache;
->  
->  	if (mg->writeback) {
-> -		cell_defer(cache, mg->old_ocell, false);
->  		clear_dirty(cache, mg->old_oblock, mg->cblock);
-> +		cell_defer(cache, mg->old_ocell, false);
->  		cleanup_migration(mg);
->  		return;
->  
-> @@ -951,13 +951,13 @@ static void migration_success_post_commit(struct dm_cache_migration *mg)
->  		}
->  
->  	} else {
-> +		clear_dirty(cache, mg->new_oblock, mg->cblock);
->  		if (mg->requeue_holder)
->  			cell_defer(cache, mg->new_ocell, true);
->  		else {
->  			bio_endio(mg->new_ocell->holder, 0);
->  			cell_defer(cache, mg->new_ocell, false);
->  		}
-> -		clear_dirty(cache, mg->new_oblock, mg->cblock);
->  		cleanup_migration(mg);
->  	}
->  }
-> -- 
-> 1.8.4.5
-> 
+dm-cache is a slow moving cache, foor instance, it does not attempt to
+pass all writes through the SSD.  Since you cannot rule out IO going
+to the origin device it's not suitable for adding resilience to an
+intermittent network connection.  Perhaps you should look at dm-raid?
+
+- Joe
