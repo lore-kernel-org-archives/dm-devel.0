@@ -1,37 +1,127 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [PATCH] slab: implement kmalloc guard
-Date: Mon, 8 Sep 2014 11:10:22 -0500 (CDT)
-Message-ID: <alpine.DEB.2.11.1409081108190.20388@gentwo.org>
-References: <alpine.LRH.2.02.1409051833510.9790@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.11.1409080932490.20388@gentwo.org> <alpine.LRH.2.02.1409081041160.29432@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.LRH.2.02.1409081041160.29432@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, kkolasa@winsoft.pl, dm-devel@redhat.com
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH] dm cache: fix race causing dirty blocks to be marked as
+ clean
+Date: Tue, 9 Sep 2014 10:54:59 +0100
+Message-ID: <20140909095457.GA2967@debian>
+References: <53F10F80.6080204@iki.fi>
+ <1409875888-1255-1-git-send-email-anssi.hannula@iki.fi>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1409875888-1255-1-git-send-email-anssi.hannula@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Anssi Hannula <anssi.hannula@iki.fi>
+Cc: Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 8 Sep 2014, Mikulas Patocka wrote:
+Ack.  Thanks.
 
-> I don't know what you mean. If someone allocates 10000 objects with sizes
-> from 1 to 10000, you can't have 10000 slab caches - you can't have a slab
-> cache for each used size. Also - you can't create a slab cache in
-> interrupt context.
-
-Oh you can create them up front on bootup. And I think only the small
-sizes matter. Allocations >=8K are pushed to the page allocator anyways.
-
-> > We already have a redzone structure to check for writes over the end of
-> > the object. Lets use that.
->
-> So, change all three slab subsystems to use that.
-
-SLOB has no debugging features and I think that was intentional. We are
-trying to unify the debug checks etc. Some work on that would be
-appreciated. I think the kmalloc creation is already in slab_common.c
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On Fri, Sep 05, 2014 at 03:11:28AM +0300, Anssi Hannula wrote:
+> When a writeback or a promotion of a block is completed, the cell of
+> that block is removed from the prison, the block is marked as clean, and
+> the clear_dirty() callback of the cache policy is called.
+> 
+> Unfortunately, performing those actions in this order allows an incoming
+> new write bio for that block to come in before clearing the dirty status
+> is completed and therefore possibly causing one of these two scenarios:
+> 
+> Scenario A:
+> 
+> Thread 1                      Thread 2
+> cell_defer()                  .
+> - cell removed from prison    .
+> - detained bios queued        .
+> .                             incoming write bio
+> .                             remapped to cache
+> .                             set_dirty() called,
+> .                               but block already dirty
+> .                               => it does nothing
+> clear_dirty()                 .
+> - block marked clean          .
+> - policy clear_dirty() called .
+> 
+> Result: Block is marked clean even though it is actually dirty. No
+> writeback will occur.
+> 
+> Scenario B:
+> 
+> Thread 1                      Thread 2
+> cell_defer()                  .
+> - cell removed from prison    .
+> - detained bios queued        .
+> clear_dirty()                 .
+> - block marked clean          .
+> .                             incoming write bio
+> .                             remapped to cache
+> .                             set_dirty() called
+> .                             - block marked dirty
+> .                             - policy set_dirty() called
+> - policy clear_dirty() called .
+> 
+> Result: Block is properly marked as dirty, but policy thinks it is clean
+> and therefore never asks us to writeback it.
+> This case is visible in "dmsetup status" dirty block count (which
+> normally decreases to 0 on a quiet device).
+> 
+> Fix these issues by calling clear_dirty() before calling cell_defer().
+> Incoming bios for that block will then be detained in the cell and
+> released only after clear_dirty() has completed, so the race will not
+> occur.
+> 
+> Found by inspecting the code after noticing spurious dirty counts
+> (scenario B).
+> 
+> Signed-off-by: Anssi Hannula <anssi.hannula@iki.fi>
+> Cc: Joe Thornber <ejt@redhat.com>
+> Cc: stable@vger.kernel.org
+> ---
+> 
+> > Unfortunately it seems there is some other potentially more serious bug
+> > still in there...
+> 
+> After looking through the code that indeed seems to be the case, as
+> explained above.
+> 
+> Unless I'm missing something?
+> 
+> I can't say with 100% certainty if this fixes the spurious counts I saw
+> since those took quite a long time (1-2 weeks?) to appear and the load
+> of that system is somewhat irregular.
+> 
+> 
+>  drivers/md/dm-cache-target.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index 1af40ee209e2..7130505c2425 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -895,8 +895,8 @@ static void migration_success_pre_commit(struct dm_cache_migration *mg)
+>  	struct cache *cache = mg->cache;
+>  
+>  	if (mg->writeback) {
+> -		cell_defer(cache, mg->old_ocell, false);
+>  		clear_dirty(cache, mg->old_oblock, mg->cblock);
+> +		cell_defer(cache, mg->old_ocell, false);
+>  		cleanup_migration(mg);
+>  		return;
+>  
+> @@ -951,13 +951,13 @@ static void migration_success_post_commit(struct dm_cache_migration *mg)
+>  		}
+>  
+>  	} else {
+> +		clear_dirty(cache, mg->new_oblock, mg->cblock);
+>  		if (mg->requeue_holder)
+>  			cell_defer(cache, mg->new_ocell, true);
+>  		else {
+>  			bio_endio(mg->new_ocell->holder, 0);
+>  			cell_defer(cache, mg->new_ocell, false);
+>  		}
+> -		clear_dirty(cache, mg->new_oblock, mg->cblock);
+>  		cleanup_migration(mg);
+>  	}
+>  }
+> -- 
+> 1.8.4.5
+> 
