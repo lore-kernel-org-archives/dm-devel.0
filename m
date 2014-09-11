@@ -1,105 +1,27 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm crypt: fix access beyond the end of allocated space
-Date: Thu, 11 Sep 2014 13:43:12 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1409111339220.5256@file01.intranet.prod.int.rdu2.redhat.com>
+From: Willy Tarreau <w@1wt.eu>
+Subject: Re: [PATCH] dm crypt: fix access beyond the end of allocated space
+Date: Thu, 11 Sep 2014 19:53:44 +0200
+Message-ID: <20140911175344.GG23478@1wt.eu>
+References: <alpine.LRH.2.02.1409111339220.5256@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1409111339220.5256@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: stable-owner@vger.kernel.org
-To: stable@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Willy Tarreau <w@1wt.eu>, Paul Gortmaker <paul.gortmaker@windriver.com>, Luis Henriques <luis.henriques@canonical.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Paul Gortmaker <paul.gortmaker@windriver.com>, Luis Henriques <luis.henriques@canonical.com>, dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hi Mikulas,
 
-This is backport of upstream commit 
-d49ec52ff6ddcda178fc2476a109cf1bd1fa19ed. It is suitable for all stable 
-kernels.
+On Thu, Sep 11, 2014 at 01:43:12PM -0400, Mikulas Patocka wrote:
+> Hi
+> 
+> This is backport of upstream commit 
+> d49ec52ff6ddcda178fc2476a109cf1bd1fa19ed. It is suitable for all stable 
+> kernels.
 
-Mikulas
+Patch queued, thanks very much!
 
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-The DM crypt target accesses memory beyond allocated space resulting in
-a crash on 32 bit x86 systems.
-
-This bug is very old (it dates back to 2.6.25 commit 3a7f6c990ad04 "dm
-crypt: use async crypto").  However, this bug was masked by the fact
-that kmalloc rounds the size up to the next power of two.  This bug
-wasn't exposed until 3.17-rc1 commit 298a9fa08a ("dm crypt: use per-bio
-data").  By switching to using per-bio data there was no longer any
-padding beyond the end of a dm-crypt allocated memory block.
-
-To minimize allocation overhead dm-crypt puts several structures into one
-block allocated with kmalloc.  The block holds struct ablkcipher_request,
-cipher-specific scratch pad (crypto_ablkcipher_reqsize(any_tfm(cc))),
-struct dm_crypt_request and an initialization vector.
-
-The variable dmreq_start is set to offset of struct dm_crypt_request
-within this memory block.  dm-crypt allocates the block with this size:
-cc->dmreq_start + sizeof(struct dm_crypt_request) + cc->iv_size.
-
-When accessing the initialization vector, dm-crypt uses the function
-iv_of_dmreq, which performs this calculation: ALIGN((unsigned long)(dmreq
-+ 1), crypto_ablkcipher_alignmask(any_tfm(cc)) + 1).
-
-dm-crypt allocated "cc->iv_size" bytes beyond the end of dm_crypt_request
-structure.  However, when dm-crypt accesses the initialization vector, it
-takes a pointer to the end of dm_crypt_request, aligns it, and then uses
-it as the initialization vector.  If the end of dm_crypt_request is not
-aligned on a crypto_ablkcipher_alignmask(any_tfm(cc)) boundary the
-alignment causes the initialization vector to point beyond the allocated
-space.
-
-Fix this bug by calculating the variable iv_size_padding and adding it
-to the allocated size.
-
-Also correct the alignment of dm_crypt_request.  struct dm_crypt_request
-is specific to dm-crypt (it isn't used by the crypto subsystem at all),
-so it is aligned on __alignof__(struct dm_crypt_request).
-
----
- drivers/md/dm-crypt.c |   20 ++++++++++++++++----
- 1 file changed, 16 insertions(+), 4 deletions(-)
-
-Index: linux-3.14.18/drivers/md/dm-crypt.c
-===================================================================
---- linux-3.14.18.orig/drivers/md/dm-crypt.c	2014-09-11 18:59:10.931906801 +0200
-+++ linux-3.14.18/drivers/md/dm-crypt.c	2014-09-11 18:59:39.787718135 +0200
-@@ -1681,6 +1681,7 @@ static int crypt_ctr(struct dm_target *t
- 	unsigned int key_size, opt_params;
- 	unsigned long long tmpll;
- 	int ret;
-+	size_t iv_size_padding;
- 	struct dm_arg_set as;
- 	const char *opt_string;
- 	char dummy;
-@@ -1717,12 +1718,23 @@ static int crypt_ctr(struct dm_target *t
- 
- 	cc->dmreq_start = sizeof(struct ablkcipher_request);
- 	cc->dmreq_start += crypto_ablkcipher_reqsize(any_tfm(cc));
--	cc->dmreq_start = ALIGN(cc->dmreq_start, crypto_tfm_ctx_alignment());
--	cc->dmreq_start += crypto_ablkcipher_alignmask(any_tfm(cc)) &
--			   ~(crypto_tfm_ctx_alignment() - 1);
-+	cc->dmreq_start = ALIGN(cc->dmreq_start, __alignof__(struct dm_crypt_request));
-+
-+	if (crypto_ablkcipher_alignmask(any_tfm(cc)) < CRYPTO_MINALIGN) {
-+		/* Allocate the padding exactly */
-+		iv_size_padding = -(cc->dmreq_start + sizeof(struct dm_crypt_request))
-+				& crypto_ablkcipher_alignmask(any_tfm(cc));
-+	} else {
-+		/*
-+		 * If the cipher requires greater alignment than kmalloc
-+		 * alignment, we don't know the exact position of the
-+		 * initialization vector. We must assume worst case.
-+		 */
-+		iv_size_padding = crypto_ablkcipher_alignmask(any_tfm(cc));
-+	}
- 
- 	cc->req_pool = mempool_create_kmalloc_pool(MIN_IOS, cc->dmreq_start +
--			sizeof(struct dm_crypt_request) + cc->iv_size);
-+			sizeof(struct dm_crypt_request) + iv_size_padding + cc->iv_size);
- 	if (!cc->req_pool) {
- 		ti->error = "Cannot allocate crypt request mempool";
- 		goto bad;
+Willy
