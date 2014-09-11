@@ -1,85 +1,105 @@
-From: Thomas Glanzmann <thomas@glanzmann.de>
-Subject: 3PAR transparent failover with Linux
-Date: Thu, 11 Sep 2014 14:58:19 +0200
-Message-ID: <20140911125818.GC29930@glanzmann.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm crypt: fix access beyond the end of allocated space
+Date: Thu, 11 Sep 2014 13:43:12 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1409111339220.5256@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: stable@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Willy Tarreau <w@1wt.eu>, Paul Gortmaker <paul.gortmaker@windriver.com>, Luis Henriques <luis.henriques@canonical.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
-we have two 3PARs 7400 which are configured for transparent failover. In
-the following manner:
+Hi
 
-Active           Passive
-3PAR-1 - RCOPY - 3PAR-2
-  \                 /
-   \               /
-Active          Standby
-Optimized        /
-      \         /
-       Linux Box
+This is backport of upstream commit 
+d49ec52ff6ddcda178fc2476a109cf1bd1fa19ed. It is suitable for all stable 
+kernels.
 
-When we run multipath -l before the failover two paths were 'active' the
-other paths 'failed'. Once we failed over and the ALUA state changed,
-all paths went to 'failed':
+Mikulas
 
-360002ac0000000000000000a0000cc14 dm-17 3PARdata,VV
-size=50G features='0' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=0 status=enabled
-  |- 6:0:6:0   sdak 66:64  failed undef running
-  |- 6:0:7:0   sdal 66:80  failed undef running
-  |- 7:0:6:0   sdbw 68:160 failed undef running
-  `- 7:0:7:0   sdbx 68:176 failed undef running
 
-But we were able to continue I/O. So I wonder why multipath reported 'failed'
-but allowed to continue I/O. So from our standpoint the I/O was continuing. The
-transparent failover successfull. This is not supported by 3PAR for Linux but
-it is for VMware ESX.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-wrz3164:~ # sg_inq /dev/sdak
-standard INQUIRY:
-  PQual=0  Device_type=0  RMB=0  version=0x06  [SPC-4]
-  [AERC=0]  [TrmTsk=0]  NormACA=0  HiSUP=1  Resp_data_format=2
-  SCCS=0  ACC=0  TPGS=1  3PC=1  Protect=0  [BQue=0]
-  EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
-  [RelAdr=0]  WBus16=1  Sync=1  Linked=0  [TranDis=0]  CmdQue=1
-  [SPI: Clocking=0x0  QAS=0  IUS=0]
-    length=168 (0xa8)   Peripheral device type: disk
- Vendor identification: 3PARdata
- Product identification: VV
- Product revision level: 3131
- Unit serial number:  <removed>
+The DM crypt target accesses memory beyond allocated space resulting in
+a crash on 32 bit x86 systems.
 
-I would like to know if other people have experimented with 3PAR and
-transparent failover. The above was with SLES 11SP3 and SuSE packaged
-multipathd 0.4.9. We tried the HP configuration and the configuration
-which was in the git head of multipath-tools which I also used during
-the failover test: 
+This bug is very old (it dates back to 2.6.25 commit 3a7f6c990ad04 "dm
+crypt: use async crypto").  However, this bug was masked by the fact
+that kmalloc rounds the size up to the next power of two.  This bug
+wasn't exposed until 3.17-rc1 commit 298a9fa08a ("dm crypt: use per-bio
+data").  By switching to using per-bio data there was no longer any
+padding beyond the end of a dm-crypt allocated memory block.
 
-       device {
-               vendor "3PARdata"
-               product "VV"
-               path_grouping_policy "multibus"
-               path_checker "directio"
-               features "0"
-               hardware_handler "0"
-               prio "const"
-               rr_weight "uniform"
-       }
+To minimize allocation overhead dm-crypt puts several structures into one
+block allocated with kmalloc.  The block holds struct ablkcipher_request,
+cipher-specific scratch pad (crypto_ablkcipher_reqsize(any_tfm(cc))),
+struct dm_crypt_request and an initialization vector.
 
-Cheers,
-        Thomas
+The variable dmreq_start is set to offset of struct dm_crypt_request
+within this memory block.  dm-crypt allocates the block with this size:
+cc->dmreq_start + sizeof(struct dm_crypt_request) + cc->iv_size.
+
+When accessing the initialization vector, dm-crypt uses the function
+iv_of_dmreq, which performs this calculation: ALIGN((unsigned long)(dmreq
++ 1), crypto_ablkcipher_alignmask(any_tfm(cc)) + 1).
+
+dm-crypt allocated "cc->iv_size" bytes beyond the end of dm_crypt_request
+structure.  However, when dm-crypt accesses the initialization vector, it
+takes a pointer to the end of dm_crypt_request, aligns it, and then uses
+it as the initialization vector.  If the end of dm_crypt_request is not
+aligned on a crypto_ablkcipher_alignmask(any_tfm(cc)) boundary the
+alignment causes the initialization vector to point beyond the allocated
+space.
+
+Fix this bug by calculating the variable iv_size_padding and adding it
+to the allocated size.
+
+Also correct the alignment of dm_crypt_request.  struct dm_crypt_request
+is specific to dm-crypt (it isn't used by the crypto subsystem at all),
+so it is aligned on __alignof__(struct dm_crypt_request).
+
+---
+ drivers/md/dm-crypt.c |   20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
+
+Index: linux-3.14.18/drivers/md/dm-crypt.c
+===================================================================
+--- linux-3.14.18.orig/drivers/md/dm-crypt.c	2014-09-11 18:59:10.931906801 +0200
++++ linux-3.14.18/drivers/md/dm-crypt.c	2014-09-11 18:59:39.787718135 +0200
+@@ -1681,6 +1681,7 @@ static int crypt_ctr(struct dm_target *t
+ 	unsigned int key_size, opt_params;
+ 	unsigned long long tmpll;
+ 	int ret;
++	size_t iv_size_padding;
+ 	struct dm_arg_set as;
+ 	const char *opt_string;
+ 	char dummy;
+@@ -1717,12 +1718,23 @@ static int crypt_ctr(struct dm_target *t
+ 
+ 	cc->dmreq_start = sizeof(struct ablkcipher_request);
+ 	cc->dmreq_start += crypto_ablkcipher_reqsize(any_tfm(cc));
+-	cc->dmreq_start = ALIGN(cc->dmreq_start, crypto_tfm_ctx_alignment());
+-	cc->dmreq_start += crypto_ablkcipher_alignmask(any_tfm(cc)) &
+-			   ~(crypto_tfm_ctx_alignment() - 1);
++	cc->dmreq_start = ALIGN(cc->dmreq_start, __alignof__(struct dm_crypt_request));
++
++	if (crypto_ablkcipher_alignmask(any_tfm(cc)) < CRYPTO_MINALIGN) {
++		/* Allocate the padding exactly */
++		iv_size_padding = -(cc->dmreq_start + sizeof(struct dm_crypt_request))
++				& crypto_ablkcipher_alignmask(any_tfm(cc));
++	} else {
++		/*
++		 * If the cipher requires greater alignment than kmalloc
++		 * alignment, we don't know the exact position of the
++		 * initialization vector. We must assume worst case.
++		 */
++		iv_size_padding = crypto_ablkcipher_alignmask(any_tfm(cc));
++	}
+ 
+ 	cc->req_pool = mempool_create_kmalloc_pool(MIN_IOS, cc->dmreq_start +
+-			sizeof(struct dm_crypt_request) + cc->iv_size);
++			sizeof(struct dm_crypt_request) + iv_size_padding + cc->iv_size);
+ 	if (!cc->req_pool) {
+ 		ti->error = "Cannot allocate crypt request mempool";
+ 		goto bad;
