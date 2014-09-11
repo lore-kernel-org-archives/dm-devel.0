@@ -1,15 +1,13 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: Powerpath vs dm-multipath - two points of FUD?
-Date: Wed, 10 Sep 2014 11:04:19 +0100
-Message-ID: <20140910100419.GB17924@localhost.localdomain>
-References: <CA+ZWeLBUXK_kWjNkUcsg_5rP8ruew6ipupzdL_kw_K4v70p_5g@mail.gmail.com>
+From: Thomas Glanzmann <thomas@glanzmann.de>
+Subject: 3PAR transparent failover with Linux
+Date: Thu, 11 Sep 2014 14:58:19 +0200
+Message-ID: <20140911125818.GC29930@glanzmann.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CA+ZWeLBUXK_kWjNkUcsg_5rP8ruew6ipupzdL_kw_K4v70p_5g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,60 +17,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCBTZXAgMDksIDIwMTQgYXQgMDU6NTA6NDlQTSArMDEwMCwgUm9iIHdyb3RlOgo+IEZp
-cnN0bHksIGFwb2xvZ2llcyBpZiB0aGlzIGlzIGEgY29tbW9uIHRvcGljIGFuZCBteSBpbnRlbnRp
-b25zIGFyZSBub3QgdG8KPiBzdGFydCBhIGZsYW1lIHdhci4gSSd2ZSBnb29nbGVkIGV4dGVuc2l2
-ZWx5IGJ1dCBoYXZlbid0IGZvdW5kIHNwZWNpZmljCj4gaW5mb3JtYXRpb24gdG8gYWRkcmVzcyBt
-eSBxdWVyaWVzLCBzbyBJIHRob3VnaHQgSSB3b3VsZCB0dXJuIGhlcmUuCgpEci4gRnJlZW1hbiwg
-SSBwcmVzdW1lPyA7KQogCj4gKkhlcmXigJlzIGEgY291cGxlIG9mIHJlYXNvbnMgdG8gc3RpY2sg
-d2l0aCBwb3dlcnBhdGg6KiBMb2FkCj4gQmFsYW5jaW5nOiBXaGlsc3QgZG0tbXVsdGlwYXRoIGNh
-biBtYWtlIHVzZSBvZiBtb3JlIHRoYW4gb25lIG9mIHRoZSBwYXRocwo+IHRvIGFuIGFycmF5LCAu
-aS5lIHdpdGggcm91bmQtcm9iaW4sIHRoaXMgaXNu4oCZdCB0cnVlIGxvYWQtYmFsYW5jaW5nLgoK
-SGFzbid0IGJlZW4gdHJ1ZSBzaW5jZSBSSEVMNS4gUkhFTDYncyBrZXJuZWwgaGFzIHJlcXVlc3Qt
-YmFzZWQKZGV2aWNlLW1hcHBlciBhbmQgdGhlIFNDU0kgZGV2aWNlX2hhbmRsZXIgaW5mcmFzdHJ1
-Y3R1cmUgd2hpY2ggYWxsb3dzCnRoZSBkbS1tdWx0aXBhdGggdGFyZ2V0IHRvIG1ha2UgYmV0dGVy
-IGRlY2lzaW9ucyBpbiByZXNwb25zZSB0byBkZXZpY2UKdXRpbGlzYXRpb24gYW5kIGVycm9yIGNv
-bmRpdGlvbnMuIEluIGFkZGl0aW9uIHRvIHRoZSBzaW1wbGUgcm91bmQtcm9iaW4KcGF0aCBzZWxl
-Y3RvciBSSEVMNiAoYW5kIGxhdGVyKSBkZXZpY2UtbWFwcGVyLW11bHRpcGF0aCBzdXBwb3J0cyB0
-aGUKcXVldWUtbGVuZ3RoIGFuZCBzZXJ2aWNlLXRpbWUgcGF0aCBzZWxlY3RvcnMuIFRoZXNlIHJv
-dXRlIElPIHRvIHRoZQpkZXZpY2Ugd2l0aCB0aGUgc2hvcnRlc3QgcXVldWUgb3IgYmVzdCBzZXJ2
-aWNlIHRpbWUgKHNob3J0ZXN0IHF1ZXVlCnJlbGF0aXZlIHRvIHRoZSBkZXZpY2UncyB0aHJvdWdo
-cHV0KS4gSXQncyByZWxhdGl2ZWx5IGVhc3kgdG8gYWRkIGEgbmV3CnBhdGggc2VsZWN0b3IgLSB0
-aGUgZGlmZmljdWx0IHBhcnQgaXMgdG8gZGVmaW5lIGdlbmVyYWxseSB1c2VmdWwKc2VsZWN0aW9u
-IGFsZ29yaXRobXMuCgpPbmUgdGhpbmcgdG8gYmVhciBpbiBtaW5kIGlzIHRoYXQgYWxsIG9mIHRo
-ZSBMaW51eCBtdWx0aXBhdGggc29sdXRpb25zCnNpdCBvbiB0b3Agb2YgdGhlIHNhbWUgU0NTSSBp
-bmZyYXN0cnVjdHVyZTsgSSd2ZSBzZWVuIHNpdHVhdGlvbnMgd2hlcmUKaG9zdHMgdXNpbmcgbXVs
-dGlwYXRoLXRvb2xzLCBQb3dlclBhdGggYW5kIFZlcml0YXMgVnhETVAgYWxsIHN1ZmZlcmVkCmEg
-c2ltaWxhciBmYWlsdXJlIGR1ZSB0byBhIGhhcmR3YXJlIGZ1YWx0IGNvbmRpdGlvbiB0aGF0IHdh
-cyBub3QgaGFuZGxlZAp3ZWxsIGJ5IHRoZSBMaW51eCBtaWRsYXllciBhdCB0aGUgdGltZS4KCj4g
-IFBvd2VycGF0aCBpcyBhYmxlIHRvIGV4YW1pbmUgdGhlIHBhdGhzIGRvd24gdG8gdGhlIGFycmF5
-IGFuZCBiYWxhbmNlCj4gd29ya2xvYWQgYmFzZWQgb24gaG93IGJ1c3kgdGhlIHN0b3JhZ2UgY29u
-dHJvbGxlciAvIHBvcnRzIGFyZS4gIEFGQUlLIFJoZWw2Cj4gaGFzIGFkZGVkIGZ1bmN0aW9uYWxp
-dHkgdG8gbWFrZSBwYXRoIGNob2ljZXMgYmFzZWQgb24gcXVldWUgZGVwdGggYW5kCj4gc2Vydmlj
-ZSB0aW1lLCB3aGljaCBkb2VzIGFkZCBzb21lIGltcHJvdmVtZW50IG92ZXIgdmFuaWxsYSByb3Vu
-ZC1yb2Jpbi4gRm9yCj4gVk1BWCBhbmQgQ1gvVk5YLCBwb3dlcnBhdGggdXNlcyB0aGUgZm9sbG93
-aW5nIHBhcmFtZXRlcnMgdG8gYmFsYW5jZSB0aGUKPiBwYXRocyBvdXQ6IFBlbmRpbmcgSS9PcyBv
-biB0aGUgcGF0aCwgU2l6ZSBvZiBJL09zLCBUeXBlcyBvZiBJL09zLCBhbmQgUGF0aHMKClBvd2Vy
-UGF0aCBkb2VzIHN1cHBvcnQgdmFyaW91cyBtb2RlcyBvZiBvcHRpbWlzYXRpb24gdGhhdCBhcmUg
-c3BlY2lmaWMKdG8gRU1DIGFycmF5cyAoaWlyYyBzZXBhcmF0ZSBwb2xpY2llcyBleGlzdCBmb3Ig
-U3ltbWV0cml4IGFuZCBvdGhlcgpwcm9kdWN0IGxpbmVzKS4gVGhlc2UgYXJlIGJhc2VkIG9uIGFu
-IHVuZGVyc3RhbmRpbmcgb2YgdGhlIGRldmljZQppbnRlcm5hbHMgYW5kIHJlbHkgb24gaW5mb3Jt
-YXRpb24gdGhhdCBpcyBub3QgcHVibGljbHkgYXZhaWxhYmxlIC0gZS5nLgpJJ3ZlIHNlZW4gY2Fz
-ZXMgd2hlcmUgUG93ZXJQYXRoIGRlY2lkZXMgdG8gcm91dGUgYWxsIElPIHRvIGEgc2luZ2xlIHBv
-cnQKb2YgYSBTeW1tZXRyaXggcHJlc3VtYWJseSBiZWNhdXNlIHRoaXMgZ2l2ZXMgaW1wcm92ZWQg
-Y2FjaGUgYmVoYXZpb3VyLgoKPiBtb3N0IHJlY2VudGx5IHVzZWQuICogRmxha2V5IFBhdGggRGV0
-ZWN0aW9uOiBUaGUgbGF0ZXN0IHZlcnNpb25zIG9mCj4gcG93ZXJwYXRoIGNhbiBwcm9hY3RpdmVs
-eSB0YWtlIHBhdGhzIG91dCBvZiBzZXJ2aWNlIHNob3VsZCBpdCBvYnNlcnZlCj4gaW50ZXJtaXR0
-ZW50IElPIGZhaWx1cmVzIChyZW1lbWJlciBhbnkgSU8gZmFpbHVyZSBjYW4gaG9sZCBhIHRocmVh
-ZCBmb3IKPiAzMC02MCBzZWNvbmRzIHdoaWxzdCB0aGUgU0NTSSBjb21tYW5kIGZ1cnRoZXIgdXAg
-dGhlIHN0YWNrIHRpbWVzIG91dCwgYW5kIGEKPiByZXRyeSBpcyBzZW50KS4gIGRtLW11bHRpcGF0
-aCBkb2VzbuKAmXQgaGF2ZSBmdW5jdGlvbmFsaXR5IHRvIHJlbW92ZSBhIGZsYWtleQo+IHBhdGgs
-IHBhdGhzIGNhbiBvbmx5IGJlIG1hcmtlZCBvdXQgb2Ygc2VydmljZSBvbiBoYXJkIGZhaWx1cmUu
-KgoKVGhpcyBpcyBzb21ldGhpbmcgSSd2ZSBkaXNjdXNzZWQgYSBmZXcgdGltZXMuIEl0J3MgYSB1
-c2VmdWwgZmVhdHVyZSBidXQKb25lIHRoYXQgbWFpbmx5IGNvbWVzIGludG8gcGxheSB3aGVuIGRl
-YWxpbmcgd2l0aCBmYWlsaW5nIG9yIG1hcmdpbmFsCmhhcmR3YXJlLgoKUmVnYXJkcywKQnJ5bi4K
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hello,
+we have two 3PARs 7400 which are configured for transparent failover. In
+the following manner:
+
+Active           Passive
+3PAR-1 - RCOPY - 3PAR-2
+  \                 /
+   \               /
+Active          Standby
+Optimized        /
+      \         /
+       Linux Box
+
+When we run multipath -l before the failover two paths were 'active' the
+other paths 'failed'. Once we failed over and the ALUA state changed,
+all paths went to 'failed':
+
+360002ac0000000000000000a0000cc14 dm-17 3PARdata,VV
+size=50G features='0' hwhandler='0' wp=rw
+`-+- policy='service-time 0' prio=0 status=enabled
+  |- 6:0:6:0   sdak 66:64  failed undef running
+  |- 6:0:7:0   sdal 66:80  failed undef running
+  |- 7:0:6:0   sdbw 68:160 failed undef running
+  `- 7:0:7:0   sdbx 68:176 failed undef running
+
+But we were able to continue I/O. So I wonder why multipath reported 'failed'
+but allowed to continue I/O. So from our standpoint the I/O was continuing. The
+transparent failover successfull. This is not supported by 3PAR for Linux but
+it is for VMware ESX.
+
+wrz3164:~ # sg_inq /dev/sdak
+standard INQUIRY:
+  PQual=0  Device_type=0  RMB=0  version=0x06  [SPC-4]
+  [AERC=0]  [TrmTsk=0]  NormACA=0  HiSUP=1  Resp_data_format=2
+  SCCS=0  ACC=0  TPGS=1  3PC=1  Protect=0  [BQue=0]
+  EncServ=0  MultiP=1 (VS=0)  [MChngr=0]  [ACKREQQ=0]  Addr16=0
+  [RelAdr=0]  WBus16=1  Sync=1  Linked=0  [TranDis=0]  CmdQue=1
+  [SPI: Clocking=0x0  QAS=0  IUS=0]
+    length=168 (0xa8)   Peripheral device type: disk
+ Vendor identification: 3PARdata
+ Product identification: VV
+ Product revision level: 3131
+ Unit serial number:  <removed>
+
+I would like to know if other people have experimented with 3PAR and
+transparent failover. The above was with SLES 11SP3 and SuSE packaged
+multipathd 0.4.9. We tried the HP configuration and the configuration
+which was in the git head of multipath-tools which I also used during
+the failover test: 
+
+       device {
+               vendor "3PARdata"
+               product "VV"
+               path_grouping_policy "multibus"
+               path_checker "directio"
+               features "0"
+               hardware_handler "0"
+               prio "const"
+               rr_weight "uniform"
+       }
+
+Cheers,
+        Thomas
