@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 5/6] multipath.conf: add all_devs device option
-Date: Fri, 12 Sep 2014 12:44:51 -0500
-Message-ID: <1410543892-29826-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/6] Fix missing frees and null terminations
+Date: Fri, 12 Sep 2014 12:44:50 -0500
+Message-ID: <1410543892-29826-5-git-send-email-bmarzins@redhat.com>
 References: <1410543892-29826-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,190 +22,135 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Sometimes users want to to be able to set a configuration value for all
-their devices (for instance, they may want all devices to set no_path_retry
-to fail). The builtin device configurations make this tricky, since
-they need to change each one device configuration individually.  To avoid
-that, this patch adds a new device config option, "all_devs". When this is
-set to "yes", the options set in this devices section will override those
-values in all the builtin configs.
-
-For instance, to make all builtin configs set no_path_retry to fail, you
-could add:
-
-devices {
-	device {
-		all_devs yes
-		no_path_retry fail
-	}
-}
-
+There were a number of error code paths where multipath wasn't correctly
+freeing memory.  Also, readlink doesn't null terminate strings, so
+multipath needs to make sure that they get terminated.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c | 59 +++++++++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/config.h |  1 +
- libmultipath/dict.c   | 38 +++++++++++++++++++++++++++++++++
- 3 files changed, 98 insertions(+)
+ kpartx/devmapper.c                       | 3 ++-
+ libmultipath/alias.c                     | 1 +
+ libmultipath/blacklist.c                 | 7 +++++++
+ libmultipath/prioritizers/iet.c          | 2 ++
+ libmultipath/prioritizers/weightedpath.c | 5 ++++-
+ libmultipath/util.c                      | 2 +-
+ 6 files changed, 17 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 39963b4..d326765 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -112,6 +112,8 @@ find_hwe (vector hwtable, char * vendor, char * product, char * revision)
- 	 * continuing to the generic entries
- 	 */
- 	vector_foreach_slot_backwards (hwtable, tmp, i) {
-+		if (tmp->all_devs == 1)
-+			continue;
- 		if (hwe_regmatch(tmp, &hwe))
- 			continue;
- 		ret = tmp;
-@@ -353,6 +355,59 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	return 0;
- }
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index 7879a09..a3272d4 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -132,8 +132,9 @@ dm_addmap (int task, const char *name, const char *target,
+ 		goto addout;
+ 	r = dm_task_run (dmt);
  
-+#define overwrite_str(s) \
-+do { \
-+	if (src->s) { \
-+		if (dst->s) \
-+			FREE(dst->s); \
-+		if (!(dst->s = set_param_str(src->s))) \
-+			return 1; \
-+	} \
-+} while(0)
-+
-+#define overwrite_num(s) \
-+do { \
-+	if (src->s) \
-+		dst->s = src->s; \
-+} while(0)
-+
-+static int
-+overwrite_hwe (struct hwentry * dst, struct hwentry * src)
-+{
-+	/* don't overwrite vendor, product, revision or all_devs */
-+	overwrite_str(uid_attribute);
-+	overwrite_str(features);
-+	overwrite_str(hwhandler);
-+	overwrite_str(selector);
-+	overwrite_str(checker_name);
-+	overwrite_str(prio_name);
-+	overwrite_str(prio_args);
-+	overwrite_str(alias_prefix);
-+	overwrite_str(bl_product);
-+	overwrite_num(pgpolicy);
-+	overwrite_num(pgfailback);
-+	overwrite_num(rr_weight);
-+	overwrite_num(no_path_retry);
-+	overwrite_num(minio);
-+	overwrite_num(minio_rq);
-+	overwrite_num(flush_on_last_del);
-+	overwrite_num(fast_io_fail);
-+	overwrite_num(dev_loss);
-+	overwrite_num(user_friendly_names);
-+	overwrite_num(retain_hwhandler);
-+	overwrite_num(detect_prio);
-+
-+	/*
-+	 * Make sure features is consistent with
-+	 * no_path_retry
-+	 */
-+	if (dst->no_path_retry == NO_PATH_RETRY_FAIL)
-+		remove_feature(&dst->features, "queue_if_no_path");
-+	else if (dst->no_path_retry != NO_PATH_RETRY_UNDEF)
-+		add_feature(&dst->features, "queue_if_no_path");
-+	return 0;
-+}
-+
- int
- store_hwe (vector hwtable, struct hwentry * dhwe)
- {
-@@ -438,6 +493,10 @@ restart:
- 			break;
- 		j = n;
- 		vector_foreach_slot_after(hw, hwe2, j) {
-+			if (hwe2->all_devs == 1) {
-+				overwrite_hwe(hwe1, hwe2);
-+				continue;
+-	addout:
++addout:
+ 	dm_task_destroy (dmt);
++	free(prefixed_uuid);
+ 
+ 	return r;
+ }
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index f2859b0..7d12a0c 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -328,6 +328,7 @@ get_user_friendly_alias(char *wwid, char *file, char *prefix,
+ 	if (fflush(f) != 0) {
+ 		condlog(0, "cannot fflush bindings file stream : %s",
+ 			strerror(errno));
++		free(alias);
+ 		fclose(f);
+ 		return NULL;
+ 	}
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 651bd7e..3f9e80b 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -80,6 +80,8 @@ set_ble_device (vector blist, char * vendor, char * product, int origin)
+ 		if (regcomp(&ble->vendor_reg, vendor,
+ 			    REG_EXTENDED|REG_NOSUB)) {
+ 			FREE(vendor);
++			if (product)
++				FREE(product);
+ 			return 1;
+ 		}
+ 		ble->vendor = vendor;
+@@ -88,6 +90,10 @@ set_ble_device (vector blist, char * vendor, char * product, int origin)
+ 		if (regcomp(&ble->product_reg, product,
+ 			    REG_EXTENDED|REG_NOSUB)) {
+ 			FREE(product);
++			if (vendor) {
++				ble->vendor = NULL;
++				FREE(vendor);
 +			}
- 			if (hwe_regmatch(hwe1, hwe2))
- 				continue;
- 			/* dup */
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 844ee12..2097879 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -47,6 +47,7 @@ struct hwentry {
- 	char * prio_args;
- 	char * alias_prefix;
+ 			return 1;
+ 		}
+ 		ble->product = product;
+@@ -202,6 +208,7 @@ setup_default_blist (struct config * conf)
+ 					   STRDUP(hwe->bl_product),
+ 					   ORIGIN_DEFAULT)) {
+ 				FREE(ble);
++				vector_del_slot(conf->blist_device, VECTOR_SIZE(conf->blist_device) - 1);
+ 				return 1;
+ 			}
+ 		}
+diff --git a/libmultipath/prioritizers/iet.c b/libmultipath/prioritizers/iet.c
+index 94406df..0bcc48b 100644
+--- a/libmultipath/prioritizers/iet.c
++++ b/libmultipath/prioritizers/iet.c
+@@ -109,6 +109,7 @@ int iet_prio(const char *dev, char * args)
+ 			ssize_t nchars = readlink(path, buffer, sizeof(buffer)-1);
+ 			if (nchars != -1) {
+ 				char *device;
++				buffer[nchars] = '\0';
+ 				device = find_regex(buffer,"(sd[a-z]+)");
+ 				// if device parsed is the right one
+ 				if (device!=NULL && strncmp(device, dev, strlen(device)) == 0) {
+@@ -118,6 +119,7 @@ int iet_prio(const char *dev, char * args)
+ 					if (ip!=NULL && strncmp(ip, preferredip, strlen(ip)) == 0) {
+ 						// high prio
+ 						free(ip);
++						free(device);
+ 						closedir(dir_p);
+ 						return 20;
+ 					}
+diff --git a/libmultipath/prioritizers/weightedpath.c b/libmultipath/prioritizers/weightedpath.c
+index 54c9039..13bc52f 100644
+--- a/libmultipath/prioritizers/weightedpath.c
++++ b/libmultipath/prioritizers/weightedpath.c
+@@ -61,8 +61,10 @@ int prio_path_weight(struct path *pp, char *prio_args)
+ 	regex = get_next_string(&temp, split_char);
  
-+	int all_devs;
- 	int pgpolicy;
- 	int pgfailback;
- 	int rr_weight;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 7de7a67..5b4fbe6 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -918,6 +918,32 @@ device_handler(vector strvec)
- }
+ 	/* Return default priority if the argument is not parseable */
+-	if (!regex)
++	if (!regex) {
++		FREE(arg);
+ 		return priority;
++	}
  
- static int
-+all_devs_handler(vector strvec)
-+{
-+	char * buff;
-+	struct hwentry *hwe = VECTOR_LAST_SLOT(conf->hwtable);
-+
-+	if (!hwe)
-+		return 1;
-+
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
-+	if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
-+	    (strlen(buff) == 1 && !strcmp(buff, "0")))
-+		hwe->all_devs = 0;
-+	else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
-+		 (strlen(buff) == 1 && !strcmp(buff, "1")))
-+		hwe->all_devs = 1;
-+	else
-+		hwe->all_devs = 0;
-+
-+	FREE(buff);
-+	return 0;
-+}
-+
-+static int
- vendor_handler(vector strvec)
- {
- 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
-@@ -2151,6 +2177,17 @@ snprint_hw_dev_loss(char * buff, int len, void * data)
- }
+ 	if (!strcmp(regex, HBTL)) {
+ 		sprintf(path, "%d:%d:%d:%d", pp->sg_id.host_no,
+@@ -72,6 +74,7 @@ int prio_path_weight(struct path *pp, char *prio_args)
+ 	} else {
+ 		condlog(0, "%s: %s - Invalid arguments", pp->dev,
+ 			pp->prio.name);
++		FREE(arg);
+ 		return priority;
+ 	}
  
- static int
-+snprint_hw_all_devs (char *buff, int len, void *data)
-+{
-+	struct hwentry * hwe = (struct hwentry *)data;
-+
-+	if (!hwe->all_devs)
-+		return 0;
-+
-+	return snprintf(buff, len, "yes");
-+}
-+
-+static int
- snprint_hw_vendor (char * buff, int len, void * data)
- {
- 	struct hwentry * hwe = (struct hwentry *)data;
-@@ -2922,6 +2959,7 @@ init_keywords(void)
- 	install_keyword_root("devices", &devices_handler);
- 	install_keyword_multi("device", &device_handler, NULL);
- 	install_sublevel();
-+	install_keyword("all_devs", &all_devs_handler, &snprint_hw_all_devs);
- 	install_keyword("vendor", &vendor_handler, &snprint_hw_vendor);
- 	install_keyword("product", &product_handler, &snprint_hw_product);
- 	install_keyword("revision", &revision_handler, &snprint_hw_revision);
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 06a6311..b8487ac 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -165,7 +165,7 @@ devt2devname (char *devname, int devname_len, char *devt)
+ 		sprintf(block_path,"/sys/dev/block/%u:%u", major, minor);
+ 		if (lstat(block_path, &statbuf) == 0) {
+ 			if (S_ISLNK(statbuf.st_mode) &&
+-			    readlink(block_path, dev, FILE_NAME_SIZE) > 0) {
++			    readlink(block_path, dev, FILE_NAME_SIZE-1) > 0) {
+ 				char *p = strrchr(dev, '/');
+ 
+ 				if (!p) {
 -- 
 1.8.3.1
