@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Powerpath vs dm-multipath - two points of FUD?
-Date: Sun, 14 Sep 2014 10:39:34 +0200
-Message-ID: <54155446.2030700@suse.de>
-References: <CA+ZWeLBUXK_kWjNkUcsg_5rP8ruew6ipupzdL_kw_K4v70p_5g@mail.gmail.com>
+From: Nir Soffer <nsoffer@redhat.com>
+Subject: Re: [PATCH 0/6] Misc multipath patches
+Date: Sun, 14 Sep 2014 09:17:31 -0400 (EDT)
+Message-ID: <1673595407.37577474.1410700651588.JavaMail.zimbra@redhat.com>
+References: <1410543892-29826-1-git-send-email-bmarzins@redhat.com>
+	<CABr-GneJNtvp+CehV2LzaNcjm2gXF3AdLUqvDRPMfPSrNzpkTg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+ZWeLBUXK_kWjNkUcsg_5rP8ruew6ipupzdL_kw_K4v70p_5g@mail.gmail.com>
+In-Reply-To: <CABr-GneJNtvp+CehV2LzaNcjm2gXF3AdLUqvDRPMfPSrNzpkTg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,81 +19,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Federico Simoncelli <fsimonce@redhat.com>
 List-Id: dm-devel.ids
 
-On 09/09/2014 06:50 PM, Rob wrote:
-> Hi List,
->
-> Firstly, apologies if this is a common topic and my intentions are not
-> to start a flame war. I've googled extensively but haven't found
-> specific information to address my queries, so I thought I would turn her=
-e.
->
-> We have a rather large multi-tenant infrastructure using PowerPath.
-> Since this inherently comes with increased maintenance costs
-> (recompiling the module, requiring extra steps / care when upgrading
-> etc) we are looking at using dm-multipath as the defacto standard
-> SAN-connection abstraction layer for installations of RHEL 7+.
->
-> After discussions with our SAN Architect team, we were given the below
-> points to chew over and we were met with stiff resistance to moving away
-> from Powerpath. Since there was little right-of-reply, I'd like to run
-> these points past the minds of this list to understand if these are
-> valid enough to justify a valid business case of keeping Powerpath over
-> Multipath.
->
-Hehe. PowerPath again.
-Mind you, device-mapper multipathing is fully supported by EMC ...
+----- Original Message -----
+> From: "Christophe Varoqui" <christophe.varoqui@opensvc.com>
+> To: "Benjamin Marzinski" <bmarzins@redhat.com>
+> Cc: "device-mapper development" <dm-devel@redhat.com>
+> Sent: Saturday, September 13, 2014 9:57:00 AM
+> Subject: Re: [dm-devel] [PATCH 0/6] Misc multipath patches
+> 
+> Hi,
+> 
+> this patchset is now all merged upstream, except the " all_devs device
+> option" part.
+> I'd like other's comments on this.
+> I personnality think the goal is fine, 
 
->
-> /Here=92s a couple of reasons to stick with powerpath:
->
-> * Load Balancing:
->
->   Whilst dm-multipath can make use of more than one of the paths to an
-> array, .i.e with round-robin, this isn=92t true load-balancing.  Powerpath
-> is able to examine the paths down to the array and balance workload
-> based on how busy the storage controller / ports are.  AFAIK Rhel6 has
-> added functionality to make path choices based on queue depth and
-> service time, which does add some improvement over vanilla round-robin.
->
-We do this with the switch to request-based multipathing.
-Using one of the other load balancers (eg least-pending) and set =
+The goal is critical for us (ovirt/rhev). We need a way to configure any
+any device on multiple (100's) hosts to use no_path_retry fail.
+We have several bugs caused by unwanted queuing in multipath.
 
-rr_min_io to '1' will give you exactly that behaviour.
+> but the configuration plug is not so
+> intuitive.
 
->   For VMAX and CX/VNX, powerpath uses the following parameters to
-> balance the paths out: Pending I/Os on the path, Size of I/Os, Types of
-> I/Os, and Paths most recently used.
->
-pending I/O is covered with the 'least-pending' I/O scheduler; I fail to =
+I agree that the suggested patch is not intuitive.
 
-see the value in any of the others (where would be the point in =
+all_devs overrides only devices with built-in configuration. Other 
+devices will use the defaults.
 
-switching I/O based on the _size_ of the I/O request ?)
+So practically this is not enough:
 
->   * Flakey Path Detection:
->
->   The latest versions of powerpath can proactively take paths out of
-> service should it observe intermittent IO failures (remember any IO
-> failure can hold a thread for 30-60 seconds whilst the SCSI command
-> further up the stack times out, and a retry is sent).  dm-multipath
-> doesn=92t have functionality to remove a flakey path, paths can only be
-> marked out of service on hard failure./
->
-Wrong. I've added flakey path detection a while back. I'll be looking
-at the sources and will be checking the current status; might be I've =
+    devices {
+        device {
+            all_devs yes
+            no_path_retry fail
+        }
+    }
 
-not gotten around to send it upstream.
-So you _might_ need to switch to SLES :-)
+You must do this:
 
-Cheers,
+    defaults {
+        no_path_retry fail         # keep in sync with all_devs bellow
+    }
 
-Hannes
--- =
+    devices {
+        device {
+            all_devs yes
+            no_path_retry fail     # keep in sync with defaults above
+        }
+    }
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+It would be nice if we could add a device that match any device,
+and use it to override *some* settings:
+
+    devices {
+        device {
+            vendor ".*"
+            no_path_retry fail
+        }
+    }
+
+I tried this, and it seem to remove settings not defined in this device
+for example, hwhandler. Looks like multipath does not use the built-in
+configuration for any device when such device exists.
+
+Making this work will probably be backward incompatible since
+people may assume the old behavior.
+
+Another option that may be useful is:
+
+    multipaths {
+        multiapth {
+            wwid ".*"
+            no_path_retry fail
+        }
+    }
+
+This does not work because multipath sections are matched using strcmp.
+Changing this may be also not backward compatible.
+
+> We already have a top-level "default" section, would defining a top-level
+> "override" section be more intuitive ?
+
+I think that would be much better from the user point of view, and
+should be simpler to implement.
+
+What I would expect from this configuration is to be able to set:
+
+    overrides {
+        no_path_retry fail
+    }
+
+And have it override all devices, both those with built-in configuration
+and those that have no configuration.
+
+Not sure it this should override also devices with device section
+in multipath configuration, since this will prevent an admin to 
+configure specific device.
+
+Nir
