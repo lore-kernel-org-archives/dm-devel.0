@@ -1,14 +1,16 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: Re: RHEL6.6 dm-cache and dm-era
-Date: Mon, 15 Sep 2014 15:25:24 -0500
-Message-ID: <FBF1ED45-5B3E-4D0C-90B5-9A51D6EAE8F7@redhat.com>
-References: <54164DC0.3020907@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/2] dm: alternate solution to reloading with
+	failed paths
+Date: Mon, 15 Sep 2014 17:44:53 -0400
+Message-ID: <20140915214453.GB19349@redhat.com>
+References: <1407956023-32372-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <54164DC0.3020907@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1407956023-32372-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,29 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, Aug 13 2014 at  2:53pm -0400,
+Benjamin Marzinski <bmarzins@redhat.com> wrote:
 
-On Sep 14, 2014, at 9:24 PM, Romu Hu wrote:
+> This is different solution to the problem of multipath not being able to
+> reload devices with failed paths than the one that Hannes first proposed.
+> It adds a list of dm_devs to the mapped_device structure.  All of the table
+> lists point to devices on this list. The list keeps track of how many tables
+> are accessing these devices, and locks them to deal with tables being created
+> and destroyed at the same time.  This avoids the issue of having tables that
+> list devices for which the kernel is not holding any reference, and which
+> can disappear and come back as a completely different device if userspace
+> drops its reference.  This also allows these devices to be reinstated without
+> another table reload.
+> 
+> The other patch deals with issues I discovered while tracking down why
+> multipath devices with no valid paths would hang on table reload. It turns
+> out that multipath_map can no longer be called after a table reload until
+> queue_io is cleared, but multipath map was previously the function that
+> usually cleared queue_io.
 
-> Hi,
-> 
-> According to https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6-Beta/html-single/6.6_Release_Notes/index.html#bh-storage, dm-cache and dm-era have been added into RHEL6.6 as technology preview, but I couldn't find any other documentation about using dm-cache and dm-era.  I found the following utilities in
-> 
-> /usr/sbin/era_check
-> /usr/sbin/era_dump
-> /usr/sbin/era_invalidate
-> 
-> /usr/sbin/cache_check
-> /usr/sbin/cache_dump
-> /usr/sbin/cache_repair
-> /usr/sbin/cache_restore
-> 
-> I guess these utilities are related to dm-era and dm-cache, respectively.  There are only manpages for the cache utilities. After reading the manpages I still have no clue how to use these technologies.  I want to do a sanity check of these technologies on my SAN storage.  Is it possible to try dm-cache and dm-era without a SSD?  e.g. using ram to imitate a fast block device..
-> 
-> Any idea?
+I've done a first pass review of the code changes and overlayed a
+cleanup patch in this branch:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=devel
 
-You can use cache to teir any block device over another.  Layering faster, smaller drives over slower, larger ones is the point; but for testing non-performance things you can still do it.  For the cache target, it would be a more inclusive test to go through LVM.  The lvmcache.7 man page would help out with that.  There is no dm-era support in LVM ATM.
+I'll do another pass of review tomorrow and perform a full regression
+test as well as a targetted test of loading various multipath tables
+with no devices.
 
- brassow
+If all looks good I'll get it staged for 3.18.
