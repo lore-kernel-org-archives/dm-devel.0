@@ -1,14 +1,14 @@
 From: behanw@converseincode.com
-Subject: [PATCH v3 05/12] crypto: LLVMLinux: Remove VLAIS from crypto/n2_core.c
-Date: Mon, 15 Sep 2014 00:30:27 -0700
-Message-ID: <1410766234-1634-6-git-send-email-behanw@converseincode.com>
+Subject: [PATCH v3 06/12] crypto: LLVMLinux: Remove VLAIS from crypto/omap_sham.c
+Date: Mon, 15 Sep 2014 00:30:28 -0700
+Message-ID: <1410766234-1634-7-git-send-email-behanw@converseincode.com>
 References: <1410766234-1634-1-git-send-email-behanw@converseincode.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-crypto-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1410766234-1634-1-git-send-email-behanw@converseincode.com>
-Sender: linux-crypto-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: agk@redhat.com, clm@fb.com, davem@davemloft.net, dm-devel@redhat.com, fabf@skynet.be, herbert@gondor.apana.org.au, jbacik@fb.com, snitzer@redhat.com, tadeusz.struk@intel.com
 Cc: akpm@linux-foundation.org, bruce.w.allan@intel.com, d.kasatkin@samsung.com, james.l.morris@oracle.com, john.griffin@intel.com, linux-btrfs@vger.kernel.org, linux-crypto@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-security-module@vger.kernel.org, neilb@suse.de, qat-linux@intel.com, serge@hallyn.com, thomas.lendacky@amd.com, zohar@linux.vnet.ibm.com, torvalds@linux-foundation.org, Behan Webster <behanw@converseincode.com>
 List-Id: dm-devel.ids
@@ -27,45 +27,63 @@ Signed-off-by: Behan Webster <behanw@converseincode.com>
 Reviewed-by: Mark Charlebois <charlebm@gmail.com>
 Reviewed-by: Jan-Simon M=C3=B6ller <dl9pf@gmx.de>
 ---
- drivers/crypto/n2_core.c | 11 ++++-------
- 1 file changed, 4 insertions(+), 7 deletions(-)
+ drivers/crypto/omap-sham.c | 28 +++++++++++-----------------
+ 1 file changed, 11 insertions(+), 17 deletions(-)
 
-diff --git a/drivers/crypto/n2_core.c b/drivers/crypto/n2_core.c
-index 7263c10..f8e3207 100644
---- a/drivers/crypto/n2_core.c
-+++ b/drivers/crypto/n2_core.c
-@@ -445,10 +445,7 @@ static int n2_hmac_async_setkey(struct crypto_ahas=
-h *tfm, const u8 *key,
- 	struct n2_hmac_ctx *ctx =3D crypto_ahash_ctx(tfm);
- 	struct crypto_shash *child_shash =3D ctx->child_shash;
- 	struct crypto_ahash *fallback_tfm;
+diff --git a/drivers/crypto/omap-sham.c b/drivers/crypto/omap-sham.c
+index 710d863..24ef489 100644
+--- a/drivers/crypto/omap-sham.c
++++ b/drivers/crypto/omap-sham.c
+@@ -949,17 +949,14 @@ static int omap_sham_finish_hmac(struct ahash_req=
+uest *req)
+ 	struct omap_sham_hmac_ctx *bctx =3D tctx->base;
+ 	int bs =3D crypto_shash_blocksize(bctx->shash);
+ 	int ds =3D crypto_shash_digestsize(bctx->shash);
 -	struct {
 -		struct shash_desc shash;
--		char ctx[crypto_shash_descsize(child_shash)];
+-		char ctx[crypto_shash_descsize(bctx->shash)];
 -	} desc;
-+	SHASH_DESC_ON_STACK(shash, child_shash);
- 	int err, bs, ds;
++	SHASH_DESC_ON_STACK(shash, bctx->shash);
 =20
- 	fallback_tfm =3D ctx->base.fallback_tfm;
-@@ -456,15 +453,15 @@ static int n2_hmac_async_setkey(struct crypto_aha=
-sh *tfm, const u8 *key,
- 	if (err)
- 		return err;
+-	desc.shash.tfm =3D bctx->shash;
+-	desc.shash.flags =3D 0; /* not CRYPTO_TFM_REQ_MAY_SLEEP */
++	shash->tfm =3D bctx->shash;
++	shash->flags =3D 0; /* not CRYPTO_TFM_REQ_MAY_SLEEP */
 =20
--	desc.shash.tfm =3D child_shash;
--	desc.shash.flags =3D crypto_ahash_get_flags(tfm) &
-+	shash->tfm =3D child_shash;
-+	shash->flags =3D crypto_ahash_get_flags(tfm) &
- 		CRYPTO_TFM_REQ_MAY_SLEEP;
+-	return crypto_shash_init(&desc.shash) ?:
+-	       crypto_shash_update(&desc.shash, bctx->opad, bs) ?:
+-	       crypto_shash_finup(&desc.shash, req->result, ds, req->result);
++	return crypto_shash_init(shash) ?:
++	       crypto_shash_update(shash, bctx->opad, bs) ?:
++	       crypto_shash_finup(shash, req->result, ds, req->result);
+ }
 =20
- 	bs =3D crypto_shash_blocksize(child_shash);
- 	ds =3D crypto_shash_digestsize(child_shash);
- 	BUG_ON(ds > N2_HASH_KEY_MAX);
- 	if (keylen > bs) {
--		err =3D crypto_shash_digest(&desc.shash, key, keylen,
-+		err =3D crypto_shash_digest(shash, key, keylen,
- 					  ctx->hash_key);
- 		if (err)
- 			return err;
+ static int omap_sham_finish(struct ahash_request *req)
+@@ -1118,18 +1115,15 @@ static int omap_sham_update(struct ahash_reques=
+t *req)
+ 	return omap_sham_enqueue(req, OP_UPDATE);
+ }
+=20
+-static int omap_sham_shash_digest(struct crypto_shash *shash, u32 flag=
+s,
++static int omap_sham_shash_digest(struct crypto_shash *tfm, u32 flags,
+ 				  const u8 *data, unsigned int len, u8 *out)
+ {
+-	struct {
+-		struct shash_desc shash;
+-		char ctx[crypto_shash_descsize(shash)];
+-	} desc;
++	SHASH_DESC_ON_STACK(shash, tfm);
+=20
+-	desc.shash.tfm =3D shash;
+-	desc.shash.flags =3D flags & CRYPTO_TFM_REQ_MAY_SLEEP;
++	shash->tfm =3D tfm;
++	shash->flags =3D flags & CRYPTO_TFM_REQ_MAY_SLEEP;
+=20
+-	return crypto_shash_digest(&desc.shash, data, len, out);
++	return crypto_shash_digest(shash, data, len, out);
+ }
+=20
+ static int omap_sham_final_shash(struct ahash_request *req)
 --=20
 1.9.1
