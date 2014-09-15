@@ -1,34 +1,42 @@
-From: Behan Webster <behanw@converseincode.com>
-Subject: Re: [PATCH v3 11/12] security, crypto: LLVMLinux: Remove VLAIS from
- ima_crypto.c
-Date: Mon, 15 Sep 2014 07:25:16 -0700
-Message-ID: <5416F6CC.3050203@converseincode.com>
-References: <1410766234-1634-1-git-send-email-behanw@converseincode.com>	<1410766234-1634-12-git-send-email-behanw@converseincode.com> <CA+55aFx8FN2Rq+d3v9rsDbTyX3hwm6TvudvZrL5wgf7fX3aQjA@mail.gmail.com>
+From: Ross Anderson <rosander@dsotm.net>
+Subject: partx fails 4096 block size
+Date: Mon, 15 Sep 2014 14:48:23 -0500
+Message-ID: <54174287.30508@dsotm.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFx8FN2Rq+d3v9rsDbTyX3hwm6TvudvZrL5wgf7fX3aQjA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Alasdair G Kergon <agk@redhat.com>, Chris Mason <clm@fb.com>, David Miller <davem@davemloft.net>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Fabian Frederick <fabf@skynet.be>, Herbert Xu <herbert@gondor.apana.org.au>, Josef Bacik <jbacik@fb.com>, Mike Snitzer <snitzer@redhat.com>, tadeusz.struk@intel.com, Andrew Morton <akpm@linux-foundation.org>, Bruce Allan <bruce.w.allan@intel.com>, Dmitry Kasatkin <d.kasatkin@samsung.com>, James Morris <james.l.morris@oracle.com>, john.griffin@intel.com, linux-btrfs <linux-btrfs@vger.kernel.org>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Neil Brown <neilb@suse.de>, qat-lin
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 09/15/14 07:21, Linus Torvalds wrote:
-> On Mon, Sep 15, 2014 at 12:30 AM,  <behanw@converseincode.com> wrote:
->> From: Behan Webster <behanw@converseincode.com>
->>
->> Replaced the use of a Variable Length Array In Struct (VLAIS) with a C99
->> compliant equivalent. This patch allocates the appropriate amount of memory
->> using a char array using the SHASH_DESC_ON_STACK macro.
-> You only made the first case use SHASH_DESC_ON_STACK, the two other
-> cases you left in the ugly format. Was that just an oversight, or was
-> there some reason for it?
->
-Oversight. Will Fix.
+Greetings,
 
-Behan
+I posted a similar error a while back. This is using multipath tools 
+from GIT as of today. kernel version 3.10.49.
 
--- 
-Behan Webster
-behanw@converseincode.com
+Devices are 4k GPT partition created under windows.
+
+They are running SFS file system (cluster multi os)
+
+udev detects individual paths and they are fully functional.
+
+Multipath creates primary dm-0 devices and alias links however no 
+partition point is created. Error output is very limited.
+
+I'd appreciate any help in troubleshooting this. Quiet frustrating not 
+being able to use mpath on 4k blocks.
+
+http://pastebin.com/EbTMXdvE
+
+Thanks,
+Ross
