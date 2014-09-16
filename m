@@ -1,17 +1,18 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH] fix mirror device creation with
 	lvcreate	failed
-Date: Wed, 17 Sep 2014 00:35:29 +0100
-Message-ID: <20140916233529.GD2407@agk-dp.fab.redhat.com>
+Date: Wed, 17 Sep 2014 00:40:08 +0100
+Message-ID: <20140916234008.GE2407@agk-dp.fab.redhat.com>
 References: <1409127505-5246-1-git-send-email-lwang@suse.com>
 	<20140916232104.GC2407@agk-dp.fab.redhat.com>
+	<20140916233529.GD2407@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20140916232104.GC2407@agk-dp.fab.redhat.com>
+In-Reply-To: <20140916233529.GD2407@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,14 +26,15 @@ To: Liuhua Wang <lwang@suse.com>
 Cc: nfbrown@suse.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 17, 2014 at 12:21:04AM +0100, Alasdair G Kergon wrote:
-> >  	rdev->sb_size = sizeof(*sb);
-> What should sb_size really be?
-> > -	ret = read_disk_sb(rdev, rdev->sb_size);
- 
-Or are the sizes in the existing code correct (the dm sb is always 512 bytes?), 
-with the problem coming from something in sync_page_io()?
+On Wed, Sep 17, 2014 at 12:35:29AM +0100, Alasdair G Kergon wrote:
+> > > -	ret = read_disk_sb(rdev, rdev->sb_size);
 
-(4k sector device? large page size? incorrectly uninitialised field?)
+And if that needed changing to 4096, why does this similar instance elsewhere
+one not also need changing?
+
+  static void attempt_restore_of_faulty_devices(struct raid_set *rs)
+  {
+  ...
+                    sync_page_io(r, 0, r->sb_size, r->sb_page, READ, 1)) {
 
 Alasdair
