@@ -1,17 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/2] dm: alternate solution to reloading with
-	failed paths
-Date: Tue, 16 Sep 2014 11:46:20 -0500
-Message-ID: <20140916164620.GB1855@ask-08.lab.msp.redhat.com>
-References: <1407956023-32372-1-git-send-email-bmarzins@redhat.com>
-	<20140915214453.GB19349@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] fix mirror device creation with
+	lvcreate	failed
+Date: Wed, 17 Sep 2014 00:21:04 +0100
+Message-ID: <20140916232104.GC2407@agk-dp.fab.redhat.com>
+References: <1409127505-5246-1-git-send-email-lwang@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20140915214453.GB19349@redhat.com>
+In-Reply-To: <1409127505-5246-1-git-send-email-lwang@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,42 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>
+To: Liuhua Wang <lwang@suse.com>
+Cc: nfbrown@suse.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 15, 2014 at 05:44:53PM -0400, Mike Snitzer wrote:
-> On Wed, Aug 13 2014 at  2:53pm -0400,
-> Benjamin Marzinski <bmarzins@redhat.com> wrote:
-> 
-> > This is different solution to the problem of multipath not being able to
-> > reload devices with failed paths than the one that Hannes first proposed.
-> > It adds a list of dm_devs to the mapped_device structure.  All of the table
-> > lists point to devices on this list. The list keeps track of how many tables
-> > are accessing these devices, and locks them to deal with tables being created
-> > and destroyed at the same time.  This avoids the issue of having tables that
-> > list devices for which the kernel is not holding any reference, and which
-> > can disappear and come back as a completely different device if userspace
-> > drops its reference.  This also allows these devices to be reinstated without
-> > another table reload.
-> > 
-> > The other patch deals with issues I discovered while tracking down why
-> > multipath devices with no valid paths would hang on table reload. It turns
-> > out that multipath_map can no longer be called after a table reload until
-> > queue_io is cleared, but multipath map was previously the function that
-> > usually cleared queue_io.
-> 
-> I've done a first pass review of the code changes and overlayed a
-> cleanup patch in this branch:
-> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=devel
-> 
-> I'll do another pass of review tomorrow and perform a full regression
-> test as well as a targetted test of loading various multipath tables
-> with no devices.
-> 
-> If all looks good I'll get it staged for 3.18.
+On Wed, Aug 27, 2014 at 04:18:25PM +0800, Liuhua Wang wrote:
+>  On some devices, 
 
+Which devices?  What is the necessary condition to trigger the problem?
 
-You changes look fine by me.
+> when create mirror device with lvcreate, it fails.
+>  device-mapper: reload ioctl on  failed: Invalid argument
+>  Failed to activate new LV.
+ 
+What exactly causes this error?
+- Do you get a kernel error message too?
 
--Ben
+>  We can use read size 4096 since md always use 4096.
+ 
+How is that connected to problem?
+Why does it fix it?
+
+> +++ b/drivers/md/dm-raid.c
+> @@ -860,7 +860,7 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
+>  	rdev->sb_start = 0;
+>  	rdev->sb_size = sizeof(*sb);
+  
+What should sb_size really be?
+
+> -	ret = read_disk_sb(rdev, rdev->sb_size);
+> +	ret = read_disk_sb(rdev, 4096);
+
+Why aren't they both MD_SB_BYTES?
+(Strictly, does sb_size need recalculating after the read?)
+
+Alasdair
