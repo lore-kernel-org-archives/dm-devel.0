@@ -1,65 +1,41 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH v3 01/12] crypto: LLVMLinux: Add macro to remove use of
- VLAIS in crypto code
-Date: Wed, 17 Sep 2014 19:30:35 +0800
-Message-ID: <20140917113035.GB2129@gondor.apana.org.au>
-References: <1410766234-1634-1-git-send-email-behanw@converseincode.com>
- <1410766234-1634-2-git-send-email-behanw@converseincode.com>
- <20140917092212.GA1213@gondor.apana.org.au>
- <54196D5C.6040104@samsung.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] fix mirror device creation with
+	lvcreate	failed
+Date: Wed, 17 Sep 2014 12:41:52 +0100
+Message-ID: <20140917114151.GF2407@agk-dp.fab.redhat.com>
+References: <1409127505-5246-1-git-send-email-lwang@suse.com>
+	<20140916232104.GC2407@agk-dp.fab.redhat.com>
+	<54198887020000A00000CFC2@soto.provo.novell.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <54196D5C.6040104@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Kasatkin <d.kasatkin@samsung.com>
-Cc: behanw@converseincode.com, agk@redhat.com, clm@fb.com, davem@davemloft.net, dm-devel@redhat.com, fabf@skynet.be, jbacik@fb.com, snitzer@redhat.com, tadeusz.struk@intel.com, akpm@linux-foundation.org, bruce.w.allan@intel.com, james.l.morris@oracle.com, john.griffin@intel.com, linux-btrfs@vger.kernel.org, linux-crypto@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-security-module@vger.kernel.org, neilb@suse.de, qat-linux@intel.com, serge@hallyn.com, thomas.lendacky@amd.com, zohar@linux.vnet.ibm.com, torvalds@linux-foundation.org
+In-Reply-To: <54198887020000A00000CFC2@soto.provo.novell.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Liuhua Wang <lwang@suse.com>
+Cc: Neil F Brown <NFBrown@suse.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 17, 2014 at 02:15:40PM +0300, Dmitry Kasatkin wrote:
-> On 17/09/14 12:22, Herbert Xu wrote:
-> > On Mon, Sep 15, 2014 at 12:30:23AM -0700, behanw@converseincode.com=
- wrote:
-> >> From: Behan Webster <behanw@converseincode.com>
-> >>
-> >> Add a macro which replaces the use of a Variable Length Array In S=
-truct (VLAIS)
-> >> with a C99 compliant equivalent. This macro instead allocates the =
-appropriate
-> >> amount of memory using an char array.
-> >>
-> >> The new code can be compiled with both gcc and clang.
-> >>
-> >> struct shash_desc contains a flexible array member member ctx decl=
-ared with
-> >> CRYPTO_MINALIGN_ATTR, so sizeof(struct shash_desc) aligns the begi=
-nning
-> >> of the array declared after struct shash_desc with long long.
-> >>
-> >> No trailing padding is required because it is not a struct type th=
-at can
-> >> be used in an array.
-> >>
-> >> The CRYPTO_MINALIGN_ATTR is required so that desc is aligned with =
-long long
-> >> as would be the case for a struct containing a member with
-> >> CRYPTO_MINALIGN_ATTR.
-> >>
-> >> Signed-off-by: Behan Webster <behanw@converseincode.com>
-> > Acked-by: Herbert Xu <herbert@gondor.apana.org.au>
-> >
-> > Thanks,
->=20
-> Just in case.
-> I would still follow advice from "Micha=C5=82 Miros=C5=82aw" to use s=
-hash##__desc[]
+On Tue, Sep 16, 2014 at 11:11:35PM -0600, Liuhua Wang wrote:
+> There are error messages:
+> ---------------------
+> [22798.077877] end_request: I/O error, dev dasdd, sector 2240
+> [22798.077902] device-mapper: raid: Failed to read superblock of device at position 1
+> [23087.875420] type=1006 audit(1404313201.346:28): pid=1596 uid=0 old auid=4294967295 new auid=0 old ses=4294967295 new ses=27 res=1
+> [23127.707296] dasd-eckd.d2bf98: 0.0.141d: ERP 0000000036ab1e40 has run out of retries and failed
+> ----------------------
+ 
+OK, so it sounds like Neil's patch will be enough to fix this.
+Can you test that and confirm it solves the problem?
 
-Oh yes of course.  My ack is more about the approach.
-
-Cheers,
---=20
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Alasdair
