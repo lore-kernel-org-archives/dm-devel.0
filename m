@@ -1,80 +1,46 @@
-From: "Liuhua Wang" <lwang@suse.com>
-Subject: Re: [PATCH] fix mirror device creation with lvcreate
- failed
-Date: Tue, 16 Sep 2014 23:11:35 -0600
-Message-ID: <54198887020000A00000CFC2@soto.provo.novell.com>
-References: <1409127505-5246-1-git-send-email-lwang@suse.com>
-	<20140916232104.GC2407@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v3 01/12] crypto: LLVMLinux: Add macro to remove use of
+ VLAIS in crypto code
+Date: Wed, 17 Sep 2014 17:22:12 +0800
+Message-ID: <20140917092212.GA1213@gondor.apana.org.au>
+References: <1410766234-1634-1-git-send-email-behanw@converseincode.com>
+ <1410766234-1634-2-git-send-email-behanw@converseincode.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140916232104.GC2407@agk-dp.fab.redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Neil F Brown <NFBrown@suse.com>, dm-devel@redhat.com
+In-Reply-To: <1410766234-1634-2-git-send-email-behanw@converseincode.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: behanw@converseincode.com
+Cc: agk@redhat.com, clm@fb.com, davem@davemloft.net, dm-devel@redhat.com, fabf@skynet.be, jbacik@fb.com, snitzer@redhat.com, tadeusz.struk@intel.com, akpm@linux-foundation.org, bruce.w.allan@intel.com, d.kasatkin@samsung.com, james.l.morris@oracle.com, john.griffin@intel.com, linux-btrfs@vger.kernel.org, linux-crypto@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-security-module@vger.kernel.org, neilb@suse.de, qat-linux@intel.com, serge@hallyn.com, thomas.lendacky@amd.com, zohar@linux.vnet.ibm.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi, Alasdair
+On Mon, Sep 15, 2014 at 12:30:23AM -0700, behanw@converseincode.com wrote:
+> From: Behan Webster <behanw@converseincode.com>
+> 
+> Add a macro which replaces the use of a Variable Length Array In Struct (VLAIS)
+> with a C99 compliant equivalent. This macro instead allocates the appropriate
+> amount of memory using an char array.
+> 
+> The new code can be compiled with both gcc and clang.
+> 
+> struct shash_desc contains a flexible array member member ctx declared with
+> CRYPTO_MINALIGN_ATTR, so sizeof(struct shash_desc) aligns the beginning
+> of the array declared after struct shash_desc with long long.
+> 
+> No trailing padding is required because it is not a struct type that can
+> be used in an array.
+> 
+> The CRYPTO_MINALIGN_ATTR is required so that desc is aligned with long long
+> as would be the case for a struct containing a member with
+> CRYPTO_MINALIGN_ATTR.
+> 
+> Signed-off-by: Behan Webster <behanw@converseincode.com>
 
->>> On 9/17/2014 at 07:21 AM, in message
-<20140916232104.GC2407@agk-dp.fab.redhat.com>, Alasdair G Kergon
-<agk@redhat.com> wrote: 
-> On Wed, Aug 27, 2014 at 04:18:25PM +0800, Liuhua Wang wrote:
-> >  On some devices, 
-> 
-> Which devices?  What is the necessary condition to trigger the problem?
-> 
-When using dasd device formated with bocksize of 4096bytes.
-the problem occurs, while formated with blocksie of 512bytes,
-no problem.
+Acked-by: Herbert Xu <herbert@gondor.apana.org.au>
 
-> > when create mirror device with lvcreate, it fails.
-> >  device-mapper: reload ioctl on  failed: Invalid argument
-> >  Failed to activate new LV.
->  
-> What exactly causes this error?
-> - Do you get a kernel error message too?
-There are error messages:
----------------------
-[22798.077877] end_request: I/O error, dev dasdd, sector 2240
-[22798.077902] device-mapper: raid: Failed to read superblock of device at position 1
-[23087.875420] type=1006 audit(1404313201.346:28): pid=1596 uid=0 old auid=4294967295 new auid=0 old ses=4294967295 new ses=27 res=1
-[23127.707296] dasd-eckd.d2bf98: 0.0.141d: ERP 0000000036ab1e40 has run out of retries and failed
-----------------------
-
-> >  We can use read size 4096 since md always use 4096.
->  
-> How is that connected to problem?
-> Why does it fix it?
-> 
-> > +++ b/drivers/md/dm-raid.c
-> > @@ -860,7 +860,7 @@ static int super_load(struct md_rdev *rdev, struct 
-> md_rdev *refdev)
-> >  	rdev->sb_start = 0;
-> >  	rdev->sb_size = sizeof(*sb);
->   
-> What should sb_size really be?
-512bytes
-> 
-> > -	ret = read_disk_sb(rdev, rdev->sb_size);
-> > +	ret = read_disk_sb(rdev, 4096);
-> 
-> Why aren't they both MD_SB_BYTES?
-> (Strictly, does sb_size need recalculating after the read?)
-> 
-> Alasdair
-> 
-
-Best regards,
-Liuhua 
+Thanks,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
