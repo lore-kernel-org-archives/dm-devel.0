@@ -1,16 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 1/2] dm mpath: stop queueing IO when no valid
-	paths exist
-Date: Thu, 18 Sep 2014 12:02:28 -0400
-Message-ID: <1411056149-16418-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 0/2] dm: alternate solution to reloading with
+	failed paths
+Date: Thu, 18 Sep 2014 12:02:27 -0400
+Message-ID: <1411056149-16418-1-git-send-email-snitzer@redhat.com>
 References: <1407956023-32372-1-git-send-email-bmarzins@redhat.com>
-	<1411056149-16418-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1411056149-16418-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1407956023-32372-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,34 +23,36 @@ To: hare@suse.de
 Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Benjamin Marzinski <bmarzins@redhat.com>
+Hi Hannes,
 
-'queue_io' is set so that IO is queued while paths are being
-initialized.  Clear queue_io in __choose_pgpath if there are no valid
-paths, since there are obviously no paths that can be initialized.
-Otherwise IOs to the device will back up.
+Here is v2 of Ben's approach to fixing the inability to reload a
+multipath table that includes failed paths.  I've staged it in
+linux-dm.git's 'for-next' branch.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-mpath.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+But I wanted to send this v2 out to verify this approach works for
+you.  This approach is focused on allowing failed paths to be pushed
+down in a multipath table.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 833d7e7..7b6b0f0 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -317,8 +317,10 @@ static void __choose_pgpath(struct multipath *m, size_t nr_bytes)
- 	struct priority_group *pg;
- 	unsigned bypassed = 1;
- 
--	if (!m->nr_valid_paths)
-+	if (!m->nr_valid_paths) {
-+		m->queue_io = 0;
- 		goto failed;
-+	}
- 
- 	/* Were we instructed to switch PG? */
- 	if (m->next_pg) {
+It does _not_ allow non-existent devices to be listed in an mpath
+table like your patchset did.  So the aggressive dev_loss_tmo case
+isn't covered... but Ben said that case is already handled by
+multipathd getting a change event and pushing the table down without
+the removed SCSI device(s).
+
+Thoughts?
+Mike
+
+Benjamin Marzinski (2):
+  dm mpath: stop queueing IO when no valid paths exist
+  dm: allow active and inactive tables to share dm_devs
+
+ drivers/md/dm-ioctl.c         |   2 +-
+ drivers/md/dm-mpath.c         |   4 +-
+ drivers/md/dm-table.c         | 102 ++++++++++++----------------------
+ drivers/md/dm.c               | 126 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm.h               |   5 +-
+ include/uapi/linux/dm-ioctl.h |   4 +-
+ 6 files changed, 170 insertions(+), 73 deletions(-)
+
 -- 
 1.9.3
