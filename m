@@ -1,15 +1,12 @@
-From: "Merla, ShivaKrishna" <ShivaKrishna.Merla@netapp.com>
-Subject: Re: DM-Multipath limiting IO to 127.000 MB/Sec
-Date: Tue, 23 Sep 2014 14:45:54 +0000
-Message-ID: <499e7a9fb338440eb125c65daa1dd4a4@hioexcmbx08-prd.hq.netapp.com>
-References: <CAAPTtDr2K8eb0H+iBVoKGOyK25uOVz2DD9p9gdZcW2rVUg=BpA@mail.gmail.com>
+From: heinzm@redhat.com
+Subject: [PATCH] dm-raid: add RAID discard support
+Date: Tue, 23 Sep 2014 18:51:46 +0200
+Message-ID: <1411491106-23676-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAPTtDr2K8eb0H+iBVoKGOyK25uOVz2DD9p9gdZcW2rVUg=BpA@mail.gmail.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,52 +16,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-PiBIaSBHdXJ1cywKCj4gSSdtIGV4cGVyaWVuY2luZyBhbiBpc3N1ZSB3aXRoIERNLU11bHRpcGF0
-aCBvbiBDZW50b3MgNi41Lgo+IEREIHJlYWRzIDIuNSB0aW1lcyBmYXN0ZXIgd2hlbiByZWFkaW5n
-IGZyb20gYSBkZXZpY2UgZGlyZWN0bHkgY29tcGFyZWQgdG8gTXVsdGlwYXRoLWVkIGRldmljZS4K
-PiBJJ20gdXNpbmfCoGRldmljZS1tYXBwZXItbXVsdGlwYXRoLTAuNC45LTcyLmVsNl81LjIueDg2
-XzY0Lgo+IEFwcGFyZW50bHkgTXVsdGlwYXRoIGlzIGxpbWl0aW5nIHRocm91Z2hwdXQgdG8gMTI3
-LjAwMCBNQi9zIGV2ZW4gdGhvdWdoIHRoZcKgdW5kZXJseWluZ8KgZGV2aWNlIGlzIGNhcGFibGUg
-b2YgbW9yZSB0aHJvdWdocHV0IHdoaWNoIHRvIG1lIGl0IGxvb2tzIGxpa2UgYSBzb2Z0d2FyZSBp
-bXBvc2VkIGxpbWl0LsKgCgo+IFtyb290QEpTMiB+XSMgbXVsdGlwYXRoIC1sIG1wYXRoYWYKPiBt
-cGF0aGFmICgtLS0tLS0tLSkgZG0tODkgUm9ya2UsRzRTLTE2TC00RjgKPiBzaXplPTcuM1QgZmVh
-dHVyZXM9JzAnIGh3aGFuZGxlcj0nMCcgd3A9cncKPiBgLSstIHBvbGljeT0ncm91bmQtcm9iaW4g
-MCcgcHJpbz0wIHN0YXR1cz1hY3RpdmUKPiDCoCB8LSAwOjA6MDoxIMKgc2RiIMKgODoxNiDCoCBh
-Y3RpdmUgdW5kZWYgcnVubmluZwo+IMKgIHwtIDA6MDoxMDoyIHNkYmIgNjc6ODAgwqBhY3RpdmUg
-dW5kZWYgcnVubmluZwo+IMKgIHwtIDE6MDoxMToxIHNkZGwgNzE6NDggwqBhY3RpdmUgdW5kZWYg
-cnVubmluZwo+IMKgIGAtIDE6MDoxMjoyIHNkZHAgNzE6MTEyIGFjdGl2ZSB1bmRlZiBydW5uaW5n
-Cgo+IFtyb290QEpTMiB+XSNkZCBpZj0vZGV2L3NkZGwgb2Y9L2Rldi9udWxsIGJzPTEyOGsgY291
-bnQ9MzIwMDAgc2tpcD0xNDAwMAo+IDMyMDAwKzAgcmVjb3JkcyBpbgo+IDMyMDAwKzAgcmVjb3Jk
-cyBvdXQKPiA0MTk0MzA0MDAwwqBieXRlcyAoNC4yIEdCKSBjb3BpZWQsIDExLjgxNjYgcywgMzU1
-IE1CL3MKCj4gW3Jvb3RASlMyIH5dIyBkZCBpZj0vZGV2L2RtLTg5IG9mPS9kZXYvbnVsbCBicz0x
-MjhrIGNvdW50PTMyMDAwIHNraXA9ODQwMDAgIyBza2lwcGluZyAyR0IgYXJyYXkgY2FjaGUgZGF0
-YcKgCj4gMzIwMDArMCByZWNvcmRzIGluCj4gMzIwMDArMCByZWNvcmRzIG91dAo+IDQxOTQzMDQw
-MDDCoGJ5dGVzICg0LjIgR0IpIGNvcGllZCwgMzEuNDk1OSBzLCAxMzMgTUIvcwoKCj4gVGhpcyBp
-cyBvbiBhIG1hY2hpbmUgY29ubmVjdGVkIG92ZXIgMng4R2IvcyBsaW5rcyB0byBhIGZpYmVyIHN3
-aXRjaCBhbmQgdGhlbiB0byBhbiBIRFg0IGRpc2sgYXJyYXksIGV4cG9ydGluZyB0aGUgdm9sdW1l
-IHRvIDIgb2YgaXQncyA0IDhHYnBzIGZpYmVyIHBvcnRzIC7CoAoKPiBNdWx0aXBhdGguY29uZiBs
-b29rcyBsaWtlIHRoaXMgOsKgCj4KPiBkZWZhdWx0cyB7Cj4gwqAgwqAgwqAgwqAgdXNlcl9mcmll
-bmRseV9uYW1lcyB5ZXMKPiB9CsKgCj4gZGV2aWNlcyB7Cj4KPsKgIMKgIMKgIMKgIGRldmljZSB7
-ICMgbm9ybWFsIEhEWDQgRGlzayBhcnJheXMKPsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHZlbmRv
-ciAiUm9ya2UiCj7CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBwcm9kdWN0ICJHNFMtMTZMLTRGOCIK
-PsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHBhdGhfZ3JvdXBpbmdfcG9saWN5IG11bHRpYnVzCj4g
-wqAgwqAgwqAgwqAgwqAgwqAgfQo+Cj4gfQrCoAo+IGJsYWNrbGlzdCB7Cj4gI2JsYWNrbGlzdGlu
-ZyBhbG1vc3QgZXZlcnl0aGluZwo+IMKgIMKgIMKgIMKgIGRldm5vZGUgIl4ocmFtfHJhd3xsb29w
-fGZkfG1kfGRtLXxzcnxzY2R8c3QpWzAtOV0qIgo+IMKgIMKgIMKgIMKgIGRldm5vZGUgIl5oZFth
-LXpdWzAtOV0qIgo+IH0KCkNoZWNrIHRoZSByZXF1ZXN0IHF1ZXVlIHBhcmFtZXRlcnMgZm9yIGJv
-dGggZG0gYW5kIHNkIGRldmljZXMuIFBhcmFtZXRlcnMgdGhhdCBjb3VsZCBhZmZlY3QgdGhpcyBh
-cmUgCgojY2F0IC9zeXMvYmxvY2svPGRtLXg+L3F1ZXVlL21heF9zZWN0b3JzX2tiCiNjYXQgL3N5
-cy9ibG9jay88ZG0teD4vcXVldWUvbWF4X3NlZ21lbnRzCiNjYXQgL3N5cy9ibG9jay88ZG0teD4v
-cXVldWUvbWF4X3NlZ21lbnRfc2l6ZQoKI2NhdCAvc3lzL2Jsb2NrLzxzZHg+L3F1ZXVlL21heF9z
-ZWN0b3JzX2tiCiNjYXQgL3N5cy9ibG9jay88c2R4Pi9xdWV1ZS9tYXhfc2VnbWVudHMKI2NhdCAv
-c3lzL2Jsb2NrLzxzZHg+L3F1ZXVlL21heF9zZWdtZW50X3NpemUKCllvdSBjYW4gbW9uaXRvciB0
-aGUgYXZlcmFnZSByZXF1ZXN0IHNpemUoYXZncnEtc3opIG9uIGJvdGggZG0gYW5kIHNkIGRldmlj
-ZSB1c2luZwojaW9zdGF0IOKAk3htIOKAk2QgL2Rldi9kbS14IC9kZXYvc2R4IOKAk3QgMgoKQ29t
-cGFyZSB0aGlzIHdpdGggdGhlIHJlcXVlc3Qgc2l6ZSB3aGlsZSBydW5uaW5nIEkvTyBvbmx5IHNk
-IGRldmljZSBkaXJlY3RseS4gVGhlcmUgd2FzIGEgcGF0Y2ggdG8gZml4CmJsb2NrIHN0YWNraW5n
-IGxpbWl0cyBvbiBkbSBkZXZpY2VzIHVwc3RyZWFtLgoKCgoKCi0tCmRtLWRldmVsIG1haWxpbmcg
-bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbA==
+From: Heinz Mauelshagen <heinzm@redhat.com>
+
+Support discard in all RAID levels 1,10,4,5 and 6.
+
+In case of RAID levels 4,5 and 6 we have to check for the capability
+to zero data on discards to avoid stripe data corruption.
+
+If that capabilizy is missing on any disk in a RAID set,
+we have to disable discards.
+
+
+Signed-off-by: Heinz Mauelshagen <heinzm|redhat.com>
+
+---
+ drivers/md/dm-raid.c | 44 +++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 43 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 4880b69..4edb2c7 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1,6 +1,6 @@
+ /*
+  * Copyright (C) 2010-2011 Neil Brown
+- * Copyright (C) 2010-2011 Red Hat, Inc. All rights reserved.
++ * Copyright (C) 2010-2014 Red Hat, Inc. All rights reserved.
+  *
+  * This file is released under the GPL.
+  */
+@@ -1150,6 +1150,43 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
+ }
+ 
+ /*
++ * Enable/disable discard support on RAID set depending
++ * on RAID level and discard properties of underlying devices
++ * (i.e. the legs of the set).
++ */
++static void raid_check_discard(struct dm_target *ti, struct raid_set *rs)
++{
++	int i;
++	bool discard_supported = true;
++	/* RAID level 4,5,6 request discard_zeroes_data for data integrity! */
++	bool raid1_or_10 = rs->md.level == 1 || rs->md.level == 10;
++	bool zeroes_data_mandatory = !raid1_or_10;
++
++	for (i = 0; i < rs->md.raid_disks; i++) {
++		struct request_queue *q = bdev_get_queue(rs->dev[i].rdev.bdev);
++
++		if (!q ||
++		    !blk_queue_discard(q) ||
++		    (zeroes_data_mandatory && !q->limits.discard_zeroes_data)) {
++			discard_supported = false;
++			break;
++		}
++	}
++
++	if (discard_supported) {
++		ti->discards_supported = true;
++		/*
++		 * raid1 and raid10 personalities require bio splitting,
++		 * raid4/5/6 don't and process large discard bios properly.
++		 */
++		ti->split_discard_bios = raid1_or_10;
++		ti->num_discard_bios = 1;
++
++	} else
++		ti->discards_supported = false;
++}
++
++/*
+  * Construct a RAID4/5/6 mapping:
+  * Args:
+  *	<raid_type> <#raid_params> <raid_params>		\
+@@ -1231,6 +1268,11 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	ti->private = rs;
+ 	ti->num_flush_bios = 1;
+ 
++	/*
++	 * Disable/enable discard support on RAID set.
++	 */
++	raid_check_discard(ti, rs);
++
+ 	mutex_lock(&rs->md.reconfig_mutex);
+ 	ret = md_run(&rs->md);
+ 	rs->md.in_sync = 0; /* Assume already marked dirty */
+-- 
+1.9.3
