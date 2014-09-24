@@ -1,12 +1,17 @@
-From: heinzm@redhat.com
-Subject: [PATCH 2/2] dm-raid: add 'ignore_discard' table argument
-Date: Wed, 24 Sep 2014 17:47:19 +0200
-Message-ID: <1411573639-21610-2-git-send-email-heinzm@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mpath: Work with blk multi-queue drivers
+Date: Wed, 24 Sep 2014 14:34:54 -0400
+Message-ID: <20140924183453.GA23052@redhat.com>
+References: <1411491802-7356-1-git-send-email-keith.busch@intel.com>
+	<20140924145215.GA26398@infradead.org>
+	<alpine.LRH.2.03.1409241020540.4696@AMR>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.03.1409241020540.4696@AMR>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,139 +21,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+To: Keith Busch <keith.busch@intel.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+On Tue, Sep 23 2014 at  1:03pm -0400,
+Keith Busch <keith.busch@intel.com> wrote:
 
-Add the 'ignore_discard' table line argument to the target in order
-to ignore discard processing completely on a RAID array, hence not
-passing down discards to MD personalities
-(this is in line with our other targets thin and cache).
+> I hear there may be some resistance to add blk-mq support to dm-mpath
+> anyway, but it seems too easy to add support to not at least try. :)
 
-
-This addresses:
-
-o prohibit discards in case of _potential_ data corruptions in RAID4/5/6
-  (i.e. discard_zeroes_data not processing properly when
-   RAID4/5/6 relies on zeroed data)
-
-o avoid discard processing overhead
+Why?  Not sure who you heard that from but I'm not opposed to it if it
+is done properly.
 
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+On Wed, Sep 24 2014 at  1:20pm -0400,
+Keith Busch <keith.busch@intel.com> wrote:
 
----
- drivers/md/dm-raid.c | 51 +++++++++++++++++++++++++++++++++------------------
- 1 file changed, 33 insertions(+), 18 deletions(-)
+> On Wed, 24 Sep 2014, Christoph Hellwig wrote:
+> >>index bf930f4..4c5952b 100644
+> >>--- a/block/blk-core.c
+> >>+++ b/block/blk-core.c
+> >
+... 
+> >> 	unsigned long flags;
+> >> 	struct pgpath *pgpath;
+> >> 	struct block_device *bdev;
+> >>@@ -410,9 +411,11 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
+> >> 		goto out_unlock;
+> >>
+> >> 	bdev = pgpath->path.dev->bdev;
+> >>-	clone->q = bdev_get_queue(bdev);
+> >>-	clone->rq_disk = bdev->bd_disk;
+> >>-	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+> >>+	*clone = blk_get_request(bdev_get_queue(bdev), rq_data_dir(rq),
+> >>+							GFP_KERNEL);
+> >
+> >I suspect this should be GFP_NOWAIT so that we can push the request back
+> >up the stack if none are available.
+> 
+> Aha, nice catch. I'd have hit the BUG_ON() in dm_request_fn() the way
+> I wrote this since irq's could have been re-enabled if a request wasn't
+> immediately available.
+> 
+> Thanks for the feedback!
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 4edb2c7..b9614ae 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -56,6 +56,7 @@ struct raid_dev {
- #define DMPF_REGION_SIZE       0x100
- #define DMPF_RAID10_COPIES     0x200
- #define DMPF_RAID10_FORMAT     0x400
-+#define DMPF_IGNORE_DISCARD    0x800
- 
- struct raid_set {
- 	struct dm_target *ti;
-@@ -475,6 +476,10 @@ too_many:
-  *                                      will form the "stripe"
-  *    [[no]sync]			Force or prevent recovery of the
-  *                                      entire array
-+ *    [ignore_discard]                  Ignore any discards;
-+ *                                      can be used in cases of bogus TRIM/UNMAP
-+ *                                      support on array legs (e.g. discard_zeroes_data
-+ *                                      flaw causing RAID4/5/6 corruption)
-  *    [rebuild <idx>]			Rebuild the drive indicated by the index
-  *    [daemon_sleep <ms>]		Time between bitmap daemon work to
-  *                                      clear bits
-@@ -559,6 +564,10 @@ static int parse_raid_params(struct raid_set *rs, char **argv,
- 			rs->print_flags |= DMPF_SYNC;
- 			continue;
- 		}
-+		if (!strcasecmp(argv[i], "ignore_discard")) {
-+			rs->print_flags |= DMPF_IGNORE_DISCARD;
-+			continue;
-+		}
- 
- 		/* The rest of the optional arguments come in key/value pairs */
- 		if ((i + 1) >= num_raid_params) {
-@@ -1157,33 +1166,37 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
- static void raid_check_discard(struct dm_target *ti, struct raid_set *rs)
- {
- 	int i;
--	bool discard_supported = true;
-+	bool discard_supported, raid456;
-+
-+	/* Assume not supported until after checks below. */
-+	ti->discards_supported = false;
-+
-+	/* Assume 'discard_supported = true' unless table argument 'ignore_discard' given */
-+	discard_supported = !(rs->print_flags & DMPF_IGNORE_DISCARD);
-+	if (!discard_supported)
-+		return;
-+
- 	/* RAID level 4,5,6 request discard_zeroes_data for data integrity! */
--	bool raid1_or_10 = rs->md.level == 1 || rs->md.level == 10;
--	bool zeroes_data_mandatory = !raid1_or_10;
-+	raid456 = (rs->md.level == 5 || rs->md.level == 6 || rs->md.level == 4);
- 
- 	for (i = 0; i < rs->md.raid_disks; i++) {
- 		struct request_queue *q = bdev_get_queue(rs->dev[i].rdev.bdev);
- 
- 		if (!q ||
- 		    !blk_queue_discard(q) ||
--		    (zeroes_data_mandatory && !q->limits.discard_zeroes_data)) {
--			discard_supported = false;
--			break;
--		}
-+		    (raid456 && !q->limits.discard_zeroes_data))
-+			return;
- 	}
- 
--	if (discard_supported) {
--		ti->discards_supported = true;
--		/*
--		 * raid1 and raid10 personalities require bio splitting,
--		 * raid4/5/6 don't and process large discard bios properly.
--		 */
--		ti->split_discard_bios = raid1_or_10;
--		ti->num_discard_bios = 1;
-+	/* Passed check on array legs -> enable discard */
-+	ti->discards_supported = true;
- 
--	} else
--		ti->discards_supported = false;
-+	/*
-+	 * RAID1 and RAID10 personalities require bio splitting,
-+	 * RAID0/4/5/6 don't and process large discard bios properly
-+	 */
-+	ti->split_discard_bios = (rs->md.level == 1 || rs->md.level == 10);
-+	ti->num_discard_bios = 1;
- }
- 
- /*
-@@ -1458,6 +1471,8 @@ static void raid_status(struct dm_target *ti, status_type_t type,
- 			DMEMIT(" sync");
- 		if (rs->print_flags & DMPF_NOSYNC)
- 			DMEMIT(" nosync");
-+		if (rs->print_flags & DMPF_IGNORE_DISCARD)
-+			DMEMIT(" ignore_discard");
- 
- 		for (i = 0; i < rs->md.raid_disks; i++)
- 			if ((rs->print_flags & DMPF_REBUILD) &&
-@@ -1694,7 +1709,7 @@ static void raid_resume(struct dm_target *ti)
- 
- static struct target_type raid_target = {
- 	.name = "raid",
--	.version = {1, 5, 2},
-+	.version = {1, 6, 0},
- 	.module = THIS_MODULE,
- 	.ctr = raid_ctr,
- 	.dtr = raid_dtr,
--- 
-1.9.3
+We have never allowed new memory allocation in a DM target's .map or
+.map_rq method.  The only allocations that are allowed are those backed
+by a mempool (see md->io_pool usage in alloc_rq_tio, before the clone's
+struct request was embedded in struct dm_rq_target_io).  This was done
+to allow request-based DM devices to be stacked on each other.  Even
+though nothing ever made use of stacking request-based DM devices; doing
+so is still a DM design possibility.  Could be we can simply say "kill
+request-based DM device stacking, it isn't needed".. if we went that far
+then the per-rq-based-device mempool becomes much less important.
+
+But building on this concern, historically each request-based DM device
+has maintained a reserve for cloning a request (so that forward progress
+can be ensured even if system memory is unavailable).  So AFAICT
+Christoph's suggestion to switch to GFP_NOWAIT from GFP_KERNEL still
+doesn't do enough to preserve the higher standards rq-based DM had
+established for guaranteed ability to clone a request.
+
+Taking a step back, I'm really _not_ liking the duality of the DM core
+with regard to the cloning of a request.  Where a request-based DM
+target (e.g. mpath) is tasked with calling blk_get_request() but then DM
+core is left to manage the life-cycle of that clone that the target
+allocated.  If anything a new dm_get_request() wrapper should be added
+to DM core, subtle difference but then at least one can easily see
+balanced request management within the DM core?
+
+In general I'd really like to see a bit more care taken to improve the
+block interface that DM is using for request-based DM.  What I mean is,
+Hannes proposed a series that eliminated request-based DM's cloning of
+requests (and associated bios), see thread:
+http://www.redhat.com/archives/dm-devel/2014-June/msg00023.html
+
+(that series was just a "test balloon" as Hannes put it, but it offered
+some serious "cleanup" by nuking a lot of fiddly block layer code in DM
+core)
+
+I never did take the time to properly review Hannes' proposal but now
+that you're floating this blk-mq support for DM core (and DM mpath) I'm
+clearly going to have to take this all on in a much more focused way.
+
+Christoph/Hannes/Junichi/Keith/others, can you see a way forward that
+offers a lighter request-based DM that makes required callouts to (new?)
+block interfaces that helps us abstract the old request and blk-mq
+request allocation, etc?
+
+Mike
