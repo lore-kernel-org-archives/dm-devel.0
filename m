@@ -1,18 +1,17 @@
-From: "lilofile" <lilofile@aliyun.com>
-Subject: =?utf-8?q?_reply=EF=BC=9A_Thinly-Provisioned_Logical_V?=
-	=?utf-8?q?olumes?=
-Date: Wed, 24 Sep 2014 10:11:00 +0800
-Message-ID: <ae586129-fc3a-41fe-8f2e-f3124c5ff58d@aliyun.com>
-References: alpine.LRH.2.02.1409171425060.15315@file01.intranet.prod.int.rdu2.redhat.com	<b3abf2cc-2219-4b5a-b546-5f71301c40e4@aliyun.com>,
-	541FC97F.9050700@redhat.com	<7adc0384-473b-41da-8ae0-08ee4b436388@aliyun.com>,
-	54217EA6.1010408@redhat.com
-Reply-To: lilofile <lilofile@aliyun.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH] dm-raid: add RAID discard support
+Date: Tue, 23 Sep 2014 22:20:33 -0400
+Message-ID: <yq1zjdpsqry.fsf@sermon.lab.mkp.net>
+References: <1411491106-23676-1-git-send-email-heinzm@redhat.com>
+	<yq18ulaszpk.fsf@sermon.lab.mkp.net>
+	<20140924093308.120fe616@notabene.brown>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: 54217EA6.1010408@redhat.com
+In-Reply-To: <20140924093308.120fe616@notabene.brown> (NeilBrown's message of
+	"Wed, 24 Sep 2014 09:33:08 +1000")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,81 +21,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Ondrej Kozina <okozina@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: NeilBrown <neilb@suse.de>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-V2hlbiBJIHRlc3QgdGhpbmx5LXByb3Zpc2lvbmVkIGxvZ2ljYWwgdm9sdW1lcyxJIHVzZSBkZCBp
-Zj0vZGV2L3plcm8gb2Y9L2Rldi9tYXBwZXIvbXl0aGludm9sdW1lIGNvdW50PTEgYnM9NGsKSSBv
-bmx5IHdyaXRlIDRrIGRhdGEgaW4gbXl0aGludm9sdW1lLmJ1dCBJbiB0aGluX21hcCBmdW5jdGlv
-bnMsIEkgZm91bmQgdGhlcmUgYXJlIHJlYWxseSAgNEsgZGF0YSB3cml0dGVuLGJ1dCBJIGZvdW5k
-IG1vcmUgcmVhZCBJTyxwcm9iYWJseSBkb3plbnMgb2YgcmVhZCBpby4gd2hvIGlzc3VlIHRoZXNl
-IElPPyAKIAoKCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLQrlj5Hku7bkurrvvJpaZGVuZWsgS2FiZWxhYyA8emthYmVsYWNA
-cmVkaGF0LmNvbT4K5Y+R6YCB5pe26Ze077yaMjAxNOW5tDnmnIgyM+aXpSjmmJ/mnJ/kuowpIDIy
-OjA3CuaUtuS7tuS6uu+8mmxpbG9maWxlIDxsaWxvZmlsZUBhbGl5dW4uY29tPjsgZGV2aWNlLW1h
-cHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxAcmVkaGF0LmNvbT47IE1pa2UgU25pdHplciA8bXNu
-aXR6ZXJAcmVkaGF0LmNvbT47IE9uZHJlaiBLb3ppbmEgPG9rb3ppbmFAcmVkaGF0LmNvbT47IEFs
-YXNkYWlyIEcuIEtlcmdvbiA8YWdrQHJlZGhhdC5jb20+CuS4u+OAgOmimO+8mlJlOiBbZG0tZGV2
-ZWxdIHJlcGx577yaIFRoaW5seS1Qcm92aXNpb25lZCBMb2dpY2FsIFZvbHVtZXMKCkRuZSAyMy45
-LjIwMTQgdiAxNTo1MSBsaWxvZmlsZSBuYXBzYWwoYSk6Cj4gd2hlbiAgSSBjcmVhdGluZyB0aGlu
-LXBvb2wgd2l0aCBub24temVyb2luZ++8iC1abiksdGhlIHJhbWRvbSBwZXJmb3JtYW5jZSBjYW4g
-YmUgZ3JlYXRseSBpbXByb3ZlZC4gd2hhdCAgaXMgdGhlIGRpZmZlcmVuY2UgaW4gY29kZSAgd2l0
-aCBub24temVyb2luZyBhbmQgemVyb2luZz8KPgo+CgoqWmVyb2luZyBpcyBzZXQqCgpXaGVuIHlv
-dSB3cml0ZSB0byBhbiB1bnByb3Zpc2lvbmVkIGNodW5rIC0gY2VydGFpbiBhbW91bnQgb2YgYnl0
-ZXMgaW4gdGhpcyAKY2h1bmsgaGF2ZSBrbm93biBjb250ZW50IChmcm9tIHlvdXIgd3JpdGUgQklP
-KSBhbmQgZXZlcnl0aGluZyBlbHNlIGdldHMgemVyb2VzCih0aGF0J3MgemVyb2luZyBvbiBwcm92
-aXNpb25pbmcpCgpTbyB3aGVuIHlvdSByZWFkIHlvdXIgdGhpbiBkZXZpY2UgLSB5b3UgYWx3YXlz
-IGdldCBzYW1lIGNvbnRlbnQuCihzaW5jZSB1bnByb3Zpc2lvbmVkIGFyZWFzIHJldHVybnMgemVy
-byAtIGFuZCBwcm92aXNpb25lZCByZXR1cm5zCndoYXQgeW91IGhhdmUgd3JpdHRlbiAtIG9yIHpl
-cm9zIGZyb20gdW53cml0dGVuIHBhcnQpCk9mIGNvdXJzZSB6ZXJvaW5nIGkuZS4gMU1CIGNodW5r
-cyBpcyBxdWl0ZSBzbG93IGNvbXBhcmVkIHdpdGggd3JpdGUgb2YgZmV3IApzaW5nbGUgYnl0ZXMg
-b24gY2h1bmsgcHJvdmlzaW9uaW5nLgoKKlplcm9pbmcgaXMgdW5zZXQqCgpVbnByb3Zpc2lvbmVk
-IGRhdGEgYXJlIHN0aWxsICd6ZXJvZXMnCgpIb3dldmVyIHdoZW4geW91IGZpcnN0IHdyaXRlIHRv
-ICd1bnByb3Zpc2lvbmVkJyBjaHVuayAtIHRoZW4geW91ciBkYXRhCmFyZSBhZ2FpbiBpbiB0aGUg
-cGxhY2UgeW91IHdyb3RlIHRoZW4gLSBCVVQgcmVtYWluaW5nIGNvbnRlbnQgaXMgLSB3aGF0IGhh
-cyAKYmVlbiBmb3VuZCBvbiB5b3VyIGRpc2sgaW4gdGhlIHByb3Zpc2lvbmVkIGNodW5rIC0gc28g
-bm93IHdoZW4geW91IHJlYWQgZnJvbSAKJ3Vud3JpdHRlbicgYXJlYXMgaW4gcHJvdmlzaW9uZWQg
-Y2h1bmsgLSB5b3UgcmVhZCBzb21lIHJhbmRvbSBnYXJiYWdlIGxlZnQgb24gCnlvdXIgZGlzay4K
-VGhpcyBtYXkgaGF2ZSBpLmUuIHNlY3VyaXR5IGltcGFjdC4KCgpTbyB5b3UgbmVlZCB0byBwaWNr
-IHdoYXQgc3VpdHMgeW91ciBuZWVkcyBiZXN0LgoKRm9yIGZpbGVzeXN0ZW0gdGhhdCBrZWVwIG1h
-cCBvZiB3cml0dGVuIHNwYWNlIC0gZ28gd2l0aCAtWm4KZm9yIGltcHJvdmVkIHNlY3VyaXR5IHN0
-YXkgd2l0aCAtWnkgYW5kIGJlIHByZXBhcmVkIHRvIHBheSBzb21lIHByaWNlIHdpdGggCmluaXRp
-YWwgcHJvdmlzaW9uaW5nIC0gc2luY2UgcmVwZWF0ZWQgd3JpdGUgaGFzIHRoZW4gcmVndWxhciBw
-ZXJmb3JtYW5jZS4KClpkZW5lawoKCgoKCj4gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4g5Y+R5Lu25Lq677yaWmRlbmVr
-IEthYmVsYWMgPHprYWJlbGFjQHJlZGhhdC5jb20+Cj4g5Y+R6YCB5pe26Ze077yaMjAxNOW5tDnm
-nIgyMuaXpSjmmJ/mnJ/kuIApIDE1OjAyCj4g5pS25Lu25Lq677yabGlsb2ZpbGUgPGxpbG9maWxl
-QGFsaXl1bi5jb20+OyBkZXZpY2UtbWFwcGVyIGRldmVsb3BtZW50IDxkbS1kZXZlbEByZWRoYXQu
-Y29tPjsgTWlrZSBTbml0emVyIDxtc25pdHplckByZWRoYXQuY29tPjsgT25kcmVqIEtvemluYSA8
-b2tvemluYUByZWRoYXQuY29tPjsgQWxhc2RhaXIgRy4gS2VyZ29uIDxhZ2tAcmVkaGF0LmNvbT4K
-PiDkuLvjgIDpopjvvJpSZTogW2RtLWRldmVsXSBUaGlubHktUHJvdmlzaW9uZWQgTG9naWNhbCBW
-b2x1bWVzCj4KPiBEbmUgMjAuOS4yMDE0IHYgMTY6MTkgbGlsb2ZpbGUgbmFwc2FsKGEpOgo+PiB3
-aGVuIEkgdGVzdCBUaGlubHktUHJvdmlzaW9uZWQgTG9naWNhbCBWb2x1bWVzKHVzZSBkZXZpY2Ug
-dGhpbnByb3Zpc29uIHRhcmdldCksSSBmb3VuZCB0aGUgcmFuZG9tIHdyaXRlIHBlcmZvcm1hbmNl
-IGlzIHZlcnkgbG93LiBXaGF0IGZhY3RvcnMgd2lsbCBpbmZsdWVuY2UgdGhlIHJhbmRvbSB3cml0
-ZSBwZXJmb3JtYW5jZSBvZiAgdGhpbiB2b2x1bWUuIGhvdyBjYW4gaSBxdWlja2x5IHVuZGVyc3Rh
-bmQgZG0tYnVmaW8uYz8KPj4KPgo+Cj4gSW4gZ2VuZXJhbCAyIG1ham9yIGZhY3RvcnMgLQo+Cj4g
-MS4gLSBzaXplIG9mIGNodW5rLyhwcm92aXNpb25lZCBibG9jaykKPgo+IHRoZSBiaWdnZXIgdGhl
-IGJsb2NrIGlzIC0gdGhlIGJldHRlciB1c3VhbGx5IGZpbGVzeXN0ZW0gcGVyZm9ybXMgLSBzaW5j
-ZSB0aGUKPiBhbGwgdGhlIGFnZ3JlZ2F0aW9uIGxvZ2ljIGFuZCBvcHRpbWl6YXRpb24gb2YgZnMg
-d29ya3MuCj4KPiBvbiB0aGUgb3RoZXIgLSB0aGUgYmlnZ2VyIHRoZSBibG9jayBpcyAtIHRoZSBs
-ZXNzIGVmZmljaWVudCBzbmFwc2hvdCB5b3UgZ2V0Cj4gKHNpbmNlIG11Y2ggYmlnZ2VyIGNodW5r
-IG5lZWRzIHRvIGJlIGNvcGllZCBmb3IgaS5lLiBzaW5nbGUgYnl0ZSB3cml0ZSkKPgo+Cj4gMi4g
-LSB6ZXJvaW5nIG9uIHByb3Zpc2lvbnNpbmcuCj4KPiB3aGVuIHRoZSBibG9jayBwcm92aXNpb25l
-ZCBmb3IgdGhlIGZpcnN0IHRpbWUgLSBpdCdzIChieSBkZWZhdWx0IGNvbmZpZykgZnVsbHkKPiB6
-ZXJvZXMgLSBzbyB5b3UgZG9uJ3QgZ2V0IHJhbmRvbSBkaXNrIGNvbnRlbnQgZnJvbSB1bndyaXR0
-ZW4gYXJlYXMuCj4KPiBJZiB5b3UgZG9uJ3QgY2FyZSBhYm91dCB0aGlzIC0geW91IGNvdWxkIHNh
-ZmVseSBkaXNhYmxlIHplcm9pbmcgLSBudW1iZXIgb2YKPiBmaWxlc3lzdGVtIHVzdWFsbHkgYWxy
-ZWFkeSBtYW5hZ2VzIHVud3JpdHRlbiBzcGFjZSB3ZWxsIHNvIGlmIHlvdSB1c2UgYmxvY2sKPiBk
-ZXZpY2UgZm9yIGV4dDQgc28gc2hvdWxkbid0IG5vcm1hbGx5IGJlIGFibGUgdG8gcmVhZCB1bndy
-aXR0ZW4gYXJlYXMuCj4KPgo+IFNvIHBsZWFzZSB0cnkgaS5lLiAgMjU2S0IgY2h1bmsgc2l6ZSB3
-aXRoIG5vbi16ZXJvaW5nICgtYyAyNTYgLVpuKSB3aGVuCj4gY3JlYXRpbmcgdGhpbi1wb29sICAt
-ICBkbyB5b3Ugc3RpbGwgZmVsbCB5b3UgZ2V0IHBvb3IgcGVyZm9ybWFuY2UgPwo+Cj4gWmRlbmVr
-Cj4KPgo+IE5PVEU6IHlvdSBjb3VsZCBjaGFuZ2UgemVyb2luZyB3aXRoIGV4aXN0aW5nIHBvb2ws
-IGJ1dCBub3QgeW91ciB0aGluLXBvb2wKPiBjaHVuayBzaXplIGZvciBub3cgKHRob3VnaCBmdXR1
-cmUgdmVyc2lvbiBtaWdodCBiZSBsZXNzIHJlc3RyaWN0aXZlIGhlcmUpLgo+Cj4KPiAtLQo+IGRt
-LWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczovL3d3dy5y
-ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKPgoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+>>>>> "Neil" == NeilBrown  <neilb@suse.de> writes:
+
+Neil,
+
+Several people have pointed out the issues with the reliability of
+discard_zeroes_data in the past. My objection with Heinz' patch is
+purely that we are perpetuating an interface that we have come to learn
+that we can't entirely trust.
+
+Neil> If it is a "hint", then why isn't it
+Neil> "discard_sometimes_zeroes_data"?
+
+Because at the time we put it in it was expected to be a solid
+guarantee. However, as it turns out the spec is vaguely worded and only
+says that the device must return zeroes if a block has been successfully
+discarded. But since discard itself is only a hint the device is free to
+silently ignore all or parts of the request. *sigh*
+
+There were several approaches being entertained in both T10 and T13
+about how to tighten this up, including a FORCE bit that would cause the
+device to return an error if parts of the request were being ignored. I
+was hoping that we would be able to use that. However, the consensus at
+the T10 meeting this summer was that WRITE SAME is the only reliable way
+to ensure that zeroed blocks are returned. And the spec was amended to
+clarify that.
+
+Neil> If a read from a discarded region doesn't reliably return zeros,
+Neil> then raid5 cannot support discard.  Should I turn of discard
+Neil> support in raid5?
+
+I've been on the fence about this for a while.
+
+The good news is that while the spec has been vague and many battles
+fought in the standards bodies, most vendors are reasonably sane when it
+comes to implementing this. We haven't had any corruption horror stories
+from the field that I'm aware of. The first couple of generations of
+SSDs were a travesty in this department but current devices behave
+reasonably well. Hardware RAID vendors generally solve the RAID5 SSD
+problem by explicitly whitelisting drives that are known to do the right
+thing. Sadly we don't have a good device list. And for most drives the
+discards only get dropped in rare corner cases so it's not trivial to
+write a test tool to generate such a list.
+
+I was really hoping we'd get better guarantees from the standards folks
+this summer. But as the spec is currently written switching to a WRITE
+SAME bias in our discard heuristics may have the opposite effect of what
+we desire. That's because the spec mandates that if a device can not
+discard the blocks in the request it must write zeroes to them. IOW, we
+get the determinism at the expense of potentially ending up writing the
+blocks in question, thus increasing write wear. Probably not what we
+want for the discard use case.
+
+I am in the process of tweaking the discard code to adhere to the August
+27th T10 SBC-4 draft. The net takeaway is that if you depend on reading
+zeroes back you should be using blkdev_issue_zeroout() and not
+blkdev_issue_discard(). raid5.c effectively needs to translate discard
+requests from above to zeroouts below.
+
+I am torn between making blkdev_issue_zeroout() unprovision if possible
+or having an explicit allocate flag. Some users only care about getting
+zeroes back but others use blkdev_issue_zeroout() to preallocate blocks
+(which is the current behavior).
+
+Right now we have:
+
+  discard		Unprovision, may or may not return zeroes
+  zeroout		Provision, return zeroes
+
+We'll have to move to a model where we have a third variant:
+
+  discard		Unprovision, may or may not return zeroes
+  zeroout, deallocate	Unprovision if possible, return zeroes
+  zeroout, allocate     Provision, return zeroes
+
+The zeroout, deallocate variant would be enabled if the device supports
+WRITE SAME w/UNMAP and has the LBPRZ flag set (and is not our libata
+SATL).
+
+Discard is the bane of my existence :(
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
