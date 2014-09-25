@@ -1,19 +1,17 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: Re: dm-mpath: Work with blk multi-queue drivers
-Date: Thu, 25 Sep 2014 09:57:41 -0600 (MDT)
-Message-ID: <alpine.LRH.2.03.1409250923390.4696@AMR>
-References: <1411491802-7356-1-git-send-email-keith.busch@intel.com>
-	<20140924145215.GA26398@infradead.org>
-	<alpine.LRH.2.03.1409241020540.4696@AMR>
-	<20140924183453.GA23052@redhat.com>
-	<20140924184834.GB23052@redhat.com>
-	<20140925001341.GA25145@redhat.com>
+From: Brian King <brking@linux.vnet.ibm.com>
+Subject: Re: [PATCH 1/1] multipath-tools: Change path checker for
+ IBM IPR devices
+Date: Thu, 25 Sep 2014 11:47:42 -0500
+Message-ID: <5424472E.4060300@linux.vnet.ibm.com>
+References: <20140924195721.148637349@linux.vnet.ibm.com>
+	<20140924195752.289011902@linux.vnet.ibm.com>
+	<5423B664.2020007@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140925001341.GA25145@redhat.com>
+In-Reply-To: <5423B664.2020007@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,44 +21,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 24 Sep 2014, Mike Snitzer wrote:
-> Mike Snitzer <snitzer@redhat.com> wrote:
->> On Wed, Sep 24 2014 at  2:34pm -0400,
->> Mike Snitzer <snitzer@redhat.com> wrote:
->>> I never did take the time to properly review Hannes' proposal but now
->>> that you're floating this blk-mq support for DM core (and DM mpath) I'm
->>> clearly going to have to take this all on in a much more focused way.
->>>
->>> Christoph/Hannes/Junichi/Keith/others, can you see a way forward that
->>> offers a lighter request-based DM that makes required callouts to (new?)
->>> block interfaces that helps us abstract the old request and blk-mq
->>> request allocation, etc?
+On 09/25/2014 01:29 AM, Hannes Reinecke wrote:
+> On 09/24/2014 09:57 PM, wenxiong@linux.vnet.ibm.com wrote:
+>> We would like to change path checker to directio for IBM IPR devices.
 >>
->> (sorry about replying to myself...)
+>> Signed-off-by: Wen Xiong <wenxiong@linux.vnet.ibm.com>
+>> ---
+>>  libmultipath/hwtable.c |    2 +-
+>>  1 file changed, 1 insertion(+), 1 deletion(-)
 >>
->> SO revisiting that thread from above, these posts stand out:
->> http://www.redhat.com/archives/dm-devel/2014-June/msg00026.html
->> http://www.redhat.com/archives/dm-devel/2014-June/msg00028.html
+>> Index: b/libmultipath/hwtable.c
+>> ===================================================================
+>> --- a/libmultipath/hwtable.c	2014-09-23 17:39:27.000000000 -0500
+>> +++ b/libmultipath/hwtable.c	2014-09-23 17:40:31.419667000 -0500
+>> @@ -630,7 +630,7 @@ static struct hwentry default_hw[] = {
+>>  		.pgfailback    = -FAILBACK_IMMEDIATE,
+>>  		.rr_weight     = RR_WEIGHT_NONE,
+>>  		.no_path_retry = NO_PATH_RETRY_UNDEF,
+>> -		.checker_name  = TUR,
+>> +		.checker_name  = DIRECTIO,
+>>  		.prio_name     = PRIO_ALUA,
+>>  		.prio_args     = NULL,
+>>  	},
 >>
->> I'd love to see us get rid of request-based DM's bio cloning for each
->> cloned request (we never did get an answer from the NEC guys to know
->> _why_ that was done).
->
-> Actually, Junichi did respond with why:
-> http://www.redhat.com/archives/dm-devel/2014-June/msg00033.html
->
-> So this needs more review and thought.
+>> -- -- dm-devel mailing list dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+> Any particular reason for doing so?
+> 
+> Using 'directio' has the drawback that it might stall under higher
+> load, as it's being added to the _tail_ of the request queue.
+> TUR is using the 'SG_IO' ioctl, which is added to the head of the
+> request_queue and hence won't be stalled ...
 
-Thank you for all the background information. This definitely gives me
-a lot more to think about.
+The issue we've run into started when this patch started making its
+way into distros:
 
-For my part, the goal was to change as little as possible to get basic
-blk-mq support working safely without regressing, and performance is
-not even on my radar yet. I purposefully did not try to understand the
-existing design well enough to propose re-arching. If we can address the
-'request' life cycle management duality issue, would this be acceptable
-as a stopgap for blk-mq support?
+http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/drivers/scsi/scsi_error.c?id=14216561e164671ce147458653b1fea06a4ada1e
+
+That changed the behaviour for user initiated TUR commands. After an ipr
+adapter gets reset, all disk array devices require a start unit command
+to be issued to them before they will accept commands. So, with the SCSI
+EH change, we now end up in a scenario with dual ipr adapters where the
+TUR getting issued from the health checker returns with a Not Ready response
+and since SCSI EH no longer triggers the Start Unit in this scenario,
+the path never recovers.
+
+The alternative solution would be to change the TUR path checker in multipath-tools
+to issue a Start Unit if it sees a 02/04/02.
+
+Thanks,
+
+Brian
+
+-- 
+Brian King
+Power Linux I/O
+IBM Linux Technology Center
