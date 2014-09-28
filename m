@@ -1,12 +1,14 @@
 From: Pranith Kumar <bobby.prani@gmail.com>
-Subject: [PATCH] drivers/md: Use rcu_dereference() for accessing rcu pointer
-Date: Sun, 28 Sep 2014 11:01:29 -0400
-Message-ID: <1411916497-17071-1-git-send-email-bobby.prani@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [RESEND PATCH] drivers/md: Use rcu_dereference() for accessing rcu pointer
+Date: Sun, 28 Sep 2014 11:05:04 -0400
+Message-ID: <1411916712-17631-1-git-send-email-bobby.prani@gmail.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, open list <linux-kernel@vger.kernel.org>
-Cc: paulmck@vger.kernel.org
+Cc: paulmck@linux.vnet.ibm.com
 List-Id: dm-devel.ids
+
+Got Paul's email wrong the first time.
 
 The map field in 'struct mapped_device' is an rcu pointer. Use rcu_dereference()
 while accessing it.
@@ -58,3 +60,4 @@ index 746411b..fbdf0bb 100644
  
 -- 
 1.9.1
+
