@@ -1,23 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mpath: Work with blk multi-queue drivers
-Date: Tue, 30 Sep 2014 10:18:28 -0400
-Message-ID: <20140930141828.GA5161@redhat.com>
-References: <1411491802-7356-1-git-send-email-keith.busch@intel.com>
-	<20140924145215.GA26398@infradead.org>
-	<alpine.LRH.2.03.1409241020540.4696@AMR>
-	<20140924183453.GA23052@redhat.com>
-	<20140924184834.GB23052@redhat.com>
-	<20140925001341.GA25145@redhat.com>
-	<alpine.LRH.2.03.1409250923390.4696@AMR>
-	<20140925161215.GA29645@redhat.com>
-	<5429F227.4080604@ce.jp.nec.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-bufio: set last_accessed when relinking the
+	buffer
+Date: Tue, 30 Sep 2014 11:54:37 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1409301150290.11404@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5429F227.4080604@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,51 +17,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <msnitzer@redhat.com>, Edward Thornber <thornber@redhat.com>, Ben Turner <bturner@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Sep 29 2014 at  7:58pm -0400,
-Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+Hi
 
-> On 09/26/14 01:12, Mike Snitzer wrote:
-> > On Thu, Sep 25 2014 at 11:57am -0400,
-> > Keith Busch <keith.busch@intel.com> wrote:
-> >> For my part, the goal was to change as little as possible to get basic
-> >> blk-mq support working safely without regressing, and performance is
-> >> not even on my radar yet. I purposefully did not try to understand the
-> >> existing design well enough to propose re-arching. If we can address the
-> >> 'request' life cycle management duality issue, would this be acceptable
-> >> as a stopgap for blk-mq support?
-> > 
-> > We can ignore my desire to cleanup existing request-based DM's bio
-> > cloning for now.  And yes, resolving the duality issue would need to
-> > happen.  But your proposed change still has the issue of no longer using
-> > a dedicated mempool per rq-based DM device to allocate requests from.
-> > If we were to do that I'm pretty sure this new dm.c:dm_get_request()
-> > wrapper would need to call blk_get_request() with GFP_ATOMIC.
-> > 
-> > Either GFP_ATOMIC or I think we _could_ relax to GFP_NOWAIT if and only
-> > if we were willing to explicitly disallow stacking request-based DM
-> > devices (which nothing uses at this point).  So I'd like to get Junichi
-> > and Alasdair's feedback on the implications.  Junichi and/or Alasdair?
-> 
-> The problem with "stacking request-based DM devices" is
-> caused by shared mempool (i.e. the pool gets emptied by
-> upper layer and we can't make forward progress).
-> So it should be ok if request has per-device mempool
-> (I think it does.)
+Here I'm sending the patch for dm-bufio last_accessed. (bug 1145230)
 
-Current request-based DM provides a per-device mempool that all cloned
-requests are allocated from.  But Keith's approach to have map_rq call
-blk_get_request will no longer make use of that DM provided mempool.
+BTW. do you think that we also need to increase default max_age value (60 
+seconds)? What do you think the default value should be?
 
-But are you referring to the request_queue's use of a mempool that is
-initialized with blk_init_rl() in blk_init_allocated_queue()?
+Mikulas
 
-> However, using blk_get_request() in map function will
-> require more changes in the code as blk_get_request()
-> assumes interrupt-enabled context.
 
-Ah yes, blk_get_request will unconditionally disable interrupts using
-spin_lock_irq.  Not yet looked at the implications though.
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+The variable last_accessed was set only once when the buffer was created.
+In the result, the buffer was discarded after dm_bufio_max_age, even if it
+was used recently.
+
+This patch changes it so that last_accessed is set each time the buffer is
+moved to the head of the LRU list, so the buffer is discarded if it was
+not used in dm_bufio_max_age time.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v3.2+
+
+---
+ drivers/md/dm-bufio.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: linux-3.17-rc7/drivers/md/dm-bufio.c
+===================================================================
+--- linux-3.17-rc7.orig/drivers/md/dm-bufio.c	2014-09-30 17:41:31.000000000 +0200
++++ linux-3.17-rc7/drivers/md/dm-bufio.c	2014-09-30 17:41:57.000000000 +0200
+@@ -465,6 +465,7 @@ static void __relink_lru(struct dm_buffe
+ 	c->n_buffers[dirty]++;
+ 	b->list_mode = dirty;
+ 	list_move(&b->lru_list, &c->lru[dirty]);
++	b->last_accessed = jiffies;
+ }
+ 
+ /*----------------------------------------------------------------
