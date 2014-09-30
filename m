@@ -1,101 +1,97 @@
-From: wenxiong@linux.vnet.ibm.com
-Subject: Re: [dm-devel] [PATCH 1/1] multipath-tools: Change path checker for
- IBM IPR devices
-Date: Tue, 30 Sep 2014 14:05:47 -0400
-Message-ID: <20140930140547.Horde.m7EONeG2u3AJYXxG2TLrmQ3@ltc.linux.ibm.com>
-References: <20140924195721.148637349@linux.vnet.ibm.com>
- <20140924195752.289011902@linux.vnet.ibm.com> <5423B664.2020007@suse.de>
- <5424472E.4060300@linux.vnet.ibm.com> <20140925165743.GA20621@infradead.org>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: dm-mpath: Work with blk multi-queue drivers
+Date: Tue, 30 Sep 2014 23:43:47 +0000
+Message-ID: <542B4033.30001@ce.jp.nec.com>
+References: <1411491802-7356-1-git-send-email-keith.busch@intel.com>
+	<20140924145215.GA26398@infradead.org>
+	<alpine.LRH.2.03.1409241020540.4696@AMR>
+	<20140924183453.GA23052@redhat.com>
+	<20140924184834.GB23052@redhat.com> <20140925001341.GA25145@redhat.com>
+	<alpine.LRH.2.03.1409250923390.4696@AMR>
+	<20140925161215.GA29645@redhat.com>
+	<5429F227.4080604@ce.jp.nec.com> <20140930141828.GA5161@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed; DelSp=Yes
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20140925165743.GA20621@infradead.org>
-Content-Disposition: inline
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@infradead.org>
-Cc: Brian King <brking@linux.vnet.ibm.com>, James Bottomley <JBottomley@parallels.com>, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20140930141828.GA5161@redhat.com>
+Content-Language: ja-JP
+Content-ID: <E680EB602BF18B49924CE04E1E20F77D@gisp.nec.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-Quoting Christoph Hellwig <hch@infradead.org>:
-
-> On Thu, Sep 25, 2014 at 11:47:42AM -0500, Brian King wrote:
->> The issue we've run into started when this patch started making its
->> way into distros:
+On 09/30/14 23:18, Mike Snitzer wrote:
+> On Mon, Sep 29 2014 at  7:58pm -0400,
+> Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+> 
+>> On 09/26/14 01:12, Mike Snitzer wrote:
+>>> On Thu, Sep 25 2014 at 11:57am -0400,
+>>> Keith Busch <keith.busch@intel.com> wrote:
+>>>> For my part, the goal was to change as little as possible to get basic
+>>>> blk-mq support working safely without regressing, and performance is
+>>>> not even on my radar yet. I purposefully did not try to understand the
+>>>> existing design well enough to propose re-arching. If we can address the
+>>>> 'request' life cycle management duality issue, would this be acceptable
+>>>> as a stopgap for blk-mq support?
+>>>
+>>> We can ignore my desire to cleanup existing request-based DM's bio
+>>> cloning for now.  And yes, resolving the duality issue would need to
+>>> happen.  But your proposed change still has the issue of no longer using
+>>> a dedicated mempool per rq-based DM device to allocate requests from.
+>>> If we were to do that I'm pretty sure this new dm.c:dm_get_request()
+>>> wrapper would need to call blk_get_request() with GFP_ATOMIC.
+>>>
+>>> Either GFP_ATOMIC or I think we _could_ relax to GFP_NOWAIT if and only
+>>> if we were willing to explicitly disallow stacking request-based DM
+>>> devices (which nothing uses at this point).  So I'd like to get Junichi
+>>> and Alasdair's feedback on the implications.  Junichi and/or Alasdair?
 >>
->> http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/drivers/scsi/scsi_error.c?id=14216561e164671ce147458653b1fea06a4ada1e
->>
->> That changed the behaviour for user initiated TUR commands. After an ipr
->> adapter gets reset, all disk array devices require a start unit command
->> to be issued to them before they will accept commands. So, with the SCSI
->> EH change, we now end up in a scenario with dual ipr adapters where the
->> TUR getting issued from the health checker returns with a Not Ready response
->> and since SCSI EH no longer triggers the Start Unit in this scenario,
->> the path never recovers.
->>
->> The alternative solution would be to change the TUR path checker in  
->> multipath-tools
->> to issue a Start Unit if it sees a 02/04/02.
->
-> Or we could fix up the check introduced by the commit, with something
-> ala:
->
-> diff --git a/drivers/scsi/scsi_error.c b/drivers/scsi/scsi_error.c
-> index a2c3d3d..7228d9e 100644
-> --- a/drivers/scsi/scsi_error.c
-> +++ b/drivers/scsi/scsi_error.c
-> @@ -459,13 +459,18 @@ static int scsi_check_sense(struct scsi_cmnd *scmd)
->  	if (! scsi_command_normalize_sense(scmd, &sshdr))
->  		return FAILED;	/* no valid sense data */
->
-> -	if (scmd->cmnd[0] == TEST_UNIT_READY && scmd->scsi_done != scsi_eh_done)
-> +	if (scmd->cmnd[0] == TEST_UNIT_READY &&
-> +	    scmd->request->cmd_type == REQ_TYPE_FS &&
-> +	    scmd->scsi_done != scsi_eh_done) {
->  		/*
->  		 * nasty: for mid-layer issued TURs, we need to return the
->  		 * actual sense data without any recovery attempt.  For eh
-> -		 * issued ones, we need to try to recover and interpret
-> +		 * issued ones, we need to try to recover and interpret,
-> +		 * and for pass through TURs we just need to stay out of the
-> +		 * way, so that the device handlers can do the right thing.
->  		 */
->  		return SUCCESS;
-> +	}
->
->  	scsi_report_sense(sdev, &sshdr);
->
->
+>> The problem with "stacking request-based DM devices" is
+>> caused by shared mempool (i.e. the pool gets emptied by
+>> upper layer and we can't make forward progress).
+>> So it should be ok if request has per-device mempool
+>> (I think it does.)
+> 
+> Current request-based DM provides a per-device mempool that all cloned
+> requests are allocated from.  But Keith's approach to have map_rq call
+> blk_get_request will no longer make use of that DM provided mempool.
+> 
+> But are you referring to the request_queue's use of a mempool that is
+> initialized with blk_init_rl() in blk_init_allocated_queue()?
 
-Hi Christoph,
+Yes.
 
-We have verified above patch in our test group system yesterday and  
-today. It works fine with their testcases.
+>> However, using blk_get_request() in map function will
+>> require more changes in the code as blk_get_request()
+>> assumes interrupt-enabled context.
+> 
+> Ah yes, blk_get_request will unconditionally disable interrupts using
+> spin_lock_irq.  Not yet looked at the implications though.
 
-Thanks,
-Wendy
+Actually, early implementation of request-based DM had tried to
+use blk_get_request() by converting them to irqsave/irqrestore
+variants. However, since (old, non-mq version of) blk_get_request
+is designed to be called in process context, such a change
+could have confused the interface.
+As a result, current DM code implements pre-allocation of memory
+and mapping separately.
+I think blk-mq already does pre-allocation of requests internally
+and mq version of blk_get_request is actually a mapping function
+in this case.
 
+So, I suspect DM functions for pre-allocation (clone_rq) and mapping
+(map_request) are good place for containing the duality inside.
 
->>
->> Thanks,
->>
->> Brian
->>
->> --
->> Brian King
->> Power Linux I/O
->> IBM Linux Technology Center
->>
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
-> ---end quoted text---
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-
+-- 
+Jun'ichi Nomura, NEC Corporation
