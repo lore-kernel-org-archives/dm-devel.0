@@ -1,13 +1,23 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [PATCH]  dm-raid: fix bug when round up region_size
-Date: Tue, 30 Sep 2014 22:30:51 +1000
-Message-ID: <20140930223051.653dd063@notabene.brown>
-References: <1412074836-5820-1-git-send-email-heinzm@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-mpath: Work with blk multi-queue drivers
+Date: Tue, 30 Sep 2014 10:18:28 -0400
+Message-ID: <20140930141828.GA5161@redhat.com>
+References: <1411491802-7356-1-git-send-email-keith.busch@intel.com>
+	<20140924145215.GA26398@infradead.org>
+	<alpine.LRH.2.03.1409241020540.4696@AMR>
+	<20140924183453.GA23052@redhat.com>
+	<20140924184834.GB23052@redhat.com>
+	<20140925001341.GA25145@redhat.com>
+	<alpine.LRH.2.03.1409250923390.4696@AMR>
+	<20140925161215.GA29645@redhat.com>
+	<5429F227.4080604@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3898203715845105095=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1412074836-5820-1-git-send-email-heinzm@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <5429F227.4080604@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,98 +27,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com
-Cc: dm-devel@redhat.com
+To: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============3898203715845105095==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	boundary="Sig_/mzsqSIgdCVb0exHA.GBEL=y";
-	protocol="application/pgp-signature"
+On Mon, Sep 29 2014 at  7:58pm -0400,
+Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
 
---Sig_/mzsqSIgdCVb0exHA.GBEL=y
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+> On 09/26/14 01:12, Mike Snitzer wrote:
+> > On Thu, Sep 25 2014 at 11:57am -0400,
+> > Keith Busch <keith.busch@intel.com> wrote:
+> >> For my part, the goal was to change as little as possible to get basic
+> >> blk-mq support working safely without regressing, and performance is
+> >> not even on my radar yet. I purposefully did not try to understand the
+> >> existing design well enough to propose re-arching. If we can address the
+> >> 'request' life cycle management duality issue, would this be acceptable
+> >> as a stopgap for blk-mq support?
+> > 
+> > We can ignore my desire to cleanup existing request-based DM's bio
+> > cloning for now.  And yes, resolving the duality issue would need to
+> > happen.  But your proposed change still has the issue of no longer using
+> > a dedicated mempool per rq-based DM device to allocate requests from.
+> > If we were to do that I'm pretty sure this new dm.c:dm_get_request()
+> > wrapper would need to call blk_get_request() with GFP_ATOMIC.
+> > 
+> > Either GFP_ATOMIC or I think we _could_ relax to GFP_NOWAIT if and only
+> > if we were willing to explicitly disallow stacking request-based DM
+> > devices (which nothing uses at this point).  So I'd like to get Junichi
+> > and Alasdair's feedback on the implications.  Junichi and/or Alasdair?
+> 
+> The problem with "stacking request-based DM devices" is
+> caused by shared mempool (i.e. the pool gets emptied by
+> upper layer and we can't make forward progress).
+> So it should be ok if request has per-device mempool
+> (I think it does.)
 
-On Tue, 30 Sep 2014 13:00:36 +0200 heinzm@redhat.com wrote:
+Current request-based DM provides a per-device mempool that all cloned
+requests are allocated from.  But Keith's approach to have map_rq call
+blk_get_request will no longer make use of that DM provided mempool.
 
-> From: Heinz Mauelshagen <heinzm@redhat.com>
->=20
-> Liong,
-> thanks for the catch.
-> Introduced minor modification utilizing the is_power_of_2() inline.
->=20
-> ---
->=20
-> If region_size is not supplied by userspace and the device is very
-> large, there is a bug in current code preventing region_size from being
-> correctly set.
->=20
->=20
-> Signed-off-by: Lidong Zhong <lzhong@suse.com>
-> Acked-by:      Heinz Mauelshagen <heinzm@redhat.com>
-> Tested-by:     Heinz Mauelshagen <heinzm@redhat.com>
->=20
-> ---
->  drivers/md/dm-raid.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
->=20
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index 4880b69..264aef4 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -325,8 +325,10 @@ static int validate_region_size(struct raid_set *rs,=
- unsigned long region_size)
->  		 */
->  		if (min_region_size > (1 << 13)) {
->  			/* If not a power of 2, make it the next power of 2 */
-> -			if (min_region_size & (min_region_size - 1))
-> -				region_size =3D 1 << fls(region_size);
-> +			if (is_power_of_2(min_region_size))
-> +				region_size =3D min_region_size;
-> +			else
-> +				region_size =3D 1 << fls(min_region_size);
->  			DMINFO("Choosing default region size of %lu sectors",
->  			       region_size);
->  		} else {
+But are you referring to the request_queue's use of a mempool that is
+initialized with blk_init_rl() in blk_init_allocated_queue()?
 
-If you really wanted to optimize, you could just do
-   region_size =3D roundup_pow_of_two(min_region_size);
+> However, using blk_get_request() in map function will
+> require more changes in the code as blk_get_request()
+> assumes interrupt-enabled context.
 
-there is all sorts of cool stuff in log2.h !!
-
-NeilBrown
-
---Sig_/mzsqSIgdCVb0exHA.GBEL=y
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iQIVAwUBVCqieznsnt1WYoG5AQJHtw//fSKLRuCpTvgstcPpwdTRuuUt/Avt/OBm
-EUmLoBU/tuTYqu/CiffEdDFblm8DEWHOD0ZOetZ4ALUmzruDNLekBzKDtNiI3Hfu
-GRUNC6yw0ws2sWr2QI8W8yt5a6QnZDMKK+5Mt1GS+FoMTaq+tdWsNDp7Gx0bX7PI
-bS7kopj+gKsoZLsks56TvrNI1E4RzkObbCcOYFhuJZeZtt3C7rmmDROqP+Lxjo3q
-rJWGjG4iZ7PF7lcYoFAeXvUeHsWWP/ubcw2n2iNRSC1ljEw/RzddNx3l4XzjMo8b
-r/ZA9F23zC/S8KhXkT3j78OQGn9UvRz/aVuRrcpmNGEGdW9LsT9ca5yKQ10di+QM
-JdR5AKUf0lkoXKqRylMXOBOg2C2yZYZz2gQRaDddlvTGHemsSLzG+kk0LSZIVJAU
-PSVAjRIIb9CKUWJPF3rPGmvUKa10SbL+Kfpn45U+KsLv297+SEuX8O4ztJRp4OgE
-/abaR7iophtjfgSfuSSwm7yCEf51X9IiL7HVIIMjIm9+smQ5bCoUDSwaSCSQuLZD
-bFe+GLCTDF8OIx5SGhiWJycwmYth6qdnj1dybgqUBSuLI/an5tAmaNriQ0c10Vkj
-Z2SMkcPP62ZN929H0VZtbjbmbOtDqzFYAau5rVDQ79tBimS36wEEY4NIKb4xe/uO
-iptmMPfNTr8=
-=ZkuB
------END PGP SIGNATURE-----
-
---Sig_/mzsqSIgdCVb0exHA.GBEL=y--
-
-
---===============3898203715845105095==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3898203715845105095==--
+Ah yes, blk_get_request will unconditionally disable interrupts using
+spin_lock_irq.  Not yet looked at the implications though.
