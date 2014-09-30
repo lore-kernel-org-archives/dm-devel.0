@@ -1,7 +1,7 @@
-From: Lidong Zhong <lzhong@suse.com>
-Subject: [PATCH] dm raid: fix bug when round up region_size
-Date: Tue, 30 Sep 2014 11:11:56 +0800
-Message-ID: <1412046716-4352-1-git-send-email-lzhong@suse.com>
+From: heinzm@redhat.com
+Subject: Re: [PATCH]  dm-raid: fix bug when round up region_size
+Date: Tue, 30 Sep 2014 13:00:36 +0200
+Message-ID: <1412074836-5820-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,31 +17,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-when region_size is not supplied by userspace and the device is very
-large, there is a bug in current code since region_size is not correctly
-set.
+From: Heinz Mauelshagen <heinzm@redhat.com>
+
+Liong,
+thanks for the catch.
+Introduced minor modification utilizing the is_power_of_2() inline.
+
+---
+
+If region_size is not supplied by userspace and the device is very
+large, there is a bug in current code preventing region_size from being
+correctly set.
+
 
 Signed-off-by: Lidong Zhong <lzhong@suse.com>
+Acked-by:      Heinz Mauelshagen <heinzm@redhat.com>
+Tested-by:     Heinz Mauelshagen <heinzm@redhat.com>
+
 ---
- drivers/md/dm-raid.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ drivers/md/dm-raid.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 4880b69..ecef01f 100644
+index 4880b69..264aef4 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -326,7 +326,9 @@ static int validate_region_size(struct raid_set *rs, unsigned long region_size)
+@@ -325,8 +325,10 @@ static int validate_region_size(struct raid_set *rs, unsigned long region_size)
+ 		 */
  		if (min_region_size > (1 << 13)) {
  			/* If not a power of 2, make it the next power of 2 */
- 			if (min_region_size & (min_region_size - 1))
+-			if (min_region_size & (min_region_size - 1))
 -				region_size = 1 << fls(region_size);
-+				region_size = 1 << fls(min_region_size);
-+			else
++			if (is_power_of_2(min_region_size))
 +				region_size = min_region_size;
++			else
++				region_size = 1 << fls(min_region_size);
  			DMINFO("Choosing default region size of %lu sectors",
  			       region_size);
  		} else {
 -- 
-1.8.1.4
+1.9.3
