@@ -1,7 +1,7 @@
 From: Lidong Zhong <lzhong@suse.com>
 Subject: [PATCH] dm raid: fix bug when round up region_size
-Date: Tue, 30 Sep 2014 11:04:53 +0800
-Message-ID: <1412046293-4120-1-git-send-email-lzhong@suse.com>
+Date: Tue, 30 Sep 2014 11:11:56 +0800
+Message-ID: <1412046716-4352-1-git-send-email-lzhong@suse.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,8 +19,8 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-when region_size if not supplied by userspace and the device is very
-large, there is a bug in current code since region_size is correctly
+when region_size is not supplied by userspace and the device is very
+large, there is a bug in current code since region_size is not correctly
 set.
 
 Signed-off-by: Lidong Zhong <lzhong@suse.com>
