@@ -1,20 +1,13 @@
-From: Andrey Kuzmin <andrey.v.kuzmin@gmail.com>
-Subject: Re: [PATCH] dm-raid: add RAID discard support
-Date: Wed, 1 Oct 2014 20:00:45 +0400
-Message-ID: <CANvN+emfkxbsvmVGr6OL1cTy+jB5t7nHhzB5Ak_6oRH24ojOxw@mail.gmail.com>
-References: <1411491106-23676-1-git-send-email-heinzm@redhat.com>
-	<yq18ulaszpk.fsf@sermon.lab.mkp.net>
-	<20140924093308.120fe616@notabene.brown>
-	<yq1zjdpsqry.fsf@sermon.lab.mkp.net>
-	<7C39EB56-623A-4318-A558-258ABA32FF12@redhat.com>
-	<20140924142157.33475baa@notabene.brown> <5422A4C4.4020707@redhat.com>
-	<20141001125625.1e0d356a@notabene.brown>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-bufio: break out of both loops when freeing
+	data
+Date: Wed, 1 Oct 2014 13:29:48 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1410011329050.25573@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141001125625.1e0d356a@notabene.brown>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,94 +17,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, Shaohua Li <shli@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
+To: Edward Thornber <thornber@redhat.com>, dm-devel@redhat.com
+Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBPY3QgMSwgMjAxNCBhdCA2OjU2IEFNLCBOZWlsQnJvd24gPG5laWxiQHN1c2UuZGU+
-IHdyb3RlOgo+IE9uIFdlZCwgMjQgU2VwIDIwMTQgMTM6MDI6MjggKzAyMDAgSGVpbnogTWF1ZWxz
-aGFnZW4gPGhlaW56bUByZWRoYXQuY29tPgo+IHdyb3RlOgo+Cj4+Cj4+IE1hcnRpbiwKPj4KPj4g
-dGhhbmtzIGZvciB0aGUgZ29vZCBleHBsYW5hdGlvbiBvZiB0aGUgc3RhdGUgb2YgdGhlIGRpc2Nh
-cmQgdW5pb24uCj4+IERvIHlvdSBoYXZlIGFuIEVUQSBmb3IgdGhlICd6ZXJvb3V0LCBkZWFsbG9j
-YXRlJyAuLi4gc3VwcG9ydCB5b3UgbWVudGlvbmVkPwo+Pgo+PiBJIHdhcyBwbGFubmluZyB0byBo
-YXZlIGEgZm9sbG93dXAgcGF0Y2ggZm9yIGRtLXJhaWQgc3VwcG9ydGluZyBhIGRtLXJhaWQKPj4g
-dGFibGUKPj4gbGluZSBhcmd1bWVudCB0byBwcm9oaWJpdCBkaXNjYXJkIHBhc3Nkb3duLgo+Pgo+
-PiBJbiBsaWV1IG9mIHRoZSBmdXp6eSBmaWVsZCBzaXR1YXRpb24gd3J0IFNTRCBmdyBhbmQgZGlz
-Y2FyZF96ZXJvZXNfZGF0YQo+PiBzdXBwb3J0Cj4+IHJlbGF0ZWQgdG8gUkFJRDQvNS82LCB3ZSBu
-ZWVkIHRoYXQgaW4gdXBzdHJlYW0gdG9nZXRoZXIgd2l0aCB0aGUgaW5pdGlhbAo+PiBwYXRjaC4K
-Pj4KPj4gVGhhdCAnbm9fZGlzY2FyZF9wYXNzZG93bicgdGFibGUgbGluZSBjYW4gYmUgYWRkZWQg
-dG8gZG0tcmFpZCBSQUlENC81LzYKPj4gdGFibGUKPj4gbGluZXMgdG8gYXZvaWQgcG9zc2libGUg
-ZGF0YSBjb3JydXB0aW9uIGJ1dCBjYW4gYmUgYXZvaWRlZCBvbiBSQUlEMS8xMAo+PiB0YWJsZSBs
-aW5lcywKPj4gYmVjYXVzZSB0aGUgbGF0dGVyIGFyZSBub3Qgc3VmZmVyaW5nIGZyb20gYW55ICBk
-aXNjYXJkX3plcm9lc19kYXRhIGZsYXcuCj4+Cj4+Cj4+IE5laWwsCj4+Cj4+IGFyZSB5b3UgZ29p
-bmcgdG8gZGlzYWJsZSBkaXNjYXJkcyBpbiBSQUlENC81LzYgc2hvcnRseQo+PiBvciByYXRoZXIg
-Z28gd2l0aCB5b3VyIGJpdG1hcCBzb2x1dGlvbj8KPgo+IENhbiBJIGp1c3QgY2xvc2UgbXkgZXll
-cyBhbmQgaG9wZSBpdCBnb2VzIGF3YXk/Cj4KPiBUaGUgaWRlYSBvZiBhIGJpdG1hcCBvZiB1bmlu
-aXRpYWxpc2VkIGFyZWFzIGlzIG5vdCBhIHNob3J0LXRlcm0gc29sdXRpb24uCj4gQnV0IEknbSBu
-b3QgcmVhbGx5IGtlZW4gb24gc2ltcGx5IGRpc2FibGluZyBkaXNjYXJkIGZvciBSQUlENC81LzYg
-ZWl0aGVyLiBJdAo+IHdvdWxkICBtZWFuIHRoYXQgcGVvcGxlIHdpdGggZ29vZCBzZW5zaWJsZSBo
-YXJkd2FyZSB3b3VsZG4ndCBiZSBhYmxlIHRvIHVzZQo+IGl0IHByb3Blcmx5Lgo+Cj4gSSB3b3Vs
-ZCByZWFsbHkgcmF0aGVyIHRoYXQgZGlzY2FyZF96ZXJvZXNfZGF0YSB3ZXJlIG9ubHkgc2V0IG9u
-IGRldmljZXMgd2hlcmUKPiBpdCB3YXMgYWN0dWFsbHkgdHJ1ZS4gIFRoZW4gaXQgd291bGRuJ3Qg
-YmUgbXkgcHJvYmxlbSBhbnkgbW9yZS4KPgo+IE1heWJlIEkgY291bGQgZG8gYSBsb3VkIHdhcm5p
-bmcKPiAgICJOb3QgZW5hYmxpbmcgRElTQ0FSRCBvbiBSQUlENSBiZWNhdXNlIHdlIGNhbm5vdCB0
-cnVzdCBjb21taXR0ZWVzLgo+ICAgIFNldCAibWRfbW9kLndpbGxpbmdfdG9fcmlza19kaXNjYXJk
-PVkiIGlmIHlvdXIgZGV2aWNlcyByZWFkcyBkaXNjYXJkZWQKPiAgICBzZWN0b3JzIGFzIHplcm9z
-Igo+Cj4gYW5kIGFkZCBhbiBhcHByb3ByaWF0ZSBtb2R1bGUgcGFyYW1ldGVyLi4uLi4uCj4KPiBX
-aGlsZSB3ZSBhcmUgb24gdGhlIHRvcGljLCBtYXliZSBJIHNob3VsZCB3cml0ZSBkb3duIG15IHRo
-b3VnaHRzIGFib3V0IHRoZQo+IGJpdG1hcCB0aGluZyBpbiBjYXNlIHNvbWVvbmUgd2FudHMgdG8g
-Y29udHJpYnV0ZS4KPgo+ICAgVGhlcmUgYXJlIDMgc3RhdGVzIHRoYXQgYSAncmVnaW9uJyBjYW4g
-YmUgaW46Cj4gICAgIDEtIGtub3duIHRvIGJlIGluLXN5bmMKPiAgICAgMi0gcG9zc2libHkgbm90
-IGluIHN5bmMsIGJ1dCBpdCBzaG91bGQgIGJlCj4gICAgIDMtIHByb2JhYmx5IG5vdCBpbiBzeW5j
-LCBjb250YWlucyBubyB2YWx1YWJsZSBkYXRhLgo+Cj4gIEEgcmVhZCBmcm9tICczJyBzaG91bGQg
-cmV0dXJuIHplcm9lcy4KPiAgQSB3cml0ZSB0byAnMycgc2hvdWxkIGNoYW5nZSB0aGUgcmVnaW9u
-IHRvIGJlICcyJy4gIEl0IGNvdWxkIGVpdGhlcgo+ICAgICB3cml0ZSB6ZXJvcyBiZWZvcmUgYWxs
-b3dpbmcgdGhlIHdyaXRlIHRvIHN0YXJ0LCBvciBpdCBjb3VsZCBqdXN0IHN0YXJ0Cj4gICAgIGEg
-bm9ybWFsIHJlc3luYy4KPgo+ICBIZXJlIGlzIGEgcXVlc3Rpb246ICBpZiBhIHJlZ2lvbiBoYXMg
-YmVlbiBkaXNjYXJkZWQsIGFyZSB3ZSBndWFyYW50ZWVkIHRoYXQKPiAgcmVhZHMgYXJlIGF0IGxl
-YXN0IHN0YWJsZS4gIGkuZS4gaWYgSSByZWFkIHR3aWNlIHdpbGwgSSBkZWZpbml0ZWx5IGdldCB0
-aGUKPiAgc2FtZSB2YWx1ZT8KCk5vdCBzdXJlIHdpdGggb3RoZXIgc3BlY3MsIGJ1dCBhbiBOVk1l
-LWNvbXBsaWFudCBTU0QgdGhhdCBzdXBwb3J0cwpkaXNjYXJkIChEYXRhc2V0IE1hbmFnZW1lbnQg
-Y29tbWFuZCB3aXRoIERlYWxsb2NhdGUgYXR0cmlidXRlLCBpbiBOVk1lCnBhcmxhbmNlKSBpcywg
-cGVyIHNwZWMsIHJlcXVpcmVkIHRvIGJlIGRldGVybWluaXN0aWMgd2hlbiBkZWFsbG9jYXRlZApy
-YW5nZSBpcyBzdWJzZXF1ZW50bHkgcmVhZC4gVGhhdCdzIHdoYXQgdGhlIHNwZWMgKDEuMSkgc2F5
-czoKClRoZSB2YWx1ZSByZWFkIGZyb20gYSBkZWFsbG9jYXRlZCBMQkEgc2hhbGwgYmUgZGV0ZXJt
-aW5pc3RpYzsKc3BlY2lmaWNhbGx5LCB0aGUgdmFsdWUgcmV0dXJuZWQgYnkgc3Vic2VxdWVudCBy
-ZWFkcyBvZiB0aGF0IExCQSBzaGFsbApiZSB0aGUgc2FtZSB1bnRpbCBhIHdyaXRlIG9jY3VycyB0
-byB0aGF0IExCQS4gVGhlIHZhbHVlcyByZWFkIGZyb20gYQpkZWFsbG9jYXRlZCBMQkEgYW5kIGl0
-cyBtZXRhZGF0YSAoZXhjbHVkaW5nIHByb3RlY3Rpb24gaW5mb3JtYXRpb24pCnNoYWxsIGJlIGFs
-bCB6ZXJvcywgYWxsIG9uZXMsIG9yIHRoZSBsYXN0IGRhdGEgd3JpdHRlbiB0byB0aGUKYXNzb2Np
-YXRlZCBMQkEgYW5kIGl0cyBtZXRhZGF0YS4gVGhlIHZhbHVlcyByZWFkIGZyb20gYW4gdW53cml0
-dGVuIG9yCmRlYWxsb2NhdGVkIExCQeKAmXMgcHJvdGVjdGlvbiBpbmZvcm1hdGlvbiBmaWVsZCBz
-aGFsbCBiZSBhbGwgb25lcwooaW5kaWNhdGluZyB0aGUgcHJvdGVjdGlvbiBpbmZvcm1hdGlvbiBz
-aGFsbCBub3QgYmUgY2hlY2tlZCkuCgpSZWdhcmRzLApBbmRyZXkKCj4KPiAgSXQgd291bGQgYmUg
-c2ltcGxlc3QgdG8gc3RvcmUgYWxsIHRoZSBzdGF0ZXMgaW4gdGhlIG9uZSBiaXRtYXAuIGkuZS4g
-aGF2ZSBhCj4gIG5ldyB2ZXJzaW9uIG9mIHRoZSBjdXJyZW50IGJpdG1hcCAod2hpY2ggZGlzdGlu
-Z3Vpc2hlcyBiZXR3ZWVuICcxJyBhbmQgJzInKQo+ICB3aGljaCBhbGxvd3MgdGhlIDNyZCBzdGF0
-ZS4gIFByb2JhYmx5IGp1c3QgMiBiaXRzIHBlciByZWdpb24sIHRob3VnaCB3ZSBjb3VsZAo+ICBz
-cXVlZXplIHN0YXRlIGZvciAyMCByZWdpb25zIGludG8gMzIgYml0cyBpZiB3ZSByZWFsbHkgd2Fu
-dGVkIDotKQo+Cj4gIFRoZW4gd2Ugc2V0IHRoZSBiaXRtYXAgdG8gYWxsICczJ3Mgd2hlbiBpdCBp
-cyBjcmVhdGVkIGFuZCBzZXQgcmVnaW9ucyB0bwo+ICAnMycgd2hlbiBkaXNjYXJkaW5nLgo+Cj4g
-IE9uZSBwcm9ibGVtIHdpdGggdGhpcyBhcHByb2FjaCBpcyB0aGF0IGl0IGZvcmNlcyB0aGUgc2Ft
-ZSByZWdpb24gc2l6ZS4KPiAgUmVnaW9ucyBmb3IgdGhlIGN1cnJlbnQgYml0bWFwIGNhbiBjb252
-ZW5pZW50bHkgYmUgMTBzIG9mIE1lZ2FieXRlcy4gIEZvcgo+ICBzdGF0ZSAnMycsIHdlIGlkZWFs
-bHkgd2FudCBvbmUgcmVnaW9uIHBlciBzdHJpcGUuCj4gIEZvciA0VEIgZHJpdmVzIHdpdGggYSA1
-MTJLIGNodW5rIHNpemUgKGFuZCBzbWFsbGVyIGlzIG5vdCB1bmNvbW1vbikgdGhhdCBpcwo+ICA4
-IG1pbGxpb24gcmVnaW9ucyB3aGljaCBpcyBhIG1lZ2FieXRlIG9mIGJpdHMuCj4KPiAgSSBndWVz
-cyB0aGF0IGlzbid0IGFsbCB0aGF0IG11Y2guICBPbmUgcHJvYmxlbSB3aXRoIHNtYWxsIHJlZ2lv
-bnMgZm9yIHRoZQo+ICAxLzIgZGlzdGluY3Rpb24gaXMgdGhhdCB3ZSBlbmQgdXAgdXBkYXRpbmcg
-dGhlIGJpdG1hcCBtb3JlIG9mdGVuLCBidXQKPiAgdGhhdCBjb3VsZCBiZSBhdm9pZGVkIGJ5IHNl
-dHRpbmcgbXVsdGlwbGUgYml0cyBhdCBvbmUuCj4gIGkuZS4ga2VlcCB0aGUgaW50ZXJuYWwgY291
-bnRlcnMgd2l0aCBhIGxhcmdlciBncmFudWxhcml0eSwgYW5kIHdoZW4gYQo+ICBjb3VudGVyIChv
-ZiBvdXRzdGFuZGluZyB3cml0ZXMpIGJlY29tZXMgbm9uLXplcm8sIHNldCBxdWl0ZSBhIGZldyBi
-aXRzIGluCj4gIHRoZSBiaXRtYXAuCj4KPiAgU28gdGhhdCBpcyBwcm9iYWJseSB3aGF0IEkgd291
-bGQgZG86Cj4gICAtIG5ldyB2ZXJzaW9uIGZvciBiaXRtYXAgd2hpY2ggaGFzIDIgYml0cyBwZXIg
-cmVnaW9uIGFuZCBlbmNvZGVzIDMgc3RhdGVzCj4gICAtIGJpdG1hcCBncmFudWxhcml0eSBtYXRj
-aGVzIGNodW5rIHNpemUgKGJ5IGRlZmF1bHQpCj4gICAtIGRlY291cGxlIHJlZ2lvbiBzaXplIG9m
-IGJpdG1hcCBmcm9tIHJlZ2lvbiBzaXplIGZvciBpbnRlcm5hbCAnZGlydHknCj4gICAgIGFjY291
-bnRpbmcKPiAgIC0gd3JpdGUgdG8gYSAnc3RhdGUgMycgcmVnaW9uIHNldHMgaXQgdG8gJ3N0YXRl
-IDInIGFuZCBraWNrcyBvZmYgcmVzeW5jCj4gICAtICdkaXNjYXJkJyBzZXRzIHN0YXRlIHRvICcz
-Jy4KPgo+IE5laWxCcm93bgo+Cj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZl
-bEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+When we free the required number of entries (nr_to_scan becomes zero), we
+must break out of both loops. The code exited only the inner loop and
+continued in the outer loop.
+
+Also, move dm_bufio_cond_resched to the inner loop, so that scanning the
+list doesn't result in scheduling latency.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-bufio.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+Index: linux-3.17-rc7/drivers/md/dm-bufio.c
+===================================================================
+--- linux-3.17-rc7.orig/drivers/md/dm-bufio.c	2014-10-01 19:20:36.000000000 +0200
++++ linux-3.17-rc7/drivers/md/dm-bufio.c	2014-10-01 19:22:50.000000000 +0200
+@@ -1473,10 +1473,12 @@ static long __scan(struct dm_bufio_clien
+ 		list_for_each_entry_safe_reverse(b, tmp, &c->lru[l], lru_list) {
+ 			freed += __cleanup_old_buffer(b, gfp_mask, 0);
+ 			if (!--nr_to_scan)
+-				break;
++				goto brk;
++			dm_bufio_cond_resched();
+ 		}
+-		dm_bufio_cond_resched();
+ 	}
++
++brk:
+ 	return freed;
+ }
+ 
