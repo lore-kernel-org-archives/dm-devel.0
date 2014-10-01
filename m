@@ -1,23 +1,19 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: dm-mpath: Work with blk multi-queue drivers
-Date: Tue, 30 Sep 2014 23:43:47 +0000
-Message-ID: <542B4033.30001@ce.jp.nec.com>
-References: <1411491802-7356-1-git-send-email-keith.busch@intel.com>
-	<20140924145215.GA26398@infradead.org>
-	<alpine.LRH.2.03.1409241020540.4696@AMR>
-	<20140924183453.GA23052@redhat.com>
-	<20140924184834.GB23052@redhat.com> <20140925001341.GA25145@redhat.com>
-	<alpine.LRH.2.03.1409250923390.4696@AMR>
-	<20140925161215.GA29645@redhat.com>
-	<5429F227.4080604@ce.jp.nec.com> <20140930141828.GA5161@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [PATCH] dm-raid: add RAID discard support
+Date: Wed, 1 Oct 2014 12:56:25 +1000
+Message-ID: <20141001125625.1e0d356a@notabene.brown>
+References: <1411491106-23676-1-git-send-email-heinzm@redhat.com>
+	<yq18ulaszpk.fsf@sermon.lab.mkp.net>
+	<20140924093308.120fe616@notabene.brown>
+	<yq1zjdpsqry.fsf@sermon.lab.mkp.net>
+	<7C39EB56-623A-4318-A558-258ABA32FF12@redhat.com>
+	<20140924142157.33475baa@notabene.brown>
+	<5422A4C4.4020707@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7024451978183875838=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20140930141828.GA5161@redhat.com>
-Content-Language: ja-JP
-Content-ID: <E680EB602BF18B49924CE04E1E20F77D@gisp.nec.co.jp>
+In-Reply-To: <5422A4C4.4020707@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,71 +23,149 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Keith Busch <keith.busch@intel.com>, Christoph Hellwig <hch@infradead.org>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On 09/30/14 23:18, Mike Snitzer wrote:
-> On Mon, Sep 29 2014 at  7:58pm -0400,
-> Junichi Nomura <j-nomura@ce.jp.nec.com> wrote:
-> 
->> On 09/26/14 01:12, Mike Snitzer wrote:
->>> On Thu, Sep 25 2014 at 11:57am -0400,
->>> Keith Busch <keith.busch@intel.com> wrote:
->>>> For my part, the goal was to change as little as possible to get basic
->>>> blk-mq support working safely without regressing, and performance is
->>>> not even on my radar yet. I purposefully did not try to understand the
->>>> existing design well enough to propose re-arching. If we can address the
->>>> 'request' life cycle management duality issue, would this be acceptable
->>>> as a stopgap for blk-mq support?
->>>
->>> We can ignore my desire to cleanup existing request-based DM's bio
->>> cloning for now.  And yes, resolving the duality issue would need to
->>> happen.  But your proposed change still has the issue of no longer using
->>> a dedicated mempool per rq-based DM device to allocate requests from.
->>> If we were to do that I'm pretty sure this new dm.c:dm_get_request()
->>> wrapper would need to call blk_get_request() with GFP_ATOMIC.
->>>
->>> Either GFP_ATOMIC or I think we _could_ relax to GFP_NOWAIT if and only
->>> if we were willing to explicitly disallow stacking request-based DM
->>> devices (which nothing uses at this point).  So I'd like to get Junichi
->>> and Alasdair's feedback on the implications.  Junichi and/or Alasdair?
->>
->> The problem with "stacking request-based DM devices" is
->> caused by shared mempool (i.e. the pool gets emptied by
->> upper layer and we can't make forward progress).
->> So it should be ok if request has per-device mempool
->> (I think it does.)
-> 
-> Current request-based DM provides a per-device mempool that all cloned
-> requests are allocated from.  But Keith's approach to have map_rq call
-> blk_get_request will no longer make use of that DM provided mempool.
-> 
-> But are you referring to the request_queue's use of a mempool that is
-> initialized with blk_init_rl() in blk_init_allocated_queue()?
+--===============7024451978183875838==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	boundary="Sig_/rLtMrHBmvoWfQHcTKqBWz8n";
+	protocol="application/pgp-signature"
 
-Yes.
+--Sig_/rLtMrHBmvoWfQHcTKqBWz8n
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
->> However, using blk_get_request() in map function will
->> require more changes in the code as blk_get_request()
->> assumes interrupt-enabled context.
-> 
-> Ah yes, blk_get_request will unconditionally disable interrupts using
-> spin_lock_irq.  Not yet looked at the implications though.
+On Wed, 24 Sep 2014 13:02:28 +0200 Heinz Mauelshagen <heinzm@redhat.com>
+wrote:
 
-Actually, early implementation of request-based DM had tried to
-use blk_get_request() by converting them to irqsave/irqrestore
-variants. However, since (old, non-mq version of) blk_get_request
-is designed to be called in process context, such a change
-could have confused the interface.
-As a result, current DM code implements pre-allocation of memory
-and mapping separately.
-I think blk-mq already does pre-allocation of requests internally
-and mq version of blk_get_request is actually a mapping function
-in this case.
+>=20
+> Martin,
+>=20
+> thanks for the good explanation of the state of the discard union.
+> Do you have an ETA for the 'zeroout, deallocate' ... support you mentione=
+d?
+>=20
+> I was planning to have a followup patch for dm-raid supporting a dm-raid=
+=20
+> table
+> line argument to prohibit discard passdown.
+>=20
+> In lieu of the fuzzy field situation wrt SSD fw and discard_zeroes_data=20
+> support
+> related to RAID4/5/6, we need that in upstream together with the initial=
+=20
+> patch.
+>=20
+> That 'no_discard_passdown' table line can be added to dm-raid RAID4/5/6=20
+> table
+> lines to avoid possible data corruption but can be avoided on RAID1/10=20
+> table lines,
+> because the latter are not suffering from any  discard_zeroes_data flaw.
+>=20
+>=20
+> Neil,
+>=20
+> are you going to disable discards in RAID4/5/6 shortly
+> or rather go with your bitmap solution?
 
-So, I suspect DM functions for pre-allocation (clone_rq) and mapping
-(map_request) are good place for containing the duality inside.
+Can I just close my eyes and hope it goes away?
 
--- 
-Jun'ichi Nomura, NEC Corporation
+The idea of a bitmap of uninitialised areas is not a short-term solution.
+But I'm not really keen on simply disabling discard for RAID4/5/6 either. It
+would  mean that people with good sensible hardware wouldn't be able to use
+it properly.
+
+I would really rather that discard_zeroes_data were only set on devices whe=
+re
+it was actually true.  Then it wouldn't be my problem any more.
+
+Maybe I could do a loud warning
+  "Not enabling DISCARD on RAID5 because we cannot trust committees.
+   Set "md_mod.willing_to_risk_discard=3DY" if your devices reads discarded
+   sectors as zeros"
+
+and add an appropriate module parameter......
+
+While we are on the topic, maybe I should write down my thoughts about the
+bitmap thing in case someone wants to contribute.
+
+  There are 3 states that a 'region' can be in:
+    1- known to be in-sync
+    2- possibly not in sync, but it should  be
+    3- probably not in sync, contains no valuable data.
+
+ A read from '3' should return zeroes.
+ A write to '3' should change the region to be '2'.  It could either
+    write zeros before allowing the write to start, or it could just start
+    a normal resync.
+
+ Here is a question:  if a region has been discarded, are we guaranteed that
+ reads are at least stable.  i.e. if I read twice will I definitely get the
+ same value?
+
+ It would be simplest to store all the states in the one bitmap. i.e. have a
+ new version of the current bitmap (which distinguishes between '1' and '2')
+ which allows the 3rd state.  Probably just 2 bits per region, though we co=
+uld
+ squeeze state for 20 regions into 32 bits if we really wanted :-)
+
+ Then we set the bitmap to all '3's when it is created and set regions to
+ '3' when discarding.
+
+ One problem with this approach is that it forces the same region size.
+ Regions for the current bitmap can conveniently be 10s of Megabytes.  For
+ state '3', we ideally want one region per stripe.
+ For 4TB drives with a 512K chunk size (and smaller is not uncommon) that is
+ 8 million regions which is a megabyte of bits.
+
+ I guess that isn't all that much.  One problem with small regions for the
+ 1/2 distinction is that we end up updating the bitmap more often, but
+ that could be avoided by setting multiple bits at one.
+ i.e. keep the internal counters with a larger granularity, and when a
+ counter (of outstanding writes) becomes non-zero, set quite a few bits in
+ the bitmap.
+
+ So that is probably what I would do:
+  - new version for bitmap which has 2 bits per region and encodes 3 states
+  - bitmap granularity matches chunk size (by default)
+  - decouple region size of bitmap from region size for internal 'dirty'
+    accounting
+  - write to a 'state 3' region sets it to 'state 2' and kicks off resync
+  - 'discard' sets state to '3'.
+
+NeilBrown
+
+--Sig_/rLtMrHBmvoWfQHcTKqBWz8n
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iQIVAwUBVCttWjnsnt1WYoG5AQJQYA//YgXvxpaMi7IwS/TfZZ4fRwLCO64WFLhF
+hpSOZqPzw6Bf126E9Ywc9h54bFV7hsTMyuLubc9/tYH3fm3yBhPdLrYdS7eQCbIW
+ecd4Yniu6gsiwg8gdHrWOXCAv+YYExf5DE71ZHTOeQomJ7TzfcMx0YyXPNGC7XTQ
+yC3waeBsBfPfVt9P138BdtjaV/hi9jamZHv9VIIomOvuGoS/sfev0r2mREEUTgKP
+9wLN/fw3ACN1hPHhRS6YuK1ag/yWkb1n+whL+7vPhNjbYKe8xtBKNbOa5rjyR4Pl
+GC7B8VMyuHf5AsMG4E1/6EDbPMjs15RvGNFCH9nJyohoWImcGqrm60eqi2/zQWVb
+S/3wM6f9omjAuMoRFhHfQRhk8fl+MCIS+PHoOL6ijP3ZNp1h7DK0A9eA1yojqAs5
+YgKYU2QvklnUBjXwle5JnSJIL8oQiCgZiO4w/i4mOwk3TGq917KN0eNrNgGoFgpK
+86ADI127UF4EOPDoiBTUhbG1eAF4FiAuoIHjrUCcuhgRNPGpqZWbU1ox1mxrZ0j8
+x2wWy0YCz0xZqeMrLqIWwZKAfFoBpTqavC6hvMwVobOjqsOZZO+orKwhNSI3vClp
+T+oqswxyuIPcv0S/TDcln7+Q7E09t6odOPL2+pjcoy1UIlYkJ5fSOU4bMt/NtHrd
+86ZUtfSV1kk=
+=DGJA
+-----END PGP SIGNATURE-----
+
+--Sig_/rLtMrHBmvoWfQHcTKqBWz8n--
+
+
+--===============7024451978183875838==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7024451978183875838==--
