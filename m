@@ -1,15 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-bufio: break out of both loops when
-	freeing data
-Date: Wed, 1 Oct 2014 13:35:26 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1410011334210.25573@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-bufio: break out of both loops when freeing data
+Date: Wed, 1 Oct 2014 14:42:31 -0400
+Message-ID: <20141001184231.GA13947@redhat.com>
 References: <alpine.LRH.2.02.1410011329050.25573@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1410011334210.25573@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1410011329050.25573@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1410011334210.25573@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +20,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Thornber <thornber@redhat.com>, dm-devel@redhat.com
-Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, Oct 01 2014 at  1:35pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-
-On Wed, 1 Oct 2014, Mikulas Patocka wrote:
-
-> When we free the required number of entries (nr_to_scan becomes zero), we
-> must break out of both loops. The code exited only the inner loop and
-> continued in the outer loop.
 > 
-> Also, move dm_bufio_cond_resched to the inner loop, so that scanning the
-> list doesn't result in scheduling latency.
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
-I forgot to add:
-
-Cc: stable@vger.kernel.org	# 3.2+
-
-> ---
->  drivers/md/dm-bufio.c |    6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
+> On Wed, 1 Oct 2014, Mikulas Patocka wrote:
 > 
-> Index: linux-3.17-rc7/drivers/md/dm-bufio.c
-> ===================================================================
-> --- linux-3.17-rc7.orig/drivers/md/dm-bufio.c	2014-10-01 19:20:36.000000000 +0200
-> +++ linux-3.17-rc7/drivers/md/dm-bufio.c	2014-10-01 19:22:50.000000000 +0200
-> @@ -1473,10 +1473,12 @@ static long __scan(struct dm_bufio_clien
->  		list_for_each_entry_safe_reverse(b, tmp, &c->lru[l], lru_list) {
->  			freed += __cleanup_old_buffer(b, gfp_mask, 0);
->  			if (!--nr_to_scan)
-> -				break;
-> +				goto brk;
-> +			dm_bufio_cond_resched();
->  		}
-> -		dm_bufio_cond_resched();
->  	}
-> +
-> +brk:
->  	return freed;
->  }
->  
+> > When we free the required number of entries (nr_to_scan becomes zero), we
+> > must break out of both loops. The code exited only the inner loop and
+> > continued in the outer loop.
+> > 
+> > Also, move dm_bufio_cond_resched to the inner loop, so that scanning the
+> > list doesn't result in scheduling latency.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 > 
+> I forgot to add:
+> 
+> Cc: stable@vger.kernel.org	# 3.2+
+
+I tweaked the header, used a return rather than goto, and staged in
+linux-next for 3.18.  See:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=04c308f43a90a9b3b84c344b324d6af29288da05
