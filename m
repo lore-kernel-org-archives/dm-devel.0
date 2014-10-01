@@ -1,16 +1,21 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-bufio: break out of both loops when freeing data
-Date: Wed, 1 Oct 2014 14:42:31 -0400
-Message-ID: <20141001184231.GA13947@redhat.com>
-References: <alpine.LRH.2.02.1410011329050.25573@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1410011334210.25573@file01.intranet.prod.int.rdu2.redhat.com>
+From: Brassow Jonathan <jbrassow@redhat.com>
+Subject: Re: [PATCH] dm-raid: add RAID discard support
+Date: Wed, 1 Oct 2014 13:57:24 -0500
+Message-ID: <1D933D29-689C-407F-98BB-3092F99BDBD1@redhat.com>
+References: <1411491106-23676-1-git-send-email-heinzm@redhat.com>
+	<yq18ulaszpk.fsf@sermon.lab.mkp.net>
+	<20140924093308.120fe616@notabene.brown>
+	<yq1zjdpsqry.fsf@sermon.lab.mkp.net>
+	<7C39EB56-623A-4318-A558-258ABA32FF12@redhat.com>
+	<20140924142157.33475baa@notabene.brown>
+	<5422A4C4.4020707@redhat.com>
+	<20141001125625.1e0d356a@notabene.brown>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
+Mime-Version: 1.0 (Apple Message framework v1085)
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1410011334210.25573@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20141001125625.1e0d356a@notabene.brown>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +25,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: NeilBrown <neilb@suse.de>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 01 2014 at  1:35pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> 
-> 
-> On Wed, 1 Oct 2014, Mikulas Patocka wrote:
-> 
-> > When we free the required number of entries (nr_to_scan becomes zero), we
-> > must break out of both loops. The code exited only the inner loop and
-> > continued in the outer loop.
-> > 
-> > Also, move dm_bufio_cond_resched to the inner loop, so that scanning the
-> > list doesn't result in scheduling latency.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> I forgot to add:
-> 
-> Cc: stable@vger.kernel.org	# 3.2+
+On Sep 30, 2014, at 9:56 PM, NeilBrown wrote:
 
-I tweaked the header, used a return rather than goto, and staged in
-linux-next for 3.18.  See:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=04c308f43a90a9b3b84c344b324d6af29288da05
+> So that is probably what I would do:
+>  - new version for bitmap which has 2 bits per region and encodes 3 states
+>  - bitmap granularity matches chunk size (by default)
+>  - decouple region size of bitmap from region size for internal 'dirty'
+>    accounting
+>  - write to a 'state 3' region sets it to 'state 2' and kicks off resync
+>  - 'discard' sets state to '3'.
+
+There are scenarios where we do not trust the bitmap and perform exhaustive searches (scrubbing).  When we do this, we assume that the bitmap has been correctly handled, but the data has been corrupted somehow.  When we scrub, we now could presumably use the bitmap to avoid those regions that have been discarded.  However, are there problems to be considered when the corruption is the other way around - i.e. when the bitmap/superblock are corrupted instead of the data area?  Do we consider problems like this unlikely because of the frequency of superblock writes?  (The bitrot that I am familiar with usually happens in areas that are not touched very often - especially if they exist near areas that /are/ touched very often.)
+
+ brassow
