@@ -1,63 +1,93 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH 1/1] multipath-tools: Change path checker for
- IBM IPR devices
-Date: Wed, 1 Oct 2014 05:51:34 -0700
-Message-ID: <20141001125134.GB31067@infradead.org>
-References: <20140924195721.148637349@linux.vnet.ibm.com>
- <20140924195752.289011902@linux.vnet.ibm.com>
- <5423B664.2020007@suse.de>
- <5424472E.4060300@linux.vnet.ibm.com>
- <20140925165743.GA20621@infradead.org>
- <20140930140547.Horde.m7EONeG2u3AJYXxG2TLrmQ3@ltc.linux.ibm.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-raid: add RAID discard support
+Date: Wed, 1 Oct 2014 09:32:37 -0400
+Message-ID: <20141001133237.GB16521@redhat.com>
+References: <1411491106-23676-1-git-send-email-heinzm@redhat.com>
+	<yq18ulaszpk.fsf@sermon.lab.mkp.net>
+	<20140924093308.120fe616@notabene.brown>
+	<yq1zjdpsqry.fsf@sermon.lab.mkp.net>
+	<7C39EB56-623A-4318-A558-258ABA32FF12@redhat.com>
+	<20140924142157.33475baa@notabene.brown>
+	<5422A4C4.4020707@redhat.com>
+	<20141001125625.1e0d356a@notabene.brown>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20140930140547.Horde.m7EONeG2u3AJYXxG2TLrmQ3@ltc.linux.ibm.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: wenxiong@linux.vnet.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@infradead.org>, Brian King <brking@linux.vnet.ibm.com>, James Bottomley <JBottomley@parallels.com>, linux-scsi@vger.kernel.org
+In-Reply-To: <20141001125625.1e0d356a@notabene.brown>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: NeilBrown <neilb@suse.de>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-Unfortunately the patch wasn't quite correct - all TEST_UNIT_READY
-commands are sent as BLOCK_PC, so this would basically revert James'
-original fix for the SATL case.
+On Tue, Sep 30 2014 at 10:56pm -0400,
+NeilBrown <neilb@suse.de> wrote:
 
-Am I right to assume you only need the call to scsi_dh->check_sense and
-not the rest of the handling for the multipath path checker?  If that's
-the case something like the patch below sould work:
+> On Wed, 24 Sep 2014 13:02:28 +0200 Heinz Mauelshagen <heinzm@redhat.com>
+> wrote:
+> 
+> > 
+> > Martin,
+> > 
+> > thanks for the good explanation of the state of the discard union.
+> > Do you have an ETA for the 'zeroout, deallocate' ... support you mentioned?
+> > 
+> > I was planning to have a followup patch for dm-raid supporting a dm-raid 
+> > table
+> > line argument to prohibit discard passdown.
+> > 
+> > In lieu of the fuzzy field situation wrt SSD fw and discard_zeroes_data 
+> > support
+> > related to RAID4/5/6, we need that in upstream together with the initial 
+> > patch.
+> > 
+> > That 'no_discard_passdown' table line can be added to dm-raid RAID4/5/6 
+> > table
+> > lines to avoid possible data corruption but can be avoided on RAID1/10 
+> > table lines,
+> > because the latter are not suffering from any  discard_zeroes_data flaw.
+> > 
+> > 
+> > Neil,
+> > 
+> > are you going to disable discards in RAID4/5/6 shortly
+> > or rather go with your bitmap solution?
+> 
+> Can I just close my eyes and hope it goes away?
+> 
+> The idea of a bitmap of uninitialised areas is not a short-term solution.
+> But I'm not really keen on simply disabling discard for RAID4/5/6 either. It
+> would  mean that people with good sensible hardware wouldn't be able to use
+> it properly.
+> 
+> I would really rather that discard_zeroes_data were only set on devices where
+> it was actually true.  Then it wouldn't be my problem any more.
+> 
+> Maybe I could do a loud warning
+>   "Not enabling DISCARD on RAID5 because we cannot trust committees.
+>    Set "md_mod.willing_to_risk_discard=Y" if your devices reads discarded
+>    sectors as zeros"
+> 
+> and add an appropriate module parameter......
 
-diff --git a/drivers/scsi/scsi_error.c b/drivers/scsi/scsi_error.c
-index 5db8454..399c1c8 100644
---- a/drivers/scsi/scsi_error.c
-+++ b/drivers/scsi/scsi_error.c
-@@ -459,14 +459,6 @@ static int scsi_check_sense(struct scsi_cmnd *scmd)
- 	if (! scsi_command_normalize_sense(scmd, &sshdr))
- 		return FAILED;	/* no valid sense data */
- 
--	if (scmd->cmnd[0] == TEST_UNIT_READY && scmd->scsi_done != scsi_eh_done)
--		/*
--		 * nasty: for mid-layer issued TURs, we need to return the
--		 * actual sense data without any recovery attempt.  For eh
--		 * issued ones, we need to try to recover and interpret
--		 */
--		return SUCCESS;
--
- 	scsi_report_sense(sdev, &sshdr);
- 
- 	if (scsi_sense_is_deferred(&sshdr))
-@@ -482,6 +474,14 @@ static int scsi_check_sense(struct scsi_cmnd *scmd)
- 		/* handler does not care. Drop down to default handling */
- 	}
- 
-+	if (scmd->cmnd[0] == TEST_UNIT_READY && scmd->scsi_done != scsi_eh_done)
-+		/*
-+		 * nasty: for mid-layer issued TURs, we need to return the
-+		 * actual sense data without any recovery attempt.  For eh
-+		 * issued ones, we need to try to recover and interpret
-+		 */
-+		return SUCCESS;
-+
- 	/*
- 	 * Previous logic looked for FILEMARK, EOM or ILI which are
- 	 * mainly associated with tapes and returned SUCCESS.
+I had the same thought and would be happy with this too.  I was going to
+update Heinz's patch to have the same default off but allow user to
+enable:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=8e0cff64f35971135a6de7907bbc8c3a010aff8f
+
+But I'd love to just follow what you arrive at with MD (using the same
+name for the module param in dm-raid).
+
+I'm open to getting this done now and included in 3.18 if you are.
+
+Mike
