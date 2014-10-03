@@ -1,17 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/4] dm: reduce memory overhead of DM devices
-Date: Fri, 3 Oct 2014 17:04:55 -0400
-Message-ID: <20141003210454.GB14135@redhat.com>
-References: <542E8CF9.6000609@ce.jp.nec.com>
-	<20141003132328.GB11977@redhat.com>
-	<20141003204852.GA14135@redhat.com> <542F0DB9.4020805@kernel.dk>
+Subject: [PATCH v2 4/4] dm: use bioset_create_nobvec()
+Date: Fri,  3 Oct 2014 17:27:13 -0400
+Message-ID: <1412371633-30356-4-git-send-email-snitzer@redhat.com>
+References: <1412371633-30356-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <542F0DB9.4020805@kernel.dk>
+In-Reply-To: <1412371633-30356-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20141003204852.GA14135@redhat.com>
+References: <20141003204852.GA14135@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,21 +20,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, Kent Overstreet <kmo@daterainc.com>
+To: snitzer@redhat.com, Junichi Nomura <j-nomura@ce.jp.nec.com>, Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, Kent Overstreet <kmo@daterainc.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 03 2014 at  4:57pm -0400,
-Jens Axboe <axboe@kernel.dk> wrote:
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
 
-> >Jens, I can easily yield this patchset to you if you care.  Or I can
-> >backfill your Acked-by in the above 2 block commits (I obviously won't
-> >just send block changes upstream without your OK!).
-> 
-> My only worry is the switch to fast clones, apart from that, it's
-> pretty basic. But we are pretty close to the 3.18 merge window, and
-> as such, I'd prefer to let it simmer for a release.
+Since DM core uses bio_clone_fast() for both bio-based and request-based
+DM devices there is no need for DM's bioset to have a bvec mempool.
 
-Fine with me.  fast clones is all we need (thanks to Kent's immutable
-biovec work), but waiting until 3.19 will give us plenty of time to
-verify all is well.
+With this patch, on arch with 4KB page for example, memory usage will be
+reduced by 64KB for each bio-based DM device and 1MB for each
+request-based DM device.
+
+For example, when you create 10,000 bio-based DM devices and 1,000
+request-based DM devices, memory usage of biovec under no load is:
+  # grep biovec /proc/slabinfo
+
+  biovec-256        418068 418068   4096  ...
+  biovec-128             0      0   2048  ...
+  biovec-64              0      0   1024  ...
+  biovec-16              0      0    256  ...
+
+With this patch series applied, the usage becomes:
+  # grep biovec /proc/slabinfo
+
+  biovec-256           116    116   4096  ...
+  biovec-128             0      0   2048  ...
+  biovec-64              0      0   1024  ...
+  biovec-16              0      0    256  ...
+
+So 4096 * (418068 - 116) = 1.6GB of memory is saved in this example.
+
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index aaeed99..f78ac7f 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -3021,7 +3021,7 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+ 	if (!pools->io_pool)
+ 		goto out;
+ 
+-	pools->bs = bioset_create(pool_size, front_pad);
++	pools->bs = bioset_nobvec_create(pool_size, front_pad);
+ 	if (!pools->bs)
+ 		goto out;
+ 
+-- 
+1.9.3
