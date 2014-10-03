@@ -1,42 +1,35 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH] dm-raid: add RAID discard support
-Date: Thu, 02 Oct 2014 21:12:13 -0400
-Message-ID: <yq1y4sygdn6.fsf@sermon.lab.mkp.net>
+Subject: Re: [dm-devel] dm-raid: add RAID discard support
+Date: Thu, 02 Oct 2014 21:14:05 -0400
+Message-ID: <yq1tx3mgdk2.fsf@sermon.lab.mkp.net>
 References: <1411491106-23676-1-git-send-email-heinzm@redhat.com>
 	<yq18ulaszpk.fsf@sermon.lab.mkp.net>
 	<20140924093308.120fe616@notabene.brown>
 	<yq1zjdpsqry.fsf@sermon.lab.mkp.net>
 	<7C39EB56-623A-4318-A558-258ABA32FF12@redhat.com>
 	<20140924142157.33475baa@notabene.brown> <5422A4C4.4020707@redhat.com>
-	<20141001125625.1e0d356a@notabene.brown> <542BE1C6.2050105@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<20141001125625.1e0d356a@notabene.brown>
+	<20141001133237.GB16521@redhat.com>
+	<20141002093403.25cc832f@notabene.brown>
+	<20141002013135.GA21091@redhat.com>
+	<20141002120049.58dba551@notabene.brown>
+	<20141002140410.1b379f74@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <542BE1C6.2050105@redhat.com> (Heinz Mauelshagen's message of
-	"Wed, 01 Oct 2014 13:13:10 +0200")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141002140410.1b379f74@notabene.brown> (NeilBrown's message of
+	"Thu, 2 Oct 2014 14:04:10 +1000")
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux RAID <linux-raid@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
->>>>> "Heinz" == Heinz Mauelshagen <heinzm@redhat.com> writes:
+>>>>> "Neil" == NeilBrown  <neilb@suse.de> writes:
 
-Heinz> BTW: we're referring to SSD discard_zeroes_data issues only so
-Heinz> far it seems?  Can we be sure that SCSI unmap with the TPRZ bit
-Heinz> set will always return zeroes on reads for arbitrary storage
-Heinz> devices?
+Neil> I plan to submit this to Linus tomorrow, hopefully for 3.7, unless
+Neil> there are complaints. It is in my for-next branch now.
 
-Only if we used WRITE SAME to discard.
+Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
 
 -- 
 Martin K. Petersen	Oracle Linux Engineering
