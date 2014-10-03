@@ -1,8 +1,8 @@
 From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 1/4] dm: remove nr_iovecs parameter from
-	alloc_tio()
-Date: Fri, 3 Oct 2014 11:55:16 +0000
-Message-ID: <542E8EA4.2010704@ce.jp.nec.com>
+Subject: [PATCH 2/4] block: use bio_clone_fast() in
+	blk_rq_prep_clone()
+Date: Fri, 3 Oct 2014 11:55:20 +0000
+Message-ID: <542E8EA8.6070004@ce.jp.nec.com>
 References: <542E8CF9.6000609@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -11,7 +11,7 @@ Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <542E8CF9.6000609@ce.jp.nec.com>
 Content-Language: ja-JP
-Content-ID: <7D67CBFB1F67B14597FE2A62CC226E8D@gisp.nec.co.jp>
+Content-ID: <308017FD40294F42B5A732246462F5D4@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,71 +25,32 @@ To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redha
 Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>
 List-Id: dm-devel.ids
 
-alloc_tio() allocates a bio for clone. It takes the number of
-bvecs to allocate for the clone-bio.
-However, with the introduction of bio_clone_fast() in v3.14,
-we no longer need to allocate bvecs and nr_iovecs is always 0.
+Request cloning clones bios in the request to track the completion
+of each bio.
+For that purpose, we can use bio_clone_fast() instead of bio_clone()
+to avoid unnecessary allocation and copy of bvecs.
 
-__clone_and_map_simple_bio() looks like passing non-zero
-nr_iovecs, but its value is always within the range of
-inline bvecs and no allocation actually happens.
-If allocation happened, BUG_ON() in __bio_clone_fast() would
-trigger.
-
-This patch removes the nr_iovecs parameter from alloc_tio()
-to prevent possible future mis-use of the interface.
+This patch reduces memory footprint of request-based device-mapper
+(about 1-4KB for each request) and is a preparation for further
+reduction of memory usage by removing unused bvec mempool.
 
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 ---
- drivers/md/dm.c | 13 ++++---------
- 1 file changed, 4 insertions(+), 9 deletions(-)
+ block/blk-core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 32b958d..4210b3c 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1249,13 +1249,13 @@ static void clone_bio(struct dm_target_io *tio, struct bio *bio,
- }
+diff --git a/block/blk-core.c b/block/blk-core.c
+index bf930f4..a92f720 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -2931,7 +2931,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ 	blk_rq_init(NULL, rq);
  
- static struct dm_target_io *alloc_tio(struct clone_info *ci,
--				      struct dm_target *ti, int nr_iovecs,
-+				      struct dm_target *ti,
- 				      unsigned target_bio_nr)
- {
- 	struct dm_target_io *tio;
- 	struct bio *clone;
+ 	__rq_for_each_bio(bio_src, rq_src) {
+-		bio = bio_clone_bioset(bio_src, gfp_mask, bs);
++		bio = bio_clone_fast(bio_src, gfp_mask, bs);
+ 		if (!bio)
+ 			goto free_and_out;
  
--	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, ci->md->bs);
-+	clone = bio_alloc_bioset(GFP_NOIO, 0, ci->md->bs);
- 	tio = container_of(clone, struct dm_target_io, clone);
- 
- 	tio->io = ci->io;
-@@ -1269,16 +1269,11 @@ static void __clone_and_map_simple_bio(struct clone_info *ci,
- 				       struct dm_target *ti,
- 				       unsigned target_bio_nr, unsigned *len)
- {
--	struct dm_target_io *tio = alloc_tio(ci, ti, ci->bio->bi_max_vecs, target_bio_nr);
-+	struct dm_target_io *tio = alloc_tio(ci, ti, target_bio_nr);
- 	struct bio *clone = &tio->clone;
- 
- 	tio->len_ptr = len;
- 
--	/*
--	 * Discard requests require the bio's inline iovecs be initialized.
--	 * ci->bio->bi_max_vecs is BIO_INLINE_VECS anyway, for both flush
--	 * and discard, so no need for concern about wasted bvec allocations.
--	 */
- 	 __bio_clone_fast(clone, ci->bio);
- 	if (len)
- 		bio_setup_sector(clone, ci->sector, *len);
-@@ -1322,7 +1317,7 @@ static void __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti
- 		num_target_bios = ti->num_write_bios(ti, bio);
- 
- 	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
--		tio = alloc_tio(ci, ti, 0, target_bio_nr);
-+		tio = alloc_tio(ci, ti, target_bio_nr);
- 		tio->len_ptr = len;
- 		clone_bio(tio, bio, sector, *len);
- 		__map_bio(tio);
 -- 
 1.9.3
