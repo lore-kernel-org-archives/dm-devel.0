@@ -1,14 +1,16 @@
 From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 0/4] dm: reduce memory overhead of DM devices
-Date: Fri, 3 Oct 2014 11:48:08 +0000
-Message-ID: <542E8CF9.6000609@ce.jp.nec.com>
+Subject: [PATCH 4/4] dm: use bioset_nobvec_create()
+Date: Fri, 3 Oct 2014 11:55:26 +0000
+Message-ID: <542E8EAE.8060300@ce.jp.nec.com>
+References: <542E8CF9.6000609@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <542E8CF9.6000609@ce.jp.nec.com>
 Content-Language: ja-JP
-Content-ID: <16B48B7638BBAA4AB19DF9850FE480A4@gisp.nec.co.jp>
+Content-ID: <0FDA2F8F0D721C429E70C24152967BAF@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,47 +24,30 @@ To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redha
 Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kmo@daterainc.com>
 List-Id: dm-devel.ids
 
-This series of patches reduce the memory overhead of device-mapper
-device mainly by removing unused mempool for bio vecs.
+Since dm core uses bio_clone_fast() for both bio-based and request-based
+DM device, there is no need for bvec mempool.
 
-DM creates per-device bioset to ensure forward progress under
-low memory situation and bioset always includes mempool for bvec.
+With this patch, on arch with 4KB page for example, memory usage will be
+reduced by 64KB for each bio-based DM device and 1MB for each
+request-based DM device.
 
-However, with the introduction of immutable bvec by Kent Overstreet,
-dm core now uses bio_clone_fast for creating a clone bio, and no longer
-needs bvecs for it.
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+---
+ drivers/md/dm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-For example, when you create 10,000 bio-based DM devices and 1,000
-request-based DM devices, memory usage of biovec under no load is:
-  # grep biovec /proc/slabinfo
-  biovec-256        418068 418068   4096  ...
-  biovec-128             0      0   2048  ...
-  biovec-64              0      0   1024  ...
-  biovec-16              0      0    256  ...
-
-With this patch series applied, the usage becomes:
-  # grep biovec /proc/slabinfo
-  biovec-256           116    116   4096  ...
-  biovec-128             0      0   2048  ...
-  biovec-64              0      0   1024  ...
-  biovec-16              0      0    256  ...
-
-So 4096 * (418068 - 116) = 1.6GB of memory is saved in this example.
-
-Jun'ichi Nomura (4):
-  dm: remove nr_iovecs parameter from alloc_tio()
-  block: use bio_clone_fast() in blk_rq_prep_clone()
-  block: add bioset_nobvec_create()
-  dm: use bioset_nobvec_create()
-
- block/bio.c         | 61 ++++++++++++++++++++++++++++++++++++++---------------
- block/blk-core.c    |  2 +-
- drivers/md/dm.c     | 15 +++++--------
- include/linux/bio.h |  1 +
- 4 files changed, 51 insertions(+), 28 deletions(-)
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4210b3c..7160853 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2895,7 +2895,7 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+ 	if (!pools->io_pool)
+ 		goto out;
+ 
+-	pools->bs = bioset_create(pool_size, front_pad);
++	pools->bs = bioset_nobvec_create(pool_size, front_pad);
+ 	if (!pools->bs)
+ 		goto out;
+ 
 -- 
 1.9.3
-
---
-Jun'ichi Nomura, NEC Corporation
