@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/3] libmultipath: replace PATH_TIMEOUT with
-	PATH_DOWN
-Date: Fri,  3 Oct 2014 19:11:21 -0500
-Message-ID: <1412381483-15757-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/3] Revert "libmultipath: fixup strlcpy"
+Date: Fri,  3 Oct 2014 19:11:23 -0500
+Message-ID: <1412381483-15757-4-git-send-email-bmarzins@redhat.com>
 References: <1412381483-15757-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,120 +22,37 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-The way the code works, PATH_TIMEOUT is treated mostly like PATH_UP or
-PATH_GHOST by check_path.  If the the path was previously failed,  it will
-even reinstate the path. It will also trigger prio refreshing. It seems
-that PATH_TIMEOUT should be at least as serious as PATH_PENDING, but the
-way the code works, it's not.  In pathinfo, PATH_TIMEOUT gets changed
-directly to PATH_DOWN, which makes sense.  But assuming that's the correct
-thing to do, why have PATH_TIMEOUT at all?
+This reverts commit 3a64d6491a1e83adcaf5f97edd18b7898dce241d.
 
-The only thing that it does that seems helpful is that when you print out
-the path, instead of it saying that the path is down, it says that the
-path has timed out.  But if we are going to treat is like the path is
-down, then I don't see this being too helpful.  And the way we are treating
-PATH_TIMEOUT right now is definitely not right.
+strlcpy already had a check to make sure that as long as the size passed in
+wasn't zero, it would leave enough space to write the final null. So, the
+only check that was necessary was to see if strlcpy was called with
+size = 0.
 
-This patch just pulls out the PATH_TIMEOUT code and replaces it with
-PATH_DOWN.  I'm not adverse to the PATH_TIMEOUT state existing if it worked
-correctly, but I'm not sure what it's for.
+strlcpy returns the number of bytes that it took, or would take, to write
+the entire string. There is no reason why bytes would usually end up
+equalling size, so this commit caused strlcpy to stop null terminating many
+strings.
 
 Cc: "Hannes Reinecke <hare@suse.de>"
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers.c     | 1 -
- libmultipath/checkers.h     | 5 -----
- libmultipath/checkers/tur.c | 5 ++---
- libmultipath/discovery.c    | 2 --
- libmultipath/print.c        | 2 --
- 5 files changed, 2 insertions(+), 13 deletions(-)
+ libmultipath/util.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 4a4cd7c..d98b781 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -17,7 +17,6 @@ char *checker_state_names[] = {
-       "shaky",
-       "ghost",
-       "pending",
--      "timeout",
-       "removed",
- };
- 
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index e62b52f..338b792 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -47,10 +47,6 @@
-  * - Use: All async checkers
-  * - Description: Indicates a check IO is in flight.
-  *
-- * PATH_TIMEOUT:
-- * - Use: Only tur checker
-- * - Description: Command timed out
-- *
-  * PATH REMOVED:
-  * - Use: All checkers
-  * - Description: Device has been removed from the system
-@@ -63,7 +59,6 @@ enum path_check_state {
- 	PATH_SHAKY,
- 	PATH_GHOST,
- 	PATH_PENDING,
--	PATH_TIMEOUT,
- 	PATH_REMOVED,
- 	PATH_MAX_STATE
- };
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index bd7372d..b0bff21 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -297,7 +297,7 @@ libcheck_check (struct checker * c)
- 				pthread_cancel(ct->thread);
- 				ct->running = 0;
- 				MSG(c, MSG_TUR_TIMEOUT);
--				tur_status = PATH_TIMEOUT;
-+				tur_status = PATH_DOWN;
- 			} else {
- 				condlog(3, "%d:%d: tur checker not finished",
- 					TUR_DEVT(ct));
-@@ -314,11 +314,10 @@ libcheck_check (struct checker * c)
- 		pthread_mutex_unlock(&ct->lock);
- 	} else {
- 		if (ct->thread) {
--			/* pthread cancel failed. continue in sync mode */
- 			pthread_mutex_unlock(&ct->lock);
- 			condlog(3, "%d:%d: tur thread not responding",
- 				TUR_DEVT(ct));
--			return PATH_TIMEOUT;
-+			return PATH_DOWN;
- 		}
- 		/* Start new TUR checker */
- 		ct->state = PATH_UNCHECKED;
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index af2aa20..b3232b2 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1218,8 +1218,6 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 			if (pp->state == PATH_UNCHECKED ||
- 			    pp->state == PATH_WILD)
- 				goto blank;
--			if (pp->state == PATH_TIMEOUT)
--				pp->state = PATH_DOWN;
- 		} else {
- 			condlog(3, "%s: path inaccessible", pp->dev);
- 			pp->chkrstate = pp->state = path_state;
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 383eae4..9d204e8 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -338,8 +338,6 @@ snprint_chk_state (char * buff, size_t len, struct path * pp)
- 		return snprintf(buff, len, "ghost");
- 	case PATH_PENDING:
- 		return snprintf(buff, len, "i/o pending");
--	case PATH_TIMEOUT:
--		return snprintf(buff, len, "i/o timeout");
- 	default:
- 		return snprintf(buff, len, "undef");
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index b8487ac..ac0d1b2 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -112,7 +112,8 @@ size_t strlcpy(char *dst, const char *src, size_t size)
+ 		bytes++;
  	}
+ 
+-	if (bytes == size)
++	/* If size == 0 there is no space for a final null... */
++	if (size)
+ 		*q = '\0';
+ 	return bytes;
+ }
 -- 
 1.8.3.1
