@@ -1,15 +1,17 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 0/4] dm: reduce memory overhead of DM devices
-Date: Sat, 4 Oct 2014 10:01:30 -0700
-Message-ID: <20141004170130.GA30207@infradead.org>
-References: <542E8CF9.6000609@ce.jp.nec.com>
+From: Junichi Nomura <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH v2 4/4] dm: use bioset_create_nobvec()
+Date: Sun, 5 Oct 2014 23:06:43 +0000
+Message-ID: <5431CF03.406@ce.jp.nec.com>
+References: <20141003204852.GA14135@redhat.com>
+	<1412371633-30356-4-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <542E8CF9.6000609@ce.jp.nec.com>
+In-Reply-To: <1412371633-30356-4-git-send-email-snitzer@redhat.com>
+Content-Language: ja-JP
+Content-ID: <512077B263026A44B882819B61FE867C@gisp.nec.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +21,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>, Kent Overstreet <kmo@daterainc.com>, Mike Snitzer <snitzer@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Cc: Kent Overstreet <kmo@daterainc.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 03, 2014 at 11:48:08AM +0000, Junichi Nomura wrote:
-> This series of patches reduce the memory overhead of device-mapper
-> device mainly by removing unused mempool for bio vecs.
-> 
-> DM creates per-device bioset to ensure forward progress under
-> low memory situation and bioset always includes mempool for bvec.
+On 10/04/14 06:27, Mike Snitzer wrote:
+> @@ -3021,7 +3021,7 @@ struct dm_md_mempools *dm_alloc_md_mempools(unsigned type, unsigned integrity, u
+>  	if (!pools->io_pool)
+>  		goto out;
+>  
+> -	pools->bs = bioset_create(pool_size, front_pad);
+> +	pools->bs = bioset_nobvec_create(pool_size, front_pad);
+>  	if (!pools->bs)
+>  		goto out;
 
-Thanks, this looks like a good step forward.
+Hi Mike,
 
-I'd still love to go all the way and avoid any bio cloning.  I can
-see two ways to do this:
+thank you for the rename. It's better.
+But we have to s/nobvec_create/create_nobvec/ here, too.
 
- 1) similar to the original block layer multipathing with a callback
-    that allows the submitter to hook into the completion path at
-    blk_update_request time.
- 2) by not completing the io chain in req_bio_endio, similar to how
-    we do it for requests that are part of a flush sequence using
-    the REQ_FLUSH_SEQ.
-
-While the first seems like the cleaner architecture it might be worth
-to look into the second version given that 1) wasn't well received
-last time, and 2) already works nicely for a very similar use
-case.  If we end up implementing 1) it should also be able to replace
-the current flag based completion hack for the flush sequence.
+-- 
+Jun'ichi Nomura, NEC Corporation
