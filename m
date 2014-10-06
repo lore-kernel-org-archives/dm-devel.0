@@ -1,64 +1,99 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 1/3] libmultipath: replace PATH_TIMEOUT with
-	PATH_DOWN
-Date: Mon, 06 Oct 2014 16:35:02 +0200
-Message-ID: <5432A896.5040205@suse.de>
-References: <1412381483-15757-1-git-send-email-bmarzins@redhat.com>
-	<1412381483-15757-2-git-send-email-bmarzins@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Brian King <brking@linux.vnet.ibm.com>
+Subject: Re: [dm-devel] [PATCH 1/1] multipath-tools: Change path checker for
+ IBM IPR devices
+Date: Mon, 06 Oct 2014 10:22:13 -0500
+Message-ID: <5432B3A5.4080001@linux.vnet.ibm.com>
+References: <20140924195721.148637349@linux.vnet.ibm.com> <20140924195752.289011902@linux.vnet.ibm.com> <5423B664.2020007@suse.de> <5424472E.4060300@linux.vnet.ibm.com> <20140925165743.GA20621@infradead.org> <20140930140547.Horde.m7EONeG2u3AJYXxG2TLrmQ3@ltc.linux.ibm.com> <20141001125134.GB31067@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1412381483-15757-2-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20141001125134.GB31067@infradead.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, wenxiong@linux.vnet.ibm.com
+Cc: device-mapper development <dm-devel@redhat.com>, James Bottomley <JBottomley@parallels.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 10/04/2014 02:11 AM, Benjamin Marzinski wrote:
-> The way the code works, PATH_TIMEOUT is treated mostly like PATH_UP or
-> PATH_GHOST by check_path.  If the the path was previously failed,  it will
-> even reinstate the path. It will also trigger prio refreshing. It seems
-> that PATH_TIMEOUT should be at least as serious as PATH_PENDING, but the
-> way the code works, it's not.  In pathinfo, PATH_TIMEOUT gets changed
-> directly to PATH_DOWN, which makes sense.  But assuming that's the correct
-> thing to do, why have PATH_TIMEOUT at all?
-> =
+On 10/01/2014 07:51 AM, Christoph Hellwig wrote:
+> Unfortunately the patch wasn't quite correct - all TEST_UNIT_READY
+> commands are sent as BLOCK_PC, so this would basically revert James'
+> original fix for the SATL case.
+> 
+> Am I right to assume you only need the call to scsi_dh->check_sense and
+> not the rest of the handling for the multipath path checker?  If that's
+> the case something like the patch below sould work:
 
-Because a timeout is different from a normal path down.
-Timeout means the tur checker is stuck somehow.
-And we currently have no real means of resetting it (aio_cancel
-doesn't really abort the I/O, is just short-circuit the callback).
+This would work if we also duplicated the 02/04/02 K/C/Q check in alua_check_sense
+handler.
 
-So the intention of this patch was that we want to get notified if
-a TUR timeout occurs, as this might lead to other subsequent errors.
+Wendy - can you try my patch below, along with Christoph's latest patch here
+and see if that resolves the issue?
 
-> The only thing that it does that seems helpful is that when you print out
-> the path, instead of it saying that the path is down, it says that the
-> path has timed out.  But if we are going to treat is like the path is
-> down, then I don't see this being too helpful.  And the way we are treati=
-ng
-> PATH_TIMEOUT right now is definitely not right.
-> =
+Thanks,
 
-See above. I really would like to be notified for PATH_TIMEOUT
-scenarios ...
+Brian
 
-Cheers,
+> 
+> diff --git a/drivers/scsi/scsi_error.c b/drivers/scsi/scsi_error.c
+> index 5db8454..399c1c8 100644
+> --- a/drivers/scsi/scsi_error.c
+> +++ b/drivers/scsi/scsi_error.c
+> @@ -459,14 +459,6 @@ static int scsi_check_sense(struct scsi_cmnd *scmd)
+>  	if (! scsi_command_normalize_sense(scmd, &sshdr))
+>  		return FAILED;	/* no valid sense data */
+> 
+> -	if (scmd->cmnd[0] == TEST_UNIT_READY && scmd->scsi_done != scsi_eh_done)
+> -		/*
+> -		 * nasty: for mid-layer issued TURs, we need to return the
+> -		 * actual sense data without any recovery attempt.  For eh
+> -		 * issued ones, we need to try to recover and interpret
+> -		 */
+> -		return SUCCESS;
+> -
+>  	scsi_report_sense(sdev, &sshdr);
+> 
+>  	if (scsi_sense_is_deferred(&sshdr))
+> @@ -482,6 +474,14 @@ static int scsi_check_sense(struct scsi_cmnd *scmd)
+>  		/* handler does not care. Drop down to default handling */
+>  	}
+> 
+> +	if (scmd->cmnd[0] == TEST_UNIT_READY && scmd->scsi_done != scsi_eh_done)
+> +		/*
+> +		 * nasty: for mid-layer issued TURs, we need to return the
+> +		 * actual sense data without any recovery attempt.  For eh
+> +		 * issued ones, we need to try to recover and interpret
+> +		 */
+> +		return SUCCESS;
+> +
+>  	/*
+>  	 * Previous logic looked for FILEMARK, EOM or ILI which are
+>  	 * mainly associated with tapes and returned SUCCESS.
+> 
 
-Hannes
--- =
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+
+Signed-off-by: Brian King <brking@linux.vnet.ibm.com>
+---
+
+ drivers/scsi/device_handler/scsi_dh_alua.c |    7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff -puN drivers/scsi/device_handler/scsi_dh_alua.c~alua_allow_restart drivers/scsi/device_handler/scsi_dh_alua.c
+--- linux/drivers/scsi/device_handler/scsi_dh_alua.c~alua_allow_restart	2014-10-06 10:19:16.184798305 -0500
++++ linux-bjking1/drivers/scsi/device_handler/scsi_dh_alua.c	2014-10-06 10:20:35.743165951 -0500
+@@ -474,6 +474,13 @@ static int alua_check_sense(struct scsi_
+ 			 * LUN Not Ready -- Offline
+ 			 */
+ 			return SUCCESS;
++		if (sdev->allow_restart &&
++		    (sense_hdr->asc == 0x04) && (sense_hdr->ascq == 0x02))
++			/*
++			 * if the device is not started, we need to wake
++			 * the error handler to start the motor
++			 */
++			return FAILED;
+ 		break;
+ 	case UNIT_ATTENTION:
+ 		if (sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x00)
+_
+
