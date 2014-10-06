@@ -1,17 +1,15 @@
-From: =?ISO-8859-1?Q?Patrik_Horn=EDk?= <patrik@dsl.sk>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: Reducing size of thin spare metadata, thin metadata
-Date: Mon, 6 Oct 2014 10:12:50 +0200
-Message-ID: <CAAOsTS=ZvKDZAi7RwaO0s4hFEHeggGFZSQCLSjs3fGC+5m5mCA@mail.gmail.com>
-References: <CAAOsTSmgp892H5M4+XLXSQ-H3G_HFUsnykiyjW+MbP4r7U8+Qw@mail.gmail.com>
-	<54324732.5080107@redhat.com>
-	<CAAOsTS=ufw7KgFMOW79+4_kwexnp=pALQWR7BLRSr_JUk6xGXQ@mail.gmail.com>
-	<54324D57.1050704@redhat.com>
-Reply-To: patrik@dsl.sk, device-mapper development <dm-devel@redhat.com>
+Date: Mon, 06 Oct 2014 10:57:27 +0200
+Message-ID: <54325977.9090805@redhat.com>
+References: <CAAOsTSmgp892H5M4+XLXSQ-H3G_HFUsnykiyjW+MbP4r7U8+Qw@mail.gmail.com>	<54324732.5080107@redhat.com>	<CAAOsTS=ufw7KgFMOW79+4_kwexnp=pALQWR7BLRSr_JUk6xGXQ@mail.gmail.com>	<54324D57.1050704@redhat.com>	<CAAOsTS=ZvKDZAi7RwaO0s4hFEHeggGFZSQCLSjs3fGC+5m5mCA@mail.gmail.com>	<5432534A.5090409@redhat.com>
+	<CAAOsTSnfpf3GCZu95GisyS6Z+zj6LTkODuhZGu5JmaQXUPXgVg@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Type: text/plain; charset="windows-1252"; Format="flowed"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <54324D57.1050704@redhat.com>
+In-Reply-To: <CAAOsTSnfpf3GCZu95GisyS6Z+zj6LTkODuhZGu5JmaQXUPXgVg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,68 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
+To: patrik@dsl.sk
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-OK, I see. So the result is that pool is not activated when it does
-not pass check and there is no spare? So is it totally safe to have no
-spare?
+Dne 6.10.2014 v 10:48 Patrik Horn=EDk napsal(a):
+> Thanks Zdenku. But you did not answer some of my questions, which I
+> need to know to decide... So is there a way I can create smaller spare
+> metadata LV? In mentioned manual steps what do I need mytemplv for and
+> why cant I use original pool metadata as input of thin_repair?
 
-And so is there a way to reduce size of spare / create spare of
-specified (smaller) size after its removal?
+Spare volume is maintained to have the size at least as the biggest
+pool metadata volume in VG.
 
-2014-10-06 10:05 GMT+02:00 Zdenek Kabelac <zkabelac@redhat.com>:
-> Dne 6.10.2014 v 09:59 Patrik Horn=EDk napsal(a):
->>
->> Hi,
->>
->> 2014-10-06 9:39 GMT+02:00 Zdenek Kabelac <zkabelac@redhat.com>:
->>>
->>> Dne 6.10.2014 v 09:28 Patrik Horn=EDk napsal(a):
->>>
->>>> Hi,
->>>>
->>>> is it possible to (safely) reduce size of thin metadata and / or thin
->>>> spare metadata? What size of spare metadata is needed? Can it be
->>>> smaller than size of pool metadata?
->>>>
->>>
->>> You could remove pool spare volume anytime  - lvremove.
->>> (it's only used for automated lvconvert --repair)
->>>
->>> Repair needs free space in VG - if there is no free space - well tool
->>> can't
->>> be used.
->>
->>
->> when does automated lvconvert --repair kick in? Can I do it manually
->> if it cannot continue automatically? (I actually have space for spare
->> metadata so I want it there if it useful but smaller. I only need to
->> decrease size of my volume group by couple of 100s MB because of
->> moving to new device. My spare is 8 GB as is regular metadata.)
->
->
-> When thin-pool does not pass 'thin-check' during thin-pool activation,
-> you could try to use this  'lvconvert --repair' at first.
->
-> Basically it automates steps described in previous mail - except it will =
-try
-> to use bigger 'replaceable' LV.
->
-> Yet the functionality is not really any better then that - it's still
-> missing
-> many validation checks between user-land lvm2 metadata and kernel-land
-> thin-pool metadata.
->
-> But it's being improved.
-> Meanwhile any 'major' damage of thin-pool metadata do need  'hand' work
-> repair - since human can do far better decision then this initial
-> implementation.
->
-> Also note - any pool damage is still important to be reported - as
-> thin pool metadata should be nearly impossible to break in the first place
-> ;)
->
-> Zdenek
->
+There is no point to keep smaller reserved space.
+
+We do not allow to activate 'subvolumes' - thus you cannot activate
+just 'thin pool metadata'  - that's why you need to swap _tmeta
+out thin pool.
+
+Zdenek
