@@ -1,15 +1,16 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Reducing size of thin spare metadata, thin metadata
-Date: Mon, 06 Oct 2014 10:57:27 +0200
-Message-ID: <54325977.9090805@redhat.com>
-References: <CAAOsTSmgp892H5M4+XLXSQ-H3G_HFUsnykiyjW+MbP4r7U8+Qw@mail.gmail.com>	<54324732.5080107@redhat.com>	<CAAOsTS=ufw7KgFMOW79+4_kwexnp=pALQWR7BLRSr_JUk6xGXQ@mail.gmail.com>	<54324D57.1050704@redhat.com>	<CAAOsTS=ZvKDZAi7RwaO0s4hFEHeggGFZSQCLSjs3fGC+5m5mCA@mail.gmail.com>	<5432534A.5090409@redhat.com>
-	<CAAOsTSnfpf3GCZu95GisyS6Z+zj6LTkODuhZGu5JmaQXUPXgVg@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/3] libmultipath: replace PATH_TIMEOUT with
+	PATH_DOWN
+Date: Mon, 06 Oct 2014 16:35:02 +0200
+Message-ID: <5432A896.5040205@suse.de>
+References: <1412381483-15757-1-git-send-email-bmarzins@redhat.com>
+	<1412381483-15757-2-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAOsTSnfpf3GCZu95GisyS6Z+zj6LTkODuhZGu5JmaQXUPXgVg@mail.gmail.com>
+In-Reply-To: <1412381483-15757-2-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,23 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: patrik@dsl.sk
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Dne 6.10.2014 v 10:48 Patrik Horn=EDk napsal(a):
-> Thanks Zdenku. But you did not answer some of my questions, which I
-> need to know to decide... So is there a way I can create smaller spare
-> metadata LV? In mentioned manual steps what do I need mytemplv for and
-> why cant I use original pool metadata as input of thin_repair?
+On 10/04/2014 02:11 AM, Benjamin Marzinski wrote:
+> The way the code works, PATH_TIMEOUT is treated mostly like PATH_UP or
+> PATH_GHOST by check_path.  If the the path was previously failed,  it will
+> even reinstate the path. It will also trigger prio refreshing. It seems
+> that PATH_TIMEOUT should be at least as serious as PATH_PENDING, but the
+> way the code works, it's not.  In pathinfo, PATH_TIMEOUT gets changed
+> directly to PATH_DOWN, which makes sense.  But assuming that's the correct
+> thing to do, why have PATH_TIMEOUT at all?
+> =
 
-Spare volume is maintained to have the size at least as the biggest
-pool metadata volume in VG.
+Because a timeout is different from a normal path down.
+Timeout means the tur checker is stuck somehow.
+And we currently have no real means of resetting it (aio_cancel
+doesn't really abort the I/O, is just short-circuit the callback).
 
-There is no point to keep smaller reserved space.
+So the intention of this patch was that we want to get notified if
+a TUR timeout occurs, as this might lead to other subsequent errors.
 
-We do not allow to activate 'subvolumes' - thus you cannot activate
-just 'thin pool metadata'  - that's why you need to swap _tmeta
-out thin pool.
+> The only thing that it does that seems helpful is that when you print out
+> the path, instead of it saying that the path is down, it says that the
+> path has timed out.  But if we are going to treat is like the path is
+> down, then I don't see this being too helpful.  And the way we are treati=
+ng
+> PATH_TIMEOUT right now is definitely not right.
+> =
 
-Zdenek
+See above. I really would like to be notified for PATH_TIMEOUT
+scenarios ...
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
