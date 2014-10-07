@@ -1,16 +1,12 @@
-From: Marian Csontos <mcsontos@redhat.com>
-Subject: Re: Fwd: Reducing size of thin spare metadata,
-	thin metadata
-Date: Tue, 07 Oct 2014 09:17:45 +0200
-Message-ID: <54339399.7060707@redhat.com>
-References: <CAAOsTSmgp892H5M4+XLXSQ-H3G_HFUsnykiyjW+MbP4r7U8+Qw@mail.gmail.com>	<54324732.5080107@redhat.com>	<CAAOsTS=ufw7KgFMOW79+4_kwexnp=pALQWR7BLRSr_JUk6xGXQ@mail.gmail.com>	<54324D57.1050704@redhat.com>	<CAAOsTS=ZvKDZAi7RwaO0s4hFEHeggGFZSQCLSjs3fGC+5m5mCA@mail.gmail.com>	<5432534A.5090409@redhat.com>	<CAAOsTSnfpf3GCZu95GisyS6Z+zj6LTkODuhZGu5JmaQXUPXgVg@mail.gmail.com>	<54325977.9090805@redhat.com>	<CAAOsTS=j1mUA+caJ35ChDvpQJTu2m8OHVPCEZFTJHdn9cgdhsw@mail.gmail.com>
-	<CAAOsTSnJy21c4x8rO6ewVatsTLdTAZ=ERPg71Gf4s0V-qOD0cg@mail.gmail.com>
+From: heinzm@redhat.com
+Subject: [PATCH] dm-raid: fix bug when round up region_size v2
+Date: Tue,  7 Oct 2014 14:35:21 +0200
+Message-ID: <1412685321-22796-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAOsTSnJy21c4x8rO6ewVatsTLdTAZ=ERPg71Gf4s0V-qOD0cg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +16,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: patrik@dsl.sk, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/06/2014 11:05 AM, Patrik Horn=EDk wrote:
-> Thank you very much, now I understand.
->
-> But apparently I dont understand exact function of " lvconvert
-> --thinpool  vg/mypool   --poolmetadata mytemplv" So it also copies
-> metadata from current metadata LV to mytemplv?
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Nope, the metadata are copied by `thin_repair` step:
+If region_size is not supplied by userspace and the device is very
+large, there is a bug in current code preventing region_size from being
+correctly set.
 
-# thin_repair  -i /dev/vg/mytemplv   -o /dev/vg/mynewsizemeta
+This new version uses roundup_pow_of_two() for optimization
+as proposed by Neil Brown.
 
-The lvconvert "only" swaps LVs.
 
--- Martian
+Signed-off-by: Lidong Zhong <lzhong@suse.com>
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 
->
-> Then what about "lvconvert --thinpool  vg/mypool   --poolmetadata
-> mynewsizemeta"? It does not do that because mynewsizemeta is smaller
-> than current metadata mytemplv or?
->
->
-> 2014-10-06 10:57 GMT+02:00 Zdenek Kabelac <zkabelac@redhat.com>:
->> Dne 6.10.2014 v 10:48 Patrik Horn=EDk napsal(a):
->>>
->>> Thanks Zdenku. But you did not answer some of my questions, which I
->>> need to know to decide... So is there a way I can create smaller spare
->>> metadata LV? In mentioned manual steps what do I need mytemplv for and
->>> why cant I use original pool metadata as input of thin_repair?
->>
->>
->> Spare volume is maintained to have the size at least as the biggest
->> pool metadata volume in VG.
->>
->> There is no point to keep smaller reserved space.
->>
->> We do not allow to activate 'subvolumes' - thus you cannot activate
->> just 'thin pool metadata'  - that's why you need to swap _tmeta
->> out thin pool.
->>
->> Zdenek
->>
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+---
+ drivers/md/dm-raid.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 4880b69..595afd5 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/slab.h>
+ #include <linux/module.h>
++#include <linux/log2.h>
+ 
+ #include "md.h"
+ #include "raid1.h"
+@@ -325,13 +326,11 @@ static int validate_region_size(struct raid_set *rs, unsigned long region_size)
+ 		 */
+ 		if (min_region_size > (1 << 13)) {
+ 			/* If not a power of 2, make it the next power of 2 */
+-			if (min_region_size & (min_region_size - 1))
+-				region_size = 1 << fls(region_size);
+-			DMINFO("Choosing default region size of %lu sectors",
+-			       region_size);
++			region_size = roundup_pow_of_two(min_region_size);
++			DMINFO("Choosing region size of %lu sectors", region_size);
+ 		} else {
+-			DMINFO("Choosing default region size of 4MiB");
+ 			region_size = 1 << 13; /* sectors */
++			DMINFO("Choosing default region size of 4MiB");
+ 		}
+ 	} else {
+ 		/*
+-- 
+1.9.3
