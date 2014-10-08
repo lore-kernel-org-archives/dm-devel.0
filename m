@@ -1,43 +1,65 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: block: fix alignment_offset math that assumes io_min is a power-of-2
-Date: Wed, 08 Oct 2014 16:38:13 -0600
-Message-ID: <5435BCD5.9050306@kernel.dk>
-References: <1412805952-15316-1-git-send-email-snitzer@redhat.com> <5435B6C0.8020704@kernel.dk> <20141008222841.GA15345@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: block: fix alignment_offset math that assumes io_min
+ is a power-of-2
+Date: Wed, 8 Oct 2014 18:41:50 -0400
+Message-ID: <20141008224149.GB15590@redhat.com>
+References: <1412805952-15316-1-git-send-email-snitzer@redhat.com>
+	<5435B6C0.8020704@kernel.dk> <20141008222841.GA15345@redhat.com>
+	<5435BCD5.9050306@kernel.dk>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141008222841.GA15345@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, martin.petersen@oracle.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <5435BCD5.9050306@kernel.dk>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-On 10/08/2014 04:28 PM, Mike Snitzer wrote:
-> On Wed, Oct 08 2014 at  6:12pm -0400,
-> Jens Axboe <axboe@kernel.dk> wrote:
-> 
->> On 10/08/2014 04:05 PM, Mike Snitzer wrote:
->>> The math in both blk_stack_limits() and queue_limit_alignment_offset()
->>> assume that a block device's io_min (aka minimum_io_size) is always a
->>> power-of-2.  Fix the math such that it works for non-power-of-2 io_min.
->>>
->>> This issue (of alignment_offset != 0) became apparent when testing
->>> dm-thinp with a thinp blocksize that matches a RAID6 stripesize of
->>> 1280K.  Commit fdfb4c8c1 ("dm thin: set minimum_io_size to pool's data
->>> block size") unlocked the potential for alignment_offset != 0 due to
->>> the dm-thin-pool's io_min possibly being a non-power-of-2.
->>
->> Well that sucks, AND with a mask is considerably cheaper than a MOD...
-> 
-> Yeah, certainly does suck (please note v2 that I just sent).  The MODs
-> shouldn't kill us, these functions aren't called in any real hot path.
-> A storm at boot maybe.. or SCSI rescan but...
-
-I had it mixed up with the recent blk_max_size_offset() - you are right,
-this is not in a hot path. For that case, I don't really care, it's fine.
-
-Is v2 runtime tested?
-
--- 
-Jens Axboe
+T24gV2VkLCBPY3QgMDggMjAxNCBhdCAgNjozOHBtIC0wNDAwLApKZW5zIEF4Ym9lIDxheGJvZUBr
+ZXJuZWwuZGs+IHdyb3RlOgoKPiBPbiAxMC8wOC8yMDE0IDA0OjI4IFBNLCBNaWtlIFNuaXR6ZXIg
+d3JvdGU6Cj4gPiBPbiBXZWQsIE9jdCAwOCAyMDE0IGF0ICA2OjEycG0gLTA0MDAsCj4gPiBKZW5z
+IEF4Ym9lIDxheGJvZUBrZXJuZWwuZGs+IHdyb3RlOgo+ID4gCj4gPj4gT24gMTAvMDgvMjAxNCAw
+NDowNSBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+ID4+PiBUaGUgbWF0aCBpbiBib3RoIGJsa19z
+dGFja19saW1pdHMoKSBhbmQgcXVldWVfbGltaXRfYWxpZ25tZW50X29mZnNldCgpCj4gPj4+IGFz
+c3VtZSB0aGF0IGEgYmxvY2sgZGV2aWNlJ3MgaW9fbWluIChha2EgbWluaW11bV9pb19zaXplKSBp
+cyBhbHdheXMgYQo+ID4+PiBwb3dlci1vZi0yLiAgRml4IHRoZSBtYXRoIHN1Y2ggdGhhdCBpdCB3
+b3JrcyBmb3Igbm9uLXBvd2VyLW9mLTIgaW9fbWluLgo+ID4+Pgo+ID4+PiBUaGlzIGlzc3VlIChv
+ZiBhbGlnbm1lbnRfb2Zmc2V0ICE9IDApIGJlY2FtZSBhcHBhcmVudCB3aGVuIHRlc3RpbmcKPiA+
+Pj4gZG0tdGhpbnAgd2l0aCBhIHRoaW5wIGJsb2Nrc2l6ZSB0aGF0IG1hdGNoZXMgYSBSQUlENiBz
+dHJpcGVzaXplIG9mCj4gPj4+IDEyODBLLiAgQ29tbWl0IGZkZmI0YzhjMSAoImRtIHRoaW46IHNl
+dCBtaW5pbXVtX2lvX3NpemUgdG8gcG9vbCdzIGRhdGEKPiA+Pj4gYmxvY2sgc2l6ZSIpIHVubG9j
+a2VkIHRoZSBwb3RlbnRpYWwgZm9yIGFsaWdubWVudF9vZmZzZXQgIT0gMCBkdWUgdG8KPiA+Pj4g
+dGhlIGRtLXRoaW4tcG9vbCdzIGlvX21pbiBwb3NzaWJseSBiZWluZyBhIG5vbi1wb3dlci1vZi0y
+Lgo+ID4+Cj4gPj4gV2VsbCB0aGF0IHN1Y2tzLCBBTkQgd2l0aCBhIG1hc2sgaXMgY29uc2lkZXJh
+Ymx5IGNoZWFwZXIgdGhhbiBhIE1PRC4uLgo+ID4gCj4gPiBZZWFoLCBjZXJ0YWlubHkgZG9lcyBz
+dWNrIChwbGVhc2Ugbm90ZSB2MiB0aGF0IEkganVzdCBzZW50KS4gIFRoZSBNT0RzCj4gPiBzaG91
+bGRuJ3Qga2lsbCB1cywgdGhlc2UgZnVuY3Rpb25zIGFyZW4ndCBjYWxsZWQgaW4gYW55IHJlYWwg
+aG90IHBhdGguCj4gPiBBIHN0b3JtIGF0IGJvb3QgbWF5YmUuLiBvciBTQ1NJIHJlc2NhbiBidXQu
+Li4KPiAKPiBJIGhhZCBpdCBtaXhlZCB1cCB3aXRoIHRoZSByZWNlbnQgYmxrX21heF9zaXplX29m
+ZnNldCgpIC0geW91IGFyZSByaWdodCwKPiB0aGlzIGlzIG5vdCBpbiBhIGhvdCBwYXRoLiBGb3Ig
+dGhhdCBjYXNlLCBJIGRvbid0IHJlYWxseSBjYXJlLCBpdCdzIGZpbmUuCj4gCj4gSXMgdjIgcnVu
+dGltZSB0ZXN0ZWQ/CgpZZXMuCgpIZXJlIGlzIHRoZSBETSBzdGFjayBmb3IgYW4gbHZtIGNyZWF0
+ZWQgZG0tdGhpbi1wb29sIChkbS01KS4KCiMgbHNibGsgL2Rldi9za2QwCk5BTUUgICAgICAgICAg
+ICAgICAgICAgIE1BSjpNSU4gUk0gICBTSVpFIFJPIFRZUEUgTU9VTlRQT0lOVApza2QwICAgICAg
+ICAgICAgICAgICAgICAyNTI6MCAgICAwIDc0NS4zRyAgMCBkaXNrIArilJzilIBicmlja3MtbXlw
+b29sX3RtZXRhICAgMjUzOjIgICAgMCAgMTUuOEcgIDAgbHZtICAK4pSCIOKUlOKUgGJyaWNrcy1t
+eXBvb2wtdHBvb2wgMjUzOjQgICAgMCAgIDUxMkcgIDAgbHZtICAK4pSCICAg4pSU4pSAYnJpY2tz
+LW15cG9vbCAgICAgMjUzOjUgICAgMCAgIDUxMkcgIDAgbHZtICAK4pSU4pSAYnJpY2tzLW15cG9v
+bF90ZGF0YSAgIDI1MzozICAgIDAgICA1MTJHICAwIGx2bSAgCiAg4pSU4pSAYnJpY2tzLW15cG9v
+bC10cG9vbCAyNTM6NCAgICAwICAgNTEyRyAgMCBsdm0gIAogICAg4pSU4pSAYnJpY2tzLW15cG9v
+bCAgICAgMjUzOjUgICAgMCAgIDUxMkcgIDAgbHZtICAKCkJlZm9yZSBwYXRjaDoKIyBjYXQgL3N5
+cy9ibG9jay9kbS01L2FsaWdubWVudF9vZmZzZXQKMTA0ODU3NgoKQWZ0ZXIgcGF0Y2g6CiMgY2F0
+IC9zeXMvYmxvY2svZG0tNS9hbGlnbm1lbnRfb2Zmc2V0IAowCgotLQpkbS1kZXZlbCBtYWlsaW5n
+IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWw=
