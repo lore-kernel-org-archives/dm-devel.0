@@ -1,35 +1,41 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH v2] block: fix alignment_offset math that assumes io_min is a power-of-2
-Date: Wed, 08 Oct 2014 20:23:10 -0400
-Message-ID: <yq1iojudrbl.fsf@sermon.lab.mkp.net>
-References: <to=1412805952-15316-1-git-send-email-snitzer@redhat.com>
-	<1412807173-15541-1-git-send-email-snitzer@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-bufio cache patches
+Date: Thu, 9 Oct 2014 14:07:36 +0100
+Message-ID: <20141009130736.GA21297@debian>
+References: <alpine.LRH.2.02.1410081607440.5670@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1410081617120.9823@file01.intranet.prod.int.rdu2.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1412807173-15541-1-git-send-email-snitzer@redhat.com> (Mike
-	Snitzer's message of "Wed, 8 Oct 2014 18:26:13 -0400")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1410081617120.9823@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+On Wed, Oct 08, 2014 at 04:17:59PM -0400, Mikulas Patocka wrote:
+> > I created dm-bufio patchset that keep some amount of cache indefinitely, 
+> > regardless of the timeout (the default is to keep 1/500 of total memory 
+> > indefinitely).
 
-Mike> The math in both blk_stack_limits() and
-Mike> queue_limit_alignment_offset() assume that a block device's io_min
-Mike> (aka minimum_io_size) is always a power-of-2.  Fix the math such
-Mike> that it works for non-power-of-2 io_min.
+I'm running something similar here.  I just put in a hard coded
+default rather than basing it on the amount of memory present.  I'm
+not sure which I prefer.
 
-Mike> This issue (of alignment_offset != 0) became apparent when testing
-Mike> dm-thinp with a thinp blocksize that matches a RAID6 stripesize of
-Mike> 1280K.  Commit fdfb4c8c1 ("dm thin: set minimum_io_size to pool's
-Mike> data block size") unlocked the potential for alignment_offset != 0
-Mike> due to the dm-thin-pool's io_min possibly being a non-power-of-2.
+I've also switched over to using a rbtree instead of that huge hash
+table which consumes 8m.
 
-Looks good to me, Mike.
+I'll post clean patches in a bit.
 
-Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+- Joe
