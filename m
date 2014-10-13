@@ -1,7 +1,7 @@
-From: Joe Thornber <thornber@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: A patchset to limit the number of outstanding bios
-Date: Mon, 13 Oct 2014 17:03:18 +0100
-Message-ID: <20141013160317.GD27596@debian>
+Date: Mon, 13 Oct 2014 12:20:26 -0400
+Message-ID: <20141013162026.GA4631@redhat.com>
 References: <alpine.LRH.2.02.1410131113450.3569@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,24 +20,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, axboe@kernel.dk, dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 13, 2014 at 11:27:20AM -0400, Mikulas Patocka wrote:
+On Mon, Oct 13 2014 at 11:27am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+
 > Hi
 > 
 > I'm announcing the release of a patchset that limits the number of 
 > outstanding bios in the device mapper.
+> 
+> The patchset is at 
+> http://people.redhat.com/~mpatocka/patches/kernel/dm-limit-outstanding-bios/
 
-Interesting; Mike and I were considering this for throttling io to
-thinp a couple of weeks ago.  The reason we didn't go with this was,
-for thinp, there are cheap bios (eg, a quick remap) and expensive bios
-(eg, one that triggers a copy on write exception).  This means it's
-very hard to come up with a single number that represents too many
-bios.  Instead I throttle by looking at how long it's taking the
-worker thread to get through it's work queue.
+You should probably just send the patchset to the list (and cc Jens on
+the block changes).
 
-Could you make this limit optional please?  eg, setting the limit to 0
-turns it off, and I'd prefer a default of 0/off.
+Patch 1 looks good as is.  But Jens suggested that Patch 2 should hook
+off the on stack plugging rather than adding yet another hook to
+kernel/sched/core.c
 
-- Joe
+And I agree with Joe, we want this DM-only limit to be opt-in per-target
+(so disabled by default).
+
+Mike
