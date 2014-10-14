@@ -1,83 +1,74 @@
-From: Behan Webster <behanw@converseincode.com>
-Subject: [GIT PULL] LLVMLinux patches for v3.18
-Date: Tue, 14 Oct 2014 10:59:04 +0200
-Message-ID: <543CE5D8.1050306@converseincode.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: akpm@linux-foundation.org, bruce.w.allan@intel.com, d.kasatkin@samsung.com, james.l.morris@oracle.com, john.griffin@intel.com, linux-btrfs@vger.kernel.org, linux-crypto@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-security-module@vger.kernel.org, neilb@suse.de, qat-linux@intel.com, serge@hallyn.com, thomas.lendacky@amd.com, zohar@linux.vnet.ibm.com, agk@redhat.com, clm@fb.com, davem@davemloft.net, dm-devel@redhat.com, fabf@skynet.be, herbert@gondor.apana.org.au, jbacik@fb.com, snitzer@redhat.com, tadeusz.struk@intel.com
+From: Dmitry Monakhov <dmonakhov@openvz.org>
+Subject: [PATCH 2/4] md: add flush_idx support for stacked devices
+Date: Tue, 14 Oct 2014 14:03:53 +0400
+Message-ID: <1413281035-6483-3-git-send-email-dmonakhov@openvz.org>
+References: <1413281035-6483-1-git-send-email-dmonakhov@openvz.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1413281035-6483-1-git-send-email-dmonakhov@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Dmitry Monakhov <dmonakhov@openvz.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-These patches remove the use of VLAIS using a new SHASH_DESC_ON_STACK m=
-acro.
-Some of the previously accepted VLAIS removal patches haven't used this
-macro. I will
-push new patches to consistently use this macro in all those older case=
-s
-for 3.19
+For single device mapping it is safe to introduce get_flush_idx conception.
+This cover most common case linear mapping for a single dev.
 
-The following changes since commit 2d65a9f48fcdf7866aab6457bc707ca233e0=
-c791:
+CC: Alasdair Kergon <agk@redhat.com>
+CC: Mike Snitzer <snitzer@redhat.com>
+CC: dm-devel@redhat.com
+Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
+---
+ drivers/md/dm.c |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
 
-  Merge branch 'drm-next' of git://people.freedesktop.org/~airlied/linu=
-x
-(2014-10-14 09:39:08 +0200)
-
-are available in the git repository at:
-
-  git://git.linuxfoundation.org/llvmlinux/kernel.git
-tags/llvmlinux-for-v3.18
-
-for you to fetch changes up to 4c5c30249452aaebf258751ea4222eba3dd3da4c=
-:
-
-  crypto: LLVMLinux: Remove VLAIS usage from crypto/testmgr.c
-(2014-10-14 10:51:24 +0200)
-
-----------------------------------------------------------------
-LLVMLinux patches for v3.18
-
-----------------------------------------------------------------
-Behan Webster (6):
-      crypto: LLVMLinux: Add macro to remove use of VLAIS in crypto cod=
-e
-      crypto: LLVMLinux: Remove VLAIS from crypto/mv_cesa.c
-      crypto: LLVMLinux: Remove VLAIS from crypto/n2_core.c
-      crypto: LLVMLinux: Remove VLAIS from crypto/omap_sham.c
-      crypto: LLVMLinux: Remove VLAIS from crypto/.../qat_algs.c
-      security, crypto: LLVMLinux: Remove VLAIS from ima_crypto.c
-
-Jan-Simon M=C3=B6ller (5):
-      crypto: LLVMLinux: Remove VLAIS from crypto/ccp/ccp-crypto-sha.c
-      crypto, dm: LLVMLinux: Remove VLAIS usage from dm-crypt
-      crypto: LLVMLinux: Remove VLAIS usage from crypto/hmac.c
-      crypto: LLVMLinux: Remove VLAIS usage from libcrc32c.c
-      crypto: LLVMLinux: Remove VLAIS usage from crypto/testmgr.c
-
-Vin=C3=ADcius Tinti (1):
-      btrfs: LLVMLinux: Remove VLAIS
-
- crypto/hmac.c                            | 25 ++++++++---------
- crypto/testmgr.c                         | 14 ++++------
- drivers/crypto/ccp/ccp-crypto-sha.c      | 13 ++++-----
- drivers/crypto/mv_cesa.c                 | 41 ++++++++++++------------=
-----
- drivers/crypto/n2_core.c                 | 11 +++-----
- drivers/crypto/omap-sham.c               | 28 ++++++++-----------
- drivers/crypto/qat/qat_common/qat_algs.c | 31 ++++++++++-----------
- drivers/md/dm-crypt.c                    | 34 ++++++++++-------------
- fs/btrfs/hash.c                          | 16 +++++------
- include/crypto/hash.h                    |  5 ++++
- lib/libcrc32c.c                          | 16 +++++------
- security/integrity/ima/ima_crypto.c      | 47
-+++++++++++++-------------------
- 12 files changed, 122 insertions(+), 159 deletions(-)
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-securit=
-y-module" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 32b958d..042d172 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1843,6 +1843,36 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
+ 	return r;
+ }
+ 
++static int dm_iter_get_flush_idx(struct dm_target *ti,
++				struct dm_dev *dev, sector_t start,
++				sector_t len, void *data)
++{
++	struct block_device *bdev = dev->bdev;
++	struct request_queue *q = bdev_get_queue(bdev);
++
++	return blk_get_flush_idx(q,  *((bool *)data));
++}
++
++static unsigned dm_get_flush_idx(struct request_queue *q, bool queued)
++{
++	struct dm_target *ti;
++	struct mapped_device *md = q->queuedata;
++	struct dm_table *map = dm_get_live_table_fast(md);
++	unsigned fid = 0;
++
++	if (unlikely(!map || dm_table_get_num_targets(map) != 1))
++		goto out;
++
++	ti = dm_table_get_target(map, 0);
++	if (unlikely(!ti || !ti->type->iterate_devices))
++		goto out;
++
++	fid = ti->type->iterate_devices(ti, dm_iter_get_flush_idx, &queued);
++out:
++	dm_put_live_table_fast(md);
++	return fid;
++}
++
+ /*-----------------------------------------------------------------
+  * An IDR is used to keep track of allocated minor numbers.
+  *---------------------------------------------------------------*/
+@@ -1962,6 +1992,7 @@ static struct mapped_device *alloc_dev(int minor)
+ 		goto bad_queue;
+ 
+ 	dm_init_md_queue(md);
++	blk_queue_get_flush_idx(md->queue, dm_get_flush_idx);
+ 
+ 	md->disk = alloc_disk(1);
+ 	if (!md->disk)
+-- 
+1.7.1
