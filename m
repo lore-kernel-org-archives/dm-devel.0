@@ -1,64 +1,83 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: A patchset to limit the number of outstanding bios
-Date: Mon, 13 Oct 2014 16:52:31 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1410131643100.11699@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1410131113450.3569@file01.intranet.prod.int.rdu2.redhat.com>
-	<20141013162026.GA4631@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Behan Webster <behanw@converseincode.com>
+Subject: [GIT PULL] LLVMLinux patches for v3.18
+Date: Tue, 14 Oct 2014 10:59:04 +0200
+Message-ID: <543CE5D8.1050306@converseincode.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141013162026.GA4631@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, axboe@kernel.dk, dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Sender: linux-security-module-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: akpm@linux-foundation.org, bruce.w.allan@intel.com, d.kasatkin@samsung.com, james.l.morris@oracle.com, john.griffin@intel.com, linux-btrfs@vger.kernel.org, linux-crypto@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-security-module@vger.kernel.org, neilb@suse.de, qat-linux@intel.com, serge@hallyn.com, thomas.lendacky@amd.com, zohar@linux.vnet.ibm.com, agk@redhat.com, clm@fb.com, davem@davemloft.net, dm-devel@redhat.com, fabf@skynet.be, herbert@gondor.apana.org.au, jbacik@fb.com, snitzer@redhat.com, tadeusz.struk@intel.com
 List-Id: dm-devel.ids
 
+These patches remove the use of VLAIS using a new SHASH_DESC_ON_STACK m=
+acro.
+Some of the previously accepted VLAIS removal patches haven't used this
+macro. I will
+push new patches to consistently use this macro in all those older case=
+s
+for 3.19
 
+The following changes since commit 2d65a9f48fcdf7866aab6457bc707ca233e0=
+c791:
 
-On Mon, 13 Oct 2014, Mike Snitzer wrote:
+  Merge branch 'drm-next' of git://people.freedesktop.org/~airlied/linu=
+x
+(2014-10-14 09:39:08 +0200)
 
-> On Mon, Oct 13 2014 at 11:27am -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > Hi
-> > 
-> > I'm announcing the release of a patchset that limits the number of 
-> > outstanding bios in the device mapper.
-> > 
-> > The patchset is at 
-> > http://people.redhat.com/~mpatocka/patches/kernel/dm-limit-outstanding-bios/
-> 
-> You should probably just send the patchset to the list (and cc Jens on
-> the block changes).
-> 
-> Patch 1 looks good as is.  But Jens suggested that Patch 2 should hook
-> off the on stack plugging rather than adding yet another hook to
-> kernel/sched/core.c
+are available in the git repository at:
 
-I think that adding some generic schedule callbacks because of *two* hooks 
-is overengineering. If there were five schedule hooks, it would be 
-justified to generalize that.
+  git://git.linuxfoundation.org/llvmlinux/kernel.git
+tags/llvmlinux-for-v3.18
 
-> And I agree with Joe, we want this DM-only limit to be opt-in per-target
-> (so disabled by default).
+for you to fetch changes up to 4c5c30249452aaebf258751ea4222eba3dd3da4c=
+:
 
-... if it were opt-in, people will still get out of memory dm-crypt 
-crashes (like bug 1010466) or tasks stuck in "D" state for too long time, 
-because they don't know that they need to this knob to avoid this problem.
+  crypto: LLVMLinux: Remove VLAIS usage from crypto/testmgr.c
+(2014-10-14 10:51:24 +0200)
 
-I'd select the default value high enough so that it doesn't degrade any 
-benchmarks.
+----------------------------------------------------------------
+LLVMLinux patches for v3.18
 
-Mikulas
+----------------------------------------------------------------
+Behan Webster (6):
+      crypto: LLVMLinux: Add macro to remove use of VLAIS in crypto cod=
+e
+      crypto: LLVMLinux: Remove VLAIS from crypto/mv_cesa.c
+      crypto: LLVMLinux: Remove VLAIS from crypto/n2_core.c
+      crypto: LLVMLinux: Remove VLAIS from crypto/omap_sham.c
+      crypto: LLVMLinux: Remove VLAIS from crypto/.../qat_algs.c
+      security, crypto: LLVMLinux: Remove VLAIS from ima_crypto.c
 
-> Mike
+Jan-Simon M=C3=B6ller (5):
+      crypto: LLVMLinux: Remove VLAIS from crypto/ccp/ccp-crypto-sha.c
+      crypto, dm: LLVMLinux: Remove VLAIS usage from dm-crypt
+      crypto: LLVMLinux: Remove VLAIS usage from crypto/hmac.c
+      crypto: LLVMLinux: Remove VLAIS usage from libcrc32c.c
+      crypto: LLVMLinux: Remove VLAIS usage from crypto/testmgr.c
+
+Vin=C3=ADcius Tinti (1):
+      btrfs: LLVMLinux: Remove VLAIS
+
+ crypto/hmac.c                            | 25 ++++++++---------
+ crypto/testmgr.c                         | 14 ++++------
+ drivers/crypto/ccp/ccp-crypto-sha.c      | 13 ++++-----
+ drivers/crypto/mv_cesa.c                 | 41 ++++++++++++------------=
+----
+ drivers/crypto/n2_core.c                 | 11 +++-----
+ drivers/crypto/omap-sham.c               | 28 ++++++++-----------
+ drivers/crypto/qat/qat_common/qat_algs.c | 31 ++++++++++-----------
+ drivers/md/dm-crypt.c                    | 34 ++++++++++-------------
+ fs/btrfs/hash.c                          | 16 +++++------
+ include/crypto/hash.h                    |  5 ++++
+ lib/libcrc32c.c                          | 16 +++++------
+ security/integrity/ima/ima_crypto.c      | 47
++++++++++++++-------------------
+ 12 files changed, 122 insertions(+), 159 deletions(-)
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-securit=
+y-module" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
