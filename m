@@ -1,13 +1,21 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bufio: change __GFP_IO to __GFP_FS in
- shrinker callbacks
-Date: Thu, 16 Oct 2014 14:45:20 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1410161443130.28500@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm raid: ensure metadata IO matches device block
+	size.
+Date: Thu, 16 Oct 2014 15:56:11 -0400
+Message-ID: <20141016195611.GA14141@redhat.com>
+References: <20141015121907.265b3aed@notabene.brown>
+	<20141015025550.GC19683@redhat.com>
+	<20141015144003.7b17752d@notabene.brown>
+	<20141015131307.GA23955@redhat.com>
+	<20141016080054.7c906901@notabene.brown>
+	<543FC8A0.8000709@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <543FC8A0.8000709@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,70 +25,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: lwang@suse.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+On Thu, Oct 16 2014 at  9:31am -0400,
+Heinz Mauelshagen <heinzm@redhat.com> wrote:
 
-This supposedly fixes the loop and dm-bufio deadlock observed by Zdenek. 
-The deadlock is not reproducible. There are many other loop-based 
-deadlocks in the kernel.
+> 
+> On 10/15/2014 11:00 PM, NeilBrown wrote:
+> >On Wed, 15 Oct 2014 09:13:08 -0400 Mike Snitzer <snitzer@redhat.com> wrote:
+> >
+> >>On Tue, Oct 14 2014 at 11:40pm -0400,
+> >>NeilBrown <neilb@suse.de> wrote:
+> >>
+> >>>On Tue, 14 Oct 2014 22:55:50 -0400 Mike Snitzer <snitzer@redhat.com> wrote:
+> >>>
+> >>>>On Tue, Oct 14 2014 at  9:19pm -0400,
+> >>>>NeilBrown <neilb@suse.de> wrote:
+> >>>>
+> >>>>>dm_raid_superblock is 512.
+> >>>>>Reading or writing this on a 512-byte sector works fine.
+> >>>>>On a 4096-byte sector device, this fails.
+> >>>>>
+> >>>>>If we round up rdev->sb_size to match the block size of
+> >>>>>the device, all IO will work correctly.
+> >>>>>
+> >>>>>Reported-by: "Liuhua Wang" <lwang@suse.com>
+> >>>>>Signed-off-by: NeilBrown <neilb@suse.de>
+> >>>>>
+> >>>>>---
+> >>>>>this issue has been discussed already a bit. See email thread
+> >>>>>  Subject: Re: [dm-devel] [PATCH] fix mirror device creation with lvcreate failed
+> >>>>>I think this is the best fix.  It handles boths read and writes, and (I think)
+> >>>>>at the best level.
+> >>>>>
+> >>>>>Thanks,
+> >>>>>NeilBrown
+> >>>>>
+> >>>>>
+> >>>>>diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> >>>>>index 4880b69e2e9e..31bdd73bc368 100644
+> >>>>>--- a/drivers/md/dm-raid.c
+> >>>>>+++ b/drivers/md/dm-raid.c
+> >>>>>@@ -858,7 +858,8 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
+> >>>>>  	uint64_t events_sb, events_refsb;
+> >>>>>  	rdev->sb_start = 0;
+> >>>>>-	rdev->sb_size = sizeof(*sb);
+> >>>>>+	rdev->sb_size = roundup(sizeof(*sb),
+> >>>>>+				bdev_logical_block_size(rdev->meta_bdev));
+> >>>>>  	ret = read_disk_sb(rdev, rdev->sb_size);
+> >>>>>  	if (ret)
+> >>>>Wouldn't it be better to use bdev_physical_block_size()?
+> >>>>
+> >>>>Even on a 4K device that emulates 512b logical sectors it is better to
+> >>>>use the physical block size (4K).
+> >>>
+> >>>_logical_ is the smallest value for which the IO actually works.
+> >>>And the goal of the change is to make it work.
+> >>>
+> >>>I don't object to using _physical_, but it isn't clear to me how I would
+> >>>justify that as "correct".
+> >>>
+> >>>A big question in my mind is: how much space does LVM reserve in this device
+> >>>for the metadata?  It seems reasonable to assume that it reserves at least
+> >>>1 logical block.  If the API guarantees that at least one physical block is
+> >>>reserved, then that would justify using _physical_.
+> 
+> dm-raid uses 512 bytes for its superblock including padding in the
+> current code
+> (with way less payload), followed by the bitmap at offset 4096 bytes.
+> 
+> With Neil's proposal, the padding will be avoided alltogether.
+> 
+> So logical looks fine to me, because physical may well be more than
+> 4K in the future.
+> Admittingly a longer time in the future though.
+> 
+> If that happens, we'd end up with the bitmap start at offset 4096
+> bytes in the same physical sector
+> and would have to cope with it plus the issues involved with 4K page sizes.
+> 
+> In order to prevent this to occur unrecognized in dm/md later,
+> we should have an "if (rdev->sb_size > PAGE_SIZE) return -EINVAL;"
+> after the setting
+> of rdev->sb_size in dm-raid.c and appropriate checks in md.c.
+> 
+> BTW: even with additions to the dm-raid superblock I have to make in
+> order to allow for reshaping etc.,
+>          it's paylod is going to stay < 512 bytes.
 
-Mikulas
+Heinz,
 
+If you could propose a revised patch I'd appreciate it.
 
-
-From: mpatocka@redhat.com
-
-The shrinker uses gfp flags to indicate what kind of operation can the
-driver wait for. If __GFP_IO flag is present, the driver can wait for
-block I/O operations, if __GFP_FS flag is present, the driver can wait on
-operations involving the filesystem.
-
-dm-bufio tested for __GFP_IO. However, dm-bufio can run on a loop block
-device that makes calls into the filesystem. If __GFP_IO is present and
-__GFP_FS isn't, dm-bufio could still block on filesystem operations if it
-runs on a loop block device.
-
-The change from __GFP_IO to __GFP_FS supposedly fixes one observed (though
-unreproducible) deadlock involving dm-bufio and loop device.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
----
- drivers/md/dm-bufio.c |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-Index: linux-3.17/drivers/md/dm-bufio.c
-===================================================================
---- linux-3.17.orig/drivers/md/dm-bufio.c	2014-10-16 16:57:26.000000000 +0200
-+++ linux-3.17/drivers/md/dm-bufio.c	2014-10-16 16:57:35.000000000 +0200
-@@ -1491,7 +1491,7 @@ static int __cleanup_old_buffer(struct d
- 	if (jiffies - b->last_accessed < max_jiffies)
- 		return 0;
- 
--	if (!(gfp & __GFP_IO)) {
-+	if (!(gfp & __GFP_FS)) {
- 		if (test_bit(B_READING, &b->state) ||
- 		    test_bit(B_WRITING, &b->state) ||
- 		    test_bit(B_DIRTY, &b->state))
-@@ -1533,7 +1533,7 @@ dm_bufio_shrink_scan(struct shrinker *sh
- 	unsigned long freed;
- 
- 	c = container_of(shrink, struct dm_bufio_client, shrinker);
--	if (sc->gfp_mask & __GFP_IO)
-+	if (sc->gfp_mask & __GFP_FS)
- 		dm_bufio_lock(c);
- 	else if (!dm_bufio_trylock(c))
- 		return SHRINK_STOP;
-@@ -1550,7 +1550,7 @@ dm_bufio_shrink_count(struct shrinker *s
- 	unsigned long count;
- 
- 	c = container_of(shrink, struct dm_bufio_client, shrinker);
--	if (sc->gfp_mask & __GFP_IO)
-+	if (sc->gfp_mask & __GFP_FS)
- 		dm_bufio_lock(c);
- 	else if (!dm_bufio_trylock(c))
- 		return 0;
+Thanks,
+Mike
