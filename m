@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 03/17] dm bio prison: switch to using
-	a red black tree
-Date: Fri, 17 Oct 2014 14:37:05 -0400
-Message-ID: <1413571039-31986-3-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 09/17] dm: improve documentation and
+	code clarity in dm_merge_bvec
+Date: Fri, 17 Oct 2014 14:37:11 -0400
+Message-ID: <1413571039-31986-9-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,366 +25,58 @@ To: dm-devel@redhat.com
 Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-From: Joe Thornber <ejt@redhat.com>
+These code changes do not introduce a functional change.
 
-Previously it was using a fixed sized hash table.  There are times
-when very many concurrent cells are held (such as when processing a very
-large discard).  When this happens the hash table performance becomes
-very poor.
+But bio_add_page() will never attempt to build up a bio larger than
+queue_max_sectors().  Similarly, bio_get_nr_vecs() is also bound by
+queue_max_sectors().  Therefore, there is no point in allowing
+dm_merge_bvec() to answer "how many sectors can a bio have at this
+offset?" with anything larger than queue_max_sectors().  Using
+queue_max_sectors() rather than BIO_MAX_SECTORS serves to more
+accurately convey the limits that are being imposed.
 
-Signed-off-by: Joe Thornber <ejt@redhat.com>
+Also, use unlikely() to clarify the fact that the defensive code in
+dm_merge_bvec() relative to max_size going negative shouldn't ever
+happen -- if it does happen there is a bug in the block layer for
+requesting larger than dm_merge_bvec()'s initial response for a given
+offset.  Also, update a comment in dm_merge_bvec() relative to
+max_hw_sectors_kb.  And fix empty newline whitespace.
+
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-bio-prison.c   | 172 ++++++++++++++++++-------------------------
- drivers/md/dm-bio-prison.h   |   7 +-
- drivers/md/dm-cache-target.c |   3 +-
- drivers/md/dm-thin.c         |   3 +-
- 4 files changed, 79 insertions(+), 106 deletions(-)
+ drivers/md/dm.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
-index f752d12..90a5662 100644
---- a/drivers/md/dm-bio-prison.c
-+++ b/drivers/md/dm-bio-prison.c
-@@ -14,68 +14,38 @@
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 58f3927..0fee0e5 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1607,9 +1607,9 @@ static int dm_merge_bvec(struct request_queue *q,
+ 	 * Find maximum amount of I/O that won't need splitting
+ 	 */
+ 	max_sectors = min(max_io_len(bvm->bi_sector, ti),
+-			  (sector_t) BIO_MAX_SECTORS);
++			  (sector_t) queue_max_sectors(q));
+ 	max_size = (max_sectors << SECTOR_SHIFT) - bvm->bi_size;
+-	if (max_size < 0)
++	if (unlikely(max_size < 0)) /* this shouldn't _ever_ happen */
+ 		max_size = 0;
  
- /*----------------------------------------------------------------*/
- 
--struct bucket {
--	spinlock_t lock;
--	struct hlist_head cells;
--};
-+#define MIN_CELLS 1024
- 
- struct dm_bio_prison {
-+	spinlock_t lock;
- 	mempool_t *cell_pool;
--
--	unsigned nr_buckets;
--	unsigned hash_mask;
--	struct bucket *buckets;
-+	struct rb_root cells;
- };
- 
--/*----------------------------------------------------------------*/
--
--static uint32_t calc_nr_buckets(unsigned nr_cells)
--{
--	uint32_t n = 128;
--
--	nr_cells /= 4;
--	nr_cells = min(nr_cells, 8192u);
--
--	while (n < nr_cells)
--		n <<= 1;
--
--	return n;
--}
--
- static struct kmem_cache *_cell_cache;
- 
--static void init_bucket(struct bucket *b)
--{
--	spin_lock_init(&b->lock);
--	INIT_HLIST_HEAD(&b->cells);
--}
-+/*----------------------------------------------------------------*/
- 
- /*
-  * @nr_cells should be the number of cells you want in use _concurrently_.
-  * Don't confuse it with the number of distinct keys.
-  */
--struct dm_bio_prison *dm_bio_prison_create(unsigned nr_cells)
-+struct dm_bio_prison *dm_bio_prison_create(void)
- {
--	unsigned i;
--	uint32_t nr_buckets = calc_nr_buckets(nr_cells);
--	size_t len = sizeof(struct dm_bio_prison) +
--		(sizeof(struct bucket) * nr_buckets);
--	struct dm_bio_prison *prison = kmalloc(len, GFP_KERNEL);
-+	struct dm_bio_prison *prison = kmalloc(sizeof(*prison), GFP_KERNEL);
- 
- 	if (!prison)
- 		return NULL;
- 
--	prison->cell_pool = mempool_create_slab_pool(nr_cells, _cell_cache);
-+	spin_lock_init(&prison->lock);
-+
-+	prison->cell_pool = mempool_create_slab_pool(MIN_CELLS, _cell_cache);
- 	if (!prison->cell_pool) {
- 		kfree(prison);
- 		return NULL;
- 	}
- 
--	prison->nr_buckets = nr_buckets;
--	prison->hash_mask = nr_buckets - 1;
--	prison->buckets = (struct bucket *) (prison + 1);
--	for (i = 0; i < nr_buckets; i++)
--		init_bucket(prison->buckets + i);
-+	prison->cells = RB_ROOT;
- 
- 	return prison;
- }
-@@ -101,68 +71,73 @@ void dm_bio_prison_free_cell(struct dm_bio_prison *prison,
- }
- EXPORT_SYMBOL_GPL(dm_bio_prison_free_cell);
- 
--static uint32_t hash_key(struct dm_bio_prison *prison, struct dm_cell_key *key)
-+static void __setup_new_cell(struct dm_cell_key *key,
-+			     struct bio *holder,
-+			     struct dm_bio_prison_cell *cell)
- {
--	const unsigned long BIG_PRIME = 4294967291UL;
--	uint64_t hash = key->block * BIG_PRIME;
--
--	return (uint32_t) (hash & prison->hash_mask);
-+       memcpy(&cell->key, key, sizeof(cell->key));
-+       cell->holder = holder;
-+       bio_list_init(&cell->bios);
- }
- 
--static int keys_equal(struct dm_cell_key *lhs, struct dm_cell_key *rhs)
-+static int cmp_keys(struct dm_cell_key *lhs,
-+		    struct dm_cell_key *rhs)
- {
--	       return (lhs->virtual == rhs->virtual) &&
--		       (lhs->dev == rhs->dev) &&
--		       (lhs->block == rhs->block);
--}
-+	if (lhs->virtual < rhs->virtual)
-+		return -1;
- 
--static struct bucket *get_bucket(struct dm_bio_prison *prison,
--				 struct dm_cell_key *key)
--{
--	return prison->buckets + hash_key(prison, key);
--}
-+	if (lhs->virtual > rhs->virtual)
-+		return 1;
- 
--static struct dm_bio_prison_cell *__search_bucket(struct bucket *b,
--						  struct dm_cell_key *key)
--{
--	struct dm_bio_prison_cell *cell;
-+	if (lhs->dev < rhs->dev)
-+		return -1;
- 
--	hlist_for_each_entry(cell, &b->cells, list)
--		if (keys_equal(&cell->key, key))
--			return cell;
-+	if (lhs->dev > rhs->dev)
-+		return 1;
- 
--	return NULL;
--}
-+	if (lhs->block < rhs->block)
-+		return -1;
- 
--static void __setup_new_cell(struct bucket *b,
--			     struct dm_cell_key *key,
--			     struct bio *holder,
--			     struct dm_bio_prison_cell *cell)
--{
--	memcpy(&cell->key, key, sizeof(cell->key));
--	cell->holder = holder;
--	bio_list_init(&cell->bios);
--	hlist_add_head(&cell->list, &b->cells);
-+	if (lhs->block > rhs->block)
-+		return 1;
-+
-+	return 0;
- }
- 
--static int __bio_detain(struct bucket *b,
-+static int __bio_detain(struct dm_bio_prison *prison,
- 			struct dm_cell_key *key,
- 			struct bio *inmate,
- 			struct dm_bio_prison_cell *cell_prealloc,
- 			struct dm_bio_prison_cell **cell_result)
- {
--	struct dm_bio_prison_cell *cell;
--
--	cell = __search_bucket(b, key);
--	if (cell) {
--		if (inmate)
--			bio_list_add(&cell->bios, inmate);
--		*cell_result = cell;
--		return 1;
-+	int r;
-+	struct rb_node **new = &prison->cells.rb_node, *parent = NULL;
-+
-+	while (*new) {
-+		struct dm_bio_prison_cell *cell =
-+			container_of(*new, struct dm_bio_prison_cell, node);
-+
-+		r = cmp_keys(key, &cell->key);
-+
-+		parent = *new;
-+		if (r < 0)
-+			new = &((*new)->rb_left);
-+		else if (r > 0)
-+			new = &((*new)->rb_right);
-+		else {
-+			if (inmate)
-+				bio_list_add(&cell->bios, inmate);
-+			*cell_result = cell;
-+			return 1;
-+		}
- 	}
- 
--	__setup_new_cell(b, key, inmate, cell_prealloc);
-+	__setup_new_cell(key, inmate, cell_prealloc);
- 	*cell_result = cell_prealloc;
-+
-+	rb_link_node(&cell_prealloc->node, parent, new);
-+	rb_insert_color(&cell_prealloc->node, &prison->cells);
-+
- 	return 0;
- }
- 
-@@ -174,11 +149,10 @@ static int bio_detain(struct dm_bio_prison *prison,
- {
- 	int r;
- 	unsigned long flags;
--	struct bucket *b = get_bucket(prison, key);
- 
--	spin_lock_irqsave(&b->lock, flags);
--	r = __bio_detain(b, key, inmate, cell_prealloc, cell_result);
--	spin_unlock_irqrestore(&b->lock, flags);
-+	spin_lock_irqsave(&prison->lock, flags);
-+	r = __bio_detain(prison, key, inmate, cell_prealloc, cell_result);
-+	spin_unlock_irqrestore(&prison->lock, flags);
- 
- 	return r;
- }
-@@ -205,10 +179,11 @@ EXPORT_SYMBOL_GPL(dm_get_cell);
- /*
-  * @inmates must have been initialised prior to this call
-  */
--static void __cell_release(struct dm_bio_prison_cell *cell,
-+static void __cell_release(struct dm_bio_prison *prison,
-+			   struct dm_bio_prison_cell *cell,
- 			   struct bio_list *inmates)
- {
--	hlist_del(&cell->list);
-+	rb_erase(&cell->node, &prison->cells);
- 
- 	if (inmates) {
- 		if (cell->holder)
-@@ -222,21 +197,21 @@ void dm_cell_release(struct dm_bio_prison *prison,
- 		     struct bio_list *bios)
- {
- 	unsigned long flags;
--	struct bucket *b = get_bucket(prison, &cell->key);
- 
--	spin_lock_irqsave(&b->lock, flags);
--	__cell_release(cell, bios);
--	spin_unlock_irqrestore(&b->lock, flags);
-+	spin_lock_irqsave(&prison->lock, flags);
-+	__cell_release(prison, cell, bios);
-+	spin_unlock_irqrestore(&prison->lock, flags);
- }
- EXPORT_SYMBOL_GPL(dm_cell_release);
- 
- /*
-  * Sometimes we don't want the holder, just the additional bios.
-  */
--static void __cell_release_no_holder(struct dm_bio_prison_cell *cell,
-+static void __cell_release_no_holder(struct dm_bio_prison *prison,
-+				     struct dm_bio_prison_cell *cell,
- 				     struct bio_list *inmates)
- {
--	hlist_del(&cell->list);
-+	rb_erase(&cell->node, &prison->cells);
- 	bio_list_merge(inmates, &cell->bios);
- }
- 
-@@ -245,11 +220,10 @@ void dm_cell_release_no_holder(struct dm_bio_prison *prison,
- 			       struct bio_list *inmates)
- {
- 	unsigned long flags;
--	struct bucket *b = get_bucket(prison, &cell->key);
- 
--	spin_lock_irqsave(&b->lock, flags);
--	__cell_release_no_holder(cell, inmates);
--	spin_unlock_irqrestore(&b->lock, flags);
-+	spin_lock_irqsave(&prison->lock, flags);
-+	__cell_release_no_holder(prison, cell, inmates);
-+	spin_unlock_irqrestore(&prison->lock, flags);
- }
- EXPORT_SYMBOL_GPL(dm_cell_release_no_holder);
- 
-diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
-index 6805a14..997a439 100644
---- a/drivers/md/dm-bio-prison.h
-+++ b/drivers/md/dm-bio-prison.h
-@@ -10,8 +10,8 @@
- #include "persistent-data/dm-block-manager.h" /* FIXME: for dm_block_t */
- #include "dm-thin-metadata.h" /* FIXME: for dm_thin_id */
- 
--#include <linux/list.h>
- #include <linux/bio.h>
-+#include <linux/rbtree.h>
- 
- /*----------------------------------------------------------------*/
- 
-@@ -35,13 +35,14 @@ struct dm_cell_key {
-  * themselves.
-  */
- struct dm_bio_prison_cell {
--	struct hlist_node list;
-+	struct rb_node node;
-+
- 	struct dm_cell_key key;
- 	struct bio *holder;
- 	struct bio_list bios;
- };
- 
--struct dm_bio_prison *dm_bio_prison_create(unsigned nr_cells);
-+struct dm_bio_prison *dm_bio_prison_create(void);
- void dm_bio_prison_destroy(struct dm_bio_prison *prison);
- 
- /*
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 7130505..69de8b4 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -95,7 +95,6 @@ static void dm_unhook_bio(struct dm_hook_info *h, struct bio *bio)
- 
- /*----------------------------------------------------------------*/
- 
--#define PRISON_CELLS 1024
- #define MIGRATION_POOL_SIZE 128
- #define COMMIT_PERIOD HZ
- #define MIGRATION_COUNT_WINDOW 10
-@@ -2327,7 +2326,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 	INIT_DELAYED_WORK(&cache->waker, do_waker);
- 	cache->last_commit_jiffies = jiffies;
- 
--	cache->prison = dm_bio_prison_create(PRISON_CELLS);
-+	cache->prison = dm_bio_prison_create();
- 	if (!cache->prison) {
- 		*error = "could not create bio prison";
- 		goto bad;
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 4843801..2459628 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -25,7 +25,6 @@
-  */
- #define ENDIO_HOOK_POOL_SIZE 1024
- #define MAPPING_POOL_SIZE 1024
--#define PRISON_CELLS 1024
- #define COMMIT_PERIOD HZ
- #define NO_SPACE_TIMEOUT_SECS 60
- 
-@@ -2185,7 +2184,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 		pool->sectors_per_block_shift = __ffs(block_size);
- 	pool->low_water_blocks = 0;
- 	pool_features_init(&pool->pf);
--	pool->prison = dm_bio_prison_create(PRISON_CELLS);
-+	pool->prison = dm_bio_prison_create();
- 	if (!pool->prison) {
- 		*error = "Error creating pool's bio prison";
- 		err_p = ERR_PTR(-ENOMEM);
+ 	/*
+@@ -1621,10 +1621,10 @@ static int dm_merge_bvec(struct request_queue *q,
+ 		max_size = ti->type->merge(ti, bvm, biovec, max_size);
+ 	/*
+ 	 * If the target doesn't support merge method and some of the devices
+-	 * provided their merge_bvec method (we know this by looking at
+-	 * queue_max_hw_sectors), then we can't allow bios with multiple vector
+-	 * entries.  So always set max_size to 0, and the code below allows
+-	 * just one page.
++	 * provided their merge_bvec method (we know this by looking for the
++	 * max_hw_sectors that dm_set_device_limits may set), then we can't
++	 * allow bios with multiple vector entries.  So always set max_size
++	 * to 0, and the code below allows just one page.
+ 	 */
+ 	else if (queue_max_hw_sectors(q) <= PAGE_SIZE >> 9)
+ 		max_size = 0;
 -- 
 1.8.3.1
