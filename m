@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 05/17] dm transaction manager: add
-	support for prefetching blocks of metadata
-Date: Fri, 17 Oct 2014 14:37:07 -0400
-Message-ID: <1413571039-31986-5-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 03/17] dm bio prison: switch to using
+	a red black tree
+Date: Fri, 17 Oct 2014 14:37:05 -0400
+Message-ID: <1413571039-31986-3-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -27,158 +27,364 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Introduce the dm_tm_issue_prefetches interface.  If you're using a
-non-blocking clone the tm will build up a list of requested blocks that
-weren't in core.  dm_tm_issue_prefetches will request those blocks to be
-prefetched.
+Previously it was using a fixed sized hash table.  There are times
+when very many concurrent cells are held (such as when processing a very
+large discard).  When this happens the hash table performance becomes
+very poor.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- .../md/persistent-data/dm-transaction-manager.c    | 77 +++++++++++++++++++++-
- .../md/persistent-data/dm-transaction-manager.h    |  7 ++
- 2 files changed, 82 insertions(+), 2 deletions(-)
+ drivers/md/dm-bio-prison.c   | 172 ++++++++++++++++++-------------------------
+ drivers/md/dm-bio-prison.h   |   7 +-
+ drivers/md/dm-cache-target.c |   3 +-
+ drivers/md/dm-thin.c         |   3 +-
+ 4 files changed, 79 insertions(+), 106 deletions(-)
 
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-index 3bc30a0..9cb797d 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.c
-+++ b/drivers/md/persistent-data/dm-transaction-manager.c
-@@ -10,6 +10,8 @@
- #include "dm-persistent-data-internal.h"
- 
- #include <linux/export.h>
-+#include <linux/mutex.h>
-+#include <linux/hash.h>
- #include <linux/slab.h>
- #include <linux/device-mapper.h>
- 
-@@ -17,6 +19,61 @@
+diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
+index f752d12..90a5662 100644
+--- a/drivers/md/dm-bio-prison.c
++++ b/drivers/md/dm-bio-prison.c
+@@ -14,68 +14,38 @@
  
  /*----------------------------------------------------------------*/
  
-+#define PREFETCH_SIZE 128
-+#define PREFETCH_BITS 7
-+#define PREFETCH_SENTINEL ((dm_block_t) -1ULL)
-+
-+struct prefetch_set {
-+	struct mutex lock;
-+	dm_block_t blocks[PREFETCH_SIZE];
-+};
-+
-+static unsigned prefetch_hash(dm_block_t b)
-+{
-+	return hash_64(b, PREFETCH_BITS);
-+}
-+
-+static void prefetch_wipe(struct prefetch_set *p)
-+{
-+	unsigned i;
-+	for (i = 0; i < PREFETCH_SIZE; i++)
-+		p->blocks[i] = PREFETCH_SENTINEL;
-+}
-+
-+static void prefetch_init(struct prefetch_set *p)
-+{
-+	mutex_init(&p->lock);
-+	prefetch_wipe(p);
-+}
-+
-+static void prefetch_add(struct prefetch_set *p, dm_block_t b)
-+{
-+	unsigned h = prefetch_hash(b);
-+
-+	mutex_lock(&p->lock);
-+	if (p->blocks[h] == PREFETCH_SENTINEL)
-+		p->blocks[h] = b;
-+
-+	mutex_unlock(&p->lock);
-+}
-+
-+static void prefetch_issue(struct prefetch_set *p, struct dm_block_manager *bm)
-+{
-+	unsigned i;
-+
-+	mutex_lock(&p->lock);
-+
-+	for (i = 0; i < PREFETCH_SIZE; i++)
-+		if (p->blocks[i] != PREFETCH_SENTINEL) {
-+			dm_bm_prefetch(bm, p->blocks[i]);
-+			p->blocks[i] = PREFETCH_SENTINEL;
-+		}
-+
-+	mutex_unlock(&p->lock);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
- struct shadow_info {
- 	struct hlist_node hlist;
- 	dm_block_t where;
-@@ -37,6 +94,8 @@ struct dm_transaction_manager {
+-struct bucket {
+-	spinlock_t lock;
+-	struct hlist_head cells;
+-};
++#define MIN_CELLS 1024
  
- 	spinlock_t lock;
- 	struct hlist_head buckets[DM_HASH_SIZE];
-+
-+	struct prefetch_set prefetches;
+ struct dm_bio_prison {
++	spinlock_t lock;
+ 	mempool_t *cell_pool;
+-
+-	unsigned nr_buckets;
+-	unsigned hash_mask;
+-	struct bucket *buckets;
++	struct rb_root cells;
  };
  
- /*----------------------------------------------------------------*/
-@@ -117,6 +176,8 @@ static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
- 	for (i = 0; i < DM_HASH_SIZE; i++)
- 		INIT_HLIST_HEAD(tm->buckets + i);
+-/*----------------------------------------------------------------*/
+-
+-static uint32_t calc_nr_buckets(unsigned nr_cells)
+-{
+-	uint32_t n = 128;
+-
+-	nr_cells /= 4;
+-	nr_cells = min(nr_cells, 8192u);
+-
+-	while (n < nr_cells)
+-		n <<= 1;
+-
+-	return n;
+-}
+-
+ static struct kmem_cache *_cell_cache;
  
-+	prefetch_init(&tm->prefetches);
-+
- 	return tm;
- }
- 
-@@ -268,8 +329,14 @@ int dm_tm_read_lock(struct dm_transaction_manager *tm, dm_block_t b,
- 		    struct dm_block_validator *v,
- 		    struct dm_block **blk)
- {
--	if (tm->is_clone)
--		return dm_bm_read_try_lock(tm->real->bm, b, v, blk);
-+	if (tm->is_clone) {
-+		int r = dm_bm_read_try_lock(tm->real->bm, b, v, blk);
-+
-+		if (r == -EWOULDBLOCK)
-+			prefetch_add(&tm->real->prefetches, b);
-+
-+		return r;
-+	}
- 
- 	return dm_bm_read_lock(tm->bm, b, v, blk);
- }
-@@ -317,6 +384,12 @@ struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm)
- 	return tm->bm;
- }
- 
-+void dm_tm_issue_prefetches(struct dm_transaction_manager *tm)
-+{
-+	prefetch_issue(&tm->prefetches, tm->bm);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_issue_prefetches);
-+
- /*----------------------------------------------------------------*/
- 
- static int dm_tm_create_internal(struct dm_block_manager *bm,
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.h b/drivers/md/persistent-data/dm-transaction-manager.h
-index 2772ed2..2e0d4d6 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.h
-+++ b/drivers/md/persistent-data/dm-transaction-manager.h
-@@ -109,6 +109,13 @@ int dm_tm_ref(struct dm_transaction_manager *tm, dm_block_t b,
- struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm);
+-static void init_bucket(struct bucket *b)
+-{
+-	spin_lock_init(&b->lock);
+-	INIT_HLIST_HEAD(&b->cells);
+-}
++/*----------------------------------------------------------------*/
  
  /*
-+ * If you're using a non-blocking clone the tm will build up a list of
-+ * requested blocks that weren't in core.  This call will request those
-+ * blocks to be prefetched.
-+ */
-+void dm_tm_issue_prefetches(struct dm_transaction_manager *tm);
+  * @nr_cells should be the number of cells you want in use _concurrently_.
+  * Don't confuse it with the number of distinct keys.
+  */
+-struct dm_bio_prison *dm_bio_prison_create(unsigned nr_cells)
++struct dm_bio_prison *dm_bio_prison_create(void)
+ {
+-	unsigned i;
+-	uint32_t nr_buckets = calc_nr_buckets(nr_cells);
+-	size_t len = sizeof(struct dm_bio_prison) +
+-		(sizeof(struct bucket) * nr_buckets);
+-	struct dm_bio_prison *prison = kmalloc(len, GFP_KERNEL);
++	struct dm_bio_prison *prison = kmalloc(sizeof(*prison), GFP_KERNEL);
+ 
+ 	if (!prison)
+ 		return NULL;
+ 
+-	prison->cell_pool = mempool_create_slab_pool(nr_cells, _cell_cache);
++	spin_lock_init(&prison->lock);
 +
-+/*
-  * A little utility that ties the knot by producing a transaction manager
-  * that has a space map managed by the transaction manager...
-  *
++	prison->cell_pool = mempool_create_slab_pool(MIN_CELLS, _cell_cache);
+ 	if (!prison->cell_pool) {
+ 		kfree(prison);
+ 		return NULL;
+ 	}
+ 
+-	prison->nr_buckets = nr_buckets;
+-	prison->hash_mask = nr_buckets - 1;
+-	prison->buckets = (struct bucket *) (prison + 1);
+-	for (i = 0; i < nr_buckets; i++)
+-		init_bucket(prison->buckets + i);
++	prison->cells = RB_ROOT;
+ 
+ 	return prison;
+ }
+@@ -101,68 +71,73 @@ void dm_bio_prison_free_cell(struct dm_bio_prison *prison,
+ }
+ EXPORT_SYMBOL_GPL(dm_bio_prison_free_cell);
+ 
+-static uint32_t hash_key(struct dm_bio_prison *prison, struct dm_cell_key *key)
++static void __setup_new_cell(struct dm_cell_key *key,
++			     struct bio *holder,
++			     struct dm_bio_prison_cell *cell)
+ {
+-	const unsigned long BIG_PRIME = 4294967291UL;
+-	uint64_t hash = key->block * BIG_PRIME;
+-
+-	return (uint32_t) (hash & prison->hash_mask);
++       memcpy(&cell->key, key, sizeof(cell->key));
++       cell->holder = holder;
++       bio_list_init(&cell->bios);
+ }
+ 
+-static int keys_equal(struct dm_cell_key *lhs, struct dm_cell_key *rhs)
++static int cmp_keys(struct dm_cell_key *lhs,
++		    struct dm_cell_key *rhs)
+ {
+-	       return (lhs->virtual == rhs->virtual) &&
+-		       (lhs->dev == rhs->dev) &&
+-		       (lhs->block == rhs->block);
+-}
++	if (lhs->virtual < rhs->virtual)
++		return -1;
+ 
+-static struct bucket *get_bucket(struct dm_bio_prison *prison,
+-				 struct dm_cell_key *key)
+-{
+-	return prison->buckets + hash_key(prison, key);
+-}
++	if (lhs->virtual > rhs->virtual)
++		return 1;
+ 
+-static struct dm_bio_prison_cell *__search_bucket(struct bucket *b,
+-						  struct dm_cell_key *key)
+-{
+-	struct dm_bio_prison_cell *cell;
++	if (lhs->dev < rhs->dev)
++		return -1;
+ 
+-	hlist_for_each_entry(cell, &b->cells, list)
+-		if (keys_equal(&cell->key, key))
+-			return cell;
++	if (lhs->dev > rhs->dev)
++		return 1;
+ 
+-	return NULL;
+-}
++	if (lhs->block < rhs->block)
++		return -1;
+ 
+-static void __setup_new_cell(struct bucket *b,
+-			     struct dm_cell_key *key,
+-			     struct bio *holder,
+-			     struct dm_bio_prison_cell *cell)
+-{
+-	memcpy(&cell->key, key, sizeof(cell->key));
+-	cell->holder = holder;
+-	bio_list_init(&cell->bios);
+-	hlist_add_head(&cell->list, &b->cells);
++	if (lhs->block > rhs->block)
++		return 1;
++
++	return 0;
+ }
+ 
+-static int __bio_detain(struct bucket *b,
++static int __bio_detain(struct dm_bio_prison *prison,
+ 			struct dm_cell_key *key,
+ 			struct bio *inmate,
+ 			struct dm_bio_prison_cell *cell_prealloc,
+ 			struct dm_bio_prison_cell **cell_result)
+ {
+-	struct dm_bio_prison_cell *cell;
+-
+-	cell = __search_bucket(b, key);
+-	if (cell) {
+-		if (inmate)
+-			bio_list_add(&cell->bios, inmate);
+-		*cell_result = cell;
+-		return 1;
++	int r;
++	struct rb_node **new = &prison->cells.rb_node, *parent = NULL;
++
++	while (*new) {
++		struct dm_bio_prison_cell *cell =
++			container_of(*new, struct dm_bio_prison_cell, node);
++
++		r = cmp_keys(key, &cell->key);
++
++		parent = *new;
++		if (r < 0)
++			new = &((*new)->rb_left);
++		else if (r > 0)
++			new = &((*new)->rb_right);
++		else {
++			if (inmate)
++				bio_list_add(&cell->bios, inmate);
++			*cell_result = cell;
++			return 1;
++		}
+ 	}
+ 
+-	__setup_new_cell(b, key, inmate, cell_prealloc);
++	__setup_new_cell(key, inmate, cell_prealloc);
+ 	*cell_result = cell_prealloc;
++
++	rb_link_node(&cell_prealloc->node, parent, new);
++	rb_insert_color(&cell_prealloc->node, &prison->cells);
++
+ 	return 0;
+ }
+ 
+@@ -174,11 +149,10 @@ static int bio_detain(struct dm_bio_prison *prison,
+ {
+ 	int r;
+ 	unsigned long flags;
+-	struct bucket *b = get_bucket(prison, key);
+ 
+-	spin_lock_irqsave(&b->lock, flags);
+-	r = __bio_detain(b, key, inmate, cell_prealloc, cell_result);
+-	spin_unlock_irqrestore(&b->lock, flags);
++	spin_lock_irqsave(&prison->lock, flags);
++	r = __bio_detain(prison, key, inmate, cell_prealloc, cell_result);
++	spin_unlock_irqrestore(&prison->lock, flags);
+ 
+ 	return r;
+ }
+@@ -205,10 +179,11 @@ EXPORT_SYMBOL_GPL(dm_get_cell);
+ /*
+  * @inmates must have been initialised prior to this call
+  */
+-static void __cell_release(struct dm_bio_prison_cell *cell,
++static void __cell_release(struct dm_bio_prison *prison,
++			   struct dm_bio_prison_cell *cell,
+ 			   struct bio_list *inmates)
+ {
+-	hlist_del(&cell->list);
++	rb_erase(&cell->node, &prison->cells);
+ 
+ 	if (inmates) {
+ 		if (cell->holder)
+@@ -222,21 +197,21 @@ void dm_cell_release(struct dm_bio_prison *prison,
+ 		     struct bio_list *bios)
+ {
+ 	unsigned long flags;
+-	struct bucket *b = get_bucket(prison, &cell->key);
+ 
+-	spin_lock_irqsave(&b->lock, flags);
+-	__cell_release(cell, bios);
+-	spin_unlock_irqrestore(&b->lock, flags);
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release(prison, cell, bios);
++	spin_unlock_irqrestore(&prison->lock, flags);
+ }
+ EXPORT_SYMBOL_GPL(dm_cell_release);
+ 
+ /*
+  * Sometimes we don't want the holder, just the additional bios.
+  */
+-static void __cell_release_no_holder(struct dm_bio_prison_cell *cell,
++static void __cell_release_no_holder(struct dm_bio_prison *prison,
++				     struct dm_bio_prison_cell *cell,
+ 				     struct bio_list *inmates)
+ {
+-	hlist_del(&cell->list);
++	rb_erase(&cell->node, &prison->cells);
+ 	bio_list_merge(inmates, &cell->bios);
+ }
+ 
+@@ -245,11 +220,10 @@ void dm_cell_release_no_holder(struct dm_bio_prison *prison,
+ 			       struct bio_list *inmates)
+ {
+ 	unsigned long flags;
+-	struct bucket *b = get_bucket(prison, &cell->key);
+ 
+-	spin_lock_irqsave(&b->lock, flags);
+-	__cell_release_no_holder(cell, inmates);
+-	spin_unlock_irqrestore(&b->lock, flags);
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release_no_holder(prison, cell, inmates);
++	spin_unlock_irqrestore(&prison->lock, flags);
+ }
+ EXPORT_SYMBOL_GPL(dm_cell_release_no_holder);
+ 
+diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
+index 6805a14..997a439 100644
+--- a/drivers/md/dm-bio-prison.h
++++ b/drivers/md/dm-bio-prison.h
+@@ -10,8 +10,8 @@
+ #include "persistent-data/dm-block-manager.h" /* FIXME: for dm_block_t */
+ #include "dm-thin-metadata.h" /* FIXME: for dm_thin_id */
+ 
+-#include <linux/list.h>
+ #include <linux/bio.h>
++#include <linux/rbtree.h>
+ 
+ /*----------------------------------------------------------------*/
+ 
+@@ -35,13 +35,14 @@ struct dm_cell_key {
+  * themselves.
+  */
+ struct dm_bio_prison_cell {
+-	struct hlist_node list;
++	struct rb_node node;
++
+ 	struct dm_cell_key key;
+ 	struct bio *holder;
+ 	struct bio_list bios;
+ };
+ 
+-struct dm_bio_prison *dm_bio_prison_create(unsigned nr_cells);
++struct dm_bio_prison *dm_bio_prison_create(void);
+ void dm_bio_prison_destroy(struct dm_bio_prison *prison);
+ 
+ /*
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 7130505..69de8b4 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -95,7 +95,6 @@ static void dm_unhook_bio(struct dm_hook_info *h, struct bio *bio)
+ 
+ /*----------------------------------------------------------------*/
+ 
+-#define PRISON_CELLS 1024
+ #define MIGRATION_POOL_SIZE 128
+ #define COMMIT_PERIOD HZ
+ #define MIGRATION_COUNT_WINDOW 10
+@@ -2327,7 +2326,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 	INIT_DELAYED_WORK(&cache->waker, do_waker);
+ 	cache->last_commit_jiffies = jiffies;
+ 
+-	cache->prison = dm_bio_prison_create(PRISON_CELLS);
++	cache->prison = dm_bio_prison_create();
+ 	if (!cache->prison) {
+ 		*error = "could not create bio prison";
+ 		goto bad;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 4843801..2459628 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -25,7 +25,6 @@
+  */
+ #define ENDIO_HOOK_POOL_SIZE 1024
+ #define MAPPING_POOL_SIZE 1024
+-#define PRISON_CELLS 1024
+ #define COMMIT_PERIOD HZ
+ #define NO_SPACE_TIMEOUT_SECS 60
+ 
+@@ -2185,7 +2184,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 		pool->sectors_per_block_shift = __ffs(block_size);
+ 	pool->low_water_blocks = 0;
+ 	pool_features_init(&pool->pf);
+-	pool->prison = dm_bio_prison_create(PRISON_CELLS);
++	pool->prison = dm_bio_prison_create();
+ 	if (!pool->prison) {
+ 		*error = "Error creating pool's bio prison";
+ 		err_p = ERR_PTR(-ENOMEM);
 -- 
 1.8.3.1
