@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 04/17] dm thin metadata: change
-	dm_thin_find_block to allow blocking, but not issuing, IO
-Date: Fri, 17 Oct 2014 14:37:06 -0400
-Message-ID: <1413571039-31986-4-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 05/17] dm transaction manager: add
+	support for prefetching blocks of metadata
+Date: Fri, 17 Oct 2014 14:37:07 -0400
+Message-ID: <1413571039-31986-5-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -27,93 +27,158 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-This change is a prerequisite for allowing metadata to be prefetched.
+Introduce the dm_tm_issue_prefetches interface.  If you're using a
+non-blocking clone the tm will build up a list of requested blocks that
+weren't in core.  dm_tm_issue_prefetches will request those blocks to be
+prefetched.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin-metadata.c | 30 +++++++++++++-----------------
- drivers/md/dm-thin-metadata.h |  4 ++--
- 2 files changed, 15 insertions(+), 19 deletions(-)
+ .../md/persistent-data/dm-transaction-manager.c    | 77 +++++++++++++++++++++-
+ .../md/persistent-data/dm-transaction-manager.h    |  7 ++
+ 2 files changed, 82 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index e9d33ad..ee42d1c 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1384,42 +1384,38 @@ static bool __snapshotted_since(struct dm_thin_device *td, uint32_t time)
- }
+diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
+index 3bc30a0..9cb797d 100644
+--- a/drivers/md/persistent-data/dm-transaction-manager.c
++++ b/drivers/md/persistent-data/dm-transaction-manager.c
+@@ -10,6 +10,8 @@
+ #include "dm-persistent-data-internal.h"
  
- int dm_thin_find_block(struct dm_thin_device *td, dm_block_t block,
--		       int can_block, struct dm_thin_lookup_result *result)
-+		       int can_issue_io, struct dm_thin_lookup_result *result)
- {
--	int r = -EINVAL;
--	uint64_t block_time = 0;
-+	int r;
- 	__le64 value;
- 	struct dm_pool_metadata *pmd = td->pmd;
- 	dm_block_t keys[2] = { td->id, block };
- 	struct dm_btree_info *info;
+ #include <linux/export.h>
++#include <linux/mutex.h>
++#include <linux/hash.h>
+ #include <linux/slab.h>
+ #include <linux/device-mapper.h>
  
--	if (can_block) {
--		down_read(&pmd->root_lock);
--		info = &pmd->info;
--	} else if (down_read_trylock(&pmd->root_lock))
--		info = &pmd->nb_info;
--	else
--		return -EWOULDBLOCK;
--
- 	if (pmd->fail_io)
--		goto out;
-+		return -EINVAL;
+@@ -17,6 +19,61 @@
  
--	r = dm_btree_lookup(info, pmd->root, keys, &value);
--	if (!r)
--		block_time = le64_to_cpu(value);
-+	down_read(&pmd->root_lock);
+ /*----------------------------------------------------------------*/
  
--out:
--	up_read(&pmd->root_lock);
-+	if (can_issue_io) {
-+		info = &pmd->info;
-+	} else
-+		info = &pmd->nb_info;
- 
-+	r = dm_btree_lookup(info, pmd->root, keys, &value);
- 	if (!r) {
-+		uint64_t block_time = 0;
- 		dm_block_t exception_block;
- 		uint32_t exception_time;
++#define PREFETCH_SIZE 128
++#define PREFETCH_BITS 7
++#define PREFETCH_SENTINEL ((dm_block_t) -1ULL)
 +
-+		block_time = le64_to_cpu(value);
- 		unpack_block_time(block_time, &exception_block,
- 				  &exception_time);
- 		result->block = exception_block;
- 		result->shared = __snapshotted_since(td, exception_time);
- 	}
++struct prefetch_set {
++	struct mutex lock;
++	dm_block_t blocks[PREFETCH_SIZE];
++};
++
++static unsigned prefetch_hash(dm_block_t b)
++{
++	return hash_64(b, PREFETCH_BITS);
++}
++
++static void prefetch_wipe(struct prefetch_set *p)
++{
++	unsigned i;
++	for (i = 0; i < PREFETCH_SIZE; i++)
++		p->blocks[i] = PREFETCH_SENTINEL;
++}
++
++static void prefetch_init(struct prefetch_set *p)
++{
++	mutex_init(&p->lock);
++	prefetch_wipe(p);
++}
++
++static void prefetch_add(struct prefetch_set *p, dm_block_t b)
++{
++	unsigned h = prefetch_hash(b);
++
++	mutex_lock(&p->lock);
++	if (p->blocks[h] == PREFETCH_SENTINEL)
++		p->blocks[h] = b;
++
++	mutex_unlock(&p->lock);
++}
++
++static void prefetch_issue(struct prefetch_set *p, struct dm_block_manager *bm)
++{
++	unsigned i;
++
++	mutex_lock(&p->lock);
++
++	for (i = 0; i < PREFETCH_SIZE; i++)
++		if (p->blocks[i] != PREFETCH_SENTINEL) {
++			dm_bm_prefetch(bm, p->blocks[i]);
++			p->blocks[i] = PREFETCH_SENTINEL;
++		}
++
++	mutex_unlock(&p->lock);
++}
++
++/*----------------------------------------------------------------*/
++
+ struct shadow_info {
+ 	struct hlist_node hlist;
+ 	dm_block_t where;
+@@ -37,6 +94,8 @@ struct dm_transaction_manager {
  
-+	up_read(&pmd->root_lock);
- 	return r;
+ 	spinlock_t lock;
+ 	struct hlist_head buckets[DM_HASH_SIZE];
++
++	struct prefetch_set prefetches;
+ };
+ 
+ /*----------------------------------------------------------------*/
+@@ -117,6 +176,8 @@ static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
+ 	for (i = 0; i < DM_HASH_SIZE; i++)
+ 		INIT_HLIST_HEAD(tm->buckets + i);
+ 
++	prefetch_init(&tm->prefetches);
++
+ 	return tm;
  }
  
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index e3c857d..efedd5a 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -139,12 +139,12 @@ struct dm_thin_lookup_result {
+@@ -268,8 +329,14 @@ int dm_tm_read_lock(struct dm_transaction_manager *tm, dm_block_t b,
+ 		    struct dm_block_validator *v,
+ 		    struct dm_block **blk)
+ {
+-	if (tm->is_clone)
+-		return dm_bm_read_try_lock(tm->real->bm, b, v, blk);
++	if (tm->is_clone) {
++		int r = dm_bm_read_try_lock(tm->real->bm, b, v, blk);
++
++		if (r == -EWOULDBLOCK)
++			prefetch_add(&tm->real->prefetches, b);
++
++		return r;
++	}
+ 
+ 	return dm_bm_read_lock(tm->bm, b, v, blk);
+ }
+@@ -317,6 +384,12 @@ struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm)
+ 	return tm->bm;
+ }
+ 
++void dm_tm_issue_prefetches(struct dm_transaction_manager *tm)
++{
++	prefetch_issue(&tm->prefetches, tm->bm);
++}
++EXPORT_SYMBOL_GPL(dm_tm_issue_prefetches);
++
+ /*----------------------------------------------------------------*/
+ 
+ static int dm_tm_create_internal(struct dm_block_manager *bm,
+diff --git a/drivers/md/persistent-data/dm-transaction-manager.h b/drivers/md/persistent-data/dm-transaction-manager.h
+index 2772ed2..2e0d4d6 100644
+--- a/drivers/md/persistent-data/dm-transaction-manager.h
++++ b/drivers/md/persistent-data/dm-transaction-manager.h
+@@ -109,6 +109,13 @@ int dm_tm_ref(struct dm_transaction_manager *tm, dm_block_t b,
+ struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm);
  
  /*
-  * Returns:
-- *   -EWOULDBLOCK iff @can_block is set and would block.
-+ *   -EWOULDBLOCK iff @can_issue_io is set and would issue IO
-  *   -ENODATA iff that mapping is not present.
-  *   0 success
-  */
- int dm_thin_find_block(struct dm_thin_device *td, dm_block_t block,
--		       int can_block, struct dm_thin_lookup_result *result);
-+		       int can_issue_io, struct dm_thin_lookup_result *result);
- 
- /*
-  * Obtain an unused block.
++ * If you're using a non-blocking clone the tm will build up a list of
++ * requested blocks that weren't in core.  This call will request those
++ * blocks to be prefetched.
++ */
++void dm_tm_issue_prefetches(struct dm_transaction_manager *tm);
++
++/*
+  * A little utility that ties the knot by producing a transaction manager
+  * that has a space map managed by the transaction manager...
+  *
 -- 
 1.8.3.1
