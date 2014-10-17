@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH 10/17] dm thin: implement thin_merge
-Date: Fri, 17 Oct 2014 02:07:00 -0400
-Message-ID: <1413526027-21630-11-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH 11/17] dm thin: grab a virtual cell
+	before looking up the mapping
+Date: Fri, 17 Oct 2014 02:07:01 -0400
+Message-ID: <1413526027-21630-12-git-send-email-snitzer@redhat.com>
 References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,61 +23,73 @@ To: dm-devel@redhat.com
 Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-Introduce thin_merge so that any additional constraints from the data
-volume may be taken into account when determing the maximum number of
-sectors that can be issued relative to the specified logical offset.
+From: Joe Thornber <ejt@redhat.com>
 
-This is particularly important if/when the data volume is layered ontop
-of a more sophisticated device (e.g. dm-raid or some other DM target).
+Avoids normal IO racing with discard.
 
-Reviewed-by: Heinz Mauelshagen <heinzm@redhat.com>
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-thin.c | 18 +++++++++++++++++-
- 1 file changed, 17 insertions(+), 1 deletion(-)
+ drivers/md/dm-thin.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 6c216b3..dc3efac 100644
+index dc3efac..b9b6afb 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -3613,6 +3613,21 @@ err:
- 	DMEMIT("Error");
+@@ -1998,6 +1998,14 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
+ 
++	/*
++	 * We must hold the virtual cell before doing the lookup, otherwise
++	 * there's a race with discard.
++	 */
++	build_virtual_key(tc->td, block, &key);
++	if (dm_bio_detain(tc->pool->prison, &key, bio, &cell1, &cell_result))
++		return DM_MAPIO_SUBMITTED;
++
+ 	r = dm_thin_find_block(td, block, 0, &result);
+ 
+ 	/*
+@@ -2021,13 +2029,10 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 			 * shared flag will be set in their case.
+ 			 */
+ 			thin_defer_bio(tc, bio);
++			cell_defer_no_holder_no_free(tc, &cell1);
+ 			return DM_MAPIO_SUBMITTED;
+ 		}
+ 
+-		build_virtual_key(tc->td, block, &key);
+-		if (dm_bio_detain(tc->pool->prison, &key, bio, &cell1, &cell_result))
+-			return DM_MAPIO_SUBMITTED;
+-
+ 		build_data_key(tc->td, result.block, &key);
+ 		if (dm_bio_detain(tc->pool->prison, &key, bio, &cell2, &cell_result)) {
+ 			cell_defer_no_holder_no_free(tc, &cell1);
+@@ -2048,12 +2053,14 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 			 * of doing so.
+ 			 */
+ 			handle_unserviceable_bio(tc->pool, bio);
++			cell_defer_no_holder_no_free(tc, &cell1);
+ 			return DM_MAPIO_SUBMITTED;
+ 		}
+ 		/* fall through */
+ 
+ 	case -EWOULDBLOCK:
+ 		thin_defer_bio(tc, bio);
++		cell_defer_no_holder_no_free(tc, &cell1);
+ 		return DM_MAPIO_SUBMITTED;
+ 
+ 	default:
+@@ -2063,6 +2070,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 		 * pool is switched to fail-io mode.
+ 		 */
+ 		bio_io_error(bio);
++		cell_defer_no_holder_no_free(tc, &cell1);
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
  }
- 
-+static int thin_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-+		      struct bio_vec *biovec, int max_size)
-+{
-+	struct thin_c *tc = ti->private;
-+	struct request_queue *q = bdev_get_queue(tc->pool_dev->bdev);
-+
-+	if (!q->merge_bvec_fn)
-+		return max_size;
-+
-+	bvm->bi_bdev = tc->pool_dev->bdev;
-+	bvm->bi_sector = dm_target_offset(ti, bvm->bi_sector);
-+
-+	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
-+}
-+
- static int thin_iterate_devices(struct dm_target *ti,
- 				iterate_devices_callout_fn fn, void *data)
- {
-@@ -3637,7 +3652,7 @@ static int thin_iterate_devices(struct dm_target *ti,
- 
- static struct target_type thin_target = {
- 	.name = "thin",
--	.version = {1, 13, 0},
-+	.version = {1, 14, 0},
- 	.module	= THIS_MODULE,
- 	.ctr = thin_ctr,
- 	.dtr = thin_dtr,
-@@ -3647,6 +3662,7 @@ static struct target_type thin_target = {
- 	.presuspend = thin_presuspend,
- 	.postsuspend = thin_postsuspend,
- 	.status = thin_status,
-+	.merge = thin_merge,
- 	.iterate_devices = thin_iterate_devices,
- };
- 
 -- 
 1.9.3
