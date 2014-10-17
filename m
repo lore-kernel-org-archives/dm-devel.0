@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 06/17] dm thin: prefetch missing
-	metadata pages
-Date: Fri, 17 Oct 2014 14:37:08 -0400
-Message-ID: <1413571039-31986-6-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 07/17] dm thin: throttle incoming IO
+Date: Fri, 17 Oct 2014 14:37:09 -0400
+Message-ID: <1413571039-31986-7-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -27,87 +26,146 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Prefetch metadata at the start of the worker thread and then again every
-128th bio processed from the deferred list.
+Throttle IO based on the time it's taking the worker to do one loop.
+There were reports of hung task timeouts occuring and it was observed
+that the excessively long avgqu-sz (as reported by iostat) was
+contributing to these hung tasks.
+
+Throttling definitely helps dm-thinp perform better under heavy IO load
+(without being detremental by being overzealous).  It reduces avgqu-sz
+drastically, e.g.: from 60K to ~6K, and even as low as 150 once metadata
+is cached by bufio, when dirty_ratio=5, dirty_background_ratio=2.  And
+avgqu-sz stays at or below 30K even with dirty_ratio=20,
+dirty_background_ratio=10.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin-metadata.c |  5 +++++
- drivers/md/dm-thin-metadata.h |  5 +++++
- drivers/md/dm-thin.c          | 10 ++++++----
- 3 files changed, 16 insertions(+), 4 deletions(-)
+ drivers/md/dm-thin.c | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 65 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index ee42d1c..43adbb8 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1809,3 +1809,8 @@ bool dm_pool_metadata_needs_check(struct dm_pool_metadata *pmd)
- 
- 	return needs_check;
- }
-+
-+void dm_pool_issue_prefetches(struct dm_pool_metadata *pmd)
-+{
-+	dm_tm_issue_prefetches(pmd->tm);
-+}
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index efedd5a..921d15e 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -213,6 +213,11 @@ int dm_pool_register_metadata_threshold(struct dm_pool_metadata *pmd,
- int dm_pool_metadata_set_needs_check(struct dm_pool_metadata *pmd);
- bool dm_pool_metadata_needs_check(struct dm_pool_metadata *pmd);
- 
-+/*
-+ * Issue any prefetches that may be useful.
-+ */
-+void dm_pool_issue_prefetches(struct dm_pool_metadata *pmd);
-+
- /*----------------------------------------------------------------*/
- 
- #endif
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 2459628..1d25b51 100644
+index 1d25b51..6057441 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -1526,6 +1526,7 @@ static void process_thin_deferred_bios(struct thin_c *tc)
- 	struct bio *bio;
- 	struct bio_list bios;
- 	struct blk_plug plug;
-+	unsigned count = 0;
+@@ -126,6 +126,53 @@ static void build_virtual_key(struct dm_thin_device *td, dm_block_t b,
  
- 	if (tc->requeue_mode) {
- 		requeue_bio_list(tc, &tc->deferred_bio_list);
-@@ -1567,6 +1568,10 @@ static void process_thin_deferred_bios(struct thin_c *tc)
- 			pool->process_discard(tc, bio);
- 		else
- 			pool->process_bio(tc, bio);
+ /*----------------------------------------------------------------*/
+ 
++#define THROTTLE_THRESHOLD (1 * HZ)
 +
-+		if ((count++ & 127) == 0) {
-+			dm_pool_issue_prefetches(pool->pmd);
-+		}
++struct throttle {
++	struct rw_semaphore lock;
++	unsigned long threshold;
++	bool throttle_applied;
++};
++
++static void throttle_init(struct throttle *t)
++{
++	init_rwsem(&t->lock);
++	t->throttle_applied = false;
++}
++
++static void throttle_work_start(struct throttle *t)
++{
++	t->threshold = jiffies + THROTTLE_THRESHOLD;
++}
++
++static void throttle_work_update(struct throttle *t)
++{
++	if (!t->throttle_applied && jiffies > t->threshold) {
++		down_write(&t->lock);
++		t->throttle_applied = true;
++	}
++}
++
++static void throttle_work_complete(struct throttle *t)
++{
++	if (t->throttle_applied) {
++		t->throttle_applied = false;
++		up_write(&t->lock);
++	}
++}
++
++static void throttle_lock(struct throttle *t)
++{
++	down_read(&t->lock);
++}
++
++static void throttle_unlock(struct throttle *t)
++{
++	up_read(&t->lock);
++}
++
++/*----------------------------------------------------------------*/
++
+ /*
+  * A pool device ties together a metadata device and a data device.  It
+  * also provides the interface for creating and destroying internal
+@@ -175,6 +222,7 @@ struct pool {
+ 	struct dm_kcopyd_client *copier;
+ 
+ 	struct workqueue_struct *wq;
++	struct throttle throttle;
+ 	struct work_struct worker;
+ 	struct delayed_work waker;
+ 	struct delayed_work no_space_timeout;
+@@ -1570,6 +1618,7 @@ static void process_thin_deferred_bios(struct thin_c *tc)
+ 			pool->process_bio(tc, bio);
+ 
+ 		if ((count++ & 127) == 0) {
++			throttle_work_update(&pool->throttle);
+ 			dm_pool_issue_prefetches(pool->pmd);
+ 		}
  	}
- 	blk_finish_plug(&plug);
- }
-@@ -1652,6 +1657,7 @@ static void do_worker(struct work_struct *ws)
+@@ -1657,10 +1706,15 @@ static void do_worker(struct work_struct *ws)
  {
  	struct pool *pool = container_of(ws, struct pool, worker);
  
-+	dm_pool_issue_prefetches(pool->pmd);
++	throttle_work_start(&pool->throttle);
+ 	dm_pool_issue_prefetches(pool->pmd);
++	throttle_work_update(&pool->throttle);
  	process_prepared(pool, &pool->prepared_mappings, &pool->process_prepared_mapping);
++	throttle_work_update(&pool->throttle);
  	process_prepared(pool, &pool->prepared_discards, &pool->process_prepared_discard);
++	throttle_work_update(&pool->throttle);
  	process_deferred_bios(pool);
-@@ -1990,10 +1996,6 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
- 		/* fall through */
++	throttle_work_complete(&pool->throttle);
+ }
  
- 	case -EWOULDBLOCK:
--		/*
--		 * In future, the failed dm_thin_find_block above could
--		 * provide the hint to load the metadata into cache.
--		 */
- 		thin_defer_bio(tc, bio);
+ /*
+@@ -1900,6 +1954,15 @@ static void thin_defer_bio(struct thin_c *tc, struct bio *bio)
+ 	wake_worker(pool);
+ }
+ 
++static void thin_defer_bio_with_throttle(struct thin_c *tc, struct bio *bio)
++{
++	struct pool *pool = tc->pool;
++
++	throttle_lock(&pool->throttle);
++	thin_defer_bio(tc, bio);
++	throttle_unlock(&pool->throttle);
++}
++
+ static void thin_hook_bio(struct thin_c *tc, struct bio *bio)
+ {
+ 	struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
+@@ -1937,7 +2000,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 	}
+ 
+ 	if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA)) {
+-		thin_defer_bio(tc, bio);
++		thin_defer_bio_with_throttle(tc, bio);
  		return DM_MAPIO_SUBMITTED;
+ 	}
  
+@@ -2212,6 +2275,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 		goto bad_wq;
+ 	}
+ 
++	throttle_init(&pool->throttle);
+ 	INIT_WORK(&pool->worker, do_worker);
+ 	INIT_DELAYED_WORK(&pool->waker, do_waker);
+ 	INIT_DELAYED_WORK(&pool->no_space_timeout, do_no_space_timeout);
 -- 
 1.8.3.1
