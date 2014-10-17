@@ -1,80 +1,74 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 3.18
-Date: Fri, 17 Oct 2014 15:11:45 -0400
-Message-ID: <20141017191144.GA26800@redhat.com>
+From: Keith Busch <keith.busch@intel.com>
+Subject: [PATCHv2 0/4] blk-mq support for dm multipath
+Date: Fri, 17 Oct 2014 17:46:34 -0600
+Message-ID: <1413589598-17631-1-git-send-email-keith.busch@intel.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Junichi Nomura <j-nomura@ce.jp.nec.com>, Benjamin Marzinski <bmarzins@redhat.com>, Alexey Khoroshilov <khoroshilov@ispras.ru>, Heinz Mauelshagen <heinzm@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Christoph Hellwig <hch@infradead.org>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Keith Busch <keith.busch@intel.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+This series makes device mapper's multipath work with both blk-mq and
+the older request_queue based block devices.
 
-I rebased the DM tree ontop of linux-block.git's 'for-3.18/core' at the
-beginning of October because DM core now depends on the newly introduced
-bioset_create_nobvec() interface.
+As before, I tested with a slightly modified version of Matias' blk-mq
+nvme driver with dual ported nvme controller. I'll post the nvme changes
+to that list once the blk-mq mpath is good to go.
 
-The following changes since commit d8f429e1669b9709f5b669aac9d734dbe0640891:
+I've tried to split this into logically separate patches to prep and
+support this request_queue type.
 
-  block: add bioset_create_nobvec() (2014-10-03 15:28:18 -0600)
+Patch [2/4] is a bit of a departure from what was done before, but I
+hope something like this is alright.
 
-are available in the git repository at:
+v1 -> v2:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.18
+Micro-optimization setting the cloned rq->bio to null from dm-mpath
+instead of blk_mq_rq_ctx_init.
 
-for you to fetch changes up to 56ec16cb1e1ce46354de8511eef962a417c32c92:
+There's no way around getting a request without calling
+blk_get_request. Making this API safe in an interrupt disabled context is
+troublesome, so submitting the dm request to the target in a different
+thread so it is NOT inline with dm's request_fn. We can use GFP_KERNEL
+now since the allocation occurs in this new context. I believe this is
+okay in both request queue types since neither allocate from general
+purpose memory.
 
-  dm log userspace: fix memory leak in dm_ulog_tfr_init failure path (2014-10-05 20:03:38 -0400)
+In v1, the target would allocate the request and dm would release it. This
+duality is somewhat changed: the target's map_rq is still responsible
+to allocate since only it knows what request queue to allocate from,
+and I've added a new target type function (unmap_rq) to handle releasing.
 
-Please pull, thanks.
-Mike
+I fixed the error handling; it was completely untested before and quite
+broken. To test, I synthesized 4 different errors: no requests available,
+no memory available to the clone bio, invalid target, and completing
+requests in low-level driver with an error. All worked as expected on
+blk-mq devices.
 
-----------------------------------------------------------------
-. fix DM's long-standing excessive use of memory by leveraging the new
-  bioset_create_nobvec() interface when creating the DM's bioset
+Keith Busch (4):
+  dm: prep initialized requests
+  dm: Submit stacked requests in irq enabled context
+  dm: Move request allocation to dm_target type
+  block: blk-mq support for cloned requests
 
-. fix a few bugs in dm-bufio and dm-log-userspace
+ block/blk-core.c              |    7 +-
+ drivers/md/dm-mpath.c         |   22 ++++--
+ drivers/md/dm-target.c        |    9 ++-
+ drivers/md/dm.c               |  155 +++++++++++++++++++++--------------------
+ include/linux/device-mapper.h |    7 +-
+ 5 files changed, 112 insertions(+), 88 deletions(-)
 
-. add DM core support for a DM multipath use-case that requires loading
-  DM tables that contain devices that have failed (by allowing active
-  and inactive DM tables to share dm_devs)
-
-. add discard support to the DM raid target; like MD raid456 the user
-  must opt-in to raid456 discard support be specifying the
-  devices_handle_discard_safely=Y module param.
-
-----------------------------------------------------------------
-Alexey Khoroshilov (1):
-      dm log userspace: fix memory leak in dm_ulog_tfr_init failure path
-
-Benjamin Marzinski (2):
-      dm mpath: stop queueing IO when no valid paths exist
-      dm: allow active and inactive tables to share dm_devs
-
-Heinz Mauelshagen (2):
-      dm raid: add discard support for RAID levels 1 and 10
-      dm raid: add discard support for RAID levels 4, 5 and 6
-
-Joe Thornber (1):
-      dm bufio: update last_accessed when relinking a buffer
-
-Junichi Nomura (2):
-      dm: remove nr_iovecs parameter from alloc_tio()
-      dm: use bioset_create_nobvec()
-
-Mikulas Patocka (1):
-      dm bufio: when done scanning return from __scan immediately
-
- drivers/md/dm-bufio.c                  |   5 +-
- drivers/md/dm-ioctl.c                  |   2 +-
- drivers/md/dm-log-userspace-transfer.c |   2 +-
- drivers/md/dm-mpath.c                  |   4 +-
- drivers/md/dm-raid.c                   |  60 +++++++++++++-
- drivers/md/dm-table.c                  | 102 ++++++++---------------
- drivers/md/dm.c                        | 143 ++++++++++++++++++++++++++++++---
- drivers/md/dm.h                        |   5 +-
- include/uapi/linux/dm-ioctl.h          |   4 +-
- 9 files changed, 238 insertions(+), 89 deletions(-)
+-- 
+1.7.10.4
