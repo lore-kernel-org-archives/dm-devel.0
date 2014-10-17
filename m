@@ -1,18 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH RFCv2 01/10] dm-dedup: main data structures
-Date: Fri, 17 Oct 2014 13:42:51 -0400
-Message-ID: <20141017174251.GA25948@redhat.com>
-References: <53ffb64d.c58d320a.14c8.1413@mx.google.com>
-	<20140926152416.GA4464@redhat.com>
-	<CAFTzLMP07qBzEBaaOuFQvi0W219YqLpz8epWdMLO36Sj8gBJoQ@mail.gmail.com>
-	<CAFTzLMNJ7=zc-qTcLY_BLQPRD4hiJYUAvs_AHgTgxsfg3Bb49Q@mail.gmail.com>
+Subject: Re: [for-3.19 PATCH 00/17] dm thin: performance
+	improvements
+Date: Fri, 17 Oct 2014 14:31:19 -0400
+Message-ID: <20141017183119.GA31854@redhat.com>
+References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAFTzLMNJ7=zc-qTcLY_BLQPRD4hiJYUAvs_AHgTgxsfg3Bb49Q@mail.gmail.com>
+In-Reply-To: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,28 +20,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vasily Tarasov <tarasov@vasily.name>
-Cc: Joe Thornber <thornber@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Philip Shilane <philip.shilane@emc.com>, Sonam Mandal <sonam.dp42@gmail.com>, Erez Zadok <ezk@fsl.cs.sunysb.edu>
+To: dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 17 2014 at  1:11pm -0400,
-Vasily Tarasov <tarasov@vasily.name> wrote:
+On Fri, Oct 17 2014 at  2:06am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> Hi Mike,
+> Here is a patchset that Joe and I have been working on for the past 2
+> weeks to address various performance problems reported against DM thin
+> provisioning.  DM thinp is now much more capable in the face of heavy
+> IO (be it random or sequential, multithreaded, etc).
 > 
-> Sonam Mandal, who also works on dm-dedup project, has addressed your
-> comments about BUG() and BUG_ON(). She has also updated the code
-> related to mark and sweep. The changes are staged here (on top of your
-> dm-dedup repo):
-> 
-> git://git.fsl.cs.stonybrook.edu/scm/git/linux-dmdedup
-> branch: dm-dedup-devel
-> 
-> I'm not sure if you want us to send the patches to device-mapper
-> mailing list in addition to that. Let us know if we should do it.
+> I've just added these patches to linux-dm.git's 'for-next' branch so
+> that these changes get early exposure/testing for 3.19 inclusion.
 
-I'll take a look next week, I need to finish up some dm-thinp work this
-week.  Your repo is perfect for now.
+Testing with device-mapper-test-suite on really fast storage uncovered
+various races.  Joe quickly fixed these and I've folded the fixes into
+the patch series.
 
-Thanks for doing this work.
+v2 will be staged staged in linux-dm.git's 'for-next' branch (after
+rebase) very soon.  But I'll respond with the full patchset again just
+to help anyone who cares to review/respond on list.
+
+Thanks,
 Mike
