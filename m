@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH 06/17] dm thin: prefetch missing
-	metadata pages
-Date: Fri, 17 Oct 2014 02:06:56 -0400
-Message-ID: <1413526027-21630-7-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH 12/17] dm thin: performance improvement
+	to discard processing
+Date: Fri, 17 Oct 2014 02:07:02 -0400
+Message-ID: <1413526027-21630-13-git-send-email-snitzer@redhat.com>
 References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,87 +25,49 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Prefetch metadata at the start of the worker thread and then again every
-128th bio processed from the deferred list.
+When processing a discard bio, if the block is already quiesced do the
+discard immediately rather than adding the mapping to a list for the
+next iteration of the worker thread.
+
+Discarding a fully provisioned 100G thin volume with 64k block size goes
+from 860s to 95s with this change.
+
+Clearly there's something wrong with the worker architecture, more
+investigation needed.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin-metadata.c |  5 +++++
- drivers/md/dm-thin-metadata.h |  5 +++++
- drivers/md/dm-thin.c          | 10 ++++++----
- 3 files changed, 16 insertions(+), 4 deletions(-)
+ drivers/md/dm-thin.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index ee42d1c..43adbb8 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1809,3 +1809,8 @@ bool dm_pool_metadata_needs_check(struct dm_pool_metadata *pmd)
- 
- 	return needs_check;
- }
-+
-+void dm_pool_issue_prefetches(struct dm_pool_metadata *pmd)
-+{
-+	dm_tm_issue_prefetches(pmd->tm);
-+}
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index efedd5a..921d15e 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -213,6 +213,11 @@ int dm_pool_register_metadata_threshold(struct dm_pool_metadata *pmd,
- int dm_pool_metadata_set_needs_check(struct dm_pool_metadata *pmd);
- bool dm_pool_metadata_needs_check(struct dm_pool_metadata *pmd);
- 
-+/*
-+ * Issue any prefetches that may be useful.
-+ */
-+void dm_pool_issue_prefetches(struct dm_pool_metadata *pmd);
-+
- /*----------------------------------------------------------------*/
- 
- #endif
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 2459628..1d25b51 100644
+index b9b6afb..67a11f3 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -1526,6 +1526,7 @@ static void process_thin_deferred_bios(struct thin_c *tc)
- 	struct bio *bio;
- 	struct bio_list bios;
- 	struct blk_plug plug;
-+	unsigned count = 0;
- 
- 	if (tc->requeue_mode) {
- 		requeue_bio_list(tc, &tc->deferred_bio_list);
-@@ -1567,6 +1568,10 @@ static void process_thin_deferred_bios(struct thin_c *tc)
- 			pool->process_discard(tc, bio);
- 		else
- 			pool->process_bio(tc, bio);
-+
-+		if ((count++ & 127) == 0) {
-+			dm_pool_issue_prefetches(pool->pmd);
-+		}
- 	}
- 	blk_finish_plug(&plug);
- }
-@@ -1652,6 +1657,7 @@ static void do_worker(struct work_struct *ws)
+@@ -1194,7 +1194,6 @@ static void retry_bios_on_resume(struct pool *pool, struct dm_bio_prison_cell *c
+ static void process_discard(struct thin_c *tc, struct bio *bio)
  {
- 	struct pool *pool = container_of(ws, struct pool, worker);
+ 	int r;
+-	unsigned long flags;
+ 	struct pool *pool = tc->pool;
+ 	struct dm_bio_prison_cell *cell, *cell2;
+ 	struct dm_cell_key key, key2;
+@@ -1235,12 +1234,9 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
+ 			m->cell2 = cell2;
+ 			m->bio = bio;
  
-+	dm_pool_issue_prefetches(pool->pmd);
- 	process_prepared(pool, &pool->prepared_mappings, &pool->process_prepared_mapping);
- 	process_prepared(pool, &pool->prepared_discards, &pool->process_prepared_discard);
- 	process_deferred_bios(pool);
-@@ -1990,10 +1996,6 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
- 		/* fall through */
- 
- 	case -EWOULDBLOCK:
--		/*
--		 * In future, the failed dm_thin_find_block above could
--		 * provide the hint to load the metadata into cache.
--		 */
- 		thin_defer_bio(tc, bio);
- 		return DM_MAPIO_SUBMITTED;
- 
+-			if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list)) {
+-				spin_lock_irqsave(&pool->lock, flags);
+-				list_add_tail(&m->list, &pool->prepared_discards);
+-				spin_unlock_irqrestore(&pool->lock, flags);
+-				wake_worker(pool);
+-			}
++			if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list))
++				pool->process_prepared_discard(m);
++
+ 		} else {
+ 			inc_all_io_entry(pool, bio);
+ 			cell_defer_no_holder(tc, cell);
 -- 
 1.9.3
