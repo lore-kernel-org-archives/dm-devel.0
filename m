@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH 07/17] dm thin: throttle incoming IO
-Date: Fri, 17 Oct 2014 02:06:57 -0400
-Message-ID: <1413526027-21630-8-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH 15/17] dm thin: remap the bios in a cell
+	immediately
+Date: Fri, 17 Oct 2014 02:07:05 -0400
+Message-ID: <1413526027-21630-16-git-send-email-snitzer@redhat.com>
 References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,133 +25,200 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Throttle IO based on the time it's taking the worker to do one loop.
-There were reports of hung task timeouts occuring and it was observed
-that the excessively long avgqu-sz (as reported by iostat) was
-contributing to these hung tasks.
+This use of direct submission in process_prepared_mapping() reduces
+latency for submitting bios in a cell by avoiding adding those bios to
+the deferred list and waiting for the next iteration of the worker.
 
-Throttling definitely helps dm-thinp perform better under heavy IO load
-(without being detremental by being overzealous).  It reduces avgqu-sz
-drastically, e.g.: from 60K to ~6K, and even as low as 150 once metadata
-is cached by bufio, when dirty_ratio=5, dirty_background_ratio=2.  And
-avgqu-sz stays at or below 30K even with dirty_ratio=20,
-dirty_background_ratio=10.
+But this direct submission exposes the potential for a race between
+releasing a cell and incrementing deferred set.  Fix this by introducing
+dm_cell_visit_release() and refactoring inc_remap_and_issue_cell()
+accordingly.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c | 57 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 57 insertions(+)
+ drivers/md/dm-bio-prison.c | 14 ++++++++
+ drivers/md/dm-bio-prison.h |  8 +++++
+ drivers/md/dm-thin.c       | 85 ++++++++++++++++++++++++++++++----------------
+ 3 files changed, 78 insertions(+), 29 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 1d25b51..d451ce5 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -126,6 +126,53 @@ static void build_virtual_key(struct dm_thin_device *td, dm_block_t b,
+diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
+index 90a5662..bbe22a5 100644
+--- a/drivers/md/dm-bio-prison.c
++++ b/drivers/md/dm-bio-prison.c
+@@ -241,6 +241,20 @@ void dm_cell_error(struct dm_bio_prison *prison,
+ }
+ EXPORT_SYMBOL_GPL(dm_cell_error);
  
++void dm_cell_visit_release(struct dm_bio_prison *prison,
++			   void (*visit_fn)(void *, struct dm_bio_prison_cell *),
++			   void *context,
++			   struct dm_bio_prison_cell *cell)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&prison->lock, flags);
++	visit_fn(context, cell);
++	rb_erase(&cell->node, &prison->cells);
++	spin_unlock_irqrestore(&prison->lock, flags);
++}
++EXPORT_SYMBOL_GPL(dm_cell_visit_release);
++
  /*----------------------------------------------------------------*/
  
-+#define THROTTLE_THRESHOLD (1 * HZ)
+ #define DEFERRED_SET_SIZE 64
+diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
+index c0cddb1..b039886 100644
+--- a/drivers/md/dm-bio-prison.h
++++ b/drivers/md/dm-bio-prison.h
+@@ -89,6 +89,14 @@ void dm_cell_release_no_holder(struct dm_bio_prison *prison,
+ void dm_cell_error(struct dm_bio_prison *prison,
+ 		   struct dm_bio_prison_cell *cell, int error);
+ 
++/*
++ * Visits the cell and then releases.  Guarantees no new inmates are
++ * inserted between the visit and release.
++ */
++void dm_cell_visit_release(struct dm_bio_prison *prison,
++			   void (*visit_fn)(void *, struct dm_bio_prison_cell *),
++			   void *context, struct dm_bio_prison_cell *cell);
 +
-+struct throttle {
-+	struct rw_semaphore lock;
-+	unsigned long threshold;
-+	bool throttle_applied;
-+};
-+
-+static void throttle_init(struct throttle *t)
-+{
-+	init_rwsem(&t->lock);
-+	t->throttle_applied = false;
-+}
-+
-+static void throttle_work_start(struct throttle *t)
-+{
-+	t->threshold = jiffies + THROTTLE_THRESHOLD;
-+}
-+
-+static void throttle_work_update(struct throttle *t)
-+{
-+	if (!t->throttle_applied && jiffies > t->threshold) {
-+		down_write(&t->lock);
-+		t->throttle_applied = true;
-+	}
-+}
-+
-+static void throttle_work_complete(struct throttle *t)
-+{
-+	if (t->throttle_applied) {
-+		t->throttle_applied = false;
-+		up_write(&t->lock);
-+	}
-+}
-+
-+static void throttle_lock(struct throttle *t)
-+{
-+	down_read(&t->lock);
-+}
-+
-+static void throttle_unlock(struct throttle *t)
-+{
-+	up_read(&t->lock);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
+ /*----------------------------------------------------------------*/
+ 
  /*
-  * A pool device ties together a metadata device and a data device.  It
-  * also provides the interface for creating and destroying internal
-@@ -175,6 +222,7 @@ struct pool {
- 	struct dm_kcopyd_client *copier;
- 
- 	struct workqueue_struct *wq;
-+	struct throttle throttle;
- 	struct work_struct worker;
- 	struct delayed_work waker;
- 	struct delayed_work no_space_timeout;
-@@ -1570,6 +1618,7 @@ static void process_thin_deferred_bios(struct thin_c *tc)
- 			pool->process_bio(tc, bio);
- 
- 		if ((count++ & 127) == 0) {
-+			throttle_work_update(&pool->throttle);
- 			dm_pool_issue_prefetches(pool->pmd);
- 		}
- 	}
-@@ -1657,10 +1706,15 @@ static void do_worker(struct work_struct *ws)
- {
- 	struct pool *pool = container_of(ws, struct pool, worker);
- 
-+	throttle_work_start(&pool->throttle);
- 	dm_pool_issue_prefetches(pool->pmd);
-+	throttle_work_update(&pool->throttle);
- 	process_prepared(pool, &pool->prepared_mappings, &pool->process_prepared_mapping);
-+	throttle_work_update(&pool->throttle);
- 	process_prepared(pool, &pool->prepared_discards, &pool->process_prepared_discard);
-+	throttle_work_update(&pool->throttle);
- 	process_deferred_bios(pool);
-+	throttle_work_complete(&pool->throttle);
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 507e674..3e1f40d 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -343,6 +343,15 @@ static void cell_release(struct pool *pool,
+ 	dm_bio_prison_free_cell(pool->prison, cell);
  }
  
- /*
-@@ -1893,9 +1947,11 @@ static void thin_defer_bio(struct thin_c *tc, struct bio *bio)
- 	unsigned long flags;
- 	struct pool *pool = tc->pool;
++static void cell_visit_release(struct pool *pool,
++			       void (*fn)(void *, struct dm_bio_prison_cell *),
++			       void *context,
++			       struct dm_bio_prison_cell *cell)
++{
++	dm_cell_visit_release(pool->prison, fn, context, cell);
++	dm_bio_prison_free_cell(pool->prison, cell);
++}
++
+ static void cell_release_no_holder(struct pool *pool,
+ 				   struct dm_bio_prison_cell *cell,
+ 				   struct bio_list *bios)
+@@ -674,55 +683,70 @@ static void overwrite_endio(struct bio *bio, int err)
+  */
  
-+	throttle_lock(&pool->throttle);
+ /*
+- * This sends the bios in the cell back to the deferred_bios list.
++ * This sends the bios in the cell, except the original holder, back
++ * to the deferred_bios list.
+  */
+-static void cell_defer(struct thin_c *tc, struct dm_bio_prison_cell *cell)
++static void cell_defer_no_holder(struct thin_c *tc, struct dm_bio_prison_cell *cell)
+ {
+ 	struct pool *pool = tc->pool;
+ 	unsigned long flags;
+ 
  	spin_lock_irqsave(&tc->lock, flags);
- 	bio_list_add(&tc->deferred_bio_list, bio);
+-	cell_release(pool, cell, &tc->deferred_bio_list);
++	cell_release_no_holder(pool, cell, &tc->deferred_bio_list);
  	spin_unlock_irqrestore(&tc->lock, flags);
-+	throttle_unlock(&pool->throttle);
  
  	wake_worker(pool);
  }
-@@ -2212,6 +2268,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 		goto bad_wq;
- 	}
  
-+	throttle_init(&pool->throttle);
- 	INIT_WORK(&pool->worker, do_worker);
- 	INIT_DELAYED_WORK(&pool->waker, do_waker);
- 	INIT_DELAYED_WORK(&pool->no_space_timeout, do_no_space_timeout);
+-/*
+- * Same as cell_defer above, except it omits the original holder of the cell.
+- */
+-static void cell_defer_no_holder(struct thin_c *tc, struct dm_bio_prison_cell *cell)
++static void thin_defer_bio(struct thin_c *tc, struct bio *bio);
++
++struct remap_info {
++	struct thin_c *tc;
++	struct bio_list bios;
++};
++
++static void __inc_remap_and_issue_cell(void *context,
++				       struct dm_bio_prison_cell *cell)
+ {
+-	struct pool *pool = tc->pool;
+-	unsigned long flags;
++	struct remap_info *info = context;
++	struct bio *bio;
+ 
+-	spin_lock_irqsave(&tc->lock, flags);
+-	cell_release_no_holder(pool, cell, &tc->deferred_bio_list);
+-	spin_unlock_irqrestore(&tc->lock, flags);
++	while ((bio = bio_list_pop(&cell->bios))) {
++		if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA))
++			thin_defer_bio(info->tc, bio);
++		else {
++			inc_all_io_entry(info->tc->pool, bio);
+ 
+-	wake_worker(pool);
++			/*
++			 * We can't issue the bios with the bio prison lock
++			 * held, so we add them to a list to issue on
++			 * return from this function.
++			 */
++			bio_list_add(&info->bios, bio);
++		}
++	}
+ }
+ 
+-static void thin_defer_bio(struct thin_c *tc, struct bio *bio);
+-
+ static void inc_remap_and_issue_cell(struct thin_c *tc,
+ 				     struct dm_bio_prison_cell *cell,
+ 				     dm_block_t block)
+ {
+ 	struct bio *bio;
+-	struct bio_list bios;
++	struct remap_info info;
+ 
+-	bio_list_init(&bios);
+-	cell_release_no_holder(tc->pool, cell, &bios);
++	info.tc = tc;
++	bio_list_init(&info.bios);
+ 
+-	while ((bio = bio_list_pop(&bios))) {
+-		if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA))
+-			thin_defer_bio(tc, bio);
+-		else {
+-			inc_all_io_entry(tc->pool, bio);
+-			remap_and_issue(tc, bio, block);
+-		}
+-	}
++	/*
++	 * We have to be careful to inc any bios we're about to issue
++	 * before the cell is released, and avoid a race with new bios
++	 * being added to the cell.
++	 */
++	cell_visit_release(tc->pool, __inc_remap_and_issue_cell,
++			   &info, cell);
++
++	while ((bio = bio_list_pop(&info.bios)))
++		remap_and_issue(info.tc, bio, block);
+ }
+ 
+ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
+@@ -773,10 +797,13 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+ 	 * the bios in the cell.
+ 	 */
+ 	if (bio) {
+-		cell_defer_no_holder(tc, m->cell);
++		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
+ 		bio_endio(bio, 0);
+-	} else
+-		cell_defer(tc, m->cell);
++	} else {
++		inc_all_io_entry(tc->pool, m->cell->holder);
++		remap_and_issue(tc, m->cell->holder, m->data_block);
++		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
++	}
+ 
+ out:
+ 	list_del(&m->list);
 -- 
 1.9.3
