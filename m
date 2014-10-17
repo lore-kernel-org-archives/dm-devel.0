@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 17/17] dm thin: sort the deferred
-	cells
-Date: Fri, 17 Oct 2014 14:37:19 -0400
-Message-ID: <1413571039-31986-17-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 12/17] dm thin: performance
+	improvement to discard processing
+Date: Fri, 17 Oct 2014 14:37:14 -0400
+Message-ID: <1413571039-31986-12-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -27,149 +27,49 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Sort the cells in logical block order before processing each cell in
-process_thin_deferred_cells().  This significantly improves the ondisk
-layout on rotational storage, whereby improving read performance.
+When processing a discard bio, if the block is already quiesced do the
+discard immediately rather than adding the mapping to a list for the
+next iteration of the worker thread.
+
+Discarding a fully provisioned 100G thin volume with 64k block size goes
+from 860s to 95s with this change.
+
+Clearly there's something wrong with the worker architecture, more
+investigation needed.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c | 88 ++++++++++++++++++++++++++++++++++++++++------------
- 1 file changed, 68 insertions(+), 20 deletions(-)
+ drivers/md/dm-thin.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 0a202f7..cd63180 100644
+index 73a1c96..fffdebc 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -17,6 +17,7 @@
- #include <linux/init.h>
- #include <linux/module.h>
- #include <linux/slab.h>
-+#include <linux/sort.h>
- #include <linux/rbtree.h>
- 
- #define	DM_MSG_PREFIX	"thin"
-@@ -205,6 +206,8 @@ typedef void (*process_bio_fn)(struct thin_c *tc, struct bio *bio);
- typedef void (*process_cell_fn)(struct thin_c *tc, struct dm_bio_prison_cell *cell);
- typedef void (*process_mapping_fn)(struct dm_thin_new_mapping *m);
- 
-+#define CELL_SORT_ARRAY_SIZE 8192
-+
- struct pool {
- 	struct list_head list;
- 	struct dm_target *ti;	/* Only set if a pool target is bound */
-@@ -252,6 +255,8 @@ struct pool {
- 
- 	process_mapping_fn process_prepared_mapping;
- 	process_mapping_fn process_prepared_discard;
-+
-+	struct dm_bio_prison_cell *cell_sort_array[CELL_SORT_ARRAY_SIZE];
- };
- 
- static enum pool_mode get_pool_mode(struct pool *pool);
-@@ -1767,12 +1772,48 @@ static void process_thin_deferred_bios(struct thin_c *tc)
- 	blk_finish_plug(&plug);
- }
- 
-+static int cmp_cells(const void *lhs, const void *rhs)
-+{
-+	struct dm_bio_prison_cell *lhs_cell = *((struct dm_bio_prison_cell **) lhs);
-+	struct dm_bio_prison_cell *rhs_cell = *((struct dm_bio_prison_cell **) rhs);
-+
-+	BUG_ON(!lhs_cell->holder);
-+	BUG_ON(!rhs_cell->holder);
-+
-+	if (lhs_cell->holder->bi_iter.bi_sector < rhs_cell->holder->bi_iter.bi_sector)
-+		return -1;
-+
-+	if (lhs_cell->holder->bi_iter.bi_sector > rhs_cell->holder->bi_iter.bi_sector)
-+		return 1;
-+
-+	return 0;
-+}
-+
-+static unsigned sort_cells(struct pool *pool, struct list_head *cells)
-+{
-+	unsigned count = 0;
-+	struct dm_bio_prison_cell *cell, *tmp;
-+
-+	list_for_each_entry_safe(cell, tmp, cells, user_list) {
-+		if (count >= CELL_SORT_ARRAY_SIZE)
-+			break;
-+
-+		pool->cell_sort_array[count++] = cell;
-+		list_del(&cell->user_list);
-+	}
-+
-+	sort(pool->cell_sort_array, count, sizeof(cell), cmp_cells, NULL);
-+
-+	return count;
-+}
-+
- static void process_thin_deferred_cells(struct thin_c *tc)
+@@ -1194,7 +1194,6 @@ static void retry_bios_on_resume(struct pool *pool, struct dm_bio_prison_cell *c
+ static void process_discard(struct thin_c *tc, struct bio *bio)
  {
+ 	int r;
+-	unsigned long flags;
  	struct pool *pool = tc->pool;
- 	unsigned long flags;
- 	struct list_head cells;
--	struct dm_bio_prison_cell *cell, *tmp;
-+	struct dm_bio_prison_cell *cell;
-+	unsigned i, j, count;
+ 	struct dm_bio_prison_cell *cell, *cell2;
+ 	struct dm_cell_key key, key2;
+@@ -1235,12 +1234,9 @@ static void process_discard(struct thin_c *tc, struct bio *bio)
+ 			m->cell2 = cell2;
+ 			m->bio = bio;
  
- 	// FIXME: push down into per cell processing
- 	if (tc->requeue_mode) {
-@@ -1789,27 +1830,34 @@ static void process_thin_deferred_cells(struct thin_c *tc)
- 	if (list_empty(&cells))
- 		return;
- 
--	list_for_each_entry_safe(cell, tmp, &cells, user_list) {
--		BUG_ON(!cell->holder);
-+	do {
-+		count = sort_cells(tc->pool, &cells);
- 
--		/*
--		 * If we've got no free new_mapping structs, and processing
--		 * this bio might require one, we pause until there are some
--		 * prepared mappings to process.
--		 */
--		if (ensure_next_mapping(pool)) {
--			spin_lock_irqsave(&tc->lock, flags);
--			list_add(&cell->user_list, &tc->deferred_cells);
--			list_splice(&cells, &tc->deferred_cells);
--			spin_unlock_irqrestore(&tc->lock, flags);
--			break;
--		}
-+		for (i = 0; i < count; i++) {
-+			cell = pool->cell_sort_array[i];
-+			BUG_ON(!cell->holder);
- 
--		if (cell->holder->bi_rw & REQ_DISCARD)
--			pool->process_discard_cell(tc, cell);
--		else
--			pool->process_cell(tc, cell);
--	}
-+			/*
-+			 * If we've got no free new_mapping structs, and processing
-+			 * this bio might require one, we pause until there are some
-+			 * prepared mappings to process.
-+			 */
-+			if (ensure_next_mapping(pool)) {
-+				for (j = i; j < count; j++)
-+					list_add(&pool->cell_sort_array[j]->user_list, &cells);
+-			if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list)) {
+-				spin_lock_irqsave(&pool->lock, flags);
+-				list_add_tail(&m->list, &pool->prepared_discards);
+-				spin_unlock_irqrestore(&pool->lock, flags);
+-				wake_worker(pool);
+-			}
++			if (!dm_deferred_set_add_work(pool->all_io_ds, &m->list))
++				pool->process_prepared_discard(m);
 +
-+				spin_lock_irqsave(&tc->lock, flags);
-+				list_splice(&cells, &tc->deferred_cells);
-+				spin_unlock_irqrestore(&tc->lock, flags);
-+				return;
-+			}
-+
-+			if (cell->holder->bi_rw & REQ_DISCARD)
-+				pool->process_discard_cell(tc, cell);
-+			else
-+				pool->process_cell(tc, cell);
-+		}
-+	} while (!list_empty(&cells));
- }
- 
- static void thin_get(struct thin_c *tc);
+ 		} else {
+ 			inc_all_io_entry(pool, bio);
+ 			cell_defer_no_holder(tc, cell);
 -- 
 1.8.3.1
