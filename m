@@ -1,21 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm raid: ensure metadata IO matches device block
-	size.
-Date: Thu, 16 Oct 2014 15:56:11 -0400
-Message-ID: <20141016195611.GA14141@redhat.com>
-References: <20141015121907.265b3aed@notabene.brown>
-	<20141015025550.GC19683@redhat.com>
-	<20141015144003.7b17752d@notabene.brown>
-	<20141015131307.GA23955@redhat.com>
-	<20141016080054.7c906901@notabene.brown>
-	<543FC8A0.8000709@redhat.com>
+Subject: [for-3.19 PATCH 17/17] dm thin: sort the deferred cells
+Date: Fri, 17 Oct 2014 02:07:07 -0400
+Message-ID: <1413526027-21630-18-git-send-email-snitzer@redhat.com>
+References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <543FC8A0.8000709@redhat.com>
+In-Reply-To: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,99 +18,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: lwang@suse.com, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 16 2014 at  9:31am -0400,
-Heinz Mauelshagen <heinzm@redhat.com> wrote:
+From: Joe Thornber <ejt@redhat.com>
 
-> 
-> On 10/15/2014 11:00 PM, NeilBrown wrote:
-> >On Wed, 15 Oct 2014 09:13:08 -0400 Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> >>On Tue, Oct 14 2014 at 11:40pm -0400,
-> >>NeilBrown <neilb@suse.de> wrote:
-> >>
-> >>>On Tue, 14 Oct 2014 22:55:50 -0400 Mike Snitzer <snitzer@redhat.com> wrote:
-> >>>
-> >>>>On Tue, Oct 14 2014 at  9:19pm -0400,
-> >>>>NeilBrown <neilb@suse.de> wrote:
-> >>>>
-> >>>>>dm_raid_superblock is 512.
-> >>>>>Reading or writing this on a 512-byte sector works fine.
-> >>>>>On a 4096-byte sector device, this fails.
-> >>>>>
-> >>>>>If we round up rdev->sb_size to match the block size of
-> >>>>>the device, all IO will work correctly.
-> >>>>>
-> >>>>>Reported-by: "Liuhua Wang" <lwang@suse.com>
-> >>>>>Signed-off-by: NeilBrown <neilb@suse.de>
-> >>>>>
-> >>>>>---
-> >>>>>this issue has been discussed already a bit. See email thread
-> >>>>>  Subject: Re: [dm-devel] [PATCH] fix mirror device creation with lvcreate failed
-> >>>>>I think this is the best fix.  It handles boths read and writes, and (I think)
-> >>>>>at the best level.
-> >>>>>
-> >>>>>Thanks,
-> >>>>>NeilBrown
-> >>>>>
-> >>>>>
-> >>>>>diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> >>>>>index 4880b69e2e9e..31bdd73bc368 100644
-> >>>>>--- a/drivers/md/dm-raid.c
-> >>>>>+++ b/drivers/md/dm-raid.c
-> >>>>>@@ -858,7 +858,8 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
-> >>>>>  	uint64_t events_sb, events_refsb;
-> >>>>>  	rdev->sb_start = 0;
-> >>>>>-	rdev->sb_size = sizeof(*sb);
-> >>>>>+	rdev->sb_size = roundup(sizeof(*sb),
-> >>>>>+				bdev_logical_block_size(rdev->meta_bdev));
-> >>>>>  	ret = read_disk_sb(rdev, rdev->sb_size);
-> >>>>>  	if (ret)
-> >>>>Wouldn't it be better to use bdev_physical_block_size()?
-> >>>>
-> >>>>Even on a 4K device that emulates 512b logical sectors it is better to
-> >>>>use the physical block size (4K).
-> >>>
-> >>>_logical_ is the smallest value for which the IO actually works.
-> >>>And the goal of the change is to make it work.
-> >>>
-> >>>I don't object to using _physical_, but it isn't clear to me how I would
-> >>>justify that as "correct".
-> >>>
-> >>>A big question in my mind is: how much space does LVM reserve in this device
-> >>>for the metadata?  It seems reasonable to assume that it reserves at least
-> >>>1 logical block.  If the API guarantees that at least one physical block is
-> >>>reserved, then that would justify using _physical_.
-> 
-> dm-raid uses 512 bytes for its superblock including padding in the
-> current code
-> (with way less payload), followed by the bitmap at offset 4096 bytes.
-> 
-> With Neil's proposal, the padding will be avoided alltogether.
-> 
-> So logical looks fine to me, because physical may well be more than
-> 4K in the future.
-> Admittingly a longer time in the future though.
-> 
-> If that happens, we'd end up with the bitmap start at offset 4096
-> bytes in the same physical sector
-> and would have to cope with it plus the issues involved with 4K page sizes.
-> 
-> In order to prevent this to occur unrecognized in dm/md later,
-> we should have an "if (rdev->sb_size > PAGE_SIZE) return -EINVAL;"
-> after the setting
-> of rdev->sb_size in dm-raid.c and appropriate checks in md.c.
-> 
-> BTW: even with additions to the dm-raid superblock I have to make in
-> order to allow for reshaping etc.,
->          it's paylod is going to stay < 512 bytes.
+Sort the cells in logical block order before processing each cell in
+process_thin_deferred_cells().  This significantly improves the ondisk
+layout on rotational storage, whereby improving read performance.
 
-Heinz,
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-thin.c | 88 ++++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 68 insertions(+), 20 deletions(-)
 
-If you could propose a revised patch I'd appreciate it.
-
-Thanks,
-Mike
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index b585c0d..16be238 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -17,6 +17,7 @@
+ #include <linux/init.h>
+ #include <linux/module.h>
+ #include <linux/slab.h>
++#include <linux/sort.h>
+ #include <linux/rbtree.h>
+ 
+ #define	DM_MSG_PREFIX	"thin"
+@@ -205,6 +206,8 @@ typedef void (*process_bio_fn)(struct thin_c *tc, struct bio *bio);
+ typedef void (*process_cell_fn)(struct thin_c *tc, struct dm_bio_prison_cell *cell);
+ typedef void (*process_mapping_fn)(struct dm_thin_new_mapping *m);
+ 
++#define CELL_SORT_ARRAY_SIZE 8192
++
+ struct pool {
+ 	struct list_head list;
+ 	struct dm_target *ti;	/* Only set if a pool target is bound */
+@@ -252,6 +255,8 @@ struct pool {
+ 
+ 	process_mapping_fn process_prepared_mapping;
+ 	process_mapping_fn process_prepared_discard;
++
++	struct dm_bio_prison_cell *cell_sort_array[CELL_SORT_ARRAY_SIZE];
+ };
+ 
+ static enum pool_mode get_pool_mode(struct pool *pool);
+@@ -1758,12 +1763,48 @@ static void process_thin_deferred_bios(struct thin_c *tc)
+ 	blk_finish_plug(&plug);
+ }
+ 
++static int cmp_cells(const void *lhs, const void *rhs)
++{
++	struct dm_bio_prison_cell *lhs_cell = *((struct dm_bio_prison_cell **) lhs);
++	struct dm_bio_prison_cell *rhs_cell = *((struct dm_bio_prison_cell **) rhs);
++
++	BUG_ON(!lhs_cell->holder);
++	BUG_ON(!rhs_cell->holder);
++
++	if (lhs_cell->holder->bi_iter.bi_sector < rhs_cell->holder->bi_iter.bi_sector)
++		return -1;
++
++	if (lhs_cell->holder->bi_iter.bi_sector > rhs_cell->holder->bi_iter.bi_sector)
++		return 1;
++
++	return 0;
++}
++
++static unsigned sort_cells(struct pool *pool, struct list_head *cells)
++{
++	unsigned count = 0;
++	struct dm_bio_prison_cell *cell, *tmp;
++
++	list_for_each_entry_safe(cell, tmp, cells, user_list) {
++		if (count >= CELL_SORT_ARRAY_SIZE)
++			break;
++
++		pool->cell_sort_array[count++] = cell;
++		list_del(&cell->user_list);
++	}
++
++	sort(pool->cell_sort_array, count, sizeof(cell), cmp_cells, NULL);
++
++	return count;
++}
++
+ static void process_thin_deferred_cells(struct thin_c *tc)
+ {
+ 	struct pool *pool = tc->pool;
+ 	unsigned long flags;
+ 	struct list_head cells;
+-	struct dm_bio_prison_cell *cell, *tmp;
++	struct dm_bio_prison_cell *cell;
++	unsigned i, j, count;
+ 
+ 	// FIXME: push down into per cell processing
+ 	if (tc->requeue_mode) {
+@@ -1780,27 +1821,34 @@ static void process_thin_deferred_cells(struct thin_c *tc)
+ 	if (list_empty(&cells))
+ 		return;
+ 
+-	list_for_each_entry_safe(cell, tmp, &cells, user_list) {
+-		BUG_ON(!cell->holder);
++	do {
++		count = sort_cells(tc->pool, &cells);
+ 
+-		/*
+-		 * If we've got no free new_mapping structs, and processing
+-		 * this bio might require one, we pause until there are some
+-		 * prepared mappings to process.
+-		 */
+-		if (ensure_next_mapping(pool)) {
+-			spin_lock_irqsave(&tc->lock, flags);
+-			list_add(&cell->user_list, &tc->deferred_cells);
+-			list_splice(&cells, &tc->deferred_cells);
+-			spin_unlock_irqrestore(&tc->lock, flags);
+-			break;
+-		}
++		for (i = 0; i < count; i++) {
++			cell = pool->cell_sort_array[i];
++			BUG_ON(!cell->holder);
+ 
+-		if (cell->holder->bi_rw & REQ_DISCARD)
+-			pool->process_discard_cell(tc, cell);
+-		else
+-			pool->process_cell(tc, cell);
+-	}
++			/*
++			 * If we've got no free new_mapping structs, and processing
++			 * this bio might require one, we pause until there are some
++			 * prepared mappings to process.
++			 */
++			if (ensure_next_mapping(pool)) {
++				for (j = i; j < count; j++)
++					list_add(&pool->cell_sort_array[j]->user_list, &cells);
++
++				spin_lock_irqsave(&tc->lock, flags);
++				list_splice(&cells, &tc->deferred_cells);
++				spin_unlock_irqrestore(&tc->lock, flags);
++				return;
++			}
++
++			if (cell->holder->bi_rw & REQ_DISCARD)
++				pool->process_discard_cell(tc, cell);
++			else
++				pool->process_cell(tc, cell);
++		}
++	} while (!list_empty(&cells));
+ }
+ 
+ static void thin_get(struct thin_c *tc);
+-- 
+1.9.3
