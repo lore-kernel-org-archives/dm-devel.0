@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH 15/17] dm thin: remap the bios in a cell
-	immediately
-Date: Fri, 17 Oct 2014 02:07:05 -0400
-Message-ID: <1413526027-21630-16-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH 01/17] dm bufio: switch from a huge hash
+	table to an rbtree
+Date: Fri, 17 Oct 2014 02:06:51 -0400
+Message-ID: <1413526027-21630-2-git-send-email-snitzer@redhat.com>
 References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,200 +25,206 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-This use of direct submission in process_prepared_mapping() reduces
-latency for submitting bios in a cell by avoiding adding those bios to
-the deferred list and waiting for the next iteration of the worker.
-
-But this direct submission exposes the potential for a race between
-releasing a cell and incrementing deferred set.  Fix this by introducing
-dm_cell_visit_release() and refactoring inc_remap_and_issue_cell()
-accordingly.
+Converting over to using an rbtree eliminates a fixed 8MB allocation
+from vmalloc space for the hash table.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-bio-prison.c | 14 ++++++++
- drivers/md/dm-bio-prison.h |  8 +++++
- drivers/md/dm-thin.c       | 85 ++++++++++++++++++++++++++++++----------------
- 3 files changed, 78 insertions(+), 29 deletions(-)
+ drivers/md/dm-bufio.c | 97 ++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 54 insertions(+), 43 deletions(-)
 
-diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
-index 90a5662..bbe22a5 100644
---- a/drivers/md/dm-bio-prison.c
-+++ b/drivers/md/dm-bio-prison.c
-@@ -241,6 +241,20 @@ void dm_cell_error(struct dm_bio_prison *prison,
- }
- EXPORT_SYMBOL_GPL(dm_cell_error);
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 0be200b..dcaa1d9 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -14,6 +14,7 @@
+ #include <linux/vmalloc.h>
+ #include <linux/shrinker.h>
+ #include <linux/module.h>
++#include <linux/rbtree.h>
  
-+void dm_cell_visit_release(struct dm_bio_prison *prison,
-+			   void (*visit_fn)(void *, struct dm_bio_prison_cell *),
-+			   void *context,
-+			   struct dm_bio_prison_cell *cell)
+ #define DM_MSG_PREFIX "bufio"
+ 
+@@ -48,14 +49,6 @@
+ #define DM_BUFIO_INLINE_VECS		16
+ 
+ /*
+- * Buffer hash
+- */
+-#define DM_BUFIO_HASH_BITS	20
+-#define DM_BUFIO_HASH(block) \
+-	((((block) >> DM_BUFIO_HASH_BITS) ^ (block)) & \
+-	 ((1 << DM_BUFIO_HASH_BITS) - 1))
+-
+-/*
+  * Don't try to use kmem_cache_alloc for blocks larger than this.
+  * For explanation, see alloc_buffer_data below.
+  */
+@@ -106,7 +99,7 @@ struct dm_bufio_client {
+ 
+ 	unsigned minimum_buffers;
+ 
+-	struct hlist_head *cache_hash;
++	struct rb_root buffer_tree;
+ 	wait_queue_head_t free_buffer_wait;
+ 
+ 	int async_write_error;
+@@ -135,7 +128,7 @@ enum data_mode {
+ };
+ 
+ struct dm_buffer {
+-	struct hlist_node hash_list;
++	struct rb_node node;
+ 	struct list_head lru_list;
+ 	sector_t block;
+ 	void *data;
+@@ -253,6 +246,53 @@ static LIST_HEAD(dm_bufio_all_clients);
+  */
+ static DEFINE_MUTEX(dm_bufio_clients_lock);
+ 
++/*----------------------------------------------------------------
++ * A red/black tree acts as an index for all the buffers.
++ *--------------------------------------------------------------*/
++static struct dm_buffer *__find(struct dm_bufio_client *c, sector_t block)
 +{
-+	unsigned long flags;
++	struct rb_node *n = c->buffer_tree.rb_node;
++	struct dm_buffer *b;
 +
-+	spin_lock_irqsave(&prison->lock, flags);
-+	visit_fn(context, cell);
-+	rb_erase(&cell->node, &prison->cells);
-+	spin_unlock_irqrestore(&prison->lock, flags);
++	while (n) {
++		b = container_of(n, struct dm_buffer, node);
++
++		if (b->block == block)
++			return b;
++
++		n = (b->block < block) ? n->rb_left : n->rb_right;
++	}
++
++	return NULL;
 +}
-+EXPORT_SYMBOL_GPL(dm_cell_visit_release);
++
++static void __insert(struct dm_bufio_client *c, struct dm_buffer *b)
++{
++	struct rb_node **new = &c->buffer_tree.rb_node, *parent = NULL;
++	struct dm_buffer *found;
++
++	while (*new) {
++		found = container_of(*new, struct dm_buffer, node);
++
++		if (found->block == b->block) {
++			BUG_ON(found != b);
++			return;
++		}
++
++		parent = *new;
++		new = (found->block < b->block) ?
++			&((*new)->rb_left) : &((*new)->rb_right);
++	}
++
++	rb_link_node(&b->node, parent, new);
++	rb_insert_color(&b->node, &c->buffer_tree);
++}
++
++static void __remove(struct dm_bufio_client *c, struct dm_buffer *b)
++{
++	rb_erase(&b->node, &c->buffer_tree);
++}
 +
  /*----------------------------------------------------------------*/
  
- #define DEFERRED_SET_SIZE 64
-diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
-index c0cddb1..b039886 100644
---- a/drivers/md/dm-bio-prison.h
-+++ b/drivers/md/dm-bio-prison.h
-@@ -89,6 +89,14 @@ void dm_cell_release_no_holder(struct dm_bio_prison *prison,
- void dm_cell_error(struct dm_bio_prison *prison,
- 		   struct dm_bio_prison_cell *cell, int error);
- 
-+/*
-+ * Visits the cell and then releases.  Guarantees no new inmates are
-+ * inserted between the visit and release.
-+ */
-+void dm_cell_visit_release(struct dm_bio_prison *prison,
-+			   void (*visit_fn)(void *, struct dm_bio_prison_cell *),
-+			   void *context, struct dm_bio_prison_cell *cell);
-+
- /*----------------------------------------------------------------*/
- 
- /*
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 507e674..3e1f40d 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -343,6 +343,15 @@ static void cell_release(struct pool *pool,
- 	dm_bio_prison_free_cell(pool->prison, cell);
+ static void adjust_total_allocated(enum data_mode data_mode, long diff)
+@@ -434,7 +474,7 @@ static void __link_buffer(struct dm_buffer *b, sector_t block, int dirty)
+ 	b->block = block;
+ 	b->list_mode = dirty;
+ 	list_add(&b->lru_list, &c->lru[dirty]);
+-	hlist_add_head(&b->hash_list, &c->cache_hash[DM_BUFIO_HASH(block)]);
++	__insert(b->c, b);
+ 	b->last_accessed = jiffies;
  }
  
-+static void cell_visit_release(struct pool *pool,
-+			       void (*fn)(void *, struct dm_bio_prison_cell *),
-+			       void *context,
-+			       struct dm_bio_prison_cell *cell)
-+{
-+	dm_cell_visit_release(pool->prison, fn, context, cell);
-+	dm_bio_prison_free_cell(pool->prison, cell);
-+}
-+
- static void cell_release_no_holder(struct pool *pool,
- 				   struct dm_bio_prison_cell *cell,
- 				   struct bio_list *bios)
-@@ -674,55 +683,70 @@ static void overwrite_endio(struct bio *bio, int err)
-  */
+@@ -448,7 +488,7 @@ static void __unlink_buffer(struct dm_buffer *b)
+ 	BUG_ON(!c->n_buffers[b->list_mode]);
  
- /*
-- * This sends the bios in the cell back to the deferred_bios list.
-+ * This sends the bios in the cell, except the original holder, back
-+ * to the deferred_bios list.
-  */
--static void cell_defer(struct thin_c *tc, struct dm_bio_prison_cell *cell)
-+static void cell_defer_no_holder(struct thin_c *tc, struct dm_bio_prison_cell *cell)
- {
- 	struct pool *pool = tc->pool;
- 	unsigned long flags;
+ 	c->n_buffers[b->list_mode]--;
+-	hlist_del(&b->hash_list);
++	__remove(b->c, b);
+ 	list_del(&b->lru_list);
+ }
  
- 	spin_lock_irqsave(&tc->lock, flags);
--	cell_release(pool, cell, &tc->deferred_bio_list);
-+	cell_release_no_holder(pool, cell, &tc->deferred_bio_list);
- 	spin_unlock_irqrestore(&tc->lock, flags);
- 
- 	wake_worker(pool);
+@@ -888,23 +928,6 @@ static void __check_watermark(struct dm_bufio_client *c,
+ 		__write_dirty_buffers_async(c, 1, write_list);
  }
  
 -/*
-- * Same as cell_defer above, except it omits the original holder of the cell.
+- * Find a buffer in the hash.
 - */
--static void cell_defer_no_holder(struct thin_c *tc, struct dm_bio_prison_cell *cell)
-+static void thin_defer_bio(struct thin_c *tc, struct bio *bio);
-+
-+struct remap_info {
-+	struct thin_c *tc;
-+	struct bio_list bios;
-+};
-+
-+static void __inc_remap_and_issue_cell(void *context,
-+				       struct dm_bio_prison_cell *cell)
- {
--	struct pool *pool = tc->pool;
--	unsigned long flags;
-+	struct remap_info *info = context;
-+	struct bio *bio;
- 
--	spin_lock_irqsave(&tc->lock, flags);
--	cell_release_no_holder(pool, cell, &tc->deferred_bio_list);
--	spin_unlock_irqrestore(&tc->lock, flags);
-+	while ((bio = bio_list_pop(&cell->bios))) {
-+		if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA))
-+			thin_defer_bio(info->tc, bio);
-+		else {
-+			inc_all_io_entry(info->tc->pool, bio);
- 
--	wake_worker(pool);
-+			/*
-+			 * We can't issue the bios with the bio prison lock
-+			 * held, so we add them to a list to issue on
-+			 * return from this function.
-+			 */
-+			bio_list_add(&info->bios, bio);
-+		}
-+	}
- }
- 
--static void thin_defer_bio(struct thin_c *tc, struct bio *bio);
+-static struct dm_buffer *__find(struct dm_bufio_client *c, sector_t block)
+-{
+-	struct dm_buffer *b;
 -
- static void inc_remap_and_issue_cell(struct thin_c *tc,
- 				     struct dm_bio_prison_cell *cell,
- 				     dm_block_t block)
- {
- 	struct bio *bio;
--	struct bio_list bios;
-+	struct remap_info info;
- 
--	bio_list_init(&bios);
--	cell_release_no_holder(tc->pool, cell, &bios);
-+	info.tc = tc;
-+	bio_list_init(&info.bios);
- 
--	while ((bio = bio_list_pop(&bios))) {
--		if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA))
--			thin_defer_bio(tc, bio);
--		else {
--			inc_all_io_entry(tc->pool, bio);
--			remap_and_issue(tc, bio, block);
--		}
+-	hlist_for_each_entry(b, &c->cache_hash[DM_BUFIO_HASH(block)],
+-			     hash_list) {
+-		dm_bufio_cond_resched();
+-		if (b->block == block)
+-			return b;
 -	}
-+	/*
-+	 * We have to be careful to inc any bios we're about to issue
-+	 * before the cell is released, and avoid a race with new bios
-+	 * being added to the cell.
-+	 */
-+	cell_visit_release(tc->pool, __inc_remap_and_issue_cell,
-+			   &info, cell);
-+
-+	while ((bio = bio_list_pop(&info.bios)))
-+		remap_and_issue(info.tc, bio, block);
+-
+-	return NULL;
+-}
+-
+ /*----------------------------------------------------------------
+  * Getting a buffer
+  *--------------------------------------------------------------*/
+@@ -1534,11 +1557,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
+ 		r = -ENOMEM;
+ 		goto bad_client;
+ 	}
+-	c->cache_hash = vmalloc(sizeof(struct hlist_head) << DM_BUFIO_HASH_BITS);
+-	if (!c->cache_hash) {
+-		r = -ENOMEM;
+-		goto bad_hash;
+-	}
++	c->buffer_tree = RB_ROOT;
+ 
+ 	c->bdev = bdev;
+ 	c->block_size = block_size;
+@@ -1557,9 +1576,6 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
+ 		c->n_buffers[i] = 0;
+ 	}
+ 
+-	for (i = 0; i < 1 << DM_BUFIO_HASH_BITS; i++)
+-		INIT_HLIST_HEAD(&c->cache_hash[i]);
+-
+ 	mutex_init(&c->lock);
+ 	INIT_LIST_HEAD(&c->reserved_buffers);
+ 	c->need_reserved_buffers = reserved_buffers;
+@@ -1633,8 +1649,6 @@ bad_cache:
+ 	}
+ 	dm_io_client_destroy(c->dm_io);
+ bad_dm_io:
+-	vfree(c->cache_hash);
+-bad_hash:
+ 	kfree(c);
+ bad_client:
+ 	return ERR_PTR(r);
+@@ -1661,9 +1675,7 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
+ 
+ 	mutex_unlock(&dm_bufio_clients_lock);
+ 
+-	for (i = 0; i < 1 << DM_BUFIO_HASH_BITS; i++)
+-		BUG_ON(!hlist_empty(&c->cache_hash[i]));
+-
++	BUG_ON(!RB_EMPTY_ROOT(&c->buffer_tree));
+ 	BUG_ON(c->need_reserved_buffers);
+ 
+ 	while (!list_empty(&c->reserved_buffers)) {
+@@ -1681,7 +1693,6 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
+ 		BUG_ON(c->n_buffers[i]);
+ 
+ 	dm_io_client_destroy(c->dm_io);
+-	vfree(c->cache_hash);
+ 	kfree(c);
  }
- 
- static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
-@@ -773,10 +797,13 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- 	 * the bios in the cell.
- 	 */
- 	if (bio) {
--		cell_defer_no_holder(tc, m->cell);
-+		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
- 		bio_endio(bio, 0);
--	} else
--		cell_defer(tc, m->cell);
-+	} else {
-+		inc_all_io_entry(tc->pool, m->cell->holder);
-+		remap_and_issue(tc, m->cell->holder, m->data_block);
-+		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
-+	}
- 
- out:
- 	list_del(&m->list);
+ EXPORT_SYMBOL_GPL(dm_bufio_client_destroy);
 -- 
 1.9.3
