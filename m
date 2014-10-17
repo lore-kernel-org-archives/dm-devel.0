@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 07/17] dm thin: throttle incoming IO
-Date: Fri, 17 Oct 2014 14:37:09 -0400
-Message-ID: <1413571039-31986-7-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 02/17] dm bufio: evict buffers that
+	are past the max age but retain some buffers
+Date: Fri, 17 Oct 2014 14:37:04 -0400
+Message-ID: <1413571039-31986-2-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -26,146 +27,208 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Throttle IO based on the time it's taking the worker to do one loop.
-There were reports of hung task timeouts occuring and it was observed
-that the excessively long avgqu-sz (as reported by iostat) was
-contributing to these hung tasks.
+These changes help keep metadata backed by dm-bufio in-core longer which
+fixes reports of metadata churn in the face of heavy random IO workloads.
 
-Throttling definitely helps dm-thinp perform better under heavy IO load
-(without being detremental by being overzealous).  It reduces avgqu-sz
-drastically, e.g.: from 60K to ~6K, and even as low as 150 once metadata
-is cached by bufio, when dirty_ratio=5, dirty_background_ratio=2.  And
-avgqu-sz stays at or below 30K even with dirty_ratio=20,
-dirty_background_ratio=10.
+Before, bufio evicted all buffers older than DM_BUFIO_DEFAULT_AGE_SECS.
+Having a device (e.g. dm-thinp or dm-cache) lose all metadata just
+because associated buffers had been idle for some time is unfriendly.
+
+Now, the user may now configure the number of bytes that bufio retains
+using the 'retain_bytes' module parameter.  The default is 256K.
+
+Also, the DM_BUFIO_WORK_TIMER_SECS and DM_BUFIO_DEFAULT_AGE_SECS
+defaults were quite low so increase them (to 30 and 300 respectively).
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 65 insertions(+), 1 deletion(-)
+ drivers/md/dm-bufio.c | 109 ++++++++++++++++++++++++++++++++++----------------
+ 1 file changed, 75 insertions(+), 34 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 1d25b51..6057441 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -126,6 +126,53 @@ static void build_virtual_key(struct dm_thin_device *td, dm_block_t b,
- 
- /*----------------------------------------------------------------*/
- 
-+#define THROTTLE_THRESHOLD (1 * HZ)
-+
-+struct throttle {
-+	struct rw_semaphore lock;
-+	unsigned long threshold;
-+	bool throttle_applied;
-+};
-+
-+static void throttle_init(struct throttle *t)
-+{
-+	init_rwsem(&t->lock);
-+	t->throttle_applied = false;
-+}
-+
-+static void throttle_work_start(struct throttle *t)
-+{
-+	t->threshold = jiffies + THROTTLE_THRESHOLD;
-+}
-+
-+static void throttle_work_update(struct throttle *t)
-+{
-+	if (!t->throttle_applied && jiffies > t->threshold) {
-+		down_write(&t->lock);
-+		t->throttle_applied = true;
-+	}
-+}
-+
-+static void throttle_work_complete(struct throttle *t)
-+{
-+	if (t->throttle_applied) {
-+		t->throttle_applied = false;
-+		up_write(&t->lock);
-+	}
-+}
-+
-+static void throttle_lock(struct throttle *t)
-+{
-+	down_read(&t->lock);
-+}
-+
-+static void throttle_unlock(struct throttle *t)
-+{
-+	up_read(&t->lock);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index dcaa1d9..99579c8 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -35,12 +35,17 @@
  /*
-  * A pool device ties together a metadata device and a data device.  It
-  * also provides the interface for creating and destroying internal
-@@ -175,6 +222,7 @@ struct pool {
- 	struct dm_kcopyd_client *copier;
+  * Check buffer ages in this interval (seconds)
+  */
+-#define DM_BUFIO_WORK_TIMER_SECS	10
++#define DM_BUFIO_WORK_TIMER_SECS	30
  
- 	struct workqueue_struct *wq;
-+	struct throttle throttle;
- 	struct work_struct worker;
- 	struct delayed_work waker;
- 	struct delayed_work no_space_timeout;
-@@ -1570,6 +1618,7 @@ static void process_thin_deferred_bios(struct thin_c *tc)
- 			pool->process_bio(tc, bio);
+ /*
+  * Free buffers when they are older than this (seconds)
+  */
+-#define DM_BUFIO_DEFAULT_AGE_SECS	60
++#define DM_BUFIO_DEFAULT_AGE_SECS	300
++
++/*
++ * The nr of bytes of cached data to keep around.
++ */
++#define DM_BUFIO_DEFAULT_RETAIN_BYTES   (256 * 1024)
  
- 		if ((count++ & 127) == 0) {
-+			throttle_work_update(&pool->throttle);
- 			dm_pool_issue_prefetches(pool->pmd);
+ /*
+  * The number of bvec entries that are embedded directly in the buffer.
+@@ -216,6 +221,7 @@ static DEFINE_SPINLOCK(param_spinlock);
+  * Buffers are freed after this timeout
+  */
+ static unsigned dm_bufio_max_age = DM_BUFIO_DEFAULT_AGE_SECS;
++static unsigned dm_bufio_retain_bytes = DM_BUFIO_DEFAULT_RETAIN_BYTES;
+ 
+ static unsigned long dm_bufio_peak_allocated;
+ static unsigned long dm_bufio_allocated_kmem_cache;
+@@ -1457,45 +1463,52 @@ static void drop_buffers(struct dm_bufio_client *c)
+ }
+ 
+ /*
+- * Test if the buffer is unused and too old, and commit it.
++ * We may not be able to evict this buffer if IO pending or the client
++ * is still using it.  Caller is expected to know buffer is too old.
++ *
+  * And if GFP_NOFS is used, we must not do any I/O because we hold
+  * dm_bufio_clients_lock and we would risk deadlock if the I/O gets
+  * rerouted to different bufio client.
+  */
+-static int __cleanup_old_buffer(struct dm_buffer *b, gfp_t gfp,
+-				unsigned long max_jiffies)
++static bool __try_evict_buffer(struct dm_buffer *b, gfp_t gfp)
+ {
+-	if (jiffies - b->last_accessed < max_jiffies)
+-		return 0;
+-
+ 	if (!(gfp & __GFP_FS)) {
+ 		if (test_bit(B_READING, &b->state) ||
+ 		    test_bit(B_WRITING, &b->state) ||
+ 		    test_bit(B_DIRTY, &b->state))
+-			return 0;
++			return false;
+ 	}
+ 
+ 	if (b->hold_count)
+-		return 0;
++		return false;
+ 
+ 	__make_buffer_clean(b);
+ 	__unlink_buffer(b);
+ 	__free_buffer_wake(b);
+ 
+-	return 1;
++	return true;
+ }
+ 
+-static long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
+-		   gfp_t gfp_mask)
++static unsigned get_retain_buffers(struct dm_bufio_client *c)
++{
++        unsigned retain_bytes = ACCESS_ONCE(dm_bufio_retain_bytes);
++        return retain_bytes / c->block_size;
++}
++
++static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
++			    gfp_t gfp_mask)
+ {
+ 	int l;
+ 	struct dm_buffer *b, *tmp;
+-	long freed = 0;
++	unsigned long freed = 0;
++	unsigned long count = nr_to_scan;
++	unsigned retain_target = get_retain_buffers(c);
+ 
+ 	for (l = 0; l < LIST_SIZE; l++) {
+ 		list_for_each_entry_safe_reverse(b, tmp, &c->lru[l], lru_list) {
+-			freed += __cleanup_old_buffer(b, gfp_mask, 0);
+-			if (!--nr_to_scan)
++			if (__try_evict_buffer(b, gfp_mask))
++				freed++;
++			if (!--nr_to_scan || ((count - freed) <= retain_target))
+ 				return freed;
+ 			dm_bufio_cond_resched();
  		}
- 	}
-@@ -1657,10 +1706,15 @@ static void do_worker(struct work_struct *ws)
+@@ -1697,31 +1710,56 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_client_destroy);
+ 
+-static void cleanup_old_buffers(void)
++static unsigned get_max_age_hz(void)
  {
- 	struct pool *pool = container_of(ws, struct pool, worker);
+-	unsigned long max_age = ACCESS_ONCE(dm_bufio_max_age);
+-	struct dm_bufio_client *c;
++	unsigned max_age = ACCESS_ONCE(dm_bufio_max_age);
  
-+	throttle_work_start(&pool->throttle);
- 	dm_pool_issue_prefetches(pool->pmd);
-+	throttle_work_update(&pool->throttle);
- 	process_prepared(pool, &pool->prepared_mappings, &pool->process_prepared_mapping);
-+	throttle_work_update(&pool->throttle);
- 	process_prepared(pool, &pool->prepared_discards, &pool->process_prepared_discard);
-+	throttle_work_update(&pool->throttle);
- 	process_deferred_bios(pool);
-+	throttle_work_complete(&pool->throttle);
- }
+-	if (max_age > ULONG_MAX / HZ)
+-		max_age = ULONG_MAX / HZ;
++	if (max_age > UINT_MAX / HZ)
++		max_age = UINT_MAX / HZ;
  
- /*
-@@ -1900,6 +1954,15 @@ static void thin_defer_bio(struct thin_c *tc, struct bio *bio)
- 	wake_worker(pool);
- }
+-	mutex_lock(&dm_bufio_clients_lock);
+-	list_for_each_entry(c, &dm_bufio_all_clients, client_list) {
+-		if (!dm_bufio_trylock(c))
+-			continue;
++	return max_age * HZ;
++}
  
-+static void thin_defer_bio_with_throttle(struct thin_c *tc, struct bio *bio)
+-		while (!list_empty(&c->lru[LIST_CLEAN])) {
+-			struct dm_buffer *b;
+-			b = list_entry(c->lru[LIST_CLEAN].prev,
+-				       struct dm_buffer, lru_list);
+-			if (!__cleanup_old_buffer(b, 0, max_age * HZ))
+-				break;
+-			dm_bufio_cond_resched();
+-		}
++static bool older_than(struct dm_buffer *b, unsigned long age_hz)
 +{
-+	struct pool *pool = tc->pool;
-+
-+	throttle_lock(&pool->throttle);
-+	thin_defer_bio(tc, bio);
-+	throttle_unlock(&pool->throttle);
++	return (jiffies - b->last_accessed) >= age_hz;
 +}
 +
- static void thin_hook_bio(struct thin_c *tc, struct bio *bio)
- {
- 	struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
-@@ -1937,7 +2000,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
- 	}
++static void __evict_old_buffers(struct dm_bufio_client *c, unsigned long age_hz)
++{
++	struct dm_buffer *b, *tmp;
++	unsigned retain_target = get_retain_buffers(c);
++	unsigned count;
++
++	dm_bufio_lock(c);
++
++	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
++	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_CLEAN], lru_list) {
++		if (count <= retain_target)
++			break;
++
++		if (!older_than(b, age_hz))
++			break;
++
++		if (__try_evict_buffer(b, 0))
++			count--;
  
- 	if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA)) {
--		thin_defer_bio(tc, bio);
-+		thin_defer_bio_with_throttle(tc, bio);
- 		return DM_MAPIO_SUBMITTED;
+-		dm_bufio_unlock(c);
+ 		dm_bufio_cond_resched();
  	}
++
++	dm_bufio_unlock(c);
++}
++
++static void cleanup_old_buffers(void)
++{
++	unsigned long max_age_hz = get_max_age_hz();
++	struct dm_bufio_client *c;
++
++	mutex_lock(&dm_bufio_clients_lock);
++
++	list_for_each_entry(c, &dm_bufio_all_clients, client_list)
++		__evict_old_buffers(c, max_age_hz);
++
+ 	mutex_unlock(&dm_bufio_clients_lock);
+ }
  
-@@ -2212,6 +2275,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 		goto bad_wq;
- 	}
+@@ -1846,6 +1884,9 @@ MODULE_PARM_DESC(max_cache_size_bytes, "Size of metadata cache");
+ module_param_named(max_age_seconds, dm_bufio_max_age, uint, S_IRUGO | S_IWUSR);
+ MODULE_PARM_DESC(max_age_seconds, "Max age of a buffer in seconds");
  
-+	throttle_init(&pool->throttle);
- 	INIT_WORK(&pool->worker, do_worker);
- 	INIT_DELAYED_WORK(&pool->waker, do_waker);
- 	INIT_DELAYED_WORK(&pool->no_space_timeout, do_no_space_timeout);
++module_param_named(retain_bytes, dm_bufio_retain_bytes, uint, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(retain_bytes, "Try to keep at least this many bytes cached in memory");
++
+ module_param_named(peak_allocated_bytes, dm_bufio_peak_allocated, ulong, S_IRUGO | S_IWUSR);
+ MODULE_PARM_DESC(peak_allocated_bytes, "Tracks the maximum allocated memory");
+ 
 -- 
 1.8.3.1
