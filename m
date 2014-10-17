@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 13/17] dm thin: factor out
-	remap_and_issue_overwrite
-Date: Fri, 17 Oct 2014 14:37:15 -0400
-Message-ID: <1413571039-31986-13-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 17/17] dm thin: sort the deferred
+	cells
+Date: Fri, 17 Oct 2014 14:37:19 -0400
+Message-ID: <1413571039-31986-17-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,76 +25,151 @@ To: dm-devel@redhat.com
 Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-Purely cleanup of duplicated code, no functional change.
+From: Joe Thornber <ejt@redhat.com>
 
+Sort the cells in logical block order before processing each cell in
+process_thin_deferred_cells().  This significantly improves the ondisk
+layout on rotational storage, whereby improving read performance.
+
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-thin.c | 38 ++++++++++++++++++++------------------
- 1 file changed, 20 insertions(+), 18 deletions(-)
+ drivers/md/dm-thin.c | 88 ++++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 68 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index fffdebc..4658635 100644
+index 0a202f7..cd63180 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -890,6 +890,20 @@ static void ll_zero(struct thin_c *tc, struct dm_thin_new_mapping *m,
- 	}
+@@ -17,6 +17,7 @@
+ #include <linux/init.h>
+ #include <linux/module.h>
+ #include <linux/slab.h>
++#include <linux/sort.h>
+ #include <linux/rbtree.h>
+ 
+ #define	DM_MSG_PREFIX	"thin"
+@@ -205,6 +206,8 @@ typedef void (*process_bio_fn)(struct thin_c *tc, struct bio *bio);
+ typedef void (*process_cell_fn)(struct thin_c *tc, struct dm_bio_prison_cell *cell);
+ typedef void (*process_mapping_fn)(struct dm_thin_new_mapping *m);
+ 
++#define CELL_SORT_ARRAY_SIZE 8192
++
+ struct pool {
+ 	struct list_head list;
+ 	struct dm_target *ti;	/* Only set if a pool target is bound */
+@@ -252,6 +255,8 @@ struct pool {
+ 
+ 	process_mapping_fn process_prepared_mapping;
+ 	process_mapping_fn process_prepared_discard;
++
++	struct dm_bio_prison_cell *cell_sort_array[CELL_SORT_ARRAY_SIZE];
+ };
+ 
+ static enum pool_mode get_pool_mode(struct pool *pool);
+@@ -1767,12 +1772,48 @@ static void process_thin_deferred_bios(struct thin_c *tc)
+ 	blk_finish_plug(&plug);
  }
  
-+static void remap_and_issue_overwrite(struct thin_c *tc, struct bio *bio,
-+				      dm_block_t data_block,
-+				      struct dm_thin_new_mapping *m)
++static int cmp_cells(const void *lhs, const void *rhs)
 +{
-+	struct pool *pool = tc->pool;
-+	struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
++	struct dm_bio_prison_cell *lhs_cell = *((struct dm_bio_prison_cell **) lhs);
++	struct dm_bio_prison_cell *rhs_cell = *((struct dm_bio_prison_cell **) rhs);
 +
-+	h->overwrite_mapping = m;
-+	m->bio = bio;
-+	save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
-+	inc_all_io_entry(pool, bio);
-+	remap_and_issue(tc, bio, data_block);
++	BUG_ON(!lhs_cell->holder);
++	BUG_ON(!rhs_cell->holder);
++
++	if (lhs_cell->holder->bi_iter.bi_sector < rhs_cell->holder->bi_iter.bi_sector)
++		return -1;
++
++	if (lhs_cell->holder->bi_iter.bi_sector > rhs_cell->holder->bi_iter.bi_sector)
++		return 1;
++
++	return 0;
 +}
 +
- /*
-  * A partial copy also needs to zero the uncopied region.
-  */
-@@ -924,15 +938,9 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	 * If the whole block of data is being overwritten, we can issue the
- 	 * bio immediately. Otherwise we use kcopyd to clone the data first.
- 	 */
--	if (io_overwrites_block(pool, bio)) {
--		struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
--
--		h->overwrite_mapping = m;
--		m->bio = bio;
--		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
--		inc_all_io_entry(pool, bio);
--		remap_and_issue(tc, bio, data_dest);
--	} else {
-+	if (io_overwrites_block(pool, bio))
-+		remap_and_issue_overwrite(tc, bio, data_dest, m);
-+	else {
- 		struct dm_io_region from, to;
++static unsigned sort_cells(struct pool *pool, struct list_head *cells)
++{
++	unsigned count = 0;
++	struct dm_bio_prison_cell *cell, *tmp;
++
++	list_for_each_entry_safe(cell, tmp, cells, user_list) {
++		if (count >= CELL_SORT_ARRAY_SIZE)
++			break;
++
++		pool->cell_sort_array[count++] = cell;
++		list_del(&cell->user_list);
++	}
++
++	sort(pool->cell_sort_array, count, sizeof(cell), cmp_cells, NULL);
++
++	return count;
++}
++
+ static void process_thin_deferred_cells(struct thin_c *tc)
+ {
+ 	struct pool *pool = tc->pool;
+ 	unsigned long flags;
+ 	struct list_head cells;
+-	struct dm_bio_prison_cell *cell, *tmp;
++	struct dm_bio_prison_cell *cell;
++	unsigned i, j, count;
  
- 		from.bdev = origin->bdev;
-@@ -1001,16 +1009,10 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
- 	if (!pool->pf.zero_new_blocks)
- 		process_prepared_mapping(m);
+ 	// FIXME: push down into per cell processing
+ 	if (tc->requeue_mode) {
+@@ -1789,27 +1830,34 @@ static void process_thin_deferred_cells(struct thin_c *tc)
+ 	if (list_empty(&cells))
+ 		return;
  
--	else if (io_overwrites_block(pool, bio)) {
--		struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
--
--		h->overwrite_mapping = m;
--		m->bio = bio;
--		save_and_set_endio(bio, &m->saved_bi_end_io, overwrite_endio);
--		inc_all_io_entry(pool, bio);
--		remap_and_issue(tc, bio, data_block);
-+	else if (io_overwrites_block(pool, bio))
-+		remap_and_issue_overwrite(tc, bio, data_block, m);
+-	list_for_each_entry_safe(cell, tmp, &cells, user_list) {
+-		BUG_ON(!cell->holder);
++	do {
++		count = sort_cells(tc->pool, &cells);
  
--	} else
-+	else
- 		ll_zero(tc, m,
- 			data_block * pool->sectors_per_block,
- 			(data_block + 1) * pool->sectors_per_block);
+-		/*
+-		 * If we've got no free new_mapping structs, and processing
+-		 * this bio might require one, we pause until there are some
+-		 * prepared mappings to process.
+-		 */
+-		if (ensure_next_mapping(pool)) {
+-			spin_lock_irqsave(&tc->lock, flags);
+-			list_add(&cell->user_list, &tc->deferred_cells);
+-			list_splice(&cells, &tc->deferred_cells);
+-			spin_unlock_irqrestore(&tc->lock, flags);
+-			break;
+-		}
++		for (i = 0; i < count; i++) {
++			cell = pool->cell_sort_array[i];
++			BUG_ON(!cell->holder);
+ 
+-		if (cell->holder->bi_rw & REQ_DISCARD)
+-			pool->process_discard_cell(tc, cell);
+-		else
+-			pool->process_cell(tc, cell);
+-	}
++			/*
++			 * If we've got no free new_mapping structs, and processing
++			 * this bio might require one, we pause until there are some
++			 * prepared mappings to process.
++			 */
++			if (ensure_next_mapping(pool)) {
++				for (j = i; j < count; j++)
++					list_add(&pool->cell_sort_array[j]->user_list, &cells);
++
++				spin_lock_irqsave(&tc->lock, flags);
++				list_splice(&cells, &tc->deferred_cells);
++				spin_unlock_irqrestore(&tc->lock, flags);
++				return;
++			}
++
++			if (cell->holder->bi_rw & REQ_DISCARD)
++				pool->process_discard_cell(tc, cell);
++			else
++				pool->process_cell(tc, cell);
++		}
++	} while (!list_empty(&cells));
+ }
+ 
+ static void thin_get(struct thin_c *tc);
 -- 
 1.8.3.1
