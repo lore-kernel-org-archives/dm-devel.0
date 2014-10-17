@@ -1,82 +1,80 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 09/17] dm: improve documentation and
-	code clarity in dm_merge_bvec
-Date: Fri, 17 Oct 2014 14:37:11 -0400
-Message-ID: <1413571039-31986-9-git-send-email-snitzer@redhat.com>
-References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: [git pull] device mapper changes for 3.18
+Date: Fri, 17 Oct 2014 15:11:45 -0400
+Message-ID: <20141017191144.GA26800@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
-In-Reply-To: <20141017183119.GA31854@redhat.com>
-References: <20141017183119.GA31854@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: ejt@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Junichi Nomura <j-nomura@ce.jp.nec.com>, Benjamin Marzinski <bmarzins@redhat.com>, Alexey Khoroshilov <khoroshilov@ispras.ru>, Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-These code changes do not introduce a functional change.
+Hi Linus,
 
-But bio_add_page() will never attempt to build up a bio larger than
-queue_max_sectors().  Similarly, bio_get_nr_vecs() is also bound by
-queue_max_sectors().  Therefore, there is no point in allowing
-dm_merge_bvec() to answer "how many sectors can a bio have at this
-offset?" with anything larger than queue_max_sectors().  Using
-queue_max_sectors() rather than BIO_MAX_SECTORS serves to more
-accurately convey the limits that are being imposed.
+I rebased the DM tree ontop of linux-block.git's 'for-3.18/core' at the
+beginning of October because DM core now depends on the newly introduced
+bioset_create_nobvec() interface.
 
-Also, use unlikely() to clarify the fact that the defensive code in
-dm_merge_bvec() relative to max_size going negative shouldn't ever
-happen -- if it does happen there is a bug in the block layer for
-requesting larger than dm_merge_bvec()'s initial response for a given
-offset.  Also, update a comment in dm_merge_bvec() relative to
-max_hw_sectors_kb.  And fix empty newline whitespace.
+The following changes since commit d8f429e1669b9709f5b669aac9d734dbe0640891:
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+  block: add bioset_create_nobvec() (2014-10-03 15:28:18 -0600)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 58f3927..0fee0e5 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1607,9 +1607,9 @@ static int dm_merge_bvec(struct request_queue *q,
- 	 * Find maximum amount of I/O that won't need splitting
- 	 */
- 	max_sectors = min(max_io_len(bvm->bi_sector, ti),
--			  (sector_t) BIO_MAX_SECTORS);
-+			  (sector_t) queue_max_sectors(q));
- 	max_size = (max_sectors << SECTOR_SHIFT) - bvm->bi_size;
--	if (max_size < 0)
-+	if (unlikely(max_size < 0)) /* this shouldn't _ever_ happen */
- 		max_size = 0;
- 
- 	/*
-@@ -1621,10 +1621,10 @@ static int dm_merge_bvec(struct request_queue *q,
- 		max_size = ti->type->merge(ti, bvm, biovec, max_size);
- 	/*
- 	 * If the target doesn't support merge method and some of the devices
--	 * provided their merge_bvec method (we know this by looking at
--	 * queue_max_hw_sectors), then we can't allow bios with multiple vector
--	 * entries.  So always set max_size to 0, and the code below allows
--	 * just one page.
-+	 * provided their merge_bvec method (we know this by looking for the
-+	 * max_hw_sectors that dm_set_device_limits may set), then we can't
-+	 * allow bios with multiple vector entries.  So always set max_size
-+	 * to 0, and the code below allows just one page.
- 	 */
- 	else if (queue_max_hw_sectors(q) <= PAGE_SIZE >> 9)
- 		max_size = 0;
--- 
-1.8.3.1
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.18
+
+for you to fetch changes up to 56ec16cb1e1ce46354de8511eef962a417c32c92:
+
+  dm log userspace: fix memory leak in dm_ulog_tfr_init failure path (2014-10-05 20:03:38 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+. fix DM's long-standing excessive use of memory by leveraging the new
+  bioset_create_nobvec() interface when creating the DM's bioset
+
+. fix a few bugs in dm-bufio and dm-log-userspace
+
+. add DM core support for a DM multipath use-case that requires loading
+  DM tables that contain devices that have failed (by allowing active
+  and inactive DM tables to share dm_devs)
+
+. add discard support to the DM raid target; like MD raid456 the user
+  must opt-in to raid456 discard support be specifying the
+  devices_handle_discard_safely=Y module param.
+
+----------------------------------------------------------------
+Alexey Khoroshilov (1):
+      dm log userspace: fix memory leak in dm_ulog_tfr_init failure path
+
+Benjamin Marzinski (2):
+      dm mpath: stop queueing IO when no valid paths exist
+      dm: allow active and inactive tables to share dm_devs
+
+Heinz Mauelshagen (2):
+      dm raid: add discard support for RAID levels 1 and 10
+      dm raid: add discard support for RAID levels 4, 5 and 6
+
+Joe Thornber (1):
+      dm bufio: update last_accessed when relinking a buffer
+
+Junichi Nomura (2):
+      dm: remove nr_iovecs parameter from alloc_tio()
+      dm: use bioset_create_nobvec()
+
+Mikulas Patocka (1):
+      dm bufio: when done scanning return from __scan immediately
+
+ drivers/md/dm-bufio.c                  |   5 +-
+ drivers/md/dm-ioctl.c                  |   2 +-
+ drivers/md/dm-log-userspace-transfer.c |   2 +-
+ drivers/md/dm-mpath.c                  |   4 +-
+ drivers/md/dm-raid.c                   |  60 +++++++++++++-
+ drivers/md/dm-table.c                  | 102 ++++++++---------------
+ drivers/md/dm.c                        | 143 ++++++++++++++++++++++++++++++---
+ drivers/md/dm.h                        |   5 +-
+ include/uapi/linux/dm-ioctl.h          |   4 +-
+ 9 files changed, 238 insertions(+), 89 deletions(-)
