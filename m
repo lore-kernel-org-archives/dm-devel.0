@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH 02/17] dm bufio: evict buffers that are
-	past the max age but retain some buffers
-Date: Fri, 17 Oct 2014 02:06:52 -0400
-Message-ID: <1413526027-21630-3-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH 03/17] dm bio prison: switch to using a
+	red black tree
+Date: Fri, 17 Oct 2014 02:06:53 -0400
+Message-ID: <1413526027-21630-4-git-send-email-snitzer@redhat.com>
 References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,208 +25,364 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-These changes help keep metadata backed by dm-bufio in-core longer which
-fixes reports of metadata churn in the face of heavy random IO workloads.
-
-Before, bufio evicted all buffers older than DM_BUFIO_DEFAULT_AGE_SECS.
-Having a device (e.g. dm-thinp or dm-cache) lose all metadata just
-because associated buffers had been idle for some time is unfriendly.
-
-Now, the user may now configure the number of bytes that bufio retains
-using the 'retain_bytes' module parameter.  The default is 256K.
-
-Also, the DM_BUFIO_WORK_TIMER_SECS and DM_BUFIO_DEFAULT_AGE_SECS
-defaults were quite low so increase them (to 30 and 300 respectively).
+Previously it was using a fixed sized hash table.  There are times
+when very many concurrent cells are held (such as when processing a very
+large discard).  When this happens the hash table performance becomes
+very poor.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-bufio.c | 109 ++++++++++++++++++++++++++++++++++----------------
- 1 file changed, 75 insertions(+), 34 deletions(-)
+ drivers/md/dm-bio-prison.c   | 172 ++++++++++++++++++-------------------------
+ drivers/md/dm-bio-prison.h   |   7 +-
+ drivers/md/dm-cache-target.c |   3 +-
+ drivers/md/dm-thin.c         |   3 +-
+ 4 files changed, 79 insertions(+), 106 deletions(-)
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index dcaa1d9..99579c8 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -35,12 +35,17 @@
- /*
-  * Check buffer ages in this interval (seconds)
-  */
--#define DM_BUFIO_WORK_TIMER_SECS	10
-+#define DM_BUFIO_WORK_TIMER_SECS	30
+diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
+index f752d12..90a5662 100644
+--- a/drivers/md/dm-bio-prison.c
++++ b/drivers/md/dm-bio-prison.c
+@@ -14,68 +14,38 @@
  
- /*
-  * Free buffers when they are older than this (seconds)
-  */
--#define DM_BUFIO_DEFAULT_AGE_SECS	60
-+#define DM_BUFIO_DEFAULT_AGE_SECS	300
-+
-+/*
-+ * The nr of bytes of cached data to keep around.
-+ */
-+#define DM_BUFIO_DEFAULT_RETAIN_BYTES   (256 * 1024)
+ /*----------------------------------------------------------------*/
  
- /*
-  * The number of bvec entries that are embedded directly in the buffer.
-@@ -216,6 +221,7 @@ static DEFINE_SPINLOCK(param_spinlock);
-  * Buffers are freed after this timeout
-  */
- static unsigned dm_bufio_max_age = DM_BUFIO_DEFAULT_AGE_SECS;
-+static unsigned dm_bufio_retain_bytes = DM_BUFIO_DEFAULT_RETAIN_BYTES;
+-struct bucket {
+-	spinlock_t lock;
+-	struct hlist_head cells;
+-};
++#define MIN_CELLS 1024
  
- static unsigned long dm_bufio_peak_allocated;
- static unsigned long dm_bufio_allocated_kmem_cache;
-@@ -1457,45 +1463,52 @@ static void drop_buffers(struct dm_bufio_client *c)
- }
- 
- /*
-- * Test if the buffer is unused and too old, and commit it.
-+ * We may not be able to evict this buffer if IO pending or the client
-+ * is still using it.  Caller is expected to know buffer is too old.
-+ *
-  * And if GFP_NOFS is used, we must not do any I/O because we hold
-  * dm_bufio_clients_lock and we would risk deadlock if the I/O gets
-  * rerouted to different bufio client.
-  */
--static int __cleanup_old_buffer(struct dm_buffer *b, gfp_t gfp,
--				unsigned long max_jiffies)
-+static bool __try_evict_buffer(struct dm_buffer *b, gfp_t gfp)
- {
--	if (jiffies - b->last_accessed < max_jiffies)
--		return 0;
+ struct dm_bio_prison {
++	spinlock_t lock;
+ 	mempool_t *cell_pool;
 -
- 	if (!(gfp & __GFP_FS)) {
- 		if (test_bit(B_READING, &b->state) ||
- 		    test_bit(B_WRITING, &b->state) ||
- 		    test_bit(B_DIRTY, &b->state))
--			return 0;
-+			return false;
+-	unsigned nr_buckets;
+-	unsigned hash_mask;
+-	struct bucket *buckets;
++	struct rb_root cells;
+ };
+ 
+-/*----------------------------------------------------------------*/
+-
+-static uint32_t calc_nr_buckets(unsigned nr_cells)
+-{
+-	uint32_t n = 128;
+-
+-	nr_cells /= 4;
+-	nr_cells = min(nr_cells, 8192u);
+-
+-	while (n < nr_cells)
+-		n <<= 1;
+-
+-	return n;
+-}
+-
+ static struct kmem_cache *_cell_cache;
+ 
+-static void init_bucket(struct bucket *b)
+-{
+-	spin_lock_init(&b->lock);
+-	INIT_HLIST_HEAD(&b->cells);
+-}
++/*----------------------------------------------------------------*/
+ 
+ /*
+  * @nr_cells should be the number of cells you want in use _concurrently_.
+  * Don't confuse it with the number of distinct keys.
+  */
+-struct dm_bio_prison *dm_bio_prison_create(unsigned nr_cells)
++struct dm_bio_prison *dm_bio_prison_create(void)
+ {
+-	unsigned i;
+-	uint32_t nr_buckets = calc_nr_buckets(nr_cells);
+-	size_t len = sizeof(struct dm_bio_prison) +
+-		(sizeof(struct bucket) * nr_buckets);
+-	struct dm_bio_prison *prison = kmalloc(len, GFP_KERNEL);
++	struct dm_bio_prison *prison = kmalloc(sizeof(*prison), GFP_KERNEL);
+ 
+ 	if (!prison)
+ 		return NULL;
+ 
+-	prison->cell_pool = mempool_create_slab_pool(nr_cells, _cell_cache);
++	spin_lock_init(&prison->lock);
++
++	prison->cell_pool = mempool_create_slab_pool(MIN_CELLS, _cell_cache);
+ 	if (!prison->cell_pool) {
+ 		kfree(prison);
+ 		return NULL;
  	}
  
- 	if (b->hold_count)
--		return 0;
-+		return false;
+-	prison->nr_buckets = nr_buckets;
+-	prison->hash_mask = nr_buckets - 1;
+-	prison->buckets = (struct bucket *) (prison + 1);
+-	for (i = 0; i < nr_buckets; i++)
+-		init_bucket(prison->buckets + i);
++	prison->cells = RB_ROOT;
  
- 	__make_buffer_clean(b);
- 	__unlink_buffer(b);
- 	__free_buffer_wake(b);
+ 	return prison;
+ }
+@@ -101,68 +71,73 @@ void dm_bio_prison_free_cell(struct dm_bio_prison *prison,
+ }
+ EXPORT_SYMBOL_GPL(dm_bio_prison_free_cell);
  
--	return 1;
-+	return true;
+-static uint32_t hash_key(struct dm_bio_prison *prison, struct dm_cell_key *key)
++static void __setup_new_cell(struct dm_cell_key *key,
++			     struct bio *holder,
++			     struct dm_bio_prison_cell *cell)
+ {
+-	const unsigned long BIG_PRIME = 4294967291UL;
+-	uint64_t hash = key->block * BIG_PRIME;
+-
+-	return (uint32_t) (hash & prison->hash_mask);
++       memcpy(&cell->key, key, sizeof(cell->key));
++       cell->holder = holder;
++       bio_list_init(&cell->bios);
  }
  
--static long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
--		   gfp_t gfp_mask)
-+static unsigned get_retain_buffers(struct dm_bufio_client *c)
-+{
-+        unsigned retain_bytes = ACCESS_ONCE(dm_bufio_retain_bytes);
-+        return retain_bytes / c->block_size;
-+}
-+
-+static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
-+			    gfp_t gfp_mask)
+-static int keys_equal(struct dm_cell_key *lhs, struct dm_cell_key *rhs)
++static int cmp_keys(struct dm_cell_key *lhs,
++		    struct dm_cell_key *rhs)
  {
- 	int l;
- 	struct dm_buffer *b, *tmp;
--	long freed = 0;
-+	unsigned long freed = 0;
-+	unsigned long count = nr_to_scan;
-+	unsigned retain_target = get_retain_buffers(c);
+-	       return (lhs->virtual == rhs->virtual) &&
+-		       (lhs->dev == rhs->dev) &&
+-		       (lhs->block == rhs->block);
+-}
++	if (lhs->virtual < rhs->virtual)
++		return -1;
  
- 	for (l = 0; l < LIST_SIZE; l++) {
- 		list_for_each_entry_safe_reverse(b, tmp, &c->lru[l], lru_list) {
--			freed += __cleanup_old_buffer(b, gfp_mask, 0);
--			if (!--nr_to_scan)
-+			if (__try_evict_buffer(b, gfp_mask))
-+				freed++;
-+			if (!--nr_to_scan || ((count - freed) <= retain_target))
- 				return freed;
- 			dm_bufio_cond_resched();
- 		}
-@@ -1697,31 +1710,56 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
+-static struct bucket *get_bucket(struct dm_bio_prison *prison,
+-				 struct dm_cell_key *key)
+-{
+-	return prison->buckets + hash_key(prison, key);
+-}
++	if (lhs->virtual > rhs->virtual)
++		return 1;
+ 
+-static struct dm_bio_prison_cell *__search_bucket(struct bucket *b,
+-						  struct dm_cell_key *key)
+-{
+-	struct dm_bio_prison_cell *cell;
++	if (lhs->dev < rhs->dev)
++		return -1;
+ 
+-	hlist_for_each_entry(cell, &b->cells, list)
+-		if (keys_equal(&cell->key, key))
+-			return cell;
++	if (lhs->dev > rhs->dev)
++		return 1;
+ 
+-	return NULL;
+-}
++	if (lhs->block < rhs->block)
++		return -1;
+ 
+-static void __setup_new_cell(struct bucket *b,
+-			     struct dm_cell_key *key,
+-			     struct bio *holder,
+-			     struct dm_bio_prison_cell *cell)
+-{
+-	memcpy(&cell->key, key, sizeof(cell->key));
+-	cell->holder = holder;
+-	bio_list_init(&cell->bios);
+-	hlist_add_head(&cell->list, &b->cells);
++	if (lhs->block > rhs->block)
++		return 1;
++
++	return 0;
  }
- EXPORT_SYMBOL_GPL(dm_bufio_client_destroy);
  
--static void cleanup_old_buffers(void)
-+static unsigned get_max_age_hz(void)
+-static int __bio_detain(struct bucket *b,
++static int __bio_detain(struct dm_bio_prison *prison,
+ 			struct dm_cell_key *key,
+ 			struct bio *inmate,
+ 			struct dm_bio_prison_cell *cell_prealloc,
+ 			struct dm_bio_prison_cell **cell_result)
  {
--	unsigned long max_age = ACCESS_ONCE(dm_bufio_max_age);
--	struct dm_bufio_client *c;
-+	unsigned max_age = ACCESS_ONCE(dm_bufio_max_age);
- 
--	if (max_age > ULONG_MAX / HZ)
--		max_age = ULONG_MAX / HZ;
-+	if (max_age > UINT_MAX / HZ)
-+		max_age = UINT_MAX / HZ;
- 
--	mutex_lock(&dm_bufio_clients_lock);
--	list_for_each_entry(c, &dm_bufio_all_clients, client_list) {
--		if (!dm_bufio_trylock(c))
--			continue;
-+	return max_age * HZ;
-+}
- 
--		while (!list_empty(&c->lru[LIST_CLEAN])) {
--			struct dm_buffer *b;
--			b = list_entry(c->lru[LIST_CLEAN].prev,
--				       struct dm_buffer, lru_list);
--			if (!__cleanup_old_buffer(b, 0, max_age * HZ))
--				break;
--			dm_bufio_cond_resched();
--		}
-+static bool older_than(struct dm_buffer *b, unsigned long age_hz)
-+{
-+	return (jiffies - b->last_accessed) >= age_hz;
-+}
+-	struct dm_bio_prison_cell *cell;
+-
+-	cell = __search_bucket(b, key);
+-	if (cell) {
+-		if (inmate)
+-			bio_list_add(&cell->bios, inmate);
+-		*cell_result = cell;
+-		return 1;
++	int r;
++	struct rb_node **new = &prison->cells.rb_node, *parent = NULL;
 +
-+static void __evict_old_buffers(struct dm_bufio_client *c, unsigned long age_hz)
-+{
-+	struct dm_buffer *b, *tmp;
-+	unsigned retain_target = get_retain_buffers(c);
-+	unsigned count;
++	while (*new) {
++		struct dm_bio_prison_cell *cell =
++			container_of(*new, struct dm_bio_prison_cell, node);
 +
-+	dm_bufio_lock(c);
++		r = cmp_keys(key, &cell->key);
 +
-+	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
-+	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_CLEAN], lru_list) {
-+		if (count <= retain_target)
-+			break;
-+
-+		if (!older_than(b, age_hz))
-+			break;
-+
-+		if (__try_evict_buffer(b, 0))
-+			count--;
- 
--		dm_bufio_unlock(c);
- 		dm_bufio_cond_resched();
++		parent = *new;
++		if (r < 0)
++			new = &((*new)->rb_left);
++		else if (r > 0)
++			new = &((*new)->rb_right);
++		else {
++			if (inmate)
++				bio_list_add(&cell->bios, inmate);
++			*cell_result = cell;
++			return 1;
++		}
  	}
+ 
+-	__setup_new_cell(b, key, inmate, cell_prealloc);
++	__setup_new_cell(key, inmate, cell_prealloc);
+ 	*cell_result = cell_prealloc;
 +
-+	dm_bufio_unlock(c);
-+}
++	rb_link_node(&cell_prealloc->node, parent, new);
++	rb_insert_color(&cell_prealloc->node, &prison->cells);
 +
-+static void cleanup_old_buffers(void)
-+{
-+	unsigned long max_age_hz = get_max_age_hz();
-+	struct dm_bufio_client *c;
-+
-+	mutex_lock(&dm_bufio_clients_lock);
-+
-+	list_for_each_entry(c, &dm_bufio_all_clients, client_list)
-+		__evict_old_buffers(c, max_age_hz);
-+
- 	mutex_unlock(&dm_bufio_clients_lock);
+ 	return 0;
  }
  
-@@ -1846,6 +1884,9 @@ MODULE_PARM_DESC(max_cache_size_bytes, "Size of metadata cache");
- module_param_named(max_age_seconds, dm_bufio_max_age, uint, S_IRUGO | S_IWUSR);
- MODULE_PARM_DESC(max_age_seconds, "Max age of a buffer in seconds");
+@@ -174,11 +149,10 @@ static int bio_detain(struct dm_bio_prison *prison,
+ {
+ 	int r;
+ 	unsigned long flags;
+-	struct bucket *b = get_bucket(prison, key);
  
-+module_param_named(retain_bytes, dm_bufio_retain_bytes, uint, S_IRUGO | S_IWUSR);
-+MODULE_PARM_DESC(retain_bytes, "Try to keep at least this many bytes cached in memory");
+-	spin_lock_irqsave(&b->lock, flags);
+-	r = __bio_detain(b, key, inmate, cell_prealloc, cell_result);
+-	spin_unlock_irqrestore(&b->lock, flags);
++	spin_lock_irqsave(&prison->lock, flags);
++	r = __bio_detain(prison, key, inmate, cell_prealloc, cell_result);
++	spin_unlock_irqrestore(&prison->lock, flags);
+ 
+ 	return r;
+ }
+@@ -205,10 +179,11 @@ EXPORT_SYMBOL_GPL(dm_get_cell);
+ /*
+  * @inmates must have been initialised prior to this call
+  */
+-static void __cell_release(struct dm_bio_prison_cell *cell,
++static void __cell_release(struct dm_bio_prison *prison,
++			   struct dm_bio_prison_cell *cell,
+ 			   struct bio_list *inmates)
+ {
+-	hlist_del(&cell->list);
++	rb_erase(&cell->node, &prison->cells);
+ 
+ 	if (inmates) {
+ 		if (cell->holder)
+@@ -222,21 +197,21 @@ void dm_cell_release(struct dm_bio_prison *prison,
+ 		     struct bio_list *bios)
+ {
+ 	unsigned long flags;
+-	struct bucket *b = get_bucket(prison, &cell->key);
+ 
+-	spin_lock_irqsave(&b->lock, flags);
+-	__cell_release(cell, bios);
+-	spin_unlock_irqrestore(&b->lock, flags);
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release(prison, cell, bios);
++	spin_unlock_irqrestore(&prison->lock, flags);
+ }
+ EXPORT_SYMBOL_GPL(dm_cell_release);
+ 
+ /*
+  * Sometimes we don't want the holder, just the additional bios.
+  */
+-static void __cell_release_no_holder(struct dm_bio_prison_cell *cell,
++static void __cell_release_no_holder(struct dm_bio_prison *prison,
++				     struct dm_bio_prison_cell *cell,
+ 				     struct bio_list *inmates)
+ {
+-	hlist_del(&cell->list);
++	rb_erase(&cell->node, &prison->cells);
+ 	bio_list_merge(inmates, &cell->bios);
+ }
+ 
+@@ -245,11 +220,10 @@ void dm_cell_release_no_holder(struct dm_bio_prison *prison,
+ 			       struct bio_list *inmates)
+ {
+ 	unsigned long flags;
+-	struct bucket *b = get_bucket(prison, &cell->key);
+ 
+-	spin_lock_irqsave(&b->lock, flags);
+-	__cell_release_no_holder(cell, inmates);
+-	spin_unlock_irqrestore(&b->lock, flags);
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release_no_holder(prison, cell, inmates);
++	spin_unlock_irqrestore(&prison->lock, flags);
+ }
+ EXPORT_SYMBOL_GPL(dm_cell_release_no_holder);
+ 
+diff --git a/drivers/md/dm-bio-prison.h b/drivers/md/dm-bio-prison.h
+index 6805a14..997a439 100644
+--- a/drivers/md/dm-bio-prison.h
++++ b/drivers/md/dm-bio-prison.h
+@@ -10,8 +10,8 @@
+ #include "persistent-data/dm-block-manager.h" /* FIXME: for dm_block_t */
+ #include "dm-thin-metadata.h" /* FIXME: for dm_thin_id */
+ 
+-#include <linux/list.h>
+ #include <linux/bio.h>
++#include <linux/rbtree.h>
+ 
+ /*----------------------------------------------------------------*/
+ 
+@@ -35,13 +35,14 @@ struct dm_cell_key {
+  * themselves.
+  */
+ struct dm_bio_prison_cell {
+-	struct hlist_node list;
++	struct rb_node node;
 +
- module_param_named(peak_allocated_bytes, dm_bufio_peak_allocated, ulong, S_IRUGO | S_IWUSR);
- MODULE_PARM_DESC(peak_allocated_bytes, "Tracks the maximum allocated memory");
+ 	struct dm_cell_key key;
+ 	struct bio *holder;
+ 	struct bio_list bios;
+ };
  
+-struct dm_bio_prison *dm_bio_prison_create(unsigned nr_cells);
++struct dm_bio_prison *dm_bio_prison_create(void);
+ void dm_bio_prison_destroy(struct dm_bio_prison *prison);
+ 
+ /*
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 7130505..69de8b4 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -95,7 +95,6 @@ static void dm_unhook_bio(struct dm_hook_info *h, struct bio *bio)
+ 
+ /*----------------------------------------------------------------*/
+ 
+-#define PRISON_CELLS 1024
+ #define MIGRATION_POOL_SIZE 128
+ #define COMMIT_PERIOD HZ
+ #define MIGRATION_COUNT_WINDOW 10
+@@ -2327,7 +2326,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 	INIT_DELAYED_WORK(&cache->waker, do_waker);
+ 	cache->last_commit_jiffies = jiffies;
+ 
+-	cache->prison = dm_bio_prison_create(PRISON_CELLS);
++	cache->prison = dm_bio_prison_create();
+ 	if (!cache->prison) {
+ 		*error = "could not create bio prison";
+ 		goto bad;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 4843801..2459628 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -25,7 +25,6 @@
+  */
+ #define ENDIO_HOOK_POOL_SIZE 1024
+ #define MAPPING_POOL_SIZE 1024
+-#define PRISON_CELLS 1024
+ #define COMMIT_PERIOD HZ
+ #define NO_SPACE_TIMEOUT_SECS 60
+ 
+@@ -2185,7 +2184,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 		pool->sectors_per_block_shift = __ffs(block_size);
+ 	pool->low_water_blocks = 0;
+ 	pool_features_init(&pool->pf);
+-	pool->prison = dm_bio_prison_create(PRISON_CELLS);
++	pool->prison = dm_bio_prison_create();
+ 	if (!pool->prison) {
+ 		*error = "Error creating pool's bio prison";
+ 		err_p = ERR_PTR(-ENOMEM);
 -- 
 1.9.3
