@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v2 08/17] dm thin: adjust max_sectors_kb
-	based on thinp blocksize
-Date: Fri, 17 Oct 2014 14:37:10 -0400
-Message-ID: <1413571039-31986-8-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v2 11/17] dm thin: grab a virtual cell
+	before looking up the mapping
+Date: Fri, 17 Oct 2014 14:37:13 -0400
+Message-ID: <1413571039-31986-11-git-send-email-snitzer@redhat.com>
 References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,69 +25,73 @@ To: dm-devel@redhat.com
 Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-Allows for filesystems to submit bios that are a factor of the thinp
-blocksize, improving dm-thinp efficiency (particularly when the data
-volume is RAID).
+From: Joe Thornber <ejt@redhat.com>
 
-Also set io_min to max_sectors_kb if it is a factor of the thinp
-blocksize.
+Avoids normal IO racing with discard.
 
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-thin.c | 28 +++++++++++++++++++++++++---
- 1 file changed, 25 insertions(+), 3 deletions(-)
+ drivers/md/dm-thin.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 6057441..3f2b1d1 100644
+index 34e42a2..73a1c96 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -11,6 +11,7 @@
- #include <linux/device-mapper.h>
- #include <linux/dm-io.h>
- #include <linux/dm-kcopyd.h>
-+#include <linux/log2.h>
- #include <linux/list.h>
- #include <linux/rculist.h>
- #include <linux/init.h>
-@@ -3234,15 +3235,36 @@ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
- {
- 	struct pool_c *pt = ti->private;
- 	struct pool *pool = pt->pool;
--	uint64_t io_opt_sectors = limits->io_opt >> SECTOR_SHIFT;
-+	sector_t io_opt_sectors = limits->io_opt >> SECTOR_SHIFT;
-+
-+	/*
-+	 * Adjust max_sectors_kb to highest possible power-of-2
-+	 * factor of pool->sectors_per_block.
-+	 */
-+	if (limits->max_hw_sectors & (limits->max_hw_sectors - 1))
-+		limits->max_sectors = rounddown_pow_of_two(limits->max_hw_sectors);
-+	else
-+		limits->max_sectors = limits->max_hw_sectors;
-+
-+	if (limits->max_sectors < pool->sectors_per_block) {
-+		while (!is_factor(pool->sectors_per_block, limits->max_sectors))
-+			limits->max_sectors = rounddown_pow_of_two(limits->max_sectors);
-+	} else if (block_size_is_power_of_two(pool)) {
-+		/* max_sectors_kb is >= power-of-2 thinp blocksize */
-+		while (!is_factor(limits->max_sectors, pool->sectors_per_block))
-+			limits->max_sectors = rounddown_pow_of_two(limits->max_sectors);
-+	}
- 
- 	/*
- 	 * If the system-determined stacked limits are compatible with the
- 	 * pool's blocksize (io_opt is a factor) do not override them.
- 	 */
- 	if (io_opt_sectors < pool->sectors_per_block ||
--	    do_div(io_opt_sectors, pool->sectors_per_block)) {
--		blk_limits_io_min(limits, pool->sectors_per_block << SECTOR_SHIFT);
-+	    !is_factor(io_opt_sectors, pool->sectors_per_block)) {
-+		if (is_factor(pool->sectors_per_block, limits->max_sectors))
-+			blk_limits_io_min(limits, limits->max_sectors << SECTOR_SHIFT);
-+		else
-+			blk_limits_io_min(limits, pool->sectors_per_block << SECTOR_SHIFT);
- 		blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
+@@ -2005,6 +2005,14 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 		return DM_MAPIO_SUBMITTED;
  	}
  
++	/*
++	 * We must hold the virtual cell before doing the lookup, otherwise
++	 * there's a race with discard.
++	 */
++	build_virtual_key(tc->td, block, &key);
++	if (dm_bio_detain(tc->pool->prison, &key, bio, &cell1, &cell_result))
++		return DM_MAPIO_SUBMITTED;
++
+ 	r = dm_thin_find_block(td, block, 0, &result);
+ 
+ 	/*
+@@ -2028,13 +2036,10 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 			 * shared flag will be set in their case.
+ 			 */
+ 			thin_defer_bio(tc, bio);
++			cell_defer_no_holder_no_free(tc, &cell1);
+ 			return DM_MAPIO_SUBMITTED;
+ 		}
+ 
+-		build_virtual_key(tc->td, block, &key);
+-		if (dm_bio_detain(tc->pool->prison, &key, bio, &cell1, &cell_result))
+-			return DM_MAPIO_SUBMITTED;
+-
+ 		build_data_key(tc->td, result.block, &key);
+ 		if (dm_bio_detain(tc->pool->prison, &key, bio, &cell2, &cell_result)) {
+ 			cell_defer_no_holder_no_free(tc, &cell1);
+@@ -2055,12 +2060,14 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 			 * of doing so.
+ 			 */
+ 			handle_unserviceable_bio(tc->pool, bio);
++			cell_defer_no_holder_no_free(tc, &cell1);
+ 			return DM_MAPIO_SUBMITTED;
+ 		}
+ 		/* fall through */
+ 
+ 	case -EWOULDBLOCK:
+ 		thin_defer_bio(tc, bio);
++		cell_defer_no_holder_no_free(tc, &cell1);
+ 		return DM_MAPIO_SUBMITTED;
+ 
+ 	default:
+@@ -2070,6 +2077,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 		 * pool is switched to fail-io mode.
+ 		 */
+ 		bio_io_error(bio);
++		cell_defer_no_holder_no_free(tc, &cell1);
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
+ }
 -- 
 1.8.3.1
