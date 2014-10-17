@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH 05/17] dm transaction manager: add
-	support for prefetching blocks of metadata
-Date: Fri, 17 Oct 2014 02:06:55 -0400
-Message-ID: <1413526027-21630-6-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH 07/17] dm thin: throttle incoming IO
+Date: Fri, 17 Oct 2014 02:06:57 -0400
+Message-ID: <1413526027-21630-8-git-send-email-snitzer@redhat.com>
 References: <1413526027-21630-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,158 +24,133 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <ejt@redhat.com>
 
-Introduce the dm_tm_issue_prefetches interface.  If you're using a
-non-blocking clone the tm will build up a list of requested blocks that
-weren't in core.  dm_tm_issue_prefetches will request those blocks to be
-prefetched.
+Throttle IO based on the time it's taking the worker to do one loop.
+There were reports of hung task timeouts occuring and it was observed
+that the excessively long avgqu-sz (as reported by iostat) was
+contributing to these hung tasks.
+
+Throttling definitely helps dm-thinp perform better under heavy IO load
+(without being detremental by being overzealous).  It reduces avgqu-sz
+drastically, e.g.: from 60K to ~6K, and even as low as 150 once metadata
+is cached by bufio, when dirty_ratio=5, dirty_background_ratio=2.  And
+avgqu-sz stays at or below 30K even with dirty_ratio=20,
+dirty_background_ratio=10.
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- .../md/persistent-data/dm-transaction-manager.c    | 77 +++++++++++++++++++++-
- .../md/persistent-data/dm-transaction-manager.h    |  7 ++
- 2 files changed, 82 insertions(+), 2 deletions(-)
+ drivers/md/dm-thin.c | 57 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 57 insertions(+)
 
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-index 3bc30a0..9cb797d 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.c
-+++ b/drivers/md/persistent-data/dm-transaction-manager.c
-@@ -10,6 +10,8 @@
- #include "dm-persistent-data-internal.h"
- 
- #include <linux/export.h>
-+#include <linux/mutex.h>
-+#include <linux/hash.h>
- #include <linux/slab.h>
- #include <linux/device-mapper.h>
- 
-@@ -17,6 +19,61 @@
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 1d25b51..d451ce5 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -126,6 +126,53 @@ static void build_virtual_key(struct dm_thin_device *td, dm_block_t b,
  
  /*----------------------------------------------------------------*/
  
-+#define PREFETCH_SIZE 128
-+#define PREFETCH_BITS 7
-+#define PREFETCH_SENTINEL ((dm_block_t) -1ULL)
++#define THROTTLE_THRESHOLD (1 * HZ)
 +
-+struct prefetch_set {
-+	struct mutex lock;
-+	dm_block_t blocks[PREFETCH_SIZE];
++struct throttle {
++	struct rw_semaphore lock;
++	unsigned long threshold;
++	bool throttle_applied;
 +};
 +
-+static unsigned prefetch_hash(dm_block_t b)
++static void throttle_init(struct throttle *t)
 +{
-+	return hash_64(b, PREFETCH_BITS);
++	init_rwsem(&t->lock);
++	t->throttle_applied = false;
 +}
 +
-+static void prefetch_wipe(struct prefetch_set *p)
++static void throttle_work_start(struct throttle *t)
 +{
-+	unsigned i;
-+	for (i = 0; i < PREFETCH_SIZE; i++)
-+		p->blocks[i] = PREFETCH_SENTINEL;
++	t->threshold = jiffies + THROTTLE_THRESHOLD;
 +}
 +
-+static void prefetch_init(struct prefetch_set *p)
++static void throttle_work_update(struct throttle *t)
 +{
-+	mutex_init(&p->lock);
-+	prefetch_wipe(p);
++	if (!t->throttle_applied && jiffies > t->threshold) {
++		down_write(&t->lock);
++		t->throttle_applied = true;
++	}
 +}
 +
-+static void prefetch_add(struct prefetch_set *p, dm_block_t b)
++static void throttle_work_complete(struct throttle *t)
 +{
-+	unsigned h = prefetch_hash(b);
-+
-+	mutex_lock(&p->lock);
-+	if (p->blocks[h] == PREFETCH_SENTINEL)
-+		p->blocks[h] = b;
-+
-+	mutex_unlock(&p->lock);
++	if (t->throttle_applied) {
++		t->throttle_applied = false;
++		up_write(&t->lock);
++	}
 +}
 +
-+static void prefetch_issue(struct prefetch_set *p, struct dm_block_manager *bm)
++static void throttle_lock(struct throttle *t)
 +{
-+	unsigned i;
++	down_read(&t->lock);
++}
 +
-+	mutex_lock(&p->lock);
-+
-+	for (i = 0; i < PREFETCH_SIZE; i++)
-+		if (p->blocks[i] != PREFETCH_SENTINEL) {
-+			dm_bm_prefetch(bm, p->blocks[i]);
-+			p->blocks[i] = PREFETCH_SENTINEL;
-+		}
-+
-+	mutex_unlock(&p->lock);
++static void throttle_unlock(struct throttle *t)
++{
++	up_read(&t->lock);
 +}
 +
 +/*----------------------------------------------------------------*/
 +
- struct shadow_info {
- 	struct hlist_node hlist;
- 	dm_block_t where;
-@@ -37,6 +94,8 @@ struct dm_transaction_manager {
+ /*
+  * A pool device ties together a metadata device and a data device.  It
+  * also provides the interface for creating and destroying internal
+@@ -175,6 +222,7 @@ struct pool {
+ 	struct dm_kcopyd_client *copier;
  
- 	spinlock_t lock;
- 	struct hlist_head buckets[DM_HASH_SIZE];
-+
-+	struct prefetch_set prefetches;
- };
+ 	struct workqueue_struct *wq;
++	struct throttle throttle;
+ 	struct work_struct worker;
+ 	struct delayed_work waker;
+ 	struct delayed_work no_space_timeout;
+@@ -1570,6 +1618,7 @@ static void process_thin_deferred_bios(struct thin_c *tc)
+ 			pool->process_bio(tc, bio);
  
- /*----------------------------------------------------------------*/
-@@ -117,6 +176,8 @@ static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
- 	for (i = 0; i < DM_HASH_SIZE; i++)
- 		INIT_HLIST_HEAD(tm->buckets + i);
- 
-+	prefetch_init(&tm->prefetches);
-+
- 	return tm;
- }
- 
-@@ -268,8 +329,14 @@ int dm_tm_read_lock(struct dm_transaction_manager *tm, dm_block_t b,
- 		    struct dm_block_validator *v,
- 		    struct dm_block **blk)
+ 		if ((count++ & 127) == 0) {
++			throttle_work_update(&pool->throttle);
+ 			dm_pool_issue_prefetches(pool->pmd);
+ 		}
+ 	}
+@@ -1657,10 +1706,15 @@ static void do_worker(struct work_struct *ws)
  {
--	if (tm->is_clone)
--		return dm_bm_read_try_lock(tm->real->bm, b, v, blk);
-+	if (tm->is_clone) {
-+		int r = dm_bm_read_try_lock(tm->real->bm, b, v, blk);
-+
-+		if (r == -EWOULDBLOCK)
-+			prefetch_add(&tm->real->prefetches, b);
-+
-+		return r;
-+	}
+ 	struct pool *pool = container_of(ws, struct pool, worker);
  
- 	return dm_bm_read_lock(tm->bm, b, v, blk);
++	throttle_work_start(&pool->throttle);
+ 	dm_pool_issue_prefetches(pool->pmd);
++	throttle_work_update(&pool->throttle);
+ 	process_prepared(pool, &pool->prepared_mappings, &pool->process_prepared_mapping);
++	throttle_work_update(&pool->throttle);
+ 	process_prepared(pool, &pool->prepared_discards, &pool->process_prepared_discard);
++	throttle_work_update(&pool->throttle);
+ 	process_deferred_bios(pool);
++	throttle_work_complete(&pool->throttle);
  }
-@@ -317,6 +384,12 @@ struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm)
- 	return tm->bm;
- }
- 
-+void dm_tm_issue_prefetches(struct dm_transaction_manager *tm)
-+{
-+	prefetch_issue(&tm->prefetches, tm->bm);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_issue_prefetches);
-+
- /*----------------------------------------------------------------*/
- 
- static int dm_tm_create_internal(struct dm_block_manager *bm,
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.h b/drivers/md/persistent-data/dm-transaction-manager.h
-index 2772ed2..2e0d4d6 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.h
-+++ b/drivers/md/persistent-data/dm-transaction-manager.h
-@@ -109,6 +109,13 @@ int dm_tm_ref(struct dm_transaction_manager *tm, dm_block_t b,
- struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm);
  
  /*
-+ * If you're using a non-blocking clone the tm will build up a list of
-+ * requested blocks that weren't in core.  This call will request those
-+ * blocks to be prefetched.
-+ */
-+void dm_tm_issue_prefetches(struct dm_transaction_manager *tm);
-+
-+/*
-  * A little utility that ties the knot by producing a transaction manager
-  * that has a space map managed by the transaction manager...
-  *
+@@ -1893,9 +1947,11 @@ static void thin_defer_bio(struct thin_c *tc, struct bio *bio)
+ 	unsigned long flags;
+ 	struct pool *pool = tc->pool;
+ 
++	throttle_lock(&pool->throttle);
+ 	spin_lock_irqsave(&tc->lock, flags);
+ 	bio_list_add(&tc->deferred_bio_list, bio);
+ 	spin_unlock_irqrestore(&tc->lock, flags);
++	throttle_unlock(&pool->throttle);
+ 
+ 	wake_worker(pool);
+ }
+@@ -2212,6 +2268,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 		goto bad_wq;
+ 	}
+ 
++	throttle_init(&pool->throttle);
+ 	INIT_WORK(&pool->worker, do_worker);
+ 	INIT_DELAYED_WORK(&pool->waker, do_waker);
+ 	INIT_DELAYED_WORK(&pool->no_space_timeout, do_no_space_timeout);
 -- 
 1.9.3
