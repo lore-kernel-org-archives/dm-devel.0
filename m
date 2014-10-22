@@ -1,16 +1,18 @@
-From: "Vaknin, Rami" <Rami.Vaknin@emc.com>
-Subject: Re: rr_min_io vs rr_min_io_rq on 6.5
-Date: Wed, 22 Oct 2014 08:28:35 +0000
-Message-ID: <CBD76F19A3EEF14686BFFB30222C123C1FFB148C@MX106CL02.corp.emc.com>
-References: <CBD76F19A3EEF14686BFFB30222C123C1FFB1182@MX106CL02.corp.emc.com>
-	<20141021210003.GP10973@ask-08.lab.msp.redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [for-3.19 PATCH v2 01/17] dm bufio: switch from a
+ huge hash table to an rbtree
+Date: Wed, 22 Oct 2014 10:41:09 +0100
+Message-ID: <20141022094109.GA26664@debian>
+References: <20141017183119.GA31854@redhat.com>
+	<1413571039-31986-1-git-send-email-snitzer@redhat.com>
+	<alpine.LRH.2.02.1410211842110.10775@file01.intranet.prod.int.rdu2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141021210003.GP10973@ask-08.lab.msp.redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1410211842110.10775@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,100 +22,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, ejt@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks Ben, that was very helpful.
-I can see now that only changes of the rr_min_io_rq value inflected in dmsetup table, no matter what path_selector I use.
-I also see that rr_min_io_rq influences performance only in round-robin path_selector while only rr_min_io influences performance in queue-length path_selector.
+On Tue, Oct 21, 2014 at 06:48:00PM -0400, Mikulas Patocka wrote:
+> I wonder if we need this patch if it doesn't really help performance.
 
+I wasn't concerned with performance.  I just thought it absurd that
+bufio was evicting all my metadata yet using 8m per client for a hash
+table.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Benjamin Marzinski
-Sent: Wednesday, October 22, 2014 12:00 AM
-To: device-mapper development
-Subject: Re: [dm-devel] rr_min_io vs rr_min_io_rq on 6.5
-
-On Tue, Oct 21, 2014 at 08:03:09AM +0000, Vaknin, Rami wrote:
->    Hi,
-> 
->     
-> 
->    I'm working on 6.5 running with 2.6.32-431.el6.x86_64, my multipath.conf
->    if configured with both rr_min_io and rr_min_io_rq, running 64k 100% write
->    load to my storage system using 8 paths over FC ("queue-length" policy).
-> 
->     
-> 
->    I found [1] that rr_min_io is deprecated in favor of rr_min_io_rq, but
->    playing with these values show that different rr_min_io_rq have no
->    influence on performance in my env, however, different values of rr_min_io
->    have huge influence on the average latency I get for the same iops.
-> 
->     
-> 
->    Am I missing something?
-
-I'm not sure what you're seeing. As long as your dm_multipath modules is at least version 1.1.0, you should be using rr_min_io_rq, and with that kernel, it definitely should be.  You can check by rmmod and modprobing the dm_multipath module and checking /var/log/messages. You should see a line like
-
-kernel: device-mapper: multipath: version 1.6.0 loaded
-
-You can also check exactly what changing rr_min_io and rr_min_io_rq is doing.  All they do is set the number of IOs to send down a path before switching.  They do this by changing the value in the table you pass to device-mapper.  You can see that table by running
-
-# dmsetup table <devname>
-
-You will see something like this
-
-# dmsetup table mpathaa
-0 204800 multipath 0 0 3 1 round-robin 0 1 1 8:112 5 round-robin 0 1 1
-8:144 5 round-robin 0 1 1 8:128 5
-
-this "round-robin 0 1 1 8:112 5" is the setup of a single path group with one path.  If this was a multibus device with all paths in one pathgroup, it would look like
-
-# dmsetup table mpathaa
-0 204800 multipath 0 0 1 1 round-robin 0 3 1 8:112 5 8:144 5 8:128 5
-
-After each device major:minor, there is number (5 in this case). That's the number of IOs to send to this path before switching.  If multipath is using rr_min_io, then this will be whatever you set rr_min_io to. If multipath is using rr_min_io_rq this will be whatever you set rr_min_io_rq to.  In my case, I was running these commands on a RHEL-6.3 machine, with rr_min_io_rq set to 5 (just to make it stand out from all the 1s in table for this example. Not because it gives me better
-performance)
-
-try this and let me know what you see.
-
--Ben
-
-> 
->     
-> 
->     
-> 
->    [1]
->    
-> https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux
-> /6/html/DM_Multipath/MPIO_Overview.html
-> 
->     
-> 
->    device-mapper-libs-1.02.79-8.el6.x86_64
-> 
->    device-mapper-event-libs-1.02.79-8.el6.x86_64
-> 
->    device-mapper-persistent-data-0.2.8-2.el6.x86_64
-> 
->    device-mapper-1.02.79-8.el6.x86_64
-> 
->    device-mapper-event-1.02.79-8.el6.x86_64
-> 
->    device-mapper-multipath-libs-0.4.9-72.el6_5.3.x86_64
-> 
->    device-mapper-multipath-0.4.9-72.el6_5.3.x86_64
-> 
->     
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+- Joe
