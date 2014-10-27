@@ -1,141 +1,71 @@
-From: "Vaknin, Rami" <Rami.Vaknin@emc.com>
-Subject: Re: rr_min_io vs rr_min_io_rq on 6.5
-Date: Mon, 27 Oct 2014 09:28:33 +0000
-Message-ID: <CBD76F19A3EEF14686BFFB30222C123C1FFB1F4F@MX106CL02.corp.emc.com>
-References: <CBD76F19A3EEF14686BFFB30222C123C1FFB1182@MX106CL02.corp.emc.com>
-	<20141021210003.GP10973@ask-08.lab.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Alexander E. Patrakov" <patrakov@gmail.com>
+Subject: Re: On /dev/disk/by-id/ata-...-part2 missing, again
+Date: Mon, 27 Oct 2014 23:49:26 +0500
+Message-ID: <544E93B6.8000905@gmail.com>
+References: <544E76F1.4000205@gmail.com> <20141027164905.GT16250@gardel-login>
+ <544E796B.1020900@gmail.com> <20141027171335.GV16250@gardel-login>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <systemd-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20141027171335.GV16250@gardel-login>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
+List-Post: <mailto:systemd-devel@lists.freedesktop.org>
+List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
+ <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: systemd-devel-bounces@lists.freedesktop.org
+Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
+To: Lennart Poettering <mzerqung@0pointer.de>
+Cc: dm-devel@redhat.com, systemd Mailing List <systemd-devel@lists.freedesktop.org>
 List-Id: dm-devel.ids
 
-Hey again, I appreciate your help,
-
-I ran a few tests for the weekend, various rr_min_io_rq values result in the same performance when running with queue-length path_selector, however rr_min_io does affect performance on the same path_selector.
-The other way around happens on round robin path_selector - different rr_min_io_rq values result in different performance, rr_min_io changes do not affect performance.
-
-I still wonder why it behaves like that, I'm still not sure for the following:
-
-What does the "rr" prefix of "rr_min_io" stands for, round robin, is that a legacy name which now relates to all path_selectors?
-Is the dmsetup table valid for all path_selectors?
-Where can I found the counters of these paths, I'd like to make sure the path_selector works a defined, maybe my test do not uses them well or any imbalance issue.
-Does it matter what block size I use? What happens with block sizes bigger than 512k?
-
-Thanks, Rami.
-
-
-
------Original Message-----
-From: Vaknin, Rami 
-Sent: Wednesday, October 22, 2014 11:29 AM
-To: 'device-mapper development'
-Cc: 'Benjamin Marzinski'
-Subject: RE: [dm-devel] rr_min_io vs rr_min_io_rq on 6.5
-
-Thanks Ben, that was very helpful.
-I can see now that only changes of the rr_min_io_rq value inflected in dmsetup table, no matter what path_selector I use.
-I also see that rr_min_io_rq influences performance only in round-robin path_selector while only rr_min_io influences performance in queue-length path_selector.
-
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Benjamin Marzinski
-Sent: Wednesday, October 22, 2014 12:00 AM
-To: device-mapper development
-Subject: Re: [dm-devel] rr_min_io vs rr_min_io_rq on 6.5
-
-On Tue, Oct 21, 2014 at 08:03:09AM +0000, Vaknin, Rami wrote:
->    Hi,
-> 
->     
-> 
->    I'm working on 6.5 running with 2.6.32-431.el6.x86_64, my multipath.conf
->    if configured with both rr_min_io and rr_min_io_rq, running 64k 100% write
->    load to my storage system using 8 paths over FC ("queue-length" policy).
-> 
->     
-> 
->    I found [1] that rr_min_io is deprecated in favor of rr_min_io_rq, but
->    playing with these values show that different rr_min_io_rq have no
->    influence on performance in my env, however, different values of rr_min_io
->    have huge influence on the average latency I get for the same iops.
-> 
->     
-> 
->    Am I missing something?
-
-I'm not sure what you're seeing. As long as your dm_multipath modules is at least version 1.1.0, you should be using rr_min_io_rq, and with that kernel, it definitely should be.  You can check by rmmod and modprobing the dm_multipath module and checking /var/log/messages. You should see a line like
-
-kernel: device-mapper: multipath: version 1.6.0 loaded
-
-You can also check exactly what changing rr_min_io and rr_min_io_rq is doing.  All they do is set the number of IOs to send down a path before switching.  They do this by changing the value in the table you pass to device-mapper.  You can see that table by running
-
-# dmsetup table <devname>
-
-You will see something like this
-
-# dmsetup table mpathaa
-0 204800 multipath 0 0 3 1 round-robin 0 1 1 8:112 5 round-robin 0 1 1
-8:144 5 round-robin 0 1 1 8:128 5
-
-this "round-robin 0 1 1 8:112 5" is the setup of a single path group with one path.  If this was a multibus device with all paths in one pathgroup, it would look like
-
-# dmsetup table mpathaa
-0 204800 multipath 0 0 1 1 round-robin 0 3 1 8:112 5 8:144 5 8:128 5
-
-After each device major:minor, there is number (5 in this case). That's the number of IOs to send to this path before switching.  If multipath is using rr_min_io, then this will be whatever you set rr_min_io to. If multipath is using rr_min_io_rq this will be whatever you set rr_min_io_rq to.  In my case, I was running these commands on a RHEL-6.3 machine, with rr_min_io_rq set to 5 (just to make it stand out from all the 1s in table for this example. Not because it gives me better
-performance)
-
-try this and let me know what you see.
-
--Ben
-
-> 
->     
-> 
->     
-> 
->    [1]
->    
-> https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux
-> /6/html/DM_Multipath/MPIO_Overview.html
-> 
->     
-> 
->    device-mapper-libs-1.02.79-8.el6.x86_64
-> 
->    device-mapper-event-libs-1.02.79-8.el6.x86_64
-> 
->    device-mapper-persistent-data-0.2.8-2.el6.x86_64
-> 
->    device-mapper-1.02.79-8.el6.x86_64
-> 
->    device-mapper-event-1.02.79-8.el6.x86_64
-> 
->    device-mapper-multipath-libs-0.4.9-72.el6_5.3.x86_64
-> 
->    device-mapper-multipath-0.4.9-72.el6_5.3.x86_64
-> 
->     
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+MjcuMTAuMjAxNCAyMjoxMywgTGVubmFydCBQb2V0dGVyaW5nIHdyb3RlOgo+IE9uIE1vbiwgMjcu
+MTAuMTQgMjE6NTcsIEFsZXhhbmRlciBFLiBQYXRyYWtvdiAocGF0cmFrb3ZAZ21haWwuY29tKSB3
+cm90ZToKPgo+PiAyNy4xMC4yMDE0IDIxOjQ5LCBMZW5uYXJ0IFBvZXR0ZXJpbmcgd3JvdGU6Cj4+
+PiBPbiBNb24sIDI3LjEwLjE0IDIxOjQ2LCBBbGV4YW5kZXIgRS4gUGF0cmFrb3YgKHBhdHJha292
+QGdtYWlsLmNvbSkgd3JvdGU6Cj4+Pgo+Pj4+IFNvbWUgdGltZSBhZ28sIEkgaGF2ZSBjb21wbGFp
+bmVkIHRoYXQgc29tZSBib290cyBhcmUgdW5zdWNjZXNzZnVsLCBiZWNhdXNlCj4+Pj4gdGhlIC9k
+ZXYvZGlzay9ieS1pZC9hdGEtT0NaLVZFQ1RPUl9PQ1otWjVDQjRLQzIwWDBaRzdGOC1wYXJ0MiBz
+eW1saW5rICh3aGljaAo+Pj4+IHNob3VsZCBwb2ludCB0byAvZGV2L3NkYTIpIGlzIG5vdCBjcmVh
+dGVkIGJ5IHVkZXYgaW4gdGhlIGluaXRyYW1mcyAod2hpY2gKPj4+PiB1c2VzIGRyYWN1dCkuIFRo
+YW5rZnVsbHksIHBlb3BsZSBvbiBJUkMgaGF2ZSBzdWdnZXN0ZWQgc29tZSB1c2VmdWwgZGVidWdn
+aW5nCj4+Pj4gb3B0aW9uczoKPj4+Pgo+Pj4+IHN5c3RlbWQubG9nX2xldmVsPWRlYnVnIHJkLnVk
+ZXYubG9nLXByaW9yaXR5PWRlYnVnCj4+Pj4KPj4+PiBTbyBub3cgSSBoYXZlIGEgU09TIHJlcG9y
+dC4gSXQgaXMgb3ZlciAxIE1CLCBzbyBub3QgYXR0YWNoZWQuIFRoZSB1c2VmdWwKPj4+PiBsaW5l
+cyBhcmU6Cj4+Pj4KPj4+PiBbICAgIDMuMDI2NTE1XSBsb2NhbGhvc3Qgc3lzdGVtZC11ZGV2ZFsz
+MTldOiBVbmFibGUgdG8gZmxvY2soL2Rldi9zZGEpLAo+Pj4+IHNraXBwaW5nIGV2ZW50IGhhbmRs
+aW5nOiBSZXNvdXJjZSB0ZW1wb3JhcmlseSB1bmF2YWlsYWJsZQo+Pj4+IFsgICAgMy4wMjcyMjRd
+IGxvY2FsaG9zdCBzeXN0ZW1kLXVkZXZkWzMzM106IFVuYWJsZSB0byBmbG9jaygvZGV2L3NkYSks
+Cj4+Pj4gc2tpcHBpbmcgZXZlbnQgaGFuZGxpbmc6IFJlc291cmNlIHRlbXBvcmFyaWx5IHVuYXZh
+aWxhYmxlCj4+Pj4KPj4+PiBMZXQgbWUgY29tcGxhaW4gaGVyZSB0aGF0IHRoZXNlIGVycm9yIG1l
+c3NhZ2VzIHN0aWxsIGRvbid0IGNvbnRhaW4gdGhlCj4+Pj4gY29tcGxldGUgcGljdHVyZS4gSG93
+IGFtIEkgc3VwcG9zZWQgdG8ga25vdyB3aGljaCBwcm9ncmFtIGluIG15Cj4+Pj4gZHJhY3V0LWNy
+ZWF0ZWQgaW5pdHJhbWZzIGxvY2tzIC9kZXYvc2RhIGFuZCBpbnRlcmZlcmVzIHdpdGggdWRldiBl
+dmVudAo+Pj4+IGhhbmRsaW5nPwo+Pj4KPj4+IE1vc3QgbGlrZWx5IHlvdSBhcmUgZWl0aGVyIHVz
+aW5nIGEgdG9vIG9sZCB1dGlsLWxpbnV4LCB3aG9zZSB1c2Ugb2YKPj4+IEJTRCBsb2NrcyBjb25m
+bGljdCdzIHdpdGggdWRldidzIHVzZSBvZiBpdC4gKGZzY2sgLWwpCj4+Pgo+Pj4gUGxlYXNlIGFs
+d2F5cyBjaGVjayBSRUFETUUsIGl0IHdpbGwgbGV0IHlvdSBrbm93IHByZWNpc2VseSB3aGljaAo+
+Pj4gcmVsZWFzZSBvZiB1dGlsLWxpbnV4IHlvdSBuZWVkIGF0IGxlYXN0Lgo+Pgo+PiBJIHVzZSBm
+c2NrIGZyb20gdXRpbC1saW51eCAyLjI1LjEuIFZlcmlmaWVkIGJ5IGV4dHJhY3RpbmcgdGhlIGlu
+aXRyYW1mcy4KPj4gQWNjb3JkaW5nIHRvIHRoZSBSRUFETUUsIHRoaXMgdmVyc2lvbiBzaG91bGQg
+YmUgT0ssIHNvIGl0IG11c3QgYmUgc29tZXRoaW5nCj4+IGVsc2UuCj4KPiBIbW0sIHBsZWFzZSB1
+c2UgImxzbG9ja3MiIG9yIC9wcm9jL2xvY2tzIHRvIGZpZ3VyZSBvdXQgd2hpY2ggcHJvY2Vzcwo+
+IG1pZ2h0IGhhdmUgdGhlIGRldmljZSBub2RlcyBsb2NrZWQuCgpPSywgYWZ0ZXIgcGxheWluZyB3
+aXRoIC9ldGMvbGQuc28ucHJlbG9hZCBhbmQgc2hhcmVkIGxpYnJhcmllcywgSSBmb3VuZCAKdGhl
+IGJhZCBndXkuIEl0IGlzIG11bHRpcGF0aGQgZnJvbSBtdWx0aXBhdGgtdG9vbHMtMC41LjAuIEkg
+ZG9uJ3QgdXNlIAptdWx0aXBhdGgtdG9vbHMgb24gdGhpcyBkZXNrdG9wLCBidXQga25vdyB3aHkg
+dGhleSBhcmUgaGVyZSAoa3BhcnR4IHdhcyAKbmVlZGVkIGF0IG9uZSB0aW1lIGluIG9yZGVyIHRv
+IGRlYnVnIGEgcGFydGl0aW9uIHRhYmxlIGlzc3VlIHdpdGggYSBkaXNrIAppbWFnZSwgYnV0IG5v
+dyBJIHdvdWxkIHByb2JhYmx5IHVzZSBhIHBhcnRpdGlvbmVkIGxvb3AgZGV2aWNlIGZvciB0aGUg
+CnNhbWUgdGFzaykuIE5vdyB0aGV5IGFyZSBkZWZpbml0ZWx5IHVubmVlZGVkLgoKUmVtb3ZlZCB0
+aGVtLCBidXQgcGxlYXNlIGNvbnNpZGVyIHB1dHRpbmcgYSB3YXJuaW5nIGluIHRoZSBzeXN0ZW1k
+IApSRUFETUUgZmlsZSBvbiB0aGUgaW5jb21wYXRpYmlsaXR5LiBBcyB0aGVyZSBhcmUgbm8gbG9j
+a2luZy1yZWxhdGVkIApjb21taXRzIGluIHRoZSBtdWx0aXBhdGgtdG9vbHMgcmVwb3NpdG9yeSBz
+aW5jZSAwLjUuMCwgdGhpcyBpcyAKZGVmaW5pdGVseSBub3QgYSBwYWNrYWdpbmcgYnVnLgoKLS0g
+CkFsZXhhbmRlciBFLiBQYXRyYWtvdgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fXwpzeXN0ZW1kLWRldmVsIG1haWxpbmcgbGlzdApzeXN0ZW1kLWRldmVsQGxp
+c3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4v
+bGlzdGluZm8vc3lzdGVtZC1kZXZlbAo=
