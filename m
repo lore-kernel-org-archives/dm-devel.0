@@ -1,71 +1,80 @@
-From: "Alexander E. Patrakov" <patrakov@gmail.com>
-Subject: Re: On /dev/disk/by-id/ata-...-part2 missing, again
-Date: Mon, 27 Oct 2014 23:49:26 +0500
-Message-ID: <544E93B6.8000905@gmail.com>
-References: <544E76F1.4000205@gmail.com> <20141027164905.GT16250@gardel-login>
- <544E796B.1020900@gmail.com> <20141027171335.GV16250@gardel-login>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: [PATCHv2 0/4] blk-mq support for dm multipath
+Date: Tue, 28 Oct 2014 18:13:12 +0000 (UTC)
+Message-ID: <alpine.LNX.2.00.1410281808390.4225@localhost.lm.intel.com>
+References: <1413589598-17631-1-git-send-email-keith.busch@intel.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <systemd-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20141027171335.GV16250@gardel-login>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
-List-Post: <mailto:systemd-devel@lists.freedesktop.org>
-List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>,
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: systemd-devel-bounces@lists.freedesktop.org
-Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
-To: Lennart Poettering <mzerqung@0pointer.de>
-Cc: dm-devel@redhat.com, systemd Mailing List <systemd-devel@lists.freedesktop.org>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1413589598-17631-1-git-send-email-keith.busch@intel.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Keith Busch <keith.busch@intel.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-MjcuMTAuMjAxNCAyMjoxMywgTGVubmFydCBQb2V0dGVyaW5nIHdyb3RlOgo+IE9uIE1vbiwgMjcu
-MTAuMTQgMjE6NTcsIEFsZXhhbmRlciBFLiBQYXRyYWtvdiAocGF0cmFrb3ZAZ21haWwuY29tKSB3
-cm90ZToKPgo+PiAyNy4xMC4yMDE0IDIxOjQ5LCBMZW5uYXJ0IFBvZXR0ZXJpbmcgd3JvdGU6Cj4+
-PiBPbiBNb24sIDI3LjEwLjE0IDIxOjQ2LCBBbGV4YW5kZXIgRS4gUGF0cmFrb3YgKHBhdHJha292
-QGdtYWlsLmNvbSkgd3JvdGU6Cj4+Pgo+Pj4+IFNvbWUgdGltZSBhZ28sIEkgaGF2ZSBjb21wbGFp
-bmVkIHRoYXQgc29tZSBib290cyBhcmUgdW5zdWNjZXNzZnVsLCBiZWNhdXNlCj4+Pj4gdGhlIC9k
-ZXYvZGlzay9ieS1pZC9hdGEtT0NaLVZFQ1RPUl9PQ1otWjVDQjRLQzIwWDBaRzdGOC1wYXJ0MiBz
-eW1saW5rICh3aGljaAo+Pj4+IHNob3VsZCBwb2ludCB0byAvZGV2L3NkYTIpIGlzIG5vdCBjcmVh
-dGVkIGJ5IHVkZXYgaW4gdGhlIGluaXRyYW1mcyAod2hpY2gKPj4+PiB1c2VzIGRyYWN1dCkuIFRo
-YW5rZnVsbHksIHBlb3BsZSBvbiBJUkMgaGF2ZSBzdWdnZXN0ZWQgc29tZSB1c2VmdWwgZGVidWdn
-aW5nCj4+Pj4gb3B0aW9uczoKPj4+Pgo+Pj4+IHN5c3RlbWQubG9nX2xldmVsPWRlYnVnIHJkLnVk
-ZXYubG9nLXByaW9yaXR5PWRlYnVnCj4+Pj4KPj4+PiBTbyBub3cgSSBoYXZlIGEgU09TIHJlcG9y
-dC4gSXQgaXMgb3ZlciAxIE1CLCBzbyBub3QgYXR0YWNoZWQuIFRoZSB1c2VmdWwKPj4+PiBsaW5l
-cyBhcmU6Cj4+Pj4KPj4+PiBbICAgIDMuMDI2NTE1XSBsb2NhbGhvc3Qgc3lzdGVtZC11ZGV2ZFsz
-MTldOiBVbmFibGUgdG8gZmxvY2soL2Rldi9zZGEpLAo+Pj4+IHNraXBwaW5nIGV2ZW50IGhhbmRs
-aW5nOiBSZXNvdXJjZSB0ZW1wb3JhcmlseSB1bmF2YWlsYWJsZQo+Pj4+IFsgICAgMy4wMjcyMjRd
-IGxvY2FsaG9zdCBzeXN0ZW1kLXVkZXZkWzMzM106IFVuYWJsZSB0byBmbG9jaygvZGV2L3NkYSks
-Cj4+Pj4gc2tpcHBpbmcgZXZlbnQgaGFuZGxpbmc6IFJlc291cmNlIHRlbXBvcmFyaWx5IHVuYXZh
-aWxhYmxlCj4+Pj4KPj4+PiBMZXQgbWUgY29tcGxhaW4gaGVyZSB0aGF0IHRoZXNlIGVycm9yIG1l
-c3NhZ2VzIHN0aWxsIGRvbid0IGNvbnRhaW4gdGhlCj4+Pj4gY29tcGxldGUgcGljdHVyZS4gSG93
-IGFtIEkgc3VwcG9zZWQgdG8ga25vdyB3aGljaCBwcm9ncmFtIGluIG15Cj4+Pj4gZHJhY3V0LWNy
-ZWF0ZWQgaW5pdHJhbWZzIGxvY2tzIC9kZXYvc2RhIGFuZCBpbnRlcmZlcmVzIHdpdGggdWRldiBl
-dmVudAo+Pj4+IGhhbmRsaW5nPwo+Pj4KPj4+IE1vc3QgbGlrZWx5IHlvdSBhcmUgZWl0aGVyIHVz
-aW5nIGEgdG9vIG9sZCB1dGlsLWxpbnV4LCB3aG9zZSB1c2Ugb2YKPj4+IEJTRCBsb2NrcyBjb25m
-bGljdCdzIHdpdGggdWRldidzIHVzZSBvZiBpdC4gKGZzY2sgLWwpCj4+Pgo+Pj4gUGxlYXNlIGFs
-d2F5cyBjaGVjayBSRUFETUUsIGl0IHdpbGwgbGV0IHlvdSBrbm93IHByZWNpc2VseSB3aGljaAo+
-Pj4gcmVsZWFzZSBvZiB1dGlsLWxpbnV4IHlvdSBuZWVkIGF0IGxlYXN0Lgo+Pgo+PiBJIHVzZSBm
-c2NrIGZyb20gdXRpbC1saW51eCAyLjI1LjEuIFZlcmlmaWVkIGJ5IGV4dHJhY3RpbmcgdGhlIGlu
-aXRyYW1mcy4KPj4gQWNjb3JkaW5nIHRvIHRoZSBSRUFETUUsIHRoaXMgdmVyc2lvbiBzaG91bGQg
-YmUgT0ssIHNvIGl0IG11c3QgYmUgc29tZXRoaW5nCj4+IGVsc2UuCj4KPiBIbW0sIHBsZWFzZSB1
-c2UgImxzbG9ja3MiIG9yIC9wcm9jL2xvY2tzIHRvIGZpZ3VyZSBvdXQgd2hpY2ggcHJvY2Vzcwo+
-IG1pZ2h0IGhhdmUgdGhlIGRldmljZSBub2RlcyBsb2NrZWQuCgpPSywgYWZ0ZXIgcGxheWluZyB3
-aXRoIC9ldGMvbGQuc28ucHJlbG9hZCBhbmQgc2hhcmVkIGxpYnJhcmllcywgSSBmb3VuZCAKdGhl
-IGJhZCBndXkuIEl0IGlzIG11bHRpcGF0aGQgZnJvbSBtdWx0aXBhdGgtdG9vbHMtMC41LjAuIEkg
-ZG9uJ3QgdXNlIAptdWx0aXBhdGgtdG9vbHMgb24gdGhpcyBkZXNrdG9wLCBidXQga25vdyB3aHkg
-dGhleSBhcmUgaGVyZSAoa3BhcnR4IHdhcyAKbmVlZGVkIGF0IG9uZSB0aW1lIGluIG9yZGVyIHRv
-IGRlYnVnIGEgcGFydGl0aW9uIHRhYmxlIGlzc3VlIHdpdGggYSBkaXNrIAppbWFnZSwgYnV0IG5v
-dyBJIHdvdWxkIHByb2JhYmx5IHVzZSBhIHBhcnRpdGlvbmVkIGxvb3AgZGV2aWNlIGZvciB0aGUg
-CnNhbWUgdGFzaykuIE5vdyB0aGV5IGFyZSBkZWZpbml0ZWx5IHVubmVlZGVkLgoKUmVtb3ZlZCB0
-aGVtLCBidXQgcGxlYXNlIGNvbnNpZGVyIHB1dHRpbmcgYSB3YXJuaW5nIGluIHRoZSBzeXN0ZW1k
-IApSRUFETUUgZmlsZSBvbiB0aGUgaW5jb21wYXRpYmlsaXR5LiBBcyB0aGVyZSBhcmUgbm8gbG9j
-a2luZy1yZWxhdGVkIApjb21taXRzIGluIHRoZSBtdWx0aXBhdGgtdG9vbHMgcmVwb3NpdG9yeSBz
-aW5jZSAwLjUuMCwgdGhpcyBpcyAKZGVmaW5pdGVseSBub3QgYSBwYWNrYWdpbmcgYnVnLgoKLS0g
-CkFsZXhhbmRlciBFLiBQYXRyYWtvdgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fXwpzeXN0ZW1kLWRldmVsIG1haWxpbmcgbGlzdApzeXN0ZW1kLWRldmVsQGxp
-c3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4v
-bGlzdGluZm8vc3lzdGVtZC1kZXZlbAo=
+No comments this time. Did I totally botch this in the wrong direction,
+or was the timing bad with the linux con/plumbers that week?
+
+On Fri, 17 Oct 2014, Keith Busch wrote:
+> This series makes device mapper's multipath work with both blk-mq and
+> the older request_queue based block devices.
+>
+> As before, I tested with a slightly modified version of Matias' blk-mq
+> nvme driver with dual ported nvme controller. I'll post the nvme changes
+> to that list once the blk-mq mpath is good to go.
+>
+> I've tried to split this into logically separate patches to prep and
+> support this request_queue type.
+>
+> Patch [2/4] is a bit of a departure from what was done before, but I
+> hope something like this is alright.
+>
+> v1 -> v2:
+>
+> Micro-optimization setting the cloned rq->bio to null from dm-mpath
+> instead of blk_mq_rq_ctx_init.
+>
+> There's no way around getting a request without calling
+> blk_get_request. Making this API safe in an interrupt disabled context is
+> troublesome, so submitting the dm request to the target in a different
+> thread so it is NOT inline with dm's request_fn. We can use GFP_KERNEL
+> now since the allocation occurs in this new context. I believe this is
+> okay in both request queue types since neither allocate from general
+> purpose memory.
+>
+> In v1, the target would allocate the request and dm would release it. This
+> duality is somewhat changed: the target's map_rq is still responsible
+> to allocate since only it knows what request queue to allocate from,
+> and I've added a new target type function (unmap_rq) to handle releasing.
+>
+> I fixed the error handling; it was completely untested before and quite
+> broken. To test, I synthesized 4 different errors: no requests available,
+> no memory available to the clone bio, invalid target, and completing
+> requests in low-level driver with an error. All worked as expected on
+> blk-mq devices.
+>
+> Keith Busch (4):
+>  dm: prep initialized requests
+>  dm: Submit stacked requests in irq enabled context
+>  dm: Move request allocation to dm_target type
+>  block: blk-mq support for cloned requests
+>
+> block/blk-core.c              |    7 +-
+> drivers/md/dm-mpath.c         |   22 ++++--
+> drivers/md/dm-target.c        |    9 ++-
+> drivers/md/dm.c               |  155 +++++++++++++++++++++--------------------
+> include/linux/device-mapper.h |    7 +-
+> 5 files changed, 112 insertions(+), 88 deletions(-)
+>
+> -- 
+> 1.7.10.4
