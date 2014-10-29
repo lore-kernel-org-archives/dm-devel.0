@@ -1,13 +1,24 @@
-From: heinzm@redhat.com
-Subject: [PATCH] dm-raid: fix inaccessible superblocks causing
-	oops in configure_discard_support
-Date: Wed, 29 Oct 2014 18:05:50 +0100
-Message-ID: <1414602350-3609-1-git-send-email-heinzm@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: staged dm_internal_{suspend,
+ resume} related changes for wider review
+Date: Wed, 29 Oct 2014 15:06:49 -0400
+Message-ID: <20141029190649.GA3676@redhat.com>
+References: <20141028014825.GA21949@redhat.com> <544F988D.7090901@redhat.com>
+	<20141028134012.GA25229@redhat.com>
+	<20141028141749.GD25229@redhat.com>
+	<20141028143742.GE25229@redhat.com>
+	<20141028171003.GG25229@redhat.com>
+	<20141028224753.GA29288@redhat.com>
+	<20141028232638.GB29288@redhat.com>
+	<20141029002125.GC29288@redhat.com>
+	<20141029012256.GF29288@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20141029012256.GF29288@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,38 +28,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: ejt@redhat.com, Bryn Reeves <breeves@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+On Tue, Oct 28 2014 at  9:22pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-In case of missing metadata device(s), the failing read of the superblock
-ause the metadata and data devices to be removed from the dev array
-in struct raid_set setting references to both devces to NULL.
-configure_discard_support nonetheless tries to access the data dev
-unconditionally causing an oops.
+> I pushed rebased versions of these patches to linux-dm.git's
+> 'dm-for-3.19' branch (and pulled into 'for-next' purely to get the
+> kernel.org autobuilders testing the code).  See top 3 commits here:
+> https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.19
+> 
+> I'm open to any and all changes or dropping code entirely; so me staging
+> like this is just to keep the review ball rolling as quickly as
+> possible.
+> 
+> But in particular we need to get Mikulas' and Bryn's feedback on how the
+> dm_internal_{suspend,resume} changes impact dm-stats.
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 4857fa4..5818596 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1169,8 +1169,12 @@ static void configure_discard_support(struct dm_target *ti, struct raid_set *rs)
- 	raid456 = (rs->md.level == 4 || rs->md.level == 5 || rs->md.level == 6);
- 
- 	for (i = 0; i < rs->md.raid_disks; i++) {
--		struct request_queue *q = bdev_get_queue(rs->dev[i].rdev.bdev);
-+		struct request_queue *q;
- 
-+		if (!rs->dev[i].rdev.bdev)
-+			continue;
-+
-+		q = bdev_get_queue(rs->dev[i].rdev.bdev);
- 		if (!q || !blk_queue_discard(q))
- 			return;
- 
--- 
-1.9.3
+Rebased, and added a few more changes, see top 5 commits here:
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.19
