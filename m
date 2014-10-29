@@ -1,18 +1,13 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: Fw: [PATCH tip/core/rcu 4/9] dm: sparse: Annotate
- field with __rcu for checking
-Date: Tue, 28 Oct 2014 19:43:19 -0700
-Message-ID: <20141029024319.GI5718@linux.vnet.ibm.com>
-References: <20141028234925.GB8321@linux.vnet.ibm.com>
-	<20141029002513.GE29288@redhat.com>
-Reply-To: paulmck@linux.vnet.ibm.com,
-        device-mapper development <dm-devel@redhat.com>
+From: heinzm@redhat.com
+Subject: [PATCH] dm-raid: fix inaccessible superblocks causing
+	oops in configure_discard_support
+Date: Wed, 29 Oct 2014 18:05:50 +0100
+Message-ID: <1414602350-3609-1-git-send-email-heinzm@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20141029002513.GE29288@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,18 +17,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 28, 2014 at 08:25:13PM -0400, Mike Snitzer wrote:
-> On Tue, Oct 28 2014 at  7:49pm -0400,
-> Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
-> 
-> > And similarly for this one on both counts.
-> 
-> Yeap, I'll take it, thanks.
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Very good, I will drop both from my tree.
+In case of missing metadata device(s), the failing read of the superblock
+ause the metadata and data devices to be removed from the dev array
+in struct raid_set setting references to both devces to NULL.
+configure_discard_support nonetheless tries to access the data dev
+unconditionally causing an oops.
 
-							Thanx, Paul
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 4857fa4..5818596 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1169,8 +1169,12 @@ static void configure_discard_support(struct dm_target *ti, struct raid_set *rs)
+ 	raid456 = (rs->md.level == 4 || rs->md.level == 5 || rs->md.level == 6);
+ 
+ 	for (i = 0; i < rs->md.raid_disks; i++) {
+-		struct request_queue *q = bdev_get_queue(rs->dev[i].rdev.bdev);
++		struct request_queue *q;
+ 
++		if (!rs->dev[i].rdev.bdev)
++			continue;
++
++		q = bdev_get_queue(rs->dev[i].rdev.bdev);
+ 		if (!q || !blk_queue_discard(q))
+ 			return;
+ 
+-- 
+1.9.3
