@@ -1,23 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: staged dm_internal_{suspend,
-	resume} related changes for wider review
-Date: Tue, 28 Oct 2014 21:22:56 -0400
-Message-ID: <20141029012256.GF29288@redhat.com>
-References: <20141028014825.GA21949@redhat.com> <544F988D.7090901@redhat.com>
-	<20141028134012.GA25229@redhat.com>
-	<20141028141749.GD25229@redhat.com>
-	<20141028143742.GE25229@redhat.com>
-	<20141028171003.GG25229@redhat.com>
-	<20141028224753.GA29288@redhat.com>
-	<20141028232638.GB29288@redhat.com>
-	<20141029002125.GC29288@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: Fw: [PATCH tip/core/rcu 4/9] dm: sparse: Annotate
+ field with __rcu for checking
+Date: Tue, 28 Oct 2014 19:43:19 -0700
+Message-ID: <20141029024319.GI5718@linux.vnet.ibm.com>
+References: <20141028234925.GB8321@linux.vnet.ibm.com>
+	<20141029002513.GE29288@redhat.com>
+Reply-To: paulmck@linux.vnet.ibm.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20141029002125.GC29288@redhat.com>
+In-Reply-To: <20141029002513.GE29288@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,20 +22,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: ejt@redhat.com, Bryn Reeves <breeves@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-I pushed rebased versions of these patches to linux-dm.git's
-'dm-for-3.19' branch (and pulled into 'for-next' purely to get the
-kernel.org autobuilders testing the code).  See top 3 commits here:
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.19
+On Tue, Oct 28, 2014 at 08:25:13PM -0400, Mike Snitzer wrote:
+> On Tue, Oct 28 2014 at  7:49pm -0400,
+> Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
+> 
+> > And similarly for this one on both counts.
+> 
+> Yeap, I'll take it, thanks.
 
-I'm open to any and all changes or dropping code entirely; so me staging
-like this is just to keep the review ball rolling as quickly as
-possible.
+Very good, I will drop both from my tree.
 
-But in particular we need to get Mikulas' and Bryn's feedback on how the
-dm_internal_{suspend,resume} changes impact dm-stats.
-
-Mike
+							Thanx, Paul
