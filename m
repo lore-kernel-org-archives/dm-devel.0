@@ -1,106 +1,253 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 4/18] block copy: initial XCOPY offload support
-Date: Fri, 31 Oct 2014 10:22:14 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1410310931530.9022@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1410220913280.31351@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1410220926180.31351@file01.intranet.prod.int.rdu2.redhat.com> <5447D74E.3080503@interlog.com>
+Subject: Re: [for-3.19 PATCH v2 02/17] dm bufio: evict buffers
+ that are past the max age but retain some buffers
+Date: Fri, 31 Oct 2014 12:37:07 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1410311234050.9022@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1413571039-31986-1-git-send-email-snitzer@redhat.com>
+	<1413571039-31986-2-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5447D74E.3080503@interlog.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Douglas Gilbert <dgilbert@interlog.com>
-Cc: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Edward Thornber <thornber@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1413571039-31986-2-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
+Hi
 
+I've already created a patch for this purpose, see patches 
+dm-bufio-ratio.patch and dm-bufio-minimum-buffers.patch here: 
+http://people.redhat.com/~mpatocka/patches/kernel/dm-bufio-cache/series.html
 
-On Wed, 22 Oct 2014, Douglas Gilbert wrote:
-
-> See below ...
-> 
-> Perhaps you are checking somewhere else ... EXTENDED_COPY
-> opcode (0x83) has had service actions since SPC-4 rev 34
-> (February 2012). By the time SPC-4 becomes standardized
-> this command will most likely be called EXTENDED COPY(LID1)
-> and will be opcode=0x83, service_action=0.
-> 
-> To change the level of confusion, opcode 0x83 itself has
-> been renamed "Third-party Copy OUT". Not sure why T10 went
-> for mixed capitalization here when most other opcode names
-> are in upper case, perhaps to stress that it was an opcode
-> shared by several commands.
-> 
-> So please add a further check for ((cmd[1] & 0x1f) == 0)
-> unless that has been done elsewhere. With that in place
-> a COPY OPERATION ABORT [opcode=0x83, service_action=0x1c]
-> issued from my ddptctl utility won't trigger this code.
-
-OK, I changed that. BTW. what happens if that code path is executed as a 
-result of a command submitted via SG_IO? Is it correct to call sd_config_* 
-or modify req->__data_len in that case? The WRITE_SAME path modifies 
-req->__data_len too.
-
-> There is a T10 proposal to drop EXTENDED COPY(LID1) in
-> SPC-5 in favour of EXTENDED COPY(LID4) [opcode=0x83,
-> service_action=0x1] which can be considered as a
-> superset of the former. Something to think about for
-> the future; perhaps a comment.
->
-> And to push my own barrow here, have you considered
-> token based copies based on POPULATE TOKEN and WRITE
-> USING TOKEN? If not I can continue to use FreeBSD and
-> FreeNAS as they have implemented them (plus the LID4
-> equivalent of what its being presented here).
-
-Is there some software iSCSI implementation that supports these commands? 
-Target core doesn't seem to support them. If it doesn't support them, I 
-can't test it.
-
-> and ....
-> 
-> >   			case UNMAP:
-> >   				sd_config_discard(sdkp, SD_LBP_DISABLE);
-> >   				break;
-> > @@ -2745,6 +2910,105 @@ static void sd_read_write_same(struct sc
-> >   		sdkp->ws10 = 1;
-> >   }
-> > 
-> > +static void sd_read_copy_operations(struct scsi_disk *sdkp,
-> > +				    unsigned char *buffer)
-> > +{
-> > +	struct scsi_device *sdev = sdkp->device;
-> > +	struct scsi_sense_hdr sshdr;
-> > +	unsigned char cdb[16];
-> > +	unsigned int result, len, i;
-> > +	bool b2b_desc = false, id_desc = false;
-> > +
-> > +	if (sdev->naa_len == 0)
-> > +		return;
-> > +
-> > +	/* Verify that the device has 3PC set in INQUIRY response */
-> > +	if (sdev->inquiry_len < 6 || (sdev->inquiry[5] & (1 << 3)) == 0)
-> > +		return;
-> > +
-> > +	/* Receive Copy Operation Parameters */
-> > +	memset(cdb, 0, 16);
-> > +	cdb[0] = RECEIVE_COPY_RESULTS;
-> 
-> This is now the "Third-party Copy IN" opcode [0x84]. In this
-> case RECEIVE_COPY_RESULTS is deceptive as this is _not_ the
-> command being built.
-> 
-> > +	cdb[1] = 0x3;
-> 
-> with service action 0x3 which is the RECEIVE COPY OPERATION
-> PARAMETERS command. Opcode 0x84 has had service actions for
-> a lot longer than opcode 0x83, but the original naming lingers
-> on.
-> 
-> The code is correct, the naming could be clearer.
-> 
-> Doug Gilbert
-
-SPC-4 lists the command as RECEIVE_COPY_RESULTS and Linux already uses 
-that name in the target-core driver.
+The difference is that my patch sets the default amount of memory to keep 
+dynamically, as 1/500 of total memory.
 
 Mikulas
+
+
+On Fri, 17 Oct 2014, Mike Snitzer wrote:
+
+> From: Joe Thornber <ejt@redhat.com>
+> 
+> These changes help keep metadata backed by dm-bufio in-core longer which
+> fixes reports of metadata churn in the face of heavy random IO workloads.
+> 
+> Before, bufio evicted all buffers older than DM_BUFIO_DEFAULT_AGE_SECS.
+> Having a device (e.g. dm-thinp or dm-cache) lose all metadata just
+> because associated buffers had been idle for some time is unfriendly.
+> 
+> Now, the user may now configure the number of bytes that bufio retains
+> using the 'retain_bytes' module parameter.  The default is 256K.
+> 
+> Also, the DM_BUFIO_WORK_TIMER_SECS and DM_BUFIO_DEFAULT_AGE_SECS
+> defaults were quite low so increase them (to 30 and 300 respectively).
+> 
+> Signed-off-by: Joe Thornber <ejt@redhat.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm-bufio.c | 109 ++++++++++++++++++++++++++++++++++----------------
+>  1 file changed, 75 insertions(+), 34 deletions(-)
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index dcaa1d9..99579c8 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -35,12 +35,17 @@
+>  /*
+>   * Check buffer ages in this interval (seconds)
+>   */
+> -#define DM_BUFIO_WORK_TIMER_SECS	10
+> +#define DM_BUFIO_WORK_TIMER_SECS	30
+>  
+>  /*
+>   * Free buffers when they are older than this (seconds)
+>   */
+> -#define DM_BUFIO_DEFAULT_AGE_SECS	60
+> +#define DM_BUFIO_DEFAULT_AGE_SECS	300
+> +
+> +/*
+> + * The nr of bytes of cached data to keep around.
+> + */
+> +#define DM_BUFIO_DEFAULT_RETAIN_BYTES   (256 * 1024)
+>  
+>  /*
+>   * The number of bvec entries that are embedded directly in the buffer.
+> @@ -216,6 +221,7 @@ static DEFINE_SPINLOCK(param_spinlock);
+>   * Buffers are freed after this timeout
+>   */
+>  static unsigned dm_bufio_max_age = DM_BUFIO_DEFAULT_AGE_SECS;
+> +static unsigned dm_bufio_retain_bytes = DM_BUFIO_DEFAULT_RETAIN_BYTES;
+>  
+>  static unsigned long dm_bufio_peak_allocated;
+>  static unsigned long dm_bufio_allocated_kmem_cache;
+> @@ -1457,45 +1463,52 @@ static void drop_buffers(struct dm_bufio_client *c)
+>  }
+>  
+>  /*
+> - * Test if the buffer is unused and too old, and commit it.
+> + * We may not be able to evict this buffer if IO pending or the client
+> + * is still using it.  Caller is expected to know buffer is too old.
+> + *
+>   * And if GFP_NOFS is used, we must not do any I/O because we hold
+>   * dm_bufio_clients_lock and we would risk deadlock if the I/O gets
+>   * rerouted to different bufio client.
+>   */
+> -static int __cleanup_old_buffer(struct dm_buffer *b, gfp_t gfp,
+> -				unsigned long max_jiffies)
+> +static bool __try_evict_buffer(struct dm_buffer *b, gfp_t gfp)
+>  {
+> -	if (jiffies - b->last_accessed < max_jiffies)
+> -		return 0;
+> -
+>  	if (!(gfp & __GFP_FS)) {
+>  		if (test_bit(B_READING, &b->state) ||
+>  		    test_bit(B_WRITING, &b->state) ||
+>  		    test_bit(B_DIRTY, &b->state))
+> -			return 0;
+> +			return false;
+>  	}
+>  
+>  	if (b->hold_count)
+> -		return 0;
+> +		return false;
+>  
+>  	__make_buffer_clean(b);
+>  	__unlink_buffer(b);
+>  	__free_buffer_wake(b);
+>  
+> -	return 1;
+> +	return true;
+>  }
+>  
+> -static long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
+> -		   gfp_t gfp_mask)
+> +static unsigned get_retain_buffers(struct dm_bufio_client *c)
+> +{
+> +        unsigned retain_bytes = ACCESS_ONCE(dm_bufio_retain_bytes);
+> +        return retain_bytes / c->block_size;
+> +}
+> +
+> +static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
+> +			    gfp_t gfp_mask)
+>  {
+>  	int l;
+>  	struct dm_buffer *b, *tmp;
+> -	long freed = 0;
+> +	unsigned long freed = 0;
+> +	unsigned long count = nr_to_scan;
+> +	unsigned retain_target = get_retain_buffers(c);
+>  
+>  	for (l = 0; l < LIST_SIZE; l++) {
+>  		list_for_each_entry_safe_reverse(b, tmp, &c->lru[l], lru_list) {
+> -			freed += __cleanup_old_buffer(b, gfp_mask, 0);
+> -			if (!--nr_to_scan)
+> +			if (__try_evict_buffer(b, gfp_mask))
+> +				freed++;
+> +			if (!--nr_to_scan || ((count - freed) <= retain_target))
+>  				return freed;
+>  			dm_bufio_cond_resched();
+>  		}
+> @@ -1697,31 +1710,56 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
+>  }
+>  EXPORT_SYMBOL_GPL(dm_bufio_client_destroy);
+>  
+> -static void cleanup_old_buffers(void)
+> +static unsigned get_max_age_hz(void)
+>  {
+> -	unsigned long max_age = ACCESS_ONCE(dm_bufio_max_age);
+> -	struct dm_bufio_client *c;
+> +	unsigned max_age = ACCESS_ONCE(dm_bufio_max_age);
+>  
+> -	if (max_age > ULONG_MAX / HZ)
+> -		max_age = ULONG_MAX / HZ;
+> +	if (max_age > UINT_MAX / HZ)
+> +		max_age = UINT_MAX / HZ;
+>  
+> -	mutex_lock(&dm_bufio_clients_lock);
+> -	list_for_each_entry(c, &dm_bufio_all_clients, client_list) {
+> -		if (!dm_bufio_trylock(c))
+> -			continue;
+> +	return max_age * HZ;
+> +}
+>  
+> -		while (!list_empty(&c->lru[LIST_CLEAN])) {
+> -			struct dm_buffer *b;
+> -			b = list_entry(c->lru[LIST_CLEAN].prev,
+> -				       struct dm_buffer, lru_list);
+> -			if (!__cleanup_old_buffer(b, 0, max_age * HZ))
+> -				break;
+> -			dm_bufio_cond_resched();
+> -		}
+> +static bool older_than(struct dm_buffer *b, unsigned long age_hz)
+> +{
+> +	return (jiffies - b->last_accessed) >= age_hz;
+> +}
+> +
+> +static void __evict_old_buffers(struct dm_bufio_client *c, unsigned long age_hz)
+> +{
+> +	struct dm_buffer *b, *tmp;
+> +	unsigned retain_target = get_retain_buffers(c);
+> +	unsigned count;
+> +
+> +	dm_bufio_lock(c);
+> +
+> +	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
+> +	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_CLEAN], lru_list) {
+> +		if (count <= retain_target)
+> +			break;
+> +
+> +		if (!older_than(b, age_hz))
+> +			break;
+> +
+> +		if (__try_evict_buffer(b, 0))
+> +			count--;
+>  
+> -		dm_bufio_unlock(c);
+>  		dm_bufio_cond_resched();
+>  	}
+> +
+> +	dm_bufio_unlock(c);
+> +}
+> +
+> +static void cleanup_old_buffers(void)
+> +{
+> +	unsigned long max_age_hz = get_max_age_hz();
+> +	struct dm_bufio_client *c;
+> +
+> +	mutex_lock(&dm_bufio_clients_lock);
+> +
+> +	list_for_each_entry(c, &dm_bufio_all_clients, client_list)
+> +		__evict_old_buffers(c, max_age_hz);
+> +
+>  	mutex_unlock(&dm_bufio_clients_lock);
+>  }
+>  
+> @@ -1846,6 +1884,9 @@ MODULE_PARM_DESC(max_cache_size_bytes, "Size of metadata cache");
+>  module_param_named(max_age_seconds, dm_bufio_max_age, uint, S_IRUGO | S_IWUSR);
+>  MODULE_PARM_DESC(max_age_seconds, "Max age of a buffer in seconds");
+>  
+> +module_param_named(retain_bytes, dm_bufio_retain_bytes, uint, S_IRUGO | S_IWUSR);
+> +MODULE_PARM_DESC(retain_bytes, "Try to keep at least this many bytes cached in memory");
+> +
+>  module_param_named(peak_allocated_bytes, dm_bufio_peak_allocated, ulong, S_IRUGO | S_IWUSR);
+>  MODULE_PARM_DESC(peak_allocated_bytes, "Tracks the maximum allocated memory");
+>  
+> -- 
+> 1.8.3.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
