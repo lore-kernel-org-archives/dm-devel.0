@@ -1,15 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-thin  COMMIT_PERIOD problem
-Date: Sat, 1 Nov 2014 14:45:02 -0400
-Message-ID: <20141101184502.GB21830@redhat.com>
-References: <b827be6a-acd8-470d-94c4-6fb9a6cf114e@aliyun.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "lilofile" <lilofile@aliyun.com>
+Subject: =?utf-8?q?dm-block-manager_unused_variable?=
+Date: Mon, 03 Nov 2014 13:57:51 +0800
+Message-ID: <4047431e-d00a-41cf-bed6-d191483916b6@aliyun.com>
+Reply-To: lilofile <lilofile@aliyun.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <b827be6a-acd8-470d-94c4-6fb9a6cf114e@aliyun.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,20 +17,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: lilofile <lilofile@aliyun.com>
 Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gU2F0LCBOb3YgMDEgMjAxNCBhdCAxMDo0MGFtIC0wNDAwLApsaWxvZmlsZSA8bGlsb2ZpbGVA
-YWxpeXVuLmNvbT4gd3JvdGU6Cgo+IEluIGRtLXRoaW4uYyxDT01NSVRfUEVSSU9EIGlzIHNldCBI
-WiwgSSB0aGluayB0aGlzIHZhbHVlIGhhcyBhICBpbXBhY3Qgb24gc3lzdGVtIGltcGFjdCx0b28g
-ZnJlcXVlbnQgY29tbWl0IHdpbGwgcmVkdWNlIHRoZSB3cml0ZSBwZXJmb3JtYW5jZSBvZiB0aGUg
-c3lzdGVt77yfCj4gb3RoZXIgbWV0aG9kIHdoaWNoIGl0IGlzIHN1Ym1pdHRlZCBieSAgdGhlIHRv
-dGFsIHNpemUgb2YgZGlydHkgZGF0YSAgIGlzIGZlYXNpYmxl77yfCgpJdCBvbmx5IGlzc3VlcyBJ
-TyBpZiBjaGFuZ2VzIGhhdmUgb2NjdXJlZC4gIEl0IGlzbid0IHdyaXRpbmcgdG8gZGlzawpldmVy
-eSBzZWNvbmQgdW5sZXNzIGNoYW5nZXMgbmVlZCB0byBnZXQgdG8gZGlzayBhbnl3YXkuCgooVGhl
-cmUgd2FzIGEgYnVnIHdoZXJlIGl0IF9kaWRfIHdyaXRlIHRoZSBtZXRhZGF0YSBzdXBlcmJsb2Nr
-IGV2ZXJ5CnNlY29uZCBldmVuIHdoZW4gaXQgd2Fzbid0IG5lZWRlZC4uIHNpbmNlIGZpeGVkIHdp
-dGggdGhpcyBjb21taXQ6Cmh0dHA6Ly9naXQua2VybmVsLm9yZy9saW51cy80ZDE2NjJhMzAgKQoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+aW4gIGZpbGUgZG0tYmxvY2stbWFuYWdlci5jLCAgaW4gZnVuY3Rpb24gZG1fYmxvY2tfbWFuYWdl
+cl9jcmVhdGUoKSx0aGUgdmFyaWFibGUgY2FjaGVfc2l6ZSB1bnVzZWQ/IEFueSBkZXNpZ24gY29u
+c2lkZXJhdGlvbnPvvJ8KCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQrlj5Hku7bkurrvvJpNaWtlIFNuaXR6ZXIgPHNuaXR6
+ZXJAcmVkaGF0LmNvbT4K5Y+R6YCB5pe26Ze077yaMjAxNOW5tDEx5pyIMuaXpSjmmJ/mnJ/ml6Up
+IDAyOjQ2CuaUtuS7tuS6uu+8mmxpbG9maWxlIDxsaWxvZmlsZUBhbGl5dW4uY29tPgrmioTjgIDp
+gIHvvJpkbS1kZXZlbCA8ZG0tZGV2ZWxAcmVkaGF0LmNvbT4K5Li744CA6aKY77yaUmU6IFtkbS1k
+ZXZlbF0gZG0tdGhpbiAgQ09NTUlUX1BFUklPRCBwcm9ibGVtCgoKT24gU2F0LCBOb3YgMDEgMjAx
+NCBhdCAxMDo0MGFtIC0wNDAwLApsaWxvZmlsZSA8bGlsb2ZpbGVAYWxpeXVuLmNvbT4gd3JvdGU6
+Cgo+IEluIGRtLXRoaW4uYyxDT01NSVRfUEVSSU9EIGlzIHNldCBIWiwgSSB0aGluayB0aGlzIHZh
+bHVlIGhhcyBhICBpbXBhY3Qgb24gc3lzdGVtIGltcGFjdCx0b28gZnJlcXVlbnQgY29tbWl0IHdp
+bGwgcmVkdWNlIHRoZSB3cml0ZSBwZXJmb3JtYW5jZSBvZiB0aGUgc3lzdGVt77yfCj4gb3RoZXIg
+bWV0aG9kIHdoaWNoIGl0IGlzIHN1Ym1pdHRlZCBieSAgdGhlIHRvdGFsIHNpemUgb2YgZGlydHkg
+ZGF0YSAgIGlzIGZlYXNpYmxl77yfCgpJdCBvbmx5IGlzc3VlcyBJTyBpZiBjaGFuZ2VzIGhhdmUg
+b2NjdXJlZC4gIEl0IGlzbid0IHdyaXRpbmcgdG8gZGlzawpldmVyeSBzZWNvbmQgdW5sZXNzIGNo
+YW5nZXMgbmVlZCB0byBnZXQgdG8gZGlzayBhbnl3YXkuCgooVGhlcmUgd2FzIGEgYnVnIHdoZXJl
+IGl0IF9kaWRfIHdyaXRlIHRoZSBtZXRhZGF0YSBzdXBlcmJsb2NrIGV2ZXJ5CnNlY29uZCBldmVu
+IHdoZW4gaXQgd2Fzbid0IG5lZWRlZC4uIHNpbmNlIGZpeGVkIHdpdGggdGhpcyBjb21taXQ6Cmh0
+dHA6Ly9naXQua2VybmVsLm9yZy9saW51cy80ZDE2NjJhMzAgKQoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
