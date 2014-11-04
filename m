@@ -1,23 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: staged dm_internal_{suspend,
- resume} related changes for wider review
-Date: Mon, 3 Nov 2014 19:17:36 -0500
-Message-ID: <CAMM=eLd8iuMDtNr7f4Cu97ZEua3-pOW4pdSdVKji7g02mKXFwQ@mail.gmail.com>
-References: <20141028014825.GA21949@redhat.com> <544F988D.7090901@redhat.com>
-	<20141028134012.GA25229@redhat.com>
-	<20141028141749.GD25229@redhat.com>
-	<20141028143742.GE25229@redhat.com>
-	<20141028171003.GG25229@redhat.com>
-	<20141028224753.GA29288@redhat.com>
-	<20141028232638.GB29288@redhat.com>
-	<20141029002125.GC29288@redhat.com>
-	<20141029012256.GF29288@redhat.com>
-	<alpine.LRH.2.02.1411031823100.29299@file01.intranet.prod.int.rdu2.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH] dm-thin: Change couple of DMWARN() to pr_debug()
+Date: Tue, 4 Nov 2014 12:54:37 -0500
+Message-ID: <20141104175437.GA14026@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3143489642695859123=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1411031823100.29299@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,104 +18,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: ejt@redhat.com, "Bryn M. Reeves" <breeves@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
---===============3143489642695859123==
-Content-Type: multipart/alternative; boundary=047d7b342ba6ea4f4e0506fd63c0
+Right now we use DMWARN to output a message on console if thin/snap device
+creation fails. It has two problems.
 
---047d7b342ba6ea4f4e0506fd63c0
-Content-Type: text/plain; charset=UTF-8
+- First of all this is not a warning and an error. In case of error, just
+  returning code to user space should be good enough. If we need some debug
+  info out, then a better choice will be pr_debug() which can be enabled
+  when the need be.
 
-On Nov 3, 2014 6:27 PM, "Mikulas Patocka" <mpatocka@redhat.com> wrote:
->
->
->
-> On Tue, 28 Oct 2014, Mike Snitzer wrote:
->
-> > I pushed rebased versions of these patches to linux-dm.git's
-> > 'dm-for-3.19' branch (and pulled into 'for-next' purely to get the
-> > kernel.org autobuilders testing the code).  See top 3 commits here:
-> >
-https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-for-3.19
-> >
-> > I'm open to any and all changes or dropping code entirely; so me staging
-> > like this is just to keep the review ball rolling as quickly as
-> > possible.
-> >
-> > But in particular we need to get Mikulas' and Bryn's feedback on how the
-> > dm_internal_{suspend,resume} changes impact dm-stats.
-> >
-> > Mike
->
-> Hi
->
-> As I said on irc - it is not correct to take a mutex from one syscall and
-> drop the mutex from another syscall.
+- dm-thin expects users to keep track of already used device id. If an
+  application tries to reuse the id, then -EEXIST is returned but this
+  message is also displayed on console.
 
-I didn't modify that aspect of dm_internal_suspend+resume.  I only extended
-the interface to other targets via export.
+[17991.140135] device-mapper: thin: Creation of new snapshot 33 of device 3 failed
 
-> I hope Joe can use the bio prison to block bios while the pool is
-> suspended.
+Docker does not keep track of already used device ids. Instead it starts from
+0 and keeps on incrementing this id and retrying till it succeeds. And that
+leads to flooding console with above messages.
 
-We'll see.
+I think it is better to just return error code to user space and not give
+any warning. Instead convert this into pr_debug() so that if need be one
+can enable it dynamically using debugfs and get some debug data out on a
+running system.
 
---047d7b342ba6ea4f4e0506fd63c0
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+One can enable all pr_debug() in dm-thin.c file using following.
 
-<p dir=3D"ltr"><br>
-On Nov 3, 2014 6:27 PM, &quot;Mikulas Patocka&quot; &lt;<a href=3D"mailto:m=
-patocka@redhat.com">mpatocka@redhat.com</a>&gt; wrote:<br>
-&gt;<br>
-&gt;<br>
-&gt;<br>
-&gt; On Tue, 28 Oct 2014, Mike Snitzer wrote:<br>
-&gt;<br>
-&gt; &gt; I pushed rebased versions of these patches to linux-dm.git&#39;s<=
-br>
-&gt; &gt; &#39;dm-for-3.19&#39; branch (and pulled into &#39;for-next&#39; =
-purely to get the<br>
-&gt; &gt; <a href=3D"http://kernel.org">kernel.org</a> autobuilders testing=
- the code).=C2=A0 See top 3 commits here:<br>
-&gt; &gt; <a href=3D"https://git.kernel.org/cgit/linux/kernel/git/device-ma=
-pper/linux-dm.git/log/?h=3Ddm-for-3.19">https://git.kernel.org/cgit/linux/k=
-ernel/git/device-mapper/linux-dm.git/log/?h=3Ddm-for-3.19</a><br>
-&gt; &gt;<br>
-&gt; &gt; I&#39;m open to any and all changes or dropping code entirely; so=
- me staging<br>
-&gt; &gt; like this is just to keep the review ball rolling as quickly as<b=
-r>
-&gt; &gt; possible.<br>
-&gt; &gt;<br>
-&gt; &gt; But in particular we need to get Mikulas&#39; and Bryn&#39;s feed=
-back on how the<br>
-&gt; &gt; dm_internal_{suspend,resume} changes impact dm-stats.<br>
-&gt; &gt;<br>
-&gt; &gt; Mike<br>
-&gt;<br>
-&gt; Hi<br>
-&gt;<br>
-&gt; As I said on irc - it is not correct to take a mutex from one syscall =
-and<br>
-&gt; drop the mutex from another syscall.</p>
-<p dir=3D"ltr">I didn&#39;t modify that aspect of dm_internal_suspend+resum=
-e.=C2=A0 I only extended the interface to other targets via export.</p>
-<p dir=3D"ltr">&gt; I hope Joe can use the bio prison to block bios while t=
-he pool is<br>
-&gt; suspended.</p>
-<p dir=3D"ltr">We&#39;ll see.<br>
-</p>
+echo 'file dm-thin.c +p' > /sys/kernel/debug/dynamic_debug/control 
 
---047d7b342ba6ea4f4e0506fd63c0--
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ drivers/md/dm-thin.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-
---===============3143489642695859123==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3143489642695859123==--
+Index: linux-2.6/drivers/md/dm-thin.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-thin.c	2014-11-04 10:05:43.504600136 -0500
++++ linux-2.6/drivers/md/dm-thin.c	2014-11-04 10:15:48.984908908 -0500
+@@ -4,6 +4,8 @@
+  * This file is released under the GPL.
+  */
+ 
++#define pr_fmt(fmt)     "device-mapper: thin: " fmt
++
+ #include "dm-thin-metadata.h"
+ #include "dm-bio-prison.h"
+ #include "dm.h"
+@@ -2819,7 +2821,7 @@ static int process_create_thin_mesg(unsi
+ 
+ 	r = dm_pool_create_thin(pool->pmd, dev_id);
+ 	if (r) {
+-		DMWARN("Creation of new thinly-provisioned device with id %s failed.",
++		pr_debug("Creation of new thinly-provisioned device with id %s failed.",
+ 		       argv[1]);
+ 		return r;
+ 	}
+@@ -2847,7 +2849,7 @@ static int process_create_snap_mesg(unsi
+ 
+ 	r = dm_pool_create_snap(pool->pmd, dev_id, origin_dev_id);
+ 	if (r) {
+-		DMWARN("Creation of new snapshot %s of device %s failed.",
++		pr_debug("Creation of new snapshot %s of device %s failed.",
+ 		       argv[1], argv[2]);
+ 		return r;
+ 	}
