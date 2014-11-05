@@ -1,18 +1,25 @@
-From: "Faccini, Bruno" <bruno.faccini@intel.com>
-Subject: Re: [PATCH] md: submit MMP reads REQ_SYNC to bypass
- RAID5 cache
-Date: Tue, 4 Nov 2014 08:21:10 +0000
-Message-ID: <5C63781B-C556-4104-934A-8083976A4373@intel.com>
-References: <CAOdCWHxeE47jwjJvyWOoHdjZ4LaDFQiZZbGpqdLZzd+PjzpyRw@mail.gmail.com>
-	<20141104090436.355a8fb1@notabene.brown>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: staged dm_internal_{suspend,
+ resume} related changes for wider review
+Date: Wed, 5 Nov 2014 07:43:55 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1411050736410.11912@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20141028134012.GA25229@redhat.com>
+	<20141028141749.GD25229@redhat.com>
+	<20141028143742.GE25229@redhat.com>
+	<20141028171003.GG25229@redhat.com>
+	<20141028224753.GA29288@redhat.com>
+	<20141028232638.GB29288@redhat.com>
+	<20141029002125.GC29288@redhat.com>
+	<20141029012256.GF29288@redhat.com>
+	<alpine.LRH.2.02.1411031823100.29299@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAMM=eLd8iuMDtNr7f4Cu97ZEua3-pOW4pdSdVKji7g02mKXFwQ@mail.gmail.com>
+	<20141105011619.GA11411@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20141104090436.355a8fb1@notabene.brown>
-Content-Language: en-US
-Content-ID: <A7CECF5FD1F677448E731CF98482064F@intel.com>
+In-Reply-To: <20141105011619.GA11411@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,99 +29,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.de>
-Cc: James Simmons <uja.ornl@gmail.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "Dilger,
-	Andreas" <andreas.dilger@intel.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Bryn M. Reeves" <breeves@redhat.com>, ejt@redhat.com, Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Neil,
-Thanks for your quick answer and pointing us to the reconstruct case we nee=
-d to handle!
-If I correctly understand you, we need to also clear the UPTODATE flag for =
-all the other blocks sharing the same parity information, right ?
-Concerning your remark about using a block device like a semaphore not bein=
-g 100% safe, my understanding is that this can be achieved by the appropria=
-te MMP feature algorithm=85
-Bruno.
 
-Le Nov 3, 2014 =E0 23:04, NeilBrown <neilb@suse.de> a =E9crit :
 
-> On Mon, 3 Nov 2014 14:01:10 -0700 James Simmons <uja.ornl@gmail.com> wrot=
-e:
-> =
+On Tue, 4 Nov 2014, Mike Snitzer wrote:
 
->> Hello.
->> =
+> > > Hi
+> > >
+> > > As I said on irc - it is not correct to take a mutex from one syscall and
+> > > drop the mutex from another syscall.
+> > 
+> > I didn't modify that aspect of dm_internal_suspend+resume.  I only extended
+> > the interface to other targets via export.
+> > 
+> > > I hope Joe can use the bio prison to block bios while the pool is
+> > > suspended.
+> > 
+> > We'll see.
+> 
+> Joe said today: "bio-prison thing isn't going to work, since we need the
+> worker thread to complete as part of the [thin-pool] suspend".
 
->>   This is a patch against the latest kernel source which is based on
->> a patch used by Lustre. The below describes what we are trying to
->> achieve. I like to get a feedback if this is the right approach.
->> =
+If you block bios coming into the prison in pool's presuspend method 
+(similar to this patch 
+https://git.kernel.org/cgit/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-for-3.19&id=2d616 
+), the worker thread is still active, so it should process bios.
 
->> ----------------------------------------------------------------------
->> =
+You can for example set the flag in the prison meaning that the prison is 
+suspended and then call dm_internal_suspend immediatelly followed by 
+dm_internal_resume - that will clear in-progress bios and prevent new bios 
+from coming in (and we don't need to change dm_internal_suspend and 
+dm_internal_resume to become so big).
 
->> The ext4 MMP block reads always need to get fresh data from the
->> underlying disk.  Otherwise, if a remote node is updating the MMP
->> block and the reads are fetched from the MD RAID5 stripe cache,
->> it is possible that the local node will incorrectly decide the
->> remote node has died and allow the filesystem to be mounted on
->> two nodes at the same time.
-> =
+> And the following patch fixes the locking issue you raised:
 
-> It is preferred for patches to be inline, rather than as attachments, as =
-it
-> makes it easier to comment on them....
-> =
+... it complicates the generic code even more than before.
 
-> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> index 9c66e59..11b749c 100644
-> --- a/drivers/md/raid5.c
-> +++ b/drivers/md/raid5.c
-> @@ -2678,6 +2678,9 @@ static int add_stripe_bio(struct stripe_head *sh, s=
-truct bio *bi, int dd_idx, in
-> 		}
-> 		if (sector >=3D sh->dev[dd_idx].sector + STRIPE_SECTORS)
-> 			set_bit(R5_OVERWRITE, &sh->dev[dd_idx].flags);
-> +	} else if (bi->bi_rw & REQ_NOCACHE) {
-> +		/* force to read from underlying disk if requested */
-> +		clear_bit(R5_UPTODATE, &sh->dev[dd_idx].flags);
-> 	}
-> =
-
-> 	pr_debug("added bi b#%llu to stripe s#%llu, disk %d.\n",
-> =
-
-> =
-
-> This doesn't provide a useful guarantee.  If the device that stores that
-> block has failed, the md/raid5 will read all other devices to recover the
-> block.
-> If that recently happened and you just clear the UPTODATE bit on the bloc=
-k,
-> md/raid5 will recover the data from all the other blocks, without reading
-> them.
-> =
-
-> But considering this at a higher level: if two different nodes try to
-> assemble the same RAID5 array then you already potentially have a problem.
-> You really want some sensible cluster co-ordinator and let it make these
-> decisions.   Hoping the a block device can be a reliable semaphore seems =
-...
-> misguided.
-> =
-
-> NeilBrown
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+Mikulas
