@@ -1,12 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-thin: fix a race in thin_dtr
-Date: Wed, 5 Nov 2014 17:00:13 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1411051658290.19828@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH] dm: do not call dm_sync_table() when
+ creating new devices
+Date: Wed, 5 Nov 2014 17:16:21 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1411051715560.23119@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1415194550-121498-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1415194550-121498-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,39 +19,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Thornber <thornber@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Note that as long as struct thin_c is in the list, anyone can grab a
-reference of it. Consequently, we must wait for the reference count to
-drop to zero *after* we remove the structure from the list, not before.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
----
- drivers/md/dm-thin.c |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+On Wed, 5 Nov 2014, Hannes Reinecke wrote:
 
-Index: linux-3.18-rc3/drivers/md/dm-thin.c
-===================================================================
---- linux-3.18-rc3.orig/drivers/md/dm-thin.c	2014-11-05 21:08:06.000000000 +0100
-+++ linux-3.18-rc3/drivers/md/dm-thin.c	2014-11-05 21:08:57.000000000 +0100
-@@ -3247,14 +3247,14 @@ static void thin_dtr(struct dm_target *t
- 	struct thin_c *tc = ti->private;
- 	unsigned long flags;
- 
--	thin_put(tc);
--	wait_for_completion(&tc->can_destroy);
--
- 	spin_lock_irqsave(&tc->pool->lock, flags);
- 	list_del_rcu(&tc->list);
- 	spin_unlock_irqrestore(&tc->pool->lock, flags);
- 	synchronize_rcu();
- 
-+	thin_put(tc);
-+	wait_for_completion(&tc->can_destroy);
-+
- 	mutex_lock(&dm_thin_pool_table.mutex);
- 
- 	__pool_dec(tc->pool);
+> When creating new devices dm_sync_table() calls
+> synchronize_rcu_expedited(), causing _all_ pending
+> RCU pointers to be flushed. This causes a latency
+> overhead especially noticeable when creating lots
+> of devices.
+> And all of this is pointless as there are no old
+> maps to be disconnected, and hence no stale pointers
+> which would need to be cleared up.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+
+> ---
+>  drivers/md/dm.c | 9 ++++++---
+>  1 file changed, 6 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 58f3927..2c2c6cf 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -2341,7 +2341,8 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+>  		set_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+>  	else
+>  		clear_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+> -	dm_sync_table(md);
+> +	if (old_map)
+> +		dm_sync_table(md);
+>  
+>  	return old_map;
+>  }
+> @@ -2782,7 +2783,8 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+>  	 * flush_workqueue(md->wq).
+>  	 */
+>  	set_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags);
+> -	synchronize_srcu(&md->io_barrier);
+> +	if (map)
+> +		synchronize_srcu(&md->io_barrier);
+>  
+>  	/*
+>  	 * Stop md->queue before flushing md->wq in case request-based
+> @@ -2802,7 +2804,8 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+>  
+>  	if (noflush)
+>  		clear_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+> -	synchronize_srcu(&md->io_barrier);
+> +	if (map)
+> +		synchronize_srcu(&md->io_barrier);
+>  
+>  	/* were we interrupted ? */
+>  	if (r < 0) {
+> -- 
+> 1.8.5.2
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
