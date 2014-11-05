@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: staged dm_internal_{suspend,
  resume} related changes for wider review
-Date: Wed, 5 Nov 2014 11:10:15 -0500
-Message-ID: <20141105161015.GD14285@redhat.com>
+Date: Wed, 5 Nov 2014 11:29:12 -0500
+Message-ID: <20141105162912.GA17625@redhat.com>
 References: <20141028232638.GB29288@redhat.com>
 	<20141029002125.GC29288@redhat.com>
 	<20141029012256.GF29288@redhat.com>
@@ -36,76 +36,25 @@ List-Id: dm-devel.ids
 On Wed, Nov 05 2014 at  9:37am -0500,
 Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> 
-> 
-> On Wed, 5 Nov 2014, Mike Snitzer wrote:
-> 
-> > On Wed, Nov 05 2014 at  8:05am -0500,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > On Wed, 5 Nov 2014, Mikulas Patocka wrote:
-> > > 
-> > > > You can for example set the flag in the prison meaning that the prison is 
-> > > > suspended and then call dm_internal_suspend immediatelly followed by 
-> > > > dm_internal_resume - that will clear in-progress bios and prevent new bios 
-> > > > from coming in (and we don't need to change dm_internal_suspend and 
-> > > > dm_internal_resume to become so big).
-> > 
-> > It may _seem_ like they have gotten big given the code was refactored to
-> > share code with dm_suspend and dm_resume.  BUT I know you see that the
-> > actual code complexity isn't big.  I especially wanted you (and/or Bryn)
-> > to evaluate the performance implications that my changes had on
-> > dm-stats.  I'm pretty confident there won't be much if any performance
-> > difference (given the code is identical to what you had, except some
-> > extra checks are made but ultimately not used, e.g. lockfs/unlockfs).
-> 
-> This is not about performance, it is about unclear behavior.
-> 
-> If someone does internal_suspend followed by remove, what should be the 
-> correct behavior? The current code deadlocks in this case.
-
-You need to be specific, if internal suspend was used by the thin-pool
-suspend to suspend thin devices you'll need the thin-pool resumed before
-you can remove any thin device!
-
-Like any interface there is a right way and a wrong way to use it.
-dm_internal_suspend must always be followed by dm_internal_resume.
-I cannot yet see a hole where properly written code is exposed here.
-
 > The patch series introduces two suspend mechanisms and it is unclear how 
 > should they interact with each other.
-> 
-> > The end result of the dm_internal_{suspend,resume} changes is an
-> > interface that is useful for DM targets in addition to dm-stats.  That
-> > is the kind of advancement DM needs.
-> > 
-> > Please focus on the performance impact of my changes, if any, and we'll
-> > go from there.
-> > 
-> > > No, the correct sequence is this (do this in presuspend handler):
-> > > 
-> > > 1. call dm_internal_suspend on all thin devices
-> > > 2. set the flag in the prison meaning that the prison is blocked
-> > > 3. call dm_internal_resume on all thin devices
-> > 
-> > I really didn't like the idea of reusing the bio-prison to achieve the
-> > suspend of all thins to begin with.  This proposal is even more suspect
-> > given the desire to call dm_internal_suspend and dm_internal_resume from
-> > pool_presuspend.
-> > 
-> > It just isn't code that I want to see making its way into the tree.
-> > Sets bad precedent of hacking around problems within a target for
-> > questionable gain (questionable in that there really isn't a
-> > pattern/infrastructure for other more complex targets to follow so
-> > they'd need to invent their own hack should they have a comparable
-> > problem).
-> 
-> At least the hack stays within dm-thin and generic dm code isn't 
-> contaminated by it.
 
-I've improved dm_internal_suspend and dm_internal_resume to not be only
-serving dm-stats.  And the complexity isn't as bad as you'd like others
-to think.
+And this point is not correct.  As you know dm_internal_suspend and
+dm_internal_resume interface predates any of my changes.
 
-Please stop with the FUD.. I won't accept FUD as the basis for
-dismissing changes.
+That existing interface was extended them to be (mostly) fully formed
+equivalents of dm_suspend() and dm_resume().
+
+I say "mostly" because dm_internal_resume() doesn't call into the targets'
+resume hooks because no existing callers (dm-stats or dm-thinp) need
+to.  But obviously dm_resume() does need to so it passes @resume_targets
+as true to __dm_resume().
+
+I'm not trying to suggest there is a bug or bugs in this new code (you
+already pointed out the locking issue across ioctls that I fixed).
+
+But a bug doesn't implicitly mean this is an imperfect way forward --
+if/when a bug is found we'll deal with it.. so feel free to pour over
+this code to see if there is a bug or bugs.  I really do welcome your
+review -- I would just like technical issues to be the focus of any
+technical review.
