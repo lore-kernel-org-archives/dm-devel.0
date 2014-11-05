@@ -1,26 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: staged dm_internal_{suspend,
- resume} related changes for wider review
-Date: Wed, 5 Nov 2014 08:05:38 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1411050801270.19559@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20141028134012.GA25229@redhat.com>
-	<20141028141749.GD25229@redhat.com>
-	<20141028143742.GE25229@redhat.com>
-	<20141028171003.GG25229@redhat.com>
-	<20141028224753.GA29288@redhat.com>
-	<20141028232638.GB29288@redhat.com>
-	<20141029002125.GC29288@redhat.com>
-	<20141029012256.GF29288@redhat.com>
-	<alpine.LRH.2.02.1411031823100.29299@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAMM=eLd8iuMDtNr7f4Cu97ZEua3-pOW4pdSdVKji7g02mKXFwQ@mail.gmail.com>
-	<20141105011619.GA11411@redhat.com>
-	<alpine.LRH.2.02.1411050736410.11912@file01.intranet.prod.int.rdu2.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] dm: do not call dm_sync_table() when creating
+	new devices
+Date: Wed,  5 Nov 2014 14:35:50 +0100
+Message-ID: <1415194550-121498-1-git-send-email-hare@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1411050736410.11912@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -31,23 +18,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Bryn M. Reeves" <breeves@redhat.com>, ejt@redhat.com, Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+When creating new devices dm_sync_table() calls
+synchronize_rcu_expedited(), causing _all_ pending
+RCU pointers to be flushed. This causes a latency
+overhead especially noticeable when creating lots
+of devices.
+And all of this is pointless as there are no old
+maps to be disconnected, and hence no stale pointers
+which would need to be cleared up.
 
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-On Wed, 5 Nov 2014, Mikulas Patocka wrote:
-
-> You can for example set the flag in the prison meaning that the prison is 
-> suspended and then call dm_internal_suspend immediatelly followed by 
-> dm_internal_resume - that will clear in-progress bios and prevent new bios 
-> from coming in (and we don't need to change dm_internal_suspend and 
-> dm_internal_resume to become so big).
-
-No, the correct sequence is this (do this in presuspend handler):
-
-1. call dm_internal_suspend on all thin devices
-2. set the flag in the prison meaning that the prison is blocked
-3. call dm_internal_resume on all thin devices
-
-Mikulas
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 58f3927..2c2c6cf 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2341,7 +2341,8 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 		set_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+ 	else
+ 		clear_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
+-	dm_sync_table(md);
++	if (old_map)
++		dm_sync_table(md);
+ 
+ 	return old_map;
+ }
+@@ -2782,7 +2783,8 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 	 * flush_workqueue(md->wq).
+ 	 */
+ 	set_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags);
+-	synchronize_srcu(&md->io_barrier);
++	if (map)
++		synchronize_srcu(&md->io_barrier);
+ 
+ 	/*
+ 	 * Stop md->queue before flushing md->wq in case request-based
+@@ -2802,7 +2804,8 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 
+ 	if (noflush)
+ 		clear_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+-	synchronize_srcu(&md->io_barrier);
++	if (map)
++		synchronize_srcu(&md->io_barrier);
+ 
+ 	/* were we interrupted ? */
+ 	if (r < 0) {
+-- 
+1.8.5.2
