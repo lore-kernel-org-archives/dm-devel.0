@@ -1,88 +1,49 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm: do not call dm_sync_table() when
- creating new devices
-Date: Wed, 5 Nov 2014 17:16:21 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1411051715560.23119@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1415194550-121498-1-git-send-email-hare@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [dm-devel] Some thoughts about providing data block checksumming
+ for ext4
+Date: Thu, 6 Nov 2014 07:55:17 -0500
+Message-ID: <20141106125517.GA3719@thunk.org>
+References: <20141103233308.GA27842@thunk.org>
+ <alpine.LRH.2.02.1411041622490.30941@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.1411041703590.7145@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.1411041915430.32105@file01.intranet.prod.int.rdu2.redhat.com>
+ <545A9885.8070901@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1415194550-121498-1-git-send-email-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <545A9885.8070901@gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, linux-ext4@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On Wed, 5 Nov 2014, Hannes Reinecke wrote:
-
-> When creating new devices dm_sync_table() calls
-> synchronize_rcu_expedited(), causing _all_ pending
-> RCU pointers to be flushed. This causes a latency
-> overhead especially noticeable when creating lots
-> of devices.
-> And all of this is pointless as there are no old
-> maps to be disconnected, and hence no stale pointers
-> which would need to be cleared up.
+On Wed, Nov 05, 2014 at 10:37:09PM +0100, Milan Broz wrote:
 > 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> Also, for encrypted devices (either on file level or block level) I think 
+> there are still requests for implementing real crypto authenticated modes (like GCM)
+> which obviously need similar space for auth tag. (I think ZFS uses it this way.) 
 
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+Yes, although it depends on your threat model.  If you need to worry
+about known or chosen plaintext attack modes --- for example, if you
+were implementing the chrome browser where the attacker might be able
+to play MITM and replace web pages which would then get encrypted in
+the browser cache, and where the attacker can continuously read and/or
+replace blocks (say, because of some really stupid design where you
+are using an unprotected iSCSI connection).  Or if you assume the
+attacker can remove the hard drive, twiddle some blocks, and then
+surreptitiously replace the hard drive many times, then yes, you need
+to worry about data integrity because a system that doesn't include a
+MAC --- such as what dm-crypt provides, is simply not enough.
 
-> ---
->  drivers/md/dm.c | 9 ++++++---
->  1 file changed, 6 insertions(+), 3 deletions(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 58f3927..2c2c6cf 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2341,7 +2341,8 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
->  		set_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
->  	else
->  		clear_bit(DMF_MERGE_IS_OPTIONAL, &md->flags);
-> -	dm_sync_table(md);
-> +	if (old_map)
-> +		dm_sync_table(md);
->  
->  	return old_map;
->  }
-> @@ -2782,7 +2783,8 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
->  	 * flush_workqueue(md->wq).
->  	 */
->  	set_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags);
-> -	synchronize_srcu(&md->io_barrier);
-> +	if (map)
-> +		synchronize_srcu(&md->io_barrier);
->  
->  	/*
->  	 * Stop md->queue before flushing md->wq in case request-based
-> @@ -2802,7 +2804,8 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
->  
->  	if (noflush)
->  		clear_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
-> -	synchronize_srcu(&md->io_barrier);
-> +	if (map)
-> +		synchronize_srcu(&md->io_barrier);
->  
->  	/* were we interrupted ? */
->  	if (r < 0) {
-> -- 
-> 1.8.5.2
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+Basically, a dm-crypt style block device encryption is only good if
+your threat model is "the attacker steals the laptop and I want to
+keep the contents of the storage device safe".
+
+Michael Halcrow discussed this in this years Linux Security Symposium:
+
+	http://kernsec.org/files/lss2014/Halcrow_EXT4_Encryption.pdf
+
+Cheers,
+
+						- Ted
