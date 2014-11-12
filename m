@@ -1,16 +1,15 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
 Subject: Re: Question about dm target size
-Date: Wed, 12 Nov 2014 12:48:03 +0100
-Message-ID: <546348F3.90806@redhat.com>
-References: <5462ABD8.1050609@fb.com>,
-	<20141112020641.GA15589@redhat.com>	<fw2umnrmmu1mdtg0ab4f8stc.1415759451452@email.android.com>	<54631E1B.4090300@redhat.com>
-	<54633DB0.8050800@fb.com>
+Date: Wed, 12 Nov 2014 12:28:03 +0000
+Message-ID: <20141112122803.GB31997@localhost.localdomain>
+References: <5462ABD8.1050609@fb.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <54633DB0.8050800@fb.com>
+Content-Disposition: inline
+In-Reply-To: <5462ABD8.1050609@fb.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +19,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, jbacik@fb.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Dne 12.11.2014 v 12:00 Josef Bacik napsal(a):
-> On 11/12/2014 03:45 AM, Zdenek Kabelac wrote:
->> Dne 12.11.2014 v 03:30 Josef Bacik napsal(a):
->>> Sorry for top posting, my phone client doesn't do inline.
->>>
->>> I'm splitting the disk in half, writing to alternating sides of the
->>> disk and keeping track of where which block is so when the power fail
->>> event occurs the subsequent reads come from the corresponding mirror
->>> in the disk. The disk needs to appear to be size/2 for the mkfs to
->>> know the correct size, but my target needs to be able to write up to
->>> size.  I looked at thinp but it reflects the full size right? It's
->>> just like a sparse find correct? My ->map function does the right
->>> thing, doing the ->len trick makes it all work out right, but this is
->>> really isolated testing. Thanks,
->>>
->>
->> Just a side note - maybe you would like to rather extend functionality
->> of dm-flakey  target ?
->>
->
-> I did that first but it ended up being really ugly.  With all the varying
-> functionality in dm-flakey it ended up making the table format horrible and
-> the code a spaghetti of if (test_bit()) crap everywhere. Thanks,
->
+On Tue, Nov 11, 2014 at 07:37:44PM -0500, Josef Bacik wrote:
+> Hello,
+> 
+> I'm creating a dm target to better test power fail situations and I'm having
+> trouble figuring out how to make the dm device appear as a different size.
+> So for example you do the normal dm table
+> 
+> offset size power-fail /dev/whatever args
 
+Just make the size argument in your table be equal to dev_size / 2. This is
+where ti->len comes from and it's the correct way to tell device-mapper how
+big your mapped device should be.
 
-The other thing that lvm2 test suite is using is -
+Your ctr can then parse out /dev/whatever from its args, open it and do
+whatever it likes with it. Access to that device by your target code is in
+no way constrained by the offset/size params used in the table.
 
-we take a base 'linear' device mapped on some origin - and we create a 
-segmented device where individual segment are either mapper to 'original' 
-device or to a 'zero' origin or  'error' origin depending on
-whether you want to read  0 or 'err' from a device.
+E.g.:
 
-Example of such mapping 'trick':
+# dmsetup create pf0 --table="0 2048 power-fail /dev/whatever foo bar"
 
-normal mapping for device pv1:
+Would create a 1M device named pf0. The power-fail target could still access
+the whole of /dev/whatever if it wants to.
 
-pv1: 0 69120 linear 7:2 0
-
-
-mapping with single error segment sector of device pv1:
-
-pv1: 0 2050 linear 7:2 0
-pv1: 2050 1 error
-pv1: 2051 67069 linear 7:2 2051
-
-You could reload table mapping for pv1 any-time with suspend/resume.
-
-
-Zdenek
+within the 
+Regards,
+Bryn.
