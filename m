@@ -1,52 +1,69 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: Question about dm target size
-Date: Wed, 12 Nov 2014 12:28:03 +0000
-Message-ID: <20141112122803.GB31997@localhost.localdomain>
-References: <5462ABD8.1050609@fb.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 3.18
+Date: Wed, 12 Nov 2014 19:34:26 -0500
+Message-ID: <20141113003425.GA9508@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5462ABD8.1050609@fb.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: snitzer@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Pavitra Kumar <pavitrak@nvidia.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 11, 2014 at 07:37:44PM -0500, Josef Bacik wrote:
-> Hello,
-> 
-> I'm creating a dm target to better test power fail situations and I'm having
-> trouble figuring out how to make the dm device appear as a different size.
-> So for example you do the normal dm table
-> 
-> offset size power-fail /dev/whatever args
+Hi Linus,
 
-Just make the size argument in your table be equal to dev_size / 2. This is
-where ti->len comes from and it's the correct way to tell device-mapper how
-big your mapped device should be.
+The following changes since commit 56ec16cb1e1ce46354de8511eef962a417c32c92:
 
-Your ctr can then parse out /dev/whatever from its args, open it and do
-whatever it likes with it. Access to that device by your target code is in
-no way constrained by the offset/size params used in the table.
+  dm log userspace: fix memory leak in dm_ulog_tfr_init failure path (2014-10-05 20:03:38 -0400)
 
-E.g.:
+are available in the git repository at:
 
-# dmsetup create pf0 --table="0 2048 power-fail /dev/whatever foo bar"
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.18-fixes
 
-Would create a 1M device named pf0. The power-fail target could still access
-the whole of /dev/whatever if it wants to.
+for you to fetch changes up to 9b460d3699324d570a4d4161c3741431887f102f:
 
-within the 
-Regards,
-Bryn.
+  dm btree: fix a recursion depth bug in btree walking code (2014-11-10 15:23:58 -0500)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+. stable fix for dm-thin that avoids normal IO racing with discard
+
+. stable fix for a dm-cache related bug in dm-btree walking code that
+  results from using very large fast device (e.g. 4T) with a very small
+  cache blocksize (e.g. 32K) -- this is a very uncommon configuration
+
+. a couple fixes for dm-raid (one for stable and the other addresses a
+  crash in 3.18-rc1 code)
+
+. stable fix for dm-thinp that addresses a very rare dm-bufio bug having
+  to do with memory reclaimation (via shrinker) when using dm-thinp
+  ontop of loopback devices
+
+. fix a leak in dm-stripe target constructor's error path
+
+----------------------------------------------------------------
+Heinz Mauelshagen (2):
+      dm raid: ensure superblock's size matches device's logical block size
+      dm raid: fix inaccessible superblocks causing oops in configure_discard_support
+
+Joe Thornber (2):
+      dm thin: grab a virtual cell before looking up the mapping
+      dm btree: fix a recursion depth bug in btree walking code
+
+Mikulas Patocka (1):
+      dm bufio: change __GFP_IO to __GFP_FS in shrinker callbacks
+
+Pavitra Kumar (1):
+      dm stripe: fix potential for leak in stripe_ctr error path
+
+ drivers/md/dm-bufio.c                          | 12 ++++++------
+ drivers/md/dm-raid.c                           | 17 ++++++++++++-----
+ drivers/md/dm-stripe.c                         |  4 +++-
+ drivers/md/dm-thin.c                           | 16 ++++++++++++----
+ drivers/md/persistent-data/dm-btree-internal.h |  6 ++++++
+ drivers/md/persistent-data/dm-btree-spine.c    |  2 +-
+ drivers/md/persistent-data/dm-btree.c          | 24 ++++++++++--------------
+ 7 files changed, 50 insertions(+), 31 deletions(-)
