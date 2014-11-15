@@ -1,69 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 3.18
-Date: Wed, 12 Nov 2014 19:34:26 -0500
-Message-ID: <20141113003425.GA9508@redhat.com>
+From: =?GBK?B?xN/UtL2t?= <niyuanjiang@ict.ac.cn>
+Subject: why does dm-cache use dm_deferred_entry_inc?
+Date: Sat, 15 Nov 2014 16:49:52 +0800 (GMT+08:00)
+Message-ID: <b05d91.32d5e.149b2a4ea2b.Coremail.niyuanjiang@ict.ac.cn>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Pavitra Kumar <pavitrak@nvidia.com>
+Content-Type: multipart/mixed; boundary="===============6672992100819982541=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Linus,
+--===============6672992100819982541==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_730670_10545943.1416041392683"
 
-The following changes since commit 56ec16cb1e1ce46354de8511eef962a417c32c92:
+------=_Part_730670_10545943.1416041392683
+Content-Type: text/plain; charset=GBK
+Content-Transfer-Encoding: 7bit
 
-  dm log userspace: fix memory leak in dm_ulog_tfr_init failure path (2014-10-05 20:03:38 -0400)
 
-are available in the git repository at:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-3.18-fixes
+Hello,
 
-for you to fetch changes up to 9b460d3699324d570a4d4161c3741431887f102f:
+I'm reading the dm-cache code.I notice that before a bio is remapped and sent to the "real" device.the function "dm_deferred_entry_inc" will be invoked.And when a migration initiated ,the function "dm_deferred_set_add_work"  will be invoked to determine whether start the migration immediately.I guess those operation are used to ensure some sort of synchronization.But i'm not sure which kind of synchronization it can ensure and why.
 
-  dm btree: fix a recursion depth bug in btree walking code (2014-11-10 15:23:58 -0500)
+Or my understanding is completely wrong . they are not at all used for synchronization?
 
-Please pull, thanks.
-Mike
+Can anyone help me about this question?Thanks,
 
-----------------------------------------------------------------
-. stable fix for dm-thin that avoids normal IO racing with discard
+Yuanjiang Ni
 
-. stable fix for a dm-cache related bug in dm-btree walking code that
-  results from using very large fast device (e.g. 4T) with a very small
-  cache blocksize (e.g. 32K) -- this is a very uncommon configuration
+ 
 
-. a couple fixes for dm-raid (one for stable and the other addresses a
-  crash in 3.18-rc1 code)
 
-. stable fix for dm-thinp that addresses a very rare dm-bufio bug having
-  to do with memory reclaimation (via shrinker) when using dm-thinp
-  ontop of loopback devices
 
-. fix a leak in dm-stripe target constructor's error path
+------=_Part_730670_10545943.1416041392683
+Content-Type: text/html; charset=GBK
+Content-Transfer-Encoding: 7bit
 
-----------------------------------------------------------------
-Heinz Mauelshagen (2):
-      dm raid: ensure superblock's size matches device's logical block size
-      dm raid: fix inaccessible superblocks causing oops in configure_discard_support
+<p><br><br>Hello,</p><p>I'm reading the dm-cache code.I&nbsp;notice that&nbsp;before a bio is remapped and&nbsp;sent to the "real" device.the function "dm_deferred_entry_inc" will be&nbsp;invoked.And&nbsp;when a&nbsp;migration initiated ,the&nbsp;function "dm_deferred_set_add_work"&nbsp;&nbsp;will be invoked to determine whether start the migration immediately.I guess&nbsp;those operation&nbsp;are used to&nbsp;ensure some&nbsp;sort of synchronization.But i'm not&nbsp;sure which kind of&nbsp;synchronization it can ensure and why.</p><p>Or my understanding is completely wrong&nbsp;. they are not at all used for synchronization?</p><p>Can anyone help me about this question?Thanks,</p><p>Yuanjiang Ni</p><p>&nbsp;</p><span></span><br><br><br>
+------=_Part_730670_10545943.1416041392683--
 
-Joe Thornber (2):
-      dm thin: grab a virtual cell before looking up the mapping
-      dm btree: fix a recursion depth bug in btree walking code
 
-Mikulas Patocka (1):
-      dm bufio: change __GFP_IO to __GFP_FS in shrinker callbacks
+--===============6672992100819982541==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Pavitra Kumar (1):
-      dm stripe: fix potential for leak in stripe_ctr error path
 
- drivers/md/dm-bufio.c                          | 12 ++++++------
- drivers/md/dm-raid.c                           | 17 ++++++++++++-----
- drivers/md/dm-stripe.c                         |  4 +++-
- drivers/md/dm-thin.c                           | 16 ++++++++++++----
- drivers/md/persistent-data/dm-btree-internal.h |  6 ++++++
- drivers/md/persistent-data/dm-btree-spine.c    |  2 +-
- drivers/md/persistent-data/dm-btree.c          | 24 ++++++++++--------------
- 7 files changed, 50 insertions(+), 31 deletions(-)
+--===============6672992100819982541==--
