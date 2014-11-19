@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/6] libmultipath: cleanup propsel.c with macros
-	for common actions
-Date: Wed, 19 Nov 2014 00:17:35 -0600
-Message-ID: <1416377859-15073-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/6] add find_multipaths option
+Date: Wed, 19 Nov 2014 00:17:37 -0600
+Message-ID: <1416377859-15073-5-git-send-email-bmarzins@redhat.com>
 References: <1416377859-15073-1-git-send-email-bmarzins@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,1043 +22,272 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Many of the functions in propsel.c are nearly identical, except for the
-names of the variables that they are dealing with.  Also, some variables
-that the user configured with a keyword were just printing the variable
-as an integer, which isn't very helpful without looking at the code to
-see what the number stands for. They were using the variable names
-instead of the config file names as well.  This patch tries to simplify
-the file by using macros for the repetitive work of the functions, and
-standardizes and clarifies the debug messages by using the print functions
-from dict.c
+This patch adds a new option (find_multipaths) to the defaults section
+of multipath.conf.  This is used to keep multipath from simply creating
+multipath devices on top of any non-blacklisted device.  When this is
+set to "yes", multipath will only create multipath devices when there
+are actually multiple paths to the storage.  This means that in most
+setups where find_multipaths is set, users don't need to bother with the
+editting the blacklist, because multipath will do the work for them.
+The only case where blacklisting is still necessary is if user want to
+disable multipathing on LUNs that actually have multiple paths.
+
+One of the issues with only grabbing devices with multiple paths is that
+multipath can't know when it first sees a path device whether a second
+path device will appear. This could be a problem, because if multipath
+doesn't claim the device, something else might. For instance, a
+filesystem could be automounted on a path device before the second path
+device appeared.
+
+Multipath deals with this by using the /etc/multipaths/wwids file.  If
+the device wwid is listed in this file, multipath knows that it is a
+path device, and can create a multipath device on it as soon as it
+appears.  This means that after multipath has created a multipath device
+once, it will automatically create it in the future as soon as the first
+path is discovered.
+
+In general, there are three conditions for find_multipaths to allow the
+creation of a device. After passing all the checks that multipath
+currently does to allow device creation, one of these three conditions
+must also be true for device creation, if find_multipaths is enabled.
+
+1. There are at least two non-blacklisted paths with the same wwid
+2. The creation was manually forced, by specifying the device with the
+   multipath command
+3. The path's wwid is in the wwids file, which means that multipath has
+   previously created a multipath device with that wwid.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c       |  14 +-
- libmultipath/dict.h       |   7 +
- libmultipath/pgpolicies.c |   2 +-
- libmultipath/propsel.c    | 712 +++++++++++++++++-----------------------------
- 4 files changed, 282 insertions(+), 453 deletions(-)
+ libmultipath/config.c    |  1 +
+ libmultipath/config.h    |  1 +
+ libmultipath/configure.c | 11 +++++++++++
+ libmultipath/defaults.h  |  1 +
+ libmultipath/dict.c      |  4 ++++
+ libmultipath/wwids.c     | 26 ++++++++++++++++++++++++++
+ libmultipath/wwids.h     |  1 +
+ multipath/main.c         | 27 +++++++++++++++++++++++++--
+ multipathd/main.c        |  6 ++++++
+ 9 files changed, 76 insertions(+), 2 deletions(-)
 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 7f7bd5a..3c72b59 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -563,6 +563,7 @@ load_config (char * file, struct udev *udev)
+ 	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+ 	conf->detect_prio = DEFAULT_DETECT_PRIO;
+ 	conf->force_sync = 0;
++	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index ef1d7c3..801387c 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -116,6 +116,7 @@ struct config {
+ 	unsigned int dev_loss;
+ 	int log_checker_err;
+ 	int allow_queueing;
++	int find_multipaths;
+ 	uid_t uid;
+ 	gid_t gid;
+ 	mode_t mode;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 1068a0a..2a7ef55 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -740,6 +740,10 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 
+ 	memset(empty_buff, 0, WWID_SIZE);
+ 
++	/* ignore refwwid if it's empty */
++	if (refwwid && !strlen(refwwid))
++		refwwid = NULL;
++
+ 	if (force_reload) {
+ 		vector_foreach_slot (pathvec, pp1, k) {
+ 			pp1->mpp = NULL;
+@@ -769,6 +773,13 @@ coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid, int force_r
+ 		if (refwwid && strncmp(pp1->wwid, refwwid, WWID_SIZE))
+ 			continue;
+ 
++		/* If find_multipaths was selected check if the path is valid */
++		if (conf->find_multipaths && !refwwid &&
++		    !should_multipath(pp1, pathvec)) {
++			orphan_path(pp1, "only one path");
++			continue;
++		}
++
+ 		/*
+ 		 * at this point, we know we really got a new mp
+ 		 */
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 99cf4b1..de6cec6 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -13,6 +13,7 @@
+ #define DEFAULT_NO_PATH_RETRY  NO_PATH_RETRY_UNDEF
+ #define DEFAULT_VERBOSITY	2
+ #define DEFAULT_REASSIGN_MAPS	1
++#define DEFAULT_FIND_MULTIPATHS	0
+ #define DEFAULT_FAST_IO_FAIL	5
+ #define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_OFF
+ #define DEFAULT_DETECT_PRIO DETECT_PRIO_OFF
 diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index e88c122..98cbe48 100644
+index 737c9b0..d1e2e96 100644
 --- a/libmultipath/dict.c
 +++ b/libmultipath/dict.c
-@@ -496,7 +496,7 @@ set_fast_io_fail(vector strvec, void *ptr)
- 	return 0;
- }
+@@ -230,6 +230,9 @@ declare_def_snprint(reassign_maps, print_yes_no)
+ declare_def_handler(multipath_dir, set_str)
+ declare_def_snprint(multipath_dir, print_str)
  
--static int
-+int
- print_fast_io_fail(char * buff, int len, void *ptr)
- {
- 	int *int_ptr = (int *)ptr;
-@@ -534,7 +534,7 @@ set_dev_loss(vector strvec, void *ptr)
- 	return 0;
- }
- 
--static int
-+int
- print_dev_loss(char * buff, int len, void *ptr)
- {
- 	unsigned int *uint_ptr = (unsigned int *)ptr;
-@@ -567,7 +567,7 @@ set_pgpolicy(vector strvec, void *ptr)
- 	return 0;
- }
- 
--static int
-+int
- print_pgpolicy(char * buff, int len, void *ptr)
- {
- 	char str[POLICY_NAME_SIZE];
-@@ -683,7 +683,7 @@ set_rr_weight(vector strvec, void *ptr)
- 	return 0;
- }
- 
--static int
-+int
- print_rr_weight (char * buff, int len, void *ptr)
- {
- 	int *int_ptr = (int *)ptr;
-@@ -727,7 +727,7 @@ set_pgfailback(vector strvec, void *ptr)
- 	return 0;
- }
- 
--static int
-+int
- print_pgfailback (char * buff, int len, void *ptr)
- {
- 	int *int_ptr = (int *)ptr;
-@@ -774,7 +774,7 @@ set_no_path_retry(vector strvec, void *ptr)
- 	return 0;
- }
- 
--static int
-+int
- print_no_path_retry(char * buff, int len, void *ptr)
- {
- 	int *int_ptr = (int *)ptr;
-@@ -873,7 +873,7 @@ set_reservation_key(vector strvec, void *ptr)
- 	return 0;
- }
- 
--static int
-+int
- print_reservation_key(char * buff, int len, void * ptr)
- {
- 	unsigned char **uchar_ptr = (unsigned char **)ptr;
-diff --git a/libmultipath/dict.h b/libmultipath/dict.h
-index 688eab7..84b6180 100644
---- a/libmultipath/dict.h
-+++ b/libmultipath/dict.h
-@@ -7,5 +7,12 @@
- 
- void init_keywords(void);
- int get_sys_max_fds(int *);
-+int print_rr_weight (char * buff, int len, void *ptr);
-+int print_pgfailback (char * buff, int len, void *ptr);
-+int print_pgpolicy(char * buff, int len, void *ptr);
-+int print_no_path_retry(char * buff, int len, void *ptr);
-+int print_fast_io_fail(char * buff, int len, void *ptr);
-+int print_dev_loss(char * buff, int len, void *ptr);
-+int print_reservation_key(char * buff, int len, void * ptr);
- 
- #endif /* _DICT_H */
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index f76ad60..2981d51 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -27,7 +27,7 @@ get_pgpolicy_id (char * str)
- 	if (0 == strncmp(str, "group_by_node_name", 18))
- 		return GROUP_BY_NODE_NAME;
- 
--	return -1;
-+	return IOPOLICY_UNDEF;
- }
- 
- extern int
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 7a966bb..f2ab7d2 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -17,6 +17,7 @@
- #include "devmapper.h"
- #include "prio.h"
- #include "discovery.h"
-+#include "dict.h"
- #include "prioritizers/alua_rtpg.h"
- #include <inttypes.h>
- 
-@@ -29,57 +30,92 @@ pgpolicyfn *pgpolicies[] = {
- 	group_by_node_name
- };
- 
-+#define do_set(var, src, dest, msg)					\
-+do {									\
-+	if (src && src->var) {						\
-+		dest = src->var;					\
-+		origin = msg;						\
-+		goto out;						\
-+	}								\
-+} while(0)
-+#define do_default(dest, value)						\
-+do {									\
-+	dest = value;							\
-+	origin = "(internal default)";					\
-+} while(0)
++declare_def_handler(find_multipaths, set_yes_no)
++declare_def_snprint(find_multipaths, print_yes_no)
 +
-+#define mp_set_mpe(var)							\
-+do_set(var, mp->mpe, mp->var, "(LUN setting)")
-+#define mp_set_hwe(var)							\
-+do_set(var, mp->hwe, mp->var, "(controller setting)")
-+#define mp_set_conf(var)						\
-+do_set(var, conf, mp->var, "(config file default)")
-+#define mp_set_default(var, value)					\
-+do_default(mp->var, value)
-+
-+#define pp_set_mpe(var)							\
-+do_set(var, mpe, pp->var, "(LUN setting)")
-+#define pp_set_hwe(var)							\
-+do_set(var, pp->hwe, pp->var, "(controller setting)")
-+#define pp_set_conf(var)						\
-+do_set(var, conf, pp->var, "(config file default)")
-+#define pp_set_default(var, value)					\
-+do_default(pp->var, value)
-+
-+#define do_attr_set(var, src, shift, msg)				\
-+do {									\
-+	if (src && (src->attribute_flags & (1 << shift))) {		\
-+		mp->attribute_flags |= (1 << shift);			\
-+		mp->var = src->var;					\
-+		origin = msg;						\
-+		goto out;						\
-+	}								\
-+} while(0)
-+
-+#define set_attr_mpe(var, shift)					\
-+do_attr_set(var, mp->mpe, shift, "(LUN setting)")
-+#define set_attr_conf(var, shift)					\
-+do_attr_set(var, conf, shift, "(config file default)")
-+
- extern int
- select_mode (struct multipath *mp)
- {
--	if (mp->mpe && (mp->mpe->attribute_flags & (1 << ATTR_MODE))) {
--		mp->attribute_flags |= (1 << ATTR_MODE);
--		mp->mode = mp->mpe->mode;
--		condlog(3, "mode = 0%o (LUN setting)", mp->mode);
--	}
--	else if (conf->attribute_flags & (1 << ATTR_MODE)) {
--		mp->attribute_flags |= (1 << ATTR_MODE);
--		mp->mode = conf->mode;
--		condlog(3, "mode = 0%o (config file default)", mp->mode);
--	}
--	else
--		mp->attribute_flags &= ~(1 << ATTR_MODE);
-+	char *origin;
-+
-+	set_attr_mpe(mode, ATTR_MODE);
-+	set_attr_conf(mode, ATTR_MODE);
-+	mp->attribute_flags &= ~(1 << ATTR_MODE);
-+	return 0;
-+out:
-+	condlog(3, "%s: mode = 0%o %s", mp->alias, mp->mode, origin);
- 	return 0;
+ declare_def_handler(selector, set_str)
+ declare_def_snprint_defstr(selector, print_str, DEFAULT_SELECTOR)
+ declare_hw_handler(selector, set_str)
+@@ -1242,6 +1245,7 @@ init_keywords(void)
+ 	install_keyword("retain_attached_hw_handler", &def_retain_hwhandler_handler, &snprint_def_retain_hwhandler);
+ 	install_keyword("detect_prio", &def_detect_prio_handler, &snprint_def_detect_prio);
+ 	install_keyword("force_sync", &def_force_sync_handler, &snprint_def_force_sync);
++	install_keyword("find_multipaths", &def_find_multipaths_handler, &snprint_def_find_multipaths);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index eca1799..f6f8ea8 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -261,6 +261,32 @@ out:
  }
  
- extern int
- select_uid (struct multipath *mp)
- {
--	if (mp->mpe && (mp->mpe->attribute_flags & (1 << ATTR_UID))) {
--		mp->attribute_flags |= (1 << ATTR_UID);
--		mp->uid = mp->mpe->uid;
--		condlog(3, "uid = %u (LUN setting)", mp->uid);
--	}
--	else if (conf->attribute_flags & (1 << ATTR_UID)) {
--		mp->attribute_flags |= (1 << ATTR_UID);
--		mp->uid = conf->uid;
--		condlog(3, "uid = %u (config file default)", mp->uid);
--	}
--	else
--		mp->attribute_flags &= ~(1 << ATTR_UID);
-+	char *origin;
+ int
++should_multipath(struct path *pp1, vector pathvec)
++{
++	int i;
++	struct path *pp2;
 +
-+	set_attr_mpe(uid, ATTR_UID);
-+	set_attr_conf(uid, ATTR_UID);
-+	mp->attribute_flags &= ~(1 << ATTR_UID);
-+	return 0;
-+out:
-+	condlog(3, "%s: uid = 0%o %s", mp->alias, mp->uid, origin);
- 	return 0;
- }
- 
- extern int
- select_gid (struct multipath *mp)
- {
--	if (mp->mpe && (mp->mpe->attribute_flags & (1 << ATTR_GID))) {
--		mp->attribute_flags |= (1 << ATTR_GID);
--		mp->gid = mp->mpe->gid;
--		condlog(3, "gid = %u (LUN setting)", mp->gid);
--	}
--	else if (conf->attribute_flags & (1 << ATTR_GID)) {
--		mp->attribute_flags |= (1 << ATTR_GID);
--		mp->gid = conf->gid;
--		condlog(3, "gid = %u (config file default)", mp->gid);
--	}
--	else
--		mp->attribute_flags &= ~(1 << ATTR_GID);
-+	char *origin;
-+
-+	set_attr_mpe(gid, ATTR_GID);
-+	set_attr_conf(gid, ATTR_GID);
-+	mp->attribute_flags &= ~(1 << ATTR_GID);
-+	return 0;
-+out:
-+	condlog(3, "%s: gid = 0%o %s", mp->alias, mp->gid, origin);
- 	return 0;
- }
- 
-@@ -91,151 +127,80 @@ select_gid (struct multipath *mp)
- extern int
- select_rr_weight (struct multipath * mp)
- {
--	if (mp->mpe && mp->mpe->rr_weight) {
--		mp->rr_weight = mp->mpe->rr_weight;
--		condlog(3, "%s: rr_weight = %i (LUN setting)",
--			mp->alias, mp->rr_weight);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->rr_weight) {
--		mp->rr_weight = mp->hwe->rr_weight;
--		condlog(3, "%s: rr_weight = %i (controller setting)",
--			mp->alias, mp->rr_weight);
--		return 0;
--	}
--	if (conf->rr_weight) {
--		mp->rr_weight = conf->rr_weight;
--		condlog(3, "%s: rr_weight = %i (config file default)",
--			mp->alias, mp->rr_weight);
--		return 0;
--	}
--	mp->rr_weight = RR_WEIGHT_NONE;
--	condlog(3, "%s: rr_weight = %i (internal default)",
--		mp->alias, mp->rr_weight);
-+	char *origin, buff[13];
-+
-+	mp_set_mpe(rr_weight);
-+	mp_set_hwe(rr_weight);
-+	mp_set_conf(rr_weight);
-+	mp_set_default(rr_weight, RR_WEIGHT_NONE);
-+out:
-+	print_rr_weight(buff, 13, &mp->rr_weight);
-+	condlog(3, "%s: rr_weight = %s %s", mp->alias, buff, origin);
- 	return 0;
- }
- 
- extern int
- select_pgfailback (struct multipath * mp)
- {
--	if (mp->mpe && mp->mpe->pgfailback != FAILBACK_UNDEF) {
--		mp->pgfailback = mp->mpe->pgfailback;
--		condlog(3, "%s: pgfailback = %i (LUN setting)",
--			mp->alias, mp->pgfailback);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->pgfailback != FAILBACK_UNDEF) {
--		mp->pgfailback = mp->hwe->pgfailback;
--		condlog(3, "%s: pgfailback = %i (controller setting)",
--			mp->alias, mp->pgfailback);
--		return 0;
--	}
--	if (conf->pgfailback != FAILBACK_UNDEF) {
--		mp->pgfailback = conf->pgfailback;
--		condlog(3, "%s: pgfailback = %i (config file default)",
--			mp->alias, mp->pgfailback);
--		return 0;
--	}
--	mp->pgfailback = DEFAULT_FAILBACK;
--	condlog(3, "%s: pgfailover = %i (internal default)",
--		mp->alias, mp->pgfailback);
-+	char *origin, buff[13];
-+
-+	mp_set_mpe(pgfailback);
-+	mp_set_hwe(pgfailback);
-+	mp_set_conf(pgfailback);
-+	mp_set_default(pgfailback, DEFAULT_FAILBACK);
-+out:
-+	print_pgfailback(buff, 13, &mp->pgfailback);
-+	condlog(3, "%s: failback = %s %s", mp->alias, buff, origin);
- 	return 0;
- }
- 
- extern int
- select_pgpolicy (struct multipath * mp)
- {
--	char pgpolicy_name[POLICY_NAME_SIZE];
-+	char *origin, buff[POLICY_NAME_SIZE];
- 
- 	if (conf->pgpolicy_flag > 0) {
- 		mp->pgpolicy = conf->pgpolicy_flag;
--		mp->pgpolicyfn = pgpolicies[mp->pgpolicy];
--		get_pgpolicy_name(pgpolicy_name, POLICY_NAME_SIZE,
--				  mp->pgpolicy);
--		condlog(3, "%s: pgpolicy = %s (cmd line flag)",
--			mp->alias, pgpolicy_name);
--		return 0;
--	}
--	if (mp->mpe && mp->mpe->pgpolicy > 0) {
--		mp->pgpolicy = mp->mpe->pgpolicy;
--		mp->pgpolicyfn = pgpolicies[mp->pgpolicy];
--		get_pgpolicy_name(pgpolicy_name, POLICY_NAME_SIZE,
--				  mp->pgpolicy);
--		condlog(3, "%s: pgpolicy = %s (LUN setting)",
--			mp->alias, pgpolicy_name);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->pgpolicy > 0) {
--		mp->pgpolicy = mp->hwe->pgpolicy;
--		mp->pgpolicyfn = pgpolicies[mp->pgpolicy];
--		get_pgpolicy_name(pgpolicy_name, POLICY_NAME_SIZE,
--				  mp->pgpolicy);
--		condlog(3, "%s: pgpolicy = %s (controller setting)",
--			mp->alias, pgpolicy_name);
--		return 0;
--	}
--	if (conf->pgpolicy > 0) {
--		mp->pgpolicy = conf->pgpolicy;
--		mp->pgpolicyfn = pgpolicies[mp->pgpolicy];
--		get_pgpolicy_name(pgpolicy_name, POLICY_NAME_SIZE,
--				  mp->pgpolicy);
--		condlog(3, "%s: pgpolicy = %s (config file default)",
--			mp->alias, pgpolicy_name);
--		return 0;
-+		origin = "(cmd line flag)";
-+		goto out;
- 	}
--	mp->pgpolicy = DEFAULT_PGPOLICY;
-+	mp_set_mpe(pgpolicy);
-+	mp_set_hwe(pgpolicy);
-+	mp_set_conf(pgpolicy);
-+	mp_set_default(pgpolicy, DEFAULT_PGPOLICY);
-+out:
- 	mp->pgpolicyfn = pgpolicies[mp->pgpolicy];
--	get_pgpolicy_name(pgpolicy_name, POLICY_NAME_SIZE, mp->pgpolicy);
--	condlog(3, "%s: pgpolicy = %s (internal default)",
--		mp->alias, pgpolicy_name);
-+	get_pgpolicy_name(buff, POLICY_NAME_SIZE, mp->pgpolicy);
-+	condlog(3, "%s: path_grouping_policy = %s %s", mp->alias, buff, origin);
- 	return 0;
- }
- 
- extern int
- select_selector (struct multipath * mp)
- {
--	if (mp->mpe && mp->mpe->selector) {
--		mp->selector = mp->mpe->selector;
--		condlog(3, "%s: selector = %s (LUN setting)",
--			mp->alias, mp->selector);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->selector) {
--		mp->selector = mp->hwe->selector;
--		condlog(3, "%s: selector = %s (controller setting)",
--			mp->alias, mp->selector);
--		return 0;
--	}
--	if (conf->selector) {
--		mp->selector = conf->selector;
--		condlog(3, "%s: selector = %s (config file default)",
--			mp->alias, mp->selector);
--		return 0;
--	}
--	mp->selector = set_default(DEFAULT_SELECTOR);
--	condlog(3, "%s: selector = %s (internal default)",
--		mp->alias, mp->selector);
-+	char *origin;
-+
-+	mp_set_mpe(selector);
-+	mp_set_hwe(selector);
-+	mp_set_conf(selector);
-+	mp_set_default(selector, set_default(DEFAULT_SELECTOR));
-+out:
-+	condlog(3, "%s: path_selector = \"%s\" %s", mp->alias, mp->selector,
-+		origin);
- 	return 0;
- }
- 
- static void
- select_alias_prefix (struct multipath * mp)
- {
--	if (mp->hwe && mp->hwe->alias_prefix) {
--		mp->alias_prefix = mp->hwe->alias_prefix;
--		condlog(3, "%s: alias_prefix = %s (controller setting)",
--			mp->wwid, mp->alias_prefix);
--		return;
--	}
--	if (conf->alias_prefix) {
--		mp->alias_prefix = conf->alias_prefix;
--		condlog(3, "%s: alias_prefix = %s (config file default)",
--			mp->wwid, mp->alias_prefix);
--		return;
--	}
--	mp->alias_prefix = set_default(DEFAULT_ALIAS_PREFIX);
--	condlog(3, "%s: alias_prefix = %s (internal default)",
--		mp->wwid, mp->alias_prefix);
-+	char *origin;
-+
-+	mp_set_hwe(alias_prefix);
-+	mp_set_conf(alias_prefix);
-+	mp_set_default(alias_prefix, DEFAULT_ALIAS_PREFIX);
-+out:
-+	condlog(3, "%s: alias_prefix = %s %s", mp->wwid, mp->alias_prefix,
-+		origin);
- }
- 
- static int
-@@ -253,8 +218,11 @@ want_user_friendly_names(struct multipath * mp)
- extern int
- select_alias (struct multipath * mp)
- {
-+	char *origin;
-+
- 	if (mp->mpe && mp->mpe->alias) {
- 		mp->alias = STRDUP(mp->mpe->alias);
-+		origin = "(LUN setting)";
- 		goto out;
- 	}
- 
-@@ -269,39 +237,37 @@ select_alias (struct multipath * mp)
- 				mp->alias_old, mp->alias_prefix,
- 				conf->bindings_read_only);
- 		memset (mp->alias_old, 0, WWID_SIZE);
-+		origin = "(using existing alias)";
- 	}
- 
--	if (mp->alias == NULL)
-+	if (mp->alias == NULL) {
- 		mp->alias = get_user_friendly_alias(mp->wwid,
- 				conf->bindings_file, mp->alias_prefix, conf->bindings_read_only);
-+		origin = "(user_friendly_name)";
++	condlog(4, "checking if %s should be multipathed", pp1->dev);
++	vector_foreach_slot(pathvec, pp2, i) {
++		if (pp1->dev == pp2->dev)
++			continue;
++		if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
++			condlog(3, "found multiple paths with wwid %s, "
++				"multipathing %s", pp1->wwid, pp1->dev);
++			return 1;
++		}
 +	}
- out:
--	if (mp->alias == NULL)
-+	if (mp->alias == NULL) {
- 		mp->alias = STRDUP(mp->wwid);
--
-+		origin = "(default to wwid)";
++	if (check_wwids_file(pp1->wwid, 0) < 0) {
++		condlog(3, "wwid %s not in wwids file, skipping %s",
++			pp1->wwid, pp1->dev);
++		return 0;
 +	}
-+	if (mp->alias)
-+		condlog(3, "%s: alias = %s %s", mp->wwid, mp->alias, origin);
- 	return mp->alias ? 0 : 1;
- }
- 
- extern int
- select_features (struct multipath * mp)
- {
--	struct mpentry * mpe;
- 	char *origin;
- 
--	if ((mpe = find_mpe(mp->wwid)) && mpe->features) {
--		mp->features = STRDUP(mpe->features);
--		origin = "LUN setting";
--	} else if (mp->hwe && mp->hwe->features) {
--		mp->features = STRDUP(mp->hwe->features);
--		origin = "controller setting";
--	} else if (conf->features) {
--		mp->features = STRDUP(conf->features);
--		origin = "config file default";
--	} else {
--		mp->features = set_default(DEFAULT_FEATURES);
--		origin = "internal default";
--	}
--	condlog(3, "%s: features = %s (%s)",
--		mp->alias, mp->features, origin);
-+	mp_set_mpe(features);
-+	mp_set_hwe(features);
-+	mp_set_conf(features);
-+	mp_set_default(features, DEFAULT_FEATURES);
-+out:
-+	mp->features = STRDUP(mp->features);
-+	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
++	condlog(3, "found wwid %s in wwids file, multipathing %s", pp1->wwid,
++		pp1->dev);
++	return 1;
++}
 +
- 	if (strstr(mp->features, "queue_if_no_path")) {
- 		if (mp->no_path_retry == NO_PATH_RETRY_UNDEF)
- 			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
-@@ -317,45 +283,29 @@ select_features (struct multipath * mp)
- extern int
- select_hwhandler (struct multipath * mp)
++int
+ remember_wwid(char *wwid)
  {
--	if (mp->hwe && mp->hwe->hwhandler) {
--		mp->hwhandler = mp->hwe->hwhandler;
--		condlog(3, "%s: hwhandler = %s (controller setting)",
--			mp->alias, mp->hwhandler);
--		return 0;
--	}
--	if (conf->hwhandler) {
--		mp->hwhandler = conf->hwhandler;
--		condlog(3, "%s: hwhandler = %s (config file default)",
--			mp->alias, mp->hwhandler);
--		return 0;
--	}
--	mp->hwhandler = set_default(DEFAULT_HWHANDLER);
--	condlog(3, "%s: hwhandler = %s (internal default)",
--		mp->alias, mp->hwhandler);
-+	char *origin;
-+
-+	mp_set_hwe(hwhandler);
-+	mp_set_conf(hwhandler);
-+	mp_set_default(hwhandler, set_default(DEFAULT_HWHANDLER));
-+out:
-+	condlog(3, "%s: hardware_handler = \"%s\" %s", mp->alias, mp->hwhandler,
-+		origin);
- 	return 0;
- }
+ 	int ret = check_wwids_file(wwid, 1);
+diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+index f3b21fa..9527012 100644
+--- a/libmultipath/wwids.h
++++ b/libmultipath/wwids.h
+@@ -12,6 +12,7 @@
+ "#\n" \
+ "# Valid WWIDs:\n"
  
- extern int
- select_checker(struct path *pp)
- {
-+	char *origin, *checker_name;
- 	struct checker * c = &pp->checker;
- 
--	if (pp->hwe && pp->hwe->checker_name) {
--		checker_get(c, pp->hwe->checker_name);
--		condlog(3, "%s: path checker = %s (controller setting)",
--			pp->dev, checker_name(c));
--		goto out;
--	}
--	if (conf->checker_name) {
--		checker_get(c, conf->checker_name);
--		condlog(3, "%s: path checker = %s (config file default)",
--			pp->dev, checker_name(c));
--		goto out;
--	}
--	checker_get(c, DEFAULT_CHECKER);
--	condlog(3, "%s: path checker = %s (internal default)",
--		pp->dev, checker_name(c));
-+	do_set(checker_name, pp->hwe, checker_name, "(controller setting)");
-+	do_set(checker_name, conf, checker_name, "(config file setting)");
-+	do_default(checker_name, DEFAULT_CHECKER);
- out:
-+	checker_get(c, checker_name);
-+	condlog(3, "%s: path_checker = %s %s", pp->dev, c->name, origin);
- 	if (conf->checker_timeout) {
- 		c->timeout = conf->checker_timeout;
- 		condlog(3, "%s: checker timeout = %u s (config file default)",
-@@ -375,33 +325,20 @@ out:
- extern int
- select_getuid (struct path * pp)
- {
--	if (pp->hwe && pp->hwe->uid_attribute) {
--		pp->uid_attribute = pp->hwe->uid_attribute;
--		condlog(3, "%s: uid_attribute = %s (controller setting)",
--			pp->dev, pp->uid_attribute);
--		return 0;
--	}
--	if (pp->hwe && pp->hwe->getuid) {
--		pp->getuid = pp->hwe->getuid;
--		condlog(3, "%s: getuid = %s (deprecated) (controller setting)",
--			pp->dev, pp->getuid);
--		return 0;
--	}
--	if (conf->uid_attribute) {
--		pp->uid_attribute = conf->uid_attribute;
--		condlog(3, "%s: uid_attribute = %s (config file default)",
--			pp->dev, pp->uid_attribute);
--		return 0;
--	}
--	if (conf->getuid) {
--		pp->getuid = conf->getuid;
--		condlog(3, "%s: getuid = %s (deprecated) (config file default)",
--			pp->dev, pp->getuid);
--		return 0;
--	}
--	pp->uid_attribute = STRDUP(DEFAULT_UID_ATTRIBUTE);
--	condlog(3, "%s: uid_attribute = %s (internal default)",
--		pp->dev, pp->uid_attribute);
-+	char *origin;
-+
-+	pp_set_hwe(uid_attribute);
-+	pp_set_hwe(getuid);
-+	pp_set_conf(uid_attribute);
-+	pp_set_conf(getuid);
-+	pp_set_default(uid_attribute, DEFAULT_UID_ATTRIBUTE);
-+out:
-+	if (pp->uid_attribute)
-+		condlog(3, "%s: uid_attribute = %s %s", pp->dev,
-+			pp->uid_attribute, origin);
-+	else if (pp->getuid)
-+		condlog(3, "%s: getuid = \"%s\" %s", pp->dev, pp->getuid,
-+			origin);
- 	return 0;
- }
- 
-@@ -421,140 +358,94 @@ detect_prio(struct path * pp)
- 	prio_get(p, PRIO_ALUA, DEFAULT_PRIO_ARGS);
- }
- 
-+#define set_prio(src, msg)						\
-+do {									\
-+	if (src && src->prio_name) {					\
-+		prio_get(p, src->prio_name, src->prio_args);		\
-+		origin = msg;						\
-+		goto out;						\
-+	}								\
-+} while(0)
-+
- extern int
- select_prio (struct path * pp)
- {
-+	char *origin;
- 	struct mpentry * mpe;
- 	struct prio * p = &pp->prio;
- 
- 	if (pp->detect_prio == DETECT_PRIO_ON) {
- 		detect_prio(pp);
- 		if (prio_selected(p)) {
--			condlog(3, "%s: prio = %s (detected setting)",
--				pp->dev, prio_name(p));
--			return 0;
--		}
--	}
--
--	if ((mpe = find_mpe(pp->wwid))) {
--		if (mpe->prio_name) {
--			prio_get(p, mpe->prio_name, mpe->prio_args);
--			condlog(3, "%s: prio = %s (LUN setting)",
--				pp->dev, prio_name(p));
--			return 0;
-+			origin = "(detected setting)";
-+			goto out;
++int should_multipath(struct path *pp, vector pathvec);
+ int remember_wwid(char *wwid);
+ int check_wwids_file(char *wwid, int write_wwid);
+ int remove_wwid(char *wwid);
+diff --git a/multipath/main.c b/multipath/main.c
+index ea453b4..d085f64 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -197,6 +197,9 @@ get_dm_mpvec (vector curmp, vector pathvec, char * refwwid)
+ 			continue;
  		}
- 	}
--
--	if (pp->hwe && pp->hwe->prio_name) {
--		prio_get(p, pp->hwe->prio_name, pp->hwe->prio_args);
--		condlog(3, "%s: prio = %s (controller setting)",
--			pp->dev, pp->hwe->prio_name);
--		condlog(3, "%s: prio args = %s (controller setting)",
--			pp->dev, pp->hwe->prio_args);
--		return 0;
--	}
--	if (conf->prio_name) {
--		prio_get(p, conf->prio_name, conf->prio_args);
--		condlog(3, "%s: prio = %s (config file default)",
--			pp->dev, conf->prio_name);
--		condlog(3, "%s: prio args = %s (config file default)",
--			pp->dev, conf->prio_args);
--		return 0;
--	}
-+	mpe = find_mpe(pp->wwid);
-+	set_prio(mpe, "(LUN setting)");
-+	set_prio(pp->hwe, "controller setting)");
-+	set_prio(conf, "(config file default)");
- 	prio_get(p, DEFAULT_PRIO, DEFAULT_PRIO_ARGS);
--	condlog(3, "%s: prio = %s (internal default)",
--		pp->dev, DEFAULT_PRIO);
--	condlog(3, "%s: prio args = %s (internal default)",
--		pp->dev, DEFAULT_PRIO_ARGS);
-+	origin = "(internal default)";
-+out:
-+	condlog(3, "%s: prio = %s %s", pp->dev, prio_name(p), origin);
-+	condlog(3, "%s: prio args = \"%s\" %s", pp->dev, prio_args(p), origin);
- 	return 0;
- }
  
- extern int
- select_no_path_retry(struct multipath *mp)
- {
-+	char *origin = NULL;
-+	char buff[12];
++		if (conf->cmd == CMD_VALID_PATH)
++			continue;
 +
- 	if (mp->flush_on_last_del == FLUSH_IN_PROGRESS) {
- 		condlog(0, "flush_on_last_del in progress");
- 		mp->no_path_retry = NO_PATH_RETRY_FAIL;
- 		return 0;
- 	}
--	if (mp->mpe && mp->mpe->no_path_retry != NO_PATH_RETRY_UNDEF) {
--		mp->no_path_retry = mp->mpe->no_path_retry;
--		condlog(3, "%s: no_path_retry = %i (multipath setting)",
--			mp->alias, mp->no_path_retry);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->no_path_retry != NO_PATH_RETRY_UNDEF) {
--		mp->no_path_retry = mp->hwe->no_path_retry;
--		condlog(3, "%s: no_path_retry = %i (controller setting)",
--			mp->alias, mp->no_path_retry);
--		return 0;
--	}
--	if (conf->no_path_retry != NO_PATH_RETRY_UNDEF) {
--		mp->no_path_retry = conf->no_path_retry;
--		condlog(3, "%s: no_path_retry = %i (config file default)",
--			mp->alias, mp->no_path_retry);
--		return 0;
--	}
--	if (mp->no_path_retry != NO_PATH_RETRY_UNDEF)
--		condlog(3, "%s: no_path_retry = %i (inherited setting)",
--			mp->alias, mp->no_path_retry);
-+	mp_set_mpe(no_path_retry);
-+	mp_set_hwe(no_path_retry);
-+	mp_set_conf(no_path_retry);
-+out:
-+	print_no_path_retry(buff, 12, &mp->no_path_retry);
-+	if (origin)
-+		condlog(3, "%s: no_path_retry = %s %s", mp->alias, buff,
-+			origin);
-+	else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF)
-+		condlog(3, "%s: no_path_retry = %s (inheritied setting)",
-+			mp->alias, buff);
- 	else
--		condlog(3, "%s: no_path_retry = %i (internal default)",
--			mp->alias, mp->no_path_retry);
-+		condlog(3, "%s: no_path_retry = undef (internal default)",
-+			mp->alias);
- 	return 0;
- }
+ 		dm_get_map(mpp->alias, &mpp->size, params);
+ 		condlog(3, "params = %s", params);
+ 		dm_get_status(mpp->alias, status);
+@@ -307,7 +310,13 @@ configure (void)
+ 			goto out;
+ 		}
+ 		condlog(3, "scope limited to %s", refwwid);
+-		if (conf->cmd == CMD_VALID_PATH) {
++		/* If you are ignoring the wwids file and find_multipaths is
++		 * set, you need to actually check if there are two available
++		 * paths to determine if this path should be multipathed. To
++		 * do this, we put off the check until after discovering all
++		 * the paths */
++		if (conf->cmd == CMD_VALID_PATH &&
++		    (!conf->find_multipaths || !conf->ignore_wwids)) {
+ 			if (conf->ignore_wwids ||
+ 			    check_wwids_file(refwwid, 0) == 0)
+ 				r = 0;
+@@ -347,6 +356,20 @@ configure (void)
  
- int
- select_minio_rq (struct multipath * mp)
- {
--	if (mp->mpe && mp->mpe->minio_rq) {
--		mp->minio = mp->mpe->minio_rq;
--		condlog(3, "%s: minio = %i rq (LUN setting)",
--			mp->alias, mp->minio);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->minio_rq) {
--		mp->minio = mp->hwe->minio_rq;
--		condlog(3, "%s: minio = %i rq (controller setting)",
--			mp->alias, mp->minio);
--		return 0;
--	}
--	if (conf->minio) {
--		mp->minio = conf->minio_rq;
--		condlog(3, "%s: minio = %i rq (config file default)",
--			mp->alias, mp->minio);
--		return 0;
--	}
--	mp->minio = DEFAULT_MINIO_RQ;
--	condlog(3, "%s: minio = %i rq (internal default)",
--		mp->alias, mp->minio);
-+	char *origin;
+ 	filter_pathvec(pathvec, refwwid);
+ 
 +
-+	do_set(minio_rq, mp->mpe, mp->minio, "(LUN setting)");
-+	do_set(minio_rq, mp->hwe, mp->minio, "(controller setting)");
-+	do_set(minio_rq, conf, mp->minio, "(config file setting)");
-+	do_default(mp->minio, DEFAULT_MINIO_RQ);
-+out:
-+	condlog(3, "%s: minio = %i %s", mp->alias, mp->minio, origin);
- 	return 0;
- }
- 
- int
- select_minio_bio (struct multipath * mp)
- {
--	if (mp->mpe && mp->mpe->minio) {
--		mp->minio = mp->mpe->minio;
--		condlog(3, "%s: minio = %i (LUN setting)",
--			mp->alias, mp->minio);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->minio) {
--		mp->minio = mp->hwe->minio;
--		condlog(3, "%s: minio = %i (controller setting)",
--			mp->alias, mp->minio);
--		return 0;
--	}
--	if (conf->minio) {
--		mp->minio = conf->minio;
--		condlog(3, "%s: minio = %i (config file default)",
--			mp->alias, mp->minio);
--		return 0;
--	}
--	mp->minio = DEFAULT_MINIO;
--	condlog(3, "%s: minio = %i (internal default)",
--		mp->alias, mp->minio);
-+	char *origin;
-+
-+	mp_set_mpe(minio);
-+	mp_set_hwe(minio);
-+	mp_set_conf(minio);
-+	mp_set_default(minio, DEFAULT_MINIO);
-+out:
-+	condlog(3, "%s: minio = %i %s", mp->alias, mp->minio, origin);
- 	return 0;
- }
- 
-@@ -572,164 +463,95 @@ select_minio (struct multipath * mp)
- extern int
- select_fast_io_fail(struct multipath *mp)
- {
--	if (mp->hwe && mp->hwe->fast_io_fail != MP_FAST_IO_FAIL_UNSET) {
--		mp->fast_io_fail = mp->hwe->fast_io_fail;
--		if (mp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
--			condlog(3, "%s: fast_io_fail_tmo = off "
--				"(controller setting)", mp->alias);
--		else
--			condlog(3, "%s: fast_io_fail_tmo = %d "
--				"(controller setting)", mp->alias,
--				mp->fast_io_fail == MP_FAST_IO_FAIL_ZERO ? 0 : mp->fast_io_fail);
--		return 0;
--	}
--	if (conf->fast_io_fail != MP_FAST_IO_FAIL_UNSET) {
--		mp->fast_io_fail = conf->fast_io_fail;
--		if (mp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
--			condlog(3, "%s: fast_io_fail_tmo = off "
--				"(config file default)", mp->alias);
--		else
--			condlog(3, "%s: fast_io_fail_tmo = %d "
--				"(config file default)", mp->alias,
--				mp->fast_io_fail == MP_FAST_IO_FAIL_ZERO ? 0 : mp->fast_io_fail);
--		return 0;
--	}
--	mp->fast_io_fail = MP_FAST_IO_FAIL_UNSET;
-+	char *origin, buff[12];
-+
-+	mp_set_hwe(fast_io_fail);
-+	mp_set_conf(fast_io_fail);
-+	mp_set_default(fast_io_fail, DEFAULT_FAST_IO_FAIL);
-+out:
-+	print_fast_io_fail(buff, 12, &mp->fast_io_fail);
-+	condlog(3, "%s: fast_io_fail_tmo = %s %s", mp->alias, buff, origin);
- 	return 0;
- }
- 
- extern int
- select_dev_loss(struct multipath *mp)
- {
--	if (mp->hwe && mp->hwe->dev_loss) {
--		mp->dev_loss = mp->hwe->dev_loss;
--		condlog(3, "%s: dev_loss_tmo = %u (controller default)",
--			mp->alias, mp->dev_loss);
--		return 0;
--	}
--	if (conf->dev_loss) {
--		mp->dev_loss = conf->dev_loss;
--		condlog(3, "%s: dev_loss_tmo = %u (config file default)",
--			mp->alias, mp->dev_loss);
--		return 0;
--	}
-+	char *origin, buff[12];
-+
-+	mp_set_hwe(dev_loss);
-+	mp_set_conf(dev_loss);
- 	mp->dev_loss = 0;
- 	return 0;
-+out:
-+	print_dev_loss(buff, 12, &mp->dev_loss);
-+	condlog(3, "%s: dev_loss_tmo = %s %s", mp->alias, buff, origin);
-+	return 0;
- }
- 
- extern int
- select_flush_on_last_del(struct multipath *mp)
- {
-+	char *origin;
-+
- 	if (mp->flush_on_last_del == FLUSH_IN_PROGRESS)
- 		return 0;
--	if (mp->mpe && mp->mpe->flush_on_last_del != FLUSH_UNDEF) {
--		mp->flush_on_last_del = mp->mpe->flush_on_last_del;
--		condlog(3, "%s: flush_on_last_del = %i (multipath setting)",
--			mp->alias, mp->flush_on_last_del);
--		return 0;
--	}
--	if (mp->hwe && mp->hwe->flush_on_last_del != FLUSH_UNDEF) {
--		mp->flush_on_last_del = mp->hwe->flush_on_last_del;
--		condlog(3, "%s: flush_on_last_del = %i (controller setting)",
--			mp->alias, mp->flush_on_last_del);
--		return 0;
--	}
--	if (conf->flush_on_last_del != FLUSH_UNDEF) {
--		mp->flush_on_last_del = conf->flush_on_last_del;
--		condlog(3, "%s: flush_on_last_del = %i (config file default)",
--			mp->alias, mp->flush_on_last_del);
--		return 0;
--	}
--	mp->flush_on_last_del = FLUSH_UNDEF;
--	condlog(3, "%s: flush_on_last_del = DISABLED (internal default)",
--		mp->alias);
-+	mp_set_mpe(flush_on_last_del);
-+	mp_set_hwe(flush_on_last_del);
-+	mp_set_conf(flush_on_last_del);
-+	mp_set_default(flush_on_last_del, FLUSH_DISABLED);
-+out:
-+	condlog(3, "%s: flush_on_last_del = %s %s", mp->alias,
-+		(mp->flush_on_last_del == FLUSH_ENABLED)? "yes" : "no", origin);
- 	return 0;
- }
- 
- extern int
- select_reservation_key (struct multipath * mp)
- {
--	int j;
--	unsigned char *keyp;
--	uint64_t prkey = 0;
-+	char *origin, buff[12];
- 
-+	mp_set_mpe(reservation_key);
-+	mp_set_conf(reservation_key);
- 	mp->reservation_key = NULL;
--
--	if (mp->mpe && mp->mpe->reservation_key) {
--		keyp =  mp->mpe->reservation_key;
--		for (j = 0; j < 8; ++j) {
--			if (j > 0)
--				prkey <<= 8;
--			prkey |= *keyp;
--			++keyp;
--		}
--
--		condlog(3, "%s: reservation_key = 0x%" PRIx64 " "
--				"(multipath setting)",  mp->alias, prkey);
--
--		mp->reservation_key = mp->mpe->reservation_key;
--		return 0;
--	}
--
--	if (conf->reservation_key) {
--		keyp = conf->reservation_key;
--		for (j = 0; j < 8; ++j) {
--			if (j > 0)
--				prkey <<= 8;
--			prkey |= *keyp;
--			++keyp;
--		}
--
--		condlog(3, "%s: reservation_key  = 0x%" PRIx64
--				" (config file default)", mp->alias, prkey);
--
--		mp->reservation_key = conf->reservation_key;
--		return 0;
--	}
--
-+	return 0;
-+out:
-+	print_reservation_key(buff, 12, &mp->reservation_key);
-+	condlog(3, "%s: reservation_key = %s %s", mp->alias, buff, origin);
- 	return 0;
- }
- 
- extern int
- select_retain_hwhandler (struct multipath * mp)
- {
-+	char *origin;
- 	unsigned int minv_dm_retain[3] = {1, 5, 0};
- 
- 	if (!VERSION_GE(conf->version, minv_dm_retain)) {
- 		mp->retain_hwhandler = RETAIN_HWHANDLER_OFF;
--		condlog(3, "%s: retain_attached_hw_handler disabled (requires kernel version >= 1.5.0)", mp->alias);
--		return 0;
--	}
--
--	if (mp->hwe && mp->hwe->retain_hwhandler) {
--		mp->retain_hwhandler = mp->hwe->retain_hwhandler;
--		condlog(3, "%s: retain_attached_hw_handler = %d (controller default)", mp->alias, mp->retain_hwhandler);
--		return 0;
--	}
--	if (conf->retain_hwhandler) {
--		mp->retain_hwhandler = conf->retain_hwhandler;
--		condlog(3, "%s: retain_attached_hw_handler = %d (config file default)", mp->alias, mp->retain_hwhandler);
--		return 0;
-+		origin = "(requires kernel version >= 1.5.0)";
++	if (conf->cmd == CMD_VALID_PATH) {
++		/* This only happens if find_multipaths is and
++		 * ignore_wwids is set.
++		 * If there is currently a multipath device matching
++		 * the refwwid, or there is more than one path matching
++		 * the refwwid, then the path is valid */
++		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
++			r = 0;
++		printf("%s %s a valid multipath device path\n",
++		       conf->dev, r == 0 ? "is" : "is not");
 +		goto out;
- 	}
--	mp->retain_hwhandler = 0;
--	condlog(3, "%s: retain_attached_hw_handler = %d (compiled in default)", mp->alias, mp->retain_hwhandler);
-+	mp_set_hwe(retain_hwhandler);
-+	mp_set_conf(retain_hwhandler);
-+	mp_set_default(retain_hwhandler, DEFAULT_RETAIN_HWHANDLER);
-+out:
-+	condlog(3, "%s: retain_attached_hw_handler = %s %s", mp->alias,
-+		(mp->retain_hwhandler == RETAIN_HWHANDLER_ON)? "yes" : "no",
-+		origin);
- 	return 0;
- }
- 
- extern int
- select_detect_prio (struct path * pp)
- {
--	if (pp->hwe && pp->hwe->detect_prio) {
--		pp->detect_prio = pp->hwe->detect_prio;
--		condlog(3, "%s: detect_prio = %d (controller default)", pp->dev, pp->detect_prio);
--		return 0;
--	}
--	if (conf->detect_prio) {
--		pp->detect_prio = conf->detect_prio;
--		condlog(3, "%s: detect_prio = %d (config file default)", pp->dev, pp->detect_prio);
--		return 0;
--	}
--	pp->detect_prio = 0;
--	condlog(3, "%s: detect_prio = %d (compiled in default)", pp->dev, pp->detect_prio);
-+	char *origin;
++	}
 +
-+	pp_set_hwe(detect_prio);
-+	pp_set_conf(detect_prio);
-+	pp_set_default(detect_prio, DEFAULT_DETECT_PRIO);
-+out:
-+	condlog(3, "%s: detect_prio = %s %s", pp->dev,
-+		(pp->detect_prio == DETECT_PRIO_ON)? "yes" : "no", origin);
- 	return 0;
- }
+ 	if (conf->cmd != CMD_CREATE && conf->cmd != CMD_DRY_RUN) {
+ 		r = 0;
+ 		goto out;
+@@ -355,7 +378,7 @@ configure (void)
+ 	/*
+ 	 * core logic entry point
+ 	 */
+-	r = coalesce_paths(&vecs, NULL, NULL, conf->force_reload);
++	r = coalesce_paths(&vecs, NULL, refwwid, conf->force_reload);
+ 
+ out:
+ 	if (refwwid)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3afed62..e697897 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -54,6 +54,7 @@
+ #include <print.h>
+ #include <configure.h>
+ #include <prio.h>
++#include <wwids.h>
+ #include <pgpolicies.h>
+ #include <uevent.h>
+ #include <log.h>
+@@ -496,6 +497,11 @@ rescan:
+ 			return 1;
+ 		}
+ 
++		if (conf->find_multipaths &&
++		    !should_multipath(pp, vecs->pathvec)) {
++			orphan_path(pp, "only one path");
++			return 0;
++		}
+ 		condlog(4,"%s: creating new map", pp->dev);
+ 		if ((mpp = add_map_with_path(vecs, pp, 1))) {
+ 			mpp->action = ACT_CREATE;
 -- 
 1.8.3.1
