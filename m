@@ -1,16 +1,14 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: Possible bug when releasing metadata snapshot in
- dm-thin
-Date: Wed, 19 Nov 2014 12:48:07 +0000
-Message-ID: <20141119124807.GA14615@debian>
-References: <CAKTMprOM+0dZV_XhvkLJCNuq6kmAbg-9uor7wkin5v3MGXRVJg@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Phillip Susi <psusi@ubuntu.com>
+Subject: Re: broken reply-to setting for dm-devel
+Date: Wed, 19 Nov 2014 11:30:35 -0500
+Message-ID: <546CC5AB.6000303@ubuntu.com>
+References: <20140924142805.GC3858@infradead.org>
+Reply-To: psusi@ubuntu.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKTMprOM+0dZV_XhvkLJCNuq6kmAbg-9uor7wkin5v3MGXRVJg@mail.gmail.com>
+In-Reply-To: <20140924142805.GC3858@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,35 +19,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: hch@infradead.org
 List-Id: dm-devel.ids
 
-On Wed, Nov 19, 2014 at 05:21:52PM +0800, Teng-Feng Yang wrote:
-> Hi all,
-> 
-> I accidentally run into this weird situation which looks like a bug to me.
-> This bug can be reproduced every time with the following steps.
-> 
-> 1) Create a thin pool and a thin volume.
-> 2) Write some data to this thin volume.
-> 3) Reserve metadata snapshot by sending "reserve_metadata_snap" to pool.
-> 4) Create a snapshot for the thin volume.
-> 5) Release metadata snapshot by sending "release_metadata_snap" to pool
-> 6) Remove both the snapshot and thin volume.
-> 
-> After these steps, pool blocks allocated to the thin volume are never
-> returned to the pool. I trace the code of releasing metadata snapshot,
-> and I might find the root cause of this. When reserving metadata
-> snapshot, we will increase the reference count of data mapping root by
-> 1. However, the subsequent changes to the data mapping tree will split
-> the data mapping tree which results in increasing reference counts of
-> all bottom level roots. When releasing metadata snapshot, we simply
-> decrease the reference count of the old data mapping root without
-> propagating these reference count decrements all the way down. IMHO,
-> maybe we should call dm_btree_del() on the old data mapping root
-> instead of dm_sm_dec_refcount().
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Yep, that sounds likely.  I'll confirm and post a patch later.
+On 9/24/2014 10:28 AM, Christoph Hellwig wrote:
+> The dm-devel setup tries to set up broken reply-to headers that
+> try to force replies to the list.  Getting rid of that and keeping
+> Ccs alive over replies would be greatly appreciated.
 
-Thanks,
+I've been telling redhat mailing lists that for years... they don't
+seem to get it.
 
-- Joe
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.17 (MingW32)
+
+iQEcBAEBAgAGBQJUbMWrAAoJEI5FoCIzSKrwjScH/2dHbOwMXePwMu/AN8WEgORy
+1TPOvPBWclbh1GEizaL/WjfsgEqnL+WvPUR02wyF9tytWoiFNnA0i5Ie/B39Mss2
+CUSM+Bt/JV3JufANx0rcQDw4YjCRwJYayAbQ5SD02G+kgg1dd5wTrTdQg486u9PP
+Rav9ClcH6oCAURMJu7p1YY8cPNhQ/BKWJeSqQ3izgFVS+rT7JwW9omuXYermDUl1
+goxAAKONtZyv3m4EwQX7IKMvMJ4QqNt0b5T5gTB7p5Peo/b2MAOtzmCji3wGqu4k
+UAzHpgj4fiKe2VQaCb74PW9wS00JV2fe0ZC4IU2k3BmIW82kZUAmrsn+VNy4S7g=
+=lQT/
+-----END PGP SIGNATURE-----
