@@ -1,13 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-3.19 PATCH v3 1/4] dm: add presuspend_undo hook to
-	target_type
-Date: Wed, 19 Nov 2014 11:34:44 -0500
-Message-ID: <1416414887-23550-1-git-send-email-snitzer@redhat.com>
+Subject: [for-3.19 PATCH v3 2/4] dm thin: do not allow thin
+	device activation while pool is suspended
+Date: Wed, 19 Nov 2014 11:34:45 -0500
+Message-ID: <1416414887-23550-2-git-send-email-snitzer@redhat.com>
+References: <1416414887-23550-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1416414887-23550-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,170 +22,147 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The DM thin-pool target now must undo the changes performed during
-pool_presuspend() so introduce presuspend_undo hook in target_type.
+Otherwise IO could be issued to the pool while it is suspended.
+
+Care was taken to properly interlock between the thin and thin-pool
+targets when accessing the pool's 'suspended' flag.  The thin_ctr will
+not add a new thin device to the pool's active_thins list if the pool is
+susepended.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Acked-by: Joe Thornber <ejt@redhat.com>
 ---
- drivers/md/dm-table.c         | 36 +++++++++++++++++++++++++++++-------
- drivers/md/dm.c               | 10 ++++++++--
- drivers/md/dm.h               |  1 +
- include/linux/device-mapper.h |  2 ++
- include/uapi/linux/dm-ioctl.h |  4 ++--
- 5 files changed, 42 insertions(+), 11 deletions(-)
+ drivers/md/dm-thin.c | 55 ++++++++++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 45 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index b2bd1eb..3afae9e 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1521,18 +1521,32 @@ fmode_t dm_table_get_mode(struct dm_table *t)
- }
- EXPORT_SYMBOL(dm_table_get_mode);
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 64fd4de..f1b53e3 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -224,6 +224,7 @@ struct pool {
  
--static void suspend_targets(struct dm_table *t, unsigned postsuspend)
-+enum suspend_mode {
-+	PRESUSPEND,
-+	PRESUSPEND_UNDO,
-+	POSTSUSPEND,
-+};
+ 	struct pool_features pf;
+ 	bool low_water_triggered:1;	/* A dm event has been sent */
++	bool suspended:1;
+ 
+ 	struct dm_bio_prison *prison;
+ 	struct dm_kcopyd_client *copier;
+@@ -2575,6 +2576,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 	INIT_LIST_HEAD(&pool->prepared_discards);
+ 	INIT_LIST_HEAD(&pool->active_thins);
+ 	pool->low_water_triggered = false;
++	pool->suspended = true;
+ 
+ 	pool->shared_read_ds = dm_deferred_set_create();
+ 	if (!pool->shared_read_ds) {
+@@ -3119,12 +3121,36 @@ static void pool_resume(struct dm_target *ti)
+ 
+ 	spin_lock_irqsave(&pool->lock, flags);
+ 	pool->low_water_triggered = false;
++	pool->suspended = false;
+ 	spin_unlock_irqrestore(&pool->lock, flags);
 +
-+static void suspend_targets(struct dm_table *t, enum suspend_mode mode)
- {
- 	int i = t->num_targets;
- 	struct dm_target *ti = t->targets;
+ 	requeue_bios(pool);
  
- 	while (i--) {
--		if (postsuspend) {
-+		switch (mode) {
-+		case PRESUSPEND:
-+			if (ti->type->presuspend)
-+				ti->type->presuspend(ti);
-+			break;
-+		case PRESUSPEND_UNDO:
-+			if (ti->type->presuspend_undo)
-+				ti->type->presuspend_undo(ti);
-+			break;
-+		case POSTSUSPEND:
- 			if (ti->type->postsuspend)
- 				ti->type->postsuspend(ti);
--		} else if (ti->type->presuspend)
--			ti->type->presuspend(ti);
--
-+			break;
-+		}
- 		ti++;
- 	}
+ 	do_waker(&pool->waker.work);
  }
-@@ -1542,7 +1556,15 @@ void dm_table_presuspend_targets(struct dm_table *t)
- 	if (!t)
- 		return;
  
--	suspend_targets(t, 0);
-+	suspend_targets(t, PRESUSPEND);
++static void pool_presuspend(struct dm_target *ti)
++{
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++	unsigned long flags;
++
++	spin_lock_irqsave(&pool->lock, flags);
++	pool->suspended = true;
++	spin_unlock_irqrestore(&pool->lock, flags);
 +}
 +
-+void dm_table_presuspend_undo_targets(struct dm_table *t)
++static void pool_presuspend_undo(struct dm_target *ti)
 +{
-+	if (!t)
-+		return;
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++	unsigned long flags;
 +
-+	suspend_targets(t, PRESUSPEND_UNDO);
- }
++	spin_lock_irqsave(&pool->lock, flags);
++	pool->suspended = false;
++	spin_unlock_irqrestore(&pool->lock, flags);
++}
++
+ static void pool_postsuspend(struct dm_target *ti)
+ {
+ 	struct pool_c *pt = ti->private;
+@@ -3592,6 +3618,8 @@ static struct target_type pool_target = {
+ 	.ctr = pool_ctr,
+ 	.dtr = pool_dtr,
+ 	.map = pool_map,
++	.presuspend = pool_presuspend,
++	.presuspend_undo = pool_presuspend_undo,
+ 	.postsuspend = pool_postsuspend,
+ 	.preresume = pool_preresume,
+ 	.resume = pool_resume,
+@@ -3721,18 +3749,18 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	if (get_pool_mode(tc->pool) == PM_FAIL) {
+ 		ti->error = "Couldn't open thin device, Pool is in fail mode";
+ 		r = -EINVAL;
+-		goto bad_thin_open;
++		goto bad_pool;
+ 	}
  
- void dm_table_postsuspend_targets(struct dm_table *t)
-@@ -1550,7 +1572,7 @@ void dm_table_postsuspend_targets(struct dm_table *t)
- 	if (!t)
- 		return;
+ 	r = dm_pool_open_thin_device(tc->pool->pmd, tc->dev_id, &tc->td);
+ 	if (r) {
+ 		ti->error = "Couldn't open thin internal device";
+-		goto bad_thin_open;
++		goto bad_pool;
+ 	}
  
--	suspend_targets(t, 1);
-+	suspend_targets(t, POSTSUSPEND);
- }
+ 	r = dm_set_target_max_io_len(ti, tc->pool->sectors_per_block);
+ 	if (r)
+-		goto bad_target_max_io_len;
++		goto bad;
  
- int dm_table_resume_targets(struct dm_table *t)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f8cdd97..f84de32 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2756,7 +2756,10 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
- 	if (noflush)
- 		set_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+ 	ti->num_flush_bios = 1;
+ 	ti->flush_supported = true;
+@@ -3747,14 +3775,16 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		ti->split_discard_bios = true;
+ 	}
  
--	/* This does not get reverted if there's an error later. */
-+	/*
-+	 * This gets reverted if there's an error later and the targets
-+	 * provide the .presuspend_undo hook.
-+	 */
- 	dm_table_presuspend_targets(map);
+-	dm_put(pool_md);
+-
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
  
+-	atomic_set(&tc->refcount, 1);
+-	init_completion(&tc->can_destroy);
+-
+ 	spin_lock_irqsave(&tc->pool->lock, flags);
++	if (tc->pool->suspended) {
++		spin_unlock_irqrestore(&tc->pool->lock, flags);
++		mutex_lock(&dm_thin_pool_table.mutex); /* reacquire for __pool_dec */
++		ti->error = "Unable to activate thin device while pool is suspended";
++		r = -EINVAL;
++		goto bad;
++	}
+ 	list_add_tail_rcu(&tc->list, &tc->pool->active_thins);
+ 	spin_unlock_irqrestore(&tc->pool->lock, flags);
  	/*
-@@ -2767,8 +2770,10 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+@@ -3765,11 +3795,16 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
  	 */
- 	if (!noflush && do_lockfs) {
- 		r = lock_fs(md);
--		if (r)
-+		if (r) {
-+			dm_table_presuspend_undo_targets(map);
- 			goto out_unlock;
-+		}
- 	}
+ 	synchronize_rcu();
  
- 	/*
-@@ -2816,6 +2821,7 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
- 			start_queue(md->queue);
++	dm_put(pool_md);
++
++	atomic_set(&tc->refcount, 1);
++	init_completion(&tc->can_destroy);
++
+ 	return 0;
  
- 		unlock_fs(md);
-+		dm_table_presuspend_undo_targets(map);
- 		goto out_unlock; /* pushback list is already flushed, so skip flush */
- 	}
- 
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 988c7fb..7819940 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -65,6 +65,7 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			       struct queue_limits *limits);
- struct list_head *dm_table_get_devices(struct dm_table *t);
- void dm_table_presuspend_targets(struct dm_table *t);
-+void dm_table_presuspend_undo_targets(struct dm_table *t);
- void dm_table_postsuspend_targets(struct dm_table *t);
- int dm_table_resume_targets(struct dm_table *t);
- int dm_table_any_congested(struct dm_table *t, int bdi_bits);
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index e1707de..ca6d2ac 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -64,6 +64,7 @@ typedef int (*dm_request_endio_fn) (struct dm_target *ti,
- 				    union map_info *map_context);
- 
- typedef void (*dm_presuspend_fn) (struct dm_target *ti);
-+typedef void (*dm_presuspend_undo_fn) (struct dm_target *ti);
- typedef void (*dm_postsuspend_fn) (struct dm_target *ti);
- typedef int (*dm_preresume_fn) (struct dm_target *ti);
- typedef void (*dm_resume_fn) (struct dm_target *ti);
-@@ -145,6 +146,7 @@ struct target_type {
- 	dm_endio_fn end_io;
- 	dm_request_endio_fn rq_end_io;
- 	dm_presuspend_fn presuspend;
-+	dm_presuspend_undo_fn presuspend_undo;
- 	dm_postsuspend_fn postsuspend;
- 	dm_preresume_fn preresume;
- 	dm_resume_fn resume;
-diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
-index 3315ab2..2be66f4 100644
---- a/include/uapi/linux/dm-ioctl.h
-+++ b/include/uapi/linux/dm-ioctl.h
-@@ -267,9 +267,9 @@ enum {
- #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
- 
- #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	28
-+#define DM_VERSION_MINOR	29
- #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2014-09-17)"
-+#define DM_VERSION_EXTRA	"-ioctl (2014-10-28)"
- 
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+-bad_target_max_io_len:
++bad:
+ 	dm_pool_close_thin_device(tc->td);
+-bad_thin_open:
++bad_pool:
+ 	__pool_dec(tc->pool);
+ bad_pool_lookup:
+ 	dm_put(pool_md);
 -- 
 1.9.3
